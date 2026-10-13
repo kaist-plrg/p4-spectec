@@ -69,6 +69,7 @@ pub fn deftyp(arena: &Arena, value_meta: Value) -> Result<ast::DefTyp, Error> {
     Ok(phrase!(node: deftyp_kind, span: span))
 }
 
+/// Decodes one struct type field.
 fn typfield(arena: &Arena, value_meta: Value) -> Result<ast::TypField, Error> {
     let (mixop, values, _) = case(arena, value_meta)?;
     match values.as_slice() {
@@ -79,13 +80,15 @@ fn typfield(arena: &Arena, value_meta: Value) -> Result<ast::TypField, Error> {
     }
 }
 
+/// Decodes one variant case without its origin or hints.
 fn typcase(arena: &Arena, value_meta: Value) -> Result<ast::TypCase, Error> {
     let (mixop_meta, values, span) = case(arena, value_meta)?;
     match values.as_slice() {
         [value_mixop, value_typs] if m::is(&mixop_meta, m::TYPCASE) => {
             let not_typ = Mixfix::new(mixop(arena, *value_mixop)?, typs(arena, *value_typs)?)?;
-            let id = phrase!(node: "".into(), span: span);
-            let typ_origin = phrase!(node: ast::TypOriginKind { id, targs: vec![] }, span: span);
+            let id_origin = phrase!(node: "".into(), span: span);
+            let typ_origin =
+                phrase!(node: ast::TypOriginKind { id: id_origin, targs: vec![] }, span: span);
             Ok(ast::TypCase {
                 not_typ: phrase!(node: not_typ, span: span),
                 typ_origin,

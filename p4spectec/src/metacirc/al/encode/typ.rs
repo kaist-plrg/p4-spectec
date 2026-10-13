@@ -59,11 +59,13 @@ pub fn deftyp(arena: &mut Arena, deftyp_al: &ast::DefTyp) -> Result<Value, Error
     case(arena, shape, "deftyp", values, deftyp_al.span)
 }
 
+/// Encodes one struct type field.
 fn typfield(arena: &mut Arena, typ_field: &ast::TypField) -> Result<Value, Error> {
     let values = vec![atom(arena, &typ_field.atom)?, typ(arena, &typ_field.typ)?];
     case(arena, m::TYPFIELD, "typfield", values, typ_field.atom.span)
 }
 
+/// Encodes one variant case without its origin or hints.
 fn typcase(arena: &mut Arena, typ_case: &ast::TypCase) -> Result<Value, Error> {
     let values = vec![
         mixop(arena, typ_case.not_typ.node.mixop())?,

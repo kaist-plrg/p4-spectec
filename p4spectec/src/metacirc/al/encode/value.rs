@@ -80,6 +80,7 @@ pub fn values(arena: &mut Arena, values_target: &[Value]) -> Result<Value, Error
     list(arena, "val", values_target, |arena, value_target| value(arena, *value_target))
 }
 
+/// Encodes one runtime struct field.
 fn valuefield(arena: &mut Arena, value_field: &ValueField) -> Result<Value, Error> {
     let values = vec![atom(arena, &value_field.atom)?, value(arena, value_field.value)?];
     case(arena, m::VALFIELD, "valfield", values, value_field.atom.span)

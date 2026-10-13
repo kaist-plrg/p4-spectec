@@ -103,6 +103,7 @@ pub fn values(arena: &mut Arena, value_meta: Value) -> Result<Vec<Value>, Error>
         .collect()
 }
 
+/// Decodes one runtime struct field.
 fn valuefield(arena: &mut Arena, value_meta: Value) -> Result<ValueField, Error> {
     let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
     match values_meta.as_slice() {

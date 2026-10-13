@@ -114,6 +114,7 @@ pub fn def(arena: &mut Arena, def_al: &ast::Def) -> Result<Option<Value>, Error>
     Ok(Some(case(arena, shape, "defn", values, def_al.span)?))
 }
 
+/// Encodes a value or higher-order function parameter.
 fn param(arena: &mut Arena, param_al: &ast::Param) -> Result<Value, Error> {
     let (shape, values) = match &param_al.node {
         ast::ParamKind::Exp(typ_al) => (m::EXP_PARAM, vec![typ(arena, typ_al)?]),
@@ -130,34 +131,43 @@ fn param(arena: &mut Arena, param_al: &ast::Param) -> Result<Value, Error> {
     case(arena, shape, "param", values, param_al.span)
 }
 
+/// Encodes an AL premise.
 fn prem(arena: &mut Arena, prem_al: &ast::Prem) -> Result<Value, Error> {
     use ast::PremKind as P;
     let (shape, values) = match &prem_al.node {
-        P::Rule(prem) => {
+        P::Rule(prem_inner) => {
             let (exps_input, exps_output) =
-                input::split(&prem.input_hint, prem.not_exp.args().to_vec())?;
+                input::split(&prem_inner.input_hint, prem_inner.not_exp.args().to_vec())?;
             (
                 m::REL_PREM,
-                vec![id(arena, &prem.id)?, exps(arena, &exps_input)?, exps(arena, &exps_output)?],
+                vec![
+                    id(arena, &prem_inner.id)?,
+                    exps(arena, &exps_input)?,
+                    exps(arena, &exps_output)?,
+                ],
             )
         }
-        P::If(prem) => (m::IF, vec![exp(arena, &prem.exp)?]),
-        P::IfHold(prem) => {
-            (m::IFHOLD, vec![id(arena, &prem.id)?, exps(arena, prem.not_exp.args())?])
+        P::If(prem_inner) => (m::IF, vec![exp(arena, &prem_inner.exp)?]),
+        P::IfHold(prem_inner) => {
+            (m::IFHOLD, vec![id(arena, &prem_inner.id)?, exps(arena, prem_inner.not_exp.args())?])
         }
-        P::IfNotHold(prem) => {
-            (m::IFNOTHOLD, vec![id(arena, &prem.id)?, exps(arena, prem.not_exp.args())?])
+        P::IfNotHold(prem_inner) => (
+            m::IFNOTHOLD,
+            vec![id(arena, &prem_inner.id)?, exps(arena, prem_inner.not_exp.args())?],
+        ),
+        P::Let(prem_inner) => {
+            (m::LET, vec![exp(arena, &prem_inner.exp_l)?, exp(arena, &prem_inner.exp_r)?])
         }
-        P::Let(prem) => (m::LET, vec![exp(arena, &prem.exp_l)?, exp(arena, &prem.exp_r)?]),
         P::Iter(prem_iter) => (
             m::ITER_PREM,
             vec![prem(arena, &prem_iter.prem)?, iterprem(arena, &prem_iter.prem_iter)?],
         ),
-        P::Debug(prem) => (m::DEBUG, vec![exp(arena, &prem.exp)?]),
+        P::Debug(prem_inner) => (m::DEBUG, vec![exp(arena, &prem_inner.exp)?]),
     };
     case(arena, shape, "prem", values, prem_al.span)
 }
 
+/// Encodes bound and bound-by-iteration variable lists in order.
 fn iterprem(arena: &mut Arena, prem_iter: &ast::PremIter) -> Result<Value, Error> {
     let values = vec![
         iter(arena, &prem_iter.iter)?,
@@ -167,12 +177,14 @@ fn iterprem(arena: &mut Arena, prem_iter: &ast::PremIter) -> Result<Value, Error
     case(arena, m::ITERPREM, "iterprem", values, Span::default())
 }
 
+/// Encodes a rule match without its printing signature.
 fn rulematch(arena: &mut Arena, rule_match: &ast::RuleMatch) -> Result<Value, Error> {
     let values =
         vec![exps(arena, &rule_match.exps_input)?, list(arena, "prem", &rule_match.prems, prem)?];
     case(arena, m::RULMATCH, "rulmatch", values, Span::default())
 }
 
+/// Encodes a rule path and its outputs.
 fn rulepath(arena: &mut Arena, rule_path: &ast::RulePath) -> Result<Value, Error> {
     let values = vec![
         id(arena, &rule_path.id)?,
@@ -182,6 +194,7 @@ fn rulepath(arena: &mut Arena, rule_path: &ast::RulePath) -> Result<Value, Error
     case(arena, m::RULPATH, "rulpath", values, rule_path.id.span)
 }
 
+/// Encodes a rule group with its shared match.
 fn rulegroup(arena: &mut Arena, rule_group: &ast::RuleGroup) -> Result<Value, Error> {
     let values = vec![
         id(arena, &rule_group.node.id)?,
@@ -191,6 +204,7 @@ fn rulegroup(arena: &mut Arena, rule_group: &ast::RuleGroup) -> Result<Value, Er
     case(arena, m::RULGROUP, "rulgroup", values, rule_group.span)
 }
 
+/// Encodes an otherwise group with one rule path.
 fn elsegroup(arena: &mut Arena, group_else: &ast::ElseGroup) -> Result<Value, Error> {
     let values = vec![
         id(arena, &group_else.node.id)?,
@@ -200,6 +214,7 @@ fn elsegroup(arena: &mut Arena, group_else: &ast::ElseGroup) -> Result<Value, Er
     case(arena, m::ELSGROUP, "elsgroup", values, group_else.span)
 }
 
+/// Encodes a function clause.
 fn clause(arena: &mut Arena, clause_al: &ast::Clause) -> Result<Value, Error> {
     let values = vec![
         args(arena, &clause_al.node.args)?,
@@ -209,6 +224,7 @@ fn clause(arena: &mut Arena, clause_al: &ast::Clause) -> Result<Value, Error> {
     case(arena, m::CLAUSE, "clause", values, clause_al.span)
 }
 
+/// Encodes a table row without its printing signature.
 fn tablerow(arena: &mut Arena, row_al: &ast::TableRow) -> Result<Value, Error> {
     let values = vec![
         args(arena, &row_al.node.args)?,

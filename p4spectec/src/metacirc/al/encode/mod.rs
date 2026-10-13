@@ -60,7 +60,7 @@ pub(super) fn list<T>(
 ) -> Result<Value, Error> {
     let values = source
         .iter()
-        .map(|value| encode(arena, value))
+        .map(|value_source| encode(arena, value_source))
         .collect::<Result<_, _>>()?;
     Ok(make::list(arena, typs::iter(name, Iter::List), values, Span::default())?)
 }
@@ -72,8 +72,10 @@ pub(super) fn opt<T>(
     source: Option<&T>,
     encode: impl FnOnce(&mut Arena, &T) -> Result<Value, Error>,
 ) -> Result<Value, Error> {
-    let value = source.map(|value| encode(arena, value)).transpose()?;
-    Ok(make::opt(arena, typs::iter(name, Iter::Opt), value, Span::default())?)
+    let value_meta = source
+        .map(|value_source| encode(arena, value_source))
+        .transpose()?;
+    Ok(make::opt(arena, typs::iter(name, Iter::Opt), value_meta, Span::default())?)
 }
 
 /// Encodes a source iterator.
@@ -129,8 +131,21 @@ pub(super) fn mixop(arena: &mut Arena, mixop_al: &Mixop) -> Result<Value, Error>
     for atoms in rows {
         values.push(list(arena, "atom", &atoms, |arena, atom_al| atom(arena, atom_al))?);
     }
-    let typ = crate::lang::data::typ::make::list(crate::lang::data::typ::make::list(
+    let typ_matrix = crate::lang::data::typ::make::list(crate::lang::data::typ::make::list(
         crate::lang::data::typ::make::text(),
     ));
-    Ok(make::list(arena, std::rc::Rc::new(typ.node), values, Span::default())?)
+    Ok(make::list(arena, std::rc::Rc::new(typ_matrix.node), values, Span::default())?)
+}
+
+/// Encodes a successful function result as `OK val : valres`.
+pub fn ok_value(arena: &mut Arena, value_target: Value) -> Result<Value, Error> {
+    let span = *arena.value.span(value_target.span);
+    let value_meta = value(arena, value_target)?;
+    case(arena, mixops::OK, "valres", vec![value_meta], span)
+}
+
+/// Encodes successful relation outputs as `OK val* : valsres`.
+pub fn ok_values(arena: &mut Arena, values_target: &[Value]) -> Result<Value, Error> {
+    let values_meta = values(arena, values_target)?;
+    case(arena, mixops::OK, "valsres", vec![values_meta], Span::default())
 }

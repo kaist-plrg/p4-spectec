@@ -116,3 +116,5 @@ pub(super) const EXTFUNC: &str = "EXTFUNC id tparam* param* ':' typ";
 pub(super) const BUILTINFUNC: &str = "BUILTINFUNC id tparam* param* ':' typ";
 pub(super) const TABLEFUNC: &str = "TABLEFUNC id param* ':' typ '=' tblrow*";
 pub(super) const FUNC_DEF: &str = "FUNC id tparam* param* ':' typ '=' clause* elsclause?";
+
+pub(super) const OK: &str = "OK val";

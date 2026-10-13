@@ -136,10 +136,11 @@ fn notation<T>(
     let atom = phrase!(node: Atom::Operator("->".into()), span: span);
     let mixop = Rc::new(Mixop::Infix(Box::new(mixop_input), atom, Box::new(mixop_output)));
     // Validate the operational hint, including the zero-arity case
-    let args = input::combine(&input_hint, args_input, args_output)?;
-    Ok((Mixfix::new(mixop, args)?, input_hint))
+    let args_al = input::combine(&input_hint, args_input, args_output)?;
+    Ok((Mixfix::new(mixop, args_al)?, input_hint))
 }
 
+/// Decodes a value or higher-order function parameter.
 fn param(arena: &Arena, value_meta: Value) -> Result<ast::Param, Error> {
     let (mixop, values, span) = case(arena, value_meta)?;
     let param_kind = match values.as_slice() {
@@ -157,6 +158,7 @@ fn param(arena: &Arena, value_meta: Value) -> Result<ast::Param, Error> {
     Ok(phrase!(node: param_kind, span: span))
 }
 
+/// Decodes an AL premise.
 fn prem(arena: &Arena, value_meta: Value) -> Result<ast::Prem, Error> {
     use ast::PremKind as P;
     let (mixop, values, span) = case(arena, value_meta)?;
@@ -190,6 +192,7 @@ fn prem(arena: &Arena, value_meta: Value) -> Result<ast::Prem, Error> {
     Ok(phrase!(node: prem_kind, span: span))
 }
 
+/// Decodes bound and bound-by-iteration variable lists in order.
 fn iterprem(arena: &Arena, value_meta: Value) -> Result<ast::PremIter, Error> {
     let (mixop, values, _) = case(arena, value_meta)?;
     match values.as_slice() {
@@ -202,6 +205,7 @@ fn iterprem(arena: &Arena, value_meta: Value) -> Result<ast::PremIter, Error> {
     }
 }
 
+/// Decodes a rule match without its printing signature.
 fn rulematch(arena: &Arena, value_meta: Value) -> Result<ast::RuleMatch, Error> {
     let (mixop, values, _) = case(arena, value_meta)?;
     match values.as_slice() {
@@ -217,6 +221,7 @@ fn rulematch(arena: &Arena, value_meta: Value) -> Result<ast::RuleMatch, Error> 
     }
 }
 
+/// Decodes a rule path and its outputs.
 fn rulepath(arena: &Arena, value_meta: Value) -> Result<ast::RulePath, Error> {
     let (mixop, values, _) = case(arena, value_meta)?;
     match values.as_slice() {
@@ -229,6 +234,7 @@ fn rulepath(arena: &Arena, value_meta: Value) -> Result<ast::RulePath, Error> {
     }
 }
 
+/// Decodes a rule group with its shared match.
 fn rulegroup(arena: &Arena, value_meta: Value) -> Result<ast::RuleGroup, Error> {
     let (mixop, values, span) = case(arena, value_meta)?;
     match values.as_slice() {
@@ -241,6 +247,7 @@ fn rulegroup(arena: &Arena, value_meta: Value) -> Result<ast::RuleGroup, Error> 
     }
 }
 
+/// Decodes an otherwise group with one rule path.
 fn elsegroup(arena: &Arena, value_meta: Value) -> Result<ast::ElseGroup, Error> {
     let (mixop, values, span) = case(arena, value_meta)?;
     match values.as_slice() {
@@ -253,6 +260,7 @@ fn elsegroup(arena: &Arena, value_meta: Value) -> Result<ast::ElseGroup, Error> 
     }
 }
 
+/// Decodes a function clause.
 fn clause(arena: &Arena, value_meta: Value) -> Result<ast::Clause, Error> {
     let (mixop, values, span) = case(arena, value_meta)?;
     match values.as_slice() {
@@ -265,10 +273,11 @@ fn clause(arena: &Arena, value_meta: Value) -> Result<ast::Clause, Error> {
     }
 }
 
+/// Decodes a table row without its printing signature.
 fn tablerow(arena: &Arena, value_meta: Value) -> Result<ast::TableRow, Error> {
     let clause_al = clause(arena, value_meta)?;
-    let ast::ClauseKind { args, exp, prems } = clause_al.node;
+    let ast::ClauseKind { args: args_al, exp: exp_body, prems } = clause_al.node;
     Ok(
-        phrase!(node: ast::TableRowKind { exps_signature: vec![], args, exp, prems }, span: clause_al.span),
+        phrase!(node: ast::TableRowKind { exps_signature: vec![], args: args_al, exp: exp_body, prems }, span: clause_al.span),
     )
 }

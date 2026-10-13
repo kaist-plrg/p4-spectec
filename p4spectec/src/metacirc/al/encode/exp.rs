@@ -91,11 +91,13 @@ pub fn exps(arena: &mut Arena, exps_al: &[ast::Exp]) -> Result<Value, Error> {
     list(arena, "exp", exps_al, exp)
 }
 
+/// Encodes one source struct-expression field.
 fn expfield(arena: &mut Arena, exp_field: &ast::ExpField) -> Result<Value, Error> {
     let values = vec![atom(arena, &exp_field.atom)?, exp(arena, &exp_field.exp)?];
     case(arena, m::EXPFIELD, "expfield", values, exp_field.atom.span)
 }
 
+/// Encodes an expression iterator and its variables.
 fn iterexp(arena: &mut Arena, exp_iter: &ast::ExpIter) -> Result<Value, Error> {
     let values = vec![iter(arena, &exp_iter.iter)?, list(arena, "vari", &exp_iter.vars, var)?];
     case(arena, m::ITEREXP, "iterexp", values, Span::default())
@@ -115,6 +117,7 @@ pub(super) fn args(arena: &mut Arena, args_al: &[ast::Arg]) -> Result<Value, Err
     list(arena, "arg", args_al, arg)
 }
 
+/// Encodes a case, list, or option shape pattern.
 fn pattern(arena: &mut Arena, pattern_al: &ast::Pattern) -> Result<Value, Error> {
     let (shape, values) = match pattern_al {
         ast::Pattern::Case(mixop_al) => (m::CASE_PATTERN, vec![mixop(arena, mixop_al)?]),
@@ -130,6 +133,7 @@ fn pattern(arena: &mut Arena, pattern_al: &ast::Pattern) -> Result<Value, Error>
     case(arena, shape, "pattern", values, Span::default())
 }
 
+/// Encodes a source update path.
 fn path(arena: &mut Arena, path_al: &ast::Path) -> Result<Value, Error> {
     let (shape, values) = match &path_al.node {
         ast::PathKind::Root => (m::ROOT, vec![]),
@@ -146,6 +150,7 @@ fn path(arena: &mut Arena, path_al: &ast::Path) -> Result<Value, Error> {
     case(arena, shape, "path", values, path_al.span)
 }
 
+/// Encodes a unary operator.
 fn unop(arena: &mut Arena, op: ast::UnOp) -> Result<Value, Error> {
     let shape = match op {
         ast::UnOp::Bool(boolean::UnOp::Not) => m::NOT,
@@ -155,6 +160,7 @@ fn unop(arena: &mut Arena, op: ast::UnOp) -> Result<Value, Error> {
     case(arena, shape, "unop", vec![], Span::default())
 }
 
+/// Encodes a binary operator.
 fn binop(arena: &mut Arena, op: ast::BinOp) -> Result<Value, Error> {
     let shape = match op {
         ast::BinOp::Bool(boolean::BinOp::And) => m::AND,
@@ -171,6 +177,7 @@ fn binop(arena: &mut Arena, op: ast::BinOp) -> Result<Value, Error> {
     case(arena, shape, "binop", vec![], Span::default())
 }
 
+/// Encodes a comparison operator.
 fn cmpop(arena: &mut Arena, op: ast::CmpOp) -> Result<Value, Error> {
     let shape = match op {
         ast::CmpOp::Bool(boolean::CmpOp::Eq) => m::EQ,

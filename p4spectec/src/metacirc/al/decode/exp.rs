@@ -117,6 +117,7 @@ pub fn exps(arena: &Arena, value_meta: Value) -> Result<Vec<ast::Exp>, Error> {
     list(arena, value_meta, exp)
 }
 
+/// Decodes a notation and its expression arguments.
 fn expcase(arena: &Arena, value_meta: Value) -> Result<ast::NotExp, Error> {
     let (mixop_meta, values, _) = case(arena, value_meta)?;
     match values.as_slice() {
@@ -127,6 +128,7 @@ fn expcase(arena: &Arena, value_meta: Value) -> Result<ast::NotExp, Error> {
     }
 }
 
+/// Decodes one source struct-expression field.
 fn expfield(arena: &Arena, value_meta: Value) -> Result<ast::ExpField, Error> {
     let (mixop, values, _) = case(arena, value_meta)?;
     match values.as_slice() {
@@ -137,6 +139,7 @@ fn expfield(arena: &Arena, value_meta: Value) -> Result<ast::ExpField, Error> {
     }
 }
 
+/// Decodes an expression iterator and its variables.
 fn iterexp(arena: &Arena, value_meta: Value) -> Result<ast::ExpIter, Error> {
     let (mixop, values, _) = case(arena, value_meta)?;
     match values.as_slice() {
@@ -166,6 +169,7 @@ pub(super) fn args(arena: &Arena, value_meta: Value) -> Result<Vec<ast::Arg>, Er
     list(arena, value_meta, arg)
 }
 
+/// Decodes a case, list, or option shape pattern.
 fn pattern(arena: &Arena, value_meta: Value) -> Result<ast::Pattern, Error> {
     use ast::{ListPattern as L, OptPattern as O, Pattern as P};
     let (mixop_meta, values, _) = case(arena, value_meta)?;
@@ -190,6 +194,7 @@ fn pattern(arena: &Arena, value_meta: Value) -> Result<ast::Pattern, Error> {
     })
 }
 
+/// Decodes a source update path.
 fn path(arena: &Arena, value_meta: Value) -> Result<ast::Path, Error> {
     let (mixop, values, span) = case(arena, value_meta)?;
     let path_kind = match values.as_slice() {
@@ -211,6 +216,7 @@ fn path(arena: &Arena, value_meta: Value) -> Result<ast::Path, Error> {
     Ok(note_phrase!(node: path_kind, note: ast::TypKind::Bool, span: span))
 }
 
+/// Decodes a unary operator.
 fn unop(arena: &Arena, value_meta: Value) -> Result<(ast::UnOp, ast::OpTyp), Error> {
     let (mixop, values, _) = case(arena, value_meta)?;
     match values.as_slice() {
@@ -221,6 +227,7 @@ fn unop(arena: &Arena, value_meta: Value) -> Result<(ast::UnOp, ast::OpTyp), Err
     }
 }
 
+/// Decodes a binary operator.
 fn binop(arena: &Arena, value_meta: Value) -> Result<(ast::BinOp, ast::OpTyp), Error> {
     let (mixop, values, _) = case(arena, value_meta)?;
     match values.as_slice() {
@@ -244,6 +251,7 @@ fn binop(arena: &Arena, value_meta: Value) -> Result<(ast::BinOp, ast::OpTyp), E
     }
 }
 
+/// Decodes a comparison operator.
 fn cmpop(arena: &Arena, value_meta: Value) -> Result<(ast::CmpOp, ast::OpTyp), Error> {
     let (mixop, values, _) = case(arena, value_meta)?;
     match values.as_slice() {
