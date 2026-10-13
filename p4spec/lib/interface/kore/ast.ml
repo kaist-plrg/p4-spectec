@@ -109,8 +109,3 @@ let string_of_pattern p =
   let b = Buffer.create 256 in
   add_pattern b p;
   Buffer.contents b
-
-let string_of_patterns ps =
-  let b = Buffer.create 256 in
-  add_patterns b ps;
-  Buffer.contents b

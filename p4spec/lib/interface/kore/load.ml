@@ -17,15 +17,7 @@ let error fmt = Printf.ksprintf (fun s -> raise (Error s)) fmt
 
 (* Information about a definition used while loading and unparsing *)
 
-type symbol = {
-  params : string list;
-  args : sort list;
-  result : sort;
-  hook : string option;
-  is_function : bool;
-  is_binder : bool;
-  is_anywhere : bool;
-}
+type symbol = { is_binder : bool }
 
 type info = {
   sort_hooks : (string, string) Hashtbl.t; (* sort -> hook of a hooked sort *)
@@ -50,17 +42,9 @@ let info_of_definition (defn : definition) : info =
               Option.iter
                 (Hashtbl.replace info.sort_hooks name)
                 (string_attr "hook" attrs)
-          | SymbolDecl { name; params; args; result; attrs; _ } ->
+          | SymbolDecl { name; attrs; _ } ->
               Hashtbl.replace info.symbols name
-                {
-                  params;
-                  args;
-                  result;
-                  hook = string_attr "hook" attrs;
-                  is_function = has_attr "function" attrs;
-                  is_binder = has_attr "binder" attrs;
-                  is_anywhere = has_attr "anywhere" attrs;
-                }
+                { is_binder = has_attr "binder" attrs }
           | _ -> ())
         m.sentences)
     defn.modules;
