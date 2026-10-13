@@ -4,7 +4,13 @@ Run `make test-metacirc` from the repository root. This independent crate uses
 the pinned Rust 1.97.1 toolchain and depends only on `p4spectec`. It does not
 import the compiler test driver and is not part of `make test` or CI defaults.
 
-The executable checks:
+Run `make test-metacirc-parse` for the parsing-only interface checks. This target
+lowers ordered files and directories to a meta `script`, checks empty input and
+shared-arena values, and compares complete compiler diagnostics. It checks
+`Runner::parse_program` delegation without evaluating a program or invoking
+AL/SL/PL execution or simulation suites. Include search paths are unused.
+
+The default executable checks:
 
 - The complete `spec-meta` elaboration, AL, and structured output against the
   preserved snapshots in `expected/`. Comparisons ignore decorative trailing

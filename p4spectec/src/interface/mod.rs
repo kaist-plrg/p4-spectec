@@ -3,19 +3,29 @@
 //! `p4` is the preset for the P4 specification:
 //! the P4 parser and standard builtins plus `print_`,
 //! which renders a value back to P4 syntax
-//! using the specification's print hints.
+//! using the specification's print hints
+//! `al` lowers specification inputs to meta scripts with standard builtins
 
 use crate::lang::{common::source::Span, data::value};
 
 use crate::runner::Spec;
 
 use self::{
+    al::AlInterface,
     builtin::{call::Builtins, extract},
     p4::{P4Interface, unparse::P4Unparser},
 };
 
+pub mod al;
 pub mod builtin;
 pub mod p4;
+
+// == AL
+
+/// Builds the AL interface with the standard specification builtins.
+pub fn al() -> AlInterface {
+    AlInterface::new(Builtins::new())
+}
 
 // == P4
 

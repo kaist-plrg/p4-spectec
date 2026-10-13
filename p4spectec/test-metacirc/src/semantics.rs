@@ -4,9 +4,9 @@
 //! Calls check signatures, capture avoidance, membership, and evaluation.
 
 use p4spectec::{
-    SpecLang,
+    SpecLang, interface,
     lang::data::arena::Arena,
-    runner::{self, Config, NullExtern, Spec},
+    runner::{Config, NullExtern, Runner},
 };
 
 use crate::{Result, check_guard, fixture, source};
@@ -20,11 +20,7 @@ pub fn run() -> Result<()> {
         let mut arena = Arena::new();
         let spec = p4spectec::runner_spec_with_warnings(lang, &paths).0?;
         let config = Config::new(false, true, true);
-        let mut runner = match spec {
-            Spec::Al(spec_al) => runner::build_al(&mut arena, spec_al, config, NullExtern)?,
-            Spec::Sl(spec_sl) => runner::build_sl(&mut arena, spec_sl, config, NullExtern)?,
-            Spec::Pl(spec_pl) => runner::build_pl(&mut arena, spec_pl, config, NullExtern)?,
-        };
+        let mut runner = Runner::new(&mut arena, spec, config, interface::al(), NullExtern)?;
 
         // Evaluate separate entries to identify each regression
         for name_func in

@@ -15,16 +15,16 @@ use std::{
 };
 
 use p4spectec::{
-    interface::p4::P4Interface,
+    interface::{self, al::AlInterface},
     lang::data::{
         arena::Arena,
         value::flat::{Value, get},
     },
-    runner::{self, Config, NullExtern, Runner},
+    runner::{Config, NullExtern, Runner, Spec},
 };
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
-type MetaRunner = Runner<P4Interface, NullExtern>;
+type MetaRunner = Runner<AlInterface, NullExtern>;
 
 fn main() -> Result<()> {
     snapshot::run()?;
@@ -51,7 +51,13 @@ fn source(name: &str) -> PathBuf {
 fn meta_runner(arena: &mut Arena) -> Result<MetaRunner> {
     let paths = [source("spec-meta"), fixture("guards.watsup")];
     let spec_al = p4spectec::algo(&paths)?;
-    Ok(runner::build_al(arena, spec_al, Config::new(false, true, true), NullExtern)?)
+    Ok(Runner::new(
+        arena,
+        Spec::Al(spec_al),
+        Config::new(false, true, true),
+        interface::al(),
+        NullExtern,
+    )?)
 }
 
 /// Requires a guarded call to return true rather than merely evaluate.
