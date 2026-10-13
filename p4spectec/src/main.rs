@@ -21,32 +21,28 @@ use p4spectec::runner::{self, RunError};
 // - Diagnostic output
 
 /// Renders reports without changing their structured payloads.
-fn render_report_with_config(report: &Report, config: RenderConfig) {
-    let mut renderer = Renderer::new(config);
+fn render_report(renderer: &mut Renderer, report: &Report) {
     if let Err(error) = renderer.render_to_stderr(report) {
         eprintln!("{report}\ndiagnostic rendering failed: {error}");
     }
 }
 
-/// Renders a report with the default diagnostic presentation.
-fn render_report(report: &Report) {
-    render_report_with_config(report, RenderConfig::default());
-}
-
 /// Renders execution frames compactly while retaining rich causes.
 fn render_exec_report(report: &Report) {
     let config = RenderConfig { frame_style: Some(DisplayStyle::Short), ..RenderConfig::default() };
-    render_report_with_config(report, config);
+    let mut renderer = Renderer::new(config);
+    render_report(&mut renderer, report);
 }
 
 // = Specification loading
 
 /// Renders accumulated warnings before returning the command result or error.
 fn report_warnings<Value, Error>(
+    renderer: &mut Renderer,
     (result, warnings): (Result<Value, Error>, Vec<Report>),
 ) -> Result<Value, Error> {
     for report in warnings {
-        render_report(&report);
+        render_report(renderer, &report);
     }
     result
 }
@@ -63,8 +59,9 @@ struct ElabArgs {
 
 /// Elaborates the specifications and prints the internal language.
 fn elab_command(args: ElabArgs) -> Result<(), ()> {
-    let spec_il = report_warnings(p4spectec::elab_with_warnings(&args.paths))
-        .map_err(|report| render_report(&report))?;
+    let mut renderer = Renderer::new(RenderConfig::default());
+    let spec_il = report_warnings(&mut renderer, p4spectec::elab_with_warnings(&args.paths))
+        .map_err(|report| render_report(&mut renderer, &report))?;
     println!("{}", Print::to_string(&spec_il));
     Ok(())
 }
@@ -81,8 +78,9 @@ struct AlgoArgs {
 
 /// Converts the specifications and prints the algorithmic language.
 fn algo_command(args: AlgoArgs) -> Result<(), ()> {
-    let spec_al = report_warnings(p4spectec::algo_with_warnings(&args.paths))
-        .map_err(|report| render_report(&report))?;
+    let mut renderer = Renderer::new(RenderConfig::default());
+    let spec_al = report_warnings(&mut renderer, p4spectec::algo_with_warnings(&args.paths))
+        .map_err(|report| render_report(&mut renderer, &report))?;
     println!("{}", Print::to_string(&spec_al));
     Ok(())
 }
@@ -99,8 +97,10 @@ struct StructArgs {
 
 /// Structures the specifications and prints them without rule groups.
 fn struct_command(args: StructArgs) -> Result<(), ()> {
-    let spec_sl = report_warnings(p4spectec::structure_with_warnings(&args.paths, true))
-        .map_err(|report| render_report(&report))?;
+    let mut renderer = Renderer::new(RenderConfig::default());
+    let spec_sl =
+        report_warnings(&mut renderer, p4spectec::structure_with_warnings(&args.paths, true))
+            .map_err(|report| render_report(&mut renderer, &report))?;
     println!("{}", Print::to_string(&spec_sl));
     Ok(())
 }
@@ -117,8 +117,9 @@ struct ProseArgs {
 
 /// Converts the specifications and prints the prose language.
 fn prose_command(args: ProseArgs) -> Result<(), ()> {
-    let spec_pl = report_warnings(p4spectec::prosify_with_warnings(&args.paths))
-        .map_err(|report| render_report(&report))?;
+    let mut renderer = Renderer::new(RenderConfig::default());
+    let spec_pl = report_warnings(&mut renderer, p4spectec::prosify_with_warnings(&args.paths))
+        .map_err(|report| render_report(&mut renderer, &report))?;
     println!("{}", Print::to_string(&spec_pl));
     Ok(())
 }
@@ -144,22 +145,23 @@ struct SpliceArgs {
 
 /// Expands skeleton documents using the source and prose specifications.
 fn splice_command(args: SpliceArgs) -> Result<(), ()> {
+    let mut renderer = Renderer::new(RenderConfig::default());
     // Reject ambiguous destinations before checking input availability
     if args.inplace && !args.paths_output.is_empty() {
-        render_report(&error::splice_output_conflict());
+        render_report(&mut renderer, &error::splice_output_conflict());
         return Err(());
     }
     // Require at least one skeleton in either output mode
     if args.paths_input.is_empty() {
-        render_report(&error::splice_input_required());
+        render_report(&mut renderer, &error::splice_input_required());
         return Err(());
     }
     // Reject mismatched lists before zip can omit unpaired paths
     if !args.inplace && args.paths_input.len() != args.paths_output.len() {
-        render_report(&error::splice_file_count_mismatch(
-            args.paths_input.len(),
-            args.paths_output.len(),
-        ));
+        render_report(
+            &mut renderer,
+            &error::splice_file_count_mismatch(args.paths_input.len(), args.paths_output.len()),
+        );
         return Err(());
     }
     // Resolve output paths before loading specifications or touching documents
@@ -175,17 +177,14 @@ fn splice_command(args: SpliceArgs) -> Result<(), ()> {
             .collect()
     };
     // Retain source definitions alongside the annotated prose representation
-    let (spec_el, spec_pl) = report_warnings(p4spectec::specdoc_spec_with_warnings(&args.paths))
-        .map_err(|report| render_report(&report))?;
-    // Render diagnostics while the original input files are still present
-    let prepared = report_warnings(p4spectec::prepare_splice_files_with_warnings(
-        &spec_el,
-        &spec_pl,
-        &path_pairs,
-    ))
-    .map_err(|report| render_report(&report))?;
-    // Replace destinations after all preparation diagnostics have been rendered
-    prepared.commit().map_err(|report| render_report(&report))?;
+    let (spec_el, spec_pl) =
+        report_warnings(&mut renderer, p4spectec::specdoc_spec_with_warnings(&args.paths))
+            .map_err(|report| render_report(&mut renderer, &report))?;
+    // Splice files and render their accumulated diagnostics
+    let result =
+        p4spectec::splice_files_with_warnings(&mut renderer, &spec_el, &spec_pl, &path_pairs);
+    report_warnings(&mut renderer, result)
+        .map_err(|report| render_report(&mut renderer, &report))?;
     Ok(())
 }
 
@@ -248,12 +247,13 @@ struct RunArgs {
 
 /// Prepares and runs a program, rendering diagnostics at the CLI boundary.
 fn run_command(args: RunArgs) -> Result<(), ()> {
+    let mut renderer = Renderer::new(RenderConfig::default());
     // Render specification warnings before constructing the runner
-    let spec = report_warnings(p4spectec::runner_spec_with_warnings(
-        args.interpreter.spec_lang(),
-        &args.paths,
-    ))
-    .map_err(|report| render_report(&report))?;
+    let spec = report_warnings(
+        &mut renderer,
+        p4spectec::runner_spec_with_warnings(args.interpreter.spec_lang(), &args.paths),
+    )
+    .map_err(|report| render_report(&mut renderer, &report))?;
 
     // Execute with the requested interpreter controls
     let config = runner::Config::new(!args.no_cache, args.det, args.guard);
@@ -261,11 +261,11 @@ fn run_command(args: RunArgs) -> Result<(), ()> {
         |error| match error {
             RunError::Build(report) => {
                 // Render runner preparation with the default presentation
-                render_report(&report);
+                render_report(&mut renderer, &report);
             }
             RunError::Parse(error) => {
                 // Keep P4 input failures rich
-                render_report(&error.into_report());
+                render_report(&mut renderer, &error.into_report());
             }
             RunError::Eval(error) => {
                 // Compact only the execution frames
@@ -317,17 +317,18 @@ struct SimArgs {
 
 /// Prepares a simulator and runs its STF test with CLI progress output.
 fn sim_command(args: SimArgs) -> Result<(), ()> {
+    let mut renderer = Renderer::new(RenderConfig::default());
     // Render specification warnings before constructing the simulator
-    let spec = report_warnings(p4spectec::runner_spec_with_warnings(
-        args.interpreter.spec_lang(),
-        &args.paths,
-    ))
-    .map_err(|report| render_report(&report))?;
+    let spec = report_warnings(
+        &mut renderer,
+        p4spectec::runner_spec_with_warnings(args.interpreter.spec_lang(), &args.paths),
+    )
+    .map_err(|report| render_report(&mut renderer, &report))?;
 
     // Build the requested native architecture
     let config = runner::Config::new(!args.no_cache, args.det, args.guard);
     let mut simulator = p4spectec::build_simulator(spec, &args.arch, config, args.plugin_encoding)
-        .map_err(|report| render_report(&report))?;
+        .map_err(|report| render_report(&mut renderer, &report))?;
 
     // Print matched packets as execution proceeds
     simulator
