@@ -3,6 +3,7 @@
 //! Source syntax only borrows the arena. Runtime-value decoding allocates in
 //! that same arena and copies child handles before recursive allocation.
 
+mod exp;
 mod typ;
 mod value;
 
@@ -23,6 +24,8 @@ use crate::{
     phrase,
 };
 use std::rc::Rc;
+
+pub use exp::{exp, exps};
 
 pub use typ::{deftyp, typ, typs};
 pub use value::{value, values};
@@ -136,4 +139,15 @@ pub fn var(arena: &Arena, value_meta: Value) -> Result<ast::Var, Error> {
         }),
         _ => Err(Error::unexpected(arena, value_meta, "id typ iter*")),
     }
+}
+
+/// Maps a checked optional meta value.
+pub(super) fn opt<T>(
+    arena: &Arena,
+    value_meta: Value,
+    decode: impl FnOnce(&Arena, Value) -> Result<T, Error>,
+) -> Result<Option<T>, Error> {
+    get::opt(arena, &value_meta)?
+        .map(|value| decode(arena, value))
+        .transpose()
 }
