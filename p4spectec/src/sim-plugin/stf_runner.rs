@@ -22,7 +22,7 @@ use crate::lang::{
     traits::print::Print,
 };
 
-use crate::runner::{ExternError, Interface, Interpreter, Runner, RunnerContext};
+use crate::runner::{Backend, ExternError, Interface, Interpreter, Runner, RunnerContext};
 
 use crate::interface::p4::{error::P4Error, parse};
 
@@ -159,9 +159,42 @@ where
     runner.reset();
     arena.reset_values();
     let program = parse::parse_file(arena, includes, path).map_err(P4Error::into_report)?;
-    let state =
-        crate::runner::with_context!(runner, arena, |ctx| Arch::init_pipe(&mut ctx, program))
-            .map_err(ExternError::into_report)?;
+    let state = match &mut runner.backend {
+        Backend::Al { spec_env, interp } => {
+            let mut ctx = RunnerContext::new(
+                arena,
+                spec_env,
+                interp,
+                &mut runner.interface,
+                &mut runner.external,
+                &mut runner.effects,
+            );
+            Arch::init_pipe(&mut ctx, program)
+        }
+        Backend::Sl { spec_env, interp } => {
+            let mut ctx = RunnerContext::new(
+                arena,
+                spec_env,
+                interp,
+                &mut runner.interface,
+                &mut runner.external,
+                &mut runner.effects,
+            );
+            Arch::init_pipe(&mut ctx, program)
+        }
+        Backend::Pl { spec_env, interp } => {
+            let mut ctx = RunnerContext::new(
+                arena,
+                spec_env,
+                interp,
+                &mut runner.interface,
+                &mut runner.external,
+                &mut runner.effects,
+            );
+            Arch::init_pipe(&mut ctx, program)
+        }
+    }
+    .map_err(ExternError::into_report)?;
     Ok(Run::new(state))
 }
 
@@ -181,54 +214,41 @@ where
     // Fresh output list; the architecture may rewrite the statement first
     run.state.txs.clear();
     let stmt_kind = Arch::transform_stf_stmt(stmt.node.clone());
-    let result = crate::runner::with_context!(runner, arena, |ctx| match stmt_kind {
-        // Packets drive the pipeline
-        Statement::Packet { port, packet } => {
-            run_stf_packet_stmt(&mut ctx, &stmt.span, run, port, packet)
+    let result = match &mut runner.backend {
+        Backend::Al { spec_env, interp } => {
+            let mut ctx = RunnerContext::new(
+                arena,
+                spec_env,
+                interp,
+                &mut runner.interface,
+                &mut runner.external,
+                &mut runner.effects,
+            );
+            run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
         }
-        // Expectations match outputs
-        Statement::Expect { port, packet_expected, exact } => {
-            run_stf_expect_stmt(run, port, packet_expected, exact)
+        Backend::Sl { spec_env, interp } => {
+            let mut ctx = RunnerContext::new(
+                arena,
+                spec_env,
+                interp,
+                &mut runner.interface,
+                &mut runner.external,
+                &mut runner.effects,
+            );
+            run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
         }
-        // Table control plane
-        Statement::Add { table, priority, matches, action, .. } => {
-            run_stf_add_stmt(&mut ctx, &stmt.span, &mut run.state, table, priority, matches, action)
+        Backend::Pl { spec_env, interp } => {
+            let mut ctx = RunnerContext::new(
+                arena,
+                spec_env,
+                interp,
+                &mut runner.interface,
+                &mut runner.external,
+                &mut runner.effects,
+            );
+            run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
         }
-        Statement::SetDefault { table, action } => {
-            run_stf_set_default_stmt(&mut ctx, &stmt.span, &mut run.state, table, action)
-        }
-        // Mirror sessions
-        Statement::MirroringAdd { session, port } => {
-            run_stf_mirroring_add_stmt(&mut ctx, &stmt.span, &mut run.state, session, port)
-        }
-        Statement::MirroringAddMc { session, group_id } => {
-            run_stf_mirroring_add_mc_stmt(&mut ctx, &stmt.span, &mut run.state, session, group_id)
-        }
-        // Multicast groups and nodes
-        Statement::McGroupCreate { group_id } => {
-            run_stf_mc_group_create_stmt(&mut ctx, &stmt.span, &mut run.state, group_id)
-        }
-        Statement::McNodeCreate { replication_id, ports } => {
-            run_stf_mc_node_create_stmt(&mut ctx, &stmt.span, &mut run.state, replication_id, ports)
-        }
-        Statement::McNodeAssociate { group_id, handle } => {
-            run_stf_mc_node_associate_stmt(&mut ctx, &stmt.span, &mut run.state, group_id, handle)
-        }
-        // Registers
-        Statement::RegisterRead { name, index } => {
-            run_stf_register_read_stmt(&mut ctx, &stmt.span, &mut run.state, name, index)
-        }
-        Statement::RegisterWrite { name, index, value } => {
-            run_stf_register_write_stmt(&mut ctx, &stmt.span, &mut run.state, name, index, value)
-        }
-        Statement::RegisterReset { name } => {
-            run_stf_register_reset_stmt(&mut ctx, &stmt.span, &mut run.state, name)
-        }
-        // Statements with no effect here
-        Statement::MirroringGet { .. } | Statement::Wait => Ok(None),
-        // Anything else is unsupported
-        stmt => Err(error::statement_unsupported(Print::to_string(&stmt))),
-    });
+    };
     // Attach the statement's span to failures that have none
     let tx = result.map_err(|report| {
         if stmt.span == Span::default() {
@@ -242,6 +262,66 @@ where
         run.matches.push(tx.clone());
     }
     Ok(tx)
+}
+
+/// Executes a transformed statement through a stage-specific context.
+fn run_stf_stmt_kind<Interp, Iface, Arch>(
+    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    span: &Span,
+    run: &mut Run,
+    stmt_kind: Statement,
+) -> Result<Option<Tx>, SimError>
+where
+    Iface: Interface,
+    Arch: Architecture,
+    Interp: Interpreter<Iface, Arch>,
+{
+    match stmt_kind {
+        // Packets drive the pipeline
+        Statement::Packet { port, packet } => run_stf_packet_stmt(ctx, span, run, port, packet),
+        // Expectations match outputs
+        Statement::Expect { port, packet_expected, exact } => {
+            run_stf_expect_stmt(run, port, packet_expected, exact)
+        }
+        // Table control plane
+        Statement::Add { table, priority, matches, action, .. } => {
+            run_stf_add_stmt(ctx, span, &mut run.state, table, priority, matches, action)
+        }
+        Statement::SetDefault { table, action } => {
+            run_stf_set_default_stmt(ctx, span, &mut run.state, table, action)
+        }
+        // Mirror sessions
+        Statement::MirroringAdd { session, port } => {
+            run_stf_mirroring_add_stmt(ctx, span, &mut run.state, session, port)
+        }
+        Statement::MirroringAddMc { session, group_id } => {
+            run_stf_mirroring_add_mc_stmt(ctx, span, &mut run.state, session, group_id)
+        }
+        // Multicast groups and nodes
+        Statement::McGroupCreate { group_id } => {
+            run_stf_mc_group_create_stmt(ctx, span, &mut run.state, group_id)
+        }
+        Statement::McNodeCreate { replication_id, ports } => {
+            run_stf_mc_node_create_stmt(ctx, span, &mut run.state, replication_id, ports)
+        }
+        Statement::McNodeAssociate { group_id, handle } => {
+            run_stf_mc_node_associate_stmt(ctx, span, &mut run.state, group_id, handle)
+        }
+        // Registers
+        Statement::RegisterRead { name, index } => {
+            run_stf_register_read_stmt(ctx, span, &mut run.state, name, index)
+        }
+        Statement::RegisterWrite { name, index, value } => {
+            run_stf_register_write_stmt(ctx, span, &mut run.state, name, index, value)
+        }
+        Statement::RegisterReset { name } => {
+            run_stf_register_reset_stmt(ctx, span, &mut run.state, name)
+        }
+        // Statements with no effect here
+        Statement::MirroringGet { .. } | Statement::Wait => Ok(None),
+        // Anything else is unsupported
+        stmt => Err(error::statement_unsupported(Print::to_string(&stmt))),
+    }
 }
 
 // - Packet I/O
