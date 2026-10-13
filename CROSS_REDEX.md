@@ -1,6 +1,6 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: done. Steps 1 to 14 are done.
+Status: done. Steps 1 to 15 are done.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language, as a small-step reduction semantics. It transcribes the AL
@@ -57,13 +57,15 @@ The split between watsup's `relation` and `dec`/`def` stays visible:
 | watsup | Redex |
 | --- | --- |
 | `relation R` and its `rule R/...` | reduction rules on R's machine form (see [Machine terms](#machine-terms)) |
-| `dec $f` and its `def $f` | `define-metafunction`, through `define-dec` |
+| `dec $f` and its `def $f` | `define-metafunction`; a `define-judgment-form` with an output mode if some input has no clause (see [Determinism and disjoint clauses](#determinism-and-disjoint-clauses)) |
 | `builtin dec $f` | a metafunction whose body escapes to Racket (list and map builtins) |
 | `extern relation R` | one reduction rule whose contractum a Racket procedure computes by calling the host |
 
 Every relation becomes reduction rules. That includes the pure ones
 (`Assign_exp(s)`, `Assign_arg(s)`, `Eval_targs`), which run as machine steps
-that update the local layer, as in K. The port has no judgment forms.
+that update the local layer, as in K. Judgment forms appear only for the
+partial `def`s, which are pure and evaluate within one step, as metafunctions
+do.
 
 Languages, metafunctions, machine forms, and reduction relations are named in
 Racket's kebab-case: a watsup name is lowercased, and every `_` becomes `-`.
@@ -95,7 +97,10 @@ applies. Complement rules end in `fail`:
   `"eval-exp/binary/fail-left"`;
 - `".../fail"` where the last subterm evaluated fits no rule;
 - `".../<rule>/fail"` where a rule's own premise fails, as in
-  `"eval-exp/binary/number/fail"`, on a `⊥`.
+  `"eval-exp/binary/number/fail"`, where `binop-number` has no derivation.
+
+The complements of a sequence assignment are named after what is left over:
+`"assign-exps/fail-exp"` and `"assign-exps/fail-val"`.
 
 ### Configurations
 
@@ -162,7 +167,7 @@ argument: this is the caller's layer, written `C_caller` in watsup.
 | `Eval_rul(s)`, `Eval_rulgroup(s)` | `(eval-rul rulmatch rulpath (val ...))`, `(eval-ruls ...)`, `(eval-rulgroup ...)`, `(eval-rulgroups ...)` | the relation's layer |
 | `Call_defined_rel`, `Call_rel_dispatch`, `Call_rel` | `(call-defined-rel ...)`, `(call-rel-dispatch ...)`, `(call-rel id (val ...))` | the caller's layer |
 | the three extern relations | `(call-extern-func ...)`, `(call-builtin-func ...)`, `(call-extern-rel ...)` | none |
-| `Entry` | the driver in `al/6-entry.rkt` | |
+| `Entry` | `entry` in `al/7-entry.rkt`, through the driver | |
 
 A rule whose premises evaluate sub-relations one after another has an
 intermediate form that holds them. The form is named after the rule that
@@ -188,6 +193,9 @@ evaluated only when the left one fits a rule, as in watsup.
 (F ::= hole (in-hole Fr F))        ; frames within one local context
 (E ::= F (in-hole F (IN L E)))     ; frames across local contexts
 (done ::= res (IN L OK))           ; a finished subterm
+(e ::= res (IN L e) exp arg prem   ; a machine term: a form that rules start
+       (assign-exp exp val) ...    ;   from, or a frame around a machine term
+       (in-hole Fr e))
 ```
 
 `Fr` lists every evaluation position of every machine form, and the pending
@@ -196,7 +204,9 @@ positions keep their precise nonterminals: `(BIN binop hole exp)`,
 looks at a `FAIL` (see [FAIL and backtracking](#fail-and-backtracking)).
 Nonterminals defined with `in-hole` work *(measured)*. Every redex has the
 form `(G (in-hole E (IN L (in-hole F r))))`, so `L` is the layer of the
-innermost `IN` around `r`.
+innermost `IN` around `r`. `e` lists the forms that rules start from, and the
+iterations over nothing, which have no evaluation position. Every intermediate
+form that a rule builds is a frame around an `e`, since a result is an `e`.
 
 ### The notion of reduction and its closure
 
@@ -213,8 +223,7 @@ The rules are written on the redex, not on the whole configuration:
 (--> (UN NOT (OK (BOOL b))) (OK (BOOL b_res))
      (where b_res ,(not (term b)))
      "eval-exp/unary/boolean")
-(--> (UN numunop (OK num)) (OK val_res)
-     (where val_res (unop-number numunop num))
+(--> (UN numunop (OK num)) (OK (unop-number numunop num))
      "eval-exp/unary/number")
 (--> (UN unop (OK val)) FAIL
      ;; otherwise
@@ -231,31 +240,37 @@ The rules are written on the redex, not on the whole configuration:
      "eval-exp/variable/fail")
 
 ;; rule Assign_exp/variable, in ->ctx
-(--> ((assign-exp (VAR id) val) G L) (OK G L_1)
-     (where L_1 (add-varr L (id ()) val))
+(--> ((assign-exp (VAR id) val) G L) (OK G (add-varr L (id ()) val))
      "assign-exp/variable")
 ```
 
-Each fragment module defines its part of the two relations, and
-`al/5-eval.rkt` combines them with `union-reduction-relations`. It also
-defines `->al`, the relation on whole configurations, as the closure of the
-two through the contexts:
+Each fragment module defines its part of the two relations with
+`reduction-relation`, and `al/5-eval.rkt` combines them with
+`union-reduction-relations`. It also defines `->al`, the relation on whole
+configurations, as the closure of the two through the contexts:
 
 ```racket
 (define ->al
-  (reduction-relation al
-   (--> (G (in-hole E (IN L (in-hole F e_r))))
-        (G_1 (in-hole E (IN L_1 (in-hole F e_1))))
-        (where (e_1 G_1 L_1) ,(focus-step (term (e_r G L))))
-        "closure")))
+  (union-reduction-relations
+   (context-closure ->redex al (G (in-hole E (IN L F))))
+   (reduction-relation
+    al
+    (--> (G (in-hole E (IN L (in-hole F e_r))))
+         (G (in-hole E (IN L_1 (in-hole F e_1))))
+         (where (_ ... (any_name (e_1 G L_1)) _ ...)
+                ,(apply-reduction-relation/tag-with-names ->ctx (term (e_r G L))))
+         (computed-name (term any_name))))))
 ```
 
-`focus-step` tries the rules of `->redex` and then those of `->ctx`, in the
-order of the source, and returns the `(r' G' L')` of the first rule that
-applies to the triple, with `G' = G` and `L' = L` for `->redex`. Nothing
-checks that a step keeps `G`: the rules carry it through unchanged. `->al` is the specification that tests and
-figures refer to, and the relation `traces` can show. Programs are run by a
-driver that computes the same relation faster:
+`context-closure` matches the context and the redex apart, so the context's
+`L` does not constrain the rules' own variables, and it keeps the rules'
+names. The rule for `->ctx` gives every successor of the focus triple, under
+the name of the rule that gives it, through `computed-name`. Its repeated `G`
+states that no step changes `G`. So `->al` gives every successor of a
+configuration, with the names of the rules applied. `->al` is the
+specification that tests and figures refer to, and the relation `traces` can
+show. Programs are run by a driver, in `al/6-driver.rkt`, that computes the
+same relation faster:
 
 1. It holds the configuration as a cursor: a subterm in focus, the layer of
    its innermost `IN`, and the nodes on the path from it to the root. A run
@@ -264,19 +279,20 @@ driver that computes the same relation faster:
    rebuilds each one. From the first node that is not `done`, it descends: at
    each node it matches `Fr` one level deep, and moves into the one evaluation
    position whose subterm is not `done`.
-3. The node where no such position exists is the redex. The driver tries
-   the rules of `->redex` and `->ctx` for the redex's head symbol, as
-   `focus-step` does, applies the first one that applies, and puts `r'` in
-   focus under `G'` and `L'`.
+3. The node where no such position exists is the redex. The driver applies
+   `->redex` to it and `->ctx` to its focus triple, and puts `r'` in focus
+   under `L'`, keeping `G`.
 
 A node's other subterms do not change while its pending subterm is evaluated,
 so its pending position stays the same until that subterm is `done`. So a step
 matches `Fr` only at the nodes it enters, not along the whole path from the
 root. The driver fails loudly if two evaluation positions are pending at a
-node it enters, or if a configuration that is not final has no step. It loops with `apply-reduction-relation`, and never
-uses `apply-reduction-relation*` (see below). The rules, the grammar, and
-`->al` are the specification; the driver adds no semantics. Tests check that
-its step equals `->al`'s on every step of small runs (see
+node it enters, if no rule applies to a redex of a configuration that is not
+final, or if more than one does. It loops with
+`apply-reduction-relation/tag-with-names`, and never uses
+`apply-reduction-relation*` (see below). The rules, the grammar, and `->al` are
+the specification; the driver adds no semantics. In cross-check mode, it
+checks that its step equals `->al`'s on every step (see
 [Verification](#verification)).
 
 The tutorial's style, with the contexts in every rule's left-hand side, costs
@@ -339,13 +355,16 @@ slice out of bounds) raises out of the driver, as it does in OCaml.
 ### Determinism and disjoint clauses
 
 - **Reduction rules.** At most one rule of `->redex` and `->ctx` applies to any
-  redex, so the order of the rules never matters. The driver does not check
-  this: it stops at the first rule that applies. Each `otherwise` becomes complement rules, as in the example above.
-- **Metafunctions.** Their clauses are disjoint: for any input, at most one
-  clause applies, whatever order the clauses are in. Each clause is told apart
-  from the others by its input patterns and side-conditions. Redex does not
-  check this: a metafunction silently takes the first clause that applies.
-  `-- otherwise` becomes the negation of the earlier clauses' conditions:
+  redex, so the order of the rules never matters. The driver checks this: it
+  applies whole relations, and fails when more than one rule applies. Each
+  `otherwise` becomes complement rules, as in the example above.
+- **Metafunctions and judgment forms.** Their clauses are disjoint: for any
+  input, at most one clause applies, whatever order the clauses are in. Each
+  clause is told apart from the others by its input patterns and
+  side-conditions. Redex does not check this for metafunctions: a metafunction
+  silently takes the first clause that applies. A judgment form gives every
+  derivation, so an overlap there would be a second result. `-- otherwise`
+  becomes the negation of the earlier clauses' conditions:
 
   ```racket
   ;; def $is_tup(TUP val*) = true
@@ -359,7 +378,7 @@ slice out of bounds) raises out of the driver, as it does in OCaml.
   whose premises failed. For example, `$upcast(C, TUP typ*, TUP val*)` fails
   when some component upcast fails, and watsup's `otherwise` then returns
   `OK val`. Compute such results once, and branch on them in a helper
-  metafunction named after the clause (`upcast/tup`).
+  metafunction (`cast-components`).
 - **Iteration over two sequences.** A watsup iteration over two sequences,
   such as `$subtyp(tdenv, typ, val)*` over `typ*` and `val*`, only applies when
   the lengths are equal. A Redex template over lists of different lengths
@@ -370,26 +389,30 @@ slice out of bounds) raises out of the driver, as it does in OCaml.
 - **Partial `def`s.** Some `def`s have no clause for some inputs;
   `$find_vari` has none for an unbound variable. In P4-SpecTec, such a call is
   a failing premise, not an error. A Redex metafunction raises an error when no
-  clause applies, so `define-dec` appends one last clause, `[(f any ...) ⊥]`,
-  and adds `⊥` to the range. `⊥` is not a term of any AL nonterminal, so a
-  premise `(where p (f ...))` fails on it, unless `p` is `any` or `_`. Bind
-  every metafunction call with `where` before using its result, against a
-  pattern narrower than `any`. Where a complement rule dispatches on a call's
-  result, it matches `⊥` literally: `(where ⊥ (binop-number numbinop num_l num_r))`.
+  clause applies, so these become judgment forms with an output mode, which
+  can have no derivation: `$theta_of_tdenv`, `$subst_typ` and `$subst_typ'`,
+  `$binop_number`, `$cmpop_number`, `$find_vari`, `$sub_opt`, and `$sub_list`.
+  A rule or clause binds a result with `(judgment-holds (f x ... p))`, and its
+  complement tests `(side-condition (not (judgment-holds (f x ... any))))`.
+  `judgment-holds` takes no ellipsis outside a judgment form, so `subst-typs`
+  is a list form of `subst-typ`, which is not a watsup `def`, and the rules
+  that iterate `$find_vari` call `find-varis`. Every other `def` is a
+  `define-metafunction`, and an input that no clause covers raises an error.
+  That is a transcription gap to fix, not a failure.
 
 ### Caching
 
-Caching is on (`caching-enabled?` is `#t`, set in `common/0.0-prelude.rkt`).
-It is safe because every impure operation happens in a reduction rule, and
+Caching is on: `caching-enabled?` is `#t`, Redex's default, and nothing sets
+it. It is safe because every impure operation happens in a reduction rule, and
 Redex caches metafunctions, judgment forms, and nonterminal matches, but not
 reduction relations:
 
-- Every `dec`/`def` is pure. No `def` has a relation premise, and the only
-  builtins that are metafunctions are the list and map ones.
+- Every `dec`/`def` is pure, whether a metafunction or a judgment form. No
+  `def` has a relation premise, and the only builtins that are metafunctions
+  are the list and map ones.
 - The impure operations are the three extern relations, which reach host state
   (the counter behind `$fresh_typeId`, and extern state), and `debug`. Each is
   one reduction rule, whose `where` clause calls a Racket procedure.
-- The port has no judgment forms.
 
 In a probe with caching on, a counter bumped in a reduction rule advanced on
 every application, and the same counter in a metafunction returned the same
@@ -416,13 +439,8 @@ performance, not for correctness:
   a deep `equal?` when the cache holds an equal but not `eq?` copy of its
   arguments. Loading a copy of `spec/` with caching off, after loading another
   copy with caching on, took 243 s instead of 4.7 s *(measured)*. The
-  nonterminal memo checks the flag first.
-
-`$load` is the one place that runs with caching off: its one clause runs
-`load/shallow` under `(parameterize ([caching-enabled? #f]) ...)`. None of
-`load/shallow`'s calls repeat, so on `spec/` the cache only added 4 to 5 s of
-hashing and comparisons. Nothing else runs `load/shallow` on a large script with
-caching on, so its cache never holds a copy that a lookup would compare deeply.
+  nonterminal memo checks the flag first. Nothing in the port turns caching
+  off.
 
 `set-cache-size!` and the argument order of metafunctions are Step 13's knobs.
 
@@ -446,19 +464,16 @@ finds `G` in the matcher's memo. A `with` shortcut matches its outer pattern
 first, which is why the rules on the redex alone form a relation of their own
 instead of being lifted into triples.
 
-There are two exceptions to precise patterns:
+`$load` is precise too, but not transcribed as watsup's recursion. With
+precise patterns, every recursive call rechecks the context and the rest of
+the script, so the recursion is quadratic: on `spec/`, it took 27 minutes with
+caching off, and 274 s with it on (Step 4). Instead, `load-defn` maps each
+definition to the entries it adds, one clause per `$load` clause, and `$load`
+adds them with one `$adds_map` per map. `$adds_map` adds its keys in order, as
+the recursion does, so the result is the same. The script, each definition,
+and the result are each checked once, and `spec/` loads in 1.0 s.
 
-- **`$load` recurses as `load/shallow`,** over a `ctx-shallow` that checks the
-  record's shape but not its maps, with the script matched as `any`. With
-  precise patterns, every recursive call rechecks the context and the rest of
-  the script, so `$load` is quadratic. On `spec/`, that took 27 minutes with
-  caching off, and 274 s with it on. `load/shallow` takes `defn_h :: defn_t*`
-  apart with a Racket escape, `uncons`, because matching `defn_t*` with an
-  ellipsis costs quadratic time (see Step 4). It runs with caching off (see
-  [Caching](#caching)). It loads `spec/` in 2.3 s, or 1.7 s with contracts off.
-  `$load` itself keeps watsup's signature, and checks its input and result
-  against `ctx` once.
-- **No `#:domain` on the relations.**
+The relations have no `#:domain`.
 
 ### Term encoding
 
@@ -495,8 +510,7 @@ and watsup's `?`-iteration becomes Redex's `...`, the same as `*`-iteration:
 ;; def $upcast(C, ITER typ QUEST, OPT val?) = OK (OPT val_upcast?)
 ;;   -- if (OK val_upcast = $upcast(C, typ, val))?
 [(upcast G L (ITER typ QUEST) (OPT (val ...)))
- (upcast/opt (OPT (val ...)) (valres ...))
- (where (valres ...) ((upcast G L typ val) ...))]
+ (cast-components (OPT (val ...)) ((upcast G L typ val) ...))]
 ```
 
 Meta-level maps (`venv`, `tdenv`, `fenv`, `renv`, `theta`) are association
@@ -510,7 +524,8 @@ and over `L` alone if it reads only `C.LOCAL`. A result of type `ctx` becomes
 the new `L`. `$find_varr(C, varr)` becomes `(find-varr L varr)`,
 `$find_func(C, id)` becomes `(find-func G L id)`, and `$sub_list(C, vari*)`
 returns a list of layers. `$load` and `$empty_ctx` keep `ctx`, because
-loading writes `GLOBAL`. A record update `C[ .LOCAL.VAL = x ]` is a pattern
+loading writes `GLOBAL`. `$load` goes through `load-defn` (see
+[Patterns and their cost](#patterns-and-their-cost)). A record update `C[ .LOCAL.VAL = x ]` is a pattern
 that rebuilds the layer, `{TYP tdenv REL renv FUNC fenv VAL venv}`.
 
 ### Premises
@@ -519,7 +534,8 @@ that rebuilds the layer, `{TYP tdenv REL renv FUNC fenv VAL venv}`.
 | --- | --- |
 | `-- R: C \|- e : OK v`, R a relation | R's form in an evaluation position of an intermediate form; a rule on `(OK v)` continues, a complement rule turns other results into `FAIL`, and `"frame/fail"` passes `FAIL` up |
 | `-- (R: C \|- e : OK v)*` | the evaluation positions of a list, left to right, stopping at the first `FAIL` |
-| `-- if p = e` (binding) | `(where p e)` |
+| `-- if p = e` (binding) | `(where p e)`; inlined where `p` is a variable that only names a result (see below) |
+| `-- if p = $f(...)`, `$f` partial | `(judgment-holds (f ... p))` |
 | `-- (if p = e)*` | `(where (p ...) (e ...))`; constrain the lengths when `e` iterates over several sequences |
 | `-- if e` (boolean) | `(where #t e)` |
 | `-- if ~e` (boolean) | `(where #f e)` |
@@ -532,6 +548,16 @@ A `where` pattern that reuses a variable bound earlier in the rule is an
 equality constraint, not a new binding, just as a repeated variable within one
 pattern is. A binding premise therefore needs a fresh name, unless watsup
 repeats the metavariable on purpose.
+
+A `where` that binds a variable to a total metafunction call or a
+concatenation, where the variable is used only in the result, goes into the
+result: `(OK G (add-varr L (id ()) val))`. A `where` stays where it
+destructures, binds a variable that is used more than once or by a later
+premise (`theta`), or tests something. A Racket escape stays in a `where`,
+whose pattern checks the escape's result. Where a premise only takes an input
+apart, the left-hand side has the shape instead, if the shape is exactly the
+nonterminal's: `(eval-clause L_caller ((arg ...) exp_out (prem ...)) (val ...))`.
+A layer is destructured with `(name L {TYP tdenv REL renv FUNC fenv VAL venv})`.
 
 The machine evaluates the elements of an iterated premise one at a time and
 stops at the first `FAIL`. The elaborated AL evaluates every element before it
@@ -555,7 +581,6 @@ codec and transport live in `common/`: the host procedures in
 ```text
 spec-meta-redex/
   common/
-    0.0-prelude.rkt       Redex re-exports; caching on; define-dec; reduction-relation/forms
     0.1-stdlib.rkt        language stdlib; $ite, $opt_as_seq_, $exists_, ...; builtins; text and list helpers; debug
     0.2-extern-json.rkt   codec for the extern JSON wire
     0.3-extern-ffi.rkt    transport to the OCaml host, over ffi2
@@ -569,7 +594,7 @@ spec-meta-redex/
     0-boot.rkt            boot-script, boot-p4: run spectec-boot sexp(-p4), read
     1-syntax.rkt          language al-syntax
     2-env.rkt             languages al-base (the union) and al-env (reldef, funcdef)
-    3-context.rkt         language al-context (layer, G, L, ctx, ctx-shallow); $load, $add_*, $find_*, $sub_*
+    3-context.rkt         language al-context (layer, G, L, ctx); $load, $add_*, $find_*, $sub_*
     4-relation.rkt        language al: conf, results, machine terms, done, Fr, F, E
     5.1-eval-typ.rkt      $upcast, $downcast, $subtyp
     5.2-eval-assign.rkt   rules of Assign_exp(s), Assign_arg(s)
@@ -578,29 +603,19 @@ spec-meta-redex/
     5.5-eval-prem.rkt     rules of Eval_prem, Eval_prems
     5.6-eval-call-func.rkt  rules of Eval_clause(s), Eval_tblrow(s), Call_*_func, Call_func
     5.7-eval-call-rel.rkt   rules of Eval_rul(s), Eval_rulgroup(s), Call_*_rel, Call_rel
-    5-eval.rkt            the IN and FAIL rules; ->redex, ->ctx, ->al; the driver
-    6-entry.rkt           Entry: load, then run $main() or a relation; the command-line driver
+    5-eval.rkt            the IN and FAIL rules; ->redex, ->ctx, ->al
+    6-driver.rkt          the driver: run, run/trace, the cross-check
+    7-entry.rkt           Entry: load, then run $main() or a relation; the command line
   test/                   unnumbered
     p4-typecheck.rkt      make redex-test: type-checks the P4 samples; raco test skips it
   ffi/
     shim.c                C shim between 0.3-extern-ffi.rkt and p4spec/bin/ffi.ml
 ```
 
-`common/0.0-prelude.rkt` defines `define-dec`, which wraps
-`define-metafunction`. It appends the `⊥` clause, and builds the contract from
-the watsup declaration. `SPECTEC_REDEX_CONTRACTS=0`, read when a module is
-compiled, drops the contracts.
-
-The fragments build their relations with `reduction-relation/forms`, in place
-of `reduction-relation`. It keeps each rule as a relation of its own, with the
-head symbol of its left-hand side, which for a focus triple is the head of the
-redex. The relation is the union of the rules, in the order of the source.
-`union-reduction-relations/forms` keeps the rules in order, and
-`(apply-first rel t)` tries the rules of `rel` for `t`'s head one by one and
-returns the first result. A rule whose left-hand side has no literal head symbol, such as
-`(in-hole Fr-pass FAIL)` or `num`, belongs to every head. Every term that a
-rule's left-hand side matches has that rule's head, so the first rule for a
-head that applies is the first rule of the whole relation that applies.
+Every module requires `redex/reduction-semantics` itself, and uses Redex's
+own forms: `define-metafunction`, `define-judgment-form`, `reduction-relation`,
+`union-reduction-relations`, and `context-closure`. There are no macros over
+them.
 
 Each file in `common/` from `0.1-stdlib` to `4-relation` extends the previous
 file's language with its own syntax: `stdlib` (the `var`s, sets and maps),
@@ -768,10 +783,10 @@ and decide with the user before deviating. Record each deviation here.
 - **Oracles.** There are two: the K port (`./spec-meta-k/scripts/k-run.sh
   FILE`, which prints the result as JSON), and the OCaml meta-circular run
   (`./spectec-boot run spec-meta/al -rel Entry -tec FILE -ali`, which prints
-  the value through `Entry`'s `debug`). `al/6-entry.rkt`, run as a program,
+  the value through `Entry`'s `debug`). `al/7-entry.rkt`, run as a program,
   prints results in `k-run.sh`'s JSON format, so the outputs can be compared
   as text. `k-run.sh` prints the debug messages on stdout before the result,
-  and `al/6-entry.rkt` prints them on stderr, so its stdout is the last line
+  and `al/7-entry.rkt` prints them on stderr, so its stdout is the last line
   of `k-run.sh`'s. Where K differs from watsup, compare with the meta-circular
   run.
 - **Unit tests.** `test-equal` and `test-match` go under `spec-meta-redex/test/`
@@ -782,13 +797,13 @@ and decide with the user before deviating. Record each deviation here.
   watsup must not evaluate a premise. Such a case puts
   `(BIN DIV (NAT 1) (NAT 0))`, which raises, where a premise must not be
   evaluated.
-- **Determinism.** The driver fails on a node with two pending positions. It
-  stops at the first rule that applies, so it does not detect two rules that
-  overlap, and neither does the cross-check, whose `->al` does the same.
+- **Determinism.** The driver fails on a node with two pending positions, and
+  on a redex to which more than one rule applies.
 - **The driver against `->al`.** In cross-check mode, the driver also applies
   `->al` to each configuration, and fails unless `->al` gives exactly its
-  successor. The check applies the rules a second time, so it runs only on
-  scripts without externs, builtins, or `debug` output that matters.
+  successor, under the same rule name. The check applies the rules a second
+  time, so it runs only on scripts without externs, builtins, or `debug`
+  output that matters.
 - **Coverage.** A test file ends by checking that every rule of the relations
   it exercises was applied. The helpers
   in `test/machine.rkt` count the rules that the driver applies, by name, as
@@ -797,13 +812,11 @@ and decide with the user before deviating. Record each deviation here.
   left-hand side and first `where` match, even when a later premise fails (see
   Step 7), and `->al` applies the rules at every candidate position.
 - **Disjoint metafunctions.** The tests cover both sides of every complement.
-- **Caching.** A test asserts that `caching-enabled?` is `#t` once
-  `common/0.0-prelude.rkt` is loaded. The `$fresh_typeId` test in Step 12
-  catches an impure call that reached a cached metafunction.
-- **Contracts.** Every metafunction gets a contract built from its watsup
-  declaration, which catches transcription slips early. With caching on, a
-  contract check on `G` or `L` costs a memo lookup. The switch turns contracts
-  off for P4 runs.
+- **Caching.** The `$fresh_typeId` test in Step 12 catches an impure call
+  that reached a cached metafunction.
+- **Contracts.** Every metafunction and judgment form has a contract from its
+  watsup declaration, which catches transcription slips early. With caching
+  on, a contract check on `G` or `L` costs a memo lookup.
 - **Grammar.** In debug mode, the driver checks every configuration against
   `conf`. That costs a full match per step, so the tests use it only on small
   runs.
@@ -835,7 +848,7 @@ racket -e '(require racket/pretty (file "spec-meta-redex/al/0-boot.rkt"))
 ### Building
 
 ```sh
-make redex    # spectec-boot, ffi.so, shim.so, and raco make on al/6-entry.rkt
+make redex    # spectec-boot, ffi.so, shim.so, and raco make on al/7-entry.rkt
 ```
 
 `spectec-boot` boots scripts and P4 programs, and `ffi.so` and `shim.so` are
@@ -848,9 +861,9 @@ is loaded without a check of its dependencies, so run `make redex`, or
 ### Running a script
 
 ```sh
-raco make spec-meta-redex/al/6-entry.rkt
-racket spec-meta-redex/al/6-entry.rkt examples/add.watsup   # ["intN","119"]; debug messages on stderr
-racket spec-meta-redex/al/6-entry.rkt --p4 p4c/testdata/p4_16_samples/action-bind.p4 -i p4c/p4include spec   # passed, in about 15 s
+raco make spec-meta-redex/al/7-entry.rkt
+racket spec-meta-redex/al/7-entry.rkt examples/add.watsup   # ["intN","119"]; debug messages on stderr
+racket spec-meta-redex/al/7-entry.rkt --p4 p4c/testdata/p4_16_samples/action-bind.p4 -i p4c/p4include spec   # passed, in about 18 s
 ```
 
 `--p4` takes `-i DIR` for each P4 include directory, and needs at least one.
@@ -884,10 +897,11 @@ The programs without the expected result are listed at the end, under
 ### Exploring in a REPL
 
 ```sh
-racket -i -e '(require (file "spec-meta-redex/common/0.0-prelude.rkt")
+racket -i -e '(require redex/reduction-semantics
                        (file "spec-meta-redex/al/0-boot.rkt")
                        (file "spec-meta-redex/al/3-context.rkt")
-                       (file "spec-meta-redex/al/5-eval.rkt"))'
+                       (file "spec-meta-redex/al/5-eval.rkt")
+                       (file "spec-meta-redex/al/6-driver.rkt"))'
 ```
 
 Then, for example:
@@ -896,6 +910,7 @@ Then, for example:
 (term (load (empty-ctx) ,(boot-script "examples/add.watsup")))   ; a loaded context
 (redex-match? al-context layer (term (empty-layer)))             ; grammar membership
 (apply-reduction-relation/tag-with-names ->redex (term (UN NOT (OK (BOOL #t)))))
+(judgment-holds (find-vari {TYP () REL () FUNC () VAL ((("x" ()) (NAT 1)))} ("x" NAT ()) val) val)  ; a partial def
 (current-traced-metafunctions '(find-vari sub-list))             ; print calls and results
 (current-traced-metafunctions '())
 ```
@@ -923,7 +938,7 @@ make k-spec && ./spec-meta-k/scripts/k-run.sh examples/add.watsup          # K, 
 To compare Redex's output with K's:
 
 ```sh
-diff <(racket spec-meta-redex/al/6-entry.rkt examples/add.watsup 2>/dev/null) \
+diff <(racket spec-meta-redex/al/7-entry.rkt examples/add.watsup 2>/dev/null) \
      <(./spec-meta-k/scripts/k-run.sh examples/add.watsup | tail -n 1)
 ```
 
@@ -1972,3 +1987,87 @@ Outcome:
   on its own. The host's `$fresh_typeId` counter keeps counting across
   programs, as in OCaml's own harness (`p4spec/test/run/test.ml`).
 - One crash of the process, such as running out of memory, ends the run.
+
+### Step 15: Plain Redex
+
+`spec-meta-redex/` should read as a Redex specification of AL. Two kinds of
+code got in the way:
+
+- **Optimizations inside the spec.** These were the shallow `$load`, the
+  head-symbol dispatch with first-match, the contract switch, the driver in the
+  spec module, and an `->al` that closed over the first rule's result only.
+- **Code shaped like watsup instead of like Redex.** This was `define-dec` and
+  its `⊥`, `where` clauses that copied watsup's one-premise-per-line layout,
+  and Racket escapes that re-spelled watsup expressions.
+
+The user decided, on 2026-10-13:
+
+1. `$load` is precise, with no accumulator: each definition maps to its
+   entries, which `$adds_map` adds in one go.
+2. The relations are plain `reduction-relation`s, without dispatch or
+   first-match. The driver applies whole relations, and checks that at most
+   one rule applies.
+3. Partial `def`s become judgment forms with an output mode, and total ones
+   plain metafunctions. The user had first suggested reduction rules for
+   `def`s. Judgment forms keep `def`s pure, atomic, and cached.
+4. The driver moves to `al/6-driver.rkt`, and `al/6-entry.rkt` becomes
+   `al/7-entry.rkt`. `e` is written through its frames.
+5. Redex's own forms only, with no `define-syntax` wrappers. The prelude
+   goes away.
+
+Every result and step count must stay the same.
+
+Outcome:
+
+- Done, in four commits: `$load`; partial `def`s as judgment forms; Redex
+  idioms; plain relations, `->al`, and the driver. After each, every example,
+  the cross-check runs, and the three P4 programs below gave the same results,
+  the same steps, and the same number of applications of each rule.
+- Probes on toy languages confirmed what the judgment forms rely on:
+  `(side-condition (not (judgment-holds ...)))` sees the rule's variables,
+  including under ellipses; a `judgment-holds` output respects a named
+  ellipsis bound in the left-hand side; an iterated premise binds at depth 2;
+  and a conclusion's output can call a metafunction or unquote.
+- `$load` on `spec/` went from 1.99 s to 1.0 s *(measured)*.
+- The restored determinism check found no overlapping rules on any of the
+  runs below.
+- `computed-name` gives `->al` the rule names of `->ctx`, and `context-closure`
+  keeps those of `->redex`, so the cross-check compares names as well.
+  `context-closure` lifts every rule of `->redex` separately, and each lifted
+  rule decomposes the configuration again. Over 400 steps of `variant-tree`,
+  the closure of `->redex` took 12.9 s, where one rule that applies the whole
+  `->redex` at the decomposed redex took 0.9 s *(measured)*. The cross-check
+  runs below took 91 s, against 7.5 s before. It is kept, since `->al` is the
+  specification and only the cross-check applies it.
+- The driver's `res?` and `done?` match the nonterminals `res` and `done`. On
+  `action-bind.p4`, that cost 8 to 9% over the earlier shape checks, across
+  two runs (15.4 s against 14.2 s), under the 10% the plan allowed.
+- Times of `run/trace` alone, in one process after `$load`, *(measured)*:
+
+  | Program | Result | Steps | Before | After |
+  | --- | --- | --- | --- | --- |
+  | `p4_16_samples/action-bind.p4` | `passed` | 73,932 | 9.6 s | 15.4 s |
+  | `p4_16_errors/action-bind.p4` | `fail` | 24,444 | 2.8 s | 4.6 s |
+  | `p4_16_samples/action-uses.p4` | `passed` | 67,911 | 7.2 s | 12.4 s |
+
+  Most of the difference is dispatch: with the shape checks, `action-bind.p4`
+  took 14.0 to 14.4 s, as Step 13 measured 14.6 s without dispatch. The
+  judgment forms and the idioms made no measurable difference (9.0 s after
+  them).
+- The examples give the same values in the same steps: `add` 119 in 27,
+  `builtin-extra` 277 in 308, `builtin-list` 19 in 179, `builtin-map` 45 in
+  187, `builtin-nested` 65 in 803, `fibo` 89 in 6,478, `iter-nontrivial` -42 in
+  170, `iter-sequence` 1085 in 1,937, `mutual-recursion` 289 in 5,638,
+  `relation-typing` 110 in 1,284, and `variant-tree` 6 in 963. The
+  cross-check, with `check-conf?`, passes on `add`, `iter-nontrivial`,
+  `variant-tree`, and `relation-typing`.
+- `test/p4-typecheck.rkt` passes `action-bind.p4` (14.5 s) and
+  `action-uses.p4` (12.6 s), and with `--neg` fails the negative
+  `action-bind.p4` (5.2 s). `racket spec-meta-redex/al/7-entry.rkt
+  examples/add.watsup` prints `["intN","119"]`.
+- `p4_16_samples/action-synth.p4` passes, in 1,432,675 steps. `run/trace`
+  took 477 s, the whole run 8 minutes, and the peak resident memory was
+  554 MB *(measured)*. An earlier measurement, with dispatch, took about
+  310 s for about 1.43 million steps. The rules applied most often are
+  `assign-exp/variable` (118,633 times), `eval-exp/variable` (96,807), and
+  `assign-exps/cons` (89,209).
