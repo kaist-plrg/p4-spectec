@@ -2,27 +2,21 @@
 ;; A driver that computes ->al's steps.
 ;;
 ;; It holds (G (IN L e)) as a cursor at the last contractum. A step moves the
-;; cursor to the redex, applies ->redex to it and ->ctx to its focus triple,
-;; and puts the contractum and the new layer at the cursor. To reach the redex,
+;; cursor to the redex, applies ->redex to it, or ->ctx to its focus triple if
+;; no rule of ->redex applies, and puts the contractum and the new layer at the
+;; cursor. To reach the redex,
 ;; the cursor climbs past the nodes whose subterm is done, and then descends
 ;; through the one pending evaluation position of each node. So a step matches
 ;; only the nodes it enters, not the whole path from the root. It fails on a
-;; node with two pending positions, and on a redex to which no rule, or more
-;; than one, applies.
+;; node with two pending positions, and on a redex to which no rule applies.
 
 (require racket/list
          racket/match
          redex/reduction-semantics
          "4-relation.rkt"
          "5-eval.rkt")
-(provide run
-         run/trace
-         check-conf?)
+(provide run)
 
-;; Whether to check every configuration against conf
-(define check-conf? (make-parameter #f))
-
-(define conf? (redex-match? al conf))
 (define res? (redex-match? al res))
 (define done? (redex-match? al done))
 
@@ -54,19 +48,6 @@
       ['() (list G (list 'IN L t))]
       [(cons (path-fr Fr) path_1) (loop path_1 (plug Fr t) L)]
       [(cons (path-in L_outer) path_1) (loop path_1 (list 'IN L t) L_outer)])))
-
-;; The cursor after the step of c's configuration and the name of the rule
-;; applied, or #f and #f if the configuration is final
-(define (cursor-step c)
-  (when (check-conf?)
-    (define conf (cursor->conf c))
-    (unless (conf? conf)
-      (error 'step "not a configuration (G e), with e: ~e" (conf-term conf))))
-  (match (settle c)
-    [#f (values #f #f)]
-    [(cursor G path r L)
-     (define-values (r_1 L_1 rule) (reduce-redex r G L))
-     (values (cursor G path r_1 L_1) rule)]))
 
 ;; c moved to the redex, or #f if c's configuration is final. A node whose
 ;; pending subterm is not done keeps that position, so the cursor climbs only
@@ -109,33 +90,21 @@
   (for/first ([b (in-list (match-bindings m))] #:when (eq? (bind-name b) name))
     (bind-exp b)))
 
-;; The contractum of redex r under G and L, the new layer, and the rule's name.
-;; G stays as it is.
+;; The contractum of redex r under G and L, and the new layer. The rules are
+;; disjoint, so the first successor found is the only one.
 (define (reduce-redex r G L)
-  (define steps
-    (remove-duplicates
-     (append (for/list ([step (in-list (apply-reduction-relation/tag-with-names ->redex r))])
-               (match-define (list rule r_1) step)
-               (list rule r_1 L))
-             (for/list ([step (in-list (apply-reduction-relation/tag-with-names
-                                        ->ctx (list r G L)))])
-               (match-define (list rule (list r_1 _ L_1)) step)
-               (list rule r_1 L_1)))))
-  (match steps
-    [(list (list rule r_1 L_1)) (values r_1 L_1 rule)]
-    ['() (error 'step "stuck: no rule applies to ~e" r)]
-    [_ (error 'step "~a rules apply to ~e: ~a" (length steps) r (map car steps))]))
+  (match (apply-reduction-relation ->redex r)
+    [(cons r_1 _) (values r_1 L)]
+    ['()
+     (match (apply-reduction-relation ->ctx (list r G L))
+       [(cons (list r_1 _ L_1) _) (values r_1 L_1)]
+       ['() (error 'step "stuck: no rule applies to ~e" r)])]))
 
 ;; The final configuration that conf reduces to
 (define (run conf)
   (let loop ([c (conf->cursor conf)])
-    (define-values (next _rule) (cursor-step c))
-    (if next (loop next) (cursor->conf c))))
-
-;; The final configuration, and the names of the rules applied, in order
-(define (run/trace conf)
-  (let loop ([c (conf->cursor conf)] [rules '()])
-    (define-values (next rule) (cursor-step c))
-    (if next
-        (loop next (cons rule rules))
-        (values (cursor->conf c) (reverse rules)))))
+    (match (settle c)
+      [#f (cursor->conf c)]
+      [(cursor G path r L)
+       (define-values (r_1 L_1) (reduce-redex r G L))
+       (loop (cursor G path r_1 L_1))])))
