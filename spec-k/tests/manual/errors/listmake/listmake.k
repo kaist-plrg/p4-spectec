@@ -1,5 +1,6 @@
 // A list of negative length.
 module LISTMAKE
+  imports INT
   imports LIST
 
   configuration <k> $PGM:Pgm </k>

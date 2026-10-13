@@ -1,5 +1,6 @@
 // A list update out of range.
 module LISTUPDATE
+  imports INT
   imports LIST
 
   configuration <k> $PGM:Pgm </k>

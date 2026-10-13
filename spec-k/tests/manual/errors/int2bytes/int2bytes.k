@@ -1,5 +1,6 @@
 // Int2Bytes of a negative length.
 module INT2BYTES
+  imports INT
   imports BYTES
 
   configuration <k> $PGM:Pgm </k>

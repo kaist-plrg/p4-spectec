@@ -1,5 +1,6 @@
 // A byte replacement past the end.
 module REPLACEAT
+  imports INT
   imports BYTES
 
   configuration <k> $PGM:Pgm </k>

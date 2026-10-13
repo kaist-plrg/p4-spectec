@@ -1,5 +1,6 @@
 // A string that is not an integer.
 module STRING2INT
+  imports INT
   imports STRING
 
   configuration <k> $PGM:Pgm </k>

@@ -1,5 +1,6 @@
 // A byte index out of range.
 module BYTESGET
+  imports INT
   imports BYTES
 
   configuration <k> $PGM:Pgm </k>

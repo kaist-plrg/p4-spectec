@@ -7,6 +7,7 @@ module CHOICE
   imports LIST
   imports INT
   imports K-EQUAL
+  imports COLLECTIONS
 
   configuration <k> $PGM:Pgm </k>
 

@@ -1,5 +1,6 @@
 // choice of the empty map.
 module MAPCHOICE
+  imports INT
   imports MAP
 
   configuration <k> $PGM:Pgm </k>

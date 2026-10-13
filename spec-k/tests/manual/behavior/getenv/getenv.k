@@ -1,6 +1,7 @@
 // #getenv, listed as supported in domains.md.
 module GETENV
-  imports K-IO
+  imports K-REFLECTION
+  imports STRING
 
   configuration <k> $PGM:Pgm </k>
 

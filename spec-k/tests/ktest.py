@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run the diff tests of the K spec against krun on the suites of
-suites.toml, the regression tests of K, and the tests of the LLVM backend.
+suites.toml, the tests written for the spec (manual/), the regression tests
+of K, and the tests of the LLVM backend.
 
 usage:
   spec-k/tests/ktest.py                 # the quick run: the quick lists of suites.toml
@@ -8,6 +9,7 @@ usage:
   spec-k/tests/ktest.py imp lambda      # all programs of some suites
   spec-k/tests/ktest.py kwasm --only conformance-i32.wast
   spec-k/tests/ktest.py regression/list-set
+  spec-k/tests/ktest.py errors behavior/powmod
 
 Programs marked skip in suites.toml never run. Each run of the spec may take
 two hours (--timeout).
@@ -39,8 +41,10 @@ from difftest import ROOT  # noqa: E402
 with open(os.path.join(os.path.dirname(__file__), "suites.toml"), "rb") as f:
     CONFIG = tomllib.load(f)
 SUITES = CONFIG["suite"]
+MANUAL = CONFIG["manual"]
 REGRESSION = CONFIG["regression"]
 LLVM = CONFIG["llvm"]
+MANUAL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manual")
 
 
 def run_difftest(name, t, args, jobs=None):
@@ -208,8 +212,8 @@ def run_suite(suite, args):
         if "quick" not in t:
             return True
         t["only"] = t["quick"]
-    src = os.path.abspath({"kwasm": args.kwasm_src, "kevm": args.kevm_src, "kmir": args.kmir_src, "k": args.k_src,
-                       "spec": ROOT}[t["src"]])
+    src = os.path.abspath({"kwasm": args.kwasm_src, "kevm": args.kevm_src, "kmir": args.kmir_src,
+                           "k": args.k_src}[t["src"]])
     t["src_dir"] = src
     t["definition"] = os.path.join(src, t["dir"], t["def"])
     if suite == "kwasm":
@@ -252,6 +256,26 @@ def group_left_out(group, d, quick):
     skip = group.get("skip", [])
     only = [k.split("/", 1)[1] for k in group.get("quick", []) if k.startswith(d + "/")] if quick else []
     return d in skip or (quick and not only), [k.split("/", 1)[1] for k in skip if k.startswith(d + "/")], only
+
+
+def manual_tests(group):
+    """The tests written for the spec (manual/<group>/<test>/): a definition
+    <test>.k and its programs *.prog. A quick run runs all of them. Programs in
+    the group's skip and known lists are named without .prog."""
+    conf = MANUAL.get(group, {})
+    prog = lambda p: p if "." in p else p + ".prog"
+    tests = {}
+    root = os.path.join(MANUAL_DIR, group)
+    for d in sorted(os.listdir(root)):
+        definition = os.path.join(root, d, d + ".k")
+        out, exclude, _ = group_left_out(conf, d, False)
+        if out or not os.path.isfile(definition):
+            continue
+        known = ["*" if k == d else prog(k.split("/", 1)[1]) for k in conf.get("known", [])
+                 if k == d or k.startswith(d + "/")]
+        tests[d] = dict(definition=definition, programs=[os.path.join(root, d)], ext="prog",
+                        exclude=[prog(e) for e in exclude], known=known)
+    return tests
 
 
 def regression_tests(src, quick):
@@ -324,8 +348,8 @@ def llvm_tests(src, quick):
 
 
 def run_group(group, tests, names, args):
-    """The tests of a group (regression or llvm; all, or those named), with a
-    summary in <work>/<group>.md."""
+    """The tests of a group (manual, regression, or llvm; all, or those
+    named), with a summary in <work>/<group>.md."""
     for n in names:
         if n not in tests:
             sys.exit("unknown %s test %s" % (group, n))
@@ -346,8 +370,8 @@ def run_group(group, tests, names, args):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("suites", nargs="*",
-                    help="%s, regression, regression/<test>, llvm, or llvm/<test> (default: all)"
-                    % ", ".join(SUITES))
+                    help="%s, a group (%s, regression, llvm), or <group>/<test> (default: all)"
+                    % (", ".join(SUITES), ", ".join(sorted(os.listdir(MANUAL_DIR)))))
     ap.add_argument("--k-src", default=os.environ.get("K_SRC", os.path.join(ROOT, "../k")),
                     help="checkout of runtimeverification/k v7.1.337 (env K_SRC, default ../k)")
     ap.add_argument("--kwasm-src", default=os.environ.get("KWASM_SRC", os.path.join(ROOT, "../wasm-semantics")),
@@ -375,8 +399,9 @@ def main():
     ap.add_argument("-j", "--jobs", type=int, default=2, help="programs to test at a time (default 2)")
     args = ap.parse_args()
     args.quick = not args.full and not args.suites
-    groups = {"regression": lambda: regression_tests(os.path.abspath(args.k_src), args.quick),
-              "llvm": lambda: llvm_tests(os.path.abspath(args.llvm_src), args.quick)}
+    groups = {g: functools.partial(manual_tests, g) for g in sorted(os.listdir(MANUAL_DIR))}
+    groups.update({"regression": lambda: regression_tests(os.path.abspath(args.k_src), args.quick),
+                   "llvm": lambda: llvm_tests(os.path.abspath(args.llvm_src), args.quick)})
     suites = args.suites or list(SUITES) + list(groups)
     for s in suites:
         if s not in SUITES and s.split("/", 1)[0] not in groups:

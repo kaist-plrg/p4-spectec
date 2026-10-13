@@ -1,5 +1,6 @@
 // A list index out of range.
 module LISTGET
+  imports INT
   imports LIST
 
   configuration <k> $PGM:Pgm </k>

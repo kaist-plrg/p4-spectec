@@ -1,5 +1,6 @@
 // memsetBytes with a value above 127.
 module MEMSET
+  imports INT
   imports BYTES
 
   configuration <k> $PGM:Pgm </k>

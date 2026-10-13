@@ -1,5 +1,6 @@
 // Padding with a value above 255.
 module PADRIGHT
+  imports INT
   imports BYTES
 
   configuration <k> $PGM:Pgm </k>

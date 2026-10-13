@@ -15,8 +15,7 @@
 #
 # [suite.<name>], run in this order by default:
 #   src          where dir is: "k" (K v7.1.337), "kwasm" (wasm-semantics),
-#                "kevm" (evm-semantics), "kmir" (mir-semantics), or "spec"
-#                (this repository)
+#                "kevm" (evm-semantics), or "kmir" (mir-semantics)
 #   dir, def     the directory of the definition, and its file
 #   ext          the extension of the programs
 #   tests        directories of the programs, relative to dir (default ["tests"])
@@ -259,140 +258,43 @@ ext = "imp"
 depth = 20
 quick = ["sum.imp"]
 
-# Definitions written for the K features and errors that the languages above
-# do not exercise, with their programs in tests/
-
-[suite.priority]
-src = "spec"
-dir = "spec-k/tests/manual/priority"
-def = "priority.k"
-ext = "priority"
-quick = ["a.priority"]
-
-[suite.equality]
-src = "spec"
-dir = "spec-k/tests/manual/equality"
-def = "equality.k"
-ext = "equality"
-known = [
-  # countAllOccurrences counts overlapping occurrences (behavior e27)
-  "strings.equality",
-]
-quick = [
-  "bytes-match.equality",
-  "compare.equality",
-  "float-match.equality",
-  "float-other.equality",
-  "implies.equality",
-  "ints-negative.equality",
-  "ints.equality",
-  "signed.equality",
-  "single.equality",
-  "strings.equality",
-]
-
-# mint.k cannot have a module MINT, which K's domains.md has
-[suite.mint]
-src = "spec"
-dir = "spec-k/tests/manual/mint"
-def = "mint.k"
-ext = "mint"
-kompile = ["--main-module", "MINT-TEST", "--syntax-module", "MINT-TEST"]
-quick = ["minmax-swap.mint", "minmax.mint", "unsigned.mint", "widths.mint"]
-
-[suite.binder]
-src = "spec"
-dir = "spec-k/tests/manual/binder"
-def = "binder.k"
-ext = "binder"
-quick = ["capture-inner.binder", "capture.binder"]
-
-[suite.errors]
-src = "spec"
-dir = "spec-k/tests/manual/errors"
-def = "errors.k"
-ext = "errors"
-quick = [
-  "ediv.errors",
-  "initial.errors",
-  "int2bytes.errors",
-  "int2float.errors",
-  "listget.errors",
-  "listindex.errors",
-  "mapchoice.errors",
-  "mapconcat.errors",
-  "mapkey.errors",
-  "noequation.errors",
-  "norequires.errors",
-  "norequireseq.errors",
-  "pow.errors",
-  "rangeempty.errors",
-  "setelement.errors",
-]
-
-# K behaviours that the K documentation leaves open or states otherwise, by
-# test number of k-findings.md in the k-in-p4 repository
-[suite.behavior]
-src = "spec"
-dir = "spec-k/tests/manual/behavior"
-def = "behavior.k"
-ext = "behavior"
+# Tests written for the spec (manual/<group>/<test>/: a definition <test>.k
+# and its programs *.prog), run as groups like the regression tests below. A
+# quick run runs all of them. skip and known name tests or <test>/<program>.
+[manual.behavior]
 skip = [
   # a fresh variable in a function equation: following the documentation
   # needs a counter through all of evaluation; not supported
-  "e21-fresh-in-function.behavior",
+  "fresh-in-function",
 ]
 known = [
   # choice and Set2List differ on ==K-equal collections
-  "e02-choice.behavior",
-  "e03-rangemap-choice.behavior",
+  "choice",
+  "rangemap-choice",
   # updateList does not check the bounds at index 0
-  "e04-updatelist-index0.behavior",
-  "e05-updatelist-index0-long.behavior",
+  "updatelist-index0",
   # the square root of -0.0 is +0.0, not -0.0 as in IEEE 754
-  "e17-sqrt-negative-zero.behavior",
+  "sqrt-negative-zero",
   # occurrences overlap in countAllOccurrences and replaceAll, and replaceAll
   # loses characters
-  "e12-constant-folding.behavior",
-  "e22-replaceall-overlap.behavior",
-  "e27-count-overlap.behavior",
+  "overlapping-occurrences",
+  "constant-folding",
   # padding does not check the value when no byte is added
-  "e15-padright-value.behavior",
+  "padright-value",
   # String2Int and String2Base take white space and radixes above 36
-  "e18-string2int-space.behavior",
-  "e26-string2base-radix.behavior",
+  "string2int-syntax",
   # a Float literal is not rounded to the exponent range
-  "e23-float-literal-range.behavior",
+  "float-literal-range",
   # ^%Int takes an inverse for a negative exponent
-  "e24-powmod-negative.behavior",
+  "powmod/negative",
 ]
-quick = [
-  "e01-inclusion.behavior",
-  "e02-choice.behavior",
-  "e03-rangemap-choice.behavior",
-  "e04-updatelist-index0.behavior",
-  "e05-updatelist-index0-long.behavior",
-  "e06-getenv.behavior",
-  "e07-or-left.behavior",
-  "e08-or-right.behavior",
-  "e09-injection-eq.behavior",
-  "e10-list-lookup-outside.behavior",
-  "e11-list-lookup.behavior",
-  "e12-constant-folding.behavior",
-  "e13-implies-short.behavior",
-  "e14-and-short.behavior",
-  "e15-padright-value.behavior",
-  "e16-mint-div-zero.behavior",
-  "e17-sqrt-negative-zero.behavior",
-  "e18-string2int-space.behavior",
-  "e19-int2bytes-negative.behavior",
-  "e20-same-priority.behavior",
-  "e22-replaceall-overlap.behavior",
-  "e23-float-literal-range.behavior",
-  "e24-powmod-negative.behavior",
-  "e25-powmod-zero.behavior",
-  "e26-string2base-radix.behavior",
-  "e27-count-overlap.behavior",
+
+[manual.errors]
+
+[manual.features]
+known = [
+  # countAllOccurrences counts overlapping occurrences (behavior/overlapping-occurrences)
+  "equality/strings",
 ]
 
 # The regression tests of K (in dir) that kompile with the LLVM backend and

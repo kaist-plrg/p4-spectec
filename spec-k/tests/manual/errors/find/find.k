@@ -1,5 +1,6 @@
 // A negative start for findString.
 module FIND
+  imports INT
   imports STRING
 
   configuration <k> $PGM:Pgm </k>

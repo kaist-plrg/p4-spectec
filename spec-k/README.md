@@ -33,7 +33,7 @@ The spec is tested by diff tests against `krun`. Everything for them is in
 | | |
 |---|---|
 | `suites.toml` | the suites: where each comes from, and its `skip`, `known`, and `quick` lists |
-| `manual/` | the suites written for the spec (`errors`, `behavior`, `equality`, `binder`, `mint`, `priority`); the others are the tests of K, KWasm, KEVM, and KMIR |
+| `manual/` | the tests written for the spec, in groups: `errors` (runs that `krun` ends with an error), `behavior` (behaviours the K documentation leaves open or states otherwise), `features` (K features the languages do not exercise). Each test is a directory `<group>/<test>/` with a definition `<test>.k` and its programs `*.prog`. The other tests are those of K, KWasm, KEVM, and KMIR |
 | `ktest.py` | runs suites |
 | `difftest.py` | diff tests programs against one kompiled definition |
 | `coverage_summary.py` | merges coverage logs |
@@ -45,6 +45,7 @@ $ spec-k/tests/ktest.py                                    # the quick run
 $ spec-k/tests/ktest.py --full                             # all programs of all suites
 $ spec-k/tests/ktest.py imp kwasm                          # all programs of some suites
 $ spec-k/tests/ktest.py regression/list-set                # one regression test of K
+$ spec-k/tests/ktest.py errors behavior/powmod             # a group, and one test of a group
 $ spec-k/tests/ktest.py kwasm --only conformance-i32.wast  # one program
 ```
 
@@ -76,7 +77,8 @@ $ spec-k/tests/coverage_summary.py spec-k/tests/_work/coverage [-o coverage.log]
 Diff test of other programs:
 
 ```shell
-$ spec-k/tests/difftest.py -k <name>-kompiled <program or directory>... [--ext <ext>] [--depth N]
+$ spec-k/tests/difftest.py -k <name>-kompiled <program>... [--depth N]
+$ spec-k/tests/difftest.py -k <name>-kompiled <directory>... --ext <ext>
 ```
 
 Each run of the spec is capped at 2.5 GB through `systemd-run` when it is

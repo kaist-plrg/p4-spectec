@@ -1,5 +1,6 @@
 // A substring that ends before it starts.
 module SUBSTR
+  imports INT
   imports STRING
 
   configuration <k> $PGM:Pgm </k>

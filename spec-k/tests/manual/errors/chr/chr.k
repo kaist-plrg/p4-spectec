@@ -1,5 +1,6 @@
 // A character code above 255.
 module CHR
+  imports INT
   imports STRING
 
   configuration <k> $PGM:Pgm </k>

@@ -1,5 +1,6 @@
 // choice of the empty range map.
 module RANGECHOICE
+  imports INT
   imports RANGEMAP
 
   configuration <k> $PGM:Pgm </k>

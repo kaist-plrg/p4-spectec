@@ -1,5 +1,6 @@
 // Float2Int of NaN.
 module FLOAT2INT
+  imports INT
   imports FLOAT
 
   configuration <k> $PGM:Pgm </k>

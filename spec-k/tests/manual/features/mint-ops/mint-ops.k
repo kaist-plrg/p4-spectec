@@ -1,6 +1,6 @@
 // Machine-integer operations that the regression tests of K do not use.
 // Values come from the program, so that kompile does not fold them.
-module MINT-TEST
+module MINT-OPS
   imports INT
   imports BOOL
   imports LIST
