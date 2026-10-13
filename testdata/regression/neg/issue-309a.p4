@@ -7,6 +7,7 @@ parser prs(packet_in pkt, out headers_t hdr, inout meta_t meta, inout standard_m
     state start {
         pkt.extract(hdr.eth);
         hdr.eth.ty = 16w0;
+        // tuple is not a legal target type of an explicit cast.
         transition select((tuple<bit<8>, bit<8>>){8w0, 8w1}) {
             {8w0, 8w2}: s_bad;
             {8w0, 8w1}: s_seq;

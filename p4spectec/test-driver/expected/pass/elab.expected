@@ -3005,6 +3005,36 @@ tbl def $is_assignable_typeIR(typeIR) : bool =
   row 6 :
     (_typeIR) -> true
 
+tbl def $is_castable_typeIR(typeIR) : bool =
+  row 0 :
+    (BOOL as typeIR) -> true
+  row 1 :
+    (INT as typeIR) -> true
+  row 2 :
+    (INT `< _nat `> as typeIR) -> true
+  row 3 :
+    (BIT `< _nat `> as typeIR) -> true
+  row 4 :
+    (TYPEDEF _typeId typeIR as typeIR) -> $is_castable_typeIR(typeIR)
+  row 5 :
+    (TYPE _typeId _typeIR as typeIR) -> true
+  row 6 :
+    (ENUM _typeId `< _typeIR `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} as typeIR) -> true
+  row 7 :
+    (LIST `< _typeIR `> as typeIR) -> true
+  row 8 :
+    (ARRAY _typeIR `[ _nat `] as typeIR) -> true
+  row 9 :
+    (HEADER_STACK _typeIR `[ _nat `] as typeIR) -> true
+  row 10 :
+    (STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR) -> true
+  row 11 :
+    (HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR) -> true
+  row 12 :
+    (HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR) -> true
+  row 13 :
+    (_typeIR) -> false
+
 tbl def $is_serializable_typeIR(typeIR) : bool =
   row 0 :
     (BOOL as typeIR) -> true
@@ -10013,6 +10043,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if (typeIR = $type_of_typedExpressionIR(typedExpressionIR))
     -- if (ctk = $ctk_of_typedExpressionIR(typedExpressionIR))
+    -- if $is_castable_typeIR(typeIR_t)
     -- Cast_expl: typeIR -> typeIR_t : OK typeIR_cast*{typeIR_cast <- typeIR_cast*}
     -- if (expressionIR_cast '#' _expressionNoteIR = $apply_cast(typedExpressionIR, typeIR_cast*{typeIR_cast <- typeIR_cast*}))
     -- if (expressionNoteIR = `( typeIR_t ctk `))

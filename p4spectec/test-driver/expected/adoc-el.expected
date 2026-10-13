@@ -2747,6 +2747,28 @@ tbl def $is_assignable_typeIR =
 
 
 
+tbl dec $is_castable_typeIR(typeIR) : bool
+
+tbl def $is_castable_typeIR =
+  | BOOL => true
+  | INT => true
+  | INT `< _ `> => true
+  | BIT `< _ `> => true
+  | TYPEDEF _ typeIR => $is_castable_typeIR(typeIR)
+  | TYPE _ _ => true
+  | ENUM _ `< _ `> `{ _ `} => true
+  | LIST `< _ `> => true
+  | ARRAY _ `[ _ `] => true
+  | HEADER_STACK _ `[ _ `] => true
+  | STRUCT _ `< _ `> `{ _ `} => true
+  | HEADER _ `< _ `> `{ _ `} => true
+  | HEADER_UNION _ `< _ `> `{ _ `} => true
+  | _ => false
+
+
+
+
+
 tbl dec $is_serializable_typeIR(typeIR) : bool
 
 tbl def $is_serializable_typeIR =
@@ -13996,6 +14018,7 @@ rule Expr_ok/castExpression:
   -- Expr_ok: p TC |- expression : typedExpressionIR
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
+  -- if $is_castable_typeIR(typeIR_t)
   -- Cast_expl: typeIR -> typeIR_t : OK typeIR_cast*
   -- if expressionIR_cast '#' _ = $apply_cast(typedExpressionIR, typeIR_cast*)
   -- if expressionNoteIR = `( typeIR_t ctk `)

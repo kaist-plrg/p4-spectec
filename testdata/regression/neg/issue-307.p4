@@ -10,6 +10,7 @@ control vfy(inout headers_t hdr, inout meta_t meta) { apply { } }
 control ingress(inout headers_t hdr, inout meta_t meta, inout standard_metadata_t std) {
     apply {
         match_kind original = exact;
+        // match_kind is not a legal target of an identity cast.
         match_kind copied = (match_kind) original;
         std.egress_spec = 1;
     }

@@ -3582,6 +3582,78 @@ tbl def $is_assignable_typeIR(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> true
 
+tbl def $is_castable_typeIR(typeIR) : bool =
+  row 0 :
+    (signature) BOOL as typeIR
+    (typeIR) -> true
+    -- if typeIR <: boolTypeIR
+    -- let boolTypeIR = typeIR as boolTypeIR
+    -- if (boolTypeIR = BOOL)
+  row 1 :
+    (signature) INT as typeIR
+    (typeIR) -> true
+    -- if typeIR <: intTypeIR
+    -- let intTypeIR = typeIR as intTypeIR
+    -- if (intTypeIR = INT)
+  row 2 :
+    (signature) INT `< _nat `> as typeIR
+    (typeIR) -> true
+    -- if typeIR <: fixedIntTypeIR
+    -- let INT `< _nat `> = typeIR as fixedIntTypeIR
+  row 3 :
+    (signature) BIT `< _nat `> as typeIR
+    (typeIR) -> true
+    -- if typeIR <: fixedBitTypeIR
+    -- let BIT `< _nat `> = typeIR as fixedBitTypeIR
+  row 4 :
+    (signature) TYPEDEF _typeId typeIR as typeIR
+    (typeIR') -> $is_castable_typeIR(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let TYPEDEF _typeId typeIR = typeIR' as typedefTypeIR
+  row 5 :
+    (signature) TYPE _typeId _typeIR as typeIR
+    (typeIR) -> true
+    -- if typeIR <: newTypeIR
+    -- let TYPE _typeId _typeIR = typeIR as newTypeIR
+  row 6 :
+    (signature) ENUM _typeId `< _typeIR `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} as typeIR
+    (typeIR) -> true
+    -- if typeIR <: serializableEnumTypeIR
+    -- let ENUM _typeId `< _typeIR `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = typeIR as serializableEnumTypeIR
+  row 7 :
+    (signature) LIST `< _typeIR `> as typeIR
+    (typeIR) -> true
+    -- if typeIR <: listTypeIR
+    -- let LIST `< _typeIR `> = typeIR as listTypeIR
+  row 8 :
+    (signature) ARRAY _typeIR `[ _nat `] as typeIR
+    (typeIR) -> true
+    -- if typeIR <: arrayTypeIR
+    -- let ARRAY _typeIR `[ _nat `] = typeIR as arrayTypeIR
+  row 9 :
+    (signature) HEADER_STACK _typeIR `[ _nat `] as typeIR
+    (typeIR) -> true
+    -- if typeIR <: headerStackTypeIR
+    -- let HEADER_STACK _typeIR `[ _nat `] = typeIR as headerStackTypeIR
+  row 10 :
+    (signature) STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR
+    (typeIR) -> true
+    -- if typeIR <: structTypeIR
+    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as structTypeIR
+  row 11 :
+    (signature) HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR
+    (typeIR) -> true
+    -- if typeIR <: headerTypeIR
+    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerTypeIR
+  row 12 :
+    (signature) HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR
+    (typeIR) -> true
+    -- if typeIR <: headerUnionTypeIR
+    -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerUnionTypeIR
+  row 13 :
+    (signature) _typeIR
+    (_typeIR) -> false
+
 tbl def $is_serializable_typeIR(typeIR) : bool =
   row 0 :
     (signature) BOOL as typeIR
@@ -16230,6 +16302,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
+    -- if $is_castable_typeIR(typeIR_t)
     -- Cast_expl: typeIR -> typeIR_t : castResult
     -- if castResult matches OK %
     -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult

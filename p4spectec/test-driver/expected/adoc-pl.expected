@@ -1080,6 +1080,28 @@ xref:is_assignable_typeIR[``typeIR''`` supports assignment]:
 
 |===
 
+xref:is_castable_typeIR[``typeIR''`` can be the target type of an explicit cast]:
+[cols="2", options="header"]
+|===
+| (``typeIR''``) | Result
+
+| +BOOL+ | true
+| +INT+ | true
+| +INT+ +`<+ ++_++ +`>+ | true
+| +BIT+ +`<+ ++_++ +`>+ | true
+| +TYPEDEF+ ++_++ typeIR | xref:is_castable_typeIR[$is_castable_typeIR(typeIR)]
+| +TYPE+ ++_++ ++_++ | true
+| +ENUM+ ++_++ +`<+ ++_++ +`>+ +`{+ ++_++^{asterisk}^ +`}+ | true
+| +LIST+ +`<+ ++_++ +`>+ | true
+| +ARRAY+ ++_++ +`[+ ++_++ +`]+ | true
+| +HEADER_STACK+ ++_++ +`[+ ++_++ +`]+ | true
+| +STRUCT+ ++_++ +`<+ ++_++^{asterisk}^ +`>+ +`{+ ++_++^{asterisk}^ +`}+ | true
+| +HEADER+ ++_++ +`<+ ++_++^{asterisk}^ +`>+ +`{+ ++_++^{asterisk}^ +`}+ | true
+| +HEADER_UNION+ ++_++ +`<+ ++_++^{asterisk}^ +`>+ +`{+ ++_++^{asterisk}^ +`}+ | true
+| ++_++ | false
+
+|===
+
 xref:is_serializable_typeIR[``typeIR''`` has a defined size]:
 [cols="2", options="header"]
 |===
@@ -10666,6 +10688,7 @@ xref:Expr_ok[Typing ``+`(+`` ``type~t~`` ``+`)+`` ``expression``, under context 
  .. Let ``typedExpressionIR`` be the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``p``].
  .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
  .. Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].
+ .. Check that xref:is_castable_typeIR[``typeIR~t~`` can be the target type of an explicit cast].
  .. Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR`` can be explicitly cast to ``typeIR~t~``].
  .. Check that ``castResult`` matches pattern ``+OK+`` ``%``.
  .. Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.

@@ -4417,6 +4417,97 @@ tbl def $is_assignable_typeIR(typeIR'')
 
     1. Return true
 
+tbl def $is_castable_typeIR(typeIR'')
+=
+
+  Row : BOOL as typeIR -> true:
+
+    1. If (typeIR'' <: boolTypeIR), then
+
+      1. (Let boolTypeIR be typeIR'' as boolTypeIR)
+
+        1. Return true
+
+  Row : INT as typeIR -> true:
+
+    1. If (typeIR'' <: intTypeIR), then
+
+      1. (Let intTypeIR be typeIR'' as intTypeIR)
+
+        1. Return true
+
+  Row : INT `< _nat `> as typeIR -> true:
+
+    1. If (typeIR'' <: fixedIntTypeIR), then
+
+      1. Return true
+
+  Row : BIT `< _nat `> as typeIR -> true:
+
+    1. If (typeIR'' <: fixedBitTypeIR), then
+
+      1. Return true
+
+  Row : TYPEDEF _typeId typeIR as typeIR -> $is_castable_typeIR(typeIR):
+
+    1. If (typeIR'' <: typedefTypeIR), then
+
+      1. (Let TYPEDEF _typeId typeIR be typeIR'' as typedefTypeIR)
+
+        1. Return $is_castable_typeIR(typeIR)
+
+  Row : TYPE _typeId _typeIR as typeIR -> true:
+
+    1. If (typeIR'' <: newTypeIR), then
+
+      1. Return true
+
+  Row : ENUM _typeId `< _typeIR `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} as typeIR -> true:
+
+    1. If (typeIR'' <: serializableEnumTypeIR), then
+
+      1. Return true
+
+  Row : LIST `< _typeIR `> as typeIR -> true:
+
+    1. If (typeIR'' <: listTypeIR), then
+
+      1. Return true
+
+  Row : ARRAY _typeIR `[ _nat `] as typeIR -> true:
+
+    1. If (typeIR'' <: arrayTypeIR), then
+
+      1. Return true
+
+  Row : HEADER_STACK _typeIR `[ _nat `] as typeIR -> true:
+
+    1. If (typeIR'' <: headerStackTypeIR), then
+
+      1. Return true
+
+  Row : STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR -> true:
+
+    1. If (typeIR'' <: structTypeIR), then
+
+      1. Return true
+
+  Row : HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR -> true:
+
+    1. If (typeIR'' <: headerTypeIR), then
+
+      1. Return true
+
+  Row : HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR -> true:
+
+    1. If (typeIR'' <: headerUnionTypeIR), then
+
+      1. Return true
+
+  Row : _typeIR -> false:
+
+    1. Return false
+
 tbl def $is_serializable_typeIR(typeIR'')
 =
 
@@ -21987,19 +22078,23 @@ relation Expr_ok: p TC |- expression'' : %
 
                 1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR))
 
-                  1. (Cast_expl: typeIR -> typeIR_t : castResult)
+                  1. If ($is_castable_typeIR(typeIR_t)), then
 
-                    1. If (castResult matches OK %), then
+                    1. (Cast_expl: typeIR -> typeIR_t : castResult)
 
-                      1. (Let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} be castResult)
+                      1. If (castResult matches OK %), then
 
-                        1. (Let expressionIR_cast '#' _expressionNoteIR be $apply_cast(typedExpressionIR, typeIR_cast*{typeIR_cast <- typeIR_cast*}))
+                        1. (Let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} be castResult)
 
-                          1. (Let expressionNoteIR be `( typeIR_t ctk `))
+                          1. (Let expressionIR_cast '#' _expressionNoteIR be $apply_cast(typedExpressionIR, typeIR_cast*{typeIR_cast <- typeIR_cast*}))
 
-                            1. Result in: % % |- % : expressionIR_cast '#' expressionNoteIR
+                            1. (Let expressionNoteIR be `( typeIR_t ctk `))
 
-                    1. Else Dangling
+                              1. Result in: % % |- % : expressionIR_cast '#' expressionNoteIR
+
+                      1. Else Dangling
+
+                  1. Else Dangling
 
           1. Else Dangling
 

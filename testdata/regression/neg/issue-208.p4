@@ -3,6 +3,7 @@
 header eth_t { bit<48> dst; bit<48> src; bit<16> ty; }
 struct headers_t { eth_t eth; }
 struct meta_t { }
+// string is not a legal target of an identity cast.
 string identity(string s) { return (string)s; }
 parser prs(packet_in pkt, out headers_t hdr, inout meta_t meta, inout standard_metadata_t std) {
     state start { pkt.extract(hdr.eth); transition accept; }
