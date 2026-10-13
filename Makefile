@@ -1,4 +1,5 @@
 SPEC = bin/p4spectec
+METACIRC = bin/metacirc
 RUST_DIR = p4spectec
 # Resolve an override before entering the Rust crate or documentation directories
 override CARGO_TARGET_DIR := $(if $(CARGO_TARGET_DIR),$(CARGO_TARGET_DIR),$(RUST_DIR)/target)
@@ -17,8 +18,9 @@ export CARGO_TARGET_DIR
 build release debug:
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 	mkdir -p $(dir $(SPEC))
-	rm -f ./$(SPEC)
+	rm -f ./$(SPEC) ./$(METACIRC)
 	cp "$(CARGO_TARGET_DIR)/$(if $(filter debug,$@),debug,release)/p4spectec" ./$(SPEC)
+	cp "$(CARGO_TARGET_DIR)/$(if $(filter debug,$@),debug,release)/metacirc" ./$(METACIRC)
 
 fmt fmt-check lint rustdoc:
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
@@ -48,5 +50,5 @@ p4spec-release-html:
 	$(MAKE) -C docs/p4 CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" release-html
 
 clean:
-	rm -f ./$(SPEC)
+	rm -f ./$(SPEC) ./$(METACIRC)
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" clean

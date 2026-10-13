@@ -9,10 +9,10 @@ endif
 .PHONY: build release debug fmt fmt-check lint rustdoc clean
 
 debug:
-	$(CARGO) build --locked --bin p4spectec --target-dir "$(TARGET_DIR)"
+	$(CARGO) build --locked --bins --target-dir "$(TARGET_DIR)"
 
 build release:
-	$(CARGO) build --locked --release --bin p4spectec --target-dir "$(TARGET_DIR)"
+	$(CARGO) build --locked --release --bins --target-dir "$(TARGET_DIR)"
 
 fmt:
 	$(CARGO) fmt
@@ -108,8 +108,8 @@ test-diagnostics: diagnostic-cli
 test-diagnostics-promote: diagnostic-cli
 	UPDATE_EXPECT=1 $(DRIVER) diagnostics --cli "$(DIAGNOSTIC_CLI)"
 
-# Independent AL meta compiler snapshots
+# Independent metacircular Program_inst execution
 .PHONY: test-metacirc
 
-test-metacirc:
-	env -u UPDATE_EXPECT $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --bin metacirc-test
+test-metacirc: release
+	env -u UPDATE_EXPECT $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --bin metacirc-test -- --cli "$(TARGET_DIR)/release/metacirc"
