@@ -35,7 +35,7 @@ fn read_sources(path_pairs: &[(PathBuf, PathBuf)]) -> Result<Vec<(String, String
 }
 
 /// Renders and stages all outputs without replacing destinations.
-fn prepare_splice_files_impl(
+fn prepare_splice_files(
     warnings: &mut Vec<Report>,
     spec_el: &el::Spec,
     spec_pl: &pl::Spec,
@@ -85,7 +85,7 @@ pub fn splice_files(
     path_pairs: &[(PathBuf, PathBuf)],
 ) -> Result<(), Error> {
     let sources = read_sources(path_pairs)?;
-    let files = prepare_splice_files_impl(&mut Vec::new(), spec_el, spec_pl, path_pairs, &sources)?;
+    let files = prepare_splice_files(&mut Vec::new(), spec_el, spec_pl, path_pairs, &sources)?;
     commit_splice_files(files)
 }
 
@@ -105,7 +105,7 @@ pub fn splice_files_with_warnings(
         Err(error) => return (Err(error), Vec::new()),
     };
     let mut warnings = Vec::new();
-    let result = prepare_splice_files_impl(&mut warnings, spec_el, spec_pl, path_pairs, &sources);
+    let result = prepare_splice_files(&mut warnings, spec_el, spec_pl, path_pairs, &sources);
     // Preserve sources even when rendering or staging has failed
     for (file, text) in sources {
         renderer.insert_source(file, text);
