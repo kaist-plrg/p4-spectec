@@ -14,7 +14,6 @@ mod adoc;
 
 mod p4parse;
 mod run;
-mod runner;
 mod sim;
 
 mod diagnostic;
@@ -48,8 +47,6 @@ struct Cli {
 enum Command {
     /// List all registered suites, inputs, and expectation files
     List,
-    /// Check runner ownership, dispatch, and host evaluation contracts
-    Runner,
     /// Compare the elaborated P4 specification with expected output
     Elab,
     /// Compare the algorithmic P4 specification with expected output
@@ -133,7 +130,6 @@ fn execute(mut cli: Cli) -> Result<()> {
     let index = Index::load(&path_registry)?;
     match command {
         Command::List => index.list(),
-        Command::Runner => runner::run(),
         Command::Elab => elab::run(&suite::load_snapshots(&index.suites.elab)?),
         Command::Algo => algo::run(&suite::load_snapshots(&index.suites.algo)?),
         Command::Structure => structure::run(&suite::load_structure(&index.suites.structure)?),

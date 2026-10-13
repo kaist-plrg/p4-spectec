@@ -34,18 +34,15 @@ clean:
 
 .DEFAULT_GOAL := test
 
-.PHONY: test test-adoc test-runner
+.PHONY: test test-adoc
 
-test: test-runner test-expected test-sim-al test-sim-sl test-sim-pl
+test: test-expected test-sim-al test-sim-sl test-sim-pl
 
 # Standalone acceptance driver; registrations live in test-driver/suites.json
 .PHONY: test-expected test-promote test-elab test-algo test-structure test-prose test-p4parse test-run-al test-run-sl test-run-pl
 .PHONY: test-diagnostics test-diagnostics-promote diagnostic-cli
 DRIVER = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --
 DIAGNOSTIC_CLI = $(TARGET_DIR)/release/p4spectec
-
-test-runner:
-	env -u UPDATE_EXPECT $(DRIVER) runner
 
 test-elab:
 	env -u UPDATE_EXPECT $(DRIVER) elab
