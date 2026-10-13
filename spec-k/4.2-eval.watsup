@@ -45,6 +45,21 @@ rule Eval/variable:
   D subst |- VAR varid sort : OK term
   -- if term = $find_map<varid, term>(subst, varid)
 
+;;; A fresh variable of a function equation (!X), which kompile leaves
+;;; unbound: the freshGenerator of its sort applied to a number below zero.
+;;; The fresh values of rules come from the generatedCounter cell (0, 1, 2,
+;;; ...), so the two never meet, as kast.md requires of all !X. The LLVM
+;;; backend reads the counter of the configuration the calling rule matched,
+;;; and may give a value of that rule again.
+
+rule Eval/fresh:
+  D subst |- VAR varid sort : result
+  -- if eps = $find_map<varid, term>(subst, varid)
+  -- if $string_find(varid, "Var'Bang", 0) = 0
+  -- if symid = $find_map<sort, symid>(D.FRESH, sort)
+  -- if n = $fresh_nat()
+  -- Apply: D |- symid eps ([INT $(0 - (n + 1))]) : result
+
 rule Eval/token:
   D subst |- DV sort t : OK (DV sort t)
 

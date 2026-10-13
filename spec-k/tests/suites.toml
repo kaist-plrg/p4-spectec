@@ -28,8 +28,9 @@
 #                default 32768); fewer bound the memory of large configurations
 #   skip         programs (glob patterns) never run, with why in comments
 #   known        known failures (glob patterns): programs on which the spec
-#                follows K's documentation and krun does not (D4 in the
-#                k-in-p4 repository); reported as known failures, and as
+#                follows K's documentation and krun does not, or, as the
+#                comments say, where the documentation leaves a value open and
+#                the spec picks another; reported as known failures, and as
 #                failures if they pass
 #   quick        programs of a quick run
 #
@@ -262,12 +263,9 @@ quick = ["sum.imp"]
 # and its programs *.prog), run as groups like the regression tests below. A
 # quick run runs all of them. skip and known name tests or <test>/<program>.
 [manual.behavior]
-skip = [
-  # a fresh variable in a function equation: following the documentation
-  # needs a counter through all of evaluation; not supported
-  "fresh-in-function",
-]
 known = [
+  # a fresh value of a rule and of a function it calls coincide
+  "fresh-in-function",
   # choice and Set2List differ on ==K-equal collections
   "choice",
   "rangemap-choice",
@@ -304,7 +302,7 @@ known = [
 
 [regression]
 dir = "k-distribution/tests/regression-new"
-# skip names tests or <test>/<program>, quick <test>/<program>
+# skip and known name tests or <test>/<program>, quick <test>/<program>
 skip = [
   # they krun differently from a plain run of each program:
   # krun --proof-hint
@@ -334,7 +332,12 @@ skip = [
   # the initializers take the configuration as an argument (fresh variables
   # in the configuration), but krun's initial term does not pass it
   "issue-3520-freshConfig",
-  # kompile leaves a fresh variable of a function equation unbound
+]
+known = [
+  # a fresh value of a function equation: krun gives 0 (as 1.test.out), the
+  # spec -1, as it numbers the fresh values of functions below zero to keep
+  # them apart from those of rules (Eval/fresh); the documentation fixes
+  # only that they differ. Not a bug of K.
   "withConfig2/1.test",
 ]
 quick = [
@@ -392,8 +395,8 @@ parseNonPgm = ["-cMODE=noprint"]
 
 # The tests of the LLVM backend (llvm-backend f02284f, test/defn/<name>.kore)
 # that run its interpreter on initial terms in KORE (test/input), compared
-# with the interpreter llvm-kompile builds from the same definition. skip names
-# tests or <test>/<program>, quick <test>/<program>
+# with the interpreter llvm-kompile builds from the same definition. skip and
+# known name tests or <test>/<program>, quick <test>/<program>
 [llvm]
 skip = [
   # file IO (the interpreter writes files in the working directory)
@@ -408,8 +411,6 @@ skip = [
   "sk",
   "test8",
   "test33",
-  # a fresh variable left unbound in a function equation, as withConfig2/1.test
-  "test18",
   # FFI hooks (native memory and calls)
   "test21",
   # JSON hooks, not in the spec yet
@@ -422,6 +423,11 @@ skip = [
   # seconds), and 2,000,006 steps (test-gc-stringbuffer)
   "imp-with-rangemaps",
   "test-gc-stringbuffer",
+]
+known = [
+  # a fresh value of a function equation: krun gives 0, the spec -1, as for
+  # withConfig2/1.test of the regression tests. Not a bug of K.
+  "test18",
 ]
 quick = [
   "lambda/closed-variable-capture.in",

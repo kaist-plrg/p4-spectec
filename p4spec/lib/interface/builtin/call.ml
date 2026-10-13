@@ -79,6 +79,7 @@ module Make (Ext : EXT) () = struct
     |> Funcs.add "update_map" Maps.update_map
     (* Fresh type id *)
     |> Funcs.add "fresh_typeId" (Fresh_.fresh_typeId ctr)
+    |> Funcs.add "fresh_nat" (Fresh_.fresh_nat ctr)
     (* Numerics *)
     |> Funcs.add "shl" Numerics.shl
     |> Funcs.add "shr" Numerics.shr

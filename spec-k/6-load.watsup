@@ -86,6 +86,17 @@ dec $params(map<symid, ksymdecl>) : map<symid, sortid*>
 def $params(`{ (symid ':' (KSYMBOL sortid_p* sort_a* '->' sort kattr*))* `})
   = `{ (symid ':' sortid_p*)* `}
 
+dec $fresh_generator(symid, ksymdecl) : pair<sort, symid>*
+def $fresh_generator(symid, KSYMBOL sortid_p* sort_a* '->' sort kattr*)
+  = [ sort ':' symid ]
+  -- if $has_attr("freshGenerator", kattr*)
+def $fresh_generator(symid, ksymdecl) = eps
+  -- otherwise
+
+dec $fresh_generators(map<symid, ksymdecl>) : map<sort, symid>
+def $fresh_generators(`{ (symid ':' ksymdecl)* `})
+  = `{ $concat_<pair<sort, symid>>($fresh_generator(symid, ksymdecl)*) `}
+
 dec $is_hooked(kdefinition, symid) : bool
 def $is_hooked(KD, symid) = $has_attr("hook", kattr*)
   -- if (KSYMBOL sortid_p* sort_a* '->' sort kattr*)
@@ -395,6 +406,7 @@ rule Load:
           EQUATIONS $group_equations($empty_map<symid, equation*>,
                       $concat_<loaded>($equations_of_loaded(loaded)*)),
           PARAMS $params(KD.KSYMBOLS),
+          FRESH $fresh_generators(KD.KSYMBOLS),
           NATSORTS $natsorts(KD.KSORTS) }
   -- if kaxiom* = KD.AXIOMS
   -- if loaded* = $concat_<loaded>($load_axiom(KD, $expand_axiom(KD, kaxiom))*)

@@ -258,6 +258,13 @@ def group_left_out(group, d, quick):
     return d in skip or (quick and not only), [k.split("/", 1)[1] for k in skip if k.startswith(d + "/")], only
 
 
+def group_known(group, d, prog=lambda p: p):
+    """The known failures of test d of a group: all its programs (<test> in the
+    group's known list) or some (<test>/<program>)."""
+    return ["*" if k == d else prog(k.split("/", 1)[1]) for k in group.get("known", [])
+            if k == d or k.startswith(d + "/")]
+
+
 def manual_tests(group):
     """The tests written for the spec (manual/<group>/<test>/): a definition
     <test>.k and its programs *.prog. A quick run runs all of them. Programs in
@@ -271,10 +278,8 @@ def manual_tests(group):
         out, exclude, _ = group_left_out(conf, d, False)
         if out or not os.path.isfile(definition):
             continue
-        known = ["*" if k == d else prog(k.split("/", 1)[1]) for k in conf.get("known", [])
-                 if k == d or k.startswith(d + "/")]
         tests[d] = dict(definition=definition, programs=[os.path.join(root, d)], ext="prog",
-                        exclude=[prog(e) for e in exclude], known=known)
+                        exclude=[prog(e) for e in exclude], known=group_known(conf, d, prog))
     return tests
 
 
@@ -310,14 +315,15 @@ def regression_tests(src, quick):
                 depth = int(flags.pop(0))
             elif f not in ("--profile", "--no-pattern"):
                 krun.append(f)
-        # cells with a stream attribute buffer IO in the configuration (decisions D10 in k-in-p4)
+        # cells with a stream attribute buffer IO in the configuration; the spec
+        # compares runs without IO
         if 'stream="' in open(definition).read():
             krun += ["--io", "off"]
         tests[d] = dict(definition=definition, programs=[testdir], ext=v["EXT"],
                         krun=["--no-exc-wrap"] + REGRESSION["krun"].get(d, krun),
                         kompile=shlex.split(v.get("KOMPILE_FLAGS", "")) + ["--no-exc-wrap", "--type-inference-mode",
                                                                            "checked"],
-                        exclude=exclude, only=only)
+                        exclude=exclude, only=only, known=group_known(REGRESSION, d))
         if search:
             tests[d]["check_steps"] = [os.path.basename(f) + ("" if depth is None else ":%d" % depth)
                                        for f in glob.glob(os.path.join(testdir, "*." + v["EXT"]))]
@@ -343,7 +349,7 @@ def llvm_tests(src, quick):
                   if os.path.exists(p)]
         if inputs:
             tests[name] = dict(definition=definition, programs=inputs, ext="in", kore=True, exclude=exclude,
-                               only=only)
+                               only=only, known=group_known(LLVM, name))
     return tests
 
 
