@@ -21,26 +21,6 @@ use super::{
 
 use pending::PendingFile;
 
-// == Prepared output
-
-/// Owns staged splice outputs until commit or cleanup on drop.
-struct PreparedSplice {
-    files: Vec<PendingFile>,
-}
-
-impl PreparedSplice {
-    /// Replaces destinations in input order, consuming the staged outputs.
-    ///
-    /// Replacements are atomic per file;
-    /// a later failure retains earlier commits and removes uncommitted outputs.
-    fn commit(self) -> Result<(), Error> {
-        for file in self.files {
-            file.commit()?;
-        }
-        Ok(())
-    }
-}
-
 // == Preparation
 
 /// Reads every skeleton before any destination can replace an input.
@@ -61,7 +41,7 @@ fn prepare_splice_files_impl(
     spec_pl: &pl::Spec,
     path_pairs: &[(PathBuf, PathBuf)],
     sources: &[(String, String)],
-) -> Result<PreparedSplice, Error> {
+) -> Result<Vec<PendingFile>, Error> {
     // Complete string splicing before staging any output
     let sources: Vec<_> = sources
         .iter()
@@ -77,7 +57,20 @@ fn prepare_splice_files_impl(
     for ((_, path_output), text) in path_pairs.iter().zip(texts) {
         files.push(PendingFile::new(path_output, &text)?);
     }
-    Ok(PreparedSplice { files })
+    Ok(files)
+}
+
+// == Commit
+
+/// Replaces destinations in input order, consuming the staged outputs.
+///
+/// Replacements are atomic per file;
+/// a later failure retains earlier commits and removes uncommitted outputs.
+fn commit_splice_files(files: Vec<PendingFile>) -> Result<(), Error> {
+    for file in files {
+        file.commit()?;
+    }
+    Ok(())
 }
 
 // == Entry points
@@ -92,7 +85,8 @@ pub fn splice_files(
     path_pairs: &[(PathBuf, PathBuf)],
 ) -> Result<(), Error> {
     let sources = read_sources(path_pairs)?;
-    prepare_splice_files_impl(&mut Vec::new(), spec_el, spec_pl, path_pairs, &sources)?.commit()
+    let files = prepare_splice_files_impl(&mut Vec::new(), spec_el, spec_pl, path_pairs, &sources)?;
+    commit_splice_files(files)
 }
 
 /// Replaces output files and retains warnings even when splicing fails.
@@ -117,5 +111,5 @@ pub fn splice_files_with_warnings(
         renderer.insert_source(file, text);
     }
     // Commit only fully prepared batches, retaining warnings on failure
-    (result.and_then(PreparedSplice::commit), warnings)
+    (result.and_then(commit_splice_files), warnings)
 }
