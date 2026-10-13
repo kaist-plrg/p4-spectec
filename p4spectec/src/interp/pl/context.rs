@@ -26,7 +26,7 @@ use super::prepare::PrepareContext;
 pub use shared::Scope;
 
 /// Stores loaded PL definitions and prepared callables.
-pub type SpecEnv = shared::SpecEnv<ast::RelDef, ast::MetaFuncDef>;
+pub type SpecEnv = shared::Global<ast::RelDef, ast::MetaFuncDef>;
 
 /// Holds local PL bindings over borrowed global definitions.
 pub type Context<'global> = shared::Context<'global, ast::RelDef, ast::MetaFuncDef>;

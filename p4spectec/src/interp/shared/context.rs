@@ -1,6 +1,6 @@
 //! Loaded definitions, local bindings, and shared context access
 //!
-//! Stage-specific loaders prepare callables into `SpecEnv<R, F>`.
+//! Stage-specific loaders prepare callables into `Global<R, F>`.
 //! A `Context` borrows those globals and owns persistent local bindings;
 //! cloning preserves its scope, while `localize` starts a fresh one.
 //! `ReadContext`, `WriteContext`, and `IterContext` serve shared evaluation;
@@ -156,13 +156,13 @@ pub enum Scope {
 
 /// Stores type definitions and prepared relation and function callables.
 #[derive(Debug)]
-pub struct SpecEnv<R, F> {
+pub struct Global<R, F> {
     tdenv: TDEnv,
     renv: IdMap<Callable<R>>,
     fenv: IdMap<Rc<Callable<F>>>,
 }
 
-impl<R, F> SpecEnv<R, F> {
+impl<R, F> Global<R, F> {
     // == Constructors
 
     /// Creates empty environments for a stage-specific loader.
@@ -245,7 +245,7 @@ impl<F> Clone for Local<F> {
 /// Combines borrowed global definitions with local bindings of one call.
 #[derive(Debug)]
 pub struct Context<'global, R, F> {
-    spec_env: &'global SpecEnv<R, F>,
+    spec_env: &'global Global<R, F>,
     local: Local<F>,
 }
 
@@ -259,7 +259,7 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     // == Constructors
 
     /// Creates a context with no local bindings.
-    pub fn new(spec_env: &'global SpecEnv<R, F>) -> Self {
+    pub fn new(spec_env: &'global Global<R, F>) -> Self {
         Self { spec_env, local: Local::default() }
     }
 
