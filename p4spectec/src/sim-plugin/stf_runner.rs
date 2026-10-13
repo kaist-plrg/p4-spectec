@@ -22,9 +22,9 @@ use crate::lang::{
     traits::print::Print,
 };
 
-use crate::runner::{Backend, ExternError, Interface, Interpreter, Runner, RunnerContext};
-
-use crate::interface::p4::{error::P4Error, parse};
+use crate::runner::{
+    Backend, ExternError, Interface, InterfaceError, Interpreter, Runner, RunnerContext,
+};
 
 use crate::stf::{
     self,
@@ -158,7 +158,9 @@ where
     // Each program starts from an empty arena and cleared extern state
     runner.reset();
     arena.reset_values();
-    let program = parse::parse_file(arena, includes, path).map_err(P4Error::into_report)?;
+    let program = runner
+        .parse_program(arena, includes, &[path.to_path_buf()])
+        .map_err(InterfaceError::into_report)?;
     let state = match &mut runner.backend {
         Backend::Al { spec_env, interp } => {
             let mut ctx = RunnerContext::new(

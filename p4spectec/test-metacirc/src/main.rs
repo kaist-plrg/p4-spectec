@@ -15,15 +15,16 @@ use std::{
 };
 
 use p4spectec::{
+    interface::p4::P4Interface,
     lang::data::{
         arena::Arena,
         value::flat::{Value, get},
     },
-    runner::{self, BuiltinInterface, Config, NullExtern, Runner},
+    runner::{self, Config, NullExtern, Runner},
 };
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
-type MetaRunner = Runner<BuiltinInterface, NullExtern>;
+type MetaRunner = Runner<P4Interface, NullExtern>;
 
 fn main() -> Result<()> {
     snapshot::run()?;
