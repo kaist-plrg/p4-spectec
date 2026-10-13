@@ -22,24 +22,21 @@ use super::{BuiltinError, fresh, ints, lists, maps, nats, numerics, sets, texts}
 /// A builtin body: arena, type arguments, values in; a value out.
 pub type BuiltinImpl = Box<dyn FnMut(&mut Arena, &[Typ], &[Value]) -> Result<Value, BuiltinError>>;
 
-/// A builtin whose mutable state is reset between programs.
-pub(super) trait StatefulBuiltin {
-    fn invoke(
-        &mut self,
-        arena: &mut Arena,
-        targs: &[Typ],
-        values: &[Value],
-    ) -> Result<Value, BuiltinError>;
+/// A builtin whose successful result may be memoized.
+type PureBuiltin = BuiltinImpl;
 
-    fn clear(&mut self);
+/// A builtin body and the factory that recreates its initial state.
+struct ImpureBuiltin {
+    builtin_impl: BuiltinImpl,
+    init: fn() -> BuiltinImpl,
 }
 
 /// A registered builtin and whether calling it has effects.
 enum BuiltinEntry {
     /// No effects; the interpreter may memoize the result.
-    Pure(BuiltinImpl),
+    Pure(PureBuiltin),
     /// Has effects; every call runs.
-    Impure(Box<dyn StatefulBuiltin>),
+    Impure(ImpureBuiltin),
 }
 
 // == Builtin registry
@@ -106,7 +103,13 @@ impl Builtins {
             ("adds_map".to_owned(), BuiltinEntry::Pure(Box::new(maps::adds_map))),
             ("update_map".to_owned(), BuiltinEntry::Pure(Box::new(maps::update_map))),
             // Fresh type id
-            ("fresh_typeId".to_owned(), BuiltinEntry::Impure(Box::<fresh::Fresh>::default())),
+            (
+                "fresh_typeId".to_owned(),
+                BuiltinEntry::Impure(ImpureBuiltin {
+                    builtin_impl: fresh::init(),
+                    init: fresh::init,
+                }),
+            ),
             // Numerics
             ("shl".to_owned(), BuiltinEntry::Pure(Box::new(numerics::shl))),
             ("shr".to_owned(), BuiltinEntry::Pure(Box::new(numerics::shr))),
@@ -150,8 +153,8 @@ impl Builtins {
     pub fn init(&mut self) {
         for entry in self.funcs.values_mut() {
             // Pure entries have no program-owned state to reset
-            if let BuiltinEntry::Impure(builtin_impl) = entry {
-                builtin_impl.clear();
+            if let BuiltinEntry::Impure(builtin) = entry {
+                builtin.builtin_impl = (builtin.init)();
             }
         }
     }
@@ -180,8 +183,8 @@ impl Builtins {
                 let effect = if result.is_err() { SideEffect::Impure } else { SideEffect::Pure };
                 (result, effect)
             }
-            BuiltinEntry::Impure(builtin_impl) => {
-                (builtin_impl.invoke(arena, targs, values), SideEffect::Impure)
+            BuiltinEntry::Impure(builtin) => {
+                ((builtin.builtin_impl)(arena, targs, values), SideEffect::Impure)
             }
         };
         Eval::new(result, effect)
