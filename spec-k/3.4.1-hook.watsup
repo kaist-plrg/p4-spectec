@@ -117,7 +117,11 @@ def $hook(D, "INT.signExtendBitRange", sort, ([INT i, INT i_o, INT i_l]))
   -- if n_p = $nat_of($(i_l - 1))
   -- if i_b = $int_bit_range(i, n_o, n_l)
   -- if $(i_b >= $int_pow(2, n_p))
+;;; A ^%Int B C is (A ^Int B) %Int C (domains.md), so not defined for a
+;;; negative B or a C of 0; the LLVM backend takes an inverse for a negative B
+
 def $hook(D, "INT.powmod", sort, ([INT i_1, INT i_2, INT i_m])) = OK (INT i)
+  -- if $(i_2 >= 0) /\ i_m =/= 0
   -- if i = $int_powmod(i_1, i_2, i_m)
 
 ;;; KEQUAL (#if is lazy and handled by the evaluator)
@@ -157,24 +161,61 @@ def $hook(D, "STRING.chr", sort, ([INT i])) = OK (STRING $string_chr(i))
   -- if $(0 <= i) /\ $(i <= 255)
 def $hook(D, "STRING.int2string", sort, ([INT i]))
   = OK (STRING $int_to_string(i))
+;;; String2Int and String2Base read a sign, then digits of the radix, which is
+;;; 2 to 36 (domains.md); the LLVM backend also skips white space, reads "+-",
+;;; and takes other radixes
+
+dec $digit_value(text) : int
+def $digit_value(t) = i
+  -- if i = $string_find("0123456789abcdefghijklmnopqrstuvwxyz", t, 0)
+  -- if $(i >= 0)
+def $digit_value(t) = $string_find("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", t, 0)
+  -- otherwise
+
+dec $digits_from(text, int, int, int) : bool
+def $digits_from(t, i_b, i, i_e) = true
+  -- if $(i >= i_e)
+def $digits_from(t, i_b, i, i_e)
+  = $(0 <= i_d) /\ $(i_d < i_b) /\ $digits_from(t, i_b, $(i + 1), i_e)
+  -- if $(i < i_e)
+  -- if i_d = $digit_value($string_substr(t, i, $(i + 1)))
+
+dec $sign_length(text) : int
+def $sign_length(t) = 1
+  -- if $($string_length(t) > 0)
+  -- if $string_substr(t, 0, 1) <- [ "+", "-" ]
+def $sign_length(t) = 0
+  -- otherwise
+
+dec $in_base(text, int) : bool
+  hint(prose_in %0 "is a sign and digits in base" %1)
+def $in_base(t, i_b) = $(i_s < i_n) /\ $digits_from(t, i_b, i_s, i_n)
+  -- if i_n = $string_length(t)
+  -- if i_s = $sign_length(t)
+
 def $hook(D, "STRING.string2int", sort, ([STRING t])) = OK (INT i)
+  -- if $in_base(t, 10)
   -- if i = $string_to_int(t)
 def $hook(D, "STRING.string2base", sort, ([STRING t, INT i_b])) = OK (INT i)
+  -- if $(2 <= i_b) /\ $(i_b <= 36)
+  -- if $in_base(t, i_b)
   -- if i = $string_to_base(t, i_b)
 
-;;; Replacing: replaceAll replaces as many occurrences as the string has bytes
+;;; Replacing and counting: occurrences do not overlap, as in the equations of
+;;; domains.md; counting the empty string does not end there
 
 def $hook(D, "STRING.replace", sort,
           ([STRING t, STRING t_n, STRING t_r, INT i]))
   = OK (STRING $string_replace(t, t_n, t_r, n))
   -- if n = $nat_of(i)
 def $hook(D, "STRING.replaceAll", sort, ([STRING t, STRING t_n, STRING t_r]))
-  = OK (STRING $string_replace(t, t_n, t_r, n))
-  -- if n = $nat_of($string_length(t))
+  = OK (STRING $string_replace(t, t_n, t_r, $string_count(t, t_n)))
+  -- if t_n =/= ""
 def $hook(D, "STRING.replaceFirst", sort, ([STRING t, STRING t_n, STRING t_r]))
   = OK (STRING $string_replace(t, t_n, t_r, 1))
 def $hook(D, "STRING.countAllOccurrences", sort, ([STRING t, STRING t_n]))
   = OK (INT $string_count(t, t_n))
+  -- if t_n =/= ""
 
 ;;; The text of a token, possibly under one injection, or of a string
 

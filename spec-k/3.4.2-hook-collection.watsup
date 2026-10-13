@@ -92,6 +92,11 @@ def $hook(D, "MAP.lookupOrDefault", sort, ([MAP sort_m M, term_k, term_d]))
 def $hook(D, "MAP.lookupOrDefault", sort, ([MAP sort_m M, term_k, term_d]))
   = OK term_d
   -- if eps = $find_map<term, term>(M, term_k)
+;;; inclusion: whether the entries of the first are in the second, so true for
+;;; equal maps, as in the LLVM backend; domains.md says "strict subset"
+
+def $hook(D, "MAP.inclusion", sort, ([MAP sort_1 M_1, MAP sort_2 M_2]))
+  = OK (BOOL ($diff_set<pair<term, term>>(M_1, M_2) = `{ eps `}))
 def $hook(D, "MAP.size", sort, ([MAP sort_m `{ (term_k ':' term_v)* `}]))
   = OK (INT $(|term_k*|))
 
@@ -108,6 +113,8 @@ def $hook(D, "SET.unit", sort, eps) = OK (SET sort `{ eps `})
 def $hook(D, "SET.element", sort, ([term])) = OK (SET sort `{ term `})
 def $hook(D, "SET.concat", sort, ([SET sort_1 S_1, SET sort_2 S_2]))
   = OK (SET sort $union_set<term>(S_1, S_2))
+def $hook(D, "SET.inclusion", sort, ([SET sort_1 S_1, SET sort_2 S_2]))
+  = OK (BOOL ($diff_set<term>(S_1, S_2) = `{ eps `}))
 def $hook(D, "SET.difference", sort, ([SET sort_1 S_1, SET sort_2 S_2]))
   = OK (SET sort_1 $diff_set<term>(S_1, S_2))
 def $hook(D, "SET.intersection", sort, ([SET sort_1 S_1, SET sort_2 S_2]))

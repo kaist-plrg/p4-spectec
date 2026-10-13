@@ -149,9 +149,11 @@ let string_to_base : impl =
   in
   opt_int add (parse_base (Value.Get.text s) base)
 
-(* Positions where needle occurs in s, searching again one byte after each
-   match (so matches may overlap), at most limit of them, as hook_STRING_replace
-   and hook_STRING_countAllOccurrences *)
+(* Positions where needle occurs in s, searching again after the end of each
+   match, at most limit of them, as the equations of replace and
+   countAllOccurrences in domains.md. hook_STRING_replace and
+   hook_STRING_countAllOccurrences search again one byte after each match, so
+   that matches overlap. *)
 let occurrences (s : string) (needle : string) (limit : int) : int list =
   let n = String.length s and k = String.length needle in
   let matches_at p = p + k <= n && String.sub s p k = needle in
@@ -163,12 +165,12 @@ let occurrences (s : string) (needle : string) (limit : int) : int list =
       in
       match next p with
       | None -> List.rev acc
-      | Some q -> go (q + 1) (q :: acc) (count + 1)
+      | Some q -> go (q + k) (q :: acc) (count + 1)
   in
   go 0 [] 0
 
-(* dec $string_replace(text, text, text, nat) : text -- as hook_STRING_replace:
-   the first count occurrences of needle are replaced *)
+(* dec $string_replace(text, text, text, nat) : text -- the first count
+   occurrences of needle are replaced *)
 let string_replace : impl =
  fun add at targs vs ->
   Extract.zero at targs;
@@ -191,7 +193,7 @@ let string_replace : impl =
       text add (Buffer.contents b)
   | _ -> Builtin.Error.error at "string_replace: expected four arguments"
 
-(* dec $string_count(text, text) : nat -- as hook_STRING_countAllOccurrences *)
+(* dec $string_count(text, text) : nat -- the occurrences of a nonempty needle *)
 let string_count : impl =
  fun add at targs vs ->
   Extract.zero at targs;
@@ -378,13 +380,13 @@ let int_to_float : impl =
   let i, p, e = Extract.three at vs in
   float add (Floats.of_int (z i) (small p) (small e))
 
-(* dec $float_literal(text) : text? -- a KORE float literal in the format
-   the backend prints, or none when it is not one *)
+(* dec $float_literal(text) : text? -- the value of a KORE float literal in
+   the format the backend prints, or none when it is not one *)
 let float_literal : impl =
  fun add at targs vs ->
   Extract.zero at targs;
   let v =
-    match Floats.normalize (Value.Get.text (Extract.one at vs)) with
+    match Floats.literal (Value.Get.text (Extract.one at vs)) with
     | s -> Some (Value.Make.text s)
     | exception Floats.Bad_float _ -> None
   in

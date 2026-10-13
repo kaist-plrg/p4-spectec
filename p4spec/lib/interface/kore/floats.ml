@@ -100,9 +100,6 @@ let to_string (f : t) : string =
     in
     sign ^ "0." ^ digits ^ "e" ^ e ^ suffix
 
-(* A literal in the canonical form: equal floats get equal text *)
-let normalize (s : string) : string = to_string (of_literal s)
-
 (* Arithmetic, as runtime/arithmetic/float.cpp. An operation runs with MPFR's
    exponent range narrowed to the result's format (mpfr_enter), rounds to
    nearest, and then rounds into that range including subnormals before the
@@ -129,6 +126,18 @@ let in_format (prec : int) (exp : int) (op : unit -> M.mpfr_float) : t =
       { prec; exp; value = x })
 
 let rnd = M.To_Nearest
+
+(* The value of a Float literal, in the canonical form: the number rounded to
+   the precision and the exponent range of its format, as an IEEE 754 type
+   (domains.md, "Float literals"). The LLVM backend rounds to the precision
+   only (CreateStaticTerm.cpp), so that 1e400 stays finite. *)
+let literal (s : string) : string =
+  let prec, exp = format_of_literal s in
+  let number = number_of_literal s in
+  if not (is_number number) then raise (Bad_float s);
+  to_string
+    (in_format prec exp (fun () ->
+         M.make_from_str ~prec ~rnd:M.To_Nearest ~base:10 number))
 
 (* Unary and binary operations: the result has the format of the first argument *)
 let unary (op : M.mpfr_float -> M.mpfr_float) (a : t) : t =

@@ -28,6 +28,10 @@
 #   cache_size   entries of the executor's call cache (SPECTEC_CACHE_SIZE;
 #                default 32768); fewer bound the memory of large configurations
 #   skip         programs (glob patterns) never run, with why in comments
+#   known        known failures (glob patterns): programs on which the spec
+#                follows K's documentation and krun does not (D4 in the
+#                k-in-p4 repository); reported as known failures, and as
+#                failures if they pass
 #   quick        programs of a quick run
 #
 # The tutorial languages leave out the programs that the tutorial Makefiles do
@@ -270,6 +274,10 @@ src = "spec"
 dir = "spec-k/test/equality"
 def = "equality.k"
 ext = "equality"
+known = [
+  # countAllOccurrences counts overlapping occurrences (behavior e27)
+  "strings.equality",
+]
 quick = [
   "bytes-match.equality",
   "compare.equality",
@@ -322,10 +330,76 @@ quick = [
   "setelement.errors",
 ]
 
+# K behaviours that the K documentation leaves open or states otherwise, by
+# test number of k-findings.md in the k-in-p4 repository
+[suite.behavior]
+src = "spec"
+dir = "spec-k/test/behavior"
+def = "behavior.k"
+ext = "behavior"
+skip = [
+  # a fresh variable in a function equation: following the documentation
+  # needs a counter through all of evaluation; not supported
+  "e21-fresh-in-function.behavior",
+]
+known = [
+  # choice and Set2List differ on ==K-equal collections
+  "e02-choice.behavior",
+  "e03-rangemap-choice.behavior",
+  # updateList does not check the bounds at index 0
+  "e04-updatelist-index0.behavior",
+  "e05-updatelist-index0-long.behavior",
+  # the square root of -0.0 is +0.0, not -0.0 as in IEEE 754
+  "e17-sqrt-negative-zero.behavior",
+  # occurrences overlap in countAllOccurrences and replaceAll, and replaceAll
+  # loses characters
+  "e12-constant-folding.behavior",
+  "e22-replaceall-overlap.behavior",
+  "e27-count-overlap.behavior",
+  # padding does not check the value when no byte is added
+  "e15-padright-value.behavior",
+  # String2Int and String2Base take white space and radixes above 36
+  "e18-string2int-space.behavior",
+  "e26-string2base-radix.behavior",
+  # a Float literal is not rounded to the exponent range
+  "e23-float-literal-range.behavior",
+  # ^%Int takes an inverse for a negative exponent
+  "e24-powmod-negative.behavior",
+]
+quick = [
+  "e01-inclusion.behavior",
+  "e02-choice.behavior",
+  "e03-rangemap-choice.behavior",
+  "e04-updatelist-index0.behavior",
+  "e05-updatelist-index0-long.behavior",
+  "e06-getenv.behavior",
+  "e07-or-left.behavior",
+  "e08-or-right.behavior",
+  "e09-injection-eq.behavior",
+  "e10-list-lookup-outside.behavior",
+  "e11-list-lookup.behavior",
+  "e12-constant-folding.behavior",
+  "e13-implies-short.behavior",
+  "e14-and-short.behavior",
+  "e15-padright-value.behavior",
+  "e16-mint-div-zero.behavior",
+  "e17-sqrt-negative-zero.behavior",
+  "e18-string2int-space.behavior",
+  "e19-int2bytes-negative.behavior",
+  "e20-same-priority.behavior",
+  "e22-replaceall-overlap.behavior",
+  "e23-float-literal-range.behavior",
+  "e24-powmod-negative.behavior",
+  "e25-powmod-zero.behavior",
+  "e26-string2base-radix.behavior",
+  "e27-count-overlap.behavior",
+]
+
 # The regression tests of K (in dir) that kompile with the LLVM backend and
 # krun their programs through ktest.mak, with the settings of their Makefiles.
 # Those run with --search are checked step by step, with the --depth of the
 # Makefile as the step limit.
+
 [regression]
 dir = "k-distribution/tests/regression-new"
 # skip names tests or <test>/<program>, quick <test>/<program>
