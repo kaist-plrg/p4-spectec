@@ -153,6 +153,15 @@ pub fn run(modules: &Modules, suite: Option<Suite>, path_cli: Option<&Path>) -> 
     Ok(())
 }
 
+/// Selects the expected result independently of diagnostic severity.
+#[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum Outcome {
+    Success,
+    #[default]
+    Failure,
+}
+
 /// Supplies fixture paths relative to the test-driver manifest directory.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -161,7 +170,7 @@ pub struct Case {
     pub input: PathBuf,
     pub expected: PathBuf,
     #[serde(default)]
-    pub allow_success: bool,
+    pub outcome: Outcome,
     #[serde(default)]
     pub code: Option<String>,
     #[serde(default)]
@@ -222,6 +231,18 @@ fn load(path: &Path, cli_only: bool) -> Result<Vec<Group>> {
 }
 
 impl Case {
+    /// Checks the operation result against its registered expectation.
+    fn check_outcome(&self, success: bool) -> Result<()> {
+        let outcome = if success { Outcome::Success } else { Outcome::Failure };
+        if outcome != self.outcome {
+            return Err(failure(
+                &self.name,
+                format!("expected {:?}, got {outcome:?}", self.outcome),
+            ));
+        }
+        Ok(())
+    }
+
     /// Selects subprocess acceptance for an exact argument-file input.
     pub fn uses_cli(&self) -> bool {
         self.input.extension().is_some_and(|ext| ext == "args")
