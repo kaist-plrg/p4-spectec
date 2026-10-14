@@ -1,10 +1,10 @@
 //! Cached notation parsing directly into flat mixops
 //!
 //! EL types supply argument positions and atoms without a tree mixop.
-//! Runtime arenas own their parsed handles; read-only string matching uses
-//! a separate pattern arena and compares structures across arenas.
+//! The parser caches EL types independently of runtime storage.
+//! Each caller interns notation into its own arena and compares canonical ids.
 
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::frontend::{error::FrontendError, parse::parse_typ};
 use crate::lang::el::ast::{NotTyp, NotTypKind, Typ};
@@ -23,33 +23,40 @@ pub(crate) enum ParseMixopError {
     Intern(#[from] MixopError),
 }
 
-/// Parses notation once per spelling and destination arena.
+thread_local! {
+    /// Parsed EL types without arena-owned handles.
+    static TYPES: RefCell<HashMap<String, Rc<Typ>>> = RefCell::new(HashMap::new());
+}
+
+/// Reuses a parsed EL type and interns its notation into the supplied arena.
 pub(crate) fn mixop_cached(
     arena_mixop: &mut MixopArena,
     text: &str,
 ) -> Result<Mixop, ParseMixopError> {
-    // Reuse only handles owned by this destination
-    if let Some(mixop) = arena_mixop.mixops_by_text.get(text) {
-        return Ok(*mixop);
-    }
-    // Cache successful parses, including dynamically decoded spellings
-    let typ_el = parse_typ(text)?;
-    let mixop = typ_el.to_mixop(arena_mixop)?;
-    arena_mixop.mixops_by_text.insert(text.to_owned(), mixop);
-    Ok(mixop)
+    // Cache successful parses without retaining runtime arena handles
+    let typ_el = TYPES.with(|types| -> Result<Rc<Typ>, FrontendError> {
+        if let Some(typ_el) = types.borrow().get(text) {
+            return Ok(Rc::clone(typ_el));
+        }
+        let typ_el = Rc::new(parse_typ(text)?);
+        types
+            .borrow_mut()
+            .insert(text.to_owned(), Rc::clone(&typ_el));
+        Ok(typ_el)
+    })?;
+    // Intern into the caller's arena on both cache hits and misses
+    Ok(typ_el.to_mixop(arena_mixop)?)
 }
 
-/// Compares a runtime notation against a cached fixed spelling without mutation.
-pub(crate) fn matches_string(arena_mixop: &MixopArena, mixop: Mixop, text: &'static str) -> bool {
-    thread_local! {
-        static PATTERNS: RefCell<MixopArena> = RefCell::new(MixopArena::new());
-    }
-    PATTERNS.with(|patterns| {
-        let mut arena_pattern = patterns.borrow_mut();
-        let mixop_pattern = mixop_cached(&mut arena_pattern, text)
-            .expect("value pattern contains a valid SpecTec mixop");
-        mixop.syntax_eq_in(arena_mixop, mixop_pattern, &arena_pattern)
-    })
+/// Compares a runtime notation against a fixed spelling in the same arena.
+pub(crate) fn matches_string(
+    arena_mixop: &mut MixopArena,
+    mixop: Mixop,
+    text: &'static str,
+) -> bool {
+    let mixop_pattern =
+        mixop_cached(arena_mixop, text).expect("value pattern contains a valid SpecTec mixop");
+    arena_mixop.canon_id(mixop) == arena_mixop.canon_id(mixop_pattern)
 }
 
 impl Typ {

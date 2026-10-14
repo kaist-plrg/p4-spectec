@@ -297,7 +297,7 @@ where
     let name = value::get::text(ctx.arena(), value_name)?.to_owned();
     let object = match name.as_str() {
         "counter" => Some(ObjectState::Counter(Counter::init(
-            ctx.arena(),
+            ctx.arena_mut(),
             *value_targs,
             *value_ids,
             *value_args,
@@ -306,13 +306,13 @@ where
             Some(ObjectState::Register(Register::init(ctx, *value_targs, *value_ids, *value_args)?))
         }
         "direct_counter" => Some(ObjectState::DirectCounter(DirectCounter::init(
-            ctx.arena(),
+            ctx.arena_mut(),
             *value_targs,
             *value_ids,
             *value_args,
         )?)),
         "direct_meter" => Some(ObjectState::DirectMeter(DirectMeter::init(
-            ctx.arena(),
+            ctx.arena_mut(),
             *value_targs,
             *value_ids,
             *value_args,
@@ -770,7 +770,7 @@ where
         "standard_metadata",
         "egress_spec",
     )?;
-    let (width, int) = unpack::p4_fixed_bit(ctx.arena(), &value)?;
+    let (width, int) = unpack::p4_fixed_bit(ctx.arena_mut(), &value)?;
     Ok(width == 9.into() && int == 511.into())
 }
 
@@ -791,7 +791,8 @@ where
             "standard_metadata",
             "mcast_grp",
         )?;
-        usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1).map_err(ExternError::from)
+        usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value)?.1)
+            .map_err(ExternError::from)
     }?;
     Ok(group)
 }
@@ -855,7 +856,7 @@ where
         rel::v1model_parser(ctx, state.value_ctx, state.value_arch)?;
     (state.value_ctx, state.value_arch) = (value_ctx, value_arch);
     // A `REJECT` carries the error value
-    let value_error = value::get::matches_string! { ctx.arena(), &value_call_result,
+    let value_error = value::get::matches_string! { ctx.arena_mut(), &value_call_result,
         "REJECT errorValue" => |values| match values {
             [value_error] => Some(*value_error),
             _ => return Err(ExternError::from(ValueError::CountMismatch {
@@ -965,7 +966,8 @@ where
             "standard_metadata",
             "egress_spec",
         )?;
-        usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1).map_err(ExternError::from)
+        usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value)?.1)
+            .map_err(ExternError::from)
     }?;
     // Emitted headers followed by the unparsed payload
     let packet = {

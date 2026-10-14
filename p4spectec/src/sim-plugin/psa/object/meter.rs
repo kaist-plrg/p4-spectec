@@ -48,7 +48,7 @@ impl Meter {
     /// Meter(bit<32> n_meters, PSA_MeterType_t type);
     /// ```
     pub fn init(
-        arena: &Arena,
+        arena: &mut Arena,
         _value_targs: Value,
         value_ids: Value,
         value_args: Value,

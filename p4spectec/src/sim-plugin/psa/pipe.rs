@@ -381,7 +381,7 @@ where
     let name = value::get::text(ctx.arena(), value_name)?.to_owned();
     let object = match name.as_str() {
         "Counter" => Some(ObjectState::Counter(Counter::init(
-            ctx.arena(),
+            ctx.arena_mut(),
             *value_targs,
             *value_ids,
             *value_args,
@@ -390,14 +390,14 @@ where
             Some(ObjectState::Register(Register::init(ctx, *value_targs, *value_ids, *value_args)?))
         }
         "Hash" => Some(ObjectState::Hash(HashExtern::init(
-            ctx.arena(),
+            ctx.arena_mut(),
             *value_targs,
             *value_ids,
             *value_args,
         )?)),
         "InternetChecksum" => Some(ObjectState::InternetChecksum(InternetChecksum::init())),
         "Meter" => Some(ObjectState::Meter(Meter::init(
-            ctx.arena(),
+            ctx.arena_mut(),
             *value_targs,
             *value_ids,
             *value_args,
@@ -864,7 +864,7 @@ where
         "ingress_output_metadata",
         "clone",
     )?;
-    unpack::p4_bool(ctx.arena(), &value)
+    unpack::p4_bool(ctx.arena_mut(), &value)
 }
 
 /// Whether ingress requested a drop.
@@ -883,7 +883,7 @@ where
         "ingress_output_metadata",
         "drop",
     )?;
-    unpack::p4_bool(ctx.arena(), &value)
+    unpack::p4_bool(ctx.arena_mut(), &value)
 }
 
 /// Whether ingress requested a resubmit.
@@ -902,7 +902,7 @@ where
         "ingress_output_metadata",
         "resubmit",
     )?;
-    unpack::p4_bool(ctx.arena(), &value)
+    unpack::p4_bool(ctx.arena_mut(), &value)
 }
 
 /// The clone session id requested by ingress.
@@ -921,7 +921,7 @@ where
         "ingress_output_metadata",
         "clone_session_id",
     )?;
-    Ok(usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1)?)
+    Ok(usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value)?.1)?)
 }
 
 /// The multicast group requested by ingress.
@@ -940,7 +940,7 @@ where
         "ingress_output_metadata",
         "multicast_group",
     )?;
-    Ok(usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1)?)
+    Ok(usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value)?.1)?)
 }
 
 /// Whether egress requested a clone.
@@ -959,7 +959,7 @@ where
         "egress_output_metadata",
         "clone",
     )?;
-    unpack::p4_bool(ctx.arena(), &value)
+    unpack::p4_bool(ctx.arena_mut(), &value)
 }
 
 /// Whether egress requested a drop.
@@ -978,7 +978,7 @@ where
         "egress_output_metadata",
         "drop",
     )?;
-    unpack::p4_bool(ctx.arena(), &value)
+    unpack::p4_bool(ctx.arena_mut(), &value)
 }
 
 /// Whether the egress port is the recirculation port.
@@ -997,7 +997,7 @@ where
         "egress_input_metadata",
         "egress_port",
     )?;
-    let (width_port, int_port) = unpack::p4_fixed_bit(ctx.arena(), &value_port)?;
+    let (width_port, int_port) = unpack::p4_fixed_bit(ctx.arena_mut(), &value_port)?;
     // The recirculation port is the 32-bit value 0xfffffffa
     Ok(width_port == 32.into() && int_port == 0xffff_fffa_u32.into())
 }
@@ -1018,7 +1018,7 @@ where
         "egress_output_metadata",
         "clone_session_id",
     )?;
-    Ok(usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1)?)
+    Ok(usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value)?.1)?)
 }
 
 // == Pipeline initializer
@@ -1055,7 +1055,8 @@ where
             "ingress_output_metadata",
             "egress_port",
         )?;
-        usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1).map_err(ExternError::from)
+        usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value)?.1)
+            .map_err(ExternError::from)
     }?;
     let cos = {
         let value = rel::lvalue_read_dot_global(
@@ -1065,7 +1066,8 @@ where
             "ingress_output_metadata",
             "class_of_service",
         )?;
-        usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1).map_err(ExternError::from)
+        usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value)?.1)
+            .map_err(ExternError::from)
     }?;
     // Fill egress input metadata for this replica
     state.value_ctx = rel::psa_egress_init_metadata(
@@ -1099,7 +1101,8 @@ where
             "ingress_output_metadata",
             "class_of_service",
         )?;
-        usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1).map_err(ExternError::from)
+        usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value)?.1)
+            .map_err(ExternError::from)
     }?;
     // Fill egress input metadata for this replica
     state.value_ctx = rel::psa_egress_init_metadata(
@@ -1133,7 +1136,8 @@ where
             "ingress_output_metadata",
             "class_of_service",
         )?;
-        usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1).map_err(ExternError::from)
+        usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value)?.1)
+            .map_err(ExternError::from)
     }?;
     // Fill egress input metadata for this replica
     state.value_ctx = rel::psa_egress_init_metadata(
@@ -1167,7 +1171,8 @@ where
             "egress_input_metadata",
             "class_of_service",
         )?;
-        usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1).map_err(ExternError::from)
+        usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value)?.1)
+            .map_err(ExternError::from)
     }?;
     // Fill egress input metadata for this replica
     state.value_ctx = rel::psa_egress_init_metadata(
@@ -1199,7 +1204,8 @@ where
             "ingress_input_metadata",
             "ingress_port",
         )?;
-        usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1).map_err(ExternError::from)
+        usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value)?.1)
+            .map_err(ExternError::from)
     }?;
     state.value_ctx =
         rel::psa_ingress_init_metadata(ctx, state.value_ctx, state.value_arch, port, "RESUBMIT")?;
@@ -1512,7 +1518,8 @@ where
             "egress_input_metadata",
             "egress_port",
         )?;
-        usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1).map_err(ExternError::from)
+        usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value)?.1)
+            .map_err(ExternError::from)
     }?;
     let packet = {
         let pkt_in = find_egress_packet_in(ctx, state.value_arch)?;
@@ -1577,7 +1584,7 @@ where
     let (value_ctx, value_arch, value_call_result) =
         rel::psa_ingress_parser(ctx, state.value_ctx, state.value_arch)?;
     (state.value_ctx, state.value_arch) = (value_ctx, value_arch);
-    let value_error = value::get::matches_string! { ctx.arena(), &value_call_result,
+    let value_error = value::get::matches_string! { ctx.arena_mut(), &value_call_result,
         "REJECT errorValue" => |values| match values {
             [value_error] => Some(*value_error),
             _ => return Err(ExternError::from(ValueError::CountMismatch {
@@ -1688,7 +1695,7 @@ where
     let (value_ctx, value_arch, value_call_result) =
         rel::psa_egress_parser(ctx, state.value_ctx, state.value_arch)?;
     (state.value_ctx, state.value_arch) = (value_ctx, value_arch);
-    let value_error = value::get::matches_string! { ctx.arena(), &value_call_result,
+    let value_error = value::get::matches_string! { ctx.arena_mut(), &value_call_result,
         "REJECT errorValue" => |values| match values {
             [value_error] => Some(*value_error),
             _ => return Err(ExternError::from(ValueError::CountMismatch {

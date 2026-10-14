@@ -4,8 +4,6 @@
 //! `intern` stores a tree node by node, children first,
 //! and records each new mixop's number of argument positions.
 
-use std::collections::HashMap;
-
 use crate::lang::data::intern::{CanonId, CanonInterner};
 
 use super::super::{MixopError, tree};
@@ -20,8 +18,6 @@ pub struct MixopArena {
     mixops: CanonInterner<MixopKind>,
     /// Argument positions of each mixop, by handle index.
     arities: Vec<u32>,
-    /// Notation spellings already parsed into this arena.
-    pub(crate) mixops_by_text: HashMap<String, Mixop>,
 }
 
 impl MixopArena {

@@ -192,7 +192,7 @@ impl PacketIn {
         let value_hi = pack::p4_arbitrary_int(ctx.arena_mut(), 2.into())?;
         let value_lo = pack::p4_arbitrary_int(ctx.arena_mut(), 0.into())?;
         let value_alignment = func::bitacc_range_op(ctx, value_size, value_hi, value_lo)?;
-        let alignment = (unpack::p4_fixed_bit(ctx.arena(), &value_alignment)?.1)
+        let alignment = (unpack::p4_fixed_bit(ctx.arena_mut(), &value_alignment)?.1)
             .to_usize()
             .ok_or_else(|| error::packet_size_invalid("invalid packet size".to_owned()))?;
         // The variable size as a number
@@ -379,7 +379,7 @@ impl PacketIn {
     {
         // The advance is a runtime `bit<32>`
         let value_size = func::find_var_e_local(ctx, value_ctx, "sizeInBits")?;
-        let size = (unpack::p4_fixed_bit(ctx.arena(), &value_size)?.1)
+        let size = (unpack::p4_fixed_bit(ctx.arena_mut(), &value_size)?.1)
             .to_usize()
             .ok_or_else(|| error::packet_size_invalid("invalid packet size".to_owned()))?;
         // Too few bits: reject with `PacketTooShort`

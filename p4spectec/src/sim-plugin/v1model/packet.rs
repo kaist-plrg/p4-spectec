@@ -37,7 +37,7 @@ pub struct CloneInfo(pub CloneType, pub usize, pub usize);
 impl CloneInfo {
     /// Reads the clone type, session, and field-list index from the arguments.
     pub fn new(
-        arena: &Arena,
+        arena: &mut Arena,
         value_clone_type: &Value,
         value_session: &Value,
         value_idx: &Value,
