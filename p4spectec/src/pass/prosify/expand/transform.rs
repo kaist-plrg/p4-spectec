@@ -101,7 +101,8 @@ fn expand_hold_case(ids_used: &mut IdSet, hold_case_sl: sl::HoldCase) -> sl::Hol
 /// Expands every arm's block.
 fn expand_case_instr(ids_used: &mut IdSet, mut instr_sl: sl::CaseInstr) -> sl::CaseInstr {
     for case_sl in &mut instr_sl.cases {
-        case_sl.block = expand_block(ids_used, std::mem::take(&mut case_sl.block));
+        let block_sl = sl::Block { instrs: std::mem::take(&mut case_sl.block.instrs) };
+        case_sl.block = expand_block(ids_used, block_sl);
     }
     instr_sl
 }
@@ -126,10 +127,12 @@ fn expand_debug_instr(ids_used: &mut IdSet, mut instr_sl: sl::DebugInstr) -> sl:
 
 /// Expands each instruction of a block in order.
 fn expand_block(ids_used: &mut IdSet, block_sl: sl::Block) -> sl::Block {
-    block_sl
+    let instrs = block_sl
+        .instrs
         .into_iter()
         .map(|instr_sl| expand_instr(ids_used, instr_sl))
-        .collect()
+        .collect();
+    sl::Block { instrs }
 }
 
 // == Relation definitions

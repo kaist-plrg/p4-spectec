@@ -46,7 +46,7 @@ fn exp_of_guard(exp_scrut: pl::Exp, guard: pl::Guard) -> pl::Exp {
         pl::Guard::Cmp(op, op_typ, exp_r) => {
             pl::ExpKind::Cmp(op, op_typ, Box::new(exp_scrut), Box::new(exp_r))
         }
-        pl::Guard::Sub(typ, subcheck) => pl::ExpKind::Sub(Box::new(exp_scrut), typ, subcheck),
+        pl::Guard::Sub(typ) => pl::ExpKind::Sub(Box::new(exp_scrut), typ),
         pl::Guard::Match(pattern) => pl::ExpKind::Match(Box::new(exp_scrut), pattern),
         pl::Guard::LetSub(..) | pl::Guard::LetMatch(..) => {
             unreachable!("conditional bindings are introduced after classification")
@@ -261,14 +261,14 @@ fn classify_block<Tier>(
     block: pl::Block<Tier>,
 ) -> pl::Block<Tier> {
     // Classify each instruction with all following instructions available
-    let mut instrs = Vec::with_capacity(block.len());
-    for instr in block.into_iter().rev() {
+    let mut instrs = Vec::with_capacity(block.instrs.len());
+    for instr in block.instrs.into_iter().rev() {
         instrs.push(classify_instr(has_continuation, classify_tier, instr));
         has_continuation = true;
     }
     // Restore source order after propagating continuations backwards
     instrs.reverse();
-    instrs
+    pl::Block { instrs }
 }
 
 /// Classifies alternatives with all later blocks included in their continuation.

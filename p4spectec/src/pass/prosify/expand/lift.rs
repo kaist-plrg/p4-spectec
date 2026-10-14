@@ -181,7 +181,7 @@ impl LiftedCall {
                 exp_l: exp_new_sl,
                 exp_r: exp_call_sl,
                 iter_instrs: iter_instrs_sl,
-                block: vec![instr_sl],
+                block: sl::Block { instrs: vec![instr_sl] },
             }),
             span: span,
         }
@@ -222,7 +222,7 @@ fn lift_from_exp_kind(
         il_ast::ExpKind::Un(_, _, exp_inner_sl)
         | il_ast::ExpKind::UpCast(_, exp_inner_sl)
         | il_ast::ExpKind::DownCast(_, exp_inner_sl)
-        | il_ast::ExpKind::Sub(exp_inner_sl, _, _)
+        | il_ast::ExpKind::Sub(exp_inner_sl, _)
         | il_ast::ExpKind::Match(exp_inner_sl, _)
         | il_ast::ExpKind::Len(exp_inner_sl)
         | il_ast::ExpKind::Dot(exp_inner_sl, _) => lift_from_exp(ids_used, nesting, exp_inner_sl),

@@ -160,7 +160,7 @@ impl SyntaxEq for Guard {
             (Guard::Cmp(op_l, typ_l, exp_l), Guard::Cmp(op_r, typ_r, exp_r)) => {
                 op_l == op_r && typ_l == typ_r && exp_l.syntax_eq(exp_r)
             }
-            (Guard::Sub(typ_l, _), Guard::Sub(typ_r, _)) => typ_l.syntax_eq(typ_r),
+            (Guard::Sub(typ_l), Guard::Sub(typ_r)) => typ_l.syntax_eq(typ_r),
             (Guard::Match(pattern_l), Guard::Match(pattern_r)) => pattern_l.syntax_eq(pattern_r),
             (Guard::Mem(exp_l), Guard::Mem(exp_r)) => exp_l.syntax_eq(exp_r),
             _ => false,
@@ -178,7 +178,7 @@ impl SyntaxEq for Case {
 
 impl SyntaxEq for Block {
     fn syntax_eq(&self, other: &Self) -> bool {
-        self.as_slice().syntax_eq(other.as_slice())
+        self.instrs.as_slice().syntax_eq(other.instrs.as_slice())
     }
 }
 

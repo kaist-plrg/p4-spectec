@@ -50,14 +50,6 @@ impl FreeIds for TypCase {
     }
 }
 
-// - Subtype checks
-
-impl FreeIds for Subcheck {
-    fn free_ids(&self) -> IdSet {
-        IdSet::new()
-    }
-}
-
 // - Operator types
 
 impl FreeIds for OpTyp {
@@ -78,7 +70,7 @@ impl FreeIds for ExpKind {
             Self::Un(_, _, exp)
             | Self::UpCast(_, exp)
             | Self::DownCast(_, exp)
-            | Self::Sub(exp, _, _)
+            | Self::Sub(exp, _)
             | Self::Match(exp, _)
             | Self::Len(exp)
             | Self::Dot(exp, _)
@@ -130,7 +122,7 @@ impl FreeVars for Exp {
             ExpKind::Un(_, _, exp_inner)
             | ExpKind::UpCast(_, exp_inner)
             | ExpKind::DownCast(_, exp_inner)
-            | ExpKind::Sub(exp_inner, _, _)
+            | ExpKind::Sub(exp_inner, _)
             | ExpKind::Match(exp_inner, _)
             | ExpKind::Len(exp_inner)
             | ExpKind::Dot(exp_inner, _) => exp_inner.free_vars(),

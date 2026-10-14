@@ -19,7 +19,10 @@ use crate::lang::{
     traits::eq::SyntaxEq,
 };
 
-use crate::lang::il::{ast, prepared::Prepared};
+use crate::lang::il::{
+    ast,
+    prepared::{Prepared, Subcheck},
+};
 
 use crate::runtime::ops::{
     self,
@@ -129,7 +132,7 @@ pub(crate) fn sub(
     arena: &Arena,
     ctx: &impl ReadContext,
     span: &Span,
-    subcheck: &ast::Subcheck<Prepared>,
+    subcheck: &Subcheck,
     value: Value,
 ) -> Backtrack<bool> {
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);

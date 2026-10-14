@@ -71,10 +71,6 @@ pub type BinOp = sl::ast::BinOp;
 pub type CmpOp = sl::ast::CmpOp;
 pub type OpTyp = sl::ast::OpTyp;
 
-// Subtype checks
-
-pub type Subcheck<P = Source> = sl::ast::Subcheck<P>;
-
 // Expressions
 
 /// A typed expression before annotation, sharing its SL type.
@@ -93,7 +89,7 @@ pub enum ExpKind<P: Stage = Source> {
     Cmp(CmpOp, OpTyp, Box<Exp<P>>, Box<Exp<P>>),
     UpCast(Typ, Box<Exp<P>>),
     DownCast(Typ, Box<Exp<P>>),
-    Sub(Box<Exp<P>>, Typ, Box<Subcheck<P>>),
+    Sub(Box<Exp<P>>, P::SubTarget),
     Match(Box<Exp<P>>, Pattern<P>),
     Tuple(Vec<Exp<P>>),
     Case(Box<NotExp<P>>),
@@ -198,9 +194,9 @@ pub enum Guard<P: Stage = Source> {
     /// The scrutinee compares so with the expression.
     Cmp(CmpOp, OpTyp, Exp<P>),
     /// The scrutinee has the type.
-    Sub(Typ, Box<Subcheck<P>>),
+    Sub(P::SubTarget),
     /// The scrutinee has the type and binds the expression.
-    LetSub(Typ, Box<Subcheck<P>>, Exp<P>),
+    LetSub(P::SubBind, Exp<P>),
     /// The scrutinee matches the pattern.
     Match(Pattern<P>),
     /// The scrutinee matches the pattern and binds the expression.
@@ -252,8 +248,7 @@ pub struct IfInstr<Tier, P: Stage = Source> {
 #[derive(Clone, Debug, PartialEq)]
 /// Bind a value with the required subtype and run the block.
 pub struct IfLetSubInstr<Tier, P: Stage = Source> {
-    pub typ: Typ,
-    pub subcheck: Box<Subcheck<P>>,
+    pub target: P::SubBind,
     pub exp_l: Exp<P>,
     pub exp_r: Exp<P>,
     pub block: Block<Tier, P>,
@@ -316,7 +311,10 @@ pub struct TierInstr<Tier> {
 }
 
 /// Instructions run in order.
-pub type Block<Tier, P = Source> = Vec<Instr<Tier, P>>;
+#[derive(Clone, Debug, PartialEq)]
+pub struct Block<Tier, P: Stage = Source> {
+    pub instrs: Vec<Instr<Tier, P>>,
+}
 pub type InstrIter<V = Var> = sl::ast::InstrIter<V>;
 
 // Relations

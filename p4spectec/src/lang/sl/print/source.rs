@@ -256,7 +256,7 @@ impl Print for Guard {
                 exp.print(printer)?;
                 printer.write_char(')')
             }
-            Guard::Sub(typ, _) => {
+            Guard::Sub(typ) => {
                 printer.write_str("(% has type ")?;
                 typ.print(printer)?;
                 printer.write_char(')')
@@ -314,7 +314,7 @@ fn write_block_with(
     level: usize,
     index: usize,
 ) -> fmt::Result {
-    for (offset, instr) in block.iter().enumerate() {
+    for (offset, instr) in block.instrs.iter().enumerate() {
         if offset != 0 {
             output.write_str("\n\n")?;
         }
@@ -429,7 +429,7 @@ impl Print for DefinedRel {
         write_relinput(printer, &self.rel_signature, &self.exps_input)?;
         printer.write_str("\n\n")?;
         write_block_with(printer, &self.block, 0, 0)?;
-        write_elseblock_opt_with(printer, &self.block_else, 0, self.block.len())
+        write_elseblock_opt_with(printer, &self.block_else, 0, self.block.instrs.len())
     }
 }
 
@@ -553,7 +553,7 @@ impl Print for DefinedFunc {
         self.params.as_slice().print(printer)?;
         printer.write_str("\n\n")?;
         write_block_with(printer, &self.block, 0, 0)?;
-        write_elseblock_opt_with(printer, &self.block_else, 0, self.block.len())
+        write_elseblock_opt_with(printer, &self.block_else, 0, self.block.instrs.len())
     }
 }
 

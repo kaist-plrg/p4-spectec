@@ -1,6 +1,7 @@
 //! IL syntax with resolved slots and interned mixops
 //!
-//! These aliases instantiate the shared AST with the prepared stage.
+//! These aliases instantiate the shared AST with the prepared stage;
+//! subtype checks exist only here.
 //! AL, SL, and PL reuse these expressions and supporting syntax;
 //! preparation operations live under `interp/shared/prepare`.
 
@@ -60,8 +61,28 @@ pub type TypCase = source::TypCase<Prepared>;
 
 /// A pattern over prepared mixops.
 pub type Pattern = source::Pattern<Prepared>;
-/// A runtime subtype check over prepared mixops.
-pub type Subcheck = source::Subcheck<Prepared>;
+
+/// The runtime part of a subtype check, after static subtyping is decided.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Subcheck {
+    /// Statically a subtype: nothing to check.
+    Skip,
+    /// A variant value: its case must be one of these.
+    Mixop(Vec<Mixop>),
+    /// A tuple: check each component.
+    Tuple(Vec<Subcheck>),
+    /// An option or list: check each element.
+    Iter(Iter, Box<Subcheck>),
+    /// Fall back to full membership in this type.
+    Recurse(Typ),
+}
+
+/// A binding subtype test: the type it casts to, and its runtime check.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SubBind {
+    pub typ: Typ,
+    pub subcheck: Subcheck,
+}
 
 // - Premises
 

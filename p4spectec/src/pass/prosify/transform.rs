@@ -136,9 +136,7 @@ fn prosify_exp(ctx: &Context, exp_sl: &sl::Exp) -> Result<pl::Exp, ProseError> {
         il::ExpKind::DownCast(typ, exp_inner_sl) => {
             prosify_downcast_exp(ctx, exp_sl, typ, exp_inner_sl)
         }
-        il::ExpKind::Sub(exp_inner_sl, typ, subcheck) => {
-            prosify_sub_exp(ctx, exp_sl, exp_inner_sl, typ, subcheck)
-        }
+        il::ExpKind::Sub(exp_inner_sl, typ) => prosify_sub_exp(ctx, exp_sl, exp_inner_sl, typ),
         il::ExpKind::Match(exp_inner_sl, pattern) => {
             prosify_match_exp(ctx, exp_sl, exp_inner_sl, pattern)
         }
@@ -271,11 +269,9 @@ fn prosify_sub_exp(
     exp_sl: &sl::Exp,
     exp_inner_sl: &sl::Exp,
     typ: &sl::Typ,
-    subcheck: &sl::Subcheck,
 ) -> Result<pl::Exp, ProseError> {
     let exp_inner_pl = prosify_exp(ctx, exp_inner_sl)?;
-    let exp_kind_pl =
-        pl::ExpKind::Sub(Box::new(exp_inner_pl), typ.clone(), Box::new(subcheck.clone()));
+    let exp_kind_pl = pl::ExpKind::Sub(Box::new(exp_inner_pl), typ.clone());
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.clone(),
@@ -796,7 +792,7 @@ fn prosify_guard(ctx: &Context, guard_sl: &sl::Guard) -> Result<pl::Guard, Prose
             let exp_pl = prosify_exp(ctx, exp_sl)?;
             pl::Guard::Cmp(*op, *op_typ, exp_pl)
         }
-        sl::Guard::Sub(typ, subcheck) => pl::Guard::Sub(typ.clone(), subcheck.clone()),
+        sl::Guard::Sub(typ) => pl::Guard::Sub(typ.clone()),
         sl::Guard::Match(pattern) => pl::Guard::Match(pattern.clone()),
         sl::Guard::Mem(exp_sl) => {
             let exp_pl = prosify_exp(ctx, exp_sl)?;
@@ -852,7 +848,7 @@ fn prosify_dispatch_if_instr(
         node: instr_kind_pl,
         span: span,
     };
-    Ok(vec![instr_pl])
+    Ok(pl::Block { instrs: vec![instr_pl] })
 }
 
 // - Hold instruction
@@ -887,7 +883,7 @@ fn prosify_dispatch_hold_instr(
         span: span,
         hints: hints.into_shared(),
     };
-    Ok(vec![instr_pl])
+    Ok(pl::Block { instrs: vec![instr_pl] })
 }
 
 /// Converts whichever branches a hold has.
@@ -948,7 +944,7 @@ fn prosify_dispatch_case_instr(
         node: instr_kind_pl,
         span: span,
     };
-    Ok(vec![instr_pl])
+    Ok(pl::Block { instrs: vec![instr_pl] })
 }
 
 // - Let instruction
@@ -984,8 +980,8 @@ fn prosify_dispatch_let_instr(
     // The body follows the let in the same block
     let block_pl = prosify_dispatch_block(ctx, instr_sl.block)?;
     let mut instrs_pl = vec![instr_pl];
-    instrs_pl.extend(block_pl);
-    Ok(instrs_pl)
+    instrs_pl.extend(block_pl.instrs);
+    Ok(pl::Block { instrs: instrs_pl })
 }
 
 // - Debug instruction
@@ -1003,10 +999,10 @@ fn prosify_dispatch_debug_instr(
         node: instr_kind_pl,
         span: span,
     };
-    let instrs_follow_pl = prosify_dispatch_instr(ctx, *instr_sl.instr)?;
+    let block_follow_pl = prosify_dispatch_instr(ctx, *instr_sl.instr)?;
     let mut instrs_pl = vec![instr_pl];
-    instrs_pl.extend(instrs_follow_pl);
-    Ok(instrs_pl)
+    instrs_pl.extend(block_follow_pl.instrs);
+    Ok(pl::Block { instrs: instrs_pl })
 }
 
 // - Group instruction
@@ -1044,7 +1040,7 @@ fn prosify_dispatch_rulegroup_instr(
         span: span,
         hints: hints.into_shared(),
     };
-    Ok(vec![instr_pl])
+    Ok(pl::Block { instrs: vec![instr_pl] })
 }
 
 // - Block
@@ -1054,17 +1050,17 @@ fn prosify_dispatch_block(
     ctx: &Context,
     block_sl: sl::Block,
 ) -> Result<pl::DispatchBlock, ProseError> {
-    match block_sl.len() {
-        0 => Ok(Vec::new()),
+    match block_sl.instrs.len() {
+        0 => Ok(pl::Block { instrs: Vec::new() }),
         // One instruction expands in place
         1 => {
-            let instr_sl = block_sl.into_iter().next().unwrap();
+            let instr_sl = block_sl.instrs.into_iter().next().unwrap();
             prosify_dispatch_instr(ctx, instr_sl)
         }
         _ => {
-            let span = block_sl.at();
-            let mut blocks_pl = Vec::with_capacity(block_sl.len());
-            for instr_sl in block_sl {
+            let span = block_sl.instrs.at();
+            let mut blocks_pl = Vec::with_capacity(block_sl.instrs.len());
+            for instr_sl in block_sl.instrs {
                 let block_pl = prosify_dispatch_instr(ctx, instr_sl)?;
                 blocks_pl.push(block_pl);
             }
@@ -1077,7 +1073,7 @@ fn prosify_dispatch_block(
                 node: instr_kind_pl,
                 span: span,
             };
-            Ok(vec![instr_pl])
+            Ok(pl::Block { instrs: vec![instr_pl] })
         }
     }
 }
@@ -1125,7 +1121,7 @@ fn prosify_group_if_instr(
         node: instr_kind_pl,
         span: span,
     };
-    Ok(vec![instr_pl])
+    Ok(pl::Block { instrs: vec![instr_pl] })
 }
 
 // - Hold instruction
@@ -1160,7 +1156,7 @@ fn prosify_group_hold_instr(
         span: span,
         hints: hints.into_shared(),
     };
-    Ok(vec![instr_pl])
+    Ok(pl::Block { instrs: vec![instr_pl] })
 }
 
 /// Converts whichever branches a hold has.
@@ -1221,7 +1217,7 @@ fn prosify_group_case_instr(
         node: instr_kind_pl,
         span: span,
     };
-    Ok(vec![instr_pl])
+    Ok(pl::Block { instrs: vec![instr_pl] })
 }
 
 // - Let instruction
@@ -1257,8 +1253,8 @@ fn prosify_group_let_instr(
     // The body follows the let in the same block
     let block_pl = prosify_group_block(ctx, instr_sl.block)?;
     let mut instrs_pl = vec![instr_pl];
-    instrs_pl.extend(block_pl);
-    Ok(instrs_pl)
+    instrs_pl.extend(block_pl.instrs);
+    Ok(pl::Block { instrs: instrs_pl })
 }
 
 // - Debug instruction
@@ -1276,10 +1272,10 @@ fn prosify_group_debug_instr(
         node: instr_kind_pl,
         span: span,
     };
-    let instrs_follow_pl = prosify_group_instr(ctx, *instr_sl.instr)?;
+    let block_follow_pl = prosify_group_instr(ctx, *instr_sl.instr)?;
     let mut instrs_pl = vec![instr_pl];
-    instrs_pl.extend(instrs_follow_pl);
-    Ok(instrs_pl)
+    instrs_pl.extend(block_follow_pl.instrs);
+    Ok(pl::Block { instrs: instrs_pl })
 }
 
 // - Rule instruction
@@ -1325,8 +1321,8 @@ fn prosify_group_rule_instr(
     // The bound outputs are used by the instructions that follow
     let block_pl = prosify_group_block(ctx, instr_sl.block)?;
     let mut instrs_pl = vec![instr_pl];
-    instrs_pl.extend(block_pl);
-    Ok(instrs_pl)
+    instrs_pl.extend(block_pl.instrs);
+    Ok(pl::Block { instrs: instrs_pl })
 }
 
 // - Result instruction
@@ -1359,7 +1355,7 @@ fn prosify_group_result_instr(
         span: span,
         hints: hints.into_shared(),
     };
-    Ok(vec![instr_pl])
+    Ok(pl::Block { instrs: vec![instr_pl] })
 }
 
 // - Return instruction
@@ -1379,24 +1375,24 @@ fn prosify_group_return_instr(
         node: instr_kind_pl,
         span: span,
     };
-    Ok(vec![instr_pl])
+    Ok(pl::Block { instrs: vec![instr_pl] })
 }
 
 // - Block
 
 /// Converts a block; several instructions become a backtrack with one arm each.
 fn prosify_group_block(ctx: &Context, block_sl: sl::Block) -> Result<pl::GroupBlock, ProseError> {
-    match block_sl.len() {
-        0 => Ok(Vec::new()),
+    match block_sl.instrs.len() {
+        0 => Ok(pl::Block { instrs: Vec::new() }),
         // One instruction expands in place
         1 => {
-            let instr_sl = block_sl.into_iter().next().unwrap();
+            let instr_sl = block_sl.instrs.into_iter().next().unwrap();
             prosify_group_instr(ctx, instr_sl)
         }
         _ => {
-            let span = block_sl.at();
-            let mut blocks_pl = Vec::with_capacity(block_sl.len());
-            for instr_sl in block_sl {
+            let span = block_sl.instrs.at();
+            let mut blocks_pl = Vec::with_capacity(block_sl.instrs.len());
+            for instr_sl in block_sl.instrs {
                 let block_pl = prosify_group_instr(ctx, instr_sl)?;
                 blocks_pl.push(block_pl);
             }
@@ -1409,7 +1405,7 @@ fn prosify_group_block(ctx: &Context, block_sl: sl::Block) -> Result<pl::GroupBl
                 node: instr_kind_pl,
                 span: span,
             };
-            Ok(vec![instr_pl])
+            Ok(pl::Block { instrs: vec![instr_pl] })
         }
     }
 }

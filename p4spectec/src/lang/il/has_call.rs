@@ -18,7 +18,7 @@ impl HasCall for Exp {
             ExpKind::Un(_, _, exp)
             | ExpKind::UpCast(_, exp)
             | ExpKind::DownCast(_, exp)
-            | ExpKind::Sub(exp, _, _)
+            | ExpKind::Sub(exp, _)
             | ExpKind::Match(exp, _)
             | ExpKind::Len(exp)
             | ExpKind::Dot(exp, _)

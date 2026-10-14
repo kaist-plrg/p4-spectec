@@ -38,7 +38,7 @@ use crate::lang::al;
 
 use crate::runtime::{
     dim::Dim,
-    ops::typ::{Theta, optimize_sub_typ, subst_typ},
+    ops::typ::{Theta, subst_typ},
     typdef::TypeDef,
 };
 
@@ -301,24 +301,15 @@ fn gen_prem_bind_match(
 
 /// Builds a subtype guard on the destination, then a let with the downcast.
 fn gen_prem_bind_sub(
-    ctx: &Context,
     iter_ctx: &ICtx,
     destination: &ast::Var,
     typ_sub: &ast::Typ,
     exp_sub: &ast::Exp,
     exp_from: &ast::Exp,
-) -> Result<Vec<AnalyzedPrem>, AlgoError> {
+) -> Vec<AnalyzedPrem> {
     let exp_to = var::as_exp(true, destination);
-    // Compute the subtype check once
-    let typ_source = phrase!(node: exp_to.note.as_ref().clone(), span: exp_to.span);
-    let subcheck = optimize_sub_typ(&ctx.tdenv, &typ_source, typ_sub)
-        .map_err(error::typ::type_operation_invalid)?;
     let exp_guard_sub = note_phrase! {
-        node: ast::ExpKind::Sub(
-            Box::new(exp_to.clone()),
-            Box::new(typ_sub.clone()),
-            Box::new(subcheck),
-        ),
+        node: ast::ExpKind::Sub(Box::new(exp_to.clone()), Box::new(typ_sub.clone())),
         note: ast::TypKind::Bool,
         span: exp_from.span,
     };
@@ -368,10 +359,10 @@ fn gen_prem_bind_sub(
     );
     let prem_sub = iter_ctx_sub.iterate_prem(side_condition_guard_sub);
     let prem_bind = iter_ctx_bind.iterate_prem(prem_bind);
-    Ok(vec![
+    vec![
         AnalyzedPrem::Condition { prem_al: prem_sub, origin: Origin::Subtype(exp_from.span) },
         AnalyzedPrem::Binding { prem_al: prem_bind },
-    ])
+    ]
 }
 
 /// Builds the premises of one rename under the enclosing iterations.
@@ -394,7 +385,9 @@ fn gen_prem(
             Ok(prems)
         }
         Source::BindSub { typ_sub, exp_sub, exp_from } => {
-            gen_prem_bind_sub(ctx, &iter_ctx, &rename.destination, typ_sub, exp_sub, exp_from)
+            let prems =
+                gen_prem_bind_sub(&iter_ctx, &rename.destination, typ_sub, exp_sub, exp_from);
+            Ok(prems)
         }
     }
 }
