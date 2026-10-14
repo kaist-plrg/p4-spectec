@@ -2,7 +2,7 @@
 //!
 //! `ValueArena` is the value half of an `Arena`;
 //! handles belong to one arena; annotation changes preserve the stored body.
-//! Bodies are interned canonically, types by `Rc` identity, spans exactly;
+//! Bodies are interned canonically, types by exact contents, spans exactly;
 //! the default span is interned first so generated values share it.
 
 use std::rc::Rc;
@@ -26,7 +26,7 @@ use super::{Value, ValueKind};
 pub struct ValueArena {
     /// Bodies, with canonical identities; a case reads its mixop's.
     values: CanonInterner<ValueKind>,
-    /// Types, shared by allocation.
+    /// Types, shared by exact contents including nested source spans.
     types: RcInterner<TypKind>,
     /// Spans, shared by equality.
     spans: Interner<Span>,
@@ -68,7 +68,7 @@ impl ValueArena {
         self.values.intern(arena_mixop, value_kind)
     }
 
-    /// Interns a shared type annotation by allocation identity.
+    /// Interns a shared type annotation by exact contents.
     pub(in crate::lang::data) fn intern_typ(
         &mut self,
         typ: Rc<TypKind>,

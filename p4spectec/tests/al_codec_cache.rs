@@ -61,19 +61,21 @@ fn recursive_conversions_reuse_child_results() {
 }
 
 #[test]
-fn disabled_and_uncached_conversions_do_not_reuse_results() {
+fn disabled_and_uncached_conversions_preserve_each_inputs_annotations() {
     let mut arena = Arena::new();
     let mut cache = Cache::new(0);
-    let value = list_bool(&mut arena, true, Span::default());
-    let value_meta_a = value.encode_cached(&mut arena, &mut cache).unwrap();
-    let value_meta_b = value.encode_cached(&mut arena, &mut cache).unwrap();
-    assert_ne!(value_meta_a, value_meta_b);
-    let value_meta_a = value.encode(&mut arena).unwrap();
-    let value_meta_b = value.encode(&mut arena).unwrap();
-    assert_ne!(value_meta_a, value_meta_b);
-    let value_a = Value::decode_cached(&mut arena, &mut cache, value_meta_a).unwrap();
-    let value_b = Value::decode_cached(&mut arena, &mut cache, value_meta_a).unwrap();
-    assert_ne!(value_a, value_b);
+    for line in [0, 2] {
+        let span = Span::new(Position { line, ..Position::default() }, Position::default());
+        let value = list_bool(&mut arena, true, span);
+        let value_meta = value.encode_cached(&mut arena, &mut cache).unwrap();
+        assert_eq!(*arena.value.span(value_meta.span), span);
+        let value_meta = value.encode(&mut arena).unwrap();
+        assert_eq!(*arena.value.span(value_meta.span), span);
+        let value = Value::decode_cached(&mut arena, &mut cache, value_meta).unwrap();
+        assert_eq!(*arena.value.span(value.span), span);
+        let value = Value::decode(&mut arena, value_meta).unwrap();
+        assert_eq!(*arena.value.span(value.span), span);
+    }
 }
 
 #[test]
@@ -166,17 +168,23 @@ fn decode_reuses_canonical_values_across_annotations() {
 fn full_tables_keep_hits_but_do_not_retain_new_results() {
     let mut arena = Arena::new();
     let mut cache = Cache::new(2);
+    let span = Span::new(Position { line: 2, ..Position::default() }, Position::default());
     let value_a = list_bool(&mut arena, true, Span::default());
     let value_b = list_bool(&mut arena, false, Span::default());
+    let value_a_later = list_bool(&mut arena, true, span);
+    let value_b_later = list_bool(&mut arena, false, span);
     let value_meta_a = value_a.encode_cached(&mut arena, &mut cache).unwrap();
     let value_meta_b = value_b.encode_cached(&mut arena, &mut cache).unwrap();
-    assert_eq!(value_a.encode_cached(&mut arena, &mut cache).unwrap(), value_meta_a);
-    assert_ne!(value_b.encode_cached(&mut arena, &mut cache).unwrap(), value_meta_b);
+    assert_eq!(value_a_later.encode_cached(&mut arena, &mut cache).unwrap(), value_meta_a);
+    let value_meta_b_later = value_b_later.encode_cached(&mut arena, &mut cache).unwrap();
+    assert_ne!(value_meta_b_later, value_meta_b);
     let value_a = Value::decode_cached(&mut arena, &mut cache, value_meta_a).unwrap();
+    let value_meta_a_later = value_a_later.encode(&mut arena).unwrap();
+    assert_eq!(Value::decode_cached(&mut arena, &mut cache, value_meta_a_later).unwrap(), value_a);
     let value_b = Value::decode_cached(&mut arena, &mut cache, value_meta_b).unwrap();
-    assert_eq!(Value::decode_cached(&mut arena, &mut cache, value_meta_a).unwrap(), value_a);
-    assert_ne!(Value::decode_cached(&mut arena, &mut cache, value_meta_b).unwrap(), value_b);
+    let value_b_later = Value::decode_cached(&mut arena, &mut cache, value_meta_b_later).unwrap();
+    assert_ne!(value_b, value_b_later);
     cache.clear();
     let value_b = Value::decode_cached(&mut arena, &mut cache, value_meta_b).unwrap();
-    assert_eq!(Value::decode_cached(&mut arena, &mut cache, value_meta_b).unwrap(), value_b);
+    assert_eq!(Value::decode_cached(&mut arena, &mut cache, value_meta_b_later).unwrap(), value_b);
 }

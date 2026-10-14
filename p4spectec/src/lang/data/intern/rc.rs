@@ -1,68 +1,42 @@
-//! Interning by Rc allocation identity
+//! Exact interning of shared allocations
 //!
-//! An Rc and its clone share a handle;
-//! a fresh Rc with equal contents gets a distinct handle.
-//! Retaining each allocation prevents its address from being reused
-//! while the interner is alive.
+//! Equal contents share one retained Rc even when allocated separately.
+//! `Interner` supplies exact comparison and stable indices;
+//! the public handle names the pointee rather than the owning Rc.
 
-use std::{
-    collections::{HashMap, hash_map::Entry},
-    marker::PhantomData,
-    num::TryFromIntError,
-    rc::Rc,
-};
+use std::{hash::Hash, marker::PhantomData, num::TryFromIntError, rc::Rc};
 
-use foldhash::fast::RandomState;
+use super::{idx::Interned, simple::Interner};
 
-use super::idx::Interned;
-
-// = Interning storage
-
-/// Shares Rc allocations by address, retaining them until the interner drops.
+/// Shares exactly equal Rc contents, retaining one allocation per entry.
 #[derive(Debug)]
 pub struct RcInterner<T> {
-    /// Allocations by handle index.
-    items: Vec<Rc<T>>,
-    /// Handle of each allocation address.
-    table: HashMap<*const T, Interned<T>, RandomState>,
+    storage: Interner<Rc<T>>,
 }
-
-// - Construction
 
 impl<T> Default for RcInterner<T> {
     fn default() -> Self {
-        Self { items: Vec::new(), table: HashMap::default() }
+        Self { storage: Interner::new() }
     }
 }
 
 impl<T> RcInterner<T> {
-    /// An empty interner.
+    /// Creates an empty interner.
     pub fn new() -> Self {
         Self::default()
     }
 
-    // - Lookup
-
-    /// The allocation behind a handle.
+    /// Borrows the shared allocation behind a handle.
     pub fn get(&self, id: Interned<T>) -> &Rc<T> {
-        &self.items[id.index as usize]
+        self.storage
+            .get(Interned { index: id.index, marker: PhantomData })
     }
+}
 
-    // - Interning
-
-    /// Reuses an allocation without hashing or comparing its contents.
+impl<T: Eq + Hash> RcInterner<T> {
+    /// Reuses equal contents or retains the supplied allocation at a new index.
     pub fn intern(&mut self, item: Rc<T>) -> Result<Interned<T>, TryFromIntError> {
-        // Seen this allocation: same handle
-        match self.table.entry(Rc::as_ptr(&item)) {
-            Entry::Occupied(entry) => Ok(*entry.get()),
-            // New allocation: next index, retaining the Rc
-            Entry::Vacant(entry) => {
-                let index = u32::try_from(self.items.len())?;
-                let id = Interned { index, marker: PhantomData };
-                self.items.push(item);
-                entry.insert(id);
-                Ok(id)
-            }
-        }
+        let id = self.storage.intern(item)?;
+        Ok(Interned { index: id.index, marker: PhantomData })
     }
 }
