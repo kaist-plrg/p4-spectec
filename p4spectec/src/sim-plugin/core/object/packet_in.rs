@@ -125,14 +125,14 @@ impl PacketIn {
         if !self.has_size(size)? {
             let value_name =
                 value::make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())?;
-            let value_err = value::make::case_shaped! {
+            let value_err = value::make::case_string! {
                 arena: ctx.arena_mut(),
                 shape: "ERROR '.' nameIR",
                 args: vec![value_name],
                 typ: "errorValue",
                 span: Span::default(),
             }?;
-            let value_call_result = value::make::case_shaped! {
+            let value_call_result = value::make::case_string! {
                 arena: ctx.arena_mut(),
                 shape: "REJECT errorValue",
                 args: vec![value_err],
@@ -151,7 +151,7 @@ impl PacketIn {
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
+        let value_call_result = value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -217,14 +217,14 @@ impl PacketIn {
                 "ParserInvalidArgument".to_owned(),
                 Span::default(),
             )?;
-            let value_err = value::make::case_shaped! {
+            let value_err = value::make::case_string! {
                 arena: ctx.arena_mut(),
                 shape: "ERROR '.' nameIR",
                 args: vec![value_name],
                 typ: "errorValue",
                 span: Span::default(),
             }?;
-            let value_call_result = value::make::case_shaped! {
+            let value_call_result = value::make::case_string! {
                 arena: ctx.arena_mut(),
                 shape: "REJECT errorValue",
                 args: vec![value_err],
@@ -237,14 +237,14 @@ impl PacketIn {
         if !self.has_size(size)? {
             let value_name =
                 value::make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())?;
-            let value_err = value::make::case_shaped! {
+            let value_err = value::make::case_string! {
                 arena: ctx.arena_mut(),
                 shape: "ERROR '.' nameIR",
                 args: vec![value_name],
                 typ: "errorValue",
                 span: Span::default(),
             }?;
-            let value_call_result = value::make::case_shaped! {
+            let value_call_result = value::make::case_string! {
                 arena: ctx.arena_mut(),
                 shape: "REJECT errorValue",
                 args: vec![value_err],
@@ -257,14 +257,14 @@ impl PacketIn {
         if size > size_max {
             let value_name =
                 value::make::text(ctx.arena_mut(), "HeaderTooShort".to_owned(), Span::default())?;
-            let value_err = value::make::case_shaped! {
+            let value_err = value::make::case_string! {
                 arena: ctx.arena_mut(),
                 shape: "ERROR '.' nameIR",
                 args: vec![value_name],
                 typ: "errorValue",
                 span: Span::default(),
             }?;
-            let value_call_result = value::make::case_shaped! {
+            let value_call_result = value::make::case_string! {
                 arena: ctx.arena_mut(),
                 shape: "REJECT errorValue",
                 args: vec![value_err],
@@ -289,7 +289,7 @@ impl PacketIn {
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
+        let value_call_result = value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -326,14 +326,14 @@ impl PacketIn {
         if !self.has_size(size)? {
             let value_name =
                 value::make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())?;
-            let value_err = value::make::case_shaped! {
+            let value_err = value::make::case_string! {
                 arena: ctx.arena_mut(),
                 shape: "ERROR '.' nameIR",
                 args: vec![value_name],
                 typ: "errorValue",
                 span: Span::default(),
             }?;
-            let value_call_result = value::make::case_shaped! {
+            let value_call_result = value::make::case_string! {
                 arena: ctx.arena_mut(),
                 shape: "REJECT errorValue",
                 args: vec![value_err],
@@ -351,7 +351,7 @@ impl PacketIn {
         ));
         let value_opt =
             value::make::opt(ctx.arena_mut(), typ.node.into(), Some(value_hdr), Span::default())?;
-        let value_call_result = value::make::case_shaped! {
+        let value_call_result = value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -386,14 +386,14 @@ impl PacketIn {
         if !self.has_size(size)? {
             let value_name =
                 value::make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())?;
-            let value_err = value::make::case_shaped! {
+            let value_err = value::make::case_string! {
                 arena: ctx.arena_mut(),
                 shape: "ERROR '.' nameIR",
                 args: vec![value_name],
                 typ: "errorValue",
                 span: Span::default(),
             }?;
-            let value_call_result = value::make::case_shaped! {
+            let value_call_result = value::make::case_string! {
                 arena: ctx.arena_mut(),
                 shape: "REJECT errorValue",
                 args: vec![value_err],
@@ -408,7 +408,7 @@ impl PacketIn {
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
+        let value_call_result = value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -444,7 +444,7 @@ impl PacketIn {
         ));
         let value_opt =
             value::make::opt(ctx.arena_mut(), typ.node.into(), Some(value_len), Span::default())?;
-        let value_call_result = value::make::case_shaped! {
+        let value_call_result = value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],

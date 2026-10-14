@@ -70,7 +70,7 @@ fn make_pair(
     let typ = typ::make::var(pair_id, vec![typ_key.clone(), typ_value.clone()]);
     let value_case = notation::Mixfix::new(pair_mixop(), vec![value_key, value_value])
         .expect("the pair mixop has exactly two arguments");
-    Ok(value::make::case(arena, typ.node.into(), value_case, Span::default())?)
+    Ok(value::make::case_tree(arena, typ.node.into(), value_case, Span::default())?)
 }
 
 /// Replaces the value of the first pair with `key`, or appends a new pair.
@@ -142,7 +142,7 @@ fn value_of_map(
     let typ = typ::make::var(map_id, vec![typ_key.clone(), typ_value.clone()]);
     let value_case = notation::Mixfix::new(map_mixop(), vec![value_pairs])
         .expect("the map mixop has exactly one argument");
-    let value = value::make::case(arena, typ.node.into(), value_case, Span::default())?;
+    let value = value::make::case_tree(arena, typ.node.into(), value_case, Span::default())?;
     Ok(value)
 }
 

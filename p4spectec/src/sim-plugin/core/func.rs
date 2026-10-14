@@ -91,7 +91,7 @@ where
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        value::make::case_shaped! {
+        value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -99,7 +99,7 @@ where
             span: Span::default(),
         }?
     } else {
-        value::make::case_shaped! {
+        value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "REJECT errorValue",
             args: vec![value_signal],
