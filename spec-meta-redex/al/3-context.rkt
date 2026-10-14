@@ -1,11 +1,14 @@
 #lang racket/base
 ;; spec-meta/al/3-context.watsup.
 ;;
-;; A dec over ctx takes the layers it reads: G L if it reads C.GLOBAL, and L
-;; alone otherwise. A ctx result is the new L. $load and $empty_ctx keep ctx.
-;; A record update C[ .LOCAL.VAL = x ] is a pattern that rebuilds the layer.
+;; A dec over ctx takes G L if it reads C.GLOBAL, and L alone otherwise. L is
+;; the local layer. The global layer never changes after $load, so it stays in
+;; a registry, and G is its handle. A ctx result is the new L. $load and
+;; $empty_ctx keep ctx. A record update C[ .LOCAL.VAL = x ] is a pattern that
+;; rebuilds the layer.
 
-(require redex/reduction-semantics
+(require racket/match
+         redex/reduction-semantics
          "../common/0.1-stdlib.rkt"
          "../common/2-env.rkt"
          "2-env.rkt")
@@ -13,6 +16,7 @@
          empty-layer
          empty-ctx
          load
+         register-global!
          add-vari
          add-varr
          add-varis
@@ -24,6 +28,7 @@
          find-varis
          find-varrs
          finds-vari
+         find-typdef
          find-typ
          find-func
          find-rel
@@ -32,8 +37,11 @@
 
 (define-extended-language al-context al-env
   ;; Context
-  (layer G L ::= {TYP tdenv REL renv FUNC fenv VAL venv})
-  (ctx C ::= {GLOBAL layer LOCAL layer}))
+  (layer L ::= {TYP tdenv REL renv FUNC fenv VAL venv})
+  (ctx C ::= {GLOBAL layer LOCAL layer})
+
+  ;; The handle of a registered global layer
+  (G ::= (GLOBAL natural)))
 
 (define-metafunction al-context
   empty-layer : -> layer
@@ -76,6 +84,33 @@
     LOCAL L}
    (where ((((id_t typdef) ...) ((id_r reldef) ...) ((id_f funcdef) ...)) ...)
           ((load-defn defn) ...))])
+
+;;
+;; The global layer, by handle
+;;
+
+;; The registered global layers, by number. An entry never changes once
+;; added, so a handle denotes the same layer for good, and a metafunction that
+;; reads the layer through its handle stays a function of its arguments.
+(define global-layers (make-hasheqv))
+
+;; The handle of a global layer, which is checked and added to the registry.
+;; Only al/7-entry.rkt calls this, after $load.
+(define (register-global! layer_global)
+  (unless (redex-match? al-context layer layer_global)
+    (error 'register-global! "not a layer: ~e" layer_global))
+  (define n (hash-count global-layers))
+  (hash-set! global-layers n layer_global)
+  (term (GLOBAL ,n)))
+
+;; The value of id in the map of the global layer G under the label field
+;; (TYP, REL, or FUNC), as () or (v). The layer is taken apart in Racket, so
+;; neither a term nor a pattern holds it.
+(define (find-global G field id)
+  (match-define (list 'GLOBAL n) G)
+  (match-define (list 'TYP tdenv 'REL renv 'FUNC fenv 'VAL _)
+    (hash-ref global-layers n (λ () (error 'find-global "no global layer ~a" n))))
+  (map-ref (case field [(TYP) tdenv] [(REL) renv] [(FUNC) fenv]) id))
 
 ;;
 ;; Adders
@@ -165,15 +200,18 @@
 
 ;;; Typedef finders
 
+;; The definition of id in tdenv, or else in the global layer G: the value of
+;; id in $extend_tdenv(C.GLOBAL.TYP, tdenv)
+(define-metafunction al-context
+  find-typdef : G tdenv id -> () ∨ (typdef)
+  [(find-typdef G tdenv id) (typdef)
+   (where (typdef) (find-map tdenv id))]
+  [(find-typdef G tdenv id) ,(find-global (term G) 'TYP (term id))
+   (where () (find-map tdenv id))])
+
 (define-metafunction al-context
   find-typ : G L id -> () ∨ (typdef)
-  [(find-typ G {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l} id) (typdef)
-   (where (typdef) (find-map tdenv_l id))]
-  [(find-typ {TYP tdenv_g REL renv_g FUNC fenv_g VAL venv_g}
-             {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l}
-             id)
-   (find-map tdenv_g id)
-   (where () (find-map tdenv_l id))])
+  [(find-typ G {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l} id) (find-typdef G tdenv_l id)])
 
 ;;; Function finders
 
@@ -181,25 +219,15 @@
   find-func : G L id -> () ∨ (funcdef)
   [(find-func G {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l} id) (funcdef)
    (where (funcdef) (find-map fenv_l id))]
-  [(find-func {TYP tdenv_g REL renv_g FUNC fenv_g VAL venv_g}
-              {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l}
-              id)
-   (funcdef)
-   (where () (find-map fenv_l id))
-   (where (funcdef) (find-map fenv_g id))]
-  [(find-func {TYP tdenv_g REL renv_g FUNC fenv_g VAL venv_g}
-              {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l}
-              id)
-   ()
-   ;; otherwise: found in neither layer
-   (where () (find-map fenv_l id))
-   (where () (find-map fenv_g id))])
+  [(find-func G {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l} id)
+   ,(find-global (term G) 'FUNC (term id))
+   (where () (find-map fenv_l id))])
 
 ;;; Relation finders
 
 (define-metafunction al-context
   find-rel : G L id -> () ∨ (reldef)
-  [(find-rel {TYP tdenv_g REL renv_g FUNC fenv_g VAL venv_g} L id) (find-map renv_g id)])
+  [(find-rel G L id) ,(find-global (term G) 'REL (term id))])
 
 ;;
 ;; Sub-context construction for iteration

@@ -5,7 +5,6 @@
          "0.1-stdlib.rkt"
          "1-syntax.rkt")
 (provide common-env
-         extend-tdenv
          theta-of-tdenv
          is-iter-on-var
          iter-vari
@@ -25,12 +24,6 @@
 
   ;; Type substitution environment
   (theta ::= ((id typ) ...)))
-
-(define-metafunction common-env
-  extend-tdenv : tdenv tdenv -> tdenv
-  [(extend-tdenv tdenv_global ()) tdenv_global]
-  [(extend-tdenv tdenv_global ((id_h typdef_h) (id_t typdef_t) ...))
-   (adds-map tdenv_global (id_h id_t ...) (typdef_h typdef_t ...))])
 
 (define-judgment-form common-env
   #:mode (theta-of-tdenv I O)

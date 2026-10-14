@@ -128,19 +128,23 @@
 ;; Value-type matching
 ;;
 
+;; $subtyp takes G and the local tdenv, where spec-meta takes their extension
+;; $extend_tdenv(C.GLOBAL.TYP, C.LOCAL.TYP): find-typdef finds in G and tdenv
+;; what $find_map finds in the extension.
 (define-metafunction al-context
-  subtyp : tdenv typ val -> bool
-  [(subtyp tdenv BOOL (BOOL b)) #t]
-  [(subtyp tdenv NAT (NAT n)) #t]
-  [(subtyp tdenv NAT (INT i)) ,(>= (term i) 0)]
-  [(subtyp tdenv INT num) #t]
-  [(subtyp tdenv TEXT (TEXT t)) #t]
-  [(subtyp tdenv (VAR id (targ ...)) val) (subtyp/var tdenv (find-map tdenv id) (targ ...) val)]
-  [(subtyp tdenv (TUP (typ ..._n)) (TUP (val ..._n))) (forall- ((subtyp tdenv typ val) ...))]
-  [(subtyp tdenv (ITER typ QUEST) (OPT (val))) (subtyp tdenv typ val)]
-  [(subtyp tdenv (ITER typ QUEST) (OPT ())) #t]
-  [(subtyp tdenv (ITER typ STAR) (LIST (val ...))) (forall- ((subtyp tdenv typ val) ...))]
-  [(subtyp tdenv typ val) #f
+  subtyp : G tdenv typ val -> bool
+  [(subtyp G tdenv BOOL (BOOL b)) #t]
+  [(subtyp G tdenv NAT (NAT n)) #t]
+  [(subtyp G tdenv NAT (INT i)) ,(>= (term i) 0)]
+  [(subtyp G tdenv INT num) #t]
+  [(subtyp G tdenv TEXT (TEXT t)) #t]
+  [(subtyp G tdenv (VAR id (targ ...)) val)
+   (subtyp/var G tdenv (find-typdef G tdenv id) (targ ...) val)]
+  [(subtyp G tdenv (TUP (typ ..._n)) (TUP (val ..._n))) (forall- ((subtyp G tdenv typ val) ...))]
+  [(subtyp G tdenv (ITER typ QUEST) (OPT (val))) (subtyp G tdenv typ val)]
+  [(subtyp G tdenv (ITER typ QUEST) (OPT ())) #t]
+  [(subtyp G tdenv (ITER typ STAR) (LIST (val ...))) (forall- ((subtyp G tdenv typ val) ...))]
+  [(subtyp G tdenv typ val) #f
    ;; otherwise: no pattern above matches
    (side-condition (not (redex-match? al-context (BOOL (BOOL b)) (term (typ val)))))
    (side-condition (not (redex-match? al-context (NAT (NAT n)) (term (typ val)))))
@@ -160,53 +164,53 @@
 ;; The VAR clauses of $subtyp, given the type definition found for id. They
 ;; are disjoint by its kind.
 (define-metafunction al-context
-  subtyp/var : tdenv (typdef ...) (targ ...) val -> bool
-  [(subtyp/var tdenv (EXT) (targ ...) (EXT json)) #t]
-  [(subtyp/var tdenv ((DEF (tparam ..._n) (ALIAS typ))) (targ ..._n) val)
-   (subtyp tdenv typ_subst val)
+  subtyp/var : G tdenv (typdef ...) (targ ...) val -> bool
+  [(subtyp/var G tdenv (EXT) (targ ...) (EXT json)) #t]
+  [(subtyp/var G tdenv ((DEF (tparam ..._n) (ALIAS typ))) (targ ..._n) val)
+   (subtyp G tdenv typ_subst val)
    (where theta ((tparam targ) ...))
    (judgment-holds (subst-typ theta typ typ_subst))]
-  [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT (typcase ...))))
+  [(subtyp/var G tdenv ((DEF (tparam ..._n) (VARIANT (typcase ...))))
                (targ ..._n) (INJ (mixop (val ..._m))))
-   (forall- ((subtyp tdenv typ_case_found_subst val) ...))
+   (forall- ((subtyp G tdenv typ_case_found_subst val) ...))
    (where theta ((tparam targ) ...))
    (where (mixop (typ_case_found ..._m)) ,(assoc (term mixop) (term (typcase ...))))
    (judgment-holds (subst-typs theta (typ_case_found ...) (typ_case_found_subst ...)))]
-  [(subtyp/var tdenv ((DEF (tparam ..._n) (STRUCT ((atom typ_field) ...))))
+  [(subtyp/var G tdenv ((DEF (tparam ..._n) (STRUCT ((atom typ_field) ...))))
                (targ ..._n) (STR ((atom val_field) ...)))
-   (forall- ((subtyp tdenv typ_field_subst val_field) ...))
+   (forall- ((subtyp G tdenv typ_field_subst val_field) ...))
    (where theta ((tparam targ) ...))
    (judgment-holds (subst-typs theta (typ_field ...) (typ_field_subst ...)))]
-  [(subtyp/var tdenv ((DEF (tparam ..._n) (ALIAS typ))) (targ ..._n) val) #f
+  [(subtyp/var G tdenv ((DEF (tparam ..._n) (ALIAS typ))) (targ ..._n) val) #f
    ;; otherwise: the substitution fails
    (where theta ((tparam targ) ...))
    (side-condition (not (judgment-holds (subst-typ theta typ any))))]
-  [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT (typcase ...))))
+  [(subtyp/var G tdenv ((DEF (tparam ..._n) (VARIANT (typcase ...))))
                (targ ..._n) (INJ (mixop (val ...))))
    #f
    ;; otherwise: mixop is not a case
    (where #f ,(assoc (term mixop) (term (typcase ...))))]
-  [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT (typcase ...))))
+  [(subtyp/var G tdenv ((DEF (tparam ..._n) (VARIANT (typcase ...))))
                (targ ..._n) (INJ (mixop (val ...))))
    #f
    ;; otherwise: the case's types are not as many as val*
    (where (mixop (typ_case_found ...)) ,(assoc (term mixop) (term (typcase ...))))
    (side-condition
     (not (= (length (term (typ_case_found ...))) (length (term (val ...))))))]
-  [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT (typcase ...))))
+  [(subtyp/var G tdenv ((DEF (tparam ..._n) (VARIANT (typcase ...))))
                (targ ..._n) (INJ (mixop (val ..._m))))
    #f
    ;; otherwise: the case's types fail to substitute
    (where theta ((tparam targ) ...))
    (where (mixop (typ_case_found ..._m)) ,(assoc (term mixop) (term (typcase ...))))
    (side-condition (not (judgment-holds (subst-typs theta (typ_case_found ...) any))))]
-  [(subtyp/var tdenv ((DEF (tparam ..._n) (STRUCT ((atom typ_field) ...))))
+  [(subtyp/var G tdenv ((DEF (tparam ..._n) (STRUCT ((atom typ_field) ...))))
                (targ ..._n) (STR ((atom val_field) ...)))
    #f
    ;; otherwise: a field's type fails to substitute
    (where theta ((tparam targ) ...))
    (side-condition (not (judgment-holds (subst-typs theta (typ_field ...) any))))]
-  [(subtyp/var tdenv (typdef ...) (targ ...) val) #f
+  [(subtyp/var G tdenv (typdef ...) (targ ...) val) #f
    ;; otherwise: no pattern above matches
    (side-condition
     (not (redex-match? al-context ((EXT) (targ ...) (EXT json))
@@ -224,8 +228,8 @@
                        (term ((typdef ...) (targ ...) val)))))])
 
 (define-metafunction al-context
-  subtyps : tdenv (typ ...) (val ...) -> bool
-  [(subtyps tdenv (typ ..._n) (val ..._n)) (forall- ((subtyp tdenv typ val) ...))]
-  [(subtyps tdenv (typ ...) (val ...)) #f
+  subtyps : G tdenv (typ ...) (val ...) -> bool
+  [(subtyps G tdenv (typ ..._n) (val ..._n)) (forall- ((subtyp G tdenv typ val) ...))]
+  [(subtyps G tdenv (typ ...) (val ...)) #f
    ;; otherwise: the lengths differ
    (side-condition (not (= (length (term (typ ...))) (length (term (val ...))))))])

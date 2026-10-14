@@ -14,6 +14,7 @@
          find-map
          add-map
          adds-map
+         map-ref
          text-len
          text-idx
          text-slice
@@ -62,7 +63,7 @@
 
 (define-metafunction stdlib
   find-map : map any -> () ∨ (any)
-  [(find-map map any_k) ,(lookup (term map) (term any_k))])
+  [(find-map map any_k) ,(map-ref (term map) (term any_k))])
 
 (define-metafunction stdlib
   add-map : map any any -> map
@@ -77,8 +78,9 @@
 ;; Builtins, as in p4spec/lib/interface/builtin/{lists,maps}.ml
 ;;
 
-;; The value of the first pair with key k, as a list of length 0 or 1.
-(define (lookup pairs k)
+;; The value of the first pair with key k, as a list of length 0 or 1. Racket
+;; code that must not pass a map to a metafunction calls this.
+(define (map-ref pairs k)
   (cond
     [(assoc k pairs) => (λ (pair) (list (cadr pair)))]
     [else '()]))

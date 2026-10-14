@@ -43,20 +43,22 @@
      res]
     ['FAIL 'FAIL]))
 
-;; The result of Program_ok on the P4 program val_p4, under the context C that
-;; the spec loads into: (OK (val ...)), or FAIL
-(define (entry-p4 C val_p4)
-  (run-loaded C (term (call-rel "Program_ok" (,val_p4)))))
+;; The result of Program_ok on the P4 program val_p4, under the context
+;; loaded that load-script gives for the spec: (OK (val ...)), or FAIL
+(define (entry-p4 loaded val_p4)
+  (run-loaded loaded (term (call-rel "Program_ok" (,val_p4)))))
 
-;; The context that script loads into, (GLOBAL G LOCAL L)
+;; The context that script loads into, as (G L): the handle of its global
+;; layer, now registered, and its local layer
 (define (load-script script)
   (debug (term (TEXT "entry-al")))
-  (begin0 (term (load (empty-ctx) ,script))
-    (debug (term (TEXT "load complete")))))
+  (match-define (list 'GLOBAL layer_global 'LOCAL L) (term (load (empty-ctx) ,script)))
+  (debug (term (TEXT "load complete")))
+  (list (register-global! layer_global) L))
 
-;; The result of e under the loaded context C
-(define (run-loaded C e)
-  (match-define (list 'GLOBAL G 'LOCAL L) C)
+;; The result of e under the loaded context (G L)
+(define (run-loaded loaded e)
+  (match-define (list G L) loaded)
   (debug (term (TEXT "into call")))
   (match (run (list G (list 'IN L e)))
     [(list _ (list 'IN _ res)) res]))

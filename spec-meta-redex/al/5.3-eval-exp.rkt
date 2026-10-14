@@ -443,11 +443,10 @@
    (--> ((DOWNCAST typ (OK val)) G L) ((downcast G L typ val) G L)
         "eval-exp/downcast")
 
-   ;; rule Eval_exp/subtype
-   (--> ((SUB (OK val) typ)
-         (name G {TYP tdenv_g REL renv_g FUNC fenv_g VAL venv_g})
-         (name L {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l}))
-        ((OK (BOOL (subtyp (extend-tdenv tdenv_g tdenv_l) typ val))) G L)
+   ;; rule Eval_exp/subtype. $subtyp takes G and the local tdenv, in place of
+   ;; their extension (see subtyp).
+   (--> ((SUB (OK val) typ) G (name L {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l}))
+        ((OK (BOOL (subtyp G tdenv_l typ val))) G L)
         "eval-exp/subtype")
 
    ;;; Iterated expression evaluation rules
