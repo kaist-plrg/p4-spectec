@@ -30,7 +30,7 @@ pub fn run(
     }
     // Keep every prepared layer and encoded input in the same arena
     let mut arena = Arena::new();
-    let specs = build::TowerSpecs::new(config)?;
+    let specs = build::Tower::new(config)?;
     let (mut tower, value_program) =
         build::tower(&mut arena, &specs, config.mode, includes, paths_program, options)?;
     // Only the native base is entered from the command boundary

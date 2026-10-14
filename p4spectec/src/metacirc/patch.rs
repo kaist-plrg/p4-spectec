@@ -74,7 +74,7 @@ pub(super) fn entry(
     if typs_input.len() != 1 {
         return Err(entry_invalid(format!("entry relation {name} must have exactly one input")));
     }
-    // Bind each output at its declared type in the new function's empty scope
+    // Program_inst outputs: result_0 : globalInstLayer, result_1 : store
     let exps_output = typs_output
         .into_iter()
         .enumerate()
@@ -83,6 +83,7 @@ pub(super) fn entry(
             note_phrase!(node: al::ExpKind::Id(id), note: Rc::new(typ.node), span: Span::default())
         })
         .collect();
+    // Arguments: <program literal>, result_0, result_1 in relation order
     let exps = input::combine(
         input_hint,
         vec![
@@ -93,14 +94,18 @@ pub(super) fn entry(
         exps_output,
     )
     .map_err(|cause| entry_invalid(cause.to_string()))?;
+    // Notation: |- <program literal> : result_0 result_1
     let not_exp = Mixfix::new(not_typ.node.mixop().clone(), exps)
         .map_err(|cause| entry_invalid(cause.to_string()))?;
+    // Premise: -- Program_inst: |- <program literal> : result_0 result_1
     let prem = phrase!(node: al::PremKind::Rule(al::RulePrem {
         id: id.clone(), not_exp, input_hint: input_hint.clone(),
     }), span: Span::default());
     // The success marker is evaluated only after the relation premise
     let exp = note_phrase!(node: al::ExpKind::Text("pass".into()), note: Rc::new(al::TypKind::Text), span: Span::default());
+    // Clause: def $main() = "pass" with the relation premise
     let clause = phrase!(node: al::ClauseKind { args: vec![], exp, prems: vec![prem] }, span: Span::default());
+    // Function: dec $main() : text, with the clause above
     let def = phrase!(node: al::DefKind::MetaFunc(al::MetaFuncDef::Defined(Box::new(al::DefinedFunc {
         id: phrase!(node: "main".into(), span: Span::default()),
         tparams: vec![], params: vec![],

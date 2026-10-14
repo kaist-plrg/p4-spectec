@@ -3,6 +3,40 @@
 //! Lowered specifications stay paired with their configured entry and input language.
 //! Host helpers are assembled from target toward base;
 //! patched scripts carry each inner entry to the interpreter consuming them.
+//!
+//! Construction for `[base, interm, target]`:
+//!
+//! ```text
+//!                  build_target(target)
+//!                           |
+//!              +------------+------------+
+//!              |                         |
+//!        runner_target             value_program
+//!              |                         |
+//!       Layer::Target              target.encode
+//!              |                         |
+//!         layer_target              value_target
+//!              |                         |
+//!   build_interm(interm, ...)      interm.encode
+//!              |                         |
+//!         layer_interm              value_interm
+//!              |                         |
+//!    build_base(base, ...)               |
+//!              |                         |
+//!      tower::Tower                     Value
+//!              |                         |
+//!              +------------+------------+
+//!                           |
+//!                    return (tower::Tower, Value)
+//! ```
+//!
+//! The two intermediate steps repeat from the last intermediate to the first.
+//! Each runner owns the layer already built beneath it; each encoded script
+//! embeds the value already built beneath it in a synthetic `main`.
+//! With no intermediates, both columns proceed directly to the base step.
+//!
+//! A direct tower only calls `build_target` and returns
+//! `(tower::Tower::Direct(runner_target), value_program)`.
 
 use super::{
     ExecutionMode, Result, TowerConfig,
@@ -10,7 +44,7 @@ use super::{
     error::input_invalid,
     externs::{RelayExtern, TerminalExtern},
     patch,
-    tower::{Layer, Target, Tower},
+    tower::{self, Layer, Target},
 };
 use crate::{
     interface::{self, al::encode::Encode},
@@ -18,10 +52,19 @@ use crate::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},
     },
+    pass::structure,
     runner::{self, NullExtern, Runner, Spec},
     sim_plugin::dummy::Dummy,
 };
 use std::path::PathBuf;
+
+// == Prepared tower and levels
+
+/// Prepared specifications with explicit execution roles.
+pub(super) enum Tower {
+    Direct(Level),
+    Nested { base: Level, interms: Vec<Level>, target: Level },
+}
 
 /// A lowered specification paired with its configuration.
 pub(super) struct Level {
@@ -29,28 +72,9 @@ pub(super) struct Level {
     spec_al: al::Spec,
 }
 
-impl Level {
-    /// Lowers one configured specification without losing its role metadata.
-    fn new(config: &LevelConfig) -> Result<Self> {
-        let spec_al = crate::algo(std::slice::from_ref(&config.specdir))?;
-        Ok(Self { config: config.clone(), spec_al })
-    }
+// == Specification preparation
 
-    /// Patches this specification's entry around its encoded input.
-    fn encode(&self, arena: &mut Arena, value: Value) -> Result<Value> {
-        patch::entry(arena, &self.spec_al, &self.config.rel, value)?
-            .encode(arena)
-            .map_err(|error| error.into_report())
-    }
-}
-
-/// Prepared specifications with explicit execution roles.
-pub(super) enum TowerSpecs {
-    Direct(Level),
-    Nested { base: Level, interms: Vec<Level>, target: Level },
-}
-
-impl TowerSpecs {
+impl Tower {
     /// Lowers each specification exactly once in its named role.
     pub fn new(config: &TowerConfig) -> Result<Self> {
         match &config.levels {
@@ -72,11 +96,28 @@ impl TowerSpecs {
     }
 }
 
-/// Prepares a native representation from already lowered AL.
-fn native(spec_al: al::Spec, mode: ExecutionMode) -> Result<Spec> {
+impl Level {
+    /// Lowers one configured specification without losing its role metadata.
+    fn new(config: &LevelConfig) -> Result<Self> {
+        let spec_al = crate::algo(std::slice::from_ref(&config.specdir))?;
+        Ok(Self { config: config.clone(), spec_al })
+    }
+
+    /// Patches this specification's entry around its encoded input.
+    fn encode(&self, arena: &mut Arena, value: Value) -> Result<Value> {
+        patch::entry(arena, &self.spec_al, &self.config.rel, value)?
+            .encode(arena)
+            .map_err(|error| error.into_report())
+    }
+}
+
+// == Runner construction
+
+/// Converts lowered AL into the representation selected for the runner.
+fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
     match mode {
         ExecutionMode::Al => Ok(Spec::Al(spec_al)),
-        ExecutionMode::Sl => crate::pass::structure::convert(spec_al, true).map(Spec::Sl),
+        ExecutionMode::Sl => structure::convert(spec_al, true).map(Spec::Sl),
     }
 }
 
@@ -89,17 +130,19 @@ fn build_target(
     paths_program: &[PathBuf],
     options: runner::Config,
 ) -> Result<(Target, Value)> {
-    let spec_target = native(target.spec_al.clone(), mode)?;
+    let spec_target = into_runner_spec(mode, target.spec_al.clone())?;
     match target.config.lang {
         Lang::Al => {
-            // Resolve script builtins against the input program's own definitions
+            // Encode the input script as data for the AL interpreter specification
             let spec_program_al = crate::algo(paths_program)?;
             let value = spec_program_al
                 .encode(arena)
                 .map_err(|error| error.into_report())?;
-            let spec_program = native(spec_program_al, mode)?;
+            // Prepare the input script's definition environment for builtin calls
+            let spec_program = into_runner_spec(mode, spec_program_al)?;
             let runner_target =
                 Runner::new(arena, spec_program, options, interface::al(), NullExtern)?;
+            // Run the AL specification with builtin calls delegated to runner_target
             let runner = Runner::new(
                 arena,
                 spec_target,
@@ -110,12 +153,14 @@ fn build_target(
             Ok((Target::Al(runner), value))
         }
         Lang::P4 => {
-            // P4 parsing consumes one translation unit and its include paths
+            // Require one P4 translation unit; includes are resolved during parsing
             if paths_program.len() != 1 {
                 return Err(input_invalid("a P4 target requires exactly one program path"));
             }
+            // Prepare the P4 specification and its input parser
             let interface_target = interface::p4(&spec_target);
             let mut runner = Runner::new(arena, spec_target, options, interface_target, Dummy)?;
+            // Parse the P4 source into the value consumed by the entry relation
             let value = runner
                 .parse_program(arena, includes, paths_program)
                 .map_err(|error| error.into_report())?;
@@ -131,7 +176,7 @@ fn build_interm(
     layer: Layer,
     options: runner::Config,
 ) -> Result<Layer> {
-    let spec = native(interm.spec_al.clone(), ExecutionMode::Sl)?;
+    let spec = into_runner_spec(ExecutionMode::Sl, interm.spec_al.clone())?;
     let external = RelayExtern { runner_next: Box::new(layer) };
     Ok(Layer::Interm(Runner::new(arena, spec, options, interface::al(), external)?))
 }
@@ -143,63 +188,31 @@ fn build_base(
     mode: ExecutionMode,
     layer: Layer,
     options: runner::Config,
-) -> Result<Tower> {
-    let spec = native(base.spec_al.clone(), mode)?;
+) -> Result<tower::Tower> {
+    let spec = into_runner_spec(mode, base.spec_al.clone())?;
     let external = RelayExtern { runner_next: Box::new(layer) };
-    Ok(Tower::Nested(Runner::new(arena, spec, options, interface::al(), external)?))
+    Ok(tower::Tower::Nested(Runner::new(arena, spec, options, interface::al(), external)?))
 }
 
+// == Tower assembly
+
 /// Assembles the host chain and encodes the input for its native base.
-///
-/// Construction for `[base, interm, target]`:
-///
-/// ```text
-///                  build_target(target)
-///                           |
-///              +------------+------------+
-///              |                         |
-///        runner_target             value_program
-///              |                         |
-///       Layer::Target              target.encode
-///              |                         |
-///         layer_target              value_target
-///              |                         |
-///   build_interm(interm, ...)      interm.encode
-///              |                         |
-///         layer_interm              value_interm
-///              |                         |
-///    build_base(base, ...)               |
-///              |                         |
-///            Tower                     Value
-///              |                         |
-///              +------------+------------+
-///                           |
-///                    return (Tower, Value)
-/// ```
-///
-/// The two intermediate steps repeat from the last intermediate to the first.
-/// Each runner owns the layer already built beneath it; each encoded script
-/// embeds the value already built beneath it in a synthetic `main`.
-/// With no intermediates, both columns proceed directly to the base step.
-///
-/// A direct tower only calls `build_target` and returns
-/// `(Tower::Direct(runner_target), value_program)`.
 pub(super) fn tower(
     arena: &mut Arena,
-    specs: &TowerSpecs,
+    specs: &Tower,
     mode: ExecutionMode,
     includes: &[PathBuf],
     paths_program: &[PathBuf],
     options: runner::Config,
-) -> Result<(Tower, Value)> {
+) -> Result<(tower::Tower, Value)> {
     match specs {
-        TowerSpecs::Direct(target) => {
+        Tower::Direct(target) => {
             // The target itself is the base, with no synthetic entry layer
             let (target, value) =
                 build_target(arena, target, mode, includes, paths_program, options)?;
-            Ok((Tower::Direct(target), value))
+            Ok((tower::Tower::Direct(target), value))
         }
-        TowerSpecs::Nested { base, interms, target } => {
+        Tower::Nested { base, interms, target } => {
             // Prepare and encode the innermost target first
             let (runner_target, value) =
                 build_target(arena, target, ExecutionMode::Sl, includes, paths_program, options)?;
