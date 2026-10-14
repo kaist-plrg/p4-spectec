@@ -20,8 +20,8 @@ pub struct MixopArena {
     mixops: CanonInterner<MixopKind>,
     /// Argument positions of each mixop, by handle index.
     arities: Vec<u32>,
-    /// Fixed constructor spellings already parsed into this arena.
-    pub(crate) shapes: HashMap<&'static str, Mixop>,
+    /// Notation spellings already parsed into this arena.
+    pub(crate) mixops_by_text: HashMap<String, Mixop>,
 }
 
 impl MixopArena {

@@ -4,13 +4,11 @@
 //! operated on, and encoded back in syntax order.
 //! For example, the union of `{a}` and `{a, b}` is emitted once as `{a, b}`.
 
-use std::rc::Rc;
-
 use crate::lang::{
     common::source::Span,
     data::{
         arena::Arena,
-        notation::tree::{self as notation, Mixop, parse},
+        notation::flat::{self as notation, Mixop, parse},
         typ,
         value::flat::{self as value, Value},
     },
@@ -41,18 +39,16 @@ fn contains(arena: &Arena, set: &[Value], value: &Value) -> bool {
 // == Conversion between meta-sets and runtime lists
 
 /// The `{ ... }` shape of a set value.
-fn set_mixop() -> Rc<Mixop> {
-    parse::mixop("`{ k `}")
+fn set_mixop(arena: &mut Arena) -> Result<Mixop, BuiltinError> {
+    parse::mixop_cached(&mut arena.mixop, "`{ k `}").map_err(BuiltinError::from)
 }
 
 /// Decodes a `set<K>` value into a sorted set.
-fn set_of_value(arena: &Arena, value: &Value) -> Result<ValueSet, BuiltinError> {
+fn set_of_value(arena: &Arena, mixop_set: Mixop, value: &Value) -> Result<ValueSet, BuiltinError> {
     let value_case = value::get::case(arena, value)
         .map_err(|_| BuiltinError::argument_invalid("expected a set"))?;
-    let mixop_set = set_mixop();
     // The value must be a set case wrapping one list
-    let mixop = value_case.mixop().into_tree(&arena.mixop);
-    if !mixop.syntax_eq(mixop_set.as_ref()) {
+    if arena.mixop.canon_id(*value_case.mixop()) != arena.mixop.canon_id(mixop_set) {
         return Err(BuiltinError::argument_invalid("expected a set"));
     }
     let value_set = extract::one(value_case.args())?;
@@ -71,9 +67,10 @@ fn value_of_set(arena: &mut Arena, typ_key: &Typ, set: ValueSet) -> Result<Value
     let value_set = value::make::list(arena, typ_list.node.into(), values_elem, Span::default())?;
     let set_id = crate::phrase!(node: "set".into(), span: Span::default());
     let typ = typ::make::var(set_id, vec![typ_key.clone()]);
-    let value_case = notation::Mixfix::new(set_mixop(), vec![value_set])
+    let mixop_set = set_mixop(arena)?;
+    let value_case = notation::Mixfix::new(&arena.mixop, mixop_set, vec![value_set])
         .expect("the set mixop has exactly one argument");
-    let value = value::make::case_tree(arena, typ.node.into(), value_case, Span::default())?;
+    let value = value::make::case_flat(arena, typ.node.into(), value_case, Span::default())?;
     Ok(value)
 }
 
@@ -85,10 +82,11 @@ pub fn intersect_set(
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {
+    let mixop_set = set_mixop(arena)?;
     let typ_key = extract::one(targs)?;
     let (value_set_l, value_set_r) = extract::two(values)?;
-    let set_l = set_of_value(arena, value_set_l)?;
-    let set_r = set_of_value(arena, value_set_r)?;
+    let set_l = set_of_value(arena, mixop_set, value_set_l)?;
+    let set_r = set_of_value(arena, mixop_set, value_set_r)?;
     let intersection = set_l
         .into_iter()
         .filter(|value| contains(arena, &set_r, value))
@@ -102,10 +100,11 @@ pub fn union_set(
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {
+    let mixop_set = set_mixop(arena)?;
     let typ_key = extract::one(targs)?;
     let (value_set_l, value_set_r) = extract::two(values)?;
-    let set_l = set_of_value(arena, value_set_l)?;
-    let set_r = set_of_value(arena, value_set_r)?;
+    let set_l = set_of_value(arena, mixop_set, value_set_l)?;
+    let set_r = set_of_value(arena, mixop_set, value_set_r)?;
     let mut union = set_l;
     union.extend(set_r);
     sort_set(arena, &mut union);
@@ -118,13 +117,14 @@ pub fn unions_set(
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {
+    let mixop_set = set_mixop(arena)?;
     let typ_key = extract::one(targs)?;
     let value_sets = extract::one(values)?;
     let values = value::get::list(arena, value_sets).map_err(BuiltinError::from)?;
     let mut union = ValueSet::new();
     // Gather every element, then sort and deduplicate once
     for value in values {
-        let set = set_of_value(arena, value)?;
+        let set = set_of_value(arena, mixop_set, value)?;
         union.extend(set);
     }
     sort_set(arena, &mut union);
@@ -134,10 +134,11 @@ pub fn unions_set(
 /// `dec $diff_set<K>(set<K>, set<K>) : set<K>`,
 /// the elements of the first not in the second.
 pub fn diff_set(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
+    let mixop_set = set_mixop(arena)?;
     let typ_key = extract::one(targs)?;
     let (value_set_l, value_set_r) = extract::two(values)?;
-    let set_l = set_of_value(arena, value_set_l)?;
-    let set_r = set_of_value(arena, value_set_r)?;
+    let set_l = set_of_value(arena, mixop_set, value_set_l)?;
+    let set_r = set_of_value(arena, mixop_set, value_set_r)?;
     let difference = set_l
         .into_iter()
         .filter(|value| !contains(arena, &set_r, value))
@@ -148,10 +149,11 @@ pub fn diff_set(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Va
 /// `dec $sub_set<K>(set<K>, set<K>) : bool`,
 /// whether the first is a subset of the second.
 pub fn sub_set(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
+    let mixop_set = set_mixop(arena)?;
     let _typ_key = extract::one(targs)?;
     let (value_set_l, value_set_r) = extract::two(values)?;
-    let set_l = set_of_value(arena, value_set_l)?;
-    let set_r = set_of_value(arena, value_set_r)?;
+    let set_l = set_of_value(arena, mixop_set, value_set_l)?;
+    let set_r = set_of_value(arena, mixop_set, value_set_r)?;
     let is_subset = set_l.iter().all(|value| contains(arena, &set_r, value));
     let value = value::make::bool(arena, is_subset, Span::default())?;
     Ok(value)
@@ -160,10 +162,11 @@ pub fn sub_set(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Val
 /// `dec $eq_set<K>(set<K>, set<K>) : bool`,
 /// whether both have the same elements.
 pub fn eq_set(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
+    let mixop_set = set_mixop(arena)?;
     let _typ_key = extract::one(targs)?;
     let (value_set_l, value_set_r) = extract::two(values)?;
-    let set_l = set_of_value(arena, value_set_l)?;
-    let set_r = set_of_value(arena, value_set_r)?;
+    let set_l = set_of_value(arena, mixop_set, value_set_l)?;
+    let set_r = set_of_value(arena, mixop_set, value_set_r)?;
     // Sorted and deduplicated, equal sets are equal lists
     let equal = set_l.len() == set_r.len()
         && set_l

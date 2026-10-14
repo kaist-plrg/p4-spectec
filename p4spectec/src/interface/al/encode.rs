@@ -17,7 +17,7 @@ use crate::{
         data::{
             arena::Arena,
             notation::{
-                flat::{Mixfix as FlatMixfix, Mixop as FlatMixop},
+                flat::{Mixfix as FlatMixfix, Mixop as FlatMixop, parse::mixop_cached},
                 items::Item,
                 tree::Mixop,
             },
@@ -53,7 +53,8 @@ fn case(
     values_meta: Vec<Value>,
     span: Span,
 ) -> Result<Value, Error> {
-    let mixop_meta = m::intern_shape(arena, text_shape).map_err(|error| error.at(span))?;
+    let mixop_meta =
+        mixop_cached(&mut arena.mixop, text_shape).map_err(|error| Error::from(error).at(span))?;
     let mixfix_meta = FlatMixfix::new(&arena.mixop, mixop_meta, values_meta)
         .map_err(|error| Error::from(error).at(span))?;
     make::case_flat(

@@ -11,7 +11,7 @@ use serde::{Deserializer, Serializer};
 use serde_derive_state::{DeserializeState, SerializeState};
 use serde_state::{DeserializeState, SerializeState};
 
-use crate::lang::data::notation::{self, AtomPhrase, MixopArena};
+use crate::lang::data::notation::{self, AtomPhrase, MixopArena, MixopError};
 
 use super::{
     super::{Value, ValueCase},
@@ -101,38 +101,46 @@ enum Case {
 }
 
 impl Case {
-    /// Splits a decoded case into its mixop and arguments in notation order.
-    fn into_parts(self) -> (notation::tree::Mixop, Vec<Value>) {
+    /// Interns decoded notation while collecting arguments in notation order.
+    fn into_parts(
+        self,
+        arena_mixop: &mut MixopArena,
+    ) -> Result<(notation::flat::Mixop, Vec<Value>), MixopError> {
         let mut values = Vec::new();
-        let mixop = self.into_parts_inner(&mut values);
-        (mixop, values)
+        let mixop = self.into_parts_inner(arena_mixop, &mut values)?;
+        Ok((mixop, values))
     }
 
-    /// Moves each argument into the output as its position is visited.
-    fn into_parts_inner(self, values: &mut Vec<Value>) -> notation::tree::Mixop {
-        match self {
+    /// Interns children before their parent and moves argument leaves to the output.
+    fn into_parts_inner(
+        self,
+        arena_mixop: &mut MixopArena,
+        values: &mut Vec<Value>,
+    ) -> Result<notation::flat::Mixop, MixopError> {
+        use notation::flat::MixopKind;
+        let kind = match self {
             Self::Arg(value) => {
                 values.push(value);
-                notation::tree::Mixop::Arg
+                MixopKind::Arg
             }
-            Self::Atom(atom) => notation::tree::Mixop::Atom(atom),
-            Self::Brack(atom_l, case, atom_r) => notation::tree::Mixop::Brack(
-                atom_l,
-                Box::new(case.into_parts_inner(values)),
-                atom_r,
-            ),
+            Self::Atom(atom) => MixopKind::Atom(atom),
+            Self::Brack(atom_l, case, atom_r) => {
+                let mixop = case.into_parts_inner(arena_mixop, values)?;
+                MixopKind::Brack(atom_l, mixop, atom_r)
+            }
             Self::Infix(case_l, atom, case_r) => {
-                let mixop_l = case_l.into_parts_inner(values);
-                let mixop_r = case_r.into_parts_inner(values);
-                notation::tree::Mixop::Infix(Box::new(mixop_l), atom, Box::new(mixop_r))
+                let mixop_l = case_l.into_parts_inner(arena_mixop, values)?;
+                let mixop_r = case_r.into_parts_inner(arena_mixop, values)?;
+                MixopKind::Infix(mixop_l, atom, mixop_r)
             }
-            Self::Seq(cases) => notation::tree::Mixop::Seq(
+            Self::Seq(cases) => MixopKind::Seq(
                 cases
                     .into_iter()
-                    .map(|case| case.into_parts_inner(values))
-                    .collect(),
+                    .map(|case| case.into_parts_inner(arena_mixop, values))
+                    .collect::<Result<_, _>>()?,
             ),
-        }
+        };
+        arena_mixop.intern_kind(kind)
     }
 }
 
@@ -143,12 +151,9 @@ impl<'de> DeserializeState<'de, DecodeContext<'_>> for ValueCase {
     ) -> Result<Self, D::Error> {
         // Decode arguments using the context's encoding
         let case = Case::deserialize_state(ctx, deserializer)?;
-        let (mixop, values) = case.into_parts();
-
-        // Intern the decoded notation in the target arena
         let arena_mixop = &mut ctx.arena_mut().mixop;
-        let mixop = mixop
-            .into_flat(arena_mixop)
+        let (mixop, values) = case
+            .into_parts(arena_mixop)
             .map_err(::serde::de::Error::custom)?;
         notation::flat::Mixfix::new(arena_mixop, mixop, values).map_err(::serde::de::Error::custom)
     }

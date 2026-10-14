@@ -19,11 +19,7 @@ use lalrpop_util::ParseError;
 
 use crate::lang::{
     common::source::{FileId, Position, Span},
-    data::notation::{
-        MixopArena, MixopError,
-        flat::{Mixop as FlatMixop, MixopKind},
-        tree::Mixop,
-    },
+    data::notation::tree::Mixop,
 };
 
 use crate::lang::el::ast::{self, Spec};
@@ -254,12 +250,12 @@ pub fn parse_mixop(source: &str) -> Result<Mixop, FrontendError> {
         }
     }
 
-    let typ = parse_notation_typ(source)?;
+    let typ = parse_typ(source)?;
     Ok(from_typ(&typ))
 }
 
-/// Parses a notation type without allocating an intermediate notation tree.
-pub(crate) fn parse_notation_typ(source: &str) -> Result<ast::Typ, FrontendError> {
+/// Parses a complete EL type, including plain argument positions.
+pub(crate) fn parse_typ(source: &str) -> Result<ast::Typ, FrontendError> {
     // Parse as a type with a throwaway context
     let ctx = Context::default();
     let lexer = Lexer::new(FileId::intern("<mixop>"), source, |id| ctx.find_id(id));
@@ -277,34 +273,4 @@ pub(crate) fn parse_notation_typ(source: &str) -> Result<ast::Typ, FrontendError
         }
     })?;
     Ok(typ)
-}
-
-/// Interns parsed EL notation directly, preserving its structure and atom spans.
-pub(crate) fn intern_notation_typ(
-    arena_mixop: &mut MixopArena,
-    typ_el: &ast::Typ,
-) -> Result<FlatMixop, MixopError> {
-    let mixop_kind = match typ_el {
-        ast::Typ::Plain(_) => MixopKind::Arg,
-        ast::Typ::Notation(not_typ_el) => match &not_typ_el.node {
-            ast::NotTypKind::Atom(atom) => MixopKind::Atom(atom.clone()),
-            ast::NotTypKind::Seq(typs_el) => {
-                let mixops = typs_el
-                    .iter()
-                    .map(|typ_el| intern_notation_typ(arena_mixop, typ_el))
-                    .collect::<Result<_, _>>()?;
-                MixopKind::Seq(mixops)
-            }
-            ast::NotTypKind::Infix(typ_l_el, atom, typ_r_el) => {
-                let mixop_l = intern_notation_typ(arena_mixop, typ_l_el)?;
-                let mixop_r = intern_notation_typ(arena_mixop, typ_r_el)?;
-                MixopKind::Infix(mixop_l, atom.clone(), mixop_r)
-            }
-            ast::NotTypKind::Brack(atom_l, typ_inner_el, atom_r) => {
-                let mixop_inner = intern_notation_typ(arena_mixop, typ_inner_el)?;
-                MixopKind::Brack(atom_l.clone(), mixop_inner, atom_r.clone())
-            }
-        },
-    };
-    arena_mixop.intern_kind(mixop_kind)
 }

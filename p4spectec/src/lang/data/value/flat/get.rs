@@ -75,12 +75,10 @@ macro_rules! matches_string {
         match $value_case {
             Some(value_case)
                 if {
-                    use $crate::lang::traits::eq::SyntaxEq as _;
-
-                    let mixop = value_case.mixop().into_tree(&$arena.mixop);
                     [$shape, $($shape_alt),*].into_iter().any(|mixop_text| {
-                        let mixop_expect = $crate::lang::data::notation::tree::parse::mixop(mixop_text);
-                        mixop.syntax_eq(mixop_expect.as_ref())
+                        $crate::lang::data::notation::flat::parse::matches_string(
+                            &$arena.mixop, *value_case.mixop(), mixop_text,
+                        )
                     })
                 } =>
             {
@@ -104,12 +102,9 @@ macro_rules! matches_string {
         match $value_case {
             Some(value_case)
                 if {
-                    use $crate::lang::traits::eq::SyntaxEq as _;
-
-                    let mixop = value_case.mixop().into_tree(&$arena.mixop);
-                    let mixop_expect =
-                        $crate::lang::data::notation::tree::parse::mixop($shape_mod::$shape);
-                    mixop.syntax_eq(mixop_expect.as_ref())
+                    $crate::lang::data::notation::flat::parse::matches_string(
+                        &$arena.mixop, *value_case.mixop(), $shape_mod::$shape,
+                    )
                 } =>
             {
                 let values_owned = value_case.args().to_vec();

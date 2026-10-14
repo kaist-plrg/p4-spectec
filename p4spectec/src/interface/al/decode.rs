@@ -7,7 +7,7 @@
 use super::{Error, mixops as m, stub};
 use crate::lang::common::prim::num::Number;
 use crate::{
-    frontend::parse::{parse_mixop, parse_notation_typ},
+    frontend::parse::{parse_mixop, parse_typ},
     lang::{
         al::ast as al,
         common::{
@@ -18,7 +18,7 @@ use crate::{
         data::{
             arena::Arena,
             notation::{
-                flat::{Mixfix as FlatMixfix, Mixop as FlatMixop, MixopKind},
+                flat::{Mixfix as FlatMixfix, Mixop as FlatMixop, MixopKind, parse::mixop_cached},
                 tree::{Mixfix as TreeMixfix, Mixop},
             },
             typ::make as make_typ,
@@ -96,8 +96,7 @@ impl Decode for il::Atom {
             "`}" => Atom::RBrace,
             _ => {
                 // Read the atom directly from the parser's notation type
-                let typ_el =
-                    parse_notation_typ(text_meta).map_err(|report| Error::from(report).at(span))?;
+                let typ_el = parse_typ(text_meta).map_err(|report| Error::from(report).at(span))?;
                 match typ_el {
                     el::Typ::Notation(not_typ_el) => match not_typ_el.node {
                         el::NotTypKind::Atom(atom) => atom.node,
@@ -180,8 +179,8 @@ impl Decode for FlatMixop {
             })
             .collect::<Vec<_>>()
             .join(" nat ");
-        let mixop =
-            m::parse_flat_mixop(&mut arena.mixop, &text_mixop).map_err(|error| error.at(span))?;
+        let mixop = mixop_cached(&mut arena.mixop, &text_mixop)
+            .map_err(|error| Error::from(error).at(span))?;
         if arena.mixop.arity(mixop) + 1 != atoms_matrix.len() {
             return Err(Error::unexpected(
                 arena,
@@ -213,7 +212,7 @@ impl Decode for TreeMixfix<il::Typ> {
 /// Decodes a runtime value notation case.
 impl Decode for FlatMixfix<Value> {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let mixop_valcase = m::intern_shape(arena, m::VALCASE)?;
+        let mixop_valcase = mixop_cached(&mut arena.mixop, m::VALCASE)?;
         get::matches_flat! { arena, &value_meta,
             mixop_valcase => |[value_mixop, values_arg]| {
                 let mixop = FlatMixop::decode(arena, *value_mixop)?;
@@ -245,8 +244,8 @@ impl Decode for TreeMixfix<il::Exp> {
 /// Decodes an iterator with its nullary constructor checked.
 impl Decode for Iter {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let mixop_quest = m::intern_shape(arena, m::QUEST)?;
-        let mixop_star = m::intern_shape(arena, m::STAR)?;
+        let mixop_quest = mixop_cached(&mut arena.mixop, m::QUEST)?;
+        let mixop_star = mixop_cached(&mut arena.mixop, m::STAR)?;
         get::matches_flat! { arena, &value_meta,
             mixop_quest => |[]| Ok(Iter::Opt),
             mixop_star => |[]| Ok(Iter::List),
@@ -278,14 +277,14 @@ impl Decode for il::Var {
 /// Decodes a source type, checking every constructor's shape.
 impl Decode for il::Typ {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let mixop_bool_typ = m::intern_shape(arena, m::BOOL_TYP)?;
-        let mixop_nat_typ = m::intern_shape(arena, m::NAT_TYP)?;
-        let mixop_int_typ = m::intern_shape(arena, m::INT_TYP)?;
-        let mixop_text_typ = m::intern_shape(arena, m::TEXT_TYP)?;
-        let mixop_var_typ = m::intern_shape(arena, m::VAR_TYP)?;
-        let mixop_tup_typ = m::intern_shape(arena, m::TUP_TYP)?;
-        let mixop_iter_typ = m::intern_shape(arena, m::ITER_TYP)?;
-        let mixop_func_typ = m::intern_shape(arena, m::FUNC_TYP)?;
+        let mixop_bool_typ = mixop_cached(&mut arena.mixop, m::BOOL_TYP)?;
+        let mixop_nat_typ = mixop_cached(&mut arena.mixop, m::NAT_TYP)?;
+        let mixop_int_typ = mixop_cached(&mut arena.mixop, m::INT_TYP)?;
+        let mixop_text_typ = mixop_cached(&mut arena.mixop, m::TEXT_TYP)?;
+        let mixop_var_typ = mixop_cached(&mut arena.mixop, m::VAR_TYP)?;
+        let mixop_tup_typ = mixop_cached(&mut arena.mixop, m::TUP_TYP)?;
+        let mixop_iter_typ = mixop_cached(&mut arena.mixop, m::ITER_TYP)?;
+        let mixop_func_typ = mixop_cached(&mut arena.mixop, m::FUNC_TYP)?;
         let span = *arena.value.span(value_meta.span);
         let typ_kind_al = get::matches_flat! { arena, &value_meta,
             mixop_bool_typ => |[]| il::TypKind::Bool,
@@ -381,17 +380,17 @@ impl Decode for il::TypCase {
 /// Decodes a runtime payload, allocating only in the supplied arena.
 impl Decode for Value {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let mixop_bool = m::intern_shape(arena, m::BOOL)?;
-        let mixop_nat = m::intern_shape(arena, m::NAT)?;
-        let mixop_int = m::intern_shape(arena, m::INT)?;
-        let mixop_text = m::intern_shape(arena, m::TEXT)?;
-        let mixop_str = m::intern_shape(arena, m::STR)?;
-        let mixop_inj = m::intern_shape(arena, m::INJ)?;
-        let mixop_tup = m::intern_shape(arena, m::TUP)?;
-        let mixop_opt = m::intern_shape(arena, m::OPT)?;
-        let mixop_list = m::intern_shape(arena, m::LIST)?;
-        let mixop_func = m::intern_shape(arena, m::FUNC)?;
-        let mixop_ext = m::intern_shape(arena, m::EXT)?;
+        let mixop_bool = mixop_cached(&mut arena.mixop, m::BOOL)?;
+        let mixop_nat = mixop_cached(&mut arena.mixop, m::NAT)?;
+        let mixop_int = mixop_cached(&mut arena.mixop, m::INT)?;
+        let mixop_text = mixop_cached(&mut arena.mixop, m::TEXT)?;
+        let mixop_str = mixop_cached(&mut arena.mixop, m::STR)?;
+        let mixop_inj = mixop_cached(&mut arena.mixop, m::INJ)?;
+        let mixop_tup = mixop_cached(&mut arena.mixop, m::TUP)?;
+        let mixop_opt = mixop_cached(&mut arena.mixop, m::OPT)?;
+        let mixop_list = mixop_cached(&mut arena.mixop, m::LIST)?;
+        let mixop_func = mixop_cached(&mut arena.mixop, m::FUNC)?;
+        let mixop_ext = mixop_cached(&mut arena.mixop, m::EXT)?;
         let span = *arena.value.span(value_meta.span);
         let value_target = get::matches_flat! { arena, &value_meta,
             mixop_bool => |[value_bool]| {
@@ -462,7 +461,7 @@ impl Decode for Value {
 /// Decodes one runtime struct field.
 impl Decode for ValueField {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let mixop_valfield = m::intern_shape(arena, m::VALFIELD)?;
+        let mixop_valfield = mixop_cached(&mut arena.mixop, m::VALFIELD)?;
         get::matches_flat! { arena, &value_meta,
             mixop_valfield => |[value_atom, value_inner]| {
                 Ok(ValueField {

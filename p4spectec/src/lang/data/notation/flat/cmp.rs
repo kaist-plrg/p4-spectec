@@ -56,6 +56,50 @@ impl CanonEq for MixopKind {
 // - Structural comparison
 
 impl Mixop {
+    /// Compares notation structure across arenas, ignoring atom spans.
+    pub(crate) fn syntax_eq_in(
+        self,
+        arena_l: &MixopArena,
+        mixop_r: Mixop,
+        arena_r: &MixopArena,
+    ) -> bool {
+        // Canonical identities are comparable only within one arena
+        if std::ptr::eq(arena_l, arena_r) {
+            return arena_l.canon_id(self) == arena_r.canon_id(mixop_r);
+        }
+        // Resolve each child in the arena that issued its handle
+        let eq_mixop =
+            |mixop_l: Mixop, mixop_r: Mixop| mixop_l.syntax_eq_in(arena_l, mixop_r, arena_r);
+        match (arena_l.kind(self), arena_r.kind(mixop_r)) {
+            (MixopKind::Arg, MixopKind::Arg) => true,
+            (MixopKind::Atom(atom_l), MixopKind::Atom(atom_r)) => atom_l.node == atom_r.node,
+            (
+                MixopKind::Brack(atom_l_l, mixop_l, atom_l_r),
+                MixopKind::Brack(atom_r_l, mixop_r, atom_r_r),
+            ) => {
+                atom_l_l.node == atom_r_l.node
+                    && eq_mixop(*mixop_l, *mixop_r)
+                    && atom_l_r.node == atom_r_r.node
+            }
+            (
+                MixopKind::Infix(mixop_l_l, atom_l, mixop_l_r),
+                MixopKind::Infix(mixop_r_l, atom_r, mixop_r_r),
+            ) => {
+                eq_mixop(*mixop_l_l, *mixop_r_l)
+                    && atom_l.node == atom_r.node
+                    && eq_mixop(*mixop_l_r, *mixop_r_r)
+            }
+            (MixopKind::Seq(mixops_l), MixopKind::Seq(mixops_r)) => {
+                mixops_l.len() == mixops_r.len()
+                    && mixops_l
+                        .iter()
+                        .zip(mixops_r)
+                        .all(|(mixop_l, mixop_r)| eq_mixop(*mixop_l, *mixop_r))
+            }
+            _ => false,
+        }
+    }
+
     /// Orders two mixops by structure and atom names, lexicographically.
     ///
     /// Brackets compare the opening atom, the inner form, then the closing atom;

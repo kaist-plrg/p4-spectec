@@ -82,3 +82,13 @@ impl From<P4UnparseError> for BuiltinError {
         Self::diagnostic(BUILTIN_PRINT_UNSUPPORTED, error.to_string())
     }
 }
+
+impl From<crate::lang::data::notation::flat::parse::ParseMixopError> for BuiltinError {
+    fn from(error: crate::lang::data::notation::flat::parse::ParseMixopError) -> Self {
+        use crate::lang::data::notation::flat::parse::ParseMixopError;
+        match error {
+            ParseMixopError::Syntax(report) => Self::from(report),
+            ParseMixopError::Intern(error) => Self::from(ValueError::from(error)),
+        }
+    }
+}

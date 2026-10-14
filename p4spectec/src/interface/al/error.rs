@@ -114,3 +114,14 @@ impl From<crate::lang::hints::input::InputError> for Error {
         Self { span: Span::default(), kind: error.into() }
     }
 }
+
+impl From<notation::flat::parse::ParseMixopError> for Error {
+    fn from(error: notation::flat::parse::ParseMixopError) -> Self {
+        match error {
+            notation::flat::parse::ParseMixopError::Syntax(error) => Self::from(error),
+            notation::flat::parse::ParseMixopError::Intern(error) => {
+                Self::from(ValueError::from(error))
+            }
+        }
+    }
+}
