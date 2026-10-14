@@ -12,21 +12,12 @@ From the repository root:
 make metacirc
 ```
 
-The root Makefile delegates this target to `METASQ.mk`, which owns the
-metacircular build and test rules. It can also be invoked directly:
+This builds and installs `bin/metacirc` in release mode. The root Makefile
+forwards the explicit target to `METASQ.mk`, which owns the metacircular
+build and test rules. The native `p4spectec` build remains independent.
 
-```sh
-make -f METASQ.mk metacirc
-```
-
-This builds and installs `bin/metacirc` in release mode.
-`make build`, `make release`, and `make debug` build only `bin/p4spectec`.
-Within `p4spectec`, use `cargo build --locked --release --bin metacirc`;
-`cargo run` still defaults to `p4spectec`.
-
-`CARGO_TARGET_DIR` works with either invocation; relative paths are resolved
-from the repository root. `make -f METASQ.mk clean` removes `bin/metacirc`.
-The root `make clean` also clears the shared Cargo build directory.
+Pass `CARGO_TARGET_DIR` to select another build directory; relative paths
+are resolved from the repository root.
 
 ## Standalone AL script
 
@@ -102,9 +93,8 @@ owned runners before arena execution values can be cleared.
 make test-metacirc
 ```
 
-The equivalent direct command is `make -f METASQ.mk test-metacirc`.
-This target builds `metacirc` and runs its independent driver; `make test`
-does not include it.
+This target builds `metacirc` and runs its independent driver.
+The default test targets do not include it.
 
 The `test-driver/metacirc` fixture runs only the Rust SL → AL specification →
 P4 specification → P4 program `Program_inst` path through the CLI.
