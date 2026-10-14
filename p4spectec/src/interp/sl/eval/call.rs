@@ -205,6 +205,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
     let mut id = Cow::Borrowed(id);
     let mut values = Cow::Borrowed(values);
     let mut ids_pending: Vec<ast::Id> = Vec::new();
+    let mut keys_pending = Vec::new();
     loop {
         // Serve from the cache when eligible
         let cache = cache_rel(runner_ctx, ctx, &id);
@@ -215,9 +216,20 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
                     .cache
                     .find_rel(runner_ctx.arena(), &id.node, &values)
         {
-            return ok!(values.clone());
+            let values = values.clone();
+            // Cached results also complete the pending pure callers
+            for key in keys_pending {
+                runner_ctx
+                    .interp_mut()
+                    .cache
+                    .rels
+                    .insert(key, values.clone());
+            }
+            return ok!(values);
         }
-        let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, &values));
+        if cache {
+            keys_pending.push(CallKey::new(runner_ctx.arena(), &id.node, &values));
+        }
         // Track effects for memoization; grow the stack for deep recursion
         let checkpoint = runner_ctx.effect_checkpoint();
         let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
@@ -234,7 +246,10 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
             }
         });
         // Nest failures under this call and then under the tail-calling callers
-        let pure = runner_ctx.effect_since(checkpoint) == SideEffect::Pure;
+        if runner_ctx.effect_since(checkpoint) == SideEffect::Impure {
+            // An effect invalidates this prefix and every earlier tail caller
+            keys_pending.clear();
+        }
         let mut result = result.with_frame(id.span, || error::trace::message_rel_invocation(&id));
         if result.is_err() {
             for id in ids_pending.iter().rev() {
@@ -246,7 +261,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
         match result {
             // Memoize a pure result
             RelResult::Result(values) => {
-                if pure && let Some(key) = key {
+                for key in keys_pending {
                     runner_ctx
                         .interp_mut()
                         .cache
@@ -346,6 +361,7 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
     let mut targs = Cow::Borrowed(targs);
     let mut values = Cow::Borrowed(values);
     let mut calls_pending: Vec<(ast::Id, Vec<ast::Typ>)> = Vec::new();
+    let mut keys_pending = Vec::new();
     loop {
         // Serve from the cache when eligible
         let cache = cache_func(runner_ctx, ctx, &id, &values);
@@ -356,9 +372,16 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
                     .cache
                     .find_func(runner_ctx.arena(), &id.node, &values)
         {
-            return ok!(*value);
+            let value = *value;
+            // Cached results also complete the pending pure callers
+            for key in keys_pending {
+                runner_ctx.interp_mut().cache.funcs.insert(key, value);
+            }
+            return ok!(value);
         }
-        let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, &values));
+        if cache {
+            keys_pending.push(CallKey::new(runner_ctx.arena(), &id.node, &values));
+        }
         // Track effects for memoization; grow the stack for deep recursion
         let checkpoint = runner_ctx.effect_checkpoint();
         let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
@@ -380,7 +403,10 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
             }
         });
         // Nest failures under this call and then under the tail-calling callers
-        let pure = runner_ctx.effect_since(checkpoint) == SideEffect::Pure;
+        if runner_ctx.effect_since(checkpoint) == SideEffect::Impure {
+            // An effect invalidates this prefix and every earlier tail caller
+            keys_pending.clear();
+        }
         let mut result =
             result.with_frame(id.span, || error::trace::message_func_invocation(&id, &targs));
         if result.is_err() {
@@ -394,7 +420,7 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
         match result {
             // Memoize a pure result
             FuncResult::Return(value) => {
-                if pure && let Some(key) = key {
+                for key in keys_pending {
                     runner_ctx.interp_mut().cache.funcs.insert(key, value);
                 }
                 return ok!(value);
