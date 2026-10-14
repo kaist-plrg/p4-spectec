@@ -1,0 +1,44 @@
+var n : nat
+
+extern dec $effect(nat) : nat
+
+dec $leaf(nat) : nat
+def $leaf(n) = n
+dec $middle(nat) : nat
+def $middle(n) = $leaf(n)
+dec $head(nat) : nat
+def $head(n) = $middle(n)
+dec $other(nat) : nat
+def $other(n) = $middle(n)
+dec $pure : nat
+def $pure = $head(1) + $other(1)
+
+dec $prefix(nat) : nat
+def $prefix(n) = $middle(n') -- if n' = $effect(n)
+dec $suffix(nat) : nat
+def $suffix(n) = $effect(n)
+dec $outer(nat) : nat
+def $outer(n) = $suffix(n)
+dec $impure : nat
+def $impure = $prefix(1) + $outer(1)
+
+relation Leaf: nat ~> nat hint(input %0)
+rule Leaf: n ~> n
+relation Middle: nat ~> nat hint(input %0)
+rule Middle: n ~> n' -- Leaf: n ~> n'
+relation Head: nat ~> nat hint(input %0)
+rule Head: n ~> n' -- Middle: n ~> n'
+relation Other: nat ~> nat hint(input %0)
+rule Other: n ~> n' -- Middle: n ~> n'
+relation Pure: nat ~> nat hint(input %0)
+rule Pure: n ~> n' + n'' -- Head: n ~> n' -- Other: n ~> n''
+
+extern relation Effect: nat ~> nat hint(input %0)
+relation Prefix: nat ~> nat hint(input %0)
+rule Prefix: n ~> n'' -- Effect: n ~> n' -- Middle: n' ~> n''
+relation Suffix: nat ~> nat hint(input %0)
+rule Suffix: n ~> n' -- Effect: n ~> n'
+relation Outer: nat ~> nat hint(input %0)
+rule Outer: n ~> n' -- Suffix: n ~> n'
+relation Impure: nat ~> nat hint(input %0)
+rule Impure: n ~> n' + n'' -- Prefix: n ~> n' -- Outer: n ~> n''
