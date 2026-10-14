@@ -7,6 +7,7 @@
 use clap::{Args, Parser, Subcommand};
 use p4spectec::{
     diagnostic::{DisplayStyle, RenderConfig, Renderer},
+    interface::al::Cache,
     metacirc::{self, TowerConfig},
     runner,
 };
@@ -33,6 +34,9 @@ struct Options {
     /// Disable AL encode/decode caching at host boundaries.
     #[arg(long)]
     no_codec_cache: bool,
+    /// Maximum entries per AL conversion table; zero disables codec caching.
+    #[arg(long = "codec-cache-limit", default_value_t = Cache::DEFAULT_LIMIT)]
+    num_entries_cache_max: usize,
     /// Check deterministic execution.
     #[arg(long)]
     det: bool,
@@ -71,7 +75,7 @@ fn run(cli: Cli) -> metacirc::Result<()> {
                 &args.includes,
                 &args.program,
                 args.options.config(),
-                !args.options.no_codec_cache,
+                if args.options.no_codec_cache { 0 } else { args.options.num_entries_cache_max },
             )
         }
     }

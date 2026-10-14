@@ -22,7 +22,7 @@ fn list_bool(arena: &mut Arena, value_bool: bool, span: Span) -> Value {
 #[test]
 fn encode_reuses_canonical_values_across_annotations() {
     let mut arena = Arena::new();
-    let mut cache = Cache::new(true);
+    let mut cache = Cache::new(Cache::DEFAULT_LIMIT);
     let span = Span::new(Position { line: 2, ..Position::default() }, Position::default());
     let value_a = list_bool(&mut arena, true, Span::default());
     let value_b = list_bool(&mut arena, true, span);
@@ -37,7 +37,7 @@ fn encode_reuses_canonical_values_across_annotations() {
 #[test]
 fn recursive_conversions_reuse_child_results() {
     let mut arena = Arena::new();
-    let mut cache = Cache::new(true);
+    let mut cache = Cache::new(Cache::DEFAULT_LIMIT);
     let value_inner = list_bool(&mut arena, true, Span::default());
     let value_outer = make::tuple(
         &mut arena,
@@ -63,7 +63,7 @@ fn recursive_conversions_reuse_child_results() {
 #[test]
 fn disabled_and_uncached_conversions_do_not_reuse_results() {
     let mut arena = Arena::new();
-    let mut cache = Cache::new(false);
+    let mut cache = Cache::new(0);
     let value = list_bool(&mut arena, true, Span::default());
     let value_meta_a = value.encode_cached(&mut arena, &mut cache).unwrap();
     let value_meta_b = value.encode_cached(&mut arena, &mut cache).unwrap();
@@ -79,7 +79,7 @@ fn disabled_and_uncached_conversions_do_not_reuse_results() {
 #[test]
 fn encoding_does_not_seed_reverse_decoding() {
     let mut arena = Arena::new();
-    let mut cache = Cache::new(true);
+    let mut cache = Cache::new(Cache::DEFAULT_LIMIT);
     let value_source = list_bool(&mut arena, true, Span::default());
     let value_meta = value_source.encode_cached(&mut arena, &mut cache).unwrap();
     let value_cached = Value::decode_cached(&mut arena, &mut cache, value_meta).unwrap();
@@ -91,7 +91,7 @@ fn encoding_does_not_seed_reverse_decoding() {
 #[test]
 fn clear_discards_handles_before_arena_reset() {
     let mut arena = Arena::new();
-    let mut cache = Cache::new(true);
+    let mut cache = Cache::new(Cache::DEFAULT_LIMIT);
     let value = list_bool(&mut arena, true, Span::default());
     let value_meta = value.encode_cached(&mut arena, &mut cache).unwrap();
     Value::decode_cached(&mut arena, &mut cache, value_meta).unwrap();
@@ -106,7 +106,7 @@ fn clear_discards_handles_before_arena_reset() {
 #[test]
 fn type_cache_uses_contents_and_clear_discards_results() {
     let mut arena = Arena::new();
-    let mut cache = Cache::new(true);
+    let mut cache = Cache::new(Cache::DEFAULT_LIMIT);
     let typ_a = make_typ::list(make_typ::bool());
     let mut typ_b = typ_a.clone();
     typ_b.span.left.line = 7;
@@ -121,7 +121,7 @@ fn type_cache_uses_contents_and_clear_discards_results() {
 #[test]
 fn malformed_values_still_fail_with_cache_enabled() {
     let mut arena = Arena::new();
-    let mut cache = Cache::new(true);
+    let mut cache = Cache::new(Cache::DEFAULT_LIMIT);
     let value_meta = make::bool(&mut arena, true, Span::default()).unwrap();
     assert!(Value::decode_cached(&mut arena, &mut cache, value_meta).is_err());
     assert!(Value::decode_cached(&mut arena, &mut cache, value_meta).is_err());
@@ -130,7 +130,7 @@ fn malformed_values_still_fail_with_cache_enabled() {
 #[test]
 fn mixop_caches_are_cleared_before_value_handles_are_reused() {
     let mut arena = Arena::new();
-    let mut cache = Cache::new(true);
+    let mut cache = Cache::new(Cache::DEFAULT_LIMIT);
     let mixop = arena.mixop.intern(&Mixop::Seq(vec![])).unwrap();
     let value_meta = mixop.encode_cached(&mut arena, &mut cache).unwrap();
     assert_eq!(mixop.encode_cached(&mut arena, &mut cache).unwrap(), value_meta);
@@ -148,7 +148,7 @@ fn mixop_caches_are_cleared_before_value_handles_are_reused() {
 #[test]
 fn decode_reuses_canonical_values_across_annotations() {
     let mut arena = Arena::new();
-    let mut cache = Cache::new(true);
+    let mut cache = Cache::new(Cache::DEFAULT_LIMIT);
     let span_a = Span::default();
     let span_b = Span::new(Position { line: 3, ..Position::default() }, Position::default());
     let value_a = list_bool(&mut arena, true, span_a);
@@ -160,4 +160,23 @@ fn decode_reuses_canonical_values_across_annotations() {
     let value_b = Value::decode_cached(&mut arena, &mut cache, value_meta_b).unwrap();
     assert_eq!(value_a, value_b);
     assert_eq!(*arena.value.span(value_b.span), span_a);
+}
+
+#[test]
+fn full_tables_keep_hits_but_do_not_retain_new_results() {
+    let mut arena = Arena::new();
+    let mut cache = Cache::new(2);
+    let value_a = list_bool(&mut arena, true, Span::default());
+    let value_b = list_bool(&mut arena, false, Span::default());
+    let value_meta_a = value_a.encode_cached(&mut arena, &mut cache).unwrap();
+    let value_meta_b = value_b.encode_cached(&mut arena, &mut cache).unwrap();
+    assert_eq!(value_a.encode_cached(&mut arena, &mut cache).unwrap(), value_meta_a);
+    assert_ne!(value_b.encode_cached(&mut arena, &mut cache).unwrap(), value_meta_b);
+    let value_a = Value::decode_cached(&mut arena, &mut cache, value_meta_a).unwrap();
+    let value_b = Value::decode_cached(&mut arena, &mut cache, value_meta_b).unwrap();
+    assert_eq!(Value::decode_cached(&mut arena, &mut cache, value_meta_a).unwrap(), value_a);
+    assert_ne!(Value::decode_cached(&mut arena, &mut cache, value_meta_b).unwrap(), value_b);
+    cache.clear();
+    let value_b = Value::decode_cached(&mut arena, &mut cache, value_meta_b).unwrap();
+    assert_eq!(Value::decode_cached(&mut arena, &mut cache, value_meta_b).unwrap(), value_b);
 }

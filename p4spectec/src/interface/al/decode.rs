@@ -40,7 +40,7 @@ use std::rc::Rc;
 pub trait Decode: Sized {
     /// Decodes a value without retaining conversion results.
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        Self::decode_cached(arena, &mut Cache::new(false), value_meta)
+        Self::decode_cached(arena, &mut Cache::new(0), value_meta)
     }
 
     /// Decodes a value with a cache belonging to the supplied arena.
@@ -188,7 +188,7 @@ impl Decode for FlatMixop {
     ) -> Result<Self, Error> {
         // Skip matrix decoding and notation reconstruction on a hit
         let id_value = arena.value.canon_id(value_meta.node);
-        if cache.enabled
+        if cache.num_entries_max > 0
             && let Some(mixop) = cache.mixops_decode.get(&id_value)
         {
             return Ok(*mixop);
@@ -211,7 +211,7 @@ impl Decode for FlatMixop {
                     ),
                     MatrixMixopError::Parse(error) => Error::from(error).at(span),
                 })?;
-        if cache.enabled {
+        if cache.mixops_decode.len() < cache.num_entries_max {
             cache.mixops_decode.insert(id_value, mixop);
         }
         Ok(mixop)
@@ -326,7 +326,7 @@ impl Decode for il::Typ {
     ) -> Result<Self, Error> {
         // Type representations share the value arena's canonical identity
         let id_value = arena.value.canon_id(value_meta.node);
-        if cache.enabled
+        if cache.num_entries_max > 0
             && let Some(typ_al) = cache.typs_decode.get(&id_value)
         {
             return Ok(typ_al.clone());
@@ -368,7 +368,7 @@ impl Decode for il::Typ {
                         },
         };
         let typ_al = phrase!(node: typ_kind_al, span: span);
-        if cache.enabled {
+        if cache.typs_decode.len() < cache.num_entries_max {
             cache.typs_decode.insert(id_value, typ_al.clone());
         }
         Ok(typ_al)
@@ -448,7 +448,7 @@ impl Decode for Value {
     ) -> Result<Self, Error> {
         // Reuse the decoded payload before visiting its children
         let id_value = arena.value.canon_id(value_meta.node);
-        if cache.enabled
+        if cache.num_entries_max > 0
             && let Some(value_target) = cache.values_decode.get(&id_value)
         {
             return Ok(*value_target);
@@ -517,7 +517,7 @@ impl Decode for Value {
                         },
         };
         // Retain successful conversions without seeding the encode cache
-        if cache.enabled {
+        if cache.values_decode.len() < cache.num_entries_max {
             cache.values_decode.insert(id_value, value_target);
         }
         Ok(value_target)

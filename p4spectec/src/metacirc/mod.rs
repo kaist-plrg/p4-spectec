@@ -24,7 +24,7 @@ pub fn run(
     includes: &[PathBuf],
     paths_program: &[PathBuf],
     options: runner::Config,
-    cache_codec: bool,
+    num_entries_cache_max: usize,
 ) -> Result<()> {
     if paths_program.is_empty() {
         return Err(error::input_invalid("a tower requires at least one program path"));
@@ -39,7 +39,7 @@ pub fn run(
         includes,
         paths_program,
         options,
-        cache_codec,
+        num_entries_cache_max,
     )?;
     // Only the native base is entered from the command boundary
     tower
