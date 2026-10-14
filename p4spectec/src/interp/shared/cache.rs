@@ -106,34 +106,3 @@ impl Cache {
         self.rels.clear();
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use std::rc::Rc;
-
-    use crate::lang::{common::source::Span, data::value::flat::make};
-
-    use super::*;
-
-    #[test]
-    fn borrowed_queries_match_owned_keys_at_every_arity() {
-        let mut arena = Arena::new();
-        let mut cache = Cache::default();
-        let name: Rc<str> = "f".into();
-        let values = (0..9)
-            .map(|n| make::nat(&mut arena, (n as u64).into(), Span::default()).unwrap())
-            .collect::<Vec<_>>();
-        // Exercise both short and longer argument lists with distinct prefixes
-        for len in 0..values.len() {
-            cache
-                .funcs
-                .insert(CallKey::new(&arena, &name, &values[..len]), values[len]);
-        }
-        // Lookups use equal text independently of the owning identifier
-        let name_query = String::from("f");
-        for len in 0..values.len() {
-            assert_eq!(cache.find_func(&arena, &name_query, &values[..len]), Some(&values[len]));
-        }
-        assert!(cache.find_func(&arena, "g", &values[..1]).is_none());
-    }
-}

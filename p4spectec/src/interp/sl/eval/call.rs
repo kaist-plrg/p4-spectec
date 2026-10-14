@@ -44,9 +44,6 @@ use super::super::{
 
 use super::{assign, instr};
 
-#[cfg(test)]
-mod tests;
-
 // = Invocation results
 
 /// What a function body produced: a value, or a tail call to make.

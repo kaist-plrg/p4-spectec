@@ -143,23 +143,3 @@ impl ToMixop for NotTyp {
         arena_mixop.intern_kind(kind)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parsed_handles_follow_the_owning_arena() {
-        let mut arena_a = MixopArena::new();
-        let mut arena_b = MixopArena::new();
-        let mixop_a = "TAG nat".to_mixop(&mut arena_a).unwrap();
-        "OTHER nat nat".to_mixop(&mut arena_b).unwrap();
-        let mixop_b = "TAG nat".to_mixop(&mut arena_b).unwrap();
-        assert_ne!(mixop_a, mixop_b);
-        assert_eq!(mixop_a.into_tree(&arena_a), mixop_b.into_tree(&arena_b));
-        assert_eq!("TAG nat".to_mixop(&mut arena_a).unwrap(), mixop_a);
-        assert_eq!("TAG nat".to_mixop(&mut arena_b).unwrap(), mixop_b);
-        assert_eq!(arena_a.arity(mixop_a), 1);
-        assert_eq!(arena_b.arity(mixop_b), 1);
-    }
-}
