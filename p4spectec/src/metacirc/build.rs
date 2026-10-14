@@ -47,7 +47,10 @@ use super::{
     tower::{self, Layer, Target},
 };
 use crate::{
-    interface::{self, al::encode::Encode},
+    interface::{
+        self,
+        al::{Cache, encode::Encode},
+    },
     lang::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},
@@ -129,6 +132,7 @@ fn build_target(
     includes: &[PathBuf],
     paths_program: &[PathBuf],
     options: runner::Config,
+    cache_codec: bool,
 ) -> Result<(Target, Value)> {
     let spec_target = into_runner_spec(mode, target.spec_al.clone())?;
     match target.config.lang {
@@ -148,7 +152,10 @@ fn build_target(
                 spec_target,
                 options,
                 interface::al(),
-                TerminalExtern { runner_target: Box::new(runner_target) },
+                TerminalExtern {
+                    cache: Box::new(Cache::new(cache_codec)),
+                    runner_target: Box::new(runner_target),
+                },
             )?;
             Ok((Target::Al(runner), value))
         }
@@ -175,9 +182,11 @@ fn build_interm(
     interm: &Level,
     layer: Layer,
     options: runner::Config,
+    cache_codec: bool,
 ) -> Result<Layer> {
     let spec = into_runner_spec(ExecutionMode::Sl, interm.spec_al.clone())?;
-    let external = RelayExtern { runner_next: Box::new(layer) };
+    let external =
+        RelayExtern { cache: Box::new(Cache::new(cache_codec)), runner_next: Box::new(layer) };
     Ok(Layer::Interm(Runner::new(arena, spec, options, interface::al(), external)?))
 }
 
@@ -188,9 +197,11 @@ fn build_base(
     mode: ExecutionMode,
     layer: Layer,
     options: runner::Config,
+    cache_codec: bool,
 ) -> Result<tower::Tower> {
     let spec = into_runner_spec(mode, base.spec_al.clone())?;
-    let external = RelayExtern { runner_next: Box::new(layer) };
+    let external =
+        RelayExtern { cache: Box::new(Cache::new(cache_codec)), runner_next: Box::new(layer) };
     Ok(tower::Tower::Nested(Runner::new(arena, spec, options, interface::al(), external)?))
 }
 
@@ -204,27 +215,35 @@ pub(super) fn tower(
     includes: &[PathBuf],
     paths_program: &[PathBuf],
     options: runner::Config,
+    cache_codec: bool,
 ) -> Result<(tower::Tower, Value)> {
     match specs {
         Tower::Direct(target) => {
             // The target itself is the base, with no synthetic entry layer
             let (target, value) =
-                build_target(arena, target, mode, includes, paths_program, options)?;
+                build_target(arena, target, mode, includes, paths_program, options, cache_codec)?;
             Ok((tower::Tower::Direct(target), value))
         }
         Tower::Nested { base, interms, target } => {
             // Prepare and encode the innermost target first
-            let (runner_target, value) =
-                build_target(arena, target, ExecutionMode::Sl, includes, paths_program, options)?;
+            let (runner_target, value) = build_target(
+                arena,
+                target,
+                ExecutionMode::Sl,
+                includes,
+                paths_program,
+                options,
+                cache_codec,
+            )?;
             let mut value = target.encode(arena, value)?;
             let mut layer = Layer::Target(runner_target);
             // Each intermediate interprets the script prepared immediately above it
             for interm in interms.iter().rev() {
-                layer = build_interm(arena, interm, layer, options)?;
+                layer = build_interm(arena, interm, layer, options, cache_codec)?;
                 value = interm.encode(arena, value)?;
             }
             // The base executes natively and is never encoded as an input script
-            Ok((build_base(arena, base, mode, layer, options)?, value))
+            Ok((build_base(arena, base, mode, layer, options, cache_codec)?, value))
         }
     }
 }

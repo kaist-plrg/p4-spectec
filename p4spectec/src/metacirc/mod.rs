@@ -24,6 +24,7 @@ pub fn run(
     includes: &[PathBuf],
     paths_program: &[PathBuf],
     options: runner::Config,
+    cache_codec: bool,
 ) -> Result<()> {
     if paths_program.is_empty() {
         return Err(error::input_invalid("a tower requires at least one program path"));
@@ -31,8 +32,15 @@ pub fn run(
     // Keep every prepared layer and encoded input in the same arena
     let mut arena = Arena::new();
     let specs = build::Tower::new(config)?;
-    let (mut tower, value_program) =
-        build::tower(&mut arena, &specs, config.mode, includes, paths_program, options)?;
+    let (mut tower, value_program) = build::tower(
+        &mut arena,
+        &specs,
+        config.mode,
+        includes,
+        paths_program,
+        options,
+        cache_codec,
+    )?;
     // Only the native base is entered from the command boundary
     tower
         .eval_program(&mut arena, specs.relation(), value_program)

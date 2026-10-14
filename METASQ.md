@@ -98,7 +98,9 @@ single-input entry relation with the encoded input and returns `"pass"` after
 success. These scripts must not already define `main`. The base is executed
 natively rather than encoded as another input script.
 
-The command accepts `--no-cache`, `--det`, and `--guard`. It prints `passed`
+The command accepts `--no-cache` (interpreter call cache), `--no-codec-cache`
+(AL encode/decode cache), `--det`, and `--guard`. Both caches are enabled by
+default and can be disabled independently. It prints `passed`
 only after the configured base entry succeeds; diagnostics cause a nonzero
 exit code. All runners share one arena. Host calls decode one representation
 layer and encode their results, preserving effects. Native mismatch becomes
@@ -108,6 +110,14 @@ Runtime value codecs traverse and construct interned mixops directly.
 Fixed constructor shapes are cached as handles within their owning mixop
 arena; matching compares canonical identities. Source AST notation and
 synthetic-entry patching retain their tree representation.
+
+Each host boundary owns five conversion tables: value encode/decode, mixop
+encode/decode, and type decode. Recursive conversions receive that cache
+explicitly. Canonical keys ignore type notes and source locations; cache hits
+retain the first result's annotations. Tables are independent, have no eviction,
+and are cleared before the shared arena resets. Initial script encoding uses
+the uncached `Encode::encode` API; runtime calls use `encode_cached` and
+`decode_cached`.
 
 ## Focused test
 
@@ -121,7 +131,8 @@ The default test targets do not include it.
 The `test-driver/metacirc` fixture runs only the Rust SL → AL specification →
 P4 specification → P4 program `Program_inst` path through the CLI using
 `towers/al-p4.json`. It uses the full P4 specification and a small constant
-declaration, without requiring the p4c submodule.
+declaration, with the codec cache both disabled and enabled, without requiring
+the p4c submodule.
 
 Native/AL/AL→AL performance measurements are follow-up work.
 

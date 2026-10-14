@@ -30,6 +30,9 @@ struct Options {
     /// Disable interpreter call caching.
     #[arg(long)]
     no_cache: bool,
+    /// Disable AL encode/decode caching at host boundaries.
+    #[arg(long)]
+    no_codec_cache: bool,
     /// Check deterministic execution.
     #[arg(long)]
     det: bool,
@@ -63,7 +66,13 @@ fn run(cli: Cli) -> metacirc::Result<()> {
     match cli.command {
         Command::Run(args) => {
             let config = TowerConfig::from_file(&args.config)?;
-            metacirc::run(&config, &args.includes, &args.program, args.options.config())
+            metacirc::run(
+                &config,
+                &args.includes,
+                &args.program,
+                args.options.config(),
+                !args.options.no_codec_cache,
+            )
         }
     }
 }

@@ -12,27 +12,35 @@ pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
 /// Checks the SL → AL specification → P4 specification → Program_inst path.
 pub fn run(path_cli: &Path) -> Result<()> {
     let path_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("metacirc");
-    let output = Command::new(path_cli)
-        .arg("run")
-        .arg(path_root.join("../../../towers/al-p4.json"))
-        .arg("-p")
-        .arg(path_root.join("program-inst.p4"))
-        .output()?;
-    if !output.status.success() {
-        return Err(format!(
-            "metacirc Program_inst failed: {}\n{}\n{}",
-            output.status,
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr),
-        )
-        .into());
+    for cache_codec in [false, true] {
+        let mut command = Command::new(path_cli);
+        command
+            .arg("run")
+            .arg(path_root.join("../../../towers/al-p4.json"))
+            .arg("-p")
+            .arg(path_root.join("program-inst.p4"));
+        if !cache_codec {
+            command.arg("--no-codec-cache");
+        }
+        let output = command.output()?;
+        if !output.status.success() {
+            return Err(format!(
+                "metacirc Program_inst (codec cache={cache_codec}) failed: {}\n{}\n{}",
+                output.status,
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr),
+            )
+            .into());
+        }
+        if !String::from_utf8_lossy(&output.stdout)
+            .lines()
+            .any(|line| line == "passed")
+        {
+            return Err("metacirc did not report successful Program_inst execution".into());
+        }
+        eprintln!(
+            "metacirc: SL > AL spec > P4 spec > P4 program: Program_inst passed (codec cache={cache_codec})"
+        );
     }
-    if !String::from_utf8_lossy(&output.stdout)
-        .lines()
-        .any(|line| line == "passed")
-    {
-        return Err("metacirc did not report successful Program_inst execution".into());
-    }
-    eprintln!("metacirc: SL > AL spec > P4 spec > P4 program: Program_inst passed");
     Ok(())
 }
