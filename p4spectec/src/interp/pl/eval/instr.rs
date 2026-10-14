@@ -239,21 +239,20 @@ fn eval_if_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Test the original value before narrowing it for the binding
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
-    if !unwrap!(ops::sub(runner_ctx.arena(), &ctx, &instr.exp_r.node.span, &instr.target, value)) {
+    let ast::SubBind { typ, subcheck } = &instr.target;
+    if !unwrap!(ops::sub(runner_ctx.arena(), &ctx, &instr.exp_r.node.span, subcheck, value)) {
         let text = format!(
             "({} has type {})",
             instr.exp_r.view(&runner_ctx.arena().mixop).to_string(),
-            instr.target.view(&runner_ctx.arena().mixop).to_string()
+            typ.to_string()
         );
         return ok!((ctx, Flow::cont(instr.exp_r.node.span, error::prem::condition_unmet(text))));
     }
-    // The binding carries the narrowed type
-    let typ = phrase!(node: instr.exp_l.node.note.as_ref().clone(), span: instr.exp_l.node.span);
     // Same-type bindings do not introduce an otherwise absent cast
     let value = if instr.exp_r.node.note.as_ref().syntax_eq(&typ.node) {
         value
     } else {
-        unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, &typ, value))
+        unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, typ, value))
     };
     // Restore the enclosing bindings when the selected body finishes
     let ctx_local =
@@ -420,14 +419,11 @@ fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         if unwrap!(eval_guard(runner_ctx, &ctx, value, &case.guard)) {
             // Commit to the accepted guard before assigning its local binding
             let ctx_local = match &case.guard {
-                ast::Guard::LetSub(_, exp_l) => {
-                    // The binding carries the narrowed type
-                    let typ =
-                        phrase!(node: exp_l.node.note.as_ref().clone(), span: exp_l.node.span);
+                ast::Guard::LetSub(ast::SubBind { typ, .. }, exp_l) => {
                     let value = if instr.exp.node.note.as_ref().syntax_eq(&typ.node) {
                         value
                     } else {
-                        unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, &typ, value))
+                        unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, typ, value))
                     };
                     unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), exp_l, value))
                 }
@@ -469,7 +465,7 @@ fn eval_guard<'global, Iface: Interface, Ext: Extern>(
             ops::cmpop(runner_ctx.arena(), &exp_r.node.span, op, value, value_r)
         }
         // Check membership before introducing any binding
-        ast::Guard::Sub(subcheck) | ast::Guard::LetSub(subcheck, _) => {
+        ast::Guard::Sub(subcheck) | ast::Guard::LetSub(ast::SubBind { subcheck, .. }, _) => {
             ops::sub(runner_ctx.arena(), ctx, &Span::default(), subcheck, value)
         }
         // Check the pattern before introducing any binding

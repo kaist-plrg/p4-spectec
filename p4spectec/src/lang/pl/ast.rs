@@ -200,7 +200,7 @@ pub enum Guard<P: Stage = Source> {
     /// The scrutinee has the type.
     Sub(P::SubTarget),
     /// The scrutinee has the type and binds the expression.
-    LetSub(P::SubTarget, Exp<P>),
+    LetSub(P::SubBind, Exp<P>),
     /// The scrutinee matches the pattern.
     Match(Pattern<P>),
     /// The scrutinee matches the pattern and binds the expression.
@@ -252,7 +252,7 @@ pub struct IfInstr<Tier, P: Stage = Source> {
 #[derive(Clone, Debug, PartialEq)]
 /// Bind a value with the required subtype and run the block.
 pub struct IfLetSubInstr<Tier, P: Stage = Source> {
-    pub target: P::SubTarget,
+    pub target: P::SubBind,
     pub exp_l: Exp<P>,
     pub exp_r: Exp<P>,
     pub block: Block<Tier, P>,

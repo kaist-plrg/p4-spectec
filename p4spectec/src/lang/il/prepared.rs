@@ -63,6 +63,13 @@ pub type Pattern = source::Pattern<Prepared>;
 /// A runtime subtype check over prepared mixops.
 pub type Subcheck = source::Subcheck<Prepared>;
 
+/// A binding subtype test: the type it casts to, and its runtime check.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SubBind {
+    pub typ: Typ,
+    pub subcheck: Subcheck,
+}
+
 // - Premises
 
 /// A premise iterator over slot-resolved variables.

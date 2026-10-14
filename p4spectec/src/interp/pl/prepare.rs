@@ -196,7 +196,7 @@ impl PrepareContext<'_> {
             pl::Guard::Sub(typ) => ast::Guard::Sub(self.il().prepare_subcheck(typ_scrut, &typ)),
             pl::Guard::LetSub(typ, exp_l) => {
                 let subcheck = self.il().prepare_subcheck(typ_scrut, &typ);
-                ast::Guard::LetSub(subcheck, exp_l.prepare(self))
+                ast::Guard::LetSub(ast::SubBind { typ, subcheck }, exp_l.prepare(self))
             }
             pl::Guard::LetMatch(pattern, exp_l) => {
                 ast::Guard::LetMatch(pattern.prepare(&mut self.il()), exp_l.prepare(self))
@@ -254,8 +254,9 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>>
         // The check starts from the tested expression's type
         let typ_source =
             crate::phrase!(node: self.exp_r.node.note.as_ref().clone(), span: self.exp_r.node.span);
+        let subcheck = ctx.il().prepare_subcheck(&typ_source, &self.target);
         ast::IfLetSubInstr {
-            target: ctx.il().prepare_subcheck(&typ_source, &self.target),
+            target: ast::SubBind { typ: self.target, subcheck },
             exp_l: self.exp_l.prepare(ctx),
             exp_r: self.exp_r.prepare(ctx),
             block: self.block.prepare(ctx),
