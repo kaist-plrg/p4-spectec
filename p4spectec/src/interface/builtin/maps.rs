@@ -9,7 +9,7 @@ use crate::lang::{
     common::source::Span,
     data::{
         arena::Arena,
-        notation::flat::{self as notation, Mixop, parse},
+        notation::flat::{self as notation, Mixop, parse::ToMixop},
         typ,
         value::flat::{self as value, Value},
     },
@@ -27,12 +27,16 @@ type ValueMap = Vec<Value>;
 
 /// The `k : v` shape of a pair value.
 fn pair_mixop(arena: &mut Arena) -> Result<Mixop, BuiltinError> {
-    parse::mixop_cached(&mut arena.mixop, "k ':' v").map_err(BuiltinError::from)
+    "k ':' v"
+        .to_mixop(&mut arena.mixop)
+        .map_err(BuiltinError::from)
 }
 
 /// The `{ ... }` shape of a map value.
 fn map_mixop(arena: &mut Arena) -> Result<Mixop, BuiltinError> {
-    parse::mixop_cached(&mut arena.mixop, "`{ k `}").map_err(BuiltinError::from)
+    "`{ k `}"
+        .to_mixop(&mut arena.mixop)
+        .map_err(BuiltinError::from)
 }
 
 /// The value under `key`, from the first matching pair.

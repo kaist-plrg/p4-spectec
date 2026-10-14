@@ -8,7 +8,7 @@ use crate::lang::{
     common::source::Span,
     data::{
         arena::Arena,
-        notation::flat::{self as notation, Mixop, parse},
+        notation::flat::{self as notation, Mixop, parse::ToMixop},
         typ,
         value::flat::{self as value, Value},
     },
@@ -40,7 +40,9 @@ fn contains(arena: &Arena, set: &[Value], value: &Value) -> bool {
 
 /// The `{ ... }` shape of a set value.
 fn set_mixop(arena: &mut Arena) -> Result<Mixop, BuiltinError> {
-    parse::mixop_cached(&mut arena.mixop, "`{ k `}").map_err(BuiltinError::from)
+    "`{ k `}"
+        .to_mixop(&mut arena.mixop)
+        .map_err(BuiltinError::from)
 }
 
 /// Decodes a `set<K>` value into a sorted set.

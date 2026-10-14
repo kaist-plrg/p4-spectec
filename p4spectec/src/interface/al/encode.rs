@@ -17,7 +17,7 @@ use crate::{
         data::{
             arena::Arena,
             notation::{
-                flat::{Mixfix as FlatMixfix, Mixop as FlatMixop, parse::mixop_cached},
+                flat::{Mixfix as FlatMixfix, Mixop as FlatMixop, parse::ToMixop},
                 items::Item,
                 tree::Mixop,
             },
@@ -53,8 +53,9 @@ fn case(
     values_meta: Vec<Value>,
     span: Span,
 ) -> Result<Value, Error> {
-    let mixop_meta =
-        mixop_cached(&mut arena.mixop, text_shape).map_err(|error| Error::from(error).at(span))?;
+    let mixop_meta = text_shape
+        .to_mixop(&mut arena.mixop)
+        .map_err(|error| Error::from(error).at(span))?;
     let mixfix_meta = FlatMixfix::new(&arena.mixop, mixop_meta, values_meta)
         .map_err(|error| Error::from(error).at(span))?;
     make::case_flat(
@@ -412,11 +413,6 @@ pub fn ok_value(arena: &mut Arena, value_target: Value) -> Result<Value, Error> 
 pub fn ok_values(arena: &mut Arena, values_target: &[Value]) -> Result<Value, Error> {
     let values_meta = list(arena, "val", values_target)?;
     case(arena, m::OK, "valsres", vec![values_meta], Span::default())
-}
-
-/// Encodes an exhausted native outcome as a nullary FAIL constructor.
-pub(crate) fn fail(arena: &mut Arena, text_typ: &str) -> Result<Value, Error> {
-    case(arena, "FAIL", text_typ, vec![], Span::default())
 }
 
 // - Operators

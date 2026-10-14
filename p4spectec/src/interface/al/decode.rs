@@ -18,7 +18,7 @@ use crate::{
         data::{
             arena::Arena,
             notation::{
-                flat::{Mixfix as FlatMixfix, Mixop as FlatMixop, MixopKind, parse::mixop_cached},
+                flat::{Mixfix as FlatMixfix, Mixop as FlatMixop, MixopKind, parse::ToMixop},
                 tree::{Mixfix as TreeMixfix, Mixop},
             },
             typ::make as make_typ,
@@ -179,7 +179,8 @@ impl Decode for FlatMixop {
             })
             .collect::<Vec<_>>()
             .join(" nat ");
-        let mixop = mixop_cached(&mut arena.mixop, &text_mixop)
+        let mixop = text_mixop
+            .to_mixop(&mut arena.mixop)
             .map_err(|error| Error::from(error).at(span))?;
         if arena.mixop.arity(mixop) + 1 != atoms_matrix.len() {
             return Err(Error::unexpected(
@@ -212,9 +213,8 @@ impl Decode for TreeMixfix<il::Typ> {
 /// Decodes a runtime value notation case.
 impl Decode for FlatMixfix<Value> {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let mixop_valcase = mixop_cached(&mut arena.mixop, m::VALCASE)?;
-        get::matches_flat! { arena, &value_meta,
-            mixop_valcase => |[value_mixop, values_arg]| {
+        get::matches_string! { arena, &value_meta,
+            m::VALCASE => |[value_mixop, values_arg]| {
                 let mixop = FlatMixop::decode(arena, *value_mixop)?;
                 let values = Vec::<Value>::decode(arena, *values_arg)?;
                 Ok(FlatMixfix::new(&arena.mixop, mixop, values)?)
@@ -244,11 +244,9 @@ impl Decode for TreeMixfix<il::Exp> {
 /// Decodes an iterator with its nullary constructor checked.
 impl Decode for Iter {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let mixop_quest = mixop_cached(&mut arena.mixop, m::QUEST)?;
-        let mixop_star = mixop_cached(&mut arena.mixop, m::STAR)?;
-        get::matches_flat! { arena, &value_meta,
-            mixop_quest => |[]| Ok(Iter::Opt),
-            mixop_star => |[]| Ok(Iter::List),
+        get::matches_string! { arena, &value_meta,
+            m::QUEST => |[]| Ok(Iter::Opt),
+            m::STAR => |[]| Ok(Iter::List),
             _ => Err(Error::unexpected(arena, value_meta, "QUEST or STAR")),
         }
     }
@@ -277,36 +275,28 @@ impl Decode for il::Var {
 /// Decodes a source type, checking every constructor's shape.
 impl Decode for il::Typ {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let mixop_bool_typ = mixop_cached(&mut arena.mixop, m::BOOL_TYP)?;
-        let mixop_nat_typ = mixop_cached(&mut arena.mixop, m::NAT_TYP)?;
-        let mixop_int_typ = mixop_cached(&mut arena.mixop, m::INT_TYP)?;
-        let mixop_text_typ = mixop_cached(&mut arena.mixop, m::TEXT_TYP)?;
-        let mixop_var_typ = mixop_cached(&mut arena.mixop, m::VAR_TYP)?;
-        let mixop_tup_typ = mixop_cached(&mut arena.mixop, m::TUP_TYP)?;
-        let mixop_iter_typ = mixop_cached(&mut arena.mixop, m::ITER_TYP)?;
-        let mixop_func_typ = mixop_cached(&mut arena.mixop, m::FUNC_TYP)?;
         let span = *arena.value.span(value_meta.span);
-        let typ_kind_al = get::matches_flat! { arena, &value_meta,
-            mixop_bool_typ => |[]| il::TypKind::Bool,
-            mixop_nat_typ => |[]| il::TypKind::Num(num::Typ::Nat),
-            mixop_int_typ => |[]| il::TypKind::Num(num::Typ::Int),
-            mixop_text_typ => |[]| il::TypKind::Text,
-            mixop_var_typ => |[value_id, value_typs]| {
+        let typ_kind_al = get::matches_string! { arena, &value_meta,
+            m::BOOL_TYP => |[]| il::TypKind::Bool,
+            m::NAT_TYP => |[]| il::TypKind::Num(num::Typ::Nat),
+            m::INT_TYP => |[]| il::TypKind::Num(num::Typ::Int),
+            m::TEXT_TYP => |[]| il::TypKind::Text,
+            m::VAR_TYP => |[value_id, value_typs]| {
                 il::TypKind::Var(
                     Id::decode(arena, *value_id)?,
                     Vec::<il::Typ>::decode(arena, *value_typs)?,
                 )
             },
-            mixop_tup_typ => |[value_typs]| {
+            m::TUP_TYP => |[value_typs]| {
                 il::TypKind::Tuple(Vec::<il::Typ>::decode(arena, *value_typs)?)
             },
-            mixop_iter_typ => |[value_typ, value_iter]| {
+            m::ITER_TYP => |[value_typ, value_iter]| {
                 il::TypKind::Iter(
                     Box::new(il::Typ::decode(arena, *value_typ)?),
                     Iter::decode(arena, *value_iter)?,
                 )
             },
-            mixop_func_typ => |[value_ids, value_typs, value_ret]| {
+            m::FUNC_TYP => |[value_ids, value_typs, value_ret]| {
                 il::TypKind::Func(il::FuncTyp {
                     tparams: Vec::<Id>::decode(arena, *value_ids)?,
                     typs_params: Vec::<il::Typ>::decode(arena, *value_typs)?,
@@ -380,55 +370,44 @@ impl Decode for il::TypCase {
 /// Decodes a runtime payload, allocating only in the supplied arena.
 impl Decode for Value {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let mixop_bool = mixop_cached(&mut arena.mixop, m::BOOL)?;
-        let mixop_nat = mixop_cached(&mut arena.mixop, m::NAT)?;
-        let mixop_int = mixop_cached(&mut arena.mixop, m::INT)?;
-        let mixop_text = mixop_cached(&mut arena.mixop, m::TEXT)?;
-        let mixop_str = mixop_cached(&mut arena.mixop, m::STR)?;
-        let mixop_inj = mixop_cached(&mut arena.mixop, m::INJ)?;
-        let mixop_tup = mixop_cached(&mut arena.mixop, m::TUP)?;
-        let mixop_opt = mixop_cached(&mut arena.mixop, m::OPT)?;
-        let mixop_list = mixop_cached(&mut arena.mixop, m::LIST)?;
-        let mixop_func = mixop_cached(&mut arena.mixop, m::FUNC)?;
-        let mixop_ext = mixop_cached(&mut arena.mixop, m::EXT)?;
         let span = *arena.value.span(value_meta.span);
-        let value_target = get::matches_flat! { arena, &value_meta,
-            mixop_bool => |[value_bool]| {
+        let value_target = get::matches_string! { arena, &value_meta,
+            m::BOOL => |[value_bool]| {
                 let value_bool = get::bool(arena, value_bool)?;
                 make::bool(arena, value_bool, span)?
             },
-            mixop_nat => |[value_num]| {
+            m::NAT => |[value_num]| {
                 let Number::Nat(nat) = get::num(arena, value_num)? else {
                     return Err(Error::unexpected(arena, *value_num, "a natural-number payload"));
                 };
                 let nat_target = nat.clone();
                 make::nat(arena, nat_target, span)?
             },
-            mixop_int => |[value_num]| {
+            m::INT => |[value_num]| {
                 let num_target = get::num(arena, value_num)?.clone();
                 make::int(arena, num::to_int(&num_target).clone(), span)?
             },
-            mixop_text => |[value_text]| {
+            m::TEXT => |[value_text]| {
                 let text_target = get::text(arena, value_text)?.to_owned();
                 make::text(arena, text_target, span)?
             },
-            mixop_str => |[value_fields]| {
+            m::STR => |[value_fields]| {
                 let fields_target = Vec::<ValueField>::decode(arena, *value_fields)?;
                 make::structure(arena, stub::value_typ().node.into(), fields_target, span)?
             },
-            mixop_inj => |[value_case]| {
+            m::INJ => |[value_case]| {
                 let mixfix_target = FlatMixfix::<Value>::decode(arena, *value_case)?;
                 make::case_flat(arena, stub::value_typ().node.into(), mixfix_target, span)?
             },
-            mixop_tup => |[value_values]| {
+            m::TUP => |[value_values]| {
                 let values_target = Vec::<Value>::decode(arena, *value_values)?;
                 make::tuple(arena, stub::value_typ().node.into(), values_target, span)?
             },
-            mixop_opt => |[value_opt]| {
+            m::OPT => |[value_opt]| {
                 let value_target = Option::<Value>::decode(arena, *value_opt)?;
                 make::opt(arena, make_typ::opt(stub::value_typ()).node.into(), value_target, span)?
             },
-            mixop_list => |[value_values]| {
+            m::LIST => |[value_values]| {
                 let values_target = Vec::<Value>::decode(arena, *value_values)?;
                 make::list(
                     arena,
@@ -437,12 +416,12 @@ impl Decode for Value {
                     span,
                 )?
             },
-            mixop_func => |[value_id]| {
+            m::FUNC => |[value_id]| {
                 let id_target = Id::decode(arena, *value_id)?;
                 let (tparams_target, typs_target, typ_target) = stub::func_typ_params();
                 make::func(arena, id_target, tparams_target, typs_target, typ_target, span)?
             },
-            mixop_ext => |[value_json]| {
+            m::EXT => |[value_json]| {
                 let json_target = get::external(arena, value_json)?.clone();
                 make::external(arena, stub::json_typ().node.into(), json_target, span)?
             },
@@ -461,9 +440,8 @@ impl Decode for Value {
 /// Decodes one runtime struct field.
 impl Decode for ValueField {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let mixop_valfield = mixop_cached(&mut arena.mixop, m::VALFIELD)?;
-        get::matches_flat! { arena, &value_meta,
-            mixop_valfield => |[value_atom, value_inner]| {
+        get::matches_string! { arena, &value_meta,
+            m::VALFIELD => |[value_atom, value_inner]| {
                 Ok(ValueField {
                     atom: il::Atom::decode(arena, *value_atom)?,
                     value: Value::decode(arena, *value_inner)?,

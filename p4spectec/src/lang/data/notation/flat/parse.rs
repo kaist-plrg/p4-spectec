@@ -28,24 +28,34 @@ thread_local! {
     static TYPES: RefCell<HashMap<String, Rc<Typ>>> = RefCell::new(HashMap::new());
 }
 
-/// Reuses a parsed EL type and interns its notation into the supplied arena.
-pub(crate) fn mixop_cached(
-    arena_mixop: &mut MixopArena,
-    text: &str,
-) -> Result<Mixop, ParseMixopError> {
-    // Cache successful parses without retaining runtime arena handles
-    let typ_el = TYPES.with(|types| -> Result<Rc<Typ>, FrontendError> {
-        if let Some(typ_el) = types.borrow().get(text) {
-            return Ok(Rc::clone(typ_el));
-        }
-        let typ_el = Rc::new(parse_typ(text)?);
-        types
-            .borrow_mut()
-            .insert(text.to_owned(), Rc::clone(&typ_el));
-        Ok(typ_el)
-    })?;
-    // Intern into the caller's arena on both cache hits and misses
-    Ok(typ_el.to_mixop(arena_mixop)?)
+/// Converts a notation representation into an interned flat mixop.
+pub(crate) trait ToMixop {
+    /// The failures supported by this representation.
+    type Error;
+
+    /// Interns the notation into the supplied arena.
+    fn to_mixop(&self, arena_mixop: &mut MixopArena) -> Result<Mixop, Self::Error>;
+}
+
+impl ToMixop for str {
+    type Error = ParseMixopError;
+
+    /// Reuses a parsed EL type and interns its notation into the supplied arena.
+    fn to_mixop(&self, arena_mixop: &mut MixopArena) -> Result<Mixop, Self::Error> {
+        // Cache successful parses without retaining runtime arena handles
+        let typ_el = TYPES.with(|types| -> Result<Rc<Typ>, FrontendError> {
+            if let Some(typ_el) = types.borrow().get(self) {
+                return Ok(Rc::clone(typ_el));
+            }
+            let typ_el = Rc::new(parse_typ(self)?);
+            types
+                .borrow_mut()
+                .insert(self.to_owned(), Rc::clone(&typ_el));
+            Ok(typ_el)
+        })?;
+        // Intern into the caller's arena on both cache hits and misses
+        Ok(typ_el.to_mixop(arena_mixop)?)
+    }
 }
 
 /// Compares a runtime notation against a fixed spelling in the same arena.
@@ -54,14 +64,17 @@ pub(crate) fn matches_string(
     mixop: Mixop,
     text: &'static str,
 ) -> bool {
-    let mixop_pattern =
-        mixop_cached(arena_mixop, text).expect("value pattern contains a valid SpecTec mixop");
+    let mixop_pattern = text
+        .to_mixop(arena_mixop)
+        .expect("value pattern contains a valid SpecTec mixop");
     arena_mixop.canon_id(mixop) == arena_mixop.canon_id(mixop_pattern)
 }
 
-impl Typ {
+impl ToMixop for Typ {
+    type Error = MixopError;
+
     /// Extracts flat notation from EL, replacing each plain type with a hole.
-    pub(crate) fn to_mixop(&self, arena_mixop: &mut MixopArena) -> Result<Mixop, MixopError> {
+    fn to_mixop(&self, arena_mixop: &mut MixopArena) -> Result<Mixop, Self::Error> {
         match self {
             Self::Plain(_) => arena_mixop.intern_kind(MixopKind::Arg),
             Self::Notation(not_typ_el) => not_typ_el.to_mixop(arena_mixop),
@@ -69,9 +82,11 @@ impl Typ {
     }
 }
 
-impl NotTyp {
+impl ToMixop for NotTyp {
+    type Error = MixopError;
+
     /// Interns EL notation children first, retaining atom spans and structure.
-    pub(crate) fn to_mixop(&self, arena_mixop: &mut MixopArena) -> Result<Mixop, MixopError> {
+    fn to_mixop(&self, arena_mixop: &mut MixopArena) -> Result<Mixop, Self::Error> {
         let kind = match &self.node {
             NotTypKind::Atom(atom) => MixopKind::Atom(atom.clone()),
             NotTypKind::Seq(typs_el) => MixopKind::Seq(

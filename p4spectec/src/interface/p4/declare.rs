@@ -40,45 +40,23 @@ pub(super) fn var(ctx: &Context, value: &Value, has_params: bool, type_ref: Opti
 
 /// Declares every name of a `nameList`, left to right.
 pub(super) fn vars(ctx: &Context, value: &Value) {
-    // Copy child handles before recursively borrowing the parser arena
-    let values = {
-        let mut arena = ctx.arena_mut();
-        value::get::matches_string! { &mut *arena,
-            value,
-            "nameList ',' name" => |values| Some([values[0], values[1]]),
-            _ => None,
-        }
-    };
-    // Register the prefix before the final name
-    match values {
-        Some([value_names, value_name]) => {
-            vars(ctx, &value_names);
-            var(ctx, &value_name, false, None);
-        }
-        None => var(ctx, value, false, None),
+    value::get::matches_string! { &mut ctx.arena_mut(), value,
+        "nameList ',' name" => |values| {
+            vars(ctx, &values[0]);
+            var(ctx, &values[1], false, None);
+        },
+        _ => var(ctx, value, false, None),
     }
 }
 
 /// Declares every type parameter of a `typeParameterList`, left to right.
 pub(super) fn typs(ctx: &Context, value: &Value) {
-    // Copy child handles before recursively borrowing the parser arena
-    let values = {
-        let mut arena = ctx.arena_mut();
-        value::get::matches_string! { &mut *arena,
-            value,
-            "typeParameterList ',' typeParameter" => |values| {
-                Some([values[0], values[1]])
-            },
-            _ => None,
-        }
-    };
-    // Register the prefix before the final type parameter
-    match values {
-        Some([value_params, value_param]) => {
-            typs(ctx, &value_params);
-            typ(ctx, &value_param, false);
-        }
-        None => typ(ctx, value, false),
+    value::get::matches_string! { &mut ctx.arena_mut(), value,
+        "typeParameterList ',' typeParameter" => |values| {
+            typs(ctx, &values[0]);
+            typ(ctx, &values[1], false);
+        },
+        _ => typ(ctx, value, false),
     }
 }
 

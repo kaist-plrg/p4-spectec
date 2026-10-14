@@ -7,7 +7,11 @@
 use crate::{
     interface::al::{self, decode::Decode, encode as encode_al},
     lang::{
-        data::{arena::Arena, value::flat::Value},
+        common::source::Span,
+        data::{
+            arena::Arena,
+            value::flat::{Value, make},
+        },
         il::ast::{Id, Typ},
     },
     runner::{Eval, ExternError, InterpreterError},
@@ -66,8 +70,14 @@ pub(super) mod encode {
                 encode(arena, output).map_err(|error| ExternError::from(error.into_report()))
             }
             // An exhausted relation or function is a meta-level FAIL, not a host abort
-            Err(InterpreterError::Mismatch(_)) => encode_al::fail(arena, text_typ)
-                .map_err(|error| ExternError::from(error.into_report())),
+            Err(InterpreterError::Mismatch(_)) => make::case_string! {
+                arena: arena,
+                shape: "FAIL",
+                args: [],
+                typ: text_typ,
+                span: Span::default(),
+            }
+            .map_err(|error| ExternError::from(al::Error::from(error).into_report())),
             // Keep fatal failures outside the specification's backtracking protocol
             Err(InterpreterError::Fatal(report)) => Err(ExternError::from(report)),
         };

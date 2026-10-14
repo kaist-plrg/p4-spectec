@@ -113,7 +113,9 @@ macro_rules! case_string {
     ) => {{
         let (mixop_text, args, typ_name, span) = ($shape, $args, $typ, $span);
         let arena = &mut *($arena);
-        $crate::lang::data::notation::flat::parse::mixop_cached(&mut arena.mixop, mixop_text)
+        use $crate::lang::data::notation::flat::parse::ToMixop as _;
+        mixop_text
+            .to_mixop(&mut arena.mixop)
             .map_err(|error| match error {
                 $crate::lang::data::notation::flat::parse::ParseMixopError::Syntax(error) => {
                     panic!("value constructor contains a valid SpecTec mixop: {error}")
