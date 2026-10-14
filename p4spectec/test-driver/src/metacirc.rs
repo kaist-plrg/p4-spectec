@@ -1,33 +1,38 @@
-//! Compiler snapshots for the AL meta specification
+//! Program instantiation through the AL metacircular specification
+//!
+//! The standalone driver exercises the metacirc CLI with the Rust SL backend,
+//! the AL specification, the P4 specification, and one P4 program.
+//! A successful synthetic entry is returned only after Program_inst succeeds.
 
-use std::{error::Error, path::Path};
+use std::{error::Error, path::Path, process::Command};
 
-use expect_test::expect_file;
-use p4spectec::lang::traits::print::Print;
-
-/// The result of a metacircular snapshot check.
+/// The result of the metacircular execution check.
 pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
-/// Checks elaboration, AL lowering, and structure lowering snapshots.
-pub fn run() -> Result<()> {
-    let paths = [source("spec-meta")];
-
-    check("elab", Print::to_string(&p4spectec::elab(&paths)?));
-    check("algo", Print::to_string(&p4spectec::algo(&paths)?));
-    check("structure", Print::to_string(&p4spectec::structure(&paths, true)?));
-
-    eprintln!("metacirc snapshots: elab, algo, structure");
+/// Checks the SL → AL specification → P4 specification → Program_inst path.
+pub fn run(path_cli: &Path) -> Result<()> {
+    let path_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("metacirc");
+    let output = Command::new(path_cli)
+        .arg("run")
+        .arg(path_root.join("../../../towers/al-p4.json"))
+        .arg("-p")
+        .arg(path_root.join("program-inst.p4"))
+        .output()?;
+    if !output.status.success() {
+        return Err(format!(
+            "metacirc Program_inst failed: {}\n{}\n{}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr),
+        )
+        .into());
+    }
+    if !String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .any(|line| line == "passed")
+    {
+        return Err("metacirc did not report successful Program_inst execution".into());
+    }
+    eprintln!("metacirc: SL > AL spec > P4 spec > P4 program: Program_inst passed");
     Ok(())
-}
-
-fn check(name: &str, text_actual: String) {
-    let path_relative = Path::new("expected/metacirc").join(format!("{name}.expected"));
-    let path_expected = crate::suite::expected_path(&path_relative);
-    crate::snapshot::check(expect_file![path_expected], &(text_actual + "\n"));
-}
-
-fn source(name: &str) -> std::path::PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join(name)
 }

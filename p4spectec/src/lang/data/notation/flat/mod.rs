@@ -18,6 +18,7 @@ mod convert;
 pub mod external;
 mod hash;
 mod make;
+pub(crate) mod parse;
 mod print;
 mod view;
 mod visit;

@@ -1,6 +1,6 @@
 //! Projections that read a value of a given kind
 //!
-//! Typed getters report a kind mismatch; case matching borrows arguments.
+//! Typed getters report a kind mismatch; case matching copies argument handles.
 //! Fixed-arity getters project argument slices without allocating.
 
 use std::rc::Rc;
@@ -65,99 +65,118 @@ pub fn case<'a>(arena: &'a Arena, value: &Value) -> Result<&'a ValueCase, ValueE
     }
 }
 
-/// Matches a case value against mixop shapes, binding its arguments per arm.
-macro_rules! matches {
-    (
-        @arms $arena:ident, $value_case:ident;
-        $shape:literal $(| $shape_alt:literal)* => |$values:ident| $body:expr,
-        $($rest:tt)+
-    ) => {{
-        match $value_case {
-            Some(value_case)
-                if {
-                    use $crate::lang::traits::eq::SyntaxEq as _;
+/// Interns patterns and copies matched arguments before releasing the arena borrow.
+/// User arms execute only after the selection scope has ended.
+macro_rules! matches_string {
+    // Select the first matching shape without evaluating any user arm
+    (@select_arms $arena:ident, $mixop:ident, $idx:expr;
+        [$($shape:expr),+ $(,)?], $($rest:tt)*
+    ) => {
+        if [$($shape),+].into_iter().any(|mixop_text| {
+            use $crate::lang::data::notation::flat::parse::ToMixop as _;
 
-                    let mixop = value_case.mixop().into_tree(&$arena.mixop);
-                    [$shape, $($shape_alt),*].into_iter().any(|mixop_text| {
-                        let mixop_expect = $crate::lang::data::notation::tree::parse::mixop(mixop_text);
-                        mixop.syntax_eq(mixop_expect.as_ref())
-                    })
-                } =>
-            {
-                let $values = value_case.args();
-                $body
+            let mixop_pattern = mixop_text
+                .to_mixop(&mut $arena.mixop)
+                .expect("value pattern contains a valid SpecTec mixop");
+            $arena.mixop.canon_id($mixop) == $arena.mixop.canon_id(mixop_pattern)
+        }) {
+            Some($idx)
+        } else {
+            $crate::lang::data::value::flat::get::matches_string! {
+                @select_arms $arena, $mixop, ($idx + 1usize); $($rest)*
             }
-            _ => $crate::lang::data::value::flat::get::matches! {
-                @arms $arena, $value_case;
-                $($rest)+
-            },
+        }
+    };
+    (@select_arms $arena:ident, $mixop:ident, $idx:expr;) => { None };
+
+    // Only the arm index and owned child handles leave this borrow scope
+    (@select $arena:expr, $value:expr; $($shapes:tt)*) => {{
+        let value_kind = ($value).node;
+        let arena = &mut *($arena);
+        let mixop = match arena.value.kind(value_kind) {
+            $crate::lang::data::value::flat::ValueKind::Case(value_case) => {
+                Some(*value_case.mixop())
+            }
+            _ => None,
+        };
+        match mixop {
+            Some(mixop) => {
+                let idx_arm = $crate::lang::data::value::flat::get::matches_string! {
+                    @select_arms arena, mixop, 0usize; $($shapes)*
+                };
+                idx_arm.map(|idx_arm| {
+                    let values_owned = match arena.value.kind(value_kind) {
+                        $crate::lang::data::value::flat::ValueKind::Case(value_case) => {
+                            value_case.args().to_vec()
+                        }
+                        _ => unreachable!(),
+                    };
+                    (idx_arm, values_owned)
+                })
+            }
+            None => None,
         }
     }};
-    (@arms $arena:ident, $value_case:ident; _ => $fallback:expr $(,)?) => {
-        $fallback
-    };
-    (
-        @const_arms $arena:ident, $value_case:ident, $fallback:expr;
-        $shape_mod:ident::$shape:ident => |$pattern:pat_param| $body:expr,
-        $($rest:tt)*
-    ) => {{
-        match $value_case {
-            Some(value_case)
-                if {
-                    use $crate::lang::traits::eq::SyntaxEq as _;
 
-                    let mixop = value_case.mixop().into_tree(&$arena.mixop);
-                    let mixop_expect =
-                        $crate::lang::data::notation::tree::parse::mixop($shape_mod::$shape);
-                    mixop.syntax_eq(mixop_expect.as_ref())
-                } =>
-            {
-                let values_owned = value_case.args().to_vec();
+    // Literal arms bind the entire argument slice
+    (@dispatch $selected:ident, $idx:expr, $fallback:expr;
+        |$values:ident| $body:expr, $($rest:tt)*
+    ) => {
+        match $selected {
+            Some((idx_arm, values_owned)) if idx_arm == $idx => {
+                let $values = values_owned.as_slice();
+                $body
+            }
+            selected => $crate::lang::data::value::flat::get::matches_string! {
+                @dispatch selected, ($idx + 1usize), $fallback; $($rest)*
+            },
+        }
+    };
+    (@dispatch $selected:ident, $idx:expr, $fallback:expr;) => {{ let _ = $selected; $fallback }};
+
+    // A matching constructor with the wrong argument pattern uses the fallback
+    (@dispatch_const $selected:ident, $idx:expr, $fallback:expr;
+        |$pattern:pat_param| $body:expr, $($rest:tt)*
+    ) => {
+        match $selected {
+            Some((idx_arm, values_owned)) if idx_arm == $idx => {
                 match values_owned.as_slice() {
                     $pattern => $body,
                     _ => $fallback,
                 }
             }
-            _ => $crate::lang::data::value::flat::get::matches! {
-                @const_arms $arena, $value_case, $fallback;
-                $($rest)*
+            selected => $crate::lang::data::value::flat::get::matches_string! {
+                @dispatch_const selected, ($idx + 1usize), $fallback; $($rest)*
             },
         }
-    }};
-    (@const_arms $arena:ident, $value_case:ident, $fallback:expr;) => {
-        $fallback
     };
-    (
-        $arena:expr, $value:expr,
-        $($shape_mod:ident::$shape:ident => |$pattern:pat_param| $body:expr,)*
+    (@dispatch_const $selected:ident, $idx:expr, $fallback:expr;) => {{ let _ = $selected; $fallback }};
+
+    ($arena:expr, $value:expr,
+        $($shape_mod:ident::$shape:ident => |$pattern:pat_param| $body:expr,)+
         _ => $fallback:expr $(,)?
     ) => {{
-        let value = $value;
-        let arena = &*($arena);
-        let value_case = match arena.value.kind(value.node) {
-            $crate::lang::data::value::flat::ValueKind::Case(value_case) => Some(value_case),
-            _ => None,
+        let selected = $crate::lang::data::value::flat::get::matches_string! {
+            @select $arena, $value; $([$shape_mod::$shape],)+
         };
-        $crate::lang::data::value::flat::get::matches! {
-            @const_arms arena, value_case, $fallback;
-            $($shape_mod::$shape => |$pattern| $body,)*
+        $crate::lang::data::value::flat::get::matches_string! {
+            @dispatch_const selected, 0usize, $fallback; $(|$pattern| $body,)+
         }
     }};
-    ($arena:expr, $value:expr, $($arms:tt)+) => {{
-        let value = $value;
-        let arena = &*($arena);
-        let value_case = match arena.value.kind(value.node) {
-            $crate::lang::data::value::flat::ValueKind::Case(value_case) => Some(value_case),
-            _ => None,
+    ($arena:expr, $value:expr,
+        $($shape:literal $(| $shape_alt:literal)* => |$values:ident| $body:expr,)+
+        _ => $fallback:expr $(,)?
+    ) => {{
+        let selected = $crate::lang::data::value::flat::get::matches_string! {
+            @select $arena, $value; $([$shape, $($shape_alt),*],)+
         };
-        $crate::lang::data::value::flat::get::matches! {
-            @arms arena, value_case;
-            $($arms)+
+        $crate::lang::data::value::flat::get::matches_string! {
+            @dispatch selected, 0usize, $fallback; $(|$values| $body,)+
         }
     }};
 }
 
-pub(crate) use matches;
+pub(crate) use matches_string;
 
 // - Sequences
 

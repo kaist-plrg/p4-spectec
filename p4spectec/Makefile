@@ -107,9 +107,3 @@ test-diagnostics: diagnostic-cli
 
 test-diagnostics-promote: diagnostic-cli
 	UPDATE_EXPECT=1 $(DRIVER) diagnostics --cli "$(DIAGNOSTIC_CLI)"
-
-# Independent AL meta compiler snapshots
-.PHONY: test-metacirc
-
-test-metacirc:
-	env -u UPDATE_EXPECT $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --bin metacirc-test

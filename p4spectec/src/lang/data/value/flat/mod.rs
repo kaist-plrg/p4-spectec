@@ -59,7 +59,7 @@ pub type ValueCase = Mixfix<Value>;
 #[derive(Debug, PartialEq, Eq, Hash, SerializeState, DeserializeState)]
 #[serde(rename = "ValueKind")]
 #[serde(serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
-#[serde(deserialize_state = "DecodeContext<'de>")]
+#[serde(deserialize_state = "DecodeContext<'arena>", de_parameters = "'arena")]
 pub enum ValueKind {
     Bool(bool),
     Num(Number),

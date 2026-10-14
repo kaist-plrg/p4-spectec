@@ -26,7 +26,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     // A bare name read at the global cursor
-    let value_cursor = crate::lang::data::value::flat::make::case_shaped! {
+    let value_cursor = crate::lang::data::value::flat::make::case_string! {
         arena: ctx.arena_mut(),
         shape: "GLOBAL",
         args: vec![],
@@ -56,7 +56,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     use crate::lang::{common::source::Span, data::value::flat::make};
-    let value_cursor = make::case_shaped! {
+    let value_cursor = make::case_string! {
         arena: ctx.arena_mut(),
         shape: "GLOBAL",
         args: vec![],
@@ -68,7 +68,7 @@ where
     let value_member = make::text(ctx.arena_mut(), member.to_owned(), Span::default())
         .map_err(ExternError::from)?;
     // The reference is `name.member`
-    let value_ref = make::case_shaped! {
+    let value_ref = make::case_string! {
         arena: ctx.arena_mut(),
         shape: "storageReference '.' nameIR",
         args: vec![value_base, value_member],
@@ -122,7 +122,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     use crate::lang::{common::source::Span, data::value::flat::make};
-    let value_cursor = make::case_shaped! {
+    let value_cursor = make::case_string! {
         arena: ctx.arena_mut(),
         shape: "LOCAL",
         args: vec![],
@@ -134,7 +134,7 @@ where
     let value_member = make::text(ctx.arena_mut(), member.to_owned(), Span::default())
         .map_err(ExternError::from)?;
     // The reference is `name.member`
-    let value_ref = make::case_shaped! {
+    let value_ref = make::case_string! {
         arena: ctx.arena_mut(),
         shape: "storageReference '.' nameIR",
         args: vec![value_base, value_member],
@@ -164,7 +164,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     use crate::lang::{common::source::Span, data::value::flat::make};
-    let value_cursor = make::case_shaped! {
+    let value_cursor = make::case_string! {
         arena: ctx.arena_mut(),
         shape: "GLOBAL",
         args: vec![],
@@ -176,7 +176,7 @@ where
     let value_member = make::text(ctx.arena_mut(), member.to_owned(), Span::default())
         .map_err(ExternError::from)?;
     // The reference is `name.member`
-    let value_ref = make::case_shaped! {
+    let value_ref = make::case_string! {
         arena: ctx.arena_mut(),
         shape: "storageReference '.' nameIR",
         args: vec![value_base, value_member],

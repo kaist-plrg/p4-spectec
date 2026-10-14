@@ -391,7 +391,7 @@ fn encode_table_keys(arena: &mut Arena, matches: &[TableMatch]) -> Result<Value,
                     ("_DEC text", num.as_str())
                 };
                 let value_num = value::make::text(arena, num.to_owned(), Span::default())?;
-                value::make::case_shaped! {
+                value::make::case_string! {
                     arena: arena,
                     shape: shape,
                     args: vec![value_num],
@@ -405,7 +405,7 @@ fn encode_table_keys(arena: &mut Arena, matches: &[TableMatch]) -> Result<Value,
                 let mask = BigInt::from(parse_int::<i128>(mask)?);
                 let nat = crate::lang::common::prim::num::Natural::try_from(mask)?;
                 let value_mask = value::make::nat(arena, nat, Span::default())?;
-                value::make::case_shaped! {
+                value::make::case_string! {
                     arena: arena,
                     shape: "text _SLASH nat",
                     args: vec![value_prefix, value_mask],

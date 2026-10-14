@@ -66,8 +66,8 @@ make debug
 ./bin/p4spectec --help
 ```
 
-All build targets replace `./bin/p4spectec`. The Cargo package and binary are
-named `p4spectec`, and build output defaults to `p4spectec/target/`.
+The Cargo package and default binary are named `p4spectec`, and build output
+defaults to `p4spectec/target/`.
 To select another build directory, pass `CARGO_TARGET_DIR` to Make; a relative
 path is resolved from the directory where Make is invoked:
 
@@ -215,14 +215,10 @@ runs also render the P4 release PDF specification.
 
 ## Retired OCaml workflows
 
-Fuzzing, coverage collection, and meta-circular boot execution are not supported
-by the Rust release. The frozen OCaml implementation is preserved at
+Fuzzing and coverage collection are not supported by the Rust release.
+The frozen OCaml implementation is preserved at
 [`v0.1.3`](https://github.com/kaist-plrg/p4-spectec/tree/v0.1.3), with its
-[installation and fuzzing instructions](https://github.com/kaist-plrg/p4-spectec/blob/v0.1.3/README.md)
-and [boot documentation](https://github.com/kaist-plrg/p4-spectec/blob/v0.1.3/BOOT.md).
-The meta specifications and their SL/AL documents are also available in that
-frozen version. Rust boot support is tracked in
-[#77](https://github.com/jaehyun1ee/p4-spectec/issues/77).
+[installation and fuzzing instructions](https://github.com/kaist-plrg/p4-spectec/blob/v0.1.3/README.md).
 
 ## Contributing
 

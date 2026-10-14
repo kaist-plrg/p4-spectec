@@ -24,8 +24,8 @@ use crate::sim_plugin::error;
 // == P4 values
 
 /// The boolean in a `_B bool` value.
-pub fn p4_bool(arena: &Arena, value: &Value) -> Result<bool, ExternError> {
-    value::get::matches! { arena,
+pub fn p4_bool(arena: &mut Arena, value: &Value) -> Result<bool, ExternError> {
+    value::get::matches_string! { arena,
         value,
         "_B bool" => |values| {
             // Exactly one argument
@@ -42,8 +42,8 @@ pub fn p4_bool(arena: &Arena, value: &Value) -> Result<bool, ExternError> {
 }
 
 /// The text in a `"text"` value.
-pub fn p4_string(arena: &Arena, value: &Value) -> Result<String, ExternError> {
-    value::get::matches! { arena,
+pub fn p4_string(arena: &mut Arena, value: &Value) -> Result<String, ExternError> {
+    value::get::matches_string! { arena,
         value,
         "'\"' text '\"'" => |values| {
             // Exactly one argument
@@ -60,8 +60,8 @@ pub fn p4_string(arena: &Arena, value: &Value) -> Result<String, ExternError> {
 }
 
 /// The type and member names of a `tid . id` value.
-pub fn p4_enum(arena: &Arena, value: &Value) -> Result<(String, String), ExternError> {
-    value::get::matches! { arena, value,
+pub fn p4_enum(arena: &mut Arena, value: &Value) -> Result<(String, String), ExternError> {
+    value::get::matches_string! { arena, value,
         "tid '.' id" => |values| {
             // Type name, then member
             let [value_enum, value_id] = values else {
@@ -74,8 +74,8 @@ pub fn p4_enum(arena: &Arena, value: &Value) -> Result<(String, String), ExternE
 }
 
 /// The components of a `TUPLE (...)` value.
-pub fn p4_tuple(arena: &Arena, value: &Value) -> Result<Vec<Value>, ExternError> {
-    value::get::matches! { arena, value,
+pub fn p4_tuple(arena: &mut Arena, value: &Value) -> Result<Vec<Value>, ExternError> {
+    value::get::matches_string! { arena, value,
         "TUPLE `( value* `)" => |values| {
             // One list of components
             let [value_list] = values else {
@@ -90,8 +90,8 @@ pub fn p4_tuple(arena: &Arena, value: &Value) -> Result<Vec<Value>, ExternError>
 // - Numbers
 
 /// Width and value of a `nat W int` bit string.
-pub fn p4_fixed_bit(arena: &Arena, value: &Value) -> Result<(BigInt, BigInt), ExternError> {
-    value::get::matches! { arena, value,
+pub fn p4_fixed_bit(arena: &mut Arena, value: &Value) -> Result<(BigInt, BigInt), ExternError> {
+    value::get::matches_string! { arena, value,
         "nat W int" => |values| {
             // Width, then value
             let [value_width, value_int] = values else {
@@ -110,8 +110,11 @@ pub fn p4_fixed_bit(arena: &Arena, value: &Value) -> Result<(BigInt, BigInt), Ex
 }
 
 /// Width and value of any fixed-width number: `W`, `S`, or varbit `V`.
-pub fn p4_precision_number(arena: &Arena, value: &Value) -> Result<(BigInt, BigInt), ExternError> {
-    value::get::matches! { arena, value,
+pub fn p4_precision_number(
+    arena: &mut Arena,
+    value: &Value,
+) -> Result<(BigInt, BigInt), ExternError> {
+    value::get::matches_string! { arena, value,
         "nat W int" | "nat S int" => |values| {
             // Width, then value
             let [value_width, value_int] = values else {

@@ -27,11 +27,15 @@ fmt fmt-check lint rustdoc:
 TEST_TARGETS := test test-expected test-elab test-algo test-structure test-prose \
   test-adoc test-p4parse test-run-al test-run-sl test-run-pl \
   test-sim-al test-sim-sl test-sim-pl test-diagnostics \
-  test-promote test-diagnostics-promote test-metacirc
+  test-promote test-diagnostics-promote
 
 .PHONY: $(TEST_TARGETS)
 $(TEST_TARGETS):
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
+
+.PHONY: metacirc test-metacirc
+metacirc test-metacirc:
+	$(MAKE) -f METASQ.mk CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
 promote: test-promote
 
@@ -49,4 +53,5 @@ p4spec-release-html:
 
 clean:
 	rm -f ./$(SPEC)
+	$(MAKE) -f METASQ.mk clean
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" clean

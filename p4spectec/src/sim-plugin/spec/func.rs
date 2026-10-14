@@ -18,7 +18,7 @@ use crate::sim_plugin::error;
 pub(crate) fn local_cursor(
     arena: &mut crate::lang::data::arena::Arena,
 ) -> Result<Value, ExternError> {
-    Ok(value::make::case_shaped! {
+    Ok(value::make::case_string! {
         arena: arena,
         shape: "LOCAL",
         args: Vec::new(),
@@ -33,7 +33,7 @@ pub(crate) fn bare_name(
     name: &str,
 ) -> Result<Value, ExternError> {
     let value_name = value::make::text(arena, name.to_owned(), Span::default())?;
-    Ok(value::make::case_shaped! {
+    Ok(value::make::case_string! {
         arena: arena,
         shape: "_BARE nameIR",
         args: vec![value_name],
@@ -59,7 +59,7 @@ where
     // The name as a bare `prefixedNameIR`
     let value_name = value::make::text(ctx.arena_mut(), name.to_owned(), Span::default())
         .map_err(ExternError::from)?;
-    let value_name = value::make::case_shaped! {
+    let value_name = value::make::case_string! {
         arena: ctx.arena_mut(),
         shape: "_BARE nameIR",
         args: vec![value_name],
@@ -83,7 +83,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     // Same lookup at the `LOCAL` cursor
-    let value_cursor = value::make::case_shaped! {
+    let value_cursor = value::make::case_string! {
         arena: ctx.arena_mut(),
         shape: "LOCAL",
         args: Vec::new(),

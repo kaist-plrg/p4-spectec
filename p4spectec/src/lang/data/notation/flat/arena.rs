@@ -36,10 +36,7 @@ impl MixopArena {
     }
 
     /// Interns a node whose children already belong to this arena.
-    pub(in crate::lang::data::notation) fn intern_kind(
-        &mut self,
-        kind: MixopKind,
-    ) -> Result<Mixop, MixopError> {
+    pub(crate) fn intern_kind(&mut self, kind: MixopKind) -> Result<Mixop, MixopError> {
         // Child canonical identities are available when the parent is hashed
         let mixop = self.mixops.intern(&(), kind)?;
         // A new mixop sums its children's positions, which are recorded
