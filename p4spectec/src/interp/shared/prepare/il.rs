@@ -30,10 +30,10 @@ use super::{Prepare, mixop};
 pub struct PrepareContext<'a> {
     /// The specification's notation arena.
     pub arena_mixop: &'a mut MixopArena,
-    /// The callable's frame layout.
-    pub layout: &'a mut FrameLayout,
     /// Source type definitions, with the callable's type parameters.
     pub tdenv: &'a TDEnv,
+    /// The callable's frame layout.
+    pub layout: &'a mut FrameLayout,
 }
 
 impl PrepareContext<'_> {

@@ -28,31 +28,31 @@ use crate::interp::shared::prepare::{Prepare, il};
 pub struct PrepareContext<'a> {
     /// The specification's notation arena.
     pub arena_mixop: &'a mut MixopArena,
-    /// The callable's frame layout.
-    pub layout: &'a mut FrameLayout,
     /// Source type definitions, with the callable's type parameters.
     pub tdenv: &'a TDEnv,
+    /// The callable's frame layout.
+    pub layout: &'a mut FrameLayout,
     /// The runner's instruction-selection mode.
     pub det: bool,
     pos: Position,
 }
 
 impl<'a> PrepareContext<'a> {
-    /// Borrows the arena, layout, and type definitions for preparation.
+    /// Borrows the arena, type definitions, and layout for preparation.
     pub fn new(
         arena_mixop: &'a mut MixopArena,
-        layout: &'a mut FrameLayout,
         tdenv: &'a TDEnv,
+        layout: &'a mut FrameLayout,
         det: bool,
     ) -> Self {
-        Self { arena_mixop, layout, tdenv, det, pos: Position::Tail }
+        Self { arena_mixop, tdenv, layout, det, pos: Position::Tail }
     }
 
     fn il(&mut self) -> il::PrepareContext<'_> {
         il::PrepareContext {
             arena_mixop: &mut *self.arena_mixop,
-            layout: &mut *self.layout,
             tdenv: self.tdenv,
+            layout: &mut *self.layout,
         }
     }
 }
@@ -69,8 +69,8 @@ impl PrepareContext<'_> {
     fn at(&mut self, pos: Position) -> PrepareContext<'_> {
         PrepareContext {
             arena_mixop: &mut *self.arena_mixop,
-            layout: &mut *self.layout,
             tdenv: self.tdenv,
+            layout: &mut *self.layout,
             det: self.det,
             pos,
         }
@@ -463,8 +463,8 @@ impl Prepare<PrepareContext<'_>> for source::DefinedFunc {
         }
         let ctx = &mut PrepareContext {
             arena_mixop: &mut *ctx.arena_mixop,
-            layout: &mut *ctx.layout,
             tdenv: &tdenv,
+            layout: &mut *ctx.layout,
             det: ctx.det,
             pos: ctx.pos,
         };

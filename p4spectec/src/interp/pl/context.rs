@@ -80,7 +80,7 @@ impl SpecEnv {
     /// Prepares relations and functions against the complete type definitions.
     fn load_callables(&mut self, arena_mixop: &mut MixopArena, tdenv: &TDEnv, spec: source::Spec) {
         let mut layout = FrameLayout::default();
-        let mut ctx = PrepareContext::new(arena_mixop, &mut layout, tdenv);
+        let mut ctx = PrepareContext::new(arena_mixop, tdenv, &mut layout);
         for def in spec {
             match def.node.node {
                 source::DefKind::Rel(rel) => {

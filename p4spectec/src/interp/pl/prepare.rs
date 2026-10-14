@@ -29,27 +29,27 @@ use crate::interp::shared::prepare::{Prepare, il};
 pub struct PrepareContext<'a> {
     /// The specification's notation arena.
     pub arena_mixop: &'a mut MixopArena,
-    /// The callable's frame layout.
-    pub layout: &'a mut FrameLayout,
     /// Source type definitions, with the callable's type parameters.
     pub tdenv: &'a TDEnv,
+    /// The callable's frame layout.
+    pub layout: &'a mut FrameLayout,
 }
 
 impl<'a> PrepareContext<'a> {
-    /// Borrows the arena, layout, and type definitions for preparation.
+    /// Borrows the arena, type definitions, and layout for preparation.
     pub fn new(
         arena_mixop: &'a mut MixopArena,
-        layout: &'a mut FrameLayout,
         tdenv: &'a TDEnv,
+        layout: &'a mut FrameLayout,
     ) -> Self {
-        Self { arena_mixop, layout, tdenv }
+        Self { arena_mixop, tdenv, layout }
     }
 
     fn il(&mut self) -> il::PrepareContext<'_> {
         il::PrepareContext {
             arena_mixop: &mut *self.arena_mixop,
-            layout: &mut *self.layout,
             tdenv: self.tdenv,
+            layout: &mut *self.layout,
         }
     }
 }
@@ -641,7 +641,7 @@ impl Prepare<PrepareContext<'_>> for pl::DefinedFunc {
         for tparam in &self.tparams {
             tdenv.insert(tparam.clone(), TypeDef::Parameter);
         }
-        let ctx = &mut PrepareContext::new(&mut *ctx.arena_mixop, &mut *ctx.layout, &tdenv);
+        let ctx = &mut PrepareContext::new(&mut *ctx.arena_mixop, &tdenv, &mut *ctx.layout);
         ast::DefinedFunc {
             id: self.id,
             tparams: self.tparams,
