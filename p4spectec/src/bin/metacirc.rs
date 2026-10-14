@@ -1,13 +1,13 @@
 //! Command-line AL metacircular execution
 //!
-//! Standalone scripts use run; runtime towers use a JSON configuration.
-//! Both routes share p4spectec::metacirc and render structured diagnostics here.
+//! The run command requires a tower configuration for AL and P4 inputs.
+//! Structured diagnostics are rendered at the CLI boundary.
 //! Success is printed only after the configured outer entry finishes.
 
 use clap::{Args, Parser, Subcommand};
 use p4spectec::{
     diagnostic::{DisplayStyle, RenderConfig, Renderer},
-    metacirc::{self, Config, Mode},
+    metacirc::{self, Config},
     runner,
 };
 use std::{path::PathBuf, process::ExitCode};
@@ -21,10 +21,8 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Interpret an AL script with builtin host calls.
+    /// Execute a program through a JSON-configured interpreter tower.
     Run(RunArgs),
-    /// Run a P4 program through a JSON-configured AL tower.
-    Tower(TowerArgs),
 }
 
 #[derive(Args)]
@@ -48,49 +46,24 @@ impl Options {
 
 #[derive(Args)]
 struct RunArgs {
-    /// Meta specification paths in processing order.
-    #[arg(required = true)]
-    paths: Vec<PathBuf>,
-    /// Native backend for the meta specification.
-    #[arg(long, value_enum, default_value = "sl")]
-    mode: Mode,
-    /// Entry relation in the meta specification.
-    #[arg(long = "rel", default_value = "Entry")]
-    relation: String,
-    /// Source paths of the AL script to interpret.
+    /// Tower configuration, ordered from native boot to target.
+    config: PathBuf,
+    /// Program source paths in processing order; P4 requires exactly one.
     #[arg(short = 'p', required = true)]
     program: Vec<PathBuf>,
-    #[command(flatten)]
-    options: Options,
-}
-
-#[derive(Args)]
-struct TowerArgs {
-    /// JSON configuration, ordered from outer interpreter to P4 target.
-    config: PathBuf,
-    /// P4 program to execute.
-    #[arg(short = 'p')]
-    program: PathBuf,
-    /// P4 include search directories.
+    /// Include search directories for P4 inputs.
     #[arg(short = 'i')]
     includes: Vec<PathBuf>,
     #[command(flatten)]
     options: Options,
 }
 
-/// Executes the selected mode through the shared library.
+/// Executes the configured tower through the shared library.
 fn run(cli: Cli) -> metacirc::Result<()> {
     match cli.command {
-        Command::Run(args) => metacirc::run_standalone(
-            args.mode,
-            &args.paths,
-            &args.relation,
-            &args.program,
-            args.options.config(),
-        ),
-        Command::Tower(args) => {
+        Command::Run(args) => {
             let config = Config::from_file(&args.config)?;
-            metacirc::run_tower(&config, &args.includes, &args.program, args.options.config())
+            metacirc::run(&config, &args.includes, &args.program, args.options.config())
         }
     }
 }

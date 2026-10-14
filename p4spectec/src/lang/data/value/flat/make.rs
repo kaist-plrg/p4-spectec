@@ -109,6 +109,16 @@ pub fn case(
     Value::new(arena, ValueKind::Case(value_case), typ, span)
 }
 
+/// A variant case whose notation already belongs to the value's arena.
+pub fn case_flat(
+    arena: &mut Arena,
+    typ: Rc<TypKind>,
+    mixfix: notation::flat::Mixfix<Value>,
+    span: Span,
+) -> Result<Value, ValueError> {
+    Value::new(arena, ValueKind::Case(mixfix), typ, span)
+}
+
 /// A variant case from a mixop text, its arguments, and its type name.
 macro_rules! case_shaped {
     (

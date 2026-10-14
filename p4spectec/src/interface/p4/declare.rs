@@ -40,7 +40,7 @@ pub(super) fn var(ctx: &Context, value: &Value, has_params: bool, type_ref: Opti
 
 /// Declares every name of a `nameList`, left to right.
 pub(super) fn vars(ctx: &Context, value: &Value) {
-    value::get::matches! { &ctx.arena(),
+    value::get::matches_string! { &ctx.arena(),
         value,
         "nameList ',' name" => |values| {
             vars(ctx, &values[0]);
@@ -52,7 +52,7 @@ pub(super) fn vars(ctx: &Context, value: &Value) {
 
 /// Declares every type parameter of a `typeParameterList`, left to right.
 pub(super) fn typs(ctx: &Context, value: &Value) {
-    value::get::matches! { &ctx.arena(),
+    value::get::matches_string! { &ctx.arena(),
         value,
         "typeParameterList ',' typeParameter" => |values| {
             typs(ctx, &values[0]);

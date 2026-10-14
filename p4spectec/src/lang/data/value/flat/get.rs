@@ -66,7 +66,7 @@ pub fn case<'a>(arena: &'a Arena, value: &Value) -> Result<&'a ValueCase, ValueE
 }
 
 /// Matches a case value against mixop shapes, binding its arguments per arm.
-macro_rules! matches {
+macro_rules! matches_string {
     (
         @arms $arena:ident, $value_case:ident;
         $shape:literal $(| $shape_alt:literal)* => |$values:ident| $body:expr,
@@ -87,7 +87,7 @@ macro_rules! matches {
                 let $values = value_case.args();
                 $body
             }
-            _ => $crate::lang::data::value::flat::get::matches! {
+            _ => $crate::lang::data::value::flat::get::matches_string! {
                 @arms $arena, $value_case;
                 $($rest)+
             },
@@ -118,7 +118,7 @@ macro_rules! matches {
                     _ => $fallback,
                 }
             }
-            _ => $crate::lang::data::value::flat::get::matches! {
+            _ => $crate::lang::data::value::flat::get::matches_string! {
                 @const_arms $arena, $value_case, $fallback;
                 $($rest)*
             },
@@ -138,7 +138,7 @@ macro_rules! matches {
             $crate::lang::data::value::flat::ValueKind::Case(value_case) => Some(value_case),
             _ => None,
         };
-        $crate::lang::data::value::flat::get::matches! {
+        $crate::lang::data::value::flat::get::matches_string! {
             @const_arms arena, value_case, $fallback;
             $($shape_mod::$shape => |$pattern| $body,)*
         }
@@ -150,14 +150,56 @@ macro_rules! matches {
             $crate::lang::data::value::flat::ValueKind::Case(value_case) => Some(value_case),
             _ => None,
         };
-        $crate::lang::data::value::flat::get::matches! {
+        $crate::lang::data::value::flat::get::matches_string! {
             @arms arena, value_case;
             $($arms)+
         }
     }};
 }
 
-pub(crate) use matches;
+pub(crate) use matches_string;
+
+/// Matches interned constructor handles and checks each arm's argument pattern.
+macro_rules! matches_flat {
+    (@arms $arena:ident, $value_case:ident, $fallback:expr;
+        $mixop:ident => |$pattern:pat_param| $body:expr,
+        $($rest:tt)*
+    ) => {{
+        match $value_case {
+            Some(value_case)
+                if $arena.mixop.canon_id(*value_case.mixop())
+                    == $arena.mixop.canon_id($mixop) =>
+            {
+                let values_owned = value_case.args().to_vec();
+                match values_owned.as_slice() {
+                    $pattern => $body,
+                    _ => $fallback,
+                }
+            }
+            _ => $crate::lang::data::value::flat::get::matches_flat! {
+                @arms $arena, $value_case, $fallback; $($rest)*
+            },
+        }
+    }};
+    (@arms $arena:ident, $value_case:ident, $fallback:expr;) => { $fallback };
+    ($arena:expr, $value:expr,
+        $($mixop:ident => |$pattern:pat_param| $body:expr,)*
+        _ => $fallback:expr $(,)?
+    ) => {{
+        let value = $value;
+        let arena = &*($arena);
+        let value_case = match arena.value.kind(value.node) {
+            $crate::lang::data::value::flat::ValueKind::Case(value_case) => Some(value_case),
+            _ => None,
+        };
+        $crate::lang::data::value::flat::get::matches_flat! {
+            @arms arena, value_case, $fallback;
+            $($mixop => |$pattern| $body,)*
+        }
+    }};
+}
+
+pub(crate) use matches_flat;
 
 // - Sequences
 

@@ -3,6 +3,35 @@
 //! These shapes follow `spec-meta/1-syntax.watsup` and are shared by the
 //! encoders and decoders.
 
+use super::Error;
+use crate::{
+    frontend::parse::{intern_notation_typ, parse_notation_typ},
+    lang::data::{
+        arena::Arena,
+        notation::{MixopArena, flat::Mixop},
+        value::ValueError,
+    },
+};
+
+/// Parses a notation directly into the destination arena.
+pub(super) fn parse_flat_mixop(arena_mixop: &mut MixopArena, text: &str) -> Result<Mixop, Error> {
+    let typ_el = parse_notation_typ(text).map_err(Error::from)?;
+    intern_notation_typ(arena_mixop, &typ_el)
+        .map_err(ValueError::from)
+        .map_err(Error::from)
+}
+
+/// Reuses a fixed constructor handle only within its owning arena.
+pub(super) fn intern_shape(arena: &mut Arena, text: &'static str) -> Result<Mixop, Error> {
+    if let Some(mixop) = arena.mixop.shapes.get(text) {
+        return Ok(*mixop);
+    }
+    // Record only successful parses of fixed constructor spellings
+    let mixop = parse_flat_mixop(&mut arena.mixop, text)?;
+    arena.mixop.shapes.insert(text, mixop);
+    Ok(mixop)
+}
+
 // == Iterations and variables
 
 pub(super) const QUEST: &str = "QUEST";

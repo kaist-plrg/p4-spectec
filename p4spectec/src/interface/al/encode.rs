@@ -17,8 +17,9 @@ use crate::{
         data::{
             arena::Arena,
             notation::{
+                flat::{Mixfix as FlatMixfix, Mixop as FlatMixop},
                 items::Item,
-                tree::{Mixfix, Mixop, parse},
+                tree::Mixop,
             },
             typ::make as make_typ,
             value::{
@@ -47,14 +48,15 @@ pub trait Encode {
 /// Constructs a typed meta case after its children have been encoded.
 fn case(
     arena: &mut Arena,
-    text_shape: &str,
+    text_shape: &'static str,
     text_typ: &str,
     values_meta: Vec<Value>,
     span: Span,
 ) -> Result<Value, Error> {
-    let mixfix_meta = Mixfix::new(parse::mixop(text_shape), values_meta)
+    let mixop_meta = m::intern_shape(arena, text_shape).map_err(|error| error.at(span))?;
+    let mixfix_meta = FlatMixfix::new(&arena.mixop, mixop_meta, values_meta)
         .map_err(|error| Error::from(error).at(span))?;
-    make::case(
+    make::case_flat(
         arena,
         make_typ::var(phrase!(node: text_typ.into(), span: Span::default()), vec![])
             .node
@@ -164,18 +166,37 @@ impl Encode for Mixop {
         // Split atoms at argument holes, including empty boundary rows
         let atoms_matrix_al = atoms_matrix(self);
 
-        // Encode every row before allocating the outer matrix
-        let mut values_meta = Vec::with_capacity(atoms_matrix_al.len());
-        for atoms_al in atoms_matrix_al {
-            values_meta.push(list(arena, "atom", &atoms_al)?);
-        }
-
-        // Retain both list dimensions even when a row is empty
-        let typ_matrix_meta = crate::lang::data::typ::make::list(
-            crate::lang::data::typ::make::list(crate::lang::data::typ::make::text()),
-        );
-        Ok(make::list(arena, std::rc::Rc::new(typ_matrix_meta.node), values_meta, Span::default())?)
+        encode_atoms_matrix(arena, &atoms_matrix_al)
     }
+}
+
+/// Encodes a flat notation without reconstructing an owned notation tree.
+impl Encode for FlatMixop {
+    type Output = Value;
+
+    fn encode(&self, arena: &mut Arena) -> Result<Value, Error> {
+        // Copy atoms before allocating encoded rows in the same arena
+        let mut atoms_matrix = vec![vec![]];
+        self.visit(&arena.mixop, |item| match item {
+            Item::Arg(_) => atoms_matrix.push(vec![]),
+            Item::Atom(atom) => atoms_matrix.last_mut().unwrap().push(atom.clone()),
+        });
+        encode_atoms_matrix(arena, &atoms_matrix)
+    }
+}
+
+/// Encodes each atom row before allocating the surrounding matrix.
+fn encode_atoms_matrix<T: Encode<Output = Value>>(
+    arena: &mut Arena,
+    atoms_matrix: &[Vec<T>],
+) -> Result<Value, Error> {
+    let mut values_meta = Vec::with_capacity(atoms_matrix.len());
+    for atoms in atoms_matrix {
+        values_meta.push(list(arena, "atom", atoms)?);
+    }
+    // Empty boundary rows still occupy their original matrix positions
+    let typ_matrix = make_typ::list(make_typ::list(make_typ::text()));
+    Ok(make::list(arena, typ_matrix.node.into(), values_meta, Span::default())?)
 }
 
 // - Iterators
@@ -324,7 +345,7 @@ impl Encode for Value {
                 case(arena, m::STR, "val", values_meta, span)
             }
             ValueKind::Case(value_case) => {
-                let mixop_target = value_case.mixop().into_tree(&arena.mixop);
+                let mixop_target = *value_case.mixop();
                 let values_target = value_case.args().to_vec();
                 let values_case =
                     vec![mixop_target.encode(arena)?, list(arena, "val", &values_target)?];
@@ -390,6 +411,11 @@ pub fn ok_value(arena: &mut Arena, value_target: Value) -> Result<Value, Error> 
 pub fn ok_values(arena: &mut Arena, values_target: &[Value]) -> Result<Value, Error> {
     let values_meta = list(arena, "val", values_target)?;
     case(arena, m::OK, "valsres", vec![values_meta], Span::default())
+}
+
+/// Encodes an exhausted native outcome as a nullary FAIL constructor.
+pub(crate) fn fail(arena: &mut Arena, text_typ: &str) -> Result<Value, Error> {
+    case(arena, "FAIL", text_typ, vec![], Span::default())
 }
 
 // - Operators

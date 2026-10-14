@@ -339,7 +339,7 @@ where
     let (value_ctx, value_arch, value_call_result) =
         rel::ebpf_parse(ctx, state.value_ctx, state.value_arch)?;
     (state.value_ctx, state.value_arch) = (value_ctx, value_arch);
-    let rejected = value::get::matches! { ctx.arena(), &value_call_result,
+    let rejected = value::get::matches_string! { ctx.arena(), &value_call_result,
         "REJECT errorValue" => |_values| true,
         _ => false,
     };

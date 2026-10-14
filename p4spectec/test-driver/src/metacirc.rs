@@ -13,8 +13,8 @@ pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
 pub fn run(path_cli: &Path) -> Result<()> {
     let path_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("metacirc");
     let output = Command::new(path_cli)
-        .arg("tower")
-        .arg(path_root.join("program-inst.json"))
+        .arg("run")
+        .arg(path_root.join("../../../towers/al-p4.json"))
         .arg("-p")
         .arg(path_root.join("program-inst.p4"))
         .output()?;
