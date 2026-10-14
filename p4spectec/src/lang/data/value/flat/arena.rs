@@ -5,7 +5,12 @@
 //! Bodies are interned canonically, types by exact contents, spans exactly;
 //! the default span is interned first so generated values share it.
 
-use std::rc::Rc;
+use std::{
+    collections::HashMap,
+    rc::{Rc, Weak},
+};
+
+use foldhash::fast::RandomState;
 
 use crate::lang::{
     common::source::Span,
@@ -21,6 +26,8 @@ use super::{Value, ValueKind};
 
 // = Arena storage
 
+const ALIAS_LIMIT: usize = 16_384;
+
 /// Storage for value bodies, types, and spans.
 #[derive(Debug)]
 pub struct ValueArena {
@@ -28,6 +35,8 @@ pub struct ValueArena {
     values: CanonInterner<ValueKind>,
     /// Types, shared by exact contents including nested source spans.
     types: Interner<Rc<TypKind>>,
+    /// Weak owners keep cached addresses from being reused for other contents.
+    typ_aliases: HashMap<*const TypKind, (Weak<TypKind>, Interned<Rc<TypKind>>), RandomState>,
     /// Spans, shared by equality.
     spans: Interner<Span>,
 }
@@ -38,7 +47,12 @@ impl Default for ValueArena {
         spans
             .intern_default()
             .expect("the first span fits in an interner index");
-        Self { values: CanonInterner::new(), types: Interner::new(), spans }
+        Self {
+            values: CanonInterner::new(),
+            types: Interner::new(),
+            typ_aliases: HashMap::default(),
+            spans,
+        }
     }
 }
 
@@ -73,7 +87,22 @@ impl ValueArena {
         &mut self,
         typ: Rc<TypKind>,
     ) -> Result<Interned<Rc<TypKind>>, std::num::TryFromIntError> {
-        self.types.intern(typ)
+        // Reuse known allocations, including aliases of the retained representative
+        let typ_ptr = Rc::as_ptr(&typ);
+        if let Some((_, id)) = self.typ_aliases.get(&typ_ptr) {
+            return Ok(*id);
+        }
+
+        // Reserve bounded address entries only for allocations shared by callers
+        let typ_weak = (self.typ_aliases.len() < ALIAS_LIMIT && Rc::strong_count(&typ) > 1)
+            .then(|| Rc::downgrade(&typ));
+        let id = self.types.intern(typ)?;
+
+        // Retain the weak owner until this arena drops
+        if let Some(typ_weak) = typ_weak {
+            self.typ_aliases.insert(typ_ptr, (typ_weak, id));
+        }
+        Ok(id)
     }
 
     /// Interns an exact source location.
