@@ -73,9 +73,12 @@ macro_rules! matches_string {
         [$($shape:expr),+ $(,)?], $($rest:tt)*
     ) => {
         if [$($shape),+].into_iter().any(|mixop_text| {
-            $crate::lang::data::notation::flat::parse::matches_string(
-                &mut $arena.mixop, $mixop, mixop_text,
-            )
+            use $crate::lang::data::notation::flat::parse::ToMixop as _;
+
+            let mixop_pattern = mixop_text
+                .to_mixop(&mut $arena.mixop)
+                .expect("value pattern contains a valid SpecTec mixop");
+            $arena.mixop.canon_id($mixop) == $arena.mixop.canon_id(mixop_pattern)
         }) {
             Some($idx)
         } else {

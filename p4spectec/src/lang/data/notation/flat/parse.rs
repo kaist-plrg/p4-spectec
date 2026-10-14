@@ -2,14 +2,17 @@
 //!
 //! EL types supply argument positions and atoms without a tree mixop.
 //! The parser caches EL types independently of runtime storage.
-//! Each caller interns notation into its own arena and compares canonical ids.
+//! Atom matrices recover notation structure through the same parser.
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::frontend::{error::FrontendError, parse::parse_typ};
-use crate::lang::el::ast::{NotTyp, NotTypKind, Typ};
+use crate::lang::{
+    el::ast::{NotTyp, NotTypKind, Typ},
+    traits::print::Print,
+};
 
-use super::super::MixopError;
+use super::super::{AtomPhrase, MixopError};
 use super::{Mixop, MixopArena, MixopKind};
 
 /// A failure parsing or interning a notation string.
@@ -21,6 +24,20 @@ pub(crate) enum ParseMixopError {
     /// The arena cannot store another notation node.
     #[error(transparent)]
     Intern(#[from] MixopError),
+}
+
+/// A failure converting an atom matrix into a flat mixop.
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum MatrixMixopError {
+    /// An atom matrix must contain at least one boundary row.
+    #[error("empty atom matrix")]
+    EmptyMatrix,
+    /// The reconstructed notation has a different number of argument positions.
+    #[error("atom matrix and mixop arity disagree")]
+    ArityMismatch,
+    /// Parsing or interning the reconstructed notation failed.
+    #[error(transparent)]
+    Parse(#[from] ParseMixopError),
 }
 
 thread_local! {
@@ -58,16 +75,46 @@ impl ToMixop for str {
     }
 }
 
-/// Compares a runtime notation against a fixed spelling in the same arena.
-pub(crate) fn matches_string(
-    arena_mixop: &mut MixopArena,
-    mixop: Mixop,
-    text: &'static str,
-) -> bool {
-    let mixop_pattern = text
-        .to_mixop(arena_mixop)
-        .expect("value pattern contains a valid SpecTec mixop");
-    arena_mixop.canon_id(mixop) == arena_mixop.canon_id(mixop_pattern)
+impl ToMixop for [Vec<AtomPhrase>] {
+    type Error = MatrixMixopError;
+
+    /// Reconstructs notation from atoms between argument positions and interns it.
+    fn to_mixop(&self, arena_mixop: &mut MixopArena) -> Result<Mixop, Self::Error> {
+        // Even zero-argument notation needs one boundary row
+        if self.is_empty() {
+            return Err(MatrixMixopError::EmptyMatrix);
+        }
+
+        // [[]] represents empty notation, which has no source text to parse
+        if self.len() == 1 && self[0].is_empty() {
+            return arena_mixop
+                .intern_kind(MixopKind::Seq(vec![]))
+                .map_err(ParseMixopError::from)
+                .map_err(MatrixMixopError::from);
+        }
+
+        // Insert a placeholder type at each hole: [[TEXT], []] becomes TEXT nat
+        let text_mixop = self
+            .iter()
+            .map(|atoms| {
+                atoms
+                    .iter()
+                    .map(Print::to_string)
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            })
+            .collect::<Vec<_>>()
+            .join(" nat ");
+
+        // Recover Seq/Infix/Brack structure through the grammar and intern it
+        let mixop = text_mixop.to_mixop(arena_mixop)?;
+
+        // Parsing must preserve exactly one hole between adjacent rows
+        if arena_mixop.arity(mixop) + 1 != self.len() {
+            return Err(MatrixMixopError::ArityMismatch);
+        }
+        Ok(mixop)
+    }
 }
 
 impl ToMixop for Typ {

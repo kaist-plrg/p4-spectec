@@ -18,14 +18,14 @@ use crate::{
         data::{
             arena::Arena,
             notation::{
-                flat::{Mixfix as FlatMixfix, Mixop as FlatMixop, MixopKind, parse::ToMixop},
+                flat::{
+                    Mixfix as FlatMixfix, Mixop as FlatMixop,
+                    parse::{MatrixMixopError, ToMixop},
+                },
                 tree::{Mixfix as TreeMixfix, Mixop},
             },
             typ::make as make_typ,
-            value::{
-                ValueError,
-                flat::{Value, ValueField, get, make},
-            },
+            value::flat::{Value, ValueField, get, make},
         },
         el::ast as el,
         il::ast as il,
@@ -155,41 +155,21 @@ impl Decode for FlatMixop {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
         let atoms_matrix = Vec::<Vec<il::Atom>>::decode(arena, value_meta)?;
         let span = *arena.value.span(value_meta.span);
-        // An empty outer list does not describe any notation
-        if atoms_matrix.is_empty() {
-            return Err(Error::unexpected(arena, value_meta, "a nonempty atom matrix"));
-        }
-        // Preserve the unique representation of empty notation
-        if atoms_matrix.len() == 1 && atoms_matrix[0].is_empty() {
-            return arena
-                .mixop
-                .intern_kind(MixopKind::Seq(vec![]))
-                .map_err(ValueError::from)
-                .map_err(|error| Error::from(error).at(span));
-        }
-        // Reuse the grammar's argument boundaries and operator structure
-        let text_mixop = atoms_matrix
-            .iter()
-            .map(|atoms| {
-                atoms
-                    .iter()
-                    .map(Print::to_string)
-                    .collect::<Vec<_>>()
-                    .join(" ")
-            })
-            .collect::<Vec<_>>()
-            .join(" nat ");
-        let mixop = text_mixop
+        // Retain the encoded value's location and shape in conversion diagnostics
+        atoms_matrix
+            .as_slice()
             .to_mixop(&mut arena.mixop)
-            .map_err(|error| Error::from(error).at(span))?;
-        if arena.mixop.arity(mixop) + 1 != atoms_matrix.len() {
-            return Err(Error::unexpected(
-                arena,
-                value_meta,
-                "an atom matrix with one row per argument boundary",
-            ));
-        }
-        Ok(mixop)
+            .map_err(|error| match error {
+                MatrixMixopError::EmptyMatrix => {
+                    Error::unexpected(arena, value_meta, "a nonempty atom matrix")
+                }
+                MatrixMixopError::ArityMismatch => Error::unexpected(
+                    arena,
+                    value_meta,
+                    "an atom matrix with one row per argument boundary",
+                ),
+                MatrixMixopError::Parse(error) => Error::from(error).at(span),
+            })
     }
 }
 
