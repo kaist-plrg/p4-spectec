@@ -19,7 +19,7 @@ use crate::lang::{
     },
 };
 
-use super::{ast::Subcheck, prepared::SubBind};
+use super::prepared::{SubBind, Subcheck};
 
 /// The parts of syntax that differ between source and prepared forms.
 pub trait Stage: Clone + fmt::Debug + PartialEq + 'static {
@@ -55,6 +55,6 @@ impl Stage for Prepared {
     type Id = IdSlot;
     type Var = VarSlot;
     type Mixop = flat::Mixop;
-    type SubTarget = Subcheck<Prepared>;
+    type SubTarget = Subcheck;
     type SubBind = SubBind;
 }

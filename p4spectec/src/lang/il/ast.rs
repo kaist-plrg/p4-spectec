@@ -67,26 +67,6 @@ pub type TypKind = data::typ::TypKind;
 /// The type of a function value.
 pub type FuncTyp = data::typ::FuncTyp;
 
-// Subtype checks
-
-/// The runtime part of a subtype check, after static subtyping is decided.
-///
-/// Preparation computes it from the tested expression's type,
-/// so only prepared syntax holds one.
-#[derive(Clone, Debug, PartialEq)]
-pub enum Subcheck<P: Stage = Source> {
-    /// Statically a subtype: nothing to check.
-    Skip,
-    /// A variant value: its case must be one of these.
-    Mixop(Vec<P::Mixop>),
-    /// A tuple: check each component.
-    Tuple(Vec<Subcheck<P>>),
-    /// An option or list: check each element.
-    Iter(Iter, Box<Subcheck<P>>),
-    /// Fall back to full membership in this type.
-    Recurse(Typ),
-}
-
 // Defined types
 
 /// A notation type with its span.

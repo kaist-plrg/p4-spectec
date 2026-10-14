@@ -39,9 +39,8 @@ pub struct PrepareContext<'a> {
 impl PrepareContext<'_> {
     /// Computes the runtime check that a `typ_source` value has `typ_target`.
     pub(crate) fn prepare_subcheck(&mut self, typ_source: &Typ, typ_target: &Typ) -> Subcheck {
-        let subcheck = optimize_sub_typ(self.tdenv, typ_source, typ_target)
-            .expect("elaboration accepted the subtype test");
-        subcheck.prepare(self)
+        optimize_sub_typ(self.arena_mixop, self.tdenv, typ_source, typ_target)
+            .expect("elaboration accepted the subtype test")
     }
 
     /// Registers the outer variable of every iterated variable.
@@ -105,7 +104,7 @@ impl Prepare<mixop::PrepareContext> for source::TypCase {
     }
 }
 
-// - Patterns and subtype checks
+// - Patterns
 
 impl Prepare<PrepareContext<'_>> for source::Pattern {
     type Output = Pattern;
@@ -115,20 +114,6 @@ impl Prepare<PrepareContext<'_>> for source::Pattern {
             source::Pattern::Case(mixop) => Pattern::Case(mixop.prepare(ctx.arena_mixop)),
             source::Pattern::List(pattern) => Pattern::List(pattern),
             source::Pattern::Opt(pattern) => Pattern::Opt(pattern),
-        }
-    }
-}
-
-impl Prepare<PrepareContext<'_>> for source::Subcheck {
-    type Output = Subcheck;
-
-    fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        match self {
-            source::Subcheck::Skip => Subcheck::Skip,
-            source::Subcheck::Mixop(mixops) => Subcheck::Mixop(mixops.prepare(ctx.arena_mixop)),
-            source::Subcheck::Tuple(subchecks) => Subcheck::Tuple(subchecks.prepare(ctx)),
-            source::Subcheck::Iter(iter, subcheck) => Subcheck::Iter(iter, subcheck.prepare(ctx)),
-            source::Subcheck::Recurse(typ) => Subcheck::Recurse(typ),
         }
     }
 }

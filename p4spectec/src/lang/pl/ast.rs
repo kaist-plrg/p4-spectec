@@ -71,10 +71,6 @@ pub type BinOp = sl::ast::BinOp;
 pub type CmpOp = sl::ast::CmpOp;
 pub type OpTyp = sl::ast::OpTyp;
 
-// Subtype checks
-
-pub type Subcheck<P = Source> = sl::ast::Subcheck<P>;
-
 // Expressions
 
 /// A typed expression before annotation, sharing its SL type.

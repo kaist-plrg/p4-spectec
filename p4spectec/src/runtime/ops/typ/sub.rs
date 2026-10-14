@@ -4,13 +4,16 @@
 //! numbers by `num::sub`, variants by case inclusion, tuples componentwise,
 //! an option into a list, and a plain value into an option or list.
 //! `optimize_sub_typ` reduces a static subtype relation
-//! to the runtime check still needed.
+//! to the runtime check still needed, interning its case tags.
 
-use std::{borrow::Cow, rc::Rc};
+use std::borrow::Cow;
 
-use crate::lang::common::prim::num;
+use crate::lang::{common::prim::num, data::notation::MixopArena};
 
-use crate::lang::il::ast::{self, DefTypKind, Iter, Subcheck, TypKind};
+use crate::lang::il::{
+    ast::{self, DefTypKind, Iter, TypKind},
+    prepared::Subcheck,
+};
 
 use crate::runtime::{envs::elab::TDEnv, typdef::TypeDef};
 
@@ -174,6 +177,7 @@ fn instantiate_cases<'a>(
 
 /// Builds the least runtime subtype check needed after static subtyping.
 pub fn optimize_sub_typ(
+    arena_mixop: &mut MixopArena,
     tdenv: &TDEnv,
     typ_source: &ast::Typ,
     typ_target: &ast::Typ,
@@ -193,7 +197,7 @@ pub fn optimize_sub_typ(
         {
             let mut subchecks = Vec::with_capacity(typs_source.len());
             for (typ_source, typ_target) in typs_source.iter().zip(typs_target) {
-                let subcheck = optimize_sub_typ(tdenv, typ_source, typ_target)?;
+                let subcheck = optimize_sub_typ(arena_mixop, tdenv, typ_source, typ_target)?;
                 subchecks.push(subcheck);
             }
             let subcheck = Subcheck::Tuple(subchecks);
@@ -203,7 +207,7 @@ pub fn optimize_sub_typ(
         (TypKind::Iter(typ_source, iter_source), TypKind::Iter(typ_target, iter_target))
             if iter_source == iter_target =>
         {
-            let subcheck = optimize_sub_typ(tdenv, typ_source, typ_target)?;
+            let subcheck = optimize_sub_typ(arena_mixop, tdenv, typ_source, typ_target)?;
             let subcheck = Box::new(subcheck);
             let subcheck = Subcheck::Iter(*iter_source, subcheck);
             Ok(subcheck)
@@ -233,7 +237,10 @@ pub fn optimize_sub_typ(
             // The target's case tags are the accepted set
             let mut mixops_target = Vec::with_capacity(typ_cases_target.len());
             for ast::TypCase { not_typ, .. } in typ_cases_target {
-                mixops_target.push(Rc::clone(not_typ.node.mixop()));
+                let mixop_target = arena_mixop
+                    .intern(not_typ.node.mixop())
+                    .expect("specification mixops fit in 32-bit shape handles");
+                mixops_target.push(mixop_target);
             }
             let subcheck = Subcheck::Mixop(mixops_target);
             Ok(subcheck)
