@@ -13,14 +13,14 @@ mod patch;
 mod tower;
 
 use crate::{lang::data::arena::Arena, runner};
-pub use config::{Config, Mode};
+pub use config::{ExecutionMode, TowerConfig};
 use std::path::PathBuf;
 
 pub use error::Result;
 
 /// Executes a program through the configured interpreter tower.
 pub fn run(
-    config: &Config,
+    config: &TowerConfig,
     includes: &[PathBuf],
     paths_program: &[PathBuf],
     options: runner::Config,

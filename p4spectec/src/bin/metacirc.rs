@@ -7,7 +7,7 @@
 use clap::{Args, Parser, Subcommand};
 use p4spectec::{
     diagnostic::{DisplayStyle, RenderConfig, Renderer},
-    metacirc::{self, Config},
+    metacirc::{self, TowerConfig},
     runner,
 };
 use std::{path::PathBuf, process::ExitCode};
@@ -62,7 +62,7 @@ struct RunArgs {
 fn run(cli: Cli) -> metacirc::Result<()> {
     match cli.command {
         Command::Run(args) => {
-            let config = Config::from_file(&args.config)?;
+            let config = TowerConfig::from_file(&args.config)?;
             metacirc::run(&config, &args.includes, &args.program, args.options.config())
         }
     }

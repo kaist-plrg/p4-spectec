@@ -41,7 +41,7 @@ Run it with the supplied AL tower:
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Entry", "interface": "al" }
+    { "specdir": "../spec-meta", "rel": "Entry", "lang": "al" }
   ]
 }
 ```
@@ -65,8 +65,8 @@ Use the supplied AL/P4 tower:
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Entry", "interface": "al" },
-    { "specdir": "../spec", "rel": "Program_inst", "interface": "p4" }
+    { "specdir": "../spec-meta", "rel": "Entry", "lang": "al" },
+    { "specdir": "../spec", "rel": "Program_inst", "lang": "p4" }
   ]
 }
 ```
@@ -79,7 +79,7 @@ declarations. A P4 target takes exactly one `-p` path.
 
 Levels are ordered from native base through intermediates to target.
 A single level supplies both target and base. In a longer tower, every level
-before the target must have `"interface": "al"`; the target may use `al` or `p4`.
+before the target must have `"lang": "al"`; the target may use `al` or `p4`.
 `mode` selects the base's native backend (`sl` or `al`). Intermediate and target
 host helpers use SL; a single-level tower uses the configured mode throughout.
 
@@ -88,7 +88,7 @@ relative to the configuration file. CLI program and include paths are
 resolved relative to the current working directory.
 
 To add an AL interpretation layer, insert another
-`{ "specdir": "../spec-meta", "rel": "Entry", "interface": "al" }`
+`{ "specdir": "../spec-meta", "rel": "Entry", "lang": "al" }`
 before the target. Names such as `al-al.json` and `al-al-p4.json` describe
 these additional configurations; only `al.json` and `al-p4.json` are supplied.
 

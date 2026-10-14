@@ -18,6 +18,22 @@ use crate::{
 use std::rc::Rc;
 
 /// Appends a main function that succeeds only if the selected relation succeeds.
+///
+/// For `Program_inst`, constructs the AL equivalent of this SpecTec sketch:
+///
+/// ```text
+/// dec $main() : text
+/// def $main() = "pass"
+///   -- Program_inst: |- <program literal> : result_0 result_1
+/// ```
+///
+/// `<program literal>` denotes the expression produced by `value.to_exp(arena)`;
+/// it is embedded in the body, so `main` takes no arguments.
+/// `result_0` and `result_1` have types `globalInstLayer` and `store`.
+/// The relation binds these outputs; `main` discards them and returns `"pass"`
+/// only after the premise succeeds.
+///
+/// Other relations use their own notation, input positions, and output types.
 pub(super) fn entry(
     arena: &Arena,
     spec_al: &al::Spec,
