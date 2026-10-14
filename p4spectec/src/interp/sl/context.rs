@@ -48,7 +48,6 @@ impl SpecEnv {
         spec: source::Spec,
     ) -> Result<Self, Error> {
         let mut loaded = Self::new();
-        // Load every type first: a callable body may name a type defined later
         let tdenv = loaded.load_typdefs(arena_mixop, &spec);
         loaded.load_callables(arena_mixop, &tdenv, det, spec);
         Ok(loaded)

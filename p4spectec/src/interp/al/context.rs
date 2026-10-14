@@ -43,7 +43,6 @@ impl SpecEnv {
     /// Panics if a global definition is repeated.
     pub fn load(arena_mixop: &mut MixopArena, spec: source::Spec) -> Result<Self, Error> {
         let mut loaded = Self::new();
-        // Load every type first: a callable body may name a type defined later
         let tdenv = loaded.load_typdefs(arena_mixop, &spec);
         loaded.load_callables(arena_mixop, &tdenv, spec);
         Ok(loaded)
