@@ -73,7 +73,7 @@ fn value_of_set(arena: &mut Arena, typ_key: &Typ, set: ValueSet) -> Result<Value
     let typ = typ::make::var(set_id, vec![typ_key.clone()]);
     let value_case = notation::Mixfix::new(set_mixop(), vec![value_set])
         .expect("the set mixop has exactly one argument");
-    let value = value::make::case(arena, typ.node.into(), value_case, Span::default())?;
+    let value = value::make::case_tree(arena, typ.node.into(), value_case, Span::default())?;
     Ok(value)
 }
 

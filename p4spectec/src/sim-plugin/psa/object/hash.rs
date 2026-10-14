@@ -145,7 +145,7 @@ impl HashExtern {
             Some(value_result),
             Span::default(),
         )?;
-        let value_call_result = value::make::case_shaped! {
+        let value_call_result = value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],

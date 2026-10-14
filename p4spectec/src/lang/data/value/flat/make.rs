@@ -95,7 +95,7 @@ pub fn structure(
 /// A variant case from a shared mixop and its arguments.
 ///
 /// The mixop is interned the first time this arena sees it.
-pub fn case(
+pub fn case_tree(
     arena: &mut Arena,
     typ: Rc<TypKind>,
     mixfix: Mixfix<Value>,
@@ -120,7 +120,7 @@ pub fn case_flat(
 }
 
 /// A variant case from a mixop text, its arguments, and its type name.
-macro_rules! case_shaped {
+macro_rules! case_string {
     (
         arena: $arena:expr,
         shape: $shape:expr,
@@ -140,7 +140,7 @@ macro_rules! case_shaped {
             span: $crate::lang::common::source::Span::default(),
         };
         let typ = $crate::lang::data::typ::make::var(id, std::vec::Vec::new());
-        $crate::lang::data::value::flat::make::case(
+        $crate::lang::data::value::flat::make::case_tree(
             $arena,
             std::rc::Rc::new(typ.node),
             mixfix,
@@ -149,7 +149,7 @@ macro_rules! case_shaped {
     }};
 }
 
-pub(crate) use case_shaped;
+pub(crate) use case_string;
 
 // - Sequences
 
