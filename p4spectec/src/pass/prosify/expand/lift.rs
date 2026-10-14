@@ -181,7 +181,7 @@ impl LiftedCall {
                 exp_l: exp_new_sl,
                 exp_r: exp_call_sl,
                 iter_instrs: iter_instrs_sl,
-                block: vec![instr_sl],
+                block: sl::Block { instrs: vec![instr_sl] },
             }),
             span: span,
         }

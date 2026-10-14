@@ -1050,17 +1050,17 @@ fn prosify_dispatch_block(
     ctx: &Context,
     block_sl: sl::Block,
 ) -> Result<pl::DispatchBlock, ProseError> {
-    match block_sl.len() {
+    match block_sl.instrs.len() {
         0 => Ok(Vec::new()),
         // One instruction expands in place
         1 => {
-            let instr_sl = block_sl.into_iter().next().unwrap();
+            let instr_sl = block_sl.instrs.into_iter().next().unwrap();
             prosify_dispatch_instr(ctx, instr_sl)
         }
         _ => {
-            let span = block_sl.at();
-            let mut blocks_pl = Vec::with_capacity(block_sl.len());
-            for instr_sl in block_sl {
+            let span = block_sl.instrs.at();
+            let mut blocks_pl = Vec::with_capacity(block_sl.instrs.len());
+            for instr_sl in block_sl.instrs {
                 let block_pl = prosify_dispatch_instr(ctx, instr_sl)?;
                 blocks_pl.push(block_pl);
             }
@@ -1382,17 +1382,17 @@ fn prosify_group_return_instr(
 
 /// Converts a block; several instructions become a backtrack with one arm each.
 fn prosify_group_block(ctx: &Context, block_sl: sl::Block) -> Result<pl::GroupBlock, ProseError> {
-    match block_sl.len() {
+    match block_sl.instrs.len() {
         0 => Ok(Vec::new()),
         // One instruction expands in place
         1 => {
-            let instr_sl = block_sl.into_iter().next().unwrap();
+            let instr_sl = block_sl.instrs.into_iter().next().unwrap();
             prosify_group_instr(ctx, instr_sl)
         }
         _ => {
-            let span = block_sl.at();
-            let mut blocks_pl = Vec::with_capacity(block_sl.len());
-            for instr_sl in block_sl {
+            let span = block_sl.instrs.at();
+            let mut blocks_pl = Vec::with_capacity(block_sl.instrs.len());
+            for instr_sl in block_sl.instrs {
                 let block_pl = prosify_group_instr(ctx, instr_sl)?;
                 blocks_pl.push(block_pl);
             }

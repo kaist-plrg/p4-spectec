@@ -127,6 +127,7 @@ fn expand_debug_instr(ids_used: &mut IdSet, mut instr_sl: sl::DebugInstr) -> sl:
 /// Expands each instruction of a block in order.
 fn expand_block(ids_used: &mut IdSet, block_sl: sl::Block) -> sl::Block {
     block_sl
+        .instrs
         .into_iter()
         .map(|instr_sl| expand_instr(ids_used, instr_sl))
         .collect()

@@ -262,9 +262,24 @@ pub struct DebugInstr<P: Stage = Source> {
 }
 
 /// Instructions run in order.
-pub type Block<P = Source> = Vec<Instr<P>>;
+#[derive(Clone, Debug, PartialEq)]
+pub struct Block<P: Stage = Source> {
+    pub instrs: Vec<Instr<P>>,
+}
+
+impl<P: Stage> Default for Block<P> {
+    fn default() -> Self {
+        Self { instrs: Vec::new() }
+    }
+}
+
+impl<P: Stage> FromIterator<Instr<P>> for Block<P> {
+    fn from_iter<I: IntoIterator<Item = Instr<P>>>(instrs: I) -> Self {
+        Self { instrs: instrs.into_iter().collect() }
+    }
+}
 /// The otherwise block, run when the main block falls through.
-pub type ElseBlock<P = Source> = Vec<Instr<P>>;
+pub type ElseBlock<P = Source> = Block<P>;
 /// An iteration over a binding instruction, as over an IL premise.
 pub type InstrIter<V = Var> = il::ast::PremIter<V>;
 

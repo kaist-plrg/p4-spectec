@@ -75,18 +75,24 @@ impl PrepareContext<'_> {
             pos,
         }
     }
+}
+
+// = Blocks
+
+impl Prepare<PrepareContext<'_>> for source::Block {
+    type Output = ast::Block;
 
     /// Prepares a block using the evaluator's tail-position rule.
-    fn prepare_block(&mut self, block: source::Block) -> ast::Block {
-        let instrs_len = block.len();
+    fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        let instrs_len = self.instrs.len();
         // Deterministic selection gives every candidate the enclosing position
-        block
+        self.instrs
             .into_iter()
             .enumerate()
             .map(|(idx, instr)| {
                 let pos =
-                    if self.det || idx + 1 == instrs_len { self.pos } else { Position::NonTail };
-                instr.prepare(&mut self.at(pos))
+                    if ctx.det || idx + 1 == instrs_len { ctx.pos } else { Position::NonTail };
+                instr.prepare(&mut ctx.at(pos))
             })
             .collect()
     }
@@ -121,7 +127,7 @@ impl Prepare<PrepareContext<'_>> for source::IfInstr {
         ast::IfInstr {
             exp: self.exp.prepare(&mut ctx.il()),
             iter_exps: self.iter_exps.prepare(&mut ctx.il()),
-            block: ctx.prepare_block(self.block),
+            block: self.block.prepare(ctx),
             dangle: self.dangle,
         }
     }
@@ -156,7 +162,7 @@ impl Prepare<PrepareContext<'_>> for source::CaseInstr {
             .into_iter()
             .map(|case| ast::Case {
                 guard: ast::Guard::prepare(ctx, case.guard, &typ_scrut),
-                block: ctx.prepare_block(case.block),
+                block: case.block.prepare(ctx),
             })
             .collect();
         ast::CaseInstr { exp, cases, totality: self.totality, dangle: self.dangle }
@@ -173,7 +179,7 @@ impl Prepare<PrepareContext<'_>> for source::GroupInstr {
             id: self.id,
             rel_signature: self.rel_signature,
             exps: self.exps.prepare(&mut ctx.il()),
-            block: ctx.prepare_block(self.block),
+            block: self.block.prepare(ctx),
         }
     }
 }
@@ -188,7 +194,7 @@ impl Prepare<PrepareContext<'_>> for source::LetInstr {
             exp_l: self.exp_l.prepare(&mut ctx.il()),
             exp_r: self.exp_r.prepare(&mut ctx.il()),
             iter_instrs: self.iter_instrs.prepare(&mut ctx.il()),
-            block: ctx.prepare_block(self.block),
+            block: self.block.prepare(ctx),
         }
     }
 }
@@ -214,7 +220,7 @@ impl Prepare<PrepareContext<'_>> for source::RuleInstr {
             not_exp: self.not_exp.prepare(&mut ctx.il()),
             input_hint: self.input_hint,
             iter_instrs: self.iter_instrs.prepare(&mut ctx.il()),
-            block: ctx.prepare_block(self.block),
+            block: self.block.prepare(ctx),
         })
     }
 }
@@ -226,7 +232,7 @@ impl source::RuleInstr {
         if pos != Position::Tail || !self.iter_instrs.is_empty() {
             return false;
         }
-        let [instr_result] = self.block.as_slice() else { return false };
+        let [instr_result] = self.block.instrs.as_slice() else { return false };
         let source::InstrKind::Result(instr_result) = &instr_result.node else { return false };
         // Output and result expressions must agree in order, ignoring source spans
         let (_, exps_output) = input::split(&self.input_hint, self.not_exp.args().iter().collect())
@@ -279,15 +285,14 @@ impl Prepare<PrepareContext<'_>> for source::HoldCase {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         match self {
-            source::HoldCase::Both(block_hold, block_not_hold) => ast::HoldCase::Both(
-                ctx.prepare_block(block_hold),
-                ctx.prepare_block(block_not_hold),
-            ),
+            source::HoldCase::Both(block_hold, block_not_hold) => {
+                ast::HoldCase::Both(block_hold.prepare(ctx), block_not_hold.prepare(ctx))
+            }
             source::HoldCase::Hold(block, dangle) => {
-                ast::HoldCase::Hold(ctx.prepare_block(block), dangle)
+                ast::HoldCase::Hold(block.prepare(ctx), dangle)
             }
             source::HoldCase::NotHold(block, dangle) => {
-                ast::HoldCase::NotHold(ctx.prepare_block(block), dangle)
+                ast::HoldCase::NotHold(block.prepare(ctx), dangle)
             }
         }
     }
@@ -345,10 +350,10 @@ impl Prepare<PrepareContext<'_>> for source::DefinedRel {
             id: self.id,
             rel_signature: self.rel_signature,
             exps_input: self.exps_input.prepare(&mut ctx.il()),
-            block: ctx.at(pos).prepare_block(self.block),
+            block: self.block.prepare(&mut ctx.at(pos)),
             block_else: self
                 .block_else
-                .map(|block| ctx.at(Position::Tail).prepare_block(block)),
+                .map(|block| block.prepare(&mut ctx.at(Position::Tail))),
             hints: self.hints,
         }
     }
@@ -426,7 +431,11 @@ impl Prepare<PrepareContext<'_>> for source::TableFunc {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let params = self.params.prepare(ctx);
-        let mut instrs_len: usize = self.table_rows.iter().map(|row| row.block.len()).sum();
+        let mut instrs_len: usize = self
+            .table_rows
+            .iter()
+            .map(|row| row.block.instrs.len())
+            .sum();
         // Only the last instruction across all rows inherits tail position
         let table_rows = self
             .table_rows
@@ -436,6 +445,7 @@ impl Prepare<PrepareContext<'_>> for source::TableFunc {
                 let exp = row.exp.prepare(&mut ctx.il());
                 let block = row
                     .block
+                    .instrs
                     .into_iter()
                     .map(|instr| {
                         instrs_len -= 1;
@@ -475,10 +485,10 @@ impl Prepare<PrepareContext<'_>> for source::DefinedFunc {
             tparams: self.tparams,
             params: self.params.prepare(ctx),
             typ: self.typ,
-            block: ctx.at(pos).prepare_block(self.block),
+            block: self.block.prepare(&mut ctx.at(pos)),
             block_else: self
                 .block_else
-                .map(|block| ctx.at(Position::Tail).prepare_block(block)),
+                .map(|block| block.prepare(&mut ctx.at(Position::Tail))),
             hints: self.hints,
         }
     }
