@@ -100,3 +100,10 @@ The fixture uses the full P4 specification and a small constant declaration,
 without requiring the p4c submodule.
 
 Native/AL/AL→AL performance measurements are follow-up work.
+
+## OCaml reference
+
+The frozen OCaml implementation and its AL/SL meta specifications are preserved
+at [`v0.1.3`](https://github.com/kaist-plrg/p4-spectec/tree/v0.1.3).
+See its [boot documentation](https://github.com/kaist-plrg/p4-spectec/blob/v0.1.3/BOOT.md)
+for the historical tower implementation and SL/AL specification documents.
