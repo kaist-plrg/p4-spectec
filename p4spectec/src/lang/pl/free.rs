@@ -274,7 +274,7 @@ impl<Tier: FreeIds> FreeIds for Case<Tier> {
 
 impl<Tier: FreeIds> FreeIds for Block<Tier> {
     fn free_ids(&self) -> IdSet {
-        self.as_slice().free_ids()
+        self.instrs.as_slice().free_ids()
     }
 }
 

@@ -311,7 +311,10 @@ pub struct TierInstr<Tier> {
 }
 
 /// Instructions run in order.
-pub type Block<Tier, P = Source> = Vec<Instr<Tier, P>>;
+#[derive(Clone, Debug, PartialEq)]
+pub struct Block<Tier, P: Stage = Source> {
+    pub instrs: Vec<Instr<Tier, P>>,
+}
 pub type InstrIter<V = Var> = sl::ast::InstrIter<V>;
 
 // Relations

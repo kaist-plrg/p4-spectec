@@ -429,7 +429,7 @@ where
     Tier: SyntaxEq,
 {
     fn syntax_eq(&self, other: &Self) -> bool {
-        self.as_slice().syntax_eq(other.as_slice())
+        self.instrs.as_slice().syntax_eq(other.instrs.as_slice())
     }
 }
 

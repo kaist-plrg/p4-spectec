@@ -29,7 +29,7 @@ fn init_from_pl(spec_pl: &pl::Spec) -> BTreeMap<String, (&pl::Id, &pl::DispatchB
             pl::DefKind::Rel(pl::RelDef::Defined(rel)) => rel
                 .block_else_opt
                 .as_ref()
-                .filter(|block| !block.is_empty())
+                .filter(|block| !block.instrs.is_empty())
                 .map(|block| (rel.id.node.to_string(), (&rel.id, block))),
             _ => None,
         })

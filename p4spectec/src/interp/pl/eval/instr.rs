@@ -80,7 +80,7 @@ pub(super) fn eval_group_block<'global, Iface: Interface, Ext: Extern>(
     ctx: Context<'global>,
     block: &ast::GroupBlock,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    eval_block(runner_ctx, ctx, eval_group_instr, block)
+    eval_block(runner_ctx, ctx, eval_group_instr, &block.instrs)
 }
 
 /// Runs relation routing in its own local scope.
@@ -89,7 +89,7 @@ pub(super) fn eval_dispatch_block<'global, Iface: Interface, Ext: Extern>(
     ctx: Context<'global>,
     block: &ast::DispatchBlock,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    eval_block(runner_ctx, ctx, eval_dispatch_instr, block)
+    eval_block(runner_ctx, ctx, eval_dispatch_instr, &block.instrs)
 }
 
 // - Alternative selection

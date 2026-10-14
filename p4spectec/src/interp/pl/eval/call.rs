@@ -446,7 +446,7 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
         values
     ));
     // Table rows stay sequential and borrow their instructions
-    let instrs = func.rows.iter().flat_map(|row| &row.block);
+    let instrs = func.rows.iter().flat_map(|row| &row.block.instrs);
     let (_, flow) = unwrap!(eval_block(runner_ctx, ctx_local, eval_group_instr, instrs));
     match flow {
         // The first return is the table result

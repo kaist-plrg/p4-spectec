@@ -67,8 +67,8 @@ fn is_match_binding(pattern: &pl::Pattern, exp_scrut: &pl::Exp, instr_let: &pl::
 }
 
 /// Finds an unhinted, noniterated leading let eligible for a conditional binding.
-fn find_leading_let_instr<Tier>(block: &[pl::Instr<Tier>]) -> Option<&pl::LetInstr> {
-    let instr = block.first()?;
+fn find_leading_let_instr<Tier>(block: &pl::Block<Tier>) -> Option<&pl::LetInstr> {
+    let instr = block.instrs.first()?;
     if instr.hints.node != Default::default() {
         return None;
     }
@@ -81,7 +81,7 @@ fn find_leading_let_instr<Tier>(block: &[pl::Instr<Tier>]) -> Option<&pl::LetIns
 
 /// Removes the leading let after its binding has been validated.
 fn take_binding_exp<Tier>(block: &mut pl::Block<Tier>) -> pl::Exp {
-    let pl::InstrKind::Let(instr_let) = block.remove(0).node.node else {
+    let pl::InstrKind::Let(instr_let) = block.instrs.remove(0).node.node else {
         unreachable!("validated leading let")
     };
     instr_let.exp_l
@@ -150,7 +150,8 @@ fn shorten_case_instr<Tier>(
             };
         }
         // Shorten the continuation after preserving its binding in the guard
-        case.block = shorten_block(std::mem::take(&mut case.block));
+        let block = pl::Block { instrs: std::mem::take(&mut case.block.instrs) };
+        case.block = shorten_block(block);
     }
     pl::InstrKind::Case(instr_case)
 }
@@ -244,7 +245,12 @@ fn shorten_dispatch_instr_kind(
 
 /// Shortens a dispatch block and its nested bodies.
 fn shorten_dispatch_block(block: pl::DispatchBlock) -> pl::DispatchBlock {
-    block.into_iter().map(shorten_dispatch_instr).collect()
+    let instrs = block
+        .instrs
+        .into_iter()
+        .map(shorten_dispatch_instr)
+        .collect();
+    pl::Block { instrs }
 }
 
 // - Holding condition
@@ -335,7 +341,8 @@ fn shorten_group_instr_kind(
 
 /// Shortens a group block and its nested bodies.
 fn shorten_group_block(block: pl::GroupBlock) -> pl::GroupBlock {
-    block.into_iter().map(shorten_group_instr).collect()
+    let instrs = block.instrs.into_iter().map(shorten_group_instr).collect();
+    pl::Block { instrs }
 }
 
 // - Holding condition
@@ -401,7 +408,8 @@ fn shorten_func_def(def_func: pl::MetaFuncDef) -> pl::MetaFuncDef {
     match def_func {
         pl::MetaFuncDef::Table(mut def_func) => {
             for row in &mut def_func.rows {
-                row.block = shorten_group_block(std::mem::take(&mut row.block));
+                let block = pl::Block { instrs: std::mem::take(&mut row.block.instrs) };
+                row.block = shorten_group_block(block);
             }
             pl::MetaFuncDef::Table(def_func)
         }

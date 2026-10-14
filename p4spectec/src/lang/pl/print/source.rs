@@ -698,7 +698,7 @@ fn write_block_with<Tier>(
     level: usize,
     index: usize,
 ) -> fmt::Result {
-    for (offset, instr) in block.iter().enumerate() {
+    for (offset, instr) in block.instrs.iter().enumerate() {
         if offset != 0 {
             output.write_str("\n\n")?;
         }
@@ -808,7 +808,7 @@ impl Print for DefinedRel {
             &self.block_else_opt,
             write_dispatch_instr_with,
             0,
-            self.block.len(),
+            self.block.instrs.len(),
         )
     }
 }
@@ -932,7 +932,7 @@ impl Print for DefinedFunc {
             &self.block_else_opt,
             write_group_instr_with,
             0,
-            self.block.len(),
+            self.block.instrs.len(),
         )
     }
 }

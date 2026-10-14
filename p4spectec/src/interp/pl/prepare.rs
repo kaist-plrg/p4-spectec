@@ -167,6 +167,16 @@ impl Prepare<PrepareContext<'_>> for pl::ParamKind {
     }
 }
 
+// = Blocks
+
+impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::Block<Tier> {
+    type Output = ast::Block<Tier::Output>;
+
+    fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
+        ast::Block { instrs: self.instrs.prepare(ctx) }
+    }
+}
+
 // = Holding conditions
 
 impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::HoldCase<Tier> {

@@ -27,7 +27,7 @@ pub struct RuleGroup<'a> {
 /// Collects the rule groups of a dispatch block in depth-first source order.
 pub fn collect_rule_groups(block: &DispatchBlock) -> Vec<RuleGroup<'_>> {
     let mut rule_groups = Vec::new();
-    for instr in block {
+    for instr in &block.instrs {
         match &instr.node.node {
             InstrKind::If(IfInstr { block, .. })
             | InstrKind::IfLetSub(IfLetSubInstr { block, .. })
