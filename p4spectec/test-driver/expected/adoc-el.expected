@@ -2747,6 +2747,28 @@ tbl def $is_assignable_typeIR =
 
 
 
+tbl dec $is_castable_typeIR(typeIR) : bool
+
+tbl def $is_castable_typeIR =
+  | BOOL => true
+  | INT => true
+  | INT `< _ `> => true
+  | BIT `< _ `> => true
+  | TYPEDEF _ typeIR => $is_castable_typeIR(typeIR)
+  | TYPE _ _ => true
+  | ENUM _ `< _ `> `{ _ `} => true
+  | LIST `< _ `> => true
+  | ARRAY _ `[ _ `] => true
+  | HEADER_STACK _ `[ _ `] => true
+  | STRUCT _ `< _ `> `{ _ `} => true
+  | HEADER _ `< _ `> `{ _ `} => true
+  | HEADER_UNION _ `< _ `> `{ _ `} => true
+  | _ => false
+
+
+
+
+
 tbl dec $is_serializable_typeIR(typeIR) : bool
 
 tbl def $is_serializable_typeIR =
@@ -4806,22 +4828,41 @@ def $bin_eq(w_a S i_a, w_b S i_b) = (w_a = w_b) /\ (i_a = i_b)
 def $bin_eq(w_max_a '.' _ V i_a, w_max_b '.' _ V i_b)
   = (w_max_a = w_max_b) /\ (i_a = i_b)
 
+def $bin_eq(LIST `[ value_a* `], LIST `[ value_b* `]) = false
+  -- if |value_a*| =/= |value_b*|
+
 def $bin_eq(LIST `[ value_a* `], LIST `[ value_b* `])
-  = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
+  = $forall_($bin_eq(value_a, value_b)*)
+  -- if |value_a*| = |value_b*|
 
 def $bin_eq(TUPLE `( value_a* `), TUPLE `( value_b* `))
   = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
 
+def $bin_eq(SEQ `( value_a* `), SEQ `( value_b* `)) = false
+  -- if |value_a*| =/= |value_b*|
+
 def $bin_eq(SEQ `( value_a* `), SEQ `( value_b* `))
-  = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
+  = $forall_($bin_eq(value_a, value_b)*)
+  -- if |value_a*| = |value_b*|
+
+def $bin_eq(ARRAY `[ value_a* `], ARRAY `[ value_b* `]) = false
+  -- if |value_a*| =/= |value_b*|
 
 def $bin_eq(ARRAY `[ value_a* `], ARRAY `[ value_b* `])
-  = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
+  = $forall_($bin_eq(value_a, value_b)*)
+  -- if |value_a*| = |value_b*|
 
 def $bin_eq(
     HEADER_STACK `[ value_a* `( _ `) `],
     HEADER_STACK `[ value_b* `( _ `) `])
-  = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
+  = false
+  -- if |value_a*| =/= |value_b*|
+
+def $bin_eq(
+    HEADER_STACK `[ value_a* `( _ `) `],
+    HEADER_STACK `[ value_b* `( _ `) `])
+  = $forall_($bin_eq(value_a, value_b)*)
+  -- if |value_a*| = |value_b*|
 
 def $bin_eq(
     STRUCT typeId_a `{ fieldValue_a* `},
@@ -5651,7 +5692,7 @@ def $sizeof_minSizeInBits'(HEADER _ `< _ `> `{ (_ typeIR _ ';')* `})
 def $sizeof_minSizeInBits'(HEADER_UNION _ `< _ `> `{ eps `}) = 0
 
 def $sizeof_minSizeInBits'(HEADER_UNION _ `< _ `> `{ (_ typeIR _ ';')* `})
-  = $min_nat($sizeof_minSizeInBits'(typeIR)*)
+  = $max_nat($sizeof_minSizeInBits'(typeIR)*)
   -- if typeIR* =/= eps
 
 def $sizeof(typeIR, "minSizeInBits") = $sizeof_minSizeInBits(typeIR)
@@ -7201,6 +7242,15 @@ def $name_annotation_default(annotationList, nameIR) = nameIR_found
 
 def $name_annotation_default(annotationList, nameIR) = nameIR
   -- if eps = $name_annotation(annotationList)
+
+
+
+
+
+dec $has_at_most_one_name_annotation(annotationList) : bool
+
+def $has_at_most_one_name_annotation(annotationList)
+  = $(|$name_annotation(annotationList)| <= 1)
 
 
 
@@ -10719,6 +10769,12 @@ def $find_callableDef_overloaded_t(BLOCK, TC, _BARE nameIR, argumentIR*)
 def $find_callableDef_overloaded_t(LOCAL, TC, _BARE nameIR, argumentIR*)
   = $find_callableDef_overloaded_t(BLOCK, TC, _BARE nameIR, argumentIR*)
 
+def $find_callableDef_overloaded_t(BLOCK, TC, '.' nameIR, argumentIR*)
+  = $find_callableDef_overloaded_t(GLOBAL, TC, '.' nameIR, argumentIR*)
+
+def $find_callableDef_overloaded_t(LOCAL, TC, '.' nameIR, argumentIR*)
+  = $find_callableDef_overloaded_t(GLOBAL, TC, '.' nameIR, argumentIR*)
+
 dec $find_callableDef_non_overloaded_t(cursor, typingContext, prefixedNameIR)
   : (callableId, callableTypeDefIR)?
 
@@ -13962,6 +14018,7 @@ rule Expr_ok/castExpression:
   -- Expr_ok: p TC |- expression : typedExpressionIR
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
+  -- if $is_castable_typeIR(typeIR_t)
   -- Cast_expl: typeIR -> typeIR_t : OK typeIR_cast*
   -- if expressionIR_cast '#' _ = $apply_cast(typedExpressionIR, typeIR_cast*)
   -- if expressionNoteIR = `( typeIR_t ctk `)
@@ -15924,11 +15981,14 @@ def $compat_range(_, _) = false
 rulegroup ForCollectionExpr_ok/expression {
 
   rule ForCollectionExpr_ok/list:
-    TC typeIR_var |- expression : typedExpressionIR
+    TC typeIR_var |- expression : typedExpressionIR_cast
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR)
     -- if LIST `< typeIR_e `> = $unroll_typeIR(typeIR_expression)
-    -- Cast_impl: typeIR_e -> typeIR_var : OK _
+    -- Cast_impl: typeIR_e -> typeIR_var : OK typeIR_cast*
+    -- (if (typeIR_cast_list = LIST `< typeIR_cast `>))*
+    -- if typedExpressionIR_cast
+        = $apply_cast(typedExpressionIR, typeIR_cast_list*)
 
   rule ForCollectionExpr_ok/array:
     TC typeIR_var |- expression : typedExpressionIR
@@ -16413,6 +16473,7 @@ rule InstDecl_non_objectInitializer_ok:
       |- annotationList prefixedTypeName `< typeArgumentList `>
       `( argumentList `) name ';'
           : TC_1 instantiationIR
+  -- if $has_at_most_one_name_annotation(annotationList)
   -- TypeArgumentList_ok:
       p TC_0 |- typeArgumentList : typeArgumentIR* '#' typeId_impl*
   -- ArgumentList_ok: p TC_0 |- argumentList : argumentIR*
@@ -16461,6 +16522,7 @@ rulegroup ObjectDecl_ok {
     -- InstDecl_ok: p TC_0 |- instantiation : TC_1 instantiationIR
     -- if _ _ _ `( _ `) nameIR _ ';' = instantiationIR
     -- if varTypeIR = $find_var_t(_BARE nameIR, p, TC_1)
+    -- if ~$in_set<id>(nameIR, $dom_map<id, varTypeIR>(typeFrame))
     -- if typeFrame_init
         = $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR)
 
@@ -16590,6 +16652,7 @@ rule InstDecl_objectInitializer_ok:
       |- annotationList prefixedTypeName `< typeArgumentList `>
       `( argumentList `) name '=' `{ objectDeclarationList `} ';'
           : TC_2 instantiationIR
+  -- if $has_at_most_one_name_annotation(annotationList)
   -- TypeArgumentList_ok:
       p TC_0 |- typeArgumentList : typeArgumentIR* '#' typeId_impl*
   -- ArgumentList_ok: p TC_0 |- argumentList : argumentIR*
@@ -16729,6 +16792,7 @@ rule ActionDecl_ok:
   p TC_0
       |- annotationList ACTION name `( parameterList `) blockStatement
           : TC_4 actionDeclarationIR
+  -- if $has_at_most_one_name_annotation(annotationList)
   -- if TC_1 = TC_0[LOCAL.KIND = ACTION]
   -- if TC_2 = TC_1[CONTROL = CONT][LOOP = OUT]
   -- ParameterList_ok: LOCAL TC_2 |- parameterList : TC_3 parameterIR* '#' eps
@@ -18854,6 +18918,8 @@ rulegroup Table_ok {
           <= 1)
     -- if TBLC_0 = $empty_tableContext()
     -- TableProperties_ok: TC TBLC_0 |- tableProperty* : TBLC_1 tablePropertyIR*
+    -- if (_, _ ACTION _ `( eps `))
+        = $find_callableDef_non_overloaded_t(LOCAL, TC, '.' "NoAction")
     -- if tablePropertyIR_default_action
         = _EMPTY eps DEFAULT_ACTION '=' ((_BARE "NoAction") eps `( eps `)) ';'
     -- if (TBLC_2, tablePropertyIR_updated*)
@@ -18949,6 +19015,7 @@ rule ControlLocalDecl_ok/tableDeclaration:
   TC_0
       |- annotationList TABLE name `{ tablePropertyList `}
           : TC_3 tableDeclarationIR
+  -- if $has_at_most_one_name_annotation(annotationList)
   -- if TC_1 = TC_0[LOCAL.KIND = TABLE_APPLY_METHOD]
   -- if tableProperty* = $flatten_tablePropertyList(tablePropertyList)
   -- Table_ok: TC_1 |- tableProperty* : TBLC tablePropertyIR*
@@ -19732,6 +19799,10 @@ rule CallableType_ok/builtinMethodTypeIR-header-stack-push-front:
           : methodTypeIR `< '#' eps `> `( '#' eps '#' eps `)
   -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
   -- if HEADER_STACK typeIR `[ _ `] = $unroll_typeIR(typeIR_base)
+  -- if typedLvalueIR_base
+      = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
+  -- if lvalue_base = $lift_typedLvalueIR(typedLvalueIR_base)
+  -- Lvalue_ok: p TC |- lvalue_base : _
   -- if methodTypeIR = BUILTIN_PUSH_FRONT
 
 rule CallableType_ok/builtinMethodTypeIR-header-stack-pop-front:
@@ -19740,6 +19811,10 @@ rule CallableType_ok/builtinMethodTypeIR-header-stack-pop-front:
           : methodTypeIR `< '#' eps `> `( '#' eps '#' eps `)
   -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
   -- if HEADER_STACK typeIR `[ _ `] = $unroll_typeIR(typeIR_base)
+  -- if typedLvalueIR_base
+      = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
+  -- if lvalue_base = $lift_typedLvalueIR(typedLvalueIR_base)
+  -- Lvalue_ok: p TC |- lvalue_base : _
   -- if methodTypeIR = BUILTIN_POP_FRONT
 
 rulegroup CallableType_ok/builtinMethodTypeIR-header {
@@ -19758,6 +19833,10 @@ rulegroup CallableType_ok/builtinMethodTypeIR-header {
             : methodTypeIR `< '#' eps `> `( '#' eps '#' eps `)
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if HEADER _ `< _ `> `{ _ `} = $unroll_typeIR(typeIR_base)
+    -- if typedLvalueIR_base
+        = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
+    -- if lvalue_base = $lift_typedLvalueIR(typedLvalueIR_base)
+    -- Lvalue_ok: p TC |- lvalue_base : _
     -- if methodTypeIR = BUILTIN_SET_VALID
 
   rule CallableType_ok/setInvalid:
@@ -19766,6 +19845,10 @@ rulegroup CallableType_ok/builtinMethodTypeIR-header {
             : methodTypeIR `< '#' eps `> `( '#' eps '#' eps `)
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if HEADER _ `< _ `> `{ _ `} = $unroll_typeIR(typeIR_base)
+    -- if typedLvalueIR_base
+        = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
+    -- if lvalue_base = $lift_typedLvalueIR(typedLvalueIR_base)
+    -- Lvalue_ok: p TC |- lvalue_base : _
     -- if methodTypeIR = BUILTIN_SET_INVALID
 
 }
@@ -21943,7 +22026,7 @@ rulegroup ObjectDecl_inst {
 
   rule ObjectDecl_inst/instantiationIR:
     IC_0 STO_0 |- instantiationIR : IC_1 STO_1
-    -- InstDecl_inst: GLOBAL IC_0 STO_0 |- instantiationIR : IC_1 STO_1 _
+    -- InstDecl_inst: BLOCK IC_0 STO_0 |- instantiationIR : IC_1 STO_1 _
 
 }
 
@@ -23641,6 +23724,12 @@ def $find_callableDef_overloaded_e(BLOCK, EC, _BARE nameIR, argumentIR*)
 
 def $find_callableDef_overloaded_e(LOCAL, EC, _BARE nameIR, argumentIR*)
   = $find_callableDef_overloaded_e(BLOCK, EC, _BARE nameIR, argumentIR*)
+
+def $find_callableDef_overloaded_e(BLOCK, EC, '.' nameIR, argumentIR*)
+  = $find_callableDef_overloaded_e(GLOBAL, EC, '.' nameIR, argumentIR*)
+
+def $find_callableDef_overloaded_e(LOCAL, EC, '.' nameIR, argumentIR*)
+  = $find_callableDef_overloaded_e(GLOBAL, EC, '.' nameIR, argumentIR*)
 
 
 

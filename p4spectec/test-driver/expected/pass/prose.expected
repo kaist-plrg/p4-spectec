@@ -4241,6 +4241,91 @@ tbl def $is_assignable_typeIR(typeIR'')
 
     1. Return true
 
+tbl def $is_castable_typeIR(typeIR'')
+=
+
+  Row : ((BOOL) as typeIR) -> true:
+
+    1. If let boolTypeIR of type boolTypeIR be typeIR'', then
+
+      1. Return true
+
+  Row : ((INT) as typeIR) -> true:
+
+    1. If let intTypeIR of type intTypeIR be typeIR'', then
+
+      1. Return true
+
+  Row : ((INT `< _nat `>) as typeIR) -> true:
+
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
+
+      1. Return true
+
+  Row : ((BIT `< _nat `>) as typeIR) -> true:
+
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
+
+      1. Return true
+
+  Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $is_castable_typeIR(typeIR):
+
+    1. If let (TYPEDEF _typeId typeIR) of type typedefTypeIR be typeIR'', then
+
+      1. Return $is_castable_typeIR(typeIR)
+
+  Row : ((TYPE _typeId _typeIR) as typeIR) -> true:
+
+    1. If ((typeIR'' has type newTypeIR)), then
+
+      1. Return true
+
+  Row : ((ENUM _typeId `< _typeIR `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) as typeIR) -> true:
+
+    1. If ((typeIR'' has type serializableEnumTypeIR)), then
+
+      1. Return true
+
+  Row : ((LIST `< _typeIR `>) as typeIR) -> true:
+
+    1. If ((typeIR'' has type listTypeIR)), then
+
+      1. Return true
+
+  Row : ((ARRAY _typeIR `[ _nat `]) as typeIR) -> true:
+
+    1. If ((typeIR'' has type arrayTypeIR)), then
+
+      1. Return true
+
+  Row : ((HEADER_STACK _typeIR `[ _nat `]) as typeIR) -> true:
+
+    1. If ((typeIR'' has type headerStackTypeIR)), then
+
+      1. Return true
+
+  Row : ((STRUCT _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ (_fieldTypeIR)*{_fieldTypeIR <- _fieldTypeIR*} `}) as typeIR) -> true:
+
+    1. If ((typeIR'' has type structTypeIR)), then
+
+      1. Return true
+
+  Row : ((HEADER _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ (_fieldTypeIR)*{_fieldTypeIR <- _fieldTypeIR*} `}) as typeIR) -> true:
+
+    1. If ((typeIR'' has type headerTypeIR)), then
+
+      1. Return true
+
+  Row : ((HEADER_UNION _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ (_fieldTypeIR)*{_fieldTypeIR <- _fieldTypeIR*} `}) as typeIR) -> true:
+
+    1. If ((typeIR'' has type headerUnionTypeIR)), then
+
+      1. Return true
+
+  Row : _typeIR -> false:
+
+    1. Return false
+
 tbl def $is_serializable_typeIR(typeIR'')
 =
 
@@ -7720,15 +7805,25 @@ Arm 1:
 
       1. If let (LIST `[ (value_b)*{value_b <- value_b*} `]) of type listValue be value', then
 
-        1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+        1. Block (2 arms)
 
-          1. (Let bool' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool' -> bool'*}
+        Arm 1:
 
-          2. (Let bool be $forall_((bool')*{bool' <- bool'*}))
+          1. If ((|(value_a)*{value_a <- value_a*}| =/= |(value_b)*{value_b <- value_b*}|)), then
 
-          3. Return ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|) /\ bool)
+            1. Return false
 
-        1. Else Dangling
+          1. Else Dangling
+
+        Arm 2:
+
+          1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+
+            1. (Let bool be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool -> bool*}
+
+            2. Return $forall_((bool)*{bool <- bool*})
+
+          1. Else Dangling
 
       1. Else Dangling
 
@@ -7738,11 +7833,11 @@ Arm 1:
 
         1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
 
-          1. (Let bool''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool''' -> bool'''*}
+          1. (Let bool'' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool'' -> bool''*}
 
-          2. (Let bool'' be $forall_((bool''')*{bool''' <- bool'''*}))
+          2. (Let bool' be $forall_((bool'')*{bool'' <- bool''*}))
 
-          3. Return ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|) /\ bool'')
+          3. Return ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|) /\ bool')
 
         1. Else Dangling
 
@@ -7756,15 +7851,25 @@ Arm 1:
 
           1. If let (SEQ `( (value_b)*{value_b <- value_b*} `)) be sequenceValue' matching pattern SEQ `( % `), then
 
-            1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+            1. Block (2 arms)
 
-              1. (Let bool''''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool''''' -> bool'''''*}
+            Arm 1:
 
-              2. (Let bool'''' be $forall_((bool''''')*{bool''''' <- bool'''''*}))
+              1. If ((|(value_a)*{value_a <- value_a*}| =/= |(value_b)*{value_b <- value_b*}|)), then
 
-              3. Return ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|) /\ bool'''')
+                1. Return false
 
-            1. Else Dangling
+              1. Else Dangling
+
+            Arm 2:
+
+              1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+
+                1. (Let bool''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool''' -> bool'''*}
+
+                2. Return $forall_((bool''')*{bool''' <- bool'''*})
+
+              1. Else Dangling
 
           1. Else Dangling
 
@@ -7776,15 +7881,25 @@ Arm 1:
 
       1. If let (ARRAY `[ (value_b)*{value_b <- value_b*} `]) of type arrayValue be value', then
 
-        1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+        1. Block (2 arms)
 
-          1. (Let bool''''''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool''''''' -> bool'''''''*}
+        Arm 1:
 
-          2. (Let bool'''''' be $forall_((bool''''''')*{bool''''''' <- bool'''''''*}))
+          1. If ((|(value_a)*{value_a <- value_a*}| =/= |(value_b)*{value_b <- value_b*}|)), then
 
-          3. Return ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|) /\ bool'''''')
+            1. Return false
 
-        1. Else Dangling
+          1. Else Dangling
+
+        Arm 2:
+
+          1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+
+            1. (Let bool'''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool'''' -> bool''''*}
+
+            2. Return $forall_((bool'''')*{bool'''' <- bool''''*})
+
+          1. Else Dangling
 
       1. Else Dangling
 
@@ -7792,15 +7907,25 @@ Arm 1:
 
       1. If let (HEADER_STACK `[ (value_b)*{value_b <- value_b*} `( _nat' `) `]) of type headerStackValue be value', then
 
-        1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+        1. Block (2 arms)
 
-          1. (Let bool''''''''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool''''''''' -> bool'''''''''*}
+        Arm 1:
 
-          2. (Let bool'''''''' be $forall_((bool''''''''')*{bool''''''''' <- bool'''''''''*}))
+          1. If ((|(value_a)*{value_a <- value_a*}| =/= |(value_b)*{value_b <- value_b*}|)), then
 
-          3. Return ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|) /\ bool'''''''')
+            1. Return false
 
-        1. Else Dangling
+          1. Else Dangling
+
+        Arm 2:
+
+          1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+
+            1. (Let bool''''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool''''' -> bool'''''*}
+
+            2. Return $forall_((bool''''')*{bool''''' <- bool'''''*})
+
+          1. Else Dangling
 
       1. Else Dangling
 
@@ -7816,13 +7941,13 @@ Arm 1:
 
           1. If ((|(nameIR_field_a)*{nameIR_field_a <- nameIR_field_a*}| = |(nameIR_field_b)*{nameIR_field_b <- nameIR_field_b*}|)), then
 
-            1. (Let bool'''''''''''' be $bin_eq(value_field_a, value_field_b))*{value_field_a <- value_field_a*, value_field_b <- value_field_b*, bool'''''''''''' -> bool''''''''''''*}
+            1. (Let bool'''''''' be $bin_eq(value_field_a, value_field_b))*{value_field_a <- value_field_a*, value_field_b <- value_field_b*, bool'''''''' -> bool''''''''*}
 
-            2. (Let bool'''''''''' be $forall_((bool'''''''''''')*{bool'''''''''''' <- bool''''''''''''*}))
+            2. (Let bool'''''' be $forall_((bool'''''''')*{bool'''''''' <- bool''''''''*}))
 
-            3. (Let bool''''''''''' be $forall_(((nameIR_field_a = nameIR_field_b))*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+            3. (Let bool''''''' be $forall_(((nameIR_field_a = nameIR_field_b))*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
 
-            4. Return ((((typeId_a = typeId_b) /\ (|(fieldValue_a)*{fieldValue_a <- fieldValue_a*}| = |(fieldValue_b)*{fieldValue_b <- fieldValue_b*}|)) /\ bool'''''''''') /\ bool''''''''''')
+            4. Return ((((typeId_a = typeId_b) /\ (|(fieldValue_a)*{fieldValue_a <- fieldValue_a*}| = |(fieldValue_b)*{fieldValue_b <- fieldValue_b*}|)) /\ bool'''''') /\ bool''''''')
 
           1. Else Dangling
 
@@ -7842,13 +7967,13 @@ Arm 1:
 
           1. If ((|(nameIR_field_a)*{nameIR_field_a <- nameIR_field_a*}| = |(nameIR_field_b)*{nameIR_field_b <- nameIR_field_b*}|)), then
 
-            1. (Let bool''''''''''''''' be $bin_eq(value_field_a, value_field_b))*{value_field_a <- value_field_a*, value_field_b <- value_field_b*, bool''''''''''''''' -> bool'''''''''''''''*}
+            1. (Let bool''''''''''' be $bin_eq(value_field_a, value_field_b))*{value_field_a <- value_field_a*, value_field_b <- value_field_b*, bool''''''''''' -> bool'''''''''''*}
 
-            2. (Let bool''''''''''''' be $forall_((bool''''''''''''''')*{bool''''''''''''''' <- bool'''''''''''''''*}))
+            2. (Let bool''''''''' be $forall_((bool''''''''''')*{bool''''''''''' <- bool'''''''''''*}))
 
-            3. (Let bool'''''''''''''' be $forall_(((nameIR_field_a = nameIR_field_b))*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+            3. (Let bool'''''''''' be $forall_(((nameIR_field_a = nameIR_field_b))*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
 
-            4. Return ((((typeId_a = typeId_b) /\ (|(fieldValue_a)*{fieldValue_a <- fieldValue_a*}| = |(fieldValue_b)*{fieldValue_b <- fieldValue_b*}|)) /\ bool''''''''''''') /\ bool'''''''''''''')
+            4. Return ((((typeId_a = typeId_b) /\ (|(fieldValue_a)*{fieldValue_a <- fieldValue_a*}| = |(fieldValue_b)*{fieldValue_b <- fieldValue_b*}|)) /\ bool''''''''') /\ bool'''''''''')
 
           1. Else Dangling
 
@@ -7868,13 +7993,13 @@ Arm 1:
 
           1. If ((|(nameIR_field_a)*{nameIR_field_a <- nameIR_field_a*}| = |(nameIR_field_b)*{nameIR_field_b <- nameIR_field_b*}|)), then
 
-            1. (Let bool'''''''''''''''''' be $bin_eq(value_field_a, value_field_b))*{value_field_a <- value_field_a*, value_field_b <- value_field_b*, bool'''''''''''''''''' -> bool''''''''''''''''''*}
+            1. (Let bool'''''''''''''' be $bin_eq(value_field_a, value_field_b))*{value_field_a <- value_field_a*, value_field_b <- value_field_b*, bool'''''''''''''' -> bool''''''''''''''*}
 
-            2. (Let bool'''''''''''''''' be $forall_((bool'''''''''''''''''')*{bool'''''''''''''''''' <- bool''''''''''''''''''*}))
+            2. (Let bool'''''''''''' be $forall_((bool'''''''''''''')*{bool'''''''''''''' <- bool''''''''''''''*}))
 
-            3. (Let bool''''''''''''''''' be $forall_(((nameIR_field_a = nameIR_field_b))*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+            3. (Let bool''''''''''''' be $forall_(((nameIR_field_a = nameIR_field_b))*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
 
-            4. Return ((((typeId_a = typeId_b) /\ (|(fieldValue_a)*{fieldValue_a <- fieldValue_a*}| = |(fieldValue_b)*{fieldValue_b <- fieldValue_b*}|)) /\ bool'''''''''''''''') /\ bool''''''''''''''''')
+            4. Return ((((typeId_a = typeId_b) /\ (|(fieldValue_a)*{fieldValue_a <- fieldValue_a*}| = |(fieldValue_b)*{fieldValue_b <- fieldValue_b*}|)) /\ bool'''''''''''') /\ bool''''''''''''')
 
           1. Else Dangling
 
@@ -7904,9 +8029,9 @@ Arm 1:
 
             1. If let (typeId_b '.' _nameIR' '.' value_field_b) be enumValue' matching pattern % '.' % '.' %, then
 
-              1. (Let bool''''''''''''''''''' be $bin_eq(value_field_a, value_field_b))
+              1. (Let bool''''''''''''''' be $bin_eq(value_field_a, value_field_b))
 
-              2. Return ((typeId_a = typeId_b) /\ bool''''''''''''''''''')
+              2. Return ((typeId_a = typeId_b) /\ bool''''''''''''''')
 
             1. Else Dangling
 
@@ -9504,7 +9629,7 @@ def $sizeof_minSizeInBits'(typeIR')
 
         1. (Let nat''''' be $sizeof_minSizeInBits'(typeIR))*{typeIR <- typeIR*, nat''''' -> nat'''''*}
 
-        2. Return $min_nat((nat''''')*{nat''''' <- nat'''''*})
+        2. Return $max_nat((nat''''')*{nat''''' <- nat'''''*})
 
 1. Else Dangling
 
@@ -10949,6 +11074,12 @@ Arm 2:
   1. Check (($name_annotation(annotationList) matches pattern []))
 
     1. Return nameIR
+
+def $has_at_most_one_name_annotation(annotationList)
+
+1. (Let (nameIR)*{nameIR <- nameIR*} be $name_annotation(annotationList))
+
+2. Return (|(nameIR)*{nameIR <- nameIR*}| <= 1)
 
 def $find_name_annotation_opt(annotationList)
 
@@ -15131,41 +15262,49 @@ def $find_callableDef_overloaded_t(p, TC, prefixedNameIR, (argumentIR)*{argument
 
   2. Case (% matches pattern BLOCK)
 
-    1. Check ((prefixedNameIR matches pattern _BARE %))
+    1. Case analysis on prefixedNameIR (total)
 
-      1. (Let (_BARE nameIR) be prefixedNameIR)
+      1. Case (% matches pattern _BARE %, let (_BARE nameIR) = %)
 
-      2. (Let callableTypeDefEnv be TC.BLOCK.CALLABLE)
+        1. (Let callableTypeDefEnv be TC.BLOCK.CALLABLE)
 
-      3. (Let callTargetKey be $callTargetKey(nameIR, (argumentIR)*{argumentIR <- argumentIR*}))
+        2. (Let callTargetKey be $callTargetKey(nameIR, (argumentIR)*{argumentIR <- argumentIR*}))
 
-      4. Block (2 arms)
+        3. Block (2 arms)
 
-      Arm 1:
+        Arm 1:
 
-        1. (Let (callResolution<callableTypeDefIR>)?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} be $find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, $parameterListIR_of_callableTypeDefIR))
+          1. (Let (callResolution<callableTypeDefIR>)?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} be $find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, $parameterListIR_of_callableTypeDefIR))
 
-        2. If (((callResolution<callableTypeDefIR>)?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} matches pattern (_))), then
+          2. If (((callResolution<callableTypeDefIR>)?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} matches pattern (_))), then
 
-          1. (Let ?((callableId ':' callableTypeDefIR '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*})) be (callResolution<callableTypeDefIR>)?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?})
+            1. (Let ?((callableId ':' callableTypeDefIR '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*})) be (callResolution<callableTypeDefIR>)?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?})
 
-          2. Return ?((callableId ':' callableTypeDefIR '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*}))
+            2. Return ?((callableId ':' callableTypeDefIR '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*}))
 
-        2. Else Dangling
+          2. Else Dangling
 
-      Arm 2:
+        Arm 2:
 
-        1. Check (($find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, $parameterListIR_of_callableTypeDefIR) matches pattern ()))
+          1. Check (($find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, $parameterListIR_of_callableTypeDefIR) matches pattern ()))
 
-          1. Return $find_callableDef_overloaded_t((GLOBAL), TC, (_BARE nameIR), (argumentIR)*{argumentIR <- argumentIR*})
+            1. Return $find_callableDef_overloaded_t((GLOBAL), TC, (_BARE nameIR), (argumentIR)*{argumentIR <- argumentIR*})
+
+      2. Case (% matches pattern '.' %, let ('.' nameIR) = %)
+
+        1. Return $find_callableDef_overloaded_t((GLOBAL), TC, ('.' nameIR), (argumentIR)*{argumentIR <- argumentIR*})
 
   3. Case (% matches pattern LOCAL)
 
-    1. Check ((prefixedNameIR matches pattern _BARE %))
+    1. Case analysis on prefixedNameIR (total)
 
-      1. (Let (_BARE nameIR) be prefixedNameIR)
+      1. Case (% matches pattern _BARE %, let (_BARE nameIR) = %)
 
-      2. Return $find_callableDef_overloaded_t((BLOCK), TC, (_BARE nameIR), (argumentIR)*{argumentIR <- argumentIR*})
+        1. Return $find_callableDef_overloaded_t((BLOCK), TC, (_BARE nameIR), (argumentIR)*{argumentIR <- argumentIR*})
+
+      2. Case (% matches pattern '.' %, let ('.' nameIR) = %)
+
+        1. Return $find_callableDef_overloaded_t((GLOBAL), TC, ('.' nameIR), (argumentIR)*{argumentIR <- argumentIR*})
 
 def $find_callableDef_non_overloaded_t(p, TC, prefixedNameIR)
 
@@ -20547,17 +20686,19 @@ Arm 3:
 
             3. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR))
 
-            4. (Cast_expl: typeIR -> typeIR_t : castResult)
+            4. Check ($is_castable_typeIR(typeIR_t))
 
-            5. Check ((castResult matches pattern OK %))
+              1. (Cast_expl: typeIR -> typeIR_t : castResult)
 
-              1. (Let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult)
+              2. Check ((castResult matches pattern OK %))
 
-              2. (Destruct (expressionIR_cast, _expressionNoteIR) = $apply_cast(typedExpressionIR, (typeIR_cast)*{typeIR_cast <- typeIR_cast*}))
+                1. (Let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult)
 
-              3. (Let expressionNoteIR be (`( typeIR_t ctk `)))
+                2. (Destruct (expressionIR_cast, _expressionNoteIR) = $apply_cast(typedExpressionIR, (typeIR_cast)*{typeIR_cast <- typeIR_cast*}))
 
-              4. Result in: % % |- % : (expressionIR_cast '#' expressionNoteIR)
+                3. (Let expressionNoteIR be (`( typeIR_t ctk `)))
+
+                4. Result in: % % |- % : (expressionIR_cast '#' expressionNoteIR)
 
           2. Else Dangling
 
@@ -23661,11 +23802,23 @@ relation Table_ok: TC |- (tableProperty)*{tableProperty <- tableProperty*} : % %
 
             2. (TableProperties_ok: TC TBLC_0 |- (tableProperty)*{tableProperty <- tableProperty*} : TBLC_1 (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*})
 
-            3. (Let tablePropertyIR_default_action be (((_EMPTY) ?() DEFAULT_ACTION '=' ((_BARE "NoAction") ?() `( [] `)) ';') as tablePropertyIR))
+            3. (Let ((callableId, callableTypeDefIR))?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?} be $find_callableDef_non_overloaded_t((LOCAL), TC, ('.' "NoAction")))
 
-            4. (Let (TBLC_2, (tablePropertyIR_updated)*{tablePropertyIR_updated <- tablePropertyIR_updated*}) be $insert_NoAction_tablePropertyIR(TBLC_1, (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*}))
+            4. Check ((((callableId, callableTypeDefIR))?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?} matches pattern (_)))
 
-            5. Result in: % |- % : TBLC_2 (tablePropertyIR_updated)*{tablePropertyIR_updated <- tablePropertyIR_updated*} ++ [tablePropertyIR_default_action]
+              1. (Let ?((_callableId, callableTypeDefIR)) be ((callableId, callableTypeDefIR))?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?})
+
+              2. Check ((callableTypeDefIR has type actionTypeIR))
+
+                1. (Let (_annotationList ACTION _nameIR `( (parameterIR)*{parameterIR <- parameterIR*} `)) be (callableTypeDefIR as actionTypeIR))
+
+                2. Check (((parameterIR)*{parameterIR <- parameterIR*} matches pattern []))
+
+                  1. (Let tablePropertyIR_default_action be (((_EMPTY) ?() DEFAULT_ACTION '=' ((_BARE "NoAction") ?() `( [] `)) ';') as tablePropertyIR))
+
+                  2. (Let (TBLC_2, (tablePropertyIR_updated)*{tablePropertyIR_updated <- tablePropertyIR_updated*}) be $insert_NoAction_tablePropertyIR(TBLC_1, (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*}))
+
+                  3. Result in: % |- % : TBLC_2 (tablePropertyIR_updated)*{tablePropertyIR_updated <- tablePropertyIR_updated*} ++ [tablePropertyIR_default_action]
 
         2. Case (% = 1)
 
@@ -23747,23 +23900,25 @@ relation ControlLocalDecl_ok: TC_0 |- controlLocalDeclaration : % %
 
     1. Group tableDeclaration: TC_0 |- ((annotationList TABLE name `{ tablePropertyList `}) as controlLocalDeclaration) : % %
 
-      1. (Let TC_1 be TC_0[LOCAL.KIND = ((TABLE_APPLY_METHOD) as localKind)])
+      1. Check ($has_at_most_one_name_annotation(annotationList))
 
-      2. (Let (tableProperty)*{tableProperty <- tableProperty*} be $flatten_tablePropertyList(tablePropertyList))
+        1. (Let TC_1 be TC_0[LOCAL.KIND = ((TABLE_APPLY_METHOD) as localKind)])
 
-      3. (Table_ok: TC_1 |- (tableProperty)*{tableProperty <- tableProperty*} : TBLC (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*})
+        2. (Let (tableProperty)*{tableProperty <- tableProperty*} be $flatten_tablePropertyList(tablePropertyList))
 
-      4. (Let nameIR be $name(name))
+        3. (Table_ok: TC_1 |- (tableProperty)*{tableProperty <- tableProperty*} : TBLC (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*})
 
-      5. (TableType_ok: TC_1 TBLC |- name : TC_2 typeIR_table)
+        4. (Let nameIR be $name(name))
 
-      6. (Let varTypeIR be ((_EMPTY) typeIR_table (DYN) ?()))
+        5. (TableType_ok: TC_1 TBLC |- name : TC_2 typeIR_table)
 
-      7. (Let TC_3 be $add_var_t((BLOCK), TC_2, nameIR, varTypeIR))
+        6. (Let varTypeIR be ((_EMPTY) typeIR_table (DYN) ?()))
 
-      8. (Let tableDeclarationIR be (annotationList TABLE typeIR_table nameIR `{ (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*} `}))
+        7. (Let TC_3 be $add_var_t((BLOCK), TC_2, nameIR, varTypeIR))
 
-      9. Result in: % |- % : TC_3 (tableDeclarationIR as controlLocalDeclarationIR)
+        8. (Let tableDeclarationIR be (annotationList TABLE typeIR_table nameIR `{ (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*} `}))
+
+        9. Result in: % |- % : TC_3 (tableDeclarationIR as controlLocalDeclarationIR)
 
 relation ControlLocalDeclList_ok: TC_0 |- controlLocalDeclarationList : % %
 
@@ -23951,33 +24106,35 @@ relation ActionDecl_ok: p TC_0 |- (annotationList ACTION name `( parameterList `
 
 1. Group : p TC_0 |- (annotationList ACTION name `( parameterList `) blockStatement) : % %
 
-  1. (Let TC_1 be TC_0[LOCAL.KIND = ((ACTION) as localKind)])
+  1. Check ($has_at_most_one_name_annotation(annotationList))
 
-  2. (Let TC_2 be TC_1[CONTROL = (CONT)][LOOP = (OUT)])
+    1. (Let TC_1 be TC_0[LOCAL.KIND = ((ACTION) as localKind)])
 
-  3. (ParameterList_ok: (LOCAL) TC_2 |- parameterList : TC_3 (parameterIR)*{parameterIR <- parameterIR*} '#' (typeId)*{typeId <- typeId*})
+    2. (Let TC_2 be TC_1[CONTROL = (CONT)][LOOP = (OUT)])
 
-  4. Check (((typeId)*{typeId <- typeId*} matches pattern []))
+    3. (ParameterList_ok: (LOCAL) TC_2 |- parameterList : TC_3 (parameterIR)*{parameterIR <- parameterIR*} '#' (typeId)*{typeId <- typeId*})
 
-    1. (Block_ok: TC_3 |- blockStatement : _TC blockStatementIR)
+    4. Check (((typeId)*{typeId <- typeId*} matches pattern []))
 
-    2. (Let callableId be $callableId(name, parameterList))
+      1. (Block_ok: TC_3 |- blockStatement : _TC blockStatementIR)
 
-    3. (Let nameIR be $name(name))
+      2. (Let callableId be $callableId(name, parameterList))
 
-    4. (Let actionTypeDefIR be (annotationList ACTION nameIR `( (parameterIR)*{parameterIR <- parameterIR*} `)))
+      3. (Let nameIR be $name(name))
 
-    5. (Let bound be $bound(p, TC_0))
+      4. (Let actionTypeDefIR be (annotationList ACTION nameIR `( (parameterIR)*{parameterIR <- parameterIR*} `)))
 
-    6. If (CallableTypeDef_wf: bound |- (actionTypeDefIR as callableTypeDefIR)) holds, then
+      5. (Let bound be $bound(p, TC_0))
 
-      1. (Let TC_4 be $add_callableDef_non_overload_t(p, TC_0, callableId, (actionTypeDefIR as callableTypeDefIR)))
+      6. If (CallableTypeDef_wf: bound |- (actionTypeDefIR as callableTypeDefIR)) holds, then
 
-      2. (Let actionDeclarationIR be (annotationList ACTION nameIR `( (parameterIR)*{parameterIR <- parameterIR*} `) blockStatementIR))
+        1. (Let TC_4 be $add_callableDef_non_overload_t(p, TC_0, callableId, (actionTypeDefIR as callableTypeDefIR)))
 
-      3. Result in: % % |- % : TC_4 actionDeclarationIR
+        2. (Let actionDeclarationIR be (annotationList ACTION nameIR `( (parameterIR)*{parameterIR <- parameterIR*} `) blockStatementIR))
 
-    6. Else Dangling
+        3. Result in: % % |- % : TC_4 actionDeclarationIR
+
+      6. Else Dangling
 
 relation Decl_ok: TC_0 |- declaration : % %
 
@@ -25001,9 +25158,21 @@ relation CallableType_ok: p TC |- callableTargetIR' `< (typeArgumentIR)*{typeArg
 
                   3. If ((typeIR has type headerTypeIR)), then
 
-                    1. (Let methodTypeIR be ((BUILTIN_SET_VALID) as methodTypeIR))
+                    1. (Let (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
 
-                    2. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
+                    2. If (((typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} matches pattern (_))), then
+
+                      1. (Let ?(typedLvalueIR_base) be (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?})
+
+                      2. (Let lvalue_base be $lift_typedLvalueIR(typedLvalueIR_base))
+
+                      3. (Lvalue_ok: p TC |- lvalue_base : _typedLvalueIR)
+
+                      4. (Let methodTypeIR be ((BUILTIN_SET_VALID) as methodTypeIR))
+
+                      5. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
+
+                    2. Else Dangling
 
                   3. Else Dangling
 
@@ -25015,9 +25184,21 @@ relation CallableType_ok: p TC |- callableTargetIR' `< (typeArgumentIR)*{typeArg
 
                   3. If ((typeIR has type headerTypeIR)), then
 
-                    1. (Let methodTypeIR be ((BUILTIN_SET_INVALID) as methodTypeIR))
+                    1. (Let (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
 
-                    2. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
+                    2. If (((typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} matches pattern (_))), then
+
+                      1. (Let ?(typedLvalueIR_base) be (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?})
+
+                      2. (Let lvalue_base be $lift_typedLvalueIR(typedLvalueIR_base))
+
+                      3. (Lvalue_ok: p TC |- lvalue_base : _typedLvalueIR)
+
+                      4. (Let methodTypeIR be ((BUILTIN_SET_INVALID) as methodTypeIR))
+
+                      5. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
+
+                    2. Else Dangling
 
                   3. Else Dangling
 
@@ -25047,9 +25228,21 @@ relation CallableType_ok: p TC |- callableTargetIR' `< (typeArgumentIR)*{typeArg
 
                 3. If ((typeIR has type headerStackTypeIR)), then
 
-                  1. (Let methodTypeIR be ((BUILTIN_PUSH_FRONT) as methodTypeIR))
+                  1. (Let (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
 
-                  2. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
+                  2. If (((typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} matches pattern (_))), then
+
+                    1. (Let ?(typedLvalueIR_base) be (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?})
+
+                    2. (Let lvalue_base be $lift_typedLvalueIR(typedLvalueIR_base))
+
+                    3. (Lvalue_ok: p TC |- lvalue_base : _typedLvalueIR)
+
+                    4. (Let methodTypeIR be ((BUILTIN_PUSH_FRONT) as methodTypeIR))
+
+                    5. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
+
+                  2. Else Dangling
 
                 3. Else Dangling
 
@@ -25073,9 +25266,21 @@ relation CallableType_ok: p TC |- callableTargetIR' `< (typeArgumentIR)*{typeArg
 
                 3. If ((typeIR has type headerStackTypeIR)), then
 
-                  1. (Let methodTypeIR be ((BUILTIN_POP_FRONT) as methodTypeIR))
+                  1. (Let (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
 
-                  2. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
+                  2. If (((typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} matches pattern (_))), then
+
+                    1. (Let ?(typedLvalueIR_base) be (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?})
+
+                    2. (Let lvalue_base be $lift_typedLvalueIR(typedLvalueIR_base))
+
+                    3. (Lvalue_ok: p TC |- lvalue_base : _typedLvalueIR)
+
+                    4. (Let methodTypeIR be ((BUILTIN_POP_FRONT) as methodTypeIR))
+
+                    5. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
+
+                  2. Else Dangling
 
                 3. Else Dangling
 
@@ -26703,7 +26908,13 @@ relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
           2. Check ((castResult matches pattern OK %))
 
-            1. Result in: % % |- % : (typedExpressionIR as forCollectionExpressionIR)
+            1. (Let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult)
+
+            2. (Let typeIR_cast_list be ((LIST `< typeIR_cast `>) as typeIR))*{typeIR_cast <- typeIR_cast*, typeIR_cast_list -> typeIR_cast_list*}
+
+            3. (Let typedExpressionIR_cast be $apply_cast(typedExpressionIR, (typeIR_cast_list)*{typeIR_cast_list <- typeIR_cast_list*}))
+
+            4. Result in: % % |- % : (typedExpressionIR_cast as forCollectionExpressionIR)
 
         2. Case (% has type arrayTypeIR, let (ARRAY typeIR_e `[ _nat `]) = %)
 
@@ -27076,33 +27287,35 @@ relation InstDecl_non_objectInitializer_ok: p TC_0 |- annotationList prefixedTyp
 
 1. Group : p TC_0 |- annotationList prefixedTypeName `< typeArgumentList `> `( argumentList `) name ';' : % %
 
-  1. (TypeArgumentList_ok: p TC_0 |- typeArgumentList : (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} '#' (typeId_impl)*{typeId_impl <- typeId_impl*})
+  1. Check ($has_at_most_one_name_annotation(annotationList))
 
-  2. (ArgumentList_ok: p TC_0 |- argumentList : (argumentIR)*{argumentIR <- argumentIR*})
+    1. (TypeArgumentList_ok: p TC_0 |- typeArgumentList : (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} '#' (typeId_impl)*{typeId_impl <- typeId_impl*})
 
-  3. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
+    2. (ArgumentList_ok: p TC_0 |- argumentList : (argumentIR)*{argumentIR <- argumentIR*})
 
-  4. (Let constructorTargetIR be (prefixedNameIR `< (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} `>))
+    3. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
 
-  5. (ConstructorType_ok: p TC_0 |- constructorTargetIR `( (argumentIR)*{argumentIR <- argumentIR*} `) : constructorTypeIR `< '#' (typeId_inserted)*{typeId_inserted <- typeId_inserted*} `> `( '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `))
+    4. (Let constructorTargetIR be (prefixedNameIR `< (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} `>))
 
-  6. (Let (typeArgumentIR_infer)*{typeArgumentIR_infer <- typeArgumentIR_infer*} be (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} ++ (((_NAME typeId_inserted) as typeIR))*{typeId_inserted <- typeId_inserted*})
+    5. (ConstructorType_ok: p TC_0 |- constructorTargetIR `( (argumentIR)*{argumentIR <- argumentIR*} `) : constructorTypeIR `< '#' (typeId_inserted)*{typeId_inserted <- typeId_inserted*} `> `( '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `))
 
-  7. (Let (typeId_infer)*{typeId_infer <- typeId_infer*} be (typeId_impl)*{typeId_impl <- typeId_impl*} ++ (typeId_inserted)*{typeId_inserted <- typeId_inserted*})
+    6. (Let (typeArgumentIR_infer)*{typeArgumentIR_infer <- typeArgumentIR_infer*} be (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} ++ (((_NAME typeId_inserted) as typeIR))*{typeId_inserted <- typeId_inserted*})
 
-  8. (Inst_ok: p TC_0 (NAMED) |- constructorTypeIR `< (typeArgumentIR_infer)*{typeArgumentIR_infer <- typeArgumentIR_infer*} '#' (typeId_infer)*{typeId_infer <- typeId_infer*} `> `( (argumentIR)*{argumentIR <- argumentIR*} '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `) : typeIR_object `< (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( (argumentIR_cast)*{argumentIR_cast <- argumentIR_cast*} `))
+    7. (Let (typeId_infer)*{typeId_infer <- typeId_infer*} be (typeId_impl)*{typeId_impl <- typeId_impl*} ++ (typeId_inserted)*{typeId_inserted <- typeId_inserted*})
 
-  9. Check ($is_concrete_extern_object(typeIR_object))
+    8. (Inst_ok: p TC_0 (NAMED) |- constructorTypeIR `< (typeArgumentIR_infer)*{typeArgumentIR_infer <- typeArgumentIR_infer*} '#' (typeId_infer)*{typeId_infer <- typeId_infer*} `> `( (argumentIR)*{argumentIR <- argumentIR*} '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `) : typeIR_object `< (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( (argumentIR_cast)*{argumentIR_cast <- argumentIR_cast*} `))
 
-    1. (Let nameIR be $name(name))
+    9. Check ($is_concrete_extern_object(typeIR_object))
 
-    2. (Let TC_1 be $add_var_t(p, TC_0, nameIR, ((_EMPTY) typeIR_object (CTK) ?())))
+      1. (Let nameIR be $name(name))
 
-    3. (Let constructorTargetIR_inferred be (prefixedNameIR `< (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `>))
+      2. (Let TC_1 be $add_var_t(p, TC_0, nameIR, ((_EMPTY) typeIR_object (CTK) ?())))
 
-    4. (Let instantiationIR be (annotationList typeIR_object constructorTargetIR_inferred `( (argumentIR_cast)*{argumentIR_cast <- argumentIR_cast*} `) nameIR ?() ';'))
+      3. (Let constructorTargetIR_inferred be (prefixedNameIR `< (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `>))
 
-    5. Result in: % % |- % % `< % `> `( % `) % ';' : TC_1 instantiationIR
+      4. (Let instantiationIR be (annotationList typeIR_object constructorTargetIR_inferred `( (argumentIR_cast)*{argumentIR_cast <- argumentIR_cast*} `) nameIR ?() ';'))
+
+      5. Result in: % % |- % % `< % `> `( % `) % ';' : TC_1 instantiationIR
 
 relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclaration : % % %
 
@@ -27122,9 +27335,11 @@ relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclara
 
         1. (Let ?(varTypeIR) be (varTypeIR')?{varTypeIR' <- varTypeIR'?})
 
-        2. (Let typeFrame_init be $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR))
+        2. Check (~$in_set<id>(nameIR, $dom_map<id, varTypeIR>(typeFrame)))
 
-        3. Result in: % % % % |- % : typeFrame_init externMethodTypeDefEnv (instantiationIR as objectDeclarationIR)
+          1. (Let typeFrame_init be $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR))
+
+          2. Result in: % % % % |- % : typeFrame_init externMethodTypeDefEnv (instantiationIR as objectDeclarationIR)
 
     2. Case (% has type functionDeclaration, let (annotationList (typeOrVoid name typeParameterListOpt `( parameterList `)) blockStatement) = %)
 
@@ -27242,47 +27457,49 @@ relation InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeNam
 
 1. Group : p TC_0 |- annotationList prefixedTypeName `< typeArgumentList `> `( argumentList `) name '=' `{ objectDeclarationList `} ';' : % %
 
-  1. (TypeArgumentList_ok: p TC_0 |- typeArgumentList : (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} '#' (typeId_impl)*{typeId_impl <- typeId_impl*})
+  1. Check ($has_at_most_one_name_annotation(annotationList))
 
-  2. (ArgumentList_ok: p TC_0 |- argumentList : (argumentIR)*{argumentIR <- argumentIR*})
+    1. (TypeArgumentList_ok: p TC_0 |- typeArgumentList : (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} '#' (typeId_impl)*{typeId_impl <- typeId_impl*})
 
-  3. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
+    2. (ArgumentList_ok: p TC_0 |- argumentList : (argumentIR)*{argumentIR <- argumentIR*})
 
-  4. (Let constructorTargetIR be (prefixedNameIR `< (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} `>))
+    3. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
 
-  5. (ConstructorType_ok: p TC_0 |- constructorTargetIR `( (argumentIR)*{argumentIR <- argumentIR*} `) : constructorTypeIR `< '#' (typeId_inserted)*{typeId_inserted <- typeId_inserted*} `> `( '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `))
+    4. (Let constructorTargetIR be (prefixedNameIR `< (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} `>))
 
-  6. (Let (typeArgumentIR_infer)*{typeArgumentIR_infer <- typeArgumentIR_infer*} be (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} ++ (((_NAME typeId_inserted) as typeIR))*{typeId_inserted <- typeId_inserted*})
+    5. (ConstructorType_ok: p TC_0 |- constructorTargetIR `( (argumentIR)*{argumentIR <- argumentIR*} `) : constructorTypeIR `< '#' (typeId_inserted)*{typeId_inserted <- typeId_inserted*} `> `( '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `))
 
-  7. (Let (typeId_infer)*{typeId_infer <- typeId_infer*} be (typeId_impl)*{typeId_impl <- typeId_impl*} ++ (typeId_inserted)*{typeId_inserted <- typeId_inserted*})
+    6. (Let (typeArgumentIR_infer)*{typeArgumentIR_infer <- typeArgumentIR_infer*} be (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} ++ (((_NAME typeId_inserted) as typeIR))*{typeId_inserted <- typeId_inserted*})
 
-  8. (Inst_ok: p TC_0 (NAMED) |- constructorTypeIR `< (typeArgumentIR_infer)*{typeArgumentIR_infer <- typeArgumentIR_infer*} '#' (typeId_infer)*{typeId_infer <- typeId_infer*} `> `( (argumentIR)*{argumentIR <- argumentIR*} '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `) : typeIR_object `< (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( (argumentIR_cast)*{argumentIR_cast <- argumentIR_cast*} `))
+    7. (Let (typeId_infer)*{typeId_infer <- typeId_infer*} be (typeId_impl)*{typeId_impl <- typeId_impl*} ++ (typeId_inserted)*{typeId_inserted <- typeId_inserted*})
 
-  9. (Let typeIR be $unroll_typeIR(typeIR_object))
+    8. (Inst_ok: p TC_0 (NAMED) |- constructorTypeIR `< (typeArgumentIR_infer)*{typeArgumentIR_infer <- typeArgumentIR_infer*} '#' (typeId_infer)*{typeId_infer <- typeId_infer*} `> `( (argumentIR)*{argumentIR <- argumentIR*} '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `) : typeIR_object `< (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( (argumentIR_cast)*{argumentIR_cast <- argumentIR_cast*} `))
 
-  10. Check ((typeIR has type externObjectTypeIR))
+    9. (Let typeIR be $unroll_typeIR(typeIR_object))
 
-    1. (Let (EXTERN typeId_extern `< (typeIR_arg)*{typeIR_arg <- typeIR_arg*} `> externMethodTypeDefEnv_extern) be (typeIR as externObjectTypeIR))
+    10. Check ((typeIR has type externObjectTypeIR))
 
-    2. (Let TC_1 be $add_var_t((LOCAL), TC_0, "this", ((_EMPTY) typeIR_object (CTK) ?())))
+      1. (Let (EXTERN typeId_extern `< (typeIR_arg)*{typeIR_arg <- typeIR_arg*} `> externMethodTypeDefEnv_extern) be (typeIR as externObjectTypeIR))
 
-    3. (ObjectDeclList_ok: p TC_1 |- objectDeclarationList : typeFrame_init externMethodTypeDefEnv_init (objectDeclarationIR)*{objectDeclarationIR <- objectDeclarationIR*})
+      2. (Let TC_1 be $add_var_t((LOCAL), TC_0, "this", ((_EMPTY) typeIR_object (CTK) ?())))
 
-    4. (Let externMethodTypeDefEnv_init_subst be $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init))
+      3. (ObjectDeclList_ok: p TC_1 |- objectDeclarationList : typeFrame_init externMethodTypeDefEnv_init (objectDeclarationIR)*{objectDeclarationIR <- objectDeclarationIR*})
 
-    5. (Let typeIR_object_init be ((EXTERN typeId_extern `< (typeIR_arg)*{typeIR_arg <- typeIR_arg*} `> externMethodTypeDefEnv_init_subst) as typeIR))
+      4. (Let externMethodTypeDefEnv_init_subst be $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init))
 
-    6. Check ($is_concrete_extern_object(typeIR_object_init))
+      5. (Let typeIR_object_init be ((EXTERN typeId_extern `< (typeIR_arg)*{typeIR_arg <- typeIR_arg*} `> externMethodTypeDefEnv_init_subst) as typeIR))
 
-      1. (Let nameIR be $name(name))
+      6. Check ($is_concrete_extern_object(typeIR_object_init))
 
-      2. (Let TC_2 be $add_var_t(p, TC_0, nameIR, ((_EMPTY) typeIR_object_init (CTK) ?())))
+        1. (Let nameIR be $name(name))
 
-      3. (Let constructorTargetIR_inferred be (prefixedNameIR `< (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `>))
+        2. (Let TC_2 be $add_var_t(p, TC_0, nameIR, ((_EMPTY) typeIR_object_init (CTK) ?())))
 
-      4. (Let instantiationIR be (annotationList typeIR_object_init constructorTargetIR_inferred `( (argumentIR_cast)*{argumentIR_cast <- argumentIR_cast*} `) nameIR ?(('=' `{ (objectDeclarationIR)*{objectDeclarationIR <- objectDeclarationIR*} `})) ';'))
+        3. (Let constructorTargetIR_inferred be (prefixedNameIR `< (typeArgumentIR_inferred)*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `>))
 
-      5. Result in: % % |- % % `< % `> `( % `) % '=' `{ % `} ';' : TC_2 instantiationIR
+        4. (Let instantiationIR be (annotationList typeIR_object_init constructorTargetIR_inferred `( (argumentIR_cast)*{argumentIR_cast <- argumentIR_cast*} `) nameIR ?(('=' `{ (objectDeclarationIR)*{objectDeclarationIR <- objectDeclarationIR*} `})) ';'))
+
+        5. Result in: % % |- % % `< % `> `( % `) % '=' `{ % `} ';' : TC_2 instantiationIR
 
 def $split_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototypeList)
 
@@ -32134,7 +32351,7 @@ relation ObjectDecl_inst: IC_0 STO |- objectDeclarationIR : % %
 
     2. Case (% has type instantiationIR, let instantiationIR = %)
 
-      1. (InstDecl_inst: (GLOBAL) IC_0 STO |- instantiationIR : IC_1 STO_1 _constantDeclarationIR)
+      1. (InstDecl_inst: (BLOCK) IC_0 STO |- instantiationIR : IC_1 STO_1 _constantDeclarationIR)
 
       2. Result in: % % |- % : IC_1 STO_1
 
@@ -32672,39 +32889,47 @@ def $find_callableDef_overloaded_e(p, EC, prefixedNameIR, (argumentIR)*{argument
 
   2. Case (% matches pattern BLOCK)
 
-    1. Check ((prefixedNameIR matches pattern _BARE %))
+    1. Case analysis on prefixedNameIR (total)
 
-      1. (Let (_BARE nameIR) be prefixedNameIR)
+      1. Case (% matches pattern _BARE %, let (_BARE nameIR) = %)
 
-      2. (Let callTargetKey be $callTargetKey(nameIR, (argumentIR)*{argumentIR <- argumentIR*}))
+        1. (Let callTargetKey be $callTargetKey(nameIR, (argumentIR)*{argumentIR <- argumentIR*}))
 
-      3. Block (2 arms)
+        2. Block (2 arms)
 
-      Arm 1:
+        Arm 1:
 
-        1. (Let (callResolution<callableDef>)?{callResolution<callableDef> <- callResolution<callableDef>?} be $find_overloaded<callableDef>(EC.BLOCK.CALLABLE, callTargetKey, $parameterListIR_of_callableDef))
+          1. (Let (callResolution<callableDef>)?{callResolution<callableDef> <- callResolution<callableDef>?} be $find_overloaded<callableDef>(EC.BLOCK.CALLABLE, callTargetKey, $parameterListIR_of_callableDef))
 
-        2. If (((callResolution<callableDef>)?{callResolution<callableDef> <- callResolution<callableDef>?} matches pattern (_))), then
+          2. If (((callResolution<callableDef>)?{callResolution<callableDef> <- callResolution<callableDef>?} matches pattern (_))), then
 
-          1. (Let ?((callableId ':' callableDef '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*})) be (callResolution<callableDef>)?{callResolution<callableDef> <- callResolution<callableDef>?})
+            1. (Let ?((callableId ':' callableDef '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*})) be (callResolution<callableDef>)?{callResolution<callableDef> <- callResolution<callableDef>?})
 
-          2. Return ?((callableId ':' ((BLOCK), callableDef) '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*}))
+            2. Return ?((callableId ':' ((BLOCK), callableDef) '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*}))
 
-        2. Else Dangling
+          2. Else Dangling
 
-      Arm 2:
+        Arm 2:
 
-        1. Check (($find_overloaded<callableDef>(EC.BLOCK.CALLABLE, callTargetKey, $parameterListIR_of_callableDef) matches pattern ()))
+          1. Check (($find_overloaded<callableDef>(EC.BLOCK.CALLABLE, callTargetKey, $parameterListIR_of_callableDef) matches pattern ()))
 
-          1. Return $find_callableDef_overloaded_e((GLOBAL), EC, (_BARE nameIR), (argumentIR)*{argumentIR <- argumentIR*})
+            1. Return $find_callableDef_overloaded_e((GLOBAL), EC, (_BARE nameIR), (argumentIR)*{argumentIR <- argumentIR*})
+
+      2. Case (% matches pattern '.' %, let ('.' nameIR) = %)
+
+        1. Return $find_callableDef_overloaded_e((GLOBAL), EC, ('.' nameIR), (argumentIR)*{argumentIR <- argumentIR*})
 
   3. Case (% matches pattern LOCAL)
 
-    1. Check ((prefixedNameIR matches pattern _BARE %))
+    1. Case analysis on prefixedNameIR (total)
 
-      1. (Let (_BARE nameIR) be prefixedNameIR)
+      1. Case (% matches pattern _BARE %, let (_BARE nameIR) = %)
 
-      2. Return $find_callableDef_overloaded_e((BLOCK), EC, (_BARE nameIR), (argumentIR)*{argumentIR <- argumentIR*})
+        1. Return $find_callableDef_overloaded_e((BLOCK), EC, (_BARE nameIR), (argumentIR)*{argumentIR <- argumentIR*})
+
+      2. Case (% matches pattern '.' %, let ('.' nameIR) = %)
+
+        1. Return $find_callableDef_overloaded_e((GLOBAL), EC, ('.' nameIR), (argumentIR)*{argumentIR <- argumentIR*})
 
 def $find_constructorDef_e(EC, prefixedNameIR, (argumentIR)*{argumentIR <- argumentIR*})
 
