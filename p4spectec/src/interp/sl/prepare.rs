@@ -155,7 +155,7 @@ impl Prepare<PrepareContext<'_>> for source::CaseInstr {
             .cases
             .into_iter()
             .map(|case| ast::Case {
-                guard: ctx.prepare_guard(case.guard, &typ_scrut),
+                guard: ast::Guard::prepare(ctx, case.guard, &typ_scrut),
                 block: ctx.prepare_block(case.block),
             })
             .collect();
@@ -503,19 +503,23 @@ impl Prepare<PrepareContext<'_>> for source::ParamKind {
 
 // - Guards
 
-impl PrepareContext<'_> {
+impl ast::Guard {
     /// Prepares a guard on a scrutinee of type `typ_scrut`.
-    fn prepare_guard(&mut self, guard: source::Guard, typ_scrut: &source::Typ) -> ast::Guard {
+    fn prepare(
+        ctx: &mut PrepareContext<'_>,
+        guard: source::Guard,
+        typ_scrut: &source::Typ,
+    ) -> Self {
         match guard {
             source::Guard::Bool(value) => ast::Guard::Bool(value),
             source::Guard::Cmp(op, typ_op, exp) => {
-                ast::Guard::Cmp(op, typ_op, exp.prepare(&mut self.il()))
+                ast::Guard::Cmp(op, typ_op, exp.prepare(&mut ctx.il()))
             }
             source::Guard::Sub(typ) => {
-                ast::Guard::Sub(ast::Subcheck::prepare(&mut self.il(), typ_scrut, &typ))
+                ast::Guard::Sub(ast::Subcheck::prepare(&mut ctx.il(), typ_scrut, &typ))
             }
-            source::Guard::Match(pattern) => ast::Guard::Match(pattern.prepare(&mut self.il())),
-            source::Guard::Mem(exp) => ast::Guard::Mem(exp.prepare(&mut self.il())),
+            source::Guard::Match(pattern) => ast::Guard::Match(pattern.prepare(&mut ctx.il())),
+            source::Guard::Mem(exp) => ast::Guard::Mem(exp.prepare(&mut ctx.il())),
         }
     }
 }

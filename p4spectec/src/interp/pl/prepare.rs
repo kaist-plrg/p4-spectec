@@ -187,24 +187,24 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
 
 // = Case analysis
 
-impl PrepareContext<'_> {
+impl ast::Guard {
     /// Prepares a guard on a scrutinee of type `typ_scrut`.
-    fn prepare_guard(&mut self, guard: pl::Guard, typ_scrut: &pl::Typ) -> ast::Guard {
+    fn prepare(ctx: &mut PrepareContext<'_>, guard: pl::Guard, typ_scrut: &pl::Typ) -> Self {
         match guard {
             pl::Guard::Bool(cond) => ast::Guard::Bool(cond),
-            pl::Guard::Cmp(op, typ, exp) => ast::Guard::Cmp(op, typ, exp.prepare(self)),
+            pl::Guard::Cmp(op, typ, exp) => ast::Guard::Cmp(op, typ, exp.prepare(ctx)),
             pl::Guard::Sub(typ) => {
-                ast::Guard::Sub(ast::Subcheck::prepare(&mut self.il(), typ_scrut, &typ))
+                ast::Guard::Sub(ast::Subcheck::prepare(&mut ctx.il(), typ_scrut, &typ))
             }
             pl::Guard::LetSub(typ, exp_l) => {
-                let subcheck = ast::Subcheck::prepare(&mut self.il(), typ_scrut, &typ);
-                ast::Guard::LetSub(ast::SubBind { typ, subcheck }, exp_l.prepare(self))
+                let subcheck = ast::Subcheck::prepare(&mut ctx.il(), typ_scrut, &typ);
+                ast::Guard::LetSub(ast::SubBind { typ, subcheck }, exp_l.prepare(ctx))
             }
             pl::Guard::LetMatch(pattern, exp_l) => {
-                ast::Guard::LetMatch(pattern.prepare(&mut self.il()), exp_l.prepare(self))
+                ast::Guard::LetMatch(pattern.prepare(&mut ctx.il()), exp_l.prepare(ctx))
             }
-            pl::Guard::Match(pattern) => ast::Guard::Match(pattern.prepare(&mut self.il())),
-            pl::Guard::Mem(exp) => ast::Guard::Mem(exp.prepare(self)),
+            pl::Guard::Match(pattern) => ast::Guard::Match(pattern.prepare(&mut ctx.il())),
+            pl::Guard::Mem(exp) => ast::Guard::Mem(exp.prepare(ctx)),
         }
     }
 }
@@ -325,7 +325,7 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
             .cases
             .into_iter()
             .map(|case| ast::Case {
-                guard: ctx.prepare_guard(case.guard, &typ_scrut),
+                guard: ast::Guard::prepare(ctx, case.guard, &typ_scrut),
                 block: case.block.prepare(ctx),
             })
             .collect();
