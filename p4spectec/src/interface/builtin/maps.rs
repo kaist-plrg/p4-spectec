@@ -81,37 +81,36 @@ fn map_update(
     typ_value: &Typ,
     key: &Value,
     value: &Value,
-    map: &[Value],
+    mut map: ValueMap,
 ) -> Result<ValueMap, BuiltinError> {
-    let mut found = false;
-    let mut updated = Vec::with_capacity(map.len() + 1);
     let mixop_pair = pair_mixop(arena)?;
-    for pair in map {
-        let matching = value::get::case(arena, pair).ok().is_some_and(|value_case| {
+    // Only the first matching key is replaced; later duplicates stay intact
+    let idx = map.iter().position(|pair| {
+        value::get::case(arena, pair).ok().is_some_and(|value_case| {
             if arena.mixop.canon_id(*value_case.mixop()) != arena.mixop.canon_id(mixop_pair) {
                 return false;
             }
             matches!(value_case.args(), [value_key, _] if value_key.view(arena).syntax_eq(&key.view(arena)))
-        });
-        // Replace in place once; later duplicates are kept as they are
-        if !found && matching {
-            updated.push(make_pair(arena, typ_key, typ_value, *key, *value)?);
-            found = true;
-        } else {
-            updated.push(*pair);
-        }
+        })
+    });
+    let pair = make_pair(arena, typ_key, typ_value, *key, *value)?;
+    // Reuse the owned buffer across a sequence of updates
+    if let Some(idx) = idx {
+        map[idx] = pair;
+    } else {
+        map.push(pair);
     }
-    // A new key goes at the end
-    if !found {
-        updated.push(make_pair(arena, typ_key, typ_value, *key, *value)?);
-    }
-    Ok(updated)
+    Ok(map)
 }
 
 // == Conversion between meta-maps and runtime lists
 
 /// Decodes a `map<K, V>` value into its pair list.
-fn map_of_value(arena: &Arena, mixop_map: Mixop, value: &Value) -> Result<ValueMap, BuiltinError> {
+fn map_of_value<'arena>(
+    arena: &'arena Arena,
+    mixop_map: Mixop,
+    value: &Value,
+) -> Result<&'arena [Value], BuiltinError> {
     let value_case = value::get::case(arena, value)
         .map_err(|_| BuiltinError::argument_invalid("expected a map"))?;
     // The value must be a map case wrapping one list
@@ -120,7 +119,6 @@ fn map_of_value(arena: &Arena, mixop_map: Mixop, value: &Value) -> Result<ValueM
     }
     let value_pairs = extract::one(value_case.args())?;
     value::get::list(arena, value_pairs)
-        .map(<[Value]>::to_vec)
         .map_err(|_| BuiltinError::argument_invalid("expected a map"))
 }
 
@@ -156,7 +154,7 @@ pub fn find_map(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Va
     let (value_map, value_key) = extract::two(values)?;
     let map = map_of_value(arena, mixop_map, value_map)?;
     let typ_opt = typ::make::opt(typ_value.clone());
-    let value_opt = map_find_opt(arena, mixop_pair, value_key, &map);
+    let value_opt = map_find_opt(arena, mixop_pair, value_key, map);
     let value = value::make::opt(arena, typ_opt.node.into(), value_opt, Span::default())?;
     Ok(value)
 }
@@ -178,7 +176,7 @@ pub fn find_maps(
         let map = map_of_value(arena, mixop_map, value_map)?;
         // Earlier maps shadow later ones; all are still decoded
         if value_opt.is_none() {
-            value_opt = map_find_opt(arena, mixop_pair, value_key, &map);
+            value_opt = map_find_opt(arena, mixop_pair, value_key, map);
         }
     }
     let typ_opt = typ::make::opt(typ_value.clone());
@@ -192,8 +190,8 @@ pub fn add_map(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Val
     let mixop_map = map_mixop(arena)?;
     let (typ_key, typ_value) = extract::two(targs)?;
     let (value_map, value_key, value_value) = extract::three(values)?;
-    let map = map_of_value(arena, mixop_map, value_map)?;
-    let map = map_update(arena, typ_key, typ_value, value_key, value_value, &map)?;
+    let map = map_of_value(arena, mixop_map, value_map)?.to_vec();
+    let map = map_update(arena, typ_key, typ_value, value_key, value_value, map)?;
     value_of_map(arena, typ_key, typ_value, map)
 }
 
@@ -203,21 +201,24 @@ pub fn adds_map(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Va
     let mixop_map = map_mixop(arena)?;
     let (typ_key, typ_value) = extract::two(targs)?;
     let (value_map, value_keys, value_values) = extract::three(values)?;
-    let mut map = map_of_value(arena, mixop_map, value_map)?;
-    let values_key = value::get::list(arena, value_keys)
+    let mut map = map_of_value(arena, mixop_map, value_map)?.to_vec();
+    let num_keys = value::get::list(arena, value_keys)
         .map_err(BuiltinError::from)?
-        .to_vec();
-    let values_value = value::get::list(arena, value_values)
+        .len();
+    let num_values = value::get::list(arena, value_values)
         .map_err(BuiltinError::from)?
-        .to_vec();
+        .len();
     // Keys and values pair up positionally
-    if values_key.len() != values_value.len() {
+    if num_keys != num_values {
         return Err(BuiltinError::argument_invalid(
             "map key and value lists must have the same length",
         ));
     }
-    for (value_key, value_value) in values_key.iter().zip(&values_value) {
-        map = map_update(arena, typ_key, typ_value, value_key, value_value, &map)?;
+    // Arena lists stay immutable while updates append new values
+    for idx in 0..num_keys {
+        let value_key = value::get::list(arena, value_keys).expect("validated key list")[idx];
+        let value_value = value::get::list(arena, value_values).expect("validated value list")[idx];
+        map = map_update(arena, typ_key, typ_value, &value_key, &value_value, map)?;
     }
     value_of_map(arena, typ_key, typ_value, map)
 }
@@ -231,7 +232,61 @@ pub fn update_map(
     let mixop_map = map_mixop(arena)?;
     let (typ_key, typ_value) = extract::two(targs)?;
     let (value_map, value_key, value_value) = extract::three(values)?;
-    let map = map_of_value(arena, mixop_map, value_map)?;
-    let map = map_update(arena, typ_key, typ_value, value_key, value_value, &map)?;
+    let map = map_of_value(arena, mixop_map, value_map)?.to_vec();
+    let map = map_update(arena, typ_key, typ_value, value_key, value_value, map)?;
     value_of_map(arena, typ_key, typ_value, map)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn updates_preserve_order_duplicates_and_the_input() {
+        // The input deliberately contains two pairs with the same key
+        let mut arena = Arena::new();
+        let typ = typ::make::nat();
+        let mut nat = |n: u64| value::make::nat(&mut arena, n.into(), Span::default()).unwrap();
+        let [key_a, key_b, key_c, value_a, value_b, value_c, value_d, value_e, value_f] =
+            [1, 2, 3, 10, 20, 30, 40, 50, 60].map(&mut nat);
+        let pairs = [(key_a, value_a), (key_b, value_b), (key_a, value_c)]
+            .into_iter()
+            .map(|(key, value)| make_pair(&mut arena, &typ, &typ, key, value).unwrap())
+            .collect();
+        let value_map = value_of_map(&mut arena, &typ, &typ, pairs).unwrap();
+        let typ_list = typ::make::list(typ.clone());
+        let value_keys = value::make::list(
+            &mut arena,
+            typ_list.node.clone().into(),
+            vec![key_a, key_c, key_a],
+            Span::default(),
+        )
+        .unwrap();
+        let value_values = value::make::list(
+            &mut arena,
+            typ_list.node.into(),
+            vec![value_d, value_e, value_f],
+            Span::default(),
+        )
+        .unwrap();
+        let targs = [typ.clone(), typ];
+        // Repeated updates replace the first pair without moving it
+        let value_updated =
+            adds_map(&mut arena, &targs, &[value_map, value_keys, value_values]).unwrap();
+        let mixop_map = map_mixop(&mut arena).unwrap();
+        let map = map_of_value(&arena, mixop_map, &value_updated).unwrap();
+        let pairs = map
+            .iter()
+            .map(|pair| {
+                let [key, value] = value::get::case(&arena, pair).unwrap().args() else {
+                    panic!("pair")
+                };
+                (*key, *value)
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(pairs, [(key_a, value_f), (key_b, value_b), (key_a, value_c), (key_c, value_e)]);
+        // Updating a copy must leave the original map intact
+        let value_found = find_map(&mut arena, &targs, &[value_map, key_a]).unwrap();
+        assert_eq!(value::get::opt(&arena, &value_found).unwrap(), Some(value_a));
+    }
 }
