@@ -4,10 +4,14 @@
 //! Public entries clear the memo tables.
 //! RunnerContext records effects independently of memoization.
 
-use std::hash::{Hash, Hasher};
+use std::{
+    hash::{Hash, Hasher},
+    rc::Rc,
+};
 
 use foldhash::fast::RandomState;
 use hashbrown::{Equivalent, HashMap};
+use smallvec::SmallVec;
 
 use crate::lang::data::{
     arena::Arena,
@@ -20,15 +24,15 @@ use crate::lang::data::{
 /// A call identified by its name and canonical argument values.
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub(crate) struct CallKey {
-    name: String,
-    values: Vec<CanonId<ValueKind>>,
+    name: Rc<str>,
+    values: SmallVec<[CanonId<ValueKind>; 4]>,
 }
 
 impl CallKey {
     /// Builds the key; type arguments and annotations never distinguish calls.
-    pub(crate) fn new(arena: &Arena, name: &str, values: &[Value]) -> Self {
+    pub(crate) fn new(arena: &Arena, name: &Rc<str>, values: &[Value]) -> Self {
         Self {
-            name: name.to_owned(),
+            name: Rc::clone(name),
             values: values
                 .iter()
                 .map(|value| arena.value.canon_id(value.node))
@@ -57,7 +61,7 @@ impl Hash for CallQuery<'_> {
 
 impl Equivalent<CallKey> for CallQuery<'_> {
     fn equivalent(&self, key: &CallKey) -> bool {
-        self.name == key.name
+        self.name == key.name.as_ref()
             && self.values.len() == key.values.len()
             && self
                 .values
