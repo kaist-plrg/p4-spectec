@@ -6,13 +6,16 @@ ifeq ($(filter /%,$(TARGET_DIR)),)
 TARGET_DIR := $(CURDIR)/$(TARGET_DIR)
 endif
 
-.PHONY: build release debug fmt fmt-check lint rustdoc clean
+.PHONY: build release debug metacirc fmt fmt-check lint rustdoc clean
 
 debug:
-	$(CARGO) build --locked --bins --target-dir "$(TARGET_DIR)"
+	$(CARGO) build --locked --bin p4spectec --target-dir "$(TARGET_DIR)"
 
 build release:
-	$(CARGO) build --locked --release --bins --target-dir "$(TARGET_DIR)"
+	$(CARGO) build --locked --release --bin p4spectec --target-dir "$(TARGET_DIR)"
+
+metacirc:
+	$(CARGO) build --locked --release --bin metacirc --target-dir "$(TARGET_DIR)"
 
 fmt:
 	$(CARGO) fmt
@@ -111,5 +114,5 @@ test-diagnostics-promote: diagnostic-cli
 # Independent metacircular Program_inst execution
 .PHONY: test-metacirc
 
-test-metacirc: release
+test-metacirc: metacirc
 	env -u UPDATE_EXPECT $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --bin metacirc-test -- --cli "$(TARGET_DIR)/release/metacirc"

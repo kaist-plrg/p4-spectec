@@ -58,7 +58,7 @@ git submodule update --init p4c
 make build
 ```
 
-This creates the optimized executables `./bin/p4spectec` and `./bin/metacirc`. `make` and
+This creates the optimized executable `./bin/p4spectec`. `make` and
 `make release` also build in release mode. To build a debug executable:
 
 ```shell
@@ -66,8 +66,10 @@ make debug
 ./bin/p4spectec --help
 ```
 
-All build targets replace both executables. The Cargo package and default binary are
-named `p4spectec`, and build output defaults to `p4spectec/target/`.
+The Cargo package and default binary are named `p4spectec`, and build output
+defaults to `p4spectec/target/`. Build the separate `./bin/metacirc` executable
+with `make metacirc`. Its test runs explicitly with `make test-metacirc` and is
+not included in `make test`.
 See [metacircular execution](docs/metacirc.md) for AL scripts and runtime towers over P4.
 To select another build directory, pass `CARGO_TARGET_DIR` to Make; a relative
 path is resolved from the directory where Make is invoked:

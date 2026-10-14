@@ -9,11 +9,12 @@ the tower are AL; SL metacircular specifications and mixed towers are not suppor
 From the repository root:
 
 ```sh
-make build
+make metacirc
 ```
 
-This builds and installs both `bin/p4spectec` and `bin/metacirc`.
-Within `p4spectec`, `cargo build --locked --bins` builds both binaries;
+This builds and installs `bin/metacirc` in release mode.
+`make build`, `make release`, and `make debug` build only `bin/p4spectec`.
+Within `p4spectec`, use `cargo build --locked --release --bin metacirc`;
 `cargo run` still defaults to `p4spectec`.
 
 ## Standalone AL script
@@ -89,6 +90,9 @@ owned runners before arena execution values can be cleared.
 ```sh
 make test-metacirc
 ```
+
+This target builds `metacirc` and runs its independent driver; `make test`
+does not include it.
 
 The `test-driver/metacirc` fixture runs only the Rust SL → AL specification →
 P4 specification → P4 program `Program_inst` path through the CLI.
