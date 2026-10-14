@@ -189,24 +189,35 @@ dec $subtyps(ctx, typ*, val*) : bool
   hint(prose_true "each of" %2 "matches each of type" %1 "under" %0)
   hint(prose_false "some of" %2 "does not match each of type" %1 "under" %0)
 
-def $subtyp(C, BOOL, BOOL b) = true
-def $subtyp(C, NAT, NAT n) = true
-def $subtyp(C, NAT, INT i) = $(i >= 0)
-def $subtyp(C, INT, num) = true
-def $subtyp(C, TEXT, TEXT t) = true
+;; Value and relation bindings do not affect membership
+;; Keep function bindings for function-value signature checks
 
-def $subtyp(C, VAR id targ*, EXT json) = true
+dec $typing_ctx(ctx) : ctx
+def $typing_ctx(C)
+  = { GLOBAL $empty_layer[ .TYP = C.GLOBAL.TYP ][ .FUNC = C.GLOBAL.FUNC ],
+      LOCAL $empty_layer[ .TYP = C.LOCAL.TYP ][ .FUNC = C.LOCAL.FUNC ] }
+
+dec $subtyp'(ctx, typ, val) : bool
+def $subtyp(C, typ, val) = $subtyp'($typing_ctx(C), typ, val)
+
+def $subtyp'(C, BOOL, BOOL b) = true
+def $subtyp'(C, NAT, NAT n) = true
+def $subtyp'(C, NAT, INT i) = $(i >= 0)
+def $subtyp'(C, INT, num) = true
+def $subtyp'(C, TEXT, TEXT t) = true
+
+def $subtyp'(C, VAR id targ*, EXT json) = true
   -- if EXT = $find_typ(C, id)
 
-def $subtyp(C, VAR id targ*, val)
-  = $subtyp(C, typ_subst, val)
+def $subtyp'(C, VAR id targ*, val)
+  = $subtyp'(C, typ_subst, val)
   -- if DEF tparam* '->' (ALIAS typ)
       = $find_typ(C, id)
   -- if theta = `{ (tparam ':' targ)* `}
   -- if typ_subst = $subst_typ(theta, typ)
 
-def $subtyp(C, VAR id targ*, INJ (mixop val*))
-  = $forall_($subtyp(C, typ_case_found_subst, val)*)
+def $subtyp'(C, VAR id targ*, INJ (mixop val*))
+  = $forall_($subtyp'(C, typ_case_found_subst, val)*)
   -- if DEF tparam* '->' (VARIANT typcase*)
       = $find_typ(C, id)
   -- if theta = `{ (tparam ':' targ)* `}
@@ -216,8 +227,8 @@ def $subtyp(C, VAR id targ*, INJ (mixop val*))
       = $assoc_<mixop, typ*>(mixop, (mixop_case, typ_case*)*)
   -- if typ_case_found_subst* = $subst_typ(theta, typ_case_found)*
 
-def $subtyp(C, VAR id targ*, STR valfield*)
-  = $forall_($subtyp(C, typ_field_subst, val_field)*)
+def $subtyp'(C, VAR id targ*, STR valfield*)
+  = $forall_($subtyp'(C, typ_field_subst, val_field)*)
   -- if DEF tparam* '->' (STRUCT typfield*)
       = $find_typ(C, id)
   -- if (atom typ_field = typfield)*
@@ -225,21 +236,21 @@ def $subtyp(C, VAR id targ*, STR valfield*)
   -- if theta = `{ (tparam ':' targ)* `}
   -- if (typ_field_subst = $subst_typ(theta, typ_field))*
 
-def $subtyp(C, TUP typ*, TUP val*)
-  = $forall_($subtyp(C, typ, val)*)
+def $subtyp'(C, TUP typ*, TUP val*)
+  = $forall_($subtyp'(C, typ, val)*)
 
-def $subtyp(C, ITER typ QUEST, OPT val)
-  = $subtyp(C, typ, val)
-def $subtyp(C, ITER typ QUEST, OPT eps) = true
+def $subtyp'(C, ITER typ QUEST, OPT val)
+  = $subtyp'(C, typ, val)
+def $subtyp'(C, ITER typ QUEST, OPT eps) = true
 
-def $subtyp(C, ITER typ STAR, LIST val*)
-  = $forall_($subtyp(C, typ, val)*)
+def $subtyp'(C, ITER typ STAR, LIST val*)
+  = $forall_($subtyp'(C, typ, val)*)
 
-def $subtyp(C, FUNC tparam* typ* typ_ret, FUNC id)
+def $subtyp'(C, FUNC tparam* typ* typ_ret, FUNC id)
   = $equiv_func_typ(C, FUNC tparam* typ* typ_ret, $func_typ(funcdef))
   -- if funcdef = $find_func(C, id)
 
-def $subtyp(C, typ, val) = false
+def $subtyp'(C, typ, val) = false
     -- otherwise
 
 def $subtyps(C, typ*, val*)
