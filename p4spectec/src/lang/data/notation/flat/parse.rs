@@ -1,10 +1,8 @@
 //! Cached notation parsing directly into flat mixops
 //!
 //! EL types supply argument positions and atoms without a tree mixop.
-//! The parser caches EL types independently of runtime storage.
+//! Each arena retains successful string conversions with its own handles.
 //! Atom matrices recover notation structure through the same parser.
-
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::frontend::{error::FrontendError, parse::parse_typ};
 use crate::lang::{
@@ -40,11 +38,6 @@ pub(crate) enum MatrixMixopError {
     Parse(#[from] ParseMixopError),
 }
 
-thread_local! {
-    /// Parsed EL types without arena-owned handles.
-    static TYPES: RefCell<HashMap<String, Rc<Typ>>> = RefCell::new(HashMap::new());
-}
-
 /// Converts a notation representation into an interned flat mixop.
 pub(crate) trait ToMixop {
     /// The failures supported by this representation.
@@ -57,21 +50,16 @@ pub(crate) trait ToMixop {
 impl ToMixop for str {
     type Error = ParseMixopError;
 
-    /// Reuses a parsed EL type and interns its notation into the supplied arena.
+    /// Reuses a notation handle from this arena or parses and interns it once.
     fn to_mixop(&self, arena_mixop: &mut MixopArena) -> Result<Mixop, Self::Error> {
-        // Cache successful parses without retaining runtime arena handles
-        let typ_el = TYPES.with(|types| -> Result<Rc<Typ>, FrontendError> {
-            if let Some(typ_el) = types.borrow().get(self) {
-                return Ok(Rc::clone(typ_el));
-            }
-            let typ_el = Rc::new(parse_typ(self)?);
-            types
-                .borrow_mut()
-                .insert(self.to_owned(), Rc::clone(&typ_el));
-            Ok(typ_el)
-        })?;
-        // Intern into the caller's arena on both cache hits and misses
-        Ok(typ_el.to_mixop(arena_mixop)?)
+        // Cached handles belong to the arena that owns this table
+        if let Some(mixop) = arena_mixop.parsed.get(self) {
+            return Ok(*mixop);
+        }
+        // Retain only successful conversions, after all children are interned
+        let mixop = parse_typ(self)?.to_mixop(arena_mixop)?;
+        arena_mixop.parsed.insert(self.to_owned(), mixop);
+        Ok(mixop)
     }
 }
 
@@ -153,5 +141,25 @@ impl ToMixop for NotTyp {
             }
         };
         arena_mixop.intern_kind(kind)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parsed_handles_follow_the_owning_arena() {
+        let mut arena_a = MixopArena::new();
+        let mut arena_b = MixopArena::new();
+        let mixop_a = "TAG nat".to_mixop(&mut arena_a).unwrap();
+        "OTHER nat nat".to_mixop(&mut arena_b).unwrap();
+        let mixop_b = "TAG nat".to_mixop(&mut arena_b).unwrap();
+        assert_ne!(mixop_a, mixop_b);
+        assert_eq!(mixop_a.into_tree(&arena_a), mixop_b.into_tree(&arena_b));
+        assert_eq!("TAG nat".to_mixop(&mut arena_a).unwrap(), mixop_a);
+        assert_eq!("TAG nat".to_mixop(&mut arena_b).unwrap(), mixop_b);
+        assert_eq!(arena_a.arity(mixop_a), 1);
+        assert_eq!(arena_b.arity(mixop_b), 1);
     }
 }
