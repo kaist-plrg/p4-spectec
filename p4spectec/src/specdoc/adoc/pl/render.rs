@@ -443,7 +443,7 @@ impl Code {
             ExpKind::Cmp(op, _, exp_l, exp_r) => Code::of_cmp_exp(op, exp_l, exp_r),
             ExpKind::UpCast(_, exp_inner) => Code::of_upcast_exp(exp_inner),
             ExpKind::DownCast(_, exp_inner) => Code::of_downcast_exp(exp_inner),
-            ExpKind::Sub(exp_inner, typ, _) => Code::of_sub_exp(exp_inner, typ),
+            ExpKind::Sub(exp_inner, typ) => Code::of_sub_exp(exp_inner, typ),
             ExpKind::Match(exp_inner, pattern) => Code::of_match_exp(exp_inner, pattern),
             ExpKind::Tuple(exps) => Code::of_tuple_exp(exps),
             ExpKind::Case(not_exp) => Code::of_case_exp(not_exp),
@@ -804,7 +804,7 @@ impl Prose {
             ExpKind::Cmp(op, _, exp_l, exp_r) => Prose::of_cmp_exp(op, exp_l, exp_r),
             ExpKind::UpCast(_, exp_inner) => Prose::of_upcast_exp(exp_inner),
             ExpKind::DownCast(_, exp_inner) => Prose::of_downcast_exp(exp_inner),
-            ExpKind::Sub(exp_inner, typ, _) => Prose::of_sub_exp(exp_inner, typ),
+            ExpKind::Sub(exp_inner, typ) => Prose::of_sub_exp(exp_inner, typ),
             ExpKind::Match(exp_inner, pattern) => Prose::of_match_exp(exp_inner, pattern),
             ExpKind::Tuple(exps) => Prose::of_tuple_exp(exps),
             ExpKind::Case(not_exp) => Prose::of_case_exp(exp, not_exp),
@@ -881,7 +881,7 @@ impl Prose {
                 ];
                 Some(Prose::seq(proses))
             }
-            ExpKind::Sub(exp_elem, typ, _) => {
+            ExpKind::Sub(exp_elem, typ) => {
                 let code_elem = Code::of_exp(exp_elem);
                 let code_typ = Code::of_typ(typ);
                 let proses = [
@@ -1417,8 +1417,8 @@ impl Prose {
             pl::Guard::Bool(true) => Prose::of_true_guard(exp_scrut),
             pl::Guard::Bool(false) => Prose::of_false_guard(exp_scrut),
             pl::Guard::Cmp(op, _, exp) => Prose::of_cmp_guard(exp_scrut, op, exp),
-            pl::Guard::Sub(typ, _) => Prose::of_sub_guard(exp_scrut, typ),
-            pl::Guard::LetSub(typ, _, exp_l) => Prose::of_let_sub_guard(exp_scrut, typ, exp_l),
+            pl::Guard::Sub(typ) => Prose::of_sub_guard(exp_scrut, typ),
+            pl::Guard::LetSub(typ, exp_l) => Prose::of_let_sub_guard(exp_scrut, typ, exp_l),
             pl::Guard::Match(pattern) => Prose::of_match_guard(exp_scrut, pattern),
             pl::Guard::LetMatch(_, exp_l) => Prose::of_let_match_guard(exp_scrut, exp_l),
             pl::Guard::Mem(exp) => Prose::of_mem_guard(exp_scrut, exp),
@@ -1823,7 +1823,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         render_tier: RenderTier<'ctx, 'a, Tier>,
         instr: &pl::IfLetSubInstr<Tier>,
     ) -> Block {
-        let prose_binding = Prose::of_sub_binding(&instr.exp_l, &instr.exp_r, &instr.typ);
+        let prose_binding = Prose::of_sub_binding(&instr.exp_l, &instr.exp_r, &instr.target);
         let prose_head = Prose::seq([Prose::text("If "), prose_binding, Prose::text(":")]);
         let block_head = Block::item_ordered(level, prose_head);
         self.render_instrs(level + 1, Some(block_head), render_tier, &instr.block)
@@ -1968,7 +1968,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             let block_head = Block::item_ordered(level, prose_head);
             // Eliding a final guard still leaves its binding in the body
             let block_case = if is_else
-                && let pl::Guard::LetSub(_, _, exp_l) | pl::Guard::LetMatch(_, exp_l) = &case.guard
+                && let pl::Guard::LetSub(_, exp_l) | pl::Guard::LetMatch(_, exp_l) = &case.guard
             {
                 let prose_binding = Prose::seq([
                     Prose::text("Let "),

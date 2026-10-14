@@ -93,7 +93,7 @@ pub enum ExpKind<P: Stage = Source> {
     Cmp(CmpOp, OpTyp, Box<Exp<P>>, Box<Exp<P>>),
     UpCast(Typ, Box<Exp<P>>),
     DownCast(Typ, Box<Exp<P>>),
-    Sub(Box<Exp<P>>, Typ, Box<Subcheck<P>>),
+    Sub(Box<Exp<P>>, P::SubTarget),
     Match(Box<Exp<P>>, Pattern<P>),
     Tuple(Vec<Exp<P>>),
     Case(Box<NotExp<P>>),
@@ -198,9 +198,9 @@ pub enum Guard<P: Stage = Source> {
     /// The scrutinee compares so with the expression.
     Cmp(CmpOp, OpTyp, Exp<P>),
     /// The scrutinee has the type.
-    Sub(Typ, Box<Subcheck<P>>),
+    Sub(P::SubTarget),
     /// The scrutinee has the type and binds the expression.
-    LetSub(Typ, Box<Subcheck<P>>, Exp<P>),
+    LetSub(P::SubTarget, Exp<P>),
     /// The scrutinee matches the pattern.
     Match(Pattern<P>),
     /// The scrutinee matches the pattern and binds the expression.
@@ -251,9 +251,11 @@ pub struct IfInstr<Tier, P: Stage = Source> {
 }
 #[derive(Clone, Debug, PartialEq)]
 /// Bind a value with the required subtype and run the block.
+///
+/// The binding `exp_l` has the subtype,
+/// so execution casts to its type after preparation replaces the target.
 pub struct IfLetSubInstr<Tier, P: Stage = Source> {
-    pub typ: Typ,
-    pub subcheck: Box<Subcheck<P>>,
+    pub target: P::SubTarget,
     pub exp_l: Exp<P>,
     pub exp_r: Exp<P>,
     pub block: Block<Tier, P>,

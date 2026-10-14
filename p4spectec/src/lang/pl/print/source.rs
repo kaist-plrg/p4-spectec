@@ -60,7 +60,7 @@ impl Print for Exp {
                 typ.print(printer)?;
                 printer.write_char(')')
             }
-            ExpKind::Sub(exp, typ, _) => {
+            ExpKind::Sub(exp, typ) => {
                 printer.write_char('(')?;
                 exp.print(printer)?;
                 printer.write_str(" has type ")?;
@@ -319,7 +319,7 @@ fn write_instr_with<Tier>(
             }
             Ok(())
         }
-        InstrKind::IfLetSub(IfLetSubInstr { exp_l, exp_r, block, dangle, typ, .. }) => {
+        InstrKind::IfLetSub(IfLetSubInstr { target: typ, exp_l, exp_r, block, dangle }) => {
             write_order(output)?;
             output.write_str("If let ")?;
             exp_l.print(output)?;
@@ -625,7 +625,7 @@ impl Print for Guard {
                 exp.print(printer)?;
                 printer.write_char(')')
             }
-            Guard::Sub(typ, _) => {
+            Guard::Sub(typ) => {
                 printer.write_str("(% has type ")?;
                 typ.print(printer)?;
                 printer.write_char(')')
@@ -635,7 +635,7 @@ impl Print for Guard {
                 pattern.print(printer)?;
                 printer.write_char(')')
             }
-            Guard::LetSub(typ, _, exp_l) => {
+            Guard::LetSub(typ, exp_l) => {
                 printer.write_str("(% has type ")?;
                 typ.print(printer)?;
                 printer.write_str(", let ")?;

@@ -13,7 +13,13 @@ use crate::lang::data::notation::{self, MixopArena, flat, tree};
 
 use crate::lang::pl::{annot::Annotated, ast as pl, prepared as ast};
 
-use crate::runtime::envs::interp::shared::{callable::Callable, frame::FrameLayout};
+use crate::runtime::{
+    envs::{
+        elab::TDEnv,
+        interp::shared::{callable::Callable, frame::FrameLayout},
+    },
+    typdef::TypeDef,
+};
 
 use crate::interp::shared::prepare::{Prepare, il};
 
@@ -25,16 +31,26 @@ pub struct PrepareContext<'a> {
     pub arena_mixop: &'a mut MixopArena,
     /// The callable's frame layout.
     pub layout: &'a mut FrameLayout,
+    /// Source type definitions, with the callable's type parameters.
+    pub tdenv: &'a TDEnv,
 }
 
 impl<'a> PrepareContext<'a> {
-    /// Borrows the notation arena and callable layout for preparation.
-    pub fn new(arena_mixop: &'a mut MixopArena, layout: &'a mut FrameLayout) -> Self {
-        Self { arena_mixop, layout }
+    /// Borrows the arena, layout, and type definitions for preparation.
+    pub fn new(
+        arena_mixop: &'a mut MixopArena,
+        layout: &'a mut FrameLayout,
+        tdenv: &'a TDEnv,
+    ) -> Self {
+        Self { arena_mixop, layout, tdenv }
     }
 
     fn il(&mut self) -> il::PrepareContext<'_> {
-        il::PrepareContext { arena_mixop: &mut *self.arena_mixop, layout: &mut *self.layout }
+        il::PrepareContext {
+            arena_mixop: &mut *self.arena_mixop,
+            layout: &mut *self.layout,
+            tdenv: self.tdenv,
+        }
     }
 }
 
@@ -70,7 +86,13 @@ impl Prepare<PrepareContext<'_>> for pl::ExpKind {
             }
             P::UpCast(typ, exp) => E::UpCast(typ, exp.prepare(ctx)),
             P::DownCast(typ, exp) => E::DownCast(typ, exp.prepare(ctx)),
-            P::Sub(exp, typ, check) => E::Sub(exp.prepare(ctx), typ, check.prepare(&mut ctx.il())),
+            P::Sub(exp, typ) => {
+                // The check starts from the tested expression's type
+                let typ_source =
+                    crate::phrase!(node: exp.node.note.as_ref().clone(), span: exp.node.span);
+                let subcheck = ctx.il().prepare_subcheck(&typ_source, &typ);
+                E::Sub(exp.prepare(ctx), subcheck)
+            }
             P::Match(exp, pattern) => E::Match(exp.prepare(ctx), pattern.prepare(&mut ctx.il())),
             P::Tuple(exps) => E::Tuple(exps.prepare(ctx)),
             P::Case(not_exp) => E::Case(not_exp.prepare(ctx)),
@@ -165,31 +187,23 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
 
 // = Case analysis
 
-impl Prepare<PrepareContext<'_>> for pl::Guard {
-    type Output = ast::Guard;
-
-    fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        match self {
+impl PrepareContext<'_> {
+    /// Prepares a guard on a scrutinee of type `typ_scrut`.
+    fn prepare_guard(&mut self, guard: pl::Guard, typ_scrut: &pl::Typ) -> ast::Guard {
+        match guard {
             pl::Guard::Bool(cond) => ast::Guard::Bool(cond),
-            pl::Guard::Cmp(op, typ, exp) => ast::Guard::Cmp(op, typ, exp.prepare(ctx)),
-            pl::Guard::Sub(typ, check) => ast::Guard::Sub(typ, check.prepare(&mut ctx.il())),
-            pl::Guard::LetSub(typ, subcheck, exp_l) => {
-                ast::Guard::LetSub(typ, subcheck.prepare(&mut ctx.il()), exp_l.prepare(ctx))
+            pl::Guard::Cmp(op, typ, exp) => ast::Guard::Cmp(op, typ, exp.prepare(self)),
+            pl::Guard::Sub(typ) => ast::Guard::Sub(self.il().prepare_subcheck(typ_scrut, &typ)),
+            pl::Guard::LetSub(typ, exp_l) => {
+                let subcheck = self.il().prepare_subcheck(typ_scrut, &typ);
+                ast::Guard::LetSub(subcheck, exp_l.prepare(self))
             }
             pl::Guard::LetMatch(pattern, exp_l) => {
-                ast::Guard::LetMatch(pattern.prepare(&mut ctx.il()), exp_l.prepare(ctx))
+                ast::Guard::LetMatch(pattern.prepare(&mut self.il()), exp_l.prepare(self))
             }
-            pl::Guard::Match(pattern) => ast::Guard::Match(pattern.prepare(&mut ctx.il())),
-            pl::Guard::Mem(exp) => ast::Guard::Mem(exp.prepare(ctx)),
+            pl::Guard::Match(pattern) => ast::Guard::Match(pattern.prepare(&mut self.il())),
+            pl::Guard::Mem(exp) => ast::Guard::Mem(exp.prepare(self)),
         }
-    }
-}
-
-impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::Case<Tier> {
-    type Output = ast::Case<Tier::Output>;
-
-    fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
-        ast::Case { guard: self.guard.prepare(ctx), block: self.block.prepare(ctx) }
     }
 }
 
@@ -237,9 +251,11 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>>
     type Output = ast::IfLetSubInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
+        // The check starts from the tested expression's type
+        let typ_source =
+            crate::phrase!(node: self.exp_r.node.note.as_ref().clone(), span: self.exp_r.node.span);
         ast::IfLetSubInstr {
-            typ: self.typ,
-            subcheck: self.subcheck.prepare(&mut ctx.il()),
+            target: ctx.il().prepare_subcheck(&typ_source, &self.target),
             exp_l: self.exp_l.prepare(ctx),
             exp_r: self.exp_r.prepare(ctx),
             block: self.block.prepare(ctx),
@@ -299,12 +315,18 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
     type Output = ast::CaseInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
-        ast::CaseInstr {
-            exp: self.exp.prepare(ctx),
-            cases: self.cases.prepare(ctx),
-            totality: self.totality,
-            dangle: self.dangle,
-        }
+        let exp = self.exp.prepare(ctx);
+        // Guards test the scrutinee, so their checks start from its type
+        let typ_scrut = crate::phrase!(node: exp.node.note.as_ref().clone(), span: exp.node.span);
+        let cases = self
+            .cases
+            .into_iter()
+            .map(|case| ast::Case {
+                guard: ctx.prepare_guard(case.guard, &typ_scrut),
+                block: case.block.prepare(ctx),
+            })
+            .collect();
+        ast::CaseInstr { exp, cases, totality: self.totality, dangle: self.dangle }
     }
 }
 
@@ -614,6 +636,12 @@ impl Prepare<PrepareContext<'_>> for pl::DefinedFunc {
     type Output = ast::DefinedFunc;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        // Type parameters are opaque types in the body
+        let mut tdenv = ctx.tdenv.clone();
+        for tparam in &self.tparams {
+            tdenv.insert(tparam.clone(), TypeDef::Parameter);
+        }
+        let ctx = &mut PrepareContext::new(&mut *ctx.arena_mixop, &mut *ctx.layout, &tdenv);
         ast::DefinedFunc {
             id: self.id,
             tparams: self.tparams,

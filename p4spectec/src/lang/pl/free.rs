@@ -20,7 +20,7 @@ impl FreeIds for ExpKind {
             Self::Un(_, _, exp)
             | Self::UpCast(_, exp)
             | Self::DownCast(_, exp)
-            | Self::Sub(exp, _, _)
+            | Self::Sub(exp, _)
             | Self::Match(exp, _)
             | Self::Len(exp)
             | Self::Dot(exp, _)
@@ -256,7 +256,7 @@ impl FreeIds for Guard {
     fn free_ids(&self) -> IdSet {
         match self {
             Self::Cmp(_, _, exp)
-            | Self::LetSub(_, _, exp)
+            | Self::LetSub(_, exp)
             | Self::LetMatch(_, exp)
             | Self::Mem(exp) => exp.free_ids(),
             Self::Bool(_) | Self::Sub(..) | Self::Match(_) => IdSet::new(),

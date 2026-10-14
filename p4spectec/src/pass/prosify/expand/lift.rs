@@ -222,7 +222,7 @@ fn lift_from_exp_kind(
         il_ast::ExpKind::Un(_, _, exp_inner_sl)
         | il_ast::ExpKind::UpCast(_, exp_inner_sl)
         | il_ast::ExpKind::DownCast(_, exp_inner_sl)
-        | il_ast::ExpKind::Sub(exp_inner_sl, _, _)
+        | il_ast::ExpKind::Sub(exp_inner_sl, _)
         | il_ast::ExpKind::Match(exp_inner_sl, _)
         | il_ast::ExpKind::Len(exp_inner_sl)
         | il_ast::ExpKind::Dot(exp_inner_sl, _) => lift_from_exp(ids_used, nesting, exp_inner_sl),

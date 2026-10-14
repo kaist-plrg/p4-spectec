@@ -81,7 +81,7 @@ pub fn collect_exp(ctx: &Context, exp: &ast::Exp) -> Result<BEnv, AlgoError> {
             reject_noninvertible(exp_inner.span, "downcast operator", benv)
         }
         // Subtype test: not invertible
-        ast::ExpKind::Sub(exp_inner, _, _) => {
+        ast::ExpKind::Sub(exp_inner, _) => {
             let benv = collect_exp(ctx, exp_inner)?;
             reject_noninvertible(exp_inner.span, "subtype check operator", benv)
         }

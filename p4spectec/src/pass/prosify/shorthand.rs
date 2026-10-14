@@ -96,7 +96,7 @@ fn shorten_if_instr<Tier>(
     let binding = instr_if.iter_exps.is_empty()
         && find_leading_let_instr(&instr_if.block).is_some_and(|instr_let| {
             match &instr_if.exp.node.node {
-                ExpKind::Sub(exp, typ, _) => is_sub_binding(typ, exp, instr_let),
+                ExpKind::Sub(exp, typ) => is_sub_binding(typ, exp, instr_let),
                 ExpKind::Match(exp, pattern) => is_match_binding(pattern, exp, instr_let),
                 _ => false,
             }
@@ -110,9 +110,8 @@ fn shorten_if_instr<Tier>(
     let block = shorten_block(instr_if.block);
     let dangle = instr_if.dangle;
     match instr_if.exp.node.node {
-        ExpKind::Sub(exp_r, typ, subcheck) => pl::InstrKind::IfLetSub(pl::IfLetSubInstr {
-            typ,
-            subcheck,
+        ExpKind::Sub(exp_r, typ) => pl::InstrKind::IfLetSub(pl::IfLetSubInstr {
+            target: typ,
             exp_l,
             exp_r: *exp_r,
             block,
@@ -138,16 +137,14 @@ fn shorten_case_instr<Tier>(
         // Keep guards and bindings separate unless the guard proves the binding
         let binding =
             find_leading_let_instr(&case.block).is_some_and(|instr_let| match &case.guard {
-                pl::Guard::Sub(typ, _) => is_sub_binding(typ, &instr_case.exp, instr_let),
+                pl::Guard::Sub(typ) => is_sub_binding(typ, &instr_case.exp, instr_let),
                 pl::Guard::Match(pattern) => is_match_binding(pattern, &instr_case.exp, instr_let),
                 _ => false,
             });
         if binding {
             let exp_l = take_binding_exp(&mut case.block);
             case.guard = match &case.guard {
-                pl::Guard::Sub(typ, subcheck) => {
-                    pl::Guard::LetSub(typ.clone(), subcheck.clone(), exp_l)
-                }
+                pl::Guard::Sub(typ) => pl::Guard::LetSub(typ.clone(), exp_l),
                 pl::Guard::Match(pattern) => pl::Guard::LetMatch(pattern.clone(), exp_l),
                 _ => unreachable!("validated conditional binding"),
             };

@@ -46,7 +46,7 @@ fn exp_of_guard(exp_scrut: pl::Exp, guard: pl::Guard) -> pl::Exp {
         pl::Guard::Cmp(op, op_typ, exp_r) => {
             pl::ExpKind::Cmp(op, op_typ, Box::new(exp_scrut), Box::new(exp_r))
         }
-        pl::Guard::Sub(typ, subcheck) => pl::ExpKind::Sub(Box::new(exp_scrut), typ, subcheck),
+        pl::Guard::Sub(typ) => pl::ExpKind::Sub(Box::new(exp_scrut), typ),
         pl::Guard::Match(pattern) => pl::ExpKind::Match(Box::new(exp_scrut), pattern),
         pl::Guard::LetSub(..) | pl::Guard::LetMatch(..) => {
             unreachable!("conditional bindings are introduced after classification")

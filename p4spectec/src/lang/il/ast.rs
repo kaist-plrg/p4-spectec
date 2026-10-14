@@ -70,6 +70,9 @@ pub type FuncTyp = data::typ::FuncTyp;
 // Subtype checks
 
 /// The runtime part of a subtype check, after static subtyping is decided.
+///
+/// Preparation computes it from the tested expression's type,
+/// so only prepared syntax holds one.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Subcheck<P: Stage = Source> {
     /// Statically a subtype: nothing to check.
@@ -186,7 +189,7 @@ pub enum ExpKind<P: Stage = Source> {
     /// `exp as typ`
     DownCast(Box<Typ>, Box<Exp<P>>),
     /// `exp <: typ`
-    Sub(Box<Exp<P>>, Box<Typ>, Box<Subcheck<P>>),
+    Sub(Box<Exp<P>>, Box<P::SubTarget>),
     /// `exp matches pattern`
     Match(Box<Exp<P>>, Pattern<P>),
     /// `(` exp* `)`

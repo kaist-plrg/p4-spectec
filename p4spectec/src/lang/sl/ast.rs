@@ -161,8 +161,8 @@ pub enum Guard<P: Stage = Source> {
     Bool(bool),
     /// The scrutinee compares so with the expression.
     Cmp(CmpOp, OpTyp, Exp<P>),
-    /// The scrutinee has the type, by the given runtime check.
-    Sub(Typ, Box<il::ast::Subcheck<P>>),
+    /// The scrutinee has the type.
+    Sub(P::SubTarget),
     /// The scrutinee matches the pattern.
     Match(Pattern<P>),
     /// The scrutinee is an element of the list.

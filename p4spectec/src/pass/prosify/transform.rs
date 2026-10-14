@@ -136,9 +136,7 @@ fn prosify_exp(ctx: &Context, exp_sl: &sl::Exp) -> Result<pl::Exp, ProseError> {
         il::ExpKind::DownCast(typ, exp_inner_sl) => {
             prosify_downcast_exp(ctx, exp_sl, typ, exp_inner_sl)
         }
-        il::ExpKind::Sub(exp_inner_sl, typ, subcheck) => {
-            prosify_sub_exp(ctx, exp_sl, exp_inner_sl, typ, subcheck)
-        }
+        il::ExpKind::Sub(exp_inner_sl, typ) => prosify_sub_exp(ctx, exp_sl, exp_inner_sl, typ),
         il::ExpKind::Match(exp_inner_sl, pattern) => {
             prosify_match_exp(ctx, exp_sl, exp_inner_sl, pattern)
         }
@@ -271,11 +269,9 @@ fn prosify_sub_exp(
     exp_sl: &sl::Exp,
     exp_inner_sl: &sl::Exp,
     typ: &sl::Typ,
-    subcheck: &sl::Subcheck,
 ) -> Result<pl::Exp, ProseError> {
     let exp_inner_pl = prosify_exp(ctx, exp_inner_sl)?;
-    let exp_kind_pl =
-        pl::ExpKind::Sub(Box::new(exp_inner_pl), typ.clone(), Box::new(subcheck.clone()));
+    let exp_kind_pl = pl::ExpKind::Sub(Box::new(exp_inner_pl), typ.clone());
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.clone(),
@@ -796,7 +792,7 @@ fn prosify_guard(ctx: &Context, guard_sl: &sl::Guard) -> Result<pl::Guard, Prose
             let exp_pl = prosify_exp(ctx, exp_sl)?;
             pl::Guard::Cmp(*op, *op_typ, exp_pl)
         }
-        sl::Guard::Sub(typ, subcheck) => pl::Guard::Sub(typ.clone(), subcheck.clone()),
+        sl::Guard::Sub(typ) => pl::Guard::Sub(typ.clone()),
         sl::Guard::Match(pattern) => pl::Guard::Match(pattern.clone()),
         sl::Guard::Mem(exp_sl) => {
             let exp_pl = prosify_exp(ctx, exp_sl)?;

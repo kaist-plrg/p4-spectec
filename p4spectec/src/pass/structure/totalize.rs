@@ -21,7 +21,7 @@ fn find_variant_case_analysis(
     for case in cases {
         match &case.guard {
             // A subtype guard covers every constructor of the subtype
-            Guard::Sub(typ, _) => {
+            Guard::Sub(typ) => {
                 // Casify admits subtype guards only after proving variant overlap
                 let mixops_sub =
                     typ_as_variant(tdenv, typ)?.expect("case subtype guard has a variant type");

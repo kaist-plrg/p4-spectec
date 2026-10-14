@@ -123,7 +123,7 @@ impl Print for Exp {
                 printer.write_str(" as ")?;
                 typ.print(printer)
             }
-            ExpKind::Sub(exp, typ, _) => {
+            ExpKind::Sub(exp, typ) => {
                 exp.print(printer)?;
                 printer.write_str(" <: ")?;
                 typ.print(printer)

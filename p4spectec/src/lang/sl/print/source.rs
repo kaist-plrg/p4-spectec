@@ -256,7 +256,7 @@ impl Print for Guard {
                 exp.print(printer)?;
                 printer.write_char(')')
             }
-            Guard::Sub(typ, _) => {
+            Guard::Sub(typ) => {
                 printer.write_str("(% has type ")?;
                 typ.print(printer)?;
                 printer.write_char(')')

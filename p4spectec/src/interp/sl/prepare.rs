@@ -12,7 +12,13 @@ use crate::lang::{data::notation::MixopArena, hints::input, traits::eq::SyntaxEq
 
 use crate::lang::sl::{ast as source, prepared as ast};
 
-use crate::runtime::envs::interp::shared::{callable::Callable, frame::FrameLayout};
+use crate::runtime::{
+    envs::{
+        elab::TDEnv,
+        interp::shared::{callable::Callable, frame::FrameLayout},
+    },
+    typdef::TypeDef,
+};
 
 use crate::interp::shared::prepare::{Prepare, il};
 
@@ -24,19 +30,30 @@ pub struct PrepareContext<'a> {
     pub arena_mixop: &'a mut MixopArena,
     /// The callable's frame layout.
     pub layout: &'a mut FrameLayout,
+    /// Source type definitions, with the callable's type parameters.
+    pub tdenv: &'a TDEnv,
     /// The runner's instruction-selection mode.
     pub det: bool,
     pos: Position,
 }
 
 impl<'a> PrepareContext<'a> {
-    /// Borrows the notation arena and callable layout for preparation.
-    pub fn new(arena_mixop: &'a mut MixopArena, layout: &'a mut FrameLayout, det: bool) -> Self {
-        Self { arena_mixop, layout, det, pos: Position::Tail }
+    /// Borrows the arena, layout, and type definitions for preparation.
+    pub fn new(
+        arena_mixop: &'a mut MixopArena,
+        layout: &'a mut FrameLayout,
+        tdenv: &'a TDEnv,
+        det: bool,
+    ) -> Self {
+        Self { arena_mixop, layout, tdenv, det, pos: Position::Tail }
     }
 
     fn il(&mut self) -> il::PrepareContext<'_> {
-        il::PrepareContext { arena_mixop: &mut *self.arena_mixop, layout: &mut *self.layout }
+        il::PrepareContext {
+            arena_mixop: &mut *self.arena_mixop,
+            layout: &mut *self.layout,
+            tdenv: self.tdenv,
+        }
     }
 }
 
@@ -53,6 +70,7 @@ impl PrepareContext<'_> {
         PrepareContext {
             arena_mixop: &mut *self.arena_mixop,
             layout: &mut *self.layout,
+            tdenv: self.tdenv,
             det: self.det,
             pos,
         }
@@ -130,12 +148,18 @@ impl Prepare<PrepareContext<'_>> for source::CaseInstr {
     type Output = ast::CaseInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::CaseInstr {
-            exp: self.exp.prepare(&mut ctx.il()),
-            cases: self.cases.prepare(ctx),
-            totality: self.totality,
-            dangle: self.dangle,
-        }
+        let exp = self.exp.prepare(&mut ctx.il());
+        // Guards test the scrutinee, so their checks start from its type
+        let typ_scrut = crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span);
+        let cases = self
+            .cases
+            .into_iter()
+            .map(|case| ast::Case {
+                guard: ctx.prepare_guard(case.guard, &typ_scrut),
+                block: ctx.prepare_block(case.block),
+            })
+            .collect();
+        ast::CaseInstr { exp, cases, totality: self.totality, dangle: self.dangle }
     }
 }
 
@@ -266,16 +290,6 @@ impl Prepare<PrepareContext<'_>> for source::HoldCase {
                 ast::HoldCase::NotHold(ctx.prepare_block(block), dangle)
             }
         }
-    }
-}
-
-// - Case analysis
-
-impl Prepare<PrepareContext<'_>> for source::Case {
-    type Output = ast::Case;
-
-    fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::Case { guard: self.guard.prepare(ctx), block: ctx.prepare_block(self.block) }
     }
 }
 
@@ -442,6 +456,18 @@ impl Prepare<PrepareContext<'_>> for source::DefinedFunc {
     type Output = ast::DefinedFunc;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        // Type parameters are opaque types in the body
+        let mut tdenv = ctx.tdenv.clone();
+        for tparam in &self.tparams {
+            tdenv.insert(tparam.clone(), TypeDef::Parameter);
+        }
+        let ctx = &mut PrepareContext {
+            arena_mixop: &mut *ctx.arena_mixop,
+            layout: &mut *ctx.layout,
+            tdenv: &tdenv,
+            det: ctx.det,
+            pos: ctx.pos,
+        };
         // The otherwise block must still catch a failing main body
         let pos = if self.block_else.is_some() { Position::NonTail } else { Position::Tail };
         ast::DefinedFunc {
@@ -477,20 +503,17 @@ impl Prepare<PrepareContext<'_>> for source::ParamKind {
 
 // - Guards
 
-impl Prepare<PrepareContext<'_>> for source::Guard {
-    type Output = ast::Guard;
-
-    fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        match self {
+impl PrepareContext<'_> {
+    /// Prepares a guard on a scrutinee of type `typ_scrut`.
+    fn prepare_guard(&mut self, guard: source::Guard, typ_scrut: &source::Typ) -> ast::Guard {
+        match guard {
             source::Guard::Bool(value) => ast::Guard::Bool(value),
             source::Guard::Cmp(op, typ_op, exp) => {
-                ast::Guard::Cmp(op, typ_op, exp.prepare(&mut ctx.il()))
+                ast::Guard::Cmp(op, typ_op, exp.prepare(&mut self.il()))
             }
-            source::Guard::Sub(typ, subcheck) => {
-                ast::Guard::Sub(typ, subcheck.prepare(&mut ctx.il()))
-            }
-            source::Guard::Match(pattern) => ast::Guard::Match(pattern.prepare(&mut ctx.il())),
-            source::Guard::Mem(exp) => ast::Guard::Mem(exp.prepare(&mut ctx.il())),
+            source::Guard::Sub(typ) => ast::Guard::Sub(self.il().prepare_subcheck(typ_scrut, &typ)),
+            source::Guard::Match(pattern) => ast::Guard::Match(pattern.prepare(&mut self.il())),
+            source::Guard::Mem(exp) => ast::Guard::Mem(exp.prepare(&mut self.il())),
         }
     }
 }

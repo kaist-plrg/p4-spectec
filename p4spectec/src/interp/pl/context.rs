@@ -11,7 +11,10 @@ use crate::lang::data::{
 
 use crate::lang::pl::{ast as source, prepared as ast};
 
-use crate::runtime::envs::interp::shared::{TypeDef, frame::FrameLayout};
+use crate::runtime::envs::{
+    elab::TDEnv,
+    interp::shared::{TypeDef, frame::FrameLayout},
+};
 
 use crate::interp::shared::{
     context::{self as shared, FuncSignature},
@@ -39,28 +42,43 @@ impl SpecEnv {
     /// Panics if a global definition is repeated.
     pub fn load(arena_mixop: &mut MixopArena, spec: source::Spec) -> Result<Self, Error> {
         let mut loaded = Self::new();
-        let mut layout = FrameLayout::default();
-        let mut ctx = PrepareContext::new(arena_mixop, &mut layout);
 
-        // Move source definitions into the execution environments
+        // Load every type first: a callable body may name a type defined later
+        let mut tdenv = TDEnv::new();
+        let mut defs_callable = Vec::new();
         for def in spec {
             match def.node.node {
                 source::DefKind::Typ(typdef) => {
-                    // Types keep their definition body
-                    let (id, typdef) = match typdef {
-                        source::TypDef::Extern(typdef) => (typdef.id, TypeDef::Extern),
+                    // Keep the source body for subtype checks
+                    let (id, typdef_source, typdef) = match typdef {
+                        source::TypDef::Extern(typdef) => {
+                            (typdef.id, TypeDef::Extern, TypeDef::Extern)
+                        }
                         source::TypDef::Defined(typdef) => {
                             let source::DefinedTyp { id, tparams, def_typ } = *typdef;
-                            let def_typ = def_typ.prepare(ctx.arena_mixop);
+                            let typdef_source =
+                                TypeDef::Defined(tparams.clone(), Box::new(def_typ.clone()));
+                            let def_typ = def_typ.prepare(arena_mixop);
                             let def_typ = Box::new(def_typ);
                             let typdef = TypeDef::Defined(tparams, def_typ);
-                            (id, typdef)
+                            (id, typdef_source, typdef)
                         }
                     };
+                    tdenv.insert(id.clone(), typdef_source);
                     loaded.insert_typdef(id, typdef);
                 }
                 // Meta-variables carry no runtime state
                 source::DefKind::Var(_) => {}
+                // Callables wait for every type
+                def_kind => defs_callable.push(def_kind),
+            }
+        }
+
+        // Prepare callables against the complete type definitions
+        let mut layout = FrameLayout::default();
+        let mut ctx = PrepareContext::new(arena_mixop, &mut layout, &tdenv);
+        for def_kind in defs_callable {
+            match def_kind {
                 source::DefKind::Rel(rel) => {
                     // Relations are prepared into callables with a frame layout
                     let rel = rel.prepare(&mut ctx);
@@ -80,6 +98,10 @@ impl SpecEnv {
                         ast::MetaFuncDef::Defined(func) => &func.id,
                     };
                     loaded.insert_func(id.clone(), func);
+                }
+                // The first pass consumed types and meta-variables
+                source::DefKind::Typ(_) | source::DefKind::Var(_) => {
+                    unreachable!("types and meta-variables load first")
                 }
             }
         }

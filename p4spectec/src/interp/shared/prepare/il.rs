@@ -4,6 +4,8 @@
 //! Iterations register the outer variable `x*` for every iterated `x`,
 //! so evaluation can find its slot.
 //! Type definitions prepare their mixops without allocating frame slots.
+//! Subtype tests compute their runtime checks here,
+//! against source type definitions.
 
 use crate::lang::{
     common::Id,
@@ -15,7 +17,10 @@ use crate::lang::{
 
 use crate::lang::il::{ast as source, prepared::*};
 
-use crate::runtime::envs::interp::shared::frame::FrameLayout;
+use crate::runtime::{
+    envs::{elab::TDEnv, interp::shared::frame::FrameLayout},
+    ops::typ::optimize_sub_typ,
+};
 
 use super::{Prepare, mixop};
 
@@ -27,9 +32,18 @@ pub struct PrepareContext<'a> {
     pub arena_mixop: &'a mut MixopArena,
     /// The callable's frame layout.
     pub layout: &'a mut FrameLayout,
+    /// Source type definitions, with the callable's type parameters.
+    pub tdenv: &'a TDEnv,
 }
 
 impl PrepareContext<'_> {
+    /// Computes the runtime check that a `typ_source` value has `typ_target`.
+    pub(crate) fn prepare_subcheck(&mut self, typ_source: &Typ, typ_target: &Typ) -> Subcheck {
+        let subcheck = optimize_sub_typ(self.tdenv, typ_source, typ_target)
+            .expect("elaboration accepted the subtype test");
+        subcheck.prepare(self)
+    }
+
     /// Registers the outer variable of every iterated variable.
     fn prepare_outer_vars(&mut self, vars: &[VarSlot], iter: Iter) {
         for var in vars {
@@ -145,8 +159,12 @@ impl Prepare<PrepareContext<'_>> for source::ExpKind {
             source::ExpKind::DownCast(typ_inner, exp_inner) => {
                 ExpKind::DownCast(typ_inner, exp_inner.prepare(ctx))
             }
-            source::ExpKind::Sub(exp_inner, typ_inner, check_inner) => {
-                ExpKind::Sub(exp_inner.prepare(ctx), typ_inner, check_inner.prepare(ctx))
+            source::ExpKind::Sub(exp_inner, typ_inner) => {
+                // The check starts from the tested expression's type
+                let typ_source =
+                    crate::phrase!(node: exp_inner.note.as_ref().clone(), span: exp_inner.span);
+                let subcheck = ctx.prepare_subcheck(&typ_source, &typ_inner);
+                ExpKind::Sub(exp_inner.prepare(ctx), Box::new(subcheck))
             }
             source::ExpKind::Match(exp_inner, pattern_inner) => {
                 ExpKind::Match(exp_inner.prepare(ctx), pattern_inner.prepare(ctx))

@@ -65,6 +65,15 @@ pub struct PatternRef<'a> {
     pattern: &'a Pattern,
 }
 
+/// Borrows a subtype check and its notation arena for printing.
+#[derive(Clone, Copy, Debug)]
+pub struct SubcheckRef<'a> {
+    /// The arena that owns the notation handles.
+    arena_mixop: &'a MixopArena,
+    /// The subtype check to render.
+    subcheck: &'a Subcheck,
+}
+
 impl Exp {
     /// Borrows this expression with its notation arena for printing.
     pub fn view<'a>(&'a self, arena_mixop: &'a MixopArena) -> ExpRef<'a> {
@@ -104,6 +113,13 @@ impl Pattern {
     /// Borrows this pattern with its notation arena for printing.
     pub fn view<'a>(&'a self, arena_mixop: &'a MixopArena) -> PatternRef<'a> {
         PatternRef { arena_mixop, pattern: self }
+    }
+}
+
+impl Subcheck {
+    /// Borrows this subtype check with its notation arena for printing.
+    pub fn view<'a>(&'a self, arena_mixop: &'a MixopArena) -> SubcheckRef<'a> {
+        SubcheckRef { arena_mixop, subcheck: self }
     }
 }
 
@@ -147,10 +163,10 @@ impl Print for ExpRef<'_> {
                 printer.write_str(" as ")?;
                 typ.print(printer)
             }
-            ExpKind::Sub(exp, typ, _) => {
+            ExpKind::Sub(exp, subcheck) => {
                 exp.view(arena_mixop).print(printer)?;
                 printer.write_str(" <: ")?;
-                typ.print(printer)
+                subcheck.view(arena_mixop).print(printer)
             }
             ExpKind::Match(exp, pattern) => {
                 exp.view(arena_mixop).print(printer)?;
@@ -347,6 +363,50 @@ impl Print for PatternRef<'_> {
             Pattern::List(ListPattern::Nil) => printer.write_str("[]"),
             Pattern::Opt(OptPattern::Some) => printer.write_str("(_)"),
             Pattern::Opt(OptPattern::None) => printer.write_str("()"),
+        }
+    }
+}
+
+// - Subtype checks
+
+impl Print for SubcheckRef<'_> {
+    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
+        let arena_mixop = self.arena_mixop;
+        match self.subcheck {
+            // Any value passes
+            Subcheck::Skip => printer.write_char('_'),
+            // A single case reads bare, alternatives are parenthesized
+            Subcheck::Mixop(mixops) => match mixops.as_slice() {
+                [mixop] => mixop.print_with(arena_mixop, printer, |_| "%"),
+                _ => {
+                    printer.write_char('(')?;
+                    for (idx, mixop) in mixops.iter().enumerate() {
+                        if idx > 0 {
+                            printer.write_str(" | ")?;
+                        }
+                        mixop.print_with(arena_mixop, printer, |_| "%")?;
+                    }
+                    printer.write_char(')')
+                }
+            },
+            // Components check positionally
+            Subcheck::Tuple(subchecks) => {
+                printer.write_char('(')?;
+                for (idx, subcheck) in subchecks.iter().enumerate() {
+                    if idx > 0 {
+                        printer.write_str(", ")?;
+                    }
+                    subcheck.view(arena_mixop).print(printer)?;
+                }
+                printer.write_char(')')
+            }
+            // Elements check under the iteration
+            Subcheck::Iter(iter, subcheck) => {
+                subcheck.view(arena_mixop).print(printer)?;
+                iter.print(printer)
+            }
+            // A full membership test names its type
+            Subcheck::Recurse(typ) => typ.print(printer),
         }
     }
 }

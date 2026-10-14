@@ -133,11 +133,11 @@ impl Print for ExpRef<'_> {
                 typ.print(printer)?;
                 printer.write_char(')')
             }
-            ExpKind::Sub(exp, typ, _) => {
+            ExpKind::Sub(exp, subcheck) => {
                 printer.write_char('(')?;
                 exp.view(arena_mixop).print(printer)?;
                 printer.write_str(" has type ")?;
-                typ.print(printer)?;
+                subcheck.view(arena_mixop).print(printer)?;
                 printer.write_char(')')
             }
             ExpKind::Match(exp, pattern) => {

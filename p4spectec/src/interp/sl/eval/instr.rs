@@ -301,7 +301,7 @@ fn eval_guard<Iface: Interface, Ext: Extern>(
             ops::cmpop(runner_ctx.arena(), span, op, value, value_r)
         }
         // Subtype check
-        ast::Guard::Sub(_, check) => ops::sub(runner_ctx.arena(), ctx, span, check, value),
+        ast::Guard::Sub(subcheck) => ops::sub(runner_ctx.arena(), ctx, span, subcheck, value),
         // Pattern match
         ast::Guard::Match(pattern) => {
             ok!(ops::r#match(runner_ctx.arena(), pattern, value))

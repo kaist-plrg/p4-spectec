@@ -434,7 +434,7 @@ fn collect_exp(exp_al: &ast::Exp) -> Vec<ast::Prem> {
         ast::ExpKind::Un(_, _, exp_inner_al)
         | ast::ExpKind::UpCast(_, exp_inner_al)
         | ast::ExpKind::DownCast(_, exp_inner_al)
-        | ast::ExpKind::Sub(exp_inner_al, _, _)
+        | ast::ExpKind::Sub(exp_inner_al, _)
         | ast::ExpKind::Match(exp_inner_al, _)
         | ast::ExpKind::Len(exp_inner_al)
         | ast::ExpKind::Dot(exp_inner_al, _) => collect_exp(exp_inner_al),

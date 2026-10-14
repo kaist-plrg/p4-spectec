@@ -35,8 +35,8 @@ use crate::diagnostic::Report;
 
 use crate::runtime::{
     ops::typ::{
-        Theta, equiv_func_typ, equiv_typ, expand_typ, optimize_sub_typ, sub_typ, subst_not_typ,
-        subst_params, subst_typ, subst_typs,
+        Theta, equiv_func_typ, equiv_typ, expand_typ, sub_typ, subst_not_typ, subst_params,
+        subst_typ, subst_typs,
     },
     typdef::TypeDef,
 };
@@ -1281,13 +1281,8 @@ fn infer_sub_exp(
             "subtype expression compares incomparable types",
         ));
     }
-    // Precompute the runtime check the test performs
-    let check =
-        unwrap_from_result!(optimize_sub_typ(&ctx.tdenv, &typ_source_il, &typ_target_il).map_err(
-            |error| error::typ::type_operation_invalid("cannot optimize subtype expression", error)
-        ));
     let exp_il = note_phrase! {
-        node: il::ExpKind::Sub(Box::new(exp_il), Box::new(typ_target_il), Box::new(check)),
+        node: il::ExpKind::Sub(Box::new(exp_il), Box::new(typ_target_il)),
         note: il::TypKind::Bool,
         span: *span,
     };
