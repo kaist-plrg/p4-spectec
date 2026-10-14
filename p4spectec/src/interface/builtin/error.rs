@@ -5,7 +5,10 @@
 
 use thiserror::Error;
 
-use crate::lang::{common::prim::num::NumericError, data::value::ValueError};
+use crate::lang::{
+    common::prim::num::NumericError,
+    data::{notation::flat::parse::ParseMixopError, value::ValueError},
+};
 
 use crate::diagnostic::{Diagnostic, Report, Severity};
 
@@ -83,9 +86,8 @@ impl From<P4UnparseError> for BuiltinError {
     }
 }
 
-impl From<crate::lang::data::notation::flat::parse::ParseMixopError> for BuiltinError {
-    fn from(error: crate::lang::data::notation::flat::parse::ParseMixopError) -> Self {
-        use crate::lang::data::notation::flat::parse::ParseMixopError;
+impl From<ParseMixopError> for BuiltinError {
+    fn from(error: ParseMixopError) -> Self {
         match error {
             ParseMixopError::Syntax(report) => Self::from(report),
             ParseMixopError::Intern(error) => Self::from(ValueError::from(error)),

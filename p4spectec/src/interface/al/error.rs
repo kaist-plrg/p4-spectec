@@ -9,9 +9,10 @@ use crate::{
         common::source::Span,
         data::{
             arena::Arena,
-            notation,
+            notation::{self, flat::parse::ParseMixopError},
             value::{ValueError, flat::Value},
         },
+        hints::input::InputError,
         traits::print::Print,
     },
 };
@@ -32,7 +33,7 @@ pub struct Error {
 pub enum ErrorKind {
     /// Relation input positions are invalid.
     #[error(transparent)]
-    Input(#[from] crate::lang::hints::input::InputError),
+    Input(#[from] InputError),
     /// A value projection or arena allocation failed.
     #[error(transparent)]
     Value(#[from] ValueError),
@@ -109,19 +110,17 @@ impl From<Box<Report>> for Error {
     }
 }
 
-impl From<crate::lang::hints::input::InputError> for Error {
-    fn from(error: crate::lang::hints::input::InputError) -> Self {
+impl From<InputError> for Error {
+    fn from(error: InputError) -> Self {
         Self { span: Span::default(), kind: error.into() }
     }
 }
 
-impl From<notation::flat::parse::ParseMixopError> for Error {
-    fn from(error: notation::flat::parse::ParseMixopError) -> Self {
+impl From<ParseMixopError> for Error {
+    fn from(error: ParseMixopError) -> Self {
         match error {
-            notation::flat::parse::ParseMixopError::Syntax(error) => Self::from(error),
-            notation::flat::parse::ParseMixopError::Intern(error) => {
-                Self::from(ValueError::from(error))
-            }
+            ParseMixopError::Syntax(error) => Self::from(error),
+            ParseMixopError::Intern(error) => Self::from(ValueError::from(error)),
         }
     }
 }
