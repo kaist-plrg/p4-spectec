@@ -1,5 +1,4 @@
 SPEC = bin/p4spectec
-METACIRC = bin/metacirc
 RUST_DIR = p4spectec
 # Resolve an override before entering the Rust crate or documentation directories
 override CARGO_TARGET_DIR := $(if $(CARGO_TARGET_DIR),$(CARGO_TARGET_DIR),$(RUST_DIR)/target)
@@ -13,19 +12,13 @@ export CARGO_TARGET_DIR
 # Recursive Rust tests still use the caller's parallel job count
 .NOTPARALLEL:
 
-.PHONY: build release debug metacirc fmt fmt-check lint rustdoc clean promote
+.PHONY: build release debug fmt fmt-check lint rustdoc clean promote
 
 build release debug:
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 	mkdir -p $(dir $(SPEC))
 	rm -f ./$(SPEC)
 	cp "$(CARGO_TARGET_DIR)/$(if $(filter debug,$@),debug,release)/p4spectec" ./$(SPEC)
-
-metacirc:
-	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
-	mkdir -p $(dir $(METACIRC))
-	rm -f ./$(METACIRC)
-	cp "$(CARGO_TARGET_DIR)/release/metacirc" ./$(METACIRC)
 
 fmt fmt-check lint rustdoc:
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
@@ -40,9 +33,9 @@ TEST_TARGETS := test test-expected test-elab test-algo test-structure test-prose
 $(TEST_TARGETS):
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
-.PHONY: test-metacirc
-test-metacirc:
-	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
+.PHONY: metacirc test-metacirc
+metacirc test-metacirc:
+	$(MAKE) -f METASQ.mk CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
 promote: test-promote
 
@@ -59,5 +52,6 @@ p4spec-release-html:
 	$(MAKE) -C docs/p4 CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" release-html
 
 clean:
-	rm -f ./$(SPEC) ./$(METACIRC)
+	rm -f ./$(SPEC)
+	$(MAKE) -f METASQ.mk clean
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" clean
