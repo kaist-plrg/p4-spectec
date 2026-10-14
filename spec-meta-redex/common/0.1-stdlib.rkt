@@ -1,24 +1,17 @@
 #lang racket/base
-;; spec-meta/common/0-stdlib.watsup, and the Racket helpers that rules use
-;; for texts, lists, and debug output.
+;; The parts of spec-meta/common/0-stdlib.watsup that the port uses, and the
+;; Racket helpers that rules use for texts, lists, and debug output.
 ;;
 ;; Type parameters are dropped: `any` stands for them in contracts.
 
 (require racket/list
          redex/reduction-semantics)
 (provide stdlib
-         ite
-         opt-as-seq-
-         exists-
          forall-
          repeat-
-         rev-
-         assoc-
          transpose-
-         empty-set
          empty-map
          find-map
-         find-maps
          add-map
          adds-map
          text-len
@@ -39,70 +32,25 @@
   (nat n ::= natural)
   (text t ::= string)
 
-  ;; Sets and maps, as lists and association lists
-  (set ::= (any ...))
+  ;; Maps, as association lists
   (pair ::= (any any))
   (map ::= (pair ...)))
-
-;;
-;; General bool functions
-;;
-
-(define-metafunction stdlib
-  ite : bool any any -> any
-  [(ite #t any_t any_f) any_t]
-  [(ite #f any_t any_f) any_f])
-
-;;
-;; General option functions
-;;
-
-(define-metafunction stdlib
-  opt-as-seq- : (any ...) -> (any ...)
-  [(opt-as-seq- ()) ()]
-  [(opt-as-seq- (any)) (any)])
 
 ;;
 ;; General sequence functions
 ;;
 
 (define-metafunction stdlib
-  exists- : (bool ...) -> bool
-  [(exists- ()) #f]
-  [(exists- (b_h b_t ...)) ,(or (term b_h) (term (exists- (b_t ...))))])
-
-(define-metafunction stdlib
   forall- : (bool ...) -> bool
-  [(forall- ()) #t]
-  [(forall- (b_h b_t ...)) ,(and (term b_h) (term (forall- (b_t ...))))])
+  [(forall- (b ...)) ,(andmap values (term (b ...)))])
 
 (define-metafunction stdlib
   repeat- : any nat -> (any ...)
-  [(repeat- any 0) ()]
-  [(repeat- any n) (any any_r ...)
-   (side-condition (not (= (term n) 0)))
-   (where (any_r ...) (repeat- any ,(- (term n) 1)))])
-
-(define-metafunction stdlib
-  rev- : (any ...) -> (any ...)
-  [(rev- (any ...)) ,(reverse (term (any ...)))])
-
-(define-metafunction stdlib
-  assoc- : any ((any any) ...) -> () ∨ (any)
-  [(assoc- any_k ((any_x any_y) ...))
-   ,(lookup (term ((any_x any_y) ...)) (term any_k))])
+  [(repeat- any n) ,(make-list (term n) (term any))])
 
 (define-metafunction stdlib
   transpose- : ((any ...) ...) -> ((any ...) ...)
   [(transpose- ((any ...) ...)) ,(transpose (term ((any ...) ...)))])
-
-;;
-;; General set functions
-;;
-
-(define-metafunction stdlib
-  empty-set : -> set
-  [(empty-set) ()])
 
 ;;
 ;; General map functions
@@ -115,10 +63,6 @@
 (define-metafunction stdlib
   find-map : map any -> () ∨ (any)
   [(find-map map any_k) ,(lookup (term map) (term any_k))])
-
-(define-metafunction stdlib
-  find-maps : (map ...) any -> () ∨ (any)
-  [(find-maps (map ...) any_k) ,(lookups (term (map ...)) (term any_k))])
 
 (define-metafunction stdlib
   add-map : map any any -> map
@@ -138,13 +82,6 @@
   (cond
     [(assoc k pairs) => (λ (pair) (list (cadr pair)))]
     [else '()]))
-
-;; The value of key k in the first of maps that has it.
-(define (lookups maps k)
-  (or (for/or ([pairs (in-list maps)])
-        (define v (lookup pairs k))
-        (and (pair? v) v))
-      '()))
 
 ;; Replaces the first pair with key k where it stands, or appends one.
 (define (update pairs k v)

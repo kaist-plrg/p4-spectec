@@ -188,8 +188,8 @@
    ;;; Membership evaluation rules
 
    ;; rule Eval_exp/mem
-   (--> (MEM (OK val_e) (OK (LIST (val ...))))
-        (OK (BOOL (exists- ((cmpop-poly EQ val_e val) ...))))
+   (--> (MEM (OK val_e) (OK (LIST (val ...)))) (OK (BOOL b))
+        (where b ,(and (member (term val_e) (term (val ...))) #t))
         "eval-exp/mem")
    (--> (MEM (OK val_e) (OK val)) FAIL
         ;; otherwise: not a list
@@ -221,12 +221,12 @@
    (--> (eval-path val_b (DOT path atom))
         (eval-path/dot (eval-path val_b path) atom)
         "eval-path/dot")
-   (--> (eval-path/dot (OK (STR ((atom_field val_field) ...))) atom) (OK val)
-        (where (val) (assoc- atom ((atom_field val_field) ...)))
+   (--> (eval-path/dot (OK (STR (valfield ...))) atom) (OK val)
+        (where (atom val) ,(assoc (term atom) (term (valfield ...))))
         "eval-path/dot/field")
-   (--> (eval-path/dot (OK (STR ((atom_field val_field) ...))) atom) FAIL
+   (--> (eval-path/dot (OK (STR (valfield ...))) atom) FAIL
         ;; otherwise: no field atom
-        (where () (assoc- atom ((atom_field val_field) ...)))
+        (where #f ,(assoc (term atom) (term (valfield ...))))
         "eval-path/dot/field/fail")
    (--> (eval-path/dot (OK val) atom) FAIL
         ;; otherwise: not a struct

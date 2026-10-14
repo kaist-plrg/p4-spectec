@@ -166,12 +166,11 @@
    (subtyp tdenv typ_subst val)
    (where theta ((tparam targ) ...))
    (judgment-holds (subst-typ theta typ typ_subst))]
-  [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT ((mixop_case (typ_case ...)) ...))))
+  [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT (typcase ...))))
                (targ ..._n) (INJ (mixop (val ..._m))))
    (forall- ((subtyp tdenv typ_case_found_subst val) ...))
    (where theta ((tparam targ) ...))
-   (side-condition (member (term mixop) (term (mixop_case ...))))
-   (where ((typ_case_found ..._m)) (assoc- mixop ((mixop_case (typ_case ...)) ...)))
+   (where (mixop (typ_case_found ..._m)) ,(assoc (term mixop) (term (typcase ...))))
    (judgment-holds (subst-typs theta (typ_case_found ...) (typ_case_found_subst ...)))]
   [(subtyp/var tdenv ((DEF (tparam ..._n) (STRUCT ((atom typ_field) ...))))
                (targ ..._n) (STR ((atom val_field) ...)))
@@ -182,26 +181,24 @@
    ;; otherwise: the substitution fails
    (where theta ((tparam targ) ...))
    (side-condition (not (judgment-holds (subst-typ theta typ any))))]
-  [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT ((mixop_case (typ_case ...)) ...))))
+  [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT (typcase ...))))
                (targ ..._n) (INJ (mixop (val ...))))
    #f
    ;; otherwise: mixop is not a case
-   (side-condition (not (member (term mixop) (term (mixop_case ...)))))]
-  [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT ((mixop_case (typ_case ...)) ...))))
+   (where #f ,(assoc (term mixop) (term (typcase ...))))]
+  [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT (typcase ...))))
                (targ ..._n) (INJ (mixop (val ...))))
    #f
    ;; otherwise: the case's types are not as many as val*
-   (side-condition (member (term mixop) (term (mixop_case ...))))
-   (where ((typ_case_found ...)) (assoc- mixop ((mixop_case (typ_case ...)) ...)))
+   (where (mixop (typ_case_found ...)) ,(assoc (term mixop) (term (typcase ...))))
    (side-condition
     (not (= (length (term (typ_case_found ...))) (length (term (val ...))))))]
-  [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT ((mixop_case (typ_case ...)) ...))))
+  [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT (typcase ...))))
                (targ ..._n) (INJ (mixop (val ..._m))))
    #f
    ;; otherwise: the case's types fail to substitute
    (where theta ((tparam targ) ...))
-   (side-condition (member (term mixop) (term (mixop_case ...))))
-   (where ((typ_case_found ..._m)) (assoc- mixop ((mixop_case (typ_case ...)) ...)))
+   (where (mixop (typ_case_found ..._m)) ,(assoc (term mixop) (term (typcase ...))))
    (side-condition (not (judgment-holds (subst-typs theta (typ_case_found ...) any))))]
   [(subtyp/var tdenv ((DEF (tparam ..._n) (STRUCT ((atom typ_field) ...))))
                (targ ..._n) (STR ((atom val_field) ...)))
