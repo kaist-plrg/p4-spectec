@@ -46,7 +46,7 @@ impl Options {
 
 #[derive(Args)]
 struct RunArgs {
-    /// Tower configuration, ordered from native boot to target.
+    /// Tower configuration, ordered from native base to target.
     config: PathBuf,
     /// Program source paths in processing order; P4 requires exactly one.
     #[arg(short = 'p', required = true)]

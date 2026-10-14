@@ -46,7 +46,7 @@ Run it with the supplied AL tower:
 }
 ```
 
-The single level is both target and native boot. Its `Entry` interprets the
+The single level is both target and native base. Its `Entry` interprets the
 encoded AL script. A separate helper resolves builtin calls using the input
 script's own definitions; other terminal host operations are unsupported.
 Repeat `-p` for ordered specification source paths.
@@ -77,10 +77,10 @@ declarations. A P4 target takes exactly one `-p` path.
 
 ## Tower configuration
 
-Levels are ordered from native boot through intermediates to target.
-A single level supplies both target and boot. In a longer tower, every level
+Levels are ordered from native base through intermediates to target.
+A single level supplies both target and base. In a longer tower, every level
 before the target must have `"interface": "al"`; the target may use `al` or `p4`.
-`mode` selects the boot's native backend (`sl` or `al`). Intermediate and target
+`mode` selects the base's native backend (`sl` or `al`). Intermediate and target
 host helpers use SL; a single-level tower uses the configured mode throughout.
 
 Each `specdir` accepts a specification file or directory and is resolved
@@ -93,13 +93,13 @@ before the target. Names such as `al-al.json` and `al-al-p4.json` describe
 these additional configurations; only `al.json` and `al-p4.json` are supplied.
 
 For a multi-level tower, a synthetic `main` is added to the target specification
-and each intermediate script, from target toward boot. It calls that level's
+and each intermediate script, from target toward base. It calls that level's
 single-input entry relation with the encoded input and returns `"pass"` after
-success. These scripts must not already define `main`. The boot is executed
+success. These scripts must not already define `main`. The base is executed
 natively rather than encoded as another input script.
 
 The command accepts `--no-cache`, `--det`, and `--guard`. It prints `passed`
-only after the configured boot entry succeeds; diagnostics cause a nonzero
+only after the configured base entry succeeds; diagnostics cause a nonzero
 exit code. All runners share one arena. Host calls decode one representation
 layer and encode their results, preserving effects. Native mismatch becomes
 meta `FAIL`; fatal errors remain diagnostics.

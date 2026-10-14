@@ -1,8 +1,8 @@
-//! Native boot and the host-call layers it owns
+//! Interpreter towers and their host-call layers
 //!
-//! Only the boot exposes program execution.
+//! The tower exposes program execution through its native entry point.
 //! Target and intermediate helpers dispatch host calls toward the input program.
-//! A single-level tower executes its target directly as its boot.
+//! A single-level tower executes its target directly as its base.
 
 use super::externs::{RelayExtern, TerminalExtern};
 use crate::{
@@ -16,12 +16,12 @@ use crate::{
 };
 
 /// The native execution entry point.
-pub(super) enum Boot {
-    Target(Target),
-    Meta(Runner<AlInterface, RelayExtern>),
+pub(super) enum Tower {
+    Direct(Target),
+    Nested(Runner<AlInterface, RelayExtern>),
 }
 
-/// A host-call destination beneath the boot.
+/// A host-call destination beneath the base.
 pub(super) enum Layer {
     Target(Target),
     Interm(Runner<AlInterface, RelayExtern>),
@@ -33,8 +33,8 @@ pub(super) enum Target {
     P4(Runner<P4Interface, Dummy>),
 }
 
-impl Boot {
-    /// Enters the boot with the prepared input value.
+impl Tower {
+    /// Enters the tower with the prepared input value.
     pub fn eval_program(
         &mut self,
         arena: &mut Arena,
@@ -42,9 +42,9 @@ impl Boot {
         program: Value,
     ) -> Eval<Vec<Value>> {
         match self {
-            Self::Target(Target::Al(runner)) => runner.eval_program(arena, name, program),
-            Self::Target(Target::P4(runner)) => runner.eval_program(arena, name, program),
-            Self::Meta(runner) => runner.eval_program(arena, name, program),
+            Self::Direct(Target::Al(runner)) => runner.eval_program(arena, name, program),
+            Self::Direct(Target::P4(runner)) => runner.eval_program(arena, name, program),
+            Self::Nested(runner) => runner.eval_program(arena, name, program),
         }
     }
 }

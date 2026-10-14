@@ -16,4 +16,5 @@ pub mod fresh;
 pub mod prepared;
 pub mod print;
 pub mod stage;
+pub mod value;
 pub mod var;

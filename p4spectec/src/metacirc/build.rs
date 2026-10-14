@@ -1,16 +1,16 @@
-//! Preparation of target, intermediate, and boot specifications
+//! Preparation of target, intermediate, and base specifications
 //!
 //! Lowered specifications stay paired with their configured entry and interface.
-//! Host helpers are assembled from target toward boot;
+//! Host helpers are assembled from target toward base;
 //! patched scripts carry each inner entry to the interpreter consuming them.
 
 use super::{
     Config, Mode, Result,
     config::{Interface, Level, Levels},
-    error,
+    error::input_invalid,
     externs::{RelayExtern, TerminalExtern},
     patch,
-    tower::{Boot, Layer, Target},
+    tower::{Layer, Target, Tower},
 };
 use crate::{
     interface::{self, al::encode::Encode},
@@ -46,28 +46,28 @@ impl LevelSpec {
 
 /// Prepared specifications with explicit execution roles.
 pub(super) enum TowerSpecs {
-    Single(LevelSpec),
-    Layered { boot: LevelSpec, interms: Vec<LevelSpec>, target: LevelSpec },
+    Direct(LevelSpec),
+    Nested { base: LevelSpec, interms: Vec<LevelSpec>, target: LevelSpec },
 }
 
 impl TowerSpecs {
     /// Lowers each specification exactly once in its named role.
     pub fn new(config: &Config) -> Result<Self> {
         match &config.levels {
-            Levels::Single(target) => Ok(Self::Single(LevelSpec::new(target)?)),
-            Levels::Layered { boot, interms, target } => Ok(Self::Layered {
-                boot: LevelSpec::new(boot)?,
+            Levels::Direct(target) => Ok(Self::Direct(LevelSpec::new(target)?)),
+            Levels::Nested { base, interms, target } => Ok(Self::Nested {
+                base: LevelSpec::new(base)?,
                 interms: interms.iter().map(LevelSpec::new).collect::<Result<_>>()?,
                 target: LevelSpec::new(target)?,
             }),
         }
     }
 
-    /// Selects the relation entered by the native boot.
+    /// Selects the relation entered by the native base.
     pub fn relation(&self) -> &str {
         match self {
-            Self::Single(target) => &target.level.rel,
-            Self::Layered { boot, .. } => &boot.level.rel,
+            Self::Direct(target) => &target.level.rel,
+            Self::Nested { base, .. } => &base.level.rel,
         }
     }
 }
@@ -112,7 +112,7 @@ fn build_target(
         Interface::P4 => {
             // P4 parsing consumes one translation unit and its include paths
             if paths_program.len() != 1 {
-                return Err(error("a P4 target requires exactly one program path"));
+                return Err(input_invalid("a P4 target requires exactly one program path"));
             }
             let interface_target = interface::p4(&spec_target);
             let mut runner = Runner::new(arena, spec_target, options, interface_target, Dummy)?;
@@ -136,20 +136,20 @@ fn build_interm(
     Ok(Layer::Interm(Runner::new(arena, spec, options, interface::al(), external)?))
 }
 
-/// Prepares the native boot with the requested interpreter mode.
-fn build_boot(
+/// Prepares the native base with the requested interpreter mode.
+fn build_base(
     arena: &mut Arena,
-    boot: &LevelSpec,
+    base: &LevelSpec,
     mode: Mode,
     layer: Layer,
     options: runner::Config,
-) -> Result<Boot> {
-    let spec = native(boot.spec_al.clone(), mode)?;
+) -> Result<Tower> {
+    let spec = native(base.spec_al.clone(), mode)?;
     let external = RelayExtern { runner_next: Box::new(layer) };
-    Ok(Boot::Meta(Runner::new(arena, spec, options, interface::al(), external)?))
+    Ok(Tower::Nested(Runner::new(arena, spec, options, interface::al(), external)?))
 }
 
-/// Assembles the host chain and encodes the input for its native boot.
+/// Assembles the host chain and encodes the input for its native base.
 pub(super) fn tower(
     arena: &mut Arena,
     specs: &TowerSpecs,
@@ -157,15 +157,15 @@ pub(super) fn tower(
     includes: &[PathBuf],
     paths_program: &[PathBuf],
     options: runner::Config,
-) -> Result<(Boot, Value)> {
+) -> Result<(Tower, Value)> {
     match specs {
-        TowerSpecs::Single(target) => {
-            // The target itself is the boot, with no synthetic entry layer
+        TowerSpecs::Direct(target) => {
+            // The target itself is the base, with no synthetic entry layer
             let (target, value) =
                 build_target(arena, target, mode, includes, paths_program, options)?;
-            Ok((Boot::Target(target), value))
+            Ok((Tower::Direct(target), value))
         }
-        TowerSpecs::Layered { boot, interms, target } => {
+        TowerSpecs::Nested { base, interms, target } => {
             // Prepare and encode the innermost target first
             let (runner_target, value) =
                 build_target(arena, target, Mode::Sl, includes, paths_program, options)?;
@@ -176,8 +176,8 @@ pub(super) fn tower(
                 layer = build_interm(arena, interm, layer, options)?;
                 value = interm.encode(arena, value)?;
             }
-            // The boot executes natively and is never encoded as an input script
-            Ok((build_boot(arena, boot, mode, layer, options)?, value))
+            // The base executes natively and is never encoded as an input script
+            Ok((build_base(arena, base, mode, layer, options)?, value))
         }
     }
 }

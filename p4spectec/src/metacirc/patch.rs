@@ -5,75 +5,17 @@
 //! Relation notation, input positions, and output types come from the source AST;
 //! literal expressions retain the parsed program's types and spans.
 
-use super::{Result, error};
+use super::{Result, error::entry_invalid};
 use crate::{
     lang::{
         al::ast as al,
         common::source::Span,
-        data::{
-            arena::Arena,
-            notation::tree::Mixfix,
-            value::flat::{Value, ValueKind},
-        },
+        data::{arena::Arena, notation::tree::Mixfix, value::flat::Value},
         hints::input,
     },
     note_phrase, phrase,
 };
 use std::rc::Rc;
-
-/// Converts a runtime value into an AL literal expression.
-fn value_as_exp(arena: &Arena, value: Value) -> Result<al::Exp> {
-    let span = *arena.value.span(value.span);
-    let typ = arena.value.typ(value.note).clone();
-    let exp_kind = match arena.value.kind(value.node) {
-        ValueKind::Bool(value) => al::ExpKind::Bool(*value),
-        ValueKind::Num(num) => al::ExpKind::Num(num.clone()),
-        ValueKind::Text(text) => al::ExpKind::Text(text.clone()),
-        ValueKind::Struct(value_fields) => al::ExpKind::Str(
-            value_fields
-                .iter()
-                .map(|value_field| {
-                    Ok(al::ExpField {
-                        atom: value_field.atom.clone(),
-                        exp: value_as_exp(arena, value_field.value)?,
-                    })
-                })
-                .collect::<Result<_>>()?,
-        ),
-        ValueKind::Case(value_case) => {
-            let exps = value_case
-                .args()
-                .iter()
-                .map(|value| value_as_exp(arena, *value))
-                .collect::<Result<_>>()?;
-            let mixop = value_case.mixop().into_tree(&arena.mixop);
-            al::ExpKind::Case(Box::new(
-                Mixfix::new(Rc::new(mixop), exps).map_err(|cause| error(cause.to_string()))?,
-            ))
-        }
-        ValueKind::Tuple(values) => al::ExpKind::Tuple(
-            values
-                .iter()
-                .map(|value| value_as_exp(arena, *value))
-                .collect::<Result<_>>()?,
-        ),
-        ValueKind::Opt(value) => al::ExpKind::Opt(
-            value
-                .map(|value| value_as_exp(arena, value).map(Box::new))
-                .transpose()?,
-        ),
-        ValueKind::List(values) => al::ExpKind::List(
-            values
-                .iter()
-                .map(|value| value_as_exp(arena, *value))
-                .collect::<Result<_>>()?,
-        ),
-        ValueKind::Func(_) | ValueKind::Extern(_) => {
-            return Err(error("cannot embed a function or extern value in a synthetic AL entry"));
-        }
-    };
-    Ok(note_phrase!(node: exp_kind, note: typ, span: span))
-}
 
 /// Appends a main function that succeeds only if the selected relation succeeds.
 pub(super) fn entry(
@@ -92,7 +34,9 @@ pub(super) fn entry(
                 al::MetaFuncDef::Defined(func) => &func.id,
             };
             if id.node.as_ref() == "main" {
-                return Err(error("cannot add a synthetic entry: the script already defines main"));
+                return Err(entry_invalid(
+                    "cannot add a synthetic entry: the script already defines main",
+                ));
             }
         }
     }
@@ -108,11 +52,11 @@ pub(super) fn entry(
             }
             _ => None,
         })
-        .ok_or_else(|| error(format!("entry relation {name} was not found")))?;
+        .ok_or_else(|| entry_invalid(format!("entry relation {name} was not found")))?;
     let (typs_input, typs_output) = input::split(input_hint, not_typ.node.args().to_vec())
-        .map_err(|cause| error(cause.to_string()))?;
+        .map_err(|cause| entry_invalid(cause.to_string()))?;
     if typs_input.len() != 1 {
-        return Err(error(format!("entry relation {name} must have exactly one input")));
+        return Err(entry_invalid(format!("entry relation {name} must have exactly one input")));
     }
     // Bind each output at its declared type in the new function's empty scope
     let exps_output = typs_output
@@ -123,10 +67,18 @@ pub(super) fn entry(
             note_phrase!(node: al::ExpKind::Id(id), note: Rc::new(typ.node), span: Span::default())
         })
         .collect();
-    let exps = input::combine(input_hint, vec![value_as_exp(arena, value)?], exps_output)
-        .map_err(|cause| error(cause.to_string()))?;
+    let exps = input::combine(
+        input_hint,
+        vec![
+            value
+                .to_exp(arena)
+                .map_err(|cause| entry_invalid(cause.to_string()))?,
+        ],
+        exps_output,
+    )
+    .map_err(|cause| entry_invalid(cause.to_string()))?;
     let not_exp = Mixfix::new(not_typ.node.mixop().clone(), exps)
-        .map_err(|cause| error(cause.to_string()))?;
+        .map_err(|cause| entry_invalid(cause.to_string()))?;
     let prem = phrase!(node: al::PremKind::Rule(al::RulePrem {
         id: id.clone(), not_exp, input_hint: input_hint.clone(),
     }), span: Span::default());
