@@ -133,10 +133,11 @@ fn insert_debug_instr(instr_ol: ol::DebugInstr, dangle: bool) -> sl::InstrKind {
 // == Blocks
 
 fn insert_block(block_ol: ol::Block, dangle: bool) -> sl::Block {
-    block_ol
+    let instrs = block_ol
         .into_iter()
         .map(|instr_ol| insert_instr(instr_ol, dangle))
-        .collect()
+        .collect();
+    sl::Block { instrs }
 }
 
 // == Block insertion strategies

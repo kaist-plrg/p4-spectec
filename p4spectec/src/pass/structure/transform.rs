@@ -676,7 +676,7 @@ fn struct_func_dec_def(
             tparams,
             params: params_sl,
             typ,
-            block: sl::Block::default(),
+            block: sl::Block { instrs: vec![] },
             block_else: None,
             hints,
         };

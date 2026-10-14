@@ -86,7 +86,8 @@ impl Prepare<PrepareContext<'_>> for source::Block {
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let instrs_len = self.instrs.len();
         // Deterministic selection gives every candidate the enclosing position
-        self.instrs
+        let instrs = self
+            .instrs
             .into_iter()
             .enumerate()
             .map(|(idx, instr)| {
@@ -94,7 +95,8 @@ impl Prepare<PrepareContext<'_>> for source::Block {
                     if ctx.det || idx + 1 == instrs_len { ctx.pos } else { Position::NonTail };
                 instr.prepare(&mut ctx.at(pos))
             })
-            .collect()
+            .collect();
+        ast::Block { instrs }
     }
 }
 
@@ -443,7 +445,7 @@ impl Prepare<PrepareContext<'_>> for source::TableFunc {
             .map(|row| {
                 let exps_input = row.exps_input.prepare(&mut ctx.il());
                 let exp = row.exp.prepare(&mut ctx.il());
-                let block = row
+                let instrs = row
                     .block
                     .instrs
                     .into_iter()
@@ -453,6 +455,7 @@ impl Prepare<PrepareContext<'_>> for source::TableFunc {
                         instr.prepare(&mut ctx.at(pos))
                     })
                     .collect();
+                let block = ast::Block { instrs };
                 ast::TableRow { exps_input, exp, block }
             })
             .collect();
