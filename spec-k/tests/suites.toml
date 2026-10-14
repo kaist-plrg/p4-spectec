@@ -190,7 +190,7 @@ quick = [
 
 # KEVM: the VMTests of ethereum-tests, as kevm-pyk run makes their initial
 # terms (ktest.py), with the blockchain plugin built in the plugin directory
-# (make). All of them are long: a quick run leaves KEVM out
+# (make). Each takes about half a minute in the spec: a quick run takes two
 [suite.kevm]
 src = "kevm"
 dir = "kevm-pyk/src/kevm_pyk/kproj/evm-semantics"
@@ -226,6 +226,16 @@ kompile = [
   "-lsecp256k1",
   "-ccopt",
   "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a",
+]
+skip = [
+  # vmPerformance, too long for the spec: loopExp (20,362,627 to 47,202,463
+  # krun steps where known) and loopMul (132,302,402) do not end within the
+  # timeout of 7,200 seconds, and are slow tests of KEVM itself
+  # (tests/slow.llvm); performanceTester-performanceTester_d0 (135,216 steps)
+  # did not end within 3,600 seconds
+  "loopExp-*",
+  "loopMul-*",
+  "performanceTester-*",
 ]
 quick = ["arith-arith_d0g0v0_Cancun.kore", "byte-byte_d0g0v0_Cancun.kore"]
 
