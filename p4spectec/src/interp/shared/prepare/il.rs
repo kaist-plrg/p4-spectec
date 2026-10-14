@@ -37,12 +37,6 @@ pub struct PrepareContext<'a> {
 }
 
 impl PrepareContext<'_> {
-    /// Computes the runtime check that a `typ_source` value has `typ_target`.
-    pub(crate) fn prepare_subcheck(&mut self, typ_source: &Typ, typ_target: &Typ) -> Subcheck {
-        optimize_sub_typ(self.arena_mixop, self.tdenv, typ_source, typ_target)
-            .expect("elaboration accepted the subtype test")
-    }
-
     /// Registers the outer variable of every iterated variable.
     fn prepare_outer_vars(&mut self, vars: &[VarSlot], iter: Iter) {
         for var in vars {
@@ -104,7 +98,7 @@ impl Prepare<mixop::PrepareContext> for source::TypCase {
     }
 }
 
-// - Patterns
+// - Patterns and subtype checks
 
 impl Prepare<PrepareContext<'_>> for source::Pattern {
     type Output = Pattern;
@@ -115,6 +109,18 @@ impl Prepare<PrepareContext<'_>> for source::Pattern {
             source::Pattern::List(pattern) => Pattern::List(pattern),
             source::Pattern::Opt(pattern) => Pattern::Opt(pattern),
         }
+    }
+}
+
+impl Subcheck {
+    /// Computes the runtime check that a `typ_source` value has `typ_target`.
+    pub(crate) fn prepare(
+        ctx: &mut PrepareContext<'_>,
+        typ_source: &Typ,
+        typ_target: &Typ,
+    ) -> Self {
+        optimize_sub_typ(ctx.arena_mixop, ctx.tdenv, typ_source, typ_target)
+            .expect("elaboration accepted the subtype test")
     }
 }
 
@@ -148,7 +154,7 @@ impl Prepare<PrepareContext<'_>> for source::ExpKind {
                 // The check starts from the tested expression's type
                 let typ_source =
                     crate::phrase!(node: exp_inner.note.as_ref().clone(), span: exp_inner.span);
-                let subcheck = ctx.prepare_subcheck(&typ_source, &typ_inner);
+                let subcheck = Subcheck::prepare(ctx, &typ_source, &typ_inner);
                 ExpKind::Sub(exp_inner.prepare(ctx), Box::new(subcheck))
             }
             source::ExpKind::Match(exp_inner, pattern_inner) => {

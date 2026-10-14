@@ -511,7 +511,9 @@ impl PrepareContext<'_> {
             source::Guard::Cmp(op, typ_op, exp) => {
                 ast::Guard::Cmp(op, typ_op, exp.prepare(&mut self.il()))
             }
-            source::Guard::Sub(typ) => ast::Guard::Sub(self.il().prepare_subcheck(typ_scrut, &typ)),
+            source::Guard::Sub(typ) => {
+                ast::Guard::Sub(ast::Subcheck::prepare(&mut self.il(), typ_scrut, &typ))
+            }
             source::Guard::Match(pattern) => ast::Guard::Match(pattern.prepare(&mut self.il())),
             source::Guard::Mem(exp) => ast::Guard::Mem(exp.prepare(&mut self.il())),
         }
