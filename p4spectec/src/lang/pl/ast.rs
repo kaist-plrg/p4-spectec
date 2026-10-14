@@ -251,9 +251,6 @@ pub struct IfInstr<Tier, P: Stage = Source> {
 }
 #[derive(Clone, Debug, PartialEq)]
 /// Bind a value with the required subtype and run the block.
-///
-/// The binding `exp_l` has the subtype,
-/// so execution casts to its type after preparation replaces the target.
 pub struct IfLetSubInstr<Tier, P: Stage = Source> {
     pub target: P::SubTarget,
     pub exp_l: Exp<P>,
