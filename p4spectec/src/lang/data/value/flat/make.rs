@@ -9,15 +9,11 @@ use crate::util::json::json;
 
 use crate::lang::{
     common::{
-        Id, TId,
+        Id,
         prim::num::{self, Number},
         source::Span,
     },
-    data::{
-        arena::Arena,
-        notation,
-        typ::{self, Typ, TypKind},
-    },
+    data::{arena::Arena, notation, typ::TypKind},
 };
 
 use super::super::ValueError;
@@ -182,17 +178,9 @@ pub fn list(
 
 // - Functions
 
-/// A function value, typed by its signature.
-pub fn func(
-    arena: &mut Arena,
-    id: Id,
-    tparams: Vec<TId>,
-    typs_params: Vec<Typ>,
-    typ_ret: Typ,
-    span: Span,
-) -> Result<Value, ValueError> {
-    let typ = typ::make::func(tparams, typs_params, typ_ret).node;
-    Value::new(arena, ValueKind::Func(id), Rc::new(typ), span)
+/// A function value, typed by its shared signature.
+pub fn func(arena: &mut Arena, id: Id, typ: Rc<TypKind>, span: Span) -> Result<Value, ValueError> {
+    Value::new(arena, ValueKind::Func(id), typ, span)
 }
 
 // - Externals
