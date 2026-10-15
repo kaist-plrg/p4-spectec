@@ -5,7 +5,7 @@
 //! a reserved slot stays unbound until an assignment writes its value.
 //! Frames share their fixed-size value slice until one is written.
 
-use std::{collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::lang::{
     common::{Id, Iter},
@@ -24,6 +24,23 @@ struct IterSlots {
     slot_list: Option<SlotIdx>,
 }
 
+/// Buffers a layout keeps for reuse, bounded for deep recursion.
+const FRAME_POOL_LEN_MAX: usize = 8;
+
+/// Recycles uniquely owned buffers without making them part of layout equality.
+#[derive(Debug, Default)]
+struct FramePool(RefCell<Vec<Rc<[Option<Value>]>>>);
+impl Clone for FramePool {
+    fn clone(&self) -> Self {
+        Self::default()
+    }
+}
+impl PartialEq for FramePool {
+    fn eq(&self, _: &Self) -> bool {
+        true
+    }
+}
+
 /// Assigns variable slots and records one-step iteration transitions.
 ///
 /// If `x` has slot 0 and `x*` has slot 2:
@@ -37,9 +54,19 @@ pub struct FrameLayout {
     funcs: Vec<(Rc<str>, SlotIdx)>,
     /// Maps each slot to its optional and list iteration slots.
     iters: Vec<IterSlots>,
+    pool: FramePool,
 }
 
 impl FrameLayout {
+    /// Returns an unshared buffer of this layout's fixed size.
+    fn buffer(&self) -> Rc<[Option<Value>]> {
+        self.pool
+            .0
+            .borrow_mut()
+            .pop()
+            .unwrap_or_else(|| std::iter::repeat_n(None, self.len()).collect())
+    }
+
     // - Accessors
 
     pub fn len(&self) -> usize {
@@ -61,6 +88,7 @@ impl FrameLayout {
         if let Some(slot) = self.vars.get(&key) {
             return *slot;
         }
+        self.pool.0.get_mut().clear();
         let slot = SlotIdx(self.iters.len());
 
         // If `x*` was registered first, registering `x` finds its list slot here
@@ -101,7 +129,7 @@ impl FrameLayout {
     /// Resolves a variable under its iteration path to its slot.
     pub fn resolve_var(&mut self, var: Var) -> VarSlot {
         let slot = self.reserve((var.id.node.to_string(), var.iters.clone()));
-        VarSlot { slot, var }
+        VarSlot::new(slot, var)
     }
 
     /// Reserves the slot of a function parameter, which holds a function value.
@@ -109,6 +137,7 @@ impl FrameLayout {
         if let Some(slot) = self.find_func_slot(id) {
             return slot;
         }
+        self.pool.0.get_mut().clear();
         let slot = SlotIdx(self.iters.len());
         // Function values never iterate
         self.iters.push(IterSlots::default());
@@ -125,6 +154,7 @@ impl FrameLayout {
     }
 
     /// Resolves one prepared iteration transition without hashing names.
+    #[inline]
     pub fn find_slot_iterated(&self, slot: SlotIdx, iter: Iter) -> SlotIdx {
         let slots_iter = &self.iters[slot.0];
         match iter {
@@ -136,22 +166,19 @@ impl FrameLayout {
 
     /// The slot of `var` one iteration deeper, resolved during preparation.
     pub fn find_var_iterated(&self, var: &VarSlot, iter: Iter) -> VarSlot {
-        let var_inner = var;
-        let mut var = var_inner.var.clone();
-        var.iters.push(iter);
-        VarSlot { slot: self.find_slot_iterated(var_inner.slot, iter), var }
+        var.iterated(self.find_slot_iterated(var.slot, iter), iter)
     }
 }
 
 // == Value frames
 
 /// Values of one callable's slots, copy-on-write across clones.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Frame {
     /// Layout the slots follow.
     layout: Rc<FrameLayout>,
     /// Slot values in one allocation, shared until written.
-    values: Rc<[Option<Value>]>,
+    values: Option<Rc<[Option<Value>]>>,
 }
 
 impl Frame {
@@ -159,13 +186,20 @@ impl Frame {
 
     /// An all-unbound frame for the layout.
     pub fn new(layout: Rc<FrameLayout>) -> Self {
-        let values = std::iter::repeat_n(None, layout.len()).collect();
-        Self { layout, values }
+        let mut values = layout.buffer();
+        Rc::get_mut(&mut values)
+            .expect("pooled buffer is unique")
+            .fill(None);
+        Self { layout, values: Some(values) }
     }
 
-    /// A fresh frame with the same layout.
-    pub fn wipe(&self) -> Self {
-        Self::new(Rc::clone(&self.layout))
+    /// Clears row bindings while reusing uniquely owned frame storage.
+    pub fn clear(&mut self) {
+        let values = self.values.as_mut().expect("live frame");
+        if Rc::strong_count(values) > 1 {
+            *values = self.layout.buffer();
+        }
+        Rc::get_mut(values).expect("unshared frame").fill(None);
     }
 
     // - Accessors
@@ -174,14 +208,44 @@ impl Frame {
         &self.layout
     }
 
+    #[inline]
     pub fn get(&self, slot: SlotIdx) -> Option<&Value> {
-        self.values[slot.0].as_ref()
+        self.values.as_ref().expect("live frame")[slot.0].as_ref()
     }
 
     // - Updates
 
     /// Writes a slot, copying the values first if they are shared.
+    #[inline]
     pub fn set(&mut self, slot: SlotIdx, value: Value) {
-        Rc::make_mut(&mut self.values)[slot.0] = Some(value);
+        let values = self.values.as_mut().expect("live frame");
+        if Rc::strong_count(values) > 1 {
+            let mut copied = self.layout.buffer();
+            Rc::get_mut(&mut copied)
+                .expect("pooled buffer is unique")
+                .copy_from_slice(values);
+            *values = copied;
+        }
+        Rc::get_mut(values).expect("unshared frame")[slot.0] = Some(value);
+    }
+}
+
+impl Default for Frame {
+    fn default() -> Self {
+        Self::new(Rc::default())
+    }
+}
+
+impl Drop for Frame {
+    fn drop(&mut self) {
+        if let Some(values) = self.values.take()
+            && Rc::strong_count(&values) == 1
+        {
+            let pool = &mut *self.layout.pool.0.borrow_mut();
+            // Deep recursion must not retain an unbounded number of frames
+            if pool.len() < FRAME_POOL_LEN_MAX {
+                pool.push(values);
+            }
+        }
     }
 }

@@ -22,8 +22,6 @@ use crate::lang::{
 
 use crate::lang::il::prepared as ast;
 
-use crate::runtime::envs::interp::shared::TypeDef;
-
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap, unwrap_from_result},
     util::{find_slot_of_exp, iterate_vars},
@@ -44,14 +42,8 @@ pub fn assign_tparams<Ctx: WriteContext>(
 ) -> Backtrack<Ctx> {
     // Check arity before binding any type parameter
     assert_eq!(tparams.len(), targs.len(), "type argument arity mismatch at {span}");
-    // Type arguments shadow global definitions in the callee scope
-    for (tparam, targ) in tparams.iter().zip(targs) {
-        let def_typ = phrase!(node: ast::DefTypKind::Plain(targ.clone()), span: targ.span);
-        unwrap_from_result!(
-            ctx.add_typdef_local(tparam.clone(), TypeDef::Defined(vec![], Box::new(def_typ))),
-            &tparam.span
-        );
-    }
+    // Reuse immutable scopes when the context has no local type bindings
+    unwrap!(ctx.bind_tparams(tparams, targs));
     ok!(ctx)
 }
 

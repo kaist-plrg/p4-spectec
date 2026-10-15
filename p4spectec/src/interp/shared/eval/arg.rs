@@ -64,17 +64,8 @@ fn eval_def_arg(
         return ok!(value);
     }
     // A global function becomes a value naming it, typed by its signature
-    let typ_func = unwrap_from_result!(ctx.find_func_typ(id), span);
-    let value = unwrap_from_result!(
-        value::make::func(
-            arena,
-            id.clone(),
-            typ_func.tparams,
-            typ_func.typs_params,
-            *typ_func.typ_ret,
-            Span::default()
-        ),
-        span
-    );
+    let typ = unwrap_from_result!(ctx.find_func_value_typ(id), span);
+    let value =
+        unwrap_from_result!(value::make::func(arena, id.clone(), typ, Span::default()), span);
     ok!(value)
 }
