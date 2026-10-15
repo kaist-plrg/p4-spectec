@@ -11,8 +11,7 @@
          "3-context.rkt"
          "4-relation.rkt")
 (provide ->term/eval-call-rel
-         ->term+ctx/eval-call-rel
-         elsgroup-as-rulgroup)
+         ->term+ctx/eval-call-rel)
 
 ;; $elsgroup_as_rulgroup
 (define-metafunction al

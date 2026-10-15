@@ -5,7 +5,6 @@
          "0.1-stdlib.rkt"
          "4-relation.rkt")
 (provide subst-typ
-         subst-typ-inner
          subst-typs)
 
 ;; Type substitution

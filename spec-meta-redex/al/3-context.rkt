@@ -17,16 +17,12 @@
          empty-ctx
          load
          register-global!
-         add-vari
          add-varr
          add-varis
-         add-varrs
-         add-typ
          add-func
          find-vari
          find-varr
          find-varis
-         find-varrs
          finds-vari
          find-typdef
          find-typ
@@ -119,11 +115,6 @@
 ;;; Value adders
 
 (define-metafunction al-context
-  add-vari : L vari val -> L
-  [(add-vari {TYP tdenv REL renv FUNC fenv VAL venv} (id typ (iter ...)) val)
-   {TYP tdenv REL renv FUNC fenv VAL (add-map venv (id (iter ...)) val)}])
-
-(define-metafunction al-context
   add-varr : L varr val -> L
   [(add-varr {TYP tdenv REL renv FUNC fenv VAL venv} varr val)
    {TYP tdenv REL renv FUNC fenv VAL (add-map venv varr val)}])
@@ -132,18 +123,6 @@
   add-varis : L (vari ...) (val ...) -> L
   [(add-varis {TYP tdenv REL renv FUNC fenv VAL venv} ((id typ (iter ...)) ...) (val ...))
    {TYP tdenv REL renv FUNC fenv VAL (adds-map venv ((id (iter ...)) ...) (val ...))}])
-
-(define-metafunction al-context
-  add-varrs : L (varr ...) (val ...) -> L
-  [(add-varrs {TYP tdenv REL renv FUNC fenv VAL venv} (varr ...) (val ...))
-   {TYP tdenv REL renv FUNC fenv VAL (adds-map venv (varr ...) (val ...))}])
-
-;;; Typedef adders
-
-(define-metafunction al-context
-  add-typ : L id typdef -> L
-  [(add-typ {TYP tdenv REL renv FUNC fenv VAL venv} id typdef)
-   {TYP (add-map tdenv id typdef) REL renv FUNC fenv VAL venv}])
 
 ;;; Function adders
 
@@ -178,15 +157,6 @@
    (side-condition
     (not (redex-match? al-context ((val) ...)
                        (term ((find-map venv (id (iter ...))) ...)))))])
-
-(define-metafunction al-context
-  find-varrs : L (varr ...) -> () ∨ ((val ...))
-  [(find-varrs {TYP tdenv REL renv FUNC fenv VAL venv} (varr ...)) ((val ...))
-   (where ((val) ...) ((find-map venv varr) ...))]
-  [(find-varrs {TYP tdenv REL renv FUNC fenv VAL venv} (varr ...)) ()
-   ;; otherwise: some lookup fails
-   (side-condition
-    (not (redex-match? al-context ((val) ...) (term ((find-map venv varr) ...)))))])
 
 (define-metafunction al-context
   finds-vari : (L ...) vari -> () ∨ ((val ...))

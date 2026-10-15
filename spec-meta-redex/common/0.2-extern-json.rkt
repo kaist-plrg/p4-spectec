@@ -6,8 +6,6 @@
 (require json
          racket/match)
 (provide val->jsexpr
-         jsexpr->val
-         typ->jsexpr
          builtin-request
          extern-func-request
          extern-rel-request

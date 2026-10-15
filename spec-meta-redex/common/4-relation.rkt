@@ -10,14 +10,14 @@
          redex/reduction-semantics
          "0.2-extern-json.rkt"
          "0.3-extern-ffi.rkt"
-         "3-context.rkt")
+         "2-env.rkt")
 (provide common-relation
          host-call-extern-func
          host-call-builtin-func
          host-call-extern-rel)
 
 ;; Redex has no parametric nonterminals, so each res<X> is written out.
-(define-extended-language common-relation common-context
+(define-extended-language common-relation common-env
   ;; Result to represent backtracking in evaluation
   (unitres ::= OK FAIL)
   (valres ::= (OK val) FAIL)

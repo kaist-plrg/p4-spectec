@@ -7,8 +7,7 @@
 (provide common-env
          theta-of-tdenv
          is-iter-on-var
-         iter-vari
-         iter-varr)
+         iter-vari)
 
 (define-extended-language common-env common-syntax
   ;; Value environment
@@ -69,7 +68,3 @@
 (define-metafunction common-env
   iter-vari : vari iter -> vari
   [(iter-vari (id typ (iter ...)) iter_add) (id typ (iter ... iter_add))])
-
-(define-metafunction common-env
-  iter-varr : varr iter -> varr
-  [(iter-varr (id (iter ...)) iter_add) (id (iter ... iter_add))])

@@ -12,8 +12,7 @@
          binop-number
          cmpop-poly
          cmpop-number
-         is-tup
-         is-fun)
+         is-tup)
 
 ;; num.ml has no POW, so this follows watsup's `^` on integers.
 (define (pow base exponent)
@@ -78,10 +77,3 @@
   [(is-tup val) #f
    ;; otherwise
    (side-condition (not (redex-match? common-relation (TUP (val ...)) (term val))))])
-
-(define-metafunction common-relation
-  is-fun : val -> bool
-  [(is-fun (FUNC id)) #t]
-  [(is-fun val) #f
-   ;; otherwise
-   (side-condition (not (redex-match? common-relation (FUNC id) (term val))))])

@@ -11,8 +11,7 @@
          "3-context.rkt")
 (provide upcast
          downcast
-         subtyp
-         subtyps)
+         subtyp)
 
 ;;
 ;; Type casts
@@ -226,10 +225,3 @@
     (not (redex-match? al-context (((DEF (tparam ..._n) (STRUCT ((atom typ) ...))))
                                    (targ ..._n) (STR ((atom val) ...)))
                        (term ((typdef ...) (targ ...) val)))))])
-
-(define-metafunction al-context
-  subtyps : G tdenv (typ ...) (val ...) -> bool
-  [(subtyps G tdenv (typ ..._n) (val ..._n)) (forall- ((subtyp G tdenv typ val) ...))]
-  [(subtyps G tdenv (typ ...) (val ...)) #f
-   ;; otherwise: the lengths differ
-   (side-condition (not (= (length (term (typ ...))) (length (term (val ...))))))])
