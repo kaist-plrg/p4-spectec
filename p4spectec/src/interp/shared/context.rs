@@ -6,13 +6,19 @@
 //! `ReadContext`, `WriteContext`, and `IterContext` serve shared evaluation;
 //! `FuncSignature` reads function types from each stage's prepared syntax.
 
-use std::rc::Rc;
+use std::{
+    cell::RefCell,
+    hash::{Hash, Hasher},
+    rc::Rc,
+};
+
+use foldhash::fast::RandomState;
+use hashbrown::{Equivalent, HashMap};
 
 use crate::lang::{
-    common::{ds::map::IdMap, source::Span},
+    common::source::Span,
     data::{
         arena::Arena,
-        typ,
         value::flat::{self as value, Value},
         var::{SlotIdx, VarSlot},
     },
@@ -23,7 +29,7 @@ use crate::lang::il::prepared as ast;
 use crate::diagnostic::{Label, Report};
 
 use crate::runtime::envs::interp::shared::{
-    TDEnv, TypeDef,
+    TypeDef,
     callable::Callable,
     frame::{Frame, FrameLayout},
 };
@@ -75,6 +81,10 @@ pub trait ReadContext {
     fn find_func(&self, id: &ast::Id) -> Result<&Rc<Self::Func>, Error>;
     /// Finds the type of a function by id.
     fn find_func_typ(&self, id: &ast::Id) -> Result<ast::FuncTyp, Error>;
+    /// Shares the immutable annotation of a function-valued argument.
+    fn find_func_value_typ(&self, id: &ast::Id) -> Result<Rc<ast::TypKind>, Error> {
+        Ok(Rc::new(ast::TypKind::Func(self.find_func_typ(id)?)))
+    }
 }
 
 /// Write access to type, value, and function bindings.
@@ -83,6 +93,20 @@ pub trait WriteContext: ReadContext + Clone {
 
     /// Binds a type definition, rejecting duplicates only in the local scope.
     fn add_typdef_local(&mut self, id: ast::Id, typdef: TypeDef) -> Result<(), Error>;
+
+    /// Binds type parameters in order, retaining local duplicate diagnostics.
+    fn bind_tparams(&mut self, tparams: &[ast::TParam], targs: &[ast::Typ]) -> Backtrack<()> {
+        assert_eq!(tparams.len(), targs.len(), "type argument arity mismatch");
+        for (tparam, targ) in tparams.iter().zip(targs) {
+            let def_typ =
+                crate::phrase!(node: ast::DefTypKind::Plain(targ.clone()), span: targ.span);
+            unwrap_from_result!(
+                self.add_typdef_local(tparam.clone(), TypeDef::Defined(vec![], Box::new(def_typ))),
+                &tparam.span
+            );
+        }
+        ok!(())
+    }
 
     // == Values
 
@@ -154,12 +178,19 @@ pub enum Scope {
 
 // = Global definitions
 
+/// Shared type-parameter scopes kept before the cache starts over.
+const TYPE_BINDINGS_MAX: usize = 256;
+
+type TypeBindingCache = HashMap<(Vec<ast::TParam>, Vec<ast::Typ>), Bindings<TypeDef>, RandomState>;
+
 /// Stores type definitions and prepared relation and function callables.
 #[derive(Debug)]
 pub struct Global<R, F> {
-    tdenv: TDEnv,
-    renv: IdMap<Callable<R>>,
-    fenv: IdMap<Rc<Callable<F>>>,
+    tdenv: HashMap<Rc<str>, TypeDef, RandomState>,
+    renv: HashMap<Rc<str>, Callable<R>, RandomState>,
+    fenv: HashMap<Rc<str>, Rc<Callable<F>>, RandomState>,
+    ftypes: HashMap<*const Callable<F>, Rc<ast::TypKind>, RandomState>,
+    tbindings: RefCell<TypeBindingCache>,
 }
 
 impl<R, F> Global<R, F> {
@@ -167,7 +198,13 @@ impl<R, F> Global<R, F> {
 
     /// Creates empty environments for a stage-specific loader.
     pub(crate) fn new() -> Self {
-        Self { tdenv: TDEnv::new(), renv: IdMap::new(), fenv: IdMap::new() }
+        Self {
+            tdenv: HashMap::default(),
+            renv: HashMap::default(),
+            fenv: HashMap::default(),
+            ftypes: HashMap::default(),
+            tbindings: RefCell::default(),
+        }
     }
 
     // == Inserters
@@ -178,11 +215,11 @@ impl<R, F> Global<R, F> {
     pub(crate) fn insert_typdef(&mut self, id: ast::Id, typdef: TypeDef) {
         // Elaboration already rejects duplicate type names
         assert!(
-            !self.tdenv.contains_key(&id),
+            !self.tdenv.contains_key(id.node.as_ref()),
             "global type definitions must be unique: {}",
             id.node
         );
-        self.tdenv.insert(id, typdef);
+        self.tdenv.insert(id.node, typdef);
     }
 
     // - Relations
@@ -194,43 +231,106 @@ impl<R, F> Global<R, F> {
     {
         // Elaboration already rejects duplicate relation names
         assert!(
-            !self.renv.contains_key(&id),
+            !self.renv.contains_key(id.node.as_ref()),
             "global relation definitions must be unique: {}",
             id.node
         );
-        self.renv.insert(id, rel);
+        self.renv.insert(id.node, rel);
     }
 
     // - Functions
 
     /// Inserts a prepared function, panicking if its name is already defined.
-    pub(crate) fn insert_func(&mut self, id: ast::Id, func: Callable<F>) {
+    pub(crate) fn insert_func(&mut self, id: ast::Id, func: Callable<F>)
+    where
+        F: FuncSignature,
+    {
         // Elaboration already rejects duplicate function names
         assert!(
-            !self.fenv.contains_key(&id),
+            !self.fenv.contains_key(id.node.as_ref()),
             "global function definitions must be unique: {}",
             id.node
         );
-        self.fenv.insert(id, Rc::new(func));
+        let func = Rc::new(func);
+        self.ftypes
+            .insert(Rc::as_ptr(&func), Rc::new(ast::TypKind::Func(func.def.func_typ())));
+        self.fenv.insert(id.node, func);
     }
 }
 
 // = Local bindings
 
+/// Small immutable parameter scopes, shared when a branch clones its context.
+#[derive(Debug)]
+struct Bindings<T>(Option<Rc<[(ast::Id, T)]>>);
+impl<T> Default for Bindings<T> {
+    fn default() -> Self {
+        Self(None)
+    }
+}
+impl<T> Clone for Bindings<T> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+impl<T> Bindings<T> {
+    fn new() -> Self {
+        Self::default()
+    }
+    fn get(&self, id: &ast::Id) -> Option<&T> {
+        self.0
+            .as_ref()?
+            .iter()
+            .find_map(|(key, value)| (key.node == id.node).then_some(value))
+    }
+    fn contains_key(&self, id: &ast::Id) -> bool {
+        self.get(id).is_some()
+    }
+}
+impl<T: Clone> Bindings<T> {
+    fn insert(&mut self, id: ast::Id, value: T) {
+        self.0 = Some(match &self.0 {
+            None => Rc::new([(id, value)]),
+            Some(entries) => {
+                let mut entries = entries.to_vec();
+                entries.push((id, value));
+                entries.into()
+            }
+        });
+    }
+}
+
+/// Borrows an exact parameter scope key without cloning its syntax.
+struct TypeBindingsQuery<'a> {
+    tparams: &'a [ast::TParam],
+    targs: &'a [ast::Typ],
+}
+impl Hash for TypeBindingsQuery<'_> {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        self.tparams.hash(hasher);
+        self.targs.hash(hasher);
+    }
+}
+impl Equivalent<(Vec<ast::TParam>, Vec<ast::Typ>)> for TypeBindingsQuery<'_> {
+    fn equivalent(&self, key: &(Vec<ast::TParam>, Vec<ast::Typ>)) -> bool {
+        self.tparams == key.0 && self.targs == key.1
+    }
+}
+
 /// Holds type parameters, function arguments, and values of one call.
 #[derive(Debug)]
 struct Local<F> {
     /// Type parameters bound to their type arguments.
-    tdenv: TDEnv,
+    tdenv: Bindings<TypeDef>,
     /// Function arguments bound to their prepared definitions.
-    fenv: IdMap<Rc<Callable<F>>>,
+    fenv: Bindings<Rc<Callable<F>>>,
     /// Value slots of the current callable.
     frame: Frame,
 }
 
 impl<F> Default for Local<F> {
     fn default() -> Self {
-        Self { tdenv: TDEnv::new(), fenv: IdMap::new(), frame: Frame::default() }
+        Self { tdenv: Bindings::new(), fenv: Bindings::new(), frame: Frame::default() }
     }
 }
 
@@ -273,8 +373,8 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
         Self {
             global: self.global,
             local: Local {
-                tdenv: TDEnv::new(),
-                fenv: IdMap::new(),
+                tdenv: Bindings::new(),
+                fenv: Bindings::new(),
                 frame: Frame::new(Rc::clone(layout)),
             },
         }
@@ -298,7 +398,7 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
 
     /// Finds a relation in the global definitions.
     pub fn find_rel_opt(&self, id: &ast::Id) -> Option<&'global Callable<R>> {
-        self.global.renv.get(id)
+        self.global.renv.get(id.node.as_ref())
     }
 
     /// Finds a global relation or reports the lookup location.
@@ -318,7 +418,10 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
         if let Some(func) = self.local.fenv.get(id) {
             Some((Scope::Local, func))
         } else {
-            self.global.fenv.get(id).map(|func| (Scope::Global, func))
+            self.global
+                .fenv
+                .get(id.node.as_ref())
+                .map(|func| (Scope::Global, func))
         }
     }
 
@@ -382,7 +485,7 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
     fn find_typdef_opt<'a>(&'a self, id: &ast::Id) -> Option<&'a TypeDef> {
         // Local type parameters shadow global types
         self.find_typdef_local_opt(id)
-            .or_else(|| self.global.tdenv.get(id))
+            .or_else(|| self.global.tdenv.get(id.node.as_ref()))
     }
 
     fn find_defined_typdef<'a>(
@@ -409,6 +512,16 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
     fn find_func_typ(&self, id: &ast::Id) -> Result<ast::FuncTyp, Error> {
         Ok(self.find_func(id)?.def.func_typ())
     }
+
+    fn find_func_value_typ(&self, id: &ast::Id) -> Result<Rc<ast::TypKind>, Error> {
+        let func = self.find_func(id)?;
+        Ok(self
+            .global
+            .ftypes
+            .get(&Rc::as_ptr(func))
+            .cloned()
+            .unwrap_or_else(|| Rc::new(ast::TypKind::Func(func.def.func_typ()))))
+    }
 }
 
 // = Write access
@@ -428,6 +541,39 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
         }
         self.local.tdenv.insert(id, typdef);
         Ok(())
+    }
+
+    fn bind_tparams(&mut self, tparams: &[ast::TParam], targs: &[ast::Typ]) -> Backtrack<()> {
+        assert_eq!(tparams.len(), targs.len(), "type argument arity mismatch");
+        // Empty parameter lists leave the enclosing scope untouched
+        if tparams.is_empty() {
+            return ok!(());
+        }
+        // Only a fresh local scope can reuse a complete immutable binding slice
+        let fresh = self.local.tdenv.0.is_none();
+        let query = TypeBindingsQuery { tparams, targs };
+        if fresh && let Some(bindings) = self.global.tbindings.borrow().get(&query) {
+            self.local.tdenv = bindings.clone();
+            return ok!(());
+        }
+        // Preserve source order and reject duplicates before caching the scope
+        for (tparam, targ) in tparams.iter().zip(targs) {
+            let def_typ =
+                crate::phrase!(node: ast::DefTypKind::Plain(targ.clone()), span: targ.span);
+            unwrap_from_result!(
+                self.add_typdef_local(tparam.clone(), TypeDef::Defined(vec![], Box::new(def_typ))),
+                &tparam.span
+            );
+        }
+        // Bound retained type syntax; live contexts keep their own shared slices
+        if fresh {
+            let mut bindings = self.global.tbindings.borrow_mut();
+            if bindings.len() >= TYPE_BINDINGS_MAX {
+                bindings.clear();
+            }
+            bindings.insert((tparams.to_vec(), targs.to_vec()), self.local.tdenv.clone());
+        }
+        ok!(())
     }
 
     // - Values
@@ -453,7 +599,7 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
 
     fn clear_value_bindings(&mut self) {
         // Keep the layout, drop the values
-        self.local.frame = self.local.frame.wipe();
+        self.local.frame.clear();
     }
 }
 
@@ -551,9 +697,9 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         values_by_var: Vec<Vec<Value>>,
     ) -> Backtrack<()> {
         for (var, values) in vars.iter().zip(values_by_var) {
-            let typ = typ::make::iterate(var.var.typ.clone(), &var.var.iters);
+            let typ = Rc::clone(&var.typ);
             // Each variable becomes a list one iteration outward
-            let value = value::make::list(arena, typ.node.into(), values, Span::default());
+            let value = value::make::list(arena, typ, values, Span::default());
             let value = unwrap_from_result!(value, &Span::default());
             self.add_value_at_slot(var.slot, value);
         }
@@ -567,14 +713,9 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         values_by_var: Vec<Vec<Value>>,
     ) -> Backtrack<()> {
         for (var, values) in vars.iter().zip(values_by_var) {
-            let typ = typ::make::iterate(var.var.typ.clone(), &var.var.iters);
+            let typ = Rc::clone(&var.typ);
             // Each variable becomes an option one iteration outward
-            let value = value::make::opt(
-                arena,
-                typ.node.into(),
-                values.into_iter().next(),
-                Span::default(),
-            );
+            let value = value::make::opt(arena, typ, values.into_iter().next(), Span::default());
             let value = unwrap_from_result!(value, &Span::default());
             self.add_value_at_slot(var.slot, value);
         }
