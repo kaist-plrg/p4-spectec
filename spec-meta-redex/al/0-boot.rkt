@@ -3,9 +3,10 @@
 ;; `spectec-boot sexp` and `spectec-boot sexp-p4`.
 
 (require json
-         racket/port
+         racket/list
          racket/runtime-path
-         racket/string)
+         racket/string
+         racket/system)
 (provide boot-script
          boot-p4)
 
@@ -19,21 +20,16 @@
 ;; Runs spectec-boot with args, and reads the one datum it prints.
 (define (read-spectec-boot . args)
   (define cmd (string-join (cons "spectec-boot" args)))
-  (define-values (proc stdout stdin stderr)
-    (apply subprocess #f #f #f (spectec-boot) args))
-  (close-output-port stdin)
-  ;; Drain stderr on its own thread, so a full pipe cannot block the process.
-  (define stderr-text #f)
-  (define stderr-thread
-    (thread (λ () (set! stderr-text (port->string stderr)))))
-  (define stdout-text (port->string stdout))
-  (subprocess-wait proc)
-  (thread-wait stderr-thread)
-  (close-input-port stdout)
-  (close-input-port stderr)
-  (unless (zero? (subprocess-status proc))
-    (error 'spectec-boot "`~a` failed:\n~a" cmd stderr-text))
-  (define in (open-input-string stdout-text))
+  (define stdout (open-output-string))
+  (define stderr (open-output-string))
+  (define ok?
+    (parameterize ([current-input-port (open-input-string "")]
+                   [current-output-port stdout]
+                   [current-error-port stderr])
+      (apply system* (spectec-boot) args)))
+  (unless ok?
+    (error 'spectec-boot "`~a` failed:\n~a" cmd (get-output-string stderr)))
+  (define in (open-input-string (get-output-string stdout)))
   (define datum (read in))
   (unless (and (not (eof-object? datum)) (eof-object? (read in)))
     (error 'spectec-boot "`~a` did not print one datum" cmd))
@@ -50,9 +46,7 @@
 (define (boot-p4 path #:includes includes)
   (decode-ext
    (apply read-spectec-boot "sexp-p4" "-p" (path-arg path)
-          (for*/list ([include (in-list includes)]
-                      [arg (in-list (list "-i" (path-arg include)))])
-            arg))))
+          (append-map (λ (include) (list "-i" (path-arg include))) includes))))
 
 ;; `sexp-p4` prints the JSON of `(EXT json)` as text; this decodes it into a
 ;; jsexpr in a `val`.

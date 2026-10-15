@@ -43,8 +43,8 @@
      res]
     ['FAIL 'FAIL]))
 
-;; The result of Program_ok on the P4 program val_p4, under the context
-;; loaded that load-script gives for the spec: (OK (val ...)), or FAIL
+;; The result of Program_ok on the P4 program val_p4, under loaded, the
+;; context that load-script gives for the spec: (OK (val ...)), or FAIL
 (define (entry-p4 loaded val_p4)
   (run-loaded loaded (term (call-rel "Program_ok" (,val_p4)))))
 

@@ -82,17 +82,17 @@
 (define (seconds-since started)
   (/ (- (current-inexact-monotonic-milliseconds) started) 1000))
 
-;; The status of the program under the loaded context C, 'pass or 'fail, the
-;; seconds it took, and, if it raised, what it wrote to stderr and the error's
-;; message
-(define (typecheck C program includes)
+;; The status of the program under loaded, the context that load-script gives:
+;; 'pass or 'fail, the seconds it took, and, if it raised, what it wrote to
+;; stderr and the error's message
+(define (typecheck loaded program includes)
   (define started (current-inexact-monotonic-milliseconds))
   (define err (open-output-string))
   (define-values (status reason)
     (with-handlers ([exn:fail? (λ (e) (values 'fail (exn-message e)))])
       (parameterize ([current-error-port err])
         (define val_p4 (boot-p4 program #:includes includes))
-        (match (entry-p4 C val_p4)
+        (match (entry-p4 loaded val_p4)
           [(list 'OK _) (values 'pass #f)]
           ['FAIL (values 'fail #f)]))))
   (values status
@@ -112,23 +112,21 @@
       (define total (length programs))
       (define started (current-inexact-monotonic-milliseconds))
       (host-init! spec)
-      (define C (load-script (boot-script spec)))
+      (define loaded (load-script (boot-script spec)))
       (report (format "loaded spec in ~as" (~r (seconds-since started) #:precision '(= 2))))
-      (define passed 0)
-      (define failing
-        (for/fold ([failing '()] #:result (reverse failing))
+      (define-values (passed failing)
+        (for/fold ([passed 0] [failing '()] #:result (values passed (reverse failing)))
                   ([program (in-list programs)]
                    [i (in-naturals 1)])
-          (define-values (status elapsed reason) (typecheck C program includes))
-          (when (eq? status 'pass)
-            (set! passed (add1 passed)))
+          (define-values (status elapsed reason) (typecheck loaded program includes))
           (report (format "[~a/~a] ~a ~as  ~a" i total (~a status #:min-width 7)
                           (~r elapsed #:precision '(= 2) #:min-width 7) program))
           (when reason
             (for ([line (in-list (string-split reason "\n"))])
               (fprintf result "    ~a\n" line))
             (flush-output result))
-          (if (eq? status expected) failing (cons program failing))))
+          (values (if (eq? status 'pass) (add1 passed) passed)
+                  (if (eq? status expected) failing (cons program failing)))))
       (report)
       (report (make-string 60 #\=))
       (report (format "pass ~a  fail ~a  of ~a in ~a min"
