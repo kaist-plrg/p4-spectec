@@ -33,6 +33,7 @@ mod convert;
 pub mod external;
 pub mod get;
 mod hash;
+mod lazy;
 pub mod make;
 mod print;
 mod view;
@@ -56,7 +57,7 @@ pub struct ValueField {
 pub type ValueCase = Mixfix<Value>;
 
 /// A stored value body whose children belong to the same arena.
-#[derive(Debug, PartialEq, Eq, Hash, SerializeState, DeserializeState)]
+#[derive(Debug, PartialEq, Eq, SerializeState, DeserializeState)]
 #[serde(rename = "ValueKind")]
 #[serde(serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
 #[serde(deserialize_state = "DecodeContext<'arena>", de_parameters = "'arena")]
