@@ -443,7 +443,7 @@ impl Code {
             ExpKind::Cmp(op, _, exp_l, exp_r) => Code::of_cmp_exp(op, exp_l, exp_r),
             ExpKind::UpCast(_, exp_inner) => Code::of_upcast_exp(exp_inner),
             ExpKind::DownCast(_, exp_inner) => Code::of_downcast_exp(exp_inner),
-            ExpKind::Sub(exp_inner, typ, _) => Code::of_sub_exp(exp_inner, typ),
+            ExpKind::Sub(exp_inner, typ) => Code::of_sub_exp(exp_inner, typ),
             ExpKind::Match(exp_inner, pattern) => Code::of_match_exp(exp_inner, pattern),
             ExpKind::Tuple(exps) => Code::of_tuple_exp(exps),
             ExpKind::Case(not_exp) => Code::of_case_exp(not_exp),
@@ -804,7 +804,7 @@ impl Prose {
             ExpKind::Cmp(op, _, exp_l, exp_r) => Prose::of_cmp_exp(op, exp_l, exp_r),
             ExpKind::UpCast(_, exp_inner) => Prose::of_upcast_exp(exp_inner),
             ExpKind::DownCast(_, exp_inner) => Prose::of_downcast_exp(exp_inner),
-            ExpKind::Sub(exp_inner, typ, _) => Prose::of_sub_exp(exp_inner, typ),
+            ExpKind::Sub(exp_inner, typ) => Prose::of_sub_exp(exp_inner, typ),
             ExpKind::Match(exp_inner, pattern) => Prose::of_match_exp(exp_inner, pattern),
             ExpKind::Tuple(exps) => Prose::of_tuple_exp(exps),
             ExpKind::Case(not_exp) => Prose::of_case_exp(exp, not_exp),
@@ -881,7 +881,7 @@ impl Prose {
                 ];
                 Some(Prose::seq(proses))
             }
-            ExpKind::Sub(exp_elem, typ, _) => {
+            ExpKind::Sub(exp_elem, typ) => {
                 let code_elem = Code::of_exp(exp_elem);
                 let code_typ = Code::of_typ(typ);
                 let proses = [
@@ -1417,8 +1417,8 @@ impl Prose {
             pl::Guard::Bool(true) => Prose::of_true_guard(exp_scrut),
             pl::Guard::Bool(false) => Prose::of_false_guard(exp_scrut),
             pl::Guard::Cmp(op, _, exp) => Prose::of_cmp_guard(exp_scrut, op, exp),
-            pl::Guard::Sub(typ, _) => Prose::of_sub_guard(exp_scrut, typ),
-            pl::Guard::LetSub(typ, _, exp_l) => Prose::of_let_sub_guard(exp_scrut, typ, exp_l),
+            pl::Guard::Sub(typ) => Prose::of_sub_guard(exp_scrut, typ),
+            pl::Guard::LetSub(typ, exp_l) => Prose::of_let_sub_guard(exp_scrut, typ, exp_l),
             pl::Guard::Match(pattern) => Prose::of_match_guard(exp_scrut, pattern),
             pl::Guard::LetMatch(_, exp_l) => Prose::of_let_match_guard(exp_scrut, exp_l),
             pl::Guard::Mem(exp) => Prose::of_mem_guard(exp_scrut, exp),
@@ -1625,10 +1625,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         level: usize,
         block_head: Option<Block>,
         render_tier: RenderTier<'ctx, 'a, Tier>,
-        instrs: &[pl::Instr<Tier>],
+        block: &pl::Block<Tier>,
     ) -> Block {
         // Fold a lone tier instruction into the enclosing heading
-        if let [instr] = instrs
+        if let [instr] = block.instrs.as_slice()
             && let pl::InstrKind::Tier(tier_instr) = &instr.node.node
         {
             let rendered = render_tier(self, level, true, instr, &tier_instr.tier);
@@ -1636,7 +1636,8 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         }
 
         // Render general blocks as a sequence below the optional heading
-        let blocks_rendered: Vec<Block> = instrs
+        let blocks_rendered: Vec<Block> = block
+            .instrs
             .iter()
             .map(|instr| self.render_instr(level, render_tier, instr))
             .collect();
@@ -1652,14 +1653,15 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         level: usize,
         block_head: Block,
         render_tier: RenderTier<'ctx, 'a, Tier>,
-        instrs: &[pl::Instr<Tier>],
+        block: &pl::Block<Tier>,
     ) -> Block {
         // Empty continuations leave the heading alone
-        if instrs.is_empty() {
+        if block.instrs.is_empty() {
             return block_head;
         }
 
-        let blocks_rendered = instrs
+        let blocks_rendered = block
+            .instrs
             .iter()
             .map(|instr| self.render_instr(level, render_tier, instr));
         Block::seq(std::iter::once(block_head).chain(blocks_rendered))
@@ -1677,10 +1679,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         def_kind: DefKind,
         id_def: &str,
         render_tier: RenderTier<'ctx, 'a, Tier>,
-        block_opt: Option<&[pl::Instr<Tier>]>,
+        block_opt: Option<&pl::Block<Tier>>,
     ) -> String {
         // Omit absent and empty otherwise blocks
-        let Some(block) = block_opt.filter(|block| !block.is_empty()) else {
+        let Some(block) = block_opt.filter(|block| !block.instrs.is_empty()) else {
             return String::new();
         };
         // Declare each definition's otherwise destination once per document batch
@@ -1823,7 +1825,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         render_tier: RenderTier<'ctx, 'a, Tier>,
         instr: &pl::IfLetSubInstr<Tier>,
     ) -> Block {
-        let prose_binding = Prose::of_sub_binding(&instr.exp_l, &instr.exp_r, &instr.typ);
+        let prose_binding = Prose::of_sub_binding(&instr.exp_l, &instr.exp_r, &instr.target);
         let prose_head = Prose::seq([Prose::text("If "), prose_binding, Prose::text(":")]);
         let block_head = Block::item_ordered(level, prose_head);
         self.render_instrs(level + 1, Some(block_head), render_tier, &instr.block)
@@ -1968,7 +1970,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             let block_head = Block::item_ordered(level, prose_head);
             // Eliding a final guard still leaves its binding in the body
             let block_case = if is_else
-                && let pl::Guard::LetSub(_, _, exp_l) | pl::Guard::LetMatch(_, exp_l) = &case.guard
+                && let pl::Guard::LetSub(_, exp_l) | pl::Guard::LetMatch(_, exp_l) = &case.guard
             {
                 let prose_binding = Prose::seq([
                     Prose::text("Let "),
@@ -2555,7 +2557,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let level_body = level + 1;
         let block_arms =
             self.render_block_arms(level, &backtrack_instr.blocks, &|renderer, arm| {
-                let blocks_rendered = arm.iter().map(|instr| {
+                let blocks_rendered = arm.instrs.iter().map(|instr| {
                     renderer.render_instr(level_body, Self::render_instr_group, instr)
                 });
                 Block::seq(blocks_rendered)
@@ -2599,6 +2601,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let level_body = level + 1;
         let block_arms = self.render_block_arms(level, &route_instr.blocks, &|renderer, arm| {
             let blocks_rendered = arm
+                .instrs
                 .iter()
                 .map(|instr| renderer.render_instr(level_body, Self::render_instr_dispatch, instr));
             Block::seq(blocks_rendered)
@@ -2778,7 +2781,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             DefKind::Rel,
             &rel.id.node,
             Self::render_instr_dispatch_inline,
-            rel.block_else_opt.as_deref(),
+            rel.block_else_opt.as_ref(),
         );
         // Extract each rule group from the dispatch tree in document order
         let rule_groups = rule_group::collect_rule_groups(&rel.block);
@@ -2928,7 +2931,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     /// Builds a function body and its optional otherwise clause.
     fn render_defined_func_def(&mut self, hints: &Hints, func: &pl::DefinedFunc) -> Block {
         // Choose the compact boolean or general body form
-        let block_body = match func.block.as_slice() {
+        let block_body = match func.block.instrs.as_slice() {
             [instr]
                 if let pl::InstrKind::Tier(tier_instr) = &instr.node.node
                     && let pl::GroupInstr::Return(return_instr) = &tier_instr.tier
@@ -2944,6 +2947,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 // Render the general instruction sequence
                 let blocks_rendered: Vec<Block> = func
                     .block
+                    .instrs
                     .iter()
                     .map(|instr| self.render_instr(0, Self::render_instr_group, instr))
                     .collect();
@@ -2956,7 +2960,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             DefKind::Func,
             &func.id.node,
             Self::render_instr_group,
-            func.block_else_opt.as_deref(),
+            func.block_else_opt.as_ref(),
         );
         Block::concat([block_header, Block::raw("\n\n"), block_body, Block::raw(text_else)])
     }

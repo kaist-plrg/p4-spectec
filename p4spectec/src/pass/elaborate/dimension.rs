@@ -122,7 +122,7 @@ fn infer_exp(dim_ctx: &mut DimContext, exp: &ast::Exp, iters: &[ast::Iter]) {
         ast::ExpKind::Un(_, _, exp_inner)
         | ast::ExpKind::UpCast(_, exp_inner)
         | ast::ExpKind::DownCast(_, exp_inner)
-        | ast::ExpKind::Sub(exp_inner, _, _)
+        | ast::ExpKind::Sub(exp_inner, _)
         | ast::ExpKind::Match(exp_inner, _)
         | ast::ExpKind::Len(exp_inner)
         | ast::ExpKind::Dot(exp_inner, _) => infer_exp(dim_ctx, exp_inner, iters),
@@ -390,7 +390,7 @@ fn annotate_exp(bounds: &VEnv, exp: &mut ast::Exp) -> Result<Occurrences, ElabEr
         ast::ExpKind::Cmp(_, _, exp_l, exp_r) => annotate_cmp_exp(bounds, exp_l, exp_r),
         ast::ExpKind::UpCast(_, exp_inner) => annotate_upcast_exp(bounds, exp_inner),
         ast::ExpKind::DownCast(_, exp_inner) => annotate_downcast_exp(bounds, exp_inner),
-        ast::ExpKind::Sub(exp_inner, _, _) => annotate_sub_exp(bounds, exp_inner),
+        ast::ExpKind::Sub(exp_inner, _) => annotate_sub_exp(bounds, exp_inner),
         ast::ExpKind::Match(exp_inner, _) => annotate_match_exp(bounds, exp_inner),
         ast::ExpKind::Tuple(exps) => annotate_tuple_exp(bounds, exps),
         ast::ExpKind::Case(not_exp) => annotate_case_exp(bounds, not_exp),

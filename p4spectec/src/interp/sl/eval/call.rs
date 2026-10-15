@@ -332,12 +332,8 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
         values
     ));
     // Run the body, falling back to the otherwise block
-    let flow = unwrap!(instr::eval_block_with_else(
-        runner_ctx,
-        ctx,
-        &rel.block,
-        rel.block_else.as_deref()
-    ));
+    let flow =
+        unwrap!(instr::eval_block_with_else(runner_ctx, ctx, &rel.block, rel.block_else.as_ref()));
     match flow {
         // Results finish the relation
         Flow::Result(values) => ok!(RelResult::Result(values.node)),
@@ -527,7 +523,10 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
         values
     ));
     // Rows are concatenated and run in tail position
-    let instrs = func.table_rows.iter().flat_map(|row| row.block.iter());
+    let instrs = func
+        .table_rows
+        .iter()
+        .flat_map(|row| row.block.instrs.iter());
     let flow =
         unwrap!(instr::eval_block_sequential(runner_ctx, Cow::Owned(ctx_local), instrs, true));
     match flow {
@@ -573,7 +572,7 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
         runner_ctx,
         ctx_local,
         &func.block,
-        func.block_else.as_deref()
+        func.block_else.as_ref()
     ));
     match flow {
         // Returns finish the function

@@ -69,7 +69,7 @@ pub(crate) fn eval_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, E
         ast::ExpKind::DownCast(typ, exp_inner) => {
             eval_downcast_exp(runner_ctx, ctx, typ, exp_inner)
         }
-        ast::ExpKind::Sub(exp_inner, _, subcheck) => {
+        ast::ExpKind::Sub(exp_inner, subcheck) => {
             eval_sub_exp(runner_ctx, ctx, span, exp_inner, subcheck)
         }
         ast::ExpKind::Match(exp_inner, pattern) => {

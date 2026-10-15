@@ -4,6 +4,8 @@
 //! Iterations register the outer variable `x*` for every iterated `x`,
 //! so evaluation can find its slot.
 //! Type definitions prepare their mixops without allocating frame slots.
+//! Subtype tests compute their runtime checks here,
+//! against source type definitions.
 
 use crate::lang::{
     common::Id,
@@ -15,7 +17,10 @@ use crate::lang::{
 
 use crate::lang::il::{ast as source, prepared::*};
 
-use crate::runtime::envs::interp::shared::frame::FrameLayout;
+use crate::runtime::{
+    envs::{elab::TDEnv, interp::shared::frame::FrameLayout},
+    ops::typ::optimize_sub_typ,
+};
 
 use super::{Prepare, mixop};
 
@@ -25,6 +30,8 @@ use super::{Prepare, mixop};
 pub struct PrepareContext<'a> {
     /// The specification's notation arena.
     pub arena_mixop: &'a mut MixopArena,
+    /// Source type definitions, with the callable's type parameters.
+    pub tdenv: &'a TDEnv,
     /// The callable's frame layout.
     pub layout: &'a mut FrameLayout,
 }
@@ -105,17 +112,15 @@ impl Prepare<PrepareContext<'_>> for source::Pattern {
     }
 }
 
-impl Prepare<PrepareContext<'_>> for source::Subcheck {
-    type Output = Subcheck;
-
-    fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        match self {
-            source::Subcheck::Skip => Subcheck::Skip,
-            source::Subcheck::Mixop(mixops) => Subcheck::Mixop(mixops.prepare(ctx.arena_mixop)),
-            source::Subcheck::Tuple(subchecks) => Subcheck::Tuple(subchecks.prepare(ctx)),
-            source::Subcheck::Iter(iter, subcheck) => Subcheck::Iter(iter, subcheck.prepare(ctx)),
-            source::Subcheck::Recurse(typ) => Subcheck::Recurse(typ),
-        }
+impl Subcheck {
+    /// Computes the runtime check that a `typ_source` value has `typ_target`.
+    pub(crate) fn prepare(
+        ctx: &mut PrepareContext<'_>,
+        typ_source: &Typ,
+        typ_target: &Typ,
+    ) -> Self {
+        optimize_sub_typ(ctx.arena_mixop, ctx.tdenv, typ_source, typ_target)
+            .expect("elaboration accepted the subtype test")
     }
 }
 
@@ -145,8 +150,12 @@ impl Prepare<PrepareContext<'_>> for source::ExpKind {
             source::ExpKind::DownCast(typ_inner, exp_inner) => {
                 ExpKind::DownCast(typ_inner, exp_inner.prepare(ctx))
             }
-            source::ExpKind::Sub(exp_inner, typ_inner, check_inner) => {
-                ExpKind::Sub(exp_inner.prepare(ctx), typ_inner, check_inner.prepare(ctx))
+            source::ExpKind::Sub(exp_inner, typ_inner) => {
+                // The check starts from the tested expression's type
+                let typ_source =
+                    crate::phrase!(node: exp_inner.note.as_ref().clone(), span: exp_inner.span);
+                let subcheck = Subcheck::prepare(ctx, &typ_source, &typ_inner);
+                ExpKind::Sub(exp_inner.prepare(ctx), Box::new(subcheck))
             }
             source::ExpKind::Match(exp_inner, pattern_inner) => {
                 ExpKind::Match(exp_inner.prepare(ctx), pattern_inner.prepare(ctx))

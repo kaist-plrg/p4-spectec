@@ -1080,6 +1080,28 @@ xref:is_assignable_typeIR[``typeIR''`` supports assignment]:
 
 |===
 
+xref:is_castable_typeIR[``typeIR''`` can be the target type of an explicit cast]:
+[cols="2", options="header"]
+|===
+| (``typeIR''``) | Result
+
+| +BOOL+ | true
+| +INT+ | true
+| +INT+ +`<+ ++_++ +`>+ | true
+| +BIT+ +`<+ ++_++ +`>+ | true
+| +TYPEDEF+ ++_++ typeIR | xref:is_castable_typeIR[$is_castable_typeIR(typeIR)]
+| +TYPE+ ++_++ ++_++ | true
+| +ENUM+ ++_++ +`<+ ++_++ +`>+ +`{+ ++_++^{asterisk}^ +`}+ | true
+| +LIST+ +`<+ ++_++ +`>+ | true
+| +ARRAY+ ++_++ +`[+ ++_++ +`]+ | true
+| +HEADER_STACK+ ++_++ +`[+ ++_++ +`]+ | true
+| +STRUCT+ ++_++ +`<+ ++_++^{asterisk}^ +`>+ +`{+ ++_++^{asterisk}^ +`}+ | true
+| +HEADER+ ++_++ +`<+ ++_++^{asterisk}^ +`>+ +`{+ ++_++^{asterisk}^ +`}+ | true
+| +HEADER_UNION+ ++_++ +`<+ ++_++^{asterisk}^ +`>+ +`{+ ++_++^{asterisk}^ +`}+ | true
+| ++_++ | false
+
+|===
+
 xref:is_serializable_typeIR[``typeIR''`` has a defined size]:
 [cols="2", options="header"]
 |===
@@ -3141,66 +3163,74 @@ xref:bin_eq[``value`` ``+'=='+`` ``value'``]
      ...... Return ``w~a~`` is equal to ``w~b~`` and ``i~a~`` is equal to ``i~b~``.
  .. Else if let ``+LIST+`` ``+`[+`` ``value~a~^{asterisk}^`` ``+`]+`` of type ``listValue`` be ``value``:
   ... If let ``+LIST+`` ``+`[+`` ``value~b~^{asterisk}^`` ``+`]+`` of type ``listValue`` be ``value'``:
-   .... If the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``:
-    ..... For each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~^{asterisk}^``:
+   .... Try:
+    ..... If the length of ``value~a~^{asterisk}^`` is not equal to the length of ``value~b~^{asterisk}^``: return ``false``.
+   .... Then, try:
+    ..... If the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``:
+     ...... For each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~^{asterisk}^``:
 +
 --
-     ****** Let ``bool'`` be xref:bin_eq[``value~a~`` ``+'=='+`` ``value~b~``].
+      ******* Let ``bool`` be xref:bin_eq[``value~a~`` ``+'=='+`` ``value~b~``].
 --
 +
-Let ``bool'^{asterisk}^`` be the resulting list.
-    ..... Let ``bool`` be xref:forall_[all ``bool'^{asterisk}^`` are true].
-    ..... Return the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^`` and ``bool``.
+Let ``bool^{asterisk}^`` be the resulting list.
+     ...... Return xref:forall_[all ``bool^{asterisk}^`` are true].
  .. Else if let ``+TUPLE+`` ``+`(+`` ``value~a~^{asterisk}^`` ``+`)+`` of type ``tupleValue`` be ``value``:
   ... If let ``+TUPLE+`` ``+`(+`` ``value~b~^{asterisk}^`` ``+`)+`` of type ``tupleValue`` be ``value'``:
    .... If the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``:
     ..... For each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~^{asterisk}^``:
 +
 --
-     ****** Let ``bool'''`` be xref:bin_eq[``value~a~`` ``+'=='+`` ``value~b~``].
+     ****** Let ``bool''`` be xref:bin_eq[``value~a~`` ``+'=='+`` ``value~b~``].
 --
 +
-Let ``bool'''^{asterisk}^`` be the resulting list.
-    ..... Let ``bool''`` be xref:forall_[all ``bool'''^{asterisk}^`` are true].
-    ..... Return the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^`` and ``bool''``.
+Let ``bool''^{asterisk}^`` be the resulting list.
+    ..... Let ``bool'`` be xref:forall_[all ``bool''^{asterisk}^`` are true].
+    ..... Return the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^`` and ``bool'``.
  .. Else if let ``sequenceValue`` of type ``sequenceValue`` be ``value``:
   ... If let ``+SEQ+`` ``+`(+`` ``value~a~^{asterisk}^`` ``+`)+`` be ``sequenceValue``:
    .... If let ``sequenceValue'`` of type ``sequenceValue`` be ``value'``:
     ..... If let ``+SEQ+`` ``+`(+`` ``value~b~^{asterisk}^`` ``+`)+`` be ``sequenceValue'``:
-     ...... If the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``:
-      ....... For each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~^{asterisk}^``:
+     ...... Try:
+      ....... If the length of ``value~a~^{asterisk}^`` is not equal to the length of ``value~b~^{asterisk}^``: return ``false``.
+     ...... Then, try:
+      ....... If the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``:
+       ........ For each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~^{asterisk}^``:
 +
 --
-       ******** Let ``bool'''''`` be xref:bin_eq[``value~a~`` ``+'=='+`` ``value~b~``].
+        ********* Let ``bool'''`` be xref:bin_eq[``value~a~`` ``+'=='+`` ``value~b~``].
+--
++
+Let ``bool'''^{asterisk}^`` be the resulting list.
+       ........ Return xref:forall_[all ``bool'''^{asterisk}^`` are true].
+ .. Else if let ``+ARRAY+`` ``+`[+`` ``value~a~^{asterisk}^`` ``+`]+`` of type ``arrayValue`` be ``value``:
+  ... If let ``+ARRAY+`` ``+`[+`` ``value~b~^{asterisk}^`` ``+`]+`` of type ``arrayValue`` be ``value'``:
+   .... Try:
+    ..... If the length of ``value~a~^{asterisk}^`` is not equal to the length of ``value~b~^{asterisk}^``: return ``false``.
+   .... Then, try:
+    ..... If the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``:
+     ...... For each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~^{asterisk}^``:
++
+--
+      ******* Let ``bool''''`` be xref:bin_eq[``value~a~`` ``+'=='+`` ``value~b~``].
+--
++
+Let ``bool''''^{asterisk}^`` be the resulting list.
+     ...... Return xref:forall_[all ``bool''''^{asterisk}^`` are true].
+ .. Else if let ``+HEADER_STACK+`` ``+`[+`` ``value~a~^{asterisk}^`` ``+`(+`` ``++_++`` ``+`)+`` ``+`]+`` of type ``headerStackValue`` be ``value``:
+  ... If let ``+HEADER_STACK+`` ``+`[+`` ``value~b~^{asterisk}^`` ``+`(+`` ``++_++`` ``+`)+`` ``+`]+`` of type ``headerStackValue`` be ``value'``:
+   .... Try:
+    ..... If the length of ``value~a~^{asterisk}^`` is not equal to the length of ``value~b~^{asterisk}^``: return ``false``.
+   .... Then, try:
+    ..... If the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``:
+     ...... For each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~^{asterisk}^``:
++
+--
+      ******* Let ``bool'''''`` be xref:bin_eq[``value~a~`` ``+'=='+`` ``value~b~``].
 --
 +
 Let ``bool'''''^{asterisk}^`` be the resulting list.
-      ....... Let ``bool''''`` be xref:forall_[all ``bool'''''^{asterisk}^`` are true].
-      ....... Return the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^`` and ``bool''''``.
- .. Else if let ``+ARRAY+`` ``+`[+`` ``value~a~^{asterisk}^`` ``+`]+`` of type ``arrayValue`` be ``value``:
-  ... If let ``+ARRAY+`` ``+`[+`` ``value~b~^{asterisk}^`` ``+`]+`` of type ``arrayValue`` be ``value'``:
-   .... If the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``:
-    ..... For each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~^{asterisk}^``:
-+
---
-     ****** Let ``bool'''''''`` be xref:bin_eq[``value~a~`` ``+'=='+`` ``value~b~``].
---
-+
-Let ``bool'''''''^{asterisk}^`` be the resulting list.
-    ..... Let ``bool''''''`` be xref:forall_[all ``bool'''''''^{asterisk}^`` are true].
-    ..... Return the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^`` and ``bool''''''``.
- .. Else if let ``+HEADER_STACK+`` ``+`[+`` ``value~a~^{asterisk}^`` ``+`(+`` ``++_++`` ``+`)+`` ``+`]+`` of type ``headerStackValue`` be ``value``:
-  ... If let ``+HEADER_STACK+`` ``+`[+`` ``value~b~^{asterisk}^`` ``+`(+`` ``++_++`` ``+`)+`` ``+`]+`` of type ``headerStackValue`` be ``value'``:
-   .... If the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``:
-    ..... For each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~^{asterisk}^``:
-+
---
-     ****** Let ``bool'''''''''`` be xref:bin_eq[``value~a~`` ``+'=='+`` ``value~b~``].
---
-+
-Let ``bool'''''''''^{asterisk}^`` be the resulting list.
-    ..... Let ``bool''''''''`` be xref:forall_[all ``bool'''''''''^{asterisk}^`` are true].
-    ..... Return the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^`` and ``bool''''''''``.
+     ...... Return xref:forall_[all ``bool'''''^{asterisk}^`` are true].
  .. Else if let ``+STRUCT+`` ``typeId~a~`` ``+`{+`` ``fieldValue~a~^{asterisk}^`` ``+`}+`` of type ``structValue`` be ``value``:
   ... If let ``+STRUCT+`` ``typeId~b~`` ``+`{+`` ``fieldValue~b~^{asterisk}^`` ``+`}+`` of type ``structValue`` be ``value'``:
    .... For each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``:
@@ -3222,13 +3252,13 @@ Let ``nameIR~field_b~^{asterisk}^`` and ``value~field_b~^{asterisk}^`` be the re
      ...... For each ``value~field_a~`` in ``value~field_a~^{asterisk}^`` and ``value~field_b~`` in ``value~field_b~^{asterisk}^``:
 +
 --
-      ******* Let ``bool''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
+      ******* Let ``bool''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
 --
 +
-Let ``bool''''''''''''^{asterisk}^`` be the resulting list.
-     ...... Let ``bool''''''''''`` be xref:forall_[all ``bool''''''''''''^{asterisk}^`` are true].
-     ...... Let ``bool'''''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].
-     ...... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool''''''''''`` and ``bool'''''''''''``.
+Let ``bool''''''''^{asterisk}^`` be the resulting list.
+     ...... Let ``bool''''''`` be xref:forall_[all ``bool''''''''^{asterisk}^`` are true].
+     ...... Let ``bool'''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].
+     ...... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool''''''`` and ``bool'''''''``.
  .. Else if let ``+HEADER+`` ``typeId~a~`` ``+`{+`` ``++_++`` ``+';'+`` ``fieldValue~a~^{asterisk}^`` ``+`}+`` of type ``headerValue`` be ``value``:
   ... If let ``+HEADER+`` ``typeId~b~`` ``+`{+`` ``++_++`` ``+';'+`` ``fieldValue~b~^{asterisk}^`` ``+`}+`` of type ``headerValue`` be ``value'``:
    .... For each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``:
@@ -3250,13 +3280,13 @@ Let ``nameIR~field_b~^{asterisk}^`` and ``value~field_b~^{asterisk}^`` be the re
      ...... For each ``value~field_a~`` in ``value~field_a~^{asterisk}^`` and ``value~field_b~`` in ``value~field_b~^{asterisk}^``:
 +
 --
-      ******* Let ``bool'''''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
+      ******* Let ``bool'''''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
 --
 +
-Let ``bool'''''''''''''''^{asterisk}^`` be the resulting list.
-     ...... Let ``bool'''''''''''''`` be xref:forall_[all ``bool'''''''''''''''^{asterisk}^`` are true].
-     ...... Let ``bool''''''''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].
-     ...... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool'''''''''''''`` and ``bool''''''''''''''``.
+Let ``bool'''''''''''^{asterisk}^`` be the resulting list.
+     ...... Let ``bool'''''''''`` be xref:forall_[all ``bool'''''''''''^{asterisk}^`` are true].
+     ...... Let ``bool''''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].
+     ...... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool'''''''''`` and ``bool''''''''''``.
  .. Else if let ``+HEADER_UNION+`` ``typeId~a~`` ``+`{+`` ``fieldValue~a~^{asterisk}^`` ``+`}+`` of type ``headerUnionValue`` be ``value``:
   ... If let ``+HEADER_UNION+`` ``typeId~b~`` ``+`{+`` ``fieldValue~b~^{asterisk}^`` ``+`}+`` of type ``headerUnionValue`` be ``value'``:
    .... For each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``:
@@ -3278,13 +3308,13 @@ Let ``nameIR~field_b~^{asterisk}^`` and ``value~field_b~^{asterisk}^`` be the re
      ...... For each ``value~field_a~`` in ``value~field_a~^{asterisk}^`` and ``value~field_b~`` in ``value~field_b~^{asterisk}^``:
 +
 --
-      ******* Let ``bool''''''''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
+      ******* Let ``bool''''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
 --
 +
-Let ``bool''''''''''''''''''^{asterisk}^`` be the resulting list.
-     ...... Let ``bool''''''''''''''''`` be xref:forall_[all ``bool''''''''''''''''''^{asterisk}^`` are true].
-     ...... Let ``bool'''''''''''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].
-     ...... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool''''''''''''''''`` and ``bool'''''''''''''''''``.
+Let ``bool''''''''''''''^{asterisk}^`` be the resulting list.
+     ...... Let ``bool''''''''''''`` be xref:forall_[all ``bool''''''''''''''^{asterisk}^`` are true].
+     ...... Let ``bool'''''''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].
+     ...... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool''''''''''''`` and ``bool'''''''''''''``.
  .. Else if let ``enumValue`` of type ``enumValue`` be ``value``:
   ... If let ``typeId~a~`` ``+'.'+`` ``nameIR~field_a~`` be ``enumValue``:
    .... If let ``enumValue'`` of type ``enumValue`` be ``value'``:
@@ -3294,8 +3324,8 @@ Let ``bool''''''''''''''''''^{asterisk}^`` be the resulting list.
    .... Let ``typeId~a~`` ``+'.'+`` ``++_++`` ``+'.'+`` ``value~field_a~`` be ``enumValue``.
    .... If let ``enumValue'`` of type ``enumValue`` be ``value'``:
     ..... If let ``typeId~b~`` ``+'.'+`` ``++_++`` ``+'.'+`` ``value~field_b~`` be ``enumValue'``:
-     ...... Let ``bool'''''''''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
-     ...... Return ``typeId~a~`` is equal to ``typeId~b~`` and ``bool'''''''''''''''''''``.
+     ...... Let ``bool'''''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
+     ...... Return ``typeId~a~`` is equal to ``typeId~b~`` and ``bool'''''''''''''''``.
  .. Else if let ``invalidHeaderValue`` of type ``invalidHeaderValue`` be ``value``:
   ... If let ``invalidHeaderValue'`` of type ``invalidHeaderValue`` be ``value'``: return ``true``.
 . Then, try:
@@ -4302,7 +4332,7 @@ Let ``nat''''^{asterisk}^`` be the resulting list.
 --
 +
 Let ``nat'''''^{asterisk}^`` be the resulting list.
-  ... Return xref:min_nat[min``+`(+`` ``nat'''''^{asterisk}^`` ``+`)+``].
+  ... Return xref:max_nat[max``+`(+`` ``nat'''''^{asterisk}^`` ``+`)+``].
 
 xref:sizeof_minSizeInBytes[$sizeof_minSizeInBytes(typeIR)]
 
@@ -4812,6 +4842,11 @@ xref:name_annotation_default[$name_annotation_default(annotationList, nameIR)]
 . Then, try:
  .. Check that xref:name_annotation[``$name_annotation(annotationList)``] is an empty list.
  .. Return ``nameIR``.
+
+xref:has_at_most_one_name_annotation[``annotationList`` has at most one name annotation]
+
+. Let ``nameIR^{asterisk}^`` be xref:name_annotation[``$name_annotation(annotationList)``].
+. Return the length of ``nameIR^{asterisk}^`` is less than or equal to ``1``.
 
 xref:find_name_annotation_opt[$find_name_annotation_opt(annotationList)]
 
@@ -7363,22 +7398,26 @@ xref:find_callableDef_overloaded_t[The overloaded callable definition of ``prefi
   ... Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``].
   ... Return xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``].
 . Else if ``p`` matches pattern ``+BLOCK+``:
- .. Check that ``prefixedNameIR`` matches pattern ``{nbsp}~BARE~`` ``%``.
- .. Let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``.
- .. Let ``callableTypeDefEnv`` be ``TC.+BLOCK+.+CALLABLE+``.
- .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``].
- .. Try:
-  ... Let ``callResolution<callableTypeDefIR>^?^`` be xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``].
-  ... If ``callResolution<callableTypeDefIR>^?^`` is defined:
-   .... Let ``callableId`` ``+':'+`` ``callableTypeDefIR`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableTypeDefIR>^?^``.
-   .... Return ``callableId`` ``+':'+`` ``callableTypeDefIR`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^``.
- .. Then, try:
-  ... Check that xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``] is none.
-  ... Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` from the ``+GLOBAL+`` layer of ``TC``].
+ .. If let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``:
+  ... Let ``callableTypeDefEnv`` be ``TC.+BLOCK+.+CALLABLE+``.
+  ... Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``].
+  ... Try:
+   .... Let ``callResolution<callableTypeDefIR>^?^`` be xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``].
+   .... If ``callResolution<callableTypeDefIR>^?^`` is defined:
+    ..... Let ``callableId`` ``+':'+`` ``callableTypeDefIR`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableTypeDefIR>^?^``.
+    ..... Return ``callableId`` ``+':'+`` ``callableTypeDefIR`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^``.
+  ... Then, try:
+   .... Check that xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``] is none.
+   .... Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` from the ``+GLOBAL+`` layer of ``TC``].
+ .. Else:
+  ... Let ``+'.'+`` ``nameIR`` be ``prefixedNameIR``.
+  ... Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``+'.'+`` ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` from the ``+GLOBAL+`` layer of ``TC``].
 . Else:
- .. Check that ``prefixedNameIR`` matches pattern ``{nbsp}~BARE~`` ``%``.
- .. Let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``.
- .. Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` from the ``+BLOCK+`` layer of ``TC``].
+ .. If let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``:
+  ... Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` from the ``+BLOCK+`` layer of ``TC``].
+ .. Else:
+  ... Let ``+'.'+`` ``nameIR`` be ``prefixedNameIR``.
+  ... Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``+'.'+`` ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` from the ``+GLOBAL+`` layer of ``TC``].
 
 xref:find_callableDef_non_overloaded_t[The non-overloaded callable definition of ``prefixedNameIR`` from the ``p`` layer of ``TC``]
 
@@ -10649,6 +10688,7 @@ xref:Expr_ok[Typing ``+`(+`` ``type~t~`` ``+`)+`` ``expression``, under context 
  .. Let ``typedExpressionIR`` be the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``p``].
  .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
  .. Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].
+ .. Check that xref:is_castable_typeIR[``typeIR~t~`` can be the target type of an explicit cast].
  .. Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR`` can be explicitly cast to ``typeIR~t~``].
  .. Check that ``castResult`` matches pattern ``+OK+`` ``%``.
  .. Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
@@ -12675,6 +12715,12 @@ xref:Table_ok[Typing ``tableProperty^{asterisk}^``, under context ``TC``]:
  .. Check that the length of xref:filter_[``tableProperty^{asterisk}^`` filtered by ``$is_tableLargestPriorityWinsProperty(tableProperty)^{asterisk}^``] is less than or equal to ``1``.
  .. Let ``TBLC~0~`` be xref:empty_tableContext[``$empty_tableContext``].
  .. Let table context ``TBLC~1~`` and ``tablePropertyIR^{asterisk}^`` be the result of xref:TableProperties_ok[typing ``tableProperty^{asterisk}^``, under context ``TC`` and table context ``TBLC~0~``].
+ .. Let ``(callableId,`` ``callableTypeDefIR)^?^`` be xref:find_callableDef_non_overloaded_t[the non-overloaded callable definition of ``+'.'+`` ``"NoAction"`` from the ``+LOCAL+`` layer of ``TC``].
+ .. Check that ``(callableId,`` ``callableTypeDefIR)^?^`` is defined.
+ .. Let ``(`` ``++_++,`` ``callableTypeDefIR`` ``)`` be ``(callableId,`` ``callableTypeDefIR)^?^``.
+ .. Check that ``callableTypeDefIR`` has type ``actionTypeIR``.
+ .. Let ``++_++`` ``+ACTION+`` ``++_++`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` be ``callableTypeDefIR``.
+ .. Check that ``parameterIR^{asterisk}^`` is an empty list.
  .. Let ``tablePropertyIR~default_action~`` be ``{nbsp}~EMPTY~`` ``·`` ``+DEFAULT_ACTION+`` ``+'='+`` ``{nbsp}~BARE~`` ``"NoAction"`` ``·`` ``+`(+`` ``·`` ``+`)+`` ``+';'+``.
  .. Let ``(`` ``TBLC~2~,`` ``tablePropertyIR~updated~^{asterisk}^`` ``)`` be xref:insert_NoAction_tablePropertyIR[``$insert_NoAction_tablePropertyIR(TBLC~1~,`` ``tablePropertyIR^{asterisk}^)``].
  .. The result is context ``TBLC~2~`` and ``tablePropertyIR~updated~^{asterisk}^`` concatenated with ``tablePropertyIR~default_action~``.
@@ -12755,6 +12801,7 @@ xref:ControlLocalDecl_ok[Typing ``actionDeclaration``, under context ``TC~0~``]:
 
 xref:ControlLocalDecl_ok[Typing ``annotationList`` ``+TABLE+`` ``name`` ``+`{+`` ``tablePropertyList`` ``+`}+``, under context ``TC~0~``]:
 
+. Check that xref:has_at_most_one_name_annotation[``annotationList`` has at most one name annotation].
 . Let ``TC~1~`` be ``TC~0~`` with ``+LOCAL+.+KIND+`` set to ``+TABLE_APPLY_METHOD+``.
 . Let ``tableProperty^{asterisk}^`` be xref:flatten_tablePropertyList[``tablePropertyList`` flattened].
 . Let context ``TBLC`` and ``tablePropertyIR^{asterisk}^`` be the result of xref:Table_ok[typing ``tableProperty^{asterisk}^``, under context ``TC~1~``].
@@ -12910,6 +12957,7 @@ xref:ActionDecl_ok[ActionDecl_ok]:
 
 xref:ActionDecl_ok[Typing ``annotationList`` ``+ACTION+`` ``name`` ``+`(+`` ``parameterList`` ``+`)+`` ``blockStatement``, under context ``TC~0~`` at ``p``]:
 
+. Check that xref:has_at_most_one_name_annotation[``annotationList`` has at most one name annotation].
 . Let ``TC~1~`` be ``TC~0~`` with ``+LOCAL+.+KIND+`` set to ``+ACTION+``.
 . Let ``TC~2~`` be ``TC~1~[+CONTROL+`` ``=`` ``+CONT+]`` with ``+LOOP+`` set to ``+OUT+``.
 . Let context ``TC~3~``, ``parameterIR^{asterisk}^``, and fresh type variables ``typeId^{asterisk}^`` be the result of xref:ParameterList_ok[typing ``parameterList``, under context ``TC~2~`` at ``+LOCAL+``].
@@ -13672,30 +13720,50 @@ xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` `
  .. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
  .. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
  .. If ``typeIR`` has type ``headerTypeIR``:
-  ... Let ``methodTypeIR`` be ``+BUILTIN_SET_VALID+``.
-  ... The result is callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
+  ... Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].
+  ... If ``typedLvalueIR^?^`` is defined:
+   .... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
+   .... Let ``lvalue~base~`` be xref:lift_typedLvalueIR[``$lift_typedLvalueIR(typedLvalueIR~base~)``].
+   .... Let ``++_++`` be the result of xref:Lvalue_ok[typing ``lvalue~base~``, under context ``TC`` at ``p``].
+   .... Let ``methodTypeIR`` be ``+BUILTIN_SET_VALID+``.
+   .... The result is callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
 . Else if ``nameIR`` is equal to ``"setInvalid"``:
  .. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
  .. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
  .. If ``typeIR`` has type ``headerTypeIR``:
-  ... Let ``methodTypeIR`` be ``+BUILTIN_SET_INVALID+``.
-  ... The result is callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
+  ... Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].
+  ... If ``typedLvalueIR^?^`` is defined:
+   .... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
+   .... Let ``lvalue~base~`` be xref:lift_typedLvalueIR[``$lift_typedLvalueIR(typedLvalueIR~base~)``].
+   .... Let ``++_++`` be the result of xref:Lvalue_ok[typing ``lvalue~base~``, under context ``TC`` at ``p``].
+   .... Let ``methodTypeIR`` be ``+BUILTIN_SET_INVALID+``.
+   .... The result is callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
 
 xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+'.'+`` ``"push_front"`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``argumentIR`` ``+`)+``, under cursor ``p`` and context ``TC``]:
 
 . Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
 . Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
 . If ``typeIR`` has type ``headerStackTypeIR``:
- .. Let ``methodTypeIR`` be ``+BUILTIN_PUSH_FRONT+``.
- .. The result is callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
+ .. Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].
+ .. If ``typedLvalueIR^?^`` is defined:
+  ... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
+  ... Let ``lvalue~base~`` be xref:lift_typedLvalueIR[``$lift_typedLvalueIR(typedLvalueIR~base~)``].
+  ... Let ``++_++`` be the result of xref:Lvalue_ok[typing ``lvalue~base~``, under context ``TC`` at ``p``].
+  ... Let ``methodTypeIR`` be ``+BUILTIN_PUSH_FRONT+``.
+  ... The result is callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
 
 xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+'.'+`` ``"pop_front"`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``argumentIR`` ``+`)+``, under cursor ``p`` and context ``TC``]:
 
 . Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
 . Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
 . If ``typeIR`` has type ``headerStackTypeIR``:
- .. Let ``methodTypeIR`` be ``+BUILTIN_POP_FRONT+``.
- .. The result is callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
+ .. Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].
+ .. If ``typedLvalueIR^?^`` is defined:
+  ... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
+  ... Let ``lvalue~base~`` be xref:lift_typedLvalueIR[``$lift_typedLvalueIR(typedLvalueIR~base~)``].
+  ... Let ``++_++`` be the result of xref:Lvalue_ok[typing ``lvalue~base~``, under context ``TC`` at ``p``].
+  ... Let ``methodTypeIR`` be ``+BUILTIN_POP_FRONT+``.
+  ... The result is callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
 
 xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+'.'+`` ``"isValid"`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``·`` ``+`)+``, under cursor ``p`` and context ``TC``]:
 
@@ -14690,7 +14758,16 @@ xref:ForCollectionExpr_ok[Typing ``expression`` under context ``TC`` with iterat
 . If let ``+LIST+`` ``+`<+`` ``typeIR~e~`` ``+`>+`` of type ``listTypeIR`` be ``typeIR``:
  .. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~e~`` can be implicitly cast to ``typeIR~var~``].
  .. Check that ``castResult`` matches pattern ``+OK+`` ``%``.
- .. The result is ``typedExpressionIR``.
+ .. Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+ .. For each ``typeIR~cast~`` in ``typeIR~cast~^{asterisk}^``:
++
+--
+  *** Let ``typeIR~cast_list~`` be ``+LIST+`` ``+`<+`` ``typeIR~cast~`` ``+`>+``.
+--
++
+Let ``typeIR~cast_list~^{asterisk}^`` be the resulting list.
+ .. Let ``typedExpressionIR~cast~`` be xref:apply_cast[``typedExpressionIR`` cast through ``typeIR~cast_list~^{asterisk}^``].
+ .. The result is ``typedExpressionIR~cast~``.
 . Else if let ``+ARRAY+`` ``typeIR~e~`` ``+`[+`` ``++_++`` ``+`]+`` of type ``arrayTypeIR`` be ``typeIR``:
  .. If xref:Type_alpha[``typeIR~e~`` and ``typeIR~var~`` are the same type]:
   ... The result is ``typedExpressionIR``.
@@ -14971,6 +15048,7 @@ xref:InstDecl_non_objectInitializer_ok[InstDecl_non_objectInitializer_ok]:
 
 xref:InstDecl_non_objectInitializer_ok[Typing ``annotationList`` ``prefixedTypeName`` ``+`<+`` ``typeArgumentList`` ``+`>+`` ``+`(+`` ``argumentList`` ``+`)+`` ``name`` ``+';'+`` under context ``TC~0~`` at ``p``]:
 
+. Check that xref:has_at_most_one_name_annotation[``annotationList`` has at most one name annotation].
 . Let ``typeArgumentIR^{asterisk}^`` and fresh type variables ``typeId~impl~^{asterisk}^`` be the result of xref:TypeArgumentList_ok[typing ``typeArgumentList``, under context ``TC~0~`` at ``p``].
 . Let ``argumentIR^{asterisk}^`` be the result of xref:ArgumentList_ok[typing ``argumentList``, under context ``TC~0~`` at ``p``].
 . Let ``prefixedNameIR`` be xref:prefixedTypeName[the prefixed name of  ``prefixedTypeName``].
@@ -15002,6 +15080,7 @@ xref:ObjectDecl_ok[Typing ``objectDeclaration`` under context ``TC~0~`` with ``t
  .. Let ``varTypeIR'^?^`` be xref:find_var_t[the type of variable ``{nbsp}~BARE~`` ``nameIR`` from the ``p`` layer of ``TC~1~``].
  .. Check that ``varTypeIR'^?^`` is defined.
  .. Let ``varTypeIR`` be ``varTypeIR'^?^``.
+ .. Check that ``~``xref:in_set[``$in_set<id>(nameIR,`` ``$dom_map<id,`` ``varTypeIR>(typeFrame))``].
  .. Let ``typeFrame~init~`` be xref:update_map[the map ``typeFrame`` with the value for ``nameIR`` is updated to ``varTypeIR``].
  .. The result is ``typeFrame~init~`` and ``externMethodTypeDefEnv`` of the object declaration and ``instantiationIR``.
 . Else:
@@ -15086,6 +15165,7 @@ xref:InstDecl_objectInitializer_ok[InstDecl_objectInitializer_ok]:
 
 xref:InstDecl_objectInitializer_ok[Typing ``annotationList`` ``prefixedTypeName`` ``+`<+`` ``typeArgumentList`` ``+`>+`` ``+`(+`` ``argumentList`` ``+`)+`` ``name`` ``+'='+`` ``+`{+`` ``objectDeclarationList`` ``+`}+`` ``+';'+`` under context ``TC~0~`` at ``p``]:
 
+. Check that xref:has_at_most_one_name_annotation[``annotationList`` has at most one name annotation].
 . Let ``typeArgumentIR^{asterisk}^`` and fresh type variables ``typeId~impl~^{asterisk}^`` be the result of xref:TypeArgumentList_ok[typing ``typeArgumentList``, under context ``TC~0~`` at ``p``].
 . Let ``argumentIR^{asterisk}^`` be the result of xref:ArgumentList_ok[typing ``argumentList``, under context ``TC~0~`` at ``p``].
 . Let ``prefixedNameIR`` be xref:prefixedTypeName[the prefixed name of  ``prefixedTypeName``].
@@ -18155,7 +18235,7 @@ xref:ObjectDecl_inst[Loading ``objectDeclarationIR`` under instantiation context
  .. The result is the updated instantiation context ``IC~1~`` and store ``STO``.
 . Else:
  .. Let ``instantiationIR`` be ``objectDeclarationIR``.
- .. Let context ``IC~1~``, store ``STO~1~``, and reference to object ``++_++`` be the result of xref:InstDecl_inst[loading ``instantiationIR``, under context ``IC~0~`` and store ``STO`` at ``+GLOBAL+``].
+ .. Let context ``IC~1~``, store ``STO~1~``, and reference to object ``++_++`` be the result of xref:InstDecl_inst[loading ``instantiationIR``, under context ``IC~0~`` and store ``STO`` at ``+BLOCK+``].
  .. The result is the updated instantiation context ``IC~1~`` and store ``STO~1~``.
 
 ObjectDecl_inst dispatch:
@@ -18432,21 +18512,25 @@ xref:find_callableDef_overloaded_e[The overloaded callable definition of ``prefi
    .... Check that xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``] is none.
    .... Return ``·``.
 . Else if ``p`` matches pattern ``+BLOCK+``:
- .. Check that ``prefixedNameIR`` matches pattern ``{nbsp}~BARE~`` ``%``.
- .. Let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``.
- .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``].
- .. Try:
-  ... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
-  ... If ``callResolution<callableDef>^?^`` is defined:
-   .... Let ``callableId`` ``+':'+`` ``callableDef`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``.
-   .... Return ``callableId`` ``+':'+`` ``(`` ``+BLOCK+,`` ``callableDef`` ``)`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^``.
- .. Then, try:
-  ... Check that xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``] is none.
-  ... Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+GLOBAL+`` layer of ``EC``].
+ .. If let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``:
+  ... Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``].
+  ... Try:
+   .... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
+   .... If ``callResolution<callableDef>^?^`` is defined:
+    ..... Let ``callableId`` ``+':'+`` ``callableDef`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``.
+    ..... Return ``callableId`` ``+':'+`` ``(`` ``+BLOCK+,`` ``callableDef`` ``)`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^``.
+  ... Then, try:
+   .... Check that xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``] is none.
+   .... Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+GLOBAL+`` layer of ``EC``].
+ .. Else:
+  ... Let ``+'.'+`` ``nameIR`` be ``prefixedNameIR``.
+  ... Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``+'.'+`` ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+GLOBAL+`` layer of ``EC``].
 . Else:
- .. Check that ``prefixedNameIR`` matches pattern ``{nbsp}~BARE~`` ``%``.
- .. Let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``.
- .. Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+BLOCK+`` layer of ``EC``].
+ .. If let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``:
+  ... Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+BLOCK+`` layer of ``EC``].
+ .. Else:
+  ... Let ``+'.'+`` ``nameIR`` be ``prefixedNameIR``.
+  ... Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``+'.'+`` ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+GLOBAL+`` layer of ``EC``].
 
 xref:find_constructorDef_e[$find_constructorDef_e(EC, prefixedNameIR, argumentIR^{asterisk}^)]
 

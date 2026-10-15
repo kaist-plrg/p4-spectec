@@ -18,7 +18,7 @@ impl HasCall for Exp {
             ExpKind::Un(_, _, exp)
             | ExpKind::UpCast(_, exp)
             | ExpKind::DownCast(_, exp)
-            | ExpKind::Sub(exp, _, _)
+            | ExpKind::Sub(exp, _)
             | ExpKind::Match(exp, _)
             | ExpKind::Len(exp)
             | ExpKind::Dot(exp, _)
@@ -98,7 +98,7 @@ impl HasCall for Guard {
         match self {
             Guard::Bool(_) | Guard::Sub(..) | Guard::Match(_) => vec![],
             Guard::Cmp(_, _, exp)
-            | Guard::LetSub(_, _, exp)
+            | Guard::LetSub(_, exp)
             | Guard::LetMatch(_, exp)
             | Guard::Mem(exp) => exp.nested_call(),
         }

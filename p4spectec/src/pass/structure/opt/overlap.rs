@@ -61,8 +61,8 @@ pub(crate) fn exp_as_guard(exp_target: &Exp, exp_cond: &Exp) -> Option<Guard> {
             Some(Guard::Cmp(*op, *optyp, exp_l.as_ref().clone()))
         }
         // Subtype, pattern, and membership tests on the target
-        ExpKind::Sub(exp, typ, subcheck) if exp_target.syntax_eq(exp.as_ref()) => {
-            Some(Guard::Sub(typ.as_ref().clone(), subcheck.clone()))
+        ExpKind::Sub(exp, typ) if exp_target.syntax_eq(exp.as_ref()) => {
+            Some(Guard::Sub(typ.as_ref().clone()))
         }
         ExpKind::Match(exp, pattern) if exp_target.syntax_eq(exp.as_ref()) => {
             Some(Guard::Match(pattern.clone()))
@@ -86,9 +86,7 @@ pub(crate) fn guard_as_exp(exp_target: &Exp, guard: &Guard) -> Exp {
         Guard::Cmp(op, optyp, exp) => {
             ExpKind::Cmp(*op, *optyp, Box::new(exp_target.clone()), Box::new(exp.clone()))
         }
-        Guard::Sub(typ, subcheck) => {
-            ExpKind::Sub(Box::new(exp_target.clone()), Box::new(typ.clone()), subcheck.clone())
-        }
+        Guard::Sub(typ) => ExpKind::Sub(Box::new(exp_target.clone()), Box::new(typ.clone())),
         Guard::Match(pattern) => ExpKind::Match(Box::new(exp_target.clone()), pattern.clone()),
         Guard::Mem(exp) => ExpKind::Mem(Box::new(exp_target.clone()), Box::new(exp.clone())),
     };
@@ -221,10 +219,8 @@ pub(crate) fn overlap_exp(
             })
         }
         // Subtyping: x <: T vs x <: U, with T={A}, U={B} -> Disjoint
-        (ExpKind::Sub(exp_a, typ_a, subcheck_a), ExpKind::Sub(exp_b, typ_b, subcheck_b))
-            if exp_a.syntax_eq(exp_b) =>
-        {
-            overlap_sub_exp(tdenv, exp_a, typ_a, subcheck_a, typ_b, subcheck_b)
+        (ExpKind::Sub(exp_a, typ_a), ExpKind::Sub(exp_b, typ_b)) if exp_a.syntax_eq(exp_b) => {
+            overlap_sub_exp(tdenv, exp_a, typ_a, typ_b)
         }
         // Match on patterns: x matches Some vs x matches None -> Partition
         (ExpKind::Match(exp_a, pattern_a), ExpKind::Match(exp_b, pattern_b))
@@ -233,16 +229,16 @@ pub(crate) fn overlap_exp(
             Ok(overlap_match_exp(exp_a, pattern_a, pattern_b))
         }
         // x <: T vs x matches B, with T={A} -> Disjoint
-        (ExpKind::Sub(exp_a, typ_a, subcheck_a), ExpKind::Match(exp_b, pattern_b))
+        (ExpKind::Sub(exp_a, typ_a), ExpKind::Match(exp_b, pattern_b))
             if exp_a.syntax_eq(exp_b) =>
         {
-            overlap_sub_match_exp(tdenv, exp_a, typ_a, subcheck_a, pattern_b)
+            overlap_sub_match_exp(tdenv, exp_a, typ_a, pattern_b)
         }
         // x matches B vs x <: T, with T={A} -> Disjoint in input order
-        (ExpKind::Match(exp_a, pattern_a), ExpKind::Sub(exp_b, typ_b, subcheck_b))
+        (ExpKind::Match(exp_a, pattern_a), ExpKind::Sub(exp_b, typ_b))
             if exp_a.syntax_eq(exp_b) =>
         {
-            overlap_match_sub_exp(tdenv, exp_a, pattern_a, typ_b, subcheck_b)
+            overlap_match_sub_exp(tdenv, exp_a, pattern_a, typ_b)
         }
         // x in [1, 2] vs x in [3] -> Disjoint
         (ExpKind::Mem(exp_elem_a, exp_set_a), ExpKind::Mem(exp_elem_b, exp_set_b))
@@ -305,9 +301,7 @@ fn overlap_sub_exp(
     tdenv: &TDEnv,
     exp: &Exp,
     typ_a: &Typ,
-    subcheck_a: &Subcheck,
     typ_b: &Typ,
-    subcheck_b: &Subcheck,
 ) -> Result<Overlap, StructureError> {
     let mixops_a = typ_as_variant(tdenv, typ_a)?;
     let mixops_b = typ_as_variant(tdenv, typ_b)?;
@@ -329,8 +323,8 @@ fn overlap_sub_exp(
         // Variant tags {A} vs {B, C} -> Disjoint
         Ok(Overlap::Disjoint {
             exp: exp.clone(),
-            guard_a: Guard::Sub(typ_a.clone(), Box::new(subcheck_a.clone())),
-            guard_b: Guard::Sub(typ_b.clone(), Box::new(subcheck_b.clone())),
+            guard_a: Guard::Sub(typ_a.clone()),
+            guard_b: Guard::Sub(typ_b.clone()),
         })
     } else {
         // Variant tags {A, B} vs {B, C} -> Fuzzy
@@ -397,7 +391,6 @@ fn overlap_sub_match_exp(
     tdenv: &TDEnv,
     exp: &Exp,
     typ: &Typ,
-    subcheck: &Subcheck,
     pattern: &Pattern,
 ) -> Result<Overlap, StructureError> {
     let Pattern::Case(mixop) = pattern else {
@@ -418,7 +411,7 @@ fn overlap_sub_match_exp(
     // x <: T vs x matches C, with T={A, B} -> Disjoint
     Ok(Overlap::Disjoint {
         exp: exp.clone(),
-        guard_a: Guard::Sub(typ.clone(), Box::new(subcheck.clone())),
+        guard_a: Guard::Sub(typ.clone()),
         guard_b: Guard::Match(pattern.clone()),
     })
 }
@@ -429,10 +422,9 @@ fn overlap_match_sub_exp(
     exp: &Exp,
     pattern: &Pattern,
     typ: &Typ,
-    subcheck: &Subcheck,
 ) -> Result<Overlap, StructureError> {
     // x matches C vs x <: T keeps Match first and Sub second
-    let overlap = overlap_sub_match_exp(tdenv, exp, typ, subcheck, pattern)?;
+    let overlap = overlap_sub_match_exp(tdenv, exp, typ, pattern)?;
     Ok(match overlap {
         Overlap::Disjoint { exp, guard_a, guard_b } => {
             Overlap::Disjoint { exp, guard_a: guard_b, guard_b: guard_a }

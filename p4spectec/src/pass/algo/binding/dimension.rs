@@ -43,7 +43,7 @@ fn infer_exp_inner(venv: &mut VEnv, exp: &ast::Exp, iters: &[ast::Iter]) {
         ast::ExpKind::Un(_, _, exp)
         | ast::ExpKind::UpCast(_, exp)
         | ast::ExpKind::DownCast(_, exp)
-        | ast::ExpKind::Sub(exp, _, _)
+        | ast::ExpKind::Sub(exp, _)
         | ast::ExpKind::Match(exp, _)
         | ast::ExpKind::Len(exp)
         | ast::ExpKind::Dot(exp, _) => infer_exp_inner(venv, exp, iters),

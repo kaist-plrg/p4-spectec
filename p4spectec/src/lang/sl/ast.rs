@@ -71,10 +71,6 @@ pub type BinOp = il::ast::BinOp;
 pub type CmpOp = il::ast::CmpOp;
 pub type OpTyp = il::ast::OpTyp;
 
-// Subtype checks
-
-pub type Subcheck<P = Source> = il::ast::Subcheck<P>;
-
 // Expressions
 
 pub type Exp<P = Source> = il::ast::Exp<P>;
@@ -161,8 +157,8 @@ pub enum Guard<P: Stage = Source> {
     Bool(bool),
     /// The scrutinee compares so with the expression.
     Cmp(CmpOp, OpTyp, Exp<P>),
-    /// The scrutinee has the type, by the given runtime check.
-    Sub(Typ, Box<il::ast::Subcheck<P>>),
+    /// The scrutinee has the type.
+    Sub(P::SubTarget),
     /// The scrutinee matches the pattern.
     Match(Pattern<P>),
     /// The scrutinee is an element of the list.
@@ -266,9 +262,12 @@ pub struct DebugInstr<P: Stage = Source> {
 }
 
 /// Instructions run in order.
-pub type Block<P = Source> = Vec<Instr<P>>;
+#[derive(Clone, Debug, PartialEq)]
+pub struct Block<P: Stage = Source> {
+    pub instrs: Vec<Instr<P>>,
+}
 /// The otherwise block, run when the main block falls through.
-pub type ElseBlock<P = Source> = Vec<Instr<P>>;
+pub type ElseBlock<P = Source> = Block<P>;
 /// An iteration over a binding instruction, as over an IL premise.
 pub type InstrIter<V = Var> = il::ast::PremIter<V>;
 

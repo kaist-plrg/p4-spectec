@@ -43,7 +43,7 @@ impl SyntaxEq for ExpKind {
             | (ExpKind::DownCast(typ_l, exp_l), ExpKind::DownCast(typ_r, exp_r)) => {
                 typ_l.syntax_eq(typ_r) && exp_l.syntax_eq(exp_r)
             }
-            (ExpKind::Sub(exp_l, typ_l, _), ExpKind::Sub(exp_r, typ_r, _)) => {
+            (ExpKind::Sub(exp_l, typ_l), ExpKind::Sub(exp_r, typ_r)) => {
                 exp_l.syntax_eq(exp_r) && typ_l.syntax_eq(typ_r)
             }
             (ExpKind::Match(exp_l, pattern_l), ExpKind::Match(exp_r, pattern_r)) => {
@@ -204,7 +204,7 @@ where
 
 impl<Tier: SyntaxEq> SyntaxEq for IfLetSubInstr<Tier> {
     fn syntax_eq(&self, other: &Self) -> bool {
-        self.typ.syntax_eq(&other.typ)
+        self.target.syntax_eq(&other.target)
             && self.exp_l.syntax_eq(&other.exp_l)
             && self.exp_r.syntax_eq(&other.exp_r)
             && self.block.syntax_eq(&other.block)
@@ -399,8 +399,8 @@ impl SyntaxEq for Guard {
             (Guard::Cmp(op_l, typ_l, exp_l), Guard::Cmp(op_r, typ_r, exp_r)) => {
                 op_l.syntax_eq(op_r) && typ_l.syntax_eq(typ_r) && exp_l.syntax_eq(exp_r)
             }
-            (Guard::Sub(typ_l, _), Guard::Sub(typ_r, _)) => typ_l.syntax_eq(typ_r),
-            (Guard::LetSub(typ_l, _, exp_l), Guard::LetSub(typ_r, _, exp_r)) => {
+            (Guard::Sub(typ_l), Guard::Sub(typ_r)) => typ_l.syntax_eq(typ_r),
+            (Guard::LetSub(typ_l, exp_l), Guard::LetSub(typ_r, exp_r)) => {
                 typ_l.syntax_eq(typ_r) && exp_l.syntax_eq(exp_r)
             }
             (Guard::LetMatch(pattern_l, exp_l), Guard::LetMatch(pattern_r, exp_r)) => {
@@ -429,7 +429,7 @@ where
     Tier: SyntaxEq,
 {
     fn syntax_eq(&self, other: &Self) -> bool {
-        self.as_slice().syntax_eq(other.as_slice())
+        self.instrs.as_slice().syntax_eq(other.instrs.as_slice())
     }
 }
 

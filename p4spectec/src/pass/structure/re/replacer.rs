@@ -140,9 +140,7 @@ impl Replacer {
             ),
             ExpKind::UpCast(typ, exp) => ExpKind::UpCast(typ, Box::new(self.replace_exp(*exp))),
             ExpKind::DownCast(typ, exp) => ExpKind::DownCast(typ, Box::new(self.replace_exp(*exp))),
-            ExpKind::Sub(exp, typ, subcheck) => {
-                ExpKind::Sub(Box::new(self.replace_exp(*exp)), typ, subcheck)
-            }
+            ExpKind::Sub(exp, typ) => ExpKind::Sub(Box::new(self.replace_exp(*exp)), typ),
             ExpKind::Match(exp, pattern) => {
                 ExpKind::Match(Box::new(self.replace_exp(*exp)), pattern)
             }

@@ -3582,6 +3582,78 @@ tbl def $is_assignable_typeIR(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> true
 
+tbl def $is_castable_typeIR(typeIR) : bool =
+  row 0 :
+    (signature) BOOL as typeIR
+    (typeIR) -> true
+    -- if typeIR <: boolTypeIR
+    -- let boolTypeIR = typeIR as boolTypeIR
+    -- if (boolTypeIR = BOOL)
+  row 1 :
+    (signature) INT as typeIR
+    (typeIR) -> true
+    -- if typeIR <: intTypeIR
+    -- let intTypeIR = typeIR as intTypeIR
+    -- if (intTypeIR = INT)
+  row 2 :
+    (signature) INT `< _nat `> as typeIR
+    (typeIR) -> true
+    -- if typeIR <: fixedIntTypeIR
+    -- let INT `< _nat `> = typeIR as fixedIntTypeIR
+  row 3 :
+    (signature) BIT `< _nat `> as typeIR
+    (typeIR) -> true
+    -- if typeIR <: fixedBitTypeIR
+    -- let BIT `< _nat `> = typeIR as fixedBitTypeIR
+  row 4 :
+    (signature) TYPEDEF _typeId typeIR as typeIR
+    (typeIR') -> $is_castable_typeIR(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let TYPEDEF _typeId typeIR = typeIR' as typedefTypeIR
+  row 5 :
+    (signature) TYPE _typeId _typeIR as typeIR
+    (typeIR) -> true
+    -- if typeIR <: newTypeIR
+    -- let TYPE _typeId _typeIR = typeIR as newTypeIR
+  row 6 :
+    (signature) ENUM _typeId `< _typeIR `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} as typeIR
+    (typeIR) -> true
+    -- if typeIR <: serializableEnumTypeIR
+    -- let ENUM _typeId `< _typeIR `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = typeIR as serializableEnumTypeIR
+  row 7 :
+    (signature) LIST `< _typeIR `> as typeIR
+    (typeIR) -> true
+    -- if typeIR <: listTypeIR
+    -- let LIST `< _typeIR `> = typeIR as listTypeIR
+  row 8 :
+    (signature) ARRAY _typeIR `[ _nat `] as typeIR
+    (typeIR) -> true
+    -- if typeIR <: arrayTypeIR
+    -- let ARRAY _typeIR `[ _nat `] = typeIR as arrayTypeIR
+  row 9 :
+    (signature) HEADER_STACK _typeIR `[ _nat `] as typeIR
+    (typeIR) -> true
+    -- if typeIR <: headerStackTypeIR
+    -- let HEADER_STACK _typeIR `[ _nat `] = typeIR as headerStackTypeIR
+  row 10 :
+    (signature) STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR
+    (typeIR) -> true
+    -- if typeIR <: structTypeIR
+    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as structTypeIR
+  row 11 :
+    (signature) HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR
+    (typeIR) -> true
+    -- if typeIR <: headerTypeIR
+    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerTypeIR
+  row 12 :
+    (signature) HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR
+    (typeIR) -> true
+    -- if typeIR <: headerUnionTypeIR
+    -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerUnionTypeIR
+  row 13 :
+    (signature) _typeIR
+    (_typeIR) -> false
+
 tbl def $is_serializable_typeIR(typeIR) : bool =
   row 0 :
     (signature) BOOL as typeIR
@@ -6323,21 +6395,39 @@ def $bin_eq(value, value) : bool =
   -- if integerValue' matches % '.' % V %
   -- let w_max_b '.' _nat' V i_b = integerValue'
 
-  clause 8 : (value, value') = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  clause 8 : (value, value') = false
+  -- if value <: listValue
+  -- let LIST `[ value_a*{value_a <- value_a*} `] = value as listValue
+  -- if value' <: listValue
+  -- let LIST `[ value_b*{value_b <- value_b*} `] = value' as listValue
+  -- if (|value_a*{value_a <- value_a*}| =/= |value_b*{value_b <- value_b*}|)
+
+  clause 9 : (value, value') = $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})
   -- if value <: listValue
   -- let LIST `[ value_a*{value_a <- value_a*} `] = value as listValue
   -- if value' <: listValue
   -- let LIST `[ value_b*{value_b <- value_b*} `] = value' as listValue
   -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
-  clause 9 : (value, value') = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  clause 10 : (value, value') = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
   -- if value <: tupleValue
   -- let TUPLE `( value_a*{value_a <- value_a*} `) = value as tupleValue
   -- if value' <: tupleValue
   -- let TUPLE `( value_b*{value_b <- value_b*} `) = value' as tupleValue
   -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
-  clause 10 : (value, value') = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  clause 11 : (value, value') = false
+  -- if value <: sequenceValue
+  -- let sequenceValue = value as sequenceValue
+  -- if sequenceValue matches SEQ `( % `)
+  -- let SEQ `( value_a*{value_a <- value_a*} `) = sequenceValue
+  -- if value' <: sequenceValue
+  -- let sequenceValue' = value' as sequenceValue
+  -- if sequenceValue' matches SEQ `( % `)
+  -- let SEQ `( value_b*{value_b <- value_b*} `) = sequenceValue'
+  -- if (|value_a*{value_a <- value_a*}| =/= |value_b*{value_b <- value_b*}|)
+
+  clause 12 : (value, value') = $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})
   -- if value <: sequenceValue
   -- let sequenceValue = value as sequenceValue
   -- if sequenceValue matches SEQ `( % `)
@@ -6348,21 +6438,35 @@ def $bin_eq(value, value) : bool =
   -- let SEQ `( value_b*{value_b <- value_b*} `) = sequenceValue'
   -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
-  clause 11 : (value, value') = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  clause 13 : (value, value') = false
+  -- if value <: arrayValue
+  -- let ARRAY `[ value_a*{value_a <- value_a*} `] = value as arrayValue
+  -- if value' <: arrayValue
+  -- let ARRAY `[ value_b*{value_b <- value_b*} `] = value' as arrayValue
+  -- if (|value_a*{value_a <- value_a*}| =/= |value_b*{value_b <- value_b*}|)
+
+  clause 14 : (value, value') = $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})
   -- if value <: arrayValue
   -- let ARRAY `[ value_a*{value_a <- value_a*} `] = value as arrayValue
   -- if value' <: arrayValue
   -- let ARRAY `[ value_b*{value_b <- value_b*} `] = value' as arrayValue
   -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
-  clause 12 : (value, value') = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  clause 15 : (value, value') = false
+  -- if value <: headerStackValue
+  -- let HEADER_STACK `[ value_a*{value_a <- value_a*} `( _nat `) `] = value as headerStackValue
+  -- if value' <: headerStackValue
+  -- let HEADER_STACK `[ value_b*{value_b <- value_b*} `( _nat' `) `] = value' as headerStackValue
+  -- if (|value_a*{value_a <- value_a*}| =/= |value_b*{value_b <- value_b*}|)
+
+  clause 16 : (value, value') = $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})
   -- if value <: headerStackValue
   -- let HEADER_STACK `[ value_a*{value_a <- value_a*} `( _nat `) `] = value as headerStackValue
   -- if value' <: headerStackValue
   -- let HEADER_STACK `[ value_b*{value_b <- value_b*} `( _nat' `) `] = value' as headerStackValue
   -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
-  clause 13 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 17 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- if value <: structValue
   -- let STRUCT typeId_a `{ fieldValue_a*{fieldValue_a <- fieldValue_a*} `} = value as structValue
   -- if value' <: structValue
@@ -6372,7 +6476,7 @@ def $bin_eq(value, value) : bool =
   -- if (|value_field_a*{value_field_a <- value_field_a*}| = |value_field_b*{value_field_b <- value_field_b*}|)
   -- if (|nameIR_field_a*{nameIR_field_a <- nameIR_field_a*}| = |nameIR_field_b*{nameIR_field_b <- nameIR_field_b*}|)
 
-  clause 14 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 18 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- if value <: headerValue
   -- let HEADER typeId_a `{ _b ';' fieldValue_a*{fieldValue_a <- fieldValue_a*} `} = value as headerValue
   -- if value' <: headerValue
@@ -6382,7 +6486,7 @@ def $bin_eq(value, value) : bool =
   -- if (|value_field_a*{value_field_a <- value_field_a*}| = |value_field_b*{value_field_b <- value_field_b*}|)
   -- if (|nameIR_field_a*{nameIR_field_a <- nameIR_field_a*}| = |nameIR_field_b*{nameIR_field_b <- nameIR_field_b*}|)
 
-  clause 15 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 19 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- if value <: headerUnionValue
   -- let HEADER_UNION typeId_a `{ fieldValue_a*{fieldValue_a <- fieldValue_a*} `} = value as headerUnionValue
   -- if value' <: headerUnionValue
@@ -6392,7 +6496,7 @@ def $bin_eq(value, value) : bool =
   -- if (|value_field_a*{value_field_a <- value_field_a*}| = |value_field_b*{value_field_b <- value_field_b*}|)
   -- if (|nameIR_field_a*{nameIR_field_a <- nameIR_field_a*}| = |nameIR_field_b*{nameIR_field_b <- nameIR_field_b*}|)
 
-  clause 16 : (value, value') = ((typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b))
+  clause 20 : (value, value') = ((typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b))
   -- if value <: enumValue
   -- let enumValue = value as enumValue
   -- if enumValue matches % '.' %
@@ -6402,7 +6506,7 @@ def $bin_eq(value, value) : bool =
   -- if enumValue' matches % '.' %
   -- let typeId_b '.' nameIR_field_b = enumValue'
 
-  clause 17 : (value, value') = ((typeId_a = typeId_b) /\ $bin_eq(value_field_a, value_field_b))
+  clause 21 : (value, value') = ((typeId_a = typeId_b) /\ $bin_eq(value_field_a, value_field_b))
   -- if value <: enumValue
   -- let enumValue = value as enumValue
   -- if enumValue matches % '.' % '.' %
@@ -6412,7 +6516,7 @@ def $bin_eq(value, value) : bool =
   -- if enumValue' matches % '.' % '.' %
   -- let typeId_b '.' _nameIR' '.' value_field_b = enumValue'
 
-  clause 18 : (value, value') = true
+  clause 22 : (value, value') = true
   -- if value <: invalidHeaderValue
   -- let invalidHeaderValue = value as invalidHeaderValue
   -- if (invalidHeaderValue = '{#}')
@@ -7526,7 +7630,7 @@ def $sizeof_minSizeInBits'(typeIR) : nat =
   -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} `} = typeIR as headerUnionTypeIR
   -- if fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} matches []
 
-  clause 13 : (typeIR') = $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  clause 13 : (typeIR') = $max_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: headerUnionTypeIR
   -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} = typeIR' as headerUnionTypeIR
   -- if (typeIR*{typeIR <- typeIR*} =/= [])
@@ -8671,6 +8775,10 @@ def $name_annotation_default(annotationList, nameIR) : nameIR =
 
   clause 1 : (annotationList, nameIR) = nameIR
   -- if ([] = $name_annotation(annotationList))
+
+def $has_at_most_one_name_annotation(annotationList) : bool =
+
+  clause 0 : (annotationList) = (|$name_annotation(annotationList)| <= 1)
 
 def $find_name_annotation_opt(annotationList) : annotation? =
 
@@ -11490,6 +11598,16 @@ def $find_callableDef_overloaded_t(cursor, typingContext, prefixedNameIR, argume
   -- if p matches LOCAL
   -- if prefixedNameIR matches _BARE %
   -- let _BARE nameIR = prefixedNameIR
+
+  clause 5 : (p, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_t(GLOBAL, TC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
+  -- if p matches BLOCK
+  -- if prefixedNameIR matches '.' %
+  -- let '.' nameIR = prefixedNameIR
+
+  clause 6 : (p, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_t(GLOBAL, TC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
+  -- if p matches LOCAL
+  -- if prefixedNameIR matches '.' %
+  -- let '.' nameIR = prefixedNameIR
 
 def $find_callableDef_non_overloaded_t(cursor, typingContext, prefixedNameIR) : (callableId, callableTypeDefIR)? =
 
@@ -16184,6 +16302,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
+    -- if $is_castable_typeIR(typeIR_t)
     -- Cast_expl: typeIR -> typeIR_t : castResult
     -- if castResult matches OK %
     -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
@@ -18905,6 +19024,12 @@ relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyL
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableLargestPriorityWinsProperty(tableProperty)*{tableProperty <- tableProperty*})| <= 1)
     -- let TBLC_0 = $empty_tableContext
     -- TableProperties_ok: TC TBLC_0 |- tableProperty*{tableProperty <- tableProperty*} : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
+    -- let (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?} = $find_callableDef_non_overloaded_t(LOCAL, TC, '.' "NoAction")
+    -- if (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?} matches (_)
+    -- let ?((_callableId, callableTypeDefIR)) = (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?}
+    -- if callableTypeDefIR <: actionTypeIR
+    -- let _annotationList ACTION _nameIR `( parameterIR*{parameterIR <- parameterIR*} `) = callableTypeDefIR as actionTypeIR
+    -- if parameterIR*{parameterIR <- parameterIR*} matches []
     -- let tablePropertyIR_default_action = _EMPTY ?() DEFAULT_ACTION '=' _BARE "NoAction" ?() `( [] `) ';' as tablePropertyIR
     -- let (TBLC_2, tablePropertyIR_updated*{tablePropertyIR_updated <- tablePropertyIR_updated*}) = $insert_NoAction_tablePropertyIR(TBLC_1, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
     -- output: % |- % : TBLC_2 tablePropertyIR_updated*{tablePropertyIR_updated <- tablePropertyIR_updated*} ++ [tablePropertyIR_default_action]
@@ -19017,6 +19142,7 @@ relation ControlLocalDecl_ok: typingContext |- controlLocalDeclaration : typingC
    paths
 
     rulepath tableDeclaration
+    -- if $has_at_most_one_name_annotation(annotationList)
     -- let TC_1 = TC_0[LOCAL.KIND = TABLE_APPLY_METHOD as localKind]
     -- let tableProperty*{tableProperty <- tableProperty*} = $flatten_tablePropertyList(tablePropertyList)
     -- Table_ok: TC_1 |- tableProperty*{tableProperty <- tableProperty*} : TBLC tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
@@ -19195,6 +19321,7 @@ relation ActionDecl_ok: cursor typingContext |- actionDeclaration : typingContex
    paths
 
     rulepath
+    -- if $has_at_most_one_name_annotation(annotationList)
     -- let TC_1 = TC_0[LOCAL.KIND = ACTION as localKind]
     -- let TC_2 = TC_1[CONTROL = CONT][LOOP = OUT]
     -- ParameterList_ok: LOCAL TC_2 |- parameterList : TC_3 parameterIR*{parameterIR <- parameterIR*} '#' typeId*{typeId <- typeId*}
@@ -20082,6 +20209,11 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     -- let typeIR' = $unroll_typeIR(typeIR_base)
     -- if typeIR' <: headerStackTypeIR
     -- let HEADER_STACK typeIR `[ _nat `] = typeIR' as headerStackTypeIR
+    -- let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
+    -- if typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)
+    -- let ?(typedLvalueIR_base) = typedLvalueIR?{typedLvalueIR <- typedLvalueIR?}
+    -- let lvalue_base = $lift_typedLvalueIR(typedLvalueIR_base)
+    -- Lvalue_ok: p TC |- lvalue_base : _typedLvalueIR
     -- let methodTypeIR = BUILTIN_PUSH_FRONT as methodTypeIR
     -- output: % % |- % `< % `> `( % `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
 
@@ -20105,6 +20237,11 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     -- let typeIR' = $unroll_typeIR(typeIR_base)
     -- if typeIR' <: headerStackTypeIR
     -- let HEADER_STACK typeIR `[ _nat `] = typeIR' as headerStackTypeIR
+    -- let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
+    -- if typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)
+    -- let ?(typedLvalueIR_base) = typedLvalueIR?{typedLvalueIR <- typedLvalueIR?}
+    -- let lvalue_base = $lift_typedLvalueIR(typedLvalueIR_base)
+    -- Lvalue_ok: p TC |- lvalue_base : _typedLvalueIR
     -- let methodTypeIR = BUILTIN_POP_FRONT as methodTypeIR
     -- output: % % |- % `< % `> `( % `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
 
@@ -20136,6 +20273,11 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     -- let typeIR = $unroll_typeIR(typeIR_base)
     -- if typeIR <: headerTypeIR
     -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerTypeIR
+    -- let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
+    -- if typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)
+    -- let ?(typedLvalueIR_base) = typedLvalueIR?{typedLvalueIR <- typedLvalueIR?}
+    -- let lvalue_base = $lift_typedLvalueIR(typedLvalueIR_base)
+    -- Lvalue_ok: p TC |- lvalue_base : _typedLvalueIR
     -- let methodTypeIR = BUILTIN_SET_VALID as methodTypeIR
     -- output: % % |- % `< % `> `( % `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
 
@@ -20145,6 +20287,11 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     -- let typeIR = $unroll_typeIR(typeIR_base)
     -- if typeIR <: headerTypeIR
     -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerTypeIR
+    -- let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
+    -- if typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)
+    -- let ?(typedLvalueIR_base) = typedLvalueIR?{typedLvalueIR <- typedLvalueIR?}
+    -- let lvalue_base = $lift_typedLvalueIR(typedLvalueIR_base)
+    -- Lvalue_ok: p TC |- lvalue_base : _typedLvalueIR
     -- let methodTypeIR = BUILTIN_SET_INVALID as methodTypeIR
     -- output: % % |- % `< % `> `( % `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
 
@@ -21501,8 +21648,10 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     -- let LIST `< typeIR_e `> = typeIR as listTypeIR
     -- Cast_impl: typeIR_e -> typeIR_var : castResult
     -- if castResult matches OK %
-    -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult
-    -- output: % % |- % : typedExpressionIR as forCollectionExpressionIR
+    -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
+    -- (let typeIR_cast_list = LIST `< typeIR_cast `> as typeIR)*{typeIR_cast <- typeIR_cast*, typeIR_cast_list -> typeIR_cast_list*}
+    -- let typedExpressionIR_cast = $apply_cast(typedExpressionIR, typeIR_cast_list*{typeIR_cast_list <- typeIR_cast_list*})
+    -- output: % % |- % : typedExpressionIR_cast as forCollectionExpressionIR
 
     rulepath array
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
@@ -21895,6 +22044,7 @@ relation InstDecl_non_objectInitializer_ok: cursor typingContext |- annotationLi
    paths
 
     rulepath
+    -- if $has_at_most_one_name_annotation(annotationList)
     -- TypeArgumentList_ok: p TC_0 |- typeArgumentList : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_impl*{typeId_impl <- typeId_impl*}
     -- ArgumentList_ok: p TC_0 |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- let prefixedNameIR = $prefixedTypeName(prefixedTypeName)
@@ -21930,6 +22080,7 @@ relation ObjectDecl_ok: cursor typingContext typeFrame externMethodTypeDefEnv |-
     -- let varTypeIR'?{varTypeIR' <- varTypeIR'?} = $find_var_t(_BARE nameIR, p, TC_1)
     -- if varTypeIR'?{varTypeIR' <- varTypeIR'?} matches (_)
     -- let ?(varTypeIR) = varTypeIR'?{varTypeIR' <- varTypeIR'?}
+    -- if ~$in_set<id>(nameIR, $dom_map<id, varTypeIR>(typeFrame))
     -- let typeFrame_init = $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR)
     -- output: % % % % |- % : typeFrame_init externMethodTypeDefEnv instantiationIR as objectDeclarationIR
 
@@ -22029,6 +22180,7 @@ relation InstDecl_objectInitializer_ok: cursor typingContext |- annotationList p
    paths
 
     rulepath
+    -- if $has_at_most_one_name_annotation(annotationList)
     -- TypeArgumentList_ok: p TC_0 |- typeArgumentList : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_impl*{typeId_impl <- typeId_impl*}
     -- ArgumentList_ok: p TC_0 |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- let prefixedNameIR = $prefixedTypeName(prefixedTypeName)
@@ -26641,7 +26793,7 @@ relation ObjectDecl_inst: instContext store |- objectDeclarationIR : instContext
     -- let objectDeclarationIR' = objectDeclarationIR
     -- if objectDeclarationIR' <: instantiationIR
     -- let instantiationIR = objectDeclarationIR' as instantiationIR
-    -- InstDecl_inst: GLOBAL IC_0 STO_0 |- instantiationIR : IC_1 STO_1 _constantDeclarationIR
+    -- InstDecl_inst: BLOCK IC_0 STO_0 |- instantiationIR : IC_1 STO_1 _constantDeclarationIR
     -- output: % % |- % : IC_1 STO_1
 
 relation ObjectDecls_inst: instContext store |- objectDeclarationListIR : instContext store
@@ -27005,6 +27157,16 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- if p matches LOCAL
   -- if prefixedNameIR matches _BARE %
   -- let _BARE nameIR = prefixedNameIR
+
+  clause 7 : (p, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_e(GLOBAL, EC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
+  -- if p matches BLOCK
+  -- if prefixedNameIR matches '.' %
+  -- let '.' nameIR = prefixedNameIR
+
+  clause 8 : (p, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_e(GLOBAL, EC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
+  -- if p matches LOCAL
+  -- if prefixedNameIR matches '.' %
+  -- let '.' nameIR = prefixedNameIR
 
 def $find_constructorDef_e(evalContext, prefixedNameIR, argumentIR*) : callResolution<constructorDef>? =
 

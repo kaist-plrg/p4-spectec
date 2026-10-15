@@ -29,9 +29,7 @@ pub(super) fn strip_exp(exp: &ast::Exp) -> shared_ast::Exp {
             }
             P::UpCast(typ, exp) => E::UpCast(Box::new(typ.clone()), Box::new(strip_exp(exp))),
             P::DownCast(typ, exp) => E::DownCast(Box::new(typ.clone()), Box::new(strip_exp(exp))),
-            P::Sub(exp, typ, check) => {
-                E::Sub(Box::new(strip_exp(exp)), Box::new(typ.clone()), check.clone())
-            }
+            P::Sub(exp, subcheck) => E::Sub(Box::new(strip_exp(exp)), Box::new(subcheck.clone())),
             P::Match(exp, pattern) => E::Match(Box::new(strip_exp(exp)), pattern.clone()),
             P::Tuple(exps) => E::Tuple(exps.iter().map(strip_exp).collect()),
             P::Case(not_exp) => E::Case(Box::new(strip_not_exp(not_exp))),

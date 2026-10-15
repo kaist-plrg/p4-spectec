@@ -11,7 +11,13 @@ use crate::lang::data::notation::MixopArena;
 
 use crate::lang::al::{ast as source, prepared::*};
 
-use crate::runtime::envs::interp::shared::{callable::Callable, frame::FrameLayout};
+use crate::runtime::{
+    envs::{
+        elab::TDEnv,
+        interp::shared::{callable::Callable, frame::FrameLayout},
+    },
+    typdef::TypeDef,
+};
 
 use crate::interp::shared::prepare::{Prepare, il};
 
@@ -21,18 +27,28 @@ use crate::interp::shared::prepare::{Prepare, il};
 pub struct PrepareContext<'a> {
     /// The specification's notation arena.
     pub arena_mixop: &'a mut MixopArena,
+    /// Source type definitions, with the callable's type parameters.
+    pub tdenv: &'a TDEnv,
     /// The callable's frame layout.
     pub layout: &'a mut FrameLayout,
 }
 
 impl<'a> PrepareContext<'a> {
-    /// Borrows the notation arena and callable layout for preparation.
-    pub fn new(arena_mixop: &'a mut MixopArena, layout: &'a mut FrameLayout) -> Self {
-        Self { arena_mixop, layout }
+    /// Borrows the arena, type definitions, and layout for preparation.
+    pub fn new(
+        arena_mixop: &'a mut MixopArena,
+        tdenv: &'a TDEnv,
+        layout: &'a mut FrameLayout,
+    ) -> Self {
+        Self { arena_mixop, tdenv, layout }
     }
 
     fn il(&mut self) -> il::PrepareContext<'_> {
-        il::PrepareContext { arena_mixop: &mut *self.arena_mixop, layout: &mut *self.layout }
+        il::PrepareContext {
+            arena_mixop: &mut *self.arena_mixop,
+            tdenv: self.tdenv,
+            layout: &mut *self.layout,
+        }
     }
 }
 
@@ -310,6 +326,12 @@ impl Prepare<PrepareContext<'_>> for source::DefinedFunc {
     type Output = DefinedFunc;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        // Type parameters are opaque types in the body
+        let mut tdenv = ctx.tdenv.clone();
+        for tparam in &self.tparams {
+            tdenv.insert(tparam.clone(), TypeDef::Parameter);
+        }
+        let ctx = &mut PrepareContext::new(&mut *ctx.arena_mixop, &tdenv, &mut *ctx.layout);
         DefinedFunc {
             id: self.id,
             tparams: self.tparams,

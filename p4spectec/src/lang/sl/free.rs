@@ -127,7 +127,7 @@ impl FreeIds for Case {
 
 impl FreeIds for Block {
     fn free_ids(&self) -> IdSet {
-        self.as_slice().free_ids()
+        self.instrs.as_slice().free_ids()
     }
 }
 

@@ -51,7 +51,7 @@ fn insert_hold_instr(instr_ol: ol::HoldInstr, dangle: bool) -> sl::InstrKind {
     } = instr_ol;
     let block_hold_sl = insert_block(block_hold_ol, dangle);
     let block_not_hold_sl = insert_block(block_not_hold_ol, dangle);
-    let hold_case = match (block_hold_sl.is_empty(), block_not_hold_sl.is_empty()) {
+    let hold_case = match (block_hold_sl.instrs.is_empty(), block_not_hold_sl.instrs.is_empty()) {
         // Lowering adds a continuation; optimization preserves its terminal
         (true, true) => unreachable!("hold must retain a continuation"),
         (false, true) => sl::HoldCase::Hold(block_hold_sl, dangle),
@@ -133,10 +133,11 @@ fn insert_debug_instr(instr_ol: ol::DebugInstr, dangle: bool) -> sl::InstrKind {
 // == Blocks
 
 fn insert_block(block_ol: ol::Block, dangle: bool) -> sl::Block {
-    block_ol
+    let instrs = block_ol
         .into_iter()
         .map(|instr_ol| insert_instr(instr_ol, dangle))
-        .collect()
+        .collect();
+    sl::Block { instrs }
 }
 
 // == Block insertion strategies

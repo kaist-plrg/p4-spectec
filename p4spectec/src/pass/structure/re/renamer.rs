@@ -157,9 +157,7 @@ impl Renamer {
             ExpKind::DownCast(typ, exp) => {
                 ExpKind::DownCast(typ, Box::new(self.rename_exp(changed, *exp)))
             }
-            ExpKind::Sub(exp, typ, subcheck) => {
-                ExpKind::Sub(Box::new(self.rename_exp(changed, *exp)), typ, subcheck)
-            }
+            ExpKind::Sub(exp, typ) => ExpKind::Sub(Box::new(self.rename_exp(changed, *exp)), typ),
             ExpKind::Match(exp, pattern) => {
                 ExpKind::Match(Box::new(self.rename_exp(changed, *exp)), pattern)
             }

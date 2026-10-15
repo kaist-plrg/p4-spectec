@@ -50,13 +50,13 @@ use super::{
 pub fn eval_block<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Cow<'_, Context<'_>>,
-    block: &[ast::Instr],
+    block: &ast::Block,
     tail: bool,
 ) -> Backtrack<Flow> {
     if runner_ctx.interp().config.det {
-        eval_block_deterministic(runner_ctx, ctx.as_ref(), block, tail)
+        eval_block_deterministic(runner_ctx, ctx.as_ref(), &block.instrs, tail)
     } else {
-        eval_block_sequential(runner_ctx, ctx, block.iter(), tail)
+        eval_block_sequential(runner_ctx, ctx, block.instrs.iter(), tail)
     }
 }
 
@@ -64,8 +64,8 @@ pub fn eval_block<Iface: Interface, Ext: Extern>(
 pub(crate) fn eval_block_with_else<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Context<'_>,
-    block: &[ast::Instr],
-    block_else: Option<&[ast::Instr]>,
+    block: &ast::Block,
+    block_else: Option<&ast::ElseBlock>,
 ) -> Backtrack<Flow> {
     // Without an otherwise block the body itself is in tail position
     let Some(block_else) = block_else else {
@@ -301,7 +301,7 @@ fn eval_guard<Iface: Interface, Ext: Extern>(
             ops::cmpop(runner_ctx.arena(), span, op, value, value_r)
         }
         // Subtype check
-        ast::Guard::Sub(_, check) => ops::sub(runner_ctx.arena(), ctx, span, check, value),
+        ast::Guard::Sub(subcheck) => ops::sub(runner_ctx.arena(), ctx, span, subcheck, value),
         // Pattern match
         ast::Guard::Match(pattern) => {
             ok!(ops::r#match(runner_ctx.arena(), pattern, value))

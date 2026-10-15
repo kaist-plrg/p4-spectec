@@ -77,18 +77,6 @@ impl SyntaxEq for TypCase {
     }
 }
 
-// - Subtype checks
-
-impl SyntaxEq for Subcheck {
-    fn syntax_eq(&self, _other: &Self) -> bool {
-        true
-    }
-
-    fn slice_syntax_eq(_subchecks_l: &[Self], _subchecks_r: &[Self]) -> bool {
-        true
-    }
-}
-
 // - Operator types
 
 impl SyntaxEq for OpTyp {
@@ -131,7 +119,7 @@ impl SyntaxEq for ExpKind {
             | (ExpKind::DownCast(typ_l, exp_l), ExpKind::DownCast(typ_r, exp_r)) => {
                 typ_l.syntax_eq(typ_r) && exp_l.syntax_eq(exp_r)
             }
-            (ExpKind::Sub(exp_l, typ_l, _), ExpKind::Sub(exp_r, typ_r, _)) => {
+            (ExpKind::Sub(exp_l, typ_l), ExpKind::Sub(exp_r, typ_r)) => {
                 exp_l.syntax_eq(exp_r) && typ_l.syntax_eq(typ_r)
             }
             (ExpKind::Match(exp_l, pattern_l), ExpKind::Match(exp_r, pattern_r)) => {

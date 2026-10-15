@@ -60,7 +60,7 @@ impl Print for Exp {
                 typ.print(printer)?;
                 printer.write_char(')')
             }
-            ExpKind::Sub(exp, typ, _) => {
+            ExpKind::Sub(exp, typ) => {
                 printer.write_char('(')?;
                 exp.print(printer)?;
                 printer.write_str(" has type ")?;
@@ -319,7 +319,7 @@ fn write_instr_with<Tier>(
             }
             Ok(())
         }
-        InstrKind::IfLetSub(IfLetSubInstr { exp_l, exp_r, block, dangle, typ, .. }) => {
+        InstrKind::IfLetSub(IfLetSubInstr { target: typ, exp_l, exp_r, block, dangle }) => {
             write_order(output)?;
             output.write_str("If let ")?;
             exp_l.print(output)?;
@@ -625,7 +625,7 @@ impl Print for Guard {
                 exp.print(printer)?;
                 printer.write_char(')')
             }
-            Guard::Sub(typ, _) => {
+            Guard::Sub(typ) => {
                 printer.write_str("(% has type ")?;
                 typ.print(printer)?;
                 printer.write_char(')')
@@ -635,7 +635,7 @@ impl Print for Guard {
                 pattern.print(printer)?;
                 printer.write_char(')')
             }
-            Guard::LetSub(typ, _, exp_l) => {
+            Guard::LetSub(typ, exp_l) => {
                 printer.write_str("(% has type ")?;
                 typ.print(printer)?;
                 printer.write_str(", let ")?;
@@ -698,7 +698,7 @@ fn write_block_with<Tier>(
     level: usize,
     index: usize,
 ) -> fmt::Result {
-    for (offset, instr) in block.iter().enumerate() {
+    for (offset, instr) in block.instrs.iter().enumerate() {
         if offset != 0 {
             output.write_str("\n\n")?;
         }
@@ -808,7 +808,7 @@ impl Print for DefinedRel {
             &self.block_else_opt,
             write_dispatch_instr_with,
             0,
-            self.block.len(),
+            self.block.instrs.len(),
         )
     }
 }
@@ -932,7 +932,7 @@ impl Print for DefinedFunc {
             &self.block_else_opt,
             write_group_instr_with,
             0,
-            self.block.len(),
+            self.block.instrs.len(),
         )
     }
 }
