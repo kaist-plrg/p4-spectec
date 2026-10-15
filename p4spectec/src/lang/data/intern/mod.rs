@@ -12,6 +12,6 @@ mod simple;
 
 // = Public interface
 
-pub use canon::{CanonEq, CanonHash, CanonId, CanonInterner};
+pub use canon::{CanonEq, CanonHash, CanonId, CanonInterner, CanonLookup};
 pub use idx::Interned;
 pub use simple::Interner;

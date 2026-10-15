@@ -9,8 +9,8 @@ use std::cmp::Ordering;
 use crate::lang::{
     common::prim::num,
     data::{
-        intern::{CanonEq, CanonInterner},
-        notation::MixopArena,
+        intern::{CanonEq, CanonLookup},
+        notation::flat::MixopKind,
     },
     traits::{cmp::SyntaxCmp, eq::SyntaxEq},
 };
@@ -19,11 +19,11 @@ use super::{Value, ValueField, ValueKind, ValueRef};
 
 // = Canonical equality
 
-impl CanonEq<MixopArena> for ValueKind {
+impl<Deps: CanonLookup<MixopKind>> CanonEq<Deps> for ValueKind {
     fn canon_eq(
         &self,
-        interner: &CanonInterner<Self>,
-        arena_mixop: &MixopArena,
+        interner: &impl CanonLookup<Self>,
+        arena_mixop: &Deps,
         kind_r: &Self,
     ) -> bool {
         // Children compare by canonical id, computed when they were interned
@@ -83,8 +83,9 @@ impl SyntaxEq for ValueRef<'_> {
             std::ptr::eq(self.arena, value_other.arena),
             "values must belong to the same arena"
         );
-        self.arena.value.canon_id(self.value.node)
-            == self.arena.value.canon_id(value_other.value.node)
+        self.value.node == value_other.value.node
+            || self.arena.value.canon_id(self.value.node)
+                == self.arena.value.canon_id(value_other.value.node)
     }
 }
 
@@ -94,6 +95,9 @@ impl SyntaxCmp for ValueRef<'_> {
             std::ptr::eq(self.arena, value_other.arena),
             "values must belong to the same arena"
         );
+        if self.value.node == value_other.value.node {
+            return Ordering::Equal;
+        }
         // Compare child contents in the same arena
         let compare_value = |value_l: &Value, value_r: &Value| {
             value_l
