@@ -65,49 +65,49 @@ def $func_typ(DEF tparam* param* typ '->' clause* elsclause?)
 
 ;; Type equivalence expands aliases before structural comparison
 
-dec $expand_typ(ctx, typ) : typ
-def $expand_typ(C, VAR id targ*) = $expand_typ(C, $subst_typ(theta, typ))
-  -- if DEF tparam* '->' (ALIAS typ) = $find_typ(C, id)
+dec $expand_typ(tctx, typ) : typ
+def $expand_typ(TC, VAR id targ*) = $expand_typ(TC, $subst_typ(theta, typ))
+  -- if DEF tparam* '->' (ALIAS typ) = $find_typ_tctx(TC, id)
   -- if theta = `{ (tparam ':' targ)* `}
-def $expand_typ(C, typ) = typ
+def $expand_typ(TC, typ) = typ
   -- otherwise
 
-dec $equiv_typ(ctx, typ, typ) : bool
-dec $equiv_typs(ctx, typ*, typ*) : bool
-dec $equiv_typ'(ctx, typ, typ) : bool
-def $equiv_typ(C, typ_l, typ_r)
-  = $equiv_typ'(C, $expand_typ(C, typ_l), $expand_typ(C, typ_r))
+dec $equiv_typ(tctx, typ, typ) : bool
+dec $equiv_typs(tctx, typ*, typ*) : bool
+dec $equiv_typ'(tctx, typ, typ) : bool
+def $equiv_typ(TC, typ_l, typ_r)
+  = $equiv_typ'(TC, $expand_typ(TC, typ_l), $expand_typ(TC, typ_r))
 
-def $equiv_typs(C, eps, eps) = true
-def $equiv_typs(C, typ_l :: typ_l_t*, typ_r :: typ_r_t*)
-  = $equiv_typ(C, typ_l, typ_r) /\ $equiv_typs(C, typ_l_t*, typ_r_t*)
-def $equiv_typs(C, typ_l*, typ_r*) = false
+def $equiv_typs(TC, eps, eps) = true
+def $equiv_typs(TC, typ_l :: typ_l_t*, typ_r :: typ_r_t*)
+  = $equiv_typ(TC, typ_l, typ_r) /\ $equiv_typs(TC, typ_l_t*, typ_r_t*)
+def $equiv_typs(TC, typ_l*, typ_r*) = false
   -- otherwise
 
-def $equiv_typ'(C, BOOL, BOOL) = true
-def $equiv_typ'(C, NAT, NAT) = true
-def $equiv_typ'(C, INT, INT) = true
-def $equiv_typ'(C, TEXT, TEXT) = true
-def $equiv_typ'(C, VAR id_l targ_l*, VAR id_r targ_r*)
-  = $(id_l = id_r) /\ $equiv_typs(C, targ_l*, targ_r*)
-def $equiv_typ'(C, TUP typ_l*, TUP typ_r*)
-  = $equiv_typs(C, typ_l*, typ_r*)
-def $equiv_typ'(C, ITER typ_l iter_l, ITER typ_r iter_r)
-  = $(iter_l = iter_r) /\ $equiv_typ(C, typ_l, typ_r)
+def $equiv_typ'(TC, BOOL, BOOL) = true
+def $equiv_typ'(TC, NAT, NAT) = true
+def $equiv_typ'(TC, INT, INT) = true
+def $equiv_typ'(TC, TEXT, TEXT) = true
+def $equiv_typ'(TC, VAR id_l targ_l*, VAR id_r targ_r*)
+  = $(id_l = id_r) /\ $equiv_typs(TC, targ_l*, targ_r*)
+def $equiv_typ'(TC, TUP typ_l*, TUP typ_r*)
+  = $equiv_typs(TC, typ_l*, typ_r*)
+def $equiv_typ'(TC, ITER typ_l iter_l, ITER typ_r iter_r)
+  = $(iter_l = iter_r) /\ $equiv_typ(TC, typ_l, typ_r)
 ;; Native structural equivalence excludes nested function types
 ;; Only function-value membership invokes signature alpha-equivalence
 
-def $equiv_typ'(C, typ_l, typ_r) = false
+def $equiv_typ'(TC, typ_l, typ_r) = false
   -- otherwise
 
-dec $equiv_func_typ(ctx, typ, typ) : bool
-def $equiv_func_typ(C, FUNC tparam_l* typ_l* typ_ret_l, FUNC tparam_r* typ_r* typ_ret_r)
-  = $equiv_typs(C_fresh, typ_l_subst*, typ_r_subst*)
-    /\ $equiv_typ(C_fresh, typ_ret_l_subst, typ_ret_r_subst)
+dec $equiv_func_typ(tctx, typ, typ) : bool
+def $equiv_func_typ(TC, FUNC tparam_l* typ_l* typ_ret_l, FUNC tparam_r* typ_r* typ_ret_r)
+  = $equiv_typs(TC_fresh, typ_l_subst*, typ_r_subst*)
+    /\ $equiv_typ(TC_fresh, typ_ret_l_subst, typ_ret_r_subst)
   -- if |tparam_l*| = |tparam_r*|
   -- if |typ_l*| = |typ_r*|
-  -- if `{ (id_global ':' typdef_global)* `} = C.GLOBAL.TYP
-  -- if `{ (id_local ':' typdef_local)* `} = C.LOCAL.TYP
+  -- if `{ (id_global ':' typdef_global)* `} = TC.GLOBAL.TYP
+  -- if `{ (id_local ':' typdef_local)* `} = TC.LOCAL.TYP
   -- if id_used* = id_global* ++ id_local*
     ++ $ids_typ(FUNC tparam_l* typ_l* typ_ret_l)
     ++ $ids_typ(FUNC tparam_r* typ_r* typ_ret_r)
@@ -118,8 +118,8 @@ def $equiv_func_typ(C, FUNC tparam_l* typ_l* typ_ret_l, FUNC tparam_r* typ_r* ty
   -- if typ_r_subst* = $subst_typ(theta_r, typ_r)*
   -- if typ_ret_l_subst = $subst_typ(theta_l, typ_ret_l)
   -- if typ_ret_r_subst = $subst_typ(theta_r, typ_ret_r)
-  -- if tdenv_fresh = $adds_map<id, typdef>(C.LOCAL.TYP, tparam_fresh*, $repeat_<typdef>(PARAM, |tparam_fresh*|))
-  -- if C_fresh = C[ .LOCAL.TYP = tdenv_fresh ]
+  -- if tdenv_fresh = $adds_map<id, typdef>(TC.LOCAL.TYP, tparam_fresh*, $repeat_<typdef>(PARAM, |tparam_fresh*|))
+  -- if TC_fresh = TC[ .LOCAL.TYP = tdenv_fresh ]
 
 ;; Type casts
 
@@ -182,33 +182,33 @@ def $downcast(C, typ, val) = OK val
 
 ;;; Value-type matching
 
-dec $subtyp(ctx, typ, val) : bool
+dec $subtyp(tctx, typ, val) : bool
   hint(prose_true %2 "matches type" %1 "under" %0)
   hint(prose_false %2 "does not match type" %1 "under" %0)
-dec $subtyps(ctx, typ*, val*) : bool
+dec $subtyps(tctx, typ*, val*) : bool
   hint(prose_true "each of" %2 "matches each of type" %1 "under" %0)
   hint(prose_false "some of" %2 "does not match each of type" %1 "under" %0)
 
-def $subtyp(C, BOOL, BOOL b) = true
-def $subtyp(C, NAT, NAT n) = true
-def $subtyp(C, NAT, INT i) = $(i >= 0)
-def $subtyp(C, INT, num) = true
-def $subtyp(C, TEXT, TEXT t) = true
+def $subtyp(TC, BOOL, BOOL b) = true
+def $subtyp(TC, NAT, NAT n) = true
+def $subtyp(TC, NAT, INT i) = $(i >= 0)
+def $subtyp(TC, INT, num) = true
+def $subtyp(TC, TEXT, TEXT t) = true
 
-def $subtyp(C, VAR id targ*, EXT json) = true
-  -- if EXT = $find_typ(C, id)
+def $subtyp(TC, VAR id targ*, EXT json) = true
+  -- if EXT = $find_typ_tctx(TC, id)
 
-def $subtyp(C, VAR id targ*, val)
-  = $subtyp(C, typ_subst, val)
+def $subtyp(TC, VAR id targ*, val)
+  = $subtyp(TC, typ_subst, val)
   -- if DEF tparam* '->' (ALIAS typ)
-      = $find_typ(C, id)
+      = $find_typ_tctx(TC, id)
   -- if theta = `{ (tparam ':' targ)* `}
   -- if typ_subst = $subst_typ(theta, typ)
 
-def $subtyp(C, VAR id targ*, INJ (mixop val*))
-  = $forall_($subtyp(C, typ_case_found_subst, val)*)
+def $subtyp(TC, VAR id targ*, INJ (mixop val*))
+  = $forall_($subtyp(TC, typ_case_found_subst, val)*)
   -- if DEF tparam* '->' (VARIANT typcase*)
-      = $find_typ(C, id)
+      = $find_typ_tctx(TC, id)
   -- if theta = `{ (tparam ':' targ)* `}
   -- if (mixop_case typ_case* = typcase)*
   -- if mixop <- mixop_case*
@@ -216,33 +216,33 @@ def $subtyp(C, VAR id targ*, INJ (mixop val*))
       = $assoc_<mixop, typ*>(mixop, (mixop_case, typ_case*)*)
   -- if typ_case_found_subst* = $subst_typ(theta, typ_case_found)*
 
-def $subtyp(C, VAR id targ*, STR valfield*)
-  = $forall_($subtyp(C, typ_field_subst, val_field)*)
+def $subtyp(TC, VAR id targ*, STR valfield*)
+  = $forall_($subtyp(TC, typ_field_subst, val_field)*)
   -- if DEF tparam* '->' (STRUCT typfield*)
-      = $find_typ(C, id)
+      = $find_typ_tctx(TC, id)
   -- if (atom typ_field = typfield)*
   -- if (atom val_field = valfield)*
   -- if theta = `{ (tparam ':' targ)* `}
   -- if (typ_field_subst = $subst_typ(theta, typ_field))*
 
-def $subtyp(C, TUP typ*, TUP val*)
-  = $forall_($subtyp(C, typ, val)*)
+def $subtyp(TC, TUP typ*, TUP val*)
+  = $forall_($subtyp(TC, typ, val)*)
 
-def $subtyp(C, ITER typ QUEST, OPT val)
-  = $subtyp(C, typ, val)
-def $subtyp(C, ITER typ QUEST, OPT eps) = true
+def $subtyp(TC, ITER typ QUEST, OPT val)
+  = $subtyp(TC, typ, val)
+def $subtyp(TC, ITER typ QUEST, OPT eps) = true
 
-def $subtyp(C, ITER typ STAR, LIST val*)
-  = $forall_($subtyp(C, typ, val)*)
+def $subtyp(TC, ITER typ STAR, LIST val*)
+  = $forall_($subtyp(TC, typ, val)*)
 
-def $subtyp(C, FUNC tparam* typ* typ_ret, FUNC id)
-  = $equiv_func_typ(C, FUNC tparam* typ* typ_ret, $func_typ(funcdef))
-  -- if funcdef = $find_func(C, id)
+def $subtyp(TC, FUNC tparam* typ* typ_ret, FUNC id)
+  = $equiv_func_typ(TC, FUNC tparam* typ* typ_ret, $func_typ(funcdef))
+  -- if funcdef = $find_func_tctx(TC, id)
 
-def $subtyp(C, typ, val) = false
+def $subtyp(TC, typ, val) = false
     -- otherwise
 
-def $subtyps(C, typ*, val*)
-  = $forall_($subtyp(C, typ, val)*)
-def $subtyps(C, typ*, val*) = false
+def $subtyps(TC, typ*, val*)
+  = $forall_($subtyp(TC, typ, val)*)
+def $subtyps(TC, typ*, val*) = false
     -- otherwise

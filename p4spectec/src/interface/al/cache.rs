@@ -14,7 +14,7 @@ use crate::lang::data::{
 
 use crate::util::cache::ClockCache;
 
-const NUM_ENTRIES_MAX: usize = 4096;
+const NUM_ENTRIES_MAX: usize = 65_536;
 
 /// Conversion results owned by one host boundary in one arena.
 ///
