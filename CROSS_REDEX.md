@@ -458,7 +458,8 @@ performance, not for correctness:
   first hashes its term or arguments with `equal-hash-code`. Keys are then
   compared with `equal?`. The hash is bounded on lists, so terms that share a
   large prefix collide *(measured)*. On a Racket hash table, it walks every
-  entry (Step 17).
+  entry (Step 17). That is why `add-map` puts a new key in front of a map
+  (Step 18).
 - `equal?` on two equal but not `eq?` copies of the booted `spec/` took
   194 ms *(measured)*. A large argument that is rebuilt on every call can
   therefore make lookups slow. `$subtyp` once took the extension of the global
@@ -557,7 +558,12 @@ layer's maps are read through `find-global`, which calls the same Racket
 helper, `map-ref`. A few places build or take apart a map directly:
 watsup's map literals `` `{ (k ':' v)* `} `` for a `theta` or the callee's
 tdenv, `theta-of-tdenv`, `subst-typ`, and `load-defn`. Step 17 tried Racket
-hash tables, and the port went back to lists.
+hash tables, and the port went back to lists. `add-map` replaces the value of
+a key where the key stands, and puts a new key in front. The order of the
+entries means nothing, since a key appears once. With new keys at the end, as
+before Step 18, two environments of a layer that differ only in their later
+bindings could hash alike once an early binding held a large value, and
+Redex's caches then compared them with a deep `equal?` *(measured)*.
 
 A `dec` over `ctx` becomes a metafunction over `G L` if it reads `C.GLOBAL`,
 and over `L` alone if it reads only `C.LOCAL`. A result of type `ctx` becomes
@@ -2381,3 +2387,34 @@ Outcome:
 - `test/p4-typecheck.rkt` passes `action-bind.p4` (11.5 s) and
   `action-uses.p4` (8.3 s), and with `--neg` fails the negative
   `action-bind.p4` (3.0 s), with `spec/` loaded in 3.4 s.
+
+Afterwards, `p4_16_samples/action-synth.p4` was timed with the handle and
+association lists, which Step 17 had not done. It took 358.7 s, where Step 17
+had measured 220.4 s with hash tables as well. A probe found why: Racket's
+`equal-hash-code` looks only at the start of a long list, and `add-map`
+appended a new key at the end. Once an early binding of a layer held a value
+of four or more small structs, every later environment of that layer had the
+same hash code, so Redex's caches compared them with a deep `equal?`. Three
+ways to store maps, timed with `test/p4-typecheck.rkt`, one run each
+*(measured)*:
+
+| Maps | `action-synth.p4` | Wall clock | Peak memory |
+| --- | --- | --- | --- |
+| association lists, a new key at the end | 358.7 s | 6:04 | 544 MB |
+| Racket hash tables, the Step 17 commit ported | 236.4 s | 4:02 | 543 MB |
+| association lists, a new key in front | 274.2 s | 4:38 | 546 MB |
+
+On `action-bind.p4`, `action-uses.p4`, and the negative `action-bind.p4`, the
+lists and the hash tables took the same time, within noise. Hash tables would
+take maps out of the grammar, and `$theta_of_tdenv` and `$subst_typ` would no
+longer match a map's structure, so the user decided, on 2026-10-15:
+
+5. `add-map` puts a new key in front, and replaces an existing key's value
+   where the key stands. The maps stay association lists.
+
+Outcome:
+
+- Done, in two commits: `add-map`, and these docs. Every example gave the same
+  value, and the three P4 programs above the same results.
+- `p4_16_samples/action-synth.p4` passes in 267.6 s (4:32 wall clock, 545 MB
+  peak), against 358.7 s before *(measured)*.
