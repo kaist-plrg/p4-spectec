@@ -11,6 +11,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use p4spectec::metacirc::TowerConfig;
 use serde::{Deserialize, de::DeserializeOwned};
 
 use crate::{Error, Result, diagnostic};
@@ -115,6 +116,14 @@ pub struct RunConfig {
     pub suites: Vec<RunSuite>,
 }
 
+/// Supplies corpus inputs and expectations independently of the executor.
+#[derive(Debug, Deserialize)]
+pub struct CorpusConfig {
+    pub includes: Vec<PathBuf>,
+    pub excludes: Vec<PathBuf>,
+    pub suites: Vec<RunSuite>,
+}
+
 /// Supplies simulation dependencies and P4/STF registrations.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -136,6 +145,7 @@ pub struct Modules {
     pub adoc: PathBuf,
     pub p4parse: PathBuf,
     pub run: PathBuf,
+    pub metacirc: PathBuf,
     pub sim: PathBuf,
     pub diagnostics: diagnostic::Modules,
 }
@@ -312,6 +322,48 @@ pub fn load_execution(path: &Path) -> Result<RunConfig> {
     Ok(config)
 }
 
+/// Loads metacircular corpus registrations and their referenced tower file.
+pub fn load_metacirc(path: &Path) -> Result<(CorpusConfig, TowerConfig)> {
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct MetacircConfig {
+        tower: PathBuf,
+        #[serde(flatten)]
+        corpus: CorpusConfig,
+    }
+
+    let config: MetacircConfig = load(path)?;
+    let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
+    // Resolve the tower file relative to this registration file
+    let path_tower = path_parent.join(&config.tower);
+    let config_tower = TowerConfig::from_file(&path_tower, &[])
+        .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
+    // Validate only the corpus declared by the metacircular suite
+    validate_execution(&config.corpus)?;
+    Ok((config.corpus, config_tower))
+}
+
+/// Validates execution inputs and expectations before corpus discovery.
+fn validate_execution(config: &CorpusConfig) -> Result<()> {
+    // Check include directories and exclusion lists before individual suites
+    directories_exist(&config.includes, "execution include directories")?;
+    for path in &config.excludes {
+        directories_exist(std::slice::from_ref(path), "execution exclusions")?;
+    }
+    let suites = &config.suites;
+    names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
+    // Entry relations and interpreter selections belong to each corpus
+    for suite in suites {
+        directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
+        languages_valid(&suite.languages)?;
+        if suite.relation.is_empty() {
+            return Err(Error::Invalid(format!("{}: empty entry relation", suite.name)));
+        }
+        expectation_exists(&suite.expected)?;
+    }
+    Ok(())
+}
+
 /// Loads simulation dependencies and explicit P4/STF corpus pairing.
 pub fn load_simulation(path: &Path) -> Result<SimConfig> {
     let config: SimConfig = load(path)?;
@@ -356,6 +408,7 @@ impl Index {
             &mut modules.adoc,
             &mut modules.p4parse,
             &mut modules.run,
+            &mut modules.metacirc,
             &mut modules.sim,
         ]
         .into_iter()
@@ -376,6 +429,7 @@ impl Index {
         println!("adoc: {:#?}", load_adoc(&self.suites.adoc)?);
         println!("p4parse: {:#?}", load_parsing(&self.suites.p4parse)?);
         println!("run: {:#?}", load_execution(&self.suites.run)?);
+        println!("metacirc: {:#?}", load_metacirc(&self.suites.metacirc)?);
         println!("sim: {:#?}", load_simulation(&self.suites.sim)?);
         self.suites.diagnostics.list()
     }

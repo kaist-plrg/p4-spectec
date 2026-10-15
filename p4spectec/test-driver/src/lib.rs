@@ -1,7 +1,7 @@
 //! Shared acceptance utilities and suite implementations
 //!
 //! The main driver selects registered compiler, execution, and simulation suites
-//! The metacirc binary checks AL meta compiler snapshots separately
+//! The metacirc binary runs the SL execution corpus through an AL tower
 //! Snapshot normalization is shared by both drivers
 
 use clap::Args;

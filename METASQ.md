@@ -98,15 +98,14 @@ caching and AL encode/decode caching are enabled together by default;
 only after the configured base entry succeeds; diagnostics cause a nonzero
 exit code.
 
-## Focused test
+## Execution corpus
 
 ```sh
 make test-metacirc
 ```
 
-This checks the Rust SL → AL specification → P4 specification → P4 program
-`Program_inst` path without requiring the p4c submodule.
-The default test targets do not include it.
+Runs the `test-run-sl` corpus through the AL/P4 tower, without `--det`.
+Requires the p4c submodule.
 
 ## OCaml reference
 
