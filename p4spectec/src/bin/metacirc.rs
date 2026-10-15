@@ -62,7 +62,7 @@ struct RunArgs {
 fn run(cli: Cli) -> metacirc::Result<()> {
     match cli.command {
         Command::Run(args) => {
-            let config = TowerConfig::from_file(&args.config)?;
+            let config = TowerConfig::from_file(&args.config, &args.program)?;
             metacirc::run(&config, &args.includes, &args.program, args.options.config())
         }
     }

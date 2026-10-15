@@ -1,4 +1,4 @@
-# Independent metacircular build and Program_inst test
+# Independent metacircular build and P4 execution corpus
 
 CARGO := cargo
 RUST_DIR = p4spectec
@@ -20,8 +20,8 @@ metacirc: metacirc-cli
 	rm -f ./$(METACIRC)
 	cp "$(CARGO_TARGET_DIR)/release/metacirc" ./$(METACIRC)
 
-test-metacirc: metacirc-cli
-	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(CARGO_TARGET_DIR)" --bin metacirc-test -- --cli "$(CARGO_TARGET_DIR)/release/metacirc"
+test-metacirc:
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(CARGO_TARGET_DIR)" --bin metacirc-test
 
 clean:
 	rm -f ./$(METACIRC)
