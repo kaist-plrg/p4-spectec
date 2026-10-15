@@ -4,10 +4,14 @@
 //! Target and intermediate helpers dispatch host calls toward the input program.
 //! A single-level tower executes its target directly as its base.
 
-use super::externs::{RelayExtern, TerminalExtern};
+use super::{
+    config::LevelConfig,
+    externs::{RelayExtern, TerminalExtern},
+};
 use crate::{
     interface::{al::AlInterface, p4::P4Interface},
     lang::{
+        al::ast as al,
         data::{arena::Arena, value::flat::Value},
         il::ast::Typ,
     },
@@ -15,16 +19,23 @@ use crate::{
     sim_plugin::dummy::Dummy,
 };
 
-/// The native execution entry point.
-pub(super) enum Tower {
-    Direct(Target),
-    Nested(Runner<AlInterface, RelayExtern>),
+/// Prepared specifications and host layers of an interpreter tower.
+pub struct Tower {
+    // Nonempty, ordered from base through intermediates to target
+    pub(super) levels: Vec<Level>,
+    pub(super) base: Layer,
 }
 
-/// A host-call destination beneath the base.
+/// A lowered specification paired with its configuration.
+pub(super) struct Level {
+    pub(super) config: LevelConfig,
+    pub(super) spec_al: al::Spec,
+}
+
+/// A native base or a host-call destination beneath it.
 pub(super) enum Layer {
     Target(Target),
-    Interm(Runner<AlInterface, RelayExtern>),
+    Meta(Runner<AlInterface, RelayExtern>),
 }
 
 /// The specification accepting the input program.
@@ -34,22 +45,34 @@ pub(super) enum Target {
 }
 
 impl Tower {
-    /// Enters the tower with the prepared input value.
+    /// Clears program state in the base and every owned host layer.
+    pub fn reset(&mut self) {
+        self.base.reset();
+    }
+
+    /// Executes a patched input at the native base's entry relation.
     pub fn eval_program(
         &mut self,
         arena: &mut Arena,
         name: &str,
         program: Value,
     ) -> Eval<Vec<Value>> {
-        match self {
-            Self::Direct(Target::Al(runner)) => runner.eval_program(arena, name, program),
-            Self::Direct(Target::P4(runner)) => runner.eval_program(arena, name, program),
-            Self::Nested(runner) => runner.eval_program(arena, name, program),
-        }
+        // A direct tower uses the caller's entry; nested towers use the base entry
+        let name_base = if self.levels.len() == 1 { name } else { &self.levels[0].config.rel };
+        self.base.eval_program(arena, name_base, program)
     }
 }
 
 impl Layer {
+    /// Enters the native runner with the patched input value.
+    fn eval_program(&mut self, arena: &mut Arena, name: &str, program: Value) -> Eval<Vec<Value>> {
+        match self {
+            Self::Target(Target::Al(runner)) => runner.eval_program(arena, name, program),
+            Self::Target(Target::P4(runner)) => runner.eval_program(arena, name, program),
+            Self::Meta(runner) => runner.eval_program(arena, name, program),
+        }
+    }
+
     /// Dispatches a decoded relation at this layer.
     pub fn eval_rel(
         &mut self,
@@ -60,7 +83,7 @@ impl Layer {
         match self {
             Self::Target(Target::Al(runner)) => runner.eval_rel(arena, name, values),
             Self::Target(Target::P4(runner)) => runner.eval_rel(arena, name, values),
-            Self::Interm(runner) => runner.eval_rel(arena, name, values),
+            Self::Meta(runner) => runner.eval_rel(arena, name, values),
         }
     }
 
@@ -75,7 +98,7 @@ impl Layer {
         match self {
             Self::Target(Target::Al(runner)) => runner.eval_func(arena, name, targs, values),
             Self::Target(Target::P4(runner)) => runner.eval_func(arena, name, targs, values),
-            Self::Interm(runner) => runner.eval_func(arena, name, targs, values),
+            Self::Meta(runner) => runner.eval_func(arena, name, targs, values),
         }
     }
 
@@ -84,7 +107,7 @@ impl Layer {
         match self {
             Self::Target(Target::Al(runner)) => runner.reset(),
             Self::Target(Target::P4(runner)) => runner.reset(),
-            Self::Interm(runner) => runner.reset(),
+            Self::Meta(runner) => runner.reset(),
         }
     }
 }
