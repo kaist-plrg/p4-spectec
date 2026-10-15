@@ -8,9 +8,11 @@ use std::collections::HashMap;
 
 use foldhash::fast::RandomState;
 
+use crate::frontend::parse::parse_typ;
 use crate::lang::data::intern::{CanonId, CanonInterner};
 
 use super::super::{MixopError, tree};
+use super::parse::{ParseMixopError, ToMixop};
 use super::{Mixop, MixopKind};
 
 // = Arena storage
@@ -23,7 +25,7 @@ pub struct MixopArena {
     /// Argument positions of each mixop, by handle index.
     arities: Vec<u32>,
     /// Successfully parsed notation strings, valid only in this arena.
-    pub(super) parsed: HashMap<String, Mixop, RandomState>,
+    mixops_parsed: HashMap<String, Mixop, RandomState>,
 }
 
 impl MixopArena {
@@ -35,6 +37,19 @@ impl MixopArena {
     }
 
     // - Interning
+
+    /// Parses and interns notation, reusing this arena's cached handle.
+    pub(crate) fn parse(&mut self, text: &str) -> Result<Mixop, ParseMixopError> {
+        // Reuse this arena's cached handle
+        if let Some(mixop) = self.mixops_parsed.get(text) {
+            return Ok(*mixop);
+        }
+
+        // Cache only successful conversions
+        let mixop = parse_typ(text)?.to_mixop(self)?;
+        self.mixops_parsed.insert(text.to_owned(), mixop);
+        Ok(mixop)
+    }
 
     /// Interns a tree node by node, children first, copying atoms.
     pub fn intern(&mut self, mixop: &tree::Mixop) -> Result<Mixop, MixopError> {
