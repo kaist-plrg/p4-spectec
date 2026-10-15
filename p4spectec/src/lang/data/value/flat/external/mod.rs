@@ -8,6 +8,8 @@
 //! A case body is written as its filled notation in both modes,
 //! so mixop handles never appear in a payload.
 
+use std::rc::Rc;
+
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_state::{DeserializeState, SerializeState};
 
@@ -132,7 +134,7 @@ impl SerializeState<EncodeContext<'_>> for Interned<flat::ValueKind> {
     }
 }
 
-impl SerializeState<EncodeContext<'_>> for Interned<TypKind> {
+impl SerializeState<EncodeContext<'_>> for Interned<Rc<TypKind>> {
     fn serialize_state<S: Serializer>(
         &self,
         serializer: S,
@@ -206,7 +208,7 @@ impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<flat::ValueKind>
     }
 }
 
-impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<TypKind> {
+impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<Rc<TypKind>> {
     fn deserialize_state<D: Deserializer<'de>>(
         ctx: &mut DecodeContext<'_>,
         deserializer: D,
