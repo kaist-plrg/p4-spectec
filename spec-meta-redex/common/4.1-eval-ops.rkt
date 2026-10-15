@@ -6,7 +6,7 @@
 ;; num.ml's `assert false` does.
 
 (require redex/reduction-semantics
-         "4-relation.rkt")
+         "3-relation.rkt")
 (provide unop-number
          binop-bool
          binop-number

@@ -8,7 +8,7 @@
 ;; Eval_exp/fail does for the call.
 
 (require redex/reduction-semantics
-         "../common/4-relation.rkt"
+         "../common/3-relation.rkt"
          "3-context.rkt"
          "4-relation.rkt")
 (provide ->term/eval-call-func

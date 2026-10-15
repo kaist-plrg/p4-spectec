@@ -7,7 +7,7 @@
 ;; Eval_prem/fail does for the premise.
 
 (require redex/reduction-semantics
-         "../common/4-relation.rkt"
+         "../common/3-relation.rkt"
          "3-context.rkt"
          "4-relation.rkt")
 (provide ->term/eval-call-rel

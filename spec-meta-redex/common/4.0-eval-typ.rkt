@@ -2,8 +2,8 @@
 ;; spec-meta/common/5.0-eval-typ.watsup.
 
 (require redex/reduction-semantics
-         "0.1-stdlib.rkt"
-         "4-relation.rkt")
+         "0.0-stdlib.rkt"
+         "3-relation.rkt")
 (provide subst-typ
          subst-typs)
 

@@ -9,7 +9,7 @@
 
 (require racket/match
          redex/reduction-semantics
-         "../common/0.1-stdlib.rkt"
+         "../common/0.0-stdlib.rkt"
          "../common/2-env.rkt"
          "2-env.rkt")
 (provide al-context

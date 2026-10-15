@@ -6,7 +6,7 @@
 ;; premise's sub-relation fails.
 
 (require redex/reduction-semantics
-         "../common/0.1-stdlib.rkt"
+         "../common/0.0-stdlib.rkt"
          "../common/2-env.rkt"
          "3-context.rkt"
          "4-relation.rkt")

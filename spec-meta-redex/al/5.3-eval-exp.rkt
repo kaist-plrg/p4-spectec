@@ -8,9 +8,9 @@
 ;; does not, and "<group>/<rule>/fail" where a rule's own premise fails.
 
 (require redex/reduction-semantics
-         "../common/0.1-stdlib.rkt"
+         "../common/0.0-stdlib.rkt"
          "../common/2-env.rkt"
-         "../common/5.1-eval-ops.rkt"
+         "../common/4.1-eval-ops.rkt"
          "3-context.rkt"
          "4-relation.rkt"
          "5.1-eval-typ.rkt")

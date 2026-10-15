@@ -24,7 +24,7 @@
          racket/runtime-path
          racket/set
          racket/string
-         "../common/0.3-extern-ffi.rkt"
+         "../common/0.2-extern-ffi.rkt"
          "../al/0-boot.rkt"
          "../al/7-entry.rkt")
 

@@ -2,7 +2,7 @@
 ;; spec-meta/common/2-env.watsup.
 
 (require redex/reduction-semantics
-         "0.1-stdlib.rkt"
+         "0.0-stdlib.rkt"
          "1-syntax.rkt")
 (provide common-env
          theta-of-tdenv

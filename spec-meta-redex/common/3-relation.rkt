@@ -8,8 +8,8 @@
 
 (require json
          redex/reduction-semantics
-         "0.2-extern-json.rkt"
-         "0.3-extern-ffi.rkt"
+         "0.1-extern-json.rkt"
+         "0.2-extern-ffi.rkt"
          "2-env.rkt")
 (provide common-relation
          host-call-extern-func

@@ -17,9 +17,9 @@
          racket/cmdline
          racket/match
          redex/reduction-semantics
-         "../common/0.1-stdlib.rkt"
-         "../common/0.2-extern-json.rkt"
-         "../common/0.3-extern-ffi.rkt"
+         "../common/0.0-stdlib.rkt"
+         "../common/0.1-extern-json.rkt"
+         "../common/0.2-extern-ffi.rkt"
          "0-boot.rkt"
          "3-context.rkt"
          "6-driver.rkt")

@@ -2,7 +2,7 @@
 ;; spec-meta/al/2-env.watsup.
 
 (require redex/reduction-semantics
-         "../common/4-relation.rkt"
+         "../common/3-relation.rkt"
          "1-syntax.rkt")
 (provide al-env)
 

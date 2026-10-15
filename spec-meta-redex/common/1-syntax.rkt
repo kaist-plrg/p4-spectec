@@ -3,7 +3,7 @@
 
 (require json
          redex/reduction-semantics
-         "0.1-stdlib.rkt")
+         "0.0-stdlib.rkt")
 (provide common-syntax)
 
 (define-extended-language common-syntax stdlib

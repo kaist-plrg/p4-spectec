@@ -1,6 +1,6 @@
 /* C shim between Racket's ffi2 and the OCaml implementation.
  *
- *   common/0.3-extern-ffi.rkt  --ffi2-->  shim.c  --caml_callback-->
+ *   common/0.2-extern-ffi.rkt  --ffi2-->  shim.c  --caml_callback-->
  *   p4spec/bin/ffi.ml
  *
  * Every call must come from the OS thread that ran the first host_init. */
