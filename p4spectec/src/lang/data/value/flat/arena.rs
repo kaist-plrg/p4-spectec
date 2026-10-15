@@ -2,7 +2,7 @@
 //!
 //! `ValueArena` is the value half of an `Arena`;
 //! handles belong to one arena; annotation changes preserve the stored body.
-//! Bodies are interned canonically, types by `Rc` identity, spans exactly;
+//! Bodies are interned canonically, types by exact contents, spans exactly;
 //! the default span is interned first so generated values share it.
 
 use std::rc::Rc;
@@ -10,7 +10,7 @@ use std::rc::Rc;
 use crate::lang::{
     common::source::Span,
     data::{
-        intern::{CanonId, CanonInterner, Interned, Interner, RcInterner},
+        intern::{CanonId, CanonInterner, Interned, Interner},
         notation::MixopArena,
         typ::TypKind,
     },
@@ -26,8 +26,8 @@ use super::{Value, ValueKind};
 pub struct ValueArena {
     /// Bodies, with canonical identities; a case reads its mixop's.
     values: CanonInterner<ValueKind>,
-    /// Types, shared by allocation.
-    types: RcInterner<TypKind>,
+    /// Types, shared by exact contents including nested source spans.
+    types: Interner<Rc<TypKind>>,
     /// Spans, shared by equality.
     spans: Interner<Span>,
 }
@@ -38,7 +38,7 @@ impl Default for ValueArena {
         spans
             .intern_default()
             .expect("the first span fits in an interner index");
-        Self { values: CanonInterner::new(), types: RcInterner::new(), spans }
+        Self { values: CanonInterner::new(), types: Interner::new(), spans }
     }
 }
 
@@ -68,11 +68,11 @@ impl ValueArena {
         self.values.intern(arena_mixop, value_kind)
     }
 
-    /// Interns a shared type annotation by allocation identity.
+    /// Interns a shared type annotation by exact contents.
     pub(in crate::lang::data) fn intern_typ(
         &mut self,
         typ: Rc<TypKind>,
-    ) -> Result<Interned<TypKind>, std::num::TryFromIntError> {
+    ) -> Result<Interned<Rc<TypKind>>, std::num::TryFromIntError> {
         self.types.intern(typ)
     }
 
@@ -92,7 +92,7 @@ impl ValueArena {
     }
 
     /// Reads a type annotation.
-    pub fn typ(&self, typ: Interned<TypKind>) -> &Rc<TypKind> {
+    pub fn typ(&self, typ: Interned<Rc<TypKind>>) -> &Rc<TypKind> {
         self.types.get(typ)
     }
 

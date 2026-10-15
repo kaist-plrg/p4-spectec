@@ -18,12 +18,14 @@ use crate::{
 use super::builtin::call::Builtins;
 use encode::Encode;
 
+mod cache;
 pub mod decode;
 pub mod encode;
 mod error;
 mod mixops;
 mod stub;
 
+pub use cache::Cache;
 pub use error::{Error, ErrorKind};
 
 /// Provides AL script parsing and the standard specification builtins.

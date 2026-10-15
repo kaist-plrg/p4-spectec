@@ -27,7 +27,7 @@ enum Command {
 
 #[derive(Args)]
 struct Options {
-    /// Disable interpreter call caching.
+    /// Disable interpreter call and AL encode/decode caching.
     #[arg(long)]
     no_cache: bool,
     /// Check deterministic execution.

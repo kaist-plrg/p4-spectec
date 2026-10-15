@@ -47,7 +47,10 @@ use super::{
     tower::{self, Layer, Target},
 };
 use crate::{
-    interface::{self, al::encode::Encode},
+    interface::{
+        self,
+        al::{Cache, encode::Encode},
+    },
     lang::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},
@@ -148,7 +151,10 @@ fn build_target(
                 spec_target,
                 options,
                 interface::al(),
-                TerminalExtern { runner_target: Box::new(runner_target) },
+                TerminalExtern {
+                    cache: Box::new(Cache::new(options.cache)),
+                    runner_target: Box::new(runner_target),
+                },
             )?;
             Ok((Target::Al(runner), value))
         }
@@ -177,7 +183,8 @@ fn build_interm(
     options: runner::Config,
 ) -> Result<Layer> {
     let spec = into_runner_spec(ExecutionMode::Sl, interm.spec_al.clone())?;
-    let external = RelayExtern { runner_next: Box::new(layer) };
+    let external =
+        RelayExtern { cache: Box::new(Cache::new(options.cache)), runner_next: Box::new(layer) };
     Ok(Layer::Interm(Runner::new(arena, spec, options, interface::al(), external)?))
 }
 
@@ -190,7 +197,8 @@ fn build_base(
     options: runner::Config,
 ) -> Result<tower::Tower> {
     let spec = into_runner_spec(mode, base.spec_al.clone())?;
-    let external = RelayExtern { runner_next: Box::new(layer) };
+    let external =
+        RelayExtern { cache: Box::new(Cache::new(options.cache)), runner_next: Box::new(layer) };
     Ok(tower::Tower::Nested(Runner::new(arena, spec, options, interface::al(), external)?))
 }
 
