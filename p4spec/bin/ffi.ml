@@ -1,6 +1,7 @@
-(* The K side of the K <-> OCaml wire, reached through the C FFI.
+(* The OCaml side of the K/Redex <-> OCaml wire, reached through the C FFI.
  *
  *   K rules  --#ffiCall-->  spec-meta-k/ffi/shim.c  --caml_callback-->
+ *   Redex    --ffi2-->  spec-meta-redex/ffi/shim.c  --caml_callback-->
  *   ml_init / ml_eval *)
 
 open Runtime.Dynamic_Runner.Signature
@@ -69,7 +70,7 @@ let eval (str_request : string) : Yojson.Safe.t =
 
 let ml_eval (str_request : string) : string =
   let fail (msg : string) : string =
-    Format.eprintf "kffi: %s\n%!" msg;
+    Format.eprintf "ffi: %s\n%!" msg;
     Yojson.Safe.to_string (`Assoc [ ("error", `String msg) ])
   in
   try Yojson.Safe.to_string (eval str_request) with

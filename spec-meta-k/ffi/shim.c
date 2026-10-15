@@ -1,6 +1,6 @@
 /* Thin C shim between K's FFI and the OCaml implementation.
  *
- *   K rules  --#ffiCall-->  shim.c  --caml_callback-->  p4spec/bin/kffi.ml
+ *   K rules  --#ffiCall-->  shim.c  --caml_callback-->  p4spec/bin/ffi.ml
  *
  * The shim is a one long-lived process for the whole `krun`. */
 
@@ -46,7 +46,7 @@ int64_t ml_init_c(const char* spec) {
   if (ml_init == NULL || ml_eval == NULL) {
     fprintf(stderr,
       "shim: caml_named_value(\"ml_init\"/\"ml_eval\") returned NULL -- "
-      "kffi.exe.o not linked in?\n");
+      "ffi.exe.o not linked in?\n");
     abort();
   }
 

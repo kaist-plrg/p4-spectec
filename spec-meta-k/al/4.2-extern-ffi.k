@@ -1,7 +1,7 @@
 // Transport for the external interface: K -> C shim -> OCaml, over K's FFI.
 //
 //   K rules  --#ffiCall-->  spec-meta-k/ffi/shim.c  --caml_callback-->
-//   p4spec/bin/kffi.ml
+//   p4spec/bin/ffi.ml
 //
 // The OCaml runtime lives in the interpreter process.
 // The runner is built once on init.

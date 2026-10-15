@@ -140,7 +140,7 @@ promote:
 KDEFDIR = al-kompiled
 KSPECDIR = spec-meta-k
 
-KFFI_OBJ = _build/default/p4spec/bin/kffi.exe.o
+KFFI_OBJ = _build/default/p4spec/bin/ffi.exe.o
 KSHIM_SRC = $(KSPECDIR)/ffi/shim.c
 KSHIM_OBJ = $(KSPECDIR)/ffi/shim.o
 OCAMLWHERE = $(shell opam exec --switch=5.1.0 -- ocamlopt -where)
@@ -156,7 +156,7 @@ k-spec: boot $(KFFI_OBJ) $(KSHIM_OBJ)
 
 .PHONY: $(KFFI_OBJ)
 $(KFFI_OBJ):
-	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/kffi.exe.o && echo
+	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/ffi.exe.o && echo
 
 $(KSHIM_OBJ): $(KSHIM_SRC)
 	gcc -c -fPIC -O2 -I "$(OCAMLWHERE)" -o $@ $<
@@ -166,6 +166,41 @@ k-test: k-spec
 	@status=0; \
 	python3 $(KSPECDIR)/scripts/run-k-typecheck.py || status=1; \
 	python3 $(KSPECDIR)/scripts/run-k-typecheck.py --neg || status=1; \
+	exit $$status
+
+# PLT Redex specification
+
+RSPECDIR = spec-meta-redex
+
+RFFI_SO = _build/default/p4spec/bin/ffi.so
+RSHIM_SRC = $(RSPECDIR)/ffi/shim.c
+RSHIM_SO = $(RSPECDIR)/ffi/shim.so
+RENTRY = $(RSPECDIR)/al/7-entry.rkt
+RTYPECHECK = $(RSPECDIR)/test/p4-typecheck.rkt
+
+# spectec-boot boots scripts and P4 programs; ffi.so and shim.so are the host
+# of builtins and externs. raco make keeps compiled/ in step with the sources.
+.PHONY: redex
+redex: boot $(RFFI_SO) $(RSHIM_SO)
+	raco make $(RENTRY)
+
+.PHONY: $(RFFI_SO)
+$(RFFI_SO):
+	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/ffi.so && echo
+
+# shim.so finds ffi.so through its run path, relative to its own location.
+$(RSHIM_SO): $(RSHIM_SRC) | $(RFFI_SO)
+	gcc -shared -fPIC -O2 -Wall -I "$(OCAMLWHERE)" -o $@ $< \
+	  -L$(dir $(RFFI_SO)) -l:ffi.so '-Wl,-rpath,$$ORIGIN/../../$(dir $(RFFI_SO))'
+
+# Type-checks the P4 programs of p4_16_samples (positive) and p4_16_errors
+# (negative).
+.PHONY: redex-test
+redex-test: redex
+	raco make $(RTYPECHECK)
+	@status=0; \
+	racket $(RTYPECHECK) --p4-dir p4c/testdata/p4_16_samples -e excludes/static -i p4c/p4include spec || status=1; \
+	racket $(RTYPECHECK) --p4-dir p4c/testdata/p4_16_errors -e excludes/static -i p4c/p4include --neg spec || status=1; \
 	exit $$status
 
 # Cleanup
@@ -178,3 +213,5 @@ clean:
 	rm -rf $(KDEFDIR) $(KSHIM_OBJ)
 	rm -f $(KSPECDIR)/specdir $(KSPECDIR)/spectec-k-* $(KSPECDIR)/run-k-typecheck-*.result
 	rm -rf $(KSPECDIR)/.kore-cache
+	rm -f $(RSHIM_SO) $(RSPECDIR)/p4-typecheck-*.result
+	rm -rf $(RSPECDIR)/*/compiled
