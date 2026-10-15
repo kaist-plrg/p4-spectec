@@ -85,13 +85,16 @@
     [(assoc k pairs) => (λ (pair) (list (cadr pair)))]
     [else '()]))
 
-;; Replaces the first pair with key k where it stands, or appends one.
+;; Replaces the first pair with key k where it stands, or adds one in front.
+;; New keys go in front because equal-hash-code, which Redex's caches use,
+;; looks only at the start of a long list.
 (define (update pairs k v)
-  (let loop ([pairs pairs])
-    (cond
-      [(null? pairs) (list (list k v))]
-      [(equal? (caar pairs) k) (cons (list k v) (cdr pairs))]
-      [else (cons (car pairs) (loop (cdr pairs)))])))
+  (if (assoc k pairs)
+      (let loop ([pairs pairs])
+        (if (equal? (caar pairs) k)
+            (cons (list k v) (cdr pairs))
+            (cons (car pairs) (loop (cdr pairs)))))
+      (cons (list k v) pairs)))
 
 (define (updates pairs ks vs)
   (unless (= (length ks) (length vs))
