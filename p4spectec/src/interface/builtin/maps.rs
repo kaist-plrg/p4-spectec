@@ -5,13 +5,13 @@
 //! Thus updating `{a: 1}` with `a: 2` preserves its list position
 //! and produces `{a: 2}`.
 
-use std::rc::Rc;
+use std::borrow::Cow;
 
 use crate::lang::{
     common::source::Span,
     data::{
         arena::Arena,
-        notation::tree::{self as notation, Mixop, parse},
+        notation::flat::{self as notation, Mixop, parse::ToMixop},
         typ,
         value::flat::{self as value, Value},
     },
@@ -25,37 +25,22 @@ use super::{BuiltinError, extract};
 // == Value map
 
 /// A map as its list of `k : v` pair values, in insertion order.
-type ValueMap = Vec<Value>;
+struct ValueMap<'a> {
+    pairs: Cow<'a, [Value]>,
+}
 
 /// The `k : v` shape of a pair value.
-fn pair_mixop() -> Rc<Mixop> {
-    parse::mixop("k ':' v")
+fn pair_mixop(arena: &mut Arena) -> Result<Mixop, BuiltinError> {
+    "k ':' v"
+        .to_mixop(&mut arena.mixop)
+        .map_err(BuiltinError::from)
 }
 
 /// The `{ ... }` shape of a map value.
-fn map_mixop() -> Rc<Mixop> {
-    parse::mixop("`{ k `}")
-}
-
-/// The value under `key`, from the first matching pair.
-fn map_find_opt(arena: &Arena, key: &Value, map: &[Value]) -> Option<Value> {
-    let mixop_pair = pair_mixop();
-    for pair in map {
-        // Skip anything that is not a pair case
-        let Ok(value_case) = value::get::case(arena, pair) else {
-            continue;
-        };
-        let mixop = value_case.mixop().into_tree(&arena.mixop);
-        if !mixop.syntax_eq(mixop_pair.as_ref()) {
-            continue;
-        }
-        if let [value_key, value_value] = value_case.args()
-            && value_key.view(arena).syntax_eq(&key.view(arena))
-        {
-            return Some(*value_value);
-        }
-    }
-    None
+fn map_mixop(arena: &mut Arena) -> Result<Mixop, BuiltinError> {
+    "`{ k `}"
+        .to_mixop(&mut arena.mixop)
+        .map_err(BuiltinError::from)
 }
 
 /// Builds a `pair<K, V>` value from a key and a value.
@@ -68,82 +53,118 @@ fn make_pair(
 ) -> Result<Value, BuiltinError> {
     let pair_id = crate::phrase!(node: "pair".into(), span: Span::default());
     let typ = typ::make::var(pair_id, vec![typ_key.clone(), typ_value.clone()]);
-    let value_case = notation::Mixfix::new(pair_mixop(), vec![value_key, value_value])
+    let mixop_pair = pair_mixop(arena)?;
+    let value_case = notation::Mixfix::new(&arena.mixop, mixop_pair, vec![value_key, value_value])
         .expect("the pair mixop has exactly two arguments");
-    Ok(value::make::case(arena, typ.node.into(), value_case, Span::default())?)
+    Ok(value::make::case_flat(arena, typ.node.into(), value_case, Span::default())?)
 }
 
-/// Replaces the value of the first pair with `key`, or appends a new pair.
-fn map_update(
-    arena: &mut Arena,
-    typ_key: &Typ,
-    typ_value: &Typ,
-    key: &Value,
-    value: &Value,
-    map: &[Value],
-) -> Result<ValueMap, BuiltinError> {
-    let mut found = false;
-    let mut updated = Vec::with_capacity(map.len() + 1);
-    let mixop_pair = pair_mixop();
-    for pair in map {
-        let matching = value::get::case(arena, pair).ok().is_some_and(|value_case| {
-            let mixop = value_case.mixop().into_tree(&arena.mixop);
-            if !mixop.syntax_eq(mixop_pair.as_ref()) {
-                return false;
+impl<'a> ValueMap<'a> {
+    // == Operations
+
+    /// The value under `key`, from the first matching pair.
+    fn find(&self, arena: &Arena, mixop_pair: Mixop, key: &Value) -> Option<Value> {
+        for pair in self.pairs.iter() {
+            // Skip anything that is not a pair case
+            let Ok(value_case) = value::get::case(arena, pair) else {
+                continue;
+            };
+            if arena.mixop.canon_id(*value_case.mixop()) != arena.mixop.canon_id(mixop_pair) {
+                continue;
             }
-            matches!(value_case.args(), [value_key, _] if value_key.view(arena).syntax_eq(&key.view(arena)))
-        });
-        // Replace in place once; later duplicates are kept as they are
-        if !found && matching {
-            updated.push(make_pair(arena, typ_key, typ_value, *key, *value)?);
-            found = true;
-        } else {
-            updated.push(*pair);
+            if let [value_key, value_value] = value_case.args()
+                && value_key.view(arena).syntax_eq(&key.view(arena))
+            {
+                return Some(*value_value);
+            }
         }
+        None
     }
-    // A new key goes at the end
-    if !found {
-        updated.push(make_pair(arena, typ_key, typ_value, *key, *value)?);
+
+    /// Replaces the value of the first pair with `key`, or appends a new pair.
+    fn update(
+        &mut self,
+        arena: &mut Arena,
+        typ_key: &Typ,
+        typ_value: &Typ,
+        key: &Value,
+        value: &Value,
+    ) -> Result<(), BuiltinError> {
+        let mixop_pair = pair_mixop(arena)?;
+        // Only the first matching key is replaced; later duplicates stay intact
+        let idx = self.pairs.iter().position(|pair| {
+            value::get::case(arena, pair)
+                .ok()
+                .is_some_and(|value_case| {
+                    if arena.mixop.canon_id(*value_case.mixop()) != arena.mixop.canon_id(mixop_pair)
+                    {
+                        return false;
+                    }
+                    matches!(
+                        value_case.args(),
+                        [value_key, _] if value_key.view(arena).syntax_eq(&key.view(arena))
+                    )
+                })
+        });
+        let pair = make_pair(arena, typ_key, typ_value, *key, *value)?;
+        // Reuse the owned buffer across a sequence of updates
+        let pairs = self.pairs.to_mut();
+        if let Some(idx) = idx {
+            pairs[idx] = pair;
+        } else {
+            pairs.push(pair);
+        }
+        Ok(())
     }
-    Ok(updated)
+
+    // == Conversion between meta-maps and runtime lists
+
+    /// Decodes a `map<K, V>` value into its pair list.
+    fn from_value(arena: &'a Arena, mixop_map: Mixop, value: &Value) -> Result<Self, BuiltinError> {
+        let value_case = value::get::case(arena, value)
+            .map_err(|_| BuiltinError::argument_invalid("expected a map"))?;
+        // The value must be a map case wrapping one list
+        if arena.mixop.canon_id(*value_case.mixop()) != arena.mixop.canon_id(mixop_map) {
+            return Err(BuiltinError::argument_invalid("expected a map"));
+        }
+        let value_pairs = extract::one(value_case.args())?;
+        let pairs = value::get::list(arena, value_pairs)
+            .map_err(|_| BuiltinError::argument_invalid("expected a map"))?;
+        Ok(Self { pairs: Cow::Borrowed(pairs) })
+    }
+
+    /// Copies borrowed pairs so updates can allocate in their arena.
+    fn into_owned(self) -> ValueMap<'static> {
+        ValueMap { pairs: Cow::Owned(self.pairs.into_owned()) }
+    }
 }
 
-// == Conversion between meta-maps and runtime lists
-
-/// Decodes a `map<K, V>` value into its pair list.
-fn map_of_value(arena: &Arena, value: &Value) -> Result<ValueMap, BuiltinError> {
-    let value_case = value::get::case(arena, value)
-        .map_err(|_| BuiltinError::argument_invalid("expected a map"))?;
-    let mixop_map = map_mixop();
-    // The value must be a map case wrapping one list
-    let mixop = value_case.mixop().into_tree(&arena.mixop);
-    if !mixop.syntax_eq(mixop_map.as_ref()) {
-        return Err(BuiltinError::argument_invalid("expected a map"));
+impl ValueMap<'static> {
+    /// Encodes a pair list as a `map<K, V>` value.
+    fn into_value(
+        self,
+        arena: &mut Arena,
+        typ_key: &Typ,
+        typ_value: &Typ,
+    ) -> Result<Value, BuiltinError> {
+        // The pair list is typed `pair<K, V>*`, the case `map<K, V>`
+        let pair_id = crate::phrase!(node: "pair".into(), span: Span::default());
+        let typ_pair = typ::make::var(pair_id, vec![typ_key.clone(), typ_value.clone()]);
+        let typ_pairs = typ::make::list(typ_pair);
+        let value_pairs = value::make::list(
+            arena,
+            typ_pairs.node.into(),
+            self.pairs.into_owned(),
+            Span::default(),
+        )?;
+        let map_id = crate::phrase!(node: "map".into(), span: Span::default());
+        let typ = typ::make::var(map_id, vec![typ_key.clone(), typ_value.clone()]);
+        let mixop_map = map_mixop(arena)?;
+        let value_case = notation::Mixfix::new(&arena.mixop, mixop_map, vec![value_pairs])
+            .expect("the map mixop has exactly one argument");
+        let value = value::make::case_flat(arena, typ.node.into(), value_case, Span::default())?;
+        Ok(value)
     }
-    let value_pairs = extract::one(value_case.args())?;
-    value::get::list(arena, value_pairs)
-        .map(<[Value]>::to_vec)
-        .map_err(|_| BuiltinError::argument_invalid("expected a map"))
-}
-
-/// Encodes a pair list as a `map<K, V>` value.
-fn value_of_map(
-    arena: &mut Arena,
-    typ_key: &Typ,
-    typ_value: &Typ,
-    map: ValueMap,
-) -> Result<Value, BuiltinError> {
-    // The pair list is typed `pair<K, V>*`, the case `map<K, V>`
-    let pair_id = crate::phrase!(node: "pair".into(), span: Span::default());
-    let typ_pair = typ::make::var(pair_id, vec![typ_key.clone(), typ_value.clone()]);
-    let typ_pairs = typ::make::list(typ_pair);
-    let value_pairs = value::make::list(arena, typ_pairs.node.into(), map, Span::default())?;
-    let map_id = crate::phrase!(node: "map".into(), span: Span::default());
-    let typ = typ::make::var(map_id, vec![typ_key.clone(), typ_value.clone()]);
-    let value_case = notation::Mixfix::new(map_mixop(), vec![value_pairs])
-        .expect("the map mixop has exactly one argument");
-    let value = value::make::case(arena, typ.node.into(), value_case, Span::default())?;
-    Ok(value)
 }
 
 // == Built-in implementations
@@ -151,11 +172,13 @@ fn value_of_map(
 /// `dec $find_map<K, V>(map<K, V>, K) : V?`,
 /// the value under the key, if present.
 pub fn find_map(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
+    let mixop_map = map_mixop(arena)?;
+    let mixop_pair = pair_mixop(arena)?;
     let (_typ_key, typ_value) = extract::two(targs)?;
     let (value_map, value_key) = extract::two(values)?;
-    let map = map_of_value(arena, value_map)?;
+    let map = ValueMap::from_value(arena, mixop_map, value_map)?;
     let typ_opt = typ::make::opt(typ_value.clone());
-    let value_opt = map_find_opt(arena, value_key, &map);
+    let value_opt = map.find(arena, mixop_pair, value_key);
     let value = value::make::opt(arena, typ_opt.node.into(), value_opt, Span::default())?;
     Ok(value)
 }
@@ -167,15 +190,17 @@ pub fn find_maps(
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {
+    let mixop_map = map_mixop(arena)?;
+    let mixop_pair = pair_mixop(arena)?;
     let (_typ_key, typ_value) = extract::two(targs)?;
     let (value_maps, value_key) = extract::two(values)?;
     let values = value::get::list(arena, value_maps).map_err(BuiltinError::from)?;
     let mut value_opt = None;
     for value_map in values {
-        let map = map_of_value(arena, value_map)?;
+        let map = ValueMap::from_value(arena, mixop_map, value_map)?;
         // Earlier maps shadow later ones; all are still decoded
         if value_opt.is_none() {
-            value_opt = map_find_opt(arena, value_key, &map);
+            value_opt = map.find(arena, mixop_pair, value_key);
         }
     }
     let typ_opt = typ::make::opt(typ_value.clone());
@@ -186,35 +211,40 @@ pub fn find_maps(
 /// `dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>`,
 /// the map with the key bound, replacing or appending.
 pub fn add_map(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
+    let mixop_map = map_mixop(arena)?;
     let (typ_key, typ_value) = extract::two(targs)?;
     let (value_map, value_key, value_value) = extract::three(values)?;
-    let map = map_of_value(arena, value_map)?;
-    let map = map_update(arena, typ_key, typ_value, value_key, value_value, &map)?;
-    value_of_map(arena, typ_key, typ_value, map)
+    let mut map = ValueMap::from_value(arena, mixop_map, value_map)?.into_owned();
+    map.update(arena, typ_key, typ_value, value_key, value_value)?;
+    map.into_value(arena, typ_key, typ_value)
 }
 
 /// `dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>`,
 /// the map with each key bound to its value in turn.
 pub fn adds_map(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
+    let mixop_map = map_mixop(arena)?;
     let (typ_key, typ_value) = extract::two(targs)?;
     let (value_map, value_keys, value_values) = extract::three(values)?;
-    let mut map = map_of_value(arena, value_map)?;
-    let values_key = value::get::list(arena, value_keys)
+    let mut map = ValueMap::from_value(arena, mixop_map, value_map)?.into_owned();
+    let num_keys = value::get::list(arena, value_keys)
         .map_err(BuiltinError::from)?
-        .to_vec();
-    let values_value = value::get::list(arena, value_values)
+        .len();
+    let num_values = value::get::list(arena, value_values)
         .map_err(BuiltinError::from)?
-        .to_vec();
+        .len();
     // Keys and values pair up positionally
-    if values_key.len() != values_value.len() {
+    if num_keys != num_values {
         return Err(BuiltinError::argument_invalid(
             "map key and value lists must have the same length",
         ));
     }
-    for (value_key, value_value) in values_key.iter().zip(&values_value) {
-        map = map_update(arena, typ_key, typ_value, value_key, value_value, &map)?;
+    // Arena lists stay immutable while updates append new values
+    for idx in 0..num_keys {
+        let value_key = value::get::list(arena, value_keys).expect("validated key list")[idx];
+        let value_value = value::get::list(arena, value_values).expect("validated value list")[idx];
+        map.update(arena, typ_key, typ_value, &value_key, &value_value)?;
     }
-    value_of_map(arena, typ_key, typ_value, map)
+    map.into_value(arena, typ_key, typ_value)
 }
 
 /// `dec $update_map<K, V>(map<K, V>, K, V) : map<K, V>`, the same as `add_map`.
@@ -223,9 +253,5 @@ pub fn update_map(
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {
-    let (typ_key, typ_value) = extract::two(targs)?;
-    let (value_map, value_key, value_value) = extract::three(values)?;
-    let map = map_of_value(arena, value_map)?;
-    let map = map_update(arena, typ_key, typ_value, value_key, value_value, &map)?;
-    value_of_map(arena, typ_key, typ_value, map)
+    add_map(arena, targs, values)
 }

@@ -69,7 +69,7 @@ where
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_shaped! {
+    let value_call_result = value::make::case_string! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -125,7 +125,7 @@ where
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_shaped! {
+    let value_call_result = value::make::case_string! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -163,9 +163,9 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     let value_base = func::find_var_e_local(ctx, value_ctx, "base")?;
-    let int_base = unpack::p4_fixed_bit(ctx.arena(), &value_base)?.1;
+    let int_base = unpack::p4_fixed_bit(ctx.arena_mut(), &value_base)?.1;
     let value_max = func::find_var_e_local(ctx, value_ctx, "max")?;
-    let int_max = unpack::p4_fixed_bit(ctx.arena(), &value_max)?.1;
+    let int_max = unpack::p4_fixed_bit(ctx.arena_mut(), &value_max)?.1;
     let int = compute_checksum(ctx, value_ctx, None)?;
     // The source simulator uses max - base as the range divisor
     let int = adjust(&int_base, &int_max, &int)?;
@@ -181,7 +181,7 @@ where
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_shaped! {
+    let value_call_result = value::make::case_string! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -219,7 +219,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
-    let mut values = unpack::p4_tuple(ctx.arena(), &value_data)?;
+    let mut values = unpack::p4_tuple(ctx.arena_mut(), &value_data)?;
     // The payload is appended as 8-bit values
     if let Some(packet_in) = payload {
         for byte in packet_in.payload_bytes()? {
@@ -227,7 +227,7 @@ where
         }
     }
     let value_algo = func::find_var_e_local(ctx, value_ctx, "algo")?;
-    let (id_enum, id_field) = unpack::p4_enum(ctx.arena(), &value_algo)?;
+    let (id_enum, id_field) = unpack::p4_enum(ctx.arena_mut(), &value_algo)?;
     // Only a `HashAlgorithm` enumerator selects the algorithm
     if id_enum != "HashAlgorithm" {
         return Err(error::hash_algorithm_invalid(format!(
@@ -235,7 +235,7 @@ where
         ))
         .into());
     }
-    hash::compute_checksum(ctx.arena(), &id_field, None, &values)
+    hash::compute_checksum(ctx.arena_mut(), &id_field, None, &values)
 }
 
 /// Shared body of `verify_checksum` and its `_with_payload` variant.
@@ -252,14 +252,14 @@ where
 {
     let value_condition = func::find_var_e_local(ctx, value_ctx, "condition")?;
     // A false condition skips the checksum
-    if !unpack::p4_bool(ctx.arena(), &value_condition)? {
+    if !unpack::p4_bool(ctx.arena_mut(), &value_condition)? {
         // Return without a value
         let typ = typ::make::opt(typ::make::var(
             crate::phrase!(node: "value".into(), span: Span::default()),
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
+        let value_call_result = value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -269,7 +269,7 @@ where
         return Ok((value_ctx, value_arch, value_call_result));
     }
     let value_checksum = func::find_var_e_local(ctx, value_ctx, "checksum")?;
-    let int_expect = unpack::p4_fixed_bit(ctx.arena(), &value_checksum)?.1;
+    let int_expect = unpack::p4_fixed_bit(ctx.arena_mut(), &value_checksum)?.1;
     let int_actual = compute_checksum(ctx, value_ctx, payload)?;
     // A mismatch sets `checksum_error` to 1
     let value_ctx = if int_expect == int_actual {
@@ -291,7 +291,7 @@ where
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_shaped! {
+    let value_call_result = value::make::case_string! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -379,14 +379,14 @@ where
 {
     let value_condition = func::find_var_e_local(ctx, value_ctx, "condition")?;
     // A false condition skips the checksum
-    if !unpack::p4_bool(ctx.arena(), &value_condition)? {
+    if !unpack::p4_bool(ctx.arena_mut(), &value_condition)? {
         // Return without a value
         let typ = typ::make::opt(typ::make::var(
             crate::phrase!(node: "value".into(), span: Span::default()),
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
+        let value_call_result = value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -408,7 +408,7 @@ where
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_shaped! {
+    let value_call_result = value::make::case_string! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -525,7 +525,7 @@ where
     Interp: Interpreter<Iface, V1Model>,
 {
     let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-    let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
+    let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
     // The scheduler acts on the request after the control returns
     let mut arch = pipe::find_arch_state(ctx, value_arch)?;
     arch.action.resubmit_opt = Some(idx);
@@ -536,7 +536,7 @@ where
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_shaped! {
+    let value_call_result = value::make::case_string! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -578,7 +578,7 @@ where
     Interp: Interpreter<Iface, V1Model>,
 {
     let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-    let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
+    let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
     // The scheduler acts on the request after the control returns
     let mut arch = pipe::find_arch_state(ctx, value_arch)?;
     arch.action.recirculate_opt = Some(idx);
@@ -589,7 +589,7 @@ where
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_shaped! {
+    let value_call_result = value::make::case_string! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -649,7 +649,7 @@ where
     let value_session = func::find_var_e_local(ctx, value_ctx, "session")?;
     let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
     arch.action.clone_opt =
-        Some(CloneInfo::new(ctx.arena(), &value_type, &value_session, &value_idx)?);
+        Some(CloneInfo::new(ctx.arena_mut(), &value_type, &value_session, &value_idx)?);
     let value_arch = pipe::update_arch_state(ctx, value_arch, &arch)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
@@ -657,7 +657,7 @@ where
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_shaped! {
+    let value_call_result = value::make::case_string! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -683,7 +683,7 @@ where
     Interp: Interpreter<Iface, V1Model>,
 {
     let value_msg = func::find_var_e_local(ctx, value_ctx, "msg")?;
-    let msg = unpack::p4_string(ctx.arena(), &value_msg)?;
+    let msg = unpack::p4_string(ctx.arena_mut(), &value_msg)?;
     ctx.record_effect(crate::runner::SideEffect::Impure);
     ctx.external().write_log(&msg)?;
     // Return without a value
@@ -692,7 +692,7 @@ where
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_shaped! {
+    let value_call_result = value::make::case_string! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -749,9 +749,9 @@ where
     Interp: Interpreter<Iface, V1Model>,
 {
     let value_msg = func::find_var_e_local(ctx, value_ctx, "msg")?;
-    let msg = unpack::p4_string(ctx.arena(), &value_msg)?;
+    let msg = unpack::p4_string(ctx.arena_mut(), &value_msg)?;
     let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
-    let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
+    let values = unpack::p4_tuple(ctx.arena_mut(), &value_data)?;
     let text = format_braces(ctx.arena(), &msg, &values)?;
     ctx.record_effect(crate::runner::SideEffect::Impure);
     ctx.external().write_log(&text)?;
@@ -761,7 +761,7 @@ where
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_shaped! {
+    let value_call_result = value::make::case_string! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],

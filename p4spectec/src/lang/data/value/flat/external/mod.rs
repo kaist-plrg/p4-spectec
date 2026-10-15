@@ -4,9 +4,11 @@
 //! independent mode saves its contents.
 //! The caller supplies the matching arena, lifetime, and encoding
 //! for relative data.
-//! Independent payloads are value trees (`tree`) that any arena can intern.
+//! Independent payloads retain the owned value format without arena indices.
 //! A case body is written as its filled notation in both modes,
 //! so mixop handles never appear in a payload.
+
+use std::rc::Rc;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_state::{DeserializeState, SerializeState};
@@ -18,7 +20,7 @@ use crate::lang::{
     data::{arena::Arena, encoding::Encoding, intern::Interned, typ::TypKind},
 };
 
-use super::super::{flat, tree};
+use super::super::flat;
 
 mod case;
 mod field;
@@ -107,7 +109,7 @@ where
         // Relative payloads are shallow; a stack-growing serializer suffices
         Encoding::ArenaRelative => data
             .serialize_state(serde_stacker::Serializer::new(serde_json::value::Serializer), &ctx),
-        // Conversion, serde, and destruction all recurse through the contents
+        // Serialization recurses through independently encoded child values
         Encoding::ArenaIndependent => stacker::grow(32 * 1024 * 1024, || {
             data.serialize_state(serde_json::value::Serializer, &ctx)
         }),
@@ -123,18 +125,16 @@ impl SerializeState<EncodeContext<'_>> for Interned<flat::ValueKind> {
         ctx: &EncodeContext<'_>,
     ) -> Result<S::Ok, S::Error> {
         match ctx {
-            // Relative: the index; independent: the body as a tree
+            // Relative: the index; independent: recursively serialize the body
             EncodeContext::ArenaRelative(_) => self.index().serialize(serializer),
-            EncodeContext::ArenaIndependent(arena) => arena
-                .value
-                .kind(*self)
-                .into_tree(arena)
-                .serialize(serializer),
+            EncodeContext::ArenaIndependent(arena) => {
+                arena.value.kind(*self).serialize_state(serializer, ctx)
+            }
         }
     }
 }
 
-impl SerializeState<EncodeContext<'_>> for Interned<TypKind> {
+impl SerializeState<EncodeContext<'_>> for Interned<Rc<TypKind>> {
     fn serialize_state<S: Serializer>(
         &self,
         serializer: S,
@@ -179,7 +179,7 @@ where
         Encoding::ArenaRelative => {
             T::deserialize_state(&mut ctx, serde_stacker::Deserializer::new(json))
         }
-        // Independent trees recurse deeply; grow the stack up front
+        // Independent contents recurse deeply; grow the stack up front
         Encoding::ArenaIndependent => {
             stacker::grow(32 * 1024 * 1024, || T::deserialize_state(&mut ctx, json))
         }
@@ -194,12 +194,11 @@ impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<flat::ValueKind>
         deserializer: D,
     ) -> Result<Self, D::Error> {
         match ctx {
-            // Relative: trust the index; independent: intern the tree
+            // Relative: trust the index; independent: intern decoded children and body
             DecodeContext::ArenaRelative(_) => u32::deserialize(deserializer).map(Self::from_index),
-            DecodeContext::ArenaIndependent(arena) => {
-                let kind = tree::ValueKind::deserialize(deserializer)?
-                    .into_flat(arena)
-                    .map_err(::serde::de::Error::custom)?;
+            DecodeContext::ArenaIndependent(_) => {
+                let kind = flat::ValueKind::deserialize_state(ctx, deserializer)?;
+                let arena = ctx.arena_mut();
                 arena
                     .value
                     .intern_kind(&arena.mixop, kind)
@@ -209,7 +208,7 @@ impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<flat::ValueKind>
     }
 }
 
-impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<TypKind> {
+impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<Rc<TypKind>> {
     fn deserialize_state<D: Deserializer<'de>>(
         ctx: &mut DecodeContext<'_>,
         deserializer: D,

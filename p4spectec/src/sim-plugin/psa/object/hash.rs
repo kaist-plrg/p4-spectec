@@ -35,7 +35,7 @@ impl HashExtern {
     /// Hash(PSA_HashAlgorithm_t algo);
     /// ```
     pub fn init(
-        arena: &Arena,
+        arena: &mut Arena,
         _value_targs: Value,
         value_ids: Value,
         value_args: Value,
@@ -77,8 +77,8 @@ impl HashExtern {
         Interp: Interpreter<Iface, Ext>,
     {
         let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
-        let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
-        let int_hash = hash::compute_checksum(ctx.arena(), &self.algo, None, &values)?;
+        let values = unpack::p4_tuple(ctx.arena_mut(), &value_data)?;
+        let int_hash = hash::compute_checksum(ctx.arena_mut(), &self.algo, None, &values)?;
         self.return_hash(ctx, value_ctx, value_arch, int_hash)
     }
 
@@ -104,12 +104,12 @@ impl HashExtern {
         Interp: Interpreter<Iface, Ext>,
     {
         let value_base = func::find_var_e_local(ctx, value_ctx, "base")?;
-        let base = unpack::p4_fixed_bit(ctx.arena(), &value_base)?.1;
+        let base = unpack::p4_fixed_bit(ctx.arena_mut(), &value_base)?.1;
         let value_max = func::find_var_e_local(ctx, value_ctx, "max")?;
-        let max = unpack::p4_fixed_bit(ctx.arena(), &value_max)?.1;
+        let max = unpack::p4_fixed_bit(ctx.arena_mut(), &value_max)?.1;
         let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
-        let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
-        let int_hash = hash::compute_checksum(ctx.arena(), &self.algo, None, &values)?;
+        let values = unpack::p4_tuple(ctx.arena_mut(), &value_data)?;
+        let int_hash = hash::compute_checksum(ctx.arena_mut(), &self.algo, None, &values)?;
         if max <= BigInt::zero() {
             return Err(
                 error::hash_range_invalid("hash modulus must be positive".to_owned()).into()
@@ -145,7 +145,7 @@ impl HashExtern {
             Some(value_result),
             Span::default(),
         )?;
-        let value_call_result = value::make::case_shaped! {
+        let value_call_result = value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],

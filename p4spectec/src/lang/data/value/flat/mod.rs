@@ -43,7 +43,7 @@ pub use view::ValueRef;
 // = Value forms
 
 /// A value's body, type, and span handles in one arena.
-pub type Value = NotePhrase<Interned<ValueKind>, Interned<TypKind>, Interned<Span>>;
+pub type Value = NotePhrase<Interned<ValueKind>, Interned<Rc<TypKind>>, Interned<Span>>;
 
 /// A named value field.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -59,7 +59,7 @@ pub type ValueCase = Mixfix<Value>;
 #[derive(Debug, PartialEq, Eq, Hash, SerializeState, DeserializeState)]
 #[serde(rename = "ValueKind")]
 #[serde(serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
-#[serde(deserialize_state = "DecodeContext<'de>")]
+#[serde(deserialize_state = "DecodeContext<'arena>", de_parameters = "'arena")]
 pub enum ValueKind {
     Bool(bool),
     Num(Number),

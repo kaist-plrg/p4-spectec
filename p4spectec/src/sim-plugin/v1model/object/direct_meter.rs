@@ -47,7 +47,7 @@ impl DirectMeter {
     /// ```
     /// `direct_meter(MeterType type);`
     pub fn init(
-        arena: &Arena,
+        arena: &mut Arena,
         _value_targs: Value,
         value_ids: Value,
         value_args: Value,
@@ -111,7 +111,7 @@ impl DirectMeter {
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
+        let value_call_result = value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],

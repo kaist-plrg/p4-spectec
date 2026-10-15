@@ -74,7 +74,7 @@ impl Register {
             Some((_, value)) => *value,
             None => func::default(ctx, value_typ)?,
         };
-        let size = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_size)?.1)?;
+        let size = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_size)?.1)?;
         Ok(Self { value_typ, values: vec![value_initial; size] })
     }
 
@@ -91,7 +91,7 @@ impl Register {
         Interp: Interpreter<Iface, Ext>,
     {
         let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
+        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
         // Out of range: the element type's default
         let value = match self.values.get(idx) {
             Some(value) => *value,
@@ -104,7 +104,7 @@ impl Register {
         ));
         let value_opt =
             value::make::opt(ctx.arena_mut(), typ.node.into(), Some(value), Span::default())?;
-        let value_call_result = value::make::case_shaped! {
+        let value_call_result = value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -127,7 +127,7 @@ impl Register {
         Interp: Interpreter<Iface, Ext>,
     {
         let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
+        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
         let value_target = func::find_var_e_local(ctx, value_ctx, "value")?;
         // Out of range: ignored
         if let Some(value) = self.values.get_mut(idx) {
@@ -139,7 +139,7 @@ impl Register {
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
+        let value_call_result = value::make::case_string! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],

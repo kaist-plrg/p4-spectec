@@ -9,7 +9,7 @@ use super::Mixop;
 
 impl Mixop {
     /// Visits atoms and argument positions in reading order.
-    pub(super) fn visit<'a>(&'a self, mut visit_item: impl FnMut(Item<'a, usize>)) {
+    pub(crate) fn visit<'a>(&'a self, mut visit_item: impl FnMut(Item<'a, usize>)) {
         let mut pos = 0;
         self.visit_inner(&mut pos, &mut visit_item);
     }

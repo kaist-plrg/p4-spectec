@@ -111,7 +111,7 @@ fn reduce(
     let op = operators.pop().expect("binary operator");
     let value_r = values.pop().expect("binary right operand");
     let value_l = values.pop().expect("binary left operand");
-    let value_operator = value::make::case_shaped! { arena: arena,
+    let value_operator = value::make::case_string! { arena: arena,
         shape: op.op.shape(),
         args: vec![],
         typ: "binop",
@@ -119,7 +119,7 @@ fn reduce(
     }?;
     // The expression spans both operands
     let span = Span::new(arena.value.span(value_l.span).left, arena.value.span(value_r.span).right);
-    values.push(value::make::case_shaped! { arena: arena,
+    values.push(value::make::case_string! { arena: arena,
         shape: "expression binop expression",
         args: vec![value_l, value_operator, value_r],
         typ: "binaryExpression",
