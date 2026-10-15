@@ -2,7 +2,6 @@
 //!
 //! EL types supply argument positions and atoms without a tree mixop.
 //! The parser caches EL types independently of runtime storage.
-//! Each caller interns notation into its own arena and compares canonical ids.
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
@@ -56,18 +55,6 @@ impl ToMixop for str {
         // Intern into the caller's arena on both cache hits and misses
         Ok(typ_el.to_mixop(arena_mixop)?)
     }
-}
-
-/// Compares a runtime notation against a fixed spelling in the same arena.
-pub(crate) fn matches_string(
-    arena_mixop: &mut MixopArena,
-    mixop: Mixop,
-    text: &'static str,
-) -> bool {
-    let mixop_pattern = text
-        .to_mixop(arena_mixop)
-        .expect("value pattern contains a valid SpecTec mixop");
-    arena_mixop.canon_id(mixop) == arena_mixop.canon_id(mixop_pattern)
 }
 
 impl ToMixop for Typ {
