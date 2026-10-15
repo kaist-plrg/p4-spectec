@@ -336,38 +336,29 @@ own environments in [`common/0.0-stdlib.rkt`](spec-meta-redex/common/0.0-stdlib.
 
 ### Exploring in a REPL
 
-Start `racket` from the repository root. This creates a small configuration
-and shows its next step, with the name of the rule applied:
+Start `racket` from the repository root. Redex renders the specification one
+definition at a time, with `language->pict`, `reduction-relation->pict`,
+`metafunction->pict`, and `judgment-form->pict`. This saves a few of them as
+PDF files in the current directory:
 
 ```racket
-(require redex/reduction-semantics
-         "spec-meta-redex/al/3-context.rkt"
-         "spec-meta-redex/al/5-eval.rkt")
+(require pict file/convertible redex/pict)
 
-(define G (register-global! (term (empty-layer))))
-(define conf (term (,G (IN (empty-layer) (UN NOT (BOOL #t))))))
-(apply-reduction-relation/tag-with-names ->al conf)
-```
+;; Evaluates form inside a spec module, where its unexported names are visible
+(define (in m form)
+  (define p (simplify-path (path->complete-path (build-path "spec-meta-redex" m))))
+  (dynamic-require p #f)
+  (parameterize ([current-namespace (module->namespace p)])
+    (namespace-require 'redex/pict)
+    (eval form)))
 
-To explore this run in Redex's graphical stepper:
+;; Saves a pict as a PDF page sized to fit it
+(define (save p file)
+  (with-output-to-file file #:exists 'replace
+    (λ () (void (write-bytes (convert p 'pdf-bytes))))))
 
-```racket
-(require redex/gui)
-(traces ->al conf)
-```
-
-Use `traces` for small runs, since it retains the reduction graph. A run that
-calls builtins or externs also needs `host-init!` from
-[`common/0.2-extern-ffi.rkt`](spec-meta-redex/common/0.2-extern-ffi.rkt), with
-the script or specification path. `load-script` from
-[`al/7-entry.rkt`](spec-meta-redex/al/7-entry.rkt) loads a booted script and
-returns `(G L)`, registering its global layer for use in a configuration.
-
-To render a named reduction rule as a PNG figure:
-
-```racket
-(require racket/class pict redex/pict)
-(parameterize ([render-reduction-relation-rules '("eval-exp/unary/boolean")])
-  (send (pict->bitmap (reduction-relation->pict ->term))
-        save-file "/tmp/redex-rules.png" 'png))
+(save (in "al/4-relation.rkt" '(language->pict al)) "al.pdf")
+(save (in "al/5-eval.rkt" '(reduction-relation->pict ->term)) "term.pdf")
+(save (in "al/5.1-eval-typ.rkt" '(metafunction->pict upcast #:contract? #t)) "upcast.pdf")
+(save (in "al/3-context.rkt" '(judgment-form->pict find-vari)) "find-vari.pdf")
 ```

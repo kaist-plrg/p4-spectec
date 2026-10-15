@@ -74,6 +74,5 @@
 (define-metafunction common-relation
   is-tup : val -> bool
   [(is-tup (TUP (val ...))) #t]
-  [(is-tup val) #f
-   ;; otherwise
-   (side-condition (not (redex-match? common-relation (TUP (val ...)) (term val))))])
+  ;; otherwise
+  [(is-tup val) #f])

@@ -46,24 +46,10 @@
 (define-metafunction common-env
   is-iter-on-var : exp -> () ∨ (varr)
   [(is-iter-on-var (VAR id)) ((id ()))]
-  [(is-iter-on-var (ITER exp iterexp)) (is-iter-on-var/iter (is-iter-on-var exp) iterexp)]
-  [(is-iter-on-var exp) ()
-   ;; otherwise
-   (side-condition (not (redex-match? common-env (VAR id) (term exp))))
-   (side-condition (not (redex-match? common-env (ITER exp iterexp) (term exp))))])
-
-;; The ITER clause of $is_iter_on_var, given the result of its premise on the
-;; inner exp.
-(define-metafunction common-env
-  is-iter-on-var/iter : (varr ...) iterexp -> () ∨ (varr)
-  [(is-iter-on-var/iter ((id (iter ...))) (iter_outer ((id _ (iter ...)))))
-   ((id (iter ... iter_outer)))]
-  [(is-iter-on-var/iter (varr ...) iterexp) ()
-   ;; otherwise
-   (side-condition
-    (not (redex-match? common-env
-                       (((id (iter ...))) (iter_outer ((id _ (iter ...)))))
-                       (term ((varr ...) iterexp)))))])
+  [(is-iter-on-var (ITER exp (iter_outer ((id _ (iter ...)))))) ((id (iter ... iter_outer)))
+   (where ((id (iter ...))) (is-iter-on-var exp))]
+  ;; otherwise
+  [(is-iter-on-var exp) ()])
 
 (define-metafunction common-env
   iter-vari : vari iter -> vari

@@ -152,21 +152,15 @@
   find-varis : L (vari ...) -> () ∨ ((val ...))
   [(find-varis {TYP tdenv REL renv FUNC fenv VAL venv} ((id typ (iter ...)) ...)) ((val ...))
    (where ((val) ...) ((find-map venv (id (iter ...))) ...))]
-  [(find-varis {TYP tdenv REL renv FUNC fenv VAL venv} ((id typ (iter ...)) ...)) ()
-   ;; otherwise: some lookup fails
-   (side-condition
-    (not (redex-match? al-context ((val) ...)
-                       (term ((find-map venv (id (iter ...))) ...)))))])
+  ;; otherwise
+  [(find-varis L (vari ...)) ()])
 
 (define-metafunction al-context
   finds-vari : (L ...) vari -> () ∨ ((val ...))
   [(finds-vari ({TYP tdenv REL renv FUNC fenv VAL venv} ...) (id typ (iter ...))) ((val ...))
    (where ((val) ...) ((find-map venv (id (iter ...))) ...))]
-  [(finds-vari ({TYP tdenv REL renv FUNC fenv VAL venv} ...) (id typ (iter ...))) ()
-   ;; otherwise: some lookup fails
-   (side-condition
-    (not (redex-match? al-context ((val) ...)
-                       (term ((find-map venv (id (iter ...))) ...)))))])
+  ;; otherwise
+  [(finds-vari (L ...) vari) ()])
 
 ;;; Typedef finders
 

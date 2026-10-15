@@ -22,8 +22,7 @@
 (define-metafunction al
   update-field : atom val valfield -> valfield
   [(update-field atom val (atom val_field)) (atom val)]
-  [(update-field atom val (atom_field val_field)) (atom_field val_field)
-   (side-condition (not (equal? (term atom) (term atom_field))))])
+  [(update-field atom val valfield) valfield])
 
 ;; The rules on a term
 (define ->term/eval-exp
