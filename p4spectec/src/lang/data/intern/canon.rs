@@ -19,6 +19,11 @@ use hashbrown::HashTable;
 
 use super::{idx::Interned, simple::Interner};
 
+/// Reads canonical classes from an eager or demand-driven store.
+pub trait CanonLookup<T> {
+    fn canon_id(&self, id: Interned<T>) -> CanonId<T>;
+}
+
 // = Canonical comparison
 
 /// Compares canonical meaning using child identities and the interners
@@ -28,7 +33,7 @@ pub trait CanonEq<Deps: ?Sized = ()>: Sized {
     ///
     /// Children in this interner compare by canonical id;
     /// identities held by other interners are read through `deps`.
-    fn canon_eq(&self, interner: &CanonInterner<Self>, deps: &Deps, other: &Self) -> bool;
+    fn canon_eq(&self, interner: &impl CanonLookup<Self>, deps: &Deps, other: &Self) -> bool;
 }
 
 /// Hashes canonical meaning; canonically equal items must have equal hashes.
@@ -37,7 +42,7 @@ pub trait CanonHash<Deps: ?Sized = ()>: Sized {
     ///
     /// Children in this interner hash by canonical id;
     /// identities held by other interners are read through `deps`.
-    fn canon_hash<H: Hasher>(&self, interner: &CanonInterner<Self>, deps: &Deps, hasher: &mut H);
+    fn canon_hash<H: Hasher>(&self, interner: &impl CanonLookup<Self>, deps: &Deps, hasher: &mut H);
 }
 
 // = Canonical identities
@@ -45,6 +50,13 @@ pub trait CanonHash<Deps: ?Sized = ()>: Sized {
 /// A canonical identity valid only in the interner that issued it.
 #[repr(transparent)]
 pub struct CanonId<T>(Interned<T>);
+
+impl<T> CanonId<T> {
+    /// Constructs an opaque class identity from a representative in its store.
+    pub(crate) fn from_representative(id: Interned<T>) -> Self {
+        Self(id)
+    }
+}
 
 // - Copying
 
@@ -60,7 +72,7 @@ impl<T> Clone for CanonId<T> {
 
 impl<T> fmt::Debug for CanonId<T> {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt.debug_tuple("CanonId").field(&self.0.index).finish()
+        fmt.debug_tuple("CanonId").field(&self.0.index()).finish()
     }
 }
 
@@ -123,16 +135,28 @@ impl<T> CanonInterner<T> {
         Self::default()
     }
 
+    /// Returns the number of stored entries.
+    pub fn len(&self) -> usize {
+        self.storage.len()
+    }
+
+    /// Whether this arena has no stored entries.
+    pub fn is_empty(&self) -> bool {
+        self.storage.is_empty()
+    }
+
     // - Lookup
 
     /// The item behind a handle.
+    #[inline]
     pub fn get(&self, id: Interned<T>) -> &T {
         self.storage.get(id)
     }
 
     /// The canonical identity of a stored item.
+    #[inline]
     pub fn canon_id(&self, id: Interned<T>) -> CanonId<T> {
-        self.canon[id.index as usize]
+        self.canon[id.index() as usize]
     }
 }
 
@@ -155,7 +179,7 @@ impl<T: Eq + Hash> CanonInterner<T> {
     {
         // An exact duplicate already has its canonical id
         let id = self.storage.intern(item)?;
-        if (id.index as usize) < self.canon.len() {
+        if (id.index() as usize) < self.canon.len() {
             return Ok(id);
         }
         // Look for an existing class with the same meaning
@@ -179,5 +203,11 @@ impl<T: Eq + Hash> CanonInterner<T> {
             );
         }
         Ok(id)
+    }
+}
+
+impl<T> CanonLookup<T> for CanonInterner<T> {
+    fn canon_id(&self, id: Interned<T>) -> CanonId<T> {
+        self.canon_id(id)
     }
 }
