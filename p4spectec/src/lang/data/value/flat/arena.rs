@@ -10,7 +10,7 @@ use std::rc::Rc;
 use crate::lang::{
     common::source::Span,
     data::{
-        intern::{CanonId, CanonInterner, Interned, Interner, RcInterner},
+        intern::{CanonId, CanonInterner, Interned, Interner},
         notation::MixopArena,
         typ::TypKind,
     },
@@ -27,7 +27,7 @@ pub struct ValueArena {
     /// Bodies, with canonical identities; a case reads its mixop's.
     values: CanonInterner<ValueKind>,
     /// Types, shared by exact contents including nested source spans.
-    types: RcInterner<TypKind>,
+    types: Interner<Rc<TypKind>>,
     /// Spans, shared by equality.
     spans: Interner<Span>,
 }
@@ -38,7 +38,7 @@ impl Default for ValueArena {
         spans
             .intern_default()
             .expect("the first span fits in an interner index");
-        Self { values: CanonInterner::new(), types: RcInterner::new(), spans }
+        Self { values: CanonInterner::new(), types: Interner::new(), spans }
     }
 }
 
@@ -72,7 +72,7 @@ impl ValueArena {
     pub(in crate::lang::data) fn intern_typ(
         &mut self,
         typ: Rc<TypKind>,
-    ) -> Result<Interned<TypKind>, std::num::TryFromIntError> {
+    ) -> Result<Interned<Rc<TypKind>>, std::num::TryFromIntError> {
         self.types.intern(typ)
     }
 
@@ -92,7 +92,7 @@ impl ValueArena {
     }
 
     /// Reads a type annotation.
-    pub fn typ(&self, typ: Interned<TypKind>) -> &Rc<TypKind> {
+    pub fn typ(&self, typ: Interned<Rc<TypKind>>) -> &Rc<TypKind> {
         self.types.get(typ)
     }
 
