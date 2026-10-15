@@ -43,7 +43,25 @@ fn map_mixop(arena: &mut Arena) -> Result<Mixop, BuiltinError> {
         .map_err(BuiltinError::from)
 }
 
-impl ValueMap<'_> {
+/// Builds a `pair<K, V>` value from a key and a value.
+fn make_pair(
+    arena: &mut Arena,
+    typ_key: &Typ,
+    typ_value: &Typ,
+    value_key: Value,
+    value_value: Value,
+) -> Result<Value, BuiltinError> {
+    let pair_id = crate::phrase!(node: "pair".into(), span: Span::default());
+    let typ = typ::make::var(pair_id, vec![typ_key.clone(), typ_value.clone()]);
+    let mixop_pair = pair_mixop(arena)?;
+    let value_case = notation::Mixfix::new(&arena.mixop, mixop_pair, vec![value_key, value_value])
+        .expect("the pair mixop has exactly two arguments");
+    Ok(value::make::case_flat(arena, typ.node.into(), value_case, Span::default())?)
+}
+
+impl<'a> ValueMap<'a> {
+    // == Operations
+
     /// The value under `key`, from the first matching pair.
     fn find(&self, arena: &Arena, mixop_pair: Mixop, key: &Value) -> Option<Value> {
         for pair in self.pairs.iter() {
@@ -62,25 +80,7 @@ impl ValueMap<'_> {
         }
         None
     }
-}
 
-/// Builds a `pair<K, V>` value from a key and a value.
-fn make_pair(
-    arena: &mut Arena,
-    typ_key: &Typ,
-    typ_value: &Typ,
-    value_key: Value,
-    value_value: Value,
-) -> Result<Value, BuiltinError> {
-    let pair_id = crate::phrase!(node: "pair".into(), span: Span::default());
-    let typ = typ::make::var(pair_id, vec![typ_key.clone(), typ_value.clone()]);
-    let mixop_pair = pair_mixop(arena)?;
-    let value_case = notation::Mixfix::new(&arena.mixop, mixop_pair, vec![value_key, value_value])
-        .expect("the pair mixop has exactly two arguments");
-    Ok(value::make::case_flat(arena, typ.node.into(), value_case, Span::default())?)
-}
-
-impl ValueMap<'_> {
     /// Replaces the value of the first pair with `key`, or appends a new pair.
     fn update(
         &mut self,
@@ -116,11 +116,9 @@ impl ValueMap<'_> {
         }
         Ok(())
     }
-}
 
-// == Conversion between meta-maps and runtime lists
+    // == Conversion between meta-maps and runtime lists
 
-impl<'a> ValueMap<'a> {
     /// Decodes a `map<K, V>` value into its pair list.
     fn from_value(arena: &'a Arena, mixop_map: Mixop, value: &Value) -> Result<Self, BuiltinError> {
         let value_case = value::get::case(arena, value)
