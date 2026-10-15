@@ -50,14 +50,14 @@ where
     } else {
         None
     };
-    let check = unpack::p4_bool(ctx.arena(), &value_check)?;
+    let check = unpack::p4_bool(ctx.arena_mut(), &value_check)?;
     // A passing assertion evaluates to its check
     if check {
         return Ok(value_check);
     }
     // The default message when the one-argument overload is used
     let message = match value_message {
-        Some(value) => unpack::p4_string(ctx.arena(), &value)?,
+        Some(value) => unpack::p4_string(ctx.arena_mut(), &value)?,
         None => "static_assert failed".to_owned(),
     };
     Err(error::assertion_unmet(message).into())
@@ -83,7 +83,7 @@ where
     // Arguments are bound as local variables of the call
     let value_check = func::find_var_e_local(ctx, value_ctx, "check")?;
     let value_signal = func::find_var_e_local(ctx, value_ctx, "toSignal")?;
-    let check = unpack::p4_bool(ctx.arena(), &value_check)?;
+    let check = unpack::p4_bool(ctx.arena_mut(), &value_check)?;
     // True: return nothing; false: reject with the given error
     let value_call_result = if check {
         let typ = typ::make::opt(typ::make::var(

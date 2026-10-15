@@ -108,7 +108,7 @@ pub fn compute_hash(
 }
 
 /// Concatenates fixed-width fields into one integer, padded to 16 bits.
-pub fn package(arena: &Arena, values: &[Value]) -> Result<(BigInt, BigInt), ExternError> {
+pub fn package(arena: &mut Arena, values: &[Value]) -> Result<(BigInt, BigInt), ExternError> {
     let mut width_pack = BigInt::zero();
     let mut int_pack = BigInt::zero();
     for value in values {
@@ -131,7 +131,7 @@ pub fn package(arena: &Arena, values: &[Value]) -> Result<(BigInt, BigInt), Exte
 
 /// Packs the fields and hashes them.
 pub fn compute_checksum(
-    arena: &Arena,
+    arena: &mut Arena,
     algo: &str,
     int_init: Option<&BigInt>,
     values: &[Value],

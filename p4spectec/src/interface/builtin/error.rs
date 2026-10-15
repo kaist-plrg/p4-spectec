@@ -5,7 +5,10 @@
 
 use thiserror::Error;
 
-use crate::lang::{common::prim::num::NumericError, data::value::ValueError};
+use crate::lang::{
+    common::prim::num::NumericError,
+    data::{notation::flat::parse::ParseMixopError, value::ValueError},
+};
 
 use crate::diagnostic::{Diagnostic, Report, Severity};
 
@@ -80,5 +83,14 @@ impl From<NumericError> for BuiltinError {
 impl From<P4UnparseError> for BuiltinError {
     fn from(error: P4UnparseError) -> Self {
         Self::diagnostic(BUILTIN_PRINT_UNSUPPORTED, error.to_string())
+    }
+}
+
+impl From<ParseMixopError> for BuiltinError {
+    fn from(error: ParseMixopError) -> Self {
+        match error {
+            ParseMixopError::Syntax(report) => Self::from(report),
+            ParseMixopError::Intern(error) => Self::from(ValueError::from(error)),
+        }
     }
 }

@@ -159,7 +159,7 @@ where
     let name = value::get::text(ctx.arena(), value_name)?;
     // Only `CounterArray` carries state
     Ok(if name == "CounterArray" {
-        let counter = CounterArray::init(ctx.arena(), *value_ids, *value_args)?;
+        let counter = CounterArray::init(ctx.arena_mut(), *value_ids, *value_args)?;
         ExternObject::CounterArray(counter).to_value(ctx.arena_mut(), encoding)?
     } else {
         let payload = encode_with(ctx.arena(), encoding, &())?;
@@ -339,7 +339,7 @@ where
     let (value_ctx, value_arch, value_call_result) =
         rel::ebpf_parse(ctx, state.value_ctx, state.value_arch)?;
     (state.value_ctx, state.value_arch) = (value_ctx, value_arch);
-    let rejected = value::get::matches! { ctx.arena(), &value_call_result,
+    let rejected = value::get::matches_string! { ctx.arena_mut(), &value_call_result,
         "REJECT errorValue" => |_values| true,
         _ => false,
     };
@@ -354,7 +354,7 @@ where
     let value_accept =
         rel::lvalue_read_var_global(ctx, state.value_ctx, state.value_arch, "accept")?;
     // Forward only when the filter accepted the packet
-    if unpack::p4_bool(ctx.arena(), &value_accept)? {
+    if unpack::p4_bool(ctx.arena_mut(), &value_accept)? {
         state
             .txs
             .push(Tx { port: rx.port, packet: rx.packet.clone() });

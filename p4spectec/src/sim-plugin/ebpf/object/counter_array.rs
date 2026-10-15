@@ -41,7 +41,11 @@ impl CounterArray {
     /// ```p4
     /// CounterArray(bit<32> max_index, bool sparse);
     /// ```
-    pub fn init(arena: &Arena, value_ids: Value, value_args: Value) -> Result<Self, ExternError> {
+    pub fn init(
+        arena: &mut Arena,
+        value_ids: Value,
+        value_args: Value,
+    ) -> Result<Self, ExternError> {
         let args = args::assoc(arena, value_ids, value_args)?;
         let value_max = args::find(&args, "max_index")?;
         let value_sparse = args::find(&args, "sparse")?;
@@ -71,7 +75,7 @@ impl CounterArray {
     {
         // Get "index"
         let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
+        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
         self.update(ctx, value_ctx, value_arch, idx, 1)
     }
 
@@ -93,10 +97,10 @@ impl CounterArray {
     {
         // Get "index"
         let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
+        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
         // Get "value"
         let value_add = func::find_var_e_local(ctx, value_ctx, "value")?;
-        let (_, int_add) = unpack::p4_fixed_bit(ctx.arena(), &value_add)?;
+        let (_, int_add) = unpack::p4_fixed_bit(ctx.arena_mut(), &value_add)?;
         let int = u32::try_from(&int_add).map_err(|_| {
             error::counter_value_out_of_bounds("counter value exceeds 32 bits".to_owned())
         })?;

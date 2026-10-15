@@ -15,7 +15,7 @@ use crate::lang::{
     },
     data::{
         arena::Arena,
-        notation::{self, tree::Mixfix},
+        notation,
         typ::{self, Typ, TypKind},
     },
 };
@@ -92,21 +92,14 @@ pub fn structure(
 
 // - Cases
 
-/// A variant case from a shared mixop and its arguments.
-///
-/// The mixop is interned the first time this arena sees it.
-pub fn case_tree(
+/// A variant case whose notation already belongs to the value's arena.
+pub fn case_flat(
     arena: &mut Arena,
     typ: Rc<TypKind>,
-    mixfix: Mixfix<Value>,
+    mixfix: notation::flat::Mixfix<Value>,
     span: Span,
 ) -> Result<Value, ValueError> {
-    let (mixop, values) = mixfix.into_parts();
-    let arena_mixop = &mut arena.mixop;
-    let mixop = arena_mixop.intern(&mixop)?;
-    let value_case = notation::flat::Mixfix::new(arena_mixop, mixop, values)
-        .expect("a mixfix fills every position");
-    Value::new(arena, ValueKind::Case(value_case), typ, span)
+    Value::new(arena, ValueKind::Case(mixfix), typ, span)
 }
 
 /// A variant case from a mixop text, its arguments, and its type name.
@@ -119,23 +112,37 @@ macro_rules! case_string {
         span: $span:expr $(,)?
     ) => {{
         let (mixop_text, args, typ_name, span) = ($shape, $args, $typ, $span);
-        let mixop = $crate::lang::data::notation::tree::parse::mixop(mixop_text);
-        let mixfix = $crate::lang::data::notation::tree::Mixfix::new(
-            mixop,
-            std::iter::IntoIterator::into_iter(args).collect(),
-        )
-        .expect("mixop arity matches its value constructor");
-        let id = $crate::phrase! {
-            node: typ_name.into(),
-            span: $crate::lang::common::source::Span::default(),
-        };
-        let typ = $crate::lang::data::typ::make::var(id, std::vec::Vec::new());
-        $crate::lang::data::value::flat::make::case_tree(
-            $arena,
-            std::rc::Rc::new(typ.node),
-            mixfix,
-            span,
-        )
+        let arena = &mut *($arena);
+        use $crate::lang::data::notation::flat::parse::ToMixop as _;
+        mixop_text
+            .to_mixop(&mut arena.mixop)
+            .map_err(|error| match error {
+                $crate::lang::data::notation::flat::parse::ParseMixopError::Syntax(error) => {
+                    panic!("value constructor contains a valid SpecTec mixop: {error}")
+                }
+                $crate::lang::data::notation::flat::parse::ParseMixopError::Intern(error) => {
+                    $crate::lang::data::value::ValueError::from(error)
+                }
+            })
+            .and_then(|mixop| {
+                let mixfix = $crate::lang::data::notation::flat::Mixfix::new(
+                    &arena.mixop,
+                    mixop,
+                    std::iter::IntoIterator::into_iter(args).collect(),
+                )
+                .expect("mixop arity matches its value constructor");
+                let id = $crate::phrase! {
+                    node: typ_name.into(),
+                    span: $crate::lang::common::source::Span::default(),
+                };
+                let typ = $crate::lang::data::typ::make::var(id, std::vec::Vec::new());
+                $crate::lang::data::value::flat::make::case_flat(
+                    arena,
+                    std::rc::Rc::new(typ.node),
+                    mixfix,
+                    span,
+                )
+            })
     }};
 }
 

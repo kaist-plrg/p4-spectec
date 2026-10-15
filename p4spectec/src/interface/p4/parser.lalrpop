@@ -3037,8 +3037,8 @@ typedef: Value = {
 
     // typedef ::= derivedTypeDeclaration
     <t:derivedTypeDeclaration> => {
-    let id = extract::id_declaration(&ctx.arena(), &t).expect("known P4 declaration shape");
-    let has_params = extract::has_type_params_declaration(&ctx.arena(), &t)
+    let id = extract::id_declaration(&mut ctx.arena_mut(), &t).expect("known P4 declaration shape");
+    let has_params = extract::has_type_params_declaration(&mut ctx.arena_mut(), &t)
         .expect("known P4 declaration type parameters");
     ctx.declare_typ(id, has_params).expect("P4 parser scope");
     t
@@ -3069,9 +3069,9 @@ typedefDeclaration: Value = {
 externFunctionDeclaration: Value = {
     // externFunctionDeclaration ::= annotationList "EXTERN" functionPrototype pop_scope "SEMICOLON"
     <l:@L> <al:annotationList> "EXTERN" <p:functionPrototype> pop_scope "SEMICOLON" <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
-        let id = extract::id_function_prototype(&ctx.arena(), &p)
+        let id = extract::id_function_prototype(&mut ctx.arena_mut(), &p)
             .expect("known P4 function prototype");
-        let has_params = extract::has_type_params_function_prototype(&ctx.arena(), &p)
+        let has_params = extract::has_type_params_function_prototype(&mut ctx.arena_mut(), &p)
             .expect("known P4 function prototype type parameters");
         ctx
             .declare_var(id, has_params, TypeId::Empty)
@@ -3124,9 +3124,9 @@ externConstructorPrototype: Value = {
 externMethodPrototype: Value = {
     // externMethodPrototype ::= annotationList functionPrototype pop_scope "SEMICOLON"
     <l:@L> <al:annotationList> <p:functionPrototype> pop_scope "SEMICOLON" <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
-        let id = extract::id_function_prototype(&ctx.arena(), &p)
+        let id = extract::id_function_prototype(&mut ctx.arena_mut(), &p)
             .expect("known P4 function prototype");
-        let has_params = extract::has_type_params_function_prototype(&ctx.arena(), &p)
+        let has_params = extract::has_type_params_function_prototype(&mut ctx.arena_mut(), &p)
             .expect("known P4 function prototype type parameters");
         ctx
             .declare_var(id, has_params, TypeId::Empty)
@@ -3143,9 +3143,9 @@ externMethodPrototype: Value = {
     // externMethodPrototype ::= annotationList "ABSTRACT" functionPrototype pop_scope "SEMICOLON"
     <l:@L> <al:annotationList> "ABSTRACT" <p:functionPrototype> pop_scope "SEMICOLON" <r:@R>
         =>? (|| -> Result<_, P4Error> { Ok({
-            let id = extract::id_function_prototype(&ctx.arena(), &p)
+            let id = extract::id_function_prototype(&mut ctx.arena_mut(), &p)
                 .expect("known P4 function prototype");
-            let has_params = extract::has_type_params_function_prototype(&ctx.arena(), &p)
+            let has_params = extract::has_type_params_function_prototype(&mut ctx.arena_mut(), &p)
                 .expect("known P4 function prototype type parameters");
             ctx
                 .declare_var(id, has_params, TypeId::Empty)
@@ -3202,12 +3202,10 @@ externObjectDeclaration: Value = {
                 typ: "externObjectDeclaration",
                 span: ctx.location_span(l, r),
             }.map_err(|error| P4Error::new(ctx.location_span(l, r), error))?;
-            declare::typ(
-                ctx,
-                &n,
-                extract::has_type_params_declaration(&ctx.arena(), &decl)
-                    .expect("known P4 declaration type parameters"),
-            );
+            let has_params =
+                extract::has_type_params_declaration(&mut ctx.arena_mut(), &decl)
+                    .expect("known P4 declaration type parameters");
+            declare::typ(ctx, &n, has_params);
             declare::type_namespace(ctx, &n, s);
             decl
         }) })().map_err(|error| ParseError::User { error }),
@@ -3830,7 +3828,7 @@ controlLocalDeclaration: Value = {
 
     // controlLocalDeclaration ::= tableDeclaration
     <d:tableDeclaration> => {
-    let id = extract::id_declaration(&ctx.arena(), &d).expect("known P4 declaration shape");
+    let id = extract::id_declaration(&mut ctx.arena_mut(), &d).expect("known P4 declaration shape");
     ctx.declare_var(id, false, TypeId::Empty).expect("P4 parser scope");
     d
 },
@@ -3910,10 +3908,10 @@ typeDeclaration: Value = {
 declaration: Value = {
     // declaration ::= constantDeclaration
     <constant:constantDeclaration> => {
-    let id = extract::id_declaration(&ctx.arena(), &constant).expect("known P4 declaration shape");
-    let has_params = extract::has_type_params_declaration(&ctx.arena(), &constant)
+    let id = extract::id_declaration(&mut ctx.arena_mut(), &constant).expect("known P4 declaration shape");
+    let has_params = extract::has_type_params_declaration(&mut ctx.arena_mut(), &constant)
         .expect("known P4 declaration type parameters");
-    let type_id = extract::type_id_declaration(&ctx.arena(), &constant)
+    let type_id = extract::type_id_declaration(&mut ctx.arena_mut(), &constant)
         .expect("known P4 declaration type");
     ctx.declare_var(id, has_params, type_id).expect("P4 parser scope");
     constant
@@ -3921,16 +3919,16 @@ declaration: Value = {
 
     // declaration ::= instantiation
     <inst:instantiation> => {
-    let id = extract::id_declaration(&ctx.arena(), &inst).expect("known P4 declaration shape");
-    let type_id = extract::type_id_declaration(&ctx.arena(), &inst).expect("known P4 declaration type");
+    let id = extract::id_declaration(&mut ctx.arena_mut(), &inst).expect("known P4 declaration shape");
+    let type_id = extract::type_id_declaration(&mut ctx.arena_mut(), &inst).expect("known P4 declaration type");
     ctx.declare_var(id, false, type_id).expect("P4 parser scope");
     inst
 },
 
     // declaration ::= functionDeclaration
     <func:functionDeclaration> => {
-    let id = extract::id_declaration(&ctx.arena(), &func).expect("known P4 declaration shape");
-    let has_params = extract::has_type_params_declaration(&ctx.arena(), &func)
+    let id = extract::id_declaration(&mut ctx.arena_mut(), &func).expect("known P4 declaration shape");
+    let has_params = extract::has_type_params_declaration(&mut ctx.arena_mut(), &func)
         .expect("known P4 declaration type parameters");
     ctx.declare_var(id, has_params, TypeId::Empty).expect("P4 parser scope");
     func
@@ -3938,7 +3936,7 @@ declaration: Value = {
 
     // declaration ::= actionDeclaration
     <action:actionDeclaration> => {
-    let id = extract::id_declaration(&ctx.arena(), &action).expect("known P4 declaration shape");
+    let id = extract::id_declaration(&mut ctx.arena_mut(), &action).expect("known P4 declaration shape");
     ctx.declare_var(id, false, TypeId::Empty).expect("P4 parser scope");
     action
 },
@@ -3954,8 +3952,8 @@ declaration: Value = {
 
     // declaration ::= parserDeclaration
     <d:parserDeclaration> => {
-    let id = extract::id_declaration(&ctx.arena(), &d).expect("known P4 declaration shape");
-    let has_params = extract::has_type_params_declaration(&ctx.arena(), &d)
+    let id = extract::id_declaration(&mut ctx.arena_mut(), &d).expect("known P4 declaration shape");
+    let has_params = extract::has_type_params_declaration(&mut ctx.arena_mut(), &d)
         .expect("known P4 declaration type parameters");
     ctx.declare_typ(id, has_params).expect("P4 parser scope");
     d
@@ -3963,8 +3961,8 @@ declaration: Value = {
 
     // declaration ::= controlDeclaration
     <d:controlDeclaration> => {
-    let id = extract::id_declaration(&ctx.arena(), &d).expect("known P4 declaration shape");
-    let has_params = extract::has_type_params_declaration(&ctx.arena(), &d)
+    let id = extract::id_declaration(&mut ctx.arena_mut(), &d).expect("known P4 declaration shape");
+    let has_params = extract::has_type_params_declaration(&mut ctx.arena_mut(), &d)
         .expect("known P4 declaration type parameters");
     ctx.declare_typ(id, has_params).expect("P4 parser scope");
     d
@@ -3972,8 +3970,8 @@ declaration: Value = {
 
     // declaration ::= typeDeclaration
     <d:typeDeclaration> => {
-    let id = extract::id_declaration(&ctx.arena(), &d).expect("known P4 declaration shape");
-    let has_params = extract::has_type_params_declaration(&ctx.arena(), &d)
+    let id = extract::id_declaration(&mut ctx.arena_mut(), &d).expect("known P4 declaration shape");
+    let has_params = extract::has_type_params_declaration(&mut ctx.arena_mut(), &d)
         .expect("known P4 declaration type parameters");
     ctx.declare_typ(id, has_params).expect("P4 parser scope");
     d

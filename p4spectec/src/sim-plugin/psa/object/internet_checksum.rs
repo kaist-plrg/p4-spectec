@@ -127,8 +127,8 @@ impl InternetChecksum {
         Interp: Interpreter<Iface, Ext>,
     {
         let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
-        let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
-        let int = hash::compute_checksum(ctx.arena(), algo, Some(&self.int), &values)?;
+        let values = unpack::p4_tuple(ctx.arena_mut(), &value_data)?;
+        let int = hash::compute_checksum(ctx.arena_mut(), algo, Some(&self.int), &values)?;
         self.int = bigint::bitwise_neg(&int, &16.into())?;
         let typ = typ::make::opt(typ::make::var(
             crate::phrase!(node: "value".into(), span: Span::default()),
@@ -215,7 +215,7 @@ impl InternetChecksum {
         Interp: Interpreter<Iface, Ext>,
     {
         let value_state = func::find_var_e_local(ctx, value_ctx, "checksum_state")?;
-        self.int = unpack::p4_fixed_bit(ctx.arena(), &value_state)?.1;
+        self.int = unpack::p4_fixed_bit(ctx.arena_mut(), &value_state)?.1;
         let typ = typ::make::opt(typ::make::var(
             crate::phrase!(node: "value".into(), span: Span::default()),
             Vec::new(),

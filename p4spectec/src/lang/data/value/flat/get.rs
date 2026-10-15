@@ -1,6 +1,6 @@
 //! Projections that read a value of a given kind
 //!
-//! Typed getters report a kind mismatch; case matching borrows arguments.
+//! Typed getters report a kind mismatch; case matching copies argument handles.
 //! Fixed-arity getters project argument slices without allocating.
 
 use std::rc::Rc;
@@ -65,52 +65,86 @@ pub fn case<'a>(arena: &'a Arena, value: &Value) -> Result<&'a ValueCase, ValueE
     }
 }
 
-/// Matches a case value against mixop texts, binding its arguments per arm.
-macro_rules! matches {
-    (
-        @arms $arena:ident, $value_case:ident;
-        $shape:literal $(| $shape_alt:literal)* => |$values:ident| $body:expr,
-        $($rest:tt)+
-    ) => {{
-        match $value_case {
-            Some(value_case)
-                if {
-                    use $crate::lang::traits::eq::SyntaxEq as _;
-
-                    let mixop = value_case.mixop().into_tree(&$arena.mixop);
-                    [$shape, $($shape_alt),*].into_iter().any(|mixop_text| {
-                        let mixop_expect = $crate::lang::data::notation::tree::parse::mixop(mixop_text);
-                        mixop.syntax_eq(mixop_expect.as_ref())
-                    })
-                } =>
-            {
-                let $values = value_case.args();
-                $body
+/// Interns patterns and copies matched arguments before releasing the arena borrow.
+/// User arms execute only after the selection scope has ended.
+macro_rules! matches_string {
+    // Select the first matching shape without evaluating any user arm
+    (@select_arms $arena:ident, $mixop:ident, $idx:expr;
+        [$($shape:expr),+ $(,)?], $($rest:tt)*
+    ) => {
+        if [$($shape),+].into_iter().any(|mixop_text| {
+            $crate::lang::data::notation::flat::parse::matches_string(
+                &mut $arena.mixop, $mixop, mixop_text,
+            )
+        }) {
+            Some($idx)
+        } else {
+            $crate::lang::data::value::flat::get::matches_string! {
+                @select_arms $arena, $mixop, ($idx + 1usize); $($rest)*
             }
-            _ => $crate::lang::data::value::flat::get::matches! {
-                @arms $arena, $value_case;
-                $($rest)+
-            },
         }
-    }};
-    (@arms $arena:ident, $value_case:ident; _ => $fallback:expr $(,)?) => {
-        $fallback
     };
-    ($arena:expr, $value:expr, $($arms:tt)+) => {{
-        let value = $value;
-        let arena = $arena;
-        let value_case = match arena.value.kind(value.node) {
-            $crate::lang::data::value::flat::ValueKind::Case(value_case) => Some(value_case),
+    (@select_arms $arena:ident, $mixop:ident, $idx:expr;) => { None };
+
+    // Only the arm index and owned child handles leave this borrow scope
+    (@select $arena:expr, $value:expr; $($shapes:tt)*) => {{
+        let value_kind = ($value).node;
+        let arena = &mut *($arena);
+        let mixop = match arena.value.kind(value_kind) {
+            $crate::lang::data::value::flat::ValueKind::Case(value_case) => {
+                Some(*value_case.mixop())
+            }
             _ => None,
         };
-        $crate::lang::data::value::flat::get::matches! {
-            @arms arena, value_case;
-            $($arms)+
+        match mixop {
+            Some(mixop) => {
+                let idx_arm = $crate::lang::data::value::flat::get::matches_string! {
+                    @select_arms arena, mixop, 0usize; $($shapes)*
+                };
+                idx_arm.map(|idx_arm| {
+                    let values_owned = match arena.value.kind(value_kind) {
+                        $crate::lang::data::value::flat::ValueKind::Case(value_case) => {
+                            value_case.args().to_vec()
+                        }
+                        _ => unreachable!(),
+                    };
+                    (idx_arm, values_owned)
+                })
+            }
+            None => None,
+        }
+    }};
+
+    // Literal arms bind the entire argument slice
+    (@dispatch $selected:ident, $idx:expr, $fallback:expr;
+        |$values:ident| $body:expr, $($rest:tt)*
+    ) => {
+        match $selected {
+            Some((idx_arm, values_owned)) if idx_arm == $idx => {
+                let $values = values_owned.as_slice();
+                $body
+            }
+            selected => $crate::lang::data::value::flat::get::matches_string! {
+                @dispatch selected, ($idx + 1usize), $fallback; $($rest)*
+            },
+        }
+    };
+    (@dispatch $selected:ident, $idx:expr, $fallback:expr;) => {{ let _ = $selected; $fallback }};
+
+    ($arena:expr, $value:expr,
+        $($shape:literal $(| $shape_alt:literal)* => |$values:ident| $body:expr,)+
+        _ => $fallback:expr $(,)?
+    ) => {{
+        let selected = $crate::lang::data::value::flat::get::matches_string! {
+            @select $arena, $value; $([$shape, $($shape_alt),*],)+
+        };
+        $crate::lang::data::value::flat::get::matches_string! {
+            @dispatch selected, 0usize, $fallback; $(|$values| $body,)+
         }
     }};
 }
 
-pub(crate) use matches;
+pub(crate) use matches_string;
 
 // - Sequences
 

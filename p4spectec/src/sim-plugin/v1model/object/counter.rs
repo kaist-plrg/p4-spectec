@@ -52,7 +52,7 @@ impl Counter {
     ///
     /// `counter(bit<32> size, CounterType type);`
     pub fn init(
-        arena: &Arena,
+        arena: &mut Arena,
         _value_targs: Value,
         value_ids: Value,
         value_args: Value,
@@ -101,7 +101,7 @@ impl Counter {
         Interp: Interpreter<Iface, Ext>,
     {
         let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
+        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
         // An out-of-range index leaves the array untouched
         match &mut self {
             Self::Packets(counts) => {

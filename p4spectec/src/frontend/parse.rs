@@ -250,6 +250,12 @@ pub fn parse_mixop(source: &str) -> Result<Mixop, FrontendError> {
         }
     }
 
+    let typ = parse_typ(source)?;
+    Ok(from_typ(&typ))
+}
+
+/// Parses a complete EL type, including plain argument positions.
+pub(crate) fn parse_typ(source: &str) -> Result<ast::Typ, FrontendError> {
     // Parse as a type with a throwaway context
     let ctx = Context::default();
     let lexer = Lexer::new(FileId::intern("<mixop>"), source, |id| ctx.find_id(id));
@@ -266,6 +272,5 @@ pub fn parse_mixop(source: &str) -> Result<Mixop, FrontendError> {
             error::mixfix_operator_invalid(ctx.span(loc_l, loc_r), source)
         }
     })?;
-    let mixop = from_typ(&typ);
-    Ok(mixop)
+    Ok(typ)
 }
