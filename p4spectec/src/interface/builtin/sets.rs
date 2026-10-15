@@ -28,7 +28,16 @@ struct ValueSet<'a> {
     values: Cow<'a, [Value]>,
 }
 
-impl ValueSet<'_> {
+/// The `{ ... }` shape of a set value.
+fn set_mixop(arena: &mut Arena) -> Result<Mixop, BuiltinError> {
+    "`{ k `}"
+        .to_mixop(&mut arena.mixop)
+        .map_err(BuiltinError::from)
+}
+
+impl<'a> ValueSet<'a> {
+    // == Operations
+
     /// Sorts by syntax and drops syntactic duplicates.
     fn sort(&mut self, arena: &Arena) {
         let values = self.values.to_mut();
@@ -102,18 +111,9 @@ impl ValueSet<'_> {
                 .zip(set.values.iter())
                 .all(|(value_a, value_b)| value_a.view(arena).syntax_eq(&value_b.view(arena)))
     }
-}
 
-// == Conversion between meta-sets and runtime lists
+    // == Conversion between meta-sets and runtime lists
 
-/// The `{ ... }` shape of a set value.
-fn set_mixop(arena: &mut Arena) -> Result<Mixop, BuiltinError> {
-    "`{ k `}"
-        .to_mixop(&mut arena.mixop)
-        .map_err(BuiltinError::from)
-}
-
-impl<'a> ValueSet<'a> {
     /// Borrows normalized elements or sorts and deduplicates an owned copy.
     fn from_value(arena: &'a Arena, mixop_set: Mixop, value: &Value) -> Result<Self, BuiltinError> {
         let value_case = value::get::case(arena, value)
