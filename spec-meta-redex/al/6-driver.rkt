@@ -4,14 +4,13 @@
 ;; It holds (G (IN L e)) as a cursor at the last contractum. A step moves the
 ;; cursor to the redex, applies ->term to it, or ->term+ctx to (r G L) if no
 ;; rule of ->term applies, and puts the contractum and the new layer at the
-;; cursor. To reach the redex,
-;; the cursor climbs past the nodes whose subterm is done, and then descends
-;; through the one pending evaluation position of each node. So a step matches
-;; only the nodes it enters, not the whole path from the root. It fails on a
-;; node with two pending positions, and on a redex to which no rule applies.
+;; cursor. To reach the redex, the cursor climbs past the nodes whose subterm
+;; is done, and then descends through the one pending evaluation position of
+;; each node. So a step matches only the nodes it enters, not the whole path
+;; from the root. It fails on a node with two pending positions, and on a
+;; redex to which no rule applies.
 
-(require racket/list
-         racket/match
+(require racket/match
          redex/reduction-semantics
          "4-relation.rkt"
          "5-eval.rkt")
@@ -20,12 +19,10 @@
 (define res? (redex-match? al res))
 (define done? (redex-match? al done))
 
-;; The one-level decompositions (in-hole Fr t_sub) of a node t
-(define decompose (redex-match al (in-hole Fr any_sub)))
-
-;; The machine term of a configuration, for error messages that leave out G
-(define (conf-term conf)
-  (if (and (list? conf) (= (length conf) 2)) (cadr conf) conf))
+;; The one-level decompositions (in-hole Fr t_sub) of a node t, as
+;; (Fr . t_sub) pairs
+(define decompose
+  (term-match al [(in-hole Fr any_sub) (cons (term Fr) (term any_sub))]))
 
 ;; (G (IN L_root body)) with the subterm t of body in focus. L is the layer of
 ;; t's innermost IN, and path holds t's ancestors in body, innermost first.
@@ -38,57 +35,51 @@
 (define (conf->cursor conf)
   (match conf
     [(list G (list 'IN L body)) (cursor G '() body L)]
-    [_ (error 'step "not a configuration (G (IN L e)), with (IN L e): ~e"
-              (conf-term conf))]))
+    [_ (error 'run "not a configuration (G (IN L e)), with (IN L e): ~e" conf)]))
 
 (define (cursor->conf c)
-  (match-define (cursor G path t L) c)
-  (let loop ([path path] [t t] [L L])
-    (match path
-      ['() (list G (list 'IN L t))]
-      [(cons (path-fr Fr) path_1) (loop path_1 (plug Fr t) L)]
-      [(cons (path-in L_outer) path_1) (loop path_1 (list 'IN L t) L_outer)])))
+  (match c
+    [(cursor G '() t L) (list G (list 'IN L t))]
+    [_ (cursor->conf (up c))]))
+
+;; c with its innermost ancestor rebuilt around its subterm, and in focus
+(define (up c)
+  (match c
+    [(cursor G (cons (path-fr Fr) path) t L) (cursor G path (plug Fr t) L)]
+    [(cursor G (cons (path-in L_outer) path) t L) (cursor G path (list 'IN L t) L_outer)]))
 
 ;; c moved to the next redex, or #f if c's configuration is final. A node whose
 ;; pending subterm is not done keeps that position, so the cursor climbs only
 ;; past done subterms.
 (define (next-redex c)
-  (match-define (cursor G path t L) c)
-  (let climb ([path path] [t t] [L L])
-    (cond
-      [(and (null? path) (res? t)) #f]
-      [(or (null? path) (not (done? t))) (descend G path t L)]
-      [else
-       (match path
-         [(cons (path-fr Fr) path_1) (climb path_1 (plug Fr t) L)]
-         [(cons (path-in L_outer) path_1) (climb path_1 (list 'IN L t) L_outer)])])))
+  (match c
+    [(cursor _ '() (? res?) _) #f]
+    [(cursor _ path t _) #:when (or (null? path) (not (done? t))) (descend c)]
+    [_ (next-redex (up c))]))
 
-;; The cursor at the redex in t, which is not done unless it is the root's body
-(define (descend G path t L)
+;; c moved to the redex in its subterm, which is not done unless it is the
+;; root's body
+(define (descend c)
+  (match-define (cursor G path t L) c)
   (match t
     [(list 'IN L_t body)
      (if (done? body)
-         (cursor G path t L)
-         (descend G (cons (path-in L) path) body L_t))]
+         c
+         (descend (cursor G (cons (path-in L) path) body L_t)))]
     [_
      (match (pending t)
-       ['() (cursor G path t L)]
-       [(list (cons Fr sub)) (descend G (cons (path-fr Fr) path) sub L)]
+       ['() c]
+       [(list (cons Fr sub)) (descend (cursor G (cons (path-fr Fr) path) sub L))]
        [positions
-        (error 'step "~a pending positions, with subterms ~e, in ~e"
+        (error 'run "~a pending positions, with subterms ~e, in ~e"
                (length positions) (map cdr positions) t)])]))
 
 ;; The evaluation positions of node t whose subterms are not done, as
 ;; (Fr . subterm) pairs
 (define (pending t)
-  (remove-duplicates
-   (for/list ([m (in-list (or (decompose t) '()))]
-              #:unless (done? (binding m 'any_sub)))
-     (cons (binding m 'Fr) (binding m 'any_sub)))))
-
-(define (binding m name)
-  (for/first ([b (in-list (match-bindings m))] #:when (eq? (bind-name b) name))
-    (bind-exp b)))
+  (for/list ([position (in-list (decompose t))]
+             #:unless (done? (cdr position)))
+    position))
 
 ;; The contractum of redex r under G and L, and the new layer. The rules are
 ;; disjoint, so the first successor found is the only one.
@@ -98,7 +89,7 @@
     ['()
      (match (apply-reduction-relation ->term+ctx (list r G L))
        [(cons (list r_1 _ L_1) _) (values r_1 L_1)]
-       ['() (error 'step "stuck: no rule applies to ~e" r)])]))
+       ['() (error 'run "stuck: no rule applies to ~e" r)])]))
 
 ;; The final configuration that conf reduces to
 (define (run conf)
