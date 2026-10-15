@@ -98,10 +98,9 @@ single-input entry relation with the encoded input and returns `"pass"` after
 success. These scripts must not already define `main`. The base is executed
 natively rather than encoded as another input script.
 
-The command accepts `--no-cache` (interpreter call cache), `--no-codec-cache`
-(AL encode/decode cache), `--codec-cache-limit` (entries per conversion table),
-`--det`, and `--guard`. Both caches are enabled by
-default and can be disabled independently. It prints `passed`
+The command accepts `--no-cache`, `--det`, and `--guard`. Interpreter call
+caching and AL encode/decode caching are enabled together by default;
+`--no-cache` disables both. It prints `passed`
 only after the configured base entry succeeds; diagnostics cause a nonzero
 exit code. All runners share one arena. Host calls decode one representation
 layer and encode their results, preserving effects. Native mismatch becomes
@@ -116,10 +115,9 @@ Each host boundary owns five conversion tables: value encode/decode, mixop
 encode/decode, and type decode. Recursive conversions receive that cache
 explicitly. Canonical keys ignore type notes and source locations; cache hits
 retain the first result's annotations. Each independent table holds at most
-4,096 entries by default; when full, it keeps existing entries and skips new
-insertions. `--codec-cache-limit N` changes the per-table entry limit; zero
-disables codec caching. This limits entry counts, not their bytes or arena
-storage. Tables are cleared before the shared arena resets. Initial script encoding uses
+4,096 entries; when full, it keeps existing entries and skips new insertions.
+This fixed limit bounds entry counts, not their bytes or arena storage.
+Tables are cleared before the shared arena resets. Initial script encoding uses
 the uncached `Encode::encode` API; runtime calls use `encode_cached` and
 `decode_cached`.
 
@@ -135,8 +133,7 @@ The default test targets do not include it.
 The `test-driver/metacirc` fixture runs only the Rust SL → AL specification →
 P4 specification → P4 program `Program_inst` path through the CLI using
 `towers/al-p4.json`. It uses the full P4 specification and a small constant
-declaration, with the codec cache disabled, limited to zero or one entry,
-and at its default limit, without requiring the p4c submodule.
+declaration with caching enabled, without requiring the p4c submodule.
 
 Native/AL/AL→AL performance measurements are follow-up work.
 

@@ -7,7 +7,6 @@
 use clap::{Args, Parser, Subcommand};
 use p4spectec::{
     diagnostic::{DisplayStyle, RenderConfig, Renderer},
-    interface::al::Cache,
     metacirc::{self, TowerConfig},
     runner,
 };
@@ -28,15 +27,9 @@ enum Command {
 
 #[derive(Args)]
 struct Options {
-    /// Disable interpreter call caching.
+    /// Disable interpreter call and AL encode/decode caching.
     #[arg(long)]
     no_cache: bool,
-    /// Disable AL encode/decode caching at host boundaries.
-    #[arg(long)]
-    no_codec_cache: bool,
-    /// Maximum entries per AL conversion table; zero disables codec caching.
-    #[arg(long = "codec-cache-limit", default_value_t = Cache::DEFAULT_LIMIT)]
-    num_entries_cache_max: usize,
     /// Check deterministic execution.
     #[arg(long)]
     det: bool,
@@ -70,13 +63,7 @@ fn run(cli: Cli) -> metacirc::Result<()> {
     match cli.command {
         Command::Run(args) => {
             let config = TowerConfig::from_file(&args.config)?;
-            metacirc::run(
-                &config,
-                &args.includes,
-                &args.program,
-                args.options.config(),
-                if args.options.no_codec_cache { 0 } else { args.options.num_entries_cache_max },
-            )
+            metacirc::run(&config, &args.includes, &args.program, args.options.config())
         }
     }
 }

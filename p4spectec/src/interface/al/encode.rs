@@ -41,7 +41,7 @@ pub trait Encode {
 
     /// Encodes this data without retaining conversion results.
     fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
-        self.encode_cached(arena, &mut Cache::new(0))
+        self.encode_cached(arena, &mut Cache::new(false))
     }
 
     /// Encodes this data with a cache belonging to the supplied arena.
@@ -186,9 +186,7 @@ impl Encode for FlatMixop {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Value, Error> {
         // Reuse encoded notation independently of atom locations
         let id_mixop = arena.mixop.canon_id(*self);
-        if cache.num_entries_max > 0
-            && let Some(value_meta) = cache.mixops_encode.get(&id_mixop)
-        {
+        if let Some(value_meta) = cache.mixops_encode.get(&id_mixop) {
             return Ok(*value_meta);
         }
         // Copy atoms before allocating encoded rows in the same arena
@@ -198,9 +196,7 @@ impl Encode for FlatMixop {
             Item::Atom(atom) => atoms_matrix.last_mut().unwrap().push(atom.clone()),
         });
         let value_meta = encode_atoms_matrix(arena, cache, &atoms_matrix)?;
-        if cache.mixops_encode.len() < cache.num_entries_max {
-            cache.mixops_encode.insert(id_mixop, value_meta);
-        }
+        cache.mixops_encode.insert(id_mixop, value_meta);
         Ok(value_meta)
     }
 }
@@ -346,9 +342,7 @@ impl Encode for Value {
         let value_target = *self;
         // Reuse a successful conversion by payload identity
         let id_value = arena.value.canon_id(value_target.node);
-        if cache.num_entries_max > 0
-            && let Some(value_meta) = cache.values_encode.get(&id_value)
-        {
+        if let Some(value_meta) = cache.values_encode.get(&id_value) {
             return Ok(*value_meta);
         }
         let span = *arena.value.span(value_target.span);
@@ -421,9 +415,7 @@ impl Encode for Value {
             }
         }?;
         // Keep only this direction; decoding still reconstructs omitted notes
-        if cache.values_encode.len() < cache.num_entries_max {
-            cache.values_encode.insert(id_value, value_meta);
-        }
+        cache.values_encode.insert(id_value, value_meta);
         Ok(value_meta)
     }
 }
@@ -443,12 +435,12 @@ impl Encode for ValueField {
 
 /// Encodes a successful function result without retaining conversions.
 pub fn ok_value(arena: &mut Arena, value_target: Value) -> Result<Value, Error> {
-    ok_value_cached(arena, &mut Cache::new(0), value_target)
+    ok_value_cached(arena, &mut Cache::new(false), value_target)
 }
 
 /// Encodes successful relation outputs without retaining conversions.
 pub fn ok_values(arena: &mut Arena, values_target: &[Value]) -> Result<Value, Error> {
-    ok_values_cached(arena, &mut Cache::new(0), values_target)
+    ok_values_cached(arena, &mut Cache::new(false), values_target)
 }
 
 /// Encodes a successful function result as `OK val : valres`.

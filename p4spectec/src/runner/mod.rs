@@ -55,8 +55,8 @@ pub enum Spec {
 /// Interpreter options shared by AL, SL, and PL.
 #[derive(Clone, Copy)]
 pub struct Config {
-    /// Memoize pure calls.
-    cache: bool,
+    /// Memoize pure calls and host-boundary conversions.
+    pub(crate) cache: bool,
     /// Check determinism of candidate selection.
     det: bool,
     /// Type-check arguments and results at call boundaries.
