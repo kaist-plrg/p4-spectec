@@ -1,6 +1,6 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: done. Steps 1 to 17 are done.
+Status: done. Steps 1 to 18 are done.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language, as a small-step reduction semantics. It transcribes the AL
@@ -584,7 +584,7 @@ record update `C[ .LOCAL.VAL = x ]` is a pattern that rebuilds the layer,
 | `-- if ~(val <: num)` | `(side-condition (not (redex-match? al num (term val))))` |
 | `-- otherwise` | complement rules; see [FAIL and backtracking](#fail-and-backtracking) |
 | `-- debug e` | `(where _ ,(debug (term val)))` in the rule of `Eval_prem/dbg`, printing to stderr |
-| `$(n - 1)`, `\|x*\|`, `x*[n]`, slices, `x*[[n] = y]`, `++` | Racket escapes; indexing, slicing, and updating are helpers in `common/0.1-stdlib.rkt` (`list-idx`, `text-slice`, ...) |
+| `$(n - 1)`, `\|x*\|`, `x*[n]`, slices, `x*[[n] = y]`, `++` | Racket escapes; indexing, slicing, and updating are helpers in `common/0.0-stdlib.rkt` (`list-idx`, `text-slice`, ...) |
 
 A `where` pattern that reuses a variable bound earlier in the rule is an
 equality constraint, not a new binding, just as a repeated variable within one
@@ -632,26 +632,29 @@ sequence of two.
 Racket modules cannot require each other in a cycle. The AL relations are
 mutually recursive, but only through the term: a rule produces another
 relation's form, and does not call that relation. So every watsup file becomes
-one module. `al/5-eval.rkt` combines the fragments' relations.
+one module. `al/5-eval.rkt` combines the fragments' relations. The files of
+each directory are numbered without gaps. So from `3-relation.rkt` on, the
+numbers in `common/` are one less than in `spec-meta/common`, which has a
+`3-context.watsup` that the port does not need (Step 18). Each module's header
+comment names its watsup file.
 
 Modules in `common/` never require modules in `al/`. That is why the extern
 codec and transport live in `common/`: the host procedures in
-`common/4-relation.rkt` call them. They mirror K's `4.1-extern-json.k` and
+`common/3-relation.rkt` call them. They mirror K's `4.1-extern-json.k` and
 `4.2-extern-ffi.k`. The transport's C shim is in `ffi/`, as K's is in
 `spec-meta-k/ffi/`.
 
 ```text
 spec-meta-redex/
   common/
-    0.1-stdlib.rkt        language stdlib; $forall_, $repeat_, $transpose_, and the map functions; text and list helpers; debug
-    0.2-extern-json.rkt   codec for the extern JSON wire
-    0.3-extern-ffi.rkt    transport to the OCaml host, over ffi2
+    0.0-stdlib.rkt        language stdlib; $forall_, $repeat_, $transpose_, and the map functions; text and list helpers; debug
+    0.1-extern-json.rkt   codec for the extern JSON wire
+    0.2-extern-ffi.rkt    transport to the OCaml host, over ffi2
     1-syntax.rkt          language common-syntax
-    2-env.rkt             language common-env; $theta_of_tdenv, $is_iter_on_var, ...
-    3-context.rkt         language common-context (cursor)
-    4-relation.rkt        language common-relation (unitres, res<X>); host procedures for the three extern relations
-    5.0-eval-typ.rkt      $subst_typ
-    5.1-eval-ops.rkt      $unop_number, $binop_*, $cmpop_*, $is_tup, $is_fun
+    2-env.rkt             language common-env; $theta_of_tdenv, $is_iter_on_var, $iter_vari
+    3-relation.rkt        language common-relation (unitres, res<X>); host procedures for the three extern relations
+    4.0-eval-typ.rkt      $subst_typ
+    4.1-eval-ops.rkt      $unop_number, $binop_*, $cmpop_*, $is_tup
   al/
     0-boot.rkt            boot-script, boot-p4: run spectec-boot sexp(-p4), read
     1-syntax.rkt          language al-syntax
@@ -671,7 +674,7 @@ spec-meta-redex/
   test/                   unnumbered
     p4-typecheck.rkt      make redex-test: type-checks the P4 samples; raco test skips it
   ffi/
-    shim.c                C shim between 0.3-extern-ffi.rkt and p4spec/bin/ffi.ml
+    shim.c                C shim between 0.2-extern-ffi.rkt and p4spec/bin/ffi.ml
 ```
 
 Every module requires `redex/reduction-semantics` itself, and uses Redex's
@@ -679,9 +682,10 @@ own forms: `define-metafunction`, `define-judgment-form`, `reduction-relation`,
 `union-reduction-relations`, and `context-closure`. There are no macros over
 them.
 
-Each file in `common/` from `0.1-stdlib` to `4-relation` extends the previous
-file's language with its own syntax: `stdlib` (the `var`s and maps),
-`common-syntax`, `common-env`, `common-context`, and `common-relation`.
+The language files in `common/`, `0.0-stdlib`, `1-syntax`, `2-env`, and
+`3-relation`, each extend the previous one's language with their own syntax:
+`stdlib` (the `var`s and maps), `common-syntax`, `common-env`, and
+`common-relation`.
 `al-syntax` extends `common-syntax` with `al/1-syntax`. `al-base` (in `al/2-env.rkt`) is the
 `define-union-language` of `common-relation` and `al-syntax`. `al-env`,
 `al-context`, and then `al` extend it with `al/2-env`, `al/3-context`, and
@@ -719,8 +723,8 @@ OCaml implementation over the existing JSON wire
 three evaluators share host behavior:
 
 ```text
-reduction rule -> common/4-relation.rkt -> common/0.2-extern-json.rkt
-  -> common/0.3-extern-ffi.rkt --ffi2--> spec-meta-redex/ffi/shim.c
+reduction rule -> common/3-relation.rkt -> common/0.1-extern-json.rkt
+  -> common/0.2-extern-ffi.rkt --ffi2--> spec-meta-redex/ffi/shim.c
   --caml_callback--> p4spec/bin/ffi.ml -> SpecTec runner
 ```
 
@@ -765,7 +769,7 @@ checked the stanza:
     `{"error": ...}` reply as K's shim. So the Racket side declares it as
     `(-> string_t string_t)`, which copies the reply into a Racket string
     before the next call, and needs no `free` or length function.
-- **Loading.** `0.3-extern-ffi.rkt` loads `shim.so` the first time
+- **Loading.** `0.2-extern-ffi.rkt` loads `shim.so` the first time
   `host-init!` or `host-eval` runs. If the file is missing, the error names
   `make redex`. It binds each function with
   `(ffi2-procedure (ffi2-lib-ref lib "host_eval") (-> string_t string_t))`.
@@ -809,7 +813,7 @@ Every object-level builtin goes to the host, including the map builtins
 the K port implements natively (`nativeBuiltin` in `5.5-eval-call-func.k`).
 Step 13 lists native versions as an option, to take only after asking the
 user. The object-level builtins are separate from the meta-level ones,
-such as `find-map` in `common/0.1-stdlib.rkt`, which work on Redex's own
+such as `find-map` in `common/0.0-stdlib.rkt`, which work on Redex's own
 environments and stay metafunctions.
 
 ### Deviations from spec-meta
@@ -969,7 +973,7 @@ Then, for example:
 ```
 
 A run that reaches the host needs it started first, with
-`(host-init! "examples/add.watsup")` from `common/0.3-extern-ffi.rkt`.
+`(host-init! "examples/add.watsup")` from `common/0.2-extern-ffi.rkt`.
 A rule or metafunction that reads the global layer needs it registered.
 `load-script` from `al/7-entry.rkt` loads a script and gives `(G L)`, with `G`
 registered, and `(run (list G (list 'IN L e)))` runs `e` under them.
@@ -2326,3 +2330,54 @@ Outcome:
   Redex's internal API, or nonterminals per head in `al/4-relation.rkt`.
 - `racket spec-meta-redex/al/7-entry.rkt examples/add.watsup` prints
   `["intN","119"]`, and `--p4` on `action-bind.p4` prints `passed` in 14.4 s.
+
+### Step 18: A recheck after Steps 16 and 17
+
+Steps 16 and 17 changed the port after Step 15 had made it plain Redex, so
+the port was checked again for optimizations in the spec modules, for code
+that is not idiomatic Redex or Racket, and for leftovers. No new optimization
+was found in the spec modules; the ones there were decided in earlier steps.
+What remained were definitions that nothing calls, provides that no other
+module uses, and code in the driver that does by hand what Redex provides.
+
+The user decided, on 2026-10-15:
+
+1. The transcriptions of watsup definitions that neither the port nor
+   spec-meta calls go, as the unused stdlib ones did in Step 17: `$iter_varr`,
+   `$is_fun`, `$add_vari`, `$add_varrs`, `$add_typ`, `$find_varrs`, and
+   `$subtyps`.
+2. `common/3-context.rkt` goes with its one nonterminal, `cursor`, which
+   nothing uses. `common-relation` extends `common-env`. The files of `common/`
+   are then renumbered without gaps, including the one that the prelude left
+   at `0.0`: `0.0-stdlib`, `0.1-extern-json`, `0.2-extern-ffi`, `1-syntax`,
+   `2-env`, `3-relation`, `4.0-eval-typ`, and `4.1-eval-ops`. The step records
+   above keep the file names of their time.
+3. The driver decomposes a node with `term-match`, and without
+   `remove-duplicates`. A duplicate decomposition would mean two overlapping
+   frames, and now fails as two pending positions.
+4. The boot, entry, and test code outside the spec are tidied too.
+
+Outcome:
+
+- Done, in five commits: the definitions and provides; the renumbering; the
+  driver; the boot, entry, and test code; and these docs. After each, every
+  example gave the same value, and the three P4 programs below the same
+  results.
+- The provides used only within their module are gone: `subst-typ-inner`,
+  `elsgroup-as-rulgroup`, `jsexpr->val`, and `typ->jsexpr`. `find-vari` stays
+  provided for the REPL example above, and `entry` as Entry's transcription.
+- The driver's `conf-term` kept the global layer out of error messages, and is
+  gone now that `G` is a handle. The errors name `run`, since `step` is gone.
+  `up` moves a cursor to its parent, for both `next-redex` and `cursor->conf`.
+- `read-spectec-boot` runs `spectec-boot` with `system*` and string ports,
+  which drains both pipes, in place of `subprocess` and a thread of its own.
+  `spectec-boot sexp-p4` on a missing file prints the C preprocessor's error,
+  then an empty program, `(INJ ((("_EMPTY")) ()))`, and exits with 0, so
+  `boot-p4` does not raise on it. That was so before, and stays.
+- Times of `racket spec-meta-redex/al/7-entry.rkt --p4` on
+  `p4_16_samples/action-bind.p4`, the whole process, *(measured)*: 14.4 s and
+  14.3 s before, and 13.2 s and 13.1 s after the driver's change. The
+  decomposition is the same pattern, so the difference is noise.
+- `test/p4-typecheck.rkt` passes `action-bind.p4` (11.5 s) and
+  `action-uses.p4` (8.3 s), and with `--neg` fails the negative
+  `action-bind.p4` (3.0 s), with `spec/` loaded in 3.4 s.
