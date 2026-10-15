@@ -359,6 +359,4 @@ PDF files in the current directory:
 
 (save (in "al/4-relation.rkt" '(language->pict al)) "al.pdf")
 (save (in "al/5-eval.rkt" '(reduction-relation->pict ->term)) "term.pdf")
-(save (in "al/5.1-eval-typ.rkt" '(metafunction->pict upcast #:contract? #t)) "upcast.pdf")
-(save (in "al/3-context.rkt" '(judgment-form->pict find-vari)) "find-vari.pdf")
 ```

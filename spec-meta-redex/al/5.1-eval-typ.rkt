@@ -20,8 +20,7 @@
   upcast : G L typ val -> valres
   [(upcast G L INT (INT i)) (OK (INT i))]
   [(upcast G L INT (NAT n)) (OK (INT n))]
-  [(upcast G L INT val) FAIL
-   (side-condition (not (redex-match? al-context num (term val))))]
+  [(upcast G L INT val) FAIL]
   [(upcast G L (VAR id (targ ..._n)) val) (upcast G L typ_subst val)
    (where ((DEF (tparam ..._n) (ALIAS typ))) (find-typ G L id))
    (where theta ((tparam targ) ...))

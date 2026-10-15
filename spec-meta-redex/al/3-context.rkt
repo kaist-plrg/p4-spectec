@@ -170,8 +170,8 @@
   find-typdef : G tdenv id -> () ∨ (typdef)
   [(find-typdef G tdenv id) (typdef)
    (where (typdef) (find-map tdenv id))]
-  [(find-typdef G tdenv id) ,(find-global (term G) 'TYP (term id))
-   (where () (find-map tdenv id))])
+  ;; otherwise
+  [(find-typdef G tdenv id) ,(find-global (term G) 'TYP (term id))])
 
 (define-metafunction al-context
   find-typ : G L id -> () ∨ (typdef)
@@ -183,9 +183,8 @@
   find-func : G L id -> () ∨ (funcdef)
   [(find-func G {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l} id) (funcdef)
    (where (funcdef) (find-map fenv_l id))]
-  [(find-func G {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l} id)
-   ,(find-global (term G) 'FUNC (term id))
-   (where () (find-map fenv_l id))])
+  ;; otherwise
+  [(find-func G L id) ,(find-global (term G) 'FUNC (term id))])
 
 ;;; Relation finders
 
