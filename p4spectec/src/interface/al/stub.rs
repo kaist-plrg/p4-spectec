@@ -74,11 +74,6 @@ pub(super) fn exp_note() -> Rc<il::TypKind> {
     Rc::new(il::TypKind::Bool)
 }
 
-/// The subtype plan omitted from a subtype expression.
-pub(super) fn subcheck(typ: il::Typ) -> il::Subcheck {
-    il::Subcheck::Recurse(typ)
-}
-
 /// The general hints omitted from meta definitions.
 pub(super) fn hints() -> Vec<il::Hint> {
     vec![]

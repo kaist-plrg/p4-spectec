@@ -565,7 +565,7 @@ impl Encode for il::Exp {
                 m::DOWNCAST,
                 vec![typ_al.encode_cached(arena, cache)?, exp_al.encode_cached(arena, cache)?],
             ),
-            il::ExpKind::Sub(exp_al, typ_al, _) => (
+            il::ExpKind::Sub(exp_al, typ_al) => (
                 m::SUB_EXP,
                 vec![exp_al.encode_cached(arena, cache)?, typ_al.encode_cached(arena, cache)?],
             ),

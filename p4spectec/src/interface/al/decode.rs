@@ -694,11 +694,9 @@ impl Decode for il::Exp {
             },
             m::SUB_EXP => |[value_exp, value_typ]| {
                 let typ_al = il::Typ::decode_cached(arena, cache, *value_typ)?;
-                let subcheck_al = stub::subcheck(typ_al.clone());
                 il::ExpKind::Sub(
                     Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?),
                     Box::new(typ_al),
-                    Box::new(subcheck_al),
                 )
             },
             m::MATCH => |[value_exp, value_pattern]| {
