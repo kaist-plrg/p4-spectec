@@ -208,6 +208,16 @@ reduction steps while keeping a cursor at the current subterm. The driver
 avoids repeatedly decomposing the whole configuration; `->al` remains the
 relation for inspecting and displaying the semantics.
 
+### Prerequisites
+
+Install [Racket 9.3](https://download.racket-lang.org/). Racket's
+[`ffi2`](https://docs.racket-lang.org/ffi2/index.html?lang=ar&fam=Zuo) library
+is also needed to support builtins. Install it with:
+
+```sh
+raco pkg install ffi2-lib
+```
+
 ### Building and running
 
 Build the Redex implementation from the repository root:
