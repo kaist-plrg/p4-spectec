@@ -61,6 +61,23 @@ impl ValueSet<'_> {
         union
     }
 
+    /// Combines runtime sets, sorting the accumulated elements once.
+    fn unions(
+        arena: &Arena,
+        mixop_set: Mixop,
+        values: &[Value],
+    ) -> Result<ValueSet<'static>, BuiltinError> {
+        let mut union = ValueSet { values: Cow::Owned(Vec::new()) };
+        // Validate and normalize every input before accumulating its elements
+        for value in values {
+            let set = ValueSet::from_value(arena, mixop_set, value)?;
+            union.values.to_mut().extend(set.values.iter().copied());
+        }
+        // Keep the first representative across sets in syntax order
+        union.sort(arena);
+        Ok(union)
+    }
+
     /// Keeps the elements absent from the other set.
     fn difference(self, arena: &Arena, set: &ValueSet<'_>) -> ValueSet<'static> {
         let mut difference = self.into_owned();
@@ -145,19 +162,6 @@ impl ValueSet<'static> {
             .expect("the set mixop has exactly one argument");
         let value = value::make::case_flat(arena, typ.node.into(), value_case, Span::default())?;
         Ok(value)
-    }
-
-    /// Combines runtime sets, sorting the accumulated elements once.
-    fn unions(arena: &Arena, mixop_set: Mixop, values: &[Value]) -> Result<Self, BuiltinError> {
-        let mut union = Self { values: Cow::Owned(Vec::new()) };
-        // Validate and normalize every input before accumulating its elements
-        for value in values {
-            let set = ValueSet::from_value(arena, mixop_set, value)?;
-            union.values.to_mut().extend(set.values.iter().copied());
-        }
-        // Keep the first representative across sets in syntax order
-        union.sort(arena);
-        Ok(union)
     }
 }
 
