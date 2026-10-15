@@ -1,6 +1,6 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: done. Steps 1 to 16 are done.
+Status: done. Steps 1 to 17 are done.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language, as a small-step reduction semantics. It transcribes the AL
@@ -37,7 +37,7 @@ The K port is the model for the evaluation structure, not for the code:
 
 | K (`spec-meta-k/`) | Redex (`spec-meta-redex/`) |
 | --- | --- |
-| `<global>` cells | `G`, a component of the configuration |
+| `<global>` cells | the global layer, which stays in a registry; the configuration holds its handle `G` |
 | `<local>` cells (`ltdenv`, `lfenv`, `lvenv`) | `L` in the innermost `(IN L ...)` around the redex |
 | `evalExp(E) ~> binaryAwaitLeftK(O, R)` | the nested term `(BIN binop exp_l exp_r)`, whose frame `(BIN binop hole exp)` says where evaluation proceeds |
 | `pushLocalSave`/`popLocalSave` around clause and rule attempts and iterations | each attempt or iteration runs in its own `(IN L ...)`; the enclosing `IN` keeps the original layer |
@@ -70,14 +70,15 @@ do.
 Languages, metafunctions, machine forms, and reduction relations are named in
 Racket's kebab-case: a watsup name is lowercased, and every `_` becomes `-`.
 `Eval_exp` becomes `eval-exp` and `$find_map` becomes `find-map`. A trailing
-`_` stays as `-`, so `$exists_` becomes `exists-`, because `define-metafunction`
-binds its name in the module, and `assoc` would shadow Racket's `assoc`. `'` is
-a Racket reader delimiter, so `$subst_typ'` becomes `subst-typ-inner`.
-Nonterminals and metavariables keep their watsup names, except that primed
-metavariables `C'` and `C''` become `C_1` and `C_2`. watsup subscripts
-(`exp_l`, `val_h`) are already Redex subscripts. Repeated metavariables are
-equality constraints in both languages. `G` and `L` are new metavariables for
-the two layers of watsup's `C`.
+`_` stays as `-`, so `$forall_` becomes `forall-`, because `define-metafunction`
+binds its name in the module, and `transpose` would clash with the stdlib's
+Racket helper of that name. `'` is a Racket reader delimiter, so `$subst_typ'`
+becomes `subst-typ-inner`. Nonterminals and metavariables keep their watsup
+names, except that primed metavariables `C'` and `C''` become `C_1` and `C_2`.
+watsup subscripts (`exp_l`, `val_h`) are already Redex subscripts. Repeated
+metavariables are equality constraints in both languages. `G` and `L` are new
+metavariables for watsup's `C`: `L` is its local layer, and `G` the handle of
+its global layer.
 
 In this file, `$f` and `Eval_exp` name watsup definitions, and kebab-case
 names their Redex transcriptions.
@@ -115,10 +116,17 @@ rule named after its form: `"eval-prems"`, `"assign-exps/each"`, and
 (conf ::= (G e))
 ```
 
-`G` is the global layer that `$load` builds. It never changes during a run,
-because no reduction rule writes it. `e` is a machine term, and `(IN L e)`
-inside it means that `e` is evaluated under the local layer `L`. watsup's `C`
-at a redex is the pair of `G` and the layer of the innermost `IN` around the
+`G` is the handle `(GLOBAL n)` of the global layer that `$load` builds. The
+layer never changes during a run, because no reduction rule writes it, so it
+stays in a registry in `al/3-context.rkt`, and terms refer to it by handle, as
+K's rules refer to the `<global>` cells. `register-global!` checks the layer
+against `layer` once, adds it, and gives its handle. Only `load-script` in
+`al/7-entry.rkt` calls it. `find-global` reads a map of the layer in Racket,
+so the layer never enters a term, a pattern, or a metafunction's arguments.
+There, Redex would hash and check it again and again (see
+[Caching](#caching)). `e` is a machine term, and `(IN L e)` inside it means
+that `e` is evaluated under the local layer `L`. watsup's `C` at a redex is
+the pair of the global layer and the layer of the innermost `IN` around the
 redex. A run starts from `(G (IN L_0 (CALL "main" () ())))`, where `L_0` is
 `$empty_layer`, and ends at `(G (IN L res))`, where `res` is a result.
 
@@ -321,10 +329,12 @@ far too much:
   step time by 30% *(measured)*.
 - **No `apply-reduction-relation*`.** It keeps every term on the path in a hash,
   to detect cycles, and it recurses once per step. Racket's `equal-hash-code`
-  stops after a bounded traversal (37 µs on the booted `spec/`), so all
-  configurations with the same large `G` get the same hash *(measured)*. The
-  hash then degrades to `equal?` comparisons against every earlier term. The
-  same applies to `test-->>` and `traces`, so they are for small runs only.
+  stops after a bounded traversal, so large configurations that agree up to
+  that bound get the same hash. When `G` still held the whole layer, the hash
+  took 37 µs on the booted `spec/`, and all configurations under it collided
+  *(measured)*. The hash then degrades to `equal?` comparisons against every
+  earlier term. The same applies to `test-->>` and `traces`, so they are for
+  small runs only.
 
 ### FAIL and backtracking
 
@@ -424,6 +434,10 @@ reduction relations:
 - The impure operations are the three extern relations, which reach host state
   (the counter behind `$fresh_typeId`, and extern state), and `debug`. Each is
   one reduction rule, whose `where` clause calls a Racket procedure.
+- The registry of global layers is state too, but only `load-script` adds to
+  it, outside the rules, and an entry never changes once added. So a handle
+  denotes one layer for good, and a metafunction that reads the layer through
+  `find-global` is still a function of its arguments.
 
 In a probe with caching on, a counter bumped in a reduction rule advanced on
 every application, and the same counter in a metafunction returned the same
@@ -438,12 +452,19 @@ The cache makes precise patterns affordable (see the next section), and
 memoizes hot pure metafunctions such as `$subtyp`. Its limits matter for
 performance, not for correctness:
 
-- Every nonterminal and every metafunction has a table of only 63 entries.
-- Keys are compared with `equal?` after a bounded hash, so terms that share a
-  large prefix collide *(measured)*.
+- Every nonterminal and every metafunction has a table of only 63 entries. A
+  metafunction's table is emptied whenever it fills.
+- Every check of a term against a nonterminal, and every metafunction call,
+  first hashes its term or arguments with `equal-hash-code`. Keys are then
+  compared with `equal?`. The hash is bounded on lists, so terms that share a
+  large prefix collide *(measured)*. On a Racket hash table, it walks every
+  entry (Step 17).
 - `equal?` on two equal but not `eq?` copies of the booted `spec/` took
-  194 ms *(measured)*. A large argument that is rebuilt on every call, like
-  `$extend_tdenv`'s result, can therefore make lookups slow.
+  194 ms *(measured)*. A large argument that is rebuilt on every call can
+  therefore make lookups slow. `$subtyp` once took the extension of the global
+  and local tdenvs, rebuilt for every `SUB`, and now takes `G` and the local
+  tdenv (see [Deviations from spec-meta](#deviations-from-spec-meta)).
+- On the larger P4 programs, these lookups dominate the run (Step 17).
 - Redex looks a metafunction call up in its cache even with caching off, and
   checks the flag only after the lookup. So a call with caching off still pays
   a deep `equal?` when the cache holds an equal but not `eq?` copy of its
@@ -457,10 +478,13 @@ performance, not for correctness:
 ### Patterns and their cost
 
 Patterns use the precise nonterminals, as close to watsup as possible,
-including `G` and `L` (aliases of `layer`) in every `->term+ctx` rule and in
-metafunction contracts. This is affordable only with caching on and with the
-term first in `(r G L)`. The probe used 150 rules, the booted `spec/`
-loaded into `G`, and a precise `layer` check for `G` and `L` *(measured)*:
+including `G` and `L` in every `->term+ctx` rule and in metafunction
+contracts. `L` is an alias of `layer`, and `G` is `(GLOBAL natural)`, a
+handle: the global layer is checked once, when `register-global!` adds it
+(see [Configurations](#configurations)). This is affordable only with caching
+on and with the term first in `(r G L)`. The probe below was run when `G` was
+still a whole `layer`. It used 150 rules, the booted `spec/` loaded into `G`,
+and a precise `layer` check for `G` and `L` *(measured)*:
 
 | One application of 150 rules | Caching on | Caching off |
 | --- | --- | --- |
@@ -469,10 +493,11 @@ loaded into `G`, and a precise `layer` check for `G` and `L` *(measured)*:
 | `with` shortcut lifting the rules on terms to `(r G L)` | 10.35 ms | 34 s |
 
 Redex matches a list pattern left to right. With the term first, a rule whose
-term does not match fails before it checks `G`, and the one rule that matches
-finds `G` in the matcher's memo. A `with` shortcut matches its outer pattern
-first, which is why the rules on a term alone form a relation of their own,
-`->term`, instead of being lifted into triples.
+term does not match fails before it checks `G` and `L`, and the one rule that
+matches finds them in the matcher's memo. A handle costs next to nothing to
+check, but the order still spares the checks of `L`. A `with` shortcut
+matches its outer pattern first, which is why the rules on a term alone form
+a relation of their own, `->term`, instead of being lifted into triples.
 
 `$load` is precise too, but not transcribed as watsup's recursion. With
 precise patterns, every recursive call rechecks the context and the rest of
@@ -524,19 +549,26 @@ and watsup's `?`-iteration becomes Redex's `...`, the same as `*`-iteration:
 ```
 
 Meta-level maps (`venv`, `tdenv`, `fenv`, `renv`, `theta`) are association
-lists `((key value) ...)`. They are only accessed through the builtin
-metafunctions (`find-map`, `add-map`, and the rest), which are implemented in
-Racket. Step 13 can therefore change their representation without touching a
-rule.
+lists `((key value) ...)`, and a pair is a two-element list: Redex cannot
+match a dotted pair, since `(any_1 . any_2)` is a compile error *(measured)*.
+Most code reaches a map through the builtin metafunctions (`find-map`,
+`add-map`, and `adds-map`), which are implemented in Racket. The global
+layer's maps are read through `find-global`, which calls the same Racket
+helper, `map-ref`. A few places build or take apart a map directly:
+watsup's map literals `` `{ (k ':' v)* `} `` for a `theta` or the callee's
+tdenv, `theta-of-tdenv`, `subst-typ`, and `load-defn`. Step 17 tried Racket
+hash tables, and the port went back to lists.
 
 A `dec` over `ctx` becomes a metafunction over `G L` if it reads `C.GLOBAL`,
 and over `L` alone if it reads only `C.LOCAL`. A result of type `ctx` becomes
 the new `L`. `$find_varr(C, varr)` becomes `(find-varr L varr)`,
 `$find_func(C, id)` becomes `(find-func G L id)`, and `$sub_list(C, vari*)`
-returns a list of layers. `$load` and `$empty_ctx` keep `ctx`, because
-loading writes `GLOBAL`. `$load` goes through `load-defn` (see
-[Patterns and their cost](#patterns-and-their-cost)). A record update `C[ .LOCAL.VAL = x ]` is a pattern
-that rebuilds the layer, `{TYP tdenv REL renv FUNC fenv VAL venv}`.
+returns a list of layers. `find-typ`, `find-func`, and `find-rel` read the
+global layer through `find-global`, with the handle `G`. `$load` and
+`$empty_ctx` keep `ctx`, because loading writes `GLOBAL`. `$load` goes through
+`load-defn` (see [Patterns and their cost](#patterns-and-their-cost)). A
+record update `C[ .LOCAL.VAL = x ]` is a pattern that rebuilds the layer,
+`{TYP tdenv REL renv FUNC fenv VAL venv}`.
 
 ### Premises
 
@@ -611,11 +643,11 @@ codec and transport live in `common/`: the host procedures in
 ```text
 spec-meta-redex/
   common/
-    0.1-stdlib.rkt        language stdlib; $ite, $opt_as_seq_, $exists_, ...; builtins; text and list helpers; debug
+    0.1-stdlib.rkt        language stdlib; $forall_, $repeat_, $transpose_, and the map functions; text and list helpers; debug
     0.2-extern-json.rkt   codec for the extern JSON wire
     0.3-extern-ffi.rkt    transport to the OCaml host, over ffi2
     1-syntax.rkt          language common-syntax
-    2-env.rkt             language common-env; $extend_tdenv, $theta_of_tdenv, $is_iter_on_var, ...
+    2-env.rkt             language common-env; $theta_of_tdenv, $is_iter_on_var, ...
     3-context.rkt         language common-context (cursor)
     4-relation.rkt        language common-relation (unitres, res<X>); host procedures for the three extern relations
     5.0-eval-typ.rkt      $subst_typ
@@ -624,7 +656,7 @@ spec-meta-redex/
     0-boot.rkt            boot-script, boot-p4: run spectec-boot sexp(-p4), read
     1-syntax.rkt          language al-syntax
     2-env.rkt             languages al-base (the union) and al-env (reldef, funcdef)
-    3-context.rkt         language al-context (layer, G, L, ctx); $load, $add_*, $find_*, $sub_*
+    3-context.rkt         language al-context (layer, L, ctx, G); $load; the registry of global layers; $add_*, $find_*, $sub_*
     4-relation.rkt        language al: conf, results, machine terms, done, Fr, F, E
     5.1-eval-typ.rkt      $upcast, $downcast, $subtyp
     5.2-eval-assign.rkt   rules of Assign_exp(s), Assign_arg(s)
@@ -648,7 +680,7 @@ own forms: `define-metafunction`, `define-judgment-form`, `reduction-relation`,
 them.
 
 Each file in `common/` from `0.1-stdlib` to `4-relation` extends the previous
-file's language with its own syntax: `stdlib` (the `var`s, sets and maps),
+file's language with its own syntax: `stdlib` (the `var`s and maps),
 `common-syntax`, `common-env`, `common-context`, and `common-relation`.
 `al-syntax` extends `common-syntax` with `al/1-syntax`. `al-base` (in `al/2-env.rkt`) is the
 `define-union-language` of `common-relation` and `al-syntax`. `al-env`,
@@ -802,6 +834,14 @@ with Redex, while OCaml's AL interpreter and the K port agree with it:
   the text rule takes `TEXT t_n`. A list of another length than the slice
   raises an error, as in OCaml's AL interpreter.
 
+One more change keeps watsup's results, but not a signature. `Eval_exp/subtype`
+passes `$subtyp` the extension `$extend_tdenv(C.GLOBAL.TYP, C.LOCAL.TYP)`.
+The port passes `G` and the local tdenv instead, so the global layer stays
+behind its handle, and `$extend_tdenv` is gone. `find-typdef` looks a name up
+in the local tdenv first, and then in the global one, so it finds what
+`$find_map` finds in the extension, whose local entries replace the global
+ones. A comment at `subtyp` says so.
+
 This is not a licence to fix surprising semantics. `$upcast` returning
 `OK val` when a component cast fails is consistent, and is transcribed as it
 stands. For an apparent bug, look at the elaborated AL and probe an oracle,
@@ -829,7 +869,8 @@ and decide with the user before deviating. Record each deviation here.
   that at run time. The driver fails on a node with two pending positions,
   and on a redex to which no rule applies.
 - **Caching.** It is safe by construction: every impure call happens in a
-  reduction rule (see [Caching](#caching)).
+  reduction rule, and the registry of global layers only grows, outside the
+  rules (see [Caching](#caching)).
 - **Contracts.** Every metafunction and judgment form has a contract from its
   watsup declaration, which catches transcription slips early. Redex checks a
   contract only on a cache miss. Removing all of them sped up `$load` of
@@ -877,7 +918,7 @@ is loaded without a check of its dependencies, so run `make redex`, or
 ```sh
 raco make spec-meta-redex/al/7-entry.rkt
 racket spec-meta-redex/al/7-entry.rkt examples/add.watsup   # ["intN","119"]; debug messages on stderr
-racket spec-meta-redex/al/7-entry.rkt --p4 p4c/testdata/p4_16_samples/action-bind.p4 -i p4c/p4include spec   # passed, in about 16 s
+racket spec-meta-redex/al/7-entry.rkt --p4 p4c/testdata/p4_16_samples/action-bind.p4 -i p4c/p4include spec   # passed, in about 14 s
 ```
 
 `--p4` takes `-i DIR` for each P4 include directory, and needs at least one.
@@ -929,6 +970,9 @@ Then, for example:
 
 A run that reaches the host needs it started first, with
 `(host-init! "examples/add.watsup")` from `common/0.3-extern-ffi.rkt`.
+A rule or metafunction that reads the global layer needs it registered.
+`load-script` from `al/7-entry.rkt` loads a script and gives `(G L)`, with `G`
+registered, and `(run (list G (list 'IN L e)))` runs `e` under them.
 
 A small run can be stepped through in Redex's GUI, with `(traces ->al conf)`
 from `redex/gui`. `traces` explores the reduction graph like
@@ -2169,3 +2213,116 @@ Outcome:
   `action-bind.p4` (5.3 s). `racket spec-meta-redex/al/7-entry.rkt
   examples/add.watsup` prints `["intN","119"]`, and `--p4` on
   `action-bind.p4` prints `passed` in 16.3 s.
+
+### Step 17: Racket's functions, and the global layer by handle
+
+The user asked whether the stdlib's constructs could be Racket's own: hash
+sets for `set`, pairs for `pair`, hash tables for `map`, and `reverse` for
+`$rev_`. Answering it led to how Redex's caches hash terms, and from there to
+the global layer.
+
+With `spec/` loaded (tdenv 612, renv 259, and fenv 801 entries), hash tables
+cost far more under Redex's caches than lists *(measured)*:
+
+| | Association lists | Racket hash tables |
+| --- | --- | --- |
+| `equal-hash-code` of fenv | 0.021 ms | 3.7 ms |
+| `equal-hash-code` of `G` | 0.016 ms | 7.0 ms |
+| a metafunction call over `G`, cache miss | 0.073 ms | 15.2 ms |
+| 1,000 lookups in fenv, outside Redex | 13.1 ms | 0.10 ms |
+
+Racket bounds the hash of a list, but walks every entry of a hash table. Both
+of Redex's caches hash their keys, and `G` was in every `->term+ctx` rule and
+in every metafunction that reads `C.GLOBAL`. A struct that keeps its hash code
+next to the table brought the call over `G` to 0.016 ms. Redex has no cell
+like K's `<global>`, and a Racket parameter would hide the layer from the
+metafunction caches, which key on arguments only.
+
+The user decided, on 2026-10-14:
+
+1. The stdlib definitions that no rule uses go: `$ite`, `$opt_as_seq_`,
+   `$rev_`, `$empty_set`, `$find_maps` with its helper, and the `set`
+   nonterminal. spec-meta calls none of them but `$opt_as_seq_`, which the port
+   already writes as `(clause ... elsclause ...)`.
+2. Racket's functions replace stdlib metafunctions where they fit.
+   `Eval_exp/mem` uses `member`, and `eval-path/dot` and `subtyp/var` match
+   the result of `assoc`, the entry or `#f`. So `$exists_` and `$assoc_` go,
+   and `subtyp/var` loses its separate membership tests. `$forall_` and
+   `$repeat_` stay, as one clause each over `andmap` and `make-list`.
+3. Pairs stay two-element lists, since Redex cannot match a dotted pair.
+4. The global layer goes into a registry, and terms hold its handle `G` (see
+   [Configurations](#configurations)). This replaces the struct.
+5. `$subtyp` takes `G` and the local tdenv (see
+   [Deviations from spec-meta](#deviations-from-spec-meta)).
+
+Outcome:
+
+- Done, in two commits: the stdlib (decisions 1 and 2), and the handle
+  (decisions 4 and 5). After each, every example gave the same value, and the
+  three P4 programs below the same results.
+- Maps as plain hash tables, with a predicate per environment that checks
+  every entry, went in as a third commit, and the user removed it. After the
+  handle only `L`'s maps reached Redex's caches, but a check of `layer`,
+  `venv`, or a map still cost 6 to 7 µs, against about 2 µs for other terms.
+- Times from `test/p4-typecheck.rkt`, two runs each *(measured)*:
+
+  | Program | Result | Before | With the handle | With hash tables too |
+  | --- | --- | --- | --- | --- |
+  | `p4_16_samples/action-bind.p4` | `passed` | 12.1 s, 13.1 s | 9.1 s, 9.3 s | 9.6 s, 9.6 s |
+  | `p4_16_errors/action-bind.p4` | `fail` | 4.3 s, 4.2 s | 3.1 s, 3.1 s | 3.2 s, 3.3 s |
+  | `p4_16_samples/action-uses.p4` | `passed` | 10.2 s, 10.1 s | 8.3 s, 8.3 s | 8.7 s, 8.7 s |
+
+  "Before" is after decisions 1 and 2. The runner's load of `spec/` went from
+  3.2–3.5 s to 3.0–3.3 s.
+- `p4_16_samples/action-synth.p4` passes in 1,110,025 steps. It took 412.1 s
+  before (6:56 wall clock, 545 MB peak), and 220.4 s with the handle and the
+  hash tables (3:45, 543 MB). It was not timed with the handle alone.
+- A profile of that action-synth run, with Racket's sampling profiler every
+  10 ms, found the time in Redex's own machinery *(measured)*:
+  - Applying rules took 69.5%, and finding the next redex 29.5%: 21.5% in
+    `pending`, which decomposes a node against `Fr`, and 8% in `next-redex`.
+  - 77% of the self time was in Redex's matcher. The lookup in the
+    nonterminal memo alone, its `equal-hash-code` and `equal?`, took 44.8%.
+    Contract wrappers on Redex's internal functions took about 10%, and the
+    metafunction cache 5.3%.
+  - GC took 1.9%, the host and its JSON under 1%, and the port's own code
+    under 1% as self time.
+- A copy of Redex's `matcher.rkt` and `reduction-semantics.rkt`, instrumented
+  and loaded through `PLTCOLLECTS`, counted the cache lookups of that run
+  *(measured)*:
+  - 58.1 million nonterminal lookups, about 52 per step, hit 53% of the
+    time. `res` and `Fr-catch` never hit, `valres`, `valsres`, and `typsres`
+    hit 1 to 2%, `Fr-pass` 13%, `num` 14.5%, and `Fr` 18%. These are mostly
+    the driver's checks and decomposition, and `"frame/fail"` and
+    `"eval-exp/literal/number"`, which are tried on every redex.
+  - `val` had 9.8 million lookups. In 51% of its hits the cached term was an
+    equal copy, not the same object, so `equal?` walked both.
+  - The metafunction caches of `find-varr`, `add-varr`, and `subtyp` were
+    emptied about 1,000 times each.
+- A copy of the driver that timed each step put 10.5% of the run in trying
+  `->term` on redexes that only `->term+ctx` reduces. `eval-exp/variable` and
+  `assign-exp/variable` took 170 to 200 µs a step, about 14% together
+  *(measured)*.
+- With caching off, `action-bind.p4` took 60 s against 15 s with it on, both
+  while other runs shared the machine. So the memo pays for itself.
+- `set-cache-size!` before the spec loads, on `action-bind.p4`: 11.1 s and
+  13.0 s at 63, 10.0 s and 10.4 s at 1021, and 9.4 s and 10.0 s at 8191, with
+  the peak memory going from 189 MB to 266 MB *(measured)*. It was not
+  adopted.
+- Driver variants on `action-bind.p4`, in scratch copies, two runs each
+  *(measured)*. None was kept:
+
+  | Driver | Time |
+  | --- | --- |
+  | the driver as it is | 10.6 s, 10.0 s |
+  | `res?` and `done?` by shape, in Racket | 9.8 s, 9.4 s |
+  | and the relation that last reduced the redex's head tried first | 7.9 s, 8.7 s |
+  | and only the frames with the node's head tried | 7.2 s, 6.7 s |
+  | `res?`, `done?`, and the relation order as above, with caching off for the decomposition | 11.8 s, 11.3 s |
+
+  Trying frames by head needs `Fr`'s productions grouped by head. Redex gives
+  no public access to a nonterminal's productions, and compiles patterns only
+  from source. So that would take a copy of the frames in the driver, a macro,
+  Redex's internal API, or nonterminals per head in `al/4-relation.rkt`.
+- `racket spec-meta-redex/al/7-entry.rkt examples/add.watsup` prints
+  `["intN","119"]`, and `--p4` on `action-bind.p4` prints `passed` in 14.4 s.
