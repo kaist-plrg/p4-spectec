@@ -194,8 +194,9 @@ impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<flat::ValueKind>
         deserializer: D,
     ) -> Result<Self, D::Error> {
         match ctx {
-            // Relative: trust the index; independent: intern decoded children and body
-            DecodeContext::ArenaRelative(_) => u32::deserialize(deserializer).map(Self::from_index),
+            // Relative: reject the reserved index; independent: intern decoded children and body
+            DecodeContext::ArenaRelative(_) => u32::deserialize(deserializer)
+                .and_then(|index| Self::try_from_index(index).map_err(::serde::de::Error::custom)),
             DecodeContext::ArenaIndependent(_) => {
                 let kind = flat::ValueKind::deserialize_state(ctx, deserializer)?;
                 let arena = ctx.arena_mut();
@@ -214,7 +215,8 @@ impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<Rc<TypKind>> {
         deserializer: D,
     ) -> Result<Self, D::Error> {
         match ctx {
-            DecodeContext::ArenaRelative(_) => u32::deserialize(deserializer).map(Self::from_index),
+            DecodeContext::ArenaRelative(_) => u32::deserialize(deserializer)
+                .and_then(|index| Self::try_from_index(index).map_err(::serde::de::Error::custom)),
             DecodeContext::ArenaIndependent(arena) => {
                 let typ = TypKind::deserialize(deserializer)?.into();
                 arena
@@ -232,7 +234,8 @@ impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<Span> {
         deserializer: D,
     ) -> Result<Self, D::Error> {
         match ctx {
-            DecodeContext::ArenaRelative(_) => u32::deserialize(deserializer).map(Self::from_index),
+            DecodeContext::ArenaRelative(_) => u32::deserialize(deserializer)
+                .and_then(|index| Self::try_from_index(index).map_err(::serde::de::Error::custom)),
             DecodeContext::ArenaIndependent(arena) => {
                 let span = Span::deserialize(deserializer)?;
                 arena

@@ -6,7 +6,7 @@
 use std::cmp::Ordering;
 
 use crate::lang::{
-    data::intern::{CanonEq, CanonInterner},
+    data::intern::{CanonEq, CanonLookup},
     traits::{cmp::SyntaxCmp, eq::SyntaxEq},
 };
 
@@ -17,7 +17,7 @@ use super::{Mixfix, Mixop, MixopArena, MixopKind, MixopRef};
 // - Canonical equality
 
 impl CanonEq for MixopKind {
-    fn canon_eq(&self, interner: &CanonInterner<Self>, _: &(), kind_r: &Self) -> bool {
+    fn canon_eq(&self, interner: &impl CanonLookup<Self>, _: &(), kind_r: &Self) -> bool {
         // Children compare by canonical id, computed when they were interned
         let eq_mixop = |mixop_l: &Mixop, mixop_r: &Mixop| {
             interner.canon_id(*mixop_l) == interner.canon_id(*mixop_r)
