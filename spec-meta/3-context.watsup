@@ -26,6 +26,18 @@ def $empty_ctx = { GLOBAL $empty_layer, LOCAL $empty_layer }
 
 var C : ctx
 
+;; Type checking context
+
+syntax tlayer = { TYP tdenv, FUNC fenv }
+syntax tctx = { GLOBAL tlayer, LOCAL tlayer }
+
+var TC : tctx
+
+dec $tctx(ctx) : tctx
+def $tctx(C)
+  = { GLOBAL { TYP C.GLOBAL.TYP, FUNC C.GLOBAL.FUNC },
+      LOCAL { TYP C.LOCAL.TYP, FUNC C.LOCAL.FUNC } }
+
 ;; Loading context from a script
 
 dec $load_typdef(ctx, id, typdef) : ctx
@@ -186,6 +198,14 @@ def $find_typ(C, id) = typdef
 def $find_typ(C, id) = $find_map<id, typdef>(C.GLOBAL.TYP, id)
   -- if eps = $find_map<id, typdef>(C.LOCAL.TYP, id)
 
+dec $find_typ_tctx(tctx, id) : typdef?
+  hint(prose_in "the type definition of" %1 "in" %0)
+
+def $find_typ_tctx(TC, id) = typdef
+  -- if typdef = $find_map<id, typdef>(TC.LOCAL.TYP, id)
+def $find_typ_tctx(TC, id) = $find_map<id, typdef>(TC.GLOBAL.TYP, id)
+  -- if eps = $find_map<id, typdef>(TC.LOCAL.TYP, id)
+
 ;;; Function finders
 
 dec $find_func(ctx, id) : funcdef?
@@ -197,6 +217,17 @@ def $find_func(C, id) = funcdef
   -- if eps = $find_map<id, funcdef>(C.LOCAL.FUNC, id)
   -- if funcdef = $find_map<id, funcdef>(C.GLOBAL.FUNC, id)
 def $find_func(C, id) = eps
+  -- otherwise
+
+dec $find_func_tctx(tctx, id) : funcdef?
+  hint(prose_in "the function definition of" %1 "in" %0)
+
+def $find_func_tctx(TC, id) = funcdef
+  -- if funcdef = $find_map<id, funcdef>(TC.LOCAL.FUNC, id)
+def $find_func_tctx(TC, id) = funcdef
+  -- if eps = $find_map<id, funcdef>(TC.LOCAL.FUNC, id)
+  -- if funcdef = $find_map<id, funcdef>(TC.GLOBAL.FUNC, id)
+def $find_func_tctx(TC, id) = eps
   -- otherwise
 
 ;;; Relation finders
