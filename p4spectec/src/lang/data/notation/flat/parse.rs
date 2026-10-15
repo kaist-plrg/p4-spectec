@@ -3,7 +3,7 @@
 //! EL types supply argument positions and atoms without a tree mixop.
 //! Each arena retains successful string conversions with its own handles.
 
-use crate::frontend::{error::FrontendError, parse::parse_typ};
+use crate::frontend::error::FrontendError;
 use crate::lang::el::ast::{NotTyp, NotTypKind, Typ};
 
 use super::super::MixopError;
@@ -34,14 +34,7 @@ impl ToMixop for str {
 
     /// Reuses a notation handle from this arena or parses and interns it once.
     fn to_mixop(&self, arena_mixop: &mut MixopArena) -> Result<Mixop, Self::Error> {
-        // Cached handles belong to the arena that owns this table
-        if let Some(mixop) = arena_mixop.parsed.get(self) {
-            return Ok(*mixop);
-        }
-        // Retain only successful conversions, after all children are interned
-        let mixop = parse_typ(self)?.to_mixop(arena_mixop)?;
-        arena_mixop.parsed.insert(self.to_owned(), mixop);
-        Ok(mixop)
+        arena_mixop.parse(self)
     }
 }
 
