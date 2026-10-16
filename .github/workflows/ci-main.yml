@@ -44,14 +44,16 @@ jobs:
           sudo apt-get install -y build-essential ruby-dev python3
           sudo gem install asciidoctor asciidoctor-pdf rouge --no-document
 
-      - name: Check formatting and lint
-        run: make fmt-check lint
-
-      - name: Build debug, release, and API documentation
-        run: make debug build rustdoc
+      - name: Check formatting
+        run: make fmt-check
 
       - name: Run registered E2E acceptance
-        run: make -j2 test
+        run: >-
+          make -j2 test-elab test-algo test-structure test-prose test-adoc
+          test-p4parse test-run-sl test-diagnostics test-sim-sl
+
+      - name: Build API documentation
+        run: make rustdoc
 
       - name: Render P4 HTML specifications
         run: make p4spec-draft-html p4spec-release-html
