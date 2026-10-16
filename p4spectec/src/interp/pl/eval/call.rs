@@ -209,7 +209,7 @@ pub(crate) fn invoke_rel<Iface: Interface, Ext: Extern>(
     {
         return ok!(values.clone());
     }
-    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, values));
+    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, &[], values));
     // Track effects for memoization; grow the stack for deep recursion
     let checkpoint = runner_ctx.effect_checkpoint();
     let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
@@ -328,11 +328,11 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
             runner_ctx
                 .interp()
                 .cache
-                .find_func(runner_ctx.arena(), &id.node, values)
+                .find_func(runner_ctx.arena(), &id.node, targs, values)
     {
         return ok!(*value);
     }
-    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, values));
+    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, targs, values));
     // Track effects for memoization; grow the stack for deep recursion
     let checkpoint = runner_ctx.effect_checkpoint();
     let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
