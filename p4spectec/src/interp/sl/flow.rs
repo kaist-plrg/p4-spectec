@@ -51,8 +51,8 @@ impl Flow {
     // = Continuation
 
     /// A continuation carrying one premise failure.
-    pub(crate) fn cont(span: Span, error: Diagnostic) -> Self {
-        let diagnostic = error.with_label(Label::primary(&span, ""));
+    pub(crate) fn cont(span: Span, error: impl FnOnce() -> Diagnostic) -> Self {
+        let diagnostic = error().with_label(Label::primary(&span, ""));
         Self::Cont(vec![Report::from(diagnostic)])
     }
 
@@ -68,7 +68,11 @@ impl Flow {
 // = Sequential choice
 
 /// Keeps the failure set that got furthest, so the report is the most specific.
-fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
+#[inline]
+pub(super) fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
+    if errors.is_empty() && errors_post.is_empty() {
+        return;
+    }
     if errors_post.iter().map(Report::depth_max).max().unwrap_or(0)
         >= errors.iter().map(Report::depth_max).max().unwrap_or(0)
     {
