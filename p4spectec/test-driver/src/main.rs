@@ -1,4 +1,5 @@
 mod corpus;
+mod output;
 mod snapshot;
 mod suite;
 
