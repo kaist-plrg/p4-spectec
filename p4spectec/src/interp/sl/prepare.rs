@@ -217,10 +217,13 @@ impl Prepare<PrepareContext<'_>> for source::RuleInstr {
             });
         }
         // Ordinary calls retain output binding, iterations, and the continuation
-        ast::RuleInstr::Call(source::RuleInstr {
+        let not_exp = self.not_exp.prepare(&mut ctx.il());
+        let (exps_input, exps_output) = input::split(&self.input_hint, not_exp.into_args())
+            .expect("input hint must fit relation");
+        ast::RuleInstr::Call(ast::RuleCallInstr {
             id: self.id,
-            not_exp: self.not_exp.prepare(&mut ctx.il()),
-            input_hint: self.input_hint,
+            exps_input,
+            exps_output,
             iter_instrs: self.iter_instrs.prepare(&mut ctx.il()),
             block: self.block.prepare(ctx),
         })

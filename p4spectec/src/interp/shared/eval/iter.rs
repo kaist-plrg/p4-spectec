@@ -43,10 +43,10 @@ where
 {
     // Slots of the variables one iteration outward
     let vars = &exp_iter.vars;
-    let vars_outer = iterate_vars(ctx, vars, exp_iter.iter);
     let value = match exp_iter.iter {
         // Option: evaluate once with the payloads, or produce none
         ast::Iter::Opt => {
+            let vars_outer = iterate_vars(ctx, vars, exp_iter.iter);
             let values = unwrap_from_result!(
                 ctx.find_opt_values_by_var(runner_ctx.arena(), &vars_outer),
                 span
@@ -63,20 +63,11 @@ where
             value::make::opt(runner_ctx.arena_mut(), typ.clone(), value, Span::default())
         }
         ast::Iter::List => {
-            let values_by_var = unwrap_from_result!(
-                ctx.find_list_values_by_var(runner_ctx.arena(), &vars_outer),
-                span
-            );
-            // Copy handles before the callback can allocate in the arena
-            let values_by_var: Vec<_> = values_by_var.into_iter().map(<[Value]>::to_vec).collect();
-            // Evaluate row by row, binding each variable to its element
-            let len = values_by_var.first().map_or(0, Vec::len);
+            let inputs = unwrap_from_result!(ListInputs::new(runner_ctx.arena(), ctx, vars), span);
             let mut ctx_sub = ctx.clone();
-            let mut values = Vec::with_capacity(len);
-            for idx in 0..len {
-                for (var, values) in vars.iter().zip(&values_by_var) {
-                    ctx_sub.add_value_at_slot(var.slot, values[idx]);
-                }
+            let mut values = Vec::with_capacity(inputs.len());
+            for idx in 0..inputs.len() {
+                inputs.bind(runner_ctx.arena(), &mut ctx_sub, vars, idx);
                 values.push(unwrap!(eval(runner_ctx, &ctx_sub)));
             }
             value::make::list(runner_ctx.arena_mut(), typ.clone(), values, Span::default())
@@ -103,12 +94,12 @@ where
 {
     let vars_bound = &prem_iter.vars_bound;
     let vars_bind = &prem_iter.vars_bind;
-    let vars_bound_outer = iterate_vars(&ctx, vars_bound, prem_iter.iter);
     let vars_bind_outer = iterate_vars(&ctx, vars_bind, prem_iter.iter);
     let mut values_bind_by_var = vec![Vec::new(); vars_bind.len()];
     match prem_iter.iter {
         // Option: run once when inputs are present; outputs become options
         ast::Iter::Opt => {
+            let vars_bound_outer = iterate_vars(&ctx, vars_bound, prem_iter.iter);
             let values = unwrap_from_result!(
                 ctx.find_opt_values_by_var(runner_ctx.arena(), &vars_bound_outer),
                 span
@@ -129,18 +120,14 @@ where
         }
         // List: run per row, collecting each bound variable's column
         ast::Iter::List => {
-            let values_by_var = unwrap_from_result!(
-                ctx.find_list_values_by_var(runner_ctx.arena(), &vars_bound_outer),
-                span
-            );
-            // Copy handles before the callback can allocate in the arena
-            let values_by_var: Vec<_> = values_by_var.into_iter().map(<[Value]>::to_vec).collect();
-            let len = values_by_var.first().map_or(0, Vec::len);
+            let inputs =
+                unwrap_from_result!(ListInputs::new(runner_ctx.arena(), &ctx, vars_bound), span);
+            for values in &mut values_bind_by_var {
+                values.reserve(inputs.len());
+            }
             let mut ctx_sub = ctx.clone();
-            for idx in 0..len {
-                for (var, values) in vars_bound.iter().zip(&values_by_var) {
-                    ctx_sub.add_value_at_slot(var.slot, values[idx]);
-                }
+            for idx in 0..inputs.len() {
+                inputs.bind(runner_ctx.arena(), &mut ctx_sub, vars_bound, idx);
                 // Keep callback writes out of the reusable input context
                 let ctx_post = unwrap!(eval(runner_ctx, ctx_sub.clone()));
                 unwrap!(ctx_post.collect_values_by_var(vars_bind, &mut values_bind_by_var));
@@ -154,4 +141,91 @@ where
         }
     }
     ok!(ctx)
+}
+
+/// Stable list handles remain valid while a callback grows value storage.
+pub(crate) struct ListInputs {
+    bodies: ListBodies,
+    len: usize,
+}
+
+enum ListBodies {
+    Empty,
+    One(crate::lang::data::intern::Interned<value::ValueKind>),
+    Two([crate::lang::data::intern::Interned<value::ValueKind>; 2]),
+    Many(Vec<crate::lang::data::intern::Interned<value::ValueKind>>),
+}
+
+impl ListBodies {
+    fn as_slice(&self) -> &[crate::lang::data::intern::Interned<value::ValueKind>] {
+        match self {
+            Self::Empty => &[],
+            Self::One(body) => std::slice::from_ref(body),
+            Self::Two(bodies) => bodies,
+            Self::Many(bodies) => bodies,
+        }
+    }
+}
+
+impl ListInputs {
+    pub(crate) fn new(
+        arena: &crate::lang::data::arena::Arena,
+        ctx: &impl crate::interp::shared::context::ReadContext,
+        vars: &[ast::Var],
+    ) -> Result<Self, crate::interp::shared::error::Error> {
+        let body = |var: &ast::Var| {
+            let slot = ctx.find_slot_iterated(var, ast::Iter::List);
+            let value = ctx.find_value_at_slot(slot).expect("value must be bound");
+            value::get::list(arena, value).expect("iteration input must be a list");
+            value.node
+        };
+        let bodies = match vars {
+            [] => ListBodies::Empty,
+            [var] => ListBodies::One(body(var)),
+            [var_a, var_b] => ListBodies::Two([body(var_a), body(var_b)]),
+            _ => ListBodies::Many(vars.iter().map(body).collect()),
+        };
+        let mut len = None;
+        for body in bodies.as_slice() {
+            let value::ValueKind::List(values) = arena.value.kind(*body) else { unreachable!() };
+            if let Some(len) = len {
+                if values.len() != len {
+                    return Err(Box::new(
+                        crate::interp::shared::error::context::iteration_length_mismatch(
+                            len,
+                            values.len(),
+                        )
+                        .into(),
+                    ));
+                }
+            } else {
+                len = Some(values.len());
+            }
+        }
+        Ok(Self { bodies, len: len.unwrap_or(0) })
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.len
+    }
+
+    pub(super) fn body(
+        &self,
+        index: usize,
+    ) -> crate::lang::data::intern::Interned<value::ValueKind> {
+        self.bodies.as_slice()[index]
+    }
+
+    pub(crate) fn bind(
+        &self,
+        arena: &crate::lang::data::arena::Arena,
+        ctx: &mut impl crate::interp::shared::context::WriteContext,
+        vars: &[ast::Var],
+        index: usize,
+    ) {
+        for (var, body) in vars.iter().zip(self.bodies.as_slice()) {
+            let value::ValueKind::List(values) = arena.value.kind(*body) else { unreachable!() };
+            ctx.add_value_at_slot(var.slot, values[index]);
+        }
+    }
 }
