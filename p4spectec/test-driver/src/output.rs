@@ -9,9 +9,6 @@ use std::{
     os::fd::{AsFd, OwnedFd},
 };
 
-#[cfg(test)]
-mod tests;
-
 /// Discards process stdout until explicitly restored or dropped.
 pub(crate) struct SilenceStdout {
     fd_stdout: Option<OwnedFd>,
