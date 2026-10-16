@@ -21,6 +21,12 @@ use super::{Value, ValueKind};
 
 // = Arena storage
 
+/// Annotation allocations remembered before interning by contents.
+const TYPES_RECENT_LEN: usize = 64;
+
+/// A retained annotation allocation and its interned handle.
+type TypRecent = (Rc<TypKind>, Interned<Rc<TypKind>>);
+
 /// Storage for value bodies, types, and spans.
 #[derive(Debug)]
 pub struct ValueArena {
@@ -35,6 +41,8 @@ pub struct ValueArena {
     pub(super) columns: super::projection::Columns,
     /// Types, shared by exact contents including nested source spans.
     types: Interner<Rc<TypKind>>,
+    /// Recently interned annotations by allocation, each retained.
+    types_recent: [Option<TypRecent>; TYPES_RECENT_LEN],
     /// Spans, shared by equality.
     spans: Interner<Span>,
 }
@@ -53,6 +61,7 @@ impl Default for ValueArena {
             tails: Default::default(),
             columns: Default::default(),
             types: Interner::new(),
+            types_recent: std::array::from_fn(|_| None),
             spans,
         }
     }
@@ -113,7 +122,16 @@ impl ValueArena {
         &mut self,
         typ: Rc<TypKind>,
     ) -> Result<Interned<Rc<TypKind>>, std::num::TryFromIntError> {
-        self.types.intern(typ)
+        // A retained allocation cannot be reused, so its address identifies it
+        let slot = (Rc::as_ptr(&typ) as usize >> 4) % TYPES_RECENT_LEN;
+        if let Some((typ_recent, id)) = &self.types_recent[slot]
+            && Rc::ptr_eq(typ_recent, &typ)
+        {
+            return Ok(*id);
+        }
+        let id = self.types.intern(Rc::clone(&typ))?;
+        self.types_recent[slot] = Some((typ, id));
+        Ok(id)
     }
 
     /// Interns an exact source location.
