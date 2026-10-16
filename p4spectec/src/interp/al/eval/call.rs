@@ -30,7 +30,6 @@ use crate::runner::{Extern, Interface, RunnerContext, SideEffect};
 
 use crate::interp::shared::{
     backtrack::{self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
-    cache::CallKey,
     context::ReadContext,
     error,
     eval::assign::assign_tparams,
@@ -189,17 +188,18 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Vec<Value>> {
     // Serve from the cache when eligible
-    let cache = is_cacheable_rel(runner_ctx, ctx, id);
-    if cache
-        && let Some(values) =
-            runner_ctx
-                .interp()
-                .cache
-                .find_rel(runner_ctx.arena(), &id.node, values)
-    {
-        return ok!(values.clone());
-    }
-    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, &[], values));
+    let key = if is_cacheable_rel(runner_ctx, ctx, id) {
+        match runner_ctx
+            .interp()
+            .cache
+            .lookup_rel(runner_ctx.arena(), &id.node, values)
+        {
+            Ok(values) => return ok!(values),
+            Err(key) => Some(key),
+        }
+    } else {
+        None
+    };
     // Track effects for memoization; grow the stack for deep recursion
     let checkpoint = runner_ctx.effect_checkpoint();
     let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
@@ -358,17 +358,18 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Value> {
     // Serve from the cache when eligible
-    let cache = is_cacheable_func(runner_ctx, ctx, id, values);
-    if cache
-        && let Some(value) =
-            runner_ctx
-                .interp()
-                .cache
-                .find_func(runner_ctx.arena(), &id.node, targs, values)
-    {
-        return ok!(*value);
-    }
-    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, targs, values));
+    let key = if is_cacheable_func(runner_ctx, ctx, id, values) {
+        match runner_ctx
+            .interp()
+            .cache
+            .lookup_func(runner_ctx.arena(), &id.node, targs, values)
+        {
+            Ok(value) => return ok!(value),
+            Err(key) => Some(key),
+        }
+    } else {
+        None
+    };
     // Track effects for memoization; grow the stack for deep recursion
     let checkpoint = runner_ctx.effect_checkpoint();
     let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {

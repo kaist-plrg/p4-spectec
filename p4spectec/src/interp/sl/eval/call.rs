@@ -30,7 +30,6 @@ use crate::runner::{Extern, Interface, RunnerContext, SideEffect};
 
 use crate::interp::shared::{
     backtrack::{self, Backtrack, WithFrame, ok, unmatch, unwrap, unwrap_from_result},
-    cache::CallKey,
     context::ReadContext,
     error,
     eval::assign::assign_tparams,
@@ -210,27 +209,25 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
     let mut keys_cache = Vec::new();
     loop {
         // Serve from the cache when eligible
-        let cache = is_cacheable_rel(runner_ctx, ctx, &id);
-        if cache
-            && let Some(values) =
-                runner_ctx
-                    .interp()
-                    .cache
-                    .find_rel(runner_ctx.arena(), &id.node, &values)
-        {
-            let values = values.clone();
-            // Cached results also complete the pure callers in this chain
-            for key in keys_cache {
-                runner_ctx
-                    .interp_mut()
-                    .cache
-                    .rels
-                    .insert(key, values.clone());
+        if is_cacheable_rel(runner_ctx, ctx, &id) {
+            match runner_ctx
+                .interp()
+                .cache
+                .lookup_rel(runner_ctx.arena(), &id.node, &values)
+            {
+                Ok(values) => {
+                    // Cached results also complete the pure callers in this chain
+                    for key in keys_cache {
+                        runner_ctx
+                            .interp_mut()
+                            .cache
+                            .rels
+                            .insert(key, values.clone());
+                    }
+                    return ok!(values);
+                }
+                Err(key) => keys_cache.push(key),
             }
-            return ok!(values);
-        }
-        if cache {
-            keys_cache.push(CallKey::new(runner_ctx.arena(), &id.node, &[], &values));
         }
         // Track effects for memoization; grow the stack for deep recursion
         let checkpoint = runner_ctx.effect_checkpoint();
@@ -368,23 +365,22 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
     let mut keys_cache = Vec::new();
     loop {
         // Serve from the cache when eligible
-        let cache = is_cacheable_func(runner_ctx, ctx, &id, &values);
-        if cache
-            && let Some(value) =
-                runner_ctx
-                    .interp()
-                    .cache
-                    .find_func(runner_ctx.arena(), &id.node, &targs, &values)
-        {
-            let value = *value;
-            // Cached results also complete the pure callers in this chain
-            for key in keys_cache {
-                runner_ctx.interp_mut().cache.funcs.insert(key, value);
+        if is_cacheable_func(runner_ctx, ctx, &id, &values) {
+            match runner_ctx.interp().cache.lookup_func(
+                runner_ctx.arena(),
+                &id.node,
+                &targs,
+                &values,
+            ) {
+                Ok(value) => {
+                    // Cached results also complete the pure callers in this chain
+                    for key in keys_cache {
+                        runner_ctx.interp_mut().cache.funcs.insert(key, value);
+                    }
+                    return ok!(value);
+                }
+                Err(key) => keys_cache.push(key),
             }
-            return ok!(value);
-        }
-        if cache {
-            keys_cache.push(CallKey::new(runner_ctx.arena(), &id.node, &targs, &values));
         }
         // Track effects for memoization; grow the stack for deep recursion
         let checkpoint = runner_ctx.effect_checkpoint();

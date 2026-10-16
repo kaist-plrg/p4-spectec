@@ -6,12 +6,12 @@
 //! RunnerContext records effects independently of memoization.
 
 use std::{
-    hash::{Hash, Hasher},
+    hash::{BuildHasher, Hash, Hasher},
     rc::Rc,
 };
 
 use foldhash::fast::RandomState;
-use hashbrown::{Equivalent, HashMap};
+use hashbrown::{Equivalent, HashTable, hash_table::Entry};
 use smallvec::SmallVec;
 
 use crate::lang::{
@@ -36,11 +36,6 @@ impl PartialEq for TypeArgs {
     }
 }
 impl Eq for TypeArgs {}
-impl Hash for TypeArgs {
-    fn hash<H: Hasher>(&self, hasher: &mut H) {
-        hash_typs(&self.0, hasher);
-    }
-}
 
 /// Hashes types as `SyntaxEq` compares them, ignoring every span.
 fn hash_typs<H: Hasher>(typs: &[Typ], hasher: &mut H) {
@@ -82,25 +77,14 @@ fn hash_typ<H: Hasher>(typ: &TypKind, hasher: &mut H) {
 }
 
 /// A call identified by its name, type arguments, and canonical argument values.
-#[derive(Debug, PartialEq, Eq, Hash)]
+///
+/// The key keeps the hash its lookup computed, so storing it never rehashes.
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) struct CallKey {
+    hash: u64,
     name: Rc<str>,
     targs: TypeArgs,
     values: SmallVec<[CanonId<ValueKind>; 4]>,
-}
-
-impl CallKey {
-    /// Builds the key; value annotations never distinguish calls.
-    pub(crate) fn new(arena: &Arena, name: &Rc<str>, targs: &[Typ], values: &[Value]) -> Self {
-        Self {
-            name: Rc::clone(name),
-            targs: TypeArgs(targs.iter().cloned().collect()),
-            values: values
-                .iter()
-                .map(|value| arena.value.canon_id(value.node))
-                .collect(),
-        }
-    }
 }
 
 /// A borrowed call lookup that canonicalizes arguments without allocating.
@@ -113,7 +97,7 @@ struct CallQuery<'a> {
 
 impl Hash for CallQuery<'_> {
     fn hash<H: Hasher>(&self, hasher: &mut H) {
-        // Match CallKey's derived hash, including the argument slice length
+        // Value annotations never distinguish calls
         self.name.hash(hasher);
         hash_typs(self.targs, hasher);
         self.values.len().hash(hasher);
@@ -136,38 +120,99 @@ impl Equivalent<CallKey> for CallQuery<'_> {
     }
 }
 
+impl CallQuery<'_> {
+    /// Owns the queried call under the hash already computed for it.
+    fn into_key(self, name: &Rc<str>, hash: u64) -> CallKey {
+        CallKey {
+            hash,
+            name: Rc::clone(name),
+            targs: TypeArgs(self.targs.iter().cloned().collect()),
+            values: self
+                .values
+                .iter()
+                .map(|value| self.arena.value.canon_id(value.node))
+                .collect(),
+        }
+    }
+}
+
+/// Results by call, each stored under its key's retained hash.
+pub(crate) struct Memo<V>(HashTable<(CallKey, V)>);
+
+impl<V> Default for Memo<V> {
+    fn default() -> Self {
+        Self(HashTable::new())
+    }
+}
+
+impl<V> Memo<V> {
+    /// Finds the result of an equivalent call with the given hash.
+    fn get(&self, query: &CallQuery<'_>, hash: u64) -> Option<&V> {
+        self.0
+            .find(hash, |(key, _)| key.hash == hash && query.equivalent(key))
+            .map(|(_, value)| value)
+    }
+
+    /// Stores a result, replacing an equal call's earlier one.
+    pub(crate) fn insert(&mut self, key: CallKey, value: V) {
+        match self
+            .0
+            .entry(key.hash, |(other, _)| *other == key, |(key, _)| key.hash)
+        {
+            Entry::Occupied(mut entry) => entry.get_mut().1 = value,
+            Entry::Vacant(entry) => {
+                entry.insert((key, value));
+            }
+        }
+    }
+
+    fn clear(&mut self) {
+        self.0.clear();
+    }
+}
+
 // = Call cache
 
 /// Memoized pure call results.
 #[derive(Default)]
 pub struct Cache {
+    hasher: RandomState,
     /// Function results by call.
-    pub(crate) funcs: HashMap<CallKey, Value, RandomState>,
+    pub(crate) funcs: Memo<Value>,
     /// Relation outputs by call.
-    pub(crate) rels: HashMap<CallKey, Vec<Value>, RandomState>,
+    pub(crate) rels: Memo<Vec<Value>>,
 }
 
 impl Cache {
-    /// Looks up a function without allocating an owned call key.
-    pub(crate) fn find_func(
+    /// Finds a function result, or the key that will memoize it.
+    pub(crate) fn lookup_func(
         &self,
         arena: &Arena,
-        name: &str,
+        name: &Rc<str>,
         targs: &[Typ],
         values: &[Value],
-    ) -> Option<&Value> {
-        self.funcs.get(&CallQuery { arena, name, targs, values })
+    ) -> Result<Value, CallKey> {
+        let query = CallQuery { arena, name, targs, values };
+        let hash = self.hasher.hash_one(&query);
+        match self.funcs.get(&query, hash) {
+            Some(value) => Ok(*value),
+            None => Err(query.into_key(name, hash)),
+        }
     }
 
-    /// Looks up a relation without allocating an owned call key.
-    pub(crate) fn find_rel(
+    /// Finds relation outputs, or the key that will memoize them.
+    pub(crate) fn lookup_rel(
         &self,
         arena: &Arena,
-        name: &str,
+        name: &Rc<str>,
         values: &[Value],
-    ) -> Option<&Vec<Value>> {
-        self.rels
-            .get(&CallQuery { arena, name, targs: &[], values })
+    ) -> Result<Vec<Value>, CallKey> {
+        let query = CallQuery { arena, name, targs: &[], values };
+        let hash = self.hasher.hash_one(&query);
+        match self.rels.get(&query, hash) {
+            Some(values) => Ok(values.clone()),
+            None => Err(query.into_key(name, hash)),
+        }
     }
 
     // - Lifecycle
