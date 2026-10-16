@@ -2,7 +2,7 @@
 ;; spec-meta/common/4-relation.watsup.
 ;;
 ;; The three extern relations are reduction rules on machine forms (in al/).
-;; Their rules call the host procedures here, which go to the OCaml host over
+;; Their rules call the host procedures here, which go to the Rust host over
 ;; the extern wire. They are impure, so only a reduction rule may call them,
 ;; never a metafunction.
 
@@ -23,7 +23,7 @@
   (valres ::= (OK val) FAIL)
   (valsres ::= (OK (val ...)) FAIL))
 
-;; Sends a request to the OCaml host, and gives its response as a jsexpr.
+;; Sends a request to the host, and gives its response as a jsexpr.
 (define (host-request request)
   (string->jsexpr (host-eval (jsexpr->string request))))
 

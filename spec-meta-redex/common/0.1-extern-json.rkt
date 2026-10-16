@@ -1,7 +1,7 @@
 #lang racket/base
 ;; The JSON encoding of the extern wire, documented in
-;; p4spec/lib/interface/spectec/ali/extern_json.ml, as jsexprs. k-run.sh prints
-;; a result in the same encoding.
+;; p4spectec/src/metacross/wire.rs, as jsexprs. k-run.sh prints a result in
+;; the same encoding.
 
 (require json
          racket/match)
@@ -102,7 +102,7 @@
 ;; response ::= {"ok": val}         builtin and extern-func
 ;;            | {"ok": [val, ...]}  extern-rel
 ;;            | {"fail": null}
-;;            | {"error": <text>}   ffi.ml, on an OCaml exception
+;;            | {"error": <text>}   the host could not answer
 
 ;; A builtin or extern-func response, as a valres; an error raises.
 (define (response->valres js)

@@ -15,7 +15,7 @@
 (define-runtime-path lib-path "../../bin/libp4spectec.so")
 
 ;; host_init and host_eval, loaded on first use
-(define shim
+(define host
   (delay
     (unless (file-exists? lib-path)
       (error 'extern-ffi "~a is missing; run `make ffi`" (simplify-path lib-path)))
@@ -29,9 +29,9 @@
 ;; directory, so the path goes complete.
 (define (host-init! spec)
   (define path (path->string (simplify-path (path->complete-path spec))))
-  (unless (= ((car (force shim)) path) 1)
+  (unless (= ((car (force host)) path) 1)
     (error 'host-init! "the host cannot build a runner for ~a" path)))
 
 ;; JSON request text -> JSON reply text
 (define (host-eval request)
-  ((cdr (force shim)) request))
+  ((cdr (force host)) request))
