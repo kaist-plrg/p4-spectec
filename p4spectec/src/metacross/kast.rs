@@ -7,131 +7,154 @@
 //! arguments of `VAR` and `CALL` are `TArgList`s although they are encoded
 //! as `typ*`. An unknown shape is an error, never a fallback label.
 
-use std::fmt::Write;
+use std::fmt::{self, Write};
 
-use serde_json::Value as Json;
+use serde::Serialize;
 
 use crate::{
     lang::{
         common::{Iter, prim::num},
         data::{arena::Arena, typ::TypKind, value::flat::Value, value::flat::ValueKind},
     },
-    util::json::json as extern_json,
+    util::json::json,
 };
 
-use super::{Result, error::emit_invalid, leading_keyword, typ_name, typ_text};
+use super::{Emit, Error, Result, leading_keyword, typ_name, typ_text};
 
 /// The KAST JSON format version this module emits.
 pub const VERSION: u64 = 4;
 
 // == KAST JSON nodes
-//
-// Objects are assembled by hand: `json!` would copy every interpolated
-// subterm, making the cons lists below quadratic in their length.
 
-fn object(fields: Vec<(&str, Json)>) -> Json {
-    Json::Object(
-        fields
+/// A KAST term: a constructor application or a token.
+#[derive(Serialize)]
+#[serde(tag = "node")]
+enum Term {
+    KApply { label: Label, arity: usize, args: Vec<Term> },
+    KToken { sort: Sort, token: String },
+}
+
+#[derive(Serialize)]
+struct Label {
+    node: &'static str,
+    name: &'static str,
+    params: [(); 0],
+}
+
+#[derive(Serialize)]
+struct Sort {
+    node: &'static str,
+    name: &'static str,
+    params: [(); 0],
+}
+
+impl Term {
+    fn apply(label: &'static str, args: Vec<Term>) -> Self {
+        let label = Label { node: "KLabel", name: label, params: [] };
+        Self::KApply { label, arity: args.len(), args }
+    }
+
+    fn token(sort: &'static str, token: String) -> Self {
+        Self::KToken { sort: Sort { node: "KSort", name: sort, params: [] }, token }
+    }
+
+    /// A cons list ending in its terminator.
+    fn list(symbol: &'static str, terminator: &'static str, items: Vec<Term>) -> Self {
+        items
             .into_iter()
-            .map(|(key, value)| (key.to_string(), value))
-            .collect(),
-    )
+            .rev()
+            .fold(Self::apply(terminator, vec![]), |tail, item| {
+                Self::apply(symbol, vec![item, tail])
+            })
+    }
+
+    fn opt(none: &'static str, some: &'static str, item: Option<Term>) -> Self {
+        match item {
+            None => Self::apply(none, vec![]),
+            Some(item) => Self::apply(some, vec![item]),
+        }
+    }
 }
 
-fn klabel(name: &str) -> Json {
-    object(vec![("node", "KLabel".into()), ("name", name.into()), ("params", Json::Array(vec![]))])
+/// A KAST document: the envelope `krun` reads.
+#[derive(Serialize)]
+pub struct Document {
+    format: &'static str,
+    version: u64,
+    term: Term,
 }
 
-fn kapply(label: &str, args: Vec<Json>) -> Json {
-    object(vec![
-        ("node", "KApply".into()),
-        ("label", klabel(label)),
-        ("arity", args.len().into()),
-        ("args", Json::Array(args)),
-    ])
+impl Document {
+    fn new(term: Term) -> Self {
+        Self { format: "KAST", version: VERSION, term }
+    }
 }
 
-fn ktoken(sort: &str, token: String) -> Json {
-    let sort = object(vec![
-        ("node", "KSort".into()),
-        ("name", sort.into()),
-        ("params", Json::Array(vec![])),
-    ]);
-    object(vec![("node", "KToken".into()), ("sort", sort), ("token", token.into())])
-}
-
-/// A cons list ending in its terminator.
-fn klist(symbol: &str, terminator: &str, items: Vec<Json>) -> Json {
-    items
-        .into_iter()
-        .rev()
-        .fold(kapply(terminator, vec![]), |tail, item| kapply(symbol, vec![item, tail]))
-}
-
-fn kopt(none: &str, some: &str, item: Option<Json>) -> Json {
-    match item {
-        None => kapply(none, vec![]),
-        Some(item) => kapply(some, vec![item]),
+impl fmt::Display for Document {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt.write_str(&serde_json::to_string(self).map_err(|_| fmt::Error)?)
     }
 }
 
 // == Tokens
 
-fn bool_token(value: bool) -> Json {
-    ktoken("Bool", value.to_string())
+fn bool_token(value: bool) -> Term {
+    Term::token("Bool", value.to_string())
 }
 
-fn int_token(digits: String) -> Json {
-    ktoken("Int", digits)
+fn int_token(digits: String) -> Term {
+    Term::token("Int", digits)
 }
 
-/// A string token in K's literal syntax.
-fn string_token(text: &str) -> Json {
-    let mut token = String::with_capacity(text.len() + 2);
-    token.push('"');
-    for ch in text.chars() {
-        match ch {
-            '"' => token.push_str("\\\""),
-            '\\' => token.push_str("\\\\"),
-            '\n' => token.push_str("\\n"),
-            '\t' => token.push_str("\\t"),
-            '\r' => token.push_str("\\r"),
-            '\x0c' => token.push_str("\\f"),
-            ch if (ch as u32) < 0x20 || ch == '\x7f' => {
-                write!(token, "\\x{:02x}", ch as u32).expect("writing to a String cannot fail");
-            }
-            ch if ch.is_ascii() => token.push(ch),
-            ch if (ch as u32) <= 0xffff => {
-                write!(token, "\\u{:04x}", ch as u32).expect("writing to a String cannot fail");
-            }
-            ch => {
-                write!(token, "\\U{:08x}", ch as u32).expect("writing to a String cannot fail");
+/// Text in K's string literal syntax.
+struct KString<'a>(&'a str);
+
+impl fmt::Display for KString<'_> {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt.write_char('"')?;
+        for ch in self.0.chars() {
+            match ch {
+                '"' => fmt.write_str("\\\"")?,
+                '\\' => fmt.write_str("\\\\")?,
+                '\n' => fmt.write_str("\\n")?,
+                '\t' => fmt.write_str("\\t")?,
+                '\r' => fmt.write_str("\\r")?,
+                '\x0c' => fmt.write_str("\\f")?,
+                ch if (ch as u32) < 0x20 || ch == '\x7f' => write!(fmt, "\\x{:02x}", ch as u32)?,
+                ch if ch.is_ascii() => fmt.write_char(ch)?,
+                ch if (ch as u32) <= 0xffff => write!(fmt, "\\u{:04x}", ch as u32)?,
+                ch => write!(fmt, "\\U{:08x}", ch as u32)?,
             }
         }
+        fmt.write_char('"')
     }
-    token.push('"');
-    ktoken("String", token)
+}
+
+fn string_token(text: &str) -> Term {
+    Term::token("String", KString(text).to_string())
 }
 
 // == Extern JSON as K `JSON` terms
 
-fn json_term(value: &extern_json) -> Json {
+fn json_term(value: &json) -> Term {
     match value {
-        extern_json::Null => kapply("JSONnull", vec![]),
-        extern_json::Bool(value) => bool_token(*value),
-        extern_json::Number(number) if number.is_f64() => ktoken("Float", number.to_string()),
-        extern_json::Number(number) => int_token(number.to_string()),
-        extern_json::String(text) => string_token(text),
-        extern_json::Array(values) => {
+        json::Null => Term::apply("JSONnull", vec![]),
+        json::Bool(value) => bool_token(*value),
+        json::Number(number) if number.is_f64() => Term::token("Float", number.to_string()),
+        json::Number(number) => int_token(number.to_string()),
+        json::String(text) => string_token(text),
+        json::Array(values) => {
             let items = values.iter().map(json_term).collect();
-            kapply("JSONList", vec![klist("JSONs", ".JSONs", items)])
+            Term::apply("JSONList", vec![Term::list("JSONs", ".JSONs", items)])
         }
-        extern_json::Object(fields) => {
+        json::Object(fields) => {
             let entries = fields
                 .iter()
-                .map(|(key, value)| kapply("JSONEntry", vec![string_token(key), json_term(value)]))
+                .map(|(key, value)| {
+                    Term::apply("JSONEntry", vec![string_token(key), json_term(value)])
+                })
                 .collect();
-            kapply("JSONObject", vec![klist("JSONs", ".JSONs", entries)])
+            Term::apply("JSONObject", vec![Term::list("JSONs", ".JSONs", entries)])
         }
     }
 }
@@ -303,7 +326,7 @@ fn opt_symbols(elem: &TypKind) -> Option<(&'static str, &'static str)> {
 // == Walking meta values
 
 /// The KAST term of a meta value.
-pub fn term(arena: &Arena, value: Value) -> Result<Json> {
+fn term(arena: &Arena, value: Value) -> Result<Term> {
     let typ = arena.value.typ(value.note);
     match arena.value.kind(value.node) {
         ValueKind::Bool(value) => Ok(bool_token(*value)),
@@ -312,38 +335,40 @@ pub fn term(arena: &Arena, value: Value) -> Result<Json> {
         ValueKind::List(values) => {
             // The script itself is typed `script`, not `defn*`
             if typ_name(typ) == Some("script") {
-                return Ok(klist("script", ".script", terms(arena, values)?));
+                return Ok(Term::list("script", ".script", terms(arena, values)?));
             }
             let TypKind::Iter(elem, Iter::List) = &**typ else {
-                return Err(emit_invalid("a list value without a list type"));
+                return Err(Error::emit_invalid("a list value without a list type"));
             };
-            let (symbol, terminator) = list_symbols(&elem.node)
-                .ok_or_else(|| emit_invalid(format!("no K list for `{}`", typ_text(&elem.node))))?;
-            Ok(klist(symbol, terminator, terms(arena, values)?))
+            let (symbol, terminator) = list_symbols(&elem.node).ok_or_else(|| {
+                Error::emit_invalid(format!("no K list for `{}`", typ_text(&elem.node)))
+            })?;
+            Ok(Term::list(symbol, terminator, terms(arena, values)?))
         }
         ValueKind::Opt(value) => {
             let TypKind::Iter(elem, Iter::Opt) = &**typ else {
-                return Err(emit_invalid("an option value without an option type"));
+                return Err(Error::emit_invalid("an option value without an option type"));
             };
             let (none, some) = opt_symbols(&elem.node).ok_or_else(|| {
-                emit_invalid(format!("no K option for `{}`", typ_text(&elem.node)))
+                Error::emit_invalid(format!("no K option for `{}`", typ_text(&elem.node)))
             })?;
-            Ok(kopt(none, some, value.map(|value| term(arena, value)).transpose()?))
+            Ok(Term::opt(none, some, value.map(|value| term(arena, value)).transpose()?))
         }
         ValueKind::Extern(json) => Ok(json_term(json)),
         ValueKind::Case(case) => {
-            let name = typ_name(typ)
-                .ok_or_else(|| emit_invalid(format!("a case value of type `{}`", typ_text(typ))))?;
+            let name = typ_name(typ).ok_or_else(|| {
+                Error::emit_invalid(format!("a case value of type `{}`", typ_text(typ)))
+            })?;
             let keyword = leading_keyword(arena, *case.mixop());
-            let label = case_label(name, keyword.as_deref()).ok_or_else(|| {
-                emit_invalid(format!(
+            let label = case_label(name, keyword).ok_or_else(|| {
+                Error::emit_invalid(format!(
                     "no K label for `{}` of type `{name}`",
                     keyword.unwrap_or_default()
                 ))
             })?;
             // The frozen K syntax has `funcT()` without its signature
             if label == "funcT" {
-                return Ok(kapply(label, vec![]));
+                return Ok(Term::apply(label, vec![]));
             }
             let args = case
                 .args()
@@ -358,37 +383,40 @@ pub fn term(arena: &Arena, value: Value) -> Result<Json> {
                     }
                 })
                 .collect::<Result<_>>()?;
-            Ok(kapply(label, args))
+            Ok(Term::apply(label, args))
         }
         ValueKind::Struct(_) | ValueKind::Tuple(_) | ValueKind::Func(_) => {
-            Err(emit_invalid("struct, tuple, and function values have no KAST term"))
+            Err(Error::emit_invalid("struct, tuple, and function values have no KAST term"))
         }
     }
 }
 
-fn terms(arena: &Arena, values: &[Value]) -> Result<Vec<Json>> {
+fn terms(arena: &Arena, values: &[Value]) -> Result<Vec<Term>> {
     values.iter().map(|value| term(arena, *value)).collect()
 }
 
-fn targs(arena: &Arena, value: Value) -> Result<Json> {
+fn targs(arena: &Arena, value: Value) -> Result<Term> {
     let ValueKind::List(values) = arena.value.kind(value.node) else {
-        return Err(emit_invalid("type arguments are a list"));
+        return Err(Error::emit_invalid("type arguments are a list"));
     };
-    Ok(klist("targList", ".targList", terms(arena, values)?))
+    Ok(Term::list("targList", ".targList", terms(arena, values)?))
 }
 
-// == Entry points
+// == The emitter
 
-fn document(term: Json) -> Json {
-    object(vec![("format", "KAST".into()), ("version", VERSION.into()), ("term", term)])
-}
+/// K: KAST documents of sort `Script` and `P4Opt`.
+pub struct K;
 
-/// The KAST document of a `script` meta value, of sort `Script`.
-pub fn script(arena: &Arena, value: Value) -> Result<Json> {
-    Ok(document(term(arena, value)?))
-}
+impl Emit for K {
+    type Script = Document;
+    type Program = Document;
 
-/// The KAST document of a `val` meta value wrapped as `someP4(val)`, of sort `P4Opt`.
-pub fn p4(arena: &Arena, value: Value) -> Result<Json> {
-    Ok(document(kapply("someP4", vec![term(arena, value)?])))
+    fn script(arena: &Arena, value: Value) -> Result<Document> {
+        Ok(Document::new(term(arena, value)?))
+    }
+
+    /// The `val` wrapped as `someP4(val)`.
+    fn program(arena: &Arena, value: Value) -> Result<Document> {
+        Ok(Document::new(Term::apply("someP4", vec![term(arena, value)?])))
+    }
 }

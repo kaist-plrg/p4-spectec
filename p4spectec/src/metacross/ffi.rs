@@ -24,7 +24,7 @@ use std::{
     panic::{AssertUnwindSafe, catch_unwind},
 };
 
-use super::host;
+use super::{error::render, host, json};
 
 thread_local! {
     static REPLY: RefCell<Option<CString>> = const { RefCell::new(None) };
@@ -35,6 +35,14 @@ fn reply(text: String) -> *const c_char {
     let text = CString::new(text)
         .unwrap_or_else(|_| CString::from(c"{\"error\": \"reply contains a NUL byte\"}"));
     REPLY.with(|reply| reply.borrow_mut().insert(text).as_ptr())
+}
+
+/// Runs `body`, turning a panic into `fallback` with a note on stderr.
+fn contained<T>(name: &str, fallback: impl FnOnce() -> T, body: impl FnOnce() -> T) -> T {
+    catch_unwind(AssertUnwindSafe(body)).unwrap_or_else(|_| {
+        eprintln!("ffi: {name} panicked");
+        fallback()
+    })
 }
 
 /// The caller's C string as UTF-8, or `None` for a null or invalid pointer.
@@ -55,23 +63,23 @@ unsafe fn argument<'a>(ptr: *const c_char) -> Option<&'a str> {
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn host_init(spec: *const c_char) -> i64 {
     let spec = unsafe { argument(spec) };
-    catch_unwind(AssertUnwindSafe(|| match spec {
-        Some(spec) => match host::init(spec) {
-            Ok(()) => 1,
-            Err(message) => {
-                eprintln!("ffi: {message}");
+    contained(
+        "host_init",
+        || 0,
+        || match spec {
+            Some(spec) => match host::init(spec) {
+                Ok(()) => 1,
+                Err(error) => {
+                    render(&error.into_report());
+                    0
+                }
+            },
+            None => {
+                eprintln!("ffi: host_init: null or non-UTF-8 specification path");
                 0
             }
         },
-        None => {
-            eprintln!("ffi: host_init: null or non-UTF-8 specification path");
-            0
-        }
-    }))
-    .unwrap_or_else(|_| {
-        eprintln!("ffi: host_init panicked");
-        0
-    })
+    )
 }
 
 /// Answers a JSON request with a JSON reply owned by this library.
@@ -82,11 +90,14 @@ pub unsafe extern "C" fn host_init(spec: *const c_char) -> i64 {
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn host_eval(request: *const c_char) -> *const c_char {
     let request = unsafe { argument(request) };
-    let text = catch_unwind(AssertUnwindSafe(|| match request {
-        Some(request) => host::eval(request),
-        None => host::error_reply("host_eval: null or non-UTF-8 request"),
-    }))
-    .unwrap_or_else(|_| host::error_reply("host_eval panicked"));
+    let text = contained(
+        "host_eval",
+        || json::error("host_eval panicked").to_string(),
+        || match request {
+            Some(request) => host::eval(request),
+            None => host::error_reply("host_eval: null or non-UTF-8 request"),
+        },
+    );
     reply(text)
 }
 

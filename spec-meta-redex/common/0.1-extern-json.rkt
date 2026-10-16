@@ -1,6 +1,6 @@
 #lang racket/base
 ;; The JSON encoding of the extern wire, documented in
-;; p4spectec/src/metacross/wire.rs, as jsexprs. k-run.sh prints a result in
+;; p4spectec/src/metacross/json.rs, as jsexprs. k-run.sh prints a result in
 ;; the same encoding.
 
 (require json

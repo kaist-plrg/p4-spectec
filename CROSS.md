@@ -198,7 +198,7 @@ resolves the library's `host_init`, `host_eval`, and `host_strlen` symbols with
 `#functionAddress` and calls them with `#ffiCall`. The Rust side is
 [`ffi.rs`](p4spectec/src/metacross/ffi.rs), the `extern "C"` surface and the
 only module of the crate that uses `unsafe`;
-[`wire.rs`](p4spectec/src/metacross/wire.rs), the codec; and
+[`json.rs`](p4spectec/src/metacross/json.rs), the codec; and
 [`host.rs`](p4spectec/src/metacross/host.rs), which owns the runner built on
 `host_init` and dispatches each request. A builtin request goes to the
 interface's builtin table directly, so a builtin the script does not declare

@@ -5,7 +5,7 @@
 //! arguments. Punctuation atoms are dropped. Options are lists of length zero
 //! or one, and a `FUNC` type prints bare, as the frozen Redex syntax expects.
 
-use std::fmt::Write;
+use std::fmt::{self, Write};
 
 use crate::{
     lang::{
@@ -15,7 +15,7 @@ use crate::{
     util::json::json,
 };
 
-use super::{Result, error::emit_invalid, leading_keyword, typ_name};
+use super::{Emit, Error, Result, leading_keyword, typ_name};
 
 // == Terms
 
@@ -29,54 +29,67 @@ pub enum Sexp {
     List(Vec<Sexp>),
 }
 
-// == Printing
+/// Text as a string literal with the escapes Racket's reader accepts.
+struct RacketString<'a>(&'a str);
 
-/// Appends a string literal with the escapes Racket's reader accepts.
-fn write_string(out: &mut String, text: &str) {
-    out.push('"');
-    for ch in text.chars() {
-        match ch {
-            '"' => out.push_str("\\\""),
-            '\\' => out.push_str("\\\\"),
-            '\n' => out.push_str("\\n"),
-            '\t' => out.push_str("\\t"),
-            '\r' => out.push_str("\\r"),
-            ch if (ch as u32) < 0x20 || ch == '\x7f' => {
-                write!(out, "\\u{:04x}", ch as u32).expect("writing to a String cannot fail");
+impl fmt::Display for RacketString<'_> {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt.write_char('"')?;
+        for ch in self.0.chars() {
+            match ch {
+                '"' => fmt.write_str("\\\"")?,
+                '\\' => fmt.write_str("\\\\")?,
+                '\n' => fmt.write_str("\\n")?,
+                '\t' => fmt.write_str("\\t")?,
+                '\r' => fmt.write_str("\\r")?,
+                ch if (ch as u32) < 0x20 || ch == '\x7f' => write!(fmt, "\\u{:04x}", ch as u32)?,
+                ch => fmt.write_char(ch)?,
             }
-            ch => out.push(ch),
         }
+        fmt.write_char('"')
     }
-    out.push('"');
 }
 
-impl Sexp {
-    /// Appends this term to `out`.
-    pub fn write(&self, out: &mut String) {
+impl fmt::Display for Sexp {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Sym(sym) => out.push_str(sym),
-            Self::Str(text) => write_string(out, text),
-            Self::Int(digits) => out.push_str(digits),
-            Self::Bool(true) => out.push_str("#t"),
-            Self::Bool(false) => out.push_str("#f"),
+            Self::Sym(sym) => fmt.write_str(sym),
+            Self::Str(text) => RacketString(text).fmt(fmt),
+            Self::Int(digits) => fmt.write_str(digits),
+            Self::Bool(true) => fmt.write_str("#t"),
+            Self::Bool(false) => fmt.write_str("#f"),
             Self::List(items) => {
-                out.push('(');
+                fmt.write_char('(')?;
                 for (index, item) in items.iter().enumerate() {
                     if index > 0 {
-                        out.push(' ');
+                        fmt.write_char(' ')?;
                     }
-                    item.write(out);
+                    item.fmt(fmt)?;
                 }
-                out.push(')');
+                fmt.write_char(')')
             }
         }
+    }
+}
+
+/// A `script`: its definitions, one per line.
+pub struct Script(Vec<Sexp>);
+
+impl fmt::Display for Script {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt.write_char('(')?;
+        for defn in &self.0 {
+            writeln!(fmt)?;
+            defn.fmt(fmt)?;
+        }
+        fmt.write_str("\n)")
     }
 }
 
 // == Walking meta values
 
 /// The s-expression of a meta value.
-pub fn term(arena: &Arena, value: Value) -> Result<Sexp> {
+fn term(arena: &Arena, value: Value) -> Result<Sexp> {
     let typ = arena.value.typ(value.note);
     match arena.value.kind(value.node) {
         ValueKind::Bool(value) => Ok(Sexp::Bool(*value)),
@@ -92,12 +105,12 @@ pub fn term(arena: &Arena, value: Value) -> Result<Sexp> {
             match leading_keyword(arena, *case.mixop()) {
                 // The frozen Redex syntax has `FUNC` without its signature
                 Some(keyword) if keyword == "FUNC" && typ_name(typ) == Some("typ") => {
-                    Ok(Sexp::Sym(keyword))
+                    Ok(Sexp::Sym(keyword.into()))
                 }
-                Some(keyword) if args.is_empty() => Ok(Sexp::Sym(keyword)),
+                Some(keyword) if args.is_empty() => Ok(Sexp::Sym(keyword.into())),
                 Some(keyword) => {
                     let mut items = Vec::with_capacity(args.len() + 1);
-                    items.push(Sexp::Sym(keyword));
+                    items.push(Sexp::Sym(keyword.into()));
                     items.extend(args);
                     Ok(Sexp::List(items))
                 }
@@ -105,7 +118,7 @@ pub fn term(arena: &Arena, value: Value) -> Result<Sexp> {
             }
         }
         ValueKind::Struct(_) | ValueKind::Func(_) => {
-            Err(emit_invalid("struct and function values have no s-expression"))
+            Err(Error::emit_invalid("struct and function values have no s-expression"))
         }
     }
 }
@@ -118,26 +131,23 @@ fn json_text(json: &json) -> String {
     serde_json::to_string(json).expect("JSON values serialize")
 }
 
-// == Entry points
+// == The emitter
 
-/// Prints a `script` meta value, one definition per line.
-pub fn script(arena: &Arena, value: Value) -> Result<String> {
-    let ValueKind::List(defns) = arena.value.kind(value.node) else {
-        return Err(emit_invalid("a script is a list of definitions"));
-    };
-    let mut out = String::with_capacity(1 << 20);
-    out.push('(');
-    for defn in defns {
-        out.push('\n');
-        term(arena, *defn)?.write(&mut out);
+/// PLT Redex: `script` and `val` s-expressions.
+pub struct Redex;
+
+impl Emit for Redex {
+    type Script = Script;
+    type Program = Sexp;
+
+    fn script(arena: &Arena, value: Value) -> Result<Script> {
+        let ValueKind::List(defns) = arena.value.kind(value.node) else {
+            return Err(Error::emit_invalid("a script is a list of definitions"));
+        };
+        Ok(Script(terms(arena, defns)?))
     }
-    out.push_str("\n)");
-    Ok(out)
-}
 
-/// Prints a `val` meta value.
-pub fn val(arena: &Arena, value: Value) -> Result<String> {
-    let mut out = String::with_capacity(1 << 20);
-    term(arena, value)?.write(&mut out);
-    Ok(out)
+    fn program(arena: &Arena, value: Value) -> Result<Sexp> {
+        term(arena, value)
+    }
 }
