@@ -2,13 +2,10 @@
 ;;
 ;; Before the external interface, K had rules for eight builtins only, and this
 ;; file would have stuck on the first call.  Every builtin used here comes from
-;; a different family of the OCaml registry (`p4spec/lib/interface/builtin/`):
-;; nats, texts, lists and numerics.
-;;
-;; NOTE: this example runs under K but *not* under the OCaml oracle.
-;; `spectec-boot run spec-meta/al ... -ali` resolves builtin calls against the
-;; meta-spec's own functions, so it only reaches the eight that
-;; spec-meta/common/0-stdlib.watsup declares.  See CROSS.md.
+;; a different family of the Rust builtin table
+;; (`p4spectec/src/interface/builtin/`): nats, texts, lists and numerics.
+;; The host resolves a builtin against that whole table, whether or not
+;; spec-meta/0-stdlib.watsup declares it.  See CROSS.md.
 
 var i : int
 var n : nat
@@ -27,8 +24,8 @@ builtin dec $strip_prefix(text, text) : text
 ;; Lists
 builtin dec $concat_<X>(X**) : X*
 
-;; Numerics.  Declared `: int`, not `: nat`: the OCaml implementations build
-;; their result with `Value.Make.int` whatever the declaration says, and K's
+;; Numerics.  Declared `: int`, not `: nat`: the implementations build their
+;; result with `make::int` whatever the declaration says, and K's
 ;; `binopNumber` does not mix an `intN` with a `natN`.
 builtin dec $pow2(nat) : int
 builtin dec $shl(nat, nat) : int

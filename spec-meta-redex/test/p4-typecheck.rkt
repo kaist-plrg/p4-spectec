@@ -28,8 +28,8 @@
          "../al/0-boot.rkt"
          "../al/7-entry.rkt")
 
-;; The repository root, which .exclude entries are relative to, as in K's and
-;; OCaml's tests
+;; The repository root, which .exclude entries are relative to, as in K's
+;; tests
 (define-runtime-path root-path "../..")
 (define root (simplify-path root-path))
 (define (default-result neg?)

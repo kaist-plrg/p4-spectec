@@ -75,7 +75,7 @@
    ,(updates (term map) (term (any_k ...)) (term (any_v ...)))])
 
 ;;
-;; Builtins, as in p4spec/lib/interface/builtin/{lists,maps}.ml
+;; Builtins, as in p4spectec/src/interface/builtin/{lists,maps}.rs
 ;;
 
 ;; The value of the first pair with key k, as a list of length 0 or 1. Racket
@@ -113,9 +113,9 @@
      (apply map list rows)]))
 
 ;;
-;; Texts and lists, as in p4spec/lib/interp/interp-al/interp.ml
+;; Texts and lists, as in p4spectec/src/interp/shared/eval/ops.rs
 ;;
-;; Texts are indexed by UTF-8 bytes, as OCaml's strings are. A result that
+;; Texts are indexed by UTF-8 bytes, as the Rust port's are. A result that
 ;; splits a character raises an error, since a Racket string cannot hold it.
 ;; So does an index or a slice out of bounds. A slice is a start and a length.
 

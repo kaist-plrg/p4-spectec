@@ -1,9 +1,9 @@
 #lang racket/base
 ;; spec-meta/common/5.1-eval-ops.watsup.
 ;;
-;; Arithmetic follows p4spec/lib/lang/xl/num.ml: DIV and MOD truncate. An
-;; undefined result (division by zero, a negative exponent) raises an error, as
-;; num.ml's `assert false` does.
+;; Arithmetic follows p4spectec/src/lang/common/prim/num.rs: DIV and MOD
+;; truncate. An undefined result (division by zero, a negative exponent) raises
+;; an error, as num.rs's NumericError does.
 
 (require redex/reduction-semantics
          "3-relation.rkt")

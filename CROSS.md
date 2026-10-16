@@ -1,24 +1,44 @@
 # Cross-checking P4-SpecTec AL
 
 `spec-meta-k/` and `spec-meta-redex/` specify P4-SpecTec AL in K and PLT Redex,
-respectively, following the AL specification in `spec-meta/{common,al}`. Both
-can execute standalone AL programs or use `spec/` to type-check P4 programs.
-Comparing their results with the existing OCaml interpreter provides a
+respectively, following the AL specification in `spec-meta/`. Both can execute
+standalone AL programs or use `spec/` to type-check P4 programs. Comparing
+their results with the Rust implementation in `p4spectec/` provides a
 cross-check of AL evaluation across the three implementations.
+
+The Rust implementation takes part twice. `bin/metacross` converts P4-SpecTec
+sources and P4 programs into the terms the two specifications read, and
+`bin/libp4spectec.so` is the host library both call back into for builtins
+and external definitions while they evaluate. From the repository root:
+
+```sh
+make metacross   # bin/metacross, from p4spectec/src/bin/metacross.rs
+make ffi         # bin/libp4spectec.so, from p4spectec/src/metacross/ffi.rs
+make k           # the K definition, into al-kompiled/ (builds both first)
+make redex       # the Redex modules, with raco make (builds both first)
+```
+
+`make k` and `make redex` are local targets: CI builds and tests the Rust
+implementation only, since K and Racket are not installed there.
+
+`spec-meta/` is one flat directory of `.watsup` files now. The K and Redex
+ports still mirror its former `common`/`al` split in their module layout, and
+their frozen syntax modules predate the signature on `FUNC` types: `metacross`
+emits a `FUNC` type without its signature, as `funcT()` and `FUNC`.
 
 ## K
 
 `spec-meta-k/` is a K implementation of the P4-SpecTec AL meta-language. It
-mirrors the AL specification in `spec-meta/{common,al}` and provides an
-independent way to execute the same AL programs.
+mirrors the AL specification in `spec-meta/` and provides an independent way to
+execute the same AL programs.
 
 The K implementation supports two main uses:
 
 - running a single P4-SpecTec program that defines `$main()`, and
 - running the P4 specification in `spec/` to type-check a P4 program.
 
-This makes it possible to compare the existing OCaml interpreter with an
-implementation based on K rewriting.
+This makes it possible to compare the Rust interpreter with an implementation
+based on K rewriting.
 
 ### K configuration
 
@@ -45,15 +65,24 @@ configuration
 
 `<k>` drives evaluation, while `<p4prog>` distinguishes a standalone AL run
 from a P4 type-checking run. The remaining cells store the specification path
-and the evaluator's environments and call state.
+and the evaluator's environments and call state. `initFFI()` starts the host
+library on the specification path before anything else runs.
 
 ### Building and running
 
-Build the K definition from the repository root:
+K is pinned by the `k` submodule; this port is tested with K v7.1.337, which
+is also available from nix. Build the K definition from the repository root:
 
 ```sh
 make k
 ```
+
+This builds `bin/metacross` and `bin/libp4spectec.so`, then kompiles
+[`al/6-entry.k`](spec-meta-k/al/6-entry.k) into `al-kompiled/`. The
+interpreter is linked against the host library with an `$ORIGIN`-relative
+rpath, so it finds `bin/libp4spectec.so` from `al-kompiled/` wherever the
+Rust target directory is. Rerun `make k` after changing the K sources; after
+changing the Rust sources, `make ffi` is enough.
 
 Run a single P4-SpecTec program with `$main()`:
 
@@ -62,7 +91,7 @@ Run a single P4-SpecTec program with `$main()`:
 ```
 
 The script is converted to KAST, loaded by K, and evaluated through `$main()`.
-Its return value is printed as JSON.
+Its return value is printed as JSON; this example prints `["intN","119"]`.
 
 Type-check a P4 program against a P4-SpecTec specification:
 
@@ -84,7 +113,9 @@ the rewriting.
 ```
 
 The final output line is `passed` when the specification's `Program_ok`
-relation holds and `fail` otherwise.
+relation holds and `fail` otherwise. The KAST of `spec` is cached in
+`spec-meta-k/.kore-cache`, keyed by the sources and the `metacross` binary,
+so only the first run pays for its conversion.
 
 Run the integration test suite with:
 
@@ -92,26 +123,35 @@ Run the integration test suite with:
 make test-k
 ```
 
+The suite checks `p4c/testdata/p4_16_samples` as positive tests and
+`p4c/testdata/p4_16_errors` as negative tests, skipping programs named by
+`excludes/static`. Results are written to
+`spec-meta-k/run-k-typecheck-pos.result` and
+`spec-meta-k/run-k-typecheck-neg.result`.
+
 The shell entry points are
 [`k-run.sh`](spec-meta-k/scripts/k-run.sh) for AL programs and
 [`k-run-p4.sh`](spec-meta-k/scripts/k-run-p4.sh) for P4 programs. Their parser
-wrappers convert source inputs to the terms expected by `krun`.
+wrappers, [`kast-spec.sh`](spec-meta-k/scripts/kast-spec.sh) and
+[`kast-p4.sh`](spec-meta-k/scripts/kast-p4.sh), run `bin/metacross` to convert
+source inputs to the terms expected by `krun`.
+[`run-k-typecheck.py`](spec-meta-k/scripts/run-k-typecheck.py) is the test
+harness.
 
-### OCaml support and KAST
+### `metacross` and KAST
 
-The OCaml implementation provides two `spectec-boot` subcommands for preparing
-K inputs:
+`bin/metacross` prepares K inputs with two subcommands:
 
 | Command | Purpose |
 | --- | --- |
-| `kast PATH [-o FILE]` | Boot a P4-SpecTec program or specification and emit a `Script` term. |
+| `kast PATH [-o FILE]` | Lower a P4-SpecTec program or specification to AL and emit a `Script` term. |
 | `kast-p4 -p FILE [-i DIR]... [-o FILE]` | Parse a P4 program and emit it as the `<p4prog>` input. |
 
 For example:
 
 ```sh
-./spectec-boot kast examples/add.watsup -o add.json
-./spectec-boot kast-p4 \
+./bin/metacross kast examples/add.watsup -o add.json
+./bin/metacross kast-p4 \
   -p p4c/testdata/p4_16_samples/action-bind.p4 \
   -i p4c/p4include \
   -o program.json
@@ -134,36 +174,67 @@ A minimal token has this shape:
 ```
 
 Complete AL and P4 inputs are trees of constructor applications and tokens in
-the same envelope. The emitter is implemented in
-[`kast.ml`](p4spec/lib/interface/spectec/ali/kast.ml).
+the same envelope. The emitter is
+[`kast.rs`](p4spectec/src/metacross/kast.rs). It does not re-implement the AL
+syntax: both emitters walk the meta `script` and `val` values that
+`p4spectec::interface::al::encode` produces, the same values the Rust
+metacircular interpreter consumes, and the K label of a case is a function
+of its meta type name and leading keyword.
 
-[`ffi.ml`](p4spec/bin/ffi.ml) is an additional OCaml object target used by the
-K interpreter and the Redex port. It initializes the SpecTec runner and
-dispatches builtin and external calls made during evaluation.
+### K–Rust wire
 
-### K–OCaml wire
-
-K delegates builtins and external definitions to the OCaml implementation so
+K delegates builtins and external definitions to the Rust implementation so
 that both evaluators use the same host-side behavior. Calls cross the boundary
 as JSON requests and responses:
 
 ```text
-K rules -> JSON codec -> C shim -> ffi.ml -> SpecTec runner
+K rules -> JSON codec -> #ffiCall -> bin/libp4spectec.so -> p4spectec runner
 ```
 
 The K side is implemented by
-[`al/4.1-extern-json.k`](spec-meta-k/al/4.1-extern-json.k) and
-[`al/4.2-extern-ffi.k`](spec-meta-k/al/4.2-extern-ffi.k). The thin C bridge is
-[`ffi/shim.c`](spec-meta-k/ffi/shim.c), which starts the embedded OCaml runtime
-and forwards requests to callbacks registered by `ffi.ml`. `make k`
-builds and links these pieces into the K interpreter.
+[`al/4.1-extern-json.k`](spec-meta-k/al/4.1-extern-json.k), the codec, and
+[`al/4.2-extern-ffi.k`](spec-meta-k/al/4.2-extern-ffi.k), the transport, which
+resolves the library's `host_init`, `host_eval`, and `host_strlen` symbols with
+`#functionAddress` and calls them with `#ffiCall`. The Rust side is
+[`ffi.rs`](p4spectec/src/metacross/ffi.rs), the `extern "C"` surface and the
+only module of the crate that uses `unsafe`;
+[`wire.rs`](p4spectec/src/metacross/wire.rs), the codec; and
+[`host.rs`](p4spectec/src/metacross/host.rs), which owns the runner built on
+`host_init` and dispatches each request. A builtin request goes to the
+interface's builtin table directly, so a builtin the script does not declare
+still resolves; an extern function or relation request runs through the loaded
+specification, and a derivation that does not exist is the `fail` reply.
+
+The reply of `host_eval` is a string the library owns, valid until the next
+`host_*` call; nothing is freed by the caller. The library keeps one runner
+for the whole process and never resets it between requests, so stateful
+builtins such as `fresh_typeId` behave as they do in a native run. All calls
+must come from the thread that called `host_init`.
+
+The wire itself, as the codec documents it:
+
+```text
+val      ::= ["boolV", bool] | ["natN", "<decimal>"] | ["intN", "<decimal>"]
+           | ["textV", text] | ["strV", [[atom, val]...]]
+           | ["injV", mixop, [val...]] | ["tupV", [val...]]
+           | ["optV", null | val] | ["listV", [val...]]
+           | ["funcV", id] | ["extV", json]
+mixop    ::= [[atom...]...]                  atoms between argument positions
+typ      ::= ["boolT"] | ["natT"] | ["intT"] | ["textT"]
+           | ["varT", id, [typ...]] | ["tupT", [typ...]]
+           | ["iterT", typ, "?" | "*"] | ["funcT"]
+request  ::= {"builtin": id, "targs": [typ...], "args": [val...]}
+           | {"extern-func": id, "targs": [typ...], "args": [val...]}
+           | {"extern-rel": id, "args": [val...]}
+response ::= {"ok": val} | {"ok": [val...]} | {"fail": null} | {"error": text}
+```
 
 ## PLT Redex
 
 `spec-meta-redex/` is a PLT Redex implementation of the P4-SpecTec AL
-meta-language. It transcribes the AL specification in `spec-meta/{common,al}`
-as a small-step reduction semantics and provides a third evaluator alongside
-the OCaml interpreter and the K implementation.
+meta-language. It transcribes the AL specification in `spec-meta/` as a
+small-step reduction semantics and provides a third evaluator alongside the
+Rust interpreter and the K implementation.
 
 The Redex implementation supports the same two main uses:
 
@@ -212,7 +283,7 @@ relation for inspecting and displaying the semantics.
 
 Install [Racket 9.3](https://download.racket-lang.org/). Racket's
 [`ffi2`](https://docs.racket-lang.org/ffi2/index.html?lang=ar&fam=Zuo) library
-is also needed to support builtins. Install it with:
+is also needed to reach the host library. Install it with:
 
 ```sh
 raco pkg install ffi2-lib
@@ -226,9 +297,10 @@ Build the Redex implementation from the repository root:
 make redex
 ```
 
-This builds `spectec-boot`, the OCaml host and C bridge, and compiles the
-Racket entry module with `raco make`. Rerun it after changing the OCaml or
-Redex sources to keep the compiled modules and host libraries up to date.
+This builds `bin/metacross` and `bin/libp4spectec.so`, then compiles the
+Racket entry module with `raco make`. Rerun it after changing the Redex
+sources to keep the compiled modules up to date; after changing the Rust
+sources, `make ffi` is enough, since Racket loads the library by path.
 
 Run a single P4-SpecTec program with `$main()`:
 
@@ -281,21 +353,20 @@ The entry point is [`al/7-entry.rkt`](spec-meta-redex/al/7-entry.rkt) for both
 AL and P4 programs. [`test/p4-typecheck.rkt`](spec-meta-redex/test/p4-typecheck.rkt)
 loads the specification once and reuses it across the P4 programs in a suite.
 
-### OCaml support and s-expressions
+### `metacross` and s-expressions
 
-The OCaml implementation provides two `spectec-boot` subcommands for preparing
-Redex inputs:
+`bin/metacross` prepares Redex inputs with two subcommands:
 
 | Command | Purpose |
 | --- | --- |
-| `sexp PATH [-o FILE]` | Boot a P4-SpecTec program or specification and emit a `script` term. |
+| `sexp PATH [-o FILE]` | Lower a P4-SpecTec program or specification to AL and emit a `script` term. |
 | `sexp-p4 -p FILE [-i DIR]... [-o FILE]` | Parse a P4 program and emit a `val` term. |
 
 For example:
 
 ```sh
-./spectec-boot sexp examples/add.watsup -o add.sexp
-./spectec-boot sexp-p4 \
+./bin/metacross sexp examples/add.watsup -o add.sexp
+./bin/metacross sexp-p4 \
   -p p4c/testdata/p4_16_samples/action-bind.p4 \
   -i p4c/p4include \
   -o program.sexp
@@ -312,39 +383,53 @@ exact integers, and booleans are `#t` or `#f`. For example:
 (OPT ((NAT 3)))
 ```
 
-The emitter is implemented in
-[`sexp.ml`](p4spec/lib/interface/spectec/ali/sexp.ml).
+The emitter is [`sexp.rs`](p4spectec/src/metacross/sexp.rs), a printer of the
+same meta values `kast.rs` walks.
 [`al/0-boot.rkt`](spec-meta-redex/al/0-boot.rkt) runs these commands and reads
 their output with Racket's `read`. It also decodes the JSON text in P4
 `(EXT json)` values into Racket JSON values.
 
-### Redex–OCaml wire
+### Redex–Rust wire
 
-Redex delegates object-level builtins and external definitions to the OCaml
+Redex delegates object-level builtins and external definitions to the Rust
 implementation over the same JSON wire as K:
 
 ```text
-Redex rules -> JSON codec -> Racket ffi2 -> C shim -> ffi.ml -> SpecTec runner
+Redex rules -> JSON codec -> Racket ffi2 -> bin/libp4spectec.so -> p4spectec runner
 ```
 
 The Redex side is implemented by
-[`common/0.1-extern-json.rkt`](spec-meta-redex/common/0.1-extern-json.rkt) and
-[`common/0.2-extern-ffi.rkt`](spec-meta-redex/common/0.2-extern-ffi.rkt). The C
-bridge is [`ffi/shim.c`](spec-meta-redex/ffi/shim.c), which forwards requests
-to callbacks registered by the shared [`ffi.ml`](p4spec/bin/ffi.ml).
-
-`make redex` builds `_build/default/p4spec/bin/ffi.so`, containing the OCaml
-runtime and host implementation, and `spec-meta-redex/ffi/shim.so`, which
-Racket loads through `ffi2`. The command-line entry point initializes the
-host with the script or specification path before evaluation. The OCaml
-runtime remains in the Racket process across calls.
+[`common/0.1-extern-json.rkt`](spec-meta-redex/common/0.1-extern-json.rkt), the
+codec, and [`common/0.2-extern-ffi.rkt`](spec-meta-redex/common/0.2-extern-ffi.rkt),
+which loads `bin/libp4spectec.so` with `ffi2` and binds `host_init` and
+`host_eval`. The Rust side is the one K uses, and the reply ownership rule of
+the K–Rust wire applies: the command-line entry point initializes the host
+with the script or specification path before evaluation, and the host runner
+stays in the Racket process across calls.
 
 A host failure reply becomes `FAIL`; a host error reply raises a Racket
 error. Redex delegates all object-level builtins, including map operations,
 to this host. Meta-level map helpers used by the evaluator operate on Redex's
 own environments in [`common/0.0-stdlib.rkt`](spec-meta-redex/common/0.0-stdlib.rkt).
 
-### Exploring in a REPL
+## Measurements
+
+Type-checking three P4 programs, with `spec` already converted and the
+native `bin/p4spectec run` as the reference. Wall-clock time and peak
+resident memory of the whole command, on one WSL2 machine:
+
+| Program | Native | K | Redex |
+| --- | --- | --- | --- |
+| `p4_16_samples/action-bind.p4` | passed, 0.8 s | passed, 7.5 s, 280 MB | passed, 12.5 s, 313 MB |
+| `p4_16_samples/action-synth.p4` | passed, 0.8 s | passed, 9.0 s, 303 MB | passed, 4 min 29 s, 312 MB |
+| `p4_16_errors/action-bind.p4` | fail, 0.8 s | fail, 7.6 s, 280 MB | fail, 6.7 s, 313 MB |
+
+The first K run of `spec` also converts it to KAST, which takes about 18 s and
+2.8 GB before the cache in `spec-meta-k/.kore-cache` exists. The host library
+accounts for none of the difference between the three columns; the time is in
+K rewriting and Redex matching.
+
+## Exploring in a REPL
 
 Start `racket` from the repository root. Redex renders the specification one
 definition at a time, with `language->pict`, `reduction-relation->pict`,
