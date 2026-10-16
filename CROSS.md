@@ -52,7 +52,7 @@ and the evaluator's environments and call state.
 Build the K definition from the repository root:
 
 ```sh
-make k-spec
+make k
 ```
 
 Run a single P4-SpecTec program with `$main()`:
@@ -89,7 +89,7 @@ relation holds and `fail` otherwise.
 Run the integration test suite with:
 
 ```sh
-make k-test
+make test-k
 ```
 
 The shell entry points are
@@ -155,7 +155,7 @@ The K side is implemented by
 [`al/4.1-extern-json.k`](spec-meta-k/al/4.1-extern-json.k) and
 [`al/4.2-extern-ffi.k`](spec-meta-k/al/4.2-extern-ffi.k). The thin C bridge is
 [`ffi/shim.c`](spec-meta-k/ffi/shim.c), which starts the embedded OCaml runtime
-and forwards requests to callbacks registered by `ffi.ml`. `make k-spec`
+and forwards requests to callbacks registered by `ffi.ml`. `make k`
 builds and links these pieces into the K interpreter.
 
 ## PLT Redex
@@ -268,7 +268,7 @@ for additional include directories.
 Run the integration test suite with:
 
 ```sh
-make redex-test
+make test-redex
 ```
 
 The suite checks `p4c/testdata/p4_16_samples` as positive tests and

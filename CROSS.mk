@@ -12,7 +12,7 @@ endif
 export CARGO_TARGET_DIR
 
 .DEFAULT_GOAL := metacross
-.PHONY: metacross metacross-cli ffi ffi-lib k-spec k-test redex redex-test clean
+.PHONY: metacross metacross-cli ffi ffi-lib k test-k redex test-redex clean
 
 # Rust
 
@@ -41,12 +41,12 @@ ffi: ffi-lib
 KDEFDIR = al-kompiled
 KSPECDIR = spec-meta-k
 
-k-spec: metacross ffi
+k: metacross ffi
 	kompile $(KSPECDIR)/al/6-entry.k --main-module AL --syntax-module AL-SYNTAX -o $(KDEFDIR) \
 	  -ccopt -L$(CURDIR)/bin -ccopt -Wl,--no-as-needed -ccopt -lp4spectec \
 	  -ccopt '-Wl,-rpath,$$ORIGIN/../bin'
 
-k-test: k-spec
+test-k: k
 	@status=0; \
 	python3 $(KSPECDIR)/scripts/run-k-typecheck.py || status=1; \
 	python3 $(KSPECDIR)/scripts/run-k-typecheck.py --neg || status=1; \
@@ -66,7 +66,7 @@ redex: metacross ffi
 
 # Type-checks the P4 programs of p4_16_samples (positive) and p4_16_errors
 # (negative).
-redex-test: redex
+test-redex: redex
 	raco make $(RTYPECHECK)
 	@status=0; \
 	racket $(RTYPECHECK) --p4-dir p4c/testdata/p4_16_samples -e excludes/static -i p4c/p4include spec || status=1; \

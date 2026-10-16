@@ -10,7 +10,7 @@
 ;; to pass, or with --neg to fail. Progress, the summary, and the programs
 ;; without the expected result go to stdout and a result file. The result file
 ;; also gets the stderr and error message of each program that raises.
-;; Run this with `make redex-test`, or:
+;; Run this with `make test-redex`, or:
 ;;
 ;;   raco make spec-meta-redex/test/p4-typecheck.rkt
 ;;   racket spec-meta-redex/test/p4-typecheck.rkt --p4-dir DIR -e DIR -i DIR [--neg] SPEC
