@@ -28,6 +28,11 @@ pub struct ValueArena {
     pub(super) bools: [Option<Value>; 2],
     /// Bodies, with canonical identities; a case reads its mixop's.
     values: super::lazy::Values,
+    /// Tail bodies already derived from immutable non-empty lists.
+    tails:
+        hashbrown::HashMap<Interned<ValueKind>, Interned<ValueKind>, foldhash::fast::RandomState>,
+    /// Exact structural columns, invalidated with their source bodies.
+    pub(super) columns: super::projection::Columns,
     /// Types, shared by exact contents including nested source spans.
     types: Interner<Rc<TypKind>>,
     /// Spans, shared by equality.
@@ -45,6 +50,8 @@ impl Default for ValueArena {
             generation: Rc::new(()),
             bools: [None; 2],
             values: super::lazy::Values::default(),
+            tails: Default::default(),
+            columns: Default::default(),
             types: Interner::new(),
             spans,
         }
@@ -78,6 +85,19 @@ impl ValueArena {
         Ok(Value { node, note, span })
     }
 
+    /// Constructs a composite, allocating children only for a new exact body.
+    pub(crate) fn composite(
+        &mut self,
+        arena_mixop: &MixopArena,
+        shape: super::projection::Shape,
+        typ: Rc<TypKind>,
+        values: &[Value],
+    ) -> Result<Value, ValueError> {
+        let node = self.values.composite(arena_mixop, shape, values)?;
+        let note = self.intern_typ(typ)?;
+        Ok(Value { node, note, span: Self::span_default() })
+    }
+
     /// Interns a body using the canonical identities of its mixops.
     pub(in crate::lang::data) fn intern_kind(
         &mut self,
@@ -102,6 +122,27 @@ impl ValueArena {
         span: Span,
     ) -> Result<Interned<Span>, std::num::TryFromIntError> {
         if span == Span::default() { Ok(Self::span_default()) } else { self.spans.intern(span) }
+    }
+
+    /// Reuses a list tail without copying and hashing the same suffix again.
+    pub(crate) fn list_tail(
+        &mut self,
+        arena_mixop: &MixopArena,
+        value: Value,
+    ) -> Result<Value, ValueError> {
+        let node = if let Some(node) = self.tails.get(&value.node) {
+            *node
+        } else {
+            let ValueKind::List(values) = self.kind(value.node) else { unreachable!("list tail") };
+            let values = values
+                .get(1..)
+                .expect("cons pattern must match a non-empty list")
+                .to_vec();
+            let node = self.intern_kind(arena_mixop, ValueKind::List(values))?;
+            self.tails.insert(value.node, node);
+            node
+        };
+        Ok(Value { node, note: value.note, span: Self::span_default() })
     }
 
     // - Lookup

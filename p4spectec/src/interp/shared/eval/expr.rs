@@ -5,7 +5,10 @@
 //! Operators delegate to `ops`, calls to the stage's `Invoker`,
 //! iterations to `iter::map`.
 
-use std::{borrow::Borrow, rc::Rc};
+use std::{
+    borrow::{Borrow, Cow},
+    rc::Rc,
+};
 
 use crate::lang::{
     common::source::Span,
@@ -26,18 +29,54 @@ use crate::runtime::{
 use crate::runner::{Extern, Interface, RunnerContext};
 
 use crate::interp::shared::{
-    backtrack::{Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
+    backtrack::{Backtrack, WithFrame, ok, unwrap, unwrap_from_result},
     util::find_slot_of_exp,
 };
 
 use super::super::context::ReadContext;
 
 use super::{Invoker, arg::eval_args, iter, ops, path::eval_update_path};
+use crate::lang::data::value::flat::projection::Shape;
 
 // = Expression evaluation
 
 /// Evaluates an expression, nesting failures under an evaluation trace.
+#[inline(always)]
 pub(crate) fn eval_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
+    runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
+    ctx: &Interp::Context<'global>,
+    exp: &ast::Exp,
+) -> Backtrack<Value> {
+    match &exp.node {
+        // Variables and identity iterations read their slot without a trace frame
+        ast::ExpKind::Id(id) => eval_id_exp(ctx, id),
+        ast::ExpKind::Iter(..) if let Some(slot) = find_slot_of_exp(ctx, exp) => {
+            ok!(*ctx.find_value_at_slot(slot).expect("value must be bound"))
+        }
+        // Calls keep their trace frame outside the general evaluator
+        ast::ExpKind::Call(..) => eval_call_exp_with_frame(runner_ctx, ctx, exp),
+        // Every other expression goes through the general evaluator
+        _ => eval_exp_inner(runner_ctx, ctx, exp),
+    }
+}
+
+/// Evaluates calls without reserving the general expression evaluator's frame.
+#[inline(never)]
+fn eval_call_exp_with_frame<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
+    runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
+    ctx: &Interp::Context<'global>,
+    exp: &ast::Exp,
+) -> Backtrack<Value> {
+    let ast::ExpKind::Call(id, targs, args) = &exp.node else {
+        unreachable!("call expression dispatch")
+    };
+    eval_call_exp(runner_ctx, ctx, id, targs, args).with_frame(exp.span, || {
+        format!("while evaluating expression {}", exp.view(&runner_ctx.arena().mixop).to_string())
+    })
+}
+
+/// Evaluates any other expression under its evaluation trace frame.
+fn eval_exp_inner<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     ctx: &Interp::Context<'global>,
     exp: &ast::Exp,
@@ -250,12 +289,7 @@ fn eval_tuple_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: E
     typ: &Rc<ast::TypKind>,
     exps: &[ast::Exp],
 ) -> Backtrack<Value> {
-    let values = unwrap!(eval_exps(runner_ctx, ctx, exps));
-    let value = unwrap_from_result!(
-        value::make::tuple(runner_ctx.arena_mut(), typ.clone(), values, Span::default()),
-        span
-    );
-    ok!(value)
+    eval_composite(runner_ctx, ctx, span, typ, Shape::Tuple, exps)
 }
 
 // - Case expression
@@ -268,23 +302,7 @@ fn eval_case_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     typ: &Rc<ast::TypKind>,
     not_exp: &ast::NotExp,
 ) -> Backtrack<Value> {
-    // Evaluate and rebuild in one traversal, preserving early failure and order
-    let eval_exp_arg = |exp: &ast::Exp| match eval_exp(runner_ctx, ctx, exp) {
-        ok!(value) => Ok(value),
-        fatal!(errors) => Err(fatal!(errors)),
-        unmatch!(errors) => Err(unmatch!(errors)),
-    };
-    let case = match not_exp.try_map(eval_exp_arg) {
-        Ok(case) => case,
-        Err(result) => return result,
-    };
-    // The prepared shape already belongs to the arena
-    let kind = ValueKind::Case(case);
-    let value = unwrap_from_result!(
-        Value::new(runner_ctx.arena_mut(), kind, typ.clone(), Span::default()),
-        span
-    );
-    ok!(value)
+    eval_composite(runner_ctx, ctx, span, typ, Shape::Case(*not_exp.mixop()), not_exp.args())
 }
 
 // - Struct expression
@@ -339,9 +357,24 @@ fn eval_list_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     typ: &Rc<ast::TypKind>,
     exps: &[ast::Exp],
 ) -> Backtrack<Value> {
+    eval_composite(runner_ctx, ctx, span, typ, Shape::List, exps)
+}
+
+/// Evaluates a constructor's children before querying exact storage.
+fn eval_composite<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
+    runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
+    ctx: &Interp::Context<'global>,
+    span: &Span,
+    typ: &Rc<ast::TypKind>,
+    shape: Shape,
+    exps: &[ast::Exp],
+) -> Backtrack<Value> {
     let values = unwrap!(eval_exps(runner_ctx, ctx, exps));
+    let arena = runner_ctx.arena_mut();
     let value = unwrap_from_result!(
-        value::make::list(runner_ctx.arena_mut(), typ.clone(), values, Span::default()),
+        arena
+            .value
+            .composite(&arena.mixop, shape, typ.clone(), &values),
         span
     );
     ok!(value)
@@ -531,10 +564,10 @@ fn eval_upd_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
 // - Call expression
 
 /// Substitutes local plain type aliases into type arguments before a call.
-pub(crate) fn resolve_targs(
+pub(crate) fn resolve_targs<'a>(
     ctx: &impl ReadContext,
-    targs: &[ast::Typ],
-) -> Result<Vec<ast::Typ>, TypeError> {
+    targs: &'a [ast::Typ],
+) -> Result<Cow<'a, [ast::Typ]>, TypeError> {
     // Only unparameterized plain aliases in local scope are substituted
     let find_subst = |id: &ast::Id| match ctx.find_typdef_local_opt(id)? {
         TypeDef::Defined(tparams, def_typ) if tparams.is_empty() => match &def_typ.node {
@@ -543,10 +576,26 @@ pub(crate) fn resolve_targs(
         },
         _ => None,
     };
+    // Reuse unchanged arguments; function binders still need freshening.
+    fn unchanged<'a>(typ: &ast::Typ, find: &impl Fn(&ast::Id) -> Option<&'a ast::Typ>) -> bool {
+        match &typ.node {
+            ast::TypKind::Bool | ast::TypKind::Num(_) | ast::TypKind::Text => true,
+            ast::TypKind::Var(id, targs) => {
+                find(id).is_none() && targs.iter().all(|typ| unchanged(typ, find))
+            }
+            ast::TypKind::Tuple(typs) => typs.iter().all(|typ| unchanged(typ, find)),
+            ast::TypKind::Iter(typ, _) => unchanged(typ, find),
+            ast::TypKind::Func(_) => false,
+        }
+    }
+    if targs.iter().all(|typ| unchanged(typ, &find_subst)) {
+        return Ok(Cow::Borrowed(targs));
+    }
     targs
         .iter()
         .map(|targ| subst_typ(&find_subst, targ))
-        .collect()
+        .collect::<Result<Vec<_>, _>>()
+        .map(Cow::Owned)
 }
 
 /// Resolves type arguments, evaluates arguments, and invokes the function.
@@ -577,6 +626,9 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     // `x*` as an expression is just the bound value
     if let Some(slot) = find_slot_of_exp(ctx, exp) {
         return ok!(*ctx.find_value_at_slot(slot).expect("value must be bound"));
+    }
+    if let Some(result) = super::rows::map(runner_ctx.arena_mut(), ctx, exp, exp_inner, exp_iter) {
+        return result;
     }
     // Otherwise map the body over the iterated variables
     iter::map(runner_ctx, ctx, span, typ, exp_iter, |runner_ctx, ctx_sub| {
