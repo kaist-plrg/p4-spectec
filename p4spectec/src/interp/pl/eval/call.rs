@@ -162,7 +162,7 @@ fn check_func_output(
 // = Cache eligibility
 
 /// Checks whether memoization is enabled for this defined relation.
-pub(crate) fn cache_rel<Iface: Interface, Ext: Extern>(
+pub(crate) fn is_cacheable_rel<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     id: &ast::Id,
@@ -175,7 +175,7 @@ pub(crate) fn cache_rel<Iface: Interface, Ext: Extern>(
 ///
 /// Requires caching on, a global non-extern function,
 /// and no function-valued argument.
-pub(crate) fn cache_func<Iface: Interface, Ext: Extern>(
+pub(crate) fn is_cacheable_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     id: &ast::Id,
@@ -199,7 +199,7 @@ pub(crate) fn invoke_rel<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Vec<Value>> {
     // Serve from the cache when eligible
-    let cache = cache_rel(runner_ctx, ctx, id);
+    let cache = is_cacheable_rel(runner_ctx, ctx, id);
     if cache
         && let Some(values) =
             runner_ctx
@@ -322,7 +322,7 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Value> {
     // Serve from the cache when eligible
-    let cache = cache_func(runner_ctx, ctx, id, values);
+    let cache = is_cacheable_func(runner_ctx, ctx, id, values);
     if cache
         && let Some(value) =
             runner_ctx

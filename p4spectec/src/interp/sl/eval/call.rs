@@ -166,7 +166,7 @@ fn check_func_output(
 // = Cache eligibility
 
 /// Whether a relation call may be memoized: caching on, relation defined.
-pub(in crate::interp::sl) fn cache_rel<Iface: Interface, Ext: Extern>(
+pub(in crate::interp::sl) fn is_cacheable_rel<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     id: &ast::Id,
@@ -179,7 +179,7 @@ pub(in crate::interp::sl) fn cache_rel<Iface: Interface, Ext: Extern>(
 ///
 /// Requires caching on, a global non-extern function,
 /// and no function-valued argument.
-pub(in crate::interp::sl) fn cache_func<Iface: Interface, Ext: Extern>(
+pub(in crate::interp::sl) fn is_cacheable_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     id: &ast::Id,
@@ -210,7 +210,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
     let mut keys_cache = Vec::new();
     loop {
         // Serve from the cache when eligible
-        let cache = cache_rel(runner_ctx, ctx, &id);
+        let cache = is_cacheable_rel(runner_ctx, ctx, &id);
         if cache
             && let Some(values) =
                 runner_ctx
@@ -368,7 +368,7 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
     let mut keys_cache = Vec::new();
     loop {
         // Serve from the cache when eligible
-        let cache = cache_func(runner_ctx, ctx, &id, &values);
+        let cache = is_cacheable_func(runner_ctx, ctx, &id, &values);
         if cache
             && let Some(value) =
                 runner_ctx
