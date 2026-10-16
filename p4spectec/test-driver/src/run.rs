@@ -27,7 +27,8 @@ struct CollectedSuite {
 
 /// Runs registered execution suites with the selected interpreter.
 pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) -> Result<()> {
-    let ExecutionOptions { cache_on, det } = options;
+    let ExecutionOptions { cache_on, no_det } = options;
+    let det = !no_det;
     let text_cache = if cache_on { "on" } else { "off" };
     // Collect registered corpus roots in suite order
     let suites = config
@@ -121,6 +122,7 @@ where
     );
     let mut executed = 0;
     let mut passed = 0;
+    let guard_stdout = crate::output::SilenceStdout::new()?;
     thread::scope(|scope| -> Result<()> {
         let (sender, receiver) = mpsc::sync_channel(2);
         scope.spawn(move || {
@@ -188,6 +190,7 @@ where
         }
         Ok(())
     })?;
+    guard_stdout.finish()?;
     progress.finish_with_message("complete");
     eprintln!(
         "{text_mode}: collected={collected} excluded={excluded} executed={executed} pass={passed} fail={} elapsed={:.3}s",

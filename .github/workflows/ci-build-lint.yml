@@ -1,0 +1,40 @@
+name: Rust build and lint
+
+on:
+  pull_request:
+    branches: [rust-port, main]
+  push:
+    branches: [rust-port, main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-build-lint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select the pinned Rust toolchain
+        working-directory: p4spectec
+        run: rustup show
+
+      - name: Cache Rust dependencies and build output
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            p4spectec/target
+          key: rust-build-lint-${{ runner.os }}-${{ hashFiles('p4spectec/rust-toolchain.toml', '**/Cargo.lock') }}
+
+      - name: Build and lint
+        run: make debug lint

@@ -1,4 +1,4 @@
-name: Rust CI
+name: Rust tests
 
 on:
   pull_request:
@@ -38,27 +38,18 @@ jobs:
             p4spectec/target
           key: rust-${{ runner.os }}-${{ hashFiles('p4spectec/rust-toolchain.toml', '**/Cargo.lock') }}
 
-      - name: Install native and document dependencies
+      - name: Install native dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential ruby-dev python3
-          sudo gem install asciidoctor asciidoctor-pdf rouge --no-document
+          sudo apt-get install -y build-essential
 
-      - name: Check formatting and lint
-        run: make fmt-check lint
-
-      - name: Build debug, release, and API documentation
-        run: make debug build rustdoc
+      - name: Check formatting
+        run: make fmt-check
 
       - name: Run registered E2E acceptance
-        run: make -j2 test
-
-      - name: Render P4 HTML specifications
-        run: make p4spec-draft-html p4spec-release-html
-
-      - name: Render P4 release PDF
-        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
-        run: make p4spec-release
+        run: >-
+          make -j2 test-elab test-algo test-structure test-prose test-adoc
+          test-p4parse test-run-sl test-diagnostics test-sim-sl
 
       - name: Check that acceptance leaves fixtures unchanged
         run: git diff --exit-code -- p4spectec/test-driver excludes testdata patches

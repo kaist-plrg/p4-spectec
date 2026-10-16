@@ -1,6 +1,6 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
-    fs, io,
+    fs,
     path::{Path, PathBuf},
     time::Instant,
 };
@@ -175,7 +175,8 @@ fn run_with<BuildSpec>(
 where
     BuildSpec: Fn() -> Result<Spec>,
 {
-    let ExecutionOptions { cache_on, det } = options;
+    let ExecutionOptions { cache_on, no_det } = options;
+    let det = !no_det;
     let text_cache = if cache_on { "on" } else { "off" };
     let start = Instant::now();
     let mut excludes = BTreeSet::new();
@@ -234,16 +235,16 @@ where
             })
             .count();
         let patched_arch = pairs_arch.filter(|pair| pair.patched).count();
-        let mut simulator = sim_plugin::build_with_output(
+        let mut simulator = sim_plugin::build(
             build_spec()?,
             arch,
             Config::new(cache_on, det, false),
             Encoding::default(),
-            io::sink(),
         )
         .map_err(|error| Error::Invalid(error.to_string()))?;
         for (suite, pairs) in suites.iter().filter(|(suite, _)| suite.arch == arch) {
             let mut results = Results::new(&suite.expected);
+            let guard_stdout = crate::output::SilenceStdout::new()?;
             for pair in pairs {
                 let id = format!(
                     "{}:{}:{}",
@@ -276,6 +277,7 @@ where
                 executed += 1;
                 progress.inc(1);
             }
+            guard_stdout.finish()?;
             results.check();
         }
         eprintln!(
