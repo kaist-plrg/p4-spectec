@@ -124,6 +124,15 @@ impl SpecEnv {
 // = Function signatures
 
 impl FuncSignature for ast::MetaFuncDef {
+    fn id(&self) -> &ast::Id {
+        match self {
+            ast::MetaFuncDef::Extern(func) => &func.id,
+            ast::MetaFuncDef::Builtin(func) => &func.id,
+            ast::MetaFuncDef::Table(func) => &func.id,
+            ast::MetaFuncDef::Defined(func) => &func.id,
+        }
+    }
+
     fn func_typ(&self) -> FuncTyp {
         fn param_typ(param: &ast::Param) -> ast::Typ {
             match &param.node {

@@ -39,6 +39,8 @@ use crate::interp::shared::{
 pub trait FuncSignature {
     /// Extracts the type parameters, parameter types, and return type.
     fn func_typ(&self) -> ast::FuncTyp;
+    /// Names the global definition.
+    fn id(&self) -> &ast::Id;
 }
 
 // = Context access
@@ -75,6 +77,10 @@ pub trait ReadContext {
     fn find_func(&self, id: &ast::Id) -> Result<&Rc<Self::Func>, Error>;
     /// Finds the type of a function by id.
     fn find_func_typ(&self, id: &ast::Id) -> Result<ast::FuncTyp, Error>;
+    /// Names the global definition behind a function reference, at its span.
+    fn find_func_global_id(&self, id: &ast::Id) -> Result<ast::Id, Error>;
+    /// Finds a global function definition, ignoring local function arguments.
+    fn find_func_global(&self, id: &ast::Id) -> Result<&Rc<Self::Func>, Error>;
 }
 
 /// Write access to type, value, and function bindings.
@@ -327,12 +333,8 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
         &'a self,
         id: &ast::Id,
     ) -> Result<(Scope, &'a Rc<Callable<F>>), Error> {
-        self.find_func_opt(id).ok_or_else(|| {
-            let diagnostic =
-                error::context::binding_undefined(EntityKind::Function, id.node.to_string())
-                    .with_label(Label::primary(&id.span, ""));
-            Box::new(Report::from(diagnostic))
-        })
+        self.find_func_opt(id)
+            .ok_or_else(|| error_func_undefined(id))
     }
 
     // == Adders
@@ -353,6 +355,13 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
 }
 
 // = Read access
+
+/// Reports an unbound function at its reference.
+fn error_func_undefined(id: &ast::Id) -> Error {
+    let diagnostic = error::context::binding_undefined(EntityKind::Function, id.node.to_string())
+        .with_label(Label::primary(&id.span, ""));
+    Box::new(Report::from(diagnostic))
+}
 
 impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
     type Func = Callable<F>;
@@ -408,6 +417,18 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
 
     fn find_func_typ(&self, id: &ast::Id) -> Result<ast::FuncTyp, Error> {
         Ok(self.find_func(id)?.def.func_typ())
+    }
+
+    fn find_func_global_id(&self, id: &ast::Id) -> Result<ast::Id, Error> {
+        let func = self.find_func(id)?;
+        Ok(crate::phrase!(node: func.def.id().node.clone(), span: id.span))
+    }
+
+    fn find_func_global(&self, id: &ast::Id) -> Result<&Rc<Self::Func>, Error> {
+        self.global
+            .fenv
+            .get(id)
+            .ok_or_else(|| error_func_undefined(id))
     }
 }
 
