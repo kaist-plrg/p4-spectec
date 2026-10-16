@@ -122,6 +122,7 @@ where
     );
     let mut executed = 0;
     let mut passed = 0;
+    let guard_stdout = crate::output::SilenceStdout::new()?;
     thread::scope(|scope| -> Result<()> {
         let (sender, receiver) = mpsc::sync_channel(2);
         scope.spawn(move || {
@@ -189,6 +190,7 @@ where
         }
         Ok(())
     })?;
+    guard_stdout.finish()?;
     progress.finish_with_message("complete");
     eprintln!(
         "{text_mode}: collected={collected} excluded={excluded} executed={executed} pass={passed} fail={} elapsed={:.3}s",
