@@ -1,7 +1,8 @@
 //! Memoized successful pure calls
 //!
 //! Memo keys belong to the shared execution arena.
-//! Public entries clear the memo tables.
+//! Evaluation entries retain memo tables within one program.
+//! Clear or reset drops the tables; reset runners before resetting arena values.
 //! RunnerContext records effects independently of memoization.
 
 use std::{

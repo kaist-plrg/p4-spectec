@@ -75,8 +75,6 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for SlInterp {
         name: &str,
         values: &[Value],
     ) -> Result<Vec<Value>, InterpreterError> {
-        // Public entries start from a fresh cache
-        runner_ctx.interp_mut().cache.clear();
         let id = crate::phrase!(node: name.into(), span: Span::default());
         let ctx = Context::new(runner_ctx.spec_env());
         // Check the caller's inputs before running the definition
@@ -96,8 +94,6 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for SlInterp {
         targs: &[ast::Typ],
         values: &[Value],
     ) -> Result<Value, InterpreterError> {
-        // Public entries start from a fresh cache
-        runner_ctx.interp_mut().cache.clear();
         let id = crate::phrase!(node: name.into(), span: Span::default());
         let ctx = Context::new(runner_ctx.spec_env());
         // Check the caller's inputs before running the definition
