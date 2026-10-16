@@ -29,12 +29,14 @@ use self::external::{DecodeContext, EncodeContext};
 
 mod arena;
 mod cmp;
+mod composite;
 mod convert;
 pub mod external;
 pub mod get;
-mod hash;
+pub(crate) mod hash;
 pub mod make;
 mod print;
+pub(crate) mod projection;
 mod view;
 
 pub use arena::ValueArena;

@@ -17,7 +17,7 @@ use crate::lang::{
 };
 
 use super::super::ValueError;
-use super::{Value, ValueKind};
+use super::{Value, ValueKind, projection::Shape};
 
 // = Arena storage
 
@@ -28,6 +28,11 @@ pub struct ValueArena {
     pub(super) bools: [Option<Value>; 2],
     /// Bodies, with canonical identities; a case reads its mixop's.
     values: CanonInterner<ValueKind>,
+    /// Tail bodies already derived from immutable non-empty lists.
+    tails:
+        hashbrown::HashMap<Interned<ValueKind>, Interned<ValueKind>, foldhash::fast::RandomState>,
+    /// Exact structural columns, invalidated with their source bodies.
+    pub(super) columns: super::projection::Columns,
     /// Types, shared by exact contents including nested source spans.
     types: Interner<Rc<TypKind>>,
     /// Spans, shared by equality.
@@ -41,7 +46,14 @@ impl Default for ValueArena {
             .intern_default()
             .expect("the first span fits in an interner index");
         debug_assert_eq!(span_default, Self::span_default());
-        Self { bools: [None; 2], values: CanonInterner::new(), types: Interner::new(), spans }
+        Self {
+            bools: [None; 2],
+            values: CanonInterner::new(),
+            tails: Default::default(),
+            columns: Default::default(),
+            types: Interner::new(),
+            spans,
+        }
     }
 }
 
@@ -67,6 +79,29 @@ impl ValueArena {
         Ok(Value { node, note, span })
     }
 
+    /// Constructs a composite, allocating children only for a new exact body.
+    pub(crate) fn composite(
+        &mut self,
+        arena_mixop: &MixopArena,
+        shape: Shape,
+        typ: Rc<TypKind>,
+        values: &[Value],
+    ) -> Result<Value, ValueError> {
+        let query = super::composite::Composite { shape, values };
+        let node = self
+            .values
+            .intern_with(arena_mixop, &query, || match shape {
+                Shape::Tuple => ValueKind::Tuple(values.to_vec()),
+                Shape::List => ValueKind::List(values.to_vec()),
+                Shape::Case(mixop) => ValueKind::Case(
+                    super::ValueCase::new(arena_mixop, mixop, values.to_vec())
+                        .expect("prepared constructor arity"),
+                ),
+            })?;
+        let note = self.intern_typ(typ)?;
+        Ok(Value { node, note, span: Self::span_default() })
+    }
+
     /// Interns a body using the canonical identities of its mixops.
     pub(in crate::lang::data) fn intern_kind(
         &mut self,
@@ -90,6 +125,27 @@ impl ValueArena {
         span: Span,
     ) -> Result<Interned<Span>, std::num::TryFromIntError> {
         if span == Span::default() { Ok(Self::span_default()) } else { self.spans.intern(span) }
+    }
+
+    /// Reuses a list tail without copying and hashing the same suffix again.
+    pub(crate) fn list_tail(
+        &mut self,
+        arena_mixop: &MixopArena,
+        value: Value,
+    ) -> Result<Value, ValueError> {
+        let node = if let Some(node) = self.tails.get(&value.node) {
+            *node
+        } else {
+            let ValueKind::List(values) = self.kind(value.node) else { unreachable!("list tail") };
+            let values = values
+                .get(1..)
+                .expect("cons pattern must match a non-empty list")
+                .to_vec();
+            let node = self.intern_kind(arena_mixop, ValueKind::List(values))?;
+            self.tails.insert(value.node, node);
+            node
+        };
+        Ok(Value { node, note: value.note, span: Self::span_default() })
     }
 
     // - Lookup

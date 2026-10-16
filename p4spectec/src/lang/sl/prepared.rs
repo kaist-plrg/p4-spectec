@@ -73,7 +73,7 @@ pub type DefinedFunc = source::DefinedFunc<Prepared>;
 #[derive(Clone, Debug, PartialEq)]
 pub enum RuleInstr {
     /// Binds the relation's outputs and runs its continuation.
-    Call(source::RuleInstr<Prepared>),
+    Call(RuleCallInstr),
     /// Returns the relation's outputs through the tail-call dispatch loop.
     Tail(RuleTailInstr),
 }
@@ -83,4 +83,14 @@ pub enum RuleInstr {
 pub struct RuleTailInstr {
     pub id: Id,
     pub exps_input: Vec<Exp>,
+}
+
+/// A relation call with input and output positions resolved during preparation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RuleCallInstr {
+    pub id: Id,
+    pub exps_input: Vec<Exp>,
+    pub exps_output: Vec<Exp>,
+    pub iter_instrs: Vec<InstrIter>,
+    pub block: Block,
 }
