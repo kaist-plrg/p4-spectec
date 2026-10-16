@@ -62,6 +62,25 @@ impl Values {
             self.canon.push(Cell::new(None));
         }
     }
+    pub(super) fn composite(
+        &mut self,
+        arena_mixop: &MixopArena,
+        shape: super::projection::Shape,
+        values: &[super::Value],
+    ) -> Result<Interned<ValueKind>, TryFromIntError> {
+        use super::projection::Shape;
+        let query = super::composite::Composite { shape, values };
+        let id = self.storage.intern_with(&query, || match shape {
+            Shape::Tuple => ValueKind::Tuple(values.to_vec()),
+            Shape::List => ValueKind::List(values.to_vec()),
+            Shape::Case(mixop) => ValueKind::Case(
+                super::ValueCase::new(arena_mixop, mixop, values.to_vec())
+                    .expect("prepared constructor arity"),
+            ),
+        })?;
+        self.register(arena_mixop, id);
+        Ok(id)
+    }
     fn compute(&self, id: Interned<ValueKind>) {
         let value = self.storage.get(id);
         let mut hasher = self.hasher.build_hasher();

@@ -107,6 +107,21 @@ impl<T: Eq + Hash> Interner<T> {
         self.insert(item, hash)
     }
 
+    /// Looks up a borrowed representation before allocating a new item.
+    pub(crate) fn intern_with<Q: Hash + hashbrown::Equivalent<T>>(
+        &mut self,
+        query: &Q,
+        make: impl FnOnce() -> T,
+    ) -> Result<Interned<T>, TryFromIntError> {
+        let hash = self.hasher.hash_one(query);
+        if let Some(entry) = self.table.find(hash, |entry| {
+            entry.hash == hash && query.equivalent(&self.items[entry.index as usize])
+        }) {
+            return Ok(Interned::from_index(entry.index));
+        }
+        self.insert(make(), hash)
+    }
+
     // - Table operations
 
     /// The handle of an equal stored item, if any.
