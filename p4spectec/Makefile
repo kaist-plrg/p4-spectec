@@ -65,15 +65,12 @@ test-p4parse:
 
 test-run-al:
 	env -u UPDATE_EXPECT $(DRIVER) run al
-	env -u UPDATE_EXPECT $(DRIVER) run al --det
 
 test-run-sl:
 	env -u UPDATE_EXPECT $(DRIVER) run sl
-	env -u UPDATE_EXPECT $(DRIVER) run sl --det
 
 test-run-pl:
 	env -u UPDATE_EXPECT $(DRIVER) run pl
-	env -u UPDATE_EXPECT $(DRIVER) run pl --det
 
 test-expected: test-elab test-algo test-structure test-prose test-adoc test-p4parse test-run-al test-run-sl test-run-pl test-diagnostics
 
@@ -90,15 +87,12 @@ test-promote:
 
 test-sim-al:
 	env -u UPDATE_EXPECT $(DRIVER) sim al
-	env -u UPDATE_EXPECT $(DRIVER) sim al --det
 
 test-sim-sl:
 	env -u UPDATE_EXPECT $(DRIVER) sim sl
-	env -u UPDATE_EXPECT $(DRIVER) sim sl --det
 
 test-sim-pl:
 	env -u UPDATE_EXPECT $(DRIVER) sim pl
-	env -u UPDATE_EXPECT $(DRIVER) sim pl --det
 
 diagnostic-cli: release
 

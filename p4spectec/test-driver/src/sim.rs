@@ -175,7 +175,8 @@ fn run_with<BuildSpec>(
 where
     BuildSpec: Fn() -> Result<Spec>,
 {
-    let ExecutionOptions { cache_on, det } = options;
+    let ExecutionOptions { cache_on, no_det } = options;
+    let det = !no_det;
     let text_cache = if cache_on { "on" } else { "off" };
     let start = Instant::now();
     let mut excludes = BTreeSet::new();

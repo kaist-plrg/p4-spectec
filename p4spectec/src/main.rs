@@ -237,9 +237,9 @@ struct RunArgs {
     /// Disable interpreter call caching.
     #[arg(long)]
     no_cache: bool,
-    /// Check deterministic execution.
+    /// Disable deterministic execution checks.
     #[arg(long)]
-    det: bool,
+    no_det: bool,
     /// Check interpreter guards.
     #[arg(long)]
     guard: bool,
@@ -256,7 +256,7 @@ fn run_command(args: RunArgs) -> Result<(), ()> {
     .map_err(|report| render_report(&mut renderer, &report))?;
 
     // Execute with the requested interpreter controls
-    let config = runner::Config::new(!args.no_cache, args.det, args.guard);
+    let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard);
     p4spectec::run(spec, config, &args.relation, &args.includes, &args.program).map_err(
         |error| match error {
             RunError::Build(report) => {
@@ -307,9 +307,9 @@ struct SimArgs {
     /// Disable interpreter call caching.
     #[arg(long)]
     no_cache: bool,
-    /// Check deterministic execution.
+    /// Disable deterministic execution checks.
     #[arg(long)]
-    det: bool,
+    no_det: bool,
     /// Check interpreter guards.
     #[arg(long)]
     guard: bool,
@@ -326,7 +326,7 @@ fn sim_command(args: SimArgs) -> Result<(), ()> {
     .map_err(|report| render_report(&mut renderer, &report))?;
 
     // Build the requested native architecture
-    let config = runner::Config::new(!args.no_cache, args.det, args.guard);
+    let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard);
     let mut simulator = p4spectec::build_simulator(spec, &args.arch, config, args.plugin_encoding)
         .map_err(|report| render_report(&mut renderer, &report))?;
 

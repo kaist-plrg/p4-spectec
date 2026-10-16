@@ -27,7 +27,8 @@ struct CollectedSuite {
 
 /// Runs registered execution suites with the selected interpreter.
 pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) -> Result<()> {
-    let ExecutionOptions { cache_on, det } = options;
+    let ExecutionOptions { cache_on, no_det } = options;
+    let det = !no_det;
     let text_cache = if cache_on { "on" } else { "off" };
     // Collect registered corpus roots in suite order
     let suites = config
