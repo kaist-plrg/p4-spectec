@@ -130,6 +130,7 @@ pub struct Runner<Iface: Interface, Ext: Extern> {
     pub(crate) interface: Iface,
     pub(crate) external: Ext,
     pub(crate) effects: u64,
+    pub(crate) hooks: Hooks,
 }
 
 /// Pairs one stage's prepared definitions with its interpreter state.
@@ -164,7 +165,12 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 interp: PlInterp::new(PlConfig::new(config.cache, config.det, config.guard)),
             },
         };
-        Ok(Self { backend, interface, external, effects: 0 })
+        Ok(Self { backend, interface, external, effects: 0, hooks: Hooks::default() })
+    }
+
+    /// Borrows the handlers retained across evaluations and program resets.
+    pub fn hooks_mut(&mut self) -> &mut Hooks {
+        &mut self.hooks
     }
 
     // - Parsing
@@ -198,6 +204,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 &mut self.interface,
                 &mut self.external,
                 &mut self.effects,
+                &mut self.hooks,
             )
             .call_program(name, program),
             Backend::Sl { spec_env, interp } => RunnerContext::new(
@@ -207,6 +214,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 &mut self.interface,
                 &mut self.external,
                 &mut self.effects,
+                &mut self.hooks,
             )
             .call_program(name, program),
             Backend::Pl { spec_env, interp } => RunnerContext::new(
@@ -216,6 +224,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 &mut self.interface,
                 &mut self.external,
                 &mut self.effects,
+                &mut self.hooks,
             )
             .call_program(name, program),
         }
@@ -236,6 +245,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 &mut self.interface,
                 &mut self.external,
                 &mut self.effects,
+                &mut self.hooks,
             )
             .call_rel(name, values),
             Backend::Sl { spec_env, interp } => RunnerContext::new(
@@ -245,6 +255,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 &mut self.interface,
                 &mut self.external,
                 &mut self.effects,
+                &mut self.hooks,
             )
             .call_rel(name, values),
             Backend::Pl { spec_env, interp } => RunnerContext::new(
@@ -254,6 +265,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 &mut self.interface,
                 &mut self.external,
                 &mut self.effects,
+                &mut self.hooks,
             )
             .call_rel(name, values),
         }
@@ -275,6 +287,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 &mut self.interface,
                 &mut self.external,
                 &mut self.effects,
+                &mut self.hooks,
             )
             .call_func(name, targs, values),
             Backend::Sl { spec_env, interp } => RunnerContext::new(
@@ -284,6 +297,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 &mut self.interface,
                 &mut self.external,
                 &mut self.effects,
+                &mut self.hooks,
             )
             .call_func(name, targs, values),
             Backend::Pl { spec_env, interp } => RunnerContext::new(
@@ -293,6 +307,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 &mut self.interface,
                 &mut self.external,
                 &mut self.effects,
+                &mut self.hooks,
             )
             .call_func(name, targs, values),
         }
@@ -303,6 +318,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
     /// Starts an independent program, keeping definitions and configuration.
     ///
     /// Clears this runner's caches, host state, and effects.
+    /// Preserves registered handlers and their observation state.
     /// Reset every runner sharing an arena before calling `Arena::reset_values`.
     pub fn reset(&mut self) {
         self.effects = 0;

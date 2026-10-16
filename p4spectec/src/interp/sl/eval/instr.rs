@@ -136,6 +136,7 @@ pub fn eval_instr<Iface: Interface, Ext: Extern>(
     tail: bool,
 ) -> Backtrack<Flow> {
     let span = &instr.span;
+    runner_ctx.on_instr(instr);
     // Grow the stack for deep blocks
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
         match &instr.node {
