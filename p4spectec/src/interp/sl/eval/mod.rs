@@ -22,6 +22,7 @@ use super::{SlInterp, context::Context};
 impl<Iface: Interface, Ext: Extern> Invoker<Iface, Ext> for SlInterp {
     type Context<'global> = Context<'global>;
 
+    #[inline(always)]
     fn invoke_func<'global>(
         runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
         ctx: &Context<'global>,
@@ -32,6 +33,7 @@ impl<Iface: Interface, Ext: Extern> Invoker<Iface, Ext> for SlInterp {
         call::invoke_func(runner_ctx, ctx, id, targs, values)
     }
 
+    #[inline(always)]
     fn invoke_rel<'global>(
         runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
         ctx: &Context<'global>,

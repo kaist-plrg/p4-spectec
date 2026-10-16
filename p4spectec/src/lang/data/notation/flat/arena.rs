@@ -85,3 +85,9 @@ impl MixopArena {
         self.mixops.canon_id(mixop)
     }
 }
+
+impl crate::lang::data::intern::CanonLookup<MixopKind> for MixopArena {
+    fn canon_id(&self, id: Mixop) -> CanonId<MixopKind> {
+        self.canon_id(id)
+    }
+}

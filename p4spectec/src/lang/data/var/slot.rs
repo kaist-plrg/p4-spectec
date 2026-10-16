@@ -3,7 +3,7 @@
 //! Preparation resolves every name of a callable to a `SlotIdx` in its frame;
 //! the slot is execution detail, so equality and syntax comparison ignore it.
 
-use std::fmt;
+use std::{cell::OnceCell, fmt, rc::Rc};
 
 use crate::lang::{
     common::Id,
@@ -52,7 +52,36 @@ pub struct VarSlot {
     /// Its frame slot.
     pub slot: SlotIdx,
     /// The variable as written.
-    pub var: Var,
+    pub var: Rc<Var>,
+    /// Its type with the complete iteration path applied once.
+    pub typ: Rc<crate::lang::data::typ::TypKind>,
+    /// Prepared outward references, shared across executions of this occurrence.
+    outer: Rc<[OnceCell<VarSlot>; 2]>,
+}
+
+impl VarSlot {
+    /// Prepares a variable's annotation and lazily shared outward references.
+    pub fn new(slot: SlotIdx, var: Var) -> Self {
+        let typ = crate::lang::data::typ::make::iterate(var.typ.clone(), &var.iters)
+            .node
+            .into();
+        Self { slot, var: Rc::new(var), typ, outer: Rc::new([OnceCell::new(), OnceCell::new()]) }
+    }
+
+    /// Reuses the same outward variable and annotation on every execution.
+    pub fn iterated(&self, slot: SlotIdx, iter: crate::lang::common::Iter) -> Self {
+        let idx = match iter {
+            crate::lang::common::Iter::Opt => 0,
+            crate::lang::common::Iter::List => 1,
+        };
+        self.outer[idx]
+            .get_or_init(|| {
+                let mut var = self.var.as_ref().clone();
+                var.iters.push(iter);
+                Self::new(slot, var)
+            })
+            .clone()
+    }
 }
 
 impl PartialEq for VarSlot {

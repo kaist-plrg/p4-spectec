@@ -59,18 +59,10 @@ fn eval_def_arg(
     id: &ast::Id,
     span: &Span,
 ) -> Backtrack<Value> {
-    // A function value carries the referenced function's type
-    let typ_func = unwrap_from_result!(ctx.find_func_typ(id), span);
-    let value = unwrap_from_result!(
-        value::make::func(
-            arena,
-            id.clone(),
-            typ_func.tparams,
-            typ_func.typs_params,
-            *typ_func.typ_ret,
-            Span::default()
-        ),
-        span
-    );
+    // A function value names the global definition and carries its type
+    let id_global = unwrap_from_result!(ctx.find_func_global_id(id), span);
+    let typ = unwrap_from_result!(ctx.find_func_value_typ(id), span);
+    let value =
+        unwrap_from_result!(value::make::func(arena, id_global, typ, Span::default()), span);
     ok!(value)
 }

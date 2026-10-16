@@ -29,7 +29,6 @@ use crate::runner::{Extern, Interface, RunnerContext, SideEffect};
 
 use crate::interp::shared::{
     backtrack::{self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
-    cache::CallKey,
     context::ReadContext,
     error,
     eval::assign::assign_tparams,
@@ -162,7 +161,7 @@ fn check_func_output(
 // = Cache eligibility
 
 /// Checks whether memoization is enabled for this defined relation.
-pub(crate) fn cache_rel<Iface: Interface, Ext: Extern>(
+pub(crate) fn is_cacheable_rel<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     id: &ast::Id,
@@ -175,7 +174,7 @@ pub(crate) fn cache_rel<Iface: Interface, Ext: Extern>(
 ///
 /// Requires caching on, a global non-extern function,
 /// and no function-valued argument.
-pub(crate) fn cache_func<Iface: Interface, Ext: Extern>(
+pub(crate) fn is_cacheable_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     id: &ast::Id,
@@ -199,17 +198,18 @@ pub(crate) fn invoke_rel<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Vec<Value>> {
     // Serve from the cache when eligible
-    let cache = cache_rel(runner_ctx, ctx, id);
-    if cache
-        && let Some(values) =
-            runner_ctx
-                .interp()
-                .cache
-                .find_rel(runner_ctx.arena(), &id.node, values)
-    {
-        return ok!(values.clone());
-    }
-    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, values));
+    let key = if is_cacheable_rel(runner_ctx, ctx, id) {
+        match runner_ctx
+            .interp()
+            .cache
+            .lookup_rel(runner_ctx.arena(), &id.node, values)
+        {
+            Ok(values) => return ok!(values),
+            Err(key) => Some(key),
+        }
+    } else {
+        None
+    };
     // Track effects for memoization; grow the stack for deep recursion
     let checkpoint = runner_ctx.effect_checkpoint();
     let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
@@ -246,8 +246,8 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
     rel: &ast::ExternRel,
     values: &[Value],
 ) -> Backtrack<Vec<Value>> {
-    // Host dispatch records effects before exposing the result
-    let result = runner_ctx.call_extern_rel(&id.node, values);
+    // Dispatch by the definition's name, recording effects before the result
+    let result = runner_ctx.call_extern_rel(&rel.id.node, values);
     // Attach the call site to fatal host failures
     let values = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Check the number of extern outputs before assigning them
@@ -322,17 +322,18 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Value> {
     // Serve from the cache when eligible
-    let cache = cache_func(runner_ctx, ctx, id, values);
-    if cache
-        && let Some(value) =
-            runner_ctx
-                .interp()
-                .cache
-                .find_func(runner_ctx.arena(), &id.node, values)
-    {
-        return ok!(*value);
-    }
-    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, values));
+    let key = if is_cacheable_func(runner_ctx, ctx, id, values) {
+        match runner_ctx
+            .interp()
+            .cache
+            .lookup_func(runner_ctx.arena(), &id.node, targs, values)
+        {
+            Ok(value) => return ok!(value),
+            Err(key) => Some(key),
+        }
+    } else {
+        None
+    };
     // Track effects for memoization; grow the stack for deep recursion
     let checkpoint = runner_ctx.effect_checkpoint();
     let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
@@ -374,8 +375,8 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
     targs: &[ast::Typ],
     values: &[Value],
 ) -> Backtrack<Value> {
-    // Host dispatch records effects before exposing the result
-    let result = runner_ctx.call_extern_func(&id.node, &[], values);
+    // Dispatch by the definition's name, recording effects before the result
+    let result = runner_ctx.call_extern_func(&func.id.node, &[], values);
     // Attach the call site to fatal host failures
     let value = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Guard the outputs against their declared types
@@ -404,8 +405,9 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
     targs: &[ast::Typ],
     values: &[Value],
 ) -> Backtrack<Value> {
-    // Builtin dispatch records effects before exposing the result
-    let result = runner_ctx.call_builtin(id, targs, values);
+    // Dispatch by the definition's name at the call site, recording effects
+    let id_builtin = crate::phrase!(node: func.id.node.clone(), span: id.span);
+    let result = runner_ctx.call_builtin(&id_builtin, targs, values);
     match result {
         // A successful builtin result may still fail its output guard
         Ok(value) => {

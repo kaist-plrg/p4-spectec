@@ -9,15 +9,11 @@ use crate::util::json::json;
 
 use crate::lang::{
     common::{
-        Id, TId,
+        Id,
         prim::num::{self, Number},
         source::Span,
     },
-    data::{
-        arena::Arena,
-        notation,
-        typ::{self, Typ, TypKind},
-    },
+    data::{arena::Arena, notation, typ::TypKind},
 };
 
 use super::super::ValueError;
@@ -26,6 +22,11 @@ use super::{Value, ValueField, ValueKind};
 // - General
 
 impl Value {
+    /// Changes a location while preserving the exact body and type.
+    pub(crate) fn with_span(self, arena: &mut Arena, span: Span) -> Result<Self, ValueError> {
+        Ok(Self { span: arena.value.intern_span(span)?, ..self })
+    }
+
     /// Allocates a value of the given kind, type, and span.
     pub fn new(
         arena: &mut Arena,
@@ -44,7 +45,13 @@ pub fn bool(arena: &mut Arena, value: bool, span: Span) -> Result<Value, ValueEr
     thread_local! {
         static TYP: Rc<TypKind> = Rc::new(TypKind::Bool);
     }
-    TYP.with(|typ| Value::new(arena, ValueKind::Bool(value), typ.clone(), span))
+    if let Some(result) = arena.value.bools[usize::from(value)] {
+        return result.with_span(arena, span);
+    }
+    let result =
+        TYP.with(|typ| Value::new(arena, ValueKind::Bool(value), typ.clone(), Span::default()))?;
+    arena.value.bools[usize::from(value)] = Some(result);
+    result.with_span(arena, span)
 }
 
 /// A number, typed by its kind.
@@ -182,17 +189,9 @@ pub fn list(
 
 // - Functions
 
-/// A function value, typed by its signature.
-pub fn func(
-    arena: &mut Arena,
-    id: Id,
-    tparams: Vec<TId>,
-    typs_params: Vec<Typ>,
-    typ_ret: Typ,
-    span: Span,
-) -> Result<Value, ValueError> {
-    let typ = typ::make::func(tparams, typs_params, typ_ret).node;
-    Value::new(arena, ValueKind::Func(id), Rc::new(typ), span)
+/// A function value, typed by its shared signature.
+pub fn func(arena: &mut Arena, id: Id, typ: Rc<TypKind>, span: Span) -> Result<Value, ValueError> {
+    Value::new(arena, ValueKind::Func(id), typ, span)
 }
 
 // - Externals

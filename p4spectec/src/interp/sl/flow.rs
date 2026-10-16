@@ -51,8 +51,8 @@ impl Flow {
     // = Continuation
 
     /// A continuation carrying one premise failure.
-    pub(crate) fn cont(span: Span, error: Diagnostic) -> Self {
-        let diagnostic = error.with_label(Label::primary(&span, ""));
+    pub(crate) fn cont(span: Span, error: impl FnOnce() -> Diagnostic) -> Self {
+        let diagnostic = error().with_label(Label::primary(&span, ""));
         Self::Cont(vec![Report::from(diagnostic)])
     }
 
@@ -68,7 +68,11 @@ impl Flow {
 // = Sequential choice
 
 /// Keeps the failure set that got furthest, so the report is the most specific.
-fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
+#[inline]
+pub(super) fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
+    if errors.is_empty() && errors_post.is_empty() {
+        return;
+    }
     if errors_post.iter().map(Report::depth_max).max().unwrap_or(0)
         >= errors.iter().map(Report::depth_max).max().unwrap_or(0)
     {
@@ -131,7 +135,7 @@ fn combine_deterministic(flow: Flow, flow_post: Flow) -> Backtrack<Flow> {
     ok!(flow)
 }
 
-/// Runs every instruction and merges the flows; mismatches are skipped.
+/// Runs every instruction and merges the flows.
 pub(crate) fn choose_deterministic<C>(
     candidates: impl IntoIterator<Item = C>,
     mut evaluate: impl FnMut(C) -> Backtrack<Flow>,
@@ -139,11 +143,7 @@ pub(crate) fn choose_deterministic<C>(
     // Start from an empty continuation
     let mut flow = Flow::Cont(vec![]);
     for candidate in candidates {
-        let flow_post = match evaluate(candidate) {
-            // A mismatching instruction contributes nothing
-            unmatch!(_) => continue,
-            result => unwrap!(result),
-        };
+        let flow_post = unwrap!(evaluate(candidate));
         // Merge, rejecting a second terminating flow
         flow = unwrap!(combine_deterministic(flow, flow_post));
     }

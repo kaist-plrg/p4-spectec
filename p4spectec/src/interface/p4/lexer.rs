@@ -1020,76 +1020,62 @@ fn keyword(text: &str) -> Option<Token> {
 
 /// The longest fixed token at the start of `rest`.
 fn fixed_token(rest: &str) -> Option<(&'static str, Token)> {
-    // Longest match wins, whatever the table order
-    let mut matched: Option<(&'static str, Token)> = None;
-    for (spelling, token) in fixed_tokens() {
-        if rest.starts_with(spelling)
-            && matched
-                .as_ref()
-                .is_none_or(|(previous, _)| spelling.len() > previous.len())
-        {
-            matched = Some((*spelling, token.clone()));
-        }
-    }
-    matched
-}
-
-/// Every fixed token with its spelling.
-fn fixed_tokens() -> &'static [(&'static str, Token)] {
-    &[
-        ("<=", Token::LessEqual),
-        (">=", Token::GreaterEqual),
-        ("<<", Token::ShiftLeft),
+    // Longer prefixes precede their shorter alternatives
+    Some(match rest.as_bytes() {
+        [b'|', b'+', b'|', b'=', ..] => ("|+|=", Token::PlusSaturatingAssign),
+        [b'|', b'-', b'|', b'=', ..] => ("|-|=", Token::MinusSaturatingAssign),
+        [b'|', b'+', b'|', ..] => ("|+|", Token::PlusSaturating),
+        [b'|', b'-', b'|', ..] => ("|-|", Token::MinusSaturating),
+        [b'{', b'#', b'}', ..] => ("{#}", Token::Invalid),
+        [b'&', b'&', b'&', ..] => ("&&&", Token::Mask),
+        [b'.', b'.', b'.', ..] => ("...", Token::Dots),
+        [b'<', b'<', b'=', ..] => ("<<=", Token::ShiftLeftAssign),
+        [b'>', b'>', b'=', ..] => (">>=", Token::ShiftRightAssign),
+        [b'<', b'=', ..] => ("<=", Token::LessEqual),
+        [b'>', b'=', ..] => (">=", Token::GreaterEqual),
+        [b'<', b'<', ..] => ("<<", Token::ShiftLeft),
         // LALRPOP's precedence grammar requires one expression token
-        (">>", Token::ShiftRight),
-        ("&&", Token::And),
-        ("||", Token::Or),
-        ("!=", Token::NotEqual),
-        ("==", Token::Equal),
-        ("+:", Token::PlusColon),
-        ("+", Token::Plus),
-        ("-", Token::Minus),
-        ("|+|", Token::PlusSaturating),
-        ("|-|", Token::MinusSaturating),
-        ("*", Token::Multiply),
-        ("{#}", Token::Invalid),
-        ("/", Token::Divide),
-        ("%", Token::Modulo),
-        ("|", Token::BitOr),
-        ("&", Token::BitAnd),
-        ("^", Token::BitXor),
-        ("~", Token::Complement),
-        ("[", Token::LeftBracket),
-        ("]", Token::RightBracket),
-        ("{", Token::LeftBrace),
-        ("}", Token::RightBrace),
-        ("<", Token::LeftAngle),
-        (">", Token::RightAngle),
-        ("(", Token::LeftParen),
-        (")", Token::RightParen),
-        ("!", Token::Not),
-        (":", Token::Colon),
-        (",", Token::Comma),
-        ("?", Token::Question),
-        (".", Token::Dot),
-        ("=", Token::Assign),
-        (";", Token::Semicolon),
-        ("@", Token::At),
-        ("++", Token::PlusPlus),
-        ("&&&", Token::Mask),
-        ("...", Token::Dots),
-        ("..", Token::Range),
-        ("+=", Token::PlusAssign),
-        ("|+|=", Token::PlusSaturatingAssign),
-        ("-=", Token::MinusAssign),
-        ("|-|=", Token::MinusSaturatingAssign),
-        ("*=", Token::MultiplyAssign),
-        ("/=", Token::DivideAssign),
-        ("%=", Token::ModuloAssign),
-        ("<<=", Token::ShiftLeftAssign),
-        (">>=", Token::ShiftRightAssign),
-        ("&=", Token::BitAndAssign),
-        ("^=", Token::BitXorAssign),
-        ("|=", Token::BitOrAssign),
-    ]
+        [b'>', b'>', ..] => (">>", Token::ShiftRight),
+        [b'&', b'&', ..] => ("&&", Token::And),
+        [b'|', b'|', ..] => ("||", Token::Or),
+        [b'!', b'=', ..] => ("!=", Token::NotEqual),
+        [b'=', b'=', ..] => ("==", Token::Equal),
+        [b'+', b':', ..] => ("+:", Token::PlusColon),
+        [b'+', b'+', ..] => ("++", Token::PlusPlus),
+        [b'.', b'.', ..] => ("..", Token::Range),
+        [b'+', b'=', ..] => ("+=", Token::PlusAssign),
+        [b'-', b'=', ..] => ("-=", Token::MinusAssign),
+        [b'*', b'=', ..] => ("*=", Token::MultiplyAssign),
+        [b'/', b'=', ..] => ("/=", Token::DivideAssign),
+        [b'%', b'=', ..] => ("%=", Token::ModuloAssign),
+        [b'&', b'=', ..] => ("&=", Token::BitAndAssign),
+        [b'^', b'=', ..] => ("^=", Token::BitXorAssign),
+        [b'|', b'=', ..] => ("|=", Token::BitOrAssign),
+        [b'+', ..] => ("+", Token::Plus),
+        [b'-', ..] => ("-", Token::Minus),
+        [b'*', ..] => ("*", Token::Multiply),
+        [b'/', ..] => ("/", Token::Divide),
+        [b'%', ..] => ("%", Token::Modulo),
+        [b'|', ..] => ("|", Token::BitOr),
+        [b'&', ..] => ("&", Token::BitAnd),
+        [b'^', ..] => ("^", Token::BitXor),
+        [b'~', ..] => ("~", Token::Complement),
+        [b'[', ..] => ("[", Token::LeftBracket),
+        [b']', ..] => ("]", Token::RightBracket),
+        [b'{', ..] => ("{", Token::LeftBrace),
+        [b'}', ..] => ("}", Token::RightBrace),
+        [b'<', ..] => ("<", Token::LeftAngle),
+        [b'>', ..] => (">", Token::RightAngle),
+        [b'(', ..] => ("(", Token::LeftParen),
+        [b')', ..] => (")", Token::RightParen),
+        [b'!', ..] => ("!", Token::Not),
+        [b':', ..] => (":", Token::Colon),
+        [b',', ..] => (",", Token::Comma),
+        [b'?', ..] => ("?", Token::Question),
+        [b'.', ..] => (".", Token::Dot),
+        [b'=', ..] => ("=", Token::Assign),
+        [b';', ..] => (";", Token::Semicolon),
+        [b'@', ..] => ("@", Token::At),
+        _ => return None,
+    })
 }

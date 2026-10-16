@@ -40,7 +40,7 @@ impl PrepareContext<'_> {
     /// Registers the outer variable of every iterated variable.
     fn prepare_outer_vars(&mut self, vars: &[VarSlot], iter: Iter) {
         for var in vars {
-            let mut var_outer = var.var.clone();
+            let mut var_outer = var.var.as_ref().clone();
             var_outer.iters.push(iter);
             self.layout.resolve_var(var_outer);
         }

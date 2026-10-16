@@ -10,10 +10,7 @@
 use std::{borrow::Cow, rc::Rc};
 
 use crate::lang::{
-    data::{
-        arena::Arena,
-        value::flat::{Value, ValueKind},
-    },
+    data::{arena::Arena, value::flat::Value},
     hints::input,
 };
 
@@ -22,7 +19,7 @@ use crate::lang::sl::prepared as ast;
 use crate::diagnostic::Diagnostic;
 
 use crate::runtime::{
-    envs::interp::shared::frame::FrameLayout,
+    envs::interp::shared::{callable::Callable, frame::FrameLayout},
     ops::{typ, value},
 };
 
@@ -30,17 +27,12 @@ use crate::runner::{Extern, Interface, RunnerContext, SideEffect};
 
 use crate::interp::shared::{
     backtrack::{self, Backtrack, WithFrame, ok, unmatch, unwrap, unwrap_from_result},
-    cache::CallKey,
-    context::ReadContext,
+    context::{FuncSignature, ReadContext},
     error,
     eval::assign::assign_tparams,
 };
 
-use super::super::{
-    SlInterp,
-    context::{Context, Scope},
-    flow::Flow,
-};
+use super::super::{SlInterp, context::Context, flow::Flow};
 
 use super::{assign, instr};
 
@@ -166,7 +158,7 @@ fn check_func_output(
 // = Cache eligibility
 
 /// Whether a relation call may be memoized: caching on, relation defined.
-pub(in crate::interp::sl) fn cache_rel<Iface: Interface, Ext: Extern>(
+pub(in crate::interp::sl) fn is_cacheable_rel<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     id: &ast::Id,
@@ -175,22 +167,15 @@ pub(in crate::interp::sl) fn cache_rel<Iface: Interface, Ext: Extern>(
         && matches!(ctx.find_rel(id), Ok(rel) if matches!(&rel.def, ast::RelDef::Defined(_)))
 }
 
-/// Whether a function call may be memoized.
+/// Whether a function call may be memoized: caching on, definition not extern.
 ///
-/// Requires caching on, a global non-extern function,
-/// and no function-valued argument.
-pub(in crate::interp::sl) fn cache_func<Iface: Interface, Ext: Extern>(
+/// Local aliases and function-valued arguments name global definitions,
+/// so calls through them are keyed by those definitions too.
+pub(in crate::interp::sl) fn is_cacheable_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, SlInterp, Iface, Ext>,
-    ctx: &Context<'_>,
-    id: &ast::Id,
-    values: &[Value],
+    func: &Callable<ast::MetaFuncDef>,
 ) -> bool {
-    runner_ctx.interp().config.cache
-        && matches!(ctx.find_func_with_scope(id), Ok((Scope::Global, func))
-            if !matches!(&func.def, ast::MetaFuncDef::Extern(_)))
-        && !values
-            .iter()
-            .any(|value| matches!(runner_ctx.arena().value.kind(value.node), ValueKind::Func(_)))
+    runner_ctx.interp().config.cache && !matches!(&func.def, ast::MetaFuncDef::Extern(_))
 }
 
 // = Relation invocation
@@ -210,27 +195,25 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
     let mut keys_cache = Vec::new();
     loop {
         // Serve from the cache when eligible
-        let cache = cache_rel(runner_ctx, ctx, &id);
-        if cache
-            && let Some(values) =
-                runner_ctx
-                    .interp()
-                    .cache
-                    .find_rel(runner_ctx.arena(), &id.node, &values)
-        {
-            let values = values.clone();
-            // Cached results also complete the pure callers in this chain
-            for key in keys_cache {
-                runner_ctx
-                    .interp_mut()
-                    .cache
-                    .rels
-                    .insert(key, values.clone());
+        if is_cacheable_rel(runner_ctx, ctx, &id) {
+            match runner_ctx
+                .interp()
+                .cache
+                .lookup_rel(runner_ctx.arena(), &id.node, &values)
+            {
+                Ok(values) => {
+                    // Cached results also complete the pure callers in this chain
+                    for key in keys_cache {
+                        runner_ctx
+                            .interp_mut()
+                            .cache
+                            .rels
+                            .insert(key, values.clone());
+                    }
+                    return ok!(values);
+                }
+                Err(key) => keys_cache.push(key),
             }
-            return ok!(values);
-        }
-        if cache {
-            keys_cache.push(CallKey::new(runner_ctx.arena(), &id.node, &values));
         }
         // Track effects for memoization; grow the stack for deep recursion
         let checkpoint = runner_ctx.effect_checkpoint();
@@ -292,8 +275,8 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
     rel: &ast::ExternRel,
     values: &[Value],
 ) -> Backtrack<Vec<Value>> {
-    // Host dispatch records effects before exposing the result
-    let result = runner_ctx.call_extern_rel(&id.node, values);
+    // Dispatch by the definition's name, recording effects before the result
+    let result = runner_ctx.call_extern_rel(&rel.id.node, values);
     // Attach the call site to fatal host failures
     let values = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Check the number of extern outputs before assigning them
@@ -368,23 +351,25 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
     let mut keys_cache = Vec::new();
     loop {
         // Serve from the cache when eligible
-        let cache = cache_func(runner_ctx, ctx, &id, &values);
-        if cache
-            && let Some(value) =
-                runner_ctx
-                    .interp()
-                    .cache
-                    .find_func(runner_ctx.arena(), &id.node, &values)
+        if let Ok(func) = ctx.find_func(&id)
+            && is_cacheable_func(runner_ctx, func)
         {
-            let value = *value;
-            // Cached results also complete the pure callers in this chain
-            for key in keys_cache {
-                runner_ctx.interp_mut().cache.funcs.insert(key, value);
+            // Key by the global definition, even through a local alias
+            match runner_ctx.interp().cache.lookup_func(
+                runner_ctx.arena(),
+                &func.def.id().node,
+                &targs,
+                &values,
+            ) {
+                Ok(value) => {
+                    // Cached results also complete the pure callers in this chain
+                    for key in keys_cache {
+                        runner_ctx.interp_mut().cache.funcs.insert(key, value);
+                    }
+                    return ok!(value);
+                }
+                Err(key) => keys_cache.push(key),
             }
-            return ok!(value);
-        }
-        if cache {
-            keys_cache.push(CallKey::new(runner_ctx.arena(), &id.node, &values));
         }
         // Track effects for memoization; grow the stack for deep recursion
         let checkpoint = runner_ctx.effect_checkpoint();
@@ -451,8 +436,8 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
     targs: &[ast::Typ],
     values: &[Value],
 ) -> Backtrack<Value> {
-    // Host dispatch records effects before exposing the result
-    let result = runner_ctx.call_extern_func(&id.node, &[], values);
+    // Dispatch by the definition's name, recording effects before the result
+    let result = runner_ctx.call_extern_func(&extern_func.id.node, &[], values);
     // Attach the call site to fatal host failures
     let value = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Guard the result against the declared type
@@ -481,8 +466,9 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
     targs: &[ast::Typ],
     values: &[Value],
 ) -> Backtrack<Value> {
-    // Builtin dispatch records effects before exposing the result
-    let result = runner_ctx.call_builtin(id, targs, values);
+    // Dispatch by the definition's name at the call site, recording effects
+    let id_builtin = crate::phrase!(node: builtin_func.id.node.clone(), span: id.span);
+    let result = runner_ctx.call_builtin(&id_builtin, targs, values);
     match result {
         // Guard the result against the declared type
         Ok(value) => {
@@ -515,10 +501,11 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<FuncResult> {
     // Parameters bind into a fresh frame
-    let ctx_local = unwrap!(assign::assign_params(
+    let mut ctx_local = ctx.localize_with_layout(layout);
+    unwrap!(assign::assign_params(
         runner_ctx.arena_mut(),
         ctx,
-        ctx.localize_with_layout(layout),
+        &mut ctx_local,
         &func.params,
         values
     ));
@@ -557,13 +544,13 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<FuncResult> {
     // Bind type arguments in the callee frame
-    let ctx_local =
+    let mut ctx_local =
         unwrap!(assign_tparams(ctx.localize_with_layout(layout), &func.tparams, targs, &id.span));
     // Parameters bind after the type parameters, so their types resolve
-    let ctx_local = unwrap!(assign::assign_params(
+    unwrap!(assign::assign_params(
         runner_ctx.arena_mut(),
         ctx,
-        ctx_local,
+        &mut ctx_local,
         &func.params,
         values
     ));
