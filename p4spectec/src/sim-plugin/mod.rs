@@ -17,7 +17,7 @@ use crate::lang::data::{arena::Arena, encoding::Encoding};
 
 use crate::interface::p4::P4Interface;
 
-use crate::runner::{self, Runner};
+use crate::runner::{self, Hooks, Runner};
 
 use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, v1model::V1Model};
 
@@ -42,6 +42,8 @@ pub use error::SimError;
 
 /// Object-safe view of a runner, so `Simulator` can hold any architecture.
 trait SimulatorRunner {
+    fn hooks_mut(&mut self) -> &mut Hooks;
+
     fn run_stf_test(
         &mut self,
         arena: &mut Arena,
@@ -56,6 +58,10 @@ impl<Arch> SimulatorRunner for Runner<P4Interface, Arch>
 where
     Arch: Architecture + 'static,
 {
+    fn hooks_mut(&mut self) -> &mut Hooks {
+        Runner::hooks_mut(self)
+    }
+
     fn run_stf_test(
         &mut self,
         arena: &mut Arena,
@@ -82,6 +88,11 @@ impl Simulator {
         Arch: Architecture + 'static,
     {
         Self { arena, runner: Box::new(runner) }
+    }
+
+    /// Borrows the handlers retained across STF tests.
+    pub fn hooks_mut(&mut self) -> &mut Hooks {
+        self.runner.hooks_mut()
     }
 
     /// Runs one STF test, calling `on_match` for each matched output packet.
