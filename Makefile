@@ -38,8 +38,8 @@ metacirc test-metacirc:
 	$(MAKE) -f METASQ.mk CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
 # K and PLT Redex cross-checking
-.PHONY: metacross
-metacross:
+.PHONY: metacross ffi k-spec k-test redex redex-test
+metacross ffi k-spec k-test redex redex-test:
 	$(MAKE) -f CROSS.mk CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
 promote: test-promote

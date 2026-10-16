@@ -5,8 +5,8 @@
 # this command, so the argument here is a file whose contents are a P4 program
 # path -- not the program itself.
 #
-# The program is parsed by the OCaml P4 front end and emitted already wrapped as
-# `someP4(<val>)` by `spectec-boot kast-p4`, so both cases arrive at sort P4Opt
+# The program is parsed by the Rust P4 front end and emitted already wrapped as
+# `someP4(<val>)` by `metacross kast-p4`, so both cases arrive at sort P4Opt
 # in a single `kast` parse.
 set -e
 
@@ -35,7 +35,7 @@ if [ -n "$P4INCLUDE" ]; then
 fi
 
 # shellcheck disable=SC2086
-"${SPECTEC_BOOT:-./spectec-boot}" kast-p4 -p "$p4" $includes -o "$json"
+"${METACROSS:-./bin/metacross}" kast-p4 -p "$p4" $includes -o "$json"
 
 status=0
 kast --definition "$KDEF" --input json --output kore --sort P4Opt "$json" \

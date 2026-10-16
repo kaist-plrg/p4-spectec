@@ -33,9 +33,9 @@ if [ -d "$target" ] || [ "${target%.watsup}" != "$target" ]; then
   #   the .watsup sources      what is being compiled
   #   $KDEF/definition.kore    the term is written against this symbol table,
   #                            so a re-kompile that moves a sort invalidates it
-  #   spectec-boot             it is the emitter (lib/interface/.../kast.ml),
+  #   bin/metacross            it is the emitter (p4spectec/src/metacross/kast.rs),
   #                            so editing the emitter must miss the cache
-  boot="${SPECTEC_BOOT:-./spectec-boot}"
+  boot="${METACROSS:-./bin/metacross}"
   key=$(
     { printf '%s\n' "$target"
       find "$target" -name '*.watsup' -type f | LC_ALL=C sort | xargs cat

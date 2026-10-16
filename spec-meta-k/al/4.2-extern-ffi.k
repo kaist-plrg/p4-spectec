@@ -1,10 +1,9 @@
-// Transport for the external interface: K -> C shim -> OCaml, over K's FFI.
+// Transport for the external interface: K -> Rust, over K's FFI.
 //
-//   K rules  --#ffiCall-->  spec-meta-k/ffi/shim.c  --caml_callback-->
-//   p4spec/bin/ffi.ml
+//   K rules  --#ffiCall-->  bin/libp4spectec.so  (p4spectec::metacross::ffi)
 //
-// The OCaml runtime lives in the interpreter process.
-// The runner is built once on init.
+// The interpreter links the library and resolves its host_* symbols at run
+// time. The runner is built once on init.
 
 requires "4.1-extern-json.k"
 requires "ffi.md"
@@ -20,7 +19,7 @@ module AL-EXTERN-FFI
   // ==========================================================================
   // Initialization
   //
-  // `ml_init_c` must precede other FFI calls.
+  // `host_init` must precede other FFI calls.
   // ==========================================================================
 
   rule <k> initFFI() => callInitFFI(Spec) ... </k>
@@ -38,7 +37,7 @@ module AL-EXTERN-FFI
   syntax K ::= initCall(String, Int, K)         [function, symbol(initCall)]
   rule initCall(Spec:String, Addr:Int, _)
     => initFree(Spec,
-         Bytes2Int(#ffiCall(#functionAddress("ml_init_c"),
+         Bytes2Int(#ffiCall(#functionAddress("host_init"),
                             ListItem(Int2Bytes(8, Addr, LE)),
                             ListItem(#pointer),
                             #sint64),
@@ -51,10 +50,10 @@ module AL-EXTERN-FFI
   // The transport
   //
   //   1. `#alloc` + `#nativeWrite` the request, NUL-terminated
-  //   2. `#ffiCall(ml_eval_c, reqPtr)` -> a `#pointer`
-  //   3. `ml_cstrlen_c` to size the reply
+  //   2. `#ffiCall(host_eval, reqPtr)` -> a `#pointer`
+  //   3. `host_strlen` to size the reply
   //   4. `#nativeRead` that many bytes back
-  //   5. `ml_free_c` the shim's buffer, `#free` ours
+  //   5. `#free` our request buffer; the reply belongs to Rust until the next call
   // ==========================================================================
 
   syntax String ::= externEval(String)              [function, symbol(externEval)]
@@ -73,7 +72,7 @@ module AL-EXTERN-FFI
   syntax String ::= evCall(String, Int, K)          [function, symbol(evCall)]
   rule evCall(Req:String, AddrReq:Int, _)
     => evResult(Req,
-         Bytes2Int(#ffiCall(#functionAddress("ml_eval_c"),
+         Bytes2Int(#ffiCall(#functionAddress("host_eval"),
                             ListItem(Int2Bytes(8, AddrReq, LE)),
                             ListItem(#pointer),
                             #pointer),
@@ -82,7 +81,7 @@ module AL-EXTERN-FFI
   syntax String ::= evResult(String, Int)           [function, symbol(evResult)]
   rule evResult(Req:String, AddrOut:Int)
     => evRead(Req, AddrOut,
-         Bytes2Int(#ffiCall(#functionAddress("ml_cstrlen_c"),
+         Bytes2Int(#ffiCall(#functionAddress("host_strlen"),
                             ListItem(Int2Bytes(8, AddrOut, LE)),
                             ListItem(#pointer),
                             #sint64),
@@ -100,12 +99,8 @@ module AL-EXTERN-FFI
     => #let _ = #nativeRead(Addr, Mem) #in Mem
 
   syntax String ::= evFinish(String, Int, Bytes)    [function, symbol(evFinish)]
-  rule evFinish(Req:String, AddrOut:Int, Out:Bytes)
+  rule evFinish(Req:String, _AddrOut:Int, Out:Bytes)
     => #let _ = #free(allocKeyReq(Req)) #in
-       #let _ = #ffiCall(#functionAddress("ml_free_c"),
-                          ListItem(Int2Bytes(8, AddrOut, LE)),
-                          ListItem(#pointer),
-                          #void) #in
        Bytes2String(Out)
 
   // ==========================================================================

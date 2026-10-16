@@ -5,8 +5,12 @@
 //! `sexp` as s-expressions, both as generic walks over the meta value whose
 //! case shapes follow `spec-meta/1-syntax.watsup`.
 //! `encode_script` and `encode_p4` produce those values from source paths.
+//! `host` serves the builtin and extern requests the specifications make at
+//! run time, and `ffi` exports it from `bin/libp4spectec.so`.
 
 mod error;
+pub mod ffi;
+pub mod host;
 pub mod kast;
 pub mod sexp;
 
