@@ -24,6 +24,7 @@ use super::{Value, ValueKind};
 /// Storage for value bodies, types, and spans.
 #[derive(Debug)]
 pub struct ValueArena {
+    generation: Rc<()>,
     pub(super) bools: [Option<Value>; 2],
     /// Bodies, with canonical identities; a case reads its mixop's.
     values: super::lazy::Values,
@@ -41,6 +42,7 @@ impl Default for ValueArena {
             .expect("the first span fits in an interner index");
         debug_assert_eq!(span_default, Self::span_default());
         Self {
+            generation: Rc::new(()),
             bools: [None; 2],
             values: super::lazy::Values::default(),
             types: Interner::new(),
@@ -53,6 +55,11 @@ impl ValueArena {
     /// The handle of the default location, which `Default` interns first.
     pub(super) fn span_default() -> Interned<Span> {
         Interned::from_index(0)
+    }
+
+    /// Identifies this value generation without retaining its stored bodies.
+    pub(crate) fn generation(&self) -> &Rc<()> {
+        &self.generation
     }
 
     // - Interning
