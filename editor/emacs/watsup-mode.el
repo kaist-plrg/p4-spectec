@@ -1,6 +1,6 @@
 ;;; watsup-mode.el --- Major mode for Watsup specification language -*- lexical-binding: t; -*-
 ;;; Commentary:
-;; Derived from p4spec/lib/frontend/lexer.mll
+;; Syntax reference: p4spectec/src/frontend/lexer.rs
 ;;; Code:
 
 (defvar watsup-mode-syntax-table

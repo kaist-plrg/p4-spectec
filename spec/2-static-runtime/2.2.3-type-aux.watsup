@@ -12,11 +12,11 @@ def $unroll_typeIR(typeIR) = typeIR
 ;; Unrolling outer aliases
 ;;
 
-dec $unroll_aliasType(typeIR) : typeIR
+dec $unroll_aliasTypeIR(typeIR) : typeIR
   hint(prose_in %0 "with aliases unrolled")
-def $unroll_aliasType(TYPE _ typeIR) = $unroll_aliasType(typeIR)
-def $unroll_aliasType(TYPEDEF _ typeIR) = $unroll_aliasType(typeIR)
-def $unroll_aliasType(typeIR) = typeIR
+def $unroll_aliasTypeIR(TYPE _ typeIR) = $unroll_aliasTypeIR(typeIR)
+def $unroll_aliasTypeIR(TYPEDEF _ typeIR) = $unroll_aliasTypeIR(typeIR)
+def $unroll_aliasTypeIR(typeIR) = typeIR
   -- otherwise
 
 ;;
@@ -91,6 +91,27 @@ tbl def $is_assignable_typeIR =
   | objectTypeIR => false
   | synthesizedTypeIR => false
   | _ => true
+
+;;; Castable
+
+tbl dec $is_castable_typeIR(typeIR) : bool
+  hint(prose_true %0 "can be the target type of an explicit cast")
+  hint(prose_false %0 "cannot be the target type of an explicit cast")
+tbl def $is_castable_typeIR =
+  | BOOL => true
+  | INT => true
+  | INT `< _ `> => true
+  | BIT `< _ `> => true
+  | TYPEDEF _ typeIR => $is_castable_typeIR(typeIR)
+  | TYPE _ _ => true
+  | ENUM _ `< _ `> `{ _ `} => true
+  | LIST `< _ `> => true
+  | ARRAY _ `[ _ `] => true
+  | HEADER_STACK _ `[ _ `] => true
+  | STRUCT _ `< _ `> `{ _ `} => true
+  | HEADER _ `< _ `> `{ _ `} => true
+  | HEADER_UNION _ `< _ `> `{ _ `} => true
+  | _ => false
 
 ;;; Serializable
 

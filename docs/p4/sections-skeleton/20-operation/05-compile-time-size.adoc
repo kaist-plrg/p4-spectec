@@ -1,0 +1,74 @@
+[#sec-type-size-operation]
+=== Compile-time size determination
+
+// 661
+The method calls `minSizeInBits`, `minSizeInBytes`, `maxSizeInBits`, and
+`maxSizeInBytes` can be applied to certain expressions. These method calls
+return the minimum (or maximum) size in bits (or bytes) required to store the
+expression. Thus, the result type of these methods has type `int`. Except in
+certain situations involving type variables, discussed below, these method
+calls produce local compile-time known values; otherwise they produce
+compile-time known values. None of these methods evaluate the expression that
+is the receiver of the method call, so it may be invalid (e.g., an
+out-of-bounds header stack access).
+
+// 662
+The method `minSizeInBytes` returns the result of `minSizeInBits` rounded up to
+the next whole number of bytes. In other words, for any expression `e`,
+`e.minSizeInBytes()` is equal to `(e.minSizeInBits() + 7) >> 3`.
+
+// 663
+The method `maxSizeInBytes` always returns the result of `maxSizeInBits`
+rounded up to the next whole number of bytes. In other words, for any
+expression `e`, `e.maxSizeInBytes()` is equal to `(e.maxSizeInBits() + 7) >>
+3`.
+
+// Added
+They dispatch by method name with:
+
+// Added
+${func-source: sizeof}
+${func-latex: sizeof}
+${func-prose: sizeof}
+
+[discrete]
+====== Minimum size in bits
+
+// Added
+${func-source: sizeof_minSizeInBits}
+${func-latex: sizeof_minSizeInBits}
+${func-prose: sizeof_minSizeInBits}
+
+// Added
+${func-source: sizeof_minSizeInBits'}
+${func-latex: sizeof_minSizeInBits'}
+${func-prose: sizeof_minSizeInBits'}
+
+[discrete]
+====== Minimum size in bytes
+
+// Added
+${func-source: sizeof_minSizeInBytes}
+${func-latex: sizeof_minSizeInBytes}
+${func-prose: sizeof_minSizeInBytes}
+
+[discrete]
+====== Maximum size in bits
+
+// Added
+${func-source: sizeof_maxSizeInBits}
+${func-latex: sizeof_maxSizeInBits}
+${func-prose: sizeof_maxSizeInBits}
+
+// Added
+${func-source: sizeof_maxSizeInBits'}
+${func-latex: sizeof_maxSizeInBits'}
+${func-prose: sizeof_maxSizeInBits'}
+
+[discrete]
+====== Maximum size in bytes
+
+// Added
+${func-source: sizeof_maxSizeInBytes}
+${func-latex: sizeof_maxSizeInBytes}
+${func-prose: sizeof_maxSizeInBytes}

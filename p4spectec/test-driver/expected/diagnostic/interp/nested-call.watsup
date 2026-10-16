@@ -1,0 +1,19 @@
+var n : nat
+
+dec $inner(nat) : nat
+def $inner(n) = ([0])[n]
+
+dec $middle(nat) : nat
+def $middle(n) = $inner(n)
+
+dec $outer(nat) : nat
+def $outer(n) = $middle(n)
+
+relation S: nat |- nat
+  hint(input %0)
+rule S/call: n |- $outer(n)
+
+relation R: nat |- nat
+  hint(input %0)
+rule R/call: n |- n_result
+  -- S: n |- n_result

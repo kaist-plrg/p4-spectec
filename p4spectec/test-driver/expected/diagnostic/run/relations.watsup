@@ -1,0 +1,15 @@
+relation Pass: p4program ~> nat
+  hint(input %0)
+rule Pass/ok: _EMPTY ~> 7
+relation Reject: p4program ~> nat
+  hint(input %0)
+rule Reject/no: _EMPTY ~> 0
+  -- if false
+relation Ambiguous: p4program ~> nat
+  hint(input %0)
+rule Ambiguous/first: _EMPTY ~> 1
+rule Ambiguous/second: _EMPTY ~> 2
+var n : nat
+relation Unchecked: nat ~> nat
+  hint(input %0)
+rule Unchecked/pass: n ~> 1

@@ -1,3 +1,59 @@
+<script>
+    window.MathJax = {
+        loader: {
+            load: ['ui/lazy', '[tex]/html', '[tex]/mathtools', '[tex]/color', '[tex]/textmacros']
+        },
+        tex: {
+            packages: {'[+]': ['html', 'mathtools', 'color', 'textmacros']},
+            color: {
+                padding: '3px',
+                borderWidth: '1px'
+            },
+            inlineMath: [['\\(', '\\)']],
+            displayMath: [['\\[', '\\]']]
+        },
+        options: {
+            ignoreHtmlClass: 'nostem|nolatexmath',
+            lazyMargin: '300px'
+        },
+        chtml: {
+            scale: 0.96
+        },
+        startup: {
+            pageReady: function () {
+                return MathJax.startup.defaultPageReady().then(function () {
+                    // Process opened math without waiting for MathJax's idle callback
+                    function typesetOpenedMath(block) {
+                        if (!block.open) return;
+                        const markers = block.querySelectorAll("mjx-lazy");
+                        if (markers.length === 0) return;
+                        const doc = MathJax.startup.document;
+                        for (const marker of markers) {
+                            doc.lazySet.add(marker.getAttribute("data-mjx-lazy"));
+                        }
+                        doc.lazyHandleSet();
+                    }
+
+                    document.addEventListener("toggle", function (event) {
+                        if (event.target.tagName === "DETAILS") typesetOpenedMath(event.target);
+                    }, true);
+                    document.querySelectorAll("details[open]").forEach(typesetOpenedMath);
+                });
+            }
+        }
+    };
+</script>
+<script defer
+        src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js">
+</script>
+<style>
+mjx-container[jax="CHTML"][display="true"] {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+</style>
+
 <!-- For collapsible table of contents,
      adapted https://github.com/asciidoctor/asciidoctor/issues/699 -->
 
@@ -194,51 +250,6 @@
 
 /* ── Details reset ───────────────────────────────────── */
 #toc details.toc-section { margin: 0; }
-
-/* ── Backtracking blocks (TryI / CaseI) ──────────────── */
-/* Block-header label, e.g. "#3" appearing after Try / Try matching X */
-strong.bk-label {
-    color: #fff;
-    background: #999;
-    padding: 0 0.35em;
-    border-radius: 3px;
-    font-family: Monaco, "DejaVu Sans Mono", "Courier New", monospace;
-    font-size: 0.8em;
-    font-weight: 500;
-}
-/* Backtrack marker on fallible operations, e.g. "[else #3-b]".
-   Rendered inline at the text baseline (the <sub> tag is used only
-   so the marker stands out semantically; the visual is baseline-aligned). */
-sub.bk-mark {
-    font-size: 0.8em;
-    vertical-align: baseline;
-    bottom: 0;
-    color: #666;
-    margin-left: 2px;
-}
-sub.bk-mark > a {
-    color: #666;
-    text-decoration: none;
-    font-weight: 500;
-}
-sub.bk-mark > a:hover {
-    color: #B12146;
-    text-decoration: underline;
-}
-/* Per-arm scroll target. Sits at the end of the arm header so the list
-   marker still renders. scroll-margin-top pulls fragment navigation up
-   so the arm header is visible above the anchor, not scrolled past it. */
-span.bk-arm-anchor {
-    scroll-margin-top: 3em;
-}
-/* Bounding box around a block arm's body; nested blocks nest boxes. */
-div.bk-arm {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: #fafafa;
-    padding: 0.25em 0.6em;
-    margin: 0.35em 0;
-}
 
 /* ── Expand / Collapse all button ────────────────────── */
 #toc-toggle-btn {

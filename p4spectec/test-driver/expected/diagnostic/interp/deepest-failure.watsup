@@ -1,0 +1,18 @@
+var n : nat
+
+relation Inner: nat |- nat
+  hint(input %0)
+rule Inner/fail: n |- n
+  -- if false
+
+relation Outer: nat |- nat
+  hint(input %0)
+rule Outer/call: n |- n_result
+  -- Inner: n |- n_result
+
+relation R: nat |- nat
+  hint(input %0)
+rule R/deep: n |- n_result
+  -- Outer: n |- n_result
+rule R/shallow: n |- n
+  -- if false

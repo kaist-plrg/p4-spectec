@@ -28,6 +28,14 @@ def $name_annotation_default(annotationList, nameIR) = nameIR_found
 def $name_annotation_default(annotationList, nameIR) = nameIR
   -- if eps = $name_annotation(annotationList)
 
+;;; Checking name annotation multiplicity
+
+dec $has_at_most_one_name_annotation(annotationList) : bool
+  hint(prose_true %0 "has at most one name annotation")
+  hint(prose_false %0 "has more than one name annotation")
+def $has_at_most_one_name_annotation(annotationList)
+  = $(|$name_annotation(annotationList)| <= 1)
+
 ;;; Finding name annotation
 
 dec $find_name_annotation_opt(annotationList) : annotation?
