@@ -37,6 +37,11 @@ $(TEST_TARGETS):
 metacirc test-metacirc:
 	$(MAKE) -f METASQ.mk CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
+# K and PLT Redex cross-checking
+.PHONY: metacross
+metacross:
+	$(MAKE) -f CROSS.mk CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
+
 promote: test-promote
 
 # Specification documents
@@ -54,4 +59,5 @@ p4spec-release-html:
 clean:
 	rm -f ./$(SPEC)
 	$(MAKE) -f METASQ.mk clean
+	$(MAKE) -f CROSS.mk clean
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" clean
