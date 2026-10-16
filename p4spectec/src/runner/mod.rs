@@ -8,6 +8,7 @@
 
 mod context;
 mod externs;
+mod hook;
 mod interface;
 mod interpreter;
 
@@ -37,6 +38,7 @@ use crate::sim_plugin::dummy::Dummy;
 
 pub use context::{Checkpoint, RunnerContext};
 pub use externs::{Extern, ExternError, NullExtern};
+pub use hook::{Handler, Hooks};
 pub use interface::{Interface, InterfaceError, NullInterface};
 pub use interpreter::{Eval, Interpreter, InterpreterError, SideEffect};
 
