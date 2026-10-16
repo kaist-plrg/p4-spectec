@@ -10,10 +10,7 @@
 use std::{borrow::Cow, rc::Rc};
 
 use crate::lang::{
-    data::{
-        arena::Arena,
-        value::flat::{Value, ValueKind},
-    },
+    data::{arena::Arena, value::flat::Value},
     hints::input,
 };
 
@@ -22,7 +19,7 @@ use crate::lang::sl::prepared as ast;
 use crate::diagnostic::Diagnostic;
 
 use crate::runtime::{
-    envs::interp::shared::frame::FrameLayout,
+    envs::interp::shared::{callable::Callable, frame::FrameLayout},
     ops::{typ, value},
 };
 
@@ -30,16 +27,12 @@ use crate::runner::{Extern, Interface, RunnerContext, SideEffect};
 
 use crate::interp::shared::{
     backtrack::{self, Backtrack, WithFrame, ok, unmatch, unwrap, unwrap_from_result},
-    context::ReadContext,
+    context::{FuncSignature, ReadContext},
     error,
     eval::assign::assign_tparams,
 };
 
-use super::super::{
-    SlInterp,
-    context::{Context, Scope},
-    flow::Flow,
-};
+use super::super::{SlInterp, context::Context, flow::Flow};
 
 use super::{assign, instr};
 
@@ -174,22 +167,15 @@ pub(in crate::interp::sl) fn is_cacheable_rel<Iface: Interface, Ext: Extern>(
         && matches!(ctx.find_rel(id), Ok(rel) if matches!(&rel.def, ast::RelDef::Defined(_)))
 }
 
-/// Whether a function call may be memoized.
+/// Whether a function call may be memoized: caching on, definition not extern.
 ///
-/// Requires caching on, a global non-extern function,
-/// and no function-valued argument.
+/// Local aliases and function-valued arguments name global definitions,
+/// so calls through them are keyed by those definitions too.
 pub(in crate::interp::sl) fn is_cacheable_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, SlInterp, Iface, Ext>,
-    ctx: &Context<'_>,
-    id: &ast::Id,
-    values: &[Value],
+    func: &Callable<ast::MetaFuncDef>,
 ) -> bool {
-    runner_ctx.interp().config.cache
-        && matches!(ctx.find_func_with_scope(id), Ok((Scope::Global, func))
-            if !matches!(&func.def, ast::MetaFuncDef::Extern(_)))
-        && !values
-            .iter()
-            .any(|value| matches!(runner_ctx.arena().value.kind(value.node), ValueKind::Func(_)))
+    runner_ctx.interp().config.cache && !matches!(&func.def, ast::MetaFuncDef::Extern(_))
 }
 
 // = Relation invocation
@@ -365,10 +351,13 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
     let mut keys_cache = Vec::new();
     loop {
         // Serve from the cache when eligible
-        if is_cacheable_func(runner_ctx, ctx, &id, &values) {
+        if let Ok(func) = ctx.find_func(&id)
+            && is_cacheable_func(runner_ctx, func)
+        {
+            // Key by the global definition, even through a local alias
             match runner_ctx.interp().cache.lookup_func(
                 runner_ctx.arena(),
-                &id.node,
+                &func.def.id().node,
                 &targs,
                 &values,
             ) {
