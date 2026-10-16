@@ -17,6 +17,11 @@ pub(super) fn emit_invalid(message: impl Into<String>) -> Box<Report> {
     diagnostic("metacross/emit-invalid", message)
 }
 
+/// Reports a host request or value the wire codec cannot read.
+pub(super) fn wire_invalid(message: impl Into<String>) -> Box<Report> {
+    diagnostic("metacross/wire-invalid", message)
+}
+
 /// Reports a failure to write the emitted text.
 pub fn output_failed(message: impl Into<String>) -> Box<Report> {
     diagnostic("metacross/output-failed", message)

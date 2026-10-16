@@ -17,7 +17,7 @@ use crate::lang::data::{arena::Arena, value::flat::Value};
 
 use crate::lang::al;
 
-use crate::lang::il::ast::Typ;
+use crate::lang::il::ast::{Id, Typ};
 
 use crate::lang::sl;
 
@@ -293,6 +293,45 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 &mut self.effects,
             )
             .call_func(name, targs, values),
+        }
+    }
+
+    /// Calls an interface builtin directly, declared by the specification or not.
+    pub fn call_builtin(
+        &mut self,
+        arena: &mut Arena,
+        id: &Id,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Result<Value, InterpreterError> {
+        match &mut self.backend {
+            Backend::Al { spec_env, interp } => RunnerContext::new(
+                arena,
+                spec_env,
+                interp,
+                &mut self.interface,
+                &mut self.external,
+                &mut self.effects,
+            )
+            .call_builtin(id, targs, values),
+            Backend::Sl { spec_env, interp } => RunnerContext::new(
+                arena,
+                spec_env,
+                interp,
+                &mut self.interface,
+                &mut self.external,
+                &mut self.effects,
+            )
+            .call_builtin(id, targs, values),
+            Backend::Pl { spec_env, interp } => RunnerContext::new(
+                arena,
+                spec_env,
+                interp,
+                &mut self.interface,
+                &mut self.external,
+                &mut self.effects,
+            )
+            .call_builtin(id, targs, values),
         }
     }
 

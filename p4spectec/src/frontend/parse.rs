@@ -6,7 +6,8 @@
 //! sharing variable bindings across them,
 //! and returns their definitions as one `Spec`.
 //! `parse_mixop` parses a notation type and keeps only its shape,
-//! for the case constructors that name their mixop as text.
+//! for the case constructors that name their mixop as text,
+//! and `parse_atom` reads one atom back from its printed text.
 
 use std::{
     fs, io,
@@ -18,7 +19,10 @@ use std::{
 use lalrpop_util::ParseError;
 
 use crate::lang::{
-    common::source::{FileId, Position, Span},
+    common::{
+        notation::atom::Atom,
+        source::{FileId, Position, Span},
+    },
     data::notation::tree::Mixop,
 };
 
@@ -252,6 +256,31 @@ pub fn parse_mixop(source: &str) -> Result<Mixop, FrontendError> {
 
     let typ = parse_typ(source)?;
     Ok(from_typ(&typ))
+}
+
+/// Parses one notation atom from its printed text.
+///
+/// `None` when the text is notation of another shape or a plain type.
+pub fn parse_atom(source: &str) -> Result<Option<Atom>, FrontendError> {
+    // Delimiter atoms do not parse outside their matching pair
+    let atom = match source {
+        "`<" => Atom::LAngle,
+        "`>" => Atom::RAngle,
+        "`(" => Atom::LParen,
+        "`)" => Atom::RParen,
+        "`[" => Atom::LBrack,
+        "`]" => Atom::RBrack,
+        "`{" => Atom::LBrace,
+        "`}" => Atom::RBrace,
+        _ => match parse_typ(source)? {
+            ast::Typ::Notation(notation) => match notation.node {
+                ast::NotTypKind::Atom(atom) => atom.node,
+                _ => return Ok(None),
+            },
+            ast::Typ::Plain(_) => return Ok(None),
+        },
+    };
+    Ok(Some(atom))
 }
 
 /// Parses a complete EL type, including plain argument positions.

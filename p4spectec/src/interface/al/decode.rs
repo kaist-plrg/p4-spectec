@@ -7,12 +7,11 @@
 use super::{Cache, Error, mixops as m, stub};
 use crate::lang::common::prim::num::Number;
 use crate::{
-    frontend::parse::{parse_mixop, parse_typ},
+    frontend::parse::{parse_atom, parse_mixop},
     lang::{
         al::ast as al,
         common::{
             Id, Iter,
-            notation::atom::Atom,
             prim::{bool as boolean, num},
         },
         data::{
@@ -27,7 +26,6 @@ use crate::{
             typ::make as make_typ,
             value::flat::{Value, ValueField, get, make},
         },
-        el::ast as el,
         il::ast as il,
         traits::print::Print,
     },
@@ -109,28 +107,9 @@ impl Decode for il::Atom {
     ) -> Result<Self, Error> {
         let text_meta = get::text(arena, &value_meta)?;
         let span = *arena.value.span(value_meta.span);
-        // Delimiter atoms cannot be parsed outside their matching pair
-        let atom_kind = match text_meta {
-            "`<" => Atom::LAngle,
-            "`>" => Atom::RAngle,
-            "`(" => Atom::LParen,
-            "`)" => Atom::RParen,
-            "`[" => Atom::LBrack,
-            "`]" => Atom::RBrack,
-            "`{" => Atom::LBrace,
-            "`}" => Atom::RBrace,
-            _ => {
-                // Read the atom directly from the parser's notation type
-                let typ_el = parse_typ(text_meta).map_err(|report| Error::from(report).at(span))?;
-                match typ_el {
-                    el::Typ::Notation(not_typ_el) => match not_typ_el.node {
-                        el::NotTypKind::Atom(atom) => atom.node,
-                        _ => return Err(Error::unexpected(arena, value_meta, "one notation atom")),
-                    },
-                    _ => return Err(Error::unexpected(arena, value_meta, "one notation atom")),
-                }
-            }
-        };
+        let atom_kind = parse_atom(text_meta)
+            .map_err(|report| Error::from(report).at(span))?
+            .ok_or_else(|| Error::unexpected(arena, value_meta, "one notation atom"))?;
         Ok(phrase!(node: atom_kind, span: span))
     }
 }

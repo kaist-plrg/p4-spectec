@@ -1,29 +1,30 @@
 //! The host that K and Redex call back into: one runner for the process
 //!
 //! `init` builds the SL runner of a specification, and `eval` answers the
-//! JSON requests of `spec-meta-k/al/4.1-extern-json.k` and
-//! `spec-meta-redex/common/0.1-extern-json.rkt`. The runner holds `Rc`
-//! data, so the host is thread-local; both consumers call from one thread.
-//! The runner is never reset between requests: `fresh_typeId`'s counter
-//! runs for the whole process, and the arena grows with it.
+//! JSON requests of `wire`: builtins go to the interface directly, extern
+//! functions and relations to the loaded specification. The runner holds
+//! `Rc` data, so the host is thread-local; both consumers call from one
+//! thread. The runner is never reset between requests: `fresh_typeId`'s
+//! counter runs for the whole process, and the arena grows with it.
 
 use std::{cell::RefCell, path::PathBuf};
 
+use serde_json::Value as Json;
+
 use crate::{
-    diagnostic::{RenderConfig, Renderer, Report},
+    diagnostic::{ColorChoice, DisplayStyle, RenderConfig, Renderer, Report},
+    interface::p4::P4Interface,
     lang::data::arena::Arena,
     pass::SpecLang,
-    runner::{self, Config, Runner, Spec},
+    runner::{self, Config, InterpreterError, Runner, Spec},
     sim_plugin::dummy::Dummy,
 };
 
-use crate::interface::p4::P4Interface;
+use super::wire::{self, Request};
 
 /// The arena and the runner prepared in it.
 struct Host {
-    #[allow(dead_code)]
     arena: Arena,
-    #[allow(dead_code)]
     runner: Runner<P4Interface, Dummy>,
 }
 
@@ -36,6 +37,21 @@ fn render(report: &Report) {
         eprintln!("{report}\ndiagnostic rendering failed: {error}");
     }
 }
+
+fn render_to_string(report: &Report) -> String {
+    let config = RenderConfig {
+        frame_style: Some(DisplayStyle::Short),
+        color: ColorChoice::Never,
+        ..RenderConfig::default()
+    };
+    Renderer::new(config)
+        .render_to_string(report)
+        .unwrap_or_else(|error| format!("{report}\ndiagnostic rendering failed: {error}"))
+        .trim_end()
+        .to_owned()
+}
+
+// == Initialization
 
 /// Builds the runner for a `.watsup` file or a directory of them, replacing any earlier one.
 ///
@@ -63,17 +79,62 @@ pub fn init(path_spec: &str) -> Result<(), String> {
     Ok(())
 }
 
+// == Requests
+
+impl Host {
+    /// Answers one request; a host error becomes the `error` reply.
+    fn answer(&mut self, request: &str) -> Result<Json, Box<Report>> {
+        let arena = &mut self.arena;
+        match wire::request_of_json(arena, request)? {
+            Request::Builtin { id, targs, args } => {
+                let value = self
+                    .runner
+                    .call_builtin(arena, &id, &targs, &args)
+                    .map_err(InterpreterError::into_report)?;
+                Ok(wire::response_ok(arena, value))
+            }
+            Request::ExternFunc { id, targs, args } => {
+                match self.runner.eval_func(arena, &id.node, &targs, &args).result {
+                    Ok(value) => Ok(wire::response_ok(arena, value)),
+                    Err(error @ InterpreterError::Mismatch(_)) => {
+                        eprintln!("ffi: extern func {} failed", id.node);
+                        render(&error.into_report());
+                        Ok(wire::response_fail())
+                    }
+                    Err(InterpreterError::Fatal(report)) => Err(report),
+                }
+            }
+            Request::ExternRel { id, args } => {
+                match self.runner.eval_rel(arena, &id.node, &args).result {
+                    Ok(values) => Ok(wire::response_ok_values(arena, &values)),
+                    Err(error @ InterpreterError::Mismatch(_)) => {
+                        eprintln!("ffi: extern rel {} failed", id.node);
+                        render(&error.into_report());
+                        Ok(wire::response_fail())
+                    }
+                    Err(InterpreterError::Fatal(report)) => Err(report),
+                }
+            }
+        }
+    }
+}
+
 /// The reply for a failed request, also noted on stderr.
 pub fn error_reply(message: &str) -> String {
     eprintln!("ffi: {message}");
-    serde_json::json!({ "error": message }).to_string()
+    wire::response_error(message).to_string()
 }
 
 /// Answers one JSON request with one JSON reply; never panics on its own.
 pub fn eval(request: &str) -> String {
-    let initialized = HOST.with(|host| host.borrow().is_some());
-    if !initialized {
-        return error_reply("host_eval called before host_init");
-    }
-    error_reply(&format!("not implemented: {}", request.chars().take(80).collect::<String>()))
+    HOST.with(|host| {
+        let mut host = host.borrow_mut();
+        let Some(host) = host.as_mut() else {
+            return error_reply("host_eval called before host_init");
+        };
+        match host.answer(request) {
+            Ok(reply) => reply.to_string(),
+            Err(report) => error_reply(&render_to_string(&report)),
+        }
+    })
 }
