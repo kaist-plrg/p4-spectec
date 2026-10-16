@@ -4,6 +4,8 @@
 //! random, clone, truncate, assert, and assume are not implemented;
 //! the pipeline's dispatch rejects them as unsupported calls.
 
+use std::io::Write;
+
 use num_bigint::BigInt;
 use num_traits::Zero;
 
@@ -685,7 +687,8 @@ where
     let value_msg = func::find_var_e_local(ctx, value_ctx, "msg")?;
     let msg = unpack::p4_string(ctx.arena_mut(), &value_msg)?;
     ctx.record_effect(crate::runner::SideEffect::Impure);
-    ctx.external().write_log(&msg)?;
+    writeln!(std::io::stdout(), "{msg}")
+        .map_err(|error| error::program_output_failed(error.to_string()))?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
         crate::phrase!(node: "value".into(), span: Span::default()),
@@ -754,7 +757,8 @@ where
     let values = unpack::p4_tuple(ctx.arena_mut(), &value_data)?;
     let text = format_braces(ctx.arena(), &msg, &values)?;
     ctx.record_effect(crate::runner::SideEffect::Impure);
-    ctx.external().write_log(&text)?;
+    writeln!(std::io::stdout(), "{text}")
+        .map_err(|error| error::program_output_failed(error.to_string()))?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
         crate::phrase!(node: "value".into(), span: Span::default()),
