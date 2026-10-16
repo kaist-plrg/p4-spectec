@@ -90,9 +90,9 @@ enum Command {
 /// Configures interpreter execution consistently for run and sim.
 #[derive(Clone, Copy, Args)]
 struct ExecutionOptions {
-    /// Reject nondeterministic candidate selection
+    /// Disable deterministic execution checks
     #[arg(long, global = true)]
-    det: bool,
+    no_det: bool,
     /// Enable or disable interpreter caching
     #[arg(long, global = true, default_value_t = true, action = clap::ArgAction::Set)]
     cache_on: bool,

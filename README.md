@@ -128,8 +128,9 @@ or `Program_inst` for instantiation. SL is the default interpreter;
   --stf testdata/p4testgen/basic_routing-bmv2/basic_routing-bmv2_1.stf
 ```
 
-Both commands enable interpreter caching by default. Use `--no-cache` to
-disable it or `--det` to check deterministic execution.
+Both commands enable interpreter caching and deterministic execution checks by
+default. Use `--no-cache` to disable caching or `--no-det` to disable determinism
+checks.
 
 ## Generating specification documents
 
