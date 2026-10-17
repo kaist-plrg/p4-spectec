@@ -131,7 +131,7 @@ fn combine_deterministic(flow: Flow, flow_post: Flow) -> Backtrack<Flow> {
     ok!(flow)
 }
 
-/// Runs every instruction and merges the flows; mismatches are skipped.
+/// Runs every instruction and merges the flows.
 pub(crate) fn choose_deterministic<C>(
     candidates: impl IntoIterator<Item = C>,
     mut evaluate: impl FnMut(C) -> Backtrack<Flow>,
@@ -139,11 +139,7 @@ pub(crate) fn choose_deterministic<C>(
     // Start from an empty continuation
     let mut flow = Flow::Cont(vec![]);
     for candidate in candidates {
-        let flow_post = match evaluate(candidate) {
-            // A mismatching instruction contributes nothing
-            unmatch!(_) => continue,
-            result => unwrap!(result),
-        };
+        let flow_post = unwrap!(evaluate(candidate));
         // Merge, rejecting a second terminating flow
         flow = unwrap!(combine_deterministic(flow, flow_post));
     }
