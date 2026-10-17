@@ -17,6 +17,7 @@ pub fn iterate_vars(ctx: &impl ReadContext, vars: &[ast::Var], iter: ast::Iter) 
 }
 
 /// Recognizes identity iterations using prepared slots without cloning syntax.
+#[inline]
 pub fn find_slot_of_exp(ctx: &impl ReadContext, exp: &ast::Exp) -> Option<SlotIdx> {
     match &exp.node {
         // A plain variable already has its slot
@@ -26,7 +27,10 @@ pub fn find_slot_of_exp(ctx: &impl ReadContext, exp: &ast::Exp) -> Option<SlotId
             let [var] = vars.as_slice() else {
                 return None;
             };
-            let slot = find_slot_of_exp(ctx, exp_inner)?;
+            let slot = match &exp_inner.node {
+                ast::ExpKind::Id(id) => id.slot,
+                _ => find_nested_slot(ctx, exp_inner)?,
+            };
             (slot == var.slot).then(|| ctx.find_slot_iterated(var, *iter))
         }
         // Computed expressions require normal iteration evaluation
@@ -34,18 +38,24 @@ pub fn find_slot_of_exp(ctx: &impl ReadContext, exp: &ast::Exp) -> Option<SlotId
     }
 }
 
+/// Keeps recursive identity iterations out of the common inline slot lookup.
+#[inline(never)]
+fn find_nested_slot(ctx: &impl ReadContext, exp: &ast::Exp) -> Option<SlotIdx> {
+    find_slot_of_exp(ctx, exp)
+}
+
 /// Finds the slot-backed variable represented by a simple iterated expression.
 pub fn find_var_of_exp(ctx: &impl ReadContext, exp: &ast::Exp) -> Option<VarSlot> {
     match &exp.node {
         // A plain variable is its own slot
-        ast::ExpKind::Id(id) => Some(VarSlot {
-            slot: id.slot,
-            var: Var {
+        ast::ExpKind::Id(id) => Some(VarSlot::new(
+            id.slot,
+            Var {
                 id: id.id.clone(),
                 typ: crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span),
                 iters: vec![],
             },
-        }),
+        )),
         // `x*` must be a single-variable iteration over `x` itself
         ast::ExpKind::Iter(exp_inner, ast::ExpIter { iter, vars }) => {
             let [var] = vars.as_slice() else {

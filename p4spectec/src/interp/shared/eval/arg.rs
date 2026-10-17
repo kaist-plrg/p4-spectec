@@ -60,17 +60,8 @@ fn eval_def_arg(
     span: &Span,
 ) -> Backtrack<Value> {
     // A function value carries the referenced function's type
-    let typ_func = unwrap_from_result!(ctx.find_func_typ(id), span);
-    let value = unwrap_from_result!(
-        value::make::func(
-            arena,
-            id.clone(),
-            typ_func.tparams,
-            typ_func.typs_params,
-            *typ_func.typ_ret,
-            Span::default()
-        ),
-        span
-    );
+    let typ = unwrap_from_result!(ctx.find_func_value_typ(id), span);
+    let value =
+        unwrap_from_result!(value::make::func(arena, id.clone(), typ, Span::default()), span);
     ok!(value)
 }
