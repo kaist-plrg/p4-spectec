@@ -4,12 +4,12 @@
 
 use std::hash::{Hash, Hasher};
 
-use crate::lang::data::intern::{CanonHash, CanonInterner};
+use crate::lang::data::intern::{CanonHash, CanonLookup};
 
 use super::MixopKind;
 
 impl CanonHash for MixopKind {
-    fn canon_hash<H: Hasher>(&self, interner: &CanonInterner<Self>, _: &(), hasher: &mut H) {
+    fn canon_hash<H: Hasher>(&self, interner: &impl CanonLookup<Self>, _: &(), hasher: &mut H) {
         self.tag().hash(hasher);
         match self {
             Self::Arg => {}
