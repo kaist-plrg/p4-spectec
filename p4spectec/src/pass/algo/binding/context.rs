@@ -9,12 +9,14 @@
 use crate::lang::{
     common::{Id, ds::set::IdSet, source::Span},
     data::typ,
+    traits::eq::SyntaxEq,
 };
 
 use crate::lang::il::ast;
 
 use crate::runtime::{
     envs::algo::{MEnv, TDEnv, VEnv},
+    ops::typ::expand_typ,
     typdef::TypeDef,
 };
 
@@ -83,6 +85,32 @@ impl Context {
     pub fn find_typdef(&self, id: &Id) -> Result<&TypeDef, AlgoError> {
         self.find_typdef_opt(id)
             .ok_or_else(|| error::typ::type_undefined(id))
+    }
+
+    /// Proves that a type has exactly the given constructor, through aliases.
+    pub fn is_singleton_case(&self, typ: &ast::Typ, mixop: &ast::Mixop) -> Result<bool, AlgoError> {
+        // Instantiate alias parameters before inspecting the nominal type
+        let typ = expand_typ(&self.tdenv, typ).map_err(error::typ::type_operation_invalid)?;
+        let ast::TypKind::Var(id, targs) = &typ.node else {
+            return Ok(false);
+        };
+        // Parameters and extern types cannot prove a constructor match
+        let TypeDef::Defined(tparams, def_typ) = self.find_typdef(id)? else {
+            return Ok(false);
+        };
+        // Direct IL callers must supply the declared type arguments
+        if tparams.len() != targs.len() {
+            return Err(error::typ::type_argument_arity_mismatch(
+                &typ.span,
+                tparams.len(),
+                targs.len(),
+            ));
+        }
+        let ast::DefTypKind::Variant(cases) = &def_typ.node else {
+            return Ok(false);
+        };
+        // Check the exact constructor as well as the size of the variant
+        Ok(cases.len() == 1 && cases[0].not_typ.node.mixop().as_ref().syntax_eq(mixop))
     }
 
     // - Definition loading

@@ -27,7 +27,7 @@
 use std::rc::Rc;
 
 use crate::lang::{
-    common::{ds::set::IdSet, prim, source::Span},
+    common::{ds::set::IdSet, prim},
     data::notation::tree as notation,
     traits::free::FreeIds,
 };
@@ -36,15 +36,11 @@ use crate::lang::il::{ast, fresh, var};
 
 use crate::lang::al;
 
-use crate::runtime::{
-    dim::Dim,
-    ops::typ::{Theta, subst_typ},
-    typdef::TypeDef,
-};
+use crate::runtime::dim::Dim;
 
 use crate::{note_phrase, phrase};
 
-use super::super::{AlgoError, error};
+use super::super::AlgoError;
 
 use super::{
     context::Context,
@@ -53,33 +49,6 @@ use super::{
 };
 
 // == Helpers
-
-/// Checks whether a type is a variant with exactly one case, through aliases.
-fn is_singleton_case(ctx: &Context, typ: &ast::Typ) -> Result<bool, AlgoError> {
-    let ast::TypKind::Var(id, targs) = &typ.node else {
-        return Ok(false);
-    };
-    let TypeDef::Defined(tparams, def_typ) = ctx.find_typdef(id)? else {
-        return Ok(false);
-    };
-    match &def_typ.node {
-        // Follow a plain alias with its type arguments substituted
-        ast::DefTypKind::Plain(typ_inner) => {
-            let theta = Theta::from_lists(tparams, targs).map_err(|mismatch| {
-                error::typ::type_argument_arity_mismatch(
-                    &typ.span,
-                    mismatch.expected,
-                    mismatch.actual,
-                )
-            })?;
-            let typ_inner = subst_typ(&|id| theta.get(id), typ_inner)
-                .map_err(error::typ::type_operation_invalid)?;
-            is_singleton_case(ctx, &typ_inner)
-        }
-        ast::DefTypKind::Struct(_) => Ok(false),
-        ast::DefTypKind::Variant(cases) => Ok(cases.len() == 1),
-    }
-}
 
 /// Checks for an upcast of a nullary case, which still needs its subtype guard.
 fn is_upcast_terminal(exp: &ast::Exp) -> bool {
@@ -135,72 +104,30 @@ impl RenameEnv {
 
 // == Premise generation
 
-/// Source pattern and reason for a condition introduced by partialbind rewriting.
-pub enum Origin {
-    Equality(Span),
-    Match(Span, &'static str),
-    Subtype(Span),
-}
-
-/// A partialbind check or the binding premise following it.
-pub enum AnalyzedPrem {
-    Condition { prem_al: al::ast::Prem, origin: Origin },
-    Binding { prem_al: al::ast::Prem },
-}
-
-impl AnalyzedPrem {
-    /// Discards the rewrite provenance after otherwise validation.
-    pub fn into_prem(self) -> al::ast::Prem {
-        match self {
-            Self::Condition { prem_al, .. } | Self::Binding { prem_al } => prem_al,
-        }
-    }
-}
-
 /// Builds the premise checking a bound sub-expression against its destination.
 ///
 /// Nullary cases, options, and the empty list become match tests;
 /// anything else becomes an equality.
-fn gen_prem_bound(
-    ctx: &Context,
-    iter_ctx: &ICtx,
-    destination: &ast::Var,
-    exp_from: &ast::Exp,
-) -> Result<AnalyzedPrem, AlgoError> {
+fn gen_prem_bound(iter_ctx: &ICtx, destination: &ast::Var, exp_from: &ast::Exp) -> al::ast::Prem {
     let exp_l = var::as_exp(true, destination);
-    let typ_from = phrase!(node: exp_from.note.as_ref().clone(), span: exp_from.span);
-    let (exp_kind, origin) = match &exp_from.node {
-        ast::ExpKind::Case(not_exp)
-            if not_exp.arity() == 0 && !is_singleton_case(ctx, &typ_from)? =>
-        {
-            (
-                ast::ExpKind::Match(
-                    Box::new(exp_l),
-                    ast::Pattern::Case(Rc::clone(not_exp.mixop())),
-                ),
-                Origin::Match(exp_from.span, "variant case"),
-            )
+    let exp_kind = match &exp_from.node {
+        ast::ExpKind::Case(not_exp) if not_exp.arity() == 0 => {
+            ast::ExpKind::Match(Box::new(exp_l), ast::Pattern::Case(Rc::clone(not_exp.mixop())))
         }
-        ast::ExpKind::Opt(Some(_)) => (
-            ast::ExpKind::Match(Box::new(exp_l), ast::Pattern::Opt(ast::OptPattern::Some)),
-            Origin::Match(exp_from.span, "option pattern"),
-        ),
-        ast::ExpKind::Opt(None) => (
-            ast::ExpKind::Match(Box::new(exp_l), ast::Pattern::Opt(ast::OptPattern::None)),
-            Origin::Match(exp_from.span, "option pattern"),
-        ),
-        ast::ExpKind::List(exps) if exps.is_empty() => (
-            ast::ExpKind::Match(Box::new(exp_l), ast::Pattern::List(ast::ListPattern::Nil)),
-            Origin::Match(exp_from.span, "list pattern"),
-        ),
-        _ => (
-            ast::ExpKind::Cmp(
-                ast::CmpOp::Bool(prim::bool::CmpOp::Eq),
-                ast::OpTyp::Bool,
-                Box::new(exp_l),
-                Box::new(exp_from.clone()),
-            ),
-            Origin::Equality(exp_from.span),
+        ast::ExpKind::Opt(Some(_)) => {
+            ast::ExpKind::Match(Box::new(exp_l), ast::Pattern::Opt(ast::OptPattern::Some))
+        }
+        ast::ExpKind::Opt(None) => {
+            ast::ExpKind::Match(Box::new(exp_l), ast::Pattern::Opt(ast::OptPattern::None))
+        }
+        ast::ExpKind::List(exps) if exps.is_empty() => {
+            ast::ExpKind::Match(Box::new(exp_l), ast::Pattern::List(ast::ListPattern::Nil))
+        }
+        _ => ast::ExpKind::Cmp(
+            ast::CmpOp::Bool(prim::bool::CmpOp::Eq),
+            ast::OpTyp::Bool,
+            Box::new(exp_l),
+            Box::new(exp_from.clone()),
         ),
     };
     let exp_cond = note_phrase! {
@@ -225,8 +152,7 @@ fn gen_prem_bound(
         destination.typ.clone(),
         destination.iters.clone(),
     );
-    let prem_al = iter_ctx.iterate_prem(side_condition);
-    Ok(AnalyzedPrem::Condition { prem_al, origin })
+    iter_ctx.iterate_prem(side_condition)
 }
 
 /// Builds `if x matches PATTERN` followed by `let PATTERN = x`.
@@ -235,7 +161,7 @@ fn gen_prem_bind_match(
     destination: &ast::Var,
     pattern: &ast::Pattern,
     exp_from: &ast::Exp,
-) -> Vec<AnalyzedPrem> {
+) -> Vec<al::ast::Prem> {
     let exp_to = var::as_exp(true, destination);
     let exp_guard_match = note_phrase! {
         node: ast::ExpKind::Match(Box::new(exp_to.clone()), pattern.clone()),
@@ -285,18 +211,7 @@ fn gen_prem_bind_match(
     );
     let prem_match = iter_ctx_match.iterate_prem(side_condition_guard_match);
     let prem_bind = iter_ctx_bind.iterate_prem(prem_bind);
-    let text_construct = match pattern {
-        ast::Pattern::Case(_) => "variant case",
-        ast::Pattern::List(_) => "list pattern",
-        ast::Pattern::Opt(_) => "option pattern",
-    };
-    vec![
-        AnalyzedPrem::Condition {
-            prem_al: prem_match,
-            origin: Origin::Match(exp_from.span, text_construct),
-        },
-        AnalyzedPrem::Binding { prem_al: prem_bind },
-    ]
+    vec![prem_match, prem_bind]
 }
 
 /// Builds a subtype guard on the destination, then a let with the downcast.
@@ -306,7 +221,7 @@ fn gen_prem_bind_sub(
     typ_sub: &ast::Typ,
     exp_sub: &ast::Exp,
     exp_from: &ast::Exp,
-) -> Vec<AnalyzedPrem> {
+) -> Vec<al::ast::Prem> {
     let exp_to = var::as_exp(true, destination);
     let exp_guard_sub = note_phrase! {
         node: ast::ExpKind::Sub(Box::new(exp_to.clone()), Box::new(typ_sub.clone())),
@@ -359,50 +274,36 @@ fn gen_prem_bind_sub(
     );
     let prem_sub = iter_ctx_sub.iterate_prem(side_condition_guard_sub);
     let prem_bind = iter_ctx_bind.iterate_prem(prem_bind);
-    vec![
-        AnalyzedPrem::Condition { prem_al: prem_sub, origin: Origin::Subtype(exp_from.span) },
-        AnalyzedPrem::Binding { prem_al: prem_bind },
-    ]
+    vec![prem_sub, prem_bind]
 }
 
 /// Builds the premises of one rename under the enclosing iterations.
-fn gen_prem(
-    ctx: &Context,
-    iter_ctx_prem: &ICtx,
-    rename: &Rename,
-) -> Result<Vec<AnalyzedPrem>, AlgoError> {
+fn gen_prem(iter_ctx_prem: &ICtx, rename: &Rename) -> Vec<al::ast::Prem> {
     // The rename's own iterations sit inside the premise's
     let mut iterations = rename.iter_ctx.as_slice().to_vec();
     iterations.extend(iter_ctx_prem.as_slice().iter().cloned());
     let iter_ctx = ICtx::from_iterations(iterations);
     match &rename.source {
         Source::Bound { exp_from } => {
-            let prem_analyzed = gen_prem_bound(ctx, &iter_ctx, &rename.destination, exp_from)?;
-            Ok(vec![prem_analyzed])
+            let prem_analyzed = gen_prem_bound(&iter_ctx, &rename.destination, exp_from);
+            vec![prem_analyzed]
         }
         Source::BindMatch { pattern, exp_from } => {
-            let prems = gen_prem_bind_match(&iter_ctx, &rename.destination, pattern, exp_from);
-            Ok(prems)
+            gen_prem_bind_match(&iter_ctx, &rename.destination, pattern, exp_from)
         }
         Source::BindSub { typ_sub, exp_sub, exp_from } => {
-            let prems =
-                gen_prem_bind_sub(&iter_ctx, &rename.destination, typ_sub, exp_sub, exp_from);
-            Ok(prems)
+            gen_prem_bind_sub(&iter_ctx, &rename.destination, typ_sub, exp_sub, exp_from)
         }
     }
 }
 
 /// Builds partialbind checks and bindings in rewrite order.
-pub fn gen_prems(
-    ctx: &Context,
-    iter_ctx_prem: &ICtx,
-    renv: &RenameEnv,
-) -> Result<Vec<AnalyzedPrem>, AlgoError> {
+pub fn gen_prems(iter_ctx_prem: &ICtx, renv: &RenameEnv) -> Vec<al::ast::Prem> {
     let mut prems = Vec::new();
     for rename in &renv.renames {
-        prems.extend(gen_prem(ctx, iter_ctx_prem, rename)?);
+        prems.extend(gen_prem(iter_ctx_prem, rename));
     }
-    Ok(prems)
+    prems
 }
 
 // == Expression rewriting
@@ -545,7 +446,7 @@ fn rename_exp_bind(
             };
             let typ = phrase!(node: note.as_ref().clone(), span: span);
             // A singleton case needs no match guard
-            if is_singleton_case(ctx, &typ)? {
+            if ctx.is_singleton_case(&typ, &mixop)? {
                 Ok(exp_from)
             } else {
                 let pattern = ast::Pattern::Case(mixop);

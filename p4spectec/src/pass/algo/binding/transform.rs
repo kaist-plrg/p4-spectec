@@ -52,7 +52,6 @@ use crate::lang::{
     traits::{
         at::At,
         free::{FreeIds, FreeVars},
-        has_call::HasCall,
     },
 };
 
@@ -116,53 +115,13 @@ fn update_venv_partial(venv: &mut VEnv, renv: &partial::RenameEnv) {
     }
 }
 
-/// A lowered premise with its source or binding rewrite provenance.
-enum AnalyzedPrem {
-    Original(al::ast::Prem),
-    Generated(GeneratedPrem),
-}
-
-enum GeneratedPrem {
-    Multibind(multiple::AnalyzedPrem),
-    Partialbind(partial::AnalyzedPrem),
-}
-
-impl AnalyzedPrem {
-    fn as_prem(&self) -> &al::ast::Prem {
-        match self {
-            Self::Original(prem_al) => prem_al,
-            Self::Generated(GeneratedPrem::Multibind(prem_analyzed)) => &prem_analyzed.prem_al,
-            Self::Generated(GeneratedPrem::Partialbind(prem_analyzed)) => match prem_analyzed {
-                partial::AnalyzedPrem::Condition { prem_al, .. }
-                | partial::AnalyzedPrem::Binding { prem_al } => prem_al,
-            },
-        }
-    }
-
-    fn into_prem(self) -> al::ast::Prem {
-        match self {
-            Self::Original(prem_al) => prem_al,
-            Self::Generated(GeneratedPrem::Multibind(prem_analyzed)) => prem_analyzed.prem_al,
-            Self::Generated(GeneratedPrem::Partialbind(prem_analyzed)) => prem_analyzed.into_prem(),
-        }
-    }
-}
-
 /// Orders partialbind premises before multibind checks.
 fn generated_prems(
-    prems_partial: Vec<partial::AnalyzedPrem>,
-    prems_multiple: Vec<multiple::AnalyzedPrem>,
-) -> Vec<AnalyzedPrem> {
-    let mut prems_analyzed = prems_partial
-        .into_iter()
-        .map(|prem_analyzed| AnalyzedPrem::Generated(GeneratedPrem::Partialbind(prem_analyzed)))
-        .collect::<Vec<_>>();
-    prems_analyzed.extend(
-        prems_multiple
-            .into_iter()
-            .map(|prem_analyzed| AnalyzedPrem::Generated(GeneratedPrem::Multibind(prem_analyzed))),
-    );
-    prems_analyzed
+    mut prems_partial: Vec<al::ast::Prem>,
+    prems_multiple: Vec<al::ast::Prem>,
+) -> Vec<al::ast::Prem> {
+    prems_partial.extend(prems_multiple);
+    prems_partial
 }
 
 // == Expression binding analysis
@@ -175,7 +134,7 @@ fn analyze_exps_as_bind(
     ctx: &mut Context,
     iter_ctx: &ICtx,
     exps_il: &[ast::Exp],
-) -> Result<(VEnv, Vec<ast::Exp>, Vec<AnalyzedPrem>), AlgoError> {
+) -> Result<(VEnv, Vec<ast::Exp>, Vec<al::ast::Prem>), AlgoError> {
     // Collect binders and check invertibility
     let benv = collect::collect_exps(ctx, exps_il)?;
     let mut venv = benv.flatten();
@@ -192,7 +151,7 @@ fn analyze_exps_as_bind(
     let exps_al =
         partial::rename_exps(ctx, &mut renv_partial, &mut iter_ctx_exp, &venv.domain(), exps_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_partial = partial::gen_prems(ctx, iter_ctx, &renv_partial)?;
+    let prems_partial = partial::gen_prems(iter_ctx, &renv_partial);
     Ok((venv, exps_al, generated_prems(prems_partial, prems_multiple)))
 }
 
@@ -240,7 +199,7 @@ fn analyze_exps_as_bound(ctx: &Context, exps: &[ast::Exp]) -> Result<(), AlgoErr
 fn analyze_args_as_bind(
     ctx: &mut Context,
     args_il: &[ast::Arg],
-) -> Result<(VEnv, Vec<ast::Arg>, Vec<AnalyzedPrem>), AlgoError> {
+) -> Result<(VEnv, Vec<ast::Arg>, Vec<al::ast::Prem>), AlgoError> {
     // Collect binders, then rename repeated occurrences
     let benv = collect::collect_args(ctx, args_il)?;
     let mut venv = benv.flatten();
@@ -256,7 +215,7 @@ fn analyze_args_as_bind(
     let args_al =
         partial::rename_args(ctx, &mut renv_partial, &mut iter_ctx_arg, &venv.domain(), args_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_partial = partial::gen_prems(ctx, &ICtx::new(), &renv_partial)?;
+    let prems_partial = partial::gen_prems(&ICtx::new(), &renv_partial);
     Ok((venv, args_al, generated_prems(prems_partial, prems_multiple)))
 }
 
@@ -294,10 +253,7 @@ fn analyze_args_as_bind_shallow(
     let args_al =
         partial::rename_args(ctx, &mut renv_partial, &mut iter_ctx_arg, &venv.domain(), args_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_al = partial::gen_prems(ctx, &ICtx::new(), &renv_partial)?
-        .into_iter()
-        .map(partial::AnalyzedPrem::into_prem)
-        .collect();
+    let prems_al = partial::gen_prems(&ICtx::new(), &renv_partial);
     Ok((venv, args_al, prems_al))
 }
 
@@ -315,68 +271,6 @@ fn analyze_args_as_bound_shallow(ctx: &Context, args: &[ast::Arg]) -> Result<(),
 
 // == Premise binding analysis
 
-// - Helpers
-
-/// Reports generated checks before scanning other otherwise premises.
-fn check_analyzed_prems_in_else(
-    prems_analyzed: &[AnalyzedPrem],
-    otherwise: &ast::Otherwise,
-) -> Result<(), AlgoError> {
-    for prem_analyzed in prems_analyzed {
-        let error_opt = match prem_analyzed {
-            // Multibind introduces an equality for repeated binders
-            AnalyzedPrem::Generated(GeneratedPrem::Multibind(multiple::AnalyzedPrem {
-                origin: multiple::Origin { id_bound, id_repeated },
-                ..
-            })) => Some(error::otherwise::otherwise_multibind_invalid(
-                id_bound,
-                id_repeated,
-                otherwise,
-            )),
-            // Partialbind introduces a match or value check
-            AnalyzedPrem::Generated(GeneratedPrem::Partialbind(
-                partial::AnalyzedPrem::Condition { origin, .. },
-            )) => Some(error::otherwise::otherwise_partialbind_invalid(origin, otherwise)),
-            // Original and generated binding premises use the ordinary check
-            _ => None,
-        };
-        if let Some(error) = error_opt {
-            return Err(error);
-        }
-    }
-    for prem_analyzed in prems_analyzed {
-        if let Some(error) = check_pure_prem_in_else(prem_analyzed.as_prem(), otherwise) {
-            return Err(error);
-        }
-    }
-    Ok(())
-}
-
-/// Locates a forbidden operation inside a possibly iterated premise.
-fn check_pure_prem_in_else(prem: &al::ast::Prem, otherwise: &ast::Otherwise) -> Option<AlgoError> {
-    match &prem.node {
-        al::ast::PremKind::Rule(_)
-        | al::ast::PremKind::IfHold(_)
-        | al::ast::PremKind::IfNotHold(_) => {
-            Some(error::otherwise::otherwise_relation_call_invalid(&prem.span, otherwise))
-        }
-        al::ast::PremKind::If(_) => {
-            Some(error::otherwise::otherwise_condition_invalid(&prem.span, otherwise))
-        }
-        al::ast::PremKind::Let(prem) => prem
-            .exp_r
-            .nested_call()
-            .first()
-            .map(|exp| error::otherwise::otherwise_function_call_invalid(&exp.at(), otherwise)),
-        al::ast::PremKind::Debug(prem) => prem
-            .exp
-            .nested_call()
-            .first()
-            .map(|exp| error::otherwise::otherwise_function_call_invalid(&exp.at(), otherwise)),
-        al::ast::PremKind::Iter(prem) => check_pure_prem_in_else(&prem.prem, otherwise),
-    }
-}
-
 // - Premise dispatch
 
 /// Analyzes one premise: bound variables, the AL premise, and side conditions.
@@ -384,7 +278,7 @@ fn lower_prem(
     ctx: &mut Context,
     iter_ctx: ICtx,
     prem_il: &ast::Prem,
-) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
+) -> Result<(VEnv, al::ast::Prem, Vec<al::ast::Prem>), AlgoError> {
     match &prem_il.node {
         ast::PremKind::Rule(rule_prem_il) => {
             lower_rule_prem(ctx, iter_ctx, &prem_il.span, rule_prem_il)
@@ -413,7 +307,7 @@ fn lower_rule_prem(
     iter_ctx: ICtx,
     span: &Span,
     rule_prem_il: &ast::RulePrem,
-) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
+) -> Result<(VEnv, al::ast::Prem, Vec<al::ast::Prem>), AlgoError> {
     let mixop = Rc::clone(rule_prem_il.not_exp.mixop());
     let exps_il = rule_prem_il.not_exp.args().to_vec();
     let (exps_input_il, exps_output_il) = input::split(&rule_prem_il.input_hint, exps_il)
@@ -463,7 +357,7 @@ fn lower_if_eq_prem(
     if_prem_il: &ast::IfPrem,
     exp_l_il: &ast::Exp,
     exp_r_il: &ast::Exp,
-) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
+) -> Result<(VEnv, al::ast::Prem, Vec<al::ast::Prem>), AlgoError> {
     let benv_l = collect::collect_exp(ctx, exp_l_il)?;
     let benv_r = collect::collect_exp(ctx, exp_r_il)?;
     match (benv_l.is_empty(), benv_r.is_empty()) {
@@ -492,7 +386,7 @@ fn lower_if_prem(
     iter_ctx: ICtx,
     span: &Span,
     if_prem_il: &ast::IfPrem,
-) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
+) -> Result<(VEnv, al::ast::Prem, Vec<al::ast::Prem>), AlgoError> {
     // An equality may bind one of its sides
     if let ast::ExpKind::Cmp(ast::CmpOp::Bool(prim::bool::CmpOp::Eq), _, exp_l_il, exp_r_il) =
         &if_prem_il.exp.node
@@ -518,7 +412,7 @@ fn lower_if_hold_prem(
     iter_ctx: ICtx,
     span: &Span,
     if_prem_il: &ast::IfHoldPrem,
-) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
+) -> Result<(VEnv, al::ast::Prem, Vec<al::ast::Prem>), AlgoError> {
     // Every argument must already be bound
     for exp_il in if_prem_il.not_exp.args() {
         analyze_exp_as_bound(ctx, exp_il)?;
@@ -541,7 +435,7 @@ fn lower_if_not_hold_prem(
     iter_ctx: ICtx,
     span: &Span,
     if_prem_il: &ast::IfNotHoldPrem,
-) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
+) -> Result<(VEnv, al::ast::Prem, Vec<al::ast::Prem>), AlgoError> {
     // Every argument must already be bound
     for exp_il in if_prem_il.not_exp.args() {
         analyze_exp_as_bound(ctx, exp_il)?;
@@ -566,7 +460,7 @@ fn lower_let_prem(
     exp_l_il: &ast::Exp,
     benv_l: &BEnv,
     exp_r_il: &ast::Exp,
-) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
+) -> Result<(VEnv, al::ast::Prem, Vec<al::ast::Prem>), AlgoError> {
     // Rename repeated binders in the pattern
     let mut venv = benv_l.flatten();
     let mut renv_multiple = multiple::RenameEnv::from_bindings(benv_l);
@@ -580,7 +474,7 @@ fn lower_let_prem(
     let exp_l_al =
         partial::rename_exp(ctx, &mut renv_partial, &mut iter_ctx_exp, &venv.domain(), exp_l_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_partial = partial::gen_prems(ctx, &iter_ctx, &renv_partial)?;
+    let prems_partial = partial::gen_prems(&iter_ctx, &renv_partial);
     let prems_analyzed = generated_prems(prems_partial, prems_multiple);
 
     let prem_al = phrase! {
@@ -613,7 +507,7 @@ fn lower_iter_prem(
     iter_ctx: ICtx,
     span: &Span,
     iter_prem_il: &ast::IterPrem,
-) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
+) -> Result<(VEnv, al::ast::Prem, Vec<al::ast::Prem>), AlgoError> {
     if !iter_prem_il.prem_iter.vars_bind.is_empty() {
         return Err(error::binding::iteration_binding_invalid(span));
     }
@@ -633,7 +527,7 @@ fn lower_debug_prem(
     iter_ctx: ICtx,
     span: &Span,
     debug_prem_il: &ast::DebugPrem,
-) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
+) -> Result<(VEnv, al::ast::Prem, Vec<al::ast::Prem>), AlgoError> {
     analyze_exp_as_bound(ctx, &debug_prem_il.exp)?;
     let prem_al = phrase! {
         node: al::ast::PremKind::Debug(al::ast::DebugPrem {
@@ -650,13 +544,13 @@ fn lower_debug_prem(
 fn lower_prems(
     ctx: &mut Context,
     prems_il: Vec<ast::Prem>,
-) -> Result<Vec<AnalyzedPrem>, AlgoError> {
+) -> Result<Vec<al::ast::Prem>, AlgoError> {
     let mut prems_analyzed = Vec::new();
     for prem_il in &prems_il {
         // Variables bound here are visible to later premises
         let (venv, prem_al, prem_sideconditions_al) = lower_prem(ctx, ICtx::new(), prem_il)?;
         ctx.add_bounds(&venv);
-        prems_analyzed.push(AnalyzedPrem::Original(prem_al));
+        prems_analyzed.push(prem_al);
         prems_analyzed.extend(prem_sideconditions_al);
     }
     Ok(prems_analyzed)
@@ -669,7 +563,6 @@ fn lower_prems(
 fn lower_rule_match(
     ctx: &mut Context,
     exps_input_by_rule_il: Vec<Vec<ast::Exp>>,
-    otherwise_opt: Option<&ast::Otherwise>,
 ) -> Result<(al::ast::RuleMatch, Vec<Vec<ast::Prem>>), AlgoError> {
     let (exps_signature_al, prems_unified_by_rule_il) =
         antiunify::antiunify(ctx, exps_input_by_rule_il)?;
@@ -678,17 +571,11 @@ fn lower_rule_match(
     // Nothing may remain free in the shared signature
     ctx.add_bounds(&venv);
     analyze_exps_as_bound(ctx, &exps_signature_al)?;
-    if let Some(otherwise) = otherwise_opt {
-        check_analyzed_prems_in_else(&prems_analyzed, otherwise)?;
-    }
 
     let rule_match_al = al::ast::RuleMatch {
         exps_signature: exps_signature_al,
         exps_input: exps_input_al,
-        prems: prems_analyzed
-            .into_iter()
-            .map(AnalyzedPrem::into_prem)
-            .collect(),
+        prems: prems_analyzed,
     };
     Ok((rule_match_al, prems_unified_by_rule_il))
 }
@@ -697,22 +584,15 @@ fn lower_rule_match(
 fn lower_rule_path(
     ctx: &mut Context,
     id: ast::Id,
-    prems_unified_analyzed: Vec<AnalyzedPrem>,
+    prems_unified_analyzed: Vec<al::ast::Prem>,
     prems_il: Vec<ast::Prem>,
     exps_output_il: Vec<ast::Exp>,
-    otherwise_opt: Option<&ast::Otherwise>,
 ) -> Result<al::ast::RulePath, AlgoError> {
     let prems_analyzed = lower_prems(ctx, prems_il)?;
     let mut prems_all_analyzed = prems_unified_analyzed;
     prems_all_analyzed.extend(prems_analyzed);
-    if let Some(otherwise) = otherwise_opt {
-        check_analyzed_prems_in_else(&prems_all_analyzed, otherwise)?;
-    }
     analyze_exps_as_bound(ctx, &exps_output_il)?;
-    let prems_al = prems_all_analyzed
-        .into_iter()
-        .map(AnalyzedPrem::into_prem)
-        .collect();
+    let prems_al = prems_all_analyzed;
     Ok(al::ast::RulePath { id, prems: prems_al, exps_output: exps_output_il })
 }
 
@@ -721,7 +601,6 @@ fn lower_rule_group(
     ctx: &mut Context,
     inputs: &InputHint,
     rule_group_il: ast::RuleGroup,
-    otherwise_opt: Option<&ast::Otherwise>,
 ) -> Result<al::ast::RuleGroup, AlgoError> {
     let mut ctx = ctx.clone();
     let span = rule_group_il.span;
@@ -746,7 +625,7 @@ fn lower_rule_group(
 
     // The match is shared; each path continues from a copy of the context
     let (rule_match_al, prems_unified_by_rule_il) =
-        lower_rule_match(&mut ctx, exps_input_by_rule_il, otherwise_opt)?;
+        lower_rule_match(&mut ctx, exps_input_by_rule_il)?;
     let mut rule_paths_al = Vec::with_capacity(prems_by_rule_il.len());
     for (((id, prems_unified_il), prems_il), exps_output_il) in ids
         .into_iter()
@@ -762,7 +641,6 @@ fn lower_rule_group(
             prems_unified_analyzed,
             prems_il,
             exps_output_il,
-            otherwise_opt,
         )?);
     }
     let rule_group_al = al::ast::RuleGroupKind {
@@ -781,13 +659,13 @@ fn lower_else_group(
     else_group_il: ast::ElseGroup,
 ) -> Result<al::ast::ElseGroup, AlgoError> {
     let span = else_group_il.span;
-    let ast::ElseGroupKind { id: id_group, rule: rule_il, otherwise } = else_group_il.node;
+    let ast::ElseGroupKind { id: id_group, rule: rule_il, .. } = else_group_il.node;
     // Reuse the rule group analysis on the single rule
     let rule_group_il = phrase! {
         node: ast::RuleGroupKind { id: id_group, rules: vec![rule_il] },
         span: span,
     };
-    let rule_group_al = lower_rule_group(ctx, inputs, rule_group_il, Some(&otherwise))?;
+    let rule_group_al = lower_rule_group(ctx, inputs, rule_group_il)?;
     let rule_path_al = rule_group_al
         .node
         .rule_paths
@@ -806,33 +684,19 @@ fn lower_else_group(
 // == Clause binding analysis
 
 /// Analyzes a clause: arguments bind, premises follow, the body must be bound.
-fn lower_clause(
-    ctx: &mut Context,
-    clause_il: ast::Clause,
-    is_else: bool,
-) -> Result<al::ast::Clause, AlgoError> {
+fn lower_clause(ctx: &mut Context, clause_il: ast::Clause) -> Result<al::ast::Clause, AlgoError> {
     let mut ctx = ctx.clone();
     ctx.add_frees(&clause_il.free_ids());
     let span = clause_il.span;
-    let ast::ClauseKind { args: args_il, exp: exp_il, prems: prems_il, otherwise_opt } =
-        clause_il.node;
+    let ast::ClauseKind { args: args_il, exp: exp_il, prems: prems_il, .. } = clause_il.node;
     // Arguments bind first, then premises in order, then the body must be bound
     let (venv, args_al, prems_generated) = analyze_args_as_bind(&mut ctx, &args_il)?;
     ctx.add_bounds(&venv);
     let prems_analyzed = lower_prems(&mut ctx, prems_il)?;
     analyze_exp_as_bound(&ctx, &exp_il)?;
-    let otherwise =
-        is_else.then(|| otherwise_opt.unwrap_or(phrase!(node: ast::OtherwiseKind, span: span)));
-    // An otherwise clause may not contain partial premises
     let mut prems_all_analyzed = prems_generated;
     prems_all_analyzed.extend(prems_analyzed);
-    if let Some(otherwise) = &otherwise {
-        check_analyzed_prems_in_else(&prems_all_analyzed, otherwise)?;
-    }
-    let prems_all_al = prems_all_analyzed
-        .into_iter()
-        .map(AnalyzedPrem::into_prem)
-        .collect();
+    let prems_all_al = prems_all_analyzed;
     let clause_al = phrase! {
         node: al::ast::ClauseKind {
             args: args_al,
@@ -1075,7 +939,7 @@ fn lower_defined_rel(
     for rule_group_il in rule_groups {
         // The group keeps its source span
         let span = rule_group_il.span;
-        let mut rule_group_al = lower_rule_group(ctx, &input_hint, rule_group_il, None)?;
+        let mut rule_group_al = lower_rule_group(ctx, &input_hint, rule_group_il)?;
         rule_group_al.span = span;
         rule_groups_al.push(rule_group_al);
     }
@@ -1156,14 +1020,19 @@ fn lower_defined_func(
     ctx: &mut Context,
     defined_func_il: ast::DefinedFunc,
 ) -> Result<al::ast::DefinedFunc, AlgoError> {
+    // Type parameters shadow global definitions only within this function
+    let mut ctx = ctx.clone();
+    for tparam in &defined_func_il.tparams {
+        ctx.tdenv.insert(tparam.clone(), TypeDef::Parameter);
+    }
     let mut clauses_al = Vec::with_capacity(defined_func_il.clauses.len());
     for clause_il in defined_func_il.clauses {
-        clauses_al.push(lower_clause(ctx, clause_il, false)?);
+        clauses_al.push(lower_clause(&mut ctx, clause_il)?);
     }
     // The otherwise clause is analyzed as the fallback
     let else_clause_al = defined_func_il
         .else_clause
-        .map(|clause_il| lower_clause(ctx, clause_il, true))
+        .map(|clause_il| lower_clause(&mut ctx, clause_il))
         .transpose()?;
     Ok(al::ast::DefinedFunc {
         id: defined_func_il.id,
