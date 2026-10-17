@@ -361,8 +361,8 @@ pub fn assign_def<Ctx: WriteContext>(
     let ValueKind::Func(id_func) = arena.value.kind(value.node) else {
         unreachable!("function parameter must receive a function reference");
     };
-    // Look the definition up in the caller, bind it in the callee
-    let func = unwrap_from_result!(ctx_caller.find_func(id_func), &id_func.span);
+    // The value already names a global definition; bind it in the callee
+    let func = unwrap_from_result!(ctx_caller.find_func_global(id_func), &id_func.span);
     unwrap_from_result!(ctx_callee.add_func(id.clone(), Rc::clone(func)), &id.span);
     ok!(ctx_callee)
 }

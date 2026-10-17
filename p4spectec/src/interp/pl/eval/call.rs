@@ -246,8 +246,8 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
     rel: &ast::ExternRel,
     values: &[Value],
 ) -> Backtrack<Vec<Value>> {
-    // Host dispatch records effects before exposing the result
-    let result = runner_ctx.call_extern_rel(&id.node, values);
+    // Dispatch by the definition's name, recording effects before the result
+    let result = runner_ctx.call_extern_rel(&rel.id.node, values);
     // Attach the call site to fatal host failures
     let values = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Check the number of extern outputs before assigning them
@@ -374,8 +374,8 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
     targs: &[ast::Typ],
     values: &[Value],
 ) -> Backtrack<Value> {
-    // Host dispatch records effects before exposing the result
-    let result = runner_ctx.call_extern_func(&id.node, &[], values);
+    // Dispatch by the definition's name, recording effects before the result
+    let result = runner_ctx.call_extern_func(&func.id.node, &[], values);
     // Attach the call site to fatal host failures
     let value = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Guard the outputs against their declared types
@@ -404,8 +404,9 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
     targs: &[ast::Typ],
     values: &[Value],
 ) -> Backtrack<Value> {
-    // Builtin dispatch records effects before exposing the result
-    let result = runner_ctx.call_builtin(id, targs, values);
+    // Dispatch by the definition's name at the call site, recording effects
+    let id_builtin = crate::phrase!(node: func.id.node.clone(), span: id.span);
+    let result = runner_ctx.call_builtin(&id_builtin, targs, values);
     match result {
         // A successful builtin result may still fail its output guard
         Ok(value) => {
