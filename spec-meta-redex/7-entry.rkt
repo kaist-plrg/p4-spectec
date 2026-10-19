@@ -1,5 +1,5 @@
 #lang racket/base
-;; spec-meta/al/6-entry.watsup: load a script, then run $main() through the
+;; spec-meta/6-entry.watsup: load a script, then run $main() through the
 ;; driver. entry-p4 runs Program_ok on a P4 program instead, as K's afterLoad
 ;; does, under a context that load-script gives, so one load can serve many
 ;; programs. Both need the host started on the spec first, with host-init!.
@@ -10,17 +10,17 @@
 ;; k-run-p4.sh does. -i adds a P4 include directory, and --p4 needs at least
 ;; one. Entry's debug messages go to stderr.
 ;;
-;;   racket spec-meta-redex/al/7-entry.rkt FILE.watsup
-;;   racket spec-meta-redex/al/7-entry.rkt --p4 PROGRAM.p4 -i DIR [-i DIR]... spec
+;;   racket spec-meta-redex/7-entry.rkt FILE.watsup
+;;   racket spec-meta-redex/7-entry.rkt --p4 PROGRAM.p4 -i DIR [-i DIR]... spec
 
 (require json
          racket/cmdline
          racket/match
          redex/reduction-semantics
-         "../common/0.0-stdlib.rkt"
-         "../common/0.1-extern-json.rkt"
-         "../common/0.2-extern-ffi.rkt"
-         "0-boot.rkt"
+         "0.0-stdlib.rkt"
+         "0.1-extern-json.rkt"
+         "0.2-extern-ffi.rkt"
+         "0.3-boot.rkt"
          "3-context.rkt"
          "6-driver.rkt")
 (provide entry

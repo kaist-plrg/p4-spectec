@@ -12,7 +12,7 @@
 (provide host-init!
          host-eval)
 
-(define-runtime-path lib-path "../../bin/libp4spectec.so")
+(define-runtime-path lib-path "../bin/libp4spectec.so")
 
 ;; host_init and host_eval, loaded on first use
 (define host

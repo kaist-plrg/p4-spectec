@@ -1,5 +1,5 @@
 #lang racket/base
-;; spec-meta/al/5.7-eval-call-rel.watsup.
+;; spec-meta/5.7-eval-call-rel.watsup.
 ;;
 ;; A relation runs in (IN L_local ...), and each rule path in a copy of it, so
 ;; a failed path leaves no bindings. Eval_rul/fail is "frame/fail". Call_rel
@@ -7,7 +7,6 @@
 ;; Eval_prem/fail does for the premise.
 
 (require redex/reduction-semantics
-         "../common/3-relation.rkt"
          "3-context.rkt"
          "4-relation.rkt")
 (provide ->term/eval-call-rel

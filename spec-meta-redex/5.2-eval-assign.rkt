@@ -1,13 +1,13 @@
 #lang racket/base
-;; spec-meta/al/5.2-eval-assign.watsup.
+;; spec-meta/5.2-eval-assign.watsup.
 ;;
 ;; A successful assignment updates the innermost IN's layer and reduces to OK.
 ;; The relations have no `otherwise`, so an input that no rule matches has no
 ;; derivation, and its caller fails: here it reduces to FAIL directly.
 
 (require redex/reduction-semantics
-         "../common/0.0-stdlib.rkt"
-         "../common/2-env.rkt"
+         "0.0-stdlib.rkt"
+         "2-env.rkt"
          "3-context.rkt"
          "4-relation.rkt")
 (provide ->term/eval-assign

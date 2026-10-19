@@ -20,10 +20,12 @@ make redex       # the Redex modules, with raco make
 `make k` and `make redex` are local targets: CI builds and tests the Rust
 implementation only, since K and Racket are not installed there.
 
-`spec-meta/` is one flat directory of `.watsup` files now. The K and Redex
-ports still mirror its former `common`/`al` split in their module layout, and
-their frozen syntax modules predate the signature on `FUNC` types: `metacross`
-emits a `FUNC` type without its signature, as `funcT()` and `FUNC`.
+`spec-meta/`, `spec-meta-k/`, and `spec-meta-redex/` are each one flat
+directory, and a K or Redex file is numbered after the `spec-meta/` file it
+mirrors (K keeps its own `5.x` numbers, since argument evaluation lives in its
+`5.3-eval-exp.k`). The frozen syntax modules predate the signature on `FUNC`
+types: `metacross` emits a `FUNC` type without its signature, as `funcT()`
+and `FUNC`.
 
 ## K
 
@@ -42,7 +44,7 @@ based on K rewriting.
 ### K configuration
 
 The evaluator is organized around the configuration in
-[`al/0-config.k`](spec-meta-k/al/0-config.k):
+[`0.1-config.k`](spec-meta-k/0.1-config.k):
 
 ```k
 configuration
@@ -77,7 +79,7 @@ make k
 ```
 
 This builds `bin/metacross` and `bin/libp4spectec.so`, then kompiles
-[`al/6-entry.k`](spec-meta-k/al/6-entry.k) into `al-kompiled/`. The
+[`6-entry.k`](spec-meta-k/6-entry.k) into `al-kompiled/`. The
 interpreter is linked against the host library with an `$ORIGIN`-relative
 rpath, so it finds `bin/libp4spectec.so` from `al-kompiled/` wherever the
 Rust target directory is. Rerun `make k` after changing the K or Rust sources.
@@ -190,8 +192,8 @@ K rules -> JSON codec -> #ffiCall -> bin/libp4spectec.so -> p4spectec runner
 ```
 
 The K side is implemented by
-[`al/4.1-extern-json.k`](spec-meta-k/al/4.1-extern-json.k), the codec, and
-[`al/4.2-extern-ffi.k`](spec-meta-k/al/4.2-extern-ffi.k), the transport, which
+[`4.1-extern-json.k`](spec-meta-k/4.1-extern-json.k), the codec, and
+[`4.2-extern-ffi.k`](spec-meta-k/4.2-extern-ffi.k), the transport, which
 resolves the library's `host_init`, `host_eval`, and `host_strlen` symbols with
 `#functionAddress` and calls them with `#ffiCall`. The Rust side is
 [`ffi.rs`](p4spectec/src/metacross/ffi.rs), the `extern "C"` surface and the
@@ -242,7 +244,7 @@ The Redex implementation supports the same two main uses:
 ### Redex reduction semantics
 
 The machine language in
-[`al/4-relation.rkt`](spec-meta-redex/al/4-relation.rkt) defines configurations
+[`4-relation.rkt`](spec-meta-redex/4-relation.rkt) defines configurations
 of the form `(G e)`. `G` is a handle to the loaded global layer, which remains
 in a registry for the duration of a run. The term `(IN L e)` evaluates `e`
 under the local layer `L`; the innermost `IN` supplies the local bindings at
@@ -261,7 +263,7 @@ rule attempts, and iterations introduce nested `IN` scopes. A failed attempt
 discards its scope, preserving the enclosing layer for the next alternative.
 `FAIL` propagates through frames until a rule handles it or the run fails.
 
-The evaluator in [`al/5-eval.rkt`](spec-meta-redex/al/5-eval.rkt) combines the
+The evaluator in [`5-eval.rkt`](spec-meta-redex/5-eval.rkt) combines the
 rule fragments into three relations:
 
 | Relation | Purpose |
@@ -272,7 +274,7 @@ rule fragments into three relations:
 
 Pure helpers use Redex metafunctions; partial helpers use judgment forms,
 where a missing derivation can fail a premise. Programs run through
-[`al/6-driver.rkt`](spec-meta-redex/al/6-driver.rkt), which computes the
+[`6-driver.rkt`](spec-meta-redex/6-driver.rkt), which computes the
 reduction steps while keeping a cursor at the current subterm. The driver
 avoids repeatedly decomposing the whole configuration; `->al` remains the
 relation for inspecting and displaying the semantics.
@@ -302,7 +304,7 @@ or Rust sources to keep the compiled modules and the library up to date.
 Run a single P4-SpecTec program with `$main()`:
 
 ```sh
-racket spec-meta-redex/al/7-entry.rkt examples/add.watsup
+racket spec-meta-redex/7-entry.rkt examples/add.watsup
 ```
 
 The script is converted to an s-expression, loaded, and evaluated through
@@ -324,7 +326,7 @@ checks the program, the Redex specification executes P4-SpecTec AL, and Racket
 and Redex run the reduction rules.
 
 ```sh
-racket spec-meta-redex/al/7-entry.rkt \
+racket spec-meta-redex/7-entry.rkt \
   --p4 p4c/testdata/p4_16_samples/action-bind.p4 \
   -i p4c/p4include \
   spec
@@ -346,7 +348,7 @@ The suite checks `p4c/testdata/p4_16_samples` as positive tests and
 `spec-meta-redex/p4-typecheck-pos.result` and
 `spec-meta-redex/p4-typecheck-neg.result`.
 
-The entry point is [`al/7-entry.rkt`](spec-meta-redex/al/7-entry.rkt) for both
+The entry point is [`7-entry.rkt`](spec-meta-redex/7-entry.rkt) for both
 AL and P4 programs. [`test/p4-typecheck.rkt`](spec-meta-redex/test/p4-typecheck.rkt)
 loads the specification once and reuses it across the P4 programs in a suite.
 
@@ -382,7 +384,7 @@ exact integers, and booleans are `#t` or `#f`. For example:
 
 The emitter is [`sexp.rs`](p4spectec/src/metacross/sexp.rs), a printer of the
 same meta values `kast.rs` walks.
-[`al/0-boot.rkt`](spec-meta-redex/al/0-boot.rkt) runs these commands and reads
+[`0.3-boot.rkt`](spec-meta-redex/0.3-boot.rkt) runs these commands and reads
 their output with Racket's `read`. It also decodes the JSON text in P4
 `(EXT json)` values into Racket JSON values.
 
@@ -396,8 +398,8 @@ Redex rules -> JSON codec -> Racket ffi2 -> bin/libp4spectec.so -> p4spectec run
 ```
 
 The Redex side is implemented by
-[`common/0.1-extern-json.rkt`](spec-meta-redex/common/0.1-extern-json.rkt), the
-codec, and [`common/0.2-extern-ffi.rkt`](spec-meta-redex/common/0.2-extern-ffi.rkt),
+[`0.1-extern-json.rkt`](spec-meta-redex/0.1-extern-json.rkt), the
+codec, and [`0.2-extern-ffi.rkt`](spec-meta-redex/0.2-extern-ffi.rkt),
 which loads `bin/libp4spectec.so` with `ffi2` and binds `host_init` and
 `host_eval`. The Rust side is the one K uses, and the reply ownership rule of
 the K–Rust wire applies: the command-line entry point initializes the host
@@ -407,7 +409,7 @@ stays in the Racket process across calls.
 A host failure reply becomes `FAIL`; a host error reply raises a Racket
 error. Redex delegates all object-level builtins, including map operations,
 to this host. Meta-level map helpers used by the evaluator operate on Redex's
-own environments in [`common/0.0-stdlib.rkt`](spec-meta-redex/common/0.0-stdlib.rkt).
+own environments in [`0.0-stdlib.rkt`](spec-meta-redex/0.0-stdlib.rkt).
 
 ## Measurements
 
@@ -449,6 +451,6 @@ PDF files in the current directory:
   (with-output-to-file file #:exists 'replace
     (λ () (void (write-bytes (convert p 'pdf-bytes))))))
 
-(save (in "al/4-relation.rkt" '(language->pict al)) "al.pdf")
-(save (in "al/5-eval.rkt" '(reduction-relation->pict ->term)) "term.pdf")
+(save (in "4-relation.rkt" '(language->pict al)) "al.pdf")
+(save (in "5-eval.rkt" '(reduction-relation->pict ->term)) "term.pdf")
 ```

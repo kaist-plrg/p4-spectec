@@ -10,7 +10,7 @@
 (provide boot-script
          boot-p4)
 
-(define-runtime-path metacross-path "../../bin/metacross")
+(define-runtime-path metacross-path "../bin/metacross")
 
 (define (metacross)
   (unless (file-exists? metacross-path)

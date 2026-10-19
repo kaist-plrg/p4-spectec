@@ -1,5 +1,5 @@
 #lang racket/base
-;; The parts of spec-meta/common/0-stdlib.watsup that the port uses, and the
+;; The parts of spec-meta/0-stdlib.watsup that the port uses, and the
 ;; Racket helpers that rules use for texts, lists, and debug output.
 ;;
 ;; Type parameters are dropped: `any` stands for them in contracts.

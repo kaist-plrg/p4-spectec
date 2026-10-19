@@ -1,5 +1,5 @@
 #lang racket/base
-;; spec-meta/al/5.6-eval-call-func.watsup.
+;; spec-meta/5.6-eval-call-func.watsup.
 ;;
 ;; A callee runs in (IN L_callee ...), and each clause in a copy of it, so a
 ;; failed clause leaves no bindings. Eval_clause/fail and Eval_tblrow/fail are
@@ -8,7 +8,6 @@
 ;; Eval_exp/fail does for the call.
 
 (require redex/reduction-semantics
-         "../common/3-relation.rkt"
          "3-context.rkt"
          "4-relation.rkt")
 (provide ->term/eval-call-func

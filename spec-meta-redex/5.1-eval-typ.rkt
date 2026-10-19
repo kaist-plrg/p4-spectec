@@ -1,14 +1,58 @@
 #lang racket/base
-;; spec-meta/al/5.1-eval-typ.watsup.
+;; spec-meta/5.1-eval-typ.watsup.
 
 (require redex/reduction-semantics
-         "../common/0.0-stdlib.rkt"
-         "../common/4.0-eval-typ.rkt"
-         "../common/4.1-eval-ops.rkt"
-         "3-context.rkt")
-(provide upcast
+         "0.0-stdlib.rkt"
+         "3-context.rkt"
+         "4-relation.rkt"
+         "5.0-eval-ops.rkt")
+(provide subst-typ
+         subst-typs
+         upcast
          downcast
          subtyp)
+
+;; Type substitution
+
+(define-judgment-form al
+  #:mode (subst-typ I I O)
+  #:contract (subst-typ theta typ typ)
+  [(subst-typ () typ typ)]
+  [(subst-typ-inner theta typ typ_subst)
+   ----------------------------------------
+   (subst-typ (name theta ((id_h typ_h) (id_t typ_t) ...)) typ typ_subst)])
+
+;; $subst_typ'
+(define-judgment-form al
+  #:mode (subst-typ-inner I I O)
+  #:contract (subst-typ-inner theta typ typ)
+  [(subst-typ-inner theta NAT NAT)]
+  [(subst-typ-inner theta INT INT)]
+  [(subst-typ-inner theta TEXT TEXT)]
+  [(subst-typ-inner theta BOOL BOOL)]
+  [(where (typ) (find-map theta id))
+   ----------------------------------------
+   (subst-typ-inner theta (VAR id ()) typ)]
+  [(where () (find-map theta id))
+   (subst-typ-inner theta targ typ_subst) ...
+   ----------------------------------------
+   (subst-typ-inner theta (VAR id (targ ...)) (VAR id (typ_subst ...)))]
+  [(subst-typ-inner theta typ typ_subst) ...
+   ----------------------------------------
+   (subst-typ-inner theta (TUP (typ ...)) (TUP (typ_subst ...)))]
+  [(subst-typ-inner theta typ typ_subst)
+   ----------------------------------------
+   (subst-typ-inner theta (ITER typ iter) (ITER typ_subst iter))]
+  [(subst-typ-inner theta FUNC FUNC)])
+
+;; $subst_typ on each type, for a caller that iterates it. Not a watsup def:
+;; judgment-holds takes no ellipsis.
+(define-judgment-form al
+  #:mode (subst-typs I I O)
+  #:contract (subst-typs theta (typ ...) (typ ...))
+  [(subst-typ theta typ typ_subst) ...
+   ----------------------------------------
+   (subst-typs theta (typ ...) (typ_subst ...))])
 
 ;;
 ;; Type casts
@@ -16,7 +60,7 @@
 
 ;;; Upcasts
 
-(define-metafunction al-context
+(define-metafunction al
   upcast : G L typ val -> valres
   [(upcast G L INT (INT i)) (OK (INT i))]
   [(upcast G L INT (NAT n)) (OK (INT n))]
@@ -38,12 +82,12 @@
 
 ;;; Downcasts
 
-(define-metafunction al-context
+(define-metafunction al
   downcast : G L typ val -> valres
   [(downcast G L NAT (NAT n)) (OK (NAT n))]
   [(downcast G L NAT (INT n)) (OK (NAT n))]
   [(downcast G L NAT val) FAIL
-   (side-condition (not (redex-match? al-context num (term val))))]
+   (side-condition (not (redex-match? al num (term val))))]
   [(downcast G L (VAR id (targ ..._n)) val) (downcast G L typ_subst val)
    (where ((DEF (tparam ..._n) (ALIAS typ))) (find-typ G L id))
    (where theta ((tparam targ) ...))
@@ -66,7 +110,7 @@
 ;; $subtyp takes G and the local tdenv, where spec-meta takes their extension
 ;; $extend_tdenv(C.GLOBAL.TYP, C.LOCAL.TYP): find-typdef finds in G and tdenv
 ;; what $find_map finds in the extension.
-(define-metafunction al-context
+(define-metafunction al
   subtyp : G tdenv typ val -> bool
   [(subtyp G tdenv BOOL (BOOL b)) #t]
   [(subtyp G tdenv NAT (NAT n)) #t]

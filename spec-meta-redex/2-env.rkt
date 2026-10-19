@@ -1,15 +1,30 @@
 #lang racket/base
-;; spec-meta/al/2-env.watsup.
+;; spec-meta/2-env.watsup.
 
 (require redex/reduction-semantics
-         "../common/3-relation.rkt"
+         "0.0-stdlib.rkt"
          "1-syntax.rkt")
-(provide al-env)
+(provide env
+         theta-of-tdenv
+         is-iter-on-var
+         iter-vari)
 
-;; The common languages and the AL syntax
-(define-union-language al-base common-relation al-syntax)
+(define-extended-language env syntax
+  ;; Value environment
+  (varr ::= (id (iter ...)))
+  (venv ::= ((varr val) ...))
 
-(define-extended-language al-env al-base
+  ;; Type definition environment
+  (typdef ::=
+          PARAM
+          EXT
+          (DEF (tparam ...) deftyp))
+  (tdenv ::= ((id typdef) ...))
+
+  ;; Type substitution environment
+  (theta ::= ((id typ) ...))
+
+
   ;; Relation environment
   (externRelDef ::= (EXT id))
   (definedRelDef ::=
@@ -27,3 +42,35 @@
                   (DEF (tparam ...) (clause ...) (elsclause)))
   (funcdef ::= externFuncDef builtinFuncDef tableFuncDef definedFuncDef)
   (fenv ::= ((id funcdef) ...)))
+
+
+(define-judgment-form env
+  #:mode (theta-of-tdenv I O)
+  #:contract (theta-of-tdenv tdenv theta)
+  [(theta-of-tdenv () (empty-map))]
+  [(theta-of-tdenv ((id_t typdef_t) ...) theta_t)
+   ----------------------------------------
+   (theta-of-tdenv ((id_h (DEF () (ALIAS typ_h))) (id_t typdef_t) ...)
+                   (add-map theta_t id_h typ_h))]
+  [(theta-of-tdenv ((id_t typdef_t) ...) theta_t)
+   ----------------------------------------
+   (theta-of-tdenv ((id_h PARAM) (id_t typdef_t) ...) theta_t)]
+  [(theta-of-tdenv ((id_t typdef_t) ...) theta_t)
+   ----------------------------------------
+   (theta-of-tdenv ((id_h EXT) (id_t typdef_t) ...) theta_t)])
+
+;;
+;; Iteration helper
+;;
+
+(define-metafunction env
+  is-iter-on-var : exp -> () ∨ (varr)
+  [(is-iter-on-var (VAR id)) ((id ()))]
+  [(is-iter-on-var (ITER exp (iter_outer ((id _ (iter ...)))))) ((id (iter ... iter_outer)))
+   (where ((id (iter ...))) (is-iter-on-var exp))]
+  ;; otherwise
+  [(is-iter-on-var exp) ()])
+
+(define-metafunction env
+  iter-vari : vari iter -> vari
+  [(iter-vari (id typ (iter ...)) iter_add) (id typ (iter ... iter_add))])

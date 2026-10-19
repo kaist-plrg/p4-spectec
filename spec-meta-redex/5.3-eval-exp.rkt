@@ -1,5 +1,5 @@
 #lang racket/base
-;; spec-meta/al/5.3-eval-exp.watsup.
+;; spec-meta/5.3-eval-exp.watsup.
 ;;
 ;; An exp evaluates in place: each evaluated subterm is replaced by its result.
 ;; Eval_exp/fail, Eval_path/fail, and Eval_path_upd/fail become complement
@@ -8,11 +8,11 @@
 ;; does not, and "<group>/<rule>/fail" where a rule's own premise fails.
 
 (require redex/reduction-semantics
-         "../common/0.0-stdlib.rkt"
-         "../common/2-env.rkt"
-         "../common/4.1-eval-ops.rkt"
+         "0.0-stdlib.rkt"
+         "2-env.rkt"
          "3-context.rkt"
          "4-relation.rkt"
+         "5.0-eval-ops.rkt"
          "5.1-eval-typ.rkt")
 (provide ->term/eval-exp
          ->term+ctx/eval-exp)

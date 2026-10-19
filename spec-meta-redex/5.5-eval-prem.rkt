@@ -1,13 +1,13 @@
 #lang racket/base
-;; spec-meta/al/5.5-eval-prem.watsup.
+;; spec-meta/5.5-eval-prem.watsup.
 ;;
 ;; A premise evaluates in place, updates the innermost IN's layer, and reduces
 ;; to OK. Eval_prem/fail becomes complement rules, and "frame/fail" where a
 ;; premise's sub-relation fails.
 
 (require redex/reduction-semantics
-         "../common/0.0-stdlib.rkt"
-         "../common/2-env.rkt"
+         "0.0-stdlib.rkt"
+         "2-env.rkt"
          "3-context.rkt"
          "4-relation.rkt")
 (provide ->term/eval-prem

@@ -1,12 +1,12 @@
 #lang racket/base
-;; spec-meta/common/5.1-eval-ops.watsup.
+;; spec-meta/5.0-eval-ops.watsup.
 ;;
 ;; Arithmetic follows p4spectec/src/lang/common/prim/num.rs: DIV and MOD
 ;; truncate. An undefined result (division by zero, a negative exponent) raises
 ;; an error, as num.rs's NumericError does.
 
 (require redex/reduction-semantics
-         "3-relation.rkt")
+         "4-relation.rkt")
 (provide unop-number
          binop-bool
          binop-number
@@ -22,21 +22,21 @@
 
 ;; Binary operations
 
-(define-metafunction common-relation
+(define-metafunction al
   unop-number : numunop num -> val
   [(unop-number PLUS (NAT n)) (NAT n)]
   [(unop-number PLUS (INT i)) (INT i)]
   [(unop-number MINUS (NAT n)) (INT ,(- (term n)))]
   [(unop-number MINUS (INT i)) (INT ,(- (term i)))])
 
-(define-metafunction common-relation
+(define-metafunction al
   binop-bool : boolbinop bool bool -> bool
   [(binop-bool AND b_l b_r) ,(and (term b_l) (term b_r))]
   [(binop-bool OR b_l b_r) ,(or (term b_l) (term b_r))]
   [(binop-bool IMPL b_l b_r) ,(or (not (term b_l)) (term b_r))]
   [(binop-bool EQUIV b_l b_r) ,(eq? (term b_l) (term b_r))])
 
-(define-judgment-form common-relation
+(define-judgment-form al
   #:mode (binop-number I I I O)
   #:contract (binop-number numbinop num num val)
   [(binop-number ADD (NAT n_l) (NAT n_r) (NAT ,(+ (term n_l) (term n_r))))]
@@ -52,12 +52,12 @@
   [(binop-number POW (NAT n_l) (NAT n_r) (NAT ,(pow (term n_l) (term n_r))))]
   [(binop-number POW (INT i_l) (INT i_r) (INT ,(pow (term i_l) (term i_r))))])
 
-(define-metafunction common-relation
+(define-metafunction al
   cmpop-poly : polycmpop val val -> bool
   [(cmpop-poly EQ val_l val_r) ,(equal? (term val_l) (term val_r))]
   [(cmpop-poly NE val_l val_r) ,(not (equal? (term val_l) (term val_r)))])
 
-(define-judgment-form common-relation
+(define-judgment-form al
   #:mode (cmpop-number I I I O)
   #:contract (cmpop-number numcmpop num num bool)
   [(cmpop-number LT (NAT n_l) (NAT n_r) ,(< (term n_l) (term n_r)))]
@@ -71,7 +71,7 @@
 
 ;; Constructor checks
 
-(define-metafunction common-relation
+(define-metafunction al
   is-tup : val -> bool
   [(is-tup (TUP (val ...))) #t]
   ;; otherwise

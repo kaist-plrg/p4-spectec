@@ -1,5 +1,10 @@
 #lang racket/base
-;; spec-meta/al/4-relation.watsup, as the terms of the machine.
+;; spec-meta/4-relation.watsup, as the terms of the machine.
+;;
+;; The three extern relations are reduction rules on machine forms. Their
+;; rules call the host procedures at the end of this module, which go to the
+;; Rust host over the extern wire. They are impure, so only a reduction rule
+;; may call them, never a metafunction.
 ;;
 ;; An AL phrase evaluates in place, and every other relation has a machine
 ;; form. Frames give their evaluation positions. watsup's res<ctx> is
@@ -7,15 +12,25 @@
 ;;
 ;; An intermediate form is named after the rule, or the group, that builds it.
 
-(require redex/reduction-semantics
+(require json
+         redex/reduction-semantics
+         "0.1-extern-json.rkt"
+         "0.2-extern-ffi.rkt"
          "3-context.rkt")
-(provide al)
+(provide al
+         host-call-extern-func
+         host-call-builtin-func
+         host-call-extern-rel)
 
-(define-extended-language al al-context
+(define-extended-language al context
   ;; Configurations
   (conf ::= (G e))
 
-  ;; Results
+  ;; Results to represent backtracking in evaluation. Redex has no parametric
+  ;; nonterminals, so each res<X> is written out.
+  (unitres ::= OK FAIL)
+  (valres ::= (OK val) FAIL)
+  (valsres ::= (OK (val ...)) FAIL)
   (typsres ::= (OK (typ ...)) FAIL)
   (res ::= unitres valres valsres typsres)
 
@@ -151,3 +166,29 @@
   ;; Frames within one local context, and across local contexts
   (F ::= hole (in-hole Fr F))
   (E ::= F (in-hole F (IN L E))))
+
+;;
+;; The host procedures of the extern relations
+;;
+
+;; Sends a request to the host, and gives its response as a jsexpr.
+(define (host-request request)
+  (string->jsexpr (host-eval (jsexpr->string request))))
+
+;;; Extern meta-function invocation
+
+;; |- id `< typ* `> `( val* `) : res<val>, as a valres
+(define (host-call-extern-func id typs vals)
+  (response->valres (host-request (extern-func-request id typs vals))))
+
+;;; Builtin meta-function invocation
+
+;; |- id '@' `< typ* `> `( val* `) : res<val>, as a valres
+(define (host-call-builtin-func id typs vals)
+  (response->valres (host-request (builtin-request id typs vals))))
+
+;;; Extern relations
+
+;; |- id val* : res<val*>, as a valsres
+(define (host-call-extern-rel id vals)
+  (response->valsres (host-request (extern-rel-request id vals))))
