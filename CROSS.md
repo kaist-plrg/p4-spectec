@@ -175,11 +175,10 @@ A minimal token has this shape:
 
 Complete AL and P4 inputs are trees of constructor applications and tokens in
 the same envelope. The emitter is
-[`kast.rs`](p4spectec/src/metacross/kast.rs). It does not re-implement the AL
-syntax: both emitters walk the meta `script` and `val` values that
-`p4spectec::interface::al::encode` produces, the same values the Rust
-metacircular interpreter consumes, and the K label of a case is a function
-of its meta type name and leading keyword.
+[`kast.rs`](p4spectec/src/metacross/kast.rs). Both emitters walk the AL
+syntax of `p4spectec::lang::al::ast` and runtime values directly, as the
+OCaml `kast.ml` and `sexp.ml` did; `metacross` depends on neither the
+metacircular interpreter nor its codec.
 
 ### K–Rust wire
 

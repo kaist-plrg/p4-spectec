@@ -71,18 +71,17 @@ fn emit(output: Option<&PathBuf>, term: impl fmt::Display) -> io::Result<()> {
 
 /// The `script` term of a specification, rendering elaboration warnings first.
 fn script<E: Emit>(args: &SpecArgs) -> metacross::Result<E::Script> {
-    let mut arena = Arena::new();
-    let (result, warnings) = metacross::encode_script(&mut arena, std::slice::from_ref(&args.path));
+    let (result, warnings) = metacross::lower_script(std::slice::from_ref(&args.path));
     for warning in &warnings {
         render(warning);
     }
-    E::script(&arena, result?)
+    E::script(&result?)
 }
 
 /// The `val` term of a P4 program.
 fn program<E: Emit>(args: &P4Args) -> metacross::Result<E::Program> {
     let mut arena = Arena::new();
-    let value = metacross::encode_p4(&mut arena, &args.includes, &args.program)?;
+    let value = metacross::parse_p4(&mut arena, &args.includes, &args.program)?;
     E::program(&arena, value)
 }
 

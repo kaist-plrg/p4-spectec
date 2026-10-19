@@ -30,10 +30,11 @@ use num_bigint::BigInt;
 use serde_json::Map;
 
 use crate::{
-    frontend::parse::parse_atom,
+    frontend::parse::parse_typ,
     lang::{
         common::{
             Id, Iter,
+            notation::atom::Atom,
             prim::num::{self, Natural, Number},
             source::Span,
         },
@@ -42,18 +43,18 @@ use crate::{
             notation::{
                 AtomPhrase,
                 flat::{Mixfix, Mixop, parse::ToMixop},
-                items::Item,
             },
             typ::{self, Typ, TypKind},
             value::flat::{Value, ValueField, ValueKind, make},
         },
+        el::ast as el,
         traits::print::Print,
     },
     phrase,
     util::json::json,
 };
 
-use super::{Error, Result};
+use super::{Error, Result, atom_rows_flat};
 
 // == The traits
 
@@ -119,30 +120,44 @@ impl ToJson for AtomPhrase {
     }
 }
 
+/// One notation atom from its printed spelling.
+fn atom_of_text(text: &str) -> Result<Atom> {
+    // Delimiter atoms do not parse outside their matching pair
+    Ok(match text {
+        "`<" => Atom::LAngle,
+        "`>" => Atom::RAngle,
+        "`(" => Atom::LParen,
+        "`)" => Atom::RParen,
+        "`[" => Atom::LBrack,
+        "`]" => Atom::RBrack,
+        "`{" => Atom::LBrace,
+        "`}" => Atom::RBrace,
+        _ => match parse_typ(text).map_err(Error::Syntax)? {
+            el::Typ::Notation(notation) => match notation.node {
+                el::NotTypKind::Atom(atom) => atom.node,
+                _ => return Err(Error::Atom(text.into())),
+            },
+            el::Typ::Plain(_) => return Err(Error::Atom(text.into())),
+        },
+    })
+}
+
 impl FromJson for AtomPhrase {
     fn from_json(_arena: &mut Arena, json: &json) -> Result<Self> {
         let json::String(text) = json else {
             return Err(Error::unexpected("an atom", json));
         };
-        let atom = parse_atom(text)
-            .map_err(Error::Syntax)?
-            .ok_or_else(|| Error::Atom(text.clone()))?;
-        Ok(phrase!(node: atom, span: Span::default()))
+        Ok(phrase!(node: atom_of_text(text)?, span: Span::default()))
     }
 }
 
 /// Atom rows between argument positions.
 impl ToJson for Mixop {
     fn to_json(&self, arena: &Arena) -> json {
-        let mut rows = vec![vec![]];
-        self.visit(&arena.mixop, |item| match item {
-            Item::Arg(_) => rows.push(vec![]),
-            Item::Atom(atom) => rows
-                .last_mut()
-                .expect("rows start nonempty")
-                .push(atom.to_json(arena)),
-        });
-        json::Array(rows.into_iter().map(json::Array).collect())
+        let rows = atom_rows_flat(arena, *self)
+            .into_iter()
+            .map(|row| json::Array(row.into_iter().map(|atom| atom.to_json(arena)).collect()));
+        json::Array(rows.collect())
     }
 }
 

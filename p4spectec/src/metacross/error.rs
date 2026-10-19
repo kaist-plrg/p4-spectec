@@ -10,6 +10,7 @@ use crate::{
     lang::{
         common::source::Span,
         data::{notation::ArityMismatch, value::ValueError},
+        hints::input::InputError,
     },
     util::json::json,
 };
@@ -17,9 +18,9 @@ use crate::{
 /// A failure emitting K or Redex inputs, or reading or answering a host request.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    /// A meta value the emitters have no term for.
-    #[error("{0}")]
-    EmitInvalid(String),
+    /// A relation whose notation does not fit its input hint.
+    #[error(transparent)]
+    Input(#[from] InputError),
     /// Request text that is not JSON.
     #[error("malformed request JSON: {0}")]
     Json(#[from] serde_json::Error),
@@ -59,11 +60,6 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 impl Error {
-    /// A meta value the emitters have no term for.
-    pub(super) fn emit_invalid(message: impl Into<String>) -> Self {
-        Self::EmitInvalid(message.into())
-    }
-
     /// JSON of another shape than expected.
     pub(super) fn unexpected(expected: &'static str, json: &json) -> Self {
         Self::Unexpected { expected, found: json.to_string() }
@@ -72,7 +68,7 @@ impl Error {
     /// Classifies this error under a metacross code; reports of other stages pass through.
     pub fn into_report(self) -> Box<Report> {
         let code = match &self {
-            Self::EmitInvalid(_) => "metacross/emit-invalid",
+            Self::Input(_) => "metacross/emit-invalid",
             Self::Output(_) => "metacross/output-failed",
             _ => "metacross/json-invalid",
         };
