@@ -25,7 +25,7 @@ use crate::runner::{Extern, Interface, RunnerContext};
 
 use crate::interp::shared::{
     backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
-    context::{IterContext, WriteContext},
+    context::{IterContext, ReadContext, WriteContext},
     error,
     eval::{Invoker, iter, ops},
     util::iterate_vars,
@@ -35,7 +35,7 @@ use crate::phrase;
 
 use super::super::{
     SlInterp,
-    context::{Context, Scope},
+    context::Context,
     flow::{self, Flow},
 };
 
@@ -413,9 +413,8 @@ fn eval_return_instr<Iface: Interface, Ext: Extern>(
         // Resolve type arguments and evaluate arguments before deciding
         let targs = unwrap_from_result!(expr::resolve_targs(ctx.as_ref(), targs), &id.span);
         let values = unwrap!(expr::eval_args(runner_ctx, ctx.as_ref(), args));
-        let (scope, _) = unwrap_from_result!(ctx.find_func_with_scope(id), &id.span);
-        // Local functions and function-valued arguments must be called here
-        if scope == Scope::Local
+        // Function parameters and function-valued arguments must be called here
+        if ctx.find_func_value_local(id).is_some()
             || values.iter().any(|value| {
                 matches!(runner_ctx.arena().value.kind(value.node), ValueKind::Func(_))
             })

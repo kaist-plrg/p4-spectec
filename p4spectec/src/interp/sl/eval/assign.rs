@@ -15,24 +15,22 @@ use super::super::context::Context;
 
 // = Parameter assignment
 
-/// Assigns a value to a parameter: to its pattern, or as a function definition.
+/// Assigns a value to a parameter: to its pattern, or to a function parameter's slot.
 fn assign_param<'global>(
     arena: &mut Arena,
-    ctx_caller: &Context<'_>,
     ctx: Context<'global>,
     param: &ast::Param,
     value: Value,
 ) -> Backtrack<Context<'global>> {
     match &param.node {
         ast::ParamKind::Exp(_, exp) => assign_exp(arena, ctx, exp, value),
-        ast::ParamKind::Def(id, ..) => assign_def(arena, ctx_caller, ctx, id, value),
+        ast::ParamKind::Def(id, ..) => assign_def(ctx, id, value),
     }
 }
 
 /// Assigns values to parameters pairwise, requiring equal counts.
 pub(in crate::interp::sl) fn assign_params<'global>(
     arena: &mut Arena,
-    ctx_caller: &Context<'_>,
     mut ctx: Context<'global>,
     params: &[ast::Param],
     values: &[Value],
@@ -41,7 +39,7 @@ pub(in crate::interp::sl) fn assign_params<'global>(
     assert_eq!(params.len(), values.len(), "validated parameter argument arity");
     // Bind pairwise, threading the context
     for (param, value) in params.iter().zip(values) {
-        ctx = unwrap!(assign_param(arena, ctx_caller, ctx, param, *value));
+        ctx = unwrap!(assign_param(arena, ctx, param, *value));
     }
     ok!(ctx)
 }

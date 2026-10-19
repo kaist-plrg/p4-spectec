@@ -7,7 +7,7 @@
 //! while `(x, y)* <- [...]` assigns each row in a fresh sub-context
 //! and gathers the rows into `x*` and `y*`.
 
-use std::{borrow::Borrow, rc::Rc};
+use std::borrow::Borrow;
 
 use crate::lang::{
     common::source::Span,
@@ -31,7 +31,7 @@ use crate::interp::shared::{
 
 use crate::phrase;
 
-use super::super::context::{ReadContext, WriteContext};
+use super::super::context::WriteContext;
 
 // = Type parameter assignment
 
@@ -305,33 +305,31 @@ fn assign_iter_exp<Ctx: WriteContext>(
 
 // = Argument assignment
 
-/// Assigns an argument value: to a pattern, or as a function definition.
+/// Assigns an argument value: to a pattern, or to a function parameter's slot.
 pub fn assign_arg<Ctx: WriteContext>(
     arena: &mut Arena,
-    ctx_caller: &impl ReadContext<Func = Ctx::Func>,
-    ctx_callee: Ctx,
+    ctx: Ctx,
     arg: &ast::Arg,
     value: Value,
 ) -> Backtrack<Ctx> {
     match &arg.node {
-        ast::ArgKind::Exp(exp) => assign_exp_arg(arena, ctx_callee, exp, value),
-        ast::ArgKind::Def(id) => assign_def(arena, ctx_caller, ctx_callee, id, value),
+        ast::ArgKind::Exp(exp) => assign_exp_arg(arena, ctx, exp, value),
+        ast::ArgKind::Def(id) => assign_def(ctx, id, value),
     }
 }
 
 /// Assigns values to arguments pairwise, requiring equal counts.
 pub fn assign_args<Ctx: WriteContext>(
     arena: &mut Arena,
-    ctx_caller: &impl ReadContext<Func = Ctx::Func>,
-    ctx_callee: Ctx,
+    ctx: Ctx,
     args: &[ast::Arg],
     values: &[Value],
 ) -> Backtrack<Ctx> {
     // Counts must match
     assert_eq!(args.len(), values.len(), "validated argument assignment arity");
-    let mut ctx = ctx_callee;
+    let mut ctx = ctx;
     for (arg, value) in args.iter().zip(values.iter()) {
-        ctx = unwrap!(assign_arg(arena, ctx_caller, ctx, arg, *value));
+        ctx = unwrap!(assign_arg(arena, ctx, arg, *value));
     }
     ok!(ctx)
 }
@@ -349,20 +347,11 @@ fn assign_exp_arg<Ctx: WriteContext>(
 
 // - Function argument
 
-/// Binds a function argument in the callee from its definition in the caller.
-pub fn assign_def<Ctx: WriteContext>(
-    arena: &Arena,
-    ctx_caller: &impl ReadContext<Func = Ctx::Func>,
-    mut ctx_callee: Ctx,
-    id: &ast::Id,
-    value: Value,
-) -> Backtrack<Ctx> {
-    // The value must be a function reference
-    let ValueKind::Func(id_func) = arena.value.kind(value.node) else {
-        unreachable!("function parameter must receive a function reference");
-    };
-    // Look the definition up in the caller, bind it in the callee
-    let func = unwrap_from_result!(ctx_caller.find_func(id_func), &id_func.span);
-    unwrap_from_result!(ctx_callee.add_func(id.clone(), Rc::clone(func)), &id.span);
-    ok!(ctx_callee)
+/// Binds a function argument, a value naming a global definition, to its parameter's slot.
+pub fn assign_def<Ctx: WriteContext>(mut ctx: Ctx, id: &ast::Id, value: Value) -> Backtrack<Ctx> {
+    let slot = ctx
+        .find_func_slot(id)
+        .expect("function parameter must have a prepared slot");
+    ctx.add_value_at_slot(slot, value);
+    ok!(ctx)
 }

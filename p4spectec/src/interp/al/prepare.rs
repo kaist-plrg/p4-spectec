@@ -207,12 +207,22 @@ impl Prepare<PrepareContext<'_>> for source::RulePath {
 
 // - Clauses
 
+/// Prepares binding arguments; each function parameter holds its value in a slot.
+fn prepare_args_bound(ctx: &mut PrepareContext<'_>, args: Vec<source::Arg>) -> Vec<Arg> {
+    for arg in &args {
+        if let source::ArgKind::Def(id) = &arg.node {
+            ctx.layout.resolve_func(id);
+        }
+    }
+    args.prepare(&mut ctx.il())
+}
+
 impl Prepare<PrepareContext<'_>> for source::ClauseKind {
     type Output = ClauseKind;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         ClauseKind {
-            args: self.args.prepare(&mut ctx.il()),
+            args: prepare_args_bound(ctx, self.args),
             exp: self.exp.prepare(&mut ctx.il()),
             prems: self.prems.prepare(ctx),
         }
@@ -227,7 +237,7 @@ impl Prepare<PrepareContext<'_>> for source::TableRowKind {
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         TableRowKind {
             exps_signature: self.exps_signature.prepare(&mut ctx.il()),
-            args: self.args.prepare(&mut ctx.il()),
+            args: prepare_args_bound(ctx, self.args),
             exp: self.exp.prepare(&mut ctx.il()),
             prems: self.prems.prepare(ctx),
         }

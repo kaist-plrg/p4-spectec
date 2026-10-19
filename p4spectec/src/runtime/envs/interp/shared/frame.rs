@@ -33,6 +33,8 @@ struct IterSlots {
 pub struct FrameLayout {
     /// Maps each variable's name and iteration path to its slot.
     vars: HashMap<(String, Vec<Iter>), SlotIdx>,
+    /// Maps each function parameter's name to the slot of its function value.
+    funcs: Vec<(Rc<str>, SlotIdx)>,
     /// Maps each slot to its optional and list iteration slots.
     iters: Vec<IterSlots>,
 }
@@ -41,11 +43,11 @@ impl FrameLayout {
     // - Accessors
 
     pub fn len(&self) -> usize {
-        self.vars.len()
+        self.iters.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.vars.is_empty()
+        self.iters.is_empty()
     }
 
     // - Resolution
@@ -59,7 +61,7 @@ impl FrameLayout {
         if let Some(slot) = self.vars.get(&key) {
             return *slot;
         }
-        let slot = SlotIdx(self.vars.len());
+        let slot = SlotIdx(self.iters.len());
 
         // If `x*` was registered first, registering `x` finds its list slot here
         let find_outer_slot = |iter| {
@@ -100,6 +102,26 @@ impl FrameLayout {
     pub fn resolve_var(&mut self, var: Var) -> VarSlot {
         let slot = self.reserve((var.id.node.to_string(), var.iters.clone()));
         VarSlot { slot, var }
+    }
+
+    /// Reserves the slot of a function parameter, which holds a function value.
+    pub fn resolve_func(&mut self, id: &Id) -> SlotIdx {
+        if let Some(slot) = self.find_func_slot(id) {
+            return slot;
+        }
+        let slot = SlotIdx(self.iters.len());
+        // Function values never iterate
+        self.iters.push(IterSlots::default());
+        self.funcs.push((Rc::clone(&id.node), slot));
+        slot
+    }
+
+    /// The slot of a function parameter, if `id` names one.
+    #[inline]
+    pub fn find_func_slot(&self, id: &Id) -> Option<SlotIdx> {
+        self.funcs
+            .iter()
+            .find_map(|(name, slot)| (*name == id.node).then_some(*slot))
     }
 
     /// Resolves one prepared iteration transition without hashing names.

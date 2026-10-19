@@ -1,7 +1,7 @@
 //! Shared argument evaluation
 //!
 //! An expression argument evaluates to its value;
-//! a function argument `$f` becomes a function value carrying the type of `$f`.
+//! a function argument `$f` becomes a function value naming a global definition.
 
 use crate::lang::{
     common::source::Span,
@@ -52,14 +52,18 @@ pub(crate) fn eval_args<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, 
 
 // - Function argument
 
-/// Builds the function value for a function argument from the function's type.
+/// Evaluates a function argument to a function value naming a global definition.
 fn eval_def_arg(
     arena: &mut Arena,
     ctx: &impl ReadContext,
     id: &ast::Id,
     span: &Span,
 ) -> Backtrack<Value> {
-    // A function value carries the referenced function's type
+    // A function parameter passes on the value it holds, like a variable
+    if let Some(value) = ctx.find_func_value_local(id) {
+        return ok!(value);
+    }
+    // A global function becomes a value naming it, typed by its signature
     let typ_func = unwrap_from_result!(ctx.find_func_typ(id), span);
     let value = unwrap_from_result!(
         value::make::func(

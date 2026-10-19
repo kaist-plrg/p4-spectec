@@ -26,8 +26,6 @@ use super::prepare::PrepareContext;
 
 // = Context aliases
 
-pub use shared::Scope;
-
 /// Stores loaded AL definitions and prepared callables.
 pub type SpecEnv = shared::Global<ast::RelDef, ast::MetaFuncDef>;
 
