@@ -51,7 +51,7 @@ impl Prepare<PrepareContext<'_>> for Id {
     type Output = IdSlot;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ctx.layout.resolve_id(self)
+        ctx.layout.resolve_var_id(self)
     }
 }
 

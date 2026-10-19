@@ -201,6 +201,24 @@ impl Prepare<PrepareContext<'_>> for source::RulePath {
     }
 }
 
+// - Arguments
+
+/// Clause and table-row arguments, the only arguments outside expressions, bind.
+impl Prepare<PrepareContext<'_>> for source::ArgKind {
+    type Output = ArgKind;
+
+    fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        match self {
+            source::ArgKind::Exp(exp) => ArgKind::Exp(exp.prepare(&mut ctx.il())),
+            source::ArgKind::Def(id) => {
+                // The parameter holds its function value in a slot
+                ctx.layout.resolve_func(&id);
+                ArgKind::Def(id)
+            }
+        }
+    }
+}
+
 // - Clauses
 
 impl Prepare<PrepareContext<'_>> for source::ClauseKind {
@@ -208,7 +226,7 @@ impl Prepare<PrepareContext<'_>> for source::ClauseKind {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         ClauseKind {
-            args: self.args.prepare(&mut ctx.il()),
+            args: self.args.prepare(ctx),
             exp: self.exp.prepare(&mut ctx.il()),
             prems: self.prems.prepare(ctx),
         }
@@ -231,7 +249,7 @@ impl Prepare<PrepareContext<'_>> for source::TableRowKind {
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         TableRowKind {
             exps_signature: self.exps_signature.prepare(&mut ctx.il()),
-            args: self.args.prepare(&mut ctx.il()),
+            args: self.args.prepare(ctx),
             exp: self.exp.prepare(&mut ctx.il()),
             prems: self.prems.prepare(ctx),
         }

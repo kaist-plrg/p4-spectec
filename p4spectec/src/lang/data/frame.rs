@@ -1,4 +1,4 @@
-//! Per-callable variable slots and copy-on-write value frames
+//! Per-callable variable and function-parameter slots and copy-on-write value frames
 //!
 //! Layouts resolve names and iterator paths during preparation.
 //! Execution uses slots;
@@ -24,7 +24,8 @@ struct IterSlots {
     slot_list: Option<SlotIdx>,
 }
 
-/// Assigns variable slots and records one-step iteration transitions.
+/// Assigns slots to variables and function parameters,
+/// and records the one-step iteration transitions of variables.
 ///
 /// If `x` has slot 0 and `x*` has slot 2:
 /// - `vars` maps `("x", [])` to slot 0 and `("x", [List])` to slot 2.
@@ -33,7 +34,10 @@ struct IterSlots {
 pub struct FrameLayout {
     /// Maps each variable's name and iteration path to its slot.
     vars: HashMap<(String, Vec<Iter>), SlotIdx>,
-    /// Maps each slot to its optional and list iteration slots.
+    /// Maps each function parameter's name to the slot of its function value.
+    funcs: Vec<(Rc<str>, SlotIdx)>,
+    /// Maps each slot to its optional and list iteration slots;
+    /// a function parameter's slot has none.
     iters: Vec<IterSlots>,
 }
 
@@ -41,25 +45,31 @@ impl FrameLayout {
     // - Accessors
 
     pub fn len(&self) -> usize {
-        self.vars.len()
+        self.iters.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.vars.is_empty()
+        self.iters.is_empty()
     }
 
     // - Resolution
 
-    /// Returns the existing slot or reserves a new one and links its iterations.
+    /// Appends a slot with its iteration transitions.
+    fn push_slot(&mut self, slots_iter: IterSlots) -> SlotIdx {
+        let slot = SlotIdx(self.iters.len());
+        self.iters.push(slots_iter);
+        slot
+    }
+
+    /// Returns a variable's existing slot or reserves a new one and links its iterations.
     ///
     /// Registering `x` and `x*` in either order establishes the same link:
     /// `iters[slot_x].slot_list = Some(slot_x_list)`.
-    fn reserve(&mut self, key: (String, Vec<Iter>)) -> SlotIdx {
+    fn reserve_var(&mut self, key: (String, Vec<Iter>)) -> SlotIdx {
         // An existing variable already has its slot and recorded links
         if let Some(slot) = self.vars.get(&key) {
             return *slot;
         }
-        let slot = SlotIdx(self.vars.len());
 
         // If `x*` was registered first, registering `x` finds its list slot here
         let find_outer_slot = |iter| {
@@ -71,7 +81,7 @@ impl FrameLayout {
             slot_opt: find_outer_slot(Iter::Opt),
             slot_list: find_outer_slot(Iter::List),
         };
-        self.iters.push(slots_iter);
+        let slot = self.push_slot(slots_iter);
 
         // If `x` was registered first, registering `x*` fills in that same link
         let mut key_inner = key.clone();
@@ -90,20 +100,36 @@ impl FrameLayout {
         slot
     }
 
-    /// Resolves a plain identifier to its slot.
-    pub fn resolve_id(&mut self, id: Id) -> IdSlot {
-        let slot = self.reserve((id.node.to_string(), vec![]));
+    /// Returns a function parameter's existing slot or reserves a new one.
+    fn reserve_func(&mut self, id: &Id) -> SlotIdx {
+        if let Some(slot) = self.find_func_slot(id) {
+            return slot;
+        }
+        // Function values never iterate
+        let slot = self.push_slot(IterSlots::default());
+        self.funcs.push((Rc::clone(&id.node), slot));
+        slot
+    }
+
+    /// Resolves a plain variable to its slot.
+    pub fn resolve_var_id(&mut self, id: Id) -> IdSlot {
+        let slot = self.reserve_var((id.node.to_string(), vec![]));
         IdSlot { id, slot }
     }
 
     /// Resolves a variable under its iteration path to its slot.
     pub fn resolve_var(&mut self, var: Var) -> VarSlot {
-        let slot = self.reserve((var.id.node.to_string(), var.iters.clone()));
+        let slot = self.reserve_var((var.id.node.to_string(), var.iters.clone()));
         VarSlot { slot, var }
     }
 
+    /// Resolves a function parameter, which holds a function value, to its slot.
+    pub fn resolve_func(&mut self, id: &Id) -> SlotIdx {
+        self.reserve_func(id)
+    }
+
     /// Resolves one prepared iteration transition without hashing names.
-    pub fn find_slot_iterated(&self, slot: SlotIdx, iter: Iter) -> SlotIdx {
+    pub fn find_var_slot_iterated(&self, slot: SlotIdx, iter: Iter) -> SlotIdx {
         let slots_iter = &self.iters[slot.0];
         match iter {
             Iter::Opt => slots_iter.slot_opt,
@@ -117,7 +143,15 @@ impl FrameLayout {
         let var_inner = var;
         let mut var = var_inner.var.clone();
         var.iters.push(iter);
-        VarSlot { slot: self.find_slot_iterated(var_inner.slot, iter), var }
+        VarSlot { slot: self.find_var_slot_iterated(var_inner.slot, iter), var }
+    }
+
+    /// The slot of a function parameter, if `id` names one.
+    #[inline]
+    pub fn find_func_slot(&self, id: &Id) -> Option<SlotIdx> {
+        self.funcs
+            .iter()
+            .find_map(|(name, slot)| (*name == id.node).then_some(*slot))
     }
 }
 

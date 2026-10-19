@@ -160,6 +160,8 @@ impl Prepare<PrepareContext<'_>> for pl::ParamKind {
         match self {
             pl::ParamKind::Exp(typ, exp) => ast::ParamKind::Exp(typ, exp.prepare(ctx)),
             pl::ParamKind::Def(id, tparams, params, typ) => {
+                // The parameter holds its function value in a slot
+                ctx.layout.resolve_func(&id);
                 ast::ParamKind::Def(id, tparams, params.prepare(ctx), typ)
             }
         }

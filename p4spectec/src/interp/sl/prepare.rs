@@ -508,6 +508,8 @@ impl Prepare<PrepareContext<'_>> for source::ParamKind {
                 ast::ParamKind::Exp(typ, exp.prepare(&mut ctx.il()))
             }
             source::ParamKind::Def(id, tparams, params, typ) => {
+                // The parameter holds its function value in a slot
+                ctx.layout.resolve_func(&id);
                 ast::ParamKind::Def(id, tparams, params.prepare(ctx), typ)
             }
         }
