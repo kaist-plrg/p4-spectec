@@ -1,13 +1,13 @@
 // Expression, path, and argument evaluation.
 //
-// Mirrors spec-meta/al/5.3-eval-exp.watsup.
+// Mirrors spec-meta/5.3-eval-exp.watsup and spec-meta/5.4-eval-arg.watsup.
 
 requires "5.1-eval-typ.k"
 requires "5.2-eval-assign.k"
 
-module AL-EVAL-EXP
-  imports AL-ASSIGN
-  imports AL-TYP
+module EVAL-EXP
+  imports ASSIGN
+  imports TYP
 
   // ==========================================================================
   // Eval_exp: ctx |- exp : res<val>

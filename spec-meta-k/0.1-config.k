@@ -1,11 +1,11 @@
 // Configuration for AL evaluation.
 
-requires "../common/0-stdlib.k"
+requires "0.0-stdlib.k"
 requires "1-syntax.k"
 
-module AL-CONFIG
-  imports COMMON-STDLIB
-  imports AL-SYNTAX
+module CONFIG
+  imports STDLIB
+  imports SYNTAX
   imports MAP
   imports LIST
 

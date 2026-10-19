@@ -26,12 +26,12 @@
 //              | {"fail": null}      // recoverable failure; extern only
 
 requires "json.md"
-requires "0-config.k"
-requires "../common/3-relation.k"
+requires "0.1-config.k"
+requires "3-context.k"
 
-module AL-EXTERN-JSON
-  imports AL-CONFIG
-  imports COMMON-RELATION
+module EXTERN-JSON
+  imports CONFIG
+  imports CONTEXT
   imports JSON
   imports STRING
   imports INT

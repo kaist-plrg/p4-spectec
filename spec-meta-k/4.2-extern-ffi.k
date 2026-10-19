@@ -8,8 +8,8 @@
 requires "4.1-extern-json.k"
 requires "ffi.md"
 
-module AL-EXTERN-FFI
-  imports public AL-EXTERN-JSON
+module EXTERN-FFI
+  imports public EXTERN-JSON
   imports FFI
   imports BYTES
   imports STRING

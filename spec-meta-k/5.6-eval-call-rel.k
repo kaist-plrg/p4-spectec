@@ -1,11 +1,11 @@
 // Relation invocation: rule paths, rule groups, dispatch, and Call_rel.
 //
-// Mirrors spec-meta/al/5.7-eval-call-rel.watsup.
+// Mirrors spec-meta/5.7-eval-call-rel.watsup.
 
 requires "5.5-eval-call-func.k"
 
-module AL-CALL-REL
-  imports AL-CALL-FUNC
+module CALL-REL
+  imports CALL-FUNC
 
   // ==========================================================================
   // Eval_rul / Eval_ruls

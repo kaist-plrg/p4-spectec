@@ -1,12 +1,11 @@
 // Operator semantics of the P4-SpecTec meta-language.
 //
-// Mirrors spec-meta/common/5.1-eval-ops.watsup.
+// Mirrors spec-meta/5.0-eval-ops.watsup.
 
-requires "1-syntax.k"
-requires "0-stdlib.k"
+requires "0.0-stdlib.k"
 
-module COMMON-EVAL-OPS
-  imports COMMON-STDLIB
+module EVAL-OPS
+  imports STDLIB
 
   // ==========================================================================
   // Unary operations

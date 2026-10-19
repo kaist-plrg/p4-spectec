@@ -1,13 +1,33 @@
-// Loading context from a script.
+// Loading context from a script, and the result sorts.
 //
-// Mirrors spec-meta/al/3-context.watsup.
+// Mirrors spec-meta/3-context.watsup and the result sorts of
+// spec-meta/4-relation.watsup.
 
 requires "2-env.k"
-requires "../common/3-relation.k"
 
-module AL-CONTEXT
-  imports AL-ENV
-  imports COMMON-RELATION
+module CONTEXT
+  imports ENV
+
+  // ==========================================================================
+  // Result sorts representing backtracking in evaluation
+  //
+  //   syntax res<X> = OK X | FAIL
+  //
+  // `res<X>` is instantiated once per `X` used by AL:
+  //
+  //   res<val>  -> ValRes    ($upcast, $downcast)
+  //   res<val*> -> ValsRes   ($upcast/$downcast on a list of operands)
+  // ==========================================================================
+
+  syntax KItem ::= "FAIL"
+
+  //   syntax valres = res<val>
+  syntax ValRes ::= okV(Val)                [symbol(okV)]
+                  | failV()                 [symbol(failV)]
+
+  //   syntax valsres = res<val*>
+  syntax ValsRes ::= okVs(ValList)          [symbol(okVs)]
+                   | failVs()               [symbol(failVs)]
 
   // ==========================================================================
   // $load: consumes definitions off the head of the script into <global>

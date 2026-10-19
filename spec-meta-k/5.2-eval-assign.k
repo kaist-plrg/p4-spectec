@@ -1,6 +1,6 @@
 // Assignment (pattern matching a value against an expression).
 //
-// Mirrors spec-meta/al/5.2-eval-assign.watsup.
+// Mirrors spec-meta/5.2-eval-assign.watsup.
 //
 //   Assign_exp:  ctx |- exp := val : ctx       --> assignExp(Exp, Val) : Outcome, mutates <local>
 //   Assign_exps: ctx |- exp* := val* : ctx     --> assignExps(ExpList, ValList) : Outcome
@@ -8,11 +8,9 @@
 //   Assign_args: ctx/ctx |- arg* := val* : ctx --> assignArgs(ArgList, ValList) : Outcome
 
 requires "3-context.k"
-requires "../common/3-relation.k"
 
-module AL-ASSIGN
-  imports AL-CONTEXT
-  imports COMMON-RELATION
+module ASSIGN
+  imports CONTEXT
   imports BOOL
 
   // ==========================================================================

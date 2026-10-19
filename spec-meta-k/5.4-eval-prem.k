@@ -1,11 +1,11 @@
 // Premise evaluation.
 //
-// Mirrors spec-meta/al/5.5-eval-prem.watsup: Eval_prem, Eval_prems.
+// Mirrors spec-meta/5.5-eval-prem.watsup: Eval_prem, Eval_prems.
 
 requires "5.3-eval-exp.k"
 
-module AL-PREM
-  imports AL-EVAL-EXP
+module PREM
+  imports EVAL-EXP
 
   syntax KItem ::= premOK()                 [symbol(premOK)]
 

@@ -1,11 +1,11 @@
 // Standard library of the P4-SpecTec meta-language.
 //
-// Mirrors spec-meta/common/0-stdlib.watsup.
+// Mirrors spec-meta/0-stdlib.watsup.
 
 requires "1-syntax.k"
 
-module COMMON-STDLIB
-  imports COMMON-SYNTAX
+module STDLIB
+  imports SYNTAX
   imports BOOL
   imports INT
   imports STRING

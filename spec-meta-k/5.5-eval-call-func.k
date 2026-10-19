@@ -1,13 +1,13 @@
 // Meta-function invocation: clauses, table rows, dispatch, and Call_func.
 //
-// Mirrors spec-meta/al/5.6-eval-call-func.watsup.
+// Mirrors spec-meta/5.6-eval-call-func.watsup.
 
 requires "5.4-eval-prem.k"
 requires "4.2-extern-ffi.k"
 
-module AL-CALL-FUNC
-  imports AL-PREM
-  imports AL-EXTERN-FFI
+module CALL-FUNC
+  imports PREM
+  imports EXTERN-FFI
 
   // ==========================================================================
   // Eval_clause / Eval_clauses
