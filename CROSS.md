@@ -263,7 +263,7 @@ rule attempts, and iterations introduce nested `IN` scopes. A failed attempt
 discards its scope, preserving the enclosing layer for the next alternative.
 `FAIL` propagates through frames until a rule handles it or the run fails.
 
-The evaluator in [`5-eval.rkt`](spec-meta-redex/5-eval.rkt) combines the
+The evaluator in [`5.8-eval.rkt`](spec-meta-redex/5.8-eval.rkt) combines the
 rule fragments into three relations:
 
 | Relation | Purpose |
@@ -452,5 +452,5 @@ PDF files in the current directory:
     (λ () (void (write-bytes (convert p 'pdf-bytes))))))
 
 (save (in "4-relation.rkt" '(language->pict al)) "al.pdf")
-(save (in "5-eval.rkt" '(reduction-relation->pict ->term)) "term.pdf")
+(save (in "5.8-eval.rkt" '(reduction-relation->pict ->term)) "term.pdf")
 ```
