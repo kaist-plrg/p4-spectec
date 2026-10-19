@@ -13,9 +13,8 @@ and external definitions while they evaluate. From the repository root:
 
 ```sh
 make metacross   # bin/metacross, from p4spectec/src/bin/metacross.rs
-make ffi         # bin/libp4spectec.so, from p4spectec/src/metacross/ffi.rs
-make k           # the K definition, into al-kompiled/ (builds both first)
-make redex       # the Redex modules, with raco make (builds both first)
+make k           # the K definition, into al-kompiled/
+make redex       # the Redex modules, with raco make
 ```
 
 `make k` and `make redex` are local targets: CI builds and tests the Rust
@@ -81,8 +80,7 @@ This builds `bin/metacross` and `bin/libp4spectec.so`, then kompiles
 [`al/6-entry.k`](spec-meta-k/al/6-entry.k) into `al-kompiled/`. The
 interpreter is linked against the host library with an `$ORIGIN`-relative
 rpath, so it finds `bin/libp4spectec.so` from `al-kompiled/` wherever the
-Rust target directory is. Rerun `make k` after changing the K sources; after
-changing the Rust sources, `make ffi` is enough.
+Rust target directory is. Rerun `make k` after changing the K or Rust sources.
 
 Run a single P4-SpecTec program with `$main()`:
 
@@ -299,8 +297,7 @@ make redex
 
 This builds `bin/metacross` and `bin/libp4spectec.so`, then compiles the
 Racket entry module with `raco make`. Rerun it after changing the Redex
-sources to keep the compiled modules up to date; after changing the Rust
-sources, `make ffi` is enough, since Racket loads the library by path.
+or Rust sources to keep the compiled modules and the library up to date.
 
 Run a single P4-SpecTec program with `$main()`:
 

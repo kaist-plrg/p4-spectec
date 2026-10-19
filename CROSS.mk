@@ -12,7 +12,7 @@ endif
 export CARGO_TARGET_DIR
 
 .DEFAULT_GOAL := metacross
-.PHONY: metacross metacross-cli ffi ffi-lib k test-k redex test-redex clean
+.PHONY: metacross metacross-cli ffi-lib k test-k redex test-redex clean
 
 # Rust
 
@@ -27,21 +27,17 @@ metacross: metacross-cli
 ffi-lib:
 	cd $(RUST_DIR) && $(CARGO) build --locked --release --lib --target-dir "$(CARGO_TARGET_DIR)"
 
-ffi: ffi-lib
+$(FFI_SO): ffi-lib
 	mkdir -p $(dir $(FFI_SO))
 	rm -f ./$(FFI_SO)
 	cp "$(CARGO_TARGET_DIR)/release/libp4spectec.so" ./$(FFI_SO)
 
 # K specification
-#
-# The interpreter links libp4spectec.so and resolves host_* by dlsym at run
-# time, so --no-as-needed keeps the DT_NEEDED entry that nothing references at
-# link time; the rpath finds bin/ from al-kompiled/interpreter.
 
 KDEFDIR = al-kompiled
 KSPECDIR = spec-meta-k
 
-k: metacross ffi
+k: metacross $(FFI_SO)
 	kompile $(KSPECDIR)/al/6-entry.k --main-module AL --syntax-module AL-SYNTAX -o $(KDEFDIR) \
 	  -ccopt -L$(CURDIR)/bin -ccopt -Wl,--no-as-needed -ccopt -lp4spectec \
 	  -ccopt '-Wl,-rpath,$$ORIGIN/../bin'
@@ -53,19 +49,14 @@ test-k: k
 	exit $$status
 
 # PLT Redex specification
-#
-# ffi2 loads bin/libp4spectec.so by path; raco make keeps compiled/ in step
-# with the sources.
 
 RSPECDIR = spec-meta-redex
 RENTRY = $(RSPECDIR)/al/7-entry.rkt
 RTYPECHECK = $(RSPECDIR)/test/p4-typecheck.rkt
 
-redex: metacross ffi
+redex: metacross $(FFI_SO)
 	raco make $(RENTRY)
 
-# Type-checks the P4 programs of p4_16_samples (positive) and p4_16_errors
-# (negative).
 test-redex: redex
 	raco make $(RTYPECHECK)
 	@status=0; \

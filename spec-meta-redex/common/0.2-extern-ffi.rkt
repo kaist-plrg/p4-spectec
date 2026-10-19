@@ -4,7 +4,7 @@
 ;;   host-eval  --ffi2-->  bin/libp4spectec.so  (p4spectec::metacross::ffi)
 ;;
 ;; The host lives in this process, and only this place may call it.
-;; `make ffi` builds the library.
+;; `make redex` builds the library.
 
 (require ffi2
          racket/promise
@@ -18,7 +18,7 @@
 (define host
   (delay
     (unless (file-exists? lib-path)
-      (error 'extern-ffi "~a is missing; run `make ffi`" (simplify-path lib-path)))
+      (error 'extern-ffi "~a is missing; run `make redex`" (simplify-path lib-path)))
     (define lib (ffi2-lib lib-path))
     (cons (ffi2-procedure (ffi2-lib-ref lib "host_init") (-> string_t int64_t))
           (ffi2-procedure (ffi2-lib-ref lib "host_eval") (-> string_t string_t)))))
