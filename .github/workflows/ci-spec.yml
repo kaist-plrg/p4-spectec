@@ -1,0 +1,53 @@
+name: Specification generation
+
+on:
+  pull_request:
+    branches: [rust-port, main]
+  push:
+    branches: [rust-port, main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-spec-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate-specification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select the pinned Rust toolchain
+        working-directory: p4spectec
+        run: rustup show
+
+      - name: Cache Rust dependencies and build output
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            p4spectec/target
+          key: rust-spec-${{ runner.os }}-${{ hashFiles('p4spectec/rust-toolchain.toml', '**/Cargo.lock') }}
+
+      - name: Install native and document dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential ruby-dev python3
+          sudo gem install asciidoctor asciidoctor-pdf rouge --no-document
+
+      - name: Build API documentation
+        run: make rustdoc
+
+      - name: Render P4 HTML specifications
+        run: make p4spec-draft-html p4spec-release-html
+
+      - name: Render P4 release PDF
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+        run: make p4spec-release

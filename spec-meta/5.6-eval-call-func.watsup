@@ -21,21 +21,10 @@ relation Eval_clauses:
   ctx '/' ctx |- clause* '@' `( val* `) : res<val>
   hint(input %0 %1 %2 %3)
 
-rulegroup Eval_clauses {
-
-  rule Eval_clauses/nil:
-    C '/' C_caller |- eps '@' `( val* `) : FAIL
-
-  rule Eval_clauses/cons-succ:
-    C '/' C_caller |- (clause_h :: clause_t*) '@' `( val* `) : OK val_res
-    -- Eval_clause: C '/' C_caller |- clause_h '@' `( val* `) : OK val_res
-
-  rule Eval_clauses/cons-fail:
-    C '/' C_caller |- (clause_h :: clause_t*) '@' `( val* `) : valres
-    -- Eval_clause: C '/' C_caller |- clause_h '@' `( val* `) : FAIL
-    -- Eval_clauses: C '/' C_caller |- clause_t* '@' `( val* `) : valres
-
-}
+rule Eval_clauses:
+  C '/' C_caller |- clause* '@' `( val* `) : valres_clauses
+  -- (Eval_clause: C '/' C_caller |- clause '@' `( val* `) : valres)*
+  -- if valres_clauses = $det_valres(valres*)
 
 ;;; Table meta-function invocation
 
@@ -105,14 +94,25 @@ relation Call_defined_func:
                 "and inputs" %3 "under" %0)
   hint(prose_out %4)
 
-rule Call_defined_func:
-  C |- definedFuncDef '@' `< typ* `> `( val* `) : valres
-  -- if DEF tparam* _ _ '->' clause* elsclause? = definedFuncDef
-  -- if tdenv = `{ (tparam ':' (DEF eps '->' (ALIAS typ)))* `}
-  -- if C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
-  -- if clause_else* = $opt_as_seq_<clause>(elsclause?)
-  -- if clause_all* = clause* ++ clause_else*
-  -- Eval_clauses: C_callee '/' C |- clause_all* '@' `( val* `) : valres
+rulegroup Call_defined_func {
+
+  rule Call_defined_func/succ:
+    C |- definedFuncDef '@' `< typ* `> `( val* `) : OK val_func
+    -- if DEF tparam* _ _ '->' clause* elsclause? = definedFuncDef
+    -- if tdenv = `{ (tparam ':' (DEF eps '->' (ALIAS typ)))* `}
+    -- if C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
+    -- Eval_clauses: C_callee '/' C |- clause* '@' `( val* `) : OK val_func
+
+  rule Call_defined_func/fail:
+    C |- definedFuncDef '@' `< typ* `> `( val* `) : valres_func
+    -- if DEF tparam* _ _ '->' clause* elsclause? = definedFuncDef
+    -- if tdenv = `{ (tparam ':' (DEF eps '->' (ALIAS typ)))* `}
+    -- if C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
+    -- Eval_clauses: C_callee '/' C |- clause* '@' `( val* `) : FAIL
+    -- (Eval_clause: C_callee '/' C |- elsclause '@' `( val* `) : valres)?
+    -- if valres_func = $deopt_<valres>(valres?, FAIL)
+
+}
 
 ;;; Meta-function dispatch
 

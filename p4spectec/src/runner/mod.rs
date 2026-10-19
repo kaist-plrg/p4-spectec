@@ -182,6 +182,8 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
     // - Evaluation
 
     /// Runs the program entry through the selected interpreter.
+    ///
+    /// Retains cached results; call `reset` before preparing an independent program.
     pub fn eval_program(
         &mut self,
         arena: &mut Arena,
@@ -220,6 +222,8 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
     }
 
     /// Calls a relation through the selected interpreter.
+    ///
+    /// Shares cached results with other calls in the current program.
     pub fn eval_rel(
         &mut self,
         arena: &mut Arena,
@@ -258,6 +262,8 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
     }
 
     /// Calls a function through the selected interpreter.
+    ///
+    /// Shares cached results with other calls in the current program.
     pub fn eval_func(
         &mut self,
         arena: &mut Arena,

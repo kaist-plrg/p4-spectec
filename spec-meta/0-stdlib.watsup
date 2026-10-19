@@ -27,6 +27,10 @@ dec $opt_as_seq_<X>(X?) : X*
 def $opt_as_seq_<X>(eps) = eps
 def $opt_as_seq_<X>(X) = [ X ]
 
+dec $deopt_<X>(X?, X) : X
+def $deopt_<X>(eps, X_d) = X_d
+def $deopt_<X>(X, X_d) = X
+
 ;;
 ;; General sequence functions
 ;;
@@ -53,10 +57,21 @@ def $repeat_<X>(X, n) = X ++ $repeat_<X>(X, n')
 builtin dec $rev_<X>(X*) : X*
   hint(prose_in "the reversal of" %0)
 
+dec $filter_<X>(X*, bool*) : X*
+  hint(prose_in %0 "filtered by" %1)
+def $filter_<X>(eps, eps) = eps
+def $filter_<X>(X_h :: X_t*, b_h :: b_t*)
+  = X_h :: $filter_<X>(X_t*, b_t*)
+  -- if b_h
+def $filter_<X>(X_h :: X_t*, b_h :: b_t*)
+  = $filter_<X>(X_t*, b_t*)
+  -- if ~b_h
+
 builtin dec $assoc_<X, Y>(X, (X, Y)*) : Y?
   hint(prose_in "the value associated to" %0 "in" %1)
 
 builtin dec $transpose_<X>(X**) : X**
+  hint(prose_in %0 "transposed")
 
 ;;
 ;; General set functions

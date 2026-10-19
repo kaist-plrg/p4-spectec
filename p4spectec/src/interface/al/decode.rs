@@ -7,7 +7,7 @@
 use super::{Cache, Error, mixops as m, stub};
 use crate::lang::common::prim::num::Number;
 use crate::{
-    frontend::parse::{parse_mixop, parse_typ},
+    frontend::parse::parse_typ,
     lang::{
         al::ast as al,
         common::{
@@ -166,7 +166,10 @@ impl Decode for Rc<Mixop> {
             })
             .collect::<Vec<_>>()
             .join(" nat ");
-        let mixop_al = parse_mixop(&text_mixop).map_err(|report| Error::from(report).at(span))?;
+        let mixop_al = text_mixop
+            .to_mixop(&mut arena.mixop)
+            .map_err(|error| Error::from(error).at(span))?
+            .into_tree(&arena.mixop);
         // Atom text must not inject additional argument positions
         if mixop_al.arity() + 1 != atoms_matrix_al.len() {
             return Err(Error::unexpected(

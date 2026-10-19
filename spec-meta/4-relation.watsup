@@ -6,6 +6,29 @@ syntax res<X> = OK X | FAIL
 syntax valres = res<val>
 syntax valsres = res<val*>
 
+dec $det_valres(valres*) : valres
+
+def $det_valres(valres*) = OK val
+  -- if (b_ok = (valres =/= FAIL))*
+  -- if OK val = $filter_<valres>(valres*, b_ok*)
+def $det_valres(valres*) = FAIL
+  -- otherwise
+
+dec $det_valsres(valsres*) : valsres
+
+def $det_valsres(valsres*) = valsres_ok*[0]
+  -- if (b_ok = (valsres =/= FAIL))*
+  -- if valsres_ok* = $filter_<valsres>(valsres*, b_ok*)
+  -- if $(|valsres_ok*| = 1)
+def $det_valsres(valsres*) = FAIL
+  -- if (b_ok = (valsres =/= FAIL))*
+  -- if valsres_ok* = $filter_<valsres>(valsres*, b_ok*)
+  -- if $(|valsres_ok*| > 1)
+def $det_valsres(valsres*) = FAIL
+  -- if (b_ok = (valsres =/= FAIL))*
+  -- if valsres_ok* = $filter_<valsres>(valsres*, b_ok*)
+  -- if $(|valsres_ok*| < 1)
+
 ;;; Extern meta-function invocation
 
 extern relation Call_extern_func:

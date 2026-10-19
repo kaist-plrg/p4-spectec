@@ -7,6 +7,7 @@
 use clap::Args;
 
 mod corpus;
+mod output;
 pub mod snapshot;
 pub mod suite;
 
@@ -44,9 +45,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// Configures interpreter execution consistently for run and sim.
 #[derive(Clone, Copy, Args)]
 pub struct ExecutionOptions {
-    /// Reject nondeterministic candidate selection
+    /// Disable deterministic execution checks
     #[arg(long, global = true)]
-    det: bool,
+    no_det: bool,
     /// Enable or disable interpreter caching
     #[arg(long, global = true, default_value_t = true, action = clap::ArgAction::Set)]
     cache_on: bool,
