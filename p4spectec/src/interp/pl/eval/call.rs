@@ -33,11 +33,7 @@ use crate::interp::shared::{
     eval::assign::assign_tparams,
 };
 
-use crate::interp::pl::{
-    PlInterp,
-    context::{Context, Scope},
-    flow::Flow,
-};
+use crate::interp::pl::{PlInterp, context::Context, flow::Flow};
 
 use super::{
     assign::{assign_exps, assign_params},
@@ -170,17 +166,18 @@ pub(crate) fn cache_rel<Iface: Interface, Ext: Extern>(
 
 /// Checks whether a function call may be memoized.
 ///
-/// Requires caching on, a global non-extern function,
+/// Requires caching on, a non-extern function not reached through a parameter,
 /// and no function-valued argument.
 pub(crate) fn cache_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     id: &ast::Id,
+    func: &ast::MetaFuncDef,
     values: &[Value],
 ) -> bool {
     runner_ctx.interp().config.cache
-        && matches!(ctx.find_func_with_scope(id), Ok((Scope::Global, func))
-            if !matches!(func.as_ref(), ast::MetaFuncDef::Extern(_)))
+        && ctx.find_func_param_opt(id).is_none()
+        && !matches!(func, ast::MetaFuncDef::Extern(_))
         && !values
             .iter()
             .any(|value| matches!(runner_ctx.arena().value.kind(value.node), ValueKind::Func(_)))
@@ -317,22 +314,25 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
     targs: &[ast::Typ],
     values: &[Value],
 ) -> Backtrack<Value> {
+    // A call through a function parameter invokes the global definition its value names
+    let id_def = ctx.resolve_func_id(runner_ctx.arena(), id);
     // Serve from the cache when eligible
-    let cache = cache_func(runner_ctx, ctx, id, values);
+    let cache = matches!(ctx.find_func(&id_def),
+        Ok(func) if cache_func(runner_ctx, ctx, id, func, values));
     if cache
         && let Some(value) =
             runner_ctx
                 .interp()
                 .cache
-                .find_func(runner_ctx.arena(), &id.node, values)
+                .find_func(runner_ctx.arena(), &id_def.node, values)
     {
         return ok!(*value);
     }
-    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, values));
+    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id_def.node, values));
     // Track effects for memoization; grow the stack for deep recursion
     let checkpoint = runner_ctx.effect_checkpoint();
     let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-        let func = unwrap_from_result!(ctx.find_func(id), &id.span);
+        let func = unwrap_from_result!(ctx.find_func(&id_def), &id.span);
         match func.as_ref() {
             ast::MetaFuncDef::Extern(func) => {
                 invoke_extern_func(runner_ctx, ctx, id, func, targs, values)
@@ -436,7 +436,6 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     // Parameters bind into a fresh frame
     let ctx_local = unwrap!(assign_params(
         runner_ctx.arena_mut(),
-        ctx,
         ctx.localize_with_layout(layout),
         &func.params,
         values
@@ -470,8 +469,7 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     let ctx_local =
         unwrap!(assign_tparams(ctx.localize_with_layout(layout), &func.tparams, targs, &id.span));
     // Bind parameters after their type arguments are in scope
-    let ctx_local =
-        unwrap!(assign_params(runner_ctx.arena_mut(), ctx, ctx_local, &func.params, values));
+    let ctx_local = unwrap!(assign_params(runner_ctx.arena_mut(), ctx_local, &func.params, values));
     // Run the body, retaining recoverable mismatches as continuations
     let mut flow = match eval_group_block(runner_ctx, ctx_local.clone(), &func.block) {
         // A completed block reports its own conclusion or continuation

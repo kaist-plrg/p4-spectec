@@ -38,7 +38,7 @@ use crate::interp::shared::{
 use super::super::{
     AlInterp,
     backtrack::{choose_deterministic, choose_sequential},
-    context::{Context, Scope},
+    context::Context,
 };
 
 use super::{assign, expr, prem::eval_prems};
@@ -161,17 +161,18 @@ pub(in crate::interp::al) fn cache_rel<Iface: Interface, Ext: Extern>(
 
 /// Whether a function call may be memoized.
 ///
-/// Requires caching on, a global non-extern function,
+/// Requires caching on, a non-extern function not reached through a parameter,
 /// and no function-valued argument.
 pub(in crate::interp::al) fn cache_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, AlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     id: &ast::Id,
+    func: &ast::MetaFuncDef,
     values: &[Value],
 ) -> bool {
     runner_ctx.interp().config.cache
-        && matches!(ctx.find_func_with_scope(id), Ok((Scope::Global, func))
-            if !matches!(func.as_ref(), ast::MetaFuncDef::Extern(_)))
+        && ctx.find_func_param_opt(id).is_none()
+        && !matches!(func, ast::MetaFuncDef::Extern(_))
         && !values
             .iter()
             .any(|value| matches!(runner_ctx.arena().value.kind(value.node), ValueKind::Func(_)))
@@ -351,22 +352,25 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
     targs: &[ast::Typ],
     values: &[Value],
 ) -> Backtrack<Value> {
+    // A call through a function parameter invokes the global definition its value names
+    let id_def = ctx.resolve_func_id(runner_ctx.arena(), id);
     // Serve from the cache when eligible
-    let cache = cache_func(runner_ctx, ctx, id, values);
+    let cache = matches!(ctx.find_func(&id_def),
+        Ok(func) if cache_func(runner_ctx, ctx, id, func, values));
     if cache
         && let Some(value) =
             runner_ctx
                 .interp()
                 .cache
-                .find_func(runner_ctx.arena(), &id.node, values)
+                .find_func(runner_ctx.arena(), &id_def.node, values)
     {
         return ok!(*value);
     }
-    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, values));
+    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id_def.node, values));
     // Track effects for memoization; grow the stack for deep recursion
     let checkpoint = runner_ctx.effect_checkpoint();
     let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-        let func = unwrap_from_result!(ctx.find_func(id), &id.span);
+        let func = unwrap_from_result!(ctx.find_func(&id_def), &id.span);
         match func.as_ref() {
             ast::MetaFuncDef::Extern(func) => {
                 invoke_extern_func(runner_ctx, ctx, id, func, targs, values)
@@ -468,7 +472,6 @@ fn eval_table_row<Iface: Interface, Ext: Extern>(
     // Arguments bind into a fresh frame for the row
     let ctx = unwrap!(assign::assign_args(
         runner_ctx.arena_mut(),
-        ctx,
         ctx.localize_with_layout(layout),
         &table_row.node.args,
         values
@@ -496,7 +499,6 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
 /// Runs one clause: bind arguments, check premises, evaluate the body.
 fn eval_clause<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, AlInterp, Iface, Ext>,
-    ctx_caller: &Context<'_>,
     ctx_tparams: &Context<'_>,
     layout: &Rc<FrameLayout>,
     clause_kind: &ast::ClauseKind,
@@ -504,10 +506,9 @@ fn eval_clause<Iface: Interface, Ext: Extern>(
 ) -> Backtrack<Value> {
     // Argument count must match the clause
     assert_eq!(clause_kind.args.len(), values.len(), "validated clause argument arity");
-    // Arguments bind into the clause's own frame, evaluated in the caller's scope
+    // Arguments bind into the clause's own frame
     let ctx = unwrap!(assign::assign_args(
         runner_ctx.arena_mut(),
-        ctx_caller,
         ctx_tparams.localize_frame(layout),
         &clause_kind.args,
         values
@@ -536,7 +537,7 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     // Clauses are candidates by index
     let mut evaluate = |idx: &usize| {
         let clause = &defined_func.clauses[*idx];
-        eval_clause(runner_ctx, ctx, &ctx_tparams, &clause.layout, &clause.def.node, values)
+        eval_clause(runner_ctx, &ctx_tparams, &clause.layout, &clause.def.node, values)
     };
     // Deterministic mode rejects two matching clauses
     let result = if det {
@@ -563,7 +564,6 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
             // The otherwise clause runs like any clause
             Some(clause) => eval_clause(
                 runner_ctx,
-                ctx,
                 &ctx_tparams,
                 &clause.layout,
                 &clause.def.node.clause,
