@@ -26,7 +26,7 @@ use std::{
 
 use crate::{
     diagnostic::Report,
-    interface::p4::parse::parse_file,
+    interface::p4::{error::P4Error, parse::parse_file},
     lang::{
         al::ast as al,
         data::{
@@ -50,10 +50,10 @@ pub trait Emit {
     type Program: fmt::Display;
 
     /// Emits a specification as a `script`.
-    fn script(spec: &al::Spec) -> Result<Self::Script>;
+    fn script(spec: &al::Spec) -> Self::Script;
 
     /// Emits the `val` of a P4 program.
-    fn program(arena: &Arena, value: Value) -> Result<Self::Program>;
+    fn program(arena: &Arena, value: Value) -> Self::Program;
 }
 
 // == Front half shared by the emitters
@@ -68,34 +68,36 @@ pub fn lower_script(paths: &[PathBuf]) -> (Result<al::Spec>, Vec<Report>) {
 
 /// Parses a P4 program into the arena.
 pub fn parse_p4(arena: &mut Arena, includes: &[PathBuf], path: &Path) -> Result<Value> {
-    Ok(parse_file(arena, includes, path).map_err(|error| error.into_report())?)
+    Ok(parse_file(arena, includes, path).map_err(P4Error::into_report)?)
 }
 
 // == Notation and hints shared by the emitters
 
-/// The atoms between the argument positions of tree notation.
+/// The atom rows between argument positions, from a visit of the notation.
 ///
 /// A mixop with n holes gives n + 1 rows, including empty boundary rows.
-fn atom_rows(mixop: &Mixop) -> Vec<Vec<&AtomPhrase>> {
+fn rows<'a>(visit: impl FnOnce(&mut dyn FnMut(Item<'a, usize>))) -> Vec<Vec<&'a AtomPhrase>> {
     let mut rows = vec![vec![]];
-    mixop.visit(|item| match item {
+    visit(&mut |item| match item {
         Item::Arg(_) => rows.push(vec![]),
         Item::Atom(atom) => rows.last_mut().expect("rows start nonempty").push(atom),
     });
     rows
 }
 
-/// The atoms between the argument positions of a runtime value's notation.
+/// The atom rows of tree notation.
+fn atom_rows(mixop: &Mixop) -> Vec<Vec<&AtomPhrase>> {
+    rows(|visit_item| mixop.visit(visit_item))
+}
+
+/// The atom rows of a runtime value's notation.
 fn atom_rows_flat(arena: &Arena, mixop: FlatMixop) -> Vec<Vec<&AtomPhrase>> {
-    let mut rows = vec![vec![]];
-    mixop.visit(&arena.mixop, |item| match item {
-        Item::Arg(_) => rows.push(vec![]),
-        Item::Atom(atom) => rows.last_mut().expect("rows start nonempty").push(atom),
-    });
-    rows
+    rows(|visit_item| mixop.visit(&arena.mixop, visit_item))
 }
 
 /// The input and output positions of a relation's notation.
-fn split_inputs<'a, T>(hint: &InputHint, items: &'a [T]) -> Result<(Vec<&'a T>, Vec<&'a T>)> {
-    Ok(input::split(hint, items.iter().collect())?)
+///
+/// Elaboration validates every input hint against its relation's arity.
+fn split_inputs<'a, T>(hint: &InputHint, items: &'a [T]) -> (Vec<&'a T>, Vec<&'a T>) {
+    input::split(hint, items.iter().collect()).expect("input hint must fit relation")
 }

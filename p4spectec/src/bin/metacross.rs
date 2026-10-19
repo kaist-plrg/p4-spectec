@@ -75,14 +75,14 @@ fn script<E: Emit>(args: &SpecArgs) -> metacross::Result<E::Script> {
     for warning in &warnings {
         render(warning);
     }
-    E::script(&result?)
+    Ok(E::script(&result?))
 }
 
 /// The `val` term of a P4 program.
 fn program<E: Emit>(args: &P4Args) -> metacross::Result<E::Program> {
     let mut arena = Arena::new();
     let value = metacross::parse_p4(&mut arena, &args.includes, &args.program)?;
-    E::program(&arena, value)
+    Ok(E::program(&arena, value))
 }
 
 fn run(cli: Cli) -> metacross::Result<()> {

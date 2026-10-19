@@ -10,17 +10,13 @@ use crate::{
     lang::{
         common::source::Span,
         data::{notation::ArityMismatch, value::ValueError},
-        hints::input::InputError,
     },
     util::json::json,
 };
 
-/// A failure emitting K or Redex inputs, or reading or answering a host request.
+/// A failure producing K or Redex inputs, or reading or answering a host request.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    /// A relation whose notation does not fit its input hint.
-    #[error(transparent)]
-    Input(#[from] InputError),
     /// Request text that is not JSON.
     #[error("malformed request JSON: {0}")]
     Json(#[from] serde_json::Error),
@@ -68,7 +64,6 @@ impl Error {
     /// Classifies this error under a metacross code; reports of other stages pass through.
     pub fn into_report(self) -> Box<Report> {
         let code = match &self {
-            Self::Input(_) => "metacross/emit-invalid",
             Self::Output(_) => "metacross/output-failed",
             _ => "metacross/json-invalid",
         };

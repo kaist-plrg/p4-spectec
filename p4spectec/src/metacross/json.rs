@@ -68,7 +68,13 @@ pub trait FromJson: Sized {
     fn from_json(arena: &mut Arena, json: &json) -> Result<Self>;
 }
 
-// - Lists
+// - References and lists
+
+impl<T: ToJson + ?Sized> ToJson for &T {
+    fn to_json(&self, arena: &Arena) -> json {
+        (**self).to_json(arena)
+    }
+}
 
 impl<T: ToJson> ToJson for [T] {
     fn to_json(&self, arena: &Arena) -> json {
@@ -154,10 +160,7 @@ impl FromJson for AtomPhrase {
 /// Atom rows between argument positions.
 impl ToJson for Mixop {
     fn to_json(&self, arena: &Arena) -> json {
-        let rows = atom_rows_flat(arena, *self)
-            .into_iter()
-            .map(|row| json::Array(row.into_iter().map(|atom| atom.to_json(arena)).collect()));
-        json::Array(rows.collect())
+        atom_rows_flat(arena, *self).to_json(arena)
     }
 }
 
@@ -368,36 +371,35 @@ fn field<'a>(fields: &'a Map<String, json>, name: &str) -> Result<&'a json> {
         .ok_or_else(|| Error::Request(format!("the request is missing the field {name}")))
 }
 
+/// The identifier a request names for its kind.
+fn name(kind: &str, json: &json) -> Result<Id> {
+    match json {
+        json::String(id) => Ok(id_of(id)),
+        _ => Err(Error::Request(format!("expected a name for {kind}"))),
+    }
+}
+
 impl FromJson for Request {
     fn from_json(arena: &mut Arena, json: &json) -> Result<Self> {
         let json::Object(fields) = json else {
             return Err(Error::unexpected("a request object", json));
         };
-        let (kind, id) =
-            match (fields.get("builtin"), fields.get("extern-func"), fields.get("extern-rel")) {
-                (Some(id), None, None) => ("builtin", id),
-                (None, Some(id), None) => ("extern-func", id),
-                (None, None, Some(id)) => ("extern-rel", id),
-                _ => {
-                    return Err(Error::Request(
+        let args = Vec::<Value>::from_json(arena, field(fields, "args")?)?;
+        let targs = |arena: &mut Arena| Vec::<Typ>::from_json(arena, field(fields, "targs")?);
+        Ok(match (fields.get("builtin"), fields.get("extern-func"), fields.get("extern-rel")) {
+            (Some(id), None, None) => {
+                Self::Builtin { id: name("builtin", id)?, targs: targs(arena)?, args }
+            }
+            (None, Some(id), None) => {
+                Self::ExternFunc { id: name("extern-func", id)?, targs: targs(arena)?, args }
+            }
+            (None, None, Some(id)) => Self::ExternRel { id: name("extern-rel", id)?, args },
+            _ => {
+                return Err(Error::Request(
                     "a request has exactly one of the fields builtin, extern-func and extern-rel"
                         .into(),
                 ));
-                }
-            };
-        let json::String(id) = id else {
-            return Err(Error::Request(format!("expected a name for {kind}")));
-        };
-        let id = id_of(id);
-        let args = Vec::<Value>::from_json(arena, field(fields, "args")?)?;
-        if kind == "extern-rel" {
-            return Ok(Self::ExternRel { id, args });
-        }
-        let targs = Vec::<Typ>::from_json(arena, field(fields, "targs")?)?;
-        Ok(if kind == "builtin" {
-            Self::Builtin { id, targs, args }
-        } else {
-            Self::ExternFunc { id, targs, args }
+            }
         })
     }
 }

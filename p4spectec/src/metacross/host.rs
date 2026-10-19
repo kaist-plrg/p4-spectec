@@ -84,11 +84,10 @@ impl Host {
     fn answer(&mut self, request: &str) -> Result<Reply> {
         let arena = &mut self.arena;
         match Request::from_json(arena, &serde_json::from_str(request)?)? {
-            Request::Builtin { id, targs, args } => self
-                .runner
-                .call_builtin(arena, &id, &targs, &args)
-                .map(Reply::Ok)
-                .map_err(|error| Error::Report(error.into_report())),
+            Request::Builtin { id, targs, args } => {
+                let value = self.runner.call_builtin(arena, &id, &targs, &args);
+                Ok(Reply::Ok(value.map_err(InterpreterError::into_report)?))
+            }
             Request::ExternFunc { id, targs, args } => {
                 let eval = self.runner.eval_func(arena, &id.node, &targs, &args);
                 settle("func", &id, eval, Reply::Ok)

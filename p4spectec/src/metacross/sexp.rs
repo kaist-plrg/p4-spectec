@@ -1,10 +1,11 @@
 //! AL specifications and P4 programs as Racket-readable s-expressions, for `spec-meta-redex/`
 //!
-//! A keyword case prints as `(KEYWORD arg ...)`, or `KEYWORD` alone without
-//! arguments; a record without a keyword (`vari`, `typcase`, `rulpath`, …)
-//! prints as the list of its fields. Options are lists of length zero or
-//! one, a `FUNC` type prints bare, and `var` definitions, signatures, hints
-//! and operand types are omitted, as the frozen Redex syntax expects.
+//! `ToSexp` gives each node of the AL syntax its s-expression. A keyword
+//! case prints as `(KEYWORD arg ...)`, or `KEYWORD` alone without arguments;
+//! a record without a keyword (`vari`, `typcase`, `rulpath`, …) prints as
+//! the list of its fields. Options are lists of length zero or one, a `FUNC`
+//! type prints bare, and `var` definitions, signatures, hints and operand
+//! types are omitted, as the frozen Redex syntax expects.
 
 use std::fmt::{self, Write};
 
@@ -24,20 +25,21 @@ use crate::{
             typ::{Typ, TypKind},
             value::flat::{Value, ValueKind},
         },
+        hints::input::InputHint,
         il::ast as il,
         traits::print::Print,
     },
     util::json::json,
 };
 
-use super::{Emit, Result, atom_rows, atom_rows_flat, split_inputs};
+use super::{Emit, atom_rows, atom_rows_flat, split_inputs};
 
 // == Terms
 
 /// An s-expression in Racket reader syntax.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub enum Sexp {
-    Sym(String),
+    Sym(&'static str),
     Str(String),
     Int(String),
     Bool(bool),
@@ -101,24 +103,9 @@ impl fmt::Display for Script {
     }
 }
 
-fn sym(keyword: &str) -> Sexp {
-    Sexp::Sym(keyword.into())
-}
-
 /// `(KEYWORD arg ...)`.
-fn app(keyword: &str, args: Vec<Sexp>) -> Sexp {
-    let mut items = Vec::with_capacity(args.len() + 1);
-    items.push(sym(keyword));
-    items.extend(args);
-    Sexp::List(items)
-}
-
-fn list<T>(items: &[T], term: impl Fn(&T) -> Sexp) -> Sexp {
-    Sexp::List(items.iter().map(term).collect())
-}
-
-fn try_list<T>(items: &[T], term: impl Fn(&T) -> Result<Sexp>) -> Result<Sexp> {
-    Ok(Sexp::List(items.iter().map(term).collect::<Result<_>>()?))
+fn app(keyword: &'static str, args: impl IntoIterator<Item = Sexp>) -> Sexp {
+    Sexp::List(std::iter::once(Sexp::Sym(keyword)).chain(args).collect())
 }
 
 /// `x?` as a list of length zero or one.
@@ -126,400 +113,414 @@ fn opt(item: Option<Sexp>) -> Sexp {
     Sexp::List(item.into_iter().collect())
 }
 
-// == Identifiers, atoms, and notation
+// == S-expressions of the AL syntax
 
-fn id(id_al: &Id) -> Sexp {
-    Sexp::Str(id_al.node.to_string())
+/// The s-expression of a node of the AL syntax.
+trait ToSexp {
+    fn sexp(&self) -> Sexp;
 }
 
-fn atom(atom_al: &AtomPhrase) -> Sexp {
-    Sexp::Str(Print::to_string(&atom_al.node))
-}
-
-fn mixop(rows: &[Vec<&AtomPhrase>]) -> Sexp {
-    list(rows, |row| list(row, |atom_al| atom(atom_al)))
-}
-
-fn iter(iter_al: &Iter) -> Sexp {
-    match iter_al {
-        Iter::Opt => sym("QUEST"),
-        Iter::List => sym("STAR"),
+impl<T: ToSexp + ?Sized> ToSexp for &T {
+    fn sexp(&self) -> Sexp {
+        (**self).sexp()
     }
 }
 
-// == Types
-
-fn typ(typ_al: &Typ) -> Sexp {
-    match &typ_al.node {
-        TypKind::Bool => sym("BOOL"),
-        TypKind::Num(num::Typ::Nat) => sym("NAT"),
-        TypKind::Num(num::Typ::Int) => sym("INT"),
-        TypKind::Text => sym("TEXT"),
-        TypKind::Var(id_al, targs_al) => app("VAR", vec![id(id_al), typs(targs_al)]),
-        TypKind::Tuple(typs_al) => app("TUP", vec![typs(typs_al)]),
-        TypKind::Iter(typ_al, iter_al) => app("ITER", vec![typ(typ_al), iter(iter_al)]),
-        // The frozen Redex syntax has `FUNC` without its signature
-        TypKind::Func(_) => sym("FUNC"),
+impl<T: ToSexp> ToSexp for [T] {
+    fn sexp(&self) -> Sexp {
+        Sexp::List(self.iter().map(ToSexp::sexp).collect())
     }
 }
 
-fn typs(typs_al: &[Typ]) -> Sexp {
-    list(typs_al, typ)
+impl<T: ToSexp> ToSexp for Vec<T> {
+    fn sexp(&self) -> Sexp {
+        self[..].sexp()
+    }
 }
 
-fn tparams(tparams_al: &[Id]) -> Sexp {
-    list(tparams_al, id)
+// - Identifiers, atoms, and notation
+
+impl ToSexp for Id {
+    fn sexp(&self) -> Sexp {
+        Sexp::Str(self.node.to_string())
+    }
 }
 
-fn vari(var_al: &il::Var) -> Sexp {
-    Sexp::List(vec![id(&var_al.id), typ(&var_al.typ), list(&var_al.iters, iter)])
+impl ToSexp for AtomPhrase {
+    fn sexp(&self) -> Sexp {
+        Sexp::Str(Print::to_string(&self.node))
+    }
 }
 
-fn varis(vars_al: &[il::Var]) -> Sexp {
-    list(vars_al, vari)
-}
-
-fn deftyp(deftyp_al: &il::DefTyp) -> Sexp {
-    match &deftyp_al.node {
-        il::DefTypKind::Plain(typ_al) => app("ALIAS", vec![typ(typ_al)]),
-        il::DefTypKind::Struct(fields_al) => {
-            let fields = list(fields_al, |field_al| {
-                Sexp::List(vec![atom(&field_al.atom), typ(&field_al.typ)])
-            });
-            app("STRUCT", vec![fields])
-        }
-        il::DefTypKind::Variant(cases_al) => {
-            let cases = list(cases_al, |case_al| {
-                let not_typ = &case_al.not_typ.node;
-                Sexp::List(vec![mixop(&atom_rows(not_typ.mixop())), typs(not_typ.args())])
-            });
-            app("VARIANT", vec![cases])
+impl ToSexp for Iter {
+    fn sexp(&self) -> Sexp {
+        match self {
+            Iter::Opt => Sexp::Sym("QUEST"),
+            Iter::List => Sexp::Sym("STAR"),
         }
     }
 }
 
-// == Operators and numbers
+// - Types
 
-fn unop(op: &il::UnOp) -> Sexp {
-    sym(match op {
-        il::UnOp::Bool(boolean::UnOp::Not) => "NOT",
-        il::UnOp::Num(num::UnOp::Plus) => "PLUS",
-        il::UnOp::Num(num::UnOp::Minus) => "MINUS",
-    })
+impl ToSexp for Typ {
+    fn sexp(&self) -> Sexp {
+        match &self.node {
+            TypKind::Bool => Sexp::Sym("BOOL"),
+            TypKind::Num(num::Typ::Nat) => Sexp::Sym("NAT"),
+            TypKind::Num(num::Typ::Int) => Sexp::Sym("INT"),
+            TypKind::Text => Sexp::Sym("TEXT"),
+            TypKind::Var(id, targs) => app("VAR", [id.sexp(), targs.sexp()]),
+            TypKind::Tuple(typs) => app("TUP", [typs.sexp()]),
+            TypKind::Iter(typ, iter) => app("ITER", [typ.sexp(), iter.sexp()]),
+            // The frozen Redex syntax has `FUNC` without its signature
+            TypKind::Func(_) => Sexp::Sym("FUNC"),
+        }
+    }
 }
 
-fn binop(op: &il::BinOp) -> Sexp {
-    sym(match op {
-        il::BinOp::Bool(boolean::BinOp::And) => "AND",
-        il::BinOp::Bool(boolean::BinOp::Or) => "OR",
-        il::BinOp::Bool(boolean::BinOp::Impl) => "IMPL",
-        il::BinOp::Bool(boolean::BinOp::Equiv) => "EQUIV",
-        il::BinOp::Num(num::BinOp::Add) => "ADD",
-        il::BinOp::Num(num::BinOp::Sub) => "SUB",
-        il::BinOp::Num(num::BinOp::Mul) => "MUL",
-        il::BinOp::Num(num::BinOp::Div) => "DIV",
-        il::BinOp::Num(num::BinOp::Mod) => "MOD",
-        il::BinOp::Num(num::BinOp::Pow) => "POW",
-    })
+impl ToSexp for il::Var {
+    fn sexp(&self) -> Sexp {
+        Sexp::List(vec![self.id.sexp(), self.typ.sexp(), self.iters.sexp()])
+    }
 }
 
-fn cmpop(op: &il::CmpOp) -> Sexp {
-    sym(match op {
-        il::CmpOp::Bool(boolean::CmpOp::Eq) => "EQ",
-        il::CmpOp::Bool(boolean::CmpOp::Ne) => "NE",
-        il::CmpOp::Num(num::CmpOp::Lt) => "LT",
-        il::CmpOp::Num(num::CmpOp::Le) => "LE",
-        il::CmpOp::Num(num::CmpOp::Gt) => "GT",
-        il::CmpOp::Num(num::CmpOp::Ge) => "GE",
-    })
+impl ToSexp for il::DefTyp {
+    fn sexp(&self) -> Sexp {
+        match &self.node {
+            il::DefTypKind::Plain(typ) => app("ALIAS", [typ.sexp()]),
+            il::DefTypKind::Struct(fields) => app("STRUCT", [fields.sexp()]),
+            il::DefTypKind::Variant(cases) => app("VARIANT", [cases.sexp()]),
+        }
+    }
+}
+
+impl ToSexp for il::TypField {
+    fn sexp(&self) -> Sexp {
+        Sexp::List(vec![self.atom.sexp(), self.typ.sexp()])
+    }
+}
+
+impl ToSexp for il::TypCase {
+    fn sexp(&self) -> Sexp {
+        let not_typ = &self.not_typ.node;
+        Sexp::List(vec![atom_rows(not_typ.mixop()).sexp(), not_typ.args().sexp()])
+    }
+}
+
+// - Operators and numbers
+
+impl ToSexp for il::UnOp {
+    fn sexp(&self) -> Sexp {
+        Sexp::Sym(match self {
+            il::UnOp::Bool(boolean::UnOp::Not) => "NOT",
+            il::UnOp::Num(num::UnOp::Plus) => "PLUS",
+            il::UnOp::Num(num::UnOp::Minus) => "MINUS",
+        })
+    }
+}
+
+impl ToSexp for il::BinOp {
+    fn sexp(&self) -> Sexp {
+        Sexp::Sym(match self {
+            il::BinOp::Bool(boolean::BinOp::And) => "AND",
+            il::BinOp::Bool(boolean::BinOp::Or) => "OR",
+            il::BinOp::Bool(boolean::BinOp::Impl) => "IMPL",
+            il::BinOp::Bool(boolean::BinOp::Equiv) => "EQUIV",
+            il::BinOp::Num(num::BinOp::Add) => "ADD",
+            il::BinOp::Num(num::BinOp::Sub) => "SUB",
+            il::BinOp::Num(num::BinOp::Mul) => "MUL",
+            il::BinOp::Num(num::BinOp::Div) => "DIV",
+            il::BinOp::Num(num::BinOp::Mod) => "MOD",
+            il::BinOp::Num(num::BinOp::Pow) => "POW",
+        })
+    }
+}
+
+impl ToSexp for il::CmpOp {
+    fn sexp(&self) -> Sexp {
+        Sexp::Sym(match self {
+            il::CmpOp::Bool(boolean::CmpOp::Eq) => "EQ",
+            il::CmpOp::Bool(boolean::CmpOp::Ne) => "NE",
+            il::CmpOp::Num(num::CmpOp::Lt) => "LT",
+            il::CmpOp::Num(num::CmpOp::Le) => "LE",
+            il::CmpOp::Num(num::CmpOp::Gt) => "GT",
+            il::CmpOp::Num(num::CmpOp::Ge) => "GE",
+        })
+    }
 }
 
 /// A number of an expression or a value.
-fn number(num: &Number) -> Sexp {
-    match num {
-        Number::Nat(nat) => app("NAT", vec![Sexp::Int(nat.to_string())]),
-        Number::Int(int) => app("INT", vec![Sexp::Int(int.to_string())]),
-    }
-}
-
-// == Expressions
-
-fn exp(exp_al: &il::Exp) -> Sexp {
-    match &exp_al.node {
-        il::ExpKind::Bool(value) => app("BOOL", vec![Sexp::Bool(*value)]),
-        il::ExpKind::Num(num) => number(num),
-        il::ExpKind::Text(text) => app("TEXT", vec![Sexp::Str(text.clone())]),
-        il::ExpKind::Id(id_al) => app("VAR", vec![id(id_al)]),
-        il::ExpKind::Un(op, _, exp_al) => app("UN", vec![unop(op), exp(exp_al)]),
-        il::ExpKind::Bin(op, _, exp_l, exp_r) => {
-            app("BIN", vec![binop(op), exp(exp_l), exp(exp_r)])
-        }
-        il::ExpKind::Cmp(op, _, exp_l, exp_r) => {
-            app("CMP", vec![cmpop(op), exp(exp_l), exp(exp_r)])
-        }
-        il::ExpKind::UpCast(typ_al, exp_al) => app("UPCAST", vec![typ(typ_al), exp(exp_al)]),
-        il::ExpKind::DownCast(typ_al, exp_al) => app("DOWNCAST", vec![typ(typ_al), exp(exp_al)]),
-        il::ExpKind::Sub(exp_al, typ_al) => app("SUB", vec![exp(exp_al), typ(typ_al)]),
-        il::ExpKind::Match(exp_al, pattern_al) => {
-            app("MATCH", vec![exp(exp_al), pattern(pattern_al)])
-        }
-        il::ExpKind::Tuple(exps_al) => app("TUP", vec![exps(exps_al)]),
-        il::ExpKind::Case(not_exp) => {
-            let case = Sexp::List(vec![mixop(&atom_rows(not_exp.mixop())), exps(not_exp.args())]);
-            app("INJ", vec![case])
-        }
-        il::ExpKind::Str(fields_al) => {
-            let fields = list(fields_al, |field_al| {
-                Sexp::List(vec![atom(&field_al.atom), exp(&field_al.exp)])
-            });
-            app("STR", vec![fields])
-        }
-        il::ExpKind::Opt(exp_al) => app("OPT", vec![opt(exp_al.as_deref().map(exp))]),
-        il::ExpKind::List(exps_al) => app("LIST", vec![exps(exps_al)]),
-        il::ExpKind::Cons(exp_h, exp_t) => app("CONS", vec![exp(exp_h), exp(exp_t)]),
-        il::ExpKind::Cat(exp_l, exp_r) => app("CAT", vec![exp(exp_l), exp(exp_r)]),
-        il::ExpKind::Mem(exp_e, exp_s) => app("MEM", vec![exp(exp_e), exp(exp_s)]),
-        il::ExpKind::Len(exp_al) => app("LEN", vec![exp(exp_al)]),
-        il::ExpKind::Dot(exp_al, atom_al) => app("DOT", vec![exp(exp_al), atom(atom_al)]),
-        il::ExpKind::Idx(exp_b, exp_i) => app("IDX", vec![exp(exp_b), exp(exp_i)]),
-        il::ExpKind::Slice(exp_b, exp_i, exp_n) => {
-            app("SLICE", vec![exp(exp_b), exp(exp_i), exp(exp_n)])
-        }
-        il::ExpKind::Upd(exp_b, path_al, exp_n) => {
-            app("UPD", vec![exp(exp_b), path(path_al), exp(exp_n)])
-        }
-        il::ExpKind::Call(id_al, targs_al, args_al) => {
-            app("CALL", vec![id(id_al), typs(targs_al), args(args_al)])
-        }
-        il::ExpKind::Iter(exp_al, exp_iter) => {
-            let iter_exp = Sexp::List(vec![iter(&exp_iter.iter), varis(&exp_iter.vars)]);
-            app("ITER", vec![exp(exp_al), iter_exp])
+impl ToSexp for Number {
+    fn sexp(&self) -> Sexp {
+        match self {
+            Number::Nat(nat) => app("NAT", [Sexp::Int(nat.to_string())]),
+            Number::Int(int) => app("INT", [Sexp::Int(int.to_string())]),
         }
     }
 }
 
-fn exps(exps_al: &[il::Exp]) -> Sexp {
-    list(exps_al, exp)
-}
+// - Expressions
 
-fn pattern(pattern_al: &il::Pattern) -> Sexp {
-    match pattern_al {
-        il::Pattern::Case(mixop_al) => app("INJ", vec![mixop(&atom_rows(mixop_al))]),
-        il::Pattern::List(il::ListPattern::Cons) => sym("CONS"),
-        il::Pattern::List(il::ListPattern::Fixed(len)) => {
-            app("FIXED", vec![Sexp::Int(len.to_string())])
+impl ToSexp for il::Exp {
+    fn sexp(&self) -> Sexp {
+        match &self.node {
+            il::ExpKind::Bool(value) => app("BOOL", [Sexp::Bool(*value)]),
+            il::ExpKind::Num(num) => num.sexp(),
+            il::ExpKind::Text(text) => app("TEXT", [Sexp::Str(text.clone())]),
+            il::ExpKind::Id(id) => app("VAR", [id.sexp()]),
+            il::ExpKind::Un(op, _, exp) => app("UN", [op.sexp(), exp.sexp()]),
+            il::ExpKind::Bin(op, _, exp_l, exp_r) => {
+                app("BIN", [op.sexp(), exp_l.sexp(), exp_r.sexp()])
+            }
+            il::ExpKind::Cmp(op, _, exp_l, exp_r) => {
+                app("CMP", [op.sexp(), exp_l.sexp(), exp_r.sexp()])
+            }
+            il::ExpKind::UpCast(typ, exp) => app("UPCAST", [typ.sexp(), exp.sexp()]),
+            il::ExpKind::DownCast(typ, exp) => app("DOWNCAST", [typ.sexp(), exp.sexp()]),
+            il::ExpKind::Sub(exp, typ) => app("SUB", [exp.sexp(), typ.sexp()]),
+            il::ExpKind::Match(exp, pattern) => app("MATCH", [exp.sexp(), pattern.sexp()]),
+            il::ExpKind::Tuple(exps) => app("TUP", [exps.sexp()]),
+            il::ExpKind::Case(not_exp) => {
+                let case =
+                    Sexp::List(vec![atom_rows(not_exp.mixop()).sexp(), not_exp.args().sexp()]);
+                app("INJ", [case])
+            }
+            il::ExpKind::Str(fields) => app("STR", [fields.sexp()]),
+            il::ExpKind::Opt(exp) => app("OPT", [opt(exp.as_deref().map(ToSexp::sexp))]),
+            il::ExpKind::List(exps) => app("LIST", [exps.sexp()]),
+            il::ExpKind::Cons(exp_h, exp_t) => app("CONS", [exp_h.sexp(), exp_t.sexp()]),
+            il::ExpKind::Cat(exp_l, exp_r) => app("CAT", [exp_l.sexp(), exp_r.sexp()]),
+            il::ExpKind::Mem(exp_e, exp_s) => app("MEM", [exp_e.sexp(), exp_s.sexp()]),
+            il::ExpKind::Len(exp) => app("LEN", [exp.sexp()]),
+            il::ExpKind::Dot(exp, atom) => app("DOT", [exp.sexp(), atom.sexp()]),
+            il::ExpKind::Idx(exp_b, exp_i) => app("IDX", [exp_b.sexp(), exp_i.sexp()]),
+            il::ExpKind::Slice(exp_b, exp_i, exp_n) => {
+                app("SLICE", [exp_b.sexp(), exp_i.sexp(), exp_n.sexp()])
+            }
+            il::ExpKind::Upd(exp_b, path, exp_n) => {
+                app("UPD", [exp_b.sexp(), path.sexp(), exp_n.sexp()])
+            }
+            il::ExpKind::Call(id, targs, args) => {
+                app("CALL", [id.sexp(), targs.sexp(), args.sexp()])
+            }
+            il::ExpKind::Iter(exp, exp_iter) => {
+                let iter_exp = Sexp::List(vec![exp_iter.iter.sexp(), exp_iter.vars.sexp()]);
+                app("ITER", [exp.sexp(), iter_exp])
+            }
         }
-        il::Pattern::List(il::ListPattern::Nil) => sym("NIL"),
-        il::Pattern::Opt(il::OptPattern::Some) => sym("SOME"),
-        il::Pattern::Opt(il::OptPattern::None) => sym("NONE"),
     }
 }
 
-fn path(path_al: &il::Path) -> Sexp {
-    match &path_al.node {
-        il::PathKind::Root => sym("ROOT"),
-        il::PathKind::Idx(path_al, exp_i) => app("IDX", vec![path(path_al), exp(exp_i)]),
-        il::PathKind::Slice(path_al, exp_i, exp_n) => {
-            app("SLICE", vec![path(path_al), exp(exp_i), exp(exp_n)])
-        }
-        il::PathKind::Dot(path_al, atom_al) => app("DOT", vec![path(path_al), atom(atom_al)]),
+impl ToSexp for il::ExpField {
+    fn sexp(&self) -> Sexp {
+        Sexp::List(vec![self.atom.sexp(), self.exp.sexp()])
     }
 }
 
-fn arg(arg_al: &il::Arg) -> Sexp {
-    match &arg_al.node {
-        il::ArgKind::Exp(exp_al) => app("EXP", vec![exp(exp_al)]),
-        il::ArgKind::Def(id_al) => app("FUN", vec![id(id_al)]),
-    }
-}
-
-fn args(args_al: &[il::Arg]) -> Sexp {
-    list(args_al, arg)
-}
-
-fn param(param_al: &il::Param) -> Sexp {
-    match &param_al.node {
-        il::ParamKind::Exp(typ_al) => app("EXP", vec![typ(typ_al)]),
-        il::ParamKind::Def(id_al, tparams_al, params_al, typ_al) => {
-            app("FUN", vec![id(id_al), tparams(tparams_al), params(params_al), typ(typ_al)])
+impl ToSexp for il::Pattern {
+    fn sexp(&self) -> Sexp {
+        match self {
+            il::Pattern::Case(mixop) => app("INJ", [atom_rows(mixop).sexp()]),
+            il::Pattern::List(il::ListPattern::Cons) => Sexp::Sym("CONS"),
+            il::Pattern::List(il::ListPattern::Fixed(len)) => {
+                app("FIXED", [Sexp::Int(len.to_string())])
+            }
+            il::Pattern::List(il::ListPattern::Nil) => Sexp::Sym("NIL"),
+            il::Pattern::Opt(il::OptPattern::Some) => Sexp::Sym("SOME"),
+            il::Pattern::Opt(il::OptPattern::None) => Sexp::Sym("NONE"),
         }
     }
 }
 
-fn params(params_al: &[il::Param]) -> Sexp {
-    list(params_al, param)
+impl ToSexp for il::Path {
+    fn sexp(&self) -> Sexp {
+        match &self.node {
+            il::PathKind::Root => Sexp::Sym("ROOT"),
+            il::PathKind::Idx(path, exp_i) => app("IDX", [path.sexp(), exp_i.sexp()]),
+            il::PathKind::Slice(path, exp_i, exp_n) => {
+                app("SLICE", [path.sexp(), exp_i.sexp(), exp_n.sexp()])
+            }
+            il::PathKind::Dot(path, atom) => app("DOT", [path.sexp(), atom.sexp()]),
+        }
+    }
 }
 
-// == Premises
-
-fn prem(prem_al: &al::Prem) -> Result<Sexp> {
-    Ok(match &prem_al.node {
-        al::PremKind::Rule(prem_rule) => {
-            let (exps_in, exps_out) =
-                split_inputs(&prem_rule.input_hint, prem_rule.not_exp.args())?;
-            let exps_in = list(&exps_in, |exp_al| exp(exp_al));
-            let exps_out = list(&exps_out, |exp_al| exp(exp_al));
-            app("REL", vec![id(&prem_rule.id), exps_in, exps_out])
+impl ToSexp for il::Arg {
+    fn sexp(&self) -> Sexp {
+        match &self.node {
+            il::ArgKind::Exp(exp) => app("EXP", [exp.sexp()]),
+            il::ArgKind::Def(id) => app("FUN", [id.sexp()]),
         }
-        al::PremKind::If(prem_if) => app("IF", vec![exp(&prem_if.exp)]),
-        al::PremKind::IfHold(prem_hold) => {
-            app("IFHOLD", vec![id(&prem_hold.id), exps(prem_hold.not_exp.args())])
-        }
-        al::PremKind::IfNotHold(prem_hold) => {
-            app("IFNOTHOLD", vec![id(&prem_hold.id), exps(prem_hold.not_exp.args())])
-        }
-        al::PremKind::Let(prem_let) => app("LET", vec![exp(&prem_let.exp_l), exp(&prem_let.exp_r)]),
-        al::PremKind::Iter(prem_iter) => {
-            let iter_prem = &prem_iter.prem_iter;
-            let iter_prem = Sexp::List(vec![
-                iter(&iter_prem.iter),
-                varis(&iter_prem.vars_bound),
-                varis(&iter_prem.vars_bind),
-            ]);
-            app("ITER", vec![prem(&prem_iter.prem)?, iter_prem])
-        }
-        al::PremKind::Debug(prem_debug) => app("DEBUG", vec![exp(&prem_debug.exp)]),
-    })
+    }
 }
 
-fn prems(prems_al: &[al::Prem]) -> Result<Sexp> {
-    try_list(prems_al, prem)
+impl ToSexp for il::Param {
+    fn sexp(&self) -> Sexp {
+        match &self.node {
+            il::ParamKind::Exp(typ) => app("EXP", [typ.sexp()]),
+            il::ParamKind::Def(id, tparams, params, typ) => {
+                app("FUN", signature(id, tparams, params, typ))
+            }
+        }
+    }
 }
 
-// == Rules, clauses, and table rows
+/// The identifier, type parameters, parameters and result type of a function.
+fn signature(id: &Id, tparams: &[Id], params: &[il::Param], typ: &Typ) -> [Sexp; 4] {
+    [id.sexp(), tparams.sexp(), params.sexp(), typ.sexp()]
+}
 
-fn rulmatch(rule_match: &al::RuleMatch) -> Result<Sexp> {
-    Ok(Sexp::List(vec![exps(&rule_match.exps_input), prems(&rule_match.prems)?]))
+// - Premises
+
+impl ToSexp for al::Prem {
+    fn sexp(&self) -> Sexp {
+        match &self.node {
+            al::PremKind::Rule(prem) => {
+                let (exps_in, exps_out) = split_inputs(&prem.input_hint, prem.not_exp.args());
+                app("REL", [prem.id.sexp(), exps_in.sexp(), exps_out.sexp()])
+            }
+            al::PremKind::If(prem) => app("IF", [prem.exp.sexp()]),
+            al::PremKind::IfHold(prem) => {
+                app("IFHOLD", [prem.id.sexp(), prem.not_exp.args().sexp()])
+            }
+            al::PremKind::IfNotHold(prem) => {
+                app("IFNOTHOLD", [prem.id.sexp(), prem.not_exp.args().sexp()])
+            }
+            al::PremKind::Let(prem) => app("LET", [prem.exp_l.sexp(), prem.exp_r.sexp()]),
+            al::PremKind::Iter(prem) => {
+                let iter_prem = &prem.prem_iter;
+                let iter_prem = Sexp::List(vec![
+                    iter_prem.iter.sexp(),
+                    iter_prem.vars_bound.sexp(),
+                    iter_prem.vars_bind.sexp(),
+                ]);
+                app("ITER", [prem.prem.sexp(), iter_prem])
+            }
+            al::PremKind::Debug(prem) => app("DEBUG", [prem.exp.sexp()]),
+        }
+    }
+}
+
+// - Rules, clauses, and table rows
+
+impl ToSexp for al::RuleMatch {
+    fn sexp(&self) -> Sexp {
+        Sexp::List(vec![self.exps_input.sexp(), self.prems.sexp()])
+    }
 }
 
 /// Outputs precede premises, unlike the field order.
-fn rulpath(rule_path: &al::RulePath) -> Result<Sexp> {
-    Ok(Sexp::List(vec![id(&rule_path.id), exps(&rule_path.exps_output), prems(&rule_path.prems)?]))
+impl ToSexp for al::RulePath {
+    fn sexp(&self) -> Sexp {
+        Sexp::List(vec![self.id.sexp(), self.exps_output.sexp(), self.prems.sexp()])
+    }
 }
 
-fn rulgroup(rule_group: &al::RuleGroup) -> Result<Sexp> {
-    let rule_group = &rule_group.node;
-    Ok(Sexp::List(vec![
-        id(&rule_group.id),
-        rulmatch(&rule_group.rule_match)?,
-        try_list(&rule_group.rule_paths, rulpath)?,
-    ]))
+impl ToSexp for al::RuleGroup {
+    fn sexp(&self) -> Sexp {
+        let group = &self.node;
+        Sexp::List(vec![group.id.sexp(), group.rule_match.sexp(), group.rule_paths.sexp()])
+    }
 }
 
-fn elsgroup(else_group: &al::ElseGroup) -> Result<Sexp> {
-    let else_group = &else_group.node;
-    Ok(Sexp::List(vec![
-        id(&else_group.id),
-        rulmatch(&else_group.rule_match)?,
-        rulpath(&else_group.rule_path)?,
-    ]))
+impl ToSexp for al::ElseGroup {
+    fn sexp(&self) -> Sexp {
+        let group = &self.node;
+        Sexp::List(vec![group.id.sexp(), group.rule_match.sexp(), group.rule_path.sexp()])
+    }
 }
 
-fn clause(clause_al: &al::Clause) -> Result<Sexp> {
-    let clause_al = &clause_al.node;
-    Ok(Sexp::List(vec![args(&clause_al.args), exp(&clause_al.exp), prems(&clause_al.prems)?]))
+impl ToSexp for al::Clause {
+    fn sexp(&self) -> Sexp {
+        let clause = &self.node;
+        Sexp::List(vec![clause.args.sexp(), clause.exp.sexp(), clause.prems.sexp()])
+    }
 }
 
-fn tblrow(row_al: &al::TableRow) -> Result<Sexp> {
-    let row_al = &row_al.node;
-    Ok(Sexp::List(vec![args(&row_al.args), exp(&row_al.exp), prems(&row_al.prems)?]))
+impl ToSexp for al::TableRow {
+    fn sexp(&self) -> Sexp {
+        let row = &self.node;
+        Sexp::List(vec![row.args.sexp(), row.exp.sexp(), row.prems.sexp()])
+    }
 }
 
-// == Definitions
+// - Definitions
+
+/// The input and output types of a relation's notation.
+fn rel_typs(hint: &InputHint, not_typ: &il::NotTyp) -> [Sexp; 2] {
+    let (typs_in, typs_out) = split_inputs(hint, not_typ.node.args());
+    [typs_in.sexp(), typs_out.sexp()]
+}
 
 /// The s-expression of a definition; `var` definitions have none.
-fn def(def_al: &al::Def) -> Result<Option<Sexp>> {
-    let sexp = match &def_al.node {
-        al::DefKind::Var(_) => return Ok(None),
-        al::DefKind::Typ(al::TypDef::Extern(typdef_al)) => app("EXTTYP", vec![id(&typdef_al.id)]),
-        al::DefKind::Typ(al::TypDef::Defined(typdef_al)) => app(
-            "TYP",
-            vec![id(&typdef_al.id), tparams(&typdef_al.tparams), deftyp(&typdef_al.def_typ)],
-        ),
-        al::DefKind::Rel(al::RelDef::Extern(rel_al)) => {
-            let (typs_in, typs_out) = split_inputs(&rel_al.input_hint, rel_al.not_typ.node.args())?;
-            let typs_in = list(&typs_in, |typ_al| typ(typ_al));
-            let typs_out = list(&typs_out, |typ_al| typ(typ_al));
-            app("EXTREL", vec![id(&rel_al.id), typs_in, typs_out])
+fn def(def: &al::Def) -> Option<Sexp> {
+    Some(match &def.node {
+        al::DefKind::Var(_) => return None,
+        al::DefKind::Typ(al::TypDef::Extern(typdef)) => app("EXTTYP", [typdef.id.sexp()]),
+        al::DefKind::Typ(al::TypDef::Defined(typdef)) => {
+            app("TYP", [typdef.id.sexp(), typdef.tparams.sexp(), typdef.def_typ.sexp()])
         }
-        al::DefKind::Rel(al::RelDef::Defined(rel_al)) => {
-            let (typs_in, typs_out) = split_inputs(&rel_al.input_hint, rel_al.not_typ.node.args())?;
-            let typs_in = list(&typs_in, |typ_al| typ(typ_al));
-            let typs_out = list(&typs_out, |typ_al| typ(typ_al));
-            let rule_groups = try_list(&rel_al.rule_groups, rulgroup)?;
-            let else_group = opt(rel_al.else_group.as_ref().map(elsgroup).transpose()?);
-            app("REL", vec![id(&rel_al.id), typs_in, typs_out, rule_groups, else_group])
+        al::DefKind::Rel(al::RelDef::Extern(rel)) => {
+            let [typs_in, typs_out] = rel_typs(&rel.input_hint, &rel.not_typ);
+            app("EXTREL", [rel.id.sexp(), typs_in, typs_out])
         }
-        al::DefKind::MetaFunc(al::MetaFuncDef::Extern(func_al)) => app(
-            "EXTFUNC",
-            vec![
-                id(&func_al.id),
-                tparams(&func_al.tparams),
-                params(&func_al.params),
-                typ(&func_al.typ),
-            ],
-        ),
-        al::DefKind::MetaFunc(al::MetaFuncDef::Builtin(func_al)) => app(
-            "BUILTINFUNC",
-            vec![
-                id(&func_al.id),
-                tparams(&func_al.tparams),
-                params(&func_al.params),
-                typ(&func_al.typ),
-            ],
-        ),
-        al::DefKind::MetaFunc(al::MetaFuncDef::Table(func_al)) => app(
+        al::DefKind::Rel(al::RelDef::Defined(rel)) => {
+            let [typs_in, typs_out] = rel_typs(&rel.input_hint, &rel.not_typ);
+            let else_group = opt(rel.else_group.as_ref().map(ToSexp::sexp));
+            app("REL", [rel.id.sexp(), typs_in, typs_out, rel.rule_groups.sexp(), else_group])
+        }
+        al::DefKind::MetaFunc(al::MetaFuncDef::Extern(func)) => {
+            app("EXTFUNC", signature(&func.id, &func.tparams, &func.params, &func.typ))
+        }
+        al::DefKind::MetaFunc(al::MetaFuncDef::Builtin(func)) => {
+            app("BUILTINFUNC", signature(&func.id, &func.tparams, &func.params, &func.typ))
+        }
+        al::DefKind::MetaFunc(al::MetaFuncDef::Table(func)) => app(
             "TABLEFUNC",
-            vec![
-                id(&func_al.id),
-                params(&func_al.params),
-                typ(&func_al.typ),
-                try_list(&func_al.table_rows, tblrow)?,
-            ],
+            [func.id.sexp(), func.params.sexp(), func.typ.sexp(), func.table_rows.sexp()],
         ),
-        al::DefKind::MetaFunc(al::MetaFuncDef::Defined(func_al)) => app(
-            "FUNC",
-            vec![
-                id(&func_al.id),
-                tparams(&func_al.tparams),
-                params(&func_al.params),
-                typ(&func_al.typ),
-                try_list(&func_al.clauses, clause)?,
-                opt(func_al.else_clause.as_ref().map(clause).transpose()?),
-            ],
-        ),
-    };
-    Ok(Some(sexp))
+        al::DefKind::MetaFunc(al::MetaFuncDef::Defined(func)) => {
+            let else_clause = opt(func.else_clause.as_ref().map(ToSexp::sexp));
+            let signature = signature(&func.id, &func.tparams, &func.params, &func.typ);
+            app(
+                "FUNC",
+                signature
+                    .into_iter()
+                    .chain([func.clauses.sexp(), else_clause]),
+            )
+        }
+    })
 }
 
 // == Values
 
 fn value(arena: &Arena, value: Value) -> Sexp {
     match arena.value.kind(value.node) {
-        ValueKind::Bool(value) => app("BOOL", vec![Sexp::Bool(*value)]),
-        ValueKind::Num(num) => number(num),
-        ValueKind::Text(text) => app("TEXT", vec![Sexp::Str(text.clone())]),
+        ValueKind::Bool(value) => app("BOOL", [Sexp::Bool(*value)]),
+        ValueKind::Num(num) => num.sexp(),
+        ValueKind::Text(text) => app("TEXT", [Sexp::Str(text.clone())]),
         ValueKind::Struct(fields) => {
-            let fields = list(fields, |field| {
-                Sexp::List(vec![atom(&field.atom), self::value(arena, field.value)])
-            });
-            app("STR", vec![fields])
+            let fields = fields
+                .iter()
+                .map(|field| Sexp::List(vec![field.atom.sexp(), self::value(arena, field.value)]));
+            app("STR", [Sexp::List(fields.collect())])
         }
         ValueKind::Case(case) => {
             let rows = atom_rows_flat(arena, *case.mixop());
-            app("INJ", vec![Sexp::List(vec![mixop(&rows), values(arena, case.args())])])
+            app("INJ", [Sexp::List(vec![rows.sexp(), values(arena, case.args())])])
         }
-        ValueKind::Tuple(items) => app("TUP", vec![values(arena, items)]),
-        ValueKind::Opt(item) => app("OPT", vec![opt(item.map(|item| self::value(arena, item)))]),
-        ValueKind::List(items) => app("LIST", vec![values(arena, items)]),
-        ValueKind::Func(id_al) => app("FUNC", vec![id(id_al)]),
+        ValueKind::Tuple(items) => app("TUP", [values(arena, items)]),
+        ValueKind::Opt(item) => app("OPT", [opt(item.map(|item| self::value(arena, item)))]),
+        ValueKind::List(items) => app("LIST", [values(arena, items)]),
+        ValueKind::Func(id) => app("FUNC", [id.sexp()]),
         // Redex decodes the JSON text back with `string->jsexpr`
-        ValueKind::Extern(json) => app("EXT", vec![Sexp::Str(json_text(json))]),
+        ValueKind::Extern(json) => app("EXT", [Sexp::Str(json_text(json))]),
     }
 }
 
 fn values(arena: &Arena, values: &[Value]) -> Sexp {
-    list(values, |item| value(arena, *item))
+    Sexp::List(values.iter().map(|item| value(arena, *item)).collect())
 }
 
 fn json_text(json: &json) -> String {
@@ -535,15 +536,11 @@ impl Emit for Redex {
     type Script = Script;
     type Program = Sexp;
 
-    fn script(spec: &al::Spec) -> Result<Script> {
-        let defs = spec
-            .iter()
-            .filter_map(|def_al| def(def_al).transpose())
-            .collect::<Result<Vec<_>>>()?;
-        Ok(Script(defs))
+    fn script(spec: &al::Spec) -> Script {
+        Script(spec.iter().filter_map(def).collect())
     }
 
-    fn program(arena: &Arena, value: Value) -> Result<Sexp> {
-        Ok(self::value(arena, value))
+    fn program(arena: &Arena, value: Value) -> Sexp {
+        self::value(arena, value)
     }
 }
