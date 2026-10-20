@@ -212,7 +212,7 @@ fn analyze_exps_as_bind(
     let mut renv_multiple = multiple::RenameEnv::from_bindings(&benv);
     let exps_al = multiple::rename_exps(ctx, &mut renv_multiple, exps_il);
     update_venv_multiple(&mut venv, &renv_multiple);
-    let prems_multiple = multiple::generate_side_conditions(iter_ctx, &renv_multiple);
+    let prems_multiple = multiple::generate_side_conditions(ctx, iter_ctx, &renv_multiple)?;
 
     // Desugar partially bound patterns into guards and lets
     let mut renv_partial = partial::RenameEnv::new();
@@ -276,7 +276,7 @@ fn analyze_args_as_bind(
     let mut renv_multiple = multiple::RenameEnv::from_bindings(&benv);
     let args_al = multiple::rename_args(ctx, &mut renv_multiple, args_il);
     update_venv_multiple(&mut venv, &renv_multiple);
-    let prems_multiple = multiple::generate_side_conditions(&ICtx::new(), &renv_multiple);
+    let prems_multiple = multiple::generate_side_conditions(ctx, &ICtx::new(), &renv_multiple)?;
 
     // Desugar partially bound patterns
     let mut renv_partial = partial::RenameEnv::new();
@@ -310,7 +310,7 @@ fn analyze_args_as_bind_shallow(
     let args_al = multiple::rename_args(ctx, &mut renv_multiple, args_il);
     update_venv_multiple(&mut venv, &renv_multiple);
     // Table validation rejects repeated binders before renaming
-    let prems_multiple = multiple::generate_side_conditions(&ICtx::new(), &renv_multiple);
+    let prems_multiple = multiple::generate_side_conditions(ctx, &ICtx::new(), &renv_multiple)?;
     assert!(
         prems_multiple.is_empty(),
         "validated table bindings generated equality side conditions"
@@ -558,7 +558,7 @@ fn lower_let_prem(
     let mut renv_multiple = multiple::RenameEnv::from_bindings(benv_l);
     let exp_l_al = multiple::rename_exp(ctx, &mut renv_multiple, exp_l_il);
     update_venv_multiple(&mut venv, &renv_multiple);
-    let prems_multiple = multiple::generate_side_conditions(&iter_ctx, &renv_multiple);
+    let prems_multiple = multiple::generate_side_conditions(ctx, &iter_ctx, &renv_multiple)?;
 
     // Desugar partially bound patterns
     let mut renv_partial = partial::RenameEnv::new();
