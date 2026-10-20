@@ -2,12 +2,14 @@
 
 ;;; Rule path evaluation
 
+syntax rul = rulmatch -> rulpath
+
 relation Eval_rul:
-  ctx |- rulmatch -> rulpath '@' `( val* `) : res<val*>
-  hint(input %0 %1 %2 %3)
+  ctx |- rul '@' `( val* `) : res<val*>
+  hint(input %0 %1 %2)
 
 rule Eval_rul/succ:
-  C |- rulmatch -> rulpath '@' `( val* `) : OK val_out*
+  C |- (rulmatch -> rulpath) '@' `( val* `) : OK val_out*
   -- if id '=' exp_out* '-' prem_path* = rulpath
   -- if exp* '-' prem_match* = rulmatch
   -- Assign_exps: C |- exp* := val* : C'
@@ -16,42 +18,19 @@ rule Eval_rul/succ:
   -- (Eval_exp: C'' |- exp_out : OK val_out)*
 
 rule Eval_rul/fail:
-  C |- rulmatch -> rulpath '@' `( val* `) : FAIL
+  C |- (rulmatch -> rulpath) '@' `( val* `) : FAIL
   -- otherwise
 
 ;;; Rule path sequence evaluation
 
 relation Eval_ruls:
-  ctx |- rulmatch -> rulpath* '@' `( val* `) : res<val*>
-  hint(input %0 %1 %2 %3)
+  ctx |- rul* '@' `( val* `) : res<val*>
+  hint(input %0 %1 %2)
 
 rule Eval_ruls:
-  C |- rulmatch -> rulpath* '@' `( val* `) : valsres_path
-  -- (Eval_rul: C |- rulmatch -> rulpath '@' `( val* `) : valsres)*
+  C |- rul* '@' `( val* `) : valsres_path
+  -- (Eval_rul: C |- rul '@' `( val* `) : valsres)*
   -- if valsres_path = $det_valsres(valsres*)
-
-;;; Rule group evaluation
-
-relation Eval_rulgroup:
-  ctx |- rulgroup '@' `( val* `) : res<val*>
-  hint(input %0 %1 %2)
-
-rule Eval_rulgroup:
-  C |- rulgroup '@' `( val* `) : valsres
-  -- if id ':' rulmatch '=' rulpath* = rulgroup
-  -- Eval_ruls:
-      C |- rulmatch -> rulpath* '@' `( val* `) : valsres
-
-;;; Rule group sequence evaluation
-
-relation Eval_rulgroups:
-  ctx |- rulgroup* '@' `( val* `) : res<val*>
-  hint(input %0 %1 %2)
-
-rule Eval_rulgroups:
-  C |- rulgroup* '@' `( val* `) : valsres_group
-  -- (Eval_rulgroup: C |- rulgroup '@' `( val* `) : valsres)*
-  -- if valsres_group = $det_valsres(valsres*)
 
 ;;; Defined relations
 
@@ -65,24 +44,39 @@ dec $elsgroup_as_rulgroup(elsgroup) : rulgroup
 def $elsgroup_as_rulgroup(id ':' rulmatch '=' rulpath)
   = id ':' rulmatch '=' rulpath
 
+dec $ruls_of_rulgroup(rulgroup) : rul*
+def $ruls_of_rulgroup(id ':' rulmatch '=' rulpath*)
+  = (rulmatch -> rulpath)*
+
+dec $ruls_of_rulgroups(rulgroup*) : rul*
+def $ruls_of_rulgroups(eps) = eps
+def $ruls_of_rulgroups(rulgroup_h :: rulgroup_t*)
+  = $ruls_of_rulgroup(rulgroup_h) ++ $ruls_of_rulgroups(rulgroup_t*)
+
+dec $rul_of_elsgroup(elsgroup) : rul
+def $rul_of_elsgroup(id ':' rulmatch '=' rulpath)
+  = rulmatch -> rulpath
+
 rulegroup Call_defined_rel {
 
   rule Call_defined_rel/succ:
     C |- definedRelDef '@' `( val* `) : OK val_rel*
     -- if DEF rulgroup* elsgroup? = definedRelDef
     -- if C_local = C[ .LOCAL = $empty_layer ]
-    -- Eval_rulgroups:
-        C_local |- rulgroup* '@' `( val* `) : OK val_rel*
+    -- if rul* = $ruls_of_rulgroups(rulgroup*)
+    -- Eval_ruls:
+        C_local |- rul* '@' `( val* `) : OK val_rel*
 
   rule Call_defined_rel/fail:
     C |- definedRelDef '@' `( val* `) : valsres_rel
     -- if DEF rulgroup* elsgroup? = definedRelDef
     -- if C_local = C[ .LOCAL = $empty_layer ]
-    -- Eval_rulgroups:
-        C_local |- rulgroup* '@' `( val* `) : FAIL
-    -- if (rulgroup_els = $elsgroup_as_rulgroup(elsgroup))?
-    -- (Eval_rulgroup:
-        C_local |- rulgroup_els '@' `( val* `) : valsres)?
+    -- if rul* = $ruls_of_rulgroups(rulgroup*)
+    -- Eval_ruls:
+        C_local |- rul* '@' `( val* `) : FAIL
+    -- if (rul_els = $rul_of_elsgroup(elsgroup))?
+    -- (Eval_rul:
+        C_local |- rul_els '@' `( val* `) : valsres)?
     -- if valsres_rel = $deopt_<valsres>(valsres?, FAIL)
 
 }

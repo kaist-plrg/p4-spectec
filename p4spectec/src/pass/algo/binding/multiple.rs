@@ -25,9 +25,15 @@ use crate::lang::il::ast;
 
 use crate::lang::al;
 
-use crate::runtime::{dim::Dim, envs::algo::VEnv};
+use crate::runtime::{
+    dim::Dim,
+    envs::algo::VEnv,
+    ops::typ::{Cardinality, cardinality},
+};
 
 use crate::{note_phrase, phrase};
+
+use super::super::{AlgoError, error};
 
 use super::{
     bind::{BEnv, Binding},
@@ -285,12 +291,38 @@ fn generate_side_condition(
     })
 }
 
-/// Builds one check per repeated identifier with its source identifiers.
-pub fn generate_side_conditions(iter_ctx: &ICtx, renv: &RenameEnv) -> Vec<AnalyzedPrem> {
-    renv.iter()
-        .filter_map(|(id, ids_rename)| {
-            let dim = renv.dimension(id)?;
-            generate_side_condition(iter_ctx, dim, id, ids_rename)
-        })
-        .collect()
+/// Builds equality checks for repeated binders.
+///
+/// With `syntax unit = UNIT` and `x : unit`,
+/// `(x, x)` becomes `(x, x')` without an `if x = x'` check.
+/// With `x : nat`, the same renaming still requires the equality.
+/// Bindings with their own or enclosing iterations retain their checks.
+pub fn generate_side_conditions(
+    ctx: &Context,
+    iter_ctx: &ICtx,
+    renv: &RenameEnv,
+) -> Result<Vec<AnalyzedPrem>, AlgoError> {
+    let mut prems_analyzed = Vec::new();
+    // A single occurrence needs no equality or cardinality query
+    for (id, ids_rename) in renv.iter() {
+        if ids_rename.len() < 2 {
+            continue;
+        }
+        let Some(dim) = renv.dimension(id) else {
+            continue;
+        };
+        // Equalities of singleton values are tautological outside iterations
+        if dim.iters.is_empty()
+            && iter_ctx.as_slice().is_empty()
+            && cardinality(&ctx.tdenv, &dim.typ).map_err(error::typ::type_operation_invalid)?
+                == Cardinality::One
+        {
+            continue;
+        }
+        // Preserve the equality and its provenance for all other bindings
+        if let Some(prem_analyzed) = generate_side_condition(iter_ctx, dim, id, ids_rename) {
+            prems_analyzed.push(prem_analyzed);
+        }
+    }
+    Ok(prems_analyzed)
 }

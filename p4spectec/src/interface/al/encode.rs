@@ -916,6 +916,20 @@ impl Encode for al::Clause {
     }
 }
 
+/// Encodes an otherwise clause without its keyword annotation.
+impl Encode for al::ElseClause {
+    type Output = Value;
+
+    fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
+        let values_meta = vec![
+            list(arena, cache, "arg", &self.node.clause.args)?,
+            self.node.clause.exp.encode_cached(arena, cache)?,
+            list(arena, cache, "prem", &self.node.clause.prems)?,
+        ];
+        case(arena, m::CLAUSE, "clause", values_meta, self.span)
+    }
+}
+
 // - Table rows
 
 /// Encodes a table row without its printing signature.

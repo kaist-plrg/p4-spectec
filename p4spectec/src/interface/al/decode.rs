@@ -1112,6 +1112,7 @@ impl Decode for al::ElseGroup {
         get::matches_string! { arena, &value_meta,
             m::ELSGROUP => |[value_id, value_match, value_path]| {
                 Ok(phrase!(node: al::ElseGroupKind {
+                    otherwise: phrase!(node: il::OtherwiseKind, span: span),
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     rule_match: al::RuleMatch::decode_cached(arena, cache, *value_match)?,
                     rule_path: al::RulePath::decode_cached(arena, cache, *value_path)?,
@@ -1142,6 +1143,21 @@ impl Decode for al::Clause {
             },
             _ => Err(Error::unexpected(arena, value_meta, "arg* '=' exp '-' prem*")),
         }
+    }
+}
+
+/// Decodes an otherwise clause, using its span for the omitted keyword.
+impl Decode for al::ElseClause {
+    fn decode_cached(
+        arena: &mut Arena,
+        cache: &mut Cache,
+        value_meta: Value,
+    ) -> Result<Self, Error> {
+        let clause_al = al::Clause::decode_cached(arena, cache, value_meta)?;
+        Ok(phrase!(node: al::ElseClauseKind {
+            otherwise: phrase!(node: il::OtherwiseKind, span: clause_al.span),
+            clause: clause_al.node,
+        }, span: clause_al.span))
     }
 }
 
@@ -1250,7 +1266,7 @@ impl Decode for al::Def {
                     params: Vec::<al::Param>::decode_cached(arena, cache, *value_params)?,
                     typ: il::Typ::decode_cached(arena, cache, *value_typ)?,
                     clauses: Vec::<al::Clause>::decode_cached(arena, cache, *value_clauses)?,
-                    else_clause: Option::<al::Clause>::decode_cached(arena, cache, *value_else)?,
+                    else_clause: Option::<al::ElseClause>::decode_cached(arena, cache, *value_else)?,
                     hints: stub::hints(),
                 })))
             },
