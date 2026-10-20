@@ -10,10 +10,7 @@
 use std::rc::Rc;
 
 use crate::lang::{
-    data::{
-        arena::Arena,
-        value::flat::{Value, ValueKind},
-    },
+    data::{arena::Arena, value::flat::Value},
     hints::input,
 };
 
@@ -161,23 +158,15 @@ pub(in crate::interp::al) fn cache_rel<Iface: Interface, Ext: Extern>(
         && matches!(ctx.find_rel(id), Ok(rel) if matches!(&rel.def, ast::RelDef::Defined(_)))
 }
 
-/// Whether a function call may be memoized.
+/// Whether a function call may be memoized: caching on, definition not extern.
 ///
-/// Requires caching on, a non-extern function not reached through a parameter,
-/// and no function-valued argument.
+/// Calls through function parameters and with function-valued arguments
+/// name global definitions, so they are keyed by those definitions too.
 pub(in crate::interp::al) fn cache_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, AlInterp, Iface, Ext>,
-    ctx: &Context<'_>,
-    id: &ast::Id,
     func: &Callable<ast::MetaFuncDef>,
-    values: &[Value],
 ) -> bool {
-    runner_ctx.interp().config.cache
-        && ctx.find_func_value_local(id).is_none()
-        && !matches!(&func.def, ast::MetaFuncDef::Extern(_))
-        && !values
-            .iter()
-            .any(|value| matches!(runner_ctx.arena().value.kind(value.node), ValueKind::Func(_)))
+    runner_ctx.interp().config.cache && !matches!(&func.def, ast::MetaFuncDef::Extern(_))
 }
 
 // = Relation invocation
@@ -236,8 +225,8 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
     rel: &ast::ExternRel,
     values: &[Value],
 ) -> Backtrack<Vec<Value>> {
-    // Host dispatch records effects before exposing the result
-    let result = runner_ctx.call_extern_rel(&id.node, values);
+    // Dispatch by the definition's name, recording effects before the result
+    let result = runner_ctx.call_extern_rel(&rel.id.node, values);
     // Attach the call site to fatal host failures
     let values = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Check the number of extern outputs before assigning them
@@ -360,9 +349,8 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
 ) -> Backtrack<Value> {
     // A call through a function parameter invokes the global definition its value names
     let id_def = ctx.resolve_func_id(runner_ctx.arena(), id);
-    // Serve from the cache when eligible
-    let cache = matches!(ctx.find_func(&id_def),
-        Ok(func) if cache_func(runner_ctx, ctx, id, func, values));
+    // Serve from the cache when eligible, keyed by the global definition
+    let cache = matches!(ctx.find_func(&id_def), Ok(func) if cache_func(runner_ctx, func));
     if cache
         && let Some(value) =
             runner_ctx
@@ -413,8 +401,8 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
     targs: &[ast::Typ],
     values: &[Value],
 ) -> Backtrack<Value> {
-    // Host dispatch records effects before exposing the result
-    let result = runner_ctx.call_extern_func(&id.node, &[], values);
+    // Dispatch by the definition's name, recording effects before the result
+    let result = runner_ctx.call_extern_func(&extern_func.id.node, &[], values);
     // Attach the call site to fatal host failures
     let value = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Guard the result against the declared type
@@ -443,8 +431,9 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
     targs: &[ast::Typ],
     values: &[Value],
 ) -> Backtrack<Value> {
-    // Builtin dispatch records effects before exposing the result
-    let result = runner_ctx.call_builtin(id, targs, values);
+    // Dispatch by the definition's name at the call site, recording effects
+    let id_builtin = crate::phrase!(node: builtin_func.id.node.clone(), span: id.span);
+    let result = runner_ctx.call_builtin(&id_builtin, targs, values);
     match result {
         // Guard the result against the declared type
         Ok(value) => {
