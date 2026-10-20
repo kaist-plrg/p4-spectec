@@ -222,6 +222,6 @@ module CONTEXT
 
   // The results of the rows, in order.
   syntax KItem ::= consRow(KItem, KItem)    [seqstrict]
-  rule consRow(Vs:ValList, Vss:ValListList) => Vs ; Vss
+  rule <k> consRow(Vs:ValList, Vss:ValListList) => Vs ; Vss ... </k>
 
 endmodule

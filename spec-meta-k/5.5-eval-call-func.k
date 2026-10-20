@@ -17,8 +17,10 @@ module CALL-FUNC
 
   //   rule Eval_clause/succ: the arguments assigned, the premises, the result
   syntax KItem ::= evalClause(Clause, ValList)
-  rule evalClause(clause(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
-    => assignArgs(As, Vs) ~> Ps ~> Eout
+  rule <k> evalClause(clause(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
+        => assignArgs(As, Vs) ~> Ps ~> Eout
+       ...
+       </k>
 
   //   rule Eval_clauses: every clause is one try (`det` picks the result)
   syntax Tries ::= clauseTries(ClauseList, ValList)
@@ -35,8 +37,10 @@ module CALL-FUNC
                  | evalTblRows(TblRowList, ValList)
 
   //   rule Eval_tblrow/succ: like a clause, in a frame of its own
-  rule evalTblRow(tblRow(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
-    => enterFrame(.Map) ~> assignArgs(As, Vs) ~> Ps ~> Eout ~> endFrame
+  rule <k> evalTblRow(tblRow(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
+        => enterFrame(.Map) ~> assignArgs(As, Vs) ~> Ps ~> Eout ~> endFrame
+       ...
+       </k>
 
   //   rulegroup Eval_tblrows: in order, the first success wins
   rule <k> evalTblRows(.TblRowList, _:ValList) => backtrack ... </k>

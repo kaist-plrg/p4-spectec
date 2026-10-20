@@ -17,10 +17,12 @@ module CALL-REL
 
   //   rule Eval_rul/succ: the inputs assigned, the premises of the match
   //   and of the path, the outputs
-  rule evalRul(rulMatch(Es:ExpList, PsMatch:PremList),
-               rulPath(_:Id, Eouts:ExpList, PsPath:PremList),
-               Vs:ValList)
-    => assignExps(Es, Vs) ~> PsMatch ~> PsPath ~> Eouts
+  rule <k> evalRul(rulMatch(Es:ExpList, PsMatch:PremList),
+                   rulPath(_:Id, Eouts:ExpList, PsPath:PremList),
+                   Vs:ValList)
+        => assignExps(Es, Vs) ~> PsMatch ~> PsPath ~> Eouts
+       ...
+       </k>
 
   // ==========================================================================
   // Eval_ruls, $ruls_of_rulgroups: one try per (rulmatch, rulpath) pair of

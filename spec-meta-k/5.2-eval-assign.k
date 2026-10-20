@@ -94,16 +94,20 @@ module ASSIGN
        </lvenv>
 
   //   rule Assign_exp/list
-  rule assignIter(noVarr(), E:Exp, iterExp(star(), Vs:VariList), listV(Ws:ValList))
-    => bindLists(Vs, assignRows(E, Ws, Vs))
+  rule <k> assignIter(noVarr(), E:Exp, iterExp(star(), Vs:VariList), listV(Ws:ValList))
+        => bindLists(Vs, assignRows(E, Ws, Vs))
+       ...
+       </k>
 
   // Each element is assigned under an empty value environment, and the
   // bindings it makes are read back as one row.
   syntax KItem ::= assignRows(Exp, ValList, VariList)
-  rule assignRows(_:Exp, .ValList, _:VariList) => .ValListList
-  rule assignRows(E:Exp, (V:Val, Rest:ValList), Vs:VariList)
-    => consRow(inScope(clearLocalVenv() ~> assignExp(E, V) ~> readVaris(Vs)),
-               assignRows(E, Rest, Vs))
+  rule <k> assignRows(_:Exp, .ValList, _:VariList) => .ValListList ... </k>
+  rule <k> assignRows(E:Exp, (V:Val, Rest:ValList), Vs:VariList)
+        => consRow(inScope(clearLocalVenv() ~> assignExp(E, V) ~> readVaris(Vs)),
+                   assignRows(E, Rest, Vs))
+       ...
+       </k>
 
   // ==========================================================================
   // Assign_exps: ctx |- exp* := val* : ctx
