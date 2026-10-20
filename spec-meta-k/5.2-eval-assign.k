@@ -66,9 +66,9 @@ module ASSIGN
 
   rule <k> assignExp(_:Exp, _:Val) => backtrack ... </k> [owise]
 
-  // Sequencing helper: run the second task only if the first succeeded.
-  syntax KItem ::= assignThen(KItem)
-  rule <k> assignOK() ~> assignThen(Next:KItem) => Next ... </k>
+  // Sequencing helper: run the next task once the assignment succeeded.
+  syntax KItem ::= assignThen(K)
+  rule <k> assignOK() ~> assignThen(Next:K) => Next ... </k>
 
   // ==========================================================================
   // Assigning to an iterated expression

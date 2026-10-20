@@ -1,8 +1,8 @@
 // Meta-function invocation: clauses, table rows, dispatch, and Call_func.
 //
 // Mirrors spec-meta/5.6-eval-call-func.watsup. Every clause of a defined
-// function is evaluated and exactly one must succeed (`det` in 3-context.k);
-// table rows are still tried in order.
+// function is one alternative and exactly one must succeed (`det` in
+// 3-context.k); table rows are tried in order.
 
 requires "5.4-eval-prem.k"
 requires "4.2-extern-ffi.k"
@@ -18,47 +18,21 @@ module CALL-FUNC
   //   relation Eval_clauses: ctx '/' ctx |- clause* '@' `( val* `) : res<val>
   // ==========================================================================
 
+  //   rule Eval_clause/succ
   syntax KItem ::= evalClause(Clause, ValList)
-                 | evalClauses(ClauseList, ValList, KItem)
-
-  syntax KItem ::= clauseAwaitPremisesK(Exp)
-                 | clauseAwaitAssignmentK(Exp, PremList)
-                 | clausesAwaitResultK(ClauseList, ValList, KItem, List)
-
   rule <k> evalClause(clause(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
-        => assignArgs(As, Vs) ~> clauseAwaitAssignmentK(Eout, Ps)
+        => assignArgs(As, Vs) ~> assignThen(evalPrems(Ps) ~> premThen(evalExp(Eout)))
        ...
        </k>
-
-  rule <k> assignOK() ~> clauseAwaitAssignmentK(Eout:Exp, Ps:PremList)
-        => evalPrems(Ps) ~> clauseAwaitPremisesK(Eout)
-       ...
-       </k>
-
-  rule <k> premOK() ~> clauseAwaitPremisesK(Eout:Exp) => evalExp(Eout) ... </k>
 
   //   rule Eval_clauses:
   //     -- (Eval_clause: C_callee '/' C |- clause '@' `( val* `) : valres)*
   //     -- if valres' = $det_valres(valres*)
-  //
-  // Every clause is one alternative under the callee context as it was at
-  // the call; the outcomes are collected for `det`, and the KItem runs when
-  // no clause matched.
-  rule <k> evalClauses(Cls:ClauseList, Vs:ValList, Else:KItem)
-        => clausesAwaitResultK(Cls, Vs, Else, .List)
-       ...
-       </k>
-
-  rule <k> clausesAwaitResultK((Cl:Clause, Cls:ClauseList), Vs:ValList, Else:KItem, L:List)
-        => alt(evalClause(Cl, Vs)) ~> clausesAwaitResultK(Cls, Vs, Else, L)
-       ...
-       </k>
-  rule <k> clausesAwaitResultK(.ClauseList, _:ValList, Else:KItem, L:List) => det(L, Else) ... </k>
-
-  rule <k> R:Res ~> clausesAwaitResultK(Cls:ClauseList, Vs:ValList, Else:KItem, L:List)
-        => clausesAwaitResultK(Cls, Vs, Else, L ListItem(R))
-       ...
-       </k>
+  syntax Alts ::= clauseAlts(ClauseList, ValList)
+                                            [function, total, symbol(clauseAlts)]
+  rule clauseAlts(.ClauseList, _:ValList) => .Alts
+  rule clauseAlts((Cl:Clause, Cls:ClauseList), Vs:ValList)
+    => alt(evalClause(Cl, Vs)) ; clauseAlts(Cls, Vs)
 
   // ==========================================================================
   // Eval_tblrow / Eval_tblrows
@@ -72,10 +46,9 @@ module CALL-FUNC
   //     -- Assign_args: C_callee '/' C |- arg* := val* : C_callee'
   //     -- Eval_prems: C_callee' |- prem* : OK C_callee''
   //     -- Eval_exp: C_callee'' |- exp_out : OK val_out
-
   rule <k> evalTblRow(tblRow(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
         => enterFrame(.Map)
-           ~> assignArgs(As, Vs) ~> clauseAwaitAssignmentK(Eout, Ps)
+           ~> assignArgs(As, Vs) ~> assignThen(evalPrems(Ps) ~> premThen(evalExp(Eout)))
            ~> endFrame
        ...
        </k>
@@ -83,13 +56,9 @@ module CALL-FUNC
   //   rulegroup Eval_tblrows: in order, the first success wins
   rule <k> evalTblRows(.TblRowList, _:ValList) => backtrack ... </k>
   rule <k> evalTblRows((R:TblRow, Rs:TblRowList), Vs:ValList)
-        => alt(evalTblRow(R, Vs)) ~> tblRowsAwaitResultK(Rs, Vs)
+        => firstOf(alt(evalTblRow(R, Vs)), evalTblRows(Rs, Vs))
        ...
        </k>
-
-  syntax KItem ::= tblRowsAwaitResultK(TblRowList, ValList)
-  rule <k> ok(V:Val) ~> tblRowsAwaitResultK(_:TblRowList, _:ValList) => V ... </k>
-  rule <k> FAIL ~> tblRowsAwaitResultK(Rs:TblRowList, Vs:ValList) => evalTblRows(Rs, Vs) ... </k>
 
   // ==========================================================================
   // Call_defined_func
@@ -110,7 +79,7 @@ module CALL-FUNC
 
   rule <k> callDefinedFunc(Ps:TParamList, Cls:ClauseList, EC:ElsClauseOpt, Ts:TypList, Vs:ValList)
         => enterFrame(tdenvOfTargs(Ps, Ts))
-           ~> evalClauses(Cls, Vs, elsClauseK(EC, Vs))
+           ~> det(clauseAlts(Cls, Vs), elsClauseK(EC, Vs))
            ~> endFrame
        ...
        </k>
@@ -167,31 +136,13 @@ module CALL-FUNC
   //     -- Call_func_dispatch: C |- funcdef targ* val* : valres
   // ==========================================================================
 
-  syntax KItem ::= findFunc(Id)
-                 | callFuncAwaitFuncK(TArgList, ValList)
-
-  rule <k> callFunc(X:Id, Ts:TArgList, Vs:ValList)
-        => findFunc(X) ~> callFuncAwaitFuncK(Ts, Vs)
-       ...
-       </k>
-
-  rule <k> F:FuncDef ~> callFuncAwaitFuncK(Ts:TArgList, Vs:ValList)
-        => callFuncDispatch(F, Ts, Vs)
-       ...
-       </k>
-
-  rule <k> findFunc(X:Id) => {LF[X]}:>FuncDef ... </k>
+  rule <k> callFunc(X:Id, Ts:TArgList, Vs:ValList) => callFuncDispatch(F, Ts, Vs) ... </k>
+       <lfenv> ... X |-> F:FuncDef ... </lfenv>
+  rule <k> callFunc(X:Id, Ts:TArgList, Vs:ValList) => callFuncDispatch(F, Ts, Vs) ... </k>
        <lfenv> LF:Map </lfenv>
-    requires X in_keys(LF)
-
-  rule <k> findFunc(X:Id) => {GF[X]}:>FuncDef ... </k>
-       <lfenv> LF:Map </lfenv>
-       <gfenv> GF:Map </gfenv>
-    requires notBool (X in_keys(LF)) andBool X in_keys(GF)
-  rule <k> findFunc(X:Id) => backtrack ... </k>
-       <lfenv> LF:Map </lfenv>
-       <gfenv> GF:Map </gfenv>
-    requires notBool (X in_keys(LF)) andBool notBool (X in_keys(GF))
+       <gfenv> ... X |-> F:FuncDef ... </gfenv>
+    requires notBool (X in_keys(LF))
+  rule <k> callFunc(_:Id, _:TArgList, _:ValList) => backtrack ... </k> [owise]
 
   // ==========================================================================
   // Call_builtin_func / Call_extern_func

@@ -43,13 +43,17 @@ module CONTEXT
   // ==========================================================================
   // Alternatives
   //
-  //   $det_valres / $det_valsres take the outcomes of every alternative.
-  //
   // `alt(K)` runs `K` as one alternative: its bindings are undone afterwards
-  // and its outcome is recorded.
+  // and its outcome is recorded. A list of alternatives evaluates in order
+  // to a list of outcomes.
   // ==========================================================================
 
   syntax Alt ::= alt(K) | Res
+
+  syntax Alts ::= List{Alt, ";"}            [symbol(alts), terminator-symbol(.alts), seqstrict, overload(alts)]
+  syntax Ress ::= List{Res, ";"}            [symbol(ress), terminator-symbol(.ress), overload(alts)]
+  syntax Alts ::= Ress
+  syntax KResult ::= Ress
 
   rule <k> alt(K:K) => K ~> checkpoint(F, V) ... </k>
        <lfenv> F:Map </lfenv>
@@ -72,23 +76,28 @@ module CONTEXT
   //   def $det_valres(valres*) : valres
   //   def $det_valsres(valsres*) : valsres
   //
-  // `det(L, Else)` is the single success; `Else` (the else clause or group,
-  // or `backtrack`) when none succeeded; and `backtrack` when several did.
+  // `det(Alts, Else)` is the single success; `Else` (the else clause or
+  // group, or `backtrack`) when none succeeded; `backtrack` when several did.
   // ==========================================================================
 
-  syntax KItem ::= det(List, KItem)
+  syntax KItem ::= det(Alts, KItem)         [strict(1)]
+  rule <k> det(Rs:Ress, Else:KItem) => pick(oks(Rs), Else) ... </k>
 
-  syntax List ::= successes(List)           [function, symbol(successes)]
-  rule successes(.List) => .List
-  rule successes(ListItem(FAIL) L:List) => successes(L)
-  rule successes(ListItem(ok(R:KItem)) L:List) => ListItem(R) successes(L)
+  syntax KItem ::= pick(List, KItem)
+  rule <k> pick(ListItem(R:KItem), _:KItem) => R ... </k>
+  rule <k> pick(.List, Else:KItem) => Else ... </k>
+  rule <k> pick(ListItem(_) ListItem(_) _:List, _:KItem) => backtrack ... </k>
 
-  rule <k> det(L:List, _:KItem) => {successes(L)[0]}:>KItem ... </k>
-    requires size(successes(L)) ==Int 1
-  rule <k> det(L:List, Else:KItem) => Else ... </k>
-    requires size(successes(L)) ==Int 0
-  rule <k> det(L:List, _:KItem) => backtrack ... </k>
-    requires size(successes(L)) >Int 1
+  // The `OK` outcomes, in order.
+  syntax List ::= oks(Ress)                 [function, total, symbol(oks)]
+  rule oks(.Ress) => .List
+  rule oks(ok(R:KItem) ; Rs:Ress) => ListItem(R) oks(Rs)
+  rule oks(FAIL ; Rs:Ress) => oks(Rs)
+
+  // The first success of alternatives tried in order.
+  syntax KItem ::= firstOf(Alt, KItem)      [strict(1)]
+  rule <k> firstOf(ok(R:KItem), _:KItem) => R ... </k>
+  rule <k> firstOf(FAIL, Next:KItem) => Next ... </k>
 
   // ==========================================================================
   // Scopes: a sub-context whose value bindings end with it
