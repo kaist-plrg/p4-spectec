@@ -1,6 +1,8 @@
-// Relation invocation: rule paths, rule groups, dispatch, and Call_rel.
+// Relation invocation: rule paths, dispatch, and Call_rel.
 //
-// Mirrors spec-meta/5.7-eval-call-rel.watsup.
+// Mirrors spec-meta/5.7-eval-call-rel.watsup, except that the rule paths of
+// all groups of a relation are checked for determinism together (see
+// Call_defined_rel below).
 
 requires "5.5-eval-call-func.k"
 
@@ -8,14 +10,12 @@ module CALL-REL
   imports CALL-FUNC
 
   // ==========================================================================
-  // Eval_rul / Eval_ruls
+  // Eval_rul
   //
   //   relation Eval_rul: ctx |- rulmatch -> rulpath '@' `( val* `) : res<val*>
-  //   relation Eval_ruls: ctx |- rulmatch -> rulpath* '@' `( val* `) : res<val*>
   // ==========================================================================
 
   syntax KItem ::= evalRul(RulMatch, RulPath, ValList)
-                 | evalRuls(RulMatch, RulPathList, ValList)
 
   //   rule Eval_rul/succ:
   //     -- if id '=' exp_out* '-' prem_path* = rulpath
@@ -48,87 +48,95 @@ module CALL-REL
   rule <k> premOK() ~> rulAwaitPremisesK(Eouts:ExpList) => evalExps(Eouts) ... </k>
   rule <k> FAIL ~> rulAwaitPremisesK(_:ExpList) => FAIL ... </k>
 
-  //   rulegroup Eval_ruls
-  rule <k> evalRuls(_:RulMatch, .RulPathList, _:ValList) => FAIL ... </k>
-  rule <k> evalRuls(M:RulMatch, (P:RulPath, Ps:RulPathList), Vs:ValList)
-        => pushLocalSave() ~> evalRul(M, P, Vs) ~> rulPathsAwaitResultK(M, Ps, Vs)
-       ...
-       </k>
-
-  syntax KItem ::= rulPathsAwaitResultK(RulMatch, RulPathList, ValList)
-  rule <k> Vs:ValList ~> rulPathsAwaitResultK(_:RulMatch, _:RulPathList, _:ValList)
-        => popLocalSave() ~> Vs
-       ...
-       </k>
-  rule <k> FAIL ~> rulPathsAwaitResultK(M:RulMatch, Ps:RulPathList, Vs:ValList)
-        => popLocalSave() ~> evalRuls(M, Ps, Vs)
-       ...
-       </k>
-
   // ==========================================================================
-  // Eval_rulgroup / Eval_rulgroups
+  // Eval_ruls: every rule path of the relation, flat across its groups
   //
-  //   relation Eval_rulgroup: ctx |- rulgroup '@' `( val* `) : res<val*>
+  //   relation Eval_ruls: ctx |- rulmatch -> rulpath* '@' `( val* `) : res<val*>
   //   relation Eval_rulgroups: ctx |- rulgroup* '@' `( val* `) : res<val*>
+  //
+  // Each attempt pairs a group's rulmatch with one of its paths; all of them
+  // are evaluated under the relation's local layer, and the results are
+  // collected for `det`; the KItem runs when no path matched.
   // ==========================================================================
 
-  syntax KItem ::= evalRulGroup(RulGroup, ValList)
-  syntax KItem ::= evalRulGroups(RulGroupList, ValList)
+  syntax RulAttempt ::= rulAttempt(RulMatch, RulPath)
+  syntax RulAttemptList ::= List{RulAttempt, ","}
 
-  //   rule Eval_rulgroup/succ, /fail:
-  //     -- if id ':' rulmatch '=' rulpath* = rulgroup
-  //     -- Eval_ruls: C |- rulmatch -> rulpath* '@' `( val* `) : OK val_out*
-  rule <k> evalRulGroup(rulGroup(_:Id, M:RulMatch, Ps:RulPathList), Vs:ValList)
-        => evalRuls(M, Ps, Vs)
+  syntax RulAttemptList ::= attemptsOfGroups(RulGroupList)
+                                            [function, total, symbol(attemptsOfGroups)]
+                          | attemptsOfPaths(RulMatch, RulPathList)
+                                            [function, total, symbol(attemptsOfPaths)]
+                          | appendAttempts(RulAttemptList, RulAttemptList)
+                                            [function, total, symbol(appendAttempts)]
+  rule attemptsOfGroups(.RulGroupList) => .RulAttemptList
+  rule attemptsOfGroups((rulGroup(_:Id, M:RulMatch, Ps:RulPathList), Gs:RulGroupList))
+    => appendAttempts(attemptsOfPaths(M, Ps), attemptsOfGroups(Gs))
+  rule attemptsOfPaths(_:RulMatch, .RulPathList) => .RulAttemptList
+  rule attemptsOfPaths(M:RulMatch, (P:RulPath, Ps:RulPathList))
+    => rulAttempt(M, P), attemptsOfPaths(M, Ps)
+  rule appendAttempts(.RulAttemptList, Bs:RulAttemptList) => Bs
+  rule appendAttempts((A:RulAttempt, As:RulAttemptList), Bs:RulAttemptList)
+    => A, appendAttempts(As, Bs)
+
+  syntax KItem ::= evalRuls(RulAttemptList, ValList, KItem)
+                 | rulsAwaitResultK(RulAttemptList, ValList, KItem, List)
+
+  rule <k> evalRuls(As:RulAttemptList, Vs:ValList, Else:KItem)
+        => rulsAwaitResultK(As, Vs, Else, .List)
        ...
        </k>
 
-  //   rulegroup Eval_rulgroups
-  rule <k> evalRulGroups(.RulGroupList, _:ValList) => FAIL ... </k>
-  rule <k> evalRulGroups((G:RulGroup, Gs:RulGroupList), Vs:ValList)
-        => evalRulGroup(G, Vs) ~> rulGroupsAwaitResultK(Gs, Vs)
+  rule <k> rulsAwaitResultK((rulAttempt(M:RulMatch, P:RulPath), As:RulAttemptList),
+                            Vs:ValList, Else:KItem, L:List)
+        => pushLocalSave() ~> evalRul(M, P, Vs) ~> rulsAwaitResultK(As, Vs, Else, L)
        ...
        </k>
+  rule <k> rulsAwaitResultK(.RulAttemptList, _:ValList, Else:KItem, L:List) => det(L, Else) ... </k>
 
-  syntax KItem ::= rulGroupsAwaitResultK(RulGroupList, ValList)
-  rule <k> Vs:ValList ~> rulGroupsAwaitResultK(_:RulGroupList, _:ValList) => Vs ... </k>
-  rule <k> FAIL ~> rulGroupsAwaitResultK(Gs:RulGroupList, Vs:ValList) => evalRulGroups(Gs, Vs) ... </k>
+  rule <k> Vouts:ValList ~> rulsAwaitResultK(As:RulAttemptList, Vs:ValList, Else:KItem, L:List)
+        => popLocalSave() ~> rulsAwaitResultK(As, Vs, Else, L ListItem(Vouts))
+       ...
+       </k>
+  rule <k> FAIL ~> rulsAwaitResultK(As:RulAttemptList, Vs:ValList, Else:KItem, L:List)
+        => popLocalSave() ~> rulsAwaitResultK(As, Vs, Else, L ListItem(FAIL))
+       ...
+       </k>
 
   // ==========================================================================
   // Call_defined_rel
   //
-  //   rule Call_defined_rel:
+  //   rule Call_defined_rel/succ, /fail:
   //     C |- definedRelDef '@' `( val* `) : valsres
   //     -- if DEF rulgroup* elsgroup? = definedRelDef
-  //     -- if (rulgroup_els = $elsgroup_as_rulgroup(elsgroup))?
-  //     -- if rulgroup_all* = rulgroup* ++ $opt_as_seq_<rulgroup>(rulgroup_els?)
   //     -- if C_local = C[ .LOCAL = $empty_layer ]
-  //     -- Eval_rulgroups: C_local |- rulgroup_all* '@' `( val* `) : valsres
+  //     -- Eval_rulgroups: C_local |- rulgroup* '@' `( val* `) : valsres
+  //     (/fail: valsres = FAIL, then Eval_rulgroup on the else group)
+  //
+  // Deviation from the spec: the spec checks determinism per group and then
+  // across groups, so a group with two matching paths FAILs and a second
+  // group's single match is accepted. Here all paths of all groups are
+  // checked together, and the else group runs only when none matched, in
+  // the relation's frame.
   // ==========================================================================
 
   syntax KItem ::= callDefinedRel(RulGroupList, ElsGroupOpt, ValList)
 
   rule <k> callDefinedRel(Gs:RulGroupList, EG:ElsGroupOpt, Vs:ValList)
         => pushCallFrame(.Map)
-           ~> evalRulGroups(appendRulGroups(Gs, optAsSeqRulGroup(EG)), Vs)
+           ~> evalRuls(attemptsOfGroups(Gs), Vs, elsGroupK(EG, Vs))
            ~> relCallAwaitResultK()
        ...
        </k>
 
+  syntax KItem ::= elsGroupK(ElsGroupOpt, ValList)
+                                            [function, total, symbol(elsGroupK)]
+  rule elsGroupK(noElsGroup(), _:ValList) => FAIL
+  rule elsGroupK(someElsGroup(elsGroup(_:Id, M:RulMatch, P:RulPath)), Vs:ValList)
+    => evalRul(M, P, Vs)
+
   syntax KItem ::= "relCallAwaitResultK" "(" ")"
   rule <k> Vs:ValList ~> relCallAwaitResultK() => popCallFrame() ~> Vs ... </k>
   rule <k> FAIL ~> relCallAwaitResultK() => popCallFrame() ~> FAIL ... </k>
-
-  syntax RulGroupList ::= optAsSeqRulGroup(ElsGroupOpt)
-                                            [function, total, symbol(optAsSeqRulGroup)]
-                        | appendRulGroups(RulGroupList, RulGroupList)
-                                            [function, total, symbol(appendRulGroups)]
-  rule optAsSeqRulGroup(noElsGroup()) => .RulGroupList
-  rule optAsSeqRulGroup(someElsGroup(elsGroup(X:Id, M:RulMatch, P:RulPath)))
-    => rulGroup(X, M, (P, .RulPathList)), .RulGroupList
-  rule appendRulGroups(.RulGroupList, Gs:RulGroupList) => Gs
-  rule appendRulGroups((G:RulGroup, Gs:RulGroupList), Hs:RulGroupList)
-    => G, appendRulGroups(Gs, Hs)
 
   // ==========================================================================
   // Call_rel_dispatch

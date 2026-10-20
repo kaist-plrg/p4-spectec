@@ -1,6 +1,8 @@
 // Meta-function invocation: clauses, table rows, dispatch, and Call_func.
 //
-// Mirrors spec-meta/5.6-eval-call-func.watsup.
+// Mirrors spec-meta/5.6-eval-call-func.watsup. Every clause of a defined
+// function is evaluated and exactly one must succeed (`det` in 3-context.k);
+// table rows are still tried in order.
 
 requires "5.4-eval-prem.k"
 requires "4.2-extern-ffi.k"
@@ -17,11 +19,11 @@ module CALL-FUNC
   // ==========================================================================
 
   syntax KItem ::= evalClause(Clause, ValList)
-                 | evalClauses(ClauseList, ValList)
+                 | evalClauses(ClauseList, ValList, KItem)
 
   syntax KItem ::= clauseAwaitPremisesK(Exp)
                  | clauseAwaitAssignmentK(Exp, PremList)
-                 | clausesAwaitResultK(ClauseList, ValList)
+                 | clausesAwaitResultK(ClauseList, ValList, KItem, List)
 
   rule <k> evalClause(clause(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
         => assignArgs(As, Vs) ~> clauseAwaitAssignmentK(Eout, Ps)
@@ -37,15 +39,30 @@ module CALL-FUNC
   rule <k> premOK() ~> clauseAwaitPremisesK(Eout:Exp) => evalExp(Eout) ... </k>
   rule <k> FAIL ~> clauseAwaitPremisesK(_:Exp) => FAIL ... </k>
 
-  rule <k> evalClauses(.ClauseList, _:ValList) => FAIL ... </k>
-  rule <k> evalClauses((Cl:Clause, Cls:ClauseList), Vs:ValList)
-        => pushLocalSave() ~> evalClause(Cl, Vs) ~> clausesAwaitResultK(Cls, Vs)
+  //   rule Eval_clauses:
+  //     -- (Eval_clause: C_callee '/' C |- clause '@' `( val* `) : valres)*
+  //     -- if valres' = $det_valres(valres*)
+  //
+  // Every clause is evaluated under the callee context as it was at the
+  // call, and the results are collected for `det`; the KItem runs when no
+  // clause matched.
+  rule <k> evalClauses(Cls:ClauseList, Vs:ValList, Else:KItem)
+        => clausesAwaitResultK(Cls, Vs, Else, .List)
        ...
        </k>
 
-  rule <k> V:Val ~> clausesAwaitResultK(_:ClauseList, _:ValList) => popLocalSave() ~> V ... </k>
-  rule <k> FAIL ~> clausesAwaitResultK(Cls:ClauseList, Vs:ValList)
-        => popLocalSave() ~> evalClauses(Cls, Vs)
+  rule <k> clausesAwaitResultK((Cl:Clause, Cls:ClauseList), Vs:ValList, Else:KItem, L:List)
+        => pushLocalSave() ~> evalClause(Cl, Vs) ~> clausesAwaitResultK(Cls, Vs, Else, L)
+       ...
+       </k>
+  rule <k> clausesAwaitResultK(.ClauseList, _:ValList, Else:KItem, L:List) => det(L, Else) ... </k>
+
+  rule <k> V:Val ~> clausesAwaitResultK(Cls:ClauseList, Vs:ValList, Else:KItem, L:List)
+        => popLocalSave() ~> clausesAwaitResultK(Cls, Vs, Else, L ListItem(V))
+       ...
+       </k>
+  rule <k> FAIL ~> clausesAwaitResultK(Cls:ClauseList, Vs:ValList, Else:KItem, L:List)
+        => popLocalSave() ~> clausesAwaitResultK(Cls, Vs, Else, L ListItem(FAIL))
        ...
        </k>
 
@@ -88,39 +105,37 @@ module CALL-FUNC
   // ==========================================================================
   // Call_defined_func
   //
-  //   rule Call_defined_func:
+  //   rule Call_defined_func/succ, /fail:
   //     C |- definedFuncDef '@' `< typ* `> `( val* `) : valres
   //     -- if DEF tparam* '->' clause* elsclause? = definedFuncDef
   //     -- if tdenv = `{ (tparam ':' (DEF eps '->' (ALIAS typ)))* `}
   //     -- if C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
-  //     -- if clause_else* = $opt_as_seq_<clause>(elsclause?)
-  //     -- if clause_all* = clause* ++ clause_else*
-  //     -- Eval_clauses: C_callee '/' C |- clause_all* '@' `( val* `) : valres
+  //     -- Eval_clauses: C_callee '/' C |- clause* '@' `( val* `) : valres
+  //     (/fail: valres = FAIL, then Eval_clause on the `otherwise` clause)
+  //
+  // The `otherwise` clause is outside the determinism check: it runs only
+  // when no ordinary clause matched, in the callee's frame.
   // ==========================================================================
 
   syntax KItem ::= callDefinedFunc(TParamList, ClauseList, ElsClauseOpt, TypList, ValList)
 
   rule <k> callDefinedFunc(Ps:TParamList, Cls:ClauseList, EC:ElsClauseOpt, Ts:TypList, Vs:ValList)
         => snapshotCaller() ~> pushCallFrame(tdenvOfTargs(Ps, Ts))
-           ~> evalClauses(appendClauses(Cls, optAsSeqClause(EC)), Vs)
+           ~> evalClauses(Cls, Vs, elsClauseK(EC, Vs))
            ~> callFrameAwaitResultK()
        ...
        </k>
+
+  syntax KItem ::= elsClauseK(ElsClauseOpt, ValList)
+                                            [function, total, symbol(elsClauseK)]
+  rule elsClauseK(noElsClause(), _:ValList) => FAIL
+  rule elsClauseK(someElsClause(Cl:Clause), Vs:ValList) => evalClause(Cl, Vs)
 
   syntax Map ::= tdenvOfTargs(TParamList, TypList)
                                             [function, symbol(tdenvOfTargs)]
   rule tdenvOfTargs(.TParamList, .TypList) => .Map
   rule tdenvOfTargs((X:TParam, Xs:TParamList), (T:Typ, Ts:TypList))
     => tdenvOfTargs(Xs, Ts) [{X}:>Id <- defTD(.TParamList, aliasDT(T))]
-
-  syntax ClauseList ::= optAsSeqClause(ElsClauseOpt)
-                                            [function, total, symbol(optAsSeqClause)]
-                      | appendClauses(ClauseList, ClauseList)
-                                            [function, total, symbol(appendClauses)]
-  rule optAsSeqClause(noElsClause()) => .ClauseList
-  rule optAsSeqClause(someElsClause(Cl:Clause)) => Cl, .ClauseList
-  rule appendClauses(.ClauseList, Cs:ClauseList) => Cs
-  rule appendClauses((C:Clause, Cs:ClauseList), Ds:ClauseList) => C, appendClauses(Cs, Ds)
 
   // ==========================================================================
   // Call_func_dispatch

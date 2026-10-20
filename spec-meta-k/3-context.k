@@ -30,6 +30,33 @@ module CONTEXT
                    | failVs()               [symbol(failVs)]
 
   // ==========================================================================
+  // Determinism check over the results of the alternatives of a call
+  //
+  //   def $det_valres(valres*) : valres
+  //   def $det_valsres(valsres*) : valsres
+  //
+  // The attempts are collected into a K List of `Val`, `ValList` or `FAIL`
+  // items. `det(L, Else)` is the single success; `Else` (the else clause or
+  // group, or FAIL) when none succeeded; and FAIL when several did, which
+  // the spec's $det_* also give, but without running the else.
+  // ==========================================================================
+
+  syntax KItem ::= det(List, KItem)
+
+  syntax List ::= successes(List)           [function, total, symbol(successes)]
+  rule successes(.List) => .List
+  rule successes(ListItem(FAIL) L:List) => successes(L)
+  rule successes(ListItem(R:KItem) L:List) => ListItem(R) successes(L) [owise]
+
+  rule <k> det(L:List, _:KItem) => {successes(L)[0]}:>KItem ... </k>
+    requires size(successes(L)) ==Int 1
+  rule <k> det(L:List, Else:KItem) => Else ... </k>
+    requires size(successes(L)) ==Int 0
+  // Two or more alternatives succeeded: the call is nondeterministic.
+  rule <k> det(L:List, _:KItem) => FAIL ... </k>
+    requires size(successes(L)) >Int 1
+
+  // ==========================================================================
   // $load: consumes definitions off the head of the script into <global>
   // ==========================================================================
 
