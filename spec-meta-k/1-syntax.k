@@ -155,13 +155,13 @@ module SYNTAX
                | funcV(Id)                  [symbol(funcV)]
                | extV(JSON)                 [symbol(extV)]
 
-  syntax ValField ::= valField(Atom, Val)   [symbol(valField)]
+  syntax ValField ::= valField(Atom, Val)   [symbol(valField), overload(field)]
   syntax ValCase ::= valCase(MixOp, ValList)
-                                            [symbol(valCase)]
+                                            [symbol(valCase), overload(case)]
 
-  syntax ValList ::= List{Val, ","}         [symbol(valList), terminator-symbol(.valList)]
+  syntax ValList ::= List{Val, ","}         [symbol(valList), terminator-symbol(.valList), overload(vals)]
   syntax ValFieldList ::= List{ValField, ","}
-                                            [symbol(valFieldList), terminator-symbol(.valFieldList)]
+                                            [symbol(valFieldList), terminator-symbol(.valFieldList), overload(fields)]
 
   // `val?`
   syntax ValOpt ::= noVal()                 [symbol(noVal)]
@@ -174,45 +174,54 @@ module SYNTAX
   //   syntax expcase = mixop exp*
   //   syntax expfield = atom exp
   //   syntax iterexp = iter vari*
+  //
+  // A value is an expression, so that an evaluated subexpression can take
+  // its place; the strictness attributes give the evaluation order. An
+  // expression list, field or case whose parts are all values is the value
+  // list, field or case (`overload`).
   // ==========================================================================
 
-  syntax Exp ::= boolE(Bool)                [symbol(boolE)]
-               | Num
+  syntax Exp ::= Val
+               | boolE(Bool)                [symbol(boolE)]
                | textE(String)              [symbol(textE)]
                | varE(Id)                   [symbol(varE)]
-               | unE(UnOp, Exp)             [symbol(unE)]
-               | binE(BinOp, Exp, Exp)      [symbol(binE)]
-               | cmpE(CmpOp, Exp, Exp)      [symbol(cmpE)]
-               | upCastE(Typ, Exp)          [symbol(upCastE)]
-               | downCastE(Typ, Exp)        [symbol(downCastE)]
-               | subE(Exp, Typ)             [symbol(subE)]
-               | matchE(Exp, Pattern)       [symbol(matchE)]
-               | tupE(ExpList)              [symbol(tupE)]
-               | injE(ExpCase)              [symbol(injE)]
-               | strE(ExpFieldList)         [symbol(strE)]
+               | unE(UnOp, Exp)             [symbol(unE), strict(2)]
+               | binE(BinOp, Exp, Exp)      [symbol(binE), seqstrict(2, 3)]
+               | cmpE(CmpOp, Exp, Exp)      [symbol(cmpE), seqstrict(2, 3)]
+               | upCastE(Typ, Exp)          [symbol(upCastE), strict(2)]
+               | downCastE(Typ, Exp)        [symbol(downCastE), strict(2)]
+               | subE(Exp, Typ)             [symbol(subE), strict(1)]
+               | matchE(Exp, Pattern)       [symbol(matchE), strict(1)]
+               | tupE(ExpList)              [symbol(tupE), strict]
+               | injE(ExpCase)              [symbol(injE), strict]
+               | strE(ExpFieldList)         [symbol(strE), strict]
                | optE(ExpOpt)               [symbol(optE)]
-               | listE(ExpList)             [symbol(listE)]
-               | consE(Exp, Exp)            [symbol(consE)]
-               | catE(Exp, Exp)             [symbol(catE)]
-               | memE(Exp, Exp)             [symbol(memE)]
-               | lenE(Exp)                  [symbol(lenE)]
-               | dotE(Exp, Atom)            [symbol(dotE)]
-               | idxE(Exp, Exp)             [symbol(idxE)]
-               | sliceE(Exp, Exp, Exp)      [symbol(sliceE)]
-               | updE(Exp, Path, Exp)       [symbol(updE)]
+               | listE(ExpList)             [symbol(listE), strict]
+               | consE(Exp, Exp)            [symbol(consE), seqstrict]
+               | catE(Exp, Exp)             [symbol(catE), seqstrict]
+               | memE(Exp, Exp)             [symbol(memE), seqstrict]
+               | lenE(Exp)                  [symbol(lenE), strict]
+               | dotE(Exp, Atom)            [symbol(dotE), strict(1)]
+               | idxE(Exp, Exp)             [symbol(idxE), seqstrict]
+               | sliceE(Exp, Exp, Exp)      [symbol(sliceE), seqstrict]
+               | updE(Exp, Path, Exp)       [symbol(updE), seqstrict(1, 3)]
                | callE(Id, TArgList, ArgList)
-                                            [symbol(callE)]
+                                            [symbol(callE), strict(3)]
                | iterE(Exp, IterExp)        [symbol(iterE)]
 
-  syntax ExpCase ::= expCase(MixOp, ExpList)
-                                            [symbol(expCase)]
-  syntax ExpField ::= expField(Atom, Exp)   [symbol(expField)]
+  syntax ExpCase ::= ValCase
+                   | expCase(MixOp, ExpList)
+                                            [symbol(expCase), strict(2), overload(case)]
+  syntax ExpField ::= ValField
+                    | expField(Atom, Exp)   [symbol(expField), strict(2), overload(field)]
   syntax IterExp ::= iterExp(Iter, VariList)
                                             [symbol(iterExp)]
 
-  syntax ExpList ::= List{Exp, ","}         [symbol(expList), terminator-symbol(.expList)]
-  syntax ExpFieldList ::= List{ExpField, ","}
-                                            [symbol(expFieldList), terminator-symbol(.expFieldList)]
+  syntax ExpList ::= ValList
+                   | List{Exp, ","}         [symbol(expList), terminator-symbol(.expList), seqstrict, overload(vals)]
+  syntax ExpFieldList ::= ValFieldList
+                        | List{ExpField, ","}
+                                            [symbol(expFieldList), terminator-symbol(.expFieldList), seqstrict, overload(fields)]
 
   // `exp?`
   syntax ExpOpt ::= noExp()                 [symbol(noExp)]
@@ -255,10 +264,12 @@ module SYNTAX
   //   syntax arg = | EXP exp | FUN id
   // ==========================================================================
 
-  syntax Arg ::= expA(Exp)                  [symbol(expA)]
+  syntax Arg ::= Val
+               | expA(Exp)                  [symbol(expA), strict]
                | funA(Id)                   [symbol(funA)]
 
-  syntax ArgList ::= List{Arg, ","}         [symbol(argList), terminator-symbol(.argList)]
+  syntax ArgList ::= ValList
+                   | List{Arg, ","}         [symbol(argList), terminator-symbol(.argList), seqstrict, overload(vals)]
 
   // ==========================================================================
   // Type parameters
@@ -301,13 +312,13 @@ module SYNTAX
                                             [symbol(iterPrem)]
 
   syntax Prem ::= relPr(Id, ExpList, ExpList)
-                                            [symbol(relPr)]
-                | ifPr(Exp)                 [symbol(ifPr)]
-                | ifHoldPr(Id, ExpList)     [symbol(ifHoldPr)]
-                | ifNotHoldPr(Id, ExpList)  [symbol(ifNotHoldPr)]
-                | letPr(Exp, Exp)           [symbol(letPr)]
+                                            [symbol(relPr), strict(2)]
+                | ifPr(Exp)                 [symbol(ifPr), strict]
+                | ifHoldPr(Id, ExpList)     [symbol(ifHoldPr), strict(2)]
+                | ifNotHoldPr(Id, ExpList)  [symbol(ifNotHoldPr), strict(2)]
+                | letPr(Exp, Exp)           [symbol(letPr), strict(2)]
                 | iterPr(Prem, IterPrem)    [symbol(iterPr)]
-                | debugPr(Exp)              [symbol(debugPr)]
+                | debugPr(Exp)              [symbol(debugPr), strict]
 
   syntax PremList ::= List{Prem, ","}       [symbol(premList), terminator-symbol(.premList)]
 
