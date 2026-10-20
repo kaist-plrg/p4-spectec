@@ -513,13 +513,24 @@ impl ToTerm for al::ElseGroup {
     }
 }
 
-impl ToTerm for al::Clause {
+impl ToTerm for al::ClauseKind {
     fn term(&self) -> Term {
-        let clause = &self.node;
         Term::apply(
             "clause",
-            [list("argList", &clause.args), clause.exp.term(), list("premList", &clause.prems)],
+            [list("argList", &self.args), self.exp.term(), list("premList", &self.prems)],
         )
+    }
+}
+
+impl ToTerm for al::Clause {
+    fn term(&self) -> Term {
+        self.node.term()
+    }
+}
+
+impl ToTerm for al::ElseClause {
+    fn term(&self) -> Term {
+        self.node.clause.term()
     }
 }
 

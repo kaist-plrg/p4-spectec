@@ -431,10 +431,21 @@ impl ToSexp for al::ElseGroup {
     }
 }
 
+impl ToSexp for al::ClauseKind {
+    fn sexp(&self) -> Sexp {
+        Sexp::List(vec![self.args.sexp(), self.exp.sexp(), self.prems.sexp()])
+    }
+}
+
 impl ToSexp for al::Clause {
     fn sexp(&self) -> Sexp {
-        let clause = &self.node;
-        Sexp::List(vec![clause.args.sexp(), clause.exp.sexp(), clause.prems.sexp()])
+        self.node.sexp()
+    }
+}
+
+impl ToSexp for al::ElseClause {
+    fn sexp(&self) -> Sexp {
+        self.node.clause.sexp()
     }
 }
 
