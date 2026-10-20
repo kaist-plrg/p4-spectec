@@ -106,7 +106,7 @@ module CONTEXT
   //   $sub_opt / $sub_list bodies, Assign_exp/list
   // ==========================================================================
 
-  syntax KItem ::= inScope(K)
+  syntax Exp ::= inScope(K)                // an `Exp`, so that it fits a strict hole
 
   rule <k> inScope(K:K) => K ~> endScope(M) ... </k>
        <lvenv> M:Map </lvenv>
