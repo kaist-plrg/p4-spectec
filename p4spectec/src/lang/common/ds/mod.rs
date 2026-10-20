@@ -1,6 +1,6 @@
 //! Common language data structures
 //!
-//! Persistent maps and sets keyed by syntax, not by source-annotated value.
+//! Persistent and small maps and sets keyed by syntax, not by source-annotated value.
 
 pub mod collections;
 pub mod map;

@@ -23,7 +23,7 @@ use crate::lang::il::prepared as ast;
 
 use crate::diagnostic::{Label, Report};
 
-use crate::runtime::envs::interp::shared::{FrozenTDEnv, TDEnv, TypeDef};
+use crate::runtime::envs::interp::shared::{FrozenTDEnv, MicroTDEnv, TypeDef};
 
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap_from_result},
@@ -223,7 +223,7 @@ impl<R, F> Global<R, F> {
 #[derive(Clone, Debug, Default)]
 struct Local {
     /// Type parameters bound to their type arguments.
-    tdenv: TDEnv,
+    tdenv: MicroTDEnv,
     /// Value slots of the current callable.
     frame: Frame,
 }
@@ -260,7 +260,7 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     pub fn localize_with_layout(&self, layout: &Rc<FrameLayout>) -> Self {
         Self {
             global: self.global,
-            local: Local { tdenv: TDEnv::new(), frame: Frame::new(Rc::clone(layout)) },
+            local: Local { tdenv: MicroTDEnv::new(), frame: Frame::new(Rc::clone(layout)) },
         }
     }
 
