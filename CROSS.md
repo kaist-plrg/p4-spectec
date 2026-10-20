@@ -69,18 +69,6 @@ from a P4 type-checking run. The remaining cells store the specification path
 and the evaluator's environments and call state. `initFFI()` starts the host
 library on the specification path before anything else runs.
 
-A call to a defined function or relation evaluates every clause, or every
-rule path of every rule group, each from the same local state (`<saves>`
-restores it between attempts), and collects the results. `det` in
-[`3-context.k`](spec-meta-k/3-context.k) then gives the single success, runs
-the `otherwise` clause or the else group when there is none, and gives `FAIL`
-when two or more alternatives succeeded: a nondeterministic call fails
-instead of taking the first match. Table rows are still tried in order. The
-relation check is flat across rule groups, where `spec-meta/` checks each
-group and then the groups (a group whose two paths both match fails, and a
-single match in another group is then accepted); see
-[`5.6-eval-call-rel.k`](spec-meta-k/5.6-eval-call-rel.k).
-
 ### Building and running
 
 K is pinned by the `k` submodule; this port is tested with K v7.1.337, which
@@ -270,17 +258,8 @@ A standalone run starts with:
 Evaluation frames specify where the next subterm runs. Evaluating an
 expression replaces it with `(OK val)` or `FAIL`; successful premises and
 assignments update the local layer and reduce to `OK`. Callees, clause and
-rule attempts, and iterations introduce nested `IN` scopes. A call to a
-defined function or relation evaluates every clause, or every rule path of
-every rule group, each in its own copy of the callee's layer, and keeps the
-results, `FAIL` included, in the `call-defined-func/clauses` and
-`call-defined-rel/ruls` frames. Once all are evaluated, the call is the single
-success; the `otherwise` clause or the else group runs when there is none;
-and two or more successes give `FAIL`, so a nondeterministic call fails
-instead of taking the first match. Table rows are still tried in order. The
-relation check is flat across rule groups, where `spec-meta/` checks each
-group and then the groups; see
-[`5.7-eval-call-rel.rkt`](spec-meta-redex/5.7-eval-call-rel.rkt). Elsewhere
+rule attempts, and iterations introduce nested `IN` scopes. A failed attempt
+discards its scope, preserving the enclosing layer for the next alternative.
 `FAIL` propagates through frames until a rule handles it or the run fails.
 
 The evaluator in [`5.8-eval.rkt`](spec-meta-redex/5.8-eval.rkt) combines the
