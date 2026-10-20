@@ -1,19 +1,17 @@
-dec $sink<T>() : T
-
 ;;
 ;; Names
 ;;
 
 ;;; identifier
 
-dec $lift_nameIR_as_identifier(nameIR) : identifier
+dec $lift_nameIR_as_identifier(nameIR) : identifier?
   hint(testgen_ignore)
 
 def $lift_nameIR_as_identifier(nameIR) = _ID nameIR
 
 ;;; typeIdentifier
 
-dec $lift_nameIR_as_typeIdentifier(nameIR) : typeIdentifier
+dec $lift_nameIR_as_typeIdentifier(nameIR) : typeIdentifier?
   hint(testgen_ignore)
 
 def $lift_nameIR_as_typeIdentifier(nameIR) = _TID nameIR
@@ -24,7 +22,7 @@ def $lift_nameIR_as_typeIdentifier(nameIR) = _TID nameIR
 
 ;;; nonTypeName
 
-dec $lift_nameIR_as_nonTypeName(nameIR) : nonTypeName
+dec $lift_nameIR_as_nonTypeName(nameIR) : nonTypeName?
   hint(testgen_ignore)
 
 def $lift_nameIR_as_nonTypeName("apply") = APPLY
@@ -40,13 +38,14 @@ def $lift_nameIR_as_nonTypeName(nameIR) = _ID nameIR
 ;;; prefixedNonTypeName
 
 dec $lift_prefixedNameIR_as_prefixedNonTypeName(prefixedNameIR)
-  : prefixedNonTypeName
+  : prefixedNonTypeName?
   hint(testgen_ignore)
 
 def $lift_prefixedNameIR_as_prefixedNonTypeName(_BARE nameIR)
   = $lift_nameIR_as_nonTypeName(nameIR)
 def $lift_prefixedNameIR_as_prefixedNonTypeName('.' nameIR)
-  = _ID '.' $lift_nameIR_as_nonTypeName(nameIR)
+  = _ID '.' nonTypeName
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
 
 ;;
 ;;;; Type names
@@ -54,7 +53,7 @@ def $lift_prefixedNameIR_as_prefixedNonTypeName('.' nameIR)
 
 ;;; typeName
 
-dec $lift_nameIR_as_typeName(nameIR) : typeName
+dec $lift_nameIR_as_typeName(nameIR) : typeName?
   hint(testgen_ignore)
 
 def $lift_nameIR_as_typeName(nameIR)
@@ -63,13 +62,14 @@ def $lift_nameIR_as_typeName(nameIR)
 ;;; prefixedTypeName
 
 dec $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)
-  : prefixedTypeName
+  : prefixedTypeName?
   hint(testgen_ignore)
 
 def $lift_prefixedNameIR_as_prefixedTypeName(_BARE nameIR)
   = $lift_nameIR_as_typeName(nameIR)
 def $lift_prefixedNameIR_as_prefixedTypeName('.' nameIR)
-  = _TID '.' $lift_nameIR_as_typeName(nameIR)
+  = _TID '.' typeName
+  -- if typeName = $lift_nameIR_as_typeName(nameIR)
 
 ;;
 ;;;; Table custom property names
@@ -78,14 +78,13 @@ def $lift_prefixedNameIR_as_prefixedTypeName('.' nameIR)
 
 ;;; tableCustomName
 
-dec $lift_nameIR_as_tableCustomName(nameIR) : tableCustomName
+dec $lift_nameIR_as_tableCustomName(nameIR) : tableCustomName?
 
 def $lift_nameIR_as_tableCustomName("apply") = APPLY
 def $lift_nameIR_as_tableCustomName("state") = STATE
 def $lift_nameIR_as_tableCustomName("type") = TYPE
 def $lift_nameIR_as_tableCustomName("priority") = PRIORITY
-def $lift_nameIR_as_tableCustomName(nameIR)
-  = $lift_nameIR_as_identifier(nameIR)
+def $lift_nameIR_as_tableCustomName(nameIR) = _ID nameIR
   -- otherwise
 
 ;;
@@ -95,7 +94,7 @@ def $lift_nameIR_as_tableCustomName(nameIR)
 ;;; nameListIR
 
 dec $lift_nameListIR_as_nonTypeNameList(nameIR*)
-  : nameList
+  : nameList?
   hint(testgen_ignore)
 
 dec $unflatten_nameList(name*) : nameList
@@ -111,13 +110,13 @@ def $unflatten_nameList'(nameList, name_h :: name_t*)
 
 def $lift_nameListIR_as_nonTypeNameList(nameIR*)
   = nameList
-  -- if (name = $lift_nameIR_as_nonTypeName(nameIR))*
+  -- if (nonTypeName = $lift_nameIR_as_nonTypeName(nameIR))*
   -- if nameList
-      = $unflatten_nameList(name*)
+      = $unflatten_nameList(nonTypeName*)
 
 ;;;;; syntax member = name
 
-dec $lift_nameIR_as_member(nameIR) : member
+dec $lift_nameIR_as_member(nameIR) : member?
   hint(testgen_ignore)
 
 def $lift_nameIR_as_member(nameIR)
@@ -127,18 +126,17 @@ def $lift_nameIR_as_member(nameIR)
 ;; Values
 ;;
 
-dec $lift_value(value) : expression
+dec $lift_value(value) : expression?
   hint(testgen_ignore)
 
-def $lift_value(value) = $sink<expression>()
+def $lift_value(value) = eps
   -- debug value
-  -- otherwise
 
 ;;
 ;; Types
 ;;
 
-dec $lift_typeIR(typeIR) : type
+dec $lift_typeIR(typeIR) : type?
   hint(testgen_ignore)
 
 ;;
@@ -147,7 +145,7 @@ dec $lift_typeIR(typeIR) : type
 
 ;;; baseTypeIR
 
-dec $lift_baseTypeIR(baseTypeIR) : baseType
+dec $lift_baseTypeIR(baseTypeIR) : baseType?
   hint(testgen_ignore)
 
 def $lift_baseTypeIR(BOOL) = BOOL
@@ -166,12 +164,13 @@ def $lift_baseTypeIR(VARBIT `< w `>) = VARBIT `< w `>
 
 ;;; nameTypeIR
 
-dec $lift_typeDefIR_as_typeName(typeDefIR) : typeName
-  hint(testgen_ignore)
-dec $lift_typeArgumentListIR(typeArgumentIR*) : typeArgumentList
+dec $lift_typeDefIR_as_typeName(typeDefIR) : typeName?
   hint(testgen_ignore)
 
-dec $lift_nameTypeIR(nameTypeIR) : namedType
+dec $lift_typeArgumentListIR(typeArgumentIR*) : typeArgumentList?
+  hint(testgen_ignore)
+
+dec $lift_nameTypeIR(nameTypeIR) : namedType?
   hint(testgen_ignore)
 
 def $lift_nameTypeIR(_NAME typeId) = typeName
@@ -183,7 +182,7 @@ def $lift_nameTypeIR(_NAME typeId) = typeName
 
 ;;; aliasTypeIR
 
-dec $lift_aliasTypeIR(aliasTypeIR) : type
+dec $lift_aliasTypeIR(aliasTypeIR) : type?
   hint(testgen_ignore)
 
 def $lift_aliasTypeIR(TYPEDEF typeId _) = typeName
@@ -197,10 +196,10 @@ def $lift_aliasTypeIR(TYPE typeId _) = typeName
 
 ;;; dataTypeIR
 
-dec $lift_typeArgumentIR(typeArgumentIR) : typeArgument
+dec $lift_typeArgumentIR(typeArgumentIR) : typeArgument?
   hint(testgen_ignore)
 
-dec $lift_dataTypeIR(dataTypeIR) : type
+dec $lift_dataTypeIR(dataTypeIR) : type?
   hint(testgen_ignore)
 
 def $lift_dataTypeIR(LIST `< typeIR `>)
@@ -229,7 +228,7 @@ def $lift_dataTypeIR(ENUM typeId `< typeIR `> `{ _ `})
 
 ;;; typeIR
 
-dec $lift_typeIR_as_typeOrVoid(typeIR) : typeOrVoid
+dec $lift_typeIR_as_typeOrVoid(typeIR) : typeOrVoid?
   hint(testgen_ignore)
 
 def $lift_typeIR(baseTypeIR)
@@ -240,7 +239,7 @@ def $lift_typeIR(aliasTypeIR)
   = $lift_aliasTypeIR(aliasTypeIR)
 def $lift_typeIR(dataTypeIR)
   = $lift_dataTypeIR(dataTypeIR)
-def $lift_typeIR(typeIR) = $sink<type>()
+def $lift_typeIR(typeIR) = eps
   -- debug typeIR
   -- otherwise
 
@@ -299,7 +298,7 @@ def $lift_typeDefIR_as_typeName(PACKAGE typeId `< _ ',' _ `> `{ _ `}) = typeName
 def $lift_typeDefIR_as_typeName(TABLE typeId `{ _ `}) = typeName
   -- if typeName = $lift_nameIR_as_typeName(typeId)
 
-def $lift_typeDefIR_as_typeName(typeDefIR) = $sink<typeName>()
+def $lift_typeDefIR_as_typeName(typeDefIR) = eps
   -- debug typeDefIR
   -- otherwise
 
@@ -309,15 +308,15 @@ def $lift_typeDefIR_as_typeName(typeDefIR) = $sink<typeName>()
 
 ;;; typeParameterIR
 
-dec $lift_typeParameterIR(typeParameterIR) : typeParameter
+dec $lift_typeParameterIR(typeParameterIR) : typeParameter?
   hint(testgen_ignore)
 
-def $lift_typeParameterIR(typeId) = typeParameter
-  -- if typeParameter = $lift_nameIR_as_typeName(typeId)
+def $lift_typeParameterIR(typeId) = typeName
+  -- if typeName = $lift_nameIR_as_typeName(typeId)
 
 ;;; typeParameterListIR
 
-dec $lift_typeParameterListIR(typeParameterIR*) : typeParameterListOpt
+dec $lift_typeParameterListIR(typeParameterIR*) : typeParameterListOpt?
   hint(testgen_ignore)
 
 dec $unflatten_typeParameterListOpt(typeParameter*) : typeParameterListOpt
@@ -355,24 +354,24 @@ def $lift_typeParameterListIR(typeParameterIR*)
 ;;; parameterIR
 
 dec $lift_constantInitializerOptIR_as_initializerOpt(constantInitializerIR?)
-  : initializerOpt
+  : initializerOpt?
   hint(testgen_ignore)
 
-dec $lift_parameterIR(parameterIR) : parameter
+dec $lift_parameterIR(parameterIR) : parameter?
   hint(testgen_ignore)
 
 def $lift_parameterIR(
     annotationList direction typeIR nameIR constantInitializerIR?
   )
-  = annotationList direction type name initializerOpt
+  = annotationList direction type nonTypeName initializerOpt
   -- if type = $lift_typeIR(typeIR)
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if initializerOpt
       = $lift_constantInitializerOptIR_as_initializerOpt(constantInitializerIR?)
 
 ;;; parameterListIR
 
-dec $lift_parameterListIR(parameterIR*) : parameterList
+dec $lift_parameterListIR(parameterIR*) : parameterList?
   hint(testgen_ignore)
 
 dec $unflatten_parameterList(parameter*) : parameterList
@@ -408,7 +407,7 @@ def $lift_parameterListIR(parameterIR*) = parameterList
 ;;; constructorParameterIR
 
 dec $lift_constructorParameterIR(constructorParameterIR)
-  : constructorParameter
+  : constructorParameter?
   hint(testgen_ignore)
 
 def $lift_constructorParameterIR(constructorParameterIR)
@@ -417,7 +416,7 @@ def $lift_constructorParameterIR(constructorParameterIR)
 ;;; constructorParameterListOptIR
 
 dec $lift_constructorParameterListIR(constructorParameterIR*)
-  : constructorParameterListOpt
+  : constructorParameterListOpt?
   hint(testgen_ignore)
 
 dec $unflatten_constructorParameterList(constructorParameter*)
@@ -442,10 +441,10 @@ def $lift_constructorParameterListIR(constructorParameterIR*)
 
 ;;; initializerIR
 
-dec $lift_typedExpressionIR(typedExpressionIR) : expression
+dec $lift_typedExpressionIR(typedExpressionIR) : expression?
   hint(testgen_ignore)
 
-dec $lift_initializerIR(initializerIR) : initializer
+dec $lift_initializerIR(initializerIR) : initializer?
   hint(testgen_ignore)
 
 def $lift_initializerIR('=' typedExpressionIR)
@@ -454,7 +453,7 @@ def $lift_initializerIR('=' typedExpressionIR)
 
 ;;; initializerOptIR
 
-dec $lift_initializerOptIR(initializerIR?) : initializerOpt
+dec $lift_initializerOptIR(initializerIR?) : initializerOpt?
   hint(testgen_ignore)
 
 def $lift_initializerOptIR(eps) = _EMPTY
@@ -464,7 +463,7 @@ def $lift_initializerOptIR(initializerIR)
 ;;; constantInitializerIR
 
 dec $lift_constantInitializerIR_as_initializer(constantInitializerIR)
-  : initializer
+  : initializer?
   hint(testgen_ignore)
 
 def $lift_constantInitializerIR_as_initializer('=' _VALUE value)
@@ -483,18 +482,18 @@ def $lift_constantInitializerOptIR_as_initializerOpt(constantInitializerIR)
 
 ;;; namedExpressionIR
 
-dec $lift_namedExpressionIR(namedExpressionIR) : namedExpression
+dec $lift_namedExpressionIR(namedExpressionIR) : namedExpression?
   hint(testgen_ignore)
 
 def $lift_namedExpressionIR(
     nameIR '=' typedExpressionIR)
-  = name '=' expression
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  = nonTypeName '=' expression
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if expression = $lift_typedExpressionIR(typedExpressionIR)
 
 ;;; namedExpressionListIR
 
-dec $lift_namedExpressionListIR(namedExpressionIR*) : namedExpressionList
+dec $lift_namedExpressionListIR(namedExpressionIR*) : namedExpressionList?
   hint(testgen_ignore)
 
 dec $unflatten_namedExpressionList(namedExpression*) : namedExpressionList
@@ -523,18 +522,18 @@ def $lift_namedExpressionListIR(namedExpressionIR*)
 
 ;;; namedValueIR
 
-dec $lift_namedValueIR(namedValueIR) : namedExpression
+dec $lift_namedValueIR(namedValueIR) : namedExpression?
   hint(testgen_ignore)
 
 def $lift_namedValueIR(
     nameIR '=' value)
-  = name '=' expression
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  = nonTypeName '=' expression
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if expression = $lift_value(value)
 
 ;;; namedValueListIR
 
-dec $lift_namedValueListIR(namedValueIR*) : namedExpressionList
+dec $lift_namedValueListIR(namedValueIR*) : namedExpressionList?
   hint(testgen_ignore)
 
 def $lift_namedValueListIR(namedValueIR*)
@@ -547,7 +546,7 @@ def $lift_namedValueListIR(namedValueIR*)
 ;; Expressions
 ;;
 
-dec $lift_typedExpressionListIR(typedExpressionIR*) : expressionList
+dec $lift_typedExpressionListIR(typedExpressionIR*) : expressionList?
   hint(testgen_ignore)
 
 ;;
@@ -556,7 +555,7 @@ dec $lift_typedExpressionListIR(typedExpressionIR*) : expressionList
 
 ;;; literalExpressionIR
 
-dec $lift_literalExpressionIR(literalExpressionIR) : literalExpression
+dec $lift_literalExpressionIR(literalExpressionIR) : literalExpression?
   hint(testgen_ignore)
 
 def $lift_literalExpressionIR(literalExpression) = literalExpression
@@ -567,7 +566,7 @@ def $lift_literalExpressionIR(literalExpression) = literalExpression
 
 ;;; referenceExpressionIR
 
-dec $lift_referenceExpressionIR(referenceExpressionIR) : referenceExpression
+dec $lift_referenceExpressionIR(referenceExpressionIR) : referenceExpression?
   hint(testgen_ignore)
 
 def $lift_referenceExpressionIR(_BARE nameIR) = THIS
@@ -584,7 +583,7 @@ def $lift_referenceExpressionIR('.' nameIR) = _ID '.' nonTypeName
 
 ;;; defaultExpressionIR
 
-dec $lift_defaultExpressionIR(defaultExpressionIR) : defaultExpression
+dec $lift_defaultExpressionIR(defaultExpressionIR) : defaultExpression?
   hint(testgen_ignore)
 
 def $lift_defaultExpressionIR('...') = '...'
@@ -595,7 +594,7 @@ def $lift_defaultExpressionIR('...') = '...'
 
 ;;; unaryExpressionIR
 
-dec $lift_unaryExpressionIR(unaryExpressionIR) : unaryExpression
+dec $lift_unaryExpressionIR(unaryExpressionIR) : unaryExpression?
   hint(testgen_ignore)
 
 def $lift_unaryExpressionIR(unop typedExpressionIR)
@@ -604,7 +603,7 @@ def $lift_unaryExpressionIR(unop typedExpressionIR)
 
 ;;; binaryExpressionIR
 
-dec $lift_binaryExpressionIR(binaryExpressionIR) : binaryExpression
+dec $lift_binaryExpressionIR(binaryExpressionIR) : binaryExpression?
   hint(testgen_ignore)
 
 def $lift_binaryExpressionIR(
@@ -615,7 +614,7 @@ def $lift_binaryExpressionIR(
 
 ;;; ternaryExpressionIR
 
-dec $lift_ternaryExpressionIR(ternaryExpressionIR) : ternaryExpression
+dec $lift_ternaryExpressionIR(ternaryExpressionIR) : ternaryExpression?
   hint(testgen_ignore)
 
 def $lift_ternaryExpressionIR(
@@ -632,7 +631,7 @@ def $lift_ternaryExpressionIR(
 
 ;;; castExpressionIR
 
-dec $lift_castExpressionIR(castExpressionIR) : expression
+dec $lift_castExpressionIR(castExpressionIR) : expression?
   hint(testgen_ignore)
 
 def $lift_castExpressionIR(`( typeIR `) typedExpressionIR)
@@ -686,7 +685,7 @@ def $unflatten_recordElementExpression_with_default(
 
 ;;; dataExpressionIR
 
-dec $lift_dataExpressionIR(dataExpressionIR) : dataExpression
+dec $lift_dataExpressionIR(dataExpressionIR) : dataExpression?
   hint(testgen_ignore)
 
 def $lift_dataExpressionIR('{#}') = '{#}'
@@ -723,7 +722,7 @@ def $lift_dataExpressionIR(RECORD `{ namedExpressionIR* ',' '...' `})
 ;;; errorAccessExpressionIR
 
 dec $lift_errorAccessExpressionIR(errorAccessExpressionIR)
-  : errorAccessExpression
+  : errorAccessExpression?
   hint(testgen_ignore)
 
 def $lift_errorAccessExpressionIR(ERROR '.' nameIR)
@@ -732,7 +731,7 @@ def $lift_errorAccessExpressionIR(ERROR '.' nameIR)
 
 ;;; memberAccessBaseIR
 
-dec $lift_memberAccessBaseIR(memberAccessBaseIR) : memberAccessBase
+dec $lift_memberAccessBaseIR(memberAccessBaseIR) : memberAccessBase?
   hint(testgen_ignore)
 
 def $lift_memberAccessBaseIR(TYPE prefixedNameIR)
@@ -744,7 +743,7 @@ def $lift_memberAccessBaseIR(typedExpressionIR)
 ;;; memberAccessExpressionIR
 
 dec $lift_memberAccessExpressionIR(memberAccessExpressionIR)
-  : memberAccessExpression
+  : memberAccessExpression?
   hint(testgen_ignore)
 
 def $lift_memberAccessExpressionIR(memberAccessBaseIR '.' nameIR)
@@ -756,7 +755,7 @@ def $lift_memberAccessExpressionIR(memberAccessBaseIR '.' nameIR)
 ;;; indexAccessExpressionIR
 
 dec $lift_indexAccessExpressionIR(indexAccessExpressionIR)
-  : indexAccessExpression
+  : indexAccessExpression?
   hint(testgen_ignore)
 
 def $lift_indexAccessExpressionIR(
@@ -768,7 +767,7 @@ def $lift_indexAccessExpressionIR(
 ;;; sliceAccessExpressionIR
 
 dec $lift_sliceAccessExpressionIR(sliceAccessExpressionIR)
-  : sliceAccessExpression
+  : sliceAccessExpression?
   hint(testgen_ignore)
 
 def $lift_sliceAccessExpressionIR(
@@ -781,7 +780,7 @@ def $lift_sliceAccessExpressionIR(
 
 ;;; accessExpressionIR
 
-dec $lift_accessExpressionIR(accessExpressionIR) : accessExpression
+dec $lift_accessExpressionIR(accessExpressionIR) : accessExpression?
   hint(testgen_ignore)
 
 def $lift_accessExpressionIR(errorAccessExpressionIR)
@@ -797,15 +796,15 @@ def $lift_accessExpressionIR(sliceAccessExpressionIR)
 ;;;; Call expressions
 ;;
 
-dec $lift_argumentListIR(argumentIR*) : argumentList
+dec $lift_argumentListIR(argumentIR*) : argumentList?
   hint(testgen_ignore)
-dec $lift_callableTargetIR_as_expression(callableTargetIR) : expression
+dec $lift_callableTargetIR_as_expression(callableTargetIR) : expression?
   hint(testgen_ignore)
 dec $lift_typeArgumentListIR_as_realTypeArgumentList(typeArgumentIR*)
-  : realTypeArgumentList
+  : realTypeArgumentList?
   hint(testgen_ignore)
 
-dec $lift_callExpressionIR(callExpressionIR) : callExpression
+dec $lift_callExpressionIR(callExpressionIR) : callExpression?
   hint(testgen_ignore)
 
 def $lift_callExpressionIR(
@@ -850,7 +849,7 @@ def $lift_callExpressionIR(
 ;;; parenthesizedExpressionIR
 
 dec $lift_parenthesizedExpressionIR(parenthesizedExpressionIR)
-  : parenthesizedExpression
+  : parenthesizedExpression?
   hint(testgen_ignore)
 
 def $lift_parenthesizedExpressionIR(`( typedExpressionIR `))
@@ -863,7 +862,7 @@ def $lift_parenthesizedExpressionIR(`( typedExpressionIR `))
 
 ;;; expressionIR
 
-dec $lift_expressionIR(expressionIR) : expression
+dec $lift_expressionIR(expressionIR) : expression?
   hint(testgen_ignore)
 
 def $lift_expressionIR(literalExpressionIR)
@@ -922,7 +921,7 @@ def $lift_typedExpressionListIR(typedExpressionIR*)
 ;;; simpleKeysetExpressionIR
 
 dec $lift_simpleKeysetExpressionIR(simpleKeysetExpressionIR)
-  : simpleKeysetExpression
+  : simpleKeysetExpression?
   hint(testgen_ignore)
 
 def $lift_simpleKeysetExpressionIR(typedExpressionIR)
@@ -948,7 +947,7 @@ def $lift_simpleKeysetExpressionIR('_') = '_'
 ;;; simpleKeysetExpressionListIR
 
 dec $lift_simpleKeysetExpressionListIR(simpleKeysetExpressionIR*)
-  : simpleKeysetExpressionList
+  : simpleKeysetExpressionList?
   hint(testgen_ignore)
 
 dec $unflatten_simpleKeysetExpressionList(simpleKeysetExpression*)
@@ -982,7 +981,7 @@ def $lift_simpleKeysetExpressionListIR(simpleKeysetExpressionIR*)
 ;;; tupleKeysetExpressionIR
 
 dec $lift_tupleKeysetExpressionIR(tupleKeysetExpressionIR)
-  : tupleKeysetExpression
+  : tupleKeysetExpression?
   hint(testgen_ignore)
 
 def $lift_tupleKeysetExpressionIR(
@@ -1015,7 +1014,7 @@ def $lift_tupleKeysetExpressionIR(`( simpleKeysetExpressionIR* `))
 
 ;;; keysetExpressionIR
 
-dec $lift_keysetExpressionIR(keysetExpressionIR) : keysetExpression
+dec $lift_keysetExpressionIR(keysetExpressionIR) : keysetExpression?
   hint(testgen_ignore)
 
 def $lift_keysetExpressionIR(simpleKeysetExpressionIR)
@@ -1029,12 +1028,12 @@ def $lift_keysetExpressionIR(tupleKeysetExpressionIR)
 
 ;;; typeArgumentIR
 
-dec $lift_typeArgumentIR_as_realTypeArgument(typeArgumentIR) : realTypeArgument
+dec $lift_typeArgumentIR_as_realTypeArgument(typeArgumentIR) : realTypeArgument?
   hint(testgen_ignore)
 
 def $lift_typeArgumentIR_as_realTypeArgument(VOID) = VOID
 def $lift_typeArgumentIR_as_realTypeArgument(typeIR) = $lift_typeIR(typeIR)
-  -- otherwise
+  -- if typeIR =/= VOID
 
 def $lift_typeArgumentIR(typeIR)
   = $lift_typeArgumentIR_as_realTypeArgument(typeIR)
@@ -1089,7 +1088,7 @@ def $lift_typeArgumentListIR_as_realTypeArgumentList(typeArgumentIR*)
 
 ;;; argumentIR
 
-dec $lift_argumentIR(argumentIR) : argument
+dec $lift_argumentIR(argumentIR) : argument?
   hint(testgen_ignore)
 
 def $lift_argumentIR(typedExpressionIR)
@@ -1097,13 +1096,13 @@ def $lift_argumentIR(typedExpressionIR)
   -- if expression = $lift_typedExpressionIR(typedExpressionIR)
 
 def $lift_argumentIR(nameIR '=' typedExpressionIR)
-  = name '=' expression
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  = nonTypeName '=' expression
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if expression = $lift_typedExpressionIR(typedExpressionIR)
 
 def $lift_argumentIR(nameIR '=' '_')
-  = name '=' '_' 
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  = nonTypeName '=' '_'
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
 
 def $lift_argumentIR('_') = '_'
 
@@ -1139,7 +1138,7 @@ def $lift_argumentListIR(argumentIR*) = argumentList
 ;; Statements
 ;;
 
-dec $lift_statementIR(statementIR) : statement
+dec $lift_statementIR(statementIR) : statement?
   hint(testgen_ignore)
 
 ;;
@@ -1148,7 +1147,7 @@ dec $lift_statementIR(statementIR) : statement
 
 ;;; emptyStatementIR
 
-dec $lift_emptyStatementIR(emptyStatementIR) : emptyStatement
+dec $lift_emptyStatementIR(emptyStatementIR) : emptyStatement?
   hint(testgen_ignore)
 
 def $lift_emptyStatementIR(';') = ';'
@@ -1159,11 +1158,11 @@ def $lift_emptyStatementIR(';') = ';'
 
 ;;; assignmentStatementIR
 
-dec $lift_typedLvalueIR(typedLvalueIR) : lvalue
+dec $lift_typedLvalueIR(typedLvalueIR) : lvalue?
   hint(testgen_ignore)
 
 dec $lift_assignmentStatementIR(assignmentStatementIR)
-  : assignmentStatement
+  : assignmentStatement?
   hint(testgen_ignore)
 
 def $lift_assignmentStatementIR(
@@ -1178,10 +1177,10 @@ def $lift_assignmentStatementIR(
 
 ;;; callStatementIR
 
-dec $lift_callableTargetIR_as_lvalue(callableTargetIR) : lvalue
+dec $lift_callableTargetIR_as_lvalue(callableTargetIR) : lvalue?
   hint(testgen_ignore)
 
-dec $lift_callStatementIR(callStatementIR) : callStatement
+dec $lift_callStatementIR(callStatementIR) : callStatement?
   hint(testgen_ignore)
 
 def $lift_callStatementIR(
@@ -1205,7 +1204,7 @@ def $lift_callStatementIR(
 
 dec $lift_directApplicationStatementIR(
     directApplicationStatementIR)
-  : directApplicationStatement
+  : directApplicationStatement?
   hint(testgen_ignore)
 
 def $lift_directApplicationStatementIR(
@@ -1233,7 +1232,7 @@ def $lift_directApplicationStatementIR(
 
 ;;; returnStatementIR
 
-dec $lift_returnStatementIR(returnStatementIR) : returnStatement
+dec $lift_returnStatementIR(returnStatementIR) : returnStatement?
   hint(testgen_ignore)
 
 def $lift_returnStatementIR(RETURN ';') = RETURN ';'
@@ -1245,7 +1244,7 @@ def $lift_returnStatementIR(RETURN typedExpressionIR ';')
 ;;;; Exit statements
 ;;
 
-dec $lift_exitStatementIR(exitStatementIR) : exitStatement
+dec $lift_exitStatementIR(exitStatementIR) : exitStatement?
   hint(testgen_ignore)
 
 def $lift_exitStatementIR(EXIT ';') = EXIT ';'
@@ -1257,14 +1256,14 @@ def $lift_exitStatementIR(EXIT ';') = EXIT ';'
 ;;; blockElementStatementIR
 
 dec $lift_constantDeclarationIR(constantDeclarationIR)
-  : constantDeclaration
+  : constantDeclaration?
   hint(testgen_ignore)
 dec $lift_variableDeclarationIR(variableDeclarationIR)
-  : variableDeclaration
+  : variableDeclaration?
   hint(testgen_ignore)
 
 dec $lift_blockElementStatementIR(blockElementStatementIR)
-  : blockElementStatement
+  : blockElementStatement?
   hint(testgen_ignore)
 
 def $lift_blockElementStatementIR(constantDeclarationIR)
@@ -1277,7 +1276,7 @@ def $lift_blockElementStatementIR(statementIR)
 ;;; blockElementStatementListIR
 
 dec $lift_blockElementStatementListIR(blockElementStatementIR*)
-  : blockElementStatementList
+  : blockElementStatementList?
   hint(testgen_ignore)
 
 dec $unflatten_blockElementStatementList(blockElementStatement*)
@@ -1309,7 +1308,7 @@ def $lift_blockElementStatementListIR(blockElementStatementIR*)
 
 ;;; blockStatementIR
 
-dec $lift_blockStatementIR(blockStatementIR) : blockStatement
+dec $lift_blockStatementIR(blockStatementIR) : blockStatement?
   hint(testgen_ignore)
 
 def $lift_blockStatementIR(
@@ -1327,7 +1326,7 @@ def $lift_blockStatementIR(
 ;;; conditionalStatementIR
 
 dec $lift_conditionalStatementIR(conditionalStatementIR)
-  : conditionalStatement
+  : conditionalStatement?
   hint(testgen_ignore)
 
 def $lift_conditionalStatementIR(
@@ -1353,7 +1352,7 @@ def $lift_conditionalStatementIR(
 
 ;;; switchLabelIR
 
-dec $lift_switchLabelIR(switchLabelIR) : switchLabel
+dec $lift_switchLabelIR(switchLabelIR) : switchLabel?
   hint(testgen_ignore)
 
 def $lift_switchLabelIR(DEFAULT) = DEFAULT
@@ -1366,7 +1365,7 @@ def $lift_switchLabelIR(typedExpressionIR)
 
 ;;; switchCaseIR
 
-dec $lift_switchCaseIR(switchCaseIR) : switchCase
+dec $lift_switchCaseIR(switchCaseIR) : switchCase?
   hint(testgen_ignore)
 
 def $lift_switchCaseIR(switchLabelIR ':' blockStatementIR)
@@ -1380,7 +1379,7 @@ def $lift_switchCaseIR(switchLabelIR ':')
 
 ;;; switchCaseListIR
 
-dec $lift_switchCaseListIR(switchCaseIR*) : switchCaseList
+dec $lift_switchCaseListIR(switchCaseIR*) : switchCaseList?
   hint(testgen_ignore)
 
 dec $unflatten_switchCaseList(switchCase*) : switchCaseList
@@ -1406,7 +1405,7 @@ def $lift_switchCaseListIR(switchCaseIR*)
 
 ;;; switchStatementIR
 
-dec $lift_switchStatementIR(switchStatementIR) : switchStatement
+dec $lift_switchStatementIR(switchStatementIR) : switchStatement?
   hint(testgen_ignore)
 
 def $lift_switchStatementIR(
@@ -1423,9 +1422,9 @@ def $lift_switchStatementIR(
 ;;; breakStatementIR
 ;;; continueStatementIR
 
-dec $lift_breakStatementIR(breakStatementIR) : breakStatement
+dec $lift_breakStatementIR(breakStatementIR) : breakStatement?
   hint(testgen_ignore)
-dec $lift_continueStatementIR(continueStatementIR) : continueStatement
+dec $lift_continueStatementIR(continueStatementIR) : continueStatement?
   hint(testgen_ignore)
 
 def $lift_breakStatementIR(BREAK ';') = BREAK ';'
@@ -1453,7 +1452,7 @@ def $lift_statementIR(conditionalStatementIR)
   = $lift_conditionalStatementIR(conditionalStatementIR)
 def $lift_statementIR(switchStatementIR)
   = $lift_switchStatementIR(switchStatementIR)
-def $lift_statementIR(statementIR) = $sink<statement>()
+def $lift_statementIR(statementIR) = eps
   -- debug statementIR
   -- otherwise
 
@@ -1569,11 +1568,11 @@ def $lift_callableTargetIR_as_lvalue(`( callableTargetIR `))
 ;;; constantDeclarationIR
 
 def $lift_constantDeclarationIR(constantDeclarationIR)
-  = annotationList CONST type name initializer ';'
+  = annotationList CONST type nonTypeName initializer ';'
   -- if annotationList CONST typeIR nameIR constantInitializerIR ';'
       = constantDeclarationIR
   -- if type = $lift_typeIR(typeIR)
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if initializer
       = $lift_constantInitializerIR_as_initializer(constantInitializerIR)
 
@@ -1581,9 +1580,9 @@ def $lift_constantDeclarationIR(constantDeclarationIR)
 
 def $lift_variableDeclarationIR(
     annotationList typeIR nameIR initializerIR? ';')
-  = annotationList type name initializerOpt ';'
+  = annotationList type nonTypeName initializerOpt ';'
   -- if type = $lift_typeIR(typeIR)
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if initializerOpt = $lift_initializerOptIR(initializerIR?)
 
 ;;
@@ -1592,16 +1591,16 @@ def $lift_variableDeclarationIR(
 
 ;;; functionPrototypeIR
 
-dec $lift_functionPrototypeIR(functionPrototypeIR) : functionPrototype
+dec $lift_functionPrototypeIR(functionPrototypeIR) : functionPrototype?
   hint(testgen_ignore)
 
 def $lift_functionPrototypeIR(
     typeIR nameIR
       `< typeParameterIR_expl* ',' typeParameterIR_impl* `>
       `( parameterIR* `))
-  = typeOrVoid name typeParameterListOpt `( parameterList `)
+  = typeOrVoid nonTypeName typeParameterListOpt `( parameterList `)
   -- if typeOrVoid = $lift_typeIR_as_typeOrVoid(typeIR)
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
   -- if typeParameterListOpt
       = $lift_typeParameterListIR(typeParameterIR*)
@@ -1609,7 +1608,7 @@ def $lift_functionPrototypeIR(
 
 ;;; functionDeclarationIR
 
-dec $lift_functionDeclarationIR(functionDeclarationIR) : functionDeclaration
+dec $lift_functionDeclarationIR(functionDeclarationIR) : functionDeclaration?
   hint(testgen_ignore)
 
 def $lift_functionDeclarationIR(
@@ -1624,13 +1623,13 @@ def $lift_functionDeclarationIR(
 ;;;; Action declarations
 ;;
 
-dec $lift_actionDeclarationIR(actionDeclarationIR) : actionDeclaration
+dec $lift_actionDeclarationIR(actionDeclarationIR) : actionDeclaration?
   hint(testgen_ignore)
 
 def $lift_actionDeclarationIR(
     annotationList ACTION nameIR `( parameterIR* `) blockStatementIR)
-  = annotationList ACTION name `( parameterList `) blockStatement
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  = annotationList ACTION nonTypeName `( parameterList `) blockStatement
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if parameterList = $lift_parameterListIR(parameterIR*)
   -- if blockStatement = $lift_blockStatementIR(blockStatementIR)
 
@@ -1638,11 +1637,11 @@ def $lift_actionDeclarationIR(
 ;;;; Instantiations
 ;;
 
-dec $lift_objectDeclarationIR(objectDeclarationIR) : objectDeclaration
+dec $lift_objectDeclarationIR(objectDeclarationIR) : objectDeclaration?
   hint(testgen_ignore)
-dec $lift_objectDeclarationListIR(objectDeclarationIR*) : objectDeclarationList
+dec $lift_objectDeclarationListIR(objectDeclarationIR*) : objectDeclarationList?
   hint(testgen_ignore)
-dec $lift_instantiationIR(instantiationIR) : instantiation
+dec $lift_instantiationIR(instantiationIR) : instantiation?
   hint(testgen_ignore)
 
 ;;; objectDeclarationIR
@@ -1683,18 +1682,18 @@ def $lift_objectDeclarationListIR(objectDeclarationIR*)
 def $lift_instantiationIR(
     annotationList typeIR constructorTargetIR
       `( argumentIR* `) nameIR eps ';')
-  = annotationList type `( argumentList `) name ';'
+  = annotationList type `( argumentList `) nonTypeName ';'
   -- if prefixedNameIR `< eps `> = constructorTargetIR
   -- if prefixedTypeName
       = $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)
   -- if type = prefixedTypeName
   -- if argumentList = $lift_argumentListIR(argumentIR*)
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
 
 def $lift_instantiationIR(
     annotationList typeIR constructorTargetIR
       `( argumentIR* `) nameIR eps ';')
-  = annotationList type `( argumentList `) name ';'
+  = annotationList type `( argumentList `) nonTypeName ';'
   -- if prefixedNameIR `< typeArgumentIR* `> = constructorTargetIR
   -- if $(|typeArgumentIR*| > 0)
   -- if prefixedTypeName
@@ -1702,20 +1701,20 @@ def $lift_instantiationIR(
   -- if typeArgumentList = $lift_typeArgumentListIR(typeArgumentIR*)
   -- if type = prefixedTypeName `< typeArgumentList `>
   -- if argumentList = $lift_argumentListIR(argumentIR*)
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
 
 def $lift_instantiationIR(
     annotationList typeIR constructorTargetIR
       `( argumentIR* `)
       nameIR ('=' `{ objectDeclarationIR* `}) ';')
   = annotationList type `( argumentList `)
-      name ('=' `{ objectDeclarationList `}) ';'
+      nonTypeName ('=' `{ objectDeclarationList `}) ';'
   -- if prefixedNameIR `< eps `> = constructorTargetIR
   -- if prefixedTypeName
       = $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)
   -- if type = prefixedTypeName
   -- if argumentList = $lift_argumentListIR(argumentIR*)
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if objectDeclarationList
       = $lift_objectDeclarationListIR(objectDeclarationIR*)
 
@@ -1724,7 +1723,7 @@ def $lift_instantiationIR(
       `( argumentIR* `)
       nameIR ('=' `{ objectDeclarationIR* `}) ';')
   = annotationList type `( argumentList `)
-      name ('=' `{ objectDeclarationList `}) ';'
+      nonTypeName ('=' `{ objectDeclarationList `}) ';'
   -- if prefixedNameIR `< typeArgumentIR* `> = constructorTargetIR
   -- if $(|typeArgumentIR*| > 0)
   -- if prefixedTypeName
@@ -1733,7 +1732,7 @@ def $lift_instantiationIR(
   -- if typeArgumentList = $lift_typeArgumentListIR(typeArgumentIR*)
   -- if type = prefixedTypeName `< typeArgumentList `>
   -- if argumentList = $lift_argumentListIR(argumentIR*)
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if objectDeclarationList
       = $lift_objectDeclarationListIR(objectDeclarationIR*)
 
@@ -1741,7 +1740,7 @@ def $lift_instantiationIR(
 ;;;; Error declarations
 ;;
 
-dec $lift_errorDeclarationIR(errorDeclarationIR) : errorDeclaration
+dec $lift_errorDeclarationIR(errorDeclarationIR) : errorDeclaration?
   hint(testgen_ignore)
 
 def $lift_errorDeclarationIR(ERROR `{ nameIR* `})
@@ -1754,7 +1753,7 @@ def $lift_errorDeclarationIR(ERROR `{ nameIR* `})
 ;;
 
 dec $lift_matchKindDeclarationIR(matchKindDeclarationIR)
-  : matchKindDeclaration
+  : matchKindDeclaration?
   hint(testgen_ignore)
 
 def $lift_matchKindDeclarationIR(MATCH_KIND `{ nameIR* `})
@@ -1771,21 +1770,21 @@ def $lift_matchKindDeclarationIR(MATCH_KIND `{ nameIR* `})
 ;;
 
 dec $lift_enumTypeDeclarationIR(enumTypeDeclarationIR)
-  : enumTypeDeclaration
+  : enumTypeDeclaration?
   hint(testgen_ignore)
 
 def $lift_enumTypeDeclarationIR(
     annotationList ENUM nameIR `{ nameIR_field* `})
-  = annotationList ENUM name `{ nameList_field _EMPTY `}
-  -- if name = $lift_nameIR_as_typeName(nameIR)
+  = annotationList ENUM typeName `{ nameList_field _EMPTY `}
+  -- if typeName = $lift_nameIR_as_typeName(nameIR)
   -- if nameList_field
       = $lift_nameListIR_as_nonTypeNameList(nameIR_field*)
 
 def $lift_enumTypeDeclarationIR(
     annotationList ENUM typeIR nameIR `{ namedValueListIR `})
-  = annotationList ENUM type name `{ namedExpressionList _EMPTY `}
+  = annotationList ENUM type typeName `{ namedExpressionList _EMPTY `}
   -- if type = $lift_typeIR(typeIR)
-  -- if name = $lift_nameIR_as_typeName(nameIR)
+  -- if typeName = $lift_nameIR_as_typeName(nameIR)
   -- if namedExpressionList
       = $lift_namedValueListIR(namedValueListIR)
 
@@ -1795,17 +1794,17 @@ def $lift_enumTypeDeclarationIR(
 
 ;;; typeFieldIR
 
-dec $lift_typeFieldIR(typeFieldIR) : typeField
+dec $lift_typeFieldIR(typeFieldIR) : typeField?
   hint(testgen_ignore)
 
 def $lift_typeFieldIR(annotationList typeIR nameIR ';')
-  = annotationList type name ';'
+  = annotationList type nonTypeName ';'
   -- if type = $lift_typeIR(typeIR)
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
 
 ;;; typeFieldListIR
 
-dec $lift_typeFieldListIR(typeFieldIR*) : typeFieldList
+dec $lift_typeFieldListIR(typeFieldIR*) : typeFieldList?
   hint(testgen_ignore)
 
 dec $unflatten_typeFieldList(typeField*) : typeFieldList
@@ -1827,14 +1826,14 @@ def $lift_typeFieldListIR(typeFieldIR*)
 ;;; structTypeDeclarationIR
 
 dec $lift_structTypeDeclarationIR(structTypeDeclarationIR)
-  : structTypeDeclaration
+  : structTypeDeclaration?
   hint(testgen_ignore)
 
 def $lift_structTypeDeclarationIR(
     annotationList STRUCT nameIR
       `< typeParameterIR* `> `{ typeFieldIR* `})
-  = annotationList STRUCT name typeParameterListOpt `{ typeFieldList `}
-  -- if name = $lift_nameIR_as_typeName(nameIR)
+  = annotationList STRUCT typeName typeParameterListOpt `{ typeFieldList `}
+  -- if typeName = $lift_nameIR_as_typeName(nameIR)
   -- if typeParameterListOpt
       = $lift_typeParameterListIR(typeParameterIR*)
   -- if typeFieldList = $lift_typeFieldListIR(typeFieldIR*)
@@ -1842,14 +1841,14 @@ def $lift_structTypeDeclarationIR(
 ;;; headerTypeDeclarationIR
 
 dec $lift_headerTypeDeclarationIR(headerTypeDeclarationIR)
-  : headerTypeDeclaration
+  : headerTypeDeclaration?
   hint(testgen_ignore)
 
 def $lift_headerTypeDeclarationIR(
     annotationList HEADER nameIR
       `< typeParameterIR* `> `{ typeFieldIR* `})
-  = annotationList HEADER name typeParameterListOpt `{ typeFieldList `}
-  -- if name = $lift_nameIR_as_typeName(nameIR)
+  = annotationList HEADER typeName typeParameterListOpt `{ typeFieldList `}
+  -- if typeName = $lift_nameIR_as_typeName(nameIR)
   -- if typeParameterListOpt
       = $lift_typeParameterListIR(typeParameterIR*)
   -- if typeFieldList = $lift_typeFieldListIR(typeFieldIR*)
@@ -1857,14 +1856,14 @@ def $lift_headerTypeDeclarationIR(
 ;;; headerUnionTypeDeclarationIR
 
 dec $lift_headerUnionTypeDeclarationIR(headerUnionTypeDeclarationIR)
-  : headerUnionTypeDeclaration
+  : headerUnionTypeDeclaration?
   hint(testgen_ignore)
 
 def $lift_headerUnionTypeDeclarationIR(
     annotationList HEADER_UNION nameIR
       `< typeParameterIR* `> `{ typeFieldIR* `})
-  = annotationList HEADER_UNION name typeParameterListOpt `{ typeFieldList `}
-  -- if name = $lift_nameIR_as_typeName(nameIR)
+  = annotationList HEADER_UNION typeName typeParameterListOpt `{ typeFieldList `}
+  -- if typeName = $lift_nameIR_as_typeName(nameIR)
   -- if typeParameterListOpt
       = $lift_typeParameterListIR(typeParameterIR*)
   -- if typeFieldList = $lift_typeFieldListIR(typeFieldIR*)
@@ -1872,7 +1871,7 @@ def $lift_headerUnionTypeDeclarationIR(
 ;;; derivedTypeDeclarationIR
 
 dec $lift_derivedTypeDeclarationIR(derivedTypeDeclarationIR)
-  : derivedTypeDeclaration
+  : derivedTypeDeclaration?
   hint(testgen_ignore)
 
 def $lift_derivedTypeDeclarationIR(enumTypeDeclarationIR)
@@ -1890,7 +1889,7 @@ def $lift_derivedTypeDeclarationIR(headerUnionTypeDeclarationIR)
 
 ;;; typedefIR
 
-dec $lift_typedefIR(typedefIR) : typedef
+dec $lift_typedefIR(typedefIR) : typedef?
   hint(testgen_ignore)
 
 def $lift_typedefIR(typeIR) = $lift_typeIR(typeIR)
@@ -1900,27 +1899,27 @@ def $lift_typedefIR(derivedTypeDeclarationIR)
 ;;; typedefDeclarationIR
 
 dec $lift_typedefDeclarationIR(typedefDeclarationIR)
-  : typedefDeclaration
+  : typedefDeclaration?
   hint(testgen_ignore)
 
 def $lift_typedefDeclarationIR(
     annotationList TYPEDEF typeIR nameIR ';')
-  = annotationList TYPEDEF type name ';'
+  = annotationList TYPEDEF type typeName ';'
   -- if type = $lift_typeIR(typeIR)
-  -- if name = $lift_nameIR_as_typeName(nameIR)
+  -- if typeName = $lift_nameIR_as_typeName(nameIR)
 
 def $lift_typedefDeclarationIR(
     annotationList TYPEDEF derivedTypeDeclarationIR nameIR ';')
-  = annotationList TYPEDEF derivedTypeDeclaration name ';'
+  = annotationList TYPEDEF derivedTypeDeclaration typeName ';'
   -- if derivedTypeDeclaration
       = $lift_derivedTypeDeclarationIR(derivedTypeDeclarationIR)
-  -- if name = $lift_nameIR_as_typeName(nameIR)
+  -- if typeName = $lift_nameIR_as_typeName(nameIR)
 
 def $lift_typedefDeclarationIR(
     annotationList TYPE typeIR nameIR ';')
-  = annotationList TYPE type name ';'
+  = annotationList TYPE type typeName ';'
   -- if type = $lift_typeIR(typeIR)
-  -- if name = $lift_nameIR_as_typeName(nameIR)
+  -- if typeName = $lift_nameIR_as_typeName(nameIR)
 
 ;;
 ;;;; Extern declarations
@@ -1929,7 +1928,7 @@ def $lift_typedefDeclarationIR(
 ;;; externFunctionDeclarationIR
 
 dec $lift_externFunctionDeclarationIR(externFunctionDeclarationIR)
-  : externFunctionDeclaration
+  : externFunctionDeclaration?
   hint(testgen_ignore)
 
 def $lift_externFunctionDeclarationIR(
@@ -1940,7 +1939,7 @@ def $lift_externFunctionDeclarationIR(
 ;;; externConstructorPrototypeIR
 
 dec $lift_externConstructorPrototypeIR(externConstructorPrototypeIR)
-  : externConstructorPrototype
+  : externConstructorPrototype?
   hint(testgen_ignore)
 
 ;; (TODO) Handle implicit type parameter
@@ -1953,7 +1952,7 @@ def $lift_externConstructorPrototypeIR(
 ;;; externMethodPrototypeIR
 
 dec $lift_externMethodPrototypeIR(externMethodPrototypeIR)
-  : externMethodPrototype
+  : externMethodPrototype?
   hint(testgen_ignore)
 
 def $lift_externMethodPrototypeIR(
@@ -1994,7 +1993,7 @@ def $unflatten_externConstructorOrMethodPrototypeList'(
 ;;; externObjectDeclarationIR
 
 dec $lift_externObjectDeclarationIR(externObjectDeclarationIR)
-  : externObjectDeclaration
+  : externObjectDeclaration?
   hint(testgen_ignore)
 
 def $lift_externObjectDeclarationIR(
@@ -2018,7 +2017,7 @@ def $lift_externObjectDeclarationIR(
 
 ;;; externDeclarationIR
 
-dec $lift_externDeclarationIR(externDeclarationIR) : externDeclaration
+dec $lift_externDeclarationIR(externDeclarationIR) : externDeclaration?
   hint(testgen_ignore)
 
 def $lift_externDeclarationIR(externFunctionDeclarationIR)
@@ -2036,19 +2035,19 @@ def $lift_externDeclarationIR(externObjectDeclarationIR)
 
 ;;; selectCase
 
-dec $lift_selectCaseIR(selectCaseIR) : selectCase
+dec $lift_selectCaseIR(selectCaseIR) : selectCase?
   hint(testgen_ignore)
 
 def $lift_selectCaseIR(keysetExpressionIR ':' nameIR ';')
-  = keysetExpression ':' name ';'
+  = keysetExpression ':' nonTypeName ';'
   -- if keysetExpression
       = $lift_keysetExpressionIR(keysetExpressionIR)
-  -- if name
+  -- if nonTypeName
       = $lift_nameIR_as_nonTypeName(nameIR)
 
 ;;; selectCaseListIR
 
-dec $lift_selectCaseListIR(selectCaseIR*) : selectCaseList
+dec $lift_selectCaseListIR(selectCaseIR*) : selectCaseList?
   hint(testgen_ignore)
 
 dec $unflatten_selectCaseList(selectCase*) : selectCaseList
@@ -2073,7 +2072,7 @@ def $lift_selectCaseListIR(selectCaseIR*)
 
 ;;; selectExpressionIR
 
-dec $lift_selectExpressionIR(selectExpressionIR) : selectExpression
+dec $lift_selectExpressionIR(selectExpressionIR) : selectExpression?
   hint(testgen_ignore)
 
 def $lift_selectExpressionIR(
@@ -2090,17 +2089,17 @@ def $lift_selectExpressionIR(
 
 ;;; stateExpressionIR
 
-dec $lift_stateExpressionIR(stateExpressionIR) : stateExpression
+dec $lift_stateExpressionIR(stateExpressionIR) : stateExpression?
   hint(testgen_ignore)
 
-def $lift_stateExpressionIR(nameIR ';') = name ';'
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+def $lift_stateExpressionIR(nameIR ';') = nonTypeName ';'
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
 def $lift_stateExpressionIR(selectExpressionIR)
   = $lift_selectExpressionIR(selectExpressionIR)
 
 ;;; transitionStatementIR
 
-dec $lift_transitionStatementIR(transitionStatementIR) : transitionStatement
+dec $lift_transitionStatementIR(transitionStatementIR) : transitionStatement?
   hint(testgen_ignore)
 
 def $lift_transitionStatementIR(TRANSITION stateExpressionIR)
@@ -2114,7 +2113,7 @@ def $lift_transitionStatementIR(TRANSITION stateExpressionIR)
 
 ;;; valueSetTypeIR (is instead modelled as typeIR)
 
-dec $lift_typeIR_as_valueSetType(typeIR) : valueSetType
+dec $lift_typeIR_as_valueSetType(typeIR) : valueSetType?
   hint(testgen_ignore)
 
 def $lift_typeIR_as_valueSetType(typeIR) = baseType
@@ -2127,30 +2126,30 @@ def $lift_typeIR_as_valueSetType(typeIR) = prefixedTypeName
 ;;; valueSetDeclarationIR
 
 dec $lift_valueSetDeclarationIR(valueSetDeclarationIR)
-  : valueSetDeclaration
+  : valueSetDeclaration?
   hint(testgen_ignore)
 
 def $lift_valueSetDeclarationIR(
     annotationList VALUE_SET `< typeIR `> `( typedExpressionIR `) nameIR ';')
-  = annotationList VALUE_SET `< valueSetType `> `( expression `) name ';'
+  = annotationList VALUE_SET `< valueSetType `> `( expression `) nonTypeName ';'
   -- if valueSetType = $lift_typeIR_as_valueSetType(typeIR)
   -- if expression = $lift_typedExpressionIR(typedExpressionIR)
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
 
 ;;
 ;;;;;; Parser type declarations
 ;;
 
 dec $lift_parserTypeDeclarationIR(parserTypeDeclarationIR)
-  : parserTypeDeclaration
+  : parserTypeDeclaration?
   hint(testgen_ignore)
 
 def $lift_parserTypeDeclarationIR(
     annotationList PARSER nameIR
       `< typeParameterIR_expl* ',' typeParameterIR_impl* `>
       `( parameterIR* `) ';')
-  = annotationList PARSER name typeParameterListOpt `( parameterList `) ';'
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  = annotationList PARSER nonTypeName typeParameterListOpt `( parameterList `) ';'
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
   -- if typeParameterListOpt
       = $lift_typeParameterListIR(typeParameterIR*)
@@ -2160,13 +2159,13 @@ def $lift_parserTypeDeclarationIR(
 ;;;;;; Parser declarations
 ;;
 
-dec $lift_parserStatementIR(parserStatementIR) : parserStatement
+dec $lift_parserStatementIR(parserStatementIR) : parserStatement?
   hint(testgen_ignore)
 
 ;;; paresrBlockStatementIR
 
 dec $lift_parserBlockElementStatementIR(parserBlockElementStatementIR)
-  : parserBlockElementStatement
+  : parserBlockElementStatement?
   hint(testgen_ignore)
 
 def $lift_parserBlockElementStatementIR(constantDeclarationIR)
@@ -2177,7 +2176,7 @@ def $lift_parserBlockElementStatementIR(parserStatementIR)
   = $lift_parserStatementIR(parserStatementIR)
 
 dec $lift_parserBlockElementStatementListIR(parserBlockElementStatementIR*)
-  : parserBlockElementStatementList
+  : parserBlockElementStatementList?
   hint(testgen_ignore)
 
 dec $unflatten_parserBlockElementStatementList(parserBlockElementStatement*)
@@ -2212,7 +2211,7 @@ def $lift_parserBlockElementStatementListIR(parserBlockElementStatementIR*)
           parserBlockElementStatement*)
 
 dec $lift_parserBlockStatementIR(parserBlockStatementIR)
-  : parserBlockStatement
+  : parserBlockStatement?
   hint(testgen_ignore)
 
 def $lift_parserBlockStatementIR(
@@ -2224,7 +2223,7 @@ def $lift_parserBlockStatementIR(
 ;;; parserConditionalStatementIR
 
 dec $lift_parserConditionalStatementIR(parserConditionalStatementIR)
-  : parserConditionalStatement
+  : parserConditionalStatement?
   hint(testgen_ignore)
 
 def $lift_parserConditionalStatementIR(
@@ -2258,14 +2257,14 @@ def $lift_parserStatementIR(parserConditionalStatementIR)
 
 ;;; parserStateIR
 
-dec $lift_parserStateIR(parserStateIR) : parserState
+dec $lift_parserStateIR(parserStateIR) : parserState?
   hint(testgen_ignore)
 
 def $lift_parserStateIR(
     annotationList STATE nameIR
       `{ parserBlockElementStatementIR* transitionStatementIR `})
-  = annotationList STATE name `{ parserBlockElementStatementList transitionStatement `}
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  = annotationList STATE nonTypeName `{ parserBlockElementStatementList transitionStatement `}
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if parserBlockElementStatementList
       = $lift_parserBlockElementStatementListIR(parserBlockElementStatementIR*)
   -- if transitionStatement
@@ -2273,7 +2272,7 @@ def $lift_parserStateIR(
 
 ;;; parserStateListIR
 
-dec $lift_parserStateListIR(parserStateIR*) : parserStateList
+dec $lift_parserStateListIR(parserStateIR*) : parserStateList?
   hint(testgen_ignore)
 
 dec $unflatten_parserStateList(parserState*) : parserStateList
@@ -2301,7 +2300,7 @@ def $lift_parserStateListIR(parserStateIR*)
 ;;; parserLocalDeclarationIR
 
 dec $lift_parserLocalDeclarationIR(parserLocalDeclarationIR)
-  : parserLocalDeclaration
+  : parserLocalDeclaration?
   hint(testgen_ignore)
 
 def $lift_parserLocalDeclarationIR(constantDeclarationIR)
@@ -2316,7 +2315,7 @@ def $lift_parserLocalDeclarationIR(valueSetDeclarationIR)
 ;;; parserLocalDeclarationListIR
 
 dec $lift_parserLocalDeclarationListIR(parserLocalDeclarationIR*)
-  : parserLocalDeclarationList
+  : parserLocalDeclarationList?
   hint(testgen_ignore)
 
 dec $unflatten_parserLocalDeclarationList(parserLocalDeclaration*)
@@ -2347,7 +2346,7 @@ def $lift_parserLocalDeclarationListIR(parserLocalDeclarationIR*)
 
 ;;; parserDeclarationIR
 
-dec $lift_parserDeclarationIR(parserDeclarationIR) : parserDeclaration
+dec $lift_parserDeclarationIR(parserDeclarationIR) : parserDeclaration?
   hint(testgen_ignore)
 
 def $lift_parserDeclarationIR(
@@ -2355,10 +2354,10 @@ def $lift_parserDeclarationIR(
       `< typeParameterIR_expl* ',' typeParameterIR_impl* `>
       `( parameterIR* `) `( constructorParameterIR* `)
       `{ parserLocalDeclarationIR* parserStateIR* `})
-  = annotationList PARSER name typeParameterListOpt
+  = annotationList PARSER nonTypeName typeParameterListOpt
       `( parameterList `) constructorParameterListOpt
       `{ parserLocalDeclarationList parserStateList `}
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
   -- if typeParameterListOpt
       = $lift_typeParameterListIR(typeParameterIR*)
@@ -2381,7 +2380,7 @@ def $lift_parserDeclarationIR(
 ;;; constIR
 ;;; constOptIR
 
-dec $lift_constOptIR(constOptIR) : constOpt
+dec $lift_constOptIR(constOptIR) : constOpt?
   hint(testgen_ignore)
 
 def $lift_constOptIR(eps) = _EMPTY
@@ -2393,18 +2392,18 @@ def $lift_constOptIR(CONST) = CONST
 
 ;;; tableKeyIR
 
-dec $lift_tableKeyIR(tableKeyIR) : tableKey
+dec $lift_tableKeyIR(tableKeyIR) : tableKey?
   hint(testgen_ignore)
 
 def $lift_tableKeyIR(
     typedExpressionIR '#' _ ':' nameIR annotationList ';')
-  = expression ':' name annotationList ';'
+  = expression ':' nonTypeName annotationList ';'
   -- if expression = $lift_typedExpressionIR(typedExpressionIR)
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
 
 ;;; tableKeyListIR
 
-dec $lift_tableKeyListIR(tableKeyIR*) : tableKeyList
+dec $lift_tableKeyListIR(tableKeyIR*) : tableKeyList?
   hint(testgen_ignore)
 
 dec $unflatten_tableKeyList(tableKey*) : tableKeyList
@@ -2433,10 +2432,10 @@ def $lift_tableKeyListIR(tableKeyIR*) = tableKeyList
 ;;; tableActionReferenceIR
 
 dec $lift_tableActionReferenceIR(tableActionReferenceIR)
-  : tableActionReference
+  : tableActionReference?
   hint(testgen_ignore)
 dec $lift_tableActionReferenceIR_as_expression(tableActionReferenceIR)
-  : expression
+  : expression?
   hint(testgen_ignore)
 
 def $lift_tableActionReferenceIR(prefixedNameIR _ `( argumentIR* `))
@@ -2456,7 +2455,7 @@ def $lift_tableActionReferenceIR_as_expression(
 
 ;;; tableActionIR
 
-dec $lift_tableActionIR(tableActionIR) : tableAction
+dec $lift_tableActionIR(tableActionIR) : tableAction?
   hint(testgen_ignore)
 
 def $lift_tableActionIR(
@@ -2467,7 +2466,7 @@ def $lift_tableActionIR(
 
 ;;; tableActionListIR
 
-dec $lift_tableActionListIR(tableActionIR*) : tableActionList
+dec $lift_tableActionListIR(tableActionIR*) : tableActionList?
   hint(testgen_ignore)
 
 dec $unflatten_tableActionList(tableAction*) : tableActionList
@@ -2497,7 +2496,7 @@ def $lift_tableActionListIR(tableActionIR*) = tableActionList
 
 ;;; tableEntryPriorityIR
 
-dec $lift_tableEntryPriorityIR(tableEntryPriorityIR) : tableEntryPriority
+dec $lift_tableEntryPriorityIR(tableEntryPriorityIR) : tableEntryPriority?
   hint(testgen_ignore)
 
 def $lift_tableEntryPriorityIR(
@@ -2506,7 +2505,7 @@ def $lift_tableEntryPriorityIR(
 
 ;;; tableEntryIR
 
-dec $lift_tableEntryIR(tableEntryIR) : tableEntry
+dec $lift_tableEntryIR(tableEntryIR) : tableEntry?
   hint(testgen_ignore)
 
 def $lift_tableEntryIR(
@@ -2534,7 +2533,7 @@ def $lift_tableEntryIR(
 
 ;;; tableEntryListIR
 
-dec $lift_tableEntryListIR(tableEntryIR*) : tableEntryList
+dec $lift_tableEntryListIR(tableEntryIR*) : tableEntryList?
   hint(testgen_ignore)
 
 dec $unflatten_tableEntryList(tableEntry*) : tableEntryList
@@ -2565,7 +2564,7 @@ def $lift_tableEntryListIR(tableEntryIR*)
 ;;
 
 dec $lift_tableCustomPropertyIR(tableCustomPropertyIR)
-  : tableProperty
+  : tableProperty?
   hint(testgen_ignore)
 
 def $lift_tableCustomPropertyIR(
@@ -2582,7 +2581,7 @@ def $lift_tableCustomPropertyIR(
 ;;; tableKeysPropertyIR
 
 dec $lift_tableKeysPropertyIR(tableKeysPropertyIR)
-  : tableProperty
+  : tableProperty?
   hint(testgen_ignore)
 
 def $lift_tableKeysPropertyIR(KEY '=' `{ tableKeyIR* `})
@@ -2592,7 +2591,7 @@ def $lift_tableKeysPropertyIR(KEY '=' `{ tableKeyIR* `})
 ;;; tableActionsPropertyIR
 
 dec $lift_tableActionsPropertyIR(tableActionsPropertyIR)
-  : tableProperty
+  : tableProperty?
   hint(testgen_ignore)
 
 def $lift_tableActionsPropertyIR(ACTIONS '=' `{ tableActionIR* `})
@@ -2602,7 +2601,7 @@ def $lift_tableActionsPropertyIR(ACTIONS '=' `{ tableActionIR* `})
 ;;; tableDefaultActionPropertyIR
 
 dec $lift_tableDefaultActionPropertyIR(tableDefaultActionPropertyIR)
-  : tableProperty
+  : tableProperty?
   hint(testgen_ignore)
 
 def $lift_tableDefaultActionPropertyIR(
@@ -2615,7 +2614,7 @@ def $lift_tableDefaultActionPropertyIR(
 ;;; tableEntriesPropertyIR
 
 dec $lift_tableEntriesPropertyIR(tableEntriesPropertyIR)
-  : tableProperty
+  : tableProperty?
   hint(testgen_ignore)
 
 def $lift_tableEntriesPropertyIR(
@@ -2627,7 +2626,7 @@ def $lift_tableEntriesPropertyIR(
 
 ;;; tablePropertyIR
 
-dec $lift_tablePropertyIR(tablePropertyIR) : tableProperty
+dec $lift_tablePropertyIR(tablePropertyIR) : tableProperty?
   hint(testgen_ignore)
 
 def $lift_tablePropertyIR(tableKeysPropertyIR)
@@ -2643,7 +2642,7 @@ def $lift_tablePropertyIR(tableCustomPropertyIR)
 
 ;;; tablePropertyListIR
 
-dec $lift_tablePropertyListIR(tablePropertyIR*) : tablePropertyList
+dec $lift_tablePropertyListIR(tablePropertyIR*) : tablePropertyList?
   hint(testgen_ignore)
 
 dec $unflatten_tablePropertyList(tableProperty*) : tablePropertyList
@@ -2672,13 +2671,13 @@ def $lift_tablePropertyListIR(tablePropertyIR*)
 ;;; tableDeclarationIR
 
 dec $lift_tableDeclarationIR(tableDeclarationIR)
-  : tableDeclaration
+  : tableDeclaration?
   hint(testgen_ignore)
 
 def $lift_tableDeclarationIR(
     annotationList TABLE typeIR nameIR `{ tablePropertyIR* `})
-  = annotationList TABLE name `{ tablePropertyList `}
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  = annotationList TABLE nonTypeName `{ tablePropertyList `}
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if tablePropertyList
       = $lift_tablePropertyListIR(tablePropertyIR*)
 
@@ -2688,15 +2687,15 @@ def $lift_tableDeclarationIR(
 
 ;;; controlTypeDeclarationIR
 
-dec $lift_controlTypeDeclarationIR(controlTypeDeclarationIR) : controlTypeDeclaration
+dec $lift_controlTypeDeclarationIR(controlTypeDeclarationIR) : controlTypeDeclaration?
   hint(testgen_ignore)
 
 def $lift_controlTypeDeclarationIR(
     annotationList CONTROL nameIR
       `< typeParameterIR_expl* ',' typeParameterIR_impl* `>
       `( parameterIR* `) ';')
-  = annotationList CONTROL name typeParameterListOpt `( parameterList `) ';'
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  = annotationList CONTROL nonTypeName typeParameterListOpt `( parameterList `) ';'
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
   -- if typeParameterListOpt
       = $lift_typeParameterListIR(typeParameterIR*)
@@ -2708,7 +2707,7 @@ def $lift_controlTypeDeclarationIR(
 
 ;;; controlBodyIR
 
-dec $lift_controlBodyIR(controlBodyIR) : controlBody
+dec $lift_controlBodyIR(controlBodyIR) : controlBody?
   hint(testgen_ignore)
 
 def $lift_controlBodyIR(controlBodyIR)
@@ -2717,7 +2716,7 @@ def $lift_controlBodyIR(controlBodyIR)
 ;;; controlLocalDeclarationIR
 
 dec $lift_controlLocalDeclarationIR(controlLocalDeclarationIR)
-  : controlLocalDeclaration
+  : controlLocalDeclaration?
   hint(testgen_ignore)
 
 def $lift_controlLocalDeclarationIR(constantDeclarationIR)
@@ -2734,7 +2733,7 @@ def $lift_controlLocalDeclarationIR(tableDeclarationIR)
 ;;; controlLocalDeclarationListIR
 
 dec $lift_controlLocalDeclarationListIR(controlLocalDeclarationIR*)
-  : controlLocalDeclarationList
+  : controlLocalDeclarationList?
   hint(testgen_ignore)
 
 dec $unflatten_controlLocalDeclarationList(controlLocalDeclaration*)
@@ -2768,7 +2767,7 @@ def $lift_controlLocalDeclarationListIR(controlLocalDeclarationIR*)
 
 ;;; controlDeclarationIR
 
-dec $lift_controlDeclarationIR(controlDeclarationIR) : controlDeclaration
+dec $lift_controlDeclarationIR(controlDeclarationIR) : controlDeclaration?
   hint(testgen_ignore)
 
 def $lift_controlDeclarationIR(
@@ -2776,10 +2775,10 @@ def $lift_controlDeclarationIR(
       `< typeParameterIR_expl* ',' typeParameterIR_impl*  `>
       `( parameterIR* `) `( constructorParameterIR* `)
       `{ controlLocalDeclarationIR* APPLY controlBodyIR `})
-  = annotationList CONTROL name typeParameterListOpt
+  = annotationList CONTROL nonTypeName typeParameterListOpt
       `( parameterList `) constructorParameterListOpt
       `{ controlLocalDeclarationList APPLY controlBody `}
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
   -- if typeParameterListOpt
       = $lift_typeParameterListIR(typeParameterIR*)
@@ -2797,15 +2796,15 @@ def $lift_controlDeclarationIR(
 ;;; packageTypeDeclarationIR
 
 dec $lift_packageTypeDeclarationIR(packageTypeDeclarationIR)
-  : packageTypeDeclaration
+  : packageTypeDeclaration?
   hint(testgen_ignore)
 
 def $lift_packageTypeDeclarationIR(
     annotationList PACKAGE nameIR
       `< typeParameterIR_expl* ',' typeParameterIR_impl* `>
       `( parameterIR* `) ';')
-  = annotationList PACKAGE name typeParameterListOpt `( parameterList `) ';'
-  -- if name = $lift_nameIR_as_nonTypeName(nameIR)
+  = annotationList PACKAGE nonTypeName typeParameterListOpt `( parameterList `) ';'
+  -- if nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
   -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
   -- if typeParameterListOpt
       = $lift_typeParameterListIR(typeParameterIR*)
@@ -2815,7 +2814,7 @@ def $lift_packageTypeDeclarationIR(
 ;;;; Type declarations
 ;;
 
-dec $lift_typeDeclarationIR(typeDeclarationIR) : typeDeclaration
+dec $lift_typeDeclarationIR(typeDeclarationIR) : typeDeclaration?
   hint(testgen_ignore)
 
 def $lift_typeDeclarationIR(derivedTypeDeclarationIR)
@@ -2833,7 +2832,7 @@ def $lift_typeDeclarationIR(packageTypeDeclarationIR)
 ;;;; Declarations
 ;;
 
-dec $lift_declarationIR(declarationIR) : declaration
+dec $lift_declarationIR(declarationIR) : declaration?
   hint(testgen_ignore)
 
 def $lift_declarationIR(constantDeclarationIR)
@@ -2856,7 +2855,7 @@ def $lift_declarationIR(controlDeclarationIR)
   = $lift_controlDeclarationIR(controlDeclarationIR)
 def $lift_declarationIR(typeDeclarationIR)
   = $lift_typeDeclarationIR(typeDeclarationIR)
-def $lift_declarationIR(declarationIR) = $sink<declaration>()
+def $lift_declarationIR(declarationIR) = eps
   -- debug declarationIR
   -- otherwise
 
@@ -2866,7 +2865,7 @@ def $lift_declarationIR(declarationIR) = $sink<declaration>()
 
 ;;; p4programIR
 
-dec $lift_p4programIR(p4programIR) : p4program
+dec $lift_p4programIR(p4programIR) : p4program?
   hint(testgen_ignore)
 
 dec $unflatten_p4program(declaration*) : p4program

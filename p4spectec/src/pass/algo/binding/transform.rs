@@ -52,7 +52,6 @@ use crate::lang::{
     traits::{
         at::At,
         free::{FreeIds, FreeVars},
-        has_call::HasCall,
     },
 };
 
@@ -64,7 +63,7 @@ use crate::runtime::{dim::Dim, envs::algo::VEnv, typdef::TypeDef};
 
 use crate::phrase;
 
-use super::super::{AlgoError, error};
+use super::super::{AlgoError, error, otherwise};
 
 use super::{
     antiunify,
@@ -146,6 +145,35 @@ impl AnalyzedPrem {
             Self::Generated(GeneratedPrem::Partialbind(prem_analyzed)) => prem_analyzed.into_prem(),
         }
     }
+
+    /// Adds binding provenance to condition errors, preserving other diagnostics.
+    fn impurity_error(
+        &self,
+        impurity: otherwise::Impurity<'_>,
+        otherwise: &ast::Otherwise,
+    ) -> AlgoError {
+        match (self, impurity) {
+            // Repeated binders retain both occurrences
+            (
+                Self::Generated(GeneratedPrem::Multibind(prem_analyzed)),
+                otherwise::Impurity::Condition(_),
+            ) => error::otherwise::otherwise_multibind_invalid(
+                &prem_analyzed.origin.id_bound,
+                &prem_analyzed.origin.id_repeated,
+                otherwise,
+            ),
+            // Partial patterns retain the kind and location of their check
+            (
+                Self::Generated(GeneratedPrem::Partialbind(partial::AnalyzedPrem::Condition {
+                    origin,
+                    ..
+                })),
+                otherwise::Impurity::Condition(_),
+            ) => error::otherwise::otherwise_partialbind_invalid(origin, otherwise),
+            // All other errors retain the common diagnostic and source span
+            (_, impurity) => impurity.into_error(otherwise),
+        }
+    }
 }
 
 /// Orders partialbind premises before multibind checks.
@@ -192,7 +220,7 @@ fn analyze_exps_as_bind(
     let exps_al =
         partial::rename_exps(ctx, &mut renv_partial, &mut iter_ctx_exp, &venv.domain(), exps_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_partial = partial::gen_prems(ctx, iter_ctx, &renv_partial)?;
+    let prems_partial = partial::gen_prems(iter_ctx, &renv_partial);
     Ok((venv, exps_al, generated_prems(prems_partial, prems_multiple)))
 }
 
@@ -256,7 +284,7 @@ fn analyze_args_as_bind(
     let args_al =
         partial::rename_args(ctx, &mut renv_partial, &mut iter_ctx_arg, &venv.domain(), args_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_partial = partial::gen_prems(ctx, &ICtx::new(), &renv_partial)?;
+    let prems_partial = partial::gen_prems(&ICtx::new(), &renv_partial);
     Ok((venv, args_al, generated_prems(prems_partial, prems_multiple)))
 }
 
@@ -294,7 +322,7 @@ fn analyze_args_as_bind_shallow(
     let args_al =
         partial::rename_args(ctx, &mut renv_partial, &mut iter_ctx_arg, &venv.domain(), args_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_al = partial::gen_prems(ctx, &ICtx::new(), &renv_partial)?
+    let prems_al = partial::gen_prems(&ICtx::new(), &renv_partial)
         .into_iter()
         .map(partial::AnalyzedPrem::into_prem)
         .collect();
@@ -315,66 +343,24 @@ fn analyze_args_as_bound_shallow(ctx: &Context, args: &[ast::Arg]) -> Result<(),
 
 // == Premise binding analysis
 
-// - Helpers
-
-/// Reports generated checks before scanning other otherwise premises.
+/// Checks normalized premises before their binding provenance is discarded.
 fn check_analyzed_prems_in_else(
-    prems_analyzed: &[AnalyzedPrem],
+    ctx: &Context,
+    prems: &[AnalyzedPrem],
     otherwise: &ast::Otherwise,
 ) -> Result<(), AlgoError> {
-    for prem_analyzed in prems_analyzed {
-        let error_opt = match prem_analyzed {
-            // Multibind introduces an equality for repeated binders
-            AnalyzedPrem::Generated(GeneratedPrem::Multibind(multiple::AnalyzedPrem {
-                origin: multiple::Origin { id_bound, id_repeated },
-                ..
-            })) => Some(error::otherwise::otherwise_multibind_invalid(
-                id_bound,
-                id_repeated,
-                otherwise,
-            )),
-            // Partialbind introduces a match or value check
-            AnalyzedPrem::Generated(GeneratedPrem::Partialbind(
-                partial::AnalyzedPrem::Condition { origin, .. },
-            )) => Some(error::otherwise::otherwise_partialbind_invalid(origin, otherwise)),
-            // Original and generated binding premises use the ordinary check
-            _ => None,
-        };
-        if let Some(error) = error_opt {
-            return Err(error);
-        }
-    }
-    for prem_analyzed in prems_analyzed {
-        if let Some(error) = check_pure_prem_in_else(prem_analyzed.as_prem(), otherwise) {
-            return Err(error);
+    for prem_analyzed in prems {
+        // Purity is independent of how the premise was produced
+        match otherwise::impure_prem(ctx, prem_analyzed.as_prem())? {
+            // Admissible premises need no diagnostic
+            None => {}
+            // Binding provenance only refines condition diagnostics
+            Some(impurity) => {
+                return Err(prem_analyzed.impurity_error(impurity, otherwise));
+            }
         }
     }
     Ok(())
-}
-
-/// Locates a forbidden operation inside a possibly iterated premise.
-fn check_pure_prem_in_else(prem: &al::ast::Prem, otherwise: &ast::Otherwise) -> Option<AlgoError> {
-    match &prem.node {
-        al::ast::PremKind::Rule(_)
-        | al::ast::PremKind::IfHold(_)
-        | al::ast::PremKind::IfNotHold(_) => {
-            Some(error::otherwise::otherwise_relation_call_invalid(&prem.span, otherwise))
-        }
-        al::ast::PremKind::If(_) => {
-            Some(error::otherwise::otherwise_condition_invalid(&prem.span, otherwise))
-        }
-        al::ast::PremKind::Let(prem) => prem
-            .exp_r
-            .nested_call()
-            .first()
-            .map(|exp| error::otherwise::otherwise_function_call_invalid(&exp.at(), otherwise)),
-        al::ast::PremKind::Debug(prem) => prem
-            .exp
-            .nested_call()
-            .first()
-            .map(|exp| error::otherwise::otherwise_function_call_invalid(&exp.at(), otherwise)),
-        al::ast::PremKind::Iter(prem) => check_pure_prem_in_else(&prem.prem, otherwise),
-    }
 }
 
 // - Premise dispatch
@@ -580,7 +566,7 @@ fn lower_let_prem(
     let exp_l_al =
         partial::rename_exp(ctx, &mut renv_partial, &mut iter_ctx_exp, &venv.domain(), exp_l_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_partial = partial::gen_prems(ctx, &iter_ctx, &renv_partial)?;
+    let prems_partial = partial::gen_prems(&iter_ctx, &renv_partial);
     let prems_analyzed = generated_prems(prems_partial, prems_multiple);
 
     let prem_al = phrase! {
@@ -679,7 +665,10 @@ fn lower_rule_match(
     ctx.add_bounds(&venv);
     analyze_exps_as_bound(ctx, &exps_signature_al)?;
     if let Some(otherwise) = otherwise_opt {
-        check_analyzed_prems_in_else(&prems_analyzed, otherwise)?;
+        for exp in &exps_input_al {
+            otherwise::check_exp(exp, otherwise)?;
+        }
+        check_analyzed_prems_in_else(ctx, &prems_analyzed, otherwise)?;
     }
 
     let rule_match_al = al::ast::RuleMatch {
@@ -705,10 +694,13 @@ fn lower_rule_path(
     let prems_analyzed = lower_prems(ctx, prems_il)?;
     let mut prems_all_analyzed = prems_unified_analyzed;
     prems_all_analyzed.extend(prems_analyzed);
-    if let Some(otherwise) = otherwise_opt {
-        check_analyzed_prems_in_else(&prems_all_analyzed, otherwise)?;
-    }
     analyze_exps_as_bound(ctx, &exps_output_il)?;
+    if let Some(otherwise) = otherwise_opt {
+        for exp in &exps_output_il {
+            otherwise::check_exp(exp, otherwise)?;
+        }
+        check_analyzed_prems_in_else(ctx, &prems_all_analyzed, otherwise)?;
+    }
     let prems_al = prems_all_analyzed
         .into_iter()
         .map(AnalyzedPrem::into_prem)
@@ -798,6 +790,7 @@ fn lower_else_group(
         id: rule_group_al.node.id,
         rule_match: rule_group_al.node.rule_match,
         rule_path: rule_path_al,
+        otherwise,
     };
     let else_group_al = phrase!(node: else_group_al, span: span);
     Ok(else_group_al)
@@ -809,25 +802,28 @@ fn lower_else_group(
 fn lower_clause(
     ctx: &mut Context,
     clause_il: ast::Clause,
-    is_else: bool,
+    otherwise_opt: Option<&ast::Otherwise>,
 ) -> Result<al::ast::Clause, AlgoError> {
     let mut ctx = ctx.clone();
     ctx.add_frees(&clause_il.free_ids());
     let span = clause_il.span;
-    let ast::ClauseKind { args: args_il, exp: exp_il, prems: prems_il, otherwise_opt } =
-        clause_il.node;
+    let ast::ClauseKind { args: args_il, exp: exp_il, prems: prems_il, .. } = clause_il.node;
     // Arguments bind first, then premises in order, then the body must be bound
     let (venv, args_al, prems_generated) = analyze_args_as_bind(&mut ctx, &args_il)?;
     ctx.add_bounds(&venv);
     let prems_analyzed = lower_prems(&mut ctx, prems_il)?;
     analyze_exp_as_bound(&ctx, &exp_il)?;
-    let otherwise =
-        is_else.then(|| otherwise_opt.unwrap_or(phrase!(node: ast::OtherwiseKind, span: span)));
-    // An otherwise clause may not contain partial premises
+    // Check normalized expressions and premises while provenance is available
     let mut prems_all_analyzed = prems_generated;
     prems_all_analyzed.extend(prems_analyzed);
-    if let Some(otherwise) = &otherwise {
-        check_analyzed_prems_in_else(&prems_all_analyzed, otherwise)?;
+    if let Some(otherwise) = otherwise_opt {
+        for arg in &args_al {
+            if let ast::ArgKind::Exp(exp) = &arg.node {
+                otherwise::check_exp(exp, otherwise)?;
+            }
+        }
+        otherwise::check_exp(&exp_il, otherwise)?;
+        check_analyzed_prems_in_else(&ctx, &prems_all_analyzed, otherwise)?;
     }
     let prems_all_al = prems_all_analyzed
         .into_iter()
@@ -842,6 +838,24 @@ fn lower_clause(
         span: span,
     };
     Ok(clause_al)
+}
+
+/// Lowers an otherwise clause and retains its marker for guard diagnostics.
+fn lower_else_clause(
+    ctx: &mut Context,
+    mut clause_il: ast::Clause,
+) -> Result<al::ast::ElseClause, AlgoError> {
+    let span = clause_il.span;
+    let otherwise = clause_il
+        .node
+        .otherwise_opt
+        .take()
+        .unwrap_or(phrase!(node: ast::OtherwiseKind, span: span));
+    let clause_al = lower_clause(ctx, clause_il, Some(&otherwise))?;
+    Ok(phrase!(
+        node: al::ast::ElseClauseKind { otherwise, clause: clause_al.node },
+        span: span,
+    ))
 }
 
 // == Table row binding analysis
@@ -1156,14 +1170,19 @@ fn lower_defined_func(
     ctx: &mut Context,
     defined_func_il: ast::DefinedFunc,
 ) -> Result<al::ast::DefinedFunc, AlgoError> {
+    // Type parameters shadow global definitions only within this function
+    let mut ctx = ctx.clone();
+    for tparam in &defined_func_il.tparams {
+        ctx.tdenv.insert(tparam.clone(), TypeDef::Parameter);
+    }
     let mut clauses_al = Vec::with_capacity(defined_func_il.clauses.len());
     for clause_il in defined_func_il.clauses {
-        clauses_al.push(lower_clause(ctx, clause_il, false)?);
+        clauses_al.push(lower_clause(&mut ctx, clause_il, None)?);
     }
     // The otherwise clause is analyzed as the fallback
     let else_clause_al = defined_func_il
         .else_clause
-        .map(|clause_il| lower_clause(ctx, clause_il, true))
+        .map(|clause_il| lower_else_clause(&mut ctx, clause_il))
         .transpose()?;
     Ok(al::ast::DefinedFunc {
         id: defined_func_il.id,
