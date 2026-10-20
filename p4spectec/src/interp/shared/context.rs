@@ -439,7 +439,7 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
 
     fn clear_value_bindings(&mut self) {
         // Keep the layout, drop the values
-        self.local.frame = self.local.frame.wipe();
+        self.local.frame.clear();
     }
 }
 
