@@ -28,9 +28,9 @@ pub fn as_exp(is_dim: bool, var: &Var) -> Exp {
             ),
             span: var.typ.span,
         };
-        // The binder names the variable as seen at this depth
+        // Keep the element type separate from the dimensions below this binder
         let var_binder =
-            Var { id: var.id.clone(), typ: typ_iter.clone(), iters: iters_prior.clone() };
+            Var { id: var.id.clone(), typ: var.typ.clone(), iters: iters_prior.clone() };
         let span = exp.span;
         exp = crate::note_phrase! {
             node: ExpKind::Iter(
