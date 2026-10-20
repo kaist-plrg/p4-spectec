@@ -27,15 +27,9 @@ module CALL-REL
   rule <k> evalRul(rulMatch(Es:ExpList, PsMatch:PremList),
                    rulPath(_:Id, Eouts:ExpList, PsPath:PremList),
                    Vs:ValList)
-        => assignExps(Es, Vs)
-           ~> assignThen(evalPrems(appendPrems(PsMatch, PsPath)) ~> premThen(evalExps(Eouts)))
+        => assignExps(Es, Vs) ~> PsMatch ~> PsPath ~> evalExps(Eouts)
        ...
        </k>
-
-  syntax PremList ::= appendPrems(PremList, PremList)
-                                            [function, total, symbol(appendPrems)]
-  rule appendPrems(.PremList, Ps:PremList) => Ps
-  rule appendPrems((P:Prem, Ps:PremList), Qs:PremList) => P, appendPrems(Ps, Qs)
 
   // ==========================================================================
   // Eval_ruls: every rule path of the relation, flat across its groups

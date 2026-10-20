@@ -1,11 +1,12 @@
 // Assignment (pattern matching a value against an expression).
 //
-// Mirrors spec-meta/5.2-eval-assign.watsup.
+// Mirrors spec-meta/5.2-eval-assign.watsup. An assignment is a statement:
+// it rewrites to `.K` with its bindings added to `<local>`, or backtracks.
 //
-//   Assign_exp:  ctx |- exp := val : ctx       --> assignExp(Exp, Val) : Outcome, mutates <local>
-//   Assign_exps: ctx |- exp* := val* : ctx     --> assignExps(ExpList, ValList) : Outcome
-//   Assign_arg:  ctx/ctx |- arg := val : ctx   --> assignArg(Arg, Val) : Outcome, reads <caller>
-//   Assign_args: ctx/ctx |- arg* := val* : ctx --> assignArgs(ArgList, ValList) : Outcome
+//   Assign_exp:  ctx |- exp := val : ctx       --> assignExp(Exp, Val)
+//   Assign_exps: ctx |- exp* := val* : ctx     --> assignExps(ExpList, ValList)
+//   Assign_arg:  ctx/ctx |- arg := val : ctx   --> assignArg(Arg, Val), reads <caller>
+//   Assign_args: ctx/ctx |- arg* := val* : ctx --> assignArgs(ArgList, ValList)
 
 requires "3-context.k"
 
@@ -14,19 +15,13 @@ module ASSIGN
   imports BOOL
 
   // ==========================================================================
-  // Outcome marker
-  // ==========================================================================
-
-  syntax Outcome ::= assignOK()             [symbol(assignOK)]
-
-  // ==========================================================================
   // Assign_exp: ctx |- exp := val : ctx
   // ==========================================================================
 
   syntax KItem ::= assignExp(Exp, Val)
 
   //   rule Assign_exp/variable: C |- VAR id := val : C'
-  rule <k> assignExp(varE(X:Id), V:Val) => assignOK() ... </k>
+  rule <k> assignExp(varE(X:Id), V:Val) => .K ... </k>
        <lvenv> M:Map => M[varr(X, .IterList) <- V] </lvenv>
 
   //   rule Assign_exp/tup: C |- TUP exp* := TUP val* : C'
@@ -47,14 +42,14 @@ module ASSIGN
 
   //   rulegroup Assign_exp/opt
   rule <k> assignExp(optE(someExp(E:Exp)), optV(someVal(V:Val))) => assignExp(E, V) ... </k>
-  rule <k> assignExp(optE(noExp()), optV(noVal())) => assignOK() ... </k>
+  rule <k> assignExp(optE(noExp()), optV(noVal())) => .K ... </k>
 
   //   rule Assign_exp/list: C |- LIST exp* := LIST val* : C'
   rule <k> assignExp(listE(Es:ExpList), listV(Vs:ValList)) => assignExps(Es, Vs) ... </k>
 
   //   rule Assign_exp/cons: C |- CONS exp_h exp_t := LIST (val_h :: val_t*) : C''
   rule <k> assignExp(consE(Eh:Exp, Et:Exp), listV(Vh:Val, Vt:ValList))
-        => assignExp(Eh, Vh) ~> assignThen(assignExp(Et, listV(Vt)))
+        => assignExp(Eh, Vh) ~> assignExp(Et, listV(Vt))
        ...
        </k>
 
@@ -66,10 +61,6 @@ module ASSIGN
 
   rule <k> assignExp(_:Exp, _:Val) => backtrack ... </k> [owise]
 
-  // Sequencing helper: run the next task once the assignment succeeded.
-  syntax KItem ::= assignThen(K)
-  rule <k> assignOK() ~> assignThen(Next:K) => Next ... </k>
-
   // ==========================================================================
   // Assigning to an iterated expression
   // ==========================================================================
@@ -77,12 +68,12 @@ module ASSIGN
   syntax KItem ::= assignIter(VarrOpt, Exp, IterExp, Val)
 
   //   rule Assign_exp/simple
-  rule <k> assignIter(someVarr(R:Varr), _:Exp, _:IterExp, V:Val) => assignOK() ... </k>
+  rule <k> assignIter(someVarr(R:Varr), _:Exp, _:IterExp, V:Val) => .K ... </k>
        <lvenv> M:Map => M[R <- V] </lvenv>
 
   //   rule Assign_exp/opt-none
   rule <k> assignIter(noVarr(), _:Exp, iterExp(quest(), Vs:VariList), optV(noVal()))
-        => assignOK()
+        => .K
        ...
        </k>
        <lvenv> M:Map
@@ -92,12 +83,12 @@ module ASSIGN
 
   //   rule Assign_exp/opt-some
   rule <k> assignIter(noVarr(), E:Exp, iterExp(quest(), Vs:VariList), optV(someVal(V:Val)))
-        => assignExp(E, V) ~> assignThen(assignIterVaris(Vs))
+        => assignExp(E, V) ~> assignIterVaris(Vs)
        ...
        </k>
 
   syntax KItem ::= assignIterVaris(VariList)
-  rule <k> assignIterVaris(Vs:VariList) => assignOK() ... </k>
+  rule <k> assignIterVaris(Vs:VariList) => .K ... </k>
        <lvenv> M:Map
             => addsMap(M, iterVaris(Vs, quest()), someVals(findVaris(Vs, M)))
        </lvenv>
@@ -113,12 +104,12 @@ module ASSIGN
   syntax KItem ::= assignEach(Exp, ValList, VariList, List)
 
   rule <k> assignEach(_:Exp, .ValList, Vs:VariList, Acc:List)
-        => assignListResults(Vs, Acc)
+        => bindLists(Vs, Acc)
        ...
        </k>
 
   rule <k> assignEach(E:Exp, (V:Val, Rest:ValList), Vs:VariList, Acc:List)
-        => inScope(clearLocalVenv() ~> assignExp(E, V) ~> assignThen(readVaris(Vs)))
+        => inScope(clearLocalVenv() ~> assignExp(E, V) ~> readVaris(Vs))
            ~> collectAssignRow(E, Rest, Vs, Acc)
        ...
        </k>
@@ -129,19 +120,15 @@ module ASSIGN
        ...
        </k>
 
-  syntax KItem ::= assignListResults(VariList, List)
-  rule <k> assignListResults(Vs:VariList, Acc:List) => assignOK() ... </k>
-       <lvenv> V:Map => addsMap(V, iterVaris(Vs, star()), transposeToLists(Vs, Acc)) </lvenv>
-
   // ==========================================================================
   // Assign_exps: ctx |- exp* := val* : ctx
   // ==========================================================================
 
   syntax KItem ::= assignExps(ExpList, ValList)
 
-  rule <k> assignExps(.ExpList, .ValList) => assignOK() ... </k>
+  rule <k> assignExps(.ExpList, .ValList) => .K ... </k>
   rule <k> assignExps((E:Exp, Es:ExpList), (V:Val, Vs:ValList))
-        => assignExp(E, V) ~> assignThen(assignExps(Es, Vs))
+        => assignExp(E, V) ~> assignExps(Es, Vs)
        ...
        </k>
   rule <k> assignExps(_:ExpList, _:ValList) => backtrack ... </k> [owise]
@@ -149,10 +136,10 @@ module ASSIGN
   // Struct fields, matched positionally with their atoms compared.
   syntax KItem ::= assignFields(ExpFieldList, ValFieldList)
 
-  rule <k> assignFields(.ExpFieldList, .ValFieldList) => assignOK() ... </k>
+  rule <k> assignFields(.ExpFieldList, .ValFieldList) => .K ... </k>
   rule <k> assignFields((expField(A:Atom, E:Exp), Fs:ExpFieldList),
                         (valField(A:Atom, V:Val), Gs:ValFieldList))
-        => assignExp(E, V) ~> assignThen(assignFields(Fs, Gs))
+        => assignExp(E, V) ~> assignFields(Fs, Gs)
        ...
        </k>
   rule <k> assignFields(_:ExpFieldList, _:ValFieldList) => backtrack ... </k> [owise]
@@ -171,11 +158,11 @@ module ASSIGN
   rule <k> assignArg(expA(E:Exp), V:Val) => assignExp(E, V) ... </k>
 
   //   rule Assign_arg/fun
-  rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => assignOK() ... </k>
+  rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => .K ... </k>
        <cfenv> CF:Map </cfenv>
        <lfenv> M:Map => M[X <- {CF[Y]}:>FuncDef] </lfenv>
     requires Y in_keys(CF)
-  rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => assignOK() ... </k>
+  rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => .K ... </k>
        <cfenv> CF:Map </cfenv>
        <gfenv> GF:Map </gfenv>
        <lfenv> M:Map => M[X <- {GF[Y]}:>FuncDef] </lfenv>
@@ -184,9 +171,9 @@ module ASSIGN
   rule <k> assignArg(_:Arg, _:Val) => backtrack ... </k> [owise]
 
   //   rulegroup Assign_args
-  rule <k> assignArgs(.ArgList, .ValList) => assignOK() ... </k>
+  rule <k> assignArgs(.ArgList, .ValList) => .K ... </k>
   rule <k> assignArgs((A:Arg, As:ArgList), (V:Val, Vs:ValList))
-        => assignArg(A, V) ~> assignThen(assignArgs(As, Vs))
+        => assignArg(A, V) ~> assignArgs(As, Vs)
        ...
        </k>
   rule <k> assignArgs(_:ArgList, _:ValList) => backtrack ... </k> [owise]
@@ -218,6 +205,11 @@ module ASSIGN
   syntax KItem ::= readVaris(VariList)
   rule <k> readVaris(Vs:VariList) => findVaris(Vs, M) ... </k>
        <lvenv> M:Map </lvenv>
+
+  // `$add_varis` of rows of bindings, transposed into one list per variable.
+  syntax KItem ::= bindLists(VariList, List)
+  rule <k> bindLists(Vs:VariList, Acc:List) => .K ... </k>
+       <lvenv> M:Map => addsMap(M, iterVaris(Vs, star()), transposeToLists(Vs, Acc)) </lvenv>
 
   syntax ValList ::= someVals(ValList)      [function, total, symbol(someVals)]
   rule someVals(.ValList) => .ValList

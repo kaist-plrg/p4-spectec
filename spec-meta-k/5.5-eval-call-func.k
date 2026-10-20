@@ -21,7 +21,7 @@ module CALL-FUNC
   //   rule Eval_clause/succ
   syntax KItem ::= evalClause(Clause, ValList)
   rule <k> evalClause(clause(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
-        => assignArgs(As, Vs) ~> assignThen(evalPrems(Ps) ~> premThen(evalExp(Eout)))
+        => assignArgs(As, Vs) ~> Ps ~> evalExp(Eout)
        ...
        </k>
 
@@ -47,9 +47,7 @@ module CALL-FUNC
   //     -- Eval_prems: C_callee' |- prem* : OK C_callee''
   //     -- Eval_exp: C_callee'' |- exp_out : OK val_out
   rule <k> evalTblRow(tblRow(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
-        => enterFrame(.Map)
-           ~> assignArgs(As, Vs) ~> assignThen(evalPrems(Ps) ~> premThen(evalExp(Eout)))
-           ~> endFrame
+        => enterFrame(.Map) ~> assignArgs(As, Vs) ~> Ps ~> evalExp(Eout) ~> endFrame
        ...
        </k>
 
