@@ -1,23 +1,18 @@
 //! Resolve AL syntax to slots and interned mixops
 //!
 //! The `Prepare` implementations rebuild source nodes as prepared syntax,
-//! reserving slots in the callable's frame layout.
+//! reserving slots in the frame layout of the unit being prepared.
 //! Extern and builtin payloads have no body and pass through unchanged.
-//! Top-level relations and functions return callables with their own layouts.
+//! Each rule group, table row, and clause binds its own variables,
+//! so it becomes a callable with its own frame layout.
 
 use std::{mem, rc::Rc};
 
-use crate::lang::data::notation::MixopArena;
+use crate::lang::data::{callable::Callable, frame::FrameLayout, notation::MixopArena};
 
 use crate::lang::al::{ast as source, prepared::*};
 
-use crate::runtime::{
-    envs::{
-        elab::TDEnv,
-        interp::shared::{callable::Callable, frame::FrameLayout},
-    },
-    typdef::TypeDef,
-};
+use crate::runtime::{envs::elab::TDEnv, typdef::TypeDef};
 
 use crate::interp::shared::prepare::{Prepare, il};
 
@@ -29,7 +24,7 @@ pub struct PrepareContext<'a> {
     pub arena_mixop: &'a mut MixopArena,
     /// Source type definitions, with the callable's type parameters.
     pub tdenv: &'a TDEnv,
-    /// The callable's frame layout.
+    /// The frame layout of the unit being prepared.
     pub layout: &'a mut FrameLayout,
 }
 
@@ -248,22 +243,14 @@ impl Prepare<PrepareContext<'_>> for source::TableRowKind {
 // - Relation definition
 
 impl Prepare<PrepareContext<'_>> for source::RelDef {
-    type Output = Callable<RelDef>;
+    type Output = RelDef;
 
-    /// Prepares the relation and transfers its callable layout.
+    /// Prepares the relation; each of its rule groups runs in a frame of its own.
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        let rel = match self {
+        match self {
             source::RelDef::Extern(rel_inner) => RelDef::Extern(rel_inner),
-            source::RelDef::Defined(rel_inner) => {
-                let rel_inner = rel_inner.prepare(ctx);
-                RelDef::Defined(rel_inner)
-            }
-        };
-
-        // Transfer this callable's layout and leave the next one empty
-        let layout = mem::take(ctx.layout);
-        let layout = Rc::new(layout);
-        Callable { def: rel, layout }
+            source::RelDef::Defined(rel_inner) => RelDef::Defined(rel_inner.prepare(ctx)),
+        }
     }
 }
 
@@ -277,8 +264,19 @@ impl Prepare<PrepareContext<'_>> for source::DefinedRel {
             id: self.id,
             not_typ: self.not_typ,
             input_hint: self.input_hint,
-            rule_groups: self.rule_groups.prepare(ctx),
-            else_group: self.else_group.prepare(ctx),
+            // Each group runs in its own frame: prepare it, then transfer the layout it filled
+            rule_groups: (self.rule_groups.into_iter())
+                .map(|group| {
+                    let def = group.prepare(ctx);
+                    let layout = Rc::new(mem::take(ctx.layout));
+                    Callable { def, layout }
+                })
+                .collect(),
+            else_group: (self.else_group).map(|group| {
+                let def = group.prepare(ctx);
+                let layout = Rc::new(mem::take(ctx.layout));
+                Callable { def, layout }
+            }),
             hints: self.hints,
         }
     }
@@ -289,27 +287,18 @@ impl Prepare<PrepareContext<'_>> for source::DefinedRel {
 // - Meta-function definition
 
 impl Prepare<PrepareContext<'_>> for source::MetaFuncDef {
-    type Output = Callable<MetaFuncDef>;
+    type Output = MetaFuncDef;
 
-    /// Prepares the function and transfers its callable layout.
+    /// Prepares the function; each of its rows or clauses runs in a frame of its own.
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        let func = match self {
+        match self {
             source::MetaFuncDef::Extern(func_inner) => MetaFuncDef::Extern(func_inner),
             source::MetaFuncDef::Builtin(func_inner) => MetaFuncDef::Builtin(func_inner),
-            source::MetaFuncDef::Table(func_inner) => {
-                let func_inner = func_inner.prepare(ctx);
-                MetaFuncDef::Table(func_inner)
-            }
+            source::MetaFuncDef::Table(func_inner) => MetaFuncDef::Table(func_inner.prepare(ctx)),
             source::MetaFuncDef::Defined(func_inner) => {
-                let func_inner = func_inner.prepare(ctx);
-                MetaFuncDef::Defined(func_inner)
+                MetaFuncDef::Defined(func_inner.prepare(ctx))
             }
-        };
-
-        // Transfer this callable's layout and leave the next one empty
-        let layout = mem::take(ctx.layout);
-        let layout = Rc::new(layout);
-        Callable { def: func, layout }
+        }
     }
 }
 
@@ -323,7 +312,14 @@ impl Prepare<PrepareContext<'_>> for source::TableFunc {
             id: self.id,
             params: self.params,
             typ: self.typ,
-            table_rows: self.table_rows.prepare(ctx),
+            // Each row runs in its own frame: prepare it, then transfer the layout it filled
+            table_rows: (self.table_rows.into_iter())
+                .map(|row| {
+                    let def = row.prepare(ctx);
+                    let layout = Rc::new(mem::take(ctx.layout));
+                    Callable { def, layout }
+                })
+                .collect(),
             hints: self.hints,
         }
     }
@@ -346,8 +342,19 @@ impl Prepare<PrepareContext<'_>> for source::DefinedFunc {
             tparams: self.tparams,
             params: self.params,
             typ: self.typ,
-            clauses: self.clauses.prepare(ctx),
-            else_clause: self.else_clause.prepare(ctx),
+            // Each clause runs in its own frame: prepare it, then transfer the layout it filled
+            clauses: (self.clauses.into_iter())
+                .map(|clause| {
+                    let def = clause.prepare(ctx);
+                    let layout = Rc::new(mem::take(ctx.layout));
+                    Callable { def, layout }
+                })
+                .collect(),
+            else_clause: (self.else_clause).map(|clause| {
+                let def = clause.prepare(ctx);
+                let layout = Rc::new(mem::take(ctx.layout));
+                Callable { def, layout }
+            }),
             hints: self.hints,
         }
     }

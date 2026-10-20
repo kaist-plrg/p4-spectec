@@ -5,16 +5,14 @@
 //! `FuncSignature` extracts types from prepared PL function definitions.
 
 use crate::lang::data::{
+    frame::FrameLayout,
     notation::MixopArena,
     typ::{FuncTyp, make},
 };
 
 use crate::lang::pl::{ast as source, prepared as ast};
 
-use crate::runtime::envs::{
-    elab::TDEnv,
-    interp::shared::{TypeDef, frame::FrameLayout},
-};
+use crate::runtime::envs::{elab::TDEnv, interp::shared::TypeDef};
 
 use crate::interp::shared::{
     context::{self as shared, FuncSignature},
@@ -28,7 +26,7 @@ use super::prepare::PrepareContext;
 
 pub use shared::Scope;
 
-/// Stores loaded PL definitions and prepared callables.
+/// Stores loaded PL definitions, prepared.
 pub type SpecEnv = shared::Global<ast::RelDef, ast::MetaFuncDef>;
 
 /// Holds local PL bindings over borrowed global definitions.
@@ -83,22 +81,22 @@ impl SpecEnv {
         for def in spec {
             match def.node.node {
                 source::DefKind::Rel(rel) => {
-                    // Relations are prepared into callables with a frame layout
+                    // A defined relation is prepared into a callable with a frame layout
                     let rel = rel.prepare(&mut ctx);
-                    let id = match &rel.def {
+                    let id = match &rel {
                         ast::RelDef::Extern(rel) => &rel.id,
-                        ast::RelDef::Defined(rel) => &rel.id,
+                        ast::RelDef::Defined(rel) => &rel.def.id,
                     };
                     self.insert_rel(id.clone(), rel);
                 }
                 source::DefKind::MetaFunc(func) => {
                     // Prepare functions before sharing them with local bindings
                     let func = func.prepare(&mut ctx);
-                    let id = match &func.def {
+                    let id = match &func {
                         ast::MetaFuncDef::Extern(func) => &func.id,
                         ast::MetaFuncDef::Builtin(func) => &func.id,
-                        ast::MetaFuncDef::Table(func) => &func.id,
-                        ast::MetaFuncDef::Defined(func) => &func.id,
+                        ast::MetaFuncDef::Table(func) => &func.def.id,
+                        ast::MetaFuncDef::Defined(func) => &func.def.id,
                     };
                     self.insert_func(id.clone(), func);
                 }
@@ -127,8 +125,8 @@ impl FuncSignature for ast::MetaFuncDef {
             ast::MetaFuncDef::Extern(func) => (&func.tparams, &func.params, &func.typ),
             ast::MetaFuncDef::Builtin(func) => (&func.tparams, &func.params, &func.typ),
             // Table functions have no type parameters
-            ast::MetaFuncDef::Table(func) => (&[], &func.params, &func.typ),
-            ast::MetaFuncDef::Defined(func) => (&func.tparams, &func.params, &func.typ),
+            ast::MetaFuncDef::Table(func) => (&[], &func.def.params, &func.def.typ),
+            ast::MetaFuncDef::Defined(func) => (&func.def.tparams, &func.def.params, &func.def.typ),
         };
         // Erase binding patterns while retaining nested function signatures
         FuncTyp {

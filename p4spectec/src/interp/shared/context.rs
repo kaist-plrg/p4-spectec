@@ -1,6 +1,6 @@
 //! Loaded definitions, local bindings, and shared context access
 //!
-//! Stage-specific loaders prepare callables into `Global<R, F>`.
+//! Stage-specific loaders prepare definitions into `Global<R, F>`.
 //! A `Context` borrows those globals and owns persistent local bindings;
 //! cloning preserves its scope, while `localize` starts a fresh one.
 //! `ReadContext`, `WriteContext`, and `IterContext` serve shared evaluation;
@@ -12,6 +12,7 @@ use crate::lang::{
     common::{ds::map::IdMap, source::Span},
     data::{
         arena::Arena,
+        frame::{Frame, FrameLayout},
         typ,
         value::flat::{self as value, Value},
         var::{SlotIdx, VarSlot},
@@ -22,11 +23,7 @@ use crate::lang::il::prepared as ast;
 
 use crate::diagnostic::{Label, Report};
 
-use crate::runtime::envs::interp::shared::{
-    TDEnv, TypeDef,
-    callable::Callable,
-    frame::{Frame, FrameLayout},
-};
+use crate::runtime::envs::interp::shared::{TDEnv, TypeDef};
 
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap_from_result},
@@ -154,12 +151,12 @@ pub enum Scope {
 
 // = Global definitions
 
-/// Stores type definitions and prepared relation and function callables.
+/// Stores type definitions and prepared relation and function definitions.
 #[derive(Debug)]
 pub struct Global<R, F> {
     tdenv: TDEnv,
-    renv: IdMap<Callable<R>>,
-    fenv: IdMap<Rc<Callable<F>>>,
+    renv: IdMap<R>,
+    fenv: IdMap<Rc<F>>,
 }
 
 impl<R, F> Global<R, F> {
@@ -188,7 +185,7 @@ impl<R, F> Global<R, F> {
     // - Relations
 
     /// Inserts a prepared relation, panicking if its name is already defined.
-    pub(crate) fn insert_rel(&mut self, id: ast::Id, rel: Callable<R>)
+    pub(crate) fn insert_rel(&mut self, id: ast::Id, rel: R)
     where
         R: Clone,
     {
@@ -204,7 +201,7 @@ impl<R, F> Global<R, F> {
     // - Functions
 
     /// Inserts a prepared function, panicking if its name is already defined.
-    pub(crate) fn insert_func(&mut self, id: ast::Id, func: Callable<F>) {
+    pub(crate) fn insert_func(&mut self, id: ast::Id, func: F) {
         // Elaboration already rejects duplicate function names
         assert!(
             !self.fenv.contains_key(&id),
@@ -223,7 +220,7 @@ struct Local<F> {
     /// Type parameters bound to their type arguments.
     tdenv: TDEnv,
     /// Function arguments bound to their prepared definitions.
-    fenv: IdMap<Rc<Callable<F>>>,
+    fenv: IdMap<Rc<F>>,
     /// Value slots of the current callable.
     frame: Frame,
 }
@@ -280,6 +277,14 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
         }
     }
 
+    /// Keeps this call's type parameters and starts a fresh frame with the layout.
+    pub fn localize_frame(&self, layout: &Rc<FrameLayout>) -> Self {
+        Self {
+            global: self.global,
+            local: Local { frame: Frame::new(Rc::clone(layout)), ..self.local.clone() },
+        }
+    }
+
     // == Finders
 
     // - Types
@@ -297,12 +302,12 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     // - Relations
 
     /// Finds a relation in the global definitions.
-    pub fn find_rel_opt(&self, id: &ast::Id) -> Option<&'global Callable<R>> {
+    pub fn find_rel_opt(&self, id: &ast::Id) -> Option<&'global R> {
         self.global.renv.get(id)
     }
 
     /// Finds a global relation or reports the lookup location.
-    pub fn find_rel(&self, id: &ast::Id) -> Result<&'global Callable<R>, Error> {
+    pub fn find_rel(&self, id: &ast::Id) -> Result<&'global R, Error> {
         self.find_rel_opt(id).ok_or_else(|| {
             let diagnostic =
                 error::context::binding_undefined(EntityKind::Relation, id.node.to_string())
@@ -314,7 +319,7 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     // - Functions
 
     /// Finds a function, preferring local arguments to global definitions.
-    pub fn find_func_opt<'a>(&'a self, id: &ast::Id) -> Option<(Scope, &'a Rc<Callable<F>>)> {
+    pub fn find_func_opt<'a>(&'a self, id: &ast::Id) -> Option<(Scope, &'a Rc<F>)> {
         if let Some(func) = self.local.fenv.get(id) {
             Some((Scope::Local, func))
         } else {
@@ -323,10 +328,7 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     }
 
     /// Finds a function and its scope or reports the lookup location.
-    pub fn find_func_with_scope<'a>(
-        &'a self,
-        id: &ast::Id,
-    ) -> Result<(Scope, &'a Rc<Callable<F>>), Error> {
+    pub fn find_func_with_scope<'a>(&'a self, id: &ast::Id) -> Result<(Scope, &'a Rc<F>), Error> {
         self.find_func_opt(id).ok_or_else(|| {
             let diagnostic =
                 error::context::binding_undefined(EntityKind::Function, id.node.to_string())
@@ -355,7 +357,7 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
 // = Read access
 
 impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
-    type Func = Callable<F>;
+    type Func = F;
 
     // == Finders
 
@@ -407,7 +409,7 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
     }
 
     fn find_func_typ(&self, id: &ast::Id) -> Result<ast::FuncTyp, Error> {
-        Ok(self.find_func(id)?.def.func_typ())
+        Ok(self.find_func(id)?.func_typ())
     }
 }
 
@@ -438,7 +440,7 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
 
     // - Functions
 
-    fn add_func(&mut self, id: ast::Id, func: Rc<Callable<F>>) -> Result<(), Error> {
+    fn add_func(&mut self, id: ast::Id, func: Rc<F>) -> Result<(), Error> {
         if self.find_func_opt(&id).is_some() {
             let diagnostic =
                 error::context::binding_repeated(EntityKind::Function, id.node.to_string())

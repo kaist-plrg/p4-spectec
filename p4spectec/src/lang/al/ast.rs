@@ -325,8 +325,8 @@ pub struct DefinedRel<P: Stage = Source> {
     pub id: Id,
     pub not_typ: NotTyp,
     pub input_hint: InputHint,
-    pub rule_groups: Vec<RuleGroup<P>>,
-    pub else_group: Option<ElseGroup<P>>,
+    pub rule_groups: Vec<P::Framed<RuleGroup<P>>>,
+    pub else_group: Option<P::Framed<ElseGroup<P>>>,
     pub hints: Vec<Hint>,
 }
 
@@ -371,7 +371,7 @@ pub struct TableFunc<P: Stage = Source> {
     pub id: Id,
     pub params: Vec<Param>,
     pub typ: Typ,
-    pub table_rows: Vec<TableRow<P>>,
+    pub table_rows: Vec<P::Framed<TableRow<P>>>,
     pub hints: Vec<Hint>,
 }
 
@@ -382,8 +382,8 @@ pub struct DefinedFunc<P: Stage = Source> {
     pub tparams: Vec<TParam>,
     pub params: Vec<Param>,
     pub typ: Typ,
-    pub clauses: Vec<Clause<P>>,
-    pub else_clause: Option<ElseClause<P>>,
+    pub clauses: Vec<P::Framed<Clause<P>>>,
+    pub else_clause: Option<P::Framed<ElseClause<P>>>,
     pub hints: Vec<Hint>,
 }
 

@@ -12,6 +12,7 @@ use std::{borrow::Cow, rc::Rc};
 use crate::lang::{
     data::{
         arena::Arena,
+        frame::FrameLayout,
         value::flat::{Value, ValueKind},
     },
     hints::input,
@@ -21,10 +22,7 @@ use crate::lang::sl::prepared as ast;
 
 use crate::diagnostic::Diagnostic;
 
-use crate::runtime::{
-    envs::interp::shared::frame::FrameLayout,
-    ops::{typ, value},
-};
+use crate::runtime::ops::{typ, value};
 
 use crate::runner::{Extern, Interface, RunnerContext, SideEffect};
 
@@ -70,10 +68,11 @@ pub(in crate::interp::sl) fn check_rel_inputs(
 ) -> Backtrack<()> {
     let rel = unwrap_from_result!(ctx.find_rel(id), &id.span);
     // Extern and defined relations share the signature shape
-    let (not_typ, inputs) = match &rel.def {
-        ast::RelDef::Extern(rel) => (&rel.rel_signature.not_typ, &rel.rel_signature.input_hint),
-        ast::RelDef::Defined(rel) => (&rel.rel_signature.not_typ, &rel.rel_signature.input_hint),
+    let signature = match rel {
+        ast::RelDef::Extern(rel) => &rel.rel_signature,
+        ast::RelDef::Defined(rel) => &rel.def.rel_signature,
     };
+    let (not_typ, inputs) = (&signature.not_typ, &signature.input_hint);
     // Always check the input count, even without type guards
     unwrap!(backtrack::check(inputs.indices().len() == values.len(), id.span, || {
         error::guard::relation_input_arity_mismatch(inputs.indices().len(), values.len())
@@ -171,8 +170,7 @@ pub(in crate::interp::sl) fn cache_rel<Iface: Interface, Ext: Extern>(
     ctx: &Context<'_>,
     id: &ast::Id,
 ) -> bool {
-    runner_ctx.interp().config.cache
-        && matches!(ctx.find_rel(id), Ok(rel) if matches!(&rel.def, ast::RelDef::Defined(_)))
+    runner_ctx.interp().config.cache && matches!(ctx.find_rel(id), Ok(ast::RelDef::Defined(_)))
 }
 
 /// Whether a function call may be memoized.
@@ -187,7 +185,7 @@ pub(in crate::interp::sl) fn cache_func<Iface: Interface, Ext: Extern>(
 ) -> bool {
     runner_ctx.interp().config.cache
         && matches!(ctx.find_func_with_scope(id), Ok((Scope::Global, func))
-            if !matches!(&func.def, ast::MetaFuncDef::Extern(_)))
+            if !matches!(func.as_ref(), ast::MetaFuncDef::Extern(_)))
         && !values
             .iter()
             .any(|value| matches!(runner_ctx.arena().value.kind(value.node), ValueKind::Func(_)))
@@ -236,14 +234,13 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
         let checkpoint = runner_ctx.effect_checkpoint();
         let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
             let rel = unwrap_from_result!(ctx.find_rel(&id), &id.span);
-            let layout = &rel.layout;
-            match &rel.def {
+            match rel {
                 ast::RelDef::Extern(rel) => {
                     let values = unwrap!(invoke_extern_rel(runner_ctx, ctx, &id, rel, &values));
                     ok!(RelResult::Result(values))
                 }
                 ast::RelDef::Defined(rel) => {
-                    invoke_defined_rel(runner_ctx, ctx, layout, rel, &values)
+                    invoke_defined_rel(runner_ctx, ctx, &rel.layout, &rel.def, &values)
                 }
             }
         });
@@ -390,8 +387,7 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
         let checkpoint = runner_ctx.effect_checkpoint();
         let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
             let func = unwrap_from_result!(ctx.find_func(&id), &id.span);
-            let layout = &func.layout;
-            match &func.def {
+            match func.as_ref() {
                 ast::MetaFuncDef::Extern(func) => ok!(FuncResult::Return(unwrap!(
                     invoke_extern_func(runner_ctx, ctx, &id, func, &targs, &values)
                 ))),
@@ -399,11 +395,17 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
                     invoke_builtin_func(runner_ctx, ctx, &id, func, &targs, &values)
                 ))),
                 ast::MetaFuncDef::Table(func) => {
-                    invoke_table_func(runner_ctx, ctx, layout, func, &values)
+                    invoke_table_func(runner_ctx, ctx, &func.layout, &func.def, &values)
                 }
-                ast::MetaFuncDef::Defined(func) => {
-                    invoke_defined_func(runner_ctx, ctx, layout, &id, func, &targs, &values)
-                }
+                ast::MetaFuncDef::Defined(func) => invoke_defined_func(
+                    runner_ctx,
+                    ctx,
+                    &func.layout,
+                    &id,
+                    &func.def,
+                    &targs,
+                    &values,
+                ),
             }
         });
         // Nest failures under this call and then under the tail-calling callers

@@ -5,21 +5,20 @@
 //! expressions retain PL syntax and hints while identifiers resolve to slots.
 //! Each callable collects its frame layout during the same traversal.
 //! Shared container and phrase implementations preserve metadata and grow stacks.
-//! Top-level relations and functions return callables with their own layouts.
+//! Defined relations, table functions, and defined functions become callables
+//! with their own frame layouts.
 
 use std::{mem, rc::Rc};
 
-use crate::lang::data::notation::{self, MixopArena, flat, tree};
+use crate::lang::data::{
+    callable::Callable,
+    frame::FrameLayout,
+    notation::{self, MixopArena, flat, tree},
+};
 
 use crate::lang::pl::{annot::Annotated, ast as pl, prepared as ast};
 
-use crate::runtime::{
-    envs::{
-        elab::TDEnv,
-        interp::shared::{callable::Callable, frame::FrameLayout},
-    },
-    typdef::TypeDef,
-};
+use crate::runtime::{envs::elab::TDEnv, typdef::TypeDef};
 
 use crate::interp::shared::prepare::{Prepare, il};
 
@@ -31,7 +30,7 @@ pub struct PrepareContext<'a> {
     pub arena_mixop: &'a mut MixopArena,
     /// Source type definitions, with the callable's type parameters.
     pub tdenv: &'a TDEnv,
-    /// The callable's frame layout.
+    /// The frame layout of the unit being prepared.
     pub layout: &'a mut FrameLayout,
 }
 
@@ -513,25 +512,24 @@ impl Prepare<PrepareContext<'_>> for pl::TableRow {
 // = Relation definitions
 
 impl Prepare<PrepareContext<'_>> for pl::RelDef {
-    type Output = Callable<ast::RelDef>;
+    type Output = ast::RelDef;
 
-    /// Prepares the relation and transfers its callable layout.
+    /// Prepares the relation; a defined one runs in a frame of its own.
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        let rel = match self {
+        match self {
             pl::RelDef::Extern(rel) => {
                 let rel = rel.prepare(ctx);
+                *ctx.layout = FrameLayout::default();
                 ast::RelDef::Extern(rel)
             }
             pl::RelDef::Defined(rel) => {
-                let rel = rel.prepare(ctx);
+                // Prepare the relation, then transfer the layout it filled
+                let def = rel.prepare(ctx);
+                let layout = Rc::new(mem::take(ctx.layout));
+                let rel = Callable { def, layout };
                 ast::RelDef::Defined(rel)
             }
-        };
-
-        // Transfer this callable's layout and leave the next one empty
-        let layout = mem::take(ctx.layout);
-        let layout = Rc::new(layout);
-        Callable { def: rel, layout }
+        }
     }
 }
 
@@ -568,33 +566,35 @@ impl Prepare<PrepareContext<'_>> for pl::DefinedRel {
 // = Meta-function definitions
 
 impl Prepare<PrepareContext<'_>> for pl::MetaFuncDef {
-    type Output = Callable<ast::MetaFuncDef>;
+    type Output = ast::MetaFuncDef;
 
-    /// Prepares the function and transfers its callable layout.
+    /// Prepares the function; a table or defined one runs in a frame of its own.
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        let func = match self {
+        match self {
             pl::MetaFuncDef::Extern(func) => {
                 let func = func.prepare(ctx);
+                *ctx.layout = FrameLayout::default();
                 ast::MetaFuncDef::Extern(func)
             }
             pl::MetaFuncDef::Builtin(func) => {
                 let func = func.prepare(ctx);
+                *ctx.layout = FrameLayout::default();
                 ast::MetaFuncDef::Builtin(func)
             }
             pl::MetaFuncDef::Table(func) => {
-                let func = func.prepare(ctx);
+                // Prepare the function, then transfer the layout it filled
+                let def = func.prepare(ctx);
+                let layout = Rc::new(mem::take(ctx.layout));
+                let func = Callable { def, layout };
                 ast::MetaFuncDef::Table(func)
             }
             pl::MetaFuncDef::Defined(func) => {
-                let func = func.prepare(ctx);
+                let def = func.prepare(ctx);
+                let layout = Rc::new(mem::take(ctx.layout));
+                let func = Callable { def, layout };
                 ast::MetaFuncDef::Defined(func)
             }
-        };
-
-        // Transfer this callable's layout and leave the next one empty
-        let layout = mem::take(ctx.layout);
-        let layout = Rc::new(layout);
-        Callable { def: func, layout }
+        }
     }
 }
 
