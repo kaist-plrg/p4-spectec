@@ -265,9 +265,4 @@ module EVAL-EXP
 
   syntax KItem ::= callFunc(Id, TArgList, ValList)
 
-  // Until the premises and bodies evaluate their expressions in place.
-  syntax KItem ::= evalExp(Exp) | evalExps(ExpList)
-  rule evalExp(E:Exp) => E
-  rule evalExps(Es:ExpList) => Es
-
 endmodule

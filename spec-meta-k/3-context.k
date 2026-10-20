@@ -182,19 +182,15 @@ module CONTEXT
        <gfenv> M:Map => M[X <- defFunc(Ps, Cs, EC)] </gfenv>
 
   // ==========================================================================
-  // Sub-context construction for iteration
+  // Sub-contexts for iteration
   //
   //   dec $sub_opt(ctx, vari*) : ctx?
   //   dec $sub_list(ctx, vari*) : ctx*
   //
-  // `subRow(vari*, iter)` finds the bound variables at one more iteration;
-  // the consumer splits on `allSomeOpts`/`allNoneOpts` or transposes the
-  // lists into `rows`.
+  // The bound variables are found at one more iteration (`finds` of
+  // `iterVaris`); the consumer splits on `allSomeOpts`/`allNoneOpts` or
+  // transposes the lists into `rows`, and runs each row under `inScope`.
   // ==========================================================================
-
-  syntax KItem ::= subRow(VariList, Iter)
-  rule <k> subRow(Xs:VariList, I:Iter) => finds(iterVaris(Xs, I), M) ... </k>
-       <lvenv> M:Map </lvenv>
 
   syntax Bool ::= allSomeOpts(ValList)      [function, total, symbol(allSomeOpts)]
                 | allNoneOpts(ValList)      [function, total, symbol(allNoneOpts)]
@@ -223,5 +219,9 @@ module CONTEXT
   rule <k> bindRow(.VariList, .ValList) => .K ... </k>
   rule <k> bindRow((V:Vari, Vs:VariList), (W:Val, Ws:ValList)) => bindRow(Vs, Ws) ... </k>
        <lvenv> M:Map => M[varrOfVari(V) <- W] </lvenv>
+
+  // The results of the rows, in order.
+  syntax KItem ::= consRow(KItem, KItem)    [seqstrict]
+  rule consRow(Vs:ValList, Vss:ValListList) => Vs ; Vss
 
 endmodule

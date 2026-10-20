@@ -94,37 +94,25 @@ module ASSIGN
        </lvenv>
 
   //   rule Assign_exp/list
-  rule <k> assignIter(noVarr(), E:Exp, iterExp(star(), Vs:VariList), listV(Ws:ValList))
-        => assignEach(E, Ws, Vs, .List)
-       ...
-       </k>
+  rule assignIter(noVarr(), E:Exp, iterExp(star(), Vs:VariList), listV(Ws:ValList))
+    => bindLists(Vs, assignRows(E, Ws, Vs))
 
   // Each element is assigned under an empty value environment, and the
   // bindings it makes are read back as one row.
-  syntax KItem ::= assignEach(Exp, ValList, VariList, List)
-
-  rule <k> assignEach(_:Exp, .ValList, Vs:VariList, Acc:List)
-        => bindLists(Vs, Acc)
-       ...
-       </k>
-
-  rule <k> assignEach(E:Exp, (V:Val, Rest:ValList), Vs:VariList, Acc:List)
-        => inScope(clearLocalVenv() ~> assignExp(E, V) ~> readVaris(Vs))
-           ~> collectAssignRow(E, Rest, Vs, Acc)
-       ...
-       </k>
-
-  syntax KItem ::= collectAssignRow(Exp, ValList, VariList, List)
-  rule <k> Row:ValList ~> collectAssignRow(E:Exp, Rest:ValList, Vs:VariList, Acc:List)
-        => assignEach(E, Rest, Vs, Acc ListItem(Row))
-       ...
-       </k>
+  syntax KItem ::= assignRows(Exp, ValList, VariList)
+  rule assignRows(_:Exp, .ValList, _:VariList) => .ValListList
+  rule assignRows(E:Exp, (V:Val, Rest:ValList), Vs:VariList)
+    => consRow(inScope(clearLocalVenv() ~> assignExp(E, V) ~> readVaris(Vs)),
+               assignRows(E, Rest, Vs))
 
   // ==========================================================================
   // Assign_exps: ctx |- exp* := val* : ctx
+  //
+  // The values may still be a computation (a relation call's outputs).
   // ==========================================================================
 
-  syntax KItem ::= assignExps(ExpList, ValList)
+  syntax KItem ::= assignExps(ExpList, KItem)
+                                            [strict(2)]
 
   rule <k> assignExps(.ExpList, .ValList) => .K ... </k>
   rule <k> assignExps((E:Exp, Es:ExpList), (V:Val, Vs:ValList))
@@ -190,29 +178,22 @@ module ASSIGN
   rule <k> readVaris(Vs:VariList) => finds(varrsOfVaris(Vs), M) ... </k>
        <lvenv> M:Map </lvenv>
 
-  // `$add_varis` of rows of bindings, transposed into one list per variable.
-  syntax KItem ::= bindLists(VariList, List)
-  rule <k> bindLists(Vs:VariList, Acc:List) => .K ... </k>
-       <lvenv> M:Map => addsMap(M, iterVaris(Vs, star()), transposeToLists(Vs, Acc)) </lvenv>
+  // `$add_varis` of rows of bindings (one computation per row), one list
+  // per variable.
+  syntax KItem ::= bindLists(VariList, KItem)
+                                            [strict(2)]
+  rule <k> bindLists(Vs:VariList, Rows:ValListList) => .K ... </k>
+       <lvenv> M:Map => addsMap(M, iterVaris(Vs, star()), columns(Vs, Rows)) </lvenv>
+
+  syntax ValList ::= columns(VariList, ValListList)
+                                            [function, total, symbol(columns)]
+  rule columns(.VariList, _:ValListList) => .ValList
+  rule columns((_:Vari, Vs:VariList), Rows:ValListList)
+    => listV(headsOf(Rows)), columns(Vs, tailsOf(Rows))
 
   syntax ValList ::= someVals(ValList)      [function, total, symbol(someVals)]
   rule someVals(.ValList) => .ValList
   rule someVals(V:Val, Vs:ValList) => optV(someVal(V)), someVals(Vs)
-
-  syntax ValList ::= transposeToLists(VariList, List)
-                                            [function, symbol(transposeToLists)]
-  rule transposeToLists(Vs:VariList, Acc:List) => transposeToListsAcc(Vs, 0, Acc)
-
-  syntax ValList ::= transposeToListsAcc(VariList, Int, List)
-                                            [function, total, symbol(transposeToListsAcc)]
-  rule transposeToListsAcc(.VariList, _:Int, _:List) => .ValList
-  rule transposeToListsAcc((_:Vari, Vs:VariList), I:Int, Acc:List)
-    => listV(columnAt(I, Acc)), transposeToListsAcc(Vs, I +Int 1, Acc)
-
-  syntax ValList ::= columnAt(Int, List)    [function, symbol(columnAt)]
-  rule columnAt(_:Int, .List) => .ValList
-  rule columnAt(I:Int, ListItem(Vs:ValList) Rest:List)
-    => nthVal(Vs, I), columnAt(I, Rest)
 
   syntax Val ::= nthVal(ValList, Int)       [function, symbol(nthVal)]
   rule nthVal((V:Val, _:ValList), 0) => V

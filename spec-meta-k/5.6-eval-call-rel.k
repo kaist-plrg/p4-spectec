@@ -24,12 +24,10 @@ module CALL-REL
   //     -- if prem* = prem_match* ++ prem_path*
   //     -- Eval_prems: C' |- prem* : OK C''
   //     -- (Eval_exp: C'' |- exp_out : OK val_out)*
-  rule <k> evalRul(rulMatch(Es:ExpList, PsMatch:PremList),
-                   rulPath(_:Id, Eouts:ExpList, PsPath:PremList),
-                   Vs:ValList)
-        => assignExps(Es, Vs) ~> PsMatch ~> PsPath ~> evalExps(Eouts)
-       ...
-       </k>
+  rule evalRul(rulMatch(Es:ExpList, PsMatch:PremList),
+               rulPath(_:Id, Eouts:ExpList, PsPath:PremList),
+               Vs:ValList)
+    => assignExps(Es, Vs) ~> PsMatch ~> PsPath ~> Eouts
 
   // ==========================================================================
   // Eval_ruls: every rule path of the relation, flat across its groups

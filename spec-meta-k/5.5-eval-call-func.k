@@ -18,12 +18,10 @@ module CALL-FUNC
   //   relation Eval_clauses: ctx '/' ctx |- clause* '@' `( val* `) : res<val>
   // ==========================================================================
 
-  //   rule Eval_clause/succ
+  //   rule Eval_clause/succ: the arguments assigned, the premises, the result
   syntax KItem ::= evalClause(Clause, ValList)
-  rule <k> evalClause(clause(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
-        => assignArgs(As, Vs) ~> Ps ~> evalExp(Eout)
-       ...
-       </k>
+  rule evalClause(clause(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
+    => assignArgs(As, Vs) ~> Ps ~> Eout
 
   //   rule Eval_clauses:
   //     -- (Eval_clause: C_callee '/' C |- clause '@' `( val* `) : valres)*
@@ -46,10 +44,8 @@ module CALL-FUNC
   //     -- Assign_args: C_callee '/' C |- arg* := val* : C_callee'
   //     -- Eval_prems: C_callee' |- prem* : OK C_callee''
   //     -- Eval_exp: C_callee'' |- exp_out : OK val_out
-  rule <k> evalTblRow(tblRow(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
-        => enterFrame(.Map) ~> assignArgs(As, Vs) ~> Ps ~> evalExp(Eout) ~> endFrame
-       ...
-       </k>
+  rule evalTblRow(tblRow(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
+    => enterFrame(.Map) ~> assignArgs(As, Vs) ~> Ps ~> Eout ~> endFrame
 
   //   rulegroup Eval_tblrows: in order, the first success wins
   rule <k> evalTblRows(.TblRowList, _:ValList) => backtrack ... </k>
