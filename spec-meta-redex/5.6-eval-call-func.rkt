@@ -2,10 +2,13 @@
 ;; spec-meta/5.6-eval-call-func.watsup.
 ;;
 ;; A callee runs in (IN L_callee ...), and each clause in a copy of it, so a
-;; failed clause leaves no bindings. Eval_clause/fail and Eval_tblrow/fail are
-;; "frame/fail". Call_func, Call_func_dispatch, and Call_defined_func have no
-;; `otherwise`, so an input that no rule matches reduces to FAIL directly, as
-;; Eval_exp/fail does for the call.
+;; clause leaves no bindings to the next. Every clause is evaluated, and the
+;; call is the one success among them; it is FAIL when several succeed
+;; ($det_valres), and the `otherwise` clause runs only when none did. Table
+;; rows are still tried in order. Eval_clause/fail and Eval_tblrow/fail are
+;; "frame/fail". Call_func and Call_func_dispatch have no `otherwise`, so an
+;; input that no rule matches reduces to FAIL directly, as Eval_exp/fail does
+;; for the call.
 
 (require redex/reduction-semantics
          "3-context.rkt"
@@ -26,15 +29,6 @@
         "eval-clause/succ")
    (--> (eval-clause/succ OK OK (OK val_out)) (OK val_out)
         "eval-clause/succ/output")
-
-   ;; rulegroup Eval_clauses. cons-succ and cons-fail share their premise.
-   (--> (eval-clauses L_caller () (val ...)) FAIL
-        "eval-clauses/nil")
-   (--> (eval-clauses/cons (OK val_res) L_caller (clause_t ...) (val ...)) (OK val_res)
-        "eval-clauses/cons-succ")
-   (--> (eval-clauses/cons FAIL L_caller (clause_t ...) (val ...))
-        (eval-clauses L_caller (clause_t ...) (val ...))
-        "eval-clauses/cons-fail")
 
    ;;; Table meta-function invocation
 
@@ -60,12 +54,27 @@
 
    ;;; Defined meta-function invocation
 
-   ;; rule Call_defined_func (see ->term+ctx)
+   ;; rules Call_defined_func/succ and Call_defined_func/fail (see
+   ;; ->term+ctx), once every clause is evaluated, with Eval_clauses's
+   ;; $det_valres: the one success, or the `otherwise` clause in the callee's
+   ;; layer when none, or FAIL when several (a nondeterministic call)
+   (--> (call-defined-func/clauses (FAIL ... (OK val_func) FAIL ...) L_caller (elsclause ...) (val ...))
+        (OK val_func)
+        "call-defined-func/succ")
+   (--> (call-defined-func/clauses (FAIL ...) L_caller (elsclause) (val ...))
+        (eval-clause L_caller elsclause (val ...))
+        "call-defined-func/fail")
+   (--> (call-defined-func/clauses (FAIL ...) L_caller () (val ...)) FAIL
+        "call-defined-func/fail/none")
+   (--> (call-defined-func/clauses (valres_1 ... (OK val_1) valres_2 ... (OK val_2) valres_3 ...)
+                                   L_caller (elsclause ...) (val ...))
+        FAIL
+        "call-defined-func/nondet")
    (--> (call-defined-func definedFuncDef (typ ...) (val ...)) FAIL
         ;; otherwise: as many types as type parameters
         (where (DEF (tparam ...) (clause ...) (elsclause ...)) definedFuncDef)
         (side-condition (not (= (length (term (tparam ...))) (length (term (typ ...))))))
-        "call-defined-func/fail")
+        "call-defined-func/typs/fail")
 
    ;;; Meta-function dispatch
 
@@ -103,16 +112,6 @@
   (reduction-relation
    al
 
-   ;;; Clause invocation
-
-   ;; Eval_clauses/cons-succ and cons-fail: the head clause runs in a copy of
-   ;; the callee's layer
-   (--> ((eval-clauses L_caller (clause_h clause_t ...) (val ...)) G L)
-        ((eval-clauses/cons (IN L (eval-clause L_caller clause_h (val ...)))
-                            L_caller (clause_t ...) (val ...))
-         G L)
-        "eval-clauses/cons")
-
    ;;; Table meta-function invocation
 
    ;; rule Eval_tblrow/succ: the row runs in a layer of its own, with the
@@ -126,14 +125,17 @@
 
    ;;; Defined meta-function invocation
 
-   ;; rule Call_defined_func: the callee's layer binds the type parameters,
-   ;; and L is the caller's
+   ;; rules Call_defined_func/succ and Call_defined_func/fail, with
+   ;; Eval_clauses: the callee's layer binds the type parameters, every
+   ;; clause runs in a copy of it, and L is the caller's
    (--> ((call-defined-func definedFuncDef (typ ..._n) (val ...)) G L)
-        ((IN {TYP ((tparam (DEF () (ALIAS typ))) ...) REL renv FUNC fenv VAL venv}
-             (eval-clauses L (clause ... elsclause ...) (val ...)))
+        ((IN L_callee
+             (call-defined-func/clauses ((IN L_callee (eval-clause L clause (val ...))) ...)
+                                        L (elsclause ...) (val ...)))
          G L)
         (where (DEF (tparam ..._n) (clause ...) (elsclause ...)) definedFuncDef)
         (where {TYP tdenv_empty REL renv FUNC fenv VAL venv} (empty-layer))
+        (where L_callee {TYP ((tparam (DEF () (ALIAS typ))) ...) REL renv FUNC fenv VAL venv})
         "call-defined-func")
 
    ;;; Meta-function call

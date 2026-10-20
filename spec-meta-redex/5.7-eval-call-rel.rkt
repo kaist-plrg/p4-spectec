@@ -2,9 +2,18 @@
 ;; spec-meta/5.7-eval-call-rel.watsup.
 ;;
 ;; A relation runs in (IN L_local ...), and each rule path in a copy of it, so
-;; a failed path leaves no bindings. Eval_rul/fail is "frame/fail". Call_rel
-;; has no `otherwise`, so an unknown relation reduces to FAIL directly, as
-;; Eval_prem/fail does for the premise.
+;; a path leaves no bindings to the next. Every path of every group is
+;; evaluated, and the call is the one success among them; it is FAIL when
+;; several succeed ($det_valsres), and the else group runs only when none
+;; did. Eval_rul/fail is "frame/fail". Call_rel has no `otherwise`, so an
+;; unknown relation reduces to FAIL directly, as Eval_prem/fail does for the
+;; premise.
+;;
+;; Deviation from the spec: the spec checks determinism per group (Eval_ruls)
+;; and then across groups (Eval_rulgroups), so a group with two matching
+;; paths FAILs and a second group's single match is accepted. Here all paths
+;; of all groups are checked together, and the else group runs only when
+;; none matched.
 
 (require redex/reduction-semantics
          "3-context.rkt"
@@ -12,10 +21,14 @@
 (provide ->term/eval-call-rel
          ->term+ctx/eval-call-rel)
 
-;; $elsgroup_as_rulgroup
+;; Every (rulmatch, rulpath) pair of the groups, in order: the attempts of
+;; a relation call
 (define-metafunction al
-  elsgroup-as-rulgroup : elsgroup -> rulgroup
-  [(elsgroup-as-rulgroup (id rulmatch rulpath)) (id rulmatch (rulpath))])
+  rul-attempts : (rulgroup ...) -> ((rulmatch rulpath) ...)
+  [(rul-attempts ()) ()]
+  [(rul-attempts ((id rulmatch (rulpath ...)) rulgroup ...))
+   ((rulmatch rulpath) ... any ...)
+   (where (any ...) (rul-attempts (rulgroup ...)))])
 
 ;; The rules on a term
 (define ->term/eval-call-rel
@@ -33,47 +46,34 @@
    (--> (eval-rul/succ OK OK ((OK val_out) ...)) (OK (val_out ...))
         "eval-rul/succ/output")
 
-   ;;; Rule path sequence evaluation
-
-   ;; rulegroup Eval_ruls. cons-succ and cons-fail share their premise.
-   (--> (eval-ruls rulmatch () (val ...)) FAIL
-        "eval-ruls/nil")
-   (--> (eval-ruls/cons (OK (val_out ...)) rulmatch (rulpath_t ...) (val ...)) (OK (val_out ...))
-        "eval-ruls/cons-succ")
-   (--> (eval-ruls/cons FAIL rulmatch (rulpath_t ...) (val ...))
-        (eval-ruls rulmatch (rulpath_t ...) (val ...))
-        "eval-ruls/cons-fail")
-
-   ;;; Rule group evaluation
-
-   ;; rules Eval_rulgroup/succ and Eval_rulgroup/fail: the group's result is
-   ;; that of Eval_ruls
-   (--> (eval-rulgroup (id rulmatch (rulpath ...)) (val ...))
-        (eval-ruls rulmatch (rulpath ...) (val ...))
-        "eval-rulgroup")
-
-   ;;; Rule group sequence evaluation
-
-   ;; rulegroup Eval_rulgroups. cons-succ and cons-fail share their premise.
-   (--> (eval-rulgroups () (val ...)) FAIL
-        "eval-rulgroups/nil")
-   (--> (eval-rulgroups (rulgroup_h rulgroup_t ...) (val ...))
-        (eval-rulgroups/cons (eval-rulgroup rulgroup_h (val ...)) (rulgroup_t ...) (val ...))
-        "eval-rulgroups/cons")
-   (--> (eval-rulgroups/cons (OK (val_out ...)) (rulgroup_t ...) (val ...)) (OK (val_out ...))
-        "eval-rulgroups/cons-succ")
-   (--> (eval-rulgroups/cons FAIL (rulgroup_t ...) (val ...))
-        (eval-rulgroups (rulgroup_t ...) (val ...))
-        "eval-rulgroups/cons-fail")
-
    ;;; Defined relations
 
-   ;; rule Call_defined_rel
+   ;; rules Call_defined_rel/succ and Call_defined_rel/fail, with Eval_ruls
+   ;; and Eval_rulgroups flat over the groups: every path runs in a copy of
+   ;; the relation's layer
    (--> (call-defined-rel definedRelDef (val ...))
-        (IN (empty-layer)
-            (eval-rulgroups (rulgroup ... (elsgroup-as-rulgroup elsgroup) ...) (val ...)))
+        (IN L_local
+            (call-defined-rel/ruls ((IN L_local (eval-rul rulmatch rulpath (val ...))) ...)
+                                   (elsgroup ...) (val ...)))
         (where (DEF (rulgroup ...) (elsgroup ...)) definedRelDef)
+        (where ((rulmatch rulpath) ...) (rul-attempts (rulgroup ...)))
+        (where L_local (empty-layer))
         "call-defined-rel")
+   ;; once every path is evaluated, with $det_valsres: the one success, or
+   ;; the else group in the relation's layer when none, or FAIL when several
+   ;; (a nondeterministic call)
+   (--> (call-defined-rel/ruls (FAIL ... (OK (val_rel ...)) FAIL ...) (elsgroup ...) (val ...))
+        (OK (val_rel ...))
+        "call-defined-rel/succ")
+   (--> (call-defined-rel/ruls (FAIL ...) ((id rulmatch rulpath)) (val ...))
+        (eval-rul rulmatch rulpath (val ...))
+        "call-defined-rel/fail")
+   (--> (call-defined-rel/ruls (FAIL ...) () (val ...)) FAIL
+        "call-defined-rel/fail/none")
+   (--> (call-defined-rel/ruls (valsres_1 ... (OK (val_1 ...)) valsres_2 ... (OK (val_2 ...)) valsres_3 ...)
+                               (elsgroup ...) (val ...))
+        FAIL
+        "call-defined-rel/nondet")
 
    ;;; Relation dispatch
 
@@ -94,16 +94,6 @@
 (define ->term+ctx/eval-call-rel
   (reduction-relation
    al
-
-   ;;; Rule path sequence evaluation
-
-   ;; Eval_ruls/cons-succ and cons-fail: the head path runs in a copy of the
-   ;; relation's layer
-   (--> ((eval-ruls rulmatch (rulpath_h rulpath_t ...) (val ...)) G L)
-        ((eval-ruls/cons (IN L (eval-rul rulmatch rulpath_h (val ...)))
-                         rulmatch (rulpath_t ...) (val ...))
-         G L)
-        "eval-ruls/cons")
 
    ;;; Relation call
 
