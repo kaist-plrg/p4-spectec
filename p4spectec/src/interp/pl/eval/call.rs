@@ -9,11 +9,7 @@
 use std::rc::Rc;
 
 use crate::lang::{
-    data::{
-        arena::Arena,
-        frame::FrameLayout,
-        value::flat::{Value, ValueKind},
-    },
+    data::{arena::Arena, frame::FrameLayout, value::flat::Value},
     hints::input,
 };
 
@@ -164,23 +160,15 @@ pub(crate) fn cache_rel<Iface: Interface, Ext: Extern>(
     runner_ctx.interp().config.cache && matches!(ctx.find_rel(id), Ok(ast::RelDef::Defined(_)))
 }
 
-/// Checks whether a function call may be memoized.
+/// Checks whether a function call may be memoized: caching on, definition not extern.
 ///
-/// Requires caching on, a non-extern function not reached through a parameter,
-/// and no function-valued argument.
+/// Calls through function parameters and with function-valued arguments
+/// name global definitions, so they are keyed by those definitions too.
 pub(crate) fn cache_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: &Context<'_>,
-    id: &ast::Id,
     func: &ast::MetaFuncDef,
-    values: &[Value],
 ) -> bool {
-    runner_ctx.interp().config.cache
-        && ctx.find_func_param_opt(id).is_none()
-        && !matches!(func, ast::MetaFuncDef::Extern(_))
-        && !values
-            .iter()
-            .any(|value| matches!(runner_ctx.arena().value.kind(value.node), ValueKind::Func(_)))
+    runner_ctx.interp().config.cache && !matches!(func, ast::MetaFuncDef::Extern(_))
 }
 
 // = Relation invocation
@@ -312,9 +300,8 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
 ) -> Backtrack<Value> {
     // A call through a function parameter invokes the global definition its value names
     let id_def = ctx.resolve_func_id(runner_ctx.arena(), id);
-    // Serve from the cache when eligible
-    let cache = matches!(ctx.find_func(&id_def),
-        Ok(func) if cache_func(runner_ctx, ctx, id, func, values));
+    // Serve from the cache when eligible, keyed by the global definition
+    let cache = matches!(ctx.find_func(&id_def), Ok(func) if cache_func(runner_ctx, func));
     if cache
         && let Some(value) =
             runner_ctx
