@@ -170,6 +170,7 @@ impl Prepare<PrepareContext<'_>> for source::ElseGroupKind {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         ElseGroupKind {
+            otherwise: self.otherwise,
             id: self.id,
             rule_match: self.rule_match.prepare(ctx),
             rule_path: self.rule_path.prepare(ctx),
@@ -216,6 +217,14 @@ impl Prepare<PrepareContext<'_>> for source::ClauseKind {
             exp: self.exp.prepare(&mut ctx.il()),
             prems: self.prems.prepare(ctx),
         }
+    }
+}
+
+impl Prepare<PrepareContext<'_>> for source::ElseClauseKind {
+    type Output = ElseClauseKind;
+
+    fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        ElseClauseKind { otherwise: self.otherwise, clause: self.clause.prepare(ctx) }
     }
 }
 

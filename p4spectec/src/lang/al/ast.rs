@@ -216,6 +216,7 @@ pub type ElseGroup<P = Source> = Phrase<ElseGroupKind<P>>;
 /// The otherwise rule of a relation: a match with a single path.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ElseGroupKind<P: Stage = Source> {
+    pub otherwise: il::ast::Otherwise,
     pub id: Id,
     pub rule_match: RuleMatch<P>,
     pub rule_path: RulePath<P>,
@@ -235,9 +236,13 @@ pub struct ClauseKind<P: Stage = Source> {
 }
 
 /// The otherwise clause of a function.
-pub type ElseClause<P = Source> = Clause<P>;
+pub type ElseClause<P = Source> = Phrase<ElseClauseKind<P>>;
 /// The form of an otherwise clause.
-pub type ElseClauseKind<P = Source> = ClauseKind<P>;
+#[derive(Clone, Debug, PartialEq)]
+pub struct ElseClauseKind<P: Stage = Source> {
+    pub otherwise: il::ast::Otherwise,
+    pub clause: ClauseKind<P>,
+}
 
 // Table rows
 

@@ -116,6 +116,12 @@ impl FreeIds for ClauseKind {
     }
 }
 
+impl FreeIds for ElseClauseKind {
+    fn free_ids(&self) -> IdSet {
+        self.clause.free_ids()
+    }
+}
+
 // - Table rows
 
 impl FreeIds for TableRowKind {

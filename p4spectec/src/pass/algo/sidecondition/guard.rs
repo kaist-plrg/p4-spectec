@@ -16,7 +16,10 @@ use crate::lang::{
 
 use crate::lang::al::{self, ast};
 
+use crate::runtime::typdef::TypeDef;
 use crate::{note_phrase, phrase};
+
+use super::super::{AlgoError, binding::context::Context, otherwise};
 
 // == Equivalence filtering
 
@@ -689,7 +692,10 @@ fn insert_rule_group(mut rule_group_al: ast::RuleGroup) -> ast::RuleGroup {
 }
 
 /// Inserts guards into an otherwise group, like a one-path rule group.
-fn insert_else_group(mut else_group_al: ast::ElseGroup) -> ast::ElseGroup {
+fn insert_else_group(
+    ctx: &Context,
+    mut else_group_al: ast::ElseGroup,
+) -> Result<ast::ElseGroup, AlgoError> {
     // Guards of the inputs are assumed, not inserted
     let prems_input = collect_exps(else_group_al.node.rule_match.exps_input.iter());
     let prems_match_al = std::mem::take(&mut else_group_al.node.rule_match.prems);
@@ -715,7 +721,18 @@ fn insert_else_group(mut else_group_al: ast::ElseGroup) -> ast::ElseGroup {
         prems_output,
     );
     else_group_al.node.rule_path.prems.extend(prems_output);
-    else_group_al
+    // Only the final premises count after implied guards have been omitted
+    otherwise::check_prems(
+        ctx,
+        else_group_al
+            .node
+            .rule_match
+            .prems
+            .iter()
+            .chain(&else_group_al.node.rule_path.prems),
+        &else_group_al.node.otherwise,
+    )?;
+    Ok(else_group_al)
 }
 
 // - Clauses
@@ -740,55 +757,90 @@ fn insert_clause(mut clause_al: ast::Clause) -> ast::Clause {
     clause_al
 }
 
+/// Inserts guards and checks all retained premises of an otherwise clause.
+fn insert_else_clause(
+    ctx: &Context,
+    clause_al: ast::ElseClause,
+) -> Result<ast::ElseClause, AlgoError> {
+    let span = clause_al.span;
+    let ast::ElseClauseKind { otherwise, clause } = clause_al.node;
+    let clause_al = insert_clause(phrase!(node: clause, span: span));
+    otherwise::check_prems(ctx, &clause_al.node.prems, &otherwise)?;
+    Ok(phrase!(
+        node: ast::ElseClauseKind { otherwise, clause: clause_al.node },
+        span: span,
+    ))
+}
+
 // - Definitions
 
-fn insert_def(def_al: ast::Def) -> ast::Def {
+fn insert_def(ctx: &Context, def_al: ast::Def) -> Result<ast::Def, AlgoError> {
     let span = def_al.span;
     let def_kind_al = match def_al.node {
         ast::DefKind::Rel(rel_def_al) => {
-            let rel_def_al = insert_rel_def(rel_def_al);
+            let rel_def_al = insert_rel_def(ctx, rel_def_al)?;
             ast::DefKind::Rel(rel_def_al)
         }
         ast::DefKind::MetaFunc(meta_func_def_al) => {
-            let meta_func_def_al = insert_meta_func_def(meta_func_def_al);
+            let meta_func_def_al = insert_meta_func_def(ctx, meta_func_def_al)?;
             ast::DefKind::MetaFunc(meta_func_def_al)
         }
         def_kind_al => def_kind_al,
     };
-    phrase!(node: def_kind_al, span: span)
+    Ok(phrase!(node: def_kind_al, span: span))
 }
 
 /// Inserts guards into every rule group of a defined relation.
-fn insert_rel_def(rel_def_al: ast::RelDef) -> ast::RelDef {
+fn insert_rel_def(ctx: &Context, rel_def_al: ast::RelDef) -> Result<ast::RelDef, AlgoError> {
     let ast::RelDef::Defined(mut defined_rel_al) = rel_def_al else {
-        return rel_def_al;
+        return Ok(rel_def_al);
     };
     defined_rel_al.rule_groups = defined_rel_al
         .rule_groups
         .into_iter()
         .map(insert_rule_group)
         .collect();
-    defined_rel_al.else_group = defined_rel_al.else_group.map(insert_else_group);
-    ast::RelDef::Defined(defined_rel_al)
+    defined_rel_al.else_group = defined_rel_al
+        .else_group
+        .map(|else_group| insert_else_group(ctx, else_group))
+        .transpose()?;
+    Ok(ast::RelDef::Defined(defined_rel_al))
 }
 
 /// Inserts guards into every clause of a defined function.
-fn insert_meta_func_def(meta_func_def_al: ast::MetaFuncDef) -> ast::MetaFuncDef {
+fn insert_meta_func_def(
+    ctx: &Context,
+    meta_func_def_al: ast::MetaFuncDef,
+) -> Result<ast::MetaFuncDef, AlgoError> {
     let ast::MetaFuncDef::Defined(mut defined_func_al) = meta_func_def_al else {
-        return meta_func_def_al;
+        return Ok(meta_func_def_al);
     };
+    // Ordinary clauses only need guard insertion
     defined_func_al.clauses = defined_func_al
         .clauses
         .into_iter()
         .map(insert_clause)
         .collect();
-    defined_func_al.else_clause = defined_func_al.else_clause.map(insert_clause);
-    ast::MetaFuncDef::Defined(defined_func_al)
+    if let Some(clause) = defined_func_al.else_clause {
+        // Type parameters remain opaque when rechecking singleton conditions
+        let mut ctx = ctx.clone();
+        for tparam in &defined_func_al.tparams {
+            ctx.tdenv.insert(tparam.clone(), TypeDef::Parameter);
+        }
+        defined_func_al.else_clause = Some(insert_else_clause(&ctx, clause)?);
+    }
+    Ok(ast::MetaFuncDef::Defined(defined_func_al))
 }
 
 // == Entry point
 
-/// Inserts side-condition guards throughout an analyzed specification.
-pub(in crate::pass::algo) fn insert_spec(spec_al: ast::Spec) -> ast::Spec {
-    spec_al.into_iter().map(insert_def).collect()
+/// Inserts guards and checks otherwise purity after redundant guards are omitted.
+pub(in crate::pass::algo) fn insert_spec(
+    ctx: &Context,
+    spec_al: ast::Spec,
+) -> Result<ast::Spec, AlgoError> {
+    spec_al
+        .into_iter()
+        .map(|def| insert_def(ctx, def))
+        .collect()
 }

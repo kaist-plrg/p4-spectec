@@ -2,7 +2,7 @@
 //!
 //! Constructors preserve locations from type operations and directly supplied IL.
 
-use crate::lang::common::{Id, source::Span};
+use crate::lang::common::Id;
 
 use crate::diagnostic::Label;
 
@@ -30,22 +30,6 @@ pub(crate) fn type_undefined(id: &Id) -> AlgoError {
         TYPE_UNDEFINED,
         format!("type `{}` is not defined", id.node),
         vec![Label::primary(&id.span, "")],
-        vec![],
-    )
-}
-
-const TYPE_ARGUMENT_ARITY_MISMATCH: &str = "algo/type-argument-arity-mismatch";
-
-/// Reports invalid type arguments in directly supplied IL.
-pub(crate) fn type_argument_arity_mismatch(
-    span: &Span,
-    expected: usize,
-    actual: usize,
-) -> AlgoError {
-    cause(
-        TYPE_ARGUMENT_ARITY_MISMATCH,
-        format!("type argument arity mismatch: expected {expected}, got {actual}"),
-        vec![Label::primary(span, "")],
         vec![],
     )
 }

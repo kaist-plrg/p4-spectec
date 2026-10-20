@@ -370,7 +370,7 @@ fn struct_else_group(
     else_group: al::ElseGroup,
 ) -> ol::Block {
     // Anti-unification premises precede the group's own match premises
-    let al::ElseGroupKind { id, rule_match, rule_path } = else_group.node;
+    let al::ElseGroupKind { id, rule_match, rule_path, .. } = else_group.node;
     let al::RuleMatch { exps_signature, prems, .. } = rule_match;
     prems_unified.extend(prems);
     let block = struct_rule_path(rel_signature, rule_path);
@@ -667,7 +667,9 @@ fn struct_func_dec_def(
     let al::DefinedFunc { id, tparams, params: params_al, typ, clauses, else_clause, hints } =
         def_func_al;
     // Anti-unify the clause arguments into one parameter template
-    let (args_template, paths, path_else) = antiunify::antiunify_clauses(clauses, else_clause);
+    let clause_else =
+        else_clause.map(|clause| crate::phrase!(node: clause.node.clause, span: clause.span));
+    let (args_template, paths, path_else) = antiunify::antiunify_clauses(clauses, clause_else);
     // A function without clauses keeps its declared parameters
     if paths.is_empty() && path_else.is_none() {
         let params_sl = struct_params(ctx, params_al);
