@@ -12,7 +12,7 @@ use std::borrow::Cow;
 
 use crate::lang::{
     common::source::Span,
-    data::value::flat::{self as value, Value, ValueKind},
+    data::value::flat::{self as value, Value},
     traits::print::Print,
 };
 
@@ -459,21 +459,9 @@ fn eval_return_instr<Iface: Interface, Ext: Extern>(
         // Resolve type arguments and evaluate arguments before deciding
         let targs = unwrap_from_result!(expr::resolve_targs(ctx.as_ref(), targs), &id.span);
         let values = unwrap!(expr::eval_args(runner_ctx, ctx.as_ref(), args));
-        // Function parameters and function-valued arguments must be called here
-        if ctx.find_func_value_local(id).is_some()
-            || values.iter().any(|value| {
-                matches!(runner_ctx.arena().value.kind(value.node), ValueKind::Func(_))
-            })
-        {
-            let value =
-                unwrap!(SlInterp::invoke_func(runner_ctx, ctx.as_ref(), id, &targs, &values));
-            ok!(Flow::Return(phrase!(node: value, span: *span)))
-        // Global calls become tail calls for the invoker loop
-        } else {
-            ok!(Flow::TailFunc(
-                phrase!(node: (id.clone(), targs.into_owned(), values), span: *span)
-            ))
-        }
+        // Every call becomes a tail call to the global definition it names
+        let id = ctx.resolve_func_id(runner_ctx.arena(), id);
+        ok!(Flow::TailFunc(phrase!(node: (id, targs.into_owned(), values), span: *span)))
     // Any other expression is evaluated and returned
     } else {
         let value = unwrap!(eval_exp(runner_ctx, ctx.as_ref(), &instr.exp));
