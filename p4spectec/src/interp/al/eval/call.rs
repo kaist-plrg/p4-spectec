@@ -507,22 +507,22 @@ fn eval_clause<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, AlInterp, Iface, Ext>,
     ctx_caller: &Context<'_>,
     ctx_callee: &Context<'_>,
-    clause: &ast::Clause,
+    clause_kind: &ast::ClauseKind,
     values: &[Value],
 ) -> Backtrack<Value> {
     // Argument count must match the clause
-    assert_eq!(clause.node.args.len(), values.len(), "validated clause argument arity");
+    assert_eq!(clause_kind.args.len(), values.len(), "validated clause argument arity");
     // Arguments bind into the callee scope, evaluated in the caller's
     let ctx = unwrap!(assign::assign_args(
         runner_ctx.arena_mut(),
         ctx_caller,
         ctx_callee.clone(),
-        &clause.node.args,
+        &clause_kind.args,
         values
     ));
     // Premises, then the clause body
-    let ctx = unwrap!(eval_prems(runner_ctx, ctx, &clause.node.prems));
-    expr::eval_exp(runner_ctx, &ctx, &clause.node.exp)
+    let ctx = unwrap!(eval_prems(runner_ctx, ctx, &clause_kind.prems));
+    expr::eval_exp(runner_ctx, &ctx, &clause_kind.exp)
 }
 
 /// Binds the type parameters, tries the clauses, then the otherwise clause.
@@ -543,8 +543,9 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     ));
     let det = runner_ctx.interp().config.det;
     // Clauses are candidates by index
-    let mut evaluate =
-        |idx: &usize| eval_clause(runner_ctx, ctx, &ctx_local, &defined_func.clauses[*idx], values);
+    let mut evaluate = |idx: &usize| {
+        eval_clause(runner_ctx, ctx, &ctx_local, &defined_func.clauses[*idx].node, values)
+    };
     // Deterministic mode rejects two matching clauses
     let result = if det {
         choose_deterministic(0..defined_func.clauses.len(), &mut evaluate, |idx_a, idx_b| {
@@ -568,7 +569,7 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
         // No clause matched: the otherwise clause is the fallback
         unmatch!(errors) => match &defined_func.else_clause {
             // The otherwise clause runs like any clause
-            Some(clause) => eval_clause(runner_ctx, ctx, &ctx_local, clause, values),
+            Some(clause) => eval_clause(runner_ctx, ctx, &ctx_local, &clause.node.clause, values),
             // No fallback: propagate the selected mismatches
             None => unmatch!(errors),
         },

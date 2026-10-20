@@ -252,10 +252,22 @@ fn write_ruleoutput(
 
 impl Print for Clause {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
-        self.node.args.print(printer)?;
+        self.node.print(printer)
+    }
+}
+
+impl Print for ClauseKind {
+    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
+        self.args.print(printer)?;
         printer.write_str(" = ")?;
-        self.node.exp.print(printer)?;
-        write_prems_with(printer, 1, &self.node.prems)
+        self.exp.print(printer)?;
+        write_prems_with(printer, 1, &self.prems)
+    }
+}
+
+impl Print for ElseClause {
+    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
+        self.node.clause.print(printer)
     }
 }
 

@@ -128,7 +128,7 @@ pub(crate) fn eval_block_sequential<'instr, Iface: Interface, Ext: Extern>(
 
 // = Instruction evaluation
 
-/// Evaluates one instruction.
+/// Evaluates one instruction; a mismatch ends only this alternative.
 pub fn eval_instr<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Cow<'_, Context<'_>>,
@@ -138,29 +138,23 @@ pub fn eval_instr<Iface: Interface, Ext: Extern>(
     let span = &instr.span;
     // Grow the stack for deep blocks
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-        match &instr.node {
+        // Every instruction falls through on a mismatch, as its block's alternative
+        Flow::cont_from_unmatch(match &instr.node {
             ast::InstrKind::If(instr) => eval_if_instr(runner_ctx, ctx, instr, tail),
             ast::InstrKind::Hold(instr) => eval_hold_instr(runner_ctx, ctx, instr, tail),
             ast::InstrKind::Case(instr) => eval_case_instr(runner_ctx, ctx, instr, tail),
             ast::InstrKind::Group(instr) => eval_group_instr(runner_ctx, ctx, instr, tail),
-            // Binding and terminal instructions fall through on a mismatch
-            ast::InstrKind::Let(instr) => {
-                Flow::cont_from_unmatch(eval_let_instr(runner_ctx, ctx, instr, tail))
+            ast::InstrKind::Let(instr) => eval_let_instr(runner_ctx, ctx, instr, tail),
+            ast::InstrKind::Rule(ast::RuleInstr::Call(instr)) => {
+                eval_rule_instr(runner_ctx, ctx, instr, tail)
             }
-            ast::InstrKind::Rule(instr) => Flow::cont_from_unmatch(match instr {
-                ast::RuleInstr::Call(instr) => eval_rule_instr(runner_ctx, ctx, instr, tail),
-                ast::RuleInstr::Tail(instr) => eval_rule_tail_instr(runner_ctx, ctx, span, instr),
-            }),
-            ast::InstrKind::Result(instr) => {
-                Flow::cont_from_unmatch(eval_result_instr(runner_ctx, ctx, span, instr))
+            ast::InstrKind::Rule(ast::RuleInstr::Tail(instr)) => {
+                eval_rule_tail_instr(runner_ctx, ctx, span, instr)
             }
-            ast::InstrKind::Return(instr) => {
-                Flow::cont_from_unmatch(eval_return_instr(runner_ctx, ctx, span, instr, tail))
-            }
-            ast::InstrKind::Debug(instr) => {
-                Flow::cont_from_unmatch(eval_debug_instr(runner_ctx, ctx, instr, tail))
-            }
-        }
+            ast::InstrKind::Result(instr) => eval_result_instr(runner_ctx, ctx, span, instr),
+            ast::InstrKind::Return(instr) => eval_return_instr(runner_ctx, ctx, span, instr, tail),
+            ast::InstrKind::Debug(instr) => eval_debug_instr(runner_ctx, ctx, instr, tail),
+        })
     })
 }
 

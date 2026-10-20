@@ -115,6 +115,12 @@ impl SyntaxEq for ClauseKind {
     }
 }
 
+impl SyntaxEq for ElseClauseKind {
+    fn syntax_eq(&self, other: &Self) -> bool {
+        self.clause.syntax_eq(&other.clause)
+    }
+}
+
 // - Table rows
 
 impl SyntaxEq for TableRowKind {

@@ -20,8 +20,6 @@ use crate::runtime::{
 
 use crate::phrase;
 
-use super::super::{AlgoError, error};
-
 /// Bindings and environments threaded through one binding analysis.
 #[derive(Clone, Debug)]
 pub struct Context {
@@ -72,17 +70,6 @@ impl Context {
                 self.venv.insert(id.clone(), dim.clone());
             }
         }
-    }
-
-    // - Finders
-
-    pub fn find_typdef_opt(&self, id: &Id) -> Option<&TypeDef> {
-        self.tdenv.get(id)
-    }
-
-    pub fn find_typdef(&self, id: &Id) -> Result<&TypeDef, AlgoError> {
-        self.find_typdef_opt(id)
-            .ok_or_else(|| error::typ::type_undefined(id))
     }
 
     // - Definition loading
