@@ -3,7 +3,10 @@
 //! `PhraseMap` is a persistent ordered map over `ByKey`;
 //! cloning shares structure, so environments can be forked cheaply.
 //! `IdMap` keys by identifier and looks up by bare name.
+//! `FrozenPhraseMap` is a hash map written until frozen and read after.
 
+use foldhash::fast::RandomState;
+use hashbrown::HashMap;
 use imbl::{GenericOrdMap, shared_ptr::RcK};
 use thiserror::Error;
 
@@ -163,3 +166,53 @@ impl<K: SyntaxCmp + Clone, V: Clone> FromIterator<(K, V)> for PhraseMap<K, V> {
 
 /// Map keyed by source-annotated identifiers.
 pub type IdMap<V> = PhraseMap<Id, V>;
+
+/// A hash map that compares keys through `SyntaxCmp`, written until frozen and read after.
+#[derive(Clone, Debug)]
+pub struct FrozenPhraseMap<K: SyntaxCmp, V> {
+    /// Bindings hashed by key syntax.
+    entries: HashMap<ByKey<K>, V, RandomState>,
+    /// Whether insertion has ended.
+    frozen: bool,
+}
+
+impl<K: SyntaxCmp, V> FrozenPhraseMap<K, V> {
+    /// Constructs an empty map open to insertion.
+    pub fn new() -> Self {
+        Self { entries: HashMap::default(), frozen: false }
+    }
+
+    /// Ends insertion.
+    pub fn freeze(&mut self) {
+        self.frozen = true;
+    }
+}
+
+impl<V> FrozenPhraseMap<Id, V> {
+    /// Returns the value for an equivalent key, panicking until frozen.
+    pub fn get(&self, key: &Id) -> Option<&V> {
+        assert!(self.frozen, "unfrozen map cannot look up {}", key.node);
+        self.entries.get(key.node.as_ref())
+    }
+
+    /// Returns whether an equivalent key is present, panicking until frozen.
+    pub fn contains_key(&self, key: &Id) -> bool {
+        assert!(self.frozen, "unfrozen map cannot look up {}", key.node);
+        self.entries.contains_key(key.node.as_ref())
+    }
+
+    /// Inserts a binding and returns the previous value, panicking once frozen.
+    pub fn insert(&mut self, key: Id, value: V) -> Option<V> {
+        assert!(!self.frozen, "frozen map cannot bind {}", key.node);
+        self.entries.insert(ByKey(key), value)
+    }
+}
+
+impl<K: SyntaxCmp, V> Default for FrozenPhraseMap<K, V> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Hash map keyed by source-annotated identifiers.
+pub type FrozenIdMap<V> = FrozenPhraseMap<Id, V>;

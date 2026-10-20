@@ -9,7 +9,7 @@
 use std::rc::Rc;
 
 use crate::lang::{
-    common::{ds::map::IdMap, source::Span},
+    common::{ds::map::FrozenIdMap, source::Span},
     data::{
         arena::Arena,
         frame::{Frame, FrameLayout},
@@ -23,7 +23,7 @@ use crate::lang::il::prepared as ast;
 
 use crate::diagnostic::{Label, Report};
 
-use crate::runtime::envs::interp::shared::{TDEnv, TypeDef};
+use crate::runtime::envs::interp::shared::{FrozenTDEnv, TDEnv, TypeDef};
 
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap_from_result},
@@ -159,9 +159,9 @@ pub trait IterContext: WriteContext {
 /// Stores type definitions and prepared relation and function definitions.
 #[derive(Debug)]
 pub struct Global<R, F> {
-    tdenv: TDEnv,
-    renv: IdMap<R>,
-    fenv: IdMap<Rc<F>>,
+    tdenv: FrozenTDEnv,
+    renv: FrozenIdMap<R>,
+    fenv: FrozenIdMap<Rc<F>>,
 }
 
 impl<R, F> Global<R, F> {
@@ -169,7 +169,7 @@ impl<R, F> Global<R, F> {
 
     /// Creates empty environments for a stage-specific loader.
     pub(crate) fn new() -> Self {
-        Self { tdenv: TDEnv::new(), renv: IdMap::new(), fenv: IdMap::new() }
+        Self { tdenv: FrozenTDEnv::new(), renv: FrozenIdMap::new(), fenv: FrozenIdMap::new() }
     }
 
     // == Inserters
@@ -179,12 +179,9 @@ impl<R, F> Global<R, F> {
     /// Inserts a global type, panicking if its name is already defined.
     pub(crate) fn insert_typdef(&mut self, id: ast::Id, typdef: TypeDef) {
         // Elaboration already rejects duplicate type names
-        assert!(
-            !self.tdenv.contains_key(&id),
-            "global type definitions must be unique: {}",
-            id.node
-        );
-        self.tdenv.insert(id, typdef);
+        let name = Rc::clone(&id.node);
+        let typdef_prev = self.tdenv.insert(id, typdef);
+        assert!(typdef_prev.is_none(), "global type definitions must be unique: {name}");
     }
 
     // - Relations
@@ -195,12 +192,9 @@ impl<R, F> Global<R, F> {
         R: Clone,
     {
         // Elaboration already rejects duplicate relation names
-        assert!(
-            !self.renv.contains_key(&id),
-            "global relation definitions must be unique: {}",
-            id.node
-        );
-        self.renv.insert(id, rel);
+        let name = Rc::clone(&id.node);
+        let rel_prev = self.renv.insert(id, rel);
+        assert!(rel_prev.is_none(), "global relation definitions must be unique: {name}");
     }
 
     // - Functions
@@ -208,12 +202,18 @@ impl<R, F> Global<R, F> {
     /// Inserts a prepared function, panicking if its name is already defined.
     pub(crate) fn insert_func(&mut self, id: ast::Id, func: F) {
         // Elaboration already rejects duplicate function names
-        assert!(
-            !self.fenv.contains_key(&id),
-            "global function definitions must be unique: {}",
-            id.node
-        );
-        self.fenv.insert(id, Rc::new(func));
+        let name = Rc::clone(&id.node);
+        let func_prev = self.fenv.insert(id, Rc::new(func));
+        assert!(func_prev.is_none(), "global function definitions must be unique: {name}");
+    }
+
+    // == Freezing
+
+    /// Ends loading; later insertions panic.
+    pub(crate) fn freeze(&mut self) {
+        self.tdenv.freeze();
+        self.renv.freeze();
+        self.fenv.freeze();
     }
 }
 
