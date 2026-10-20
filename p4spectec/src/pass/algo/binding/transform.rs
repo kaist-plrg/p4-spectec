@@ -294,13 +294,14 @@ fn analyze_args_as_bind_shallow(
     args_il: &[ast::Arg],
 ) -> Result<(VEnv, Vec<ast::Arg>, Vec<al::ast::Prem>), AlgoError> {
     // Translate shallow binding failures into table diagnostics
-    shallow::check_args(&ctx.venv, args_il).map_err(|failure| match failure {
+    shallow::check_args(&ctx.tdenv, &ctx.venv, args_il).map_err(|failure| match failure {
         shallow::ShallowFailure::ShapeInvalid(arg) => {
             error::table::table_binding_shape_invalid(arg)
         }
         shallow::ShallowFailure::BindingRepeated { id, id_previous } => {
             error::table::table_binding_repeated(id, &id_previous.at())
         }
+        shallow::ShallowFailure::TypeInvalid(error) => error::typ::type_operation_invalid(error),
     })?;
 
     // Collect binders and rename repeated occurrences
@@ -333,7 +334,10 @@ fn analyze_args_as_bind_shallow(
 fn analyze_args_as_bound_shallow(ctx: &Context, args: &[ast::Arg]) -> Result<(), AlgoError> {
     for arg in args {
         // Row admission validated the shapes before binding analysis
-        assert!(shallow::check_arg(arg), "validated table argument must remain shallow");
+        assert!(
+            shallow::check_arg(&ctx.tdenv, arg).map_err(error::typ::type_operation_invalid)?,
+            "validated table argument must remain shallow"
+        );
         let benv = collect::collect_arg(ctx, arg)?;
         // lower_table_row inserted every collected binder into the context
         assert!(benv.is_empty(), "validated table binders must be bound");
