@@ -12,28 +12,9 @@ module STDLIB
   imports K-EQUAL   // `#if _ #then _ #else _ #fi`
 
   // ==========================================================================
-  // General bool functions
-  //
-  //   dec $exists_(bool*) : bool
-  //   dec $forall_(bool*) : bool
-  // ==========================================================================
-
-  syntax BoolList ::= List{Bool, ","}       [symbol(boolList), terminator-symbol(.boolList)]
-
-  syntax Bool ::= exists(BoolList)          [function, total, symbol(exists)]
-                | forall(BoolList)          [function, total, symbol(forall)]
-
-  rule exists(.BoolList) => false
-  rule exists(B:Bool, Bs:BoolList) => B orBool exists(Bs)
-
-  rule forall(.BoolList) => true
-  rule forall(B:Bool, Bs:BoolList) => B andBool forall(Bs)
-
-  // ==========================================================================
   // General sequence functions, instantiated at `val`
   //
   //   dec $repeat_<X>(X, nat) : X*
-  //   builtin dec $rev_<X>(X*) : X*
   //   builtin dec $transpose_<X>(X**) : X**
   //   builtin dec $assoc_<X, Y>(X, (X, Y)*) : Y?   at X = atom, Y = val
   // ==========================================================================
@@ -42,19 +23,11 @@ module STDLIB
   syntax ValListList ::= List{ValList, ";"} [symbol(valListList), terminator-symbol(.valListList)]
 
   syntax ValList ::= repeatVal(Val, Int)    [function, total, symbol(repeatVal)]
-                   | revVal(ValList)        [function, total, symbol(revVal)]
                    | appendVal(ValList, ValList)
                                             [function, total, symbol(appendVal)]
 
   rule repeatVal(_:Val, N:Int) => .ValList requires N <=Int 0
   rule repeatVal(V:Val, N:Int) => V, repeatVal(V, N -Int 1) requires N >Int 0
-
-  rule revVal(Vs:ValList) => revValAcc(Vs, .ValList)
-
-  syntax ValList ::= revValAcc(ValList, ValList)
-                                            [function, total, symbol(revValAcc)]
-  rule revValAcc(.ValList, Acc:ValList) => Acc
-  rule revValAcc((V:Val, Vs:ValList), Acc:ValList) => revValAcc(Vs, (V, Acc))
 
   rule appendVal(.ValList, Vs:ValList) => Vs
   rule appendVal((V:Val, Vs:ValList), Ws:ValList) => V, appendVal(Vs, Ws)

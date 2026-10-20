@@ -59,7 +59,6 @@ configuration
       <ltdenv> .Map </ltdenv> <lfenv> .Map </lfenv> <lvenv> .Map </lvenv>
     </local>
     <caller> <cfenv> .Map </cfenv> </caller>
-    <saves> .List </saves>
     <callstack> .List </callstack>
   </al>
 ```
@@ -68,6 +67,36 @@ configuration
 from a P4 type-checking run. The remaining cells store the specification path
 and the evaluator's environments and call state. `initFFI()` starts the host
 library on the specification path before anything else runs.
+
+### Evaluation, failure, and scoping
+
+Expressions and premises evaluate in place. The productions of
+[`1-syntax.k`](spec-meta-k/1-syntax.k) carry `strict`/`seqstrict`
+attributes, a value is an expression (`Exp ::= Val`), and an expression list,
+field, or case whose parts are all values is the value list, field, or case
+(`overload`), so the semantic rules match on value constructors:
+`binE(O, Nl:Num, Nr:Num)`, `tupE(Vs:ValList) => tupV(Vs)`. A premise that
+holds rewrites to `.K`, an assignment adds its bindings to `<local>`, and a
+premise list runs as a sequence of statements.
+
+watsup's `res<X> = OK X | FAIL` is the outcome of one alternative: a clause, a
+rule path, a table row, a cast, or the relation under `IFNOTHOLD`. A rule with
+no applicable case rewrites to `backtrack`, which discards the pending work of
+the current alternative up to the boundary that started it
+([`3-context.k`](spec-meta-k/3-context.k)):
+
+- `try(K)` runs `K` under a `checkpoint` of the local bindings. It yields
+  `ok(R)` or `FAIL` and restores the bindings either way. A list of tries
+  evaluates in order to a list of outcomes; `det` picks the single success
+  among a function's clauses or a relation's rule paths (two successes fail,
+  none runs the `otherwise` clause or else group), and `firstOf` takes the
+  first success among a table's rows.
+- `inScope(K)` ends with `endScope`, which restores `<lvenv>` after the body
+  of an iteration or of a list assignment, whether `K` succeeded or
+  backtracked.
+- `enterFrame(tdenv)` pushes the local layer and `<cfenv>` onto `<callstack>`
+  for a call, and `endFrame` pops them on the result or on backtracking, so
+  `<callstack>` is empty whenever `<k>` is.
 
 ### Building and running
 

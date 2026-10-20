@@ -13,9 +13,6 @@ module CALL-FUNC
 
   // ==========================================================================
   // Eval_clause / Eval_clauses
-  //
-  //   relation Eval_clause: ctx '/' ctx |- clause '@' `( val* `) : res<val>
-  //   relation Eval_clauses: ctx '/' ctx |- clause* '@' `( val* `) : res<val>
   // ==========================================================================
 
   //   rule Eval_clause/succ: the arguments assigned, the premises, the result
@@ -23,9 +20,7 @@ module CALL-FUNC
   rule evalClause(clause(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
     => assignArgs(As, Vs) ~> Ps ~> Eout
 
-  //   rule Eval_clauses:
-  //     -- (Eval_clause: C_callee '/' C |- clause '@' `( val* `) : valres)*
-  //     -- if valres' = $det_valres(valres*)
+  //   rule Eval_clauses: every clause is one try (`det` picks the result)
   syntax Tries ::= clauseTries(ClauseList, ValList)
                                             [function, total, symbol(clauseTries)]
   rule clauseTries(.ClauseList, _:ValList) => .Tries
@@ -39,11 +34,7 @@ module CALL-FUNC
   syntax KItem ::= evalTblRow(TblRow, ValList)
                  | evalTblRows(TblRowList, ValList)
 
-  //   rule Eval_tblrow/succ:
-  //     -- if C_callee = C[ .LOCAL = $empty_layer ]
-  //     -- Assign_args: C_callee '/' C |- arg* := val* : C_callee'
-  //     -- Eval_prems: C_callee' |- prem* : OK C_callee''
-  //     -- Eval_exp: C_callee'' |- exp_out : OK val_out
+  //   rule Eval_tblrow/succ: like a clause, in a frame of its own
   rule evalTblRow(tblRow(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
     => enterFrame(.Map) ~> assignArgs(As, Vs) ~> Ps ~> Eout ~> endFrame
 
@@ -55,18 +46,9 @@ module CALL-FUNC
        </k>
 
   // ==========================================================================
-  // Call_defined_func
-  //
-  //   rule Call_defined_func/succ, /fail:
-  //     C |- definedFuncDef '@' `< typ* `> `( val* `) : valres
-  //     -- if DEF tparam* '->' clause* elsclause? = definedFuncDef
-  //     -- if tdenv = `{ (tparam ':' (DEF eps '->' (ALIAS typ)))* `}
-  //     -- if C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
-  //     -- Eval_clauses: C_callee '/' C |- clause* '@' `( val* `) : valres
-  //     (/fail: valres = FAIL, then Eval_clause on the `otherwise` clause)
-  //
-  // The `otherwise` clause is outside the determinism check: it runs only
-  // when no ordinary clause matched, in the callee's frame.
+  // Call_defined_func/succ, /fail: the clauses in a frame whose tdenv binds
+  // the type parameters. The `otherwise` clause is outside the determinism
+  // check: it runs only when no ordinary clause matched, in the same frame.
   // ==========================================================================
 
   syntax KItem ::= callDefinedFunc(TParamList, ClauseList, ElsClauseOpt, TArgList, ValList)
@@ -84,14 +66,7 @@ module CALL-FUNC
   rule elsClauseK(someElsClause(Cl:Clause), Vs:ValList) => evalClause(Cl, Vs)
 
   // ==========================================================================
-  // Call_func_dispatch
-  //
-  //   rulegroup Call_func_dispatch {
-  //     Call_func_dispatch/extern:  Call_extern_func
-  //     Call_func_dispatch/builtin: Call_builtin_func
-  //     Call_func_dispatch/table:   Call_table_func
-  //     Call_func_dispatch/defined: Call_defined_func
-  //   }
+  // Call_func_dispatch/extern, /builtin, /table, /defined
   // ==========================================================================
 
   syntax KItem ::= callFuncDispatch(FuncDef, TArgList, ValList)
@@ -117,11 +92,7 @@ module CALL-FUNC
        </k>
 
   // ==========================================================================
-  // Call_func: look the function up, then dispatch
-  //
-  //   rule Call_func: C |- id targ* val* : valres
-  //     -- if funcdef = $find_func(C, id)
-  //     -- Call_func_dispatch: C |- funcdef targ* val* : valres
+  // Call_func: `$find_func` in the local, then the global environment
   // ==========================================================================
 
   rule <k> callFunc(X:Id, Ts:TArgList, Vs:ValList) => callFuncDispatch(F, Ts, Vs) ... </k>

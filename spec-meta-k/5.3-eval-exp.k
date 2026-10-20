@@ -111,6 +111,10 @@ module EVAL-EXP
     requires N >=Int 0 andBool N <Int lengthVals(Vs)
   rule idxE(_:Val, _:Val) => backtrack [owise]
 
+  syntax Val ::= nthVal(ValList, Int)       [function, symbol(nthVal)]
+  rule nthVal((V:Val, _:ValList), 0) => V
+  rule nthVal((_:Val, Vs:ValList), N:Int) => nthVal(Vs, N -Int 1) requires N >Int 0
+
   rule sliceE(textV(S:String), natN(I:Int), natN(N:Int)) => textV(substrString(S, I, I +Int N))
     requires I >=Int 0 andBool N >=Int 0 andBool I +Int N <=Int lengthString(S)
   rule sliceE(listV(Vs:ValList), natN(I:Int), natN(N:Int)) => listV(sliceVal(Vs, I, N))

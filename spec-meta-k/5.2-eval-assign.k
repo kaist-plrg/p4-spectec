@@ -195,8 +195,4 @@ module ASSIGN
   rule someVals(.ValList) => .ValList
   rule someVals(V:Val, Vs:ValList) => optV(someVal(V)), someVals(Vs)
 
-  syntax Val ::= nthVal(ValList, Int)       [function, symbol(nthVal)]
-  rule nthVal((V:Val, _:ValList), 0) => V
-  rule nthVal((_:Val, Vs:ValList), N:Int) => nthVal(Vs, N -Int 1) requires N >Int 0
-
 endmodule

@@ -11,31 +11,20 @@ module CALL-REL
 
   // ==========================================================================
   // Eval_rul
-  //
-  //   relation Eval_rul: ctx |- rulmatch -> rulpath '@' `( val* `) : res<val*>
   // ==========================================================================
 
   syntax KItem ::= evalRul(RulMatch, RulPath, ValList)
 
-  //   rule Eval_rul/succ:
-  //     -- if id '=' exp_out* '-' prem_path* = rulpath
-  //     -- if exp* '-' prem_match* = rulmatch
-  //     -- Assign_exps: C |- exp* := val* : C'
-  //     -- if prem* = prem_match* ++ prem_path*
-  //     -- Eval_prems: C' |- prem* : OK C''
-  //     -- (Eval_exp: C'' |- exp_out : OK val_out)*
+  //   rule Eval_rul/succ: the inputs assigned, the premises of the match
+  //   and of the path, the outputs
   rule evalRul(rulMatch(Es:ExpList, PsMatch:PremList),
                rulPath(_:Id, Eouts:ExpList, PsPath:PremList),
                Vs:ValList)
     => assignExps(Es, Vs) ~> PsMatch ~> PsPath ~> Eouts
 
   // ==========================================================================
-  // Eval_ruls: every rule path of the relation, flat across its groups
-  //
-  //   relation Eval_ruls: ctx |- rul* '@' `( val* `) : res<val*>
-  //   dec $ruls_of_rulgroups(rulgroup*) : rul*
-  //
-  // Each alternative pairs a group's rulmatch with one of its paths.
+  // Eval_ruls, $ruls_of_rulgroups: one try per (rulmatch, rulpath) pair of
+  // every group
   // ==========================================================================
 
   syntax Tries ::= rulTries(RulGroupList, ValList)
@@ -48,14 +37,7 @@ module CALL-REL
     => try(evalRul(M, P, Vs)) ; rulTries((rulGroup(X, M, Ps), Gs), Vs)
 
   // ==========================================================================
-  // Call_defined_rel
-  //
-  //   rule Call_defined_rel/succ, /fail:
-  //     C |- definedRelDef '@' `( val* `) : valsres
-  //     -- if DEF rulgroup* elsgroup? = definedRelDef
-  //     -- if C_local = C[ .LOCAL = $empty_layer ]
-  //     -- Eval_rulgroups: C_local |- rulgroup* '@' `( val* `) : valsres
-  //     (/fail: valsres = FAIL, then Eval_rulgroup on the else group)
+  // Call_defined_rel/succ, /fail: the rule paths in a frame of their own
   //
   // Deviation from the spec: the spec checks determinism per group and then
   // across groups, so a group with two matching paths FAILs and a second
@@ -80,12 +62,7 @@ module CALL-REL
     => evalRul(M, P, Vs)
 
   // ==========================================================================
-  // Call_rel_dispatch
-  //
-  //   rulegroup Call_rel_dispatch {
-  //     Call_rel_dispatch/defined: Call_defined_rel
-  //     Call_rel_dispatch/ext:     Call_extern_rel
-  //   }
+  // Call_rel_dispatch/defined, /ext
   // ==========================================================================
 
   syntax KItem ::= callRelDispatch(RelDef, ValList)
@@ -104,11 +81,7 @@ module CALL-REL
        </k>
 
   // ==========================================================================
-  // Call_rel: look the relation up, then dispatch.
-  //
-  //   rule Call_rel: C |- id val* : valsres
-  //     -- if reldef = $find_rel(C, id)
-  //     -- Call_rel_dispatch: C |- reldef val* : valsres
+  // Call_rel: `$find_rel` in the global environment
   // ==========================================================================
 
   rule <k> callRel(X:Id, Vs:ValList) => callRelDispatch(R, Vs) ... </k>

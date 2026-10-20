@@ -87,16 +87,11 @@ module EVAL-OPS
   // Constructor checks
   //
   //   dec $is_tup(val) : bool
-  //   dec $is_fun(val) : bool
   // ==========================================================================
 
   syntax Bool ::= isTup(Val)                [function, total, symbol(isTup)]
-                | isFun(Val)                [function, total, symbol(isFun)]
 
   rule isTup(tupV(_:ValList)) => true
   rule isTup(_:Val) => false [owise]
-
-  rule isFun(funcV(_:Id)) => true
-  rule isFun(_:Val) => false [owise]
 
 endmodule
