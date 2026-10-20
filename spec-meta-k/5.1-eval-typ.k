@@ -105,13 +105,12 @@ module TYP
   //   def $upcast(C, typ, val) = OK val        -- otherwise
   // ==========================================================================
 
-  syntax ValRes ::= upcast(Map, Map, Typ, Val)
-                                            [function, symbol(upcast)]
+  syntax Res ::= upcast(Map, Map, Typ, Val) [function, symbol(upcast)]
                                             // (ltdenv, gtdenv, typ, val)
 
-  rule upcast(_:Map, _:Map, intT(), intN(I:Int)) => okV(intN(I))
-  rule upcast(_:Map, _:Map, intT(), natN(N:Int)) => okV(intN(N))
-  rule upcast(_:Map, _:Map, intT(), V:Val) => failV()
+  rule upcast(_:Map, _:Map, intT(), intN(I:Int)) => ok(intN(I))
+  rule upcast(_:Map, _:Map, intT(), natN(N:Int)) => ok(intN(N))
+  rule upcast(_:Map, _:Map, intT(), V:Val) => FAIL
     requires notBool isNumV(V)
 
   rule upcast(L:Map, G:Map, varT(X:Id, Ts:TArgList), V:Val)
@@ -119,24 +118,24 @@ module TYP
 
   rule upcast(L:Map, G:Map, tupT(Ts:TypList), tupV(Vs:ValList))
     => resTup(upcasts(L, G, Ts, Vs))
-  rule upcast(_:Map, _:Map, tupT(_:TypList), V:Val) => failV()
+  rule upcast(_:Map, _:Map, tupT(_:TypList), V:Val) => FAIL
     requires notBool isTup(V)
 
-  rule upcast(_:Map, _:Map, iterT(_:Typ, quest()), optV(noVal())) => okV(optV(noVal()))
+  rule upcast(_:Map, _:Map, iterT(_:Typ, quest()), optV(noVal())) => ok(optV(noVal()))
   rule upcast(L:Map, G:Map, iterT(T:Typ, quest()), optV(someVal(V:Val)))
     => resOpt(upcast(L, G, T, V))
   rule upcast(L:Map, G:Map, iterT(T:Typ, star()), listV(Vs:ValList))
     => resList(upcasts(L, G, Typs2Repeat(T, Vs), Vs))
 
-  rule upcast(_:Map, _:Map, _:Typ, V:Val) => okV(V) [owise]
+  rule upcast(_:Map, _:Map, _:Typ, V:Val) => ok(V) [owise]
 
-  syntax ValRes ::= upcastVar(TypDefOpt, Map, Map, TArgList, Val)
+  syntax Res ::= upcastVar(TypDefOpt, Map, Map, TArgList, Val)
                                             [function, symbol(upcastVar)]
 
   rule upcastVar(someTypDefOpt(defTD(Ps:TParamList, aliasDT(T:Typ))),
                  L:Map, G:Map, Ts:TArgList, V:Val)
     => upcast(L, G, substTyp(zipThetaMap(Ps, Ts), T), V)
-  rule upcastVar(_:TypDefOpt, _:Map, _:Map, _:TArgList, V:Val) => okV(V) [owise]
+  rule upcastVar(_:TypDefOpt, _:Map, _:Map, _:TArgList, V:Val) => ok(V) [owise]
 
   // ==========================================================================
   // Downcasts
@@ -147,13 +146,13 @@ module TYP
   //   ... (as for upcasts)
   // ==========================================================================
 
-  syntax ValRes ::= downcast(Map, Map, Typ, Val)
+  syntax Res ::= downcast(Map, Map, Typ, Val)
                                             [function, symbol(downcast)]
 
-  rule downcast(_:Map, _:Map, natT(), natN(N:Int)) => okV(natN(N))
-  rule downcast(_:Map, _:Map, natT(), intN(I:Int)) => okV(natN(I))
+  rule downcast(_:Map, _:Map, natT(), natN(N:Int)) => ok(natN(N))
+  rule downcast(_:Map, _:Map, natT(), intN(I:Int)) => ok(natN(I))
     requires I >=Int 0
-  rule downcast(_:Map, _:Map, natT(), V:Val) => failV()
+  rule downcast(_:Map, _:Map, natT(), V:Val) => FAIL
     requires notBool isNumV(V)
 
   rule downcast(L:Map, G:Map, varT(X:Id, Ts:TArgList), V:Val)
@@ -161,58 +160,57 @@ module TYP
 
   rule downcast(L:Map, G:Map, tupT(Ts:TypList), tupV(Vs:ValList))
     => resTup(downcasts(L, G, Ts, Vs))
-  rule downcast(_:Map, _:Map, tupT(_:TypList), V:Val) => failV()
+  rule downcast(_:Map, _:Map, tupT(_:TypList), V:Val) => FAIL
     requires notBool isTup(V)
 
-  rule downcast(_:Map, _:Map, iterT(_:Typ, quest()), optV(noVal())) => okV(optV(noVal()))
+  rule downcast(_:Map, _:Map, iterT(_:Typ, quest()), optV(noVal())) => ok(optV(noVal()))
   rule downcast(L:Map, G:Map, iterT(T:Typ, quest()), optV(someVal(V:Val)))
     => resOpt(downcast(L, G, T, V))
   rule downcast(L:Map, G:Map, iterT(T:Typ, star()), listV(Vs:ValList))
     => resList(downcasts(L, G, Typs2Repeat(T, Vs), Vs))
 
-  rule downcast(_:Map, _:Map, _:Typ, V:Val) => okV(V) [owise]
+  rule downcast(_:Map, _:Map, _:Typ, V:Val) => ok(V) [owise]
 
-  syntax ValRes ::= downcastVar(TypDefOpt, Map, Map, TArgList, Val)
+  syntax Res ::= downcastVar(TypDefOpt, Map, Map, TArgList, Val)
                                             [function, symbol(downcastVar)]
 
   rule downcastVar(someTypDefOpt(defTD(Ps:TParamList, aliasDT(T:Typ))),
                    L:Map, G:Map, Ts:TArgList, V:Val)
     => downcast(L, G, substTyp(zipThetaMap(Ps, Ts), T), V)
-  rule downcastVar(_:TypDefOpt, _:Map, _:Map, _:TArgList, V:Val) => okV(V) [owise]
+  rule downcastVar(_:TypDefOpt, _:Map, _:Map, _:TArgList, V:Val) => ok(V) [owise]
 
   // ==========================================================================
   // Cast helpers
   // ==========================================================================
 
-  syntax ValsRes ::= upcasts(Map, Map, TypList, ValList)
+  syntax Res ::= upcasts(Map, Map, TypList, ValList)
                                             [function, symbol(upcasts)]
-                   | downcasts(Map, Map, TypList, ValList)
+               | downcasts(Map, Map, TypList, ValList)
                                             [function, symbol(downcasts)]
 
-  rule upcasts(_:Map, _:Map, .TypList, .ValList) => okVs(.ValList)
+  rule upcasts(_:Map, _:Map, .TypList, .ValList) => ok(.ValList)
   rule upcasts(L:Map, G:Map, (T:Typ, Ts:TypList), (V:Val, Vs:ValList))
-    => consValsRes(upcast(L, G, T, V), upcasts(L, G, Ts, Vs))
+    => consRes(upcast(L, G, T, V), upcasts(L, G, Ts, Vs))
 
-  rule downcasts(_:Map, _:Map, .TypList, .ValList) => okVs(.ValList)
+  rule downcasts(_:Map, _:Map, .TypList, .ValList) => ok(.ValList)
   rule downcasts(L:Map, G:Map, (T:Typ, Ts:TypList), (V:Val, Vs:ValList))
-    => consValsRes(downcast(L, G, T, V), downcasts(L, G, Ts, Vs))
+    => consRes(downcast(L, G, T, V), downcasts(L, G, Ts, Vs))
 
-  syntax ValsRes ::= consValsRes(ValRes, ValsRes)
-                                            [function, total, symbol(consValsRes)]
+  syntax Res ::= consRes(Res, Res)          [function, total, symbol(consRes)]
 
-  rule consValsRes(okV(V:Val), okVs(Vs:ValList)) => okVs(V, Vs)
-  rule consValsRes(_:ValRes, _:ValsRes) => failVs() [owise]
+  rule consRes(ok(V:Val), ok(Vs:ValList)) => ok((V, Vs))
+  rule consRes(_:Res, _:Res) => FAIL [owise]
 
-  syntax ValRes ::= resTup(ValsRes)         [function, total, symbol(resTup)]
-                  | resList(ValsRes)        [function, total, symbol(resList)]
-                  | resOpt(ValRes)          [function, total, symbol(resOpt)]
+  syntax Res ::= resTup(Res)                [function, total, symbol(resTup)]
+               | resList(Res)               [function, total, symbol(resList)]
+               | resOpt(Res)                [function, total, symbol(resOpt)]
 
-  rule resTup(okVs(Vs:ValList)) => okV(tupV(Vs))
-  rule resTup(failVs()) => failV()
-  rule resList(okVs(Vs:ValList)) => okV(listV(Vs))
-  rule resList(failVs()) => failV()
-  rule resOpt(okV(V:Val)) => okV(optV(someVal(V)))
-  rule resOpt(failV()) => failV()
+  rule resTup(ok(Vs:ValList)) => ok(tupV(Vs))
+  rule resTup(_:Res) => FAIL [owise]
+  rule resList(ok(Vs:ValList)) => ok(listV(Vs))
+  rule resList(_:Res) => FAIL [owise]
+  rule resOpt(ok(V:Val)) => ok(optV(someVal(V)))
+  rule resOpt(_:Res) => FAIL [owise]
 
   syntax TypList ::= Typs2Repeat(Typ, ValList)
                                             [function, total, symbol(Typs2Repeat)]

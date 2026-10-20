@@ -42,11 +42,9 @@ module CALL-REL
         => evalPrems(Ps) ~> rulAwaitPremisesK(Eouts)
        ...
        </k>
-  rule <k> FAIL ~> rulAwaitAssignmentK(_:PremList, _:ExpList) => FAIL ... </k>
 
   syntax KItem ::= rulAwaitPremisesK(ExpList)
   rule <k> premOK() ~> rulAwaitPremisesK(Eouts:ExpList) => evalExps(Eouts) ... </k>
-  rule <k> FAIL ~> rulAwaitPremisesK(_:ExpList) => FAIL ... </k>
 
   // ==========================================================================
   // Eval_ruls: every rule path of the relation, flat across its groups
@@ -54,8 +52,8 @@ module CALL-REL
   //   relation Eval_ruls: ctx |- rulmatch -> rulpath* '@' `( val* `) : res<val*>
   //   relation Eval_rulgroups: ctx |- rulgroup* '@' `( val* `) : res<val*>
   //
-  // Each attempt pairs a group's rulmatch with one of its paths; all of them
-  // are evaluated under the relation's local layer, and the results are
+  // Each attempt pairs a group's rulmatch with one of its paths; each is one
+  // alternative under the relation's local layer, and the outcomes are
   // collected for `det`; the KItem runs when no path matched.
   // ==========================================================================
 
@@ -88,17 +86,13 @@ module CALL-REL
 
   rule <k> rulsAwaitResultK((rulAttempt(M:RulMatch, P:RulPath), As:RulAttemptList),
                             Vs:ValList, Else:KItem, L:List)
-        => pushLocalSave() ~> evalRul(M, P, Vs) ~> rulsAwaitResultK(As, Vs, Else, L)
+        => alt(evalRul(M, P, Vs)) ~> rulsAwaitResultK(As, Vs, Else, L)
        ...
        </k>
   rule <k> rulsAwaitResultK(.RulAttemptList, _:ValList, Else:KItem, L:List) => det(L, Else) ... </k>
 
-  rule <k> Vouts:ValList ~> rulsAwaitResultK(As:RulAttemptList, Vs:ValList, Else:KItem, L:List)
-        => popLocalSave() ~> rulsAwaitResultK(As, Vs, Else, L ListItem(Vouts))
-       ...
-       </k>
-  rule <k> FAIL ~> rulsAwaitResultK(As:RulAttemptList, Vs:ValList, Else:KItem, L:List)
-        => popLocalSave() ~> rulsAwaitResultK(As, Vs, Else, L ListItem(FAIL))
+  rule <k> R:Res ~> rulsAwaitResultK(As:RulAttemptList, Vs:ValList, Else:KItem, L:List)
+        => rulsAwaitResultK(As, Vs, Else, L ListItem(R))
        ...
        </k>
 
@@ -122,21 +116,17 @@ module CALL-REL
   syntax KItem ::= callDefinedRel(RulGroupList, ElsGroupOpt, ValList)
 
   rule <k> callDefinedRel(Gs:RulGroupList, EG:ElsGroupOpt, Vs:ValList)
-        => pushCallFrame(.Map)
+        => enterFrame(.Map)
            ~> evalRuls(attemptsOfGroups(Gs), Vs, elsGroupK(EG, Vs))
-           ~> relCallAwaitResultK()
+           ~> endFrame
        ...
        </k>
 
   syntax KItem ::= elsGroupK(ElsGroupOpt, ValList)
                                             [function, total, symbol(elsGroupK)]
-  rule elsGroupK(noElsGroup(), _:ValList) => FAIL
+  rule elsGroupK(noElsGroup(), _:ValList) => backtrack
   rule elsGroupK(someElsGroup(elsGroup(_:Id, M:RulMatch, P:RulPath)), Vs:ValList)
     => evalRul(M, P, Vs)
-
-  syntax KItem ::= "relCallAwaitResultK" "(" ")"
-  rule <k> Vs:ValList ~> relCallAwaitResultK() => popCallFrame() ~> Vs ... </k>
-  rule <k> FAIL ~> relCallAwaitResultK() => popCallFrame() ~> FAIL ... </k>
 
   // ==========================================================================
   // Call_rel_dispatch
@@ -182,12 +172,11 @@ module CALL-REL
         => callRelDispatch(R, Vs)
        ...
        </k>
-  rule <k> FAIL ~> callRelAwaitRelK(_:ValList) => FAIL ... </k>
 
   rule <k> findRel(X:Id) => {GR[X]}:>RelDef ... </k>
        <grenv> GR:Map </grenv>
     requires X in_keys(GR)
-  rule <k> findRel(X:Id) => FAIL ... </k>
+  rule <k> findRel(X:Id) => backtrack ... </k>
        <grenv> GR:Map </grenv>
     requires notBool (X in_keys(GR))
 

@@ -1,4 +1,4 @@
-// Loading context from a script, and the result sorts.
+// Context and control: loading, outcomes, backtracking, scopes, and frames.
 //
 // Mirrors spec-meta/3-context.watsup and the result sorts of
 // spec-meta/4-relation.watsup.
@@ -9,52 +9,138 @@ module CONTEXT
   imports ENV
 
   // ==========================================================================
-  // Result sorts representing backtracking in evaluation
+  // Outcomes
   //
   //   syntax res<X> = OK X | FAIL
   //
-  // `res<X>` is instantiated once per `X` used by AL:
+  // The outcome of one alternative (a clause, a rule path, a table row, a
+  // cast). `FAIL` is only ever a recorded outcome, never in-flight failure:
+  // a rule with no applicable case rewrites to `backtrack` instead.
+  // ==========================================================================
+
+  syntax Res ::= ok(KItem)                  [symbol(ok)]
+               | "FAIL"                     [symbol(FAIL)]
+
+  syntax KResult ::= Val | ValList | ValField | ValFieldList | ValCase
+                   | ValListList | Res
+
+  // ==========================================================================
+  // Backtracking
   //
-  //   res<val>  -> ValRes    ($upcast, $downcast)
-  //   res<val*> -> ValsRes   ($upcast/$downcast on a list of operands)
+  // `backtrack` discards the pending work of the current alternative up to
+  // the boundary that started it. A checkpoint turns it into the outcome
+  // `FAIL`; a scope or frame boundary restores its state and lets it go on.
   // ==========================================================================
 
-  syntax KItem ::= "FAIL"
+  syntax KItem ::= "backtrack"
 
-  //   syntax valres = res<val>
-  syntax ValRes ::= okV(Val)                [symbol(okV)]
-                  | failV()                 [symbol(failV)]
+  syntax Boundary ::= checkpoint(Map, Map)  // lfenv, lvenv
+                    | endScope(Map)         // lvenv
+                    | "endFrame"
 
-  //   syntax valsres = res<val*>
-  syntax ValsRes ::= okVs(ValList)          [symbol(okVs)]
-                   | failVs()               [symbol(failVs)]
+  rule <k> backtrack ~> (K:KItem => .K) ... </k> requires notBool isBoundary(K)
 
   // ==========================================================================
-  // Determinism check over the results of the alternatives of a call
+  // Alternatives
+  //
+  //   $det_valres / $det_valsres take the outcomes of every alternative.
+  //
+  // `alt(K)` runs `K` as one alternative: its bindings are undone afterwards
+  // and its outcome is recorded.
+  // ==========================================================================
+
+  syntax Alt ::= alt(K) | Res
+
+  rule <k> alt(K:K) => K ~> checkpoint(F, V) ... </k>
+       <lfenv> F:Map </lfenv>
+       <lvenv> V:Map </lvenv>
+  rule <k> R:KResult ~> checkpoint(F:Map, V:Map) => ok(R) ... </k>
+       <lfenv> _ => F </lfenv>
+       <lvenv> _ => V </lvenv>
+  rule <k> backtrack ~> checkpoint(F:Map, V:Map) => FAIL ... </k>
+       <lfenv> _ => F </lfenv>
+       <lvenv> _ => V </lvenv>
+
+  // `unres`: the outcome of a cast, back in flight.
+  syntax KItem ::= unres(Res)
+  rule <k> unres(ok(V:Val)) => V ... </k>
+  rule <k> unres(FAIL) => backtrack ... </k>
+
+  // ==========================================================================
+  // Determinism check over the outcomes of the alternatives of a call
   //
   //   def $det_valres(valres*) : valres
   //   def $det_valsres(valsres*) : valsres
   //
-  // The attempts are collected into a K List of `Val`, `ValList` or `FAIL`
-  // items. `det(L, Else)` is the single success; `Else` (the else clause or
-  // group, or FAIL) when none succeeded; and FAIL when several did, which
-  // the spec's $det_* also give, but without running the else.
+  // `det(L, Else)` is the single success; `Else` (the else clause or group,
+  // or `backtrack`) when none succeeded; and `backtrack` when several did.
   // ==========================================================================
 
   syntax KItem ::= det(List, KItem)
 
-  syntax List ::= successes(List)           [function, total, symbol(successes)]
+  syntax List ::= successes(List)           [function, symbol(successes)]
   rule successes(.List) => .List
   rule successes(ListItem(FAIL) L:List) => successes(L)
-  rule successes(ListItem(R:KItem) L:List) => ListItem(R) successes(L) [owise]
+  rule successes(ListItem(ok(R:KItem)) L:List) => ListItem(R) successes(L)
 
   rule <k> det(L:List, _:KItem) => {successes(L)[0]}:>KItem ... </k>
     requires size(successes(L)) ==Int 1
   rule <k> det(L:List, Else:KItem) => Else ... </k>
     requires size(successes(L)) ==Int 0
-  // Two or more alternatives succeeded: the call is nondeterministic.
-  rule <k> det(L:List, _:KItem) => FAIL ... </k>
+  rule <k> det(L:List, _:KItem) => backtrack ... </k>
     requires size(successes(L)) >Int 1
+
+  // ==========================================================================
+  // Scopes: a sub-context whose value bindings end with it
+  //
+  //   $sub_opt / $sub_list bodies, Assign_exp/list
+  // ==========================================================================
+
+  syntax KItem ::= inScope(K)
+
+  rule <k> inScope(K:K) => K ~> endScope(M) ... </k>
+       <lvenv> M:Map </lvenv>
+  rule <k> R:KResult ~> endScope(M:Map) => R ... </k>
+       <lvenv> _ => M </lvenv>
+  rule <k> backtrack ~> endScope(M:Map) => backtrack ... </k>
+       <lvenv> _ => M </lvenv>
+
+  syntax KItem ::= "clearLocalVenv" "(" ")"
+  rule <k> clearLocalVenv() => .K ... </k>
+       <lvenv> _ => .Map </lvenv>
+
+  // ==========================================================================
+  // Call frames
+  //
+  //   C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
+  //
+  // `enterFrame(T)` replaces the local layer and records the caller's local
+  // function environment for `Assign_arg/fun`; `endFrame` restores all of it.
+  // ==========================================================================
+
+  syntax Frame ::= frame(Map, Map, Map, Map) [symbol(frame)]   // ltdenv, lfenv, lvenv, cfenv
+
+  syntax KItem ::= enterFrame(Map)          // the callee's local tdenv
+
+  rule <k> enterFrame(T:Map) => .K ... </k>
+       <ltdenv> T':Map => T </ltdenv>
+       <lfenv> F:Map => .Map </lfenv>
+       <lvenv> V:Map => .Map </lvenv>
+       <cfenv> CF:Map => F </cfenv>
+       <callstack> .List => ListItem(frame(T', F, V, CF)) ... </callstack>
+
+  rule <k> R:KResult ~> endFrame => R ... </k>
+       <ltdenv> _ => T </ltdenv>
+       <lfenv> _ => F </lfenv>
+       <lvenv> _ => V </lvenv>
+       <cfenv> _ => CF </cfenv>
+       <callstack> ListItem(frame(T:Map, F:Map, V:Map, CF:Map)) => .List ... </callstack>
+  rule <k> backtrack ~> endFrame => backtrack ... </k>
+       <ltdenv> _ => T </ltdenv>
+       <lfenv> _ => F </lfenv>
+       <lvenv> _ => V </lvenv>
+       <cfenv> _ => CF </cfenv>
+       <callstack> ListItem(frame(T:Map, F:Map, V:Map, CF:Map)) => .List ... </callstack>
 
   // ==========================================================================
   // $load: consumes definitions off the head of the script into <global>
@@ -94,70 +180,6 @@ module CONTEXT
        <gfenv> M:Map => M[X <- defFunc(Ps, Cs, EC)] </gfenv>
 
   rule <k> .Script => .K ... </k>
-
-  // ==========================================================================
-  // Local environment saves
-  // ==========================================================================
-
-  syntax KItem ::= "pushLocalSave" "(" ")"
-                 | "popLocalSave" "(" ")"
-                 | popLocalSaveThen(KItem)
-                 | "popLocalSaveList" "(" ")"
-                 | "peekLocalSave" "(" ")"
-                 | "clearLocalVenv" "(" ")"
-
-  rule <k> pushLocalSave() => .K ... </k>
-       <ltdenv> T:Map </ltdenv>
-       <lfenv> F:Map </lfenv>
-       <lvenv> V:Map </lvenv>
-       <saves> .List => ListItem(localSave(T, F, V)) ... </saves>
-
-  rule <k> popLocalSave() => .K ... </k>
-       <ltdenv> _ => T </ltdenv>
-       <lfenv> _ => F </lfenv>
-       <lvenv> _ => V </lvenv>
-       <saves> ListItem(localSave(T:Map, F:Map, V:Map)) => .List ... </saves>
-
-  rule <k> V:Val ~> popLocalSaveThen(Next:KItem) => popLocalSave() ~> V ~> Next ... </k>
-  rule <k> FAIL ~> popLocalSaveThen(_:KItem) => popLocalSave() ~> FAIL ... </k>
-
-  rule <k> Vs:ValList ~> popLocalSaveList() => popLocalSave() ~> listV(Vs) ... </k>
-  rule <k> FAIL ~> popLocalSaveList() => popLocalSave() ~> FAIL ... </k>
-
-  rule <k> peekLocalSave() => .K ... </k>
-       <ltdenv> _ => T </ltdenv>
-       <lfenv> _ => F </lfenv>
-       <lvenv> _ => V </lvenv>
-       <saves> ListItem(localSave(T:Map, F:Map, V:Map)) ... </saves>
-
-  rule <k> clearLocalVenv() => .K ... </k>
-       <lvenv> _ => .Map </lvenv>
-
-  // ==========================================================================
-  // Call-frame stack
-  // ==========================================================================
-
-  syntax KItem ::= pushCallFrame(Map)       // new local tdenv for the callee
-                 | "popCallFrame" "(" ")"
-                 | "snapshotCaller" "(" ")"
-
-  rule <k> pushCallFrame(T:Map) => .K ... </k>
-       <ltdenv> T':Map => T </ltdenv>
-       <lfenv> F:Map => .Map </lfenv>
-       <lvenv> V:Map => .Map </lvenv>
-       <cfenv> CF:Map </cfenv>
-       <callstack> .List => ListItem(callSave(localSave(T', F, V), CF)) ... </callstack>
-
-  rule <k> popCallFrame() => .K ... </k>
-       <ltdenv> _ => T </ltdenv>
-       <lfenv> _ => F </lfenv>
-       <lvenv> _ => V </lvenv>
-       <cfenv> _ => CF </cfenv>
-       <callstack> ListItem(callSave(localSave(T:Map, F:Map, V:Map), CF:Map)) => .List ... </callstack>
-
-  rule <k> snapshotCaller() => .K ... </k>
-       <lfenv> F:Map </lfenv>
-       <cfenv> _ => F </cfenv>
 
   // ==========================================================================
   // $find_typ
@@ -256,5 +278,11 @@ module CONTEXT
   rule iterVaris(.VariList, _:Iter) => .VarrList
   rule iterVaris((V:Vari, Vs:VariList), I:Iter)
     => varrOfVari(iterVari(V, I)), iterVaris(Vs, I)
+
+  // Bind one row of a sub-context.
+  syntax KItem ::= bindRow(VariList, ValList)
+  rule <k> bindRow(.VariList, .ValList) => .K ... </k>
+  rule <k> bindRow((V:Vari, Vs:VariList), (W:Val, Ws:ValList)) => bindRow(Vs, Ws) ... </k>
+       <lvenv> M:Map => M[varrOfVari(V) <- W] </lvenv>
 
 endmodule

@@ -64,12 +64,11 @@ module ASSIGN
        ...
        </k>
 
-  rule <k> assignExp(_:Exp, _:Val) => FAIL ... </k> [owise]
+  rule <k> assignExp(_:Exp, _:Val) => backtrack ... </k> [owise]
 
   // Sequencing helper: run the second task only if the first succeeded.
   syntax KItem ::= assignThen(KItem)
   rule <k> assignOK() ~> assignThen(Next:KItem) => Next ... </k>
-  rule <k> FAIL ~> assignThen(_:KItem) => FAIL ... </k>
 
   // ==========================================================================
   // Assigning to an iterated expression
@@ -105,29 +104,30 @@ module ASSIGN
 
   //   rule Assign_exp/list
   rule <k> assignIter(noVarr(), E:Exp, iterExp(star(), Vs:VariList), listV(Ws:ValList))
-        => pushLocalSave() ~> clearLocalVenv()
-           ~> assignEach(E, Ws, Vs, .List)
+        => assignEach(E, Ws, Vs, .List)
        ...
        </k>
 
+  // Each element is assigned under an empty value environment, and the
+  // bindings it makes are read back as one row.
   syntax KItem ::= assignEach(Exp, ValList, VariList, List)
 
   rule <k> assignEach(_:Exp, .ValList, Vs:VariList, Acc:List)
-        => popLocalSave() ~> assignListResults(Vs, Acc)
+        => assignListResults(Vs, Acc)
        ...
        </k>
 
   rule <k> assignEach(E:Exp, (V:Val, Rest:ValList), Vs:VariList, Acc:List)
-        => assignExp(E, V) ~> assignThen(collectAssignRow(E, Rest, Vs, Acc))
+        => inScope(clearLocalVenv() ~> assignExp(E, V) ~> assignThen(readVaris(Vs)))
+           ~> collectAssignRow(E, Rest, Vs, Acc)
        ...
        </k>
 
   syntax KItem ::= collectAssignRow(Exp, ValList, VariList, List)
-  rule <k> collectAssignRow(E:Exp, Rest:ValList, Vs:VariList, Acc:List)
-        => clearLocalVenv() ~> assignEach(E, Rest, Vs, Acc ListItem(findVaris(Vs, M)))
+  rule <k> Row:ValList ~> collectAssignRow(E:Exp, Rest:ValList, Vs:VariList, Acc:List)
+        => assignEach(E, Rest, Vs, Acc ListItem(Row))
        ...
        </k>
-       <lvenv> M:Map </lvenv>
 
   syntax KItem ::= assignListResults(VariList, List)
   rule <k> assignListResults(Vs:VariList, Acc:List) => assignOK() ... </k>
@@ -144,7 +144,7 @@ module ASSIGN
         => assignExp(E, V) ~> assignThen(assignExps(Es, Vs))
        ...
        </k>
-  rule <k> assignExps(_:ExpList, _:ValList) => FAIL ... </k> [owise]
+  rule <k> assignExps(_:ExpList, _:ValList) => backtrack ... </k> [owise]
 
   // Struct fields, matched positionally with their atoms compared.
   syntax KItem ::= assignFields(ExpFieldList, ValFieldList)
@@ -155,7 +155,7 @@ module ASSIGN
         => assignExp(E, V) ~> assignThen(assignFields(Fs, Gs))
        ...
        </k>
-  rule <k> assignFields(_:ExpFieldList, _:ValFieldList) => FAIL ... </k> [owise]
+  rule <k> assignFields(_:ExpFieldList, _:ValFieldList) => backtrack ... </k> [owise]
 
   // ==========================================================================
   // Assign_arg / Assign_args: ctx_callee '/' ctx_caller |- arg(*) := val(*)
@@ -181,7 +181,7 @@ module ASSIGN
        <lfenv> M:Map => M[X <- {GF[Y]}:>FuncDef] </lfenv>
     requires notBool (Y in_keys(CF)) andBool (Y in_keys(GF))
 
-  rule <k> assignArg(_:Arg, _:Val) => FAIL ... </k> [owise]
+  rule <k> assignArg(_:Arg, _:Val) => backtrack ... </k> [owise]
 
   //   rulegroup Assign_args
   rule <k> assignArgs(.ArgList, .ValList) => assignOK() ... </k>
@@ -189,7 +189,7 @@ module ASSIGN
         => assignArg(A, V) ~> assignThen(assignArgs(As, Vs))
        ...
        </k>
-  rule <k> assignArgs(_:ArgList, _:ValList) => FAIL ... </k> [owise]
+  rule <k> assignArgs(_:ArgList, _:ValList) => backtrack ... </k> [owise]
 
   // ==========================================================================
   // Value-level helpers
@@ -213,6 +213,11 @@ module ASSIGN
   rule findVaris(.VariList, _:Map) => .ValList
   rule findVaris((V:Vari, Vs:VariList), M:Map) => {M[varrOfVari(V)]}:>Val, findVaris(Vs, M)
     requires varrOfVari(V) in_keys(M)
+
+  // `$find_varis` on the current value environment.
+  syntax KItem ::= readVaris(VariList)
+  rule <k> readVaris(Vs:VariList) => findVaris(Vs, M) ... </k>
+       <lvenv> M:Map </lvenv>
 
   syntax ValList ::= someVals(ValList)      [function, total, symbol(someVals)]
   rule someVals(.ValList) => .ValList

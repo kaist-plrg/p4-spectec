@@ -31,11 +31,7 @@ module CONFIG
       <caller>
         <cfenv> .Map </cfenv>
       </caller>
-      <saves> .List </saves>
       <callstack> .List </callstack>
     </al>
-
-  syntax LocalSave ::= localSave(Map, Map, Map) [symbol(localSave)]
-  syntax CallSave ::= callSave(LocalSave, Map) [symbol(callSave)]
 
 endmodule

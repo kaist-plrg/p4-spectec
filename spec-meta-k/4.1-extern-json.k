@@ -184,10 +184,10 @@ module EXTERN-JSON
                  | externRelResult(JSON)      [function, symbol(externRelResult)]
 
   rule externFuncResult({ "ok" : J:JSON, .JSONs }) => valOfJson(J)
-  rule externFuncResult({ "fail" : null, .JSONs }) => FAIL
+  rule externFuncResult({ "fail" : null, .JSONs }) => backtrack
 
   rule externRelResult({ "ok" : [ Js:JSONs ], .JSONs }) => valsOfJsons(Js)
-  rule externRelResult({ "fail" : null, .JSONs }) => FAIL
+  rule externRelResult({ "fail" : null, .JSONs }) => backtrack
 
   // ==========================================================================
   // The debug log

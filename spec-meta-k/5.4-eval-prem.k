@@ -31,25 +31,25 @@ module PREM
         => callRel(X, Vs) ~> relPrAwaitOutputsK(Eouts)
        ...
        </k>
-  rule <k> FAIL ~> relPrAwaitArgsK(_:Id, _:ExpList) => FAIL ... </k>
 
   syntax KItem ::= relPrAwaitOutputsK(ExpList)
   rule <k> Vouts:ValList ~> relPrAwaitOutputsK(Eouts:ExpList)
         => assignExps(Eouts, Vouts) ~> premAwaitAssignmentK()
        ...
        </k>
-  rule <k> FAIL ~> relPrAwaitOutputsK(_:ExpList) => FAIL ... </k>
 
   syntax KItem ::= "premAwaitAssignmentK" "(" ")"
   rule <k> assignOK() ~> premAwaitAssignmentK() => premOK() ... </k>
-  rule <k> FAIL ~> premAwaitAssignmentK() => FAIL ... </k>
+
+  // Sequencing helper: run the next task once the premise held.
+  syntax KItem ::= premThen(K)
+  rule <k> premOK() ~> premThen(Next:K) => Next ... </k>
 
   //   rulegroup Eval_prem/ifpr
   syntax KItem ::= "ifPrAwaitConditionK" "(" ")"
   rule <k> evalPrem(ifPr(E:Exp)) => evalExp(E) ~> ifPrAwaitConditionK() ... </k>
   rule <k> boolV(true) ~> ifPrAwaitConditionK() => premOK() ... </k>
-  rule <k> boolV(false) ~> ifPrAwaitConditionK() => FAIL ... </k>
-  rule <k> FAIL ~> ifPrAwaitConditionK() => FAIL ... </k>
+  rule <k> boolV(false) ~> ifPrAwaitConditionK() => backtrack ... </k>
 
   //   rulegroup Eval_prem/ifholdpr
   //
@@ -58,20 +58,18 @@ module PREM
   syntax KItem ::= holdPrAwaitArgsK(Id) | notHoldPrAwaitArgsK(Id)
   rule <k> evalPrem(ifHoldPr(X:Id, Es:ExpList)) => evalExps(Es) ~> holdPrAwaitArgsK(X) ... </k>
   rule <k> Vs:ValList ~> holdPrAwaitArgsK(X:Id) => callRel(X, Vs) ~> holdPrAwaitOutputsK() ... </k>
-  rule <k> FAIL ~> holdPrAwaitArgsK(_:Id) => FAIL ... </k>
 
   syntax KItem ::= "holdPrAwaitOutputsK" "(" ")"
   rule <k> .ValList ~> holdPrAwaitOutputsK() => premOK() ... </k>
-  rule <k> FAIL ~> holdPrAwaitOutputsK() => FAIL ... </k>
-  rule <k> (_:Val, _:ValList) ~> holdPrAwaitOutputsK() => FAIL ... </k>
+  rule <k> (_:Val, _:ValList) ~> holdPrAwaitOutputsK() => backtrack ... </k>
 
+  // The relation call is one alternative: it holds iff it fails.
   rule <k> evalPrem(ifNotHoldPr(X:Id, Es:ExpList)) => evalExps(Es) ~> notHoldPrAwaitArgsK(X) ... </k>
-  rule <k> Vs:ValList ~> notHoldPrAwaitArgsK(X:Id) => callRel(X, Vs) ~> notHoldPrAwaitOutputsK() ... </k>
-  rule <k> FAIL ~> notHoldPrAwaitArgsK(_:Id) => FAIL ... </k>
+  rule <k> Vs:ValList ~> notHoldPrAwaitArgsK(X:Id) => alt(callRel(X, Vs)) ~> notHoldPrAwaitOutputsK() ... </k>
 
   syntax KItem ::= "notHoldPrAwaitOutputsK" "(" ")"
   rule <k> FAIL ~> notHoldPrAwaitOutputsK() => premOK() ... </k>
-  rule <k> _:ValList ~> notHoldPrAwaitOutputsK() => FAIL ... </k>
+  rule <k> ok(_:ValList) ~> notHoldPrAwaitOutputsK() => backtrack ... </k>
 
   //   rule Eval_prem/letpr:
   //     C |- LET exp_l '=' exp_r : OK C'
@@ -80,7 +78,6 @@ module PREM
   syntax KItem ::= letPrAwaitValueK(Exp)
   rule <k> evalPrem(letPr(El:Exp, Er:Exp)) => evalExp(Er) ~> letPrAwaitValueK(El) ... </k>
   rule <k> V:Val ~> letPrAwaitValueK(El:Exp) => assignExp(El, V) ~> premAwaitAssignmentK() ... </k>
-  rule <k> FAIL ~> letPrAwaitValueK(_:Exp) => FAIL ... </k>
 
   //   rulegroup Eval_prem/iterpr-opt
   syntax KItem ::= evalIterPrOpt(VariList, VariList, Prem)
@@ -105,21 +102,13 @@ module PREM
   //     -- if (val_bind = $find_vari(C_sub_res, vari_bind))*
   //     -- if C_res = $add_varis(C, vari_bind_iter*, (OPT val_bind)*)
   rule <k> someRowOpt(Row:ValList) ~> evalIterPrOpt(Bound:VariList, Bind:VariList, P:Prem)
-        => pushLocalSave() ~> bindRow(Bound, Row) ~> evalPrem(P)
-           ~> collectIterPrOpt(Bind)
+        => inScope(bindRow(Bound, Row) ~> evalPrem(P) ~> premThen(readVaris(Bind)))
+           ~> bindOptResults(Bind)
        ...
        </k>
 
-  syntax KItem ::= collectIterPrOpt(VariList)
-  rule <k> premOK() ~> collectIterPrOpt(Bind:VariList)
-        => popLocalSave() ~> bindOptResults(Bind, findVaris(Bind, M))
-       ...
-       </k>
-       <lvenv> M:Map </lvenv>
-  rule <k> FAIL ~> collectIterPrOpt(_:VariList) => popLocalSave() ~> FAIL ... </k>
-
-  syntax KItem ::= bindOptResults(VariList, ValList)
-  rule <k> bindOptResults(Bind:VariList, Vs:ValList) => premOK() ... </k>
+  syntax KItem ::= bindOptResults(VariList)
+  rule <k> Vs:ValList ~> bindOptResults(Bind:VariList) => premOK() ... </k>
        <lvenv> M:Map => addsMap(M, iterVaris(Bind, quest()), someVals(Vs)) </lvenv>
 
   //   rule Eval_prem/empty, /list
@@ -129,12 +118,7 @@ module PREM
        ...
        </k>
 
-  //   rule Eval_prem/empty
-  rule <k> .ValListList ~> evalIterPrList(_:VariList, Bind:VariList, _:Prem) => premOK() ... </k>
-       <lvenv> M:Map => addsMap(M, iterVaris(Bind, star()),
-                                repeatVal(listV(.ValList), lengthVaris(Bind))) </lvenv>
-
-  //   rule Eval_prem/list:
+  //   rule Eval_prem/empty, /list:
   //     -- if C_sub* = $sub_list(C, vari_bound*)
   //     -- (Eval_prem: C_sub |- prem : OK C_sub_res)*
   //     -- if (val_sub_bind* = $find_varis(C_sub_res, vari_bind*))*
@@ -142,32 +126,28 @@ module PREM
   //     -- if (val_res_bind = LIST val_bind*)*
   //     -- if C_res = $add_varis(C, vari_bind_iter*, val_res_bind*)
   rule <k> Rows:ValListList ~> evalIterPrList(Bound:VariList, Bind:VariList, P:Prem)
-        => pushLocalSave() ~> evalPremEachRow(Bound, Bind, P, Rows, .List)
+        => evalPremEachRow(Bound, Bind, P, Rows, .List)
        ...
        </k>
-    requires Rows =/=K .ValListList
 
+  // Every row is evaluated against the base environment; no rows bind
+  // empty lists.
   syntax KItem ::= evalPremEachRow(VariList, VariList, Prem, ValListList, List)
   rule <k> evalPremEachRow(_:VariList, Bind:VariList, _:Prem, .ValListList, Acc:List)
-        => popLocalSave() ~> finishIterPrList(Bind, Acc)
+        => finishIterPrList(Bind, Acc)
        ...
        </k>
   rule <k> evalPremEachRow(Bound:VariList, Bind:VariList, P:Prem,
                           (Row:ValList ; Rows:ValListList), Acc:List)
-        => peekLocalSave() ~> bindRow(Bound, Row) ~> evalPrem(P)
+        => inScope(bindRow(Bound, Row) ~> evalPrem(P) ~> premThen(readVaris(Bind)))
            ~> collectPremRow(Bound, Bind, P, Rows, Acc)
        ...
        </k>
 
   syntax KItem ::= collectPremRow(VariList, VariList, Prem, ValListList, List)
-  rule <k> premOK() ~> collectPremRow(Bound:VariList, Bind:VariList, P:Prem,
-                                      Rows:ValListList, Acc:List)
-        => evalPremEachRow(Bound, Bind, P, Rows, Acc ListItem(findVaris(Bind, M)))
-       ...
-       </k>
-       <lvenv> M:Map </lvenv>
-  rule <k> FAIL ~> collectPremRow(_:VariList, _:VariList, _:Prem, _:ValListList, _:List)
-        => popLocalSave() ~> FAIL
+  rule <k> Vs:ValList ~> collectPremRow(Bound:VariList, Bind:VariList, P:Prem,
+                                        Rows:ValListList, Acc:List)
+        => evalPremEachRow(Bound, Bind, P, Rows, Acc ListItem(Vs))
        ...
        </k>
 
@@ -182,10 +162,9 @@ module PREM
   syntax KItem ::= "dbgPrAwaitValueK" "(" ")"
   rule <k> evalPrem(debugPr(E:Exp)) => evalExp(E) ~> dbgPrAwaitValueK() ... </k>
   rule <k> V:Val ~> dbgPrAwaitValueK() => logDebug(V) ~> premOK() ... </k>
-  rule <k> FAIL ~> dbgPrAwaitValueK() => FAIL ... </k>
 
   //   rule Eval_prem/fail
-  rule <k> evalPrem(_:Prem) => FAIL ... </k> [owise]
+  rule <k> evalPrem(_:Prem) => backtrack ... </k> [owise]
 
   // ==========================================================================
   // Eval_prems: ctx |- prem* : res<ctx>
@@ -200,6 +179,5 @@ module PREM
   syntax KItem ::= premsAwaitHeadK(PremList)
   rule <k> evalPrems((P:Prem, Ps:PremList)) => evalPrem(P) ~> premsAwaitHeadK(Ps) ... </k>
   rule <k> premOK() ~> premsAwaitHeadK(Ps:PremList) => evalPrems(Ps) ... </k>
-  rule <k> FAIL ~> premsAwaitHeadK(_:PremList) => FAIL ... </k>
 
 endmodule

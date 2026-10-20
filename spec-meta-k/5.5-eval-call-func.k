@@ -34,35 +34,29 @@ module CALL-FUNC
         => evalPrems(Ps) ~> clauseAwaitPremisesK(Eout)
        ...
        </k>
-  rule <k> FAIL ~> clauseAwaitAssignmentK(_:Exp, _:PremList) => FAIL ... </k>
 
   rule <k> premOK() ~> clauseAwaitPremisesK(Eout:Exp) => evalExp(Eout) ... </k>
-  rule <k> FAIL ~> clauseAwaitPremisesK(_:Exp) => FAIL ... </k>
 
   //   rule Eval_clauses:
   //     -- (Eval_clause: C_callee '/' C |- clause '@' `( val* `) : valres)*
   //     -- if valres' = $det_valres(valres*)
   //
-  // Every clause is evaluated under the callee context as it was at the
-  // call, and the results are collected for `det`; the KItem runs when no
-  // clause matched.
+  // Every clause is one alternative under the callee context as it was at
+  // the call; the outcomes are collected for `det`, and the KItem runs when
+  // no clause matched.
   rule <k> evalClauses(Cls:ClauseList, Vs:ValList, Else:KItem)
         => clausesAwaitResultK(Cls, Vs, Else, .List)
        ...
        </k>
 
   rule <k> clausesAwaitResultK((Cl:Clause, Cls:ClauseList), Vs:ValList, Else:KItem, L:List)
-        => pushLocalSave() ~> evalClause(Cl, Vs) ~> clausesAwaitResultK(Cls, Vs, Else, L)
+        => alt(evalClause(Cl, Vs)) ~> clausesAwaitResultK(Cls, Vs, Else, L)
        ...
        </k>
   rule <k> clausesAwaitResultK(.ClauseList, _:ValList, Else:KItem, L:List) => det(L, Else) ... </k>
 
-  rule <k> V:Val ~> clausesAwaitResultK(Cls:ClauseList, Vs:ValList, Else:KItem, L:List)
-        => popLocalSave() ~> clausesAwaitResultK(Cls, Vs, Else, L ListItem(V))
-       ...
-       </k>
-  rule <k> FAIL ~> clausesAwaitResultK(Cls:ClauseList, Vs:ValList, Else:KItem, L:List)
-        => popLocalSave() ~> clausesAwaitResultK(Cls, Vs, Else, L ListItem(FAIL))
+  rule <k> R:Res ~> clausesAwaitResultK(Cls:ClauseList, Vs:ValList, Else:KItem, L:List)
+        => clausesAwaitResultK(Cls, Vs, Else, L ListItem(R))
        ...
        </k>
 
@@ -73,8 +67,6 @@ module CALL-FUNC
   syntax KItem ::= evalTblRow(TblRow, ValList)
                  | evalTblRows(TblRowList, ValList)
 
-  syntax KItem ::= "callFrameAwaitResultK" "(" ")"
-
   //   rule Eval_tblrow/succ:
   //     -- if C_callee = C[ .LOCAL = $empty_layer ]
   //     -- Assign_args: C_callee '/' C |- arg* := val* : C_callee'
@@ -82,24 +74,21 @@ module CALL-FUNC
   //     -- Eval_exp: C_callee'' |- exp_out : OK val_out
 
   rule <k> evalTblRow(tblRow(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
-        => snapshotCaller() ~> pushCallFrame(.Map)
+        => enterFrame(.Map)
            ~> assignArgs(As, Vs) ~> clauseAwaitAssignmentK(Eout, Ps)
-           ~> callFrameAwaitResultK()
+           ~> endFrame
        ...
        </k>
 
-  rule <k> V:Val ~> callFrameAwaitResultK() => popCallFrame() ~> V ... </k>
-  rule <k> FAIL ~> callFrameAwaitResultK() => popCallFrame() ~> FAIL ... </k>
-
-  //   rulegroup Eval_tblrows
-  rule <k> evalTblRows(.TblRowList, _:ValList) => FAIL ... </k>
+  //   rulegroup Eval_tblrows: in order, the first success wins
+  rule <k> evalTblRows(.TblRowList, _:ValList) => backtrack ... </k>
   rule <k> evalTblRows((R:TblRow, Rs:TblRowList), Vs:ValList)
-        => evalTblRow(R, Vs) ~> tblRowsAwaitResultK(Rs, Vs)
+        => alt(evalTblRow(R, Vs)) ~> tblRowsAwaitResultK(Rs, Vs)
        ...
        </k>
 
   syntax KItem ::= tblRowsAwaitResultK(TblRowList, ValList)
-  rule <k> V:Val ~> tblRowsAwaitResultK(_:TblRowList, _:ValList) => V ... </k>
+  rule <k> ok(V:Val) ~> tblRowsAwaitResultK(_:TblRowList, _:ValList) => V ... </k>
   rule <k> FAIL ~> tblRowsAwaitResultK(Rs:TblRowList, Vs:ValList) => evalTblRows(Rs, Vs) ... </k>
 
   // ==========================================================================
@@ -120,15 +109,15 @@ module CALL-FUNC
   syntax KItem ::= callDefinedFunc(TParamList, ClauseList, ElsClauseOpt, TypList, ValList)
 
   rule <k> callDefinedFunc(Ps:TParamList, Cls:ClauseList, EC:ElsClauseOpt, Ts:TypList, Vs:ValList)
-        => snapshotCaller() ~> pushCallFrame(tdenvOfTargs(Ps, Ts))
+        => enterFrame(tdenvOfTargs(Ps, Ts))
            ~> evalClauses(Cls, Vs, elsClauseK(EC, Vs))
-           ~> callFrameAwaitResultK()
+           ~> endFrame
        ...
        </k>
 
   syntax KItem ::= elsClauseK(ElsClauseOpt, ValList)
                                             [function, total, symbol(elsClauseK)]
-  rule elsClauseK(noElsClause(), _:ValList) => FAIL
+  rule elsClauseK(noElsClause(), _:ValList) => backtrack
   rule elsClauseK(someElsClause(Cl:Clause), Vs:ValList) => evalClause(Cl, Vs)
 
   syntax Map ::= tdenvOfTargs(TParamList, TypList)
@@ -190,7 +179,6 @@ module CALL-FUNC
         => callFuncDispatch(F, Ts, Vs)
        ...
        </k>
-  rule <k> FAIL ~> callFuncAwaitFuncK(_:TArgList, _:ValList) => FAIL ... </k>
 
   rule <k> findFunc(X:Id) => {LF[X]}:>FuncDef ... </k>
        <lfenv> LF:Map </lfenv>
@@ -200,7 +188,7 @@ module CALL-FUNC
        <lfenv> LF:Map </lfenv>
        <gfenv> GF:Map </gfenv>
     requires notBool (X in_keys(LF)) andBool X in_keys(GF)
-  rule <k> findFunc(X:Id) => FAIL ... </k>
+  rule <k> findFunc(X:Id) => backtrack ... </k>
        <lfenv> LF:Map </lfenv>
        <gfenv> GF:Map </gfenv>
     requires notBool (X in_keys(LF)) andBool notBool (X in_keys(GF))

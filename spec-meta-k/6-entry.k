@@ -11,7 +11,7 @@ module AL
   rule <k> afterLoad()
         => logDebug(textV("load complete"))
            ~> logDebug(textV("into call"))
-           ~> callFunc("main", .TArgList, .ValList)
+           ~> alt(callFunc("main", .TArgList, .ValList))
            ~> finishMain()
        ...
        </k>
@@ -21,7 +21,7 @@ module AL
   rule <k> afterLoad()
         => logDebug(textV("load complete"))
            ~> logDebug(textV("into call"))
-           ~> callRel(entryRel(), (V, .ValList))
+           ~> alt(callRel(entryRel(), (V, .ValList)))
            ~> finishRel()
        ...
        </k>
@@ -36,11 +36,10 @@ module AL
 
   rule <k> result(S:String) => #write(1, S +String "\n") ... </k>
 
-  rule <k> _:Val ~> finishRel() => result("passed") ... </k>
-  rule <k> _:ValList ~> finishRel() => result("passed") ... </k>
+  rule <k> ok(_:ValList) ~> finishRel() => result("passed") ... </k>
   rule <k> FAIL ~> finishRel() => result("fail") ... </k>
 
-  rule <k> V:Val ~> finishMain() => result(JSON2String(jsonOfVal(V))) ... </k>
+  rule <k> ok(V:Val) ~> finishMain() => result(JSON2String(jsonOfVal(V))) ... </k>
   rule <k> FAIL ~> finishMain() => result("fail") ... </k>
 
 endmodule
