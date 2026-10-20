@@ -92,16 +92,11 @@ module EVAL-OPS
 
   syntax Bool ::= isTup(Val)                [function, total, symbol(isTup)]
                 | isFun(Val)                [function, total, symbol(isFun)]
-                | isNumV(Val)                [function, total, symbol(isNumV)]
 
   rule isTup(tupV(_:ValList)) => true
   rule isTup(_:Val) => false [owise]
 
   rule isFun(funcV(_:Id)) => true
   rule isFun(_:Val) => false [owise]
-
-  // `val <: num`, used by `$upcast`/`$downcast` side conditions.
-  rule isNumV(_:Num) => true
-  rule isNumV(_:Val) => false [owise]
 
 endmodule

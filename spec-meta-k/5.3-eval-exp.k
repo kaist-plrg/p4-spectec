@@ -21,12 +21,9 @@ module EVAL-EXP
   rule <k> evalExp(textE(S:String)) => textV(S) ... </k>
 
   //   rule Eval_exp/variable
-  rule <k> evalExp(varE(X:Id)) => {M[varr(X, .IterList)]}:>Val ... </k>
-       <lvenv> M:Map </lvenv>
-    requires varr(X, .IterList) in_keys(M)
-  rule <k> evalExp(varE(X:Id)) => backtrack ... </k>
-       <lvenv> M:Map </lvenv>
-    requires notBool (varr(X, .IterList) in_keys(M))
+  rule <k> evalExp(varE(X:Id)) => V ... </k>
+       <lvenv> ... varr(X, .IterList) |-> V:Val ... </lvenv>
+  rule <k> evalExp(varE(_:Id)) => backtrack ... </k> [owise]
 
   //   rulegroup Eval_exp/unary
   syntax KItem ::= unaryAwaitOperandK(UnOp)
@@ -61,12 +58,12 @@ module EVAL-EXP
                  | subAwaitOperandK(Typ)
 
   rule <k> evalExp(upCastE(T:Typ, E:Exp)) => evalExp(E) ~> upCastAwaitOperandK(T) ... </k>
-  rule <k> V:Val ~> upCastAwaitOperandK(T:Typ) => unres(upcast(L, G, T, V)) ... </k>
+  rule <k> V:Val ~> upCastAwaitOperandK(T:Typ) => unres(upcast(updateMap(G, L), T, V)) ... </k>
        <ltdenv> L:Map </ltdenv>
        <gtdenv> G:Map </gtdenv>
 
   rule <k> evalExp(downCastE(T:Typ, E:Exp)) => evalExp(E) ~> downCastAwaitOperandK(T) ... </k>
-  rule <k> V:Val ~> downCastAwaitOperandK(T:Typ) => unres(downcast(L, G, T, V)) ... </k>
+  rule <k> V:Val ~> downCastAwaitOperandK(T:Typ) => unres(downcast(updateMap(G, L), T, V)) ... </k>
        <ltdenv> L:Map </ltdenv>
        <gtdenv> G:Map </gtdenv>
 
@@ -80,7 +77,7 @@ module EVAL-EXP
   rule <k> evalExp(matchE(E:Exp, P:Pattern)) => evalExp(E) ~> matchAwaitValueK(P) ... </k>
 
   rule <k> injV(valCase(M':MixOp, _:ValList)) ~> matchAwaitValueK(injPat(M:MixOp))
-        => boolV(eqMixOp(M, M'))
+        => boolV(M ==K M')
        ...
        </k>
   rule <k> listV(Vs:ValList) ~> matchAwaitValueK(consPat()) => boolV(lengthVals(Vs) >Int 0) ... </k>
@@ -206,53 +203,48 @@ module EVAL-EXP
   //   rule Eval_targs: C |- targ* : targ_subst*
   //     -- if theta = $theta_of_tdenv(C.LOCAL.TYP)
   //     -- if (targ_subst = $subst_typ(theta, targ))*
-  syntax KItem ::= callAwaitArgsK(Id, TypList)
+  syntax KItem ::= callAwaitArgsK(Id, TArgList)
   rule <k> evalExp(callE(X:Id, Ts:TArgList, As:ArgList))
-        => evalArgs(As)
-           ~> callAwaitArgsK(X, typsOfTargs(substTargsMap(thetaOfTdenv(L), Ts)))
+        => evalArgs(As) ~> callAwaitArgsK(X, substTargs(L, Ts))
        ...
        </k>
        <ltdenv> L:Map </ltdenv>
 
-  rule <k> Vs:ValList ~> callAwaitArgsK(X:Id, Ts:TypList)
-        => callFunc(X, targsOfTyps(Ts), Vs)
-       ...
-       </k>
+  rule <k> Vs:ValList ~> callAwaitArgsK(X:Id, Ts:TArgList) => callFunc(X, Ts, Vs) ... </k>
 
   //   rulegroup Eval_exp/iter
   syntax KItem ::= evalIter(VarrOpt, Exp, IterExp)
   rule <k> evalExp(iterE(E:Exp, IE:IterExp)) => evalIter(isIterOnVar(iterE(E, IE)), E, IE) ... </k>
 
   //   rule Eval_exp/simple
-  rule <k> evalIter(someVarr(R:Varr), _:Exp, _:IterExp) => {M[R]}:>Val ... </k>
-       <lvenv> M:Map </lvenv>
-    requires R in_keys(M)
-  rule <k> evalIter(someVarr(R:Varr), _:Exp, _:IterExp) => backtrack ... </k>
-       <lvenv> M:Map </lvenv>
-    requires notBool (R in_keys(M))
+  rule <k> evalIter(someVarr(R:Varr), _:Exp, _:IterExp) => V ... </k>
+       <lvenv> ... R |-> V:Val ... </lvenv>
+  rule <k> evalIter(someVarr(_:Varr), _:Exp, _:IterExp) => backtrack ... </k> [owise]
 
   //   rule Eval_exp/opt
-  rule <k> evalIter(noVarr(), E:Exp, iterExp(quest(), Vs:VariList))
-        => subOptRow(Vs) ~> evalOptSub(Vs, E)
+  rule <k> evalIter(noVarr(), E:Exp, iterExp(quest(), Xs:VariList))
+        => subRow(Xs, quest()) ~> evalOptSub(Xs, E)
        ...
        </k>
 
   syntax KItem ::= evalOptSub(VariList, Exp)
-  rule <k> noRowOpt() ~> evalOptSub(_:VariList, _:Exp) => optV(noVal()) ... </k>
-  rule <k> someRowOpt(Row:ValList) ~> evalOptSub(Vs:VariList, E:Exp)
-        => inScope(bindRow(Vs, Row) ~> evalExp(E)) ~> optAwaitValueK()
+  rule <k> Vs:ValList ~> evalOptSub(_:VariList, _:Exp) => optV(noVal()) ... </k>
+    requires allNoneOpts(Vs)
+  rule <k> Vs:ValList ~> evalOptSub(Xs:VariList, E:Exp)
+        => inScope(bindRow(Xs, unwrapSomeOpts(Vs)) ~> evalExp(E)) ~> optAwaitValueK()
        ...
        </k>
+    requires allSomeOpts(Vs)
 
   //   rule Eval_exp/list
-  rule <k> evalIter(noVarr(), E:Exp, iterExp(star(), Vs:VariList))
-        => subListRows(Vs) ~> evalListSub(Vs, E)
+  rule <k> evalIter(noVarr(), E:Exp, iterExp(star(), Xs:VariList))
+        => subRow(Xs, star()) ~> evalListSub(Xs, E)
        ...
        </k>
 
   syntax KItem ::= evalListSub(VariList, Exp)
-  rule <k> Rows:ValListList ~> evalListSub(Vs:VariList, E:Exp)
-        => evalEachRow(Vs, E, Rows) ~> listAwaitElementsK()
+  rule <k> Vs:ValList ~> evalListSub(Xs:VariList, E:Exp)
+        => evalEachRow(Xs, E, rows(Vs)) ~> listAwaitElementsK()
        ...
        </k>
 
@@ -449,8 +441,10 @@ module EVAL-EXP
   syntax ValFieldList ::= updateField(ValFieldList, Atom, Val)
                                             [function, total, symbol(updateField)]
   rule updateField(.ValFieldList, _:Atom, _:Val) => .ValFieldList
-  rule updateField((valField(A':Atom, V:Val), Fs:ValFieldList), A:Atom, Vn:Val)
-    => valField(A', #if A ==String A' #then Vn #else V #fi), updateField(Fs, A, Vn)
+  rule updateField((valField(A, _:Val), Fs:ValFieldList), A:Atom, Vn:Val)
+    => valField(A, Vn), updateField(Fs, A, Vn)
+  rule updateField((F:ValField, Fs:ValFieldList), A:Atom, Vn:Val)
+    => F, updateField(Fs, A, Vn) [owise]
 
   // ==========================================================================
   // Eval_arg / Eval_targs

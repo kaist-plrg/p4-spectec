@@ -90,7 +90,7 @@ module ASSIGN
   syntax KItem ::= assignIterVaris(VariList)
   rule <k> assignIterVaris(Vs:VariList) => .K ... </k>
        <lvenv> M:Map
-            => addsMap(M, iterVaris(Vs, quest()), someVals(findVaris(Vs, M)))
+            => addsMap(M, iterVaris(Vs, quest()), someVals(finds(varrsOfVaris(Vs), M)))
        </lvenv>
 
   //   rule Assign_exp/list
@@ -157,16 +157,15 @@ module ASSIGN
   //   rule Assign_arg/exp
   rule <k> assignArg(expA(E:Exp), V:Val) => assignExp(E, V) ... </k>
 
-  //   rule Assign_arg/fun
+  //   rule Assign_arg/fun: the caller's local functions, then the global ones
+  rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => .K ... </k>
+       <cfenv> ... Y |-> F:FuncDef ... </cfenv>
+       <lfenv> M:Map => M[X <- F] </lfenv>
   rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => .K ... </k>
        <cfenv> CF:Map </cfenv>
-       <lfenv> M:Map => M[X <- {CF[Y]}:>FuncDef] </lfenv>
-    requires Y in_keys(CF)
-  rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => .K ... </k>
-       <cfenv> CF:Map </cfenv>
-       <gfenv> GF:Map </gfenv>
-       <lfenv> M:Map => M[X <- {GF[Y]}:>FuncDef] </lfenv>
-    requires notBool (Y in_keys(CF)) andBool (Y in_keys(GF))
+       <gfenv> ... Y |-> F:FuncDef ... </gfenv>
+       <lfenv> M:Map => M[X <- F] </lfenv>
+    requires notBool (Y in_keys(CF))
 
   rule <k> assignArg(_:Arg, _:Val) => backtrack ... </k> [owise]
 
@@ -182,28 +181,13 @@ module ASSIGN
   // Value-level helpers
   // ==========================================================================
 
-  // `$adds_map<varr, val>`: add each key/value pair, in order.
-  syntax Map ::= addsMap(Map, VarrList, ValList)
-                                            [function, symbol(addsMap)]
-
-  rule addsMap(M:Map, .VarrList, .ValList) => M
-  rule addsMap(M:Map, (R:Varr, Rs:VarrList), (V:Val, Vs:ValList))
-    => addsMap(M[R <- V], Rs, Vs)
-
   syntax Int ::= lengthVaris(VariList)      [function, total, symbol(lengthVaris)]
   rule lengthVaris(.VariList) => 0
   rule lengthVaris(_:Vari, Vs:VariList) => 1 +Int lengthVaris(Vs)
 
-  // `$find_vari`/`$finds_vari` against an explicit `Map`.
-  syntax ValList ::= findVaris(VariList, Map)
-                                            [function, symbol(findVaris)]
-  rule findVaris(.VariList, _:Map) => .ValList
-  rule findVaris((V:Vari, Vs:VariList), M:Map) => {M[varrOfVari(V)]}:>Val, findVaris(Vs, M)
-    requires varrOfVari(V) in_keys(M)
-
   // `$find_varis` on the current value environment.
   syntax KItem ::= readVaris(VariList)
-  rule <k> readVaris(Vs:VariList) => findVaris(Vs, M) ... </k>
+  rule <k> readVaris(Vs:VariList) => finds(varrsOfVaris(Vs), M) ... </k>
        <lvenv> M:Map </lvenv>
 
   // `$add_varis` of rows of bindings, transposed into one list per variable.

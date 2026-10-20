@@ -79,21 +79,24 @@ module PREM
   //   rulegroup Eval_prem/iterpr-opt
   syntax KItem ::= evalIterPrOpt(VariList, VariList, Prem)
   rule <k> evalPrem(iterPr(P:Prem, iterPrem(quest(), Bound:VariList, Bind:VariList)))
-        => subOptRow(Bound) ~> evalIterPrOpt(Bound, Bind, P)
+        => subRow(Bound, quest()) ~> evalIterPrOpt(Bound, Bind, P)
        ...
        </k>
 
   //   rule Eval_prem/none: every bound variable is `OPT eps`
-  rule <k> noRowOpt() ~> evalIterPrOpt(_:VariList, Bind:VariList, _:Prem) => .K ... </k>
+  rule <k> Vs:ValList ~> evalIterPrOpt(_:VariList, Bind:VariList, _:Prem) => .K ... </k>
        <lvenv> M:Map => addsMap(M, iterVaris(Bind, quest()),
                                 repeatVal(optV(noVal()), lengthVaris(Bind))) </lvenv>
+    requires allNoneOpts(Vs)
 
   //   rule Eval_prem/some: the premise under the sub-context, then its
   //   bindings as `OPT val`
-  rule <k> someRowOpt(Row:ValList) ~> evalIterPrOpt(Bound:VariList, Bind:VariList, P:Prem)
-        => inScope(bindRow(Bound, Row) ~> evalPrem(P) ~> readVaris(Bind)) ~> bindOpts(Bind)
+  rule <k> Vs:ValList ~> evalIterPrOpt(Bound:VariList, Bind:VariList, P:Prem)
+        => inScope(bindRow(Bound, unwrapSomeOpts(Vs)) ~> evalPrem(P) ~> readVaris(Bind))
+           ~> bindOpts(Bind)
        ...
        </k>
+    requires allSomeOpts(Vs)
 
   syntax KItem ::= bindOpts(VariList)
   rule <k> Vs:ValList ~> bindOpts(Bind:VariList) => .K ... </k>
@@ -102,14 +105,14 @@ module PREM
   //   rulegroup Eval_prem/iterpr-list
   syntax KItem ::= evalIterPrList(VariList, VariList, Prem)
   rule <k> evalPrem(iterPr(P:Prem, iterPrem(star(), Bound:VariList, Bind:VariList)))
-        => subListRows(Bound) ~> evalIterPrList(Bound, Bind, P)
+        => subRow(Bound, star()) ~> evalIterPrList(Bound, Bind, P)
        ...
        </k>
 
   //   rule Eval_prem/empty, /list: the premise under each sub-context in
   //   turn, then the rows of bindings transposed into lists
-  rule <k> Rows:ValListList ~> evalIterPrList(Bound:VariList, Bind:VariList, P:Prem)
-        => premRows(Bound, Bind, P, Rows, .List)
+  rule <k> Vs:ValList ~> evalIterPrList(Bound:VariList, Bind:VariList, P:Prem)
+        => premRows(Bound, Bind, P, rows(Vs), .List)
        ...
        </k>
 

@@ -73,10 +73,10 @@ module CALL-FUNC
   // when no ordinary clause matched, in the callee's frame.
   // ==========================================================================
 
-  syntax KItem ::= callDefinedFunc(TParamList, ClauseList, ElsClauseOpt, TypList, ValList)
+  syntax KItem ::= callDefinedFunc(TParamList, ClauseList, ElsClauseOpt, TArgList, ValList)
 
-  rule <k> callDefinedFunc(Ps:TParamList, Cls:ClauseList, EC:ElsClauseOpt, Ts:TypList, Vs:ValList)
-        => enterFrame(tdenvOfTargs(Ps, Ts))
+  rule <k> callDefinedFunc(Ps:TParamList, Cls:ClauseList, EC:ElsClauseOpt, Ts:TArgList, Vs:ValList)
+        => enterFrame(tdenvOf(Ps, Ts))
            ~> det(clauseAlts(Cls, Vs), elsClauseK(EC, Vs))
            ~> endFrame
        ...
@@ -86,12 +86,6 @@ module CALL-FUNC
                                             [function, total, symbol(elsClauseK)]
   rule elsClauseK(noElsClause(), _:ValList) => backtrack
   rule elsClauseK(someElsClause(Cl:Clause), Vs:ValList) => evalClause(Cl, Vs)
-
-  syntax Map ::= tdenvOfTargs(TParamList, TypList)
-                                            [function, symbol(tdenvOfTargs)]
-  rule tdenvOfTargs(.TParamList, .TypList) => .Map
-  rule tdenvOfTargs((X:TParam, Xs:TParamList), (T:Typ, Ts:TypList))
-    => tdenvOfTargs(Xs, Ts) [{X}:>Id <- defTD(.TParamList, aliasDT(T))]
 
   // ==========================================================================
   // Call_func_dispatch
@@ -122,7 +116,7 @@ module CALL-FUNC
        </k>
   rule <k> callFuncDispatch(defFunc(Ps:TParamList, Cls:ClauseList, EC:ElsClauseOpt),
                             Ts:TArgList, Vs:ValList)
-        => callDefinedFunc(Ps, Cls, EC, typsOfTargs(Ts), Vs)
+        => callDefinedFunc(Ps, Cls, EC, Ts, Vs)
        ...
        </k>
 

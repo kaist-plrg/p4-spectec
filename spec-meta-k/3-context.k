@@ -152,103 +152,48 @@ module CONTEXT
        <callstack> ListItem(frame(T:Map, F:Map, V:Map, CF:Map)) => .List ... </callstack>
 
   // ==========================================================================
-  // $load: consumes definitions off the head of the script into <global>
+  // $load: definitions in order, each into <global>
   // ==========================================================================
 
-  rule <k> (extTypD(X:Id), Ds:Script) => Ds ... </k>
+  rule <k> (D:Defn, Ds:Script) => D ~> Ds ... </k>
+  rule <k> .Script => .K ... </k>
+
+  rule <k> extTypD(X:Id) => .K ... </k>
        <gtdenv> M:Map => M[X <- extTD()] </gtdenv>
-  rule <k> (typD(X:Id, Ps:TParamList, DT:DefTyp), Ds:Script) => Ds ... </k>
+  rule <k> typD(X:Id, Ps:TParamList, DT:DefTyp) => .K ... </k>
        <gtdenv> M:Map => M[X <- defTD(Ps, DT)] </gtdenv>
 
-  rule <k> (extRelD(X:Id, _:TypList, _:TypList), Ds:Script) => Ds ... </k>
+  rule <k> extRelD(X:Id, _:TypList, _:TypList) => .K ... </k>
        <grenv> M:Map => M[X <- extRel(X)] </grenv>
-  rule <k> (relD(X:Id, _:TypList, _:TypList, Gs:RulGroupList, EG:ElsGroupOpt),
-            Ds:Script)
-        => Ds
-       ...
-       </k>
+  rule <k> relD(X:Id, _:TypList, _:TypList, Gs:RulGroupList, EG:ElsGroupOpt) => .K ... </k>
        <grenv> M:Map => M[X <- defRel(Gs, EG)] </grenv>
 
-  rule <k> (extFuncD(X:Id, _:TParamList, _:ParamList, _:Typ), Ds:Script) => Ds ... </k>
+  rule <k> extFuncD(X:Id, _:TParamList, _:ParamList, _:Typ) => .K ... </k>
        <gfenv> M:Map => M[X <- extFunc(X)] </gfenv>
-  rule <k> (builtinFuncD(X:Id, Ps:TParamList, As:ParamList, _:Typ), Ds:Script)
-        => Ds
-       ...
-       </k>
+  rule <k> builtinFuncD(X:Id, Ps:TParamList, As:ParamList, _:Typ) => .K ... </k>
        <gfenv> M:Map => M[X <- builtinFunc(X, Ps, As)] </gfenv>
-  rule <k> (tableFuncD(X:Id, As:ParamList, _:Typ, Rs:TblRowList), Ds:Script)
-        => Ds
-       ...
-       </k>
+  rule <k> tableFuncD(X:Id, As:ParamList, _:Typ, Rs:TblRowList) => .K ... </k>
        <gfenv> M:Map => M[X <- tableFunc(As, Rs)] </gfenv>
-  rule <k> (funcD(X:Id, Ps:TParamList, _:ParamList, _:Typ, Cs:ClauseList, EC:ElsClauseOpt),
-            Ds:Script)
-        => Ds
+  rule <k> funcD(X:Id, Ps:TParamList, _:ParamList, _:Typ, Cs:ClauseList, EC:ElsClauseOpt)
+        => .K
        ...
        </k>
        <gfenv> M:Map => M[X <- defFunc(Ps, Cs, EC)] </gfenv>
-
-  rule <k> .Script => .K ... </k>
-
-  // ==========================================================================
-  // $find_typ
-  // ==========================================================================
-
-  syntax TypDefOpt ::= noTypDefOpt()        [symbol(noTypDefOpt)]
-                     | someTypDefOpt(TypDef)
-                                            [symbol(someTypDefOpt)]
-
-  syntax TypDefOpt ::= findTypIn(Map, Map, Id)
-                                            [function, total, symbol(findTypIn)]
-                                            // (ltdenv, gtdenv, id)
-
-  rule findTypIn(L:Map, _:Map, X:Id) => someTypDefOpt({L[X]}:>TypDef)
-    requires X in_keys(L)
-  rule findTypIn(L:Map, G:Map, X:Id) => someTypDefOpt({G[X]}:>TypDef)
-    requires notBool (X in_keys(L)) andBool (X in_keys(G))
-  rule findTypIn(L:Map, G:Map, X:Id) => noTypDefOpt()
-    requires notBool (X in_keys(L)) andBool notBool (X in_keys(G))
 
   // ==========================================================================
   // Sub-context construction for iteration
   //
   //   dec $sub_opt(ctx, vari*) : ctx?
   //   dec $sub_list(ctx, vari*) : ctx*
+  //
+  // `subRow(vari*, iter)` finds the bound variables at one more iteration;
+  // the consumer splits on `allSomeOpts`/`allNoneOpts` or transposes the
+  // lists into `rows`.
   // ==========================================================================
 
-  syntax SubOptRow ::= noRowOpt()           [symbol(noRowOpt)]
-                     | someRowOpt(ValList)  [symbol(someRowOpt)]
-
-  syntax KItem ::= subOptRow(VariList)
-  rule <k> subOptRow(Vs:VariList) => classifySubOpt(findOpts(iterVaris(Vs, quest()), M)) ... </k>
+  syntax KItem ::= subRow(VariList, Iter)
+  rule <k> subRow(Xs:VariList, I:Iter) => finds(iterVaris(Xs, I), M) ... </k>
        <lvenv> M:Map </lvenv>
-
-  syntax ValListOpt ::= noValListOpt()      [symbol(noValListOpt)]
-                      | someValListOpt(ValList)
-                                            [symbol(someValListOpt)]
-
-  syntax ValListOpt ::= findOpts(VarrList, Map)
-                                            [function, total, symbol(findOpts)]
-  rule findOpts(.VarrList, _:Map) => someValListOpt(.ValList)
-  rule findOpts((R:Varr, Rs:VarrList), M:Map)
-    => consOptRow({M[R]}:>Val, findOpts(Rs, M))
-    requires R in_keys(M)
-  rule findOpts((R:Varr, _:VarrList), M:Map) => noValListOpt()
-    requires notBool (R in_keys(M))
-
-  syntax ValListOpt ::= consOptRow(Val, ValListOpt)
-                                            [function, total, symbol(consOptRow)]
-  rule consOptRow(V:Val, someValListOpt(Vs:ValList)) => someValListOpt(V, Vs)
-  rule consOptRow(_:Val, noValListOpt()) => noValListOpt()
-
-  syntax SubOptRow ::= classifySubOpt(ValListOpt)
-                                            [function, symbol(classifySubOpt)]
-  // every lookup was `OPT val`
-  rule classifySubOpt(someValListOpt(Vs:ValList)) => someRowOpt(unwrapSomeOpts(Vs))
-    requires allSomeOpts(Vs)
-  // every lookup was `OPT eps`
-  rule classifySubOpt(someValListOpt(Vs:ValList)) => noRowOpt()
-    requires allNoneOpts(Vs)
 
   syntax Bool ::= allSomeOpts(ValList)      [function, total, symbol(allSomeOpts)]
                 | allNoneOpts(ValList)      [function, total, symbol(allNoneOpts)]
@@ -264,29 +209,13 @@ module CONTEXT
   rule unwrapSomeOpts(.ValList) => .ValList
   rule unwrapSomeOpts(optV(someVal(V:Val)), Vs:ValList) => V, unwrapSomeOpts(Vs)
 
-  // `$sub_list`: the rows to bind, one per element, or `.ValListList` if no
-  // rows apply (`$sub_list(C, vari*) = eps`, e.g. an empty `LIST`).
-  syntax KItem ::= subListRows(VariList)
-  rule <k> subListRows(Vs:VariList) => transposeVal(unwrapLists(findLists(iterVaris(Vs, star()), M))) ... </k>
-       <lvenv> M:Map </lvenv>
-
-  syntax ValList ::= findLists(VarrList, Map)
-                                            [function, symbol(findLists)]
-  rule findLists(.VarrList, _:Map) => .ValList
-  rule findLists((R:Varr, Rs:VarrList), M:Map) => {M[R]}:>Val, findLists(Rs, M)
-    requires R in_keys(M)
-
-  syntax ValListList ::= unwrapLists(ValList)
-                                            [function, symbol(unwrapLists)]
-  rule unwrapLists(.ValList) => .ValListList
-  rule unwrapLists(listV(Vs:ValList), Ws:ValList) => Vs ; unwrapLists(Ws)
-
-  // `vari*` at one more `iter`.
-  syntax VarrList ::= iterVaris(VariList, Iter)
-                                            [function, total, symbol(iterVaris)]
-  rule iterVaris(.VariList, _:Iter) => .VarrList
-  rule iterVaris((V:Vari, Vs:VariList), I:Iter)
-    => varrOfVari(iterVari(V, I)), iterVaris(Vs, I)
+  // The rows of `$sub_list`: the bound lists transposed, one row per
+  // element, so an empty list gives no rows.
+  syntax ValListList ::= rows(ValList)      [function, symbol(rows)]
+                       | lists(ValList)     [function, symbol(lists)]
+  rule rows(Vs:ValList) => transposeVal(lists(Vs))
+  rule lists(.ValList) => .ValListList
+  rule lists(listV(Vs:ValList), Ws:ValList) => Vs ; lists(Ws)
 
   // Bind one row of a sub-context.
   syntax KItem ::= bindRow(VariList, ValList)

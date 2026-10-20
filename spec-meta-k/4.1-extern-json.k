@@ -101,7 +101,7 @@ module EXTERN-JSON
   rule jsonOfTyps(T:Typ, Ts:TypList) => jsonOfTyp(T), jsonOfTyps(Ts)
 
   rule jsonOfTargs(.TArgList) => .JSONs
-  rule jsonOfTargs(T:TArg, Ts:TArgList) => jsonOfTyp({T}:>Typ), jsonOfTargs(Ts)
+  rule jsonOfTargs(T:Typ, Ts:TArgList) => jsonOfTyp(T), jsonOfTargs(Ts)
 
   // ==========================================================================
   // Requests

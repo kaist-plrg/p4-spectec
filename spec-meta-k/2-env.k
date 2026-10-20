@@ -36,16 +36,17 @@ module ENV
   // ==========================================================================
   // Type substitution environment
   //
-  //   dec $theta_of_tdenv(tdenv) : theta
+  //   if tdenv = `{ (tparam ':' (DEF eps '->' (ALIAS typ)))* `}
+  //
+  // A substitution is a tdenv of aliases, one per type parameter.
   // ==========================================================================
 
-  syntax Map ::= thetaOfTdenv(Map)          [function, symbol(thetaOfTdenv)]
+  syntax Map ::= tdenvOf(TParamList, TArgList)
+                                            [function, symbol(tdenvOf)]
 
-  rule thetaOfTdenv(.Map) => .Map
-  rule thetaOfTdenv(X:Id |-> defTD(.TParamList, aliasDT(T:Typ)) M:Map)
-    => (X |-> T) thetaOfTdenv(M)
-  rule thetaOfTdenv(_:Id |-> paramTD() M:Map) => thetaOfTdenv(M)
-  rule thetaOfTdenv(_:Id |-> extTD() M:Map) => thetaOfTdenv(M)
+  rule tdenvOf(.TParamList, .TArgList) => .Map
+  rule tdenvOf((X:Id, Xs:TParamList), (T:Typ, Ts:TArgList))
+    => (X |-> defTD(.TParamList, aliasDT(T))) tdenvOf(Xs, Ts)
 
   // ==========================================================================
   // Iteration helpers
@@ -89,6 +90,31 @@ module ENV
                                             [function, total, symbol(varrsOfVaris)]
   rule varrsOfVaris(.VariList) => .VarrList
   rule varrsOfVaris(V:Vari, Vs:VariList) => varrOfVari(V), varrsOfVaris(Vs)
+
+  // `vari*` at one more `iter`.
+  syntax VarrList ::= iterVaris(VariList, Iter)
+                                            [function, total, symbol(iterVaris)]
+  rule iterVaris(.VariList, _:Iter) => .VarrList
+  rule iterVaris((V:Vari, Vs:VariList), I:Iter)
+    => varrOfVari(iterVari(V, I)), iterVaris(Vs, I)
+
+  // ==========================================================================
+  // Value finders and adders
+  //
+  //   dec $find_varrs(ctx, varr*) : val*?
+  //   dec $adds_map<varr, val>
+  // ==========================================================================
+
+  // The values of the variables, all of which must be bound.
+  syntax ValList ::= finds(VarrList, Map)   [function, symbol(finds)]
+  rule finds(.VarrList, _:Map) => .ValList
+  rule finds((R:Varr, Rs:VarrList), ((R |-> V:Val) _:Map) #as M:Map) => V, finds(Rs, M)
+
+  syntax Map ::= addsMap(Map, VarrList, ValList)
+                                            [function, symbol(addsMap)]
+  rule addsMap(M:Map, .VarrList, .ValList) => M
+  rule addsMap(M:Map, (R:Varr, Rs:VarrList), (V:Val, Vs:ValList))
+    => addsMap(M[R <- V], Rs, Vs)
 
   // ==========================================================================
   // reldef / funcdef

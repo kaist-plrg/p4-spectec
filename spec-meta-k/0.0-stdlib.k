@@ -92,7 +92,7 @@ module STDLIB
                                             [function, total, symbol(assocVal)]
 
   rule assocVal(_:Atom, .ValFieldList) => noVal()
-  rule assocVal(A:Atom, valField(A':Atom, V:Val), Fs:ValFieldList)
-    => #if A ==String A' #then someVal(V) #else assocVal(A, Fs) #fi
+  rule assocVal(A:Atom, (valField(A, V:Val), _:ValFieldList)) => someVal(V)
+  rule assocVal(A:Atom, (_:ValField, Fs:ValFieldList)) => assocVal(A, Fs) [owise]
 
 endmodule
