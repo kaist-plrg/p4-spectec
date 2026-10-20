@@ -40,14 +40,14 @@ module CALL-REL
   // Each alternative pairs a group's rulmatch with one of its paths.
   // ==========================================================================
 
-  syntax Alts ::= rulAlts(RulGroupList, ValList)
-                                            [function, total, symbol(rulAlts)]
-  rule rulAlts(.RulGroupList, _:ValList) => .Alts
-  rule rulAlts((rulGroup(_:Id, _:RulMatch, .RulPathList), Gs:RulGroupList), Vs:ValList)
-    => rulAlts(Gs, Vs)
-  rule rulAlts((rulGroup(X:Id, M:RulMatch, (P:RulPath, Ps:RulPathList)), Gs:RulGroupList),
+  syntax Tries ::= rulTries(RulGroupList, ValList)
+                                            [function, total, symbol(rulTries)]
+  rule rulTries(.RulGroupList, _:ValList) => .Tries
+  rule rulTries((rulGroup(_:Id, _:RulMatch, .RulPathList), Gs:RulGroupList), Vs:ValList)
+    => rulTries(Gs, Vs)
+  rule rulTries((rulGroup(X:Id, M:RulMatch, (P:RulPath, Ps:RulPathList)), Gs:RulGroupList),
                Vs:ValList)
-    => alt(evalRul(M, P, Vs)) ; rulAlts((rulGroup(X, M, Ps), Gs), Vs)
+    => try(evalRul(M, P, Vs)) ; rulTries((rulGroup(X, M, Ps), Gs), Vs)
 
   // ==========================================================================
   // Call_defined_rel
@@ -70,7 +70,7 @@ module CALL-REL
 
   rule <k> callDefinedRel(Gs:RulGroupList, EG:ElsGroupOpt, Vs:ValList)
         => enterFrame(.Map)
-           ~> det(rulAlts(Gs, Vs), elsGroupK(EG, Vs))
+           ~> det(rulTries(Gs, Vs), elsGroupK(EG, Vs))
            ~> endFrame
        ...
        </k>

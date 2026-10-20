@@ -11,7 +11,7 @@ module AL
   rule <k> afterLoad()
         => logDebug(textV("load complete"))
            ~> logDebug(textV("into call"))
-           ~> alt(callFunc("main", .TArgList, .ValList))
+           ~> try(callFunc("main", .TArgList, .ValList))
            ~> finishMain()
        ...
        </k>
@@ -21,7 +21,7 @@ module AL
   rule <k> afterLoad()
         => logDebug(textV("load complete"))
            ~> logDebug(textV("into call"))
-           ~> alt(callRel(entryRel(), (V, .ValList)))
+           ~> try(callRel(entryRel(), (V, .ValList)))
            ~> finishRel()
        ...
        </k>

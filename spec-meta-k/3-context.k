@@ -41,21 +41,22 @@ module CONTEXT
   rule <k> backtrack ~> (K:KItem => .K) ... </k> requires notBool isBoundary(K)
 
   // ==========================================================================
-  // Alternatives
+  // Tries
   //
-  // `alt(K)` runs `K` as one alternative: its bindings are undone afterwards
-  // and its outcome is recorded. A list of alternatives evaluates in order
-  // to a list of outcomes.
+  // `try(K)` runs `K` as one alternative: its failure is caught, its bindings
+  // are undone afterwards, and its outcome is recorded. A `Try` is a try, or
+  // its outcome once evaluated; a list of tries evaluates in order to a list
+  // of outcomes.
   // ==========================================================================
 
-  syntax Alt ::= alt(K) | Res
+  syntax Try ::= try(K) | Res
 
-  syntax Alts ::= List{Alt, ";"}            [symbol(alts), terminator-symbol(.alts), seqstrict, overload(alts)]
-  syntax Ress ::= List{Res, ";"}            [symbol(ress), terminator-symbol(.ress), overload(alts)]
-  syntax Alts ::= Ress
+  syntax Tries ::= List{Try, ";"}           [symbol(tries), terminator-symbol(.tries), seqstrict, overload(tries)]
+  syntax Ress ::= List{Res, ";"}            [symbol(ress), terminator-symbol(.ress), overload(tries)]
+  syntax Tries ::= Ress
   syntax KResult ::= Ress
 
-  rule <k> alt(K:K) => K ~> checkpoint(F, V) ... </k>
+  rule <k> try(K:K) => K ~> checkpoint(F, V) ... </k>
        <lfenv> F:Map </lfenv>
        <lvenv> V:Map </lvenv>
   rule <k> R:KResult ~> checkpoint(F:Map, V:Map) => ok(R) ... </k>
@@ -76,11 +77,11 @@ module CONTEXT
   //   def $det_valres(valres*) : valres
   //   def $det_valsres(valsres*) : valsres
   //
-  // `det(Alts, Else)` is the single success; `Else` (the else clause or
+  // `det(Tries, Else)` is the single success; `Else` (the else clause or
   // group, or `backtrack`) when none succeeded; `backtrack` when several did.
   // ==========================================================================
 
-  syntax KItem ::= det(Alts, KItem)         [strict(1)]
+  syntax KItem ::= det(Tries, KItem)        [strict(1)]
   rule <k> det(Rs:Ress, Else:KItem) => pick(oks(Rs), Else) ... </k>
 
   syntax KItem ::= pick(List, KItem)
@@ -95,7 +96,7 @@ module CONTEXT
   rule oks(FAIL ; Rs:Ress) => oks(Rs)
 
   // The first success of alternatives tried in order.
-  syntax KItem ::= firstOf(Alt, KItem)      [strict(1)]
+  syntax KItem ::= firstOf(Try, KItem)      [strict(1)]
   rule <k> firstOf(ok(R:KItem), _:KItem) => R ... </k>
   rule <k> firstOf(FAIL, Next:KItem) => Next ... </k>
 

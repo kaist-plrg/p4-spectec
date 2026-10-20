@@ -62,7 +62,7 @@ module PREM
 
   // The relation call is one alternative: the premise holds iff it fails.
   rule <k> evalPrem(ifNotHoldPr(X:Id, Es:ExpList)) => evalExps(Es) ~> notHoldPrAwaitArgsK(X) ... </k>
-  rule <k> Vs:ValList ~> notHoldPrAwaitArgsK(X:Id) => alt(callRel(X, Vs)) ~> notHoldPrAwaitOutputsK() ... </k>
+  rule <k> Vs:ValList ~> notHoldPrAwaitArgsK(X:Id) => try(callRel(X, Vs)) ~> notHoldPrAwaitOutputsK() ... </k>
 
   syntax KItem ::= "notHoldPrAwaitOutputsK" "(" ")"
   rule <k> FAIL ~> notHoldPrAwaitOutputsK() => .K ... </k>

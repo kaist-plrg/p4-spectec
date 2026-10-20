@@ -28,11 +28,11 @@ module CALL-FUNC
   //   rule Eval_clauses:
   //     -- (Eval_clause: C_callee '/' C |- clause '@' `( val* `) : valres)*
   //     -- if valres' = $det_valres(valres*)
-  syntax Alts ::= clauseAlts(ClauseList, ValList)
-                                            [function, total, symbol(clauseAlts)]
-  rule clauseAlts(.ClauseList, _:ValList) => .Alts
-  rule clauseAlts((Cl:Clause, Cls:ClauseList), Vs:ValList)
-    => alt(evalClause(Cl, Vs)) ; clauseAlts(Cls, Vs)
+  syntax Tries ::= clauseTries(ClauseList, ValList)
+                                            [function, total, symbol(clauseTries)]
+  rule clauseTries(.ClauseList, _:ValList) => .Tries
+  rule clauseTries((Cl:Clause, Cls:ClauseList), Vs:ValList)
+    => try(evalClause(Cl, Vs)) ; clauseTries(Cls, Vs)
 
   // ==========================================================================
   // Eval_tblrow / Eval_tblrows
@@ -54,7 +54,7 @@ module CALL-FUNC
   //   rulegroup Eval_tblrows: in order, the first success wins
   rule <k> evalTblRows(.TblRowList, _:ValList) => backtrack ... </k>
   rule <k> evalTblRows((R:TblRow, Rs:TblRowList), Vs:ValList)
-        => firstOf(alt(evalTblRow(R, Vs)), evalTblRows(Rs, Vs))
+        => firstOf(try(evalTblRow(R, Vs)), evalTblRows(Rs, Vs))
        ...
        </k>
 
@@ -77,7 +77,7 @@ module CALL-FUNC
 
   rule <k> callDefinedFunc(Ps:TParamList, Cls:ClauseList, EC:ElsClauseOpt, Ts:TArgList, Vs:ValList)
         => enterFrame(tdenvOf(Ps, Ts))
-           ~> det(clauseAlts(Cls, Vs), elsClauseK(EC, Vs))
+           ~> det(clauseTries(Cls, Vs), elsClauseK(EC, Vs))
            ~> endFrame
        ...
        </k>
