@@ -29,7 +29,7 @@ pub(crate) fn table_binding_shape_invalid(arg: &ast::Arg) -> AlgoError {
             arg.to_string()
         ),
         vec![Label::primary(&arg.span, "")],
-        vec!["Either form may be upcast. Variant cases may contain only variables.".into()],
+        vec!["Either form may be upcast. Variant case payloads must be irrefutable patterns: variables, tuples, records, singleton constructors, or iterations of these.".into()],
     )
 }
 
