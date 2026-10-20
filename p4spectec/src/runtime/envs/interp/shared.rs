@@ -4,7 +4,7 @@
 
 pub mod caches;
 
-use crate::lang::common::ds::map::IdMap;
+use crate::lang::common::ds::map::{FrozenIdMap, IdMap};
 
 use crate::lang::il::stage::Prepared;
 
@@ -15,3 +15,6 @@ pub type TypeDef<P = Prepared> = typdef::TypeDef<P>;
 
 /// Type names to their definitions.
 pub type TDEnv<P = Prepared> = IdMap<TypeDef<P>>;
+
+/// Type names to their definitions, fixed once loading ends.
+pub type FrozenTDEnv = FrozenIdMap<TypeDef>;
