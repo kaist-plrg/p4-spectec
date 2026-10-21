@@ -80,9 +80,8 @@ xref:strip_all_whitespace[The text ``t`` with all whitespace removed]
 
 xref:starts_with[The text ``t`` starts with ``t~prefix~``]
 
-. If the length of ``t~prefix~`` is less than or equal to the length of ``t``:
- .. If ``0`` ``{plus}`` ``the`` ``length`` ``of`` ``t~prefix~`` is less than or equal to the length of ``t``:
-  ... If ``t[0`` ``:`` ``the`` ``length`` ``of`` ``t~prefix~]`` is equal to ``t~prefix~``: return ``true``.
+. If ``0`` ``{plus}`` ``the`` ``length`` ``of`` ``t~prefix~`` is less than or equal to the length of ``t``:
+ .. If ``t[0`` ``:`` ``the`` ``length`` ``of`` ``t~prefix~]`` is equal to ``t~prefix~``: return ``true``.
 
 . +++<span id="func:starts_with-else"></span>+++Otherwise: return ``false``.
 
@@ -860,27 +859,25 @@ xref:write_value_from_bits'[$write_value_from_bits'(value', n~var~, b^{asterisk}
    .... Return ( ``{nbsp}~B~`` ``b~h~``, ``b~t~^{asterisk}^`` ).
  .. Else if let ``integerLiteral`` of type ``integerLiteral`` be ``value'``:
   ... If let ``w`` ``+W+`` ``++_++`` be ``integerLiteral``:
-   .... If the length of ``b^{asterisk}^`` is greater than or equal to ``w``:
-    ..... If ``0`` ``{plus}`` ``w`` is less than or equal to the length of ``b^{asterisk}^``:
-     ...... Let ``b~h~^{asterisk}^`` be ``b^{asterisk}^[0`` ``:`` ``w]``.
-     ...... Let ``i'`` be ``the`` ``length`` ``of`` ``b^{asterisk}^`` ``-`` ``w``.
-     ...... If let ``n~t~`` of type ``nat`` be ``i'``:
-      ....... If ``w`` ``{plus}`` ``n~t~`` is less than or equal to the length of ``b^{asterisk}^``:
-       ........ Let ``b~t~^{asterisk}^`` be ``b^{asterisk}^[w`` ``:`` ``n~t~]``.
-       ........ Let ``int`` be xref:bits_to_int_unsigned[``$bits_to_int_unsigned(b~h~^{asterisk}^)``].
-       ........ Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``int``].
-       ........ Return ( ``w`` ``+W+`` ``i``, ``b~t~^{asterisk}^`` ).
+   .... If ``0`` ``{plus}`` ``w`` is less than or equal to the length of ``b^{asterisk}^``:
+    ..... Let ``b~h~^{asterisk}^`` be ``b^{asterisk}^[0`` ``:`` ``w]``.
+    ..... Let ``i'`` be ``the`` ``length`` ``of`` ``b^{asterisk}^`` ``-`` ``w``.
+    ..... If let ``n~t~`` of type ``nat`` be ``i'``:
+     ...... If ``w`` ``{plus}`` ``n~t~`` is less than or equal to the length of ``b^{asterisk}^``:
+      ....... Let ``b~t~^{asterisk}^`` be ``b^{asterisk}^[w`` ``:`` ``n~t~]``.
+      ....... Let ``int`` be xref:bits_to_int_unsigned[``$bits_to_int_unsigned(b~h~^{asterisk}^)``].
+      ....... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``int``].
+      ....... Return ( ``w`` ``+W+`` ``i``, ``b~t~^{asterisk}^`` ).
   ... Else if let ``w`` ``+S+`` ``++_++`` be ``integerLiteral``:
-   .... If the length of ``b^{asterisk}^`` is greater than or equal to ``w``:
-    ..... If ``0`` ``{plus}`` ``w`` is less than or equal to the length of ``b^{asterisk}^``:
-     ...... Let ``b~h~^{asterisk}^`` be ``b^{asterisk}^[0`` ``:`` ``w]``.
-     ...... Let ``i'`` be ``the`` ``length`` ``of`` ``b^{asterisk}^`` ``-`` ``w``.
-     ...... If let ``n~t~`` of type ``nat`` be ``i'``:
-      ....... If ``w`` ``{plus}`` ``n~t~`` is less than or equal to the length of ``b^{asterisk}^``:
-       ........ Let ``b~t~^{asterisk}^`` be ``b^{asterisk}^[w`` ``:`` ``n~t~]``.
-       ........ Let ``int'`` be xref:bits_to_int_signed[``$bits_to_int_signed(b~h~^{asterisk}^)``].
-       ........ Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``int'``].
-       ........ Return ( ``w`` ``+S+`` ``i``, ``b~t~^{asterisk}^`` ).
+   .... If ``0`` ``{plus}`` ``w`` is less than or equal to the length of ``b^{asterisk}^``:
+    ..... Let ``b~h~^{asterisk}^`` be ``b^{asterisk}^[0`` ``:`` ``w]``.
+    ..... Let ``i'`` be ``the`` ``length`` ``of`` ``b^{asterisk}^`` ``-`` ``w``.
+    ..... If let ``n~t~`` of type ``nat`` be ``i'``:
+     ...... If ``w`` ``{plus}`` ``n~t~`` is less than or equal to the length of ``b^{asterisk}^``:
+      ....... Let ``b~t~^{asterisk}^`` be ``b^{asterisk}^[w`` ``:`` ``n~t~]``.
+      ....... Let ``int'`` be xref:bits_to_int_signed[``$bits_to_int_signed(b~h~^{asterisk}^)``].
+      ....... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``int'``].
+      ....... Return ( ``w`` ``+S+`` ``i``, ``b~t~^{asterisk}^`` ).
  .. Else if let ``+STRUCT+`` ``typeId`` ``+`{+`` ``fieldValue^{asterisk}^`` ``+`}+`` of type ``structValue`` be ``value'``:
   ... Let ``(`` ``fieldValue~updated~^{asterisk}^,`` ``b~rest~^{asterisk}^`` ``)`` be xref:write_value_fields_from_bits'[``$write_value_fields_from_bits'(fieldValue^{asterisk}^,`` ``n~var~,`` ``b^{asterisk}^)``].
   ... Return ( ``+STRUCT+`` ``typeId`` ``+`{+`` ``fieldValue~updated~^{asterisk}^`` ``+`}+``, ``b~rest~^{asterisk}^`` ).
@@ -905,7 +902,6 @@ xref:write_value_from_bits'[$write_value_from_bits'(value', n~var~, b^{asterisk}
  .. If ``n~var~`` is equal to ``0``:
   ... Return ( ``n~max~`` ``+'.'+`` ``0`` ``+V+`` ``i``, ``b^{asterisk}^`` ).
  .. Else:
-  ... Check that the length of ``b^{asterisk}^`` is greater than or equal to ``n~var~``.
   ... Check that ``0`` ``{plus}`` ``n~var~`` is less than or equal to the length of ``b^{asterisk}^``.
   ... Let ``b~h~^{asterisk}^`` be ``b^{asterisk}^[0`` ``:`` ``n~var~]``.
   ... Let ``i'`` be ``the`` ``length`` ``of`` ``b^{asterisk}^`` ``-`` ``n~var~``.
@@ -2168,7 +2164,7 @@ xref:specialize_typeDefIR[``typeDefIR~base~`` specialized by ``typeArgumentIR^{a
 
 . Let ``(`` ``typeParameterIR~expl~^{asterisk}^,`` ``typeParameterIR~impl~^{asterisk}^`` ``)`` be xref:typeParameterListIR_of_typeDefIR[the type parameters of ``typeDefIR~base~``].
 . Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^``.
-. Check that the length of ``typeParameterIR^{asterisk}^`` is equal to the length of ``typeArgumentIR^{asterisk}^``.
+. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``theta`` be ``+`{+`` ``(`` ``typeParameterIR`` ``+':'+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+`}+``.
 . Let ``typeIR~base~`` be xref:typeIR_of_typeDefIR[the underlying type of ``typeDefIR~base~``].
 . Let ``typeIR~spec~`` be xref:subst_typeIR[``typeIR~base~`` substituted by ``theta``].
@@ -16212,7 +16208,7 @@ xref:SelectCase_keyset_ok[Typing ``tupleKeysetExpression`` under context ``TC`` 
  .. Else if let ``+`(+`` ``simpleKeysetExpression~h~`` ``+','+`` ``simpleKeysetExpressionList~t~`` ``+`)+`` be ``tupleKeysetExpression``:
   ... Let ``simpleKeysetExpression~t~^{asterisk}^`` be xref:flatten_simpleKeysetExpressionList[``simpleKeysetExpressionList~t~`` flattened].
   ... Let ``simpleKeysetExpression^{asterisk}^`` be ``simpleKeysetExpression~h~`` ``{two-colons}`` ``simpleKeysetExpression~t~^{asterisk}^``.
-  ... Check that the length of ``typeIR^{asterisk}^`` is equal to the length of ``simpleKeysetExpression^{asterisk}^``.
+  ... Check that the length of ``simpleKeysetExpression^{asterisk}^`` is equal to the length of ``typeIR^{asterisk}^``.
   ... For each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` and ``typeIR`` in ``typeIR^{asterisk}^``:
 +
 --
@@ -20003,8 +19999,6 @@ xref:Lvalue_read[Reading from ``storageReference`` ``+'.'+`` ``nameIR``, under c
 . Else if let ``headerStackValue~base~`` of type ``headerStackValue`` be ``value~base~``:
  .. Let ``+HEADER_STACK+`` ``+`[+`` ``value~element~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+`)+`` ``+`]+`` be ``headerStackValue~base~``.
  .. If ``nameIR`` is equal to ``"next"``:
-  ... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
-  ... Check that ``n~idx~`` is less than ``n~size~``.
   ... Check that ``n~idx~`` is less than the length of ``value~element~^{asterisk}^``.
   ... Let ``value`` be ``value~element~^{asterisk}^[n~idx~]``.
   ... The result is value ``value``.

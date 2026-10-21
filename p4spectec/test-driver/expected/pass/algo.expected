@@ -97,7 +97,6 @@ builtin def $strip_all_whitespace(text) : text
 def $starts_with(text, text) : bool =
 
   clause 0 : (t, t_prefix) = true
-  -- if (|t_prefix| <= |t|)
   -- if ((0 + |t_prefix|) <= |t|)
   -- if (t[0 : |t_prefix|] = t_prefix)
 
@@ -2935,7 +2934,6 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches % W %
   -- let w W _i = integerLiteral
-  -- if (|b*{b <- b*}| >= w)
   -- if ((0 + w) <= |b*{b <- b*}|)
   -- let b_h*{b_h <- b_h*} = b*{b <- b*}[0 : w]
   -- let i' = (|b*{b <- b*}| - w)
@@ -2950,7 +2948,6 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches % S %
   -- let w S _i = integerLiteral
-  -- if (|b*{b <- b*}| >= w)
   -- if ((0 + w) <= |b*{b <- b*}|)
   -- let b_h*{b_h <- b_h*} = b*{b <- b*}[0 : w]
   -- let i' = (|b*{b <- b*}| - w)
@@ -2973,7 +2970,6 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- if integerValue matches % '.' % V %
   -- let n_max '.' _nat V _i = integerValue
   -- if (n_var =/= 0)
-  -- if (|b*{b <- b*}| >= n_var)
   -- if ((0 + n_var) <= |b*{b <- b*}|)
   -- let b_h*{b_h <- b_h*} = b*{b <- b*}[0 : n_var]
   -- let i' = (|b*{b <- b*}| - n_var)
@@ -4836,7 +4832,7 @@ def $specialize_typeDefIR(typeDefIR, typeIR*) : typeIR =
   clause 0 : (typeDefIR_base, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}) = typeIR_spec
   -- let (typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}, typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}) = $typeParameterListIR_of_typeDefIR(typeDefIR_base)
   -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
-  -- if (|typeParameterIR*{typeParameterIR <- typeParameterIR*}| = |typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}|)
+  -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
   -- let theta = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}
   -- let typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
   -- let typeIR_spec = $subst_typeIR(theta, typeIR_base)
@@ -23253,7 +23249,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- let `( simpleKeysetExpression_h ',' simpleKeysetExpressionList_t `) = tupleKeysetExpression'
     -- let simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} = $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList_t)
     -- let simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} = simpleKeysetExpression_h :: simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*}
-    -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| = |simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}|)
+    -- if (|simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}| = |typeIR_key*{typeIR_key <- typeIR_key*}|)
     -- (SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : simpleKeysetExpressionIR)*{simpleKeysetExpression <- simpleKeysetExpression*, typeIR_key <- typeIR_key*, simpleKeysetExpressionIR -> simpleKeysetExpressionIR*}
     -- output: % % |- % : `( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} `) as keysetExpressionIR
 
@@ -29097,8 +29093,6 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- let headerStackValue_base = value' as headerStackValue
     -- let HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue_base
     -- if (nameIR = "next")
-    -- let n_size = |value_element*{value_element <- value_element*}|
-    -- if (n_idx < n_size)
     -- if (n_idx < |value_element*{value_element <- value_element*}|)
     -- let value = value_element*{value_element <- value_element*}[n_idx]
     -- output: % % % |- % : value

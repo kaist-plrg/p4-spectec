@@ -246,12 +246,11 @@ rulegroup SelectCase_keyset_ok/tupleKeysetExpression {
   rule SelectCase_keyset_ok/list:
     TC typeIR_key* |- `( simpleKeysetExpression_h ',' simpleKeysetExpressionList_t `)
                     : `( simpleKeysetExpressionIR* `)
-    ---- ;; check arity
+    ---- ;; flatten keysets
     -- if simpleKeysetExpression_t*
         = $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList_t)
     -- if simpleKeysetExpression*
         = simpleKeysetExpression_h :: simpleKeysetExpression_t*
-    -- if |typeIR_key*| = |simpleKeysetExpression*|
     ---- ;; check keysets pairwise
     -- (SelectCase_keyset_simple_ok:
         TC typeIR_key |- simpleKeysetExpression : simpleKeysetExpressionIR)*

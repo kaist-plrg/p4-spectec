@@ -146,13 +146,11 @@ builtin def $strip_all_whitespace(t)
 
 def $starts_with(t, t_prefix)
 
-1. If ((|t_prefix| <= |t|)), then
+1. If (((0 + |t_prefix|) <= |t|)), then
 
-  1. If (((0 + |t_prefix|) <= |t|)), then
+  1. If ((t[0 : |t_prefix|] = t_prefix)), then
 
-    1. If ((t[0 : |t_prefix|] = t_prefix)), then
-
-      1. Return true
+    1. Return true
 
 2. Otherwise,
 
@@ -3448,61 +3446,53 @@ Arm 1:
 
         1. Case (% matches pattern % W %, let (w W _i) = %)
 
-          1. If ((|(b)*{b <- b*}| >= w)), then
+          1. If (((0 + w) <= |(b)*{b <- b*}|)), then
 
-            1. If (((0 + w) <= |(b)*{b <- b*}|)), then
+            1. (Let (b_h)*{b_h <- b_h*} be (b)*{b <- b*}[0 : w])
 
-              1. (Let (b_h)*{b_h <- b_h*} be (b)*{b <- b*}[0 : w])
+            2. (Let i' be (|(b)*{b <- b*}| - w))
 
-              2. (Let i' be (|(b)*{b <- b*}| - w))
+            3. If let n_t of type nat be i', then
 
-              3. If let n_t of type nat be i', then
+              1. If (((w + n_t) <= |(b)*{b <- b*}|)), then
 
-                1. If (((w + n_t) <= |(b)*{b <- b*}|)), then
+                1. (Let (b_t)*{b_t <- b_t*} be (b)*{b <- b*}[w : n_t])
 
-                  1. (Let (b_t)*{b_t <- b_t*} be (b)*{b <- b*}[w : n_t])
+                2. (Let int be $bits_to_int_unsigned((b_h)*{b_h <- b_h*}))
 
-                  2. (Let int be $bits_to_int_unsigned((b_h)*{b_h <- b_h*}))
+                3. (Let i be $int_to_bitstr((w as int), int))
 
-                  3. (Let i be $int_to_bitstr((w as int), int))
+                4. Return (((w W i) as value), (b_t)*{b_t <- b_t*})
 
-                  4. Return (((w W i) as value), (b_t)*{b_t <- b_t*})
+              1. Else Dangling
 
-                1. Else Dangling
-
-              3. Else Dangling
-
-            1. Else Dangling
+            3. Else Dangling
 
           1. Else Dangling
 
         2. Case (% matches pattern % S %, let (w S _i) = %)
 
-          1. If ((|(b)*{b <- b*}| >= w)), then
+          1. If (((0 + w) <= |(b)*{b <- b*}|)), then
 
-            1. If (((0 + w) <= |(b)*{b <- b*}|)), then
+            1. (Let (b_h)*{b_h <- b_h*} be (b)*{b <- b*}[0 : w])
 
-              1. (Let (b_h)*{b_h <- b_h*} be (b)*{b <- b*}[0 : w])
+            2. (Let i' be (|(b)*{b <- b*}| - w))
 
-              2. (Let i' be (|(b)*{b <- b*}| - w))
+            3. If let n_t of type nat be i', then
 
-              3. If let n_t of type nat be i', then
+              1. If (((w + n_t) <= |(b)*{b <- b*}|)), then
 
-                1. If (((w + n_t) <= |(b)*{b <- b*}|)), then
+                1. (Let (b_t)*{b_t <- b_t*} be (b)*{b <- b*}[w : n_t])
 
-                  1. (Let (b_t)*{b_t <- b_t*} be (b)*{b <- b*}[w : n_t])
+                2. (Let int' be $bits_to_int_signed((b_h)*{b_h <- b_h*}))
 
-                  2. (Let int' be $bits_to_int_signed((b_h)*{b_h <- b_h*}))
+                3. (Let i be $int_to_bitstr((w as int), int'))
 
-                  3. (Let i be $int_to_bitstr((w as int), int'))
+                4. Return (((w S i) as value), (b_t)*{b_t <- b_t*})
 
-                  4. Return (((w S i) as value), (b_t)*{b_t <- b_t*})
+              1. Else Dangling
 
-                1. Else Dangling
-
-              3. Else Dangling
-
-            1. Else Dangling
+            3. Else Dangling
 
           1. Else Dangling
 
@@ -3562,27 +3552,25 @@ Arm 2:
 
         2. Case (% =/= 0)
 
-          1. Check ((|(b)*{b <- b*}| >= n_var))
+          1. Check (((0 + n_var) <= |(b)*{b <- b*}|))
 
-            1. Check (((0 + n_var) <= |(b)*{b <- b*}|))
+            1. (Let (b_h)*{b_h <- b_h*} be (b)*{b <- b*}[0 : n_var])
 
-              1. (Let (b_h)*{b_h <- b_h*} be (b)*{b <- b*}[0 : n_var])
+            2. (Let i' be (|(b)*{b <- b*}| - n_var))
 
-              2. (Let i' be (|(b)*{b <- b*}| - n_var))
+            3. Check ((i' has type nat))
 
-              3. Check ((i' has type nat))
+              1. (Let n_t be (i' as nat))
 
-                1. (Let n_t be (i' as nat))
+              2. Check (((n_var + n_t) <= |(b)*{b <- b*}|))
 
-                2. Check (((n_var + n_t) <= |(b)*{b <- b*}|))
+                1. (Let (b_t)*{b_t <- b_t*} be (b)*{b <- b*}[n_var : n_t])
 
-                  1. (Let (b_t)*{b_t <- b_t*} be (b)*{b <- b*}[n_var : n_t])
+                2. (Let int'' be $bits_to_int_signed((b_h)*{b_h <- b_h*}))
 
-                  2. (Let int'' be $bits_to_int_signed((b_h)*{b_h <- b_h*}))
+                3. (Let i' be $int_to_bitstr((n_var as int), int''))
 
-                  3. (Let i' be $int_to_bitstr((n_var as int), int''))
-
-                  4. Return (((n_max '.' n_var V i') as value), (b_t)*{b_t <- b_t*})
+                4. Return (((n_max '.' n_var V i') as value), (b_t)*{b_t <- b_t*})
 
 def $write_values_from_bits'((value)*{value <- value*}, n_var, (b)*{b <- b*})
 
@@ -5832,7 +5820,7 @@ def $specialize_typeDefIR(typeDefIR_base, (typeArgumentIR)*{typeArgumentIR <- ty
 
 2. (Let (typeParameterIR)*{typeParameterIR <- typeParameterIR*} be (typeParameterIR_expl)*{typeParameterIR_expl <- typeParameterIR_expl*} ++ (typeParameterIR_impl)*{typeParameterIR_impl <- typeParameterIR_impl*})
 
-3. Check ((|(typeParameterIR)*{typeParameterIR <- typeParameterIR*}| = |(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}|))
+3. Check ((|(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}| = |(typeParameterIR)*{typeParameterIR <- typeParameterIR*}|))
 
   1. (Let theta be (`{ ((typeParameterIR ':' typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}))
 
@@ -29231,7 +29219,7 @@ Arm 2:
 
             2. (Let (simpleKeysetExpression)*{simpleKeysetExpression <- simpleKeysetExpression*} be simpleKeysetExpression_h :: (simpleKeysetExpression_t)*{simpleKeysetExpression_t <- simpleKeysetExpression_t*})
 
-            3. Check ((|(typeIR)*{typeIR <- typeIR*}| = |(simpleKeysetExpression)*{simpleKeysetExpression <- simpleKeysetExpression*}|))
+            3. Check ((|(simpleKeysetExpression)*{simpleKeysetExpression <- simpleKeysetExpression*}| = |(typeIR)*{typeIR <- typeIR*}|))
 
               1. (SelectCase_keyset_simple_ok: TC typeIR |- simpleKeysetExpression : simpleKeysetExpressionIR)*{simpleKeysetExpression <- simpleKeysetExpression*, typeIR <- typeIR*, simpleKeysetExpressionIR -> simpleKeysetExpressionIR*}
 
@@ -35490,15 +35478,11 @@ relation Lvalue_read: p EC ARCH |- storageReference' : %
 
             1. Case (% = "next")
 
-              1. (Let n_size be |(value_element)*{value_element <- value_element*}|)
+              1. Check ((n_idx < |(value_element)*{value_element <- value_element*}|))
 
-              2. Check ((n_idx < n_size))
+                1. (Let value be (value_element)*{value_element <- value_element*}[n_idx])
 
-                1. Check ((n_idx < |(value_element)*{value_element <- value_element*}|))
-
-                  1. (Let value be (value_element)*{value_element <- value_element*}[n_idx])
-
-                  2. Result in: % % % |- % : value
+                2. Result in: % % % |- % : value
 
             2. Case (% = "last")
 
