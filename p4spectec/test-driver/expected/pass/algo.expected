@@ -70,6 +70,7 @@ def $replace_text'(nat, nat, text, text, text) : text =
   clause 1 : (n, n_len, t, t_old, t_new) = $replace_text'((n + 1), n_len, t_replaced, t_old, t_new)
   -- if (n < n_len)
   -- if (n < |t|)
+  -- if (|t_new| = 1)
   -- let t_replaced = $ite<text>((t[n] = t_old), t[[n] = t_new], t)
 
 def $replace_text_except(text, text, text) : text =
@@ -84,6 +85,7 @@ def $replace_text_except'(nat, nat, text, text, text) : text =
   clause 1 : (n, n_len, t, t_old, t_new) = $replace_text_except'((n + 1), n_len, t_replaced, t_old, t_new)
   -- if (n < n_len)
   -- if (n < |t|)
+  -- if (|t_new| = 1)
   -- let t_replaced = $ite<text>((t[n] = t_old), t, t[[n] = t_new])
 
 builtin def $strip_prefix(text, text) : text
@@ -96,6 +98,7 @@ def $starts_with(text, text) : bool =
 
   clause 0 : (t, t_prefix) = true
   -- if (|t_prefix| <= |t|)
+  -- if ((0 + |t_prefix|) <= |t|)
   -- if (t[0 : |t_prefix|] = t_prefix)
 
   clause -1 : (t, t_prefix) = false
@@ -107,6 +110,7 @@ def $ends_with(text, text) : bool =
   -- let i = (|t| - |t_suffix|)
   -- if i <: nat
   -- let n_start = i as nat
+  -- if ((n_start + |t_suffix|) <= |t|)
   -- if (t[n_start : |t_suffix|] = t_suffix)
 
   clause -1 : (t, t_suffix) = false
@@ -2932,10 +2936,12 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- if integerLiteral matches % W %
   -- let w W _i = integerLiteral
   -- if (|b*{b <- b*}| >= w)
+  -- if ((0 + w) <= |b*{b <- b*}|)
   -- let b_h*{b_h <- b_h*} = b*{b <- b*}[0 : w]
   -- let i' = (|b*{b <- b*}| - w)
   -- if i' <: nat
   -- let n_t = i' as nat
+  -- if ((w + n_t) <= |b*{b <- b*}|)
   -- let b_t*{b_t <- b_t*} = b*{b <- b*}[w : n_t]
   -- let i = $int_to_bitstr(w as int, $bits_to_int_unsigned(b_h*{b_h <- b_h*}))
 
@@ -2945,10 +2951,12 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- if integerLiteral matches % S %
   -- let w S _i = integerLiteral
   -- if (|b*{b <- b*}| >= w)
+  -- if ((0 + w) <= |b*{b <- b*}|)
   -- let b_h*{b_h <- b_h*} = b*{b <- b*}[0 : w]
   -- let i' = (|b*{b <- b*}| - w)
   -- if i' <: nat
   -- let n_t = i' as nat
+  -- if ((w + n_t) <= |b*{b <- b*}|)
   -- let b_t*{b_t <- b_t*} = b*{b <- b*}[w : n_t]
   -- let i = $int_to_bitstr(w as int, $bits_to_int_signed(b_h*{b_h <- b_h*}))
 
@@ -2966,10 +2974,12 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let n_max '.' _nat V _i = integerValue
   -- if (n_var =/= 0)
   -- if (|b*{b <- b*}| >= n_var)
+  -- if ((0 + n_var) <= |b*{b <- b*}|)
   -- let b_h*{b_h <- b_h*} = b*{b <- b*}[0 : n_var]
   -- let i' = (|b*{b <- b*}| - n_var)
   -- if i' <: nat
   -- let n_t = i' as nat
+  -- if ((n_var + n_t) <= |b*{b <- b*}|)
   -- let b_t*{b_t <- b_t*} = b*{b <- b*}[n_var : n_t]
   -- let i = $int_to_bitstr(n_var as int, $bits_to_int_signed(b_h*{b_h <- b_h*}))
 
@@ -4486,7 +4496,9 @@ def $capture_avoiding(theta, typeId*, typeId*, bound) : (theta, typeId*, typeId*
   -- let B_capture = $unions_set<typeId>($free_typeIR(typeIR_free)*{typeIR_free <- typeIR_free*})
   -- let typeId_fresh*{typeId_fresh <- typeId_fresh*} = $fresh_typeIds(|typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}|)
   -- (if ~$in_set<typeId>(typeId_fresh, B_capture))*{typeId_fresh <- typeId_fresh*}
+  -- if ((0 + |typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}|) <= |typeId_fresh*{typeId_fresh <- typeId_fresh*}|)
   -- let typeParameterIR_expl_fresh*{typeParameterIR_expl_fresh <- typeParameterIR_expl_fresh*} = typeId_fresh*{typeId_fresh <- typeId_fresh*}[0 : |typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}|]
+  -- if ((|typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}| + |typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}|) <= |typeId_fresh*{typeId_fresh <- typeId_fresh*}|)
   -- let typeParameterIR_impl_fresh*{typeParameterIR_impl_fresh <- typeParameterIR_impl_fresh*} = typeId_fresh*{typeId_fresh <- typeId_fresh*}[|typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}| : |typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}|]
   -- let theta_fresh = $adds_map<typeId, typeIR>(theta, typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}, _NAME typeParameterIR_expl_fresh as typeIR*{typeParameterIR_expl_fresh <- typeParameterIR_expl_fresh*} ++ _NAME typeParameterIR_impl_fresh as typeIR*{typeParameterIR_impl_fresh <- typeParameterIR_impl_fresh*})
 
@@ -5887,6 +5899,7 @@ def $bin_div(value, value) : value =
   -- let integerLiteral' = value' as integerLiteral
   -- if integerLiteral' matches D %
   -- let D i_r = integerLiteral'
+  -- if (i_r =/= +0)
 
   clause 1 : (value, value') = w W i' as value
   -- if value <: integerLiteral
@@ -5900,6 +5913,7 @@ def $bin_div(value, value) : value =
   -- if (w = w')
   -- let i_l' = $bitstr_to_int(w as int, i_l)
   -- let i_r' = $bitstr_to_int(w as int, i_r)
+  -- if (i_r' =/= +0)
   -- let i' = $int_to_bitstr(w as int, (i_l' / i_r'))
 
 def $bin_mod(value, value) : value =
@@ -5913,6 +5927,7 @@ def $bin_mod(value, value) : value =
   -- let integerLiteral' = value' as integerLiteral
   -- if integerLiteral' matches D %
   -- let D i_r = integerLiteral'
+  -- if (i_r =/= +0)
 
   clause 1 : (value, value') = w W i' as value
   -- if value <: integerLiteral
@@ -5926,6 +5941,7 @@ def $bin_mod(value, value) : value =
   -- if (w = w')
   -- let i_l' = $bitstr_to_int(w as int, i_l)
   -- let i_r' = $bitstr_to_int(w as int, i_r)
+  -- if (i_r' =/= +0)
   -- let i' = $int_to_bitstr(w as int, (i_l' \ i_r'))
 
 def $bin_shl(value, value) : value =
@@ -6479,7 +6495,6 @@ def $bin_eq(value, value) : bool =
   -- (let value_field_a nameIR_field_a ';' = fieldValue_a)*{fieldValue_a <- fieldValue_a*, nameIR_field_a -> nameIR_field_a*, value_field_a -> value_field_a*}
   -- (let value_field_b nameIR_field_b ';' = fieldValue_b)*{fieldValue_b <- fieldValue_b*, nameIR_field_b -> nameIR_field_b*, value_field_b -> value_field_b*}
   -- if (|value_field_a*{value_field_a <- value_field_a*}| = |value_field_b*{value_field_b <- value_field_b*}|)
-  -- if (|nameIR_field_a*{nameIR_field_a <- nameIR_field_a*}| = |nameIR_field_b*{nameIR_field_b <- nameIR_field_b*}|)
 
   clause 18 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- if value <: headerValue
@@ -6489,7 +6504,6 @@ def $bin_eq(value, value) : bool =
   -- (let value_field_a nameIR_field_a ';' = fieldValue_a)*{fieldValue_a <- fieldValue_a*, nameIR_field_a -> nameIR_field_a*, value_field_a -> value_field_a*}
   -- (let value_field_b nameIR_field_b ';' = fieldValue_b)*{fieldValue_b <- fieldValue_b*, nameIR_field_b -> nameIR_field_b*, value_field_b -> value_field_b*}
   -- if (|value_field_a*{value_field_a <- value_field_a*}| = |value_field_b*{value_field_b <- value_field_b*}|)
-  -- if (|nameIR_field_a*{nameIR_field_a <- nameIR_field_a*}| = |nameIR_field_b*{nameIR_field_b <- nameIR_field_b*}|)
 
   clause 19 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- if value <: headerUnionValue
@@ -6499,7 +6513,6 @@ def $bin_eq(value, value) : bool =
   -- (let value_field_a nameIR_field_a ';' = fieldValue_a)*{fieldValue_a <- fieldValue_a*, nameIR_field_a -> nameIR_field_a*, value_field_a -> value_field_a*}
   -- (let value_field_b nameIR_field_b ';' = fieldValue_b)*{fieldValue_b <- fieldValue_b*, nameIR_field_b -> nameIR_field_b*, value_field_b -> value_field_b*}
   -- if (|value_field_a*{value_field_a <- value_field_a*}| = |value_field_b*{value_field_b <- value_field_b*}|)
-  -- if (|nameIR_field_a*{nameIR_field_a <- nameIR_field_a*}| = |nameIR_field_b*{nameIR_field_b <- nameIR_field_b*}|)
 
   clause 20 : (value, value') = ((typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b))
   -- if value <: enumValue
@@ -7319,6 +7332,7 @@ def $cast_record(typeIR, recordValue) : value =
   -- let STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} = typeIR as structTypeIR
   -- if recordValue matches RECORD `{ % `}
   -- let RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `} = recordValue
+  -- (if (|nameIR_field*{nameIR_field <- nameIR_field*}| = |value_field*{value_field <- value_field*}|))*{id_t_field <- id_t_field*}
   -- (let value?{value <- value?} = $find_map<id, value>(`{ nameIR_field ':' value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
   -- (if value?{value <- value?} matches (_))*{value? <- value?*}
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
@@ -7329,6 +7343,7 @@ def $cast_record(typeIR, recordValue) : value =
   -- let HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} = typeIR as headerTypeIR
   -- if recordValue matches RECORD `{ % `}
   -- let RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `} = recordValue
+  -- (if (|nameIR_field*{nameIR_field <- nameIR_field*}| = |value_field*{value_field <- value_field*}|))*{id_t_field <- id_t_field*}
   -- (let value?{value <- value?} = $find_map<id, value>(`{ nameIR_field ':' value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
   -- (if value?{value <- value?} matches (_))*{value? <- value?*}
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
@@ -7341,6 +7356,7 @@ def $cast_record(typeIR, recordValue) : value =
   -- let RECORD `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} = recordTypeIR
   -- if recordValue matches RECORD `{ % `}
   -- let RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `} = recordValue
+  -- (if (|nameIR_field*{nameIR_field <- nameIR_field*}| = |value_field*{value_field <- value_field*}|))*{id_t_field <- id_t_field*}
   -- (let value?{value <- value?} = $find_map<id, value>(`{ nameIR_field ':' value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
   -- (if value?{value <- value?} matches (_))*{value? <- value?*}
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
@@ -7353,6 +7369,7 @@ def $cast_record(typeIR, recordValue) : value =
   -- let RECORD `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} ',' '...' `} = recordTypeIR
   -- if recordValue matches RECORD `{ % ',' '...' `}
   -- let RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} ',' '...' `} = recordValue
+  -- (if (|nameIR_field*{nameIR_field <- nameIR_field*}| = |value_field*{value_field <- value_field*}|))*{id_t_field <- id_t_field*}
   -- (let value?{value <- value?} = $find_map<id, value>(`{ nameIR_field ':' value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
   -- (if value?{value <- value?} matches (_))*{value? <- value?*}
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
@@ -7363,6 +7380,7 @@ def $cast_record(typeIR, recordValue) : value =
   -- let STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} = typeIR as structTypeIR
   -- if recordValue matches RECORD `{ % ',' '...' `}
   -- let RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} ',' '...' `} = recordValue
+  -- (if (|nameIR_field*{nameIR_field <- nameIR_field*}| = |value_field*{value_field <- value_field*}|))*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*}
   -- (let value_field_cast = $cast_record_field(typeIR_t_field, id_t_field, `{ nameIR_field ':' value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}))*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*, value_field_cast -> value_field_cast*}
 
   clause 5 : (typeIR, recordValue) = HEADER typeId `{ true ';' value_field_cast id_t_field ';'*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} `} as value
@@ -7370,6 +7388,7 @@ def $cast_record(typeIR, recordValue) : value =
   -- let HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} = typeIR as headerTypeIR
   -- if recordValue matches RECORD `{ % ',' '...' `}
   -- let RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} ',' '...' `} = recordValue
+  -- (if (|nameIR_field*{nameIR_field <- nameIR_field*}| = |value_field*{value_field <- value_field*}|))*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*}
   -- (let value_field_cast = $cast_record_field(typeIR_t_field, id_t_field, `{ nameIR_field ':' value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}))*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*, value_field_cast -> value_field_cast*}
 
 def $cast_record_field(typeIR, id, map<id, value>) : value =
@@ -7644,6 +7663,7 @@ def $sizeof_minSizeInBytes(typeIR) : value =
 
   clause 0 : (typeIR) = D (n_size / 8) as int as value
   -- let n_size = $sizeof_minSizeInBits'(typeIR)
+  -- if (8 =/= 0)
 
 def $sizeof_maxSizeInBits(typeIR) : value =
 
@@ -7714,6 +7734,7 @@ def $sizeof_maxSizeInBytes(typeIR) : value =
 
   clause 0 : (typeIR) = D (n_size / 8) as int as value
   -- let n_size = $sizeof_maxSizeInBits'(typeIR)
+  -- if (8 =/= 0)
 
 syntax prefixedNameIR =
    | _BARE nameIR (from prefixedNameIR)  hint(print %0)
@@ -12528,7 +12549,9 @@ def $tableEntry_lpm_prefix'(value, nat) : nat =
   -- let i' = (w - 1)
   -- if i' <: nat
   -- let w' = i' as nat
+  -- if (2 =/= 0)
   -- if ((n \ 2) =/= 0)
+  -- if (2 as int =/= +0)
   -- let i'' = ((n - 1) / 2 as int)
   -- if i'' <: nat
   -- let n' = i'' as nat
@@ -12546,6 +12569,7 @@ def $tableEntry_lpm_prefix'(value, nat) : nat =
   -- let i' = (w - 1)
   -- if i' <: nat
   -- let w' = i' as nat
+  -- if (2 =/= 0)
   -- if ((n \ 2) = 0)
   -- let value' = w' W (n / 2) as int as value
 
@@ -14804,7 +14828,6 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_index) = nat?{nat <- nat?}
     -- if (n_index < |value_e*{value_e <- value_e*}|)
-    -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- let value = value_e*{value_e <- value_e*}[n_index]
     -- output: % % |- % ~> value
 
@@ -14820,7 +14843,6 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_index) = nat?{nat <- nat?}
     -- if (n_index < |value_e*{value_e <- value_e*}|)
-    -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- let value = value_e*{value_e <- value_e*}[n_index]
     -- output: % % |- % ~> value
 
@@ -14835,7 +14857,6 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_index) = nat?{nat <- nat?}
-    -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- let value = value_e*{value_e <- value_e*}[n_index]
     -- output: % % |- % ~> value
@@ -15861,6 +15882,7 @@ relation Cast_expl_neq: typeIR -> typeIR : castResult
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
     -- (let ?(typeIR_field_a_aligned) = typeIR'''?{typeIR''' <- typeIR'''?})*{typeIR'''? <- typeIR'''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+    -- (if (|id_field_b*{id_field_b <- id_field_b*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
@@ -15881,6 +15903,7 @@ relation Cast_expl_neq: typeIR -> typeIR : castResult
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
     -- (let ?(typeIR_field_a_aligned) = typeIR'''?{typeIR''' <- typeIR'''?})*{typeIR'''? <- typeIR'''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+    -- (if (|id_field_b*{id_field_b <- id_field_b*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
@@ -15914,6 +15937,7 @@ relation Cast_expl_neq: typeIR -> typeIR : castResult
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
     -- (let ?(typeIR_field_a_aligned) = typeIR'''?{typeIR''' <- typeIR'''?})*{typeIR'''? <- typeIR'''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+    -- (if (|id_field_b*{id_field_b <- id_field_b*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_non_default_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
@@ -15921,6 +15945,7 @@ relation Cast_expl_neq: typeIR -> typeIR : castResult
     -- (if castResult matches OK %)*{castResult <- castResult*}
     -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- let `{ id_default*{id_default <- id_default*} `} = $diff_set<id>(`{ id_field_b*{id_field_b <- id_field_b*} `}, `{ id_field_a*{id_field_a <- id_field_a*} `})
+    -- (if (|id_field_b*{id_field_b <- id_field_b*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|))*{id_default <- id_default*}
     -- (let typeIR'''''?{typeIR''''' <- typeIR'''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_default))*{id_default <- id_default*, typeIR'''''? -> typeIR'''''?*}
     -- (if typeIR'''''?{typeIR''''' <- typeIR'''''?} matches (_))*{typeIR'''''? <- typeIR'''''?*}
     -- (let ?(typeIR_field_b_default) = typeIR'''''?{typeIR''''' <- typeIR'''''?})*{typeIR'''''? <- typeIR'''''?*, typeIR_field_b_default -> typeIR_field_b_default*}
@@ -15939,6 +15964,7 @@ relation Cast_expl_neq: typeIR -> typeIR : castResult
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
     -- (let ?(typeIR_field_a_aligned) = typeIR'''?{typeIR''' <- typeIR'''?})*{typeIR'''? <- typeIR'''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+    -- (if (|id_field_b*{id_field_b <- id_field_b*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_non_default_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
@@ -15946,6 +15972,7 @@ relation Cast_expl_neq: typeIR -> typeIR : castResult
     -- (if castResult matches OK %)*{castResult <- castResult*}
     -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- let `{ id_default*{id_default <- id_default*} `} = $diff_set<id>(`{ id_field_b*{id_field_b <- id_field_b*} `}, `{ id_field_a*{id_field_a <- id_field_a*} `})
+    -- (if (|id_field_b*{id_field_b <- id_field_b*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|))*{id_default <- id_default*}
     -- (let typeIR'''''?{typeIR''''' <- typeIR'''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_default))*{id_default <- id_default*, typeIR'''''? -> typeIR'''''?*}
     -- (if typeIR'''''?{typeIR''''' <- typeIR'''''?} matches (_))*{typeIR'''''? <- typeIR'''''?*}
     -- (let ?(typeIR_field_b_default) = typeIR'''''?{typeIR''''' <- typeIR'''''?})*{typeIR'''''? <- typeIR'''''?*, typeIR_field_b_default -> typeIR_field_b_default*}
@@ -16281,6 +16308,7 @@ relation Cast_impl_neq: typeIR -> typeIR : castResult
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
     -- (let ?(typeIR_field_a_aligned) = typeIR'''?{typeIR''' <- typeIR'''?})*{typeIR'''? <- typeIR'''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+    -- (if (|id_field_b*{id_field_b <- id_field_b*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
@@ -16301,6 +16329,7 @@ relation Cast_impl_neq: typeIR -> typeIR : castResult
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
     -- (let ?(typeIR_field_a_aligned) = typeIR'''?{typeIR''' <- typeIR'''?})*{typeIR'''? <- typeIR'''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+    -- (if (|id_field_b*{id_field_b <- id_field_b*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
@@ -16334,6 +16363,7 @@ relation Cast_impl_neq: typeIR -> typeIR : castResult
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
     -- (let ?(typeIR_field_a_aligned) = typeIR'''?{typeIR''' <- typeIR'''?})*{typeIR'''? <- typeIR'''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+    -- (if (|id_field_b*{id_field_b <- id_field_b*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_non_default_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
@@ -16341,6 +16371,7 @@ relation Cast_impl_neq: typeIR -> typeIR : castResult
     -- (if castResult matches OK %)*{castResult <- castResult*}
     -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- let `{ id_default*{id_default <- id_default*} `} = $diff_set<id>(`{ id_field_b*{id_field_b <- id_field_b*} `}, `{ id_field_a*{id_field_a <- id_field_a*} `})
+    -- (if (|id_field_b*{id_field_b <- id_field_b*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|))*{id_default <- id_default*}
     -- (let typeIR'''''?{typeIR''''' <- typeIR'''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_default))*{id_default <- id_default*, typeIR'''''? -> typeIR'''''?*}
     -- (if typeIR'''''?{typeIR''''' <- typeIR'''''?} matches (_))*{typeIR'''''? <- typeIR'''''?*}
     -- (let ?(typeIR_field_b_default) = typeIR'''''?{typeIR''''' <- typeIR'''''?})*{typeIR'''''? <- typeIR'''''?*, typeIR_field_b_default -> typeIR_field_b_default*}
@@ -16359,6 +16390,7 @@ relation Cast_impl_neq: typeIR -> typeIR : castResult
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
     -- (if typeIR'''?{typeIR''' <- typeIR'''?} matches (_))*{typeIR'''? <- typeIR'''?*}
     -- (let ?(typeIR_field_a_aligned) = typeIR'''?{typeIR''' <- typeIR'''?})*{typeIR'''? <- typeIR'''?*, typeIR_field_a_aligned -> typeIR_field_a_aligned*}
+    -- (if (|id_field_b*{id_field_b <- id_field_b*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_non_default_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
@@ -16366,6 +16398,7 @@ relation Cast_impl_neq: typeIR -> typeIR : castResult
     -- (if castResult matches OK %)*{castResult <- castResult*}
     -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- let `{ id_default*{id_default <- id_default*} `} = $diff_set<id>(`{ id_field_b*{id_field_b <- id_field_b*} `}, `{ id_field_a*{id_field_a <- id_field_a*} `})
+    -- (if (|id_field_b*{id_field_b <- id_field_b*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|))*{id_default <- id_default*}
     -- (let typeIR'''''?{typeIR''''' <- typeIR'''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_default))*{id_default <- id_default*, typeIR'''''? -> typeIR'''''?*}
     -- (if typeIR'''''?{typeIR''''' <- typeIR'''''?} matches (_))*{typeIR'''''? <- typeIR'''''?*}
     -- (let ?(typeIR_field_b_default) = typeIR'''''?{typeIR''''' <- typeIR'''''?})*{typeIR'''''? <- typeIR'''''?*, typeIR_field_b_default -> typeIR_field_b_default*}
@@ -17263,7 +17296,6 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_index) = nat?{nat <- nat?}
-    -- if (n_index < |typeIR_e*{typeIR_e <- typeIR_e*}|)
     -- if (n_index < |typeIR_e*{typeIR_e <- typeIR_e*}|)
     -- let expressionNoteIR = `( typeIR_e*{typeIR_e <- typeIR_e*}[n_index] ctk_base `)
     -- output: % % |- % : typedExpressionIR_base `[ typedExpressionIR_index_reduced `] as expressionIR '#' expressionNoteIR
@@ -19146,7 +19178,9 @@ relation TableDefaultAction_ok: typingContext tableContext |- initializer : tabl
     -- let ?((parameterIR_action*{parameterIR_action <- parameterIR_action*}, argumentIR_action*{argumentIR_action <- argumentIR_action*})) = (parameterIR*, argumentListIR)?{(parameterIR*, argumentListIR) <- (parameterIR*, argumentListIR)?}
     -- ArgumentList_ok: LOCAL TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- Call_action_default_ok: TC |- parameterIR_action*{parameterIR_action <- parameterIR_action*} '@' argumentIR*{argumentIR <- argumentIR*} : parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*} ',' parameterIR_action_control*{parameterIR_action_control <- parameterIR_action_control*} '@' argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
+    -- if ((0 + |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|) <= |argumentIR_action*{argumentIR_action <- argumentIR_action*}|)
     -- let argumentIR_action_data*{argumentIR_action_data <- argumentIR_action_data*} = argumentIR_action*{argumentIR_action <- argumentIR_action*}[0 : |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|]
+    -- if ((0 + |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|) <= |argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}|)
     -- let argumentIR_cast_data*{argumentIR_cast_data <- argumentIR_cast_data*} = argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}[0 : |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|]
     -- if (|argumentIR_action_data*{argumentIR_action_data <- argumentIR_action_data*}| = |argumentIR_cast_data*{argumentIR_cast_data <- argumentIR_cast_data*}|)
     -- (if (argumentIR_action_data = argumentIR_cast_data))*{argumentIR_action_data <- argumentIR_action_data*, argumentIR_cast_data <- argumentIR_cast_data*}
@@ -19361,7 +19395,9 @@ relation TableEntry_action_ok: typingContext tableContext |- tableActionReferenc
     -- let ?((parameterIR_action*{parameterIR_action <- parameterIR_action*}, argumentIR_action*{argumentIR_action <- argumentIR_action*})) = (parameterIR*, argumentListIR)?{(parameterIR*, argumentListIR) <- (parameterIR*, argumentListIR)?}
     -- ArgumentList_ok: LOCAL TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- Call_action_default_ok: TC |- parameterIR_action*{parameterIR_action <- parameterIR_action*} '@' argumentIR*{argumentIR <- argumentIR*} : parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*} ',' parameterIR_action_control*{parameterIR_action_control <- parameterIR_action_control*} '@' argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
+    -- if ((0 + |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|) <= |argumentIR_action*{argumentIR_action <- argumentIR_action*}|)
     -- let argumentIR_action_data*{argumentIR_action_data <- argumentIR_action_data*} = argumentIR_action*{argumentIR_action <- argumentIR_action*}[0 : |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|]
+    -- if ((0 + |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|) <= |argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}|)
     -- let argumentIR_cast_data*{argumentIR_cast_data <- argumentIR_cast_data*} = argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}[0 : |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|]
     -- if (|argumentIR_action_data*{argumentIR_action_data <- argumentIR_action_data*}| = |argumentIR_cast_data*{argumentIR_cast_data <- argumentIR_cast_data*}|)
     -- (if (argumentIR_action_data = argumentIR_cast_data))*{argumentIR_action_data <- argumentIR_action_data*, argumentIR_cast_data <- argumentIR_cast_data*}
@@ -25200,7 +25236,6 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_index) = nat?{nat <- nat?}
     -- if (n_index < |value_e*{value_e <- value_e*}|)
-    -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- let value = value_e*{value_e <- value_e*}[n_index]
     -- output: % % % |- % : STO_2 value
 
@@ -25216,7 +25251,6 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_index) = nat?{nat <- nat?}
     -- if (n_index < |value_e*{value_e <- value_e*}|)
-    -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- let value = value_e*{value_e <- value_e*}[n_index]
     -- output: % % % |- % : STO_2 value
 
@@ -25231,7 +25265,6 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_index) = nat?{nat <- nat?}
-    -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- let value = value_e*{value_e <- value_e*}[n_index]
     -- output: % % % |- % : STO_2 value
@@ -29253,6 +29286,7 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- let headerStackValue_base = value' as headerStackValue
     -- let HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue_base
     -- if (nameIR = "next")
+    -- if (n_idx < |value_element*{value_element <- value_element*}|)
     -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value]
     -- let headerStackValue_base_update = HEADER_STACK `[ value_element_update*{value_element_update <- value_element_update*} `( (n_idx + 1) `) `]
     -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update as value : EC_1
@@ -29267,6 +29301,7 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- let i = (n_idx - 1)
     -- if i <: nat
     -- let n_idx_last = i as nat
+    -- if (n_idx_last < |value_element*{value_element <- value_element*}|)
     -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx_last] = value]
     -- let headerStackValue_base_update = HEADER_STACK `[ value_element_update*{value_element_update <- value_element_update*} `( n_idx `) `]
     -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update as value : EC_1
@@ -29362,6 +29397,7 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- let i = i_idx
     -- if i <: nat
     -- let n_idx = i as nat
+    -- if (n_idx < |value_element*{value_element <- value_element*}|)
     -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value]
     -- let arrayValue_base_update = ARRAY `[ value_element_update*{value_element_update <- value_element_update*} `]
     -- Lvalue_write: p EC_0 ARCH |- storageReference := arrayValue_base_update as value : EC_1
@@ -29390,6 +29426,7 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- let i = i_idx
     -- if i <: nat
     -- let n_idx = i as nat
+    -- if (n_idx < |value_element*{value_element <- value_element*}|)
     -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value]
     -- let headerStackValue_base_update = HEADER_STACK `[ value_element_update*{value_element_update <- value_element_update*} `( n_base_idx `) `]
     -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update as value : EC_1
@@ -31608,11 +31645,13 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_count) = nat?{nat <- nat?}
     -- if (n_count < n_size)
+    -- if ((0 + n_count) <= |value_element*{value_element <- value_element*}|)
     -- let value_front*{value_front <- value_front*} = value_element*{value_element <- value_element*}[0 : n_count]
     -- (let value_front_invalidated = $invalidate_value(value_front))*{value_front <- value_front*, value_front_invalidated -> value_front_invalidated*}
     -- let i = $max_int([0 as int, (n_size - n_count)])
     -- if i <: nat
     -- let n_back = i as nat
+    -- if ((0 + n_back) <= |value_element*{value_element <- value_element*}|)
     -- let value_back*{value_back <- value_back*} = value_element*{value_element <- value_element*}[0 : n_back]
     -- let value_element_updated*{value_element_updated <- value_element_updated*} = value_front_invalidated*{value_front_invalidated <- value_front_invalidated*} ++ value_back*{value_back <- value_back*}
     -- let n_idx_updated = $min_nat([n_size, (n_idx + n_count)])
@@ -31686,7 +31725,9 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let i = $max_int([0 as int, (n_size - n_count)])
     -- if i <: nat
     -- let n_front = i as nat
+    -- if ((n_count + n_front) <= |value_element*{value_element <- value_element*}|)
     -- let value_front*{value_front <- value_front*} = value_element*{value_element <- value_element*}[n_count : n_front]
+    -- if ((0 + n_count) <= |value_element*{value_element <- value_element*}|)
     -- let value_back*{value_back <- value_back*} = value_element*{value_element <- value_element*}[0 : n_count]
     -- (let value_back_invalidated = $invalidate_value(value_back))*{value_back <- value_back*, value_back_invalidated -> value_back_invalidated*}
     -- let value_element_updated*{value_element_updated <- value_element_updated*} = value_front*{value_front <- value_front*} ++ value_back_invalidated*{value_back_invalidated <- value_back_invalidated*}
@@ -33640,11 +33681,13 @@ def $cast_control_plane(evalContext, typedExpressionIR, typeIR) : typedExpressio
 def $reverse_bytes_of_hex(text) : text =
 
   clause 0 : (t) = "0x" ++ $reverse_bytes_of_hex'(t[2 : n_len_bytes])
+  -- if ((0 + 2) <= |t|)
   -- if (t[0 : 2] = "0x")
   -- let n_len = |t|
   -- let i = (n_len - 2)
   -- if i <: nat
   -- let n_len_bytes = i as nat
+  -- if ((2 + n_len_bytes) <= |t|)
 
 def $reverse_bytes_of_hex'(text) : text =
 
@@ -33654,10 +33697,12 @@ def $reverse_bytes_of_hex'(text) : text =
   clause 1 : (t) = t_bytes_rev ++ t_byte
   -- let n_len = |t|
   -- if (n_len > 2)
+  -- if ((0 + 2) <= |t|)
   -- let t_byte = t[0 : 2]
   -- let i = (n_len - 2)
   -- if i <: nat
   -- let n_len_bytes = i as nat
+  -- if ((2 + n_len_bytes) <= |t|)
   -- let t_bytes = t[2 : n_len_bytes]
   -- let t_bytes_rev = $reverse_bytes_of_hex'(t_bytes)
 
@@ -33925,11 +33970,13 @@ def $align_tableActionArgumentInterfaces(parameterIR*, tableActionArgumentInterf
 
   clause 0 : (parameterIR*{parameterIR <- parameterIR*}, (nameIR_arg, i_arg)*{i_arg <- i_arg*, nameIR_arg <- nameIR_arg*}) = i_aligned*{i_aligned <- i_aligned*}
   -- let `{ nameIR_alias ':' nameIR_original*{nameIR_alias <- nameIR_alias*, nameIR_original <- nameIR_original*} `} = $alias_to_original_lookup_map(parameterIR*{parameterIR <- parameterIR*})
+  -- (if (|nameIR_alias*{nameIR_alias <- nameIR_alias*}| = |nameIR_original*{nameIR_original <- nameIR_original*}|))*{nameIR_arg <- nameIR_arg*}
   -- (let nameIR?{nameIR <- nameIR?} = $find_map<nameIR, nameIR>(`{ nameIR_alias ':' nameIR_original*{nameIR_alias <- nameIR_alias*, nameIR_original <- nameIR_original*} `}, nameIR_arg))*{nameIR_arg <- nameIR_arg*, nameIR? -> nameIR?*}
   -- (if nameIR?{nameIR <- nameIR?} matches (_))*{nameIR? <- nameIR?*}
   -- (let ?(nameIR_arg_resolved) = nameIR?{nameIR <- nameIR?})*{nameIR? <- nameIR?*, nameIR_arg_resolved -> nameIR_arg_resolved*}
   -- (let _annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, nameIR_param -> nameIR_param*}
   -- if $sub_set<nameIR>(`{ nameIR_arg_resolved*{nameIR_arg_resolved <- nameIR_arg_resolved*} `}, `{ nameIR_param*{nameIR_param <- nameIR_param*} `})
+  -- (if (|i_arg*{i_arg <- i_arg*}| = |nameIR_arg_resolved*{nameIR_arg_resolved <- nameIR_arg_resolved*}|))*{parameterIR <- parameterIR*}
   -- (let i_aligned = $align_tableActionArgumentInterfaces'(`{ nameIR_arg_resolved ':' i_arg*{i_arg <- i_arg*, nameIR_arg_resolved <- nameIR_arg_resolved*} `}, parameterIR))*{parameterIR <- parameterIR*, i_aligned -> i_aligned*}
 
 def $align_tableActionArgumentInterfaces'(map<id, int>, parameterIR) : int =

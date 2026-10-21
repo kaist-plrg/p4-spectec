@@ -1,22 +1,71 @@
 //! Explicit guard insertion for partial algorithmic expressions
 //!
-//! - `a[n]` requires `n < |a|`
-//! - `e*{x <- x*, y <- y*, z <- z*}` requires
-//!   `(|x*| = |y*|) /\ (|y*| = |z*|)`
-//! - `e?{x <- x?, y <- y?}` requires `(x? = eps) <=> (y? = eps)`
+//! `insert_spec` inserts conditions before the operations that require them,
+//! omitting conditions implied by earlier premises.
 //!
-//! Binding sites also produce must-premises. For example,
-//! `(let (x, y) = z){x -> x*, y -> y*, z <- z*}` establishes the list-length
-//! equalities above. Guards entailed by these earlier premises are omitted.
+//! - `a[i]` requires `i < |a|`
+//! - `a[i : n]` requires `i + n <= |a|`
+//! - `r[.VALUES[i] = v]` requires `i < |r.VALUES|`
+//! - `a[[i : n] = b]` requires `i + n <= |a|` and `|b| = n`
+//! - Text `t[[i] = t_new]` requires `i < |t|` and `|t_new| = 1`
+//! - `a / b` and `a % b` require `b =/= 0`
+//!
+//! Iterations check source agreement before evaluating body guards.
+//! For `a[x + y]*{x <- x*, y <- y*}`, insert:
+//!
+//! ```text
+//! -- if |x*| = |y*|
+//! -- if (x + y < |a|)*{x <- x*, y <- y*}
+//! ```
+//!
+//! Optional iterations instead check `(x? = eps) <=> (y? = eps)`.
+//! Body guards retain every original source, even those they do not reference:
+//! `(a[i] + x)*{x <- x*}` requires `(i < |a|)*{x <- x*}`,
+//! so an empty `x*` skips the index check.
+//!
+//! Binding premises also establish facts for subsequent guard elimination:
+//!
+//! ```text
+//! -- let (x, y) = z *{x -> x*, y -> y*, z <- z*}
+//! ```
+//!
+//! Guards checked before this binding may iterate over the input `z*`;
+//! the output lists `x*` and `y*` are not yet bound.
+//! Once the binding succeeds, `|x*| = |y*| = |z*|` is guaranteed,
+//! so later guards requiring those equalities can be omitted.
+//!
+//! Guard elimination tracks facts established by earlier premises.
+//! Equalities (`=`) and Boolean equivalences (`<=>`) form separate classes;
+//! conjunctions contribute their conjuncts, and other conditions are recorded
+//! for exact-match elimination.
+//!
+//! ```text
+//! -- if a = b           ;; equality class: {a, b}
+//! -- if b = c           ;; equality class: {a, b, c}
+//! -- if a = c           ;; omitted: both sides belong to the same class
+//!
+//! -- if p <=> q         ;; equivalence class: {p, q}
+//! -- if q <=> r         ;; equivalence class: {p, q, r}
+//! -- if p <=> r         ;; omitted: both sides belong to the same class
+//!
+//! -- if i < |a|         ;; recorded as a condition
+//! -- if i < |a|         ;; omitted: the same condition is already known
+//! ```
+//!
+//! Newly collected guards are filtered in execution order:
+//! each retained guard contributes facts for the following guards.
+//! Facts established by a binding become available only after that binding.
+//! Class membership compares whole expressions;
+//! it does not substitute equal subexpressions inside other conditions.
 
 use crate::lang::{
     common::prim,
-    traits::{at::At, eq::SyntaxEq, free::FreeIds},
+    traits::{at::At, eq::SyntaxEq},
 };
 
 use crate::lang::al::{self, ast};
 
-use crate::runtime::typdef::TypeDef;
+use crate::runtime::{ops::typ::expand_typ, typdef::TypeDef};
 use crate::{note_phrase, phrase};
 
 use super::super::{AlgoError, binding::context::Context, otherwise};
@@ -228,51 +277,50 @@ fn filter_prems_insert(
     prems_insert: Vec<ast::Prem>,
 ) -> Vec<ast::Prem> {
     // Facts known before this premise
-    let prems_must = prems_base
+    let mut prems_must: Vec<_> = prems_base
         .iter()
         .flat_map(|prems| prems.iter())
         .chain(prems_derived)
-        .chain(prems_output);
-    let table = EquivalenceTable::from_prems(prems_must);
-    // Drop guards that are implied or literally repeated
+        .chain(prems_output)
+        .collect();
+    let mut table = EquivalenceTable::from_prems(prems_must.iter().copied());
+    // Check each guard using only premises that will execute before it
+    let keep: Vec<_> = prems_insert
+        .iter()
+        .map(|prem_al| {
+            let implied = table.implies(prem_al);
+            let duplicated = prems_must
+                .iter()
+                .any(|prem_must_al| prem_al.syntax_eq(prem_must_al));
+            // Keep the first establishing guard, including its iteration sources
+            if implied || duplicated {
+                return false;
+            }
+            table.add_prem(prem_al);
+            prems_must.push(prem_al);
+            true
+        })
+        .collect();
+    // Move retained premises after the table's borrowed expressions are released
     prems_insert
         .into_iter()
-        .filter(|prem_al| {
-            let implied = table.implies(prem_al);
-            let duplicated = prems_base
-                .iter()
-                .flat_map(|prems| prems.iter())
-                .chain(prems_derived)
-                .chain(prems_output)
-                .any(|prem_must_al| prem_al.syntax_eq(prem_must_al));
-            !implied && !duplicated
-        })
+        .zip(keep)
+        .filter_map(|(prem_al, keep)| keep.then_some(prem_al))
         .collect()
 }
 
-/// Wraps a premise under an iteration over the variables it uses, if any.
-fn iterate_prem(iter: ast::Iter, vars: &[ast::Var], prem_al: ast::Prem) -> Option<ast::Prem> {
-    // Only variables used by the premise supply iteration values
-    let frees = prem_al.free_ids();
-    let vars_bound = vars
-        .iter()
-        .filter(|var| frees.contains(&var.id))
-        .cloned()
-        .collect::<Vec<_>>();
-    if vars_bound.is_empty() {
-        return None;
-    }
+/// Wraps a premise over every source, preserving empty-iteration behavior.
+fn iterate_prem(iter: ast::Iter, vars: &[ast::Var], prem_al: ast::Prem) -> ast::Prem {
     let span = prem_al.span;
-    let prem_iter = ast::PremIter { iter, vars_bound, vars_bind: vec![] };
+    let prem_iter = ast::PremIter { iter, vars_bound: vars.to_vec(), vars_bind: vec![] };
     let prem_kind = ast::PremKind::Iter(ast::IterPrem { prem: Box::new(prem_al), prem_iter });
-    let prem_al = phrase!(node: prem_kind, span: span);
-    Some(prem_al)
+    phrase!(node: prem_kind, span: span)
 }
 
 fn iterate_prems(iter: ast::Iter, vars: &[ast::Var], prems_al: Vec<ast::Prem>) -> Vec<ast::Prem> {
     prems_al
         .into_iter()
-        .filter_map(|prem_al| iterate_prem(iter, vars, prem_al))
+        .map(|prem_al| iterate_prem(iter, vars, prem_al))
         .collect()
 }
 
@@ -291,32 +339,161 @@ fn iterate_collected(
 
 // == Guard generation
 
-/// Builds `if idx < |base|` for an index expression.
-fn gen_index_guard(
+/// Builds a length expression with the operand's location.
+fn gen_len_exp(exp_al: &ast::Exp) -> ast::Exp {
+    note_phrase! {
+        node: ast::ExpKind::Len(Box::new(exp_al.clone())),
+        note: ast::TypKind::Num(prim::num::Typ::Nat),
+        span: exp_al.span,
+    }
+}
+
+/// Builds the read expression whose guards protect each update path prefix.
+///
+/// Path notes retain the type at each step: `r[.VALUES[i] = v]`
+/// checks the index against `r.VALUES`, not against `r`.
+fn gen_access_exp(exp_base_al: &ast::Exp, path_al: &ast::Path) -> ast::Exp {
+    let exp_kind = match &path_al.node {
+        ast::PathKind::Root => return exp_base_al.clone(),
+        ast::PathKind::Idx(path_inner_al, exp_idx_al) => ast::ExpKind::Idx(
+            Box::new(gen_access_exp(exp_base_al, path_inner_al)),
+            exp_idx_al.clone(),
+        ),
+        ast::PathKind::Slice(path_inner_al, exp_idx_al, exp_len_al) => ast::ExpKind::Slice(
+            Box::new(gen_access_exp(exp_base_al, path_inner_al)),
+            exp_idx_al.clone(),
+            exp_len_al.clone(),
+        ),
+        ast::PathKind::Dot(path_inner_al, atom) => {
+            ast::ExpKind::Dot(Box::new(gen_access_exp(exp_base_al, path_inner_al)), atom.clone())
+        }
+    };
+    note_phrase!(node: exp_kind, note: path_al.note.clone(), span: path_al.span)
+}
+
+/// Builds a comparison premise at the guarded expression's location.
+fn gen_cmp_guard_prem(
     exp_al: &ast::Exp,
-    exp_base_al: &ast::Exp,
-    exp_idx_al: &ast::Exp,
+    op: ast::CmpOp,
+    op_typ: ast::OpTyp,
+    exp_l_al: ast::Exp,
+    exp_r_al: ast::Exp,
 ) -> Vec<ast::Prem> {
     let span = exp_al.span;
-    // Guard: idx < |base|
-    let exp_len_al = note_phrase! {
-        node: ast::ExpKind::Len(Box::new(exp_base_al.clone())),
-        note: ast::TypKind::Num(prim::num::Typ::Nat),
-        span: span,
-    };
     let exp_guard_al = note_phrase! {
-        node: ast::ExpKind::Cmp(
-            ast::CmpOp::Num(prim::num::CmpOp::Lt),
-            ast::OpTyp::Bool,
-            Box::new(exp_idx_al.clone()),
-            Box::new(exp_len_al),
-        ),
+        node: ast::ExpKind::Cmp(op, op_typ, Box::new(exp_l_al), Box::new(exp_r_al)),
         note: ast::TypKind::Bool,
         span: span,
     };
     let prem_kind = ast::PremKind::If(ast::IfPrem { exp: exp_guard_al });
-    let prem_guard_al = phrase!(node: prem_kind, span: span);
-    vec![prem_guard_al]
+    vec![phrase!(node: prem_kind, span: span)]
+}
+
+/// Builds `if idx < |base|` for an index expression.
+fn gen_index_guard_prem(
+    exp_al: &ast::Exp,
+    exp_base_al: &ast::Exp,
+    exp_idx_al: &ast::Exp,
+) -> Vec<ast::Prem> {
+    gen_cmp_guard_prem(
+        exp_al,
+        ast::CmpOp::Num(prim::num::CmpOp::Lt),
+        ast::OpTyp::Nat,
+        exp_idx_al.clone(),
+        gen_len_exp(exp_base_al),
+    )
+}
+
+/// Builds `if idx + len <= |base|`, including the empty slice at the end.
+fn gen_slice_guard_prem(
+    exp_al: &ast::Exp,
+    exp_base_al: &ast::Exp,
+    exp_idx_al: &ast::Exp,
+    exp_len_al: &ast::Exp,
+) -> Vec<ast::Prem> {
+    // Both operands are naturals and addition is arbitrary precision
+    let exp_end_al = note_phrase! {
+        node: ast::ExpKind::Bin(
+            ast::BinOp::Num(prim::num::BinOp::Add),
+            ast::OpTyp::Nat,
+            Box::new(exp_idx_al.clone()),
+            Box::new(exp_len_al.clone()),
+        ),
+        note: ast::TypKind::Num(prim::num::Typ::Nat),
+        span: exp_al.span,
+    };
+    // Check the exclusive end after the operands' own guards
+    gen_cmp_guard_prem(
+        exp_al,
+        ast::CmpOp::Num(prim::num::CmpOp::Le),
+        ast::OpTyp::Nat,
+        exp_end_al,
+        gen_len_exp(exp_base_al),
+    )
+}
+
+/// Builds a nonzero-divisor guard with the arithmetic operand's numeric kind.
+fn gen_divisor_guard_prem(
+    exp_al: &ast::Exp,
+    op_typ: ast::OpTyp,
+    exp_r_al: &ast::Exp,
+) -> Vec<ast::Prem> {
+    // Equality distinguishes natural and integer values
+    let num_zero = match op_typ {
+        ast::OpTyp::Nat => prim::num::Number::Nat(0u64.into()),
+        ast::OpTyp::Int => prim::num::Number::Int(0.into()),
+        ast::OpTyp::Bool => unreachable!("arithmetic operands must be numeric"),
+    };
+    let typ_zero = ast::TypKind::Num(prim::num::to_typ(&num_zero));
+    let exp_zero_al = note_phrase! {
+        node: ast::ExpKind::Num(num_zero),
+        note: typ_zero,
+        span: exp_r_al.span,
+    };
+    // Generic inequality compares two values of the same kind
+    gen_cmp_guard_prem(
+        exp_al,
+        ast::CmpOp::Bool(prim::bool::CmpOp::Ne),
+        ast::OpTyp::Bool,
+        exp_r_al.clone(),
+        exp_zero_al,
+    )
+}
+
+/// Requires length-preserving replacements for slices and text indices.
+fn gen_update_guard_prem(
+    ctx: &Context,
+    path_al: &ast::Path,
+    exp_field_al: &ast::Exp,
+) -> Vec<ast::Prem> {
+    let exp_len_al = match &path_al.node {
+        // A slice replacement must retain the selected length
+        ast::PathKind::Slice(_, _, exp_len_al) => exp_len_al.as_ref().clone(),
+        // Only text indexing constrains the replacement's length
+        ast::PathKind::Idx(path_inner_al, _) => {
+            let typ = phrase!(node: path_inner_al.note.as_ref().clone(), span: path_inner_al.span);
+            let typ = expand_typ(&ctx.tdenv, &typ)
+                .expect("an elaborated index base must have a defined sequence type");
+            if !matches!(typ.node, ast::TypKind::Text) {
+                return vec![];
+            }
+            note_phrase! {
+                node: ast::ExpKind::Num(prim::num::Number::Nat(1u64.into())),
+                note: ast::TypKind::Num(prim::num::Typ::Nat),
+                span: path_al.span,
+            }
+        }
+        // Whole values and record fields may change their length
+        ast::PathKind::Root | ast::PathKind::Dot(_, _) => return vec![],
+    };
+    // Inner updates preserve enclosing sequence lengths by construction
+    gen_cmp_guard_prem(
+        exp_field_al,
+        ast::CmpOp::Bool(prim::bool::CmpOp::Eq),
+        ast::OpTyp::Bool,
+        gen_len_exp(exp_field_al),
+        exp_len_al,
+    )
 }
 
 /// Builds `x? = eps` for an option variable.
@@ -426,7 +603,7 @@ fn gen_iter_guard(exp_iter: &ast::ExpIter) -> Vec<ast::Prem> {
 // - Expressions
 
 /// Collects the guards an expression needs before evaluation.
-fn collect_exp(exp_al: &ast::Exp) -> Vec<ast::Prem> {
+fn collect_exp(ctx: &Context, exp_al: &ast::Exp) -> Vec<ast::Prem> {
     match &exp_al.node {
         // Literals and variables need no guards
         ast::ExpKind::Bool(_)
@@ -440,115 +617,105 @@ fn collect_exp(exp_al: &ast::Exp) -> Vec<ast::Prem> {
         | ast::ExpKind::Sub(exp_inner_al, _)
         | ast::ExpKind::Match(exp_inner_al, _)
         | ast::ExpKind::Len(exp_inner_al)
-        | ast::ExpKind::Dot(exp_inner_al, _) => collect_exp(exp_inner_al),
+        | ast::ExpKind::Dot(exp_inner_al, _) => collect_exp(ctx, exp_inner_al),
+        // Division and modulo require a nonzero divisor after operand guards
+        ast::ExpKind::Bin(
+            ast::BinOp::Num(prim::num::BinOp::Div | prim::num::BinOp::Mod),
+            op_typ,
+            exp_l_al,
+            exp_r_al,
+        ) => {
+            let mut prems_insert = collect_exp(ctx, exp_l_al);
+            prems_insert.extend(collect_exp(ctx, exp_r_al));
+            prems_insert.extend(gen_divisor_guard_prem(exp_al, *op_typ, exp_r_al));
+            prems_insert
+        }
         // Binary forms collect from both sides
         ast::ExpKind::Bin(_, _, exp_l_al, exp_r_al)
         | ast::ExpKind::Cmp(_, _, exp_l_al, exp_r_al)
         | ast::ExpKind::Cons(exp_l_al, exp_r_al)
         | ast::ExpKind::Cat(exp_l_al, exp_r_al)
         | ast::ExpKind::Mem(exp_l_al, exp_r_al) => {
-            let mut prems_insert = collect_exp(exp_l_al);
-            let prems_r_insert = collect_exp(exp_r_al);
+            let mut prems_insert = collect_exp(ctx, exp_l_al);
+            let prems_r_insert = collect_exp(ctx, exp_r_al);
             prems_insert.extend(prems_r_insert);
             prems_insert
         }
         // Tuple or list: guards of every element
-        ast::ExpKind::Tuple(exps_al) | ast::ExpKind::List(exps_al) => collect_exps(exps_al.iter()),
+        ast::ExpKind::Tuple(exps_al) | ast::ExpKind::List(exps_al) => {
+            collect_exps(ctx, exps_al.iter())
+        }
         // Case: guards of the arguments
-        ast::ExpKind::Case(not_exp) => collect_exps(not_exp.args()),
+        ast::ExpKind::Case(not_exp) => collect_exps(ctx, not_exp.args()),
         // Struct: guards of the fields
         ast::ExpKind::Str(fields) => {
-            collect_exps(fields.iter().map(|ast::ExpField { exp, .. }| exp))
+            collect_exps(ctx, fields.iter().map(|ast::ExpField { exp, .. }| exp))
         }
         // Option: guards of the payload
-        ast::ExpKind::Opt(Some(exp_inner_al)) => collect_exp(exp_inner_al),
+        ast::ExpKind::Opt(Some(exp_inner_al)) => collect_exp(ctx, exp_inner_al),
         // Empty option needs no guard
         ast::ExpKind::Opt(None) => vec![],
         // Indexing needs a bounds guard
         ast::ExpKind::Idx(exp_base_al, exp_idx_al) => {
-            let mut prems_insert = collect_exp(exp_base_al);
-            let prems_idx_insert = collect_exp(exp_idx_al);
-            let prems_guard = gen_index_guard(exp_al, exp_base_al, exp_idx_al);
+            let mut prems_insert = collect_exp(ctx, exp_base_al);
+            let prems_idx_insert = collect_exp(ctx, exp_idx_al);
+            let prems_guard = gen_index_guard_prem(exp_al, exp_base_al, exp_idx_al);
             prems_insert.extend(prems_idx_insert);
             prems_insert.extend(prems_guard);
             prems_insert
         }
         // Slice: guards of base, index, and length
         ast::ExpKind::Slice(exp_base_al, exp_idx_al, exp_len_al) => {
-            let mut prems_insert = collect_exp(exp_base_al);
-            let prems_idx_insert = collect_exp(exp_idx_al);
-            let prems_len_insert = collect_exp(exp_len_al);
+            let mut prems_insert = collect_exp(ctx, exp_base_al);
+            let prems_idx_insert = collect_exp(ctx, exp_idx_al);
+            let prems_len_insert = collect_exp(ctx, exp_len_al);
             prems_insert.extend(prems_idx_insert);
             prems_insert.extend(prems_len_insert);
+            prems_insert.extend(gen_slice_guard_prem(exp_al, exp_base_al, exp_idx_al, exp_len_al));
             prems_insert
         }
-        // Update: guards of base, path, and field
+        // Update: guard each accessed prefix, then the replacement
         ast::ExpKind::Upd(exp_base_al, path_al, exp_field_al) => {
-            let mut prems_insert = collect_exp(exp_base_al);
-            let prems_path_insert = collect_path(path_al);
-            let prems_field_insert = collect_exp(exp_field_al);
-            prems_insert.extend(prems_path_insert);
-            prems_insert.extend(prems_field_insert);
+            let exp_target_al = gen_access_exp(exp_base_al, path_al);
+            let mut prems_insert = collect_exp(ctx, &exp_target_al);
+            prems_insert.extend(collect_exp(ctx, exp_field_al));
+            prems_insert.extend(gen_update_guard_prem(ctx, path_al, exp_field_al));
             prems_insert
         }
         // Call: guards of the arguments
-        ast::ExpKind::Call(_, _, args) => collect_args(args),
-        // Inner guards iterate too, plus the length agreement guard
+        ast::ExpKind::Call(_, _, args) => collect_args(ctx, args),
+        // Check source agreement before evaluating any iterated guard
         ast::ExpKind::Iter(exp_inner_al, exp_iter) => {
-            let prems_inner_insert = collect_exp(exp_inner_al);
-            let mut prems_insert = iterate_prems(exp_iter.iter, &exp_iter.vars, prems_inner_insert);
-            let prems_guard = gen_iter_guard(exp_iter);
-            prems_insert.extend(prems_guard);
+            let prems_inner_insert = collect_exp(ctx, exp_inner_al);
+            let mut prems_insert = gen_iter_guard(exp_iter);
+            prems_insert.extend(iterate_prems(exp_iter.iter, &exp_iter.vars, prems_inner_insert));
             prems_insert
         }
     }
 }
 
-fn collect_exps<'a>(exps: impl IntoIterator<Item = &'a ast::Exp>) -> Vec<ast::Prem> {
+fn collect_exps<'a>(ctx: &Context, exps: impl IntoIterator<Item = &'a ast::Exp>) -> Vec<ast::Prem> {
     let mut prems_insert = Vec::new();
     for exp_al in exps {
-        let prems_exp_insert = collect_exp(exp_al);
+        let prems_exp_insert = collect_exp(ctx, exp_al);
         prems_insert.extend(prems_exp_insert);
     }
     prems_insert
 }
 
-// - Paths
-
-fn collect_path(path_al: &ast::Path) -> Vec<ast::Prem> {
-    match &path_al.node {
-        ast::PathKind::Root => vec![],
-        ast::PathKind::Idx(path_al, exp_al) => {
-            let mut prems_insert = collect_path(path_al);
-            let prems_exp_insert = collect_exp(exp_al);
-            prems_insert.extend(prems_exp_insert);
-            prems_insert
-        }
-        ast::PathKind::Slice(path_al, exp_idx_al, exp_len_al) => {
-            let mut prems_insert = collect_path(path_al);
-            let prems_idx_insert = collect_exp(exp_idx_al);
-            let prems_len_insert = collect_exp(exp_len_al);
-            prems_insert.extend(prems_idx_insert);
-            prems_insert.extend(prems_len_insert);
-            prems_insert
-        }
-        ast::PathKind::Dot(path_al, _) => collect_path(path_al),
-    }
-}
-
 // - Arguments
 
-fn collect_arg(arg: &ast::Arg) -> Vec<ast::Prem> {
+fn collect_arg(ctx: &Context, arg: &ast::Arg) -> Vec<ast::Prem> {
     match &arg.node {
-        ast::ArgKind::Exp(exp_al) => collect_exp(exp_al),
+        ast::ArgKind::Exp(exp_al) => collect_exp(ctx, exp_al),
         ast::ArgKind::Def(_) => vec![],
     }
 }
 
-fn collect_args(args: &[ast::Arg]) -> Vec<ast::Prem> {
+fn collect_args(ctx: &Context, args: &[ast::Arg]) -> Vec<ast::Prem> {
     let mut prems_insert = Vec::new();
     for arg in args {
-        let prems_arg_insert = collect_arg(arg);
+        let prems_arg_insert = collect_arg(ctx, arg);
         prems_insert.extend(prems_arg_insert);
     }
     prems_insert
@@ -556,53 +723,53 @@ fn collect_args(args: &[ast::Arg]) -> Vec<ast::Prem> {
 
 // - Premises
 
-fn collect_prem(prem_al: &ast::Prem) -> Collected {
+fn collect_prem(ctx: &Context, prem_al: &ast::Prem) -> Collected {
     match &prem_al.node {
-        ast::PremKind::Rule(rule_prem) => collect_rule_prem(rule_prem),
-        ast::PremKind::If(if_prem) => collect_if_prem(if_prem),
-        ast::PremKind::IfHold(if_prem) => collect_if_hold_prem(if_prem),
-        ast::PremKind::IfNotHold(if_prem) => collect_if_not_hold_prem(if_prem),
-        ast::PremKind::Let(let_prem) => collect_let_prem(let_prem),
-        ast::PremKind::Iter(iter_prem) => collect_iter_prem(iter_prem),
-        ast::PremKind::Debug(debug_prem) => collect_debug_prem(debug_prem),
+        ast::PremKind::Rule(rule_prem) => collect_rule_prem(ctx, rule_prem),
+        ast::PremKind::If(if_prem) => collect_if_prem(ctx, if_prem),
+        ast::PremKind::IfHold(if_prem) => collect_if_hold_prem(ctx, if_prem),
+        ast::PremKind::IfNotHold(if_prem) => collect_if_not_hold_prem(ctx, if_prem),
+        ast::PremKind::Let(let_prem) => collect_let_prem(ctx, let_prem),
+        ast::PremKind::Iter(iter_prem) => collect_iter_prem(ctx, iter_prem),
+        ast::PremKind::Debug(debug_prem) => collect_debug_prem(ctx, debug_prem),
     }
 }
 
-fn collect_rule_prem(rule_prem: &ast::RulePrem) -> Collected {
-    let prems_insert = collect_exps(rule_prem.not_exp.args());
+fn collect_rule_prem(ctx: &Context, rule_prem: &ast::RulePrem) -> Collected {
+    let prems_insert = collect_exps(ctx, rule_prem.not_exp.args());
     Collected { prems_must: vec![], prems_insert }
 }
 
-fn collect_if_prem(if_prem: &ast::IfPrem) -> Collected {
-    let prems_insert = collect_exp(&if_prem.exp);
+fn collect_if_prem(ctx: &Context, if_prem: &ast::IfPrem) -> Collected {
+    let prems_insert = collect_exp(ctx, &if_prem.exp);
     Collected { prems_must: vec![], prems_insert }
 }
 
-fn collect_if_hold_prem(if_prem: &ast::IfHoldPrem) -> Collected {
-    let prems_insert = collect_exps(if_prem.not_exp.args());
+fn collect_if_hold_prem(ctx: &Context, if_prem: &ast::IfHoldPrem) -> Collected {
+    let prems_insert = collect_exps(ctx, if_prem.not_exp.args());
     Collected { prems_must: vec![], prems_insert }
 }
 
-fn collect_if_not_hold_prem(if_prem: &ast::IfNotHoldPrem) -> Collected {
-    let prems_insert = collect_exps(if_prem.not_exp.args());
+fn collect_if_not_hold_prem(ctx: &Context, if_prem: &ast::IfNotHoldPrem) -> Collected {
+    let prems_insert = collect_exps(ctx, if_prem.not_exp.args());
     Collected { prems_must: vec![], prems_insert }
 }
 
 /// The pattern side establishes its guards; the value side needs them checked.
-fn collect_let_prem(let_prem: &ast::LetPrem) -> Collected {
-    let prems_must = collect_exp(&let_prem.exp_l);
-    let prems_insert = collect_exp(&let_prem.exp_r);
+fn collect_let_prem(ctx: &Context, let_prem: &ast::LetPrem) -> Collected {
+    let prems_must = collect_exp(ctx, &let_prem.exp_l);
+    let prems_insert = collect_exp(ctx, &let_prem.exp_r);
     Collected { prems_must, prems_insert }
 }
 
 /// Collects guards under an iteration premise.
-fn collect_iter_prem(iter_prem: &ast::IterPrem) -> Collected {
+fn collect_iter_prem(ctx: &Context, iter_prem: &ast::IterPrem) -> Collected {
     let prem_iter = &iter_prem.prem_iter;
     let mut vars_must = prem_iter.vars_bound.clone();
     vars_must.extend(prem_iter.vars_bind.clone());
 
     // Musts iterate over all variables, inserts use source variables only
-    let collected = collect_prem(&iter_prem.prem);
+    let collected = collect_prem(ctx, &iter_prem.prem);
     let collected = iterate_collected(prem_iter.iter, &vars_must, &prem_iter.vars_bound, collected);
     // The iteration itself requires its variables to agree in length
     let collected_guard = Collected {
@@ -612,11 +779,11 @@ fn collect_iter_prem(iter_prem: &ast::IterPrem) -> Collected {
             vars: prem_iter.vars_bound.clone(),
         }),
     };
-    collected.compose(collected_guard)
+    collected_guard.compose(collected)
 }
 
-fn collect_debug_prem(debug_prem: &ast::DebugPrem) -> Collected {
-    let prems_insert = collect_exp(&debug_prem.exp);
+fn collect_debug_prem(ctx: &Context, debug_prem: &ast::DebugPrem) -> Collected {
+    let prems_insert = collect_exp(ctx, &debug_prem.exp);
     Collected { prems_must: vec![], prems_insert }
 }
 
@@ -634,12 +801,13 @@ struct InsertedPrems {
 
 /// Inserts the guards a premise needs, skipping those already known.
 fn insert_prem(
+    ctx: &Context,
     prems_base: &[&[ast::Prem]],
     prems_derived: &mut Vec<ast::Prem>,
     prems_output: &mut Vec<ast::Prem>,
     prem_al: ast::Prem,
 ) {
-    let collected = collect_prem(&prem_al);
+    let collected = collect_prem(ctx, &prem_al);
     let mut prems_insert =
         filter_prems_insert(prems_base, prems_derived, prems_output, collected.prems_insert);
     // Guards go before the premise, its own facts after
@@ -648,11 +816,15 @@ fn insert_prem(
     prems_output.extend(prems_insert);
 }
 
-fn insert_prems(prems_base: &[&[ast::Prem]], prems_al: Vec<ast::Prem>) -> InsertedPrems {
+fn insert_prems(
+    ctx: &Context,
+    prems_base: &[&[ast::Prem]],
+    prems_al: Vec<ast::Prem>,
+) -> InsertedPrems {
     let mut prems_derived = Vec::new();
     let mut prems_output = Vec::new();
     for prem_al in prems_al {
-        insert_prem(prems_base, &mut prems_derived, &mut prems_output, prem_al);
+        insert_prem(ctx, prems_base, &mut prems_derived, &mut prems_output, prem_al);
     }
     InsertedPrems { derived: prems_derived, output: prems_output }
 }
@@ -660,11 +832,11 @@ fn insert_prems(prems_base: &[&[ast::Prem]], prems_al: Vec<ast::Prem>) -> Insert
 // - Rule groups
 
 /// Inserts guards into the shared match and then into each rule path.
-fn insert_rule_group(mut rule_group_al: ast::RuleGroup) -> ast::RuleGroup {
+fn insert_rule_group(ctx: &Context, mut rule_group_al: ast::RuleGroup) -> ast::RuleGroup {
     // Guards of the inputs are assumed, not inserted
-    let prems_input = collect_exps(rule_group_al.node.rule_match.exps_input.iter());
+    let prems_input = collect_exps(ctx, rule_group_al.node.rule_match.exps_input.iter());
     let prems_match_al = std::mem::take(&mut rule_group_al.node.rule_match.prems);
-    let prems_match = insert_prems(&[&prems_input], prems_match_al);
+    let prems_match = insert_prems(ctx, &[&prems_input], prems_match_al);
     rule_group_al.node.rule_match.prems = prems_match.output;
 
     // Each path builds on the facts of the shared match
@@ -675,11 +847,11 @@ fn insert_rule_group(mut rule_group_al: ast::RuleGroup) -> ast::RuleGroup {
             rule_group_al.node.rule_match.prems.as_slice(),
         ];
         let prems_path_al = std::mem::take(&mut rule_path_al.prems);
-        let prems_path = insert_prems(&prems_base, prems_path_al);
+        let prems_path = insert_prems(ctx, &prems_base, prems_path_al);
         rule_path_al.prems = prems_path.output;
 
         // Outputs need guards too, after the path premises
-        let prems_output = collect_exps(rule_path_al.exps_output.iter());
+        let prems_output = collect_exps(ctx, rule_path_al.exps_output.iter());
         let prems_output = filter_prems_insert(
             &prems_base,
             &prems_path.derived,
@@ -697,9 +869,9 @@ fn insert_else_group(
     mut else_group_al: ast::ElseGroup,
 ) -> Result<ast::ElseGroup, AlgoError> {
     // Guards of the inputs are assumed, not inserted
-    let prems_input = collect_exps(else_group_al.node.rule_match.exps_input.iter());
+    let prems_input = collect_exps(ctx, else_group_al.node.rule_match.exps_input.iter());
     let prems_match_al = std::mem::take(&mut else_group_al.node.rule_match.prems);
-    let prems_match = insert_prems(&[&prems_input], prems_match_al);
+    let prems_match = insert_prems(ctx, &[&prems_input], prems_match_al);
     else_group_al.node.rule_match.prems = prems_match.output;
 
     // The path builds on the facts of the match
@@ -709,11 +881,11 @@ fn insert_else_group(
         prems_match.derived.as_slice(),
         else_group_al.node.rule_match.prems.as_slice(),
     ];
-    let prems_path = insert_prems(&prems_base, prems_path_al);
+    let prems_path = insert_prems(ctx, &prems_base, prems_path_al);
     else_group_al.node.rule_path.prems = prems_path.output;
 
     // Outputs need guards too, after the path premises
-    let prems_output = collect_exps(else_group_al.node.rule_path.exps_output.iter());
+    let prems_output = collect_exps(ctx, else_group_al.node.rule_path.exps_output.iter());
     let prems_output = filter_prems_insert(
         &prems_base,
         &prems_path.derived,
@@ -738,15 +910,15 @@ fn insert_else_group(
 // - Clauses
 
 /// Inserts guards into a clause's premises and body.
-fn insert_clause(mut clause_al: ast::Clause) -> ast::Clause {
+fn insert_clause(ctx: &Context, mut clause_al: ast::Clause) -> ast::Clause {
     // Guards of the arguments are assumed, not inserted
-    let prems_args = collect_args(&clause_al.node.args);
+    let prems_args = collect_args(ctx, &clause_al.node.args);
     let prems_clause_al = std::mem::take(&mut clause_al.node.prems);
-    let prems_clause = insert_prems(&[&prems_args], prems_clause_al);
+    let prems_clause = insert_prems(ctx, &[&prems_args], prems_clause_al);
     clause_al.node.prems = prems_clause.output;
 
     // The body's guards go after the premises
-    let prems_output = collect_exp(&clause_al.node.exp);
+    let prems_output = collect_exp(ctx, &clause_al.node.exp);
     let prems_output = filter_prems_insert(
         &[&prems_args],
         &prems_clause.derived,
@@ -764,7 +936,7 @@ fn insert_else_clause(
 ) -> Result<ast::ElseClause, AlgoError> {
     let span = clause_al.span;
     let ast::ElseClauseKind { otherwise, clause } = clause_al.node;
-    let clause_al = insert_clause(phrase!(node: clause, span: span));
+    let clause_al = insert_clause(ctx, phrase!(node: clause, span: span));
     otherwise::check_prems(ctx, &clause_al.node.prems, &otherwise)?;
     Ok(phrase!(
         node: ast::ElseClauseKind { otherwise, clause: clause_al.node },
@@ -798,7 +970,7 @@ fn insert_rel_def(ctx: &Context, rel_def_al: ast::RelDef) -> Result<ast::RelDef,
     defined_rel_al.rule_groups = defined_rel_al
         .rule_groups
         .into_iter()
-        .map(insert_rule_group)
+        .map(|rule_group| insert_rule_group(ctx, rule_group))
         .collect();
     defined_rel_al.else_group = defined_rel_al
         .else_group
@@ -819,7 +991,7 @@ fn insert_meta_func_def(
     defined_func_al.clauses = defined_func_al
         .clauses
         .into_iter()
-        .map(insert_clause)
+        .map(|clause| insert_clause(ctx, clause))
         .collect();
     if let Some(clause) = defined_func_al.else_clause {
         // Type parameters remain opaque when rechecking singleton conditions
