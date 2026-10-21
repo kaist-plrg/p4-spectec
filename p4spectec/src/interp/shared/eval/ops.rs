@@ -240,23 +240,35 @@ pub(crate) fn cast_up(
                 span
             )
         }
-        // Option: the payload
+        // nat? -> int? or nat -> int?
         ast::TypKind::Iter(typ_inner, ast::Iter::Opt) => {
-            let value = value::get::opt(arena, &value).expect("operand must be an option");
-            let value = match value {
-                Some(value) => Some(unwrap!(cast_up(arena, ctx, typ_inner, value))),
-                None => None,
+            let value_opt = match arena.value.kind(value.node) {
+                // nat? -> int?: None -> None
+                ValueKind::Opt(None) => None,
+                // nat? -> int?: Some(1) -> Some(1 as int)
+                ValueKind::Opt(Some(value_inner)) => {
+                    let value_inner = *value_inner;
+                    Some(unwrap!(cast_up(arena, ctx, typ_inner, value_inner)))
+                }
+                // nat -> int?: 1 -> Some(1 as int)
+                _ => Some(unwrap!(cast_up(arena, ctx, typ_inner, value))),
             };
             unwrap_from_result!(
-                value::make::opt(arena, typ_inner.node.clone().into(), value, Span::default()),
+                value::make::opt(arena, typ_inner.node.clone().into(), value_opt, Span::default()),
                 span
             )
         }
-        // List: every element
+        // nat* -> int*, nat? -> int*, or nat -> int*
         ast::TypKind::Iter(typ_inner, ast::Iter::List) => {
-            let values = value::get::list(arena, &value)
-                .expect("operand must be a list")
-                .to_vec();
+            let values = match arena.value.kind(value.node) {
+                // [1, 2] retains both elements for recursive casting
+                ValueKind::List(values) => values.to_vec(),
+                // None -> []; Some(1) -> [1] before element casting
+                ValueKind::Opt(value_opt) => value_opt.iter().copied().collect(),
+                // 1 -> [1] before element casting
+                _ => vec![value],
+            };
+            // nat* -> int?*: [1] -> [Some(1 as int)]
             let mut values_cast = Vec::with_capacity(values.len());
             for value in values {
                 values_cast.push(unwrap!(cast_up(arena, ctx, typ_inner, value)));
