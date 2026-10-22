@@ -1,0 +1,145 @@
+;; Value-type matching
+
+syntax subtypRes = ok<bool> | error
+
+;;; Matching functions
+
+dec $subtyp(fenv, tdenv, typ, val) : subtypRes
+  hint(prose_in "the result of checking value" %3 "against type" %2
+                "under function environment" %0 "and type environment" %1)
+dec $subtyps(fenv, tdenv, typ*, val*) : subtypRes
+  hint(prose_in "the result of checking values" %3 "against types" %2
+                "under function environment" %0 "and type environment" %1)
+dec $subtyp_list(fenv, tdenv, typ, val*) : subtypRes
+  hint(prose_in "the result of checking each value in" %3 "against type" %2
+                "under function environment" %0 "and type environment" %1)
+dec $subtyp_var(fenv, tdenv, id, typ*, val) : subtypRes
+  hint(prose_in "the result of checking value" %4 "against type name" %2
+                "with arguments" %3 "under function environment" %0
+                "and type environment" %1)
+dec $subtyp_def(fenv, tdenv, typDef, typ*, val) : subtypRes
+  hint(prose_in "the result of checking value" %4 "against type definition" %2
+                "with arguments" %3 "under function environment" %0
+                "and type environment" %1)
+dec $subtyp_extern(val) : subtypRes
+  hint(prose_in "the result of checking whether" %0 "is an extern value")
+dec $subtyp_variant(fenv, tdenv, theta, typCase*, val) : subtypRes
+  hint(prose_in "the result of checking value" %4 "against variant cases" %3
+                "with substitution" %2 "under function environment" %0
+                "and type environment" %1)
+dec $subtyp_struct(fenv, tdenv, theta, typField*, val) : subtypRes
+  hint(prose_in "the result of checking value" %4 "against struct fields" %3
+                "with substitution" %2 "under function environment" %0
+                "and type environment" %1)
+dec $subtyp_case(fenv, tdenv, theta, typ*, val*) : subtypRes
+  hint(prose_in "the result of checking values" %4 "against types" %3
+                "with substitution" %2 "under function environment" %0
+                "and type environment" %1)
+dec $subtyp_func(fenv, tdenv, typ, id) : subtypRes
+  hint(prose_in "the result of checking function" %3 "against type" %2
+                "under function environment" %0 "and type environment" %1)
+
+;;; Values and sequences
+
+def $subtyp(fenv, tdenv, BOOL, BOOL b) = OK true
+def $subtyp(fenv, tdenv, NAT, NAT n) = OK true
+def $subtyp(fenv, tdenv, NAT, INT i) = OK $(i >= 0)
+def $subtyp(fenv, tdenv, INT, num) = OK true
+def $subtyp(fenv, tdenv, TEXT, TEXT t) = OK true
+def $subtyp(fenv, tdenv, VAR id targ*, val) = $subtyp_var(fenv, tdenv, id, targ*, val)
+def $subtyp(fenv, tdenv, TUP typ*, TUP val*) = $subtyps(fenv, tdenv, typ*, val*)
+def $subtyp(fenv, tdenv, ITER typ QUEST, OPT val) = $subtyp(fenv, tdenv, typ, val)
+def $subtyp(fenv, tdenv, ITER typ QUEST, OPT eps) = OK true
+def $subtyp(fenv, tdenv, ITER typ STAR, LIST val*) = $subtyp_list(fenv, tdenv, typ, val*)
+def $subtyp(fenv, tdenv, FUNC tparam* typ* typ_ret, FUNC id)
+  = $subtyp_func(fenv, tdenv, FUNC tparam* typ* typ_ret, id)
+def $subtyp(fenv, tdenv, typ, val) = OK false
+  -- otherwise
+
+def $subtyps(fenv, tdenv, eps, eps) = OK true
+def $subtyps(fenv, tdenv, typ_h :: typ_t*, val_h :: val_t*) = $subtyps(fenv, tdenv, typ_t*, val_t*)
+  -- if OK true = $subtyp(fenv, tdenv, typ_h, val_h)
+def $subtyps(fenv, tdenv, typ_h :: typ_t*, val_h :: val_t*) = subtypRes
+  -- if subtypRes = $subtyp(fenv, tdenv, typ_h, val_h)
+  -- if subtypRes =/= OK true
+def $subtyps(fenv, tdenv, eps, val_h :: val_t*) = OK false
+def $subtyps(fenv, tdenv, typ_h :: typ_t*, eps) = OK false
+
+def $subtyp_list(fenv, tdenv, typ, eps) = OK true
+def $subtyp_list(fenv, tdenv, typ, val_h :: val_t*) = $subtyp_list(fenv, tdenv, typ, val_t*)
+  -- if OK true = $subtyp(fenv, tdenv, typ, val_h)
+def $subtyp_list(fenv, tdenv, typ, val_h :: val_t*) = subtypRes
+  -- if subtypRes = $subtyp(fenv, tdenv, typ, val_h)
+  -- if subtypRes =/= OK true
+
+;;; Named types and type definitions
+
+def $subtyp_var(fenv, tdenv, id, targ*, val) = $subtyp_def(fenv, tdenv, typDef, targ*, val)
+  -- if typDef = $find_map<id, typDef>(tdenv, id)
+def $subtyp_var(fenv, tdenv, id, targ*, val) = ERROR
+  -- otherwise
+
+def $subtyp_def(fenv, tdenv, EXTTYP _, eps, val) = $subtyp_extern(val)
+def $subtyp_def(fenv, tdenv, TYP _ tparam* '=' (ALIAS typ), targ*, val)
+  = $subtyp(fenv, tdenv, typ_subst, val)
+  -- if theta = `{ (tparam ':' targ)* `}
+  -- if OK typ_subst = $subst_typ(theta, typ)
+def $subtyp_def(fenv, tdenv, TYP _ tparam* '=' (VARIANT typCase*), targ*, val)
+  = $subtyp_variant(fenv, tdenv, theta, typCase*, val)
+  -- if theta = `{ (tparam ':' targ)* `}
+def $subtyp_def(fenv, tdenv, TYP _ tparam* '=' (STRUCT typField*), targ*, val)
+  = $subtyp_struct(fenv, tdenv, theta, typField*, val)
+  -- if theta = `{ (tparam ':' targ)* `}
+def $subtyp_def(fenv, tdenv, typDef, targ*, val) = ERROR
+  -- otherwise
+
+;;; Extern values
+
+def $subtyp_extern(EXT json) = OK true
+def $subtyp_extern(val) = OK false
+  -- otherwise
+
+;;; Variants and structs
+
+def $subtyp_variant(fenv, tdenv, theta, typCase*, INJ (mixop val*))
+  = $subtyp_case(fenv, tdenv, theta, typ_case_found*, val*)
+  -- if (mixop_case typ_case* = typCase)*
+  -- if typ_case_found* = $assoc_<mixop, typ*>(mixop, (mixop_case, typ_case*)*)
+def $subtyp_variant(fenv, tdenv, theta, typCase*, val) = OK false
+  -- otherwise
+
+def $subtyp_struct(fenv, tdenv, theta, typField*, STR valField*)
+  = $subtyp_case(fenv, tdenv, theta, typ_field*, val_field*)
+  -- if (atom typ_field = typField)*
+  -- if (atom val_field = valField)*
+def $subtyp_struct(fenv, tdenv, theta, typField*, val) = OK false
+  -- otherwise
+
+def $subtyp_case(fenv, tdenv, theta, typ*, val*) = $subtyps(fenv, tdenv, typ_subst*, val*)
+  -- if OK typ_subst* = $subst_typs(theta, typ*)
+def $subtyp_case(fenv, tdenv, theta, typ*, val*) = ERROR
+  -- otherwise
+
+;;; Function signatures and values
+
+dec $param_typ(param) : typ
+  hint(prose_in "the type of parameter" %0)
+def $param_typ(EXP typ) = typ
+def $param_typ(FUN id ':' tparam* param* '->' typ)
+  = FUNC tparam* $param_typ(param)* typ
+
+dec $func_typ(funcDefn) : typ
+  hint(prose_in "the signature of function" %0)
+def $func_typ(EXTFUNC id tparam* param* ':' typ)
+  = FUNC tparam* $param_typ(param)* typ
+def $func_typ(BUILTINFUNC id tparam* param* ':' typ)
+  = FUNC tparam* $param_typ(param)* typ
+def $func_typ(TABLEFUNC _ param* ':' typ '=' tblRow*)
+  = FUNC eps $param_typ(param)* typ
+def $func_typ(FUNC _ tparam* param* ':' typ '=' clause* elsClause?)
+  = FUNC tparam* $param_typ(param)* typ
+
+def $subtyp_func(fenv, tdenv, typ, id) = $equiv_func_typ(tdenv, typ, $func_typ(funcDefn))
+  -- if funcDefn = $find_map<id, funcDefn>(fenv, id)
+def $subtyp_func(fenv, tdenv, typ, id) = ERROR
+  -- otherwise
