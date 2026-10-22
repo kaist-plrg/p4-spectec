@@ -80,6 +80,26 @@ so the base level names no entry relation.
 `towers/al-p4-ok.json` is the same tower entered through `Program_ok`,
 which only type-checks the program.
 
+## STF simulation
+
+`metacirc sim` runs a P4 program and its STF test through a two-level `sl`
+tower over P4, with the same output as `p4spectec sim`:
+
+```sh
+./bin/metacirc sim towers/al-p4.json --arch v1model -i p4c/p4include \
+  -p /path/to/program.p4 --stf /path/to/program.stf
+```
+
+The architecture's externs and the P4 builtins run natively. When the AL
+specification calls `Call_extern_rel`, `Call_extern_func`, or
+`Call_builtin_func`, the host decodes the call and answers it; a reentry
+from the simulator runs on a second SL executor over the same AL
+specification. Other towers, including `"mode": "al"`, AL targets, and
+three or more levels, cannot simulate.
+
+`make -C p4spectec test-sim-meta` runs the `meta` simulation suites against
+the native expectations; it is not part of `make test`.
+
 ## Tower configuration
 
 Levels are ordered from native base through intermediates to target.
