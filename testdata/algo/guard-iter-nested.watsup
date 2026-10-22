@@ -1,0 +1,11 @@
+;; Guards repeat over nested iterations; an empty inner source checks nothing
+
+dec $picks(nat*, nat**) : nat**
+def $picks(nat_base*, nat_idx**) = ((nat_base*[nat_idx])*)*
+def $picks(nat_base*, nat_idx**) = eps
+  -- otherwise
+
+dec $main() : bool
+def $main() = true
+  -- if $picks([ 7, 8 ], [ [ 1, 0 ], eps ]) = [ [ 8, 7 ], eps ]
+  -- if $picks([ 7, 8 ], [ eps, [ 2 ] ]) = eps
