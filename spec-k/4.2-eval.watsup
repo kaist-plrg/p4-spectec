@@ -1,0 +1,250 @@
+;;
+;; Evaluation: building a term from a pattern and a substitution
+;;
+;;
+
+;;; As create_term of the LLVM backend: bottom-up, evaluating each function
+;;; symbol as soon as its term is built
+
+;; Evaluation
+
+relation Equation:
+  definition |- equation* term* : applies<(subst, pattern)>
+  hint(input %0 %1 %2)
+  hint(prose_in "the first of the equations" %1 "that applies to" %2)
+  hint(prose_out %3)
+
+relation Equation_applies:
+  definition |- equation term* : applies<subst>
+  hint(input %0 %1 %2)
+  hint(prose_in "the way" %1 "applies to" %2)
+  hint(prose_out %3)
+
+relation First_holding:
+  definition |- way* pattern? : applies<subst>
+  hint(input %0 %1 %2)
+  hint(prose_in "the first of" %1 "under which" %2 "holds")
+  hint(prose_out %3)
+
+relation Holds:
+  definition subst |- pattern? : res<bool>
+  hint(input %0 %1 %2)
+  hint(prose_in "whether" %2 "holds under" %1)
+  hint(prose_out %3)
+
+var found : applies<(subst, pattern)>
+var matched : applies<subst>
+
+dec $rhs_of(equation) : pattern
+def $rhs_of(EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*)
+  = pattern_r
+
+;;; Variables and domain values
+
+rule Eval/variable:
+  D subst |- VAR varid sort : OK term
+  -- if term = $find_map<varid, term>(subst, varid)
+
+;;; A fresh variable of a function equation (!X), which kompile leaves
+;;; unbound: the freshGenerator of its sort applied to a number below zero.
+;;; The fresh values of rules come from the generatedCounter cell (0, 1, 2,
+;;; ...), so the two never meet, as kast.md requires of all !X. The LLVM
+;;; backend reads the counter of the configuration the calling rule matched,
+;;; and may give a value of that rule again.
+
+rule Eval/fresh:
+  D subst |- VAR varid sort : result
+  -- if eps = $find_map<varid, term>(subst, varid)
+  -- if $string_find(varid, "Var'Bang", 0) = 0
+  -- if symid = $find_map<sort, symid>(D.FRESH, sort)
+  -- if n = $fresh_nat()
+  -- Apply: D |- symid eps ([INT $(0 - (n + 1))]) : result
+
+rule Eval/token:
+  D subst |- DV sort t : OK (DV sort t)
+
+rule Eval/integer:
+  D subst |- INT i : OK (INT i)
+
+rule Eval/boolean:
+  D subst |- BOOL b : OK (BOOL b)
+
+rule Eval/string:
+  D subst |- STRING t : OK (STRING t)
+
+rule Eval/float:
+  D subst |- FLOAT t : OK (FLOAT t)
+
+rule Eval/bytes:
+  D subst |- BYTES n* : OK (BYTES n*)
+
+rule Eval/mint:
+  D subst |- MINT n_w n_v : OK (MINT n_w n_v)
+
+;;; Lazy hooks: the second argument is evaluated only when the first does not
+;;; decide
+
+rule Eval/and-false:
+  D subst |- APP symid sort* ([pattern_1, pattern_2]) : OK (BOOL false)
+  -- if t = $lazy_hook(D, symid)
+  -- if t = "BOOL.and" \/ t = "BOOL.andThen"
+  -- Eval: D subst |- pattern_1 : OK (BOOL false)
+
+rule Eval/or-true:
+  D subst |- APP symid sort* ([pattern_1, pattern_2]) : OK (BOOL true)
+  -- if t = $lazy_hook(D, symid)
+  -- if t = "BOOL.or" \/ t = "BOOL.orElse"
+  -- Eval: D subst |- pattern_1 : OK (BOOL true)
+
+rule Eval/implies-true:
+  D subst |- APP symid sort* ([pattern_1, pattern_2]) : OK (BOOL true)
+  -- if t = $lazy_hook(D, symid)
+  -- if t = "BOOL.implies"
+  -- Eval: D subst |- pattern_1 : OK (BOOL false)
+
+rule Eval/and-second:
+  D subst |- APP symid sort* ([pattern_1, pattern_2]) : result
+  -- if t = $lazy_hook(D, symid)
+  -- if t = "BOOL.and" \/ t = "BOOL.andThen" \/ t = "BOOL.implies"
+  -- Eval: D subst |- pattern_1 : OK (BOOL true)
+  -- Eval: D subst |- pattern_2 : result
+
+rule Eval/or-second:
+  D subst |- APP symid sort* ([pattern_1, pattern_2]) : result
+  -- if t = $lazy_hook(D, symid)
+  -- if t = "BOOL.or" \/ t = "BOOL.orElse"
+  -- Eval: D subst |- pattern_1 : OK (BOOL false)
+  -- Eval: D subst |- pattern_2 : result
+
+rule Eval/ite-then:
+  D subst |- APP symid sort* ([pattern_c, pattern_t, pattern_e]) : result
+  -- if "KEQUAL.ite" = $lazy_hook(D, symid)
+  -- Eval: D subst |- pattern_c : OK (BOOL true)
+  -- Eval: D subst |- pattern_t : result
+
+rule Eval/ite-else:
+  D subst |- APP symid sort* ([pattern_c, pattern_t, pattern_e]) : result
+  -- if "KEQUAL.ite" = $lazy_hook(D, symid)
+  -- Eval: D subst |- pattern_c : OK (BOOL false)
+  -- Eval: D subst |- pattern_e : result
+
+;;; Other symbols: arguments first, left to right, then the symbol
+
+rule Eval/app:
+  D subst |- APP symid sort* pattern* : result
+  -- if "" = $lazy_hook(D, symid)
+  -- (Eval: D subst |- pattern : OK term)*
+  -- Apply: D |- symid sort* term* : result
+
+;;; Anything else (an unbound variable, \and outside a left-hand side, a
+;;; failing argument) fails
+
+rule Eval/fail:
+  D subst |- pattern : FAIL
+  -- otherwise
+
+;;; A symbol applied to evaluated arguments, by its kind
+
+rule Apply/constructor:
+  D |- symid sort* term* : OK $construct(symid, sort*, term*)
+  -- if CONSTRUCTOR = $kind_of_symbol(D, symid)
+
+rule Apply/binder:
+  D |- symid sort* term* : OK $construct(symid, sort*, term*)
+  -- if BINDER = $kind_of_symbol(D, symid)
+
+rule Apply/hooked:
+  D |- symid sort* term* : $hook(D, hookid, sort_r, term*)
+  -- if HOOKED hookid = $kind_of_symbol(D, symid)
+  -- if sort_r = $result_instance(D, symid, sort*)
+
+;;; A function symbol is rewritten by its first equation that applies.
+;;; Failing to evaluate the right-hand side does not fall back to later
+;;; equations.
+
+rule Apply/function:
+  D |- symid sort* term* : result
+  -- if FUNCTION = $kind_of_symbol(D, symid)
+  -- Equation: D |- $equations_of(D, symid) term* : APPLIES (subst, pattern_r)
+  -- Eval: D subst |- pattern_r : result
+
+;;; An anywhere symbol is rewritten by its first equation that applies, and
+;;; stays a constructor when none does
+
+rule Apply/anywhere:
+  D |- symid sort* term* : result
+  -- if ANYWHERE = $kind_of_symbol(D, symid)
+  -- Equation: D |- $equations_of(D, symid) term* : APPLIES (subst, pattern_r)
+  -- Eval: D subst |- pattern_r : result
+
+rule Apply/anywhere-none:
+  D |- symid sort* term* : OK $construct(symid, sort*, term*)
+  -- if ANYWHERE = $kind_of_symbol(D, symid)
+  -- Equation: D |- $equations_of(D, symid) term* : SKIPS
+
+rule Apply/fail:
+  D |- symid sort* term* : FAIL
+  -- otherwise
+
+;;; The first equation, in priority order, that applies to the arguments: its
+;;; left-hand sides match them and its requires clause holds. It gives the
+;;; substitution and the right-hand side. A requires clause that cannot be
+;;; evaluated does not fall back to later equations.
+
+rule Equation/none:
+  D |- eps term* : SKIPS
+
+rule Equation/first:
+  D |- (eqn_h :: eqn_t*) term* : APPLIES (subst, $rhs_of(eqn_h))
+  -- Equation_applies: D |- eqn_h term* : APPLIES subst
+
+rule Equation/undefined:
+  D |- (eqn_h :: eqn_t*) term* : UNDEFINED
+  -- Equation_applies: D |- eqn_h term* : UNDEFINED
+
+rule Equation/next:
+  D |- (eqn_h :: eqn_t*) term* : found
+  -- Equation_applies: D |- eqn_h term* : SKIPS
+  -- Equation: D |- eqn_t* term* : found
+
+rule Equation_applies:
+  D |- (EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*) term* : matched
+  -- Match_list: D (OK $empty_map<varid, term>) |- pattern_a* ~~ term* : way*
+  -- First_holding: D |- way* pattern_c? : matched
+
+;;; Among the ways a left-hand side matches, in order, the first one under
+;;; which the requires clause holds, unless one before is stuck or cannot
+;;; evaluate it
+
+rule First_holding/none:
+  D |- eps pattern_c? : SKIPS
+
+rule First_holding/stuck:
+  D |- (FAIL :: way_t*) pattern_c? : UNDEFINED
+
+rule First_holding/first:
+  D |- (OK subst_h :: way_t*) pattern_c? : APPLIES subst_h
+  -- Holds: D subst_h |- pattern_c? : OK true
+
+rule First_holding/undefined:
+  D |- (OK subst_h :: way_t*) pattern_c? : UNDEFINED
+  -- Holds: D subst_h |- pattern_c? : FAIL
+
+rule First_holding/next:
+  D |- (OK subst_h :: way_t*) pattern_c? : matched
+  -- Holds: D subst_h |- pattern_c? : OK false
+  -- First_holding: D |- way_t* pattern_c? : matched
+
+;;; A requires clause holds when there is none, or it evaluates to true; it
+;;; fails when it cannot be evaluated (a function in it is stuck)
+
+rule Holds/none:
+  D subst |- eps : OK true
+
+rule Holds/value:
+  D subst |- (pattern) : OK b
+  -- Eval: D subst |- pattern : OK (BOOL b)
+
+rule Holds/fail:
+  D subst |- (pattern) : FAIL
+  -- Eval: D subst |- pattern : FAIL

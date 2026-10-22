@@ -1,0 +1,41 @@
+;;
+;; Auxiliary definitions on top of spec-meta/common/0-stdlib.watsup
+;;
+
+;; Results that may fail, as in P4-SpecTec² (spec-meta/common/4-relation.watsup)
+
+syntax res<X> = OK X | FAIL
+
+;; Whether a rule or an equation applies: its left-hand side matches and its
+;; requires clause holds, it does not, or the requires clause cannot be
+;; evaluated, which ends the run (abort_when_stuck of the LLVM backend)
+
+syntax applies<X> = APPLIES X | SKIPS | UNDEFINED
+
+;; Set and map builtins, implemented in p4spec/lib/interface/builtin
+;; (declared the same way in spec/0-aux)
+
+builtin dec $diff_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in %0 "without the elements of" %1)
+
+builtin dec $eq_set<K>(set<K>, set<K>) : bool
+  hint(prose_in %0 "and" %1 "have the same elements")
+
+builtin dec $update_map<K, V>(map<K, V>, K, V) : map<K, V>
+  hint(prose_in %0 "where" %1 "is updated to" %2)
+
+builtin dec $concat_<X>((X*)*) : X*
+  hint(prose_in "the concatenation of" %0)
+
+builtin dec $union_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in "the union of" %0 "and" %1)
+
+builtin dec $intersect_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in "the intersection of" %0 "and" %1)
+
+;; A number not given before: 0, 1, 2, ... The one builtin with a state, as
+;; $fresh_typeId of the P4 spec; the interpreter does not cache a call that
+;; takes one.
+
+builtin dec $fresh_nat() : nat
+  hint(prose_in "a new number")
