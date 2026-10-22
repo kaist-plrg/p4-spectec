@@ -480,9 +480,9 @@ fn eval_cond_iter<Iface: Interface, Ext: Extern>(
                 ctx.find_opt_values_by_var(runner_ctx.arena(), &vars_outer),
                 &Span::default()
             );
-            // An absent option makes the condition false
+            // No element can refute a universally iterated condition
             let Some(values) = values else {
-                return ok!(false);
+                return ok!(true);
             };
             // Bind the inner variables for the nested check
             let mut ctx_sub = ctx.clone();

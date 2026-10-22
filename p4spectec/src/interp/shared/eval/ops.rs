@@ -2,6 +2,8 @@
 //!
 //! Operators, predicates, casts, access, and updates on arena values;
 //! every failure is located at the span the caller passes in.
+//! Text positions count Unicode scalar values (`char`),
+//! without normalization or grapheme segmentation.
 
 use std::rc::Rc;
 
@@ -238,23 +240,35 @@ pub(crate) fn cast_up(
                 span
             )
         }
-        // Option: the payload
+        // nat? -> int? or nat -> int?
         ast::TypKind::Iter(typ_inner, ast::Iter::Opt) => {
-            let value = value::get::opt(arena, &value).expect("operand must be an option");
-            let value = match value {
-                Some(value) => Some(unwrap!(cast_up(arena, ctx, typ_inner, value))),
-                None => None,
+            let value_opt = match arena.value.kind(value.node) {
+                // nat? -> int?: None -> None
+                ValueKind::Opt(None) => None,
+                // nat? -> int?: Some(1) -> Some(1 as int)
+                ValueKind::Opt(Some(value_inner)) => {
+                    let value_inner = *value_inner;
+                    Some(unwrap!(cast_up(arena, ctx, typ_inner, value_inner)))
+                }
+                // nat -> int?: 1 -> Some(1 as int)
+                _ => Some(unwrap!(cast_up(arena, ctx, typ_inner, value))),
             };
             unwrap_from_result!(
-                value::make::opt(arena, typ_inner.node.clone().into(), value, Span::default()),
+                value::make::opt(arena, typ_inner.node.clone().into(), value_opt, Span::default()),
                 span
             )
         }
-        // List: every element
+        // nat* -> int*, nat? -> int*, or nat -> int*
         ast::TypKind::Iter(typ_inner, ast::Iter::List) => {
-            let values = value::get::list(arena, &value)
-                .expect("operand must be a list")
-                .to_vec();
+            let values = match arena.value.kind(value.node) {
+                // [1, 2] retains both elements for recursive casting
+                ValueKind::List(values) => values.to_vec(),
+                // None -> []; Some(1) -> [1] before element casting
+                ValueKind::Opt(value_opt) => value_opt.iter().copied().collect(),
+                // 1 -> [1] before element casting
+                _ => vec![value],
+            };
+            // nat* -> int?*: [1] -> [Some(1 as int)]
             let mut values_cast = Vec::with_capacity(values.len());
             for value in values {
                 values_cast.push(unwrap!(cast_up(arena, ctx, typ_inner, value)));
@@ -401,7 +415,7 @@ pub(crate) fn access_index(
     // The operand must be a text or list and the index in bounds
     let int_idx = unwrap!(get_int(arena, value_idx, span_idx));
     let len = match arena.value.kind(value_base.node) {
-        ValueKind::Text(text) => text.len(),
+        ValueKind::Text(text) => text.chars().count(),
         ValueKind::List(values) => values.len(),
         _ => unreachable!("index operand must be a text or list"),
     };
@@ -430,7 +444,7 @@ pub(crate) fn access_index(
 // - Slice access
 
 #[expect(clippy::too_many_arguments, reason = "operand and bounds spans remain explicit")]
-/// Slices a text or list; a text slice must cut on UTF-8 boundaries.
+/// Slices a text by Unicode scalar values or a list by elements.
 pub(crate) fn access_slice(
     arena: &mut Arena,
     value_base: &Value,
@@ -447,7 +461,7 @@ pub(crate) fn access_slice(
     let int_idx = unwrap!(get_int(arena, value_idx, span_idx));
     let int_len = unwrap!(get_int(arena, value_len, span_len));
     let size = match arena.value.kind(value_base.node) {
-        ValueKind::Text(text) => text.len(),
+        ValueKind::Text(text) => text.chars().count(),
         ValueKind::List(values) => values.len(),
         _ => unreachable!("slice operand must be a text or list"),
     };
@@ -464,16 +478,11 @@ pub(crate) fn access_slice(
         );
     };
     match arena.value.kind(value_base.node) {
-        // Text: the byte range must fall on character boundaries
-        ValueKind::Text(text) => match text.get(idx..idx_end) {
-            Some(text) => {
-                let text = text.to_owned();
-                backtrack::from_result(value::make::text(arena, text, Span::default()), span_typ)
-            }
-            None => {
-                fatal!(span_bounds.clone(), error::expr::text_slice_boundary_mismatch(),)
-            }
-        },
+        // Text: select scalar values without interpreting indices as byte offsets
+        ValueKind::Text(text) => {
+            let text = text.chars().skip(idx).take(idx_end - idx).collect();
+            backtrack::from_result(value::make::text(arena, text, Span::default()), span_typ)
+        }
         // List: copy the range
         ValueKind::List(values) => {
             let values = values[idx..idx_end].to_vec();
@@ -497,13 +506,13 @@ pub(crate) fn update_index(
     value_idx: &Value,
     value_upd: Value,
     typ: &Phrase<Rc<ast::TypKind>>,
-    span_base: &Span,
+    _span_base: &Span,
     span_idx: &Span,
 ) -> Backtrack<Value> {
     // Operand and index checks as for access
     let int_idx = unwrap!(get_int(arena, value_idx, span_idx));
     let len = match arena.value.kind(value_base.node) {
-        ValueKind::Text(text) => text.len(),
+        ValueKind::Text(text) => text.chars().count(),
         ValueKind::List(values) => values.len(),
         _ => unreachable!("index operand must be a text or list"),
     };
@@ -511,61 +520,20 @@ pub(crate) fn update_index(
         return fatal!(span_idx.clone(), error::expr::index_out_of_bounds(int_idx, len),);
     };
     let value = match arena.value.kind(value_base.node) {
-        // Text: the replacement must be a single character
+        // Text: replace exactly one scalar value
         ValueKind::Text(text) => {
-            let size = text.len();
             let text_upd = value::get::text(arena, &value_upd).expect("operand must be a text");
-            if text_upd.len() != 1 {
+            if text_upd.chars().count() != 1 {
                 return fatal!(span_idx.clone(), error::expr::character_update_length_mismatch(),);
             }
-            // Rebuild as prefix, replacement, suffix
-            let text_upd = text_upd.to_owned();
-            let value_l_idx = unwrap_from_result!(
-                value::make::int(arena, (0).into(), Span::default()),
-                &typ.span
-            );
-            let value_l_len = unwrap_from_result!(
-                value::make::int(arena, (idx).into(), Span::default()),
-                &typ.span
-            );
-            let value_l = unwrap!(access_slice(
-                arena,
-                value_base,
-                &value_l_idx,
-                &value_l_len,
-                &typ.node,
-                &typ.span,
-                span_base,
-                span_idx,
-                span_idx,
-                span_idx
-            ));
-            let value_r_idx = unwrap_from_result!(
-                value::make::int(arena, (idx + 1).into(), Span::default()),
-                &typ.span
-            );
-            let value_r_len = unwrap_from_result!(
-                value::make::int(arena, (size - (idx + 1)).into(), Span::default()),
-                &typ.span
-            );
-            let value_r = unwrap!(access_slice(
-                arena,
-                value_base,
-                &value_r_idx,
-                &value_r_len,
-                &typ.node,
-                &typ.span,
-                span_base,
-                span_idx,
-                span_idx,
-                span_idx
-            ));
-            let text_l = value::get::text(arena, &value_l).expect("operand must be a text");
-            let text_r = value::get::text(arena, &value_r).expect("operand must be a text");
-            {
-                let text = format!("{text_l}{text_upd}{text_r}");
-                unwrap_from_result!(value::make::text(arena, text, Span::default()), &typ.span)
-            }
+            // Preserve the prefix and suffix as scalar sequences
+            let text = text
+                .chars()
+                .take(idx)
+                .chain(text_upd.chars())
+                .chain(text.chars().skip(idx + 1))
+                .collect();
+            unwrap_from_result!(value::make::text(arena, text, Span::default()), &typ.span)
         }
         // List: replace in a copy
         ValueKind::List(values) => {
@@ -592,7 +560,7 @@ pub(crate) fn update_slice(
     value_len: &Value,
     value_upd: Value,
     typ: &Phrase<Rc<ast::TypKind>>,
-    span_base: &Span,
+    _span_base: &Span,
     span_idx: &Span,
     span_len: &Span,
 ) -> Backtrack<Value> {
@@ -600,7 +568,7 @@ pub(crate) fn update_slice(
     let int_idx = unwrap!(get_int(arena, value_idx, span_idx));
     let int_len = unwrap!(get_int(arena, value_len, span_len));
     let size = match arena.value.kind(value_base.node) {
-        ValueKind::Text(text) => text.len(),
+        ValueKind::Text(text) => text.chars().count(),
         ValueKind::List(values) => values.len(),
         _ => unreachable!("slice operand must be a text or list"),
     };
@@ -614,64 +582,24 @@ pub(crate) fn update_slice(
         return fatal!(span_len.clone(), error::expr::slice_out_of_bounds(int_idx, int_end, size),);
     };
     let value = match arena.value.kind(value_base.node) {
-        // Text: the replacement must have the range's length
+        // Text: the replacement must have the range's scalar count
         ValueKind::Text(text) => {
-            let size = text.len();
             let text_upd = value::get::text(arena, &value_upd).expect("operand must be a text");
-            if text_upd.len() != idx_end - idx {
+            let len_upd = text_upd.chars().count();
+            if len_upd != idx_end - idx {
                 return fatal!(
                     span_len.clone(),
-                    error::expr::text_slice_update_length_mismatch(idx_end - idx, text_upd.len()),
+                    error::expr::text_slice_update_length_mismatch(idx_end - idx, len_upd),
                 );
             }
-            // Rebuild as prefix, replacement, suffix
-            let text_upd = text_upd.to_owned();
-            let value_l_idx = unwrap_from_result!(
-                value::make::int(arena, (0).into(), Span::default()),
-                &typ.span
-            );
-            let value_l_len = unwrap_from_result!(
-                value::make::int(arena, (idx).into(), Span::default()),
-                &typ.span
-            );
-            let value_l = unwrap!(access_slice(
-                arena,
-                value_base,
-                &value_l_idx,
-                &value_l_len,
-                &typ.node,
-                &typ.span,
-                span_base,
-                span_len,
-                span_len,
-                span_len
-            ));
-            let value_r_idx = unwrap_from_result!(
-                value::make::int(arena, (idx_end).into(), Span::default()),
-                &typ.span
-            );
-            let value_r_len = unwrap_from_result!(
-                value::make::int(arena, (size - (idx_end)).into(), Span::default()),
-                &typ.span
-            );
-            let value_r = unwrap!(access_slice(
-                arena,
-                value_base,
-                &value_r_idx,
-                &value_r_len,
-                &typ.node,
-                &typ.span,
-                span_base,
-                span_len,
-                span_len,
-                span_len
-            ));
-            let text_l = value::get::text(arena, &value_l).expect("operand must be a text");
-            let text_r = value::get::text(arena, &value_r).expect("operand must be a text");
-            {
-                let text = format!("{text_l}{text_upd}{text_r}");
-                unwrap_from_result!(value::make::text(arena, text, Span::default()), &typ.span)
-            }
+            // Preserve the prefix and suffix as scalar sequences
+            let text = text
+                .chars()
+                .take(idx)
+                .chain(text_upd.chars())
+                .chain(text.chars().skip(idx_end))
+                .collect();
+            unwrap_from_result!(value::make::text(arena, text, Span::default()), &typ.span)
         }
         // List: the replacement must have the range's length
         ValueKind::List(values) => {
