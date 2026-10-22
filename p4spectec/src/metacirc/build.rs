@@ -41,7 +41,7 @@ use super::{
     tower::{Layer, Level, Tower},
 };
 use crate::{
-    interface::{self, al::Cache},
+    interface::{self, meta::shared::Cache},
     lang::{al::ast as al, data::arena::Arena},
     pass::structure,
     runner::{self, NullExtern, Runner, Spec},

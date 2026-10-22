@@ -2,7 +2,7 @@
 //!
 //! Forms shared with AL reuse the AL notation.
 
-pub(super) use crate::interface::al::mixops::{
+pub(super) use crate::interface::meta::shared::mixops::{
     BUILTINFUNC, DEBUG, EXTFUNC, EXTTYP, IF, IFHOLD, IFNOTHOLD, ITER_PREM, TYP_DEF,
 };
 

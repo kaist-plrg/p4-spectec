@@ -14,7 +14,7 @@ mod patch;
 mod tower;
 
 use crate::{
-    interface::{al::encode::Encode, p4::parse::parse_file},
+    interface::{meta::shared::encode::Encode, p4::parse::parse_file},
     lang::data::arena::Arena,
     runner,
 };

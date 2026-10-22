@@ -2,7 +2,7 @@
 
 use std::rc::Rc;
 
-use super::Error;
+use crate::interface::meta::shared::Error;
 use crate::{
     lang::{
         common::source::Span,

@@ -8,7 +8,7 @@ use num_traits::ToPrimitive;
 
 use super::{mixops as m, stub};
 use crate::{
-    interface::al::{Cache, Error, decode::Decode},
+    interface::meta::shared::{Cache, Error, decode::Decode},
     lang::{
         common::{Id, prim::num::Number},
         data::{

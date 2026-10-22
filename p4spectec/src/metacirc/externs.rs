@@ -7,7 +7,7 @@
 
 use super::{codec, tower::Layer};
 use crate::{
-    interface::al::{AlInterface, Cache},
+    interface::meta::{al::AlInterface, shared::Cache},
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::Typ,

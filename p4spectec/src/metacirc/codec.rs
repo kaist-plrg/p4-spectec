@@ -5,7 +5,10 @@
 //! Fatal errors remain diagnostics, and every path retains the call's effects.
 
 use crate::{
-    interface::al::{self, Cache, decode::Decode, encode as encode_al},
+    interface::meta::{
+        al::encode as encode_al,
+        shared::{self as meta, Cache, decode::Decode},
+    },
     lang::{
         common::source::Span,
         data::{
@@ -74,7 +77,7 @@ pub(super) mod encode {
         cache: &mut Cache,
         eval: Eval<T>,
         text_typ: &str,
-        encode: impl FnOnce(&mut Arena, &mut Cache, T) -> Result<Value, al::Error>,
+        encode: impl FnOnce(&mut Arena, &mut Cache, T) -> Result<Value, meta::Error>,
     ) -> Eval<Vec<Value>, ExternError> {
         let result = match eval.result {
             // Encode successful outputs in the same arena as the decoded arguments
@@ -89,7 +92,7 @@ pub(super) mod encode {
                 typ: text_typ,
                 span: Span::default(),
             }
-            .map_err(|error| ExternError::from(al::Error::from(error).into_report())),
+            .map_err(|error| ExternError::from(meta::Error::from(error).into_report())),
             // Keep fatal failures outside the specification's backtracking protocol
             Err(InterpreterError::Fatal(report)) => Err(ExternError::from(report)),
         };

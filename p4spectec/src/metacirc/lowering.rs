@@ -15,7 +15,7 @@ use super::{
 use crate::{
     interface::{
         self,
-        al::{decode::Decode, encode::Encode},
+        meta::shared::{decode::Decode, encode::Encode},
     },
     lang::{al::ast as al, data::arena::Arena},
     pass::structure,

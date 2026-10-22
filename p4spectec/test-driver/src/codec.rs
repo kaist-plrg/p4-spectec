@@ -8,7 +8,7 @@
 use std::time::Instant;
 
 use p4spectec::{
-    interface::al,
+    interface::meta::shared,
     lang::{
         data::{arena::Arena, value::flat::Value},
         traits::print::Print,
@@ -46,20 +46,22 @@ pub fn run(suites: &[CodecSuite]) -> Result<()> {
         };
         // IL: elaborated specification
         let spec_il = p4spectec::elab(&suite.inputs).map_err(|error| invalid(&error))?;
-        let value_il =
-            al::encode::Encode::encode(&spec_il, &mut arena).map_err(|error| invalid(&error))?;
+        let value_il = shared::encode::Encode::encode(&spec_il, &mut arena)
+            .map_err(|error| invalid(&error))?;
         let spec_il_decoded: p4spectec::lang::il::ast::Spec =
-            al::decode::Decode::decode(&mut arena, value_il).map_err(|error| invalid(&error))?;
-        let value_il_again = al::encode::Encode::encode(&spec_il_decoded, &mut arena)
+            shared::decode::Decode::decode(&mut arena, value_il)
+                .map_err(|error| invalid(&error))?;
+        let value_il_again = shared::encode::Encode::encode(&spec_il_decoded, &mut arena)
             .map_err(|error| invalid(&error))?;
         check_fixpoint(&suite.name, "IL", &arena, value_il, value_il_again)?;
         // AL: natively lowered specification
         let spec_al = p4spectec::algo(&suite.inputs).map_err(|error| invalid(&error))?;
-        let value_al =
-            al::encode::Encode::encode(&spec_al, &mut arena).map_err(|error| invalid(&error))?;
+        let value_al = shared::encode::Encode::encode(&spec_al, &mut arena)
+            .map_err(|error| invalid(&error))?;
         let spec_al_decoded: p4spectec::lang::al::ast::Spec =
-            al::decode::Decode::decode(&mut arena, value_al).map_err(|error| invalid(&error))?;
-        let value_al_again = al::encode::Encode::encode(&spec_al_decoded, &mut arena)
+            shared::decode::Decode::decode(&mut arena, value_al)
+                .map_err(|error| invalid(&error))?;
+        let value_al_again = shared::encode::Encode::encode(&spec_al_decoded, &mut arena)
             .map_err(|error| invalid(&error))?;
         check_fixpoint(&suite.name, "AL", &arena, value_al, value_al_again)?;
         eprintln!("codec: {} round-trips in IL and AL", suite.name);

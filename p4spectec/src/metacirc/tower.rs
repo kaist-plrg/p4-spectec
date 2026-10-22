@@ -8,7 +8,7 @@
 
 use super::{config::LevelConfig, externs::AlExtern};
 use crate::{
-    interface::{al::AlInterface, p4::P4Interface},
+    interface::{meta::al::AlInterface, p4::P4Interface},
     lang::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},

@@ -4,21 +4,21 @@
 //! the P4 parser and standard builtins plus `print_`,
 //! which renders a value back to P4 syntax
 //! using the specification's print hints
-//! `al` lowers specification inputs to meta scripts with standard builtins
+//! `al` lowers specification inputs to meta scripts with standard builtins;
+//! `meta` converts IL and AL to and from meta-language values
 
 use crate::lang::{common::source::Span, data::value};
 
 use crate::runner::Spec;
 
 use self::{
-    al::AlInterface,
     builtin::{call::Builtins, extract},
+    meta::al::AlInterface,
     p4::{P4Interface, unparse::P4Unparser},
 };
 
-pub mod al;
 pub mod builtin;
-pub mod il;
+pub mod meta;
 pub mod p4;
 
 // == AL

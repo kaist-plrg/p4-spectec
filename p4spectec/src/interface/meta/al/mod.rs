@@ -15,18 +15,12 @@ use crate::{
     runner::{Eval, Extern, Interface, InterfaceError, Interpreter, RunnerContext},
 };
 
-use super::builtin::call::Builtins;
-use encode::Encode;
+use crate::interface::{builtin::call::Builtins, meta::shared::encode::Encode};
 
-mod cache;
 pub mod decode;
 pub mod encode;
-mod error;
-pub(super) mod mixops;
+mod mixops;
 mod stub;
-
-pub use cache::Cache;
-pub use error::{Error, ErrorKind};
 
 /// Provides AL script parsing and the standard specification builtins.
 pub struct AlInterface {

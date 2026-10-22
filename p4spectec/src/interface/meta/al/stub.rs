@@ -2,7 +2,9 @@
 
 use std::rc::Rc;
 
-use super::Error;
+use crate::interface::meta::shared::Error;
+
+pub(super) use crate::interface::meta::shared::stub::hints;
 use crate::{
     lang::{
         common::{Id, notation::atom::Atom, source::Span},
@@ -38,15 +40,6 @@ fn relation_notation<T>(
 
 // == Stubs
 
-/// The origin omitted from a variant case.
-pub(super) fn typ_origin() -> il::TypOrigin {
-    let span = Span::default();
-    phrase!(node: il::TypOriginKind {
-        id: phrase!(node: "".into(), span: span),
-        targs: vec![],
-    }, span: span)
-}
-
 /// The signature omitted from a runtime function value.
 pub(super) fn func_typ_params() -> (Vec<Id>, Vec<il::Typ>, il::Typ) {
     (vec![], vec![], make_typ::bool())
@@ -67,11 +60,6 @@ pub(super) fn not_exp(
     exps_output: Vec<il::Exp>,
 ) -> Result<(il::NotExp, InputHint), Error> {
     relation_notation(exps_input, exps_output)
-}
-
-/// The general hints omitted from meta definitions.
-pub(super) fn hints() -> Vec<il::Hint> {
-    vec![]
 }
 
 /// The written signature omitted from a rule match.

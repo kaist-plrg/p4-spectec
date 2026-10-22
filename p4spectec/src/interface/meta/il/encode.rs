@@ -7,7 +7,7 @@
 
 use super::mixops as m;
 use crate::{
-    interface::al::{
+    interface::meta::shared::{
         Cache, Error,
         encode::{Encode, case, list, opt},
     },
