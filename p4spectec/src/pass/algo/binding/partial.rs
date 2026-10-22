@@ -128,18 +128,14 @@ impl AnalyzedPrem {
 
 /// Builds the premise checking a bound sub-expression against its destination.
 ///
-/// Nullary cases, options, and the empty list become match tests;
-/// anything else becomes an equality.
+/// Nullary cases, the empty option, and the empty list become match tests;
+/// anything else, including `?(e)`, becomes an equality.
 fn gen_prem_bound(iter_ctx: &ICtx, destination: &ast::Var, exp_from: &ast::Exp) -> AnalyzedPrem {
     let exp_l = var::as_exp(true, destination);
     let (exp_kind, origin) = match &exp_from.node {
         ast::ExpKind::Case(not_exp) if not_exp.arity() == 0 => (
             ast::ExpKind::Match(Box::new(exp_l), ast::Pattern::Case(Rc::clone(not_exp.mixop()))),
             Origin::Match(exp_from.span, "variant case"),
-        ),
-        ast::ExpKind::Opt(Some(_)) => (
-            ast::ExpKind::Match(Box::new(exp_l), ast::Pattern::Opt(ast::OptPattern::Some)),
-            Origin::Match(exp_from.span, "option pattern"),
         ),
         ast::ExpKind::Opt(None) => (
             ast::ExpKind::Match(Box::new(exp_l), ast::Pattern::Opt(ast::OptPattern::None)),
