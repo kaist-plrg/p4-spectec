@@ -1,0 +1,18 @@
+;; An error in a clause does not select the otherwise clause
+
+var n : nat
+
+dec $f(nat) : nat
+def $f(n) = n
+def $f(n) = n
+
+dec $k(nat) : nat
+def $k(n) = 1
+  -- if $f(n) = 0
+def $k(n) = 2
+  -- otherwise
+
+dec $main() : nat
+def $main() = $k(3)
+def $main() = 0
+  -- otherwise

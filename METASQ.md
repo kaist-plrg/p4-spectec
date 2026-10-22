@@ -72,6 +72,8 @@ Use the supplied AL/P4 tower:
 The path is Rust SL interpreter → AL specification → P4 specification →
 P4 program. `Program_inst` type-checks the program and instantiates its
 declarations. A P4 target takes exactly one `-p` path.
+`towers/al-p4-ok.json` is the same tower entered through `Program_ok`,
+which only type-checks the program.
 
 ## Tower configuration
 
@@ -87,12 +89,14 @@ resolved relative to the current working directory.
 To add an AL interpretation layer, insert another
 `{ "specdir": "../spec-meta", "rel": "Entry", "lang": "al" }`
 before the target. Names such as `al-al.json` and `al-al-p4.json` describe
-these additional configurations; only `al.json` and `al-p4.json` are supplied.
+these additional configurations; only `al.json`, `al-p4.json`, and
+`al-p4-ok.json` are supplied.
 
 In a multi-level tower, target and intermediate specifications must not
 define `main`.
 
-The command accepts `--no-cache`, `--det`, and `--guard`. Interpreter call
+The command accepts `--no-cache`, `--no-det`, and `--guard`. `--no-det` disables
+determinism checks only in the native base interpreter. Interpreter call
 caching and AL encode/decode caching are enabled together by default;
 `--no-cache` disables both. It prints `passed`
 only after the configured base entry succeeds; diagnostics cause a nonzero
@@ -104,8 +108,11 @@ exit code.
 make test-metacirc
 ```
 
-Runs the `test-run-sl` corpus through the AL/P4 tower, without `--det`.
+Runs the AL scripts under `testdata/metacirc/det` through the AL tower,
+then the `test-run-sl` corpus through the AL/P4 tower, with determinism checks.
 Requires the p4c submodule.
+The driver accepts `--suite <NAME>` to run one registered suite,
+for example `--suite determinism` for the AL scripts alone.
 
 ## OCaml reference
 
