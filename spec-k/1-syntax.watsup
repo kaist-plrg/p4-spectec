@@ -28,8 +28,8 @@ syntax term =
   | FLOAT text                ;; FLOAT.Float, in the backend's output format
   | BYTES nat*                ;; BYTES.Bytes, one nat per byte
   | MINT nat nat              ;; MINT.MInt: width, and value below 2^width
-  | MAP sort map<term, term>
-  | SET sort set<term>
+  | MAP sort (map<term, term>)
+  | SET sort (set<term>)
   | LIST sort term*
   | RANGEMAP sort rangeitem*  ;; RANGEMAP.RangeMap, by start
 
@@ -89,14 +89,14 @@ syntax equation = EQN symid pattern* '=' pattern 'requires' pattern? attr*
 ;; Definitions
 
 syntax definition =
-  { SYMBOLS map<symid, symdecl>,
+  { SYMBOLS (map<symid, symdecl>),
     SUBSORTS subsort*,
     OVERLOADS overload*,
     RULES krule*,
-    EQUATIONS map<symid, equation*>,  ;; by the symbol defined, in file order
-    PARAMS map<symid, sortid*>,       ;; sort parameters, e.g. of MInt{Width}
-    FRESH map<sort, symid>,           ;; the freshGenerator of a sort, e.g. freshInt
-    NATSORTS map<sortid, nat> }       ;; sorts standing for a number, e.g. Sort8
+    EQUATIONS (map<symid, equation*>),  ;; by the symbol defined, in file order
+    PARAMS (map<symid, sortid*>),       ;; sort parameters, e.g. of MInt{Width}
+    FRESH (map<sort, symid>),           ;; the freshGenerator of a sort, e.g. freshInt
+    NATSORTS (map<sortid, nat>) }       ;; sorts standing for a number, e.g. Sort8
 
 ;; KORE as kompile writes it, every axiom with its attributes; loading picks
 ;; the definition above from it (6-load)
@@ -117,7 +117,7 @@ syntax ksymdecl = KSYMBOL sortid* sort* '->' sort kattr*  ;; with parameters
 syntax kalias = ALIAS varid* ':=' kore  ;; alias f(X1, ..., Xn) := body
 
 syntax kdefinition =
-  { KSORTS map<sortid, kattr*>,
-    KSYMBOLS map<symid, ksymdecl>,
-    KALIASES map<symid, kalias>,
+  { KSORTS (map<sortid, kattr*>),
+    KSYMBOLS (map<symid, ksymdecl>),
+    KALIASES (map<symid, kalias>),
     AXIOMS kaxiom* }               ;; in file order
