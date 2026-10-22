@@ -30,9 +30,9 @@ struct Options {
     /// Disable interpreter call and AL encode/decode caching.
     #[arg(long)]
     no_cache: bool,
-    /// Check deterministic execution.
+    /// Disable deterministic execution checks.
     #[arg(long)]
-    det: bool,
+    no_det: bool,
     /// Check types at native call boundaries.
     #[arg(long)]
     guard: bool,
@@ -40,7 +40,7 @@ struct Options {
 
 impl Options {
     fn config(&self) -> runner::Config {
-        runner::Config::new(!self.no_cache, self.det, self.guard)
+        runner::Config::new(!self.no_cache, !self.no_det, self.guard)
     }
 }
 
