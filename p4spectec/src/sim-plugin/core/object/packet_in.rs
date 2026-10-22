@@ -29,7 +29,7 @@ use crate::sim_plugin::{
 use super::bits::{bits_to_int_unsigned, string_to_bits};
 
 /// Input packet data and its extraction cursor.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PacketIn {
     /// The whole packet.

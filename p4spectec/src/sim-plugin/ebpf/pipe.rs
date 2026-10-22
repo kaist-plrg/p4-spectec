@@ -18,11 +18,13 @@ use crate::lang::{
     common::source::Span,
     data::{
         arena::Arena,
-        encoding::Encoding,
-        typ,
-        value::flat::{
-            self as value, Value,
-            external::{DecodeContext, EncodeContext, decode_with, encode_with},
+        value::{
+            ValueError,
+            extern_value::TypDef,
+            flat::{
+                self as value, Value,
+                external::{DecodeContext, EncodeContext},
+            },
         },
     },
 };
@@ -44,23 +46,27 @@ use super::object::CounterArray;
 
 // == Configuration
 
-#[derive(Default)]
-/// The eBPF architecture, parameterized by its state encoding.
+/// The eBPF architecture, with its definitions of the state types.
 pub struct Ebpf {
-    /// Encoding of architecture and object states as external values.
-    encoding: Encoding,
+    /// Definition of `archState`, which carries no payload.
+    typdef_arch: TypDef<()>,
+    /// Definition of `objectState`; stateless objects carry `None`.
+    typdef_object: TypDef<Option<ExternObject>>,
 }
 
 impl Ebpf {
-    /// Creates the architecture with the given state encoding.
-    pub fn new(encoding: Encoding) -> Self {
-        Self { encoding }
+    /// Defines the architecture's extern syntax types in `arena`.
+    pub fn new(arena: &mut Arena) -> Result<Self, ValueError> {
+        Ok(Self {
+            typdef_arch: TypDef::new(arena, "archState")?,
+            typdef_object: TypDef::new(arena, "objectState")?,
+        })
     }
 }
 
 // == Extern objects
 
-#[derive(Clone, Debug, PartialEq, Eq, SerializeState, DeserializeState)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, SerializeState, DeserializeState)]
 #[serde(serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
 #[serde(deserialize_state = "DecodeContext<'de>")]
 /// Core and eBPF-specific extern objects.
@@ -72,28 +78,29 @@ pub enum ExternObject {
 }
 
 impl ExternObject {
-    // - Encoding
+    // - Wrapping
 
-    /// Encodes the object as the specification's `objectState` external value.
-    pub fn to_value(&self, arena: &mut Arena, encoding: Encoding) -> Result<Value, ExternError> {
-        let payload = encode_with(arena, encoding, self)?;
-        let typ = typ::make::var(
-            crate::phrase!(node: "objectState".into(), span: Span::default()),
-            Vec::new(),
-        );
-        Ok(value::make::external(arena, typ.node.into(), payload.into(), Span::default())?)
+    /// Wraps the object as the specification's `objectState` value.
+    pub fn to_value(
+        self,
+        arena: &mut Arena,
+        typdef: TypDef<Option<Self>>,
+    ) -> Result<Value, ExternError> {
+        Ok(typdef.make(arena, Some(self), Span::default())?)
     }
 
-    // - Decoding
+    // - Reading
 
-    /// Decodes an object from an `objectState` external value.
+    /// Reads the object from an `objectState` value; stateless objects fail.
     pub fn from_value(
-        arena: &mut Arena,
-        encoding: Encoding,
+        arena: &Arena,
+        typdef: TypDef<Option<Self>>,
         value: &Value,
     ) -> Result<Self, ExternError> {
-        let json = value::get::external(arena, value)?.clone();
-        decode_with(arena, encoding, json.as_ref()).map_err(ExternError::from)
+        typdef
+            .get(arena, value)?
+            .clone()
+            .ok_or_else(|| error::object_state_undefined("extern object has no state").into())
     }
 }
 
@@ -126,7 +133,7 @@ pub fn transform_stf_stmt(mut stmt: Statement) -> Statement {
 
 // == Architectural state
 
-/// The initial architecture state: an encoded unit value.
+/// The initial architecture state, without a payload.
 pub(super) fn init_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
 ) -> Result<Value, ExternError>
@@ -134,11 +141,8 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
 {
-    let encoding = ctx.external().encoding;
-    let payload = encode_with(ctx.arena(), encoding, &())?;
-    let typ =
-        typ::make::var(crate::phrase!(node: "archState".into(), span: Span::default()), Vec::new());
-    Ok(value::make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?)
+    let typdef_arch = ctx.external().typdef_arch;
+    Ok(typdef_arch.make(ctx.arena_mut(), (), Span::default())?)
 }
 
 // == Extern calls
@@ -154,20 +158,15 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
 {
-    let encoding = ctx.external().encoding;
+    let typdef_object = ctx.external().typdef_object;
     let (value_name, _value_targs, value_ids, value_args) = value::get::four(values)?;
     let name = value::get::text(ctx.arena(), value_name)?;
     // Only `CounterArray` carries state
     Ok(if name == "CounterArray" {
         let counter = CounterArray::init(ctx.arena_mut(), *value_ids, *value_args)?;
-        ExternObject::CounterArray(counter).to_value(ctx.arena_mut(), encoding)?
+        ExternObject::CounterArray(counter).to_value(ctx.arena_mut(), typdef_object)?
     } else {
-        let payload = encode_with(ctx.arena(), encoding, &())?;
-        let typ = typ::make::var(
-            crate::phrase!(node: "objectState".into(), span: Span::default()),
-            Vec::new(),
-        );
-        value::make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?
+        typdef_object.make(ctx.arena_mut(), None, Span::default())?
     })
 }
 
@@ -224,7 +223,7 @@ fn unsupported_method(
 
 /// Dispatches an extern method call on the object named `value_id`.
 ///
-/// The object is decoded, updated by its method, and written back.
+/// The object is read, updated by its method, and written back.
 pub(super) fn eval_extern_method_call<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     values: &[Value],
@@ -233,7 +232,7 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
 {
-    let encoding = ctx.external().encoding;
+    let typdef_object = ctx.external().typdef_object;
     // Context, state, object id, method name, parameter names
     let [value_ctx, value_arch, value_id, value_name, value_names] = values else {
         return Err(error::extern_argument_arity_mismatch(
@@ -242,7 +241,7 @@ where
         .into());
     };
     let value_state = func::find_object_state_e(ctx, *value_arch, *value_id)?;
-    let object = ExternObject::from_value(ctx.arena_mut(), encoding, &value_state)?;
+    let object = ExternObject::from_value(ctx.arena(), typdef_object, &value_state)?;
     let name = value::get::text(ctx.arena(), value_name)?.to_owned();
     let names = value::get::list(ctx.arena(), value_names)?
         .iter()
@@ -289,7 +288,7 @@ where
             (ExternObject::CounterArray(object), value_ctx, value_arch, value_call_result)
         }
     };
-    let value_state = object.to_value(ctx.arena_mut(), encoding)?;
+    let value_state = object.to_value(ctx.arena_mut(), typdef_object)?;
     let value_arch = func::update_object_state_e(ctx, value_arch, *value_id, value_state)?;
     Ok(vec![value_ctx, value_arch, value_call_result])
 }
@@ -325,11 +324,11 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
 {
-    let encoding = ctx.external().encoding;
+    let typdef_object = ctx.external().typdef_object;
     state.txs.clear();
     // Setup packet_in extern
     let pkt = ExternObject::PacketIn(PacketIn::init(&rx.packet)?);
-    let value_packet = pkt.to_value(ctx.arena_mut(), encoding)?;
+    let value_packet = pkt.to_value(ctx.arena_mut(), typdef_object)?;
     let (value_ctx, value_arch) =
         rel::ebpf_init_packet_in(ctx, state.value_ctx, state.value_arch, value_packet)?;
     (state.value_ctx, state.value_arch) = (value_ctx, value_arch);

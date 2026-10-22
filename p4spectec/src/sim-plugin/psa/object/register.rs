@@ -24,7 +24,7 @@ use crate::sim_plugin::{
     spec::{args, func, unpack},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, SerializeState, DeserializeState)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, SerializeState, DeserializeState)]
 #[serde(deny_unknown_fields, serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
 #[serde(deserialize_state = "DecodeContext<'de>")]
 /// Register array with its element type.

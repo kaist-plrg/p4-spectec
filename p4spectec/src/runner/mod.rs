@@ -345,10 +345,12 @@ pub fn run(
     path_p4: &Path,
 ) -> Result<(), RunError> {
     let mut arena = Arena::new();
+    let dummy = Dummy::new(&mut arena)
+        .map_err(|error| RunError::Build(ExternError::from(error).into_report()))?;
     let runner = match spec {
-        Spec::Al(spec_al) => build_al(&mut arena, spec_al, config, Dummy),
-        Spec::Sl(spec_sl) => build_sl(&mut arena, spec_sl, config, Dummy),
-        Spec::Pl(spec_pl) => build_pl(&mut arena, spec_pl, config, Dummy),
+        Spec::Al(spec_al) => build_al(&mut arena, spec_al, config, dummy),
+        Spec::Sl(spec_sl) => build_sl(&mut arena, spec_sl, config, dummy),
+        Spec::Pl(spec_pl) => build_pl(&mut arena, spec_pl, config, dummy),
     }
     .map_err(RunError::Build)?;
     run_program(&mut arena, runner, relation, includes, path_p4)

@@ -5,8 +5,6 @@
 
 use std::rc::Rc;
 
-use crate::util::json::json;
-
 use crate::lang::{
     common::{
         Id, TId,
@@ -193,16 +191,4 @@ pub fn func(
 ) -> Result<Value, ValueError> {
     let typ = typ::make::func(tparams, typs_params, typ_ret).node;
     Value::new(arena, ValueKind::Func(id), Rc::new(typ), span)
-}
-
-// - Externals
-
-/// A host-owned value carried as JSON.
-pub fn external(
-    arena: &mut Arena,
-    typ: Rc<TypKind>,
-    json: Rc<json>,
-    span: Span,
-) -> Result<Value, ValueError> {
-    Value::new(arena, ValueKind::Extern(json), typ, span)
 }

@@ -47,7 +47,7 @@ impl CanonHash<MixopArena> for ValueKind {
                 .map(|value| interner.canon_id(value.node))
                 .hash(hasher),
             ValueKind::Func(id) => id.node.hash(hasher),
-            ValueKind::Extern(json) => json.hash(hasher),
+            ValueKind::Extern(value_extern) => value_extern.canon_hash(hasher),
         }
     }
 }

@@ -18,7 +18,7 @@ use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
 use crate::sim_plugin::spec::func;
 
 /// Output packet data accumulated by emission.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PacketOut {
     /// Emitted bits so far, most significant first.

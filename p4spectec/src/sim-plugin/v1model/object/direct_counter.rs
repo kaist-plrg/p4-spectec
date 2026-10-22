@@ -24,7 +24,7 @@ use crate::sim_plugin::{
     spec::{args, unpack},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 /// Direct counter by `CounterType`.
 pub enum DirectCounter {
     /// Packet count.

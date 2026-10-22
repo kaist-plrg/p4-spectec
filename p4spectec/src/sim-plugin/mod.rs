@@ -9,11 +9,11 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::lang::data::{arena::Arena, encoding::Encoding};
+use crate::lang::data::{arena::Arena, value::ValueError};
 
 use crate::interface::p4::P4Interface;
 
-use crate::runner::{self, Runner};
+use crate::runner::{self, ExternError, Runner};
 
 use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, v1model::V1Model};
 
@@ -100,24 +100,26 @@ pub fn build(
     spec: runner::Spec,
     arch: &str,
     config: runner::Config,
-    encoding: Encoding,
 ) -> Result<Simulator, SimError> {
     // Each architecture is its own extern implementation
     match arch {
-        "ebpf" => build_for_arch(spec, config, Ebpf::new(encoding)),
-        "psa" => build_for_arch(spec, config, Psa::new(encoding)),
-        "v1model" => build_for_arch(spec, config, V1Model::new(encoding)),
+        "ebpf" => build_for_arch(spec, config, Ebpf::new),
+        "psa" => build_for_arch(spec, config, Psa::new),
+        "v1model" => build_for_arch(spec, config, V1Model::new),
         _ => Err(error::architecture_unsupported(arch)),
     }
 }
 
-/// Builds the AL or SL runner, whichever the specification is.
+/// Builds the AL, SL, or PL runner, whichever the specification is.
+///
+/// The architecture defines its extern syntax types in the new arena.
 fn build_for_arch<Arch: Architecture + 'static>(
     spec: runner::Spec,
     config: runner::Config,
-    arch: Arch,
+    define_arch: fn(&mut Arena) -> Result<Arch, ValueError>,
 ) -> Result<Simulator, SimError> {
     let mut arena = Arena::new();
+    let arch = define_arch(&mut arena).map_err(|error| ExternError::from(error).into_report())?;
     let runner = match spec {
         runner::Spec::Al(spec) => runner::build_al(&mut arena, spec, config, arch)?,
         runner::Spec::Sl(spec) => runner::build_sl(&mut arena, spec, config, arch)?,

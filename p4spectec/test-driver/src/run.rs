@@ -52,7 +52,8 @@ pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) ->
             run_with(config, &format!("AL cache={text_cache} det={det}"), suites, |arena| {
                 let spec_al = p4spectec::algo(&config.spec)
                     .map_err(|error| Error::Invalid(error.to_string()))?;
-                runner::build_al(arena, spec_al, Config::new(cache_on, det, false), Dummy)
+                let dummy = Dummy::new(arena).map_err(|error| Error::Invalid(error.to_string()))?;
+                runner::build_al(arena, spec_al, Config::new(cache_on, det, false), dummy)
                     .map_err(|error| Error::Invalid(error.to_string()))
             })
         }
@@ -60,7 +61,8 @@ pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) ->
             run_with(config, &format!("SL cache={text_cache} det={det}"), suites, |arena| {
                 let spec_sl = p4spectec::structure(&config.spec, true)
                     .map_err(|error| Error::Invalid(error.to_string()))?;
-                runner::build_sl(arena, spec_sl, Config::new(cache_on, det, false), Dummy)
+                let dummy = Dummy::new(arena).map_err(|error| Error::Invalid(error.to_string()))?;
+                runner::build_sl(arena, spec_sl, Config::new(cache_on, det, false), dummy)
                     .map_err(|error| Error::Invalid(error.to_string()))
             })
         }
@@ -68,7 +70,8 @@ pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) ->
             run_with(config, &format!("PL cache={text_cache} det={det}"), suites, |arena| {
                 let spec_pl = p4spectec::prosify(&config.spec)
                     .map_err(|error| Error::Invalid(error.to_string()))?;
-                runner::build_pl(arena, spec_pl, Config::new(cache_on, det, false), Dummy)
+                let dummy = Dummy::new(arena).map_err(|error| Error::Invalid(error.to_string()))?;
+                runner::build_pl(arena, spec_pl, Config::new(cache_on, det, false), dummy)
                     .map_err(|error| Error::Invalid(error.to_string()))
             })
         }

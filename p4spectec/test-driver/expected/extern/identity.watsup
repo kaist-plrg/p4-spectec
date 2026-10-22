@@ -1,0 +1,11 @@
+;; Values of one definition are equal when the host's order says so;
+;; values of different definitions never are.
+;; Each value keeps its own payload: the second note survives the first.
+relation R: nat |- (bool, bool, bool, bool, text)
+  hint(input %0)
+rule R/identity:
+  n |- ( $make_state("k", "a") = $make_state("k", "b"),
+         $make_state("k", "a") =/= $make_state("j", "a"),
+         $make_state("k", "a") = $make_rogue_state("k", "a"),
+         $make_state("j", "a") =/= $make_rogue_state("j", "a"),
+         $note_state($make_state("k", "b")) )

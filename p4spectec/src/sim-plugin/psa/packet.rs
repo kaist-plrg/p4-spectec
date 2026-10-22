@@ -12,7 +12,7 @@ use crate::lang::data::value::flat::{
 
 use super::super::core::object::PacketIn;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 /// Which pipeline a queued packet resumes at.
 pub enum Entrypoint {
     /// Ingress parser, control, and deparser.
@@ -21,7 +21,7 @@ pub enum Entrypoint {
     Egress,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, SerializeState, DeserializeState)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, SerializeState, DeserializeState)]
 #[serde(deny_unknown_fields, serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
 #[serde(deserialize_state = "DecodeContext<'de>")]
 /// Processing context per packet.

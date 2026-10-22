@@ -5,8 +5,8 @@
 use crate::lang::{
     common::source::Span,
     data::{
-        typ,
-        value::flat::{self as value, Value, external::encode},
+        arena::Arena,
+        value::{ValueError, extern_value::TypDef, flat::Value},
     },
 };
 
@@ -16,12 +16,27 @@ use crate::sim_plugin::error;
 
 // == Configuration
 
-/// The dummy architecture, holding no state.
-pub struct Dummy;
+/// The dummy architecture, whose states carry no payload.
+pub struct Dummy {
+    /// Definition of `archState`.
+    typdef_arch: TypDef<()>,
+    /// Definition of `objectState`.
+    typdef_object: TypDef<()>,
+}
+
+impl Dummy {
+    /// Defines the architecture's extern syntax types in `arena`.
+    pub fn new(arena: &mut Arena) -> Result<Self, ValueError> {
+        Ok(Self {
+            typdef_arch: TypDef::new(arena, "archState")?,
+            typdef_object: TypDef::new(arena, "objectState")?,
+        })
+    }
+}
 
 // == Architectural state
 
-/// The initial architecture state: an encoded unit value.
+/// The initial architecture state, without a payload.
 pub(super) fn init_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Dummy>,
 ) -> Result<Value, ExternError>
@@ -29,17 +44,15 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,
 {
-    let payload = encode(ctx.arena(), &())?;
-    let typ =
-        typ::make::var(crate::phrase!(node: "archState".into(), span: Span::default()), Vec::new());
-    Ok(value::make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?)
+    let typdef_arch = ctx.external().typdef_arch;
+    Ok(typdef_arch.make(ctx.arena_mut(), (), Span::default())?)
 }
 
 // == Extern calls
 
 // - Initialization
 
-/// Every object starts as an encoded unit value.
+/// Every object starts without a payload.
 pub(super) fn eval_extern_init<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Dummy>,
     _values: &[Value],
@@ -48,12 +61,8 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,
 {
-    let payload = encode(ctx.arena(), &())?;
-    let typ = typ::make::var(
-        crate::phrase!(node: "objectState".into(), span: Span::default()),
-        Vec::new(),
-    );
-    Ok(value::make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?)
+    let typdef_object = ctx.external().typdef_object;
+    Ok(typdef_object.make(ctx.arena_mut(), (), Span::default())?)
 }
 
 // - Function calls

@@ -20,7 +20,7 @@ use crate::sim_plugin::{
     spec::{args, func, unpack},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 /// A counter array as a vector of 32-bit values.
 pub struct CounterArray {
     /// The counter values, indexed from zero.

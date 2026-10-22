@@ -3,10 +3,6 @@
 //! Typed getters report a kind mismatch; case matching copies argument handles.
 //! Fixed-arity getters project argument slices without allocating.
 
-use std::rc::Rc;
-
-use crate::util::json::json;
-
 use crate::lang::{common::prim::num::Number, data::arena::Arena};
 
 use super::super::{ValueError, ValueTag};
@@ -172,16 +168,6 @@ pub fn list<'a>(arena: &'a Arena, value: &Value) -> Result<&'a [Value], ValueErr
     match arena.value.kind(value.node) {
         ValueKind::List(values) => Ok(values),
         kind => Err(kind_mismatch(kind, ValueTag::List)),
-    }
-}
-
-// - Externals
-
-/// The JSON of a host-owned value.
-pub fn external<'a>(arena: &'a Arena, value: &Value) -> Result<&'a Rc<json>, ValueError> {
-    match arena.value.kind(value.node) {
-        ValueKind::Extern(json) => Ok(json),
-        kind => Err(kind_mismatch(kind, ValueTag::Extern)),
     }
 }
 

@@ -13,6 +13,7 @@ mod prose;
 
 mod adoc;
 
+mod externs;
 mod p4parse;
 mod run;
 mod sim;
@@ -71,6 +72,8 @@ enum Command {
         #[command(flatten)]
         options: ExecutionOptions,
     },
+    /// Compare extern value semantics through a test host
+    Extern,
     /// Compare simulation outcomes and matched packets
     Sim {
         #[command(subcommand)]
@@ -107,7 +110,7 @@ fn execute(mut cli: Cli) -> Result<()> {
     ) && std::env::var_os("UPDATE_EXPECT").is_some()
     {
         return Err(Error::Invalid(
-            "UPDATE_EXPECT is supported only for elab, algo, prose, adoc, and diagnostics"
+            "UPDATE_EXPECT is supported only for elab, algo, prose, adoc, extern, and diagnostics"
                 .to_owned(),
         ));
     }
@@ -142,6 +145,7 @@ fn execute(mut cli: Cli) -> Result<()> {
         Command::Run { language, options } => {
             run::run(&suite::load_execution(&index.suites.run)?, *language, *options)
         }
+        Command::Extern => externs::run(&index.suites.externs),
         Command::Sim { language, options } => {
             sim::run(&suite::load_simulation(&index.suites.sim)?, *language, *options)
         }

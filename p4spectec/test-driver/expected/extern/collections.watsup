@@ -1,0 +1,21 @@
+;; Sets order and deduplicate extern values by the host's order,
+;; keeping the first of equal elements; maps find keys the same way
+syntax set<K> = `{ K* `}
+syntax pair<K, V> = K ':' V
+syntax map<K, V> = set<pair<K, V>>
+
+builtin dec $union_set<K>(set<K>, set<K>) : set<K>
+builtin dec $find_map<K, V>(map<K, V>, K) : V?
+
+dec $notes(set<state>) : text*
+def $notes(`{ state* `}) = $note_state(state)*
+
+relation R: nat |- (text*, nat?)
+  hint(input %0)
+rule R/collections:
+  n |- ( $notes($union_set<state>(
+             `{ $make_state("k", "a") `},
+             `{ [$make_state("k", "b"), $make_state("j", "c")] `})),
+         $find_map<state, nat>(
+             `{ $make_state("k", "a") ':' 1 `},
+             $make_state("k", "z")) )

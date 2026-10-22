@@ -2,6 +2,7 @@
 //!
 //! Kind and count mismatches identify invalid projections.
 //! Interning failures distinguish value handles from case mixop handles.
+//! Extern type definition mismatches name both definitions.
 
 use std::num::TryFromIntError;
 
@@ -29,6 +30,15 @@ pub enum ValueError {
     /// A fixed-arity projection met another count.
     #[error("expected exactly {expected} values, got {actual}")]
     CountMismatch { expected: usize, actual: usize },
+    /// An extern value read through a definition that did not make it.
+    #[error("expected an extern value of {expected}, got one of {actual}")]
+    TypDefMismatch { expected: String, actual: String },
+    /// An extern type definition used with an arena that did not issue it.
+    #[error("extern type definition belongs to another arena")]
+    TypDefForeign,
+    /// An extern payload copied out of its arena without a codec.
+    #[error("extern value has no codec")]
+    CodecMissing,
 }
 
 // - Index overflow
