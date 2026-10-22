@@ -63,10 +63,6 @@ module EVAL-EXP
   rule lengthVals(.ValList) => 0
   rule lengthVals(_:Val, Vs:ValList) => 1 +Int lengthVals(Vs)
 
-  //   rule Eval_exp/tuple, /case, /struct, /list, and rulegroup /opt: the
-  //   evaluated constructor is the value constructor (`overload`)
-  context optE(someExp(HOLE))
-
   //   rule Eval_exp/cons
   rule <k> consE(V:Val, listV(Vs:ValList)) => listV(V, Vs) ... </k>
   rule <k> consE(_:Val, _:Val) => backtrack ... </k> [owise]

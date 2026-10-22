@@ -195,7 +195,7 @@ module SYNTAX
                | tupE(ExpList)              [symbol(tupE), strict, overload(tup)]
                | injE(ExpCase)              [symbol(injE), strict, overload(inj)]
                | strE(ExpFieldList)         [symbol(strE), strict, overload(str)]
-               | optE(ExpOpt)               [symbol(optE), overload(opt)]
+               | optE(ExpOpt)               [symbol(optE), strict, result(ValOpt), overload(opt)]
                | listE(ExpList)             [symbol(listE), strict, overload(list)]
                | consE(Exp, Exp)            [symbol(consE), seqstrict]
                | catE(Exp, Exp)             [symbol(catE), seqstrict]
@@ -226,7 +226,7 @@ module SYNTAX
   // `exp?`
   syntax ExpOpt ::= ValOpt
                   | noExp()                 [symbol(noExp), overload(none)]
-                  | someExp(Exp)            [symbol(someExp), overload(some)]
+                  | someExp(Exp)            [symbol(someExp), strict, overload(some)]
 
   // ==========================================================================
   // Patterns
