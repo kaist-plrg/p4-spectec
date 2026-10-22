@@ -17,8 +17,8 @@ use crate::{
     lang::data::arena::Arena,
     runner,
 };
-use config::ProgramConfig;
 pub use config::{ExecutionMode, TowerConfig};
+use config::{Lang, ProgramConfig};
 use std::path::PathBuf;
 
 pub use error::Result;
@@ -35,34 +35,31 @@ pub fn run(
     if paths_program.is_empty() {
         return Err(error::input_invalid("a tower requires at least one program path"));
     }
-    let target = config.levels.target();
+    let relation = config.target_rel();
     let mut arena = Arena::new();
-    let mut tower;
-    let value_program;
-
-    // Prepare the input and host environment by the configured target language
-    match &config.program {
-        ProgramConfig::Al { spec_al } => {
-            // Use the same AL definitions for builtin calls and input encoding
-            tower = Tower::build(&mut arena, config, options)?;
-            value_program = spec_al
-                .encode(&mut arena)
-                .map_err(|error| error.into_report())?;
+    // Prepare the input environment by the configured target language
+    let program = match config.target_lang() {
+        // AL builtins must resolve against the actual input definitions
+        Lang::Al => ProgramConfig::Al { spec_al: crate::algo(paths_program)? },
+        // P4 inputs contain exactly one translation unit
+        Lang::P4 if paths_program.len() == 1 => ProgramConfig::P4,
+        Lang::P4 => {
+            return Err(error::input_invalid("a P4 target requires exactly one program path"));
         }
-        ProgramConfig::P4 => {
-            // P4 inputs contain exactly one translation unit
-            let [path] = paths_program else {
-                return Err(error::input_invalid("a P4 target requires exactly one program path"));
-            };
-            tower = Tower::build(&mut arena, config, options)?;
-            value_program =
-                parse_file(&mut arena, includes, path).map_err(|error| error.into_report())?;
-        }
-    }
+    };
+    let mut tower = Tower::build(&mut arena, config, &program, options)?;
+    let value_program = match &program {
+        // Use the same AL definitions for builtin calls and input encoding
+        ProgramConfig::Al { spec_al } => spec_al
+            .encode(&mut arena)
+            .map_err(|error| error.into_report())?,
+        ProgramConfig::P4 => parse_file(&mut arena, includes, &paths_program[0])
+            .map_err(|error| error.into_report())?,
+    };
     // Encoding errors propagate before entering the native base
-    let value = tower.patch(&mut arena, &target.rel, value_program)?;
+    let value = tower.patch(&mut arena, relation, value_program)?;
     tower
-        .eval_program(&mut arena, &target.rel, value)
+        .eval_program(&mut arena, relation, value)
         .result
         .map_err(|error| error.into_report())?;
     Ok(())

@@ -35,7 +35,8 @@
 
 use super::{
     ExecutionMode, Result, TowerConfig,
-    config::{LevelConfigs, ProgramConfig},
+    config::{Lang, LevelConfigs, ProgramConfig},
+    error::config_invalid,
     externs::{RelayExtern, TerminalExtern},
     tower::{Layer, Level, Target, Tower},
 };
@@ -126,9 +127,19 @@ fn build_base(
 impl Tower {
     /// Prepares a tower without parsing or encoding its input.
     ///
-    /// The configuration supplies AL input definitions for terminal builtin calls.
+    /// The program supplies AL input definitions for terminal builtin calls.
     /// All calls must use the construction arena.
-    pub fn build(arena: &mut Arena, config: &TowerConfig, options: runner::Config) -> Result<Self> {
+    pub fn build(
+        arena: &mut Arena,
+        config: &TowerConfig,
+        program: &ProgramConfig,
+        options: runner::Config,
+    ) -> Result<Self> {
+        // The input environment must match the target language
+        match (config.target_lang(), program) {
+            (Lang::Al, ProgramConfig::Al { .. }) | (Lang::P4, ProgramConfig::P4) => {}
+            _ => return Err(config_invalid("program language must match the tower target")),
+        }
         // Lower each specification once, preserving base-to-target order
         let configs = match &config.levels {
             LevelConfigs::Direct(target) => vec![target],
@@ -148,7 +159,7 @@ impl Tower {
         // Only a direct target uses the configured native execution mode
         let (target, metas) = levels.split_last().expect("validated nonempty tower");
         let mode_target = if metas.is_empty() { config.mode } else { ExecutionMode::Sl };
-        let runner_target = build_target(arena, target, mode_target, &config.program, options)?;
+        let runner_target = build_target(arena, target, mode_target, program, options)?;
         let mut layer = Layer::Target(runner_target);
 
         // Assemble intermediate helpers and the native base above the target

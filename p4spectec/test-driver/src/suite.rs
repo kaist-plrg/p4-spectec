@@ -84,10 +84,13 @@ pub struct RunSuite {
     pub languages: Vec<Language>,
 }
 
-/// Registers AL scripts executed through their own interpreter tower.
+/// Registers a metacircular corpus run through one tower.
+///
+/// The tower's target decides the entry relation
+/// and whether inputs are P4 programs or AL scripts.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct ScriptSuite {
+pub struct MetacircSuite {
     pub name: String,
     pub tower: PathBuf,
     pub root: PathBuf,
@@ -126,12 +129,13 @@ pub struct RunConfig {
     pub suites: Vec<RunSuite>,
 }
 
-/// Supplies corpus inputs and expectations independently of the executor.
+/// Supplies metacircular corpus inputs, towers, and expectations.
 #[derive(Debug, Deserialize)]
-pub struct CorpusConfig {
+#[serde(deny_unknown_fields)]
+pub struct MetacircConfig {
     pub includes: Vec<PathBuf>,
     pub excludes: Vec<PathBuf>,
-    pub suites: Vec<RunSuite>,
+    pub suites: Vec<MetacircSuite>,
 }
 
 /// Supplies simulation dependencies and P4/STF registrations.
@@ -332,60 +336,25 @@ pub fn load_execution(path: &Path) -> Result<RunConfig> {
     Ok(config)
 }
 
-/// Loads metacircular corpus registrations, their tower, and AL script suites.
-///
-/// Script towers are resolved relative to the registration file
-/// and prepared per script, since an AL target needs its input definitions.
-pub fn load_metacirc(path: &Path) -> Result<(CorpusConfig, TowerConfig, Vec<ScriptSuite>)> {
-    #[derive(Deserialize)]
-    #[serde(deny_unknown_fields)]
-    struct MetacircConfig {
-        tower: PathBuf,
-        #[serde(default)]
-        scripts: Vec<ScriptSuite>,
-        #[serde(flatten)]
-        corpus: CorpusConfig,
-    }
-
+/// Loads metacircular registrations with towers resolved against this file.
+pub fn load_metacirc(path: &Path) -> Result<MetacircConfig> {
     let mut config: MetacircConfig = load(path)?;
-    let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
-    // Resolve the tower file relative to this registration file
-    let path_tower = path_parent.join(&config.tower);
-    let config_tower = TowerConfig::from_file(&path_tower, &[])
-        .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
-    // Validate only the corpus declared by the metacircular suite
-    validate_execution(&config.corpus)?;
-    // Script names share one namespace with the corpus suites
-    let names_corpus = config.corpus.suites.iter().map(|suite| suite.name.as_str());
-    names_valid(names_corpus.chain(config.scripts.iter().map(|suite| suite.name.as_str())))?;
-    for suite in &mut config.scripts {
-        suite.tower = path_parent.join(&suite.tower);
-        paths_exist(std::slice::from_ref(&suite.tower), &suite.name)?;
-        directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
-        expectation_exists(&suite.expected)?;
-    }
-    Ok((config.corpus, config_tower, config.scripts))
-}
-
-/// Validates execution inputs and expectations before corpus discovery.
-fn validate_execution(config: &CorpusConfig) -> Result<()> {
     // Check include directories and exclusion lists before individual suites
     directories_exist(&config.includes, "execution include directories")?;
     for path in &config.excludes {
         directories_exist(std::slice::from_ref(path), "execution exclusions")?;
     }
-    let suites = &config.suites;
-    names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
-    // Entry relations and interpreter selections belong to each corpus
-    for suite in suites {
+    names_valid(config.suites.iter().map(|suite| suite.name.as_str()))?;
+    let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
+    for suite in &mut config.suites {
+        // Resolve each tower relative to this registration file
+        suite.tower = path_parent.join(&suite.tower);
+        TowerConfig::from_file(&suite.tower)
+            .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
         directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
-        languages_valid(&suite.languages)?;
-        if suite.relation.is_empty() {
-            return Err(Error::Invalid(format!("{}: empty entry relation", suite.name)));
-        }
         expectation_exists(&suite.expected)?;
     }
-    Ok(())
+    Ok(config)
 }
 
 /// Loads simulation dependencies and explicit P4/STF corpus pairing.

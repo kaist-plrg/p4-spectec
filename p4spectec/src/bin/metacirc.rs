@@ -101,7 +101,7 @@ fn run(cli: Cli) -> metacirc::Result<()> {
         Command::Struct(args) => print_spec(p4spectec::structure_with_warnings(&args.paths, true)),
         Command::Prose(args) => print_spec(p4spectec::prosify_with_warnings(&args.paths)),
         Command::Run(args) => {
-            let config = TowerConfig::from_file(&args.config, &args.program)?;
+            let config = TowerConfig::from_file(&args.config)?;
             metacirc::run(&config, &args.includes, &args.program, args.options.config())?;
             println!("passed");
             Ok(())

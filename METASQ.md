@@ -72,6 +72,8 @@ Use the supplied AL/P4 tower:
 The path is Rust SL interpreter → AL specification → P4 specification →
 P4 program. `Program_inst` type-checks the program and instantiates its
 declarations. A P4 target takes exactly one `-p` path.
+`towers/al-p4-ok.json` is the same tower entered through `Program_ok`,
+which only type-checks the program.
 
 ## Tower configuration
 
@@ -87,7 +89,8 @@ resolved relative to the current working directory.
 To add an AL interpretation layer, insert another
 `{ "specdir": "../spec-meta", "rel": "Entry", "lang": "al" }`
 before the target. Names such as `al-al.json` and `al-al-p4.json` describe
-these additional configurations; only `al.json` and `al-p4.json` are supplied.
+these additional configurations; only `al.json`, `al-p4.json`, and
+`al-p4-ok.json` are supplied.
 
 In a multi-level tower, target and intermediate specifications must not
 define `main`.

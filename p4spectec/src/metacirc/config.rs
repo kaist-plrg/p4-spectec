@@ -4,10 +4,7 @@
 //! The native backend is AL or SL; all meta interfaces represent AL scripts.
 //! Specification paths are resolved relative to the JSON file.
 
-use super::{
-    Result,
-    error::{config_invalid, input_invalid},
-};
+use super::{Result, error::config_invalid};
 use crate::lang::al::ast as al;
 use serde::Deserialize;
 use std::{
@@ -15,15 +12,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// Validated tower roles, native execution mode, and input definitions.
+/// Validated tower roles and native execution mode.
 #[derive(Clone, Debug)]
 pub struct TowerConfig {
     /// The interpreter executing the base specification.
     pub(super) mode: ExecutionMode,
     /// Specification roles established at the JSON boundary.
     pub(super) levels: LevelConfigs,
-    /// The input environment used by the target's host interface.
-    pub(super) program: ProgramConfig,
 }
 
 /// The native interpreter used for the outermost level.
@@ -78,11 +73,11 @@ pub enum ProgramConfig {
 }
 
 impl TowerConfig {
-    /// Reads tower roles and prepares the configured input environment.
+    /// Reads tower roles from a JSON file.
     ///
-    /// AL source paths are lowered once for builtin calls and input encoding.
-    /// P4 parsing is deferred, so a corpus can prepare a tower without an input.
-    pub fn from_file(path: &Path, paths_program: &[PathBuf]) -> Result<Self> {
+    /// Input definitions are supplied when the tower is built,
+    /// so a corpus can read a tower once and run many inputs through it.
+    pub fn from_file(path: &Path) -> Result<Self> {
         /// Ordered levels at the JSON boundary.
         #[derive(Deserialize)]
         #[serde(deny_unknown_fields)]
@@ -103,37 +98,24 @@ impl TowerConfig {
                 level.specdir = path_parent.join(&level.specdir);
             }
         }
-        let levels = LevelConfigs::new(levels)?;
-        // Prepare input definitions only when the target consumes an AL script
-        let program = match levels.target().lang {
-            Lang::Al => {
-                // AL builtins must resolve against the actual input definitions
-                if paths_program.is_empty() {
-                    return Err(input_invalid("a tower requires at least one program path"));
-                }
-                let spec_al = crate::algo(paths_program)?;
-                ProgramConfig::Al { spec_al }
-            }
-            Lang::P4 => ProgramConfig::P4,
-        };
-        Ok(Self { mode: config.mode, levels, program })
+        Self::new(config.mode, levels)
     }
 
-    /// Validates ordered levels and their input environment.
+    /// Validates ordered levels.
     ///
     /// Specification paths are relative to the current directory.
-    pub fn new(
-        mode: ExecutionMode,
-        levels: Vec<LevelConfig>,
-        program: ProgramConfig,
-    ) -> Result<Self> {
-        let levels = LevelConfigs::new(levels)?;
-        match (levels.target().lang, &program) {
-            (Lang::Al, ProgramConfig::Al { .. }) | (Lang::P4, ProgramConfig::P4) => {
-                Ok(Self { mode, levels, program })
-            }
-            _ => Err(config_invalid("program language must match the tower target")),
-        }
+    pub fn new(mode: ExecutionMode, levels: Vec<LevelConfig>) -> Result<Self> {
+        Ok(Self { mode, levels: LevelConfigs::new(levels)? })
+    }
+
+    /// Returns the language consumed by the target level.
+    pub fn target_lang(&self) -> Lang {
+        self.levels.target().lang
+    }
+
+    /// Returns the relation configured to enter the target level.
+    pub fn target_rel(&self) -> &str {
+        &self.levels.target().rel
     }
 }
 

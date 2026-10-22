@@ -13,7 +13,7 @@ struct Cli {
     /// Suite registration file, relative to the invoking directory.
     #[arg(long = "registry")]
     path_registry: Option<PathBuf>,
-    /// Run only the registered corpus or script suite with this name.
+    /// Run only the registered suite with this name.
     #[arg(long, value_name = "NAME")]
     suite: Option<String>,
     #[command(flatten)]
@@ -35,22 +35,15 @@ fn execute(cli: Cli) -> Result<()> {
     // Resolve caller paths before selecting the corpus repository as working directory
     std::env::set_current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))?;
     let index = Index::load(&path_registry)?;
-    let (mut config, config_tower, mut scripts) = suite::load_metacirc(&index.suites.metacirc)?;
-    // Restrict both kinds of suites to the selected name
+    let mut config = suite::load_metacirc(&index.suites.metacirc)?;
+    // Restrict the registered suites to the selected name
     if let Some(name) = &cli.suite {
         config.suites.retain(|suite| &suite.name == name);
-        scripts.retain(|suite| &suite.name == name);
-        if config.suites.is_empty() && scripts.is_empty() {
+        if config.suites.is_empty() {
             return Err(Error::Invalid(format!("unknown metacirc suite {name}")));
         }
     }
-    if !scripts.is_empty() {
-        metacirc::run_scripts(&scripts, cli.options)?;
-    }
-    if !config.suites.is_empty() {
-        metacirc::run(&config, &config_tower, cli.options)?;
-    }
-    Ok(())
+    metacirc::run(&config, cli.options)
 }
 
 fn main() -> ExitCode {
