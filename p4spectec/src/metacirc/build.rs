@@ -128,13 +128,22 @@ impl Tower {
                 ));
             }
         }
-        // Lower each specification once, preserving base-to-top order
+        // Lower each specification once, preserving base-to-top order;
+        // the IL-to-AL specification, if configured, lowers a P4 top level
+        let idx_top = config.levels.len() - 1;
         let levels = config
             .levels
             .iter()
-            .map(|config| {
-                let spec_al = crate::algo(std::slice::from_ref(&config.specdir))?;
-                Ok(Level { config: config.clone(), spec_al })
+            .enumerate()
+            .map(|(idx, level)| {
+                let paths = std::slice::from_ref(&level.specdir);
+                // Only a P4 top level is the specification under test
+                let spec_al = if idx == idx_top && level.lang == Lang::P4 {
+                    config.lower(paths, options)?
+                } else {
+                    crate::algo(paths)?
+                };
+                Ok(Level { config: level.clone(), spec_al })
             })
             .collect::<Result<Vec<_>>>()?;
 

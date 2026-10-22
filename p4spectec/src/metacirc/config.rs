@@ -19,6 +19,8 @@ pub struct TowerConfig {
     pub(super) mode: ExecutionMode,
     /// Nonempty, ordered from base toward top.
     pub(super) levels: Vec<LevelConfig>,
+    /// The IL-to-AL specification lowering the specification under test.
+    pub(super) algo: Option<PathBuf>,
 }
 
 /// The native interpreter used for the outermost level.
@@ -74,6 +76,8 @@ impl TowerConfig {
         #[serde(deny_unknown_fields)]
         struct TowerConfigJson {
             mode: ExecutionMode,
+            #[serde(default)]
+            algo: Option<PathBuf>,
             levels: Vec<LevelConfig>,
         }
 
@@ -89,7 +93,8 @@ impl TowerConfig {
                 level.specdir = path_parent.join(&level.specdir);
             }
         }
-        Self::new(config.mode, levels)
+        let algo = config.algo.map(|path_algo| path_parent.join(path_algo));
+        Ok(Self { algo, ..Self::new(config.mode, levels)? })
     }
 
     /// Validates ordered levels.
@@ -114,7 +119,18 @@ impl TowerConfig {
                 )));
             }
         }
-        Ok(Self { mode, levels })
+        Ok(Self { mode, levels, algo: None })
+    }
+
+    /// Lowers the specification under test, through the IL-to-AL specification if configured.
+    ///
+    /// The specification under test is a P4 top level's specification
+    /// or the program of an AL top level.
+    pub fn lower(&self, paths: &[PathBuf], options: crate::runner::Config) -> Result<al::Spec> {
+        match &self.algo {
+            Some(path_algo) => super::lowering::algo(paths, path_algo, self.mode, options),
+            None => Ok(crate::algo(paths)?),
+        }
     }
 
     pub(super) fn top(&self) -> &LevelConfig {

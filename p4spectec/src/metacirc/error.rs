@@ -26,3 +26,15 @@ pub(super) fn input_invalid(message: impl Into<String>) -> Box<Report> {
 pub(super) fn entry_invalid(message: impl Into<String>) -> Box<Report> {
     diagnostic("metacirc/entry-invalid", message)
 }
+
+/// Reports specification inputs that the IL-to-AL specification does not lower.
+pub(super) fn algo_rejected(paths: &[std::path::PathBuf]) -> Box<Report> {
+    let paths = paths
+        .iter()
+        .map(|path| path.display().to_string())
+        .collect::<Vec<_>>();
+    diagnostic(
+        "metacirc/algo-rejected",
+        format!("the IL-to-AL specification does not lower {}", paths.join(", ")),
+    )
+}

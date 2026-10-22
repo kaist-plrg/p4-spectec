@@ -9,7 +9,7 @@ use clap::{Args, Parser, Subcommand};
 use p4spectec::{
     diagnostic::{DisplayStyle, RenderConfig, Renderer, Report},
     lang::traits::print::Print,
-    metacirc::{self, TowerConfig},
+    metacirc::{self, ExecutionMode, TowerConfig},
     runner,
 };
 use std::{path::PathBuf, process::ExitCode};
@@ -24,7 +24,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     /// Convert specifications and print the algorithmic representation.
-    Algo(SpecArgs),
+    Algo(AlgoArgs),
     /// Structure specifications and print them without rule groups.
     Struct(SpecArgs),
     /// Convert specifications and print the prose representation.
@@ -38,6 +38,18 @@ struct SpecArgs {
     /// Specification files in processing order.
     #[arg(required = true, value_name = "PATH")]
     paths: Vec<PathBuf>,
+}
+
+#[derive(Args)]
+struct AlgoArgs {
+    /// Specification files in processing order.
+    #[arg(required = true, value_name = "PATH")]
+    paths: Vec<PathBuf>,
+    /// Lower through this IL-to-AL specification instead of the native pass.
+    #[arg(long = "meta", value_name = "SPEC")]
+    path_meta: Option<PathBuf>,
+    #[command(flatten)]
+    options: Options,
 }
 
 #[derive(Args)]
@@ -97,7 +109,14 @@ fn print_spec<Spec: Print>(
 /// Dispatches specification transformations and tower execution.
 fn run(cli: Cli) -> metacirc::Result<()> {
     match cli.command {
-        Command::Algo(args) => print_spec(p4spectec::algo_with_warnings(&args.paths)),
+        Command::Algo(AlgoArgs { paths, path_meta: None, .. }) => {
+            print_spec(p4spectec::algo_with_warnings(&paths))
+        }
+        Command::Algo(AlgoArgs { paths, path_meta: Some(path_meta), options }) => {
+            let spec_al = metacirc::algo(&paths, &path_meta, ExecutionMode::Sl, options.config())?;
+            println!("{}", Print::to_string(&spec_al));
+            Ok(())
+        }
         Command::Struct(args) => print_spec(p4spectec::structure_with_warnings(&args.paths, true)),
         Command::Prose(args) => print_spec(p4spectec::prosify_with_warnings(&args.paths)),
         Command::Run(args) => {

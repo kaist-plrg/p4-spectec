@@ -9,6 +9,7 @@ mod codec;
 pub mod config;
 mod error;
 mod externs;
+mod lowering;
 mod patch;
 mod tower;
 
@@ -22,6 +23,7 @@ use config::{Lang, ProgramConfig};
 use std::path::PathBuf;
 
 pub use error::Result;
+pub use lowering::algo;
 
 pub use tower::Tower;
 
@@ -39,7 +41,7 @@ pub fn run(
     // Prepare the input environment by the top level's configured language
     let program = match config.top_lang() {
         // AL builtins must resolve against the actual input definitions
-        Lang::Al => ProgramConfig::Al { spec_al: crate::algo(paths_program)? },
+        Lang::Al => ProgramConfig::Al { spec_al: config.lower(paths_program, options)? },
         // P4 inputs contain exactly one translation unit
         Lang::P4 if paths_program.len() == 1 => ProgramConfig::P4,
         Lang::P4 => {
