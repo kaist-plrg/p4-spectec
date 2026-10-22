@@ -5,7 +5,13 @@ rule Eval_arg/exp:
   -- Eval_exp: C |- exp : argRes
 
 rule Eval_arg/fun:
-  C |- FUN id : OK (FUNC id)
+  C |- FUN id : OK (FUNC id_global)
+  -- if id_global = $resolve_func(C, id)
+  -- if funcDef = $find_func(C, id_global)
+
+rule Eval_arg/error:
+  C |- arg : ERROR
+  -- otherwise
 
 ;; Argument sequence evaluation rules
 

@@ -3,73 +3,73 @@
 ;;; Clause invocation
 
 relation Eval_clause:
-  ctx '/' ctx |- clause '@' `( val* `) : funcRes
-  hint(input %0 %1 %2 %3)
+  ctx |- clause '@' `( val* `) : funcRes
+  hint(input %0 %1 %2)
 
 rulegroup Eval_clause {
 
   rule Eval_clause/premises-failure:
-    C '/' C_caller |- clause '@' `( val* `) : failure
+    C |- clause '@' `( val* `) : failure
     -- if arg* '=' exp_out '-' prem* = clause
-    -- Assign_args: C '/' C_caller |- arg* := val* : OK C'
+    -- Assign_args: C |- arg* := val* : OK C'
     -- Eval_prems: C' |- prem* : failure
 
   rule Eval_clause/succ:
-    C '/' C_caller |- clause '@' `( val* `) : funcRes
+    C |- clause '@' `( val* `) : funcRes
     -- if arg* '=' exp_out '-' prem* = clause
-    -- Assign_args: C '/' C_caller |- arg* := val* : OK C'
+    -- Assign_args: C |- arg* := val* : OK C'
     -- Eval_prems: C' |- prem* : OK C''
     -- Eval_exp : C'' |- exp_out : funcRes
 
 }
 
 rule Eval_clause/error:
-  C '/' C_caller |- clause '@' `( val* `) : ERROR
+  C |- clause '@' `( val* `) : ERROR
   -- otherwise
 
 relation Eval_clauses:
-  ctx '/' ctx |- clause* '@' `( val* `) : funcRes
-  hint(input %0 %1 %2 %3)
+  ctx |- clause* '@' `( val* `) : funcRes
+  hint(input %0 %1 %2)
 
 relation Eval_clauses_on_ok:
-  ctx '/' ctx |- clause* '@' `( val* `) : unitRes
-  hint(input %0 %1 %2 %3)
+  ctx |- clause* '@' `( val* `) : unitRes
+  hint(input %0 %1 %2)
 
 rulegroup Eval_clauses {
 
   rule Eval_clauses/nil:
-    C '/' C_caller |- eps '@' `( val* `) : UNMATCH
+    C |- eps '@' `( val* `) : UNMATCH
 
   rule Eval_clauses/unmatch:
-    C '/' C_caller |- (clause_h :: clause_t*) '@' `( val* `) : funcRes
-    -- Eval_clause: C '/' C_caller |- clause_h '@' `( val* `) : UNMATCH
-    -- Eval_clauses: C '/' C_caller |- clause_t* '@' `( val* `) : funcRes
+    C |- (clause_h :: clause_t*) '@' `( val* `) : funcRes
+    -- Eval_clause: C |- clause_h '@' `( val* `) : UNMATCH
+    -- Eval_clauses: C |- clause_t* '@' `( val* `) : funcRes
 
   rule Eval_clauses/success:
-    C '/' C_caller |- (clause_h :: clause_t*) '@' `( val* `) : OK val_out
-    -- Eval_clause: C '/' C_caller |- clause_h '@' `( val* `) : OK val_out
-    -- Eval_clauses_on_ok: C '/' C_caller |- clause_t* '@' `( val* `) : OK
+    C |- (clause_h :: clause_t*) '@' `( val* `) : OK val_out
+    -- Eval_clause: C |- clause_h '@' `( val* `) : OK val_out
+    -- Eval_clauses_on_ok: C |- clause_t* '@' `( val* `) : OK
 
 }
 
 rule Eval_clauses/error:
-  C '/' C_caller |- clause* '@' `( val* `) : ERROR
+  C |- clause* '@' `( val* `) : ERROR
   -- otherwise
 
 rulegroup Eval_clauses_on_ok {
 
   rule Eval_clauses_on_ok/unmatch:
-    C '/' C_caller |- (clause_h :: clause_t*) '@' `( val* `) : unitRes
-    -- Eval_clause: C '/' C_caller |- clause_h '@' `( val* `) : UNMATCH
-    -- Eval_clauses_on_ok: C '/' C_caller |- clause_t* '@' `( val* `) : unitRes
+    C |- (clause_h :: clause_t*) '@' `( val* `) : unitRes
+    -- Eval_clause: C |- clause_h '@' `( val* `) : UNMATCH
+    -- Eval_clauses_on_ok: C |- clause_t* '@' `( val* `) : unitRes
 
   rule Eval_clauses_on_ok/error:
-    C '/' C_caller |- (clause_h :: clause_t*) '@' `( val* `) : ERROR
-    -- Eval_clause: C '/' C_caller |- clause_h '@' `( val* `) : funcRes
+    C |- (clause_h :: clause_t*) '@' `( val* `) : ERROR
+    -- Eval_clause: C |- clause_h '@' `( val* `) : funcRes
     -- if funcRes =/= UNMATCH
 
   rule Eval_clauses_on_ok/nil:
-    C '/' C_caller |- eps '@' `( val* `) : OK
+    C |- eps '@' `( val* `) : OK
 
 }
 
@@ -88,15 +88,15 @@ rulegroup Eval_tblrow {
   rule Eval_tblrow/premises-failure:
     C |- tblRow '@' `( val* `) : failure
     -- if arg* '=' exp_out '-' prem* = tblRow
-    -- if C_callee = C[ .LOCAL = $empty_layer ]
-    -- Assign_args: C_callee '/' C |- arg* := val* : OK C_callee'
+    -- if C_callee = C[ .LOCAL = $empty_local_layer ]
+    -- Assign_args: C_callee |- arg* := val* : OK C_callee'
     -- Eval_prems: C_callee' |- prem* : failure
 
   rule Eval_tblrow/succ:
     C |- tblRow '@' `( val* `) : funcRes
     -- if arg* '=' exp_out '-' prem* = tblRow
-    -- if C_callee = C[ .LOCAL = $empty_layer ]
-    -- Assign_args: C_callee '/' C |- arg* := val* : OK C_callee'
+    -- if C_callee = C[ .LOCAL = $empty_local_layer ]
+    -- Assign_args: C_callee |- arg* := val* : OK C_callee'
     -- Eval_prems: C_callee' |- prem* : OK C_callee''
     -- Eval_exp: C_callee'' |- exp_out : funcRes
 
@@ -160,9 +160,9 @@ rulegroup Call_defined_func {
     -- if DEF tparam* _ _ '->' clause* elsClause? = definedFuncDef
     -- if |tparam*| = |typ*|
     -- if tdenv = `{ (tparam ':' (DEF eps '->' (ALIAS typ)))* `}
-    -- if C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
-    -- Eval_clauses: C_callee '/' C |- clause* '@' `( val* `) : UNMATCH
-    -- (Eval_clause: C_callee '/' C |- elsClause '@' `( val* `) : funcRes_els)?
+    -- if C_callee = C[ .LOCAL = $empty_local_layer[ .TYP = tdenv ] ]
+    -- Eval_clauses: C_callee |- clause* '@' `( val* `) : UNMATCH
+    -- (Eval_clause: C_callee |- elsClause '@' `( val* `) : funcRes_els)?
     -- if funcRes = $deopt_<funcRes>(funcRes_els?, UNMATCH)
 
   rule Call_defined_func/result:
@@ -170,8 +170,8 @@ rulegroup Call_defined_func {
     -- if DEF tparam* _ _ '->' clause* elsClause? = definedFuncDef
     -- if |tparam*| = |typ*|
     -- if tdenv = `{ (tparam ':' (DEF eps '->' (ALIAS typ)))* `}
-    -- if C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
-    -- Eval_clauses: C_callee '/' C |- clause* '@' `( val* `) : funcRes
+    -- if C_callee = C[ .LOCAL = $empty_local_layer[ .TYP = tdenv ] ]
+    -- Eval_clauses: C_callee |- clause* '@' `( val* `) : funcRes
     -- if funcRes =/= UNMATCH
 
 }
@@ -211,7 +211,8 @@ rulegroup Call_func_dispatch {
 
 rule Call_func:
   C |- id typ* val* : funcRes
-  -- if funcDef = $find_func(C, id)
+  -- if id_global = $resolve_func(C, id)
+  -- if funcDef = $find_func(C, id_global)
   -- Call_func_dispatch: C |- funcDef typ* val* : funcRes
 
 rule Call_func/error:

@@ -15,17 +15,15 @@ relation Assign_exps:
   hint(prose_out %3)
 
 relation Assign_arg:
-  ctx '/' ctx |- arg := val : assignRes
-  hint(input %0 %1 %2 %3)
-  hint(prose_in "assigning" %2 "to" %1
-                "under caller" %1 "and callee" %0)
-  hint(prose_out %4)
+  ctx |- arg := val : assignRes
+  hint(input %0 %1 %2)
+  hint(prose_in "assigning" %2 "to" %1 "under" %0)
+  hint(prose_out %3)
 
 relation Assign_args:
-  ctx '/' ctx  |- arg* := val* : assignRes
-  hint(input %0 %1 %2 %3)
-  hint(prose_in "assigning each of" %2 "to each of" %1
-                "under caller" %1 "and callee" %0)
+  ctx |- arg* := val* : assignRes
+  hint(input %0 %1 %2)
+  hint(prose_in "assigning each of" %2 "to each of" %1 "under" %0)
 
 ;;; Assigning to an expression
 
@@ -129,16 +127,15 @@ rule Assign_exps/error:
 ;;; Assigning to an argument
 
 rule Assign_arg/exp:
-  C_callee '/' _ |- EXP exp := val : OK C_callee'
-  -- Assign_exp: C_callee |- exp := val : OK C_callee'
+  C |- EXP exp := val : OK C'
+  -- Assign_exp: C |- exp := val : OK C'
 
 rule Assign_arg/fun:
-  C_callee '/' C_caller |- FUN id_callee := FUNC id_caller : OK C_callee'
-  -- if funcDef = $find_func(C_caller, id_caller)
-  -- if C_callee' = $add_func(C_callee, id_callee, funcDef)
+  C |- FUN id := FUNC id_global : OK C'
+  -- if C' = $add_func(C, id, id_global)
 
 rule Assign_arg/error:
-  C_callee '/' C_caller |- arg := val : ERROR
+  C |- arg := val : ERROR
   -- otherwise
 
 ;;; Assigning to a sequence of arguments
@@ -146,15 +143,15 @@ rule Assign_arg/error:
 rulegroup Assign_args {
 
   rule Assign_args/nil:
-    C_callee '/' _ |- eps := eps : OK C_callee
+    C |- eps := eps : OK C
 
   rule Assign_args/cons:
-    C_callee '/' C_caller |- arg_h :: arg_t* := val_h :: val_t* : OK C_callee''
-    -- Assign_arg: C_callee '/' C_caller |- arg_h := val_h : OK C_callee'
-    -- Assign_args: C_callee' '/' C_caller |- arg_t* := val_t* : OK C_callee''
+    C |- arg_h :: arg_t* := val_h :: val_t* : OK C''
+    -- Assign_arg: C |- arg_h := val_h : OK C'
+    -- Assign_args: C' |- arg_t* := val_t* : OK C''
 
 }
 
 rule Assign_args/error:
-  C_callee '/' C_caller |- arg* := val* : ERROR
+  C |- arg* := val* : ERROR
   -- otherwise

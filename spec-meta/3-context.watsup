@@ -4,39 +4,50 @@ syntax cursor = GLOBAL | LOCAL
 
 ;; Context
 
-syntax layer =
+syntax globalLayer =
   { TYP tdenv,
     REL renv,
-    FUNC fenv,
+    FUNC fenv }
+
+syntax localLayer =
+  { TYP tdenv,
+    FUNC fnenv,
     VAL venv }
 
-dec $empty_layer : layer
-  hint(prose_in "empty layer")
-def $empty_layer =
+dec $empty_global_layer : globalLayer
+  hint(prose_in "empty global layer")
+def $empty_global_layer =
   { TYP $empty_map<id, typDef>,
     REL $empty_map<id, relDef>,
-    FUNC $empty_map<id, funcDef>,
+    FUNC $empty_map<id, funcDef> }
+
+dec $empty_local_layer : localLayer
+  hint(prose_in "empty local layer")
+def $empty_local_layer =
+  { TYP $empty_map<id, typDef>,
+    FUNC $empty_map<id, id>,
     VAL $empty_map<varr, val> }
 
-syntax ctx = { GLOBAL layer, LOCAL layer }
+syntax ctx = { GLOBAL globalLayer, LOCAL localLayer }
 
 dec $empty_ctx : ctx
   hint(prose_in "empty context")
-def $empty_ctx = { GLOBAL $empty_layer, LOCAL $empty_layer }
+def $empty_ctx = { GLOBAL $empty_global_layer, LOCAL $empty_local_layer }
 
 var C : ctx
 
 ;; Type checking context
 
-syntax tlayer = { TYP tdenv, FUNC fenv }
-syntax tctx = { GLOBAL tlayer, LOCAL tlayer }
+syntax globalTLayer = { TYP tdenv, FUNC fenv }
+syntax localTLayer = { TYP tdenv }
+syntax tctx = { GLOBAL globalTLayer, LOCAL localTLayer }
 
 var TC : tctx
 
 dec $tctx(ctx) : tctx
 def $tctx(C)
   = { GLOBAL { TYP C.GLOBAL.TYP, FUNC C.GLOBAL.FUNC },
-      LOCAL { TYP C.LOCAL.TYP, FUNC C.LOCAL.FUNC } }
+      LOCAL { TYP C.LOCAL.TYP } }
 
 ;; Loading context from a script
 
@@ -145,12 +156,12 @@ def $add_typ(C, id, typDef)
 
 ;;; Function adders
 
-dec $add_func(ctx, id, funcDef) : ctx
+dec $add_func(ctx, id, id) : ctx
   hint(prose_in %0 "where function" %1 "to" %2 "added locally")
 
-def $add_func(C, id, funcDef)
-  = C[ .LOCAL.FUNC = fenv_update ]
-  -- if fenv_update = $add_map<id, funcDef>(C.LOCAL.FUNC, id, funcDef)
+def $add_func(C, id, id_global)
+  = C[ .LOCAL.FUNC = fnenv_update ]
+  -- if fnenv_update = $add_map<id, id>(C.LOCAL.FUNC, id, id_global)
 
 ;; Finders
 
@@ -211,27 +222,23 @@ def $find_typ_tctx(TC, id) = $find_map<id, typDef>(TC.GLOBAL.TYP, id)
 
 ;;; Function finders
 
+dec $find_func_param(ctx, id) : id?
+  hint(prose_in "the global function name bound to" %1 "in" %0)
+def $find_func_param(C, id)
+  = $find_map<id, id>(C.LOCAL.FUNC, id)
+
+dec $resolve_func(ctx, id) : id
+  hint(prose_in "the global function name for" %1 "in" %0)
+def $resolve_func(C, id)
+  = $deopt_<id>($find_func_param(C, id), id)
+
 dec $find_func(ctx, id) : funcDef?
   hint(prose_in "the function definition of" %1 "in" %0)
-
-def $find_func(C, id) = funcDef
-  -- if funcDef = $find_map<id, funcDef>(C.LOCAL.FUNC, id)
-def $find_func(C, id) = funcDef
-  -- if eps = $find_map<id, funcDef>(C.LOCAL.FUNC, id)
-  -- if funcDef = $find_map<id, funcDef>(C.GLOBAL.FUNC, id)
-def $find_func(C, id) = eps
-  -- otherwise
+def $find_func(C, id) = $find_map<id, funcDef>(C.GLOBAL.FUNC, id)
 
 dec $find_func_tctx(tctx, id) : funcDef?
   hint(prose_in "the function definition of" %1 "in" %0)
-
-def $find_func_tctx(TC, id) = funcDef
-  -- if funcDef = $find_map<id, funcDef>(TC.LOCAL.FUNC, id)
-def $find_func_tctx(TC, id) = funcDef
-  -- if eps = $find_map<id, funcDef>(TC.LOCAL.FUNC, id)
-  -- if funcDef = $find_map<id, funcDef>(TC.GLOBAL.FUNC, id)
-def $find_func_tctx(TC, id) = eps
-  -- otherwise
+def $find_func_tctx(TC, id) = $find_map<id, funcDef>(TC.GLOBAL.FUNC, id)
 
 ;;; Relation finders
 
