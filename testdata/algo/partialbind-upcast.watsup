@@ -1,0 +1,15 @@
+;; A pattern of a subtype checks the subtype and then downcasts
+
+syntax small = A | B
+syntax big = small | C
+
+var x : small
+
+dec $is_small(big) : bool
+def $is_small(x) = true
+def $is_small(C) = false
+
+dec $main() : bool
+def $main() = true
+  -- if $is_small(A)
+  -- if ~$is_small(C)

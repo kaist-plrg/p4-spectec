@@ -1,0 +1,17 @@
+;; A constructor that is the only one of its type is still matched,
+;; and the match is allowed in an otherwise clause
+
+syntax s = S nat
+
+var n : nat
+
+dec $f(s) : nat
+def $f(S n) = n
+  -- if $(n > 1)
+def $f(S n) = 0
+  -- otherwise
+
+dec $main() : bool
+def $main() = true
+  -- if $f(S 3) = 3
+  -- if $f(S 1) = 0

@@ -1,0 +1,24 @@
+;; Text indexing, slicing, and updates count characters, not bytes
+
+var t : text
+var i : nat
+
+dec $char(text, nat) : text
+def $char(t, i) = t[i]
+def $char(t, i) = "?"
+  -- otherwise
+
+dec $set(text, nat, text) : text
+def $set(t, i, t_new) = t[[i] = t_new]
+def $set(t, i, t_new) = "?"
+  -- otherwise
+
+dec $main() : bool
+def $main() = true
+  -- if |"가나다"| = 3
+  -- if $char("가나다", 1) = "나"
+  -- if $char("가나다", 3) = "?"
+  -- if "가나다"[1 : 2] = "나다"
+  -- if $set("가나다", 1, "X") = "가X다"
+  -- if $set("가나다", 1, "XY") = "?"
+  -- if $set("가나다", 3, "X") = "?"

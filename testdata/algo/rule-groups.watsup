@@ -1,0 +1,23 @@
+;; Rules of a relation are alternatives; each rule matches its own inputs
+
+syntax t = A nat | B nat | C
+
+var n : nat
+
+relation Val: t |- nat
+  hint(input %0)
+
+rule Val/a:
+  A n |- n
+
+rule Val/b:
+  B n |- $(n + 10)
+
+rule Val/c:
+  C |- 0
+
+dec $main() : bool
+def $main() = true
+  -- Val: A 1 |- 1
+  -- Val: B 1 |- 11
+  -- Val: C |- 0

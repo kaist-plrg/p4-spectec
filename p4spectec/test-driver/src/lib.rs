@@ -17,6 +17,8 @@ pub mod algo;
 
 pub mod codec;
 
+pub mod algo_run;
+
 pub mod structure;
 
 pub mod prose;

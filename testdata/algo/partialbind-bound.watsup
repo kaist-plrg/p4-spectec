@@ -1,0 +1,18 @@
+;; A bound sub-pattern is compared after the binding
+
+syntax pair = (nat, nat)
+
+var x : nat
+var n : nat
+var p : pair
+
+dec $f(pair, nat) : nat
+def $f(p, n) = x
+  -- if (x, $(n + 1)) = p
+def $f(p, n) = 0
+  -- otherwise
+
+dec $main() : bool
+def $main() = true
+  -- if $f((5, 3), 2) = 5
+  -- if $f((5, 4), 2) = 0
