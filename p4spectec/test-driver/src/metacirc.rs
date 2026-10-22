@@ -16,7 +16,7 @@ use p4spectec::{
 };
 
 use crate::{
-    Error, Result,
+    Error, ExecutionOptions, Result,
     corpus::{self, Outcome, Results},
     suite::{self, CorpusConfig, Language},
 };
@@ -28,10 +28,16 @@ struct CollectedSuite {
 }
 
 /// Runs the registered P4 corpus through one prepared AL/P4 tower.
-pub fn run(config: &CorpusConfig, config_tower: &TowerConfig, cache_on: bool) -> Result<()> {
+pub fn run(
+    config: &CorpusConfig,
+    config_tower: &TowerConfig,
+    options: ExecutionOptions,
+) -> Result<()> {
+    let ExecutionOptions { cache_on, no_det } = options;
+    let det = !no_det;
     let language = Language::Sl;
     let text_cache = if cache_on { "on" } else { "off" };
-    let text_mode = format!("metacirc SL cache={text_cache}");
+    let text_mode = format!("metacirc SL cache={text_cache} det={det}");
     let start = Instant::now();
     // Collect registered corpus roots in suite order
     let mut suites = config
@@ -66,7 +72,7 @@ pub fn run(config: &CorpusConfig, config_tower: &TowerConfig, cache_on: bool) ->
         collected - excluded
     );
     let mut arena = Arena::new();
-    let mut tower = Tower::build(&mut arena, config_tower, Config::new(cache_on, false, false))
+    let mut tower = Tower::build(&mut arena, config_tower, Config::new(cache_on, det, false))
         .map_err(|error| Error::Invalid(error.to_string()))?;
     let includes = &config.includes;
     for path in includes {

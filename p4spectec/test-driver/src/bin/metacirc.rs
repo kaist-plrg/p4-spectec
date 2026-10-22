@@ -2,19 +2,19 @@
 
 use clap::Parser;
 use p4spectec_test::{
-    Error, Result, metacirc,
+    Error, ExecutionOptions, Result, metacirc,
     suite::{self, Index},
 };
 use std::{path::PathBuf, process::ExitCode};
 
+/// Compares P4 corpus outcomes through the metacircular tower.
 #[derive(Parser)]
 struct Cli {
     /// Suite registration file, relative to the invoking directory.
     #[arg(long = "registry")]
     path_registry: Option<PathBuf>,
-    /// Enable or disable interpreter and AL encoding caches.
-    #[arg(long, default_value_t = true, action = clap::ArgAction::Set)]
-    cache_on: bool,
+    #[command(flatten)]
+    options: ExecutionOptions,
 }
 
 /// Resolves caller paths and runs the registered corpus from the repository root.
@@ -33,7 +33,7 @@ fn execute(cli: Cli) -> Result<()> {
     std::env::set_current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))?;
     let index = Index::load(&path_registry)?;
     let (config, config_tower) = suite::load_metacirc(&index.suites.metacirc)?;
-    metacirc::run(&config, &config_tower, cli.cache_on)
+    metacirc::run(&config, &config_tower, cli.options)
 }
 
 fn main() -> ExitCode {

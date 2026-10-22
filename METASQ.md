@@ -105,7 +105,7 @@ exit code.
 make test-metacirc
 ```
 
-Runs the `test-run-sl` corpus through the AL/P4 tower, without `--det`.
+Runs the `test-run-sl` corpus through the AL/P4 tower, with determinism checks.
 Requires the p4c submodule.
 
 ## OCaml reference
