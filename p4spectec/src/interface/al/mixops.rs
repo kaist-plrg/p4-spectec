@@ -46,6 +46,8 @@ pub(super) const EXT: &str = "EXT json";
 
 // == Expressions and paths
 
+pub(super) const EXP: &str = "expKind '#' typ";
+pub(super) const PATH: &str = "pathKind '#' typ";
 pub(super) const VAR_EXP: &str = "VAR id";
 pub(super) const UN: &str = "UN unop exp";
 pub(super) const BIN: &str = "BIN binop exp exp";

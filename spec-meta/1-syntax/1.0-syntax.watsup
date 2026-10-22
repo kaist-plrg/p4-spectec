@@ -90,9 +90,11 @@ syntax pat =
 
 ;; Expressions
 
-syntax expField, expCase, path, arg, iterExp
+syntax expKind, expField, expCase, path, pathKind, arg, iterExp
 
-syntax exp =
+syntax exp = expKind '#' typ
+
+syntax expKind =
   | BOOL bool
   | num
   | TEXT text
@@ -127,7 +129,9 @@ syntax iterExp = iter vari*
 
 ;; Paths
 
-syntax path =
+syntax path = pathKind '#' typ
+
+syntax pathKind =
   | ROOT
   | IDX path exp
   | SLICE path exp exp

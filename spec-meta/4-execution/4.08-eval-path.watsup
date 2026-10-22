@@ -3,16 +3,16 @@
 ;;; Access evaluation rules
 
 rule Eval_path_acc/root:
-  C |- val_b ROOT : OK val_b
+  C |- val_b (ROOT '#' _) : OK val_b
 
 rulegroup Eval_path_acc/dot {
 
   rule Eval_path_acc/path-failure:
-    C |- val_b (DOT path atom) : failure
+    C |- val_b ((DOT path atom) '#' _) : failure
     -- Eval_path_acc: C |- val_b path : failure
 
   rule Eval_path_acc/succ:
-    C |- val_b (DOT path atom) : OK val
+    C |- val_b ((DOT path atom) '#' _) : OK val
     -- Eval_path_acc: C |- val_b path : OK (STR valField*)
     -- if (atom_field val_field = valField)*
     -- if val
@@ -23,27 +23,27 @@ rulegroup Eval_path_acc/dot {
 rulegroup Eval_path_acc/idx {
 
   rule Eval_path_acc/path-failure:
-    C |- val_b (IDX path exp_i) : failure
+    C |- val_b ((IDX path exp_i) '#' _) : failure
     -- Eval_path_acc: C |- val_b path : failure
 
   rule Eval_path_acc/list-index-failure:
-    C |- val_b (IDX path exp_i) : failure
+    C |- val_b ((IDX path exp_i) '#' _) : failure
     -- Eval_path_acc: C |- val_b path : OK (LIST val*)
     -- Eval_exp: C |- exp_i : failure
 
   rule Eval_path_acc/list-succ:
-    C |- val_b (IDX path exp_i) : OK val_idx
+    C |- val_b ((IDX path exp_i) '#' _) : OK val_idx
     -- Eval_path_acc: C |- val_b path : OK (LIST val*)
     -- Eval_exp: C |- exp_i : OK (NAT n)
     -- if val_idx = val*[n]
 
   rule Eval_path_acc/text-index-failure:
-    C |- val_b (IDX path exp_i) : failure
+    C |- val_b ((IDX path exp_i) '#' _) : failure
     -- Eval_path_acc: C |- val_b path : OK (TEXT t)
     -- Eval_exp: C |- exp_i : failure
 
   rule Eval_path_acc/text-succ:
-    C |- val_b (IDX path exp_i) : OK (TEXT t_idx)
+    C |- val_b ((IDX path exp_i) '#' _) : OK (TEXT t_idx)
     -- Eval_path_acc: C |- val_b path : OK (TEXT t)
     -- Eval_exp: C |- exp_i : OK (NAT n)
     -- if t_idx = t[n]
@@ -53,40 +53,40 @@ rulegroup Eval_path_acc/idx {
 rulegroup Eval_path_acc/slice {
 
   rule Eval_path_acc/path-failure:
-    C |- val_b (SLICE path exp_i exp_n) : failure
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) : failure
     -- Eval_path_acc: C |- val_b path : failure
 
   rule Eval_path_acc/text-index-failure:
-    C |- val_b (SLICE path exp_i exp_n) : failure
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) : failure
     -- Eval_path_acc: C |- val_b path : OK (TEXT t)
     -- Eval_exp: C |- exp_i : failure
 
   rule Eval_path_acc/text-length-failure:
-    C |- val_b (SLICE path exp_i exp_n) : failure
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) : failure
     -- Eval_path_acc: C |- val_b path : OK (TEXT t)
     -- Eval_exp: C |- exp_i : OK (NAT n_i)
     -- Eval_exp: C |- exp_n : failure
 
   rule Eval_path_acc/text-succ:
-    C |- val_b (SLICE path exp_i exp_n) : OK val_slice
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) : OK val_slice
     -- Eval_path_acc: C |- val_b path : OK (TEXT t)
     -- Eval_exp: C |- exp_i : OK (NAT n_i)
     -- Eval_exp: C |- exp_n : OK (NAT n_n)
     -- if val_slice = TEXT t[n_i : n_n]
 
   rule Eval_path_acc/list-index-failure:
-    C |- val_b (SLICE path exp_i exp_n) : failure
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) : failure
     -- Eval_path_acc: C |- val_b path : OK (LIST val*)
     -- Eval_exp: C |- exp_i : failure
 
   rule Eval_path_acc/list-length-failure:
-    C |- val_b (SLICE path exp_i exp_n) : failure
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) : failure
     -- Eval_path_acc: C |- val_b path : OK (LIST val*)
     -- Eval_exp: C |- exp_i : OK (NAT n_i)
     -- Eval_exp: C |- exp_n : failure
 
   rule Eval_path_acc/list-succ:
-    C |- val_b (SLICE path exp_i exp_n) : OK val_slice
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) : OK val_slice
     -- Eval_path_acc: C |- val_b path : OK (LIST val*)
     -- Eval_exp: C |- exp_i : OK (NAT n_i)
     -- Eval_exp: C |- exp_n : OK (NAT n_n)
@@ -101,21 +101,21 @@ rule Eval_path_acc/error:
 ;;; Update evaluation rules
 
 rule Eval_path_upd/root:
-  C |- val_b ROOT := val_n : OK val_n
+  C |- val_b (ROOT '#' _) := val_n : OK val_n
 
 rulegroup Eval_path_upd/idx {
 
   rule Eval_path_upd/path-failure:
-    C |- val_b (IDX path exp_i) := val_n : failure
+    C |- val_b ((IDX path exp_i) '#' _) := val_n : failure
     -- Eval_path_acc: C |- val_b path : failure
 
   rule Eval_path_upd/list-index-failure:
-    C |- val_b (IDX path exp_i) := val_n : failure
+    C |- val_b ((IDX path exp_i) '#' _) := val_n : failure
     -- Eval_path_acc: C |- val_b path : OK (LIST val*)
     -- Eval_exp: C |- exp_i : failure
 
   rule Eval_path_upd/list-succ:
-    C |- val_b (IDX path exp_i) := val_n : pathRes
+    C |- val_b ((IDX path exp_i) '#' _) := val_n : pathRes
     -- Eval_path_acc: C |- val_b path : OK (LIST val*)
     -- Eval_exp: C |- exp_i : OK (NAT n_target)
     -- if val_upd = LIST val*[ [n_target] = val_n ]
@@ -123,12 +123,12 @@ rulegroup Eval_path_upd/idx {
         C |- val_b path := val_upd : pathRes
 
   rule Eval_path_upd/text-index-failure:
-    C |- val_b (IDX path exp_i) := val_n : failure
+    C |- val_b ((IDX path exp_i) '#' _) := val_n : failure
     -- Eval_path_acc: C |- val_b path : OK (TEXT t)
     -- Eval_exp: C |- exp_i : failure
 
   rule Eval_path_upd/text-succ:
-    C |- val_b (IDX path exp_i) := TEXT t_n : pathRes
+    C |- val_b ((IDX path exp_i) '#' _) := TEXT t_n : pathRes
     -- Eval_path_acc: C |- val_b path : OK (TEXT t)
     -- Eval_exp: C |- exp_i : OK (NAT n_target)
     -- if val_upd = TEXT t[ [n_target] = t_n ]
@@ -140,22 +140,22 @@ rulegroup Eval_path_upd/idx {
 rulegroup Eval_path_upd/slice {
 
   rule Eval_path_upd/path-failure:
-    C |- val_b (SLICE path exp_i exp_n) := val_n : failure
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) := val_n : failure
     -- Eval_path_acc: C |- val_b path : failure
 
   rule Eval_path_upd/text-index-failure:
-    C |- val_b (SLICE path exp_i exp_n) := val_n : failure
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) := val_n : failure
     -- Eval_path_acc: C |- val_b path : OK (TEXT t)
     -- Eval_exp: C |- exp_i : failure
 
   rule Eval_path_upd/text-length-failure:
-    C |- val_b (SLICE path exp_i exp_n) := val_n : failure
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) := val_n : failure
     -- Eval_path_acc: C |- val_b path : OK (TEXT t)
     -- Eval_exp: C |- exp_i : OK (NAT n_i)
     -- Eval_exp: C |- exp_n : failure
 
   rule Eval_path_upd/text-succ:
-    C |- val_b (SLICE path exp_i exp_n) := TEXT t_n : pathRes
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) := TEXT t_n : pathRes
     -- Eval_path_acc: C |- val_b path : OK (TEXT t)
     -- Eval_exp: C |- exp_i : OK (NAT n_i)
     -- Eval_exp: C |- exp_n : OK (NAT n_n)
@@ -164,18 +164,18 @@ rulegroup Eval_path_upd/slice {
         C |- val_b path := val_upd : pathRes
 
   rule Eval_path_upd/list-index-failure:
-    C |- val_b (SLICE path exp_i exp_n) := val_n : failure
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) := val_n : failure
     -- Eval_path_acc: C |- val_b path : OK (LIST val*)
     -- Eval_exp: C |- exp_i : failure
 
   rule Eval_path_upd/list-length-failure:
-    C |- val_b (SLICE path exp_i exp_n) := val_n : failure
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) := val_n : failure
     -- Eval_path_acc: C |- val_b path : OK (LIST val*)
     -- Eval_exp: C |- exp_i : OK (NAT n_i)
     -- Eval_exp: C |- exp_n : failure
 
   rule Eval_path_upd/list-succ:
-    C |- val_b (SLICE path exp_i exp_n) := LIST val_n* : pathRes
+    C |- val_b ((SLICE path exp_i exp_n) '#' _) := LIST val_n* : pathRes
     -- Eval_path_acc: C |- val_b path : OK (LIST val*)
     -- Eval_exp: C |- exp_i : OK (NAT n_i)
     -- Eval_exp: C |- exp_n : OK (NAT n_n)
@@ -188,11 +188,11 @@ rulegroup Eval_path_upd/slice {
 rulegroup Eval_path_upd/dot {
 
   rule Eval_path_upd/path-failure:
-    C |- val_b (DOT path atom) := val_n : failure
+    C |- val_b ((DOT path atom) '#' _) := val_n : failure
     -- Eval_path_acc: C |- val_b path : failure
 
   rule Eval_path_upd/succ:
-    C |- val_b (DOT path atom) := val_n : pathRes
+    C |- val_b ((DOT path atom) '#' _) := val_n : pathRes
     -- Eval_path_acc: C |- val_b path : OK (STR valField*)
     -- if (atom_field val_field = valField)*
     -- if (valField_new

@@ -69,11 +69,6 @@ pub(super) fn not_exp(
     relation_notation(exps_input, exps_output)
 }
 
-/// The type note omitted from expressions and paths.
-pub(super) fn exp_note() -> Rc<il::TypKind> {
-    Rc::new(il::TypKind::Bool)
-}
-
 /// The general hints omitted from meta definitions.
 pub(super) fn hints() -> Vec<il::Hint> {
     vec![]

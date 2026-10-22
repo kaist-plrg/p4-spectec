@@ -121,6 +121,21 @@ fn opt<T: Encode<Output = Value>>(
     )?)
 }
 
+/// Pairs an encoded expression or path form with its type annotation.
+fn typed(
+    arena: &mut Arena,
+    cache: &mut Cache,
+    text_shape: &'static str,
+    text_typ: &str,
+    value_kind: Value,
+    typ_kind: &il::TypKind,
+    span: Span,
+) -> Result<Value, Error> {
+    let typ = phrase!(node: typ_kind.clone(), span: span);
+    let value_typ = typ.encode_cached(arena, cache)?;
+    case(arena, text_shape, text_typ, vec![value_kind, value_typ], span)
+}
+
 // == Encoding
 
 // - References
@@ -644,7 +659,8 @@ impl Encode for il::Exp {
                 vec![exp_al.encode_cached(arena, cache)?, exp_iter_al.encode_cached(arena, cache)?],
             ),
         };
-        case(arena, shape, "exp", values_meta, span)
+        let value_kind = case(arena, shape, "expKind", values_meta, span)?;
+        typed(arena, cache, m::EXP, "exp", value_kind, &self.note, span)
     }
 }
 
@@ -703,14 +719,14 @@ impl Encode for il::Path {
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let span = self.span;
-        match &self.node {
-            il::PathKind::Root => case(arena, m::ROOT, "path", vec![], span),
+        let value_kind = match &self.node {
+            il::PathKind::Root => case(arena, m::ROOT, "pathKind", vec![], span),
             il::PathKind::Idx(path_base_al, exp_idx_al) => {
                 let values_meta = vec![
                     path_base_al.encode_cached(arena, cache)?,
                     exp_idx_al.encode_cached(arena, cache)?,
                 ];
-                case(arena, m::IDX, "path", values_meta, span)
+                case(arena, m::IDX, "pathKind", values_meta, span)
             }
             il::PathKind::Slice(path_base_al, exp_idx_al, exp_len_al) => {
                 let values_meta = vec![
@@ -718,16 +734,17 @@ impl Encode for il::Path {
                     exp_idx_al.encode_cached(arena, cache)?,
                     exp_len_al.encode_cached(arena, cache)?,
                 ];
-                case(arena, m::SLICE, "path", values_meta, span)
+                case(arena, m::SLICE, "pathKind", values_meta, span)
             }
             il::PathKind::Dot(path_base_al, atom_al) => {
                 let values_meta = vec![
                     path_base_al.encode_cached(arena, cache)?,
                     atom_al.encode_cached(arena, cache)?,
                 ];
-                case(arena, m::DOT, "path", values_meta, span)
+                case(arena, m::DOT, "pathKind", values_meta, span)
             }
-        }
+        }?;
+        typed(arena, cache, m::PATH, "path", value_kind, &self.note, span)
     }
 }
 

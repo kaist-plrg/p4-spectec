@@ -53,6 +53,30 @@ pub trait Decode: Sized {
 
 // == Decoding
 
+// - Typed phrases
+
+/// Decodes the type annotation of a typed expression or path.
+fn typed(
+    arena: &mut Arena,
+    cache: &mut Cache,
+    value_kind: &Value,
+    value_typ: &Value,
+) -> Result<(Value, il::Typ), Error> {
+    Ok((*value_kind, il::Typ::decode_cached(arena, cache, *value_typ)?))
+}
+
+/// Recovers a numeric operator type from its operand or result type.
+fn op_typ(typ_kind: &il::TypKind, op_typ_decoded: il::OpTyp) -> il::OpTyp {
+    match (op_typ_decoded, typ_kind) {
+        // Boolean operators carry their own type
+        (il::OpTyp::Bool, _) => il::OpTyp::Bool,
+        // Integer operands select integer arithmetic
+        (_, il::TypKind::Num(num::Typ::Int)) => il::OpTyp::Int,
+        // Every other numeric operator works on naturals
+        (_, _) => il::OpTyp::Nat,
+    }
+}
+
 // - Containers
 
 /// Decodes a checked meta list element by element.
@@ -642,7 +666,11 @@ impl Decode for il::Exp {
         value_meta: Value,
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
-        let exp_kind_al = get::matches_string! { arena, &value_meta,
+        let (value_kind, typ_al) = get::matches_string! { arena, &value_meta,
+            m::EXP => |[value_kind, value_typ]| typed(arena, cache, value_kind, value_typ)?,
+            _ => return Err(Error::unexpected(arena, value_meta, "expKind '#' typ")),
+        };
+        let exp_kind_al = get::matches_string! { arena, &value_kind,
             m::BOOL => |[value_bool]| {
                 il::ExpKind::Bool(get::bool(arena, value_bool)?)
             },
@@ -663,23 +691,24 @@ impl Decode for il::Exp {
             },
             m::UN => |[value_op, value_exp]| {
                 let (op_al, typ_op_al) = <(il::UnOp, il::OpTyp)>::decode_cached(arena, cache, *value_op)?;
-                il::ExpKind::Un(op_al, typ_op_al, Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?))
+                il::ExpKind::Un(op_al, op_typ(&typ_al.node, typ_op_al), Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?))
             },
             m::BIN => |[value_op, value_l, value_r]| {
                 let (op_al, typ_op_al) = <(il::BinOp, il::OpTyp)>::decode_cached(arena, cache, *value_op)?;
                 il::ExpKind::Bin(
                     op_al,
-                    typ_op_al,
+                    op_typ(&typ_al.node, typ_op_al),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_l)?),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_r)?),
                 )
             },
             m::CMP => |[value_op, value_l, value_r]| {
                 let (op_al, typ_op_al) = <(il::CmpOp, il::OpTyp)>::decode_cached(arena, cache, *value_op)?;
+                let exp_l_al = il::Exp::decode_cached(arena, cache, *value_l)?;
                 il::ExpKind::Cmp(
                     op_al,
-                    typ_op_al,
-                    Box::new(il::Exp::decode_cached(arena, cache, *value_l)?),
+                    op_typ(&exp_l_al.note, typ_op_al),
+                    Box::new(exp_l_al),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_r)?),
                 )
             },
@@ -789,7 +818,7 @@ impl Decode for il::Exp {
                             ));
                         },
         };
-        Ok(note_phrase!(node: exp_kind_al, note: stub::exp_note(), span: span))
+        Ok(note_phrase!(node: exp_kind_al, note: Rc::new(typ_al.node), span: span))
     }
 }
 
@@ -880,7 +909,11 @@ impl Decode for il::Path {
         value_meta: Value,
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
-        let path_kind_al = get::matches_string! { arena, &value_meta,
+        let (value_kind, typ_al) = get::matches_string! { arena, &value_meta,
+            m::PATH => |[value_kind, value_typ]| typed(arena, cache, value_kind, value_typ)?,
+            _ => return Err(Error::unexpected(arena, value_meta, "pathKind '#' typ")),
+        };
+        let path_kind_al = get::matches_string! { arena, &value_kind,
             m::ROOT => |[]| il::PathKind::Root,
             m::IDX => |[value_path, value_idx]| {
                 il::PathKind::Idx(
@@ -903,7 +936,7 @@ impl Decode for il::Path {
             },
             _ => return Err(Error::unexpected(arena, value_meta, "an AL update path")),
         };
-        Ok(note_phrase!(node: path_kind_al, note: stub::exp_note(), span: span))
+        Ok(note_phrase!(node: path_kind_al, note: Rc::new(typ_al.node), span: span))
     }
 }
 
