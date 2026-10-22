@@ -45,7 +45,7 @@ struct Options {
     /// Disable interpreter call and AL encode/decode caching.
     #[arg(long)]
     no_cache: bool,
-    /// Disable deterministic execution checks.
+    /// Disable deterministic execution checks in the native base interpreter.
     #[arg(long)]
     no_det: bool,
     /// Check types at native call boundaries.

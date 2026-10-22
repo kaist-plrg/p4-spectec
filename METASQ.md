@@ -92,7 +92,8 @@ these additional configurations; only `al.json` and `al-p4.json` are supplied.
 In a multi-level tower, target and intermediate specifications must not
 define `main`.
 
-The command accepts `--no-cache`, `--det`, and `--guard`. Interpreter call
+The command accepts `--no-cache`, `--no-det`, and `--guard`. `--no-det` disables
+determinism checks only in the native base interpreter. Interpreter call
 caching and AL encode/decode caching are enabled together by default;
 `--no-cache` disables both. It prints `passed`
 only after the configured base entry succeeds; diagnostics cause a nonzero
