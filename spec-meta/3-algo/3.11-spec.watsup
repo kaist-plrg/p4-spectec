@@ -1,0 +1,25 @@
+;; Specifications
+
+;; A specification is lowered definition by definition, every definition
+;; seeing all type definitions. Guards are then inserted into the lowered
+;; definitions, and finally the otherwise rules and clauses are checked.
+
+dec $typdefs(defnIL*) : tdenv
+  hint(prose_in "the type definitions of" %0)
+def $typdefs(eps) = $empty_map<id, typDef>
+def $typdefs(externTypDefn :: defnIL*) = $add_map<id, typDef>(tdenv, id, externTypDefn)
+  -- if EXTTYP id = externTypDefn
+  -- if tdenv = $typdefs(defnIL*)
+def $typdefs(definedTypDefn :: defnIL*) = $add_map<id, typDef>(tdenv, id, definedTypDefn)
+  -- if TYP id _ '=' _ = definedTypDefn
+  -- if tdenv = $typdefs(defnIL*)
+def $typdefs(relDefnIL :: defnIL*) = $typdefs(defnIL*)
+def $typdefs(funcDefnIL :: defnIL*) = $typdefs(defnIL*)
+
+rule Algo_spec:
+  |- defnIL* : defn''*
+  -- if tdenv = $typdefs(defnIL*)
+  -- if AC = $empty_algoCtx[ .TYP = tdenv ]
+  -- (Algo_def: AC |- defnIL : defn)*
+  -- (Guard_def: AC |- defn : defn'')*
+  -- (Pure_otherwise: AC |- defn'')*

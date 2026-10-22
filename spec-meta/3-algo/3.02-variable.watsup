@@ -1,0 +1,209 @@
+;; Variables and dimensions
+
+;; A variable of type `nat*?` is the element variable `id nat` iterated by
+;; `STAR` then `QUEST`; iterators are listed innermost first.
+
+dec $typ_dim(typ) : (typ, iter*)
+  hint(prose_in "the element type and iterators of" %0)
+def $typ_dim(ITER typ iter) = (typ_elem, iter_elem* ++ [ iter ])
+  -- if (typ_elem, iter_elem*) = $typ_dim(typ)
+def $typ_dim(typ) = (typ, eps)
+  -- otherwise
+
+dec $ids_of_varis(vari*) : id*
+  hint(prose_in "the identifiers of" %0)
+def $ids_of_varis((id _ _)*) = id*
+
+dec $sub_dim(vari, vari) : bool
+  hint(prose_true "the dimension of" %0 "is a prefix of the dimension of" %1)
+  hint(prose_false "the dimension of" %0 "is not a prefix of the dimension of" %1)
+def $sub_dim(_ typ_a iter_a*, _ typ_b iter_b*) = true
+  -- if typ_a = typ_b
+  -- if $(|iter_a*| <= |iter_b*|)
+  -- if iter_a* = iter_b*[0 : |iter_a*|]
+def $sub_dim(vari_a, vari_b) = false
+  -- otherwise
+
+;;; Variable expressions
+
+;; `$exp_of_vari(x nat (STAR QUEST))` is `(x*{x <- x*})?{x* <- x*?}`,
+;; each iteration listing the variable at the dimension inside it
+
+dec $iter_exp(exp, vari, iter*) : exp
+  hint(prose_in %0 "of variable" %1 "iterated by" %2)
+def $iter_exp(exp, vari, eps) = exp
+def $iter_exp(exp, vari, iter_h :: iter_t*) = $iter_exp(exp_iter, vari_iter, iter_t*)
+  -- if _ '#' typ = exp
+  -- if exp_iter = (ITER exp (iter_h vari)) '#' (ITER typ iter_h)
+  -- if vari_iter = $iter_vari(vari, iter_h)
+
+dec $exp_of_vari(vari) : exp
+  hint(prose_in "the expression of variable" %0)
+def $exp_of_vari(id typ iter*) = $iter_exp((VAR id) '#' typ, id typ eps, iter*)
+
+;;; Fresh variables
+
+dec $typ_name(typ) : id
+  hint(prose_in "a name for values of type" %0)
+def $typ_name(BOOL) = "bool"
+def $typ_name(NAT) = "nat"
+def $typ_name(INT) = "int"
+def $typ_name(TEXT) = "text"
+def $typ_name(VAR id _) = id
+def $typ_name(ITER typ _) = $typ_name(typ)
+def $typ_name(TUP _) = "tuple"
+def $typ_name(FUNC _ _ _) = "func"
+
+dec $fresh_name(algoCtx, id) : (algoCtx, id)
+  hint(prose_in "an identifier based on" %1 "unused in" %0 "and the context using it")
+def $fresh_name(AC, id_base) = (AC', id_fresh)
+  -- if id_fresh = $fresh(id_base, AC.IDS)
+  -- if AC' = $add_used_ids(AC, id_fresh)
+
+dec $fresh_vari(algoCtx, typ) : (algoCtx, vari)
+  hint(prose_in "a fresh variable of type" %1 "and the context using it, under" %0)
+def $fresh_vari(AC, typ) = (AC', id_fresh typ_elem iter*)
+  -- if (typ_elem, iter*) = $typ_dim(typ)
+  -- if id_base = $typ_name(typ_elem)
+  -- if (AC', id_fresh) = $fresh_name(AC, id_base)
+
+;; Free variables
+
+;; Every occurrence of a variable, at its dimension relative to the expression
+
+dec $free_vars_exp(exp) : vari*
+  hint(prose_in "the variables occurring in" %0)
+dec $free_vars_exps(exp*) : vari*
+  hint(prose_in "the variables occurring in" %0)
+dec $free_vars_path(path) : vari*
+  hint(prose_in "the variables occurring in" %0)
+dec $free_vars_arg(arg) : vari*
+  hint(prose_in "the variables occurring in" %0)
+dec $free_vars_args(arg*) : vari*
+  hint(prose_in "the variables occurring in" %0)
+
+def $free_vars_exp((BOOL _) '#' _) = eps
+def $free_vars_exp(num '#' _) = eps
+def $free_vars_exp((TEXT _) '#' _) = eps
+def $free_vars_exp((VAR id) '#' typ) = [ id typ eps ]
+def $free_vars_exp((UN _ exp) '#' _) = $free_vars_exp(exp)
+def $free_vars_exp((BIN _ exp_l exp_r) '#' _) = $free_vars_exps([ exp_l, exp_r ])
+def $free_vars_exp((CMP _ exp_l exp_r) '#' _) = $free_vars_exps([ exp_l, exp_r ])
+def $free_vars_exp((UPCAST _ exp) '#' _) = $free_vars_exp(exp)
+def $free_vars_exp((DOWNCAST _ exp) '#' _) = $free_vars_exp(exp)
+def $free_vars_exp((SUB exp _) '#' _) = $free_vars_exp(exp)
+def $free_vars_exp((MATCH exp _) '#' _) = $free_vars_exp(exp)
+def $free_vars_exp((TUP exp*) '#' _) = $free_vars_exps(exp*)
+def $free_vars_exp((INJ (_ exp*)) '#' _) = $free_vars_exps(exp*)
+def $free_vars_exp((STR expField*) '#' _) = $free_vars_exps(exp*)
+  -- (if _ exp = expField)*
+def $free_vars_exp((OPT eps) '#' _) = eps
+def $free_vars_exp((OPT exp) '#' _) = $free_vars_exp(exp)
+def $free_vars_exp((LIST exp*) '#' _) = $free_vars_exps(exp*)
+def $free_vars_exp((CONS exp_h exp_t) '#' _) = $free_vars_exps([ exp_h, exp_t ])
+def $free_vars_exp((CAT exp_l exp_r) '#' _) = $free_vars_exps([ exp_l, exp_r ])
+def $free_vars_exp((MEM exp_l exp_r) '#' _) = $free_vars_exps([ exp_l, exp_r ])
+def $free_vars_exp((LEN exp) '#' _) = $free_vars_exp(exp)
+def $free_vars_exp((DOT exp _) '#' _) = $free_vars_exp(exp)
+def $free_vars_exp((IDX exp_b exp_i) '#' _) = $free_vars_exps([ exp_b, exp_i ])
+def $free_vars_exp((SLICE exp_b exp_i exp_n) '#' _)
+  = $free_vars_exps([ exp_b, exp_i, exp_n ])
+def $free_vars_exp((UPD exp_b path exp_f) '#' _)
+  = $free_vars_exp(exp_b) ++ $free_vars_path(path) ++ $free_vars_exp(exp_f)
+def $free_vars_exp((CALL _ _ arg*) '#' _) = $free_vars_args(arg*)
+def $free_vars_exp((ITER exp (iter _)) '#' _) = vari_iter*
+  -- if vari* = $free_vars_exp(exp)
+  -- if (vari_iter = $iter_vari(vari, iter))*
+
+def $free_vars_exps(eps) = eps
+def $free_vars_exps(exp_h :: exp_t*) = $free_vars_exp(exp_h) ++ $free_vars_exps(exp_t*)
+
+def $free_vars_path(ROOT '#' _) = eps
+def $free_vars_path((IDX path exp_i) '#' _) = $free_vars_path(path) ++ $free_vars_exp(exp_i)
+def $free_vars_path((SLICE path exp_i exp_n) '#' _)
+  = $free_vars_path(path) ++ $free_vars_exps([ exp_i, exp_n ])
+def $free_vars_path((DOT path _) '#' _) = $free_vars_path(path)
+
+def $free_vars_arg(EXP exp) = $free_vars_exp(exp)
+def $free_vars_arg(FUN _) = eps
+
+def $free_vars_args(eps) = eps
+def $free_vars_args(arg_h :: arg_t*) = $free_vars_arg(arg_h) ++ $free_vars_args(arg_t*)
+
+;;; Shallowest occurrences
+
+;; Each variable once, at its shallowest dimension;
+;; `a :: (a + b)*` has `a` at no dimension and `b` at `*`
+
+dec $merge_shallower(vari*, vari) : vari*
+  hint(prose_in %0 "with" %1 "kept when it is shallower")
+def $merge_shallower(eps, vari) = [ vari ]
+def $merge_shallower(vari_h :: vari_t*, vari) = vari :: vari_t*
+  -- if id _ _ = vari_h
+  -- if id _ _ = vari
+  -- if $sub_dim(vari, vari_h)
+def $merge_shallower(vari_h :: vari_t*, vari) = vari_h :: vari_t*
+  -- if id _ _ = vari_h
+  -- if id _ _ = vari
+  -- if ~$sub_dim(vari, vari_h)
+def $merge_shallower(vari_h :: vari_t*, vari) = vari_h :: $merge_shallower(vari_t*, vari)
+  -- if id_h _ _ = vari_h
+  -- if id _ _ = vari
+  -- if id_h =/= id
+
+dec $shallowest_into(vari*, vari*) : vari*
+  hint(prose_in "the shallowest occurrences" %0 "merged with" %1)
+def $shallowest_into(vari_acc*, eps) = vari_acc*
+def $shallowest_into(vari_acc*, vari_h :: vari_t*) = $shallowest_into(vari_merge*, vari_t*)
+  -- if vari_merge* = $merge_shallower(vari_acc*, vari_h)
+
+dec $shallowest_vars(vari*) : vari*
+  hint(prose_in "the shallowest occurrence of each variable in" %0)
+def $shallowest_vars(vari*) = $shallowest_into(eps, vari*)
+
+;; Free identifiers
+
+dec $free_ids_exp(exp) : id*
+  hint(prose_in "the identifiers occurring in" %0)
+def $free_ids_exp(exp) = $ids_of_varis(vari*)
+  -- if vari* = $free_vars_exp(exp)
+
+dec $free_ids_exps(exp*) : id*
+  hint(prose_in "the identifiers occurring in" %0)
+def $free_ids_exps(exp*) = $ids_of_varis(vari*)
+  -- if vari* = $free_vars_exps(exp*)
+
+dec $free_ids_args(arg*) : id*
+  hint(prose_in "the identifiers occurring in" %0)
+def $free_ids_args(arg*) = $ids_of_varis(vari*)
+  -- if vari* = $free_vars_args(arg*)
+
+dec $free_ids_premIL(premIL) : id*
+  hint(prose_in "the identifiers occurring in" %0)
+dec $free_ids_premILs(premIL*) : id*
+  hint(prose_in "the identifiers occurring in" %0)
+
+def $free_ids_premIL(REL _ ':' exp* `( _ `)) = $free_ids_exps(exp*)
+def $free_ids_premIL(IF exp) = $free_ids_exp(exp)
+def $free_ids_premIL(IFHOLD _ ':' exp*) = $free_ids_exps(exp*)
+def $free_ids_premIL(IFNOTHOLD _ ':' exp*) = $free_ids_exps(exp*)
+def $free_ids_premIL(ITER premIL _) = $free_ids_premIL(premIL)
+def $free_ids_premIL(DEBUG exp) = $free_ids_exp(exp)
+
+def $free_ids_premILs(eps) = eps
+def $free_ids_premILs(premIL_h :: premIL_t*)
+  = $free_ids_premIL(premIL_h) ++ $free_ids_premILs(premIL_t*)
+
+dec $free_ids_rulIL(rulIL) : id*
+  hint(prose_in "the identifiers occurring in" %0)
+def $free_ids_rulIL(_ ':' exp* '-' premIL*)
+  = $free_ids_exps(exp*) ++ $free_ids_premILs(premIL*)
+
+dec $free_ids_clauseIL(clauseIL) : id*
+  hint(prose_in "the identifiers occurring in" %0)
+def $free_ids_clauseIL(arg* '=' exp '-' premIL*)
+  = $free_ids_args(arg*) ++ $free_ids_exp(exp) ++ $free_ids_premILs(premIL*)
+
+dec $free_ids_tblRowIL(tblRowIL) : id*
+  hint(prose_in "the identifiers occurring in" %0)
+def $free_ids_tblRowIL(arg* '=' exp) = $free_ids_args(arg*) ++ $free_ids_exp(exp)

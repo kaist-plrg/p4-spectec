@@ -1,0 +1,409 @@
+;; Binder collection
+
+;; Unbound variables in a pattern are its binders.
+;; Binders may appear only through invertible constructs;
+;; a binder under any other construct has no derivation,
+;; so `-- if (x, y + 1) = e` with `y` unbound is not lowered.
+
+rulegroup Collect_exp/literal {
+
+  rule Collect_exp/boolean:
+    AC |- (BOOL _) '#' _ : eps
+
+  rule Collect_exp/number:
+    AC |- num '#' _ : eps
+
+  rule Collect_exp/text:
+    AC |- (TEXT _) '#' _ : eps
+
+}
+
+rulegroup Collect_exp/variable {
+
+  rule Collect_exp/bound:
+    AC |- (VAR id) '#' _ : eps
+    -- if id <- AC.BOUND
+
+  rule Collect_exp/binder:
+    AC |- (VAR id) '#' typ : [ id typ eps ]
+    -- if ~(id <- AC.BOUND)
+
+}
+
+;;; Invertible constructs
+
+rule Collect_exp/upcast:
+  AC |- (UPCAST _ exp) '#' _ : vari*
+  -- Collect_exp: AC |- exp : vari*
+
+rule Collect_exp/tuple:
+  AC |- (TUP exp*) '#' _ : vari*
+  -- Collect_exps: AC |- exp* : vari*
+
+rule Collect_exp/case:
+  AC |- (INJ (_ exp*)) '#' _ : vari*
+  -- Collect_exps: AC |- exp* : vari*
+
+rule Collect_exp/struct:
+  AC |- (STR expField*) '#' _ : vari*
+  -- (if _ exp = expField)*
+  -- Collect_exps: AC |- exp* : vari*
+
+rulegroup Collect_exp/opt {
+
+  rule Collect_exp/none:
+    AC |- (OPT eps) '#' _ : eps
+
+  rule Collect_exp/some:
+    AC |- (OPT exp) '#' _ : vari*
+    -- Collect_exp: AC |- exp : vari*
+
+}
+
+rule Collect_exp/list:
+  AC |- (LIST exp*) '#' _ : vari*
+  -- Collect_exps: AC |- exp* : vari*
+
+rule Collect_exp/cons:
+  AC |- (CONS exp_h exp_t) '#' _ : vari*
+  -- Collect_exps: AC |- [ exp_h, exp_t ] : vari*
+
+rule Collect_exp/iter:
+  AC |- (ITER exp (iter _)) '#' _ : vari_iter*
+  -- Collect_exp: AC |- exp : vari*
+  -- if (vari_iter = $iter_vari(vari, iter))*
+
+;;; Non-invertible constructs bind nothing
+
+rule Collect_exp/unary:
+  AC |- (UN _ exp) '#' _ : eps
+  -- Collect_exp: AC |- exp : eps
+
+rule Collect_exp/binary:
+  AC |- (BIN _ exp_l exp_r) '#' _ : eps
+  -- Collect_exps: AC |- [ exp_l, exp_r ] : eps
+
+rule Collect_exp/compare:
+  AC |- (CMP _ exp_l exp_r) '#' _ : eps
+  -- Collect_exps: AC |- [ exp_l, exp_r ] : eps
+
+rule Collect_exp/downcast:
+  AC |- (DOWNCAST _ exp) '#' _ : eps
+  -- Collect_exp: AC |- exp : eps
+
+rule Collect_exp/subtype:
+  AC |- (SUB exp _) '#' _ : eps
+  -- Collect_exp: AC |- exp : eps
+
+rule Collect_exp/match:
+  AC |- (MATCH exp _) '#' _ : eps
+  -- Collect_exp: AC |- exp : eps
+
+rule Collect_exp/concat:
+  AC |- (CAT exp_l exp_r) '#' _ : eps
+  -- Collect_exps: AC |- [ exp_l, exp_r ] : eps
+
+rule Collect_exp/mem:
+  AC |- (MEM exp_l exp_r) '#' _ : eps
+  -- Collect_exps: AC |- [ exp_l, exp_r ] : eps
+
+rule Collect_exp/len:
+  AC |- (LEN exp) '#' _ : eps
+  -- Collect_exp: AC |- exp : eps
+
+rule Collect_exp/dot:
+  AC |- (DOT exp _) '#' _ : eps
+  -- Collect_exp: AC |- exp : eps
+
+rule Collect_exp/idx:
+  AC |- (IDX exp_b exp_i) '#' _ : eps
+  -- Collect_exps: AC |- [ exp_b, exp_i ] : eps
+
+rule Collect_exp/slice:
+  AC |- (SLICE exp_b exp_i exp_n) '#' _ : eps
+  -- Collect_exps: AC |- [ exp_b, exp_i, exp_n ] : eps
+
+rule Collect_exp/upd:
+  AC |- (UPD exp_b path exp_f) '#' _ : eps
+  -- Collect_exps: AC |- [ exp_b, exp_f ] : eps
+  -- Collect_path: AC |- path : eps
+
+rule Collect_exp/call:
+  AC |- (CALL _ _ arg*) '#' _ : eps
+  -- Collect_args: AC |- arg* : eps
+
+;;; Sequences, paths, and arguments
+
+rulegroup Collect_exps {
+
+  rule Collect_exps/nil:
+    AC |- eps : eps
+
+  rule Collect_exps/cons:
+    AC |- exp_h :: exp_t* : vari_h* ++ vari_t*
+    -- Collect_exp: AC |- exp_h : vari_h*
+    -- Collect_exps: AC |- exp_t* : vari_t*
+
+}
+
+rulegroup Collect_path {
+
+  rule Collect_path/root:
+    AC |- ROOT '#' _ : eps
+
+  rule Collect_path/idx:
+    AC |- (IDX path exp_i) '#' _ : vari_p* ++ vari_i*
+    -- Collect_path: AC |- path : vari_p*
+    -- Collect_exp: AC |- exp_i : vari_i*
+
+  rule Collect_path/slice:
+    AC |- (SLICE path exp_i exp_n) '#' _ : vari_p* ++ vari_e*
+    -- Collect_path: AC |- path : vari_p*
+    -- Collect_exps: AC |- [ exp_i, exp_n ] : vari_e*
+
+  rule Collect_path/dot:
+    AC |- (DOT path _) '#' _ : vari*
+    -- Collect_path: AC |- path : vari*
+
+}
+
+rulegroup Collect_arg {
+
+  rule Collect_arg/exp:
+    AC |- EXP exp : vari*
+    -- Collect_exp: AC |- exp : vari*
+
+  rule Collect_arg/fun:
+    AC |- FUN _ : eps
+
+}
+
+rulegroup Collect_args {
+
+  rule Collect_args/nil:
+    AC |- eps : eps
+
+  rule Collect_args/cons:
+    AC |- arg_h :: arg_t* : vari_h* ++ vari_t*
+    -- Collect_arg: AC |- arg_h : vari_h*
+    -- Collect_args: AC |- arg_t* : vari_t*
+
+}
+
+;; Renamer construction
+
+;; Every occurrence of a repeated binder has the same type and dimension
+
+dec $varis_with_id(id, vari*) : vari*
+  hint(prose_in "the variables in" %1 "named" %0)
+def $varis_with_id(id, eps) = eps
+def $varis_with_id(id, vari_h :: vari_t*) = vari_h :: $varis_with_id(id, vari_t*)
+  -- if id _ _ = vari_h
+def $varis_with_id(id, vari_h :: vari_t*) = $varis_with_id(id, vari_t*)
+  -- if id_h _ _ = vari_h
+  -- if id_h =/= id
+
+dec $varis_without_id(id, vari*) : vari*
+  hint(prose_in "the variables in" %1 "not named" %0)
+def $varis_without_id(id, eps) = eps
+def $varis_without_id(id, vari_h :: vari_t*) = $varis_without_id(id, vari_t*)
+  -- if id _ _ = vari_h
+def $varis_without_id(id, vari_h :: vari_t*) = vari_h :: $varis_without_id(id, vari_t*)
+  -- if id_h _ _ = vari_h
+  -- if id_h =/= id
+
+rulegroup Multibind_renamer {
+
+  rule Multibind_renamer/nil:
+    |- eps : eps
+
+  rule Multibind_renamer/single:
+    |- vari_h :: vari_t* : R
+    -- if id_h _ _ = vari_h
+    -- if eps = $varis_with_id(id_h, vari_t*)
+    -- Multibind_renamer: |- vari_t* : R
+
+  rule Multibind_renamer/repeated:
+    |- vari_h :: vari_t* : (vari_h '->' eps) :: R
+    -- if id_h _ _ = vari_h
+    -- if vari_same* = $varis_with_id(id_h, vari_t*)
+    -- if vari_same* =/= eps
+    -- if (vari_same = vari_h)*
+    -- if vari_rest* = $varis_without_id(id_h, vari_t*)
+    -- Multibind_renamer: |- vari_rest* : R
+
+}
+
+;; Renamer lookup
+
+dec $renamer_ids(renamer) : id*
+  hint(prose_in "the repeated binders of" %0)
+def $renamer_ids(((id _ _) '->' _)*) = id*
+
+dec $renaming_ids(renamer, id) : id*
+  hint(prose_in "the identifiers given so far to the occurrences of" %1 "in" %0)
+def $renaming_ids(eps, id) = eps
+def $renaming_ids((vari '->' id_name*) :: R, id) = id_name*
+  -- if id _ _ = vari
+def $renaming_ids((vari '->' _) :: R, id) = $renaming_ids(R, id)
+  -- if id_rep _ _ = vari
+  -- if id_rep =/= id
+
+dec $add_renaming(renamer, id, id) : renamer
+  hint(prose_in %0 "with" %2 "given to the next occurrence of" %1)
+def $add_renaming((vari '->' id_name*) :: R, id, id_next) = (vari '->' (id_name* ++ [ id_next ])) :: R
+  -- if id _ _ = vari
+def $add_renaming((vari '->' id_name*) :: R, id, id_next) = (vari '->' id_name*) :: R'
+  -- if id_rep _ _ = vari
+  -- if id_rep =/= id
+  -- if R' = $add_renaming(R, id, id_next)
+
+;; Renaming repeated binders
+
+;; The first occurrence keeps its identifier; later ones take fresh identifiers:
+;; `(x, x, (y, y)*)` becomes `(x, x', (y, y')*)`
+
+rulegroup Multibind_exp {
+
+  rule Multibind_exp/unrenamed:
+    AC R |- exp : AC R exp
+    -- if id* = $free_ids_exp(exp)
+    -- if id_rep* = $renamer_ids(R)
+    -- if ~$exists_((id <- id_rep*)*)
+
+  rule Multibind_exp/renamed:
+    AC R |- exp : AC' R' exp'
+    -- if id* = $free_ids_exp(exp)
+    -- if id_rep* = $renamer_ids(R)
+    -- if $exists_((id <- id_rep*)*)
+    -- Multibind_pattern: AC R |- exp : AC' R' exp'
+
+}
+
+rulegroup Multibind_pattern/variable {
+
+  rule Multibind_pattern/first:
+    AC R |- (VAR id) '#' typ : AC R' ((VAR id) '#' typ)
+    -- if eps = $renaming_ids(R, id)
+    -- if R' = $add_renaming(R, id, id)
+
+  rule Multibind_pattern/later:
+    AC R |- (VAR id) '#' typ : AC' R' ((VAR id_fresh) '#' typ)
+    -- if id_name* = $renaming_ids(R, id)
+    -- if id_name* =/= eps
+    -- if (AC', id_fresh) = $fresh_name(AC, id)
+    -- if R' = $add_renaming(R, id, id_fresh)
+
+}
+
+rule Multibind_pattern/upcast:
+  AC R |- (UPCAST typ_sup exp) '#' typ : AC' R' ((UPCAST typ_sup exp') '#' typ)
+  -- Multibind_exp: AC R |- exp : AC' R' exp'
+
+rule Multibind_pattern/tuple:
+  AC R |- (TUP exp*) '#' typ : AC' R' ((TUP exp'*) '#' typ)
+  -- Multibind_exps: AC R |- exp* : AC' R' exp'*
+
+rule Multibind_pattern/case:
+  AC R |- (INJ (mixop exp*)) '#' typ : AC' R' ((INJ (mixop exp'*)) '#' typ)
+  -- Multibind_exps: AC R |- exp* : AC' R' exp'*
+
+rule Multibind_pattern/struct:
+  AC R |- (STR expField*) '#' typ : AC' R' ((STR expField'*) '#' typ)
+  -- (if atom exp = expField)*
+  -- Multibind_exps: AC R |- exp* : AC' R' exp'*
+  -- (if expField' = atom exp')*
+
+rule Multibind_pattern/opt:
+  AC R |- (OPT exp) '#' typ : AC' R' ((OPT exp') '#' typ)
+  -- Multibind_exp: AC R |- exp : AC' R' exp'
+
+rule Multibind_pattern/list:
+  AC R |- (LIST exp*) '#' typ : AC' R' ((LIST exp'*) '#' typ)
+  -- Multibind_exps: AC R |- exp* : AC' R' exp'*
+
+rule Multibind_pattern/cons:
+  AC R |- (CONS exp_h exp_t) '#' typ : AC'' R'' ((CONS exp_h' exp_t') '#' typ)
+  -- Multibind_exp: AC R |- exp_h : AC' R' exp_h'
+  -- Multibind_exp: AC' R' |- exp_t : AC'' R'' exp_t'
+
+;; An iteration lists the renamed occurrences it now contains
+
+dec $ids_within(id*, id*) : id*
+  hint(prose_in "the identifiers in" %0 "that are also in" %1)
+def $ids_within(eps, id_in*) = eps
+def $ids_within(id_h :: id_t*, id_in*) = id_h :: $ids_within(id_t*, id_in*)
+  -- if id_h <- id_in*
+def $ids_within(id_h :: id_t*, id_in*) = $ids_within(id_t*, id_in*)
+  -- if ~(id_h <- id_in*)
+
+dec $rename_iter_vari(renamer, vari, id*) : vari*
+  hint(prose_in "the variables replacing iteration variable" %1
+                "by its renamed occurrences among" %2 "under" %0)
+def $rename_iter_vari(R, id typ iter*, id_free*) = [ id typ iter* ]
+  -- if eps = $renaming_ids(R, id)
+def $rename_iter_vari(R, id typ iter*, id_free*) = (id_occ typ iter*)*
+  -- if id_name* = $renaming_ids(R, id)
+  -- if id_name* =/= eps
+  -- if id_occ* = $ids_within(id_name*, id_free*)
+
+rule Multibind_pattern/iter:
+  AC R |- (ITER exp (iter vari*)) '#' typ : AC' R' ((ITER exp' (iter vari_occ*)) '#' typ)
+  -- Multibind_exp: AC R |- exp : AC' R' exp'
+  -- if id_free* = $free_ids_exp(exp')
+  -- if (vari_rename* = $rename_iter_vari(R', vari, id_free*))*
+  -- if vari_occ* = $concat_<vari>(vari_rename**)
+
+rulegroup Multibind_exps {
+
+  rule Multibind_exps/nil:
+    AC R |- eps : AC R eps
+
+  rule Multibind_exps/cons:
+    AC R |- exp_h :: exp_t* : AC'' R'' (exp_h' :: exp_t'*)
+    -- Multibind_exp: AC R |- exp_h : AC' R' exp_h'
+    -- Multibind_exps: AC' R' |- exp_t* : AC'' R'' exp_t'*
+
+}
+
+rulegroup Multibind_args {
+
+  rule Multibind_args/nil:
+    AC R |- eps : AC R eps
+
+  rule Multibind_args/exp:
+    AC R |- (EXP exp_h) :: arg_t* : AC'' R'' ((EXP exp_h') :: arg_t'*)
+    -- Multibind_exp: AC R |- exp_h : AC' R' exp_h'
+    -- Multibind_args: AC' R' |- arg_t* : AC'' R'' arg_t'*
+
+  rule Multibind_args/fun:
+    AC R |- (FUN id) :: arg_t* : AC' R' ((FUN id) :: arg_t'*)
+    -- Multibind_args: AC R |- arg_t* : AC' R' arg_t'*
+
+}
+
+;; Equalities of repeated binders
+
+;; Each later occurrence must equal the first, under the binder's own
+;; dimension and the iterations of the premise:
+;; `(x, x)*` binding `x*` and `x'*` requires `(x = x')*{x <- x*, x' <- x'*}`
+
+rulegroup Multibind_eqs {
+
+  rule Multibind_eqs/nil:
+    IC |- eps : eps
+
+  rule Multibind_eqs/cons:
+    IC |- (vari '->' id_name*) :: R : prem_eq* ++ prem_t*
+    -- if _ typ iter* = vari
+    -- if id_first :: id_later* = id_name*
+    -- Iter_clear: |- IC : IC_clear
+    -- if IC_dim = (iter '<-' eps '->' eps)* ++ IC_clear
+    -- if exp_first = (VAR id_first) '#' typ
+    -- (if exp_later = (VAR id_later) '#' typ)*
+    -- (if prem_cmp = IF ((CMP EQ exp_first exp_later) '#' BOOL))*
+    -- (Iter_source: IC_dim |- [ id_first typ eps, id_later typ eps ] : IC_eq)*
+    -- (Iter_prem: IC_eq |- prem_cmp : prem_eq)*
+    -- Multibind_eqs: IC |- R : prem_t*
+
+}

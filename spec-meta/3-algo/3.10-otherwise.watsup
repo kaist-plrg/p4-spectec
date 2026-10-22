@@ -1,0 +1,233 @@
+;; Otherwise purity
+
+;; An otherwise rule or clause runs only after every other alternative is
+;; unmatched, so it must not fail itself. Its inputs, results, and premises
+;; in the final AL, including generated guards, may not call functions,
+;; test refutable conditions, or invoke relations. Binding a pure value,
+;; debugging, and matching a constructor that is the only one of its type
+;; are allowed, also under iteration.
+
+;;; Expressions
+
+rulegroup Pure_exp/literal {
+
+  rule Pure_exp/boolean:
+    |- (BOOL _) '#' _
+
+  rule Pure_exp/number:
+    |- num '#' _
+
+  rule Pure_exp/text:
+    |- (TEXT _) '#' _
+
+}
+
+rule Pure_exp/variable:
+  |- (VAR _) '#' _
+
+rule Pure_exp/unary:
+  |- (UN _ exp) '#' _
+  -- Pure_exp: |- exp
+
+rule Pure_exp/binary:
+  |- (BIN _ exp_l exp_r) '#' _
+  -- Pure_exp: |- exp_l
+  -- Pure_exp: |- exp_r
+
+rule Pure_exp/compare:
+  |- (CMP _ exp_l exp_r) '#' _
+  -- Pure_exp: |- exp_l
+  -- Pure_exp: |- exp_r
+
+rule Pure_exp/upcast:
+  |- (UPCAST _ exp) '#' _
+  -- Pure_exp: |- exp
+
+rule Pure_exp/downcast:
+  |- (DOWNCAST _ exp) '#' _
+  -- Pure_exp: |- exp
+
+rule Pure_exp/subtype:
+  |- (SUB exp _) '#' _
+  -- Pure_exp: |- exp
+
+rule Pure_exp/match:
+  |- (MATCH exp _) '#' _
+  -- Pure_exp: |- exp
+
+rule Pure_exp/tuple:
+  |- (TUP exp*) '#' _
+  -- (Pure_exp: |- exp)*
+
+rule Pure_exp/case:
+  |- (INJ (_ exp*)) '#' _
+  -- (Pure_exp: |- exp)*
+
+rule Pure_exp/struct:
+  |- (STR expField*) '#' _
+  -- (if _ exp = expField)*
+  -- (Pure_exp: |- exp)*
+
+rule Pure_exp/opt:
+  |- (OPT exp?) '#' _
+  -- (Pure_exp: |- exp)?
+
+rule Pure_exp/list:
+  |- (LIST exp*) '#' _
+  -- (Pure_exp: |- exp)*
+
+rule Pure_exp/cons:
+  |- (CONS exp_h exp_t) '#' _
+  -- Pure_exp: |- exp_h
+  -- Pure_exp: |- exp_t
+
+rule Pure_exp/concat:
+  |- (CAT exp_l exp_r) '#' _
+  -- Pure_exp: |- exp_l
+  -- Pure_exp: |- exp_r
+
+rule Pure_exp/mem:
+  |- (MEM exp_l exp_r) '#' _
+  -- Pure_exp: |- exp_l
+  -- Pure_exp: |- exp_r
+
+rule Pure_exp/len:
+  |- (LEN exp) '#' _
+  -- Pure_exp: |- exp
+
+rule Pure_exp/dot:
+  |- (DOT exp _) '#' _
+  -- Pure_exp: |- exp
+
+rule Pure_exp/idx:
+  |- (IDX exp_b exp_i) '#' _
+  -- Pure_exp: |- exp_b
+  -- Pure_exp: |- exp_i
+
+rule Pure_exp/slice:
+  |- (SLICE exp_b exp_i exp_n) '#' _
+  -- Pure_exp: |- exp_b
+  -- Pure_exp: |- exp_i
+  -- Pure_exp: |- exp_n
+
+rule Pure_exp/upd:
+  |- (UPD exp_b path exp_f) '#' _
+  -- Pure_exp: |- exp_b
+  -- Pure_path: |- path
+  -- Pure_exp: |- exp_f
+
+rule Pure_exp/iter:
+  |- (ITER exp _) '#' _
+  -- Pure_exp: |- exp
+
+;;; Update paths
+
+rulegroup Pure_path {
+
+  rule Pure_path/root:
+    |- ROOT '#' _
+
+  rule Pure_path/idx:
+    |- (IDX path exp_i) '#' _
+    -- Pure_path: |- path
+    -- Pure_exp: |- exp_i
+
+  rule Pure_path/slice:
+    |- (SLICE path exp_i exp_n) '#' _
+    -- Pure_path: |- path
+    -- Pure_exp: |- exp_i
+    -- Pure_exp: |- exp_n
+
+  rule Pure_path/dot:
+    |- (DOT path _) '#' _
+    -- Pure_path: |- path
+
+}
+
+;;; Arguments
+
+rulegroup Pure_arg {
+
+  rule Pure_arg/exp:
+    |- EXP exp
+    -- Pure_exp: |- exp
+
+  rule Pure_arg/fun:
+    |- FUN _
+
+}
+
+;; Premises
+
+rule Pure_prem/let:
+  AC |- LET exp_l '=' exp_r
+  -- Pure_exp: |- exp_l
+  -- Pure_exp: |- exp_r
+
+rule Pure_prem/dbg:
+  AC |- DEBUG exp
+  -- Pure_exp: |- exp
+
+rule Pure_prem/iter:
+  AC |- ITER prem _
+  -- Pure_prem: AC |- prem
+
+rule Pure_prem/singleton:
+  AC |- IF ((MATCH exp (INJ _)) '#' _)
+  -- Pure_exp: |- exp
+  -- if _ '#' typ = exp
+  -- if $singleton_typ(AC.TYP, typ)
+
+;; Definitions
+
+;; Definitions without an otherwise rule or clause are trivially accepted
+
+rulegroup Pure_otherwise/typ {
+
+  rule Pure_otherwise/extern:
+    AC |- externTypDefn
+
+  rule Pure_otherwise/defined:
+    AC |- definedTypDefn
+
+}
+
+rulegroup Pure_otherwise/rel {
+
+  rule Pure_otherwise/extern:
+    AC |- externRelDefn
+
+  rule Pure_otherwise/none:
+    AC |- REL _ ':' _ '->' _ '=' _ eps
+
+  rule Pure_otherwise/else:
+    AC |- REL _ ':' _ '->' _ '=' _ (_ ':' ((exp_in* '-' prem_match*) '->' (_ '=' exp_out* '-' prem_path*)))
+    -- (Pure_exp: |- exp_in)*
+    -- (Pure_prem: AC |- prem_match)*
+    -- (Pure_prem: AC |- prem_path)*
+    -- (Pure_exp: |- exp_out)*
+
+}
+
+rulegroup Pure_otherwise/func {
+
+  rule Pure_otherwise/extern:
+    AC |- externFuncDefn
+
+  rule Pure_otherwise/builtin:
+    AC |- builtinFuncDefn
+
+  rule Pure_otherwise/table:
+    AC |- tableFuncDefn
+
+  rule Pure_otherwise/none:
+    AC |- FUNC _ _ _ ':' _ '=' _ eps
+
+  rule Pure_otherwise/else:
+    AC |- FUNC _ tparam* _ ':' _ '=' _ (arg* '=' exp '-' prem*)
+    -- if AC_func = $add_tparams(AC, tparam*)
+    -- (Pure_arg: |- arg)*
+    -- (Pure_prem: AC_func |- prem)*
+    -- Pure_exp: |- exp
+
+}

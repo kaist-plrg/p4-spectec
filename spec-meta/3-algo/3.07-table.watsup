@@ -1,0 +1,191 @@
+;; Constructor types
+
+;; A variant with exactly one case, after expanding aliases
+
+dec $singleton_typ(tdenv, typ) : bool
+  hint(prose_true "type" %1 "has a single constructor under" %0)
+  hint(prose_false "type" %1 "does not have a single constructor under" %0)
+def $singleton_typ(tdenv, typ) = true
+  -- if OK (VAR id targ*) = $expand_typ(tdenv, typ)
+  -- if TYP _ tparam* '=' (VARIANT typCase*) = $find_map<id, typDef>(tdenv, id)
+  -- if |typCase*| = 1
+  -- if |tparam*| = |targ*|
+def $singleton_typ(tdenv, typ) = false
+  -- otherwise
+
+;; Shallow table patterns
+
+;; A row argument selects a variable or a case, possibly under an upcast;
+;; a selected case must cover every value its arguments carry
+
+rulegroup Shallow_exp {
+
+  rule Shallow_exp/variable:
+    AC |- (VAR _) '#' _
+
+  rule Shallow_exp/upcast-variable:
+    AC |- (UPCAST _ ((VAR id) '#' typ)) '#' _
+    -- Shallow_exp: AC |- (VAR id) '#' typ
+
+  rule Shallow_exp/upcast-case:
+    AC |- (UPCAST _ ((INJ expCase) '#' typ)) '#' _
+    -- Shallow_exp: AC |- (INJ expCase) '#' typ
+
+  rule Shallow_exp/case:
+    AC |- (INJ (_ exp*)) '#' _
+    -- (Irrefutable_exp: AC |- exp)*
+
+}
+
+rulegroup Irrefutable_exp {
+
+  rule Irrefutable_exp/variable:
+    AC |- (VAR _) '#' _
+
+  rule Irrefutable_exp/iter:
+    AC |- (ITER exp _) '#' _
+    -- Irrefutable_exp: AC |- exp
+
+  rule Irrefutable_exp/tuple:
+    AC |- (TUP exp*) '#' _
+    -- (Irrefutable_exp: AC |- exp)*
+
+  rule Irrefutable_exp/struct:
+    AC |- (STR expField*) '#' _
+    -- (if _ exp = expField)*
+    -- (Irrefutable_exp: AC |- exp)*
+
+  rule Irrefutable_exp/case:
+    AC |- (INJ (_ exp*)) '#' typ
+    -- if $singleton_typ(AC.TYP, typ)
+    -- (Irrefutable_exp: AC |- exp)*
+
+}
+
+;; Table rows
+
+;; Row arguments are shallow and bind each variable once;
+;; their decomposition premises precede the row's result
+
+rule Algo_tblRow:
+  AC |- tblRowIL : arg'* '=' exp '-' prem*
+  -- if arg* '=' exp = tblRowIL
+  -- if id_used* = $free_ids_tblRowIL(tblRowIL)
+  -- if AC_row = $add_used_ids(AC, id_used*)
+  -- if (EXP exp_arg)* = arg*
+  -- (Shallow_exp: AC_row |- exp_arg)*
+  -- Collect_args: AC_row |- arg* : vari_bind*
+  -- Multibind_renamer: |- vari_bind* : eps
+  -- Bind_args: AC_row |- arg* : AC_body arg'* prem*
+  -- if id_body* = $free_ids_exp(exp)
+  -- if $bound_ids(AC_body, id_body*)
+
+;; Table coverage
+
+;; A row argument covers a set of cases of its variant type.
+;; No input may be covered by two rows, and unless the last row consists of
+;; wildcard variables, every combination of cases must be covered by a row.
+
+dec $variant_cases(tdenv, typ) : typCase*
+  hint(prose_in "the cases of variant type" %1 "under" %0)
+def $variant_cases(tdenv, VAR id _) = typCase*
+  -- if TYP _ _ '=' (VARIANT typCase*) = $find_map<id, typDef>(tdenv, id)
+
+dec $covered_cases(tdenv, exp) : typCase*
+  hint(prose_in "the cases covered by row argument" %1 "under" %0)
+def $covered_cases(tdenv, (VAR _) '#' typ) = $variant_cases(tdenv, typ)
+def $covered_cases(tdenv, (UPCAST _ exp) '#' _) = $covered_cases(tdenv, exp)
+def $covered_cases(tdenv, (INJ (mixop exp*)) '#' _) = [ mixop typ* ]
+  -- (if _ '#' typ = exp)*
+
+dec $wildcard(exp) : bool
+  hint(prose_true %0 "is a wildcard variable")
+  hint(prose_false %0 "is not a wildcard variable")
+def $wildcard((VAR id) '#' _) = true
+  -- if $(|id| > 0)
+  -- if id[0 : 1] = "_"
+def $wildcard(exp) = false
+  -- otherwise
+
+dec $shares_case(typCase*, typCase*) : bool
+  hint(prose_true %0 "and" %1 "share a case")
+  hint(prose_false %0 "and" %1 "share no case")
+def $shares_case(typCase_a*, typCase_b*) = $exists_((typCase_a <- typCase_b*)*)
+
+dec $overlap(typCase**, typCase**) : bool
+  hint(prose_true "rows covering" %0 "and" %1 "accept a common input")
+  hint(prose_false "rows covering" %0 "and" %1 "accept no common input")
+def $overlap(typCase_a**, typCase_b**) = $forall_(b_share*)
+  -- (if b_share = $shares_case(typCase_a*, typCase_b*))*
+
+dec $overlap_any(typCase**, typCase***) : bool
+  hint(prose_true "the row covering" %0 "accepts an input of some row in" %1)
+  hint(prose_false "the row covering" %0 "accepts no input of the rows in" %1)
+def $overlap_any(typCase_a**, eps) = false
+def $overlap_any(typCase_a**, typCase_h** :: typCase_t***) = b_h \/ b_t
+  -- if b_h = $overlap(typCase_a**, typCase_h**)
+  -- if b_t = $overlap_any(typCase_a**, typCase_t***)
+
+dec $exclusive(typCase***) : bool
+  hint(prose_true "the rows covering" %0 "accept disjoint inputs")
+  hint(prose_false "two rows covering" %0 "accept a common input")
+def $exclusive(eps) = true
+def $exclusive(typCase_h** :: typCase_t***) = ~b_h /\ b_t
+  -- if b_h = $overlap_any(typCase_h**, typCase_t***)
+  -- if b_t = $exclusive(typCase_t***)
+
+dec $prepend_each(typCase, typCase**) : typCase**
+  hint(prose_in "the choices" %1 "each preceded by" %0)
+def $prepend_each(typCase, typCase_rest**) = (typCase :: typCase_rest*)*
+
+dec $combinations(typCase**) : typCase**
+  hint(prose_in "every choice of one case from each of" %0)
+def $combinations(eps) = [ eps ]
+def $combinations(typCase_h* :: typCase_t**) = $concat_<typCase*>(typCase_comb***)
+  -- if typCase_rest** = $combinations(typCase_t**)
+  -- (if typCase_comb** = $prepend_each(typCase_h, typCase_rest**))*
+
+dec $covers(typCase**, typCase*) : bool
+  hint(prose_true "the row covering" %0 "accepts the cases" %1)
+  hint(prose_false "the row covering" %0 "does not accept the cases" %1)
+def $covers(typCase_row**, typCase*) = $forall_((typCase <- typCase_row*)*)
+
+dec $covered_by_any(typCase***, typCase*) : bool
+  hint(prose_true "some row covering" %0 "accepts the cases" %1)
+  hint(prose_false "no row covering" %0 "accepts the cases" %1)
+def $covered_by_any(typCase_row***, typCase*) = $exists_(b_cover*)
+  -- (if b_cover = $covers(typCase_row**, typCase*))*
+
+dec $complete(typCase**, typCase***) : bool
+  hint(prose_true "the rows covering" %1 "accept every combination of" %0)
+  hint(prose_false "the rows covering" %1 "miss some combination of" %0)
+def $complete(typCase_total**, typCase_row***) = $forall_(b_cover*)
+  -- if typCase_comb** = $combinations(typCase_total**)
+  -- (if b_cover = $covered_by_any(typCase_row***, typCase_comb*))*
+
+rulegroup Cover_tblRows {
+
+  rule Cover_tblRows/closed:
+    AC |- typ* : tblRowIL*
+    -- (if typCase_total* = $variant_cases(AC.TYP, typ))*
+    -- if $(|tblRowIL*| > 0)
+    -- if n_init = $(|tblRowIL*| - 1)
+    -- if (EXP exp_last)* '=' _ = tblRowIL*[n_init]
+    -- if $forall_($wildcard(exp_last)*)
+    -- if ((EXP exp)* '=' _)* = tblRowIL*[0 : n_init]
+    -- (if (typCase_row* = $covered_cases(AC.TYP, exp))*)*
+    -- if $exclusive(typCase_row***)
+
+  rule Cover_tblRows/open:
+    AC |- typ* : tblRowIL*
+    -- (if typCase_total* = $variant_cases(AC.TYP, typ))*
+    -- if $(|tblRowIL*| > 0)
+    -- if n_init = $(|tblRowIL*| - 1)
+    -- if (EXP exp_last)* '=' _ = tblRowIL*[n_init]
+    -- if ~$forall_($wildcard(exp_last)*)
+    -- if ((EXP exp)* '=' _)* = tblRowIL*
+    -- (if (typCase_row* = $covered_cases(AC.TYP, exp))*)*
+    -- if $exclusive(typCase_row***)
+    -- if $complete(typCase_total**, typCase_row***)
+
+}

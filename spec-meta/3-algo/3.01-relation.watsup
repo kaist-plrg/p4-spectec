@@ -1,0 +1,340 @@
+;; Iteration contexts
+
+relation Iter_bound:
+  iterCtx |- vari* : iterCtx
+  hint(input %0 %1)
+  hint(prose_in "restricting the sources of" %0 "to the variables" %1 "it reads")
+  hint(prose_out %2)
+
+relation Iter_bind:
+  iterCtx |- vari* : iterCtx
+  hint(input %0 %1)
+  hint(prose_in "adding the binders" %1 "to" %0)
+  hint(prose_out %2)
+
+relation Iter_source:
+  iterCtx |- vari* : iterCtx
+  hint(input %0 %1)
+  hint(prose_in "adding the sources" %1 "to" %0)
+  hint(prose_out %2)
+
+relation Iter_replace:
+  iterCtx |- id* -> vari : iterCtx
+  hint(input %0 %1 %2)
+  hint(prose_in "replacing the sources" %1 "of" %0 "with the variable" %2)
+  hint(prose_out %3)
+
+relation Iter_clear:
+  |- iterCtx : iterCtx
+  hint(input %0)
+  hint(prose_in "the iterations of" %0 "without sources and binders")
+  hint(prose_out %1)
+
+relation Iter_sourced:
+  |- iterCtx
+  hint(input %0)
+  hint(prose_in "every iteration in" %0 "has a source")
+
+relation Iter_prem:
+  iterCtx |- premAL : premAL
+  hint(input %0 %1)
+  hint(prose_in "iterating premise" %1 "over" %0)
+  hint(prose_out %2)
+
+;; Binder collection
+
+relation Collect_exp:
+  algoCtx |- exp : vari*
+  hint(input %0 %1)
+  hint(prose_in "collecting the binders of" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Collect_exps:
+  algoCtx |- exp* : vari*
+  hint(input %0 %1)
+  hint(prose_in "collecting the binders of" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Collect_path:
+  algoCtx |- path : vari*
+  hint(input %0 %1)
+  hint(prose_in "collecting the binders of" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Collect_arg:
+  algoCtx |- arg : vari*
+  hint(input %0 %1)
+  hint(prose_in "collecting the binders of" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Collect_args:
+  algoCtx |- arg* : vari*
+  hint(input %0 %1)
+  hint(prose_in "collecting the binders of" %1 "under" %0)
+  hint(prose_out %2)
+
+;; Multibind
+
+relation Multibind_renamer:
+  |- vari* : renamer
+  hint(input %0)
+  hint(prose_in "the renamer for the repeated binders in" %0)
+  hint(prose_out %1)
+
+relation Multibind_exp:
+  algoCtx renamer |- exp : algoCtx renamer exp
+  hint(input %0 %1 %2)
+  hint(prose_in "renaming the repeated binders of" %2 "with" %1 "under" %0)
+  hint(prose_out %3 %4 %5)
+
+relation Multibind_pattern:
+  algoCtx renamer |- exp : algoCtx renamer exp
+  hint(input %0 %1 %2)
+  hint(prose_in "renaming the repeated binders inside pattern" %2 "with" %1 "under" %0)
+  hint(prose_out %3 %4 %5)
+
+relation Multibind_exps:
+  algoCtx renamer |- exp* : algoCtx renamer exp*
+  hint(input %0 %1 %2)
+  hint(prose_in "renaming the repeated binders of" %2 "with" %1 "under" %0)
+  hint(prose_out %3 %4 %5)
+
+relation Multibind_args:
+  algoCtx renamer |- arg* : algoCtx renamer arg*
+  hint(input %0 %1 %2)
+  hint(prose_in "renaming the repeated binders of" %2 "with" %1 "under" %0)
+  hint(prose_out %3 %4 %5)
+
+relation Multibind_eqs:
+  iterCtx |- renamer : premAL*
+  hint(input %0 %1)
+  hint(prose_in "the equalities of the renamed binders in" %1 "under" %0)
+  hint(prose_out %2)
+
+;; Partialbind
+
+relation Partialbind_exp:
+  algoCtx iterCtx |- iterCtx exp : algoCtx iterCtx exp premAL* id*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "decomposing pattern" %3 "inside iterations" %2
+                "of a premise iterated over" %1 "under" %0)
+  hint(prose_out %4 %5 %6 %7 %8)
+
+relation Partialbind_pattern:
+  algoCtx iterCtx |- iterCtx exp : algoCtx iterCtx exp premAL* id*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "decomposing binding pattern" %3 "inside iterations" %2
+                "of a premise iterated over" %1 "under" %0)
+  hint(prose_out %4 %5 %6 %7 %8)
+
+relation Partialbind_exps:
+  algoCtx iterCtx |- iterCtx exp* : algoCtx iterCtx exp* premAL* id*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "decomposing patterns" %3 "inside iterations" %2
+                "of a premise iterated over" %1 "under" %0)
+  hint(prose_out %4 %5 %6 %7 %8)
+
+relation Partialbind_args:
+  algoCtx |- arg* : algoCtx arg* premAL* id*
+  hint(input %0 %1)
+  hint(prose_in "decomposing argument patterns" %1 "under" %0)
+  hint(prose_out %2 %3 %4 %5)
+
+relation Partialbind_check:
+  iterCtx |- vari : exp : premAL
+  hint(input %0 %1 %2)
+  hint(prose_in "checking" %2 "on the fresh variable" %1 "over" %0)
+  hint(prose_out %3)
+
+relation Partialbind_destructure:
+  iterCtx |- vari : exp '=' exp : premAL
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "binding pattern" %2 "to" %3 "from the fresh variable" %1 "over" %0)
+  hint(prose_out %4)
+
+;; Binding
+
+relation Bind_exps:
+  algoCtx iterCtx |- exp* : algoCtx exp* premAL*
+  hint(input %0 %1 %2)
+  hint(prose_in "binding patterns" %2 "of a premise iterated over" %1 "under" %0)
+  hint(prose_out %3 %4 %5)
+
+relation Bind_args:
+  algoCtx |- arg* : algoCtx arg* premAL*
+  hint(input %0 %1)
+  hint(prose_in "binding argument patterns" %1 "under" %0)
+  hint(prose_out %2 %3 %4)
+
+;; Premises
+
+relation Algo_prem:
+  algoCtx iterCtx |- premIL : algoCtx premAL*
+  hint(input %0 %1 %2)
+  hint(prose_in "lowering premise" %2 "iterated over" %1 "under" %0)
+  hint(prose_out %3 %4)
+
+relation Algo_let:
+  algoCtx iterCtx |- exp '=' exp : algoCtx premAL*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "lowering the binding of" %2 "to" %3 "iterated over" %1 "under" %0)
+  hint(prose_out %4 %5)
+
+relation Algo_prems:
+  algoCtx |- premIL* : algoCtx premAL*
+  hint(input %0 %1)
+  hint(prose_in "lowering premises" %1 "in order under" %0)
+  hint(prose_out %2 %3)
+
+;; Tables
+
+relation Shallow_exp:
+  algoCtx |- exp
+  hint(input %0 %1)
+  hint(prose_in %1 "is a shallow table pattern under" %0)
+
+relation Irrefutable_exp:
+  algoCtx |- exp
+  hint(input %0 %1)
+  hint(prose_in %1 "matches every value of its type under" %0)
+
+relation Algo_tblRow:
+  algoCtx |- tblRowIL : tblRowAL
+  hint(input %0 %1)
+  hint(prose_in "lowering table row" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Cover_tblRows:
+  algoCtx |- typ* : tblRowIL*
+  hint(input %0 %1 %2)
+  hint(prose_in "the rows" %2 "are exclusive and complete for parameter types" %1
+                "under" %0)
+
+;; Definitions
+
+relation Algo_rul:
+  algoCtx inputHint |- rulIL : rul
+  hint(input %0 %1 %2)
+  hint(prose_in "lowering rule" %2 "with input positions" %1 "under" %0)
+  hint(prose_out %3)
+
+relation Algo_rulGroup:
+  algoCtx inputHint |- rulGroupIL : rulGroupAL
+  hint(input %0 %1 %2)
+  hint(prose_in "lowering rule group" %2 "with input positions" %1 "under" %0)
+  hint(prose_out %3)
+
+relation Algo_elsGroup:
+  algoCtx inputHint |- elsGroupIL : elsGroupAL
+  hint(input %0 %1 %2)
+  hint(prose_in "lowering otherwise group" %2 "with input positions" %1 "under" %0)
+  hint(prose_out %3)
+
+relation Algo_clause:
+  algoCtx |- clauseIL : clauseAL
+  hint(input %0 %1)
+  hint(prose_in "lowering clause" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Algo_def:
+  algoCtx |- defnIL : defnAL
+  hint(input %0 %1)
+  hint(prose_in "lowering definition" %1 "under" %0)
+  hint(prose_out %2)
+
+;; Guards
+
+relation Guard_exp:
+  algoCtx |- exp : premAL*
+  hint(input %0 %1)
+  hint(prose_in "the guards for evaluating" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Guard_exps:
+  algoCtx |- exp* : premAL*
+  hint(input %0 %1)
+  hint(prose_in "the guards for evaluating" %1 "in order under" %0)
+  hint(prose_out %2)
+
+relation Guard_path:
+  algoCtx |- exp path exp : premAL*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "the guards for updating path" %2 "of" %1 "with" %3 "under" %0)
+  hint(prose_out %4)
+
+relation Guard_args:
+  algoCtx |- arg* : premAL*
+  hint(input %0 %1)
+  hint(prose_in "the guards for evaluating arguments" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Guard_prem:
+  algoCtx |- premAL : premAL*
+  hint(input %0 %1)
+  hint(prose_in "the guards to check before premise" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Guard_prems:
+  algoCtx |- premAL* : premAL*
+  hint(input %0 %1)
+  hint(prose_in "premises" %1 "each preceded by its guards under" %0)
+  hint(prose_out %2)
+
+relation Guard_rul:
+  algoCtx |- rul : rul
+  hint(input %0 %1)
+  hint(prose_in "guarding rule" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Guard_clause:
+  algoCtx |- clauseAL : clauseAL
+  hint(input %0 %1)
+  hint(prose_in "guarding clause" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Guard_tblRow:
+  algoCtx |- tblRowAL : tblRowAL
+  hint(input %0 %1)
+  hint(prose_in "guarding table row" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Guard_def:
+  algoCtx |- defnAL : defnAL
+  hint(input %0 %1)
+  hint(prose_in "guarding definition" %1 "under" %0)
+  hint(prose_out %2)
+
+;; Otherwise purity
+
+relation Pure_exp:
+  |- exp
+  hint(input %0)
+  hint(prose_in "evaluating" %0 "calls no function")
+
+relation Pure_arg:
+  |- arg
+  hint(input %0)
+  hint(prose_in "evaluating" %0 "calls no function")
+
+relation Pure_path:
+  |- path
+  hint(input %0)
+  hint(prose_in "evaluating" %0 "calls no function")
+
+relation Pure_prem:
+  algoCtx |- premAL
+  hint(input %0 %1)
+  hint(prose_in "premise" %1 "cannot fail under" %0)
+
+relation Pure_otherwise:
+  algoCtx |- defnAL
+  hint(input %0 %1)
+  hint(prose_in "the otherwise rule or clause of" %1 "cannot fail under" %0)
+
+;; Specifications
+
+relation Algo_spec:
+  |- specIL : specAL
+  hint(input %0)
+  hint(prose_in "lowering specification" %0 "to the algorithmic language")
+  hint(prose_out %1)

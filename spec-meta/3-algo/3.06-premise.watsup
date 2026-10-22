@@ -1,0 +1,139 @@
+;; Input positions
+
+;; Relation arguments in notation order, separated into the arguments at
+;; the input positions and the remaining outputs, each in source order
+
+dec $split_inputs<X>(inputHint, X*) : (X*, X*)
+  hint(prose_in "the arguments" %1 "split into inputs at positions" %0 "and outputs")
+dec $split_inputs_from<X>(inputHint, nat, X*) : (X*, X*)
+  hint(prose_in "the arguments" %2 "from position" %1
+                "split into inputs at positions" %0 "and outputs")
+
+def $split_inputs<X>(n*, X*) = $split_inputs_from<X>(n*, 0, X*)
+  -- if $forall_($(n < |X*|)*)
+
+def $split_inputs_from<X>(n*, n_pos, eps) = (eps, eps)
+def $split_inputs_from<X>(n*, n_pos, X_h :: X_t*) = (X_h :: X_in*, X_out*)
+  -- if n_pos <- n*
+  -- if (X_in*, X_out*) = $split_inputs_from<X>(n*, $(n_pos + 1), X_t*)
+def $split_inputs_from<X>(n*, n_pos, X_h :: X_t*) = (X_in*, X_h :: X_out*)
+  -- if ~(n_pos <- n*)
+  -- if (X_in*, X_out*) = $split_inputs_from<X>(n*, $(n_pos + 1), X_t*)
+
+;; Premise lowering
+
+;; Each premise reads bound variables and binds the variables of its patterns.
+;; Under an iteration, the variables a premise reads become its sources
+;; and the variables it binds become its binders:
+;;
+;;   -- (let x = z + 1)*{x <- x*, z <- z*}
+;;
+;; becomes
+;;
+;;   -- (let x = z + 1)*{z <- z*, x -> x*}
+
+;;; Relation premises
+
+;; Inputs must be bound; outputs bind
+
+rule Algo_prem/rel:
+  AC IC |- REL id ':' exp* `( inputHint `) : AC' (prem_rel :: prem_bind*)
+  -- if (exp_in*, exp_out*) = $split_inputs<exp>(inputHint, exp*)
+  -- if id_in* = $free_ids_exps(exp_in*)
+  -- if $bound_ids(AC, id_in*)
+  -- Bind_exps: AC IC |- exp_out* : AC' exp_out'* prem_bind*
+  -- if vari_in* = $free_vars_exps(exp_in*)
+  -- if vari_read* = $shallowest_vars(vari_in*)
+  -- if vari_out* = $free_vars_exps(exp_out'*)
+  -- if vari_bind* = $shallowest_vars(vari_out*)
+  -- Iter_bound: IC |- vari_read* : IC_read
+  -- Iter_bind: IC_read |- vari_bind* : IC_rel
+  -- Iter_sourced: |- IC_rel
+  -- Iter_prem: IC_rel |- REL id ':' exp_in* '->' exp_out'* : prem_rel
+
+;;; Conditions
+
+;; An equality with binders on one side binds that side
+
+rulegroup Algo_prem/cond {
+
+  rule Algo_prem/test:
+    AC IC |- IF exp : AC ([ prem_if ])
+    -- if id* = $free_ids_exp(exp)
+    -- if $bound_ids(AC, id*)
+    -- Iter_prem: IC |- IF exp : prem_if
+
+  rule Algo_prem/let-left:
+    AC IC |- IF ((CMP EQ exp_l exp_r) '#' _) : AC' prem*
+    -- Collect_exp: AC |- exp_l : vari_l*
+    -- if vari_l* =/= eps
+    -- Collect_exp: AC |- exp_r : eps
+    -- Algo_let: AC IC |- exp_l '=' exp_r : AC' prem*
+
+  rule Algo_prem/let-right:
+    AC IC |- IF ((CMP EQ exp_l exp_r) '#' _) : AC' prem*
+    -- Collect_exp: AC |- exp_l : eps
+    -- Collect_exp: AC |- exp_r : vari_r*
+    -- if vari_r* =/= eps
+    -- Algo_let: AC IC |- exp_r '=' exp_l : AC' prem*
+
+}
+
+rule Algo_let:
+  AC IC |- exp_l '=' exp_r : AC' (prem_let :: prem_bind*)
+  -- Bind_exps: AC IC |- [ exp_l ] : AC' ([ exp_l' ]) prem_bind*
+  -- if vari_r* = $free_vars_exp(exp_r)
+  -- if vari_read* = $shallowest_vars(vari_r*)
+  -- if vari_l* = $free_vars_exp(exp_l')
+  -- if vari_bind* = $shallowest_vars(vari_l*)
+  -- Iter_bound: IC |- vari_read* : IC_read
+  -- Iter_bind: IC_read |- vari_bind* : IC_let
+  -- Iter_sourced: |- IC_let
+  -- Iter_prem: IC_let |- LET exp_l' '=' exp_r : prem_let
+
+;;; Holding and non-holding relations
+
+rule Algo_prem/ifhold:
+  AC IC |- IFHOLD id ':' exp* : AC ([ prem_hold ])
+  -- if id_read* = $free_ids_exps(exp*)
+  -- if $bound_ids(AC, id_read*)
+  -- Iter_prem: IC |- IFHOLD id ':' exp* : prem_hold
+
+rule Algo_prem/ifnothold:
+  AC IC |- IFNOTHOLD id ':' exp* : AC ([ prem_hold ])
+  -- if id_read* = $free_ids_exps(exp*)
+  -- if $bound_ids(AC, id_read*)
+  -- Iter_prem: IC |- IFNOTHOLD id ':' exp* : prem_hold
+
+;;; Iterations
+
+;; Binders of an iteration are decided by its premise; the elaborated
+;; iteration lists every iterated variable as a source
+
+rule Algo_prem/iter:
+  AC IC |- ITER premIL (iter '<-' vari* '->' eps) : AC' prem*
+  -- Algo_prem: AC ((iter '<-' vari* '->' eps) :: IC) |- premIL : AC' prem*
+
+;;; Debugging
+
+rule Algo_prem/dbg:
+  AC IC |- DEBUG exp : AC ([ prem_debug ])
+  -- if id* = $free_ids_exp(exp)
+  -- if $bound_ids(AC, id*)
+  -- Iter_prem: IC |- DEBUG exp : prem_debug
+
+;; Premise sequences
+
+;; Variables bound by a premise are bound for the following premises
+
+rulegroup Algo_prems {
+
+  rule Algo_prems/nil:
+    AC |- eps : AC eps
+
+  rule Algo_prems/cons:
+    AC |- premIL_h :: premIL_t* : AC'' (prem_h* ++ prem_t*)
+    -- Algo_prem: AC eps |- premIL_h : AC' prem_h*
+    -- Algo_prems: AC' |- premIL_t* : AC'' prem_t*
+
+}

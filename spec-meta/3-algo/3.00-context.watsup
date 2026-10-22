@@ -1,0 +1,68 @@
+;; Lowering context
+
+;; Type definitions, identifiers bound so far,
+;; and identifiers in use that fresh identifiers must avoid
+
+syntax algoCtx =
+  { TYP tdenv,
+    BOUND id*,
+    IDS id* }
+
+var AC : algoCtx
+
+dec $empty_algoCtx : algoCtx
+  hint(prose_in "empty lowering context")
+def $empty_algoCtx = { TYP $empty_map<id, typDef>, BOUND eps, IDS eps }
+
+;;; Adders
+
+dec $add_bound_ids(algoCtx, id*) : algoCtx
+  hint(prose_in %0 "with identifiers" %1 "bound")
+def $add_bound_ids(AC, id*) = AC[ .BOUND = AC.BOUND ++ id* ]
+
+dec $add_used_ids(algoCtx, id*) : algoCtx
+  hint(prose_in %0 "with identifiers" %1 "in use")
+def $add_used_ids(AC, id*) = AC[ .IDS = AC.IDS ++ id* ]
+
+dec $add_typdef(algoCtx, id, typDef) : algoCtx
+  hint(prose_in %0 "with type" %2 "defined as" %1)
+def $add_typdef(AC, id, typDef)
+  = AC[ .TYP = tdenv ]
+  -- if tdenv = $add_map<id, typDef>(AC.TYP, id, typDef)
+
+dec $add_tparams(algoCtx, tparam*) : algoCtx
+  hint(prose_in %0 "with type parameters" %1)
+def $add_tparams(AC, tparam*)
+  = AC[ .TYP = tdenv ]
+  -- if typDef* = $repeat_<typDef>(PARAM, |tparam*|)
+  -- if tdenv = $adds_map<id, typDef>(AC.TYP, tparam*, typDef*)
+
+;;; Bound identifiers
+
+dec $bound_ids(algoCtx, id*) : bool
+  hint(prose_true "identifiers" %1 "are all bound in" %0)
+  hint(prose_false "some identifier in" %1 "is not bound in" %0)
+def $bound_ids(AC, id*) = $forall_((id <- AC.BOUND)*)
+
+;; Iteration context
+
+;; Enclosing iterations, innermost first, each with its sources and binders
+
+syntax iterCtx = iterPrem*
+
+var IC : iterCtx
+
+;; Renamer
+
+;; A repeated binder: its first occurrence with type and dimension,
+;; followed by the identifiers already given to its occurrences
+
+syntax renaming = vari '->' id*
+syntax renamer = renaming*
+
+var R : renamer
+
+;; Fresh identifiers
+
+builtin dec $fresh(id, id*) : id
+  hint(prose_in "an identifier based on" %0 "distinct from" %1)

@@ -1,0 +1,256 @@
+;; Partially bound patterns
+
+;; A pattern is rewritten until only variables, tuples, and structs bind.
+;; Every other sub-pattern becomes a fresh variable checked and destructured
+;; after the binding, outer checks before inner ones:
+;;
+;;   -- let ((A y)*, n + 1) = e
+;;
+;; with `y` unbound and `n` bound, and `A` a case of `t = A nat | B`, becomes
+;;
+;;   -- let (t*, nat) = e
+;;   -- (if t matches A)*{t <- t*}
+;;   -- (let A y = t)*{t <- t*, y -> y*}
+;;   -- if nat = n + 1
+
+;;; Sub-patterns compared rather than decomposed
+
+dec $upcast_of_nullary(exp) : bool
+  hint(prose_true %0 "upcasts a constructor without arguments")
+  hint(prose_false %0 "does not upcast a constructor without arguments")
+def $upcast_of_nullary((UPCAST _ ((INJ (_ eps)) '#' _)) '#' _) = true
+def $upcast_of_nullary(exp) = false
+  -- otherwise
+
+;; A sub-pattern without binders is compared, except that a nullary case
+;; under an upcast keeps its subtype check
+
+dec $decomposes(algoCtx, exp) : bool
+  hint(prose_true "pattern" %1 "is decomposed under" %0)
+  hint(prose_false "pattern" %1 "is compared under" %0)
+def $decomposes(AC, exp) = true
+  -- if $upcast_of_nullary(exp)
+def $decomposes(AC, exp) = ~$bound_ids(AC, id*)
+  -- if ~$upcast_of_nullary(exp)
+  -- if id* = $free_ids_exp(exp)
+
+;; Constructors without arguments, empty options, and empty lists are
+;; matched; every other value is compared for equality
+
+dec $bound_check(exp, exp) : exp
+  hint(prose_in "the check that" %0 "is" %1)
+def $bound_check(exp_d, (INJ (mixop eps)) '#' _) = (MATCH exp_d (INJ mixop)) '#' BOOL
+def $bound_check(exp_d, (OPT eps) '#' _) = (MATCH exp_d NONE) '#' BOOL
+def $bound_check(exp_d, (LIST eps) '#' _) = (MATCH exp_d NIL) '#' BOOL
+def $bound_check(exp_d, exp) = (CMP EQ exp_d exp) '#' BOOL
+  -- otherwise
+
+rulegroup Partialbind_exp {
+
+  rule Partialbind_exp/bound:
+    AC IC_prem |- IC exp : AC' IC' exp_d ([ prem_check ]) ([ id_d ])
+    -- if ~$decomposes(AC, exp)
+    -- if _ '#' typ = exp
+    -- if (AC', vari_d) = $fresh_vari(AC, typ)
+    -- if id_d _ _ = vari_d
+    -- if exp_d = $exp_of_vari(vari_d)
+    -- if exp_check = $bound_check(exp_d, exp)
+    ---- ;; iterate over the sources the compared value reads
+    -- if vari_read* = $free_vars_exp(exp)
+    -- if vari_read_min* = $shallowest_vars(vari_read*)
+    -- Iter_bound: IC ++ IC_prem |- vari_read_min* : IC_read
+    -- Iter_source: IC_read |- [ vari_d ] : IC_check
+    -- Iter_prem: IC_check |- IF exp_check : prem_check
+    -- if id_read* = $ids_of_varis(vari_read*)
+    -- Iter_replace: IC |- id_read* -> vari_d : IC'
+
+  rule Partialbind_exp/decomposed:
+    AC IC_prem |- IC exp : AC' IC' exp' prem* id*
+    -- if $decomposes(AC, exp)
+    -- Partialbind_pattern: AC IC_prem |- IC exp : AC' IC' exp' prem* id*
+
+}
+
+;;; Checking and destructuring a fresh variable
+
+;; The check iterates over the fresh variable alone
+
+rule Partialbind_check:
+  IC |- vari_d : exp_check : prem
+  -- Iter_clear: |- IC : IC_clear
+  -- Iter_source: IC_clear |- [ vari_d ] : IC_check
+  -- Iter_prem: IC_check |- IF exp_check : prem
+
+;; The destructuring iterates over the fresh variable and binds the pattern
+
+rule Partialbind_destructure:
+  IC |- vari_d : exp_l '=' exp_r : prem
+  -- Iter_clear: |- IC : IC_clear
+  -- if vari_l* = $free_vars_exp(exp_l)
+  -- if vari_bind* = $shallowest_vars(vari_l*)
+  -- Iter_bind: IC_clear |- vari_bind* : IC_bind
+  -- Iter_source: IC_bind |- [ vari_d ] : IC_let
+  -- Iter_prem: IC_let |- LET exp_l '=' exp_r : prem
+
+;;; Decomposing binding patterns
+
+rule Partialbind_pattern/variable:
+  AC IC_prem |- IC ((VAR id) '#' typ) : AC IC ((VAR id) '#' typ) eps eps
+
+rule Partialbind_pattern/upcast:
+  AC IC_prem |- IC ((UPCAST typ_sup exp) '#' typ)
+    : AC'' IC'' exp_d (prem_check :: prem_let :: prem*) (id_d :: id*)
+  -- Partialbind_exp: AC IC_prem |- IC exp : AC' IC' exp_sub prem* id*
+  -- if _ '#' typ_sub = exp_sub
+  -- if (AC'', vari_d) = $fresh_vari(AC', typ)
+  -- if id_d _ _ = vari_d
+  -- if exp_d = $exp_of_vari(vari_d)
+  -- if exp_check = (SUB exp_d typ_sub) '#' BOOL
+  -- if exp_down = (DOWNCAST typ_sub exp_d) '#' typ_sub
+  -- Partialbind_check: IC' ++ IC_prem |- vari_d : exp_check : prem_check
+  -- Partialbind_destructure: IC' ++ IC_prem |- vari_d : exp_sub '=' exp_down : prem_let
+  -- if id_sub* = $free_ids_exp(exp_sub)
+  -- Iter_replace: IC' |- id_sub* -> vari_d : IC''
+
+rule Partialbind_pattern/tuple:
+  AC IC_prem |- IC ((TUP exp*) '#' typ) : AC' IC' ((TUP exp'*) '#' typ) prem* id*
+  -- Partialbind_exps: AC IC_prem |- IC exp* : AC' IC' exp'* prem* id*
+
+rule Partialbind_pattern/struct:
+  AC IC_prem |- IC ((STR expField*) '#' typ) : AC' IC' ((STR expField'*) '#' typ) prem* id*
+  -- (if atom exp = expField)*
+  -- Partialbind_exps: AC IC_prem |- IC exp* : AC' IC' exp'* prem* id*
+  -- (if expField' = atom exp')*
+
+;; Constructor, option, and list patterns match the fresh variable first
+
+rule Partialbind_pattern/case:
+  AC IC_prem |- IC ((INJ (mixop exp*)) '#' typ)
+    : AC'' IC'' exp_d (prem_check :: prem_let :: prem*) (id_d :: id*)
+  -- Partialbind_exps: AC IC_prem |- IC exp* : AC' IC' exp'* prem* id*
+  -- if exp_case = (INJ (mixop exp'*)) '#' typ
+  -- if (AC'', vari_d) = $fresh_vari(AC', typ)
+  -- if id_d _ _ = vari_d
+  -- if exp_d = $exp_of_vari(vari_d)
+  -- if exp_check = (MATCH exp_d (INJ mixop)) '#' BOOL
+  -- Partialbind_check: IC' ++ IC_prem |- vari_d : exp_check : prem_check
+  -- Partialbind_destructure: IC' ++ IC_prem |- vari_d : exp_case '=' exp_d : prem_let
+  -- if id_case* = $free_ids_exp(exp_case)
+  -- Iter_replace: IC' |- id_case* -> vari_d : IC''
+
+rule Partialbind_pattern/opt:
+  AC IC_prem |- IC ((OPT exp) '#' typ)
+    : AC'' IC'' exp_d (prem_check :: prem_let :: prem*) (id_d :: id*)
+  -- Partialbind_exp: AC IC_prem |- IC exp : AC' IC' exp' prem* id*
+  -- if exp_opt = (OPT exp') '#' typ
+  -- if (AC'', vari_d) = $fresh_vari(AC', typ)
+  -- if id_d _ _ = vari_d
+  -- if exp_d = $exp_of_vari(vari_d)
+  -- if exp_check = (MATCH exp_d SOME) '#' BOOL
+  -- Partialbind_check: IC' ++ IC_prem |- vari_d : exp_check : prem_check
+  -- Partialbind_destructure: IC' ++ IC_prem |- vari_d : exp_opt '=' exp_d : prem_let
+  -- if id_opt* = $free_ids_exp(exp_opt)
+  -- Iter_replace: IC' |- id_opt* -> vari_d : IC''
+
+rule Partialbind_pattern/list:
+  AC IC_prem |- IC ((LIST exp*) '#' typ)
+    : AC'' IC'' exp_d (prem_check :: prem_let :: prem*) (id_d :: id*)
+  -- Partialbind_exps: AC IC_prem |- IC exp* : AC' IC' exp'* prem* id*
+  -- if exp_list = (LIST exp'*) '#' typ
+  -- if (AC'', vari_d) = $fresh_vari(AC', typ)
+  -- if id_d _ _ = vari_d
+  -- if exp_d = $exp_of_vari(vari_d)
+  -- if n = |exp*|
+  -- if exp_check = (MATCH exp_d (FIXED n)) '#' BOOL
+  -- Partialbind_check: IC' ++ IC_prem |- vari_d : exp_check : prem_check
+  -- Partialbind_destructure: IC' ++ IC_prem |- vari_d : exp_list '=' exp_d : prem_let
+  -- if id_list* = $free_ids_exp(exp_list)
+  -- Iter_replace: IC' |- id_list* -> vari_d : IC''
+
+rule Partialbind_pattern/cons:
+  AC IC_prem |- IC ((CONS exp_h exp_t) '#' typ)
+    : AC''' IC''' exp_d (prem_check :: prem_let :: prem_h* ++ prem_t*) (id_d :: id_h* ++ id_t*)
+  -- Partialbind_exp: AC IC_prem |- IC exp_h : AC' IC' exp_h' prem_h* id_h*
+  -- Partialbind_exp: AC' IC_prem |- IC' exp_t : AC'' IC'' exp_t' prem_t* id_t*
+  -- if exp_cons = (CONS exp_h' exp_t') '#' typ
+  -- if (AC''', vari_d) = $fresh_vari(AC'', typ)
+  -- if id_d _ _ = vari_d
+  -- if exp_d = $exp_of_vari(vari_d)
+  -- if exp_check = (MATCH exp_d CONS) '#' BOOL
+  -- Partialbind_check: IC'' ++ IC_prem |- vari_d : exp_check : prem_check
+  -- Partialbind_destructure: IC'' ++ IC_prem |- vari_d : exp_cons '=' exp_d : prem_let
+  -- if id_cons* = $free_ids_exp(exp_cons)
+  -- Iter_replace: IC'' |- id_cons* -> vari_d : IC'''
+
+;; An iterated pattern is decomposed under one more iteration,
+;; whose sources then reflect the fresh variables inside it
+
+rule Partialbind_pattern/iter:
+  AC IC_prem |- IC ((ITER exp (iter vari*)) '#' typ)
+    : AC' IC' ((ITER exp' (iter vari'*)) '#' typ) prem* id*
+  -- Partialbind_exp: AC IC_prem |- ((iter '<-' vari* '->' eps) :: IC) exp
+       : AC' (iterPrem :: IC') exp' prem* id*
+  -- if iter '<-' vari'* '->' _ = iterPrem
+
+;;; Pattern sequences and arguments
+
+rulegroup Partialbind_exps {
+
+  rule Partialbind_exps/nil:
+    AC IC_prem |- IC eps : AC IC eps eps eps
+
+  rule Partialbind_exps/cons:
+    AC IC_prem |- IC (exp_h :: exp_t*)
+      : AC'' IC'' (exp_h' :: exp_t'*) (prem_h* ++ prem_t*) (id_h* ++ id_t*)
+    -- Partialbind_exp: AC IC_prem |- IC exp_h : AC' IC' exp_h' prem_h* id_h*
+    -- Partialbind_exps: AC' IC_prem |- IC' exp_t* : AC'' IC'' exp_t'* prem_t* id_t*
+
+}
+
+rulegroup Partialbind_args {
+
+  rule Partialbind_args/nil:
+    AC |- eps : AC eps eps eps
+
+  rule Partialbind_args/exp:
+    AC |- (EXP exp_h) :: arg_t* : AC'' ((EXP exp_h') :: arg_t'*) (prem_h* ++ prem_t*) (id_h* ++ id_t*)
+    -- Partialbind_exp: AC eps |- eps exp_h : AC' _ exp_h' prem_h* id_h*
+    -- Partialbind_args: AC' |- arg_t* : AC'' arg_t'* prem_t* id_t*
+
+  rule Partialbind_args/fun:
+    AC |- (FUN id_fun) :: arg_t* : AC' ((FUN id_fun) :: arg_t'*) prem* id*
+    -- Partialbind_args: AC |- arg_t* : AC' arg_t'* prem* id*
+
+}
+
+;; Binding patterns
+
+;; Binders are collected, repeated binders renamed, and partially bound
+;; patterns decomposed. The decomposition premises come first; the
+;; equalities of repeated binders follow once every occurrence is bound.
+
+dec $renamer_names(renamer) : id*
+  hint(prose_in "the identifiers given to the repeated binders of" %0)
+def $renamer_names((_ '->' id_name*)*) = $concat_<id>(id_name**)
+
+rule Bind_exps:
+  AC IC |- exp* : AC''' exp''* (prem_part* ++ prem_eq*)
+  -- Collect_exps: AC |- exp* : vari_bind*
+  -- Multibind_renamer: |- vari_bind* : R
+  -- Multibind_exps: AC R |- exp* : AC' R' exp'*
+  -- Partialbind_exps: AC' IC |- eps exp'* : AC'' _ exp''* prem_part* id_fresh*
+  -- Multibind_eqs: IC |- R' : prem_eq*
+  -- if id_bind* = $ids_of_varis(vari_bind*)
+  -- if id_rename* = $renamer_names(R')
+  -- if AC''' = $add_bound_ids(AC'', id_bind* ++ id_rename* ++ id_fresh*)
+
+rule Bind_args:
+  AC |- arg* : AC''' arg''* (prem_part* ++ prem_eq*)
+  -- Collect_args: AC |- arg* : vari_bind*
+  -- Multibind_renamer: |- vari_bind* : R
+  -- Multibind_args: AC R |- arg* : AC' R' arg'*
+  -- Partialbind_args: AC' |- arg'* : AC'' arg''* prem_part* id_fresh*
+  -- Multibind_eqs: eps |- R' : prem_eq*
+  -- if id_bind* = $ids_of_varis(vari_bind*)
+  -- if id_rename* = $renamer_names(R')
+  -- if AC''' = $add_bound_ids(AC'', id_bind* ++ id_rename* ++ id_fresh*)

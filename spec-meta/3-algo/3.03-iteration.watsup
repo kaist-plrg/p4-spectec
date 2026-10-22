@@ -1,0 +1,135 @@
+;; Iteration contexts
+
+;; Each level of an iteration context lists the variables the iteration
+;; reads (sources) and the variables it binds, at the dimension inside it.
+;; Adding a variable lifts it by each level it passes outward.
+
+;;; Source and binder selection
+
+dec $read_by(vari, vari*) : bool
+  hint(prose_true "source" %0 "is read by some variable in" %1)
+  hint(prose_false "source" %0 "is read by no variable in" %1)
+def $read_by(vari, eps) = false
+def $read_by(vari, vari_h :: vari_t*) = true
+  -- if id _ _ = vari
+  -- if id _ _ = vari_h
+  -- if $sub_dim(vari_h, vari)
+def $read_by(vari, vari_h :: vari_t*) = $read_by(vari, vari_t*)
+  -- if id _ _ = vari
+  -- if id_h _ _ = vari_h
+  -- if id_h =/= id \/ ~$sub_dim(vari_h, vari)
+
+dec $sources_read(vari*, vari*) : vari*
+  hint(prose_in "the sources in" %0 "read by" %1)
+def $sources_read(eps, vari_read*) = eps
+def $sources_read(vari_h :: vari_t*, vari_read*) = vari_h :: vari_keep*
+  -- if $read_by(vari_h, vari_read*)
+  -- if vari_keep* = $sources_read(vari_t*, vari_read*)
+def $sources_read(vari_h :: vari_t*, vari_read*) = $sources_read(vari_t*, vari_read*)
+  -- if ~$read_by(vari_h, vari_read*)
+
+dec $sources_except(vari*, id*) : vari*
+  hint(prose_in "the sources in" %0 "whose identifiers are not in" %1)
+def $sources_except(eps, id*) = eps
+def $sources_except(vari_h :: vari_t*, id*) = vari_h :: vari_keep*
+  -- if id_h _ _ = vari_h
+  -- if ~(id_h <- id*)
+  -- if vari_keep* = $sources_except(vari_t*, id*)
+def $sources_except(vari_h :: vari_t*, id*) = $sources_except(vari_t*, id*)
+  -- if id_h _ _ = vari_h
+  -- if id_h <- id*
+
+;;; Restricting sources
+
+rulegroup Iter_bound {
+
+  rule Iter_bound/nil:
+    eps |- vari_read* : eps
+
+  rule Iter_bound/cons:
+    iterPrem :: IC |- vari_read* : iterPrem' :: IC'
+    -- if iter '<-' vari_src* '->' vari_bind* = iterPrem
+    -- if vari_keep* = $sources_read(vari_src*, vari_read*)
+    -- if iterPrem' = iter '<-' vari_keep* '->' vari_bind*
+    -- Iter_bound: IC |- vari_read* : IC'
+
+}
+
+;;; Adding binders and sources
+
+rulegroup Iter_bind {
+
+  rule Iter_bind/nil:
+    eps |- vari* : eps
+
+  rule Iter_bind/cons:
+    iterPrem :: IC |- vari* : iterPrem' :: IC'
+    -- if iter '<-' vari_src* '->' vari_bind* = iterPrem
+    -- if iterPrem' = iter '<-' vari_src* '->' (vari_bind* ++ vari*)
+    -- if (vari_lift = $iter_vari(vari, iter))*
+    -- Iter_bind: IC |- vari_lift* : IC'
+
+}
+
+rulegroup Iter_source {
+
+  rule Iter_source/nil:
+    eps |- vari* : eps
+
+  rule Iter_source/cons:
+    iterPrem :: IC |- vari* : iterPrem' :: IC'
+    -- if iter '<-' vari_src* '->' vari_bind* = iterPrem
+    -- if iterPrem' = iter '<-' (vari_src* ++ vari*) '->' vari_bind*
+    -- if (vari_lift = $iter_vari(vari, iter))*
+    -- Iter_source: IC |- vari_lift* : IC'
+
+}
+
+;;; Replacing sources
+
+;; A fresh variable standing for a sub-pattern takes the place of the
+;; sources the sub-pattern mentions
+
+rulegroup Iter_replace {
+
+  rule Iter_replace/nil:
+    eps |- id* -> vari : eps
+
+  rule Iter_replace/cons:
+    iterPrem :: IC |- id* -> vari : iterPrem' :: IC'
+    -- if iter '<-' vari_src* '->' vari_bind* = iterPrem
+    -- if vari_keep* = $sources_except(vari_src*, id*)
+    -- if iterPrem' = iter '<-' (vari_keep* ++ [ vari ]) '->' vari_bind*
+    -- if vari_lift = $iter_vari(vari, iter)
+    -- Iter_replace: IC |- id* -> vari_lift : IC'
+
+}
+
+;;; Clearing sources and binders
+
+rule Iter_clear:
+  |- IC : IC'
+  -- if (iter '<-' _ '->' _)* = IC
+  -- if IC' = (iter '<-' eps '->' eps)*
+
+;;; Checking sources
+
+;; An iteration without a source has no length to follow
+
+rule Iter_sourced:
+  |- IC
+  -- if (_ '<-' vari_src* '->' _)* = IC
+  -- if (vari_src* =/= eps)*
+
+;;; Iterating premises
+
+rulegroup Iter_prem {
+
+  rule Iter_prem/nil:
+    eps |- prem : prem
+
+  rule Iter_prem/cons:
+    iterPrem :: IC |- prem : prem'
+    -- Iter_prem: IC |- ITER prem iterPrem : prem'
+
+}

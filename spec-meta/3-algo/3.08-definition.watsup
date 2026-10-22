@@ -1,0 +1,95 @@
+;; Rules
+
+;; A rule binds its inputs in its match, then runs its premises and returns
+;; its outputs in its path; each rule has a match of its own
+
+rule Algo_rul:
+  AC inputHint |- rulIL : rulMatch '->' rulPath
+  -- if id ':' exp* '-' premIL* = rulIL
+  -- if id_used* = $free_ids_rulIL(rulIL)
+  -- if AC_rul = $add_used_ids(AC, id_used*)
+  -- if (exp_in*, exp_out*) = $split_inputs<exp>(inputHint, exp*)
+  -- Bind_exps: AC_rul eps |- exp_in* : AC_in exp_in'* prem_match*
+  -- if rulMatch = exp_in'* '-' prem_match*
+  -- Algo_prems: AC_in |- premIL* : AC_path prem_path*
+  -- if id_out* = $free_ids_exps(exp_out*)
+  -- if $bound_ids(AC_path, id_out*)
+  -- if rulPath = id '=' exp_out* '-' prem_path*
+
+rule Algo_rulGroup:
+  AC inputHint |- id ':' rulIL* : id ':' rul*
+  -- (Algo_rul: AC inputHint |- rulIL : rul)*
+
+rule Algo_elsGroup:
+  AC inputHint |- id ':' rulIL : id ':' rul
+  -- Algo_rul: AC inputHint |- rulIL : rul
+
+;; Clauses
+
+;; A clause binds its arguments, runs its premises, and returns its result
+
+rule Algo_clause:
+  AC |- clauseIL : arg'* '=' exp '-' (prem_arg* ++ prem*)
+  -- if arg* '=' exp '-' premIL* = clauseIL
+  -- if id_used* = $free_ids_clauseIL(clauseIL)
+  -- if AC_clause = $add_used_ids(AC, id_used*)
+  -- Bind_args: AC_clause |- arg* : AC_arg arg'* prem_arg*
+  -- Algo_prems: AC_arg |- premIL* : AC_body prem*
+  -- if id_body* = $free_ids_exp(exp)
+  -- if $bound_ids(AC_body, id_body*)
+
+;; Definitions
+
+rulegroup Algo_def/typ {
+
+  rule Algo_def/extern:
+    AC |- externTypDefn : externTypDefn
+
+  rule Algo_def/defined:
+    AC |- definedTypDefn : definedTypDefn
+
+}
+
+rulegroup Algo_def/rel {
+
+  rule Algo_def/extern:
+    AC |- EXTREL id ':' typ* `( inputHint `) : EXTREL id ':' typ_in* '->' typ_out*
+    -- if (typ_in*, typ_out*) = $split_inputs<typ>(inputHint, typ*)
+
+  rule Algo_def/defined:
+    AC |- REL id ':' typ* `( inputHint `) '=' rulGroupIL* elsGroupIL?
+      : REL id ':' typ_in* '->' typ_out* '=' rulGroup* elsGroup?
+    -- if (typ_in*, typ_out*) = $split_inputs<typ>(inputHint, typ*)
+    -- (Algo_rulGroup: AC inputHint |- rulGroupIL : rulGroup)*
+    -- (Algo_elsGroup: AC inputHint |- elsGroupIL : elsGroup)?
+
+}
+
+rulegroup Algo_def/func {
+
+  rule Algo_def/extern:
+    AC |- externFuncDefn : externFuncDefn
+
+  rule Algo_def/builtin:
+    AC |- builtinFuncDefn : builtinFuncDefn
+
+  ;; Table parameters are plain types and every row has one argument per parameter
+
+  rule Algo_def/table:
+    AC |- TABLEFUNC id param* ':' typ '=' tblRowIL* : TABLEFUNC id param* ':' typ '=' tblRow*
+    -- if (EXP typ_param)* = param*
+    -- (if arg* '=' _ = tblRowIL)*
+    -- (if |arg*| = |param*|)*
+    -- (Algo_tblRow: AC |- tblRowIL : tblRow)*
+    -- Cover_tblRows: AC |- typ_param* : tblRowIL*
+
+  ;; Type parameters stand for opaque types within the function
+
+  rule Algo_def/defined:
+    AC |- FUNC id tparam* param* ':' typ '=' clauseIL* elsClauseIL?
+      : FUNC id tparam* param* ':' typ '=' clause* elsClause?
+    -- if AC_func = $add_tparams(AC, tparam*)
+    -- (Algo_clause: AC_func |- clauseIL : clause)*
+    -- (Algo_clause: AC_func |- elsClauseIL : elsClause)?
+
+}
