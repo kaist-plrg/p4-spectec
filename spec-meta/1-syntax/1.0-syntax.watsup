@@ -189,8 +189,9 @@ syntax externRelDefn =
 
 syntax rulMatch = exp* '-' prem*
 syntax rulPath = id '=' exp* '-' prem*
-syntax rulGroup = id ':' rulMatch '=' rulPath*
-syntax elsGroup = id ':' rulMatch '=' rulPath
+syntax rul = rulMatch -> rulPath
+syntax rulGroup = id ':' rul*
+syntax elsGroup = id ':' rul
 
 syntax definedRelDefn =
   REL id ':' typ* '->' typ* '=' rulGroup* elsGroup?

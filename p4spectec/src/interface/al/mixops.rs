@@ -127,8 +127,9 @@ pub(super) const DEBUG: &str = "DEBUG exp";
 
 pub(super) const RULMATCH: &str = "exp* '-' prem*";
 pub(super) const RULPATH: &str = "id '=' exp* '-' prem*";
-pub(super) const RULGROUP: &str = "id ':' rulMatch '=' rulPath*";
-pub(super) const ELSGROUP: &str = "id ':' rulMatch '=' rulPath";
+pub(super) const RUL: &str = "rulMatch -> rulPath";
+pub(super) const RULGROUP: &str = "id ':' rul*";
+pub(super) const ELSGROUP: &str = "id ':' rul";
 pub(super) const CLAUSE: &str = "arg* '=' exp '-' prem*";
 
 // == Definitions

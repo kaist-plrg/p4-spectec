@@ -2,8 +2,6 @@
 
 ;;; Rule path evaluation
 
-syntax rul = rulMatch -> rulPath
-
 relation Eval_rul:
   ctx |- rul `( val* `) : relRes
   hint(input %0 %1 %2)
@@ -99,8 +97,7 @@ relation Call_defined_rel:
 
 dec $ruls_of_rulgroup(rulGroup) : rul*
   hint(prose_in "the rule paths of rule group" %0)
-def $ruls_of_rulgroup(id ':' rulMatch '=' rulPath*)
-  = (rulMatch -> rulPath)*
+def $ruls_of_rulgroup(id ':' rul*) = rul*
 
 dec $ruls_of_rulgroups(rulGroup*) : rul*
   hint(prose_in "the rule paths of rule groups" %0 "in order")
@@ -110,8 +107,7 @@ def $ruls_of_rulgroups(rulGroup_h :: rulGroup_t*)
 
 dec $rul_of_elsgroup(elsGroup) : rul
   hint(prose_in "the rule path of otherwise group" %0)
-def $rul_of_elsgroup(id ':' rulMatch '=' rulPath)
-  = rulMatch -> rulPath
+def $rul_of_elsgroup(id ':' rul) = rul
 
 rulegroup Call_defined_rel {
 

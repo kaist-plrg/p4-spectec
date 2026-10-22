@@ -889,30 +889,43 @@ impl Encode for al::RulePath {
     }
 }
 
-/// Encodes a rule group with its shared match.
+/// Encodes one rule as its match followed by its path.
+impl Encode for (&al::RuleMatch, &al::RulePath) {
+    type Output = Value;
+
+    fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
+        let (rule_match, rule_path) = self;
+        let values_meta =
+            vec![rule_match.encode_cached(arena, cache)?, rule_path.encode_cached(arena, cache)?];
+        case(arena, m::RUL, "rul", values_meta, rule_path.id.span)
+    }
+}
+
+/// Encodes a rule group, pairing its shared match with each path in order.
 impl Encode for al::RuleGroup {
     type Output = Value;
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
-        let values_meta = vec![
-            self.node.id.encode_cached(arena, cache)?,
-            self.node.rule_match.encode_cached(arena, cache)?,
-            list(arena, cache, "rulPath", &self.node.rule_paths)?,
-        ];
+        let rules: Vec<_> = self
+            .node
+            .rule_paths
+            .iter()
+            .map(|rule_path| (&self.node.rule_match, rule_path))
+            .collect();
+        let values_meta =
+            vec![self.node.id.encode_cached(arena, cache)?, list(arena, cache, "rul", &rules)?];
         case(arena, m::RULGROUP, "rulGroup", values_meta, self.span)
     }
 }
 
-/// Encodes an otherwise group with one rule path.
+/// Encodes an otherwise group with one rule.
 impl Encode for al::ElseGroup {
     type Output = Value;
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
-        let values_meta = vec![
-            self.node.id.encode_cached(arena, cache)?,
-            self.node.rule_match.encode_cached(arena, cache)?,
-            self.node.rule_path.encode_cached(arena, cache)?,
-        ];
+        let rule = (&self.node.rule_match, &self.node.rule_path);
+        let values_meta =
+            vec![self.node.id.encode_cached(arena, cache)?, rule.encode_cached(arena, cache)?];
         case(arena, m::ELSGROUP, "elsGroup", values_meta, self.span)
     }
 }

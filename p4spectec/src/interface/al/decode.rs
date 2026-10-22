@@ -1113,28 +1113,56 @@ impl Decode for al::RulePath {
     }
 }
 
-/// Decodes a rule group with its shared match.
-impl Decode for al::RuleGroup {
+/// Decodes one rule as its match followed by its path.
+impl Decode for (al::RuleMatch, al::RulePath) {
     fn decode_cached(
         arena: &mut Arena,
         cache: &mut Cache,
         value_meta: Value,
     ) -> Result<Self, Error> {
-        let span = *arena.value.span(value_meta.span);
         get::matches_string! { arena, &value_meta,
-            m::RULGROUP => |[value_id, value_match, value_paths]| {
-                Ok(phrase!(node: al::RuleGroupKind {
-                    id: Id::decode_cached(arena, cache, *value_id)?,
-                    rule_match: al::RuleMatch::decode_cached(arena, cache, *value_match)?,
-                    rule_paths: Vec::<al::RulePath>::decode_cached(arena, cache, *value_paths)?,
-                }, span: span))
+            m::RUL => |[value_match, value_path]| {
+                Ok((
+                    al::RuleMatch::decode_cached(arena, cache, *value_match)?,
+                    al::RulePath::decode_cached(arena, cache, *value_path)?,
+                ))
             },
-            _ => Err(Error::unexpected(arena, value_meta, "id ':' rulMatch '=' rulPath*")),
+            _ => Err(Error::unexpected(arena, value_meta, "rulMatch -> rulPath")),
         }
     }
 }
 
-/// Decodes an otherwise group with one rule path.
+/// Decodes rule groups into one native group per rule.
+///
+/// Each rule keeps its own match, so a meta group of n rules becomes
+/// n native groups sharing the meta group's identifier.
+fn decode_rule_groups(
+    arena: &mut Arena,
+    cache: &mut Cache,
+    value_meta: Value,
+) -> Result<Vec<al::RuleGroup>, Error> {
+    let mut rule_groups = Vec::new();
+    for value_group in get::list(arena, &value_meta)?.to_vec() {
+        let span = *arena.value.span(value_group.span);
+        let (id, rules) = get::matches_string! { arena, &value_group,
+            m::RULGROUP => |[value_id, value_rules]| (
+                Id::decode_cached(arena, cache, *value_id)?,
+                Vec::<(al::RuleMatch, al::RulePath)>::decode_cached(arena, cache, *value_rules)?,
+            ),
+            _ => return Err(Error::unexpected(arena, value_group, "id ':' rul*")),
+        };
+        for (rule_match, rule_path) in rules {
+            rule_groups.push(phrase!(node: al::RuleGroupKind {
+                id: id.clone(),
+                rule_match,
+                rule_paths: vec![rule_path],
+            }, span: span));
+        }
+    }
+    Ok(rule_groups)
+}
+
+/// Decodes an otherwise group with one rule.
 impl Decode for al::ElseGroup {
     fn decode_cached(
         arena: &mut Arena,
@@ -1143,15 +1171,17 @@ impl Decode for al::ElseGroup {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         get::matches_string! { arena, &value_meta,
-            m::ELSGROUP => |[value_id, value_match, value_path]| {
+            m::ELSGROUP => |[value_id, value_rule]| {
+                let (rule_match, rule_path) =
+                    <(al::RuleMatch, al::RulePath)>::decode_cached(arena, cache, *value_rule)?;
                 Ok(phrase!(node: al::ElseGroupKind {
                     otherwise: phrase!(node: il::OtherwiseKind, span: span),
                     id: Id::decode_cached(arena, cache, *value_id)?,
-                    rule_match: al::RuleMatch::decode_cached(arena, cache, *value_match)?,
-                    rule_path: al::RulePath::decode_cached(arena, cache, *value_path)?,
+                    rule_match,
+                    rule_path,
                 }, span: span))
             },
-            _ => Err(Error::unexpected(arena, value_meta, "id ':' rulMatch '=' rulPath")),
+            _ => Err(Error::unexpected(arena, value_meta, "id ':' rul")),
         }
     }
 }
@@ -1260,7 +1290,7 @@ impl Decode for al::Def {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     not_typ,
                     input_hint,
-                    rule_groups: Vec::<al::RuleGroup>::decode_cached(arena, cache, *value_groups)?,
+                    rule_groups: decode_rule_groups(arena, cache, *value_groups)?,
                     else_group: Option::<al::ElseGroup>::decode_cached(arena, cache, *value_else)?,
                     hints: stub::hints(),
                 })))
