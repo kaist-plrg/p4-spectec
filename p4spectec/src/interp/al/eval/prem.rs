@@ -32,6 +32,7 @@ pub fn eval_prem<'global, Iface: Interface, Ext: Extern>(
     ctx: Context<'global>,
     prem: &ast::Prem,
 ) -> Backtrack<Context<'global>> {
+    runner_ctx.on_prem(prem);
     match &prem.node {
         ast::PremKind::Rule(prem) => eval_rule_prem(runner_ctx, ctx, prem),
         ast::PremKind::If(prem) => eval_if_prem(runner_ctx, ctx, prem),
