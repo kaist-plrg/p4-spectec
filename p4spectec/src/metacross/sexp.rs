@@ -3,9 +3,9 @@
 //! `ToSexp` gives each node of the AL syntax its s-expression. A keyword
 //! case prints as `(KEYWORD arg ...)`, or `KEYWORD` alone without arguments;
 //! a record without a keyword (`vari`, `typcase`, `rulpath`, …) prints as
-//! the list of its fields. Options are lists of length zero or one, a `FUNC`
-//! type prints bare, and `var` definitions, signatures, hints and operand
-//! types are omitted, as the frozen Redex syntax expects.
+//! the list of its fields. Options are lists of length zero or one, and
+//! `var` definitions, signatures, hints and operand types are omitted, as
+//! the Redex syntax expects.
 
 use std::fmt::{self, Write};
 
@@ -173,8 +173,9 @@ impl ToSexp for Typ {
             TypKind::Var(id, targs) => app("VAR", [id.sexp(), targs.sexp()]),
             TypKind::Tuple(typs) => app("TUP", [typs.sexp()]),
             TypKind::Iter(typ, iter) => app("ITER", [typ.sexp(), iter.sexp()]),
-            // The frozen Redex syntax has `FUNC` without its signature
-            TypKind::Func(_) => Sexp::Sym("FUNC"),
+            TypKind::Func(func) => {
+                app("FUNC", [func.tparams.sexp(), func.typs_params.sexp(), func.typ_ret.sexp()])
+            }
         }
     }
 }

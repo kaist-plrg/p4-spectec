@@ -23,9 +23,7 @@ implementation only, since K and Racket are not installed there.
 `spec-meta/`, `spec-meta-k/`, and `spec-meta-redex/` are each one flat
 directory, and a K or Redex file is numbered after the `spec-meta/` file it
 mirrors (K keeps its own `5.x` numbers, since argument evaluation lives in its
-`5.3-eval-exp.k`). The frozen syntax modules predate the signature on `FUNC`
-types: `metacross` emits a `FUNC` type without its signature, as `funcT()`
-and `FUNC`.
+`5.3-eval-exp.k`).
 
 ## K
 

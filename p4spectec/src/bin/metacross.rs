@@ -26,7 +26,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Emit a SpecTec program or specification as a KAST `Script` term.
+    /// Emit a SpecTec program or specification as a KAST `Spec` term.
     Kast(SpecArgs),
     /// Emit a P4 program as the KAST `someP4(val)` term.
     #[command(name = "kast-p4")]

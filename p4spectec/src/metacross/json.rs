@@ -12,7 +12,7 @@
 //! mixop    ::= [[atom...]...]                  atoms between argument positions
 //! typ      ::= ["boolT"] | ["natT"] | ["intT"] | ["textT"]
 //!            | ["varT", id, [typ...]] | ["tupT", [typ...]]
-//!            | ["iterT", typ, "?" | "*"] | ["funcT"]
+//!            | ["iterT", typ, "?" | "*"] | ["funcT"]   no signature: never decoded
 //! request  ::= {"builtin": id, "targs": [typ...], "args": [val...]}
 //!            | {"extern-func": id, "targs": [typ...], "args": [val...]}
 //!            | {"extern-rel": id, "args": [val...]}

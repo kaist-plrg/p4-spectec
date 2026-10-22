@@ -1,10 +1,9 @@
 //! AL specifications and P4 programs as KAST JSON version 4, for `spec-meta-k/`
 //!
-//! A specification is a `Script` term and a P4 program a `someP4(val)` term
-//! of the frozen `1-syntax.k`; `ToTerm` gives each node of the AL syntax its
-//! term. A `FUNC` type becomes `funcT()` without its signature, the type
-//! arguments of `VAR` and `CALL` are `TArgList`s, and `var` definitions,
-//! signatures, hints and operand types are omitted.
+//! A specification is a `Spec` term and a P4 program a `someP4(val)` term
+//! of the syntax module of `spec-meta-k/`; `ToTerm` gives each node of the AL
+//! syntax its term. The type arguments of `VAR` and `CALL` are `TArgList`s,
+//! and `var` definitions, signatures, hints and operand types are omitted.
 
 use std::{
     borrow::Cow,
@@ -229,8 +228,14 @@ impl ToTerm for Typ {
             TypKind::Var(id, targs) => Term::apply("varT", [id.term(), list("targList", targs)]),
             TypKind::Tuple(typs) => Term::apply("tupT", [list("typList", typs)]),
             TypKind::Iter(typ, iter) => Term::apply("iterT", [typ.term(), iter.term()]),
-            // The frozen K syntax has `funcT()` without its signature
-            TypKind::Func(_) => Term::apply("funcT", []),
+            TypKind::Func(func) => Term::apply(
+                "funcT",
+                [
+                    list("tparamList", &func.tparams),
+                    list("typList", &func.typs_params),
+                    func.typ_ret.term(),
+                ],
+            ),
         }
     }
 }
@@ -632,7 +637,7 @@ fn values(arena: &Arena, values: &[Value]) -> Term {
 
 // == The emitter
 
-/// K: KAST documents of sort `Script` and `P4Opt`.
+/// K: KAST documents of sort `Spec` and `P4Opt`.
 pub struct K;
 
 impl Emit for K {
@@ -640,7 +645,7 @@ impl Emit for K {
     type Program = Document;
 
     fn script(spec: &al::Spec) -> Document {
-        Document::new(Term::list("script", spec.iter().filter_map(def)))
+        Document::new(Term::list("spec", spec.iter().filter_map(def)))
     }
 
     /// The `val` wrapped as `someP4(val)`.
