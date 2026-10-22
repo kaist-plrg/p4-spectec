@@ -196,7 +196,7 @@ rulegroup Collect_args {
 
 dec $varis_with_id(id, vari*) : vari*
   hint(prose_in "the variables in" %1 "named" %0)
-def $varis_with_id(id, eps) = eps
+def $varis_with_id(_, eps) = eps
 def $varis_with_id(id, vari_h :: vari_t*) = vari_h :: $varis_with_id(id, vari_t*)
   -- if id _ _ = vari_h
 def $varis_with_id(id, vari_h :: vari_t*) = $varis_with_id(id, vari_t*)
@@ -205,7 +205,7 @@ def $varis_with_id(id, vari_h :: vari_t*) = $varis_with_id(id, vari_t*)
 
 dec $varis_without_id(id, vari*) : vari*
   hint(prose_in "the variables in" %1 "not named" %0)
-def $varis_without_id(id, eps) = eps
+def $varis_without_id(_, eps) = eps
 def $varis_without_id(id, vari_h :: vari_t*) = $varis_without_id(id, vari_t*)
   -- if id _ _ = vari_h
 def $varis_without_id(id, vari_h :: vari_t*) = vari_h :: $varis_without_id(id, vari_t*)
@@ -242,7 +242,7 @@ def $renamer_ids(((id _ _) '->' _)*) = id*
 
 dec $renaming_ids(renamer, id) : id*
   hint(prose_in "the identifiers given so far to the occurrences of" %1 "in" %0)
-def $renaming_ids(eps, id) = eps
+def $renaming_ids(eps, _) = eps
 def $renaming_ids((vari '->' id_name*) :: R, id) = id_name*
   -- if id _ _ = vari
 def $renaming_ids((vari '->' _) :: R, id) = $renaming_ids(R, id)
@@ -331,7 +331,7 @@ rule Multibind_pattern/cons:
 
 dec $ids_within(id*, id*) : id*
   hint(prose_in "the identifiers in" %0 "that are also in" %1)
-def $ids_within(eps, id_in*) = eps
+def $ids_within(eps, _) = eps
 def $ids_within(id_h :: id_t*, id_in*) = id_h :: $ids_within(id_t*, id_in*)
   -- if id_h <- id_in*
 def $ids_within(id_h :: id_t*, id_in*) = $ids_within(id_t*, id_in*)
@@ -340,7 +340,7 @@ def $ids_within(id_h :: id_t*, id_in*) = $ids_within(id_t*, id_in*)
 dec $rename_iter_vari(renamer, vari, id*) : vari*
   hint(prose_in "the variables replacing iteration variable" %1
                 "by its renamed occurrences among" %2 "under" %0)
-def $rename_iter_vari(R, id typ iter*, id_free*) = [ id typ iter* ]
+def $rename_iter_vari(R, id typ iter*, _) = [ id typ iter* ]
   -- if eps = $renaming_ids(R, id)
 def $rename_iter_vari(R, id typ iter*, id_free*) = (id_occ typ iter*)*
   -- if id_name* = $renaming_ids(R, id)

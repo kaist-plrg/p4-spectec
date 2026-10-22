@@ -10,7 +10,7 @@ def $singleton_typ(tdenv, typ) = true
   -- if TYP _ tparam* '=' (VARIANT typCase*) = $find_map<id, typDef>(tdenv, id)
   -- if |typCase*| = 1
   -- if |tparam*| = |targ*|
-def $singleton_typ(tdenv, typ) = false
+def $singleton_typ(_, _) = false
   -- otherwise
 
 ;; Shallow table patterns
@@ -104,7 +104,7 @@ dec $wildcard(exp) : bool
 def $wildcard((VAR id) '#' _) = true
   -- if $(|id| > 0)
   -- if id[0 : 1] = "_"
-def $wildcard(exp) = false
+def $wildcard(_) = false
   -- otherwise
 
 dec $shares_case(typCase*, typCase*) : bool
@@ -121,7 +121,7 @@ def $overlap(typCase_a**, typCase_b**) = $forall_(b_share*)
 dec $overlap_any(typCase**, typCase***) : bool
   hint(prose_true "the row covering" %0 "accepts an input of some row in" %1)
   hint(prose_false "the row covering" %0 "accepts no input of the rows in" %1)
-def $overlap_any(typCase_a**, eps) = false
+def $overlap_any(_, eps) = false
 def $overlap_any(typCase_a**, typCase_h** :: typCase_t***) = b_h \/ b_t
   -- if b_h = $overlap(typCase_a**, typCase_h**)
   -- if b_t = $overlap_any(typCase_a**, typCase_t***)
@@ -167,7 +167,7 @@ rulegroup Cover_tblRows {
 
   rule Cover_tblRows/closed:
     AC |- typ* : tblRowIL*
-    -- (if typCase_total* = $variant_cases(AC.TYP, typ))*
+    -- (if _ = $variant_cases(AC.TYP, typ))*
     -- if $(|tblRowIL*| > 0)
     -- if n_init = $(|tblRowIL*| - 1)
     -- if (EXP exp_last)* '=' _ = tblRowIL*[n_init]

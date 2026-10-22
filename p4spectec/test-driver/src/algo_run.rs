@@ -5,7 +5,8 @@
 //! native lowering with native execution,
 //! meta lowering with native execution,
 //! and meta lowering with execution by the AL specification.
-//! The three outcomes are compared with the registered expectation.
+//! Each path records pass, fail, reject (no lowering), or panic (native
+//! interpreter abort); the outcomes are compared with the registered expectation.
 
 use std::time::Instant;
 
@@ -23,27 +24,27 @@ use crate::{
     suite::{self, AlgoRunConfig},
 };
 
-/// The outcome of one lowering and execution path.
-fn outcome_text(lowered: bool, passed: bool) -> &'static str {
-    match (lowered, passed) {
-        (false, _) => "reject",
-        (true, true) => "pass",
-        (true, false) => "fail",
-    }
-}
-
 /// Calls `main` of lowered AL with the native AL interpreter.
-fn run_native(spec_al: al::Spec, config: Config) -> bool {
-    let mut arena = Arena::new();
-    let Ok(mut runner) =
-        Runner::new(&mut arena, Spec::Al(spec_al), config, interface::al(), NullExtern)
-    else {
-        return false;
-    };
-    runner
-        .eval_func(&mut arena, "main", &[], &[])
-        .result
-        .is_ok()
+///
+/// An interpreter panic is recorded rather than aborting the suite.
+fn run_native(spec_al: al::Spec, config: Config) -> &'static str {
+    let run = std::panic::AssertUnwindSafe(|| {
+        let mut arena = Arena::new();
+        let Ok(mut runner) =
+            Runner::new(&mut arena, Spec::Al(spec_al), config, interface::al(), NullExtern)
+        else {
+            return false;
+        };
+        runner
+            .eval_func(&mut arena, "main", &[], &[])
+            .result
+            .is_ok()
+    });
+    match std::panic::catch_unwind(run) {
+        Ok(true) => "pass",
+        Ok(false) => "fail",
+        Err(_) => "panic",
+    }
 }
 
 /// Runs registered scripts through every lowering and execution path.
@@ -67,12 +68,13 @@ pub fn run(config_run: &AlgoRunConfig) -> Result<()> {
             let meta_meta = meta
                 .is_ok()
                 .then(|| metacirc::run(&tower, &[], paths, config).is_ok());
-            let text_outcome = [
-                outcome_text(native.is_ok(), native.unwrap_or(false)),
-                outcome_text(meta.is_ok(), meta.as_ref().is_ok_and(|passed| *passed)),
-                outcome_text(meta_meta.is_some(), meta_meta.unwrap_or(false)),
-            ]
-            .join("/");
+            let text_meta_meta = match meta_meta {
+                None => "reject",
+                Some(true) => "pass",
+                Some(false) => "fail",
+            };
+            let text_outcome =
+                [native.unwrap_or("reject"), meta.unwrap_or("reject"), text_meta_meta].join("/");
             actual.push_str(&format!("{text_outcome}\t{}\n", path.display()));
         }
         results.push((suite.expected.clone(), actual));

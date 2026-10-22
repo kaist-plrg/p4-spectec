@@ -19,7 +19,7 @@ dec $upcast_of_nullary(exp) : bool
   hint(prose_true %0 "upcasts a constructor without arguments")
   hint(prose_false %0 "does not upcast a constructor without arguments")
 def $upcast_of_nullary((UPCAST _ ((INJ (_ eps)) '#' _)) '#' _) = true
-def $upcast_of_nullary(exp) = false
+def $upcast_of_nullary(_) = false
   -- otherwise
 
 ;; A sub-pattern without binders is compared, except that a nullary case
@@ -98,7 +98,7 @@ rule Partialbind_pattern/variable:
   AC IC_prem |- IC ((VAR id) '#' typ) : AC IC ((VAR id) '#' typ) eps eps
 
 rule Partialbind_pattern/upcast:
-  AC IC_prem |- IC ((UPCAST typ_sup exp) '#' typ)
+  AC IC_prem |- IC ((UPCAST _ exp) '#' typ)
     : AC'' IC'' exp_d (prem_check :: prem_let :: prem*) (id_d :: id*)
   -- Partialbind_exp: AC IC_prem |- IC exp : AC' IC' exp_sub prem* id*
   -- if _ '#' typ_sub = exp_sub

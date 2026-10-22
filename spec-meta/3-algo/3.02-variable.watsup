@@ -21,7 +21,7 @@ def $sub_dim(_ typ_a iter_a*, _ typ_b iter_b*) = true
   -- if typ_a = typ_b
   -- if $(|iter_a*| <= |iter_b*|)
   -- if iter_a* = iter_b*[0 : |iter_a*|]
-def $sub_dim(vari_a, vari_b) = false
+def $sub_dim(_, _) = false
   -- otherwise
 
 ;;; Variable expressions
@@ -31,7 +31,7 @@ def $sub_dim(vari_a, vari_b) = false
 
 dec $iter_exp(exp, vari, iter*) : exp
   hint(prose_in %0 "of variable" %1 "iterated by" %2)
-def $iter_exp(exp, vari, eps) = exp
+def $iter_exp(exp, _, eps) = exp
 def $iter_exp(exp, vari, iter_h :: iter_t*) = $iter_exp(exp_iter, vari_iter, iter_t*)
   -- if _ '#' typ = exp
   -- if exp_iter = (ITER exp (iter_h vari)) '#' (ITER typ iter_h)

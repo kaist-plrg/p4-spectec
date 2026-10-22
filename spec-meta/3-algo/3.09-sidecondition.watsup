@@ -59,8 +59,8 @@ def $agree_guard(QUEST, vari_a, vari_b) = IF ((BIN EQUIV exp_a exp_b) '#' BOOL)
 
 dec $agree_guards(iter, vari*) : premAL*
   hint(prose_in "the conditions that the sources" %1 "agree under iteration" %0)
-def $agree_guards(iter, eps) = eps
-def $agree_guards(iter, [ vari ]) = eps
+def $agree_guards(_, eps) = eps
+def $agree_guards(_, [ _ ]) = eps
 def $agree_guards(iter, vari_a :: vari_b :: vari_t*) = prem_ab :: prem_t*
   -- if prem_ab = $agree_guard(iter, vari_a, vari_b)
   -- if prem_t* = $agree_guards(iter, vari_b :: vari_t*)
@@ -90,7 +90,7 @@ def $replace_guards(tdenv, (IDX (_ '#' typ_b) _) '#' _, exp_f) = [ prem_len ]
   -- if OK TEXT = $expand_typ(tdenv, typ_b)
   -- if exp_len = $exp_len(exp_f)
   -- if prem_len = $guard_cmp(EQ, exp_len, (NAT 1) '#' NAT)
-def $replace_guards(tdenv, path, exp_f) = eps
+def $replace_guards(_, _, _) = eps
   -- otherwise
 
 ;; Expression guards
