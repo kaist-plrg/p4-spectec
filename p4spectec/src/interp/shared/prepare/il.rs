@@ -35,12 +35,12 @@ pub struct PrepareContext<'a> {
 }
 
 impl PrepareContext<'_> {
-    /// Registers the outer variable of every iterated variable.
-    fn prepare_outer_vars(&mut self, vars: &[VarSlot], iter: Iter) {
+    /// Prepares the outer variable of every iterated variable and records it there.
+    fn prepare_outer_vars(&mut self, vars: &mut [VarSlot], iter: Iter) {
         for var in vars {
-            let mut var_outer = var.var.clone();
+            let mut var_outer = var.var.as_ref().clone();
             var_outer.iters.push(iter);
-            self.layout.resolve_var(var_outer);
+            var.set_outer(self.layout.resolve_var(var_outer));
         }
     }
 }
@@ -210,9 +210,9 @@ impl Prepare<PrepareContext<'_>> for source::ExpIter {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let source::ExpIter { iter, vars } = self;
-        // Register `x*` for every iterated `x` so its slot exists
-        let vars = vars.prepare(ctx);
-        ctx.prepare_outer_vars(&vars, iter);
+        // Prepare `x*` for every iterated `x`
+        let mut vars = vars.prepare(ctx);
+        ctx.prepare_outer_vars(&mut vars, iter);
         ExpIter { iter, vars }
     }
 }
@@ -257,11 +257,11 @@ impl Prepare<PrepareContext<'_>> for source::PremIter {
     type Output = PremIter;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        // Register the outer variables of the bound and binding variables
-        let vars_bound = self.vars_bound.prepare(ctx);
-        let vars_bind = self.vars_bind.prepare(ctx);
-        ctx.prepare_outer_vars(&vars_bound, self.iter);
-        ctx.prepare_outer_vars(&vars_bind, self.iter);
+        // Prepare the outer variables of the bound and binding variables
+        let mut vars_bound = self.vars_bound.prepare(ctx);
+        let mut vars_bind = self.vars_bind.prepare(ctx);
+        ctx.prepare_outer_vars(&mut vars_bound, self.iter);
+        ctx.prepare_outer_vars(&mut vars_bind, self.iter);
         PremIter { iter: self.iter, vars_bound, vars_bind }
     }
 }

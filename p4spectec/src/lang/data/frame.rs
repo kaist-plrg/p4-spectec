@@ -17,13 +17,6 @@ use crate::lang::{
 
 // == Frame layouts
 
-/// Prepared optional and list transitions from one inner slot.
-#[derive(Clone, Debug, Default, PartialEq)]
-struct IterSlots {
-    slot_opt: Option<SlotIdx>,
-    slot_list: Option<SlotIdx>,
-}
-
 /// Buffers a layout keeps for reuse, bounded for deep recursion.
 const FRAME_POOL_LEN_MAX: usize = 8;
 
@@ -41,21 +34,18 @@ impl PartialEq for FramePool {
     }
 }
 
-/// Assigns slots to variables and function parameters,
-/// and records the one-step iteration transitions of variables.
+/// Assigns slots to variables and function parameters.
 ///
-/// If `x` has slot 0 and `x*` has slot 2:
-/// - `vars` maps `("x", [])` to slot 0 and `("x", [List])` to slot 2.
-/// - `iters[0].slot_list` points to slot 2.
+/// If `x` has slot 0 and `x*` has slot 2,
+/// `vars` maps `("x", [])` to slot 0 and `("x", [List])` to slot 2.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct FrameLayout {
     /// Maps each variable's name and iteration path to its slot.
     vars: HashMap<(String, Vec<Iter>), SlotIdx>,
     /// Maps each function parameter's name to the slot of its function value.
     funcs: Vec<(Rc<str>, SlotIdx)>,
-    /// Maps each slot to its optional and list iteration slots;
-    /// a function parameter's slot has none.
-    iters: Vec<IterSlots>,
+    /// The number of slots.
+    len: usize,
     pool: FramePool,
 }
 
@@ -72,58 +62,29 @@ impl FrameLayout {
     // - Accessors
 
     pub fn len(&self) -> usize {
-        self.iters.len()
+        self.len
     }
 
     pub fn is_empty(&self) -> bool {
-        self.iters.is_empty()
+        self.len == 0
     }
 
     // - Resolution
 
-    /// Appends a slot with its iteration transitions.
-    fn push_slot(&mut self, slots_iter: IterSlots) -> SlotIdx {
+    /// Appends a slot.
+    fn push_slot(&mut self) -> SlotIdx {
         self.pool.0.get_mut().clear();
-        let slot = SlotIdx(self.iters.len());
-        self.iters.push(slots_iter);
+        let slot = SlotIdx(self.len);
+        self.len += 1;
         slot
     }
 
-    /// Returns a variable's existing slot or reserves a new one and links its iterations.
-    ///
-    /// Registering `x` and `x*` in either order establishes the same link:
-    /// `iters[slot_x].slot_list = Some(slot_x_list)`.
+    /// Returns a variable's existing slot or reserves a new one.
     fn reserve_var(&mut self, key: (String, Vec<Iter>)) -> SlotIdx {
-        // An existing variable already has its slot and recorded links
         if let Some(slot) = self.vars.get(&key) {
             return *slot;
         }
-
-        // If `x*` was registered first, registering `x` finds its list slot here
-        let find_outer_slot = |iter| {
-            let mut key_outer = key.clone();
-            key_outer.1.push(iter);
-            self.vars.get(&key_outer).copied()
-        };
-        let slots_iter = IterSlots {
-            slot_opt: find_outer_slot(Iter::Opt),
-            slot_list: find_outer_slot(Iter::List),
-        };
-        let slot = self.push_slot(slots_iter);
-
-        // If `x` was registered first, registering `x*` fills in that same link
-        let mut key_inner = key.clone();
-        if let Some(iter) = key_inner.1.pop()
-            && let Some(slot_inner) = self.vars.get(&key_inner)
-        {
-            let slots_iter = &mut self.iters[slot_inner.0];
-            match iter {
-                Iter::Opt => slots_iter.slot_opt = Some(slot),
-                Iter::List => slots_iter.slot_list = Some(slot),
-            }
-        }
-
-        // Record the new variable after linking it to existing slots
+        let slot = self.push_slot();
         self.vars.insert(key, slot);
         slot
     }
@@ -134,7 +95,7 @@ impl FrameLayout {
             return slot;
         }
         // Function values never iterate
-        let slot = self.push_slot(IterSlots::default());
+        let slot = self.push_slot();
         self.funcs.push((Rc::clone(&id.node), slot));
         slot
     }
@@ -148,30 +109,12 @@ impl FrameLayout {
     /// Resolves a variable under its iteration path to its slot.
     pub fn resolve_var(&mut self, var: Var) -> VarSlot {
         let slot = self.reserve_var((var.id.node.to_string(), var.iters.clone()));
-        VarSlot { slot, var }
+        VarSlot::new(slot, var)
     }
 
     /// Resolves a function parameter, which holds a function value, to its slot.
     pub fn resolve_func(&mut self, id: &Id) -> SlotIdx {
         self.reserve_func(id)
-    }
-
-    /// Resolves one prepared iteration transition without hashing names.
-    pub fn find_var_slot_iterated(&self, slot: SlotIdx, iter: Iter) -> SlotIdx {
-        let slots_iter = &self.iters[slot.0];
-        match iter {
-            Iter::Opt => slots_iter.slot_opt,
-            Iter::List => slots_iter.slot_list,
-        }
-        .expect("iterated binding is resolved during preparation")
-    }
-
-    /// The slot of `var` one iteration deeper, resolved during preparation.
-    pub fn find_var_iterated(&self, var: &VarSlot, iter: Iter) -> VarSlot {
-        let var_inner = var;
-        let mut var = var_inner.var.clone();
-        var.iters.push(iter);
-        VarSlot { slot: self.find_var_slot_iterated(var_inner.slot, iter), var }
     }
 
     /// The slot of a function parameter, if `id` names one.

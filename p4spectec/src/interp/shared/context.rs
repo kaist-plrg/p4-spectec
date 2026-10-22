@@ -13,9 +13,8 @@ use crate::lang::{
     data::{
         arena::Arena,
         frame::{Frame, FrameLayout},
-        typ,
         value::flat::{self as value, Value, ValueKind},
-        var::{SlotIdx, VarSlot},
+        var::SlotIdx,
     },
 };
 
@@ -46,13 +45,6 @@ pub trait ReadContext {
 
     /// Finds the value bound at `slot`, if any.
     fn find_value_at_slot(&self, slot: SlotIdx) -> Option<&Value>;
-    /// Finds the slot of `var` under one more iteration `iter`.
-    fn find_var_iterated(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot;
-
-    /// Finds the prepared slot of `var` under one more iteration.
-    fn find_var_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
-        self.find_var_iterated(var, iter).slot
-    }
 
     // == Types
 
@@ -333,17 +325,6 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
         self.local.frame.get(slot)
     }
 
-    fn find_var_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
-        self.local
-            .frame
-            .layout()
-            .find_var_slot_iterated(var.slot, iter)
-    }
-
-    fn find_var_iterated(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot {
-        self.local.frame.layout().find_var_iterated(var, iter)
-    }
-
     // - Types
 
     fn find_typdef_local_opt(&self, id: &ast::Id) -> Option<&TypeDef> {
@@ -537,9 +518,9 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         values_by_var: Vec<Vec<Value>>,
     ) -> Backtrack<()> {
         for (var, values) in vars.iter().zip(values_by_var) {
-            let typ = typ::make::iterate(var.var.typ.clone(), &var.var.iters);
+            let typ = Rc::clone(&var.typ);
             // Each variable becomes a list one iteration outward
-            let value = value::make::list(arena, typ.node.into(), values, Span::default());
+            let value = value::make::list(arena, typ, values, Span::default());
             let value = unwrap_from_result!(value, &Span::default());
             self.add_value_at_slot(var.slot, value);
         }
@@ -553,14 +534,9 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         values_by_var: Vec<Vec<Value>>,
     ) -> Backtrack<()> {
         for (var, values) in vars.iter().zip(values_by_var) {
-            let typ = typ::make::iterate(var.var.typ.clone(), &var.var.iters);
+            let typ = Rc::clone(&var.typ);
             // Each variable becomes an option one iteration outward
-            let value = value::make::opt(
-                arena,
-                typ.node.into(),
-                values.into_iter().next(),
-                Span::default(),
-            );
+            let value = value::make::opt(arena, typ, values.into_iter().next(), Span::default());
             let value = unwrap_from_result!(value, &Span::default());
             self.add_value_at_slot(var.slot, value);
         }
