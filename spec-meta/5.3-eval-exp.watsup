@@ -150,7 +150,9 @@ rulegroup Eval_exp/subtype {
   rule Eval_exp/succ:
     C |- SUB exp typ : OK (BOOL b)
     -- Eval_exp: C |- exp : OK val
-    -- if OK b = $subtyp($tctx(C), typ, val)
+    -- if `{ (id_local ':' typDef_local)* `} = C.LOCAL.TYP
+    -- if tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*, typDef_local*)
+    -- if OK b = $subtyp(C.GLOBAL.FUNC, tdenv, typ, val)
 
 }
 
