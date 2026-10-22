@@ -1096,7 +1096,7 @@ impl Decode for al::RuleGroup {
                     rule_paths: Vec::<al::RulePath>::decode_cached(arena, cache, *value_paths)?,
                 }, span: span))
             },
-            _ => Err(Error::unexpected(arena, value_meta, "id ':' rulmatch '=' rulpath*")),
+            _ => Err(Error::unexpected(arena, value_meta, "id ':' rulMatch '=' rulPath*")),
         }
     }
 }
@@ -1118,7 +1118,7 @@ impl Decode for al::ElseGroup {
                     rule_path: al::RulePath::decode_cached(arena, cache, *value_path)?,
                 }, span: span))
             },
-            _ => Err(Error::unexpected(arena, value_meta, "id ':' rulmatch '=' rulpath")),
+            _ => Err(Error::unexpected(arena, value_meta, "id ':' rulMatch '=' rulPath")),
         }
     }
 }

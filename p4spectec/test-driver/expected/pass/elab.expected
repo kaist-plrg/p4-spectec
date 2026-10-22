@@ -79,7 +79,6 @@ builtin def $strip_all_whitespace(text) : text
 def $starts_with(text, text) : bool =
 
   clause 0 : (t, t_prefix) = true
-  -- if (|t_prefix| <= |t|)
   -- if (t[0 : |t_prefix|] = t_prefix)
 
   clause -1 : (t, t_prefix) = false
@@ -249,7 +248,6 @@ builtin def $print_<X>(X) : text
 def $modulo(nat, nat) : nat? =
 
   clause 0 : (n_a, n_b) = ?((n_a \ n_b))
-  -- if (n_b =/= 0)
 
   clause 1 : (n_a, n_b) = ?()
   -- if (n_b = 0)
@@ -2552,14 +2550,12 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   clause 0 : (_B _b as value, n_var, b_h :: b_t*{b_t <- b_t*}) = (_B b_h as value, b_t*{b_t <- b_t*})
 
   clause 1 : (w W _i as value, n_var, b*{b <- b*}) = (w W i as value, b_t*{b_t <- b_t*})
-  -- if (|b*{b <- b*}| >= w)
   -- if (b_h*{b_h <- b_h*} = b*{b <- b*}[0 : w])
   -- if (n_t as int = (|b*{b <- b*}| - w))
   -- if (b_t*{b_t <- b_t*} = b*{b <- b*}[w : n_t])
   -- if (i = $int_to_bitstr(w as int, $bits_to_int_unsigned(b_h*{b_h <- b_h*})))
 
   clause 2 : (w S _i as value, n_var, b*{b <- b*}) = (w S i as value, b_t*{b_t <- b_t*})
-  -- if (|b*{b <- b*}| >= w)
   -- if (b_h*{b_h <- b_h*} = b*{b <- b*}[0 : w])
   -- if (n_t as int = (|b*{b <- b*}| - w))
   -- if (b_t*{b_t <- b_t*} = b*{b <- b*}[w : n_t])
@@ -2569,7 +2565,6 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
 
   clause 4 : (n_max '.' _nat V _i as value, n_var, b*{b <- b*}) = (n_max '.' n_var V i as value, b_t*{b_t <- b_t*})
   -- if (n_var =/= 0)
-  -- if (|b*{b <- b*}| >= n_var)
   -- if (b_h*{b_h <- b_h*} = b*{b <- b*}[0 : n_var])
   -- if (n_t as int = (|b*{b <- b*}| - n_var))
   -- if (b_t*{b_t <- b_t*} = b*{b <- b*}[n_var : n_t])
@@ -3800,7 +3795,6 @@ def $specialize_typeDefIR(typeDefIR, typeIR*) : typeIR =
   clause 0 : (typeDefIR_base, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}) = typeIR_spec
   -- if ((typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}, typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}) = $typeParameterListIR_of_typeDefIR(typeDefIR_base))
   -- if (typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*})
-  -- if (|typeParameterIR*{typeParameterIR <- typeParameterIR*}| = |typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}|)
   -- if (theta = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `})
   -- if (typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base))
   -- if (typeIR_spec = $subst_typeIR(theta, typeIR_base))
@@ -4401,7 +4395,6 @@ def $bin_eq(value, value) : bool =
   -- if (|value_a*{value_a <- value_a*}| =/= |value_b*{value_b <- value_b*}|)
 
   clause 9 : (LIST `[ value_a*{value_a <- value_a*} `] as value, LIST `[ value_b*{value_b <- value_b*} `] as value) = $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})
-  -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
   clause 10 : (TUPLE `( value_a*{value_a <- value_a*} `) as value, TUPLE `( value_b*{value_b <- value_b*} `) as value) = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
 
@@ -4409,19 +4402,16 @@ def $bin_eq(value, value) : bool =
   -- if (|value_a*{value_a <- value_a*}| =/= |value_b*{value_b <- value_b*}|)
 
   clause 12 : (SEQ `( value_a*{value_a <- value_a*} `) as value, SEQ `( value_b*{value_b <- value_b*} `) as value) = $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})
-  -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
   clause 13 : (ARRAY `[ value_a*{value_a <- value_a*} `] as value, ARRAY `[ value_b*{value_b <- value_b*} `] as value) = false
   -- if (|value_a*{value_a <- value_a*}| =/= |value_b*{value_b <- value_b*}|)
 
   clause 14 : (ARRAY `[ value_a*{value_a <- value_a*} `] as value, ARRAY `[ value_b*{value_b <- value_b*} `] as value) = $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})
-  -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
   clause 15 : (HEADER_STACK `[ value_a*{value_a <- value_a*} `( _nat `) `] as value, HEADER_STACK `[ value_b*{value_b <- value_b*} `( _nat' `) `] as value) = false
   -- if (|value_a*{value_a <- value_a*}| =/= |value_b*{value_b <- value_b*}|)
 
   clause 16 : (HEADER_STACK `[ value_a*{value_a <- value_a*} `( _nat `) `] as value, HEADER_STACK `[ value_b*{value_b <- value_b*} `( _nat' `) `] as value) = $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})
-  -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
   clause 17 : (STRUCT typeId_a `{ fieldValue_a*{fieldValue_a <- fieldValue_a*} `} as value, STRUCT typeId_b `{ fieldValue_b*{fieldValue_b <- fieldValue_b*} `} as value) = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- (if (value_field_a nameIR_field_a ';' = fieldValue_a))*{fieldValue_a <- fieldValue_a*, nameIR_field_a <- nameIR_field_a*, value_field_a <- value_field_a*}
@@ -9172,7 +9162,6 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index ~> integerValue_index as value
     -- if (TUPLE `( value_e*{value_e <- value_e*} `) as value = value_base)
     -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
-    -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- if (value = value_e*{value_e <- value_e*}[n_index])
 
     rule array: p TC |- typedExpressionIR_base `[ typedExpressionIR_index `] as expressionIR '#' _expressionNoteIR ~> value
@@ -9180,7 +9169,6 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index ~> integerValue_index as value
     -- if (ARRAY `[ value_e*{value_e <- value_e*} `] as value = value_base)
     -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
-    -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- if (value = value_e*{value_e <- value_e*}[n_index])
 
     rule stack: p TC |- typedExpressionIR_base `[ typedExpressionIR_index `] as expressionIR '#' _expressionNoteIR ~> value
@@ -9188,7 +9176,6 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index ~> integerValue_index as value
     -- if (HEADER_STACK `[ value_e*{value_e <- value_e*} `( _nat `) `] as value = value_base)
     -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
-    -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- if (value = value_e*{value_e <- value_e*}[n_index])
 
   rulegroup sliceAccessExpressionIR
@@ -10256,7 +10243,6 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (ctk_index = LCTK)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index as value
     -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
-    -- if (n_index < |typeIR_e*{typeIR_e <- typeIR_e*}|)
     -- if (expressionNoteIR = `( typeIR_e*{typeIR_e <- typeIR_e*}[n_index] ctk_base `))
 
     rule array-lctk: p TC |- expression_base `[ expression_index `] as expression : typedExpressionIR_base `[ typedExpressionIR_index_reduced `] as expressionIR '#' expressionNoteIR
@@ -13222,7 +13208,6 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     rule list: TC typeIR_key*{typeIR_key <- typeIR_key*} |- `( simpleKeysetExpression_h ',' simpleKeysetExpressionList_t `) as keysetExpression : `( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} `) as keysetExpressionIR
     -- if (simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} = $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList_t))
     -- if (simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} = simpleKeysetExpression_h :: simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*})
-    -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| = |simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}|)
     -- (SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : simpleKeysetExpressionIR)*{simpleKeysetExpression <- simpleKeysetExpression*, simpleKeysetExpressionIR <- simpleKeysetExpressionIR*, typeIR_key <- typeIR_key*}
 
 relation SelectCase_ok: typingContext nameIR* typeIR* |- selectCase : selectCaseIR
@@ -14426,7 +14411,6 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_index : STO_2 integerValue_index as value
     -- if (TUPLE `( value_e*{value_e <- value_e*} `) as value = value_base)
     -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
-    -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- if (value = value_e*{value_e <- value_e*}[n_index])
 
     rule array: p IC STO_0 |- typedExpressionIR_base `[ typedExpressionIR_index `] as expressionIR '#' _expressionNoteIR : STO_2 value
@@ -14434,7 +14418,6 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_index : STO_2 integerValue_index as value
     -- if (ARRAY `[ value_e*{value_e <- value_e*} `] as value = value_base)
     -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
-    -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- if (value = value_e*{value_e <- value_e*}[n_index])
 
     rule stack: p IC STO_0 |- typedExpressionIR_base `[ typedExpressionIR_index `] as expressionIR '#' _expressionNoteIR : STO_2 value
@@ -14442,7 +14425,6 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_index : STO_2 integerValue_index as value
     -- if (HEADER_STACK `[ value_e*{value_e <- value_e*} `( _nat `) `] as value = value_base)
     -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
-    -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- if (value = value_e*{value_e <- value_e*}[n_index])
 
   rulegroup sliceAccessExpressionIR
@@ -16166,8 +16148,6 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base as value
     -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue_base)
     -- if (nameIR = "next")
-    -- if (n_size = |value_element*{value_element <- value_element*}|)
-    -- if (n_idx < n_size)
     -- if (value = value_element*{value_element <- value_element*}[n_idx])
 
     rule stack-last: p EC_0 ARCH |- storageReference '.' nameIR : value

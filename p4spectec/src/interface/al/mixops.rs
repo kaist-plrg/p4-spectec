@@ -1,7 +1,7 @@
 //! Constructor notation shared by AL encoders and decoders
 //!
-//! These shapes follow `spec-meta/1-syntax.watsup` and are shared by the
-//! encoders and decoders.
+//! These shapes follow `spec-meta/1-syntax/1.0-syntax.watsup` and
+//! `spec-meta/2-runtime/2.0-value.watsup` and are shared by the encoders and decoders.
 
 // == Iterations and variables
 
@@ -24,9 +24,9 @@ pub(super) const FUNC_TYP: &str = "FUNC tparam* typ* typ";
 
 pub(super) const ALIAS: &str = "ALIAS typ";
 pub(super) const TYPFIELD: &str = "atom typ";
-pub(super) const STRUCT: &str = "STRUCT typfield*";
+pub(super) const STRUCT: &str = "STRUCT typField*";
 pub(super) const TYPCASE: &str = "mixop typ*";
-pub(super) const VARIANT: &str = "VARIANT typcase*";
+pub(super) const VARIANT: &str = "VARIANT typCase*";
 
 // == Values
 
@@ -35,9 +35,9 @@ pub(super) const NAT: &str = "NAT nat";
 pub(super) const INT: &str = "INT int";
 pub(super) const TEXT: &str = "TEXT text";
 pub(super) const VALFIELD: &str = "atom val";
-pub(super) const STR: &str = "STR valfield*";
+pub(super) const STR: &str = "STR valField*";
 pub(super) const VALCASE: &str = "mixop val*";
-pub(super) const INJ: &str = "INJ valcase";
+pub(super) const INJ: &str = "INJ valCase";
 pub(super) const TUP: &str = "TUP val*";
 pub(super) const OPT: &str = "OPT val?";
 pub(super) const LIST: &str = "LIST val*";
@@ -53,7 +53,7 @@ pub(super) const CMP: &str = "CMP cmpop exp exp";
 pub(super) const UPCAST: &str = "UPCAST typ exp";
 pub(super) const DOWNCAST: &str = "DOWNCAST typ exp";
 pub(super) const SUB_EXP: &str = "SUB exp typ";
-pub(super) const MATCH: &str = "MATCH exp pattern";
+pub(super) const MATCH: &str = "MATCH exp pat";
 pub(super) const EXPCASE: &str = "mixop exp*";
 pub(super) const EXPFIELD: &str = "atom exp";
 pub(super) const CONS: &str = "CONS exp exp";
@@ -65,7 +65,7 @@ pub(super) const IDX: &str = "IDX exp exp";
 pub(super) const SLICE: &str = "SLICE exp exp exp";
 pub(super) const UPD: &str = "UPD exp path exp";
 pub(super) const CALL: &str = "CALL id targ* arg*";
-pub(super) const ITER_EXP: &str = "ITER exp iterexp";
+pub(super) const ITER_EXP: &str = "ITER exp iterExp";
 pub(super) const ITEREXP: &str = "iter vari*";
 pub(super) const ROOT: &str = "ROOT";
 
@@ -118,15 +118,15 @@ pub(super) const IF: &str = "IF exp";
 pub(super) const IFHOLD: &str = "IFHOLD id ':' exp*";
 pub(super) const IFNOTHOLD: &str = "IFNOTHOLD id ':' exp*";
 pub(super) const LET: &str = "LET exp '=' exp";
-pub(super) const ITER_PREM: &str = "ITER prem iterprem";
+pub(super) const ITER_PREM: &str = "ITER prem iterPrem";
 pub(super) const DEBUG: &str = "DEBUG exp";
 
 // == Rules and clauses
 
 pub(super) const RULMATCH: &str = "exp* '-' prem*";
 pub(super) const RULPATH: &str = "id '=' exp* '-' prem*";
-pub(super) const RULGROUP: &str = "id ':' rulmatch '=' rulpath*";
-pub(super) const ELSGROUP: &str = "id ':' rulmatch '=' rulpath";
+pub(super) const RULGROUP: &str = "id ':' rulMatch '=' rulPath*";
+pub(super) const ELSGROUP: &str = "id ':' rulMatch '=' rulPath";
 pub(super) const CLAUSE: &str = "arg* '=' exp '-' prem*";
 
 // == Definitions
@@ -134,11 +134,11 @@ pub(super) const CLAUSE: &str = "arg* '=' exp '-' prem*";
 pub(super) const EXTTYP: &str = "EXTTYP id";
 pub(super) const TYP_DEF: &str = "TYP id tparam* '=' deftyp";
 pub(super) const EXTREL: &str = "EXTREL id ':' typ* '->' typ*";
-pub(super) const REL_DEF: &str = "REL id ':' typ* '->' typ* '=' rulgroup* elsgroup?";
+pub(super) const REL_DEF: &str = "REL id ':' typ* '->' typ* '=' rulGroup* elsGroup?";
 pub(super) const EXTFUNC: &str = "EXTFUNC id tparam* param* ':' typ";
 pub(super) const BUILTINFUNC: &str = "BUILTINFUNC id tparam* param* ':' typ";
-pub(super) const TABLEFUNC: &str = "TABLEFUNC id param* ':' typ '=' tblrow*";
-pub(super) const FUNC_DEF: &str = "FUNC id tparam* param* ':' typ '=' clause* elsclause?";
+pub(super) const TABLEFUNC: &str = "TABLEFUNC id param* ':' typ '=' tblRow*";
+pub(super) const FUNC_DEF: &str = "FUNC id tparam* param* ':' typ '=' clause* elsClause?";
 
 // == Results
 

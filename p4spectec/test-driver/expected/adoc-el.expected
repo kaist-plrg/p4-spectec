@@ -99,7 +99,6 @@ builtin dec $strip_all_whitespace(text) : text
 dec $starts_with(text, text) : bool
 
 def $starts_with(t, t_prefix) = true
-  -- if $(|t_prefix| <= |t|)
   -- if t[0 : |t_prefix|] = t_prefix
 
 def $starts_with(t, t_prefix) = false
@@ -290,7 +289,6 @@ builtin dec $print_<X>(X) : text
 dec $modulo(nat, nat) : nat?
 
 def $modulo(n_a, n_b) = $(n_a \ n_b)
-  -- if n_b =/= 0
 
 def $modulo(n_a, n_b) = eps
   -- if n_b = 0
@@ -2245,14 +2243,12 @@ def $write_value_from_bits(value, n_var, b*) = value_updated
 def $write_value_from_bits'(_B _, n_var, b_h :: b_t*) = (_B b_h, b_t*)
 
 def $write_value_from_bits'(w W _, n_var, b*) = (w W i, b_t*)
-  -- if $(|b*| >= w)
   -- if b_h* = b*[0 : w]
   -- if n_t = $(|b*| - w)
   -- if b_t* = b*[w : n_t]
   -- if i = $int_to_bitstr(w, $bits_to_int_unsigned(b_h*))
 
 def $write_value_from_bits'(w S _, n_var, b*) = (w S i, b_t*)
-  -- if $(|b*| >= w)
   -- if b_h* = b*[0 : w]
   -- if n_t = $(|b*| - w)
   -- if b_t* = b*[w : n_t]
@@ -2263,7 +2259,6 @@ def $write_value_from_bits'(n_max '.' _ V i, 0, b*) = (n_max '.' 0 V i, b*)
 def $write_value_from_bits'(n_max '.' _ V _, n_var, b*)
   = (n_max '.' n_var V i, b_t*)
   -- if n_var =/= 0
-  -- if $(|b*| >= n_var)
   -- if b_h* = b*[0 : n_var]
   -- if n_t = $(|b*| - n_var)
   -- if b_t* = b*[n_var : n_t]
@@ -4060,7 +4055,6 @@ def $specialize_typeDefIR(typeDefIR_base, typeArgumentIR*) = typeIR_spec
   -- if (typeParameterIR_expl*, typeParameterIR_impl*)
       = $typeParameterListIR_of_typeDefIR(typeDefIR_base)
   -- if typeParameterIR* = typeParameterIR_expl* ++ typeParameterIR_impl*
-  -- if |typeParameterIR*| = |typeArgumentIR*|
   -- if theta = `{ (typeParameterIR ':' typeArgumentIR)* `}
   -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
   -- if typeIR_spec = $subst_typeIR(theta, typeIR_base)
@@ -4833,7 +4827,6 @@ def $bin_eq(LIST `[ value_a* `], LIST `[ value_b* `]) = false
 
 def $bin_eq(LIST `[ value_a* `], LIST `[ value_b* `])
   = $forall_($bin_eq(value_a, value_b)*)
-  -- if |value_a*| = |value_b*|
 
 def $bin_eq(TUPLE `( value_a* `), TUPLE `( value_b* `))
   = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
@@ -4843,14 +4836,12 @@ def $bin_eq(SEQ `( value_a* `), SEQ `( value_b* `)) = false
 
 def $bin_eq(SEQ `( value_a* `), SEQ `( value_b* `))
   = $forall_($bin_eq(value_a, value_b)*)
-  -- if |value_a*| = |value_b*|
 
 def $bin_eq(ARRAY `[ value_a* `], ARRAY `[ value_b* `]) = false
   -- if |value_a*| =/= |value_b*|
 
 def $bin_eq(ARRAY `[ value_a* `], ARRAY `[ value_b* `])
   = $forall_($bin_eq(value_a, value_b)*)
-  -- if |value_a*| = |value_b*|
 
 def $bin_eq(
     HEADER_STACK `[ value_a* `( _ `) `],
@@ -4862,7 +4853,6 @@ def $bin_eq(
     HEADER_STACK `[ value_a* `( _ `) `],
     HEADER_STACK `[ value_b* `( _ `) `])
   = $forall_($bin_eq(value_a, value_b)*)
-  -- if |value_a*| = |value_b*|
 
 def $bin_eq(
     STRUCT typeId_a `{ fieldValue_a* `},
@@ -14352,7 +14342,6 @@ rulegroup Expr_ok/indexAccessExpression {
     -- Expr_eval_lctk:
         p TC |- typedExpressionIR_index_reduced ~> integerValue_index
     -- if n_index = $nat_of_integerValue(integerValue_index)
-    -- if $(n_index < |typeIR_e*|)
     -- if expressionNoteIR = `( typeIR_e*[n_index] ctk_base `)
 
   rule Expr_ok/array-lctk:
@@ -15064,7 +15053,6 @@ rulegroup Expr_eval_lctk/indexAccessExpressionIR {
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index ~> integerValue_index
     -- if TUPLE `( value_e* `) = value_base
     -- if n_index = $nat_of_integerValue(integerValue_index)
-    -- if $(n_index < |value_e*|)
     -- if value = value_e*[n_index]
 
   rule Expr_eval_lctk/array:
@@ -15074,7 +15062,6 @@ rulegroup Expr_eval_lctk/indexAccessExpressionIR {
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index ~> integerValue_index
     -- if ARRAY `[ value_e* `] = value_base
     -- if n_index = $nat_of_integerValue(integerValue_index)
-    -- if $(n_index < |value_e*|)
     -- if value = value_e*[n_index]
 
   rule Expr_eval_lctk/stack:
@@ -15084,7 +15071,6 @@ rulegroup Expr_eval_lctk/indexAccessExpressionIR {
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index ~> integerValue_index
     -- if HEADER_STACK `[ value_e* `( _ `) `] = value_base
     -- if n_index = $nat_of_integerValue(integerValue_index)
-    -- if $(n_index < |value_e*|)
     -- if value = value_e*[n_index]
 
 }
@@ -17698,7 +17684,6 @@ rulegroup SelectCase_keyset_ok/tupleKeysetExpression {
         = $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList_t)
     -- if simpleKeysetExpression*
         = simpleKeysetExpression_h :: simpleKeysetExpression_t*
-    -- if |typeIR_key*| = |simpleKeysetExpression*|
     -- (SelectCase_keyset_simple_ok:
         TC typeIR_key |- simpleKeysetExpression : simpleKeysetExpressionIR)*
 
@@ -21486,7 +21471,6 @@ rulegroup Expr_inst/indexAccessExpressionIR {
         p IC STO_1 |- typedExpressionIR_index : STO_2 integerValue_index
     -- if TUPLE `( value_e* `) = value_base
     -- if n_index = $nat_of_integerValue(integerValue_index)
-    -- if $(n_index < |value_e*|)
     -- if value = value_e*[n_index]
 
   rule Expr_inst/array:
@@ -21498,7 +21482,6 @@ rulegroup Expr_inst/indexAccessExpressionIR {
         p IC STO_1 |- typedExpressionIR_index : STO_2 integerValue_index
     -- if ARRAY `[ value_e* `] = value_base
     -- if n_index = $nat_of_integerValue(integerValue_index)
-    -- if $(n_index < |value_e*|)
     -- if value = value_e*[n_index]
 
   rule Expr_inst/stack:
@@ -21510,7 +21493,6 @@ rulegroup Expr_inst/indexAccessExpressionIR {
         p IC STO_1 |- typedExpressionIR_index : STO_2 integerValue_index
     -- if HEADER_STACK `[ value_e* `( _ `) `] = value_base
     -- if n_index = $nat_of_integerValue(integerValue_index)
-    -- if $(n_index < |value_e*|)
     -- if value = value_e*[n_index]
 
 }
@@ -25278,8 +25260,6 @@ rulegroup Lvalue_read/memberAccess {
     -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base
     -- if HEADER_STACK `[ value_element* `( n_idx `) `] = headerStackValue_base
     -- if nameIR = "next"
-    -- if n_size = |value_element*|
-    -- if $(n_idx < n_size)
     -- if value = value_element*[n_idx]
 
   rule Lvalue_read/stack-last:

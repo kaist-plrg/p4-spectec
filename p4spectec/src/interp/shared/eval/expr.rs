@@ -432,7 +432,7 @@ fn eval_mem_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
 
 // - Length expression
 
-/// Length of a text in bytes or of a list in elements.
+/// Counts Unicode scalar values in a text or elements in a list.
 fn eval_len_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     ctx: &Interp::Context<'global>,
@@ -440,8 +440,8 @@ fn eval_len_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
 ) -> Backtrack<Value> {
     let value = unwrap!(eval_exp(runner_ctx, ctx, exp_inner));
     let len = match runner_ctx.arena().value.kind(value.node) {
-        // Texts count bytes, lists count elements; anything else is an error
-        ValueKind::Text(text) => text.len(),
+        // Texts count scalar values and lists count elements
+        ValueKind::Text(text) => text.chars().count(),
         ValueKind::List(values) => values.len(),
         _ => {
             unreachable!("length operand must be a text or list")

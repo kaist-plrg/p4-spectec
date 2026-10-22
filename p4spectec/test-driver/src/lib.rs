@@ -42,7 +42,7 @@ pub enum Error {
 /// The result of an acceptance check.
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Configures interpreter execution consistently for run and sim.
+/// Configures interpreter execution consistently for run, sim, and metacirc.
 #[derive(Clone, Copy, Args)]
 pub struct ExecutionOptions {
     /// Disable deterministic execution checks

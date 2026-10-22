@@ -1,0 +1,16 @@
+;; An error in a later clause is reported after an earlier clause succeeds
+
+var n : nat
+
+dec $f(nat) : nat
+def $f(n) = n
+def $f(n) = n
+
+dec $g(nat) : nat
+def $g(n) = n
+def $g(n) = $f(n)
+
+dec $main() : nat
+def $main() = $g(1)
+def $main() = 0
+  -- otherwise

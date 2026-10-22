@@ -1,0 +1,22 @@
+;; An error in a premise does not fall through to another rule path
+
+var n : nat
+var m : nat
+
+dec $f(nat) : nat
+def $f(n) = n
+def $f(n) = n
+
+relation S: nat |- nat
+  hint(input %0)
+
+rule S/a: n |- n
+  -- if $f(n) = n
+rule S/b: n |- 0
+  -- if n = 1
+
+dec $main() : nat
+def $main() = m
+  -- S: 1 |- m
+def $main() = 0
+  -- otherwise

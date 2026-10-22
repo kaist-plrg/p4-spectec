@@ -2,22 +2,25 @@
 
 use clap::Parser;
 use p4spectec_test::{
-    Error, Result, metacirc,
+    Error, ExecutionOptions, Result, metacirc,
     suite::{self, Index},
 };
 use std::{path::PathBuf, process::ExitCode};
 
+/// Compares P4 corpus and AL script outcomes through metacircular towers.
 #[derive(Parser)]
 struct Cli {
     /// Suite registration file, relative to the invoking directory.
     #[arg(long = "registry")]
     path_registry: Option<PathBuf>,
-    /// Enable or disable interpreter and AL encoding caches.
-    #[arg(long, default_value_t = true, action = clap::ArgAction::Set)]
-    cache_on: bool,
+    /// Run only the registered suite with this name.
+    #[arg(long, value_name = "NAME")]
+    suite: Option<String>,
+    #[command(flatten)]
+    options: ExecutionOptions,
 }
 
-/// Resolves caller paths and runs the registered corpus from the repository root.
+/// Resolves caller paths and runs the selected suites from the repository root.
 fn execute(cli: Cli) -> Result<()> {
     // Refuse baseline promotion before discovering or executing any inputs
     if std::env::var_os("UPDATE_EXPECT").is_some() {
@@ -32,8 +35,15 @@ fn execute(cli: Cli) -> Result<()> {
     // Resolve caller paths before selecting the corpus repository as working directory
     std::env::set_current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))?;
     let index = Index::load(&path_registry)?;
-    let (config, config_tower) = suite::load_metacirc(&index.suites.metacirc)?;
-    metacirc::run(&config, &config_tower, cli.cache_on)
+    let mut config = suite::load_metacirc(&index.suites.metacirc)?;
+    // Restrict the registered suites to the selected name
+    if let Some(name) = &cli.suite {
+        config.suites.retain(|suite| &suite.name == name);
+        if config.suites.is_empty() {
+            return Err(Error::Invalid(format!("unknown metacirc suite {name}")));
+        }
+    }
+    metacirc::run(&config, cli.options)
 }
 
 fn main() -> ExitCode {

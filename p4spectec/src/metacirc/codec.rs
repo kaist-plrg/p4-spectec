@@ -1,7 +1,7 @@
 //! Host-call arguments and results at one AL representation boundary
 //!
 //! Calls decode identifiers, types, and values through the shared AL codec.
-//! Successful native calls become OK; exhausted alternatives become FAIL.
+//! Successful native calls become OK; exhausted alternatives become UNMATCH.
 //! Fatal errors remain diagnostics, and every path retains the call's effects.
 
 use crate::{
@@ -81,10 +81,10 @@ pub(super) mod encode {
             Ok(output) => {
                 encode(arena, cache, output).map_err(|error| ExternError::from(error.into_report()))
             }
-            // An exhausted relation or function is a meta-level FAIL, not a host abort
+            // An exhausted relation or function is a meta-level UNMATCH, not a host abort
             Err(InterpreterError::Mismatch(_)) => make::case_string! {
                 arena: arena,
-                shape: "FAIL",
+                shape: "UNMATCH",
                 args: [],
                 typ: text_typ,
                 span: Span::default(),
@@ -96,22 +96,22 @@ pub(super) mod encode {
         Eval::new(result.map(|value| vec![value]), eval.effect)
     }
 
-    /// Encodes a native function outcome as valres.
+    /// Encodes a native function outcome as funcRes.
     pub(in crate::metacirc) fn func_result(
         arena: &mut Arena,
         cache: &mut Cache,
         eval: Eval<Value>,
     ) -> Eval<Vec<Value>, ExternError> {
-        result(arena, cache, eval, "valres", encode_al::ok_value_cached)
+        result(arena, cache, eval, "funcRes", encode_al::ok_value_cached)
     }
 
-    /// Encodes a native relation outcome as valsres.
+    /// Encodes a native relation outcome as relRes.
     pub(in crate::metacirc) fn rel_result(
         arena: &mut Arena,
         cache: &mut Cache,
         eval: Eval<Vec<Value>>,
     ) -> Eval<Vec<Value>, ExternError> {
-        result(arena, cache, eval, "valsres", |arena, cache, values| {
+        result(arena, cache, eval, "relRes", |arena, cache, values| {
             encode_al::ok_values_cached(arena, cache, &values)
         })
     }

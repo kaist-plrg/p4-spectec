@@ -1,0 +1,165 @@
+;; Relation invocation
+
+;;; Rule path evaluation
+
+syntax rul = rulMatch -> rulPath
+
+relation Eval_rul:
+  ctx |- rul `( val* `) : relRes
+  hint(input %0 %1 %2)
+  hint(prose_in "evaluating rule path" %1 "with inputs" %2 "under context" %0)
+  hint(prose_out %3)
+
+rulegroup Eval_rul {
+
+  rule Eval_rul/premises-failure:
+    C |- (rulMatch -> rulPath) `( val* `) : failure
+    -- if id '=' exp_out* '-' prem_path* = rulPath
+    -- if exp* '-' prem_match* = rulMatch
+    -- Assign_exps: C |- exp* := val* : OK C'
+    -- if prem* = prem_match* ++ prem_path*
+    -- Eval_prems: C' |- prem* : failure
+
+  rule Eval_rul/succ:
+    C |- (rulMatch -> rulPath) `( val* `) : relRes
+    -- if id '=' exp_out* '-' prem_path* = rulPath
+    -- if exp* '-' prem_match* = rulMatch
+    -- Assign_exps: C |- exp* := val* : OK C'
+    -- if prem* = prem_match* ++ prem_path*
+    -- Eval_prems: C' |- prem* : OK C''
+    -- Eval_exps: C'' |- exp_out* : relRes
+
+}
+
+rule Eval_rul/error:
+  C |- (rulMatch -> rulPath) `( val* `) : ERROR
+  -- otherwise
+
+;;; Rule path sequence evaluation
+
+relation Eval_ruls:
+  ctx |- rul* `( val* `) : relRes
+  hint(input %0 %1 %2)
+  hint(prose_in "evaluating rule paths" %1 "with inputs" %2 "under context" %0
+                "with determinism checks")
+  hint(prose_out %3)
+
+relation Eval_ruls_on_ok:
+  ctx |- rul* `( val* `) : unitRes
+  hint(input %0 %1 %2)
+  hint(prose_in "checking that all remaining rule paths" %1
+                "are unmatched with inputs" %2 "under context" %0)
+  hint(prose_out %3)
+
+rulegroup Eval_ruls {
+
+  rule Eval_ruls/nil:
+    C |- eps `( val* `) : UNMATCH
+
+  rule Eval_ruls/unmatch:
+    C |- (rul_h :: rul_t*) `( val* `) : relRes
+    -- Eval_rul: C |- rul_h `( val* `) : UNMATCH
+    -- Eval_ruls: C |- rul_t* `( val* `) : relRes
+
+  rule Eval_ruls/succ:
+    C |- (rul_h :: rul_t*) `( val* `) : OK val_out*
+    -- Eval_rul: C |- rul_h `( val* `) : OK val_out*
+    -- Eval_ruls_on_ok: C |- rul_t* `( val* `) : OK
+
+}
+
+rule Eval_ruls/error:
+  C |- rul* `( val* `) : ERROR
+  -- otherwise
+
+rulegroup Eval_ruls_on_ok {
+
+  rule Eval_ruls_on_ok/nil:
+    C |- eps `( val* `) : OK
+
+  rule Eval_ruls_on_ok/unmatch:
+    C |- (rul_h :: rul_t*) `( val* `) : unitRes
+    -- Eval_rul: C |- rul_h `( val* `) : UNMATCH
+    -- Eval_ruls_on_ok: C |- rul_t* `( val* `) : unitRes
+
+  rule Eval_ruls_on_ok/error:
+    C |- (rul_h :: rul_t*) `( val* `) : ERROR
+    -- Eval_rul: C |- rul_h `( val* `) : relRes
+    -- if relRes =/= UNMATCH
+
+}
+
+;;; Defined relations
+
+relation Call_defined_rel:
+  ctx |- definedRelDefn `( val* `) : relRes
+  hint(input %0 %1 %2)
+  hint(prose_in "calling defined relation" %1 "with inputs" %2 "under context" %0)
+  hint(prose_out %3)
+
+dec $ruls_of_rulgroup(rulGroup) : rul*
+  hint(prose_in "the rule paths of rule group" %0)
+def $ruls_of_rulgroup(id ':' rulMatch '=' rulPath*)
+  = (rulMatch -> rulPath)*
+
+dec $ruls_of_rulgroups(rulGroup*) : rul*
+  hint(prose_in "the rule paths of rule groups" %0 "in order")
+def $ruls_of_rulgroups(eps) = eps
+def $ruls_of_rulgroups(rulGroup_h :: rulGroup_t*)
+  = $ruls_of_rulgroup(rulGroup_h) ++ $ruls_of_rulgroups(rulGroup_t*)
+
+dec $rul_of_elsgroup(elsGroup) : rul
+  hint(prose_in "the rule path of otherwise group" %0)
+def $rul_of_elsgroup(id ':' rulMatch '=' rulPath)
+  = rulMatch -> rulPath
+
+rulegroup Call_defined_rel {
+
+  rule Call_defined_rel/unmatch:
+    C |- definedRelDefn `( val* `) : relRes
+    -- if REL _ ':' _ '->' _ '=' rulGroup* elsGroup? = definedRelDefn
+    -- if C_local = C[ .LOCAL = $empty_localLayer ]
+    -- if rul* = $ruls_of_rulgroups(rulGroup*)
+    -- Eval_ruls:
+        C_local |- rul* `( val* `) : UNMATCH
+    -- if (rul_els = $rul_of_elsgroup(elsGroup))?
+    -- (Eval_rul:
+        C_local |- rul_els `( val* `) : relRes_els)?
+    -- if relRes = $deopt_<relRes>(relRes_els?, UNMATCH)
+
+  rule Call_defined_rel/result:
+    C |- definedRelDefn `( val* `) : relRes
+    -- if REL _ ':' _ '->' _ '=' rulGroup* elsGroup? = definedRelDefn
+    -- if C_local = C[ .LOCAL = $empty_localLayer ]
+    -- if rul* = $ruls_of_rulgroups(rulGroup*)
+    -- Eval_ruls:
+        C_local |- rul* `( val* `) : relRes
+    -- if relRes =/= UNMATCH
+
+}
+
+rule Call_defined_rel/error:
+  C |- definedRelDefn `( val* `) : ERROR
+  -- otherwise
+
+;; Relation call
+
+rulegroup Call_rel {
+
+  rule Call_rel/extern:
+    C |- id `( val* `) : relRes
+    -- if EXTREL id_rel ':' _ '->' _ = $find_rel(C, id)
+    -- Call_extern_rel:
+        |- id_rel `( val* `) : relRes
+
+  rule Call_rel/defined:
+    C |- id `( val* `) : relRes
+    -- if definedRelDefn = $find_rel(C, id)
+    -- Call_defined_rel:
+        C |- definedRelDefn `( val* `) : relRes
+
+}
+
+rule Call_rel/error:
+  C |- id `( val* `) : ERROR
+  -- otherwise
