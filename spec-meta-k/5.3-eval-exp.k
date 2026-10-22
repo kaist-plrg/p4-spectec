@@ -63,16 +63,9 @@ module EVAL-EXP
   rule lengthVals(.ValList) => 0
   rule lengthVals(_:Val, Vs:ValList) => 1 +Int lengthVals(Vs)
 
-  //   rule Eval_exp/tuple, /case, /struct, /list
-  rule <k> tupE(Vs:ValList) => tupV(Vs) ... </k>
-  rule <k> injE(C:ValCase) => injV(C) ... </k>
-  rule <k> strE(Fs:ValFieldList) => strV(Fs) ... </k>
-  rule <k> listE(Vs:ValList) => listV(Vs) ... </k>
-
-  //   rulegroup Eval_exp/opt
+  //   rule Eval_exp/tuple, /case, /struct, /list, and rulegroup /opt: the
+  //   evaluated constructor is the value constructor (`overload`)
   context optE(someExp(HOLE))
-  rule <k> optE(someExp(V:Val)) => optV(someVal(V)) ... </k>
-  rule <k> optE(noExp()) => optV(noVal()) ... </k>
 
   //   rule Eval_exp/cons
   rule <k> consE(V:Val, listV(Vs:ValList)) => listV(V, Vs) ... </k>

@@ -72,10 +72,11 @@ library on the specification path before anything else runs.
 
 Expressions and premises evaluate in place. The productions of
 [`1-syntax.k`](spec-meta-k/1-syntax.k) carry `strict`/`seqstrict`
-attributes, a value is an expression (`Exp ::= Val`), and an expression list,
-field, or case whose parts are all values is the value list, field, or case
-(`overload`), so the semantic rules match on value constructors:
-`binE(O, Nl:Num, Nr:Num)`, `tupE(Vs:ValList) => tupV(Vs)`. A premise that
+attributes, a value is an expression (`Exp ::= Val`), and an expression
+constructor, list, field, or case whose parts are all values is the value
+constructor, list, field, or case (`overload`: an evaluated `tupE` is a
+`tupV`), so the semantic rules only ever see value constructors:
+`binE(O, Nl:Num, Nr:Num)`, `catE(listV(Vl), listV(Vr))`. A premise that
 holds rewrites to `.K`, an assignment adds its bindings to `<local>`, and a
 premise list runs as a sequence of statements.
 

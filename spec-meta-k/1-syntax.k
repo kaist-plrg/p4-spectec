@@ -147,11 +147,11 @@ module SYNTAX
   syntax Val ::= boolV(Bool)                [symbol(boolV)]
                | Num
                | textV(String)              [symbol(textV)]
-               | strV(ValFieldList)         [symbol(strV)]
-               | injV(ValCase)              [symbol(injV)]
-               | tupV(ValList)              [symbol(tupV)]
-               | optV(ValOpt)               [symbol(optV)]
-               | listV(ValList)             [symbol(listV)]
+               | strV(ValFieldList)         [symbol(strV), overload(str)]
+               | injV(ValCase)              [symbol(injV), overload(inj)]
+               | tupV(ValList)              [symbol(tupV), overload(tup)]
+               | optV(ValOpt)               [symbol(optV), overload(opt)]
+               | listV(ValList)             [symbol(listV), overload(list)]
                | funcV(Id)                  [symbol(funcV)]
                | extV(JSON)                 [symbol(extV)]
 
@@ -164,8 +164,8 @@ module SYNTAX
                                             [symbol(valFieldList), terminator-symbol(.valFieldList), overload(fields)]
 
   // `val?`
-  syntax ValOpt ::= noVal()                 [symbol(noVal)]
-                  | someVal(Val)            [symbol(someVal)]
+  syntax ValOpt ::= noVal()                 [symbol(noVal), overload(none)]
+                  | someVal(Val)            [symbol(someVal), overload(some)]
 
   // ==========================================================================
   // Expressions
@@ -177,8 +177,8 @@ module SYNTAX
   //
   // A value is an expression, so that an evaluated subexpression can take
   // its place; the strictness attributes give the evaluation order. An
-  // expression list, field or case whose parts are all values is the value
-  // list, field or case (`overload`).
+  // expression constructor, list, field or case whose parts are all values
+  // is the value constructor, list, field or case (`overload`).
   // ==========================================================================
 
   syntax Exp ::= Val
@@ -192,11 +192,11 @@ module SYNTAX
                | downCastE(Typ, Exp)        [symbol(downCastE), strict(2)]
                | subE(Exp, Typ)             [symbol(subE), strict(1)]
                | matchE(Exp, Pattern)       [symbol(matchE), strict(1)]
-               | tupE(ExpList)              [symbol(tupE), strict]
-               | injE(ExpCase)              [symbol(injE), strict]
-               | strE(ExpFieldList)         [symbol(strE), strict]
-               | optE(ExpOpt)               [symbol(optE)]
-               | listE(ExpList)             [symbol(listE), strict]
+               | tupE(ExpList)              [symbol(tupE), strict, overload(tup)]
+               | injE(ExpCase)              [symbol(injE), strict, overload(inj)]
+               | strE(ExpFieldList)         [symbol(strE), strict, overload(str)]
+               | optE(ExpOpt)               [symbol(optE), overload(opt)]
+               | listE(ExpList)             [symbol(listE), strict, overload(list)]
                | consE(Exp, Exp)            [symbol(consE), seqstrict]
                | catE(Exp, Exp)             [symbol(catE), seqstrict]
                | memE(Exp, Exp)             [symbol(memE), seqstrict]
@@ -224,8 +224,9 @@ module SYNTAX
                                             [symbol(expFieldList), terminator-symbol(.expFieldList), seqstrict, overload(fields)]
 
   // `exp?`
-  syntax ExpOpt ::= noExp()                 [symbol(noExp)]
-                  | someExp(Exp)            [symbol(someExp)]
+  syntax ExpOpt ::= ValOpt
+                  | noExp()                 [symbol(noExp), overload(none)]
+                  | someExp(Exp)            [symbol(someExp), overload(some)]
 
   // ==========================================================================
   // Patterns
