@@ -120,7 +120,6 @@ dec $expand_typ(tdenv, typ) : typRes
                 "under type environment" %0)
 def $expand_typ(tdenv, VAR id targ*) = $expand_typ(tdenv, typ_subst)
   -- if TYP _ tparam* '=' (ALIAS typ) = $find_map<id, typDef>(tdenv, id)
-  -- if |tparam*| = |targ*|
   -- if theta = `{ (tparam ':' targ)* `}
   -- if OK typ_subst = $subst_typ(theta, typ)
 def $expand_typ(tdenv, VAR id targ*) = OK (VAR id targ*)
@@ -277,16 +276,13 @@ def $subtyp_def(fenv, tdenv, EXTTYP _, eps, val) = $subtyp_extern(val)
 
 def $subtyp_def(fenv, tdenv, TYP _ tparam* '=' (ALIAS typ), targ*, val)
   = $subtyp(fenv, tdenv, typ_subst, val)
-  -- if |tparam*| = |targ*|
   -- if theta = `{ (tparam ':' targ)* `}
   -- if OK typ_subst = $subst_typ(theta, typ)
 def $subtyp_def(fenv, tdenv, TYP _ tparam* '=' (VARIANT typCase*), targ*, val)
   = $subtyp_variant(fenv, tdenv, theta, typCase*, val)
-  -- if |tparam*| = |targ*|
   -- if theta = `{ (tparam ':' targ)* `}
 def $subtyp_def(fenv, tdenv, TYP _ tparam* '=' (STRUCT typField*), targ*, val)
   = $subtyp_struct(fenv, tdenv, theta, typField*, val)
-  -- if |tparam*| = |targ*|
   -- if theta = `{ (tparam ':' targ)* `}
 def $subtyp_def(fenv, tdenv, typDef, targ*, val) = ERROR
   -- otherwise
@@ -347,7 +343,6 @@ def $upcast(C, INT, INT i) = OK (INT i)
 def $upcast(C, INT, NAT n) = OK (INT n)
 def $upcast(C, VAR id targ*, val) = $upcast(C, typ_subst, val)
   -- if TYP _ tparam* '=' (ALIAS typ) = $find_typ(C, id)
-  -- if |tparam*| = |targ*|
   -- if theta = `{ (tparam ':' targ)* `}
   -- if OK typ_subst = $subst_typ(theta, typ)
 def $upcast(C, VAR id targ*, val) = OK val
@@ -398,7 +393,6 @@ def $downcast(C, NAT, INT i) = OK (NAT n)
   -- if n = i
 def $downcast(C, VAR id targ*, val) = $downcast(C, typ_subst, val)
   -- if TYP _ tparam* '=' (ALIAS typ) = $find_typ(C, id)
-  -- if |tparam*| = |targ*|
   -- if theta = `{ (tparam ':' targ)* `}
   -- if OK typ_subst = $subst_typ(theta, typ)
 def $downcast(C, VAR id targ*, val) = OK val
