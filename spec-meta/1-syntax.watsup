@@ -4,6 +4,12 @@ syntax id = text
 syntax atom = text
 syntax mixop = atom**
 
+;; Numbers
+
+syntax num =
+  | NAT nat
+  | INT int
+
 ;; Types
 
 syntax iter, targ, typField, typCase, tparam
@@ -40,48 +46,51 @@ syntax iter = QUEST | STAR
 
 syntax vari = id typ iter*
 
-;; Expressions
+;; Operators
 
-syntax valField, valCase, expField, expCase, pattern, path, arg, iterExp
-
-syntax num =
-  | NAT nat
-  | INT int
-
-syntax boolunop =
+syntax boolUnop =
   | NOT
 
-syntax boolbinop =
-  | AND
-  | OR
-  | IMPL
-  | EQUIV
+syntax numUnop =
+  | PLUS | MINUS
 
-syntax numunop =
-  | PLUS
-  | MINUS
+syntax unop = boolUnop | numUnop
 
-syntax numbinop =
-  | ADD
-  | SUB
-  | MUL
-  | DIV
-  | MOD
-  | POW
+syntax boolBinop =
+  | AND | OR | IMPL | EQUIV
 
-syntax numcmpop =
-  | LT
-  | GT
-  | LE
-  | GE
+syntax numBinop =
+  | ADD | SUB | MUL | DIV | MOD | POW
 
-syntax polycmpop =
-  | EQ
-  | NE
+syntax binop = boolBinop | numBinop
 
-syntax unop = boolunop | numunop
-syntax binop = boolbinop | numbinop
-syntax cmpop = polycmpop | numcmpop
+syntax numCmpop =
+  | LT | GT | LE | GE
+
+syntax polyCmpop =
+  | EQ | NE
+
+syntax cmpop = polyCmpop | numCmpop
+
+;; Patterns
+
+syntax listPat =
+  | CONS
+  | FIXED nat
+  | NIL
+
+syntax optPat =
+  | SOME
+  | NONE
+
+syntax pat =
+  | INJ mixop
+  | listPat
+  | optPat
+
+;; Values
+
+syntax valField, valCase
 
 extern syntax json
 syntax val =
@@ -99,6 +108,10 @@ syntax val =
 syntax valField = atom val
 syntax valCase = mixop val*
 
+;; Expressions
+
+syntax expField, expCase, path, arg, iterExp
+
 syntax exp =
   | BOOL bool
   | num
@@ -110,7 +123,7 @@ syntax exp =
   | UPCAST typ exp
   | DOWNCAST typ exp
   | SUB exp typ
-  | MATCH exp pattern
+  | MATCH exp pat
   | TUP exp*
   | INJ expCase
   | STR expField*
@@ -129,21 +142,10 @@ syntax exp =
 
 syntax expCase = mixop exp*
 syntax expField = atom exp
+
 syntax iterExp = iter vari*
 
-syntax listpattern =
-  | CONS
-  | FIXED nat
-  | NIL
-
-syntax optpattern =
-  | SOME
-  | NONE
-
-syntax pattern =
-  | INJ mixop
-  | listpattern
-  | optpattern
+;; Paths
 
 syntax path =
   | ROOT
@@ -171,7 +173,7 @@ syntax param =
 
 ;; Premises
 
-syntax iterPrem = iter vari* vari*
+syntax iterPrem
 
 syntax prem =
   | REL id ':' exp* '->' exp*
@@ -182,28 +184,69 @@ syntax prem =
   | ITER prem iterPrem
   | DEBUG exp
 
-;; Definitions
+syntax iterPrem = iter vari* vari*
+
+;; Type definitions
+
+syntax externTypDefn =
+  EXTTYP id
+
+syntax definedTypDefn =
+  TYP id tparam* '=' deftyp
+
+syntax typDefn =
+  | externTypDefn
+  | definedTypDefn
+
+;; Relation definitions
+
+syntax externRelDefn =
+  EXTREL id ':' typ* '->' typ*
 
 syntax rulMatch = exp* '-' prem*
 syntax rulPath = id '=' exp* '-' prem*
 syntax rulGroup = id ':' rulMatch '=' rulPath*
 syntax elsGroup = id ':' rulMatch '=' rulPath
 
-syntax clause = arg* '=' exp '-' prem*
-syntax elsClause = clause
+syntax definedRelDefn =
+  REL id ':' typ* '->' typ* '=' rulGroup* elsGroup?
+
+syntax relDefn =
+  | externRelDefn
+  | definedRelDefn
+
+;; Meta-functions
+
+syntax externFuncDefn =
+  EXTFUNC id tparam* param* ':' typ
+
+syntax builtinFuncDefn =
+  BUILTINFUNC id tparam* param* ':' typ
 
 syntax tblRow = arg* '=' exp '-' prem*
 
+syntax tableFuncDefn =
+  TABLEFUNC id param* ':' typ '=' tblRow*
+
+syntax clause = arg* '=' exp '-' prem*
+syntax elsClause = clause
+
+syntax definedFuncDefn =
+  FUNC id tparam* param* ':' typ '=' clause* elsClause?
+
+syntax funcDefn =
+  | externFuncDefn
+  | builtinFuncDefn
+  | tableFuncDefn
+  | definedFuncDefn
+
+;; Definitions
+
 syntax defn =
-  | EXTTYP id
-  | TYP id tparam* '=' deftyp
-  | EXTREL id ':' typ* '->' typ*
-  | REL id ':' typ* '->' typ* '=' rulGroup* elsGroup?
-  | EXTFUNC id tparam* param* ':' typ
-  | BUILTINFUNC id tparam* param* ':' typ
-  | TABLEFUNC id param* ':' typ '=' tblRow*
-  | FUNC id tparam* param* ':' typ '=' clause* elsClause?
+  | typDefn
+  | relDefn
+  | funcDefn
 
-;; Scripts
+;; Spec
 
-syntax script = defn*
+syntax spec = defn*

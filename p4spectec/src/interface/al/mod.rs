@@ -1,7 +1,7 @@
 //! AL program parsing and specification builtins
 //!
 //! `AlInterface::parse_program` lowers specification paths through `algo`
-//! and encodes source AL as a meta `script` in the caller's arena
+//! and encodes source AL as a meta `spec` in the caller's arena
 //! Paths follow the compiler's ordered file and directory loading rules
 //! Include search paths are unused because AL input is not preprocessed
 

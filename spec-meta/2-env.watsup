@@ -1,5 +1,4 @@
 ;; Value environment
-;; In the mechanization, the underlying types of variables are omitted
 
 syntax varr = id iter*
 
@@ -8,37 +7,42 @@ syntax venv = map<varr, val>
 ;; Type definition environment
 
 syntax typDef =
+  | typDefn
   | PARAM
-  | EXT
-  | DEF tparam* '->' deftyp
 
 syntax tdenv = map<id, typDef>
+
+;; Relation environment
+
+syntax renv = map<id, relDefn>
+
+;; Function environment
+
+syntax fenv = map<id, funcDefn>
+syntax fnenv = map<id, id>
 
 ;; Type substitution environment
 
 syntax theta = map<id, typ>
-
-dec $extend_tdenv(tdenv, tdenv) : tdenv
-  hint(prose_in "the extension of" %0 "by" %1)
-def $extend_tdenv(tdenv_global, `{ (id ':' typDef)* `})
-  = $adds_map<id, typDef>(tdenv_global, id*, typDef*)
 
 dec $theta_of_tdenv(tdenv) : theta
   hint(prose_in "the type substitution environment of" %0)
 def $theta_of_tdenv(`{ eps `}) = $empty_map<id, typ>
 def $theta_of_tdenv(`{ (id_h ':' typDef_h) :: (id_t ':' typDef_t)* `})
   = $add_map<id, typ>(theta_t, id_h, typ_h)
-  -- if typDef_h = DEF eps '->' (ALIAS typ_h)
+  -- if typDef_h = TYP _ eps '=' (ALIAS typ_h)
   -- if theta_t = $theta_of_tdenv(`{ (id_t ':' typDef_t)* `})
 def $theta_of_tdenv(`{ (id_h ':' typDef_h) :: (id_t ':' typDef_t)* `})
   = $theta_of_tdenv(`{ (id_t ':' typDef_t)* `})
-  -- if typDef_h = PARAM \/ typDef_h = EXT
-def $theta_of_tdenv(`{ (id_h ':' (DEF tparam* '->' (ALIAS typ))) :: (id_t ':' typDef_t)* `})
+  -- if typDef_h = PARAM
+def $theta_of_tdenv(`{ (id_h ':' (EXTTYP _)) :: (id_t ':' typDef_t)* `})
+  = $theta_of_tdenv(`{ (id_t ':' typDef_t)* `})
+def $theta_of_tdenv(`{ (id_h ':' (TYP _ tparam* '=' (ALIAS typ))) :: (id_t ':' typDef_t)* `})
   = $theta_of_tdenv(`{ (id_t ':' typDef_t)* `})
   -- if tparam* =/= eps
-def $theta_of_tdenv(`{ (id_h ':' (DEF tparam* '->' (STRUCT typField*))) :: (id_t ':' typDef_t)* `})
+def $theta_of_tdenv(`{ (id_h ':' (TYP _ tparam* '=' (STRUCT typField*))) :: (id_t ':' typDef_t)* `})
   = $theta_of_tdenv(`{ (id_t ':' typDef_t)* `})
-def $theta_of_tdenv(`{ (id_h ':' (DEF tparam* '->' (VARIANT typCase*))) :: (id_t ':' typDef_t)* `})
+def $theta_of_tdenv(`{ (id_h ':' (TYP _ tparam* '=' (VARIANT typCase*))) :: (id_t ':' typDef_t)* `})
   = $theta_of_tdenv(`{ (id_t ':' typDef_t)* `})
 
 ;; Iteration helper
@@ -57,45 +61,3 @@ dec $iter_vari(vari, iter) : vari
   hint(prose_in %0 "iterated by" %1)
 def $iter_vari(id typ iter*, iter_add)
   = id typ (iter* ++ [ iter_add ])
-
-dec $iter_varr(varr, iter) : varr
-  hint(prose_in %0 "iterated by" %1)
-def $iter_varr(id iter*, iter_add)
-  = id (iter* ++ [ iter_add ])
-
-;; Relation environment
-
-syntax externRelDef =
-  | EXT id
-
-syntax definedRelDef =
-  | DEF rulGroup* elsGroup?
-
-syntax relDef =
-  | externRelDef
-  | definedRelDef
-
-syntax renv = map<id, relDef>
-
-;; Function environment
-
-syntax externFuncDef =
-  | EXT id tparam* param* typ
-
-syntax builtinFuncDef =
-  | BUILTIN id tparam* param* typ
-
-syntax tableFuncDef =
-  | TABLE param* typ '->' tblRow*
-
-syntax definedFuncDef =
-  | DEF tparam* param* typ '->' clause* elsClause?
-
-syntax funcDef =
-  | externFuncDef
-  | builtinFuncDef
-  | tableFuncDef
-  | definedFuncDef
-
-syntax fenv = map<id, funcDef>
-syntax fnenv = map<id, id>

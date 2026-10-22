@@ -6,8 +6,8 @@ rule Eval_arg/exp:
 
 rule Eval_arg/fun:
   C |- FUN id : OK (FUNC id_global)
-  -- if id_global = $resolve_func(C, id)
-  -- if funcDef = $find_func(C, id_global)
+  -- if id_global = $resolve_func_param(C, id)
+  -- if funcDefn = $find_func(C, id_global)
 
 rule Eval_arg/error:
   C |- arg : ERROR
@@ -16,6 +16,9 @@ rule Eval_arg/error:
 ;; Argument sequence evaluation rules
 
 rulegroup Eval_args {
+
+  rule Eval_args/nil:
+    C |- eps : OK eps
 
   rule Eval_args/head-failure:
     C |- arg_h :: arg_t* : failure
@@ -26,10 +29,7 @@ rulegroup Eval_args {
     -- Eval_arg: C |- arg_h : OK val_h
     -- Eval_args: C |- arg_t* : failure
 
-  rule Eval_args/nil:
-    C |- eps : OK eps
-
-  rule Eval_args/cons:
+  rule Eval_args/cons-succ:
     C |- arg_h :: arg_t* : OK (val_h :: val_t*)
     -- Eval_arg: C |- arg_h : OK val_h
     -- Eval_args: C |- arg_t* : OK val_t*

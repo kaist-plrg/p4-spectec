@@ -691,7 +691,7 @@ impl Encode for il::Pattern {
             il::Pattern::Opt(il::OptPattern::Some) => (m::SOME, vec![]),
             il::Pattern::Opt(il::OptPattern::None) => (m::NONE, vec![]),
         };
-        case(arena, shape, "pattern", values_meta, Span::default())
+        case(arena, shape, "pat", values_meta, Span::default())
     }
 }
 
@@ -1053,7 +1053,7 @@ impl Encode for al::Spec {
         }
         Ok(make::list(
             arena,
-            make_typ::var(phrase!(node: "script".into(), span: Span::default()), vec![])
+            make_typ::var(phrase!(node: "spec".into(), span: Span::default()), vec![])
                 .node
                 .into(),
             values_meta,

@@ -12,7 +12,7 @@ extern relation Call_extern_func:
 ;;; Builtin meta-function invocation
 
 extern relation Call_builtin_func:
-  |- id '@' `< typ* `> `( val* `) : funcRes
+  |- id `< typ* `> `( val* `) : funcRes
   hint(input %0 %1 %2)
 
 ;;; Extern relations
@@ -20,7 +20,7 @@ extern relation Call_builtin_func:
 syntax relRes = ok<val*> | failure
 
 extern relation Call_extern_rel:
-  |- id val* : relRes
+  |- id `( val* `) : relRes
   hint(input %0 %1)
   hint(prose_in "evaluating extern relation" %0 "with inputs" %1)
   hint(prose_out %2)
@@ -46,6 +46,22 @@ relation Eval_exps:
 relation Eval_exp_each:
   ctx* |- exp : expsRes
   hint(input %0 %1)
+
+;;; Path evaluation
+
+syntax pathRes = ok<val> | failure
+
+relation Eval_path_acc:
+  ctx |- val path : pathRes
+  hint(input %0 %1 %2)
+  hint(prose_in "accessing" %2 "of" %1 "under" %0)
+  hint(prose_out %3)
+
+relation Eval_path_upd:
+  ctx |- val path := val : pathRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "updating" %2 "of" %1 "with" %3 "under" %0)
+  hint(prose_out %4)
 
 ;;; Type argument evaluation
 
@@ -100,11 +116,11 @@ relation Eval_prem_each:
 ;;; Meta-function calls
 
 relation Call_func_dispatch:
-  ctx |- funcDef targ* val* : funcRes
+  ctx |- funcDefn `< targ* `> `( val* `) : funcRes
   hint(input %0 %1 %2 %3)
 
 relation Call_func:
-  ctx |- id targ* val* : funcRes
+  ctx |- id `< targ* `> `( val* `) : funcRes
   hint(input %0 %1 %2 %3)
   hint(prose_in "calling" %1 "with types" %2 "and arguments" %3 "under" %0)
   hint(prose_out %4)
@@ -112,11 +128,11 @@ relation Call_func:
 ;;; Relation calls
 
 relation Call_rel_dispatch:
-  ctx |- relDef val* : relRes
+  ctx |- relDefn `( val* `) : relRes
   hint(input %0 %1 %2)
 
 relation Call_rel:
-  ctx |- id val* : relRes
+  ctx |- id `( val* `) : relRes
   hint(input %0 %1 %2)
   hint(prose_in "calling" %1 "with arguments" %2 "under" %0)
   hint(prose_out %3)

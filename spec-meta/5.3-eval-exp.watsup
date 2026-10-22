@@ -29,86 +29,87 @@ rulegroup Eval_exp/unary {
     C |- UN NOT exp : failure
     -- Eval_exp: C |- exp : failure
 
+  rule Eval_exp/boolean-succ:
+    C |- UN NOT exp : OK (BOOL b_res)
+    -- Eval_exp: C |- exp : OK (BOOL b)
+    -- if b_res = ~b
+
   rule Eval_exp/number-operand-failure:
-    C |- UN numunop exp : failure
+    C |- UN numUnop exp : failure
     -- Eval_exp: C |- exp : failure
 
-  rule Eval_exp/boolean:
-    C |- UN NOT exp : OK (BOOL (~b))
-    -- Eval_exp: C |- exp : OK (BOOL b)
-
-  rule Eval_exp/number:
-    C |- UN numunop exp : OK val_res
+  rule Eval_exp/number-succ:
+    C |- UN numUnop exp : OK val_res
     -- Eval_exp: C |- exp : OK num
-    -- if val_res = $unop_number(numunop, num)
+    -- if val_res = $numUnop(numUnop, num)
 
 }
 
 rulegroup Eval_exp/binary {
 
   rule Eval_exp/boolean-left-failure:
-    C |- BIN boolbinop exp_l exp_r : failure
+    C |- BIN boolBinop exp_l exp_r : failure
     -- Eval_exp: C |- exp_l : failure
 
   rule Eval_exp/boolean-right-failure:
-    C |- BIN boolbinop exp_l exp_r : failure
+    C |- BIN boolBinop exp_l exp_r : failure
     -- Eval_exp: C |- exp_l : OK (BOOL b_l)
     -- Eval_exp: C |- exp_r : failure
 
+  rule Eval_exp/boolean-succ:
+    C |- BIN boolBinop exp_l exp_r : OK (BOOL b_res)
+    -- Eval_exp: C |- exp_l : OK (BOOL b_l)
+    -- Eval_exp: C |- exp_r : OK (BOOL b_r)
+    -- if b_res = $boolBinop(boolBinop, b_l, b_r)
+
   rule Eval_exp/number-left-failure:
-    C |- BIN numbinop exp_l exp_r : failure
+    C |- BIN numBinop exp_l exp_r : failure
     -- Eval_exp: C |- exp_l : failure
 
   rule Eval_exp/number-right-failure:
-    C |- BIN numbinop exp_l exp_r : failure
+    C |- BIN numBinop exp_l exp_r : failure
     -- Eval_exp: C |- exp_l : OK num_l
     -- Eval_exp: C |- exp_r : failure
 
-  rule Eval_exp/boolean:
-    C |- BIN boolbinop exp_l exp_r : OK (BOOL b_res)
-    -- Eval_exp: C |- exp_l : OK (BOOL b_l)
-    -- Eval_exp: C |- exp_r : OK (BOOL b_r)
-    -- if b_res = $binop_bool(boolbinop, b_l, b_r)
-
-  rule Eval_exp/number:
-    C |- BIN numbinop exp_l exp_r : numOpRes
+  rule Eval_exp/number-succ:
+    C |- BIN numBinop exp_l exp_r : numBinopRes
     -- Eval_exp: C |- exp_l : OK num_l
     -- Eval_exp: C |- exp_r : OK num_r
-    -- if numOpRes = $binop_number(numbinop, num_l, num_r)
+    -- if numBinopRes = $numBinop(numBinop, num_l, num_r)
 
 }
 
 rulegroup Eval_exp/compare {
 
   rule Eval_exp/poly-left-failure:
-    C |- CMP polycmpop exp_l exp_r : failure
+    C |- CMP polyCmpop exp_l exp_r : failure
     -- Eval_exp: C |- exp_l : failure
 
   rule Eval_exp/poly-right-failure:
-    C |- CMP polycmpop exp_l exp_r : failure
+    C |- CMP polyCmpop exp_l exp_r : failure
     -- Eval_exp: C |- exp_l : OK val_l
     -- Eval_exp: C |- exp_r : failure
 
+  rule Eval_exp/poly-succ:
+    C |- CMP polyCmpop exp_l exp_r : OK (BOOL b_res)
+    -- Eval_exp: C |- exp_l : OK val_l
+    -- Eval_exp: C |- exp_r : OK val_r
+    -- if b_res = $polyCmpop(polyCmpop, val_l, val_r)
+
   rule Eval_exp/number-left-failure:
-    C |- CMP numcmpop exp_l exp_r : failure
+    C |- CMP numCmpop exp_l exp_r : failure
     -- Eval_exp: C |- exp_l : failure
 
   rule Eval_exp/number-right-failure:
-    C |- CMP numcmpop exp_l exp_r : failure
+    C |- CMP numCmpop exp_l exp_r : failure
     -- Eval_exp: C |- exp_l : OK num_l
     -- Eval_exp: C |- exp_r : failure
 
-  rule Eval_exp/poly:
-    C |- CMP polycmpop exp_l exp_r : OK (BOOL b_res)
-    -- Eval_exp: C |- exp_l : OK val_l
-    -- Eval_exp: C |- exp_r : OK val_r
-    -- if b_res = $cmpop_poly(polycmpop, val_l, val_r)
-
-  rule Eval_exp/number:
-    C |- CMP numcmpop exp_l exp_r : OK (BOOL b_res)
+  rule Eval_exp/number-succ:
+    C |- CMP numCmpop exp_l exp_r : OK (BOOL b_res)
     -- Eval_exp: C |- exp_l : OK num_l
     -- Eval_exp: C |- exp_r : OK num_r
-    -- if OK b_res = $cmpop_number(numcmpop, num_l, num_r)
+    -- if OK b_res = $numCmpop(numCmpop, num_l, num_r)
 
 }
 
@@ -158,12 +159,13 @@ rulegroup Eval_exp/subtype {
 rulegroup Eval_exp/match {
 
   rule Eval_exp/operand-failure:
-    C |- MATCH exp pattern : failure
+    C |- MATCH exp pat : failure
     -- Eval_exp: C |- exp : failure
 
   rule Eval_exp/succ:
-    C |- MATCH exp pattern : OK (BOOL $match(val, pattern))
+    C |- MATCH exp pat : OK (BOOL b_matches)
     -- Eval_exp: C |- exp : OK val
+    -- if b_matches = $matches(val, pat)
 
 }
 
@@ -216,16 +218,16 @@ rulegroup Eval_exp/struct {
 
 rulegroup Eval_exp/opt {
 
+  rule Eval_exp/succ-none:
+    C |- OPT eps : OK (OPT eps)
+
   rule Eval_exp/operand-failure:
     C |- OPT exp : failure
     -- Eval_exp : C |- exp : failure
 
-  rule Eval_exp/some:
+  rule Eval_exp/succ-some:
     C |- OPT exp : OK (OPT val)
     -- Eval_exp : C |- exp : OK val
-
-  rule Eval_exp/none:
-    C |- OPT eps : OK (OPT eps)
 
 }
 
@@ -271,25 +273,27 @@ rulegroup Eval_exp/concat {
     C |- CAT exp_l exp_r : failure
     -- Eval_exp: C |- exp_l : failure
 
-  rule Eval_exp/text-right-failure:
-    C |- CAT exp_l exp_r : failure
-    -- Eval_exp: C |- exp_l : OK (TEXT text_l)
-    -- Eval_exp: C |- exp_r : failure
-
   rule Eval_exp/list-right-failure:
     C |- CAT exp_l exp_r : failure
     -- Eval_exp: C |- exp_l : OK (LIST val_l*)
     -- Eval_exp: C |- exp_r : failure
 
-  rule Eval_exp/text:
-    C |- CAT exp_l exp_r : OK (TEXT (text_l ++ text_r))
-    -- Eval_exp: C |- exp_l : OK (TEXT text_l)
-    -- Eval_exp: C |- exp_r : OK (TEXT text_r)
-
-  rule Eval_exp/list:
-    C |- CAT exp_l exp_r : OK (LIST (val_l* ++ val_r*))
+  rule Eval_exp/list-succ:
+    C |- CAT exp_l exp_r : OK (LIST val_res*)
     -- Eval_exp: C |- exp_l : OK (LIST val_l*)
     -- Eval_exp: C |- exp_r : OK (LIST val_r*)
+    -- if val_res* = val_l* ++ val_r*
+
+  rule Eval_exp/text-right-failure:
+    C |- CAT exp_l exp_r : failure
+    -- Eval_exp: C |- exp_l : OK (TEXT text_l)
+    -- Eval_exp: C |- exp_r : failure
+
+  rule Eval_exp/text-succ:
+    C |- CAT exp_l exp_r : OK (TEXT t_res)
+    -- Eval_exp: C |- exp_l : OK (TEXT t_l)
+    -- Eval_exp: C |- exp_r : OK (TEXT t_r)
+    -- if t_res = t_l ++ t_r
 
 }
 
@@ -297,7 +301,7 @@ rulegroup Eval_exp/concat {
 
 rulegroup Eval_exp/mem {
 
-  rule Eval_exp/element-failure:
+  rule Eval_exp/elem-failure:
     C |- MEM exp_e exp_s : failure
     -- Eval_exp: C |- exp_e : failure
 
@@ -307,9 +311,10 @@ rulegroup Eval_exp/mem {
     -- Eval_exp: C |- exp_s : failure
 
   rule Eval_exp/succ:
-    C |- MEM exp_e exp_s : OK (BOOL $exists_((val_e = val)*))
+    C |- MEM exp_e exp_s : OK (BOOL b_mem)
     -- Eval_exp: C |- exp_e : OK val_e
     -- Eval_exp: C |- exp_s : OK (LIST val*)
+    -- if b_mem = $exists_((val_e = val)*)
 
 }
 
@@ -322,119 +327,18 @@ rulegroup Eval_exp/len {
     -- Eval_exp: C |- exp : failure
 
   rule Eval_exp/text:
-    C |- LEN exp : OK (NAT (|text|))
-    -- Eval_exp: C |- exp : OK (TEXT text)
+    C |- LEN exp : OK (NAT n)
+    -- Eval_exp: C |- exp : OK (TEXT t)
+    -- if n = |t|
 
   rule Eval_exp/list:
-    C |- LEN exp : OK (NAT (|val*|))
+    C |- LEN exp : OK (NAT n)
     -- Eval_exp: C |- exp : OK (LIST val*)
+    -- if n = |val*|
 
 }
 
 ;;; Dot, indexing, and slicing evaluation rules
-
-syntax pathRes = ok<val> | failure
-
-relation Eval_path:
-  ctx |- val path : pathRes
-  hint(input %0 %1 %2)
-  hint(prose_in "accessing" %2 "of" %1 "under" %0)
-  hint(prose_out %3)
-
-rule Eval_path/root:
-  C |- val_b ROOT : OK val_b
-
-rulegroup Eval_path/dot {
-
-  rule Eval_path/path-failure:
-    C |- val_b (DOT path atom) : failure
-    -- Eval_path: C |- val_b path : failure
-
-  rule Eval_path/succ:
-    C |- val_b (DOT path atom) : OK val
-    -- Eval_path: C |- val_b path : OK (STR valField*)
-    -- if (atom_field val_field = valField)*
-    -- if val = $assoc_<atom, val>(atom, (atom_field, val_field)*)
-
-}
-
-rulegroup Eval_path/idx {
-
-  rule Eval_path/path-failure:
-    C |- val_b (IDX path exp_i) : failure
-    -- Eval_path: C |- val_b path : failure
-
-  rule Eval_path/text-index-failure:
-    C |- val_b (IDX path exp_i) : failure
-    -- Eval_path: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : failure
-
-  rule Eval_path/list-index-failure:
-    C |- val_b (IDX path exp_i) : failure
-    -- Eval_path: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : failure
-
-  rule Eval_path/text:
-    C |- val_b (IDX path exp_i) : OK (TEXT t[n])
-    -- Eval_path: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n)
-    -- if $(n < |t|)
-
-  rule Eval_path/list:
-    C |- val_b (IDX path exp_i) : OK val*[n]
-    -- Eval_path: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n)
-    -- if $(n < |val*|)
-
-}
-
-rulegroup Eval_path/slice {
-
-  rule Eval_path/path-failure:
-    C |- val_b (SLICE path exp_i exp_n) : failure
-    -- Eval_path: C |- val_b path : failure
-
-  rule Eval_path/text-index-failure:
-    C |- val_b (SLICE path exp_i exp_n) : failure
-    -- Eval_path: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : failure
-
-  rule Eval_path/text-length-failure:
-    C |- val_b (SLICE path exp_i exp_n) : failure
-    -- Eval_path: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : failure
-
-  rule Eval_path/list-index-failure:
-    C |- val_b (SLICE path exp_i exp_n) : failure
-    -- Eval_path: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : failure
-
-  rule Eval_path/list-length-failure:
-    C |- val_b (SLICE path exp_i exp_n) : failure
-    -- Eval_path: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : failure
-
-  rule Eval_path/text:
-    C |- val_b (SLICE path exp_i exp_n) : OK (TEXT t[n_i : n_n])
-    -- Eval_path: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : OK (NAT n_n)
-    -- if $(n_i + n_n <= |t|)
-
-  rule Eval_path/list:
-    C |- val_b (SLICE path exp_i exp_n) : OK (LIST val*[n_i : n_n])
-    -- Eval_path: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : OK (NAT n_n)
-    -- if $(n_i + n_n <= |val*|)
-
-}
-
-rule Eval_path/error:
-  C |- val path : ERROR
-  -- otherwise
 
 rulegroup Eval_exp/dot {
 
@@ -445,7 +349,8 @@ rulegroup Eval_exp/dot {
   rule Eval_exp/succ:
     C |- DOT exp atom : pathRes
     -- Eval_exp: C |- exp : OK val
-    -- Eval_path: C |- val (DOT ROOT atom) : pathRes
+    -- if path = DOT ROOT atom
+    -- Eval_path_acc: C |- val path : pathRes
 
 }
 
@@ -458,7 +363,8 @@ rulegroup Eval_exp/idx {
   rule Eval_exp/succ:
     C |- IDX exp_b exp_i : pathRes
     -- Eval_exp: C |- exp_b : OK val_b
-    -- Eval_path: C |- val_b (IDX ROOT exp_i) : pathRes
+    -- if path = IDX ROOT exp_i
+    -- Eval_path_acc: C |- val_b path : pathRes
 
 }
 
@@ -471,126 +377,10 @@ rulegroup Eval_exp/slice {
   rule Eval_exp/succ:
     C |- SLICE exp_b exp_i exp_n : pathRes
     -- Eval_exp: C |- exp_b : OK val_b
-    -- Eval_path: C |- val_b (SLICE ROOT exp_i exp_n) : pathRes
+    -- if path = SLICE ROOT exp_i exp_n
+    -- Eval_path_acc: C |- val_b path : pathRes
 
 }
-
-;;; Update evaluation rules
-
-relation Eval_path_upd:
-  ctx |- val path := val : pathRes
-  hint(input %0 %1 %2 %3)
-  hint(prose_in "updating" %2 "of" %1 "with" %3 "under" %0)
-  hint(prose_out %4)
-
-rule Eval_path_upd/root:
-  C |- val_b ROOT := val_n : OK val_n
-
-rulegroup Eval_path_upd/idx {
-
-  rule Eval_path_upd/text-index-failure:
-    C |- val_b (IDX path exp_i) := val_n : failure
-    -- Eval_path: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : failure
-
-  rule Eval_path_upd/path-failure:
-    C |- val_b (IDX path exp_i) := val_n : failure
-    -- Eval_path: C |- val_b path : failure
-
-  rule Eval_path_upd/list-index-failure:
-    C |- val_b (IDX path exp_i) := val_n : failure
-    -- Eval_path: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : failure
-
-  rule Eval_path_upd/text:
-    C |- val_b (IDX path exp_i) := TEXT t_n : pathRes
-    -- Eval_path: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n_target)
-    -- if $(n_target < |t|)
-    -- if |t_n| = 1
-    -- Eval_path_upd:
-        C |- val_b path := (TEXT t[ [n_target] = t_n ]) : pathRes
-
-  rule Eval_path_upd/list:
-    C |- val_b (IDX path exp_i) := val_n : pathRes
-    -- Eval_path: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n_target)
-    -- if $(n_target < |val*|)
-    -- Eval_path_upd:
-        C |- val_b path := (LIST val*[ [n_target] = val_n ]) : pathRes
-
-}
-
-rulegroup Eval_path_upd/slice {
-
-  rule Eval_path_upd/path-failure:
-    C |- val_b (SLICE path exp_i exp_n) := val_n : failure
-    -- Eval_path: C |- val_b path : failure
-
-  rule Eval_path_upd/text-index-failure:
-    C |- val_b (SLICE path exp_i exp_n) := val_n : failure
-    -- Eval_path: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : failure
-
-  rule Eval_path_upd/text-length-failure:
-    C |- val_b (SLICE path exp_i exp_n) := val_n : failure
-    -- Eval_path: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : failure
-
-  rule Eval_path_upd/list-index-failure:
-    C |- val_b (SLICE path exp_i exp_n) := val_n : failure
-    -- Eval_path: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : failure
-
-  rule Eval_path_upd/list-length-failure:
-    C |- val_b (SLICE path exp_i exp_n) := val_n : failure
-    -- Eval_path: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : failure
-
-  rule Eval_path_upd/text:
-    C |- val_b (SLICE path exp_i exp_n) := TEXT t_n : pathRes
-    -- Eval_path: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : OK (NAT n_n)
-    -- if $(n_i + n_n <= |t|)
-    -- if |t_n| = n_n
-    -- Eval_path_upd:
-        C |- val_b path := (TEXT t[ [n_i : n_n] = t_n ]) : pathRes
-
-  rule Eval_path_upd/list:
-    C |- val_b (SLICE path exp_i exp_n) := LIST val_n* : pathRes
-    -- Eval_path: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : OK (NAT n_n)
-    -- if $(n_i + n_n <= |val*|)
-    -- if |val_n*| = n_n
-    -- Eval_path_upd:
-        C |- val_b path := (LIST val*[ [n_i : n_n] = val_n* ]) : pathRes
-
-}
-
-rulegroup Eval_path_upd/dot {
-
-  rule Eval_path_upd/path-failure:
-    C |- val_b (DOT path atom) := val_n : failure
-    -- Eval_path: C |- val_b path : failure
-
-  rule Eval_path_upd/succ:
-    C |- val_b (DOT path atom) := val_n : pathRes
-    -- Eval_path: C |- val_b path : OK (STR valField*)
-    -- if (atom_field val_field = valField)*
-    -- if (valField_new
-        = atom_field $ite<val>(atom = atom_field, val_n, val_field))*
-    -- Eval_path_upd:
-        C |- val_b path := (STR valField_new*) : pathRes
-
-}
-
-rule Eval_path_upd/error:
-  C |- val_b path := val_n : ERROR
-  -- otherwise
 
 rulegroup Eval_exp/upd {
 
@@ -624,13 +414,25 @@ rulegroup Eval_exp/call {
     C |- CALL id targ* arg* : funcRes
     -- Eval_targs: C |- targ* : OK typ_input*
     -- Eval_args: C |- arg* : OK val_input*
-    -- Call_func: C |- id typ_input* val_input* : funcRes
+    -- Call_func:
+        C |- id `< typ_input* `> `( val_input* `) : funcRes
 
 }
 
 ;;; Iterated expression evaluation rules
 
 rulegroup Eval_exp/iter {
+
+  rule Eval_exp/simple:
+    C |- ITER exp iterExp : OK val
+    -- if varr = $is_iter_on_var(ITER exp iterExp)
+    -- if val = $find_varr(C, varr)
+
+  rule Eval_exp/opt-succ-none:
+    C |- ITER exp iterExp : OK (OPT eps)
+    -- if eps = $is_iter_on_var(ITER exp iterExp)
+    -- if QUEST vari* = iterExp
+    -- if OK eps = $sub_opt(C, vari*)
 
   rule Eval_exp/opt-body-failure:
     C |- ITER exp iterExp : failure
@@ -639,6 +441,13 @@ rulegroup Eval_exp/iter {
     -- if OK C_sub = $sub_opt(C, vari*)
     -- Eval_exp: C_sub |- exp : failure
 
+  rule Eval_exp/opt-succ-some:
+    C |- ITER exp iterExp : OK (OPT val)
+    -- if eps = $is_iter_on_var(ITER exp iterExp)
+    -- if QUEST vari* = iterExp
+    -- if OK C_sub = $sub_opt(C, vari*)
+    -- Eval_exp: C_sub |- exp : OK val
+
   rule Eval_exp/list-body-failure:
     C |- ITER exp iterExp : failure
     -- if eps = $is_iter_on_var(ITER exp iterExp)
@@ -646,25 +455,7 @@ rulegroup Eval_exp/iter {
     -- if OK C_sub* = $sub_list(C, vari*)
     -- Eval_exp_each: C_sub* |- exp : failure
 
-  rule Eval_exp/simple:
-    C |- ITER exp iterExp : OK val
-    -- if varr = $is_iter_on_var(ITER exp iterExp)
-    -- if val = $find_varr(C, varr)
-
-  rule Eval_exp/opt-none:
-    C |- ITER exp iterExp : OK (OPT eps)
-    -- if eps = $is_iter_on_var(ITER exp iterExp)
-    -- if QUEST vari* = iterExp
-    -- if OK eps = $sub_opt(C, vari*)
-
-  rule Eval_exp/opt-some:
-    C |- ITER exp iterExp : OK (OPT val)
-    -- if eps = $is_iter_on_var(ITER exp iterExp)
-    -- if QUEST vari* = iterExp
-    -- if OK C_sub = $sub_opt(C, vari*)
-    -- Eval_exp: C_sub |- exp : OK val
-
-  rule Eval_exp/list:
+  rule Eval_exp/list-succ:
     C |- ITER exp iterExp : OK (LIST val*)
     -- if eps = $is_iter_on_var(ITER exp iterExp)
     -- if STAR vari* = iterExp
@@ -681,6 +472,9 @@ rule Eval_exp/error:
 
 rulegroup Eval_exps {
 
+  rule Eval_exps/nil:
+    C |- eps : OK eps
+
   rule Eval_exps/head-failure:
     C |- exp_h :: exp_t* : failure
     -- Eval_exp: C |- exp_h : failure
@@ -690,10 +484,7 @@ rulegroup Eval_exps {
     -- Eval_exp: C |- exp_h : OK val_h
     -- Eval_exps: C |- exp_t* : failure
 
-  rule Eval_exps/nil:
-    C |- eps : OK eps
-
-  rule Eval_exps/cons:
+  rule Eval_exps/cons-succ:
     C |- exp_h :: exp_t* : OK (val_h :: val_t*)
     -- Eval_exp: C |- exp_h : OK val_h
     -- Eval_exps: C |- exp_t* : OK val_t*
@@ -704,6 +495,9 @@ rulegroup Eval_exps {
 
 rulegroup Eval_exp_each {
 
+  rule Eval_exp_each/nil:
+    eps |- exp : OK eps
+
   rule Eval_exp_each/head-failure:
     (C_h :: C_t*) |- exp : failure
     -- Eval_exp: C_h |- exp : failure
@@ -713,10 +507,7 @@ rulegroup Eval_exp_each {
     -- Eval_exp: C_h |- exp : OK val_h
     -- Eval_exp_each: C_t* |- exp : failure
 
-  rule Eval_exp_each/nil:
-    eps |- exp : OK eps
-
-  rule Eval_exp_each/cons:
+  rule Eval_exp_each/cons-succ:
     (C_h :: C_t*) |- exp : OK (val_h :: val_t*)
     -- Eval_exp: C_h |- exp : OK val_h
     -- Eval_exp_each: C_t* |- exp : OK val_t*

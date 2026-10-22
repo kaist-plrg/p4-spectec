@@ -11,12 +11,12 @@ rulegroup Eval_prem/relpr {
   rule Eval_prem/call-failure:
     C |- REL id ':' exp* '->' exp_out* : failure
     -- Eval_exps: C |- exp* : OK val*
-    -- Call_rel: C |- id val* : failure
+    -- Call_rel: C |- id `( val* `) : failure
 
   rule Eval_prem/succ:
     C |- REL id ':' exp* '->' exp_out* : OK C'
     -- Eval_exps: C |- exp* : OK val*
-    -- Call_rel: C |- id val* : OK val_out*
+    -- Call_rel: C |- id `( val* `) : OK val_out*
     -- Assign_exps : C |- exp_out* := val_out* : OK C'
 
 }
@@ -25,15 +25,15 @@ rulegroup Eval_prem/relpr {
 
 rulegroup Eval_prem/ifpr {
 
-  rule Eval_prem/operand-failure:
+  rule Eval_prem/cond-failure:
     C |- IF exp : failure
     -- Eval_exp: C |- exp : failure
 
-  rule Eval_prem/false:
+  rule Eval_prem/succ-false:
     C |- IF exp : UNMATCH
     -- Eval_exp: C |- exp : OK (BOOL false)
 
-  rule Eval_prem/true:
+  rule Eval_prem/succ-true:
     C |- IF exp : OK C
     -- Eval_exp: C |- exp : OK (BOOL true)
 
@@ -43,38 +43,42 @@ rulegroup Eval_prem/ifpr {
 
 rulegroup Eval_prem/ifholdpr {
 
-  rule Eval_prem/hold-expressions-failure:
+  rule Eval_prem/expressions-failure:
     C |- IFHOLD id ':' exp* : failure
     -- Eval_exps: C |- exp* : failure
 
-  rule Eval_prem/hold-call-failure:
+  rule Eval_prem/call-failure:
     C |- IFHOLD id ':' exp* : failure
     -- Eval_exps: C |- exp* : OK val_input*
-    -- Call_rel: C |- id val_input* : failure
+    -- Call_rel: C |- id `( val_input* `) : failure
 
-  rule Eval_prem/nothold-expressions-failure:
+  rule Eval_prem/succ:
+    C |- IFHOLD id ':' exp* : OK C
+    -- Eval_exps: C |- exp* : OK val_input*
+    -- Call_rel: C |- id `( val_input* `) : OK eps
+
+}
+
+rulegroup Eval_prem/ifnotholdpr {
+
+  rule Eval_prem/expressions-failure:
     C |- IFNOTHOLD id ':' exp* : failure
     -- Eval_exps: C |- exp* : failure
 
-  rule Eval_prem/nothold-unmatch:
-    C |- IFNOTHOLD id ':' exp* : UNMATCH
-    -- Eval_exps: C |- exp* : OK val_input*
-    -- Call_rel: C |- id val_input* : OK val_out*
-
-  rule Eval_prem/nothold-error:
+  rule Eval_prem/error:
     C |- IFNOTHOLD id ':' exp* : ERROR
     -- Eval_exps: C |- exp* : OK val_input*
-    -- Call_rel: C |- id val_input* : ERROR
+    -- Call_rel: C |- id `( val_input* `) : ERROR
 
-  rule Eval_prem/hold:
-    C |- IFHOLD id ':' exp* : OK C
+  rule Eval_prem/succ-unmatch:
+    C |- IFNOTHOLD id ':' exp* : UNMATCH
     -- Eval_exps: C |- exp* : OK val_input*
-    -- Call_rel: C |- id val_input* : OK eps
+    -- Call_rel: C |- id `( val_input* `) : OK val_out*
 
-  rule Eval_prem/nothold:
+  rule Eval_prem/succ-ok:
     C |- IFNOTHOLD id ':' exp* : OK C
     -- Eval_exps: C |- exp* : OK val_input*
-    -- Call_rel: C |- id val_input* : UNMATCH
+    -- Call_rel: C |- id `( val_input* `) : UNMATCH
 
 }
 
@@ -97,14 +101,7 @@ rulegroup Eval_prem/letpr {
 
 rulegroup Eval_prem/iterpr-opt {
 
-  rule Eval_prem/body-failure:
-    C |- ITER prem iterPrem : failure
-    -- if QUEST vari_bound* vari_bind* = iterPrem
-    -- if OK C_sub = $sub_opt(C, vari_bound*)
-    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
-    -- Eval_prem: C_sub |- prem : failure
-
-  rule Eval_prem/none:
+  rule Eval_prem/succ-none:
     C |- ITER prem iterPrem : OK C_res
     -- if QUEST vari_bound* vari_bind* = iterPrem
     -- if OK eps = $sub_opt(C, vari_bound*)
@@ -112,7 +109,14 @@ rulegroup Eval_prem/iterpr-opt {
     -- if val_bind* = $repeat_<val>(OPT eps, |vari_bind*|)
     -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
 
-  rule Eval_prem/some:
+  rule Eval_prem/body-failure:
+    C |- ITER prem iterPrem : failure
+    -- if QUEST vari_bound* vari_bind* = iterPrem
+    -- if OK C_sub = $sub_opt(C, vari_bound*)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
+    -- Eval_prem: C_sub |- prem : failure
+
+  rule Eval_prem/succ-some:
     C |- ITER prem iterPrem : OK C_res
     -- if QUEST vari_bound* vari_bind* = iterPrem
     -- if OK C_sub = $sub_opt(C, vari_bound*)
@@ -127,14 +131,7 @@ rulegroup Eval_prem/iterpr-opt {
 
 rulegroup Eval_prem/iterpr-list {
 
-  rule Eval_prem/body-failure:
-    C |- ITER prem iterPrem : failure
-    -- if STAR vari_bound* vari_bind* = iterPrem
-    -- if OK C_sub* = $sub_list(C, vari_bound*)
-    -- if C_sub* =/= eps
-    -- Eval_prem_each: C_sub* |- prem : failure
-
-  rule Eval_prem/empty:
+  rule Eval_prem/succ-empty:
     C |- ITER prem iterPrem : OK C_res
     -- if STAR vari_bound* vari_bind* = iterPrem
     -- if OK eps = $sub_list(C, vari_bound*)
@@ -142,11 +139,19 @@ rulegroup Eval_prem/iterpr-list {
     -- if val_bind* = $repeat_<val>(LIST eps, |vari_bind*|)
     -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
 
-  rule Eval_prem/list:
+  rule Eval_prem/body-failure:
+    C |- ITER prem iterPrem : failure
+    -- if STAR vari_bound* vari_bind* = iterPrem
+    -- if OK C_sub* = $sub_list(C, vari_bound*)
+    -- if C_sub* =/= eps
+    -- Eval_prem_each: C_sub* |- prem : failure
+
+  rule Eval_prem/succ-list:
     C |- ITER prem iterPrem : OK C_res
     ----
     -- if STAR vari_bound* vari_bind* = iterPrem
-    ---- ;; decompose C into a list of subcontexts C_sub* corresponding to vari_bound*
+    ---- ;; decompose C into a list of subcontexts
+    ---- ;; C_sub* corresponding to vari_bound*
     -- if OK C_sub* = $sub_list(C, vari_bound*)
     -- if C_sub* =/= eps
     ---- ;; for each C_sub in C_sub*, evaluate prem
@@ -185,12 +190,12 @@ rule Eval_prem/error:
 
 rulegroup Eval_prems {
 
+  rule Eval_prems/empty:
+    C |- eps : OK C
+
   rule Eval_prems/head-failure:
     C |- prem_h :: prem_t* : failure
     -- Eval_prem: C |- prem_h : failure
-
-  rule Eval_prems/empty:
-    C |- eps : OK C
 
   rule Eval_prems/head-succ:
     C |- prem_h :: prem_t* : premRes
@@ -203,6 +208,9 @@ rulegroup Eval_prems {
 
 rulegroup Eval_prem_each {
 
+  rule Eval_prem_each/nil:
+    eps |- prem : OK eps
+
   rule Eval_prem_each/head-failure:
     (C_h :: C_t*) |- prem : failure
     -- Eval_prem: C_h |- prem : failure
@@ -212,10 +220,7 @@ rulegroup Eval_prem_each {
     -- Eval_prem: C_h |- prem : OK C_res
     -- Eval_prem_each: C_t* |- prem : failure
 
-  rule Eval_prem_each/nil:
-    eps |- prem : OK eps
-
-  rule Eval_prem_each/cons:
+  rule Eval_prem_each/cons-succ:
     (C_h :: C_t*) |- prem : OK (C_res :: C_t_res*)
     -- Eval_prem: C_h |- prem : OK C_res
     -- Eval_prem_each: C_t* |- prem : OK C_t_res*
