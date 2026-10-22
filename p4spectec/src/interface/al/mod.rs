@@ -22,7 +22,7 @@ mod cache;
 pub mod decode;
 pub mod encode;
 mod error;
-mod mixops;
+pub(super) mod mixops;
 mod stub;
 
 pub use cache::Cache;

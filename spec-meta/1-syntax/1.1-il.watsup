@@ -1,0 +1,59 @@
+;; Input positions
+
+syntax inputHint = nat*
+
+;; Premises
+
+syntax premIL =
+  | REL id ':' exp* `( inputHint `)
+  | IF exp
+  | IFHOLD id ':' exp*
+  | IFNOTHOLD id ':' exp*
+  | ITER premIL iterPrem
+  | DEBUG exp
+
+;; Relation definitions
+
+syntax externRelDefnIL =
+  EXTREL id ':' typ* `( inputHint `)
+
+syntax rulIL = id ':' exp* '-' premIL*
+syntax rulGroupIL = id ':' rulIL*
+syntax elsGroupIL = id ':' rulIL
+
+syntax definedRelDefnIL =
+  REL id ':' typ* `( inputHint `) '=' rulGroupIL* elsGroupIL?
+
+syntax relDefnIL =
+  | externRelDefnIL
+  | definedRelDefnIL
+
+;; Meta-functions
+
+syntax tblRowIL = arg* '=' exp
+
+syntax tableFuncDefnIL =
+  TABLEFUNC id param* ':' typ '=' tblRowIL*
+
+syntax clauseIL = arg* '=' exp '-' premIL*
+syntax elsClauseIL = clauseIL
+
+syntax definedFuncDefnIL =
+  FUNC id tparam* param* ':' typ '=' clauseIL* elsClauseIL?
+
+syntax funcDefnIL =
+  | externFuncDefn
+  | builtinFuncDefn
+  | tableFuncDefnIL
+  | definedFuncDefnIL
+
+;; Definitions
+
+syntax defnIL =
+  | typDefn
+  | relDefnIL
+  | funcDefnIL
+
+;; Specifications
+
+syntax specIL = defnIL*

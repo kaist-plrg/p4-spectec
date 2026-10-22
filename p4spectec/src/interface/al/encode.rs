@@ -51,7 +51,7 @@ pub trait Encode {
 // == Helpers
 
 /// Constructs a typed meta case after its children have been encoded.
-fn case(
+pub(in crate::interface) fn case(
     arena: &mut Arena,
     text_shape: &'static str,
     text_typ: &str,
@@ -75,7 +75,7 @@ fn case(
 }
 
 /// Maps a source list and annotates its meta element type.
-fn list<T: Encode<Output = Value>>(
+pub(in crate::interface) fn list<T: Encode<Output = Value>>(
     arena: &mut Arena,
     cache: &mut Cache,
     text_elem_typ: &str,
@@ -99,7 +99,7 @@ fn list<T: Encode<Output = Value>>(
 }
 
 /// Maps an optional source value and retains its meta element type.
-fn opt<T: Encode<Output = Value>>(
+pub(in crate::interface) fn opt<T: Encode<Output = Value>>(
     arena: &mut Arena,
     cache: &mut Cache,
     text_elem_typ: &str,

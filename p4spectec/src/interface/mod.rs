@@ -18,6 +18,7 @@ use self::{
 
 pub mod al;
 pub mod builtin;
+pub mod il;
 pub mod p4;
 
 // == AL

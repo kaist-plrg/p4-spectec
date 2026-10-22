@@ -64,6 +64,14 @@ pub struct AdocSuite {
     pub pl: Vec<StructureSnapshot>,
 }
 
+/// Registers specification inputs whose IL and AL codecs must round-trip.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CodecSuite {
+    pub name: String,
+    pub inputs: Vec<PathBuf>,
+}
+
 /// Registers P4 parsing and roundtrip inputs.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -241,6 +249,7 @@ pub struct MicroConfig {
 pub struct Modules {
     pub elab: PathBuf,
     pub algo: PathBuf,
+    pub codec: PathBuf,
     pub structure: PathBuf,
     pub prose: PathBuf,
     pub adoc: PathBuf,
@@ -343,6 +352,16 @@ pub fn load_snapshots(path: &Path) -> Result<Vec<Snapshot>> {
         expectation_exists(&snapshot.expected)?;
     }
     Ok(snapshots)
+}
+
+/// Loads codec round-trip inputs.
+pub fn load_codec(path: &Path) -> Result<Vec<CodecSuite>> {
+    let suites: Vec<CodecSuite> = load(path)?;
+    names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
+    for suite in &suites {
+        paths_exist(&suite.inputs, &suite.name)?;
+    }
+    Ok(suites)
 }
 
 /// Loads structured snapshots with module-owned rule-group options.
@@ -528,6 +547,7 @@ impl Index {
         for path in [
             &mut modules.elab,
             &mut modules.algo,
+            &mut modules.codec,
             &mut modules.structure,
             &mut modules.prose,
             &mut modules.adoc,
@@ -550,6 +570,7 @@ impl Index {
         // Validate and display each module through its normal loader
         println!("elab: {:#?}", load_snapshots(&self.suites.elab)?);
         println!("algo: {:#?}", load_snapshots(&self.suites.algo)?);
+        println!("codec: {:#?}", load_codec(&self.suites.codec)?);
         println!("structure: {:#?}", load_structure(&self.suites.structure)?);
         println!("prose: {:#?}", load_snapshots(&self.suites.prose)?);
         println!("adoc: {:#?}", load_adoc(&self.suites.adoc)?);

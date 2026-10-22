@@ -3,8 +3,8 @@ use std::{path::PathBuf, process::ExitCode};
 use clap::{Parser, Subcommand};
 
 use p4spectec_test::{
-    Error, ExecutionOptions, Result, adoc, algo, diagnostic, elab, micro, p4parse, prose, run, sim,
-    structure,
+    Error, ExecutionOptions, Result, adoc, algo, codec, diagnostic, elab, micro, p4parse, prose,
+    run, sim, structure,
     suite::{self, Index, Language},
 };
 
@@ -26,6 +26,8 @@ enum Command {
     Elab,
     /// Compare the algorithmic P4 specification with expected output
     Algo,
+    /// Check that IL and AL encodings are fixed points of decode-then-encode
+    Codec,
     /// Compare the structured P4 specification in both rule-group modes
     Structure,
     /// Compare the rendered prose specification with expected output
@@ -107,6 +109,7 @@ fn execute(mut cli: Cli) -> Result<()> {
         Command::List => index.list(),
         Command::Elab => elab::run(&suite::load_snapshots(&index.suites.elab)?),
         Command::Algo => algo::run(&suite::load_snapshots(&index.suites.algo)?),
+        Command::Codec => codec::run(&suite::load_codec(&index.suites.codec)?),
         Command::Structure => structure::run(&suite::load_structure(&index.suites.structure)?),
         Command::Prose => prose::run(&suite::load_snapshots(&index.suites.prose)?),
         Command::Adoc { path_output } => {
