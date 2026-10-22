@@ -255,9 +255,10 @@ A standalone run starts with:
 ```
 
 Evaluation frames specify where the next subterm runs. Evaluating an
-expression replaces it with `(OK val)` or `FAIL`; successful premises and
-assignments update the local layer and reduce to `OK`. Callees, clause and
-rule attempts, and iterations introduce nested `IN` scopes. A failed attempt
+expression replaces it with its value or `FAIL`; a constructor whose parts
+are all values is a value, so a frame writes `val` for an evaluated subterm
+and `exp` for one still to evaluate. Successful premises and assignments
+update the local layer and reduce to `OK`. A failed attempt
 discards its scope, preserving the enclosing layer for the next alternative.
 `FAIL` propagates through frames until a rule handles it or the run fails.
 
