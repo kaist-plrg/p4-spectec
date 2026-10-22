@@ -31,8 +31,15 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Build caches *)
 
-  let func_cache = ref (CCache.create ~size:(256 * 1024))
-  let rel_cache = ref (CCache.create ~size:(256 * 1024))
+  (* Number of cached calls; SPECTEC_CACHE_SIZE overrides it, e.g. to bound
+     memory when the arguments are large (the K spec passes configurations) *)
+  let cache_size =
+    match Sys.getenv_opt "SPECTEC_CACHE_SIZE" with
+    | Some s -> ( try int_of_string s with Failure _ -> 256 * 1024)
+    | None -> 256 * 1024
+
+  let func_cache = ref (CCache.create ~size:cache_size)
+  let rel_cache = ref (CCache.create ~size:cache_size)
   let sub_cache = Hashtbl.create 4096
 
   (* Cache toggle *)

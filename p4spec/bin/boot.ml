@@ -142,6 +142,53 @@ let run_command =
            | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
            ))
 
+(* Running a kompiled K definition with the K spec: the work is in the KORE
+   interface (p4spec/lib/interface/kore/krun.ml) *)
+let krun_command =
+  Core.Command.basic
+    ~summary:"run a kompiled K definition (definition.kore) with the K spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and path_def =
+       flag "-def" (required string) ~doc:"FILE definition.kore from kompile"
+     and path_init =
+       flag "-init" (required string)
+         ~doc:"FILE initial term, as krun --save-temps writes it (tmp.in.*)"
+     and depth = flag "-depth" (optional int) ~doc:"N stop after N steps"
+     and path_expect =
+       flag "-expect" (optional string)
+         ~doc:"FILE expected final configuration (krun --output kore)"
+     and path_out =
+       flag "-o" (optional string) ~doc:"FILE write the final configuration"
+     and profile = flag "-profile" no_arg ~doc:"profiling"
+     and det =
+       flag "-det" no_arg
+         ~doc:"deterministic mode: fail when two rules or clauses both apply"
+     and path_cover =
+       flag "-cover" (optional string)
+         ~doc:
+           "FILE write the spec with the instructions the run executes marked"
+     and path_check =
+       flag "-check-steps" (optional string)
+         ~doc:
+           "DIR check each step against the kompiled definition DIR (kompile \
+            --enable-search): the next configuration must be one DIR/search \
+            finds one step on"
+     in
+     fun () ->
+       match
+         let* spec = P4spectec.spec_of_mode SL_mode paths_spec in
+         let* runner =
+           Kore.K.runner ~det spec |> Result.map_error (fun e -> Error.RunError e)
+         in
+         Ok (spec, runner)
+       with
+       | Error e -> Format.printf "%s\n" (Error.to_string e)
+       | Ok (spec, runner) ->
+           Kore.Krun.run runner spec ~path_def ~path_init ~depth ~path_expect
+             ~path_out ~profile ~path_cover ~path_check)
+
 let boot_n_command =
   Core.Command.basic ~summary:"run meta-circular interpreter"
     (let open Core.Command.Let_syntax in
@@ -269,6 +316,7 @@ let command_core =
       (* Execution *)
       ("run", run_command);
       ("boot-n", boot_n_command);
+      ("krun", krun_command);
       (* Interfacing with IL specification *)
       ("parse", parse_command);
     ]

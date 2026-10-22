@@ -1,0 +1,459 @@
+# Formatted with: uvx taplo fmt -o align_comments=false -o column_width=100
+#
+# The test suites of ktest.py: K definitions whose programs are run by krun
+# and by the K spec, and compared (difftest.py). When the final configuration
+# or the step count differs, the run of the spec is checked step by step: each
+# step must be one K allows (K leaves the choice among rules of the same
+# priority and the order of map elements open).
+#
+# A quick run (ktest.py with no suite named) runs the programs in the quick
+# lists; ktest.py --full, or naming suites, runs all of them. Programs in the
+# skip lists never run. The quick lists were chosen on 2026-10-09 so that
+# together they cover every spec instruction the runs of all programs covered
+# (ktest.py --cover), at the least spec time, with a program of every suite;
+# they are kept by hand.
+#
+# [suite.<name>], run in this order by default:
+#   src          where dir is: "k" (K v7.1.337), "kwasm" (wasm-semantics),
+#                "kevm" (evm-semantics), or "kmir" (mir-semantics)
+#   dir, def     the directory of the definition, and its file
+#   ext          the extension of the programs
+#   tests        directories of the programs, relative to dir (default ["tests"])
+#   inputs       directory of the <program>.in files, relative to dir
+#                (default: beside the programs)
+#   kompile      extra kompile options (--enable-search is always added)
+#   krun         extra krun options
+#   depth        stop krun and the spec after this many steps
+#   cache_size   entries of the executor's call cache (SPECTEC_CACHE_SIZE;
+#                default 32768); fewer bound the memory of large configurations
+#   skip         programs (glob patterns) never run, with why in comments
+#   known        known failures (glob patterns): programs on which the spec
+#                follows K's documentation and krun does not, or, as the
+#                comments say, where the documentation leaves a value open and
+#                the spec picks another; reported as known failures, and as
+#                failures if they pass
+#   quick        programs of a quick run
+#
+# The tutorial languages leave out the programs that the tutorial Makefiles do
+# not run.
+
+[suite.imp]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/2_imp/lesson_4"
+def = "imp.k"
+ext = "imp"
+kompile = ["--gen-glr-bison-parser"]
+quick = ["primes.imp"]
+
+[suite.lambda]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/1_lambda/lesson_8"
+def = "lambda.k"
+ext = "lambda"
+kompile = ["--gen-glr-bison-parser"]
+quick = ["factorial-letrec.lambda", "free-variable-capture.lambda"]
+
+[suite.simple]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/1_untyped"
+def = "simple-untyped.md"
+ext = "simple"
+krun = ["--io", "off"]
+tests = ["tests/diverse", "tests/exceptions", "tests/threads"]
+skip = ["threads_05.simple"] # krun's run does not end
+quick = ["exceptions_14.simple"]
+
+[suite.kool]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/1_untyped"
+def = "kool-untyped.md"
+ext = "kool"
+krun = ["--io", "off"]
+skip = ["threads.kool"] # the tutorial Makefile does not run it
+quick = ["hello-world.kool"]
+
+[suite."lambda++"]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/3_lambda++/lesson_5"
+def = "lambda.k"
+ext = "lambda"
+kompile = ["--syntax-module", "LAMBDA"]
+tests = ["tests/deterministic", "tests/nondeterministic"]
+quick = ["arithmetic-div-zero.lambda"]
+
+# The proofs of the lesson (kprove, the Haskell backend) are not run
+[suite."imp++"]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/4_imp++/lesson_7"
+def = "imp.k"
+ext = "imp"
+kompile = ["--gen-glr-bison-parser"]
+krun = ["--io", "off"]
+quick = ["io.imp"]
+
+[suite.simple-typed-static]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/2_typed/1_static"
+def = "simple-typed-static.md"
+ext = "simple"
+tests = ["../programs/diverse", "../programs/exceptions", "../programs/threads"]
+inputs = "tests"
+quick = ["exceptions_13.simple"]
+
+[suite.simple-typed-dynamic]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/2_typed/2_dynamic"
+def = "simple-typed-dynamic.md"
+ext = "simple"
+krun = ["--io", "off"]
+tests = ["../programs/diverse", "../programs/exceptions", "../programs/threads"]
+inputs = "tests"
+skip = [
+  # krun's run does not end
+  "threads_05.simple",
+  # they do not end, and the tutorial Makefile does not run them
+  "dekker.simple",
+  "threads_03.simple",
+  "threads_08.simple",
+]
+quick = ["exceptions_14.simple"]
+
+[suite.kool-typed-dynamic]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/2_typed/1_dynamic"
+def = "kool-typed-dynamic.md"
+ext = "kool"
+krun = ["--io", "off"]
+tests = ["../programs"]
+inputs = "tests"
+skip = ["cycle.kool", "threads.kool"] # the tutorial Makefile does not run them
+quick = ["hello-world.kool"]
+
+[suite.kool-typed-static]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/2_typed/2_static"
+def = "kool-typed-static.md"
+ext = "kool"
+krun = ["--io", "off"]
+tests = ["../programs"]
+inputs = "tests"
+skip = ["return-object.kool"] # the tutorial Makefile does not run it
+quick = ["hello-world.kool"]
+
+[suite.fun]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/3_fun/1_untyped/1_environment"
+def = "fun-untyped.md"
+ext = "fun"
+# constructor-bst-sorting grows the store to 1,131 entries (a 1 MB
+# configuration): a smaller call cache keeps the spec under its memory limit,
+# and its 13,914 steps take about 66 minutes step by step
+cache_size = 1024
+tests = ["../../programs"]
+inputs = "tests"
+quick = ["empty-argument-2.fun", "tuple-2.fun"]
+
+[suite.kwasm]
+src = "kwasm"
+dir = "pykwasm/src/pykwasm/kdist/wasm-semantics"
+def = "test.md"
+ext = "wast"
+kompile = [
+  "--main-module",
+  "WASM-TEST",
+  "--syntax-module",
+  "WASM-TEST-SYNTAX",
+  "--md-selector",
+  "k",
+  "--gen-glr-bison-parser",
+  "-O3",
+]
+skip = [
+  # the spec does not end them within the timeout of 7,200 seconds: it runs 70
+  # to 100 steps a second on KWasm, and they take (krun steps) 517,177,
+  # 6,966,501, 6,817,093, and 12,585,667 steps
+  "conformance-call.wast",
+  "conformance-memory_copy.wast",
+  "conformance-memory_fill.wast",
+  "conformance-memory_grow.wast",
+]
+quick = [
+  "conformance-local_set.wast",
+  "conformance-table.wast",
+  "simple-bitwise.wast",
+  "simple-constants.wast",
+  "simple-f64-cs.wast",
+  "simple-f64_bitwise-cs.wast",
+  "simple-f64_cmp-cs.wast",
+  "simple-modules.wast",
+]
+
+# KEVM: the VMTests of ethereum-tests, as kevm-pyk run makes their initial
+# terms (ktest.py), with the blockchain plugin built in the plugin directory
+# (make). Each takes about half a minute in the spec: a quick run takes two
+[suite.kevm]
+src = "kevm"
+dir = "kevm-pyk/src/kevm_pyk/kproj/evm-semantics"
+def = "driver.md"
+ext = "kore"
+# twoOps (51,547 steps) needs 1.3 GB with 4,096 entries, and more than 2.5 GB
+# with the default
+cache_size = 4096
+kompile = [
+  "--main-module",
+  "ETHEREUM-SIMULATION",
+  "--syntax-module",
+  "ETHEREUM-SIMULATION",
+  "-I",
+  "{src}/kevm-pyk/src/kevm_pyk/kproj/evm-semantics",
+  "-I",
+  "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin",
+  "--md-selector",
+  "k & ! symbolic",
+  "--hook-namespaces",
+  "JSON KRYPTO",
+  "--emit-json",
+  "-O3",
+  "--type-inference-mode",
+  "simplesub",
+  "-ccopt",
+  "-std=c++20",
+  "-ccopt",
+  "-lssl",
+  "-ccopt",
+  "-lcrypto",
+  "-ccopt",
+  "-lsecp256k1",
+  "-ccopt",
+  "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a",
+]
+skip = [
+  # vmPerformance, too long for the spec: loopExp (20,362,627 to 47,202,463
+  # krun steps where known) and loopMul (132,302,402) do not end within the
+  # timeout of 7,200 seconds, and are slow tests of KEVM itself
+  # (tests/slow.llvm); performanceTester-performanceTester_d0 (135,216 steps)
+  # did not end within 3,600 seconds
+  "loopExp-*",
+  "loopMul-*",
+  "performanceTester-*",
+]
+quick = ["arith-arith_d0g0v0_Cancun.kore", "byte-byte_d0g0v0_Cancun.kore"]
+
+# KMIR: the exec-smir tests of mir-semantics, as kmir run makes their initial
+# terms from the SMIR JSON in the repository (ktest.py), with the options of
+# its kdist target mir-semantics.llvm
+[suite.kmir]
+src = "kmir"
+dir = "kmir/src/kmir/kdist/mir-semantics"
+def = "kmir.md"
+ext = "kore"
+kompile = [
+  "-I",
+  "{src}/kmir/src/kmir/kdist",
+  "--syntax-module",
+  "KMIR-AST",
+  "--md-selector",
+  "k & ! symbolic",
+  "-O2",
+  "-w2e",
+  "--emit-json",
+]
+quick = ["pointers-offset_write.kore"]
+
+# IMP stopped after 20 steps
+[suite.depth]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/2_imp/lesson_4"
+def = "imp.k"
+ext = "imp"
+depth = 20
+quick = ["sum.imp"]
+
+# Tests written for the spec (manual/<group>/<test>/: a definition <test>.k
+# and its programs *.prog), run as groups like the regression tests below. A
+# quick run runs all of them. skip and known name tests or <test>/<program>.
+[manual.behavior]
+known = [
+  # a fresh value of a rule and of a function it calls coincide
+  "fresh-in-function",
+  # choice and Set2List differ on ==K-equal collections
+  "choice",
+  "rangemap-choice",
+  # updateList does not check the bounds at index 0
+  "updatelist-index0",
+  # occurrences overlap in countAllOccurrences and replaceAll, and replaceAll
+  # loses characters
+  "overlapping-occurrences",
+  "constant-folding",
+  # padding does not check the value when no byte is added
+  "padright-value",
+  # String2Int and String2Base take white space and radixes above 36
+  "string2int-syntax",
+  # a Float literal is not rounded to the exponent range
+  "float-literal-range",
+  # ^%Int takes an inverse for a negative exponent
+  "powmod/negative",
+]
+
+[manual.errors]
+
+[manual.features]
+known = [
+  # countAllOccurrences counts overlapping occurrences (behavior/overlapping-occurrences)
+  "equality/strings",
+]
+
+# The regression tests of K (in dir) that kompile with the LLVM backend and
+# krun their programs through ktest.mak, with the settings of their Makefiles.
+# Those run with --search are checked step by step, with the --depth of the
+# Makefile as the step limit.
+
+[regression]
+dir = "k-distribution/tests/regression-new"
+# skip and known name tests or <test>/<program>, quick <test>/<program>
+skip = [
+  # they krun differently from a plain run of each program:
+  # krun --proof-hint
+  "proof-instrumentation",
+  "proof-instrumentation-debug",
+  # krun --dry-run
+  "issue-1602",
+  # a custom parser
+  "krun-deserialize",
+  "issue-582",
+  "star-multiplicity",
+  # a preprocessed definition
+  "issue-1169",
+  # a definition in JSON
+  "imp-outer-json",
+  # kast tests
+  "issue-2273",
+  # a custom krun target
+  "issue-946",
+  # they use what the spec does not cover:
+  # file IO, random numbers, the exit code, #trace (IO), #unparseKORE (reflection)
+  "io-llvm",
+  "rand",
+  "exit-code-no-gen-top",
+  "trace",
+  "unparseKORE",
+  # the initializers take the configuration as an argument (fresh variables
+  # in the configuration), but krun's initial term does not pass it
+  "issue-3520-freshConfig",
+]
+known = [
+  # a fresh value of a function equation: krun gives 0 (as 1.test.out), the
+  # spec -1, as it numbers the fresh values of functions below zero to keep
+  # them apart from those of rules (Eval/fresh); the documentation fixes
+  # only that they differ. Not a bug of K.
+  "withConfig2/1.test",
+]
+quick = [
+  "bytes-memset/1.test",
+  "f32-mul/1.mul",
+  "group/1.test",
+  "int-llvm/test2.llvmint",
+  "int2bytes-no-len/14.test",
+  "issue-1186/1.test",
+  "list-in-bug/test2.listin",
+  "mint-llvm-4/1.test",
+  "mint-llvm-4/10.test",
+  "mint-llvm-4/11.test",
+  "mint-llvm-4/12.test",
+  "mint-llvm-4/13.test",
+  "mint-llvm-4/2.test",
+  "mint-llvm-4/3.test",
+  "mint-llvm-4/4.test",
+  "mint-llvm-4/5.test",
+  "mint-llvm-4/6.test",
+  "mint-llvm-4/7.test",
+  "mint-llvm-4/8.test",
+  "mint-llvm-4/9.test",
+  "mint-llvm/1.test",
+  "mint-llvm/10.test",
+  "mint-llvm/11.test",
+  "mint-llvm/12.test",
+  "mint-llvm/13.test",
+  "mint-llvm/14.test",
+  "mint-llvm/15.test",
+  "mint-llvm/16.test",
+  "mint-llvm/18.test",
+  "mint-llvm/2.test",
+  "mint-llvm/3.test",
+  "mint-llvm/4.test",
+  "mint-llvm/5.test",
+  "mint-llvm/6.test",
+  "mint-llvm/7.test",
+  "mint-llvm/8.test",
+  "mint-llvm/9.test",
+  "or-llvm/3.test",
+  "rangemap-tests-llvm/in-keys-02.test",
+  "rangemap-tests-llvm/in-keys-06.test",
+  "rangemap-tests-llvm/inclusion-9.test",
+  "rangemap-tests-llvm/keys-1.test",
+  "rangemap-tests-llvm/keys-list-0.test",
+  "rangemap-tests-llvm/lookup-0.test",
+  "string_escape/1.a",
+]
+
+# krun options in place of those of the Makefile
+[regression.krun]
+# its own script passes $MODE; print would write to stdout (IO)
+parseNonPgm = ["-cMODE=noprint"]
+
+# The tests of the LLVM backend (llvm-backend f02284f, test/defn/<name>.kore)
+# that run its interpreter on initial terms in KORE (test/input), compared
+# with the interpreter llvm-kompile builds from the same definition. skip and
+# known name tests or <test>/<program>, quick <test>/<program>
+[llvm]
+skip = [
+  # file IO (the interpreter writes files in the working directory)
+  "io",
+  "test26",
+  "test28",
+  # an older kompile's KORE: rule sides as ruleNLHS aliases with \equals and
+  # \top, owise as \not(priorityLE50())
+  "issue-539-priorities",
+  "kool-static",
+  "locations",
+  "sk",
+  "test8",
+  "test33",
+  # FFI hooks (native memory and calls)
+  "test21",
+  # JSON hooks, not in the spec yet
+  "test34",
+  # a function recursing 2^19 deep in one step: the LLVM backend makes it a
+  # tail call, the spec nests it (about 12 KB a level)
+  "iterated-map-pointer-residual",
+  # the spec does not end them within the timeout of 7,200 seconds: 266,050 to
+  # 1,632,181 krun steps (imp-with-rangemaps-4, 408,117 steps, took 3,304
+  # seconds), and 2,000,006 steps (test-gc-stringbuffer)
+  "imp-with-rangemaps",
+  "test-gc-stringbuffer",
+]
+known = [
+  # a fresh value of a function equation: krun gives 0, the spec -1, as for
+  # withConfig2/1.test of the regression tests. Not a bug of K.
+  "test18",
+]
+quick = [
+  "lambda/closed-variable-capture.in",
+  "mint-literal/mint-literal.in",
+  "rangemap-simple/rangemap-simple-1.in",
+  "rangemap-simple/rangemap-simple-100.in",
+  "rangemap-simple/rangemap-simple-13.in",
+  "rangemap-simple/rangemap-simple-17.in",
+  "rangemap-simple/rangemap-simple-55.in",
+  "rangemap-simple/rangemap-simple-68.in",
+  "rangemap-simple/rangemap-simple-71.in",
+  "rangemap-simple/rangemap-simple-78.in",
+  "rangemap-simple/rangemap-simple-79.in",
+  "rangemap-simple/rangemap-simple-87.in",
+  "rangemap-simple/rangemap-simple-97.in",
+  "strip_injection/strip_injection.in",
+  "test-list-get/11.in",
+  "test32/test32.in",
+  "test4/test4.in",
+  "test6/test6.in",
+]
