@@ -35,13 +35,13 @@
 ;;   -- debug "into call"
 ;;   -- Eval_exp: C |- CALL "main" eps eps : OK val
 ;;   -- debug val
-;; Gives (OK val), or FAIL where Entry has no derivation.
+;; Gives val, or FAIL where Entry has no derivation.
 (define (entry script)
   (match (run-loaded (load-script script) (term (CALL "main" () ())))
-    [(and res (list 'OK val))
+    ['FAIL 'FAIL]
+    [val
      (debug val)
-     res]
-    ['FAIL 'FAIL]))
+     val]))
 
 ;; The result of Program_ok on the P4 program val_p4, under loaded, the
 ;; context that load-script gives for the spec: (OK (val ...)), or FAIL
@@ -66,8 +66,8 @@
 ;; The line printed for Entry's result
 (define (result->output res)
   (match res
-    [(list 'OK val) (jsexpr->string (val->jsexpr val))]
-    ['FAIL "fail"]))
+    ['FAIL "fail"]
+    [val (jsexpr->string (val->jsexpr val))]))
 
 ;; The line printed for Program_ok's result
 (define (result-p4->output res)

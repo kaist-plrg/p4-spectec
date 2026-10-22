@@ -90,11 +90,8 @@
 
    ;; rulegroup Assign_exps: each exp is assigned its val in place, left to
    ;; right
-   (--> (assign-exps (exp ..._n) (val ..._n))
-        (assign-exps/each ((assign-exp exp val) ...))
+   (--> (assign-exps (exp ..._n) (val ..._n)) (seq ((assign-exp exp val) ...))
         "assign-exps")
-   (--> (assign-exps/each (OK ...)) OK
-        "assign-exps/each")
    ;; otherwise: the lengths differ
    (--> (assign-exps (exp ...) (val ...)) FAIL
         (side-condition (not (= (length (term (exp ...))) (length (term (val ...))))))
@@ -116,11 +113,8 @@
 
    ;; rulegroup Assign_args: each arg is assigned its val in place, left to
    ;; right
-   (--> (assign-args L_caller (arg ..._n) (val ..._n))
-        (assign-args/each ((assign-arg L_caller arg val) ...))
+   (--> (assign-args L_caller (arg ..._n) (val ..._n)) (seq ((assign-arg L_caller arg val) ...))
         "assign-args")
-   (--> (assign-args/each (OK ...)) OK
-        "assign-args/each")
    ;; otherwise: the lengths differ
    (--> (assign-args L_caller (arg ...) (val ...)) FAIL
         (side-condition (not (= (length (term (arg ...))) (length (term (val ...))))))

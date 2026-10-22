@@ -1,5 +1,5 @@
 #lang racket/base
-;; The machine: the IN and FAIL rules, the notion of reduction (->term and
+;; The machine: the IN, seq, and FAIL rules, the notion of reduction (->term and
 ;; ->term+ctx), and its closure ->al.
 
 (require redex/reduction-semantics
@@ -15,17 +15,27 @@
          ->al)
 
 ;;
-;; The IN and FAIL rules
+;; The IN, seq, and FAIL rules
 ;;
 
 (define ->term/eval
   (reduction-relation
    al
    ;; Leaving a local context
-   (--> (IN L (OK any)) (OK any)
-        "in/ok")
+   (--> (IN L val) val
+        "in/val")
+   (--> (IN L (OK (val ...))) (OK (val ...))
+        "in/vals")
    (--> (IN L FAIL) FAIL
         "in/fail")
+   ;; A statement sequence: once every statement before the last holds, the
+   ;; last one's result
+   (--> (seq (OK ...)) OK
+        "seq/unit")
+   (--> (seq (OK ... val)) val
+        "seq/val")
+   (--> (seq (OK ... (OK (val ...)))) (OK (val ...))
+        "seq/vals")
    ;; FAIL passes up through every frame that does not catch it
    (--> (in-hole Fr-pass FAIL) FAIL
         "frame/fail")))
@@ -48,7 +58,6 @@
 (define ->term+ctx
   (union-reduction-relations ->term+ctx/eval-assign
                              ->term+ctx/eval-exp
-                             ->term+ctx/eval-arg
                              ->term+ctx/eval-prem
                              ->term+ctx/eval-call-func
                              ->term+ctx/eval-call-rel))

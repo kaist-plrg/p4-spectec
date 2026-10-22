@@ -7,10 +7,14 @@
 ;; may call them, never a metafunction.
 ;;
 ;; An AL phrase evaluates in place, and every other relation has a machine
-;; form. Frames give their evaluation positions. watsup's res<ctx> is
-;; (IN L OK) or FAIL: premises update the innermost IN's layer in place.
+;; form. Frames give their evaluation positions. An evaluated expression is
+;; its value, and a constructor whose parts are all values is a value, so a
+;; frame writes val for an evaluated subterm and exp for one still to
+;; evaluate. watsup's res<ctx> is (IN L OK) or FAIL: premises update the
+;; innermost IN's layer in place.
 ;;
-;; An intermediate form is named after the rule, or the group, that builds it.
+;; An intermediate form is named after the rule, or the group, that builds
+;; it; seq and eval-exps, which several rules build, after what they do.
 
 (require json
          redex/reduction-semantics
@@ -29,10 +33,9 @@
   ;; Results to represent backtracking in evaluation. Redex has no parametric
   ;; nonterminals, so each res<X> is written out.
   (unitres ::= OK FAIL)
-  (valres ::= (OK val) FAIL)
+  (valres ::= val FAIL)
   (valsres ::= (OK (val ...)) FAIL)
-  (typsres ::= (OK (typ ...)) FAIL)
-  (res ::= unitres valres valsres typsres)
+  (res ::= unitres valres valsres)
 
   ;; Machine terms: the forms that rules start from, and the frames around a
   ;; machine term
@@ -42,7 +45,7 @@
      exp arg prem
      (assign-exp exp val) (assign-exps (exp ...) (val ...))
      (assign-arg L arg val) (assign-args L (arg ...) (val ...))
-     (eval-targs (targ ...)) (eval-prems (prem ...))
+     (seq (e ...)) (eval-exps (exp ...))
      (eval-path val path) (eval-path-upd val path val)
      (eval-clause L clause (val ...))
      (eval-tblrow tblrow (val ...)) (eval-tblrows (tblrow ...) (val ...))
@@ -58,8 +61,7 @@
      (call-rel id (val ...))
      (call-extern-rel id (val ...))
      ;; iterations over nothing, which have no evaluation position
-     (eval-exp/iter/opt ()) (eval-exp/iter/list ()) (assign-exp/iter/list () (vari ...))
-     (assign-exps/each ()) (assign-args/each ())
+     (assign-exp/iter/list () (vari ...))
      ;; calls with no clause or rule path, which have no evaluation position
      (call-defined-func/clauses () L (elsclause ...) (val ...))
      (call-defined-rel/ruls () (elsgroup ...) (val ...))
@@ -68,93 +70,72 @@
   ;; Finished subterms
   (done ::= res (IN L OK))
 
+  ;; An element of a list expression: under an iteration, each element
+  ;; evaluates in a sub-context of its own
+  (elem ::= exp (IN L exp))
+
   ;; Frames, one level each: those through which FAIL passes, and those
   ;; where a rule looks at FAIL
   (Fr-pass ::=
            ;; Assign_exp(s), Assign_arg(s)
            (assign-exp/iter/opt-some hole (vari ...))
            (assign-exp/iter/list ((IN L OK) ... hole (IN L (assign-exp exp val)) ...) (vari ...))
-           (assign-exps/each (OK ... hole (assign-exp exp val) ...))
-           (assign-args/each (OK ... hole (assign-arg L arg val) ...))
+           ;; a statement sequence: assignments, premises, and an expression
+           (seq (OK ... hole e ...))
            ;; Eval_exp
            (UN unop hole)
            (BIN binop hole exp)
-           (BIN boolbinop (OK (BOOL b)) hole)
-           (BIN numbinop (OK num) hole)
+           (BIN binop val hole)
            (CMP cmpop hole exp)
-           (CMP polycmpop (OK val) hole)
-           (CMP numcmpop (OK num) hole)
+           (CMP cmpop val hole)
            (UPCAST typ hole)
            (DOWNCAST typ hole)
            (SUB hole typ)
            (MATCH hole pattern)
-           (TUP ((OK val) ... hole exp ...))
-           (INJ (mixop ((OK val) ... hole exp ...)))
-           (STR ((atom (OK val)) ... (atom hole) expfield ...))
+           (TUP (val ... hole exp ...))
+           (INJ (mixop (val ... hole exp ...)))
+           (STR ((atom val) ... (atom hole) expfield ...))
            (OPT (hole))
-           (LIST ((OK val) ... hole exp ...))
+           (LIST (val ... hole elem ...))
            (CONS hole exp)
-           (CONS (OK val) hole)
+           (CONS val hole)
            (CAT hole exp)
-           (CAT (OK (TEXT t)) hole)
-           (CAT (OK (LIST (val ...))) hole)
+           (CAT val hole)
            (MEM hole exp)
-           (MEM (OK val) hole)
+           (MEM val hole)
            (LEN hole)
            (DOT hole atom)
            (IDX hole exp)
+           (IDX val hole)
            (SLICE hole exp exp)
+           (SLICE val hole exp)
+           (SLICE val val hole)
            (UPD hole path exp)
-           (UPD (OK val) path hole)
-           (eval-exp/call id hole (arg ...))
-           (eval-exp/call id (OK (typ ...)) ((OK val) ... hole arg ...))
-           (eval-exp/iter/opt (hole))
-           (eval-exp/iter/list ((OK val) ... hole (IN L exp) ...))
-           ;; Eval_path
-           (eval-path/dot hole atom)
-           (eval-path/idx hole exp)
-           (eval-path/idx (OK (TEXT t)) hole)
-           (eval-path/idx (OK (LIST (val ...))) hole)
-           (eval-path/slice hole exp exp)
-           (eval-path/slice (OK (TEXT t)) hole exp)
-           (eval-path/slice (OK (LIST (val ...))) hole exp)
-           (eval-path/slice (OK (TEXT t)) (OK (NAT n)) hole)
-           (eval-path/slice (OK (LIST (val ...))) (OK (NAT n)) hole)
+           (UPD val path hole)
+           (CALL id (targ ...) (val ... hole arg ...))
            ;; Eval_path_upd
-           (eval-path-upd/idx hole exp val path val)
-           (eval-path-upd/idx (OK (TEXT t)) hole val path (TEXT t))
-           (eval-path-upd/idx (OK (LIST (val ...))) hole val path val)
-           (eval-path-upd/slice hole exp exp val path val)
-           (eval-path-upd/slice (OK (TEXT t)) hole exp val path (TEXT t))
-           (eval-path-upd/slice (OK (LIST (val ...))) hole exp val path (LIST (val ...)))
-           (eval-path-upd/slice (OK (TEXT t)) (OK (NAT n)) hole val path (TEXT t))
-           (eval-path-upd/slice (OK (LIST (val ...))) (OK (NAT n)) hole val path (LIST (val ...)))
-           (eval-path-upd/dot hole atom val path val)
+           (eval-path-upd val path hole)
+           (eval-path-upd/idx hole exp val)
+           (eval-path-upd/idx val hole val)
+           (eval-path-upd/slice hole exp exp val)
+           (eval-path-upd/slice val hole exp val)
+           (eval-path-upd/slice val val hole val)
+           (eval-path-upd/dot hole atom val)
            ;; Eval_arg
            (EXP hole)
-           ;; Eval_prem, Eval_prems
-           (REL id ((OK val) ... hole exp ...) (exp ...))
+           ;; Eval_prem
+           (REL id (val ... hole exp ...) (exp ...))
            (eval-prem/relpr hole (exp ...))
            (IF hole)
-           (IFHOLD id ((OK val) ... hole exp ...))
+           (IFHOLD id (val ... hole exp ...))
            (eval-prem/ifholdpr/hold hole)
-           (IFNOTHOLD id ((OK val) ... hole exp ...))
+           (IFNOTHOLD id (val ... hole exp ...))
            (LET exp hole)
            (eval-prem/iterpr-opt/some hole (vari ...))
            (eval-prem/iterpr-list/list ((IN L OK) ... hole (IN L prem) ...) (vari ...))
            (DEBUG hole)
-           (eval-prems (OK ... hole prem ...))
-           ;; Eval_clause, Eval_tblrow
-           (eval-clause/succ hole (eval-prems (prem ...)) exp)
-           (eval-clause/succ OK hole exp)
-           (eval-clause/succ OK OK hole)
-           (eval-tblrow/succ hole (eval-prems (prem ...)) exp)
-           (eval-tblrow/succ OK hole exp)
-           (eval-tblrow/succ OK OK hole)
            ;; Eval_rul
-           (eval-rul/succ hole (eval-prems (prem ...)) (exp ...))
-           (eval-rul/succ OK hole (exp ...))
-           (eval-rul/succ OK OK ((OK val) ... hole exp ...)))
+           (eval-exps (val ... hole exp ...)))
   (Fr-catch ::=
             ;; Eval_prem/nothold
             (eval-prem/ifholdpr/nothold hole)

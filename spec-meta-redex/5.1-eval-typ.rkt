@@ -62,46 +62,46 @@
 
 (define-metafunction al
   upcast : G L typ val -> valres
-  [(upcast G L INT (INT i)) (OK (INT i))]
-  [(upcast G L INT (NAT n)) (OK (INT n))]
+  [(upcast G L INT (INT i)) (INT i)]
+  [(upcast G L INT (NAT n)) (INT n)]
   [(upcast G L INT val) FAIL]
   [(upcast G L (VAR id (targ ..._n)) val) (upcast G L typ_subst val)
    (where ((DEF (tparam ..._n) (ALIAS typ))) (find-typ G L id))
    (where theta ((tparam targ) ...))
    (judgment-holds (subst-typ theta typ typ_subst))]
-  [(upcast G L (TUP (typ ..._n)) (TUP (val ..._n))) (OK (TUP (val_upcast ...)))
-   (where ((OK val_upcast) ...) ((upcast G L typ val) ...))]
+  [(upcast G L (TUP (typ ..._n)) (TUP (val ..._n))) (TUP (val_upcast ...))
+   (where (val_upcast ...) ((upcast G L typ val) ...))]
   [(upcast G L (TUP (typ ...)) val) FAIL
    (where #f (is-tup val))]
-  [(upcast G L (ITER typ QUEST) (OPT (val ...))) (OK (OPT (val_upcast ...)))
-   (where ((OK val_upcast) ...) ((upcast G L typ val) ...))]
-  [(upcast G L (ITER typ STAR) (LIST (val ...))) (OK (LIST (val_upcast ...)))
-   (where ((OK val_upcast) ...) ((upcast G L typ val) ...))]
+  [(upcast G L (ITER typ QUEST) (OPT (val ...))) (OPT (val_upcast ...))
+   (where (val_upcast ...) ((upcast G L typ val) ...))]
+  [(upcast G L (ITER typ STAR) (LIST (val ...))) (LIST (val_upcast ...))
+   (where (val_upcast ...) ((upcast G L typ val) ...))]
   ;; otherwise
-  [(upcast G L typ val) (OK val)])
+  [(upcast G L typ val) val])
 
 ;;; Downcasts
 
 (define-metafunction al
   downcast : G L typ val -> valres
-  [(downcast G L NAT (NAT n)) (OK (NAT n))]
-  [(downcast G L NAT (INT n)) (OK (NAT n))]
+  [(downcast G L NAT (NAT n)) (NAT n)]
+  [(downcast G L NAT (INT n)) (NAT n)]
   [(downcast G L NAT val) FAIL
    (side-condition (not (redex-match? al num (term val))))]
   [(downcast G L (VAR id (targ ..._n)) val) (downcast G L typ_subst val)
    (where ((DEF (tparam ..._n) (ALIAS typ))) (find-typ G L id))
    (where theta ((tparam targ) ...))
    (judgment-holds (subst-typ theta typ typ_subst))]
-  [(downcast G L (TUP (typ ..._n)) (TUP (val ..._n))) (OK (TUP (val_downcast ...)))
-   (where ((OK val_downcast) ...) ((downcast G L typ val) ...))]
+  [(downcast G L (TUP (typ ..._n)) (TUP (val ..._n))) (TUP (val_downcast ...))
+   (where (val_downcast ...) ((downcast G L typ val) ...))]
   [(downcast G L (TUP (typ ...)) val) FAIL
    (where #f (is-tup val))]
-  [(downcast G L (ITER typ QUEST) (OPT (val ...))) (OK (OPT (val_downcast ...)))
-   (where ((OK val_downcast) ...) ((downcast G L typ val) ...))]
-  [(downcast G L (ITER typ STAR) (LIST (val ...))) (OK (LIST (val_downcast ...)))
-   (where ((OK val_downcast) ...) ((downcast G L typ val) ...))]
+  [(downcast G L (ITER typ QUEST) (OPT (val ...))) (OPT (val_downcast ...))
+   (where (val_downcast ...) ((downcast G L typ val) ...))]
+  [(downcast G L (ITER typ STAR) (LIST (val ...))) (LIST (val_downcast ...))
+   (where (val_downcast ...) ((downcast G L typ val) ...))]
   ;; otherwise
-  [(downcast G L typ val) (OK val)])
+  [(downcast G L typ val) val])
 
 ;;
 ;; Value-type matching

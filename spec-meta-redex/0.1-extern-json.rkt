@@ -104,10 +104,11 @@
 ;;            | {"fail": null}
 ;;            | {"error": <text>}   the host could not answer
 
-;; A builtin or extern-func response, as a valres; an error raises.
+;; A builtin or extern-func response, as a valres (the value, or FAIL); an
+;; error raises.
 (define (response->valres js)
   (match js
-    [(hash-table ('ok val)) #:when (= (hash-count js) 1) (list 'OK (jsexpr->val val))]
+    [(hash-table ('ok val)) #:when (= (hash-count js) 1) (jsexpr->val val)]
     [_ (response->fail js)]))
 
 ;; An extern-rel response, as a valsres; an error raises.

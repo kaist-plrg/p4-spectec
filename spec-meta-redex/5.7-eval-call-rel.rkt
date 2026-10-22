@@ -37,14 +37,11 @@
 
    ;;; Rule path evaluation
 
-   ;; rule Eval_rul/succ
+   ;; rule Eval_rul/succ: the inputs are assigned, the premises hold, and the
+   ;; outputs are evaluated, as a statement sequence
    (--> (eval-rul ((exp ...) (prem_match ...)) (id (exp_out ...) (prem_path ...)) (val ...))
-        (eval-rul/succ (assign-exps (exp ...) (val ...))
-                       (eval-prems (prem_match ... prem_path ...))
-                       (exp_out ...))
-        "eval-rul/succ")
-   (--> (eval-rul/succ OK OK ((OK val_out) ...)) (OK (val_out ...))
-        "eval-rul/succ/output")
+        (seq ((assign-exps (exp ...) (val ...)) prem_match ... prem_path ... (eval-exps (exp_out ...))))
+        "eval-rul")
 
    ;;; Defined relations
 

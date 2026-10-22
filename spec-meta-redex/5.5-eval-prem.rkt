@@ -2,7 +2,7 @@
 ;; spec-meta/5.5-eval-prem.watsup.
 ;;
 ;; A premise evaluates in place, updates the innermost IN's layer, and reduces
-;; to OK. Eval_prem/fail becomes complement rules, and "frame/fail" where a
+;; to OK; a premise sequence is a statement sequence (seq). Eval_prem/fail becomes complement rules, and "frame/fail" where a
 ;; premise's sub-relation fails.
 
 (require redex/reduction-semantics
@@ -21,7 +21,7 @@
    ;;; Relation premises
 
    ;; rule Eval_prem/relpr, once the inputs are evaluated
-   (--> (REL id ((OK val) ...) (exp_out ...))
+   (--> (REL id (val ...) (exp_out ...))
         (eval-prem/relpr (call-rel id (val ...)) (exp_out ...))
         "eval-prem/relpr")
    (--> (eval-prem/relpr (OK (val_out ...)) (exp_out ...))
@@ -31,11 +31,11 @@
    ;;; If premises
 
    ;; rulegroup Eval_prem/ifpr
-   (--> (IF (OK (BOOL #t))) OK
+   (--> (IF (BOOL #t)) OK
         "eval-prem/ifpr/true")
-   (--> (IF (OK (BOOL #f))) FAIL
+   (--> (IF (BOOL #f)) FAIL
         "eval-prem/ifpr/false")
-   (--> (IF (OK val)) FAIL
+   (--> (IF val) FAIL
         ;; otherwise: not a boolean
         (side-condition (not (redex-match? al (BOOL b) (term val))))
         "eval-prem/ifpr/fail")
@@ -43,7 +43,7 @@
    ;;; If-hold and if-not-hold premises
 
    ;; rule Eval_prem/hold, once the inputs are evaluated
-   (--> (IFHOLD id ((OK val_input) ...))
+   (--> (IFHOLD id (val_input ...))
         (eval-prem/ifholdpr/hold (call-rel id (val_input ...)))
         "eval-prem/ifholdpr/hold")
    (--> (eval-prem/ifholdpr/hold (OK ())) OK
@@ -62,22 +62,15 @@
    ;;; Let premises
 
    ;; rule Eval_prem/letpr
-   (--> (LET exp_l (OK val_r)) (assign-exp exp_l val_r)
+   (--> (LET exp_l val_r) (assign-exp exp_l val_r)
         "eval-prem/letpr")
 
    ;;; Debug premises
 
    ;; rule Eval_prem/dbg
-   (--> (DEBUG (OK val)) OK
+   (--> (DEBUG val) OK
         (where _ ,(debug (term val)))
-        "eval-prem/dbg")
-
-   ;;; Premise sequences
-
-   ;; rulegroup Eval_prems: the premises evaluate in place, left to right, each
-   ;; under the layer the previous ones updated. head-fail is "frame/fail".
-   (--> (eval-prems (OK ...)) OK
-        "eval-prems")))
+        "eval-prem/dbg")))
 
 ;; The rules on a term and its context (r G L)
 (define ->term+ctx/eval-prem
@@ -89,11 +82,11 @@
    ;; rule Eval_prem/nothold, once the inputs are evaluated. Call_rel has no
    ;; derivation for an unknown relation, so the relation is looked up here,
    ;; before the FAIL of the call is caught.
-   (--> ((IFNOTHOLD id ((OK val_input) ...)) G L)
+   (--> ((IFNOTHOLD id (val_input ...)) G L)
         ((eval-prem/ifholdpr/nothold (call-rel id (val_input ...))) G L)
         (where (reldef) (find-rel G L id))
         "eval-prem/ifholdpr/nothold")
-   (--> ((IFNOTHOLD id ((OK val_input) ...)) G L) (FAIL G L)
+   (--> ((IFNOTHOLD id (val_input ...)) G L) (FAIL G L)
         ;; otherwise: no such relation
         (where () (find-rel G L id))
         "eval-prem/ifholdpr/nothold/fail-rel")

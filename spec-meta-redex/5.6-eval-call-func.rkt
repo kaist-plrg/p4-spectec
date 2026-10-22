@@ -23,18 +23,13 @@
 
    ;;; Clause invocation
 
-   ;; rule Eval_clause/succ
+   ;; rule Eval_clause/succ: the arguments are assigned, the premises hold,
+   ;; and the output is evaluated, as a statement sequence
    (--> (eval-clause L_caller ((arg ...) exp_out (prem ...)) (val ...))
-        (eval-clause/succ (assign-args L_caller (arg ...) (val ...)) (eval-prems (prem ...)) exp_out)
-        "eval-clause/succ")
-   (--> (eval-clause/succ OK OK (OK val_out)) (OK val_out)
-        "eval-clause/succ/output")
+        (seq ((assign-args L_caller (arg ...) (val ...)) prem ... exp_out))
+        "eval-clause")
 
    ;;; Table meta-function invocation
-
-   ;; rule Eval_tblrow/succ (see ->term+ctx), once the output is evaluated
-   (--> (eval-tblrow/succ OK OK (OK val_out)) (OK val_out)
-        "eval-tblrow/succ/output")
 
    ;; rulegroup Eval_tblrows. cons-succ and cons-fail share their premise.
    (--> (eval-tblrows () (val ...)) FAIL
@@ -42,7 +37,7 @@
    (--> (eval-tblrows (tblrow_h tblrow_t ...) (val ...))
         (eval-tblrows/cons (eval-tblrow tblrow_h (val ...)) (tblrow_t ...) (val ...))
         "eval-tblrows/cons")
-   (--> (eval-tblrows/cons (OK val_out) (tblrow_t ...) (val ...)) (OK val_out)
+   (--> (eval-tblrows/cons val_out (tblrow_t ...) (val ...)) val_out
         "eval-tblrows/cons-succ")
    (--> (eval-tblrows/cons FAIL (tblrow_t ...) (val ...)) (eval-tblrows (tblrow_t ...) (val ...))
         "eval-tblrows/cons-fail")
@@ -58,15 +53,15 @@
    ;; ->term+ctx), once every clause is evaluated, with Eval_clauses's
    ;; $det_valres: the one success, or the `otherwise` clause in the callee's
    ;; layer when none, or FAIL when several (a nondeterministic call)
-   (--> (call-defined-func/clauses (FAIL ... (OK val_func) FAIL ...) L_caller (elsclause ...) (val ...))
-        (OK val_func)
+   (--> (call-defined-func/clauses (FAIL ... val_func FAIL ...) L_caller (elsclause ...) (val ...))
+        val_func
         "call-defined-func/succ")
    (--> (call-defined-func/clauses (FAIL ...) L_caller (elsclause) (val ...))
         (eval-clause L_caller elsclause (val ...))
         "call-defined-func/fail")
    (--> (call-defined-func/clauses (FAIL ...) L_caller () (val ...)) FAIL
         "call-defined-func/fail/none")
-   (--> (call-defined-func/clauses (valres_1 ... (OK val_1) valres_2 ... (OK val_2) valres_3 ...)
+   (--> (call-defined-func/clauses (valres_1 ... val_1 valres_2 ... val_2 valres_3 ...)
                                    L_caller (elsclause ...) (val ...))
         FAIL
         "call-defined-func/nondet")
@@ -115,13 +110,10 @@
    ;;; Table meta-function invocation
 
    ;; rule Eval_tblrow/succ: the row runs in a layer of its own, with the
-   ;; caller's layer L
+   ;; caller's layer L, as a statement sequence
    (--> ((eval-tblrow ((arg ...) exp_out (prem ...)) (val ...)) G L)
-        ((IN (empty-layer) (eval-tblrow/succ (assign-args L (arg ...) (val ...))
-                                             (eval-prems (prem ...))
-                                             exp_out))
-         G L)
-        "eval-tblrow/succ")
+        ((IN (empty-layer) (seq ((assign-args L (arg ...) (val ...)) prem ... exp_out))) G L)
+        "eval-tblrow")
 
    ;;; Defined meta-function invocation
 
