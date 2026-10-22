@@ -34,7 +34,7 @@ impl Tower {
             .map_err(|error| error.into_report())?;
         // Each intermediate interprets the script immediately above it
         for interm in interms.iter().rev() {
-            value = Self::entry(arena, &interm.spec_al, &interm.config.rel, value)?
+            value = Self::entry(arena, &interm.spec_al, &interm.rel, value)?
                 .encode(arena)
                 .map_err(|error| error.into_report())?;
         }

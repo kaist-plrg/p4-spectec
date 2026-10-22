@@ -38,6 +38,25 @@ where
     effects: &'runner mut u64,
 }
 
+/// Simultaneous borrows of one context's components.
+///
+/// A backend that runs another interpreter beneath it reassembles
+/// these borrows into a context of a different interpreter type,
+/// keeping the same arena and effect count.
+pub(crate) struct ContextParts<'c, Interp, Iface, Ext>
+where
+    Interp: Interpreter<Iface, Ext>,
+    Iface: Interface,
+    Ext: Extern,
+{
+    pub arena: &'c mut Arena,
+    pub spec_env: &'c Interp::SpecEnv,
+    pub interp: &'c mut Interp,
+    pub interface: &'c mut Iface,
+    pub external: &'c mut Ext,
+    pub effects: &'c mut u64,
+}
+
 impl<'runner, Interp, Iface, Ext> RunnerContext<'runner, Interp, Iface, Ext>
 where
     Interp: Interpreter<Iface, Ext>,
@@ -93,6 +112,18 @@ where
     /// Borrows the arena and interface state for builtin dispatch.
     pub fn arena_and_interface_mut(&mut self) -> (&mut Arena, &mut Iface) {
         (self.arena, self.interface)
+    }
+
+    /// Borrows every component at once to assemble a nested context.
+    pub(crate) fn parts_mut(&mut self) -> ContextParts<'_, Interp, Iface, Ext> {
+        ContextParts {
+            arena: self.arena,
+            spec_env: self.spec_env,
+            interp: self.interp,
+            interface: self.interface,
+            external: self.external,
+            effects: self.effects,
+        }
     }
 
     // - Evaluation effects

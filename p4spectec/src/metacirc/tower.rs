@@ -4,10 +4,7 @@
 //! Target and intermediate helpers dispatch host calls toward the input program.
 //! A single-level tower executes its target directly as its base.
 
-use super::{
-    config::LevelConfig,
-    externs::{RelayExtern, TerminalExtern},
-};
+use super::externs::{RelayExtern, TerminalExtern};
 use crate::{
     interface::{al::AlInterface, p4::P4Interface},
     lang::{
@@ -26,9 +23,10 @@ pub struct Tower {
     pub(super) base: Layer,
 }
 
-/// A lowered specification paired with its configuration.
+/// A lowered specification paired with its entry relation.
 pub(super) struct Level {
-    pub(super) config: LevelConfig,
+    /// The entry relation, validated when the tower is built.
+    pub(super) rel: String,
     pub(super) spec_al: al::Spec,
 }
 
@@ -58,7 +56,7 @@ impl Tower {
         program: Value,
     ) -> Eval<Vec<Value>> {
         // A direct tower uses the caller's entry; nested towers use the base entry
-        let name_base = if self.levels.len() == 1 { name } else { &self.levels[0].config.rel };
+        let name_base = if self.levels.len() == 1 { name } else { &self.levels[0].rel };
         self.base.eval_program(arena, name_base, program)
     }
 }

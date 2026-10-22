@@ -4,7 +4,8 @@
 //! through `Backend`, while each evaluation keeps a typed `RunnerContext`.
 //! Host calls and simulator operations borrow the same components,
 //! so externs can reenter the selected interpreter.
-//! `build_al`, `build_sl`, and `build_pl` prepare the selected stage.
+//! `build_al`, `build_sl`, and `build_pl` prepare the selected stage;
+//! `build_meta` runs an AL target through the meta specification.
 
 mod context;
 mod externs;
@@ -33,6 +34,8 @@ use crate::interp::pl::{Config as PlConfig, PlInterp, context::SpecEnv as PlSpec
 
 use crate::interface::{self as builtin, p4::P4Interface};
 
+use crate::metacirc::interp::{MetaEnv, MetaState};
+
 use crate::sim_plugin::dummy::Dummy;
 
 pub use context::{Checkpoint, RunnerContext};
@@ -42,7 +45,7 @@ pub use interpreter::{Eval, Interpreter, InterpreterError, SideEffect};
 
 // == Runner construction
 
-/// An AL, SL, or PL specification.
+/// An AL, SL, or PL specification, or an AL target under the meta specification.
 pub enum Spec {
     /// An AL specification.
     Al(al::ast::Spec),
@@ -50,6 +53,8 @@ pub enum Spec {
     Sl(sl::ast::Spec),
     /// A PL specification.
     Pl(pl::ast::Spec),
+    /// An AL target executed by the SL meta specification.
+    Meta { base: sl::ast::Spec, target: al::ast::Spec },
 }
 
 /// Interpreter options shared by AL, SL, and PL.
@@ -58,9 +63,9 @@ pub struct Config {
     /// Memoize pure calls and host-boundary conversions.
     pub(crate) cache: bool,
     /// Check determinism of candidate selection.
-    det: bool,
+    pub(crate) det: bool,
     /// Type-check arguments and results at call boundaries.
-    guard: bool,
+    pub(crate) guard: bool,
 }
 
 impl Config {
@@ -117,6 +122,22 @@ pub fn build_pl<Ext: Extern>(
     Runner::new(arena, spec, config, interface, external)
 }
 
+/// Builds a runner executing an AL target through the SL meta specification.
+///
+/// Calls enter the meta specification's Call_rel and Call_func;
+/// its host calls reach the P4 interface and `external`.
+pub fn build_meta<Ext: Extern>(
+    arena: &mut Arena,
+    base: sl::ast::Spec,
+    target: al::ast::Spec,
+    config: Config,
+    external: Ext,
+) -> Result<Runner<P4Interface, Ext>, BuildError> {
+    let spec = Spec::Meta { base, target };
+    let interface = builtin::p4(&spec);
+    Runner::new(arena, spec, config, interface, external)
+}
+
 // == Runner assembly
 
 /// Prepared definitions, interpreter state, and host components.
@@ -135,6 +156,7 @@ pub(crate) enum Backend {
     Al { spec_env: AlSpecEnv, interp: AlInterp },
     Sl { spec_env: SlSpecEnv, interp: SlInterp },
     Pl { spec_env: PlSpecEnv, interp: PlInterp },
+    Meta { spec_env: MetaEnv, state: Box<MetaState> },
 }
 
 impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
@@ -160,6 +182,10 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
             Spec::Pl(spec) => Backend::Pl {
                 spec_env: PlSpecEnv::load(&mut arena.mixop, spec)?,
                 interp: PlInterp::new(PlConfig::new(config.cache, config.det, config.guard)),
+            },
+            Spec::Meta { base, target } => Backend::Meta {
+                spec_env: MetaEnv::new(arena, base, target, config)?,
+                state: Box::new(MetaState::new(config)),
             },
         };
         Ok(Self { backend, interface, external, effects: 0 })
@@ -218,6 +244,18 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 &mut self.effects,
             )
             .call_program(name, program),
+            Backend::Meta { spec_env, state } => {
+                let mut interp = state.view();
+                RunnerContext::new(
+                    arena,
+                    spec_env,
+                    &mut interp,
+                    &mut self.interface,
+                    &mut self.external,
+                    &mut self.effects,
+                )
+                .call_program(name, program)
+            }
         }
     }
 
@@ -258,6 +296,18 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 &mut self.effects,
             )
             .call_rel(name, values),
+            Backend::Meta { spec_env, state } => {
+                let mut interp = state.view();
+                RunnerContext::new(
+                    arena,
+                    spec_env,
+                    &mut interp,
+                    &mut self.interface,
+                    &mut self.external,
+                    &mut self.effects,
+                )
+                .call_rel(name, values)
+            }
         }
     }
 
@@ -299,6 +349,18 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 &mut self.effects,
             )
             .call_func(name, targs, values),
+            Backend::Meta { spec_env, state } => {
+                let mut interp = state.view();
+                RunnerContext::new(
+                    arena,
+                    spec_env,
+                    &mut interp,
+                    &mut self.interface,
+                    &mut self.external,
+                    &mut self.effects,
+                )
+                .call_func(name, targs, values)
+            }
         }
     }
 
@@ -314,6 +376,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
             Backend::Al { interp, .. } => Interpreter::<Iface, Ext>::reset(interp),
             Backend::Sl { interp, .. } => Interpreter::<Iface, Ext>::reset(interp),
             Backend::Pl { interp, .. } => Interpreter::<Iface, Ext>::reset(interp),
+            Backend::Meta { state, .. } => Interpreter::<Iface, Ext>::reset(&mut state.view()),
         }
         self.external.clear();
         self.interface.clear();
@@ -349,6 +412,7 @@ pub fn run(
         Spec::Al(spec_al) => build_al(&mut arena, spec_al, config, Dummy),
         Spec::Sl(spec_sl) => build_sl(&mut arena, spec_sl, config, Dummy),
         Spec::Pl(spec_pl) => build_pl(&mut arena, spec_pl, config, Dummy),
+        Spec::Meta { base, target } => build_meta(&mut arena, base, target, config, Dummy),
     }
     .map_err(RunError::Build)?;
     run_program(&mut arena, runner, relation, includes, path_p4)

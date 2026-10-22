@@ -195,6 +195,18 @@ where
             );
             Arch::init_pipe(&mut ctx, program)
         }
+        Backend::Meta { spec_env, state } => {
+            let mut interp = state.view();
+            let mut ctx = RunnerContext::new(
+                arena,
+                spec_env,
+                &mut interp,
+                &mut runner.interface,
+                &mut runner.external,
+                &mut runner.effects,
+            );
+            Arch::init_pipe(&mut ctx, program)
+        }
     }
     .map_err(ExternError::into_report)?;
     Ok(Run::new(state))
@@ -244,6 +256,18 @@ where
                 arena,
                 spec_env,
                 interp,
+                &mut runner.interface,
+                &mut runner.external,
+                &mut runner.effects,
+            );
+            run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
+        }
+        Backend::Meta { spec_env, state } => {
+            let mut interp = state.view();
+            let mut ctx = RunnerContext::new(
+                arena,
+                spec_env,
+                &mut interp,
                 &mut runner.interface,
                 &mut runner.external,
                 &mut runner.effects,
