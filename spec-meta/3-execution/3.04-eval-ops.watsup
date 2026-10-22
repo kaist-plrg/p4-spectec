@@ -2,6 +2,7 @@
 
 dec $numUnop(numUnop, num) : val
   hint(print %0 %1)
+  hint(prose_in "the value of applying" %0 "to" %1)
 def $numUnop(PLUS, NAT n) = NAT n
 def $numUnop(PLUS, INT i) = INT i
 def $numUnop(MINUS, NAT n) = INT $(-n)
@@ -11,6 +12,8 @@ def $numUnop(MINUS, INT i) = INT $(-i)
 
 dec $boolBinop(boolBinop, bool, bool) : bool
   hint(print %1 %0 %2)
+  hint(prose_true "applying" %0 "to" %1 "and" %2 "yields true")
+  hint(prose_false "applying" %0 "to" %1 "and" %2 "yields false")
 def $boolBinop(AND, b_l, b_r) = (b_l /\ b_r)
 def $boolBinop(OR, b_l, b_r) = (b_l \/ b_r)
 def $boolBinop(IMPL, b_l, b_r) = (b_l => b_r)
@@ -22,6 +25,7 @@ syntax numBinopRes = ok<val> | error
 
 dec $numBinop(numBinop, num, num) : numBinopRes
   hint(print %1 %0 %2)
+  hint(prose_in "the result of applying" %0 "to" %1 "and" %2)
 def $numBinop(ADD, NAT n_l, NAT n_r) = OK (NAT $(n_l + n_r))
 def $numBinop(ADD, INT i_l, INT i_r) = OK (INT $(i_l + i_r))
 def $numBinop(SUB, NAT n_l, NAT n_r) = OK (INT $(n_l - n_r))
@@ -39,6 +43,8 @@ def $numBinop(numBinop, num_l, num_r) = ERROR
 
 dec $polyCmpop(polyCmpop, val, val) : bool
   hint(print %1 %0 %2)
+  hint(prose_true "comparing" %1 "and" %2 "using" %0 "yields true")
+  hint(prose_false "comparing" %1 "and" %2 "using" %0 "yields false")
 def $polyCmpop(EQ, val_l, val_r) = (val_l = val_r)
 def $polyCmpop(NE, val_l, val_r) = (val_l =/= val_r)
 
@@ -48,6 +54,7 @@ syntax numCmpRes = ok<bool> | error
 
 dec $numCmpop(numCmpop, num, num) : numCmpRes
   hint(print %1 %0 %2)
+  hint(prose_in "the result of comparing" %1 "and" %2 "using" %0)
 def $numCmpop(LT, NAT n_l, NAT n_r) = OK ($(n_l < n_r))
 def $numCmpop(LT, INT i_l, INT i_r) = OK ($(i_l < i_r))
 def $numCmpop(GT, NAT n_l, NAT n_r) = OK ($(n_l > n_r))
@@ -62,6 +69,8 @@ def $numCmpop(numCmpop, num_l, num_r) = ERROR
 ;; Pattern tests
 
 dec $matches(val, pat) : bool
+  hint(prose_true %0 "matches pattern" %1)
+  hint(prose_false %0 "does not match pattern" %1)
 def $matches(INJ (mixop_v val*), INJ mixop_p) = (mixop_v = mixop_p)
 def $matches(LIST val*, CONS) = $(|val*| > 0)
 def $matches(LIST val*, FIXED n) = (|val*| = n)

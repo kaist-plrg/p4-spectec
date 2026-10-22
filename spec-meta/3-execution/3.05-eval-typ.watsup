@@ -25,7 +25,9 @@ def $theta_of_tdenv(`{ (id_h ':' (TYP _ tparam* '=' (VARIANT typCase*))) :: (id_
 ;; Fresh binders avoid every name in the type and substitution
 
 dec $ids_typ(typ) : id*
+  hint(prose_in "the type names and binders in" %0)
 dec $ids_typs(typ*) : id*
+  hint(prose_in "the type names and binders in" %0)
 def $ids_typ(VAR id typ*) = id ++ $ids_typs(typ*)
 def $ids_typ(TUP typ*) = $ids_typs(typ*)
 def $ids_typ(ITER typ iter) = $ids_typ(typ)
@@ -37,12 +39,14 @@ def $ids_typs(eps) = eps
 def $ids_typs(typ_h :: typ_t*) = $ids_typ(typ_h) ++ $ids_typs(typ_t*)
 
 dec $fresh_id(id, id*) : id
+  hint(prose_in "a fresh name based on" %0 "avoiding" %1)
 def $fresh_id(id, id_used*) = id
   -- if ~(id <- id_used*)
 def $fresh_id(id, id_used*) = $fresh_id(id ++ "'", id_used*)
   -- if id <- id_used*
 
 dec $fresh_ids(id*, id*) : id*
+  hint(prose_in "distinct fresh names based on" %0 "avoiding" %1)
 def $fresh_ids(eps, id_used*) = eps
 def $fresh_ids(id_h :: id_t*, id_used*)
   = id_fresh ++ $fresh_ids(id_t*, id_fresh ++ id_used*)
@@ -51,7 +55,9 @@ def $fresh_ids(id_h :: id_t*, id_used*)
 syntax typRes = ok<typ> | error
 
 dec $subst_typ(theta, typ) : typRes
+  hint(prose_in "the result of substituting" %0 "into type" %1)
 dec $subst_typs(theta, typ*) : typsRes
+  hint(prose_in "the result of substituting" %0 "into types" %1)
 
 def $subst_typ(theta, NAT) = OK NAT
 def $subst_typ(theta, INT) = OK INT
@@ -89,11 +95,13 @@ def $subst_typs(theta, typ*) = ERROR
 ;; Function signatures include higher-order parameters
 
 dec $param_typ(param) : typ
+  hint(prose_in "the type of parameter" %0)
 def $param_typ(EXP typ) = typ
 def $param_typ(FUN id ':' tparam* param* '->' typ)
   = FUNC tparam* $param_typ(param)* typ
 
 dec $func_typ(funcDefn) : typ
+  hint(prose_in "the signature of function" %0)
 def $func_typ(EXTFUNC id tparam* param* ':' typ)
   = FUNC tparam* $param_typ(param)* typ
 def $func_typ(BUILTINFUNC id tparam* param* ':' typ)
@@ -108,6 +116,8 @@ def $func_typ(FUNC _ tparam* param* ':' typ '=' clause* elsClause?)
 syntax equivRes = ok<bool> | error
 
 dec $expand_typ(tdenv, typ) : typRes
+  hint(prose_in "the result of expanding outer type aliases of" %1
+                "under type environment" %0)
 def $expand_typ(tdenv, VAR id targ*) = $expand_typ(tdenv, typ_subst)
   -- if TYP _ tparam* '=' (ALIAS typ) = $find_map<id, typDef>(tdenv, id)
   -- if |tparam*| = |targ*|
@@ -136,8 +146,14 @@ def $expand_typ(tdenv, typ) = ERROR
   -- otherwise
 
 dec $equiv_typ(tdenv, typ, typ) : equivRes
+  hint(prose_in "the result of checking equivalence of" %1 "and" %2
+                "under type environment" %0)
 dec $equiv_typs(tdenv, typ*, typ*) : equivRes
+  hint(prose_in "the result of checking pairwise equivalence of" %1 "and" %2
+                "under type environment" %0)
 dec $equiv_typ'(tdenv, typ, typ) : equivRes
+  hint(prose_in "the result of comparing expanded types" %1 "and" %2
+                "under type environment" %0)
 def $equiv_typ(tdenv, typ_l, typ_r) = $equiv_typ'(tdenv, typ_l_expand, typ_r_expand)
   -- if OK typ_l_expand = $expand_typ(tdenv, typ_l)
   -- if OK typ_r_expand = $expand_typ(tdenv, typ_r)
@@ -171,6 +187,8 @@ def $equiv_typ'(tdenv, typ_l, typ_r) = OK false
   -- otherwise
 
 dec $equiv_func_typ(tdenv, typ, typ) : equivRes
+  hint(prose_in "the result of checking alpha-equivalence of function types" %1
+                "and" %2 "under type environment" %0)
 def $equiv_func_typ(tdenv, FUNC tparam_l* typ_l* typ_ret_l, FUNC tparam_r* typ_r* typ_ret_r)
   = $equiv_typs(tdenv_fresh, typ_l_subst* ++ [ typ_ret_l_subst ], typ_r_subst* ++ [ typ_ret_r_subst ])
   -- if |tparam_l*| = |tparam_r*|
@@ -197,15 +215,39 @@ def $equiv_func_typ(tdenv, typ_l, typ_r) = ERROR
 syntax subtypRes = ok<bool> | error
 
 dec $subtyp(fenv, tdenv, typ, val) : subtypRes
+  hint(prose_in "the result of checking value" %3 "against type" %2
+                "under function environment" %0 "and type environment" %1)
 dec $subtyps(fenv, tdenv, typ*, val*) : subtypRes
+  hint(prose_in "the result of checking values" %3 "against types" %2
+                "under function environment" %0 "and type environment" %1)
 dec $subtyp_list(fenv, tdenv, typ, val*) : subtypRes
+  hint(prose_in "the result of checking each value in" %3 "against type" %2
+                "under function environment" %0 "and type environment" %1)
 dec $subtyp_var(fenv, tdenv, id, typ*, val) : subtypRes
+  hint(prose_in "the result of checking value" %4 "against type name" %2
+                "with arguments" %3 "under function environment" %0
+                "and type environment" %1)
 dec $subtyp_def(fenv, tdenv, typDef, typ*, val) : subtypRes
+  hint(prose_in "the result of checking value" %4 "against type definition" %2
+                "with arguments" %3 "under function environment" %0
+                "and type environment" %1)
 dec $subtyp_extern(val) : subtypRes
+  hint(prose_in "the result of checking whether" %0 "is an extern value")
 dec $subtyp_variant(fenv, tdenv, theta, typCase*, val) : subtypRes
+  hint(prose_in "the result of checking value" %4 "against variant cases" %3
+                "with substitution" %2 "under function environment" %0
+                "and type environment" %1)
 dec $subtyp_struct(fenv, tdenv, theta, typField*, val) : subtypRes
+  hint(prose_in "the result of checking value" %4 "against struct fields" %3
+                "with substitution" %2 "under function environment" %0
+                "and type environment" %1)
 dec $subtyp_case(fenv, tdenv, theta, typ*, val*) : subtypRes
+  hint(prose_in "the result of checking values" %4 "against types" %3
+                "with substitution" %2 "under function environment" %0
+                "and type environment" %1)
 dec $subtyp_func(fenv, tdenv, typ, id) : subtypRes
+  hint(prose_in "the result of checking function" %3 "against type" %2
+                "under function environment" %0 "and type environment" %1)
 
 def $subtyp(fenv, tdenv, BOOL, BOOL b) = OK true
 def $subtyp(fenv, tdenv, NAT, NAT n) = OK true
@@ -297,8 +339,9 @@ syntax castsRes = ok<val*> | error
 ;;; Upcasts
 
 dec $upcast(ctx, typ, val) : castRes
-  hint(prose_in %2 "upcasted to" %1 "under" %0)
+  hint(prose_in "the result of upcasting" %2 "to" %1 "under context" %0)
 dec $upcasts(ctx, typ*, val*) : castsRes
+  hint(prose_in "the result of upcasting values" %2 "to types" %1 "under context" %0)
 
 def $upcast(C, INT, INT i) = OK (INT i)
 def $upcast(C, INT, NAT n) = OK (INT n)
@@ -346,8 +389,9 @@ def $upcasts(C, typ*, val*) = ERROR
 ;;; Downcasts
 
 dec $downcast(ctx, typ, val) : castRes
-  hint(prose_in %2 "downcasted to" %1 "under" %0)
+  hint(prose_in "the result of downcasting" %2 "to" %1 "under context" %0)
 dec $downcasts(ctx, typ*, val*) : castsRes
+  hint(prose_in "the result of downcasting values" %2 "to types" %1 "under context" %0)
 
 def $downcast(C, NAT, NAT n) = OK (NAT n)
 def $downcast(C, NAT, INT i) = OK (NAT n)

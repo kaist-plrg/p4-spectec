@@ -5,6 +5,8 @@
 relation Eval_clause:
   ctx |- clause `( val* `) : funcRes
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating clause" %1 "with inputs" %2 "under context" %0)
+  hint(prose_out %3)
 
 rulegroup Eval_clause {
 
@@ -30,10 +32,16 @@ rule Eval_clause/error:
 relation Eval_clauses:
   ctx |- clause* `( val* `) : funcRes
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating clauses" %1 "with inputs" %2 "under context" %0
+                "with determinism checks")
+  hint(prose_out %3)
 
 relation Eval_clauses_on_ok:
   ctx |- clause* `( val* `) : unitRes
   hint(input %0 %1 %2)
+  hint(prose_in "checking that all remaining clauses" %1
+                "are unmatched with inputs" %2 "under context" %0)
+  hint(prose_out %3)
 
 rulegroup Eval_clauses {
 
@@ -80,7 +88,7 @@ rulegroup Eval_clauses_on_ok {
 relation Eval_tblrow:
   ctx |- tblRow `( val* `) : funcRes
   hint(input %0 %1 %2)
-  hint(prose_in "evaluating" %1 "with inputs" %2 "under" %0)
+  hint(prose_in "evaluating table row" %1 "with inputs" %2 "under context" %0)
   hint(prose_out %3)
 
 rulegroup Eval_tblrow {
@@ -111,7 +119,8 @@ rule Eval_tblrow/error:
 relation Eval_tblrows:
   ctx |- tblRow* `( val* `) : funcRes
   hint(input %0 %1 %2)
-  hint(prose_in "evaluating" %1 "with inputs" %2 "under" %0)
+  hint(prose_in "evaluating table rows" %1 "with inputs" %2 "under context" %0
+                "in order until a row succeeds or errors")
   hint(prose_out %3)
 
 rulegroup Eval_tblrows {
@@ -136,7 +145,7 @@ rulegroup Eval_tblrows {
 relation Call_table_func:
   ctx |- tableFuncDefn `( val* `) : funcRes
   hint(input %0 %1 %2)
-  hint(prose_in "evaluating" %1 "with inputs" %2 "under" %0)
+  hint(prose_in "calling table function" %1 "with inputs" %2 "under context" %0)
   hint(prose_out %3)
 
 rule Call_table_func:
@@ -149,8 +158,8 @@ rule Call_table_func:
 relation Call_defined_func:
   ctx |- definedFuncDefn `< typ* `> `( val* `) : funcRes
   hint(input %0 %1 %2 %3)
-  hint(prose_in "evaluating" %1 "with types" %2
-                "and inputs" %3 "under" %0)
+  hint(prose_in "calling defined function" %1 "with types" %2 "and inputs" %3
+                "under context" %0)
   hint(prose_out %4)
 
 rulegroup Call_defined_func {

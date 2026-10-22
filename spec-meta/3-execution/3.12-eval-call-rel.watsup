@@ -7,6 +7,8 @@ syntax rul = rulMatch -> rulPath
 relation Eval_rul:
   ctx |- rul `( val* `) : relRes
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating rule path" %1 "with inputs" %2 "under context" %0)
+  hint(prose_out %3)
 
 rulegroup Eval_rul {
 
@@ -38,10 +40,16 @@ rule Eval_rul/error:
 relation Eval_ruls:
   ctx |- rul* `( val* `) : relRes
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating rule paths" %1 "with inputs" %2 "under context" %0
+                "with determinism checks")
+  hint(prose_out %3)
 
 relation Eval_ruls_on_ok:
   ctx |- rul* `( val* `) : unitRes
   hint(input %0 %1 %2)
+  hint(prose_in "checking that all remaining rule paths" %1
+                "are unmatched with inputs" %2 "under context" %0)
+  hint(prose_out %3)
 
 rulegroup Eval_ruls {
 
@@ -86,19 +94,22 @@ rulegroup Eval_ruls_on_ok {
 relation Call_defined_rel:
   ctx |- definedRelDefn `( val* `) : relRes
   hint(input %0 %1 %2)
-  hint(prose_in "evaluating" %1 "with inputs" %2 "under" %0)
+  hint(prose_in "calling defined relation" %1 "with inputs" %2 "under context" %0)
   hint(prose_out %3)
 
 dec $ruls_of_rulgroup(rulGroup) : rul*
+  hint(prose_in "the rule paths of rule group" %0)
 def $ruls_of_rulgroup(id ':' rulMatch '=' rulPath*)
   = (rulMatch -> rulPath)*
 
 dec $ruls_of_rulgroups(rulGroup*) : rul*
+  hint(prose_in "the rule paths of rule groups" %0 "in order")
 def $ruls_of_rulgroups(eps) = eps
 def $ruls_of_rulgroups(rulGroup_h :: rulGroup_t*)
   = $ruls_of_rulgroup(rulGroup_h) ++ $ruls_of_rulgroups(rulGroup_t*)
 
 dec $rul_of_elsgroup(elsGroup) : rul
+  hint(prose_in "the rule path of otherwise group" %0)
 def $rul_of_elsgroup(id ':' rulMatch '=' rulPath)
   = rulMatch -> rulPath
 

@@ -106,13 +106,13 @@ def $load(C, eps) = C
 ;;; Value adders
 
 dec $add_varr(ctx, varr, val) : ctx
-  hint(prose_in %0 "where" %1 "to" %2 "added locally")
+  hint(prose_in %0 "with runtime variable" %1 "bound locally to value" %2)
 def $add_varr(C, varr, val)
   = C[ .LOCAL.VAL = venv_update ]
   -- if venv_update = $add_map<varr, val>(C.LOCAL.VAL, varr, val)
 
 dec $add_varis(ctx, vari*, val*) : ctx
-  hint(prose_in %0 "where each of" %1 "to each of" %2 "added locally")
+  hint(prose_in %0 "with variables" %1 "bound locally to corresponding values" %2)
 def $add_varis(C, vari*, val*)
   = C[ .LOCAL.VAL = venv_update ]
   -- if (id _ iter* = vari)*
@@ -121,7 +121,8 @@ def $add_varis(C, vari*, val*)
 ;;; Function adders
 
 dec $add_func(ctx, id, id) : ctx
-  hint(prose_in %0 "where function" %1 "to" %2 "added locally")
+  hint(prose_in %0 "with function parameter" %1
+                "bound locally to global function name" %2)
 
 def $add_func(C, id, id_global)
   = C[ .LOCAL.FUNC = fnenv_update ]
@@ -132,7 +133,7 @@ def $add_func(C, id, id_global)
 ;;; Value finders
 
 dec $find_vari(ctx, vari) : val?
-  hint(prose_in "the value of" %1 "in" %0)
+  hint(prose_in "the value bound to variable" %1 "in context" %0 "if present")
 def $find_vari(C, vari) = val
   -- if id _ iter* = vari
   -- if val = $find_map<varr, val>(C.LOCAL.VAL, id iter*)
@@ -141,18 +142,20 @@ def $find_vari(C, vari) = eps
   -- otherwise
 
 dec $find_varr(ctx, varr) : val?
-  hint(prose_in "the value of" %1 "in" %0)
+  hint(prose_in "the value bound to runtime variable" %1 "in context" %0 "if present")
 def $find_varr(C, varr) = $find_map<varr, val>(C.LOCAL.VAL, varr)
 
 dec $find_varis(ctx, vari*) : val*?
-  hint(prose_in "the values of" %1 "in" %0)
+  hint(prose_in "the values bound to variables" %1 "in context" %0
+                "if all are present")
 def $find_varis(C, vari*) = val*
   -- if (val = $find_vari(C, vari))*
 def $find_varis(C, vari*) = eps
   -- otherwise
 
 dec $finds_vari(ctx*, vari) : val*?
-  hint(prose_in "the value of" %1 "in each of" %0)
+  hint(prose_in "the values bound to variable" %1 "in contexts" %0
+                "if all are present")
 def $finds_vari(C*, vari) = val*
   -- if id _ iter* = vari
   -- if (val = $find_map<varr, val>(C.LOCAL.VAL, id iter*))*
@@ -162,7 +165,7 @@ def $finds_vari(C*, vari) = eps
 ;;; Typedef finders
 
 dec $find_typ(ctx, id) : typDef?
-  hint(prose_in "the type definition of" %1 "in" %0)
+  hint(prose_in "the type definition bound to" %1 "in context" %0 "if present")
 
 def $find_typ(C, id) = typDef
   -- if typDef = $find_map<id, typDef>(C.LOCAL.TYP, id)
@@ -172,7 +175,8 @@ def $find_typ(C, id) = $find_map<id, typDef>(C.GLOBAL.TYP, id)
 ;;; Function finders
 
 dec $find_func_param(ctx, id) : id?
-  hint(prose_in "the global function name bound to" %1 "in" %0)
+  hint(prose_in "the global function name bound to parameter" %1 "in context" %0
+                "if present")
 def $find_func_param(C, id)
   = $find_map<id, id>(C.LOCAL.FUNC, id)
 
@@ -182,13 +186,13 @@ def $resolve_func_param(C, id)
   = $deopt_<id>($find_func_param(C, id), id)
 
 dec $find_func(ctx, id) : funcDefn?
-  hint(prose_in "the function definition of" %1 "in" %0)
+  hint(prose_in "the definition of global function" %1 "in context" %0 "if present")
 def $find_func(C, id) = $find_map<id, funcDefn>(C.GLOBAL.FUNC, id)
 
 ;;; Relation finders
 
 dec $find_rel(ctx, id) : relDefn?
-  hint(prose_in "the relation definition of" %1 "in" %0)
+  hint(prose_in "the definition of relation" %1 "in context" %0 "if present")
 
 def $find_rel(C, id) = $find_map<id, relDefn>(C.GLOBAL.REL, id)
 
@@ -197,7 +201,8 @@ def $find_rel(C, id) = $find_map<id, relDefn>(C.GLOBAL.REL, id)
 syntax subOptRes = ok<ctx?> | error
 
 dec $sub_opt(ctx, vari*) : subOptRes
-  hint(prose_in "the sub-context of" %0 "for optional iterators" %1)
+  hint(prose_in "the result of constructing an optional subcontext of" %0
+                "for variables" %1)
 
 def $sub_opt(C, eps) = ERROR
 def $sub_opt(C, vari*) = OK C_sub
@@ -215,7 +220,7 @@ def $sub_opt(C, vari*) = ERROR
 syntax subListRes = ok<ctx*> | error
 
 dec $sub_list(ctx, vari*) : subListRes
-  hint(prose_in "the sub-contexts of" %0 "for list iterators" %1)
+  hint(prose_in "the result of constructing list subcontexts of" %0 "for variables" %1)
 
 def $sub_list(C, vari*) = OK C'*
   -- if (vari_iter = $iter_vari(vari, STAR))*

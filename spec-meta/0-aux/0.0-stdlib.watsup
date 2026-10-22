@@ -24,6 +24,7 @@ def $ite<X>(false, X_t, X_f) = X_f
 ;;
 
 dec $deopt_<X>(X?, X) : X
+  hint(prose_in %0 "when present, or" %1 "otherwise")
 def $deopt_<X>(eps, X_d) = X_d
 def $deopt_<X>(X, X_d) = X
 
@@ -84,10 +85,10 @@ builtin dec $find_map<K, V>(map<K, V>, K) : V?
   hint(prose_in "the value of" %1 "in map" %0)
 
 builtin dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
-  hint(prose_in %0 "where" %1 "to" %2 "is added")
+  hint(prose_in %0 "with key" %1 "bound to value" %2)
 
 dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
-  hint(prose_in %0 "where each of" %1 "to each of" %2 "are added")
+  hint(prose_in %0 "with keys" %1 "bound to corresponding values" %2)
 def $adds_map<K, V>(`{ (K ':' V)* `}, eps, eps) = `{ (K ':' V)* `}
 def $adds_map<K, V>(`{ (K ':' V)* `}, K_h :: K_t*, V_h :: V_t*)
   = $adds_map<K, V>($add_map<K, V>(`{ (K ':' V)* `}, K_h, V_h), K_t*, V_t*)
