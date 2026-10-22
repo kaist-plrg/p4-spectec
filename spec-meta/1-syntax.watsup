@@ -6,7 +6,7 @@ syntax mixop = atom**
 
 ;; Types
 
-syntax iter, targ, typfield, typcase, tparam
+syntax iter, targ, typField, typCase, tparam
 
 syntax numtyp =
   | NAT
@@ -26,11 +26,11 @@ syntax typ =
 
 syntax deftyp =
   | ALIAS typ
-  | STRUCT typfield*
-  | VARIANT typcase*
+  | STRUCT typField*
+  | VARIANT typCase*
 
-syntax typfield = atom typ
-syntax typcase = mixop typ*
+syntax typField = atom typ
+syntax typCase = mixop typ*
 
 ;; Iterators
 
@@ -42,7 +42,7 @@ syntax vari = id typ iter*
 
 ;; Expressions
 
-syntax valfield, valcase, expfield, expcase, pattern, path, arg, iterexp
+syntax valField, valCase, expField, expCase, pattern, path, arg, iterExp
 
 syntax num =
   | NAT nat
@@ -88,16 +88,16 @@ syntax val =
   | BOOL bool
   | num
   | TEXT text
-  | STR valfield*
-  | INJ valcase
+  | STR valField*
+  | INJ valCase
   | TUP val*
   | OPT val?
   | LIST val*
   | FUNC id
   | EXT json
 
-syntax valfield = atom val
-syntax valcase = mixop val*
+syntax valField = atom val
+syntax valCase = mixop val*
 
 syntax exp =
   | BOOL bool
@@ -112,8 +112,8 @@ syntax exp =
   | SUB exp typ
   | MATCH exp pattern
   | TUP exp*
-  | INJ expcase
-  | STR expfield*
+  | INJ expCase
+  | STR expField*
   | OPT exp?
   | LIST exp*
   | CONS exp exp
@@ -125,11 +125,11 @@ syntax exp =
   | SLICE exp exp exp
   | UPD exp path exp
   | CALL id targ* arg*
-  | ITER exp iterexp
+  | ITER exp iterExp
 
-syntax expcase = mixop exp*
-syntax expfield = atom exp
-syntax iterexp = iter vari*
+syntax expCase = mixop exp*
+syntax expField = atom exp
+syntax iterExp = iter vari*
 
 syntax listpattern =
   | CONS
@@ -171,7 +171,7 @@ syntax param =
 
 ;; Premises
 
-syntax iterprem = iter vari* vari*
+syntax iterPrem = iter vari* vari*
 
 syntax prem =
   | REL id ':' exp* '->' exp*
@@ -179,30 +179,30 @@ syntax prem =
   | IFHOLD id ':' exp*
   | IFNOTHOLD id ':' exp*
   | LET exp '=' exp
-  | ITER prem iterprem
+  | ITER prem iterPrem
   | DEBUG exp
 
 ;; Definitions
 
-syntax rulmatch = exp* '-' prem*
-syntax rulpath = id '=' exp* '-' prem*
-syntax rulgroup = id ':' rulmatch '=' rulpath*
-syntax elsgroup = id ':' rulmatch '=' rulpath
+syntax rulMatch = exp* '-' prem*
+syntax rulPath = id '=' exp* '-' prem*
+syntax rulGroup = id ':' rulMatch '=' rulPath*
+syntax elsGroup = id ':' rulMatch '=' rulPath
 
 syntax clause = arg* '=' exp '-' prem*
-syntax elsclause = clause
+syntax elsClause = clause
 
-syntax tblrow = arg* '=' exp '-' prem*
+syntax tblRow = arg* '=' exp '-' prem*
 
 syntax defn =
   | EXTTYP id
   | TYP id tparam* '=' deftyp
   | EXTREL id ':' typ* '->' typ*
-  | REL id ':' typ* '->' typ* '=' rulgroup* elsgroup?
+  | REL id ':' typ* '->' typ* '=' rulGroup* elsGroup?
   | EXTFUNC id tparam* param* ':' typ
   | BUILTINFUNC id tparam* param* ':' typ
-  | TABLEFUNC id param* ':' typ '=' tblrow*
-  | FUNC id tparam* param* ':' typ '=' clause* elsclause?
+  | TABLEFUNC id param* ':' typ '=' tblRow*
+  | FUNC id tparam* param* ':' typ '=' clause* elsClause?
 
 ;; Scripts
 

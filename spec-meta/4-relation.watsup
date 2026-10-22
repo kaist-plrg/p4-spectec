@@ -1,38 +1,9 @@
-;; Result to represent backtracking in evaluation
-
-syntax unitres = OK | FAIL
-syntax res<X> = OK X | FAIL
-
-syntax valres = res<val>
-syntax valsres = res<val*>
-
-dec $det_valres(valres*) : valres
-
-def $det_valres(valres*) = OK val
-  -- if (b_ok = (valres =/= FAIL))*
-  -- if OK val = $filter_<valres>(valres*, b_ok*)
-def $det_valres(valres*) = FAIL
-  -- otherwise
-
-dec $det_valsres(valsres*) : valsres
-
-def $det_valsres(valsres*) = valsres_ok*[0]
-  -- if (b_ok = (valsres =/= FAIL))*
-  -- if valsres_ok* = $filter_<valsres>(valsres*, b_ok*)
-  -- if $(|valsres_ok*| = 1)
-def $det_valsres(valsres*) = FAIL
-  -- if (b_ok = (valsres =/= FAIL))*
-  -- if valsres_ok* = $filter_<valsres>(valsres*, b_ok*)
-  -- if $(|valsres_ok*| > 1)
-def $det_valsres(valsres*) = FAIL
-  -- if (b_ok = (valsres =/= FAIL))*
-  -- if valsres_ok* = $filter_<valsres>(valsres*, b_ok*)
-  -- if $(|valsres_ok*| < 1)
-
 ;;; Extern meta-function invocation
 
+syntax funcRes = ok<val> | failure
+
 extern relation Call_extern_func:
-  |- id `< typ* `> `( val* `) : res<val>
+  |- id `< typ* `> `( val* `) : funcRes
   hint(input %0 %1 %2)
   hint(prose_in "evaluating extern function"
                 %0 "with types" %1 "and inputs" %2)
@@ -41,69 +12,111 @@ extern relation Call_extern_func:
 ;;; Builtin meta-function invocation
 
 extern relation Call_builtin_func:
-  |- id '@' `< typ* `> `( val* `) : res<val>
+  |- id '@' `< typ* `> `( val* `) : funcRes
   hint(input %0 %1 %2)
 
 ;;; Extern relations
 
+syntax relRes = ok<val*> | failure
+
 extern relation Call_extern_rel:
-  |- id val* : res<val*>
+  |- id val* : relRes
   hint(input %0 %1)
   hint(prose_in "evaluating extern relation" %0 "with inputs" %1)
   hint(prose_out %2)
 
-;; Result to represent backtracking in evaluation
-
-syntax ctxres = res<ctx>
-
 ;; Evaluation relations
 
+;;; Expression evaluation
+
+syntax expRes = ok<val> | failure
+
 relation Eval_exp:
-  ctx |- exp : res<val>
+  ctx |- exp : expRes
   hint(input %0 %1)
   hint(prose_in "evaluating" %1 "under" %0)
   hint(prose_out %2)
+
+syntax expsRes = ok<val*> | failure
+
+relation Eval_exps:
+  ctx |- exp* : expsRes
+  hint(input %0 %1)
+
+relation Eval_exp_each:
+  ctx* |- exp : expsRes
+  hint(input %0 %1)
+
+;;; Type argument evaluation
+
+syntax typsRes = ok<typ*> | error
 
 relation Eval_targs:
-  ctx |- targ* : typ*
+  ctx |- targ* : typsRes
   hint(input %0 %1)
   hint(prose_in "evaluating" %1 "under" %0)
   hint(prose_out %2)
+
+;;; Argument evaluation
+
+syntax argRes = ok<val> | failure
 
 relation Eval_arg:
-  ctx |- arg : res<val>
+  ctx |- arg : argRes
   hint(input %0 %1)
   hint(prose_in "evaluating" %1 "under" %0)
   hint(prose_out %2)
 
+syntax argsRes = ok<val*> | failure
+
+relation Eval_args:
+  ctx |- arg* : argsRes
+  hint(input %0 %1)
+
+;;; Premise evaluation
+
+syntax premRes = ok<ctx> | failure
+
 relation Eval_prem:
-  ctx |- prem : res<ctx>
+  ctx |- prem : premRes
   hint(input %0 %1)
   hint(prose_in "evaluating" %1 "under" %0)
   hint(prose_out %2)
 
 relation Eval_prems:
-  ctx |- prem* : res<ctx>
+  ctx |- prem* : premRes
   hint(input %0 %1)
   hint(prose_in "evaluating" %1 "under" %0)
   hint(prose_out %2)
 
+syntax premIterRes = ok<ctx*> | failure
+
+relation Eval_prem_each:
+  ctx* |- prem : premIterRes
+  hint(input %0 %1)
+
+;; Call relations
+
+;;; Meta-function calls
+
 relation Call_func_dispatch:
-  ctx |- funcdef targ* val* : res<val>
+  ctx |- funcDef targ* val* : funcRes
   hint(input %0 %1 %2 %3)
 
 relation Call_func:
-  ctx |- id targ* val* : res<val>
+  ctx |- id targ* val* : funcRes
   hint(input %0 %1 %2 %3)
   hint(prose_in "calling" %1 "with types" %2 "and arguments" %3 "under" %0)
   hint(prose_out %4)
 
+;;; Relation calls
+
 relation Call_rel_dispatch:
-  ctx |- reldef val* : res<val*>
+  ctx |- relDef val* : relRes
   hint(input %0 %1 %2)
 
 relation Call_rel:
-  ctx |- id val* : res<val*>
+  ctx |- id val* : relRes
   hint(input %0 %1 %2)
   hint(prose_in "calling" %1 "with arguments" %2 "under" %0)
   hint(prose_out %3)

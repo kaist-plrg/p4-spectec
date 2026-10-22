@@ -1,3 +1,11 @@
+;; Recoverable mismatches and execution errors
+
+syntax ok<X> = OK X
+syntax error = ERROR
+syntax unmatch = UNMATCH
+syntax failure = error | unmatch
+syntax unitRes = OK | error
+
 ;;
 ;; Metavariables for int, nat, bool, and text
 ;;
@@ -57,21 +65,17 @@ def $repeat_<X>(X, n) = X ++ $repeat_<X>(X, n')
 builtin dec $rev_<X>(X*) : X*
   hint(prose_in "the reversal of" %0)
 
-dec $filter_<X>(X*, bool*) : X*
-  hint(prose_in %0 "filtered by" %1)
-def $filter_<X>(eps, eps) = eps
-def $filter_<X>(X_h :: X_t*, b_h :: b_t*)
-  = X_h :: $filter_<X>(X_t*, b_t*)
-  -- if b_h
-def $filter_<X>(X_h :: X_t*, b_h :: b_t*)
-  = $filter_<X>(X_t*, b_t*)
-  -- if ~b_h
-
 builtin dec $assoc_<X, Y>(X, (X, Y)*) : Y?
   hint(prose_in "the value associated to" %0 "in" %1)
 
-builtin dec $transpose_<X>(X**) : X**
+dec $transpose_<X>(X**) : X**
   hint(prose_in %0 "transposed")
+def $transpose_<X>(eps) = eps
+def $transpose_<X>(eps :: X_t**) = eps
+  -- if $forall_((X_t* = eps)*)
+def $transpose_<X>((X_h :: X_t*)*) = X_h* :: X_trans**
+  -- if X_h* =/= eps
+  -- if X_trans** = $transpose_<X>(X_t**)
 
 ;;
 ;; General set functions
@@ -103,5 +107,8 @@ builtin dec $find_maps<K, V>(map<K, V>*, K) : V?
 builtin dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
   hint(prose_in %0 "where" %1 "to" %2 "is added")
 
-builtin dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
-  hint(prose_in %0 "where each of" %1 "to" %2 "are added")
+dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
+  hint(prose_in %0 "where each of" %1 "to each of" %2 "are added")
+def $adds_map<K, V>(`{ (K ':' V)* `}, eps, eps) = `{ (K ':' V)* `}
+def $adds_map<K, V>(`{ (K ':' V)* `}, K_h :: K_t*, V_h :: V_t*)
+  = $adds_map<K, V>($add_map<K, V>(`{ (K ':' V)* `}, K_h, V_h), K_t*, V_t*)
