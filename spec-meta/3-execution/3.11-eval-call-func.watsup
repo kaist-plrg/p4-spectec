@@ -187,41 +187,39 @@ rule Call_defined_func/error:
   C |- definedFuncDefn `< typ* `> `( val* `) : ERROR
   -- otherwise
 
-;;; Meta-function dispatch
-
-rulegroup Call_func_dispatch {
-
-    rule Call_func_dispatch/extern:
-      C |- (EXTFUNC id _ _ ':' _) `< typ* `> `( val* `) : funcRes
-      -- Call_extern_func:
-          |- id `< typ* `> `( val* `) : funcRes
-
-    rule Call_func_dispatch/builtin:
-      C |- builtinFuncDefn `< typ* `> `( val* `) : funcRes
-      -- if BUILTINFUNC id _ _ ':' _ = builtinFuncDefn
-      -- Call_builtin_func:
-          |- id `< typ* `> `( val* `) : funcRes
-
-    rule Call_func_dispatch/table:
-      C |- tableFuncDefn `< eps `> `( val* `) : funcRes
-      -- Call_table_func:
-          C |- tableFuncDefn `( val* `) : funcRes
-
-    rule Call_func_dispatch/defined:
-      C |- definedFuncDefn `< typ* `> `( val* `) : funcRes
-      -- Call_defined_func:
-          C |- definedFuncDefn `< typ* `> `( val* `) : funcRes
-
-}
-
 ;; Meta-function call
 
-rule Call_func:
-  C |- id `< typ* `> `( val* `) : funcRes
-  -- if id_global = $resolve_func_param(C, id)
-  -- if funcDefn = $find_func(C, id_global)
-  -- Call_func_dispatch:
-      C |- funcDefn `< typ* `> `( val* `) : funcRes
+rulegroup Call_func {
+
+  rule Call_func/extern:
+    C |- id `< typ* `> `( val* `) : funcRes
+    -- if id_global = $resolve_func_param(C, id)
+    -- if EXTFUNC id_func _ _ ':' _ = $find_func(C, id_global)
+    -- Call_extern_func:
+        |- id_func `< typ* `> `( val* `) : funcRes
+
+  rule Call_func/builtin:
+    C |- id `< typ* `> `( val* `) : funcRes
+    -- if id_global = $resolve_func_param(C, id)
+    -- if BUILTINFUNC id_func _ _ ':' _ = $find_func(C, id_global)
+    -- Call_builtin_func:
+        |- id_func `< typ* `> `( val* `) : funcRes
+
+  rule Call_func/table:
+    C |- id `< eps `> `( val* `) : funcRes
+    -- if id_global = $resolve_func_param(C, id)
+    -- if tableFuncDefn = $find_func(C, id_global)
+    -- Call_table_func:
+        C |- tableFuncDefn `( val* `) : funcRes
+
+  rule Call_func/defined:
+    C |- id `< typ* `> `( val* `) : funcRes
+    -- if id_global = $resolve_func_param(C, id)
+    -- if definedFuncDefn = $find_func(C, id_global)
+    -- Call_defined_func:
+        C |- definedFuncDefn `< typ* `> `( val* `) : funcRes
+
+}
 
 rule Call_func/error:
   C |- id `< typ* `> `( val* `) : ERROR

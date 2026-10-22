@@ -138,28 +138,23 @@ rulegroup Call_defined_rel {
 
 }
 
-;; Relation dispatch
-
-rulegroup Call_rel_dispatch {
-
-    rule Call_rel_dispatch/extern:
-      C |- (EXTREL id ':' _ '->' _) `( val* `) : relRes
-      -- Call_extern_rel:
-          |- id `( val* `) : relRes
-
-    rule Call_rel_dispatch/defined:
-      C |- definedRelDefn `( val* `) : relRes
-      -- Call_defined_rel:
-          C |- definedRelDefn `( val* `) : relRes
-
-}
-
 ;; Relation call
 
-rule Call_rel:
-  C |- id `( val* `) : relRes
-  -- if relDefn = $find_rel(C, id)
-  -- Call_rel_dispatch: C |- relDefn `( val* `) : relRes
+rulegroup Call_rel {
+
+  rule Call_rel/extern:
+    C |- id `( val* `) : relRes
+    -- if EXTREL id_rel ':' _ '->' _ = $find_rel(C, id)
+    -- Call_extern_rel:
+        |- id_rel `( val* `) : relRes
+
+  rule Call_rel/defined:
+    C |- id `( val* `) : relRes
+    -- if definedRelDefn = $find_rel(C, id)
+    -- Call_defined_rel:
+        C |- definedRelDefn `( val* `) : relRes
+
+}
 
 rule Call_rel/error:
   C |- id `( val* `) : ERROR
