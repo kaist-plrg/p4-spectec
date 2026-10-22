@@ -33,6 +33,7 @@
 //! the output lists `x*` and `y*` are not yet bound.
 //! Once the binding succeeds, `|x*| = |y*| = |z*|` is guaranteed,
 //! so later guards requiring those equalities can be omitted.
+//! Relation premises treat their inputs as values and their outputs as patterns.
 //!
 //! Guard elimination tracks facts established by earlier premises.
 //! Equalities (`=`) and Boolean equivalences (`<=>`) form separate classes;
@@ -60,6 +61,7 @@
 
 use crate::lang::{
     common::prim,
+    hints::input,
     traits::{at::At, eq::SyntaxEq},
 };
 
@@ -735,9 +737,15 @@ fn collect_prem(ctx: &Context, prem_al: &ast::Prem) -> Collected {
     }
 }
 
+/// The output patterns establish their guards; the inputs need them checked.
 fn collect_rule_prem(ctx: &Context, rule_prem: &ast::RulePrem) -> Collected {
-    let prems_insert = collect_exps(ctx, rule_prem.not_exp.args());
-    Collected { prems_must: vec![], prems_insert }
+    let exps_al = rule_prem.not_exp.args().iter().collect();
+    // Binding analysis validates hints; later rewrites preserve notation arity
+    let (exps_input_al, exps_output_al) = input::split(&rule_prem.input_hint, exps_al)
+        .expect("validated relation hints and argument counts");
+    let prems_must = collect_exps(ctx, exps_output_al);
+    let prems_insert = collect_exps(ctx, exps_input_al);
+    Collected { prems_must, prems_insert }
 }
 
 fn collect_if_prem(ctx: &Context, if_prem: &ast::IfPrem) -> Collected {
