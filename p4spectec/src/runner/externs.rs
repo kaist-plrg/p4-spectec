@@ -2,6 +2,7 @@
 //!
 //! Each call receives the operation-local runner context
 //! and may reenter the interpreter through it.
+//! `typdefs` names the definitions of the extern syntax types the host makes.
 //! The result carries its own SideEffect,
 //! so the extern keeps all architecture-specific state bookkeeping.
 //! Failures describe the host operation;
@@ -13,7 +14,7 @@ use thiserror::Error;
 
 use crate::lang::{
     common::prim::num::NumericError,
-    data::value::{ValueError, flat::Value},
+    data::value::{ValueError, extern_value::TypDefId, flat::Value},
 };
 
 use crate::lang::il::ast::Typ;
@@ -116,6 +117,15 @@ impl From<InterpreterError> for ExternError {
 
 /// Total host relations and functions: each call returns values or a fatal error.
 pub trait Extern: Sized {
+    /// Definitions of the extern syntax types, issued by the runner's arena.
+    ///
+    /// The runner reads values of each declared extern syntax type
+    /// through the definition of the same name;
+    /// a host that makes none of them supplies none.
+    fn typdefs(&self) -> Vec<TypDefId> {
+        Vec::new()
+    }
+
     /// Evaluates a host relation; retains effects on success and failure.
     fn eval_rel<Interp, Iface>(
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,

@@ -134,7 +134,7 @@ fn check_values(
     };
     // Check all values against their declared types
     let matches = unwrap_from_result!(
-        value::subs(arena, &find_typdef_opt, &find_func, typs, values),
+        value::subs(arena, ctx.typdefs_extern(), &find_typdef_opt, &find_func, typs, values),
         &id.span
     );
     backtrack::check(matches, id.span, diagnostic)

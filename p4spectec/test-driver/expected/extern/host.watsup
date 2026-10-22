@@ -15,3 +15,21 @@ extern dec $note_state(state) : text
 extern dec $calls_note : nat
 
 var n : nat
+
+;; The argument, returned as is
+extern dec $keep<X>(X) : X
+
+;; The argument, with every state value made by the other definition
+extern dec $poison<X>(X) : X
+
+;; The output of S for a value of the other definition
+extern dec $reenter(text, text) : nat
+
+relation S: state |- nat
+  hint(input %0)
+rule S: state |- 0
+
+;; Shapes that hold state values
+syntax alias = state
+syntax box = {KEY text, STATE state}
+syntax wrap = WRAP state | EMPTY

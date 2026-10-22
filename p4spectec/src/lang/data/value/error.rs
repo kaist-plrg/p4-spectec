@@ -33,6 +33,9 @@ pub enum ValueError {
     /// An extern value read through a definition that did not make it.
     #[error("expected an extern value of {expected}, got one of {actual}")]
     TypDefMismatch { expected: String, actual: String },
+    /// Two definitions registered under one extern type name.
+    #[error("extern type {name} has more than one definition")]
+    TypDefRepeated { name: String },
     /// An extern type definition used with an arena that did not issue it.
     #[error("extern type definition belongs to another arena")]
     TypDefForeign,

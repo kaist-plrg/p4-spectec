@@ -1,0 +1,10 @@
+;; Values of the registered definition pass the result check in every shape
+relation R: nat |- (alias, box, wrap, state?, state*)
+  hint(input %0)
+rule R/keep:
+  n |- $keep<(alias, box, wrap, state?, state*)>(
+         ( $make_state("a", "a"),
+           {KEY "b", STATE $make_state("b", "b")},
+           WRAP $make_state("c", "c"),
+           $make_state("d", "d"),
+           [$make_state("e", "e"), $make_state("f", "f")] ))

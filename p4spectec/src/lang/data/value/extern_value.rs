@@ -8,10 +8,12 @@
 //! two definitions with one name and payload type still differ,
 //! and each value made gets its own serial.
 //! Exact identity is that serial; canonical identity is the payload's `Ord`.
+//! A runner registers one definition per declaration name in `TypDefs`.
 
 use std::{
     any::{Any, TypeId},
     cmp::Ordering,
+    collections::BTreeMap,
     fmt,
     hash::{Hash, Hasher},
     marker::PhantomData,
@@ -65,20 +67,59 @@ impl TypDefArena {
     }
 
     /// The declaration name of a definition issued here.
+    ///
+    /// Panics if another arena issued `id`.
     pub fn name(&self, id: TypDefId) -> &str {
         &self.entries[id.0 as usize].name
     }
 
+    /// The entry of `id`, if this arena issued it.
+    fn entry(&self, id: TypDefId) -> Option<&TypDefEntry> {
+        self.entries.get(id.0 as usize)
+    }
+
     /// Whether this arena issued `id` for payloads of `type_id`.
     fn carries(&self, id: TypDefId, type_id: TypeId) -> bool {
-        self.entries
-            .get(id.0 as usize)
-            .is_some_and(|entry| entry.type_id == type_id)
+        self.entry(id).is_some_and(|entry| entry.type_id == type_id)
     }
 
     /// Names a definition and its index, telling equally named ones apart.
     fn describe(&self, id: TypDefId) -> String {
         format!("{} (definition {})", self.name(id), id.0)
+    }
+}
+
+// = Registered definitions
+
+/// The definitions a runner reads extern values through, by declaration name.
+#[derive(Debug, Default)]
+pub struct TypDefs {
+    ids_by_name: BTreeMap<String, TypDefId>,
+}
+
+impl TypDefs {
+    /// Indexes definitions issued by `arena`, rejecting a repeated name.
+    pub fn new(arena: &TypDefArena, ids: &[TypDefId]) -> Result<Self, ValueError> {
+        let mut ids_by_name = BTreeMap::new();
+        for &id in ids {
+            // Reject a definition that another arena issued
+            let name = &arena.entry(id).ok_or(ValueError::TypDefForeign)?.name;
+            // Each declaration reads values through one definition
+            if ids_by_name.insert(name.clone(), id).is_some() {
+                return Err(ValueError::TypDefRepeated { name: name.clone() });
+            }
+        }
+        Ok(Self { ids_by_name })
+    }
+
+    /// The definition registered for a declaration name.
+    pub fn find(&self, name: &str) -> Option<TypDefId> {
+        self.ids_by_name.get(name).copied()
+    }
+
+    /// Whether the definition registered for `name` made `value_extern`.
+    pub fn admits(&self, name: &str, value_extern: &ExternValue) -> bool {
+        self.find(name) == Some(value_extern.typdef)
     }
 }
 

@@ -7,6 +7,8 @@
 //! so equal values may still carry distinct notes.
 //! A second definition of `state`, made by the same host,
 //! is never the one the specification's values are read through.
+//! Cases choose which definitions the host registers, `state` by default,
+//! and whether the runner type-checks values at call boundaries.
 //! Each stage renders R's outputs or failure codes;
 //! stages with equal transcripts share one block.
 
@@ -14,6 +16,7 @@ use std::{
     cmp::Ordering,
     hash::{Hash, Hasher},
     path::{Path, PathBuf},
+    rc::Rc,
 };
 
 use expect_test::expect_file;
@@ -28,8 +31,8 @@ use p4spectec::{
             arena::Arena,
             value::{
                 ValueError,
-                extern_value::TypDef,
-                flat::{self as value, Value},
+                extern_value::{TypDef, TypDefId},
+                flat::{self as value, Value, ValueField, ValueKind},
             },
         },
         il::ast::Typ,
@@ -63,6 +66,13 @@ pub struct Case {
     /// Type-check values at call boundaries.
     #[serde(default)]
     pub guard: bool,
+    /// Definitions the host registers: `state`, `rogue`, or `unused`.
+    #[serde(default = "register_default")]
+    pub register: Vec<String>,
+}
+
+fn register_default() -> Vec<String> {
+    vec!["state".to_owned()]
 }
 
 fn failure(name: &str, message: impl std::fmt::Display) -> Error {
@@ -112,18 +122,98 @@ struct Host {
     typdef_state: TypDef<Tagged>,
     /// Another definition with the same name and payload type.
     typdef_state_rogue: TypDef<Tagged>,
+    /// The definitions this host registers.
+    typdefs: Vec<TypDefId>,
     /// Calls of `$note_state` so far.
     calls_note: u64,
 }
 
 impl Host {
-    /// Defines both `state` definitions in `arena`.
-    fn new(arena: &mut Arena) -> std::result::Result<Self, ValueError> {
-        Ok(Self {
-            typdef_state: TypDef::new(arena, "state")?,
-            typdef_state_rogue: TypDef::new(arena, "state")?,
-            calls_note: 0,
-        })
+    /// Defines both `state` definitions and a third, `unused`, in `arena`.
+    fn new(arena: &mut Arena, register: &[String]) -> std::result::Result<Self, String> {
+        let typdef_state = TypDef::new(arena, "state").map_err(|error| error.to_string())?;
+        let typdef_state_rogue = TypDef::new(arena, "state").map_err(|error| error.to_string())?;
+        let typdef_unused =
+            TypDef::<u8>::new(arena, "unused").map_err(|error| error.to_string())?;
+        // Register the chosen definitions in the order given
+        let typdefs = register
+            .iter()
+            .map(|name| match name.as_str() {
+                "state" => Ok(typdef_state.id()),
+                "rogue" => Ok(typdef_state_rogue.id()),
+                "unused" => Ok(typdef_unused.id()),
+                _ => Err(format!("unknown definition {name}")),
+            })
+            .collect::<std::result::Result<_, _>>()?;
+        Ok(Self { typdef_state, typdef_state_rogue, typdefs, calls_note: 0 })
+    }
+}
+
+/// Rebuilds `value` with every `state` value made by the rogue definition.
+///
+/// Struct, case, tuple, option, and list structure is kept as is.
+fn poison(
+    arena: &mut Arena,
+    typdef_state: TypDef<Tagged>,
+    typdef_state_rogue: TypDef<Tagged>,
+    value: Value,
+) -> std::result::Result<Value, ValueError> {
+    let poison_inner =
+        |arena: &mut Arena, value| poison(arena, typdef_state, typdef_state_rogue, value);
+    let typ = Rc::clone(arena.value.typ(value.note));
+    let span = *arena.value.span(value.span);
+    match arena.value.kind(value.node) {
+        // Move the payload to the other definition
+        ValueKind::Extern(_) => {
+            let tagged = typdef_state.get(arena, &value)?.clone();
+            typdef_state_rogue.make(arena, tagged, span)
+        }
+        // Rebuild each field
+        ValueKind::Struct(value_fields) => {
+            let value_fields = value_fields.clone();
+            let value_fields = value_fields
+                .into_iter()
+                .map(|ValueField { atom, value }| {
+                    Ok(ValueField { atom, value: poison_inner(arena, value)? })
+                })
+                .collect::<std::result::Result<_, ValueError>>()?;
+            value::make::structure(arena, typ, value_fields, span)
+        }
+        // Rebuild each argument under the same mixop
+        ValueKind::Case(value_case) => {
+            let mut value_case = value_case.clone();
+            for value in value_case.args_mut() {
+                *value = poison_inner(arena, *value)?;
+            }
+            value::make::case_flat(arena, typ, value_case, span)
+        }
+        // Rebuild each element
+        ValueKind::Tuple(values) => {
+            let values = values.clone();
+            let values = values
+                .into_iter()
+                .map(|value| poison_inner(arena, value))
+                .collect::<std::result::Result<_, _>>()?;
+            value::make::tuple(arena, typ, values, span)
+        }
+        ValueKind::List(values) => {
+            let values = values.clone();
+            let values = values
+                .into_iter()
+                .map(|value| poison_inner(arena, value))
+                .collect::<std::result::Result<_, _>>()?;
+            value::make::list(arena, typ, values, span)
+        }
+        // Rebuild a present payload
+        ValueKind::Opt(value_opt) => {
+            let value_opt = *value_opt;
+            let value_opt = value_opt
+                .map(|value| poison_inner(arena, value))
+                .transpose()?;
+            value::make::opt(arena, typ, value_opt, span)
+        }
+        // Other values hold no extern values
+        _ => Ok(value),
     }
 }
 
@@ -136,6 +226,10 @@ fn read_tagged(arena: &Arena, values: &[Value]) -> std::result::Result<Tagged, V
 }
 
 impl Extern for Host {
+    fn typdefs(&self) -> Vec<TypDefId> {
+        self.typdefs.clone()
+    }
+
     fn eval_rel<Interp, Iface>(
         _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         _name: &str,
@@ -183,6 +277,36 @@ impl Extern for Host {
                     .and_then(|note| value::make::text(ctx.arena_mut(), note, Span::default()));
                 Eval::new(result.map_err(ExternError::from), SideEffect::Pure)
             }
+            // Return the argument unchanged
+            "keep" => Eval::new(
+                value::get::one(values).copied().map_err(ExternError::from),
+                SideEffect::Pure,
+            ),
+            // Return the argument with its `state` values made by the rogue definition
+            "poison" => {
+                let (typdef_state, typdef_state_rogue) =
+                    (ctx.external().typdef_state, ctx.external().typdef_state_rogue);
+                let result = value::get::one(values).copied().and_then(|value| {
+                    poison(ctx.arena_mut(), typdef_state, typdef_state_rogue, value)
+                });
+                Eval::new(result.map_err(ExternError::from), SideEffect::Pure)
+            }
+            // Pass a rogue value to relation S and return its output
+            "reenter" => {
+                let typdef = ctx.external().typdef_state_rogue;
+                let value = match read_tagged(ctx.arena(), values)
+                    .and_then(|tagged| typdef.make(ctx.arena_mut(), tagged, Span::default()))
+                {
+                    Ok(value) => value,
+                    Err(error) => return Eval::new(Err(error.into()), SideEffect::Impure),
+                };
+                let eval = ctx.call_rel("S", &[value]);
+                let result = eval
+                    .result
+                    .map_err(ExternError::from)
+                    .and_then(|values| Ok(*value::get::one(&values)?));
+                Eval::new(result, eval.effect)
+            }
             // Read the call count, which changes between calls
             "calls_note" => {
                 let calls = ctx.external().calls_note;
@@ -222,28 +346,29 @@ fn run_case(path_host: &Path, case: &Case) -> Result<String> {
     let mut blocks: Vec<(Vec<&str>, String)> = Vec::new();
     for stage in ["al", "sl", "pl"] {
         let mut arena = Arena::new();
-        let host = Host::new(&mut arena).map_err(|error| failure(&case.name, error))?;
-        // Specification and runner failures are setup errors, not outcomes
-        let build = |result: std::result::Result<Runner<P4Interface, Host>, runner::BuildError>| {
-            result.map_err(|error| failure(&case.name, error))
-        };
-        let runner = match stage {
+        let host =
+            Host::new(&mut arena, &case.register).map_err(|error| failure(&case.name, error))?;
+        // Specification failures are setup errors; runner build failures are outcomes
+        let built = match stage {
             "al" => {
                 let spec = p4spectec::algo(&paths).map_err(|error| failure(&case.name, error))?;
-                build(runner::build_al(&mut arena, spec, config, host))?
+                runner::build_al(&mut arena, spec, config, host)
             }
             "sl" => {
                 let spec = p4spectec::structure(&paths, true)
                     .map_err(|error| failure(&case.name, error))?;
-                build(runner::build_sl(&mut arena, spec, config, host))?
+                runner::build_sl(&mut arena, spec, config, host)
             }
             _ => {
                 let spec =
                     p4spectec::prosify(&paths).map_err(|error| failure(&case.name, error))?;
-                build(runner::build_pl(&mut arena, spec, config, host))?
+                runner::build_pl(&mut arena, spec, config, host)
             }
         };
-        let outcome = eval(&case.name, &mut arena, runner)?;
+        let outcome = match built {
+            Ok(runner) => eval(&case.name, &mut arena, runner)?,
+            Err(report) => format!("build {}\n", codes(&report).join(" ")),
+        };
         // Stages with the same outcome share a block
         match blocks.iter_mut().find(|(_, text)| *text == outcome) {
             Some((stages, _)) => stages.push(stage),

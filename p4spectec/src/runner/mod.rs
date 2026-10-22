@@ -13,7 +13,10 @@ mod interpreter;
 
 use std::path::{Path, PathBuf};
 
-use crate::lang::data::{arena::Arena, value::flat::Value};
+use crate::lang::data::{
+    arena::Arena,
+    value::{extern_value::TypDefs, flat::Value},
+};
 
 use crate::lang::al;
 
@@ -26,6 +29,8 @@ use crate::lang::pl;
 use crate::diagnostic::Report;
 
 use crate::interp::al::{AlInterp, Config as AlConfig, context::SpecEnv as AlSpecEnv};
+
+use crate::interp::shared::error;
 
 use crate::interp::sl::{Config as SlConfig, SlInterp, context::SpecEnv as SlSpecEnv};
 
@@ -141,6 +146,8 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
     /// Prepares a specification with the supplied interface and extern state.
     ///
     /// Interns notation in `arena`; every evaluation must borrow that same arena.
+    /// Fails unless the extern supplies exactly one definition
+    /// for each extern syntax type the specification declares.
     pub fn new(
         arena: &mut Arena,
         spec: Spec,
@@ -148,17 +155,20 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
         interface: Iface,
         external: Ext,
     ) -> Result<Self, BuildError> {
+        // Loading checks declarations against the host's definitions
+        let typdefs_extern = TypDefs::new(&arena.typdef, &external.typdefs())
+            .map_err(error::context::extern_types_invalid)?;
         let backend = match spec {
             Spec::Al(spec) => Backend::Al {
-                spec_env: AlSpecEnv::load(&mut arena.mixop, spec)?,
+                spec_env: AlSpecEnv::load(&mut arena.mixop, typdefs_extern, spec)?,
                 interp: AlInterp::new(AlConfig::new(config.cache, config.det, config.guard)),
             },
             Spec::Sl(spec) => Backend::Sl {
-                spec_env: SlSpecEnv::load(&mut arena.mixop, config.det, spec)?,
+                spec_env: SlSpecEnv::load(&mut arena.mixop, typdefs_extern, config.det, spec)?,
                 interp: SlInterp::new(SlConfig::new(config.cache, config.det, config.guard)),
             },
             Spec::Pl(spec) => Backend::Pl {
-                spec_env: PlSpecEnv::load(&mut arena.mixop, spec)?,
+                spec_env: PlSpecEnv::load(&mut arena.mixop, typdefs_extern, spec)?,
                 interp: PlInterp::new(PlConfig::new(config.cache, config.det, config.guard)),
             },
         };

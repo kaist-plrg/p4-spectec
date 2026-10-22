@@ -23,7 +23,7 @@ use crate::lang::{
         typ,
         value::{
             ValueError,
-            extern_value::TypDef,
+            extern_value::{TypDef, TypDefId},
             flat::{
                 self as value, Value,
                 external::{DecodeContext, EncodeContext},
@@ -72,6 +72,11 @@ impl V1Model {
             typdef_arch: TypDef::new(arena, "archState")?,
             typdef_object: TypDef::new(arena, "objectState")?,
         })
+    }
+
+    /// The definitions of `archState` and `objectState`.
+    pub(super) fn typdefs(&self) -> Vec<TypDefId> {
+        vec![self.typdef_arch.id(), self.typdef_object.id()]
     }
 }
 
