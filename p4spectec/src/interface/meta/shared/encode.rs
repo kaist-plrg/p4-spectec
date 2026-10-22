@@ -8,7 +8,6 @@ use super::{Cache, Error, mixops as m};
 use crate::lang::common::prim::num::Number;
 use crate::{
     lang::{
-        al::ast as al,
         common::{
             Id, Iter,
             prim::{bool as boolean, num},
@@ -618,13 +617,13 @@ impl Encode for il::Path {
 // - Parameters
 
 /// Encodes a value or higher-order function parameter.
-impl Encode for al::Param {
+impl Encode for il::Param {
     type Output = Value;
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let (shape, values_meta) = match &self.node {
-            al::ParamKind::Exp(typ_al) => (m::EXP_PARAM, vec![typ_al.encode_cached(arena, cache)?]),
-            al::ParamKind::Def(id_al, tparams_al, params_al, typ_al) => (
+            il::ParamKind::Exp(typ_al) => (m::EXP_PARAM, vec![typ_al.encode_cached(arena, cache)?]),
+            il::ParamKind::Def(id_al, tparams_al, params_al, typ_al) => (
                 m::FUN_PARAM,
                 vec![
                     id_al.encode_cached(arena, cache)?,
@@ -653,8 +652,10 @@ impl Encode for il::Arg {
     }
 }
 
+// - Iteration premises
+
 /// Encodes bound and bound-by-iteration variable lists in order.
-impl Encode for al::PremIter {
+impl Encode for il::PremIter {
     type Output = Value;
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {

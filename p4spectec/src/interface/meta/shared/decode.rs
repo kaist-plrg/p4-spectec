@@ -9,7 +9,6 @@ use crate::lang::common::prim::num::Number;
 use crate::{
     frontend::parse::parse_typ,
     lang::{
-        al::ast as al,
         common::{
             Id, Iter,
             notation::atom::Atom,
@@ -822,7 +821,7 @@ impl Decode for il::Path {
 // - Parameters
 
 /// Decodes a value or higher-order function parameter.
-impl Decode for al::Param {
+impl Decode for il::Param {
     fn decode_cached(
         arena: &mut Arena,
         cache: &mut Cache,
@@ -831,13 +830,13 @@ impl Decode for al::Param {
         let span = *arena.value.span(value_meta.span);
         let param_kind_al = get::matches_string! { arena, &value_meta,
             m::EXP_PARAM => |[value_typ]| {
-                al::ParamKind::Exp(il::Typ::decode_cached(arena, cache, *value_typ)?)
+                il::ParamKind::Exp(il::Typ::decode_cached(arena, cache, *value_typ)?)
             },
             m::FUN_PARAM => |[value_id, value_ids, value_params, value_typ]| {
-                al::ParamKind::Def(
+                il::ParamKind::Def(
                     Id::decode_cached(arena, cache, *value_id)?,
                     Vec::<Id>::decode_cached(arena, cache, *value_ids)?,
-                    Vec::<al::Param>::decode_cached(arena, cache, *value_params)?,
+                    Vec::<il::Param>::decode_cached(arena, cache, *value_params)?,
                     il::Typ::decode_cached(arena, cache, *value_typ)?,
                 )
             },
@@ -870,8 +869,10 @@ impl Decode for il::Arg {
     }
 }
 
+// - Iteration premises
+
 /// Decodes bound and bound-by-iteration variable lists in order.
-impl Decode for al::PremIter {
+impl Decode for il::PremIter {
     fn decode_cached(
         arena: &mut Arena,
         cache: &mut Cache,
@@ -879,7 +880,7 @@ impl Decode for al::PremIter {
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
             m::ITERPREM => |[value_iter, value_bound, value_bind]| {
-                Ok(al::PremIter {
+                Ok(il::PremIter {
                     iter: Iter::decode_cached(arena, cache, *value_iter)?,
                     vars_bound: Vec::<il::Var>::decode_cached(arena, cache, *value_bound)?,
                     vars_bind: Vec::<il::Var>::decode_cached(arena, cache, *value_bind)?,

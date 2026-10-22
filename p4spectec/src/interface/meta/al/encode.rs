@@ -23,6 +23,8 @@ use crate::{
     phrase,
 };
 
+// == Encoding
+
 // - Values
 
 /// Encodes a runtime value's payload in the same arena.
