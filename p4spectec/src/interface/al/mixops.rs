@@ -1,6 +1,7 @@
 //! Constructor notation shared by AL encoders and decoders
 //!
-//! These shapes follow `spec-meta/1-syntax/1.0-syntax.watsup` and
+//! These shapes follow `spec-meta/1-syntax/1.0-common.watsup`,
+//! `spec-meta/1-syntax/1.2-al.watsup`, and
 //! `spec-meta/2-runtime/2.0-value.watsup` and are shared by the encoders and decoders.
 
 // == Iterations and variables

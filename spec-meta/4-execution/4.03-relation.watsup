@@ -110,13 +110,13 @@ relation Eval_args:
 syntax premRes = ok<ctx> | failure
 
 relation Eval_prem:
-  ctx |- prem : premRes
+  ctx |- premAL : premRes
   hint(input %0 %1)
   hint(prose_in "evaluating premise" %1 "under context" %0)
   hint(prose_out %2)
 
 relation Eval_prems:
-  ctx |- prem* : premRes
+  ctx |- premAL* : premRes
   hint(input %0 %1)
   hint(prose_in "evaluating premises" %1 "sequentially starting from context" %0)
   hint(prose_out %2)
@@ -124,7 +124,7 @@ relation Eval_prems:
 syntax premOptRes = ok<ctx?> | failure
 
 relation Eval_prem_maybe:
-  ctx? |- prem : premOptRes
+  ctx? |- premAL : premOptRes
   hint(input %0 %1)
   hint(prose_in "evaluating premise" %1 "under the optional context" %0 "when present")
   hint(prose_out %2)
@@ -132,7 +132,7 @@ relation Eval_prem_maybe:
 syntax premIterRes = ok<ctx*> | failure
 
 relation Eval_prem_each:
-  ctx* |- prem : premIterRes
+  ctx* |- premAL : premIterRes
   hint(input %0 %1)
   hint(prose_in "evaluating premise" %1 "sequentially under each context in" %0)
   hint(prose_out %2)

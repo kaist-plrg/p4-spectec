@@ -842,7 +842,7 @@ impl Encode for al::Prem {
                 (m::DEBUG, vec![prem_inner_al.exp.encode_cached(arena, cache)?])
             }
         };
-        case(arena, shape, "prem", values_meta, span)
+        case(arena, shape, "premAL", values_meta, span)
     }
 }
 
@@ -869,7 +869,7 @@ impl Encode for al::RuleMatch {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let values_meta = vec![
             list(arena, cache, "exp", &self.exps_input)?,
-            list(arena, cache, "prem", &self.prems)?,
+            list(arena, cache, "premAL", &self.prems)?,
         ];
         case(arena, m::RULMATCH, "rulMatch", values_meta, Span::default())
     }
@@ -883,7 +883,7 @@ impl Encode for al::RulePath {
         let values_meta = vec![
             self.id.encode_cached(arena, cache)?,
             list(arena, cache, "exp", &self.exps_output)?,
-            list(arena, cache, "prem", &self.prems)?,
+            list(arena, cache, "premAL", &self.prems)?,
         ];
         case(arena, m::RULPATH, "rulPath", values_meta, self.id.span)
     }
@@ -914,7 +914,7 @@ impl Encode for al::RuleGroup {
             .collect();
         let values_meta =
             vec![self.node.id.encode_cached(arena, cache)?, list(arena, cache, "rul", &rules)?];
-        case(arena, m::RULGROUP, "rulGroup", values_meta, self.span)
+        case(arena, m::RULGROUP, "rulGroupAL", values_meta, self.span)
     }
 }
 
@@ -926,7 +926,7 @@ impl Encode for al::ElseGroup {
         let rule = (&self.node.rule_match, &self.node.rule_path);
         let values_meta =
             vec![self.node.id.encode_cached(arena, cache)?, rule.encode_cached(arena, cache)?];
-        case(arena, m::ELSGROUP, "elsGroup", values_meta, self.span)
+        case(arena, m::ELSGROUP, "elsGroupAL", values_meta, self.span)
     }
 }
 
@@ -940,9 +940,9 @@ impl Encode for al::Clause {
         let values_meta = vec![
             list(arena, cache, "arg", &self.node.args)?,
             self.node.exp.encode_cached(arena, cache)?,
-            list(arena, cache, "prem", &self.node.prems)?,
+            list(arena, cache, "premAL", &self.node.prems)?,
         ];
-        case(arena, m::CLAUSE, "clause", values_meta, self.span)
+        case(arena, m::CLAUSE, "clauseAL", values_meta, self.span)
     }
 }
 
@@ -954,9 +954,9 @@ impl Encode for al::ElseClause {
         let values_meta = vec![
             list(arena, cache, "arg", &self.node.clause.args)?,
             self.node.clause.exp.encode_cached(arena, cache)?,
-            list(arena, cache, "prem", &self.node.clause.prems)?,
+            list(arena, cache, "premAL", &self.node.clause.prems)?,
         ];
-        case(arena, m::CLAUSE, "clause", values_meta, self.span)
+        case(arena, m::CLAUSE, "clauseAL", values_meta, self.span)
     }
 }
 
@@ -970,9 +970,9 @@ impl Encode for al::TableRow {
         let values_meta = vec![
             list(arena, cache, "arg", &self.node.args)?,
             self.node.exp.encode_cached(arena, cache)?,
-            list(arena, cache, "prem", &self.node.prems)?,
+            list(arena, cache, "premAL", &self.node.prems)?,
         ];
-        case(arena, m::CLAUSE, "tblRow", values_meta, self.span)
+        case(arena, m::CLAUSE, "tblRowAL", values_meta, self.span)
     }
 }
 
@@ -1018,8 +1018,8 @@ impl Encode for al::Def {
                         rel_al.id.encode_cached(arena, cache)?,
                         list(arena, cache, "typ", &typs_input_al)?,
                         list(arena, cache, "typ", &typs_output_al)?,
-                        list(arena, cache, "rulGroup", &rel_al.rule_groups)?,
-                        opt(arena, cache, "elsGroup", rel_al.else_group.as_ref())?,
+                        list(arena, cache, "rulGroupAL", &rel_al.rule_groups)?,
+                        opt(arena, cache, "elsGroupAL", rel_al.else_group.as_ref())?,
                     ],
                 )
             }
@@ -1047,7 +1047,7 @@ impl Encode for al::Def {
                     func_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "param", &func_al.params)?,
                     func_al.typ.encode_cached(arena, cache)?,
-                    list(arena, cache, "tblRow", &func_al.table_rows)?,
+                    list(arena, cache, "tblRowAL", &func_al.table_rows)?,
                 ],
             ),
             al::DefKind::MetaFunc(al::MetaFuncDef::Defined(func_al)) => (
@@ -1057,12 +1057,12 @@ impl Encode for al::Def {
                     list(arena, cache, "id", &func_al.tparams)?,
                     list(arena, cache, "param", &func_al.params)?,
                     func_al.typ.encode_cached(arena, cache)?,
-                    list(arena, cache, "clause", &func_al.clauses)?,
-                    opt(arena, cache, "elsClause", func_al.else_clause.as_ref())?,
+                    list(arena, cache, "clauseAL", &func_al.clauses)?,
+                    opt(arena, cache, "elsClauseAL", func_al.else_clause.as_ref())?,
                 ],
             ),
         };
-        Ok(Some(case(arena, shape, "defn", values_meta, span)?))
+        Ok(Some(case(arena, shape, "defnAL", values_meta, span)?))
     }
 }
 
@@ -1083,7 +1083,7 @@ impl Encode for al::Spec {
         }
         Ok(make::list(
             arena,
-            make_typ::var(phrase!(node: "spec".into(), span: Span::default()), vec![])
+            make_typ::var(phrase!(node: "specAL".into(), span: Span::default()), vec![])
                 .node
                 .into(),
             values_meta,

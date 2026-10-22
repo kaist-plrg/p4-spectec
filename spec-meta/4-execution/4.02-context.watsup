@@ -14,8 +14,8 @@ dec $empty_globalLayer : globalLayer
   hint(prose_in "empty global layer")
 def $empty_globalLayer =
   { TYP $empty_map<id, typDef>,
-    REL $empty_map<id, relDefn>,
-    FUNC $empty_map<id, funcDefn> }
+    REL $empty_map<id, relDefnAL>,
+    FUNC $empty_map<id, funcDefnAL> }
 
 dec $empty_localLayer : localLayer
   hint(prose_in "empty local layer")
@@ -40,19 +40,19 @@ def $load_typdef(C, id, typDef)
   = C[ .GLOBAL.TYP = tdenv_update ]
   -- if tdenv_update = $add_map<id, typDef>(C.GLOBAL.TYP, id, typDef)
 
-dec $load_reldef(ctx, id, relDefn) : ctx
+dec $load_reldef(ctx, id, relDefnAL) : ctx
   hint(prose_in %0 "with relation" %2 "loaded as" %1)
 def $load_reldef(C, id, relDefn)
   = C[ .GLOBAL.REL = renv_update ]
-  -- if renv_update = $add_map<id, relDefn>(C.GLOBAL.REL, id, relDefn)
+  -- if renv_update = $add_map<id, relDefnAL>(C.GLOBAL.REL, id, relDefn)
 
-dec $load_funcdef(ctx, id, funcDefn) : ctx
+dec $load_funcdef(ctx, id, funcDefnAL) : ctx
   hint(prose_in %0 "with function" %2 "loaded as" %1)
 def $load_funcdef(C, id, funcDefn)
   = C[ .GLOBAL.FUNC = fenv_update ]
-  -- if fenv_update = $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, funcDefn)
+  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, funcDefn)
 
-dec $load(ctx, spec) : ctx
+dec $load(ctx, specAL) : ctx
   hint(prose_in %0 "with spec" %1 "loaded")
 
 def $load(C, externTypDefn :: defn_t*)
@@ -181,16 +181,16 @@ dec $resolve_func_param(ctx, id) : id
 def $resolve_func_param(C, id)
   = $deopt_<id>($find_func_param(C, id), id)
 
-dec $find_func(ctx, id) : funcDefn?
+dec $find_func(ctx, id) : funcDefnAL?
   hint(prose_in "the definition of global function" %1 "in context" %0 "if present")
-def $find_func(C, id) = $find_map<id, funcDefn>(C.GLOBAL.FUNC, id)
+def $find_func(C, id) = $find_map<id, funcDefnAL>(C.GLOBAL.FUNC, id)
 
 ;;; Relation finders
 
-dec $find_rel(ctx, id) : relDefn?
+dec $find_rel(ctx, id) : relDefnAL?
   hint(prose_in "the definition of relation" %1 "in context" %0 "if present")
 
-def $find_rel(C, id) = $find_map<id, relDefn>(C.GLOBAL.REL, id)
+def $find_rel(C, id) = $find_map<id, relDefnAL>(C.GLOBAL.REL, id)
 
 ;; Sub-context construction for iteration
 

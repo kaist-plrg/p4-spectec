@@ -155,18 +155,7 @@ syntax param =
   | EXP typ
   | FUN id ':' tparam* param* '->' typ
 
-;; Premises
-
-syntax iterPrem
-
-syntax prem =
-  | REL id ':' exp* '->' exp*
-  | IF exp
-  | IFHOLD id ':' exp*
-  | IFNOTHOLD id ':' exp*
-  | LET exp '=' exp
-  | ITER prem iterPrem
-  | DEBUG exp
+;; Iteration premises
 
 syntax iterPrem = iter '<-' vari* '->' vari*
 
@@ -182,56 +171,10 @@ syntax typDefn =
   | externTypDefn
   | definedTypDefn
 
-;; Relation definitions
-
-syntax externRelDefn =
-  EXTREL id ':' typ* '->' typ*
-
-syntax rulMatch = exp* '-' prem*
-syntax rulPath = id '=' exp* '-' prem*
-syntax rul = rulMatch -> rulPath
-syntax rulGroup = id ':' rul*
-syntax elsGroup = id ':' rul
-
-syntax definedRelDefn =
-  REL id ':' typ* '->' typ* '=' rulGroup* elsGroup?
-
-syntax relDefn =
-  | externRelDefn
-  | definedRelDefn
-
-;; Meta-functions
+;; Meta-functions without clauses
 
 syntax externFuncDefn =
   EXTFUNC id tparam* param* ':' typ
 
 syntax builtinFuncDefn =
   BUILTINFUNC id tparam* param* ':' typ
-
-syntax tblRow = arg* '=' exp '-' prem*
-
-syntax tableFuncDefn =
-  TABLEFUNC id param* ':' typ '=' tblRow*
-
-syntax clause = arg* '=' exp '-' prem*
-syntax elsClause = clause
-
-syntax definedFuncDefn =
-  FUNC id tparam* param* ':' typ '=' clause* elsClause?
-
-syntax funcDefn =
-  | externFuncDefn
-  | builtinFuncDefn
-  | tableFuncDefn
-  | definedFuncDefn
-
-;; Definitions
-
-syntax defn =
-  | typDefn
-  | relDefn
-  | funcDefn
-
-;; Spec
-
-syntax spec = defn*
