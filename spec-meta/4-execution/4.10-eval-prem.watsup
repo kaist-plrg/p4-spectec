@@ -103,13 +103,13 @@ rulegroup Eval_prem/iterpr-opt {
 
   rule Eval_prem/body-failure:
     C |- ITER prem iterPrem : failure
-    -- if QUEST vari_bound* vari_bind* = iterPrem
+    -- if QUEST '<-' vari_bound* '->' _ = iterPrem
     -- if OK C_sub? = $sub_opt(C, vari_bound*)
     -- Eval_prem_maybe: C_sub? |- prem : failure
 
   rule Eval_prem/succ-none:
     C |- ITER prem iterPrem : OK C_res
-    -- if QUEST vari_bound* vari_bind* = iterPrem
+    -- if QUEST '<-' vari_bound* '->' vari_bind* = iterPrem
     -- if OK C_sub? = $sub_opt(C, vari_bound*)
     -- Eval_prem_maybe: C_sub? |- prem : OK eps
     -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
@@ -118,7 +118,7 @@ rulegroup Eval_prem/iterpr-opt {
 
   rule Eval_prem/succ-some:
     C |- ITER prem iterPrem : OK C_res
-    -- if QUEST vari_bound* vari_bind* = iterPrem
+    -- if QUEST '<-' vari_bound* '->' vari_bind* = iterPrem
     -- if OK C_sub? = $sub_opt(C, vari_bound*)
     -- Eval_prem_maybe: C_sub? |- prem : OK C_sub_res
     -- if (val_bind = $find_vari(C_sub_res, vari_bind))*
@@ -133,7 +133,7 @@ rulegroup Eval_prem/iterpr-list {
 
   rule Eval_prem/succ-empty:
     C |- ITER prem iterPrem : OK C_res
-    -- if STAR vari_bound* vari_bind* = iterPrem
+    -- if STAR '<-' vari_bound* '->' vari_bind* = iterPrem
     -- if OK eps = $sub_list(C, vari_bound*)
     -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
     -- if val_bind* = $repeat_<val>(LIST eps, |vari_bind*|)
@@ -141,7 +141,7 @@ rulegroup Eval_prem/iterpr-list {
 
   rule Eval_prem/body-failure:
     C |- ITER prem iterPrem : failure
-    -- if STAR vari_bound* vari_bind* = iterPrem
+    -- if STAR '<-' vari_bound* '->' _ = iterPrem
     -- if OK C_sub* = $sub_list(C, vari_bound*)
     -- if C_sub* =/= eps
     -- Eval_prem_each: C_sub* |- prem : failure
@@ -149,7 +149,7 @@ rulegroup Eval_prem/iterpr-list {
   rule Eval_prem/succ-list:
     C |- ITER prem iterPrem : OK C_res
     ----
-    -- if STAR vari_bound* vari_bind* = iterPrem
+    -- if STAR '<-' vari_bound* '->' vari_bind* = iterPrem
     ---- ;; decompose C into a list of subcontexts
     ---- ;; C_sub* corresponding to vari_bound*
     -- if OK C_sub* = $sub_list(C, vari_bound*)

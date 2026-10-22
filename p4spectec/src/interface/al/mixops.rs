@@ -114,7 +114,7 @@ pub(super) const FUN_PARAM: &str = "FUN id ':' tparam* param* '->' typ";
 
 // == Premises
 
-pub(super) const ITERPREM: &str = "iter vari* vari*";
+pub(super) const ITERPREM: &str = "iter '<-' vari* '->' vari*";
 pub(super) const REL_PREM: &str = "REL id ':' exp* '->' exp*";
 pub(super) const IF: &str = "IF exp";
 pub(super) const IFHOLD: &str = "IFHOLD id ':' exp*";
