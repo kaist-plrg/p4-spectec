@@ -43,6 +43,12 @@ relation Eval_exps:
   ctx |- exp* : expsRes
   hint(input %0 %1)
 
+syntax expOptRes = ok<val?> | failure
+
+relation Eval_exp_maybe:
+  ctx? |- exp : expOptRes
+  hint(input %0 %1)
+
 relation Eval_exp_each:
   ctx* |- exp : expsRes
   hint(input %0 %1)
@@ -104,6 +110,12 @@ relation Eval_prems:
   hint(input %0 %1)
   hint(prose_in "evaluating" %1 "under" %0)
   hint(prose_out %2)
+
+syntax premOptRes = ok<ctx?> | failure
+
+relation Eval_prem_maybe:
+  ctx? |- prem : premOptRes
+  hint(input %0 %1)
 
 syntax premIterRes = ok<ctx*> | failure
 

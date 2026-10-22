@@ -430,25 +430,19 @@ rulegroup Eval_exp/iter {
     -- if varr = $is_iter_on_var(ITER exp iterExp)
     -- if val = $find_varr(C, varr)
 
-  rule Eval_exp/opt-succ-none:
-    C |- ITER exp iterExp : OK (OPT eps)
-    -- if eps = $is_iter_on_var(ITER exp iterExp)
-    -- if QUEST vari* = iterExp
-    -- if OK eps = $sub_opt(C, vari*)
-
   rule Eval_exp/opt-body-failure:
     C |- ITER exp iterExp : failure
     -- if eps = $is_iter_on_var(ITER exp iterExp)
     -- if QUEST vari* = iterExp
-    -- if OK C_sub = $sub_opt(C, vari*)
-    -- Eval_exp: C_sub |- exp : failure
+    -- if OK C_sub? = $sub_opt(C, vari*)
+    -- Eval_exp_maybe: C_sub? |- exp : failure
 
-  rule Eval_exp/opt-succ-some:
-    C |- ITER exp iterExp : OK (OPT val)
+  rule Eval_exp/opt-succ:
+    C |- ITER exp iterExp : OK (OPT val?)
     -- if eps = $is_iter_on_var(ITER exp iterExp)
     -- if QUEST vari* = iterExp
-    -- if OK C_sub = $sub_opt(C, vari*)
-    -- Eval_exp: C_sub |- exp : OK val
+    -- if OK C_sub? = $sub_opt(C, vari*)
+    -- Eval_exp_maybe: C_sub? |- exp : OK val?
 
   rule Eval_exp/list-body-failure:
     C |- ITER exp iterExp : failure
@@ -494,6 +488,25 @@ rulegroup Eval_exps {
 }
 
 ;; Expression iteration evaluation rules
+
+;;; Optional contexts
+
+rulegroup Eval_exp_maybe {
+
+  rule Eval_exp_maybe/none:
+    eps |- exp : OK eps
+
+  rule Eval_exp_maybe/failure:
+    C |- exp : failure
+    -- Eval_exp: C |- exp : failure
+
+  rule Eval_exp_maybe/some:
+    C |- exp : OK val
+    -- Eval_exp: C |- exp : OK val
+
+}
+
+;;; List contexts
 
 rulegroup Eval_exp_each {
 

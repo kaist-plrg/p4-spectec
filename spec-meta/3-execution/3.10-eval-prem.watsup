@@ -101,28 +101,28 @@ rulegroup Eval_prem/letpr {
 
 rulegroup Eval_prem/iterpr-opt {
 
+  rule Eval_prem/body-failure:
+    C |- ITER prem iterPrem : failure
+    -- if QUEST vari_bound* vari_bind* = iterPrem
+    -- if OK C_sub? = $sub_opt(C, vari_bound*)
+    -- Eval_prem_maybe: C_sub? |- prem : failure
+
   rule Eval_prem/succ-none:
     C |- ITER prem iterPrem : OK C_res
     -- if QUEST vari_bound* vari_bind* = iterPrem
-    -- if OK eps = $sub_opt(C, vari_bound*)
+    -- if OK C_sub? = $sub_opt(C, vari_bound*)
+    -- Eval_prem_maybe: C_sub? |- prem : OK eps
     -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
     -- if val_bind* = $repeat_<val>(OPT eps, |vari_bind*|)
     -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
 
-  rule Eval_prem/body-failure:
-    C |- ITER prem iterPrem : failure
-    -- if QUEST vari_bound* vari_bind* = iterPrem
-    -- if OK C_sub = $sub_opt(C, vari_bound*)
-    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
-    -- Eval_prem: C_sub |- prem : failure
-
   rule Eval_prem/succ-some:
     C |- ITER prem iterPrem : OK C_res
     -- if QUEST vari_bound* vari_bind* = iterPrem
-    -- if OK C_sub = $sub_opt(C, vari_bound*)
-    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
-    -- Eval_prem: C_sub |- prem : OK C_sub_res
+    -- if OK C_sub? = $sub_opt(C, vari_bound*)
+    -- Eval_prem_maybe: C_sub? |- prem : OK C_sub_res
     -- if (val_bind = $find_vari(C_sub_res, vari_bind))*
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
     -- if C_res = $add_varis(C, vari_bind_iter*, (OPT val_bind)*)
 
 }
@@ -205,6 +205,25 @@ rulegroup Eval_prems {
 }
 
 ;; Premise iteration evaluation rules
+
+;;; Optional contexts
+
+rulegroup Eval_prem_maybe {
+
+  rule Eval_prem_maybe/none:
+    eps |- prem : OK eps
+
+  rule Eval_prem_maybe/failure:
+    C |- prem : failure
+    -- Eval_prem: C |- prem : failure
+
+  rule Eval_prem_maybe/some:
+    C |- prem : OK C_res
+    -- Eval_prem: C |- prem : OK C_res
+
+}
+
+;;; List contexts
 
 rulegroup Eval_prem_each {
 
