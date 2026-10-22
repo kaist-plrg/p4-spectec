@@ -58,7 +58,7 @@ module EVAL-EXP
   rule <k> matchE(optV(noVal()), somePat()) => boolV(false) ... </k>
   rule <k> matchE(optV(someVal(_:Val)), nonePat()) => boolV(false) ... </k>
   rule <k> matchE(optV(noVal()), nonePat()) => boolV(true) ... </k>
-  rule <k> matchE(_:Val, _:Pattern) => backtrack ... </k> [owise]
+  rule <k> matchE(_:Val, _:Pat) => backtrack ... </k> [owise]
 
   syntax Int ::= lengthVals(ValList)        [function, total, symbol(lengthVals)]
   rule lengthVals(.ValList) => 0

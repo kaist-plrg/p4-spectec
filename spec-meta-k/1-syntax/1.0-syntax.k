@@ -1,6 +1,8 @@
 // Syntax of AL, the algorithmic layer of the P4-SpecTec meta-language.
 //
-// Mirrors spec-meta/1-syntax/1.0-syntax.watsup.
+// Mirrors spec-meta/1-syntax/1.0-syntax.watsup, with the values of
+// spec-meta/2-runtime/2.0-value.watsup: a value is an expression here
+// (`Exp ::= Val`), so values are declared beside the expressions.
 
 requires "json.md"
 
@@ -25,11 +27,24 @@ module SYNTAX
   syntax MixOp ::= List{AtomList, ";"}      [symbol(mixop), terminator-symbol(.mixop)]
 
   // ==========================================================================
+  // Numbers
+  //
+  //   syntax num = | NAT nat | INT int
+  // ==========================================================================
+
+  syntax Num ::= natN(Int)                  [symbol(natN)]
+               | intN(Int)                  [symbol(intN)]
+
+  // ==========================================================================
   // Types
   //
   //   syntax numtyp = | NAT | INT
   //   syntax optyp = | BOOL | numtyp | TEXT
-  //   syntax typ = | optyp | VAR id targ* | TUP typ* | ITER typ iter | FUNC
+  //   syntax typ =
+  //     | optyp | VAR id targ* | TUP typ* | ITER typ iter | FUNC tparam* typ* typ
+  //   syntax deftyp = | ALIAS typ | STRUCT typField* | VARIANT typCase*
+  //   syntax typField = atom typ
+  //   syntax typCase = mixop typ*
   // ==========================================================================
 
   syntax NumTyp ::= natT()                  [symbol(natT)]
@@ -43,16 +58,10 @@ module SYNTAX
                | varT(Id, TArgList)         [symbol(varT)]
                | tupT(TypList)              [symbol(tupT)]
                | iterT(Typ, Iter)           [symbol(iterT)]
-               | funcT()                    [symbol(funcT)]
+               | funcT(TParamList, TypList, Typ)
+                                            [symbol(funcT)]
 
   syntax TypList ::= List{Typ, ","}         [symbol(typList), terminator-symbol(.typList)]
-
-  syntax TArg ::= Typ
-  syntax TArgList ::= List{TArg, ","}       [symbol(targList), terminator-symbol(.targList)]
-
-  //   syntax deftyp = | ALIAS typ | STRUCT typfield* | VARIANT typcase*
-  //   syntax typfield = atom typ
-  //   syntax typcase = mixop typ*
 
   syntax DefTyp ::= aliasDT(Typ)            [symbol(aliasDT)]
                   | structDT(TypFieldList)  [symbol(structDT)]
@@ -88,31 +97,24 @@ module SYNTAX
   syntax VariList ::= List{Vari, ","}       [symbol(variList), terminator-symbol(.variList)]
 
   // ==========================================================================
-  // Numbers
-  //
-  //   syntax num = | NAT nat | INT int
-  // ==========================================================================
-
-  syntax Num ::= natN(Int)                  [symbol(natN)]
-               | intN(Int)                  [symbol(intN)]
-
-  // ==========================================================================
   // Operators
   //
-  //   syntax unop = boolunop | numunop
-  //   syntax binop = boolbinop | numbinop
-  //   syntax cmpop = polycmpop | numcmpop
+  //   syntax unop = boolUnop | numUnop
+  //   syntax binop = boolBinop | numBinop
+  //   syntax cmpop = polyCmpop | numCmpop
   // ==========================================================================
 
   syntax BoolUnOp ::= notOp()               [symbol(notOp)]
+
+  syntax NumUnOp ::= plusOp()               [symbol(plusOp)]
+                   | minusOp()              [symbol(minusOp)]
+
+  syntax UnOp ::= BoolUnOp | NumUnOp
 
   syntax BoolBinOp ::= andOp()              [symbol(andOp)]
                      | orOp()               [symbol(orOp)]
                      | implOp()             [symbol(implOp)]
                      | equivOp()            [symbol(equivOp)]
-
-  syntax NumUnOp ::= plusOp()               [symbol(plusOp)]
-                   | minusOp()              [symbol(minusOp)]
 
   syntax NumBinOp ::= addOp()               [symbol(addOp)]
                     | subOp()               [symbol(subOp)]
@@ -120,6 +122,8 @@ module SYNTAX
                     | divOp()               [symbol(divOp)]
                     | modOp()               [symbol(modOp)]
                     | powOp()               [symbol(powOp)]
+
+  syntax BinOp ::= BoolBinOp | NumBinOp
 
   syntax NumCmpOp ::= ltOp()                [symbol(ltOp)]
                     | gtOp()                [symbol(gtOp)]
@@ -129,19 +133,36 @@ module SYNTAX
   syntax PolyCmpOp ::= eqOp()               [symbol(eqOp)]
                      | neOp()               [symbol(neOp)]
 
-  syntax UnOp ::= BoolUnOp | NumUnOp
-  syntax BinOp ::= BoolBinOp | NumBinOp
   syntax CmpOp ::= PolyCmpOp | NumCmpOp
 
   // ==========================================================================
-  // Values
+  // Patterns
+  //
+  //   syntax listPat = | CONS | FIXED nat | NIL
+  //   syntax optPat = | SOME | NONE
+  //   syntax pat = | INJ mixop | listPat | optPat
+  // ==========================================================================
+
+  syntax ListPat ::= consPat()              [symbol(consPat)]
+                   | fixedPat(Int)          [symbol(fixedPat)]
+                   | nilPat()               [symbol(nilPat)]
+
+  syntax OptPat ::= somePat()               [symbol(somePat)]
+                  | nonePat()               [symbol(nonePat)]
+
+  syntax Pat ::= injPat(MixOp)              [symbol(injPat)]
+               | ListPat
+               | OptPat
+
+  // ==========================================================================
+  // Values (spec-meta/2-runtime/2.0-value.watsup)
   //
   //   extern syntax json
   //   syntax val =
-  //     | BOOL bool | num | TEXT text | STR valfield* | INJ valcase
+  //     | BOOL bool | num | TEXT text | STR valField* | INJ valCase
   //     | TUP val* | OPT val? | LIST val* | FUNC id | EXT json
-  //   syntax valfield = atom val
-  //   syntax valcase = mixop val*
+  //   syntax valField = atom val
+  //   syntax valCase = mixop val*
   // ==========================================================================
 
   syntax Val ::= boolV(Bool)                [symbol(boolV)]
@@ -171,9 +192,9 @@ module SYNTAX
   // Expressions
   //
   //   syntax exp = | BOOL bool | num | TEXT text | VAR id | ...
-  //   syntax expcase = mixop exp*
-  //   syntax expfield = atom exp
-  //   syntax iterexp = iter vari*
+  //   syntax expCase = mixop exp*
+  //   syntax expField = atom exp
+  //   syntax iterExp = iter vari*
   //
   // A value is an expression, so that an evaluated subexpression can take
   // its place; the strictness attributes give the evaluation order. An
@@ -191,7 +212,7 @@ module SYNTAX
                | upCastE(Typ, Exp)          [symbol(upCastE), strict(2)]
                | downCastE(Typ, Exp)        [symbol(downCastE), strict(2)]
                | subE(Exp, Typ)             [symbol(subE), strict(1)]
-               | matchE(Exp, Pattern)       [symbol(matchE), strict(1)]
+               | matchE(Exp, Pat)           [symbol(matchE), strict(1)]
                | tupE(ExpList)              [symbol(tupE), strict, overload(tup)]
                | injE(ExpCase)              [symbol(injE), strict, overload(inj)]
                | strE(ExpFieldList)         [symbol(strE), strict, overload(str)]
@@ -229,25 +250,6 @@ module SYNTAX
                   | someExp(Exp)            [symbol(someExp), strict, overload(some)]
 
   // ==========================================================================
-  // Patterns
-  //
-  //   syntax listpattern = | CONS | FIXED nat | NIL
-  //   syntax optpattern = | SOME | NONE
-  //   syntax pattern = | INJ mixop | listpattern | optpattern
-  // ==========================================================================
-
-  syntax ListPattern ::= consPat()          [symbol(consPat)]
-                       | fixedPat(Int)      [symbol(fixedPat)]
-                       | nilPat()           [symbol(nilPat)]
-
-  syntax OptPattern ::= somePat()           [symbol(somePat)]
-                      | nonePat()           [symbol(nonePat)]
-
-  syntax Pattern ::= injPat(MixOp)          [symbol(injPat)]
-                   | ListPattern
-                   | OptPattern
-
-  // ==========================================================================
   // Paths
   //
   //   syntax path = | ROOT | IDX path exp | SLICE path exp exp | DOT path atom
@@ -264,6 +266,9 @@ module SYNTAX
   //   syntax targ = typ
   //   syntax arg = | EXP exp | FUN id
   // ==========================================================================
+
+  syntax TArg ::= Typ
+  syntax TArgList ::= List{TArg, ","}       [symbol(targList), terminator-symbol(.targList)]
 
   syntax Arg ::= Val
                | expA(Exp)                  [symbol(expA), strict]
@@ -298,19 +303,16 @@ module SYNTAX
   // ==========================================================================
   // Premises
   //
-  //   syntax iterprem = iter vari* vari*
   //   syntax prem =
   //     | REL id ':' exp* '->' exp*
   //     | IF exp
   //     | IFHOLD id ':' exp*
   //     | IFNOTHOLD id ':' exp*
   //     | LET exp '=' exp
-  //     | ITER prem iterprem
+  //     | ITER prem iterPrem
   //     | DEBUG exp
+  //   syntax iterPrem = iter vari* vari*
   // ==========================================================================
-
-  syntax IterPrem ::= iterPrem(Iter, VariList, VariList)
-                                            [symbol(iterPrem)]
 
   syntax Prem ::= relPr(Id, ExpList, ExpList)
                                             [symbol(relPr), strict(2)]
@@ -321,16 +323,38 @@ module SYNTAX
                 | iterPr(Prem, IterPrem)    [symbol(iterPr)]
                 | debugPr(Exp)              [symbol(debugPr), strict]
 
+  syntax IterPrem ::= iterPrem(Iter, VariList, VariList)
+                                            [symbol(iterPrem)]
+
   syntax PremList ::= List{Prem, ","}       [symbol(premList), terminator-symbol(.premList)]
 
   // ==========================================================================
-  // Rules
+  // Type definitions
   //
-  //   syntax rulmatch = exp* '-' prem*
-  //   syntax rulpath = id '=' exp* '-' prem*
-  //   syntax rulgroup = id ':' rulmatch '=' rulpath*
-  //   syntax elsgroup = id ':' rulmatch '=' rulpath
+  //   syntax externTypDefn = EXTTYP id
+  //   syntax definedTypDefn = TYP id tparam* '=' deftyp
+  //   syntax typDefn = | externTypDefn | definedTypDefn
   // ==========================================================================
+
+  syntax ExternTypDefn ::= extTypD(Id)      [symbol(extTypD)]
+  syntax DefinedTypDefn ::= typD(Id, TParamList, DefTyp)
+                                            [symbol(typD)]
+  syntax TypDefn ::= ExternTypDefn | DefinedTypDefn
+
+  // ==========================================================================
+  // Relation definitions
+  //
+  //   syntax externRelDefn = EXTREL id ':' typ* '->' typ*
+  //   syntax rulMatch = exp* '-' prem*
+  //   syntax rulPath = id '=' exp* '-' prem*
+  //   syntax rulGroup = id ':' rulMatch '=' rulPath*
+  //   syntax elsGroup = id ':' rulMatch '=' rulPath
+  //   syntax definedRelDefn = REL id ':' typ* '->' typ* '=' rulGroup* elsGroup?
+  //   syntax relDefn = | externRelDefn | definedRelDefn
+  // ==========================================================================
+
+  syntax ExternRelDefn ::= extRelD(Id, TypList, TypList)
+                                            [symbol(extRelD)]
 
   syntax RulMatch ::= rulMatch(ExpList, PremList)
                                             [symbol(rulMatch)]
@@ -345,69 +369,72 @@ module SYNTAX
   syntax RulGroupList ::= List{RulGroup, ","}
                                             [symbol(rulGroupList), terminator-symbol(.rulGroupList)]
 
-  // `elsgroup?`
+  // `elsGroup?`
   syntax ElsGroupOpt ::= noElsGroup()       [symbol(noElsGroup)]
                        | someElsGroup(ElsGroup)
                                             [symbol(someElsGroup)]
 
+  syntax DefinedRelDefn ::= relD(Id, TypList, TypList, RulGroupList, ElsGroupOpt)
+                                            [symbol(relD)]
+  syntax RelDefn ::= ExternRelDefn | DefinedRelDefn
+
   // ==========================================================================
-  // Clauses and table rows
+  // Meta-functions
   //
+  //   syntax externFuncDefn = EXTFUNC id tparam* param* ':' typ
+  //   syntax builtinFuncDefn = BUILTINFUNC id tparam* param* ':' typ
+  //   syntax tblRow = arg* '=' exp '-' prem*
+  //   syntax tableFuncDefn = TABLEFUNC id param* ':' typ '=' tblRow*
   //   syntax clause = arg* '=' exp '-' prem*
-  //   syntax elsclause = clause
-  //   syntax tblrow = arg* '=' exp '-' prem*
+  //   syntax elsClause = clause
+  //   syntax definedFuncDefn = FUNC id tparam* param* ':' typ '=' clause* elsClause?
+  //   syntax funcDefn =
+  //     | externFuncDefn | builtinFuncDefn | tableFuncDefn | definedFuncDefn
   // ==========================================================================
+
+  syntax ExternFuncDefn ::= extFuncD(Id, TParamList, ParamList, Typ)
+                                            [symbol(extFuncD)]
+  syntax BuiltinFuncDefn ::= builtinFuncD(Id, TParamList, ParamList, Typ)
+                                            [symbol(builtinFuncD)]
+
+  syntax TblRow ::= tblRow(ArgList, Exp, PremList)
+                                            [symbol(tblRow)]
+  syntax TblRowList ::= List{TblRow, ","}   [symbol(tblRowList), terminator-symbol(.tblRowList)]
+
+  syntax TableFuncDefn ::= tableFuncD(Id, ParamList, Typ, TblRowList)
+                                            [symbol(tableFuncD)]
 
   syntax Clause ::= clause(ArgList, Exp, PremList)
                                             [symbol(clause)]
-  syntax TblRow ::= tblRow(ArgList, Exp, PremList)
-                                            [symbol(tblRow)]
-
   syntax ClauseList ::= List{Clause, ","}   [symbol(clauseList), terminator-symbol(.clauseList)]
-  syntax TblRowList ::= List{TblRow, ","}   [symbol(tblRowList), terminator-symbol(.tblRowList)]
 
-  // `elsclause?`; `elsclause` is an alias of `clause`, so it is inlined.
+  // `elsClause?`; `elsClause` is an alias of `clause`, so it is inlined.
   syntax ElsClauseOpt ::= noElsClause()     [symbol(noElsClause)]
                         | someElsClause(Clause)
                                             [symbol(someElsClause)]
 
+  syntax DefinedFuncDefn ::= funcD(Id, TParamList, ParamList, Typ, ClauseList, ElsClauseOpt)
+                                            [symbol(funcD)]
+  syntax FuncDefn ::= ExternFuncDefn
+                    | BuiltinFuncDefn
+                    | TableFuncDefn
+                    | DefinedFuncDefn
+
   // ==========================================================================
   // Definitions
   //
-  //   syntax defn =
-  //     | EXTTYP id
-  //     | TYP id tparam* '=' deftyp
-  //     | EXTREL id ':' typ* '->' typ*
-  //     | REL id ':' typ* '->' typ* '=' rulgroup* elsgroup?
-  //     | EXTFUNC id tparam* param* ':' typ
-  //     | BUILTINFUNC id tparam* param* ':' typ
-  //     | TABLEFUNC id param* ':' typ '=' tblrow*
-  //     | FUNC id tparam* param* ':' typ '=' clause* elsclause?
+  //   syntax defn = | typDefn | relDefn | funcDefn
   // ==========================================================================
 
-  syntax Defn ::= extTypD(Id)               [symbol(extTypD)]
-                | typD(Id, TParamList, DefTyp)
-                                            [symbol(typD)]
-                | extRelD(Id, TypList, TypList)
-                                            [symbol(extRelD)]
-                | relD(Id, TypList, TypList, RulGroupList, ElsGroupOpt)
-                                            [symbol(relD)]
-                | extFuncD(Id, TParamList, ParamList, Typ)
-                                            [symbol(extFuncD)]
-                | builtinFuncD(Id, TParamList, ParamList, Typ)
-                                            [symbol(builtinFuncD)]
-                | tableFuncD(Id, ParamList, Typ, TblRowList)
-                                            [symbol(tableFuncD)]
-                | funcD(Id, TParamList, ParamList, Typ, ClauseList, ElsClauseOpt)
-                                            [symbol(funcD)]
+  syntax Defn ::= TypDefn | RelDefn | FuncDefn
 
   // ==========================================================================
-  // Scripts
+  // Spec
   //
-  //   syntax script = defn*
+  //   syntax spec = defn*
   // ==========================================================================
 
-  syntax Script ::= List{Defn, ","}         [symbol(script), terminator-symbol(.script)]
+  syntax Spec ::= List{Defn, ","}           [symbol(spec), terminator-symbol(.spec)]
 
   // ==========================================================================
   // Target programs

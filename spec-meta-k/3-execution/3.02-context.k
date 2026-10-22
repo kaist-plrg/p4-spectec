@@ -156,13 +156,13 @@ module CONTEXT
   // $load: definitions in order, each into <global>
   // ==========================================================================
 
-  rule <k> (D:Defn, Ds:Script) => D ~> Ds ... </k>
-  rule <k> .Script => .K ... </k>
+  rule <k> (D:Defn, Ds:Spec) => D ~> Ds ... </k>
+  rule <k> .Spec => .K ... </k>
 
   rule <k> extTypD(X:Id) => .K ... </k>
-       <gtdenv> M:Map => M[X <- extTD()] </gtdenv>
+       <gtdenv> M:Map => M[X <- extTypD(X)] </gtdenv>
   rule <k> typD(X:Id, Ps:TParamList, DT:DefTyp) => .K ... </k>
-       <gtdenv> M:Map => M[X <- defTD(Ps, DT)] </gtdenv>
+       <gtdenv> M:Map => M[X <- typD(X, Ps, DT)] </gtdenv>
 
   rule <k> extRelD(X:Id, _:TypList, _:TypList) => .K ... </k>
        <grenv> M:Map => M[X <- extRel(X)] </grenv>

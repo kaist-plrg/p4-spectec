@@ -95,7 +95,7 @@ module EXTERN-JSON
   rule jsonOfTyp(tupT(Ts:TypList)) => [ "tupT", jsonList(jsonOfTyps(Ts)), .JSONs ]
   rule jsonOfTyp(iterT(T:Typ, quest())) => [ "iterT", jsonOfTyp(T), "?", .JSONs ]
   rule jsonOfTyp(iterT(T:Typ, star()))  => [ "iterT", jsonOfTyp(T), "*", .JSONs ]
-  rule jsonOfTyp(funcT()) => [ "funcT", .JSONs ]
+  rule jsonOfTyp(funcT(_:TParamList, _:TypList, _:Typ)) => [ "funcT", .JSONs ]
 
   rule jsonOfTyps(.TypList) => .JSONs
   rule jsonOfTyps(T:Typ, Ts:TypList) => jsonOfTyp(T), jsonOfTyps(Ts)

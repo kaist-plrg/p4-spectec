@@ -15,7 +15,7 @@ module CONFIG
 
   configuration
     <al>
-      <k> initFFI() ~> logDebug(textV("entry-al")) ~> $PGM:Script ~> afterLoad() </k>
+      <k> initFFI() ~> logDebug(textV("entry-al")) ~> $PGM:Spec ~> afterLoad() </k>
       <p4prog> $P4:P4Opt </p4prog>
       <specdir> $SPEC:String </specdir>
       <global>

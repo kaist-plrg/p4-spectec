@@ -33,8 +33,9 @@ module TYP
                                             [function, total, symbol(substTargs)]
 
   rule substTyp(_:Map, T:OpTyp) => T
-  rule substTyp(_:Map, funcT()) => funcT()
-  rule substTyp((X:Id |-> defTD(.TParamList, aliasDT(T:Typ))) _:Map, varT(X, .TArgList)) => T
+  rule substTyp(Th:Map, funcT(Ps:TParamList, Ts:TypList, T:Typ))
+    => funcT(Ps, substTyps(Th, Ts), substTyp(Th, T))
+  rule substTyp((X:Id |-> typD(X, .TParamList, aliasDT(T:Typ))) _:Map, varT(X, .TArgList)) => T
   rule substTyp(Th:Map, varT(X:Id, Ts:TArgList)) => varT(X, substTargs(Th, Ts)) [owise]
   rule substTyp(Th:Map, tupT(Ts:TypList)) => tupT(substTyps(Th, Ts))
   rule substTyp(Th:Map, iterT(T:Typ, I:Iter)) => iterT(substTyp(Th, T), I)
@@ -70,7 +71,7 @@ module TYP
   rule upcast(_:Map, intT(), V:Val) => FAIL
     requires notBool isNum(V)
 
-  rule upcast(((X:Id |-> defTD(Ps:TParamList, aliasDT(T:Typ))) _:Map) #as E:Map,
+  rule upcast(((X:Id |-> typD(X, Ps:TParamList, aliasDT(T:Typ))) _:Map) #as E:Map,
               varT(X, Ts:TArgList), V:Val)
     => upcast(E, substTyp(tdenvOf(Ps, Ts), T), V)
 
@@ -102,7 +103,7 @@ module TYP
   rule downcast(_:Map, natT(), V:Val) => FAIL
     requires notBool isNum(V)
 
-  rule downcast(((X:Id |-> defTD(Ps:TParamList, aliasDT(T:Typ))) _:Map) #as E:Map,
+  rule downcast(((X:Id |-> typD(X, Ps:TParamList, aliasDT(T:Typ))) _:Map) #as E:Map,
                 varT(X, Ts:TArgList), V:Val)
     => downcast(E, substTyp(tdenvOf(Ps, Ts), T), V)
 
@@ -173,14 +174,14 @@ module TYP
   rule subtyp(_:Map, intT(), _:Num) => true
   rule subtyp(_:Map, textT(), textV(_:String)) => true
 
-  rule subtyp((X:Id |-> extTD()) _:Map, varT(X, _:TArgList), extV(_:JSON)) => true
-  rule subtyp(((X:Id |-> defTD(Ps:TParamList, aliasDT(T:Typ))) _:Map) #as E:Map,
+  rule subtyp((X:Id |-> extTypD(X)) _:Map, varT(X, _:TArgList), extV(_:JSON)) => true
+  rule subtyp(((X:Id |-> typD(X, Ps:TParamList, aliasDT(T:Typ))) _:Map) #as E:Map,
               varT(X, Ts:TArgList), V:Val)
     => subtyp(E, substTyp(tdenvOf(Ps, Ts), T), V)
-  rule subtyp(((X:Id |-> defTD(Ps:TParamList, variantDT(Cs:TypCaseList))) _:Map) #as E:Map,
+  rule subtyp(((X:Id |-> typD(X, Ps:TParamList, variantDT(Cs:TypCaseList))) _:Map) #as E:Map,
               varT(X, Ts:TArgList), injV(valCase(M:MixOp, Vs:ValList)))
     => subtypCases(E, tdenvOf(Ps, Ts), M, Cs, Vs)
-  rule subtyp(((X:Id |-> defTD(Ps:TParamList, structDT(Fs:TypFieldList))) _:Map) #as E:Map,
+  rule subtyp(((X:Id |-> typD(X, Ps:TParamList, structDT(Fs:TypFieldList))) _:Map) #as E:Map,
               varT(X, Ts:TArgList), strV(Gs:ValFieldList))
     => subtypFields(E, tdenvOf(Ps, Ts), Fs, Gs)
 

@@ -1,42 +1,19 @@
 // Environments: values, type definitions, relations, and functions.
 //
-// Mirrors spec-meta/3-execution/3.01-env.watsup and spec-meta/2-runtime/.
+// Mirrors spec-meta/3-execution/3.01-env.watsup.
 
 requires "../0-aux/0.1-config.k"
+requires "../2-runtime/2.1-variable.k"
+requires "../2-runtime/2.2-type-def.k"
 
 module ENV
   imports CONFIG
+  imports VARIABLE
+  imports TYPE-DEF
   imports MAP
 
   // ==========================================================================
-  // Value environment key
-  //
-  //   syntax varr = id iter*
-  // ==========================================================================
-
-  syntax Varr ::= varr(Id, IterList)        [symbol(varr)]
-
-  syntax VarrList ::= List{Varr, ","}       [symbol(varrList), terminator-symbol(.varrList)]
-
-  // `varr?`
-  syntax VarrOpt ::= noVarr()               [symbol(noVarr)]
-                   | someVarr(Varr)         [symbol(someVarr)]
-
-  // ==========================================================================
-  // Type definition environment
-  //
-  //   syntax typdef = | PARAM | EXT | DEF tparam* '->' deftyp
-  // ==========================================================================
-
-  syntax TypDef ::= paramTD()               [symbol(paramTD)]
-                  | extTD()                 [symbol(extTD)]
-                  | defTD(TParamList, DefTyp)
-                                            [symbol(defTD)]
-
-  // ==========================================================================
   // Type substitution environment
-  //
-  //   if tdenv = `{ (tparam ':' (DEF eps '->' (ALIAS typ)))* `}
   //
   // A substitution is a tdenv of aliases, one per type parameter.
   // ==========================================================================
@@ -46,57 +23,7 @@ module ENV
 
   rule tdenvOf(.TParamList, .TArgList) => .Map
   rule tdenvOf((X:Id, Xs:TParamList), (T:Typ, Ts:TArgList))
-    => (X |-> defTD(.TParamList, aliasDT(T))) tdenvOf(Xs, Ts)
-
-  // ==========================================================================
-  // Iteration helpers
-  //
-  //   dec $is_iter_on_var(exp) : varr?
-  //   dec $iter_vari(vari, iter) : vari
-  //   dec $iter_varr(varr, iter) : varr
-  // ==========================================================================
-
-  syntax VarrOpt ::= isIterOnVar(Exp)       [function, total, symbol(isIterOnVar)]
-
-  rule isIterOnVar(varE(X:Id)) => someVarr(varr(X, .IterList))
-  rule isIterOnVar(iterE(E:Exp, iterExp(I:Iter, _:VariList)))
-    => appendIterOpt(isIterOnVar(E), I)
-  rule isIterOnVar(_:Exp) => noVarr() [owise]
-
-  syntax VarrOpt ::= appendIterOpt(VarrOpt, Iter)
-                                            [function, total, symbol(appendIterOpt)]
-
-  rule appendIterOpt(noVarr(), _:Iter) => noVarr()
-  rule appendIterOpt(someVarr(R:Varr), I:Iter) => someVarr(iterVarr(R, I))
-
-  syntax Vari ::= iterVari(Vari, Iter)      [function, total, symbol(iterVari)]
-  syntax Varr ::= iterVarr(Varr, Iter)      [function, total, symbol(iterVarr)]
-
-  rule iterVari(vari(X:Id, T:Typ, Is:IterList), I:Iter)
-    => vari(X, T, appendIter(Is, I))
-  rule iterVarr(varr(X:Id, Is:IterList), I:Iter)
-    => varr(X, appendIter(Is, I))
-
-  syntax IterList ::= appendIter(IterList, Iter)
-                                            [function, total, symbol(appendIter)]
-
-  rule appendIter(.IterList, I:Iter) => I, .IterList
-  rule appendIter((J:Iter, Is:IterList), I:Iter) => J, appendIter(Is, I)
-
-  syntax Varr ::= varrOfVari(Vari)          [function, total, symbol(varrOfVari)]
-  rule varrOfVari(vari(X:Id, _:Typ, Is:IterList)) => varr(X, Is)
-
-  syntax VarrList ::= varrsOfVaris(VariList)
-                                            [function, total, symbol(varrsOfVaris)]
-  rule varrsOfVaris(.VariList) => .VarrList
-  rule varrsOfVaris(V:Vari, Vs:VariList) => varrOfVari(V), varrsOfVaris(Vs)
-
-  // `vari*` at one more `iter`.
-  syntax VarrList ::= iterVaris(VariList, Iter)
-                                            [function, total, symbol(iterVaris)]
-  rule iterVaris(.VariList, _:Iter) => .VarrList
-  rule iterVaris((V:Vari, Vs:VariList), I:Iter)
-    => varrOfVari(iterVari(V, I)), iterVaris(Vs, I)
+    => (X |-> typD(X, .TParamList, aliasDT(T))) tdenvOf(Xs, Ts)
 
   // ==========================================================================
   // Value finders and adders
