@@ -1,4 +1,27 @@
 ;; Type substitution
+
+syntax theta = map<id, typ>
+
+dec $theta_of_tdenv(tdenv) : theta
+  hint(prose_in "the type substitution environment of" %0)
+def $theta_of_tdenv(`{ eps `}) = $empty_map<id, typ>
+def $theta_of_tdenv(`{ (id_h ':' typDef_h) :: (id_t ':' typDef_t)* `})
+  = $add_map<id, typ>(theta_t, id_h, typ_h)
+  -- if typDef_h = TYP _ eps '=' (ALIAS typ_h)
+  -- if theta_t = $theta_of_tdenv(`{ (id_t ':' typDef_t)* `})
+def $theta_of_tdenv(`{ (id_h ':' typDef_h) :: (id_t ':' typDef_t)* `})
+  = $theta_of_tdenv(`{ (id_t ':' typDef_t)* `})
+  -- if typDef_h = PARAM
+def $theta_of_tdenv(`{ (id_h ':' (EXTTYP _)) :: (id_t ':' typDef_t)* `})
+  = $theta_of_tdenv(`{ (id_t ':' typDef_t)* `})
+def $theta_of_tdenv(`{ (id_h ':' (TYP _ tparam* '=' (ALIAS typ))) :: (id_t ':' typDef_t)* `})
+  = $theta_of_tdenv(`{ (id_t ':' typDef_t)* `})
+  -- if tparam* =/= eps
+def $theta_of_tdenv(`{ (id_h ':' (TYP _ tparam* '=' (STRUCT typField*))) :: (id_t ':' typDef_t)* `})
+  = $theta_of_tdenv(`{ (id_t ':' typDef_t)* `})
+def $theta_of_tdenv(`{ (id_h ':' (TYP _ tparam* '=' (VARIANT typCase*))) :: (id_t ':' typDef_t)* `})
+  = $theta_of_tdenv(`{ (id_t ':' typDef_t)* `})
+
 ;; Fresh binders avoid every name in the type and substitution
 
 dec $ids_typ(typ) : id*
