@@ -8,17 +8,6 @@ use crate::diagnostic::Diagnostic;
 
 use super::diagnostic;
 
-const TEXT_SLICE_BOUNDARY_MISMATCH: &str = "runtime/text-slice-boundary-mismatch";
-
-/// Reports text slice boundary mismatch.
-pub fn text_slice_boundary_mismatch() -> Diagnostic {
-    diagnostic(
-        TEXT_SLICE_BOUNDARY_MISMATCH,
-        "text byte slice is not on UTF-8 boundaries",
-        Vec::new(),
-    )
-}
-
 const CHARACTER_UPDATE_LENGTH_MISMATCH: &str = "runtime/character-update-length-mismatch";
 
 /// Reports character update length mismatch.

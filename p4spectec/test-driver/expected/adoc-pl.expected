@@ -53,6 +53,7 @@ xref:replace_text'[$replace_text'(n~len~, n~len'~, t, t~old~, t~new~)]
 . Then, try:
  .. Check that ``n~len~`` is less than ``n~len'~``.
  .. Check that ``n~len~`` is less than the length of ``t``.
+ .. Check that the length of ``t~new~`` is equal to ``1``.
  .. Let ``t~replaced~`` be <<ite,``t`` with ``[n~len~]`` set to ``t~new~`` if ``t[n~len~]`` is equal to ``t~old~`` otherwise ``t``>>.
  .. Return xref:replace_text'[``$replace_text'(n~len~`` ``{plus}`` ``1,`` ``n~len'~,`` ``t~replaced~,`` ``t~old~,`` ``t~new~)``].
 
@@ -67,6 +68,7 @@ xref:replace_text_except'[$replace_text_except'(n~len~, n~len'~, t, t~old~, t~ne
 . Then, try:
  .. Check that ``n~len~`` is less than ``n~len'~``.
  .. Check that ``n~len~`` is less than the length of ``t``.
+ .. Check that the length of ``t~new~`` is equal to ``1``.
  .. Let ``t~replaced~`` be <<ite,``t`` if ``t[n~len~]`` is equal to ``t~old~`` otherwise ``t`` with ``[n~len~]`` set to ``t~new~``>>.
  .. Return xref:replace_text_except'[``$replace_text_except'(n~len~`` ``{plus}`` ``1,`` ``n~len'~,`` ``t~replaced~,`` ``t~old~,`` ``t~new~)``].
 
@@ -78,7 +80,7 @@ xref:strip_all_whitespace[The text ``t`` with all whitespace removed]
 
 xref:starts_with[The text ``t`` starts with ``t~prefix~``]
 
-. If the length of ``t~prefix~`` is less than or equal to the length of ``t``:
+. If ``0`` ``{plus}`` ``the`` ``length`` ``of`` ``t~prefix~`` is less than or equal to the length of ``t``:
  .. If ``t[0`` ``:`` ``the`` ``length`` ``of`` ``t~prefix~]`` is equal to ``t~prefix~``: return ``true``.
 
 . +++<span id="func:starts_with-else"></span>+++Otherwise: return ``false``.
@@ -88,7 +90,8 @@ xref:ends_with[The text ``t`` ends with ``t~suffix~``]
 . If the length of ``t~suffix~`` is less than or equal to the length of ``t``:
  .. Let ``i`` be ``the`` ``length`` ``of`` ``t`` ``-`` ``the`` ``length`` ``of`` ``t~suffix~``.
  .. If let ``n~start~`` of type ``nat`` be ``i``:
-  ... If ``t[n~start~`` ``:`` ``the`` ``length`` ``of`` ``t~suffix~]`` is equal to ``t~suffix~``: return ``true``.
+  ... If ``n~start~`` ``{plus}`` ``the`` ``length`` ``of`` ``t~suffix~`` is less than or equal to the length of ``t``:
+   .... If ``t[n~start~`` ``:`` ``the`` ``length`` ``of`` ``t~suffix~]`` is equal to ``t~suffix~``: return ``true``.
 
 . +++<span id="func:ends_with-else"></span>+++Otherwise: return ``false``.
 
@@ -856,23 +859,25 @@ xref:write_value_from_bits'[$write_value_from_bits'(value', n~var~, b^{asterisk}
    .... Return ( ``{nbsp}~B~`` ``b~h~``, ``b~t~^{asterisk}^`` ).
  .. Else if let ``integerLiteral`` of type ``integerLiteral`` be ``value'``:
   ... If let ``w`` ``+W+`` ``++_++`` be ``integerLiteral``:
-   .... If the length of ``b^{asterisk}^`` is greater than or equal to ``w``:
+   .... If ``0`` ``{plus}`` ``w`` is less than or equal to the length of ``b^{asterisk}^``:
     ..... Let ``b~h~^{asterisk}^`` be ``b^{asterisk}^[0`` ``:`` ``w]``.
     ..... Let ``i'`` be ``the`` ``length`` ``of`` ``b^{asterisk}^`` ``-`` ``w``.
     ..... If let ``n~t~`` of type ``nat`` be ``i'``:
-     ...... Let ``b~t~^{asterisk}^`` be ``b^{asterisk}^[w`` ``:`` ``n~t~]``.
-     ...... Let ``int`` be xref:bits_to_int_unsigned[``$bits_to_int_unsigned(b~h~^{asterisk}^)``].
-     ...... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``int``].
-     ...... Return ( ``w`` ``+W+`` ``i``, ``b~t~^{asterisk}^`` ).
+     ...... If ``w`` ``{plus}`` ``n~t~`` is less than or equal to the length of ``b^{asterisk}^``:
+      ....... Let ``b~t~^{asterisk}^`` be ``b^{asterisk}^[w`` ``:`` ``n~t~]``.
+      ....... Let ``int`` be xref:bits_to_int_unsigned[``$bits_to_int_unsigned(b~h~^{asterisk}^)``].
+      ....... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``int``].
+      ....... Return ( ``w`` ``+W+`` ``i``, ``b~t~^{asterisk}^`` ).
   ... Else if let ``w`` ``+S+`` ``++_++`` be ``integerLiteral``:
-   .... If the length of ``b^{asterisk}^`` is greater than or equal to ``w``:
+   .... If ``0`` ``{plus}`` ``w`` is less than or equal to the length of ``b^{asterisk}^``:
     ..... Let ``b~h~^{asterisk}^`` be ``b^{asterisk}^[0`` ``:`` ``w]``.
     ..... Let ``i'`` be ``the`` ``length`` ``of`` ``b^{asterisk}^`` ``-`` ``w``.
     ..... If let ``n~t~`` of type ``nat`` be ``i'``:
-     ...... Let ``b~t~^{asterisk}^`` be ``b^{asterisk}^[w`` ``:`` ``n~t~]``.
-     ...... Let ``int'`` be xref:bits_to_int_signed[``$bits_to_int_signed(b~h~^{asterisk}^)``].
-     ...... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``int'``].
-     ...... Return ( ``w`` ``+S+`` ``i``, ``b~t~^{asterisk}^`` ).
+     ...... If ``w`` ``{plus}`` ``n~t~`` is less than or equal to the length of ``b^{asterisk}^``:
+      ....... Let ``b~t~^{asterisk}^`` be ``b^{asterisk}^[w`` ``:`` ``n~t~]``.
+      ....... Let ``int'`` be xref:bits_to_int_signed[``$bits_to_int_signed(b~h~^{asterisk}^)``].
+      ....... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``int'``].
+      ....... Return ( ``w`` ``+S+`` ``i``, ``b~t~^{asterisk}^`` ).
  .. Else if let ``+STRUCT+`` ``typeId`` ``+`{+`` ``fieldValue^{asterisk}^`` ``+`}+`` of type ``structValue`` be ``value'``:
   ... Let ``(`` ``fieldValue~updated~^{asterisk}^,`` ``b~rest~^{asterisk}^`` ``)`` be xref:write_value_fields_from_bits'[``$write_value_fields_from_bits'(fieldValue^{asterisk}^,`` ``n~var~,`` ``b^{asterisk}^)``].
   ... Return ( ``+STRUCT+`` ``typeId`` ``+`{+`` ``fieldValue~updated~^{asterisk}^`` ``+`}+``, ``b~rest~^{asterisk}^`` ).
@@ -897,11 +902,12 @@ xref:write_value_from_bits'[$write_value_from_bits'(value', n~var~, b^{asterisk}
  .. If ``n~var~`` is equal to ``0``:
   ... Return ( ``n~max~`` ``+'.'+`` ``0`` ``+V+`` ``i``, ``b^{asterisk}^`` ).
  .. Else:
-  ... Check that the length of ``b^{asterisk}^`` is greater than or equal to ``n~var~``.
+  ... Check that ``0`` ``{plus}`` ``n~var~`` is less than or equal to the length of ``b^{asterisk}^``.
   ... Let ``b~h~^{asterisk}^`` be ``b^{asterisk}^[0`` ``:`` ``n~var~]``.
   ... Let ``i'`` be ``the`` ``length`` ``of`` ``b^{asterisk}^`` ``-`` ``n~var~``.
   ... Check that ``i'`` has type ``nat``.
   ... Let ``n~t~`` be ``i'``.
+  ... Check that ``n~var~`` ``{plus}`` ``n~t~`` is less than or equal to the length of ``b^{asterisk}^``.
   ... Let ``b~t~^{asterisk}^`` be ``b^{asterisk}^[n~var~`` ``:`` ``n~t~]``.
   ... Let ``int''`` be xref:bits_to_int_signed[``$bits_to_int_signed(b~h~^{asterisk}^)``].
   ... Let ``i'`` be xref:int_to_bitstr[the bitstring of width ``n~var~`` representing the integer ``int''``].
@@ -1731,7 +1737,9 @@ Let ``bound^{asterisk}^`` be the resulting list.
 . Let ``B~capture~`` be xref:unions_set[the union of the sets ``bound^{asterisk}^``].
 . Let ``typeId~fresh~^{asterisk}^`` be xref:fresh_typeIds[the length of ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^`` fresh type variables].
 . Check that ``~``xref:in_set[``$in_set<typeId>(typeId~fresh~,`` ``B~capture~)``], for all ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``.
+. Check that ``0`` ``{plus}`` ``the`` ``length`` ``of`` ``typeParameterIR~expl~^{asterisk}^`` is less than or equal to the length of ``typeId~fresh~^{asterisk}^``.
 . Let ``typeParameterIR~expl_fresh~^{asterisk}^`` be ``typeId~fresh~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``typeParameterIR~expl~^{asterisk}^]``.
+. Check that ``the`` ``length`` ``of`` ``typeParameterIR~expl~^{asterisk}^`` ``{plus}`` ``the`` ``length`` ``of`` ``typeParameterIR~impl~^{asterisk}^`` is less than or equal to the length of ``typeId~fresh~^{asterisk}^``.
 . Let ``typeParameterIR~impl_fresh~^{asterisk}^`` be ``typeId~fresh~^{asterisk}^[the`` ``length`` ``of`` ``typeParameterIR~expl~^{asterisk}^`` ``:`` ``the`` ``length`` ``of`` ``typeParameterIR~impl~^{asterisk}^]``.
 . Let ``theta~fresh~`` be xref:adds_map[``theta`` where each of ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^`` to ``(`` ``{nbsp}~NAME~`` ``typeParameterIR~expl_fresh~`` ``)^{asterisk}^`` concatenated with ``(`` ``{nbsp}~NAME~`` ``typeParameterIR~impl_fresh~`` ``)^{asterisk}^`` are added].
 . Return ( ``theta~fresh~``, ``typeParameterIR~expl_fresh~^{asterisk}^``, ``typeParameterIR~impl_fresh~^{asterisk}^`` ).
@@ -2156,7 +2164,7 @@ xref:specialize_typeDefIR[``typeDefIR~base~`` specialized by ``typeArgumentIR^{a
 
 . Let ``(`` ``typeParameterIR~expl~^{asterisk}^,`` ``typeParameterIR~impl~^{asterisk}^`` ``)`` be xref:typeParameterListIR_of_typeDefIR[the type parameters of ``typeDefIR~base~``].
 . Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^``.
-. Check that the length of ``typeParameterIR^{asterisk}^`` is equal to the length of ``typeArgumentIR^{asterisk}^``.
+. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``theta`` be ``+`{+`` ``(`` ``typeParameterIR`` ``+':'+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+`}+``.
 . Let ``typeIR~base~`` be xref:typeIR_of_typeDefIR[the underlying type of ``typeDefIR~base~``].
 . Let ``typeIR~spec~`` be xref:subst_typeIR[``typeIR~base~`` substituted by ``theta``].
@@ -2846,6 +2854,7 @@ xref:bin_div[``value`` ``+'/'+`` ``value'``]
  .. Let ``integerLiteral'`` be ``value'``.
  .. Check that ``integerLiteral'`` matches pattern ``+D+`` ``%``.
  .. Let ``+D+`` ``i~r~`` be ``integerLiteral'``.
+ .. Check that ``i~r~`` is not equal to ``+0``.
  .. Return ``+D+`` ``i~l~`` ``/`` ``i~r~``.
 . Else if let ``w`` ``+W+`` ``i~l~`` be ``integerLiteral``:
  .. Check that ``value'`` has type ``integerLiteral``.
@@ -2855,6 +2864,7 @@ xref:bin_div[``value`` ``+'/'+`` ``value'``]
  .. Check that ``w`` is equal to ``w'``.
  .. Let ``i~l'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~l~`` of width ``w``].
  .. Let ``i~r'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~r~`` of width ``w``].
+ .. Check that ``i~r'~`` is not equal to ``+0``.
  .. Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'~`` ``/`` ``i~r'~``].
  .. Return ``w`` ``+W+`` ``i``.
 
@@ -2867,6 +2877,7 @@ xref:bin_mod[``value`` ``+'%'+`` ``value'``]
  .. Let ``integerLiteral'`` be ``value'``.
  .. Check that ``integerLiteral'`` matches pattern ``+D+`` ``%``.
  .. Let ``+D+`` ``i~r~`` be ``integerLiteral'``.
+ .. Check that ``i~r~`` is not equal to ``+0``.
  .. Return ``+D+`` ``i~l~`` ``\`` ``i~r~``.
 . Else if let ``w`` ``+W+`` ``i~l~`` be ``integerLiteral``:
  .. Check that ``value'`` has type ``integerLiteral``.
@@ -2876,6 +2887,7 @@ xref:bin_mod[``value`` ``+'%'+`` ``value'``]
  .. Check that ``w`` is equal to ``w'``.
  .. Let ``i~l'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~l~`` of width ``w``].
  .. Let ``i~r'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~r~`` of width ``w``].
+ .. Check that ``i~r'~`` is not equal to ``+0``.
  .. Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'~`` ``\`` ``i~r'~``].
  .. Return ``w`` ``+W+`` ``i``.
 
@@ -3243,17 +3255,16 @@ Let ``nameIR~field_a~^{asterisk}^`` and ``value~field_a~^{asterisk}^`` be the re
 +
 Let ``nameIR~field_b~^{asterisk}^`` and ``value~field_b~^{asterisk}^`` be the resulting lists.
    .... If the length of ``value~field_a~^{asterisk}^`` is equal to the length of ``value~field_b~^{asterisk}^``:
-    ..... If the length of ``nameIR~field_a~^{asterisk}^`` is equal to the length of ``nameIR~field_b~^{asterisk}^``:
-     ...... For each ``value~field_a~`` in ``value~field_a~^{asterisk}^`` and ``value~field_b~`` in ``value~field_b~^{asterisk}^``:
+    ..... For each ``value~field_a~`` in ``value~field_a~^{asterisk}^`` and ``value~field_b~`` in ``value~field_b~^{asterisk}^``:
 +
 --
-      ******* Let ``bool''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
+     ****** Let ``bool''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
 --
 +
 Let ``bool''''''''^{asterisk}^`` be the resulting list.
-     ...... Let ``bool''''''`` be xref:forall_[all ``bool''''''''^{asterisk}^`` are true].
-     ...... Let ``bool'''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].
-     ...... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool''''''`` and ``bool'''''''``.
+    ..... Let ``bool''''''`` be xref:forall_[all ``bool''''''''^{asterisk}^`` are true].
+    ..... Let ``bool'''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].
+    ..... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool''''''`` and ``bool'''''''``.
  .. Else if let ``+HEADER+`` ``typeId~a~`` ``+`{+`` ``++_++`` ``+';'+`` ``fieldValue~a~^{asterisk}^`` ``+`}+`` of type ``headerValue`` be ``value``:
   ... If let ``+HEADER+`` ``typeId~b~`` ``+`{+`` ``++_++`` ``+';'+`` ``fieldValue~b~^{asterisk}^`` ``+`}+`` of type ``headerValue`` be ``value'``:
    .... For each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``:
@@ -3271,17 +3282,16 @@ Let ``nameIR~field_a~^{asterisk}^`` and ``value~field_a~^{asterisk}^`` be the re
 +
 Let ``nameIR~field_b~^{asterisk}^`` and ``value~field_b~^{asterisk}^`` be the resulting lists.
    .... If the length of ``value~field_a~^{asterisk}^`` is equal to the length of ``value~field_b~^{asterisk}^``:
-    ..... If the length of ``nameIR~field_a~^{asterisk}^`` is equal to the length of ``nameIR~field_b~^{asterisk}^``:
-     ...... For each ``value~field_a~`` in ``value~field_a~^{asterisk}^`` and ``value~field_b~`` in ``value~field_b~^{asterisk}^``:
+    ..... For each ``value~field_a~`` in ``value~field_a~^{asterisk}^`` and ``value~field_b~`` in ``value~field_b~^{asterisk}^``:
 +
 --
-      ******* Let ``bool'''''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
+     ****** Let ``bool'''''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
 --
 +
 Let ``bool'''''''''''^{asterisk}^`` be the resulting list.
-     ...... Let ``bool'''''''''`` be xref:forall_[all ``bool'''''''''''^{asterisk}^`` are true].
-     ...... Let ``bool''''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].
-     ...... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool'''''''''`` and ``bool''''''''''``.
+    ..... Let ``bool'''''''''`` be xref:forall_[all ``bool'''''''''''^{asterisk}^`` are true].
+    ..... Let ``bool''''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].
+    ..... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool'''''''''`` and ``bool''''''''''``.
  .. Else if let ``+HEADER_UNION+`` ``typeId~a~`` ``+`{+`` ``fieldValue~a~^{asterisk}^`` ``+`}+`` of type ``headerUnionValue`` be ``value``:
   ... If let ``+HEADER_UNION+`` ``typeId~b~`` ``+`{+`` ``fieldValue~b~^{asterisk}^`` ``+`}+`` of type ``headerUnionValue`` be ``value'``:
    .... For each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``:
@@ -3299,17 +3309,16 @@ Let ``nameIR~field_a~^{asterisk}^`` and ``value~field_a~^{asterisk}^`` be the re
 +
 Let ``nameIR~field_b~^{asterisk}^`` and ``value~field_b~^{asterisk}^`` be the resulting lists.
    .... If the length of ``value~field_a~^{asterisk}^`` is equal to the length of ``value~field_b~^{asterisk}^``:
-    ..... If the length of ``nameIR~field_a~^{asterisk}^`` is equal to the length of ``nameIR~field_b~^{asterisk}^``:
-     ...... For each ``value~field_a~`` in ``value~field_a~^{asterisk}^`` and ``value~field_b~`` in ``value~field_b~^{asterisk}^``:
+    ..... For each ``value~field_a~`` in ``value~field_a~^{asterisk}^`` and ``value~field_b~`` in ``value~field_b~^{asterisk}^``:
 +
 --
-      ******* Let ``bool''''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
+     ****** Let ``bool''''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+'=='+`` ``value~field_b~``].
 --
 +
 Let ``bool''''''''''''''^{asterisk}^`` be the resulting list.
-     ...... Let ``bool''''''''''''`` be xref:forall_[all ``bool''''''''''''''^{asterisk}^`` are true].
-     ...... Let ``bool'''''''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].
-     ...... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool''''''''''''`` and ``bool'''''''''''''``.
+    ..... Let ``bool''''''''''''`` be xref:forall_[all ``bool''''''''''''''^{asterisk}^`` are true].
+    ..... Let ``bool'''''''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].
+    ..... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool''''''''''''`` and ``bool'''''''''''''``.
  .. Else if let ``enumValue`` of type ``enumValue`` be ``value``:
   ... If let ``typeId~a~`` ``+'.'+`` ``nameIR~field_a~`` be ``enumValue``:
    .... If let ``enumValue'`` of type ``enumValue`` be ``value'``:
@@ -3995,6 +4004,7 @@ xref:cast_record[``recordValue`` casted to type ``typeIR``]
 
 . If let ``+STRUCT+`` ``typeId`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` of type ``structTypeIR`` be ``typeIR``:
  .. If let ``+RECORD+`` ``+`{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``recordValue``:
+  ... Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``, for all ``id~t_field~`` in ``id~t_field~^{asterisk}^``.
   ... For each ``id~t_field~`` in ``id~t_field~^{asterisk}^``:
 +
 --
@@ -4020,6 +4030,7 @@ Let ``value~field_cast~^{asterisk}^`` be the resulting list.
   ... Return ``+STRUCT+`` ``typeId`` ``+`{+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+``.
  .. Else:
   ... Let ``+RECORD+`` ``+`{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+';'+`` ``)^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` be ``recordValue``.
+  ... Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``, for all ``id~t_field~`` in ``id~t_field~^{asterisk}^`` and ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^``.
   ... For each ``id~t_field~`` in ``id~t_field~^{asterisk}^`` and ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^``:
 +
 --
@@ -4030,6 +4041,7 @@ Let ``value~field_cast~^{asterisk}^`` be the resulting list.
   ... Return ``+STRUCT+`` ``typeId`` ``+`{+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+``.
 . Else if let ``+HEADER+`` ``typeId`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` of type ``headerTypeIR`` be ``typeIR``:
  .. If let ``+RECORD+`` ``+`{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``recordValue``:
+  ... Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``, for all ``id~t_field~`` in ``id~t_field~^{asterisk}^``.
   ... For each ``id~t_field~`` in ``id~t_field~^{asterisk}^``:
 +
 --
@@ -4055,6 +4067,7 @@ Let ``value~field_cast~^{asterisk}^`` be the resulting list.
   ... Return ``+HEADER+`` ``typeId`` ``+`{+`` ``true`` ``+';'+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+``.
  .. Else:
   ... Let ``+RECORD+`` ``+`{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+';'+`` ``)^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` be ``recordValue``.
+  ... Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``, for all ``id~t_field~`` in ``id~t_field~^{asterisk}^`` and ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^``.
   ... For each ``id~t_field~`` in ``id~t_field~^{asterisk}^`` and ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^``:
 +
 --
@@ -4067,6 +4080,7 @@ Let ``value~field_cast~^{asterisk}^`` be the resulting list.
  .. If let ``+RECORD+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``recordTypeIR``:
   ... Check that ``recordValue`` matches pattern ``+RECORD+`` ``+`{+`` ``%`` ``+`}+``.
   ... Let ``+RECORD+`` ``+`{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``recordValue``.
+  ... Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``, for all ``id~t_field~`` in ``id~t_field~^{asterisk}^``.
   ... For each ``id~t_field~`` in ``id~t_field~^{asterisk}^``:
 +
 --
@@ -4094,6 +4108,7 @@ Let ``value~field_cast~^{asterisk}^`` be the resulting list.
   ... Let ``+RECORD+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``+';'+`` ``)^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` be ``recordTypeIR``.
   ... Check that ``recordValue`` matches pattern ``+RECORD+`` ``+`{+`` ``%`` ``+','+`` ``+'...'+`` ``+`}+``.
   ... Let ``+RECORD+`` ``+`{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+';'+`` ``)^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` be ``recordValue``.
+  ... Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``, for all ``id~t_field~`` in ``id~t_field~^{asterisk}^``.
   ... For each ``id~t_field~`` in ``id~t_field~^{asterisk}^``:
 +
 --
@@ -4332,6 +4347,7 @@ Let ``nat'''''^{asterisk}^`` be the resulting list.
 xref:sizeof_minSizeInBytes[$sizeof_minSizeInBytes(typeIR)]
 
 . Let ``n~size~`` be xref:sizeof_minSizeInBits'[``$sizeof_minSizeInBits'(typeIR)``].
+. Check that ``8`` is not equal to ``0``.
 . Return ``+D+`` ``n~size~`` ``/`` ``8``.
 
 xref:sizeof_maxSizeInBits[$sizeof_maxSizeInBits(typeIR)]
@@ -4400,6 +4416,7 @@ Let ``nat'''''^{asterisk}^`` be the resulting list.
 xref:sizeof_maxSizeInBytes[$sizeof_maxSizeInBytes(typeIR)]
 
 . Let ``n~size~`` be xref:sizeof_maxSizeInBits'[``$sizeof_maxSizeInBits'(typeIR)``].
+. Check that ``8`` is not equal to ``0``.
 . Return ``+D+`` ``n~size~`` ``/`` ``8``.
 
 xref:prefixedNonTypeName[The prefixed name of  ``prefixedNonTypeName``]
@@ -8401,17 +8418,20 @@ xref:tableEntry_lpm_prefix'[$tableEntry_lpm_prefix'(value, n~prefix~)]
   ... If ``nat`` is greater than ``0``:
    .... Let ``i`` be ``nat`` ``-`` ``1``.
    .... If let ``w`` of type ``nat`` be ``i``:
-    ..... If ``n`` ``\`` ``2`` is not equal to ``0``:
-     ...... Let ``i'`` be ``n`` ``-`` ``1`` ``/`` ``2``.
-     ...... If let ``n'`` of type ``nat`` be ``i'``:
-      ....... Let ``value'`` be ``w`` ``+W+`` ``n'``.
-      ....... Return xref:tableEntry_lpm_prefix'[``$tableEntry_lpm_prefix'(value',`` ``n~prefix~`` ``{plus}`` ``1)``].
+    ..... If ``2`` is not equal to ``0``:
+     ...... If ``n`` ``\`` ``2`` is not equal to ``0``:
+      ....... If ``2`` is not equal to ``+0``:
+       ........ Let ``i'`` be ``n`` ``-`` ``1`` ``/`` ``2``.
+       ........ If let ``n'`` of type ``nat`` be ``i'``:
+        ......... Let ``value'`` be ``w`` ``+W+`` ``n'``.
+        ......... Return xref:tableEntry_lpm_prefix'[``$tableEntry_lpm_prefix'(value',`` ``n~prefix~`` ``{plus}`` ``1)``].
  .. Then, try:
   ... Check that ``n~prefix~`` is equal to ``0``.
   ... Check that ``nat`` is greater than ``0``.
   ... Let ``i`` be ``nat`` ``-`` ``1``.
   ... Check that ``i`` has type ``nat``.
   ... Let ``w`` be ``i``.
+  ... Check that ``2`` is not equal to ``0``.
   ... Check that ``n`` ``\`` ``2`` is equal to ``0``.
   ... Let ``value'`` be ``w`` ``+W+`` ``n`` ``/`` ``2``.
   ... Return xref:tableEntry_lpm_prefix'[``$tableEntry_lpm_prefix'(value',`` ``0)``].
@@ -9512,7 +9532,6 @@ xref:Expr_eval_lctk[Local compile-time evaluation of ``typedExpressionIR~base~``
  .. Check that ``nat^?^`` is defined.
  .. Let ``n~index~`` be ``nat^?^``.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
- .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value`` be ``value~e~^{asterisk}^[n~index~]``.
  .. The result is ``value``.
 . Else if let ``+ARRAY+`` ``+`[+`` ``value~e~^{asterisk}^`` ``+`]+`` of type ``arrayValue`` be ``value~base~``:
@@ -9520,14 +9539,12 @@ xref:Expr_eval_lctk[Local compile-time evaluation of ``typedExpressionIR~base~``
  .. Check that ``nat^?^`` is defined.
  .. Let ``n~index~`` be ``nat^?^``.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
- .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value`` be ``value~e~^{asterisk}^[n~index~]``.
  .. The result is ``value``.
 . Else if let ``+HEADER_STACK+`` ``+`[+`` ``value~e~^{asterisk}^`` ``+`(+`` ``++_++`` ``+`)+`` ``+`]+`` of type ``headerStackValue`` be ``value~base~``:
  .. Let ``nat^?^`` be xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
  .. Check that ``nat^?^`` is defined.
  .. Let ``n~index~`` be ``nat^?^``.
- .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value`` be ``value~e~^{asterisk}^[n~index~]``.
  .. The result is ``value``.
@@ -10287,38 +10304,39 @@ Let ``typeIR''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_a_aligned~^{asterisk}^`` be the resulting list.
-    ..... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+    ..... If the length of ``id~field_b~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+     ...... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
 +
 --
-     ****** Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+      ******* Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
-    ..... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
-     ...... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+     ...... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+      ....... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
 +
 --
-      ******* Let ``typeIR~field_b_aligned~`` be ``typeIR'''^?^``.
+       ******** Let ``typeIR~field_b_aligned~`` be ``typeIR'''^?^``.
 --
 +
 Let ``typeIR~field_b_aligned~^{asterisk}^`` be the resulting list.
-     ...... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
+      ....... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
 +
 --
-      ******* Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``].
+       ******** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``].
 --
 +
 Let ``castResult^{asterisk}^`` be the resulting list.
-     ...... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
-      ....... For each ``castResult`` in ``castResult^{asterisk}^``:
+      ....... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
+       ........ For each ``castResult`` in ``castResult^{asterisk}^``:
 +
 --
-       ******** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+        ********* Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
 --
 +
 Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
-      ....... Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR[``$chain_casts_recordTypeIR(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)``].
-      ....... The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+       ........ Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR[``$chain_casts_recordTypeIR(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)``].
+       ........ The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 . Else if let ``headerTypeIR`` of type ``headerTypeIR`` be ``typeIR'``:
  .. Let ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` be ``fieldTypeIR~a~^{asterisk}^``.
  .. Let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerTypeIR``.
@@ -10339,38 +10357,39 @@ Let ``typeIR''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_a_aligned~^{asterisk}^`` be the resulting list.
-    ..... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+    ..... If the length of ``id~field_b~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+     ...... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
 +
 --
-     ****** Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+      ******* Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
-    ..... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
-     ...... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+     ...... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+      ....... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
 +
 --
-      ******* Let ``typeIR~field_b_aligned~`` be ``typeIR'''^?^``.
+       ******** Let ``typeIR~field_b_aligned~`` be ``typeIR'''^?^``.
 --
 +
 Let ``typeIR~field_b_aligned~^{asterisk}^`` be the resulting list.
-     ...... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
+      ....... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
 +
 --
-      ******* Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``].
+       ******** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``].
 --
 +
 Let ``castResult^{asterisk}^`` be the resulting list.
-     ...... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
-      ....... For each ``castResult`` in ``castResult^{asterisk}^``:
+      ....... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
+       ........ For each ``castResult`` in ``castResult^{asterisk}^``:
 +
 --
-       ******** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+        ********* Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
 --
 +
 Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
-      ....... Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR[``$chain_casts_recordTypeIR(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)``].
-      ....... The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+       ........ Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR[``$chain_casts_recordTypeIR(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)``].
+       ........ The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 
 xref:Cast_expl_neq[Checking if ``+RECORD+`` ``+`{+`` ``fieldTypeIR~a~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
 
@@ -10394,55 +10413,57 @@ Let ``typeIR''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_a_aligned~^{asterisk}^`` be the resulting list.
-    ..... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+    ..... If the length of ``id~field_b~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+     ...... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
 +
 --
-     ****** Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+      ******* Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
-    ..... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
-     ...... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+     ...... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+      ....... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
 +
 --
-      ******* Let ``typeIR~field_b_non_default_aligned~`` be ``typeIR'''^?^``.
+       ******** Let ``typeIR~field_b_non_default_aligned~`` be ``typeIR'''^?^``.
 --
 +
 Let ``typeIR~field_b_non_default_aligned~^{asterisk}^`` be the resulting list.
-     ...... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
+      ....... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
 +
 --
-      ******* Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``].
+       ******** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``].
 --
 +
 Let ``castResult^{asterisk}^`` be the resulting list.
-     ...... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
-      ....... For each ``castResult`` in ``castResult^{asterisk}^``:
+      ....... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
+       ........ For each ``castResult`` in ``castResult^{asterisk}^``:
 +
 --
-       ******** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+        ********* Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
 --
 +
 Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
-      ....... Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
-      ....... For each ``id~default~`` in ``id~default~^{asterisk}^``:
+       ........ Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
+       ........ If the length of ``id~field_b~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``, for all ``id~default~`` in ``id~default~^{asterisk}^``:
+        ......... For each ``id~default~`` in ``id~default~^{asterisk}^``:
 +
 --
-       ******** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+         ********** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR''''^?^^{asterisk}^`` be the resulting list.
-      ....... If ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
-       ........ For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
+        ......... If ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
+         .......... For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
 +
 --
-        ********* Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
+          *********** Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
 --
 +
 Let ``typeIR~field_b_default~^{asterisk}^`` be the resulting list.
-       ........ If xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``:
-        ......... Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR_default[``$chain_casts_recordTypeIR_default(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)``].
-        ......... The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+         .......... If xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``:
+          ........... Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR_default[``$chain_casts_recordTypeIR_default(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)``].
+          ........... The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 . Else if let ``headerTypeIR`` of type ``headerTypeIR`` be ``typeIR'``:
  .. Let ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` be ``fieldTypeIR~a~^{asterisk}^``.
  .. Let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerTypeIR``.
@@ -10463,55 +10484,57 @@ Let ``typeIR''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_a_aligned~^{asterisk}^`` be the resulting list.
-    ..... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+    ..... If the length of ``id~field_b~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+     ...... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
 +
 --
-     ****** Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+      ******* Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
-    ..... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
-     ...... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+     ...... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+      ....... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
 +
 --
-      ******* Let ``typeIR~field_b_non_default_aligned~`` be ``typeIR'''^?^``.
+       ******** Let ``typeIR~field_b_non_default_aligned~`` be ``typeIR'''^?^``.
 --
 +
 Let ``typeIR~field_b_non_default_aligned~^{asterisk}^`` be the resulting list.
-     ...... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
+      ....... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
 +
 --
-      ******* Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``].
+       ******** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``].
 --
 +
 Let ``castResult^{asterisk}^`` be the resulting list.
-     ...... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
-      ....... For each ``castResult`` in ``castResult^{asterisk}^``:
+      ....... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
+       ........ For each ``castResult`` in ``castResult^{asterisk}^``:
 +
 --
-       ******** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+        ********* Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
 --
 +
 Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
-      ....... Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
-      ....... For each ``id~default~`` in ``id~default~^{asterisk}^``:
+       ........ Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
+       ........ If the length of ``id~field_b~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``, for all ``id~default~`` in ``id~default~^{asterisk}^``:
+        ......... For each ``id~default~`` in ``id~default~^{asterisk}^``:
 +
 --
-       ******** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+         ********** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR''''^?^^{asterisk}^`` be the resulting list.
-      ....... If ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
-       ........ For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
+        ......... If ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
+         .......... For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
 +
 --
-        ********* Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
+          *********** Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
 --
 +
 Let ``typeIR~field_b_default~^{asterisk}^`` be the resulting list.
-       ........ If xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``:
-        ......... Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR_default[``$chain_casts_recordTypeIR_default(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)``].
-        ......... The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+         .......... If xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``:
+          ........... Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR_default[``$chain_casts_recordTypeIR_default(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)``].
+          ........... The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 
 . +++<span id="rel:Cast_expl_neq-else"></span>+++Otherwise:
  .. xref:Cast_expl_neq[Checking if ``typeIR`` can be explicitly cast to ``typeIR'`` (when unequal)]: the result is casts ``+FAIL+``.
@@ -10867,38 +10890,39 @@ Let ``typeIR''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_a_aligned~^{asterisk}^`` be the resulting list.
-    ..... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+    ..... If the length of ``id~field_b~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+     ...... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
 +
 --
-     ****** Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+      ******* Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
-    ..... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
-     ...... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+     ...... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+      ....... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
 +
 --
-      ******* Let ``typeIR~field_b_aligned~`` be ``typeIR'''^?^``.
+       ******** Let ``typeIR~field_b_aligned~`` be ``typeIR'''^?^``.
 --
 +
 Let ``typeIR~field_b_aligned~^{asterisk}^`` be the resulting list.
-     ...... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
+      ....... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
 +
 --
-      ******* Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``].
+       ******** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``].
 --
 +
 Let ``castResult^{asterisk}^`` be the resulting list.
-     ...... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
-      ....... For each ``castResult`` in ``castResult^{asterisk}^``:
+      ....... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
+       ........ For each ``castResult`` in ``castResult^{asterisk}^``:
 +
 --
-       ******** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+        ********* Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
 --
 +
 Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
-      ....... Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR[``$chain_casts_recordTypeIR(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)``].
-      ....... The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+       ........ Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR[``$chain_casts_recordTypeIR(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)``].
+       ........ The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 . Else if let ``headerTypeIR`` of type ``headerTypeIR`` be ``typeIR'``:
  .. Let ``(`` ``annotationList~a~`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` be ``fieldTypeIR~a~^{asterisk}^``.
  .. Let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerTypeIR``.
@@ -10919,38 +10943,39 @@ Let ``typeIR''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_a_aligned~^{asterisk}^`` be the resulting list.
-    ..... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+    ..... If the length of ``id~field_b~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+     ...... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
 +
 --
-     ****** Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+      ******* Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
-    ..... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
-     ...... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+     ...... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+      ....... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
 +
 --
-      ******* Let ``typeIR~field_b_aligned~`` be ``typeIR'''^?^``.
+       ******** Let ``typeIR~field_b_aligned~`` be ``typeIR'''^?^``.
 --
 +
 Let ``typeIR~field_b_aligned~^{asterisk}^`` be the resulting list.
-     ...... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
+      ....... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
 +
 --
-      ******* Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``].
+       ******** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``].
 --
 +
 Let ``castResult^{asterisk}^`` be the resulting list.
-     ...... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
-      ....... For each ``castResult`` in ``castResult^{asterisk}^``:
+      ....... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
+       ........ For each ``castResult`` in ``castResult^{asterisk}^``:
 +
 --
-       ******** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+        ********* Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
 --
 +
 Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
-      ....... Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR[``$chain_casts_recordTypeIR(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)``].
-      ....... The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+       ........ Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR[``$chain_casts_recordTypeIR(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)``].
+       ........ The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 
 xref:Cast_impl_neq[Checking if ``+RECORD+`` ``+`{+`` ``fieldTypeIR~a~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
 
@@ -10974,55 +10999,57 @@ Let ``typeIR''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_a_aligned~^{asterisk}^`` be the resulting list.
-    ..... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+    ..... If the length of ``id~field_b~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+     ...... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
 +
 --
-     ****** Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+      ******* Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
-    ..... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
-     ...... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+     ...... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+      ....... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
 +
 --
-      ******* Let ``typeIR~field_b_non_default_aligned~`` be ``typeIR'''^?^``.
+       ******** Let ``typeIR~field_b_non_default_aligned~`` be ``typeIR'''^?^``.
 --
 +
 Let ``typeIR~field_b_non_default_aligned~^{asterisk}^`` be the resulting list.
-     ...... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
+      ....... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
 +
 --
-      ******* Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``].
+       ******** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``].
 --
 +
 Let ``castResult^{asterisk}^`` be the resulting list.
-     ...... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
-      ....... For each ``castResult`` in ``castResult^{asterisk}^``:
+      ....... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
+       ........ For each ``castResult`` in ``castResult^{asterisk}^``:
 +
 --
-       ******** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+        ********* Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
 --
 +
 Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
-      ....... Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
-      ....... For each ``id~default~`` in ``id~default~^{asterisk}^``:
+       ........ Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
+       ........ If the length of ``id~field_b~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``, for all ``id~default~`` in ``id~default~^{asterisk}^``:
+        ......... For each ``id~default~`` in ``id~default~^{asterisk}^``:
 +
 --
-       ******** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+         ********** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR''''^?^^{asterisk}^`` be the resulting list.
-      ....... If ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
-       ........ For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
+        ......... If ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
+         .......... For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
 +
 --
-        ********* Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
+          *********** Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
 --
 +
 Let ``typeIR~field_b_default~^{asterisk}^`` be the resulting list.
-       ........ If xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``:
-        ......... Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR_default[``$chain_casts_recordTypeIR_default(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)``].
-        ......... The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+         .......... If xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``:
+          ........... Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR_default[``$chain_casts_recordTypeIR_default(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)``].
+          ........... The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 . Else if let ``headerTypeIR`` of type ``headerTypeIR`` be ``typeIR'``:
  .. Let ``(`` ``annotationList~a~`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` be ``fieldTypeIR~a~^{asterisk}^``.
  .. Let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerTypeIR``.
@@ -11043,55 +11070,57 @@ Let ``typeIR''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_a_aligned~^{asterisk}^`` be the resulting list.
-    ..... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+    ..... If the length of ``id~field_b~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
+     ...... For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
 +
 --
-     ****** Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+      ******* Let ``typeIR'''^?^`` be xref:find_map[the value of ``id~field_a~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
-    ..... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
-     ...... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+     ...... If ``typeIR'''^?^`` is defined, for all ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
+      ....... For each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``:
 +
 --
-      ******* Let ``typeIR~field_b_non_default_aligned~`` be ``typeIR'''^?^``.
+       ******** Let ``typeIR~field_b_non_default_aligned~`` be ``typeIR'''^?^``.
 --
 +
 Let ``typeIR~field_b_non_default_aligned~^{asterisk}^`` be the resulting list.
-     ...... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
+      ....... For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
 +
 --
-      ******* Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``].
+       ******** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``].
 --
 +
 Let ``castResult^{asterisk}^`` be the resulting list.
-     ...... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
-      ....... For each ``castResult`` in ``castResult^{asterisk}^``:
+      ....... If ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``:
+       ........ For each ``castResult`` in ``castResult^{asterisk}^``:
 +
 --
-       ******** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+        ********* Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
 --
 +
 Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
-      ....... Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
-      ....... For each ``id~default~`` in ``id~default~^{asterisk}^``:
+       ........ Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
+       ........ If the length of ``id~field_b~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``, for all ``id~default~`` in ``id~default~^{asterisk}^``:
+        ......... For each ``id~default~`` in ``id~default~^{asterisk}^``:
 +
 --
-       ******** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+         ********** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR''''^?^^{asterisk}^`` be the resulting list.
-      ....... If ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
-       ........ For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
+        ......... If ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
+         .......... For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
 +
 --
-        ********* Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
+          *********** Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
 --
 +
 Let ``typeIR~field_b_default~^{asterisk}^`` be the resulting list.
-       ........ If xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``:
-        ......... Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR_default[``$chain_casts_recordTypeIR_default(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)``].
-        ......... The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+         .......... If xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``:
+          ........... Let ``typeIR~cast_agg~^{asterisk}^`` be xref:chain_casts_recordTypeIR_default[``$chain_casts_recordTypeIR_default(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)``].
+          ........... The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 
 . +++<span id="rel:Cast_impl_neq-else"></span>+++Otherwise:
  .. xref:Cast_impl_neq[Checking if ``typeIR`` can be implicitly cast to ``typeIR'`` (when unequal)]: the result is casts ``+FAIL+``.
@@ -11694,7 +11723,6 @@ xref:Expr_ok[Typing ``expression~base~`` ``+'.'+`` ``member``, under context ``T
  .. Let ``nat^?^`` be xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
  .. Check that ``nat^?^`` is defined.
  .. Let ``n~index~`` be ``nat^?^``.
- .. Check that ``n~index~`` is less than the length of ``typeIR~e~^{asterisk}^``.
  .. Check that ``n~index~`` is less than the length of ``typeIR~e~^{asterisk}^``.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR,a pair of type ``typeIR~e~^{asterisk}^[n~index~]`` and compile-time known-ness ``ctk~base~``>>.
  .. The result is <<typedExpressionIR,``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~index_reduced~`` ``+`]+`` annotated with ``expressionNoteIR``>>.
@@ -13085,7 +13113,9 @@ xref:TableDefaultAction_ok[Typing ``+'='+`` ``expression``, under context ``TC``
  .. Let ``(`` ``parameterIR~action~^{asterisk}^,`` ``argumentIR~action~^{asterisk}^`` ``)`` be ``(parameterIR*,`` ``argumentListIR)^?^``.
  .. Let ``argumentIR^{asterisk}^`` be the result of xref:ArgumentList_ok[typing ``argumentList``, under context ``TC`` at ``+LOCAL+``].
  .. Let parameters ``parameterIR~action_data~^{asterisk}^`` for data-plane, ``parameterIR~action_control~^{asterisk}^`` for control-plane,and casted ``argumentIR~cast~^{asterisk}^`` be the result of xref:Call_action_default_ok[typing action call on ``parameterIR~action~^{asterisk}^`` with ``argumentIR^{asterisk}^``, under context ``TC``].
+ .. Check that ``0`` ``{plus}`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^`` is less than or equal to the length of ``argumentIR~action~^{asterisk}^``.
  .. Let ``argumentIR~action_data~^{asterisk}^`` be ``argumentIR~action~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
+ .. Check that ``0`` ``{plus}`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^`` is less than or equal to the length of ``argumentIR~cast~^{asterisk}^``.
  .. Let ``argumentIR~cast_data~^{asterisk}^`` be ``argumentIR~cast~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
  .. Check that the length of ``argumentIR~action_data~^{asterisk}^`` is equal to the length of ``argumentIR~cast_data~^{asterisk}^``.
  .. Check that ``argumentIR~action_data~`` is equal to ``argumentIR~cast_data~``, for all ``argumentIR~action_data~`` in ``argumentIR~action_data~^{asterisk}^`` and ``argumentIR~cast_data~`` in ``argumentIR~cast_data~^{asterisk}^``.
@@ -13235,7 +13265,9 @@ xref:TableEntry_action_ok[Typing ``tableActionReference``, under context ``TC`` 
  .. Let ``(`` ``parameterIR~action~^{asterisk}^,`` ``argumentIR~action~^{asterisk}^`` ``)`` be ``(parameterIR*,`` ``argumentListIR)^?^``.
  .. Let ``argumentIR^{asterisk}^`` be the result of xref:ArgumentList_ok[typing ``argumentList``, under context ``TC`` at ``+LOCAL+``].
  .. Let parameters ``parameterIR~action_data~^{asterisk}^`` for data-plane, ``parameterIR~action_control~^{asterisk}^`` for control-plane,and casted ``argumentIR~cast~^{asterisk}^`` be the result of xref:Call_action_default_ok[typing action call on ``parameterIR~action~^{asterisk}^`` with ``argumentIR^{asterisk}^``, under context ``TC``].
+ .. Check that ``0`` ``{plus}`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^`` is less than or equal to the length of ``argumentIR~action~^{asterisk}^``.
  .. Let ``argumentIR~action_data~^{asterisk}^`` be ``argumentIR~action~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
+ .. Check that ``0`` ``{plus}`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^`` is less than or equal to the length of ``argumentIR~cast~^{asterisk}^``.
  .. Let ``argumentIR~cast_data~^{asterisk}^`` be ``argumentIR~cast~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
  .. Check that the length of ``argumentIR~action_data~^{asterisk}^`` is equal to the length of ``argumentIR~cast_data~^{asterisk}^``.
  .. Check that ``argumentIR~action_data~`` is equal to ``argumentIR~cast_data~``, for all ``argumentIR~action_data~`` in ``argumentIR~action_data~^{asterisk}^`` and ``argumentIR~cast_data~`` in ``argumentIR~cast_data~^{asterisk}^``.
@@ -16176,7 +16208,7 @@ xref:SelectCase_keyset_ok[Typing ``tupleKeysetExpression`` under context ``TC`` 
  .. Else if let ``+`(+`` ``simpleKeysetExpression~h~`` ``+','+`` ``simpleKeysetExpressionList~t~`` ``+`)+`` be ``tupleKeysetExpression``:
   ... Let ``simpleKeysetExpression~t~^{asterisk}^`` be xref:flatten_simpleKeysetExpressionList[``simpleKeysetExpressionList~t~`` flattened].
   ... Let ``simpleKeysetExpression^{asterisk}^`` be ``simpleKeysetExpression~h~`` ``{two-colons}`` ``simpleKeysetExpression~t~^{asterisk}^``.
-  ... Check that the length of ``typeIR^{asterisk}^`` is equal to the length of ``simpleKeysetExpression^{asterisk}^``.
+  ... Check that the length of ``simpleKeysetExpression^{asterisk}^`` is equal to the length of ``typeIR^{asterisk}^``.
   ... For each ``simpleKeysetExpression`` in ``simpleKeysetExpression^{asterisk}^`` and ``typeIR`` in ``typeIR^{asterisk}^``:
 +
 --
@@ -17428,7 +17460,6 @@ xref:Expr_inst[Compile-time evaluation of ``typedExpressionIR~base~`` ``+'.'+`` 
  .. Check that ``nat^?^`` is defined.
  .. Let ``n~index~`` be ``nat^?^``.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
- .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value`` be ``value~e~^{asterisk}^[n~index~]``.
  .. The result is store ``STO~2~`` and ``value``.
 . Else if let ``+ARRAY+`` ``+`[+`` ``value~e~^{asterisk}^`` ``+`]+`` of type ``arrayValue`` be ``value~base~``:
@@ -17436,14 +17467,12 @@ xref:Expr_inst[Compile-time evaluation of ``typedExpressionIR~base~`` ``+'.'+`` 
  .. Check that ``nat^?^`` is defined.
  .. Let ``n~index~`` be ``nat^?^``.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
- .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value`` be ``value~e~^{asterisk}^[n~index~]``.
  .. The result is store ``STO~2~`` and ``value``.
 . Else if let ``+HEADER_STACK+`` ``+`[+`` ``value~e~^{asterisk}^`` ``+`(+`` ``++_++`` ``+`)+`` ``+`]+`` of type ``headerStackValue`` be ``value~base~``:
  .. Let ``nat^?^`` be xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
  .. Check that ``nat^?^`` is defined.
  .. Let ``n~index~`` be ``nat^?^``.
- .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value`` be ``value~e~^{asterisk}^[n~index~]``.
  .. The result is store ``STO~2~`` and ``value``.
@@ -19970,8 +19999,6 @@ xref:Lvalue_read[Reading from ``storageReference`` ``+'.'+`` ``nameIR``, under c
 . Else if let ``headerStackValue~base~`` of type ``headerStackValue`` be ``value~base~``:
  .. Let ``+HEADER_STACK+`` ``+`[+`` ``value~element~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+`)+`` ``+`]+`` be ``headerStackValue~base~``.
  .. If ``nameIR`` is equal to ``"next"``:
-  ... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
-  ... Check that ``n~idx~`` is less than ``n~size~``.
   ... Check that ``n~idx~`` is less than the length of ``value~element~^{asterisk}^``.
   ... Let ``value`` be ``value~element~^{asterisk}^[n~idx~]``.
   ... The result is value ``value``.
@@ -20082,6 +20109,7 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference`` ``+'.'+`` ``nameIR``
 . If let ``headerStackValue~base~`` of type ``headerStackValue`` be ``value'``:
  .. Let ``+HEADER_STACK+`` ``+`[+`` ``value~element~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+`)+`` ``+`]+`` be ``headerStackValue~base~``.
  .. If ``nameIR`` is equal to ``"next"``:
+  ... Check that ``n~idx~`` is less than the length of ``value~element~^{asterisk}^``.
   ... Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
   ... Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_update~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``{plus}`` ``1`` ``+`)+`` ``+`]+``.
   ... Let context ``EC~1~`` be the result of xref:Lvalue_write[writing ``headerStackValue~base_update~`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
@@ -20090,6 +20118,7 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference`` ``+'.'+`` ``nameIR``
   ... Let ``i`` be ``n~idx~`` ``-`` ``1``.
   ... Check that ``i`` has type ``nat``.
   ... Let ``n~idx_last~`` be ``i``.
+  ... Check that ``n~idx_last~`` is less than the length of ``value~element~^{asterisk}^``.
   ... Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx_last~]`` set to ``value``.
   ... Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_update~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+`)+`` ``+`]+``.
   ... Let context ``EC~1~`` be the result of xref:Lvalue_write[writing ``headerStackValue~base_update~`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
@@ -20139,6 +20168,7 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference`` ``+'.'+`` ``nameIR``
  .. If ``b~in_bounds~``:
   ... Check that ``i~idx~`` has type ``nat``.
   ... Let ``n~idx~`` be ``i~idx~``.
+  ... Check that ``n~idx~`` is less than the length of ``value~element~^{asterisk}^``.
   ... Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
   ... Let ``arrayValue~base_update~`` be ``+ARRAY+`` ``+`[+`` ``value~element_update~^{asterisk}^`` ``+`]+``.
   ... Let context ``EC~1~`` be the result of xref:Lvalue_write[writing ``arrayValue~base_update~`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
@@ -20152,6 +20182,7 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference`` ``+'.'+`` ``nameIR``
  .. If ``b~in_bounds~``:
   ... Check that ``i~idx~`` has type ``nat``.
   ... Let ``n~idx~`` be ``i~idx~``.
+  ... Check that ``n~idx~`` is less than the length of ``value~element~^{asterisk}^``.
   ... Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
   ... Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_update~^{asterisk}^`` ``+`(+`` ``n~base_idx~`` ``+`)+`` ``+`]+``.
   ... Let context ``EC~1~`` be the result of xref:Lvalue_write[writing ``headerStackValue~base_update~`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
@@ -21421,22 +21452,24 @@ xref:Call_eval[Calling ``builtinPushFrontMethodCallee`` ``+`<+`` ``·`` ``+`>+``
      ...... Let ``n~count~`` be ``nat^?^``.
      ...... Try:
       ....... If ``n~count~`` is less than ``n~size~``:
-       ........ Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
-       ........ For each ``value~front~`` in ``value~front~^{asterisk}^``:
+       ........ If ``0`` ``{plus}`` ``n~count~`` is less than or equal to the length of ``value~element~^{asterisk}^``:
+        ......... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
+        ......... For each ``value~front~`` in ``value~front~^{asterisk}^``:
 +
 --
-        ********* Let ``value~front_invalidated~`` be xref:invalidate_value[``$invalidate_value(value~front~)``].
+         ********** Let ``value~front_invalidated~`` be xref:invalidate_value[``$invalidate_value(value~front~)``].
 --
 +
 Let ``value~front_invalidated~^{asterisk}^`` be the resulting list.
-       ........ Let ``i`` be <<max_int,max``+`(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+`)+``>>.
-       ........ If let ``n~back~`` of type ``nat`` be ``i``:
-        ......... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.
-        ......... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.
-        ......... Let ``n~idx_updated~`` be <<min_nat,min``+`(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``{plus}`` ``n~count~`` ``+]+`` ``+`)+``>>.
-        ......... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_updated~^{asterisk}^`` ``+`(+`` ``n~idx_updated~`` ``+`)+`` ``+`]+``.
-        ......... Let context ``EC~2~`` be the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-        ......... The result is context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+        ......... Let ``i`` be <<max_int,max``+`(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+`)+``>>.
+        ......... If let ``n~back~`` of type ``nat`` be ``i``:
+         .......... If ``0`` ``{plus}`` ``n~back~`` is less than or equal to the length of ``value~element~^{asterisk}^``:
+          ........... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.
+          ........... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.
+          ........... Let ``n~idx_updated~`` be <<min_nat,min``+`(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``{plus}`` ``n~count~`` ``+]+`` ``+`)+``>>.
+          ........... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_updated~^{asterisk}^`` ``+`(+`` ``n~idx_updated~`` ``+`)+`` ``+`]+``.
+          ........... Let context ``EC~2~`` be the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
+          ........... The result is context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
      ...... Then, try:
       ....... If ``n~count~`` is greater than or equal to ``n~size~``:
        ........ For each ``value~element~`` in ``value~element~^{asterisk}^``:
@@ -21473,19 +21506,21 @@ xref:Call_eval[Calling ``builtinPopFrontMethodCallee`` ``+`<+`` ``·`` ``+`>+`` 
       ....... If ``n~count~`` is less than ``n~size~``:
        ........ Let ``i`` be <<max_int,max``+`(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+`)+``>>.
        ........ If let ``n~front~`` of type ``nat`` be ``i``:
-        ......... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[n~count~`` ``:`` ``n~front~]``.
-        ......... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
-        ......... For each ``value~back~`` in ``value~back~^{asterisk}^``:
+        ......... If ``n~count~`` ``{plus}`` ``n~front~`` is less than or equal to the length of ``value~element~^{asterisk}^``:
+         .......... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[n~count~`` ``:`` ``n~front~]``.
+         .......... If ``0`` ``{plus}`` ``n~count~`` is less than or equal to the length of ``value~element~^{asterisk}^``:
+          ........... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
+          ........... For each ``value~back~`` in ``value~back~^{asterisk}^``:
 +
 --
-         ********** Let ``value~back_invalidated~`` be xref:invalidate_value[``$invalidate_value(value~back~)``].
+           ************ Let ``value~back_invalidated~`` be xref:invalidate_value[``$invalidate_value(value~back~)``].
 --
 +
 Let ``value~back_invalidated~^{asterisk}^`` be the resulting list.
-        ......... Let ``value~element_updated~^{asterisk}^`` be ``value~front~^{asterisk}^`` concatenated with ``value~back_invalidated~^{asterisk}^``.
-        ......... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_updated~^{asterisk}^`` ``+`(+`` ``n~front~`` ``+`)+`` ``+`]+``.
-        ......... Let context ``EC~2~`` be the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-        ......... The result is context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+          ........... Let ``value~element_updated~^{asterisk}^`` be ``value~front~^{asterisk}^`` concatenated with ``value~back_invalidated~^{asterisk}^``.
+          ........... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_updated~^{asterisk}^`` ``+`(+`` ``n~front~`` ``+`)+`` ``+`]+``.
+          ........... Let context ``EC~2~`` be the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
+          ........... The result is context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
      ...... Then, try:
       ....... If ``n~count~`` is greater than or equal to ``n~size~``:
        ........ For each ``value~element~`` in ``value~element~^{asterisk}^``:
@@ -22699,11 +22734,13 @@ xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeI
 
 xref:reverse_bytes_of_hex[$reverse_bytes_of_hex(t)]
 
+. Check that ``0`` ``{plus}`` ``2`` is less than or equal to the length of ``t``.
 . Check that ``t[0`` ``:`` ``2]`` is equal to ``"0x"``.
 . Let ``n~len~`` be the length of ``t``.
 . Let ``i`` be ``n~len~`` ``-`` ``2``.
 . Check that ``i`` has type ``nat``.
 . Let ``n~len_bytes~`` be ``i``.
+. Check that ``2`` ``{plus}`` ``n~len_bytes~`` is less than or equal to the length of ``t``.
 . Let ``text`` be <<reverse_bytes_of_hex',``$reverse_bytes_of_hex'(t[2`` ``:`` ``n~len_bytes~])``>>.
 . Return ``"0x"`` concatenated with ``text``.
 
@@ -22714,10 +22751,12 @@ xref:reverse_bytes_of_hex'[$reverse_bytes_of_hex'(t)]
 . Then, try:
  .. Let ``n~len~`` be the length of ``t``.
  .. Check that ``n~len~`` is greater than ``2``.
+ .. Check that ``0`` ``{plus}`` ``2`` is less than or equal to the length of ``t``.
  .. Let ``t~byte~`` be ``t[0`` ``:`` ``2]``.
  .. Let ``i`` be ``n~len~`` ``-`` ``2``.
  .. Check that ``i`` has type ``nat``.
  .. Let ``n~len_bytes~`` be ``i``.
+ .. Check that ``2`` ``{plus}`` ``n~len_bytes~`` is less than or equal to the length of ``t``.
  .. Let ``t~bytes~`` be ``t[2`` ``:`` ``n~len_bytes~]``.
  .. Let ``t~bytes_rev~`` be xref:reverse_bytes_of_hex'[``$reverse_bytes_of_hex'(t~bytes~)``].
  .. Return ``t~bytes_rev~`` concatenated with ``t~byte~``.
@@ -22999,6 +23038,7 @@ Let ``nameIR~names~^{asterisk}^^{asterisk}^`` be the resulting list.
 xref:align_tableActionArgumentInterfaces[$align_tableActionArgumentInterfaces(parameterIR^{asterisk}^, ( nameIR~arg~, i~arg~ )^{asterisk}^)]
 
 . Let ``+`{+`` ``(`` ``nameIR~alias~`` ``+':'+`` ``nameIR~original~`` ``)^{asterisk}^`` ``+`}+`` be xref:alias_to_original_lookup_map[``$alias_to_original_lookup_map(parameterIR^{asterisk}^)``].
+. Check that the length of ``nameIR~alias~^{asterisk}^`` is equal to the length of ``nameIR~original~^{asterisk}^``, for all ``nameIR~arg~`` in ``nameIR~arg~^{asterisk}^``.
 . For each ``nameIR~arg~`` in ``nameIR~arg~^{asterisk}^``:
 +
 --
@@ -23022,6 +23062,7 @@ Let ``nameIR~arg_resolved~^{asterisk}^`` be the resulting list.
 +
 Let ``nameIR~param~^{asterisk}^`` be the resulting list.
 . Check that xref:sub_set[``+`{+`` ``nameIR~arg_resolved~^{asterisk}^`` ``+`}+`` is a subset of ``+`{+`` ``nameIR~param~^{asterisk}^`` ``+`}+``].
+. Check that the length of ``i~arg~^{asterisk}^`` is equal to the length of ``nameIR~arg_resolved~^{asterisk}^``, for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
 . For each ``parameterIR`` in ``parameterIR^{asterisk}^``:
 +
 --
