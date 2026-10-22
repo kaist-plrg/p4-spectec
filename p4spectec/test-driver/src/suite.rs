@@ -84,6 +84,16 @@ pub struct RunSuite {
     pub languages: Vec<Language>,
 }
 
+/// Registers AL scripts executed through their own interpreter tower.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ScriptSuite {
+    pub name: String,
+    pub tower: PathBuf,
+    pub root: PathBuf,
+    pub expected: PathBuf,
+}
+
 /// Registers paired P4/STF corpus discovery and optional patches.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -322,17 +332,22 @@ pub fn load_execution(path: &Path) -> Result<RunConfig> {
     Ok(config)
 }
 
-/// Loads metacircular corpus registrations and their referenced tower file.
-pub fn load_metacirc(path: &Path) -> Result<(CorpusConfig, TowerConfig)> {
+/// Loads metacircular corpus registrations, their tower, and AL script suites.
+///
+/// Script towers are resolved relative to the registration file
+/// and prepared per script, since an AL target needs its input definitions.
+pub fn load_metacirc(path: &Path) -> Result<(CorpusConfig, TowerConfig, Vec<ScriptSuite>)> {
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct MetacircConfig {
         tower: PathBuf,
+        #[serde(default)]
+        scripts: Vec<ScriptSuite>,
         #[serde(flatten)]
         corpus: CorpusConfig,
     }
 
-    let config: MetacircConfig = load(path)?;
+    let mut config: MetacircConfig = load(path)?;
     let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
     // Resolve the tower file relative to this registration file
     let path_tower = path_parent.join(&config.tower);
@@ -340,7 +355,16 @@ pub fn load_metacirc(path: &Path) -> Result<(CorpusConfig, TowerConfig)> {
         .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
     // Validate only the corpus declared by the metacircular suite
     validate_execution(&config.corpus)?;
-    Ok((config.corpus, config_tower))
+    // Script names share one namespace with the corpus suites
+    let names_corpus = config.corpus.suites.iter().map(|suite| suite.name.as_str());
+    names_valid(names_corpus.chain(config.scripts.iter().map(|suite| suite.name.as_str())))?;
+    for suite in &mut config.scripts {
+        suite.tower = path_parent.join(&suite.tower);
+        paths_exist(std::slice::from_ref(&suite.tower), &suite.name)?;
+        directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
+        expectation_exists(&suite.expected)?;
+    }
+    Ok((config.corpus, config_tower, config.scripts))
 }
 
 /// Validates execution inputs and expectations before corpus discovery.

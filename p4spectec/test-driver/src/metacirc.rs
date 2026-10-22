@@ -1,7 +1,9 @@
-//! P4 execution corpus through a prepared AL metacircular tower
+//! P4 execution corpus and AL scripts through AL metacircular towers
 //!
 //! This driver owns corpus traversal, preprocessing, execution, and comparison.
 //! The tower retains its prepared runners while each program's state is reset.
+//! `run_scripts` prepares a fresh tower per AL script,
+//! because an AL target supplies the builtin definitions of its own level.
 
 use std::{collections::BTreeSet, fs, path::PathBuf, sync::mpsc, thread, time::Instant};
 
@@ -11,14 +13,14 @@ use indicatif::{ProgressBar, ProgressStyle};
 use p4spectec::{
     interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess},
     lang::data::arena::Arena,
-    metacirc::{Tower, TowerConfig},
+    metacirc::{self, Tower, TowerConfig},
     runner::Config,
 };
 
 use crate::{
     Error, ExecutionOptions, Result,
     corpus::{self, Outcome, Results},
-    suite::{self, CorpusConfig, Language},
+    suite::{self, CorpusConfig, Language, ScriptSuite},
 };
 
 struct CollectedSuite {
@@ -181,5 +183,37 @@ pub fn run(
         suite.results.check();
     }
     eprintln!("{text_mode}: all {collected} file results matched expected");
+    Ok(())
+}
+
+/// Runs registered AL scripts through their towers and compares pass or fail.
+pub fn run_scripts(suites: &[ScriptSuite], options: ExecutionOptions) -> Result<()> {
+    let ExecutionOptions { cache_on, no_det } = options;
+    let det = !no_det;
+    let text_cache = if cache_on { "on" } else { "off" };
+    let text_mode = format!("metacirc script cache={text_cache} det={det}");
+    // Specification debug premises print to stdout
+    let guard_stdout = crate::output::SilenceStdout::new()?;
+    let mut results_by_suite = Vec::with_capacity(suites.len());
+    for suite in suites {
+        let path_expected = suite::expected_path(&suite.expected);
+        let mut results = Results::new(expect_file![path_expected]);
+        for path in corpus::collect(&suite.root, ".watsup")? {
+            // Invalid scripts are test errors, not rejected executions
+            let paths_program = std::slice::from_ref(&path);
+            let config_tower = TowerConfig::from_file(&suite.tower, paths_program)
+                .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
+            let accepted =
+                metacirc::run(&config_tower, &[], paths_program, Config::new(cache_on, det, false))
+                    .is_ok();
+            results.record(&path, if accepted { Outcome::Pass } else { Outcome::Fail })?;
+        }
+        results_by_suite.push(results);
+    }
+    guard_stdout.finish()?;
+    for results in results_by_suite {
+        results.check();
+    }
+    eprintln!("{text_mode}: all script results matched expected");
     Ok(())
 }
