@@ -58,8 +58,8 @@ impl Ebpf {
     /// Defines the architecture's extern syntax types in `arena`.
     pub fn new(arena: &mut Arena) -> Result<Self, ValueError> {
         Ok(Self {
-            typdef_arch: TypDef::new(arena, "archState")?,
-            typdef_object: TypDef::new(arena, "objectState")?,
+            typdef_arch: TypDef::with_codec(arena, "archState")?,
+            typdef_object: TypDef::with_codec(arena, "objectState")?,
         })
     }
 
@@ -73,7 +73,7 @@ impl Ebpf {
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, SerializeState, DeserializeState)]
 #[serde(serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
-#[serde(deserialize_state = "DecodeContext<'de>")]
+#[serde(deserialize_state = "DecodeContext<'arena>", de_parameters = "'arena")]
 /// Core and eBPF-specific extern objects.
 pub enum ExternObject {
     /// The `packet_in` being parsed.

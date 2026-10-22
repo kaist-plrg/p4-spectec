@@ -39,9 +39,15 @@ pub enum ValueError {
     /// An extern type definition used with an arena that did not issue it.
     #[error("extern type definition belongs to another arena")]
     TypDefForeign,
+    /// An extern type name the receiving runner has no definition for.
+    #[error("extern type {name} has no registered definition")]
+    TypDefUnregistered { name: String },
     /// An extern payload copied out of its arena without a codec.
-    #[error("extern value has no codec")]
-    CodecMissing,
+    #[error("extern type {name} has no codec")]
+    CodecMissing { name: String },
+    /// An extern payload codec failed.
+    #[error("extern type {name} payload: {message}")]
+    CodecFailed { name: String, message: String },
 }
 
 // - Index overflow

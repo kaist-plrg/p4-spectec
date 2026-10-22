@@ -32,8 +32,8 @@ impl Dummy {
     /// Defines the architecture's extern syntax types in `arena`.
     pub fn new(arena: &mut Arena) -> Result<Self, ValueError> {
         Ok(Self {
-            typdef_arch: TypDef::new(arena, "archState")?,
-            typdef_object: TypDef::new(arena, "objectState")?,
+            typdef_arch: TypDef::with_codec(arena, "archState")?,
+            typdef_object: TypDef::with_codec(arena, "objectState")?,
         })
     }
 

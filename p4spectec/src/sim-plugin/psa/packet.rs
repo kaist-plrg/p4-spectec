@@ -23,7 +23,7 @@ pub enum Entrypoint {
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, SerializeState, DeserializeState)]
 #[serde(deny_unknown_fields, serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
-#[serde(deserialize_state = "DecodeContext<'de>")]
+#[serde(deserialize_state = "DecodeContext<'arena>", de_parameters = "'arena")]
 /// Processing context per packet.
 pub struct Packet {
     /// Evaluation context.

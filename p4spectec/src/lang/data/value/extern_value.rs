@@ -9,6 +9,10 @@
 //! and each value made gets its own serial.
 //! Exact identity is that serial; canonical identity is the payload's `Ord`.
 //! A runner registers one definition per declaration name in `TypDefs`.
+//! A definition made `with_codec` encodes its payloads in the value encoding,
+//! as `{"typ": name, "payload": ...}`;
+//! decoding finds the receiving runner's definition by name
+//! and wraps the payload with it, never with a new definition.
 
 use std::{
     any::{Any, TypeId},
@@ -19,8 +23,10 @@ use std::{
     marker::PhantomData,
 };
 
-use serde::{Deserializer, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_state::{DeserializeState, SerializeState};
+
+use crate::util::json::json;
 
 use crate::lang::{
     common::source::Span,
@@ -41,11 +47,12 @@ use super::{
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TypDefId(u32);
 
-/// A defined name and the payload type its values carry.
+/// A defined name, the payload type its values carry, and how to encode them.
 #[derive(Debug)]
 struct TypDefEntry {
     name: String,
     type_id: TypeId,
+    codec: Option<Codec>,
 }
 
 /// Extern type definitions issued in one arena.
@@ -59,10 +66,15 @@ pub struct TypDefArena {
 
 impl TypDefArena {
     /// Issues a definition distinct from every earlier one.
-    fn define(&mut self, name: &str, type_id: TypeId) -> Result<TypDefId, ValueError> {
+    fn define(
+        &mut self,
+        name: &str,
+        type_id: TypeId,
+        codec: Option<Codec>,
+    ) -> Result<TypDefId, ValueError> {
         let index = u32::try_from(self.entries.len())?;
         self.entries
-            .push(TypDefEntry { name: name.to_owned(), type_id });
+            .push(TypDefEntry { name: name.to_owned(), type_id, codec });
         Ok(TypDefId(index))
     }
 
@@ -152,8 +164,10 @@ impl<T> fmt::Debug for TypDef<T> {
 
 impl<T: Ord + Hash + fmt::Debug + 'static> TypDef<T> {
     /// Defines a new type named `name` in `arena`, distinct from every other.
+    ///
+    /// Its values cannot be encoded.
     pub fn new(arena: &mut Arena, name: &str) -> Result<Self, ValueError> {
-        let id = arena.typdef.define(name, TypeId::of::<T>())?;
+        let id = arena.typdef.define(name, TypeId::of::<T>(), None)?;
         Ok(Self { id, marker: PhantomData })
     }
 
@@ -199,6 +213,26 @@ impl<T: Ord + Hash + fmt::Debug + 'static> TypDef<T> {
             .as_any()
             .downcast_ref::<T>()
             .expect("a definition carries one payload type"))
+    }
+}
+
+impl<T> TypDef<T>
+where
+    T: Ord
+        + Hash
+        + fmt::Debug
+        + 'static
+        + for<'arena> SerializeState<EncodeContext<'arena>>
+        + for<'de, 'arena> DeserializeState<'de, DecodeContext<'arena>>,
+{
+    /// Defines a new type like `new`, whose payloads encode in the value encoding.
+    ///
+    /// Payload values follow the encoding's mode:
+    /// handle indices when arena-relative, full contents when arena-independent.
+    pub fn with_codec(arena: &mut Arena, name: &str) -> Result<Self, ValueError> {
+        let codec = Codec { encode: encode_payload::<T>, decode: decode_payload::<T> };
+        let id = arena.typdef.define(name, TypeId::of::<T>(), Some(codec))?;
+        Ok(Self { id, marker: PhantomData })
     }
 }
 
@@ -254,25 +288,125 @@ impl ExternValue {
     }
 }
 
-// - Encoding
+// = Encoding
 
-// Payloads have no codec; encoding a value that contains one fails
+/// An extern value's declaration name and encoded payload.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ExternEncoded {
+    /// The declaration name the receiver finds its definition by.
+    pub typ: String,
+    /// The payload as its definition's codec encoded it.
+    pub payload: json,
+}
+
+/// Encodes an erased payload in the context's mode.
+type EncodeFn = fn(&dyn Any, &EncodeContext<'_>) -> Result<json, serde_json::Error>;
+
+/// Decodes a payload, interning its values into the context's arena.
+type DecodeFn = fn(&mut DecodeContext<'_>, &json) -> Result<Box<dyn Payload>, serde_json::Error>;
+
+/// Encoders of one definition's payloads, with the payload type erased.
+#[derive(Clone, Copy, Debug)]
+struct Codec {
+    encode: EncodeFn,
+    decode: DecodeFn,
+}
+
+/// Encodes a payload of type `T` in the context's mode.
+fn encode_payload<T>(payload: &dyn Any, ctx: &EncodeContext<'_>) -> Result<json, serde_json::Error>
+where
+    T: for<'arena> SerializeState<EncodeContext<'arena>> + 'static,
+{
+    let payload = payload
+        .downcast_ref::<T>()
+        .expect("a definition carries one payload type");
+    payload.serialize_state(serde_json::value::Serializer, ctx)
+}
+
+/// Decodes a payload of type `T`, interning its values into the context's arena.
+fn decode_payload<T>(
+    ctx: &mut DecodeContext<'_>,
+    payload: &json,
+) -> Result<Box<dyn Payload>, serde_json::Error>
+where
+    T: Ord
+        + Hash
+        + fmt::Debug
+        + 'static
+        + for<'de, 'arena> DeserializeState<'de, DecodeContext<'arena>>,
+{
+    Ok(Box::new(T::deserialize_state(ctx, payload)?))
+}
+
+impl ExternValue {
+    /// Encodes the payload through the codec of the definition that made it.
+    pub(in crate::lang::data) fn encode(
+        &self,
+        ctx: &EncodeContext<'_>,
+    ) -> Result<ExternEncoded, ValueError> {
+        let entry = ctx
+            .arena()
+            .typdef
+            .entry(self.typdef)
+            .ok_or(ValueError::TypDefForeign)?;
+        let codec = entry
+            .codec
+            .ok_or_else(|| ValueError::CodecMissing { name: entry.name.clone() })?;
+        let payload = (codec.encode)(self.payload.as_any(), ctx).map_err(|error| {
+            ValueError::CodecFailed { name: entry.name.clone(), message: error.to_string() }
+        })?;
+        Ok(ExternEncoded { typ: entry.name.clone(), payload })
+    }
+
+    /// Decodes a payload through the definition the receiving runner registered.
+    pub(in crate::lang::data) fn decode(
+        ctx: &mut DecodeContext<'_>,
+        encoded: &ExternEncoded,
+    ) -> Result<Self, ValueError> {
+        let ExternEncoded { typ: name, payload } = encoded;
+        // The receiver's definition, not one named in the payload, reads it
+        let typdef = ctx
+            .typdefs()
+            .find(name)
+            .ok_or_else(|| ValueError::TypDefUnregistered { name: name.clone() })?;
+        let entry = ctx
+            .arena_mut()
+            .typdef
+            .entry(typdef)
+            .ok_or(ValueError::TypDefForeign)?;
+        let codec = entry
+            .codec
+            .ok_or_else(|| ValueError::CodecMissing { name: name.clone() })?;
+        // Payload values intern into the receiving arena
+        let payload = (codec.decode)(ctx, payload).map_err(|error| ValueError::CodecFailed {
+            name: name.clone(),
+            message: error.to_string(),
+        })?;
+        let serial = ctx.arena_mut().value.issue_extern_serial()?;
+        Ok(Self { typdef, serial, payload })
+    }
+}
+
 impl SerializeState<EncodeContext<'_>> for ExternValue {
     fn serialize_state<S: Serializer>(
         &self,
-        _serializer: S,
-        _ctx: &EncodeContext<'_>,
+        serializer: S,
+        ctx: &EncodeContext<'_>,
     ) -> Result<S::Ok, S::Error> {
-        Err(serde::ser::Error::custom(ValueError::CodecMissing))
+        self.encode(ctx)
+            .map_err(serde::ser::Error::custom)?
+            .serialize(serializer)
     }
 }
 
 impl<'de> DeserializeState<'de, DecodeContext<'_>> for ExternValue {
     fn deserialize_state<D: Deserializer<'de>>(
-        _ctx: &mut DecodeContext<'_>,
-        _deserializer: D,
+        ctx: &mut DecodeContext<'_>,
+        deserializer: D,
     ) -> Result<Self, D::Error> {
-        Err(serde::de::Error::custom(ValueError::CodecMissing))
+        let encoded = ExternEncoded::deserialize(deserializer)?;
+        Self::decode(ctx, &encoded).map_err(serde::de::Error::custom)
     }
 }
 

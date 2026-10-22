@@ -2,13 +2,14 @@
 //!
 //! `into_tree` copies bodies, types, and spans out of the arena.
 //! Case expansion fills each notation position with its corresponding value.
-//! Extern payloads have no tree form, so expanding one fails.
+//! Extern payloads encode arena-independently through their definition's codec.
 
 use std::slice;
 
-use crate::lang::data::{arena::Arena, notation};
+use crate::lang::data::{arena::Arena, encoding::Encoding, notation};
 
 use super::super::{ValueError, tree};
+use super::external::EncodeContext;
 use super::{Value, ValueCase, ValueField, ValueKind};
 
 // = Values
@@ -16,7 +17,7 @@ use super::{Value, ValueCase, ValueField, ValueKind};
 impl Value {
     /// Copies an arena value into a tree, including its type and source span.
     ///
-    /// Fails on an extern value anywhere inside.
+    /// Fails on an extern value whose definition has no codec.
     pub fn into_tree(self, arena: &Arena) -> Result<tree::Value, ValueError> {
         Ok(tree::Value {
             node: arena.value.kind(self.node).into_tree(arena)?,
@@ -63,8 +64,10 @@ impl ValueKind {
                     .collect::<Result<_, _>>()?,
             ),
             Self::Func(id) => tree::ValueKind::Func(id.clone()),
-            // Only the host knows how to copy its payload
-            Self::Extern(_) => return Err(ValueError::CodecMissing),
+            // Only the definition's codec can copy the payload out of the arena
+            Self::Extern(value_extern) => tree::ValueKind::Extern(
+                value_extern.encode(&EncodeContext::new(arena, Encoding::ArenaIndependent))?,
+            ),
         })
     }
 }

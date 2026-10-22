@@ -7,8 +7,14 @@
 //! so equal values may still carry distinct notes.
 //! A second definition of `state`, made by the same host,
 //! is never the one the specification's values are read through.
-//! Cases choose which definitions the host registers, `state` by default,
+//! The host also makes `holder` values that hold other values,
+//! through a definition with a codec.
+//! Cases choose which definitions the host registers,
+//! `state` and `holder` by default,
 //! and whether the runner type-checks values at call boundaries.
+//! Roundtrip cases then encode each output arena-relatively into the same arena,
+//! and arena-independently, directly and as a tree,
+//! into a fresh arena whose host has its own definitions.
 //! Each stage renders R's outputs or failure codes;
 //! stages with equal transcripts share one block.
 
@@ -29,13 +35,19 @@ use p4spectec::{
         common::source::Span,
         data::{
             arena::Arena,
+            encoding::Encoding,
             value::{
                 ValueError,
-                extern_value::{TypDef, TypDefId},
-                flat::{self as value, Value, ValueField, ValueKind},
+                extern_value::{TypDef, TypDefId, TypDefs},
+                flat::{
+                    self as value, Value, ValueField, ValueKind,
+                    external::{decode_with, encode_with},
+                },
+                tree as value_tree,
             },
         },
         il::ast::Typ,
+        traits::eq::SyntaxEq,
         traits::print::Print,
     },
     runner::{
@@ -66,13 +78,19 @@ pub struct Case {
     /// Type-check values at call boundaries.
     #[serde(default)]
     pub guard: bool,
-    /// Definitions the host registers: `state`, `rogue`, or `unused`.
+    /// Definitions the host registers: `state`, `holder`, `rogue`, or `unused`.
     #[serde(default = "register_default")]
     pub register: Vec<String>,
+    /// Encode and decode each output of R.
+    #[serde(default)]
+    pub roundtrip: bool,
+    /// Definitions a fresh roundtrip receiver registers, if not `register`.
+    #[serde(default)]
+    pub register_receiver: Option<Vec<String>>,
 }
 
 fn register_default() -> Vec<String> {
-    vec!["state".to_owned()]
+    vec!["state".to_owned(), "holder".to_owned()]
 }
 
 fn failure(name: &str, message: impl std::fmt::Display) -> Error {
@@ -122,6 +140,8 @@ struct Host {
     typdef_state: TypDef<Tagged>,
     /// Another definition with the same name and payload type.
     typdef_state_rogue: TypDef<Tagged>,
+    /// The definition of `holder`, whose payloads encode with their values.
+    typdef_holder: TypDef<Vec<Value>>,
     /// The definitions this host registers.
     typdefs: Vec<TypDefId>,
     /// Calls of `$note_state` so far.
@@ -129,10 +149,12 @@ struct Host {
 }
 
 impl Host {
-    /// Defines both `state` definitions and a third, `unused`, in `arena`.
+    /// Defines both `state` definitions, `holder`, and `unused` in `arena`.
     fn new(arena: &mut Arena, register: &[String]) -> std::result::Result<Self, String> {
         let typdef_state = TypDef::new(arena, "state").map_err(|error| error.to_string())?;
         let typdef_state_rogue = TypDef::new(arena, "state").map_err(|error| error.to_string())?;
+        let typdef_holder =
+            TypDef::with_codec(arena, "holder").map_err(|error| error.to_string())?;
         let typdef_unused =
             TypDef::<u8>::new(arena, "unused").map_err(|error| error.to_string())?;
         // Register the chosen definitions in the order given
@@ -141,11 +163,26 @@ impl Host {
             .map(|name| match name.as_str() {
                 "state" => Ok(typdef_state.id()),
                 "rogue" => Ok(typdef_state_rogue.id()),
+                "holder" => Ok(typdef_holder.id()),
                 "unused" => Ok(typdef_unused.id()),
                 _ => Err(format!("unknown definition {name}")),
             })
             .collect::<std::result::Result<_, _>>()?;
-        Ok(Self { typdef_state, typdef_state_rogue, typdefs, calls_note: 0 })
+        Ok(Self { typdef_state, typdef_state_rogue, typdef_holder, typdefs, calls_note: 0 })
+    }
+}
+
+/// The definitions a case's host made, kept after the host moves into its runner.
+#[derive(Clone)]
+struct HostDefs {
+    typdef_holder: TypDef<Vec<Value>>,
+    typdefs: Vec<TypDefId>,
+}
+
+impl Host {
+    /// The definitions roundtrips decode through.
+    fn defs(&self) -> HostDefs {
+        HostDefs { typdef_holder: self.typdef_holder, typdefs: self.typdefs.clone() }
     }
 }
 
@@ -277,6 +314,15 @@ impl Extern for Host {
                     .and_then(|note| value::make::text(ctx.arena_mut(), note, Span::default()));
                 Eval::new(result.map_err(ExternError::from), SideEffect::Pure)
             }
+            // Hold the list's values
+            "hold" => {
+                let typdef = ctx.external().typdef_holder;
+                let result = value::get::one(values)
+                    .and_then(|value| value::get::list(ctx.arena(), value))
+                    .map(<[Value]>::to_vec)
+                    .and_then(|values| typdef.make(ctx.arena_mut(), values, Span::default()));
+                Eval::new(result.map_err(ExternError::from), SideEffect::Pure)
+            }
             // Return the argument unchanged
             "keep" => Eval::new(
                 value::get::one(values).copied().map_err(ExternError::from),
@@ -348,6 +394,7 @@ fn run_case(path_host: &Path, case: &Case) -> Result<String> {
         let mut arena = Arena::new();
         let host =
             Host::new(&mut arena, &case.register).map_err(|error| failure(&case.name, error))?;
+        let defs = host.defs();
         // Specification failures are setup errors; runner build failures are outcomes
         let built = match stage {
             "al" => {
@@ -366,7 +413,7 @@ fn run_case(path_host: &Path, case: &Case) -> Result<String> {
             }
         };
         let outcome = match built {
-            Ok(runner) => eval(&case.name, &mut arena, runner)?,
+            Ok(runner) => eval(case, &mut arena, runner, &defs)?,
             Err(report) => format!("build {}\n", codes(&report).join(" ")),
         };
         // Stages with the same outcome share a block
@@ -382,15 +429,27 @@ fn run_case(path_host: &Path, case: &Case) -> Result<String> {
 }
 
 /// Calls R with nat 1, then renders its outputs or failure codes.
-fn eval(name: &str, arena: &mut Arena, mut runner: Runner<P4Interface, Host>) -> Result<String> {
+fn eval(
+    case: &Case,
+    arena: &mut Arena,
+    mut runner: Runner<P4Interface, Host>,
+    defs: &HostDefs,
+) -> Result<String> {
+    let name = case.name.as_str();
     let value = value::make::nat(arena, 1u64.into(), Span::default())
         .map_err(|error| failure(name, error))?;
     let result = runner.eval_rel(arena, "R", &[value]).result;
     let text = match result {
-        Ok(values) => values
-            .iter()
-            .map(|value| format!("{}\n", value.view(arena).to_string()))
-            .collect::<String>(),
+        Ok(values) => {
+            let mut text = String::new();
+            for value in values {
+                text.push_str(&format!("{}\n", value.view(arena).to_string()));
+                if case.roundtrip {
+                    text.push_str(&roundtrip(case, arena, defs, value)?);
+                }
+            }
+            text
+        }
         Err(error) => {
             let kind = match &error {
                 InterpreterError::Fatal(_) => "fatal",
@@ -400,6 +459,126 @@ fn eval(name: &str, arena: &mut Arena, mut runner: Runner<P4Interface, Host>) ->
         }
     };
     Ok(text)
+}
+
+// = Encoding
+
+/// Encodes and decodes `value` in each mode, describing what comes back.
+///
+/// Arena-relative decoding reuses this arena and the case's definitions;
+/// arena-independent decoding, directly and through a tree value,
+/// uses a fresh arena whose host defines and registers its own.
+fn roundtrip(case: &Case, arena: &mut Arena, defs: &HostDefs, value: Value) -> Result<String> {
+    let name = case.name.as_str();
+    let mut text = String::new();
+    let typdefs =
+        TypDefs::new(&arena.typdef, &defs.typdefs).map_err(|error| failure(name, error))?;
+    let typdef_holder = defs.typdef_holder;
+
+    // Relative: the body's handles decode into the same arena
+    let result = encode_with(arena, Encoding::ArenaRelative, arena.value.kind(value.node))
+        .map_err(|error| error.to_string())
+        .and_then(|json| {
+            let kind = decode_with::<ValueKind>(arena, Encoding::ArenaRelative, &typdefs, &json)
+                .map_err(|error| error.to_string())?;
+            let typ = std::rc::Rc::clone(arena.value.typ(value.note));
+            let span = *arena.value.span(value.span);
+            Value::new(arena, kind, typ, span).map_err(|error| error.to_string())
+        });
+    text.push_str(&match result {
+        Ok(value_decoded) => {
+            let equal = value_decoded.view(arena).syntax_eq(&value.view(arena));
+            let kept = match (
+                typdef_holder.get(arena, &value),
+                typdef_holder.get(arena, &value_decoded),
+            ) {
+                (Ok(values), Ok(values_decoded)) => {
+                    format!(", held handles kept: {}", values == values_decoded)
+                }
+                _ => String::new(),
+            };
+            format!("relative: equal: {equal}{kept}\n")
+        }
+        Err(message) => format!("relative: {message}\n"),
+    });
+
+    // Independent: contents decode into a fresh arena through its own definitions
+    let json = encode_with(arena, Encoding::ArenaIndependent, &value);
+    text.push_str(&format!(
+        "independent: {}\n",
+        decode_fresh(
+            case,
+            arena,
+            typdef_holder,
+            value,
+            json.map_err(|error| error.to_string()),
+            |arena, typdefs, json| {
+                decode_with::<Value>(arena, Encoding::ArenaIndependent, typdefs, json)
+                    .map_err(|error| error.to_string())
+            }
+        )?
+    ));
+
+    // Tree: the owned form converts into a fresh arena the same way
+    let tree = value.into_tree(arena).map_err(|error| error.to_string());
+    let tree = tree.and_then(|tree| serde_json::to_value(tree).map_err(|error| error.to_string()));
+    text.push_str(&format!(
+        "tree: {}\n",
+        decode_fresh(case, arena, typdef_holder, value, tree, |arena, typdefs, json| {
+            let tree = serde_json::from_value::<value_tree::Value>(json.clone())
+                .map_err(|error| error.to_string())?;
+            tree.into_flat(arena, typdefs)
+                .map_err(|error| error.to_string())
+        })?
+    ));
+    Ok(text)
+}
+
+/// Decodes an encoded `value` into a fresh arena, describing the result.
+///
+/// Reports whether the printed value and every held value's annotations survive,
+/// and whether the receiver's own `holder` definition reads the result.
+fn decode_fresh(
+    case: &Case,
+    arena: &Arena,
+    typdef_holder: TypDef<Vec<Value>>,
+    value: Value,
+    json: std::result::Result<serde_json::Value, String>,
+    decode: impl FnOnce(&mut Arena, &TypDefs, &serde_json::Value) -> std::result::Result<Value, String>,
+) -> Result<String> {
+    let name = case.name.as_str();
+    let json = match json {
+        Ok(json) => json,
+        Err(message) => return Ok(message),
+    };
+    // A fresh host defines new definitions in a fresh arena
+    let mut arena_fresh = Arena::new();
+    let register = case.register_receiver.as_ref().unwrap_or(&case.register);
+    let host_fresh = Host::new(&mut arena_fresh, register).map_err(|error| failure(name, error))?;
+    let typdefs_fresh = TypDefs::new(&arena_fresh.typdef, &host_fresh.typdefs)
+        .map_err(|error| failure(name, error))?;
+    let value_fresh = match decode(&mut arena_fresh, &typdefs_fresh, &json) {
+        Ok(value_fresh) => value_fresh,
+        Err(message) => return Ok(message),
+    };
+    let equal = value.view(arena).to_string() == value_fresh.view(&arena_fresh).to_string();
+    // Held values keep their contents, types, and spans
+    let kept = match (
+        host_fresh.typdef_holder.get(&arena_fresh, &value_fresh),
+        typdef_holder.get(arena, &value),
+    ) {
+        (Ok(values_fresh), Ok(values)) => {
+            let kept = values.len() == values_fresh.len()
+                && values.iter().zip(values_fresh).all(|(value, value_fresh)| {
+                    value.view(arena).to_string() == value_fresh.view(&arena_fresh).to_string()
+                        && arena.value.typ(value.note) == arena_fresh.value.typ(value_fresh.note)
+                        && arena.value.span(value.span) == arena_fresh.value.span(value_fresh.span)
+                });
+            format!(", read through the receiver's holder, held annotations kept: {kept}")
+        }
+        _ => String::new(),
+    };
+    Ok(format!("printed equal: {equal}{kept}"))
 }
 
 /// Collects diagnostic codes beneath every report frame, outermost first.
