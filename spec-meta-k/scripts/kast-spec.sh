@@ -53,7 +53,7 @@ if [ -d "$target" ] || [ "${target%.watsup}" != "$target" ]; then
   kore=$(mktemp $KCACHE/kore-XXXXXX.tmp)
   status=0
   { "$boot" kast "$target" -o "$json" \
-      && kast --definition "$KDEF" --input json --output kore --sort Script \
+      && kast --definition "$KDEF" --input json --output kore --sort Spec \
            "$json" > "$kore"; } || status=$?
   rm -f "$json"
 
@@ -70,4 +70,4 @@ fi
 
 json="$target"
 
-exec kast --definition "$KDEF" --input json --output kore --sort Script "$json"
+exec kast --definition "$KDEF" --input json --output kore --sort Spec "$json"

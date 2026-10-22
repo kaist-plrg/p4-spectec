@@ -1,14 +1,15 @@
 // Assignment (pattern matching a value against an expression).
 //
-// Mirrors spec-meta/5.2-eval-assign.watsup. An assignment is a statement:
-// it rewrites to `.K` with its bindings added to `<local>`, or backtracks.
+// Mirrors spec-meta/3-execution/3.06-eval-assign.watsup. An assignment is a
+// statement: it rewrites to `.K` with its bindings added to `<local>`, or
+// backtracks.
 //
 //   Assign_exp:  ctx |- exp := val : ctx       --> assignExp(Exp, Val)
 //   Assign_exps: ctx |- exp* := val* : ctx     --> assignExps(ExpList, ValList)
 //   Assign_arg:  ctx/ctx |- arg := val : ctx   --> assignArg(Arg, Val), reads <caller>
 //   Assign_args: ctx/ctx |- arg* := val* : ctx --> assignArgs(ArgList, ValList)
 
-requires "3-context.k"
+requires "3.02-context.k"
 
 module ASSIGN
   imports CONTEXT
@@ -140,7 +141,7 @@ module ASSIGN
   // Assign_arg / Assign_args: ctx_callee '/' ctx_caller |- arg(*) := val(*)
   //
   // `<local>` holds `ctx_callee`; `<caller>`'s `cfenv` holds `ctx_caller`'s
-  // local function environment (all `Assign_arg/fun` needs — see 0-config.k).
+  // local function environment (all `Assign_arg/fun` needs — see 0.1-config.k).
   // ==========================================================================
 
   syntax KItem ::= assignArg(Arg, Val)

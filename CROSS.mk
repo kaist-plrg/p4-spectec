@@ -38,7 +38,7 @@ KDEFDIR = al-kompiled
 KSPECDIR = spec-meta-k
 
 k: metacross $(FFI_SO)
-	kompile $(KSPECDIR)/6-entry.k --main-module AL --syntax-module SYNTAX -o $(KDEFDIR) \
+	kompile $(KSPECDIR)/3-execution/3.14-entry.k --main-module AL --syntax-module SYNTAX -o $(KDEFDIR) \
 	  -ccopt -L$(CURDIR)/bin -ccopt -Wl,--no-as-needed -ccopt -lp4spectec \
 	  -ccopt '-Wl,-rpath,$$ORIGIN/../bin'
 

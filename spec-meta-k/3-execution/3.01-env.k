@@ -1,8 +1,8 @@
 // Environments: values, type definitions, relations, and functions.
 //
-// Mirrors spec-meta/2-env.watsup.
+// Mirrors spec-meta/3-execution/3.01-env.watsup and spec-meta/2-runtime/.
 
-requires "0.1-config.k"
+requires "../0-aux/0.1-config.k"
 
 module ENV
   imports CONFIG

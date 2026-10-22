@@ -1,6 +1,7 @@
 // Type substitution, type casts, and value-type matching.
 //
-// Mirrors spec-meta/5.1-eval-typ.watsup.
+// Mirrors spec-meta/3-execution/3.05.1-typ-subst.watsup to
+// 3.05.4-typ-cast.watsup.
 //
 //   dec $subst_typ(theta, typ) : typ
 //   dec $upcast(ctx, typ, val) : res<val>
@@ -8,11 +9,11 @@
 //   dec $subtyp(tdenv, typ, val) : bool
 //   dec $subtyps(tdenv, typ*, val*) : bool
 //
-// A substitution is a tdenv of aliases (`tdenvOf` in 2-env.k), and the casts
+// A substitution is a tdenv of aliases (`tdenvOf` in 3.01-env.k), and the casts
 // take the merged tdenv `updateMap(gtdenv, ltdenv)` like `$subtyp` does.
 
-requires "3-context.k"
-requires "5.0-eval-ops.k"
+requires "3.02-context.k"
+requires "3.05-eval-ops.k"
 
 module TYP
   imports CONTEXT

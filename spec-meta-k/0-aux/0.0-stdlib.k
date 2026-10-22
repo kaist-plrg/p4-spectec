@@ -1,8 +1,8 @@
 // Standard library of the P4-SpecTec meta-language.
 //
-// Mirrors spec-meta/0-stdlib.watsup.
+// Mirrors spec-meta/0-aux/0.0-stdlib.watsup.
 
-requires "1-syntax.k"
+requires "../1-syntax/1.0-syntax.k"
 
 module STDLIB
   imports SYNTAX

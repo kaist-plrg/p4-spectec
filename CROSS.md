@@ -20,10 +20,12 @@ make redex       # the Redex modules, with raco make
 `make k` and `make redex` are local targets: CI builds and tests the Rust
 implementation only, since K and Racket are not installed there.
 
-`spec-meta/`, `spec-meta-k/`, and `spec-meta-redex/` are each one flat
-directory, and a K or Redex file is numbered after the `spec-meta/` file it
-mirrors (K keeps its own `5.x` numbers, since argument evaluation lives in its
-`5.3-eval-exp.k`).
+`spec-meta/` and `spec-meta-k/` share the layout `0-aux/`, `1-syntax/`,
+`2-runtime/`, `3-execution/`, and a K file is numbered after the `spec-meta/`
+file it mirrors; from `3.04` on the K numbers run one above the spec's, since
+the host interface (`3.04.1`, `3.04.2`) has no `spec-meta/` counterpart.
+`spec-meta-redex/` is still one flat directory numbered after the previous
+layout of `spec-meta/`.
 
 ## K
 
@@ -42,7 +44,7 @@ based on K rewriting.
 ### K configuration
 
 The evaluator is organized around the configuration in
-[`0.1-config.k`](spec-meta-k/0.1-config.k):
+[`0.1-config.k`](spec-meta-k/0-aux/0.1-config.k):
 
 ```k
 configuration
@@ -76,7 +78,7 @@ make k
 ```
 
 This builds `bin/metacross` and `bin/libp4spectec.so`, then kompiles
-[`6-entry.k`](spec-meta-k/6-entry.k) into `al-kompiled/`. The
+[`3.14-entry.k`](spec-meta-k/3-execution/3.14-entry.k) into `al-kompiled/`. The
 interpreter is linked against the host library with an `$ORIGIN`-relative
 rpath, so it finds `bin/libp4spectec.so` from `al-kompiled/` wherever the
 Rust target directory is. Rerun `make k` after changing the K or Rust sources.
@@ -188,8 +190,8 @@ K rules -> JSON codec -> #ffiCall -> bin/libp4spectec.so -> p4spectec runner
 ```
 
 The K side is implemented by
-[`4.1-extern-json.k`](spec-meta-k/4.1-extern-json.k), the codec, and
-[`4.2-extern-ffi.k`](spec-meta-k/4.2-extern-ffi.k), the transport, which
+[`3.04.1-extern-json.k`](spec-meta-k/3-execution/3.04.1-extern-json.k), the codec, and
+[`3.04.2-extern-ffi.k`](spec-meta-k/3-execution/3.04.2-extern-ffi.k), the transport, which
 resolves the library's `host_init`, `host_eval`, and `host_strlen` symbols with
 `#functionAddress` and calls them with `#ffiCall`. The Rust side is
 [`ffi.rs`](p4spectec/src/metacross/ffi.rs), the `extern "C"` surface and the

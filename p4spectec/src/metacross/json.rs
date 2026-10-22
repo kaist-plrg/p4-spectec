@@ -1,6 +1,6 @@
 //! The JSON of the host boundary
 //!
-//! Shared with `spec-meta-k/al/4.1-extern-json.k` and
+//! Shared with `spec-meta-k/3-execution/3.04.1-extern-json.k` and
 //! `spec-meta-redex/common/0.1-extern-json.rkt`:
 //!
 //! ```text

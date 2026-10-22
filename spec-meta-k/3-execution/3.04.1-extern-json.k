@@ -26,8 +26,8 @@
 //              | {"fail": null}      // recoverable failure; extern only
 
 requires "json.md"
-requires "0.1-config.k"
-requires "3-context.k"
+requires "../0-aux/0.1-config.k"
+requires "3.02-context.k"
 
 module EXTERN-JSON
   imports CONFIG

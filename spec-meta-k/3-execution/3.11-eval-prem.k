@@ -1,10 +1,10 @@
 // Premise evaluation.
 //
-// Mirrors spec-meta/5.5-eval-prem.watsup: Eval_prem, Eval_prems. A premise
-// is a statement: one that holds rewrites to `.K`, one that does not
-// backtracks. Its expressions evaluate in place (1-syntax.k).
+// Mirrors spec-meta/3-execution/3.10-eval-prem.watsup: Eval_prem, Eval_prems.
+// A premise is a statement: one that holds rewrites to `.K`, one that does
+// not backtracks. Its expressions evaluate in place (1.0-syntax.k).
 
-requires "5.3-eval-exp.k"
+requires "3.08-eval-exp.k"
 
 module PREM
   imports EVAL-EXP

@@ -1,6 +1,6 @@
 // Syntax of AL, the algorithmic layer of the P4-SpecTec meta-language.
 //
-// Mirrors spec-meta/1-syntax.watsup.
+// Mirrors spec-meta/1-syntax/1.0-syntax.watsup.
 
 requires "json.md"
 

@@ -1,10 +1,10 @@
 // Relation invocation: rule paths, dispatch, and Call_rel.
 //
-// Mirrors spec-meta/5.7-eval-call-rel.watsup, except that the rule paths of
-// all groups of a relation are checked for determinism together (see
-// Call_defined_rel below).
+// Mirrors spec-meta/3-execution/3.12-eval-call-rel.watsup, except that the
+// rule paths of all groups of a relation are checked for determinism
+// together (see Call_defined_rel below).
 
-requires "5.5-eval-call-func.k"
+requires "3.12-eval-call-func.k"
 
 module CALL-REL
   imports CALL-FUNC

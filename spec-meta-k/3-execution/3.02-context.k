@@ -1,9 +1,9 @@
 // Context and control: loading, outcomes, backtracking, scopes, and frames.
 //
-// Mirrors spec-meta/3-context.watsup and the result sorts of
-// spec-meta/4-relation.watsup.
+// Mirrors spec-meta/3-execution/3.02-context.watsup and the result sorts of
+// spec-meta/3-execution/3.00-result.watsup.
 
-requires "2-env.k"
+requires "3.01-env.k"
 
 module CONTEXT
   imports ENV

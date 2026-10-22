@@ -1,7 +1,7 @@
 // Configuration for AL evaluation.
 
 requires "0.0-stdlib.k"
-requires "1-syntax.k"
+requires "../1-syntax/1.0-syntax.k"
 
 module CONFIG
   imports STDLIB

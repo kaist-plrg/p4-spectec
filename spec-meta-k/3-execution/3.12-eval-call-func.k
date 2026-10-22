@@ -1,11 +1,11 @@
 // Meta-function invocation: clauses, table rows, dispatch, and Call_func.
 //
-// Mirrors spec-meta/5.6-eval-call-func.watsup. Every clause of a defined
-// function is one alternative and exactly one must succeed (`det` in
-// 3-context.k); table rows are tried in order.
+// Mirrors spec-meta/3-execution/3.11-eval-call-func.watsup. Every clause of
+// a defined function is one alternative and exactly one must succeed (`det`
+// in 3.02-context.k); table rows are tried in order.
 
-requires "5.4-eval-prem.k"
-requires "4.2-extern-ffi.k"
+requires "3.11-eval-prem.k"
+requires "3.04.2-extern-ffi.k"
 
 module CALL-FUNC
   imports PREM

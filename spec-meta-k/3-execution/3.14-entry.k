@@ -1,8 +1,8 @@
 // Entry point.
 //
-// Mirrors spec-meta/6-entry.watsup.
+// Mirrors spec-meta/3-execution/3.13-entry.watsup.
 
-requires "5.6-eval-call-rel.k"
+requires "3.13-eval-call-rel.k"
 
 module AL
   imports CALL-REL

@@ -5,7 +5,7 @@
 // The interpreter links the library and resolves its host_* symbols at run
 // time. The runner is built once on init.
 
-requires "4.1-extern-json.k"
+requires "3.04.1-extern-json.k"
 requires "ffi.md"
 
 module EXTERN-FFI

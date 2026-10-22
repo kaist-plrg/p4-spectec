@@ -1,11 +1,12 @@
 // Expression, path, and argument evaluation.
 //
-// Mirrors spec-meta/5.3-eval-exp.watsup and spec-meta/5.4-eval-arg.watsup.
+// Mirrors spec-meta/3-execution/3.07-eval-exp.watsup, 3.08-eval-path.watsup and
+// 3.09-eval-arg.watsup.
 // An expression at the head of `<k>` evaluates its operands by the
-// strictness attributes of 1-syntax.k; the rules here compute on values.
+// strictness attributes of 1.0-syntax.k; the rules here compute on values.
 
-requires "5.1-eval-typ.k"
-requires "5.2-eval-assign.k"
+requires "3.06.1-typ-subst.k"
+requires "3.07-eval-assign.k"
 
 module EVAL-EXP
   imports ASSIGN

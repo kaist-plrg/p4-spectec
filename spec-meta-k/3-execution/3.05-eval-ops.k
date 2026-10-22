@@ -1,8 +1,8 @@
 // Operator semantics of the P4-SpecTec meta-language.
 //
-// Mirrors spec-meta/5.0-eval-ops.watsup.
+// Mirrors spec-meta/3-execution/3.04-eval-ops.watsup.
 
-requires "0.0-stdlib.k"
+requires "../0-aux/0.0-stdlib.k"
 
 module EVAL-OPS
   imports STDLIB
