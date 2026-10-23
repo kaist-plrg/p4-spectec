@@ -4,10 +4,10 @@
 ;; does, under a context that load-script gives, so one load can serve many
 ;; programs. Both need the host started on the spec first, with host-init!.
 ;;
-;; As a program, it runs $main() of a script through Entry, and
-;; prints its value in k-run.sh's JSON format, or `fail`. With --p4, it runs
-;; Program_ok of the spec on a P4 program, and prints `passed` or `fail`, as
-;; k-run-p4.sh does. -i adds a P4 include directory, and --p4 needs at least
+;; As a program, it runs $main() of a script through Entry, and prints its
+;; value in k-run.sh's JSON format, `fail` on UNMATCH, or `error` on ERROR.
+;; With --p4, it runs Program_ok of the spec on a P4 program, and prints
+;; `passed`, `fail`, or `error`, as k-run-p4.sh does. -i adds a P4 include directory, and --p4 needs at least
 ;; one. Entry's debug messages go to stderr.
 ;;
 ;;   racket spec-meta-redex/3-execution/3.16-entry.rkt FILE.watsup
@@ -35,16 +35,16 @@
 ;;   -- debug "into call"
 ;;   -- Eval_exp: C |- CALL "main" eps eps : OK val
 ;;   -- debug val
-;; Gives val, or FAIL where Entry has no derivation.
+;; Gives val, or the failure where Entry has no derivation.
 (define (entry spec)
   (match (run-loaded (load-script spec) (term (CALL "main" () ())))
-    ['FAIL 'FAIL]
+    [(and failure (or 'UNMATCH 'ERROR)) failure]
     [val
      (debug val)
      val]))
 
 ;; The result of Program_ok on the P4 program val_p4, under loaded, the
-;; context that load-script gives for the spec: (OK (val ...)), or FAIL
+;; context that load-script gives for the spec: (OK (val ...)), or a failure
 (define (entry-p4 loaded val_p4)
   (run-loaded loaded (term (call-rel "Program_ok" (,val_p4)))))
 
@@ -66,14 +66,16 @@
 ;; The line printed for Entry's result
 (define (result->output res)
   (match res
-    ['FAIL "fail"]
+    ['UNMATCH "fail"]
+    ['ERROR "error"]
     [val (jsexpr->string (val->jsexpr val))]))
 
 ;; The line printed for Program_ok's result
 (define (result-p4->output res)
   (match res
     [(list 'OK _) "passed"]
-    ['FAIL "fail"]))
+    ['UNMATCH "fail"]
+    ['ERROR "error"]))
 
 (module+ main
   (define p4 #f)

@@ -2,17 +2,19 @@
 ;; spec-meta/3-execution/3.11-eval-call-func.watsup.
 ;;
 ;; A callee runs in (IN L_callee ...), and each clause in a copy of it, so a
-;; clause leaves no bindings to the next. Every clause is evaluated, and the
-;; call is the one success among them; it is FAIL when several succeed
-;; ($det_valres), and the `otherwise` clause runs only when none did. Table
-;; rows are still tried in order. Eval_clause/fail and Eval_tblrow/fail are
-;; "frame/fail". Call_func and Call_func_dispatch have no `otherwise`, so an
-;; input that no rule matches reduces to FAIL directly, as Eval_exp/fail does
-;; for the call.
+;; clause leaves no bindings to the next. The clauses are evaluated in order
+;; until one succeeds or errors (Eval_clauses), and the clauses after a
+;; success must all be unmatched (Eval_clauses_on_ok): a second success is an
+;; error. The `otherwise` clause runs only when every clause is unmatched.
+;; Table rows are tried in order, and the first row that is not unmatched
+;; gives the result. The `/error` rules become complement rules, and
+;; "frame/failure" where a clause's or a row's statement fails.
 
 (require redex/reduction-semantics
+         "../0-aux/0.0-stdlib.rkt"
          "3.02-context.rkt"
-         "3.03-machine.rkt")
+         "3.03-machine.rkt"
+         "3.04.2-extern-ffi.rkt")
 (provide ->term/eval-call-func
          ->term+ctx/eval-call-func)
 
@@ -25,68 +27,79 @@
 
    ;; rule Eval_clause/succ: the arguments are assigned, the premises hold,
    ;; and the output is evaluated, as a statement sequence
-   (--> (eval-clause L_caller ((arg ...) exp_out (prem ...)) (val ...))
-        (seq ((assign-args L_caller (arg ...) (val ...)) prem ... exp_out))
+   (--> (eval-clause ((arg ...) exp_out (prem ...)) (val ...))
+        (seq ((assign-args (arg ...) (val ...)) prem ... exp_out))
         "eval-clause")
+
+   ;; rulegroup Eval_clauses, once the clause at hand is evaluated. An
+   ;; unmatched clause is passed over by the frame (Eval_clauses/unmatch).
+   (--> (eval-clauses (UNMATCH ...)) UNMATCH
+        "eval-clauses/nil")
+   (--> (eval-clauses (UNMATCH ... val_out (IN L (eval-clause clause (val ...))) ...))
+        (eval-clauses-on-ok val_out ((IN L (eval-clause clause (val ...))) ...))
+        "eval-clauses/succ")
+   (--> (eval-clauses (UNMATCH ... ERROR (IN L (eval-clause clause (val ...))) ...)) ERROR
+        "eval-clauses/error")
+
+   ;; rulegroup Eval_clauses_on_ok, once the clause at hand is evaluated
+   (--> (eval-clauses-on-ok val_out (UNMATCH ...)) val_out
+        "eval-clauses-on-ok/nil")
+   (--> (eval-clauses-on-ok val_out (UNMATCH ... valres (IN L (eval-clause clause (val ...))) ...)) ERROR
+        (side-condition (not (equal? (term valres) 'UNMATCH)))
+        "eval-clauses-on-ok/error")
 
    ;;; Table meta-function invocation
 
-   ;; rulegroup Eval_tblrows. cons-succ and cons-fail share their premise.
-   (--> (eval-tblrows () (val ...)) FAIL
+   ;; rule Eval_tblrow/succ: the row runs in a layer of its own, as a
+   ;; statement sequence
+   (--> (eval-tblrow ((arg ...) exp_out (prem ...)) (val ...))
+        (IN (empty-localLayer) (seq ((assign-args (arg ...) (val ...)) prem ... exp_out)))
+        "eval-tblrow")
+
+   ;; rulegroup Eval_tblrows
+   (--> (eval-tblrows () (val ...)) UNMATCH
         "eval-tblrows/nil")
    (--> (eval-tblrows (tblRow_h tblRow_t ...) (val ...))
         (eval-tblrows/cons (eval-tblrow tblRow_h (val ...)) (tblRow_t ...) (val ...))
         "eval-tblrows/cons")
-   (--> (eval-tblrows/cons val_out (tblRow_t ...) (val ...)) val_out
-        "eval-tblrows/cons-succ")
-   (--> (eval-tblrows/cons FAIL (tblRow_t ...) (val ...)) (eval-tblrows (tblRow_t ...) (val ...))
-        "eval-tblrows/cons-fail")
+   (--> (eval-tblrows/cons UNMATCH (tblRow_t ...) (val ...)) (eval-tblrows (tblRow_t ...) (val ...))
+        "eval-tblrows/unmatch")
+   (--> (eval-tblrows/cons valres (tblRow_t ...) (val ...)) valres
+        (side-condition (not (equal? (term valres) 'UNMATCH)))
+        "eval-tblrows/cons-result")
 
    ;; rule Call_table_func
-   (--> (call-table-func (TABLE (param ...) (tblRow ...)) (val ...))
+   (--> (call-table-func (TABLEFUNC id (param ...) typ (tblRow ...)) (val ...))
         (eval-tblrows (tblRow ...) (val ...))
         "call-table-func")
 
    ;;; Defined meta-function invocation
 
-   ;; rules Call_defined_func/succ and Call_defined_func/fail (see
-   ;; ->term+ctx), once every clause is evaluated, with Eval_clauses's
-   ;; $det_valres: the one success, or the `otherwise` clause in the callee's
-   ;; layer when none, or FAIL when several (a nondeterministic call)
-   (--> (call-defined-func/clauses (FAIL ... val_func FAIL ...) L_caller (elsClause ...) (val ...))
-        val_func
-        "call-defined-func/succ")
-   (--> (call-defined-func/clauses (FAIL ...) L_caller (elsClause) (val ...))
-        (eval-clause L_caller elsClause (val ...))
-        "call-defined-func/fail")
-   (--> (call-defined-func/clauses (FAIL ...) L_caller () (val ...)) FAIL
-        "call-defined-func/fail/none")
-   (--> (call-defined-func/clauses (valres_1 ... val_1 valres_2 ... val_2 valres_3 ...)
-                                   L_caller (elsClause ...) (val ...))
-        FAIL
-        "call-defined-func/nondet")
-   (--> (call-defined-func definedFuncDef (typ ...) (val ...)) FAIL
+   ;; rulegroup Call_defined_func: the callee's layer binds the type
+   ;; parameters, and every clause runs in a copy of it
+   (--> (call-defined-func (FUNC id (tparam ..._n) (param ...) typ_ret (clause ...) (elsClause ...))
+                           (typ ..._n) (val ...))
+        (IN L_callee
+            (call-defined-func/clauses (eval-clauses ((IN L_callee (eval-clause clause (val ...))) ...))
+                                       (elsClause ...) (val ...)))
+        (where L_callee {TYP ((tparam (TYP tparam () (ALIAS typ))) ...) FUNC (empty-map) VAL (empty-map)})
+        "call-defined-func")
+   (--> (call-defined-func (FUNC id (tparam ...) (param ...) typ_ret (clause ...) (elsClause ...))
+                           (typ ...) (val ...))
+        ERROR
         ;; otherwise: as many types as type parameters
-        (where (DEF (tparam ...) (clause ...) (elsClause ...)) definedFuncDef)
         (side-condition (not (= (length (term (tparam ...))) (length (term (typ ...))))))
-        "call-defined-func/typs/fail")
-
-   ;;; Meta-function dispatch
-
-   ;; rulegroup Call_func_dispatch
-   (--> (call-func-dispatch (EXT id) (typ ...) (val ...)) (call-extern-func id (typ ...) (val ...))
-        "call-func-dispatch/extern")
-   (--> (call-func-dispatch (BUILTIN id (tparam ...) (param ...)) (typ ...) (val ...))
-        (call-builtin-func id (typ ...) (val ...))
-        "call-func-dispatch/builtin")
-   (--> (call-func-dispatch tableFuncDef () (val ...)) (call-table-func tableFuncDef (val ...))
-        "call-func-dispatch/table")
-   (--> (call-func-dispatch tableFuncDef (typ_h typ_t ...) (val ...)) FAIL
-        ;; otherwise: a table function takes no types
-        "call-func-dispatch/table/fail")
-   (--> (call-func-dispatch definedFuncDef (typ ...) (val ...))
-        (call-defined-func definedFuncDef (typ ...) (val ...))
-        "call-func-dispatch/defined")
+        "call-defined-func/error")
+   ;; once the clauses are evaluated: the result, or the `otherwise` clause
+   ;; in the callee's layer when all are unmatched
+   (--> (call-defined-func/clauses valres (elsClause ...) (val ...)) valres
+        (side-condition (not (equal? (term valres) 'UNMATCH)))
+        "call-defined-func/result")
+   (--> (call-defined-func/clauses UNMATCH (elsClause) (val ...))
+        (eval-clause elsClause (val ...))
+        "call-defined-func/unmatch")
+   (--> (call-defined-func/clauses UNMATCH () (val ...)) UNMATCH
+        "call-defined-func/unmatch/none")
 
    ;;; Extern meta-function invocation, which reaches the host
 
@@ -107,36 +120,27 @@
   (reduction-relation
    al
 
-   ;;; Table meta-function invocation
-
-   ;; rule Eval_tblrow/succ: the row runs in a layer of its own, with the
-   ;; caller's layer L, as a statement sequence
-   (--> ((eval-tblrow ((arg ...) exp_out (prem ...)) (val ...)) G L)
-        ((IN (empty-layer) (seq ((assign-args L (arg ...) (val ...)) prem ... exp_out))) G L)
-        "eval-tblrow")
-
-   ;;; Defined meta-function invocation
-
-   ;; rules Call_defined_func/succ and Call_defined_func/fail, with
-   ;; Eval_clauses: the callee's layer binds the type parameters, every
-   ;; clause runs in a copy of it, and L is the caller's
-   (--> ((call-defined-func definedFuncDef (typ ..._n) (val ...)) G L)
-        ((IN L_callee
-             (call-defined-func/clauses ((IN L_callee (eval-clause L clause (val ...))) ...)
-                                        L (elsClause ...) (val ...)))
-         G L)
-        (where (DEF (tparam ..._n) (clause ...) (elsClause ...)) definedFuncDef)
-        (where {TYP tdenv_empty REL renv FUNC fenv VAL venv} (empty-layer))
-        (where L_callee {TYP ((tparam (DEF () (ALIAS typ))) ...) REL renv FUNC fenv VAL venv})
-        "call-defined-func")
-
    ;;; Meta-function call
 
-   ;; rule Call_func
-   (--> ((call-func id (typ ...) (val ...)) G L) ((call-func-dispatch funcdef (typ ...) (val ...)) G L)
-        (where (funcdef) (find-func G L id))
-        "call-func")
-   (--> ((call-func id (typ ...) (val ...)) G L) (FAIL G L)
+   ;; rulegroup Call_func: the name is resolved through the local function
+   ;; environment, and its definition found in the global layer
+   (--> ((call-func id (typ ...) (val ...)) G L) ((call-extern-func id_func (typ ...) (val ...)) G L)
+        (where ((EXTFUNC id_func (tparam ...) (param ...) typ_ret)) (find-func G (resolve-func-param L id)))
+        "call-func/extern")
+   (--> ((call-func id (typ ...) (val ...)) G L) ((call-builtin-func id_func (typ ...) (val ...)) G L)
+        (where ((BUILTINFUNC id_func (tparam ...) (param ...) typ_ret)) (find-func G (resolve-func-param L id)))
+        "call-func/builtin")
+   (--> ((call-func id () (val ...)) G L) ((call-table-func tableFuncDefn (val ...)) G L)
+        (where (tableFuncDefn) (find-func G (resolve-func-param L id)))
+        "call-func/table")
+   (--> ((call-func id (typ ...) (val ...)) G L) ((call-defined-func definedFuncDefn (typ ...) (val ...)) G L)
+        (where (definedFuncDefn) (find-func G (resolve-func-param L id)))
+        "call-func/defined")
+   (--> ((call-func id (typ ...) (val ...)) G L) (ERROR G L)
         ;; otherwise: no such function
-        (where () (find-func G L id))
-        "call-func/fail")))
+        (where () (find-func G (resolve-func-param L id)))
+        "call-func/error")
+   (--> ((call-func id (typ_h typ_t ...) (val ...)) G L) (ERROR G L)
+        ;; otherwise: a table function takes no types
+        (where (tableFuncDefn) (find-func G (resolve-func-param L id)))
+        "call-func/table/error")))

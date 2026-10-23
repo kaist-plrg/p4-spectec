@@ -6,7 +6,7 @@
 ;; skipped, as are files under an include/ directory (#include fragments, not
 ;; programs).
 ;;
-;; Each program passes or fails; one that raises fails. A program is expected
+;; Each program passes or fails; one that errors or raises fails. A program is expected
 ;; to pass, or with --neg to fail. Progress, the summary, and the programs
 ;; without the expected result go to stdout and a result file. The result file
 ;; also gets the stderr and error message of each program that raises.
@@ -83,8 +83,8 @@
   (/ (- (current-inexact-monotonic-milliseconds) started) 1000))
 
 ;; The status of the program under loaded, the context that load-script gives:
-;; 'pass or 'fail, the seconds it took, and, if it raised, what it wrote to
-;; stderr and the error's message
+;; 'pass or 'fail, the seconds it took, and, if it errored or raised, what it
+;; wrote to stderr and the error's message
 (define (typecheck loaded program includes)
   (define started (current-inexact-monotonic-milliseconds))
   (define err (open-output-string))
@@ -94,7 +94,8 @@
         (define val_p4 (boot-p4 program #:includes includes))
         (match (entry-p4 loaded val_p4)
           [(list 'OK _) (values 'pass #f)]
-          ['FAIL (values 'fail #f)]))))
+          ['UNMATCH (values 'fail #f)]
+          ['ERROR (values 'fail "error")]))))
   (values status
           (seconds-since started)
           (and reason (string-append (get-output-string err) reason))))
