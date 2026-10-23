@@ -259,12 +259,14 @@ A standalone run starts with:
 ```
 
 Evaluation frames specify where the next subterm runs. Evaluating an
-expression replaces it with its value or `FAIL`; a constructor whose parts
-are all values is a value, so a frame writes `val` for an evaluated subterm
-and `exp` for one still to evaluate. Successful premises and assignments
-update the local layer and reduce to `OK`. A failed attempt
-discards its scope, preserving the enclosing layer for the next alternative.
-`FAIL` propagates through frames until a rule handles it or the run fails.
+expression replaces it with its value or a failure, `UNMATCH` or `ERROR`; a
+constructor whose parts are all values is a value, so a frame writes `val`
+for an evaluated subterm and `exp` for one still to evaluate. Successful
+premises and assignments update the local layer and reduce to `OK`. A failed
+attempt discards its scope, preserving the enclosing layer for the next
+alternative. A failure propagates through frames until a rule handles it:
+`UNMATCH` moves a call to its next clause or rule path, and `ERROR` ends the
+call.
 
 The evaluator in [`3.14-step.rkt`](spec-meta-redex/3-execution/3.14-step.rkt) combines the
 rule fragments into three relations:
@@ -275,8 +277,8 @@ rule fragments into three relations:
 | `->term+ctx` | Reduce `(term G L)`, reading the context or updating `L`. |
 | `->al` | Apply these rules within evaluation contexts to step a whole configuration. |
 
-Pure helpers use Redex metafunctions; partial helpers use judgment forms,
-where a missing derivation can fail a premise. Programs run through
+Helpers are Redex metafunctions; one that the specification lets fail gives
+`(OK ...)` or `ERROR`, which the rule reads with `where`. Programs run through
 [`3.15-driver.rkt`](spec-meta-redex/3-execution/3.15-driver.rkt), which computes the
 reduction steps while keeping a cursor at the current subterm. The driver
 avoids repeatedly decomposing the whole configuration; `->al` remains the
@@ -312,8 +314,9 @@ racket spec-meta-redex/3-execution/3.16-entry.rkt examples/add.watsup
 
 The script is converted to an s-expression, loaded, and evaluated through
 `$main()`. Its return value is printed as JSON in the same format as
-`k-run.sh`; this example prints `["intN","119"]`. A failed evaluation prints
-`fail`. Debug messages go to stderr.
+`k-run.sh`; this example prints `["intN","119"]`. A run whose `$main()`
+mismatches prints `fail`, and one that fails with an execution error prints
+`error`. Debug messages go to stderr.
 
 Type-check a P4 program against a P4-SpecTec specification:
 
@@ -335,9 +338,10 @@ racket spec-meta-redex/3-execution/3.16-entry.rkt \
   spec
 ```
 
-The output is `passed` when the specification's `Program_ok` relation holds
-and `fail` otherwise. With `--p4`, at least one `-i DIR` is required; repeat it
-for additional include directories.
+The output is `passed` when the specification's `Program_ok` relation holds,
+`fail` when it does not, and `error` when its evaluation fails. With `--p4`,
+at least one `-i DIR` is required; repeat it for additional include
+directories.
 
 Run the integration test suite with:
 
@@ -361,7 +365,7 @@ loads the specification once and reuses it across the P4 programs in a suite.
 
 | Command | Purpose |
 | --- | --- |
-| `sexp PATH [-o FILE]` | Lower a P4-SpecTec program or specification to AL and emit a `script` term. |
+| `sexp PATH [-o FILE]` | Lower a P4-SpecTec program or specification to AL and emit a `spec` term. |
 | `sexp-p4 -p FILE [-i DIR]... [-o FILE]` | Parse a P4 program and emit a `val` term. |
 
 For example:
@@ -410,16 +414,17 @@ the K–Rust wire applies: the command-line entry point initializes the host
 with the script or specification path before evaluation, and the host runner
 stays in the Racket process across calls.
 
-A host failure reply becomes `FAIL`; a host error reply raises a Racket
-error. Redex delegates all object-level builtins, including map operations,
+A host failure reply becomes `UNMATCH`; a host error reply is written to
+stderr and becomes `ERROR`. Redex delegates all object-level builtins,
+including map operations,
 to this host. Meta-level map helpers used by the evaluator operate on Redex's
 own environments in [`0.0-stdlib.rkt`](spec-meta-redex/0-aux/0.0-stdlib.rkt).
 
 ## Exploring in a REPL
 
 Start `racket` from the repository root. Redex renders the specification one
-definition at a time, with `language->pict`, `reduction-relation->pict`,
-`metafunction->pict`, and `judgment-form->pict`. This saves a few of them as
+definition at a time, with `language->pict`, `reduction-relation->pict`, and
+`metafunction->pict`. This saves a few of them as
 PDF files in the current directory:
 
 ```racket
