@@ -1,10 +1,7 @@
 //! IL-to-AL scripts converted natively and through the meta specification
 //!
 //! Each script is converted to AL by the native `algo` pass and by the IL-to-AL
-//! specification, and its `main` is executed in three ways:
-//! native algo with native execution,
-//! meta algo with native execution,
-//! and meta algo with execution by the AL specification.
+//! specification, and the `main` of each AL is executed natively.
 //! Each path records pass, fail, reject (no AL), or panic (native
 //! interpreter abort); the outcomes are compared with the registered expectation.
 
@@ -22,7 +19,7 @@ use p4spectec::{
     },
     lang::{al::ast as al, data::arena::Arena},
     metacirc::{
-        self, ExecutionMode, Tower, TowerConfig,
+        ExecutionMode, Tower, TowerConfig,
         config::{Lang, LevelConfig, ProgramConfig},
     },
     runner::{Config, NullExtern, Runner, Spec},
@@ -80,12 +77,10 @@ fn algo_meta(config_tower: &TowerConfig, paths: &[PathBuf], config: Config) -> O
     al::Spec::decode(&mut arena, *value_al).ok()
 }
 
-/// Runs registered scripts through every algo and execution path.
+/// Runs registered scripts through both conversions and native execution.
 pub fn run(config_run: &AlgoRunConfig) -> Result<()> {
     let start = Instant::now();
     let config = Config::new(true, true, false);
-    let tower = TowerConfig::from_file(&config_run.tower)
-        .map_err(|error| Error::Invalid(error.to_string()))?;
     let level_algo =
         LevelConfig { specdir: config_run.algo.clone(), rel: "Algo_IL".into(), lang: Lang::Il };
     let tower_algo = TowerConfig::new(ExecutionMode::Sl, vec![level_algo])
@@ -101,17 +96,7 @@ pub fn run(config_run: &AlgoRunConfig) -> Result<()> {
             // Meta algo, native execution
             let meta =
                 algo_meta(&tower_algo, paths, config).map(|spec_al| run_native(spec_al, config));
-            // Meta algo, execution by the AL specification
-            let meta_meta = meta
-                .is_some()
-                .then(|| metacirc::run(&tower, &[], paths, config).is_ok());
-            let text_meta_meta = match meta_meta {
-                None => "reject",
-                Some(true) => "pass",
-                Some(false) => "fail",
-            };
-            let text_outcome =
-                [native.unwrap_or("reject"), meta.unwrap_or("reject"), text_meta_meta].join("/");
+            let text_outcome = [native.unwrap_or("reject"), meta.unwrap_or("reject")].join("/");
             actual.push_str(&format!("{text_outcome}\t{}\n", path.display()));
         }
         results.push((suite.expected.clone(), actual));

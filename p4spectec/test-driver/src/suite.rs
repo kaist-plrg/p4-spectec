@@ -81,12 +81,11 @@ pub struct AlgoRunSuite {
     pub expected: PathBuf,
 }
 
-/// Supplies the IL-to-AL specification, the meta-execution tower, and scripts.
+/// Supplies the IL-to-AL specification and scripts.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AlgoRunConfig {
     pub algo: PathBuf,
-    pub tower: PathBuf,
     pub suites: Vec<AlgoRunSuite>,
 }
 
@@ -383,12 +382,11 @@ pub fn load_codec(path: &Path) -> Result<Vec<CodecSuite>> {
     Ok(suites)
 }
 
-/// Loads IL-to-AL script suites with their specification and tower.
+/// Loads IL-to-AL script suites with their specification.
 pub fn load_algo_run(path: &Path) -> Result<AlgoRunConfig> {
     let config: AlgoRunConfig = load(path)?;
     names_valid(config.suites.iter().map(|suite| suite.name.as_str()))?;
     paths_exist(std::slice::from_ref(&config.algo), "algo-run")?;
-    paths_exist(std::slice::from_ref(&config.tower), "algo-run")?;
     for suite in &config.suites {
         directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
         expectation_exists(&suite.expected)?;
