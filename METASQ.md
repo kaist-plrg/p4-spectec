@@ -98,7 +98,7 @@ these additional configurations; only `al.json`, `al-p4.json`, and
 In a multi-level tower, top-level and intermediate specifications must not
 define `main`.
 
-`run-meta` and `algo-meta` accept `--no-cache`, `--no-det`, and `--guard`. `--no-det` disables
+`run-meta` accepts `--no-cache`, `--no-det`, and `--guard`. `--no-det` disables
 determinism checks only in the native base interpreter. Interpreter call
 caching and AL encode/decode caching are enabled together by default;
 `--no-cache` disables both. `run-meta` prints `passed`
@@ -126,12 +126,6 @@ The conversion runs for every input, in the level that accepts the IL.
 The IL-to-AL specification itself is converted by the native `algo` pass.
 `towers/il.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
 are the supplied towers entered through `Eval_IL`.
-
-To print the AL produced by the specification:
-
-```sh
-./bin/metacirc algo-meta spec-meta /path/to/spec
-```
 
 ## Execution corpus
 

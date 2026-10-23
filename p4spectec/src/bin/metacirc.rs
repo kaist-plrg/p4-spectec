@@ -1,8 +1,7 @@
 //! Command-line specification transformation and AL metacircular execution
 //!
 //! `algo`, `struct`, and `prose` transform ordered specification paths natively.
-//! `algo-meta` converts them through an IL-to-AL specification instead,
-//! and `run-meta` requires a tower configuration for AL and P4 inputs.
+//! `run-meta` requires a tower configuration for AL, IL, and P4 inputs.
 //! Structured diagnostics are rendered at the CLI boundary.
 //! Success is printed only after the configured outer entry finishes.
 
@@ -10,7 +9,7 @@ use clap::{Args, Parser, Subcommand};
 use p4spectec::{
     diagnostic::{DisplayStyle, RenderConfig, Renderer, Report},
     lang::traits::print::Print,
-    metacirc::{self, ExecutionMode, TowerConfig},
+    metacirc::{self, TowerConfig},
     runner,
 };
 use std::{path::PathBuf, process::ExitCode};
@@ -30,8 +29,6 @@ enum Command {
     Struct(SpecArgs),
     /// Convert specifications and print the prose representation.
     Prose(SpecArgs),
-    /// Convert specifications through an IL-to-AL specification and print the AL.
-    AlgoMeta(AlgoMetaArgs),
     /// Execute a program through a JSON-configured interpreter tower.
     RunMeta(RunMetaArgs),
 }
@@ -41,18 +38,6 @@ struct SpecArgs {
     /// Specification files in processing order.
     #[arg(required = true, value_name = "PATH")]
     paths: Vec<PathBuf>,
-}
-
-#[derive(Args)]
-struct AlgoMetaArgs {
-    /// IL-to-AL specification, converted natively and run on the inputs.
-    #[arg(value_name = "SPEC_META")]
-    path_meta: PathBuf,
-    /// Specification files in processing order.
-    #[arg(required = true, value_name = "PATH")]
-    paths: Vec<PathBuf>,
-    #[command(flatten)]
-    options: Options,
 }
 
 #[derive(Args)]
@@ -115,11 +100,6 @@ fn run(cli: Cli) -> metacirc::Result<()> {
         Command::Algo(args) => print_spec(p4spectec::algo_with_warnings(&args.paths)),
         Command::Struct(args) => print_spec(p4spectec::structure_with_warnings(&args.paths, true)),
         Command::Prose(args) => print_spec(p4spectec::prosify_with_warnings(&args.paths)),
-        Command::AlgoMeta(AlgoMetaArgs { path_meta, paths, options }) => {
-            let spec_al = metacirc::algo(&paths, &path_meta, ExecutionMode::Sl, options.config())?;
-            println!("{}", Print::to_string(&spec_al));
-            Ok(())
-        }
         Command::RunMeta(args) => {
             let config = TowerConfig::from_file(&args.config)?;
             metacirc::run(&config, &args.includes, &args.program, args.options.config())?;
