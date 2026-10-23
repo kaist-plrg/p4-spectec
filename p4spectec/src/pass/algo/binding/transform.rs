@@ -1025,60 +1025,16 @@ fn lower_table_rows(
     Ok(rows_al)
 }
 
-// - Type definitions
-
-fn lower_typ_def(typ_def_il: ast::TypDef) -> al::ast::TypDef {
-    match typ_def_il {
-        ast::TypDef::Extern(extern_typ_il) => {
-            al::ast::TypDef::Extern(lower_extern_typ(extern_typ_il))
-        }
-        ast::TypDef::Defined(defined_typ_il) => {
-            let defined_typ_al = lower_defined_typ(*defined_typ_il);
-            al::ast::TypDef::Defined(Box::new(defined_typ_al))
-        }
-    }
-}
-
-fn lower_extern_typ(extern_typ_il: ast::ExternTyp) -> al::ast::ExternTyp {
-    al::ast::ExternTyp { id: extern_typ_il.id, hints: extern_typ_il.hints }
-}
-
-fn lower_defined_typ(defined_typ_il: ast::DefinedTyp) -> al::ast::DefinedTyp {
-    al::ast::DefinedTyp {
-        id: defined_typ_il.id,
-        tparams: defined_typ_il.tparams,
-        def_typ: defined_typ_il.def_typ,
-        hints: defined_typ_il.hints,
-    }
-}
-
-// - Meta-variables
-
-fn lower_var_def(var_def_il: ast::VarDef) -> al::ast::VarDef {
-    al::ast::VarDef { id: var_def_il.id, typ: var_def_il.typ, hints: var_def_il.hints }
-}
-
 // - Relations
 
 fn lower_rel_def(ctx: &mut Context, rel_def_il: ast::RelDef) -> Result<al::ast::RelDef, AlgoError> {
     match rel_def_il {
-        ast::RelDef::Extern(extern_rel_il) => {
-            let extern_rel_al = lower_extern_rel(*extern_rel_il);
-            Ok(al::ast::RelDef::Extern(Box::new(extern_rel_al)))
-        }
+        // Extern relations are shared with IL
+        ast::RelDef::Extern(extern_rel) => Ok(al::ast::RelDef::Extern(extern_rel)),
         ast::RelDef::Defined(defined_rel_il) => {
             let defined_rel_al = lower_defined_rel(ctx, *defined_rel_il)?;
             Ok(al::ast::RelDef::Defined(Box::new(defined_rel_al)))
         }
-    }
-}
-
-fn lower_extern_rel(extern_rel_il: ast::ExternRel) -> al::ast::ExternRel {
-    al::ast::ExternRel {
-        id: extern_rel_il.id,
-        not_typ: extern_rel_il.not_typ,
-        input_hint: extern_rel_il.input_hint,
-        hints: extern_rel_il.hints,
     }
 }
 
@@ -1118,12 +1074,9 @@ fn lower_meta_func_def(
     span: &Span,
 ) -> Result<al::ast::MetaFuncDef, AlgoError> {
     match meta_func_def_il {
-        ast::MetaFuncDef::Extern(extern_func_il) => {
-            Ok(al::ast::MetaFuncDef::Extern(lower_extern_func(extern_func_il)))
-        }
-        ast::MetaFuncDef::Builtin(builtin_func_il) => {
-            Ok(al::ast::MetaFuncDef::Builtin(lower_builtin_func(builtin_func_il)))
-        }
+        // Extern and builtin declarations are shared with IL
+        ast::MetaFuncDef::Extern(extern_func) => Ok(al::ast::MetaFuncDef::Extern(extern_func)),
+        ast::MetaFuncDef::Builtin(builtin_func) => Ok(al::ast::MetaFuncDef::Builtin(builtin_func)),
         ast::MetaFuncDef::Table(table_func_il) => {
             Ok(al::ast::MetaFuncDef::Table(lower_table_func(ctx, table_func_il, span)?))
         }
@@ -1131,26 +1084,6 @@ fn lower_meta_func_def(
             let defined_func_al = lower_defined_func(ctx, *defined_func_il)?;
             Ok(al::ast::MetaFuncDef::Defined(Box::new(defined_func_al)))
         }
-    }
-}
-
-fn lower_extern_func(extern_func_il: ast::ExternFunc) -> al::ast::ExternFunc {
-    al::ast::ExternFunc {
-        id: extern_func_il.id,
-        tparams: extern_func_il.tparams,
-        params: extern_func_il.params,
-        typ: extern_func_il.typ,
-        hints: extern_func_il.hints,
-    }
-}
-
-fn lower_builtin_func(builtin_func_il: ast::BuiltinFunc) -> al::ast::BuiltinFunc {
-    al::ast::BuiltinFunc {
-        id: builtin_func_il.id,
-        tparams: builtin_func_il.tparams,
-        params: builtin_func_il.params,
-        typ: builtin_func_il.typ,
-        hints: builtin_func_il.hints,
     }
 }
 
@@ -1204,14 +1137,9 @@ fn lower_defined_func(
 fn lower_def(ctx: &mut Context, def_il: ast::Def) -> Result<al::ast::Def, AlgoError> {
     let span = def_il.span;
     let def_kind_al = match def_il.node {
-        ast::DefKind::Typ(typ_def_il) => {
-            let typ_def_al = lower_typ_def(typ_def_il);
-            al::ast::DefKind::Typ(typ_def_al)
-        }
-        ast::DefKind::Var(var_def_il) => {
-            let var_def_al = lower_var_def(var_def_il);
-            al::ast::DefKind::Var(var_def_al)
-        }
+        // Type and variable definitions are shared with IL
+        ast::DefKind::Typ(typ_def) => al::ast::DefKind::Typ(typ_def),
+        ast::DefKind::Var(var_def) => al::ast::DefKind::Var(var_def),
         ast::DefKind::Rel(rel_def_il) => {
             let rel_def_al = lower_rel_def(ctx, rel_def_il)?;
             al::ast::DefKind::Rel(rel_def_al)
