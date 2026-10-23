@@ -8,14 +8,20 @@
 //! Each path records pass, fail, reject (no AL), or panic (native
 //! interpreter abort); the outcomes are compared with the registered expectation.
 
-use std::time::Instant;
+use std::{path::PathBuf, time::Instant};
 
 use expect_test::expect_file;
 
 use p4spectec::{
-    interface,
+    interface::{
+        self,
+        meta::shared::{decode::Decode, encode::Encode},
+    },
     lang::{al::ast as al, data::arena::Arena},
-    metacirc::{self, ExecutionMode, TowerConfig},
+    metacirc::{
+        self, ExecutionMode, Tower, TowerConfig,
+        config::{Lang, LevelConfig, ProgramConfig},
+    },
     runner::{Config, NullExtern, Runner, Spec},
 };
 
@@ -47,11 +53,35 @@ fn run_native(spec_al: al::Spec, config: Config) -> &'static str {
     }
 }
 
+/// Converts a script to AL through a single-level tower entered by `Algo_IL`.
+///
+/// `None` means the script has no AL: elaboration failed,
+/// the IL-to-AL specification has no derivation, or the result is not one AL specification.
+fn algo_meta(config_tower: &TowerConfig, paths: &[PathBuf], config: Config) -> Option<al::Spec> {
+    let mut arena = Arena::new();
+    // Encode the elaborated script as the tower's IL input
+    let spec_il = p4spectec::elab(paths).ok()?;
+    let value_il = spec_il.encode(&mut arena).ok()?;
+    let program = ProgramConfig::Il { spec_il };
+    let mut tower = Tower::build(&mut arena, config_tower, &program, config).ok()?;
+    let value = tower.patch(&mut arena, value_il).ok()?;
+    // The entry's single output is the AL specification
+    let values = tower.eval_program(&mut arena, value).result.ok()?;
+    let [value_al] = values.as_slice() else {
+        return None;
+    };
+    al::Spec::decode(&mut arena, *value_al).ok()
+}
+
 /// Runs registered scripts through every algo and execution path.
 pub fn run(config_run: &AlgoRunConfig) -> Result<()> {
     let start = Instant::now();
     let config = Config::new(true, true, false);
     let tower = TowerConfig::from_file(&config_run.tower)
+        .map_err(|error| Error::Invalid(error.to_string()))?;
+    let level_algo =
+        LevelConfig { specdir: config_run.algo.clone(), rel: "Algo_IL".into(), lang: Lang::Il };
+    let tower_algo = TowerConfig::new(ExecutionMode::Sl, vec![level_algo])
         .map_err(|error| Error::Invalid(error.to_string()))?;
     let guard_stdout = crate::output::SilenceStdout::new()?;
     let mut results = Vec::new();
@@ -62,11 +92,11 @@ pub fn run(config_run: &AlgoRunConfig) -> Result<()> {
             // Native algo, native execution
             let native = p4spectec::algo(paths).map(|spec_al| run_native(spec_al, config));
             // Meta algo, native execution
-            let meta = metacirc::algo(paths, &config_run.algo, ExecutionMode::Sl, config)
-                .map(|spec_al| run_native(spec_al, config));
+            let meta =
+                algo_meta(&tower_algo, paths, config).map(|spec_al| run_native(spec_al, config));
             // Meta algo, execution by the AL specification
             let meta_meta = meta
-                .is_ok()
+                .is_some()
                 .then(|| metacirc::run(&tower, &[], paths, config).is_ok());
             let text_meta_meta = match meta_meta {
                 None => "reject",

@@ -4,7 +4,6 @@
 //! Meta externs decode one level of arguments and reenter the next runner.
 //! The outer interpreter may execute AL or SL; every represented script is AL.
 
-mod algo;
 mod build;
 mod codec;
 pub mod config;
@@ -22,7 +21,6 @@ pub use config::{ExecutionMode, TowerConfig};
 use config::{Lang, ProgramConfig};
 use std::path::PathBuf;
 
-pub use algo::algo;
 pub use error::Result;
 
 pub use tower::Tower;
