@@ -1,17 +1,17 @@
 #lang racket/base
 ;; spec-meta/3-execution/3.01-env.watsup.
+;;
+;; typdef is the port's runtime type definition until $load stores
+;; definitions as written (typDef of 2.2-type-def.rkt).
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
-         "../1-syntax/1.0-syntax.rkt")
+         "../2-runtime/2.2-type-def.rkt")
 (provide env
-         theta-of-tdenv
-         is-iter-on-var
-         iter-vari)
+         theta-of-tdenv)
 
-(define-extended-language env syntax
+(define-extended-language env type-def
   ;; Value environment
-  (varr ::= (id (iter ...)))
   (venv ::= ((varr val) ...))
 
   ;; Type definition environment
@@ -24,25 +24,23 @@
   ;; Type substitution environment
   (theta ::= ((id typ) ...))
 
-
   ;; Relation environment
   (externRelDef ::= (EXT id))
   (definedRelDef ::=
-                 (DEF (rulgroup ...) ())
-                 (DEF (rulgroup ...) (elsgroup)))
+                 (DEF (rulGroup ...) ())
+                 (DEF (rulGroup ...) (elsGroup)))
   (reldef ::= externRelDef definedRelDef)
   (renv ::= ((id reldef) ...))
 
   ;; Function environment
   (externFuncDef ::= (EXT id))
   (builtinFuncDef ::= (BUILTIN id (tparam ...) (param ...)))
-  (tableFuncDef ::= (TABLE (param ...) (tblrow ...)))
+  (tableFuncDef ::= (TABLE (param ...) (tblRow ...)))
   (definedFuncDef ::=
                   (DEF (tparam ...) (clause ...) ())
-                  (DEF (tparam ...) (clause ...) (elsclause)))
+                  (DEF (tparam ...) (clause ...) (elsClause)))
   (funcdef ::= externFuncDef builtinFuncDef tableFuncDef definedFuncDef)
   (fenv ::= ((id funcdef) ...)))
-
 
 (define-judgment-form env
   #:mode (theta-of-tdenv I O)
@@ -58,19 +56,3 @@
   [(theta-of-tdenv ((id_t typdef_t) ...) theta_t)
    ----------------------------------------
    (theta-of-tdenv ((id_h EXT) (id_t typdef_t) ...) theta_t)])
-
-;;
-;; Iteration helper
-;;
-
-(define-metafunction env
-  is-iter-on-var : exp -> () ∨ (varr)
-  [(is-iter-on-var (VAR id)) ((id ()))]
-  [(is-iter-on-var (ITER exp (iter_outer ((id _ (iter ...)))))) ((id (iter ... iter_outer)))
-   (where ((id (iter ...))) (is-iter-on-var exp))]
-  ;; otherwise
-  [(is-iter-on-var exp) ()])
-
-(define-metafunction env
-  iter-vari : vari iter -> vari
-  [(iter-vari (id typ (iter ...)) iter_add) (id typ (iter ... iter_add))])

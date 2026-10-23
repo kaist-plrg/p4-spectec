@@ -10,6 +10,7 @@
 (require racket/match
          redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
+         "../2-runtime/2.1-variable.rkt"
          "3.01-env.rkt")
 (provide context
          empty-layer
@@ -47,7 +48,7 @@
   [(empty-ctx) {GLOBAL (empty-layer) LOCAL (empty-layer)}])
 
 ;;
-;; Loading context from a script
+;; Loading context from a spec
 ;;
 
 ;; The entries that a definition adds to GLOBAL's TYP, REL, and FUNC, one
@@ -57,20 +58,20 @@
   [(load-defn (EXTTYP id)) (((id EXT)) () ())]
   [(load-defn (TYP id (tparam ...) deftyp)) (((id (DEF (tparam ...) deftyp))) () ())]
   [(load-defn (EXTREL id (typ_input ...) (typ_output ...))) (() ((id (EXT id))) ())]
-  [(load-defn (REL id (typ_input ...) (typ_output ...) (rulgroup ...) (elsgroup ...)))
-   (() ((id (DEF (rulgroup ...) (elsgroup ...)))) ())]
+  [(load-defn (REL id (typ_input ...) (typ_output ...) (rulGroup ...) (elsGroup ...)))
+   (() ((id (DEF (rulGroup ...) (elsGroup ...)))) ())]
   [(load-defn (EXTFUNC id (tparam ...) (param ...) typ)) (() () ((id (EXT id))))]
   [(load-defn (BUILTINFUNC id (tparam ...) (param ...) typ))
    (() () ((id (BUILTIN id (tparam ...) (param ...)))))]
-  [(load-defn (TABLEFUNC id (param ...) typ (tblrow ...)))
-   (() () ((id (TABLE (param ...) (tblrow ...)))))]
-  [(load-defn (FUNC id (tparam ...) (param ...) typ (clause ...) (elsclause ...)))
-   (() () ((id (DEF (tparam ...) (clause ...) (elsclause ...)))))])
+  [(load-defn (TABLEFUNC id (param ...) typ (tblRow ...)))
+   (() () ((id (TABLE (param ...) (tblRow ...)))))]
+  [(load-defn (FUNC id (tparam ...) (param ...) typ (clause ...) (elsClause ...)))
+   (() () ((id (DEF (tparam ...) (clause ...) (elsClause ...)))))])
 
-;; $load: GLOBAL with the entries of every definition added, in script order.
+;; $load: GLOBAL with the entries of every definition added, in spec order.
 ;; $adds_map adds its keys in order, as $load's recursion does.
 (define-metafunction context
-  load : ctx script -> ctx
+  load : ctx spec -> ctx
   [(load {GLOBAL {TYP tdenv REL renv FUNC fenv VAL venv} LOCAL L} (defn ...))
    {GLOBAL {TYP (adds-map tdenv (id_t ... ...) (typdef ... ...))
             REL (adds-map renv (id_r ... ...) (reldef ... ...))

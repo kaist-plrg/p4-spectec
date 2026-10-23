@@ -85,7 +85,7 @@
     [(list 'TUP typs) (list "tupT" (map typ->jsexpr typs))]
     [(list 'ITER typ 'QUEST) (list "iterT" (typ->jsexpr typ) "?")]
     [(list 'ITER typ 'STAR) (list "iterT" (typ->jsexpr typ) "*")]
-    ['FUNC (list "funcT")]))
+    [(list 'FUNC _ _ _) (list "funcT")]))
 
 ;; request ::= {"builtin":     <id>, "targs": [typ, ...], "args": [val, ...]}
 ;;           | {"extern-func": <id>, "targs": [typ, ...], "args": [val, ...]}

@@ -38,7 +38,7 @@
 (define (path-arg path)
   (if (path? path) (path->string path) path))
 
-;; A .watsup file, or a directory of them, as a `script`.
+;; A .watsup file, or a directory of them, as a `spec`.
 (define (boot-script path)
   (read-metacross "sexp" (path-arg path)))
 

@@ -1,10 +1,10 @@
 #lang racket/base
-;; spec-meta/3-execution/3.13-entry.watsup: load a script, then run $main() through the
+;; spec-meta/3-execution/3.13-entry.watsup: load a spec, then run $main() through the
 ;; driver. entry-p4 runs Program_ok on a P4 program instead, as K's afterLoad
 ;; does, under a context that load-script gives, so one load can serve many
 ;; programs. Both need the host started on the spec first, with host-init!.
 ;;
-;; As a program, it runs $main() of a SpecTec script through Entry, and
+;; As a program, it runs $main() of a script through Entry, and
 ;; prints its value in k-run.sh's JSON format, or `fail`. With --p4, it runs
 ;; Program_ok of the spec on a P4 program, and prints `passed` or `fail`, as
 ;; k-run-p4.sh does. -i adds a P4 include directory, and --p4 needs at least
@@ -28,16 +28,16 @@
          load-script)
 
 ;; rule Entry:
-;;   |- script : val
+;;   |- spec : val
 ;;   -- debug "entry-al"
-;;   -- if C = $load($empty_ctx, script)
+;;   -- if C = $load($empty_ctx, spec)
 ;;   -- debug "load complete"
 ;;   -- debug "into call"
 ;;   -- Eval_exp: C |- CALL "main" eps eps : OK val
 ;;   -- debug val
 ;; Gives val, or FAIL where Entry has no derivation.
-(define (entry script)
-  (match (run-loaded (load-script script) (term (CALL "main" () ())))
+(define (entry spec)
+  (match (run-loaded (load-script spec) (term (CALL "main" () ())))
     ['FAIL 'FAIL]
     [val
      (debug val)
@@ -48,11 +48,11 @@
 (define (entry-p4 loaded val_p4)
   (run-loaded loaded (term (call-rel "Program_ok" (,val_p4)))))
 
-;; The context that script loads into, as (G L): the handle of its global
+;; The context that spec loads into, as (G L): the handle of its global
 ;; layer, now registered, and its local layer
-(define (load-script script)
+(define (load-script spec)
   (debug (term (TEXT "entry-al")))
-  (match-define (list 'GLOBAL layer_global 'LOCAL L) (term (load (empty-ctx) ,script)))
+  (match-define (list 'GLOBAL layer_global 'LOCAL L) (term (load (empty-ctx) ,spec)))
   (debug (term (TEXT "load complete")))
   (list (register-global! layer_global) L))
 

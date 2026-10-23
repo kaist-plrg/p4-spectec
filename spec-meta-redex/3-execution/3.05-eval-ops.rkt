@@ -23,14 +23,14 @@
 ;; Binary operations
 
 (define-metafunction al
-  unop-number : numunop num -> val
+  unop-number : numUnop num -> val
   [(unop-number PLUS (NAT n)) (NAT n)]
   [(unop-number PLUS (INT i)) (INT i)]
   [(unop-number MINUS (NAT n)) (INT ,(- (term n)))]
   [(unop-number MINUS (INT i)) (INT ,(- (term i)))])
 
 (define-metafunction al
-  binop-bool : boolbinop bool bool -> bool
+  binop-bool : boolBinop bool bool -> bool
   [(binop-bool AND b_l b_r) ,(and (term b_l) (term b_r))]
   [(binop-bool OR b_l b_r) ,(or (term b_l) (term b_r))]
   [(binop-bool IMPL b_l b_r) ,(or (not (term b_l)) (term b_r))]
@@ -38,7 +38,7 @@
 
 (define-judgment-form al
   #:mode (binop-number I I I O)
-  #:contract (binop-number numbinop num num val)
+  #:contract (binop-number numBinop num num val)
   [(binop-number ADD (NAT n_l) (NAT n_r) (NAT ,(+ (term n_l) (term n_r))))]
   [(binop-number ADD (INT i_l) (INT i_r) (INT ,(+ (term i_l) (term i_r))))]
   [(binop-number SUB (NAT n_l) (NAT n_r) (INT ,(- (term n_l) (term n_r))))]
@@ -53,13 +53,13 @@
   [(binop-number POW (INT i_l) (INT i_r) (INT ,(pow (term i_l) (term i_r))))])
 
 (define-metafunction al
-  cmpop-poly : polycmpop val val -> bool
+  cmpop-poly : polyCmpop val val -> bool
   [(cmpop-poly EQ val_l val_r) ,(equal? (term val_l) (term val_r))]
   [(cmpop-poly NE val_l val_r) ,(not (equal? (term val_l) (term val_r)))])
 
 (define-judgment-form al
   #:mode (cmpop-number I I I O)
-  #:contract (cmpop-number numcmpop num num bool)
+  #:contract (cmpop-number numCmpop num num bool)
   [(cmpop-number LT (NAT n_l) (NAT n_r) ,(< (term n_l) (term n_r)))]
   [(cmpop-number LT (INT i_l) (INT i_r) ,(< (term i_l) (term i_r)))]
   [(cmpop-number GT (NAT n_l) (NAT n_r) ,(> (term n_l) (term n_r)))]

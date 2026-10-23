@@ -7,7 +7,7 @@
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
-         "3.01-env.rkt"
+         "../2-runtime/2.1-variable.rkt"
          "3.02-context.rkt"
          "3.03-machine.rkt")
 (provide ->term/eval-prem

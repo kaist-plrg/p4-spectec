@@ -9,6 +9,7 @@
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
+         "../2-runtime/2.1-variable.rkt"
          "3.01-env.rkt"
          "3.02-context.rkt"
          "3.03-machine.rkt"
@@ -20,9 +21,9 @@
 ;; A field of the struct that Eval_path_upd/dot updates: val if its atom is
 ;; atom, and unchanged otherwise
 (define-metafunction al
-  update-field : atom val valfield -> valfield
+  update-field : atom val valField -> valField
   [(update-field atom val (atom val_field)) (atom val)]
-  [(update-field atom val valfield) valfield])
+  [(update-field atom val valField) valField])
 
 ;; The rules on a term
 (define ->term/eval-exp
@@ -35,43 +36,43 @@
    (--> (UN NOT (BOOL b)) (BOOL b_res)
         (where b_res ,(not (term b)))
         "eval-exp/unary/boolean")
-   (--> (UN numunop num) (unop-number numunop num)
+   (--> (UN numUnop num) (unop-number numUnop num)
         "eval-exp/unary/number")
    (--> (UN unop val) FAIL
         ;; otherwise
         (side-condition (not (redex-match? al (NOT (BOOL b)) (term (unop val)))))
-        (side-condition (not (redex-match? al (numunop num) (term (unop val)))))
+        (side-condition (not (redex-match? al (numUnop num) (term (unop val)))))
         "eval-exp/unary/fail")
 
    ;; rulegroup Eval_exp/binary
-   (--> (BIN boolbinop (BOOL b_l) (BOOL b_r)) (BOOL (binop-bool boolbinop b_l b_r))
+   (--> (BIN boolBinop (BOOL b_l) (BOOL b_r)) (BOOL (binop-bool boolBinop b_l b_r))
         "eval-exp/binary/boolean")
-   (--> (BIN numbinop num_l num_r) val_res
-        (judgment-holds (binop-number numbinop num_l num_r val_res))
+   (--> (BIN numBinop num_l num_r) val_res
+        (judgment-holds (binop-number numBinop num_l num_r val_res))
         "eval-exp/binary/number")
-   (--> (BIN numbinop num_l num_r) FAIL
+   (--> (BIN numBinop num_l num_r) FAIL
         ;; otherwise: one operand is a nat and the other an int
-        (side-condition (not (judgment-holds (binop-number numbinop num_l num_r any))))
+        (side-condition (not (judgment-holds (binop-number numBinop num_l num_r any))))
         "eval-exp/binary/number/fail")
    (--> (BIN binop val_l val_r) FAIL
         ;; otherwise
         (side-condition
-         (not (redex-match? al (boolbinop (BOOL b_l) (BOOL b_r)) (term (binop val_l val_r)))))
+         (not (redex-match? al (boolBinop (BOOL b_l) (BOOL b_r)) (term (binop val_l val_r)))))
         (side-condition
-         (not (redex-match? al (numbinop num_l num_r) (term (binop val_l val_r)))))
+         (not (redex-match? al (numBinop num_l num_r) (term (binop val_l val_r)))))
         "eval-exp/binary/fail")
 
    ;; rulegroup Eval_exp/compare
-   (--> (CMP polycmpop val_l val_r) (BOOL (cmpop-poly polycmpop val_l val_r))
+   (--> (CMP polyCmpop val_l val_r) (BOOL (cmpop-poly polyCmpop val_l val_r))
         "eval-exp/compare/poly")
-   (--> (CMP numcmpop num_l num_r) (BOOL b_res)
-        (judgment-holds (cmpop-number numcmpop num_l num_r b_res))
+   (--> (CMP numCmpop num_l num_r) (BOOL b_res)
+        (judgment-holds (cmpop-number numCmpop num_l num_r b_res))
         "eval-exp/compare/number")
-   (--> (CMP numcmpop num_l num_r) FAIL
+   (--> (CMP numCmpop num_l num_r) FAIL
         ;; otherwise: one operand is a nat and the other an int
-        (side-condition (not (judgment-holds (cmpop-number numcmpop num_l num_r any))))
+        (side-condition (not (judgment-holds (cmpop-number numCmpop num_l num_r any))))
         "eval-exp/compare/number/fail")
-   (--> (CMP numcmpop val_l val_r) FAIL
+   (--> (CMP numCmpop val_l val_r) FAIL
         ;; otherwise
         (side-condition (not (redex-match? al (num_l num_r) (term (val_l val_r)))))
         "eval-exp/compare/fail")
@@ -97,11 +98,11 @@
    (--> (MATCH (OPT (val ...)) NONE) (BOOL b)
         (where b ,(null? (term (val ...))))
         "eval-exp/match/opt-none")
-   (--> (MATCH val pattern) FAIL
+   (--> (MATCH val pat) FAIL
         ;; otherwise: the value does not have the pattern's kind
-        (side-condition (not (redex-match? al ((INJ valcase) (INJ mixop)) (term (val pattern)))))
-        (side-condition (not (redex-match? al ((LIST (val ...)) listpattern) (term (val pattern)))))
-        (side-condition (not (redex-match? al ((OPT (val ...)) optpattern) (term (val pattern)))))
+        (side-condition (not (redex-match? al ((INJ valCase) (INJ mixop)) (term (val pat)))))
+        (side-condition (not (redex-match? al ((LIST (val ...)) listPat) (term (val pat)))))
+        (side-condition (not (redex-match? al ((OPT (val ...)) optPat) (term (val pat)))))
         "eval-exp/match/fail")
 
    ;;; Cons-list evaluation rules
@@ -158,16 +159,16 @@
    ;;; Dot, indexing, and slicing evaluation rules, which Eval_path shares
 
    ;; rules Eval_exp/dot and Eval_path/dot
-   (--> (DOT (STR (valfield ...)) atom) val
-        (where (atom val) ,(assoc (term atom) (term (valfield ...))))
+   (--> (DOT (STR (valField ...)) atom) val
+        (where (atom val) ,(assoc (term atom) (term (valField ...))))
         "eval-exp/dot/field")
-   (--> (DOT (STR (valfield ...)) atom) FAIL
+   (--> (DOT (STR (valField ...)) atom) FAIL
         ;; otherwise: no field atom
-        (where #f ,(assoc (term atom) (term (valfield ...))))
+        (where #f ,(assoc (term atom) (term (valField ...))))
         "eval-exp/dot/field/fail")
    (--> (DOT val atom) FAIL
         ;; otherwise: not a struct
-        (side-condition (not (redex-match? al (STR (valfield ...)) (term val))))
+        (side-condition (not (redex-match? al (STR (valField ...)) (term val))))
         "eval-exp/dot/fail")
 
    ;; rules Eval_exp/idx and Eval_path/idx
@@ -282,12 +283,12 @@
         "eval-path-upd/slice/fail")
 
    ;; Eval_path_upd/dot, on the value at the prefix
-   (--> (eval-path-upd/dot (STR (valfield ...)) atom val_n)
-        (STR ((update-field atom val_n valfield) ...))
+   (--> (eval-path-upd/dot (STR (valField ...)) atom val_n)
+        (STR ((update-field atom val_n valField) ...))
         "eval-path-upd/dot/field")
    (--> (eval-path-upd/dot val atom val_n) FAIL
         ;; otherwise: not a struct
-        (side-condition (not (redex-match? al (STR (valfield ...)) (term val))))
+        (side-condition (not (redex-match? al (STR (valField ...)) (term val))))
         "eval-path-upd/dot/fail")
 
    ;;; Expression sequences
@@ -356,13 +357,13 @@
 
    ;; rulegroup Eval_exp/iter. An iteration over sub-contexts is the option
    ;; or list of exp under each of them, which evaluates as one.
-   (--> ((ITER exp iterexp) G L) (val G L)
-        (where (varr) (is-iter-on-var (ITER exp iterexp)))
+   (--> ((ITER exp iterExp) G L) (val G L)
+        (where (varr) (is-iter-on-var (ITER exp iterExp)))
         (where (val) (find-varr L varr))
         "eval-exp/iter/simple")
-   (--> ((ITER exp iterexp) G L) (FAIL G L)
+   (--> ((ITER exp iterExp) G L) (FAIL G L)
         ;; otherwise: the variable is unbound
-        (where (varr) (is-iter-on-var (ITER exp iterexp)))
+        (where (varr) (is-iter-on-var (ITER exp iterExp)))
         (where () (find-varr L varr))
         "eval-exp/iter/simple/fail")
    (--> ((ITER exp (QUEST (vari ...))) G L) ((OPT ((IN L_sub exp) ...)) G L)

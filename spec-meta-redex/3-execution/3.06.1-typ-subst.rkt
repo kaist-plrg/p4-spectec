@@ -44,7 +44,7 @@
   [(subst-typ-inner theta typ typ_subst)
    ----------------------------------------
    (subst-typ-inner theta (ITER typ iter) (ITER typ_subst iter))]
-  [(subst-typ-inner theta FUNC FUNC)])
+  [(subst-typ-inner theta (FUNC (tparam ...) (typ ...) typ_ret) (FUNC (tparam ...) (typ ...) typ_ret))])
 
 ;; $subst_typ on each type, for a caller that iterates it. Not a watsup def:
 ;; judgment-holds takes no ellipsis.
@@ -126,9 +126,9 @@
    (judgment-holds (subst-typ theta typ typ_subst))]
   [(subtyp G tdenv (VAR id (targ ..._n)) (INJ (mixop (val ..._m))))
    (forall- ((subtyp G tdenv typ_case_found_subst val) ...))
-   (where ((DEF (tparam ..._n) (VARIANT (typcase ...)))) (find-typdef G tdenv id))
+   (where ((DEF (tparam ..._n) (VARIANT (typCase ...)))) (find-typdef G tdenv id))
    (where theta ((tparam targ) ...))
-   (where (mixop (typ_case_found ..._m)) ,(assoc (term mixop) (term (typcase ...))))
+   (where (mixop (typ_case_found ..._m)) ,(assoc (term mixop) (term (typCase ...))))
    (judgment-holds (subst-typs theta (typ_case_found ...) (typ_case_found_subst ...)))]
   [(subtyp G tdenv (VAR id (targ ..._n)) (STR ((atom val_field) ...)))
    (forall- ((subtyp G tdenv typ_field_subst val_field) ...))

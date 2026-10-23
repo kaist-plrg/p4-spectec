@@ -48,14 +48,14 @@
      (seq (e ...)) (eval-exps (exp ...))
      (eval-path val path) (eval-path-upd val path val)
      (eval-clause L clause (val ...))
-     (eval-tblrow tblrow (val ...)) (eval-tblrows (tblrow ...) (val ...))
+     (eval-tblrow tblRow (val ...)) (eval-tblrows (tblRow ...) (val ...))
      (call-table-func tableFuncDef (val ...))
      (call-defined-func definedFuncDef (typ ...) (val ...))
      (call-func-dispatch funcdef (typ ...) (val ...))
      (call-func id (typ ...) (val ...))
      (call-extern-func id (typ ...) (val ...))
      (call-builtin-func id (typ ...) (val ...))
-     (eval-rul rulmatch rulpath (val ...))
+     (eval-rul rulMatch rulPath (val ...))
      (call-defined-rel definedRelDef (val ...))
      (call-rel-dispatch reldef (val ...))
      (call-rel id (val ...))
@@ -63,8 +63,8 @@
      ;; iterations over nothing, which have no evaluation position
      (assign-exp/iter/list () (vari ...))
      ;; calls with no clause or rule path, which have no evaluation position
-     (call-defined-func/clauses () L (elsclause ...) (val ...))
-     (call-defined-rel/ruls () (elsgroup ...) (val ...))
+     (call-defined-func/clauses () L (elsClause ...) (val ...))
+     (call-defined-rel/ruls () (elsGroup ...) (val ...))
      (in-hole Fr e))
 
   ;; Finished subterms
@@ -91,10 +91,10 @@
            (UPCAST typ hole)
            (DOWNCAST typ hole)
            (SUB hole typ)
-           (MATCH hole pattern)
+           (MATCH hole pat)
            (TUP (val ... hole exp ...))
            (INJ (mixop (val ... hole exp ...)))
-           (STR ((atom val) ... (atom hole) expfield ...))
+           (STR ((atom val) ... (atom hole) expField ...))
            (OPT (hole))
            (LIST (val ... hole elem ...))
            (CONS hole exp)
@@ -142,11 +142,11 @@
             ;; the alternatives of a call: every clause or rule path is
             ;; evaluated, and a FAIL is one result among them
             (call-defined-func/clauses (valres ... hole (IN L_callee (eval-clause L_caller clause (val ...))) ...)
-                                       L (elsclause ...) (val ...))
-            (call-defined-rel/ruls (valsres ... hole (IN L (eval-rul rulmatch rulpath (val ...))) ...)
-                                   (elsgroup ...) (val ...))
+                                       L (elsClause ...) (val ...))
+            (call-defined-rel/ruls (valsres ... hole (IN L (eval-rul rulMatch rulPath (val ...))) ...)
+                                   (elsGroup ...) (val ...))
             ;; Eval_tblrows/cons-fail, which tries the next row
-            (eval-tblrows/cons hole (tblrow ...) (val ...)))
+            (eval-tblrows/cons hole (tblRow ...) (val ...)))
   (Fr ::= Fr-pass Fr-catch)
 
   ;; Frames within one local context, and across local contexts

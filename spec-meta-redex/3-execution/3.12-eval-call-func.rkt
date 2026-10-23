@@ -34,17 +34,17 @@
    ;; rulegroup Eval_tblrows. cons-succ and cons-fail share their premise.
    (--> (eval-tblrows () (val ...)) FAIL
         "eval-tblrows/nil")
-   (--> (eval-tblrows (tblrow_h tblrow_t ...) (val ...))
-        (eval-tblrows/cons (eval-tblrow tblrow_h (val ...)) (tblrow_t ...) (val ...))
+   (--> (eval-tblrows (tblRow_h tblRow_t ...) (val ...))
+        (eval-tblrows/cons (eval-tblrow tblRow_h (val ...)) (tblRow_t ...) (val ...))
         "eval-tblrows/cons")
-   (--> (eval-tblrows/cons val_out (tblrow_t ...) (val ...)) val_out
+   (--> (eval-tblrows/cons val_out (tblRow_t ...) (val ...)) val_out
         "eval-tblrows/cons-succ")
-   (--> (eval-tblrows/cons FAIL (tblrow_t ...) (val ...)) (eval-tblrows (tblrow_t ...) (val ...))
+   (--> (eval-tblrows/cons FAIL (tblRow_t ...) (val ...)) (eval-tblrows (tblRow_t ...) (val ...))
         "eval-tblrows/cons-fail")
 
    ;; rule Call_table_func
-   (--> (call-table-func (TABLE (param ...) (tblrow ...)) (val ...))
-        (eval-tblrows (tblrow ...) (val ...))
+   (--> (call-table-func (TABLE (param ...) (tblRow ...)) (val ...))
+        (eval-tblrows (tblRow ...) (val ...))
         "call-table-func")
 
    ;;; Defined meta-function invocation
@@ -53,21 +53,21 @@
    ;; ->term+ctx), once every clause is evaluated, with Eval_clauses's
    ;; $det_valres: the one success, or the `otherwise` clause in the callee's
    ;; layer when none, or FAIL when several (a nondeterministic call)
-   (--> (call-defined-func/clauses (FAIL ... val_func FAIL ...) L_caller (elsclause ...) (val ...))
+   (--> (call-defined-func/clauses (FAIL ... val_func FAIL ...) L_caller (elsClause ...) (val ...))
         val_func
         "call-defined-func/succ")
-   (--> (call-defined-func/clauses (FAIL ...) L_caller (elsclause) (val ...))
-        (eval-clause L_caller elsclause (val ...))
+   (--> (call-defined-func/clauses (FAIL ...) L_caller (elsClause) (val ...))
+        (eval-clause L_caller elsClause (val ...))
         "call-defined-func/fail")
    (--> (call-defined-func/clauses (FAIL ...) L_caller () (val ...)) FAIL
         "call-defined-func/fail/none")
    (--> (call-defined-func/clauses (valres_1 ... val_1 valres_2 ... val_2 valres_3 ...)
-                                   L_caller (elsclause ...) (val ...))
+                                   L_caller (elsClause ...) (val ...))
         FAIL
         "call-defined-func/nondet")
    (--> (call-defined-func definedFuncDef (typ ...) (val ...)) FAIL
         ;; otherwise: as many types as type parameters
-        (where (DEF (tparam ...) (clause ...) (elsclause ...)) definedFuncDef)
+        (where (DEF (tparam ...) (clause ...) (elsClause ...)) definedFuncDef)
         (side-condition (not (= (length (term (tparam ...))) (length (term (typ ...))))))
         "call-defined-func/typs/fail")
 
@@ -123,9 +123,9 @@
    (--> ((call-defined-func definedFuncDef (typ ..._n) (val ...)) G L)
         ((IN L_callee
              (call-defined-func/clauses ((IN L_callee (eval-clause L clause (val ...))) ...)
-                                        L (elsclause ...) (val ...)))
+                                        L (elsClause ...) (val ...)))
          G L)
-        (where (DEF (tparam ..._n) (clause ...) (elsclause ...)) definedFuncDef)
+        (where (DEF (tparam ..._n) (clause ...) (elsClause ...)) definedFuncDef)
         (where {TYP tdenv_empty REL renv FUNC fenv VAL venv} (empty-layer))
         (where L_callee {TYP ((tparam (DEF () (ALIAS typ))) ...) REL renv FUNC fenv VAL venv})
         "call-defined-func")

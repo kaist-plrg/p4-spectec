@@ -1,8 +1,7 @@
 #lang racket/base
 ;; spec-meta/1-syntax/1.0-syntax.watsup.
 
-(require json
-         redex/reduction-semantics
+(require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt")
 (provide syntax)
 
@@ -12,6 +11,9 @@
   (atom ::= text)
   (mixop ::= ((atom ...) ...))
 
+  ;; Numbers
+  (num ::= (NAT nat) (INT int))
+
   ;; Types
   (numtyp ::= NAT INT)
   (optyp ::= BOOL numtyp TEXT)
@@ -20,13 +22,13 @@
        (VAR id (targ ...))
        (TUP (typ ...))
        (ITER typ iter)
-       FUNC)
+       (FUNC (tparam ...) (typ ...) typ))
   (deftyp ::=
           (ALIAS typ)
-          (STRUCT (typfield ...))
-          (VARIANT (typcase ...)))
-  (typfield ::= (atom typ))
-  (typcase ::= (mixop (typ ...)))
+          (STRUCT (typField ...))
+          (VARIANT (typCase ...)))
+  (typField ::= (atom typ))
+  (typCase ::= (mixop (typ ...)))
 
   ;; Iterators
   (iter ::= QUEST STAR)
@@ -34,33 +36,21 @@
   ;; Variables
   (vari ::= (id typ (iter ...)))
 
-  ;; Numbers and operators
-  (num ::= (NAT nat) (INT int))
-  (boolunop ::= NOT)
-  (boolbinop ::= AND OR IMPL EQUIV)
-  (numunop ::= PLUS MINUS)
-  (numbinop ::= ADD SUB MUL DIV MOD POW)
-  (numcmpop ::= LT GT LE GE)
-  (polycmpop ::= EQ NE)
-  (unop ::= boolunop numunop)
-  (binop ::= boolbinop numbinop)
-  (cmpop ::= polycmpop numcmpop)
+  ;; Operators
+  (boolUnop ::= NOT)
+  (numUnop ::= PLUS MINUS)
+  (unop ::= boolUnop numUnop)
+  (boolBinop ::= AND OR IMPL EQUIV)
+  (numBinop ::= ADD SUB MUL DIV MOD POW)
+  (binop ::= boolBinop numBinop)
+  (numCmpop ::= LT GT LE GE)
+  (polyCmpop ::= EQ NE)
+  (cmpop ::= polyCmpop numCmpop)
 
-  ;; Values
-  (json ::= (side-condition any_json (jsexpr? (term any_json))))
-  (val ::=
-       (BOOL bool)
-       num
-       (TEXT text)
-       (STR (valfield ...))
-       (INJ valcase)
-       (TUP (val ...))
-       (OPT ()) (OPT (val))
-       (LIST (val ...))
-       (FUNC id)
-       (EXT json))
-  (valfield ::= (atom val))
-  (valcase ::= (mixop (val ...)))
+  ;; Patterns
+  (listPat ::= CONS (FIXED nat) NIL)
+  (optPat ::= SOME NONE)
+  (pat ::= (INJ mixop) listPat optPat)
 
   ;; Expressions
   (exp ::=
@@ -74,10 +64,10 @@
        (UPCAST typ exp)
        (DOWNCAST typ exp)
        (SUB exp typ)
-       (MATCH exp pattern)
+       (MATCH exp pat)
        (TUP (exp ...))
-       (INJ expcase)
-       (STR (expfield ...))
+       (INJ expCase)
+       (STR (expField ...))
        (OPT ()) (OPT (exp))
        (LIST (exp ...))
        (CONS exp exp)
@@ -89,15 +79,10 @@
        (SLICE exp exp exp)
        (UPD exp path exp)
        (CALL id (targ ...) (arg ...))
-       (ITER exp iterexp))
-  (expcase ::= (mixop (exp ...)))
-  (expfield ::= (atom exp))
-  (iterexp ::= (iter (vari ...)))
-
-  ;; Patterns
-  (listpattern ::= CONS (FIXED nat) NIL)
-  (optpattern ::= SOME NONE)
-  (pattern ::= (INJ mixop) listpattern optpattern)
+       (ITER exp iterExp))
+  (expCase ::= (mixop (exp ...)))
+  (expField ::= (atom exp))
+  (iterExp ::= (iter (vari ...)))
 
   ;; Paths
   (path ::=
@@ -113,45 +98,52 @@
   ;; Type parameters
   (tparam ::= id)
 
-
   ;; Parameters
   (param ::=
          (EXP typ)
          (FUN id (tparam ...) (param ...) typ))
 
   ;; Premises
-  (iterprem ::= (iter (vari ...) (vari ...)))
   (prem ::=
         (REL id (exp ...) (exp ...))
         (IF exp)
         (IFHOLD id (exp ...))
         (IFNOTHOLD id (exp ...))
         (LET exp exp)
-        (ITER prem iterprem)
+        (ITER prem iterPrem)
         (DEBUG exp))
+  (iterPrem ::= (iter (vari ...) (vari ...)))
+
+  ;; Type definitions
+  (externTypDefn ::= (EXTTYP id))
+  (definedTypDefn ::= (TYP id (tparam ...) deftyp))
+  (typDefn ::= externTypDefn definedTypDefn)
+
+  ;; Relation definitions
+  (externRelDefn ::= (EXTREL id (typ ...) (typ ...)))
+  (rulMatch ::= ((exp ...) (prem ...)))
+  (rulPath ::= (id (exp ...) (prem ...)))
+  (rulGroup ::= (id rulMatch (rulPath ...)))
+  (elsGroup ::= (id rulMatch rulPath))
+  (definedRelDefn ::=
+                  (REL id (typ ...) (typ ...) (rulGroup ...) ())
+                  (REL id (typ ...) (typ ...) (rulGroup ...) (elsGroup)))
+  (relDefn ::= externRelDefn definedRelDefn)
+
+  ;; Meta-functions
+  (externFuncDefn ::= (EXTFUNC id (tparam ...) (param ...) typ))
+  (builtinFuncDefn ::= (BUILTINFUNC id (tparam ...) (param ...) typ))
+  (tblRow ::= ((arg ...) exp (prem ...)))
+  (tableFuncDefn ::= (TABLEFUNC id (param ...) typ (tblRow ...)))
+  (clause ::= ((arg ...) exp (prem ...)))
+  (elsClause ::= clause)
+  (definedFuncDefn ::=
+                   (FUNC id (tparam ...) (param ...) typ (clause ...) ())
+                   (FUNC id (tparam ...) (param ...) typ (clause ...) (elsClause)))
+  (funcDefn ::= externFuncDefn builtinFuncDefn tableFuncDefn definedFuncDefn)
 
   ;; Definitions
-  (rulmatch ::= ((exp ...) (prem ...)))
-  (rulpath ::= (id (exp ...) (prem ...)))
-  (rulgroup ::= (id rulmatch (rulpath ...)))
-  (elsgroup ::= (id rulmatch rulpath))
+  (defn ::= typDefn relDefn funcDefn)
 
-  (clause ::= ((arg ...) exp (prem ...)))
-  (elsclause ::= clause)
-
-  (tblrow ::= ((arg ...) exp (prem ...)))
-
-  (defn ::=
-        (EXTTYP id)
-        (TYP id (tparam ...) deftyp)
-        (EXTREL id (typ ...) (typ ...))
-        (REL id (typ ...) (typ ...) (rulgroup ...) ())
-        (REL id (typ ...) (typ ...) (rulgroup ...) (elsgroup))
-        (EXTFUNC id (tparam ...) (param ...) typ)
-        (BUILTINFUNC id (tparam ...) (param ...) typ)
-        (TABLEFUNC id (param ...) typ (tblrow ...))
-        (FUNC id (tparam ...) (param ...) typ (clause ...) ())
-        (FUNC id (tparam ...) (param ...) typ (clause ...) (elsclause)))
-
-  ;; Scripts
-  (script ::= (defn ...)))
+  ;; Spec
+  (spec ::= (defn ...)))

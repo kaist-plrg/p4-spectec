@@ -7,7 +7,7 @@
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
-         "3.01-env.rkt"
+         "../2-runtime/2.1-variable.rkt"
          "3.02-context.rkt"
          "3.03-machine.rkt")
 (provide ->term/eval-assign
@@ -76,14 +76,14 @@
          (not (redex-match? al ((LIST (exp ...)) (LIST (val ...))) (term (exp val)))))
         (side-condition
          (not (redex-match? al ((CONS exp_h exp_t) (LIST (val_h val_t ...))) (term (exp val)))))
-        (side-condition (not (redex-match? al (ITER exp iterexp) (term exp))))
+        (side-condition (not (redex-match? al (ITER exp iterExp) (term exp))))
         "assign-exp/fail")
-   (--> (assign-exp (ITER exp iterexp) val) FAIL
-        (where () (is-iter-on-var (ITER exp iterexp)))
+   (--> (assign-exp (ITER exp iterExp) val) FAIL
+        (where () (is-iter-on-var (ITER exp iterExp)))
         (side-condition
-         (not (redex-match? al ((QUEST (vari ...)) (OPT (val ...))) (term (iterexp val)))))
+         (not (redex-match? al ((QUEST (vari ...)) (OPT (val ...))) (term (iterExp val)))))
         (side-condition
-         (not (redex-match? al ((STAR (vari ...)) (LIST (val ...))) (term (iterexp val)))))
+         (not (redex-match? al ((STAR (vari ...)) (LIST (val ...))) (term (iterExp val)))))
         "assign-exp/iter/fail")
 
    ;;; Assigning to a sequence of expressions
@@ -133,8 +133,8 @@
 
    ;; rulegroup Assign_exp/iter
 
-   (--> ((assign-exp (ITER exp iterexp) val) G L) (OK G (add-varr L varr val))
-        (where (varr) (is-iter-on-var (ITER exp iterexp)))
+   (--> ((assign-exp (ITER exp iterExp) val) G L) (OK G (add-varr L varr val))
+        (where (varr) (is-iter-on-var (ITER exp iterExp)))
         "assign-exp/iter/simple")
 
    (--> ((assign-exp (ITER exp (QUEST (vari ...))) (OPT ())) G L)

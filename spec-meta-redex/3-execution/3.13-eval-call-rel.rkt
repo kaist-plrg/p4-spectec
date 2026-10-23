@@ -21,14 +21,14 @@
 (provide ->term/eval-call-rel
          ->term+ctx/eval-call-rel)
 
-;; Every (rulmatch, rulpath) pair of the groups, in order: the attempts of
+;; Every (rulMatch, rulPath) pair of the groups, in order: the attempts of
 ;; a relation call
 (define-metafunction al
-  rul-attempts : (rulgroup ...) -> ((rulmatch rulpath) ...)
+  rul-attempts : (rulGroup ...) -> ((rulMatch rulPath) ...)
   [(rul-attempts ()) ()]
-  [(rul-attempts ((id rulmatch (rulpath ...)) rulgroup ...))
-   ((rulmatch rulpath) ... any ...)
-   (where (any ...) (rul-attempts (rulgroup ...)))])
+  [(rul-attempts ((id rulMatch (rulPath ...)) rulGroup ...))
+   ((rulMatch rulPath) ... any ...)
+   (where (any ...) (rul-attempts (rulGroup ...)))])
 
 ;; The rules on a term
 (define ->term/eval-call-rel
@@ -50,25 +50,25 @@
    ;; the relation's layer
    (--> (call-defined-rel definedRelDef (val ...))
         (IN L_local
-            (call-defined-rel/ruls ((IN L_local (eval-rul rulmatch rulpath (val ...))) ...)
-                                   (elsgroup ...) (val ...)))
-        (where (DEF (rulgroup ...) (elsgroup ...)) definedRelDef)
-        (where ((rulmatch rulpath) ...) (rul-attempts (rulgroup ...)))
+            (call-defined-rel/ruls ((IN L_local (eval-rul rulMatch rulPath (val ...))) ...)
+                                   (elsGroup ...) (val ...)))
+        (where (DEF (rulGroup ...) (elsGroup ...)) definedRelDef)
+        (where ((rulMatch rulPath) ...) (rul-attempts (rulGroup ...)))
         (where L_local (empty-layer))
         "call-defined-rel")
    ;; once every path is evaluated, with $det_valsres: the one success, or
    ;; the else group in the relation's layer when none, or FAIL when several
    ;; (a nondeterministic call)
-   (--> (call-defined-rel/ruls (FAIL ... (OK (val_rel ...)) FAIL ...) (elsgroup ...) (val ...))
+   (--> (call-defined-rel/ruls (FAIL ... (OK (val_rel ...)) FAIL ...) (elsGroup ...) (val ...))
         (OK (val_rel ...))
         "call-defined-rel/succ")
-   (--> (call-defined-rel/ruls (FAIL ...) ((id rulmatch rulpath)) (val ...))
-        (eval-rul rulmatch rulpath (val ...))
+   (--> (call-defined-rel/ruls (FAIL ...) ((id rulMatch rulPath)) (val ...))
+        (eval-rul rulMatch rulPath (val ...))
         "call-defined-rel/fail")
    (--> (call-defined-rel/ruls (FAIL ...) () (val ...)) FAIL
         "call-defined-rel/fail/none")
    (--> (call-defined-rel/ruls (valsres_1 ... (OK (val_1 ...)) valsres_2 ... (OK (val_2 ...)) valsres_3 ...)
-                               (elsgroup ...) (val ...))
+                               (elsGroup ...) (val ...))
         FAIL
         "call-defined-rel/nondet")
 
