@@ -1,7 +1,7 @@
 //! Algorithmic conversion through the IL-to-AL specification
 //!
 //! `algo` elaborates the input specification and encodes its IL,
-//! then runs `Algo_spec` of the IL-to-AL specification on it and decodes the AL.
+//! then runs `Algo_IL` of the IL-to-AL specification on it and decodes the AL.
 //! The IL-to-AL specification itself is converted by the native `algo` pass;
 //! that bootstrap is the only native conversion involved.
 //! A missing derivation means the input has no AL, not that execution failed.
@@ -42,7 +42,7 @@ pub fn algo(
     let value_il = spec_il
         .encode(&mut arena)
         .map_err(|error| error.into_report())?;
-    let values = match runner.eval_rel(&mut arena, "Algo_spec", &[value_il]).result {
+    let values = match runner.eval_rel(&mut arena, "Algo_IL", &[value_il]).result {
         Ok(values) => values,
         // No derivation: the specification has no algorithmic form
         Err(InterpreterError::Mismatch(_)) => {
@@ -51,7 +51,7 @@ pub fn algo(
         Err(InterpreterError::Fatal(report)) => return Err(report),
     };
     let [value_al] = values.as_slice() else {
-        return Err(input_invalid("Algo_spec must produce one AL specification"));
+        return Err(input_invalid("Algo_IL must produce one AL specification"));
     };
     al::Spec::decode(&mut arena, *value_al).map_err(|error| error.into_report())
 }

@@ -1,6 +1,6 @@
 //! Synthetic AL entry functions for encoded programs
 //!
-//! The meta specification's Entry invokes main() in its input script.
+//! The meta specification's `Eval_AL` invokes main() in its input script.
 //! An added main calls the selected single-input relation and returns "pass".
 //! Relation notation, input positions, and output types come from the source AST;
 //! literal expressions retain the parsed program's types and spans.

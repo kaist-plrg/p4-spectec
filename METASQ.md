@@ -39,12 +39,12 @@ Run it with the supplied AL tower:
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Entry", "lang": "al" }
+    { "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" }
   ]
 }
 ```
 
-The single level is both top level and native base. Its `Entry` interprets the
+The single level is both top level and native base. Its `Eval_AL` interprets the
 AL script. Builtin calls use the input script's definitions;
 other host operations are unsupported.
 Repeat `-p` for ordered specification source paths.
@@ -63,7 +63,7 @@ Use the supplied AL/P4 tower:
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Entry", "lang": "al" },
+    { "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" },
     { "specdir": "../spec", "rel": "Program_inst", "lang": "p4" }
   ]
 }
@@ -87,7 +87,7 @@ relative to the configuration file. CLI program and include paths are
 resolved relative to the current working directory.
 
 To add an AL interpretation layer, insert another
-`{ "specdir": "../spec-meta", "rel": "Entry", "lang": "al" }`
+`{ "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" }`
 below the top level. Names such as `al-al.json` and `al-al-p4.json` describe
 these additional configurations; only `al.json`, `al-p4.json`, and
 `al-p4-ok.json` are supplied.
@@ -104,7 +104,7 @@ exit code.
 
 ## Algo through the IL-to-AL specification
 
-`spec-meta/3-algo` specifies the IL-to-AL pass as the relation `Algo_spec`.
+`spec-meta/3-algo` specifies the IL-to-AL pass as the relation `Algo_IL`.
 A tower with an `algo` entry converts the specification under test to AL through it:
 
 ```json
@@ -112,7 +112,7 @@ A tower with an `algo` entry converts the specification under test to AL through
   "mode": "sl",
   "algo": "../spec-meta",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Entry", "lang": "al" },
+    { "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" },
     { "specdir": "../spec", "rel": "Program_inst", "lang": "p4" }
   ]
 }
@@ -120,7 +120,7 @@ A tower with an `algo` entry converts the specification under test to AL through
 
 The specification under test is the P4 target's specification
 or, for an AL target, the input script.
-It is elaborated, encoded as IL, converted by `Algo_spec`, and decoded once
+It is elaborated, encoded as IL, converted by `Algo_IL`, and decoded once
 when the tower is built; every input then reuses that AL.
 The IL-to-AL specification itself and the other levels are converted by the native `algo` pass.
 `towers/algo-al.json`, `towers/algo-al-p4.json`, and `towers/algo-al-p4-ok.json`
