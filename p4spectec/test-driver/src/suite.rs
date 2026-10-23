@@ -86,7 +86,7 @@ pub struct RunSuite {
 
 /// Registers a metacircular corpus run through one tower.
 ///
-/// The tower's target decides the entry relation
+/// The tower's top level decides the entry relation
 /// and whether inputs are P4 programs or AL scripts.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
