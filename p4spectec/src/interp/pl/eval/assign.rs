@@ -2,7 +2,7 @@
 //!
 //! Expression patterns retain PL syntax until `assign_exp` removes hints.
 //! Shared assignment then binds their prepared slots.
-//! `assign_params` resolves function arguments in the caller's context.
+//! `assign_params` binds function arguments to their parameters' slots.
 
 use std::borrow::Borrow;
 
@@ -19,7 +19,7 @@ use crate::interp::pl::context::Context;
 
 use super::strip::strip_exp;
 
-use shared::assign_def;
+use shared::assign_def_arg;
 
 // = Expression assignment
 
@@ -50,10 +50,9 @@ pub(super) fn assign_exps<'g, T: Borrow<ast::Exp>>(
 
 // = Parameter assignment
 
-/// Binds prepared parameter patterns and resolves caller function aliases.
+/// Binds prepared parameter patterns and function arguments.
 pub(super) fn assign_params<'g>(
     arena: &mut Arena,
-    ctx_caller: &Context<'_>,
     mut ctx: Context<'g>,
     params: &[ast::Param],
     values: &[Value],
@@ -64,7 +63,7 @@ pub(super) fn assign_params<'g>(
     for (param, value) in params.iter().zip(values) {
         let result = match &param.node {
             ast::ParamKind::Exp(_, exp) => assign_exp(arena, ctx, exp, *value),
-            ast::ParamKind::Def(id, ..) => assign_def(arena, ctx_caller, ctx, id, *value),
+            ast::ParamKind::Def(id, ..) => assign_def_arg(ctx, id, *value),
         };
         ctx = unwrap!(result);
     }
