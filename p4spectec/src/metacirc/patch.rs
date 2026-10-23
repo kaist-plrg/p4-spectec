@@ -9,7 +9,6 @@
 
 use super::{
     Result,
-    config::Lang,
     error::entry_invalid,
     tower::{Level, Tower},
 };
@@ -42,7 +41,7 @@ impl Tower {
         Ok(value)
     }
 
-    /// Patches level `idx` and encodes it for the level below, which consumes it.
+    /// Patches level `idx` and encodes it in the form the level below accepts.
     fn entry_encoded(
         arena: &mut Arena,
         levels: &[Level],
@@ -50,18 +49,17 @@ impl Tower {
         value: Value,
     ) -> Result<Value> {
         let level = &levels[idx];
-        let name = &level.config.rel;
-        let encoded = match levels[idx - 1].config.lang {
+        let name = &level.config().rel;
+        let encoded = match level {
+            Level::AboveAl { spec_al, .. } => {
+                Self::entry_al(arena, spec_al, name, value)?.encode(arena)
+            }
             // An IL consumer converts the patched IL itself
-            Lang::Il => {
-                let spec_il = level.spec_il.as_ref().ok_or_else(|| {
-                    entry_invalid(format!("level {idx} has no IL for its consumer"))
-                })?;
+            Level::AboveIl { spec_il, .. } => {
                 Self::entry_il(arena, spec_il, name, value)?.encode(arena)
             }
-            // Only the top level accepts P4, and the top level is never consumed
-            Lang::Al | Lang::P4 => {
-                Self::entry_al(arena, &level.spec_al, name, value)?.encode(arena)
+            Level::Base { .. } => {
+                return Err(entry_invalid("the base is never passed to another level"));
             }
         };
         encoded.map_err(|error| error.into_report())

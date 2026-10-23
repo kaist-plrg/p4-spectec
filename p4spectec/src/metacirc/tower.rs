@@ -25,12 +25,34 @@ pub struct Tower {
     pub(super) base: Layer,
 }
 
-/// The AL of a specification paired with its configuration.
-pub(super) struct Level {
-    pub(super) config: LevelConfig,
-    pub(super) spec_al: al::Spec,
-    /// The IL, kept when the level below accepts IL.
-    pub(super) spec_il: Option<il::Spec>,
+/// A configured specification, by the form it is passed to the level below.
+///
+/// Every level keeps its AL for its own native runner.
+pub(super) enum Level {
+    /// The base, which no level interprets.
+    Base { config: LevelConfig, spec_al: al::Spec },
+    /// A level above one accepting AL, which receives the patched AL.
+    AboveAl { config: LevelConfig, spec_al: al::Spec },
+    /// A level above one accepting IL, which receives the patched IL.
+    AboveIl { config: LevelConfig, spec_al: al::Spec, spec_il: il::Spec },
+}
+
+impl Level {
+    pub(super) fn config(&self) -> &LevelConfig {
+        match self {
+            Self::Base { config, .. }
+            | Self::AboveAl { config, .. }
+            | Self::AboveIl { config, .. } => config,
+        }
+    }
+
+    pub(super) fn spec_al(&self) -> &al::Spec {
+        match self {
+            Self::Base { spec_al, .. }
+            | Self::AboveAl { spec_al, .. }
+            | Self::AboveIl { spec_al, .. } => spec_al,
+        }
+    }
 }
 
 /// The native runner of one level, selected by the language it interprets.
@@ -50,7 +72,7 @@ impl Tower {
     /// Executes a patched input at the native base's entry relation.
     pub fn eval_program(&mut self, arena: &mut Arena, program: Value) -> Eval<Vec<Value>> {
         self.base
-            .eval_program(arena, &self.levels[0].config.rel, program)
+            .eval_program(arena, &self.levels[0].config().rel, program)
     }
 }
 

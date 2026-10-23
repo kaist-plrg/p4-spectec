@@ -43,7 +43,7 @@ use super::{
 use crate::{
     interface::{self, meta::shared::Cache},
     lang::{al::ast as al, data::arena::Arena, il::ast as il},
-    pass::structure,
+    pass::{algo, structure},
     phrase,
     runner::{self, NullExtern, Runner, Spec},
     sim_plugin::dummy::Dummy,
@@ -107,7 +107,7 @@ fn build_top(
     program: &ProgramConfig,
     options: runner::Config,
 ) -> Result<Layer> {
-    let spec_top = into_runner_spec(mode, top.spec_al.clone())?;
+    let spec_top = into_runner_spec(mode, top.spec_al().clone())?;
     match program {
         ProgramConfig::Al { spec_al } => {
             build_terminal(arena, spec_top, spec_al.clone(), mode, options)
@@ -133,7 +133,7 @@ fn build_relay(
     layer_next: Layer,
     options: runner::Config,
 ) -> Result<Layer> {
-    let spec = into_runner_spec(mode, level.spec_al.clone())?;
+    let spec = into_runner_spec(mode, level.spec_al().clone())?;
     let external = AlExtern::Relay(RelayExtern {
         cache: Box::new(Cache::new(options.cache)),
         layer_next: Box::new(layer_next),
@@ -165,23 +165,38 @@ impl Tower {
                 ));
             }
         }
-        // Convert each specification to AL once, preserving base-to-top order
+        // Convert each specification once, preserving base-to-top order;
+        // the level below decides whether a level is passed as AL or IL
         let levels = config
             .levels
             .iter()
             .enumerate()
             .map(|(idx, level)| {
                 let paths = std::slice::from_ref(&level.specdir);
-                let spec_al = crate::algo(paths)?;
-                // A level accepting IL receives the IL of the level above
-                let spec_il = match idx
-                    .checked_sub(1)
-                    .map(|idx_below| config.levels[idx_below].lang)
-                {
-                    Some(Lang::Il) => Some(crate::elab(paths)?),
-                    _ => None,
-                };
-                Ok(Level { config: level.clone(), spec_al, spec_il })
+                let config_level = level.clone();
+                Ok(
+                    match idx
+                        .checked_sub(1)
+                        .map(|idx_below| config.levels[idx_below].lang)
+                    {
+                        None => Level::Base { config: config_level, spec_al: crate::algo(paths)? },
+                        Some(Lang::Al) => {
+                            Level::AboveAl { config: config_level, spec_al: crate::algo(paths)? }
+                        }
+                        // Elaborate once for the native runner and for the IL passed below
+                        Some(Lang::Il) => {
+                            let spec_il = crate::elab(paths)?;
+                            let spec_al = algo::convert(spec_il.clone())?;
+                            Level::AboveIl { config: config_level, spec_al, spec_il }
+                        }
+                        Some(Lang::P4) => {
+                            return Err(config_invalid(format!(
+                                "level {} accepts P4 below the top level",
+                                idx - 1
+                            )));
+                        }
+                    },
+                )
             })
             .collect::<Result<Vec<_>>>()?;
 
