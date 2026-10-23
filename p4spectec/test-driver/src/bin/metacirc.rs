@@ -94,7 +94,7 @@ fn execute(cli: Cli) -> Result<()> {
             let config_tower = TowerConfig::from_file(&suite.tower)
                 .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
             let input_suite = match config_tower.top_lang() {
-                Lang::Al => Input::Al,
+                Lang::Al | Lang::Il => Input::Al,
                 Lang::P4 => Input::P4,
             };
             if input_suite == input {

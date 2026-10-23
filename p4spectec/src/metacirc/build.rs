@@ -121,7 +121,7 @@ impl Tower {
     ) -> Result<Self> {
         // The input environment must match the top level's language
         match (config.top_lang(), program) {
-            (Lang::Al, ProgramConfig::Al { .. }) | (Lang::P4, ProgramConfig::P4) => {}
+            (Lang::Al | Lang::Il, ProgramConfig::Al { .. }) | (Lang::P4, ProgramConfig::P4) => {}
             _ => {
                 return Err(config_invalid(
                     "program language must match the top level of the tower",
@@ -143,7 +143,15 @@ impl Tower {
                 } else {
                     crate::algo(paths)?
                 };
-                Ok(Level { config: level.clone(), spec_al })
+                // A level accepting IL receives the IL of the level above
+                let spec_il = match idx
+                    .checked_sub(1)
+                    .map(|idx_below| config.levels[idx_below].lang)
+                {
+                    Some(Lang::Il) => Some(crate::elab(paths)?),
+                    _ => None,
+                };
+                Ok(Level { config: level.clone(), spec_al, spec_il })
             })
             .collect::<Result<Vec<_>>>()?;
 

@@ -51,7 +51,7 @@ pub fn run(config: &MetacircConfig, options: ExecutionOptions) -> Result<()> {
             .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
         match config_tower.top_lang() {
             Lang::P4 => suites_p4.push(suite),
-            Lang::Al => suites_al.push(suite),
+            Lang::Al | Lang::Il => suites_al.push(suite),
         }
     }
     if !suites_al.is_empty() {

@@ -1,7 +1,9 @@
 //! JSON descriptions of AL interpreter towers
 //!
-//! Levels run from the native base toward a top level consuming AL or P4.
-//! The native backend is AL or SL; all meta interfaces represent AL scripts.
+//! Levels run from the native base toward a top level consuming AL, IL, or P4.
+//! Each level names the language it accepts:
+//! the level above it is passed to it as AL or IL.
+//! The native backend is AL or SL.
 //! Specification paths are resolved relative to the JSON file.
 
 use super::{Result, error::config_invalid};
@@ -52,6 +54,8 @@ pub struct LevelConfig {
 pub enum Lang {
     /// An AL script.
     Al,
+    /// An IL script, converted to AL by the accepting specification.
+    Il,
     /// A P4 program, at the top level only.
     P4,
 }
@@ -59,7 +63,7 @@ pub enum Lang {
 /// Supplies input definitions required by the top level's host interface.
 #[derive(Clone, Debug)]
 pub enum ProgramConfig {
-    /// The AL input whose definitions supply the terminal builtin environment.
+    /// The AL or IL input whose AL supplies the terminal builtin environment.
     Al { spec_al: al::Spec },
     /// P4 inputs use builtins from the top level's specification.
     P4,
@@ -105,12 +109,12 @@ impl TowerConfig {
         if levels.is_empty() {
             return Err(config_invalid("a tower requires at least one level"));
         }
-        // Only the top level may consume a language other than AL
+        // Only the top level may consume P4
         let idx_top = levels.len() - 1;
         for (idx, level) in levels.iter().enumerate() {
-            if idx != idx_top && level.lang != Lang::Al {
+            if idx != idx_top && level.lang == Lang::P4 {
                 return Err(config_invalid(format!(
-                    "invalid language at level {idx}: expected Al"
+                    "invalid language at level {idx}: expected al or il"
                 )));
             }
             if level.rel.is_empty() || level.specdir.as_os_str().is_empty() {

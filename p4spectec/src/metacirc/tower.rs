@@ -12,7 +12,7 @@ use crate::{
     lang::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},
-        il::ast::Typ,
+        il::ast::{self as il, Typ},
     },
     runner::{Eval, Runner},
     sim_plugin::dummy::Dummy,
@@ -29,6 +29,8 @@ pub struct Tower {
 pub(super) struct Level {
     pub(super) config: LevelConfig,
     pub(super) spec_al: al::Spec,
+    /// The IL, kept when the level below accepts IL.
+    pub(super) spec_il: Option<il::Spec>,
 }
 
 /// The native runner of one level, selected by the language it interprets.
