@@ -1,13 +1,15 @@
 // Entry point.
 //
-// Mirrors spec-meta/3-execution/3.13-entry.watsup.
+// Mirrors spec-meta/3-execution/3.13-entry.watsup. The outcome of the run is
+// printed last: a value or `passed` for `OK`, `fail` for `UNMATCH`, `error`
+// for `ERROR`.
 
 requires "3.13-eval-call-rel.k"
 
 module AL
   imports CALL-REL
 
-  // Calls $main(), assuming it exists in the given script.
+  // Calls $main(), assuming it exists in the given spec.
   rule <k> afterLoad()
         => logDebug(textV("load complete"))
            ~> logDebug(textV("into call"))
@@ -17,7 +19,7 @@ module AL
        </k>
        <p4prog> noP4() </p4prog>
 
-  // Calls entry relation with a P4 program
+  // Calls the entry relation with a P4 program.
   rule <k> afterLoad()
         => logDebug(textV("load complete"))
            ~> logDebug(textV("into call"))
