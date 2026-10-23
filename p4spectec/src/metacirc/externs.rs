@@ -100,10 +100,10 @@ impl TerminalExtern {
             Ok(args) => args,
             Err(error) => return Eval::new(Err(error), SideEffect::Pure),
         };
-        // Dispatch through the separately prepared program definition environment
+        // Answer the builtin through the program's interface
         let eval = self
             .runner_program
-            .eval_func(arena, &id.node, &targs, &values);
+            .eval_builtin(arena, &id, &targs, &values);
         codec::encode::func_result(arena, &mut self.cache, eval)
     }
 
@@ -122,23 +122,35 @@ impl RelayExtern {
         values: &[Value],
     ) -> Eval<Vec<Value>, ExternError> {
         match name {
-            // Builtin and extern functions share a call shape and one result value
-            "Call_builtin_func" | "Call_extern_func" => {
+            // Builtins are answered by the next level's interface
+            "Call_builtin_func" => {
                 let (id, targs, values) =
                     match codec::decode::func_args(arena, &mut self.cache, values) {
                         Ok(args) => args,
                         Err(error) => return Eval::new(Err(error), SideEffect::Pure),
                     };
-                let eval = self.layer_next.eval_func(arena, &id.node, &targs, &values);
+                let eval = self.layer_next.eval_builtin(arena, &id, &targs, &values);
                 codec::encode::func_result(arena, &mut self.cache, eval)
             }
-            // Relations return an ordered list of outputs
+            // Host functions are answered by the next level's extern
+            "Call_extern_func" => {
+                let (id, targs, values) =
+                    match codec::decode::func_args(arena, &mut self.cache, values) {
+                        Ok(args) => args,
+                        Err(error) => return Eval::new(Err(error), SideEffect::Pure),
+                    };
+                let eval = self
+                    .layer_next
+                    .eval_extern_func(arena, &id.node, &targs, &values);
+                codec::encode::func_result(arena, &mut self.cache, eval)
+            }
+            // Host relations return an ordered list of outputs
             "Call_extern_rel" => {
                 let (id, values) = match codec::decode::rel_args(arena, &mut self.cache, values) {
                     Ok(args) => args,
                     Err(error) => return Eval::new(Err(error), SideEffect::Pure),
                 };
-                let eval = self.layer_next.eval_rel(arena, &id.node, &values);
+                let eval = self.layer_next.eval_extern_rel(arena, &id.node, &values);
                 codec::encode::rel_result(arena, &mut self.cache, eval)
             }
             // Host functions are reached through the three declared meta relations

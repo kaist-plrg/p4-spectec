@@ -12,7 +12,7 @@ use crate::{
     lang::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},
-        il::ast::{self as il, Typ},
+        il::ast::{self as il, Id, Typ},
     },
     runner::{Eval, Runner},
     sim_plugin::dummy::Dummy,
@@ -77,21 +77,35 @@ impl Layer {
         }
     }
 
-    /// Dispatches a decoded relation at this layer.
-    pub fn eval_rel(
+    /// Calls a decoded builtin at this layer.
+    pub fn eval_builtin(
+        &mut self,
+        arena: &mut Arena,
+        id: &Id,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Eval<Value> {
+        match self {
+            Self::P4Spec(runner) => runner.eval_builtin(arena, id, targs, values),
+            Self::MetaSpec(runner) => runner.eval_builtin(arena, id, targs, values),
+        }
+    }
+
+    /// Calls a decoded host relation at this layer.
+    pub fn eval_extern_rel(
         &mut self,
         arena: &mut Arena,
         name: &str,
         values: &[Value],
     ) -> Eval<Vec<Value>> {
         match self {
-            Self::P4Spec(runner) => runner.eval_rel(arena, name, values),
-            Self::MetaSpec(runner) => runner.eval_rel(arena, name, values),
+            Self::P4Spec(runner) => runner.eval_extern_rel(arena, name, values),
+            Self::MetaSpec(runner) => runner.eval_extern_rel(arena, name, values),
         }
     }
 
-    /// Dispatches a decoded function at this layer.
-    pub fn eval_func(
+    /// Calls a decoded host function at this layer.
+    pub fn eval_extern_func(
         &mut self,
         arena: &mut Arena,
         name: &str,
@@ -99,8 +113,8 @@ impl Layer {
         values: &[Value],
     ) -> Eval<Value> {
         match self {
-            Self::P4Spec(runner) => runner.eval_func(arena, name, targs, values),
-            Self::MetaSpec(runner) => runner.eval_func(arena, name, targs, values),
+            Self::P4Spec(runner) => runner.eval_extern_func(arena, name, targs, values),
+            Self::MetaSpec(runner) => runner.eval_extern_func(arena, name, targs, values),
         }
     }
 
