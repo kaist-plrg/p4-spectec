@@ -143,37 +143,6 @@ impl FreeIds for TableRow {
     }
 }
 
-// == Type definitions
-
-impl FreeIds for TypDef {
-    fn free_ids(&self) -> IdSet {
-        match self {
-            Self::Extern(extern_typ) => extern_typ.free_ids(),
-            Self::Defined(defined_typ) => defined_typ.free_ids(),
-        }
-    }
-}
-
-impl FreeIds for ExternTyp {
-    fn free_ids(&self) -> IdSet {
-        IdSet::new()
-    }
-}
-
-impl FreeIds for DefinedTyp {
-    fn free_ids(&self) -> IdSet {
-        IdSet::new()
-    }
-}
-
-// == Meta-variable definitions
-
-impl FreeIds for VarDef {
-    fn free_ids(&self) -> IdSet {
-        IdSet::new()
-    }
-}
-
 // == Relation definitions
 
 impl FreeIds for RelDef {
