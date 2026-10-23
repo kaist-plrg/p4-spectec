@@ -13,13 +13,13 @@
 //!             |                                      |
 //!       build_target(target)                entry(target) + encode
 //!             |                                      |
-//!       Layer::Target                       encoded target script
+//!       Layer::AlSpec or Layer::P4Spec      encoded target script
 //!             |                                      |
-//!       build_interm(interm, layer)          entry(interm) + encode
+//!       build_relay(interm, layer)          entry(interm) + encode
 //!             |                                      |
-//!       Layer::Meta                         encoded intermediate script
+//!       Layer::AlSpec                       encoded intermediate script
 //!             |                                      |
-//!       build_base(base, layer)                      |
+//!       build_relay(base, layer)                     |
 //!             |                                      |
 //!       Tower { levels, base }                       Value
 //!             |                                      |
@@ -37,8 +37,8 @@ use super::{
     ExecutionMode, Result, TowerConfig,
     config::{Lang, LevelConfigs, ProgramConfig},
     error::config_invalid,
-    externs::{RelayExtern, TerminalExtern},
-    tower::{Layer, Level, Target, Tower},
+    externs::{AlExtern, RelayExtern, TerminalExtern},
+    tower::{Layer, Level, Tower},
 };
 use crate::{
     interface::{self, al::Cache},
@@ -58,68 +58,52 @@ fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
     }
 }
 
-/// Prepares the input interface and its own terminal host environment.
+/// Prepares the target level, hosting the AL program or taking a P4 program.
 fn build_target(
     arena: &mut Arena,
     target: &Level,
     mode: ExecutionMode,
     program: &ProgramConfig,
     options: runner::Config,
-) -> Result<Target> {
+) -> Result<Layer> {
     let spec_target = into_runner_spec(mode, target.spec_al.clone())?;
     match program {
         ProgramConfig::Al { spec_al } => {
             // Prepare the input script's definition environment for builtin calls
             let spec_program = into_runner_spec(mode, spec_al.clone())?;
-            let runner_target =
+            let runner_program =
                 Runner::new(arena, spec_program, options, interface::al(), NullExtern)?;
-            // Run the AL specification with builtin calls delegated to runner_target
-            let runner = Runner::new(
-                arena,
-                spec_target,
-                options,
-                interface::al(),
-                TerminalExtern {
-                    cache: Box::new(Cache::new(options.cache)),
-                    runner_target: Box::new(runner_target),
-                },
-            )?;
-            Ok(Target::Al(runner))
+            // Run the AL specification with builtin calls delegated to runner_program
+            let external = AlExtern::Terminal(TerminalExtern {
+                cache: Box::new(Cache::new(options.cache)),
+                runner_program: Box::new(runner_program),
+            });
+            let runner = Runner::new(arena, spec_target, options, interface::al(), external)?;
+            Ok(Layer::AlSpec(runner))
         }
         ProgramConfig::P4 => {
             // Prepare the P4 host environment independently of program parsing
             let interface_target = interface::p4(&spec_target);
             let runner = Runner::new(arena, spec_target, options, interface_target, Dummy)?;
-            Ok(Target::P4(runner))
+            Ok(Layer::P4Spec(runner))
         }
     }
 }
 
-/// Prepares an intermediate host helper above an already built layer.
-fn build_interm(
+/// Prepares a level beneath an already built layer, relaying host calls to it.
+fn build_relay(
     arena: &mut Arena,
-    interm: &Level,
-    layer: Layer,
-    options: runner::Config,
-) -> Result<Layer> {
-    let spec = into_runner_spec(ExecutionMode::Sl, interm.spec_al.clone())?;
-    let external =
-        RelayExtern { cache: Box::new(Cache::new(options.cache)), runner_next: Box::new(layer) };
-    Ok(Layer::Meta(Runner::new(arena, spec, options, interface::al(), external)?))
-}
-
-/// Prepares the native base with the requested interpreter mode.
-fn build_base(
-    arena: &mut Arena,
-    base: &Level,
+    level: &Level,
     mode: ExecutionMode,
-    layer: Layer,
+    layer_next: Layer,
     options: runner::Config,
 ) -> Result<Layer> {
-    let spec = into_runner_spec(mode, base.spec_al.clone())?;
-    let external =
-        RelayExtern { cache: Box::new(Cache::new(options.cache)), runner_next: Box::new(layer) };
-    Ok(Layer::Meta(Runner::new(arena, spec, options, interface::al(), external)?))
+    let spec = into_runner_spec(mode, level.spec_al.clone())?;
+    let external = AlExtern::Relay(RelayExtern {
+        cache: Box::new(Cache::new(options.cache)),
+        layer_next: Box::new(layer_next),
+    });
+    Ok(Layer::AlSpec(Runner::new(arena, spec, options, interface::al(), external)?))
 }
 
 // == Tower assembly
@@ -156,18 +140,14 @@ impl Tower {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        // Only a direct target uses the configured native execution mode
-        let (target, metas) = levels.split_last().expect("validated nonempty tower");
-        let mode_target = if metas.is_empty() { config.mode } else { ExecutionMode::Sl };
-        let runner_target = build_target(arena, target, mode_target, program, options)?;
-        let mut layer = Layer::Target(runner_target);
+        // Only the base uses the configured native execution mode
+        let mode = |idx| if idx == 0 { config.mode } else { ExecutionMode::Sl };
+        let (target, levels_lower) = levels.split_last().expect("validated nonempty tower");
+        let mut layer = build_target(arena, target, mode(levels_lower.len()), program, options)?;
 
-        // Assemble intermediate helpers and the native base above the target
-        if let Some((base, interms)) = metas.split_first() {
-            for interm in interms.iter().rev() {
-                layer = build_interm(arena, interm, layer, options)?;
-            }
-            layer = build_base(arena, base, config.mode, layer, options)?;
+        // Assemble the levels beneath the target down to the native base
+        for (idx, level) in levels_lower.iter().enumerate().rev() {
+            layer = build_relay(arena, level, mode(idx), layer, options)?;
         }
         Ok(Self { levels, base: layer })
     }
