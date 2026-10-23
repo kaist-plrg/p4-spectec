@@ -7,7 +7,7 @@
 //! Specification paths are resolved relative to the JSON file.
 
 use super::{Result, error::config_invalid};
-use crate::lang::al::ast as al;
+use crate::lang::{al::ast as al, il::ast as il};
 use serde::Deserialize;
 use std::{
     fs,
@@ -61,8 +61,10 @@ pub enum Lang {
 /// Supplies input definitions required by the top level's host interface.
 #[derive(Clone, Debug)]
 pub enum ProgramConfig {
-    /// The AL or IL input whose AL supplies the terminal builtin environment.
+    /// The AL program, which also supplies the terminal builtin environment.
     Al { spec_al: al::Spec },
+    /// The IL program, whose builtin declarations supply the terminal builtin environment.
+    Il { spec_il: il::Spec },
     /// P4 inputs use builtins from the top level's specification.
     P4,
 }

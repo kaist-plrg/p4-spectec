@@ -41,7 +41,9 @@ pub fn run(
     // Prepare the input environment by the top level's configured language
     let program = match config.top_lang() {
         // AL builtins must resolve against the actual input definitions
-        Lang::Al | Lang::Il => ProgramConfig::Al { spec_al: crate::algo(paths_program)? },
+        Lang::Al => ProgramConfig::Al { spec_al: crate::algo(paths_program)? },
+        // IL input is elaborated only; the top level converts it itself
+        Lang::Il => ProgramConfig::Il { spec_il: crate::elab(paths_program)? },
         // P4 inputs contain exactly one translation unit
         Lang::P4 if paths_program.len() == 1 => ProgramConfig::P4,
         Lang::P4 => {
@@ -50,12 +52,11 @@ pub fn run(
     };
     let mut tower = Tower::build(&mut arena, config, &program, options)?;
     let value_program = match &program {
-        // An IL top level accepts the input's IL and converts it itself
-        ProgramConfig::Al { .. } if config.top_lang() == Lang::Il => crate::elab(paths_program)?
-            .encode(&mut arena)
-            .map_err(|error| error.into_report())?,
         // Use the same AL definitions for builtin calls and input encoding
         ProgramConfig::Al { spec_al } => spec_al
+            .encode(&mut arena)
+            .map_err(|error| error.into_report())?,
+        ProgramConfig::Il { spec_il } => spec_il
             .encode(&mut arena)
             .map_err(|error| error.into_report())?,
         ProgramConfig::P4 => parse_file(&mut arena, includes, &paths_program[0])

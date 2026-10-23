@@ -42,8 +42,9 @@ use super::{
 };
 use crate::{
     interface::{self, meta::shared::Cache},
-    lang::{al::ast as al, data::arena::Arena},
+    lang::{al::ast as al, data::arena::Arena, il::ast as il},
     pass::structure,
+    phrase,
     runner::{self, NullExtern, Runner, Spec},
     sim_plugin::dummy::Dummy,
 };
@@ -58,7 +59,47 @@ fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
     }
 }
 
-/// Prepares the top level, hosting the AL program or taking a P4 program.
+/// The type definitions and builtin declarations of an IL program, as AL.
+///
+/// Both are shared by IL and AL, so no rule or clause is converted;
+/// a runner of the result answers the IL program's builtin calls.
+fn builtins_of_il(spec_il: &il::Spec) -> al::Spec {
+    spec_il
+        .iter()
+        .filter_map(|def_il| {
+            let def_kind_al = match &def_il.node {
+                il::DefKind::Typ(typ_def) => al::DefKind::Typ(typ_def.clone()),
+                il::DefKind::MetaFunc(il::MetaFuncDef::Builtin(builtin_func)) => {
+                    al::DefKind::MetaFunc(al::MetaFuncDef::Builtin(builtin_func.clone()))
+                }
+                _ => return None,
+            };
+            Some(phrase!(node: def_kind_al, span: def_il.span))
+        })
+        .collect()
+}
+
+/// Prepares an AL top level whose builtin calls are answered by the program's definitions.
+fn build_terminal(
+    arena: &mut Arena,
+    spec_top: Spec,
+    spec_al_program: al::Spec,
+    mode: ExecutionMode,
+    options: runner::Config,
+) -> Result<Layer> {
+    // Prepare the input script's definition environment for builtin calls
+    let spec_program = into_runner_spec(mode, spec_al_program)?;
+    let runner_program = Runner::new(arena, spec_program, options, interface::al(), NullExtern)?;
+    // Run the AL specification with builtin calls delegated to runner_program
+    let external = AlExtern::Terminal(TerminalExtern {
+        cache: Box::new(Cache::new(options.cache)),
+        runner_program: Box::new(runner_program),
+    });
+    let runner = Runner::new(arena, spec_top, options, interface::al(), external)?;
+    Ok(Layer::AlSpec(runner))
+}
+
+/// Prepares the top level, hosting the AL or IL program or taking a P4 program.
 fn build_top(
     arena: &mut Arena,
     top: &Level,
@@ -69,17 +110,11 @@ fn build_top(
     let spec_top = into_runner_spec(mode, top.spec_al.clone())?;
     match program {
         ProgramConfig::Al { spec_al } => {
-            // Prepare the input script's definition environment for builtin calls
-            let spec_program = into_runner_spec(mode, spec_al.clone())?;
-            let runner_program =
-                Runner::new(arena, spec_program, options, interface::al(), NullExtern)?;
-            // Run the AL specification with builtin calls delegated to runner_program
-            let external = AlExtern::Terminal(TerminalExtern {
-                cache: Box::new(Cache::new(options.cache)),
-                runner_program: Box::new(runner_program),
-            });
-            let runner = Runner::new(arena, spec_top, options, interface::al(), external)?;
-            Ok(Layer::AlSpec(runner))
+            build_terminal(arena, spec_top, spec_al.clone(), mode, options)
+        }
+        // An IL program needs only its builtin declarations to answer builtin calls
+        ProgramConfig::Il { spec_il } => {
+            build_terminal(arena, spec_top, builtins_of_il(spec_il), mode, options)
         }
         ProgramConfig::P4 => {
             // Prepare the P4 host environment independently of program parsing
@@ -121,7 +156,9 @@ impl Tower {
     ) -> Result<Self> {
         // The input environment must match the top level's language
         match (config.top_lang(), program) {
-            (Lang::Al | Lang::Il, ProgramConfig::Al { .. }) | (Lang::P4, ProgramConfig::P4) => {}
+            (Lang::Al, ProgramConfig::Al { .. })
+            | (Lang::Il, ProgramConfig::Il { .. })
+            | (Lang::P4, ProgramConfig::P4) => {}
             _ => {
                 return Err(config_invalid(
                     "program language must match the top level of the tower",
