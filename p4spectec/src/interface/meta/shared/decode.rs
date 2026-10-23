@@ -49,9 +49,7 @@ pub trait Decode: Sized {
     ) -> Result<Self, Error>;
 }
 
-// == Decoding
-
-// - Typed phrases
+// == Helpers
 
 /// Decodes the type annotation of a typed expression or path.
 fn typed(
@@ -74,6 +72,8 @@ fn op_typ(typ_kind: &il::TypKind, op_typ_decoded: il::OpTyp) -> il::OpTyp {
         (_, _) => il::OpTyp::Nat,
     }
 }
+
+// == Decoding
 
 // - Containers
 

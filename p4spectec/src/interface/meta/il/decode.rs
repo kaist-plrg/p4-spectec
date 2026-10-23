@@ -1,6 +1,7 @@
 //! Decodes IL meta data into elaborated IL syntax
 //!
-//! Expressions, types, paths, arguments, and parameters use the AL decoders.
+//! Expressions, types, paths, arguments, and parameters use the decoders of
+//! `meta::shared::decode`.
 //! Relation notation, otherwise markers, and general hints are omitted
 //! from the meta syntax and reconstructed canonically by `stub`.
 
@@ -20,6 +21,8 @@ use crate::{
     },
     phrase,
 };
+
+// == Decoding
 
 // - Input positions
 
@@ -41,26 +44,6 @@ impl Decode for InputHint {
             indices.push(phrase!(node: idx, span: span));
         }
         Ok(InputHint::new(indices))
-    }
-}
-
-// - Iteration premises
-
-/// Decodes an iteration premise, which elaboration leaves without binders.
-fn decode_prem_iter(
-    arena: &mut Arena,
-    cache: &mut Cache,
-    value_meta: Value,
-) -> Result<il::PremIter, Error> {
-    get::matches_string! { arena, &value_meta,
-        m::ITERPREM => |[value_iter, value_bound]| {
-            Ok(il::PremIter {
-                iter: Iter::decode_cached(arena, cache, *value_iter)?,
-                vars_bound: Vec::<il::Var>::decode_cached(arena, cache, *value_bound)?,
-                vars_bind: vec![],
-            })
-        },
-        _ => Err(Error::unexpected(arena, value_meta, "iter vari*")),
     }
 }
 
@@ -109,6 +92,24 @@ impl Decode for il::Prem {
             _ => return Err(Error::unexpected(arena, value_meta, "an IL premise")),
         };
         Ok(phrase!(node: prem_kind_il, span: span))
+    }
+}
+
+/// Decodes an iteration premise, which elaboration leaves without binders.
+fn decode_prem_iter(
+    arena: &mut Arena,
+    cache: &mut Cache,
+    value_meta: Value,
+) -> Result<il::PremIter, Error> {
+    get::matches_string! { arena, &value_meta,
+        m::ITERPREM => |[value_iter, value_bound]| {
+            Ok(il::PremIter {
+                iter: Iter::decode_cached(arena, cache, *value_iter)?,
+                vars_bound: Vec::<il::Var>::decode_cached(arena, cache, *value_bound)?,
+                vars_bind: vec![],
+            })
+        },
+        _ => Err(Error::unexpected(arena, value_meta, "iter vari*")),
     }
 }
 

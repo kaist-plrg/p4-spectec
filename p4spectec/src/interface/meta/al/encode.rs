@@ -217,8 +217,6 @@ impl Encode for al::Prem {
     }
 }
 
-// - Iteration premises
-
 /// Encodes bound and bound-by-iteration variable lists in order.
 impl Encode for al::PremIter {
     type Output = Value;

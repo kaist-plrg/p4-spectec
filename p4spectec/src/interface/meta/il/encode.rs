@@ -1,7 +1,7 @@
 //! Encodes elaborated IL specifications as meta data
 //!
-//! Expressions, types, paths, arguments, and parameters use the AL encoders,
-//! since IL and AL share those forms in the meta syntax.
+//! Expressions, types, paths, arguments, and parameters use the encoders of
+//! `meta::shared::encode`, since IL and AL share those forms in the meta syntax.
 //! Relation arguments stay in notation order next to their input positions.
 //! Variable declarations and general hints are omitted.
 
@@ -24,6 +24,8 @@ use crate::{
     phrase,
 };
 
+// == Encoding
+
 // - Input positions
 
 /// Encodes input positions in their declared order.
@@ -45,29 +47,6 @@ impl Encode for InputHint {
             Span::default(),
         )?)
     }
-}
-
-// - Iteration premises
-
-/// Encodes an iteration premise, which elaboration leaves without binders.
-fn encode_prem_iter(
-    arena: &mut Arena,
-    cache: &mut Cache,
-    prem_iter_il: &il::PremIter,
-) -> Result<Value, Error> {
-    // Binders are decided by the IL-to-AL specification
-    if !prem_iter_il.vars_bind.is_empty() {
-        return Err(Error::malformed(
-            Span::default(),
-            "an IL iteration premise without binders",
-            format!("{} binders", prem_iter_il.vars_bind.len()),
-        ));
-    }
-    let values_meta = vec![
-        prem_iter_il.iter.encode_cached(arena, cache)?,
-        list(arena, cache, "vari", &prem_iter_il.vars_bound)?,
-    ];
-    case(arena, m::ITERPREM, "iterPremIL", values_meta, Span::default())
 }
 
 // - Premises
@@ -116,6 +95,27 @@ impl Encode for il::Prem {
         };
         case(arena, shape, "premIL", values_meta, self.span)
     }
+}
+
+/// Encodes an iteration premise, which elaboration leaves without binders.
+fn encode_prem_iter(
+    arena: &mut Arena,
+    cache: &mut Cache,
+    prem_iter_il: &il::PremIter,
+) -> Result<Value, Error> {
+    // Binders are decided by the IL-to-AL specification
+    if !prem_iter_il.vars_bind.is_empty() {
+        return Err(Error::malformed(
+            Span::default(),
+            "an IL iteration premise without binders",
+            format!("{} binders", prem_iter_il.vars_bind.len()),
+        ));
+    }
+    let values_meta = vec![
+        prem_iter_il.iter.encode_cached(arena, cache)?,
+        list(arena, cache, "vari", &prem_iter_il.vars_bound)?,
+    ];
+    case(arena, m::ITERPREM, "iterPremIL", values_meta, Span::default())
 }
 
 // - Rules
