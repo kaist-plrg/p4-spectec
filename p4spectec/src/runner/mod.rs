@@ -19,7 +19,7 @@ use crate::lang::data::{arena::Arena, value::flat::Value};
 
 use crate::lang::al;
 
-use crate::lang::il::ast::Typ;
+use crate::lang::il::ast::{Id, Typ};
 
 use crate::lang::sl;
 
@@ -286,6 +286,52 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
         values: &[Value],
     ) -> Eval<Value, InterpreterError> {
         with_context!(self, arena, |ctx| ctx.call_func(name, targs, values))
+    }
+
+    // - Host dispatch
+
+    /// Calls a builtin through the interface, without consulting definitions.
+    pub fn eval_builtin(
+        &mut self,
+        arena: &mut Arena,
+        id: &Id,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Eval<Value, InterpreterError> {
+        with_context!(self, arena, |ctx| {
+            let checkpoint = ctx.effect_checkpoint();
+            let result = ctx.call_builtin(id, targs, values);
+            Eval::new(result, ctx.effect_since(checkpoint))
+        })
+    }
+
+    /// Calls a host relation through the extern, without consulting definitions.
+    pub fn eval_extern_rel(
+        &mut self,
+        arena: &mut Arena,
+        name: &str,
+        values: &[Value],
+    ) -> Eval<Vec<Value>, InterpreterError> {
+        with_context!(self, arena, |ctx| {
+            let checkpoint = ctx.effect_checkpoint();
+            let result = ctx.call_extern_rel(name, values);
+            Eval::new(result, ctx.effect_since(checkpoint))
+        })
+    }
+
+    /// Calls a host function through the extern, without consulting definitions.
+    pub fn eval_extern_func(
+        &mut self,
+        arena: &mut Arena,
+        name: &str,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Eval<Value, InterpreterError> {
+        with_context!(self, arena, |ctx| {
+            let checkpoint = ctx.effect_checkpoint();
+            let result = ctx.call_extern_func(name, targs, values);
+            Eval::new(result, ctx.effect_since(checkpoint))
+        })
     }
 
     // - Lifecycle
