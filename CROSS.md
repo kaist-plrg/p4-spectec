@@ -147,7 +147,7 @@ harness.
 
 | Command | Purpose |
 | --- | --- |
-| `kast PATH [-o FILE]` | Lower a P4-SpecTec program or specification to AL and emit a `Script` term. |
+| `kast PATH [-o FILE]` | Lower a P4-SpecTec program or specification to AL and emit a `Spec` term. |
 | `kast-p4 -p FILE [-i DIR]... [-o FILE]` | Parse a P4 program and emit it as the `<p4prog>` input. |
 
 For example:
