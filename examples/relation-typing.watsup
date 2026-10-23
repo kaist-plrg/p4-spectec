@@ -1,0 +1,74 @@
+;; Relations with several rules, and rule selection by backtracking.
+;;
+;; A miniature type system: `Typing` derives a type for an expression, and its
+;; rules are tried in order until one matches.  This exercises multi-rule
+;; relations, relation premises nested inside other rules, a relation that
+;; recurses through itself, and a FAIL that is recovered from by the next
+;; clause of the caller rather than escaping to the top.
+
+var b : bool
+var i : int
+var n : nat
+var t : text
+
+syntax typ =
+  | INT
+  | BOOL
+
+syntax exp =
+  | NUM int
+  | TRUE
+  | FALSE
+  | PLUS exp exp
+  | IFTE exp exp exp
+
+;; Typing: exp has type typ.  Partial on purpose: an ill-typed expression has
+;; no derivation, so the relation FAILs.
+relation Typing:
+  |- exp ':' typ
+  hint(input %0)
+
+rule Typing/num:
+  |- (NUM i) ':' INT
+
+rule Typing/true:
+  |- TRUE ':' BOOL
+
+rule Typing/false:
+  |- FALSE ':' BOOL
+
+;; A relation premise inside a rule, twice, plus a side condition on the result.
+rule Typing/plus:
+  |- (PLUS exp_l exp_r) ':' INT
+  -- Typing: |- exp_l ':' INT
+  -- Typing: |- exp_r ':' INT
+
+;; Three nested relation premises; the two branches must agree on a type.
+rule Typing/ifte:
+  |- (IFTE exp_c exp_t exp_f) ':' typ
+  -- Typing: |- exp_c ':' BOOL
+  -- Typing: |- exp_t ':' typ
+  -- Typing: |- exp_f ':' typ
+
+;; $check returns 1 when the expression types, 0 when it does not.  The
+;; `otherwise` clause is what catches the FAIL from the relation premise.
+dec $check(exp) : nat
+def $check(exp) = 1
+  -- Typing: |- exp ':' typ
+def $check(exp) = 0
+  -- otherwise
+
+dec $main() : int
+def $main() = i
+  ;; well typed: (1 + 2) : INT
+  -- if n_1 = $check(PLUS (NUM 1) (NUM 2))
+  ;; well typed: if true then 1 else 2 : INT
+  -- if n_2 = $check(IFTE TRUE (NUM 1) (NUM 2))
+  ;; ill typed: true + 1  -- the PLUS rule's first premise FAILs
+  -- if n_3 = $check(PLUS TRUE (NUM 1))
+  ;; ill typed: if 1 then ... -- the IFTE rule's condition is not BOOL
+  -- if n_4 = $check(IFTE (NUM 1) (NUM 1) (NUM 2))
+  ;; ill typed: branches disagree, so no single `typ` satisfies both premises
+  -- if n_5 = $check(IFTE TRUE (NUM 1) FALSE)
+  ;; expect 1 + 1 + 0 + 0 + 0 = 2, then scaled to make a wrong answer obvious
+  -- if i = $(100 * n_1 + 10 * n_2 + n_3 + n_4 + n_5)

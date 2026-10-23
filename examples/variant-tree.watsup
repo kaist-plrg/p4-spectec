@@ -1,0 +1,43 @@
+;; Variant types and structural recursion.
+;;
+;; Builds an expression tree as a recursive variant, then folds it two ways:
+;; `$eval` computes its value, `$depth` its height.  Exercises `injV` values
+;; with several distinct mixops, nested constructor patterns in clause
+;; arguments, and mutual recursion between a function and its list form.
+
+var i : int
+var n : nat
+
+;; A little arithmetic expression language.
+syntax exp =
+  | LIT int
+  | ADD exp exp
+  | MUL exp exp
+  | NEG exp
+
+dec $eval(exp) : int
+def $eval(LIT i) = i
+def $eval(ADD exp_l exp_r) = $($eval(exp_l) + $eval(exp_r))
+def $eval(MUL exp_l exp_r) = $($eval(exp_l) * $eval(exp_r))
+def $eval(NEG exp) = $(0 - $eval(exp))
+
+dec $depth(exp) : nat
+dec $max(exp, exp) : nat
+
+def $depth(LIT i) = 1
+def $depth(ADD exp_l exp_r) = $($max(exp_l, exp_r) + 1)
+def $depth(MUL exp_l exp_r) = $($max(exp_l, exp_r) + 1)
+def $depth(NEG exp) = $($depth(exp) + 1)
+
+def $max(exp_l, exp_r) = $depth(exp_l)
+  -- if $($depth(exp_l) >= $depth(exp_r))
+def $max(exp_l, exp_r) = $depth(exp_r)
+  -- otherwise
+
+;; (2 * 3) + -(4)  =  2, of depth 3.
+dec $main() : int
+def $main() = i
+  -- if exp_tree = ADD (MUL (LIT 2) (LIT 3)) (NEG (LIT 4))
+  -- if i_val = $eval(exp_tree)
+  -- if n_depth = $depth(exp_tree)
+  -- if i = $(i_val * n_depth)
