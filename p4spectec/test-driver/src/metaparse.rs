@@ -15,7 +15,7 @@ use p4spectec::{
     },
 };
 
-use crate::{Error, Result, suite::CodecSuite};
+use crate::{Error, Result, suite::MetaparseSuite};
 
 /// Renders a meta value through its arena.
 fn render(arena: &Arena, value: Value) -> String {
@@ -31,18 +31,20 @@ fn check_fixpoint(
     value_b: Value,
 ) -> Result<()> {
     if render(arena, value_a) != render(arena, value_b) {
-        return Err(Error::Invalid(format!("codec {name}: {stage} encoding is not a fixpoint")));
+        return Err(Error::Invalid(format!(
+            "metaparse {name}: {stage} encoding is not a fixpoint"
+        )));
     }
     Ok(())
 }
 
 /// Checks registered IL and AL codec round-trips.
-pub fn run(suites: &[CodecSuite]) -> Result<()> {
+pub fn run(suites: &[MetaparseSuite]) -> Result<()> {
     let start = Instant::now();
     for suite in suites {
         let mut arena = Arena::new();
         let invalid = |error: &dyn std::fmt::Display| {
-            Error::Invalid(format!("codec {}: {error}", suite.name))
+            Error::Invalid(format!("metaparse {}: {error}", suite.name))
         };
         // IL: elaborated specification
         let spec_il = p4spectec::elab(&suite.inputs).map_err(|error| invalid(&error))?;
@@ -64,8 +66,8 @@ pub fn run(suites: &[CodecSuite]) -> Result<()> {
         let value_al_again = shared::encode::Encode::encode(&spec_al_decoded, &mut arena)
             .map_err(|error| invalid(&error))?;
         check_fixpoint(&suite.name, "AL", &arena, value_al, value_al_again)?;
-        eprintln!("codec: {} round-trips in IL and AL", suite.name);
+        eprintln!("metaparse: {} round-trips in IL and AL", suite.name);
     }
-    eprintln!("codec: checked, elapsed={:.3}s", start.elapsed().as_secs_f64());
+    eprintln!("metaparse: checked, elapsed={:.3}s", start.elapsed().as_secs_f64());
     Ok(())
 }

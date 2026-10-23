@@ -15,7 +15,7 @@ pub mod elab;
 
 pub mod algo;
 
-pub mod codec;
+pub mod metaparse;
 
 pub mod algo_run;
 

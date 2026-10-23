@@ -67,7 +67,7 @@ pub struct AdocSuite {
 /// Registers specification inputs whose IL and AL codecs must round-trip.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct CodecSuite {
+pub struct MetaparseSuite {
     pub name: String,
     pub inputs: Vec<PathBuf>,
 }
@@ -266,7 +266,7 @@ pub struct MicroConfig {
 pub struct Modules {
     pub elab: PathBuf,
     pub algo: PathBuf,
-    pub codec: PathBuf,
+    pub metaparse: PathBuf,
     pub algo_run: PathBuf,
     pub structure: PathBuf,
     pub prose: PathBuf,
@@ -373,8 +373,8 @@ pub fn load_snapshots(path: &Path) -> Result<Vec<Snapshot>> {
 }
 
 /// Loads codec round-trip inputs.
-pub fn load_codec(path: &Path) -> Result<Vec<CodecSuite>> {
-    let suites: Vec<CodecSuite> = load(path)?;
+pub fn load_metaparse(path: &Path) -> Result<Vec<MetaparseSuite>> {
+    let suites: Vec<MetaparseSuite> = load(path)?;
     names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
     for suite in &suites {
         paths_exist(&suite.inputs, &suite.name)?;
@@ -577,7 +577,7 @@ impl Index {
         for path in [
             &mut modules.elab,
             &mut modules.algo,
-            &mut modules.codec,
+            &mut modules.metaparse,
             &mut modules.algo_run,
             &mut modules.structure,
             &mut modules.prose,
@@ -601,7 +601,7 @@ impl Index {
         // Validate and display each module through its normal loader
         println!("elab: {:#?}", load_snapshots(&self.suites.elab)?);
         println!("algo: {:#?}", load_snapshots(&self.suites.algo)?);
-        println!("codec: {:#?}", load_codec(&self.suites.codec)?);
+        println!("metaparse: {:#?}", load_metaparse(&self.suites.metaparse)?);
         println!("algo-run: {:#?}", load_algo_run(&self.suites.algo_run)?);
         println!("structure: {:#?}", load_structure(&self.suites.structure)?);
         println!("prose: {:#?}", load_snapshots(&self.suites.prose)?);
