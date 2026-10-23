@@ -192,7 +192,7 @@ impl Decode for al::Prem {
             m::ITER_PREM => |[value_prem, value_iter]| {
                 al::PremKind::Iter(al::IterPrem {
                     prem: Box::new(al::Prem::decode_cached(arena, cache, *value_prem)?),
-                    prem_iter: al::PremIter::decode_cached(arena, cache, *value_iter)?,
+                    prem_iter: PremIterAl::decode_cached(arena, cache, *value_iter)?.0,
                 })
             },
             m::DEBUG => |[value_exp]| {
@@ -204,8 +204,11 @@ impl Decode for al::Prem {
     }
 }
 
+/// An AL iteration premise, as distinct from the IL form of the same type.
+struct PremIterAl(al::PremIter);
+
 /// Decodes bound and bound-by-iteration variable lists in order.
-impl Decode for al::PremIter {
+impl Decode for PremIterAl {
     fn decode_cached(
         arena: &mut Arena,
         cache: &mut Cache,
@@ -213,11 +216,11 @@ impl Decode for al::PremIter {
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
             m::ITERPREM => |[value_iter, value_bound, value_bind]| {
-                Ok(al::PremIter {
+                Ok(Self(al::PremIter {
                     iter: Iter::decode_cached(arena, cache, *value_iter)?,
                     vars_bound: Vec::<al::Var>::decode_cached(arena, cache, *value_bound)?,
                     vars_bind: Vec::<al::Var>::decode_cached(arena, cache, *value_bind)?,
-                })
+                }))
             },
             _ => Err(Error::unexpected(arena, value_meta, "iter '<-' vari* '->' vari*")),
         }
