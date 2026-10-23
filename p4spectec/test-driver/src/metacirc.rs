@@ -112,7 +112,7 @@ fn run_programs(
         let options_tower = Config::new(cache_on, det, false);
         let tower = Tower::build(&mut arena, &config_tower, &ProgramConfig::P4, options_tower)
             .map_err(|error| Error::Invalid(error.to_string()))?;
-        towers.insert(suite.path_tower, (tower, config_tower.target_rel().to_owned()));
+        towers.insert(suite.path_tower, tower);
     }
     let includes = &config.includes;
     for path in includes {
@@ -148,7 +148,7 @@ fn run_programs(
             }
         });
         for suite in &mut suites {
-            let (tower, id_relation) = towers
+            let tower = towers
                 .get_mut(suite.path_tower)
                 .expect("tower prepared per suite");
             for path in &suite.paths {
@@ -175,19 +175,13 @@ fn run_programs(
                     let outcome = match parse_string(&mut arena, path, &source) {
                         Ok(program) => {
                             // Patch failures abort; evaluation rejection is an outcome
-                            let value =
-                                tower
-                                    .patch(&mut arena, id_relation, program)
-                                    .map_err(|error| {
-                                        Error::Invalid(format!(
-                                            "{}: test execution error: {error}",
-                                            path.display()
-                                        ))
-                                    })?;
-                            let accepted = tower
-                                .eval_program(&mut arena, id_relation, value)
-                                .result
-                                .is_ok();
+                            let value = tower.patch(&mut arena, program).map_err(|error| {
+                                Error::Invalid(format!(
+                                    "{}: test execution error: {error}",
+                                    path.display()
+                                ))
+                            })?;
+                            let accepted = tower.eval_program(&mut arena, value).result.is_ok();
                             if accepted { Outcome::Pass } else { Outcome::Fail }
                         }
                         Err(P4Error {

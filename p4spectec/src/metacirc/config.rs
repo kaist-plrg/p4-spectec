@@ -125,9 +125,4 @@ impl TowerConfig {
     pub fn target_lang(&self) -> Lang {
         self.target().lang
     }
-
-    /// Returns the relation configured to enter the target level.
-    pub fn target_rel(&self) -> &str {
-        &self.target().rel
-    }
 }

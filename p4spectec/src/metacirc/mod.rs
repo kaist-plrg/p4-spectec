@@ -35,7 +35,6 @@ pub fn run(
     if paths_program.is_empty() {
         return Err(error::input_invalid("a tower requires at least one program path"));
     }
-    let relation = config.target_rel();
     let mut arena = Arena::new();
     // Prepare the input environment by the configured target language
     let program = match config.target_lang() {
@@ -57,9 +56,9 @@ pub fn run(
             .map_err(|error| error.into_report())?,
     };
     // Encoding errors propagate before entering the native base
-    let value = tower.patch(&mut arena, relation, value_program)?;
+    let value = tower.patch(&mut arena, value_program)?;
     tower
-        .eval_program(&mut arena, relation, value)
+        .eval_program(&mut arena, value)
         .result
         .map_err(|error| error.into_report())?;
     Ok(())

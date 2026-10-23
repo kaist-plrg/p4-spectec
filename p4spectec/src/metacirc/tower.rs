@@ -46,15 +46,9 @@ impl Tower {
     }
 
     /// Executes a patched input at the native base's entry relation.
-    pub fn eval_program(
-        &mut self,
-        arena: &mut Arena,
-        name: &str,
-        program: Value,
-    ) -> Eval<Vec<Value>> {
-        // A direct tower uses the caller's entry; nested towers use the base entry
-        let name_base = if self.levels.len() == 1 { name } else { &self.levels[0].config.rel };
-        self.base.eval_program(arena, name_base, program)
+    pub fn eval_program(&mut self, arena: &mut Arena, program: Value) -> Eval<Vec<Value>> {
+        self.base
+            .eval_program(arena, &self.levels[0].config.rel, program)
     }
 }
 
