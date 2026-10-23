@@ -2,77 +2,84 @@
 ;; spec-meta/3-execution/3.04-eval-ops.watsup.
 ;;
 ;; Arithmetic follows p4spectec/src/lang/common/prim/num.rs: DIV and MOD
-;; truncate. An undefined result (division by zero, a negative exponent) raises
-;; an error, as num.rs's NumericError does.
+;; truncate. An undefined result (division by zero) raises an error, as
+;; num.rs's NumericError does.
 
 (require redex/reduction-semantics
          "3.03-machine.rkt")
-(provide unop-number
-         binop-bool
-         binop-number
-         cmpop-poly
-         cmpop-number
-         is-tup)
+(provide num-unop
+         bool-binop
+         num-binop
+         poly-cmpop
+         num-cmpop
+         matches)
 
-;; num.ml has no POW, so this follows watsup's `^` on integers.
-(define (pow base exponent)
-  (when (negative? exponent)
-    (error 'binop-number "negative exponent: ~a" exponent))
-  (expt base exponent))
-
-;; Binary operations
+;; Unary numeric operations
 
 (define-metafunction al
-  unop-number : numUnop num -> val
-  [(unop-number PLUS (NAT n)) (NAT n)]
-  [(unop-number PLUS (INT i)) (INT i)]
-  [(unop-number MINUS (NAT n)) (INT ,(- (term n)))]
-  [(unop-number MINUS (INT i)) (INT ,(- (term i)))])
+  num-unop : numUnop num -> val
+  [(num-unop PLUS (NAT n)) (NAT n)]
+  [(num-unop PLUS (INT i)) (INT i)]
+  [(num-unop MINUS (NAT n)) (INT ,(- (term n)))]
+  [(num-unop MINUS (INT i)) (INT ,(- (term i)))])
+
+;; Binary boolean operations
 
 (define-metafunction al
-  binop-bool : boolBinop bool bool -> bool
-  [(binop-bool AND b_l b_r) ,(and (term b_l) (term b_r))]
-  [(binop-bool OR b_l b_r) ,(or (term b_l) (term b_r))]
-  [(binop-bool IMPL b_l b_r) ,(or (not (term b_l)) (term b_r))]
-  [(binop-bool EQUIV b_l b_r) ,(eq? (term b_l) (term b_r))])
+  bool-binop : boolBinop bool bool -> bool
+  [(bool-binop AND b_l b_r) ,(and (term b_l) (term b_r))]
+  [(bool-binop OR b_l b_r) ,(or (term b_l) (term b_r))]
+  [(bool-binop IMPL b_l b_r) ,(or (not (term b_l)) (term b_r))]
+  [(bool-binop EQUIV b_l b_r) ,(eq? (term b_l) (term b_r))])
 
-(define-judgment-form al
-  #:mode (binop-number I I I O)
-  #:contract (binop-number numBinop num num val)
-  [(binop-number ADD (NAT n_l) (NAT n_r) (NAT ,(+ (term n_l) (term n_r))))]
-  [(binop-number ADD (INT i_l) (INT i_r) (INT ,(+ (term i_l) (term i_r))))]
-  [(binop-number SUB (NAT n_l) (NAT n_r) (INT ,(- (term n_l) (term n_r))))]
-  [(binop-number SUB (INT i_l) (INT i_r) (INT ,(- (term i_l) (term i_r))))]
-  [(binop-number MUL (NAT n_l) (NAT n_r) (NAT ,(* (term n_l) (term n_r))))]
-  [(binop-number MUL (INT i_l) (INT i_r) (INT ,(* (term i_l) (term i_r))))]
-  [(binop-number DIV (NAT n_l) (NAT n_r) (NAT ,(quotient (term n_l) (term n_r))))]
-  [(binop-number DIV (INT i_l) (INT i_r) (INT ,(quotient (term i_l) (term i_r))))]
-  [(binop-number MOD (NAT n_l) (NAT n_r) (NAT ,(remainder (term n_l) (term n_r))))]
-  [(binop-number MOD (INT i_l) (INT i_r) (INT ,(remainder (term i_l) (term i_r))))]
-  [(binop-number POW (NAT n_l) (NAT n_r) (NAT ,(pow (term n_l) (term n_r))))]
-  [(binop-number POW (INT i_l) (INT i_r) (INT ,(pow (term i_l) (term i_r))))])
+;; Binary numeric operations
 
 (define-metafunction al
-  cmpop-poly : polyCmpop val val -> bool
-  [(cmpop-poly EQ val_l val_r) ,(equal? (term val_l) (term val_r))]
-  [(cmpop-poly NE val_l val_r) ,(not (equal? (term val_l) (term val_r)))])
-
-(define-judgment-form al
-  #:mode (cmpop-number I I I O)
-  #:contract (cmpop-number numCmpop num num bool)
-  [(cmpop-number LT (NAT n_l) (NAT n_r) ,(< (term n_l) (term n_r)))]
-  [(cmpop-number LT (INT i_l) (INT i_r) ,(< (term i_l) (term i_r)))]
-  [(cmpop-number GT (NAT n_l) (NAT n_r) ,(> (term n_l) (term n_r)))]
-  [(cmpop-number GT (INT i_l) (INT i_r) ,(> (term i_l) (term i_r)))]
-  [(cmpop-number LE (NAT n_l) (NAT n_r) ,(<= (term n_l) (term n_r)))]
-  [(cmpop-number LE (INT i_l) (INT i_r) ,(<= (term i_l) (term i_r)))]
-  [(cmpop-number GE (NAT n_l) (NAT n_r) ,(>= (term n_l) (term n_r)))]
-  [(cmpop-number GE (INT i_l) (INT i_r) ,(>= (term i_l) (term i_r)))])
-
-;; Constructor checks
-
-(define-metafunction al
-  is-tup : val -> bool
-  [(is-tup (TUP (val ...))) #t]
+  num-binop : numBinop num num -> numBinopRes
+  [(num-binop ADD (NAT n_l) (NAT n_r)) (OK (NAT ,(+ (term n_l) (term n_r))))]
+  [(num-binop ADD (INT i_l) (INT i_r)) (OK (INT ,(+ (term i_l) (term i_r))))]
+  [(num-binop SUB (NAT n_l) (NAT n_r)) (OK (INT ,(- (term n_l) (term n_r))))]
+  [(num-binop SUB (INT i_l) (INT i_r)) (OK (INT ,(- (term i_l) (term i_r))))]
+  [(num-binop MUL (NAT n_l) (NAT n_r)) (OK (NAT ,(* (term n_l) (term n_r))))]
+  [(num-binop MUL (INT i_l) (INT i_r)) (OK (INT ,(* (term i_l) (term i_r))))]
+  [(num-binop DIV (NAT n_l) (NAT n_r)) (OK (NAT ,(quotient (term n_l) (term n_r))))]
+  [(num-binop DIV (INT i_l) (INT i_r)) (OK (INT ,(quotient (term i_l) (term i_r))))]
+  [(num-binop MOD (NAT n_l) (NAT n_r)) (OK (NAT ,(remainder (term n_l) (term n_r))))]
+  [(num-binop MOD (INT i_l) (INT i_r)) (OK (INT ,(remainder (term i_l) (term i_r))))]
   ;; otherwise
-  [(is-tup val) #f])
+  [(num-binop numBinop num_l num_r) ERROR])
+
+;; Polymorphic comparison operations
+
+(define-metafunction al
+  poly-cmpop : polyCmpop val val -> bool
+  [(poly-cmpop EQ val_l val_r) ,(equal? (term val_l) (term val_r))]
+  [(poly-cmpop NE val_l val_r) ,(not (equal? (term val_l) (term val_r)))])
+
+;; Numeric comparison operations
+
+(define-metafunction al
+  num-cmpop : numCmpop num num -> numCmpRes
+  [(num-cmpop LT (NAT n_l) (NAT n_r)) (OK ,(< (term n_l) (term n_r)))]
+  [(num-cmpop LT (INT i_l) (INT i_r)) (OK ,(< (term i_l) (term i_r)))]
+  [(num-cmpop GT (NAT n_l) (NAT n_r)) (OK ,(> (term n_l) (term n_r)))]
+  [(num-cmpop GT (INT i_l) (INT i_r)) (OK ,(> (term i_l) (term i_r)))]
+  [(num-cmpop LE (NAT n_l) (NAT n_r)) (OK ,(<= (term n_l) (term n_r)))]
+  [(num-cmpop LE (INT i_l) (INT i_r)) (OK ,(<= (term i_l) (term i_r)))]
+  [(num-cmpop GE (NAT n_l) (NAT n_r)) (OK ,(>= (term n_l) (term n_r)))]
+  [(num-cmpop GE (INT i_l) (INT i_r)) (OK ,(>= (term i_l) (term i_r)))]
+  ;; otherwise
+  [(num-cmpop numCmpop num_l num_r) ERROR])
+
+;; Pattern tests
+
+(define-metafunction al
+  matches : val pat -> bool
+  [(matches (INJ (mixop_v (val ...))) (INJ mixop_p)) ,(equal? (term mixop_v) (term mixop_p))]
+  [(matches (LIST (val ...)) CONS) ,(> (length (term (val ...))) 0)]
+  [(matches (LIST (val ...)) (FIXED n)) ,(= (length (term (val ...))) (term n))]
+  [(matches (LIST (val ...)) NIL) ,(= (length (term (val ...))) 0)]
+  [(matches (OPT (val ...)) SOME) ,(pair? (term (val ...)))]
+  [(matches (OPT (val ...)) NONE) ,(null? (term (val ...)))]
+  ;; otherwise
+  [(matches val pat) #f])
