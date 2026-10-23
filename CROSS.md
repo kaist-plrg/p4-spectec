@@ -94,11 +94,6 @@ run whose `$main()` mismatches (`UNMATCH`) prints `fail`, and one that fails
 with an execution error (`ERROR`: a nondeterministic call, a type mismatch,
 an unbound variable, a rejected cast, a host error) prints `error`.
 
-Deviation: K's string primitives count bytes, so a text position (`|t|`,
-`t[n]`, `t[n : m]`, their updates) is a byte offset under K where the
-specification counts Unicode scalar values; `|"éx"|` is 3 under K and 2 in
-`metacirc`. ASCII text is unaffected.
-
 Type-check a P4 program against a P4-SpecTec specification:
 
 ```text
