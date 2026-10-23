@@ -146,37 +146,29 @@ rulegroup Collect_exps {
 
 }
 
-rulegroup Collect_path {
+rule Collect_path/root:
+  AC |- ROOT '#' _ : eps
 
-  rule Collect_path/root:
-    AC |- ROOT '#' _ : eps
+rule Collect_path/idx:
+  AC |- (IDX path exp_i) '#' _ : vari_p* ++ vari_i*
+  -- Collect_path: AC |- path : vari_p*
+  -- Collect_exp: AC |- exp_i : vari_i*
 
-  rule Collect_path/idx:
-    AC |- (IDX path exp_i) '#' _ : vari_p* ++ vari_i*
-    -- Collect_path: AC |- path : vari_p*
-    -- Collect_exp: AC |- exp_i : vari_i*
+rule Collect_path/slice:
+  AC |- (SLICE path exp_i exp_n) '#' _ : vari_p* ++ vari_e*
+  -- Collect_path: AC |- path : vari_p*
+  -- Collect_exps: AC |- [ exp_i, exp_n ] : vari_e*
 
-  rule Collect_path/slice:
-    AC |- (SLICE path exp_i exp_n) '#' _ : vari_p* ++ vari_e*
-    -- Collect_path: AC |- path : vari_p*
-    -- Collect_exps: AC |- [ exp_i, exp_n ] : vari_e*
+rule Collect_path/dot:
+  AC |- (DOT path _) '#' _ : vari*
+  -- Collect_path: AC |- path : vari*
 
-  rule Collect_path/dot:
-    AC |- (DOT path _) '#' _ : vari*
-    -- Collect_path: AC |- path : vari*
+rule Collect_arg/exp:
+  AC |- EXP exp : vari*
+  -- Collect_exp: AC |- exp : vari*
 
-}
-
-rulegroup Collect_arg {
-
-  rule Collect_arg/exp:
-    AC |- EXP exp : vari*
-    -- Collect_exp: AC |- exp : vari*
-
-  rule Collect_arg/fun:
-    AC |- FUN _ : eps
-
-}
+rule Collect_arg/fun:
+  AC |- FUN _ : eps
 
 rulegroup Collect_args {
 

@@ -122,40 +122,32 @@ rule Exp_pure/iter:
 
 ;;; Update paths
 
-rulegroup Path_pure {
+rule Path_pure/root:
+  |- ROOT '#' _
 
-  rule Path_pure/root:
-    |- ROOT '#' _
+rule Path_pure/idx:
+  |- (IDX path exp_i) '#' _
+  -- Path_pure: |- path
+  -- Exp_pure: |- exp_i
 
-  rule Path_pure/idx:
-    |- (IDX path exp_i) '#' _
-    -- Path_pure: |- path
-    -- Exp_pure: |- exp_i
+rule Path_pure/slice:
+  |- (SLICE path exp_i exp_n) '#' _
+  -- Path_pure: |- path
+  -- Exp_pure: |- exp_i
+  -- Exp_pure: |- exp_n
 
-  rule Path_pure/slice:
-    |- (SLICE path exp_i exp_n) '#' _
-    -- Path_pure: |- path
-    -- Exp_pure: |- exp_i
-    -- Exp_pure: |- exp_n
-
-  rule Path_pure/dot:
-    |- (DOT path _) '#' _
-    -- Path_pure: |- path
-
-}
+rule Path_pure/dot:
+  |- (DOT path _) '#' _
+  -- Path_pure: |- path
 
 ;;; Arguments
 
-rulegroup Arg_pure {
+rule Arg_pure/exp:
+  |- EXP exp
+  -- Exp_pure: |- exp
 
-  rule Arg_pure/exp:
-    |- EXP exp
-    -- Exp_pure: |- exp
-
-  rule Arg_pure/fun:
-    |- FUN _
-
-}
+rule Arg_pure/fun:
+  |- FUN _
 
 ;; Premises
 

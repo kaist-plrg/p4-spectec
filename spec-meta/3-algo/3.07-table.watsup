@@ -18,10 +18,10 @@ def $is_singleton_typ(_, _) = false
 ;; A row argument selects a variable or a case, possibly under an upcast;
 ;; a selected case must cover every value its arguments carry
 
-rulegroup Exp_shallow {
+rule Exp_shallow/variable:
+  AC |- (VAR _) '#' _
 
-  rule Exp_shallow/variable:
-    AC |- (VAR _) '#' _
+rulegroup Exp_shallow/upcast {
 
   rule Exp_shallow/upcast-variable:
     AC |- (UPCAST _ ((VAR id) '#' typ)) '#' _
@@ -31,36 +31,32 @@ rulegroup Exp_shallow {
     AC |- (UPCAST _ ((INJ expCase) '#' typ)) '#' _
     -- Exp_shallow: AC |- (INJ expCase) '#' typ
 
-  rule Exp_shallow/case:
-    AC |- (INJ (_ exp*)) '#' _
-    -- (Exp_irrefutable: AC |- exp)*
-
 }
 
-rulegroup Exp_irrefutable {
+rule Exp_shallow/case:
+  AC |- (INJ (_ exp*)) '#' _
+  -- (Exp_irrefutable: AC |- exp)*
 
-  rule Exp_irrefutable/variable:
-    AC |- (VAR _) '#' _
+rule Exp_irrefutable/variable:
+  AC |- (VAR _) '#' _
 
-  rule Exp_irrefutable/iter:
-    AC |- (ITER exp _) '#' _
-    -- Exp_irrefutable: AC |- exp
+rule Exp_irrefutable/iter:
+  AC |- (ITER exp _) '#' _
+  -- Exp_irrefutable: AC |- exp
 
-  rule Exp_irrefutable/tuple:
-    AC |- (TUP exp*) '#' _
-    -- (Exp_irrefutable: AC |- exp)*
+rule Exp_irrefutable/tuple:
+  AC |- (TUP exp*) '#' _
+  -- (Exp_irrefutable: AC |- exp)*
 
-  rule Exp_irrefutable/struct:
-    AC |- (STR expField*) '#' _
-    -- (if _ exp = expField)*
-    -- (Exp_irrefutable: AC |- exp)*
+rule Exp_irrefutable/struct:
+  AC |- (STR expField*) '#' _
+  -- (if _ exp = expField)*
+  -- (Exp_irrefutable: AC |- exp)*
 
-  rule Exp_irrefutable/case:
-    AC |- (INJ (_ exp*)) '#' typ
-    -- if $is_singleton_typ(AC.TYP, typ)
-    -- (Exp_irrefutable: AC |- exp)*
-
-}
+rule Exp_irrefutable/case:
+  AC |- (INJ (_ exp*)) '#' typ
+  -- if $is_singleton_typ(AC.TYP, typ)
+  -- (Exp_irrefutable: AC |- exp)*
 
 ;; Table rows
 
