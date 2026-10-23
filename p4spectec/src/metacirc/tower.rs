@@ -2,11 +2,11 @@
 //!
 //! The tower exposes program execution through its native entry point.
 //! Each level runs natively as one layer.
-//! An AL specification's extern hosts the script above it:
-//! the next level's layer, or the builtins of the AL program.
+//! A meta specification's extern hosts the script above it:
+//! the next level's layer, or the builtins of the AL or IL program.
 //! A single-level tower executes its top level directly as its base.
 
-use super::{config::LevelConfig, externs::AlExtern};
+use super::{config::LevelConfig, externs::MetaExtern};
 use crate::{
     interface::{meta::al::AlInterface, p4::P4Interface},
     lang::{
@@ -59,8 +59,8 @@ impl Level {
 pub(super) enum Layer {
     /// A P4 specification, interpreting a parsed P4 program.
     P4Spec(Runner<P4Interface, Dummy>),
-    /// A specification interpreting AL, hosting the script above it.
-    AlSpec(Runner<AlInterface, AlExtern>),
+    /// A meta specification interpreting an AL or IL script, hosting the script above it.
+    MetaSpec(Runner<AlInterface, MetaExtern>),
 }
 
 impl Tower {
@@ -81,7 +81,7 @@ impl Layer {
     fn eval_program(&mut self, arena: &mut Arena, name: &str, program: Value) -> Eval<Vec<Value>> {
         match self {
             Self::P4Spec(runner) => runner.eval_program(arena, name, program),
-            Self::AlSpec(runner) => runner.eval_program(arena, name, program),
+            Self::MetaSpec(runner) => runner.eval_program(arena, name, program),
         }
     }
 
@@ -94,7 +94,7 @@ impl Layer {
     ) -> Eval<Vec<Value>> {
         match self {
             Self::P4Spec(runner) => runner.eval_rel(arena, name, values),
-            Self::AlSpec(runner) => runner.eval_rel(arena, name, values),
+            Self::MetaSpec(runner) => runner.eval_rel(arena, name, values),
         }
     }
 
@@ -108,7 +108,7 @@ impl Layer {
     ) -> Eval<Value> {
         match self {
             Self::P4Spec(runner) => runner.eval_func(arena, name, targs, values),
-            Self::AlSpec(runner) => runner.eval_func(arena, name, targs, values),
+            Self::MetaSpec(runner) => runner.eval_func(arena, name, targs, values),
         }
     }
 
@@ -116,7 +116,7 @@ impl Layer {
     pub fn reset(&mut self) {
         match self {
             Self::P4Spec(runner) => runner.reset(),
-            Self::AlSpec(runner) => runner.reset(),
+            Self::MetaSpec(runner) => runner.reset(),
         }
     }
 }

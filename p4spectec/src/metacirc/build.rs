@@ -13,11 +13,11 @@
 //!             |                                      |
 //!       build_top(top)                      entry(top) + encode
 //!             |                                      |
-//!       Layer::AlSpec or Layer::P4Spec      encoded top script
+//!       Layer::MetaSpec or Layer::P4Spec    encoded top script
 //!             |                                      |
 //!       build_relay(interm, layer)          entry(interm) + encode
 //!             |                                      |
-//!       Layer::AlSpec                       encoded intermediate script
+//!       Layer::MetaSpec                     encoded intermediate script
 //!             |                                      |
 //!       build_relay(base, layer)                     |
 //!             |                                      |
@@ -37,7 +37,7 @@ use super::{
     ExecutionMode, Result, TowerConfig,
     config::{Lang, ProgramConfig},
     error::config_invalid,
-    externs::{AlExtern, RelayExtern, TerminalExtern},
+    externs::{MetaExtern, RelayExtern, TerminalExtern},
     tower::{Layer, Level, Tower},
 };
 use crate::{
@@ -90,13 +90,13 @@ fn build_terminal(
     // Prepare the input script's definition environment for builtin calls
     let spec_program = into_runner_spec(mode, spec_al_program)?;
     let runner_program = Runner::new(arena, spec_program, options, interface::al(), NullExtern)?;
-    // Run the AL specification with builtin calls delegated to runner_program
-    let external = AlExtern::Terminal(TerminalExtern {
+    // Run the meta specification with builtin calls delegated to runner_program
+    let external = MetaExtern::Terminal(TerminalExtern {
         cache: Box::new(Cache::new(options.cache)),
         runner_program: Box::new(runner_program),
     });
     let runner = Runner::new(arena, spec_top, options, interface::al(), external)?;
-    Ok(Layer::AlSpec(runner))
+    Ok(Layer::MetaSpec(runner))
 }
 
 /// Prepares the top level, hosting the AL or IL program or taking a P4 program.
@@ -134,11 +134,11 @@ fn build_relay(
     options: runner::Config,
 ) -> Result<Layer> {
     let spec = into_runner_spec(mode, level.spec_al().clone())?;
-    let external = AlExtern::Relay(RelayExtern {
+    let external = MetaExtern::Relay(RelayExtern {
         cache: Box::new(Cache::new(options.cache)),
         layer_next: Box::new(layer_next),
     });
-    Ok(Layer::AlSpec(Runner::new(arena, spec, options, interface::al(), external)?))
+    Ok(Layer::MetaSpec(Runner::new(arena, spec, options, interface::al(), external)?))
 }
 
 // == Tower assembly

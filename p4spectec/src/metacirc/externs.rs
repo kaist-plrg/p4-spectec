@@ -1,8 +1,8 @@
 //! Native host operations requested by the AL interpreter specification
 //!
-//! AlExtern hosts the script that an AL specification interprets.
+//! MetaExtern hosts the AL or IL script that a meta specification interprets.
 //! RelayExtern decodes one representation layer and delegates to the next level.
-//! TerminalExtern handles only builtins of the AL program above the top level.
+//! TerminalExtern handles only builtins of the AL or IL program above the top level.
 //! Clearing an extern resets its owned runners before arena values are reset.
 
 use super::{codec, tower::Layer};
@@ -18,15 +18,15 @@ use crate::{
     },
 };
 
-/// The host of the script that an AL specification interprets.
-pub(super) enum AlExtern {
+/// The host of the AL or IL script that a meta specification interprets.
+pub(super) enum MetaExtern {
     /// The script is the next level; host calls go to its layer.
     Relay(RelayExtern),
-    /// The script is the AL program; only its builtins are answered.
+    /// The script is the AL or IL program; only its builtins are answered.
     Terminal(TerminalExtern),
 }
 
-/// Builtin calls resolved against the AL program's own specification.
+/// Builtin calls resolved against the program's own builtin declarations.
 pub(super) struct TerminalExtern {
     pub cache: Box<Cache>,
     pub runner_program: Box<Runner<AlInterface, NullExtern>>,
@@ -46,7 +46,7 @@ fn unsupported<T>(name: &str) -> Eval<T, ExternError> {
     )
 }
 
-impl Extern for AlExtern {
+impl Extern for MetaExtern {
     fn eval_rel<Interp, Iface>(
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
@@ -85,14 +85,14 @@ impl Extern for AlExtern {
 }
 
 impl TerminalExtern {
-    /// Answers a builtin call of the AL program and rejects other meta relations.
+    /// Answers a builtin call of the program and rejects other meta relations.
     fn eval_rel(
         &mut self,
         arena: &mut Arena,
         name: &str,
         values: &[Value],
     ) -> Eval<Vec<Value>, ExternError> {
-        // The AL program exposes only its builtins to the meta interpreter
+        // The program exposes only its builtins to the meta interpreter
         if name != "Call_builtin_func" {
             return unsupported(name);
         }
