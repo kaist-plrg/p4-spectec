@@ -6,7 +6,6 @@
 
 use std::{
     hash::{BuildHasher, Hash},
-    marker::PhantomData,
     num::TryFromIntError,
 };
 
@@ -56,11 +55,22 @@ impl<T> Interner<T> {
         Self::default()
     }
 
+    /// Returns the number of stored entries.
+    pub fn len(&self) -> usize {
+        self.items.len()
+    }
+
+    /// Whether this arena has no stored entries.
+    pub fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
+
     // - Lookup
 
     /// Borrows an item using a handle issued by this interner.
+    #[inline]
     pub fn get(&self, id: Interned<T>) -> &T {
-        &self.items[id.index as usize]
+        &self.items[id.index() as usize]
     }
 }
 
@@ -97,21 +107,37 @@ impl<T: Eq + Hash> Interner<T> {
         self.insert(item, hash)
     }
 
+    /// Looks up a borrowed representation before allocating a new item.
+    pub(crate) fn intern_with<Q: Hash + hashbrown::Equivalent<T>>(
+        &mut self,
+        query: &Q,
+        make: impl FnOnce() -> T,
+    ) -> Result<Interned<T>, TryFromIntError> {
+        let hash = self.hasher.hash_one(query);
+        if let Some(entry) = self.table.find(hash, |entry| {
+            entry.hash == hash && query.equivalent(&self.items[entry.index as usize])
+        }) {
+            return Ok(Interned::from_index(entry.index));
+        }
+        self.insert(make(), hash)
+    }
+
     // - Table operations
 
     /// The handle of an equal stored item, if any.
     fn find(&self, item: &T, hash: u64) -> Option<Interned<T>> {
         self.table
             .find(hash, |entry| entry.hash == hash && &self.items[entry.index as usize] == item)
-            .map(|entry| Interned { index: entry.index, marker: PhantomData })
+            .map(|entry| Interned::from_index(entry.index))
     }
 
     /// Stores a new item at the next index.
     fn insert(&mut self, item: T, hash: u64) -> Result<Interned<T>, TryFromIntError> {
-        let index = u32::try_from(self.items.len())?;
+        let id = Interned::from_len(self.items.len())?;
+        let index = id.index();
         self.items.push(item);
         self.table
             .insert_unique(hash, Entry { hash, index }, |entry| entry.hash);
-        Ok(Interned { index, marker: PhantomData })
+        Ok(id)
     }
 }
