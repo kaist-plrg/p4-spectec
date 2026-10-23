@@ -236,27 +236,29 @@ rulegroup Multibind_renamer {
 
 ;; Renamer lookup
 
-dec $renamer_ids(renamer) : id*
+dec $repeated_ids(renamer) : id*
   hint(prose_in "the repeated binders of" %0)
-def $renamer_ids(((id _ _) '->' _)*) = id*
+def $repeated_ids(((id _ _) '->' _)*) = id*
 
-dec $renaming_ids(renamer, id) : id*
+dec $occurrence_ids(renamer, id) : id*
   hint(prose_in "the identifiers given so far to the occurrences of" %1 "in" %0)
-def $renaming_ids(eps, _) = eps
-def $renaming_ids((vari '->' id_name*) :: R, id) = id_name*
+def $occurrence_ids(eps, _) = eps
+def $occurrence_ids((vari '->' id_name*) :: R, id) = id_name*
   -- if id _ _ = vari
-def $renaming_ids((vari '->' _) :: R, id) = $renaming_ids(R, id)
+def $occurrence_ids((vari '->' _) :: R, id) = $occurrence_ids(R, id)
   -- if id_rep _ _ = vari
   -- if id_rep =/= id
 
-dec $add_renaming(renamer, id, id) : renamer
+dec $add_occurrence_id(renamer, id, id) : renamer
   hint(prose_in %0 "with" %2 "given to the next occurrence of" %1)
-def $add_renaming((vari '->' id_name*) :: R, id, id_next) = (vari '->' (id_name* ++ [ id_next ])) :: R
+def $add_occurrence_id((vari '->' id_name*) :: R, id, id_next)
+  = (vari '->' (id_name* ++ [ id_next ])) :: R
   -- if id _ _ = vari
-def $add_renaming((vari '->' id_name*) :: R, id, id_next) = (vari '->' id_name*) :: R'
+def $add_occurrence_id((vari '->' id_name*) :: R, id, id_next)
+  = (vari '->' id_name*) :: R'
   -- if id_rep _ _ = vari
   -- if id_rep =/= id
-  -- if R' = $add_renaming(R, id, id_next)
+  -- if R' = $add_occurrence_id(R, id, id_next)
 
 ;; Renaming repeated binders
 
@@ -268,13 +270,13 @@ rulegroup Multibind_exp {
   rule Multibind_exp/unrenamed:
     AC R |- exp : AC R exp
     -- if id* = $free_ids_exp(exp)
-    -- if id_rep* = $renamer_ids(R)
+    -- if id_rep* = $repeated_ids(R)
     -- if ~$exists_((id <- id_rep*)*)
 
   rule Multibind_exp/renamed:
     AC R |- exp : AC' R' exp'
     -- if id* = $free_ids_exp(exp)
-    -- if id_rep* = $renamer_ids(R)
+    -- if id_rep* = $repeated_ids(R)
     -- if $exists_((id <- id_rep*)*)
     -- Multibind_exp_repeated: AC R |- exp : AC' R' exp'
 
@@ -284,15 +286,15 @@ rulegroup Multibind_exp_repeated/variable {
 
   rule Multibind_exp_repeated/first:
     AC R |- (VAR id) '#' typ : AC R' ((VAR id) '#' typ)
-    -- if eps = $renaming_ids(R, id)
-    -- if R' = $add_renaming(R, id, id)
+    -- if eps = $occurrence_ids(R, id)
+    -- if R' = $add_occurrence_id(R, id, id)
 
   rule Multibind_exp_repeated/later:
     AC R |- (VAR id) '#' typ : AC' R' ((VAR id_fresh) '#' typ)
-    -- if id_name* = $renaming_ids(R, id)
+    -- if id_name* = $occurrence_ids(R, id)
     -- if id_name* =/= eps
     -- if (AC', id_fresh) = $fresh_name(AC, id)
-    -- if R' = $add_renaming(R, id, id_fresh)
+    -- if R' = $add_occurrence_id(R, id, id_fresh)
 
 }
 
@@ -341,9 +343,9 @@ dec $rename_iter_vari(renamer, vari, id*) : vari*
   hint(prose_in "the variables replacing iteration variable" %1
                 "by its renamed occurrences among" %2 "under" %0)
 def $rename_iter_vari(R, id typ iter*, _) = [ id typ iter* ]
-  -- if eps = $renaming_ids(R, id)
+  -- if eps = $occurrence_ids(R, id)
 def $rename_iter_vari(R, id typ iter*, id_free*) = (id_occ typ iter*)*
-  -- if id_name* = $renaming_ids(R, id)
+  -- if id_name* = $occurrence_ids(R, id)
   -- if id_name* =/= eps
   -- if id_occ* = $ids_within(id_name*, id_free*)
 

@@ -229,9 +229,9 @@ rulegroup Partialbind_args {
 ;; patterns decomposed. The decomposition premises come first; the
 ;; equalities of repeated binders follow once every occurrence is bound.
 
-dec $renamer_names(renamer) : id*
+dec $all_occurrence_ids(renamer) : id*
   hint(prose_in "the identifiers given to the repeated binders of" %0)
-def $renamer_names((_ '->' id_name*)*) = $concat_<id>(id_name**)
+def $all_occurrence_ids((_ '->' id_name*)*) = $concat_<id>(id_name**)
 
 rule Bind_exps:
   AC IC |- exp* : AC''' exp''* (premAL_part* ++ premAL_eq*)
@@ -241,7 +241,7 @@ rule Bind_exps:
   -- Partialbind_exps: AC' IC |- eps exp'* : AC'' _ exp''* premAL_part* id_fresh*
   -- Multibind_eqs: IC |- R' : premAL_eq*
   -- if id_bind* = $ids_of_varis(vari_bind*)
-  -- if id_rename* = $renamer_names(R')
+  -- if id_rename* = $all_occurrence_ids(R')
   -- if AC''' = $add_bound_ids(AC'', id_bind* ++ id_rename* ++ id_fresh*)
 
 rule Bind_args:
@@ -252,5 +252,5 @@ rule Bind_args:
   -- Partialbind_args: AC' |- arg'* : AC'' arg''* premAL_part* id_fresh*
   -- Multibind_eqs: eps |- R' : premAL_eq*
   -- if id_bind* = $ids_of_varis(vari_bind*)
-  -- if id_rename* = $renamer_names(R')
+  -- if id_rename* = $all_occurrence_ids(R')
   -- if AC''' = $add_bound_ids(AC'', id_bind* ++ id_rename* ++ id_fresh*)
