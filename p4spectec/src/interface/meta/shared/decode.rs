@@ -249,7 +249,7 @@ impl Decode for TreeMixfix<il::Typ> {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::TYPCASE => |[value_mixop, values_arg]| {
+            m::TYP_CASE => |[value_mixop, values_arg]| {
                 Ok(TreeMixfix::new(
                     Rc::<Mixop>::decode_cached(arena, cache, *value_mixop)?,
                     Vec::<il::Typ>::decode_cached(arena, cache, *values_arg)?,
@@ -268,7 +268,7 @@ impl Decode for TreeMixfix<il::Exp> {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::EXPCASE => |[value_mixop, values_arg]| {
+            m::EXP_CASE => |[value_mixop, values_arg]| {
                 Ok(TreeMixfix::new(
                     Rc::<Mixop>::decode_cached(arena, cache, *value_mixop)?,
                     Vec::<il::Exp>::decode_cached(arena, cache, *values_arg)?,
@@ -289,8 +289,8 @@ impl Decode for Iter {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::QUEST => |[]| Ok(Iter::Opt),
-            m::STAR => |[]| Ok(Iter::List),
+            m::ITER_QUEST => |[]| Ok(Iter::Opt),
+            m::ITER_STAR => |[]| Ok(Iter::List),
             _ => Err(Error::unexpected(arena, value_meta, "QUEST or STAR")),
         }
     }
@@ -334,26 +334,26 @@ impl Decode for il::Typ {
         }
         let span = *arena.value.span(value_meta.span);
         let typ_kind_al = get::matches_string! { arena, &value_meta,
-            m::BOOL_TYP => |[]| il::TypKind::Bool,
-            m::NAT_TYP => |[]| il::TypKind::Num(num::Typ::Nat),
-            m::INT_TYP => |[]| il::TypKind::Num(num::Typ::Int),
-            m::TEXT_TYP => |[]| il::TypKind::Text,
-            m::VAR_TYP => |[value_id, value_typs]| {
+            m::TYP_BOOL => |[]| il::TypKind::Bool,
+            m::TYP_NAT => |[]| il::TypKind::Num(num::Typ::Nat),
+            m::TYP_INT => |[]| il::TypKind::Num(num::Typ::Int),
+            m::TYP_TEXT => |[]| il::TypKind::Text,
+            m::TYP_VAR => |[value_id, value_typs]| {
                 il::TypKind::Var(
                     Id::decode_cached(arena, cache, *value_id)?,
                     Vec::<il::Typ>::decode_cached(arena, cache, *value_typs)?,
                 )
             },
-            m::TUP_TYP => |[value_typs]| {
+            m::TYP_TUP => |[value_typs]| {
                 il::TypKind::Tuple(Vec::<il::Typ>::decode_cached(arena, cache, *value_typs)?)
             },
-            m::ITER_TYP => |[value_typ, value_iter]| {
+            m::TYP_ITER => |[value_typ, value_iter]| {
                 il::TypKind::Iter(
                     Box::new(il::Typ::decode_cached(arena, cache, *value_typ)?),
                     Iter::decode_cached(arena, cache, *value_iter)?,
                 )
             },
-            m::FUNC_TYP => |[value_ids, value_typs, value_ret]| {
+            m::TYP_FUNC => |[value_ids, value_typs, value_ret]| {
                 il::TypKind::Func(il::FuncTyp {
                     tparams: Vec::<Id>::decode_cached(arena, cache, *value_ids)?,
                     typs_params: Vec::<il::Typ>::decode_cached(arena, cache, *value_typs)?,
@@ -385,13 +385,13 @@ impl Decode for il::DefTyp {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         let deftyp_kind_al = get::matches_string! { arena, &value_meta,
-            m::ALIAS => |[value_typ]| {
+            m::DEFTYP_ALIAS => |[value_typ]| {
                 il::DefTypKind::Plain(il::Typ::decode_cached(arena, cache, *value_typ)?)
             },
-            m::STRUCT => |[value_fields]| {
+            m::DEFTYP_STRUCT => |[value_fields]| {
                 il::DefTypKind::Struct(Vec::<il::TypField>::decode_cached(arena, cache, *value_fields)?)
             },
-            m::VARIANT => |[value_cases]| {
+            m::DEFTYP_VARIANT => |[value_cases]| {
                 il::DefTypKind::Variant(Vec::<il::TypCase>::decode_cached(arena, cache, *value_cases)?)
             },
             _ => return Err(Error::unexpected(arena, value_meta, "ALIAS, STRUCT, or VARIANT")),
@@ -408,7 +408,7 @@ impl Decode for il::TypField {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::TYPFIELD => |[value_atom, value_typ]| {
+            m::TYP_FIELD => |[value_atom, value_typ]| {
                 Ok(il::TypField {
                     atom: il::Atom::decode_cached(arena, cache, *value_atom)?,
                     typ: il::Typ::decode_cached(arena, cache, *value_typ)?,
@@ -446,13 +446,13 @@ impl Decode for (il::UnOp, il::OpTyp) {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::NOT => |[]| {
+            m::UNOP_NOT => |[]| {
                 Ok((il::UnOp::Bool(boolean::UnOp::Not), il::OpTyp::Bool))
             },
-            m::PLUS => |[]| {
+            m::UNOP_PLUS => |[]| {
                 Ok((il::UnOp::Num(num::UnOp::Plus), il::OpTyp::Nat))
             },
-            m::MINUS => |[]| {
+            m::UNOP_MINUS => |[]| {
                 Ok((il::UnOp::Num(num::UnOp::Minus), il::OpTyp::Nat))
             },
             _ => Err(Error::unexpected(arena, value_meta, "a nullary unop constructor")),
@@ -468,34 +468,34 @@ impl Decode for (il::BinOp, il::OpTyp) {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::AND => |[]| {
+            m::BINOP_AND => |[]| {
                 Ok((il::BinOp::Bool(boolean::BinOp::And), il::OpTyp::Bool))
             },
-            m::OR => |[]| {
+            m::BINOP_OR => |[]| {
                 Ok((il::BinOp::Bool(boolean::BinOp::Or), il::OpTyp::Bool))
             },
-            m::IMPL => |[]| {
+            m::BINOP_IMPL => |[]| {
                 Ok((il::BinOp::Bool(boolean::BinOp::Impl), il::OpTyp::Bool))
             },
-            m::EQUIV => |[]| {
+            m::BINOP_EQUIV => |[]| {
                 Ok((il::BinOp::Bool(boolean::BinOp::Equiv), il::OpTyp::Bool))
             },
-            m::ADD => |[]| {
+            m::BINOP_ADD => |[]| {
                 Ok((il::BinOp::Num(num::BinOp::Add), il::OpTyp::Nat))
             },
-            m::SUB => |[]| {
+            m::BINOP_SUB => |[]| {
                 Ok((il::BinOp::Num(num::BinOp::Sub), il::OpTyp::Nat))
             },
-            m::MUL => |[]| {
+            m::BINOP_MUL => |[]| {
                 Ok((il::BinOp::Num(num::BinOp::Mul), il::OpTyp::Nat))
             },
-            m::DIV => |[]| {
+            m::BINOP_DIV => |[]| {
                 Ok((il::BinOp::Num(num::BinOp::Div), il::OpTyp::Nat))
             },
-            m::MOD => |[]| {
+            m::BINOP_MOD => |[]| {
                 Ok((il::BinOp::Num(num::BinOp::Mod), il::OpTyp::Nat))
             },
-            m::POW => |[]| {
+            m::BINOP_POW => |[]| {
                 Ok((il::BinOp::Num(num::BinOp::Pow), il::OpTyp::Nat))
             },
             _ => Err(Error::unexpected(arena, value_meta, "a nullary binop constructor")),
@@ -511,22 +511,22 @@ impl Decode for (il::CmpOp, il::OpTyp) {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::EQ => |[]| {
+            m::CMPOP_EQ => |[]| {
                 Ok((il::CmpOp::Bool(boolean::CmpOp::Eq), il::OpTyp::Bool))
             },
-            m::NE => |[]| {
+            m::CMPOP_NE => |[]| {
                 Ok((il::CmpOp::Bool(boolean::CmpOp::Ne), il::OpTyp::Bool))
             },
-            m::LT => |[]| {
+            m::CMPOP_LT => |[]| {
                 Ok((il::CmpOp::Num(num::CmpOp::Lt), il::OpTyp::Nat))
             },
-            m::LE => |[]| {
+            m::CMPOP_LE => |[]| {
                 Ok((il::CmpOp::Num(num::CmpOp::Le), il::OpTyp::Nat))
             },
-            m::GT => |[]| {
+            m::CMPOP_GT => |[]| {
                 Ok((il::CmpOp::Num(num::CmpOp::Gt), il::OpTyp::Nat))
             },
-            m::GE => |[]| {
+            m::CMPOP_GE => |[]| {
                 Ok((il::CmpOp::Num(num::CmpOp::Ge), il::OpTyp::Nat))
             },
             _ => Err(Error::unexpected(arena, value_meta, "a nullary cmpop constructor")),
@@ -545,33 +545,33 @@ impl Decode for il::Exp {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         let (value_kind, typ_al) = get::matches_string! { arena, &value_meta,
-            m::EXP => |[value_kind, value_typ]| typed(arena, cache, value_kind, value_typ)?,
+            m::TYPED_EXP => |[value_kind, value_typ]| typed(arena, cache, value_kind, value_typ)?,
             _ => return Err(Error::unexpected(arena, value_meta, "exp '#' typ")),
         };
         let exp_kind_al = get::matches_string! { arena, &value_kind,
-            m::BOOL => |[value_bool]| {
+            m::EXP_BOOL => |[value_bool]| {
                 il::ExpKind::Bool(get::bool(arena, value_bool)?)
             },
-            m::NAT => |[value_num]| {
+            m::EXP_NAT => |[value_num]| {
                 let Number::Nat(nat) = get::num(arena, value_num)? else {
                     return Err(Error::unexpected(arena, *value_num, "a natural-number payload"));
                 };
                 il::ExpKind::Num(Number::Nat(nat.clone()))
             },
-            m::INT => |[value_num]| {
+            m::EXP_INT => |[value_num]| {
                 il::ExpKind::Num(Number::Int(num::to_int(get::num(arena, value_num)?).clone()))
             },
-            m::TEXT => |[value_text]| {
+            m::EXP_TEXT => |[value_text]| {
                 il::ExpKind::Text(get::text(arena, value_text)?.into())
             },
-            m::VAR_EXP => |[value_id]| {
+            m::EXP_VAR => |[value_id]| {
                 il::ExpKind::Id(Id::decode_cached(arena, cache, *value_id)?)
             },
-            m::UN => |[value_op, value_exp]| {
+            m::EXP_UN => |[value_op, value_exp]| {
                 let (op_al, typ_op_al) = <(il::UnOp, il::OpTyp)>::decode_cached(arena, cache, *value_op)?;
                 il::ExpKind::Un(op_al, op_typ(&typ_al.node, typ_op_al), Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?))
             },
-            m::BIN => |[value_op, value_l, value_r]| {
+            m::EXP_BIN => |[value_op, value_l, value_r]| {
                 let (op_al, typ_op_al) = <(il::BinOp, il::OpTyp)>::decode_cached(arena, cache, *value_op)?;
                 il::ExpKind::Bin(
                     op_al,
@@ -580,7 +580,7 @@ impl Decode for il::Exp {
                     Box::new(il::Exp::decode_cached(arena, cache, *value_r)?),
                 )
             },
-            m::CMP => |[value_op, value_l, value_r]| {
+            m::EXP_CMP => |[value_op, value_l, value_r]| {
                 let (op_al, typ_op_al) = <(il::CmpOp, il::OpTyp)>::decode_cached(arena, cache, *value_op)?;
                 let exp_l_al = il::Exp::decode_cached(arena, cache, *value_l)?;
                 il::ExpKind::Cmp(
@@ -590,99 +590,99 @@ impl Decode for il::Exp {
                     Box::new(il::Exp::decode_cached(arena, cache, *value_r)?),
                 )
             },
-            m::UPCAST => |[value_typ, value_exp]| {
+            m::EXP_UPCAST => |[value_typ, value_exp]| {
                 il::ExpKind::UpCast(
                     Box::new(il::Typ::decode_cached(arena, cache, *value_typ)?),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?),
                 )
             },
-            m::DOWNCAST => |[value_typ, value_exp]| {
+            m::EXP_DOWNCAST => |[value_typ, value_exp]| {
                 il::ExpKind::DownCast(
                     Box::new(il::Typ::decode_cached(arena, cache, *value_typ)?),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?),
                 )
             },
-            m::SUB_EXP => |[value_exp, value_typ]| {
+            m::EXP_SUB => |[value_exp, value_typ]| {
                 let typ_al = il::Typ::decode_cached(arena, cache, *value_typ)?;
                 il::ExpKind::Sub(
                     Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?),
                     Box::new(typ_al),
                 )
             },
-            m::MATCH => |[value_exp, value_pattern]| {
+            m::EXP_MATCH => |[value_exp, value_pattern]| {
                 il::ExpKind::Match(
                     Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?),
                     il::Pattern::decode_cached(arena, cache, *value_pattern)?,
                 )
             },
-            m::TUP => |[value_exps]| {
+            m::EXP_TUP => |[value_exps]| {
                 il::ExpKind::Tuple(Vec::<il::Exp>::decode_cached(arena, cache, *value_exps)?)
             },
-            m::INJ => |[value_case]| {
+            m::EXP_INJ => |[value_case]| {
                 il::ExpKind::Case(Box::new(TreeMixfix::<il::Exp>::decode_cached(arena, cache, *value_case)?))
             },
-            m::STR => |[value_fields]| {
+            m::EXP_STR => |[value_fields]| {
                 il::ExpKind::Str(Vec::<il::ExpField>::decode_cached(arena, cache, *value_fields)?)
             },
-            m::OPT => |[value_opt]| {
+            m::EXP_OPT => |[value_opt]| {
                 il::ExpKind::Opt(Option::<il::Exp>::decode_cached(arena, cache, *value_opt)?.map(Box::new))
             },
-            m::LIST => |[value_exps]| {
+            m::EXP_LIST => |[value_exps]| {
                 il::ExpKind::List(Vec::<il::Exp>::decode_cached(arena, cache, *value_exps)?)
             },
-            m::CONS => |[value_head, value_tail]| {
+            m::EXP_CONS => |[value_head, value_tail]| {
                 il::ExpKind::Cons(
                     Box::new(il::Exp::decode_cached(arena, cache, *value_head)?),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_tail)?),
                 )
             },
-            m::CAT => |[value_l, value_r]| il::ExpKind::Cat(
+            m::EXP_CAT => |[value_l, value_r]| il::ExpKind::Cat(
                             Box::new(il::Exp::decode_cached(arena, cache, *value_l)?),
                             Box::new(il::Exp::decode_cached(arena, cache, *value_r)?),
                         ),
-            m::MEM => |[value_elem, value_list]| {
+            m::EXP_MEM => |[value_elem, value_list]| {
                 il::ExpKind::Mem(
                     Box::new(il::Exp::decode_cached(arena, cache, *value_elem)?),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_list)?),
                 )
             },
-            m::LEN => |[value_exp]| {
+            m::EXP_LEN => |[value_exp]| {
                 il::ExpKind::Len(Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?))
             },
-            m::DOT => |[value_base, value_atom]| {
+            m::EXP_DOT => |[value_base, value_atom]| {
                 il::ExpKind::Dot(
                     Box::new(il::Exp::decode_cached(arena, cache, *value_base)?),
                     il::Atom::decode_cached(arena, cache, *value_atom)?,
                 )
             },
-            m::IDX => |[value_base, value_idx]| {
+            m::EXP_IDX => |[value_base, value_idx]| {
                 il::ExpKind::Idx(
                     Box::new(il::Exp::decode_cached(arena, cache, *value_base)?),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_idx)?),
                 )
             },
-            m::SLICE => |[value_base, value_idx, value_len]| {
+            m::EXP_SLICE => |[value_base, value_idx, value_len]| {
                 il::ExpKind::Slice(
                     Box::new(il::Exp::decode_cached(arena, cache, *value_base)?),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_idx)?),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_len)?),
                 )
             },
-            m::UPD => |[value_base, value_path, value_upd]| {
+            m::EXP_UPD => |[value_base, value_path, value_upd]| {
                 il::ExpKind::Upd(
                     Box::new(il::Exp::decode_cached(arena, cache, *value_base)?),
                     Box::new(il::Path::decode_cached(arena, cache, *value_path)?),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_upd)?),
                 )
             },
-            m::CALL => |[value_id, value_typs, value_args]| {
+            m::EXP_CALL => |[value_id, value_typs, value_args]| {
                 il::ExpKind::Call(
                     Id::decode_cached(arena, cache, *value_id)?,
                     Vec::<il::Typ>::decode_cached(arena, cache, *value_typs)?,
                     Vec::<il::Arg>::decode_cached(arena, cache, *value_args)?,
                 )
             },
-            m::ITER_EXP => |[value_exp, value_iter]| {
+            m::EXP_ITER => |[value_exp, value_iter]| {
                 il::ExpKind::Iter(
                     Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?),
                     il::ExpIter::decode_cached(arena, cache, *value_iter)?,
@@ -708,7 +708,7 @@ impl Decode for il::ExpField {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::EXPFIELD => |[value_atom, value_exp]| {
+            m::EXP_FIELD => |[value_atom, value_exp]| {
                 Ok(il::ExpField {
                     atom: il::Atom::decode_cached(arena, cache, *value_atom)?,
                     exp: il::Exp::decode_cached(arena, cache, *value_exp)?,
@@ -727,7 +727,7 @@ impl Decode for il::ExpIter {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::ITEREXP => |[value_iter, value_vars]| {
+            m::ITER_EXP => |[value_iter, value_vars]| {
                 Ok(il::ExpIter {
                     iter: Iter::decode_cached(arena, cache, *value_iter)?,
                     vars: Vec::<il::Var>::decode_cached(arena, cache, *value_vars)?,
@@ -748,13 +748,13 @@ impl Decode for il::Pattern {
         value_meta: Value,
     ) -> Result<Self, Error> {
         Ok(get::matches_string! { arena, &value_meta,
-            m::CASE_PATTERN => |[value_mixop]| {
+            m::PAT_INJ => |[value_mixop]| {
                 il::Pattern::Case(Rc::<Mixop>::decode_cached(arena, cache, *value_mixop)?)
             },
-            m::CONS_PATTERN => |[]| {
+            m::PAT_CONS => |[]| {
                 il::Pattern::List(il::ListPattern::Cons)
             },
-            m::FIXED => |[value_nat]| {
+            m::PAT_FIXED => |[value_nat]| {
                 let Number::Nat(nat) = get::num(arena, value_nat)? else {
                     return Err(Error::unexpected(arena, *value_nat, "a natural list length"));
                 };
@@ -763,13 +763,13 @@ impl Decode for il::Pattern {
                 })?;
                 il::Pattern::List(il::ListPattern::Fixed(num_len))
             },
-            m::NIL => |[]| {
+            m::PAT_NIL => |[]| {
                 il::Pattern::List(il::ListPattern::Nil)
             },
-            m::SOME => |[]| {
+            m::PAT_SOME => |[]| {
                 il::Pattern::Opt(il::OptPattern::Some)
             },
-            m::NONE => |[]| {
+            m::PAT_NONE => |[]| {
                 il::Pattern::Opt(il::OptPattern::None)
             },
             _ => return Err(Error::unexpected(arena, value_meta, "an AL shape pattern")),
@@ -788,25 +788,25 @@ impl Decode for il::Path {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         let (value_kind, typ_al) = get::matches_string! { arena, &value_meta,
-            m::PATH => |[value_kind, value_typ]| typed(arena, cache, value_kind, value_typ)?,
+            m::TYPED_PATH => |[value_kind, value_typ]| typed(arena, cache, value_kind, value_typ)?,
             _ => return Err(Error::unexpected(arena, value_meta, "path '#' typ")),
         };
         let path_kind_al = get::matches_string! { arena, &value_kind,
-            m::ROOT => |[]| il::PathKind::Root,
-            m::IDX => |[value_path, value_idx]| {
+            m::PATH_ROOT => |[]| il::PathKind::Root,
+            m::PATH_IDX => |[value_path, value_idx]| {
                 il::PathKind::Idx(
                     Box::new(il::Path::decode_cached(arena, cache, *value_path)?),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_idx)?),
                 )
             },
-            m::SLICE => |[value_path, value_idx, value_len]| {
+            m::PATH_SLICE => |[value_path, value_idx, value_len]| {
                 il::PathKind::Slice(
                     Box::new(il::Path::decode_cached(arena, cache, *value_path)?),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_idx)?),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_len)?),
                 )
             },
-            m::DOT => |[value_path, value_atom]| {
+            m::PATH_DOT => |[value_path, value_atom]| {
                 il::PathKind::Dot(
                     Box::new(il::Path::decode_cached(arena, cache, *value_path)?),
                     il::Atom::decode_cached(arena, cache, *value_atom)?,
@@ -829,10 +829,10 @@ impl Decode for il::Param {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         let param_kind_al = get::matches_string! { arena, &value_meta,
-            m::EXP_PARAM => |[value_typ]| {
+            m::PARAM_EXP => |[value_typ]| {
                 il::ParamKind::Exp(il::Typ::decode_cached(arena, cache, *value_typ)?)
             },
-            m::FUN_PARAM => |[value_id, value_ids, value_params, value_typ]| {
+            m::PARAM_FUN => |[value_id, value_ids, value_params, value_typ]| {
                 il::ParamKind::Def(
                     Id::decode_cached(arena, cache, *value_id)?,
                     Vec::<Id>::decode_cached(arena, cache, *value_ids)?,
@@ -857,10 +857,10 @@ impl Decode for il::Arg {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         let arg_kind_al = get::matches_string! { arena, &value_meta,
-            m::EXP_ARG => |[value_exp]| {
+            m::ARG_EXP => |[value_exp]| {
                 il::ArgKind::Exp(Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?))
             },
-            m::FUN_ARG => |[value_id]| {
+            m::ARG_FUN => |[value_id]| {
                 il::ArgKind::Def(Id::decode_cached(arena, cache, *value_id)?)
             },
             _ => return Err(Error::unexpected(arena, value_meta, "EXP exp or FUN id")),

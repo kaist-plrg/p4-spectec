@@ -33,7 +33,7 @@ impl Decode for FlatMixfix<Value> {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::VALCASE => |[value_mixop, values_arg]| {
+            m::VAL_CASE => |[value_mixop, values_arg]| {
                 let mixop = FlatMixop::decode_cached(arena, cache, *value_mixop)?;
                 let values = Vec::<Value>::decode_cached(arena, cache, *values_arg)?;
                 Ok(FlatMixfix::new(&arena.mixop, mixop, values)?)
@@ -59,42 +59,42 @@ impl Decode for Value {
         }
         let span = *arena.value.span(value_meta.span);
         let value_target = get::matches_string! { arena, &value_meta,
-            m::BOOL => |[value_bool]| {
+            m::VAL_BOOL => |[value_bool]| {
                 let value_bool = get::bool(arena, value_bool)?;
                 make::bool(arena, value_bool, span)?
             },
-            m::NAT => |[value_num]| {
+            m::VAL_NAT => |[value_num]| {
                 let Number::Nat(nat) = get::num(arena, value_num)? else {
                     return Err(Error::unexpected(arena, *value_num, "a natural-number payload"));
                 };
                 let nat_target = nat.clone();
                 make::nat(arena, nat_target, span)?
             },
-            m::INT => |[value_num]| {
+            m::VAL_INT => |[value_num]| {
                 let num_target = get::num(arena, value_num)?.clone();
                 make::int(arena, num::to_int(&num_target).clone(), span)?
             },
-            m::TEXT => |[value_text]| {
+            m::VAL_TEXT => |[value_text]| {
                 let text_target = get::text(arena, value_text)?.to_owned();
                 make::text(arena, text_target, span)?
             },
-            m::STR => |[value_fields]| {
+            m::VAL_STR => |[value_fields]| {
                 let fields_target = Vec::<ValueField>::decode_cached(arena, cache, *value_fields)?;
                 make::structure(arena, stub::value_typ().node.into(), fields_target, span)?
             },
-            m::INJ => |[value_case]| {
+            m::VAL_INJ => |[value_case]| {
                 let mixfix_target = FlatMixfix::<Value>::decode_cached(arena, cache, *value_case)?;
                 make::case_flat(arena, stub::value_typ().node.into(), mixfix_target, span)?
             },
-            m::TUP => |[value_values]| {
+            m::VAL_TUP => |[value_values]| {
                 let values_target = Vec::<Value>::decode_cached(arena, cache, *value_values)?;
                 make::tuple(arena, stub::value_typ().node.into(), values_target, span)?
             },
-            m::OPT => |[value_opt]| {
+            m::VAL_OPT => |[value_opt]| {
                 let value_target = Option::<Value>::decode_cached(arena, cache, *value_opt)?;
                 make::opt(arena, make_typ::opt(stub::value_typ()).node.into(), value_target, span)?
             },
-            m::LIST => |[value_values]| {
+            m::VAL_LIST => |[value_values]| {
                 let values_target = Vec::<Value>::decode_cached(arena, cache, *value_values)?;
                 make::list(
                     arena,
@@ -103,12 +103,12 @@ impl Decode for Value {
                     span,
                 )?
             },
-            m::FUNC => |[value_id]| {
+            m::VAL_FUNC => |[value_id]| {
                 let id_target = Id::decode_cached(arena, cache, *value_id)?;
                 let (tparams_target, typs_target, typ_target) = stub::func_typ_params();
                 make::func(arena, id_target, tparams_target, typs_target, typ_target, span)?
             },
-            m::EXT => |[value_json]| {
+            m::VAL_EXT => |[value_json]| {
                 let json_target = get::external(arena, value_json)?.clone();
                 make::external(arena, stub::json_typ().node.into(), json_target, span)?
             },
@@ -134,7 +134,7 @@ impl Decode for ValueField {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::VALFIELD => |[value_atom, value_inner]| {
+            m::VAL_FIELD => |[value_atom, value_inner]| {
                 Ok(ValueField {
                     atom: il::Atom::decode_cached(arena, cache, *value_atom)?,
                     value: Value::decode_cached(arena, cache, *value_inner)?,
@@ -156,7 +156,7 @@ impl Decode for al::Prem {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         let prem_kind_al = get::matches_string! { arena, &value_meta,
-            m::REL_PREM => |[value_id, value_input, value_output]| {
+            m::PREM_REL => |[value_id, value_input, value_output]| {
                 let (not_exp, input_hint) = stub::not_exp(
                     Vec::<il::Exp>::decode_cached(arena, cache, *value_input)?,
                     Vec::<il::Exp>::decode_cached(arena, cache, *value_output)?,
@@ -167,15 +167,15 @@ impl Decode for al::Prem {
                     input_hint,
                 })
             },
-            m::IF => |[value_exp]| {
+            m::PREM_IF => |[value_exp]| {
                 al::PremKind::If(al::IfPrem { exp: il::Exp::decode_cached(arena, cache, *value_exp)? })
             },
-            m::IFHOLD => |[value_id, value_exps]| {
+            m::PREM_IFHOLD => |[value_id, value_exps]| {
                 let (not_exp, _) =
                     stub::not_exp(Vec::<il::Exp>::decode_cached(arena, cache, *value_exps)?, vec![])?;
                 al::PremKind::IfHold(al::IfHoldPrem { id: Id::decode_cached(arena, cache, *value_id)?, not_exp })
             },
-            m::IFNOTHOLD => |[value_id, value_exps]| {
+            m::PREM_IFNOTHOLD => |[value_id, value_exps]| {
                 let (not_exp, _) =
                     stub::not_exp(Vec::<il::Exp>::decode_cached(arena, cache, *value_exps)?, vec![])?;
                 al::PremKind::IfNotHold(al::IfNotHoldPrem {
@@ -183,19 +183,19 @@ impl Decode for al::Prem {
                     not_exp,
                 })
             },
-            m::LET => |[value_l, value_r]| {
+            m::PREM_LET => |[value_l, value_r]| {
                 al::PremKind::Let(al::LetPrem {
                     exp_l: il::Exp::decode_cached(arena, cache, *value_l)?,
                     exp_r: il::Exp::decode_cached(arena, cache, *value_r)?,
                 })
             },
-            m::ITER_PREM => |[value_prem, value_iter]| {
+            m::PREM_ITER => |[value_prem, value_iter]| {
                 al::PremKind::Iter(al::IterPrem {
                     prem: Box::new(al::Prem::decode_cached(arena, cache, *value_prem)?),
                     prem_iter: PremIterAl::decode_cached(arena, cache, *value_iter)?.0,
                 })
             },
-            m::DEBUG => |[value_exp]| {
+            m::PREM_DEBUG => |[value_exp]| {
                 al::PremKind::Debug(al::DebugPrem { exp: il::Exp::decode_cached(arena, cache, *value_exp)? })
             },
             _ => return Err(Error::unexpected(arena, value_meta, "an AL premise")),
@@ -215,7 +215,7 @@ impl Decode for PremIterAl {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::ITERPREM => |[value_iter, value_bound, value_bind]| {
+            m::ITER_PREM => |[value_iter, value_bound, value_bind]| {
                 Ok(Self(al::PremIter {
                     iter: Iter::decode_cached(arena, cache, *value_iter)?,
                     vars_bound: Vec::<al::Var>::decode_cached(arena, cache, *value_bound)?,
@@ -271,7 +271,7 @@ impl Decode for RuleGroupRun {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         let (id, rules) = get::matches_string! { arena, &value_meta,
-            m::RULGROUP => |[value_id, value_rules]| (
+            m::RUL_GROUP => |[value_id, value_rules]| (
                 Id::decode_cached(arena, cache, *value_id)?,
                 Vec::<(al::RuleMatch, al::RulePath)>::decode_cached(arena, cache, *value_rules)?,
             ),
@@ -300,7 +300,7 @@ impl Decode for al::ElseGroup {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         get::matches_string! { arena, &value_meta,
-            m::ELSGROUP => |[value_id, value_rule]| {
+            m::ELS_GROUP => |[value_id, value_rule]| {
                 let (rule_match, rule_path) =
                     <(al::RuleMatch, al::RulePath)>::decode_cached(arena, cache, *value_rule)?;
                 Ok(phrase!(node: al::ElseGroupKind {
@@ -384,13 +384,13 @@ impl Decode for al::Def {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         let def_kind_al = get::matches_string! { arena, &value_meta,
-            m::EXTTYP => |[value_id]| {
+            m::DEF_EXTTYP => |[value_id]| {
                 al::DefKind::Typ(al::TypDef::Extern(al::ExternTyp {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     hints: stub::hints(),
                 }))
             },
-            m::TYP_DEF => |[value_id, value_ids, value_typ]| {
+            m::DEF_TYP => |[value_id, value_ids, value_typ]| {
                 al::DefKind::Typ(al::TypDef::Defined(Box::new(al::DefinedTyp {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     tparams: Vec::<Id>::decode_cached(arena, cache, *value_ids)?,
@@ -398,7 +398,7 @@ impl Decode for al::Def {
                     hints: stub::hints(),
                 })))
             },
-            m::EXTREL => |[value_id, value_input, value_output]| {
+            m::DEF_EXTREL => |[value_id, value_input, value_output]| {
                 let (not_typ, input_hint) = stub::not_typ(
                     Vec::<il::Typ>::decode_cached(arena, cache, *value_input)?,
                     Vec::<il::Typ>::decode_cached(arena, cache, *value_output)?,
@@ -410,7 +410,7 @@ impl Decode for al::Def {
                     hints: stub::hints(),
                 })))
             },
-            m::REL_DEF => |[value_id, value_input, value_output, value_groups, value_else]| {
+            m::DEF_REL => |[value_id, value_input, value_output, value_groups, value_else]| {
                 let (not_typ, input_hint) = stub::not_typ(
                     Vec::<il::Typ>::decode_cached(arena, cache, *value_input)?,
                     Vec::<il::Typ>::decode_cached(arena, cache, *value_output)?,
@@ -427,7 +427,7 @@ impl Decode for al::Def {
                     hints: stub::hints(),
                 })))
             },
-            m::EXTFUNC => |[value_id, value_ids, value_params, value_typ]| {
+            m::DEF_EXTFUNC => |[value_id, value_ids, value_params, value_typ]| {
                 al::DefKind::MetaFunc(al::MetaFuncDef::Extern(al::ExternFunc {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     tparams: Vec::<Id>::decode_cached(arena, cache, *value_ids)?,
@@ -436,7 +436,7 @@ impl Decode for al::Def {
                     hints: stub::hints(),
                 }))
             },
-            m::BUILTINFUNC => |[value_id, value_ids, value_params, value_typ]| {
+            m::DEF_BUILTINFUNC => |[value_id, value_ids, value_params, value_typ]| {
                 al::DefKind::MetaFunc(al::MetaFuncDef::Builtin(al::BuiltinFunc {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     tparams: Vec::<Id>::decode_cached(arena, cache, *value_ids)?,
@@ -445,7 +445,7 @@ impl Decode for al::Def {
                     hints: stub::hints(),
                 }))
             },
-            m::TABLEFUNC => |[value_id, value_params, value_typ, value_rows]| {
+            m::DEF_TABLEFUNC => |[value_id, value_params, value_typ, value_rows]| {
                 al::DefKind::MetaFunc(al::MetaFuncDef::Table(al::TableFunc {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     params: Vec::<al::Param>::decode_cached(arena, cache, *value_params)?,
@@ -454,7 +454,7 @@ impl Decode for al::Def {
                     hints: stub::hints(),
                 }))
             },
-            m::FUNC_DEF => |[value_id, value_ids, value_params, value_typ, value_clauses, value_else]| {
+            m::DEF_FUNC => |[value_id, value_ids, value_params, value_typ, value_clauses, value_else]| {
                 al::DefKind::MetaFunc(al::MetaFuncDef::Defined(Box::new(al::DefinedFunc {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     tparams: Vec::<Id>::decode_cached(arena, cache, *value_ids)?,

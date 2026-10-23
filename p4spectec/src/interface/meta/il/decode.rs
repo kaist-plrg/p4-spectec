@@ -58,35 +58,35 @@ impl Decode for il::Prem {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         let prem_kind_il = get::matches_string! { arena, &value_meta,
-            m::REL_PREM => |[value_id, value_exps, value_input]| {
+            m::PREM_REL => |[value_id, value_exps, value_input]| {
                 il::PremKind::Rule(il::RulePrem {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     not_exp: stub::notation(Vec::<il::Exp>::decode_cached(arena, cache, *value_exps)?)?,
                     input_hint: InputHint::decode_cached(arena, cache, *value_input)?,
                 })
             },
-            m::IF => |[value_exp]| {
+            m::PREM_IF => |[value_exp]| {
                 il::PremKind::If(il::IfPrem { exp: il::Exp::decode_cached(arena, cache, *value_exp)? })
             },
-            m::IFHOLD => |[value_id, value_exps]| {
+            m::PREM_IFHOLD => |[value_id, value_exps]| {
                 il::PremKind::IfHold(il::IfHoldPrem {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     not_exp: stub::notation(Vec::<il::Exp>::decode_cached(arena, cache, *value_exps)?)?,
                 })
             },
-            m::IFNOTHOLD => |[value_id, value_exps]| {
+            m::PREM_IFNOTHOLD => |[value_id, value_exps]| {
                 il::PremKind::IfNotHold(il::IfNotHoldPrem {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     not_exp: stub::notation(Vec::<il::Exp>::decode_cached(arena, cache, *value_exps)?)?,
                 })
             },
-            m::ITER_PREM => |[value_prem, value_iter]| {
+            m::PREM_ITER => |[value_prem, value_iter]| {
                 il::PremKind::Iter(il::IterPrem {
                     prem: Box::new(il::Prem::decode_cached(arena, cache, *value_prem)?),
                     prem_iter: PremIterIl::decode_cached(arena, cache, *value_iter)?.0,
                 })
             },
-            m::DEBUG => |[value_exp]| {
+            m::PREM_DEBUG => |[value_exp]| {
                 il::PremKind::Debug(il::DebugPrem { exp: il::Exp::decode_cached(arena, cache, *value_exp)? })
             },
             _ => return Err(Error::unexpected(arena, value_meta, "an IL premise")),
@@ -106,7 +106,7 @@ impl Decode for PremIterIl {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::ITERPREM => |[value_iter, value_bound]| {
+            m::ITER_PREM => |[value_iter, value_bound]| {
                 Ok(Self(il::PremIter {
                     iter: Iter::decode_cached(arena, cache, *value_iter)?,
                     vars_bound: Vec::<il::Var>::decode_cached(arena, cache, *value_bound)?,
@@ -150,7 +150,7 @@ impl Decode for il::RuleGroup {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         get::matches_string! { arena, &value_meta,
-            m::RULGROUP => |[value_id, value_rules]| {
+            m::RUL_GROUP => |[value_id, value_rules]| {
                 Ok(phrase!(node: il::RuleGroupKind {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     rules: Vec::<il::Rule>::decode_cached(arena, cache, *value_rules)?,
@@ -170,7 +170,7 @@ impl Decode for il::ElseGroup {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         get::matches_string! { arena, &value_meta,
-            m::ELSGROUP => |[value_id, value_rule]| {
+            m::ELS_GROUP => |[value_id, value_rule]| {
                 Ok(phrase!(node: il::ElseGroupKind {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     rule: il::Rule::decode_cached(arena, cache, *value_rule)?,
@@ -214,7 +214,7 @@ impl Decode for il::TableRow {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         get::matches_string! { arena, &value_meta,
-            m::TBLROW => |[value_args, value_exp]| {
+            m::TBL_ROW => |[value_args, value_exp]| {
                 Ok(phrase!(node: il::TableRowKind {
                     args: Vec::<il::Arg>::decode_cached(arena, cache, *value_args)?,
                     exp: il::Exp::decode_cached(arena, cache, *value_exp)?,
@@ -236,13 +236,13 @@ impl Decode for il::Def {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         let def_kind_il = get::matches_string! { arena, &value_meta,
-            m::EXTTYP => |[value_id]| {
+            m::DEF_EXTTYP => |[value_id]| {
                 il::DefKind::Typ(il::TypDef::Extern(il::ExternTyp {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     hints: vec![],
                 }))
             },
-            m::TYP_DEF => |[value_id, value_ids, value_typ]| {
+            m::DEF_TYP => |[value_id, value_ids, value_typ]| {
                 il::DefKind::Typ(il::TypDef::Defined(Box::new(il::DefinedTyp {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     tparams: Vec::<Id>::decode_cached(arena, cache, *value_ids)?,
@@ -250,7 +250,7 @@ impl Decode for il::Def {
                     hints: vec![],
                 })))
             },
-            m::EXTREL => |[value_id, value_typs, value_input]| {
+            m::DEF_EXTREL => |[value_id, value_typs, value_input]| {
                 il::DefKind::Rel(il::RelDef::Extern(Box::new(il::ExternRel {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     not_typ: phrase!(
@@ -261,7 +261,7 @@ impl Decode for il::Def {
                     hints: vec![],
                 })))
             },
-            m::REL_DEF => |[value_id, value_typs, value_input, value_groups, value_else]| {
+            m::DEF_REL => |[value_id, value_typs, value_input, value_groups, value_else]| {
                 il::DefKind::Rel(il::RelDef::Defined(Box::new(il::DefinedRel {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     not_typ: phrase!(
@@ -274,7 +274,7 @@ impl Decode for il::Def {
                     hints: vec![],
                 })))
             },
-            m::EXTFUNC => |[value_id, value_ids, value_params, value_typ]| {
+            m::DEF_EXTFUNC => |[value_id, value_ids, value_params, value_typ]| {
                 il::DefKind::MetaFunc(il::MetaFuncDef::Extern(il::ExternFunc {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     tparams: Vec::<Id>::decode_cached(arena, cache, *value_ids)?,
@@ -283,7 +283,7 @@ impl Decode for il::Def {
                     hints: vec![],
                 }))
             },
-            m::BUILTINFUNC => |[value_id, value_ids, value_params, value_typ]| {
+            m::DEF_BUILTINFUNC => |[value_id, value_ids, value_params, value_typ]| {
                 il::DefKind::MetaFunc(il::MetaFuncDef::Builtin(il::BuiltinFunc {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     tparams: Vec::<Id>::decode_cached(arena, cache, *value_ids)?,
@@ -292,7 +292,7 @@ impl Decode for il::Def {
                     hints: vec![],
                 }))
             },
-            m::TABLEFUNC => |[value_id, value_params, value_typ, value_rows]| {
+            m::DEF_TABLEFUNC => |[value_id, value_params, value_typ, value_rows]| {
                 il::DefKind::MetaFunc(il::MetaFuncDef::Table(il::TableFunc {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     params: Vec::<il::Param>::decode_cached(arena, cache, *value_params)?,
@@ -301,7 +301,7 @@ impl Decode for il::Def {
                     hints: vec![],
                 }))
             },
-            m::FUNC_DEF => |[value_id, value_ids, value_params, value_typ, value_clauses, value_else]| {
+            m::DEF_FUNC => |[value_id, value_ids, value_params, value_typ, value_clauses, value_else]| {
                 let mut clauses = Vec::new();
                 for value_clause in get::list(arena, value_clauses)?.to_vec() {
                     clauses.push(decode_clause(arena, cache, value_clause, false)?);

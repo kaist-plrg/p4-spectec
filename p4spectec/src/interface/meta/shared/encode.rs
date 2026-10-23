@@ -237,8 +237,8 @@ impl Encode for Iter {
 
     fn encode_cached(&self, arena: &mut Arena, _cache: &mut Cache) -> Result<Self::Output, Error> {
         let shape = match self {
-            Iter::Opt => m::QUEST,
-            Iter::List => m::STAR,
+            Iter::Opt => m::ITER_QUEST,
+            Iter::List => m::ITER_STAR,
         };
         case(arena, shape, "iter", vec![], Span::default())
     }
@@ -268,25 +268,25 @@ impl Encode for il::Typ {
         let typ_al = self;
         let span = typ_al.span;
         match &typ_al.node {
-            il::TypKind::Bool => case(arena, m::BOOL_TYP, "typ", vec![], span),
-            il::TypKind::Num(num::Typ::Nat) => case(arena, m::NAT_TYP, "typ", vec![], span),
-            il::TypKind::Num(num::Typ::Int) => case(arena, m::INT_TYP, "typ", vec![], span),
-            il::TypKind::Text => case(arena, m::TEXT_TYP, "typ", vec![], span),
+            il::TypKind::Bool => case(arena, m::TYP_BOOL, "typ", vec![], span),
+            il::TypKind::Num(num::Typ::Nat) => case(arena, m::TYP_NAT, "typ", vec![], span),
+            il::TypKind::Num(num::Typ::Int) => case(arena, m::TYP_INT, "typ", vec![], span),
+            il::TypKind::Text => case(arena, m::TYP_TEXT, "typ", vec![], span),
             il::TypKind::Var(id_al, targs_al) => {
                 let values_meta =
                     vec![id_al.encode_cached(arena, cache)?, list(arena, cache, "typ", targs_al)?];
-                case(arena, m::VAR_TYP, "typ", values_meta, span)
+                case(arena, m::TYP_VAR, "typ", values_meta, span)
             }
             il::TypKind::Tuple(typs_al) => {
                 let value_typs = list(arena, cache, "typ", typs_al)?;
-                case(arena, m::TUP_TYP, "typ", vec![value_typs], span)
+                case(arena, m::TYP_TUP, "typ", vec![value_typs], span)
             }
             il::TypKind::Iter(typ_inner_al, iter_al) => {
                 let values_meta = vec![
                     typ_inner_al.encode_cached(arena, cache)?,
                     iter_al.encode_cached(arena, cache)?,
                 ];
-                case(arena, m::ITER_TYP, "typ", values_meta, span)
+                case(arena, m::TYP_ITER, "typ", values_meta, span)
             }
             il::TypKind::Func(typ_func_al) => {
                 let values_meta = vec![
@@ -294,7 +294,7 @@ impl Encode for il::Typ {
                     list(arena, cache, "typ", &typ_func_al.typs_params)?,
                     typ_func_al.typ_ret.encode_cached(arena, cache)?,
                 ];
-                case(arena, m::FUNC_TYP, "typ", values_meta, span)
+                case(arena, m::TYP_FUNC, "typ", values_meta, span)
             }
         }
     }
@@ -309,12 +309,14 @@ impl Encode for il::DefTyp {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let deftyp_al = self;
         let (shape, values_meta) = match &deftyp_al.node {
-            il::DefTypKind::Plain(typ_al) => (m::ALIAS, vec![typ_al.encode_cached(arena, cache)?]),
+            il::DefTypKind::Plain(typ_al) => {
+                (m::DEFTYP_ALIAS, vec![typ_al.encode_cached(arena, cache)?])
+            }
             il::DefTypKind::Struct(typ_fields_al) => {
-                (m::STRUCT, vec![list(arena, cache, "typField", typ_fields_al)?])
+                (m::DEFTYP_STRUCT, vec![list(arena, cache, "typField", typ_fields_al)?])
             }
             il::DefTypKind::Variant(typ_cases_al) => {
-                (m::VARIANT, vec![list(arena, cache, "typCase", typ_cases_al)?])
+                (m::DEFTYP_VARIANT, vec![list(arena, cache, "typCase", typ_cases_al)?])
             }
         };
         case(arena, shape, "deftyp", values_meta, deftyp_al.span)
@@ -328,7 +330,7 @@ impl Encode for il::TypField {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let values_meta =
             vec![self.atom.encode_cached(arena, cache)?, self.typ.encode_cached(arena, cache)?];
-        case(arena, m::TYPFIELD, "typField", values_meta, self.atom.span)
+        case(arena, m::TYP_FIELD, "typField", values_meta, self.atom.span)
     }
 }
 
@@ -341,7 +343,7 @@ impl Encode for il::TypCase {
             self.not_typ.node.mixop().encode_cached(arena, cache)?,
             list(arena, cache, "typ", self.not_typ.node.args())?,
         ];
-        case(arena, m::TYPCASE, "typCase", values_meta, self.not_typ.span)
+        case(arena, m::TYP_CASE, "typCase", values_meta, self.not_typ.span)
     }
 }
 
@@ -353,9 +355,9 @@ impl Encode for il::UnOp {
 
     fn encode_cached(&self, arena: &mut Arena, _cache: &mut Cache) -> Result<Self::Output, Error> {
         let shape = match self {
-            il::UnOp::Bool(boolean::UnOp::Not) => m::NOT,
-            il::UnOp::Num(num::UnOp::Plus) => m::PLUS,
-            il::UnOp::Num(num::UnOp::Minus) => m::MINUS,
+            il::UnOp::Bool(boolean::UnOp::Not) => m::UNOP_NOT,
+            il::UnOp::Num(num::UnOp::Plus) => m::UNOP_PLUS,
+            il::UnOp::Num(num::UnOp::Minus) => m::UNOP_MINUS,
         };
         case(arena, shape, "unop", vec![], Span::default())
     }
@@ -367,16 +369,16 @@ impl Encode for il::BinOp {
 
     fn encode_cached(&self, arena: &mut Arena, _cache: &mut Cache) -> Result<Self::Output, Error> {
         let shape = match self {
-            il::BinOp::Bool(boolean::BinOp::And) => m::AND,
-            il::BinOp::Bool(boolean::BinOp::Or) => m::OR,
-            il::BinOp::Bool(boolean::BinOp::Impl) => m::IMPL,
-            il::BinOp::Bool(boolean::BinOp::Equiv) => m::EQUIV,
-            il::BinOp::Num(num::BinOp::Add) => m::ADD,
-            il::BinOp::Num(num::BinOp::Sub) => m::SUB,
-            il::BinOp::Num(num::BinOp::Mul) => m::MUL,
-            il::BinOp::Num(num::BinOp::Div) => m::DIV,
-            il::BinOp::Num(num::BinOp::Mod) => m::MOD,
-            il::BinOp::Num(num::BinOp::Pow) => m::POW,
+            il::BinOp::Bool(boolean::BinOp::And) => m::BINOP_AND,
+            il::BinOp::Bool(boolean::BinOp::Or) => m::BINOP_OR,
+            il::BinOp::Bool(boolean::BinOp::Impl) => m::BINOP_IMPL,
+            il::BinOp::Bool(boolean::BinOp::Equiv) => m::BINOP_EQUIV,
+            il::BinOp::Num(num::BinOp::Add) => m::BINOP_ADD,
+            il::BinOp::Num(num::BinOp::Sub) => m::BINOP_SUB,
+            il::BinOp::Num(num::BinOp::Mul) => m::BINOP_MUL,
+            il::BinOp::Num(num::BinOp::Div) => m::BINOP_DIV,
+            il::BinOp::Num(num::BinOp::Mod) => m::BINOP_MOD,
+            il::BinOp::Num(num::BinOp::Pow) => m::BINOP_POW,
         };
         case(arena, shape, "binop", vec![], Span::default())
     }
@@ -388,12 +390,12 @@ impl Encode for il::CmpOp {
 
     fn encode_cached(&self, arena: &mut Arena, _cache: &mut Cache) -> Result<Self::Output, Error> {
         let shape = match self {
-            il::CmpOp::Bool(boolean::CmpOp::Eq) => m::EQ,
-            il::CmpOp::Bool(boolean::CmpOp::Ne) => m::NE,
-            il::CmpOp::Num(num::CmpOp::Lt) => m::LT,
-            il::CmpOp::Num(num::CmpOp::Le) => m::LE,
-            il::CmpOp::Num(num::CmpOp::Gt) => m::GT,
-            il::CmpOp::Num(num::CmpOp::Ge) => m::GE,
+            il::CmpOp::Bool(boolean::CmpOp::Eq) => m::CMPOP_EQ,
+            il::CmpOp::Bool(boolean::CmpOp::Ne) => m::CMPOP_NE,
+            il::CmpOp::Num(num::CmpOp::Lt) => m::CMPOP_LT,
+            il::CmpOp::Num(num::CmpOp::Le) => m::CMPOP_LE,
+            il::CmpOp::Num(num::CmpOp::Gt) => m::CMPOP_GT,
+            il::CmpOp::Num(num::CmpOp::Ge) => m::CMPOP_GE,
         };
         case(arena, shape, "cmpop", vec![], Span::default())
     }
@@ -408,22 +410,24 @@ impl Encode for il::Exp {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let span = self.span;
         let (shape, values_meta) = match &self.node {
-            il::ExpKind::Bool(value_bool) => (m::BOOL, vec![make::bool(arena, *value_bool, span)?]),
+            il::ExpKind::Bool(value_bool) => {
+                (m::EXP_BOOL, vec![make::bool(arena, *value_bool, span)?])
+            }
             il::ExpKind::Num(num) => {
                 let shape = match num {
-                    Number::Nat(_) => m::NAT,
-                    Number::Int(_) => m::INT,
+                    Number::Nat(_) => m::EXP_NAT,
+                    Number::Int(_) => m::EXP_INT,
                 };
                 (shape, vec![make::num(arena, num.clone(), span)?])
             }
-            il::ExpKind::Text(text) => (m::TEXT, vec![make::text(arena, text.clone(), span)?]),
-            il::ExpKind::Id(id_al) => (m::VAR_EXP, vec![id_al.encode_cached(arena, cache)?]),
+            il::ExpKind::Text(text) => (m::EXP_TEXT, vec![make::text(arena, text.clone(), span)?]),
+            il::ExpKind::Id(id_al) => (m::EXP_VAR, vec![id_al.encode_cached(arena, cache)?]),
             il::ExpKind::Un(op_al, _, exp_al) => (
-                m::UN,
+                m::EXP_UN,
                 vec![op_al.encode_cached(arena, cache)?, exp_al.encode_cached(arena, cache)?],
             ),
             il::ExpKind::Bin(op_al, _, exp_l_al, exp_r_al) => (
-                m::BIN,
+                m::EXP_BIN,
                 vec![
                     op_al.encode_cached(arena, cache)?,
                     exp_l_al.encode_cached(arena, cache)?,
@@ -431,7 +435,7 @@ impl Encode for il::Exp {
                 ],
             ),
             il::ExpKind::Cmp(op_al, _, exp_l_al, exp_r_al) => (
-                m::CMP,
+                m::EXP_CMP,
                 vec![
                     op_al.encode_cached(arena, cache)?,
                     exp_l_al.encode_cached(arena, cache)?,
@@ -439,65 +443,69 @@ impl Encode for il::Exp {
                 ],
             ),
             il::ExpKind::UpCast(typ_al, exp_al) => (
-                m::UPCAST,
+                m::EXP_UPCAST,
                 vec![typ_al.encode_cached(arena, cache)?, exp_al.encode_cached(arena, cache)?],
             ),
             il::ExpKind::DownCast(typ_al, exp_al) => (
-                m::DOWNCAST,
+                m::EXP_DOWNCAST,
                 vec![typ_al.encode_cached(arena, cache)?, exp_al.encode_cached(arena, cache)?],
             ),
             il::ExpKind::Sub(exp_al, typ_al) => (
-                m::SUB_EXP,
+                m::EXP_SUB,
                 vec![exp_al.encode_cached(arena, cache)?, typ_al.encode_cached(arena, cache)?],
             ),
             il::ExpKind::Match(exp_al, pattern_al) => (
-                m::MATCH,
+                m::EXP_MATCH,
                 vec![exp_al.encode_cached(arena, cache)?, pattern_al.encode_cached(arena, cache)?],
             ),
-            il::ExpKind::Tuple(exps_al) => (m::TUP, vec![list(arena, cache, "typedExp", exps_al)?]),
+            il::ExpKind::Tuple(exps_al) => {
+                (m::EXP_TUP, vec![list(arena, cache, "typedExp", exps_al)?])
+            }
             il::ExpKind::Case(exp_case_al) => {
                 let values_case = vec![
                     exp_case_al.mixop().encode_cached(arena, cache)?,
                     list(arena, cache, "typedExp", exp_case_al.args())?,
                 ];
-                (m::INJ, vec![case(arena, m::EXPCASE, "expCase", values_case, span)?])
+                (m::EXP_INJ, vec![case(arena, m::EXP_CASE, "expCase", values_case, span)?])
             }
             il::ExpKind::Str(fields_al) => {
-                (m::STR, vec![list(arena, cache, "expField", fields_al)?])
+                (m::EXP_STR, vec![list(arena, cache, "expField", fields_al)?])
             }
             il::ExpKind::Opt(exp_al) => {
-                (m::OPT, vec![opt(arena, cache, "typedExp", exp_al.as_deref())?])
+                (m::EXP_OPT, vec![opt(arena, cache, "typedExp", exp_al.as_deref())?])
             }
-            il::ExpKind::List(exps_al) => (m::LIST, vec![list(arena, cache, "typedExp", exps_al)?]),
+            il::ExpKind::List(exps_al) => {
+                (m::EXP_LIST, vec![list(arena, cache, "typedExp", exps_al)?])
+            }
             il::ExpKind::Cons(exp_head_al, exp_tail_al) => (
-                m::CONS,
+                m::EXP_CONS,
                 vec![
                     exp_head_al.encode_cached(arena, cache)?,
                     exp_tail_al.encode_cached(arena, cache)?,
                 ],
             ),
             il::ExpKind::Cat(exp_l_al, exp_r_al) => (
-                m::CAT,
+                m::EXP_CAT,
                 vec![exp_l_al.encode_cached(arena, cache)?, exp_r_al.encode_cached(arena, cache)?],
             ),
             il::ExpKind::Mem(exp_elem_al, exp_list_al) => (
-                m::MEM,
+                m::EXP_MEM,
                 vec![
                     exp_elem_al.encode_cached(arena, cache)?,
                     exp_list_al.encode_cached(arena, cache)?,
                 ],
             ),
-            il::ExpKind::Len(exp_al) => (m::LEN, vec![exp_al.encode_cached(arena, cache)?]),
+            il::ExpKind::Len(exp_al) => (m::EXP_LEN, vec![exp_al.encode_cached(arena, cache)?]),
             il::ExpKind::Dot(exp_al, atom_al) => (
-                m::DOT,
+                m::EXP_DOT,
                 vec![exp_al.encode_cached(arena, cache)?, atom_al.encode_cached(arena, cache)?],
             ),
             il::ExpKind::Idx(exp_al, exp_idx_al) => (
-                m::IDX,
+                m::EXP_IDX,
                 vec![exp_al.encode_cached(arena, cache)?, exp_idx_al.encode_cached(arena, cache)?],
             ),
             il::ExpKind::Slice(exp_al, exp_idx_al, exp_len_al) => (
-                m::SLICE,
+                m::EXP_SLICE,
                 vec![
                     exp_al.encode_cached(arena, cache)?,
                     exp_idx_al.encode_cached(arena, cache)?,
@@ -505,7 +513,7 @@ impl Encode for il::Exp {
                 ],
             ),
             il::ExpKind::Upd(exp_al, path_al, exp_upd_al) => (
-                m::UPD,
+                m::EXP_UPD,
                 vec![
                     exp_al.encode_cached(arena, cache)?,
                     path_al.encode_cached(arena, cache)?,
@@ -513,7 +521,7 @@ impl Encode for il::Exp {
                 ],
             ),
             il::ExpKind::Call(id_al, targs_al, args_al) => (
-                m::CALL,
+                m::EXP_CALL,
                 vec![
                     id_al.encode_cached(arena, cache)?,
                     list(arena, cache, "typ", targs_al)?,
@@ -521,12 +529,12 @@ impl Encode for il::Exp {
                 ],
             ),
             il::ExpKind::Iter(exp_al, exp_iter_al) => (
-                m::ITER_EXP,
+                m::EXP_ITER,
                 vec![exp_al.encode_cached(arena, cache)?, exp_iter_al.encode_cached(arena, cache)?],
             ),
         };
         let value_kind = case(arena, shape, "exp", values_meta, span)?;
-        typed(arena, cache, m::EXP, "typedExp", value_kind, &self.note, span)
+        typed(arena, cache, m::TYPED_EXP, "typedExp", value_kind, &self.note, span)
     }
 }
 
@@ -537,7 +545,7 @@ impl Encode for il::ExpField {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let values_meta =
             vec![self.atom.encode_cached(arena, cache)?, self.exp.encode_cached(arena, cache)?];
-        case(arena, m::EXPFIELD, "expField", values_meta, self.atom.span)
+        case(arena, m::EXP_FIELD, "expField", values_meta, self.atom.span)
     }
 }
 
@@ -548,7 +556,7 @@ impl Encode for il::ExpIter {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let values_meta =
             vec![self.iter.encode_cached(arena, cache)?, list(arena, cache, "vari", &self.vars)?];
-        case(arena, m::ITEREXP, "iterExp", values_meta, Span::default())
+        case(arena, m::ITER_EXP, "iterExp", values_meta, Span::default())
     }
 }
 
@@ -561,17 +569,17 @@ impl Encode for il::Pattern {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let (shape, values_meta) = match self {
             il::Pattern::Case(mixop_al) => {
-                (m::CASE_PATTERN, vec![mixop_al.encode_cached(arena, cache)?])
+                (m::PAT_INJ, vec![mixop_al.encode_cached(arena, cache)?])
             }
-            il::Pattern::List(il::ListPattern::Cons) => (m::CONS_PATTERN, vec![]),
+            il::Pattern::List(il::ListPattern::Cons) => (m::PAT_CONS, vec![]),
             il::Pattern::List(il::ListPattern::Fixed(num_len)) => {
                 let nat_meta = u64::try_from(*num_len).map_err(ValueError::from)?.into();
                 let value_nat = make::nat(arena, nat_meta, Span::default())?;
-                (m::FIXED, vec![value_nat])
+                (m::PAT_FIXED, vec![value_nat])
             }
-            il::Pattern::List(il::ListPattern::Nil) => (m::NIL, vec![]),
-            il::Pattern::Opt(il::OptPattern::Some) => (m::SOME, vec![]),
-            il::Pattern::Opt(il::OptPattern::None) => (m::NONE, vec![]),
+            il::Pattern::List(il::ListPattern::Nil) => (m::PAT_NIL, vec![]),
+            il::Pattern::Opt(il::OptPattern::Some) => (m::PAT_SOME, vec![]),
+            il::Pattern::Opt(il::OptPattern::None) => (m::PAT_NONE, vec![]),
         };
         case(arena, shape, "pat", values_meta, Span::default())
     }
@@ -586,13 +594,13 @@ impl Encode for il::Path {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let span = self.span;
         let value_kind = match &self.node {
-            il::PathKind::Root => case(arena, m::ROOT, "path", vec![], span),
+            il::PathKind::Root => case(arena, m::PATH_ROOT, "path", vec![], span),
             il::PathKind::Idx(path_base_al, exp_idx_al) => {
                 let values_meta = vec![
                     path_base_al.encode_cached(arena, cache)?,
                     exp_idx_al.encode_cached(arena, cache)?,
                 ];
-                case(arena, m::IDX, "path", values_meta, span)
+                case(arena, m::PATH_IDX, "path", values_meta, span)
             }
             il::PathKind::Slice(path_base_al, exp_idx_al, exp_len_al) => {
                 let values_meta = vec![
@@ -600,17 +608,17 @@ impl Encode for il::Path {
                     exp_idx_al.encode_cached(arena, cache)?,
                     exp_len_al.encode_cached(arena, cache)?,
                 ];
-                case(arena, m::SLICE, "path", values_meta, span)
+                case(arena, m::PATH_SLICE, "path", values_meta, span)
             }
             il::PathKind::Dot(path_base_al, atom_al) => {
                 let values_meta = vec![
                     path_base_al.encode_cached(arena, cache)?,
                     atom_al.encode_cached(arena, cache)?,
                 ];
-                case(arena, m::DOT, "path", values_meta, span)
+                case(arena, m::PATH_DOT, "path", values_meta, span)
             }
         }?;
-        typed(arena, cache, m::PATH, "typedPath", value_kind, &self.note, span)
+        typed(arena, cache, m::TYPED_PATH, "typedPath", value_kind, &self.note, span)
     }
 }
 
@@ -622,9 +630,9 @@ impl Encode for il::Param {
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let (shape, values_meta) = match &self.node {
-            il::ParamKind::Exp(typ_al) => (m::EXP_PARAM, vec![typ_al.encode_cached(arena, cache)?]),
+            il::ParamKind::Exp(typ_al) => (m::PARAM_EXP, vec![typ_al.encode_cached(arena, cache)?]),
             il::ParamKind::Def(id_al, tparams_al, params_al, typ_al) => (
-                m::FUN_PARAM,
+                m::PARAM_FUN,
                 vec![
                     id_al.encode_cached(arena, cache)?,
                     list(arena, cache, "id", tparams_al)?,
@@ -645,8 +653,8 @@ impl Encode for il::Arg {
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let (shape, value) = match &self.node {
-            il::ArgKind::Exp(exp_al) => (m::EXP_ARG, exp_al.encode_cached(arena, cache)?),
-            il::ArgKind::Def(id_al) => (m::FUN_ARG, id_al.encode_cached(arena, cache)?),
+            il::ArgKind::Exp(exp_al) => (m::ARG_EXP, exp_al.encode_cached(arena, cache)?),
+            il::ArgKind::Def(id_al) => (m::ARG_FUN, id_al.encode_cached(arena, cache)?),
         };
         case(arena, shape, "arg", vec![value], self.span)
     }

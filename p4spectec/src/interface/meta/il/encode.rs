@@ -58,7 +58,7 @@ impl Encode for il::Prem {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let (shape, values_meta) = match &self.node {
             il::PremKind::Rule(prem_rule_il) => (
-                m::REL_PREM,
+                m::PREM_REL,
                 vec![
                     prem_rule_il.id.encode_cached(arena, cache)?,
                     list(arena, cache, "typedExp", prem_rule_il.not_exp.args())?,
@@ -66,31 +66,31 @@ impl Encode for il::Prem {
                 ],
             ),
             il::PremKind::If(prem_if_il) => {
-                (m::IF, vec![prem_if_il.exp.encode_cached(arena, cache)?])
+                (m::PREM_IF, vec![prem_if_il.exp.encode_cached(arena, cache)?])
             }
             il::PremKind::IfHold(prem_hold_il) => (
-                m::IFHOLD,
+                m::PREM_IFHOLD,
                 vec![
                     prem_hold_il.id.encode_cached(arena, cache)?,
                     list(arena, cache, "typedExp", prem_hold_il.not_exp.args())?,
                 ],
             ),
             il::PremKind::IfNotHold(prem_hold_il) => (
-                m::IFNOTHOLD,
+                m::PREM_IFNOTHOLD,
                 vec![
                     prem_hold_il.id.encode_cached(arena, cache)?,
                     list(arena, cache, "typedExp", prem_hold_il.not_exp.args())?,
                 ],
             ),
             il::PremKind::Iter(prem_iter_il) => (
-                m::ITER_PREM,
+                m::PREM_ITER,
                 vec![
                     prem_iter_il.prem.encode_cached(arena, cache)?,
                     PremIterIl(&prem_iter_il.prem_iter).encode_cached(arena, cache)?,
                 ],
             ),
             il::PremKind::Debug(prem_debug_il) => {
-                (m::DEBUG, vec![prem_debug_il.exp.encode_cached(arena, cache)?])
+                (m::PREM_DEBUG, vec![prem_debug_il.exp.encode_cached(arena, cache)?])
             }
         };
         case(arena, shape, "premIL", values_meta, self.span)
@@ -118,7 +118,7 @@ impl Encode for PremIterIl<'_> {
             prem_iter_il.iter.encode_cached(arena, cache)?,
             list(arena, cache, "vari", &prem_iter_il.vars_bound)?,
         ];
-        case(arena, m::ITERPREM, "iterPremIL", values_meta, Span::default())
+        case(arena, m::ITER_PREM, "iterPremIL", values_meta, Span::default())
     }
 }
 
@@ -147,7 +147,7 @@ impl Encode for il::RuleGroup {
             self.node.id.encode_cached(arena, cache)?,
             list(arena, cache, "rulIL", &self.node.rules)?,
         ];
-        case(arena, m::RULGROUP, "rulGroupIL", values_meta, self.span)
+        case(arena, m::RUL_GROUP, "rulGroupIL", values_meta, self.span)
     }
 }
 
@@ -160,7 +160,7 @@ impl Encode for il::ElseGroup {
             self.node.id.encode_cached(arena, cache)?,
             self.node.rule.encode_cached(arena, cache)?,
         ];
-        case(arena, m::ELSGROUP, "elsGroupIL", values_meta, self.span)
+        case(arena, m::ELS_GROUP, "elsGroupIL", values_meta, self.span)
     }
 }
 
@@ -189,7 +189,7 @@ impl Encode for il::TableRow {
             list(arena, cache, "arg", &self.node.args)?,
             self.node.exp.encode_cached(arena, cache)?,
         ];
-        case(arena, m::TBLROW, "tblRowIL", values_meta, self.span)
+        case(arena, m::TBL_ROW, "tblRowIL", values_meta, self.span)
     }
 }
 
@@ -203,10 +203,10 @@ impl Encode for il::Def {
         let (shape, values_meta) = match &self.node {
             il::DefKind::Var(_) => return Ok(None),
             il::DefKind::Typ(il::TypDef::Extern(typdef_il)) => {
-                (m::EXTTYP, vec![typdef_il.id.encode_cached(arena, cache)?])
+                (m::DEF_EXTTYP, vec![typdef_il.id.encode_cached(arena, cache)?])
             }
             il::DefKind::Typ(il::TypDef::Defined(typdef_il)) => (
-                m::TYP_DEF,
+                m::DEF_TYP,
                 vec![
                     typdef_il.id.encode_cached(arena, cache)?,
                     list(arena, cache, "id", &typdef_il.tparams)?,
@@ -214,7 +214,7 @@ impl Encode for il::Def {
                 ],
             ),
             il::DefKind::Rel(il::RelDef::Extern(rel_il)) => (
-                m::EXTREL,
+                m::DEF_EXTREL,
                 vec![
                     rel_il.id.encode_cached(arena, cache)?,
                     list(arena, cache, "typ", rel_il.not_typ.node.args())?,
@@ -222,7 +222,7 @@ impl Encode for il::Def {
                 ],
             ),
             il::DefKind::Rel(il::RelDef::Defined(rel_il)) => (
-                m::REL_DEF,
+                m::DEF_REL,
                 vec![
                     rel_il.id.encode_cached(arena, cache)?,
                     list(arena, cache, "typ", rel_il.not_typ.node.args())?,
@@ -232,7 +232,7 @@ impl Encode for il::Def {
                 ],
             ),
             il::DefKind::MetaFunc(il::MetaFuncDef::Extern(func_il)) => (
-                m::EXTFUNC,
+                m::DEF_EXTFUNC,
                 vec![
                     func_il.id.encode_cached(arena, cache)?,
                     list(arena, cache, "id", &func_il.tparams)?,
@@ -241,7 +241,7 @@ impl Encode for il::Def {
                 ],
             ),
             il::DefKind::MetaFunc(il::MetaFuncDef::Builtin(func_il)) => (
-                m::BUILTINFUNC,
+                m::DEF_BUILTINFUNC,
                 vec![
                     func_il.id.encode_cached(arena, cache)?,
                     list(arena, cache, "id", &func_il.tparams)?,
@@ -250,7 +250,7 @@ impl Encode for il::Def {
                 ],
             ),
             il::DefKind::MetaFunc(il::MetaFuncDef::Table(func_il)) => (
-                m::TABLEFUNC,
+                m::DEF_TABLEFUNC,
                 vec![
                     func_il.id.encode_cached(arena, cache)?,
                     list(arena, cache, "param", &func_il.params)?,
@@ -259,7 +259,7 @@ impl Encode for il::Def {
                 ],
             ),
             il::DefKind::MetaFunc(il::MetaFuncDef::Defined(func_il)) => (
-                m::FUNC_DEF,
+                m::DEF_FUNC,
                 vec![
                     func_il.id.encode_cached(arena, cache)?,
                     list(arena, cache, "id", &func_il.tparams)?,

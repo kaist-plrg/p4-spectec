@@ -43,13 +43,13 @@ impl Encode for Value {
             ValueKind::Bool(value_bool) => {
                 let value_bool = *value_bool;
                 let values_meta = vec![make::bool(arena, value_bool, span)?];
-                case(arena, m::BOOL, "val", values_meta, span)
+                case(arena, m::VAL_BOOL, "val", values_meta, span)
             }
             ValueKind::Num(num) => {
                 let num_target = num.clone();
                 let shape = match &num_target {
-                    Number::Nat(_) => m::NAT,
-                    Number::Int(_) => m::INT,
+                    Number::Nat(_) => m::VAL_NAT,
+                    Number::Int(_) => m::VAL_INT,
                 };
                 let values_meta = vec![make::num(arena, num_target, span)?];
                 case(arena, shape, "val", values_meta, span)
@@ -57,12 +57,12 @@ impl Encode for Value {
             ValueKind::Text(text) => {
                 let text_target = text.clone();
                 let values_meta = vec![make::text(arena, text_target, span)?];
-                case(arena, m::TEXT, "val", values_meta, span)
+                case(arena, m::VAL_TEXT, "val", values_meta, span)
             }
             ValueKind::Struct(value_fields) => {
                 let value_fields = value_fields.clone();
                 let values_meta = vec![list(arena, cache, "valField", &value_fields)?];
-                case(arena, m::STR, "val", values_meta, span)
+                case(arena, m::VAL_STR, "val", values_meta, span)
             }
             ValueKind::Case(value_case) => {
                 let mixop_target = *value_case.mixop();
@@ -71,28 +71,28 @@ impl Encode for Value {
                     mixop_target.encode_cached(arena, cache)?,
                     list(arena, cache, "val", &values_target)?,
                 ];
-                let values_meta = vec![case(arena, m::VALCASE, "valCase", values_case, span)?];
-                case(arena, m::INJ, "val", values_meta, span)
+                let values_meta = vec![case(arena, m::VAL_CASE, "valCase", values_case, span)?];
+                case(arena, m::VAL_INJ, "val", values_meta, span)
             }
             ValueKind::Tuple(values_target) => {
                 let values_target = values_target.clone();
                 let values_meta = vec![list(arena, cache, "val", &values_target)?];
-                case(arena, m::TUP, "val", values_meta, span)
+                case(arena, m::VAL_TUP, "val", values_meta, span)
             }
             ValueKind::Opt(value_inner) => {
                 let value_inner = *value_inner;
                 let values_meta = vec![opt(arena, cache, "val", value_inner.as_ref())?];
-                case(arena, m::OPT, "val", values_meta, span)
+                case(arena, m::VAL_OPT, "val", values_meta, span)
             }
             ValueKind::List(values_target) => {
                 let values_target = values_target.clone();
                 let values_meta = vec![list(arena, cache, "val", &values_target)?];
-                case(arena, m::LIST, "val", values_meta, span)
+                case(arena, m::VAL_LIST, "val", values_meta, span)
             }
             ValueKind::Func(id_target) => {
                 let id_target = id_target.clone();
                 let values_meta = vec![id_target.encode_cached(arena, cache)?];
-                case(arena, m::FUNC, "val", values_meta, span)
+                case(arena, m::VAL_FUNC, "val", values_meta, span)
             }
             ValueKind::Extern(json) => {
                 let json_target = json.clone();
@@ -104,7 +104,7 @@ impl Encode for Value {
                     json_target,
                     span,
                 )?;
-                case(arena, m::EXT, "val", vec![value_json], span)
+                case(arena, m::VAL_EXT, "val", vec![value_json], span)
             }
         }?;
         // Keep only this direction; decoding still reconstructs omitted notes
@@ -120,7 +120,7 @@ impl Encode for ValueField {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let values_meta =
             vec![self.atom.encode_cached(arena, cache)?, self.value.encode_cached(arena, cache)?];
-        case(arena, m::VALFIELD, "valField", values_meta, self.atom.span)
+        case(arena, m::VAL_FIELD, "valField", values_meta, self.atom.span)
     }
 }
 
@@ -160,7 +160,7 @@ impl Encode for al::Prem {
                 let (exps_input_al, exps_output_al) =
                     input::split(&prem_rule_al.input_hint, prem_rule_al.not_exp.args().to_vec())?;
                 (
-                    m::REL_PREM,
+                    m::PREM_REL,
                     vec![
                         prem_rule_al.id.encode_cached(arena, cache)?,
                         list(arena, cache, "typedExp", &exps_input_al)?,
@@ -169,38 +169,38 @@ impl Encode for al::Prem {
                 )
             }
             al::PremKind::If(prem_inner_al) => {
-                (m::IF, vec![prem_inner_al.exp.encode_cached(arena, cache)?])
+                (m::PREM_IF, vec![prem_inner_al.exp.encode_cached(arena, cache)?])
             }
             al::PremKind::IfHold(prem_inner_al) => (
-                m::IFHOLD,
+                m::PREM_IFHOLD,
                 vec![
                     prem_inner_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "typedExp", prem_inner_al.not_exp.args())?,
                 ],
             ),
             al::PremKind::IfNotHold(prem_inner_al) => (
-                m::IFNOTHOLD,
+                m::PREM_IFNOTHOLD,
                 vec![
                     prem_inner_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "typedExp", prem_inner_al.not_exp.args())?,
                 ],
             ),
             al::PremKind::Let(prem_inner_al) => (
-                m::LET,
+                m::PREM_LET,
                 vec![
                     prem_inner_al.exp_l.encode_cached(arena, cache)?,
                     prem_inner_al.exp_r.encode_cached(arena, cache)?,
                 ],
             ),
             al::PremKind::Iter(prem_inner_al) => (
-                m::ITER_PREM,
+                m::PREM_ITER,
                 vec![
                     prem_inner_al.prem.encode_cached(arena, cache)?,
                     PremIterAl(&prem_inner_al.prem_iter).encode_cached(arena, cache)?,
                 ],
             ),
             al::PremKind::Debug(prem_inner_al) => {
-                (m::DEBUG, vec![prem_inner_al.exp.encode_cached(arena, cache)?])
+                (m::PREM_DEBUG, vec![prem_inner_al.exp.encode_cached(arena, cache)?])
             }
         };
         case(arena, shape, "premAL", values_meta, span)
@@ -221,7 +221,7 @@ impl Encode for PremIterAl<'_> {
             list(arena, cache, "vari", &prem_iter_al.vars_bound)?,
             list(arena, cache, "vari", &prem_iter_al.vars_bind)?,
         ];
-        case(arena, m::ITERPREM, "iterPremAL", values_meta, Span::default())
+        case(arena, m::ITER_PREM, "iterPremAL", values_meta, Span::default())
     }
 }
 
@@ -273,7 +273,7 @@ impl Encode for RuleGroupRun<'_> {
             rule_group_first.node.id.encode_cached(arena, cache)?,
             list(arena, cache, "rulAL", &rules)?,
         ];
-        case(arena, m::RULGROUP, "rulGroupAL", values_meta, rule_group_first.span)
+        case(arena, m::RUL_GROUP, "rulGroupAL", values_meta, rule_group_first.span)
     }
 }
 
@@ -285,7 +285,7 @@ impl Encode for al::ElseGroup {
         let rule = (&self.node.rule_match, &self.node.rule_path);
         let values_meta =
             vec![self.node.id.encode_cached(arena, cache)?, rule.encode_cached(arena, cache)?];
-        case(arena, m::ELSGROUP, "elsGroupAL", values_meta, self.span)
+        case(arena, m::ELS_GROUP, "elsGroupAL", values_meta, self.span)
     }
 }
 
@@ -331,7 +331,7 @@ impl Encode for al::TableRow {
             self.node.exp.encode_cached(arena, cache)?,
             list(arena, cache, "premAL", &self.node.prems)?,
         ];
-        case(arena, m::CLAUSE, "tblRowAL", values_meta, self.span)
+        case(arena, m::TBL_ROW, "tblRowAL", values_meta, self.span)
     }
 }
 
@@ -346,10 +346,10 @@ impl Encode for al::Def {
         let (shape, values_meta) = match &self.node {
             al::DefKind::Var(_) => return Ok(None),
             al::DefKind::Typ(al::TypDef::Extern(typdef_al)) => {
-                (m::EXTTYP, vec![typdef_al.id.encode_cached(arena, cache)?])
+                (m::DEF_EXTTYP, vec![typdef_al.id.encode_cached(arena, cache)?])
             }
             al::DefKind::Typ(al::TypDef::Defined(typdef_al)) => (
-                m::TYP_DEF,
+                m::DEF_TYP,
                 vec![
                     typdef_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "id", &typdef_al.tparams)?,
@@ -360,7 +360,7 @@ impl Encode for al::Def {
                 let (typs_input_al, typs_output_al) =
                     input::split(&rel_al.input_hint, rel_al.not_typ.node.args().to_vec())?;
                 (
-                    m::EXTREL,
+                    m::DEF_EXTREL,
                     vec![
                         rel_al.id.encode_cached(arena, cache)?,
                         list(arena, cache, "typ", &typs_input_al)?,
@@ -380,7 +380,7 @@ impl Encode for al::Def {
                     .map(RuleGroupRun)
                     .collect();
                 (
-                    m::REL_DEF,
+                    m::DEF_REL,
                     vec![
                         rel_al.id.encode_cached(arena, cache)?,
                         list(arena, cache, "typ", &typs_input_al)?,
@@ -391,7 +391,7 @@ impl Encode for al::Def {
                 )
             }
             al::DefKind::MetaFunc(al::MetaFuncDef::Extern(func_al)) => (
-                m::EXTFUNC,
+                m::DEF_EXTFUNC,
                 vec![
                     func_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "id", &func_al.tparams)?,
@@ -400,7 +400,7 @@ impl Encode for al::Def {
                 ],
             ),
             al::DefKind::MetaFunc(al::MetaFuncDef::Builtin(func_al)) => (
-                m::BUILTINFUNC,
+                m::DEF_BUILTINFUNC,
                 vec![
                     func_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "id", &func_al.tparams)?,
@@ -409,7 +409,7 @@ impl Encode for al::Def {
                 ],
             ),
             al::DefKind::MetaFunc(al::MetaFuncDef::Table(func_al)) => (
-                m::TABLEFUNC,
+                m::DEF_TABLEFUNC,
                 vec![
                     func_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "param", &func_al.params)?,
@@ -418,7 +418,7 @@ impl Encode for al::Def {
                 ],
             ),
             al::DefKind::MetaFunc(al::MetaFuncDef::Defined(func_al)) => (
-                m::FUNC_DEF,
+                m::DEF_FUNC,
                 vec![
                     func_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "id", &func_al.tparams)?,
