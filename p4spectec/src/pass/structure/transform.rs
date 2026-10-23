@@ -413,47 +413,6 @@ fn struct_table_row_clause(table_row_al: al::TableRow) -> (Vec<al::Exp>, al::Cla
     (exps_signature, clause)
 }
 
-// == Type definitions
-
-// - Type definition
-
-fn struct_typ_def(typdef_al: al::TypDef) -> sl::TypDef {
-    match typdef_al {
-        al::TypDef::Extern(typdef_al) => {
-            let typdef_sl = struct_extern_typ_def(typdef_al);
-            sl::TypDef::Extern(typdef_sl)
-        }
-        al::TypDef::Defined(typdef_al) => {
-            let typdef_sl = struct_defined_typ_def(*typdef_al);
-            let typdef_sl = Box::new(typdef_sl);
-            sl::TypDef::Defined(typdef_sl)
-        }
-    }
-}
-
-// - External type definition
-
-fn struct_extern_typ_def(typdef_al: al::ExternTyp) -> sl::ExternTyp {
-    let al::ExternTyp { id, hints } = typdef_al;
-    sl::ExternTyp { id, hints }
-}
-
-// - Defined type definition
-
-fn struct_defined_typ_def(typdef_al: al::DefinedTyp) -> sl::DefinedTyp {
-    let al::DefinedTyp { id, tparams, def_typ, hints } = typdef_al;
-    sl::DefinedTyp { id, tparams, def_typ, hints }
-}
-
-// == Meta-variable definitions
-
-// - Meta-variable definition
-
-fn struct_var_def(def_var_al: al::VarDef) -> sl::VarDef {
-    let al::VarDef { id, typ, hints } = def_var_al;
-    sl::VarDef { id, typ, hints }
-}
-
 // == Relation definitions
 
 // - Relation definition
@@ -726,14 +685,9 @@ fn struct_def_kind(
     without_rule_groups: bool,
 ) -> Result<sl::DefKind, StructureError> {
     let def_kind_sl = match def_kind_al {
-        al::DefKind::Typ(typdef_al) => {
-            let typdef_sl = struct_typ_def(typdef_al);
-            sl::DefKind::Typ(typdef_sl)
-        }
-        al::DefKind::Var(def_var_al) => {
-            let def_var_sl = struct_var_def(def_var_al);
-            sl::DefKind::Var(def_var_sl)
-        }
+        // Type and variable definitions are shared with AL
+        al::DefKind::Typ(typ_def) => sl::DefKind::Typ(typ_def),
+        al::DefKind::Var(var_def) => sl::DefKind::Var(var_def),
         al::DefKind::Rel(def_rel_al) => {
             let def_rel_sl = struct_rel_def(ctx, def_rel_al, without_rule_groups)?;
             sl::DefKind::Rel(def_rel_sl)
