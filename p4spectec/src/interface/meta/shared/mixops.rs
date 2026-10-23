@@ -43,28 +43,28 @@ pub(in crate::interface::meta) const LIST: &str = "LIST val*";
 
 // == Expressions and paths
 
-pub(in crate::interface::meta) const EXP: &str = "expKind '#' typ";
-pub(in crate::interface::meta) const PATH: &str = "pathKind '#' typ";
+pub(in crate::interface::meta) const EXP: &str = "exp '#' typ";
+pub(in crate::interface::meta) const PATH: &str = "path '#' typ";
 pub(in crate::interface::meta) const VAR_EXP: &str = "VAR id";
-pub(in crate::interface::meta) const UN: &str = "UN unop exp";
-pub(in crate::interface::meta) const BIN: &str = "BIN binop exp exp";
-pub(in crate::interface::meta) const CMP: &str = "CMP cmpop exp exp";
-pub(in crate::interface::meta) const UPCAST: &str = "UPCAST typ exp";
-pub(in crate::interface::meta) const DOWNCAST: &str = "DOWNCAST typ exp";
-pub(in crate::interface::meta) const SUB_EXP: &str = "SUB exp typ";
-pub(in crate::interface::meta) const MATCH: &str = "MATCH exp pat";
-pub(in crate::interface::meta) const EXPCASE: &str = "mixop exp*";
-pub(in crate::interface::meta) const EXPFIELD: &str = "atom exp";
-pub(in crate::interface::meta) const CONS: &str = "CONS exp exp";
-pub(in crate::interface::meta) const CAT: &str = "CAT exp exp";
-pub(in crate::interface::meta) const MEM: &str = "MEM exp exp";
-pub(in crate::interface::meta) const LEN: &str = "LEN exp";
-pub(in crate::interface::meta) const DOT: &str = "DOT exp atom";
-pub(in crate::interface::meta) const IDX: &str = "IDX exp exp";
-pub(in crate::interface::meta) const SLICE: &str = "SLICE exp exp exp";
-pub(in crate::interface::meta) const UPD: &str = "UPD exp path exp";
+pub(in crate::interface::meta) const UN: &str = "UN unop typedExp";
+pub(in crate::interface::meta) const BIN: &str = "BIN binop typedExp typedExp";
+pub(in crate::interface::meta) const CMP: &str = "CMP cmpop typedExp typedExp";
+pub(in crate::interface::meta) const UPCAST: &str = "UPCAST typ typedExp";
+pub(in crate::interface::meta) const DOWNCAST: &str = "DOWNCAST typ typedExp";
+pub(in crate::interface::meta) const SUB_EXP: &str = "SUB typedExp typ";
+pub(in crate::interface::meta) const MATCH: &str = "MATCH typedExp pat";
+pub(in crate::interface::meta) const EXPCASE: &str = "mixop typedExp*";
+pub(in crate::interface::meta) const EXPFIELD: &str = "atom typedExp";
+pub(in crate::interface::meta) const CONS: &str = "CONS typedExp typedExp";
+pub(in crate::interface::meta) const CAT: &str = "CAT typedExp typedExp";
+pub(in crate::interface::meta) const MEM: &str = "MEM typedExp typedExp";
+pub(in crate::interface::meta) const LEN: &str = "LEN typedExp";
+pub(in crate::interface::meta) const DOT: &str = "DOT typedExp atom";
+pub(in crate::interface::meta) const IDX: &str = "IDX typedExp typedExp";
+pub(in crate::interface::meta) const SLICE: &str = "SLICE typedExp typedExp typedExp";
+pub(in crate::interface::meta) const UPD: &str = "UPD typedExp typedPath typedExp";
 pub(in crate::interface::meta) const CALL: &str = "CALL id targ* arg*";
-pub(in crate::interface::meta) const ITER_EXP: &str = "ITER exp iterExp";
+pub(in crate::interface::meta) const ITER_EXP: &str = "ITER typedExp iterExp";
 pub(in crate::interface::meta) const ITEREXP: &str = "iter vari*";
 pub(in crate::interface::meta) const ROOT: &str = "ROOT";
 
@@ -79,7 +79,7 @@ pub(in crate::interface::meta) const NONE: &str = "NONE";
 
 // == Arguments
 
-pub(in crate::interface::meta) const EXP_ARG: &str = "EXP exp";
+pub(in crate::interface::meta) const EXP_ARG: &str = "EXP typedExp";
 pub(in crate::interface::meta) const FUN_ARG: &str = "FUN id";
 
 // == Operators
@@ -111,11 +111,11 @@ pub(in crate::interface::meta) const FUN_PARAM: &str = "FUN id ':' tparam* param
 
 // == Premises
 
-pub(in crate::interface::meta) const IF: &str = "IF exp";
-pub(in crate::interface::meta) const IFHOLD: &str = "IFHOLD id ':' exp*";
-pub(in crate::interface::meta) const IFNOTHOLD: &str = "IFNOTHOLD id ':' exp*";
+pub(in crate::interface::meta) const IF: &str = "IF typedExp";
+pub(in crate::interface::meta) const IFHOLD: &str = "IFHOLD id ':' typedExp*";
+pub(in crate::interface::meta) const IFNOTHOLD: &str = "IFNOTHOLD id ':' typedExp*";
 pub(in crate::interface::meta) const ITER_PREM: &str = "ITER prem iterPrem";
-pub(in crate::interface::meta) const DEBUG: &str = "DEBUG exp";
+pub(in crate::interface::meta) const DEBUG: &str = "DEBUG typedExp";
 
 // == Definitions
 

@@ -5,20 +5,20 @@ syntax iterPremAL = iter '<-' vari* '->' vari*
 ;; Premises
 
 syntax premAL =
-  | REL id ':' exp* '->' exp*
-  | IF exp
-  | IFHOLD id ':' exp*
-  | IFNOTHOLD id ':' exp*
-  | LET exp '=' exp
+  | REL id ':' typedExp* '->' typedExp*
+  | IF typedExp
+  | IFHOLD id ':' typedExp*
+  | IFNOTHOLD id ':' typedExp*
+  | LET typedExp '=' typedExp
   | ITER premAL iterPremAL
-  | DEBUG exp
+  | DEBUG typedExp
 
 ;; Relation definitions
 
 syntax externRelDefnAL =
   EXTREL id ':' typ* '->' typ*
 
-syntax rulAL = id ':' exp* '->' exp* '-' premAL*
+syntax rulAL = id ':' typedExp* '->' typedExp* '-' premAL*
 syntax rulGroupAL = id ':' rulAL*
 syntax elsGroupAL = id ':' rulAL
 
@@ -31,12 +31,12 @@ syntax relDefnAL =
 
 ;; Meta-functions
 
-syntax tblRowAL = arg* '=' exp '-' premAL*
+syntax tblRowAL = arg* '=' typedExp '-' premAL*
 
 syntax tableFuncDefnAL =
   TABLEFUNC id param* ':' typ '=' tblRowAL*
 
-syntax clauseAL = arg* '=' exp '-' premAL*
+syntax clauseAL = arg* '=' typedExp '-' premAL*
 syntax elsClauseAL = clauseAL
 
 syntax definedFuncDefnAL =

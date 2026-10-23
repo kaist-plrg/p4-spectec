@@ -34,29 +34,29 @@ rulegroup Exp_shallow/upcast {
 }
 
 rule Exp_shallow/case:
-  AC |- (INJ (_ exp*)) '#' _
-  -- (Exp_irrefutable: AC |- exp)*
+  AC |- (INJ (_ typedExp*)) '#' _
+  -- (Exp_irrefutable: AC |- typedExp)*
 
 rule Exp_irrefutable/variable:
   AC |- (VAR _) '#' _
 
 rule Exp_irrefutable/iter:
-  AC |- (ITER exp _) '#' _
-  -- Exp_irrefutable: AC |- exp
+  AC |- (ITER typedExp _) '#' _
+  -- Exp_irrefutable: AC |- typedExp
 
 rule Exp_irrefutable/tuple:
-  AC |- (TUP exp*) '#' _
-  -- (Exp_irrefutable: AC |- exp)*
+  AC |- (TUP typedExp*) '#' _
+  -- (Exp_irrefutable: AC |- typedExp)*
 
 rule Exp_irrefutable/struct:
   AC |- (STR expField*) '#' _
-  -- (if _ exp = expField)*
-  -- (Exp_irrefutable: AC |- exp)*
+  -- (if _ typedExp = expField)*
+  -- (Exp_irrefutable: AC |- typedExp)*
 
 rule Exp_irrefutable/case:
-  AC |- (INJ (_ exp*)) '#' typ
+  AC |- (INJ (_ typedExp*)) '#' typ
   -- if $is_singleton_typ(AC.TYP, typ)
-  -- (Exp_irrefutable: AC |- exp)*
+  -- (Exp_irrefutable: AC |- typedExp)*
 
 ;; Table rows
 
@@ -64,16 +64,16 @@ rule Exp_irrefutable/case:
 ;; their decomposition premises precede the row's result
 
 rule Algo_tblRow:
-  AC |- tblRowIL : arg'* '=' exp '-' premAL*
-  -- if arg* '=' exp = tblRowIL
+  AC |- tblRowIL : arg'* '=' typedExp '-' premAL*
+  -- if arg* '=' typedExp = tblRowIL
   -- if id_used* = $free_ids_tblRowIL(tblRowIL)
   -- if AC_row = $add_used_ids(AC, id_used*)
-  -- if (EXP exp_arg)* = arg*
-  -- (Exp_shallow: AC_row |- exp_arg)*
+  -- if (EXP typedExp_arg)* = arg*
+  -- (Exp_shallow: AC_row |- typedExp_arg)*
   -- Collect_args: AC_row |- arg* : vari_bind*
   -- Multibind_renamer: |- vari_bind* : eps
   -- Bind_args: AC_row |- arg* : AC_body arg'* premAL*
-  -- if id_body* = $free_ids_exp(exp)
+  -- if id_body* = $free_ids_exp(typedExp)
   -- if $is_bound_ids(AC_body, id_body*)
 
 ;; Table coverage
@@ -87,14 +87,14 @@ dec $variant_cases(tdenv, typ) : typCase*
 def $variant_cases(tdenv, VAR id _) = typCase*
   -- if TYP _ _ '=' (VARIANT typCase*) = $find_map<id, typDef>(tdenv, id)
 
-dec $covered_cases(tdenv, exp) : typCase*
+dec $covered_cases(tdenv, typedExp) : typCase*
   hint(prose_in "the cases covered by row argument" %1 "under" %0)
 def $covered_cases(tdenv, (VAR _) '#' typ) = $variant_cases(tdenv, typ)
-def $covered_cases(tdenv, (UPCAST _ exp) '#' _) = $covered_cases(tdenv, exp)
-def $covered_cases(tdenv, (INJ (mixop exp*)) '#' _) = [ mixop typ* ]
-  -- (if _ '#' typ = exp)*
+def $covered_cases(tdenv, (UPCAST _ typedExp) '#' _) = $covered_cases(tdenv, typedExp)
+def $covered_cases(tdenv, (INJ (mixop typedExp*)) '#' _) = [ mixop typ* ]
+  -- (if _ '#' typ = typedExp)*
 
-dec $is_wildcard_exp(exp) : bool
+dec $is_wildcard_exp(typedExp) : bool
   hint(prose_true %0 "is a wildcard variable")
   hint(prose_false %0 "is not a wildcard variable")
 def $is_wildcard_exp((VAR id) '#' _) = true
@@ -166,10 +166,10 @@ rulegroup TblRows_cover {
     -- (if _ = $variant_cases(AC.TYP, typ))*
     -- if $(|tblRowIL*| > 0)
     -- if n_init = $(|tblRowIL*| - 1)
-    -- if (EXP exp_last)* '=' _ = tblRowIL*[n_init]
-    -- if $forall_($is_wildcard_exp(exp_last)*)
-    -- if ((EXP exp)* '=' _)* = tblRowIL*[0 : n_init]
-    -- (if (typCase_row* = $covered_cases(AC.TYP, exp))*)*
+    -- if (EXP typedExp_last)* '=' _ = tblRowIL*[n_init]
+    -- if $forall_($is_wildcard_exp(typedExp_last)*)
+    -- if ((EXP typedExp)* '=' _)* = tblRowIL*[0 : n_init]
+    -- (if (typCase_row* = $covered_cases(AC.TYP, typedExp))*)*
     -- if $is_exclusive(typCase_row***)
 
   rule TblRows_cover/exhaustive:
@@ -177,10 +177,10 @@ rulegroup TblRows_cover {
     -- (if typCase_total* = $variant_cases(AC.TYP, typ))*
     -- if $(|tblRowIL*| > 0)
     -- if n_init = $(|tblRowIL*| - 1)
-    -- if (EXP exp_last)* '=' _ = tblRowIL*[n_init]
-    -- if ~$forall_($is_wildcard_exp(exp_last)*)
-    -- if ((EXP exp)* '=' _)* = tblRowIL*
-    -- (if (typCase_row* = $covered_cases(AC.TYP, exp))*)*
+    -- if (EXP typedExp_last)* '=' _ = tblRowIL*[n_init]
+    -- if ~$forall_($is_wildcard_exp(typedExp_last)*)
+    -- if ((EXP typedExp)* '=' _)* = tblRowIL*
+    -- (if (typCase_row* = $covered_cases(AC.TYP, typedExp))*)*
     -- if $is_exclusive(typCase_row***)
     -- if $is_complete(typCase_total**, typCase_row***)
 

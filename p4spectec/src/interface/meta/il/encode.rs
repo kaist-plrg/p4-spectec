@@ -61,7 +61,7 @@ impl Encode for il::Prem {
                 m::REL_PREM,
                 vec![
                     prem_rule_il.id.encode_cached(arena, cache)?,
-                    list(arena, cache, "exp", prem_rule_il.not_exp.args())?,
+                    list(arena, cache, "typedExp", prem_rule_il.not_exp.args())?,
                     prem_rule_il.input_hint.encode_cached(arena, cache)?,
                 ],
             ),
@@ -72,14 +72,14 @@ impl Encode for il::Prem {
                 m::IFHOLD,
                 vec![
                     prem_hold_il.id.encode_cached(arena, cache)?,
-                    list(arena, cache, "exp", prem_hold_il.not_exp.args())?,
+                    list(arena, cache, "typedExp", prem_hold_il.not_exp.args())?,
                 ],
             ),
             il::PremKind::IfNotHold(prem_hold_il) => (
                 m::IFNOTHOLD,
                 vec![
                     prem_hold_il.id.encode_cached(arena, cache)?,
-                    list(arena, cache, "exp", prem_hold_il.not_exp.args())?,
+                    list(arena, cache, "typedExp", prem_hold_il.not_exp.args())?,
                 ],
             ),
             il::PremKind::Iter(prem_iter_il) => (
@@ -127,7 +127,7 @@ impl Encode for il::Rule {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let values_meta = vec![
             self.node.id.encode_cached(arena, cache)?,
-            list(arena, cache, "exp", self.node.not_exp.args())?,
+            list(arena, cache, "typedExp", self.node.not_exp.args())?,
             list(arena, cache, "premIL", &self.node.prems)?,
         ];
         case(arena, m::RUL, "rulIL", values_meta, self.span)

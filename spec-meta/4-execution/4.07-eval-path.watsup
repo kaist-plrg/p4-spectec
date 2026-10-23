@@ -8,12 +8,12 @@ rule Eval_path_acc/root:
 rulegroup Eval_path_acc/dot {
 
   rule Eval_path_acc/path-failure:
-    C |- val_b ((DOT path atom) '#' _) : failure
-    -- Eval_path_acc: C |- val_b path : failure
+    C |- val_b ((DOT typedPath atom) '#' _) : failure
+    -- Eval_path_acc: C |- val_b typedPath : failure
 
   rule Eval_path_acc/succ:
-    C |- val_b ((DOT path atom) '#' _) : OK val
-    -- Eval_path_acc: C |- val_b path : OK (STR valField*)
+    C |- val_b ((DOT typedPath atom) '#' _) : OK val
+    -- Eval_path_acc: C |- val_b typedPath : OK (STR valField*)
     -- if (atom_field val_field = valField)*
     -- if val
         = $assoc_<atom, val>(atom, (atom_field, val_field)*)
@@ -23,29 +23,29 @@ rulegroup Eval_path_acc/dot {
 rulegroup Eval_path_acc/idx {
 
   rule Eval_path_acc/path-failure:
-    C |- val_b ((IDX path exp_i) '#' _) : failure
-    -- Eval_path_acc: C |- val_b path : failure
+    C |- val_b ((IDX typedPath typedExp_i) '#' _) : failure
+    -- Eval_path_acc: C |- val_b typedPath : failure
 
   rule Eval_path_acc/list-index-failure:
-    C |- val_b ((IDX path exp_i) '#' _) : failure
-    -- Eval_path_acc: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : failure
+    C |- val_b ((IDX typedPath typedExp_i) '#' _) : failure
+    -- Eval_path_acc: C |- val_b typedPath : OK (LIST val*)
+    -- Eval_exp: C |- typedExp_i : failure
 
   rule Eval_path_acc/list-succ:
-    C |- val_b ((IDX path exp_i) '#' _) : OK val_idx
-    -- Eval_path_acc: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n)
+    C |- val_b ((IDX typedPath typedExp_i) '#' _) : OK val_idx
+    -- Eval_path_acc: C |- val_b typedPath : OK (LIST val*)
+    -- Eval_exp: C |- typedExp_i : OK (NAT n)
     -- if val_idx = val*[n]
 
   rule Eval_path_acc/text-index-failure:
-    C |- val_b ((IDX path exp_i) '#' _) : failure
-    -- Eval_path_acc: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : failure
+    C |- val_b ((IDX typedPath typedExp_i) '#' _) : failure
+    -- Eval_path_acc: C |- val_b typedPath : OK (TEXT t)
+    -- Eval_exp: C |- typedExp_i : failure
 
   rule Eval_path_acc/text-succ:
-    C |- val_b ((IDX path exp_i) '#' _) : OK (TEXT t_idx)
-    -- Eval_path_acc: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n)
+    C |- val_b ((IDX typedPath typedExp_i) '#' _) : OK (TEXT t_idx)
+    -- Eval_path_acc: C |- val_b typedPath : OK (TEXT t)
+    -- Eval_exp: C |- typedExp_i : OK (NAT n)
     -- if t_idx = t[n]
 
 }
@@ -53,49 +53,49 @@ rulegroup Eval_path_acc/idx {
 rulegroup Eval_path_acc/slice {
 
   rule Eval_path_acc/path-failure:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) : failure
-    -- Eval_path_acc: C |- val_b path : failure
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) : failure
+    -- Eval_path_acc: C |- val_b typedPath : failure
 
   rule Eval_path_acc/text-index-failure:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) : failure
-    -- Eval_path_acc: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : failure
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) : failure
+    -- Eval_path_acc: C |- val_b typedPath : OK (TEXT t)
+    -- Eval_exp: C |- typedExp_i : failure
 
   rule Eval_path_acc/text-length-failure:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) : failure
-    -- Eval_path_acc: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : failure
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) : failure
+    -- Eval_path_acc: C |- val_b typedPath : OK (TEXT t)
+    -- Eval_exp: C |- typedExp_i : OK (NAT n_i)
+    -- Eval_exp: C |- typedExp_n : failure
 
   rule Eval_path_acc/text-succ:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) : OK val_slice
-    -- Eval_path_acc: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) : OK val_slice
+    -- Eval_path_acc: C |- val_b typedPath : OK (TEXT t)
+    -- Eval_exp: C |- typedExp_i : OK (NAT n_i)
+    -- Eval_exp: C |- typedExp_n : OK (NAT n_n)
     -- if val_slice = TEXT t[n_i : n_n]
 
   rule Eval_path_acc/list-index-failure:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) : failure
-    -- Eval_path_acc: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : failure
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) : failure
+    -- Eval_path_acc: C |- val_b typedPath : OK (LIST val*)
+    -- Eval_exp: C |- typedExp_i : failure
 
   rule Eval_path_acc/list-length-failure:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) : failure
-    -- Eval_path_acc: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : failure
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) : failure
+    -- Eval_path_acc: C |- val_b typedPath : OK (LIST val*)
+    -- Eval_exp: C |- typedExp_i : OK (NAT n_i)
+    -- Eval_exp: C |- typedExp_n : failure
 
   rule Eval_path_acc/list-succ:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) : OK val_slice
-    -- Eval_path_acc: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) : OK val_slice
+    -- Eval_path_acc: C |- val_b typedPath : OK (LIST val*)
+    -- Eval_exp: C |- typedExp_i : OK (NAT n_i)
+    -- Eval_exp: C |- typedExp_n : OK (NAT n_n)
     -- if val_slice = LIST val*[n_i : n_n]
 
 }
 
 rule Eval_path_acc/error:
-  C |- val path : ERROR
+  C |- val typedPath : ERROR
   -- otherwise
 
 ;;; Update evaluation rules
@@ -106,103 +106,103 @@ rule Eval_path_upd/root:
 rulegroup Eval_path_upd/idx {
 
   rule Eval_path_upd/path-failure:
-    C |- val_b ((IDX path exp_i) '#' _) := val_n : failure
-    -- Eval_path_acc: C |- val_b path : failure
+    C |- val_b ((IDX typedPath typedExp_i) '#' _) := val_n : failure
+    -- Eval_path_acc: C |- val_b typedPath : failure
 
   rule Eval_path_upd/list-index-failure:
-    C |- val_b ((IDX path exp_i) '#' _) := val_n : failure
-    -- Eval_path_acc: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : failure
+    C |- val_b ((IDX typedPath typedExp_i) '#' _) := val_n : failure
+    -- Eval_path_acc: C |- val_b typedPath : OK (LIST val*)
+    -- Eval_exp: C |- typedExp_i : failure
 
   rule Eval_path_upd/list-succ:
-    C |- val_b ((IDX path exp_i) '#' _) := val_n : pathRes
-    -- Eval_path_acc: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n_target)
+    C |- val_b ((IDX typedPath typedExp_i) '#' _) := val_n : pathRes
+    -- Eval_path_acc: C |- val_b typedPath : OK (LIST val*)
+    -- Eval_exp: C |- typedExp_i : OK (NAT n_target)
     -- if val_upd = LIST val*[ [n_target] = val_n ]
     -- Eval_path_upd:
-        C |- val_b path := val_upd : pathRes
+        C |- val_b typedPath := val_upd : pathRes
 
   rule Eval_path_upd/text-index-failure:
-    C |- val_b ((IDX path exp_i) '#' _) := val_n : failure
-    -- Eval_path_acc: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : failure
+    C |- val_b ((IDX typedPath typedExp_i) '#' _) := val_n : failure
+    -- Eval_path_acc: C |- val_b typedPath : OK (TEXT t)
+    -- Eval_exp: C |- typedExp_i : failure
 
   rule Eval_path_upd/text-succ:
-    C |- val_b ((IDX path exp_i) '#' _) := TEXT t_n : pathRes
-    -- Eval_path_acc: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n_target)
+    C |- val_b ((IDX typedPath typedExp_i) '#' _) := TEXT t_n : pathRes
+    -- Eval_path_acc: C |- val_b typedPath : OK (TEXT t)
+    -- Eval_exp: C |- typedExp_i : OK (NAT n_target)
     -- if val_upd = TEXT t[ [n_target] = t_n ]
     -- Eval_path_upd:
-        C |- val_b path := val_upd : pathRes
+        C |- val_b typedPath := val_upd : pathRes
 
 }
 
 rulegroup Eval_path_upd/slice {
 
   rule Eval_path_upd/path-failure:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) := val_n : failure
-    -- Eval_path_acc: C |- val_b path : failure
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) := val_n : failure
+    -- Eval_path_acc: C |- val_b typedPath : failure
 
   rule Eval_path_upd/text-index-failure:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) := val_n : failure
-    -- Eval_path_acc: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : failure
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) := val_n : failure
+    -- Eval_path_acc: C |- val_b typedPath : OK (TEXT t)
+    -- Eval_exp: C |- typedExp_i : failure
 
   rule Eval_path_upd/text-length-failure:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) := val_n : failure
-    -- Eval_path_acc: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : failure
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) := val_n : failure
+    -- Eval_path_acc: C |- val_b typedPath : OK (TEXT t)
+    -- Eval_exp: C |- typedExp_i : OK (NAT n_i)
+    -- Eval_exp: C |- typedExp_n : failure
 
   rule Eval_path_upd/text-succ:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) := TEXT t_n : pathRes
-    -- Eval_path_acc: C |- val_b path : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) := TEXT t_n : pathRes
+    -- Eval_path_acc: C |- val_b typedPath : OK (TEXT t)
+    -- Eval_exp: C |- typedExp_i : OK (NAT n_i)
+    -- Eval_exp: C |- typedExp_n : OK (NAT n_n)
     -- if val_upd = TEXT t[ [n_i : n_n] = t_n ]
     -- Eval_path_upd:
-        C |- val_b path := val_upd : pathRes
+        C |- val_b typedPath := val_upd : pathRes
 
   rule Eval_path_upd/list-index-failure:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) := val_n : failure
-    -- Eval_path_acc: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : failure
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) := val_n : failure
+    -- Eval_path_acc: C |- val_b typedPath : OK (LIST val*)
+    -- Eval_exp: C |- typedExp_i : failure
 
   rule Eval_path_upd/list-length-failure:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) := val_n : failure
-    -- Eval_path_acc: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : failure
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) := val_n : failure
+    -- Eval_path_acc: C |- val_b typedPath : OK (LIST val*)
+    -- Eval_exp: C |- typedExp_i : OK (NAT n_i)
+    -- Eval_exp: C |- typedExp_n : failure
 
   rule Eval_path_upd/list-succ:
-    C |- val_b ((SLICE path exp_i exp_n) '#' _) := LIST val_n* : pathRes
-    -- Eval_path_acc: C |- val_b path : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+    C |- val_b ((SLICE typedPath typedExp_i typedExp_n) '#' _) := LIST val_n* : pathRes
+    -- Eval_path_acc: C |- val_b typedPath : OK (LIST val*)
+    -- Eval_exp: C |- typedExp_i : OK (NAT n_i)
+    -- Eval_exp: C |- typedExp_n : OK (NAT n_n)
     -- if val_upd = LIST val*[ [n_i : n_n] = val_n* ]
     -- Eval_path_upd:
-        C |- val_b path := val_upd : pathRes
+        C |- val_b typedPath := val_upd : pathRes
 
 }
 
 rulegroup Eval_path_upd/dot {
 
   rule Eval_path_upd/path-failure:
-    C |- val_b ((DOT path atom) '#' _) := val_n : failure
-    -- Eval_path_acc: C |- val_b path : failure
+    C |- val_b ((DOT typedPath atom) '#' _) := val_n : failure
+    -- Eval_path_acc: C |- val_b typedPath : failure
 
   rule Eval_path_upd/succ:
-    C |- val_b ((DOT path atom) '#' _) := val_n : pathRes
-    -- Eval_path_acc: C |- val_b path : OK (STR valField*)
+    C |- val_b ((DOT typedPath atom) '#' _) := val_n : pathRes
+    -- Eval_path_acc: C |- val_b typedPath : OK (STR valField*)
     -- if (atom_field val_field = valField)*
     -- if (valField_new
         = atom_field $ite<val>(atom = atom_field, val_n, val_field))*
     -- if val_upd = STR valField_new*
     -- Eval_path_upd:
-        C |- val_b path := val_upd : pathRes
+        C |- val_b typedPath := val_upd : pathRes
 
 }
 
 rule Eval_path_upd/error:
-  C |- val_b path := val_n : ERROR
+  C |- val_b typedPath := val_n : ERROR
   -- otherwise

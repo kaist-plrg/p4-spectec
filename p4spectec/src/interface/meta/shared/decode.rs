@@ -546,7 +546,7 @@ impl Decode for il::Exp {
         let span = *arena.value.span(value_meta.span);
         let (value_kind, typ_al) = get::matches_string! { arena, &value_meta,
             m::EXP => |[value_kind, value_typ]| typed(arena, cache, value_kind, value_typ)?,
-            _ => return Err(Error::unexpected(arena, value_meta, "expKind '#' typ")),
+            _ => return Err(Error::unexpected(arena, value_meta, "exp '#' typ")),
         };
         let exp_kind_al = get::matches_string! { arena, &value_kind,
             m::BOOL => |[value_bool]| {
@@ -789,7 +789,7 @@ impl Decode for il::Path {
         let span = *arena.value.span(value_meta.span);
         let (value_kind, typ_al) = get::matches_string! { arena, &value_meta,
             m::PATH => |[value_kind, value_typ]| typed(arena, cache, value_kind, value_typ)?,
-            _ => return Err(Error::unexpected(arena, value_meta, "pathKind '#' typ")),
+            _ => return Err(Error::unexpected(arena, value_meta, "path '#' typ")),
         };
         let path_kind_al = get::matches_string! { arena, &value_kind,
             m::ROOT => |[]| il::PathKind::Root,

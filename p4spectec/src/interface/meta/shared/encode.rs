@@ -454,11 +454,11 @@ impl Encode for il::Exp {
                 m::MATCH,
                 vec![exp_al.encode_cached(arena, cache)?, pattern_al.encode_cached(arena, cache)?],
             ),
-            il::ExpKind::Tuple(exps_al) => (m::TUP, vec![list(arena, cache, "exp", exps_al)?]),
+            il::ExpKind::Tuple(exps_al) => (m::TUP, vec![list(arena, cache, "typedExp", exps_al)?]),
             il::ExpKind::Case(exp_case_al) => {
                 let values_case = vec![
                     exp_case_al.mixop().encode_cached(arena, cache)?,
-                    list(arena, cache, "exp", exp_case_al.args())?,
+                    list(arena, cache, "typedExp", exp_case_al.args())?,
                 ];
                 (m::INJ, vec![case(arena, m::EXPCASE, "expCase", values_case, span)?])
             }
@@ -466,9 +466,9 @@ impl Encode for il::Exp {
                 (m::STR, vec![list(arena, cache, "expField", fields_al)?])
             }
             il::ExpKind::Opt(exp_al) => {
-                (m::OPT, vec![opt(arena, cache, "exp", exp_al.as_deref())?])
+                (m::OPT, vec![opt(arena, cache, "typedExp", exp_al.as_deref())?])
             }
-            il::ExpKind::List(exps_al) => (m::LIST, vec![list(arena, cache, "exp", exps_al)?]),
+            il::ExpKind::List(exps_al) => (m::LIST, vec![list(arena, cache, "typedExp", exps_al)?]),
             il::ExpKind::Cons(exp_head_al, exp_tail_al) => (
                 m::CONS,
                 vec![
@@ -525,8 +525,8 @@ impl Encode for il::Exp {
                 vec![exp_al.encode_cached(arena, cache)?, exp_iter_al.encode_cached(arena, cache)?],
             ),
         };
-        let value_kind = case(arena, shape, "expKind", values_meta, span)?;
-        typed(arena, cache, m::EXP, "exp", value_kind, &self.note, span)
+        let value_kind = case(arena, shape, "exp", values_meta, span)?;
+        typed(arena, cache, m::EXP, "typedExp", value_kind, &self.note, span)
     }
 }
 
@@ -586,13 +586,13 @@ impl Encode for il::Path {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let span = self.span;
         let value_kind = match &self.node {
-            il::PathKind::Root => case(arena, m::ROOT, "pathKind", vec![], span),
+            il::PathKind::Root => case(arena, m::ROOT, "path", vec![], span),
             il::PathKind::Idx(path_base_al, exp_idx_al) => {
                 let values_meta = vec![
                     path_base_al.encode_cached(arena, cache)?,
                     exp_idx_al.encode_cached(arena, cache)?,
                 ];
-                case(arena, m::IDX, "pathKind", values_meta, span)
+                case(arena, m::IDX, "path", values_meta, span)
             }
             il::PathKind::Slice(path_base_al, exp_idx_al, exp_len_al) => {
                 let values_meta = vec![
@@ -600,17 +600,17 @@ impl Encode for il::Path {
                     exp_idx_al.encode_cached(arena, cache)?,
                     exp_len_al.encode_cached(arena, cache)?,
                 ];
-                case(arena, m::SLICE, "pathKind", values_meta, span)
+                case(arena, m::SLICE, "path", values_meta, span)
             }
             il::PathKind::Dot(path_base_al, atom_al) => {
                 let values_meta = vec![
                     path_base_al.encode_cached(arena, cache)?,
                     atom_al.encode_cached(arena, cache)?,
                 ];
-                case(arena, m::DOT, "pathKind", values_meta, span)
+                case(arena, m::DOT, "path", values_meta, span)
             }
         }?;
-        typed(arena, cache, m::PATH, "path", value_kind, &self.note, span)
+        typed(arena, cache, m::PATH, "typedPath", value_kind, &self.note, span)
     }
 }
 

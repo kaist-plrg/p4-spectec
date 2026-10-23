@@ -33,21 +33,21 @@ rulegroup Collect_exp/variable {
 ;;; Invertible constructs
 
 rule Collect_exp/upcast:
-  AC |- (UPCAST _ exp) '#' _ : vari*
-  -- Collect_exp: AC |- exp : vari*
+  AC |- (UPCAST _ typedExp) '#' _ : vari*
+  -- Collect_exp: AC |- typedExp : vari*
 
 rule Collect_exp/tuple:
-  AC |- (TUP exp*) '#' _ : vari*
-  -- Collect_exps: AC |- exp* : vari*
+  AC |- (TUP typedExp*) '#' _ : vari*
+  -- Collect_exps: AC |- typedExp* : vari*
 
 rule Collect_exp/case:
-  AC |- (INJ (_ exp*)) '#' _ : vari*
-  -- Collect_exps: AC |- exp* : vari*
+  AC |- (INJ (_ typedExp*)) '#' _ : vari*
+  -- Collect_exps: AC |- typedExp* : vari*
 
 rule Collect_exp/struct:
   AC |- (STR expField*) '#' _ : vari*
-  -- (if _ exp = expField)*
-  -- Collect_exps: AC |- exp* : vari*
+  -- (if _ typedExp = expField)*
+  -- Collect_exps: AC |- typedExp* : vari*
 
 rulegroup Collect_exp/opt {
 
@@ -55,78 +55,78 @@ rulegroup Collect_exp/opt {
     AC |- (OPT eps) '#' _ : eps
 
   rule Collect_exp/some:
-    AC |- (OPT exp) '#' _ : vari*
-    -- Collect_exp: AC |- exp : vari*
+    AC |- (OPT typedExp) '#' _ : vari*
+    -- Collect_exp: AC |- typedExp : vari*
 
 }
 
 rule Collect_exp/list:
-  AC |- (LIST exp*) '#' _ : vari*
-  -- Collect_exps: AC |- exp* : vari*
+  AC |- (LIST typedExp*) '#' _ : vari*
+  -- Collect_exps: AC |- typedExp* : vari*
 
 rule Collect_exp/cons:
-  AC |- (CONS exp_h exp_t) '#' _ : vari*
-  -- Collect_exps: AC |- [ exp_h, exp_t ] : vari*
+  AC |- (CONS typedExp_h typedExp_t) '#' _ : vari*
+  -- Collect_exps: AC |- [ typedExp_h, typedExp_t ] : vari*
 
 rule Collect_exp/iter:
-  AC |- (ITER exp (iter _)) '#' _ : vari_iter*
-  -- Collect_exp: AC |- exp : vari*
+  AC |- (ITER typedExp (iter _)) '#' _ : vari_iter*
+  -- Collect_exp: AC |- typedExp : vari*
   -- if (vari_iter = $iter_vari(vari, iter))*
 
 ;;; Non-invertible constructs bind nothing
 
 rule Collect_exp/unary:
-  AC |- (UN _ exp) '#' _ : eps
-  -- Collect_exp: AC |- exp : eps
+  AC |- (UN _ typedExp) '#' _ : eps
+  -- Collect_exp: AC |- typedExp : eps
 
 rule Collect_exp/binary:
-  AC |- (BIN _ exp_l exp_r) '#' _ : eps
-  -- Collect_exps: AC |- [ exp_l, exp_r ] : eps
+  AC |- (BIN _ typedExp_l typedExp_r) '#' _ : eps
+  -- Collect_exps: AC |- [ typedExp_l, typedExp_r ] : eps
 
 rule Collect_exp/compare:
-  AC |- (CMP _ exp_l exp_r) '#' _ : eps
-  -- Collect_exps: AC |- [ exp_l, exp_r ] : eps
+  AC |- (CMP _ typedExp_l typedExp_r) '#' _ : eps
+  -- Collect_exps: AC |- [ typedExp_l, typedExp_r ] : eps
 
 rule Collect_exp/downcast:
-  AC |- (DOWNCAST _ exp) '#' _ : eps
-  -- Collect_exp: AC |- exp : eps
+  AC |- (DOWNCAST _ typedExp) '#' _ : eps
+  -- Collect_exp: AC |- typedExp : eps
 
 rule Collect_exp/subtype:
-  AC |- (SUB exp _) '#' _ : eps
-  -- Collect_exp: AC |- exp : eps
+  AC |- (SUB typedExp _) '#' _ : eps
+  -- Collect_exp: AC |- typedExp : eps
 
 rule Collect_exp/match:
-  AC |- (MATCH exp _) '#' _ : eps
-  -- Collect_exp: AC |- exp : eps
+  AC |- (MATCH typedExp _) '#' _ : eps
+  -- Collect_exp: AC |- typedExp : eps
 
 rule Collect_exp/concat:
-  AC |- (CAT exp_l exp_r) '#' _ : eps
-  -- Collect_exps: AC |- [ exp_l, exp_r ] : eps
+  AC |- (CAT typedExp_l typedExp_r) '#' _ : eps
+  -- Collect_exps: AC |- [ typedExp_l, typedExp_r ] : eps
 
 rule Collect_exp/mem:
-  AC |- (MEM exp_l exp_r) '#' _ : eps
-  -- Collect_exps: AC |- [ exp_l, exp_r ] : eps
+  AC |- (MEM typedExp_l typedExp_r) '#' _ : eps
+  -- Collect_exps: AC |- [ typedExp_l, typedExp_r ] : eps
 
 rule Collect_exp/len:
-  AC |- (LEN exp) '#' _ : eps
-  -- Collect_exp: AC |- exp : eps
+  AC |- (LEN typedExp) '#' _ : eps
+  -- Collect_exp: AC |- typedExp : eps
 
 rule Collect_exp/dot:
-  AC |- (DOT exp _) '#' _ : eps
-  -- Collect_exp: AC |- exp : eps
+  AC |- (DOT typedExp _) '#' _ : eps
+  -- Collect_exp: AC |- typedExp : eps
 
 rule Collect_exp/idx:
-  AC |- (IDX exp_b exp_i) '#' _ : eps
-  -- Collect_exps: AC |- [ exp_b, exp_i ] : eps
+  AC |- (IDX typedExp_b typedExp_i) '#' _ : eps
+  -- Collect_exps: AC |- [ typedExp_b, typedExp_i ] : eps
 
 rule Collect_exp/slice:
-  AC |- (SLICE exp_b exp_i exp_n) '#' _ : eps
-  -- Collect_exps: AC |- [ exp_b, exp_i, exp_n ] : eps
+  AC |- (SLICE typedExp_b typedExp_i typedExp_n) '#' _ : eps
+  -- Collect_exps: AC |- [ typedExp_b, typedExp_i, typedExp_n ] : eps
 
 rule Collect_exp/upd:
-  AC |- (UPD exp_b path exp_f) '#' _ : eps
-  -- Collect_exps: AC |- [ exp_b, exp_f ] : eps
-  -- Collect_path: AC |- path : eps
+  AC |- (UPD typedExp_b typedPath typedExp_f) '#' _ : eps
+  -- Collect_exps: AC |- [ typedExp_b, typedExp_f ] : eps
+  -- Collect_path: AC |- typedPath : eps
 
 rule Collect_exp/call:
   AC |- (CALL _ _ arg*) '#' _ : eps
@@ -140,9 +140,9 @@ rulegroup Collect_exps {
     AC |- eps : eps
 
   rule Collect_exps/cons:
-    AC |- exp_h :: exp_t* : vari_h* ++ vari_t*
-    -- Collect_exp: AC |- exp_h : vari_h*
-    -- Collect_exps: AC |- exp_t* : vari_t*
+    AC |- typedExp_h :: typedExp_t* : vari_h* ++ vari_t*
+    -- Collect_exp: AC |- typedExp_h : vari_h*
+    -- Collect_exps: AC |- typedExp_t* : vari_t*
 
 }
 
@@ -150,22 +150,22 @@ rule Collect_path/root:
   AC |- ROOT '#' _ : eps
 
 rule Collect_path/idx:
-  AC |- (IDX path exp_i) '#' _ : vari_p* ++ vari_i*
-  -- Collect_path: AC |- path : vari_p*
-  -- Collect_exp: AC |- exp_i : vari_i*
+  AC |- (IDX typedPath typedExp_i) '#' _ : vari_p* ++ vari_i*
+  -- Collect_path: AC |- typedPath : vari_p*
+  -- Collect_exp: AC |- typedExp_i : vari_i*
 
 rule Collect_path/slice:
-  AC |- (SLICE path exp_i exp_n) '#' _ : vari_p* ++ vari_e*
-  -- Collect_path: AC |- path : vari_p*
-  -- Collect_exps: AC |- [ exp_i, exp_n ] : vari_e*
+  AC |- (SLICE typedPath typedExp_i typedExp_n) '#' _ : vari_p* ++ vari_e*
+  -- Collect_path: AC |- typedPath : vari_p*
+  -- Collect_exps: AC |- [ typedExp_i, typedExp_n ] : vari_e*
 
 rule Collect_path/dot:
-  AC |- (DOT path _) '#' _ : vari*
-  -- Collect_path: AC |- path : vari*
+  AC |- (DOT typedPath _) '#' _ : vari*
+  -- Collect_path: AC |- typedPath : vari*
 
 rule Collect_arg/exp:
-  AC |- EXP exp : vari*
-  -- Collect_exp: AC |- exp : vari*
+  AC |- EXP typedExp : vari*
+  -- Collect_exp: AC |- typedExp : vari*
 
 rule Collect_arg/fun:
   AC |- FUN _ : eps
@@ -260,17 +260,17 @@ def $add_occurrence_id((vari '->' id_name*) :: R, id, id_next)
 rulegroup Multibind_exp {
 
   rule Multibind_exp/unrenamed:
-    AC R |- exp : AC R exp
-    -- if id* = $free_ids_exp(exp)
+    AC R |- typedExp : AC R typedExp
+    -- if id* = $free_ids_exp(typedExp)
     -- if id_rep* = $repeated_ids(R)
     -- if ~$exists_((id <- id_rep*)*)
 
   rule Multibind_exp/renamed:
-    AC R |- exp : AC' R' exp'
-    -- if id* = $free_ids_exp(exp)
+    AC R |- typedExp : AC' R' typedExp'
+    -- if id* = $free_ids_exp(typedExp)
     -- if id_rep* = $repeated_ids(R)
     -- if $exists_((id <- id_rep*)*)
-    -- Multibind_exp_repeated: AC R |- exp : AC' R' exp'
+    -- Multibind_exp_repeated: AC R |- typedExp : AC' R' typedExp'
 
 }
 
@@ -291,35 +291,35 @@ rulegroup Multibind_exp_repeated/variable {
 }
 
 rule Multibind_exp_repeated/upcast:
-  AC R |- (UPCAST typ_sup exp) '#' typ : AC' R' ((UPCAST typ_sup exp') '#' typ)
-  -- Multibind_exp: AC R |- exp : AC' R' exp'
+  AC R |- (UPCAST typ_sup typedExp) '#' typ : AC' R' ((UPCAST typ_sup typedExp') '#' typ)
+  -- Multibind_exp: AC R |- typedExp : AC' R' typedExp'
 
 rule Multibind_exp_repeated/tuple:
-  AC R |- (TUP exp*) '#' typ : AC' R' ((TUP exp'*) '#' typ)
-  -- Multibind_exps: AC R |- exp* : AC' R' exp'*
+  AC R |- (TUP typedExp*) '#' typ : AC' R' ((TUP typedExp'*) '#' typ)
+  -- Multibind_exps: AC R |- typedExp* : AC' R' typedExp'*
 
 rule Multibind_exp_repeated/case:
-  AC R |- (INJ (mixop exp*)) '#' typ : AC' R' ((INJ (mixop exp'*)) '#' typ)
-  -- Multibind_exps: AC R |- exp* : AC' R' exp'*
+  AC R |- (INJ (mixop typedExp*)) '#' typ : AC' R' ((INJ (mixop typedExp'*)) '#' typ)
+  -- Multibind_exps: AC R |- typedExp* : AC' R' typedExp'*
 
 rule Multibind_exp_repeated/struct:
   AC R |- (STR expField*) '#' typ : AC' R' ((STR expField'*) '#' typ)
-  -- (if atom exp = expField)*
-  -- Multibind_exps: AC R |- exp* : AC' R' exp'*
-  -- (if expField' = atom exp')*
+  -- (if atom typedExp = expField)*
+  -- Multibind_exps: AC R |- typedExp* : AC' R' typedExp'*
+  -- (if expField' = atom typedExp')*
 
 rule Multibind_exp_repeated/opt:
-  AC R |- (OPT exp) '#' typ : AC' R' ((OPT exp') '#' typ)
-  -- Multibind_exp: AC R |- exp : AC' R' exp'
+  AC R |- (OPT typedExp) '#' typ : AC' R' ((OPT typedExp') '#' typ)
+  -- Multibind_exp: AC R |- typedExp : AC' R' typedExp'
 
 rule Multibind_exp_repeated/list:
-  AC R |- (LIST exp*) '#' typ : AC' R' ((LIST exp'*) '#' typ)
-  -- Multibind_exps: AC R |- exp* : AC' R' exp'*
+  AC R |- (LIST typedExp*) '#' typ : AC' R' ((LIST typedExp'*) '#' typ)
+  -- Multibind_exps: AC R |- typedExp* : AC' R' typedExp'*
 
 rule Multibind_exp_repeated/cons:
-  AC R |- (CONS exp_h exp_t) '#' typ : AC'' R'' ((CONS exp_h' exp_t') '#' typ)
-  -- Multibind_exp: AC R |- exp_h : AC' R' exp_h'
-  -- Multibind_exp: AC' R' |- exp_t : AC'' R'' exp_t'
+  AC R |- (CONS typedExp_h typedExp_t) '#' typ : AC'' R'' ((CONS typedExp_h' typedExp_t') '#' typ)
+  -- Multibind_exp: AC R |- typedExp_h : AC' R' typedExp_h'
+  -- Multibind_exp: AC' R' |- typedExp_t : AC'' R'' typedExp_t'
 
 ;; An iteration lists the renamed occurrences it now contains
 
@@ -342,9 +342,9 @@ def $rename_iter_vari(R, id typ iter*, id_free*) = (id_occ typ iter*)*
   -- if id_occ* = $ids_within(id_name*, id_free*)
 
 rule Multibind_exp_repeated/iter:
-  AC R |- (ITER exp (iter vari*)) '#' typ : AC' R' ((ITER exp' (iter vari_occ*)) '#' typ)
-  -- Multibind_exp: AC R |- exp : AC' R' exp'
-  -- if id_free* = $free_ids_exp(exp')
+  AC R |- (ITER typedExp (iter vari*)) '#' typ : AC' R' ((ITER typedExp' (iter vari_occ*)) '#' typ)
+  -- Multibind_exp: AC R |- typedExp : AC' R' typedExp'
+  -- if id_free* = $free_ids_exp(typedExp')
   -- if (vari_rename* = $rename_iter_vari(R', vari, id_free*))*
   -- if vari_occ* = $concat_<vari>(vari_rename**)
 
@@ -354,9 +354,9 @@ rulegroup Multibind_exps {
     AC R |- eps : AC R eps
 
   rule Multibind_exps/cons:
-    AC R |- exp_h :: exp_t* : AC'' R'' (exp_h' :: exp_t'*)
-    -- Multibind_exp: AC R |- exp_h : AC' R' exp_h'
-    -- Multibind_exps: AC' R' |- exp_t* : AC'' R'' exp_t'*
+    AC R |- typedExp_h :: typedExp_t* : AC'' R'' (typedExp_h' :: typedExp_t'*)
+    -- Multibind_exp: AC R |- typedExp_h : AC' R' typedExp_h'
+    -- Multibind_exps: AC' R' |- typedExp_t* : AC'' R'' typedExp_t'*
 
 }
 
@@ -366,8 +366,8 @@ rulegroup Multibind_args {
     AC R |- eps : AC R eps
 
   rule Multibind_args/exp:
-    AC R |- (EXP exp_h) :: arg_t* : AC'' R'' ((EXP exp_h') :: arg_t'*)
-    -- Multibind_exp: AC R |- exp_h : AC' R' exp_h'
+    AC R |- (EXP typedExp_h) :: arg_t* : AC'' R'' ((EXP typedExp_h') :: arg_t'*)
+    -- Multibind_exp: AC R |- typedExp_h : AC' R' typedExp_h'
     -- Multibind_args: AC' R' |- arg_t* : AC'' R'' arg_t'*
 
   rule Multibind_args/fun:
@@ -393,9 +393,9 @@ rulegroup Multibind_eqs {
     -- if id_first :: id_later* = id_name*
     -- Iter_clear: |- IC : IC_clear
     -- if IC_dim = (iter '<-' eps '->' eps)* ++ IC_clear
-    -- if exp_first = (VAR id_first) '#' typ
-    -- (if exp_later = (VAR id_later) '#' typ)*
-    -- (if premAL_cmp = IF ((CMP EQ exp_first exp_later) '#' BOOL))*
+    -- if typedExp_first = (VAR id_first) '#' typ
+    -- (if typedExp_later = (VAR id_later) '#' typ)*
+    -- (if premAL_cmp = IF ((CMP EQ typedExp_first typedExp_later) '#' BOOL))*
     -- (Iter_source: IC_dim |- [ id_first typ eps, id_later typ eps ] : IC_eq)*
     -- (Iter_prem: IC_eq |- premAL_cmp : premAL_eq)*
     -- Multibind_eqs: IC |- R : premAL_t*

@@ -9,15 +9,15 @@ pub(super) use crate::interface::meta::shared::mixops::{
 // == Premises
 
 pub(super) const ITERPREM: &str = "iter vari*";
-pub(super) const REL_PREM: &str = "REL id ':' exp* `( inputHint `)";
+pub(super) const REL_PREM: &str = "REL id ':' typedExp* `( inputHint `)";
 
 // == Rules and clauses
 
-pub(super) const RUL: &str = "id ':' exp* '-' premIL*";
+pub(super) const RUL: &str = "id ':' typedExp* '-' premIL*";
 pub(super) const RULGROUP: &str = "id ':' rulIL*";
 pub(super) const ELSGROUP: &str = "id ':' rulIL";
-pub(super) const TBLROW: &str = "arg* '=' exp";
-pub(super) const CLAUSE: &str = "arg* '=' exp '-' premIL*";
+pub(super) const TBLROW: &str = "arg* '=' typedExp";
+pub(super) const CLAUSE: &str = "arg* '=' typedExp '-' premIL*";
 
 // == Definitions
 

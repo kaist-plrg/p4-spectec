@@ -173,8 +173,8 @@ impl Encode for al::Prem {
                     m::REL_PREM,
                     vec![
                         prem_rule_al.id.encode_cached(arena, cache)?,
-                        list(arena, cache, "exp", &exps_input_al)?,
-                        list(arena, cache, "exp", &exps_output_al)?,
+                        list(arena, cache, "typedExp", &exps_input_al)?,
+                        list(arena, cache, "typedExp", &exps_output_al)?,
                     ],
                 )
             }
@@ -185,14 +185,14 @@ impl Encode for al::Prem {
                 m::IFHOLD,
                 vec![
                     prem_inner_al.id.encode_cached(arena, cache)?,
-                    list(arena, cache, "exp", prem_inner_al.not_exp.args())?,
+                    list(arena, cache, "typedExp", prem_inner_al.not_exp.args())?,
                 ],
             ),
             al::PremKind::IfNotHold(prem_inner_al) => (
                 m::IFNOTHOLD,
                 vec![
                     prem_inner_al.id.encode_cached(arena, cache)?,
-                    list(arena, cache, "exp", prem_inner_al.not_exp.args())?,
+                    list(arena, cache, "typedExp", prem_inner_al.not_exp.args())?,
                 ],
             ),
             al::PremKind::Let(prem_inner_al) => (
@@ -242,8 +242,8 @@ impl Encode for (&al::RuleMatch, &al::RulePath) {
         let prems: Vec<_> = rule_match.prems.iter().chain(&rule_path.prems).collect();
         let values_meta = vec![
             rule_path.id.encode_cached(arena, cache)?,
-            list(arena, cache, "exp", &rule_match.exps_input)?,
-            list(arena, cache, "exp", &rule_path.exps_output)?,
+            list(arena, cache, "typedExp", &rule_match.exps_input)?,
+            list(arena, cache, "typedExp", &rule_path.exps_output)?,
             list(arena, cache, "premAL", &prems)?,
         ];
         case(arena, m::RUL, "rulAL", values_meta, rule_path.id.span)

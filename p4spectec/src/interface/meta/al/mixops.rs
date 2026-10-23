@@ -15,16 +15,16 @@ pub(super) const EXT: &str = "EXT json";
 
 // == Premises
 
-pub(super) const REL_PREM: &str = "REL id ':' exp* '->' exp*";
+pub(super) const REL_PREM: &str = "REL id ':' typedExp* '->' typedExp*";
 pub(super) const ITERPREM: &str = "iter '<-' vari* '->' vari*";
-pub(super) const LET: &str = "LET exp '=' exp";
+pub(super) const LET: &str = "LET typedExp '=' typedExp";
 
 // == Rules and clauses
 
-pub(super) const RUL: &str = "id ':' exp* '->' exp* '-' premAL*";
+pub(super) const RUL: &str = "id ':' typedExp* '->' typedExp* '-' premAL*";
 pub(super) const RULGROUP: &str = "id ':' rulAL*";
 pub(super) const ELSGROUP: &str = "id ':' rulAL";
-pub(super) const CLAUSE: &str = "arg* '=' exp '-' premAL*";
+pub(super) const CLAUSE: &str = "arg* '=' typedExp '-' premAL*";
 
 // == Definitions
 

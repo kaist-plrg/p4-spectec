@@ -37,19 +37,19 @@ def $split_inputs_from<X>(n*, n_pos, X_h :: X_t*) = (X_in*, X_h :: X_out*)
 ;; Inputs must be bound; outputs bind
 
 rule Algo_prem/rel:
-  AC IC |- REL id ':' exp* `( inputHint `) : AC' (premAL_rel :: premAL_bind*)
-  -- if (exp_in*, exp_out*) = $split_inputs<exp>(inputHint, exp*)
-  -- if id_in* = $free_ids_exps(exp_in*)
+  AC IC |- REL id ':' typedExp* `( inputHint `) : AC' (premAL_rel :: premAL_bind*)
+  -- if (typedExp_in*, typedExp_out*) = $split_inputs<typedExp>(inputHint, typedExp*)
+  -- if id_in* = $free_ids_exps(typedExp_in*)
   -- if $is_bound_ids(AC, id_in*)
-  -- Bind_exps: AC IC |- exp_out* : AC' exp_out'* premAL_bind*
-  -- if vari_in* = $free_vars_exps(exp_in*)
+  -- Bind_exps: AC IC |- typedExp_out* : AC' typedExp_out'* premAL_bind*
+  -- if vari_in* = $free_vars_exps(typedExp_in*)
   -- if vari_read* = $shallowest_vars(vari_in*)
-  -- if vari_out* = $free_vars_exps(exp_out'*)
+  -- if vari_out* = $free_vars_exps(typedExp_out'*)
   -- if vari_bind* = $shallowest_vars(vari_out*)
   -- Iter_restrict: IC |- vari_read* : IC_read
   -- Iter_bind: IC_read |- vari_bind* : IC_rel
   -- Iter_sourced: |- IC_rel
-  -- Iter_prem: IC_rel |- REL id ':' exp_in* '->' exp_out'* : premAL_rel
+  -- Iter_prem: IC_rel |- REL id ':' typedExp_in* '->' typedExp_out'* : premAL_rel
 
 ;;; Conditions
 
@@ -58,52 +58,52 @@ rule Algo_prem/rel:
 rulegroup Algo_prem/cond {
 
   rule Algo_prem/test:
-    AC IC |- IF exp : AC ([ premAL_if ])
-    -- if id* = $free_ids_exp(exp)
+    AC IC |- IF typedExp : AC ([ premAL_if ])
+    -- if id* = $free_ids_exp(typedExp)
     -- if $is_bound_ids(AC, id*)
-    -- Iter_prem: IC |- IF exp : premAL_if
+    -- Iter_prem: IC |- IF typedExp : premAL_if
 
   rule Algo_prem/let-left:
-    AC IC |- IF ((CMP EQ exp_l exp_r) '#' _) : AC' premAL*
-    -- Collect_exp: AC |- exp_l : vari_l*
+    AC IC |- IF ((CMP EQ typedExp_l typedExp_r) '#' _) : AC' premAL*
+    -- Collect_exp: AC |- typedExp_l : vari_l*
     -- if vari_l* =/= eps
-    -- Collect_exp: AC |- exp_r : eps
-    -- Algo_let: AC IC |- exp_l '=' exp_r : AC' premAL*
+    -- Collect_exp: AC |- typedExp_r : eps
+    -- Algo_let: AC IC |- typedExp_l '=' typedExp_r : AC' premAL*
 
   rule Algo_prem/let-right:
-    AC IC |- IF ((CMP EQ exp_l exp_r) '#' _) : AC' premAL*
-    -- Collect_exp: AC |- exp_l : eps
-    -- Collect_exp: AC |- exp_r : vari_r*
+    AC IC |- IF ((CMP EQ typedExp_l typedExp_r) '#' _) : AC' premAL*
+    -- Collect_exp: AC |- typedExp_l : eps
+    -- Collect_exp: AC |- typedExp_r : vari_r*
     -- if vari_r* =/= eps
-    -- Algo_let: AC IC |- exp_r '=' exp_l : AC' premAL*
+    -- Algo_let: AC IC |- typedExp_r '=' typedExp_l : AC' premAL*
 
 }
 
 rule Algo_let:
-  AC IC |- exp_l '=' exp_r : AC' (premAL_let :: premAL_bind*)
-  -- Bind_exps: AC IC |- [ exp_l ] : AC' ([ exp_l' ]) premAL_bind*
-  -- if vari_r* = $free_vars_exp(exp_r)
+  AC IC |- typedExp_l '=' typedExp_r : AC' (premAL_let :: premAL_bind*)
+  -- Bind_exps: AC IC |- [ typedExp_l ] : AC' ([ typedExp_l' ]) premAL_bind*
+  -- if vari_r* = $free_vars_exp(typedExp_r)
   -- if vari_read* = $shallowest_vars(vari_r*)
-  -- if vari_l* = $free_vars_exp(exp_l')
+  -- if vari_l* = $free_vars_exp(typedExp_l')
   -- if vari_bind* = $shallowest_vars(vari_l*)
   -- Iter_restrict: IC |- vari_read* : IC_read
   -- Iter_bind: IC_read |- vari_bind* : IC_let
   -- Iter_sourced: |- IC_let
-  -- Iter_prem: IC_let |- LET exp_l' '=' exp_r : premAL_let
+  -- Iter_prem: IC_let |- LET typedExp_l' '=' typedExp_r : premAL_let
 
 ;;; Holding and non-holding relations
 
 rule Algo_prem/ifhold:
-  AC IC |- IFHOLD id ':' exp* : AC ([ premAL_hold ])
-  -- if id_read* = $free_ids_exps(exp*)
+  AC IC |- IFHOLD id ':' typedExp* : AC ([ premAL_hold ])
+  -- if id_read* = $free_ids_exps(typedExp*)
   -- if $is_bound_ids(AC, id_read*)
-  -- Iter_prem: IC |- IFHOLD id ':' exp* : premAL_hold
+  -- Iter_prem: IC |- IFHOLD id ':' typedExp* : premAL_hold
 
 rule Algo_prem/ifnothold:
-  AC IC |- IFNOTHOLD id ':' exp* : AC ([ premAL_hold ])
-  -- if id_read* = $free_ids_exps(exp*)
+  AC IC |- IFNOTHOLD id ':' typedExp* : AC ([ premAL_hold ])
+  -- if id_read* = $free_ids_exps(typedExp*)
   -- if $is_bound_ids(AC, id_read*)
-  -- Iter_prem: IC |- IFNOTHOLD id ':' exp* : premAL_hold
+  -- Iter_prem: IC |- IFNOTHOLD id ':' typedExp* : premAL_hold
 
 ;;; Iterations
 
@@ -117,10 +117,10 @@ rule Algo_prem/iter:
 ;;; Debugging
 
 rule Algo_prem/dbg:
-  AC IC |- DEBUG exp : AC ([ premAL_debug ])
-  -- if id* = $free_ids_exp(exp)
+  AC IC |- DEBUG typedExp : AC ([ premAL_debug ])
+  -- if id* = $free_ids_exp(typedExp)
   -- if $is_bound_ids(AC, id*)
-  -- Iter_prem: IC |- DEBUG exp : premAL_debug
+  -- Iter_prem: IC |- DEBUG typedExp : premAL_debug
 
 ;; Premise sequences
 

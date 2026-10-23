@@ -33,7 +33,7 @@ extern relation Call_extern_rel:
 syntax expRes = ok<val> | failure
 
 relation Eval_exp:
-  ctx |- exp : expRes
+  ctx |- typedExp : expRes
   hint(input %0 %1)
   hint(prose_in "evaluating expression" %1 "under context" %0)
   hint(prose_out %2)
@@ -41,7 +41,7 @@ relation Eval_exp:
 syntax expsRes = ok<val*> | failure
 
 relation Eval_exps:
-  ctx |- exp* : expsRes
+  ctx |- typedExp* : expsRes
   hint(input %0 %1)
   hint(prose_in "evaluating expressions" %1 "sequentially under context" %0)
   hint(prose_out %2)
@@ -49,14 +49,14 @@ relation Eval_exps:
 syntax expOptRes = ok<val?> | failure
 
 relation Eval_exp_maybe:
-  ctx? |- exp : expOptRes
+  ctx? |- typedExp : expOptRes
   hint(input %0 %1)
   hint(prose_in "evaluating expression" %1 "under the optional context" %0
                 "when present")
   hint(prose_out %2)
 
 relation Eval_exp_each:
-  ctx* |- exp : expsRes
+  ctx* |- typedExp : expsRes
   hint(input %0 %1)
   hint(prose_in "evaluating expression" %1 "sequentially under each context in" %0)
   hint(prose_out %2)
@@ -66,13 +66,13 @@ relation Eval_exp_each:
 syntax pathRes = ok<val> | failure
 
 relation Eval_path_acc:
-  ctx |- val path : pathRes
+  ctx |- val typedPath : pathRes
   hint(input %0 %1 %2)
   hint(prose_in "accessing path" %2 "of value" %1 "under context" %0)
   hint(prose_out %3)
 
 relation Eval_path_upd:
-  ctx |- val path := val : pathRes
+  ctx |- val typedPath := val : pathRes
   hint(input %0 %1 %2 %3)
   hint(prose_in "updating path" %2 "of value" %1 "with value" %3 "under context" %0)
   hint(prose_out %4)

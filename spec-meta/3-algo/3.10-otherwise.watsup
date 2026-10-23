@@ -26,99 +26,99 @@ rule Exp_pure/variable:
   |- (VAR _) '#' _
 
 rule Exp_pure/unary:
-  |- (UN _ exp) '#' _
-  -- Exp_pure: |- exp
+  |- (UN _ typedExp) '#' _
+  -- Exp_pure: |- typedExp
 
 rule Exp_pure/binary:
-  |- (BIN _ exp_l exp_r) '#' _
-  -- Exp_pure: |- exp_l
-  -- Exp_pure: |- exp_r
+  |- (BIN _ typedExp_l typedExp_r) '#' _
+  -- Exp_pure: |- typedExp_l
+  -- Exp_pure: |- typedExp_r
 
 rule Exp_pure/compare:
-  |- (CMP _ exp_l exp_r) '#' _
-  -- Exp_pure: |- exp_l
-  -- Exp_pure: |- exp_r
+  |- (CMP _ typedExp_l typedExp_r) '#' _
+  -- Exp_pure: |- typedExp_l
+  -- Exp_pure: |- typedExp_r
 
 rule Exp_pure/upcast:
-  |- (UPCAST _ exp) '#' _
-  -- Exp_pure: |- exp
+  |- (UPCAST _ typedExp) '#' _
+  -- Exp_pure: |- typedExp
 
 rule Exp_pure/downcast:
-  |- (DOWNCAST _ exp) '#' _
-  -- Exp_pure: |- exp
+  |- (DOWNCAST _ typedExp) '#' _
+  -- Exp_pure: |- typedExp
 
 rule Exp_pure/subtype:
-  |- (SUB exp _) '#' _
-  -- Exp_pure: |- exp
+  |- (SUB typedExp _) '#' _
+  -- Exp_pure: |- typedExp
 
 rule Exp_pure/match:
-  |- (MATCH exp _) '#' _
-  -- Exp_pure: |- exp
+  |- (MATCH typedExp _) '#' _
+  -- Exp_pure: |- typedExp
 
 rule Exp_pure/tuple:
-  |- (TUP exp*) '#' _
-  -- (Exp_pure: |- exp)*
+  |- (TUP typedExp*) '#' _
+  -- (Exp_pure: |- typedExp)*
 
 rule Exp_pure/case:
-  |- (INJ (_ exp*)) '#' _
-  -- (Exp_pure: |- exp)*
+  |- (INJ (_ typedExp*)) '#' _
+  -- (Exp_pure: |- typedExp)*
 
 rule Exp_pure/struct:
   |- (STR expField*) '#' _
-  -- (if _ exp = expField)*
-  -- (Exp_pure: |- exp)*
+  -- (if _ typedExp = expField)*
+  -- (Exp_pure: |- typedExp)*
 
 rule Exp_pure/opt:
-  |- (OPT exp?) '#' _
-  -- (Exp_pure: |- exp)?
+  |- (OPT typedExp?) '#' _
+  -- (Exp_pure: |- typedExp)?
 
 rule Exp_pure/list:
-  |- (LIST exp*) '#' _
-  -- (Exp_pure: |- exp)*
+  |- (LIST typedExp*) '#' _
+  -- (Exp_pure: |- typedExp)*
 
 rule Exp_pure/cons:
-  |- (CONS exp_h exp_t) '#' _
-  -- Exp_pure: |- exp_h
-  -- Exp_pure: |- exp_t
+  |- (CONS typedExp_h typedExp_t) '#' _
+  -- Exp_pure: |- typedExp_h
+  -- Exp_pure: |- typedExp_t
 
 rule Exp_pure/concat:
-  |- (CAT exp_l exp_r) '#' _
-  -- Exp_pure: |- exp_l
-  -- Exp_pure: |- exp_r
+  |- (CAT typedExp_l typedExp_r) '#' _
+  -- Exp_pure: |- typedExp_l
+  -- Exp_pure: |- typedExp_r
 
 rule Exp_pure/mem:
-  |- (MEM exp_l exp_r) '#' _
-  -- Exp_pure: |- exp_l
-  -- Exp_pure: |- exp_r
+  |- (MEM typedExp_l typedExp_r) '#' _
+  -- Exp_pure: |- typedExp_l
+  -- Exp_pure: |- typedExp_r
 
 rule Exp_pure/len:
-  |- (LEN exp) '#' _
-  -- Exp_pure: |- exp
+  |- (LEN typedExp) '#' _
+  -- Exp_pure: |- typedExp
 
 rule Exp_pure/dot:
-  |- (DOT exp _) '#' _
-  -- Exp_pure: |- exp
+  |- (DOT typedExp _) '#' _
+  -- Exp_pure: |- typedExp
 
 rule Exp_pure/idx:
-  |- (IDX exp_b exp_i) '#' _
-  -- Exp_pure: |- exp_b
-  -- Exp_pure: |- exp_i
+  |- (IDX typedExp_b typedExp_i) '#' _
+  -- Exp_pure: |- typedExp_b
+  -- Exp_pure: |- typedExp_i
 
 rule Exp_pure/slice:
-  |- (SLICE exp_b exp_i exp_n) '#' _
-  -- Exp_pure: |- exp_b
-  -- Exp_pure: |- exp_i
-  -- Exp_pure: |- exp_n
+  |- (SLICE typedExp_b typedExp_i typedExp_n) '#' _
+  -- Exp_pure: |- typedExp_b
+  -- Exp_pure: |- typedExp_i
+  -- Exp_pure: |- typedExp_n
 
 rule Exp_pure/upd:
-  |- (UPD exp_b path exp_f) '#' _
-  -- Exp_pure: |- exp_b
-  -- Path_pure: |- path
-  -- Exp_pure: |- exp_f
+  |- (UPD typedExp_b typedPath typedExp_f) '#' _
+  -- Exp_pure: |- typedExp_b
+  -- Path_pure: |- typedPath
+  -- Exp_pure: |- typedExp_f
 
 rule Exp_pure/iter:
-  |- (ITER exp _) '#' _
-  -- Exp_pure: |- exp
+  |- (ITER typedExp _) '#' _
+  -- Exp_pure: |- typedExp
 
 ;;; Update paths
 
@@ -126,25 +126,25 @@ rule Path_pure/root:
   |- ROOT '#' _
 
 rule Path_pure/idx:
-  |- (IDX path exp_i) '#' _
-  -- Path_pure: |- path
-  -- Exp_pure: |- exp_i
+  |- (IDX typedPath typedExp_i) '#' _
+  -- Path_pure: |- typedPath
+  -- Exp_pure: |- typedExp_i
 
 rule Path_pure/slice:
-  |- (SLICE path exp_i exp_n) '#' _
-  -- Path_pure: |- path
-  -- Exp_pure: |- exp_i
-  -- Exp_pure: |- exp_n
+  |- (SLICE typedPath typedExp_i typedExp_n) '#' _
+  -- Path_pure: |- typedPath
+  -- Exp_pure: |- typedExp_i
+  -- Exp_pure: |- typedExp_n
 
 rule Path_pure/dot:
-  |- (DOT path _) '#' _
-  -- Path_pure: |- path
+  |- (DOT typedPath _) '#' _
+  -- Path_pure: |- typedPath
 
 ;;; Arguments
 
 rule Arg_pure/exp:
-  |- EXP exp
-  -- Exp_pure: |- exp
+  |- EXP typedExp
+  -- Exp_pure: |- typedExp
 
 rule Arg_pure/fun:
   |- FUN _
@@ -152,22 +152,22 @@ rule Arg_pure/fun:
 ;; Premises
 
 rule Prem_pure/let:
-  AC |- LET exp_l '=' exp_r
-  -- Exp_pure: |- exp_l
-  -- Exp_pure: |- exp_r
+  AC |- LET typedExp_l '=' typedExp_r
+  -- Exp_pure: |- typedExp_l
+  -- Exp_pure: |- typedExp_r
 
 rule Prem_pure/dbg:
-  AC |- DEBUG exp
-  -- Exp_pure: |- exp
+  AC |- DEBUG typedExp
+  -- Exp_pure: |- typedExp
 
 rule Prem_pure/iter:
   AC |- ITER premAL _
   -- Prem_pure: AC |- premAL
 
 rule Prem_pure/singleton:
-  AC |- IF ((MATCH exp (INJ _)) '#' _)
-  -- Exp_pure: |- exp
-  -- if _ '#' typ = exp
+  AC |- IF ((MATCH typedExp (INJ _)) '#' _)
+  -- Exp_pure: |- typedExp
+  -- if _ '#' typ = typedExp
   -- if $is_singleton_typ(AC.TYP, typ)
 
 ;; Definitions
@@ -193,10 +193,10 @@ rulegroup Otherwise_pure/rel {
     AC |- REL _ ':' _ '->' _ '=' _ eps
 
   rule Otherwise_pure/else:
-    AC |- REL _ ':' _ '->' _ '=' _ (_ ':' (_ ':' exp_in* '->' exp_out* '-' premAL*))
-    -- (Exp_pure: |- exp_in)*
+    AC |- REL _ ':' _ '->' _ '=' _ (_ ':' (_ ':' typedExp_in* '->' typedExp_out* '-' premAL*))
+    -- (Exp_pure: |- typedExp_in)*
     -- (Prem_pure: AC |- premAL)*
-    -- (Exp_pure: |- exp_out)*
+    -- (Exp_pure: |- typedExp_out)*
 
 }
 
@@ -215,10 +215,10 @@ rulegroup Otherwise_pure/func {
     AC |- FUNC _ _ _ ':' _ '=' _ eps
 
   rule Otherwise_pure/else:
-    AC |- FUNC _ tparam* _ ':' _ '=' _ (arg* '=' exp '-' premAL*)
+    AC |- FUNC _ tparam* _ ':' _ '=' _ (arg* '=' typedExp '-' premAL*)
     -- if AC_func = $add_tparams(AC, tparam*)
     -- (Arg_pure: |- arg)*
     -- (Prem_pure: AC_func |- premAL)*
-    -- Exp_pure: |- exp
+    -- Exp_pure: |- typedExp
 
 }

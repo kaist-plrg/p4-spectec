@@ -11,19 +11,19 @@ syntax iterPremIL = iter vari*
 ;; Premises
 
 syntax premIL =
-  | REL id ':' exp* `( inputHint `)
-  | IF exp
-  | IFHOLD id ':' exp*
-  | IFNOTHOLD id ':' exp*
+  | REL id ':' typedExp* `( inputHint `)
+  | IF typedExp
+  | IFHOLD id ':' typedExp*
+  | IFNOTHOLD id ':' typedExp*
   | ITER premIL iterPremIL
-  | DEBUG exp
+  | DEBUG typedExp
 
 ;; Relation definitions
 
 syntax externRelDefnIL =
   EXTREL id ':' typ* `( inputHint `)
 
-syntax rulIL = id ':' exp* '-' premIL*
+syntax rulIL = id ':' typedExp* '-' premIL*
 syntax rulGroupIL = id ':' rulIL*
 syntax elsGroupIL = id ':' rulIL
 
@@ -36,12 +36,12 @@ syntax relDefnIL =
 
 ;; Meta-functions
 
-syntax tblRowIL = arg* '=' exp
+syntax tblRowIL = arg* '=' typedExp
 
 syntax tableFuncDefnIL =
   TABLEFUNC id param* ':' typ '=' tblRowIL*
 
-syntax clauseIL = arg* '=' exp '-' premIL*
+syntax clauseIL = arg* '=' typedExp '-' premIL*
 syntax elsClauseIL = clauseIL
 
 syntax definedFuncDefnIL =

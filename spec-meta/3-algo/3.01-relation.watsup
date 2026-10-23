@@ -44,19 +44,19 @@ relation Iter_prem:
 ;; Binder collection
 
 relation Collect_exp:
-  algoCtx |- exp : vari*
+  algoCtx |- typedExp : vari*
   hint(input %0 %1)
   hint(prose_in "collecting the binders of" %1 "under" %0)
   hint(prose_out %2)
 
 relation Collect_exps:
-  algoCtx |- exp* : vari*
+  algoCtx |- typedExp* : vari*
   hint(input %0 %1)
   hint(prose_in "collecting the binders of" %1 "under" %0)
   hint(prose_out %2)
 
 relation Collect_path:
-  algoCtx |- path : vari*
+  algoCtx |- typedPath : vari*
   hint(input %0 %1)
   hint(prose_in "collecting the binders of" %1 "under" %0)
   hint(prose_out %2)
@@ -82,19 +82,19 @@ relation Multibind_renamer:
   hint(prose_out %1)
 
 relation Multibind_exp:
-  algoCtx renamer |- exp : algoCtx renamer exp
+  algoCtx renamer |- typedExp : algoCtx renamer typedExp
   hint(input %0 %1 %2)
   hint(prose_in "renaming the repeated binders of" %2 "with" %1 "under" %0)
   hint(prose_out %3 %4 %5)
 
 relation Multibind_exp_repeated:
-  algoCtx renamer |- exp : algoCtx renamer exp
+  algoCtx renamer |- typedExp : algoCtx renamer typedExp
   hint(input %0 %1 %2)
   hint(prose_in "renaming the repeated binders inside pattern" %2 "with" %1 "under" %0)
   hint(prose_out %3 %4 %5)
 
 relation Multibind_exps:
-  algoCtx renamer |- exp* : algoCtx renamer exp*
+  algoCtx renamer |- typedExp* : algoCtx renamer typedExp*
   hint(input %0 %1 %2)
   hint(prose_in "renaming the repeated binders of" %2 "with" %1 "under" %0)
   hint(prose_out %3 %4 %5)
@@ -114,21 +114,21 @@ relation Multibind_eqs:
 ;; Partialbind
 
 relation Partialbind_exp:
-  algoCtx iterCtx |- iterCtx exp : algoCtx iterCtx exp premAL*
+  algoCtx iterCtx |- iterCtx typedExp : algoCtx iterCtx typedExp premAL*
   hint(input %0 %1 %2 %3)
   hint(prose_in "decomposing pattern" %3 "inside iterations" %2
                 "of a premise iterated over" %1 "under" %0)
   hint(prose_out %4 %5 %6 %7)
 
 relation Partialbind_exp_decomposed:
-  algoCtx iterCtx |- iterCtx exp : algoCtx iterCtx exp premAL*
+  algoCtx iterCtx |- iterCtx typedExp : algoCtx iterCtx typedExp premAL*
   hint(input %0 %1 %2 %3)
   hint(prose_in "decomposing binding pattern" %3 "inside iterations" %2
                 "of a premise iterated over" %1 "under" %0)
   hint(prose_out %4 %5 %6 %7)
 
 relation Partialbind_exps:
-  algoCtx iterCtx |- iterCtx exp* : algoCtx iterCtx exp* premAL*
+  algoCtx iterCtx |- iterCtx typedExp* : algoCtx iterCtx typedExp* premAL*
   hint(input %0 %1 %2 %3)
   hint(prose_in "decomposing patterns" %3 "inside iterations" %2
                 "of a premise iterated over" %1 "under" %0)
@@ -141,13 +141,13 @@ relation Partialbind_args:
   hint(prose_out %2 %3 %4)
 
 relation Partialbind_check:
-  iterCtx vari |- exp : premAL
+  iterCtx vari |- typedExp : premAL
   hint(input %0 %1 %2)
   hint(prose_in "checking" %2 "on the fresh variable" %1 "over" %0)
   hint(prose_out %3)
 
 relation Partialbind_destructure:
-  iterCtx vari |- exp '=' exp : premAL
+  iterCtx vari |- typedExp '=' typedExp : premAL
   hint(input %0 %1 %2 %3)
   hint(prose_in "binding pattern" %2 "to" %3 "from the fresh variable" %1 "over" %0)
   hint(prose_out %4)
@@ -155,7 +155,7 @@ relation Partialbind_destructure:
 ;; Binding
 
 relation Bind_exps:
-  algoCtx iterCtx |- exp* : algoCtx exp* premAL*
+  algoCtx iterCtx |- typedExp* : algoCtx typedExp* premAL*
   hint(input %0 %1 %2)
   hint(prose_in "binding patterns" %2 "of a premise iterated over" %1 "under" %0)
   hint(prose_out %3 %4 %5)
@@ -175,7 +175,7 @@ relation Algo_prem:
   hint(prose_out %3 %4)
 
 relation Algo_let:
-  algoCtx iterCtx |- exp '=' exp : algoCtx premAL*
+  algoCtx iterCtx |- typedExp '=' typedExp : algoCtx premAL*
   hint(input %0 %1 %2 %3)
   hint(prose_in "converting the binding of" %2 "to" %3 "iterated over" %1 "under" %0)
   hint(prose_out %4 %5)
@@ -189,12 +189,12 @@ relation Algo_prems:
 ;; Tables
 
 relation Exp_shallow:
-  algoCtx |- exp
+  algoCtx |- typedExp
   hint(input %0 %1)
   hint(prose_in %1 "is a shallow table pattern under" %0)
 
 relation Exp_irrefutable:
-  algoCtx |- exp
+  algoCtx |- typedExp
   hint(input %0 %1)
   hint(prose_in %1 "matches every value of its type under" %0)
 
@@ -245,19 +245,19 @@ relation Algo_def:
 ;; Guards
 
 relation Guard_exp:
-  algoCtx |- exp : premAL*
+  algoCtx |- typedExp : premAL*
   hint(input %0 %1)
   hint(prose_in "the guards for evaluating" %1 "under" %0)
   hint(prose_out %2)
 
 relation Guard_exps:
-  algoCtx |- exp* : premAL*
+  algoCtx |- typedExp* : premAL*
   hint(input %0 %1)
   hint(prose_in "the guards for evaluating" %1 "in order under" %0)
   hint(prose_out %2)
 
 relation Guard_path:
-  algoCtx |- exp path exp : premAL*
+  algoCtx |- typedExp typedPath typedExp : premAL*
   hint(input %0 %1 %2 %3)
   hint(prose_in "the guards for updating path" %2 "of" %1 "with" %3 "under" %0)
   hint(prose_out %4)
@@ -307,7 +307,7 @@ relation Guard_def:
 ;; Otherwise purity
 
 relation Exp_pure:
-  |- exp
+  |- typedExp
   hint(input %0)
   hint(prose_in "evaluating" %0 "calls no function")
 
@@ -317,7 +317,7 @@ relation Arg_pure:
   hint(prose_in "evaluating" %0 "calls no function")
 
 relation Path_pure:
-  |- path
+  |- typedPath
   hint(input %0)
   hint(prose_in "evaluating" %0 "calls no function")
 

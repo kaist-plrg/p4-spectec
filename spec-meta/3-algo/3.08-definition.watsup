@@ -3,14 +3,14 @@
 ;; A rule binds its inputs, then runs its premises and returns its outputs
 
 rule Algo_rul:
-  AC inputHint |- rulIL : id ':' exp_in'* '->' exp_out* '-' (premAL_bind* ++ premAL*)
-  -- if id ':' exp* '-' premIL* = rulIL
+  AC inputHint |- rulIL : id ':' typedExp_in'* '->' typedExp_out* '-' (premAL_bind* ++ premAL*)
+  -- if id ':' typedExp* '-' premIL* = rulIL
   -- if id_used* = $free_ids_rulIL(rulIL)
   -- if AC_rul = $add_used_ids(AC, id_used*)
-  -- if (exp_in*, exp_out*) = $split_inputs<exp>(inputHint, exp*)
-  -- Bind_exps: AC_rul eps |- exp_in* : AC_in exp_in'* premAL_bind*
+  -- if (typedExp_in*, typedExp_out*) = $split_inputs<typedExp>(inputHint, typedExp*)
+  -- Bind_exps: AC_rul eps |- typedExp_in* : AC_in typedExp_in'* premAL_bind*
   -- Algo_prems: AC_in |- premIL* : AC_body premAL*
-  -- if id_out* = $free_ids_exps(exp_out*)
+  -- if id_out* = $free_ids_exps(typedExp_out*)
   -- if $is_bound_ids(AC_body, id_out*)
 
 rule Algo_rulGroup:
@@ -26,13 +26,13 @@ rule Algo_elsGroup:
 ;; A clause binds its arguments, runs its premises, and returns its result
 
 rule Algo_clause:
-  AC |- clauseIL : arg'* '=' exp '-' (premAL_arg* ++ premAL*)
-  -- if arg* '=' exp '-' premIL* = clauseIL
+  AC |- clauseIL : arg'* '=' typedExp '-' (premAL_arg* ++ premAL*)
+  -- if arg* '=' typedExp '-' premIL* = clauseIL
   -- if id_used* = $free_ids_clauseIL(clauseIL)
   -- if AC_clause = $add_used_ids(AC, id_used*)
   -- Bind_args: AC_clause |- arg* : AC_arg arg'* premAL_arg*
   -- Algo_prems: AC_arg |- premIL* : AC_body premAL*
-  -- if id_body* = $free_ids_exp(exp)
+  -- if id_body* = $free_ids_exp(typedExp)
   -- if $is_bound_ids(AC_body, id_body*)
 
 ;; Definitions

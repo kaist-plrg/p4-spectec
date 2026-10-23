@@ -5,19 +5,19 @@
 rulegroup Eval_prem/relpr {
 
   rule Eval_prem/expressions-failure:
-    C |- REL id ':' exp* '->' exp_out* : failure
-    -- Eval_exps: C |- exp* : failure
+    C |- REL id ':' typedExp* '->' typedExp_out* : failure
+    -- Eval_exps: C |- typedExp* : failure
 
   rule Eval_prem/call-failure:
-    C |- REL id ':' exp* '->' exp_out* : failure
-    -- Eval_exps: C |- exp* : OK val*
+    C |- REL id ':' typedExp* '->' typedExp_out* : failure
+    -- Eval_exps: C |- typedExp* : OK val*
     -- Call_rel: C |- id `( val* `) : failure
 
   rule Eval_prem/succ:
-    C |- REL id ':' exp* '->' exp_out* : OK C'
-    -- Eval_exps: C |- exp* : OK val*
+    C |- REL id ':' typedExp* '->' typedExp_out* : OK C'
+    -- Eval_exps: C |- typedExp* : OK val*
     -- Call_rel: C |- id `( val* `) : OK val_out*
-    -- Assign_exps : C |- exp_out* := val_out* : OK C'
+    -- Assign_exps : C |- typedExp_out* := val_out* : OK C'
 
 }
 
@@ -26,16 +26,16 @@ rulegroup Eval_prem/relpr {
 rulegroup Eval_prem/ifpr {
 
   rule Eval_prem/cond-failure:
-    C |- IF exp : failure
-    -- Eval_exp: C |- exp : failure
+    C |- IF typedExp : failure
+    -- Eval_exp: C |- typedExp : failure
 
   rule Eval_prem/succ-false:
-    C |- IF exp : UNMATCH
-    -- Eval_exp: C |- exp : OK (BOOL false)
+    C |- IF typedExp : UNMATCH
+    -- Eval_exp: C |- typedExp : OK (BOOL false)
 
   rule Eval_prem/succ-true:
-    C |- IF exp : OK C
-    -- Eval_exp: C |- exp : OK (BOOL true)
+    C |- IF typedExp : OK C
+    -- Eval_exp: C |- typedExp : OK (BOOL true)
 
 }
 
@@ -44,17 +44,17 @@ rulegroup Eval_prem/ifpr {
 rulegroup Eval_prem/ifholdpr {
 
   rule Eval_prem/expressions-failure:
-    C |- IFHOLD id ':' exp* : failure
-    -- Eval_exps: C |- exp* : failure
+    C |- IFHOLD id ':' typedExp* : failure
+    -- Eval_exps: C |- typedExp* : failure
 
   rule Eval_prem/call-failure:
-    C |- IFHOLD id ':' exp* : failure
-    -- Eval_exps: C |- exp* : OK val_input*
+    C |- IFHOLD id ':' typedExp* : failure
+    -- Eval_exps: C |- typedExp* : OK val_input*
     -- Call_rel: C |- id `( val_input* `) : failure
 
   rule Eval_prem/succ:
-    C |- IFHOLD id ':' exp* : OK C
-    -- Eval_exps: C |- exp* : OK val_input*
+    C |- IFHOLD id ':' typedExp* : OK C
+    -- Eval_exps: C |- typedExp* : OK val_input*
     -- Call_rel: C |- id `( val_input* `) : OK eps
 
 }
@@ -62,22 +62,22 @@ rulegroup Eval_prem/ifholdpr {
 rulegroup Eval_prem/ifnotholdpr {
 
   rule Eval_prem/expressions-failure:
-    C |- IFNOTHOLD id ':' exp* : failure
-    -- Eval_exps: C |- exp* : failure
+    C |- IFNOTHOLD id ':' typedExp* : failure
+    -- Eval_exps: C |- typedExp* : failure
 
   rule Eval_prem/error:
-    C |- IFNOTHOLD id ':' exp* : ERROR
-    -- Eval_exps: C |- exp* : OK val_input*
+    C |- IFNOTHOLD id ':' typedExp* : ERROR
+    -- Eval_exps: C |- typedExp* : OK val_input*
     -- Call_rel: C |- id `( val_input* `) : ERROR
 
   rule Eval_prem/succ-unmatch:
-    C |- IFNOTHOLD id ':' exp* : UNMATCH
-    -- Eval_exps: C |- exp* : OK val_input*
+    C |- IFNOTHOLD id ':' typedExp* : UNMATCH
+    -- Eval_exps: C |- typedExp* : OK val_input*
     -- Call_rel: C |- id `( val_input* `) : OK val_out*
 
   rule Eval_prem/succ-ok:
-    C |- IFNOTHOLD id ':' exp* : OK C
-    -- Eval_exps: C |- exp* : OK val_input*
+    C |- IFNOTHOLD id ':' typedExp* : OK C
+    -- Eval_exps: C |- typedExp* : OK val_input*
     -- Call_rel: C |- id `( val_input* `) : UNMATCH
 
 }
@@ -87,13 +87,13 @@ rulegroup Eval_prem/ifnotholdpr {
 rulegroup Eval_prem/letpr {
 
   rule Eval_prem/right-failure:
-    C |- LET exp_l '=' exp_r : failure
-    -- Eval_exp: C |- exp_r : failure
+    C |- LET typedExp_l '=' typedExp_r : failure
+    -- Eval_exp: C |- typedExp_r : failure
 
   rule Eval_prem/succ:
-    C |- LET exp_l '=' exp_r : OK C'
-    -- Eval_exp: C |- exp_r : OK val_r
-    -- Assign_exp: C |- exp_l := val_r : OK C'
+    C |- LET typedExp_l '=' typedExp_r : OK C'
+    -- Eval_exp: C |- typedExp_r : OK val_r
+    -- Assign_exp: C |- typedExp_l := val_r : OK C'
 
 }
 
@@ -172,12 +172,12 @@ rulegroup Eval_prem/iterpr-list {
 rulegroup Eval_prem/dbg {
 
   rule Eval_prem/operand-failure:
-    C |- DEBUG exp : failure
-    -- Eval_exp: C |- exp : failure
+    C |- DEBUG typedExp : failure
+    -- Eval_exp: C |- typedExp : failure
 
   rule Eval_prem/succ:
-    C |- DEBUG exp : OK C
-    -- Eval_exp: C |- exp : OK val
+    C |- DEBUG typedExp : OK C
+    -- Eval_exp: C |- typedExp : OK val
     -- debug val
 
 }
