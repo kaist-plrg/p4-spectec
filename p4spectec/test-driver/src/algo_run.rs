@@ -1,11 +1,11 @@
-//! IL-to-AL scripts lowered natively and through the meta specification
+//! IL-to-AL scripts converted natively and through the meta specification
 //!
-//! Each script is lowered by the native pass and by the IL-to-AL specification,
-//! and its `main` is executed in three ways:
-//! native lowering with native execution,
-//! meta lowering with native execution,
-//! and meta lowering with execution by the AL specification.
-//! Each path records pass, fail, reject (no lowering), or panic (native
+//! Each script is converted to AL by the native `algo` pass and by the IL-to-AL
+//! specification, and its `main` is executed in three ways:
+//! native algo with native execution,
+//! meta algo with native execution,
+//! and meta algo with execution by the AL specification.
+//! Each path records pass, fail, reject (no AL), or panic (native
 //! interpreter abort); the outcomes are compared with the registered expectation.
 
 use std::time::Instant;
@@ -24,7 +24,7 @@ use crate::{
     suite::{self, AlgoRunConfig},
 };
 
-/// Calls `main` of lowered AL with the native AL interpreter.
+/// Calls `main` of converted AL with the native AL interpreter.
 ///
 /// An interpreter panic is recorded rather than aborting the suite.
 fn run_native(spec_al: al::Spec, config: Config) -> &'static str {
@@ -47,7 +47,7 @@ fn run_native(spec_al: al::Spec, config: Config) -> &'static str {
     }
 }
 
-/// Runs registered scripts through every lowering and execution path.
+/// Runs registered scripts through every algo and execution path.
 pub fn run(config_run: &AlgoRunConfig) -> Result<()> {
     let start = Instant::now();
     let config = Config::new(true, true, false);
@@ -59,12 +59,12 @@ pub fn run(config_run: &AlgoRunConfig) -> Result<()> {
         let mut actual = String::new();
         for path in corpus::collect(&suite.root, ".watsup")? {
             let paths = std::slice::from_ref(&path);
-            // Native lowering, native execution
+            // Native algo, native execution
             let native = p4spectec::algo(paths).map(|spec_al| run_native(spec_al, config));
-            // Meta lowering, native execution
+            // Meta algo, native execution
             let meta = metacirc::algo(paths, &config_run.algo, ExecutionMode::Sl, config)
                 .map(|spec_al| run_native(spec_al, config));
-            // Meta lowering, execution by the AL specification
+            // Meta algo, execution by the AL specification
             let meta_meta = meta
                 .is_ok()
                 .then(|| metacirc::run(&tower, &[], paths, config).is_ok());

@@ -1,9 +1,9 @@
-//! Lowering through the IL-to-AL specification
+//! Algorithmic conversion through the IL-to-AL specification
 //!
 //! `algo` elaborates the input specification and encodes its IL,
 //! then runs `Algo_spec` of the IL-to-AL specification on it and decodes the AL.
-//! The IL-to-AL specification itself is lowered by the native pass;
-//! that bootstrap is the only native lowering involved.
+//! The IL-to-AL specification itself is converted by the native `algo` pass;
+//! that bootstrap is the only native conversion involved.
 //! A missing derivation means the input has no AL, not that execution failed.
 
 use std::path::{Path, PathBuf};
@@ -22,7 +22,7 @@ use crate::{
     runner::{self, InterpreterError, NullExtern, Runner, Spec},
 };
 
-/// Lowers specification paths to AL by executing the IL-to-AL specification.
+/// Converts specification paths to AL by executing the IL-to-AL specification.
 pub fn algo(
     paths: &[PathBuf],
     path_algo: &Path,

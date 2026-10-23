@@ -1,7 +1,7 @@
 //! Command-line specification transformation and AL metacircular execution
 //!
 //! `algo`, `struct`, and `prose` transform ordered specification paths natively.
-//! `algo-meta` lowers them through an IL-to-AL specification instead,
+//! `algo-meta` converts them through an IL-to-AL specification instead,
 //! and `run-meta` requires a tower configuration for AL and P4 inputs.
 //! Structured diagnostics are rendered at the CLI boundary.
 //! Success is printed only after the configured outer entry finishes.
@@ -30,7 +30,7 @@ enum Command {
     Struct(SpecArgs),
     /// Convert specifications and print the prose representation.
     Prose(SpecArgs),
-    /// Lower specifications through an IL-to-AL specification and print the AL.
+    /// Convert specifications through an IL-to-AL specification and print the AL.
     AlgoMeta(AlgoMetaArgs),
     /// Execute a program through a JSON-configured interpreter tower.
     RunMeta(RunMetaArgs),
@@ -45,7 +45,7 @@ struct SpecArgs {
 
 #[derive(Args)]
 struct AlgoMetaArgs {
-    /// IL-to-AL specification lowered natively and run on the inputs.
+    /// IL-to-AL specification, converted natively and run on the inputs.
     #[arg(value_name = "SPEC_META")]
     path_meta: PathBuf,
     /// Specification files in processing order.

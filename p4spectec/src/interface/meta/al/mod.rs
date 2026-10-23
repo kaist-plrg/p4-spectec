@@ -1,6 +1,6 @@
 //! AL program parsing and specification builtins
 //!
-//! `AlInterface::parse_program` lowers specification paths through `algo`
+//! `AlInterface::parse_program` converts specification paths to AL through `algo`
 //! and encodes source AL as a meta `spec` in the caller's arena
 //! Paths follow the compiler's ordered file and directory loading rules
 //! Include search paths are unused because AL input is not preprocessed
@@ -41,7 +41,7 @@ impl Interface for AlInterface {
         _includes: &[PathBuf],
         paths: &[PathBuf],
     ) -> Result<Value, InterfaceError> {
-        // Lower ordered specification inputs to source AL
+        // Convert ordered specification inputs to source AL
         let spec_al = crate::algo(paths).map_err(InterfaceError::from)?;
         // Encode the program in the caller's arena and retain codec diagnostics
         spec_al

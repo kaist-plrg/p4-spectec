@@ -25,7 +25,7 @@ pub struct Tower {
     pub(super) base: Layer,
 }
 
-/// A lowered specification paired with its configuration.
+/// The AL of a specification paired with its configuration.
 pub(super) struct Level {
     pub(super) config: LevelConfig,
     pub(super) spec_al: al::Spec,

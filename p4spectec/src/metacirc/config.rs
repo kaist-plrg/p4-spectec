@@ -19,7 +19,7 @@ pub struct TowerConfig {
     pub(super) mode: ExecutionMode,
     /// Nonempty, ordered from base toward top.
     pub(super) levels: Vec<LevelConfig>,
-    /// The IL-to-AL specification lowering the specification under test.
+    /// The IL-to-AL specification converting the specification under test to AL.
     pub(super) algo: Option<PathBuf>,
 }
 
@@ -122,13 +122,14 @@ impl TowerConfig {
         Ok(Self { mode, levels, algo: None })
     }
 
-    /// Lowers the specification under test, through the IL-to-AL specification if configured.
+    /// Converts the specification under test to AL,
+    /// through the IL-to-AL specification if configured.
     ///
     /// The specification under test is a P4 top level's specification
     /// or the program of an AL top level.
-    pub fn lower(&self, paths: &[PathBuf], options: crate::runner::Config) -> Result<al::Spec> {
+    pub fn algo(&self, paths: &[PathBuf], options: crate::runner::Config) -> Result<al::Spec> {
         match &self.algo {
-            Some(path_algo) => super::lowering::algo(paths, path_algo, self.mode, options),
+            Some(path_algo) => super::algo::algo(paths, path_algo, self.mode, options),
             None => Ok(crate::algo(paths)?),
         }
     }

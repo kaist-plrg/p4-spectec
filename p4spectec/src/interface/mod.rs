@@ -4,7 +4,7 @@
 //! the P4 parser and standard builtins plus `print_`,
 //! which renders a value back to P4 syntax
 //! using the specification's print hints
-//! `al` lowers specification inputs to meta scripts with standard builtins;
+//! `al` converts specification inputs to meta scripts with standard builtins;
 //! `meta` converts IL and AL to and from meta-language values
 
 use crate::lang::{common::source::Span, data::value};

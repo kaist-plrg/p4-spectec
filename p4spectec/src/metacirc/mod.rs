@@ -4,12 +4,12 @@
 //! Meta externs decode one level of arguments and reenter the next runner.
 //! The outer interpreter may execute AL or SL; every represented script is AL.
 
+mod algo;
 mod build;
 mod codec;
 pub mod config;
 mod error;
 mod externs;
-mod lowering;
 mod patch;
 mod tower;
 
@@ -22,8 +22,8 @@ pub use config::{ExecutionMode, TowerConfig};
 use config::{Lang, ProgramConfig};
 use std::path::PathBuf;
 
+pub use algo::algo;
 pub use error::Result;
-pub use lowering::algo;
 
 pub use tower::Tower;
 
@@ -41,7 +41,7 @@ pub fn run(
     // Prepare the input environment by the top level's configured language
     let program = match config.top_lang() {
         // AL builtins must resolve against the actual input definitions
-        Lang::Al => ProgramConfig::Al { spec_al: config.lower(paths_program, options)? },
+        Lang::Al => ProgramConfig::Al { spec_al: config.algo(paths_program, options)? },
         // P4 inputs contain exactly one translation unit
         Lang::P4 if paths_program.len() == 1 => ProgramConfig::P4,
         Lang::P4 => {

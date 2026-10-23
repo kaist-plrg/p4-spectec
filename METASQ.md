@@ -102,10 +102,10 @@ caching and AL encode/decode caching are enabled together by default;
 only after the configured base entry succeeds; diagnostics cause a nonzero
 exit code.
 
-## Lowering through the IL-to-AL specification
+## Algo through the IL-to-AL specification
 
 `spec-meta/3-algo` specifies the IL-to-AL pass as the relation `Algo_spec`.
-A tower with an `algo` entry lowers the specification under test through it:
+A tower with an `algo` entry converts the specification under test to AL through it:
 
 ```json
 {
@@ -120,9 +120,9 @@ A tower with an `algo` entry lowers the specification under test through it:
 
 The specification under test is the P4 target's specification
 or, for an AL target, the input script.
-It is elaborated, encoded as IL, lowered by `Algo_spec`, and decoded once
+It is elaborated, encoded as IL, converted by `Algo_spec`, and decoded once
 when the tower is built; every input then reuses that AL.
-The IL-to-AL specification itself and the other levels are lowered natively.
+The IL-to-AL specification itself and the other levels are converted by the native `algo` pass.
 `towers/algo-al.json`, `towers/algo-al-p4.json`, and `towers/algo-al-p4-ok.json`
 are the supplied towers with an `algo` entry.
 

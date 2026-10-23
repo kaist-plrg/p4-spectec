@@ -1,6 +1,6 @@
 //! Round-trip checks for the IL and AL meta codecs
 //!
-//! For each registered specification, the elaborated IL and the lowered AL
+//! For each registered specification, the elaborated IL and the converted AL
 //! are encoded, decoded, and encoded again.
 //! Decoding reconstructs omitted metadata canonically,
 //! so the check compares the two encodings rather than the source syntax.
@@ -54,7 +54,7 @@ pub fn run(suites: &[CodecSuite]) -> Result<()> {
         let value_il_again = shared::encode::Encode::encode(&spec_il_decoded, &mut arena)
             .map_err(|error| invalid(&error))?;
         check_fixpoint(&suite.name, "IL", &arena, value_il, value_il_again)?;
-        // AL: natively lowered specification
+        // AL: natively converted specification
         let spec_al = p4spectec::algo(&suite.inputs).map_err(|error| invalid(&error))?;
         let value_al = shared::encode::Encode::encode(&spec_al, &mut arena)
             .map_err(|error| invalid(&error))?;

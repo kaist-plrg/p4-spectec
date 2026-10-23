@@ -27,7 +27,7 @@ pub(super) fn entry_invalid(message: impl Into<String>) -> Box<Report> {
     diagnostic("metacirc/entry-invalid", message)
 }
 
-/// Reports specification inputs that the IL-to-AL specification does not lower.
+/// Reports specification inputs that the IL-to-AL specification does not convert.
 pub(super) fn algo_rejected(paths: &[std::path::PathBuf]) -> Box<Report> {
     let paths = paths
         .iter()
@@ -35,6 +35,6 @@ pub(super) fn algo_rejected(paths: &[std::path::PathBuf]) -> Box<Report> {
         .collect::<Vec<_>>();
     diagnostic(
         "metacirc/algo-rejected",
-        format!("the IL-to-AL specification does not lower {}", paths.join(", ")),
+        format!("the IL-to-AL specification does not convert {} to AL", paths.join(", ")),
     )
 }

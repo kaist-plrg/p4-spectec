@@ -28,7 +28,7 @@ enum Command {
     Algo,
     /// Check that IL and AL encodings are fixed points of decode-then-encode
     Codec,
-    /// Lower scripts natively and through the IL-to-AL specification, then run them
+    /// Convert scripts natively and through the IL-to-AL specification, then run them
     AlgoRun,
     /// Compare the structured P4 specification in both rule-group modes
     Structure,

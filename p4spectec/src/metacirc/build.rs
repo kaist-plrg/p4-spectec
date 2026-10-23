@@ -1,6 +1,6 @@
 //! Preparation of top, intermediate, and base levels
 //!
-//! Lowered specifications stay paired with their configured entry and input language.
+//! The AL of each specification stays paired with its configured entry and input language.
 //! Layers are assembled from the top level toward the base;
 //! patched scripts carry each inner entry to the interpreter consuming them.
 //!
@@ -9,7 +9,7 @@
 //! ```text
 //! Tower::build(config) -- once          Tower::patch(program) -- per input
 //!             |                                      |
-//!       lower levels                        parsed program Value
+//!       algo levels                         parsed program Value
 //!             |                                      |
 //!       build_top(top)                      entry(top) + encode
 //!             |                                      |
@@ -50,7 +50,7 @@ use crate::{
 
 // == Runner construction
 
-/// Converts lowered AL into the representation selected for the runner.
+/// Converts the AL of a specification into the representation selected for the runner.
 fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
     match mode {
         ExecutionMode::Al => Ok(Spec::Al(spec_al)),
@@ -128,8 +128,8 @@ impl Tower {
                 ));
             }
         }
-        // Lower each specification once, preserving base-to-top order;
-        // the IL-to-AL specification, if configured, lowers a P4 top level
+        // Convert each specification to AL once, preserving base-to-top order;
+        // the IL-to-AL specification, if configured, converts a P4 top level
         let idx_top = config.levels.len() - 1;
         let levels = config
             .levels
@@ -139,7 +139,7 @@ impl Tower {
                 let paths = std::slice::from_ref(&level.specdir);
                 // Only a P4 top level is the specification under test
                 let spec_al = if idx == idx_top && level.lang == Lang::P4 {
-                    config.lower(paths, options)?
+                    config.algo(paths, options)?
                 } else {
                     crate::algo(paths)?
                 };
