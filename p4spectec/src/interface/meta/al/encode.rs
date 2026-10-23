@@ -196,7 +196,7 @@ impl Encode for al::Prem {
                 m::PREM_ITER,
                 vec![
                     prem_inner_al.prem.encode_cached(arena, cache)?,
-                    PremIterAl(&prem_inner_al.prem_iter).encode_cached(arena, cache)?,
+                    IterPremAl(&prem_inner_al.prem_iter).encode_cached(arena, cache)?,
                 ],
             ),
             al::PremKind::Debug(prem_inner_al) => {
@@ -207,11 +207,11 @@ impl Encode for al::Prem {
     }
 }
 
-/// An AL iteration premise, as distinct from the IL form of the same type.
-struct PremIterAl<'a>(&'a al::PremIter);
+/// An iteration premise as the meta `iterPremAL`; IL encodes the same type as `iterPremIL`.
+struct IterPremAl<'a>(&'a al::PremIter);
 
 /// Encodes bound and bound-by-iteration variable lists in order.
-impl Encode for PremIterAl<'_> {
+impl Encode for IterPremAl<'_> {
     type Output = Value;
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
@@ -244,15 +244,15 @@ impl Encode for (&al::RuleMatch, &al::RulePath) {
     }
 }
 
-/// Consecutive native rule groups that share an identifier.
-struct RuleGroupRun<'a>(&'a [al::RuleGroup]);
+/// The native rule groups of one meta `rulGroupAL`: consecutive groups with one identifier.
+struct RulGroupAl<'a>(&'a [al::RuleGroup]);
 
-/// Encodes a run of rule groups as one meta group,
+/// Encodes consecutive rule groups with one identifier as one meta group,
 /// pairing each shared match with each of its paths in order.
 ///
 /// Decoding gives every rule a native group of its own,
-/// so merging runs keeps decode-then-encode a fixpoint.
-impl Encode for RuleGroupRun<'_> {
+/// so merging the groups keeps decode-then-encode a fixpoint.
+impl Encode for RulGroupAl<'_> {
     type Output = Value;
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
@@ -372,12 +372,12 @@ impl Encode for al::Def {
                 let (typs_input_al, typs_output_al) =
                     input::split(&rel_al.input_hint, rel_al.not_typ.node.args().to_vec())?;
                 // Group consecutive rule groups with one identifier
-                let rule_group_runs: Vec<_> = rel_al
+                let rul_groups_al: Vec<_> = rel_al
                     .rule_groups
                     .chunk_by(|rule_group_a, rule_group_b| {
                         rule_group_a.node.id.node == rule_group_b.node.id.node
                     })
-                    .map(RuleGroupRun)
+                    .map(RulGroupAl)
                     .collect();
                 (
                     m::DEF_REL,
@@ -385,7 +385,7 @@ impl Encode for al::Def {
                         rel_al.id.encode_cached(arena, cache)?,
                         list(arena, cache, "typ", &typs_input_al)?,
                         list(arena, cache, "typ", &typs_output_al)?,
-                        list(arena, cache, "rulGroupAL", &rule_group_runs)?,
+                        list(arena, cache, "rulGroupAL", &rul_groups_al)?,
                         opt(arena, cache, "elsGroupAL", rel_al.else_group.as_ref())?,
                     ],
                 )

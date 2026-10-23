@@ -192,7 +192,7 @@ impl Decode for al::Prem {
             m::PREM_ITER => |[value_prem, value_iter]| {
                 al::PremKind::Iter(al::IterPrem {
                     prem: Box::new(al::Prem::decode_cached(arena, cache, *value_prem)?),
-                    prem_iter: PremIterAl::decode_cached(arena, cache, *value_iter)?.0,
+                    prem_iter: IterPremAl::decode_cached(arena, cache, *value_iter)?.0,
                 })
             },
             m::PREM_DEBUG => |[value_exp]| {
@@ -204,11 +204,11 @@ impl Decode for al::Prem {
     }
 }
 
-/// An AL iteration premise, as distinct from the IL form of the same type.
-struct PremIterAl(al::PremIter);
+/// An iteration premise as the meta `iterPremAL`; IL encodes the same type as `iterPremIL`.
+struct IterPremAl(al::PremIter);
 
 /// Decodes bound and bound-by-iteration variable lists in order.
-impl Decode for PremIterAl {
+impl Decode for IterPremAl {
     fn decode_cached(
         arena: &mut Arena,
         cache: &mut Cache,
@@ -256,14 +256,14 @@ impl Decode for (al::RuleMatch, al::RulePath) {
     }
 }
 
-/// The native rule groups decoded from one meta rule group.
-struct RuleGroupRun(Vec<al::RuleGroup>);
+/// The native rule groups of one meta `rulGroupAL`, one per rule.
+struct RulGroupAl(Vec<al::RuleGroup>);
 
 /// Decodes a rule group, giving each rule a native group of its own.
 ///
 /// Every group keeps its meta group's identifier,
 /// so the native interpreter evaluates the same (group, path) candidates.
-impl Decode for RuleGroupRun {
+impl Decode for RulGroupAl {
     fn decode_cached(
         arena: &mut Arena,
         cache: &mut Cache,
@@ -419,9 +419,9 @@ impl Decode for al::Def {
                     id: Id::decode_cached(arena, cache, *value_id)?,
                     not_typ,
                     input_hint,
-                    rule_groups: Vec::<RuleGroupRun>::decode_cached(arena, cache, *value_groups)?
+                    rule_groups: Vec::<RulGroupAl>::decode_cached(arena, cache, *value_groups)?
                         .into_iter()
-                        .flat_map(|RuleGroupRun(rule_groups)| rule_groups)
+                        .flat_map(|RulGroupAl(rule_groups)| rule_groups)
                         .collect(),
                     else_group: Option::<al::ElseGroup>::decode_cached(arena, cache, *value_else)?,
                     hints: stub::hints(),
