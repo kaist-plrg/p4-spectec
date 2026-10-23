@@ -35,7 +35,7 @@
 
 use super::{
     ExecutionMode, Result, TowerConfig,
-    config::{Lang, LevelConfigs, ProgramConfig},
+    config::{Lang, ProgramConfig},
     error::config_invalid,
     externs::{AlExtern, RelayExtern, TerminalExtern},
     tower::{Layer, Level, Tower},
@@ -125,15 +125,9 @@ impl Tower {
             _ => return Err(config_invalid("program language must match the tower target")),
         }
         // Lower each specification once, preserving base-to-target order
-        let configs = match &config.levels {
-            LevelConfigs::Direct(target) => vec![target],
-            LevelConfigs::Nested { base, interms, target } => std::iter::once(base)
-                .chain(interms.iter())
-                .chain(std::iter::once(target))
-                .collect(),
-        };
-        let levels = configs
-            .into_iter()
+        let levels = config
+            .levels
+            .iter()
             .map(|config| {
                 let spec_al = crate::algo(std::slice::from_ref(&config.specdir))?;
                 Ok(Level { config: config.clone(), spec_al })

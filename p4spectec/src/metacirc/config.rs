@@ -17,8 +17,8 @@ use std::{
 pub struct TowerConfig {
     /// The interpreter executing the base specification.
     pub(super) mode: ExecutionMode,
-    /// Specification roles established at the JSON boundary.
-    pub(super) levels: LevelConfigs,
+    /// Nonempty, ordered from base toward target.
+    pub(super) levels: Vec<LevelConfig>,
 }
 
 /// The native interpreter used for the outermost level.
@@ -30,15 +30,6 @@ pub enum ExecutionMode {
     /// Execute the structured representation.
     #[default]
     Sl,
-}
-
-/// Validated specification roles, ordered from base toward target.
-#[derive(Clone, Debug)]
-pub enum LevelConfigs {
-    /// One target also supplies the native entry point.
-    Direct(LevelConfig),
-    /// A native base interprets intermediate specifications and the target.
-    Nested { base: LevelConfig, interms: Vec<LevelConfig>, target: LevelConfig },
 }
 
 /// One specification and the relation used to enter it.
@@ -104,34 +95,12 @@ impl TowerConfig {
     /// Validates ordered levels.
     ///
     /// Specification paths are relative to the current directory.
+    /// A single level is both target and base.
     pub fn new(mode: ExecutionMode, levels: Vec<LevelConfig>) -> Result<Self> {
-        Ok(Self { mode, levels: LevelConfigs::new(levels)? })
-    }
-
-    /// Returns the language consumed by the target level.
-    pub fn target_lang(&self) -> Lang {
-        self.levels.target().lang
-    }
-
-    /// Returns the relation configured to enter the target level.
-    pub fn target_rel(&self) -> &str {
-        &self.levels.target().rel
-    }
-}
-
-impl LevelConfigs {
-    pub(super) fn target(&self) -> &LevelConfig {
-        match self {
-            Self::Direct(target) | Self::Nested { target, .. } => target,
-        }
-    }
-
-    /// Validates the ordering and separates the native base from its inputs.
-    fn new(mut levels: Vec<LevelConfig>) -> Result<Self> {
-        // Validate the external ordering before constructing named roles
         if levels.is_empty() {
             return Err(config_invalid("a tower requires at least one level"));
         }
+        // Only the target may consume a language other than AL
         let idx_target = levels.len() - 1;
         for (idx, level) in levels.iter().enumerate() {
             if idx != idx_target && level.lang != Lang::Al {
@@ -145,14 +114,20 @@ impl LevelConfigs {
                 )));
             }
         }
-        // A singleton target is also the base; do not duplicate its runner
-        let target = levels.pop().expect("validated nonempty levels");
-        Ok(if levels.is_empty() {
-            Self::Direct(target)
-        } else {
-            let mut levels = levels.into_iter();
-            let base = levels.next().expect("nonempty meta levels");
-            Self::Nested { base, interms: levels.collect(), target }
-        })
+        Ok(Self { mode, levels })
+    }
+
+    pub(super) fn target(&self) -> &LevelConfig {
+        self.levels.last().expect("validated nonempty levels")
+    }
+
+    /// Returns the language consumed by the target level.
+    pub fn target_lang(&self) -> Lang {
+        self.target().lang
+    }
+
+    /// Returns the relation configured to enter the target level.
+    pub fn target_rel(&self) -> &str {
+        &self.target().rel
     }
 }
