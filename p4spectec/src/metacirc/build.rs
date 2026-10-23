@@ -1,37 +1,47 @@
-//! Preparation of top, intermediate, and base levels
-//!
-//! Each level keeps the form passed to the level below; its AL goes to its native runner.
-//! Layers are assembled from the top level toward the base;
-//! patched scripts carry each inner entry to the interpreter consuming them.
-//!
-//! Construction and execution for `[base, interm, top]`:
+//! Construction of a tower's levels and layers
 //!
 //! ```text
-//! Tower::build(config) -- once          Tower::patch(program) -- per input
-//!             |                                      |
-//!       algo levels                         parsed program Value
-//!             |                                      |
-//!       build_top(top)                      entry(top) + encode
-//!             |                                      |
-//!       Layer::MetaSpec or Layer::P4Spec    encoded top script
-//!             |                                      |
-//!       build_relay(interm, layer)          entry(interm) + encode
-//!             |                                      |
-//!       Layer::MetaSpec                     encoded intermediate script
-//!             |                                      |
-//!       build_relay(base, layer)                     |
-//!             |                                      |
-//!       Tower { levels, base }                       Value
-//!             |                                      |
-//!             +-------------------+------------------+
-//!                                 |
-//!                        Tower::eval_program
+//!   +-------------+-------------+
+//!   | Builtin P4  | Extern P4   |   top     Layer::P4Spec, Dummy
+//!   +-------------+-------------+
+//!   |      Interp(top AL)       |
+//!   +---------------------------+
+//!                 ^ layer_next
+//!   +-------------+-------------+
+//!   | Builtin ST  | Extern ST   |   interm  Layer::MetaSpec, RelayExtern
+//!   +-------------+-------------+
+//!   |     Interp(interm AL)     |
+//!   +---------------------------+
+//!                 ^ layer_next
+//!   +-------------+-------------+
+//!   | Builtin ST  | Extern ST   |   base    Layer::MetaSpec, RelayExtern
+//!   +-------------+-------------+
+//!   |  Interp(base AL): entry   |
+//!   +---------------------------+
 //! ```
 //!
-//! Both chains run from top toward base; the base is never encoded.
-//! Before each input, reset every runner and then the arena values before parsing.
-//! A single-level tower uses its top level as the base and consumes the input unchanged.
-//! AL input definitions supply the terminal builtin runner during construction.
+//! Only the base runs an entry; the others answer calls relayed from below.
+//! An AL or IL top ends the chain at its program:
+//!
+//! ```text
+//!   +-------------+-------------+
+//!   | Builtin     | NullExtern  |   runner_program
+//!   +-------------+-------------+
+//!   | Interp(program builtins)  |
+//!   +---------------------------+
+//!                 ^ builtin calls only
+//!   +-------------+-------------+
+//!   | Builtin ST  | Extern ST   |   top     Layer::MetaSpec, TerminalExtern
+//!   +-------------+-------------+
+//!   |      Interp(top AL)       |
+//!   +---------------------------+
+//! ```
+//!
+//! | level below accepts | `Level`   | patched into the level below |
+//! |---------------------|-----------|------------------------------|
+//! | none (base)         | `Base`    | —                            |
+//! | `al`                | `AboveAl` | AL                           |
+//! | `il`                | `AboveIl` | IL                           |
 
 use super::{
     ExecutionMode, Result, TowerConfig,
@@ -162,10 +172,9 @@ impl Tower {
                 ));
             }
         }
-        // Convert each specification once, preserving base-to-top order;
-        // the level below decides whether a level is passed as AL or IL,
-        // and the AL for each native runner is kept apart from the level
-        let (levels, mut specs_al): (Vec<_>, Vec<_>) = config
+        // Convert each specification once, from base to top, into its Level and its runner's AL;
+        // the level below decides whether a level is passed as AL or IL
+        let (levels, mut specs_level_al): (Vec<_>, Vec<_>) = config
             .levels
             .iter()
             .enumerate()
@@ -206,11 +215,12 @@ impl Tower {
 
         // Only the base uses the configured native execution mode
         let mode = |idx| if idx == 0 { config.mode } else { ExecutionMode::Sl };
-        let spec_top_al = specs_al.pop().expect("validated nonempty tower");
-        let mut layer = build_top(arena, spec_top_al, mode(specs_al.len()), program, options)?;
+        let spec_top_al = specs_level_al.pop().expect("validated nonempty tower");
+        let mut layer =
+            build_top(arena, spec_top_al, mode(specs_level_al.len()), program, options)?;
 
         // Assemble the levels beneath the top level down to the native base
-        for (idx, spec_level_al) in specs_al.into_iter().enumerate().rev() {
+        for (idx, spec_level_al) in specs_level_al.into_iter().enumerate().rev() {
             let lang_level = config.levels[idx].lang;
             layer = build_relay(arena, spec_level_al, lang_level, mode(idx), layer, options)?;
         }

@@ -55,6 +55,8 @@ pub(super) enum Layer {
 
 impl Tower {
     /// Clears program state in the base and every owned host layer.
+    ///
+    /// Call before each input, and before resetting the arena values for parsing.
     pub fn reset(&mut self) {
         self.base.reset();
     }
