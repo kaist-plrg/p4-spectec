@@ -38,7 +38,7 @@ pub fn run(
     let mut arena = Arena::new();
     // Prepare the input environment by the top level's configured language
     let program = match config.top_lang() {
-        // AL builtins must resolve against the actual input definitions
+        // An AL level accepts AL converted by the native algo pass
         Lang::Al => ProgramConfig::Al { spec_al: crate::algo(paths_program)? },
         // IL input is elaborated only; the top level converts it itself
         Lang::Il => ProgramConfig::Il { spec_il: crate::elab(paths_program)? },
@@ -50,7 +50,6 @@ pub fn run(
     };
     let mut tower = Tower::build(&mut arena, config, &program, options)?;
     let value_program = match &program {
-        // Use the same AL definitions for builtin calls and input encoding
         ProgramConfig::Al { spec_al } => spec_al
             .encode(&mut arena)
             .map_err(|error| error.into_report())?,

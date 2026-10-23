@@ -58,14 +58,14 @@ pub enum Lang {
     P4,
 }
 
-/// Supplies input definitions required by the top level's host interface.
+/// The input program in the form the top level accepts.
 #[derive(Clone, Debug)]
 pub enum ProgramConfig {
-    /// The AL program, which also supplies the terminal builtin environment.
+    /// The AL program, converted by the native algo pass.
     Al { spec_al: al::Spec },
-    /// The IL program, whose builtin declarations supply the terminal builtin environment.
+    /// The elaborated IL program.
     Il { spec_il: il::Spec },
-    /// P4 inputs use builtins from the top level's specification.
+    /// A P4 program, parsed by the top level's interface.
     P4,
 }
 

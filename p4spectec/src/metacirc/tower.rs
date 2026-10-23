@@ -1,7 +1,8 @@
 //! Interpreter towers and their host-call layers
 //!
 //! The tower exposes program execution through its native entry point.
-//! Each level runs natively as one layer.
+//! Each level has one layer; only the base's layer has an interpreter,
+//! since every other level is interpreted by the level below.
 //! A meta specification's extern hosts the script above it:
 //! the next level's layer, or the builtins of the AL or IL program.
 //! A single-level tower executes its top level directly as its base.

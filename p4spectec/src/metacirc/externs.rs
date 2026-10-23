@@ -26,7 +26,7 @@ pub(super) enum MetaExtern {
     Terminal(TerminalExtern),
 }
 
-/// Builtin calls resolved against the program's own builtin declarations.
+/// Builtin calls of the program, answered by a runner without an interpreter.
 pub(super) struct TerminalExtern {
     pub cache: Box<Cache>,
     pub runner_program: Box<Runner<MetaInterface, NullExtern>>,

@@ -45,7 +45,7 @@ Run it with the supplied AL tower:
 ```
 
 The single level is both top level and native base. Its `Eval_AL` interprets the
-AL script. Builtin calls use the input script's definitions;
+AL script. Builtin calls of the script are answered by the native builtins;
 other host operations are unsupported.
 Repeat `-p` for ordered specification source paths.
 
@@ -85,6 +85,10 @@ AL converted by the native `algo` pass; the level above an `il` level is
 passed as elaborated IL. `mode` selects the base's native backend
 (`sl` or `al`).
 
+Only the base runs on a native interpreter. Every level above it is
+interpreted by the level below, so natively it only answers the builtin and
+host calls relayed from below, without consulting its own definitions.
+
 Each `specdir` accepts a specification file or directory and is resolved
 relative to the configuration file. CLI program and include paths are
 resolved relative to the current working directory.
@@ -123,7 +127,9 @@ above it on AL produced by the specification:
 ```
 
 The conversion runs for every input, in the level that accepts the IL.
-The IL-to-AL specification itself is converted by the native `algo` pass.
+Only the base, here the IL-to-AL specification itself, is converted by the
+native `algo` pass; the specification above it reaches native code only
+through its builtin and host calls.
 `towers/il.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
 are the supplied towers entered through `Eval_IL`.
 
