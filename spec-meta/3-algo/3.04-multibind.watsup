@@ -276,18 +276,18 @@ rulegroup Multibind_exp {
     -- if id* = $free_ids_exp(exp)
     -- if id_rep* = $renamer_ids(R)
     -- if $exists_((id <- id_rep*)*)
-    -- Multibind_pattern: AC R |- exp : AC' R' exp'
+    -- Multibind_exp_repeated: AC R |- exp : AC' R' exp'
 
 }
 
-rulegroup Multibind_pattern/variable {
+rulegroup Multibind_exp_repeated/variable {
 
-  rule Multibind_pattern/first:
+  rule Multibind_exp_repeated/first:
     AC R |- (VAR id) '#' typ : AC R' ((VAR id) '#' typ)
     -- if eps = $renaming_ids(R, id)
     -- if R' = $add_renaming(R, id, id)
 
-  rule Multibind_pattern/later:
+  rule Multibind_exp_repeated/later:
     AC R |- (VAR id) '#' typ : AC' R' ((VAR id_fresh) '#' typ)
     -- if id_name* = $renaming_ids(R, id)
     -- if id_name* =/= eps
@@ -296,33 +296,33 @@ rulegroup Multibind_pattern/variable {
 
 }
 
-rule Multibind_pattern/upcast:
+rule Multibind_exp_repeated/upcast:
   AC R |- (UPCAST typ_sup exp) '#' typ : AC' R' ((UPCAST typ_sup exp') '#' typ)
   -- Multibind_exp: AC R |- exp : AC' R' exp'
 
-rule Multibind_pattern/tuple:
+rule Multibind_exp_repeated/tuple:
   AC R |- (TUP exp*) '#' typ : AC' R' ((TUP exp'*) '#' typ)
   -- Multibind_exps: AC R |- exp* : AC' R' exp'*
 
-rule Multibind_pattern/case:
+rule Multibind_exp_repeated/case:
   AC R |- (INJ (mixop exp*)) '#' typ : AC' R' ((INJ (mixop exp'*)) '#' typ)
   -- Multibind_exps: AC R |- exp* : AC' R' exp'*
 
-rule Multibind_pattern/struct:
+rule Multibind_exp_repeated/struct:
   AC R |- (STR expField*) '#' typ : AC' R' ((STR expField'*) '#' typ)
   -- (if atom exp = expField)*
   -- Multibind_exps: AC R |- exp* : AC' R' exp'*
   -- (if expField' = atom exp')*
 
-rule Multibind_pattern/opt:
+rule Multibind_exp_repeated/opt:
   AC R |- (OPT exp) '#' typ : AC' R' ((OPT exp') '#' typ)
   -- Multibind_exp: AC R |- exp : AC' R' exp'
 
-rule Multibind_pattern/list:
+rule Multibind_exp_repeated/list:
   AC R |- (LIST exp*) '#' typ : AC' R' ((LIST exp'*) '#' typ)
   -- Multibind_exps: AC R |- exp* : AC' R' exp'*
 
-rule Multibind_pattern/cons:
+rule Multibind_exp_repeated/cons:
   AC R |- (CONS exp_h exp_t) '#' typ : AC'' R'' ((CONS exp_h' exp_t') '#' typ)
   -- Multibind_exp: AC R |- exp_h : AC' R' exp_h'
   -- Multibind_exp: AC' R' |- exp_t : AC'' R'' exp_t'
@@ -347,7 +347,7 @@ def $rename_iter_vari(R, id typ iter*, id_free*) = (id_occ typ iter*)*
   -- if id_name* =/= eps
   -- if id_occ* = $ids_within(id_name*, id_free*)
 
-rule Multibind_pattern/iter:
+rule Multibind_exp_repeated/iter:
   AC R |- (ITER exp (iter vari*)) '#' typ : AC' R' ((ITER exp' (iter vari_occ*)) '#' typ)
   -- Multibind_exp: AC R |- exp : AC' R' exp'
   -- if id_free* = $free_ids_exp(exp')

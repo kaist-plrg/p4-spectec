@@ -1,6 +1,6 @@
 ;; Iteration contexts
 
-relation Iter_bound:
+relation Iter_restrict:
   iterCtx |- vari* : iterCtx
   hint(input %0 %1)
   hint(prose_in "restricting the sources of" %0 "to the variables" %1 "it reads")
@@ -87,7 +87,7 @@ relation Multibind_exp:
   hint(prose_in "renaming the repeated binders of" %2 "with" %1 "under" %0)
   hint(prose_out %3 %4 %5)
 
-relation Multibind_pattern:
+relation Multibind_exp_repeated:
   algoCtx renamer |- exp : algoCtx renamer exp
   hint(input %0 %1 %2)
   hint(prose_in "renaming the repeated binders inside pattern" %2 "with" %1 "under" %0)
@@ -120,7 +120,7 @@ relation Partialbind_exp:
                 "of a premise iterated over" %1 "under" %0)
   hint(prose_out %4 %5 %6 %7 %8)
 
-relation Partialbind_pattern:
+relation Partialbind_exp_decomposed:
   algoCtx iterCtx |- iterCtx exp : algoCtx iterCtx exp premAL* id*
   hint(input %0 %1 %2 %3)
   hint(prose_in "decomposing binding pattern" %3 "inside iterations" %2

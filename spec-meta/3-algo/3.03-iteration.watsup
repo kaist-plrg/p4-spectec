@@ -41,17 +41,17 @@ def $sources_except(vari_h :: vari_t*, id*) = $sources_except(vari_t*, id*)
 
 ;;; Restricting sources
 
-rulegroup Iter_bound {
+rulegroup Iter_restrict {
 
-  rule Iter_bound/nil:
+  rule Iter_restrict/nil:
     eps |- _ : eps
 
-  rule Iter_bound/cons:
+  rule Iter_restrict/cons:
     iterPremAL :: IC |- vari_read* : iterPremAL' :: IC'
     -- if iter '<-' vari_src* '->' vari_bind* = iterPremAL
     -- if vari_keep* = $sources_read(vari_src*, vari_read*)
     -- if iterPremAL' = iter '<-' vari_keep* '->' vari_bind*
-    -- Iter_bound: IC |- vari_read* : IC'
+    -- Iter_restrict: IC |- vari_read* : IC'
 
 }
 
