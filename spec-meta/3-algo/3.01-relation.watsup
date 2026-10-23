@@ -188,12 +188,12 @@ relation Algo_prems:
 
 ;; Tables
 
-relation Shallow_exp:
+relation Exp_shallow:
   algoCtx |- exp
   hint(input %0 %1)
   hint(prose_in %1 "is a shallow table pattern under" %0)
 
-relation Irrefutable_exp:
+relation Exp_irrefutable:
   algoCtx |- exp
   hint(input %0 %1)
   hint(prose_in %1 "matches every value of its type under" %0)
@@ -204,7 +204,7 @@ relation Algo_tblRow:
   hint(prose_in "lowering table row" %1 "under" %0)
   hint(prose_out %2)
 
-relation Cover_tblRows:
+relation TblRows_cover:
   algoCtx |- typ* : tblRowIL*
   hint(input %0 %1 %2)
   hint(prose_in "the rows" %2 "are exclusive and complete for parameter types" %1
@@ -306,27 +306,27 @@ relation Guard_def:
 
 ;; Otherwise purity
 
-relation Pure_exp:
+relation Exp_pure:
   |- exp
   hint(input %0)
   hint(prose_in "evaluating" %0 "calls no function")
 
-relation Pure_arg:
+relation Arg_pure:
   |- arg
   hint(input %0)
   hint(prose_in "evaluating" %0 "calls no function")
 
-relation Pure_path:
+relation Path_pure:
   |- path
   hint(input %0)
   hint(prose_in "evaluating" %0 "calls no function")
 
-relation Pure_prem:
+relation Prem_pure:
   algoCtx |- premAL
   hint(input %0 %1)
   hint(prose_in "premise" %1 "cannot fail under" %0)
 
-relation Pure_otherwise:
+relation Otherwise_pure:
   algoCtx |- defnAL
   hint(input %0 %1)
   hint(prose_in "the otherwise rule or clause of" %1 "cannot fail under" %0)

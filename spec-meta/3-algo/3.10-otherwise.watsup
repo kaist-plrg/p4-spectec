@@ -9,172 +9,172 @@
 
 ;;; Expressions
 
-rulegroup Pure_exp/literal {
+rulegroup Exp_pure/literal {
 
-  rule Pure_exp/boolean:
+  rule Exp_pure/boolean:
     |- (BOOL _) '#' _
 
-  rule Pure_exp/number:
+  rule Exp_pure/number:
     |- num '#' _
 
-  rule Pure_exp/text:
+  rule Exp_pure/text:
     |- (TEXT _) '#' _
 
 }
 
-rule Pure_exp/variable:
+rule Exp_pure/variable:
   |- (VAR _) '#' _
 
-rule Pure_exp/unary:
+rule Exp_pure/unary:
   |- (UN _ exp) '#' _
-  -- Pure_exp: |- exp
+  -- Exp_pure: |- exp
 
-rule Pure_exp/binary:
+rule Exp_pure/binary:
   |- (BIN _ exp_l exp_r) '#' _
-  -- Pure_exp: |- exp_l
-  -- Pure_exp: |- exp_r
+  -- Exp_pure: |- exp_l
+  -- Exp_pure: |- exp_r
 
-rule Pure_exp/compare:
+rule Exp_pure/compare:
   |- (CMP _ exp_l exp_r) '#' _
-  -- Pure_exp: |- exp_l
-  -- Pure_exp: |- exp_r
+  -- Exp_pure: |- exp_l
+  -- Exp_pure: |- exp_r
 
-rule Pure_exp/upcast:
+rule Exp_pure/upcast:
   |- (UPCAST _ exp) '#' _
-  -- Pure_exp: |- exp
+  -- Exp_pure: |- exp
 
-rule Pure_exp/downcast:
+rule Exp_pure/downcast:
   |- (DOWNCAST _ exp) '#' _
-  -- Pure_exp: |- exp
+  -- Exp_pure: |- exp
 
-rule Pure_exp/subtype:
+rule Exp_pure/subtype:
   |- (SUB exp _) '#' _
-  -- Pure_exp: |- exp
+  -- Exp_pure: |- exp
 
-rule Pure_exp/match:
+rule Exp_pure/match:
   |- (MATCH exp _) '#' _
-  -- Pure_exp: |- exp
+  -- Exp_pure: |- exp
 
-rule Pure_exp/tuple:
+rule Exp_pure/tuple:
   |- (TUP exp*) '#' _
-  -- (Pure_exp: |- exp)*
+  -- (Exp_pure: |- exp)*
 
-rule Pure_exp/case:
+rule Exp_pure/case:
   |- (INJ (_ exp*)) '#' _
-  -- (Pure_exp: |- exp)*
+  -- (Exp_pure: |- exp)*
 
-rule Pure_exp/struct:
+rule Exp_pure/struct:
   |- (STR expField*) '#' _
   -- (if _ exp = expField)*
-  -- (Pure_exp: |- exp)*
+  -- (Exp_pure: |- exp)*
 
-rule Pure_exp/opt:
+rule Exp_pure/opt:
   |- (OPT exp?) '#' _
-  -- (Pure_exp: |- exp)?
+  -- (Exp_pure: |- exp)?
 
-rule Pure_exp/list:
+rule Exp_pure/list:
   |- (LIST exp*) '#' _
-  -- (Pure_exp: |- exp)*
+  -- (Exp_pure: |- exp)*
 
-rule Pure_exp/cons:
+rule Exp_pure/cons:
   |- (CONS exp_h exp_t) '#' _
-  -- Pure_exp: |- exp_h
-  -- Pure_exp: |- exp_t
+  -- Exp_pure: |- exp_h
+  -- Exp_pure: |- exp_t
 
-rule Pure_exp/concat:
+rule Exp_pure/concat:
   |- (CAT exp_l exp_r) '#' _
-  -- Pure_exp: |- exp_l
-  -- Pure_exp: |- exp_r
+  -- Exp_pure: |- exp_l
+  -- Exp_pure: |- exp_r
 
-rule Pure_exp/mem:
+rule Exp_pure/mem:
   |- (MEM exp_l exp_r) '#' _
-  -- Pure_exp: |- exp_l
-  -- Pure_exp: |- exp_r
+  -- Exp_pure: |- exp_l
+  -- Exp_pure: |- exp_r
 
-rule Pure_exp/len:
+rule Exp_pure/len:
   |- (LEN exp) '#' _
-  -- Pure_exp: |- exp
+  -- Exp_pure: |- exp
 
-rule Pure_exp/dot:
+rule Exp_pure/dot:
   |- (DOT exp _) '#' _
-  -- Pure_exp: |- exp
+  -- Exp_pure: |- exp
 
-rule Pure_exp/idx:
+rule Exp_pure/idx:
   |- (IDX exp_b exp_i) '#' _
-  -- Pure_exp: |- exp_b
-  -- Pure_exp: |- exp_i
+  -- Exp_pure: |- exp_b
+  -- Exp_pure: |- exp_i
 
-rule Pure_exp/slice:
+rule Exp_pure/slice:
   |- (SLICE exp_b exp_i exp_n) '#' _
-  -- Pure_exp: |- exp_b
-  -- Pure_exp: |- exp_i
-  -- Pure_exp: |- exp_n
+  -- Exp_pure: |- exp_b
+  -- Exp_pure: |- exp_i
+  -- Exp_pure: |- exp_n
 
-rule Pure_exp/upd:
+rule Exp_pure/upd:
   |- (UPD exp_b path exp_f) '#' _
-  -- Pure_exp: |- exp_b
-  -- Pure_path: |- path
-  -- Pure_exp: |- exp_f
+  -- Exp_pure: |- exp_b
+  -- Path_pure: |- path
+  -- Exp_pure: |- exp_f
 
-rule Pure_exp/iter:
+rule Exp_pure/iter:
   |- (ITER exp _) '#' _
-  -- Pure_exp: |- exp
+  -- Exp_pure: |- exp
 
 ;;; Update paths
 
-rulegroup Pure_path {
+rulegroup Path_pure {
 
-  rule Pure_path/root:
+  rule Path_pure/root:
     |- ROOT '#' _
 
-  rule Pure_path/idx:
+  rule Path_pure/idx:
     |- (IDX path exp_i) '#' _
-    -- Pure_path: |- path
-    -- Pure_exp: |- exp_i
+    -- Path_pure: |- path
+    -- Exp_pure: |- exp_i
 
-  rule Pure_path/slice:
+  rule Path_pure/slice:
     |- (SLICE path exp_i exp_n) '#' _
-    -- Pure_path: |- path
-    -- Pure_exp: |- exp_i
-    -- Pure_exp: |- exp_n
+    -- Path_pure: |- path
+    -- Exp_pure: |- exp_i
+    -- Exp_pure: |- exp_n
 
-  rule Pure_path/dot:
+  rule Path_pure/dot:
     |- (DOT path _) '#' _
-    -- Pure_path: |- path
+    -- Path_pure: |- path
 
 }
 
 ;;; Arguments
 
-rulegroup Pure_arg {
+rulegroup Arg_pure {
 
-  rule Pure_arg/exp:
+  rule Arg_pure/exp:
     |- EXP exp
-    -- Pure_exp: |- exp
+    -- Exp_pure: |- exp
 
-  rule Pure_arg/fun:
+  rule Arg_pure/fun:
     |- FUN _
 
 }
 
 ;; Premises
 
-rule Pure_prem/let:
+rule Prem_pure/let:
   AC |- LET exp_l '=' exp_r
-  -- Pure_exp: |- exp_l
-  -- Pure_exp: |- exp_r
+  -- Exp_pure: |- exp_l
+  -- Exp_pure: |- exp_r
 
-rule Pure_prem/dbg:
+rule Prem_pure/dbg:
   AC |- DEBUG exp
-  -- Pure_exp: |- exp
+  -- Exp_pure: |- exp
 
-rule Pure_prem/iter:
+rule Prem_pure/iter:
   AC |- ITER premAL _
-  -- Pure_prem: AC |- premAL
+  -- Prem_pure: AC |- premAL
 
-rule Pure_prem/singleton:
+rule Prem_pure/singleton:
   AC |- IF ((MATCH exp (INJ _)) '#' _)
-  -- Pure_exp: |- exp
+  -- Exp_pure: |- exp
   -- if _ '#' typ = exp
   -- if $singleton_typ(AC.TYP, typ)
 
@@ -182,51 +182,51 @@ rule Pure_prem/singleton:
 
 ;; Definitions without an otherwise rule or clause are trivially accepted
 
-rulegroup Pure_otherwise/typ {
+rulegroup Otherwise_pure/typ {
 
-  rule Pure_otherwise/extern:
+  rule Otherwise_pure/extern:
     AC |- externTypDefn
 
-  rule Pure_otherwise/defined:
+  rule Otherwise_pure/defined:
     AC |- definedTypDefn
 
 }
 
-rulegroup Pure_otherwise/rel {
+rulegroup Otherwise_pure/rel {
 
-  rule Pure_otherwise/extern:
+  rule Otherwise_pure/extern:
     AC |- externRelDefnAL
 
-  rule Pure_otherwise/none:
+  rule Otherwise_pure/none:
     AC |- REL _ ':' _ '->' _ '=' _ eps
 
-  rule Pure_otherwise/else:
+  rule Otherwise_pure/else:
     AC |- REL _ ':' _ '->' _ '=' _ (_ ':' (_ ':' exp_in* '->' exp_out* '-' premAL*))
-    -- (Pure_exp: |- exp_in)*
-    -- (Pure_prem: AC |- premAL)*
-    -- (Pure_exp: |- exp_out)*
+    -- (Exp_pure: |- exp_in)*
+    -- (Prem_pure: AC |- premAL)*
+    -- (Exp_pure: |- exp_out)*
 
 }
 
-rulegroup Pure_otherwise/func {
+rulegroup Otherwise_pure/func {
 
-  rule Pure_otherwise/extern:
+  rule Otherwise_pure/extern:
     AC |- externFuncDefn
 
-  rule Pure_otherwise/builtin:
+  rule Otherwise_pure/builtin:
     AC |- builtinFuncDefn
 
-  rule Pure_otherwise/table:
+  rule Otherwise_pure/table:
     AC |- tableFuncDefnAL
 
-  rule Pure_otherwise/none:
+  rule Otherwise_pure/none:
     AC |- FUNC _ _ _ ':' _ '=' _ eps
 
-  rule Pure_otherwise/else:
+  rule Otherwise_pure/else:
     AC |- FUNC _ tparam* _ ':' _ '=' _ (arg* '=' exp '-' premAL*)
     -- if AC_func = $add_tparams(AC, tparam*)
-    -- (Pure_arg: |- arg)*
-    -- (Pure_prem: AC_func |- premAL)*
-    -- Pure_exp: |- exp
+    -- (Arg_pure: |- arg)*
+    -- (Prem_pure: AC_func |- premAL)*
+    -- Exp_pure: |- exp
 
 }

@@ -18,47 +18,47 @@ def $singleton_typ(_, _) = false
 ;; A row argument selects a variable or a case, possibly under an upcast;
 ;; a selected case must cover every value its arguments carry
 
-rulegroup Shallow_exp {
+rulegroup Exp_shallow {
 
-  rule Shallow_exp/variable:
+  rule Exp_shallow/variable:
     AC |- (VAR _) '#' _
 
-  rule Shallow_exp/upcast-variable:
+  rule Exp_shallow/upcast-variable:
     AC |- (UPCAST _ ((VAR id) '#' typ)) '#' _
-    -- Shallow_exp: AC |- (VAR id) '#' typ
+    -- Exp_shallow: AC |- (VAR id) '#' typ
 
-  rule Shallow_exp/upcast-case:
+  rule Exp_shallow/upcast-case:
     AC |- (UPCAST _ ((INJ expCase) '#' typ)) '#' _
-    -- Shallow_exp: AC |- (INJ expCase) '#' typ
+    -- Exp_shallow: AC |- (INJ expCase) '#' typ
 
-  rule Shallow_exp/case:
+  rule Exp_shallow/case:
     AC |- (INJ (_ exp*)) '#' _
-    -- (Irrefutable_exp: AC |- exp)*
+    -- (Exp_irrefutable: AC |- exp)*
 
 }
 
-rulegroup Irrefutable_exp {
+rulegroup Exp_irrefutable {
 
-  rule Irrefutable_exp/variable:
+  rule Exp_irrefutable/variable:
     AC |- (VAR _) '#' _
 
-  rule Irrefutable_exp/iter:
+  rule Exp_irrefutable/iter:
     AC |- (ITER exp _) '#' _
-    -- Irrefutable_exp: AC |- exp
+    -- Exp_irrefutable: AC |- exp
 
-  rule Irrefutable_exp/tuple:
+  rule Exp_irrefutable/tuple:
     AC |- (TUP exp*) '#' _
-    -- (Irrefutable_exp: AC |- exp)*
+    -- (Exp_irrefutable: AC |- exp)*
 
-  rule Irrefutable_exp/struct:
+  rule Exp_irrefutable/struct:
     AC |- (STR expField*) '#' _
     -- (if _ exp = expField)*
-    -- (Irrefutable_exp: AC |- exp)*
+    -- (Exp_irrefutable: AC |- exp)*
 
-  rule Irrefutable_exp/case:
+  rule Exp_irrefutable/case:
     AC |- (INJ (_ exp*)) '#' typ
     -- if $singleton_typ(AC.TYP, typ)
-    -- (Irrefutable_exp: AC |- exp)*
+    -- (Exp_irrefutable: AC |- exp)*
 
 }
 
@@ -73,7 +73,7 @@ rule Algo_tblRow:
   -- if id_used* = $free_ids_tblRowIL(tblRowIL)
   -- if AC_row = $add_used_ids(AC, id_used*)
   -- if (EXP exp_arg)* = arg*
-  -- (Shallow_exp: AC_row |- exp_arg)*
+  -- (Exp_shallow: AC_row |- exp_arg)*
   -- Collect_args: AC_row |- arg* : vari_bind*
   -- Multibind_renamer: |- vari_bind* : eps
   -- Bind_args: AC_row |- arg* : AC_body arg'* premAL*
@@ -163,9 +163,9 @@ def $complete(typCase_total**, typCase_row***) = $forall_(b_cover*)
   -- if typCase_comb** = $combinations(typCase_total**)
   -- (if b_cover = $covered_by_any(typCase_row***, typCase_comb*))*
 
-rulegroup Cover_tblRows {
+rulegroup TblRows_cover {
 
-  rule Cover_tblRows/closed:
+  rule TblRows_cover/default:
     AC |- typ* : tblRowIL*
     -- (if _ = $variant_cases(AC.TYP, typ))*
     -- if $(|tblRowIL*| > 0)
@@ -176,7 +176,7 @@ rulegroup Cover_tblRows {
     -- (if (typCase_row* = $covered_cases(AC.TYP, exp))*)*
     -- if $exclusive(typCase_row***)
 
-  rule Cover_tblRows/open:
+  rule TblRows_cover/exhaustive:
     AC |- typ* : tblRowIL*
     -- (if typCase_total* = $variant_cases(AC.TYP, typ))*
     -- if $(|tblRowIL*| > 0)
