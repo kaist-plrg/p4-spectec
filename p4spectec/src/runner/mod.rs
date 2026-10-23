@@ -2,6 +2,8 @@
 //!
 //! `Runner<Iface, Ext>` selects its prepared definitions and interpreter
 //! through `Backend`, while each evaluation keeps a typed `RunnerContext`.
+//! A runner built by `Runner::host` has no interpreter;
+//! it answers builtin and extern calls only.
 //! Host calls and simulator operations borrow the same components,
 //! so externs can reenter the selected interpreter.
 //! `build_al`, `build_sl`, and `build_pl` prepare the selected stage.
@@ -38,7 +40,7 @@ use crate::sim_plugin::dummy::Dummy;
 pub use context::{Checkpoint, RunnerContext};
 pub use externs::{Extern, ExternError, NullExtern};
 pub use interface::{Interface, InterfaceError, NullInterface};
-pub use interpreter::{Eval, Interpreter, InterpreterError, SideEffect};
+pub use interpreter::{Eval, Interpreter, InterpreterError, NullInterp, SideEffect};
 
 // == Runner construction
 
@@ -135,6 +137,7 @@ pub(crate) enum Backend {
     Al { spec_env: AlSpecEnv, interp: AlInterp },
     Sl { spec_env: SlSpecEnv, interp: SlInterp },
     Pl { spec_env: PlSpecEnv, interp: PlInterp },
+    Null { interp: NullInterp },
 }
 
 /// Splits a runner into the context of its selected backend for one evaluation.
@@ -179,6 +182,18 @@ macro_rules! with_context {
                 );
                 $body
             }
+            // A runner without an interpreter has no definitions
+            $crate::runner::Backend::Null { interp } => {
+                let mut $ctx = $crate::runner::RunnerContext::new(
+                    arena,
+                    &(),
+                    interp,
+                    &mut runner.interface,
+                    &mut runner.external,
+                    &mut runner.effects,
+                );
+                $body
+            }
         }
     }};
 }
@@ -210,6 +225,14 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
             },
         };
         Ok(Self { backend, interface, external, effects: 0 })
+    }
+
+    /// Prepares a runner without an interpreter, answering builtin and extern calls only.
+    ///
+    /// Calls of relations, functions, or a program entry fail as not configured.
+    pub fn host(interface: Iface, external: Ext) -> Self {
+        let backend = Backend::Null { interp: NullInterp };
+        Self { backend, interface, external, effects: 0 }
     }
 
     // - Parsing
@@ -277,6 +300,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
             Backend::Al { interp, .. } => Interpreter::<Iface, Ext>::reset(interp),
             Backend::Sl { interp, .. } => Interpreter::<Iface, Ext>::reset(interp),
             Backend::Pl { interp, .. } => Interpreter::<Iface, Ext>::reset(interp),
+            Backend::Null { interp } => Interpreter::<Iface, Ext>::reset(interp),
         }
         self.external.clear();
         self.interface.clear();

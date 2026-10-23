@@ -9,7 +9,7 @@ use crate::lang::{common::source::Span, data::value::flat::Value};
 
 use crate::lang::il::ast::Typ;
 
-use crate::diagnostic::Report;
+use crate::diagnostic::{Diagnostic, Report, Severity};
 
 use crate::runner::{ExternError, InterfaceError};
 
@@ -58,9 +58,26 @@ pub enum InterpreterError {
     Mismatch(Vec<Report>),
 }
 
+const INTERPRETER_UNCONFIGURED: &str = "runtime/interpreter-unconfigured";
+
 // = Error reports
 
 impl InterpreterError {
+    /// Describes an interpreter that has not been configured.
+    pub fn diagnostic_unconfigured() -> Self {
+        Self::Fatal(Box::new(
+            Diagnostic::new(
+                "runtime",
+                Severity::Error,
+                Some(INTERPRETER_UNCONFIGURED.to_owned()),
+                "interpreter is not configured",
+                vec![],
+                vec![],
+            )
+            .into(),
+        ))
+    }
+
     /// Returns the fatal report or groups mismatches under an execution frame.
     pub fn into_report(self) -> Box<Report> {
         match self {
@@ -174,4 +191,46 @@ where
         targs: &[Typ],
         values: &[Value],
     ) -> Result<Value, InterpreterError>;
+}
+
+// == Null implementation
+
+/// An interpreter with no definitions; every call fails as not configured.
+pub struct NullInterp;
+
+impl<Iface, Ext> Interpreter<Iface, Ext> for NullInterp
+where
+    Iface: Interface,
+    Ext: Extern,
+{
+    type SpecEnv = ();
+
+    fn clear(&mut self) {}
+
+    fn reset(&mut self) {}
+
+    fn eval_program(
+        _ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
+        _name: &str,
+        _program: Value,
+    ) -> Result<Vec<Value>, InterpreterError> {
+        Err(InterpreterError::diagnostic_unconfigured())
+    }
+
+    fn eval_rel(
+        _ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
+        _name: &str,
+        _values: &[Value],
+    ) -> Result<Vec<Value>, InterpreterError> {
+        Err(InterpreterError::diagnostic_unconfigured())
+    }
+
+    fn eval_func(
+        _ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
+        _name: &str,
+        _targs: &[Typ],
+        _values: &[Value],
+    ) -> Result<Value, InterpreterError> {
+        Err(InterpreterError::diagnostic_unconfigured())
+    }
 }
