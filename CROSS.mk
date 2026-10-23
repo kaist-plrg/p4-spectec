@@ -51,7 +51,7 @@ test-k: k
 # PLT Redex specification
 
 RSPECDIR = spec-meta-redex
-RENTRY = $(RSPECDIR)/7-entry.rkt
+RENTRY = $(RSPECDIR)/3-execution/3.16-entry.rkt
 RTYPECHECK = $(RSPECDIR)/test/p4-typecheck.rkt
 
 redex: metacross $(FFI_SO)
@@ -70,5 +70,5 @@ clean:
 	rm -rf $(KDEFDIR) $(KSPECDIR)/.kore-cache
 	rm -f $(KSPECDIR)/spectec-k-* $(KSPECDIR)/run-k-typecheck-*.result
 	rm -f $(RSPECDIR)/p4-typecheck-*.result
-	rm -rf $(RSPECDIR)/compiled $(RSPECDIR)/test/compiled
+	rm -rf $(RSPECDIR)/*/compiled
 	rm -f ./$(METACROSS) ./$(FFI_SO)

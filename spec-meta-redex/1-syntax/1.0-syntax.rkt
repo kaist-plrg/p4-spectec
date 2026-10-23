@@ -1,9 +1,9 @@
 #lang racket/base
-;; spec-meta/1-syntax.watsup.
+;; spec-meta/1-syntax/1.0-syntax.watsup.
 
 (require json
          redex/reduction-semantics
-         "0.0-stdlib.rkt")
+         "../0-aux/0.0-stdlib.rkt")
 (provide syntax)
 
 (define-extended-language syntax stdlib

@@ -12,8 +12,8 @@
 
 (require racket/match
          redex/reduction-semantics
-         "4-relation.rkt"
-         "5.8-eval.rkt")
+         "3.03-machine.rkt"
+         "3.14-step.rkt")
 (provide run)
 
 (define res? (redex-match? al res))

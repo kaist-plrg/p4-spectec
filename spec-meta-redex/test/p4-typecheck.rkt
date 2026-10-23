@@ -24,9 +24,9 @@
          racket/runtime-path
          racket/set
          racket/string
-         "../0.2-extern-ffi.rkt"
-         "../0.3-boot.rkt"
-         "../7-entry.rkt")
+         "../3-execution/3.04.2-extern-ffi.rkt"
+         "../0-aux/0.1-boot.rkt"
+         "../3-execution/3.16-entry.rkt")
 
 ;; The repository root, which .exclude entries are relative to, as in K's
 ;; tests

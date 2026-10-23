@@ -1,5 +1,5 @@
 #lang racket/base
-;; spec-meta/6-entry.watsup: load a script, then run $main() through the
+;; spec-meta/3-execution/3.13-entry.watsup: load a script, then run $main() through the
 ;; driver. entry-p4 runs Program_ok on a P4 program instead, as K's afterLoad
 ;; does, under a context that load-script gives, so one load can serve many
 ;; programs. Both need the host started on the spec first, with host-init!.
@@ -10,19 +10,19 @@
 ;; k-run-p4.sh does. -i adds a P4 include directory, and --p4 needs at least
 ;; one. Entry's debug messages go to stderr.
 ;;
-;;   racket spec-meta-redex/7-entry.rkt FILE.watsup
-;;   racket spec-meta-redex/7-entry.rkt --p4 PROGRAM.p4 -i DIR [-i DIR]... spec
+;;   racket spec-meta-redex/3-execution/3.16-entry.rkt FILE.watsup
+;;   racket spec-meta-redex/3-execution/3.16-entry.rkt --p4 PROGRAM.p4 -i DIR [-i DIR]... spec
 
 (require json
          racket/cmdline
          racket/match
          redex/reduction-semantics
-         "0.0-stdlib.rkt"
-         "0.1-extern-json.rkt"
-         "0.2-extern-ffi.rkt"
-         "0.3-boot.rkt"
-         "3-context.rkt"
-         "6-driver.rkt")
+         "../0-aux/0.0-stdlib.rkt"
+         "3.04.1-extern-json.rkt"
+         "3.04.2-extern-ffi.rkt"
+         "../0-aux/0.1-boot.rkt"
+         "3.02-context.rkt"
+         "3.15-driver.rkt")
 (provide entry
          entry-p4
          load-script)
@@ -80,7 +80,7 @@
   (define includes '())
   (define path
     (command-line
-     #:program "7-entry.rkt"
+     #:program "3.16-entry.rkt"
      #:once-each
      [("--p4") program "Run Program_ok of the spec FILE on a P4 program"
                (set! p4 program)]
@@ -89,7 +89,7 @@
              (set! includes (append includes (list dir)))]
      #:args (file) file))
   (when (and p4 (null? includes))
-    (raise-user-error '7-entry.rkt "-i is required with --p4"))
+    (raise-user-error '3.16-entry.rkt "-i is required with --p4"))
   (host-init! path)
   (displayln
    (if p4

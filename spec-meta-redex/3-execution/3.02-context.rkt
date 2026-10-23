@@ -1,5 +1,5 @@
 #lang racket/base
-;; spec-meta/3-context.watsup.
+;; spec-meta/3-execution/3.02-context.watsup.
 ;;
 ;; A dec over ctx takes G L if it reads C.GLOBAL, and L alone otherwise. L is
 ;; the local layer. The global layer never changes after $load, so it stays in
@@ -9,8 +9,8 @@
 
 (require racket/match
          redex/reduction-semantics
-         "0.0-stdlib.rkt"
-         "2-env.rkt")
+         "../0-aux/0.0-stdlib.rkt"
+         "3.01-env.rkt")
 (provide context
          empty-layer
          empty-ctx
@@ -90,7 +90,7 @@
 (define global-layers (make-hasheqv))
 
 ;; The handle of a global layer, which is checked and added to the registry.
-;; Only 7-entry.rkt calls this, after $load.
+;; Only 3.16-entry.rkt calls this, after $load.
 (define (register-global! layer_global)
   (unless (redex-match? context layer layer_global)
     (error 'register-global! "not a layer: ~e" layer_global))

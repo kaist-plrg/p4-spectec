@@ -1,5 +1,5 @@
 #lang racket/base
-;; spec-meta/4-relation.watsup, as the terms of the machine.
+;; spec-meta/3-execution/3.03-relation.watsup, as the terms of the machine.
 ;;
 ;; The three extern relations are reduction rules on machine forms. Their
 ;; rules call the host procedures at the end of this module, which go to the
@@ -18,9 +18,9 @@
 
 (require json
          redex/reduction-semantics
-         "0.1-extern-json.rkt"
-         "0.2-extern-ffi.rkt"
-         "3-context.rkt")
+         "3.04.1-extern-json.rkt"
+         "3.04.2-extern-ffi.rkt"
+         "3.02-context.rkt")
 (provide al
          host-call-extern-func
          host-call-builtin-func

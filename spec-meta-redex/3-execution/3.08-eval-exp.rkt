@@ -1,5 +1,5 @@
 #lang racket/base
-;; spec-meta/5.3-eval-exp.watsup.
+;; spec-meta/3-execution/3.07-eval-exp.watsup.
 ;;
 ;; An exp evaluates in place: each evaluated subterm is replaced by its value,
 ;; and a constructor whose parts are all values is a value already. Eval_exp/
@@ -8,12 +8,12 @@
 ;; no rule, and "<group>/<rule>/fail" where a rule's own premise fails.
 
 (require redex/reduction-semantics
-         "0.0-stdlib.rkt"
-         "2-env.rkt"
-         "3-context.rkt"
-         "4-relation.rkt"
-         "5.0-eval-ops.rkt"
-         "5.1-eval-typ.rkt")
+         "../0-aux/0.0-stdlib.rkt"
+         "3.01-env.rkt"
+         "3.02-context.rkt"
+         "3.03-machine.rkt"
+         "3.05-eval-ops.rkt"
+         "3.06.1-typ-subst.rkt")
 (provide ->term/eval-exp
          ->term+ctx/eval-exp)
 

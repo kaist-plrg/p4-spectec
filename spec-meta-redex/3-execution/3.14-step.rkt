@@ -3,13 +3,13 @@
 ;; ->term+ctx), and its closure ->al.
 
 (require redex/reduction-semantics
-         "4-relation.rkt"
-         "5.2-eval-assign.rkt"
-         "5.3-eval-exp.rkt"
-         "5.4-eval-arg.rkt"
-         "5.5-eval-prem.rkt"
-         "5.6-eval-call-func.rkt"
-         "5.7-eval-call-rel.rkt")
+         "3.03-machine.rkt"
+         "3.07-eval-assign.rkt"
+         "3.08-eval-exp.rkt"
+         "3.10-eval-arg.rkt"
+         "3.11-eval-prem.rkt"
+         "3.12-eval-call-func.rkt"
+         "3.13-eval-call-rel.rkt")
 (provide ->term
          ->term+ctx
          ->al)

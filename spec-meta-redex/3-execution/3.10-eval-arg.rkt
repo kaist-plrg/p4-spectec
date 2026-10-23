@@ -1,11 +1,11 @@
 #lang racket/base
-;; spec-meta/5.4-eval-arg.watsup.
+;; spec-meta/3-execution/3.09-eval-arg.watsup.
 ;;
 ;; An arg evaluates in place, as an exp does. Eval_arg/fail is "frame/fail"
 ;; on (EXP hole): no other input fails.
 
 (require redex/reduction-semantics
-         "4-relation.rkt")
+         "3.03-machine.rkt")
 (provide ->term/eval-arg)
 
 ;; The rules on a term

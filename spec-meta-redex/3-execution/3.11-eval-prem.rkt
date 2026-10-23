@@ -1,15 +1,15 @@
 #lang racket/base
-;; spec-meta/5.5-eval-prem.watsup.
+;; spec-meta/3-execution/3.10-eval-prem.watsup.
 ;;
 ;; A premise evaluates in place, updates the innermost IN's layer, and reduces
 ;; to OK; a premise sequence is a statement sequence (seq). Eval_prem/fail becomes complement rules, and "frame/fail" where a
 ;; premise's sub-relation fails.
 
 (require redex/reduction-semantics
-         "0.0-stdlib.rkt"
-         "2-env.rkt"
-         "3-context.rkt"
-         "4-relation.rkt")
+         "../0-aux/0.0-stdlib.rkt"
+         "3.01-env.rkt"
+         "3.02-context.rkt"
+         "3.03-machine.rkt")
 (provide ->term/eval-prem
          ->term+ctx/eval-prem)
 

@@ -1,5 +1,5 @@
 #lang racket/base
-;; spec-meta/5.7-eval-call-rel.watsup.
+;; spec-meta/3-execution/3.12-eval-call-rel.watsup.
 ;;
 ;; A relation runs in (IN L_local ...), and each rule path in a copy of it, so
 ;; a path leaves no bindings to the next. Every path of every group is
@@ -16,8 +16,8 @@
 ;; none matched.
 
 (require redex/reduction-semantics
-         "3-context.rkt"
-         "4-relation.rkt")
+         "3.02-context.rkt"
+         "3.03-machine.rkt")
 (provide ->term/eval-call-rel
          ->term+ctx/eval-call-rel)
 

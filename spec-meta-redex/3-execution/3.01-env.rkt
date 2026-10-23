@@ -1,9 +1,9 @@
 #lang racket/base
-;; spec-meta/2-env.watsup.
+;; spec-meta/3-execution/3.01-env.watsup.
 
 (require redex/reduction-semantics
-         "0.0-stdlib.rkt"
-         "1-syntax.rkt")
+         "../0-aux/0.0-stdlib.rkt"
+         "../1-syntax/1.0-syntax.rkt")
 (provide env
          theta-of-tdenv
          is-iter-on-var
