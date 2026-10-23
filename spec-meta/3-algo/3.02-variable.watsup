@@ -60,12 +60,16 @@ def $fresh_name(AC, id_base) = (AC', id_fresh)
   -- if id_fresh = $fresh_id(id_base, AC.IDS)
   -- if AC' = $add_used_ids(AC, id_fresh)
 
+;; A fresh variable stands for a sub-pattern and is bound by the premise
+;; it is created for, so it is bound in the returned context
+
 dec $fresh_vari(algoCtx, typ) : (algoCtx, vari)
-  hint(prose_in "a fresh variable of type" %1 "and the context using it, under" %0)
-def $fresh_vari(AC, typ) = (AC', id_fresh typ_elem iter*)
+  hint(prose_in "a fresh variable of type" %1 "and the context binding it, under" %0)
+def $fresh_vari(AC, typ) = (AC'', id_fresh typ_elem iter*)
   -- if (typ_elem, iter*) = $typ_dim(typ)
   -- if id_base = $typ_name(typ_elem)
   -- if (AC', id_fresh) = $fresh_name(AC, id_base)
+  -- if AC'' = $add_bound_ids(AC', [ id_fresh ])
 
 ;; Free variables
 
