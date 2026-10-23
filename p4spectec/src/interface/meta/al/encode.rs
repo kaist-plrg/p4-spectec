@@ -124,29 +124,6 @@ impl Encode for ValueField {
     }
 }
 
-// - Results
-
-/// Encodes a successful function result as `OK val : funcRes`.
-pub fn ok_value_cached(
-    arena: &mut Arena,
-    cache: &mut Cache,
-    value_target: Value,
-) -> Result<Value, Error> {
-    let span = *arena.value.span(value_target.span);
-    let value_meta = value_target.encode_cached(arena, cache)?;
-    case(arena, m::OK, "funcRes", vec![value_meta], span)
-}
-
-/// Encodes successful relation outputs as `OK val* : relRes`.
-pub fn ok_values_cached(
-    arena: &mut Arena,
-    cache: &mut Cache,
-    values_target: &[Value],
-) -> Result<Value, Error> {
-    let values_meta = list(arena, cache, "val", values_target)?;
-    case(arena, m::OK, "relRes", vec![values_meta], Span::default())
-}
-
 // - Premises
 
 /// Encodes an AL premise.

@@ -43,7 +43,3 @@ pub(super) const DEF_EXTREL: &str = "EXTREL id ':' typ* '->' typ*";
 pub(super) const DEF_REL: &str = "REL id ':' typ* '->' typ* '=' rulGroupAL* elsGroupAL?";
 pub(super) const DEF_TABLEFUNC: &str = "TABLEFUNC id param* ':' typ '=' tblRowAL*";
 pub(super) const DEF_FUNC: &str = "FUNC id tparam* param* ':' typ '=' clauseAL* elsClauseAL?";
-
-// == Results
-
-pub(super) const OK: &str = "OK val";

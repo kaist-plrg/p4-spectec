@@ -73,7 +73,7 @@ pub(in crate::interface) fn case(
 }
 
 /// Maps a source list and annotates its meta element type.
-pub(in crate::interface) fn list<T: Encode<Output = Value>>(
+pub(crate) fn list<T: Encode<Output = Value>>(
     arena: &mut Arena,
     cache: &mut Cache,
     text_elem_typ: &str,
