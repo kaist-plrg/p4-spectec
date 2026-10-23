@@ -4,22 +4,26 @@
 ;; seeing all type definitions. Guards are then inserted into the lowered
 ;; definitions, and finally the otherwise rules and clauses are checked.
 
-dec $typdefs(defnIL*) : tdenv
-  hint(prose_in "the type definitions of" %0)
-def $typdefs(eps) = $empty_map<id, typDef>
-def $typdefs(externTypDefn :: defnIL*) = $add_map<id, typDef>(tdenv, id, externTypDefn)
+dec $load_typdefs(algoCtx, defnIL*) : algoCtx
+  hint(prose_in %0 "with the type definitions of" %1 "loaded")
+
+def $load_typdefs(AC, externTypDefn :: defnIL*)
+  = $load_typdefs(AC', defnIL*)
   -- if EXTTYP id = externTypDefn
-  -- if tdenv = $typdefs(defnIL*)
-def $typdefs(definedTypDefn :: defnIL*) = $add_map<id, typDef>(tdenv, id, definedTypDefn)
+  -- if AC' = $add_typdef(AC, id, externTypDefn)
+
+def $load_typdefs(AC, definedTypDefn :: defnIL*)
+  = $load_typdefs(AC', defnIL*)
   -- if TYP id _ '=' _ = definedTypDefn
-  -- if tdenv = $typdefs(defnIL*)
-def $typdefs(relDefnIL :: defnIL*) = $typdefs(defnIL*)
-def $typdefs(funcDefnIL :: defnIL*) = $typdefs(defnIL*)
+  -- if AC' = $add_typdef(AC, id, definedTypDefn)
+
+def $load_typdefs(AC, relDefnIL :: defnIL*) = $load_typdefs(AC, defnIL*)
+def $load_typdefs(AC, funcDefnIL :: defnIL*) = $load_typdefs(AC, defnIL*)
+def $load_typdefs(AC, eps) = AC
 
 rule Algo_spec:
   |- defnIL* : defnAL''*
-  -- if tdenv = $typdefs(defnIL*)
-  -- if AC = $empty_algoCtx[ .TYP = tdenv ]
+  -- if AC = $load_typdefs($empty_algoCtx, defnIL*)
   -- (Algo_def: AC |- defnIL : defnAL)*
   -- (Guard_def: AC |- defnAL : defnAL'')*
   -- (Otherwise_pure: AC |- defnAL'')*
