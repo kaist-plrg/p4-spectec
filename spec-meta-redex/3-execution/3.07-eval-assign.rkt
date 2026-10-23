@@ -2,8 +2,8 @@
 ;; spec-meta/3-execution/3.06-eval-assign.watsup.
 ;;
 ;; A successful assignment updates the innermost IN's layer and reduces to OK.
-;; The relations have no `otherwise`, so an input that no rule matches has no
-;; derivation, and its caller fails: here it reduces to FAIL directly.
+;; The relations' `otherwise` rules give ERROR: here an input that no rule
+;; matches reduces to ERROR directly.
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
@@ -59,8 +59,8 @@
         (where () (is-iter-on-var (ITER exp (QUEST (vari ...)))))
         "assign-exp/iter/opt-some")
 
-   ;; otherwise: no rule applies
-   (--> (assign-exp exp val) FAIL
+   ;; rule Assign_exp/error: no rule applies
+   (--> (assign-exp exp val) ERROR
         (side-condition (not (redex-match? al (VAR id) (term exp))))
         (side-condition
          (not (redex-match? al ((TUP (exp ...)) (TUP (val ...))) (term (exp val)))))
@@ -77,14 +77,14 @@
         (side-condition
          (not (redex-match? al ((CONS exp_h exp_t) (LIST (val_h val_t ...))) (term (exp val)))))
         (side-condition (not (redex-match? al (ITER exp iterExp) (term exp))))
-        "assign-exp/fail")
-   (--> (assign-exp (ITER exp iterExp) val) FAIL
+        "assign-exp/error")
+   (--> (assign-exp (ITER exp iterExp) val) ERROR
         (where () (is-iter-on-var (ITER exp iterExp)))
         (side-condition
          (not (redex-match? al ((QUEST (vari ...)) (OPT (val ...))) (term (iterExp val)))))
         (side-condition
          (not (redex-match? al ((STAR (vari ...)) (LIST (val ...))) (term (iterExp val)))))
-        "assign-exp/iter/fail")
+        "assign-exp/iter/error")
 
    ;;; Assigning to a sequence of expressions
 
@@ -92,33 +92,33 @@
    ;; right
    (--> (assign-exps (exp ..._n) (val ..._n)) (seq ((assign-exp exp val) ...))
         "assign-exps")
-   ;; otherwise: the lengths differ
-   (--> (assign-exps (exp ...) (val ...)) FAIL
+   ;; rule Assign_exps/error: the lengths differ
+   (--> (assign-exps (exp ...) (val ...)) ERROR
         (side-condition (not (= (length (term (exp ...))) (length (term (val ...))))))
-        "assign-exps/fail")
+        "assign-exps/error")
 
    ;;; Assigning to an argument
 
    ;; rule Assign_arg/exp
-   (--> (assign-arg L_caller (EXP exp) val)
+   (--> (assign-arg (EXP exp) val)
         (assign-exp exp val)
         "assign-arg/exp")
 
-   ;; otherwise: Assign_arg/fun on a value other than a function
-   (--> (assign-arg L_caller (FUN id) val) FAIL
+   ;; rule Assign_arg/error: Assign_arg/fun on a value other than a function
+   (--> (assign-arg (FUN id) val) ERROR
         (side-condition (not (redex-match? al (FUNC id) (term val))))
-        "assign-arg/fail")
+        "assign-arg/error")
 
    ;;; Assigning to a sequence of arguments
 
    ;; rulegroup Assign_args: each arg is assigned its val in place, left to
    ;; right
-   (--> (assign-args L_caller (arg ..._n) (val ..._n)) (seq ((assign-arg L_caller arg val) ...))
+   (--> (assign-args (arg ..._n) (val ..._n)) (seq ((assign-arg arg val) ...))
         "assign-args")
-   ;; otherwise: the lengths differ
-   (--> (assign-args L_caller (arg ...) (val ...)) FAIL
+   ;; rule Assign_args/error: the lengths differ
+   (--> (assign-args (arg ...) (val ...)) ERROR
         (side-condition (not (= (length (term (arg ...))) (length (term (val ...))))))
-        "assign-args/fail")))
+        "assign-args/error")))
 
 ;; The rules on a term and its context (r G L)
 (define ->term+ctx/eval-assign
@@ -149,18 +149,18 @@
         (OK G (add-varis L ((iter-vari vari QUEST) ...) ((OPT (val_sub)) ...)))
         (where ((val_sub ...)) (find-varis L (vari ...)))
         "assign-exp/iter/opt-some/bind")
-   (--> ((assign-exp/iter/opt-some OK (vari ...)) G L) (FAIL G L)
+   (--> ((assign-exp/iter/opt-some OK (vari ...)) G L) (ERROR G L)
         ;; otherwise: some variable is unbound
         (where () (find-varis L (vari ...)))
-        "assign-exp/iter/opt-some/fail")
+        "assign-exp/iter/opt-some/error")
 
    ;; Assign_exp/iter/list: each element is assigned under C_local, which has
    ;; no values
    (--> ((assign-exp (ITER exp (STAR (vari ...))) (LIST (val ...)))
          G
-         (name L {TYP tdenv REL renv FUNC fenv VAL venv}))
+         (name L {TYP tdenv FUNC fnenv VAL venv}))
         ((assign-exp/iter/list
-          ((IN {TYP tdenv REL renv FUNC fenv VAL (empty-map)} (assign-exp exp val)) ...)
+          ((IN {TYP tdenv FUNC fnenv VAL (empty-map)} (assign-exp exp val)) ...)
           (vari ...))
          G L)
         (where () (is-iter-on-var (ITER exp (STAR (vari ...)))))
@@ -169,21 +169,16 @@
         (OK G (add-varis L ((iter-vari vari STAR) ...) ((LIST (val_sub ...)) ...)))
         (where (((val_sub ...)) ...) ((finds-vari (L_sub ...) vari) ...))
         "assign-exp/iter/list/bind")
-   (--> ((assign-exp/iter/list ((IN L_sub OK) ...) (vari ...)) G L) (FAIL G L)
+   (--> ((assign-exp/iter/list ((IN L_sub OK) ...) (vari ...)) G L) (ERROR G L)
         ;; otherwise: some variable is unbound in some element's layer
         (side-condition
          (not (redex-match? al (((val ...)) ...)
                             (term ((finds-vari (L_sub ...) vari) ...)))))
-        "assign-exp/iter/list/fail")
+        "assign-exp/iter/list/error")
 
    ;;; Assigning to an argument
 
-   ;; rule Assign_arg/fun
-   (--> ((assign-arg L_caller (FUN id_callee) (FUNC id_caller)) G L)
-        (OK G (add-func L id_callee funcdef))
-        (where (funcdef) (find-func G L_caller id_caller))
-        "assign-arg/fun")
-   (--> ((assign-arg L_caller (FUN id_callee) (FUNC id_caller)) G L) (FAIL G L)
-        ;; otherwise: the caller has no such function
-        (where () (find-func G L_caller id_caller))
-        "assign-arg/fun/fail")))
+   ;; rule Assign_arg/fun: the parameter is bound to the global function name
+   (--> ((assign-arg (FUN id) (FUNC id_global)) G L)
+        (OK G (add-func L id id_global))
+        "assign-arg/fun")))

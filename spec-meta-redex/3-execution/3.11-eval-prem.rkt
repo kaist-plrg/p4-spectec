@@ -2,8 +2,9 @@
 ;; spec-meta/3-execution/3.10-eval-prem.watsup.
 ;;
 ;; A premise evaluates in place, updates the innermost IN's layer, and reduces
-;; to OK; a premise sequence is a statement sequence (seq). Eval_prem/fail becomes complement rules, and "frame/fail" where a
-;; premise's sub-relation fails.
+;; to OK; a premise sequence is a statement sequence (seq). Eval_prem/error
+;; becomes complement rules, and "frame/failure" where a premise's
+;; sub-relation fails.
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
@@ -20,54 +21,58 @@
 
    ;;; Relation premises
 
-   ;; rule Eval_prem/relpr, once the inputs are evaluated
+   ;; rulegroup Eval_prem/relpr, once the inputs are evaluated
    (--> (REL id (val ...) (exp_out ...))
         (eval-prem/relpr (call-rel id (val ...)) (exp_out ...))
         "eval-prem/relpr")
    (--> (eval-prem/relpr (OK (val_out ...)) (exp_out ...))
         (assign-exps (exp_out ...) (val_out ...))
-        "eval-prem/relpr/assign")
+        "eval-prem/relpr/succ")
 
    ;;; If premises
 
    ;; rulegroup Eval_prem/ifpr
    (--> (IF (BOOL #t)) OK
-        "eval-prem/ifpr/true")
-   (--> (IF (BOOL #f)) FAIL
-        "eval-prem/ifpr/false")
-   (--> (IF val) FAIL
+        "eval-prem/ifpr/succ-true")
+   (--> (IF (BOOL #f)) UNMATCH
+        "eval-prem/ifpr/succ-false")
+   (--> (IF val) ERROR
         ;; otherwise: not a boolean
         (side-condition (not (redex-match? al (BOOL b) (term val))))
-        "eval-prem/ifpr/fail")
+        "eval-prem/ifpr/error")
 
    ;;; If-hold and if-not-hold premises
 
-   ;; rule Eval_prem/hold, once the inputs are evaluated
+   ;; rulegroup Eval_prem/ifholdpr, once the inputs are evaluated
    (--> (IFHOLD id (val_input ...))
-        (eval-prem/ifholdpr/hold (call-rel id (val_input ...)))
-        "eval-prem/ifholdpr/hold")
-   (--> (eval-prem/ifholdpr/hold (OK ())) OK
-        "eval-prem/ifholdpr/hold/succ")
-   (--> (eval-prem/ifholdpr/hold (OK (val_h val_t ...))) FAIL
+        (eval-prem/ifholdpr (call-rel id (val_input ...)))
+        "eval-prem/ifholdpr")
+   (--> (eval-prem/ifholdpr (OK ())) OK
+        "eval-prem/ifholdpr/succ")
+   (--> (eval-prem/ifholdpr (OK (val_h val_t ...))) ERROR
         ;; otherwise: the relation has outputs
-        "eval-prem/ifholdpr/hold/fail")
+        "eval-prem/ifholdpr/error")
 
-   ;; rule Eval_prem/nothold, once the relation is called (see ->term+ctx)
-   (--> (eval-prem/ifholdpr/nothold FAIL) OK
-        "eval-prem/ifholdpr/nothold/succ")
-   (--> (eval-prem/ifholdpr/nothold (OK (val_out ...))) FAIL
-        ;; otherwise: the relation holds
-        "eval-prem/ifholdpr/nothold/fail")
+   ;; rulegroup Eval_prem/ifnotholdpr, once the inputs are evaluated
+   (--> (IFNOTHOLD id (val_input ...))
+        (eval-prem/ifnotholdpr (call-rel id (val_input ...)))
+        "eval-prem/ifnotholdpr")
+   (--> (eval-prem/ifnotholdpr UNMATCH) OK
+        "eval-prem/ifnotholdpr/succ-ok")
+   (--> (eval-prem/ifnotholdpr (OK (val_out ...))) UNMATCH
+        "eval-prem/ifnotholdpr/succ-unmatch")
+   (--> (eval-prem/ifnotholdpr ERROR) ERROR
+        "eval-prem/ifnotholdpr/error")
 
    ;;; Let premises
 
-   ;; rule Eval_prem/letpr
+   ;; rulegroup Eval_prem/letpr
    (--> (LET exp_l val_r) (assign-exp exp_l val_r)
         "eval-prem/letpr")
 
    ;;; Debug premises
 
-   ;; rule Eval_prem/dbg
+   ;; rulegroup Eval_prem/dbg
    (--> (DEBUG val) OK
         (where _ ,(debug (term val)))
         "eval-prem/dbg")))
@@ -77,46 +82,31 @@
   (reduction-relation
    al
 
-   ;;; If-not-hold premises
-
-   ;; rule Eval_prem/nothold, once the inputs are evaluated. Call_rel has no
-   ;; derivation for an unknown relation, so the relation is looked up here,
-   ;; before the FAIL of the call is caught.
-   (--> ((IFNOTHOLD id (val_input ...)) G L)
-        ((eval-prem/ifholdpr/nothold (call-rel id (val_input ...))) G L)
-        (where (reldef) (find-rel G L id))
-        "eval-prem/ifholdpr/nothold")
-   (--> ((IFNOTHOLD id (val_input ...)) G L) (FAIL G L)
-        ;; otherwise: no such relation
-        (where () (find-rel G L id))
-        "eval-prem/ifholdpr/nothold/fail-rel")
-
    ;;; Iteration premises - optional
 
    ;; rulegroup Eval_prem/iterpr-opt
    (--> ((ITER prem (QUEST (vari_bound ...) (vari_bind ...))) G L)
         (OK G (add-varis L ((iter-vari vari_bind QUEST) ...)
                          (repeat- (OPT ()) ,(length (term (vari_bind ...))))))
-        (judgment-holds (sub-opt L (vari_bound ...) ()))
-        "eval-prem/iterpr-opt/none")
+        (where (OK ()) (sub-opt L (vari_bound ...)))
+        "eval-prem/iterpr-opt/succ-none")
    (--> ((ITER prem (QUEST (vari_bound ...) (vari_bind ...))) G L)
         ((eval-prem/iterpr-opt/some (IN L_sub prem) (vari_bind ...)) G L)
-        (judgment-holds (sub-opt L (vari_bound ...) (L_sub)))
+        (where (OK (L_sub)) (sub-opt L (vari_bound ...)))
         "eval-prem/iterpr-opt/some")
-   (--> ((ITER prem (QUEST (vari_bound ...) (vari_bind ...))) G L) (FAIL G L)
-        ;; otherwise: $sub_opt has no result
-        (side-condition (not (judgment-holds (sub-opt L (vari_bound ...) any))))
-        "eval-prem/iterpr-opt/fail")
+   (--> ((ITER prem (QUEST (vari_bound ...) (vari_bind ...))) G L) (ERROR G L)
+        (where ERROR (sub-opt L (vari_bound ...)))
+        "eval-prem/iterpr-opt/error")
 
-   ;; Eval_prem/some, once prem has updated C_sub to C_sub_res
+   ;; Eval_prem/succ-some, once prem has updated C_sub to C_sub_res
    (--> ((eval-prem/iterpr-opt/some (IN L_sub_res OK) (vari_bind ...)) G L)
         (OK G (add-varis L ((iter-vari vari_bind QUEST) ...) ((OPT (val_bind)) ...)))
         (where ((val_bind ...)) (find-varis L_sub_res (vari_bind ...)))
-        "eval-prem/iterpr-opt/some/bind")
-   (--> ((eval-prem/iterpr-opt/some (IN L_sub_res OK) (vari_bind ...)) G L) (FAIL G L)
+        "eval-prem/iterpr-opt/succ-some")
+   (--> ((eval-prem/iterpr-opt/some (IN L_sub_res OK) (vari_bind ...)) G L) (ERROR G L)
         ;; otherwise: some variable is unbound
         (where () (find-varis L_sub_res (vari_bind ...)))
-        "eval-prem/iterpr-opt/some/fail")
+        "eval-prem/iterpr-opt/succ-some/error")
 
    ;;; Iteration premises - list
 
@@ -124,27 +114,26 @@
    (--> ((ITER prem (STAR (vari_bound ...) (vari_bind ...))) G L)
         (OK G (add-varis L ((iter-vari vari_bind STAR) ...)
                          (repeat- (LIST ()) ,(length (term (vari_bind ...))))))
-        (judgment-holds (sub-list L (vari_bound ...) ()))
-        "eval-prem/iterpr-list/empty")
+        (where (OK ()) (sub-list L (vari_bound ...)))
+        "eval-prem/iterpr-list/succ-empty")
    (--> ((ITER prem (STAR (vari_bound ...) (vari_bind ...))) G L)
         ((eval-prem/iterpr-list/list ((IN L_sub prem) ...) (vari_bind ...)) G L)
-        (judgment-holds (sub-list L (vari_bound ...) (L_sub ...)))
-        (side-condition (pair? (term (L_sub ...))))
+        (where (OK (L_sub_h L_sub_t ...)) (sub-list L (vari_bound ...)))
+        (where (L_sub ...) (L_sub_h L_sub_t ...))
         "eval-prem/iterpr-list/list")
-   (--> ((ITER prem (STAR (vari_bound ...) (vari_bind ...))) G L) (FAIL G L)
-        ;; otherwise: $sub_list has no result
-        (side-condition (not (judgment-holds (sub-list L (vari_bound ...) any))))
-        "eval-prem/iterpr-list/fail")
+   (--> ((ITER prem (STAR (vari_bound ...) (vari_bind ...))) G L) (ERROR G L)
+        (where ERROR (sub-list L (vari_bound ...)))
+        "eval-prem/iterpr-list/error")
 
-   ;; Eval_prem/list, once prem has updated each C_sub to C_sub_res
+   ;; Eval_prem/succ-list, once prem has updated each C_sub to C_sub_res
    (--> ((eval-prem/iterpr-list/list ((IN L_sub_res OK) ...) (vari_bind ...)) G L)
         (OK G (add-varis L ((iter-vari vari_bind STAR) ...) ((LIST (val_bind ...)) ...)))
         (where (((val_sub_bind ...)) ...) ((find-varis L_sub_res (vari_bind ...)) ...))
         (where ((val_bind ...) ...) (transpose- ((val_sub_bind ...) ...)))
-        "eval-prem/iterpr-list/list/bind")
-   (--> ((eval-prem/iterpr-list/list ((IN L_sub_res OK) ...) (vari_bind ...)) G L) (FAIL G L)
+        "eval-prem/iterpr-list/succ-list")
+   (--> ((eval-prem/iterpr-list/list ((IN L_sub_res OK) ...) (vari_bind ...)) G L) (ERROR G L)
         ;; otherwise: some variable is unbound in some sub-context
         (side-condition
          (not (redex-match? al (((val ...)) ...)
                             (term ((find-varis L_sub_res (vari_bind ...)) ...)))))
-        "eval-prem/iterpr-list/list/fail")))
+        "eval-prem/iterpr-list/succ-list/error")))
