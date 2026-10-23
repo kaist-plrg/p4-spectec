@@ -42,8 +42,8 @@ pub fn p4(spec: &Spec) -> P4Interface {
     p4_with_unparser(unparser)
 }
 
-/// Installs `print_` over the standard builtins.
-fn p4_with_unparser(unparser: P4Unparser) -> P4Interface {
+/// Builds the P4 interface, with `print_` rendering through `unparser`.
+pub fn p4_with_unparser(unparser: P4Unparser) -> P4Interface {
     let builtins = Builtins::with_extensions([(
         "print_",
         // `print_<T>(T) : text`: one type argument, one value

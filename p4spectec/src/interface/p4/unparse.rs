@@ -21,7 +21,10 @@ use crate::lang::{
     traits::print::Print,
 };
 
-use crate::lang::il::ast::{DefTypKind, Hint, TypCase, TypKind};
+use crate::lang::il::{
+    self,
+    ast::{DefTypKind, Hint, TypCase, TypKind},
+};
 
 use crate::lang::al;
 
@@ -65,6 +68,22 @@ fn insert_case_hints(
 
 impl P4Unparser {
     // - Construction
+
+    /// Collects print hints from an IL specification.
+    pub fn from_il_spec(spec_il: &[il::ast::Def]) -> Self {
+        let mut hints = HashMap::new();
+        // Only defined types carry cases with print hints
+        for definition_il in spec_il {
+            let il::ast::DefKind::Typ(typ_def_il) = &definition_il.node else {
+                continue;
+            };
+            let il::ast::TypDef::Defined(defined_typ_il) = typ_def_il else {
+                continue;
+            };
+            insert_case_hints(&mut hints, &defined_typ_il.id.node, &defined_typ_il.def_typ);
+        }
+        Self { hints }
+    }
 
     /// Collects print hints from an AL specification.
     pub fn from_al_spec(spec_al: &[al::ast::Def]) -> Self {
