@@ -16,4 +16,8 @@ module TYPE-DEF
   syntax TypDef ::= TypDefn
                   | paramTD()               [symbol(paramTD)]
 
+  // `typDef?`
+  syntax TypDefOpt ::= noTypDef()           [symbol(noTypDef)]
+                     | someTypDef(TypDef)   [symbol(someTypDef)]
+
 endmodule

@@ -34,6 +34,7 @@ module RESULT
   syntax Res ::= consRes(Res, Res)          [function, symbol(consRes)]
   rule consRes(ok(V:Val), ok(Vs:ValList)) => ok((V, Vs))
   rule consRes(ok(T:Typ), ok(Ts:TypList)) => ok((T, Ts))
+  rule consRes(ok(T:Typ), ok(Ts:TArgList)) => ok((T, Ts))
   rule consRes(F:Failure, _:Res) => F
   rule consRes(ok(_), F:Failure) => F
 
@@ -78,10 +79,14 @@ module RESULT
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>
 
-  // `unres`: an outcome back in flight.
+  // `unres`: an outcome back in flight; `unresBool`: a `bool` outcome as
+  // its value.
   syntax KItem ::= unres(Res)
+                 | unresBool(Res)
   rule <k> unres(ok(R:KItem)) => R ... </k>
   rule <k> unres(UNMATCH) => unmatch ... </k>
   rule <k> unres(ERROR) => error ... </k>
+  rule <k> unresBool(ok(B:Bool)) => boolV(B) ... </k>
+  rule <k> unresBool(F:Failure) => unres(F) ... </k>
 
 endmodule

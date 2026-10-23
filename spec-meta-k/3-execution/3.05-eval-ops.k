@@ -2,96 +2,116 @@
 //
 // Mirrors spec-meta/3-execution/3.04-eval-ops.watsup.
 
-requires "../0-aux/0.0-stdlib.k"
+requires "3.03-relation.k"
 
 module EVAL-OPS
-  imports STDLIB
+  imports RELATION
 
   // ==========================================================================
-  // Unary operations
+  // Unary numeric operations
   //
-  //   dec $unop_number(numunop, num) : val
+  //   dec $numUnop(numUnop, num) : val
   // ==========================================================================
 
-  syntax Val ::= unopNumber(NumUnOp, Num)   [function, symbol(unopNumber)]
+  syntax Val ::= numUnop(NumUnOp, Num)      [function, total, symbol(numUnop)]
 
-  rule unopNumber(plusOp(), natN(N:Int)) => natN(N)
-  rule unopNumber(plusOp(), intN(I:Int)) => intN(I)
-  rule unopNumber(minusOp(), natN(N:Int)) => intN(0 -Int N)
-  rule unopNumber(minusOp(), intN(I:Int)) => intN(0 -Int I)
+  rule numUnop(plusOp(), natN(N:Int)) => natN(N)
+  rule numUnop(plusOp(), intN(I:Int)) => intN(I)
+  rule numUnop(minusOp(), natN(N:Int)) => intN(0 -Int N)
+  rule numUnop(minusOp(), intN(I:Int)) => intN(0 -Int I)
 
   // ==========================================================================
-  // Binary operations
+  // Binary boolean operations
   //
-  //   dec $binop_bool(boolbinop, bool, bool) : bool
-  //   dec $binop_number(numbinop, num, num) : val
+  //   dec $boolBinop(boolBinop, bool, bool) : bool
   // ==========================================================================
 
-  syntax Bool ::= binopBool(BoolBinOp, Bool, Bool)
-                                            [function, total, symbol(binopBool)]
+  syntax Bool ::= boolBinop(BoolBinOp, Bool, Bool)
+                                            [function, total, symbol(boolBinop)]
 
-  rule binopBool(andOp(), B:Bool, B':Bool) => B andBool B'
-  rule binopBool(orOp(), B:Bool, B':Bool) => B orBool B'
-  rule binopBool(implOp(), B:Bool, B':Bool) => B impliesBool B'
-  rule binopBool(equivOp(), B:Bool, B':Bool) => B ==Bool B'
-
-  syntax Val ::= binopNumber(NumBinOp, Num, Num)
-                                            [function, symbol(binopNumber)]
-
-  rule binopNumber(addOp(), natN(L:Int), natN(R:Int)) => natN(L +Int R)
-  rule binopNumber(addOp(), intN(L:Int), intN(R:Int)) => intN(L +Int R)
-  // `NAT - NAT` is an `INT`, as in watsup.
-  rule binopNumber(subOp(), natN(L:Int), natN(R:Int)) => intN(L -Int R)
-  rule binopNumber(subOp(), intN(L:Int), intN(R:Int)) => intN(L -Int R)
-  rule binopNumber(mulOp(), natN(L:Int), natN(R:Int)) => natN(L *Int R)
-  rule binopNumber(mulOp(), intN(L:Int), intN(R:Int)) => intN(L *Int R)
-  rule binopNumber(divOp(), natN(L:Int), natN(R:Int)) => natN(L /Int R)
-    requires R =/=Int 0
-  rule binopNumber(divOp(), intN(L:Int), intN(R:Int)) => intN(L /Int R)
-    requires R =/=Int 0
-  rule binopNumber(modOp(), natN(L:Int), natN(R:Int)) => natN(L %Int R)
-    requires R =/=Int 0
-  rule binopNumber(modOp(), intN(L:Int), intN(R:Int)) => intN(L %Int R)
-    requires R =/=Int 0
-  rule binopNumber(powOp(), natN(L:Int), natN(R:Int)) => natN(L ^Int R)
-    requires R >=Int 0
-  rule binopNumber(powOp(), intN(L:Int), intN(R:Int)) => intN(L ^Int R)
-    requires R >=Int 0
+  rule boolBinop(andOp(), B:Bool, B':Bool) => B andBool B'
+  rule boolBinop(orOp(), B:Bool, B':Bool) => B orBool B'
+  rule boolBinop(implOp(), B:Bool, B':Bool) => B impliesBool B'
+  rule boolBinop(equivOp(), B:Bool, B':Bool) => B ==Bool B'
 
   // ==========================================================================
-  // Comparison operations
+  // Binary numeric operations
   //
-  //   dec $cmpop_poly(polycmpop, val, val) : bool
-  //   dec $cmpop_number(numcmpop, num, num) : bool
-  // ==========================================================================
-
-  syntax Bool ::= cmpopPoly(PolyCmpOp, Val, Val)
-                                            [function, total, symbol(cmpopPoly)]
-
-  rule cmpopPoly(eqOp(), L:Val, R:Val) => L ==K R
-  rule cmpopPoly(neOp(), L:Val, R:Val) => L =/=K R
-
-  syntax Bool ::= cmpopNumber(NumCmpOp, Num, Num)
-                                            [function, symbol(cmpopNumber)]
-
-  rule cmpopNumber(ltOp(), natN(L:Int), natN(R:Int)) => L <Int R
-  rule cmpopNumber(ltOp(), intN(L:Int), intN(R:Int)) => L <Int R
-  rule cmpopNumber(gtOp(), natN(L:Int), natN(R:Int)) => L >Int R
-  rule cmpopNumber(gtOp(), intN(L:Int), intN(R:Int)) => L >Int R
-  rule cmpopNumber(leOp(), natN(L:Int), natN(R:Int)) => L <=Int R
-  rule cmpopNumber(leOp(), intN(L:Int), intN(R:Int)) => L <=Int R
-  rule cmpopNumber(geOp(), natN(L:Int), natN(R:Int)) => L >=Int R
-  rule cmpopNumber(geOp(), intN(L:Int), intN(R:Int)) => L >=Int R
-
-  // ==========================================================================
-  // Constructor checks
+  //   syntax numBinopRes = ok<val> | error
+  //   dec $numBinop(numBinop, num, num) : numBinopRes
   //
-  //   dec $is_tup(val) : bool
+  // A nat/int mix, a division by zero, and `POW` (no clause in the spec) are
+  // errors.
   // ==========================================================================
 
-  syntax Bool ::= isTup(Val)                [function, total, symbol(isTup)]
+  syntax Res ::= numBinop(NumBinOp, Num, Num)
+                                            [function, total, symbol(numBinop)]
 
-  rule isTup(tupV(_:ValList)) => true
-  rule isTup(_:Val) => false [owise]
+  rule numBinop(addOp(), natN(L:Int), natN(R:Int)) => ok(natN(L +Int R))
+  rule numBinop(addOp(), intN(L:Int), intN(R:Int)) => ok(intN(L +Int R))
+  // `NAT - NAT` is an `INT`.
+  rule numBinop(subOp(), natN(L:Int), natN(R:Int)) => ok(intN(L -Int R))
+  rule numBinop(subOp(), intN(L:Int), intN(R:Int)) => ok(intN(L -Int R))
+  rule numBinop(mulOp(), natN(L:Int), natN(R:Int)) => ok(natN(L *Int R))
+  rule numBinop(mulOp(), intN(L:Int), intN(R:Int)) => ok(intN(L *Int R))
+  rule numBinop(divOp(), natN(L:Int), natN(R:Int)) => ok(natN(L /Int R))
+    requires R =/=Int 0
+  rule numBinop(divOp(), intN(L:Int), intN(R:Int)) => ok(intN(L /Int R))
+    requires R =/=Int 0
+  rule numBinop(modOp(), natN(L:Int), natN(R:Int)) => ok(natN(L %Int R))
+    requires R =/=Int 0
+  rule numBinop(modOp(), intN(L:Int), intN(R:Int)) => ok(intN(L %Int R))
+    requires R =/=Int 0
+  rule numBinop(_:NumBinOp, _:Num, _:Num) => ERROR [owise]
+
+  // ==========================================================================
+  // Polymorphic comparison operations
+  //
+  //   dec $polyCmpop(polyCmpop, val, val) : bool
+  // ==========================================================================
+
+  syntax Bool ::= polyCmpop(PolyCmpOp, Val, Val)
+                                            [function, total, symbol(polyCmpop)]
+
+  rule polyCmpop(eqOp(), L:Val, R:Val) => L ==K R
+  rule polyCmpop(neOp(), L:Val, R:Val) => L =/=K R
+
+  // ==========================================================================
+  // Numeric comparison operations
+  //
+  //   syntax numCmpRes = ok<bool> | error
+  //   dec $numCmpop(numCmpop, num, num) : numCmpRes
+  // ==========================================================================
+
+  syntax Res ::= numCmpop(NumCmpOp, Num, Num)
+                                            [function, total, symbol(numCmpop)]
+
+  rule numCmpop(ltOp(), natN(L:Int), natN(R:Int)) => ok(L <Int R)
+  rule numCmpop(ltOp(), intN(L:Int), intN(R:Int)) => ok(L <Int R)
+  rule numCmpop(gtOp(), natN(L:Int), natN(R:Int)) => ok(L >Int R)
+  rule numCmpop(gtOp(), intN(L:Int), intN(R:Int)) => ok(L >Int R)
+  rule numCmpop(leOp(), natN(L:Int), natN(R:Int)) => ok(L <=Int R)
+  rule numCmpop(leOp(), intN(L:Int), intN(R:Int)) => ok(L <=Int R)
+  rule numCmpop(geOp(), natN(L:Int), natN(R:Int)) => ok(L >=Int R)
+  rule numCmpop(geOp(), intN(L:Int), intN(R:Int)) => ok(L >=Int R)
+  rule numCmpop(_:NumCmpOp, _:Num, _:Num) => ERROR [owise]
+
+  // ==========================================================================
+  // Pattern tests
+  //
+  //   dec $matches(val, pat) : bool
+  // ==========================================================================
+
+  syntax Bool ::= matches(Val, Pat)         [function, total, symbol(matches)]
+
+  rule matches(injV(valCase(M:MixOp, _:ValList)), injPat(M':MixOp)) => M ==K M'
+  rule matches(listV(Vs:ValList), consPat()) => lengthVals(Vs) >Int 0
+  rule matches(listV(Vs:ValList), fixedPat(N:Int)) => lengthVals(Vs) ==Int N
+  rule matches(listV(Vs:ValList), nilPat()) => lengthVals(Vs) ==Int 0
+  rule matches(optV(someVal(_:Val)), somePat()) => true
+  rule matches(optV(noVal()), somePat()) => false
+  rule matches(optV(someVal(_:Val)), nonePat()) => false
+  rule matches(optV(noVal()), nonePat()) => true
+  rule matches(_:Val, _:Pat) => false [owise]
 
 endmodule

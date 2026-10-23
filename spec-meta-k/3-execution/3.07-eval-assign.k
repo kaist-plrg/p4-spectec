@@ -9,17 +9,15 @@
 //   Assign_arg:  ctx |- arg := val : assignRes    --> assignArg(Arg, Val)
 //   Assign_args: ctx |- arg* := val* : assignRes  --> assignArgs(ArgList, ValList)
 
-requires "3.02-context.k"
+requires "3.03-relation.k"
 
 module ASSIGN
-  imports CONTEXT
+  imports RELATION
   imports BOOL
 
   // ==========================================================================
   // Assign_exp: ctx |- exp := val : ctx
   // ==========================================================================
-
-  syntax KItem ::= assignExp(Exp, Val)
 
   //   rule Assign_exp/variable: C |- VAR id := val : C'
   rule <k> assignExp(varE(X:Id), V:Val) => .K ... </k>
@@ -113,9 +111,6 @@ module ASSIGN
   // The values may still be a computation (a relation call's outputs).
   // ==========================================================================
 
-  syntax KItem ::= assignExps(ExpList, KItem)
-                                            [strict(2)]
-
   rule <k> assignExps(.ExpList, .ValList) => .K ... </k>
   rule <k> assignExps((E:Exp, Es:ExpList), (V:Val, Vs:ValList))
         => assignExp(E, V) ~> assignExps(Es, Vs)
@@ -137,9 +132,6 @@ module ASSIGN
   // ==========================================================================
   // Assign_arg / Assign_args: ctx |- arg(*) := val(*) : assignRes
   // ==========================================================================
-
-  syntax KItem ::= assignArg(Arg, Val)
-                 | assignArgs(ArgList, ValList)
 
   //   rule Assign_arg/exp
   rule <k> assignArg(expA(E:Exp), V:Val) => assignExp(E, V) ... </k>

@@ -13,12 +13,10 @@ module CALL-REL
   // Eval_rul
   // ==========================================================================
 
-  syntax KItem ::= evalRul(RulMatch, RulPath, ValList)
-
   //   rule Eval_rul/succ: the inputs assigned, the premises of the match
   //   and of the path, the outputs
-  rule <k> evalRul(rulMatch(Es:ExpList, PsMatch:PremList),
-                   rulPath(_:Id, Eouts:ExpList, PsPath:PremList),
+  rule <k> evalRul(rul(rulMatch(Es:ExpList, PsMatch:PremList),
+                       rulPath(_:Id, Eouts:ExpList, PsPath:PremList)),
                    Vs:ValList)
         => assignExps(Es, Vs) ~> PsMatch ~> PsPath ~> Eouts
        ...
@@ -36,7 +34,7 @@ module CALL-REL
     => rulTries(Gs, Vs)
   rule rulTries((rulGroup(X:Id, M:RulMatch, (P:RulPath, Ps:RulPathList)), Gs:RulGroupList),
                Vs:ValList)
-    => tryAlt(evalRul(M, P, Vs)) ; rulTries((rulGroup(X, M, Ps), Gs), Vs)
+    => tryAlt(evalRul(rul(M, P), Vs)) ; rulTries((rulGroup(X, M, Ps), Gs), Vs)
 
   // ==========================================================================
   // Call_defined_rel/succ, /fail: the rule paths in a frame of their own
@@ -48,9 +46,7 @@ module CALL-REL
   // the relation's frame.
   // ==========================================================================
 
-  syntax KItem ::= callDefinedRel(RulGroupList, ElsGroupOpt, ValList)
-
-  rule <k> callDefinedRel(Gs:RulGroupList, EG:ElsGroupOpt, Vs:ValList)
+  rule <k> callDefinedRel(relD(_, _, _, Gs:RulGroupList, EG:ElsGroupOpt), Vs:ValList)
         => enterFrame(.Map)
            ~> det(rulTries(Gs, Vs), elsGroupK(EG, Vs))
            ~> endFrame
@@ -61,26 +57,19 @@ module CALL-REL
                                             [function, total, symbol(elsGroupK)]
   rule elsGroupK(noElsGroup(), _:ValList) => unmatch
   rule elsGroupK(someElsGroup(elsGroup(_:Id, M:RulMatch, P:RulPath)), Vs:ValList)
-    => evalRul(M, P, Vs)
+    => evalRul(rul(M, P), Vs)
 
   // ==========================================================================
   // Call_rel_dispatch/defined, /ext
   // ==========================================================================
 
   syntax KItem ::= callRelDispatch(RelDefn, ValList)
-  syntax KItem ::= callExternRel(Id, ValList)
 
-  rule <k> callRelDispatch(relD(_, _, _, Gs:RulGroupList, EG:ElsGroupOpt), Vs:ValList)
-        => callDefinedRel(Gs, EG, Vs)
+  rule <k> callRelDispatch(relD(_, _, _, _, _) #as D:DefinedRelDefn, Vs:ValList)
+        => callDefinedRel(D, Vs)
        ...
        </k>
   rule <k> callRelDispatch(extRelD(X:Id, _, _), Vs:ValList) => callExternRel(X, Vs) ... </k>
-
-  rule <k> callExternRel(X:Id, Vs:ValList)
-        => externReq(JSON2String(jsonOfExternRelRequest(X, Vs)),
-                     externRelK())
-       ...
-       </k>
 
   // ==========================================================================
   // Call_rel: `$find_rel` in the global environment

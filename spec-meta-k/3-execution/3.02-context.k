@@ -36,6 +36,21 @@ module CONTEXT
        <gfenv> M:Map => M[X <- D] </gfenv>
 
   // ==========================================================================
+  // Type definitions
+  //
+  //   dec $find_typ(ctx, id) : typDef?
+  //
+  // The local type definitions, then the global ones.
+  // ==========================================================================
+
+  syntax TypDefOpt ::= findTyp(Map, Map, Id)
+                                            [function, total, symbol(findTyp)]   // gtdenv, ltdenv
+  rule findTyp(_:Map, (X |-> D:TypDef) _:Map, X:Id) => someTypDef(D)
+  rule findTyp((X |-> D:TypDef) _:Map, L:Map, X:Id) => someTypDef(D)
+    requires notBool (X in_keys(L))
+  rule findTyp(_:Map, _:Map, _:Id) => noTypDef() [owise]
+
+  // ==========================================================================
   // Function parameters
   //
   //   dec $resolve_func_param(ctx, id) : id

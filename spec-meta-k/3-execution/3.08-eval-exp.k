@@ -5,12 +5,14 @@
 // An expression at the head of `<k>` evaluates its operands by the
 // strictness attributes of 1.0-syntax.k; the rules here compute on values.
 
-requires "3.06.1-typ-subst.k"
+requires "3.05-eval-ops.k"
+requires "3.06.4-typ-cast.k"
 requires "3.07-eval-assign.k"
 
 module EVAL-EXP
   imports ASSIGN
-  imports TYP
+  imports EVAL-OPS
+  imports TYP-CAST
 
   // ==========================================================================
   // Eval_exp: ctx |- exp : res<val>
@@ -27,39 +29,34 @@ module EVAL-EXP
 
   //   rulegroup Eval_exp/unary
   rule <k> unE(notOp(), boolV(B:Bool)) => boolV(notBool B) ... </k>
-  rule <k> unE(O:NumUnOp, N:Num) => unopNumber(O, N) ... </k>
+  rule <k> unE(O:NumUnOp, N:Num) => numUnop(O, N) ... </k>
   rule <k> unE(_:UnOp, _:Val) => error ... </k> [owise]
 
   //   rulegroup Eval_exp/binary and /compare
-  rule <k> binE(O:BoolBinOp, boolV(Bl:Bool), boolV(Br:Bool)) => boolV(binopBool(O, Bl, Br)) ... </k>
-  rule <k> binE(O:NumBinOp, Nl:Num, Nr:Num) => binopNumber(O, Nl, Nr) ... </k>
+  rule <k> binE(O:BoolBinOp, boolV(Bl:Bool), boolV(Br:Bool)) => boolV(boolBinop(O, Bl, Br)) ... </k>
+  rule <k> binE(O:NumBinOp, Nl:Num, Nr:Num) => unres(numBinop(O, Nl, Nr)) ... </k>
   rule <k> binE(_:BinOp, _:Val, _:Val) => error ... </k> [owise]
 
-  rule <k> cmpE(O:PolyCmpOp, Vl:Val, Vr:Val) => boolV(cmpopPoly(O, Vl, Vr)) ... </k>
-  rule <k> cmpE(O:NumCmpOp, Nl:Num, Nr:Num) => boolV(cmpopNumber(O, Nl, Nr)) ... </k>
+  rule <k> cmpE(O:PolyCmpOp, Vl:Val, Vr:Val) => boolV(polyCmpop(O, Vl, Vr)) ... </k>
+  rule <k> cmpE(O:NumCmpOp, Nl:Num, Nr:Num) => unresBool(numCmpop(O, Nl, Nr)) ... </k>
   rule <k> cmpE(_:CmpOp, _:Val, _:Val) => error ... </k> [owise]
 
   //   rule Eval_exp/upcast, /downcast, /subtype
-  rule <k> upCastE(T:Typ, V:Val) => unres(upcast(updateMap(G, L), T, V)) ... </k>
-       <ltdenv> L:Map </ltdenv>
+  rule <k> upCastE(T:Typ, V:Val) => unres(upcast(G, L, FE, T, V)) ... </k>
        <gtdenv> G:Map </gtdenv>
-  rule <k> downCastE(T:Typ, V:Val) => unres(downcast(updateMap(G, L), T, V)) ... </k>
        <ltdenv> L:Map </ltdenv>
+       <gfenv> FE:Map </gfenv>
+  rule <k> downCastE(T:Typ, V:Val) => unres(downcast(G, L, FE, T, V)) ... </k>
        <gtdenv> G:Map </gtdenv>
-  rule <k> subE(V:Val, T:Typ) => boolV(subtyp(updateMap(G, L), T, V)) ... </k>
        <ltdenv> L:Map </ltdenv>
+       <gfenv> FE:Map </gfenv>
+  rule <k> subE(V:Val, T:Typ) => unresBool(subtyp(FE, updateMap(G, L), T, V)) ... </k>
        <gtdenv> G:Map </gtdenv>
+       <ltdenv> L:Map </ltdenv>
+       <gfenv> FE:Map </gfenv>
 
   //   rulegroup Eval_exp/match
-  rule <k> matchE(injV(valCase(M':MixOp, _:ValList)), injPat(M:MixOp)) => boolV(M ==K M') ... </k>
-  rule <k> matchE(listV(Vs:ValList), consPat()) => boolV(lengthVals(Vs) >Int 0) ... </k>
-  rule <k> matchE(listV(Vs:ValList), fixedPat(N:Int)) => boolV(lengthVals(Vs) ==Int N) ... </k>
-  rule <k> matchE(listV(Vs:ValList), nilPat()) => boolV(lengthVals(Vs) ==Int 0) ... </k>
-  rule <k> matchE(optV(someVal(_:Val)), somePat()) => boolV(true) ... </k>
-  rule <k> matchE(optV(noVal()), somePat()) => boolV(false) ... </k>
-  rule <k> matchE(optV(someVal(_:Val)), nonePat()) => boolV(false) ... </k>
-  rule <k> matchE(optV(noVal()), nonePat()) => boolV(true) ... </k>
-  rule <k> matchE(_:Val, _:Pat) => error ... </k> [owise]
+  rule <k> matchE(V:Val, P:Pat) => boolV(matches(V, P)) ... </k>
 
   //   rule Eval_exp/cons
   rule <k> consE(V:Val, listV(Vs:ValList)) => listV(V, Vs) ... </k>
@@ -125,12 +122,17 @@ module EVAL-EXP
   //   rule Eval_exp/call
   //
   //   rule Eval_arg/exp, /fun
-  //   rule Eval_targs: the type arguments under the local tdenv's aliases
   rule <k> expA(V:Val) => V ... </k>
-  rule <k> funA(X:Id) => funcV(X) ... </k>
+  rule <k> funA(X:Id) => funcV(resolveFuncParam(X, LF)) ... </k>
+       <lfenv> LF:Map </lfenv>
 
-  rule <k> callE(X:Id, Ts:TArgList, Vs:ValList) => callFunc(X, substTargs(L, Ts), Vs) ... </k>
+  //   rule Eval_targs: the type arguments under the local tdenv's aliases
+  rule <k> callE(X:Id, Ts:TArgList, Vs:ValList) => callTargs(X, substTargs(thetaOfTdenv(L), Ts), Vs) ... </k>
        <ltdenv> L:Map </ltdenv>
+
+  syntax KItem ::= callTargs(Id, Res, ValList)
+  rule <k> callTargs(X:Id, ok(Ts:TArgList), Vs:ValList) => callFunc(X, Ts, Vs) ... </k>
+  rule <k> callTargs(_:Id, ERROR, _:ValList) => error ... </k>
 
   //   rulegroup Eval_exp/iter
   syntax KItem ::= evalIter(VarrOpt, Exp, IterExp)
@@ -182,8 +184,6 @@ module EVAL-EXP
   // A path is the chain of the `dotE`/`idxE`/`sliceE` steps from its root.
   // ==========================================================================
 
-  syntax Exp ::= path(Val, Path)
-
   rule <k> path(V:Val, rootPath()) => V ... </k>
   rule <k> path(V:Val, dotPath(P:Path, A:Atom)) => dotE(path(V, P), A) ... </k>
   rule <k> path(V:Val, idxPath(P:Path, Ei:Exp)) => idxE(path(V, P), Ei) ... </k>
@@ -196,8 +196,7 @@ module EVAL-EXP
   // updated with the result.
   // ==========================================================================
 
-  syntax Exp ::= upd(Val, Path, Exp)        [strict(3)]
-               | updIdx(Exp, Exp, Val)      [seqstrict(1, 2)]
+  syntax Exp ::= updIdx(Exp, Exp, Val)      [seqstrict(1, 2)]
                | updSlice(Exp, Exp, Exp, Val)
                                             [seqstrict(1, 2, 3)]
                | updDot(Exp, Atom, Val)     [strict(1)]
@@ -275,11 +274,5 @@ module EVAL-EXP
     => valField(A, Vn), updateField(Fs, A, Vn)
   rule updateField((F:ValField, Fs:ValFieldList), A:Atom, Vn:Val)
     => F, updateField(Fs, A, Vn) [owise]
-
-  // ==========================================================================
-  // Call_func forward declaration.
-  // ==========================================================================
-
-  syntax KItem ::= callFunc(Id, TArgList, ValList)
 
 endmodule

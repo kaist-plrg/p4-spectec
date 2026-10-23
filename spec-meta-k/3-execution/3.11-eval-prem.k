@@ -10,8 +10,6 @@ requires "3.08-eval-exp.k"
 module PREM
   imports EVAL-EXP
 
-  syntax KItem ::= callRel(Id, ValList)
-
   // ==========================================================================
   // Eval_prems: ctx |- prem* : res<ctx>
   // ==========================================================================

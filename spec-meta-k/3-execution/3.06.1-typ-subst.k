@@ -1,224 +1,192 @@
-// Type substitution, type casts, and value-type matching.
+// Type substitution.
 //
-// Mirrors spec-meta/3-execution/3.05.1-typ-subst.watsup to
-// 3.05.4-typ-cast.watsup.
+// Mirrors spec-meta/3-execution/3.05.1-typ-subst.watsup.
 //
-//   dec $subst_typ(theta, typ) : typ
-//   dec $upcast(ctx, typ, val) : res<val>
-//   dec $downcast(ctx, typ, val) : res<val>
-//   dec $subtyp(tdenv, typ, val) : bool
-//   dec $subtyps(tdenv, typ*, val*) : bool
-//
-// A substitution is a tdenv of aliases (`tdenvOf`), and the casts
-// take the merged tdenv `updateMap(gtdenv, ltdenv)` like `$subtyp` does.
+//   syntax theta = map<id, typ>      a K Map, Id |-> Typ
 
-requires "3.02-context.k"
-requires "3.05-eval-ops.k"
+requires "3.03-relation.k"
 
-module TYP
-  imports CONTEXT
-  imports EVAL-OPS
-  imports MAP
-  imports BOOL
+module TYP-SUBST
+  imports RELATION
+  imports SET
   imports K-EQUAL
 
   // ==========================================================================
-  // Type substitution
+  // Substitution environments
+  //
+  //   dec $theta_of_tdenv(tdenv) : theta
+  //
+  // The aliases without type parameters of a tdenv.
   // ==========================================================================
 
-  // A substitution is a tdenv of aliases, one per type parameter.
-  syntax Map ::= tdenvOf(TParamList, TArgList)
-                                            [function, symbol(tdenvOf)]
+  syntax Map ::= thetaOfTdenv(Map)          [function, total, symbol(thetaOfTdenv)]
+               | thetaOfTdenv(List, Map)    [function, total, symbol(thetaOfTdenvKeys)]
+  rule thetaOfTdenv(M:Map) => thetaOfTdenv(keys_list(M), M)
+  rule thetaOfTdenv(.List, _:Map) => .Map
+  rule thetaOfTdenv(ListItem(X:KItem) Xs:List,
+                    ((X |-> typD(_, .TParamList, aliasDT(T:Typ))) _:Map) #as M:Map)
+    => (X |-> T) thetaOfTdenv(Xs, M)
+  rule thetaOfTdenv(ListItem(_) Xs:List, M:Map) => thetaOfTdenv(Xs, M) [owise]
 
-  rule tdenvOf(.TParamList, .TArgList) => .Map
-  rule tdenvOf((X:Id, Xs:TParamList), (T:Typ, Ts:TArgList))
-    => (X |-> typD(X, .TParamList, aliasDT(T))) tdenvOf(Xs, Ts)
+  // `{ (tparam ':' targ)* }`: as many arguments as parameters (`sameArity`).
+  syntax Map ::= thetaOf(TParamList, TArgList)
+                                            [function, symbol(thetaOf)]
+  rule thetaOf(.TParamList, .TArgList) => .Map
+  rule thetaOf((P:Id, Ps:TParamList), (T:Typ, Ts:TArgList)) => (P |-> T) thetaOf(Ps, Ts)
 
-  syntax Typ ::= substTyp(Map, Typ)         [function, symbol(substTyp)]
-  syntax TypList ::= substTyps(Map, TypList)
-                                            [function, total, symbol(substTyps)]
-  syntax TArgList ::= substTargs(Map, TArgList)
-                                            [function, total, symbol(substTargs)]
+  syntax Bool ::= sameArity(TParamList, TArgList)
+                                            [function, total, symbol(sameArity)]
+  rule sameArity(.TParamList, .TArgList) => true
+  rule sameArity((_:Id, Ps:TParamList), (_:Typ, Ts:TArgList)) => sameArity(Ps, Ts)
+  rule sameArity(_:TParamList, _:TArgList) => false [owise]
 
-  rule substTyp(_:Map, T:OpTyp) => T
+  // ==========================================================================
+  // Type names and fresh binders
+  //
+  //   dec $ids_typ(typ) : id*
+  //   dec $ids_typs(typ*) : id*
+  //   dec $fresh_id(id, id*) : id
+  //   dec $fresh_ids(id*, id*) : id*
+  //
+  // The names used are a `Set`; fresh names are made in order.
+  // ==========================================================================
+
+  syntax Set ::= idsTyp(Typ)                [function, total, symbol(idsTyp)]
+               | idsTyps(TypList)           [function, total, symbol(idsTyps)]
+               | idsTargs(TArgList)         [function, total, symbol(idsTargs)]
+               | idsTParams(TParamList)     [function, total, symbol(idsTParams)]
+
+  rule idsTyp(varT(X:Id, Ts:TArgList)) => SetItem(X) |Set idsTargs(Ts)
+  rule idsTyp(tupT(Ts:TypList)) => idsTyps(Ts)
+  rule idsTyp(iterT(T:Typ, _:Iter)) => idsTyp(T)
+  rule idsTyp(funcT(Ps:TParamList, Ts:TypList, T:Typ))
+    => idsTParams(Ps) |Set idsTyps(Ts) |Set idsTyp(T)
+  rule idsTyp(_:Typ) => .Set [owise]
+
+  rule idsTyps(.TypList) => .Set
+  rule idsTyps(T:Typ, Ts:TypList) => idsTyp(T) |Set idsTyps(Ts)
+
+  rule idsTargs(.TArgList) => .Set
+  rule idsTargs(T:Typ, Ts:TArgList) => idsTyp(T) |Set idsTargs(Ts)
+
+  rule idsTParams(.TParamList) => .Set
+  rule idsTParams(P:Id, Ps:TParamList) => SetItem(P) |Set idsTParams(Ps)
+
+  // The names of a substitution: `id* ++ $ids_typs(typ_arg*)`.
+  syntax Set ::= idsTheta(Map)              [function, total, symbol(idsTheta)]
+               | idsTypItems(List)          [function, total, symbol(idsTypItems)]
+  rule idsTheta(Th:Map) => keys(Th) |Set idsTypItems(values(Th))
+  rule idsTypItems(.List) => .Set
+  rule idsTypItems(ListItem(T:Typ) Ts:List) => idsTyp(T) |Set idsTypItems(Ts)
+
+  syntax Id ::= freshId(Id, Set)            [function, total, symbol(freshId)]
+  rule freshId(X:Id, Used:Set) => X
+    requires notBool (X in Used)
+  rule freshId(X:Id, Used:Set) => freshId({X}:>String +String "'", Used)
+    requires X in Used
+
+  syntax TParamList ::= freshIds(TParamList, Set)
+                                            [function, total, symbol(freshIds)]
+                      | freshIdsCons(Id, TParamList, Set)
+                                            [function, total, symbol(freshIdsCons)]
+  rule freshIds(.TParamList, _:Set) => .TParamList
+  rule freshIds((X:Id, Xs:TParamList), Used:Set) => freshIdsCons(freshId(X, Used), Xs, Used)
+  rule freshIdsCons(Y:Id, Xs:TParamList, Used:Set) => Y, freshIds(Xs, SetItem(Y) |Set Used)
+
+  // ==========================================================================
+  // Substitution in types and type sequences
+  //
+  //   syntax typRes = ok<typ> | error
+  //   dec $subst_typ(theta, typ) : typRes
+  //   dec $subst_typs(theta, typ*) : typsRes
+  //
+  // A parameterized use of a substituted name is an error.
+  // ==========================================================================
+
+  syntax Res ::= substTyp(Map, Typ)         [function, total, symbol(substTyp)]
+               | substTyps(Map, TypList)    [function, total, symbol(substTyps)]
+               | substTargs(Map, TArgList)  [function, total, symbol(substTargs)]
+
+  rule substTyp(_:Map, T:OpTyp) => ok(T)
+  rule substTyp((X |-> T:Typ) _:Map, varT(X:Id, .TArgList)) => ok(T)
+  rule substTyp(Th:Map, varT(X:Id, Ts:TArgList)) => resVarT(X, substTargs(Th, Ts))
+    requires notBool (X in_keys(Th))
+  rule substTyp(Th:Map, tupT(Ts:TypList)) => resTupT(substTyps(Th, Ts))
+  rule substTyp(Th:Map, iterT(T:Typ, I:Iter)) => resIterT(substTyp(Th, T), I)
   rule substTyp(Th:Map, funcT(Ps:TParamList, Ts:TypList, T:Typ))
-    => funcT(Ps, substTyps(Th, Ts), substTyp(Th, T))
-  rule substTyp((X:Id |-> typD(X, .TParamList, aliasDT(T:Typ))) _:Map, varT(X, .TArgList)) => T
-  rule substTyp(Th:Map, varT(X:Id, Ts:TArgList)) => varT(X, substTargs(Th, Ts)) [owise]
-  rule substTyp(Th:Map, tupT(Ts:TypList)) => tupT(substTyps(Th, Ts))
-  rule substTyp(Th:Map, iterT(T:Typ, I:Iter)) => iterT(substTyp(Th, T), I)
+    => substFuncTyp(Th, freshIds(Ps, idsTheta(Th) |Set idsTyp(funcT(Ps, Ts, T))), Ps, Ts, T)
+  rule substTyp(_:Map, _:Typ) => ERROR [owise]
 
-  rule substTyps(_:Map, .TypList) => .TypList
-  rule substTyps(Th:Map, (T:Typ, Ts:TypList)) => substTyp(Th, T), substTyps(Th, Ts)
+  rule substTyps(_:Map, .TypList) => ok(.TypList)
+  rule substTyps(Th:Map, (T:Typ, Ts:TypList)) => consRes(substTyp(Th, T), substTyps(Th, Ts))
 
-  rule substTargs(_:Map, .TArgList) => .TArgList
-  rule substTargs(Th:Map, (T:Typ, Ts:TArgList)) => substTyp(Th, T), substTargs(Th, Ts)
+  rule substTargs(_:Map, .TArgList) => ok(.TArgList)
+  rule substTargs(Th:Map, (T:Typ, Ts:TArgList)) => consRes(substTyp(Th, T), substTargs(Th, Ts))
+
+  // A function type: its type parameters renamed apart from the names of
+  // the substitution and of the type, then its parameter and result types
+  // substituted.
+  syntax Res ::= substFuncTyp(Map, TParamList, TParamList, TypList, Typ)
+                                            [function, total, symbol(substFuncTyp)]
+  rule substFuncTyp(Th:Map, PsF:TParamList, Ps:TParamList, Ts:TypList, T:Typ)
+    => resFuncT(PsF,
+                substTypsRes(Th, substTyps(thetaFresh(Ps, PsF), Ts)),
+                substTypRes(Th, substTyp(thetaFresh(Ps, PsF), T)))
+
+  // `{ (tparam ':' (VAR tparam_fresh eps))* }`
+  syntax Map ::= thetaFresh(TParamList, TParamList)
+                                            [function, symbol(thetaFresh)]
+  rule thetaFresh(.TParamList, .TParamList) => .Map
+  rule thetaFresh((P:Id, Ps:TParamList), (Q:Id, Qs:TParamList))
+    => (P |-> varT(Q, .TArgList)) thetaFresh(Ps, Qs)
+
+  // Substitution into an `OK` type or types.
+  syntax Res ::= substTypRes(Map, Res)      [function, symbol(substTypRes)]
+               | substTypsRes(Map, Res)     [function, symbol(substTypsRes)]
+  rule substTypRes(Th:Map, ok(T:Typ)) => substTyp(Th, T)
+  rule substTypRes(_:Map, F:Failure) => F
+  rule substTypsRes(Th:Map, ok(Ts:TypList)) => substTyps(Th, Ts)
+  rule substTypsRes(_:Map, F:Failure) => F
+
+  // The type built from `OK` parts, or the first failure.
+  syntax Res ::= resVarT(Id, Res)           [function, symbol(resVarT)]
+               | resTupT(Res)               [function, symbol(resTupT)]
+               | resIterT(Res, Iter)        [function, symbol(resIterT)]
+               | resFuncT(TParamList, Res, Res)
+                                            [function, symbol(resFuncT)]
+  rule resVarT(X:Id, ok(Ts:TArgList)) => ok(varT(X, Ts))
+  rule resVarT(_:Id, F:Failure) => F
+  rule resTupT(ok(Ts:TypList)) => ok(tupT(Ts))
+  rule resTupT(F:Failure) => F
+  rule resIterT(ok(T:Typ), I:Iter) => ok(iterT(T, I))
+  rule resIterT(F:Failure, _:Iter) => F
+  rule resFuncT(Ps:TParamList, ok(Ts:TypList), ok(T:Typ)) => ok(funcT(Ps, Ts, T))
+  rule resFuncT(_:TParamList, F:Failure, _:Res) => F
+  rule resFuncT(_:TParamList, ok(_), F:Failure) => F
+
+  // ==========================================================================
+  // Type sequence helpers
+  // ==========================================================================
 
   syntax TypList ::= typsOfTargs(TArgList)  [function, total, symbol(typsOfTargs)]
   rule typsOfTargs(.TArgList) => .TypList
   rule typsOfTargs((T:Typ, Ts:TArgList)) => T, typsOfTargs(Ts)
 
-  // ==========================================================================
-  // Upcasts
-  //
-  //   def $upcast(C, INT, INT i) = OK (INT i)
-  //   def $upcast(C, INT, NAT n) = OK (INT n)
-  //   def $upcast(C, INT, val) = ERROR          -- if ~(val <: num)
-  //   def $upcast(C, VAR id targ*, val) = $upcast(C, typ', val)
-  //   def $upcast(C, TUP typ*, TUP val*) = OK (TUP val_upcast*)
-  //   def $upcast(C, TUP typ*, val) = ERROR     -- if ~$is_tup(val)
-  //   def $upcast(C, ITER typ QUEST, OPT val?) = ...
-  //   def $upcast(C, ITER typ STAR, LIST val*) = ...
-  //   def $upcast(C, typ, val) = OK val        -- otherwise
-  // ==========================================================================
+  syntax Int ::= lengthTyps(TypList)        [function, total, symbol(lengthTyps)]
+               | lengthTParams(TParamList)  [function, total, symbol(lengthTParams)]
+  rule lengthTyps(.TypList) => 0
+  rule lengthTyps(_:Typ, Ts:TypList) => 1 +Int lengthTyps(Ts)
+  rule lengthTParams(.TParamList) => 0
+  rule lengthTParams(_:Id, Ps:TParamList) => 1 +Int lengthTParams(Ps)
 
-  syntax Res ::= upcast(Map, Typ, Val)      [function, symbol(upcast)]
+  // `typ* ++ [ typ ]`
+  syntax TypList ::= snocTyp(TypList, Typ)  [function, total, symbol(snocTyp)]
+  rule snocTyp(.TypList, T:Typ) => T, .TypList
+  rule snocTyp((T':Typ, Ts:TypList), T:Typ) => T', snocTyp(Ts, T)
 
-  rule upcast(_:Map, intT(), intN(I:Int)) => ok(intN(I))
-  rule upcast(_:Map, intT(), natN(N:Int)) => ok(intN(N))
-  rule upcast(_:Map, intT(), V:Val) => ERROR
-    requires notBool isNum(V)
-
-  rule upcast(((X:Id |-> typD(X, Ps:TParamList, aliasDT(T:Typ))) _:Map) #as E:Map,
-              varT(X, Ts:TArgList), V:Val)
-    => upcast(E, substTyp(tdenvOf(Ps, Ts), T), V)
-
-  rule upcast(E:Map, tupT(Ts:TypList), tupV(Vs:ValList)) => resTup(upcasts(E, Ts, Vs))
-  rule upcast(_:Map, tupT(_:TypList), V:Val) => ERROR
-    requires notBool isTup(V)
-
-  rule upcast(_:Map, iterT(_:Typ, quest()), optV(noVal())) => ok(optV(noVal()))
-  rule upcast(E:Map, iterT(T:Typ, quest()), optV(someVal(V:Val))) => resOpt(upcast(E, T, V))
-  rule upcast(E:Map, iterT(T:Typ, star()), listV(Vs:ValList))
-    => resList(upcasts(E, Typs2Repeat(T, Vs), Vs))
-
-  rule upcast(_:Map, _:Typ, V:Val) => ok(V) [owise]
-
-  // ==========================================================================
-  // Downcasts
-  //
-  //   def $downcast(C, NAT, NAT n) = OK (NAT n)
-  //   def $downcast(C, NAT, INT i) = OK (NAT n)  -- if n = i
-  //   def $downcast(C, NAT, val) = ERROR          -- if ~(val <: num)
-  //   ... (as for upcasts)
-  // ==========================================================================
-
-  syntax Res ::= downcast(Map, Typ, Val)    [function, symbol(downcast)]
-
-  rule downcast(_:Map, natT(), natN(N:Int)) => ok(natN(N))
-  rule downcast(_:Map, natT(), intN(I:Int)) => ok(natN(I))
-    requires I >=Int 0
-  rule downcast(_:Map, natT(), V:Val) => ERROR
-    requires notBool isNum(V)
-
-  rule downcast(((X:Id |-> typD(X, Ps:TParamList, aliasDT(T:Typ))) _:Map) #as E:Map,
-                varT(X, Ts:TArgList), V:Val)
-    => downcast(E, substTyp(tdenvOf(Ps, Ts), T), V)
-
-  rule downcast(E:Map, tupT(Ts:TypList), tupV(Vs:ValList)) => resTup(downcasts(E, Ts, Vs))
-  rule downcast(_:Map, tupT(_:TypList), V:Val) => ERROR
-    requires notBool isTup(V)
-
-  rule downcast(_:Map, iterT(_:Typ, quest()), optV(noVal())) => ok(optV(noVal()))
-  rule downcast(E:Map, iterT(T:Typ, quest()), optV(someVal(V:Val))) => resOpt(downcast(E, T, V))
-  rule downcast(E:Map, iterT(T:Typ, star()), listV(Vs:ValList))
-    => resList(downcasts(E, Typs2Repeat(T, Vs), Vs))
-
-  rule downcast(_:Map, _:Typ, V:Val) => ok(V) [owise]
-
-  // ==========================================================================
-  // Cast helpers
-  // ==========================================================================
-
-  syntax Res ::= upcasts(Map, TypList, ValList)
-                                            [function, symbol(upcasts)]
-               | downcasts(Map, TypList, ValList)
-                                            [function, symbol(downcasts)]
-
-  rule upcasts(_:Map, .TypList, .ValList) => ok(.ValList)
-  rule upcasts(E:Map, (T:Typ, Ts:TypList), (V:Val, Vs:ValList))
-    => consRes(upcast(E, T, V), upcasts(E, Ts, Vs))
-
-  rule downcasts(_:Map, .TypList, .ValList) => ok(.ValList)
-  rule downcasts(E:Map, (T:Typ, Ts:TypList), (V:Val, Vs:ValList))
-    => consRes(downcast(E, T, V), downcasts(E, Ts, Vs))
-
-  syntax Res ::= resTup(Res)                [function, total, symbol(resTup)]
-               | resList(Res)               [function, total, symbol(resList)]
-               | resOpt(Res)                [function, total, symbol(resOpt)]
-
-  rule resTup(ok(Vs:ValList)) => ok(tupV(Vs))
-  rule resTup(_:Res) => ERROR [owise]
-  rule resList(ok(Vs:ValList)) => ok(listV(Vs))
-  rule resList(_:Res) => ERROR [owise]
-  rule resOpt(ok(V:Val)) => ok(optV(someVal(V)))
-  rule resOpt(_:Res) => ERROR [owise]
-
-  syntax TypList ::= Typs2Repeat(Typ, ValList)
-                                            [function, total, symbol(Typs2Repeat)]
-
-  rule Typs2Repeat(_:Typ, .ValList) => .TypList
-  rule Typs2Repeat(T:Typ, (_:Val, Vs:ValList)) => T, Typs2Repeat(T, Vs)
-
-  // ==========================================================================
-  // Value-type matching
-  //
-  //   dec $subtyp(tdenv, typ, val) : bool
-  //   dec $subtyps(tdenv, typ*, val*) : bool
-  // ==========================================================================
-
-  syntax Bool ::= subtyp(Map, Typ, Val)     [function, symbol(subtyp)]
-                | subtyps(Map, TypList, ValList)
-                                            [function, total, symbol(subtyps)]
-
-  rule subtyp(_:Map, boolT(), boolV(_:Bool)) => true
-  rule subtyp(_:Map, natT(), natN(_:Int)) => true
-  rule subtyp(_:Map, natT(), intN(I:Int)) => I >=Int 0
-  rule subtyp(_:Map, intT(), _:Num) => true
-  rule subtyp(_:Map, textT(), textV(_:String)) => true
-
-  rule subtyp((X:Id |-> extTypD(X)) _:Map, varT(X, _:TArgList), extV(_:JSON)) => true
-  rule subtyp(((X:Id |-> typD(X, Ps:TParamList, aliasDT(T:Typ))) _:Map) #as E:Map,
-              varT(X, Ts:TArgList), V:Val)
-    => subtyp(E, substTyp(tdenvOf(Ps, Ts), T), V)
-  rule subtyp(((X:Id |-> typD(X, Ps:TParamList, variantDT(Cs:TypCaseList))) _:Map) #as E:Map,
-              varT(X, Ts:TArgList), injV(valCase(M:MixOp, Vs:ValList)))
-    => subtypCases(E, tdenvOf(Ps, Ts), M, Cs, Vs)
-  rule subtyp(((X:Id |-> typD(X, Ps:TParamList, structDT(Fs:TypFieldList))) _:Map) #as E:Map,
-              varT(X, Ts:TArgList), strV(Gs:ValFieldList))
-    => subtypFields(E, tdenvOf(Ps, Ts), Fs, Gs)
-
-  rule subtyp(E:Map, tupT(Ts:TypList), tupV(Vs:ValList)) => subtyps(E, Ts, Vs)
-
-  rule subtyp(_:Map, iterT(_:Typ, quest()), optV(noVal())) => true
-  rule subtyp(E:Map, iterT(T:Typ, quest()), optV(someVal(V:Val)))
-    => subtyp(E, T, V)
-  rule subtyp(E:Map, iterT(T:Typ, star()), listV(Vs:ValList))
-    => subtyps(E, Typs2Repeat(T, Vs), Vs)
-
-  rule subtyp(_:Map, _:Typ, _:Val) => false [owise]
-
-  // The case of the mixop, if any, with its types substituted.
-  syntax Bool ::= subtypCases(Map, Map, MixOp, TypCaseList, ValList)
-                                            [function, total, symbol(subtypCases)]
-  rule subtypCases(E:Map, Th:Map, M:MixOp, (typCase(M, Ts:TypList), _:TypCaseList), Vs:ValList)
-    => subtyps(E, substTyps(Th, Ts), Vs)
-  rule subtypCases(E:Map, Th:Map, M:MixOp, (_:TypCase, Cs:TypCaseList), Vs:ValList)
-    => subtypCases(E, Th, M, Cs, Vs) [owise]
-  rule subtypCases(_:Map, _:Map, _:MixOp, .TypCaseList, _:ValList) => false
-
-  syntax Bool ::= subtypFields(Map, Map, TypFieldList, ValFieldList)
-                                            [function, total, symbol(subtypFields)]
-  rule subtypFields(_:Map, _:Map, .TypFieldList, .ValFieldList) => true
-  rule subtypFields(E:Map, Th:Map,
-                    (typField(A:Atom, T:Typ), Fs:TypFieldList),
-                    (valField(A, V:Val), Gs:ValFieldList))
-    => subtyp(E, substTyp(Th, T), V) andBool subtypFields(E, Th, Fs, Gs)
-  rule subtypFields(_:Map, _:Map, _:TypFieldList, _:ValFieldList) => false [owise]
-
-  rule subtyps(_:Map, .TypList, .ValList) => true
-  rule subtyps(E:Map, (T:Typ, Ts:TypList), (V:Val, Vs:ValList))
-    => subtyp(E, T, V) andBool subtyps(E, Ts, Vs)
-  rule subtyps(_:Map, _:TypList, _:ValList) => false [owise]
+  // `$repeat_<typ>(typ, n)`
+  syntax TypList ::= repeatTyp(Typ, Int)    [function, total, symbol(repeatTyp)]
+  rule repeatTyp(_:Typ, N:Int) => .TypList requires N <=Int 0
+  rule repeatTyp(T:Typ, N:Int) => T, repeatTyp(T, N -Int 1) requires N >Int 0
 
 endmodule
