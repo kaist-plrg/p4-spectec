@@ -169,8 +169,8 @@ rule Pure_prem/dbg:
   -- Pure_exp: |- exp
 
 rule Pure_prem/iter:
-  AC |- ITER prem _
-  -- Pure_prem: AC |- prem
+  AC |- ITER premAL _
+  -- Pure_prem: AC |- premAL
 
 rule Pure_prem/singleton:
   AC |- IF ((MATCH exp (INJ _)) '#' _)
@@ -195,15 +195,15 @@ rulegroup Pure_otherwise/typ {
 rulegroup Pure_otherwise/rel {
 
   rule Pure_otherwise/extern:
-    AC |- externRelDefn
+    AC |- externRelDefnAL
 
   rule Pure_otherwise/none:
     AC |- REL _ ':' _ '->' _ '=' _ eps
 
   rule Pure_otherwise/else:
-    AC |- REL _ ':' _ '->' _ '=' _ (_ ':' (_ ':' exp_in* '->' exp_out* '-' prem*))
+    AC |- REL _ ':' _ '->' _ '=' _ (_ ':' (_ ':' exp_in* '->' exp_out* '-' premAL*))
     -- (Pure_exp: |- exp_in)*
-    -- (Pure_prem: AC |- prem)*
+    -- (Pure_prem: AC |- premAL)*
     -- (Pure_exp: |- exp_out)*
 
 }
@@ -217,16 +217,16 @@ rulegroup Pure_otherwise/func {
     AC |- builtinFuncDefn
 
   rule Pure_otherwise/table:
-    AC |- tableFuncDefn
+    AC |- tableFuncDefnAL
 
   rule Pure_otherwise/none:
     AC |- FUNC _ _ _ ':' _ '=' _ eps
 
   rule Pure_otherwise/else:
-    AC |- FUNC _ tparam* _ ':' _ '=' _ (arg* '=' exp '-' prem*)
+    AC |- FUNC _ tparam* _ ':' _ '=' _ (arg* '=' exp '-' premAL*)
     -- if AC_func = $add_tparams(AC, tparam*)
     -- (Pure_arg: |- arg)*
-    -- (Pure_prem: AC_func |- prem)*
+    -- (Pure_prem: AC_func |- premAL)*
     -- Pure_exp: |- exp
 
 }

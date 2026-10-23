@@ -24,14 +24,14 @@ pub(super) const LET: &str = "LET exp '=' exp";
 pub(super) const RUL: &str = "id ':' exp* '->' exp* '-' premAL*";
 pub(super) const RULGROUP: &str = "id ':' rulAL*";
 pub(super) const ELSGROUP: &str = "id ':' rulAL";
-pub(super) const CLAUSE: &str = "arg* '=' exp '-' prem*";
+pub(super) const CLAUSE: &str = "arg* '=' exp '-' premAL*";
 
 // == Definitions
 
 pub(super) const EXTREL: &str = "EXTREL id ':' typ* '->' typ*";
-pub(super) const REL_DEF: &str = "REL id ':' typ* '->' typ* '=' rulGroup* elsGroup?";
-pub(super) const TABLEFUNC: &str = "TABLEFUNC id param* ':' typ '=' tblRow*";
-pub(super) const FUNC_DEF: &str = "FUNC id tparam* param* ':' typ '=' clause* elsClause?";
+pub(super) const REL_DEF: &str = "REL id ':' typ* '->' typ* '=' rulGroupAL* elsGroupAL?";
+pub(super) const TABLEFUNC: &str = "TABLEFUNC id param* ':' typ '=' tblRowAL*";
+pub(super) const FUNC_DEF: &str = "FUNC id tparam* param* ':' typ '=' clauseAL* elsClauseAL?";
 
 // == Results
 

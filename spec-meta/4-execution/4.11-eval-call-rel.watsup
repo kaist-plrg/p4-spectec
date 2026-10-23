@@ -11,14 +11,14 @@ relation Eval_rul:
 rulegroup Eval_rul {
 
   rule Eval_rul/premises-failure:
-    C |- (_ ':' exp* '->' _ '-' prem*) `( val* `) : failure
+    C |- (_ ':' exp* '->' _ '-' premAL*) `( val* `) : failure
     -- Assign_exps: C |- exp* := val* : OK C'
-    -- Eval_prems: C' |- prem* : failure
+    -- Eval_prems: C' |- premAL* : failure
 
   rule Eval_rul/succ:
-    C |- (_ ':' exp* '->' exp_out* '-' prem*) `( val* `) : relRes
+    C |- (_ ':' exp* '->' exp_out* '-' premAL*) `( val* `) : relRes
     -- Assign_exps: C |- exp* := val* : OK C'
-    -- Eval_prems: C' |- prem* : OK C''
+    -- Eval_prems: C' |- premAL* : OK C''
     -- Eval_exps: C'' |- exp_out* : relRes
 
 }
@@ -96,8 +96,8 @@ def $ruls_of_rulgroup(id ':' rulAL*) = rulAL*
 dec $ruls_of_rulgroups(rulGroupAL*) : rulAL*
   hint(prose_in "the rules of rule groups" %0 "in order")
 def $ruls_of_rulgroups(eps) = eps
-def $ruls_of_rulgroups(rulGroup_h :: rulGroup_t*)
-  = $ruls_of_rulgroup(rulGroup_h) ++ $ruls_of_rulgroups(rulGroup_t*)
+def $ruls_of_rulgroups(rulGroupAL_h :: rulGroupAL_t*)
+  = $ruls_of_rulgroup(rulGroupAL_h) ++ $ruls_of_rulgroups(rulGroupAL_t*)
 
 dec $rul_of_elsgroup(elsGroupAL) : rulAL
   hint(prose_in "the rule of otherwise group" %0)
@@ -106,22 +106,22 @@ def $rul_of_elsgroup(id ':' rulAL) = rulAL
 rulegroup Call_defined_rel {
 
   rule Call_defined_rel/unmatch:
-    C |- definedRelDefn `( val* `) : relRes
-    -- if REL _ ':' _ '->' _ '=' rulGroup* elsGroup? = definedRelDefn
+    C |- definedRelDefnAL `( val* `) : relRes
+    -- if REL _ ':' _ '->' _ '=' rulGroupAL* elsGroupAL? = definedRelDefnAL
     -- if C_local = C[ .LOCAL = $empty_localLayer ]
-    -- if rulAL* = $ruls_of_rulgroups(rulGroup*)
+    -- if rulAL* = $ruls_of_rulgroups(rulGroupAL*)
     -- Eval_ruls:
         C_local |- rulAL* `( val* `) : UNMATCH
-    -- if (rulAL_els = $rul_of_elsgroup(elsGroup))?
+    -- if (rulAL_els = $rul_of_elsgroup(elsGroupAL))?
     -- (Eval_rul:
         C_local |- rulAL_els `( val* `) : relRes_els)?
     -- if relRes = $deopt_<relRes>(relRes_els?, UNMATCH)
 
   rule Call_defined_rel/result:
-    C |- definedRelDefn `( val* `) : relRes
-    -- if REL _ ':' _ '->' _ '=' rulGroup* elsGroup? = definedRelDefn
+    C |- definedRelDefnAL `( val* `) : relRes
+    -- if REL _ ':' _ '->' _ '=' rulGroupAL* elsGroupAL? = definedRelDefnAL
     -- if C_local = C[ .LOCAL = $empty_localLayer ]
-    -- if rulAL* = $ruls_of_rulgroups(rulGroup*)
+    -- if rulAL* = $ruls_of_rulgroups(rulGroupAL*)
     -- Eval_ruls:
         C_local |- rulAL* `( val* `) : relRes
     -- if relRes =/= UNMATCH
@@ -129,7 +129,7 @@ rulegroup Call_defined_rel {
 }
 
 rule Call_defined_rel/error:
-  C |- definedRelDefn `( val* `) : ERROR
+  C |- definedRelDefnAL `( val* `) : ERROR
   -- otherwise
 
 ;; Relation call
@@ -144,9 +144,9 @@ rulegroup Call_rel {
 
   rule Call_rel/defined:
     C |- id `( val* `) : relRes
-    -- if definedRelDefn = $find_rel(C, id)
+    -- if definedRelDefnAL = $find_rel(C, id)
     -- Call_defined_rel:
-        C |- definedRelDefn `( val* `) : relRes
+        C |- definedRelDefnAL `( val* `) : relRes
 
 }
 

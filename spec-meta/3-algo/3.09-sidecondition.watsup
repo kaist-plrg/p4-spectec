@@ -61,9 +61,9 @@ dec $agree_guards(iter, vari*) : premAL*
   hint(prose_in "the conditions that the sources" %1 "agree under iteration" %0)
 def $agree_guards(_, eps) = eps
 def $agree_guards(_, [ _ ]) = eps
-def $agree_guards(iter, vari_a :: vari_b :: vari_t*) = prem_ab :: prem_t*
-  -- if prem_ab = $agree_guard(iter, vari_a, vari_b)
-  -- if prem_t* = $agree_guards(iter, vari_b :: vari_t*)
+def $agree_guards(iter, vari_a :: vari_b :: vari_t*) = premAL_ab :: premAL_t*
+  -- if premAL_ab = $agree_guard(iter, vari_a, vari_b)
+  -- if premAL_t* = $agree_guards(iter, vari_b :: vari_t*)
 
 ;;; Updates
 
@@ -83,13 +83,13 @@ def $access_exp(exp_b, (DOT path atom) '#' typ) = (DOT exp_p atom) '#' typ
 
 dec $replace_guards(tdenv, path, exp) : premAL*
   hint(prose_in "the conditions for replacing path" %1 "with" %2 "under" %0)
-def $replace_guards(tdenv, (SLICE _ _ exp_n) '#' _, exp_f) = [ prem_len ]
+def $replace_guards(tdenv, (SLICE _ _ exp_n) '#' _, exp_f) = [ premAL_len ]
   -- if exp_len = $exp_len(exp_f)
-  -- if prem_len = $guard_cmp(EQ, exp_len, exp_n)
-def $replace_guards(tdenv, (IDX (_ '#' typ_b) _) '#' _, exp_f) = [ prem_len ]
+  -- if premAL_len = $guard_cmp(EQ, exp_len, exp_n)
+def $replace_guards(tdenv, (IDX (_ '#' typ_b) _) '#' _, exp_f) = [ premAL_len ]
   -- if OK TEXT = $expand_typ(tdenv, typ_b)
   -- if exp_len = $exp_len(exp_f)
-  -- if prem_len = $guard_cmp(EQ, exp_len, (NAT 1) '#' NAT)
+  -- if premAL_len = $guard_cmp(EQ, exp_len, (NAT 1) '#' NAT)
 def $replace_guards(_, _, _) = eps
   -- otherwise
 
@@ -112,58 +112,58 @@ rule Guard_exp/variable:
   AC |- (VAR _) '#' _ : eps
 
 rule Guard_exp/unary:
-  AC |- (UN _ exp) '#' _ : prem*
-  -- Guard_exp: AC |- exp : prem*
+  AC |- (UN _ exp) '#' _ : premAL*
+  -- Guard_exp: AC |- exp : premAL*
 
 rulegroup Guard_exp/binary {
 
   rule Guard_exp/total:
-    AC |- (BIN binop exp_l exp_r) '#' _ : prem*
+    AC |- (BIN binop exp_l exp_r) '#' _ : premAL*
     -- if ~(binop <- [ DIV, MOD ])
-    -- Guard_exps: AC |- [ exp_l, exp_r ] : prem*
+    -- Guard_exps: AC |- [ exp_l, exp_r ] : premAL*
 
   rule Guard_exp/divide:
-    AC |- (BIN binop exp_l exp_r) '#' _ : prem* ++ [ prem_div ]
+    AC |- (BIN binop exp_l exp_r) '#' _ : premAL* ++ [ premAL_div ]
     -- if binop <- [ DIV, MOD ]
-    -- Guard_exps: AC |- [ exp_l, exp_r ] : prem*
+    -- Guard_exps: AC |- [ exp_l, exp_r ] : premAL*
     -- if _ '#' typ_r = exp_r
     -- if exp_zero = $exp_zero(AC.TYP, typ_r)
-    -- if prem_div = $guard_cmp(NE, exp_r, exp_zero)
+    -- if premAL_div = $guard_cmp(NE, exp_r, exp_zero)
 
 }
 
 rule Guard_exp/compare:
-  AC |- (CMP _ exp_l exp_r) '#' _ : prem*
-  -- Guard_exps: AC |- [ exp_l, exp_r ] : prem*
+  AC |- (CMP _ exp_l exp_r) '#' _ : premAL*
+  -- Guard_exps: AC |- [ exp_l, exp_r ] : premAL*
 
 rule Guard_exp/upcast:
-  AC |- (UPCAST _ exp) '#' _ : prem*
-  -- Guard_exp: AC |- exp : prem*
+  AC |- (UPCAST _ exp) '#' _ : premAL*
+  -- Guard_exp: AC |- exp : premAL*
 
 rule Guard_exp/downcast:
-  AC |- (DOWNCAST _ exp) '#' _ : prem*
-  -- Guard_exp: AC |- exp : prem*
+  AC |- (DOWNCAST _ exp) '#' _ : premAL*
+  -- Guard_exp: AC |- exp : premAL*
 
 rule Guard_exp/subtype:
-  AC |- (SUB exp _) '#' _ : prem*
-  -- Guard_exp: AC |- exp : prem*
+  AC |- (SUB exp _) '#' _ : premAL*
+  -- Guard_exp: AC |- exp : premAL*
 
 rule Guard_exp/match:
-  AC |- (MATCH exp _) '#' _ : prem*
-  -- Guard_exp: AC |- exp : prem*
+  AC |- (MATCH exp _) '#' _ : premAL*
+  -- Guard_exp: AC |- exp : premAL*
 
 rule Guard_exp/tuple:
-  AC |- (TUP exp*) '#' _ : prem*
-  -- Guard_exps: AC |- exp* : prem*
+  AC |- (TUP exp*) '#' _ : premAL*
+  -- Guard_exps: AC |- exp* : premAL*
 
 rule Guard_exp/case:
-  AC |- (INJ (_ exp*)) '#' _ : prem*
-  -- Guard_exps: AC |- exp* : prem*
+  AC |- (INJ (_ exp*)) '#' _ : premAL*
+  -- Guard_exps: AC |- exp* : premAL*
 
 rule Guard_exp/struct:
-  AC |- (STR expField*) '#' _ : prem*
+  AC |- (STR expField*) '#' _ : premAL*
   -- (if _ exp = expField)*
-  -- Guard_exps: AC |- exp* : prem*
+  -- Guard_exps: AC |- exp* : premAL*
 
 rulegroup Guard_exp/opt {
 
@@ -171,61 +171,61 @@ rulegroup Guard_exp/opt {
     AC |- (OPT eps) '#' _ : eps
 
   rule Guard_exp/some:
-    AC |- (OPT exp) '#' _ : prem*
-    -- Guard_exp: AC |- exp : prem*
+    AC |- (OPT exp) '#' _ : premAL*
+    -- Guard_exp: AC |- exp : premAL*
 
 }
 
 rule Guard_exp/list:
-  AC |- (LIST exp*) '#' _ : prem*
-  -- Guard_exps: AC |- exp* : prem*
+  AC |- (LIST exp*) '#' _ : premAL*
+  -- Guard_exps: AC |- exp* : premAL*
 
 rule Guard_exp/cons:
-  AC |- (CONS exp_h exp_t) '#' _ : prem*
-  -- Guard_exps: AC |- [ exp_h, exp_t ] : prem*
+  AC |- (CONS exp_h exp_t) '#' _ : premAL*
+  -- Guard_exps: AC |- [ exp_h, exp_t ] : premAL*
 
 rule Guard_exp/concat:
-  AC |- (CAT exp_l exp_r) '#' _ : prem*
-  -- Guard_exps: AC |- [ exp_l, exp_r ] : prem*
+  AC |- (CAT exp_l exp_r) '#' _ : premAL*
+  -- Guard_exps: AC |- [ exp_l, exp_r ] : premAL*
 
 rule Guard_exp/mem:
-  AC |- (MEM exp_l exp_r) '#' _ : prem*
-  -- Guard_exps: AC |- [ exp_l, exp_r ] : prem*
+  AC |- (MEM exp_l exp_r) '#' _ : premAL*
+  -- Guard_exps: AC |- [ exp_l, exp_r ] : premAL*
 
 rule Guard_exp/len:
-  AC |- (LEN exp) '#' _ : prem*
-  -- Guard_exp: AC |- exp : prem*
+  AC |- (LEN exp) '#' _ : premAL*
+  -- Guard_exp: AC |- exp : premAL*
 
 rule Guard_exp/dot:
-  AC |- (DOT exp _) '#' _ : prem*
-  -- Guard_exp: AC |- exp : prem*
+  AC |- (DOT exp _) '#' _ : premAL*
+  -- Guard_exp: AC |- exp : premAL*
 
 rule Guard_exp/idx:
-  AC |- (IDX exp_b exp_i) '#' _ : prem* ++ [ prem_idx ]
-  -- Guard_exps: AC |- [ exp_b, exp_i ] : prem*
+  AC |- (IDX exp_b exp_i) '#' _ : premAL* ++ [ premAL_idx ]
+  -- Guard_exps: AC |- [ exp_b, exp_i ] : premAL*
   -- if exp_len = $exp_len(exp_b)
-  -- if prem_idx = $guard_cmp(LT, exp_i, exp_len)
+  -- if premAL_idx = $guard_cmp(LT, exp_i, exp_len)
 
 rule Guard_exp/slice:
-  AC |- (SLICE exp_b exp_i exp_n) '#' _ : prem* ++ [ prem_slice ]
-  -- Guard_exps: AC |- [ exp_b, exp_i, exp_n ] : prem*
+  AC |- (SLICE exp_b exp_i exp_n) '#' _ : premAL* ++ [ premAL_slice ]
+  -- Guard_exps: AC |- [ exp_b, exp_i, exp_n ] : premAL*
   -- if exp_end = (BIN ADD exp_i exp_n) '#' NAT
   -- if exp_len = $exp_len(exp_b)
-  -- if prem_slice = $guard_cmp(LE, exp_end, exp_len)
+  -- if premAL_slice = $guard_cmp(LE, exp_end, exp_len)
 
 rule Guard_exp/upd:
-  AC |- (UPD exp_b path exp_f) '#' _ : prem*
-  -- Guard_path: AC |- exp_b path exp_f : prem*
+  AC |- (UPD exp_b path exp_f) '#' _ : premAL*
+  -- Guard_path: AC |- exp_b path exp_f : premAL*
 
 rule Guard_exp/call:
-  AC |- (CALL _ _ arg*) '#' _ : prem*
-  -- Guard_args: AC |- arg* : prem*
+  AC |- (CALL _ _ arg*) '#' _ : premAL*
+  -- Guard_args: AC |- arg* : premAL*
 
 rule Guard_exp/iter:
-  AC |- (ITER exp (iter vari*)) '#' _ : prem_agree* ++ prem_iter*
-  -- if prem_agree* = $agree_guards(iter, vari*)
-  -- Guard_exp: AC |- exp : prem_body*
-  -- (if prem_iter = ITER prem_body (iter '<-' vari* '->' eps))*
+  AC |- (ITER exp (iter vari*)) '#' _ : premAL_agree* ++ premAL_iter*
+  -- if premAL_agree* = $agree_guards(iter, vari*)
+  -- Guard_exp: AC |- exp : premAL_body*
+  -- (if premAL_iter = ITER premAL_body (iter '<-' vari* '->' eps))*
 
 ;;; Sequences, update paths, and arguments
 
@@ -235,18 +235,18 @@ rulegroup Guard_exps {
     AC |- eps : eps
 
   rule Guard_exps/cons:
-    AC |- exp_h :: exp_t* : prem_h* ++ prem_t*
-    -- Guard_exp: AC |- exp_h : prem_h*
-    -- Guard_exps: AC |- exp_t* : prem_t*
+    AC |- exp_h :: exp_t* : premAL_h* ++ premAL_t*
+    -- Guard_exp: AC |- exp_h : premAL_h*
+    -- Guard_exps: AC |- exp_t* : premAL_t*
 
 }
 
 rule Guard_path:
-  AC |- exp_b path exp_f : prem_acc* ++ prem_f* ++ prem_rep*
+  AC |- exp_b path exp_f : premAL_acc* ++ premAL_f* ++ premAL_rep*
   -- if exp_acc = $access_exp(exp_b, path)
-  -- Guard_exp: AC |- exp_acc : prem_acc*
-  -- Guard_exp: AC |- exp_f : prem_f*
-  -- if prem_rep* = $replace_guards(AC.TYP, path, exp_f)
+  -- Guard_exp: AC |- exp_acc : premAL_acc*
+  -- Guard_exp: AC |- exp_f : premAL_f*
+  -- if premAL_rep* = $replace_guards(AC.TYP, path, exp_f)
 
 rulegroup Guard_args {
 
@@ -254,13 +254,13 @@ rulegroup Guard_args {
     AC |- eps : eps
 
   rule Guard_args/exp:
-    AC |- (EXP exp) :: arg_t* : prem_h* ++ prem_t*
-    -- Guard_exp: AC |- exp : prem_h*
-    -- Guard_args: AC |- arg_t* : prem_t*
+    AC |- (EXP exp) :: arg_t* : premAL_h* ++ premAL_t*
+    -- Guard_exp: AC |- exp : premAL_h*
+    -- Guard_args: AC |- arg_t* : premAL_t*
 
   rule Guard_args/fun:
-    AC |- (FUN _) :: arg_t* : prem*
-    -- Guard_args: AC |- arg_t* : prem*
+    AC |- (FUN _) :: arg_t* : premAL*
+    -- Guard_args: AC |- arg_t* : premAL*
 
 }
 
@@ -272,34 +272,34 @@ rulegroup Guard_args {
 ;; so its guards never read the variables it is about to bind.
 
 rule Guard_prem/rel:
-  AC |- REL _ ':' exp_in* '->' _ : prem*
-  -- Guard_exps: AC |- exp_in* : prem*
+  AC |- REL _ ':' exp_in* '->' _ : premAL*
+  -- Guard_exps: AC |- exp_in* : premAL*
 
 rule Guard_prem/cond:
-  AC |- IF exp : prem*
-  -- Guard_exp: AC |- exp : prem*
+  AC |- IF exp : premAL*
+  -- Guard_exp: AC |- exp : premAL*
 
 rule Guard_prem/ifhold:
-  AC |- IFHOLD _ ':' exp* : prem*
-  -- Guard_exps: AC |- exp* : prem*
+  AC |- IFHOLD _ ':' exp* : premAL*
+  -- Guard_exps: AC |- exp* : premAL*
 
 rule Guard_prem/ifnothold:
-  AC |- IFNOTHOLD _ ':' exp* : prem*
-  -- Guard_exps: AC |- exp* : prem*
+  AC |- IFNOTHOLD _ ':' exp* : premAL*
+  -- Guard_exps: AC |- exp* : premAL*
 
 rule Guard_prem/let:
-  AC |- LET _ '=' exp_r : prem*
-  -- Guard_exp: AC |- exp_r : prem*
+  AC |- LET _ '=' exp_r : premAL*
+  -- Guard_exp: AC |- exp_r : premAL*
 
 rule Guard_prem/iter:
-  AC |- ITER prem (iter '<-' vari_src* '->' _) : prem_agree* ++ prem_iter*
-  -- if prem_agree* = $agree_guards(iter, vari_src*)
-  -- Guard_prem: AC |- prem : prem_body*
-  -- (if prem_iter = ITER prem_body (iter '<-' vari_src* '->' eps))*
+  AC |- ITER premAL (iter '<-' vari_src* '->' _) : premAL_agree* ++ premAL_iter*
+  -- if premAL_agree* = $agree_guards(iter, vari_src*)
+  -- Guard_prem: AC |- premAL : premAL_body*
+  -- (if premAL_iter = ITER premAL_body (iter '<-' vari_src* '->' eps))*
 
 rule Guard_prem/dbg:
-  AC |- DEBUG exp : prem*
-  -- Guard_exp: AC |- exp : prem*
+  AC |- DEBUG exp : premAL*
+  -- Guard_exp: AC |- exp : premAL*
 
 ;;; Premise sequences
 
@@ -311,9 +311,9 @@ rulegroup Guard_prems {
     AC |- eps : eps
 
   rule Guard_prems/cons:
-    AC |- prem_h :: prem_t* : prem_guard* ++ [ prem_h ] ++ prem_t'*
-    -- Guard_prem: AC |- prem_h : prem_guard*
-    -- Guard_prems: AC |- prem_t* : prem_t'*
+    AC |- premAL_h :: premAL_t* : premAL_guard* ++ [ premAL_h ] ++ premAL_t'*
+    -- Guard_prem: AC |- premAL_h : premAL_guard*
+    -- Guard_prems: AC |- premAL_t* : premAL_t'*
 
 }
 
@@ -323,19 +323,19 @@ rulegroup Guard_prems {
 ;; results are guarded after the premises that bind their variables
 
 rule Guard_rul:
-  AC |- id ':' exp_in* '->' exp_out* '-' prem* : id ':' exp_in* '->' exp_out* '-' (prem'* ++ prem_out*)
-  -- Guard_prems: AC |- prem* : prem'*
-  -- Guard_exps: AC |- exp_out* : prem_out*
+  AC |- id ':' exp_in* '->' exp_out* '-' premAL* : id ':' exp_in* '->' exp_out* '-' (premAL'* ++ premAL_out*)
+  -- Guard_prems: AC |- premAL* : premAL'*
+  -- Guard_exps: AC |- exp_out* : premAL_out*
 
 rule Guard_clause:
-  AC |- arg* '=' exp '-' prem* : arg* '=' exp '-' (prem'* ++ prem_out*)
-  -- Guard_prems: AC |- prem* : prem'*
-  -- Guard_exp: AC |- exp : prem_out*
+  AC |- arg* '=' exp '-' premAL* : arg* '=' exp '-' (premAL'* ++ premAL_out*)
+  -- Guard_prems: AC |- premAL* : premAL'*
+  -- Guard_exp: AC |- exp : premAL_out*
 
 rule Guard_tblRow:
-  AC |- arg* '=' exp '-' prem* : arg* '=' exp '-' (prem'* ++ prem_out*)
-  -- Guard_prems: AC |- prem* : prem'*
-  -- Guard_exp: AC |- exp : prem_out*
+  AC |- arg* '=' exp '-' premAL* : arg* '=' exp '-' (premAL'* ++ premAL_out*)
+  -- Guard_prems: AC |- premAL* : premAL'*
+  -- Guard_exp: AC |- exp : premAL_out*
 
 ;; Definitions
 
@@ -352,7 +352,7 @@ rulegroup Guard_def/typ {
 rulegroup Guard_def/rel {
 
   rule Guard_def/extern:
-    AC |- externRelDefn : externRelDefn
+    AC |- externRelDefnAL : externRelDefnAL
 
   rule Guard_def/defined:
     AC |- REL id ':' typ_in* '->' typ_out* '=' (id_group ':' rulAL*)* (id_else ':' rulAL_else)?
@@ -371,14 +371,14 @@ rulegroup Guard_def/func {
     AC |- builtinFuncDefn : builtinFuncDefn
 
   rule Guard_def/table:
-    AC |- TABLEFUNC id param* ':' typ '=' tblRow* : TABLEFUNC id param* ':' typ '=' tblRow'*
-    -- (Guard_tblRow: AC |- tblRow : tblRow')*
+    AC |- TABLEFUNC id param* ':' typ '=' tblRowAL* : TABLEFUNC id param* ':' typ '=' tblRowAL'*
+    -- (Guard_tblRow: AC |- tblRowAL : tblRowAL')*
 
   rule Guard_def/defined:
-    AC |- FUNC id tparam* param* ':' typ '=' clause* elsClause?
-      : FUNC id tparam* param* ':' typ '=' clause'* elsClause'?
+    AC |- FUNC id tparam* param* ':' typ '=' clauseAL* elsClauseAL?
+      : FUNC id tparam* param* ':' typ '=' clauseAL'* elsClauseAL'?
     -- if AC_func = $add_tparams(AC, tparam*)
-    -- (Guard_clause: AC_func |- clause : clause')*
-    -- (Guard_clause: AC_func |- elsClause : elsClause')?
+    -- (Guard_clause: AC_func |- clauseAL : clauseAL')*
+    -- (Guard_clause: AC_func |- elsClauseAL : elsClauseAL')?
 
 }

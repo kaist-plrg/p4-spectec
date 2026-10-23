@@ -37,11 +37,11 @@ def $split_inputs_from<X>(n*, n_pos, X_h :: X_t*) = (X_in*, X_h :: X_out*)
 ;; Inputs must be bound; outputs bind
 
 rule Algo_prem/rel:
-  AC IC |- REL id ':' exp* `( inputHint `) : AC' (prem_rel :: prem_bind*)
+  AC IC |- REL id ':' exp* `( inputHint `) : AC' (premAL_rel :: premAL_bind*)
   -- if (exp_in*, exp_out*) = $split_inputs<exp>(inputHint, exp*)
   -- if id_in* = $free_ids_exps(exp_in*)
   -- if $bound_ids(AC, id_in*)
-  -- Bind_exps: AC IC |- exp_out* : AC' exp_out'* prem_bind*
+  -- Bind_exps: AC IC |- exp_out* : AC' exp_out'* premAL_bind*
   -- if vari_in* = $free_vars_exps(exp_in*)
   -- if vari_read* = $shallowest_vars(vari_in*)
   -- if vari_out* = $free_vars_exps(exp_out'*)
@@ -49,7 +49,7 @@ rule Algo_prem/rel:
   -- Iter_bound: IC |- vari_read* : IC_read
   -- Iter_bind: IC_read |- vari_bind* : IC_rel
   -- Iter_sourced: |- IC_rel
-  -- Iter_prem: IC_rel |- REL id ':' exp_in* '->' exp_out'* : prem_rel
+  -- Iter_prem: IC_rel |- REL id ':' exp_in* '->' exp_out'* : premAL_rel
 
 ;;; Conditions
 
@@ -58,30 +58,30 @@ rule Algo_prem/rel:
 rulegroup Algo_prem/cond {
 
   rule Algo_prem/test:
-    AC IC |- IF exp : AC ([ prem_if ])
+    AC IC |- IF exp : AC ([ premAL_if ])
     -- if id* = $free_ids_exp(exp)
     -- if $bound_ids(AC, id*)
-    -- Iter_prem: IC |- IF exp : prem_if
+    -- Iter_prem: IC |- IF exp : premAL_if
 
   rule Algo_prem/let-left:
-    AC IC |- IF ((CMP EQ exp_l exp_r) '#' _) : AC' prem*
+    AC IC |- IF ((CMP EQ exp_l exp_r) '#' _) : AC' premAL*
     -- Collect_exp: AC |- exp_l : vari_l*
     -- if vari_l* =/= eps
     -- Collect_exp: AC |- exp_r : eps
-    -- Algo_let: AC IC |- exp_l '=' exp_r : AC' prem*
+    -- Algo_let: AC IC |- exp_l '=' exp_r : AC' premAL*
 
   rule Algo_prem/let-right:
-    AC IC |- IF ((CMP EQ exp_l exp_r) '#' _) : AC' prem*
+    AC IC |- IF ((CMP EQ exp_l exp_r) '#' _) : AC' premAL*
     -- Collect_exp: AC |- exp_l : eps
     -- Collect_exp: AC |- exp_r : vari_r*
     -- if vari_r* =/= eps
-    -- Algo_let: AC IC |- exp_r '=' exp_l : AC' prem*
+    -- Algo_let: AC IC |- exp_r '=' exp_l : AC' premAL*
 
 }
 
 rule Algo_let:
-  AC IC |- exp_l '=' exp_r : AC' (prem_let :: prem_bind*)
-  -- Bind_exps: AC IC |- [ exp_l ] : AC' ([ exp_l' ]) prem_bind*
+  AC IC |- exp_l '=' exp_r : AC' (premAL_let :: premAL_bind*)
+  -- Bind_exps: AC IC |- [ exp_l ] : AC' ([ exp_l' ]) premAL_bind*
   -- if vari_r* = $free_vars_exp(exp_r)
   -- if vari_read* = $shallowest_vars(vari_r*)
   -- if vari_l* = $free_vars_exp(exp_l')
@@ -89,21 +89,21 @@ rule Algo_let:
   -- Iter_bound: IC |- vari_read* : IC_read
   -- Iter_bind: IC_read |- vari_bind* : IC_let
   -- Iter_sourced: |- IC_let
-  -- Iter_prem: IC_let |- LET exp_l' '=' exp_r : prem_let
+  -- Iter_prem: IC_let |- LET exp_l' '=' exp_r : premAL_let
 
 ;;; Holding and non-holding relations
 
 rule Algo_prem/ifhold:
-  AC IC |- IFHOLD id ':' exp* : AC ([ prem_hold ])
+  AC IC |- IFHOLD id ':' exp* : AC ([ premAL_hold ])
   -- if id_read* = $free_ids_exps(exp*)
   -- if $bound_ids(AC, id_read*)
-  -- Iter_prem: IC |- IFHOLD id ':' exp* : prem_hold
+  -- Iter_prem: IC |- IFHOLD id ':' exp* : premAL_hold
 
 rule Algo_prem/ifnothold:
-  AC IC |- IFNOTHOLD id ':' exp* : AC ([ prem_hold ])
+  AC IC |- IFNOTHOLD id ':' exp* : AC ([ premAL_hold ])
   -- if id_read* = $free_ids_exps(exp*)
   -- if $bound_ids(AC, id_read*)
-  -- Iter_prem: IC |- IFNOTHOLD id ':' exp* : prem_hold
+  -- Iter_prem: IC |- IFNOTHOLD id ':' exp* : premAL_hold
 
 ;;; Iterations
 
@@ -111,16 +111,16 @@ rule Algo_prem/ifnothold:
 ;; iteration lists every iterated variable as a source
 
 rule Algo_prem/iter:
-  AC IC |- ITER premIL (iter vari*) : AC' prem*
-  -- Algo_prem: AC ((iter '<-' vari* '->' eps) :: IC) |- premIL : AC' prem*
+  AC IC |- ITER premIL (iter vari*) : AC' premAL*
+  -- Algo_prem: AC ((iter '<-' vari* '->' eps) :: IC) |- premIL : AC' premAL*
 
 ;;; Debugging
 
 rule Algo_prem/dbg:
-  AC IC |- DEBUG exp : AC ([ prem_debug ])
+  AC IC |- DEBUG exp : AC ([ premAL_debug ])
   -- if id* = $free_ids_exp(exp)
   -- if $bound_ids(AC, id*)
-  -- Iter_prem: IC |- DEBUG exp : prem_debug
+  -- Iter_prem: IC |- DEBUG exp : premAL_debug
 
 ;; Premise sequences
 
@@ -132,8 +132,8 @@ rulegroup Algo_prems {
     AC |- eps : AC eps
 
   rule Algo_prems/cons:
-    AC |- premIL_h :: premIL_t* : AC'' (prem_h* ++ prem_t*)
-    -- Algo_prem: AC eps |- premIL_h : AC' prem_h*
-    -- Algo_prems: AC' |- premIL_t* : AC'' prem_t*
+    AC |- premIL_h :: premIL_t* : AC'' (premAL_h* ++ premAL_t*)
+    -- Algo_prem: AC eps |- premIL_h : AC' premAL_h*
+    -- Algo_prems: AC' |- premIL_t* : AC'' premAL_t*
 
 }

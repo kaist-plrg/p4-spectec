@@ -102,25 +102,25 @@ rulegroup Eval_prem/letpr {
 rulegroup Eval_prem/iterpr-opt {
 
   rule Eval_prem/body-failure:
-    C |- ITER prem iterPremAL : failure
+    C |- ITER premAL iterPremAL : failure
     -- if QUEST '<-' vari_bound* '->' _ = iterPremAL
     -- if OK C_sub? = $sub_opt(C, vari_bound*)
-    -- Eval_prem_maybe: C_sub? |- prem : failure
+    -- Eval_prem_maybe: C_sub? |- premAL : failure
 
   rule Eval_prem/succ-none:
-    C |- ITER prem iterPremAL : OK C_res
+    C |- ITER premAL iterPremAL : OK C_res
     -- if QUEST '<-' vari_bound* '->' vari_bind* = iterPremAL
     -- if OK C_sub? = $sub_opt(C, vari_bound*)
-    -- Eval_prem_maybe: C_sub? |- prem : OK eps
+    -- Eval_prem_maybe: C_sub? |- premAL : OK eps
     -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
     -- if val_bind* = $repeat_<val>(OPT eps, |vari_bind*|)
     -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
 
   rule Eval_prem/succ-some:
-    C |- ITER prem iterPremAL : OK C_res
+    C |- ITER premAL iterPremAL : OK C_res
     -- if QUEST '<-' vari_bound* '->' vari_bind* = iterPremAL
     -- if OK C_sub? = $sub_opt(C, vari_bound*)
-    -- Eval_prem_maybe: C_sub? |- prem : OK C_sub_res
+    -- Eval_prem_maybe: C_sub? |- premAL : OK C_sub_res
     -- if (val_bind = $find_vari(C_sub_res, vari_bind))*
     -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
     -- if C_res = $add_varis(C, vari_bind_iter*, (OPT val_bind)*)
@@ -132,7 +132,7 @@ rulegroup Eval_prem/iterpr-opt {
 rulegroup Eval_prem/iterpr-list {
 
   rule Eval_prem/succ-empty:
-    C |- ITER prem iterPremAL : OK C_res
+    C |- ITER premAL iterPremAL : OK C_res
     -- if STAR '<-' vari_bound* '->' vari_bind* = iterPremAL
     -- if OK eps = $sub_list(C, vari_bound*)
     -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
@@ -140,14 +140,14 @@ rulegroup Eval_prem/iterpr-list {
     -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
 
   rule Eval_prem/body-failure:
-    C |- ITER prem iterPremAL : failure
+    C |- ITER premAL iterPremAL : failure
     -- if STAR '<-' vari_bound* '->' _ = iterPremAL
     -- if OK C_sub* = $sub_list(C, vari_bound*)
     -- if C_sub* =/= eps
-    -- Eval_prem_each: C_sub* |- prem : failure
+    -- Eval_prem_each: C_sub* |- premAL : failure
 
   rule Eval_prem/succ-list:
-    C |- ITER prem iterPremAL : OK C_res
+    C |- ITER premAL iterPremAL : OK C_res
     ----
     -- if STAR '<-' vari_bound* '->' vari_bind* = iterPremAL
     ---- ;; decompose C into a list of subcontexts
@@ -156,7 +156,7 @@ rulegroup Eval_prem/iterpr-list {
     -- if C_sub* =/= eps
     ---- ;; for each C_sub in C_sub*, evaluate prem
     ---- ;; this yields val_sub_bind* for each C_sub
-    -- Eval_prem_each: C_sub* |- prem : OK C_sub_res*
+    -- Eval_prem_each: C_sub* |- premAL : OK C_sub_res*
     -- if (val_sub_bind* = $find_varis(C_sub_res, vari_bind*))*
     ---- ;; transpose val_sub_bind** to get val_bind**
     ---- ;; then combine val_bind* as a LIST, which is the value to be bind
@@ -183,7 +183,7 @@ rulegroup Eval_prem/dbg {
 }
 
 rule Eval_prem/error:
-  C |- prem : ERROR
+  C |- premAL : ERROR
   -- otherwise
 
 ;; Premise sequence evaluation rules
@@ -194,13 +194,13 @@ rulegroup Eval_prems {
     C |- eps : OK C
 
   rule Eval_prems/head-failure:
-    C |- prem_h :: prem_t* : failure
-    -- Eval_prem: C |- prem_h : failure
+    C |- premAL_h :: premAL_t* : failure
+    -- Eval_prem: C |- premAL_h : failure
 
   rule Eval_prems/head-succ:
-    C |- prem_h :: prem_t* : premRes
-    -- Eval_prem: C |- prem_h : OK C'
-    -- Eval_prems: C' |- prem_t* : premRes
+    C |- premAL_h :: premAL_t* : premRes
+    -- Eval_prem: C |- premAL_h : OK C'
+    -- Eval_prems: C' |- premAL_t* : premRes
 
 }
 
@@ -211,15 +211,15 @@ rulegroup Eval_prems {
 rulegroup Eval_prem_maybe {
 
   rule Eval_prem_maybe/none:
-    eps |- prem : OK eps
+    eps |- premAL : OK eps
 
   rule Eval_prem_maybe/failure:
-    C |- prem : failure
-    -- Eval_prem: C |- prem : failure
+    C |- premAL : failure
+    -- Eval_prem: C |- premAL : failure
 
   rule Eval_prem_maybe/some:
-    C |- prem : OK C_res
-    -- Eval_prem: C |- prem : OK C_res
+    C |- premAL : OK C_res
+    -- Eval_prem: C |- premAL : OK C_res
 
 }
 
@@ -228,20 +228,20 @@ rulegroup Eval_prem_maybe {
 rulegroup Eval_prem_each {
 
   rule Eval_prem_each/nil:
-    eps |- prem : OK eps
+    eps |- premAL : OK eps
 
   rule Eval_prem_each/head-failure:
-    (C_h :: C_t*) |- prem : failure
-    -- Eval_prem: C_h |- prem : failure
+    (C_h :: C_t*) |- premAL : failure
+    -- Eval_prem: C_h |- premAL : failure
 
   rule Eval_prem_each/tail-failure:
-    (C_h :: C_t*) |- prem : failure
-    -- Eval_prem: C_h |- prem : OK C_res
-    -- Eval_prem_each: C_t* |- prem : failure
+    (C_h :: C_t*) |- premAL : failure
+    -- Eval_prem: C_h |- premAL : OK C_res
+    -- Eval_prem_each: C_t* |- premAL : failure
 
   rule Eval_prem_each/cons-succ:
-    (C_h :: C_t*) |- prem : OK (C_res :: C_t_res*)
-    -- Eval_prem: C_h |- prem : OK C_res
-    -- Eval_prem_each: C_t* |- prem : OK C_t_res*
+    (C_h :: C_t*) |- premAL : OK (C_res :: C_t_res*)
+    -- Eval_prem: C_h |- premAL : OK C_res
+    -- Eval_prem_each: C_t* |- premAL : OK C_t_res*
 
 }

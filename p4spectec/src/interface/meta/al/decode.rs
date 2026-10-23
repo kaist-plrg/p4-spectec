@@ -327,7 +327,7 @@ impl Decode for al::Clause {
                     prems: Vec::<al::Prem>::decode_cached(arena, cache, *value_prems)?,
                 }, span: span))
             },
-            _ => Err(Error::unexpected(arena, value_meta, "arg* '=' exp '-' prem*")),
+            _ => Err(Error::unexpected(arena, value_meta, "arg* '=' exp '-' premAL*")),
         }
     }
 }
