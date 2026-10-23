@@ -58,7 +58,6 @@ configuration
     <local>
       <ltdenv> .Map </ltdenv> <lfenv> .Map </lfenv> <lvenv> .Map </lvenv>
     </local>
-    <caller> <cfenv> .Map </cfenv> </caller>
     <callstack> .List </callstack>
   </al>
 ```
@@ -90,7 +89,15 @@ Run a single P4-SpecTec program with `$main()`:
 ```
 
 The script is converted to KAST, loaded by K, and evaluated through `$main()`.
-Its return value is printed as JSON; this example prints `["intN","119"]`.
+Its return value is printed as JSON; this example prints `["intN","119"]`. A
+run whose `$main()` mismatches (`UNMATCH`) prints `fail`, and one that fails
+with an execution error (`ERROR`: a nondeterministic call, a type mismatch,
+an unbound variable, a rejected cast, a host error) prints `error`.
+
+Deviation: K's string primitives count bytes, so a text position (`|t|`,
+`t[n]`, `t[n : m]`, their updates) is a byte offset under K where the
+specification counts Unicode scalar values; `|"éx"|` is 3 under K and 2 in
+`metacirc`. ASCII text is unaffected.
 
 Type-check a P4 program against a P4-SpecTec specification:
 
@@ -112,7 +119,8 @@ the rewriting.
 ```
 
 The final output line is `passed` when the specification's `Program_ok`
-relation holds and `fail` otherwise. The KAST of `spec` is cached in
+relation holds, `fail` when it does not, and `error` when its evaluation
+fails. The KAST of `spec` is cached in
 `spec-meta-k/.kore-cache`, keyed by the sources and the `metacross` binary,
 so only the first run pays for its conversion.
 
