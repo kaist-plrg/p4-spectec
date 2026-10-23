@@ -41,7 +41,7 @@ pub fn run(
     // Prepare the input environment by the top level's configured language
     let program = match config.top_lang() {
         // AL builtins must resolve against the actual input definitions
-        Lang::Al | Lang::Il => ProgramConfig::Al { spec_al: config.algo(paths_program, options)? },
+        Lang::Al | Lang::Il => ProgramConfig::Al { spec_al: crate::algo(paths_program)? },
         // P4 inputs contain exactly one translation unit
         Lang::P4 if paths_program.len() == 1 => ProgramConfig::P4,
         Lang::P4 => {

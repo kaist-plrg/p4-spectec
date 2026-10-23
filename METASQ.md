@@ -78,9 +78,12 @@ which only type-checks the program.
 ## Tower configuration
 
 Levels are ordered from native base through intermediates to top level.
-A single level supplies both top level and base. In a longer tower, every level
-below the top level must have `"lang": "al"`; the top level may use `al` or `p4`.
-`mode` selects the base's native backend (`sl` or `al`).
+A single level supplies both top level and base. `lang` names the language a
+level accepts: every level below the top level uses `al` or `il`, and the
+top level may also use `p4`. The level above an `al` level is passed to it as
+AL converted by the native `algo` pass; the level above an `il` level is
+passed as elaborated IL. `mode` selects the base's native backend
+(`sl` or `al`).
 
 Each `specdir` accepts a specification file or directory and is resolved
 relative to the configuration file. CLI program and include paths are
@@ -105,26 +108,24 @@ exit code.
 ## Algo through the IL-to-AL specification
 
 `spec-meta/3-algo` specifies the IL-to-AL pass as the relation `Algo_IL`.
-A tower with an `algo` entry converts the specification under test to AL through it:
+`Eval_IL` converts its IL input with `Algo_IL` and evaluates the result
+with `Eval_AL`, so a spec-meta level that accepts IL runs the specification
+above it on AL produced by the specification:
 
 ```json
 {
   "mode": "sl",
-  "algo": "../spec-meta",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" },
+    { "specdir": "../spec-meta", "rel": "Eval_IL", "lang": "il" },
     { "specdir": "../spec", "rel": "Program_inst", "lang": "p4" }
   ]
 }
 ```
 
-The specification under test is the P4 target's specification
-or, for an AL target, the input script.
-It is elaborated, encoded as IL, converted by `Algo_IL`, and decoded once
-when the tower is built; every input then reuses that AL.
-The IL-to-AL specification itself and the other levels are converted by the native `algo` pass.
-`towers/algo-al.json`, `towers/algo-al-p4.json`, and `towers/algo-al-p4-ok.json`
-are the supplied towers with an `algo` entry.
+The conversion runs for every input, in the level that accepts the IL.
+The IL-to-AL specification itself is converted by the native `algo` pass.
+`towers/il.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
+are the supplied towers entered through `Eval_IL`.
 
 To print the AL produced by the specification:
 
