@@ -45,9 +45,8 @@ use crate::{
         self,
         meta::{ScriptLang, shared::Cache},
     },
-    lang::{al::ast as al, data::arena::Arena, il::ast as il},
+    lang::{al::ast as al, data::arena::Arena},
     pass::{algo, structure},
-    phrase,
     runner::{self, NullExtern, Runner, Spec},
     sim_plugin::dummy::Dummy,
 };
@@ -60,26 +59,6 @@ fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
         ExecutionMode::Al => Ok(Spec::Al(spec_al)),
         ExecutionMode::Sl => structure::convert(spec_al, true).map(Spec::Sl),
     }
-}
-
-/// The type definitions and builtin declarations of an IL program, as AL.
-///
-/// Both are shared by IL and AL, so no rule or clause is converted;
-/// a runner of the result answers the IL program's builtin calls.
-fn builtins_of_il(spec_il: &il::Spec) -> al::Spec {
-    spec_il
-        .iter()
-        .filter_map(|def_il| {
-            let def_kind_al = match &def_il.node {
-                il::DefKind::Typ(typ_def) => al::DefKind::Typ(typ_def.clone()),
-                il::DefKind::MetaFunc(il::MetaFuncDef::Builtin(builtin_func)) => {
-                    al::DefKind::MetaFunc(al::MetaFuncDef::Builtin(builtin_func.clone()))
-                }
-                _ => return None,
-            };
-            Some(phrase!(node: def_kind_al, span: def_il.span))
-        })
-        .collect()
 }
 
 /// The script language of a meta level accepting `lang`.
@@ -129,7 +108,8 @@ fn build_top(
         }
         // An IL program needs only its builtin declarations to answer builtin calls
         ProgramConfig::Il { spec_il } => {
-            build_terminal(arena, spec_top, ScriptLang::Il, builtins_of_il(spec_il), mode, options)
+            let spec_al_program = algo::convert_builtins(spec_il);
+            build_terminal(arena, spec_top, ScriptLang::Il, spec_al_program, mode, options)
         }
         ProgramConfig::P4 => {
             // Prepare the P4 host environment independently of program parsing
