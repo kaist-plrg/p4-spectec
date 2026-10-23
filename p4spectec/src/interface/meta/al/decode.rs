@@ -9,7 +9,7 @@ use crate::lang::common::prim::num::Number;
 use crate::{
     lang::{
         al::ast as al,
-        common::{Id, prim::num},
+        common::{Id, Iter, prim::num},
         data::{
             arena::Arena,
             notation::flat::{Mixfix as FlatMixfix, Mixop as FlatMixop},
@@ -202,6 +202,28 @@ impl Decode for al::Prem {
             _ => return Err(Error::unexpected(arena, value_meta, "an AL premise")),
         };
         Ok(phrase!(node: prem_kind_al, span: span))
+    }
+}
+
+// - Iteration premises
+
+/// Decodes bound and bound-by-iteration variable lists in order.
+impl Decode for al::PremIter {
+    fn decode_cached(
+        arena: &mut Arena,
+        cache: &mut Cache,
+        value_meta: Value,
+    ) -> Result<Self, Error> {
+        get::matches_string! { arena, &value_meta,
+            m::ITERPREM => |[value_iter, value_bound, value_bind]| {
+                Ok(al::PremIter {
+                    iter: Iter::decode_cached(arena, cache, *value_iter)?,
+                    vars_bound: Vec::<al::Var>::decode_cached(arena, cache, *value_bound)?,
+                    vars_bind: Vec::<al::Var>::decode_cached(arena, cache, *value_bind)?,
+                })
+            },
+            _ => Err(Error::unexpected(arena, value_meta, "iter '<-' vari* '->' vari*")),
+        }
     }
 }
 

@@ -47,6 +47,29 @@ impl Encode for InputHint {
     }
 }
 
+// - Iteration premises
+
+/// Encodes an iteration premise, which elaboration leaves without binders.
+fn encode_prem_iter(
+    arena: &mut Arena,
+    cache: &mut Cache,
+    prem_iter_il: &il::PremIter,
+) -> Result<Value, Error> {
+    // Binders are decided by the IL-to-AL specification
+    if !prem_iter_il.vars_bind.is_empty() {
+        return Err(Error::malformed(
+            Span::default(),
+            "an IL iteration premise without binders",
+            format!("{} binders", prem_iter_il.vars_bind.len()),
+        ));
+    }
+    let values_meta = vec![
+        prem_iter_il.iter.encode_cached(arena, cache)?,
+        list(arena, cache, "vari", &prem_iter_il.vars_bound)?,
+    ];
+    case(arena, m::ITERPREM, "iterPremIL", values_meta, Span::default())
+}
+
 // - Premises
 
 /// Encodes an IL premise; relation arguments keep their notation order.
@@ -84,7 +107,7 @@ impl Encode for il::Prem {
                 m::ITER_PREM,
                 vec![
                     prem_iter_il.prem.encode_cached(arena, cache)?,
-                    prem_iter_il.prem_iter.encode_cached(arena, cache)?,
+                    encode_prem_iter(arena, cache, &prem_iter_il.prem_iter)?,
                 ],
             ),
             il::PremKind::Debug(prem_debug_il) => {

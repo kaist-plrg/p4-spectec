@@ -111,7 +111,6 @@ pub(in crate::interface::meta) const FUN_PARAM: &str = "FUN id ':' tparam* param
 
 // == Premises
 
-pub(in crate::interface::meta) const ITERPREM: &str = "iter '<-' vari* '->' vari*";
 pub(in crate::interface::meta) const IF: &str = "IF exp";
 pub(in crate::interface::meta) const IFHOLD: &str = "IFHOLD id ':' exp*";
 pub(in crate::interface::meta) const IFNOTHOLD: &str = "IFNOTHOLD id ':' exp*";

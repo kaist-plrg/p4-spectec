@@ -6,6 +6,7 @@ pub(super) use crate::interface::meta::shared::mixops::{
     BUILTINFUNC, DEBUG, EXTFUNC, EXTTYP, IF, IFHOLD, IFNOTHOLD, ITER_PREM, TYP_DEF,
 };
 
+pub(super) const ITERPREM: &str = "iter vari*";
 pub(super) const REL_PREM: &str = "REL id ':' exp* `( inputHint `)";
 pub(super) const RUL: &str = "id ':' exp* '-' premIL*";
 pub(super) const RULGROUP: &str = "id ':' rulIL*";

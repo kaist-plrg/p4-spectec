@@ -1,6 +1,6 @@
 //! Syntax shared by IL and AL at the meta-language boundary
 //!
-//! Types, expressions, paths, arguments, parameters, and iteration premises
+//! Types, expressions, paths, arguments, and parameters
 //! have one meta form for both stages.
 
 mod cache;

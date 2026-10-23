@@ -651,19 +651,3 @@ impl Encode for il::Arg {
         case(arena, shape, "arg", vec![value], self.span)
     }
 }
-
-// - Iteration premises
-
-/// Encodes bound and bound-by-iteration variable lists in order.
-impl Encode for il::PremIter {
-    type Output = Value;
-
-    fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
-        let values_meta = vec![
-            self.iter.encode_cached(arena, cache)?,
-            list(arena, cache, "vari", &self.vars_bound)?,
-            list(arena, cache, "vari", &self.vars_bind)?,
-        ];
-        case(arena, m::ITERPREM, "iterPrem", values_meta, Span::default())
-    }
-}

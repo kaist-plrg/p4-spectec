@@ -10,7 +10,7 @@ use super::{mixops as m, stub};
 use crate::{
     interface::meta::shared::{Cache, Error, decode::Decode},
     lang::{
-        common::{Id, prim::num::Number},
+        common::{Id, Iter, prim::num::Number},
         data::{
             arena::Arena,
             value::flat::{Value, get},
@@ -41,6 +41,26 @@ impl Decode for InputHint {
             indices.push(phrase!(node: idx, span: span));
         }
         Ok(InputHint::new(indices))
+    }
+}
+
+// - Iteration premises
+
+/// Decodes an iteration premise, which elaboration leaves without binders.
+fn decode_prem_iter(
+    arena: &mut Arena,
+    cache: &mut Cache,
+    value_meta: Value,
+) -> Result<il::PremIter, Error> {
+    get::matches_string! { arena, &value_meta,
+        m::ITERPREM => |[value_iter, value_bound]| {
+            Ok(il::PremIter {
+                iter: Iter::decode_cached(arena, cache, *value_iter)?,
+                vars_bound: Vec::<il::Var>::decode_cached(arena, cache, *value_bound)?,
+                vars_bind: vec![],
+            })
+        },
+        _ => Err(Error::unexpected(arena, value_meta, "iter vari*")),
     }
 }
 
@@ -80,7 +100,7 @@ impl Decode for il::Prem {
             m::ITER_PREM => |[value_prem, value_iter]| {
                 il::PremKind::Iter(il::IterPrem {
                     prem: Box::new(il::Prem::decode_cached(arena, cache, *value_prem)?),
-                    prem_iter: il::PremIter::decode_cached(arena, cache, *value_iter)?,
+                    prem_iter: decode_prem_iter(arena, cache, *value_iter)?,
                 })
             },
             m::DEBUG => |[value_exp]| {

@@ -868,25 +868,3 @@ impl Decode for il::Arg {
         Ok(phrase!(node: arg_kind_al, span: span))
     }
 }
-
-// - Iteration premises
-
-/// Decodes bound and bound-by-iteration variable lists in order.
-impl Decode for il::PremIter {
-    fn decode_cached(
-        arena: &mut Arena,
-        cache: &mut Cache,
-        value_meta: Value,
-    ) -> Result<Self, Error> {
-        get::matches_string! { arena, &value_meta,
-            m::ITERPREM => |[value_iter, value_bound, value_bind]| {
-                Ok(il::PremIter {
-                    iter: Iter::decode_cached(arena, cache, *value_iter)?,
-                    vars_bound: Vec::<il::Var>::decode_cached(arena, cache, *value_bound)?,
-                    vars_bind: Vec::<il::Var>::decode_cached(arena, cache, *value_bind)?,
-                })
-            },
-            _ => Err(Error::unexpected(arena, value_meta, "iter vari* vari*")),
-        }
-    }
-}

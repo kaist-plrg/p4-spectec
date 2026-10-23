@@ -16,6 +16,7 @@ pub(super) const EXT: &str = "EXT json";
 // == Premises
 
 pub(super) const REL_PREM: &str = "REL id ':' exp* '->' exp*";
+pub(super) const ITERPREM: &str = "iter '<-' vari* '->' vari*";
 pub(super) const LET: &str = "LET exp '=' exp";
 
 // == Rules and clauses

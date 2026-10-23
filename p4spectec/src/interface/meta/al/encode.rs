@@ -217,6 +217,22 @@ impl Encode for al::Prem {
     }
 }
 
+// - Iteration premises
+
+/// Encodes bound and bound-by-iteration variable lists in order.
+impl Encode for al::PremIter {
+    type Output = Value;
+
+    fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
+        let values_meta = vec![
+            self.iter.encode_cached(arena, cache)?,
+            list(arena, cache, "vari", &self.vars_bound)?,
+            list(arena, cache, "vari", &self.vars_bind)?,
+        ];
+        case(arena, m::ITERPREM, "iterPremAL", values_meta, Span::default())
+    }
+}
+
 // - Rules
 
 /// Encodes a rule match without its printing signature.
