@@ -63,7 +63,7 @@ Use the supplied AL/P4 tower:
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Entry", "lang": "al" },
+    { "specdir": "../spec-meta", "lang": "al" },
     { "specdir": "../spec", "rel": "Program_inst", "lang": "p4" }
   ]
 }
@@ -72,8 +72,33 @@ Use the supplied AL/P4 tower:
 The path is Rust SL interpreter → AL specification → P4 specification →
 P4 program. `Program_inst` type-checks the program and instantiates its
 declarations. A P4 target takes exactly one `-p` path.
+
+A two-level `sl` tower over a P4 target runs as one runner backend:
+the host loads the P4 specification into an AL context once per program
+and calls the AL specification's `Call_rel` and `Call_func` directly,
+so the base level names no entry relation.
 `towers/al-p4-ok.json` is the same tower entered through `Program_ok`,
 which only type-checks the program.
+
+## STF simulation
+
+`metacirc sim` runs a P4 program and its STF test through a two-level `sl`
+tower over P4, with the same output as `p4spectec sim`:
+
+```sh
+./bin/metacirc sim towers/al-p4.json --arch v1model -i p4c/p4include \
+  -p /path/to/program.p4 --stf /path/to/program.stf
+```
+
+The architecture's externs and the P4 builtins run natively. When the AL
+specification calls `Call_extern_rel`, `Call_extern_func`, or
+`Call_builtin_func`, the host decodes the call and answers it; a reentry
+from the simulator runs on a second SL executor over the same AL
+specification. Other towers, including `"mode": "al"`, AL targets, and
+three or more levels, cannot simulate.
+
+`make -C p4spectec test-sim-meta` runs the `meta` simulation suites against
+the native expectations; it is not part of `make test`.
 
 ## Tower configuration
 
@@ -83,7 +108,10 @@ before the target must have `"lang": "al"`; the target may use `al` or `p4`.
 `mode` selects the base's native backend (`sl` or `al`).
 
 Each `specdir` accepts a specification file or directory and is resolved
-relative to the configuration file. CLI program and include paths are
+relative to the configuration file. The target requires `rel`, its entry
+relation. Other levels require `rel` only in towers that patch their input
+into an AL script: three or more levels, an AL target, or `"mode": "al"`.
+The two-level `sl` tower over P4 rejects a base `rel`. CLI program and include paths are
 resolved relative to the current working directory.
 
 To add an AL interpretation layer, insert another

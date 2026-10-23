@@ -94,6 +94,11 @@ test-sim-sl:
 test-sim-pl:
 	env -u UPDATE_EXPECT $(DRIVER) sim pl
 
+# Meta simulation shares the native expectations; it is not part of `test`
+.PHONY: test-sim-meta
+test-sim-meta:
+	env -u UPDATE_EXPECT $(DRIVER) sim meta
+
 diagnostic-cli: release
 
 test-diagnostics: diagnostic-cli

@@ -10,6 +10,8 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 use p4spectec::lang::data::encoding::Encoding;
 
+use p4spectec::metacirc::{self, TowerConfig};
+
 use p4spectec::runner::{Config, Spec};
 
 use p4spectec::sim_plugin::{self, io::Tx};
@@ -163,6 +165,22 @@ pub fn run(config: &SimConfig, language: Language, options: ExecutionOptions) ->
         Language::Pl => p4spectec::prosify(&config.spec)
             .map(Spec::Pl)
             .map_err(|error| Error::Invalid(error.to_string())),
+        Language::Meta => {
+            // The registered tower replaces the native specification
+            let tower = config
+                .tower
+                .as_ref()
+                .ok_or_else(|| Error::Invalid("meta simulation requires a tower".into()))?;
+            let config_tower =
+                TowerConfig::from_file(tower).map_err(|error| Error::Invalid(error.to_string()))?;
+            metacirc::meta_spec(&config_tower)
+                .map_err(|error| Error::Invalid(error.to_string()))?
+                .ok_or_else(|| {
+                    Error::Invalid(
+                        "simulation requires a two-level SL tower with a P4 target".into(),
+                    )
+                })
+        }
     })
 }
 

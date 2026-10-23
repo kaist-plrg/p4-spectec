@@ -150,9 +150,16 @@ impl Tower {
         };
         let levels = configs
             .into_iter()
-            .map(|config| {
+            .enumerate()
+            .map(|(idx, config)| {
+                // Patching enters every nested level by its own relation
+                let rel = config.rel.clone().ok_or_else(|| {
+                    config_invalid(format!(
+                        "level {idx} requires an entry relation in a nested tower"
+                    ))
+                })?;
                 let spec_al = crate::algo(std::slice::from_ref(&config.specdir))?;
-                Ok(Level { config: config.clone(), spec_al })
+                Ok(Level { rel, spec_al })
             })
             .collect::<Result<Vec<_>>>()?;
 

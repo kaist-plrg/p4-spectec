@@ -26,3 +26,13 @@ pub(super) fn input_invalid(message: impl Into<String>) -> Box<Report> {
 pub(super) fn entry_invalid(message: impl Into<String>) -> Box<Report> {
     diagnostic("metacirc/entry-invalid", message)
 }
+
+/// Reports a meta execution whose result is UNMATCH.
+pub(super) fn execution_unmatched(name: &str) -> Box<Report> {
+    diagnostic("metacirc/execution-unmatched", format!("meta execution of {name} unmatched"))
+}
+
+/// Reports a meta execution whose result is ERROR.
+pub(super) fn execution_failed(name: &str) -> Box<Report> {
+    diagnostic("metacirc/execution-failed", format!("meta execution of {name} failed"))
+}

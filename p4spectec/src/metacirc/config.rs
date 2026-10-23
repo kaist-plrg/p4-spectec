@@ -3,6 +3,8 @@
 //! Levels run from the native base toward an AL or P4 target.
 //! The native backend is AL or SL; all meta interfaces represent AL scripts.
 //! Specification paths are resolved relative to the JSON file.
+//! Only the target must name an entry relation;
+//! `Tower::build` requires one at every level of a nested tower it patches.
 
 use super::{Result, error::config_invalid};
 use crate::lang::al::ast as al;
@@ -47,8 +49,9 @@ pub enum LevelConfigs {
 pub struct LevelConfig {
     /// A specification file or directory.
     pub specdir: PathBuf,
-    /// The single-input entry relation.
-    pub rel: String,
+    /// The single-input entry relation; required at the target.
+    #[serde(default)]
+    pub rel: Option<String>,
     /// The language accepted by this level.
     pub lang: Lang,
 }
@@ -115,7 +118,11 @@ impl TowerConfig {
 
     /// Returns the relation configured to enter the target level.
     pub fn target_rel(&self) -> &str {
-        &self.levels.target().rel
+        self.levels
+            .target()
+            .rel
+            .as_deref()
+            .expect("validated target entry relation")
     }
 }
 
@@ -139,7 +146,12 @@ impl LevelConfigs {
                     "invalid language at level {idx}: expected Al"
                 )));
             }
-            if level.rel.is_empty() || level.specdir.as_os_str().is_empty() {
+            // Only the target is entered by name; other levels may omit it
+            let rel_missing = match &level.rel {
+                Some(rel) => rel.is_empty(),
+                None => idx == idx_target,
+            };
+            if rel_missing || level.specdir.as_os_str().is_empty() {
                 return Err(config_invalid(format!(
                     "level {idx} requires a specification path and entry relation"
                 )));

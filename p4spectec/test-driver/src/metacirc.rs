@@ -4,6 +4,7 @@
 //! `run` dispatches each suite by its tower's target language;
 //! every suite enters its target through the tower's target relation.
 //! `run_programs` prepares each P4 tower once and resets its state per program;
+//! a two-level SL tower runs as a meta runner, other P4 towers patch each input;
 //! `run_scripts` prepares a fresh tower per AL script,
 //! because an AL target supplies the builtin definitions of its own level.
 
@@ -20,13 +21,18 @@ use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 
 use p4spectec::{
-    interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess},
-    lang::data::arena::Arena,
+    diagnostic::Report,
+    interface::{
+        self,
+        p4::{P4Interface, error::P4Error, parse::parse_string, preprocessor::preprocess},
+    },
+    lang::data::{arena::Arena, value::flat::Value},
     metacirc::{
         self, Tower, TowerConfig,
         config::{Lang, ProgramConfig},
     },
-    runner::Config,
+    runner::{Config, Runner},
+    sim_plugin::dummy::Dummy,
 };
 
 use crate::{
@@ -34,6 +40,55 @@ use crate::{
     corpus::{self, Outcome, Results},
     suite::{self, MetacircConfig, MetacircSuite},
 };
+
+/// A P4 tower prepared once for a corpus.
+enum PreparedTower {
+    /// A two-level SL tower run as one meta runner backend.
+    Meta(Runner<P4Interface, Dummy>),
+    /// A tower whose input is patched into each inner script.
+    Patched(Tower),
+}
+
+impl PreparedTower {
+    /// Prepares the meta runner when the tower admits one.
+    fn build(arena: &mut Arena, config_tower: &TowerConfig, options: Config) -> Result<Self> {
+        let invalid = |error: Box<Report>| Error::Invalid(error.to_string());
+        Ok(match metacirc::meta_spec(config_tower).map_err(invalid)? {
+            Some(spec) => {
+                let interface = interface::p4(&spec);
+                Self::Meta(Runner::new(arena, spec, options, interface, Dummy).map_err(invalid)?)
+            }
+            None => Self::Patched(
+                Tower::build(arena, config_tower, &ProgramConfig::P4, options).map_err(invalid)?,
+            ),
+        })
+    }
+
+    fn reset(&mut self) {
+        match self {
+            Self::Meta(runner) => runner.reset(),
+            Self::Patched(tower) => tower.reset(),
+        }
+    }
+
+    /// Reports whether the entry accepts a parsed program.
+    ///
+    /// Patch failures are returned as errors; evaluation rejection is `false`.
+    fn accepts(
+        &mut self,
+        arena: &mut Arena,
+        name: &str,
+        program: Value,
+    ) -> std::result::Result<bool, Box<Report>> {
+        match self {
+            Self::Meta(runner) => Ok(runner.eval_program(arena, name, program).result.is_ok()),
+            Self::Patched(tower) => {
+                let value = tower.patch(arena, name, program)?;
+                Ok(tower.eval_program(arena, name, value).result.is_ok())
+            }
+        }
+    }
+}
 
 struct CollectedSuite<'a> {
     paths: Vec<PathBuf>,
@@ -110,8 +165,7 @@ fn run_programs(
         let config_tower = TowerConfig::from_file(suite.path_tower)
             .map_err(|error| Error::Invalid(error.to_string()))?;
         let options_tower = Config::new(cache_on, det, false);
-        let tower = Tower::build(&mut arena, &config_tower, &ProgramConfig::P4, options_tower)
-            .map_err(|error| Error::Invalid(error.to_string()))?;
+        let tower = PreparedTower::build(&mut arena, &config_tower, options_tower)?;
         towers.insert(suite.path_tower, (tower, config_tower.target_rel().to_owned()));
     }
     let includes = &config.includes;
@@ -175,19 +229,14 @@ fn run_programs(
                     let outcome = match parse_string(&mut arena, path, &source) {
                         Ok(program) => {
                             // Patch failures abort; evaluation rejection is an outcome
-                            let value =
-                                tower
-                                    .patch(&mut arena, id_relation, program)
-                                    .map_err(|error| {
-                                        Error::Invalid(format!(
-                                            "{}: test execution error: {error}",
-                                            path.display()
-                                        ))
-                                    })?;
                             let accepted = tower
-                                .eval_program(&mut arena, id_relation, value)
-                                .result
-                                .is_ok();
+                                .accepts(&mut arena, id_relation, program)
+                                .map_err(|error| {
+                                    Error::Invalid(format!(
+                                        "{}: test execution error: {error}",
+                                        path.display()
+                                    ))
+                                })?;
                             if accepted { Outcome::Pass } else { Outcome::Fail }
                         }
                         Err(P4Error {

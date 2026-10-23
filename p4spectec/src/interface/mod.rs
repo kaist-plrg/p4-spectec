@@ -35,6 +35,7 @@ pub fn p4(spec: &Spec) -> P4Interface {
         Spec::Al(spec) => P4Unparser::from_al_spec(spec),
         Spec::Sl(spec) => P4Unparser::from_sl_spec(spec),
         Spec::Pl(spec) => P4Unparser::from_pl_spec(spec),
+        Spec::Meta { target, .. } => P4Unparser::from_al_spec(target),
     };
     p4_with_unparser(unparser)
 }

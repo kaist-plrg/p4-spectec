@@ -111,7 +111,7 @@ pub fn build(
     }
 }
 
-/// Builds the AL or SL runner, whichever the specification is.
+/// Builds the AL, SL, PL, or meta runner, whichever the specification is.
 fn build_for_arch<Arch: Architecture + 'static>(
     spec: runner::Spec,
     config: runner::Config,
@@ -122,6 +122,9 @@ fn build_for_arch<Arch: Architecture + 'static>(
         runner::Spec::Al(spec) => runner::build_al(&mut arena, spec, config, arch)?,
         runner::Spec::Sl(spec) => runner::build_sl(&mut arena, spec, config, arch)?,
         runner::Spec::Pl(spec) => runner::build_pl(&mut arena, spec, config, arch)?,
+        runner::Spec::Meta { base, target } => {
+            runner::build_meta(&mut arena, base, target, config, arch)?
+        }
     };
     Ok(Simulator::new(arena, runner))
 }
