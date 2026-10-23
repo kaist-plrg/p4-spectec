@@ -165,6 +165,21 @@ fn atoms_matrix(mixop_al: &Mixop) -> Vec<Vec<&il::Atom>> {
     atoms_matrix_al
 }
 
+/// Encodes each atom row before allocating the surrounding matrix.
+fn encode_atoms_matrix<T: Encode<Output = Value>>(
+    arena: &mut Arena,
+    cache: &mut Cache,
+    atoms_matrix: &[Vec<T>],
+) -> Result<Value, Error> {
+    let mut values_meta = Vec::with_capacity(atoms_matrix.len());
+    for atoms in atoms_matrix {
+        values_meta.push(list(arena, cache, "atom", atoms)?);
+    }
+    // Empty boundary rows still occupy their original matrix positions
+    let typ_matrix = make_typ::list(make_typ::list(make_typ::text()));
+    Ok(make::list(arena, typ_matrix.node.into(), values_meta, Span::default())?)
+}
+
 /// Encodes atoms between argument positions as a nonempty matrix.
 impl Encode for Mixop {
     type Output = Value;
@@ -197,21 +212,6 @@ impl Encode for FlatMixop {
         cache.mixops_encode.insert(id_mixop, value_meta);
         Ok(value_meta)
     }
-}
-
-/// Encodes each atom row before allocating the surrounding matrix.
-fn encode_atoms_matrix<T: Encode<Output = Value>>(
-    arena: &mut Arena,
-    cache: &mut Cache,
-    atoms_matrix: &[Vec<T>],
-) -> Result<Value, Error> {
-    let mut values_meta = Vec::with_capacity(atoms_matrix.len());
-    for atoms in atoms_matrix {
-        values_meta.push(list(arena, cache, "atom", atoms)?);
-    }
-    // Empty boundary rows still occupy their original matrix positions
-    let typ_matrix = make_typ::list(make_typ::list(make_typ::text()));
-    Ok(make::list(arena, typ_matrix.node.into(), values_meta, Span::default())?)
 }
 
 // - Iterators
