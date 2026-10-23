@@ -14,14 +14,14 @@ dec $ids_of_varis(vari*) : id*
   hint(prose_in "the identifiers of" %0)
 def $ids_of_varis((id _ _)*) = id*
 
-dec $sub_dim(vari, vari) : bool
+dec $is_prefix_dim(vari, vari) : bool
   hint(prose_true "the dimension of" %0 "is a prefix of the dimension of" %1)
   hint(prose_false "the dimension of" %0 "is not a prefix of the dimension of" %1)
-def $sub_dim(_ typ_a iter_a*, _ typ_b iter_b*) = true
+def $is_prefix_dim(_ typ_a iter_a*, _ typ_b iter_b*) = true
   -- if typ_a = typ_b
   -- if $(|iter_a*| <= |iter_b*|)
   -- if iter_a* = iter_b*[0 : |iter_a*|]
-def $sub_dim(_, _) = false
+def $is_prefix_dim(_, _) = false
   -- otherwise
 
 ;;; Variable expressions
@@ -141,11 +141,11 @@ def $merge_shallower(eps, vari) = [ vari ]
 def $merge_shallower(vari_h :: vari_t*, vari) = vari :: vari_t*
   -- if id _ _ = vari_h
   -- if id _ _ = vari
-  -- if $sub_dim(vari, vari_h)
+  -- if $is_prefix_dim(vari, vari_h)
 def $merge_shallower(vari_h :: vari_t*, vari) = vari_h :: vari_t*
   -- if id _ _ = vari_h
   -- if id _ _ = vari
-  -- if ~$sub_dim(vari, vari_h)
+  -- if ~$is_prefix_dim(vari, vari_h)
 def $merge_shallower(vari_h :: vari_t*, vari) = vari_h :: $merge_shallower(vari_t*, vari)
   -- if id_h _ _ = vari_h
   -- if id _ _ = vari

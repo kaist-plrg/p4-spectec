@@ -15,11 +15,11 @@
 
 ;;; Sub-patterns compared rather than decomposed
 
-dec $upcast_of_nullary(exp) : bool
+dec $is_upcast_nullary_exp(exp) : bool
   hint(prose_true %0 "upcasts a constructor without arguments")
   hint(prose_false %0 "does not upcast a constructor without arguments")
-def $upcast_of_nullary((UPCAST _ ((INJ (_ eps)) '#' _)) '#' _) = true
-def $upcast_of_nullary(_) = false
+def $is_upcast_nullary_exp((UPCAST _ ((INJ (_ eps)) '#' _)) '#' _) = true
+def $is_upcast_nullary_exp(_) = false
   -- otherwise
 
 ;; A sub-pattern without binders is compared, except that a nullary case
@@ -29,9 +29,9 @@ dec $decomposes(algoCtx, exp) : bool
   hint(prose_true "pattern" %1 "is decomposed under" %0)
   hint(prose_false "pattern" %1 "is compared under" %0)
 def $decomposes(AC, exp) = true
-  -- if $upcast_of_nullary(exp)
-def $decomposes(AC, exp) = ~$bound_ids(AC, id*)
-  -- if ~$upcast_of_nullary(exp)
+  -- if $is_upcast_nullary_exp(exp)
+def $decomposes(AC, exp) = ~$is_bound_ids(AC, id*)
+  -- if ~$is_upcast_nullary_exp(exp)
   -- if id* = $free_ids_exp(exp)
 
 ;; Constructors without arguments, empty options, and empty lists are

@@ -40,7 +40,7 @@ rule Algo_prem/rel:
   AC IC |- REL id ':' exp* `( inputHint `) : AC' (premAL_rel :: premAL_bind*)
   -- if (exp_in*, exp_out*) = $split_inputs<exp>(inputHint, exp*)
   -- if id_in* = $free_ids_exps(exp_in*)
-  -- if $bound_ids(AC, id_in*)
+  -- if $is_bound_ids(AC, id_in*)
   -- Bind_exps: AC IC |- exp_out* : AC' exp_out'* premAL_bind*
   -- if vari_in* = $free_vars_exps(exp_in*)
   -- if vari_read* = $shallowest_vars(vari_in*)
@@ -60,7 +60,7 @@ rulegroup Algo_prem/cond {
   rule Algo_prem/test:
     AC IC |- IF exp : AC ([ premAL_if ])
     -- if id* = $free_ids_exp(exp)
-    -- if $bound_ids(AC, id*)
+    -- if $is_bound_ids(AC, id*)
     -- Iter_prem: IC |- IF exp : premAL_if
 
   rule Algo_prem/let-left:
@@ -96,13 +96,13 @@ rule Algo_let:
 rule Algo_prem/ifhold:
   AC IC |- IFHOLD id ':' exp* : AC ([ premAL_hold ])
   -- if id_read* = $free_ids_exps(exp*)
-  -- if $bound_ids(AC, id_read*)
+  -- if $is_bound_ids(AC, id_read*)
   -- Iter_prem: IC |- IFHOLD id ':' exp* : premAL_hold
 
 rule Algo_prem/ifnothold:
   AC IC |- IFNOTHOLD id ':' exp* : AC ([ premAL_hold ])
   -- if id_read* = $free_ids_exps(exp*)
-  -- if $bound_ids(AC, id_read*)
+  -- if $is_bound_ids(AC, id_read*)
   -- Iter_prem: IC |- IFNOTHOLD id ':' exp* : premAL_hold
 
 ;;; Iterations
@@ -119,7 +119,7 @@ rule Algo_prem/iter:
 rule Algo_prem/dbg:
   AC IC |- DEBUG exp : AC ([ premAL_debug ])
   -- if id* = $free_ids_exp(exp)
-  -- if $bound_ids(AC, id*)
+  -- if $is_bound_ids(AC, id*)
   -- Iter_prem: IC |- DEBUG exp : premAL_debug
 
 ;; Premise sequences
