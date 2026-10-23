@@ -26,15 +26,13 @@ pub struct Tower {
 }
 
 /// A configured specification, by the form it is passed to the level below.
-///
-/// Every level keeps its AL for its own native runner.
 pub(super) enum Level {
     /// The base, which no level interprets.
-    Base { config: LevelConfig, spec_al: al::Spec },
+    Base { config: LevelConfig },
     /// A level above one accepting AL, which receives the patched AL.
     AboveAl { config: LevelConfig, spec_al: al::Spec },
     /// A level above one accepting IL, which receives the patched IL.
-    AboveIl { config: LevelConfig, spec_al: al::Spec, spec_il: il::Spec },
+    AboveIl { config: LevelConfig, spec_il: il::Spec },
 }
 
 impl Level {
@@ -43,14 +41,6 @@ impl Level {
             Self::Base { config, .. }
             | Self::AboveAl { config, .. }
             | Self::AboveIl { config, .. } => config,
-        }
-    }
-
-    pub(super) fn spec_al(&self) -> &al::Spec {
-        match self {
-            Self::Base { spec_al, .. }
-            | Self::AboveAl { spec_al, .. }
-            | Self::AboveIl { spec_al, .. } => spec_al,
         }
     }
 }

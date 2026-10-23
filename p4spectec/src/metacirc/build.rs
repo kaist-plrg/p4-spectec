@@ -1,6 +1,6 @@
 //! Preparation of top, intermediate, and base levels
 //!
-//! The AL of each specification stays paired with its configured entry and input language.
+//! Each level keeps the form passed to the level below; its AL goes to its native runner.
 //! Layers are assembled from the top level toward the base;
 //! patched scripts carry each inner entry to the interpreter consuming them.
 //!
@@ -117,12 +117,12 @@ fn build_terminal(
 /// Prepares the top level, hosting the AL or IL program or taking a P4 program.
 fn build_top(
     arena: &mut Arena,
-    top: &Level,
+    spec_al: al::Spec,
     mode: ExecutionMode,
     program: &ProgramConfig,
     options: runner::Config,
 ) -> Result<Layer> {
-    let spec_top = into_runner_spec(mode, top.spec_al().clone())?;
+    let spec_top = into_runner_spec(mode, spec_al)?;
     match program {
         ProgramConfig::Al { spec_al } => {
             build_terminal(arena, spec_top, ScriptLang::Al, spec_al.clone(), mode, options)
@@ -143,13 +143,14 @@ fn build_top(
 /// Prepares a level beneath an already built layer, relaying host calls to it.
 fn build_relay(
     arena: &mut Arena,
-    level: &Level,
+    spec_al: al::Spec,
+    lang: Lang,
     mode: ExecutionMode,
     layer_next: Layer,
     options: runner::Config,
 ) -> Result<Layer> {
-    let spec = into_runner_spec(mode, level.spec_al().clone())?;
-    let interface_level = interface::meta(script_lang(level.config().lang)?);
+    let spec = into_runner_spec(mode, spec_al)?;
+    let interface_level = interface::meta(script_lang(lang)?);
     let external = MetaExtern::Relay(RelayExtern {
         cache: Box::new(Cache::new(options.cache)),
         layer_next: Box::new(layer_next),
@@ -182,8 +183,9 @@ impl Tower {
             }
         }
         // Convert each specification once, preserving base-to-top order;
-        // the level below decides whether a level is passed as AL or IL
-        let levels = config
+        // the level below decides whether a level is passed as AL or IL,
+        // and the AL for each native runner is kept apart from the level
+        let (levels, mut specs_al): (Vec<_>, Vec<_>) = config
             .levels
             .iter()
             .enumerate()
@@ -195,15 +197,19 @@ impl Tower {
                         .checked_sub(1)
                         .map(|idx_below| config.levels[idx_below].lang)
                     {
-                        None => Level::Base { config: config_level, spec_al: crate::algo(paths)? },
+                        None => (Level::Base { config: config_level }, crate::algo(paths)?),
                         Some(Lang::Al) => {
-                            Level::AboveAl { config: config_level, spec_al: crate::algo(paths)? }
+                            let spec_al = crate::algo(paths)?;
+                            (
+                                Level::AboveAl { config: config_level, spec_al: spec_al.clone() },
+                                spec_al,
+                            )
                         }
                         // Elaborate once for the native runner and for the IL passed below
                         Some(Lang::Il) => {
                             let spec_il = crate::elab(paths)?;
                             let spec_al = algo::convert(spec_il.clone())?;
-                            Level::AboveIl { config: config_level, spec_al, spec_il }
+                            (Level::AboveIl { config: config_level, spec_il }, spec_al)
                         }
                         Some(Lang::P4) => {
                             return Err(config_invalid(format!(
@@ -214,16 +220,19 @@ impl Tower {
                     },
                 )
             })
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>>>()?
+            .into_iter()
+            .unzip();
 
         // Only the base uses the configured native execution mode
         let mode = |idx| if idx == 0 { config.mode } else { ExecutionMode::Sl };
-        let (top, levels_lower) = levels.split_last().expect("validated nonempty tower");
-        let mut layer = build_top(arena, top, mode(levels_lower.len()), program, options)?;
+        let spec_al_top = specs_al.pop().expect("validated nonempty tower");
+        let mut layer = build_top(arena, spec_al_top, mode(specs_al.len()), program, options)?;
 
         // Assemble the levels beneath the top level down to the native base
-        for (idx, level) in levels_lower.iter().enumerate().rev() {
-            layer = build_relay(arena, level, mode(idx), layer, options)?;
+        for (idx, spec_al) in specs_al.into_iter().enumerate().rev() {
+            let lang = config.levels[idx].lang;
+            layer = build_relay(arena, spec_al, lang, mode(idx), layer, options)?;
         }
         Ok(Self { levels, base: layer })
     }
