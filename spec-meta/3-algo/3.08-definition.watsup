@@ -1,28 +1,25 @@
 ;; Rules
 
-;; A rule binds its inputs in its match, then runs its premises and returns
-;; its outputs in its path; each rule has a match of its own
+;; A rule binds its inputs, then runs its premises and returns its outputs
 
 rule Algo_rul:
-  AC inputHint |- rulIL : rulMatch '->' rulPath
+  AC inputHint |- rulIL : id ':' exp_in'* '->' exp_out* '-' (prem_bind* ++ prem*)
   -- if id ':' exp* '-' premIL* = rulIL
   -- if id_used* = $free_ids_rulIL(rulIL)
   -- if AC_rul = $add_used_ids(AC, id_used*)
   -- if (exp_in*, exp_out*) = $split_inputs<exp>(inputHint, exp*)
-  -- Bind_exps: AC_rul eps |- exp_in* : AC_in exp_in'* prem_match*
-  -- if rulMatch = exp_in'* '-' prem_match*
-  -- Algo_prems: AC_in |- premIL* : AC_path prem_path*
+  -- Bind_exps: AC_rul eps |- exp_in* : AC_in exp_in'* prem_bind*
+  -- Algo_prems: AC_in |- premIL* : AC_body prem*
   -- if id_out* = $free_ids_exps(exp_out*)
-  -- if $bound_ids(AC_path, id_out*)
-  -- if rulPath = id '=' exp_out* '-' prem_path*
+  -- if $bound_ids(AC_body, id_out*)
 
 rule Algo_rulGroup:
-  AC inputHint |- id ':' rulIL* : id ':' rul*
-  -- (Algo_rul: AC inputHint |- rulIL : rul)*
+  AC inputHint |- id ':' rulIL* : id ':' rulAL*
+  -- (Algo_rul: AC inputHint |- rulIL : rulAL)*
 
 rule Algo_elsGroup:
-  AC inputHint |- id ':' rulIL : id ':' rul
-  -- Algo_rul: AC inputHint |- rulIL : rul
+  AC inputHint |- id ':' rulIL : id ':' rulAL
+  -- Algo_rul: AC inputHint |- rulIL : rulAL
 
 ;; Clauses
 

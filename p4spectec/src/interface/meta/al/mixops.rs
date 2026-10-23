@@ -21,11 +21,9 @@ pub(super) const LET: &str = "LET exp '=' exp";
 
 // == Rules and clauses
 
-pub(super) const RULMATCH: &str = "exp* '-' prem*";
-pub(super) const RULPATH: &str = "id '=' exp* '-' prem*";
-pub(super) const RUL: &str = "rulMatch '->' rulPath";
-pub(super) const RULGROUP: &str = "id ':' rul*";
-pub(super) const ELSGROUP: &str = "id ':' rul";
+pub(super) const RUL: &str = "id ':' exp* '->' exp* '-' premAL*";
+pub(super) const RULGROUP: &str = "id ':' rulAL*";
+pub(super) const ELSGROUP: &str = "id ':' rulAL";
 pub(super) const CLAUSE: &str = "arg* '=' exp '-' prem*";
 
 // == Definitions

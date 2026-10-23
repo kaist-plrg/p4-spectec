@@ -323,10 +323,8 @@ rulegroup Guard_prems {
 ;; results are guarded after the premises that bind their variables
 
 rule Guard_rul:
-  AC |- (exp_in* '-' prem_match*) '->' (id '=' exp_out* '-' prem_path*)
-    : (exp_in* '-' prem_match'*) '->' (id '=' exp_out* '-' (prem_path'* ++ prem_out*))
-  -- Guard_prems: AC |- prem_match* : prem_match'*
-  -- Guard_prems: AC |- prem_path* : prem_path'*
+  AC |- id ':' exp_in* '->' exp_out* '-' prem* : id ':' exp_in* '->' exp_out* '-' (prem'* ++ prem_out*)
+  -- Guard_prems: AC |- prem* : prem'*
   -- Guard_exps: AC |- exp_out* : prem_out*
 
 rule Guard_clause:
@@ -357,10 +355,10 @@ rulegroup Guard_def/rel {
     AC |- externRelDefn : externRelDefn
 
   rule Guard_def/defined:
-    AC |- REL id ':' typ_in* '->' typ_out* '=' (id_group ':' rul*)* (id_else ':' rul_else)?
-      : REL id ':' typ_in* '->' typ_out* '=' (id_group ':' rul'*)* (id_else ':' rul_else')?
-    -- ((Guard_rul: AC |- rul : rul')*)*
-    -- (Guard_rul: AC |- rul_else : rul_else')?
+    AC |- REL id ':' typ_in* '->' typ_out* '=' (id_group ':' rulAL*)* (id_else ':' rulAL_else)?
+      : REL id ':' typ_in* '->' typ_out* '=' (id_group ':' rulAL'*)* (id_else ':' rulAL_else')?
+    -- ((Guard_rul: AC |- rulAL : rulAL')*)*
+    -- (Guard_rul: AC |- rulAL_else : rulAL_else')?
 
 }
 

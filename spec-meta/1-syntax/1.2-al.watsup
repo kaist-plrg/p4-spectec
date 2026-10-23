@@ -20,11 +20,9 @@ var prem : premAL
 syntax externRelDefnAL =
   EXTREL id ':' typ* '->' typ*
 
-syntax rulMatch = exp* '-' premAL*
-syntax rulPath = id '=' exp* '-' premAL*
-syntax rul = rulMatch '->' rulPath
-syntax rulGroupAL = id ':' rul*
-syntax elsGroupAL = id ':' rul
+syntax rulAL = id ':' exp* '->' exp* '-' premAL*
+syntax rulGroupAL = id ':' rulAL*
+syntax elsGroupAL = id ':' rulAL
 
 syntax definedRelDefnAL =
   REL id ':' typ* '->' typ* '=' rulGroupAL* elsGroupAL?

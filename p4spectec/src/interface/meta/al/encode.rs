@@ -235,59 +235,53 @@ impl Encode for al::PremIter {
 
 // - Rules
 
-/// Encodes a rule match without its printing signature.
-impl Encode for al::RuleMatch {
-    type Output = Value;
-
-    fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
-        let values_meta = vec![
-            list(arena, cache, "exp", &self.exps_input)?,
-            list(arena, cache, "premAL", &self.prems)?,
-        ];
-        case(arena, m::RULMATCH, "rulMatch", values_meta, Span::default())
-    }
-}
-
-/// Encodes a rule path and its outputs.
-impl Encode for al::RulePath {
-    type Output = Value;
-
-    fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
-        let values_meta = vec![
-            self.id.encode_cached(arena, cache)?,
-            list(arena, cache, "exp", &self.exps_output)?,
-            list(arena, cache, "premAL", &self.prems)?,
-        ];
-        case(arena, m::RULPATH, "rulPath", values_meta, self.id.span)
-    }
-}
-
-/// Encodes one rule as its match followed by its path.
+/// Encodes one rule, its match premises followed by its path premises.
 impl Encode for (&al::RuleMatch, &al::RulePath) {
     type Output = Value;
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let (rule_match, rule_path) = self;
-        let values_meta =
-            vec![rule_match.encode_cached(arena, cache)?, rule_path.encode_cached(arena, cache)?];
-        case(arena, m::RUL, "rul", values_meta, rule_path.id.span)
+        let prems: Vec<_> = rule_match.prems.iter().chain(&rule_path.prems).collect();
+        let values_meta = vec![
+            rule_path.id.encode_cached(arena, cache)?,
+            list(arena, cache, "exp", &rule_match.exps_input)?,
+            list(arena, cache, "exp", &rule_path.exps_output)?,
+            list(arena, cache, "premAL", &prems)?,
+        ];
+        case(arena, m::RUL, "rulAL", values_meta, rule_path.id.span)
     }
 }
 
-/// Encodes a rule group, pairing its shared match with each path in order.
-impl Encode for al::RuleGroup {
+/// Consecutive native rule groups that share an identifier.
+struct RuleGroupRun<'a>(&'a [al::RuleGroup]);
+
+/// Encodes a run of rule groups as one meta group,
+/// pairing each shared match with each of its paths in order.
+///
+/// Decoding gives every rule a native group of its own,
+/// so merging runs keeps decode-then-encode a fixpoint.
+impl Encode for RuleGroupRun<'_> {
     type Output = Value;
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
-        let rules: Vec<_> = self
-            .node
-            .rule_paths
+        let Self(rule_groups) = self;
+        let rules: Vec<_> = rule_groups
             .iter()
-            .map(|rule_path| (&self.node.rule_match, rule_path))
+            .flat_map(|rule_group| {
+                let rule_match = &rule_group.node.rule_match;
+                rule_group
+                    .node
+                    .rule_paths
+                    .iter()
+                    .map(move |rule_path| (rule_match, rule_path))
+            })
             .collect();
-        let values_meta =
-            vec![self.node.id.encode_cached(arena, cache)?, list(arena, cache, "rul", &rules)?];
-        case(arena, m::RULGROUP, "rulGroupAL", values_meta, self.span)
+        let rule_group_first = &rule_groups[0];
+        let values_meta = vec![
+            rule_group_first.node.id.encode_cached(arena, cache)?,
+            list(arena, cache, "rulAL", &rules)?,
+        ];
+        case(arena, m::RULGROUP, "rulGroupAL", values_meta, rule_group_first.span)
     }
 }
 
@@ -385,13 +379,21 @@ impl Encode for al::Def {
             al::DefKind::Rel(al::RelDef::Defined(rel_al)) => {
                 let (typs_input_al, typs_output_al) =
                     input::split(&rel_al.input_hint, rel_al.not_typ.node.args().to_vec())?;
+                // Group consecutive rule groups with one identifier
+                let rule_group_runs: Vec<_> = rel_al
+                    .rule_groups
+                    .chunk_by(|rule_group_a, rule_group_b| {
+                        rule_group_a.node.id.node == rule_group_b.node.id.node
+                    })
+                    .map(RuleGroupRun)
+                    .collect();
                 (
                     m::REL_DEF,
                     vec![
                         rel_al.id.encode_cached(arena, cache)?,
                         list(arena, cache, "typ", &typs_input_al)?,
                         list(arena, cache, "typ", &typs_output_al)?,
-                        list(arena, cache, "rulGroupAL", &rel_al.rule_groups)?,
+                        list(arena, cache, "rulGroupAL", &rule_group_runs)?,
                         opt(arena, cache, "elsGroupAL", rel_al.else_group.as_ref())?,
                     ],
                 )

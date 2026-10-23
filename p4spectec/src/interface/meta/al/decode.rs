@@ -17,7 +17,6 @@ use crate::{
             value::flat::{Value, ValueField, get, make},
         },
         il::ast as il,
-        traits::eq::SyntaxEq,
     },
     phrase,
 };
@@ -229,48 +228,7 @@ impl Decode for al::PremIter {
 
 // - Rules
 
-/// Decodes a rule match without its printing signature.
-impl Decode for al::RuleMatch {
-    fn decode_cached(
-        arena: &mut Arena,
-        cache: &mut Cache,
-        value_meta: Value,
-    ) -> Result<Self, Error> {
-        get::matches_string! { arena, &value_meta,
-            m::RULMATCH => |[value_exps, value_prems]| {
-                let exps_input = Vec::<il::Exp>::decode_cached(arena, cache, *value_exps)?;
-                Ok(al::RuleMatch {
-                    exps_signature: stub::rule_match_signature(&exps_input),
-                    exps_input,
-                    prems: Vec::<al::Prem>::decode_cached(arena, cache, *value_prems)?,
-                })
-            },
-            _ => Err(Error::unexpected(arena, value_meta, "exp* '-' prem*")),
-        }
-    }
-}
-
-/// Decodes a rule path and its outputs.
-impl Decode for al::RulePath {
-    fn decode_cached(
-        arena: &mut Arena,
-        cache: &mut Cache,
-        value_meta: Value,
-    ) -> Result<Self, Error> {
-        get::matches_string! { arena, &value_meta,
-            m::RULPATH => |[value_id, value_exps, value_prems]| {
-                Ok(al::RulePath {
-                    id: Id::decode_cached(arena, cache, *value_id)?,
-                    exps_output: Vec::<il::Exp>::decode_cached(arena, cache, *value_exps)?,
-                    prems: Vec::<al::Prem>::decode_cached(arena, cache, *value_prems)?,
-                })
-            },
-            _ => Err(Error::unexpected(arena, value_meta, "id '=' exp* '-' prem*")),
-        }
-    }
-}
-
-/// Decodes one rule as its match followed by its path.
+/// Decodes one rule as a match holding all of its premises and a path.
 impl Decode for (al::RuleMatch, al::RulePath) {
     fn decode_cached(
         arena: &mut Arena,
@@ -278,29 +236,35 @@ impl Decode for (al::RuleMatch, al::RulePath) {
         value_meta: Value,
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
-            m::RUL => |[value_match, value_path]| {
-                Ok((
-                    al::RuleMatch::decode_cached(arena, cache, *value_match)?,
-                    al::RulePath::decode_cached(arena, cache, *value_path)?,
-                ))
+            m::RUL => |[value_id, value_inputs, value_outputs, value_prems]| {
+                let exps_input = Vec::<il::Exp>::decode_cached(arena, cache, *value_inputs)?;
+                let rule_match = al::RuleMatch {
+                    exps_signature: stub::rule_match_signature(&exps_input),
+                    exps_input,
+                    prems: Vec::<al::Prem>::decode_cached(arena, cache, *value_prems)?,
+                };
+                let rule_path = al::RulePath {
+                    id: Id::decode_cached(arena, cache, *value_id)?,
+                    prems: vec![],
+                    exps_output: Vec::<il::Exp>::decode_cached(arena, cache, *value_outputs)?,
+                };
+                Ok((rule_match, rule_path))
             },
-            _ => Err(Error::unexpected(arena, value_meta, "rulMatch '->' rulPath")),
+            _ => Err(Error::unexpected(arena, value_meta, "id ':' exp* '->' exp* '-' premAL*")),
         }
     }
 }
 
-/// Decodes rule groups, sharing a native match among consecutive equal matches.
+/// Decodes rule groups, giving each rule a native group of its own.
 ///
-/// Encoding copies a native group's shared match into each of its rules;
-/// decoding merges such runs back into one group.
-/// Rules with different matches become separate groups with the same identifier,
-/// which the native interpreter evaluates as the same (group, path) candidates.
+/// Every group keeps its meta group's identifier,
+/// so the native interpreter evaluates the same (group, path) candidates.
 fn decode_rule_groups(
     arena: &mut Arena,
     cache: &mut Cache,
     value_meta: Value,
 ) -> Result<Vec<al::RuleGroup>, Error> {
-    let mut rule_groups: Vec<al::RuleGroup> = Vec::new();
+    let mut rule_groups = Vec::new();
     for value_group in get::list(arena, &value_meta)?.to_vec() {
         let span = *arena.value.span(value_group.span);
         let (id, rules) = get::matches_string! { arena, &value_group,
@@ -308,21 +272,14 @@ fn decode_rule_groups(
                 Id::decode_cached(arena, cache, *value_id)?,
                 Vec::<(al::RuleMatch, al::RulePath)>::decode_cached(arena, cache, *value_rules)?,
             ),
-            _ => return Err(Error::unexpected(arena, value_group, "id ':' rul*")),
+            _ => return Err(Error::unexpected(arena, value_group, "id ':' rulAL*")),
         };
-        let idx_first = rule_groups.len();
         for (rule_match, rule_path) in rules {
-            // Extend the previous group of this meta group when the match repeats
-            match rule_groups[idx_first..].last_mut() {
-                Some(rule_group) if rule_group.node.rule_match.syntax_eq(&rule_match) => {
-                    rule_group.node.rule_paths.push(rule_path);
-                }
-                _ => rule_groups.push(phrase!(node: al::RuleGroupKind {
-                    id: id.clone(),
-                    rule_match,
-                    rule_paths: vec![rule_path],
-                }, span: span)),
-            }
+            rule_groups.push(phrase!(node: al::RuleGroupKind {
+                id: id.clone(),
+                rule_match,
+                rule_paths: vec![rule_path],
+            }, span: span));
         }
     }
     Ok(rule_groups)
@@ -347,7 +304,7 @@ impl Decode for al::ElseGroup {
                     rule_path,
                 }, span: span))
             },
-            _ => Err(Error::unexpected(arena, value_meta, "id ':' rul")),
+            _ => Err(Error::unexpected(arena, value_meta, "id ':' rulAL")),
         }
     }
 }
