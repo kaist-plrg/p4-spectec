@@ -14,6 +14,27 @@ dec $empty_algoCtx : algoCtx
   hint(prose_in "empty algo context")
 def $empty_algoCtx = { TYP $empty_map<id, typDef>, BOUND eps, IDS eps }
 
+;;; Loading context from a spec
+
+dec $load_algoCtx(algoCtx, specIL) : algoCtx
+  hint(prose_in %0 "with the type definitions of spec" %1 "loaded")
+
+def $load_algoCtx(AC, externTypDefn :: defnIL_t*)
+  = $load_algoCtx(AC', defnIL_t*)
+  -- if EXTTYP id = externTypDefn
+  -- if tdenv_update = $add_map<id, typDef>(AC.TYP, id, externTypDefn)
+  -- if AC' = AC[ .TYP = tdenv_update ]
+
+def $load_algoCtx(AC, definedTypDefn :: defnIL_t*)
+  = $load_algoCtx(AC', defnIL_t*)
+  -- if TYP id _ '=' _ = definedTypDefn
+  -- if tdenv_update = $add_map<id, typDef>(AC.TYP, id, definedTypDefn)
+  -- if AC' = AC[ .TYP = tdenv_update ]
+
+def $load_algoCtx(AC, relDefnIL :: defnIL_t*) = $load_algoCtx(AC, defnIL_t*)
+def $load_algoCtx(AC, funcDefnIL :: defnIL_t*) = $load_algoCtx(AC, defnIL_t*)
+def $load_algoCtx(AC, eps) = AC
+
 ;;; Adders
 
 dec $add_bound_ids(algoCtx, id*) : algoCtx
@@ -23,12 +44,6 @@ def $add_bound_ids(AC, id*) = AC[ .BOUND = AC.BOUND ++ id* ]
 dec $add_used_ids(algoCtx, id*) : algoCtx
   hint(prose_in %0 "with identifiers" %1 "in use")
 def $add_used_ids(AC, id*) = AC[ .IDS = AC.IDS ++ id* ]
-
-dec $add_typdef(algoCtx, id, typDef) : algoCtx
-  hint(prose_in %0 "with type" %2 "defined as" %1)
-def $add_typdef(AC, id, typDef)
-  = AC[ .TYP = tdenv ]
-  -- if tdenv = $add_map<id, typDef>(AC.TYP, id, typDef)
 
 dec $add_tparams(algoCtx, tparam*) : algoCtx
   hint(prose_in %0 "with type parameters" %1)

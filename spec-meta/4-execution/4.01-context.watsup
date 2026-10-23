@@ -34,68 +34,58 @@ var C : ctx
 
 ;; Loading context from a spec
 
-dec $load_typdef(ctx, id, typDef) : ctx
-  hint(prose_in %0 "with type" %2 "loaded as" %1)
-def $load_typdef(C, id, typDef)
-  = C[ .GLOBAL.TYP = tdenv_update ]
-  -- if tdenv_update = $add_map<id, typDef>(C.GLOBAL.TYP, id, typDef)
-
-dec $load_reldef(ctx, id, relDefnAL) : ctx
-  hint(prose_in %0 "with relation" %2 "loaded as" %1)
-def $load_reldef(C, id, relDefnAL)
-  = C[ .GLOBAL.REL = renv_update ]
-  -- if renv_update = $add_map<id, relDefnAL>(C.GLOBAL.REL, id, relDefnAL)
-
-dec $load_funcdef(ctx, id, funcDefnAL) : ctx
-  hint(prose_in %0 "with function" %2 "loaded as" %1)
-def $load_funcdef(C, id, funcDefnAL)
-  = C[ .GLOBAL.FUNC = fenv_update ]
-  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, funcDefnAL)
-
-dec $load(ctx, specAL) : ctx
+dec $load_ctx(ctx, specAL) : ctx
   hint(prose_in %0 "with spec" %1 "loaded")
 
-def $load(C, externTypDefn :: defnAL_t*)
-  = $load(C', defnAL_t*)
+def $load_ctx(C, externTypDefn :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
   -- if EXTTYP id = externTypDefn
-  -- if C' = $load_typdef(C, id, externTypDefn)
+  -- if tdenv_update = $add_map<id, typDef>(C.GLOBAL.TYP, id, externTypDefn)
+  -- if C' = C[ .GLOBAL.TYP = tdenv_update ]
 
-def $load(C, definedTypDefn :: defnAL_t*)
-  = $load(C', defnAL_t*)
+def $load_ctx(C, definedTypDefn :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
   -- if TYP id _ '=' _ = definedTypDefn
-  -- if C' = $load_typdef(C, id, definedTypDefn)
+  -- if tdenv_update = $add_map<id, typDef>(C.GLOBAL.TYP, id, definedTypDefn)
+  -- if C' = C[ .GLOBAL.TYP = tdenv_update ]
 
-def $load(C, externRelDefnAL :: defnAL_t*)
-  = $load(C', defnAL_t*)
+def $load_ctx(C, externRelDefnAL :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
   -- if EXTREL id ':' _ '->' _ = externRelDefnAL
-  -- if C' = $load_reldef(C, id, externRelDefnAL)
+  -- if renv_update = $add_map<id, relDefnAL>(C.GLOBAL.REL, id, externRelDefnAL)
+  -- if C' = C[ .GLOBAL.REL = renv_update ]
 
-def $load(C, definedRelDefnAL :: defnAL_t*)
-  = $load(C', defnAL_t*)
+def $load_ctx(C, definedRelDefnAL :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
   -- if REL id ':' _ '->' _ '=' _ _ = definedRelDefnAL
-  -- if C' = $load_reldef(C, id, definedRelDefnAL)
+  -- if renv_update = $add_map<id, relDefnAL>(C.GLOBAL.REL, id, definedRelDefnAL)
+  -- if C' = C[ .GLOBAL.REL = renv_update ]
 
-def $load(C, externFuncDefn :: defnAL_t*)
-  = $load(C', defnAL_t*)
+def $load_ctx(C, externFuncDefn :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
   -- if EXTFUNC id _ _ ':' _ = externFuncDefn
-  -- if C' = $load_funcdef(C, id, externFuncDefn)
+  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, externFuncDefn)
+  -- if C' = C[ .GLOBAL.FUNC = fenv_update ]
 
-def $load(C, builtinFuncDefn :: defnAL_t*)
-  = $load(C', defnAL_t*)
+def $load_ctx(C, builtinFuncDefn :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
   -- if BUILTINFUNC id _ _ ':' _ = builtinFuncDefn
-  -- if C' = $load_funcdef(C, id, builtinFuncDefn)
+  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, builtinFuncDefn)
+  -- if C' = C[ .GLOBAL.FUNC = fenv_update ]
 
-def $load(C, tableFuncDefnAL :: defnAL_t*)
-  = $load(C', defnAL_t*)
+def $load_ctx(C, tableFuncDefnAL :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
   -- if TABLEFUNC id _ ':' _ '=' _ = tableFuncDefnAL
-  -- if C' = $load_funcdef(C, id, tableFuncDefnAL)
+  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, tableFuncDefnAL)
+  -- if C' = C[ .GLOBAL.FUNC = fenv_update ]
 
-def $load(C, definedFuncDefnAL :: defnAL_t*)
-  = $load(C', defnAL_t*)
+def $load_ctx(C, definedFuncDefnAL :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
   -- if FUNC id _ _ ':' _ '=' _ _ = definedFuncDefnAL
-  -- if C' = $load_funcdef(C, id, definedFuncDefnAL)
+  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, definedFuncDefnAL)
+  -- if C' = C[ .GLOBAL.FUNC = fenv_update ]
 
-def $load(C, eps) = C
+def $load_ctx(C, eps) = C
 
 ;; Adders
 
