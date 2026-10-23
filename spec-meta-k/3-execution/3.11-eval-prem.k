@@ -5,20 +5,20 @@
 // not to `unmatch`, one that cannot be evaluated to `error`. Its expressions
 // evaluate in place (1.0-syntax.k).
 
-requires "3.08-eval-exp.k"
+requires "3.10-eval-arg.k"
 
 module PREM
-  imports EVAL-EXP
+  imports EVAL-ARG
 
   // ==========================================================================
-  // Eval_prems: ctx |- prem* : res<ctx>
+  // Eval_prems: ctx |- prem* : premRes
   // ==========================================================================
 
   rule <k> (P:Prem, Ps:PremList) => P ~> Ps ... </k>
   rule <k> .PremList => .K ... </k>
 
   // ==========================================================================
-  // Eval_prem: ctx |- prem : res<ctx>
+  // Eval_prem: ctx |- prem : premRes
   // ==========================================================================
 
   //   rule Eval_prem/relpr

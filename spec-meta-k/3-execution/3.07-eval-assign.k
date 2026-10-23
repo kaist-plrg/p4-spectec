@@ -16,7 +16,7 @@ module ASSIGN
   imports BOOL
 
   // ==========================================================================
-  // Assign_exp: ctx |- exp := val : ctx
+  // Assign_exp: ctx |- exp := val : assignRes
   // ==========================================================================
 
   //   rule Assign_exp/variable: C |- VAR id := val : C'
@@ -106,7 +106,7 @@ module ASSIGN
        </k>
 
   // ==========================================================================
-  // Assign_exps: ctx |- exp* := val* : ctx
+  // Assign_exps: ctx |- exp* := val* : assignRes
   //
   // The values may still be a computation (a relation call's outputs).
   // ==========================================================================
