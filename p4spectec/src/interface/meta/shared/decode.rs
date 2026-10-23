@@ -49,30 +49,6 @@ pub trait Decode: Sized {
     ) -> Result<Self, Error>;
 }
 
-// == Helpers
-
-/// Decodes the type annotation of a typed expression or path.
-fn typed(
-    arena: &mut Arena,
-    cache: &mut Cache,
-    value_kind: &Value,
-    value_typ: &Value,
-) -> Result<(Value, il::Typ), Error> {
-    Ok((*value_kind, il::Typ::decode_cached(arena, cache, *value_typ)?))
-}
-
-/// Recovers a numeric operator type from its operand or result type.
-fn op_typ(typ_kind: &il::TypKind, op_typ_decoded: il::OpTyp) -> il::OpTyp {
-    match (op_typ_decoded, typ_kind) {
-        // Boolean operators carry their own type
-        (il::OpTyp::Bool, _) => il::OpTyp::Bool,
-        // Integer operands select integer arithmetic
-        (_, il::TypKind::Num(num::Typ::Int)) => il::OpTyp::Int,
-        // Every other numeric operator works on naturals
-        (_, _) => il::OpTyp::Nat,
-    }
-}
-
 // == Decoding
 
 // - Containers
@@ -438,8 +414,44 @@ impl Decode for il::TypCase {
 
 // - Operators
 
+/// Operators whose type the meta syntax leaves to the operands.
+trait TypedOperand {
+    /// Whether the operator works on booleans.
+    fn is_bool(&self) -> bool;
+
+    /// The operator type for operands of `typ_kind`.
+    fn op_typ(&self, typ_kind: &il::TypKind) -> il::OpTyp {
+        match typ_kind {
+            // Boolean operators carry their own type
+            _ if self.is_bool() => il::OpTyp::Bool,
+            // Integer operands select integer arithmetic
+            il::TypKind::Num(num::Typ::Int) => il::OpTyp::Int,
+            // Every other numeric operator works on naturals
+            _ => il::OpTyp::Nat,
+        }
+    }
+}
+
+impl TypedOperand for il::UnOp {
+    fn is_bool(&self) -> bool {
+        matches!(self, Self::Bool(_))
+    }
+}
+
+impl TypedOperand for il::BinOp {
+    fn is_bool(&self) -> bool {
+        matches!(self, Self::Bool(_))
+    }
+}
+
+impl TypedOperand for il::CmpOp {
+    fn is_bool(&self) -> bool {
+        matches!(self, Self::Bool(_))
+    }
+}
+
 /// Decodes a unary operator.
-impl Decode for (il::UnOp, il::OpTyp) {
+impl Decode for il::UnOp {
     fn decode_cached(
         arena: &mut Arena,
         _cache: &mut Cache,
@@ -447,13 +459,13 @@ impl Decode for (il::UnOp, il::OpTyp) {
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
             m::UNOP_NOT => |[]| {
-                Ok((il::UnOp::Bool(boolean::UnOp::Not), il::OpTyp::Bool))
+                Ok(il::UnOp::Bool(boolean::UnOp::Not))
             },
             m::UNOP_PLUS => |[]| {
-                Ok((il::UnOp::Num(num::UnOp::Plus), il::OpTyp::Nat))
+                Ok(il::UnOp::Num(num::UnOp::Plus))
             },
             m::UNOP_MINUS => |[]| {
-                Ok((il::UnOp::Num(num::UnOp::Minus), il::OpTyp::Nat))
+                Ok(il::UnOp::Num(num::UnOp::Minus))
             },
             _ => Err(Error::unexpected(arena, value_meta, "a nullary unop constructor")),
         }
@@ -461,7 +473,7 @@ impl Decode for (il::UnOp, il::OpTyp) {
 }
 
 /// Decodes a binary operator.
-impl Decode for (il::BinOp, il::OpTyp) {
+impl Decode for il::BinOp {
     fn decode_cached(
         arena: &mut Arena,
         _cache: &mut Cache,
@@ -469,34 +481,34 @@ impl Decode for (il::BinOp, il::OpTyp) {
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
             m::BINOP_AND => |[]| {
-                Ok((il::BinOp::Bool(boolean::BinOp::And), il::OpTyp::Bool))
+                Ok(il::BinOp::Bool(boolean::BinOp::And))
             },
             m::BINOP_OR => |[]| {
-                Ok((il::BinOp::Bool(boolean::BinOp::Or), il::OpTyp::Bool))
+                Ok(il::BinOp::Bool(boolean::BinOp::Or))
             },
             m::BINOP_IMPL => |[]| {
-                Ok((il::BinOp::Bool(boolean::BinOp::Impl), il::OpTyp::Bool))
+                Ok(il::BinOp::Bool(boolean::BinOp::Impl))
             },
             m::BINOP_EQUIV => |[]| {
-                Ok((il::BinOp::Bool(boolean::BinOp::Equiv), il::OpTyp::Bool))
+                Ok(il::BinOp::Bool(boolean::BinOp::Equiv))
             },
             m::BINOP_ADD => |[]| {
-                Ok((il::BinOp::Num(num::BinOp::Add), il::OpTyp::Nat))
+                Ok(il::BinOp::Num(num::BinOp::Add))
             },
             m::BINOP_SUB => |[]| {
-                Ok((il::BinOp::Num(num::BinOp::Sub), il::OpTyp::Nat))
+                Ok(il::BinOp::Num(num::BinOp::Sub))
             },
             m::BINOP_MUL => |[]| {
-                Ok((il::BinOp::Num(num::BinOp::Mul), il::OpTyp::Nat))
+                Ok(il::BinOp::Num(num::BinOp::Mul))
             },
             m::BINOP_DIV => |[]| {
-                Ok((il::BinOp::Num(num::BinOp::Div), il::OpTyp::Nat))
+                Ok(il::BinOp::Num(num::BinOp::Div))
             },
             m::BINOP_MOD => |[]| {
-                Ok((il::BinOp::Num(num::BinOp::Mod), il::OpTyp::Nat))
+                Ok(il::BinOp::Num(num::BinOp::Mod))
             },
             m::BINOP_POW => |[]| {
-                Ok((il::BinOp::Num(num::BinOp::Pow), il::OpTyp::Nat))
+                Ok(il::BinOp::Num(num::BinOp::Pow))
             },
             _ => Err(Error::unexpected(arena, value_meta, "a nullary binop constructor")),
         }
@@ -504,7 +516,7 @@ impl Decode for (il::BinOp, il::OpTyp) {
 }
 
 /// Decodes a comparison operator.
-impl Decode for (il::CmpOp, il::OpTyp) {
+impl Decode for il::CmpOp {
     fn decode_cached(
         arena: &mut Arena,
         _cache: &mut Cache,
@@ -512,22 +524,22 @@ impl Decode for (il::CmpOp, il::OpTyp) {
     ) -> Result<Self, Error> {
         get::matches_string! { arena, &value_meta,
             m::CMPOP_EQ => |[]| {
-                Ok((il::CmpOp::Bool(boolean::CmpOp::Eq), il::OpTyp::Bool))
+                Ok(il::CmpOp::Bool(boolean::CmpOp::Eq))
             },
             m::CMPOP_NE => |[]| {
-                Ok((il::CmpOp::Bool(boolean::CmpOp::Ne), il::OpTyp::Bool))
+                Ok(il::CmpOp::Bool(boolean::CmpOp::Ne))
             },
             m::CMPOP_LT => |[]| {
-                Ok((il::CmpOp::Num(num::CmpOp::Lt), il::OpTyp::Nat))
+                Ok(il::CmpOp::Num(num::CmpOp::Lt))
             },
             m::CMPOP_LE => |[]| {
-                Ok((il::CmpOp::Num(num::CmpOp::Le), il::OpTyp::Nat))
+                Ok(il::CmpOp::Num(num::CmpOp::Le))
             },
             m::CMPOP_GT => |[]| {
-                Ok((il::CmpOp::Num(num::CmpOp::Gt), il::OpTyp::Nat))
+                Ok(il::CmpOp::Num(num::CmpOp::Gt))
             },
             m::CMPOP_GE => |[]| {
-                Ok((il::CmpOp::Num(num::CmpOp::Ge), il::OpTyp::Nat))
+                Ok(il::CmpOp::Num(num::CmpOp::Ge))
             },
             _ => Err(Error::unexpected(arena, value_meta, "a nullary cmpop constructor")),
         }
@@ -545,7 +557,7 @@ impl Decode for il::Exp {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         let (value_kind, typ_al) = get::matches_string! { arena, &value_meta,
-            m::TYPED_EXP => |[value_kind, value_typ]| typed(arena, cache, value_kind, value_typ)?,
+            m::TYPED_EXP => |[value_kind, value_typ]| (*value_kind, il::Typ::decode_cached(arena, cache, *value_typ)?),
             _ => return Err(Error::unexpected(arena, value_meta, "exp '#' typ")),
         };
         let exp_kind_al = get::matches_string! { arena, &value_kind,
@@ -568,24 +580,28 @@ impl Decode for il::Exp {
                 il::ExpKind::Id(Id::decode_cached(arena, cache, *value_id)?)
             },
             m::EXP_UN => |[value_op, value_exp]| {
-                let (op_al, typ_op_al) = <(il::UnOp, il::OpTyp)>::decode_cached(arena, cache, *value_op)?;
-                il::ExpKind::Un(op_al, op_typ(&typ_al.node, typ_op_al), Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?))
+                let op_al = il::UnOp::decode_cached(arena, cache, *value_op)?;
+                let typ_op_al = op_al.op_typ(&typ_al.node);
+                il::ExpKind::Un(op_al, typ_op_al, Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?))
             },
             m::EXP_BIN => |[value_op, value_l, value_r]| {
-                let (op_al, typ_op_al) = <(il::BinOp, il::OpTyp)>::decode_cached(arena, cache, *value_op)?;
+                let op_al = il::BinOp::decode_cached(arena, cache, *value_op)?;
+                let typ_op_al = op_al.op_typ(&typ_al.node);
                 il::ExpKind::Bin(
                     op_al,
-                    op_typ(&typ_al.node, typ_op_al),
+                    typ_op_al,
                     Box::new(il::Exp::decode_cached(arena, cache, *value_l)?),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_r)?),
                 )
             },
             m::EXP_CMP => |[value_op, value_l, value_r]| {
-                let (op_al, typ_op_al) = <(il::CmpOp, il::OpTyp)>::decode_cached(arena, cache, *value_op)?;
+                let op_al = il::CmpOp::decode_cached(arena, cache, *value_op)?;
                 let exp_l_al = il::Exp::decode_cached(arena, cache, *value_l)?;
+                // A comparison yields a boolean, so its operands decide the operator type
+                let typ_op_al = op_al.op_typ(&exp_l_al.note);
                 il::ExpKind::Cmp(
                     op_al,
-                    op_typ(&exp_l_al.note, typ_op_al),
+                    typ_op_al,
                     Box::new(exp_l_al),
                     Box::new(il::Exp::decode_cached(arena, cache, *value_r)?),
                 )
@@ -788,7 +804,7 @@ impl Decode for il::Path {
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         let (value_kind, typ_al) = get::matches_string! { arena, &value_meta,
-            m::TYPED_PATH => |[value_kind, value_typ]| typed(arena, cache, value_kind, value_typ)?,
+            m::TYPED_PATH => |[value_kind, value_typ]| (*value_kind, il::Typ::decode_cached(arena, cache, *value_typ)?),
             _ => return Err(Error::unexpected(arena, value_meta, "path '#' typ")),
         };
         let path_kind_al = get::matches_string! { arena, &value_kind,

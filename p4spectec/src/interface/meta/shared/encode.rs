@@ -119,21 +119,6 @@ pub(in crate::interface) fn opt<T: Encode<Output = Value>>(
     )?)
 }
 
-/// Pairs an encoded expression or path form with its type annotation.
-fn typed(
-    arena: &mut Arena,
-    cache: &mut Cache,
-    text_shape: &'static str,
-    text_typ: &str,
-    value_kind: Value,
-    typ_kind: &il::TypKind,
-    span: Span,
-) -> Result<Value, Error> {
-    let typ = phrase!(node: typ_kind.clone(), span: span);
-    let value_typ = typ.encode_cached(arena, cache)?;
-    case(arena, text_shape, text_typ, vec![value_kind, value_typ], span)
-}
-
 // == Encoding
 
 // - References
@@ -534,7 +519,10 @@ impl Encode for il::Exp {
             ),
         };
         let value_kind = case(arena, shape, "exp", values_meta, span)?;
-        typed(arena, cache, m::TYPED_EXP, "typedExp", value_kind, &self.note, span)
+        // The note becomes the type annotation of the typed expression
+        let typ = phrase!(node: il::TypKind::clone(&self.note), span: span);
+        let value_typ = typ.encode_cached(arena, cache)?;
+        case(arena, m::TYPED_EXP, "typedExp", vec![value_kind, value_typ], span)
     }
 }
 
@@ -618,7 +606,10 @@ impl Encode for il::Path {
                 case(arena, m::PATH_DOT, "path", values_meta, span)
             }
         }?;
-        typed(arena, cache, m::TYPED_PATH, "typedPath", value_kind, &self.note, span)
+        // The note becomes the type annotation of the typed path
+        let typ = phrase!(node: il::TypKind::clone(&self.note), span: span);
+        let value_typ = typ.encode_cached(arena, cache)?;
+        case(arena, m::TYPED_PATH, "typedPath", vec![value_kind, value_typ], span)
     }
 }
 
