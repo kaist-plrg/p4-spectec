@@ -2,12 +2,12 @@
 //
 // Mirrors spec-meta/3-execution/3.06-eval-assign.watsup. An assignment is a
 // statement: it rewrites to `.K` with its bindings added to `<local>`, or
-// backtracks.
+// to `error`.
 //
-//   Assign_exp:  ctx |- exp := val : ctx       --> assignExp(Exp, Val)
-//   Assign_exps: ctx |- exp* := val* : ctx     --> assignExps(ExpList, ValList)
-//   Assign_arg:  ctx/ctx |- arg := val : ctx   --> assignArg(Arg, Val), reads <caller>
-//   Assign_args: ctx/ctx |- arg* := val* : ctx --> assignArgs(ArgList, ValList)
+//   Assign_exp:  ctx |- exp := val : assignRes    --> assignExp(Exp, Val)
+//   Assign_exps: ctx |- exp* := val* : assignRes  --> assignExps(ExpList, ValList)
+//   Assign_arg:  ctx |- arg := val : assignRes    --> assignArg(Arg, Val)
+//   Assign_args: ctx |- arg* := val* : assignRes  --> assignArgs(ArgList, ValList)
 
 requires "3.02-context.k"
 
@@ -60,7 +60,7 @@ module ASSIGN
        ...
        </k>
 
-  rule <k> assignExp(_:Exp, _:Val) => backtrack ... </k> [owise]
+  rule <k> assignExp(_:Exp, _:Val) => error ... </k> [owise]
 
   // ==========================================================================
   // Assigning to an iterated expression
@@ -89,10 +89,7 @@ module ASSIGN
        </k>
 
   syntax KItem ::= assignIterVaris(VariList)
-  rule <k> assignIterVaris(Vs:VariList) => .K ... </k>
-       <lvenv> M:Map
-            => addsMap(M, iterVaris(Vs, quest()), someVals(finds(varrsOfVaris(Vs), M)))
-       </lvenv>
+  rule <k> assignIterVaris(Vs:VariList) => bindOpts(Vs, readVaris(Vs)) ... </k>
 
   //   rule Assign_exp/list
   rule <k> assignIter(noVarr(), E:Exp, iterExp(star(), Vs:VariList), listV(Ws:ValList))
@@ -124,7 +121,7 @@ module ASSIGN
         => assignExp(E, V) ~> assignExps(Es, Vs)
        ...
        </k>
-  rule <k> assignExps(_:ExpList, _:ValList) => backtrack ... </k> [owise]
+  rule <k> assignExps(_:ExpList, _:ValList) => error ... </k> [owise]
 
   // Struct fields, matched positionally with their atoms compared.
   syntax KItem ::= assignFields(ExpFieldList, ValFieldList)
@@ -135,13 +132,10 @@ module ASSIGN
         => assignExp(E, V) ~> assignFields(Fs, Gs)
        ...
        </k>
-  rule <k> assignFields(_:ExpFieldList, _:ValFieldList) => backtrack ... </k> [owise]
+  rule <k> assignFields(_:ExpFieldList, _:ValFieldList) => error ... </k> [owise]
 
   // ==========================================================================
-  // Assign_arg / Assign_args: ctx_callee '/' ctx_caller |- arg(*) := val(*)
-  //
-  // `<local>` holds `ctx_callee`; `<caller>`'s `cfenv` holds `ctx_caller`'s
-  // local function environment (all `Assign_arg/fun` needs — see 0.1-config.k).
+  // Assign_arg / Assign_args: ctx |- arg(*) := val(*) : assignRes
   // ==========================================================================
 
   syntax KItem ::= assignArg(Arg, Val)
@@ -150,17 +144,11 @@ module ASSIGN
   //   rule Assign_arg/exp
   rule <k> assignArg(expA(E:Exp), V:Val) => assignExp(E, V) ... </k>
 
-  //   rule Assign_arg/fun: the caller's local functions, then the global ones
+  //   rule Assign_arg/fun: the parameter is bound to the global function name
   rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => .K ... </k>
-       <cfenv> ... Y |-> F:FuncDef ... </cfenv>
-       <lfenv> M:Map => M[X <- F] </lfenv>
-  rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => .K ... </k>
-       <cfenv> CF:Map </cfenv>
-       <gfenv> ... Y |-> F:FuncDef ... </gfenv>
-       <lfenv> M:Map => M[X <- F] </lfenv>
-    requires notBool (Y in_keys(CF))
+       <lfenv> M:Map => M[X <- Y] </lfenv>
 
-  rule <k> assignArg(_:Arg, _:Val) => backtrack ... </k> [owise]
+  rule <k> assignArg(_:Arg, _:Val) => error ... </k> [owise]
 
   //   rulegroup Assign_args
   rule <k> assignArgs(.ArgList, .ValList) => .K ... </k>
@@ -168,7 +156,7 @@ module ASSIGN
         => assignArg(A, V) ~> assignArgs(As, Vs)
        ...
        </k>
-  rule <k> assignArgs(_:ArgList, _:ValList) => backtrack ... </k> [owise]
+  rule <k> assignArgs(_:ArgList, _:ValList) => error ... </k> [owise]
 
   // ==========================================================================
   // Value-level helpers
@@ -178,10 +166,16 @@ module ASSIGN
   rule lengthVaris(.VariList) => 0
   rule lengthVaris(_:Vari, Vs:VariList) => 1 +Int lengthVaris(Vs)
 
-  // `$find_varis` on the current value environment.
+  // `$find_varis` on the current value environment: the values, or `error`.
   syntax KItem ::= readVaris(VariList)
-  rule <k> readVaris(Vs:VariList) => finds(varrsOfVaris(Vs), M) ... </k>
+  rule <k> readVaris(Vs:VariList) => unres(finds(varrsOfVaris(Vs), M)) ... </k>
        <lvenv> M:Map </lvenv>
+
+  // `$add_varis` of the bindings of one sub-context, each as `OPT val`.
+  syntax KItem ::= bindOpts(VariList, KItem)
+                                            [strict(2)]
+  rule <k> bindOpts(Vs:VariList, Ws:ValList) => .K ... </k>
+       <lvenv> M:Map => addsMap(M, iterVaris(Vs, quest()), someVals(Ws)) </lvenv>
 
   // `$add_varis` of rows of bindings (one computation per row), one list
   // per variable.

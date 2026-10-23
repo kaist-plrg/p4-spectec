@@ -28,9 +28,6 @@ module CONFIG
         <lfenv> .Map </lfenv>
         <lvenv> .Map </lvenv>
       </local>
-      <caller>
-        <cfenv> .Map </cfenv>
-      </caller>
       <callstack> .List </callstack>
     </al>
 

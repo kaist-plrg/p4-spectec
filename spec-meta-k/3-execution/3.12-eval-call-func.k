@@ -2,7 +2,7 @@
 //
 // Mirrors spec-meta/3-execution/3.11-eval-call-func.watsup. Every clause of
 // a defined function is one alternative and exactly one must succeed (`det`
-// in 3.02-context.k); table rows are tried in order.
+// below, until Step 7 of the port); table rows are tried in order.
 
 requires "3.11-eval-prem.k"
 requires "3.04.2-extern-ffi.k"
@@ -10,6 +10,41 @@ requires "3.04.2-extern-ffi.k"
 module CALL-FUNC
   imports PREM
   imports EXTERN-FFI
+
+  // ==========================================================================
+  // Tries and the determinism check over the outcomes of the alternatives
+  //
+  // A `Try` is a try, or its outcome once evaluated; a list of tries
+  // evaluates in order to a list of outcomes. `det(Tries, Else)` is the
+  // single success; `Else` when none succeeded; `error` when several did.
+  // ==========================================================================
+
+  syntax Try ::= tryAlt(K) | Res
+  rule <k> tryAlt(K:K) => try(K) ... </k>
+
+  syntax Tries ::= List{Try, ";"}           [symbol(tries), terminator-symbol(.tries), seqstrict, overload(tries)]
+  syntax Ress ::= List{Res, ";"}            [symbol(ress), terminator-symbol(.ress), overload(tries)]
+  syntax Tries ::= Ress
+  syntax KResult ::= Ress
+
+  syntax KItem ::= det(Tries, KItem)        [strict(1)]
+  rule <k> det(Rs:Ress, Else:KItem) => pick(oks(Rs), Else) ... </k>
+
+  syntax KItem ::= pick(List, KItem)
+  rule <k> pick(ListItem(R:KItem), _:KItem) => R ... </k>
+  rule <k> pick(.List, Else:KItem) => Else ... </k>
+  rule <k> pick(ListItem(_) ListItem(_) _:List, _:KItem) => error ... </k>
+
+  // The `OK` outcomes, in order.
+  syntax List ::= oks(Ress)                 [function, total, symbol(oks)]
+  rule oks(.Ress) => .List
+  rule oks(ok(R:KItem) ; Rs:Ress) => ListItem(R) oks(Rs)
+  rule oks(_:Failure ; Rs:Ress) => oks(Rs)
+
+  // The first success of alternatives tried in order.
+  syntax KItem ::= firstOf(Try, KItem)      [strict(1)]
+  rule <k> firstOf(ok(R:KItem), _:KItem) => R ... </k>
+  rule <k> firstOf(_:Failure, Next:KItem) => Next ... </k>
 
   // ==========================================================================
   // Eval_clause / Eval_clauses
@@ -27,7 +62,7 @@ module CALL-FUNC
                                             [function, total, symbol(clauseTries)]
   rule clauseTries(.ClauseList, _:ValList) => .Tries
   rule clauseTries((Cl:Clause, Cls:ClauseList), Vs:ValList)
-    => try(evalClause(Cl, Vs)) ; clauseTries(Cls, Vs)
+    => tryAlt(evalClause(Cl, Vs)) ; clauseTries(Cls, Vs)
 
   // ==========================================================================
   // Eval_tblrow / Eval_tblrows
@@ -43,9 +78,9 @@ module CALL-FUNC
        </k>
 
   //   rulegroup Eval_tblrows: in order, the first success wins
-  rule <k> evalTblRows(.TblRowList, _:ValList) => backtrack ... </k>
+  rule <k> evalTblRows(.TblRowList, _:ValList) => unmatch ... </k>
   rule <k> evalTblRows((R:TblRow, Rs:TblRowList), Vs:ValList)
-        => firstOf(try(evalTblRow(R, Vs)), evalTblRows(Rs, Vs))
+        => firstOf(tryAlt(evalTblRow(R, Vs)), evalTblRows(Rs, Vs))
        ...
        </k>
 
@@ -66,46 +101,48 @@ module CALL-FUNC
 
   syntax KItem ::= elsClauseK(ElsClauseOpt, ValList)
                                             [function, total, symbol(elsClauseK)]
-  rule elsClauseK(noElsClause(), _:ValList) => backtrack
+  rule elsClauseK(noElsClause(), _:ValList) => unmatch
   rule elsClauseK(someElsClause(Cl:Clause), Vs:ValList) => evalClause(Cl, Vs)
 
   // ==========================================================================
   // Call_func_dispatch/extern, /builtin, /table, /defined
   // ==========================================================================
 
-  syntax KItem ::= callFuncDispatch(FuncDef, TArgList, ValList)
+  syntax KItem ::= callFuncDispatch(FuncDefn, TArgList, ValList)
                  | callExternFunc(Id, TypList, ValList)
                  | callBuiltinFunc(Id, TypList, ValList)
 
-  rule <k> callFuncDispatch(extFunc(X:Id), Ts:TArgList, Vs:ValList)
+  rule <k> callFuncDispatch(extFuncD(X:Id, _, _, _), Ts:TArgList, Vs:ValList)
         => callExternFunc(X, typsOfTargs(Ts), Vs)
        ...
        </k>
-  rule <k> callFuncDispatch(builtinFunc(X:Id, _:TParamList, _:ParamList), Ts:TArgList, Vs:ValList)
+  rule <k> callFuncDispatch(builtinFuncD(X:Id, _, _, _), Ts:TArgList, Vs:ValList)
         => callBuiltinFunc(X, typsOfTargs(Ts), Vs)
        ...
        </k>
-  rule <k> callFuncDispatch(tableFunc(_:ParamList, Rs:TblRowList), .TArgList, Vs:ValList)
+  rule <k> callFuncDispatch(tableFuncD(_, _, _, Rs:TblRowList), .TArgList, Vs:ValList)
         => evalTblRows(Rs, Vs)
        ...
        </k>
-  rule <k> callFuncDispatch(defFunc(Ps:TParamList, Cls:ClauseList, EC:ElsClauseOpt),
+  rule <k> callFuncDispatch(funcD(_, Ps:TParamList, _, _, Cls:ClauseList, EC:ElsClauseOpt),
                             Ts:TArgList, Vs:ValList)
         => callDefinedFunc(Ps, Cls, EC, Ts, Vs)
        ...
        </k>
+  rule <k> callFuncDispatch(_:FuncDefn, _:TArgList, _:ValList) => error ... </k> [owise]
 
   // ==========================================================================
-  // Call_func: `$find_func` in the local, then the global environment
+  // Call_func: the name resolved through the local function parameters, then
+  // `$find_func` in the global environment
   // ==========================================================================
 
-  rule <k> callFunc(X:Id, Ts:TArgList, Vs:ValList) => callFuncDispatch(F, Ts, Vs) ... </k>
-       <lfenv> ... X |-> F:FuncDef ... </lfenv>
-  rule <k> callFunc(X:Id, Ts:TArgList, Vs:ValList) => callFuncDispatch(F, Ts, Vs) ... </k>
+  rule <k> callFunc(X:Id, Ts:TArgList, Vs:ValList) => callFuncNamed(resolveFuncParam(X, LF), Ts, Vs) ... </k>
        <lfenv> LF:Map </lfenv>
-       <gfenv> ... X |-> F:FuncDef ... </gfenv>
-    requires notBool (X in_keys(LF))
-  rule <k> callFunc(_:Id, _:TArgList, _:ValList) => backtrack ... </k> [owise]
+
+  syntax KItem ::= callFuncNamed(Id, TArgList, ValList)
+  rule <k> callFuncNamed(X:Id, Ts:TArgList, Vs:ValList) => callFuncDispatch(D, Ts, Vs) ... </k>
+       <gfenv> ... X |-> D:FuncDefn ... </gfenv>
+  rule <k> callFuncNamed(_:Id, _:TArgList, _:ValList) => error ... </k> [owise]
 
   // ==========================================================================
   // Call_builtin_func / Call_extern_func

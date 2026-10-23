@@ -22,6 +22,10 @@ module STDLIB
   // `val**`
   syntax ValListList ::= List{ValList, ";"} [symbol(valListList), terminator-symbol(.valListList)]
 
+  syntax Int ::= lengthVals(ValList)        [function, total, symbol(lengthVals)]
+  rule lengthVals(.ValList) => 0
+  rule lengthVals(_:Val, Vs:ValList) => 1 +Int lengthVals(Vs)
+
   syntax ValList ::= repeatVal(Val, Int)    [function, total, symbol(repeatVal)]
                    | appendVal(ValList, ValList)
                                             [function, total, symbol(appendVal)]

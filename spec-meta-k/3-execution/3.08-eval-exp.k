@@ -23,20 +23,21 @@ module EVAL-EXP
   //   rule Eval_exp/variable
   rule <k> varE(X:Id) => V ... </k>
        <lvenv> ... varr(X, .IterList) |-> V:Val ... </lvenv>
-  rule <k> varE(_:Id) => backtrack ... </k> [owise]
+  rule <k> varE(_:Id) => error ... </k> [owise]
 
   //   rulegroup Eval_exp/unary
   rule <k> unE(notOp(), boolV(B:Bool)) => boolV(notBool B) ... </k>
   rule <k> unE(O:NumUnOp, N:Num) => unopNumber(O, N) ... </k>
-  rule <k> unE(_:UnOp, _:Val) => backtrack ... </k> [owise]
+  rule <k> unE(_:UnOp, _:Val) => error ... </k> [owise]
 
   //   rulegroup Eval_exp/binary and /compare
   rule <k> binE(O:BoolBinOp, boolV(Bl:Bool), boolV(Br:Bool)) => boolV(binopBool(O, Bl, Br)) ... </k>
   rule <k> binE(O:NumBinOp, Nl:Num, Nr:Num) => binopNumber(O, Nl, Nr) ... </k>
-  rule <k> binE(_:BinOp, _:Val, _:Val) => backtrack ... </k> [owise]
+  rule <k> binE(_:BinOp, _:Val, _:Val) => error ... </k> [owise]
 
   rule <k> cmpE(O:PolyCmpOp, Vl:Val, Vr:Val) => boolV(cmpopPoly(O, Vl, Vr)) ... </k>
   rule <k> cmpE(O:NumCmpOp, Nl:Num, Nr:Num) => boolV(cmpopNumber(O, Nl, Nr)) ... </k>
+  rule <k> cmpE(_:CmpOp, _:Val, _:Val) => error ... </k> [owise]
 
   //   rule Eval_exp/upcast, /downcast, /subtype
   rule <k> upCastE(T:Typ, V:Val) => unres(upcast(updateMap(G, L), T, V)) ... </k>
@@ -58,24 +59,20 @@ module EVAL-EXP
   rule <k> matchE(optV(noVal()), somePat()) => boolV(false) ... </k>
   rule <k> matchE(optV(someVal(_:Val)), nonePat()) => boolV(false) ... </k>
   rule <k> matchE(optV(noVal()), nonePat()) => boolV(true) ... </k>
-  rule <k> matchE(_:Val, _:Pat) => backtrack ... </k> [owise]
-
-  syntax Int ::= lengthVals(ValList)        [function, total, symbol(lengthVals)]
-  rule lengthVals(.ValList) => 0
-  rule lengthVals(_:Val, Vs:ValList) => 1 +Int lengthVals(Vs)
+  rule <k> matchE(_:Val, _:Pat) => error ... </k> [owise]
 
   //   rule Eval_exp/cons
   rule <k> consE(V:Val, listV(Vs:ValList)) => listV(V, Vs) ... </k>
-  rule <k> consE(_:Val, _:Val) => backtrack ... </k> [owise]
+  rule <k> consE(_:Val, _:Val) => error ... </k> [owise]
 
   //   rulegroup Eval_exp/concat
   rule <k> catE(textV(Sl:String), textV(Sr:String)) => textV(Sl +String Sr) ... </k>
   rule <k> catE(listV(Vl:ValList), listV(Vr:ValList)) => listV(appendVal(Vl, Vr)) ... </k>
-  rule <k> catE(_:Val, _:Val) => backtrack ... </k> [owise]
+  rule <k> catE(_:Val, _:Val) => error ... </k> [owise]
 
   //   rule Eval_exp/mem
   rule <k> memE(V:Val, listV(Vs:ValList)) => boolV(memVal(V, Vs)) ... </k>
-  rule <k> memE(_:Val, _:Val) => backtrack ... </k> [owise]
+  rule <k> memE(_:Val, _:Val) => error ... </k> [owise]
 
   syntax Bool ::= memVal(Val, ValList)      [function, total, symbol(memVal)]
   rule memVal(_:Val, .ValList) => false
@@ -84,22 +81,22 @@ module EVAL-EXP
   //   rulegroup Eval_exp/len
   rule <k> lenE(textV(S:String)) => natN(lengthString(S)) ... </k>
   rule <k> lenE(listV(Vs:ValList)) => natN(lengthVals(Vs)) ... </k>
-  rule <k> lenE(_:Val) => backtrack ... </k> [owise]
+  rule <k> lenE(_:Val) => error ... </k> [owise]
 
   //   rule Eval_exp/dot, /idx, /slice, and Eval_path/dot, /idx, /slice
   rule <k> dotE(strV(Fs:ValFieldList), A:Atom) => unopt(assocVal(A, Fs)) ... </k>
-  rule <k> dotE(_:Val, _:Atom) => backtrack ... </k> [owise]
+  rule <k> dotE(_:Val, _:Atom) => error ... </k> [owise]
 
   // The field found, back in flight.
   syntax KItem ::= unopt(ValOpt)
   rule <k> unopt(someVal(V:Val)) => V ... </k>
-  rule <k> unopt(noVal()) => backtrack ... </k>
+  rule <k> unopt(noVal()) => error ... </k>
 
   rule <k> idxE(textV(S:String), natN(N:Int)) => textV(substrString(S, N, N +Int 1)) ... </k>
     requires N >=Int 0 andBool N <Int lengthString(S)
   rule <k> idxE(listV(Vs:ValList), natN(N:Int)) => nthVal(Vs, N) ... </k>
     requires N >=Int 0 andBool N <Int lengthVals(Vs)
-  rule <k> idxE(_:Val, _:Val) => backtrack ... </k> [owise]
+  rule <k> idxE(_:Val, _:Val) => error ... </k> [owise]
 
   syntax Val ::= nthVal(ValList, Int)       [function, symbol(nthVal)]
   rule nthVal((V:Val, _:ValList), 0) => V
@@ -112,7 +109,7 @@ module EVAL-EXP
     requires I >=Int 0 andBool N >=Int 0 andBool I +Int N <=Int lengthString(S)
   rule <k> sliceE(listV(Vs:ValList), natN(I:Int), natN(N:Int)) => listV(sliceVal(Vs, I, N)) ... </k>
     requires I >=Int 0 andBool N >=Int 0 andBool I +Int N <=Int lengthVals(Vs)
-  rule <k> sliceE(_:Val, _:Val, _:Val) => backtrack ... </k> [owise]
+  rule <k> sliceE(_:Val, _:Val, _:Val) => error ... </k> [owise]
 
   syntax ValList ::= sliceVal(ValList, Int, Int)
                                             [function, symbol(sliceVal)]
@@ -142,30 +139,36 @@ module EVAL-EXP
   //   rule Eval_exp/simple
   rule <k> evalIter(someVarr(R:Varr), _:Exp, _:IterExp) => V ... </k>
        <lvenv> ... R |-> V:Val ... </lvenv>
-  rule <k> evalIter(someVarr(_:Varr), _:Exp, _:IterExp) => backtrack ... </k> [owise]
+  rule <k> evalIter(someVarr(_:Varr), _:Exp, _:IterExp) => error ... </k> [owise]
 
-  //   rule Eval_exp/opt: the body under the sub-context, if there is one
+  //   rule Eval_exp/opt-succ: the body under the sub-context, if there is one
   rule <k> evalIter(noVarr(), E:Exp, iterExp(quest(), Xs:VariList))
-        => optSub(Xs, E, finds(iterVaris(Xs, quest()), M))
+        => optSub(Xs, E, subOpt(Xs, M))
        ...
        </k>
        <lvenv> M:Map </lvenv>
 
-  syntax KItem ::= optSub(VariList, Exp, ValList)
-  rule <k> optSub(_:VariList, _:Exp, Vs:ValList) => optV(noVal()) ... </k>
-    requires allNoneOpts(Vs)
-  rule <k> optSub(Xs:VariList, E:Exp, Vs:ValList)
-        => optE(someExp(inScope(bindRow(Xs, unwrapSomeOpts(Vs)) ~> E)))
+  syntax KItem ::= optSub(VariList, Exp, Res)
+  rule <k> optSub(_:VariList, _:Exp, ok(noSub())) => optV(noVal()) ... </k>
+  rule <k> optSub(Xs:VariList, E:Exp, ok(someSub(Vs:ValList)))
+        => optE(someExp(inScope(bindRow(Xs, Vs) ~> E)))
        ...
        </k>
-    requires allSomeOpts(Vs)
+  rule <k> optSub(_:VariList, _:Exp, ERROR) => error ... </k>
 
-  //   rule Eval_exp/list: the body under each sub-context in turn
+  //   rule Eval_exp/list-succ: the body under each sub-context in turn
   rule <k> evalIter(noVarr(), E:Exp, iterExp(star(), Xs:VariList))
-        => listE(rowExps(Xs, E, rows(finds(iterVaris(Xs, star()), M))))
+        => listSub(Xs, E, subList(Xs, M))
        ...
        </k>
        <lvenv> M:Map </lvenv>
+
+  syntax KItem ::= listSub(VariList, Exp, Res)
+  rule <k> listSub(Xs:VariList, E:Exp, ok(Rows:ValListList))
+        => listE(rowExps(Xs, E, Rows))
+       ...
+       </k>
+  rule <k> listSub(_:VariList, _:Exp, ERROR) => error ... </k>
 
   syntax ExpList ::= rowExps(VariList, Exp, ValListList)
                                             [function, total, symbol(rowExps)]
@@ -216,7 +219,7 @@ module EVAL-EXP
     requires lengthString(Sn) ==Int 1 andBool N >=Int 0 andBool N <Int lengthString(S)
   rule <k> updIdx(listV(Vs:ValList), natN(N:Int), Vn:Val) => listV(updateNthVal(Vs, N, Vn)) ... </k>
     requires N >=Int 0 andBool N <Int lengthVals(Vs)
-  rule <k> updIdx(_:Val, _:Val, _:Val) => backtrack ... </k> [owise]
+  rule <k> updIdx(_:Val, _:Val, _:Val) => error ... </k> [owise]
 
   syntax ValList ::= updateNthVal(ValList, Int, Val)
                                             [function, symbol(updateNthVal)]
@@ -247,7 +250,7 @@ module EVAL-EXP
        ...
        </k>
     requires I >=Int 0 andBool N >=Int 0 andBool I +Int N <=Int lengthVals(Vs)
-  rule <k> updSlice(_:Val, _:Val, _:Val, _:Val) => backtrack ... </k> [owise]
+  rule <k> updSlice(_:Val, _:Val, _:Val, _:Val) => error ... </k> [owise]
 
   syntax ValList ::= replaceSliceVal(ValList, Int, Int, ValList)
                                             [function, symbol(replaceSliceVal)]
@@ -262,7 +265,7 @@ module EVAL-EXP
        </k>
 
   rule <k> updDot(strV(Fs:ValFieldList), A:Atom, Vn:Val) => strV(updateField(Fs, A, Vn)) ... </k>
-  rule <k> updDot(_:Val, _:Atom, _:Val) => backtrack ... </k> [owise]
+  rule <k> updDot(_:Val, _:Atom, _:Val) => error ... </k> [owise]
 
   // Update every field selected by its atom.
   syntax ValFieldList ::= updateField(ValFieldList, Atom, Val)

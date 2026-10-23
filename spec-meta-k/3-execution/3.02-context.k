@@ -1,7 +1,8 @@
-// Context and control: loading, outcomes, backtracking, scopes, and frames.
+// Context: loading, function parameters, scopes, call frames, and
+// sub-contexts for iteration.
 //
-// Mirrors spec-meta/3-execution/3.02-context.watsup and the result sorts of
-// spec-meta/3-execution/3.00-result.watsup.
+// Mirrors spec-meta/3-execution/3.02-context.watsup. The context `ctx` is
+// the `<global>` and `<local>` cells of the configuration.
 
 requires "3.01-env.k"
 
@@ -9,96 +10,42 @@ module CONTEXT
   imports ENV
 
   // ==========================================================================
-  // Outcomes
+  // $load: definitions in order, each into <global> as written
+  // ==========================================================================
+
+  rule <k> (D:Defn, Ds:Spec) => D ~> Ds ... </k>
+  rule <k> .Spec => .K ... </k>
+
+  rule <k> (extTypD(X:Id) #as D:ExternTypDefn) => .K ... </k>
+       <gtdenv> M:Map => M[X <- D] </gtdenv>
+  rule <k> (typD(X:Id, _, _) #as D:DefinedTypDefn) => .K ... </k>
+       <gtdenv> M:Map => M[X <- D] </gtdenv>
+
+  rule <k> (extRelD(X:Id, _, _) #as D:ExternRelDefn) => .K ... </k>
+       <grenv> M:Map => M[X <- D] </grenv>
+  rule <k> (relD(X:Id, _, _, _, _) #as D:DefinedRelDefn) => .K ... </k>
+       <grenv> M:Map => M[X <- D] </grenv>
+
+  rule <k> (extFuncD(X:Id, _, _, _) #as D:ExternFuncDefn) => .K ... </k>
+       <gfenv> M:Map => M[X <- D] </gfenv>
+  rule <k> (builtinFuncD(X:Id, _, _, _) #as D:BuiltinFuncDefn) => .K ... </k>
+       <gfenv> M:Map => M[X <- D] </gfenv>
+  rule <k> (tableFuncD(X:Id, _, _, _) #as D:TableFuncDefn) => .K ... </k>
+       <gfenv> M:Map => M[X <- D] </gfenv>
+  rule <k> (funcD(X:Id, _, _, _, _, _) #as D:DefinedFuncDefn) => .K ... </k>
+       <gfenv> M:Map => M[X <- D] </gfenv>
+
+  // ==========================================================================
+  // Function parameters
   //
-  //   syntax res<X> = OK X | FAIL
+  //   dec $resolve_func_param(ctx, id) : id
   //
-  // The outcome of one alternative (a clause, a rule path, a table row, a
-  // cast). `FAIL` is only ever a recorded outcome, never in-flight failure:
-  // a rule with no applicable case rewrites to `backtrack` instead.
+  // `<lfenv>` binds a function parameter to a global function name.
   // ==========================================================================
 
-  syntax Res ::= ok(KItem)                  [symbol(ok)]
-               | "FAIL"                     [symbol(FAIL)]
-
-  syntax KResult ::= Val | ValList | ValField | ValFieldList | ValCase
-                   | ValListList | Res
-
-  // ==========================================================================
-  // Backtracking
-  //
-  // `backtrack` discards the pending work of the current alternative up to
-  // the boundary that started it. A checkpoint turns it into the outcome
-  // `FAIL`; a scope or frame boundary restores its state and lets it go on.
-  // ==========================================================================
-
-  syntax KItem ::= "backtrack"
-
-  syntax Boundary ::= checkpoint(Map, Map)  // lfenv, lvenv
-                    | endScope(Map)         // lvenv
-                    | "endFrame"
-
-  rule <k> backtrack ~> (K:KItem => .K) ... </k> requires notBool isBoundary(K)
-
-  // ==========================================================================
-  // Tries
-  //
-  // `try(K)` runs `K` as one alternative: its failure is caught, its bindings
-  // are undone afterwards, and its outcome is recorded. A `Try` is a try, or
-  // its outcome once evaluated; a list of tries evaluates in order to a list
-  // of outcomes.
-  // ==========================================================================
-
-  syntax Try ::= try(K) | Res
-
-  syntax Tries ::= List{Try, ";"}           [symbol(tries), terminator-symbol(.tries), seqstrict, overload(tries)]
-  syntax Ress ::= List{Res, ";"}            [symbol(ress), terminator-symbol(.ress), overload(tries)]
-  syntax Tries ::= Ress
-  syntax KResult ::= Ress
-
-  rule <k> try(K:K) => K ~> checkpoint(F, V) ... </k>
-       <lfenv> F:Map </lfenv>
-       <lvenv> V:Map </lvenv>
-  rule <k> R:KResult ~> checkpoint(F:Map, V:Map) => ok(R) ... </k>
-       <lfenv> _ => F </lfenv>
-       <lvenv> _ => V </lvenv>
-  rule <k> backtrack ~> checkpoint(F:Map, V:Map) => FAIL ... </k>
-       <lfenv> _ => F </lfenv>
-       <lvenv> _ => V </lvenv>
-
-  // `unres`: the outcome of a cast, back in flight.
-  syntax KItem ::= unres(Res)
-  rule <k> unres(ok(V:Val)) => V ... </k>
-  rule <k> unres(FAIL) => backtrack ... </k>
-
-  // ==========================================================================
-  // Determinism check over the outcomes of the alternatives of a call
-  //
-  //   def $det_valres(valres*) : valres
-  //   def $det_valsres(valsres*) : valsres
-  //
-  // `det(Tries, Else)` is the single success; `Else` (the else clause or
-  // group, or `backtrack`) when none succeeded; `backtrack` when several did.
-  // ==========================================================================
-
-  syntax KItem ::= det(Tries, KItem)        [strict(1)]
-  rule <k> det(Rs:Ress, Else:KItem) => pick(oks(Rs), Else) ... </k>
-
-  syntax KItem ::= pick(List, KItem)
-  rule <k> pick(ListItem(R:KItem), _:KItem) => R ... </k>
-  rule <k> pick(.List, Else:KItem) => Else ... </k>
-  rule <k> pick(ListItem(_) ListItem(_) _:List, _:KItem) => backtrack ... </k>
-
-  // The `OK` outcomes, in order.
-  syntax List ::= oks(Ress)                 [function, total, symbol(oks)]
-  rule oks(.Ress) => .List
-  rule oks(ok(R:KItem) ; Rs:Ress) => ListItem(R) oks(Rs)
-  rule oks(FAIL ; Rs:Ress) => oks(Rs)
-
-  // The first success of alternatives tried in order.
-  syntax KItem ::= firstOf(Try, KItem)      [strict(1)]
-  rule <k> firstOf(ok(R:KItem), _:KItem) => R ... </k>
-  rule <k> firstOf(FAIL, Next:KItem) => Next ... </k>
+  syntax Id ::= resolveFuncParam(Id, Map)   [function, total, symbol(resolveFuncParam)]
+  rule resolveFuncParam(X:Id, (X |-> Y:Id) _:Map) => Y
+  rule resolveFuncParam(X:Id, _:Map) => X [owise]
 
   // ==========================================================================
   // Scopes: a sub-context whose value bindings end with it
@@ -112,7 +59,7 @@ module CONTEXT
        <lvenv> M:Map </lvenv>
   rule <k> R:KResult ~> endScope(M:Map) => R ... </k>
        <lvenv> _ => M </lvenv>
-  rule <k> backtrack ~> endScope(M:Map) => backtrack ... </k>
+  rule <k> S:Signal ~> endScope(M:Map) => S ... </k>
        <lvenv> _ => M </lvenv>
 
   syntax KItem ::= "clearLocalVenv" "(" ")"
@@ -122,13 +69,12 @@ module CONTEXT
   // ==========================================================================
   // Call frames
   //
-  //   C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
+  //   C_callee = C[ .LOCAL = $empty_localLayer[ .TYP = tdenv ] ]
   //
-  // `enterFrame(T)` replaces the local layer and records the caller's local
-  // function environment for `Assign_arg/fun`; `endFrame` restores all of it.
+  // `enterFrame(T)` replaces the local layer; `endFrame` restores it.
   // ==========================================================================
 
-  syntax Frame ::= frame(Map, Map, Map, Map) [symbol(frame)]   // ltdenv, lfenv, lvenv, cfenv
+  syntax Frame ::= frame(Map, Map, Map)     [symbol(frame)]   // ltdenv, lfenv, lvenv
 
   syntax KItem ::= enterFrame(Map)          // the callee's local tdenv
 
@@ -136,61 +82,43 @@ module CONTEXT
        <ltdenv> T':Map => T </ltdenv>
        <lfenv> F:Map => .Map </lfenv>
        <lvenv> V:Map => .Map </lvenv>
-       <cfenv> CF:Map => F </cfenv>
-       <callstack> .List => ListItem(frame(T', F, V, CF)) ... </callstack>
+       <callstack> .List => ListItem(frame(T', F, V)) ... </callstack>
 
   rule <k> R:KResult ~> endFrame => R ... </k>
        <ltdenv> _ => T </ltdenv>
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>
-       <cfenv> _ => CF </cfenv>
-       <callstack> ListItem(frame(T:Map, F:Map, V:Map, CF:Map)) => .List ... </callstack>
-  rule <k> backtrack ~> endFrame => backtrack ... </k>
+       <callstack> ListItem(frame(T:Map, F:Map, V:Map)) => .List ... </callstack>
+  rule <k> S:Signal ~> endFrame => S ... </k>
        <ltdenv> _ => T </ltdenv>
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>
-       <cfenv> _ => CF </cfenv>
-       <callstack> ListItem(frame(T:Map, F:Map, V:Map, CF:Map)) => .List ... </callstack>
-
-  // ==========================================================================
-  // $load: definitions in order, each into <global>
-  // ==========================================================================
-
-  rule <k> (D:Defn, Ds:Spec) => D ~> Ds ... </k>
-  rule <k> .Spec => .K ... </k>
-
-  rule <k> extTypD(X:Id) => .K ... </k>
-       <gtdenv> M:Map => M[X <- extTypD(X)] </gtdenv>
-  rule <k> typD(X:Id, Ps:TParamList, DT:DefTyp) => .K ... </k>
-       <gtdenv> M:Map => M[X <- typD(X, Ps, DT)] </gtdenv>
-
-  rule <k> extRelD(X:Id, _:TypList, _:TypList) => .K ... </k>
-       <grenv> M:Map => M[X <- extRel(X)] </grenv>
-  rule <k> relD(X:Id, _:TypList, _:TypList, Gs:RulGroupList, EG:ElsGroupOpt) => .K ... </k>
-       <grenv> M:Map => M[X <- defRel(Gs, EG)] </grenv>
-
-  rule <k> extFuncD(X:Id, _:TParamList, _:ParamList, _:Typ) => .K ... </k>
-       <gfenv> M:Map => M[X <- extFunc(X)] </gfenv>
-  rule <k> builtinFuncD(X:Id, Ps:TParamList, As:ParamList, _:Typ) => .K ... </k>
-       <gfenv> M:Map => M[X <- builtinFunc(X, Ps, As)] </gfenv>
-  rule <k> tableFuncD(X:Id, As:ParamList, _:Typ, Rs:TblRowList) => .K ... </k>
-       <gfenv> M:Map => M[X <- tableFunc(As, Rs)] </gfenv>
-  rule <k> funcD(X:Id, Ps:TParamList, _:ParamList, _:Typ, Cs:ClauseList, EC:ElsClauseOpt)
-        => .K
-       ...
-       </k>
-       <gfenv> M:Map => M[X <- defFunc(Ps, Cs, EC)] </gfenv>
+       <callstack> ListItem(frame(T:Map, F:Map, V:Map)) => .List ... </callstack>
 
   // ==========================================================================
   // Sub-contexts for iteration
   //
-  //   dec $sub_opt(ctx, vari*) : ctx?
-  //   dec $sub_list(ctx, vari*) : ctx*
+  //   dec $sub_opt(ctx, vari*) : subOptRes       syntax subOptRes = ok<ctx?> | error
+  //   dec $sub_list(ctx, vari*) : subListRes     syntax subListRes = ok<ctx*> | error
   //
-  // The bound variables are found at one more iteration (`finds` of
-  // `iterVaris`); the consumer splits on `allSomeOpts`/`allNoneOpts` or
-  // transposes the lists into `rows`, and runs each row under `inScope`.
+  // A sub-context is the current context with `vari*` bound: here the values
+  // to bind to them (`SubOpt`), or one row of values per sub-context
+  // (`ValListList`). The consumer runs each under `inScope(bindRow(..) ~> ..)`.
   // ==========================================================================
+
+  syntax SubOpt ::= noSub()                 [symbol(noSub)]
+                  | someSub(ValList)        [symbol(someSub)]
+
+  syntax Res ::= subOpt(VariList, Map)      [function, total, symbol(subOpt)]
+  rule subOpt(.VariList, _:Map) => ERROR
+  rule subOpt(Xs:VariList, M:Map) => subOptOf(finds(iterVaris(Xs, quest()), M)) [owise]
+
+  syntax Res ::= subOptOf(Res)              [function, total, symbol(subOptOf)]
+  rule subOptOf(ok(Vs:ValList)) => ok(someSub(unwrapSomeOpts(Vs)))
+    requires allSomeOpts(Vs)
+  rule subOptOf(ok(Vs:ValList)) => ok(noSub())
+    requires allNoneOpts(Vs)
+  rule subOptOf(_:Res) => ERROR [owise]
 
   syntax Bool ::= allSomeOpts(ValList)      [function, total, symbol(allSomeOpts)]
                 | allNoneOpts(ValList)      [function, total, symbol(allNoneOpts)]
@@ -206,13 +134,31 @@ module CONTEXT
   rule unwrapSomeOpts(.ValList) => .ValList
   rule unwrapSomeOpts(optV(someVal(V:Val)), Vs:ValList) => V, unwrapSomeOpts(Vs)
 
-  // The rows of `$sub_list`: the bound lists transposed, one row per
-  // element, so an empty list gives no rows.
-  syntax ValListList ::= rows(ValList)      [function, symbol(rows)]
-                       | lists(ValList)     [function, symbol(lists)]
-  rule rows(Vs:ValList) => transposeVal(lists(Vs))
+  // The rows of `$sub_list`: the bound lists transposed, one row per element,
+  // so an empty list gives no rows. Lists of different lengths are an error.
+  syntax Res ::= subList(VariList, Map)     [function, total, symbol(subList)]
+  rule subList(Xs:VariList, M:Map) => subListOf(finds(iterVaris(Xs, star()), M))
+
+  syntax Res ::= subListOf(Res)             [function, total, symbol(subListOf)]
+  rule subListOf(ok(Vs:ValList)) => ok(transposeVal(lists(Vs)))
+    requires sameLengthLists(Vs)
+  rule subListOf(_:Res) => ERROR [owise]
+
+  syntax ValListList ::= lists(ValList)     [function, symbol(lists)]
   rule lists(.ValList) => .ValListList
   rule lists(listV(Vs:ValList), Ws:ValList) => Vs ; lists(Ws)
+
+  // All `LIST`s of one length.
+  syntax Bool ::= sameLengthLists(ValList)  [function, total, symbol(sameLengthLists)]
+                | sameLengthLists(Int, ValList)
+                                            [function, total, symbol(sameLengthListsAs)]
+  rule sameLengthLists(.ValList) => true
+  rule sameLengthLists(listV(Vs:ValList), Ws:ValList) => sameLengthLists(lengthVals(Vs), Ws)
+  rule sameLengthLists(_:Val, _:ValList) => false [owise]
+  rule sameLengthLists(_:Int, .ValList) => true
+  rule sameLengthLists(N:Int, (listV(Vs:ValList), Ws:ValList))
+    => lengthVals(Vs) ==Int N andBool sameLengthLists(N, Ws)
+  rule sameLengthLists(_:Int, (_:Val, _:ValList)) => false [owise]
 
   // Bind one row of a sub-context.
   syntax KItem ::= bindRow(VariList, ValList)

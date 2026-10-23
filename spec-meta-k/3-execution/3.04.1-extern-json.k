@@ -23,7 +23,8 @@
 //
 //   response ::= {"ok": val}         // builtin and extern-func
 //              | {"ok": [val, ...]}  // extern-rel: a relation yields val*
-//              | {"fail": null}      // recoverable failure; extern only
+//              | {"fail": null}      // recoverable mismatch; extern only
+//              | {"error": text}     // a fatal error of the host
 
 requires "json.md"
 requires "../0-aux/0.1-config.k"
@@ -180,14 +181,20 @@ module EXTERN-JSON
   syntax JSON ::= respOk(JSON)                [function, symbol(respOk)]
   rule respOk({ "ok" : J:JSON, .JSONs }) => J
 
-  syntax KItem ::= externFuncResult(JSON)     [function, symbol(externFuncResult)]
-                 | externRelResult(JSON)      [function, symbol(externRelResult)]
+  syntax KItem ::= externFuncResult(JSON)     [symbol(externFuncResult)]
+                 | externRelResult(JSON)      [symbol(externRelResult)]
 
-  rule externFuncResult({ "ok" : J:JSON, .JSONs }) => valOfJson(J)
-  rule externFuncResult({ "fail" : null, .JSONs }) => backtrack
+  rule <k> externFuncResult({ "ok" : J:JSON, .JSONs }) => valOfJson(J) ... </k>
+  rule <k> externFuncResult({ "fail" : null, .JSONs }) => unmatch ... </k>
+  rule <k> externFuncResult({ "error" : S:String, .JSONs }) => hostError(S) ... </k>
 
-  rule externRelResult({ "ok" : [ Js:JSONs ], .JSONs }) => valsOfJsons(Js)
-  rule externRelResult({ "fail" : null, .JSONs }) => backtrack
+  rule <k> externRelResult({ "ok" : [ Js:JSONs ], .JSONs }) => valsOfJsons(Js) ... </k>
+  rule <k> externRelResult({ "fail" : null, .JSONs }) => unmatch ... </k>
+  rule <k> externRelResult({ "error" : S:String, .JSONs }) => hostError(S) ... </k>
+
+  // A host error is reported, then is an execution error.
+  syntax KItem ::= hostError(String)
+  rule <k> hostError(S:String) => #write(2, "host error: " +String S +String "\n") ~> error ... </k>
 
   // ==========================================================================
   // The debug log

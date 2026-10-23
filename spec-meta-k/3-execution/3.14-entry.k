@@ -37,9 +37,11 @@ module AL
   rule <k> result(S:String) => #write(1, S +String "\n") ... </k>
 
   rule <k> ok(_:ValList) ~> finishRel() => result("passed") ... </k>
-  rule <k> FAIL ~> finishRel() => result("fail") ... </k>
+  rule <k> UNMATCH ~> finishRel() => result("fail") ... </k>
+  rule <k> ERROR ~> finishRel() => result("error") ... </k>
 
   rule <k> ok(V:Val) ~> finishMain() => result(JSON2String(jsonOfVal(V))) ... </k>
-  rule <k> FAIL ~> finishMain() => result("fail") ... </k>
+  rule <k> UNMATCH ~> finishMain() => result("fail") ... </k>
+  rule <k> ERROR ~> finishMain() => result("error") ... </k>
 
 endmodule

@@ -9,7 +9,7 @@
 //   dec $subtyp(tdenv, typ, val) : bool
 //   dec $subtyps(tdenv, typ*, val*) : bool
 //
-// A substitution is a tdenv of aliases (`tdenvOf` in 3.01-env.k), and the casts
+// A substitution is a tdenv of aliases (`tdenvOf`), and the casts
 // take the merged tdenv `updateMap(gtdenv, ltdenv)` like `$subtyp` does.
 
 requires "3.02-context.k"
@@ -25,6 +25,14 @@ module TYP
   // ==========================================================================
   // Type substitution
   // ==========================================================================
+
+  // A substitution is a tdenv of aliases, one per type parameter.
+  syntax Map ::= tdenvOf(TParamList, TArgList)
+                                            [function, symbol(tdenvOf)]
+
+  rule tdenvOf(.TParamList, .TArgList) => .Map
+  rule tdenvOf((X:Id, Xs:TParamList), (T:Typ, Ts:TArgList))
+    => (X |-> typD(X, .TParamList, aliasDT(T))) tdenvOf(Xs, Ts)
 
   syntax Typ ::= substTyp(Map, Typ)         [function, symbol(substTyp)]
   syntax TypList ::= substTyps(Map, TypList)
@@ -55,10 +63,10 @@ module TYP
   //
   //   def $upcast(C, INT, INT i) = OK (INT i)
   //   def $upcast(C, INT, NAT n) = OK (INT n)
-  //   def $upcast(C, INT, val) = FAIL          -- if ~(val <: num)
+  //   def $upcast(C, INT, val) = ERROR          -- if ~(val <: num)
   //   def $upcast(C, VAR id targ*, val) = $upcast(C, typ', val)
   //   def $upcast(C, TUP typ*, TUP val*) = OK (TUP val_upcast*)
-  //   def $upcast(C, TUP typ*, val) = FAIL     -- if ~$is_tup(val)
+  //   def $upcast(C, TUP typ*, val) = ERROR     -- if ~$is_tup(val)
   //   def $upcast(C, ITER typ QUEST, OPT val?) = ...
   //   def $upcast(C, ITER typ STAR, LIST val*) = ...
   //   def $upcast(C, typ, val) = OK val        -- otherwise
@@ -68,7 +76,7 @@ module TYP
 
   rule upcast(_:Map, intT(), intN(I:Int)) => ok(intN(I))
   rule upcast(_:Map, intT(), natN(N:Int)) => ok(intN(N))
-  rule upcast(_:Map, intT(), V:Val) => FAIL
+  rule upcast(_:Map, intT(), V:Val) => ERROR
     requires notBool isNum(V)
 
   rule upcast(((X:Id |-> typD(X, Ps:TParamList, aliasDT(T:Typ))) _:Map) #as E:Map,
@@ -76,7 +84,7 @@ module TYP
     => upcast(E, substTyp(tdenvOf(Ps, Ts), T), V)
 
   rule upcast(E:Map, tupT(Ts:TypList), tupV(Vs:ValList)) => resTup(upcasts(E, Ts, Vs))
-  rule upcast(_:Map, tupT(_:TypList), V:Val) => FAIL
+  rule upcast(_:Map, tupT(_:TypList), V:Val) => ERROR
     requires notBool isTup(V)
 
   rule upcast(_:Map, iterT(_:Typ, quest()), optV(noVal())) => ok(optV(noVal()))
@@ -91,7 +99,7 @@ module TYP
   //
   //   def $downcast(C, NAT, NAT n) = OK (NAT n)
   //   def $downcast(C, NAT, INT i) = OK (NAT n)  -- if n = i
-  //   def $downcast(C, NAT, val) = FAIL          -- if ~(val <: num)
+  //   def $downcast(C, NAT, val) = ERROR          -- if ~(val <: num)
   //   ... (as for upcasts)
   // ==========================================================================
 
@@ -100,7 +108,7 @@ module TYP
   rule downcast(_:Map, natT(), natN(N:Int)) => ok(natN(N))
   rule downcast(_:Map, natT(), intN(I:Int)) => ok(natN(I))
     requires I >=Int 0
-  rule downcast(_:Map, natT(), V:Val) => FAIL
+  rule downcast(_:Map, natT(), V:Val) => ERROR
     requires notBool isNum(V)
 
   rule downcast(((X:Id |-> typD(X, Ps:TParamList, aliasDT(T:Typ))) _:Map) #as E:Map,
@@ -108,7 +116,7 @@ module TYP
     => downcast(E, substTyp(tdenvOf(Ps, Ts), T), V)
 
   rule downcast(E:Map, tupT(Ts:TypList), tupV(Vs:ValList)) => resTup(downcasts(E, Ts, Vs))
-  rule downcast(_:Map, tupT(_:TypList), V:Val) => FAIL
+  rule downcast(_:Map, tupT(_:TypList), V:Val) => ERROR
     requires notBool isTup(V)
 
   rule downcast(_:Map, iterT(_:Typ, quest()), optV(noVal())) => ok(optV(noVal()))
@@ -135,21 +143,16 @@ module TYP
   rule downcasts(E:Map, (T:Typ, Ts:TypList), (V:Val, Vs:ValList))
     => consRes(downcast(E, T, V), downcasts(E, Ts, Vs))
 
-  syntax Res ::= consRes(Res, Res)          [function, total, symbol(consRes)]
-
-  rule consRes(ok(V:Val), ok(Vs:ValList)) => ok((V, Vs))
-  rule consRes(_:Res, _:Res) => FAIL [owise]
-
   syntax Res ::= resTup(Res)                [function, total, symbol(resTup)]
                | resList(Res)               [function, total, symbol(resList)]
                | resOpt(Res)                [function, total, symbol(resOpt)]
 
   rule resTup(ok(Vs:ValList)) => ok(tupV(Vs))
-  rule resTup(_:Res) => FAIL [owise]
+  rule resTup(_:Res) => ERROR [owise]
   rule resList(ok(Vs:ValList)) => ok(listV(Vs))
-  rule resList(_:Res) => FAIL [owise]
+  rule resList(_:Res) => ERROR [owise]
   rule resOpt(ok(V:Val)) => ok(optV(someVal(V)))
-  rule resOpt(_:Res) => FAIL [owise]
+  rule resOpt(_:Res) => ERROR [owise]
 
   syntax TypList ::= Typs2Repeat(Typ, ValList)
                                             [function, total, symbol(Typs2Repeat)]
