@@ -109,8 +109,7 @@ impl Builtins {
             ("add_map".to_owned(), BuiltinEntry::Pure(Box::new(maps::add_map))),
             ("adds_map".to_owned(), BuiltinEntry::Pure(Box::new(maps::adds_map))),
             ("update_map".to_owned(), BuiltinEntry::Pure(Box::new(maps::update_map))),
-            // Fresh names
-            ("fresh".to_owned(), BuiltinEntry::Pure(Box::new(fresh::fresh))),
+            // Fresh type id
             ("fresh_typeId".to_owned(), BuiltinEntry::Impure(ImpureBuiltin::new(fresh::make))),
             // Numerics
             ("shl".to_owned(), BuiltinEntry::Pure(Box::new(numerics::shl))),
