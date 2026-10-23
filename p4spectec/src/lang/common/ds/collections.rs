@@ -2,9 +2,13 @@
 //!
 //! `ByKey` gives a key the `Eq`/`Ord` of its `SyntaxCmp`,
 //! so two identifiers with different spans collide in a map or set.
-//! Identifier keys also borrow as their bare name, for lookups by name.
+//! Identifier keys also borrow and hash as their bare name, for lookups by name.
 
-use std::{borrow::Borrow, cmp::Ordering};
+use std::{
+    borrow::Borrow,
+    cmp::Ordering,
+    hash::{Hash, Hasher},
+};
 
 use crate::lang::{common::Id, traits::cmp::SyntaxCmp};
 
@@ -16,6 +20,13 @@ pub(crate) struct ByKey<K: ?Sized>(pub(crate) K);
 impl Borrow<str> for ByKey<Id> {
     fn borrow(&self) -> &str {
         &self.0.node
+    }
+}
+
+impl Hash for ByKey<Id> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Agree with `Borrow<str>`, so lookups by name find the key
+        self.0.node.hash(state)
     }
 }
 

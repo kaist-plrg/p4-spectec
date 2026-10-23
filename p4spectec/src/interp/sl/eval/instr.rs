@@ -471,7 +471,7 @@ fn eval_cond_iter<Iface: Interface, Ext: Extern>(
         return eval(runner_ctx, ctx);
     };
     let ast::ExpIter { iter, vars } = exp_iter;
-    let vars_outer = iterate_vars(ctx, vars, *iter);
+    let vars_outer = iterate_vars(vars);
     match iter {
         // An option iterates zero or one time
         ast::Iter::Opt => {
