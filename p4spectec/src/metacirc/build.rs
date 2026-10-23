@@ -41,7 +41,10 @@ use super::{
     tower::{Layer, Level, Tower},
 };
 use crate::{
-    interface::{self, meta::shared::Cache},
+    interface::{
+        self,
+        meta::{ScriptLang, shared::Cache},
+    },
     lang::{al::ast as al, data::arena::Arena, il::ast as il},
     pass::{algo, structure},
     phrase,
@@ -79,23 +82,35 @@ fn builtins_of_il(spec_il: &il::Spec) -> al::Spec {
         .collect()
 }
 
-/// Prepares an AL top level whose builtin calls are answered by the program's definitions.
+/// The script language of a meta level accepting `lang`.
+fn script_lang(lang: Lang) -> Result<ScriptLang> {
+    match lang {
+        Lang::Al => Ok(ScriptLang::Al),
+        Lang::Il => Ok(ScriptLang::Il),
+        Lang::P4 => Err(config_invalid("a meta level cannot accept P4")),
+    }
+}
+
+/// Prepares a meta top level whose builtin calls are answered by the program's definitions.
 fn build_terminal(
     arena: &mut Arena,
     spec_top: Spec,
+    lang: ScriptLang,
     spec_al_program: al::Spec,
     mode: ExecutionMode,
     options: runner::Config,
 ) -> Result<Layer> {
-    // Prepare the input script's definition environment for builtin calls
+    // Prepare the input script's definition environment for builtin calls;
+    // this runner holds AL, whatever the top level accepts
     let spec_program = into_runner_spec(mode, spec_al_program)?;
-    let runner_program = Runner::new(arena, spec_program, options, interface::al(), NullExtern)?;
+    let interface_program = interface::meta(ScriptLang::Al);
+    let runner_program = Runner::new(arena, spec_program, options, interface_program, NullExtern)?;
     // Run the meta specification with builtin calls delegated to runner_program
     let external = MetaExtern::Terminal(TerminalExtern {
         cache: Box::new(Cache::new(options.cache)),
         runner_program: Box::new(runner_program),
     });
-    let runner = Runner::new(arena, spec_top, options, interface::al(), external)?;
+    let runner = Runner::new(arena, spec_top, options, interface::meta(lang), external)?;
     Ok(Layer::MetaSpec(runner))
 }
 
@@ -110,11 +125,11 @@ fn build_top(
     let spec_top = into_runner_spec(mode, top.spec_al().clone())?;
     match program {
         ProgramConfig::Al { spec_al } => {
-            build_terminal(arena, spec_top, spec_al.clone(), mode, options)
+            build_terminal(arena, spec_top, ScriptLang::Al, spec_al.clone(), mode, options)
         }
         // An IL program needs only its builtin declarations to answer builtin calls
         ProgramConfig::Il { spec_il } => {
-            build_terminal(arena, spec_top, builtins_of_il(spec_il), mode, options)
+            build_terminal(arena, spec_top, ScriptLang::Il, builtins_of_il(spec_il), mode, options)
         }
         ProgramConfig::P4 => {
             // Prepare the P4 host environment independently of program parsing
@@ -134,11 +149,12 @@ fn build_relay(
     options: runner::Config,
 ) -> Result<Layer> {
     let spec = into_runner_spec(mode, level.spec_al().clone())?;
+    let interface_level = interface::meta(script_lang(level.config().lang)?);
     let external = MetaExtern::Relay(RelayExtern {
         cache: Box::new(Cache::new(options.cache)),
         layer_next: Box::new(layer_next),
     });
-    Ok(Layer::MetaSpec(Runner::new(arena, spec, options, interface::al(), external)?))
+    Ok(Layer::MetaSpec(Runner::new(arena, spec, options, interface_level, external)?))
 }
 
 // == Tower assembly

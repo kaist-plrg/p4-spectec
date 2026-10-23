@@ -15,7 +15,10 @@ use expect_test::expect_file;
 use p4spectec::{
     interface::{
         self,
-        meta::shared::{decode::Decode, encode::Encode},
+        meta::{
+            ScriptLang,
+            shared::{decode::Decode, encode::Encode},
+        },
     },
     lang::{al::ast as al, data::arena::Arena},
     metacirc::{
@@ -36,9 +39,13 @@ use crate::{
 fn run_native(spec_al: al::Spec, config: Config) -> &'static str {
     let run = std::panic::AssertUnwindSafe(|| {
         let mut arena = Arena::new();
-        let Ok(mut runner) =
-            Runner::new(&mut arena, Spec::Al(spec_al), config, interface::al(), NullExtern)
-        else {
+        let Ok(mut runner) = Runner::new(
+            &mut arena,
+            Spec::Al(spec_al),
+            config,
+            interface::meta(ScriptLang::Al),
+            NullExtern,
+        ) else {
             return false;
         };
         runner

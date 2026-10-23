@@ -8,7 +8,7 @@
 
 use super::{config::LevelConfig, externs::MetaExtern};
 use crate::{
-    interface::{meta::al::AlInterface, p4::P4Interface},
+    interface::{meta::MetaInterface, p4::P4Interface},
     lang::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},
@@ -60,7 +60,7 @@ pub(super) enum Layer {
     /// A P4 specification, interpreting a parsed P4 program.
     P4Spec(Runner<P4Interface, Dummy>),
     /// A meta specification interpreting an AL or IL script, hosting the script above it.
-    MetaSpec(Runner<AlInterface, MetaExtern>),
+    MetaSpec(Runner<MetaInterface, MetaExtern>),
 }
 
 impl Tower {

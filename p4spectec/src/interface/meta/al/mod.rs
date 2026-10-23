@@ -1,72 +1,9 @@
-//! AL program parsing and specification builtins
+//! AL syntax and runtime values at the meta-language boundary
 //!
-//! `AlInterface::parse_program` converts specification paths to AL through `algo`
-//! and encodes source AL as a meta `spec` in the caller's arena
-//! Paths follow the compiler's ordered file and directory loading rules
-//! Include search paths are unused because AL input is not preprocessed
-
-use std::path::PathBuf;
-
-use crate::{
-    lang::{
-        data::{arena::Arena, value::flat::Value},
-        il::ast::{Id, Typ},
-    },
-    runner::{Eval, Extern, Interface, InterfaceError, Interpreter, RunnerContext},
-};
-
-use crate::interface::{builtin::call::Builtins, meta::shared::encode::Encode};
+//! `encode` and `decode` convert AL specifications and runtime values;
+//! shared syntax comes from `meta::shared`.
 
 pub mod decode;
 pub mod encode;
 mod mixops;
 mod stub;
-
-/// Provides AL script parsing and the standard specification builtins.
-pub struct AlInterface {
-    builtins: Builtins,
-}
-
-impl AlInterface {
-    /// Assembles the AL interface with its configured builtin table.
-    pub(crate) fn new(builtins: Builtins) -> Self {
-        Self { builtins }
-    }
-}
-
-impl Interface for AlInterface {
-    fn parse_program(
-        &mut self,
-        arena: &mut Arena,
-        _includes: &[PathBuf],
-        paths: &[PathBuf],
-    ) -> Result<Value, InterfaceError> {
-        // Convert ordered specification inputs to source AL
-        let spec_al = crate::algo(paths).map_err(InterfaceError::from)?;
-        // Encode the program in the caller's arena and retain codec diagnostics
-        spec_al
-            .encode(arena)
-            .map_err(|error| InterfaceError::from(error.into_report()))
-    }
-
-    fn call_builtin<Interp, Ext>(
-        ctx: &mut RunnerContext<'_, Interp, Self, Ext>,
-        id: &Id,
-        targs: &[Typ],
-        values: &[Value],
-    ) -> Eval<Value, InterfaceError>
-    where
-        Ext: Extern,
-        Interp: Interpreter<Self, Ext>,
-    {
-        let (arena, interface) = ctx.arena_and_interface_mut();
-        interface
-            .builtins
-            .invoke(arena, id, targs, values)
-            .map_err(InterfaceError::from)
-    }
-
-    fn clear(&mut self) {
-        self.builtins.init();
-    }
-}

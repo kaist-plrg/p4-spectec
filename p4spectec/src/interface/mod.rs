@@ -4,8 +4,9 @@
 //! the P4 parser and standard builtins plus `print_`,
 //! which renders a value back to P4 syntax
 //! using the specification's print hints
-//! `al` converts specification inputs to meta scripts with standard builtins;
-//! `meta` converts IL and AL to and from meta-language values
+//! `meta` is the preset for meta specifications: standard builtins,
+//! with specification inputs parsed as AL or IL scripts;
+//! `meta` also converts IL and AL to and from meta-language values
 
 use crate::lang::{common::source::Span, data::value};
 
@@ -13,7 +14,7 @@ use crate::runner::Spec;
 
 use self::{
     builtin::{call::Builtins, extract},
-    meta::al::AlInterface,
+    meta::{MetaInterface, ScriptLang},
     p4::{P4Interface, unparse::P4Unparser},
 };
 
@@ -21,11 +22,12 @@ pub mod builtin;
 pub mod meta;
 pub mod p4;
 
-// == AL
+// == Meta
 
-/// Builds the AL interface with the standard specification builtins.
-pub fn al() -> AlInterface {
-    AlInterface::new(Builtins::new())
+/// Builds the interface of a meta specification accepting `lang` scripts,
+/// with the standard specification builtins.
+pub fn meta(lang: ScriptLang) -> MetaInterface {
+    MetaInterface::new(lang, Builtins::new())
 }
 
 // == P4
