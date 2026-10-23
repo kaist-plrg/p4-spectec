@@ -19,7 +19,7 @@ relation Iter_source:
   hint(prose_out %2)
 
 relation Iter_replace:
-  iterCtx |- id* -> vari : iterCtx
+  iterCtx id* |- vari : iterCtx
   hint(input %0 %1 %2)
   hint(prose_in "replacing the sources" %1 "of" %0 "with the variable" %2)
   hint(prose_out %3)
@@ -141,13 +141,13 @@ relation Partialbind_args:
   hint(prose_out %2 %3 %4 %5)
 
 relation Partialbind_check:
-  iterCtx |- vari : exp : premAL
+  iterCtx vari |- exp : premAL
   hint(input %0 %1 %2)
   hint(prose_in "checking" %2 "on the fresh variable" %1 "over" %0)
   hint(prose_out %3)
 
 relation Partialbind_destructure:
-  iterCtx |- vari : exp '=' exp : premAL
+  iterCtx vari |- exp '=' exp : premAL
   hint(input %0 %1 %2 %3)
   hint(prose_in "binding pattern" %2 "to" %3 "from the fresh variable" %1 "over" %0)
   hint(prose_out %4)
@@ -205,7 +205,7 @@ relation Algo_tblRow:
   hint(prose_out %2)
 
 relation TblRows_cover:
-  algoCtx |- typ* : tblRowIL*
+  algoCtx typ* |- tblRowIL*
   hint(input %0 %1 %2)
   hint(prose_in "the rows" %2 "are exclusive and complete for parameter types" %1
                 "under" %0)

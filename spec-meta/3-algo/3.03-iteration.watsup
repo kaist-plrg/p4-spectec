@@ -93,15 +93,15 @@ rulegroup Iter_source {
 rulegroup Iter_replace {
 
   rule Iter_replace/nil:
-    eps |- _ -> _ : eps
+    eps _ |- _ : eps
 
   rule Iter_replace/cons:
-    iterPremAL :: IC |- id* -> vari : iterPremAL' :: IC'
+    (iterPremAL :: IC) id* |- vari : iterPremAL' :: IC'
     -- if iter '<-' vari_src* '->' vari_bind* = iterPremAL
     -- if vari_keep* = $sources_except(vari_src*, id*)
     -- if iterPremAL' = iter '<-' (vari_keep* ++ [ vari ]) '->' vari_bind*
     -- if vari_lift = $iter_vari(vari, iter)
-    -- Iter_replace: IC |- id* -> vari_lift : IC'
+    -- Iter_replace: IC id* |- vari_lift : IC'
 
 }
 
