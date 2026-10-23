@@ -36,14 +36,14 @@ pub fn run(
         return Err(error::input_invalid("a tower requires at least one program path"));
     }
     let mut arena = Arena::new();
-    // Prepare the input environment by the configured target language
-    let program = match config.target_lang() {
+    // Prepare the input environment by the top level's configured language
+    let program = match config.top_lang() {
         // AL builtins must resolve against the actual input definitions
         Lang::Al => ProgramConfig::Al { spec_al: crate::algo(paths_program)? },
         // P4 inputs contain exactly one translation unit
         Lang::P4 if paths_program.len() == 1 => ProgramConfig::P4,
         Lang::P4 => {
-            return Err(error::input_invalid("a P4 target requires exactly one program path"));
+            return Err(error::input_invalid("a P4 top level requires exactly one program path"));
         }
     };
     let mut tower = Tower::build(&mut arena, config, &program, options)?;

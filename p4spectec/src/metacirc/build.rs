@@ -1,19 +1,19 @@
-//! Preparation of target, intermediate, and base specifications
+//! Preparation of top, intermediate, and base levels
 //!
 //! Lowered specifications stay paired with their configured entry and input language.
-//! Host helpers are assembled from target toward base;
+//! Layers are assembled from the top level toward the base;
 //! patched scripts carry each inner entry to the interpreter consuming them.
 //!
-//! Construction and execution for `[base, interm, target]`:
+//! Construction and execution for `[base, interm, top]`:
 //!
 //! ```text
 //! Tower::build(config) -- once          Tower::patch(program) -- per input
 //!             |                                      |
 //!       lower levels                        parsed program Value
 //!             |                                      |
-//!       build_target(target)                entry(target) + encode
+//!       build_top(top)                      entry(top) + encode
 //!             |                                      |
-//!       Layer::AlSpec or Layer::P4Spec      encoded target script
+//!       Layer::AlSpec or Layer::P4Spec      encoded top script
 //!             |                                      |
 //!       build_relay(interm, layer)          entry(interm) + encode
 //!             |                                      |
@@ -28,9 +28,9 @@
 //!                        Tower::eval_program
 //! ```
 //!
-//! Both chains run from target toward base; the base is never encoded.
+//! Both chains run from top toward base; the base is never encoded.
 //! Before each input, reset every runner and then the arena values before parsing.
-//! A direct tower uses its target as the base and consumes the input unchanged.
+//! A single-level tower uses its top level as the base and consumes the input unchanged.
 //! AL input definitions supply the terminal builtin runner during construction.
 
 use super::{
@@ -58,15 +58,15 @@ fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
     }
 }
 
-/// Prepares the target level, hosting the AL program or taking a P4 program.
-fn build_target(
+/// Prepares the top level, hosting the AL program or taking a P4 program.
+fn build_top(
     arena: &mut Arena,
-    target: &Level,
+    top: &Level,
     mode: ExecutionMode,
     program: &ProgramConfig,
     options: runner::Config,
 ) -> Result<Layer> {
-    let spec_target = into_runner_spec(mode, target.spec_al.clone())?;
+    let spec_top = into_runner_spec(mode, top.spec_al.clone())?;
     match program {
         ProgramConfig::Al { spec_al } => {
             // Prepare the input script's definition environment for builtin calls
@@ -78,13 +78,13 @@ fn build_target(
                 cache: Box::new(Cache::new(options.cache)),
                 runner_program: Box::new(runner_program),
             });
-            let runner = Runner::new(arena, spec_target, options, interface::al(), external)?;
+            let runner = Runner::new(arena, spec_top, options, interface::al(), external)?;
             Ok(Layer::AlSpec(runner))
         }
         ProgramConfig::P4 => {
             // Prepare the P4 host environment independently of program parsing
-            let interface_target = interface::p4(&spec_target);
-            let runner = Runner::new(arena, spec_target, options, interface_target, Dummy)?;
+            let interface_top = interface::p4(&spec_top);
+            let runner = Runner::new(arena, spec_top, options, interface_top, Dummy)?;
             Ok(Layer::P4Spec(runner))
         }
     }
@@ -119,12 +119,16 @@ impl Tower {
         program: &ProgramConfig,
         options: runner::Config,
     ) -> Result<Self> {
-        // The input environment must match the target language
-        match (config.target_lang(), program) {
+        // The input environment must match the top level's language
+        match (config.top_lang(), program) {
             (Lang::Al, ProgramConfig::Al { .. }) | (Lang::P4, ProgramConfig::P4) => {}
-            _ => return Err(config_invalid("program language must match the tower target")),
+            _ => {
+                return Err(config_invalid(
+                    "program language must match the top level of the tower",
+                ));
+            }
         }
-        // Lower each specification once, preserving base-to-target order
+        // Lower each specification once, preserving base-to-top order
         let levels = config
             .levels
             .iter()
@@ -136,10 +140,10 @@ impl Tower {
 
         // Only the base uses the configured native execution mode
         let mode = |idx| if idx == 0 { config.mode } else { ExecutionMode::Sl };
-        let (target, levels_lower) = levels.split_last().expect("validated nonempty tower");
-        let mut layer = build_target(arena, target, mode(levels_lower.len()), program, options)?;
+        let (top, levels_lower) = levels.split_last().expect("validated nonempty tower");
+        let mut layer = build_top(arena, top, mode(levels_lower.len()), program, options)?;
 
-        // Assemble the levels beneath the target down to the native base
+        // Assemble the levels beneath the top level down to the native base
         for (idx, level) in levels_lower.iter().enumerate().rev() {
             layer = build_relay(arena, level, mode(idx), layer, options)?;
         }

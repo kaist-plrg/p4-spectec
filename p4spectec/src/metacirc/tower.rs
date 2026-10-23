@@ -4,7 +4,7 @@
 //! Each level runs natively as one layer.
 //! An AL specification's extern hosts the script above it:
 //! the next level's layer, or the builtins of the AL program.
-//! A single-level tower executes its target directly as its base.
+//! A single-level tower executes its top level directly as its base.
 
 use super::{config::LevelConfig, externs::AlExtern};
 use crate::{
@@ -20,7 +20,7 @@ use crate::{
 
 /// Prepared specifications and host layers of an interpreter tower.
 pub struct Tower {
-    // Nonempty, ordered from base through intermediates to target
+    // Nonempty, ordered from base through intermediates to the top level
     pub(super) levels: Vec<Level>,
     pub(super) base: Layer,
 }

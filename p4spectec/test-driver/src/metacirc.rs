@@ -1,11 +1,11 @@
 //! P4 programs and AL scripts through AL metacircular towers
 //!
 //! This driver owns corpus traversal, preprocessing, execution, and comparison.
-//! `run` dispatches each suite by its tower's target language;
-//! every suite enters its target through the tower's target relation.
+//! `run` dispatches each suite by the language of its tower's top level;
+//! every suite enters its top level through that level's relation.
 //! `run_programs` prepares each P4 tower once and resets its state per program;
 //! `run_scripts` prepares a fresh tower per AL script,
-//! because an AL target supplies the builtin definitions of its own level.
+//! because each AL script supplies the builtin definitions for the top level.
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -48,7 +48,7 @@ pub fn run(config: &MetacircConfig, options: ExecutionOptions) -> Result<()> {
     for suite in &config.suites {
         let config_tower = TowerConfig::from_file(&suite.tower)
             .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
-        match config_tower.target_lang() {
+        match config_tower.top_lang() {
             Lang::P4 => suites_p4.push(suite),
             Lang::Al => suites_al.push(suite),
         }

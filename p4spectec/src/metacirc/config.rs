@@ -1,6 +1,6 @@
 //! JSON descriptions of AL interpreter towers
 //!
-//! Levels run from the native base toward an AL or P4 target.
+//! Levels run from the native base toward a top level consuming AL or P4.
 //! The native backend is AL or SL; all meta interfaces represent AL scripts.
 //! Specification paths are resolved relative to the JSON file.
 
@@ -17,7 +17,7 @@ use std::{
 pub struct TowerConfig {
     /// The interpreter executing the base specification.
     pub(super) mode: ExecutionMode,
-    /// Nonempty, ordered from base toward target.
+    /// Nonempty, ordered from base toward top.
     pub(super) levels: Vec<LevelConfig>,
 }
 
@@ -50,16 +50,16 @@ pub struct LevelConfig {
 pub enum Lang {
     /// An AL script.
     Al,
-    /// A P4 program, at the target only.
+    /// A P4 program, at the top level only.
     P4,
 }
 
-/// Supplies input definitions required by the target's host interface.
+/// Supplies input definitions required by the top level's host interface.
 #[derive(Clone, Debug)]
 pub enum ProgramConfig {
     /// The AL input whose definitions supply the terminal builtin environment.
     Al { spec_al: al::Spec },
-    /// P4 inputs use builtins from the target specification.
+    /// P4 inputs use builtins from the top level's specification.
     P4,
 }
 
@@ -95,15 +95,15 @@ impl TowerConfig {
     /// Validates ordered levels.
     ///
     /// Specification paths are relative to the current directory.
-    /// A single level is both target and base.
+    /// A single level is both the top level and the base.
     pub fn new(mode: ExecutionMode, levels: Vec<LevelConfig>) -> Result<Self> {
         if levels.is_empty() {
             return Err(config_invalid("a tower requires at least one level"));
         }
-        // Only the target may consume a language other than AL
-        let idx_target = levels.len() - 1;
+        // Only the top level may consume a language other than AL
+        let idx_top = levels.len() - 1;
         for (idx, level) in levels.iter().enumerate() {
-            if idx != idx_target && level.lang != Lang::Al {
+            if idx != idx_top && level.lang != Lang::Al {
                 return Err(config_invalid(format!(
                     "invalid language at level {idx}: expected Al"
                 )));
@@ -117,12 +117,12 @@ impl TowerConfig {
         Ok(Self { mode, levels })
     }
 
-    pub(super) fn target(&self) -> &LevelConfig {
+    pub(super) fn top(&self) -> &LevelConfig {
         self.levels.last().expect("validated nonempty levels")
     }
 
-    /// Returns the language consumed by the target level.
-    pub fn target_lang(&self) -> Lang {
-        self.target().lang
+    /// Returns the language consumed by the top level.
+    pub fn top_lang(&self) -> Lang {
+        self.top().lang
     }
 }

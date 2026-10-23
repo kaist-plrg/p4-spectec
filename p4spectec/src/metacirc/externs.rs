@@ -2,7 +2,7 @@
 //!
 //! AlExtern hosts the script that an AL specification interprets.
 //! RelayExtern decodes one representation layer and delegates to the next level.
-//! TerminalExtern handles only builtins of the AL program above the target.
+//! TerminalExtern handles only builtins of the AL program above the top level.
 //! Clearing an extern resets its owned runners before arena values are reset.
 
 use super::{codec, tower::Layer};
