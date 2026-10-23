@@ -1,6 +1,6 @@
 # Metacircular execution
 
-`metacirc run` executes a program through a required JSON tower configuration.
+`metacirc run-meta` executes a program through a required JSON tower configuration.
 The native backend can be Rust AL or Rust SL. Interpreter specifications inside
 the tower consume AL; the top level accepts either an AL script or a P4 program.
 SL metacircular specifications and mixed AL/SL towers are not supported.
@@ -30,7 +30,7 @@ def $main() = 42
 Run it with the supplied AL tower:
 
 ```sh
-./bin/metacirc run towers/al.json -p /path/to/script.watsup
+./bin/metacirc run-meta towers/al.json -p /path/to/script.watsup
 ```
 
 `towers/al.json` contains:
@@ -54,7 +54,7 @@ Repeat `-p` for ordered specification source paths.
 Use the supplied AL/P4 tower:
 
 ```sh
-./bin/metacirc run towers/al-p4.json -i p4c/p4include -p /path/to/program.p4
+./bin/metacirc run-meta towers/al-p4.json -i p4c/p4include -p /path/to/program.p4
 ```
 
 `towers/al-p4.json` contains:
@@ -95,10 +95,10 @@ these additional configurations; only `al.json`, `al-p4.json`, and
 In a multi-level tower, top-level and intermediate specifications must not
 define `main`.
 
-The command accepts `--no-cache`, `--no-det`, and `--guard`. `--no-det` disables
+`run-meta` and `algo-meta` accept `--no-cache`, `--no-det`, and `--guard`. `--no-det` disables
 determinism checks only in the native base interpreter. Interpreter call
 caching and AL encode/decode caching are enabled together by default;
-`--no-cache` disables both. It prints `passed`
+`--no-cache` disables both. `run-meta` prints `passed`
 only after the configured base entry succeeds; diagnostics cause a nonzero
 exit code.
 
@@ -129,7 +129,7 @@ are the supplied towers with an `algo` entry.
 To print the AL produced by the specification:
 
 ```sh
-./bin/metacirc algo --meta spec-meta /path/to/spec
+./bin/metacirc algo-meta spec-meta /path/to/spec
 ```
 
 ## Execution corpus

@@ -1,7 +1,8 @@
 //! Command-line specification transformation and AL metacircular execution
 //!
-//! Transformation commands accept ordered specification paths.
-//! The run command requires a tower configuration for AL and P4 inputs.
+//! `algo`, `struct`, and `prose` transform ordered specification paths natively.
+//! `algo-meta` lowers them through an IL-to-AL specification instead,
+//! and `run-meta` requires a tower configuration for AL and P4 inputs.
 //! Structured diagnostics are rendered at the CLI boundary.
 //! Success is printed only after the configured outer entry finishes.
 
@@ -24,13 +25,15 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     /// Convert specifications and print the algorithmic representation.
-    Algo(AlgoArgs),
+    Algo(SpecArgs),
     /// Structure specifications and print them without rule groups.
     Struct(SpecArgs),
     /// Convert specifications and print the prose representation.
     Prose(SpecArgs),
+    /// Lower specifications through an IL-to-AL specification and print the AL.
+    AlgoMeta(AlgoMetaArgs),
     /// Execute a program through a JSON-configured interpreter tower.
-    Run(RunArgs),
+    RunMeta(RunMetaArgs),
 }
 
 #[derive(Args)]
@@ -41,13 +44,13 @@ struct SpecArgs {
 }
 
 #[derive(Args)]
-struct AlgoArgs {
+struct AlgoMetaArgs {
+    /// IL-to-AL specification lowered natively and run on the inputs.
+    #[arg(value_name = "SPEC_META")]
+    path_meta: PathBuf,
     /// Specification files in processing order.
     #[arg(required = true, value_name = "PATH")]
     paths: Vec<PathBuf>,
-    /// Lower through this IL-to-AL specification instead of the native pass.
-    #[arg(long = "meta", value_name = "SPEC")]
-    path_meta: Option<PathBuf>,
     #[command(flatten)]
     options: Options,
 }
@@ -72,7 +75,7 @@ impl Options {
 }
 
 #[derive(Args)]
-struct RunArgs {
+struct RunMetaArgs {
     /// Tower configuration, ordered from native base to top level.
     config: PathBuf,
     /// Program source paths in processing order; P4 requires exactly one.
@@ -109,17 +112,15 @@ fn print_spec<Spec: Print>(
 /// Dispatches specification transformations and tower execution.
 fn run(cli: Cli) -> metacirc::Result<()> {
     match cli.command {
-        Command::Algo(AlgoArgs { paths, path_meta: None, .. }) => {
-            print_spec(p4spectec::algo_with_warnings(&paths))
-        }
-        Command::Algo(AlgoArgs { paths, path_meta: Some(path_meta), options }) => {
+        Command::Algo(args) => print_spec(p4spectec::algo_with_warnings(&args.paths)),
+        Command::Struct(args) => print_spec(p4spectec::structure_with_warnings(&args.paths, true)),
+        Command::Prose(args) => print_spec(p4spectec::prosify_with_warnings(&args.paths)),
+        Command::AlgoMeta(AlgoMetaArgs { path_meta, paths, options }) => {
             let spec_al = metacirc::algo(&paths, &path_meta, ExecutionMode::Sl, options.config())?;
             println!("{}", Print::to_string(&spec_al));
             Ok(())
         }
-        Command::Struct(args) => print_spec(p4spectec::structure_with_warnings(&args.paths, true)),
-        Command::Prose(args) => print_spec(p4spectec::prosify_with_warnings(&args.paths)),
-        Command::Run(args) => {
+        Command::RunMeta(args) => {
             let config = TowerConfig::from_file(&args.config)?;
             metacirc::run(&config, &args.includes, &args.program, args.options.config())?;
             println!("passed");
