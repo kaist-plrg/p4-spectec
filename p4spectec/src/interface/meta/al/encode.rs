@@ -126,16 +126,6 @@ impl Encode for ValueField {
 
 // - Results
 
-/// Encodes a successful function result without retaining conversions.
-pub fn ok_value(arena: &mut Arena, value_target: Value) -> Result<Value, Error> {
-    ok_value_cached(arena, &mut Cache::new(false), value_target)
-}
-
-/// Encodes successful relation outputs without retaining conversions.
-pub fn ok_values(arena: &mut Arena, values_target: &[Value]) -> Result<Value, Error> {
-    ok_values_cached(arena, &mut Cache::new(false), values_target)
-}
-
 /// Encodes a successful function result as `OK val : funcRes`.
 pub fn ok_value_cached(
     arena: &mut Arena,
