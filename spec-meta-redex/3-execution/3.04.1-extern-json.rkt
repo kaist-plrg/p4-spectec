@@ -104,24 +104,26 @@
 ;;            | {"fail": null}
 ;;            | {"error": <text>}   the host could not answer
 
-;; A builtin or extern-func response, as a valres (the value, or FAIL); an
-;; error raises.
+;; A builtin or extern-func response, as a valres
 (define (response->valres js)
   (match js
     [(hash-table ('ok val)) #:when (= (hash-count js) 1) (jsexpr->val val)]
-    [_ (response->fail js)]))
+    [_ (response->failure js)]))
 
-;; An extern-rel response, as a valsres; an error raises.
+;; An extern-rel response, as a valsres
 (define (response->valsres js)
   (match js
     [(hash-table ('ok (? list? vals))) #:when (= (hash-count js) 1)
      (list 'OK (map jsexpr->val vals))]
-    [_ (response->fail js)]))
+    [_ (response->failure js)]))
 
-(define (response->fail js)
+;; A failure reply is UNMATCH; an error reply is reported, and is ERROR.
+(define (response->failure js)
   (match js
-    [(hash-table ('fail (== (json-null)))) #:when (= (hash-count js) 1) 'FAIL]
-    [(hash-table ('error (? string? msg))) #:when (= (hash-count js) 1) (error 'host "~a" msg)]
+    [(hash-table ('fail (== (json-null)))) #:when (= (hash-count js) 1) 'UNMATCH]
+    [(hash-table ('error (? string? msg))) #:when (= (hash-count js) 1)
+     (eprintf "host error: ~a\n" msg)
+     'ERROR]
     [_ (malformed "a response" js)]))
 
 (define (malformed what js)

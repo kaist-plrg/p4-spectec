@@ -1,16 +1,22 @@
 #lang racket/base
-;; Transport for the extern wire: Racket -> Rust, over ffi2.
+;; Transport for the extern wire: Racket -> Rust, over ffi2, and the host
+;; procedures of the three extern relations.
 ;;
 ;;   host-eval  --ffi2-->  bin/libp4spectec.so  (p4spectec::metacross::ffi)
 ;;
-;; The host lives in this process, and only this place may call it.
-;; `make redex` builds the library.
+;; The host lives in this process, and only this place may call it. The host
+;; procedures are impure, so only a reduction rule may call them, never a
+;; metafunction. `make redex` builds the library.
 
 (require ffi2
+         json
          racket/promise
-         racket/runtime-path)
+         racket/runtime-path
+         "3.04.1-extern-json.rkt")
 (provide host-init!
-         host-eval)
+         host-call-extern-func
+         host-call-builtin-func
+         host-call-extern-rel)
 
 (define-runtime-path lib-path "../../bin/libp4spectec.so")
 
@@ -35,3 +41,29 @@
 ;; JSON request text -> JSON reply text
 (define (host-eval request)
   ((cdr (force host)) request))
+
+;;
+;; The host procedures of the extern relations
+;;
+
+;; Sends a request to the host, and gives its response as a jsexpr.
+(define (host-request request)
+  (string->jsexpr (host-eval (jsexpr->string request))))
+
+;;; Extern meta-function invocation
+
+;; |- id `< typ* `> `( val* `) : funcRes, as a valres
+(define (host-call-extern-func id typs vals)
+  (response->valres (host-request (extern-func-request id typs vals))))
+
+;;; Builtin meta-function invocation
+
+;; |- id `< typ* `> `( val* `) : funcRes, as a valres
+(define (host-call-builtin-func id typs vals)
+  (response->valres (host-request (builtin-request id typs vals))))
+
+;;; Extern relations
+
+;; |- id `( val* `) : relRes, as a valsres
+(define (host-call-extern-rel id vals)
+  (response->valsres (host-request (extern-rel-request id vals))))

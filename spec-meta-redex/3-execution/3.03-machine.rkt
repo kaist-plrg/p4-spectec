@@ -1,41 +1,48 @@
 #lang racket/base
-;; spec-meta/3-execution/3.03-relation.watsup, as the terms of the machine.
-;;
-;; The three extern relations are reduction rules on machine forms. Their
-;; rules call the host procedures at the end of this module, which go to the
-;; Rust host over the extern wire. They are impure, so only a reduction rule
-;; may call them, never a metafunction.
+;; spec-meta/3-execution/3.03-relation.watsup, as the terms of the machine,
+;; with the result syntaxes of 3.04-eval-ops and 3.05.x, whose metafunctions
+;; are over al.
 ;;
 ;; An AL phrase evaluates in place, and every other relation has a machine
-;; form. Frames give their evaluation positions. An evaluated expression is
-;; its value, and a constructor whose parts are all values is a value, so a
-;; frame writes val for an evaluated subterm and exp for one still to
-;; evaluate. watsup's res<ctx> is (IN L OK) or FAIL: premises update the
-;; innermost IN's layer in place.
+;; form; the three extern relations are reduction rules on theirs, which call
+;; the host procedures of 3.04.2-extern-ffi.rkt. Frames give the evaluation
+;; positions. An evaluated expression is its value, and a constructor whose
+;; parts are all values is a value, so a frame writes val for an evaluated
+;; subterm and exp for one still to evaluate. watsup's ok<ctx> is (IN L OK):
+;; premises update the innermost IN's layer in place. A failure (UNMATCH or
+;; ERROR) passes through the frames of Fr-pass, and a rule looks at it in
+;; those of Fr-catch.
 ;;
 ;; An intermediate form is named after the rule, or the group, that builds
 ;; it; seq and eval-exps, which several rules build, after what they do.
 
-(require json
-         redex/reduction-semantics
-         "3.04.1-extern-json.rkt"
-         "3.04.2-extern-ffi.rkt"
+(require redex/reduction-semantics
          "3.02-context.rkt")
-(provide al
-         host-call-extern-func
-         host-call-builtin-func
-         host-call-extern-rel)
+(provide al)
 
 (define-extended-language al context
   ;; Configurations
   (conf ::= (G e))
 
-  ;; Results to represent backtracking in evaluation. Redex has no parametric
-  ;; nonterminals, so each res<X> is written out.
-  (unitres ::= OK FAIL)
-  (valres ::= val FAIL)
-  (valsres ::= (OK (val ...)) FAIL)
-  (res ::= unitres valres valsres)
+  ;; Results. Redex has no parametric nonterminals, so each ok<X> is written
+  ;; out, and a result of val is the val itself.
+  (valres ::= val failure)
+  (valsres ::= (OK (val ...)) failure)
+  (res ::= unitRes valres valsres)
+
+  ;; The results, and the substitution environment, of 3.04-eval-ops and
+  ;; 3.05.x
+  (numBinopRes ::= (OK val) ERROR)
+  (numCmpRes ::= (OK bool) ERROR)
+  (theta ::= ((id typ) ...))
+  (typRes ::= (OK typ) ERROR)
+  (typsRes ::= (OK (typ ...)) ERROR)
+  (equivRes ::= (OK bool) ERROR)
+  (subtypRes ::= (OK bool) ERROR)
+  (castRes ::= (OK val) ERROR)
+
+  ;; A rule path with its group's match (3.12)
+  (rul ::= (rulMatch rulPath))
 
   ;; Machine terms: the forms that rules start from, and the frames around a
   ;; machine term
@@ -44,27 +51,26 @@
      (IN L e)
      exp arg prem
      (assign-exp exp val) (assign-exps (exp ...) (val ...))
-     (assign-arg L arg val) (assign-args L (arg ...) (val ...))
+     (assign-arg arg val) (assign-args (arg ...) (val ...))
      (seq (e ...)) (eval-exps (exp ...))
-     (eval-path val path) (eval-path-upd val path val)
-     (eval-clause L clause (val ...))
+     (eval-path-acc val path) (eval-path-upd val path val)
+     (eval-clause clause (val ...))
+     (eval-clauses ((IN L (eval-clause clause (val ...))) ...))
+     (eval-clauses-on-ok val ((IN L (eval-clause clause (val ...))) ...))
      (eval-tblrow tblRow (val ...)) (eval-tblrows (tblRow ...) (val ...))
-     (call-table-func tableFuncDef (val ...))
-     (call-defined-func definedFuncDef (typ ...) (val ...))
-     (call-func-dispatch funcdef (typ ...) (val ...))
+     (call-table-func tableFuncDefn (val ...))
+     (call-defined-func definedFuncDefn (typ ...) (val ...))
      (call-func id (typ ...) (val ...))
      (call-extern-func id (typ ...) (val ...))
      (call-builtin-func id (typ ...) (val ...))
-     (eval-rul rulMatch rulPath (val ...))
-     (call-defined-rel definedRelDef (val ...))
-     (call-rel-dispatch reldef (val ...))
+     (eval-rul rul (val ...))
+     (eval-ruls ((IN L (eval-rul rul (val ...))) ...))
+     (eval-ruls-on-ok (OK (val ...)) ((IN L (eval-rul rul (val ...))) ...))
+     (call-defined-rel definedRelDefn (val ...))
      (call-rel id (val ...))
      (call-extern-rel id (val ...))
-     ;; iterations over nothing, which have no evaluation position
+     ;; an iteration over nothing, which has no evaluation position
      (assign-exp/iter/list () (vari ...))
-     ;; calls with no clause or rule path, which have no evaluation position
-     (call-defined-func/clauses () L (elsClause ...) (val ...))
-     (call-defined-rel/ruls () (elsGroup ...) (val ...))
      (in-hole Fr e))
 
   ;; Finished subterms
@@ -74,8 +80,8 @@
   ;; evaluates in a sub-context of its own
   (elem ::= exp (IN L exp))
 
-  ;; Frames, one level each: those through which FAIL passes, and those
-  ;; where a rule looks at FAIL
+  ;; Frames, one level each: those through which a failure passes, and those
+  ;; where a rule looks at it
   (Fr-pass ::=
            ;; Assign_exp(s), Assign_arg(s)
            (assign-exp/iter/opt-some hole (vari ...))
@@ -128,7 +134,7 @@
            (eval-prem/relpr hole (exp ...))
            (IF hole)
            (IFHOLD id (val ... hole exp ...))
-           (eval-prem/ifholdpr/hold hole)
+           (eval-prem/ifholdpr hole)
            (IFNOTHOLD id (val ... hole exp ...))
            (LET exp hole)
            (eval-prem/iterpr-opt/some hole (vari ...))
@@ -137,44 +143,21 @@
            ;; Eval_rul
            (eval-exps (val ... hole exp ...)))
   (Fr-catch ::=
-            ;; Eval_prem/nothold
-            (eval-prem/ifholdpr/nothold hole)
-            ;; the alternatives of a call: every clause or rule path is
-            ;; evaluated, and a FAIL is one result among them
-            (call-defined-func/clauses (valres ... hole (IN L_callee (eval-clause L_caller clause (val ...))) ...)
-                                       L (elsClause ...) (val ...))
-            (call-defined-rel/ruls (valsres ... hole (IN L (eval-rul rulMatch rulPath (val ...))) ...)
-                                   (elsGroup ...) (val ...))
-            ;; Eval_tblrows/cons-fail, which tries the next row
-            (eval-tblrows/cons hole (tblRow ...) (val ...)))
+            ;; Eval_prem/ifnotholdpr
+            (eval-prem/ifnotholdpr hole)
+            ;; the clauses of a call, in order: an unmatched one is passed
+            ;; over, and the ones after a success must be unmatched too
+            (eval-clauses (UNMATCH ... hole (IN L (eval-clause clause (val ...))) ...))
+            (eval-clauses-on-ok val (UNMATCH ... hole (IN L (eval-clause clause (val ...))) ...))
+            (call-defined-func/clauses hole (elsClause ...) (val ...))
+            ;; Eval_tblrows/unmatch, which tries the next row
+            (eval-tblrows/cons hole (tblRow ...) (val ...))
+            ;; the rule paths of a call, as the clauses
+            (eval-ruls (UNMATCH ... hole (IN L (eval-rul rul (val ...))) ...))
+            (eval-ruls-on-ok (OK (val ...)) (UNMATCH ... hole (IN L (eval-rul rul (val ...))) ...))
+            (call-defined-rel/ruls hole (elsGroup ...) (val ...)))
   (Fr ::= Fr-pass Fr-catch)
 
   ;; Frames within one local context, and across local contexts
   (F ::= hole (in-hole Fr F))
   (E ::= F (in-hole F (IN L E))))
-
-;;
-;; The host procedures of the extern relations
-;;
-
-;; Sends a request to the host, and gives its response as a jsexpr.
-(define (host-request request)
-  (string->jsexpr (host-eval (jsexpr->string request))))
-
-;;; Extern meta-function invocation
-
-;; |- id `< typ* `> `( val* `) : res<val>, as a valres
-(define (host-call-extern-func id typs vals)
-  (response->valres (host-request (extern-func-request id typs vals))))
-
-;;; Builtin meta-function invocation
-
-;; |- id '@' `< typ* `> `( val* `) : res<val>, as a valres
-(define (host-call-builtin-func id typs vals)
-  (response->valres (host-request (builtin-request id typs vals))))
-
-;;; Extern relations
-
-;; |- id val* : res<val*>, as a valsres
-(define (host-call-extern-rel id vals)
-  (response->valsres (host-request (extern-rel-request id vals))))

@@ -13,10 +13,11 @@
          "../2-runtime/2.1-variable.rkt"
          "3.01-env.rkt")
 (provide context
-         empty-layer
+         empty-localLayer
          empty-ctx
          load
          register-global!
+         global-ids
          add-varr
          add-varis
          add-func
@@ -26,6 +27,8 @@
          finds-vari
          find-typdef
          find-typ
+         find-func-param
+         resolve-func-param
          find-func
          find-rel
          sub-opt
@@ -33,52 +36,64 @@
 
 (define-extended-language context env
   ;; Context
-  (layer L ::= {TYP tdenv REL renv FUNC fenv VAL venv})
-  (ctx C ::= {GLOBAL layer LOCAL layer})
+  (globalLayer ::= {TYP tdenv REL renv FUNC fenv})
+  (localLayer L ::= {TYP tdenv FUNC fnenv VAL venv})
+  (ctx C ::= {GLOBAL globalLayer LOCAL localLayer})
 
   ;; The handle of a registered global layer
-  (G ::= (GLOBAL natural)))
+  (G ::= (GLOBAL natural))
+
+  ;; Sub-contexts for iteration, as their local layers
+  (subOptRes ::= (OK ()) (OK (L)) ERROR)
+  (subListRes ::= (OK (L ...)) ERROR))
 
 (define-metafunction context
-  empty-layer : -> layer
-  [(empty-layer) {TYP (empty-map) REL (empty-map) FUNC (empty-map) VAL (empty-map)}])
+  empty-globalLayer : -> globalLayer
+  [(empty-globalLayer) {TYP (empty-map) REL (empty-map) FUNC (empty-map)}])
+
+(define-metafunction context
+  empty-localLayer : -> localLayer
+  [(empty-localLayer) {TYP (empty-map) FUNC (empty-map) VAL (empty-map)}])
 
 (define-metafunction context
   empty-ctx : -> ctx
-  [(empty-ctx) {GLOBAL (empty-layer) LOCAL (empty-layer)}])
+  [(empty-ctx) {GLOBAL (empty-globalLayer) LOCAL (empty-localLayer)}])
 
 ;;
 ;; Loading context from a spec
 ;;
 
-;; The entries that a definition adds to GLOBAL's TYP, REL, and FUNC, one
-;; clause per $load clause
+;; The entry that a definition adds to GLOBAL's TYP, REL, or FUNC: the
+;; definition as written, one clause per $load clause
 (define-metafunction context
   load-defn : defn -> (tdenv renv fenv)
-  [(load-defn (EXTTYP id)) (((id EXT)) () ())]
-  [(load-defn (TYP id (tparam ...) deftyp)) (((id (DEF (tparam ...) deftyp))) () ())]
-  [(load-defn (EXTREL id (typ_input ...) (typ_output ...))) (() ((id (EXT id))) ())]
-  [(load-defn (REL id (typ_input ...) (typ_output ...) (rulGroup ...) (elsGroup ...)))
-   (() ((id (DEF (rulGroup ...) (elsGroup ...)))) ())]
-  [(load-defn (EXTFUNC id (tparam ...) (param ...) typ)) (() () ((id (EXT id))))]
-  [(load-defn (BUILTINFUNC id (tparam ...) (param ...) typ))
-   (() () ((id (BUILTIN id (tparam ...) (param ...)))))]
-  [(load-defn (TABLEFUNC id (param ...) typ (tblRow ...)))
-   (() () ((id (TABLE (param ...) (tblRow ...)))))]
-  [(load-defn (FUNC id (tparam ...) (param ...) typ (clause ...) (elsClause ...)))
-   (() () ((id (DEF (tparam ...) (clause ...) (elsClause ...)))))])
+  [(load-defn externTypDefn) (((id externTypDefn)) () ())
+   (where (EXTTYP id) externTypDefn)]
+  [(load-defn definedTypDefn) (((id definedTypDefn)) () ())
+   (where (TYP id (tparam ...) deftyp) definedTypDefn)]
+  [(load-defn externRelDefn) (() ((id externRelDefn)) ())
+   (where (EXTREL id (typ_input ...) (typ_output ...)) externRelDefn)]
+  [(load-defn definedRelDefn) (() ((id definedRelDefn)) ())
+   (where (REL id (typ_input ...) (typ_output ...) (rulGroup ...) (elsGroup ...)) definedRelDefn)]
+  [(load-defn externFuncDefn) (() () ((id externFuncDefn)))
+   (where (EXTFUNC id (tparam ...) (param ...) typ) externFuncDefn)]
+  [(load-defn builtinFuncDefn) (() () ((id builtinFuncDefn)))
+   (where (BUILTINFUNC id (tparam ...) (param ...) typ) builtinFuncDefn)]
+  [(load-defn tableFuncDefn) (() () ((id tableFuncDefn)))
+   (where (TABLEFUNC id (param ...) typ (tblRow ...)) tableFuncDefn)]
+  [(load-defn definedFuncDefn) (() () ((id definedFuncDefn)))
+   (where (FUNC id (tparam ...) (param ...) typ (clause ...) (elsClause ...)) definedFuncDefn)])
 
-;; $load: GLOBAL with the entries of every definition added, in spec order.
+;; $load: GLOBAL with the entry of every definition added, in spec order.
 ;; $adds_map adds its keys in order, as $load's recursion does.
 (define-metafunction context
   load : ctx spec -> ctx
-  [(load {GLOBAL {TYP tdenv REL renv FUNC fenv VAL venv} LOCAL L} (defn ...))
-   {GLOBAL {TYP (adds-map tdenv (id_t ... ...) (typdef ... ...))
-            REL (adds-map renv (id_r ... ...) (reldef ... ...))
-            FUNC (adds-map fenv (id_f ... ...) (funcdef ... ...))
-            VAL venv}
+  [(load {GLOBAL {TYP tdenv REL renv FUNC fenv} LOCAL L} (defn ...))
+   {GLOBAL {TYP (adds-map tdenv (id_t ... ...) (typDef ... ...))
+            REL (adds-map renv (id_r ... ...) (relDefn ... ...))
+            FUNC (adds-map fenv (id_f ... ...) (funcDefn ... ...))}
     LOCAL L}
-   (where ((((id_t typdef) ...) ((id_r reldef) ...) ((id_f funcdef) ...)) ...)
+   (where ((((id_t typDef) ...) ((id_r relDefn) ...) ((id_f funcDefn) ...)) ...)
           ((load-defn defn) ...))])
 
 ;;
@@ -93,20 +108,28 @@
 ;; The handle of a global layer, which is checked and added to the registry.
 ;; Only 3.16-entry.rkt calls this, after $load.
 (define (register-global! layer_global)
-  (unless (redex-match? context layer layer_global)
-    (error 'register-global! "not a layer: ~e" layer_global))
+  (unless (redex-match? context globalLayer layer_global)
+    (error 'register-global! "not a global layer: ~e" layer_global))
   (define n (hash-count global-layers))
   (hash-set! global-layers n layer_global)
   (term (GLOBAL ,n)))
 
-;; The value of id in the map of the global layer G under the label field
-;; (TYP, REL, or FUNC), as () or (v). The layer is taken apart in Racket, so
-;; neither a term nor a pattern holds it.
-(define (find-global G field id)
+;; The map of the global layer G under the label field (TYP, REL, or FUNC).
+;; The layer is taken apart in Racket, so neither a term nor a pattern holds
+;; it.
+(define (global-map G field)
   (match-define (list 'GLOBAL n) G)
-  (match-define (list 'TYP tdenv 'REL renv 'FUNC fenv 'VAL _)
-    (hash-ref global-layers n (λ () (error 'find-global "no global layer ~a" n))))
-  (map-ref (case field [(TYP) tdenv] [(REL) renv] [(FUNC) fenv]) id))
+  (match-define (list 'TYP tdenv 'REL renv 'FUNC fenv)
+    (hash-ref global-layers n (λ () (error 'global-map "no global layer ~a" n))))
+  (case field [(TYP) tdenv] [(REL) renv] [(FUNC) fenv]))
+
+;; The value of id in that map, as () or (v)
+(define (find-global G field id)
+  (map-ref (global-map G field) id))
+
+;; The keys of that map
+(define (global-ids G field)
+  (map car (global-map G field)))
 
 ;;
 ;; Adders
@@ -116,20 +139,20 @@
 
 (define-metafunction context
   add-varr : L varr val -> L
-  [(add-varr {TYP tdenv REL renv FUNC fenv VAL venv} varr val)
-   {TYP tdenv REL renv FUNC fenv VAL (add-map venv varr val)}])
+  [(add-varr {TYP tdenv FUNC fnenv VAL venv} varr val)
+   {TYP tdenv FUNC fnenv VAL (add-map venv varr val)}])
 
 (define-metafunction context
   add-varis : L (vari ...) (val ...) -> L
-  [(add-varis {TYP tdenv REL renv FUNC fenv VAL venv} ((id typ (iter ...)) ...) (val ...))
-   {TYP tdenv REL renv FUNC fenv VAL (adds-map venv ((id (iter ...)) ...) (val ...))}])
+  [(add-varis {TYP tdenv FUNC fnenv VAL venv} ((id typ (iter ...)) ...) (val ...))
+   {TYP tdenv FUNC fnenv VAL (adds-map venv ((id (iter ...)) ...) (val ...))}])
 
 ;;; Function adders
 
 (define-metafunction context
-  add-func : L id funcdef -> L
-  [(add-func {TYP tdenv REL renv FUNC fenv VAL venv} id funcdef)
-   {TYP tdenv REL renv FUNC (add-map fenv id funcdef) VAL venv}])
+  add-func : L id id -> L
+  [(add-func {TYP tdenv FUNC fnenv VAL venv} id id_global)
+   {TYP tdenv FUNC (add-map fnenv id id_global) VAL venv}])
 
 ;;
 ;; Finders
@@ -137,84 +160,89 @@
 
 ;;; Value finders
 
-(define-judgment-form context
-  #:mode (find-vari I I O)
-  #:contract (find-vari L vari val)
-  [(where (val) (find-map venv (id (iter ...))))
-   ----------------------------------------
-   (find-vari {TYP tdenv REL renv FUNC fenv VAL venv} (id typ (iter ...)) val)])
+(define-metafunction context
+  find-vari : L vari -> () ∨ (val)
+  [(find-vari {TYP tdenv FUNC fnenv VAL venv} (id typ (iter ...))) (find-map venv (id (iter ...)))])
 
 (define-metafunction context
   find-varr : L varr -> () ∨ (val)
-  [(find-varr {TYP tdenv REL renv FUNC fenv VAL venv} varr) (find-map venv varr)])
+  [(find-varr {TYP tdenv FUNC fnenv VAL venv} varr) (find-map venv varr)])
 
 (define-metafunction context
   find-varis : L (vari ...) -> () ∨ ((val ...))
-  [(find-varis {TYP tdenv REL renv FUNC fenv VAL venv} ((id typ (iter ...)) ...)) ((val ...))
-   (where ((val) ...) ((find-map venv (id (iter ...))) ...))]
+  [(find-varis L (vari ...)) ((val ...))
+   (where ((val) ...) ((find-vari L vari) ...))]
   ;; otherwise
   [(find-varis L (vari ...)) ()])
 
 (define-metafunction context
   finds-vari : (L ...) vari -> () ∨ ((val ...))
-  [(finds-vari ({TYP tdenv REL renv FUNC fenv VAL venv} ...) (id typ (iter ...))) ((val ...))
-   (where ((val) ...) ((find-map venv (id (iter ...))) ...))]
+  [(finds-vari (L ...) vari) ((val ...))
+   (where ((val) ...) ((find-vari L vari) ...))]
   ;; otherwise
   [(finds-vari (L ...) vari) ()])
 
 ;;; Typedef finders
 
-;; The definition of id in tdenv, or else in the global layer G: the value of
-;; id in $extend_tdenv(C.GLOBAL.TYP, tdenv)
+;; $find_typ with the local tdenv on its own, for the callers that hold it
+;; apart from L: the definition of id in tdenv, or else in the global layer G
 (define-metafunction context
-  find-typdef : G tdenv id -> () ∨ (typdef)
-  [(find-typdef G tdenv id) (typdef)
-   (where (typdef) (find-map tdenv id))]
+  find-typdef : G tdenv id -> () ∨ (typDef)
+  [(find-typdef G tdenv id) (typDef)
+   (where (typDef) (find-map tdenv id))]
   ;; otherwise
   [(find-typdef G tdenv id) ,(find-global (term G) 'TYP (term id))])
 
 (define-metafunction context
-  find-typ : G L id -> () ∨ (typdef)
-  [(find-typ G {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l} id) (find-typdef G tdenv_l id)])
+  find-typ : G L id -> () ∨ (typDef)
+  [(find-typ G {TYP tdenv FUNC fnenv VAL venv} id) (find-typdef G tdenv id)])
 
 ;;; Function finders
 
 (define-metafunction context
-  find-func : G L id -> () ∨ (funcdef)
-  [(find-func G {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l} id) (funcdef)
-   (where (funcdef) (find-map fenv_l id))]
+  find-func-param : L id -> () ∨ (id)
+  [(find-func-param {TYP tdenv FUNC fnenv VAL venv} id) (find-map fnenv id)])
+
+(define-metafunction context
+  resolve-func-param : L id -> id
+  [(resolve-func-param L id) id_global
+   (where (id_global) (find-func-param L id))]
   ;; otherwise
-  [(find-func G L id) ,(find-global (term G) 'FUNC (term id))])
+  [(resolve-func-param L id) id])
+
+(define-metafunction context
+  find-func : G id -> () ∨ (funcDefn)
+  [(find-func G id) ,(find-global (term G) 'FUNC (term id))])
 
 ;;; Relation finders
 
 (define-metafunction context
-  find-rel : G L id -> () ∨ (reldef)
-  [(find-rel G L id) ,(find-global (term G) 'REL (term id))])
+  find-rel : G id -> () ∨ (relDefn)
+  [(find-rel G id) ,(find-global (term G) 'REL (term id))])
 
 ;;
 ;; Sub-context construction for iteration
 ;;
 
-(define-judgment-form context
-  #:mode (sub-opt I I O)
-  #:contract (sub-opt L (vari ...) (L ...))
-  [(where (vari_iter ...) ((iter-vari vari QUEST) ...))
-   (find-vari L vari_iter (OPT (val))) ...
-   ----------------------------------------
-   (sub-opt L (vari ...) ((add-varis L (vari ...) (val ...))))]
-  [;; An empty vari* is the first rule's, as watsup takes the first clause.
-   (side-condition ,(pair? (term (vari ...))))
-   (where (vari_iter ...) ((iter-vari vari QUEST) ...))
-   (find-vari L vari_iter (OPT ())) ...
-   ----------------------------------------
-   (sub-opt L (vari ...) ())])
+(define-metafunction context
+  sub-opt : L (vari ...) -> subOptRes
+  [(sub-opt L ()) ERROR]
+  [(sub-opt L (vari_h vari_t ...)) (OK ((add-varis L (vari ...) (val ...))))
+   (where (vari ...) (vari_h vari_t ...))
+   (where (((OPT (val))) ...) ((find-vari L (iter-vari vari QUEST)) ...))]
+  [(sub-opt L (vari_h vari_t ...)) (OK ())
+   (where (vari ...) (vari_h vari_t ...))
+   (where (((OPT ())) ...) ((find-vari L (iter-vari vari QUEST)) ...))]
+  ;; otherwise
+  [(sub-opt L (vari ...)) ERROR])
 
-(define-judgment-form context
-  #:mode (sub-list I I O)
-  #:contract (sub-list L (vari ...) (L ...))
-  [(where (vari_iter ...) ((iter-vari vari STAR) ...))
-   (find-vari L vari_iter (LIST (val ...))) ...
-   (where ((val_trans ...) ...) (transpose- ((val ...) ...)))
-   ----------------------------------------
-   (sub-list L (vari ...) ((add-varis L (vari ...) (val_trans ...)) ...))])
+(define-metafunction context
+  sub-list : L (vari ...) -> subListRes
+  [(sub-list L (vari ...)) (OK ((add-varis L (vari ...) (val_trans ...)) ...))
+   (where (((LIST (val ...))) ...) ((find-vari L (iter-vari vari STAR)) ...))
+   ;; $forall_((|val*| = |val**[0]|)*)
+   (side-condition (let ([lengths (map length (term ((val ...) ...)))])
+                     (or (null? lengths) (apply = lengths))))
+   (where ((val_trans ...) ...) (transpose- ((val ...) ...)))]
+  ;; otherwise
+  [(sub-list L (vari ...)) ERROR])
