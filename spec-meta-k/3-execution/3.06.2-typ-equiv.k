@@ -18,15 +18,15 @@ module TYP-EQUIV
   // type, and a wrong number of arguments are errors.
   // ==========================================================================
 
-  syntax Res ::= expandTyp(Map, Typ)        [function, total, symbol(expandTyp)]
+  syntax Res ::= expandTyp(Typ, Map)        [function, total, symbol(expandTyp)]
 
-  rule expandTyp(((X |-> D:TypDef) _:Map) #as TD:Map, varT(X:Id, Ts:TArgList))
+  rule expandTyp(varT(X:Id, Ts:TArgList), ((X |-> D:TypDef) _:Map) #as TD:Map)
     => expandVarT(TD, D, X, Ts)
-  rule expandTyp(_:Map, T:OpTyp) => ok(T)
-  rule expandTyp(_:Map, tupT(Ts:TypList)) => ok(tupT(Ts))
-  rule expandTyp(_:Map, iterT(T:Typ, I:Iter)) => ok(iterT(T, I))
-  rule expandTyp(_:Map, funcT(Ps:TParamList, Ts:TypList, T:Typ)) => ok(funcT(Ps, Ts, T))
-  rule expandTyp(_:Map, _:Typ) => ERROR [owise]
+  rule expandTyp(T:OpTyp, _:Map) => ok(T)
+  rule expandTyp(tupT(Ts:TypList), _:Map) => ok(tupT(Ts))
+  rule expandTyp(iterT(T:Typ, I:Iter), _:Map) => ok(iterT(T, I))
+  rule expandTyp(funcT(Ps:TParamList, Ts:TypList, T:Typ), _:Map) => ok(funcT(Ps, Ts, T))
+  rule expandTyp(_:Typ, _:Map) => ERROR [owise]
 
   syntax Res ::= expandVarT(Map, TypDef, Id, TArgList)
                                             [function, total, symbol(expandVarT)]
@@ -42,7 +42,7 @@ module TYP-EQUIV
   rule expandVarT(_:Map, _:TypDef, _:Id, _:TArgList) => ERROR [owise]
 
   syntax Res ::= expandTypRes(Map, Res)     [function, symbol(expandTypRes)]
-  rule expandTypRes(TD:Map, ok(T:Typ)) => expandTyp(TD, T)
+  rule expandTypRes(TD:Map, ok(T:Typ)) => expandTyp(T, TD)
   rule expandTypRes(_:Map, F:Failure) => F
 
   // ==========================================================================
@@ -63,7 +63,7 @@ module TYP-EQUIV
                | equivExpandedTyp(Map, Typ, Typ)
                                             [function, total, symbol(equivExpandedTyp)]
 
-  rule equivTyp(TD:Map, Tl:Typ, Tr:Typ) => equivTypRes(TD, expandTyp(TD, Tl), expandTyp(TD, Tr))
+  rule equivTyp(TD:Map, Tl:Typ, Tr:Typ) => equivTypRes(TD, expandTyp(Tl, TD), expandTyp(Tr, TD))
 
   syntax Res ::= equivTypRes(Map, Res, Res) [function, total, symbol(equivTypRes)]
   rule equivTypRes(TD:Map, ok(Tl:Typ), ok(Tr:Typ)) => equivExpandedTyp(TD, Tl, Tr)

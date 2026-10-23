@@ -78,6 +78,7 @@ module TYP-SUBST
   rule idsTheta(Th:Map) => keys(Th) |Set idsTypItems(values(Th))
   rule idsTypItems(.List) => .Set
   rule idsTypItems(ListItem(T:Typ) Ts:List) => idsTyp(T) |Set idsTypItems(Ts)
+  rule idsTypItems(ListItem(_) Ts:List) => idsTypItems(Ts) [owise]
 
   syntax Id ::= freshId(Id, Set)            [function, total, symbol(freshId)]
   rule freshId(X:Id, Used:Set) => X

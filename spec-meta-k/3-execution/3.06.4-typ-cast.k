@@ -28,7 +28,7 @@ module TYP-CAST
   rule upcast(_:Map, _:Map, _:Map, intT(), intN(I:Int)) => ok(intN(I))
   rule upcast(_:Map, _:Map, _:Map, intT(), natN(N:Int)) => ok(intN(N))
   rule upcast(G:Map, L:Map, FE:Map, varT(X:Id, Ts:TArgList), V:Val)
-    => upcastVar(G, L, FE, findTyp(G, L, X), varT(X, Ts), V)
+    => upcastVar(G, L, FE, findTyp(X, G, L), varT(X, Ts), V)
   rule upcast(G:Map, L:Map, FE:Map, tupT(Ts:TypList), tupV(Vs:ValList))
     => resTupV(upcasts(G, L, FE, Ts, Vs))
   rule upcast(_:Map, _:Map, _:Map, iterT(_:Typ, quest()), optV(noVal())) => ok(optV(noVal()))
@@ -84,7 +84,7 @@ module TYP-CAST
   rule downcast(_:Map, _:Map, _:Map, natT(), intN(I:Int)) => ok(natN(I))
     requires I >=Int 0
   rule downcast(G:Map, L:Map, FE:Map, varT(X:Id, Ts:TArgList), V:Val)
-    => downcastVar(G, L, FE, findTyp(G, L, X), varT(X, Ts), V)
+    => downcastVar(G, L, FE, findTyp(X, G, L), varT(X, Ts), V)
   rule downcast(G:Map, L:Map, FE:Map, tupT(Ts:TypList), tupV(Vs:ValList))
     => resTupV(downcasts(G, L, FE, Ts, Vs))
   rule downcast(_:Map, _:Map, _:Map, iterT(_:Typ, quest()), optV(noVal())) => ok(optV(noVal()))

@@ -24,13 +24,13 @@ module TYP-MATCH
   rule subtyp(_:Map, _:Map, natT(), intN(I:Int)) => ok(I >=Int 0)
   rule subtyp(_:Map, _:Map, intT(), _:Num) => ok(true)
   rule subtyp(_:Map, _:Map, textT(), textV(_:String)) => ok(true)
-  rule subtyp(FE:Map, TD:Map, varT(X:Id, Ts:TArgList), V:Val) => subtypVar(FE, TD, X, Ts, V)
+  rule subtyp(FE:Map, TD:Map, varT(X:Id, Ts:TArgList), V:Val) => subtypVar(X, FE, TD, Ts, V)
   rule subtyp(FE:Map, TD:Map, tupT(Ts:TypList), tupV(Vs:ValList)) => subtyps(FE, TD, Ts, Vs)
   rule subtyp(FE:Map, TD:Map, iterT(T:Typ, quest()), optV(someVal(V:Val))) => subtyp(FE, TD, T, V)
   rule subtyp(_:Map, _:Map, iterT(_:Typ, quest()), optV(noVal())) => ok(true)
   rule subtyp(FE:Map, TD:Map, iterT(T:Typ, star()), listV(Vs:ValList)) => subtypList(FE, TD, T, Vs)
   rule subtyp(FE:Map, TD:Map, funcT(Ps:TParamList, Ts:TypList, T:Typ), funcV(X:Id))
-    => subtypFunc(FE, TD, funcT(Ps, Ts, T), X)
+    => subtypFunc(X, FE, TD, funcT(Ps, Ts, T))
   rule subtyp(_:Map, _:Map, _:Typ, _:Val) => ok(false) [owise]
 
   // ==========================================================================
@@ -43,11 +43,11 @@ module TYP-MATCH
   // arguments, and a type parameter are errors.
   // ==========================================================================
 
-  syntax Res ::= subtypVar(Map, Map, Id, TArgList, Val)
+  syntax Res ::= subtypVar(Id, Map, Map, TArgList, Val)
                                             [function, total, symbol(subtypVar)]
-  rule subtypVar(FE:Map, ((X |-> D:TypDef) _:Map) #as TD:Map, X:Id, Ts:TArgList, V:Val)
+  rule subtypVar(X:Id, FE:Map, ((X |-> D:TypDef) _:Map) #as TD:Map, Ts:TArgList, V:Val)
     => subtypDef(FE, TD, D, Ts, V)
-  rule subtypVar(_:Map, _:Map, _:Id, _:TArgList, _:Val) => ERROR [owise]
+  rule subtypVar(_:Id, _:Map, _:Map, _:TArgList, _:Val) => ERROR [owise]
 
   syntax Res ::= subtypDef(Map, Map, TypDef, TArgList, Val)
                                             [function, total, symbol(subtypDef)]
@@ -195,9 +195,9 @@ module TYP-MATCH
   rule funcTyp(tableFuncD(_, As:ParamList, T:Typ, _)) => funcT(.TParamList, paramTyps(As), T)
   rule funcTyp(funcD(_, Ps:TParamList, As:ParamList, T:Typ, _, _)) => funcT(Ps, paramTyps(As), T)
 
-  syntax Res ::= subtypFunc(Map, Map, Typ, Id)
+  syntax Res ::= subtypFunc(Id, Map, Map, Typ)
                                             [function, total, symbol(subtypFunc)]
-  rule subtypFunc((X |-> D:FuncDefn) _:Map, TD:Map, T:Typ, X:Id) => equivFuncTyp(TD, T, funcTyp(D))
-  rule subtypFunc(_:Map, _:Map, _:Typ, _:Id) => ERROR [owise]
+  rule subtypFunc(X:Id, (X |-> D:FuncDefn) _:Map, TD:Map, T:Typ) => equivFuncTyp(TD, T, funcTyp(D))
+  rule subtypFunc(_:Id, _:Map, _:Map, _:Typ) => ERROR [owise]
 
 endmodule
