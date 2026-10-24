@@ -211,13 +211,13 @@ rulegroup Multibind_eqs {
     IC |- (vari '->' id_name*) :: R : premAL_eq* ++ premAL_t*
     -- if _ typ iter* = vari
     -- if id_first :: id_later* = id_name*
-    -- Iter_clear: |- IC : IC_clear
+    -- if IC_clear = $clear_iterCtx(IC)
     -- if IC_dim = (iter '<-' eps '->' eps)* ++ IC_clear
     -- if typedExp_first = (VAR id_first) '#' typ
     -- (if typedExp_later = (VAR id_later) '#' typ)*
     -- (if premAL_cmp = IF ((CMP EQ typedExp_first typedExp_later) '#' BOOL))*
-    -- (Iter_source: IC_dim |- [ id_first typ eps, id_later typ eps ] : IC_eq)*
-    -- (Iter_prem: IC_eq |- premAL_cmp : premAL_eq)*
+    -- (if IC_eq = $add_sources_iterCtx(IC_dim, [ id_first typ eps, id_later typ eps ]))*
+    -- if (premAL_eq = $iterate_prem(IC_eq, premAL_cmp))*
     -- Multibind_eqs: IC |- R : premAL_t*
 
 }

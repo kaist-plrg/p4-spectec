@@ -193,12 +193,12 @@ dec $sub_opt(ctx, vari*) : subOptRes
 def $sub_opt(C, eps) = ERROR
 def $sub_opt(C, vari*) = OK C_sub
   -- if vari* =/= eps
-  -- if (vari_iter = $iter_vari(vari, QUEST))*
+  -- if (vari_iter = $iterate_vari(QUEST, vari))*
   -- if (OPT val = $find_vari(C, vari_iter))*
   -- if C_sub = $add_varis(C, vari*, val*)
 def $sub_opt(C, vari*) = OK eps
   -- if vari* =/= eps
-  -- if (vari_iter = $iter_vari(vari, QUEST))*
+  -- if (vari_iter = $iterate_vari(QUEST, vari))*
   -- if (OPT eps = $find_vari(C, vari_iter))*
 def $sub_opt(C, vari*) = ERROR
   -- otherwise
@@ -209,7 +209,7 @@ dec $sub_list(ctx, vari*) : subListRes
   hint(prose_in "the result of constructing list subcontexts of" %0 "for variables" %1)
 
 def $sub_list(C, vari*) = OK C'*
-  -- if (vari_iter = $iter_vari(vari, STAR))*
+  -- if (vari_iter = $iterate_vari(STAR, vari))*
   -- if (LIST val* = $find_vari(C, vari_iter))*
   -- if $forall_((|val*| = |val**[0]|)*)
   -- if val_trans** = $transpose_<val>(val**)
