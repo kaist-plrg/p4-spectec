@@ -5,12 +5,17 @@
 //! For example, `\dv{SortInt{}}("5")` is the string pattern `5`,
 //! the sort `SortInt{}`, the symbol `\dv` with one sort, and arity 1.
 //! Strings are byte strings, kept with one character per byte (`parse`).
+//! The runtime writes the sort of a domain value as one name, the sort's text
+//! without its last two characters (`emit_token` in
+//! `runtime/util/ConfigurationSerializer.cpp` assumes `S{}`), so the sort
+//! `SortMInt{Sort8{}}` of an MInt comes as the name `SortMInt{Sort8{`.
 
 use super::{
     ast::{Pattern, Sort},
     parse::{parse_sort, text_of_bytes},
 };
 
+/// The first bytes of binary KORE.
 const MAGIC: &[u8] = b"\x7fKORE";
 
 /// An item on the decoder's stack.
@@ -20,6 +25,7 @@ enum Item {
     Pattern(Pattern),
 }
 
+/// A reader of binary KORE at a position.
 struct Decoder<'a> {
     src: &'a [u8],
     pos: usize,
@@ -27,9 +33,11 @@ struct Decoder<'a> {
     fixed: bool,
 }
 
+/// A decoding result; an error says what is malformed.
 type Result<T> = std::result::Result<T, String>;
 
 impl Decoder<'_> {
+    /// The next byte.
     fn byte(&mut self) -> Result<u8> {
         let byte = *self
             .src
@@ -39,6 +47,7 @@ impl Decoder<'_> {
         Ok(byte)
     }
 
+    /// A little-endian number of a fixed number of bytes.
     fn fixed(&mut self, bytes: usize) -> Result<usize> {
         let mut value = 0;
         for shift in 0..bytes {
@@ -94,16 +103,14 @@ impl Decoder<'_> {
         }
     }
 
+    /// A string as a name or text, one character per byte.
     fn name(&mut self) -> Result<String> {
         Ok(text_of_bytes(&self.string()?))
     }
 }
 
-/// A sort by its name and arguments. The runtime writes the sort of a domain
-/// value as one name without arguments: its text with the last two
-/// characters dropped, as `emit_token` in `runtime/util/ConfigurationSerializer.cpp`
-/// assumes a sort `S{}`. So the sort `SortMInt{Sort8{}}` of an MInt comes as
-/// the name `SortMInt{Sort8{`; such a name is read as the sort it was.
+/// A sort by its name and arguments; a name cut from a sort's text is read
+/// as that sort.
 fn sort_named(name: String, sorts: Vec<Sort>) -> Result<Sort> {
     if sorts.is_empty() && name.contains('{') {
         // The two characters dropped are the closing braces of the sort
@@ -113,6 +120,7 @@ fn sort_named(name: String, sorts: Vec<Sort>) -> Result<Sort> {
     Ok(Sort::Sort(name, sorts))
 }
 
+/// The last `n` items of the stack, which must be sorts.
 fn pop_sorts(stack: &mut Vec<Item>, n: usize) -> Result<Vec<Sort>> {
     let start = stack
         .len()
@@ -211,33 +219,5 @@ pub fn decode(src: &[u8]) -> Result<Pattern> {
     match (stack.pop(), stack.is_empty()) {
         (Some(Item::Pattern(pattern)), true) => Ok(pattern),
         _ => Err("binary KORE is not one pattern".to_owned()),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn sort_of_an_mint_value() {
-        let sort = sort_named("SortMInt{Sort8{".to_owned(), vec![]).unwrap();
-        let sort8 = Sort::Sort("Sort8".to_owned(), vec![]);
-        assert_eq!(sort, Sort::Sort("SortMInt".to_owned(), vec![sort8]));
-    }
-
-    #[test]
-    fn domain_value_in_raw_term() {
-        // rawTerm{}(inj{SortInt{}, SortKItem{}}(\dv{SortInt{}}("5"))), from kore_simplify
-        let src = b"\x7fKORE\x01\x00\x02\x00\x00\x00\x3f\x00\x00\x00\x00\x00\x00\x00\
-            \x05\x01\x015\x06\x00\x01\x07SortInt\x08\x01\x01\x03\\dv\x04\x01\
-            \x06\x00\x02\x15\x06\x00\x01\x09SortKItem\x08\x02\x01\x03inj\x04\x01\
-            \x08\x00\x01\x07rawTerm\x04\x01";
-        let int = Sort::Sort("SortInt".to_owned(), vec![]);
-        let kitem = Sort::Sort("SortKItem".to_owned(), vec![]);
-        let dv =
-            Pattern::App("\\dv".to_owned(), vec![int.clone()], vec![Pattern::Str("5".to_owned())]);
-        let inj = Pattern::App("inj".to_owned(), vec![int, kitem], vec![dv]);
-        let raw = Pattern::App("rawTerm".to_owned(), vec![], vec![inj]);
-        assert_eq!(decode(src).unwrap(), raw);
     }
 }

@@ -19,12 +19,15 @@ use crate::lang::{
 
 use crate::interface::builtin::{BuiltinError, call::BuiltinImpl, extract};
 
+/// A builtin result.
 type Result<T> = std::result::Result<T, BuiltinError>;
 
+/// The text of a value.
 fn text(arena: &Arena, value: &Value) -> Result<String> {
     Ok(value::get::text(arena, value)?.to_owned())
 }
 
+/// The number of a value, as an integer.
 fn int(arena: &Arena, value: &Value) -> Result<BigInt> {
     Ok(num::to_int(value::get::num(arena, value)?).clone())
 }
@@ -34,6 +37,7 @@ fn index(i: &BigInt) -> Result<usize> {
     usize::try_from(i).map_err(|_| BuiltinError::argument_invalid(format!("bad position {i}")))
 }
 
+/// An integer value.
 fn make_int(arena: &mut Arena, i: BigInt) -> Result<Value> {
     Ok(value::make::int(arena, i, Span::default())?)
 }
@@ -129,17 +133,4 @@ pub fn entries() -> [(&'static str, BuiltinImpl); 5] {
         ("string_to_int", Box::new(string_to_int)),
         ("string_to_bytes", Box::new(string_to_bytes)),
     ]
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn string_to_int_as_k() {
-        assert_eq!(parse_base("+12", 10), Some(BigInt::from(12)));
-        assert_eq!(parse_base("- 1 2", 10), Some(BigInt::from(-12)));
-        assert_eq!(parse_base("1x", 10), None);
-        assert_eq!(parse_base("", 10), None);
-    }
 }

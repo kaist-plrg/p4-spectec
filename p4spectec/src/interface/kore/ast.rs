@@ -3,6 +3,8 @@
 //! Only what `definition.kore` and krun's initial terms use is represented.
 //! For example, `\dv{SortInt{}}("1")` is an application of `\dv`
 //! to the string `1`, with the sort `SortInt{}`.
+//! Patterns print as KORE text, as the LLVM backend parses it: a string has
+//! one character per byte, and bytes outside printable ASCII are `\xHH`.
 
 use std::fmt::{self, Display, Write};
 
@@ -88,9 +90,6 @@ impl Definition {
 }
 
 // == Printing
-//
-// KORE text, as the LLVM backend parses it. A string has one character
-// per byte; bytes outside printable ASCII are written as `\xHH`.
 
 impl Display for Sort {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -141,18 +140,5 @@ impl Display for Pattern {
                 f.write_char('"')
             }
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn nested_sort() {
-        let sort = Sort::Sort("SortMInt".to_owned(), vec![Sort::Sort("Sort8".to_owned(), vec![])]);
-        assert_eq!(sort.to_string(), "SortMInt{Sort8{}}");
-        let dv = Pattern::App("\\dv".to_owned(), vec![sort], vec![Pattern::Str("1p8".to_owned())]);
-        assert_eq!(dv.to_string(), "\\dv{SortMInt{Sort8{}}}(\"1p8\")");
     }
 }

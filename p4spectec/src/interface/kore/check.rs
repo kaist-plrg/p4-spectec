@@ -45,6 +45,7 @@ pub struct Checker {
 }
 
 impl Checker {
+    /// A check against the binaries of a kompiled directory.
     pub fn new(kompiled: &Path) -> Self {
         let tmp = std::env::temp_dir();
         let id = std::process::id();
@@ -94,6 +95,7 @@ impl Checker {
             return Ok(());
         }
         if let Some((last, _)) = &self.last {
+            // The configurations K allows one step after the last one
             if !self.run_k("search", last, 1, &[])? {
                 self.failure = Some(format!("search failed after {} steps", self.steps));
             } else {

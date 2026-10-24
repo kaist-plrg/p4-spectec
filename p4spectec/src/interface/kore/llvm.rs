@@ -21,6 +21,7 @@ use super::ast::Sort;
 
 // == The dynamic loader
 
+/// `dlopen` resolves every symbol of the library at once.
 const RTLD_NOW: c_int = 2;
 
 unsafe extern "C" {
@@ -45,6 +46,7 @@ fn dl_error() -> String {
 
 // == The C API
 
+/// An object of the C API, used only through its functions.
 type Opaque = c_void;
 
 /// The functions of `kllvm-c.h` used here.

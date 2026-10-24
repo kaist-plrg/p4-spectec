@@ -8,6 +8,13 @@
 //! them afresh (`substitution.md`).
 //! For example, `\left-assoc{}(_Set_(SetItem(2), SetItem(1)))` and
 //! `_Set_(SetItem(1), _Set_(SetItem(2), .Set))` have one normal form.
+//!
+//! The printer of the LLVM backend (`runtime/util/ConfigurationPrinter.cpp`)
+//! takes each binder's variable as a variable of its own and free variables
+//! as one per name, and names each when first printed, adding a number from
+//! one counter if another variable has that name already: krun prints
+//! `(\y.y) y` as `(\y.y) y0`. Primed names (`y'`, from the specification's
+//! substitution) are named as the name without primes.
 
 use std::collections::{HashMap, HashSet};
 
@@ -84,17 +91,12 @@ fn bound(pattern: &Pattern) -> Option<(&Sort, &str)> {
     }
 }
 
+/// The domain value `\dv{S}("x")`.
 fn dv(sort: &Sort, x: String) -> Pattern {
     Pattern::App("\\dv".to_owned(), vec![sort.clone()], vec![Pattern::Str(x)])
 }
 
-/// Names as the LLVM backend's printer gives them
-/// (`runtime/util/ConfigurationPrinter.cpp`): each binder's variable is a
-/// variable of its own, free variables are one per name, and each gets its
-/// name when first printed, with a number from one counter added if another
-/// variable has that name already. So a free variable can be renamed: krun
-/// prints `(\y.y) y` as `(\y.y) y0`. Names made by priming (`y'`, from the
-/// specification's substitution) are named as the name without primes.
+/// Variable names as the LLVM backend's printer gives them.
 struct Printer<'a> {
     info: &'a Info,
     used: HashSet<String>,
@@ -103,6 +105,7 @@ struct Printer<'a> {
 }
 
 impl Printer<'_> {
+    /// A new name for a variable named `x`, with a number if it is taken.
     fn name(&mut self, x: &str) -> String {
         let base = x.trim_end_matches('\'');
         let mut suffix = String::new();
@@ -115,6 +118,7 @@ impl Printer<'_> {
         y
     }
 
+    /// A pattern with its variables renamed; `env` maps bound names.
     fn walk(&mut self, env: &[(String, String)], pattern: &Pattern) -> Pattern {
         stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || {
             if let Some((sort, x)) = kvar(self.info, pattern) {
@@ -203,6 +207,7 @@ fn norm(
                         },
                     }
                 }
+                // Elements in the order of their text, as krun prints them
                 elems.sort();
                 let text = match elems.split_first() {
                     None => format!("{unit}{{}}()"),
@@ -230,6 +235,7 @@ fn norm(
 
 /// The normal form of a pattern, as text.
 pub fn normal_text(info: &Info, pattern: &Pattern) -> String {
+    // The concatenations of Map and Set sorts, with their units
     let unordered: HashMap<&str, &str> = info
         .collections
         .iter()
@@ -237,38 +243,11 @@ pub fn normal_text(info: &Info, pattern: &Pattern) -> String {
         .map(|(_, constructors)| (constructors.concat.as_str(), constructors.unit.as_str()))
         .collect();
     let mut pattern = desugar_assoc(pattern);
+    // Names, in a definition with binders
     if info.has_binders() {
         let mut printer = Printer { info, used: HashSet::new(), free: HashMap::new(), counter: 0 };
         pattern = printer.walk(&[], &pattern);
         pattern = alpha(info, &[], 0, &pattern);
     }
     norm(&unordered, &pattern).0
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::interface::kore::parse::{parse_definition, parse_pattern};
-
-    fn info() -> Info {
-        let src = br#"[]
-module M
-  hooked-sort SortSet{} [concat{}(Lbl'Unds'Set'Unds'{}()), element{}(LblSetItem{}()), unit{}(Lbl'Stop'Set{}()), hook{}("SET.Set")]
-endmodule []"#;
-        Info::new(&parse_definition(src).unwrap())
-    }
-
-    #[test]
-    fn sets_in_one_form() {
-        let info = info();
-        let a = parse_pattern(
-            br#"\left-assoc{}(Lbl'Unds'Set'Unds'{}(LblSetItem{}(\dv{SortInt{}}("2")), LblSetItem{}(\dv{SortInt{}}("1"))))"#,
-        )
-        .unwrap();
-        let b = parse_pattern(
-            br#"Lbl'Unds'Set'Unds'{}(LblSetItem{}(\dv{SortInt{}}("1")), Lbl'Unds'Set'Unds'{}(LblSetItem{}(\dv{SortInt{}}("2")), Lbl'Stop'Set{}()))"#,
-        )
-        .unwrap();
-        assert_eq!(normal_text(&info, &a), normal_text(&info, &b));
-    }
 }

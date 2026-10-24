@@ -49,14 +49,17 @@ impl From<ValueError> for LoadError {
     }
 }
 
+/// A loading result.
 type Result<T> = std::result::Result<T, LoadError>;
 
 // == Types
 
+/// An identifier without a location.
 fn id(name: &str) -> Id {
     phrase!(node: name.into(), span: Span::default())
 }
 
+/// A named type without arguments, e.g. `kore`.
 fn typ(name: &str) -> Typ {
     typ::make::var(id(name), vec![])
 }
@@ -66,10 +69,12 @@ fn typ_map(typ_key: Typ, typ_value: Typ) -> Typ {
     typ::make::var(id("map"), vec![typ_key, typ_value])
 }
 
+/// `pair<K, V>`, an entry of a map.
 fn typ_pair(typ_key: Typ, typ_value: Typ) -> Typ {
     typ::make::var(id("pair"), vec![typ_key, typ_value])
 }
 
+/// A type as values hold it.
 fn rc(typ: Typ) -> Rc<TypKind> {
     Rc::new(typ.node)
 }
@@ -83,6 +88,7 @@ pub struct Builder<'a> {
     known: &'a HashSet<String>,
 }
 
+/// A case of the given notation and type, from its arguments.
 macro_rules! case {
     ($arena:expr, $shape:expr, [$($arg:expr),* $(,)?], $typ:expr) => {
         value::make::case_string! {
@@ -96,14 +102,17 @@ macro_rules! case {
 }
 
 impl<'a> Builder<'a> {
+    /// A builder into an arena, checking applications against `known`.
     pub fn new(arena: &'a mut Arena, known: &'a HashSet<String>) -> Self {
         Self { arena, known }
     }
 
+    /// A text value.
     fn text(&mut self, text: &str) -> Result<Value> {
         Ok(value::make::text(self.arena, text.to_owned(), Span::default())?)
     }
 
+    /// A list value of the given element type.
     fn list(&mut self, typ_elem: Typ, values: Vec<Value>) -> Result<Value> {
         let typ = rc(typ::make::list(typ_elem));
         Ok(value::make::list(self.arena, typ, values, Span::default())?)
@@ -134,6 +143,7 @@ impl<'a> Builder<'a> {
 
     // - Sorts and patterns
 
+    /// A sort as a `sort` value.
     pub fn sort(&mut self, sort: &Sort) -> Result<Value> {
         match sort {
             Sort::Sort(name, sorts) => {
@@ -148,6 +158,7 @@ impl<'a> Builder<'a> {
         }
     }
 
+    /// Sorts as a `sort*` value.
     fn sorts(&mut self, sorts: &[Sort]) -> Result<Value> {
         let values = sorts
             .iter()
@@ -232,6 +243,7 @@ impl<'a> Builder<'a> {
         )?)
     }
 
+    /// Attributes as a `kattr*` value.
     fn kattrs(&mut self, attrs: &[Attr]) -> Result<Value> {
         let values = attrs
             .iter()
@@ -262,6 +274,7 @@ pub fn load_definition(
     known: &HashSet<String>,
     definition: &Definition,
 ) -> Result<(Value, usize)> {
+    // Each sentence goes to its part, in file order
     let mut builder = Builder::new(arena, known);
     let mut sorts = Vec::new();
     let mut symbols = Vec::new();
@@ -329,6 +342,7 @@ pub fn load_definition(
             Sentence::Import(_) | Sentence::Claim { .. } => {}
         }
     }
+    // The parts, as the fields of a kdefinition
     let count = axioms.len();
     let value_sorts = builder.map(typ("sortid"), typ::make::list(typ("kattr")), sorts)?;
     let value_symbols = builder.map(typ("symid"), typ("ksymdecl"), symbols)?;

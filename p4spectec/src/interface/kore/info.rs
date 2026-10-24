@@ -34,6 +34,7 @@ pub struct Info {
     pub int2mint: Option<String>,
 }
 
+/// The string an attribute holds, as in `hook{}("INT.Int")`.
 fn string_attr<'a>(name: &str, attrs: &'a [Attr]) -> Option<&'a str> {
     attrs.iter().find_map(|attr| match attr {
         Pattern::App(attr_name, _, args) if attr_name == name => match args.as_slice() {
@@ -56,6 +57,7 @@ fn symbol_attr<'a>(name: &str, attrs: &'a [Attr]) -> Option<&'a str> {
 }
 
 impl Info {
+    /// The facts of a definition, from its sort and symbol declarations.
     pub fn new(definition: &Definition) -> Self {
         let mut info = Self::default();
         for sentence in definition.sentences() {

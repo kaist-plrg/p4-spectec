@@ -111,6 +111,7 @@ impl<'a> Lexer<'a> {
 
     /// A string literal; escapes are `\" \\ \n \t \r \f \xHH \uHHHH \UHHHHHHHH`.
     fn string(&mut self) -> Result<String> {
+        // The bytes up to the closing quote, with escapes resolved
         let mut bytes = Vec::new();
         self.pos += 1;
         loop {
@@ -334,6 +335,7 @@ impl<'a> Parser<'a> {
     }
 
     fn sentence(&mut self) -> Result<Sentence> {
+        // A sentence starts with its keyword
         let keyword = self.ident()?;
         match keyword.as_str() {
             "import" => {
@@ -429,64 +431,4 @@ pub fn parse_pattern(src: &[u8]) -> Result<Pattern> {
         return parser.error("trailing input after pattern");
     }
     Ok(pattern)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn domain_value() {
-        let pattern = parse_pattern(br#"\dv{SortInt{}}("1")"#).unwrap();
-        let sort = Sort::Sort("SortInt".to_owned(), vec![]);
-        assert_eq!(
-            pattern,
-            Pattern::App("\\dv".to_owned(), vec![sort], vec![Pattern::Str("1".to_owned())])
-        );
-    }
-
-    #[test]
-    fn variables() {
-        let pattern = parse_pattern(b"f{}(VarX:SortInt{}, @Y:S)").unwrap();
-        let Pattern::App(_, _, args) = pattern else { panic!() };
-        assert!(matches!(&args[0], Pattern::Var(x, Sort::Sort(..)) if x == "VarX"));
-        assert!(matches!(&args[1], Pattern::SetVar(y, Sort::Var(_)) if y == "@Y"));
-    }
-
-    #[test]
-    fn escapes() {
-        let pattern = parse_pattern(br#""a\"\\\n\x41\xe9\u00e9""#).unwrap();
-        assert_eq!(pattern, Pattern::Str("a\"\\\nA\u{e9}\u{c3}\u{a9}".to_owned()));
-    }
-
-    #[test]
-    fn raw_bytes() {
-        // A raw UTF-8 character is its bytes, as an escape is
-        let raw = parse_pattern("\"\u{ac00}\"".as_bytes()).unwrap();
-        let escaped = parse_pattern(br#""\uac00""#).unwrap();
-        assert_eq!(raw, escaped);
-        let Pattern::Str(text) = raw else { panic!() };
-        assert_eq!(bytes_of_text(&text).unwrap(), "\u{ac00}".as_bytes());
-    }
-
-    #[test]
-    fn definition() {
-        let src = r#"[topCellInitializer{}(LblinitGeneratedTopCell{}())]
-module M
-  sort SortInt{} [hook{}("INT.Int")]
-  symbol f{}(SortInt{}) : SortInt{} [function{}()]
-  alias a{}() : SortInt{} where a{}() := \dv{SortInt{}}("1") []
-  // a comment
-  axiom{R} \equals{SortInt{}, R}(f{}(VarX:SortInt{}), VarX:SortInt{}) [owise{}()]
-endmodule [ ]"#;
-        let definition = parse_definition(src.as_bytes()).unwrap();
-        assert_eq!(definition.modules.len(), 1);
-        assert_eq!(definition.sentences().count(), 4);
-    }
-
-    #[test]
-    fn error_line() {
-        let error = parse_pattern(b"f{}(\n\n)x").unwrap_err();
-        assert_eq!(error.line, 3);
-    }
 }

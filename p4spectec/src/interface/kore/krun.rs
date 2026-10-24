@@ -3,6 +3,8 @@
 //! As the LLVM backend's interpreter does with krun's initial term:
 //! `Krun: kdefinition |- kore nat? : runres` evaluates the term
 //! and rewrites it until no rule applies, or up to a number of steps.
+//! A checked run (`check`) takes the specification's `Run` one step at a
+//! time instead, from the configuration `Krun` gives with no step.
 
 use std::{path::Path, rc::Rc, time::Instant};
 
@@ -69,6 +71,7 @@ impl Krun {
         let value_depth = depth_value(&mut arena, depth).map_err(RunError::Parse)?;
         let secs_load = time.elapsed().as_secs_f64();
 
+        // Krun's inputs, kept for the run
         let inputs = [value_definition, value_term, value_depth];
         Ok(Self { arena, runner, inputs, axioms, secs_load })
     }
@@ -146,10 +149,8 @@ impl Krun {
         Ok(if is_final { Outcome::Final(steps, kore) } else { Outcome::Error(steps, kore) })
     }
 
-    /// Runs step by step, checking each step against K (`check`): the
-    /// specification's `Run` is taken one step at a time, from the initial
-    /// configuration `Krun` gives with no step. The outcome, and the check's
-    /// report and verdict.
+    /// Runs step by step, checking each step against K; the outcome, and the
+    /// check's report and verdict.
     pub fn run_checked(
         &mut self,
         kompiled: &Path,
@@ -162,6 +163,7 @@ impl Krun {
                 .result
                 .map_err(|error| eval_error(RunError::Eval(error)))
         };
+        // The loaded definition, and the initial configuration after no step
         let [value_kdefinition, value_term, _] = self.inputs;
         let [value_definition] = run(self, "Load", &[value_kdefinition])?[..] else {
             return Err("Load has one output".to_owned());
@@ -182,6 +184,7 @@ impl Krun {
         )
         .map_err(|e| e.to_string())?;
         let value_one = depth_value(&mut self.arena, Some(1)).map_err(|e| e.to_string())?;
+        // One step at a time: Run with a limit of one step, checked by K
         let mut checker = Checker::new(kompiled);
         let mut steps = 0;
         let (is_final, ended) = loop {
@@ -198,6 +201,7 @@ impl Krun {
             else {
                 return Err("Run has one output".to_owned());
             };
+            // A step taken, the end of the run, or a failing step
             match self.runres(&result)? {
                 Some((true, 1, next)) => {
                     term = next;

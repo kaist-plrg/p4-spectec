@@ -327,12 +327,14 @@ struct KrunArgs {
 /// Runs a kompiled K definition with the K specification from an initial term.
 fn krun_command(args: KrunArgs) -> Result<(), ()> {
     let mut renderer = Renderer::new(RenderConfig::default());
+    // Render specification warnings before constructing the runner
     let spec = report_warnings(
         &mut renderer,
         p4spectec::runner_spec_with_warnings(args.interpreter.spec_lang(), &args.paths),
     )
     .map_err(|report| render_report(&mut renderer, &report))?;
 
+    // Read the definition and the initial term with the requested controls
     let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard);
     let render_error = |renderer: &mut Renderer, error| match error {
         RunError::Build(report) => render_report(renderer, &report),
@@ -344,6 +346,7 @@ fn krun_command(args: KrunArgs) -> Result<(), ()> {
             .map_err(|error| render_error(&mut renderer, error))?;
     println!("read {} axioms ({:.2}s)", krun.axioms, krun.secs_load);
 
+    // Run at once, or step by step against K
     let time = std::time::Instant::now();
     let (outcome, report) = match &args.check_steps {
         Some(kompiled) => match krun.run_checked(kompiled, args.depth) {
@@ -370,6 +373,7 @@ fn krun_command(args: KrunArgs) -> Result<(), ()> {
             return Err(());
         }
     };
+    // The configuration goes to the output or to a file
     println!("{status} after {steps} steps");
     match &args.output {
         Some(path) => {
@@ -383,6 +387,7 @@ fn krun_command(args: KrunArgs) -> Result<(), ()> {
     if let Some(report) = report {
         println!("{report}");
     }
+    // Compare with krun's configuration, up to a normal form
     if let Some(path) = &args.expect {
         match krun.normal_texts(&pattern, path) {
             Ok((spec, expected)) if spec == expected => println!("matches {}", path.display()),

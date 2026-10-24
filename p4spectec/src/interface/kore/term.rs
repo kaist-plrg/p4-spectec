@@ -8,6 +8,11 @@
 //! their sort, from its `element`, `concat`, and `unit` attributes.
 //! `Maker::of_pattern` reads the result of such a hook back into a term:
 //! a domain value, or a constructor applied to such results.
+//!
+//! `runtime_form` writes MInt literals for the runtime as `Int2MInt` of their
+//! value: the runtime reads a literal wider than 64 bits with its 64-bit words
+//! in the wrong order (`5p256` as `5 * 2^192`, `get_mint_token` in
+//! `runtime/util/ConfigurationParser.cpp`), and computes `Int2MInt` right.
 
 use std::rc::Rc;
 
@@ -207,6 +212,7 @@ fn element_symbol<'a>(info: &'a Info, sort: &Sort) -> Result<&'a str> {
 /// A term of the specification as a KORE pattern.
 pub fn to_pattern(arena: &Arena, info: &Info, shapes: &Shapes, value: &Value) -> Result<Pattern> {
     stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || {
+        // By the case of the term
         let (mixop, args) = case(arena, value)?;
         let to = |value: &Value| to_pattern(arena, info, shapes, value);
         let hooked = |hook: &str| info.sort_of_hook(hook).map(sort_named);
@@ -384,6 +390,7 @@ impl Maker<'_> {
             return Err(format!("domain value of sort {sort}"));
         };
         let bad = || format!("bad domain value {text:?} of {sort}");
+        // The hook of the sort says how its text reads
         match self.info.sort_hook(name) {
             Some("INT.Int") => {
                 let i = text.parse::<BigInt>().map_err(|_| bad())?;
@@ -472,11 +479,8 @@ impl Maker<'_> {
     }
 }
 
-/// A term as the runtime is given it. The runtime reads an MInt literal wider
-/// than 64 bits with its 64-bit words in the wrong order (`5p256` as
-/// `5 * 2^192`, `get_mint_token` of `runtime/util/ConfigurationParser.cpp`),
-/// so each MInt literal `vpw` is given as `Int2MInt{SortW}(v)`, which the
-/// runtime computes right.
+/// A pattern as the runtime is given it: each MInt literal `vpw` as
+/// `Int2MInt{SortW}(v)`.
 pub fn runtime_form(info: &Info, pattern: Pattern) -> Pattern {
     stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match pattern {
         Pattern::App(symbol, sorts, args) if symbol == "\\dv" => {

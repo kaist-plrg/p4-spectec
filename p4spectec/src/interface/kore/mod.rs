@@ -56,12 +56,14 @@ pub mod term;
 
 // == Errors
 
+/// Diagnostic codes of the KORE interface.
 const KORE_READ: &str = "kore/read";
 const KORE_PARSE: &str = "kore/parse";
 const KORE_LOAD: &str = "kore/load";
 const KORE_INPUT: &str = "kore/input";
 const KORE_RUNTIME: &str = "kore/runtime";
 
+/// An error of the KORE interface, without a location.
 fn diagnostic(code: &str, message: impl Into<String>) -> InterfaceError {
     let report: Report =
         Diagnostic::new("kore", Severity::Error, Some(code.to_owned()), message, vec![], vec![])
@@ -69,16 +71,19 @@ fn diagnostic(code: &str, message: impl Into<String>) -> InterfaceError {
     InterfaceError::from(Box::new(report))
 }
 
+/// The bytes of a file.
 fn read(path: &Path) -> Result<Vec<u8>, InterfaceError> {
     std::fs::read(path)
         .map_err(|error| diagnostic(KORE_READ, format!("{}: {error}", path.display())))
 }
 
+/// A syntax error in a file, with its line.
 fn parse_error(path: &Path, error: parse::ParseError) -> InterfaceError {
     let message = format!("{}:{}: {}", path.display(), error.line, error.message);
     diagnostic(KORE_PARSE, message)
 }
 
+/// An error loading a file into values.
 fn load_error(path: &Path, error: load::LoadError) -> InterfaceError {
     let message = match error {
         load::LoadError::SymbolUndeclared(name) => format!("undeclared symbol {name}"),
@@ -145,6 +150,7 @@ impl KoreInterface {
         let [symbol, sorts, sort, terms] = values else {
             return Err(format!("$call_hook takes 4 arguments, not {}", values.len()));
         };
+        // The application of the hooked symbol, as KORE
         let symbol = value::get::text(arena, symbol)
             .map_err(|e| e.to_string())?
             .to_owned();
@@ -164,6 +170,7 @@ impl KoreInterface {
         if std::env::var_os("KORE_TRACE").is_some() {
             eprintln!("hook> {pattern} : {sort}");
         }
+        // Evaluated by the runtime; a failure there is FAIL
         let mut maker = term::Maker { arena, info, shapes };
         match runtime.simplify(&pattern.to_string(), &sort) {
             Ok(result) => {
@@ -195,6 +202,7 @@ impl KoreInterface {
         let text = value::get::text(arena, text)
             .map_err(|e| e.to_string())?
             .to_owned();
+        // The literal as a Float domain value, evaluated by the runtime
         let sort = Sort::Sort(info.sort_of_hook("FLOAT.Float")?.to_owned(), vec![]);
         let literal = Pattern::App("\\dv".to_owned(), vec![sort.clone()], vec![Pattern::Str(text)]);
         let normal = match runtime.simplify(&literal.to_string(), &sort) {
