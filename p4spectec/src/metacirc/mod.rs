@@ -1,16 +1,15 @@
-//! Configured AL interpreter towers over AL or P4 inputs
+//! Configured interpreter towers over AL, IL, or P4 inputs
 //!
 //! Each runner is prepared in the arena used by all of its calls.
-//! Meta externs decode one level of arguments and reenter the next runner.
-//! The outer interpreter may execute AL or SL; every represented script is AL.
+//! Only the base runs natively; meta externs decode one level of arguments
+//! and relay them to the host of the next level.
+//! The native base may execute AL or SL.
 
 mod build;
-mod codec;
 pub mod config;
 mod error;
-mod externs;
+mod host;
 mod patch;
-mod reentry;
 mod tower;
 
 use crate::{

@@ -3,9 +3,9 @@
 //! MetaExtern hosts the AL or IL script that a meta specification interprets.
 //! RelayExtern decodes one representation layer and delegates to the next level.
 //! TerminalExtern handles only builtins of the AL or IL program above the top level.
-//! Clearing an extern resets its owned runners before arena values are reset.
+//! Clearing an extern resets the host it owns before arena values are reset.
 
-use super::{codec, reentry::NoReentry, tower::HostLayer};
+use super::{HostLayer, codec, reentry::NoReentry};
 use crate::{
     interface::meta::{MetaInterface, shared::Cache},
     lang::{
@@ -16,7 +16,7 @@ use crate::{
 };
 
 /// The host of the AL or IL script that a meta specification interprets.
-pub(super) enum MetaExtern {
+pub(in crate::metacirc) enum MetaExtern {
     /// The script is the next level; host calls go to its layer.
     Relay(RelayExtern),
     /// The script is the AL or IL program; only its builtins are answered.
@@ -24,13 +24,13 @@ pub(super) enum MetaExtern {
 }
 
 /// Builtin calls of the program, answered by the program's interface.
-pub(super) struct TerminalExtern {
+pub(in crate::metacirc) struct TerminalExtern {
     pub cache: Box<Cache>,
     pub interface_program: Box<MetaInterface>,
 }
 
 /// Host calls resolved against the next level's host in a runtime tower.
-pub(super) struct RelayExtern {
+pub(in crate::metacirc) struct RelayExtern {
     pub cache: Box<Cache>,
     pub layer_next: Box<HostLayer>,
 }

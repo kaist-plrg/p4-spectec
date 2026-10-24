@@ -44,8 +44,8 @@ use super::{
     ExecutionMode, Result, TowerConfig,
     config::Lang,
     error::config_invalid,
-    externs::{MetaExtern, RelayExtern, TerminalExtern},
-    tower::{BaseLayer, HostLayer, Level, Tower},
+    host::{HostLayer, MetaExtern, RelayExtern, TerminalExtern},
+    tower::{BaseLayer, Level, Tower},
 };
 use crate::{
     interface::{

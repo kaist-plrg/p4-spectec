@@ -4,7 +4,7 @@
 //! lends, which answers if the extern calls back into a relation, function,
 //! or program entry.
 
-use super::error;
+use crate::metacirc::error;
 use crate::{
     lang::{data::value::flat::Value, il::ast::Typ},
     runner::{Extern, Interface, Interpreter, InterpreterError, RunnerContext},
