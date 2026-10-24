@@ -498,9 +498,19 @@ def $is_iter_on_var(typedExp) : varr? =
 
   clause -1 : (_typedExp) = ?()
 
-def $iter_vari(vari, iter) : vari =
+def $iterate_vari(iter, vari) : vari =
 
-  clause 0 : (id typ iter*{iter <- iter*}, iter_add) = id typ iter*{iter <- iter*} ++ [iter_add]
+  clause 0 : (iter_add, id typ iter*{iter <- iter*}) = id typ iter*{iter <- iter*} ++ [iter_add]
+
+def $is_prefix_dim(vari, vari) : bool =
+
+  clause 0 : (_id typ_a iter_a*{iter_a <- iter_a*}, _id' typ_b iter_b*{iter_b <- iter_b*}) = true
+  -- if (typ_a = typ_b)
+  -- if (|iter_a*{iter_a <- iter_a*}| <= |iter_b*{iter_b <- iter_b*}|)
+  -- if ((0 + |iter_a*{iter_a <- iter_a*}|) <= |iter_b*{iter_b <- iter_b*}|)
+  -- if (iter_a*{iter_a <- iter_a*} = iter_b*{iter_b <- iter_b*}[0 : |iter_a*{iter_a <- iter_a*}|])
+
+  clause -1 : (_vari, _vari') = false
 
 syntax typDef =
    | EXTTYP id (from externTypDefn)
@@ -963,7 +973,7 @@ def $equiv_func_typ(tdenv, typ, typ) : equivRes =
 
   clause -1 : (tdenv, typ_l, typ_r) = ERROR as equivRes
 
-syntax algoCtx = {TYP tdenv, BOUND id*, USED id*}
+syntax algoCtx = {TYP tdenv, BOUND vari*, USED id*}
 
 var AC : algoCtx
 
@@ -1006,9 +1016,9 @@ def $load_algoCtx(algoCtx, specIL) : algoCtx =
   clause 4 : (AC, defnIL*{defnIL <- defnIL*}) = AC
   -- if defnIL*{defnIL <- defnIL*} matches []
 
-def $add_bound(algoCtx, id*) : algoCtx =
+def $add_bound(algoCtx, vari*) : algoCtx =
 
-  clause 0 : (AC, id*{id <- id*}) = AC[BOUND = AC.BOUND ++ id*{id <- id*}]
+  clause 0 : (AC, vari*{vari <- vari*}) = AC[BOUND = AC.BOUND ++ vari*{vari <- vari*}]
 
 def $add_used(algoCtx, id*) : algoCtx =
 
@@ -1020,185 +1030,112 @@ def $add_tparams(algoCtx, tparam*) : algoCtx =
   -- let typDef*{typDef <- typDef*} = $repeat_<typDef>(PARAM, |tparam*{tparam <- tparam*}|)
   -- let tdenv = $adds_map<id, typDef>(AC.TYP, tparam*{tparam <- tparam*}, typDef*{typDef <- typDef*})
 
-def $is_bound(algoCtx, id*) : bool =
-
-  clause 0 : (AC, id*{id <- id*}) = $forall_(id <- AC.BOUND*{id <- id*})
-
-syntax iterCtx = premIterAL*
+syntax iterCtx = premIterIL*
 
 var IC : iterCtx
+
+def $add_iterated(iterCtx, vari) : iterCtx =
+
+  clause 0 : (premIterIL*{premIterIL <- premIterIL*}, _vari) = []
+  -- if premIterIL*{premIterIL <- premIterIL*} matches []
+
+  clause 1 : (premIterIL*{premIterIL <- premIterIL*}, vari_new) = iter vari*{vari <- vari*} ++ [vari_new] :: $add_iterated(IC, vari_lift)
+  -- if premIterIL*{premIterIL <- premIterIL*} matches _ :: _
+  -- let iter vari*{vari <- vari*} :: IC = premIterIL*{premIterIL <- premIterIL*}
+  -- let vari_lift = $iterate_vari(iter, vari_new)
+
+def $lift_vari(iterCtx, vari) : vari =
+
+  clause 0 : (premIterIL*{premIterIL <- premIterIL*}, vari) = vari
+  -- if premIterIL*{premIterIL <- premIterIL*} matches []
+
+  clause 1 : (premIterIL*{premIterIL <- premIterIL*}, vari) = $lift_vari(IC, $iterate_vari(iter, vari))
+  -- if premIterIL*{premIterIL <- premIterIL*} matches _ :: _
+  -- let iter _vari*{_vari <- _vari*} :: IC = premIterIL*{premIterIL <- premIterIL*}
+
+def $varis_in(vari*, id*) : vari* =
+
+  clause 0 : (vari*{vari <- vari*}, _id*{_id <- _id*}) = []
+  -- if vari*{vari <- vari*} matches []
+
+  clause 1 : (vari*{vari <- vari*}, id*{id <- id*}) = vari_h :: $varis_in(vari_t*{vari_t <- vari_t*}, id*{id <- id*})
+  -- if vari*{vari <- vari*} matches _ :: _
+  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari*{vari <- vari*}
+  -- let id_h _typ _iter*{_iter <- _iter*} = vari_h
+  -- if id_h <- id*{id <- id*}
+
+  clause 2 : (vari*{vari <- vari*}, id*{id <- id*}) = $varis_in(vari_t*{vari_t <- vari_t*}, id*{id <- id*})
+  -- if vari*{vari <- vari*} matches _ :: _
+  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari*{vari <- vari*}
+  -- let id_h _typ _iter*{_iter <- _iter*} = vari_h
+  -- if ~id_h <- id*{id <- id*}
+
+def $annotate(iterCtx, id*, vari*) : premIterAL* =
+
+  clause 0 : (premIterIL*{premIterIL <- premIterIL*}, _id*{_id <- _id*}, _vari*{_vari <- _vari*}) = []
+  -- if premIterIL*{premIterIL <- premIterIL*} matches []
+
+  clause 1 : (premIterIL*{premIterIL <- premIterIL*}, id_read*{id_read <- id_read*}, vari_bind*{vari_bind <- vari_bind*}) = iter '<-' vari_src*{vari_src <- vari_src*} '->' vari_bind*{vari_bind <- vari_bind*} :: $annotate(IC, id_read*{id_read <- id_read*}, vari_lift*{vari_lift <- vari_lift*})
+  -- if premIterIL*{premIterIL <- premIterIL*} matches _ :: _
+  -- let iter vari*{vari <- vari*} :: IC = premIterIL*{premIterIL <- premIterIL*}
+  -- let vari_src*{vari_src <- vari_src*} = $varis_in(vari*{vari <- vari*}, id_read*{id_read <- id_read*})
+  -- (let vari_lift = $iterate_vari(iter, vari_bind))*{vari_bind <- vari_bind*, vari_lift -> vari_lift*}
+
+relation Iter_sourced: |- premIterAL*
+
+  rulegroup
+
+   match
+
+    (signature) |- premIterAL*{premIterAL <- premIterAL*}
+    |- premIterAL*{premIterAL <- premIterAL*}
+
+   paths
+
+    rulepath
+    -- let _iter '<-' vari_src*{vari_src <- vari_src*} '->' _vari*{_vari <- _vari*}*{_iter <- _iter*, _vari* <- _vari**, vari_src* <- vari_src**} = premIterAL*{premIterAL <- premIterAL*}
+    -- (if (vari_src*{vari_src <- vari_src*} =/= []))*{vari_src* <- vari_src**}
+    -- the relation holds
+
+def $iterate_prem(premIterAL*, premAL) : premAL =
+
+  clause 0 : (premIterAL*{premIterAL <- premIterAL*}, premAL) = premAL
+  -- if premIterAL*{premIterAL <- premIterAL*} matches []
+
+  clause 1 : (premIterAL'*{premIterAL' <- premIterAL'*}, premAL) = $iterate_prem(premIterAL_t*{premIterAL_t <- premIterAL_t*}, ITER premAL premIterAL as premAL)
+  -- if premIterAL'*{premIterAL' <- premIterAL'*} matches _ :: _
+  -- let premIterAL :: premIterAL_t*{premIterAL_t <- premIterAL_t*} = premIterAL'*{premIterAL' <- premIterAL'*}
+
+def $is_bound_vari(vari*, vari) : bool =
+
+  clause 0 : (vari*{vari <- vari*}, _vari) = false
+  -- if vari*{vari <- vari*} matches []
+
+  clause 1 : (vari'*{vari' <- vari'*}, vari) = true
+  -- if vari'*{vari' <- vari'*} matches _ :: _
+  -- let vari_h :: _vari*{_vari <- _vari*} = vari'*{vari' <- vari'*}
+  -- let id _typ _iter*{_iter <- _iter*} = vari
+  -- let id' _typ' _iter'*{_iter' <- _iter'*} = vari_h
+  -- if (id' = id)
+  -- if $is_prefix_dim(vari_h, vari)
+
+  clause 2 : (vari'*{vari' <- vari'*}, vari) = $is_bound_vari(vari_t*{vari_t <- vari_t*}, vari)
+  -- if vari'*{vari' <- vari'*} matches _ :: _
+  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari'*{vari' <- vari'*}
+  -- let id _typ _iter*{_iter <- _iter*} = vari
+  -- let id_h _typ' _iter'*{_iter' <- _iter'*} = vari_h
+  -- if ((id_h =/= id) \/ ~$is_prefix_dim(vari_h, vari))
+
+def $is_bound(algoCtx, iterCtx, vari*) : bool =
+
+  clause 0 : (AC, IC, vari*{vari <- vari*}) = $forall_($is_bound_vari(AC.BOUND, $lift_vari(IC, vari))*{vari <- vari*})
 
 syntax renaming =
    | vari '->' id* (from renaming)
 
-syntax renamer = renaming*
+syntax renamer = map<id, renaming>
 
 var R : renamer
-
-relation Iter_restrict: iterCtx |- vari* : iterCtx
-
-  rulegroup
-
-   match
-
-    (signature) premIterAL''*{premIterAL'' <- premIterAL''*} |- vari*{vari <- vari*} : %
-    premIterAL''*{premIterAL'' <- premIterAL''*} |- vari*{vari <- vari*} : %
-
-   paths
-
-    rulepath nil
-    -- if (premIterAL''*{premIterAL'' <- premIterAL''*} = [])
-    -- let _vari*{_vari <- _vari*} = vari*{vari <- vari*}
-    -- output: % |- % : []
-
-    rulepath cons
-    -- let premIterAL'''*{premIterAL''' <- premIterAL'''*} = premIterAL''*{premIterAL'' <- premIterAL''*}
-    -- if premIterAL'''*{premIterAL''' <- premIterAL'''*} matches _ :: _
-    -- let premIterAL :: IC = premIterAL'''*{premIterAL''' <- premIterAL'''*}
-    -- let vari_read*{vari_read <- vari_read*} = vari*{vari <- vari*}
-    -- let iter '<-' vari_src*{vari_src <- vari_src*} '->' vari_bind*{vari_bind <- vari_bind*} = premIterAL
-    -- let vari_keep*{vari_keep <- vari_keep*} = $sources_read(vari_src*{vari_src <- vari_src*}, vari_read*{vari_read <- vari_read*})
-    -- let premIterAL' = iter '<-' vari_keep*{vari_keep <- vari_keep*} '->' vari_bind*{vari_bind <- vari_bind*}
-    -- Iter_restrict: IC |- vari_read*{vari_read <- vari_read*} : IC'
-    -- output: % |- % : premIterAL' :: IC'
-
-relation Iter_bind: iterCtx |- vari* : iterCtx
-
-  rulegroup
-
-   match
-
-    (signature) premIterAL''*{premIterAL'' <- premIterAL''*} |- vari'*{vari' <- vari'*} : %
-    premIterAL''*{premIterAL'' <- premIterAL''*} |- vari'*{vari' <- vari'*} : %
-
-   paths
-
-    rulepath nil
-    -- if (premIterAL''*{premIterAL'' <- premIterAL''*} = [])
-    -- let _vari*{_vari <- _vari*} = vari'*{vari' <- vari'*}
-    -- output: % |- % : []
-
-    rulepath cons
-    -- let premIterAL'''*{premIterAL''' <- premIterAL'''*} = premIterAL''*{premIterAL'' <- premIterAL''*}
-    -- if premIterAL'''*{premIterAL''' <- premIterAL'''*} matches _ :: _
-    -- let premIterAL :: IC = premIterAL'''*{premIterAL''' <- premIterAL'''*}
-    -- let vari*{vari <- vari*} = vari'*{vari' <- vari'*}
-    -- let iter '<-' vari_src*{vari_src <- vari_src*} '->' vari_bind*{vari_bind <- vari_bind*} = premIterAL
-    -- let premIterAL' = iter '<-' vari_src*{vari_src <- vari_src*} '->' vari_bind*{vari_bind <- vari_bind*} ++ vari*{vari <- vari*}
-    -- (let vari_lift = $iter_vari(vari, iter))*{vari <- vari*, vari_lift -> vari_lift*}
-    -- Iter_bind: IC |- vari_lift*{vari_lift <- vari_lift*} : IC'
-    -- output: % |- % : premIterAL' :: IC'
-
-relation Iter_source: iterCtx |- vari* : iterCtx
-
-  rulegroup
-
-   match
-
-    (signature) premIterAL''*{premIterAL'' <- premIterAL''*} |- vari'*{vari' <- vari'*} : %
-    premIterAL''*{premIterAL'' <- premIterAL''*} |- vari'*{vari' <- vari'*} : %
-
-   paths
-
-    rulepath nil
-    -- if (premIterAL''*{premIterAL'' <- premIterAL''*} = [])
-    -- let _vari*{_vari <- _vari*} = vari'*{vari' <- vari'*}
-    -- output: % |- % : []
-
-    rulepath cons
-    -- let premIterAL'''*{premIterAL''' <- premIterAL'''*} = premIterAL''*{premIterAL'' <- premIterAL''*}
-    -- if premIterAL'''*{premIterAL''' <- premIterAL'''*} matches _ :: _
-    -- let premIterAL :: IC = premIterAL'''*{premIterAL''' <- premIterAL'''*}
-    -- let vari*{vari <- vari*} = vari'*{vari' <- vari'*}
-    -- let iter '<-' vari_src*{vari_src <- vari_src*} '->' vari_bind*{vari_bind <- vari_bind*} = premIterAL
-    -- let premIterAL' = iter '<-' vari_src*{vari_src <- vari_src*} ++ vari*{vari <- vari*} '->' vari_bind*{vari_bind <- vari_bind*}
-    -- (let vari_lift = $iter_vari(vari, iter))*{vari <- vari*, vari_lift -> vari_lift*}
-    -- Iter_source: IC |- vari_lift*{vari_lift <- vari_lift*} : IC'
-    -- output: % |- % : premIterAL' :: IC'
-
-relation Iter_replace: iterCtx id* |- vari : iterCtx
-
-  rulegroup
-
-   match
-
-    (signature) premIterAL''*{premIterAL'' <- premIterAL''*} id'*{id' <- id'*} |- vari' : %
-    premIterAL''*{premIterAL'' <- premIterAL''*} id'*{id' <- id'*} |- vari' : %
-
-   paths
-
-    rulepath nil
-    -- if (premIterAL''*{premIterAL'' <- premIterAL''*} = [])
-    -- let _id*{_id <- _id*} = id'*{id' <- id'*}
-    -- let _vari = vari'
-    -- output: % % |- % : []
-
-    rulepath cons
-    -- let premIterAL'''*{premIterAL''' <- premIterAL'''*} = premIterAL''*{premIterAL'' <- premIterAL''*}
-    -- if premIterAL'''*{premIterAL''' <- premIterAL'''*} matches _ :: _
-    -- let premIterAL :: IC = premIterAL'''*{premIterAL''' <- premIterAL'''*}
-    -- let id*{id <- id*} = id'*{id' <- id'*}
-    -- let vari = vari'
-    -- let iter '<-' vari_src*{vari_src <- vari_src*} '->' vari_bind*{vari_bind <- vari_bind*} = premIterAL
-    -- let vari_keep*{vari_keep <- vari_keep*} = $sources_except(vari_src*{vari_src <- vari_src*}, id*{id <- id*})
-    -- let premIterAL' = iter '<-' vari_keep*{vari_keep <- vari_keep*} ++ [vari] '->' vari_bind*{vari_bind <- vari_bind*}
-    -- let vari_lift = $iter_vari(vari, iter)
-    -- Iter_replace: IC id*{id <- id*} |- vari_lift : IC'
-    -- output: % % |- % : premIterAL' :: IC'
-
-relation Iter_clear: |- iterCtx : iterCtx
-
-  rulegroup
-
-   match
-
-    (signature) |- IC : %
-    |- IC : %
-
-   paths
-
-    rulepath
-    -- let iter '<-' _vari*{_vari <- _vari*} '->' _vari'*{_vari' <- _vari'*}*{_vari* <- _vari**, _vari'* <- _vari'**, iter <- iter*} = IC
-    -- let IC' = iter '<-' [] '->' []*{iter <- iter*}
-    -- output: |- % : IC'
-
-relation Iter_sourced: |- iterCtx
-
-  rulegroup
-
-   match
-
-    (signature) |- IC
-    |- IC
-
-   paths
-
-    rulepath
-    -- let _iter '<-' vari_src*{vari_src <- vari_src*} '->' _vari*{_vari <- _vari*}*{_iter <- _iter*, _vari* <- _vari**, vari_src* <- vari_src**} = IC
-    -- (if (vari_src*{vari_src <- vari_src*} =/= []))*{vari_src* <- vari_src**}
-    -- the relation holds
-
-relation Iter_prem: iterCtx |- premAL : premAL
-
-  rulegroup
-
-   match
-
-    (signature) premIterAL'*{premIterAL' <- premIterAL'*} |- premAL : %
-    premIterAL'*{premIterAL' <- premIterAL'*} |- premAL : %
-
-   paths
-
-    rulepath nil
-    -- if (premIterAL'*{premIterAL' <- premIterAL'*} = [])
-    -- output: % |- % : premAL
-
-    rulepath cons
-    -- let premIterAL''*{premIterAL'' <- premIterAL''*} = premIterAL'*{premIterAL' <- premIterAL'*}
-    -- if premIterAL''*{premIterAL'' <- premIterAL''*} matches _ :: _
-    -- let premIterAL :: IC = premIterAL''*{premIterAL'' <- premIterAL''*}
-    -- Iter_prem: IC |- ITER premAL premIterAL as premAL : premAL'
-    -- output: % |- % : premAL'
 
 relation Collect_exp: algoCtx |- typedExp : vari*
 
@@ -1215,12 +1152,12 @@ relation Collect_exp: algoCtx |- typedExp : vari*
 
     rulepath bound
     -- let _typ = typ'
-    -- if id <- AC.BOUND
+    -- if id <- $ids_of_varis(AC.BOUND)
     -- output: % |- % : []
 
     rulepath binder
     -- let typ = typ'
-    -- if ~id <- AC.BOUND
+    -- if ~id <- $ids_of_varis(AC.BOUND)
     -- output: % |- % : [id typ []]
 
   rulegroup upcast
@@ -1349,7 +1286,7 @@ relation Collect_exp: algoCtx |- typedExp : vari*
 
     rulepath iter
     -- Collect_exp: AC |- typedExp : vari*{vari <- vari*}
-    -- (let vari_iter = $iter_vari(vari, iter))*{vari <- vari*, vari_iter -> vari_iter*}
+    -- (let vari_iter = $iterate_vari(iter, vari))*{vari <- vari*, vari_iter -> vari_iter*}
     -- output: % |- % : vari_iter*{vari_iter <- vari_iter*}
 
   rulegroup literal
@@ -1744,7 +1681,7 @@ relation Collect_args: algoCtx |- arg* : vari*
     -- Collect_args: AC |- arg_t*{arg_t <- arg_t*} : vari_t*{vari_t <- vari_t*}
     -- output: % |- % : vari_h*{vari_h <- vari_h*} ++ vari_t*{vari_t <- vari_t*}
 
-relation Multibind_renamer: |- vari* : renamer
+relation Multibind_renamer: |- vari* : renaming*
 
   rulegroup
 
@@ -1765,8 +1702,8 @@ relation Multibind_renamer: |- vari* : renamer
     -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari''*{vari'' <- vari''*}
     -- let id_h _typ _iter*{_iter <- _iter*} = vari_h
     -- if ([] = $varis_with_id(id_h, vari_t*{vari_t <- vari_t*}))
-    -- Multibind_renamer: |- vari_t*{vari_t <- vari_t*} : R
-    -- output: |- % : R
+    -- Multibind_renamer: |- vari_t*{vari_t <- vari_t*} : renaming*{renaming <- renaming*}
+    -- output: |- % : renaming*{renaming <- renaming*}
 
     rulepath repeated
     -- let vari''*{vari'' <- vari''*} = vari'*{vari' <- vari'*}
@@ -1777,8 +1714,8 @@ relation Multibind_renamer: |- vari* : renamer
     -- if (vari_same*{vari_same <- vari_same*} =/= [])
     -- (if (vari_same = vari_h))*{vari_same <- vari_same*}
     -- let vari_rest*{vari_rest <- vari_rest*} = $varis_without_id(id_h, vari_t*{vari_t <- vari_t*})
-    -- Multibind_renamer: |- vari_rest*{vari_rest <- vari_rest*} : R
-    -- output: |- % : vari_h '->' [] :: R
+    -- Multibind_renamer: |- vari_rest*{vari_rest <- vari_rest*} : renaming*{renaming <- renaming*}
+    -- output: |- % : vari_h '->' [] :: renaming*{renaming <- renaming*}
 
 relation Multibind_exp: algoCtx renamer |- typedExp : algoCtx renamer typedExp
 
@@ -1793,13 +1730,13 @@ relation Multibind_exp: algoCtx renamer |- typedExp : algoCtx renamer typedExp
 
     rulepath unrenamed
     -- let id*{id <- id*} = $free_ids_exp(typedExp)
-    -- let id_rep*{id_rep <- id_rep*} = $repeated_ids(R)
+    -- let `{ id_rep ':' _renaming*{_renaming <- _renaming*, id_rep <- id_rep*} `} = R
     -- if ~$exists_(id <- id_rep*{id_rep <- id_rep*}*{id <- id*})
     -- output: % % |- % : AC R typedExp
 
     rulepath renamed
     -- let id*{id <- id*} = $free_ids_exp(typedExp)
-    -- let id_rep*{id_rep <- id_rep*} = $repeated_ids(R)
+    -- let `{ id_rep ':' _renaming*{_renaming <- _renaming*, id_rep <- id_rep*} `} = R
     -- if $exists_(id <- id_rep*{id_rep <- id_rep*}*{id <- id*})
     -- Multibind_exp_repeated: AC R |- typedExp : AC' R' typedExp'
     -- output: % % |- % : AC' R' typedExp'
@@ -1818,15 +1755,20 @@ relation Multibind_exp_repeated: algoCtx renamer |- typedExp : algoCtx renamer t
    paths
 
     rulepath first
-    -- if ([] = $occurrence_ids(R, id))
-    -- let R' = $add_occurrence_id(R, id, id)
+    -- let renaming?{renaming <- renaming?} = $find_map<id, renaming>(R, id)
+    -- if renaming?{renaming <- renaming?} matches (_)
+    -- let ?(vari '->' id'*{id' <- id'*}) = renaming?{renaming <- renaming?}
+    -- if id'*{id' <- id'*} matches []
+    -- let R' = $add_map<id, renaming>(R, id, vari '->' [id])
     -- output: % % |- % : AC R' VAR id '#' typ
 
     rulepath later
-    -- let id_name*{id_name <- id_name*} = $occurrence_ids(R, id)
+    -- let renaming?{renaming <- renaming?} = $find_map<id, renaming>(R, id)
+    -- if renaming?{renaming <- renaming?} matches (_)
+    -- let ?(vari '->' id_name*{id_name <- id_name*}) = renaming?{renaming <- renaming?}
     -- if (id_name*{id_name <- id_name*} =/= [])
     -- let (AC', id_fresh) = $fresh_name(AC, id)
-    -- let R' = $add_occurrence_id(R, id, id_fresh)
+    -- let R' = $add_map<id, renaming>(R, id, vari '->' id_name*{id_name <- id_name*} ++ [id_fresh])
     -- output: % % |- % : AC' R' VAR id_fresh '#' typ
 
   rulegroup upcast
@@ -2015,37 +1957,30 @@ relation Multibind_args: algoCtx renamer |- arg* : algoCtx renamer arg*
     -- Multibind_args: AC R |- arg_t*{arg_t <- arg_t*} : AC' R' arg_t'*{arg_t' <- arg_t'*}
     -- output: % % |- % : AC' R' FUN id :: arg_t'*{arg_t' <- arg_t'*}
 
-relation Multibind_eqs: iterCtx |- renamer : premAL*
+relation Multibind_eqs: iterCtx |- renaming* : premAL*
 
   rulegroup
 
    match
 
-    (signature) IC |- renaming*{renaming <- renaming*} : %
-    IC |- renaming*{renaming <- renaming*} : %
+    (signature) IC |- renaming'*{renaming' <- renaming'*} : %
+    IC |- renaming'*{renaming' <- renaming'*} : %
 
    paths
 
     rulepath nil
-    -- if (renaming*{renaming <- renaming*} = [])
+    -- if (renaming'*{renaming' <- renaming'*} = [])
     -- output: % |- % : []
 
     rulepath cons
-    -- let renaming'*{renaming' <- renaming'*} = renaming*{renaming <- renaming*}
-    -- if renaming'*{renaming' <- renaming'*} matches _ :: _
-    -- let vari '->' id_name*{id_name <- id_name*} :: R = renaming'*{renaming' <- renaming'*}
-    -- let _id typ iter*{iter <- iter*} = vari
+    -- let renaming''*{renaming'' <- renaming''*} = renaming'*{renaming' <- renaming'*}
+    -- if renaming''*{renaming'' <- renaming''*} matches _ :: _
+    -- let vari '->' id_name*{id_name <- id_name*} :: renaming*{renaming <- renaming*} = renaming''*{renaming'' <- renaming''*}
     -- let id*{id <- id*} = id_name*{id_name <- id_name*}
     -- if id*{id <- id*} matches _ :: _
-    -- let id_first :: id_later*{id_later <- id_later*} = id*{id <- id*}
-    -- Iter_clear: |- IC : IC_clear
-    -- let IC_dim = iter '<-' [] '->' []*{iter <- iter*} ++ IC_clear
-    -- let typedExp_first = VAR id_first '#' typ
-    -- (let typedExp_later = VAR id_later '#' typ)*{id_later <- id_later*, typedExp_later -> typedExp_later*}
-    -- (let premAL_cmp = IF CMP EQ as cmpop typedExp_first typedExp_later '#' BOOL as typ as premAL)*{typedExp_later <- typedExp_later*, premAL_cmp -> premAL_cmp*}
-    -- (Iter_source: IC_dim |- [id_first typ [], id_later typ []] : IC_eq)*{id_later <- id_later*, IC_eq -> IC_eq*}
-    -- (Iter_prem: IC_eq |- premAL_cmp : premAL_eq)*{IC_eq <- IC_eq*, premAL_cmp <- premAL_cmp*, premAL_eq -> premAL_eq*}
-    -- Multibind_eqs: IC |- R : premAL_t*{premAL_t <- premAL_t*}
+    -- let _id :: id_later*{id_later <- id_later*} = id*{id <- id*}
+    -- (let premAL_eq = $occurrence_eq(IC, vari, id_later))*{id_later <- id_later*, premAL_eq -> premAL_eq*}
+    -- Multibind_eqs: IC |- renaming*{renaming <- renaming*} : premAL_t*{premAL_t <- premAL_t*}
     -- output: % |- % : premAL_eq*{premAL_eq <- premAL_eq*} ++ premAL_t*{premAL_t <- premAL_t*}
 
 relation Partialbind_exp: algoCtx iterCtx |- iterCtx typedExp : algoCtx iterCtx typedExp premAL*
@@ -2061,17 +1996,18 @@ relation Partialbind_exp: algoCtx iterCtx |- iterCtx typedExp : algoCtx iterCtx 
 
     rulepath compared
     -- if ~$decomposes(AC, typedExp)
+    -- let vari_read*{vari_read <- vari_read*} = $free_vars_exp(typedExp)
+    -- if $is_bound(AC, IC ++ IC_prem, vari_read*{vari_read <- vari_read*})
     -- let _exp '#' typ = typedExp
-    -- let (AC', vari_d) = $fresh_vari(AC, typ)
+    -- let (AC', vari_d) = $fresh_vari(AC, IC ++ IC_prem, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
     -- let typedExp_check = $check_exp(typedExp_d, typedExp)
-    -- let vari_read*{vari_read <- vari_read*} = $free_vars_exp(typedExp)
-    -- let vari_read_min*{vari_read_min <- vari_read_min*} = $shallowest_vars(vari_read*{vari_read <- vari_read*})
-    -- Iter_restrict: IC ++ IC_prem |- vari_read_min*{vari_read_min <- vari_read_min*} : IC_read
-    -- Iter_source: IC_read |- [vari_d] : IC_check
-    -- Iter_prem: IC_check |- IF typedExp_check as premAL : premAL_check
+    -- let id_d _typ _iter*{_iter <- _iter*} = vari_d
     -- let id_read*{id_read <- id_read*} = $ids_of_varis(vari_read*{vari_read <- vari_read*})
-    -- Iter_replace: IC id_read*{id_read <- id_read*} |- vari_d : IC'
+    -- let IC_d = $add_iterated(IC ++ IC_prem, vari_d)
+    -- let premIterAL*{premIterAL <- premIterAL*} = $annotate(IC_d, id_d :: id_read*{id_read <- id_read*}, [])
+    -- let premAL_check = $iterate_prem(premIterAL*{premIterAL <- premIterAL*}, IF typedExp_check as premAL)
+    -- let IC' = $add_iterated(IC, vari_d)
     -- output: % % |- % % : AC' IC' typedExp_d [premAL_check]
 
     rulepath decomposed
@@ -2109,14 +2045,13 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
     rulepath upcast
     -- Partialbind_exp: AC IC_prem |- IC typedExp : AC' IC' typedExp_sub premAL*{premAL <- premAL*}
     -- let _exp '#' typ_sub = typedExp_sub
-    -- let (AC'', vari_d) = $fresh_vari(AC', typ)
+    -- let (AC'', vari_d) = $fresh_vari(AC', IC' ++ IC_prem, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
     -- let typedExp_check = SUB typedExp_d typ_sub '#' BOOL as typ
     -- let typedExp_down = DOWNCAST typ_sub typedExp_d '#' typ_sub
     -- Partialbind_check: IC' ++ IC_prem vari_d |- typedExp_check : premAL_check
     -- Partialbind_destructure: IC' ++ IC_prem vari_d |- typedExp_sub '=' typedExp_down : premAL_let
-    -- let id_sub*{id_sub <- id_sub*} = $free_ids_exp(typedExp_sub)
-    -- Iter_replace: IC' id_sub*{id_sub <- id_sub*} |- vari_d : IC''
+    -- let IC'' = $add_iterated(IC', vari_d)
     -- output: % % |- % % : AC'' IC'' typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
 
   rulegroup tuple
@@ -2166,13 +2101,12 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
     rulepath case
     -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC' IC' typedExp'*{typedExp' <- typedExp'*} premAL*{premAL <- premAL*}
     -- let typedExp_case = INJ mixop typedExp'*{typedExp' <- typedExp'*} '#' typ
-    -- let (AC'', vari_d) = $fresh_vari(AC', typ)
+    -- let (AC'', vari_d) = $fresh_vari(AC', IC' ++ IC_prem, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
     -- let typedExp_check = MATCH typedExp_d INJ mixop '#' BOOL as typ
     -- Partialbind_check: IC' ++ IC_prem vari_d |- typedExp_check : premAL_check
     -- Partialbind_destructure: IC' ++ IC_prem vari_d |- typedExp_case '=' typedExp_d : premAL_let
-    -- let id_case*{id_case <- id_case*} = $free_ids_exp(typedExp_case)
-    -- Iter_replace: IC' id_case*{id_case <- id_case*} |- vari_d : IC''
+    -- let IC'' = $add_iterated(IC', vari_d)
     -- output: % % |- % % : AC'' IC'' typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
 
   rulegroup opt
@@ -2191,13 +2125,12 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
     rulepath opt
     -- Partialbind_exp: AC IC_prem |- IC typedExp : AC' IC' typedExp' premAL*{premAL <- premAL*}
     -- let typedExp_opt = OPT ?(typedExp') '#' typ
-    -- let (AC'', vari_d) = $fresh_vari(AC', typ)
+    -- let (AC'', vari_d) = $fresh_vari(AC', IC' ++ IC_prem, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
     -- let typedExp_check = MATCH typedExp_d SOME as pat '#' BOOL as typ
     -- Partialbind_check: IC' ++ IC_prem vari_d |- typedExp_check : premAL_check
     -- Partialbind_destructure: IC' ++ IC_prem vari_d |- typedExp_opt '=' typedExp_d : premAL_let
-    -- let id_opt*{id_opt <- id_opt*} = $free_ids_exp(typedExp_opt)
-    -- Iter_replace: IC' id_opt*{id_opt <- id_opt*} |- vari_d : IC''
+    -- let IC'' = $add_iterated(IC', vari_d)
     -- output: % % |- % % : AC'' IC'' typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
 
   rulegroup list
@@ -2214,14 +2147,13 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
     rulepath list
     -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC' IC' typedExp'*{typedExp' <- typedExp'*} premAL*{premAL <- premAL*}
     -- let typedExp_list = LIST typedExp'*{typedExp' <- typedExp'*} '#' typ
-    -- let (AC'', vari_d) = $fresh_vari(AC', typ)
+    -- let (AC'', vari_d) = $fresh_vari(AC', IC' ++ IC_prem, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
     -- let n = |typedExp*{typedExp <- typedExp*}|
     -- let typedExp_check = MATCH typedExp_d FIXED n as pat '#' BOOL as typ
     -- Partialbind_check: IC' ++ IC_prem vari_d |- typedExp_check : premAL_check
     -- Partialbind_destructure: IC' ++ IC_prem vari_d |- typedExp_list '=' typedExp_d : premAL_let
-    -- let id_list*{id_list <- id_list*} = $free_ids_exp(typedExp_list)
-    -- Iter_replace: IC' id_list*{id_list <- id_list*} |- vari_d : IC''
+    -- let IC'' = $add_iterated(IC', vari_d)
     -- output: % % |- % % : AC'' IC'' typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
 
   rulegroup cons
@@ -2239,13 +2171,12 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
     -- Partialbind_exp: AC IC_prem |- IC typedExp_h : AC' IC' typedExp_h' premAL_h*{premAL_h <- premAL_h*}
     -- Partialbind_exp: AC' IC_prem |- IC' typedExp_t : AC'' IC'' typedExp_t' premAL_t*{premAL_t <- premAL_t*}
     -- let typedExp_cons = CONS typedExp_h' typedExp_t' '#' typ
-    -- let (AC''', vari_d) = $fresh_vari(AC'', typ)
+    -- let (AC''', vari_d) = $fresh_vari(AC'', IC'' ++ IC_prem, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
     -- let typedExp_check = MATCH typedExp_d CONS as pat '#' BOOL as typ
     -- Partialbind_check: IC'' ++ IC_prem vari_d |- typedExp_check : premAL_check
     -- Partialbind_destructure: IC'' ++ IC_prem vari_d |- typedExp_cons '=' typedExp_d : premAL_let
-    -- let id_cons*{id_cons <- id_cons*} = $free_ids_exp(typedExp_cons)
-    -- Iter_replace: IC'' id_cons*{id_cons <- id_cons*} |- vari_d : IC'''
+    -- let IC''' = $add_iterated(IC'', vari_d)
     -- output: % % |- % % : AC''' IC''' typedExp_d premAL_check :: premAL_let :: premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*}
 
   rulegroup iter
@@ -2260,11 +2191,11 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
    paths
 
     rulepath iter
-    -- Partialbind_exp: AC IC_prem |- iter '<-' vari*{vari <- vari*} '->' [] :: IC typedExp : AC' premIterAL'*{premIterAL' <- premIterAL'*} typedExp' premAL*{premAL <- premAL*}
-    -- if premIterAL'*{premIterAL' <- premIterAL'*} matches _ :: _
-    -- let premIterAL :: IC' = premIterAL'*{premIterAL' <- premIterAL'*}
-    -- let iter' '<-' vari'*{vari' <- vari'*} '->' _vari*{_vari <- _vari*} = premIterAL
+    -- Partialbind_exp: AC IC_prem |- iter vari*{vari <- vari*} :: IC typedExp : AC' premIterIL*{premIterIL <- premIterIL*} typedExp' premAL*{premAL <- premAL*}
+    -- if premIterIL*{premIterIL <- premIterIL*} matches _ :: _
+    -- let iter' vari_iter*{vari_iter <- vari_iter*} :: IC' = premIterIL*{premIterIL <- premIterIL*}
     -- if (iter' = iter)
+    -- let vari'*{vari' <- vari'*} = $varis_in(vari_iter*{vari_iter <- vari_iter*}, $free_ids_exp(typedExp'))
     -- output: % % |- % % : AC' IC' ITER typedExp' iter vari'*{vari' <- vari'*} '#' typ premAL*{premAL <- premAL*}
 
 relation Partialbind_exps: algoCtx iterCtx |- iterCtx typedExp* : algoCtx iterCtx typedExp* premAL*
@@ -2336,10 +2267,10 @@ relation Partialbind_check: iterCtx vari |- typedExp : premAL
    paths
 
     rulepath
-    -- Iter_clear: |- IC : IC_clear
-    -- Iter_source: IC_clear |- [vari_d] : IC_check
-    -- Iter_prem: IC_check |- IF typedExp_check as premAL : premAL
-    -- output: % % |- % : premAL
+    -- let id_d _typ _iter*{_iter <- _iter*} = vari_d
+    -- let premIterAL*{premIterAL <- premIterAL*} = $annotate($add_iterated(IC, vari_d), [id_d], [])
+    -- let premAL_check = $iterate_prem(premIterAL*{premIterAL <- premIterAL*}, IF typedExp_check as premAL)
+    -- output: % % |- % : premAL_check
 
 relation Partialbind_destructure: iterCtx vari |- typedExp '=' typedExp : premAL
 
@@ -2353,13 +2284,12 @@ relation Partialbind_destructure: iterCtx vari |- typedExp '=' typedExp : premAL
    paths
 
     rulepath
-    -- Iter_clear: |- IC : IC_clear
+    -- let id_d _typ _iter*{_iter <- _iter*} = vari_d
     -- let vari_l*{vari_l <- vari_l*} = $free_vars_exp(typedExp_l)
     -- let vari_bind*{vari_bind <- vari_bind*} = $shallowest_vars(vari_l*{vari_l <- vari_l*})
-    -- Iter_bind: IC_clear |- vari_bind*{vari_bind <- vari_bind*} : IC_bind
-    -- Iter_source: IC_bind |- [vari_d] : IC_let
-    -- Iter_prem: IC_let |- LET typedExp_l '=' typedExp_r as premAL : premAL
-    -- output: % % |- % '=' % : premAL
+    -- let premIterAL*{premIterAL <- premIterAL*} = $annotate($add_iterated(IC, vari_d), [id_d], vari_bind*{vari_bind <- vari_bind*})
+    -- let premAL_let = $iterate_prem(premIterAL*{premIterAL <- premIterAL*}, LET typedExp_l '=' typedExp_r as premAL)
+    -- output: % % |- % '=' % : premAL_let
 
 relation Bind_exps: algoCtx iterCtx |- typedExp* : algoCtx typedExp* premAL*
 
@@ -2374,13 +2304,15 @@ relation Bind_exps: algoCtx iterCtx |- typedExp* : algoCtx typedExp* premAL*
 
     rulepath
     -- Collect_exps: AC |- typedExp*{typedExp <- typedExp*} : vari_bind*{vari_bind <- vari_bind*}
-    -- Multibind_renamer: |- vari_bind*{vari_bind <- vari_bind*} : R
+    -- Multibind_renamer: |- vari_bind*{vari_bind <- vari_bind*} : renaming*{renaming <- renaming*}
+    -- let R = $renamer_of(renaming*{renaming <- renaming*})
     -- Multibind_exps: AC R |- typedExp*{typedExp <- typedExp*} : AC' R' typedExp'*{typedExp' <- typedExp'*}
     -- Partialbind_exps: AC' IC |- [] typedExp'*{typedExp' <- typedExp'*} : AC'' _IC typedExp''*{typedExp'' <- typedExp''*} premAL_part*{premAL_part <- premAL_part*}
-    -- Multibind_eqs: IC |- R' : premAL_eq*{premAL_eq <- premAL_eq*}
-    -- let id_bind*{id_bind <- id_bind*} = $ids_of_varis(vari_bind*{vari_bind <- vari_bind*})
-    -- let id_rename*{id_rename <- id_rename*} = $all_occurrence_ids(R')
-    -- let AC''' = $add_bound(AC'', id_bind*{id_bind <- id_bind*} ++ id_rename*{id_rename <- id_rename*})
+    -- let `{ _id ':' renaming'*{_id <- _id*, renaming' <- renaming'*} `} = R'
+    -- Multibind_eqs: IC |- renaming'*{renaming' <- renaming'*} : premAL_eq*{premAL_eq <- premAL_eq*}
+    -- let vari_rename*{vari_rename <- vari_rename*} = $concat_<vari>($occurrence_varis(renaming')*{renaming' <- renaming'*})
+    -- let vari_bound*{vari_bound <- vari_bound*} = $lift_vari(IC, vari_bind)*{vari_bind <- vari_bind*} ++ $lift_vari(IC, vari_rename)*{vari_rename <- vari_rename*}
+    -- let AC''' = $add_bound(AC'', vari_bound*{vari_bound <- vari_bound*})
     -- output: % % |- % : AC''' typedExp''*{typedExp'' <- typedExp''*} premAL_part*{premAL_part <- premAL_part*} ++ premAL_eq*{premAL_eq <- premAL_eq*}
 
 relation Bind_args: algoCtx |- arg* : algoCtx arg* premAL*
@@ -2396,13 +2328,14 @@ relation Bind_args: algoCtx |- arg* : algoCtx arg* premAL*
 
     rulepath
     -- Collect_args: AC |- arg*{arg <- arg*} : vari_bind*{vari_bind <- vari_bind*}
-    -- Multibind_renamer: |- vari_bind*{vari_bind <- vari_bind*} : R
+    -- Multibind_renamer: |- vari_bind*{vari_bind <- vari_bind*} : renaming*{renaming <- renaming*}
+    -- let R = $renamer_of(renaming*{renaming <- renaming*})
     -- Multibind_args: AC R |- arg*{arg <- arg*} : AC' R' arg'*{arg' <- arg'*}
     -- Partialbind_args: AC' |- arg'*{arg' <- arg'*} : AC'' arg''*{arg'' <- arg''*} premAL_part*{premAL_part <- premAL_part*}
-    -- Multibind_eqs: [] |- R' : premAL_eq*{premAL_eq <- premAL_eq*}
-    -- let id_bind*{id_bind <- id_bind*} = $ids_of_varis(vari_bind*{vari_bind <- vari_bind*})
-    -- let id_rename*{id_rename <- id_rename*} = $all_occurrence_ids(R')
-    -- let AC''' = $add_bound(AC'', id_bind*{id_bind <- id_bind*} ++ id_rename*{id_rename <- id_rename*})
+    -- let `{ _id ':' renaming'*{_id <- _id*, renaming' <- renaming'*} `} = R'
+    -- Multibind_eqs: [] |- renaming'*{renaming' <- renaming'*} : premAL_eq*{premAL_eq <- premAL_eq*}
+    -- let vari_rename*{vari_rename <- vari_rename*} = $concat_<vari>($occurrence_varis(renaming')*{renaming' <- renaming'*})
+    -- let AC''' = $add_bound(AC'', vari_bind*{vari_bind <- vari_bind*} ++ vari_rename*{vari_rename <- vari_rename*})
     -- output: % |- % : AC''' arg''*{arg'' <- arg''*} premAL_part*{premAL_part <- premAL_part*} ++ premAL_eq*{premAL_eq <- premAL_eq*}
 
 relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
@@ -2411,48 +2344,51 @@ relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
 
    match
 
-    (signature) AC IC |- REL id ':' typedExp*{typedExp <- typedExp*} `( inputHint `) as premIL : % %
+    (signature) AC IC |- relPremIL as premIL : % %
     AC IC |- premIL : % %
     -- if premIL <: relPremIL
-    -- let REL id ':' typedExp*{typedExp <- typedExp*} `( inputHint `) = premIL as relPremIL
+    -- let relPremIL = premIL as relPremIL
 
    paths
 
     rulepath rel
+    -- let REL id ':' typedExp*{typedExp <- typedExp*} `( inputHint `) = relPremIL
     -- let (typedExp_in*{typedExp_in <- typedExp_in*}, typedExp_out*{typedExp_out <- typedExp_out*}) = $split_inputs<typedExp>(inputHint, typedExp*{typedExp <- typedExp*})
-    -- let id_in*{id_in <- id_in*} = $free_ids_exps(typedExp_in*{typedExp_in <- typedExp_in*})
-    -- if $is_bound(AC, id_in*{id_in <- id_in*})
-    -- Bind_exps: AC IC |- typedExp_out*{typedExp_out <- typedExp_out*} : AC' typedExp_out'*{typedExp_out' <- typedExp_out'*} premAL_bind*{premAL_bind <- premAL_bind*}
     -- let vari_in*{vari_in <- vari_in*} = $free_vars_exps(typedExp_in*{typedExp_in <- typedExp_in*})
-    -- let vari_read*{vari_read <- vari_read*} = $shallowest_vars(vari_in*{vari_in <- vari_in*})
+    -- if $is_bound(AC, IC, vari_in*{vari_in <- vari_in*})
+    -- Bind_exps: AC IC |- typedExp_out*{typedExp_out <- typedExp_out*} : AC' typedExp_out'*{typedExp_out' <- typedExp_out'*} premAL_bind*{premAL_bind <- premAL_bind*}
+    -- let id_read*{id_read <- id_read*} = $ids_of_varis(vari_in*{vari_in <- vari_in*})
     -- let vari_out*{vari_out <- vari_out*} = $free_vars_exps(typedExp_out'*{typedExp_out' <- typedExp_out'*})
     -- let vari_bind*{vari_bind <- vari_bind*} = $shallowest_vars(vari_out*{vari_out <- vari_out*})
-    -- Iter_restrict: IC |- vari_read*{vari_read <- vari_read*} : IC_read
-    -- Iter_bind: IC_read |- vari_bind*{vari_bind <- vari_bind*} : IC_rel
-    -- if Iter_sourced: |- IC_rel holds
-    -- Iter_prem: IC_rel |- REL id ':' typedExp_in*{typedExp_in <- typedExp_in*} '->' typedExp_out'*{typedExp_out' <- typedExp_out'*} as premAL : premAL_rel
-    -- output: % % |- % : AC' premAL_rel :: premAL_bind*{premAL_bind <- premAL_bind*}
+    -- let premIterAL*{premIterAL <- premIterAL*} = $annotate(IC, id_read*{id_read <- id_read*}, vari_bind*{vari_bind <- vari_bind*})
+    -- if Iter_sourced: |- premIterAL*{premIterAL <- premIterAL*} holds
+    -- let relPremAL = REL id ':' typedExp_in*{typedExp_in <- typedExp_in*} '->' typedExp_out'*{typedExp_out' <- typedExp_out'*}
+    -- let premAL_rel = $iterate_prem(premIterAL*{premIterAL <- premIterAL*}, relPremAL as premAL)
+    -- let premAL*{premAL <- premAL*} = premAL_rel :: premAL_bind*{premAL_bind <- premAL_bind*}
+    -- output: % % |- % : AC' premAL*{premAL <- premAL*}
 
   rulegroup cond
 
    match
 
-    (signature) AC IC |- IF typedExp' as premIL : % %
+    (signature) AC IC |- ifPrem as premIL : % %
     AC IC |- premIL : % %
     -- if premIL <: ifPrem
-    -- let IF typedExp' = premIL as ifPrem
+    -- let ifPrem = premIL as ifPrem
 
    paths
 
     rulepath test
-    -- let typedExp = typedExp'
-    -- let id*{id <- id*} = $free_ids_exp(typedExp)
-    -- if $is_bound(AC, id*{id <- id*})
-    -- Iter_prem: IC |- IF typedExp as premAL : premAL_if
+    -- let IF typedExp = ifPrem
+    -- let vari*{vari <- vari*} = $free_vars_exp(typedExp)
+    -- if $is_bound(AC, IC, vari*{vari <- vari*})
+    -- let premIterAL*{premIterAL <- premIterAL*} = $annotate(IC, $ids_of_varis(vari*{vari <- vari*}), [])
+    -- let premAL_if = $iterate_prem(premIterAL*{premIterAL <- premIterAL*}, ifPrem as premAL)
     -- output: % % |- % : AC [premAL_if]
 
     rulepath let-left
-    -- let exp '#' _typ = typedExp'
+    -- let IF typedExp = ifPrem
+    -- let exp '#' _typ = typedExp
     -- if exp matches CMP % % %
     -- let CMP cmpop typedExp_l typedExp_r = exp
     -- if cmpop <: polyCmpop
@@ -2460,20 +2396,21 @@ relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
     -- if polyCmpop matches EQ
     -- Collect_exp: AC |- typedExp_l : vari_l*{vari_l <- vari_l*}
     -- if (vari_l*{vari_l <- vari_l*} =/= [])
-    -- Collect_exp: AC |- typedExp_r : vari*{vari <- vari*}
-    -- if vari*{vari <- vari*} matches []
+    -- Collect_exp: AC |- typedExp_r : vari'*{vari' <- vari'*}
+    -- if vari'*{vari' <- vari'*} matches []
     -- Algo_let: AC IC |- typedExp_l '=' typedExp_r : AC' premAL*{premAL <- premAL*}
     -- output: % % |- % : AC' premAL*{premAL <- premAL*}
 
     rulepath let-right
-    -- let exp '#' _typ = typedExp'
+    -- let IF typedExp = ifPrem
+    -- let exp '#' _typ = typedExp
     -- if exp matches CMP % % %
     -- let CMP cmpop typedExp_l typedExp_r = exp
     -- if cmpop <: polyCmpop
     -- let polyCmpop = cmpop as polyCmpop
     -- if polyCmpop matches EQ
-    -- Collect_exp: AC |- typedExp_l : vari*{vari <- vari*}
-    -- if vari*{vari <- vari*} matches []
+    -- Collect_exp: AC |- typedExp_l : vari'*{vari' <- vari'*}
+    -- if vari'*{vari' <- vari'*} matches []
     -- Collect_exp: AC |- typedExp_r : vari_r*{vari_r <- vari_r*}
     -- if (vari_r*{vari_r <- vari_r*} =/= [])
     -- Algo_let: AC IC |- typedExp_r '=' typedExp_l : AC' premAL*{premAL <- premAL*}
@@ -2483,66 +2420,73 @@ relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
 
    match
 
-    (signature) AC IC |- IFHOLD id ':' typedExp*{typedExp <- typedExp*} as premIL : % %
+    (signature) AC IC |- ifHoldPrem as premIL : % %
     AC IC |- premIL : % %
     -- if premIL <: ifHoldPrem
-    -- let IFHOLD id ':' typedExp*{typedExp <- typedExp*} = premIL as ifHoldPrem
+    -- let ifHoldPrem = premIL as ifHoldPrem
 
    paths
 
     rulepath ifhold
-    -- let id_read*{id_read <- id_read*} = $free_ids_exps(typedExp*{typedExp <- typedExp*})
-    -- if $is_bound(AC, id_read*{id_read <- id_read*})
-    -- Iter_prem: IC |- IFHOLD id ':' typedExp*{typedExp <- typedExp*} as premAL : premAL_hold
+    -- let IFHOLD id ':' typedExp*{typedExp <- typedExp*} = ifHoldPrem
+    -- let vari_read*{vari_read <- vari_read*} = $free_vars_exps(typedExp*{typedExp <- typedExp*})
+    -- if $is_bound(AC, IC, vari_read*{vari_read <- vari_read*})
+    -- let premIterAL*{premIterAL <- premIterAL*} = $annotate(IC, $ids_of_varis(vari_read*{vari_read <- vari_read*}), [])
+    -- let premAL_hold = $iterate_prem(premIterAL*{premIterAL <- premIterAL*}, ifHoldPrem as premAL)
     -- output: % % |- % : AC [premAL_hold]
 
   rulegroup ifnothold
 
    match
 
-    (signature) AC IC |- IFNOTHOLD id ':' typedExp*{typedExp <- typedExp*} as premIL : % %
+    (signature) AC IC |- ifNotHoldPrem as premIL : % %
     AC IC |- premIL : % %
     -- if premIL <: ifNotHoldPrem
-    -- let IFNOTHOLD id ':' typedExp*{typedExp <- typedExp*} = premIL as ifNotHoldPrem
+    -- let ifNotHoldPrem = premIL as ifNotHoldPrem
 
    paths
 
     rulepath ifnothold
-    -- let id_read*{id_read <- id_read*} = $free_ids_exps(typedExp*{typedExp <- typedExp*})
-    -- if $is_bound(AC, id_read*{id_read <- id_read*})
-    -- Iter_prem: IC |- IFNOTHOLD id ':' typedExp*{typedExp <- typedExp*} as premAL : premAL_hold
+    -- let IFNOTHOLD id ':' typedExp*{typedExp <- typedExp*} = ifNotHoldPrem
+    -- let vari_read*{vari_read <- vari_read*} = $free_vars_exps(typedExp*{typedExp <- typedExp*})
+    -- if $is_bound(AC, IC, vari_read*{vari_read <- vari_read*})
+    -- let premIterAL*{premIterAL <- premIterAL*} = $annotate(IC, $ids_of_varis(vari_read*{vari_read <- vari_read*}), [])
+    -- let premAL_hold = $iterate_prem(premIterAL*{premIterAL <- premIterAL*}, ifNotHoldPrem as premAL)
     -- output: % % |- % : AC [premAL_hold]
 
   rulegroup iter
 
    match
 
-    (signature) AC IC |- ITER premIL iter vari*{vari <- vari*} as premIL : % %
+    (signature) AC IC |- ITER premIL premIterIL as premIL : % %
     AC IC |- premIL' : % %
     -- if premIL' <: iterPremIL
-    -- let ITER premIL iter vari*{vari <- vari*} = premIL' as iterPremIL
+    -- let ITER premIL premIterIL = premIL' as iterPremIL
 
    paths
 
     rulepath iter
-    -- Algo_prem: AC iter '<-' vari*{vari <- vari*} '->' [] :: IC |- premIL : AC' premAL*{premAL <- premAL*}
+    -- let IC' = premIterIL :: IC
+    -- Algo_prem: AC IC' |- premIL : AC' premAL*{premAL <- premAL*}
     -- output: % % |- % : AC' premAL*{premAL <- premAL*}
 
   rulegroup dbg
 
    match
 
-    (signature) AC IC |- DEBUG typedExp as premIL : % %
+    (signature) AC IC |- debugPrem as premIL : % %
     AC IC |- premIL : % %
     -- if premIL <: debugPrem
-    -- let DEBUG typedExp = premIL as debugPrem
+    -- let debugPrem = premIL as debugPrem
 
    paths
 
     rulepath dbg
-    -- let id*{id <- id*} = $free_ids_exp(typedExp)
-    -- if $is_bound(AC, id*{id <- id*})
-    -- Iter_prem: IC |- DEBUG typedExp as premAL : premAL_debug
+    -- let DEBUG typedExp = debugPrem
+    -- let vari*{vari <- vari*} = $free_vars_exp(typedExp)
+    -- if $is_bound(AC, IC, vari*{vari <- vari*})
+    -- let premIterAL*{premIterAL <- premIterAL*} = $annotate(IC, $ids_of_varis(vari*{vari <- vari*}), [])
+    -- let premAL_debug = $iterate_prem(premIterAL*{premIterAL <- premIterAL*}, debugPrem as premAL)
     -- output: % % |- % : AC [premAL_debug]
 
 relation Algo_let: algoCtx iterCtx |- typedExp '=' typedExp : algoCtx premAL*
@@ -2561,13 +2505,12 @@ relation Algo_let: algoCtx iterCtx |- typedExp '=' typedExp : algoCtx premAL*
     -- if typedExp*{typedExp <- typedExp*} matches [ _/1 ]
     -- let [typedExp_l'] = typedExp*{typedExp <- typedExp*}
     -- let vari_r*{vari_r <- vari_r*} = $free_vars_exp(typedExp_r)
-    -- let vari_read*{vari_read <- vari_read*} = $shallowest_vars(vari_r*{vari_r <- vari_r*})
+    -- if $is_bound(AC, IC, vari_r*{vari_r <- vari_r*})
     -- let vari_l*{vari_l <- vari_l*} = $free_vars_exp(typedExp_l')
     -- let vari_bind*{vari_bind <- vari_bind*} = $shallowest_vars(vari_l*{vari_l <- vari_l*})
-    -- Iter_restrict: IC |- vari_read*{vari_read <- vari_read*} : IC_read
-    -- Iter_bind: IC_read |- vari_bind*{vari_bind <- vari_bind*} : IC_let
-    -- if Iter_sourced: |- IC_let holds
-    -- Iter_prem: IC_let |- LET typedExp_l' '=' typedExp_r as premAL : premAL_let
+    -- let premIterAL*{premIterAL <- premIterAL*} = $annotate(IC, $ids_of_varis(vari_r*{vari_r <- vari_r*}), vari_bind*{vari_bind <- vari_bind*})
+    -- if Iter_sourced: |- premIterAL*{premIterAL <- premIterAL*} holds
+    -- let premAL_let = $iterate_prem(premIterAL*{premIterAL <- premIterAL*}, LET typedExp_l' '=' typedExp_r as premAL)
     -- output: % % |- % '=' % : AC' premAL_let :: premAL_bind*{premAL_bind <- premAL_bind*}
 
 relation Algo_prems: algoCtx |- premIL* : algoCtx premAL*
@@ -2589,7 +2532,8 @@ relation Algo_prems: algoCtx |- premIL* : algoCtx premAL*
     -- let premIL'*{premIL' <- premIL'*} = premIL*{premIL <- premIL*}
     -- if premIL'*{premIL' <- premIL'*} matches _ :: _
     -- let premIL_h :: premIL_t*{premIL_t <- premIL_t*} = premIL'*{premIL' <- premIL'*}
-    -- Algo_prem: AC [] |- premIL_h : AC' premAL_h*{premAL_h <- premAL_h*}
+    -- let IC = []
+    -- Algo_prem: AC IC |- premIL_h : AC' premAL_h*{premAL_h <- premAL_h*}
     -- Algo_prems: AC' |- premIL_t*{premIL_t <- premIL_t*} : AC'' premAL_t*{premAL_t <- premAL_t*}
     -- output: % |- % : AC'' premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*}
 
@@ -2750,8 +2694,8 @@ relation Algo_tblRow: algoCtx |- tblRowIL : tblRowAL
     -- Multibind_renamer: |- vari_bind*{vari_bind <- vari_bind*} : renaming*{renaming <- renaming*}
     -- if renaming*{renaming <- renaming*} matches []
     -- Bind_args: AC_row |- arg*{arg <- arg*} : AC_body arg'*{arg' <- arg'*} premAL*{premAL <- premAL*}
-    -- let id_body*{id_body <- id_body*} = $free_ids_exp(typedExp)
-    -- if $is_bound(AC_body, id_body*{id_body <- id_body*})
+    -- let vari_body*{vari_body <- vari_body*} = $free_vars_exp(typedExp)
+    -- if $is_bound(AC_body, [], vari_body*{vari_body <- vari_body*})
     -- output: % |- % : arg'*{arg' <- arg'*} '=' typedExp '-' premAL*{premAL <- premAL*}
 
 relation TblRows_cover: algoCtx typ* |- tblRowIL*
@@ -2821,8 +2765,8 @@ relation Algo_rul: algoCtx inputHint |- rulIL : rulAL
     -- let (typedExp_in*{typedExp_in <- typedExp_in*}, typedExp_out*{typedExp_out <- typedExp_out*}) = $split_inputs<typedExp>(inputHint, typedExp*{typedExp <- typedExp*})
     -- Bind_exps: AC_rul [] |- typedExp_in*{typedExp_in <- typedExp_in*} : AC_in typedExp_in'*{typedExp_in' <- typedExp_in'*} premAL_bind*{premAL_bind <- premAL_bind*}
     -- Algo_prems: AC_in |- premIL*{premIL <- premIL*} : AC_body premAL*{premAL <- premAL*}
-    -- let id_out*{id_out <- id_out*} = $free_ids_exps(typedExp_out*{typedExp_out <- typedExp_out*})
-    -- if $is_bound(AC_body, id_out*{id_out <- id_out*})
+    -- let vari_out*{vari_out <- vari_out*} = $free_vars_exps(typedExp_out*{typedExp_out <- typedExp_out*})
+    -- if $is_bound(AC_body, [], vari_out*{vari_out <- vari_out*})
     -- let rulAL = id ':' typedExp_in'*{typedExp_in' <- typedExp_in'*} '->' typedExp_out*{typedExp_out <- typedExp_out*} '-' premAL_bind*{premAL_bind <- premAL_bind*} ++ premAL*{premAL <- premAL*}
     -- output: % % |- % : rulAL
 
@@ -2877,8 +2821,8 @@ relation Algo_clause: algoCtx |- clauseIL : clauseAL
     -- let AC_clause = $add_used(AC, id_used*{id_used <- id_used*})
     -- Bind_args: AC_clause |- arg*{arg <- arg*} : AC_arg arg'*{arg' <- arg'*} premAL_arg*{premAL_arg <- premAL_arg*}
     -- Algo_prems: AC_arg |- premIL*{premIL <- premIL*} : AC_body premAL*{premAL <- premAL*}
-    -- let id_body*{id_body <- id_body*} = $free_ids_exp(typedExp)
-    -- if $is_bound(AC_body, id_body*{id_body <- id_body*})
+    -- let vari_body*{vari_body <- vari_body*} = $free_vars_exp(typedExp)
+    -- if $is_bound(AC_body, [], vari_body*{vari_body <- vari_body*})
     -- let clauseAL = arg'*{arg' <- arg'*} '=' typedExp '-' premAL_arg*{premAL_arg <- premAL_arg*} ++ premAL*{premAL <- premAL*}
     -- output: % |- % : clauseAL
 
@@ -4355,16 +4299,6 @@ def $ids_of_varis(vari*) : id* =
 
   clause 0 : (id _typ _iter*{_iter <- _iter*}*{_iter* <- _iter**, _typ <- _typ*, id <- id*}) = id*{id <- id*}
 
-def $is_prefix_dim(vari, vari) : bool =
-
-  clause 0 : (_id typ_a iter_a*{iter_a <- iter_a*}, _id' typ_b iter_b*{iter_b <- iter_b*}) = true
-  -- if (typ_a = typ_b)
-  -- if (|iter_a*{iter_a <- iter_a*}| <= |iter_b*{iter_b <- iter_b*}|)
-  -- if ((0 + |iter_a*{iter_a <- iter_a*}|) <= |iter_b*{iter_b <- iter_b*}|)
-  -- if (iter_a*{iter_a <- iter_a*} = iter_b*{iter_b <- iter_b*}[0 : |iter_a*{iter_a <- iter_a*}|])
-
-  clause -1 : (_vari, _vari') = false
-
 def $iter_exp(typedExp, vari, iter*) : typedExp =
 
   clause 0 : (typedExp, _vari, iter*{iter <- iter*}) = typedExp
@@ -4375,7 +4309,7 @@ def $iter_exp(typedExp, vari, iter*) : typedExp =
   -- let iter_h :: iter_t*{iter_t <- iter_t*} = iter*{iter <- iter*}
   -- let _exp '#' typ = typedExp
   -- let typedExp_iter = ITER typedExp iter_h [vari] '#' ITER typ iter_h
-  -- let vari_iter = $iter_vari(vari, iter_h)
+  -- let vari_iter = $iterate_vari(iter_h, vari)
 
 def $exp_of_vari(vari) : typedExp =
 
@@ -4425,13 +4359,14 @@ def $fresh_name(algoCtx, id) : (algoCtx, id) =
   -- let id_fresh = $fresh_id(id_base, AC.USED)
   -- let AC' = $add_used(AC, [id_fresh])
 
-def $fresh_vari(algoCtx, typ) : (algoCtx, vari) =
+def $fresh_vari(algoCtx, iterCtx, typ) : (algoCtx, vari) =
 
-  clause 0 : (AC, typ) = (AC'', id_fresh typ_elem iter*{iter <- iter*})
+  clause 0 : (AC, IC, typ) = (AC'', vari_fresh)
   -- let (typ_elem, iter*{iter <- iter*}) = $typ_dim(typ)
   -- let id_base = $typ_name(typ_elem)
   -- let (AC', id_fresh) = $fresh_name(AC, id_base)
-  -- let AC'' = $add_bound(AC', [id_fresh])
+  -- let vari_fresh = id_fresh typ_elem iter*{iter <- iter*}
+  -- let AC'' = $add_bound(AC', [$lift_vari(IC, vari_fresh)])
 
 def $free_vars_exp(typedExp) : vari* =
 
@@ -4545,7 +4480,7 @@ def $free_vars_exp(typedExp) : vari* =
   -- if exp matches ITER % %
   -- let ITER typedExp iter _vari*{_vari <- _vari*} = exp
   -- let vari*{vari <- vari*} = $free_vars_exp(typedExp)
-  -- (let vari_iter = $iter_vari(vari, iter))*{vari <- vari*, vari_iter -> vari_iter*}
+  -- (let vari_iter = $iterate_vari(iter, vari))*{vari <- vari*, vari_iter -> vari_iter*}
 
 def $free_vars_exps(typedExp*) : vari* =
 
@@ -4696,60 +4631,6 @@ def $free_ids_tblRowIL(tblRowIL) : id* =
 
   clause 0 : (arg*{arg <- arg*} '=' typedExp) = $free_ids_args(arg*{arg <- arg*}) ++ $free_ids_exp(typedExp)
 
-def $is_read_by(vari, vari*) : bool =
-
-  clause 0 : (_vari, vari*{vari <- vari*}) = false
-  -- if vari*{vari <- vari*} matches []
-
-  clause 1 : (vari, vari'*{vari' <- vari'*}) = true
-  -- if vari'*{vari' <- vari'*} matches _ :: _
-  -- let vari_h :: _vari*{_vari <- _vari*} = vari'*{vari' <- vari'*}
-  -- let id _typ _iter*{_iter <- _iter*} = vari
-  -- let id' _typ' _iter'*{_iter' <- _iter'*} = vari_h
-  -- if (id' = id)
-  -- if $is_prefix_dim(vari_h, vari)
-
-  clause 2 : (vari, vari'*{vari' <- vari'*}) = $is_read_by(vari, vari_t*{vari_t <- vari_t*})
-  -- if vari'*{vari' <- vari'*} matches _ :: _
-  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari'*{vari' <- vari'*}
-  -- let id _typ _iter*{_iter <- _iter*} = vari
-  -- let id_h _typ' _iter'*{_iter' <- _iter'*} = vari_h
-  -- if ((id_h =/= id) \/ ~$is_prefix_dim(vari_h, vari))
-
-def $sources_read(vari*, vari*) : vari* =
-
-  clause 0 : (vari*{vari <- vari*}, _vari*{_vari <- _vari*}) = []
-  -- if vari*{vari <- vari*} matches []
-
-  clause 1 : (vari*{vari <- vari*}, vari_read*{vari_read <- vari_read*}) = vari_h :: vari_keep*{vari_keep <- vari_keep*}
-  -- if vari*{vari <- vari*} matches _ :: _
-  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari*{vari <- vari*}
-  -- if $is_read_by(vari_h, vari_read*{vari_read <- vari_read*})
-  -- let vari_keep*{vari_keep <- vari_keep*} = $sources_read(vari_t*{vari_t <- vari_t*}, vari_read*{vari_read <- vari_read*})
-
-  clause 2 : (vari*{vari <- vari*}, vari_read*{vari_read <- vari_read*}) = $sources_read(vari_t*{vari_t <- vari_t*}, vari_read*{vari_read <- vari_read*})
-  -- if vari*{vari <- vari*} matches _ :: _
-  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari*{vari <- vari*}
-  -- if ~$is_read_by(vari_h, vari_read*{vari_read <- vari_read*})
-
-def $sources_except(vari*, id*) : vari* =
-
-  clause 0 : (vari*{vari <- vari*}, _id*{_id <- _id*}) = []
-  -- if vari*{vari <- vari*} matches []
-
-  clause 1 : (vari*{vari <- vari*}, id*{id <- id*}) = vari_h :: vari_keep*{vari_keep <- vari_keep*}
-  -- if vari*{vari <- vari*} matches _ :: _
-  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari*{vari <- vari*}
-  -- let id_h _typ _iter*{_iter <- _iter*} = vari_h
-  -- if ~id_h <- id*{id <- id*}
-  -- let vari_keep*{vari_keep <- vari_keep*} = $sources_except(vari_t*{vari_t <- vari_t*}, id*{id <- id*})
-
-  clause 2 : (vari*{vari <- vari*}, id*{id <- id*}) = $sources_except(vari_t*{vari_t <- vari_t*}, id*{id <- id*})
-  -- if vari*{vari <- vari*} matches _ :: _
-  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari*{vari <- vari*}
-  -- let id_h _typ _iter*{_iter <- _iter*} = vari_h
-  -- if id_h <- id*{id <- id*}
-
 def $varis_with_id(id, vari*) : vari* =
 
   clause 0 : (_id, vari*{vari <- vari*}) = []
@@ -4784,41 +4665,11 @@ def $varis_without_id(id, vari*) : vari* =
   -- let id_h _typ _iter*{_iter <- _iter*} = vari_h
   -- if (id_h =/= id)
 
-def $repeated_ids(renamer) : id* =
+def $renamer_of(renaming*) : renamer =
 
-  clause 0 : (id _typ _iter*{_iter <- _iter*} '->' _id*{_id <- _id*}*{_id* <- _id**, _iter* <- _iter**, _typ <- _typ*, id <- id*}) = id*{id <- id*}
-
-def $occurrence_ids(renamer, id) : id* =
-
-  clause 0 : (renaming*{renaming <- renaming*}, _id) = []
-  -- if renaming*{renaming <- renaming*} matches []
-
-  clause 1 : (renaming*{renaming <- renaming*}, id) = id_name*{id_name <- id_name*}
-  -- if renaming*{renaming <- renaming*} matches _ :: _
-  -- let vari '->' id_name*{id_name <- id_name*} :: R = renaming*{renaming <- renaming*}
-  -- let id' _typ _iter*{_iter <- _iter*} = vari
-  -- if (id' = id)
-
-  clause 2 : (renaming*{renaming <- renaming*}, id) = $occurrence_ids(R, id)
-  -- if renaming*{renaming <- renaming*} matches _ :: _
-  -- let vari '->' _id*{_id <- _id*} :: R = renaming*{renaming <- renaming*}
-  -- let id_rep _typ _iter*{_iter <- _iter*} = vari
-  -- if (id_rep =/= id)
-
-def $add_occurrence_id(renamer, id, id) : renamer =
-
-  clause 0 : (renaming*{renaming <- renaming*}, id, id_next) = vari '->' id_name*{id_name <- id_name*} ++ [id_next] :: R
-  -- if renaming*{renaming <- renaming*} matches _ :: _
-  -- let vari '->' id_name*{id_name <- id_name*} :: R = renaming*{renaming <- renaming*}
-  -- let id' _typ _iter*{_iter <- _iter*} = vari
-  -- if (id' = id)
-
-  clause 1 : (renaming*{renaming <- renaming*}, id, id_next) = vari '->' id_name*{id_name <- id_name*} :: R'
-  -- if renaming*{renaming <- renaming*} matches _ :: _
-  -- let vari '->' id_name*{id_name <- id_name*} :: R = renaming*{renaming <- renaming*}
-  -- let id_rep _typ _iter*{_iter <- _iter*} = vari
-  -- if (id_rep =/= id)
-  -- let R' = $add_occurrence_id(R, id, id_next)
+  clause 0 : (renaming*{renaming <- renaming*}) = `{ id ':' renaming*{id <- id*, renaming <- renaming*} `}
+  -- let id _typ _iter*{_iter <- _iter*} '->' _id*{_id <- _id*}*{_id* <- _id**, _iter* <- _iter**, _typ <- _typ*, id <- id*} = renaming*{renaming <- renaming*}
+  -- if (|id*{id <- id*}| = |renaming*{renaming <- renaming*}|)
 
 def $ids_within(id*, id*) : id* =
 
@@ -4838,12 +4689,25 @@ def $ids_within(id*, id*) : id* =
 def $rename_iter_vari(renamer, vari, id*) : vari* =
 
   clause 0 : (R, id typ iter*{iter <- iter*}, _id*{_id <- _id*}) = [id typ iter*{iter <- iter*}]
-  -- if ([] = $occurrence_ids(R, id))
+  -- if (?() = $find_map<id, renaming>(R, id))
 
   clause 1 : (R, id typ iter*{iter <- iter*}, id_free*{id_free <- id_free*}) = id_occ typ iter*{iter <- iter*}*{id_occ <- id_occ*}
-  -- let id_name*{id_name <- id_name*} = $occurrence_ids(R, id)
-  -- if (id_name*{id_name <- id_name*} =/= [])
+  -- let renaming?{renaming <- renaming?} = $find_map<id, renaming>(R, id)
+  -- if renaming?{renaming <- renaming?} matches (_)
+  -- let ?(_vari '->' id_name*{id_name <- id_name*}) = renaming?{renaming <- renaming?}
   -- let id_occ*{id_occ <- id_occ*} = $ids_within(id_name*{id_name <- id_name*}, id_free*{id_free <- id_free*})
+
+def $occurrence_eq(iterCtx, vari, id) : premAL =
+
+  clause 0 : (IC, id_first typ iter*{iter <- iter*}, id_later) = $iterate_prem(premIterAL*{premIterAL <- premIterAL*}, premAL_cmp)
+  -- let iter_prem _vari*{_vari <- _vari*}*{_vari* <- _vari**, iter_prem <- iter_prem*} = IC
+  -- let IC_dim = iter []*{iter <- iter*} ++ iter_prem []*{iter_prem <- iter_prem*}
+  -- let IC_first = $add_iterated(IC_dim, id_first typ [])
+  -- let IC_eq = $add_iterated(IC_first, id_later typ [])
+  -- let premIterAL*{premIterAL <- premIterAL*} = $annotate(IC_eq, [id_first, id_later], [])
+  -- let typedExp_first = VAR id_first '#' typ
+  -- let typedExp_later = VAR id_later '#' typ
+  -- let premAL_cmp = IF CMP EQ as cmpop typedExp_first typedExp_later '#' BOOL as typ as premAL
 
 def $is_upcast_nullary_exp(typedExp) : bool =
 
@@ -4861,9 +4725,10 @@ def $decomposes(algoCtx, typedExp) : bool =
   clause 0 : (AC, typedExp) = true
   -- if $is_upcast_nullary_exp(typedExp)
 
-  clause 1 : (AC, typedExp) = ~$is_bound(AC, id*{id <- id*})
+  clause 1 : (AC, typedExp) = ~$forall_(id <- id_bound*{id_bound <- id_bound*}*{id <- id*})
   -- if ~$is_upcast_nullary_exp(typedExp)
   -- let id*{id <- id*} = $free_ids_exp(typedExp)
+  -- let id_bound*{id_bound <- id_bound*} = $ids_of_varis(AC.BOUND)
 
 def $check_exp(typedExp, typedExp) : typedExp =
 
@@ -4880,9 +4745,13 @@ def $check_exp(typedExp, typedExp) : typedExp =
 
   clause -1 : (typedExp_d, typedExp) = CMP EQ as cmpop typedExp_d typedExp '#' BOOL as typ
 
-def $all_occurrence_ids(renamer) : id* =
+def $rename_vari(typ, iter*, id) : vari =
 
-  clause 0 : (_vari '->' id_name*{id_name <- id_name*}*{_vari <- _vari*, id_name* <- id_name**}) = $concat_<id>(id_name*{id_name <- id_name*}*{id_name* <- id_name**})
+  clause 0 : (typ, iter*{iter <- iter*}, id) = id typ iter*{iter <- iter*}
+
+def $occurrence_varis(renaming) : vari* =
+
+  clause 0 : (_id typ iter*{iter <- iter*} '->' id_name*{id_name <- id_name*}) = $rename_vari(typ, iter*{iter <- iter*}, id_name)*{id_name <- id_name*}
 
 def $split_inputs<X>(inputHint, X*) : (X*, X*) =
 
@@ -5048,12 +4917,12 @@ def $agree_exp(iter, vari) : typedExp =
 
   clause 0 : (iter, vari) = $exp_len(typedExp_iter)
   -- if iter matches STAR
-  -- let vari_iter = $iter_vari(vari, STAR)
+  -- let vari_iter = $iterate_vari(STAR, vari)
   -- let typedExp_iter = $exp_of_vari(vari_iter)
 
   clause 1 : (iter, vari) = CMP EQ as cmpop typedExp_iter OPT ?() '#' typ_iter '#' BOOL as typ
   -- if iter matches QUEST
-  -- let vari_iter = $iter_vari(vari, QUEST)
+  -- let vari_iter = $iterate_vari(QUEST, vari)
   -- let typedExp_iter = $exp_of_vari(vari_iter)
   -- let _exp '#' typ_iter = typedExp_iter
 
@@ -5314,7 +5183,7 @@ def $sub_opt(ctx, vari*) : subOptRes =
 
   clause 1 : (C, vari*{vari <- vari*}) = OK ?(C_sub) as subOptRes
   -- if (vari*{vari <- vari*} =/= [])
-  -- (let vari_iter = $iter_vari(vari, QUEST))*{vari <- vari*, vari_iter -> vari_iter*}
+  -- (let vari_iter = $iterate_vari(QUEST, vari))*{vari <- vari*, vari_iter -> vari_iter*}
   -- (let val'''?{val''' <- val'''?} = $find_vari(C, vari_iter))*{vari_iter <- vari_iter*, val'''? -> val'''?*}
   -- (if val'''?{val''' <- val'''?} matches (_))*{val'''? <- val'''?*}
   -- (let ?(val'') = val'''?{val''' <- val'''?})*{val'''? <- val'''?*, val'' -> val''*}
@@ -5326,7 +5195,7 @@ def $sub_opt(ctx, vari*) : subOptRes =
 
   clause 2 : (C, vari*{vari <- vari*}) = OK ?() as subOptRes
   -- if (vari*{vari <- vari*} =/= [])
-  -- (let vari_iter = $iter_vari(vari, QUEST))*{vari <- vari*, vari_iter -> vari_iter*}
+  -- (let vari_iter = $iterate_vari(QUEST, vari))*{vari <- vari*, vari_iter -> vari_iter*}
   -- (if (?(OPT ?()) = $find_vari(C, vari_iter)))*{vari_iter <- vari_iter*}
 
   clause -1 : (C, vari*{vari <- vari*}) = ERROR as subOptRes
@@ -5338,7 +5207,7 @@ syntax subListRes =
 def $sub_list(ctx, vari*) : subListRes =
 
   clause 0 : (C, vari*{vari <- vari*}) = OK C'*{C' <- C'*} as subListRes
-  -- (let vari_iter = $iter_vari(vari, STAR))*{vari <- vari*, vari_iter -> vari_iter*}
+  -- (let vari_iter = $iterate_vari(STAR, vari))*{vari <- vari*, vari_iter -> vari_iter*}
   -- (let val''?{val'' <- val''?} = $find_vari(C, vari_iter))*{vari_iter <- vari_iter*, val''? -> val''?*}
   -- (if val''?{val'' <- val''?} matches (_))*{val''? <- val''?*}
   -- (let ?(val') = val''?{val'' <- val''?})*{val''? <- val''?*, val' -> val'*}
@@ -7304,7 +7173,7 @@ relation Eval_prem: ctx |- premAL : premRes
     -- let OK C_sub?{C_sub <- C_sub?} = subOptRes as ok<ctx?>
     -- Eval_prem_maybe: C_sub?{C_sub <- C_sub?} |- premAL : premOptRes
     -- if (premOptRes = OK ?() as premOptRes)
-    -- (let vari_bind_iter = $iter_vari(vari_bind, QUEST))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
+    -- (let vari_bind_iter = $iterate_vari(QUEST, vari_bind))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
     -- let val_bind*{val_bind <- val_bind*} = $repeat_<val>(OPT ?(), |vari_bind*{vari_bind <- vari_bind*}|)
     -- let C_res = $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, val_bind*{val_bind <- val_bind*})
     -- output: % |- % : OK C_res as premRes
@@ -7323,7 +7192,7 @@ relation Eval_prem: ctx |- premAL : premRes
     -- (let val?{val <- val?} = $find_vari(C_sub_res, vari_bind))*{vari_bind <- vari_bind*, val? -> val?*}
     -- (if val?{val <- val?} matches (_))*{val? <- val?*}
     -- (let ?(val_bind) = val?{val <- val?})*{val? <- val?*, val_bind -> val_bind*}
-    -- (let vari_bind_iter = $iter_vari(vari_bind, QUEST))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
+    -- (let vari_bind_iter = $iterate_vari(QUEST, vari_bind))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
     -- let C_res = $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, OPT ?(val_bind)*{val_bind <- val_bind*})
     -- output: % |- % : OK C_res as premRes
 
@@ -7342,7 +7211,7 @@ relation Eval_prem: ctx |- premAL : premRes
     -- let iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} = premIterAL
     -- if iter matches STAR
     -- if (OK [] as subListRes = $sub_list(C, vari_bound*{vari_bound <- vari_bound*}))
-    -- (let vari_bind_iter = $iter_vari(vari_bind, STAR))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
+    -- (let vari_bind_iter = $iterate_vari(STAR, vari_bind))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
     -- let val_bind*{val_bind <- val_bind*} = $repeat_<val>(LIST [], |vari_bind*{vari_bind <- vari_bind*}|)
     -- let C_res = $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, val_bind*{val_bind <- val_bind*})
     -- output: % |- % : OK C_res as premRes
@@ -7374,7 +7243,7 @@ relation Eval_prem: ctx |- premAL : premRes
     -- (let ?(val_sub_bind*{val_sub_bind <- val_sub_bind*}) = val*{val <- val*}?{val* <- val*?})*{val*? <- val*?*, val_sub_bind* -> val_sub_bind**}
     -- let val_bind*{val_bind <- val_bind*}*{val_bind* <- val_bind**} = $transpose_<val>(val_sub_bind*{val_sub_bind <- val_sub_bind*}*{val_sub_bind* <- val_sub_bind**})
     -- (let val_res_bind = LIST val_bind*{val_bind <- val_bind*})*{val_bind* <- val_bind**, val_res_bind -> val_res_bind*}
-    -- (let vari_bind_iter = $iter_vari(vari_bind, STAR))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
+    -- (let vari_bind_iter = $iterate_vari(STAR, vari_bind))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
     -- let C_res = $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, val_res_bind*{val_res_bind <- val_res_bind*})
     -- output: % |- % : OK C_res as premRes
 
@@ -8667,7 +8536,7 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
     -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
     -- let iter vari*{vari <- vari*} = expIter
     -- if iter matches QUEST
-    -- (let vari_iter = $iter_vari(vari, QUEST))*{vari <- vari*, vari_iter -> vari_iter*}
+    -- (let vari_iter = $iterate_vari(QUEST, vari))*{vari <- vari*, vari_iter -> vari_iter*}
     -- let val_bind*{val_bind <- val_bind*} = $repeat_<val>(OPT ?(), |vari_iter*{vari_iter <- vari_iter*}|)
     -- let C' = $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*})
     -- output: % |- % := % : OK C' as assignRes
@@ -8684,7 +8553,7 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
     -- Assign_exp: C |- typedExp := val : assignRes
     -- if assignRes <: ok<ctx>
     -- let OK C' = assignRes as ok<ctx>
-    -- (let vari_iter = $iter_vari(vari, QUEST))*{vari <- vari*, vari_iter -> vari_iter*}
+    -- (let vari_iter = $iterate_vari(QUEST, vari))*{vari <- vari*, vari_iter -> vari_iter*}
     -- (let val''''?{val'''' <- val''''?} = $find_vari(C', vari))*{vari <- vari*, val''''? -> val''''?*}
     -- (if val''''?{val'''' <- val''''?} matches (_))*{val''''? <- val''''?*}
     -- (let ?(val_sub) = val''''?{val'''' <- val''''?})*{val''''? <- val''''?*, val_sub -> val_sub*}
@@ -8702,7 +8571,7 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
     -- (Assign_exp: C_local |- typedExp := val : assignRes)*{val <- val*, assignRes -> assignRes*}
     -- (if assignRes <: ok<ctx>)*{assignRes <- assignRes*}
     -- (let OK C_sub = assignRes as ok<ctx>)*{assignRes <- assignRes*, C_sub -> C_sub*}
-    -- (let vari_iter = $iter_vari(vari, STAR))*{vari <- vari*, vari_iter -> vari_iter*}
+    -- (let vari_iter = $iterate_vari(STAR, vari))*{vari <- vari*, vari_iter -> vari_iter*}
     -- (let val'''*{val''' <- val'''*}?{val'''* <- val'''*?} = $finds_vari(C_sub*{C_sub <- C_sub*}, vari))*{vari <- vari*, val'''*? -> val'''*?*}
     -- (if val'''*{val''' <- val'''*}?{val'''* <- val'''*?} matches (_))*{val'''*? <- val'''*?*}
     -- (let ?(val_sub*{val_sub <- val_sub*}) = val'''*{val''' <- val'''*}?{val'''* <- val'''*?})*{val'''*? <- val'''*?*, val_sub* -> val_sub**}
