@@ -105,16 +105,17 @@ exit code.
 ## Execution corpus
 
 ```sh
+make test-metacirc-micro
 make test-metacirc
 ```
 
-Runs the spec-language sources under `testdata/spec/pos/run` and
-`testdata/spec/neg/run` through the AL tower, each expected to succeed or
-fail as its suite in `suites/metacirc.json` registers,
-then the `test-run-sl` corpus through the AL/P4 tower, with determinism checks.
-Requires the p4c submodule.
-The driver accepts `--suite <NAME>` to run one registered suite,
-for example `--suite neg-run` for the failing AL scripts alone.
+`test-metacirc-micro` runs the spec-language sources under
+`testdata/spec/pos/run` and `testdata/spec/neg/run` through the AL tower,
+each expected to succeed or fail as its suite in `suites/metacirc.json`
+registers. `test-metacirc` runs the `test-run-sl` corpus through the AL/P4
+tower and requires the p4c submodule. Both check determinism.
+The driver selects suites with `--input al` or `--input p4`,
+or one registered suite with `--suite <NAME>`, for example `--suite neg-run`.
 
 ## OCaml reference
 

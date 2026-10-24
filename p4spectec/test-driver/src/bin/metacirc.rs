@@ -1,11 +1,21 @@
 //! Execution entry point for the AL metacircular specification
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
+use p4spectec::metacirc::{TowerConfig, config::Lang};
 use p4spectec_test::{
     Error, ExecutionOptions, Result, metacirc,
     suite::{self, Index},
 };
 use std::{path::PathBuf, process::ExitCode};
+
+/// Selects suites by the input language of their tower's top level.
+#[derive(Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum Input {
+    /// AL scripts
+    Al,
+    /// P4 programs
+    P4,
+}
 
 /// Compares P4 corpus and AL script outcomes through metacircular towers.
 #[derive(Parser)]
@@ -16,6 +26,9 @@ struct Cli {
     /// Run only the registered suite with this name.
     #[arg(long, value_name = "NAME")]
     suite: Option<String>,
+    /// Run only the suites whose tower takes this input.
+    #[arg(long, value_enum)]
+    input: Option<Input>,
     #[command(flatten)]
     options: ExecutionOptions,
 }
@@ -42,6 +55,25 @@ fn execute(cli: Cli) -> Result<()> {
         if config.suites.is_empty() {
             return Err(Error::Invalid(format!("unknown metacirc suite {name}")));
         }
+    }
+    // Restrict the registered suites to the selected input language
+    if let Some(input) = cli.input {
+        let mut suites = Vec::new();
+        for suite in config.suites {
+            let config_tower = TowerConfig::from_file(&suite.tower)
+                .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
+            let input_suite = match config_tower.top_lang() {
+                Lang::Al => Input::Al,
+                Lang::P4 => Input::P4,
+            };
+            if input_suite == input {
+                suites.push(suite);
+            }
+        }
+        if suites.is_empty() {
+            return Err(Error::Invalid("no selected metacirc suite takes this input".into()));
+        }
+        config.suites = suites;
     }
     metacirc::run(&config, cli.options)
 }
