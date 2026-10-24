@@ -11,11 +11,16 @@ def parse_name(stem):
     return {"repo": repo, "upstream": upstream, "name": stem}
 
 
+# Mismatch layers; other excludes/ trees (e.g. micro, metacirc-*) are not on the board
+LAYERS = ("static", "dynamic")
+
+
 def walk_excludes(root):
     rows = []
     for f in sorted(Path(root).rglob("*.exclude")):
         rel = f.relative_to(root).parts
         layer = rel[0]
+        if layer not in LAYERS: continue
         category = rel[1] if len(rel) > 2 else None
         status = rel[2] if len(rel) > 3 else None
         pos = neg = 0
