@@ -228,11 +228,7 @@ fn analyze_exps_as_bind(
 ///
 /// After `-- (if y = x + 1)*` binds `y` at `nat*`, a later read of `y` is rejected;
 /// a variable bound at `nat` may still be read inside an iteration.
-fn analyze_var_as_bound_dim(
-    iter_ctx: &ICtx,
-    var: &ast::Var,
-    dim_bound: &Dim,
-) -> Result<(), AlgoError> {
+fn analyze_var_as_bound(iter_ctx: &ICtx, var: &ast::Var, dim_bound: &Dim) -> Result<(), AlgoError> {
     // Lift the read through the enclosing iterations, as bindings are
     let dim_read = iter_ctx
         .iters()
@@ -251,7 +247,7 @@ fn analyze_exp_as_bound(ctx: &Context, iter_ctx: &ICtx, exp: &ast::Exp) -> Resul
         let Some(dim_bound) = ctx.venv.get(&var.id) else {
             return Err(error::binding::expression_variable_unbound(&var.id));
         };
-        analyze_var_as_bound_dim(iter_ctx, &var, dim_bound)?;
+        analyze_var_as_bound(iter_ctx, &var, dim_bound)?;
     }
     Ok(())
 }
@@ -272,7 +268,7 @@ fn analyze_relation_input_as_bound(
                 idx_input,
             ));
         };
-        analyze_var_as_bound_dim(iter_ctx, &var, dim_bound)?;
+        analyze_var_as_bound(iter_ctx, &var, dim_bound)?;
     }
     Ok(())
 }
