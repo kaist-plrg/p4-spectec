@@ -11,7 +11,7 @@
 use std::path::PathBuf;
 
 use crate::{
-    interface::builtin::call::Builtins,
+    interface::{Lang, builtin::call::Builtins},
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
@@ -25,24 +25,15 @@ pub mod al;
 pub mod il;
 pub mod shared;
 
-/// The language of the scripts a meta specification interprets.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ScriptLang {
-    /// AL, converted by the native `algo` pass.
-    Al,
-    /// Elaborated IL, converted by the interpreting specification.
-    Il,
-}
-
 /// Provides script parsing in one language and the standard specification builtins.
 pub struct MetaInterface {
-    lang: ScriptLang,
+    lang: Lang,
     builtins: Builtins,
 }
 
 impl MetaInterface {
     /// Assembles the meta interface for scripts in `lang` with its builtin table.
-    pub(crate) fn new(lang: ScriptLang, builtins: Builtins) -> Self {
+    pub(crate) fn new(lang: Lang, builtins: Builtins) -> Self {
         Self { lang, builtins }
     }
 }
@@ -57,12 +48,14 @@ impl Interface for MetaInterface {
         // Encode the ordered specification inputs in the caller's arena,
         // retaining codec diagnostics
         let encoded = match self.lang {
-            ScriptLang::Al => crate::algo(paths)
+            Lang::Al => crate::algo(paths)
                 .map_err(InterfaceError::from)?
                 .encode(arena),
-            ScriptLang::Il => crate::elab(paths)
+            Lang::Il => crate::elab(paths)
                 .map_err(InterfaceError::from)?
                 .encode(arena),
+            // A meta specification never interprets P4 directly
+            Lang::P4 => return Err(InterfaceError::diagnostic_unconfigured()),
         };
         encoded.map_err(|error| InterfaceError::from(error.into_report()))
     }

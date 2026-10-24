@@ -7,7 +7,7 @@
 //! Specification paths are resolved relative to the JSON file.
 
 use super::{Result, error::config_invalid};
-use crate::lang::{al::ast as al, il::ast as il};
+pub use crate::interface::Lang;
 use serde::Deserialize;
 use std::{
     fs,
@@ -46,34 +46,11 @@ pub struct LevelConfig {
     pub lang: Lang,
 }
 
-/// The language consumed at a specification boundary.
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-pub enum Lang {
-    /// An AL script.
-    Al,
-    /// An IL script, converted to AL by the accepting specification.
-    Il,
-    /// A P4 program, at the top level only.
-    P4,
-}
-
-/// The input program in the form the top level accepts.
-#[derive(Clone, Debug)]
-pub enum ProgramConfig {
-    /// The AL program, converted by the native algo pass.
-    Al { spec_al: al::Spec },
-    /// The elaborated IL program.
-    Il { spec_il: il::Spec },
-    /// A P4 program, parsed by the top level's interface.
-    P4,
-}
-
 impl TowerConfig {
     /// Reads tower roles from a JSON file.
     ///
-    /// Input definitions are supplied when the tower is built,
-    /// so a corpus can read a tower once and run many inputs through it.
+    /// Inputs are supplied only after the tower is built,
+    /// so a corpus can build a tower once and run many inputs through it.
     pub fn from_file(path: &Path) -> Result<Self> {
         /// Ordered levels at the JSON boundary.
         #[derive(Deserialize)]

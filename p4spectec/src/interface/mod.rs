@@ -14,7 +14,7 @@ use crate::runner::Spec;
 
 use self::{
     builtin::{call::Builtins, extract},
-    meta::{MetaInterface, ScriptLang},
+    meta::MetaInterface,
     p4::{P4Interface, unparse::P4Unparser},
 };
 
@@ -22,11 +22,23 @@ pub mod builtin;
 pub mod meta;
 pub mod p4;
 
+/// The language of the input a specification accepts.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Lang {
+    /// An AL script, converted by the native `algo` pass.
+    Al,
+    /// An IL script, converted to AL by the accepting specification.
+    Il,
+    /// A P4 program, which only the P4 specification accepts.
+    P4,
+}
+
 // == Meta
 
 /// Builds the interface of a meta specification accepting `lang` scripts,
 /// with the standard specification builtins.
-pub fn meta(lang: ScriptLang) -> MetaInterface {
+pub fn meta(lang: Lang) -> MetaInterface {
     MetaInterface::new(lang, Builtins::new())
 }
 
