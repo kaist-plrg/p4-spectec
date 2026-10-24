@@ -12,8 +12,8 @@ rule Algo_rul:
   -- Bind_exps:
       AC_rul eps |- typedExp_in* : AC_in typedExp_in'* premAL_bind*
   -- Algo_prems: AC_in |- premIL* : AC_body premAL*
-  -- if id_out* = $free_ids_exps(typedExp_out*)
-  -- if $is_bound(AC_body, id_out*)
+  -- if vari_out* = $free_vars_exps(typedExp_out*)
+  -- if $is_bound(AC_body, eps, vari_out*)
   -- if rulAL
       = id ':' typedExp_in'* '->' typedExp_out*
         '-' (premAL_bind* ++ premAL*)
@@ -41,8 +41,8 @@ rule Algo_clause:
   -- if AC_clause = $add_used(AC, id_used*)
   -- Bind_args: AC_clause |- arg* : AC_arg arg'* premAL_arg*
   -- Algo_prems: AC_arg |- premIL* : AC_body premAL*
-  -- if id_body* = $free_ids_exp(typedExp)
-  -- if $is_bound(AC_body, id_body*)
+  -- if vari_body* = $free_vars_exp(typedExp)
+  -- if $is_bound(AC_body, eps, vari_body*)
   -- if clauseAL
       = arg'* '=' typedExp '-' (premAL_arg* ++ premAL*)
 

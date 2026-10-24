@@ -4,9 +4,13 @@
 ;; patterns decomposed. The decomposition premises come first; the
 ;; equalities of repeated binders follow once every occurrence is bound.
 
-dec $all_occurrence_ids(renamer) : id*
-  hint(prose_in "the identifiers given to the repeated binders of" %0)
-def $all_occurrence_ids((_ '->' id_name*)*) = $concat_<id>(id_name**)
+dec $rename_vari(typ, iter*, id) : vari
+  hint(prose_in "the variable" %2 "of type" %0 "iterated by" %1)
+def $rename_vari(typ, iter*, id) = id typ iter*
+
+dec $occurrence_varis(renaming) : vari*
+  hint(prose_in "the variables given to the occurrences of" %0)
+def $occurrence_varis((_ typ iter*) '->' id_name*) = $rename_vari(typ, iter*, id_name)*
 
 rule Bind_exps:
   AC IC |- typedExp* : AC''' typedExp''* (premAL_part* ++ premAL_eq*)
@@ -16,9 +20,10 @@ rule Bind_exps:
   -- Partialbind_exps:
       AC' IC |- eps typedExp'* : AC'' _ typedExp''* premAL_part*
   -- Multibind_eqs: IC |- R' : premAL_eq*
-  -- if id_bind* = $ids_of_varis(vari_bind*)
-  -- if id_rename* = $all_occurrence_ids(R')
-  -- if AC''' = $add_bound(AC'', id_bind* ++ id_rename*)
+  -- if renaming* = R'
+  -- if vari_rename* = $concat_<vari>($occurrence_varis(renaming)*)
+  -- if vari_bound* = $lift_vari(IC, vari_bind)* ++ $lift_vari(IC, vari_rename)*
+  -- if AC''' = $add_bound(AC'', vari_bound*)
 
 rule Bind_args:
   AC |- arg* : AC''' arg''* (premAL_part* ++ premAL_eq*)
@@ -27,6 +32,6 @@ rule Bind_args:
   -- Multibind_args: AC R |- arg* : AC' R' arg'*
   -- Partialbind_args: AC' |- arg'* : AC'' arg''* premAL_part*
   -- Multibind_eqs: eps |- R' : premAL_eq*
-  -- if id_bind* = $ids_of_varis(vari_bind*)
-  -- if id_rename* = $all_occurrence_ids(R')
-  -- if AC''' = $add_bound(AC'', id_bind* ++ id_rename*)
+  -- if renaming* = R'
+  -- if vari_rename* = $concat_<vari>($occurrence_varis(renaming)*)
+  -- if AC''' = $add_bound(AC'', vari_bind* ++ vari_rename*)

@@ -30,9 +30,10 @@ dec $decomposes(algoCtx, typedExp) : bool
   hint(prose_false "pattern" %1 "is compared under" %0)
 def $decomposes(AC, typedExp) = true
   -- if $is_upcast_nullary_exp(typedExp)
-def $decomposes(AC, typedExp) = ~$is_bound(AC, id*)
+def $decomposes(AC, typedExp) = ~$forall_((id <- id_bound*)*)
   -- if ~$is_upcast_nullary_exp(typedExp)
   -- if id* = $free_ids_exp(typedExp)
+  -- if id_bound* = $ids_of_varis(AC.BOUND)
 
 ;; Constructors without arguments, empty options, and empty lists are
 ;; matched; every other value is compared for equality
@@ -54,13 +55,15 @@ rulegroup Partialbind_exp {
   rule Partialbind_exp/compared:
     AC IC_prem |- IC typedExp : AC' IC' typedExp_d ([ premAL_check ])
     -- if ~$decomposes(AC, typedExp)
+    -- if vari_read* = $free_vars_exp(typedExp)
+    -- if $is_bound(AC, IC ++ IC_prem, vari_read*)
     -- if _ '#' typ = typedExp
-    -- if (AC', vari_d) = $fresh_vari(AC, typ)
+    -- if (AC', vari_d) = $fresh_vari(AC, IC ++ IC_prem, typ)
     -- if typedExp_d = $exp_of_vari(vari_d)
     -- if typedExp_check = $check_exp(typedExp_d, typedExp)
     ---- ;; iterate over the fresh variable and the sources the compared value reads
     -- if id_d _ _ = vari_d
-    -- if id_read* = $free_ids_exp(typedExp)
+    -- if id_read* = $ids_of_varis(vari_read*)
     -- if IC_d = $add_iterated(IC ++ IC_prem, vari_d)
     -- if premIterAL* = $annotate(IC_d, id_d :: id_read*, eps)
     -- if premAL_check = $iterate_prem(premIterAL*, IF typedExp_check)
@@ -104,7 +107,7 @@ rule Partialbind_exp_decomposed/upcast:
     : AC'' IC'' typedExp_d (premAL_check :: premAL_let :: premAL*)
   -- Partialbind_exp: AC IC_prem |- IC typedExp : AC' IC' typedExp_sub premAL*
   -- if _ '#' typ_sub = typedExp_sub
-  -- if (AC'', vari_d) = $fresh_vari(AC', typ)
+  -- if (AC'', vari_d) = $fresh_vari(AC', IC' ++ IC_prem, typ)
   -- if typedExp_d = $exp_of_vari(vari_d)
   -- if typedExp_check = (SUB typedExp_d typ_sub) '#' BOOL
   -- if typedExp_down = (DOWNCAST typ_sub typedExp_d) '#' typ_sub
@@ -133,7 +136,7 @@ rule Partialbind_exp_decomposed/case:
     : AC'' IC'' typedExp_d (premAL_check :: premAL_let :: premAL*)
   -- Partialbind_exps: AC IC_prem |- IC typedExp* : AC' IC' typedExp'* premAL*
   -- if typedExp_case = (INJ (mixop typedExp'*)) '#' typ
-  -- if (AC'', vari_d) = $fresh_vari(AC', typ)
+  -- if (AC'', vari_d) = $fresh_vari(AC', IC' ++ IC_prem, typ)
   -- if typedExp_d = $exp_of_vari(vari_d)
   -- if typedExp_check = (MATCH typedExp_d (INJ mixop)) '#' BOOL
   -- Partialbind_check: (IC' ++ IC_prem) vari_d |- typedExp_check : premAL_check
@@ -146,7 +149,7 @@ rule Partialbind_exp_decomposed/opt:
     : AC'' IC'' typedExp_d (premAL_check :: premAL_let :: premAL*)
   -- Partialbind_exp: AC IC_prem |- IC typedExp : AC' IC' typedExp' premAL*
   -- if typedExp_opt = (OPT typedExp') '#' typ
-  -- if (AC'', vari_d) = $fresh_vari(AC', typ)
+  -- if (AC'', vari_d) = $fresh_vari(AC', IC' ++ IC_prem, typ)
   -- if typedExp_d = $exp_of_vari(vari_d)
   -- if typedExp_check = (MATCH typedExp_d SOME) '#' BOOL
   -- Partialbind_check: (IC' ++ IC_prem) vari_d |- typedExp_check : premAL_check
@@ -159,7 +162,7 @@ rule Partialbind_exp_decomposed/list:
     : AC'' IC'' typedExp_d (premAL_check :: premAL_let :: premAL*)
   -- Partialbind_exps: AC IC_prem |- IC typedExp* : AC' IC' typedExp'* premAL*
   -- if typedExp_list = (LIST typedExp'*) '#' typ
-  -- if (AC'', vari_d) = $fresh_vari(AC', typ)
+  -- if (AC'', vari_d) = $fresh_vari(AC', IC' ++ IC_prem, typ)
   -- if typedExp_d = $exp_of_vari(vari_d)
   -- if n = |typedExp*|
   -- if typedExp_check = (MATCH typedExp_d (FIXED n)) '#' BOOL
@@ -176,7 +179,7 @@ rule Partialbind_exp_decomposed/cons:
   -- Partialbind_exp:
       AC' IC_prem |- IC' typedExp_t : AC'' IC'' typedExp_t' premAL_t*
   -- if typedExp_cons = (CONS typedExp_h' typedExp_t') '#' typ
-  -- if (AC''', vari_d) = $fresh_vari(AC'', typ)
+  -- if (AC''', vari_d) = $fresh_vari(AC'', IC'' ++ IC_prem, typ)
   -- if typedExp_d = $exp_of_vari(vari_d)
   -- if typedExp_check = (MATCH typedExp_d CONS) '#' BOOL
   -- Partialbind_check:

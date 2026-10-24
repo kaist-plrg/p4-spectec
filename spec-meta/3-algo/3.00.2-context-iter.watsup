@@ -69,3 +69,27 @@ def $iterate_prem(eps, premAL) = premAL
 def $iterate_prem(premIterAL :: premIterAL_t*, premAL)
   = $iterate_prem(premIterAL_t*, ITER premAL premIterAL)
 
+;;; Bound variables
+
+;; A variable read under iterations is bound when a bound variable of its name
+;; has a dimension that the read, lifted out of the iterations, extends:
+;; a scalar may be read inside an iteration, but an iterated variable
+;; may not be read as a scalar
+
+dec $is_bound_vari(vari*, vari) : bool
+  hint(prose_true %1 "is bound by some variable in" %0)
+  hint(prose_false %1 "is bound by no variable in" %0)
+def $is_bound_vari(eps, _) = false
+def $is_bound_vari(vari_h :: _, vari) = true
+  -- if id _ _ = vari
+  -- if id _ _ = vari_h
+  -- if $is_prefix_dim(vari_h, vari)
+def $is_bound_vari(vari_h :: vari_t*, vari) = $is_bound_vari(vari_t*, vari)
+  -- if id _ _ = vari
+  -- if id_h _ _ = vari_h
+  -- if id_h =/= id \/ ~$is_prefix_dim(vari_h, vari)
+
+dec $is_bound(algoCtx, iterCtx, vari*) : bool
+  hint(prose_true "variables" %2 "read under" %1 "are all bound in" %0)
+  hint(prose_false "some variable in" %2 "read under" %1 "is not bound in" %0)
+def $is_bound(AC, IC, vari*) = $forall_($is_bound_vari(AC.BOUND, $lift_vari(IC, vari))*)
