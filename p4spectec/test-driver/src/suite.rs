@@ -2,8 +2,8 @@
 //!
 //! `Index::load` resolves module filenames from the root index.
 //! Each module loader reads its own registration type and validates its paths.
-//! Corpus paths are relative to the repository;
-//! diagnostic inputs and expectations are relative to the driver.
+//! Corpus paths are relative to the repository, expectations to the driver,
+//! and diagnostic inputs and expectations to `testdata/spec`.
 
 use std::{
     collections::BTreeSet,
@@ -229,7 +229,7 @@ pub fn load<T: DeserializeOwned>(path: &Path) -> Result<T> {
         .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))
 }
 
-/// Resolves an expectation or diagnostic input relative to the driver.
+/// Resolves an expectation relative to the driver.
 pub fn expected_path(path: &Path) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join(path)
 }
