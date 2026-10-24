@@ -16,6 +16,8 @@ use p4spectec::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
 
 use p4spectec::runner::{self, RunError};
 
+use p4spectec::interface::kore::krun::Krun;
+
 // = Helpers
 
 // - Diagnostic output
@@ -279,6 +281,64 @@ fn run_command(args: RunArgs) -> Result<(), ()> {
     Ok(())
 }
 
+// = Krun command
+
+#[derive(Args)]
+/// Arguments of the `krun` command.
+struct KrunArgs {
+    #[command(flatten)]
+    interpreter: InterpArgs,
+    /// Specification files of the K specification, in processing order.
+    #[arg(required = true, value_name = "PATH")]
+    paths: Vec<PathBuf>,
+    /// The kompiled definition, `definition.kore`.
+    #[arg(long = "def", value_name = "KORE")]
+    definition: PathBuf,
+    /// The initial term, as krun passes it to the interpreter.
+    #[arg(long = "init", value_name = "KORE")]
+    init: PathBuf,
+    /// Stop after this many rewrite steps.
+    #[arg(long, value_name = "N")]
+    depth: Option<u64>,
+    /// Disable interpreter call caching.
+    #[arg(long)]
+    no_cache: bool,
+    /// Disable deterministic execution checks.
+    #[arg(long)]
+    no_det: bool,
+    /// Check interpreter guards.
+    #[arg(long)]
+    guard: bool,
+}
+
+/// Runs a kompiled K definition with the K specification from an initial term.
+fn krun_command(args: KrunArgs) -> Result<(), ()> {
+    let mut renderer = Renderer::new(RenderConfig::default());
+    let spec = report_warnings(
+        &mut renderer,
+        p4spectec::runner_spec_with_warnings(args.interpreter.spec_lang(), &args.paths),
+    )
+    .map_err(|report| render_report(&mut renderer, &report))?;
+
+    let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard);
+    let render_error = |renderer: &mut Renderer, error| match error {
+        RunError::Build(report) => render_report(renderer, &report),
+        RunError::Parse(error) => render_report(renderer, &error.into_report()),
+        RunError::Eval(error) => render_exec_report(&error.into_report()),
+    };
+    let mut krun = Krun::load(spec, config, &args.definition, &args.init, args.depth)
+        .map_err(|error| render_error(&mut renderer, error))?;
+    println!("read {} axioms ({:.2}s)", krun.axioms, krun.secs_load);
+
+    let time = std::time::Instant::now();
+    let result = krun
+        .run()
+        .map_err(|error| render_error(&mut renderer, error))?;
+    println!("ran ({:.2}s)", time.elapsed().as_secs_f64());
+    println!("{}", Print::to_string(&result.view(&krun.arena)));
+    Ok(())
+}
+
 // = Sim command
 
 #[derive(Args)]
@@ -369,6 +429,8 @@ enum Command {
     Run(RunArgs),
     /// Simulate a P4 program and STF test on a target architecture.
     Sim(SimArgs),
+    /// Run a kompiled K definition with the K specification.
+    Krun(KrunArgs),
 }
 
 /// Dispatches the parsed command.
@@ -381,6 +443,7 @@ fn run(cli: Cli) -> Result<(), ()> {
         Command::Splice(args) => splice_command(args),
         Command::Run(args) => run_command(args),
         Command::Sim(args) => sim_command(args),
+        Command::Krun(args) => krun_command(args),
     }
 }
 

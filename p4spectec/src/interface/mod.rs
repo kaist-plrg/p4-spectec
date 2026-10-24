@@ -5,6 +5,7 @@
 //! which renders a value back to P4 syntax
 //! using the specification's print hints
 //! `al` lowers specification inputs to meta scripts with standard builtins
+//! `kore` reads kompiled K definitions for the K specification
 
 use crate::lang::{common::source::Span, data::value};
 
@@ -13,11 +14,13 @@ use crate::runner::Spec;
 use self::{
     al::AlInterface,
     builtin::{call::Builtins, extract},
+    kore::KoreInterface,
     p4::{P4Interface, unparse::P4Unparser},
 };
 
 pub mod al;
 pub mod builtin;
+pub mod kore;
 pub mod p4;
 
 // == AL
@@ -52,4 +55,11 @@ fn p4_with_unparser(unparser: P4Unparser) -> P4Interface {
         }),
     )]);
     P4Interface::new(builtins)
+}
+
+// == KORE
+
+/// Builds the KORE interface with the standard specification builtins.
+pub fn kore() -> KoreInterface {
+    KoreInterface::new(Builtins::new())
 }
