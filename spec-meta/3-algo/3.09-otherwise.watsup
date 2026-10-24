@@ -3,9 +3,7 @@
 ;; An otherwise rule or clause runs only after every other alternative is
 ;; unmatched, so it must not fail itself. Its inputs, results, and premises
 ;; in the final AL, including generated guards, may not call functions,
-;; test refutable conditions, or invoke relations. Binding a pure value,
-;; debugging, and matching a constructor that is the only one of its type
-;; are allowed, also under iteration.
+;; test refutable conditions, or invoke relations.
 
 ;;; Expressions
 
@@ -152,23 +150,17 @@ rule Arg_pure/fun:
 ;; Premises
 
 rule Prem_pure/let:
-  AC |- LET typedExp_l '=' typedExp_r
+  |- LET typedExp_l '=' typedExp_r
   -- Exp_pure: |- typedExp_l
   -- Exp_pure: |- typedExp_r
 
 rule Prem_pure/dbg:
-  AC |- DEBUG typedExp
+  |- DEBUG typedExp
   -- Exp_pure: |- typedExp
 
 rule Prem_pure/iter:
-  AC |- ITER premAL _
-  -- Prem_pure: AC |- premAL
-
-rule Prem_pure/singleton:
-  AC |- IF ((MATCH typedExp (INJ _)) '#' _)
-  -- Exp_pure: |- typedExp
-  -- if _ '#' typ = typedExp
-  -- if $is_singleton_typ(AC.TYP, typ)
+  |- ITER premAL _
+  -- Prem_pure: |- premAL
 
 ;; Definitions
 
@@ -177,27 +169,27 @@ rule Prem_pure/singleton:
 rulegroup Otherwise_pure/typ {
 
   rule Otherwise_pure/extern:
-    AC |- externTypDefn
+    |- externTypDefn
 
   rule Otherwise_pure/defined:
-    AC |- definedTypDefn
+    |- definedTypDefn
 
 }
 
 rulegroup Otherwise_pure/rel {
 
   rule Otherwise_pure/extern:
-    AC |- externRelDefnAL
+    |- externRelDefnAL
 
   rule Otherwise_pure/none:
-    AC |- REL _ ':' _ '->' _ '=' _ eps
+    |- REL _ ':' _ '->' _ '=' _ eps
 
   rule Otherwise_pure/else:
-    AC |- REL _ ':' _ '->' _ '=' _ elsGroupAL
+    |- REL _ ':' _ '->' _ '=' _ elsGroupAL
     -- if _ ':' rulAL = elsGroupAL
     -- if _ ':' typedExp_in* '->' typedExp_out* '-' premAL* = rulAL
     -- (Exp_pure: |- typedExp_in)*
-    -- (Prem_pure: AC |- premAL)*
+    -- (Prem_pure: |- premAL)*
     -- (Exp_pure: |- typedExp_out)*
 
 }
@@ -205,23 +197,22 @@ rulegroup Otherwise_pure/rel {
 rulegroup Otherwise_pure/func {
 
   rule Otherwise_pure/extern:
-    AC |- externFuncDefn
+    |- externFuncDefn
 
   rule Otherwise_pure/builtin:
-    AC |- builtinFuncDefn
+    |- builtinFuncDefn
 
   rule Otherwise_pure/table:
-    AC |- tableFuncDefnAL
+    |- tableFuncDefnAL
 
   rule Otherwise_pure/none:
-    AC |- FUNC _ _ _ ':' _ '=' _ eps
+    |- FUNC _ _ _ ':' _ '=' _ eps
 
   rule Otherwise_pure/else:
-    AC |- FUNC _ tparam* _ ':' _ '=' _ elsClauseAL
+    |- FUNC _ _ _ ':' _ '=' _ elsClauseAL
     -- if arg* '=' typedExp '-' premAL* = elsClauseAL
-    -- if AC_func = $add_tparams(AC, tparam*)
     -- (Arg_pure: |- arg)*
-    -- (Prem_pure: AC_func |- premAL)*
+    -- (Prem_pure: |- premAL)*
     -- Exp_pure: |- typedExp
 
 }
