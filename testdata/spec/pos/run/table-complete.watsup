@@ -1,0 +1,16 @@
+;; Table rows without a wildcard may cover every case themselves
+
+syntax color = RED | GREEN | BLUE
+syntax cool = GREEN | BLUE
+
+var c : cool
+
+tbl dec $is_red(color) : bool
+tbl def $is_red =
+  | RED => true
+  | c => false
+
+dec $main() : bool
+def $main() = true
+  -- if $is_red(RED)
+  -- if ~$is_red(BLUE)

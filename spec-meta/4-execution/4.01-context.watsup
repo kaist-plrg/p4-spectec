@@ -1,0 +1,218 @@
+;; Context
+
+syntax globalLayer =
+  { TYP tdenv,
+    REL renv,
+    FUNC fenv }
+
+syntax localLayer =
+  { TYP tdenv,
+    FUNC fnenv,
+    VAL venv }
+
+dec $empty_globalLayer : globalLayer
+  hint(prose_in "empty global layer")
+def $empty_globalLayer =
+  { TYP $empty_map<id, typDef>,
+    REL $empty_map<id, relDefnAL>,
+    FUNC $empty_map<id, funcDefnAL> }
+
+dec $empty_localLayer : localLayer
+  hint(prose_in "empty local layer")
+def $empty_localLayer =
+  { TYP $empty_map<id, typDef>,
+    FUNC $empty_map<id, id>,
+    VAL $empty_map<varr, val> }
+
+syntax ctx = { GLOBAL globalLayer, LOCAL localLayer }
+
+dec $empty_ctx : ctx
+  hint(prose_in "empty context")
+def $empty_ctx = { GLOBAL $empty_globalLayer, LOCAL $empty_localLayer }
+
+var C : ctx
+
+;; Loading context from a spec
+
+dec $load_ctx(ctx, specAL) : ctx
+  hint(prose_in %0 "with spec" %1 "loaded")
+
+def $load_ctx(C, externTypDefn :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
+  -- if EXTTYP id = externTypDefn
+  -- if tdenv_update = $add_map<id, typDef>(C.GLOBAL.TYP, id, externTypDefn)
+  -- if C' = C[ .GLOBAL.TYP = tdenv_update ]
+
+def $load_ctx(C, definedTypDefn :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
+  -- if TYP id _ '=' _ = definedTypDefn
+  -- if tdenv_update = $add_map<id, typDef>(C.GLOBAL.TYP, id, definedTypDefn)
+  -- if C' = C[ .GLOBAL.TYP = tdenv_update ]
+
+def $load_ctx(C, externRelDefnAL :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
+  -- if EXTREL id ':' _ '->' _ = externRelDefnAL
+  -- if renv_update = $add_map<id, relDefnAL>(C.GLOBAL.REL, id, externRelDefnAL)
+  -- if C' = C[ .GLOBAL.REL = renv_update ]
+
+def $load_ctx(C, definedRelDefnAL :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
+  -- if REL id ':' _ '->' _ '=' _ _ = definedRelDefnAL
+  -- if renv_update = $add_map<id, relDefnAL>(C.GLOBAL.REL, id, definedRelDefnAL)
+  -- if C' = C[ .GLOBAL.REL = renv_update ]
+
+def $load_ctx(C, externFuncDefn :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
+  -- if EXTFUNC id _ _ ':' _ = externFuncDefn
+  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, externFuncDefn)
+  -- if C' = C[ .GLOBAL.FUNC = fenv_update ]
+
+def $load_ctx(C, builtinFuncDefn :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
+  -- if BUILTINFUNC id _ _ ':' _ = builtinFuncDefn
+  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, builtinFuncDefn)
+  -- if C' = C[ .GLOBAL.FUNC = fenv_update ]
+
+def $load_ctx(C, tableFuncDefnAL :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
+  -- if TABLEFUNC id _ ':' _ '=' _ = tableFuncDefnAL
+  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, tableFuncDefnAL)
+  -- if C' = C[ .GLOBAL.FUNC = fenv_update ]
+
+def $load_ctx(C, definedFuncDefnAL :: defnAL_t*)
+  = $load_ctx(C', defnAL_t*)
+  -- if FUNC id _ _ ':' _ '=' _ _ = definedFuncDefnAL
+  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, definedFuncDefnAL)
+  -- if C' = C[ .GLOBAL.FUNC = fenv_update ]
+
+def $load_ctx(C, eps) = C
+
+;; Adders
+
+;;; Value adders
+
+dec $add_varr(ctx, varr, val) : ctx
+  hint(prose_in %0 "with runtime variable" %1 "bound locally to value" %2)
+def $add_varr(C, varr, val)
+  = C[ .LOCAL.VAL = venv_update ]
+  -- if venv_update = $add_map<varr, val>(C.LOCAL.VAL, varr, val)
+
+dec $add_varis(ctx, vari*, val*) : ctx
+  hint(prose_in %0 "with variables" %1 "bound locally to corresponding values" %2)
+def $add_varis(C, vari*, val*)
+  = C[ .LOCAL.VAL = venv_update ]
+  -- if (id _ iter* = vari)*
+  -- if venv_update = $adds_map<varr, val>(C.LOCAL.VAL, (id iter*)*, val*)
+
+;;; Function adders
+
+dec $add_func(ctx, id, id) : ctx
+  hint(prose_in %0 "with function parameter" %1
+                "bound locally to global function name" %2)
+
+def $add_func(C, id, id_global)
+  = C[ .LOCAL.FUNC = fnenv_update ]
+  -- if fnenv_update = $add_map<id, id>(C.LOCAL.FUNC, id, id_global)
+
+;; Finders
+
+;;; Value finders
+
+dec $find_vari(ctx, vari) : val?
+  hint(prose_in "the value bound to variable" %1 "in context" %0 "if present")
+def $find_vari(C, vari) = val
+  -- if id _ iter* = vari
+  -- if val = $find_map<varr, val>(C.LOCAL.VAL, id iter*)
+
+def $find_vari(C, vari) = eps
+  -- otherwise
+
+dec $find_varr(ctx, varr) : val?
+  hint(prose_in "the value bound to runtime variable" %1 "in context" %0 "if present")
+def $find_varr(C, varr) = $find_map<varr, val>(C.LOCAL.VAL, varr)
+
+dec $find_varis(ctx, vari*) : val*?
+  hint(prose_in "the values bound to variables" %1 "in context" %0
+                "if all are present")
+def $find_varis(C, vari*) = val*
+  -- if (val = $find_vari(C, vari))*
+def $find_varis(C, vari*) = eps
+  -- otherwise
+
+dec $finds_vari(ctx*, vari) : val*?
+  hint(prose_in "the values bound to variable" %1 "in contexts" %0
+                "if all are present")
+def $finds_vari(C*, vari) = val*
+  -- if id _ iter* = vari
+  -- if (val = $find_map<varr, val>(C.LOCAL.VAL, id iter*))*
+def $finds_vari(C*, vari) = eps
+  -- otherwise
+
+;;; Typedef finders
+
+dec $find_typ(ctx, id) : typDef?
+  hint(prose_in "the type definition bound to" %1 "in context" %0 "if present")
+
+def $find_typ(C, id) = typDef
+  -- if typDef = $find_map<id, typDef>(C.LOCAL.TYP, id)
+def $find_typ(C, id) = $find_map<id, typDef>(C.GLOBAL.TYP, id)
+  -- if eps = $find_map<id, typDef>(C.LOCAL.TYP, id)
+
+;;; Function finders
+
+dec $find_func_param(ctx, id) : id?
+  hint(prose_in "the global function name bound to parameter" %1 "in context" %0
+                "if present")
+def $find_func_param(C, id)
+  = $find_map<id, id>(C.LOCAL.FUNC, id)
+
+dec $resolve_func_param(ctx, id) : id
+  hint(prose_in "the global function name for" %1 "in" %0)
+def $resolve_func_param(C, id)
+  = $deopt_<id>($find_func_param(C, id), id)
+
+dec $find_func(ctx, id) : funcDefnAL?
+  hint(prose_in "the definition of global function" %1 "in context" %0 "if present")
+def $find_func(C, id) = $find_map<id, funcDefnAL>(C.GLOBAL.FUNC, id)
+
+;;; Relation finders
+
+dec $find_rel(ctx, id) : relDefnAL?
+  hint(prose_in "the definition of relation" %1 "in context" %0 "if present")
+
+def $find_rel(C, id) = $find_map<id, relDefnAL>(C.GLOBAL.REL, id)
+
+;; Sub-context construction for iteration
+
+syntax subOptRes = ok<ctx?> | error
+
+dec $sub_opt(ctx, vari*) : subOptRes
+  hint(prose_in "the result of constructing an optional subcontext of" %0
+                "for variables" %1)
+
+def $sub_opt(C, eps) = ERROR
+def $sub_opt(C, vari*) = OK C_sub
+  -- if vari* =/= eps
+  -- if (vari_iter = $iterate_vari(QUEST, vari))*
+  -- if (OPT val = $find_vari(C, vari_iter))*
+  -- if C_sub = $add_varis(C, vari*, val*)
+def $sub_opt(C, vari*) = OK eps
+  -- if vari* =/= eps
+  -- if (vari_iter = $iterate_vari(QUEST, vari))*
+  -- if (OPT eps = $find_vari(C, vari_iter))*
+def $sub_opt(C, vari*) = ERROR
+  -- otherwise
+
+syntax subListRes = ok<ctx*> | error
+
+dec $sub_list(ctx, vari*) : subListRes
+  hint(prose_in "the result of constructing list subcontexts of" %0 "for variables" %1)
+
+def $sub_list(C, vari*) = OK C'*
+  -- if (vari_iter = $iterate_vari(STAR, vari))*
+  -- if (LIST val* = $find_vari(C, vari_iter))*
+  -- if $forall_((|val*| = |val**[0]|)*)
+  -- if val_trans** = $transpose_<val>(val**)
+  -- if (C' = $add_varis(C, vari*, val_trans*))*
+def $sub_list(C, vari*) = ERROR
+  -- otherwise

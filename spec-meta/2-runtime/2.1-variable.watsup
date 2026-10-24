@@ -4,17 +4,31 @@ syntax varr = id iter*
 
 ;; Iteration helpers
 
-dec $is_iter_on_var(exp) : varr?
+dec $is_iter_on_var(typedExp) : varr?
   hint(prose_in "the runtime variable represented by" %0 "if any")
-def $is_iter_on_var(VAR id) = id eps
-def $is_iter_on_var(ITER exp iterExp)
+def $is_iter_on_var((VAR id) '#' _) = id eps
+def $is_iter_on_var((ITER typedExp expIter) '#' _)
   = id (iter* ++ [ iter_outer ])
-  -- if id iter* = $is_iter_on_var(exp)
-  -- if iter_outer (id _ iter*) = iterExp
+  -- if id iter* = $is_iter_on_var(typedExp)
+  -- if iter_outer (id _ iter*) = expIter
 def $is_iter_on_var(_) = eps
   -- otherwise
 
-dec $iter_vari(vari, iter) : vari
-  hint(prose_in %0 "iterated by" %1)
-def $iter_vari(id typ iter*, iter_add)
+;; Iterating variables
+
+dec $iterate_vari(iter, vari) : vari
+  hint(prose_in %1 "iterated by" %0)
+def $iterate_vari(iter_add, id typ iter*)
   = id typ (iter* ++ [ iter_add ])
+
+;; Comparing dimensions
+
+dec $is_prefix_dim(vari, vari) : bool
+  hint(prose_true "the dimension of" %0 "is a prefix of the dimension of" %1)
+  hint(prose_false "the dimension of" %0 "is not a prefix of the dimension of" %1)
+def $is_prefix_dim(_ typ_a iter_a*, _ typ_b iter_b*) = true
+  -- if typ_a = typ_b
+  -- if $(|iter_a*| <= |iter_b*|)
+  -- if iter_a* = iter_b*[0 : |iter_a*|]
+def $is_prefix_dim(_, _) = false
+  -- otherwise

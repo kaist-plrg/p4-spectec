@@ -90,11 +90,6 @@ where
         (self.arena, self.external)
     }
 
-    /// Borrows the arena and interface state for builtin dispatch.
-    pub fn arena_and_interface_mut(&mut self) -> (&mut Arena, &mut Iface) {
-        (self.arena, self.interface)
-    }
-
     // - Evaluation effects
 
     /// Records a host or output effect independently of its result.
@@ -168,7 +163,7 @@ where
         targs: &[Typ],
         values: &[Value],
     ) -> Result<Value, InterpreterError> {
-        let eval = Iface::call_builtin(self, id, targs, values);
+        let eval = self.interface.call_builtin(self.arena, id, targs, values);
         self.record_effect(eval.effect);
         eval.result.map_err(Into::into)
     }

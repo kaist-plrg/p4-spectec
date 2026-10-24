@@ -2,12 +2,15 @@
 //!
 //! `Runner<Iface, Ext>` selects its prepared definitions and interpreter
 //! through `Backend`, while each evaluation keeps a typed `RunnerContext`.
+//! A `Host<Iface, Ext>` has no interpreter; it answers builtin and extern
+//! calls of a level that the level below interprets.
 //! Host calls and simulator operations borrow the same components,
 //! so externs can reenter the selected interpreter.
 //! `build_al`, `build_sl`, and `build_pl` prepare the selected stage.
 
 mod context;
 mod externs;
+mod host;
 mod interface;
 mod interpreter;
 
@@ -37,6 +40,7 @@ use crate::sim_plugin::dummy::Dummy;
 
 pub use context::{Checkpoint, RunnerContext};
 pub use externs::{Extern, ExternError, NullExtern};
+pub use host::Host;
 pub use interface::{Interface, InterfaceError, NullInterface};
 pub use interpreter::{Eval, Interpreter, InterpreterError, SideEffect};
 
@@ -137,6 +141,53 @@ pub(crate) enum Backend {
     Pl { spec_env: PlSpecEnv, interp: PlInterp },
 }
 
+/// Splits a runner into the context of its selected backend for one evaluation.
+///
+/// `with_context!(runner, arena, |ctx| body)` binds `ctx` to the `RunnerContext`
+/// of the backend's interpreter, so `body` is instantiated once per backend.
+macro_rules! with_context {
+    ($runner:expr, $arena:expr, |$ctx:ident| $body:expr) => {{
+        let runner = &mut *$runner;
+        let arena = &mut *$arena;
+        match &mut runner.backend {
+            $crate::runner::Backend::Al { spec_env, interp } => {
+                let mut $ctx = $crate::runner::RunnerContext::new(
+                    arena,
+                    spec_env,
+                    interp,
+                    &mut runner.interface,
+                    &mut runner.external,
+                    &mut runner.effects,
+                );
+                $body
+            }
+            $crate::runner::Backend::Sl { spec_env, interp } => {
+                let mut $ctx = $crate::runner::RunnerContext::new(
+                    arena,
+                    spec_env,
+                    interp,
+                    &mut runner.interface,
+                    &mut runner.external,
+                    &mut runner.effects,
+                );
+                $body
+            }
+            $crate::runner::Backend::Pl { spec_env, interp } => {
+                let mut $ctx = $crate::runner::RunnerContext::new(
+                    arena,
+                    spec_env,
+                    interp,
+                    &mut runner.interface,
+                    &mut runner.external,
+                    &mut runner.effects,
+                );
+                $body
+            }
+        }
+    }};
+}
+pub(crate) use with_context;
+
 impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
     /// Prepares a specification with the supplied interface and extern state.
     ///
@@ -190,35 +241,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
         name: &str,
         program: Value,
     ) -> Eval<Vec<Value>, InterpreterError> {
-        match &mut self.backend {
-            Backend::Al { spec_env, interp } => RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut self.interface,
-                &mut self.external,
-                &mut self.effects,
-            )
-            .call_program(name, program),
-            Backend::Sl { spec_env, interp } => RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut self.interface,
-                &mut self.external,
-                &mut self.effects,
-            )
-            .call_program(name, program),
-            Backend::Pl { spec_env, interp } => RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut self.interface,
-                &mut self.external,
-                &mut self.effects,
-            )
-            .call_program(name, program),
-        }
+        with_context!(self, arena, |ctx| ctx.call_program(name, program))
     }
 
     /// Calls a relation through the selected interpreter.
@@ -230,35 +253,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
         name: &str,
         values: &[Value],
     ) -> Eval<Vec<Value>, InterpreterError> {
-        match &mut self.backend {
-            Backend::Al { spec_env, interp } => RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut self.interface,
-                &mut self.external,
-                &mut self.effects,
-            )
-            .call_rel(name, values),
-            Backend::Sl { spec_env, interp } => RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut self.interface,
-                &mut self.external,
-                &mut self.effects,
-            )
-            .call_rel(name, values),
-            Backend::Pl { spec_env, interp } => RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut self.interface,
-                &mut self.external,
-                &mut self.effects,
-            )
-            .call_rel(name, values),
-        }
+        with_context!(self, arena, |ctx| ctx.call_rel(name, values))
     }
 
     /// Calls a function through the selected interpreter.
@@ -271,35 +266,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
         targs: &[Typ],
         values: &[Value],
     ) -> Eval<Value, InterpreterError> {
-        match &mut self.backend {
-            Backend::Al { spec_env, interp } => RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut self.interface,
-                &mut self.external,
-                &mut self.effects,
-            )
-            .call_func(name, targs, values),
-            Backend::Sl { spec_env, interp } => RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut self.interface,
-                &mut self.external,
-                &mut self.effects,
-            )
-            .call_func(name, targs, values),
-            Backend::Pl { spec_env, interp } => RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut self.interface,
-                &mut self.external,
-                &mut self.effects,
-            )
-            .call_func(name, targs, values),
-        }
+        with_context!(self, arena, |ctx| ctx.call_func(name, targs, values))
     }
 
     // - Lifecycle

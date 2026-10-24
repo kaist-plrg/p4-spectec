@@ -1,0 +1,29 @@
+;; Execution entry point for specifications in IL and AL
+
+relation Eval_AL:
+  |- specAL : val
+  hint(input %0)
+  hint(prose_in "executing the main function of specification" %0)
+  hint(prose_out "value" %1)
+
+rule Eval_AL:
+  |- specAL : val
+  -- debug "entry-al"
+  -- if C = $load_ctx($empty_ctx, specAL)
+  -- debug "load complete"
+  ---- ;; calls $main(), assuming it exists in the given spec
+  -- debug "into call"
+  -- Call_func: C |- "main" `< eps `> `( eps `) : OK val
+  -- debug val
+
+relation Eval_IL:
+  |- specIL : val
+  hint(input %0)
+  hint(prose_in "converting specification" %0
+                "to AL and executing its main function")
+  hint(prose_out "value" %1)
+
+rule Eval_IL:
+  |- specIL : val
+  -- Algo_IL: |- specIL : specAL
+  -- Eval_AL: |- specAL : val

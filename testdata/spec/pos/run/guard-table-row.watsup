@@ -1,0 +1,13 @@
+;; Table rows are guarded like clauses: a division by zero in a row is
+;; unmatched, so the next row applies
+
+syntax color = RED | GREEN
+
+tbl dec $odd(color) : bool
+tbl def $odd =
+  | RED => $(1 / 0) = 1
+  | _ => false
+
+dec $main() : bool
+def $main() = true
+  -- if ~$odd(RED)

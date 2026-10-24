@@ -1,0 +1,218 @@
+;; Otherwise purity
+
+;; An otherwise rule or clause runs only after every other alternative is
+;; unmatched, so it must not fail itself. Its inputs, results, and premises
+;; in the final AL, including generated guards, may not call functions,
+;; test refutable conditions, or invoke relations.
+
+;;; Expressions
+
+rulegroup Exp_pure/literal {
+
+  rule Exp_pure/boolean:
+    |- (BOOL _) '#' _
+
+  rule Exp_pure/number:
+    |- num '#' _
+
+  rule Exp_pure/text:
+    |- (TEXT _) '#' _
+
+}
+
+rule Exp_pure/variable:
+  |- (VAR _) '#' _
+
+rule Exp_pure/unary:
+  |- (UN _ typedExp) '#' _
+  -- Exp_pure: |- typedExp
+
+rule Exp_pure/binary:
+  |- (BIN _ typedExp_l typedExp_r) '#' _
+  -- Exp_pure: |- typedExp_l
+  -- Exp_pure: |- typedExp_r
+
+rule Exp_pure/compare:
+  |- (CMP _ typedExp_l typedExp_r) '#' _
+  -- Exp_pure: |- typedExp_l
+  -- Exp_pure: |- typedExp_r
+
+rule Exp_pure/upcast:
+  |- (UPCAST _ typedExp) '#' _
+  -- Exp_pure: |- typedExp
+
+rule Exp_pure/downcast:
+  |- (DOWNCAST _ typedExp) '#' _
+  -- Exp_pure: |- typedExp
+
+rule Exp_pure/subtype:
+  |- (SUB typedExp _) '#' _
+  -- Exp_pure: |- typedExp
+
+rule Exp_pure/match:
+  |- (MATCH typedExp _) '#' _
+  -- Exp_pure: |- typedExp
+
+rule Exp_pure/tuple:
+  |- (TUP typedExp*) '#' _
+  -- (Exp_pure: |- typedExp)*
+
+rule Exp_pure/case:
+  |- (INJ (_ typedExp*)) '#' _
+  -- (Exp_pure: |- typedExp)*
+
+rule Exp_pure/struct:
+  |- (STR expField*) '#' _
+  -- (if _ typedExp = expField)*
+  -- (Exp_pure: |- typedExp)*
+
+rule Exp_pure/opt:
+  |- (OPT typedExp?) '#' _
+  -- (Exp_pure: |- typedExp)?
+
+rule Exp_pure/list:
+  |- (LIST typedExp*) '#' _
+  -- (Exp_pure: |- typedExp)*
+
+rule Exp_pure/cons:
+  |- (CONS typedExp_h typedExp_t) '#' _
+  -- Exp_pure: |- typedExp_h
+  -- Exp_pure: |- typedExp_t
+
+rule Exp_pure/concat:
+  |- (CAT typedExp_l typedExp_r) '#' _
+  -- Exp_pure: |- typedExp_l
+  -- Exp_pure: |- typedExp_r
+
+rule Exp_pure/mem:
+  |- (MEM typedExp_l typedExp_r) '#' _
+  -- Exp_pure: |- typedExp_l
+  -- Exp_pure: |- typedExp_r
+
+rule Exp_pure/len:
+  |- (LEN typedExp) '#' _
+  -- Exp_pure: |- typedExp
+
+rule Exp_pure/dot:
+  |- (DOT typedExp _) '#' _
+  -- Exp_pure: |- typedExp
+
+rule Exp_pure/idx:
+  |- (IDX typedExp_b typedExp_i) '#' _
+  -- Exp_pure: |- typedExp_b
+  -- Exp_pure: |- typedExp_i
+
+rule Exp_pure/slice:
+  |- (SLICE typedExp_b typedExp_i typedExp_n) '#' _
+  -- Exp_pure: |- typedExp_b
+  -- Exp_pure: |- typedExp_i
+  -- Exp_pure: |- typedExp_n
+
+rule Exp_pure/upd:
+  |- (UPD typedExp_b typedPath typedExp_f) '#' _
+  -- Exp_pure: |- typedExp_b
+  -- Path_pure: |- typedPath
+  -- Exp_pure: |- typedExp_f
+
+rule Exp_pure/iter:
+  |- (ITER typedExp _) '#' _
+  -- Exp_pure: |- typedExp
+
+;;; Paths
+
+rule Path_pure/root:
+  |- ROOT '#' _
+
+rule Path_pure/idx:
+  |- (IDX typedPath typedExp_i) '#' _
+  -- Path_pure: |- typedPath
+  -- Exp_pure: |- typedExp_i
+
+rule Path_pure/slice:
+  |- (SLICE typedPath typedExp_i typedExp_n) '#' _
+  -- Path_pure: |- typedPath
+  -- Exp_pure: |- typedExp_i
+  -- Exp_pure: |- typedExp_n
+
+rule Path_pure/dot:
+  |- (DOT typedPath _) '#' _
+  -- Path_pure: |- typedPath
+
+;;; Arguments
+
+rule Arg_pure/exp:
+  |- EXP typedExp
+  -- Exp_pure: |- typedExp
+
+rule Arg_pure/fun:
+  |- FUN _
+
+;; Premises
+
+rule Prem_pure/let:
+  |- LET typedExp_l '=' typedExp_r
+  -- Exp_pure: |- typedExp_l
+  -- Exp_pure: |- typedExp_r
+
+rule Prem_pure/dbg:
+  |- DEBUG typedExp
+  -- Exp_pure: |- typedExp
+
+rule Prem_pure/iter:
+  |- ITER premAL _
+  -- Prem_pure: |- premAL
+
+;; Definitions
+
+;; Definitions without an otherwise rule or clause are trivially accepted
+
+rulegroup Otherwise_pure/typ {
+
+  rule Otherwise_pure/extern:
+    |- externTypDefn
+
+  rule Otherwise_pure/defined:
+    |- definedTypDefn
+
+}
+
+rulegroup Otherwise_pure/rel {
+
+  rule Otherwise_pure/extern:
+    |- externRelDefnAL
+
+  rule Otherwise_pure/none:
+    |- REL _ ':' _ '->' _ '=' _ eps
+
+  rule Otherwise_pure/else:
+    |- REL _ ':' _ '->' _ '=' _ elsGroupAL
+    -- if _ ':' rulAL = elsGroupAL
+    -- if _ ':' typedExp_in* '->' typedExp_out* '-' premAL* = rulAL
+    -- (Exp_pure: |- typedExp_in)*
+    -- (Prem_pure: |- premAL)*
+    -- (Exp_pure: |- typedExp_out)*
+
+}
+
+rulegroup Otherwise_pure/func {
+
+  rule Otherwise_pure/extern:
+    |- externFuncDefn
+
+  rule Otherwise_pure/builtin:
+    |- builtinFuncDefn
+
+  rule Otherwise_pure/table:
+    |- tableFuncDefnAL
+
+  rule Otherwise_pure/none:
+    |- FUNC _ _ _ ':' _ '=' _ eps
+
+  rule Otherwise_pure/else:
+    |- FUNC _ _ _ ':' _ '=' _ elsClauseAL
+    -- if arg* '=' typedExp '-' premAL* = elsClauseAL
+    -- (Arg_pure: |- arg)*
+    -- (Prem_pure: |- premAL)*
+    -- Exp_pure: |- typedExp
+
+}

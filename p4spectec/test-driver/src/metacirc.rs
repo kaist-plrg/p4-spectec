@@ -1,11 +1,12 @@
-//! P4 programs and AL scripts through AL metacircular towers
+//! P4 programs and spec-language scripts through metacircular towers
 //!
 //! This driver owns corpus traversal, preprocessing, execution, and comparison.
 //! `run` dispatches each suite by the language of its tower's top level;
 //! every suite enters its top level through that level's relation.
 //! `run_programs` prepares each P4 tower once and resets its state per program;
-//! `run_scripts` prepares a fresh tower per AL script,
-//! because each AL script supplies the builtin definitions for the top level.
+//! `run_scripts` prepares a fresh tower per script,
+//! because each script supplies the builtin definitions for the top level.
+//! Both skip the sources listed by the configuration's exclusions.
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -22,10 +23,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use p4spectec::{
     interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess},
     lang::data::arena::Arena,
-    metacirc::{
-        self, Tower, TowerConfig,
-        config::{Lang, ProgramConfig},
-    },
+    metacirc::{self, Tower, TowerConfig, config::Lang},
     runner::Config,
 };
 
@@ -51,11 +49,11 @@ pub fn run(config: &MetacircConfig, options: ExecutionOptions) -> Result<()> {
             .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
         match config_tower.top_lang() {
             Lang::P4 => suites_p4.push(suite),
-            Lang::Al => suites_al.push(suite),
+            Lang::Al | Lang::Il => suites_al.push(suite),
         }
     }
     if !suites_al.is_empty() {
-        run_scripts(&suites_al, options)?;
+        run_scripts(config, &suites_al, options)?;
     }
     if !suites_p4.is_empty() {
         run_programs(config, &suites_p4, options)?;
@@ -92,10 +90,7 @@ fn run_programs(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    let mut excludes = BTreeSet::new();
-    for path in &config.excludes {
-        excludes.extend(corpus::collect_excludes(path)?);
-    }
+    let excludes = collect_excludes(config)?;
     let collected: usize = suites.iter().map(|suite| suite.paths.len()).sum();
     let excluded = suites
         .iter()
@@ -116,7 +111,7 @@ fn run_programs(
         let config_tower = TowerConfig::from_file(suite.path_tower)
             .map_err(|error| Error::Invalid(error.to_string()))?;
         let options_tower = Config::new(cache_on, det, false);
-        let tower = Tower::build(&mut arena, &config_tower, &ProgramConfig::P4, options_tower)
+        let tower = Tower::build(&mut arena, &config_tower, options_tower)
             .map_err(|error| Error::Invalid(error.to_string()))?;
         towers.insert(suite.path_tower, tower);
     }
@@ -228,25 +223,48 @@ fn run_programs(
     Ok(())
 }
 
-/// Runs AL suites through their towers and checks each script's outcome.
-fn run_scripts(suites: &[&MetacircSuite], options: ExecutionOptions) -> Result<()> {
+/// Gathers the excluded corpus paths of the selected conversion.
+fn collect_excludes(config: &MetacircConfig) -> Result<BTreeSet<String>> {
+    let mut excludes = BTreeSet::new();
+    for path in &config.excludes {
+        excludes.extend(corpus::collect_excludes(path)?);
+    }
+    Ok(excludes)
+}
+
+/// Runs script suites through their towers and checks each script's outcome.
+fn run_scripts(
+    config: &MetacircConfig,
+    suites: &[&MetacircSuite],
+    options: ExecutionOptions,
+) -> Result<()> {
     let ExecutionOptions { cache_on, no_det } = options;
     let det = !no_det;
     let text_cache = if cache_on { "on" } else { "off" };
-    let text_mode = format!("metacirc AL cache={text_cache} det={det}");
+    let text_mode = format!("metacirc script cache={text_cache} det={det}");
+    let excludes = collect_excludes(config)?;
     // Specification debug premises print to stdout
     let guard_stdout = crate::output::SilenceStdout::new()?;
     let mut executed = 0;
+    let mut excluded = 0;
     let mut mismatches = Vec::new();
     for suite in suites {
         let outcome_expect = suite.outcome.expect("loader requires an AL outcome");
         let config_tower = TowerConfig::from_file(&suite.tower)
             .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
         for path in corpus::collect(&suite.root, ".watsup")? {
+            if path.to_str().is_some_and(|path| excludes.contains(path)) {
+                excluded += 1;
+                continue;
+            }
             let paths_program = std::slice::from_ref(&path);
-            // Invalid scripts are test errors, not rejected executions
-            p4spectec::algo(paths_program)
-                .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
+            // Invalid scripts are test errors, not rejected executions;
+            // an IL top level converts the script itself, so it need only elaborate
+            let valid = match config_tower.top_lang() {
+                Lang::Il => p4spectec::elab(paths_program).map(|_| ()),
+                _ => p4spectec::algo(paths_program).map(|_| ()),
+            };
+            valid.map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
             let accepted =
                 metacirc::run(&config_tower, &[], paths_program, Config::new(cache_on, det, false))
                     .is_ok();
@@ -270,6 +288,8 @@ fn run_scripts(suites: &[&MetacircSuite], options: ExecutionOptions) -> Result<(
             mismatches.join("\n")
         )));
     }
-    eprintln!("{text_mode}: all {executed} script outcomes matched their suite");
+    eprintln!(
+        "{text_mode}: all {executed} script outcomes matched their suite, excluded={excluded}"
+    );
     Ok(())
 }

@@ -1,0 +1,186 @@
+;; Identifiers
+
+syntax id = text
+syntax atom = text
+syntax mixop = atom**
+
+;; Numbers
+
+syntax num =
+  | NAT nat
+  | INT int
+
+;; Types
+
+syntax iter, targ, typField, typCase, tparam
+
+syntax numtyp =
+  | NAT
+  | INT
+
+syntax optyp =
+  | BOOL
+  | numtyp
+  | TEXT
+
+syntax typ =
+  | optyp
+  | VAR id targ*
+  | TUP typ*
+  | ITER typ iter
+  | FUNC tparam* typ* typ
+
+syntax deftyp =
+  | ALIAS typ
+  | STRUCT typField*
+  | VARIANT typCase*
+
+syntax typField = atom typ
+syntax typCase = mixop typ*
+
+;; Iterators
+
+syntax iter = QUEST | STAR
+
+;; Variables
+
+syntax vari = id typ iter*
+
+;; Operators
+
+syntax boolUnop =
+  | NOT
+
+syntax numUnop =
+  | PLUS | MINUS
+
+syntax unop = boolUnop | numUnop
+
+syntax boolBinop =
+  | AND | OR | IMPL | EQUIV
+
+syntax numBinop =
+  | ADD | SUB | MUL | DIV | MOD | POW
+
+syntax binop = boolBinop | numBinop
+
+syntax numCmpop =
+  | LT | GT | LE | GE
+
+syntax polyCmpop =
+  | EQ | NE
+
+syntax cmpop = polyCmpop | numCmpop
+
+;; Patterns
+
+syntax listPat =
+  | CONS
+  | FIXED nat
+  | NIL
+
+syntax optPat =
+  | SOME
+  | NONE
+
+syntax pat =
+  | INJ mixop
+  | listPat
+  | optPat
+
+;; Expressions
+
+syntax exp, expField, expCase, typedPath, path, arg, expIter
+
+syntax typedExp = exp '#' typ
+
+syntax exp =
+  | BOOL bool
+  | num
+  | TEXT text
+  | VAR id
+  | UN unop typedExp
+  | BIN binop typedExp typedExp
+  | CMP cmpop typedExp typedExp
+  | UPCAST typ typedExp
+  | DOWNCAST typ typedExp
+  | SUB typedExp typ
+  | MATCH typedExp pat
+  | TUP typedExp*
+  | INJ expCase
+  | STR expField*
+  | OPT typedExp?
+  | LIST typedExp*
+  | CONS typedExp typedExp
+  | CAT typedExp typedExp
+  | MEM typedExp typedExp
+  | LEN typedExp
+  | DOT typedExp atom
+  | IDX typedExp typedExp
+  | SLICE typedExp typedExp typedExp
+  | UPD typedExp typedPath typedExp
+  | CALL id targ* arg*
+  | ITER typedExp expIter
+
+syntax expCase = mixop typedExp*
+syntax expField = atom typedExp
+
+syntax expIter = iter vari*
+
+;; Paths
+
+syntax typedPath = path '#' typ
+
+syntax path =
+  | ROOT
+  | IDX typedPath typedExp
+  | SLICE typedPath typedExp typedExp
+  | DOT typedPath atom
+
+;; Arguments
+
+syntax targ = typ
+
+syntax arg =
+  | EXP typedExp
+  | FUN id
+
+;; Type parameters
+
+syntax tparam = id
+
+;; Parameters
+
+syntax param =
+  | EXP typ
+  | FUN id ':' tparam* param* '->' typ
+
+;; Premises
+
+syntax ifPrem = IF typedExp
+
+syntax ifHoldPrem = IFHOLD id ':' typedExp*
+
+syntax ifNotHoldPrem = IFNOTHOLD id ':' typedExp*
+
+syntax debugPrem = DEBUG typedExp
+
+;; Type definitions
+
+syntax externTypDefn =
+  EXTTYP id
+
+syntax definedTypDefn =
+  TYP id tparam* '=' deftyp
+
+syntax typDefn =
+  | externTypDefn
+  | definedTypDefn
+
+;; Meta-functions without clauses
+
+syntax externFuncDefn =
+  EXTFUNC id tparam* param* ':' typ
+
+syntax builtinFuncDefn =
+  BUILTINFUNC id tparam* param* ':' typ

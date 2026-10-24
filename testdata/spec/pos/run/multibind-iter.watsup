@@ -1,0 +1,16 @@
+;; A repeated binder under an iteration compares each pair of occurrences
+
+syntax pair = (nat, nat)
+
+var x : nat
+
+dec $diag(pair*) : nat*
+def $diag((x, x)*) = x*
+def $diag(pair*) = eps
+  -- otherwise
+
+dec $main() : bool
+def $main() = true
+  -- if $diag([ (1, 1), (2, 2) ]) = [ 1, 2 ]
+  -- if $diag([ (1, 1), (2, 3) ]) = eps
+  -- if $diag(eps) = eps

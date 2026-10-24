@@ -1,0 +1,158 @@
+;; Assignments
+
+syntax assignRes = ok<ctx> | error
+
+relation Assign_exp:
+  ctx |- typedExp := val : assignRes
+  hint(input %0 %1 %2)
+  hint(prose_in "assigning value" %2 "to expression" %1 "under context" %0)
+  hint(prose_out %3)
+
+relation Assign_exps:
+  ctx |- typedExp* := val* : assignRes
+  hint(input %0 %1 %2)
+  hint(prose_in "assigning values" %2 "to expressions" %1 "in order under context" %0)
+  hint(prose_out %3)
+
+relation Assign_arg:
+  ctx |- arg := val : assignRes
+  hint(input %0 %1 %2)
+  hint(prose_in "assigning value" %2 "to argument" %1 "under context" %0)
+  hint(prose_out %3)
+
+relation Assign_args:
+  ctx |- arg* := val* : assignRes
+  hint(input %0 %1 %2)
+  hint(prose_in "assigning values" %2 "to arguments" %1 "in order under context" %0)
+  hint(prose_out %3)
+
+;;; Assigning to an expression
+
+rule Assign_exp/variable:
+  C |- (VAR id) '#' _ := val : OK C'
+  -- if C' = $add_varr(C, id eps, val)
+
+rule Assign_exp/tup:
+  C |- (TUP typedExp*) '#' _ := TUP val* : OK C'
+  -- Assign_exps: C |- typedExp* := val* : OK C'
+
+rule Assign_exp/inj:
+  C |- (INJ (mixop typedExp*)) '#' _ := INJ (mixop val*) : OK C'
+  -- Assign_exps: C |- typedExp* := val* : OK C'
+
+rule Assign_exp/str:
+  C |- (STR expField*) '#' _ := STR valField* : OK C'
+  -- (if atom val = valField)*
+  -- (if atom typedExp = expField)*
+  -- Assign_exps: C |- typedExp* := val* : OK C'
+
+rulegroup Assign_exp/opt {
+
+  rule Assign_exp/opt-some:
+    C |- (OPT typedExp) '#' _ := OPT val : OK C'
+    -- Assign_exp: C |- typedExp := val : OK C'
+
+  rule Assign_exp/opt-none:
+    C |- (OPT eps) '#' _ := OPT eps : OK C
+
+}
+
+rule Assign_exp/list:
+  C |- (LIST typedExp*) '#' _ := LIST val* : OK C'
+  -- Assign_exps: C |- typedExp* := val* : OK C'
+
+rule Assign_exp/cons:
+  C |- (CONS typedExp_h typedExp_t) '#' _ := LIST (val_h :: val_t*) : OK C''
+  -- Assign_exp: C |- typedExp_h := val_h : OK C'
+  -- Assign_exp: C' |- typedExp_t := LIST val_t* : OK C''
+
+rulegroup Assign_exp/iter {
+
+  rule Assign_exp/simple:
+    C |- (ITER typedExp expIter) '#' typ := val : OK C'
+    -- if varr = $is_iter_on_var((ITER typedExp expIter) '#' typ)
+    -- if C' = $add_varr(C, varr, val)
+
+  rule Assign_exp/opt-none:
+    C |- (ITER typedExp expIter) '#' typ := OPT eps : OK C'
+    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
+    -- if QUEST vari* = expIter
+    -- if (vari_iter = $iterate_vari(QUEST, vari))*
+    -- if val_bind* = $repeat_<val>(OPT eps, |vari_iter*|)
+    -- if C' = $add_varis(C, vari_iter*, val_bind*)
+
+  rule Assign_exp/opt-some:
+    C |- (ITER typedExp expIter) '#' typ := OPT val : OK C''
+    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
+    -- if QUEST vari* = expIter
+    -- Assign_exp: C |- typedExp := val : OK C'
+    -- if (vari_iter = $iterate_vari(QUEST, vari))*
+    -- if (val_sub = $find_vari(C', vari))*
+    -- if C'' = $add_varis(C', vari_iter*, (OPT val_sub)*)
+
+  rule Assign_exp/list:
+    C |- (ITER typedExp expIter) '#' typ := LIST val* : OK C'
+    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
+    -- if STAR vari* = expIter
+    -- if C_local = C[ .LOCAL.VAL = $empty_map<varr, val> ]
+    -- (Assign_exp: C_local |- typedExp := val : OK C_sub)*
+    -- if (vari_iter = $iterate_vari(STAR, vari))*
+    -- if (val_sub* = $finds_vari(C_sub*, vari))*
+    -- if (val_bind = LIST val_sub*)*
+    -- if C' = $add_varis(C, vari_iter*, val_bind*)
+
+}
+
+rule Assign_exp/error:
+  C |- typedExp := val : ERROR
+  -- otherwise
+
+;;; Assigning to a sequence of expressions
+
+rulegroup Assign_exps {
+
+  rule Assign_exps/nil:
+    C |- eps := eps : OK C
+
+  rule Assign_exps/cons:
+    C |- typedExp_h :: typedExp_t* := val_h :: val_t* : OK C''
+    -- Assign_exp: C |- typedExp_h := val_h : OK C'
+    -- Assign_exps: C' |- typedExp_t* := val_t* : OK C''
+
+}
+
+rule Assign_exps/error:
+  C |- typedExp* := val* : ERROR
+  -- otherwise
+
+;;; Assigning to an argument
+
+rule Assign_arg/exp:
+  C |- EXP typedExp := val : OK C'
+  -- Assign_exp: C |- typedExp := val : OK C'
+
+rule Assign_arg/fun:
+  C |- FUN id := FUNC id_global : OK C'
+  -- if C' = $add_func(C, id, id_global)
+
+rule Assign_arg/error:
+  C |- arg := val : ERROR
+  -- otherwise
+
+;;; Assigning to a sequence of arguments
+
+rulegroup Assign_args {
+
+  rule Assign_args/nil:
+    C |- eps := eps : OK C
+
+  rule Assign_args/cons:
+    C |- arg_h :: arg_t* := val_h :: val_t* : OK C''
+    -- Assign_arg: C |- arg_h := val_h : OK C'
+    -- Assign_args: C' |- arg_t* := val_t* : OK C''
+
+}
+
+rule Assign_args/error:
+  C |- arg* := val* : ERROR
+  -- otherwise

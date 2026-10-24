@@ -1,0 +1,208 @@
+;; Renamer construction
+
+;; Every occurrence of a repeated binder has the same type and dimension
+
+dec $varis_with_id(id, vari*) : vari*
+  hint(prose_in "the variables in" %1 "named" %0)
+def $varis_with_id(_, eps) = eps
+def $varis_with_id(id, vari_h :: vari_t*)
+  = vari_h :: $varis_with_id(id, vari_t*)
+  -- if id _ _ = vari_h
+def $varis_with_id(id, vari_h :: vari_t*)
+  = $varis_with_id(id, vari_t*)
+  -- if id_h _ _ = vari_h
+  -- if id_h =/= id
+
+dec $varis_without_id(id, vari*) : vari*
+  hint(prose_in "the variables in" %1 "not named" %0)
+def $varis_without_id(_, eps) = eps
+def $varis_without_id(id, vari_h :: vari_t*)
+  = $varis_without_id(id, vari_t*)
+  -- if id _ _ = vari_h
+def $varis_without_id(id, vari_h :: vari_t*)
+  = vari_h :: $varis_without_id(id, vari_t*)
+  -- if id_h _ _ = vari_h
+  -- if id_h =/= id
+
+rulegroup Multibind_renamer {
+
+  rule Multibind_renamer/nil:
+    |- eps : eps
+
+  rule Multibind_renamer/single:
+    |- vari_h :: vari_t* : renaming*
+    -- if id_h _ _ = vari_h
+    -- if eps = $varis_with_id(id_h, vari_t*)
+    -- Multibind_renamer: |- vari_t* : renaming*
+
+  rule Multibind_renamer/repeated:
+    |- vari_h :: vari_t* : (vari_h '->' eps) :: renaming*
+    -- if id_h _ _ = vari_h
+    -- if vari_same* = $varis_with_id(id_h, vari_t*)
+    -- if vari_same* =/= eps
+    -- if (vari_same = vari_h)*
+    -- if vari_rest* = $varis_without_id(id_h, vari_t*)
+    -- Multibind_renamer: |- vari_rest* : renaming*
+
+}
+
+;; Renamer lookup
+
+dec $renamer_of(renaming*) : renamer
+  hint(prose_in "the renamer keyed by the binders of" %0)
+def $renamer_of(renaming*) = `{ (id ':' renaming)* `}
+  -- if ((id _ _) '->' _)* = renaming*
+
+;; Renaming repeated binders
+
+;; The first occurrence keeps its identifier; later ones take fresh identifiers:
+;; `(x, x, (y, y)*)` becomes `(x, x', (y, y')*)`
+
+rulegroup Multibind_exp {
+
+  rule Multibind_exp/unrenamed:
+    AC R |- typedExp : AC R typedExp
+    -- if id* = $free_ids_exp(typedExp)
+    -- if `{ (id_rep ':' _)* `} = R
+    -- if ~$exists_((id <- id_rep*)*)
+
+  rule Multibind_exp/renamed:
+    AC R |- typedExp : AC' R' typedExp'
+    -- if id* = $free_ids_exp(typedExp)
+    -- if `{ (id_rep ':' _)* `} = R
+    -- if $exists_((id <- id_rep*)*)
+    -- Multibind_exp_repeated: AC R |- typedExp : AC' R' typedExp'
+
+}
+
+rulegroup Multibind_exp_repeated/variable {
+
+  rule Multibind_exp_repeated/first:
+    AC R |- (VAR id) '#' typ : AC R' ((VAR id) '#' typ)
+    -- if vari '->' eps = $find_map<id, renaming>(R, id)
+    -- if R' = $add_map<id, renaming>(R, id, (vari '->' ([ id ])))
+
+  rule Multibind_exp_repeated/later:
+    AC R |- (VAR id) '#' typ : AC' R' ((VAR id_fresh) '#' typ)
+    -- if vari '->' id_name* = $find_map<id, renaming>(R, id)
+    -- if id_name* =/= eps
+    -- if (AC', id_fresh) = $fresh_name(AC, id)
+    -- if R' = $add_map<id, renaming>(R, id, (vari '->' (id_name* ++ [ id_fresh ])))
+
+}
+
+rule Multibind_exp_repeated/upcast:
+  AC R |- (UPCAST typ_sup typedExp) '#' typ : AC' R' ((UPCAST typ_sup typedExp') '#' typ)
+  -- Multibind_exp: AC R |- typedExp : AC' R' typedExp'
+
+rule Multibind_exp_repeated/tuple:
+  AC R |- (TUP typedExp*) '#' typ : AC' R' ((TUP typedExp'*) '#' typ)
+  -- Multibind_exps: AC R |- typedExp* : AC' R' typedExp'*
+
+rule Multibind_exp_repeated/case:
+  AC R |- (INJ (mixop typedExp*)) '#' typ : AC' R' ((INJ (mixop typedExp'*)) '#' typ)
+  -- Multibind_exps: AC R |- typedExp* : AC' R' typedExp'*
+
+rule Multibind_exp_repeated/struct:
+  AC R |- (STR expField*) '#' typ : AC' R' ((STR expField'*) '#' typ)
+  -- (if atom typedExp = expField)*
+  -- Multibind_exps: AC R |- typedExp* : AC' R' typedExp'*
+  -- (if expField' = atom typedExp')*
+
+rule Multibind_exp_repeated/opt:
+  AC R |- (OPT typedExp) '#' typ : AC' R' ((OPT typedExp') '#' typ)
+  -- Multibind_exp: AC R |- typedExp : AC' R' typedExp'
+
+rule Multibind_exp_repeated/list:
+  AC R |- (LIST typedExp*) '#' typ : AC' R' ((LIST typedExp'*) '#' typ)
+  -- Multibind_exps: AC R |- typedExp* : AC' R' typedExp'*
+
+rule Multibind_exp_repeated/cons:
+  AC R |- (CONS typedExp_h typedExp_t) '#' typ : AC'' R'' ((CONS typedExp_h' typedExp_t') '#' typ)
+  -- Multibind_exp: AC R |- typedExp_h : AC' R' typedExp_h'
+  -- Multibind_exp: AC' R' |- typedExp_t : AC'' R'' typedExp_t'
+
+;; An iteration lists the renamed occurrences it now contains
+
+dec $ids_within(id*, id*) : id*
+  hint(prose_in "the identifiers in" %0 "that are also in" %1)
+def $ids_within(eps, _) = eps
+def $ids_within(id_h :: id_t*, id_in*) = id_h :: $ids_within(id_t*, id_in*)
+  -- if id_h <- id_in*
+def $ids_within(id_h :: id_t*, id_in*) = $ids_within(id_t*, id_in*)
+  -- if ~(id_h <- id_in*)
+
+dec $rename_iter_vari(renamer, vari, id*) : vari*
+  hint(prose_in "the variables replacing iteration variable" %1
+                "by its renamed occurrences among" %2 "under" %0)
+def $rename_iter_vari(R, id typ iter*, _) = [ id typ iter* ]
+  -- if eps = $find_map<id, renaming>(R, id)
+def $rename_iter_vari(R, id typ iter*, id_free*) = (id_occ typ iter*)*
+  -- if _ '->' id_name* = $find_map<id, renaming>(R, id)
+  -- if id_occ* = $ids_within(id_name*, id_free*)
+
+rule Multibind_exp_repeated/iter:
+  AC R |- (ITER typedExp (iter vari*)) '#' typ : AC' R' ((ITER typedExp' (iter vari_occ*)) '#' typ)
+  -- Multibind_exp: AC R |- typedExp : AC' R' typedExp'
+  -- if id_free* = $free_ids_exp(typedExp')
+  -- if (vari_rename* = $rename_iter_vari(R', vari, id_free*))*
+  -- if vari_occ* = $concat_<vari>(vari_rename**)
+
+rulegroup Multibind_exps {
+
+  rule Multibind_exps/nil:
+    AC R |- eps : AC R eps
+
+  rule Multibind_exps/cons:
+    AC R |- typedExp_h :: typedExp_t* : AC'' R'' (typedExp_h' :: typedExp_t'*)
+    -- Multibind_exp: AC R |- typedExp_h : AC' R' typedExp_h'
+    -- Multibind_exps: AC' R' |- typedExp_t* : AC'' R'' typedExp_t'*
+
+}
+
+rulegroup Multibind_args {
+
+  rule Multibind_args/nil:
+    AC R |- eps : AC R eps
+
+  rule Multibind_args/exp:
+    AC R |- (EXP typedExp_h) :: arg_t* : AC'' R'' ((EXP typedExp_h') :: arg_t'*)
+    -- Multibind_exp: AC R |- typedExp_h : AC' R' typedExp_h'
+    -- Multibind_args: AC' R' |- arg_t* : AC'' R'' arg_t'*
+
+  rule Multibind_args/fun:
+    AC R |- (FUN id) :: arg_t* : AC' R' ((FUN id) :: arg_t'*)
+    -- Multibind_args: AC R |- arg_t* : AC' R' arg_t'*
+
+}
+
+;; Equalities of repeated binders
+
+;; Each later occurrence must equal the first, under the binder's own
+;; dimension and the iterations of the premise:
+;; `(x, x)*` binding `x*` and `x'*` requires `(x = x')*{x <- x*, x' <- x'*}`
+
+dec $occurrence_eq(iterCtx, vari, id) : premAL
+  hint(prose_in "the equality of" %1 "and its occurrence" %2 "inside iterations" %0)
+def $occurrence_eq(IC, id_first typ iter*, id_later) = $iterate_prem(premIterAL*, premAL_cmp)
+  -- if (iter_prem _)* = IC
+  -- if IC_dim = (iter eps)* ++ (iter_prem eps)*
+  -- if IC_first = $add_iterated(IC_dim, id_first typ eps)
+  -- if IC_eq = $add_iterated(IC_first, id_later typ eps)
+  -- if premIterAL* = $annotate(IC_eq, [ id_first, id_later ], eps)
+  -- if typedExp_first = (VAR id_first) '#' typ
+  -- if typedExp_later = (VAR id_later) '#' typ
+  -- if premAL_cmp = IF ((CMP EQ typedExp_first typedExp_later) '#' BOOL)
+
+rulegroup Multibind_eqs {
+
+  rule Multibind_eqs/nil:
+    IC |- eps : eps
+
+  rule Multibind_eqs/cons:
+    IC |- (vari '->' id_name*) :: renaming* : premAL_eq* ++ premAL_t*
+    -- if _ :: id_later* = id_name*
+    -- (if premAL_eq = $occurrence_eq(IC, vari, id_later))*
+    -- Multibind_eqs: IC |- renaming* : premAL_t*
+
+}

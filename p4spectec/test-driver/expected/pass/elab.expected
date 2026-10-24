@@ -3274,7 +3274,7 @@ def $is_default_parameterIR(parameterIR) : bool =
 
   clause 0 : (_annotationList _direction _typeIR _id ?()) = false
 
-  clause -1 : (_annotationList _direction _typeIR _id _parameterInitializerOptIR) = true
+  clause -1 : (_parameterIR) = true
 
 def $annotationList_of_parameterIR(parameterIR) : annotationList =
 
@@ -5772,7 +5772,7 @@ def $match_overloaded_named<V>(pair<callTargetId, V>, namedCallTargetKey, $get_p
   -- if (id_optional*{id_optional <- id_optional*} = $filter_<id>(id_param_omitted*{id_param_omitted <- id_param_omitted*}, id_param_omitted <- id_optional_param*{id_optional_param <- id_optional_param*}*{id_param_omitted <- id_param_omitted*}))
   -- if $eq_set<id>(`{ id_default*{id_default <- id_default*} ++ id_optional*{id_optional <- id_optional*} `}, `{ id_param_omitted*{id_param_omitted <- id_param_omitted*} `})
 
-  clause -1 : (callTargetId ':' V, nameIR_f `( id_arg*{id_arg <- id_arg*} `), $get_parameterListIR) = NOMATCH
+  clause -1 : (_pair<callTargetId, V>, _namedCallTargetKey, $get_parameterListIR) = NOMATCH
 
 def $match_overloaded_unnamed<V>(pair<callTargetId, V>, unnamedCallTargetKey, $get_parameterListIR(V) : parameterListIR) : callTargetMatch =
 
@@ -5808,7 +5808,7 @@ def $match_overloaded_unnamed<V>(pair<callTargetId, V>, unnamedCallTargetKey, $g
   -- (if $is_optional_parameterIR(parameterIR_omitted))*{parameterIR_omitted <- parameterIR_omitted*}
   -- (if (id_optional = $id_of_parameterIR(parameterIR_omitted)))*{id_optional <- id_optional*, parameterIR_omitted <- parameterIR_omitted*}
 
-  clause -1 : (callTargetId ':' V, nameIR_f `( n_arg `), $get_parameterListIR) = NOMATCH
+  clause -1 : (_pair<callTargetId, V>, _unnamedCallTargetKey, $get_parameterListIR) = NOMATCH
 
 def $find_overloadeds_named<V>(map<callableId, V>, namedCallTargetKey, $get_parameterListIR(V) : parameterListIR) : callResolution<V>* =
 
@@ -5855,7 +5855,7 @@ def $find_non_overloaded<V>(map<callableId, V>, nameIR) : (callableId, V)? =
   clause 0 : (`{ callableId ':' V*{V <- V*, callableId <- callableId*} `}, nameIR_f) = ?((callableId_found, V_found))
   -- if ([(callableId_found, V_found)] = $find_non_overloadeds<V>(`{ callableId ':' V*{V <- V*, callableId <- callableId*} `}, nameIR_f))
 
-  clause -1 : (`{ callableId ':' V*{V <- V*, callableId <- callableId*} `}, nameIR_f) = ?()
+  clause -1 : (_map<callableId, V>, nameIR_f) = ?()
 
 def $find_non_overloadeds<V>(map<callableId, V>, nameIR) : (callableId, V)* =
 
@@ -18469,7 +18469,7 @@ def $tableObject_add_entry(evalContext, tableObject, tableEntryPriorityInterface
   -- if (tableEntriesPropertyIR_updated = annotationList constOptIR ENTRIES '=' `{ tableEntryIR*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] `})
   -- if (TBL_updated = TBL[ENTRIES = tableEntriesPropertyIR_updated])
 
-  clause -1 : (EC, TABLE typeId `{ frame TBL `}, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) = ?()
+  clause -1 : (EC, _tableObject, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) = ?()
 
 def $tableObject_add_default_action(evalContext, tableObject, tableActionInterface) : tableObject =
 
