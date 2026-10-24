@@ -7,7 +7,7 @@
 //! the next level's layer, or the builtins of the AL or IL program.
 //! A single-level tower executes its top level directly as its base.
 
-use super::{config::LevelConfig, externs::MetaExtern};
+use super::{config::LevelConfig, externs::MetaExtern, reentry::NoReentry};
 use crate::{
     interface::{meta::MetaInterface, p4::P4Interface},
     lang::{
@@ -15,7 +15,7 @@ use crate::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{self as il, Id, Typ},
     },
-    runner::{Eval, Host, NullInterp, Runner},
+    runner::{Eval, Host, Runner},
     sim_plugin::dummy::Dummy,
 };
 
@@ -115,7 +115,7 @@ impl HostLayer {
     pub fn eval_extern_rel(
         &mut self,
         arena: &mut Arena,
-        interp: &mut NullInterp,
+        interp: &mut NoReentry,
         name: &str,
         values: &[Value],
     ) -> Eval<Vec<Value>> {
@@ -129,7 +129,7 @@ impl HostLayer {
     pub fn eval_extern_func(
         &mut self,
         arena: &mut Arena,
-        interp: &mut NullInterp,
+        interp: &mut NoReentry,
         name: &str,
         targs: &[Typ],
         values: &[Value],

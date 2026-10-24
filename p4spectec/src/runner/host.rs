@@ -3,7 +3,8 @@
 //! A host pairs an interface with an extern and has no interpreter:
 //! the level below interprets its specification and relays builtin and
 //! host calls to it. An extern call runs in a context built around the
-//! interpreter the caller lends, which answers if the extern reenters.
+//! interpreter the caller lends, which answers if the extern reenters;
+//! a caller that supports no reentry lends one that always fails.
 
 use crate::lang::data::{arena::Arena, value::flat::Value};
 

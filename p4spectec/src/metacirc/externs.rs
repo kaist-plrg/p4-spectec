@@ -5,16 +5,14 @@
 //! TerminalExtern handles only builtins of the AL or IL program above the top level.
 //! Clearing an extern resets its owned runners before arena values are reset.
 
-use super::{codec, tower::HostLayer};
+use super::{codec, reentry::NoReentry, tower::HostLayer};
 use crate::{
     interface::meta::{MetaInterface, shared::Cache},
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::Typ,
     },
-    runner::{
-        Eval, Extern, ExternError, Interface, Interpreter, NullInterp, RunnerContext, SideEffect,
-    },
+    runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext, SideEffect},
 };
 
 /// The host of the AL or IL script that a meta specification interprets.
@@ -141,7 +139,7 @@ impl RelayExtern {
                     };
                 let eval = self.layer_next.eval_extern_func(
                     arena,
-                    &mut NullInterp,
+                    &mut NoReentry,
                     &id.node,
                     &targs,
                     &values,
@@ -156,7 +154,7 @@ impl RelayExtern {
                 };
                 let eval =
                     self.layer_next
-                        .eval_extern_rel(arena, &mut NullInterp, &id.node, &values);
+                        .eval_extern_rel(arena, &mut NoReentry, &id.node, &values);
                 codec::encode::rel_result(arena, &mut self.cache, eval)
             }
             // Host functions are reached through the three declared meta relations

@@ -42,7 +42,7 @@ pub use context::{Checkpoint, RunnerContext};
 pub use externs::{Extern, ExternError, NullExtern};
 pub use host::Host;
 pub use interface::{Interface, InterfaceError, NullInterface};
-pub use interpreter::{Eval, Interpreter, InterpreterError, NullInterp, SideEffect};
+pub use interpreter::{Eval, Interpreter, InterpreterError, SideEffect};
 
 // == Runner construction
 

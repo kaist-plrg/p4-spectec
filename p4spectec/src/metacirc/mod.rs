@@ -10,6 +10,7 @@ pub mod config;
 mod error;
 mod externs;
 mod patch;
+mod reentry;
 mod tower;
 
 use crate::{
