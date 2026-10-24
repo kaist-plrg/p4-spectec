@@ -232,7 +232,21 @@ pub fn to_pattern(arena: &Arena, info: &Info, shapes: &Shapes, value: &Value) ->
                 Ok(Pattern::App(symbol, sorts, terms))
             }
             [sort, t] if is(arena, mixop, shapes.dv) => {
-                Ok(dv(sort_of_value(arena, shapes, sort)?, text(arena, t)?))
+                let sort = sort_of_value(arena, shapes, sort)?;
+                let t = text(arena, t)?;
+                // The runtime cannot read a StringBuffer as a domain value;
+                // it is made as .StringBuffer +String "text"
+                if let Sort::Sort(name, _) = &sort
+                    && info.sort_hook(name) == Some("BUFFER.StringBuffer")
+                {
+                    let empty = app(info.symbol_of_hook("BUFFER.empty")?, vec![]);
+                    if t.is_empty() {
+                        return Ok(empty);
+                    }
+                    let string = dv(hooked("STRING.String")?, t);
+                    return Ok(app(info.symbol_of_hook("BUFFER.concat")?, vec![empty, string]));
+                }
+                Ok(dv(sort, t))
             }
             [i] if is(arena, mixop, shapes.int) => {
                 Ok(dv(hooked("INT.Int")?, int(arena, i)?.to_string()))

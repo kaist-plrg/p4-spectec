@@ -59,6 +59,8 @@ pub struct Info {
     pub constructors: HashMap<String, (String, Role)>,
     /// The sort standing for each number, e.g. `8` for `Sort8`.
     pub nat_sorts: HashMap<String, String>,
+    /// A symbol of each hook, e.g. `.StringBuffer` of `BUFFER.empty`.
+    symbol_hooks: HashMap<String, String>,
 }
 
 fn string_attr<'a>(name: &str, attrs: &'a [Attr]) -> Option<&'a str> {
@@ -86,6 +88,13 @@ impl Info {
     pub fn new(definition: &Definition) -> Self {
         let mut info = Self::default();
         for sentence in definition.sentences() {
+            if let Sentence::SymbolDecl { name, attrs, .. } = sentence
+                && let Some(hook) = string_attr("hook", attrs)
+            {
+                info.symbol_hooks
+                    .entry(hook.to_owned())
+                    .or_insert_with(|| name.clone());
+            }
             let Sentence::SortDecl { name, attrs, .. } = sentence else {
                 continue;
             };
@@ -123,6 +132,14 @@ impl Info {
     /// The hook of a sort.
     pub fn sort_hook(&self, sort: &str) -> Option<&str> {
         self.sort_hooks.get(sort).map(String::as_str)
+    }
+
+    /// A symbol with a hook, e.g. `BUFFER.empty`.
+    pub fn symbol_of_hook(&self, hook: &str) -> Result<&str, String> {
+        self.symbol_hooks
+            .get(hook)
+            .map(String::as_str)
+            .ok_or_else(|| format!("no symbol has the hook {hook}"))
     }
 
     /// The one sort with a hook, e.g. `SortInt` for `INT.Int`.

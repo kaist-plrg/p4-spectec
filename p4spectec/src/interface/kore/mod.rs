@@ -157,6 +157,10 @@ impl KoreInterface {
             .map(|t| term::to_pattern(arena, info, shapes, t))
             .collect::<Result<Vec<_>, _>>()?;
         let pattern = Pattern::App(symbol, sorts, terms);
+        // KORE_TRACE: each call, before the runtime sees it
+        if std::env::var_os("KORE_TRACE").is_some() {
+            eprintln!("hook> {pattern} : {sort}");
+        }
         let mut maker = term::Maker { arena, info, shapes };
         match runtime.simplify(&pattern.to_string(), &sort) {
             Ok(result) => {
