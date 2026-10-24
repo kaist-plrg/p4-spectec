@@ -121,10 +121,13 @@ def $result_instance(D, symid, sort_a*) = $result_sort(D, symid)
 ;; Hooks whose arguments are evaluated lazily (create_hardcoded_hook): the
 ;; hook of the symbol, or "" for any other symbol
 
+dec $is_lazy(hookid) : bool
+def $is_lazy(hookid) = hookid <- [ "BOOL.and", "BOOL.andThen", "BOOL.or",
+                                   "BOOL.orElse", "BOOL.implies", "KEQUAL.ite" ]
+
 dec $lazy_hook(definition, symid) : text
 def $lazy_hook(D, symid) = hookid
   -- if hookid = $hook_of(D, symid)
-  -- if hookid <- [ "BOOL.and", "BOOL.andThen", "BOOL.or", "BOOL.orElse",
-                   "BOOL.implies", "KEQUAL.ite" ]
+  -- if $is_lazy(hookid)
 def $lazy_hook(D, symid) = ""
   -- otherwise

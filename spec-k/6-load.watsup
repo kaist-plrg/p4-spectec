@@ -62,9 +62,32 @@ def $proof_only(kattr*) = $exists_($is_proof_attr(kattr)*)
 ;; A hook comes before the equations of a function, as the LLVM backend calls
 ;; the hook
 
+;; The hooks of K's modules of domain values (INT, BOOL, STRING, BYTES, FLOAT,
+;; MINT, and the KRYPTO plugin) are computed by the K runtime (RUNTIME), but for
+;; the lazy ones and the conversions between strings and tokens of any sort;
+;; the hooks on K terms are specified (HOOKED)
+
+dec $hook_module(hookid) : text
+def $hook_module(hookid) = $string_substr(hookid, 0, i)
+  -- if i = $string_find(hookid, ".", 0)
+  -- if $(i >= 0)
+def $hook_module(hookid) = hookid
+  -- if $string_find(hookid, ".", 0) = -1
+
+dec $is_runtime(hookid) : bool
+def $is_runtime(hookid)
+  = $hook_module(hookid) <- [ "INT", "BOOL", "STRING", "BYTES", "FLOAT", "MINT",
+                              "KRYPTO" ]
+    /\ ~$is_lazy(hookid)
+    /\ ~(hookid <- [ "STRING.token2string", "STRING.string2token" ])
+
 dec $kind_by_attrs(kattr*) : symkind
+def $kind_by_attrs(kattr*) = RUNTIME hookid
+  -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
+  -- if $is_runtime(hookid)
 def $kind_by_attrs(kattr*) = HOOKED hookid
   -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
+  -- if ~$is_runtime(hookid)
 def $kind_by_attrs(kattr*) = FUNCTION
   -- if ~$has_attr("hook", kattr*)
   -- if $has_attr("function", kattr*)
@@ -78,9 +101,6 @@ def $kind_by_attrs(kattr*) = CONSTRUCTOR
   -- if ~$has_attr("hook", kattr*) /\ ~$has_attr("function", kattr*)
   -- if ~$has_attr("anywhere", kattr*) /\ ~$has_attr("binder", kattr*)
 
-dec $symdecls(map<symid, ksymdecl>) : map<symid, symdecl>
-def $symdecls(`{ (symid ':' (KSYMBOL sortid_p* sort_a* '->' sort kattr*))* `})
-  = `{ (symid ':' (sort_a* '->' sort $kind_by_attrs(kattr*)))* `}
 
 dec $params(map<symid, ksymdecl>) : map<symid, sortid*>
 def $params(`{ (symid ':' (KSYMBOL sortid_p* sort_a* '->' sort kattr*))* `})
@@ -112,6 +132,10 @@ def $sort_hook(KD, SORT sortid sort*) = hookid
   -- if (KATTR "hook" sort_h* ([KSTR hookid])) = $attr_named("hook", kattr*)
 def $sort_hook(KD, sort) = ""
   -- otherwise
+
+dec $symdecls(map<symid, ksymdecl>) : map<symid, symdecl>
+def $symdecls(`{ (symid ':' (KSYMBOL sortid_p* sort_a* '->' sort kattr*))* `})
+  = `{ (symid ':' (sort_a* '->' sort $kind_by_attrs(kattr*)))* `}
 
 dec $natsort(sortid, kattr*) : pair<sortid, nat>*
 def $natsort(sortid, kattr*) = [ sortid ':' n ]

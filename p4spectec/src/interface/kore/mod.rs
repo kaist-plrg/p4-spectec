@@ -6,9 +6,10 @@
 //! and then parses initial terms against its symbols.
 //! `krun` runs the specification's `Krun` relation from an initial term.
 //!
-//! Hooks are delegated to the K runtime of the definition (`llvm`):
-//! `$call_hook` writes its arguments as KORE (`term`), has the runtime
-//! evaluate the hooked symbol, and reads the result back (`binary`).
+//! Hooks on domain values are computed by the K runtime of the definition
+//! (`llvm`): `$call_hook` writes its arguments, domain values, as KORE
+//! (`term`), has the runtime evaluate the hooked symbol, and reads the
+//! resulting domain value back (`binary`). Hooks on K terms are specified.
 //! `builtins` has the text builtins for reading domain values.
 
 use std::{collections::HashSet, path::Path, path::PathBuf};
@@ -164,16 +165,7 @@ impl KoreInterface {
         let mut maker = term::Maker { arena, info, shapes };
         match runtime.simplify(&pattern.to_string(), &sort) {
             Ok(result) => {
-                let result = unwrap_result(binary::decode(&result)?, &sort);
-                // Binary KORE loses the names of KVars; the printer keeps them
-                let result = if info.has_kvar(&result) {
-                    let text = runtime.print(&pattern.to_string(), &sort)?;
-                    let kseq = parse::parse_pattern(text.as_bytes())
-                        .map_err(|error| format!("the runtime prints {text}: {}", error.message))?;
-                    unwrap_printed(desugar_assoc(kseq), &sort)?
-                } else {
-                    result
-                };
+                let result = unwrap_result(binary::decode(&result)?);
                 let result = maker.of_pattern(&result)?;
                 maker.ok(result)
             }
@@ -201,7 +193,7 @@ impl KoreInterface {
         let sort = Sort::Sort(info.sort_of_hook("FLOAT.Float")?.to_owned(), vec![]);
         let literal = Pattern::App("\\dv".to_owned(), vec![sort.clone()], vec![Pattern::Str(text)]);
         let normal = match runtime.simplify(&literal.to_string(), &sort) {
-            Ok(result) => match unwrap_result(binary::decode(&result)?, &sort) {
+            Ok(result) => match unwrap_result(binary::decode(&result)?) {
                 Pattern::App(dv, _, args) if dv == "\\dv" => match args.as_slice() {
                     [Pattern::Str(normal)] => Some(normal.clone()),
                     _ => None,
@@ -288,81 +280,15 @@ impl Interface for KoreInterface {
     }
 }
 
-/// A term of sort `S` from its injection into `SortKItem`: the runtime
-/// joins injections, so `inj{A, SortKItem{}}(t)` stands for
-/// `inj{A, S}(t)` when `A` is a subsort of `S`, and for `t` when `A` is `S`.
-fn from_kitem(pattern: Pattern, sort: &Sort) -> Pattern {
-    match pattern {
-        Pattern::App(inj, mut sorts, mut args)
-            if inj == "inj"
-                && args.len() == 1
-                && sorts.len() == 2
-                && matches!(&sorts[1], Sort::Sort(kitem, _) if kitem == "SortKItem")
-                && !matches!(sort, Sort::Sort(name, _) if name == "SortKItem") =>
-        {
-            if &sorts[0] == sort {
-                args.remove(0)
-            } else {
-                sorts[1] = sort.clone();
-                Pattern::App(inj, sorts, args)
-            }
-        }
-        pattern => pattern,
-    }
-}
-
 /// The result of `kore_simplify` without its wrapping: the runtime gives
-/// `rawTerm{}(inj{A, SortKItem{}}(t))` for a term of sort `S` (`from_kitem`).
-fn unwrap_result(pattern: Pattern, sort: &Sort) -> Pattern {
-    let pattern = match pattern {
-        Pattern::App(raw, _, mut args) if raw == "rawTerm" && args.len() == 1 => args.remove(0),
-        pattern => pattern,
-    };
-    from_kitem(pattern, sort)
-}
-
-/// The term in the runtime's printing of a result (`Runtime::print`).
-fn unwrap_printed(pattern: Pattern, sort: &Sort) -> Result<Pattern, String> {
-    if matches!(sort, Sort::Sort(name, _) if name == "SortK") {
-        return Ok(pattern);
+/// `rawTerm{}(inj{S, SortKItem{}}(v))` for a domain value `v` of sort `S`.
+fn unwrap_result(pattern: Pattern) -> Pattern {
+    let mut pattern = pattern;
+    for wrapper in ["rawTerm", "inj"] {
+        pattern = match pattern {
+            Pattern::App(name, _, mut args) if name == wrapper && args.len() == 1 => args.remove(0),
+            pattern => pattern,
+        };
     }
-    match pattern {
-        Pattern::App(kseq, _, mut args) if kseq == "kseq" && args.len() == 2 => {
-            Ok(from_kitem(args.swap_remove(0), sort))
-        }
-        _ => Err("the runtime prints no K sequence".to_owned()),
-    }
-}
-
-/// `\left-assoc{}(f(a, b, c))` as `f(f(a, b), c)`, and `\right-assoc{}(f(a, b, c))`
-/// as `f(a, f(b, c))`, as the runtime's printer writes collections.
-fn desugar_assoc(pattern: Pattern) -> Pattern {
-    stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match pattern {
-        Pattern::App(assoc, _, mut args)
-            if (assoc == "\\left-assoc" || assoc == "\\right-assoc") && args.len() == 1 =>
-        {
-            let Pattern::App(f, sorts, elems) = args.remove(0) else {
-                return Pattern::App(assoc, vec![], args);
-            };
-            let mut elems: Vec<Pattern> = elems.into_iter().map(desugar_assoc).collect();
-            if elems.is_empty() {
-                return Pattern::App(f, sorts, elems);
-            }
-            let join = |l, r| Pattern::App(f.clone(), sorts.clone(), vec![l, r]);
-            if assoc == "\\left-assoc" {
-                let first = elems.remove(0);
-                elems.into_iter().fold(first, join)
-            } else {
-                let last = elems.pop().expect("not empty");
-                elems
-                    .into_iter()
-                    .rev()
-                    .fold(last, |acc, elem| join(elem, acc))
-            }
-        }
-        Pattern::App(f, sorts, args) => {
-            Pattern::App(f, sorts, args.into_iter().map(desugar_assoc).collect())
-        }
-        pattern => pattern,
-    })
+    pattern
 }

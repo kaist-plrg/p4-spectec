@@ -1,0 +1,30 @@
+;;
+;; Hooks computed by the K runtime
+;;
+
+;;; A hook of K's modules of domain values (INT, BOOL, STRING, BYTES, FLOAT,
+;;; MINT, KRYPTO) is computed by the K runtime of the definition, the LLVM
+;;; backend's (RUNTIME symbols, 6-load); FAIL if the runtime fails, as on a
+;;; division by zero. Hooks on K terms are specified (3.2 to 3.4.2).
+
+builtin dec $call_hook(symid, sort*, sort, term*) : res<term>
+  hint(prose_in "the result of the K runtime on" %0 "applied to" %3)
+
+;;; Reading domain values (6-load): a KORE string has one byte per character
+
+builtin dec $string_length(text) : int
+  hint(prose_in "the number of bytes of" %0)
+builtin dec $string_substr(text, int, int) : text
+  hint(prose_in "the bytes of" %0 "from" %1 "up to" %2)
+builtin dec $string_find(text, text, int) : int
+  hint(prose_in "the first position from" %2 "where" %1 "occurs in" %0
+                ", or -1")
+builtin dec $string_to_int(text) : int?
+  hint(prose_in "the integer written in decimal as" %0)
+builtin dec $string_to_bytes(text) : nat*
+  hint(prose_in "the bytes of" %0)
+
+;;; A Float literal in the runtime's output format, by the K runtime
+
+builtin dec $float_literal(text) : text?
+  hint(prose_in "the value of the float literal" %0)

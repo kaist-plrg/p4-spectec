@@ -6,11 +6,7 @@
 //! `Runtime::open` loads that library, and `Runtime::simplify` evaluates
 //! the functions of a term, e.g. `_+Int_(2, 3)` to `5`, without rewriting.
 //! The library keeps global state, so a process opens one definition.
-//!
-//! `simplify` gives binary KORE, in which the runtime writes a KVar
-//! (`KVAR.KVar`) without its name (`runtime/util/ConfigurationSerializer.cpp`
-//! emits only the suffix the printer adds). `print` evaluates a term again
-//! and writes it with the runtime's printer, which keeps the names.
+
 //!
 //! This is the one module with unsafe code: the calls into the library.
 
@@ -63,8 +59,6 @@ struct Api {
     kore_composite_sort_new: unsafe extern "C" fn(*const c_char) -> *mut Opaque,
     kore_composite_sort_add_argument: unsafe extern "C" fn(*const Opaque, *const Opaque),
     kore_sort_free: unsafe extern "C" fn(*const Opaque),
-    kore_pattern_construct: unsafe extern "C" fn(*const Opaque) -> *mut Opaque,
-    kore_block_dump: unsafe extern "C" fn(*mut Opaque) -> *mut c_char,
     kore_simplify: unsafe extern "C" fn(
         *mut Opaque,
         *const Opaque,
@@ -120,8 +114,6 @@ impl Runtime {
             kore_composite_sort_new: lookup!(handle, kore_composite_sort_new),
             kore_composite_sort_add_argument: lookup!(handle, kore_composite_sort_add_argument),
             kore_sort_free: lookup!(handle, kore_sort_free),
-            kore_pattern_construct: lookup!(handle, kore_pattern_construct),
-            kore_block_dump: lookup!(handle, kore_block_dump),
             kore_simplify: lookup!(handle, kore_simplify),
         };
         // SAFETY: called once, before any other call into the runtime
@@ -182,36 +174,6 @@ impl Runtime {
             (self.api.kore_pattern_free)(pattern);
             (self.api.kore_sort_free)(sort_c);
             result
-        }
-    }
-
-    /// Evaluates the functions of a term in KORE text, of the given sort, and
-    /// writes the result with the runtime's printer, as a K sequence:
-    /// `kseq{}(inj{S, SortKItem{}}(t), dotk{}())` for a result `t`.
-    ///
-    /// A failing evaluation aborts the process here, unlike in `simplify`;
-    /// call this only for a term that `simplify` evaluated.
-    pub fn print(&self, term: &str, sort: &Sort) -> Result<String, String> {
-        let wrapped = match sort {
-            Sort::Sort(name, _) if name == "SortK" => term.to_owned(),
-            Sort::Sort(name, _) if name == "SortKItem" => format!("kseq{{}}({term}, dotk{{}}())"),
-            sort => format!("kseq{{}}(inj{{{sort}, SortKItem{{}}}}({term}), dotk{{}}())"),
-        };
-        let term_c = CString::new(wrapped).map_err(|_| "NUL in a term".to_owned())?;
-        // SAFETY: a C string; the term evaluated without error before, so
-        // constructing it again does not throw; the dump is malloc'ed
-        unsafe {
-            let pattern = (self.api.kore_pattern_parse)(term_c.as_ptr());
-            if pattern.is_null() {
-                return Err(format!("the runtime cannot parse {term}"));
-            }
-            let block = (self.api.kore_pattern_construct)(pattern);
-            let dump = (self.api.kore_block_dump)(block);
-            let text = CStr::from_ptr(dump).to_bytes().to_vec();
-            free(dump.cast());
-            (self.api.kore_pattern_free)(pattern);
-            String::from_utf8(text)
-                .map_err(|_| "the runtime prints a term that is not UTF-8".to_owned())
         }
     }
 }

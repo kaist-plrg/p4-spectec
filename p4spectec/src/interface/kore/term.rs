@@ -1,13 +1,13 @@
-//! Terms of the K specification as KORE, and back, at the runtime boundary
+//! Terms of the K specification as KORE, and domain values back
 //!
-//! A hook delegated to the K runtime gets its arguments, terms of the
-//! specification (`term` in `spec-k/1-syntax.watsup`), as KORE patterns,
-//! and gives back a KORE pattern that becomes a term again.
+//! `to_pattern` writes a term of the specification (`term` in
+//! `spec-k/1-syntax.watsup`) as a KORE pattern: the arguments of a hook the
+//! K runtime computes, and the final configuration of a run.
 //! Domain values are written with the sort hooked to their kind:
-//! `INT 5` is `\dv{SortInt{}}("5")`. Collections are written with the
-//! constructors of their sort, and read back into the specification's
-//! collection values: Map entries and Set elements in the order of
-//! `$union_set`, as the specification keeps them (`$sorted_map`).
+//! `INT 5` is `\dv{SortInt{}}("5")`; collections with the constructors of
+//! their sort, from its `element`, `concat`, and `unit` attributes.
+//! `Maker::of_pattern` reads the result of such a hook back into a term:
+//! a domain value, or a constructor applied to such results.
 
 use std::rc::Rc;
 
@@ -30,13 +30,11 @@ use crate::lang::{
     },
 };
 
-use crate::interface::builtin::sets;
-
 use crate::phrase;
 
 use super::{
     ast::{Pattern, Sort},
-    info::{Collection, Info, Role},
+    info::Info,
 };
 
 type Result<T> = std::result::Result<T, String>;
@@ -220,32 +218,12 @@ pub fn to_pattern(arena: &Arena, info: &Info, shapes: &Shapes, value: &Value) ->
                     .map(|sort| sort_of_value(arena, shapes, sort))
                     .collect::<Result<_>>()?;
                 let terms = list(arena, terms)?;
-                // substOne makes inj{S, S}(V), which the runtime cannot read
-                // back: no such symbol is declared. It is written as V.
-                if let ([sort_a, sort_b], [term]) = (sorts.as_slice(), terms)
-                    && symbol == "inj"
-                    && sort_a == sort_b
-                {
-                    return to(term);
-                }
                 let terms = terms.iter().map(to).collect::<Result<_>>()?;
                 Ok(Pattern::App(symbol, sorts, terms))
             }
             [sort, t] if is(arena, mixop, shapes.dv) => {
                 let sort = sort_of_value(arena, shapes, sort)?;
                 let t = text(arena, t)?;
-                // The runtime cannot read a StringBuffer as a domain value;
-                // it is made as .StringBuffer +String "text"
-                if let Sort::Sort(name, _) = &sort
-                    && info.sort_hook(name) == Some("BUFFER.StringBuffer")
-                {
-                    let empty = app(info.symbol_of_hook("BUFFER.empty")?, vec![]);
-                    if t.is_empty() {
-                        return Ok(empty);
-                    }
-                    let string = dv(hooked("STRING.String")?, t);
-                    return Ok(app(info.symbol_of_hook("BUFFER.concat")?, vec![empty, string]));
-                }
                 Ok(dv(sort, t))
             }
             [i] if is(arena, mixop, shapes.int) => {
@@ -400,17 +378,6 @@ impl Maker<'_> {
         }
     }
 
-    /// The elements of a set in the order of `$union_set`.
-    fn set_value(&mut self, typ_elem: Typ, elems: Vec<Value>) -> Result<Value> {
-        let elems = self.list(typ_elem.clone(), elems)?;
-        let typ_set = typ::make::var(id("set"), vec![typ_elem.clone()]);
-        let set = self.case(self.shapes.braces, vec![elems], typ_set)?;
-        sets::union_set(self.arena, &[typ_elem], &[set, set]).map_err(|error| {
-            let report = error.into_report();
-            report.to_string()
-        })
-    }
-
     /// A domain value, by the hook of its sort.
     fn domain_value(&mut self, sort: &Sort, text: &str) -> Result<Value> {
         let Sort::Sort(name, _) = sort else {
@@ -464,129 +431,17 @@ impl Maker<'_> {
         }
     }
 
-    /// The elements of nested concatenations of a collection sort.
-    fn elements<'p>(&self, sort: &str, pattern: &'p Pattern, elems: &mut Vec<&'p [Pattern]>) {
-        if let Pattern::App(symbol, _, args) = pattern
-            && let Some((sort_c, role)) = self.info.constructors.get(symbol)
-            && sort_c == sort
-        {
-            match role {
-                Role::Unit => {}
-                Role::Element => elems.push(args),
-                Role::Concat => {
-                    for arg in args {
-                        self.elements(sort, arg, elems);
-                    }
-                }
-            }
-        }
-    }
-
-    fn range_bound(&self, pattern: &Pattern) -> Result<BigInt> {
-        match pattern {
-            Pattern::App(inj, _, args) if inj == "inj" => match args.as_slice() {
-                [arg] => self.range_bound(arg),
-                _ => Err("bad range bound".to_owned()),
-            },
-            Pattern::App(dv, _, args) if dv == "\\dv" => match args.as_slice() {
-                [Pattern::Str(text)] => text
-                    .parse::<BigInt>()
-                    .map_err(|_| "bad range bound".to_owned()),
-                _ => Err("bad range bound".to_owned()),
-            },
-            _ => Err("bad range bound".to_owned()),
-        }
-    }
-
-    /// A collection of the given sort, from its constructors.
-    fn collection(&mut self, sort: &str, pattern: &Pattern) -> Result<Value> {
-        let constructors = &self.info.collections[sort];
-        let kind = constructors.collection;
-        let mut elems = Vec::new();
-        self.elements(sort, pattern, &mut elems);
-        let value_sort = self.sort(&sort_named(sort))?;
-        let wrong = || format!("bad element of {sort}");
-        match kind {
-            Collection::Map => {
-                let typ_pair =
-                    typ::make::var(id("pair"), vec![typ_named("term"), typ_named("term")]);
-                let pairs = elems
-                    .into_iter()
-                    .map(|args| match args {
-                        [k, v] => {
-                            let k = self.of_pattern(k)?;
-                            let v = self.of_pattern(v)?;
-                            self.case(self.shapes.pair, vec![k, v], typ_pair.clone())
-                        }
-                        _ => Err(wrong()),
-                    })
-                    .collect::<Result<_>>()?;
-                let map = self.set_value(typ_pair, pairs)?;
-                self.term(self.shapes.map, vec![value_sort, map])
-            }
-            Collection::Set => {
-                let elems = elems
-                    .into_iter()
-                    .map(|args| match args {
-                        [elem] => self.of_pattern(elem),
-                        _ => Err(wrong()),
-                    })
-                    .collect::<Result<_>>()?;
-                let set = self.set_value(typ_named("term"), elems)?;
-                self.term(self.shapes.set, vec![value_sort, set])
-            }
-            Collection::List => {
-                let elems = elems
-                    .into_iter()
-                    .map(|args| match args {
-                        [elem] => self.of_pattern(elem),
-                        _ => Err(wrong()),
-                    })
-                    .collect::<Result<_>>()?;
-                let elems = self.list(typ_named("term"), elems)?;
-                self.term(self.shapes.list, vec![value_sort, elems])
-            }
-            Collection::RangeMap => {
-                let mut ranges = elems
-                    .into_iter()
-                    .map(|args| match args {
-                        [Pattern::App(_, _, bounds), v] => match bounds.as_slice() {
-                            [a, b] => Ok((self.range_bound(a)?, self.range_bound(b)?, v)),
-                            _ => Err(wrong()),
-                        },
-                        _ => Err(wrong()),
-                    })
-                    .collect::<Result<Vec<_>>>()?;
-                ranges.sort_by(|(a, _, _), (b, _, _)| a.cmp(b));
-                let items = ranges
-                    .into_iter()
-                    .map(|(a, b, v)| {
-                        let a = self.int(a)?;
-                        let b = self.int(b)?;
-                        let v = self.of_pattern(v)?;
-                        self.case(self.shapes.range, vec![a, b, v], typ_named("rangeitem"))
-                    })
-                    .collect::<Result<_>>()?;
-                let items = self.list(typ_named("rangeitem"), items)?;
-                self.term(self.shapes.rangemap, vec![value_sort, items])
-            }
-        }
-    }
-
-    /// A KORE pattern, without variables, as a term of the specification.
+    /// The result of a hook computed by the runtime as a term: a domain value,
+    /// or a constructor applied to such results, as `G1Point(x, y)` of KRYPTO.
     pub fn of_pattern(&mut self, pattern: &Pattern) -> Result<Value> {
-        stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match pattern {
+        match pattern {
             Pattern::App(symbol, sorts, args) if symbol == "\\dv" => {
                 match (sorts.as_slice(), args.as_slice()) {
                     ([sort], [Pattern::Str(text)]) => self.domain_value(sort, text),
-                    _ => Err("bad domain value".to_owned()),
+                    _ => Err(format!("bad domain value {pattern}")),
                 }
             }
             Pattern::App(symbol, sorts, args) => {
-                if let Some((sort, _)) = self.info.constructors.get(symbol) {
-                    let sort = sort.clone();
-                    return self.collection(&sort, pattern);
-                }
                 let symbol = self.text(symbol)?;
                 let sorts = sorts
                     .iter()
@@ -600,10 +455,8 @@ impl Maker<'_> {
                 let args = self.list(typ_named("term"), args)?;
                 self.term(self.shapes.app, vec![symbol, sorts, args])
             }
-            Pattern::Var(..) | Pattern::SetVar(..) | Pattern::Str(_) => {
-                Err(format!("not a term: {pattern}"))
-            }
-        })
+            _ => Err(format!("the runtime gives {pattern}, not a term")),
+        }
     }
 
     /// `OK term`, of `res<term>`.
