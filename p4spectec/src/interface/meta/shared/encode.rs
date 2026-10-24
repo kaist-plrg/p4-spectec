@@ -253,10 +253,10 @@ impl Encode for il::Typ {
         let typ_al = self;
         let span = typ_al.span;
         match &typ_al.node {
-            il::TypKind::Bool => case(arena, m::TYP_BOOL, "typ", vec![], span),
-            il::TypKind::Num(num::Typ::Nat) => case(arena, m::TYP_NAT, "typ", vec![], span),
-            il::TypKind::Num(num::Typ::Int) => case(arena, m::TYP_INT, "typ", vec![], span),
-            il::TypKind::Text => case(arena, m::TYP_TEXT, "typ", vec![], span),
+            il::TypKind::Bool => case(arena, m::TYP_BOOL, "optyp", vec![], span),
+            il::TypKind::Num(num::Typ::Nat) => case(arena, m::TYP_NAT, "numtyp", vec![], span),
+            il::TypKind::Num(num::Typ::Int) => case(arena, m::TYP_INT, "numtyp", vec![], span),
+            il::TypKind::Text => case(arena, m::TYP_TEXT, "optyp", vec![], span),
             il::TypKind::Var(id_al, targs_al) => {
                 let values_meta =
                     vec![id_al.encode_cached(arena, cache)?, list(arena, cache, "typ", targs_al)?];
@@ -555,21 +555,21 @@ impl Encode for il::Pattern {
     type Output = Value;
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
-        let (shape, values_meta) = match self {
+        let (shape, typ, values_meta) = match self {
             il::Pattern::Case(mixop_al) => {
-                (m::PAT_INJ, vec![mixop_al.encode_cached(arena, cache)?])
+                (m::PAT_INJ, "pat", vec![mixop_al.encode_cached(arena, cache)?])
             }
-            il::Pattern::List(il::ListPattern::Cons) => (m::PAT_CONS, vec![]),
+            il::Pattern::List(il::ListPattern::Cons) => (m::PAT_CONS, "listPat", vec![]),
             il::Pattern::List(il::ListPattern::Fixed(num_len)) => {
                 let nat_meta = u64::try_from(*num_len).map_err(ValueError::from)?.into();
                 let value_nat = make::nat(arena, nat_meta, Span::default())?;
-                (m::PAT_FIXED, vec![value_nat])
+                (m::PAT_FIXED, "listPat", vec![value_nat])
             }
-            il::Pattern::List(il::ListPattern::Nil) => (m::PAT_NIL, vec![]),
-            il::Pattern::Opt(il::OptPattern::Some) => (m::PAT_SOME, vec![]),
-            il::Pattern::Opt(il::OptPattern::None) => (m::PAT_NONE, vec![]),
+            il::Pattern::List(il::ListPattern::Nil) => (m::PAT_NIL, "listPat", vec![]),
+            il::Pattern::Opt(il::OptPattern::Some) => (m::PAT_SOME, "optPat", vec![]),
+            il::Pattern::Opt(il::OptPattern::None) => (m::PAT_NONE, "optPat", vec![]),
         };
-        case(arena, shape, "pat", values_meta, Span::default())
+        case(arena, shape, typ, values_meta, Span::default())
     }
 }
 

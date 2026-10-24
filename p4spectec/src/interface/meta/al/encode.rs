@@ -132,12 +132,13 @@ impl Encode for al::Prem {
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let span = self.span;
-        let (shape, values_meta) = match &self.node {
+        let (shape, typ, values_meta) = match &self.node {
             al::PremKind::Rule(prem_rule_al) => {
                 let (exps_input_al, exps_output_al) =
                     input::split(&prem_rule_al.input_hint, prem_rule_al.not_exp.args().to_vec())?;
                 (
                     m::PREM_REL,
+                    "relPremAL",
                     vec![
                         prem_rule_al.id.encode_cached(arena, cache)?,
                         list(arena, cache, "typedExp", &exps_input_al)?,
@@ -146,10 +147,11 @@ impl Encode for al::Prem {
                 )
             }
             al::PremKind::If(prem_inner_al) => {
-                (m::PREM_IF, vec![prem_inner_al.exp.encode_cached(arena, cache)?])
+                (m::PREM_IF, "ifPrem", vec![prem_inner_al.exp.encode_cached(arena, cache)?])
             }
             al::PremKind::IfHold(prem_inner_al) => (
                 m::PREM_IFHOLD,
+                "ifHoldPrem",
                 vec![
                     prem_inner_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "typedExp", prem_inner_al.not_exp.args())?,
@@ -157,6 +159,7 @@ impl Encode for al::Prem {
             ),
             al::PremKind::IfNotHold(prem_inner_al) => (
                 m::PREM_IFNOTHOLD,
+                "ifNotHoldPrem",
                 vec![
                     prem_inner_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "typedExp", prem_inner_al.not_exp.args())?,
@@ -164,6 +167,7 @@ impl Encode for al::Prem {
             ),
             al::PremKind::Let(prem_inner_al) => (
                 m::PREM_LET,
+                "letPremAL",
                 vec![
                     prem_inner_al.exp_l.encode_cached(arena, cache)?,
                     prem_inner_al.exp_r.encode_cached(arena, cache)?,
@@ -171,16 +175,17 @@ impl Encode for al::Prem {
             ),
             al::PremKind::Iter(prem_inner_al) => (
                 m::PREM_ITER,
+                "iterPremAL",
                 vec![
                     prem_inner_al.prem.encode_cached(arena, cache)?,
                     PremIterAl(&prem_inner_al.prem_iter).encode_cached(arena, cache)?,
                 ],
             ),
             al::PremKind::Debug(prem_inner_al) => {
-                (m::PREM_DEBUG, vec![prem_inner_al.exp.encode_cached(arena, cache)?])
+                (m::PREM_DEBUG, "debugPrem", vec![prem_inner_al.exp.encode_cached(arena, cache)?])
             }
         };
-        case(arena, shape, "premAL", values_meta, span)
+        case(arena, shape, typ, values_meta, span)
     }
 }
 
@@ -320,13 +325,14 @@ impl Encode for al::Def {
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let span = self.span;
-        let (shape, values_meta) = match &self.node {
+        let (shape, typ, values_meta) = match &self.node {
             al::DefKind::Var(_) => return Ok(None),
             al::DefKind::Typ(al::TypDef::Extern(typdef_al)) => {
-                (m::DEF_EXTTYP, vec![typdef_al.id.encode_cached(arena, cache)?])
+                (m::DEF_EXTTYP, "externTypDefn", vec![typdef_al.id.encode_cached(arena, cache)?])
             }
             al::DefKind::Typ(al::TypDef::Defined(typdef_al)) => (
                 m::DEF_TYP,
+                "definedTypDefn",
                 vec![
                     typdef_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "id", &typdef_al.tparams)?,
@@ -338,6 +344,7 @@ impl Encode for al::Def {
                     input::split(&rel_al.input_hint, rel_al.not_typ.node.args().to_vec())?;
                 (
                     m::DEF_EXTREL,
+                    "externRelDefnAL",
                     vec![
                         rel_al.id.encode_cached(arena, cache)?,
                         list(arena, cache, "typ", &typs_input_al)?,
@@ -358,6 +365,7 @@ impl Encode for al::Def {
                     .collect();
                 (
                     m::DEF_REL,
+                    "definedRelDefnAL",
                     vec![
                         rel_al.id.encode_cached(arena, cache)?,
                         list(arena, cache, "typ", &typs_input_al)?,
@@ -369,6 +377,7 @@ impl Encode for al::Def {
             }
             al::DefKind::MetaFunc(al::MetaFuncDef::Extern(func_al)) => (
                 m::DEF_EXTFUNC,
+                "externFuncDefn",
                 vec![
                     func_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "id", &func_al.tparams)?,
@@ -378,6 +387,7 @@ impl Encode for al::Def {
             ),
             al::DefKind::MetaFunc(al::MetaFuncDef::Builtin(func_al)) => (
                 m::DEF_BUILTINFUNC,
+                "builtinFuncDefn",
                 vec![
                     func_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "id", &func_al.tparams)?,
@@ -387,6 +397,7 @@ impl Encode for al::Def {
             ),
             al::DefKind::MetaFunc(al::MetaFuncDef::Table(func_al)) => (
                 m::DEF_TABLEFUNC,
+                "tableFuncDefnAL",
                 vec![
                     func_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "param", &func_al.params)?,
@@ -396,6 +407,7 @@ impl Encode for al::Def {
             ),
             al::DefKind::MetaFunc(al::MetaFuncDef::Defined(func_al)) => (
                 m::DEF_FUNC,
+                "definedFuncDefnAL",
                 vec![
                     func_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "id", &func_al.tparams)?,
@@ -406,7 +418,7 @@ impl Encode for al::Def {
                 ],
             ),
         };
-        Ok(Some(case(arena, shape, "defnAL", values_meta, span)?))
+        Ok(Some(case(arena, shape, typ, values_meta, span)?))
     }
 }
 
