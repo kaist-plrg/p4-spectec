@@ -11,7 +11,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use p4spectec::metacirc::TowerConfig;
+use p4spectec::metacirc::{TowerConfig, config::Lang};
 use serde::{Deserialize, de::DeserializeOwned};
 
 use crate::{Error, Result, diagnostic};
@@ -88,13 +88,16 @@ pub struct RunSuite {
 ///
 /// The tower's top level decides the entry relation
 /// and whether inputs are P4 programs or AL scripts.
+/// P4 suites compare against an `expected` file of per-program results;
+/// AL suites give every script under `root` one `outcome`.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MetacircSuite {
     pub name: String,
     pub tower: PathBuf,
     pub root: PathBuf,
-    pub expected: PathBuf,
+    pub expected: Option<PathBuf>,
+    pub outcome: Option<diagnostic::Outcome>,
 }
 
 /// Registers paired P4/STF corpus discovery and optional patches.
@@ -423,10 +426,26 @@ pub fn load_metacirc(path: &Path) -> Result<MetacircConfig> {
     for suite in &mut config.suites {
         // Resolve each tower relative to this registration file
         suite.tower = path_parent.join(&suite.tower);
-        TowerConfig::from_file(&suite.tower)
+        let config_tower = TowerConfig::from_file(&suite.tower)
             .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
         directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
-        expectation_exists(&suite.expected)?;
+        // The tower's input language selects the kind of verdict
+        match (config_tower.top_lang(), &suite.expected, suite.outcome) {
+            (Lang::P4, Some(path_expected), None) => expectation_exists(path_expected)?,
+            (Lang::Al, None, Some(_)) => {}
+            (Lang::P4, _, _) => {
+                return Err(Error::Invalid(format!(
+                    "{}: a P4 suite needs an expected file and no outcome",
+                    suite.name
+                )));
+            }
+            (Lang::Al, _, _) => {
+                return Err(Error::Invalid(format!(
+                    "{}: an AL suite needs an outcome and no expected file",
+                    suite.name
+                )));
+            }
+        }
     }
     Ok(config)
 }

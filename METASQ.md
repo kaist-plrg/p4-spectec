@@ -108,11 +108,13 @@ exit code.
 make test-metacirc
 ```
 
-Runs the AL scripts under `testdata/metacirc/det` through the AL tower,
+Runs the spec-language sources under `testdata/spec/pos/run` and
+`testdata/spec/neg/run` through the AL tower, each expected to succeed or
+fail as its suite in `suites/metacirc.json` registers,
 then the `test-run-sl` corpus through the AL/P4 tower, with determinism checks.
 Requires the p4c submodule.
 The driver accepts `--suite <NAME>` to run one registered suite,
-for example `--suite determinism` for the AL scripts alone.
+for example `--suite neg-run` for the failing AL scripts alone.
 
 ## OCaml reference
 
