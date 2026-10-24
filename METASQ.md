@@ -105,14 +105,32 @@ exit code.
 ## Execution corpus
 
 ```sh
+make test-metacirc-micro
 make test-metacirc
 ```
 
-Runs the AL scripts under `testdata/metacirc/det` through the AL tower,
-then the `test-run-sl` corpus through the AL/P4 tower, with determinism checks.
-Requires the p4c submodule.
-The driver accepts `--suite <NAME>` to run one registered suite,
-for example `--suite determinism` for the AL scripts alone.
+`test-metacirc-micro` runs the spec-language sources under
+`testdata/spec/pos/run` and `testdata/spec/neg/run` through the AL tower,
+each expected to succeed or fail as its suite in `suites/metacirc.json`
+registers. `test-metacirc` runs the `test-run-sl` corpus through the AL/P4
+tower and requires the p4c submodule. Both check determinism.
+The driver selects suites with `--input al` or `--input p4`,
+or one registered suite with `--suite <NAME>`, for example `--suite neg-run`.
+
+## Specification snapshots
+
+```sh
+make test-metacirc-elab
+make test-metacirc-algo
+make test-metacirc-structure
+make test-metacirc-prose
+make test-metacirc-promote
+```
+
+Compare the elaborated, algorithmic, structured (with and without rule
+groups), and prose forms of `spec-meta` with `expected/spec-meta/`,
+as registered in `suites/metacirc/`. `test-metacirc-promote` updates the
+elab, algo, and prose snapshots; structure snapshots are never promoted.
 
 ## OCaml reference
 

@@ -1,0 +1,5112 @@
+var b : bool
+
+var i : int
+
+var n : nat
+
+var t : text
+
+def $ite<X>(bool, X, X) : X =
+
+  clause 0 : (b, X_t, X_f) = X_t
+  -- if (b = true)
+
+  clause 1 : (b, X_t, X_f) = X_f
+  -- if (b = false)
+
+def $deopt_<X>(X?, X) : X =
+
+  clause 0 : (X?{X <- X?}, X_d) = X_d
+  -- if X?{X <- X?} matches ()
+
+  clause 1 : (X'?{X' <- X'?}, X_d) = X
+  -- if X'?{X' <- X'?} matches (_)
+  -- let ?(X) = X'?{X' <- X'?}
+
+def $exists_(bool*) : bool =
+
+  clause 0 : (b*{b <- b*}) = false
+  -- if b*{b <- b*} matches []
+
+  clause 1 : (b*{b <- b*}) = (b_h \/ $exists_(b_t*{b_t <- b_t*}))
+  -- if b*{b <- b*} matches _ :: _
+  -- let b_h :: b_t*{b_t <- b_t*} = b*{b <- b*}
+
+def $forall_(bool*) : bool =
+
+  clause 0 : (b*{b <- b*}) = true
+  -- if b*{b <- b*} matches []
+
+  clause 1 : (b*{b <- b*}) = (b_h /\ $forall_(b_t*{b_t <- b_t*}))
+  -- if b*{b <- b*} matches _ :: _
+  -- let b_h :: b_t*{b_t <- b_t*} = b*{b <- b*}
+
+def $repeat_<X>(X, nat) : X* =
+
+  clause 0 : (X, n) = []
+  -- if (n = 0)
+
+  clause 1 : (X, n) = [X] ++ $repeat_<X>(X, n')
+  -- if (n =/= 0)
+  -- let i = (n - 1)
+  -- if i <: nat
+  -- let n' = i as nat
+
+builtin def $assoc_<X, Y>(X, (X, Y)*) : Y?
+
+def $transpose_<X>(X**) : X** =
+
+  clause 0 : (X*{X <- X*}*{X* <- X**}) = []
+  -- if X*{X <- X*}*{X* <- X**} matches []
+
+  clause 1 : (X'*{X' <- X'*}*{X'* <- X'**}) = []
+  -- if X'*{X' <- X'*}*{X'* <- X'**} matches _ :: _
+  -- let X*{X <- X*} :: X_t*{X_t <- X_t*}*{X_t* <- X_t**} = X'*{X' <- X'*}*{X'* <- X'**}
+  -- if X*{X <- X*} matches []
+  -- if $forall_((X_t*{X_t <- X_t*} = [])*{X_t* <- X_t**})
+
+  clause 2 : (X*{X <- X*}*{X* <- X**}) = X_h*{X_h <- X_h*} :: X_trans*{X_trans <- X_trans*}*{X_trans* <- X_trans**}
+  -- (if X*{X <- X*} matches _ :: _)*{X* <- X**}
+  -- (let X_h :: X_t*{X_t <- X_t*} = X*{X <- X*})*{X* <- X**, X_h -> X_h*, X_t* -> X_t**}
+  -- if (X_h*{X_h <- X_h*} =/= [])
+  -- let X_trans*{X_trans <- X_trans*}*{X_trans* <- X_trans**} = $transpose_<X>(X_t*{X_t <- X_t*}*{X_t* <- X_t**})
+
+syntax set<K> =
+   | `{ K* `} (from set<K>)
+
+syntax pair<K, V> =
+   | K ':' V (from pair<K, V>)
+
+syntax map<K, V> = set<pair<K, V>>
+
+def $empty_map<K, V> : map<K, V> =
+
+  clause 0 :  = `{ [] `}
+
+builtin def $find_map<K, V>(map<K, V>, K) : V?
+
+builtin def $add_map<K, V>(map<K, V>, K, V) : map<K, V>
+
+def $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V> =
+
+  clause 0 : (`{ K ':' V*{K <- K*, V <- V*} `}, K'*{K' <- K'*}, V'*{V' <- V'*}) = `{ K ':' V*{K <- K*, V <- V*} `}
+  -- if K'*{K' <- K'*} matches []
+  -- if V'*{V' <- V'*} matches []
+
+  clause 1 : (`{ K ':' V*{K <- K*, V <- V*} `}, K'*{K' <- K'*}, V'*{V' <- V'*}) = $adds_map<K, V>($add_map<K, V>(`{ K ':' V*{K <- K*, V <- V*} `}, K_h, V_h), K_t*{K_t <- K_t*}, V_t*{V_t <- V_t*})
+  -- if K'*{K' <- K'*} matches _ :: _
+  -- let K_h :: K_t*{K_t <- K_t*} = K'*{K' <- K'*}
+  -- if V'*{V' <- V'*} matches _ :: _
+  -- let V_h :: V_t*{V_t <- V_t*} = V'*{V' <- V'*}
+
+syntax id = text
+
+syntax atom = text
+
+syntax mixop = atom**
+
+syntax num =
+   | NAT nat (from num)
+   | INT int (from num)
+
+syntax numtyp =
+   | NAT (from numtyp)
+   | INT (from numtyp)
+
+syntax optyp =
+   | BOOL (from optyp)
+   | NAT (from numtyp)
+   | INT (from numtyp)
+   | TEXT (from optyp)
+
+syntax typ =
+   | BOOL (from optyp)
+   | NAT (from numtyp)
+   | INT (from numtyp)
+   | TEXT (from optyp)
+   | VAR id targ* (from typ)
+   | TUP typ* (from typ)
+   | ITER typ iter (from typ)
+   | FUNC tparam* typ* typ (from typ)
+
+syntax deftyp =
+   | ALIAS typ (from deftyp)
+   | STRUCT typField* (from deftyp)
+   | VARIANT typCase* (from deftyp)
+
+syntax typField =
+   | atom typ (from typField)
+
+syntax typCase =
+   | mixop typ* (from typCase)
+
+syntax iter =
+   | QUEST (from iter)
+   | STAR (from iter)
+
+syntax vari =
+   | id typ iter* (from vari)
+
+syntax boolUnop =
+   | NOT (from boolUnop)
+
+syntax numUnop =
+   | PLUS (from numUnop)
+   | MINUS (from numUnop)
+
+syntax unop =
+   | NOT (from boolUnop)
+   | PLUS (from numUnop)
+   | MINUS (from numUnop)
+
+syntax boolBinop =
+   | AND (from boolBinop)
+   | OR (from boolBinop)
+   | IMPL (from boolBinop)
+   | EQUIV (from boolBinop)
+
+syntax numBinop =
+   | ADD (from numBinop)
+   | SUB (from numBinop)
+   | MUL (from numBinop)
+   | DIV (from numBinop)
+   | MOD (from numBinop)
+   | POW (from numBinop)
+
+syntax binop =
+   | AND (from boolBinop)
+   | OR (from boolBinop)
+   | IMPL (from boolBinop)
+   | EQUIV (from boolBinop)
+   | ADD (from numBinop)
+   | SUB (from numBinop)
+   | MUL (from numBinop)
+   | DIV (from numBinop)
+   | MOD (from numBinop)
+   | POW (from numBinop)
+
+syntax numCmpop =
+   | LT (from numCmpop)
+   | GT (from numCmpop)
+   | LE (from numCmpop)
+   | GE (from numCmpop)
+
+syntax polyCmpop =
+   | EQ (from polyCmpop)
+   | NE (from polyCmpop)
+
+syntax cmpop =
+   | EQ (from polyCmpop)
+   | NE (from polyCmpop)
+   | LT (from numCmpop)
+   | GT (from numCmpop)
+   | LE (from numCmpop)
+   | GE (from numCmpop)
+
+syntax listPat =
+   | CONS (from listPat)
+   | FIXED nat (from listPat)
+   | NIL (from listPat)
+
+syntax optPat =
+   | SOME (from optPat)
+   | NONE (from optPat)
+
+syntax pat =
+   | INJ mixop (from pat)
+   | CONS (from listPat)
+   | FIXED nat (from listPat)
+   | NIL (from listPat)
+   | SOME (from optPat)
+   | NONE (from optPat)
+
+syntax exp =
+   | BOOL bool (from exp)
+   | NAT nat (from num)
+   | INT int (from num)
+   | TEXT text (from exp)
+   | VAR id (from exp)
+   | UN unop exp (from exp)
+   | BIN binop exp exp (from exp)
+   | CMP cmpop exp exp (from exp)
+   | UPCAST typ exp (from exp)
+   | DOWNCAST typ exp (from exp)
+   | SUB exp typ (from exp)
+   | MATCH exp pat (from exp)
+   | TUP exp* (from exp)
+   | INJ expCase (from exp)
+   | STR expField* (from exp)
+   | OPT exp? (from exp)
+   | LIST exp* (from exp)
+   | CONS exp exp (from exp)
+   | CAT exp exp (from exp)
+   | MEM exp exp (from exp)
+   | LEN exp (from exp)
+   | DOT exp atom (from exp)
+   | IDX exp exp (from exp)
+   | SLICE exp exp exp (from exp)
+   | UPD exp path exp (from exp)
+   | CALL id targ* arg* (from exp)
+   | ITER exp iterExp (from exp)
+
+syntax expCase =
+   | mixop exp* (from expCase)
+
+syntax expField =
+   | atom exp (from expField)
+
+syntax iterExp =
+   | iter vari* (from iterExp)
+
+syntax path =
+   | ROOT (from path)
+   | IDX path exp (from path)
+   | SLICE path exp exp (from path)
+   | DOT path atom (from path)
+
+syntax targ = typ
+
+syntax arg =
+   | EXP exp (from arg)
+   | FUN id (from arg)
+
+syntax tparam = id
+
+syntax param =
+   | EXP typ (from param)
+   | FUN id ':' tparam* param* '->' typ (from param)
+
+syntax prem =
+   | REL id ':' exp* '->' exp* (from prem)
+   | IF exp (from prem)
+   | IFHOLD id ':' exp* (from prem)
+   | IFNOTHOLD id ':' exp* (from prem)
+   | LET exp '=' exp (from prem)
+   | ITER prem iterPrem (from prem)
+   | DEBUG exp (from prem)
+
+syntax iterPrem =
+   | iter vari* vari* (from iterPrem)
+
+syntax externTypDefn =
+   | EXTTYP id (from externTypDefn)
+
+syntax definedTypDefn =
+   | TYP id tparam* '=' deftyp (from definedTypDefn)
+
+syntax typDefn =
+   | EXTTYP id (from externTypDefn)
+   | TYP id tparam* '=' deftyp (from definedTypDefn)
+
+syntax externRelDefn =
+   | EXTREL id ':' typ* '->' typ* (from externRelDefn)
+
+syntax rulMatch =
+   | exp* '-' prem* (from rulMatch)
+
+syntax rulPath =
+   | id '=' exp* '-' prem* (from rulPath)
+
+syntax rulGroup =
+   | id ':' rulMatch '=' rulPath* (from rulGroup)
+
+syntax elsGroup =
+   | id ':' rulMatch '=' rulPath (from elsGroup)
+
+syntax definedRelDefn =
+   | REL id ':' typ* '->' typ* '=' rulGroup* elsGroup? (from definedRelDefn)
+
+syntax relDefn =
+   | EXTREL id ':' typ* '->' typ* (from externRelDefn)
+   | REL id ':' typ* '->' typ* '=' rulGroup* elsGroup? (from definedRelDefn)
+
+syntax externFuncDefn =
+   | EXTFUNC id tparam* param* ':' typ (from externFuncDefn)
+
+syntax builtinFuncDefn =
+   | BUILTINFUNC id tparam* param* ':' typ (from builtinFuncDefn)
+
+syntax tblRow =
+   | arg* '=' exp '-' prem* (from tblRow)
+
+syntax tableFuncDefn =
+   | TABLEFUNC id param* ':' typ '=' tblRow* (from tableFuncDefn)
+
+syntax clause =
+   | arg* '=' exp '-' prem* (from clause)
+
+syntax elsClause = clause
+
+syntax definedFuncDefn =
+   | FUNC id tparam* param* ':' typ '=' clause* elsClause? (from definedFuncDefn)
+
+syntax funcDefn =
+   | EXTFUNC id tparam* param* ':' typ (from externFuncDefn)
+   | BUILTINFUNC id tparam* param* ':' typ (from builtinFuncDefn)
+   | TABLEFUNC id param* ':' typ '=' tblRow* (from tableFuncDefn)
+   | FUNC id tparam* param* ':' typ '=' clause* elsClause? (from definedFuncDefn)
+
+syntax defn =
+   | EXTTYP id (from externTypDefn)
+   | TYP id tparam* '=' deftyp (from definedTypDefn)
+   | EXTREL id ':' typ* '->' typ* (from externRelDefn)
+   | REL id ':' typ* '->' typ* '=' rulGroup* elsGroup? (from definedRelDefn)
+   | EXTFUNC id tparam* param* ':' typ (from externFuncDefn)
+   | BUILTINFUNC id tparam* param* ':' typ (from builtinFuncDefn)
+   | TABLEFUNC id param* ':' typ '=' tblRow* (from tableFuncDefn)
+   | FUNC id tparam* param* ':' typ '=' clause* elsClause? (from definedFuncDefn)
+
+syntax spec = defn*
+
+extern syntax json
+
+syntax val =
+   | BOOL bool (from val)
+   | NAT nat (from num)
+   | INT int (from num)
+   | TEXT text (from val)
+   | STR valField* (from val)
+   | INJ valCase (from val)
+   | TUP val* (from val)
+   | OPT val? (from val)
+   | LIST val* (from val)
+   | FUNC id (from val)
+   | EXT json (from val)
+
+syntax valField =
+   | atom val (from valField)
+
+syntax valCase =
+   | mixop val* (from valCase)
+
+syntax varr =
+   | id iter* (from varr)
+
+def $is_iter_on_var(exp) : varr? =
+
+  clause 0 : (exp) = ?(id [])
+  -- if exp matches VAR %
+  -- let VAR id = exp
+
+  clause 1 : (exp') = ?(id iter*{iter <- iter*} ++ [iter_outer])
+  -- if exp' matches ITER % %
+  -- let ITER exp iterExp = exp'
+  -- let varr?{varr <- varr?} = $is_iter_on_var(exp)
+  -- if varr?{varr <- varr?} matches (_)
+  -- let ?(id iter*{iter <- iter*}) = varr?{varr <- varr?}
+  -- let iter_outer vari*{vari <- vari*} = iterExp
+  -- if vari*{vari <- vari*} matches [ _/1 ]
+  -- let [id' _typ iter'*{iter' <- iter'*}] = vari*{vari <- vari*}
+  -- if (id' = id)
+  -- if (iter'*{iter' <- iter'*} = iter*{iter <- iter*})
+
+  clause -1 : (_exp) = ?()
+
+def $iter_vari(vari, iter) : vari =
+
+  clause 0 : (id typ iter*{iter <- iter*}, iter_add) = id typ iter*{iter <- iter*} ++ [iter_add]
+
+syntax typDef =
+   | EXTTYP id (from externTypDefn)
+   | TYP id tparam* '=' deftyp (from definedTypDefn)
+   | PARAM (from typDef)
+
+syntax ok<X> =
+   | OK X (from ok<X>)
+
+syntax error =
+   | ERROR (from error)
+
+syntax unmatch =
+   | UNMATCH (from unmatch)
+
+syntax failure =
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+syntax unitRes =
+   | OK (from unitRes)
+   | ERROR (from error)
+
+syntax venv = map<varr, val>
+
+syntax tdenv = map<id, typDef>
+
+syntax renv = map<id, relDefn>
+
+syntax fenv = map<id, funcDefn>
+
+syntax fnenv = map<id, id>
+
+syntax globalLayer = {TYP tdenv, REL renv, FUNC fenv}
+
+syntax localLayer = {TYP tdenv, FUNC fnenv, VAL venv}
+
+def $empty_globalLayer : globalLayer =
+
+  clause 0 :  = {TYP $empty_map<id, typDef>, REL $empty_map<id, relDefn>, FUNC $empty_map<id, funcDefn>}
+
+def $empty_localLayer : localLayer =
+
+  clause 0 :  = {TYP $empty_map<id, typDef>, FUNC $empty_map<id, id>, VAL $empty_map<varr, val>}
+
+syntax ctx = {GLOBAL globalLayer, LOCAL localLayer}
+
+def $empty_ctx : ctx =
+
+  clause 0 :  = {GLOBAL $empty_globalLayer, LOCAL $empty_localLayer}
+
+var C : ctx
+
+def $load_typdef(ctx, id, typDef) : ctx =
+
+  clause 0 : (C, id, typDef) = C[GLOBAL.TYP = tdenv_update]
+  -- let tdenv_update = $add_map<id, typDef>(C.GLOBAL.TYP, id, typDef)
+
+def $load_reldef(ctx, id, relDefn) : ctx =
+
+  clause 0 : (C, id, relDefn) = C[GLOBAL.REL = renv_update]
+  -- let renv_update = $add_map<id, relDefn>(C.GLOBAL.REL, id, relDefn)
+
+def $load_funcdef(ctx, id, funcDefn) : ctx =
+
+  clause 0 : (C, id, funcDefn) = C[GLOBAL.FUNC = fenv_update]
+  -- let fenv_update = $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, funcDefn)
+
+def $load(ctx, spec) : ctx =
+
+  clause 0 : (C, defn'*{defn' <- defn'*}) = $load(C', defn_t*{defn_t <- defn_t*})
+  -- if defn'*{defn' <- defn'*} matches _ :: _
+  -- let defn :: defn_t*{defn_t <- defn_t*} = defn'*{defn' <- defn'*}
+  -- if defn <: externTypDefn
+  -- let externTypDefn = defn as externTypDefn
+  -- let EXTTYP id = externTypDefn
+  -- let C' = $load_typdef(C, id, externTypDefn as typDef)
+
+  clause 1 : (C, defn'*{defn' <- defn'*}) = $load(C', defn_t*{defn_t <- defn_t*})
+  -- if defn'*{defn' <- defn'*} matches _ :: _
+  -- let defn :: defn_t*{defn_t <- defn_t*} = defn'*{defn' <- defn'*}
+  -- if defn <: definedTypDefn
+  -- let definedTypDefn = defn as definedTypDefn
+  -- let TYP id _tparam*{_tparam <- _tparam*} '=' _deftyp = definedTypDefn
+  -- let C' = $load_typdef(C, id, definedTypDefn as typDef)
+
+  clause 2 : (C, defn'*{defn' <- defn'*}) = $load(C', defn_t*{defn_t <- defn_t*})
+  -- if defn'*{defn' <- defn'*} matches _ :: _
+  -- let defn :: defn_t*{defn_t <- defn_t*} = defn'*{defn' <- defn'*}
+  -- if defn <: externRelDefn
+  -- let externRelDefn = defn as externRelDefn
+  -- let EXTREL id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} = externRelDefn
+  -- let C' = $load_reldef(C, id, externRelDefn as relDefn)
+
+  clause 3 : (C, defn'*{defn' <- defn'*}) = $load(C', defn_t*{defn_t <- defn_t*})
+  -- if defn'*{defn' <- defn'*} matches _ :: _
+  -- let defn :: defn_t*{defn_t <- defn_t*} = defn'*{defn' <- defn'*}
+  -- if defn <: definedRelDefn
+  -- let definedRelDefn = defn as definedRelDefn
+  -- let REL id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} '=' _rulGroup*{_rulGroup <- _rulGroup*} _elsGroup?{_elsGroup <- _elsGroup?} = definedRelDefn
+  -- let C' = $load_reldef(C, id, definedRelDefn as relDefn)
+
+  clause 4 : (C, defn'*{defn' <- defn'*}) = $load(C', defn_t*{defn_t <- defn_t*})
+  -- if defn'*{defn' <- defn'*} matches _ :: _
+  -- let defn :: defn_t*{defn_t <- defn_t*} = defn'*{defn' <- defn'*}
+  -- if defn <: externFuncDefn
+  -- let externFuncDefn = defn as externFuncDefn
+  -- let EXTFUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ = externFuncDefn
+  -- let C' = $load_funcdef(C, id, externFuncDefn as funcDefn)
+
+  clause 5 : (C, defn'*{defn' <- defn'*}) = $load(C', defn_t*{defn_t <- defn_t*})
+  -- if defn'*{defn' <- defn'*} matches _ :: _
+  -- let defn :: defn_t*{defn_t <- defn_t*} = defn'*{defn' <- defn'*}
+  -- if defn <: builtinFuncDefn
+  -- let builtinFuncDefn = defn as builtinFuncDefn
+  -- let BUILTINFUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ = builtinFuncDefn
+  -- let C' = $load_funcdef(C, id, builtinFuncDefn as funcDefn)
+
+  clause 6 : (C, defn'*{defn' <- defn'*}) = $load(C', defn_t*{defn_t <- defn_t*})
+  -- if defn'*{defn' <- defn'*} matches _ :: _
+  -- let defn :: defn_t*{defn_t <- defn_t*} = defn'*{defn' <- defn'*}
+  -- if defn <: tableFuncDefn
+  -- let tableFuncDefn = defn as tableFuncDefn
+  -- let TABLEFUNC id _param*{_param <- _param*} ':' _typ '=' _tblRow*{_tblRow <- _tblRow*} = tableFuncDefn
+  -- let C' = $load_funcdef(C, id, tableFuncDefn as funcDefn)
+
+  clause 7 : (C, defn'*{defn' <- defn'*}) = $load(C', defn_t*{defn_t <- defn_t*})
+  -- if defn'*{defn' <- defn'*} matches _ :: _
+  -- let defn :: defn_t*{defn_t <- defn_t*} = defn'*{defn' <- defn'*}
+  -- if defn <: definedFuncDefn
+  -- let definedFuncDefn = defn as definedFuncDefn
+  -- let FUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ '=' _clause*{_clause <- _clause*} _elsClause?{_elsClause <- _elsClause?} = definedFuncDefn
+  -- let C' = $load_funcdef(C, id, definedFuncDefn as funcDefn)
+
+  clause 8 : (C, defn*{defn <- defn*}) = C
+  -- if defn*{defn <- defn*} matches []
+
+def $add_varr(ctx, varr, val) : ctx =
+
+  clause 0 : (C, varr, val) = C[LOCAL.VAL = venv_update]
+  -- let venv_update = $add_map<varr, val>(C.LOCAL.VAL, varr, val)
+
+def $add_varis(ctx, vari*, val*) : ctx =
+
+  clause 0 : (C, vari*{vari <- vari*}, val*{val <- val*}) = C[LOCAL.VAL = venv_update]
+  -- (let id _typ iter*{iter <- iter*} = vari)*{vari <- vari*, _typ -> _typ*, id -> id*, iter* -> iter**}
+  -- let venv_update = $adds_map<varr, val>(C.LOCAL.VAL, id iter*{iter <- iter*}*{id <- id*, iter* <- iter**}, val*{val <- val*})
+
+def $add_func(ctx, id, id) : ctx =
+
+  clause 0 : (C, id, id_global) = C[LOCAL.FUNC = fnenv_update]
+  -- let fnenv_update = $add_map<id, id>(C.LOCAL.FUNC, id, id_global)
+
+def $find_vari(ctx, vari) : val? =
+
+  clause 0 : (C, vari) = ?(val)
+  -- let id _typ iter*{iter <- iter*} = vari
+  -- let val'?{val' <- val'?} = $find_map<varr, val>(C.LOCAL.VAL, id iter*{iter <- iter*})
+  -- if val'?{val' <- val'?} matches (_)
+  -- let ?(val) = val'?{val' <- val'?}
+
+  clause -1 : (C, vari) = ?()
+
+def $find_varr(ctx, varr) : val? =
+
+  clause 0 : (C, varr) = $find_map<varr, val>(C.LOCAL.VAL, varr)
+
+def $find_varis(ctx, vari*) : val*? =
+
+  clause 0 : (C, vari*{vari <- vari*}) = ?(val*{val <- val*})
+  -- (let val'?{val' <- val'?} = $find_vari(C, vari))*{vari <- vari*, val'? -> val'?*}
+  -- (if val'?{val' <- val'?} matches (_))*{val'? <- val'?*}
+  -- (let ?(val) = val'?{val' <- val'?})*{val'? <- val'?*, val -> val*}
+
+  clause -1 : (C, vari*{vari <- vari*}) = ?()
+
+def $finds_vari(ctx*, vari) : val*? =
+
+  clause 0 : (C*{C <- C*}, vari) = ?(val*{val <- val*})
+  -- let id _typ iter*{iter <- iter*} = vari
+  -- (let val'?{val' <- val'?} = $find_map<varr, val>(C.LOCAL.VAL, id iter*{iter <- iter*}))*{C <- C*, val'? -> val'?*}
+  -- (if val'?{val' <- val'?} matches (_))*{val'? <- val'?*}
+  -- (let ?(val) = val'?{val' <- val'?})*{val'? <- val'?*, val -> val*}
+
+  clause -1 : (C*{C <- C*}, vari) = ?()
+
+def $find_typ(ctx, id) : typDef? =
+
+  clause 0 : (C, id) = ?(typDef)
+  -- let typDef'?{typDef' <- typDef'?} = $find_map<id, typDef>(C.LOCAL.TYP, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+
+  clause 1 : (C, id) = $find_map<id, typDef>(C.GLOBAL.TYP, id)
+  -- if (?() = $find_map<id, typDef>(C.LOCAL.TYP, id))
+
+def $find_func_param(ctx, id) : id? =
+
+  clause 0 : (C, id) = $find_map<id, id>(C.LOCAL.FUNC, id)
+
+def $resolve_func_param(ctx, id) : id =
+
+  clause 0 : (C, id) = $deopt_<id>($find_func_param(C, id), id)
+
+def $find_func(ctx, id) : funcDefn? =
+
+  clause 0 : (C, id) = $find_map<id, funcDefn>(C.GLOBAL.FUNC, id)
+
+def $find_rel(ctx, id) : relDefn? =
+
+  clause 0 : (C, id) = $find_map<id, relDefn>(C.GLOBAL.REL, id)
+
+syntax subOptRes =
+   | OK ctx? (from ok<ctx?>)
+   | ERROR (from error)
+
+def $sub_opt(ctx, vari*) : subOptRes =
+
+  clause 0 : (C, vari*{vari <- vari*}) = ERROR as subOptRes
+  -- if vari*{vari <- vari*} matches []
+
+  clause 1 : (C, vari*{vari <- vari*}) = OK ?(C_sub) as subOptRes
+  -- if (vari*{vari <- vari*} =/= [])
+  -- (let vari_iter = $iter_vari(vari, QUEST))*{vari <- vari*, vari_iter -> vari_iter*}
+  -- (let val'''?{val''' <- val'''?} = $find_vari(C, vari_iter))*{vari_iter <- vari_iter*, val'''? -> val'''?*}
+  -- (if val'''?{val''' <- val'''?} matches (_))*{val'''? <- val'''?*}
+  -- (let ?(val'') = val'''?{val''' <- val'''?})*{val'''? <- val'''?*, val'' -> val''*}
+  -- (if val'' matches OPT %)*{val'' <- val''*}
+  -- (let OPT val'?{val' <- val'?} = val'')*{val'' <- val''*, val'? -> val'?*}
+  -- (if val'?{val' <- val'?} matches (_))*{val'? <- val'?*}
+  -- (let ?(val) = val'?{val' <- val'?})*{val'? <- val'?*, val -> val*}
+  -- let C_sub = $add_varis(C, vari*{vari <- vari*}, val*{val <- val*})
+
+  clause 2 : (C, vari*{vari <- vari*}) = OK ?() as subOptRes
+  -- if (vari*{vari <- vari*} =/= [])
+  -- (let vari_iter = $iter_vari(vari, QUEST))*{vari <- vari*, vari_iter -> vari_iter*}
+  -- (if (?(OPT ?()) = $find_vari(C, vari_iter)))*{vari_iter <- vari_iter*}
+
+  clause -1 : (C, vari*{vari <- vari*}) = ERROR as subOptRes
+
+syntax subListRes =
+   | OK ctx* (from ok<ctx*>)
+   | ERROR (from error)
+
+def $sub_list(ctx, vari*) : subListRes =
+
+  clause 0 : (C, vari*{vari <- vari*}) = OK C'*{C' <- C'*} as subListRes
+  -- (let vari_iter = $iter_vari(vari, STAR))*{vari <- vari*, vari_iter -> vari_iter*}
+  -- (let val''?{val'' <- val''?} = $find_vari(C, vari_iter))*{vari_iter <- vari_iter*, val''? -> val''?*}
+  -- (if val''?{val'' <- val''?} matches (_))*{val''? <- val''?*}
+  -- (let ?(val') = val''?{val'' <- val''?})*{val''? <- val''?*, val' -> val'*}
+  -- (if val' matches LIST %)*{val' <- val'*}
+  -- (let LIST val*{val <- val*} = val')*{val' <- val'*, val* -> val**}
+  -- (if (0 < |val*{val <- val*}*{val* <- val**}|))*{val* <- val**}
+  -- if $forall_((|val*{val <- val*}| = |val*{val <- val*}*{val* <- val**}[0]|)*{val* <- val**})
+  -- let val_trans*{val_trans <- val_trans*}*{val_trans* <- val_trans**} = $transpose_<val>(val*{val <- val*}*{val* <- val**})
+  -- (let C' = $add_varis(C, vari*{vari <- vari*}, val_trans*{val_trans <- val_trans*}))*{val_trans* <- val_trans**, C' -> C'*}
+
+  clause -1 : (C, vari*{vari <- vari*}) = ERROR as subListRes
+
+syntax funcRes =
+   | OK val (from ok<val>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+extern relation Call_extern_func: |- id `< typ* `> `( val* `) : funcRes
+
+extern relation Call_builtin_func: |- id `< typ* `> `( val* `) : funcRes
+
+syntax relRes =
+   | OK val* (from ok<val*>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+extern relation Call_extern_rel: |- id `( val* `) : relRes
+
+syntax expRes =
+   | OK val (from ok<val>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+relation Eval_exp: ctx |- exp : expRes
+
+  rulegroup literal
+
+   match
+
+    (signature) C |- exp : %
+    C |- exp : %
+
+   paths
+
+    rulepath boolean
+    -- let exp' = exp
+    -- if exp' matches BOOL %
+    -- let BOOL b = exp'
+    -- output: % |- % : OK BOOL b as expRes
+
+    rulepath number
+    -- let exp' = exp
+    -- if exp' <: num
+    -- let num = exp' as num
+    -- output: % |- % : OK num as val as expRes
+
+    rulepath string
+    -- let exp' = exp
+    -- if exp' matches TEXT %
+    -- let TEXT t = exp'
+    -- output: % |- % : OK TEXT t as expRes
+
+  rulegroup variable
+
+   match
+
+    (signature) C |- VAR id : %
+    C |- exp : %
+    -- if exp matches VAR %
+    -- let VAR id = exp
+
+   paths
+
+    rulepath variable
+    -- let val'?{val' <- val'?} = $find_varr(C, id [])
+    -- if val'?{val' <- val'?} matches (_)
+    -- let ?(val) = val'?{val' <- val'?}
+    -- output: % |- % : OK val as expRes
+
+  rulegroup unary
+
+   match
+
+    (signature) C |- UN unop exp : %
+    C |- exp' : %
+    -- if exp' matches UN % %
+    -- let UN unop exp = exp'
+
+   paths
+
+    rulepath boolean-operand-failure
+    -- if (unop = NOT as unop)
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath boolean-succ
+    -- if (unop = NOT as unop)
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- if val matches BOOL %
+    -- let BOOL b = val
+    -- let b_res = ~b
+    -- output: % |- % : OK BOOL b_res as expRes
+
+    rulepath number-operand-failure
+    -- let unop' = unop
+    -- if unop' <: numUnop
+    -- let numUnop = unop' as numUnop
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath number-succ
+    -- let unop' = unop
+    -- if unop' <: numUnop
+    -- let numUnop = unop' as numUnop
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- if val <: num
+    -- let num = val as num
+    -- let val_res = $numUnop(numUnop, num)
+    -- output: % |- % : OK val_res as expRes
+
+  rulegroup binary
+
+   match
+
+    (signature) C |- BIN binop exp_l exp_r : %
+    C |- exp : %
+    -- if exp matches BIN % % %
+    -- let BIN binop exp_l exp_r = exp
+
+   paths
+
+    rulepath boolean-left-failure
+    -- let binop' = binop
+    -- if binop' <: boolBinop
+    -- let boolBinop = binop' as boolBinop
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath boolean-right-failure
+    -- let binop' = binop
+    -- if binop' <: boolBinop
+    -- let boolBinop = binop' as boolBinop
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- if val matches BOOL %
+    -- let BOOL b_l = val
+    -- Eval_exp: C |- exp_r : expRes'
+    -- if expRes' <: failure
+    -- let failure = expRes' as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath boolean-succ
+    -- let binop' = binop
+    -- if binop' <: boolBinop
+    -- let boolBinop = binop' as boolBinop
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- if val matches BOOL %
+    -- let BOOL b_l = val
+    -- Eval_exp: C |- exp_r : expRes'
+    -- if expRes' <: ok<val>
+    -- let OK val' = expRes' as ok<val>
+    -- if val' matches BOOL %
+    -- let BOOL b_r = val'
+    -- let b_res = $boolBinop(boolBinop, b_l, b_r)
+    -- output: % |- % : OK BOOL b_res as expRes
+
+    rulepath number-left-failure
+    -- let binop' = binop
+    -- if binop' <: numBinop
+    -- let numBinop = binop' as numBinop
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath number-right-failure
+    -- let binop' = binop
+    -- if binop' <: numBinop
+    -- let numBinop = binop' as numBinop
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- if val <: num
+    -- let num_l = val as num
+    -- Eval_exp: C |- exp_r : expRes'
+    -- if expRes' <: failure
+    -- let failure = expRes' as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath number-succ
+    -- let binop' = binop
+    -- if binop' <: numBinop
+    -- let numBinop = binop' as numBinop
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- if val <: num
+    -- let num_l = val as num
+    -- Eval_exp: C |- exp_r : expRes'
+    -- if expRes' <: ok<val>
+    -- let OK val' = expRes' as ok<val>
+    -- if val' <: num
+    -- let num_r = val' as num
+    -- let numBinopRes = $numBinop(numBinop, num_l, num_r)
+    -- output: % |- % : numBinopRes as expRes
+
+  rulegroup compare
+
+   match
+
+    (signature) C |- CMP cmpop exp_l exp_r : %
+    C |- exp : %
+    -- if exp matches CMP % % %
+    -- let CMP cmpop exp_l exp_r = exp
+
+   paths
+
+    rulepath poly-left-failure
+    -- let cmpop' = cmpop
+    -- if cmpop' <: polyCmpop
+    -- let polyCmpop = cmpop' as polyCmpop
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath poly-right-failure
+    -- let cmpop' = cmpop
+    -- if cmpop' <: polyCmpop
+    -- let polyCmpop = cmpop' as polyCmpop
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_l = expRes as ok<val>
+    -- Eval_exp: C |- exp_r : expRes'
+    -- if expRes' <: failure
+    -- let failure = expRes' as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath poly-succ
+    -- let cmpop' = cmpop
+    -- if cmpop' <: polyCmpop
+    -- let polyCmpop = cmpop' as polyCmpop
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_l = expRes as ok<val>
+    -- Eval_exp: C |- exp_r : expRes'
+    -- if expRes' <: ok<val>
+    -- let OK val_r = expRes' as ok<val>
+    -- let b_res = $polyCmpop(polyCmpop, val_l, val_r)
+    -- output: % |- % : OK BOOL b_res as expRes
+
+    rulepath number-left-failure
+    -- let cmpop' = cmpop
+    -- if cmpop' <: numCmpop
+    -- let numCmpop = cmpop' as numCmpop
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath number-right-failure
+    -- let cmpop' = cmpop
+    -- if cmpop' <: numCmpop
+    -- let numCmpop = cmpop' as numCmpop
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- if val <: num
+    -- let num_l = val as num
+    -- Eval_exp: C |- exp_r : expRes'
+    -- if expRes' <: failure
+    -- let failure = expRes' as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath number-succ
+    -- let cmpop' = cmpop
+    -- if cmpop' <: numCmpop
+    -- let numCmpop = cmpop' as numCmpop
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- if val <: num
+    -- let num_l = val as num
+    -- Eval_exp: C |- exp_r : expRes'
+    -- if expRes' <: ok<val>
+    -- let OK val' = expRes' as ok<val>
+    -- if val' <: num
+    -- let num_r = val' as num
+    -- let numCmpRes = $numCmpop(numCmpop, num_l, num_r)
+    -- if numCmpRes <: ok<bool>
+    -- let OK b_res = numCmpRes as ok<bool>
+    -- output: % |- % : OK BOOL b_res as expRes
+
+  rulegroup upcast
+
+   match
+
+    (signature) C |- UPCAST typ exp : %
+    C |- exp' : %
+    -- if exp' matches UPCAST % %
+    -- let UPCAST typ exp = exp'
+
+   paths
+
+    rulepath operand-failure
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- let castRes = $upcast(C, typ, val)
+    -- output: % |- % : castRes as expRes
+
+  rulegroup downcast
+
+   match
+
+    (signature) C |- DOWNCAST typ exp : %
+    C |- exp' : %
+    -- if exp' matches DOWNCAST % %
+    -- let DOWNCAST typ exp = exp'
+
+   paths
+
+    rulepath operand-failure
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- let castRes = $downcast(C, typ, val)
+    -- output: % |- % : castRes as expRes
+
+  rulegroup subtype
+
+   match
+
+    (signature) C |- SUB exp typ : %
+    C |- exp' : %
+    -- if exp' matches SUB % %
+    -- let SUB exp typ = exp'
+
+   paths
+
+    rulepath operand-failure
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- let `{ id_local ':' typDef_local*{id_local <- id_local*, typDef_local <- typDef_local*} `} = C.LOCAL.TYP
+    -- let tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*{id_local <- id_local*}, typDef_local*{typDef_local <- typDef_local*})
+    -- let subtypRes = $subtyp(C.GLOBAL.FUNC, tdenv, typ, val)
+    -- if subtypRes <: ok<bool>
+    -- let OK b = subtypRes as ok<bool>
+    -- output: % |- % : OK BOOL b as expRes
+
+  rulegroup match
+
+   match
+
+    (signature) C |- MATCH exp pat : %
+    C |- exp' : %
+    -- if exp' matches MATCH % %
+    -- let MATCH exp pat = exp'
+
+   paths
+
+    rulepath operand-failure
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- let b_matches = $matches(val, pat)
+    -- output: % |- % : OK BOOL b_matches as expRes
+
+  rulegroup tuple
+
+   match
+
+    (signature) C |- TUP exp*{exp <- exp*} : %
+    C |- exp' : %
+    -- if exp' matches TUP %
+    -- let TUP exp*{exp <- exp*} = exp'
+
+   paths
+
+    rulepath expressions-failure
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: failure
+    -- let failure = expsRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val*{val <- val*} = expsRes as ok<val*>
+    -- output: % |- % : OK TUP val*{val <- val*} as expRes
+
+  rulegroup case
+
+   match
+
+    (signature) C |- INJ mixop exp*{exp <- exp*} : %
+    C |- exp' : %
+    -- if exp' matches INJ %
+    -- let INJ mixop exp*{exp <- exp*} = exp'
+
+   paths
+
+    rulepath expressions-failure
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: failure
+    -- let failure = expsRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val*{val <- val*} = expsRes as ok<val*>
+    -- output: % |- % : OK INJ mixop val*{val <- val*} as expRes
+
+  rulegroup struct
+
+   match
+
+    (signature) C |- STR expField*{expField <- expField*} : %
+    C |- exp' : %
+    -- if exp' matches STR %
+    -- let STR expField*{expField <- expField*} = exp'
+
+   paths
+
+    rulepath expressions-failure
+    -- (let atom exp = expField)*{expField <- expField*, atom -> atom*, exp -> exp*}
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: failure
+    -- let failure = expsRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- (let atom exp = expField)*{expField <- expField*, atom -> atom*, exp -> exp*}
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val*{val <- val*} = expsRes as ok<val*>
+    -- if (|atom*{atom <- atom*}| = |val*{val <- val*}|)
+    -- (let valField = atom val)*{atom <- atom*, val <- val*, valField -> valField*}
+    -- output: % |- % : OK STR valField*{valField <- valField*} as expRes
+
+  rulegroup opt
+
+   match
+
+    (signature) C |- OPT exp''?{exp'' <- exp''?} : %
+    C |- exp''' : %
+    -- if exp''' matches OPT %
+    -- let OPT exp''?{exp'' <- exp''?} = exp'''
+
+   paths
+
+    rulepath succ-none
+    -- if (exp''?{exp'' <- exp''?} = ?())
+    -- output: % |- % : OK OPT ?() as expRes
+
+    rulepath operand-failure
+    -- let exp''''?{exp'''' <- exp''''?} = exp''?{exp'' <- exp''?}
+    -- if exp''''?{exp'''' <- exp''''?} matches (_)
+    -- let ?(exp) = exp''''?{exp'''' <- exp''''?}
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ-some
+    -- let exp''''?{exp'''' <- exp''''?} = exp''?{exp'' <- exp''?}
+    -- if exp''''?{exp'''' <- exp''''?} matches (_)
+    -- let ?(exp) = exp''''?{exp'''' <- exp''''?}
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- output: % |- % : OK OPT ?(val) as expRes
+
+  rulegroup list
+
+   match
+
+    (signature) C |- LIST exp*{exp <- exp*} : %
+    C |- exp' : %
+    -- if exp' matches LIST %
+    -- let LIST exp*{exp <- exp*} = exp'
+
+   paths
+
+    rulepath expressions-failure
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: failure
+    -- let failure = expsRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val*{val <- val*} = expsRes as ok<val*>
+    -- output: % |- % : OK LIST val*{val <- val*} as expRes
+
+  rulegroup cons
+
+   match
+
+    (signature) C |- CONS exp_h exp_t : %
+    C |- exp : %
+    -- if exp matches CONS % %
+    -- let CONS exp_h exp_t = exp
+
+   paths
+
+    rulepath head-failure
+    -- Eval_exp: C |- exp_h : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath tail-failure
+    -- Eval_exp: C |- exp_h : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_h = expRes as ok<val>
+    -- Eval_exp: C |- exp_t : expRes'
+    -- if expRes' <: failure
+    -- let failure = expRes' as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_exp: C |- exp_h : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_h = expRes as ok<val>
+    -- Eval_exp: C |- exp_t : expRes'
+    -- if expRes' <: ok<val>
+    -- let OK val = expRes' as ok<val>
+    -- if val matches LIST %
+    -- let LIST val_t*{val_t <- val_t*} = val
+    -- output: % |- % : OK LIST val_h :: val_t*{val_t <- val_t*} as expRes
+
+  rulegroup concat
+
+   match
+
+    (signature) C |- CAT exp_l exp_r : %
+    C |- exp : %
+    -- if exp matches CAT % %
+    -- let CAT exp_l exp_r = exp
+
+   paths
+
+    rulepath left-failure
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath list-right-failure
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- if val matches LIST %
+    -- let LIST val_l*{val_l <- val_l*} = val
+    -- Eval_exp: C |- exp_r : expRes'
+    -- if expRes' <: failure
+    -- let failure = expRes' as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath list-succ
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- if val matches LIST %
+    -- let LIST val_l*{val_l <- val_l*} = val
+    -- Eval_exp: C |- exp_r : expRes'
+    -- if expRes' <: ok<val>
+    -- let OK val' = expRes' as ok<val>
+    -- if val' matches LIST %
+    -- let LIST val_r*{val_r <- val_r*} = val'
+    -- let val_res*{val_res <- val_res*} = val_l*{val_l <- val_l*} ++ val_r*{val_r <- val_r*}
+    -- output: % |- % : OK LIST val_res*{val_res <- val_res*} as expRes
+
+    rulepath text-right-failure
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- if val matches TEXT %
+    -- let TEXT text_l = val
+    -- Eval_exp: C |- exp_r : expRes'
+    -- if expRes' <: failure
+    -- let failure = expRes' as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath text-succ
+    -- Eval_exp: C |- exp_l : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- if val matches TEXT %
+    -- let TEXT t_l = val
+    -- Eval_exp: C |- exp_r : expRes'
+    -- if expRes' <: ok<val>
+    -- let OK val' = expRes' as ok<val>
+    -- if val' matches TEXT %
+    -- let TEXT t_r = val'
+    -- let t_res = t_l ++ t_r
+    -- output: % |- % : OK TEXT t_res as expRes
+
+  rulegroup mem
+
+   match
+
+    (signature) C |- MEM exp_e exp_s : %
+    C |- exp : %
+    -- if exp matches MEM % %
+    -- let MEM exp_e exp_s = exp
+
+   paths
+
+    rulepath elem-failure
+    -- Eval_exp: C |- exp_e : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath list-failure
+    -- Eval_exp: C |- exp_e : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_e = expRes as ok<val>
+    -- Eval_exp: C |- exp_s : expRes'
+    -- if expRes' <: failure
+    -- let failure = expRes' as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_exp: C |- exp_e : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_e = expRes as ok<val>
+    -- Eval_exp: C |- exp_s : expRes'
+    -- if expRes' <: ok<val>
+    -- let OK val' = expRes' as ok<val>
+    -- if val' matches LIST %
+    -- let LIST val*{val <- val*} = val'
+    -- let b_mem = $exists_((val_e = val)*{val <- val*})
+    -- output: % |- % : OK BOOL b_mem as expRes
+
+  rulegroup len
+
+   match
+
+    (signature) C |- LEN exp : %
+    C |- exp' : %
+    -- if exp' matches LEN %
+    -- let LEN exp = exp'
+
+   paths
+
+    rulepath operand-failure
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath text
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val' = expRes as ok<val>
+    -- if val' matches TEXT %
+    -- let TEXT t = val'
+    -- let n = |t|
+    -- output: % |- % : OK NAT n as val as expRes
+
+    rulepath list
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val' = expRes as ok<val>
+    -- if val' matches LIST %
+    -- let LIST val*{val <- val*} = val'
+    -- let n = |val*{val <- val*}|
+    -- output: % |- % : OK NAT n as val as expRes
+
+  rulegroup dot
+
+   match
+
+    (signature) C |- DOT exp atom : %
+    C |- exp' : %
+    -- if exp' matches DOT % %
+    -- let DOT exp atom = exp'
+
+   paths
+
+    rulepath operand-failure
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- let path = DOT ROOT atom
+    -- Eval_path_acc: C |- val path : pathRes
+    -- output: % |- % : pathRes as expRes
+
+  rulegroup idx
+
+   match
+
+    (signature) C |- IDX exp_b exp_i : %
+    C |- exp : %
+    -- if exp matches IDX % %
+    -- let IDX exp_b exp_i = exp
+
+   paths
+
+    rulepath base-failure
+    -- Eval_exp: C |- exp_b : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_exp: C |- exp_b : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_b = expRes as ok<val>
+    -- let path = IDX ROOT exp_i
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- output: % |- % : pathRes as expRes
+
+  rulegroup slice
+
+   match
+
+    (signature) C |- SLICE exp_b exp_i exp_n : %
+    C |- exp : %
+    -- if exp matches SLICE % % %
+    -- let SLICE exp_b exp_i exp_n = exp
+
+   paths
+
+    rulepath base-failure
+    -- Eval_exp: C |- exp_b : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_exp: C |- exp_b : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_b = expRes as ok<val>
+    -- let path = SLICE ROOT exp_i exp_n
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- output: % |- % : pathRes as expRes
+
+  rulegroup upd
+
+   match
+
+    (signature) C |- UPD exp_b path exp_f : %
+    C |- exp : %
+    -- if exp matches UPD % % %
+    -- let UPD exp_b path exp_f = exp
+
+   paths
+
+    rulepath base-failure
+    -- Eval_exp: C |- exp_b : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath value-failure
+    -- Eval_exp: C |- exp_b : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_b = expRes as ok<val>
+    -- Eval_exp: C |- exp_f : expRes'
+    -- if expRes' <: failure
+    -- let failure = expRes' as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_exp: C |- exp_b : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_b = expRes as ok<val>
+    -- Eval_exp: C |- exp_f : expRes'
+    -- if expRes' <: ok<val>
+    -- let OK val_f = expRes' as ok<val>
+    -- Eval_path_upd: C |- val_b path := val_f : pathRes
+    -- output: % |- % : pathRes as expRes
+
+  rulegroup call
+
+   match
+
+    (signature) C |- CALL id targ*{targ <- targ*} arg*{arg <- arg*} : %
+    C |- exp : %
+    -- if exp matches CALL % % %
+    -- let CALL id targ*{targ <- targ*} arg*{arg <- arg*} = exp
+
+   paths
+
+    rulepath arguments-failure
+    -- Eval_targs: C |- targ*{targ <- targ*} : typsRes
+    -- if typsRes <: ok<typ*>
+    -- let OK typ_input*{typ_input <- typ_input*} = typsRes as ok<typ*>
+    -- Eval_args: C |- arg*{arg <- arg*} : argsRes
+    -- if argsRes <: failure
+    -- let failure = argsRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath succ
+    -- Eval_targs: C |- targ*{targ <- targ*} : typsRes
+    -- if typsRes <: ok<typ*>
+    -- let OK typ_input*{typ_input <- typ_input*} = typsRes as ok<typ*>
+    -- Eval_args: C |- arg*{arg <- arg*} : argsRes
+    -- if argsRes <: ok<val*>
+    -- let OK val_input*{val_input <- val_input*} = argsRes as ok<val*>
+    -- Call_func: C |- id `< typ_input*{typ_input <- typ_input*} `> `( val_input*{val_input <- val_input*} `) : funcRes
+    -- output: % |- % : funcRes as expRes
+
+  rulegroup iter
+
+   match
+
+    (signature) C |- ITER exp iterExp : %
+    C |- exp' : %
+    -- if exp' matches ITER % %
+    -- let ITER exp iterExp = exp'
+
+   paths
+
+    rulepath simple
+    -- let varr'?{varr' <- varr'?} = $is_iter_on_var(ITER exp iterExp)
+    -- if varr'?{varr' <- varr'?} matches (_)
+    -- let ?(varr) = varr'?{varr' <- varr'?}
+    -- let val'?{val' <- val'?} = $find_varr(C, varr)
+    -- if val'?{val' <- val'?} matches (_)
+    -- let ?(val) = val'?{val' <- val'?}
+    -- output: % |- % : OK val as expRes
+
+    rulepath opt-body-failure
+    -- if (?() = $is_iter_on_var(ITER exp iterExp))
+    -- let iter vari*{vari <- vari*} = iterExp
+    -- if iter matches QUEST
+    -- let subOptRes = $sub_opt(C, vari*{vari <- vari*})
+    -- if subOptRes <: ok<ctx?>
+    -- let OK C_sub?{C_sub <- C_sub?} = subOptRes as ok<ctx?>
+    -- Eval_exp_maybe: C_sub?{C_sub <- C_sub?} |- exp : expOptRes
+    -- if expOptRes <: failure
+    -- let failure = expOptRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath opt-succ
+    -- if (?() = $is_iter_on_var(ITER exp iterExp))
+    -- let iter vari*{vari <- vari*} = iterExp
+    -- if iter matches QUEST
+    -- let subOptRes = $sub_opt(C, vari*{vari <- vari*})
+    -- if subOptRes <: ok<ctx?>
+    -- let OK C_sub?{C_sub <- C_sub?} = subOptRes as ok<ctx?>
+    -- Eval_exp_maybe: C_sub?{C_sub <- C_sub?} |- exp : expOptRes
+    -- if expOptRes <: ok<val?>
+    -- let OK val?{val <- val?} = expOptRes as ok<val?>
+    -- output: % |- % : OK OPT val?{val <- val?} as expRes
+
+    rulepath list-body-failure
+    -- if (?() = $is_iter_on_var(ITER exp iterExp))
+    -- let iter vari*{vari <- vari*} = iterExp
+    -- if iter matches STAR
+    -- let subListRes = $sub_list(C, vari*{vari <- vari*})
+    -- if subListRes <: ok<ctx*>
+    -- let OK C_sub*{C_sub <- C_sub*} = subListRes as ok<ctx*>
+    -- Eval_exp_each: C_sub*{C_sub <- C_sub*} |- exp : expsRes
+    -- if expsRes <: failure
+    -- let failure = expsRes as failure
+    -- output: % |- % : failure as expRes
+
+    rulepath list-succ
+    -- if (?() = $is_iter_on_var(ITER exp iterExp))
+    -- let iter vari*{vari <- vari*} = iterExp
+    -- if iter matches STAR
+    -- let subListRes = $sub_list(C, vari*{vari <- vari*})
+    -- if subListRes <: ok<ctx*>
+    -- let OK C_sub*{C_sub <- C_sub*} = subListRes as ok<ctx*>
+    -- Eval_exp_each: C_sub*{C_sub <- C_sub*} |- exp : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val*{val <- val*} = expsRes as ok<val*>
+    -- output: % |- % : OK LIST val*{val <- val*} as expRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- exp : %
+    C |- exp : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % : ERROR as expRes
+
+syntax expsRes =
+   | OK val* (from ok<val*>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+relation Eval_exps: ctx |- exp* : expsRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- exp''*{exp'' <- exp''*} : %
+    C |- exp''*{exp'' <- exp''*} : %
+
+   paths
+
+    rulepath nil
+    -- if (exp''*{exp'' <- exp''*} = [])
+    -- output: % |- % : OK [] as expsRes
+
+    rulepath head-failure
+    -- let exp'''*{exp''' <- exp'''*} = exp''*{exp'' <- exp''*}
+    -- if exp'''*{exp''' <- exp'''*} matches _ :: _
+    -- let exp_h :: exp_t*{exp_t <- exp_t*} = exp'''*{exp''' <- exp'''*}
+    -- Eval_exp: C |- exp_h : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expsRes
+
+    rulepath tail-failure
+    -- let exp'''*{exp''' <- exp'''*} = exp''*{exp'' <- exp''*}
+    -- if exp'''*{exp''' <- exp'''*} matches _ :: _
+    -- let exp_h :: exp_t*{exp_t <- exp_t*} = exp'''*{exp''' <- exp'''*}
+    -- Eval_exp: C |- exp_h : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_h = expRes as ok<val>
+    -- Eval_exps: C |- exp_t*{exp_t <- exp_t*} : expsRes
+    -- if expsRes <: failure
+    -- let failure = expsRes as failure
+    -- output: % |- % : failure as expsRes
+
+    rulepath cons-succ
+    -- let exp'''*{exp''' <- exp'''*} = exp''*{exp'' <- exp''*}
+    -- if exp'''*{exp''' <- exp'''*} matches _ :: _
+    -- let exp_h :: exp_t*{exp_t <- exp_t*} = exp'''*{exp''' <- exp'''*}
+    -- Eval_exp: C |- exp_h : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_h = expRes as ok<val>
+    -- Eval_exps: C |- exp_t*{exp_t <- exp_t*} : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val_t*{val_t <- val_t*} = expsRes as ok<val*>
+    -- output: % |- % : OK val_h :: val_t*{val_t <- val_t*} as expsRes
+
+syntax expOptRes =
+   | OK val? (from ok<val?>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+relation Eval_exp_maybe: ctx? |- exp : expOptRes
+
+  rulegroup
+
+   match
+
+    (signature) C''?{C'' <- C''?} |- exp : %
+    C''?{C'' <- C''?} |- exp : %
+
+   paths
+
+    rulepath none
+    -- if (C''?{C'' <- C''?} = ?())
+    -- output: % |- % : OK ?() as expOptRes
+
+    rulepath failure
+    -- let C'''?{C''' <- C'''?} = C''?{C'' <- C''?}
+    -- if C'''?{C''' <- C'''?} matches (_)
+    -- let ?(C) = C'''?{C''' <- C'''?}
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expOptRes
+
+    rulepath some
+    -- let C'''?{C''' <- C'''?} = C''?{C'' <- C''?}
+    -- if C'''?{C''' <- C'''?} matches (_)
+    -- let ?(C) = C'''?{C''' <- C'''?}
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- output: % |- % : OK ?(val) as expOptRes
+
+relation Eval_exp_each: ctx* |- exp : expsRes
+
+  rulegroup
+
+   match
+
+    (signature) C''*{C'' <- C''*} |- exp : %
+    C''*{C'' <- C''*} |- exp : %
+
+   paths
+
+    rulepath nil
+    -- if (C''*{C'' <- C''*} = [])
+    -- output: % |- % : OK [] as expsRes
+
+    rulepath head-failure
+    -- let C'''*{C''' <- C'''*} = C''*{C'' <- C''*}
+    -- if C'''*{C''' <- C'''*} matches _ :: _
+    -- let C_h :: C_t*{C_t <- C_t*} = C'''*{C''' <- C'''*}
+    -- Eval_exp: C_h |- exp : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as expsRes
+
+    rulepath tail-failure
+    -- let C'''*{C''' <- C'''*} = C''*{C'' <- C''*}
+    -- if C'''*{C''' <- C'''*} matches _ :: _
+    -- let C_h :: C_t*{C_t <- C_t*} = C'''*{C''' <- C'''*}
+    -- Eval_exp: C_h |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_h = expRes as ok<val>
+    -- Eval_exp_each: C_t*{C_t <- C_t*} |- exp : expsRes
+    -- if expsRes <: failure
+    -- let failure = expsRes as failure
+    -- output: % |- % : failure as expsRes
+
+    rulepath cons-succ
+    -- let C'''*{C''' <- C'''*} = C''*{C'' <- C''*}
+    -- if C'''*{C''' <- C'''*} matches _ :: _
+    -- let C_h :: C_t*{C_t <- C_t*} = C'''*{C''' <- C'''*}
+    -- Eval_exp: C_h |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_h = expRes as ok<val>
+    -- Eval_exp_each: C_t*{C_t <- C_t*} |- exp : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val_t*{val_t <- val_t*} = expsRes as ok<val*>
+    -- output: % |- % : OK val_h :: val_t*{val_t <- val_t*} as expsRes
+
+syntax pathRes =
+   | OK val (from ok<val>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+relation Eval_path_acc: ctx |- val path : pathRes
+
+  rulegroup root
+
+   match
+
+    (signature) C |- val_b ROOT : %
+    C |- val_b path : %
+    -- if path matches ROOT
+
+   paths
+
+    rulepath root
+    -- output: % |- % % : OK val_b as pathRes
+
+  rulegroup dot
+
+   match
+
+    (signature) C |- val_b DOT path atom : %
+    C |- val_b path' : %
+    -- if path' matches DOT % %
+    -- let DOT path atom = path'
+
+   paths
+
+    rulepath path-failure
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: failure
+    -- let failure = pathRes as failure
+    -- output: % |- % % : failure as pathRes
+
+    rulepath succ
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: ok<val>
+    -- let OK val' = pathRes as ok<val>
+    -- if val' matches STR %
+    -- let STR valField*{valField <- valField*} = val'
+    -- (let atom_field val_field = valField)*{valField <- valField*, atom_field -> atom_field*, val_field -> val_field*}
+    -- let val''?{val'' <- val''?} = $assoc_<atom, val>(atom, (atom_field, val_field)*{atom_field <- atom_field*, val_field <- val_field*})
+    -- if val''?{val'' <- val''?} matches (_)
+    -- let ?(val) = val''?{val'' <- val''?}
+    -- output: % |- % % : OK val as pathRes
+
+  rulegroup idx
+
+   match
+
+    (signature) C |- val_b IDX path exp_i : %
+    C |- val_b path' : %
+    -- if path' matches IDX % %
+    -- let IDX path exp_i = path'
+
+   paths
+
+    rulepath path-failure
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: failure
+    -- let failure = pathRes as failure
+    -- output: % |- % % : failure as pathRes
+
+    rulepath list-index-failure
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: ok<val>
+    -- let OK val' = pathRes as ok<val>
+    -- if val' matches LIST %
+    -- let LIST val*{val <- val*} = val'
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % % : failure as pathRes
+
+    rulepath list-succ
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: ok<val>
+    -- let OK val' = pathRes as ok<val>
+    -- if val' matches LIST %
+    -- let LIST val*{val <- val*} = val'
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: ok<val>
+    -- let OK val'' = expRes as ok<val>
+    -- if val'' <: num
+    -- let num = val'' as num
+    -- if num matches NAT %
+    -- let NAT n = num
+    -- if (n < |val*{val <- val*}|)
+    -- let val_idx = val*{val <- val*}[n]
+    -- output: % |- % % : OK val_idx as pathRes
+
+    rulepath text-index-failure
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: ok<val>
+    -- let OK val' = pathRes as ok<val>
+    -- if val' matches TEXT %
+    -- let TEXT t = val'
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % % : failure as pathRes
+
+    rulepath text-succ
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: ok<val>
+    -- let OK val' = pathRes as ok<val>
+    -- if val' matches TEXT %
+    -- let TEXT t = val'
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: ok<val>
+    -- let OK val'' = expRes as ok<val>
+    -- if val'' <: num
+    -- let num = val'' as num
+    -- if num matches NAT %
+    -- let NAT n = num
+    -- if (n < |t|)
+    -- let t_idx = t[n]
+    -- output: % |- % % : OK TEXT t_idx as pathRes
+
+  rulegroup slice
+
+   match
+
+    (signature) C |- val_b SLICE path exp_i exp_n : %
+    C |- val_b path' : %
+    -- if path' matches SLICE % % %
+    -- let SLICE path exp_i exp_n = path'
+
+   paths
+
+    rulepath path-failure
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: failure
+    -- let failure = pathRes as failure
+    -- output: % |- % % : failure as pathRes
+
+    rulepath text-index-failure
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: ok<val>
+    -- let OK val' = pathRes as ok<val>
+    -- if val' matches TEXT %
+    -- let TEXT t = val'
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % % : failure as pathRes
+
+    rulepath text-length-failure
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: ok<val>
+    -- let OK val' = pathRes as ok<val>
+    -- if val' matches TEXT %
+    -- let TEXT t = val'
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: ok<val>
+    -- let OK val'' = expRes as ok<val>
+    -- if val'' <: num
+    -- let num = val'' as num
+    -- if num matches NAT %
+    -- let NAT n_i = num
+    -- Eval_exp: C |- exp_n : expRes'
+    -- if expRes' <: failure
+    -- let failure = expRes' as failure
+    -- output: % |- % % : failure as pathRes
+
+    rulepath text-succ
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: ok<val>
+    -- let OK val' = pathRes as ok<val>
+    -- if val' matches TEXT %
+    -- let TEXT t = val'
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: ok<val>
+    -- let OK val'' = expRes as ok<val>
+    -- if val'' <: num
+    -- let num = val'' as num
+    -- if num matches NAT %
+    -- let NAT n_i = num
+    -- Eval_exp: C |- exp_n : expRes'
+    -- if expRes' <: ok<val>
+    -- let OK val''' = expRes' as ok<val>
+    -- if val''' <: num
+    -- let num' = val''' as num
+    -- if num' matches NAT %
+    -- let NAT n_n = num'
+    -- if ((n_i + n_n) <= |t|)
+    -- let val_slice = TEXT t[n_i : n_n]
+    -- output: % |- % % : OK val_slice as pathRes
+
+    rulepath list-index-failure
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: ok<val>
+    -- let OK val' = pathRes as ok<val>
+    -- if val' matches LIST %
+    -- let LIST val*{val <- val*} = val'
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % % : failure as pathRes
+
+    rulepath list-length-failure
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: ok<val>
+    -- let OK val' = pathRes as ok<val>
+    -- if val' matches LIST %
+    -- let LIST val*{val <- val*} = val'
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: ok<val>
+    -- let OK val'' = expRes as ok<val>
+    -- if val'' <: num
+    -- let num = val'' as num
+    -- if num matches NAT %
+    -- let NAT n_i = num
+    -- Eval_exp: C |- exp_n : expRes'
+    -- if expRes' <: failure
+    -- let failure = expRes' as failure
+    -- output: % |- % % : failure as pathRes
+
+    rulepath list-succ
+    -- Eval_path_acc: C |- val_b path : pathRes
+    -- if pathRes <: ok<val>
+    -- let OK val' = pathRes as ok<val>
+    -- if val' matches LIST %
+    -- let LIST val*{val <- val*} = val'
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: ok<val>
+    -- let OK val'' = expRes as ok<val>
+    -- if val'' <: num
+    -- let num = val'' as num
+    -- if num matches NAT %
+    -- let NAT n_i = num
+    -- Eval_exp: C |- exp_n : expRes'
+    -- if expRes' <: ok<val>
+    -- let OK val''' = expRes' as ok<val>
+    -- if val''' <: num
+    -- let num' = val''' as num
+    -- if num' matches NAT %
+    -- let NAT n_n = num'
+    -- if ((n_i + n_n) <= |val*{val <- val*}|)
+    -- let val_slice = LIST val*{val <- val*}[n_i : n_n]
+    -- output: % |- % % : OK val_slice as pathRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- val path : %
+    C |- val path : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % % : ERROR as pathRes
+
+relation Eval_path_upd: ctx |- val path := val : pathRes
+
+  rulegroup root
+
+   match
+
+    (signature) C |- val_b ROOT := val_n : %
+    C |- val_b path := val_n : %
+    -- if path matches ROOT
+
+   paths
+
+    rulepath root
+    -- output: % |- % % := % : OK val_n as pathRes
+
+  rulegroup idx
+
+   match
+
+    (signature) C |- val_b IDX path exp_i := val' : %
+    C |- val_b path' := val' : %
+    -- if path' matches IDX % %
+    -- let IDX path exp_i = path'
+
+   paths
+
+    rulepath path-failure
+    -- let val_n = val'
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: failure
+    -- let failure = pathRes' as failure
+    -- output: % |- % % := % : failure as pathRes
+
+    rulepath list-index-failure
+    -- let val_n = val'
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: ok<val>
+    -- let OK val'' = pathRes' as ok<val>
+    -- if val'' matches LIST %
+    -- let LIST val*{val <- val*} = val''
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % % := % : failure as pathRes
+
+    rulepath list-succ
+    -- let val_n = val'
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: ok<val>
+    -- let OK val'' = pathRes' as ok<val>
+    -- if val'' matches LIST %
+    -- let LIST val*{val <- val*} = val''
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: ok<val>
+    -- let OK val''' = expRes as ok<val>
+    -- if val''' <: num
+    -- let num = val''' as num
+    -- if num matches NAT %
+    -- let NAT n_target = num
+    -- if (n_target < |val*{val <- val*}|)
+    -- let val_upd = LIST val*{val <- val*}[[n_target] = val_n]
+    -- Eval_path_upd: C |- val_b path := val_upd : pathRes
+    -- output: % |- % % := % : pathRes
+
+    rulepath text-index-failure
+    -- let val_n = val'
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: ok<val>
+    -- let OK val'' = pathRes' as ok<val>
+    -- if val'' matches TEXT %
+    -- let TEXT t = val''
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % % := % : failure as pathRes
+
+    rulepath text-succ
+    -- let val'' = val'
+    -- if val'' matches TEXT %
+    -- let TEXT t_n = val''
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: ok<val>
+    -- let OK val''' = pathRes' as ok<val>
+    -- if val''' matches TEXT %
+    -- let TEXT t = val'''
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: ok<val>
+    -- let OK val'''' = expRes as ok<val>
+    -- if val'''' <: num
+    -- let num = val'''' as num
+    -- if num matches NAT %
+    -- let NAT n_target = num
+    -- if (n_target < |t|)
+    -- if (|t_n| = 1)
+    -- let val_upd = TEXT t[[n_target] = t_n]
+    -- Eval_path_upd: C |- val_b path := val_upd : pathRes
+    -- output: % |- % % := % : pathRes
+
+  rulegroup slice
+
+   match
+
+    (signature) C |- val_b SLICE path exp_i exp_n := val' : %
+    C |- val_b path' := val' : %
+    -- if path' matches SLICE % % %
+    -- let SLICE path exp_i exp_n = path'
+
+   paths
+
+    rulepath path-failure
+    -- let val_n = val'
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: failure
+    -- let failure = pathRes' as failure
+    -- output: % |- % % := % : failure as pathRes
+
+    rulepath text-index-failure
+    -- let val_n = val'
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: ok<val>
+    -- let OK val'' = pathRes' as ok<val>
+    -- if val'' matches TEXT %
+    -- let TEXT t = val''
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % % := % : failure as pathRes
+
+    rulepath text-length-failure
+    -- let val_n = val'
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: ok<val>
+    -- let OK val'' = pathRes' as ok<val>
+    -- if val'' matches TEXT %
+    -- let TEXT t = val''
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: ok<val>
+    -- let OK val''' = expRes as ok<val>
+    -- if val''' <: num
+    -- let num = val''' as num
+    -- if num matches NAT %
+    -- let NAT n_i = num
+    -- Eval_exp: C |- exp_n : expRes'
+    -- if expRes' <: failure
+    -- let failure = expRes' as failure
+    -- output: % |- % % := % : failure as pathRes
+
+    rulepath text-succ
+    -- let val'' = val'
+    -- if val'' matches TEXT %
+    -- let TEXT t_n = val''
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: ok<val>
+    -- let OK val''' = pathRes' as ok<val>
+    -- if val''' matches TEXT %
+    -- let TEXT t = val'''
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: ok<val>
+    -- let OK val'''' = expRes as ok<val>
+    -- if val'''' <: num
+    -- let num = val'''' as num
+    -- if num matches NAT %
+    -- let NAT n_i = num
+    -- Eval_exp: C |- exp_n : expRes'
+    -- if expRes' <: ok<val>
+    -- let OK val''''' = expRes' as ok<val>
+    -- if val''''' <: num
+    -- let num' = val''''' as num
+    -- if num' matches NAT %
+    -- let NAT n_n = num'
+    -- if ((n_i + n_n) <= |t|)
+    -- if (|t_n| = n_n)
+    -- let val_upd = TEXT t[[n_i : n_n] = t_n]
+    -- Eval_path_upd: C |- val_b path := val_upd : pathRes
+    -- output: % |- % % := % : pathRes
+
+    rulepath list-index-failure
+    -- let val_n = val'
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: ok<val>
+    -- let OK val'' = pathRes' as ok<val>
+    -- if val'' matches LIST %
+    -- let LIST val*{val <- val*} = val''
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % % := % : failure as pathRes
+
+    rulepath list-length-failure
+    -- let val_n = val'
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: ok<val>
+    -- let OK val'' = pathRes' as ok<val>
+    -- if val'' matches LIST %
+    -- let LIST val*{val <- val*} = val''
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: ok<val>
+    -- let OK val''' = expRes as ok<val>
+    -- if val''' <: num
+    -- let num = val''' as num
+    -- if num matches NAT %
+    -- let NAT n_i = num
+    -- Eval_exp: C |- exp_n : expRes'
+    -- if expRes' <: failure
+    -- let failure = expRes' as failure
+    -- output: % |- % % := % : failure as pathRes
+
+    rulepath list-succ
+    -- let val'' = val'
+    -- if val'' matches LIST %
+    -- let LIST val_n*{val_n <- val_n*} = val''
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: ok<val>
+    -- let OK val''' = pathRes' as ok<val>
+    -- if val''' matches LIST %
+    -- let LIST val*{val <- val*} = val'''
+    -- Eval_exp: C |- exp_i : expRes
+    -- if expRes <: ok<val>
+    -- let OK val'''' = expRes as ok<val>
+    -- if val'''' <: num
+    -- let num = val'''' as num
+    -- if num matches NAT %
+    -- let NAT n_i = num
+    -- Eval_exp: C |- exp_n : expRes'
+    -- if expRes' <: ok<val>
+    -- let OK val''''' = expRes' as ok<val>
+    -- if val''''' <: num
+    -- let num' = val''''' as num
+    -- if num' matches NAT %
+    -- let NAT n_n = num'
+    -- if ((n_i + n_n) <= |val*{val <- val*}|)
+    -- if (|val_n*{val_n <- val_n*}| = n_n)
+    -- let val_upd = LIST val*{val <- val*}[[n_i : n_n] = val_n*{val_n <- val_n*}]
+    -- Eval_path_upd: C |- val_b path := val_upd : pathRes
+    -- output: % |- % % := % : pathRes
+
+  rulegroup dot
+
+   match
+
+    (signature) C |- val_b DOT path atom := val_n : %
+    C |- val_b path' := val_n : %
+    -- if path' matches DOT % %
+    -- let DOT path atom = path'
+
+   paths
+
+    rulepath path-failure
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: failure
+    -- let failure = pathRes' as failure
+    -- output: % |- % % := % : failure as pathRes
+
+    rulepath succ
+    -- Eval_path_acc: C |- val_b path : pathRes'
+    -- if pathRes' <: ok<val>
+    -- let OK val = pathRes' as ok<val>
+    -- if val matches STR %
+    -- let STR valField*{valField <- valField*} = val
+    -- (let atom_field val_field = valField)*{valField <- valField*, atom_field -> atom_field*, val_field -> val_field*}
+    -- (let valField_new = atom_field $ite<val>((atom = atom_field), val_n, val_field))*{atom_field <- atom_field*, val_field <- val_field*, valField_new -> valField_new*}
+    -- let val_upd = STR valField_new*{valField_new <- valField_new*}
+    -- Eval_path_upd: C |- val_b path := val_upd : pathRes
+    -- output: % |- % % := % : pathRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- val_b path := val_n : %
+    C |- val_b path := val_n : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % % := % : ERROR as pathRes
+
+syntax typsRes =
+   | OK typ* (from ok<typ*>)
+   | ERROR (from error)
+
+relation Eval_targs: ctx |- targ* : typsRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- targ*{targ <- targ*} : %
+    C |- targ*{targ <- targ*} : %
+
+   paths
+
+    rulepath
+    -- let theta = $theta_of_tdenv(C.LOCAL.TYP)
+    -- let typsRes = $subst_typs(theta, targ*{targ <- targ*})
+    -- output: % |- % : typsRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- targ*{targ <- targ*} : %
+    C |- targ*{targ <- targ*} : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % : ERROR as typsRes
+
+syntax argRes =
+   | OK val (from ok<val>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+relation Eval_arg: ctx |- arg : argRes
+
+  rulegroup exp
+
+   match
+
+    (signature) C |- EXP exp : %
+    C |- arg : %
+    -- if arg matches EXP %
+    -- let EXP exp = arg
+
+   paths
+
+    rulepath exp
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: argRes
+    -- let argRes = expRes as argRes
+    -- output: % |- % : argRes
+
+  rulegroup fun
+
+   match
+
+    (signature) C |- FUN id : %
+    C |- arg : %
+    -- if arg matches FUN %
+    -- let FUN id = arg
+
+   paths
+
+    rulepath fun
+    -- let id_global = $resolve_func_param(C, id)
+    -- output: % |- % : OK FUNC id_global as argRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- arg : %
+    C |- arg : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % : ERROR as argRes
+
+syntax argsRes =
+   | OK val* (from ok<val*>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+relation Eval_args: ctx |- arg* : argsRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- arg''*{arg'' <- arg''*} : %
+    C |- arg''*{arg'' <- arg''*} : %
+
+   paths
+
+    rulepath nil
+    -- if (arg''*{arg'' <- arg''*} = [])
+    -- output: % |- % : OK [] as argsRes
+
+    rulepath head-failure
+    -- let arg'''*{arg''' <- arg'''*} = arg''*{arg'' <- arg''*}
+    -- if arg'''*{arg''' <- arg'''*} matches _ :: _
+    -- let arg_h :: arg_t*{arg_t <- arg_t*} = arg'''*{arg''' <- arg'''*}
+    -- Eval_arg: C |- arg_h : argRes
+    -- if argRes <: failure
+    -- let failure = argRes as failure
+    -- output: % |- % : failure as argsRes
+
+    rulepath tail-failure
+    -- let arg'''*{arg''' <- arg'''*} = arg''*{arg'' <- arg''*}
+    -- if arg'''*{arg''' <- arg'''*} matches _ :: _
+    -- let arg_h :: arg_t*{arg_t <- arg_t*} = arg'''*{arg''' <- arg'''*}
+    -- Eval_arg: C |- arg_h : argRes
+    -- if argRes <: ok<val>
+    -- let OK val_h = argRes as ok<val>
+    -- Eval_args: C |- arg_t*{arg_t <- arg_t*} : argsRes
+    -- if argsRes <: failure
+    -- let failure = argsRes as failure
+    -- output: % |- % : failure as argsRes
+
+    rulepath cons-succ
+    -- let arg'''*{arg''' <- arg'''*} = arg''*{arg'' <- arg''*}
+    -- if arg'''*{arg''' <- arg'''*} matches _ :: _
+    -- let arg_h :: arg_t*{arg_t <- arg_t*} = arg'''*{arg''' <- arg'''*}
+    -- Eval_arg: C |- arg_h : argRes
+    -- if argRes <: ok<val>
+    -- let OK val_h = argRes as ok<val>
+    -- Eval_args: C |- arg_t*{arg_t <- arg_t*} : argsRes
+    -- if argsRes <: ok<val*>
+    -- let OK val_t*{val_t <- val_t*} = argsRes as ok<val*>
+    -- output: % |- % : OK val_h :: val_t*{val_t <- val_t*} as argsRes
+
+syntax premRes =
+   | OK ctx (from ok<ctx>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+relation Eval_prem: ctx |- prem : premRes
+
+  rulegroup relpr
+
+   match
+
+    (signature) C |- REL id ':' exp*{exp <- exp*} '->' exp_out*{exp_out <- exp_out*} : %
+    C |- prem : %
+    -- if prem matches REL % ':' % '->' %
+    -- let REL id ':' exp*{exp <- exp*} '->' exp_out*{exp_out <- exp_out*} = prem
+
+   paths
+
+    rulepath expressions-failure
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: failure
+    -- let failure = expsRes as failure
+    -- output: % |- % : failure as premRes
+
+    rulepath call-failure
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val*{val <- val*} = expsRes as ok<val*>
+    -- Call_rel: C |- id `( val*{val <- val*} `) : relRes
+    -- if relRes <: failure
+    -- let failure = relRes as failure
+    -- output: % |- % : failure as premRes
+
+    rulepath succ
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val*{val <- val*} = expsRes as ok<val*>
+    -- Call_rel: C |- id `( val*{val <- val*} `) : relRes
+    -- if relRes <: ok<val*>
+    -- let OK val_out*{val_out <- val_out*} = relRes as ok<val*>
+    -- Assign_exps: C |- exp_out*{exp_out <- exp_out*} := val_out*{val_out <- val_out*} : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- output: % |- % : OK C' as premRes
+
+  rulegroup ifpr
+
+   match
+
+    (signature) C |- IF exp : %
+    C |- prem : %
+    -- if prem matches IF %
+    -- let IF exp = prem
+
+   paths
+
+    rulepath cond-failure
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as premRes
+
+    rulepath succ-false
+    -- Eval_exp: C |- exp : expRes
+    -- if (expRes = OK BOOL false as expRes)
+    -- output: % |- % : UNMATCH as premRes
+
+    rulepath succ-true
+    -- Eval_exp: C |- exp : expRes
+    -- if (expRes = OK BOOL true as expRes)
+    -- output: % |- % : OK C as premRes
+
+  rulegroup ifholdpr
+
+   match
+
+    (signature) C |- IFHOLD id ':' exp*{exp <- exp*} : %
+    C |- prem : %
+    -- if prem matches IFHOLD % ':' %
+    -- let IFHOLD id ':' exp*{exp <- exp*} = prem
+
+   paths
+
+    rulepath expressions-failure
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: failure
+    -- let failure = expsRes as failure
+    -- output: % |- % : failure as premRes
+
+    rulepath call-failure
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val_input*{val_input <- val_input*} = expsRes as ok<val*>
+    -- Call_rel: C |- id `( val_input*{val_input <- val_input*} `) : relRes
+    -- if relRes <: failure
+    -- let failure = relRes as failure
+    -- output: % |- % : failure as premRes
+
+    rulepath succ
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val_input*{val_input <- val_input*} = expsRes as ok<val*>
+    -- Call_rel: C |- id `( val_input*{val_input <- val_input*} `) : relRes
+    -- if (relRes = OK [] as relRes)
+    -- output: % |- % : OK C as premRes
+
+  rulegroup ifnotholdpr
+
+   match
+
+    (signature) C |- IFNOTHOLD id ':' exp*{exp <- exp*} : %
+    C |- prem : %
+    -- if prem matches IFNOTHOLD % ':' %
+    -- let IFNOTHOLD id ':' exp*{exp <- exp*} = prem
+
+   paths
+
+    rulepath expressions-failure
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: failure
+    -- let failure = expsRes as failure
+    -- output: % |- % : failure as premRes
+
+    rulepath error
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val_input*{val_input <- val_input*} = expsRes as ok<val*>
+    -- Call_rel: C |- id `( val_input*{val_input <- val_input*} `) : relRes
+    -- if relRes <: error
+    -- let error = relRes as error
+    -- if error matches ERROR
+    -- output: % |- % : ERROR as premRes
+
+    rulepath succ-unmatch
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val_input*{val_input <- val_input*} = expsRes as ok<val*>
+    -- Call_rel: C |- id `( val_input*{val_input <- val_input*} `) : relRes
+    -- if relRes <: ok<val*>
+    -- let OK val_out*{val_out <- val_out*} = relRes as ok<val*>
+    -- output: % |- % : UNMATCH as premRes
+
+    rulepath succ-ok
+    -- Eval_exps: C |- exp*{exp <- exp*} : expsRes
+    -- if expsRes <: ok<val*>
+    -- let OK val_input*{val_input <- val_input*} = expsRes as ok<val*>
+    -- Call_rel: C |- id `( val_input*{val_input <- val_input*} `) : relRes
+    -- if relRes <: unmatch
+    -- let unmatch = relRes as unmatch
+    -- if unmatch matches UNMATCH
+    -- output: % |- % : OK C as premRes
+
+  rulegroup letpr
+
+   match
+
+    (signature) C |- LET exp_l '=' exp_r : %
+    C |- prem : %
+    -- if prem matches LET % '=' %
+    -- let LET exp_l '=' exp_r = prem
+
+   paths
+
+    rulepath right-failure
+    -- Eval_exp: C |- exp_r : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as premRes
+
+    rulepath succ
+    -- Eval_exp: C |- exp_r : expRes
+    -- if expRes <: ok<val>
+    -- let OK val_r = expRes as ok<val>
+    -- Assign_exp: C |- exp_l := val_r : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- output: % |- % : OK C' as premRes
+
+  rulegroup iterpr-opt
+
+   match
+
+    (signature) C |- ITER prem iterPrem : %
+    C |- prem' : %
+    -- if prem' matches ITER % %
+    -- let ITER prem iterPrem = prem'
+
+   paths
+
+    rulepath body-failure
+    -- let iter vari_bound*{vari_bound <- vari_bound*} vari_bind*{vari_bind <- vari_bind*} = iterPrem
+    -- if iter matches QUEST
+    -- let subOptRes = $sub_opt(C, vari_bound*{vari_bound <- vari_bound*})
+    -- if subOptRes <: ok<ctx?>
+    -- let OK C_sub?{C_sub <- C_sub?} = subOptRes as ok<ctx?>
+    -- Eval_prem_maybe: C_sub?{C_sub <- C_sub?} |- prem : premOptRes
+    -- if premOptRes <: failure
+    -- let failure = premOptRes as failure
+    -- output: % |- % : failure as premRes
+
+    rulepath succ-none
+    -- let iter vari_bound*{vari_bound <- vari_bound*} vari_bind*{vari_bind <- vari_bind*} = iterPrem
+    -- if iter matches QUEST
+    -- let subOptRes = $sub_opt(C, vari_bound*{vari_bound <- vari_bound*})
+    -- if subOptRes <: ok<ctx?>
+    -- let OK C_sub?{C_sub <- C_sub?} = subOptRes as ok<ctx?>
+    -- Eval_prem_maybe: C_sub?{C_sub <- C_sub?} |- prem : premOptRes
+    -- if (premOptRes = OK ?() as premOptRes)
+    -- (let vari_bind_iter = $iter_vari(vari_bind, QUEST))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
+    -- let val_bind*{val_bind <- val_bind*} = $repeat_<val>(OPT ?(), |vari_bind*{vari_bind <- vari_bind*}|)
+    -- let C_res = $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, val_bind*{val_bind <- val_bind*})
+    -- output: % |- % : OK C_res as premRes
+
+    rulepath succ-some
+    -- let iter vari_bound*{vari_bound <- vari_bound*} vari_bind*{vari_bind <- vari_bind*} = iterPrem
+    -- if iter matches QUEST
+    -- let subOptRes = $sub_opt(C, vari_bound*{vari_bound <- vari_bound*})
+    -- if subOptRes <: ok<ctx?>
+    -- let OK C_sub?{C_sub <- C_sub?} = subOptRes as ok<ctx?>
+    -- Eval_prem_maybe: C_sub?{C_sub <- C_sub?} |- prem : premOptRes
+    -- if premOptRes <: ok<ctx?>
+    -- let OK C'?{C' <- C'?} = premOptRes as ok<ctx?>
+    -- if C'?{C' <- C'?} matches (_)
+    -- let ?(C_sub_res) = C'?{C' <- C'?}
+    -- (let val?{val <- val?} = $find_vari(C_sub_res, vari_bind))*{vari_bind <- vari_bind*, val? -> val?*}
+    -- (if val?{val <- val?} matches (_))*{val? <- val?*}
+    -- (let ?(val_bind) = val?{val <- val?})*{val? <- val?*, val_bind -> val_bind*}
+    -- (let vari_bind_iter = $iter_vari(vari_bind, QUEST))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
+    -- let C_res = $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, OPT ?(val_bind)*{val_bind <- val_bind*})
+    -- output: % |- % : OK C_res as premRes
+
+  rulegroup iterpr-list
+
+   match
+
+    (signature) C |- ITER prem iterPrem : %
+    C |- prem' : %
+    -- if prem' matches ITER % %
+    -- let ITER prem iterPrem = prem'
+
+   paths
+
+    rulepath succ-empty
+    -- let iter vari_bound*{vari_bound <- vari_bound*} vari_bind*{vari_bind <- vari_bind*} = iterPrem
+    -- if iter matches STAR
+    -- if (OK [] as subListRes = $sub_list(C, vari_bound*{vari_bound <- vari_bound*}))
+    -- (let vari_bind_iter = $iter_vari(vari_bind, STAR))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
+    -- let val_bind*{val_bind <- val_bind*} = $repeat_<val>(LIST [], |vari_bind*{vari_bind <- vari_bind*}|)
+    -- let C_res = $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, val_bind*{val_bind <- val_bind*})
+    -- output: % |- % : OK C_res as premRes
+
+    rulepath body-failure
+    -- let iter vari_bound*{vari_bound <- vari_bound*} vari_bind*{vari_bind <- vari_bind*} = iterPrem
+    -- if iter matches STAR
+    -- let subListRes = $sub_list(C, vari_bound*{vari_bound <- vari_bound*})
+    -- if subListRes <: ok<ctx*>
+    -- let OK C_sub*{C_sub <- C_sub*} = subListRes as ok<ctx*>
+    -- if (C_sub*{C_sub <- C_sub*} =/= [])
+    -- Eval_prem_each: C_sub*{C_sub <- C_sub*} |- prem : premIterRes
+    -- if premIterRes <: failure
+    -- let failure = premIterRes as failure
+    -- output: % |- % : failure as premRes
+
+    rulepath succ-list
+    -- let iter vari_bound*{vari_bound <- vari_bound*} vari_bind*{vari_bind <- vari_bind*} = iterPrem
+    -- if iter matches STAR
+    -- let subListRes = $sub_list(C, vari_bound*{vari_bound <- vari_bound*})
+    -- if subListRes <: ok<ctx*>
+    -- let OK C_sub*{C_sub <- C_sub*} = subListRes as ok<ctx*>
+    -- if (C_sub*{C_sub <- C_sub*} =/= [])
+    -- Eval_prem_each: C_sub*{C_sub <- C_sub*} |- prem : premIterRes
+    -- if premIterRes <: ok<ctx*>
+    -- let OK C_sub_res*{C_sub_res <- C_sub_res*} = premIterRes as ok<ctx*>
+    -- (let val*{val <- val*}?{val* <- val*?} = $find_varis(C_sub_res, vari_bind*{vari_bind <- vari_bind*}))*{C_sub_res <- C_sub_res*, val*? -> val*?*}
+    -- (if val*{val <- val*}?{val* <- val*?} matches (_))*{val*? <- val*?*}
+    -- (let ?(val_sub_bind*{val_sub_bind <- val_sub_bind*}) = val*{val <- val*}?{val* <- val*?})*{val*? <- val*?*, val_sub_bind* -> val_sub_bind**}
+    -- let val_bind*{val_bind <- val_bind*}*{val_bind* <- val_bind**} = $transpose_<val>(val_sub_bind*{val_sub_bind <- val_sub_bind*}*{val_sub_bind* <- val_sub_bind**})
+    -- (let val_res_bind = LIST val_bind*{val_bind <- val_bind*})*{val_bind* <- val_bind**, val_res_bind -> val_res_bind*}
+    -- (let vari_bind_iter = $iter_vari(vari_bind, STAR))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
+    -- let C_res = $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, val_res_bind*{val_res_bind <- val_res_bind*})
+    -- output: % |- % : OK C_res as premRes
+
+  rulegroup dbg
+
+   match
+
+    (signature) C |- DEBUG exp : %
+    C |- prem : %
+    -- if prem matches DEBUG %
+    -- let DEBUG exp = prem
+
+   paths
+
+    rulepath operand-failure
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: failure
+    -- let failure = expRes as failure
+    -- output: % |- % : failure as premRes
+
+    rulepath succ
+    -- Eval_exp: C |- exp : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- debug val
+    -- output: % |- % : OK C as premRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- prem : %
+    C |- prem : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % : ERROR as premRes
+
+relation Eval_prems: ctx |- prem* : premRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- prem'*{prem' <- prem'*} : %
+    C |- prem'*{prem' <- prem'*} : %
+
+   paths
+
+    rulepath empty
+    -- if (prem'*{prem' <- prem'*} = [])
+    -- output: % |- % : OK C as premRes
+
+    rulepath head-failure
+    -- let prem''*{prem'' <- prem''*} = prem'*{prem' <- prem'*}
+    -- if prem''*{prem'' <- prem''*} matches _ :: _
+    -- let prem_h :: prem_t*{prem_t <- prem_t*} = prem''*{prem'' <- prem''*}
+    -- Eval_prem: C |- prem_h : premRes'
+    -- if premRes' <: failure
+    -- let failure = premRes' as failure
+    -- output: % |- % : failure as premRes
+
+    rulepath head-succ
+    -- let prem''*{prem'' <- prem''*} = prem'*{prem' <- prem'*}
+    -- if prem''*{prem'' <- prem''*} matches _ :: _
+    -- let prem_h :: prem_t*{prem_t <- prem_t*} = prem''*{prem'' <- prem''*}
+    -- Eval_prem: C |- prem_h : premRes'
+    -- if premRes' <: ok<ctx>
+    -- let OK C' = premRes' as ok<ctx>
+    -- Eval_prems: C' |- prem_t*{prem_t <- prem_t*} : premRes
+    -- output: % |- % : premRes
+
+syntax premOptRes =
+   | OK ctx? (from ok<ctx?>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+relation Eval_prem_maybe: ctx? |- prem : premOptRes
+
+  rulegroup
+
+   match
+
+    (signature) C''?{C'' <- C''?} |- prem : %
+    C''?{C'' <- C''?} |- prem : %
+
+   paths
+
+    rulepath none
+    -- if (C''?{C'' <- C''?} = ?())
+    -- output: % |- % : OK ?() as premOptRes
+
+    rulepath failure
+    -- let C'''?{C''' <- C'''?} = C''?{C'' <- C''?}
+    -- if C'''?{C''' <- C'''?} matches (_)
+    -- let ?(C) = C'''?{C''' <- C'''?}
+    -- Eval_prem: C |- prem : premRes
+    -- if premRes <: failure
+    -- let failure = premRes as failure
+    -- output: % |- % : failure as premOptRes
+
+    rulepath some
+    -- let C'''?{C''' <- C'''?} = C''?{C'' <- C''?}
+    -- if C'''?{C''' <- C'''?} matches (_)
+    -- let ?(C) = C'''?{C''' <- C'''?}
+    -- Eval_prem: C |- prem : premRes
+    -- if premRes <: ok<ctx>
+    -- let OK C_res = premRes as ok<ctx>
+    -- output: % |- % : OK ?(C_res) as premOptRes
+
+syntax premIterRes =
+   | OK ctx* (from ok<ctx*>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+relation Eval_prem_each: ctx* |- prem : premIterRes
+
+  rulegroup
+
+   match
+
+    (signature) C''*{C'' <- C''*} |- prem : %
+    C''*{C'' <- C''*} |- prem : %
+
+   paths
+
+    rulepath nil
+    -- if (C''*{C'' <- C''*} = [])
+    -- output: % |- % : OK [] as premIterRes
+
+    rulepath head-failure
+    -- let C'''*{C''' <- C'''*} = C''*{C'' <- C''*}
+    -- if C'''*{C''' <- C'''*} matches _ :: _
+    -- let C_h :: C_t*{C_t <- C_t*} = C'''*{C''' <- C'''*}
+    -- Eval_prem: C_h |- prem : premRes
+    -- if premRes <: failure
+    -- let failure = premRes as failure
+    -- output: % |- % : failure as premIterRes
+
+    rulepath tail-failure
+    -- let C'''*{C''' <- C'''*} = C''*{C'' <- C''*}
+    -- if C'''*{C''' <- C'''*} matches _ :: _
+    -- let C_h :: C_t*{C_t <- C_t*} = C'''*{C''' <- C'''*}
+    -- Eval_prem: C_h |- prem : premRes
+    -- if premRes <: ok<ctx>
+    -- let OK C_res = premRes as ok<ctx>
+    -- Eval_prem_each: C_t*{C_t <- C_t*} |- prem : premIterRes
+    -- if premIterRes <: failure
+    -- let failure = premIterRes as failure
+    -- output: % |- % : failure as premIterRes
+
+    rulepath cons-succ
+    -- let C'''*{C''' <- C'''*} = C''*{C'' <- C''*}
+    -- if C'''*{C''' <- C'''*} matches _ :: _
+    -- let C_h :: C_t*{C_t <- C_t*} = C'''*{C''' <- C'''*}
+    -- Eval_prem: C_h |- prem : premRes
+    -- if premRes <: ok<ctx>
+    -- let OK C_res = premRes as ok<ctx>
+    -- Eval_prem_each: C_t*{C_t <- C_t*} |- prem : premIterRes
+    -- if premIterRes <: ok<ctx*>
+    -- let OK C_t_res*{C_t_res <- C_t_res*} = premIterRes as ok<ctx*>
+    -- output: % |- % : OK C_res :: C_t_res*{C_t_res <- C_t_res*} as premIterRes
+
+relation Call_func: ctx |- id `< targ* `> `( val* `) : funcRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- id `< typ''*{typ'' <- typ''*} `> `( val*{val <- val*} `) : %
+    C |- id `< typ''*{typ'' <- typ''*} `> `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath extern
+    -- let typ*{typ <- typ*} = typ''*{typ'' <- typ''*}
+    -- let id_global = $resolve_func_param(C, id)
+    -- let funcDefn'?{funcDefn' <- funcDefn'?} = $find_func(C, id_global)
+    -- if funcDefn'?{funcDefn' <- funcDefn'?} matches (_)
+    -- let ?(funcDefn) = funcDefn'?{funcDefn' <- funcDefn'?}
+    -- if funcDefn <: externFuncDefn
+    -- let EXTFUNC id_func _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ = funcDefn as externFuncDefn
+    -- Call_extern_func: |- id_func `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : funcRes
+    -- output: % |- % `< % `> `( % `) : funcRes
+
+    rulepath builtin
+    -- let typ*{typ <- typ*} = typ''*{typ'' <- typ''*}
+    -- let id_global = $resolve_func_param(C, id)
+    -- let funcDefn'?{funcDefn' <- funcDefn'?} = $find_func(C, id_global)
+    -- if funcDefn'?{funcDefn' <- funcDefn'?} matches (_)
+    -- let ?(funcDefn) = funcDefn'?{funcDefn' <- funcDefn'?}
+    -- if funcDefn <: builtinFuncDefn
+    -- let BUILTINFUNC id_func _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ = funcDefn as builtinFuncDefn
+    -- Call_builtin_func: |- id_func `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : funcRes
+    -- output: % |- % `< % `> `( % `) : funcRes
+
+    rulepath table
+    -- if (typ''*{typ'' <- typ''*} = [])
+    -- let id_global = $resolve_func_param(C, id)
+    -- let funcDefn'?{funcDefn' <- funcDefn'?} = $find_func(C, id_global)
+    -- if funcDefn'?{funcDefn' <- funcDefn'?} matches (_)
+    -- let ?(funcDefn) = funcDefn'?{funcDefn' <- funcDefn'?}
+    -- if funcDefn <: tableFuncDefn
+    -- let tableFuncDefn = funcDefn as tableFuncDefn
+    -- Call_table_func: C |- tableFuncDefn `( val*{val <- val*} `) : funcRes
+    -- output: % |- % `< % `> `( % `) : funcRes
+
+    rulepath defined
+    -- let typ*{typ <- typ*} = typ''*{typ'' <- typ''*}
+    -- let id_global = $resolve_func_param(C, id)
+    -- let funcDefn'?{funcDefn' <- funcDefn'?} = $find_func(C, id_global)
+    -- if funcDefn'?{funcDefn' <- funcDefn'?} matches (_)
+    -- let ?(funcDefn) = funcDefn'?{funcDefn' <- funcDefn'?}
+    -- if funcDefn <: definedFuncDefn
+    -- let definedFuncDefn = funcDefn as definedFuncDefn
+    -- Call_defined_func: C |- definedFuncDefn `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : funcRes
+    -- output: % |- % `< % `> `( % `) : funcRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- id `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
+    C |- id `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % `< % `> `( % `) : ERROR as funcRes
+
+relation Call_rel: ctx |- id `( val* `) : relRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- id `( val*{val <- val*} `) : %
+    C |- id `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath extern
+    -- let relDefn'?{relDefn' <- relDefn'?} = $find_rel(C, id)
+    -- if relDefn'?{relDefn' <- relDefn'?} matches (_)
+    -- let ?(relDefn) = relDefn'?{relDefn' <- relDefn'?}
+    -- if relDefn <: externRelDefn
+    -- let EXTREL id_rel ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} = relDefn as externRelDefn
+    -- Call_extern_rel: |- id_rel `( val*{val <- val*} `) : relRes
+    -- output: % |- % `( % `) : relRes
+
+    rulepath defined
+    -- let relDefn'?{relDefn' <- relDefn'?} = $find_rel(C, id)
+    -- if relDefn'?{relDefn' <- relDefn'?} matches (_)
+    -- let ?(relDefn) = relDefn'?{relDefn' <- relDefn'?}
+    -- if relDefn <: definedRelDefn
+    -- let definedRelDefn = relDefn as definedRelDefn
+    -- Call_defined_rel: C |- definedRelDefn `( val*{val <- val*} `) : relRes
+    -- output: % |- % `( % `) : relRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- id `( val*{val <- val*} `) : %
+    C |- id `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % `( % `) : ERROR as relRes
+
+def $numUnop(numUnop, num) : val =
+
+  clause 0 : (numUnop, num) = NAT n as val
+  -- if numUnop matches PLUS
+  -- if num matches NAT %
+  -- let NAT n = num
+
+  clause 1 : (numUnop, num) = INT i as val
+  -- if numUnop matches PLUS
+  -- if num matches INT %
+  -- let INT i = num
+
+  clause 2 : (numUnop, num) = INT -n as int as val
+  -- if numUnop matches MINUS
+  -- if num matches NAT %
+  -- let NAT n = num
+
+  clause 3 : (numUnop, num) = INT -i as val
+  -- if numUnop matches MINUS
+  -- if num matches INT %
+  -- let INT i = num
+
+def $boolBinop(boolBinop, bool, bool) : bool =
+
+  clause 0 : (boolBinop, b_l, b_r) = (b_l /\ b_r)
+  -- if boolBinop matches AND
+
+  clause 1 : (boolBinop, b_l, b_r) = (b_l \/ b_r)
+  -- if boolBinop matches OR
+
+  clause 2 : (boolBinop, b_l, b_r) = (b_l => b_r)
+  -- if boolBinop matches IMPL
+
+  clause 3 : (boolBinop, b_l, b_r) = (b_l <=> b_r)
+  -- if boolBinop matches EQUIV
+
+syntax numBinopRes =
+   | OK val (from ok<val>)
+   | ERROR (from error)
+
+def $numBinop(numBinop, num, num) : numBinopRes =
+
+  clause 0 : (numBinop, num, num') = OK NAT (n_l + n_r) as val as numBinopRes
+  -- if numBinop matches ADD
+  -- if num matches NAT %
+  -- let NAT n_l = num
+  -- if num' matches NAT %
+  -- let NAT n_r = num'
+
+  clause 1 : (numBinop, num, num') = OK INT (i_l + i_r) as val as numBinopRes
+  -- if numBinop matches ADD
+  -- if num matches INT %
+  -- let INT i_l = num
+  -- if num' matches INT %
+  -- let INT i_r = num'
+
+  clause 2 : (numBinop, num, num') = OK INT (n_l - n_r) as val as numBinopRes
+  -- if numBinop matches SUB
+  -- if num matches NAT %
+  -- let NAT n_l = num
+  -- if num' matches NAT %
+  -- let NAT n_r = num'
+
+  clause 3 : (numBinop, num, num') = OK INT (i_l - i_r) as val as numBinopRes
+  -- if numBinop matches SUB
+  -- if num matches INT %
+  -- let INT i_l = num
+  -- if num' matches INT %
+  -- let INT i_r = num'
+
+  clause 4 : (numBinop, num, num') = OK NAT (n_l * n_r) as val as numBinopRes
+  -- if numBinop matches MUL
+  -- if num matches NAT %
+  -- let NAT n_l = num
+  -- if num' matches NAT %
+  -- let NAT n_r = num'
+
+  clause 5 : (numBinop, num, num') = OK INT (i_l * i_r) as val as numBinopRes
+  -- if numBinop matches MUL
+  -- if num matches INT %
+  -- let INT i_l = num
+  -- if num' matches INT %
+  -- let INT i_r = num'
+
+  clause 6 : (numBinop, num, num') = OK NAT (n_l / n_r) as val as numBinopRes
+  -- if numBinop matches DIV
+  -- if num matches NAT %
+  -- let NAT n_l = num
+  -- if num' matches NAT %
+  -- let NAT n_r = num'
+  -- if (n_r =/= 0)
+
+  clause 7 : (numBinop, num, num') = OK INT (i_l / i_r) as val as numBinopRes
+  -- if numBinop matches DIV
+  -- if num matches INT %
+  -- let INT i_l = num
+  -- if num' matches INT %
+  -- let INT i_r = num'
+  -- if (i_r =/= +0)
+
+  clause 8 : (numBinop, num, num') = OK NAT (n_l \ n_r) as val as numBinopRes
+  -- if numBinop matches MOD
+  -- if num matches NAT %
+  -- let NAT n_l = num
+  -- if num' matches NAT %
+  -- let NAT n_r = num'
+  -- if (n_r =/= 0)
+
+  clause 9 : (numBinop, num, num') = OK INT (i_l \ i_r) as val as numBinopRes
+  -- if numBinop matches MOD
+  -- if num matches INT %
+  -- let INT i_l = num
+  -- if num' matches INT %
+  -- let INT i_r = num'
+  -- if (i_r =/= +0)
+
+  clause -1 : (numBinop, num_l, num_r) = ERROR as numBinopRes
+
+def $polyCmpop(polyCmpop, val, val) : bool =
+
+  clause 0 : (polyCmpop, val_l, val_r) = (val_l = val_r)
+  -- if polyCmpop matches EQ
+
+  clause 1 : (polyCmpop, val_l, val_r) = (val_l =/= val_r)
+  -- if polyCmpop matches NE
+
+syntax numCmpRes =
+   | OK bool (from ok<bool>)
+   | ERROR (from error)
+
+def $numCmpop(numCmpop, num, num) : numCmpRes =
+
+  clause 0 : (numCmpop, num, num') = OK (n_l < n_r) as numCmpRes
+  -- if numCmpop matches LT
+  -- if num matches NAT %
+  -- let NAT n_l = num
+  -- if num' matches NAT %
+  -- let NAT n_r = num'
+
+  clause 1 : (numCmpop, num, num') = OK (i_l < i_r) as numCmpRes
+  -- if numCmpop matches LT
+  -- if num matches INT %
+  -- let INT i_l = num
+  -- if num' matches INT %
+  -- let INT i_r = num'
+
+  clause 2 : (numCmpop, num, num') = OK (n_l > n_r) as numCmpRes
+  -- if numCmpop matches GT
+  -- if num matches NAT %
+  -- let NAT n_l = num
+  -- if num' matches NAT %
+  -- let NAT n_r = num'
+
+  clause 3 : (numCmpop, num, num') = OK (i_l > i_r) as numCmpRes
+  -- if numCmpop matches GT
+  -- if num matches INT %
+  -- let INT i_l = num
+  -- if num' matches INT %
+  -- let INT i_r = num'
+
+  clause 4 : (numCmpop, num, num') = OK (n_l <= n_r) as numCmpRes
+  -- if numCmpop matches LE
+  -- if num matches NAT %
+  -- let NAT n_l = num
+  -- if num' matches NAT %
+  -- let NAT n_r = num'
+
+  clause 5 : (numCmpop, num, num') = OK (i_l <= i_r) as numCmpRes
+  -- if numCmpop matches LE
+  -- if num matches INT %
+  -- let INT i_l = num
+  -- if num' matches INT %
+  -- let INT i_r = num'
+
+  clause 6 : (numCmpop, num, num') = OK (n_l >= n_r) as numCmpRes
+  -- if numCmpop matches GE
+  -- if num matches NAT %
+  -- let NAT n_l = num
+  -- if num' matches NAT %
+  -- let NAT n_r = num'
+
+  clause 7 : (numCmpop, num, num') = OK (i_l >= i_r) as numCmpRes
+  -- if numCmpop matches GE
+  -- if num matches INT %
+  -- let INT i_l = num
+  -- if num' matches INT %
+  -- let INT i_r = num'
+
+  clause -1 : (numCmpop, num_l, num_r) = ERROR as numCmpRes
+
+def $matches(val, pat) : bool =
+
+  clause 0 : (val', pat) = (mixop_v = mixop_p)
+  -- if val' matches INJ %
+  -- let INJ mixop_v val*{val <- val*} = val'
+  -- if pat matches INJ %
+  -- let INJ mixop_p = pat
+
+  clause 1 : (val', pat) = (|val*{val <- val*}| > 0)
+  -- if val' matches LIST %
+  -- let LIST val*{val <- val*} = val'
+  -- if pat <: listPat
+  -- let listPat = pat as listPat
+  -- if listPat matches CONS
+
+  clause 2 : (val', pat) = (|val*{val <- val*}| = n)
+  -- if val' matches LIST %
+  -- let LIST val*{val <- val*} = val'
+  -- if pat <: listPat
+  -- let listPat = pat as listPat
+  -- if listPat matches FIXED %
+  -- let FIXED n = listPat
+
+  clause 3 : (val', pat) = (|val*{val <- val*}| = 0)
+  -- if val' matches LIST %
+  -- let LIST val*{val <- val*} = val'
+  -- if pat <: listPat
+  -- let listPat = pat as listPat
+  -- if listPat matches NIL
+
+  clause 4 : (val', pat) = (val?{val <- val?} =/= ?())
+  -- if val' matches OPT %
+  -- let OPT val?{val <- val?} = val'
+  -- if pat <: optPat
+  -- let optPat = pat as optPat
+  -- if optPat matches SOME
+
+  clause 5 : (val', pat) = (val?{val <- val?} = ?())
+  -- if val' matches OPT %
+  -- let OPT val?{val <- val?} = val'
+  -- if pat <: optPat
+  -- let optPat = pat as optPat
+  -- if optPat matches NONE
+
+  clause -1 : (val, pat) = false
+
+syntax theta = map<id, typ>
+
+def $theta_of_tdenv(tdenv) : theta =
+
+  clause 0 : (set<pair<id, typDef>>) = $empty_map<id, typ>
+  -- if (set<pair<id, typDef>> = `{ [] `})
+
+  clause 1 : (`{ pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*} `}) = $add_map<id, typ>(theta_t, id_h, typ_h)
+  -- if pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*} matches _ :: _
+  -- let id_h ':' typDef_h :: id_t ':' typDef_t*{id_t <- id_t*, typDef_t <- typDef_t*} = pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*}
+  -- let typDef = typDef_h
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if tparam*{tparam <- tparam*} matches []
+  -- if deftyp matches ALIAS %
+  -- let ALIAS typ_h = deftyp
+  -- let theta_t = $theta_of_tdenv(`{ id_t ':' typDef_t*{id_t <- id_t*, typDef_t <- typDef_t*} `})
+
+  clause 2 : (`{ pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*} `}) = $theta_of_tdenv(`{ id_t ':' typDef_t*{id_t <- id_t*, typDef_t <- typDef_t*} `})
+  -- if pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*} matches _ :: _
+  -- let id_h ':' typDef_h :: id_t ':' typDef_t*{id_t <- id_t*, typDef_t <- typDef_t*} = pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*}
+  -- if (typDef_h = PARAM)
+
+  clause 3 : (`{ pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*} `}) = $theta_of_tdenv(`{ id_t ':' typDef_t*{id_t <- id_t*, typDef_t <- typDef_t*} `})
+  -- if pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*} matches _ :: _
+  -- let id_h ':' typDef :: id_t ':' typDef_t*{id_t <- id_t*, typDef_t <- typDef_t*} = pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*}
+  -- if typDef <: externTypDefn
+  -- let EXTTYP _id = typDef as externTypDefn
+
+  clause 4 : (`{ pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*} `}) = $theta_of_tdenv(`{ id_t ':' typDef_t*{id_t <- id_t*, typDef_t <- typDef_t*} `})
+  -- if pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*} matches _ :: _
+  -- let id_h ':' typDef :: id_t ':' typDef_t*{id_t <- id_t*, typDef_t <- typDef_t*} = pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches ALIAS %
+  -- let ALIAS typ = deftyp
+  -- if (tparam*{tparam <- tparam*} =/= [])
+
+  clause 5 : (`{ pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*} `}) = $theta_of_tdenv(`{ id_t ':' typDef_t*{id_t <- id_t*, typDef_t <- typDef_t*} `})
+  -- if pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*} matches _ :: _
+  -- let id_h ':' typDef :: id_t ':' typDef_t*{id_t <- id_t*, typDef_t <- typDef_t*} = pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches STRUCT %
+  -- let STRUCT typField*{typField <- typField*} = deftyp
+
+  clause 6 : (`{ pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*} `}) = $theta_of_tdenv(`{ id_t ':' typDef_t*{id_t <- id_t*, typDef_t <- typDef_t*} `})
+  -- if pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*} matches _ :: _
+  -- let id_h ':' typDef :: id_t ':' typDef_t*{id_t <- id_t*, typDef_t <- typDef_t*} = pair<id, typDef>*{pair<id, typDef> <- pair<id, typDef>*}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches VARIANT %
+  -- let VARIANT typCase*{typCase <- typCase*} = deftyp
+
+def $ids_typ(typ) : id* =
+
+  clause 0 : (typ') = [id] ++ $ids_typs(typ*{typ <- typ*})
+  -- if typ' matches VAR % %
+  -- let VAR id typ*{typ <- typ*} = typ'
+
+  clause 1 : (typ') = $ids_typs(typ*{typ <- typ*})
+  -- if typ' matches TUP %
+  -- let TUP typ*{typ <- typ*} = typ'
+
+  clause 2 : (typ') = $ids_typ(typ)
+  -- if typ' matches ITER % %
+  -- let ITER typ iter = typ'
+
+  clause 3 : (typ') = tparam*{tparam <- tparam*} ++ $ids_typs(typ*{typ <- typ*}) ++ $ids_typ(typ_ret)
+  -- if typ' matches FUNC % % %
+  -- let FUNC tparam*{tparam <- tparam*} typ*{typ <- typ*} typ_ret = typ'
+
+  clause -1 : (typ) = []
+
+def $ids_typs(typ*) : id* =
+
+  clause 0 : (typ*{typ <- typ*}) = []
+  -- if typ*{typ <- typ*} matches []
+
+  clause 1 : (typ*{typ <- typ*}) = $ids_typ(typ_h) ++ $ids_typs(typ_t*{typ_t <- typ_t*})
+  -- if typ*{typ <- typ*} matches _ :: _
+  -- let typ_h :: typ_t*{typ_t <- typ_t*} = typ*{typ <- typ*}
+
+def $fresh_id(id, id*) : id =
+
+  clause 0 : (id, id_used*{id_used <- id_used*}) = id
+  -- if ~id <- id_used*{id_used <- id_used*}
+
+  clause 1 : (id, id_used*{id_used <- id_used*}) = $fresh_id(id ++ "'", id_used*{id_used <- id_used*})
+  -- if id <- id_used*{id_used <- id_used*}
+
+def $fresh_ids(id*, id*) : id* =
+
+  clause 0 : (id*{id <- id*}, id_used*{id_used <- id_used*}) = []
+  -- if id*{id <- id*} matches []
+
+  clause 1 : (id*{id <- id*}, id_used*{id_used <- id_used*}) = [id_fresh] ++ $fresh_ids(id_t*{id_t <- id_t*}, [id_fresh] ++ id_used*{id_used <- id_used*})
+  -- if id*{id <- id*} matches _ :: _
+  -- let id_h :: id_t*{id_t <- id_t*} = id*{id <- id*}
+  -- let id_fresh = $fresh_id(id_h, id_used*{id_used <- id_used*})
+
+syntax typRes =
+   | OK typ (from ok<typ>)
+   | ERROR (from error)
+
+def $subst_typ(theta, typ) : typRes =
+
+  clause 0 : (theta, typ) = OK NAT as typ as typRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches NAT
+
+  clause 1 : (theta, typ) = OK INT as typ as typRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches INT
+
+  clause 2 : (theta, typ) = OK TEXT as typ as typRes
+  -- if typ <: optyp
+  -- let optyp = typ as optyp
+  -- if optyp matches TEXT
+
+  clause 3 : (theta, typ) = OK BOOL as typ as typRes
+  -- if typ <: optyp
+  -- let optyp = typ as optyp
+  -- if optyp matches BOOL
+
+  clause 4 : (theta, typ') = OK typ as typRes
+  -- if typ' matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ'
+  -- if targ*{targ <- targ*} matches []
+  -- let typ''?{typ'' <- typ''?} = $find_map<id, typ>(theta, id)
+  -- if typ''?{typ'' <- typ''?} matches (_)
+  -- let ?(typ) = typ''?{typ'' <- typ''?}
+
+  clause 5 : (theta, typ) = OK VAR id targ_subst*{targ_subst <- targ_subst*} as typRes
+  -- if typ matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ
+  -- if (?() = $find_map<id, typ>(theta, id))
+  -- let typsRes = $subst_typs(theta, targ*{targ <- targ*})
+  -- if typsRes <: ok<typ*>
+  -- let OK targ_subst*{targ_subst <- targ_subst*} = typsRes as ok<typ*>
+
+  clause 6 : (theta, typ') = OK TUP typ_subst*{typ_subst <- typ_subst*} as typRes
+  -- if typ' matches TUP %
+  -- let TUP typ*{typ <- typ*} = typ'
+  -- let typsRes = $subst_typs(theta, typ*{typ <- typ*})
+  -- if typsRes <: ok<typ*>
+  -- let OK typ_subst*{typ_subst <- typ_subst*} = typsRes as ok<typ*>
+
+  clause 7 : (theta, typ') = OK ITER typ_subst iter as typRes
+  -- if typ' matches ITER % %
+  -- let ITER typ iter = typ'
+  -- let typRes = $subst_typ(theta, typ)
+  -- if typRes <: ok<typ>
+  -- let OK typ_subst = typRes as ok<typ>
+
+  clause 8 : (theta, typ') = OK FUNC tparam_fresh*{tparam_fresh <- tparam_fresh*} typ_subst*{typ_subst <- typ_subst*} typ_ret_subst as typRes
+  -- if typ' matches FUNC % % %
+  -- let FUNC tparam*{tparam <- tparam*} typ*{typ <- typ*} typ_ret = typ'
+  -- let `{ id ':' typ_arg*{id <- id*, typ_arg <- typ_arg*} `} = theta
+  -- let id_used*{id_used <- id_used*} = id*{id <- id*} ++ $ids_typs(typ_arg*{typ_arg <- typ_arg*}) ++ $ids_typ(FUNC tparam*{tparam <- tparam*} typ*{typ <- typ*} typ_ret)
+  -- let tparam_fresh*{tparam_fresh <- tparam_fresh*} = $fresh_ids(tparam*{tparam <- tparam*}, id_used*{id_used <- id_used*})
+  -- if (|tparam*{tparam <- tparam*}| = |tparam_fresh*{tparam_fresh <- tparam_fresh*}|)
+  -- let theta_fresh = `{ tparam ':' VAR tparam_fresh []*{tparam <- tparam*, tparam_fresh <- tparam_fresh*} `}
+  -- let typsRes = $subst_typs(theta_fresh, typ*{typ <- typ*})
+  -- if typsRes <: ok<typ*>
+  -- let OK typ_fresh*{typ_fresh <- typ_fresh*} = typsRes as ok<typ*>
+  -- let typsRes' = $subst_typs(theta, typ_fresh*{typ_fresh <- typ_fresh*})
+  -- if typsRes' <: ok<typ*>
+  -- let OK typ_subst*{typ_subst <- typ_subst*} = typsRes' as ok<typ*>
+  -- let typRes = $subst_typ(theta_fresh, typ_ret)
+  -- if typRes <: ok<typ>
+  -- let OK typ_ret_fresh = typRes as ok<typ>
+  -- let typRes' = $subst_typ(theta, typ_ret_fresh)
+  -- if typRes' <: ok<typ>
+  -- let OK typ_ret_subst = typRes' as ok<typ>
+
+  clause -1 : (theta, typ) = ERROR as typRes
+
+def $subst_typs(theta, typ*) : typsRes =
+
+  clause 0 : (theta, typ*{typ <- typ*}) = OK [] as typsRes
+  -- if typ*{typ <- typ*} matches []
+
+  clause 1 : (theta, typ*{typ <- typ*}) = OK typ_subst :: typ_t_subst*{typ_t_subst <- typ_t_subst*} as typsRes
+  -- if typ*{typ <- typ*} matches _ :: _
+  -- let typ_h :: typ_t*{typ_t <- typ_t*} = typ*{typ <- typ*}
+  -- let typRes = $subst_typ(theta, typ_h)
+  -- if typRes <: ok<typ>
+  -- let OK typ_subst = typRes as ok<typ>
+  -- let typsRes = $subst_typs(theta, typ_t*{typ_t <- typ_t*})
+  -- if typsRes <: ok<typ*>
+  -- let OK typ_t_subst*{typ_t_subst <- typ_t_subst*} = typsRes as ok<typ*>
+
+  clause -1 : (theta, typ*{typ <- typ*}) = ERROR as typsRes
+
+def $expand_typ(tdenv, typ) : typRes =
+
+  clause 0 : (tdenv, typ') = $expand_typ(tdenv, typ_subst)
+  -- if typ' matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ'
+  -- let typDef'?{typDef' <- typDef'?} = $find_map<id, typDef>(tdenv, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches ALIAS %
+  -- let ALIAS typ = deftyp
+  -- if (|targ*{targ <- targ*}| = |tparam*{tparam <- tparam*}|)
+  -- let theta = `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `}
+  -- let typRes = $subst_typ(theta, typ)
+  -- if typRes <: ok<typ>
+  -- let OK typ_subst = typRes as ok<typ>
+
+  clause 1 : (tdenv, typ) = OK VAR id targ*{targ <- targ*} as typRes
+  -- if typ matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ
+  -- let typDef'?{typDef' <- typDef'?} = $find_map<id, typDef>(tdenv, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if (typDef = PARAM)
+  -- if (targ*{targ <- targ*} = [])
+
+  clause 2 : (tdenv, typ) = OK VAR id [] as typRes
+  -- if typ matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ
+  -- if targ*{targ <- targ*} matches []
+  -- let typDef'?{typDef' <- typDef'?} = $find_map<id, typDef>(tdenv, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: externTypDefn
+  -- let EXTTYP _id = typDef as externTypDefn
+
+  clause 3 : (tdenv, typ) = OK VAR id targ*{targ <- targ*} as typRes
+  -- if typ matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ
+  -- let typDef'?{typDef' <- typDef'?} = $find_map<id, typDef>(tdenv, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches STRUCT %
+  -- let STRUCT typField*{typField <- typField*} = deftyp
+  -- if (|tparam*{tparam <- tparam*}| = |targ*{targ <- targ*}|)
+
+  clause 4 : (tdenv, typ) = OK VAR id targ*{targ <- targ*} as typRes
+  -- if typ matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ
+  -- let typDef'?{typDef' <- typDef'?} = $find_map<id, typDef>(tdenv, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches VARIANT %
+  -- let VARIANT typCase*{typCase <- typCase*} = deftyp
+  -- if (|tparam*{tparam <- tparam*}| = |targ*{targ <- targ*}|)
+
+  clause 5 : (tdenv, typ) = OK BOOL as typ as typRes
+  -- if typ <: optyp
+  -- let optyp = typ as optyp
+  -- if optyp matches BOOL
+
+  clause 6 : (tdenv, typ) = OK NAT as typ as typRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches NAT
+
+  clause 7 : (tdenv, typ) = OK INT as typ as typRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches INT
+
+  clause 8 : (tdenv, typ) = OK TEXT as typ as typRes
+  -- if typ <: optyp
+  -- let optyp = typ as optyp
+  -- if optyp matches TEXT
+
+  clause 9 : (tdenv, typ') = OK TUP typ*{typ <- typ*} as typRes
+  -- if typ' matches TUP %
+  -- let TUP typ*{typ <- typ*} = typ'
+
+  clause 10 : (tdenv, typ') = OK ITER typ iter as typRes
+  -- if typ' matches ITER % %
+  -- let ITER typ iter = typ'
+
+  clause 11 : (tdenv, typ') = OK FUNC tparam*{tparam <- tparam*} typ*{typ <- typ*} typ_ret as typRes
+  -- if typ' matches FUNC % % %
+  -- let FUNC tparam*{tparam <- tparam*} typ*{typ <- typ*} typ_ret = typ'
+
+  clause -1 : (tdenv, typ) = ERROR as typRes
+
+syntax equivRes =
+   | OK bool (from ok<bool>)
+   | ERROR (from error)
+
+def $equiv_typ(tdenv, typ, typ) : equivRes =
+
+  clause 0 : (tdenv, typ_l, typ_r) = $equiv_typ'(tdenv, typ_l_expand, typ_r_expand)
+  -- let typRes = $expand_typ(tdenv, typ_l)
+  -- if typRes <: ok<typ>
+  -- let OK typ_l_expand = typRes as ok<typ>
+  -- let typRes' = $expand_typ(tdenv, typ_r)
+  -- if typRes' <: ok<typ>
+  -- let OK typ_r_expand = typRes' as ok<typ>
+
+  clause -1 : (tdenv, typ_l, typ_r) = ERROR as equivRes
+
+def $equiv_typs(tdenv, typ*, typ*) : equivRes =
+
+  clause 0 : (tdenv, typ*{typ <- typ*}, typ'*{typ' <- typ'*}) = OK true as equivRes
+  -- if typ*{typ <- typ*} matches []
+  -- if typ'*{typ' <- typ'*} matches []
+
+  clause 1 : (tdenv, typ*{typ <- typ*}, typ'*{typ' <- typ'*}) = $equiv_typs(tdenv, typ_l_t*{typ_l_t <- typ_l_t*}, typ_r_t*{typ_r_t <- typ_r_t*})
+  -- if typ*{typ <- typ*} matches _ :: _
+  -- let typ_l :: typ_l_t*{typ_l_t <- typ_l_t*} = typ*{typ <- typ*}
+  -- if typ'*{typ' <- typ'*} matches _ :: _
+  -- let typ_r :: typ_r_t*{typ_r_t <- typ_r_t*} = typ'*{typ' <- typ'*}
+  -- if (OK true as equivRes = $equiv_typ(tdenv, typ_l, typ_r))
+
+  clause 2 : (tdenv, typ*{typ <- typ*}, typ'*{typ' <- typ'*}) = equivRes
+  -- if typ*{typ <- typ*} matches _ :: _
+  -- let typ_l :: typ_l_t*{typ_l_t <- typ_l_t*} = typ*{typ <- typ*}
+  -- if typ'*{typ' <- typ'*} matches _ :: _
+  -- let typ_r :: typ_r_t*{typ_r_t <- typ_r_t*} = typ'*{typ' <- typ'*}
+  -- let equivRes = $equiv_typ(tdenv, typ_l, typ_r)
+  -- if (equivRes =/= OK true as equivRes)
+
+  clause 3 : (tdenv, typ*{typ <- typ*}, typ'*{typ' <- typ'*}) = OK false as equivRes
+  -- if typ*{typ <- typ*} matches []
+  -- if typ'*{typ' <- typ'*} matches _ :: _
+  -- let typ_r :: typ_r_t*{typ_r_t <- typ_r_t*} = typ'*{typ' <- typ'*}
+
+  clause 4 : (tdenv, typ*{typ <- typ*}, typ'*{typ' <- typ'*}) = OK false as equivRes
+  -- if typ*{typ <- typ*} matches _ :: _
+  -- let typ_l :: typ_l_t*{typ_l_t <- typ_l_t*} = typ*{typ <- typ*}
+  -- if typ'*{typ' <- typ'*} matches []
+
+def $equiv_typ'(tdenv, typ, typ) : equivRes =
+
+  clause 0 : (tdenv, typ, typ') = OK true as equivRes
+  -- if typ <: optyp
+  -- let optyp = typ as optyp
+  -- if optyp matches BOOL
+  -- if typ' <: optyp
+  -- let optyp' = typ' as optyp
+  -- if optyp' matches BOOL
+
+  clause 1 : (tdenv, typ, typ') = OK true as equivRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches NAT
+  -- if typ' <: numtyp
+  -- let numtyp' = typ' as numtyp
+  -- if numtyp' matches NAT
+
+  clause 2 : (tdenv, typ, typ') = OK true as equivRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches INT
+  -- if typ' <: numtyp
+  -- let numtyp' = typ' as numtyp
+  -- if numtyp' matches INT
+
+  clause 3 : (tdenv, typ, typ') = OK true as equivRes
+  -- if typ <: optyp
+  -- let optyp = typ as optyp
+  -- if optyp matches TEXT
+  -- if typ' <: optyp
+  -- let optyp' = typ' as optyp
+  -- if optyp' matches TEXT
+
+  clause 4 : (tdenv, typ, typ') = $equiv_typs(tdenv, targ_l*{targ_l <- targ_l*}, targ_r*{targ_r <- targ_r*})
+  -- if typ matches VAR % %
+  -- let VAR id_l targ_l*{targ_l <- targ_l*} = typ
+  -- if typ' matches VAR % %
+  -- let VAR id_r targ_r*{targ_r <- targ_r*} = typ'
+  -- if (id_l = id_r)
+
+  clause 5 : (tdenv, typ, typ') = $equiv_typs(tdenv, typ_l*{typ_l <- typ_l*}, typ_r*{typ_r <- typ_r*})
+  -- if typ matches TUP %
+  -- let TUP typ_l*{typ_l <- typ_l*} = typ
+  -- if typ' matches TUP %
+  -- let TUP typ_r*{typ_r <- typ_r*} = typ'
+
+  clause 6 : (tdenv, typ, typ') = $equiv_typ(tdenv, typ_l, typ_r)
+  -- if typ matches ITER % %
+  -- let ITER typ_l iter_l = typ
+  -- if typ' matches ITER % %
+  -- let ITER typ_r iter_r = typ'
+  -- if (iter_l = iter_r)
+
+  clause -1 : (tdenv, typ_l, typ_r) = OK false as equivRes
+
+def $equiv_func_typ(tdenv, typ, typ) : equivRes =
+
+  clause 0 : (tdenv, typ, typ') = $equiv_typs(tdenv_fresh, typ_l_subst*{typ_l_subst <- typ_l_subst*} ++ [typ_ret_l_subst], typ_r_subst*{typ_r_subst <- typ_r_subst*} ++ [typ_ret_r_subst])
+  -- if typ matches FUNC % % %
+  -- let FUNC tparam_l*{tparam_l <- tparam_l*} typ_l*{typ_l <- typ_l*} typ_ret_l = typ
+  -- if typ' matches FUNC % % %
+  -- let FUNC tparam_r*{tparam_r <- tparam_r*} typ_r*{typ_r <- typ_r*} typ_ret_r = typ'
+  -- if (|tparam_l*{tparam_l <- tparam_l*}| = |tparam_r*{tparam_r <- tparam_r*}|)
+  -- if (|typ_l*{typ_l <- typ_l*}| = |typ_r*{typ_r <- typ_r*}|)
+  -- let `{ id ':' typDef*{id <- id*, typDef <- typDef*} `} = tdenv
+  -- let id_used*{id_used <- id_used*} = id*{id <- id*} ++ $ids_typ(FUNC tparam_l*{tparam_l <- tparam_l*} typ_l*{typ_l <- typ_l*} typ_ret_l) ++ $ids_typ(FUNC tparam_r*{tparam_r <- tparam_r*} typ_r*{typ_r <- typ_r*} typ_ret_r)
+  -- let tparam_fresh*{tparam_fresh <- tparam_fresh*} = $fresh_ids(tparam_l*{tparam_l <- tparam_l*}, id_used*{id_used <- id_used*})
+  -- if (|tparam_fresh*{tparam_fresh <- tparam_fresh*}| = |tparam_l*{tparam_l <- tparam_l*}|)
+  -- let theta_l = `{ tparam_l ':' VAR tparam_fresh []*{tparam_fresh <- tparam_fresh*, tparam_l <- tparam_l*} `}
+  -- let theta_r = `{ tparam_r ':' VAR tparam_fresh []*{tparam_fresh <- tparam_fresh*, tparam_r <- tparam_r*} `}
+  -- let typsRes = $subst_typs(theta_l, typ_l*{typ_l <- typ_l*})
+  -- if typsRes <: ok<typ*>
+  -- let OK typ_l_subst*{typ_l_subst <- typ_l_subst*} = typsRes as ok<typ*>
+  -- let typsRes' = $subst_typs(theta_r, typ_r*{typ_r <- typ_r*})
+  -- if typsRes' <: ok<typ*>
+  -- let OK typ_r_subst*{typ_r_subst <- typ_r_subst*} = typsRes' as ok<typ*>
+  -- let typRes = $subst_typ(theta_l, typ_ret_l)
+  -- if typRes <: ok<typ>
+  -- let OK typ_ret_l_subst = typRes as ok<typ>
+  -- let typRes' = $subst_typ(theta_r, typ_ret_r)
+  -- if typRes' <: ok<typ>
+  -- let OK typ_ret_r_subst = typRes' as ok<typ>
+  -- let tdenv_fresh = $adds_map<id, typDef>(tdenv, tparam_fresh*{tparam_fresh <- tparam_fresh*}, $repeat_<typDef>(PARAM, |tparam_fresh*{tparam_fresh <- tparam_fresh*}|))
+
+  clause 1 : (tdenv, typ, typ') = OK false as equivRes
+  -- if typ matches FUNC % % %
+  -- let FUNC tparam_l*{tparam_l <- tparam_l*} typ_l*{typ_l <- typ_l*} typ_ret_l = typ
+  -- if typ' matches FUNC % % %
+  -- let FUNC tparam_r*{tparam_r <- tparam_r*} typ_r*{typ_r <- typ_r*} typ_ret_r = typ'
+  -- if ((|tparam_l*{tparam_l <- tparam_l*}| =/= |tparam_r*{tparam_r <- tparam_r*}|) \/ (|typ_l*{typ_l <- typ_l*}| =/= |typ_r*{typ_r <- typ_r*}|))
+
+  clause -1 : (tdenv, typ_l, typ_r) = ERROR as equivRes
+
+syntax subtypRes =
+   | OK bool (from ok<bool>)
+   | ERROR (from error)
+
+def $subtyp(fenv, tdenv, typ, val) : subtypRes =
+
+  clause 0 : (fenv, tdenv, typ, val) = OK true as subtypRes
+  -- if typ <: optyp
+  -- let optyp = typ as optyp
+  -- if optyp matches BOOL
+  -- if val matches BOOL %
+  -- let BOOL b = val
+
+  clause 1 : (fenv, tdenv, typ, val) = OK true as subtypRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches NAT
+  -- if val <: num
+  -- let num = val as num
+  -- if num matches NAT %
+  -- let NAT n = num
+
+  clause 2 : (fenv, tdenv, typ, val) = OK (i >= 0 as int) as subtypRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches NAT
+  -- if val <: num
+  -- let num = val as num
+  -- if num matches INT %
+  -- let INT i = num
+
+  clause 3 : (fenv, tdenv, typ, val) = OK true as subtypRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches INT
+  -- if val <: num
+  -- let num = val as num
+
+  clause 4 : (fenv, tdenv, typ, val) = OK true as subtypRes
+  -- if typ <: optyp
+  -- let optyp = typ as optyp
+  -- if optyp matches TEXT
+  -- if val matches TEXT %
+  -- let TEXT t = val
+
+  clause 5 : (fenv, tdenv, typ, val) = $subtyp_var(fenv, tdenv, id, targ*{targ <- targ*}, val)
+  -- if typ matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ
+
+  clause 6 : (fenv, tdenv, typ', val') = $subtyps(fenv, tdenv, typ*{typ <- typ*}, val*{val <- val*})
+  -- if typ' matches TUP %
+  -- let TUP typ*{typ <- typ*} = typ'
+  -- if val' matches TUP %
+  -- let TUP val*{val <- val*} = val'
+
+  clause 7 : (fenv, tdenv, typ', val'') = $subtyp(fenv, tdenv, typ, val)
+  -- if typ' matches ITER % %
+  -- let ITER typ iter = typ'
+  -- if iter matches QUEST
+  -- if val'' matches OPT %
+  -- let OPT val'?{val' <- val'?} = val''
+  -- if val'?{val' <- val'?} matches (_)
+  -- let ?(val) = val'?{val' <- val'?}
+
+  clause 8 : (fenv, tdenv, typ', val) = OK true as subtypRes
+  -- if typ' matches ITER % %
+  -- let ITER typ iter = typ'
+  -- if iter matches QUEST
+  -- if (val = OPT ?())
+
+  clause 9 : (fenv, tdenv, typ', val') = $subtyp_list(fenv, tdenv, typ, val*{val <- val*})
+  -- if typ' matches ITER % %
+  -- let ITER typ iter = typ'
+  -- if iter matches STAR
+  -- if val' matches LIST %
+  -- let LIST val*{val <- val*} = val'
+
+  clause 10 : (fenv, tdenv, typ', val) = $subtyp_func(fenv, tdenv, FUNC tparam*{tparam <- tparam*} typ*{typ <- typ*} typ_ret, id)
+  -- if typ' matches FUNC % % %
+  -- let FUNC tparam*{tparam <- tparam*} typ*{typ <- typ*} typ_ret = typ'
+  -- if val matches FUNC %
+  -- let FUNC id = val
+
+  clause -1 : (fenv, tdenv, typ, val) = OK false as subtypRes
+
+def $subtyp_var(fenv, tdenv, id, typ*, val) : subtypRes =
+
+  clause 0 : (fenv, tdenv, id, targ*{targ <- targ*}, val) = $subtyp_def(fenv, tdenv, typDef, targ*{targ <- targ*}, val)
+  -- let typDef'?{typDef' <- typDef'?} = $find_map<id, typDef>(tdenv, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+
+  clause -1 : (fenv, tdenv, id, targ*{targ <- targ*}, val) = ERROR as subtypRes
+
+def $subtyp_def(fenv, tdenv, typDef, typ*, val) : subtypRes =
+
+  clause 0 : (fenv, tdenv, typDef, typ*{typ <- typ*}, val) = $subtyp_extern(val)
+  -- if typDef <: externTypDefn
+  -- let EXTTYP _id = typDef as externTypDefn
+  -- if typ*{typ <- typ*} matches []
+
+  clause 1 : (fenv, tdenv, typDef, targ*{targ <- targ*}, val) = $subtyp(fenv, tdenv, typ_subst, val)
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches ALIAS %
+  -- let ALIAS typ = deftyp
+  -- if (|targ*{targ <- targ*}| = |tparam*{tparam <- tparam*}|)
+  -- let theta = `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `}
+  -- let typRes = $subst_typ(theta, typ)
+  -- if typRes <: ok<typ>
+  -- let OK typ_subst = typRes as ok<typ>
+
+  clause 2 : (fenv, tdenv, typDef, targ*{targ <- targ*}, val) = $subtyp_variant(fenv, tdenv, theta, typCase*{typCase <- typCase*}, val)
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches VARIANT %
+  -- let VARIANT typCase*{typCase <- typCase*} = deftyp
+  -- if (|targ*{targ <- targ*}| = |tparam*{tparam <- tparam*}|)
+  -- let theta = `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `}
+
+  clause 3 : (fenv, tdenv, typDef, targ*{targ <- targ*}, val) = $subtyp_struct(fenv, tdenv, theta, typField*{typField <- typField*}, val)
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches STRUCT %
+  -- let STRUCT typField*{typField <- typField*} = deftyp
+  -- if (|targ*{targ <- targ*}| = |tparam*{tparam <- tparam*}|)
+  -- let theta = `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `}
+
+  clause -1 : (fenv, tdenv, typDef, targ*{targ <- targ*}, val) = ERROR as subtypRes
+
+def $subtyp_extern(val) : subtypRes =
+
+  clause 0 : (val) = OK true as subtypRes
+  -- if val matches EXT %
+  -- let EXT json = val
+
+  clause -1 : (val) = OK false as subtypRes
+
+def $subtyp_variant(fenv, tdenv, theta, typCase*, val) : subtypRes =
+
+  clause 0 : (fenv, tdenv, theta, typCase*{typCase <- typCase*}, val') = $subtyp_case(fenv, tdenv, theta, typ_case_found*{typ_case_found <- typ_case_found*}, val*{val <- val*})
+  -- if val' matches INJ %
+  -- let INJ mixop val*{val <- val*} = val'
+  -- (let mixop_case typ_case*{typ_case <- typ_case*} = typCase)*{typCase <- typCase*, mixop_case -> mixop_case*, typ_case* -> typ_case**}
+  -- let typ*{typ <- typ*}?{typ* <- typ*?} = $assoc_<mixop, typ*>(mixop, (mixop_case, typ_case*{typ_case <- typ_case*})*{mixop_case <- mixop_case*, typ_case* <- typ_case**})
+  -- if typ*{typ <- typ*}?{typ* <- typ*?} matches (_)
+  -- let ?(typ_case_found*{typ_case_found <- typ_case_found*}) = typ*{typ <- typ*}?{typ* <- typ*?}
+
+  clause -1 : (fenv, tdenv, theta, typCase*{typCase <- typCase*}, val) = OK false as subtypRes
+
+def $subtyp_struct(fenv, tdenv, theta, typField*, val) : subtypRes =
+
+  clause 0 : (fenv, tdenv, theta, typField*{typField <- typField*}, val) = $subtyp_case(fenv, tdenv, theta, typ_field*{typ_field <- typ_field*}, val_field*{val_field <- val_field*})
+  -- if val matches STR %
+  -- let STR valField*{valField <- valField*} = val
+  -- (let atom typ_field = typField)*{typField <- typField*, atom -> atom*, typ_field -> typ_field*}
+  -- (let atom' val_field = valField)*{valField <- valField*, atom' -> atom'*, val_field -> val_field*}
+  -- if (|atom*{atom <- atom*}| = |atom'*{atom' <- atom'*}|)
+  -- (if (atom' = atom))*{atom <- atom*, atom' <- atom'*}
+
+  clause -1 : (fenv, tdenv, theta, typField*{typField <- typField*}, val) = OK false as subtypRes
+
+def $subtyp_case(fenv, tdenv, theta, typ*, val*) : subtypRes =
+
+  clause 0 : (fenv, tdenv, theta, typ*{typ <- typ*}, val*{val <- val*}) = $subtyps(fenv, tdenv, typ_subst*{typ_subst <- typ_subst*}, val*{val <- val*})
+  -- let typsRes = $subst_typs(theta, typ*{typ <- typ*})
+  -- if typsRes <: ok<typ*>
+  -- let OK typ_subst*{typ_subst <- typ_subst*} = typsRes as ok<typ*>
+
+  clause -1 : (fenv, tdenv, theta, typ*{typ <- typ*}, val*{val <- val*}) = ERROR as subtypRes
+
+def $subtyps(fenv, tdenv, typ*, val*) : subtypRes =
+
+  clause 0 : (fenv, tdenv, typ*{typ <- typ*}, val*{val <- val*}) = OK true as subtypRes
+  -- if typ*{typ <- typ*} matches []
+  -- if val*{val <- val*} matches []
+
+  clause 1 : (fenv, tdenv, typ*{typ <- typ*}, val*{val <- val*}) = $subtyps(fenv, tdenv, typ_t*{typ_t <- typ_t*}, val_t*{val_t <- val_t*})
+  -- if typ*{typ <- typ*} matches _ :: _
+  -- let typ_h :: typ_t*{typ_t <- typ_t*} = typ*{typ <- typ*}
+  -- if val*{val <- val*} matches _ :: _
+  -- let val_h :: val_t*{val_t <- val_t*} = val*{val <- val*}
+  -- if (OK true as subtypRes = $subtyp(fenv, tdenv, typ_h, val_h))
+
+  clause 2 : (fenv, tdenv, typ*{typ <- typ*}, val*{val <- val*}) = subtypRes
+  -- if typ*{typ <- typ*} matches _ :: _
+  -- let typ_h :: typ_t*{typ_t <- typ_t*} = typ*{typ <- typ*}
+  -- if val*{val <- val*} matches _ :: _
+  -- let val_h :: val_t*{val_t <- val_t*} = val*{val <- val*}
+  -- let subtypRes = $subtyp(fenv, tdenv, typ_h, val_h)
+  -- if (subtypRes =/= OK true as subtypRes)
+
+  clause 3 : (fenv, tdenv, typ*{typ <- typ*}, val*{val <- val*}) = OK false as subtypRes
+  -- if typ*{typ <- typ*} matches []
+  -- if val*{val <- val*} matches _ :: _
+  -- let val_h :: val_t*{val_t <- val_t*} = val*{val <- val*}
+
+  clause 4 : (fenv, tdenv, typ*{typ <- typ*}, val*{val <- val*}) = OK false as subtypRes
+  -- if typ*{typ <- typ*} matches _ :: _
+  -- let typ_h :: typ_t*{typ_t <- typ_t*} = typ*{typ <- typ*}
+  -- if val*{val <- val*} matches []
+
+def $subtyp_list(fenv, tdenv, typ, val*) : subtypRes =
+
+  clause 0 : (fenv, tdenv, typ, val*{val <- val*}) = OK true as subtypRes
+  -- if val*{val <- val*} matches []
+
+  clause 1 : (fenv, tdenv, typ, val*{val <- val*}) = $subtyp_list(fenv, tdenv, typ, val_t*{val_t <- val_t*})
+  -- if val*{val <- val*} matches _ :: _
+  -- let val_h :: val_t*{val_t <- val_t*} = val*{val <- val*}
+  -- if (OK true as subtypRes = $subtyp(fenv, tdenv, typ, val_h))
+
+  clause 2 : (fenv, tdenv, typ, val*{val <- val*}) = subtypRes
+  -- if val*{val <- val*} matches _ :: _
+  -- let val_h :: val_t*{val_t <- val_t*} = val*{val <- val*}
+  -- let subtypRes = $subtyp(fenv, tdenv, typ, val_h)
+  -- if (subtypRes =/= OK true as subtypRes)
+
+def $subtyp_func(fenv, tdenv, typ, id) : subtypRes =
+
+  clause 0 : (fenv, tdenv, typ, id) = $equiv_func_typ(tdenv, typ, $func_typ(funcDefn)) as subtypRes
+  -- let funcDefn'?{funcDefn' <- funcDefn'?} = $find_map<id, funcDefn>(fenv, id)
+  -- if funcDefn'?{funcDefn' <- funcDefn'?} matches (_)
+  -- let ?(funcDefn) = funcDefn'?{funcDefn' <- funcDefn'?}
+
+  clause -1 : (fenv, tdenv, typ, id) = ERROR as subtypRes
+
+def $param_typ(param) : typ =
+
+  clause 0 : (param) = typ
+  -- if param matches EXP %
+  -- let EXP typ = param
+
+  clause 1 : (param') = FUNC tparam*{tparam <- tparam*} $param_typ(param)*{param <- param*} typ
+  -- if param' matches FUN % ':' % % '->' %
+  -- let FUN id ':' tparam*{tparam <- tparam*} param*{param <- param*} '->' typ = param'
+
+def $func_typ(funcDefn) : typ =
+
+  clause 0 : (funcDefn) = FUNC tparam*{tparam <- tparam*} $param_typ(param)*{param <- param*} typ
+  -- if funcDefn <: externFuncDefn
+  -- let EXTFUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ = funcDefn as externFuncDefn
+
+  clause 1 : (funcDefn) = FUNC tparam*{tparam <- tparam*} $param_typ(param)*{param <- param*} typ
+  -- if funcDefn <: builtinFuncDefn
+  -- let BUILTINFUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ = funcDefn as builtinFuncDefn
+
+  clause 2 : (funcDefn) = FUNC [] $param_typ(param)*{param <- param*} typ
+  -- if funcDefn <: tableFuncDefn
+  -- let TABLEFUNC _id param*{param <- param*} ':' typ '=' tblRow*{tblRow <- tblRow*} = funcDefn as tableFuncDefn
+
+  clause 3 : (funcDefn) = FUNC tparam*{tparam <- tparam*} $param_typ(param)*{param <- param*} typ
+  -- if funcDefn <: definedFuncDefn
+  -- let FUNC _id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' clause*{clause <- clause*} elsClause?{elsClause <- elsClause?} = funcDefn as definedFuncDefn
+
+syntax castRes =
+   | OK val (from ok<val>)
+   | ERROR (from error)
+
+syntax castsRes =
+   | OK val* (from ok<val*>)
+   | ERROR (from error)
+
+def $upcast(ctx, typ, val) : castRes =
+
+  clause 0 : (C, typ, val) = OK INT i as val as castRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches INT
+  -- if val <: num
+  -- let num = val as num
+  -- if num matches INT %
+  -- let INT i = num
+
+  clause 1 : (C, typ, val) = OK INT n as int as val as castRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches INT
+  -- if val <: num
+  -- let num = val as num
+  -- if num matches NAT %
+  -- let NAT n = num
+
+  clause 2 : (C, typ', val) = $upcast(C, typ_subst, val)
+  -- if typ' matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ'
+  -- let typDef'?{typDef' <- typDef'?} = $find_typ(C, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches ALIAS %
+  -- let ALIAS typ = deftyp
+  -- if (|targ*{targ <- targ*}| = |tparam*{tparam <- tparam*}|)
+  -- let theta = `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `}
+  -- let typRes = $subst_typ(theta, typ)
+  -- if typRes <: ok<typ>
+  -- let OK typ_subst = typRes as ok<typ>
+
+  clause 3 : (C, typ, val) = OK val as castRes
+  -- if typ matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ
+  -- let typDef'?{typDef' <- typDef'?} = $find_typ(C, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches VARIANT %
+  -- let VARIANT typCase*{typCase <- typCase*} = deftyp
+  -- let `{ id_local ':' typDef_local*{id_local <- id_local*, typDef_local <- typDef_local*} `} = C.LOCAL.TYP
+  -- let tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*{id_local <- id_local*}, typDef_local*{typDef_local <- typDef_local*})
+  -- if (OK true as subtypRes = $subtyp(C.GLOBAL.FUNC, tdenv, VAR id targ*{targ <- targ*}, val))
+
+  clause 4 : (C, typ, val) = OK val as castRes
+  -- if typ matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ
+  -- let typDef'?{typDef' <- typDef'?} = $find_typ(C, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches STRUCT %
+  -- let STRUCT typField*{typField <- typField*} = deftyp
+  -- let `{ id_local ':' typDef_local*{id_local <- id_local*, typDef_local <- typDef_local*} `} = C.LOCAL.TYP
+  -- let tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*{id_local <- id_local*}, typDef_local*{typDef_local <- typDef_local*})
+  -- if (OK true as subtypRes = $subtyp(C.GLOBAL.FUNC, tdenv, VAR id targ*{targ <- targ*}, val))
+
+  clause 5 : (C, typ, val) = OK EXT json as castRes
+  -- if typ matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ
+  -- if targ*{targ <- targ*} matches []
+  -- if val matches EXT %
+  -- let EXT json = val
+  -- let typDef'?{typDef' <- typDef'?} = $find_typ(C, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: externTypDefn
+  -- let EXTTYP _id = typDef as externTypDefn
+
+  clause 6 : (C, typ', val') = OK TUP val_cast*{val_cast <- val_cast*} as castRes
+  -- if typ' matches TUP %
+  -- let TUP typ*{typ <- typ*} = typ'
+  -- if val' matches TUP %
+  -- let TUP val*{val <- val*} = val'
+  -- let castsRes = $upcasts(C, typ*{typ <- typ*}, val*{val <- val*})
+  -- if castsRes <: ok<val*>
+  -- let OK val_cast*{val_cast <- val_cast*} = castsRes as ok<val*>
+
+  clause 7 : (C, typ', val) = OK OPT ?() as castRes
+  -- if typ' matches ITER % %
+  -- let ITER typ iter = typ'
+  -- if iter matches QUEST
+  -- if (val = OPT ?())
+
+  clause 8 : (C, typ', val'') = OK OPT ?(val_cast) as castRes
+  -- if typ' matches ITER % %
+  -- let ITER typ iter = typ'
+  -- if iter matches QUEST
+  -- if val'' matches OPT %
+  -- let OPT val'?{val' <- val'?} = val''
+  -- if val'?{val' <- val'?} matches (_)
+  -- let ?(val) = val'?{val' <- val'?}
+  -- let castRes = $upcast(C, typ, val)
+  -- if castRes <: ok<val>
+  -- let OK val_cast = castRes as ok<val>
+
+  clause 9 : (C, typ', val') = OK LIST val_cast*{val_cast <- val_cast*} as castRes
+  -- if typ' matches ITER % %
+  -- let ITER typ iter = typ'
+  -- if iter matches STAR
+  -- if val' matches LIST %
+  -- let LIST val*{val <- val*} = val'
+  -- let castsRes = $upcasts(C, $repeat_<typ>(typ, |val*{val <- val*}|), val*{val <- val*})
+  -- if castsRes <: ok<val*>
+  -- let OK val_cast*{val_cast <- val_cast*} = castsRes as ok<val*>
+
+  clause 10 : (C, typ, val) = OK BOOL b as castRes
+  -- if typ <: optyp
+  -- let optyp = typ as optyp
+  -- if optyp matches BOOL
+  -- if val matches BOOL %
+  -- let BOOL b = val
+
+  clause 11 : (C, typ, val) = OK TEXT t as castRes
+  -- if typ <: optyp
+  -- let optyp = typ as optyp
+  -- if optyp matches TEXT
+  -- if val matches TEXT %
+  -- let TEXT t = val
+
+  clause 12 : (C, typ, val) = OK NAT n as val as castRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches NAT
+  -- if val <: num
+  -- let num = val as num
+  -- if num matches NAT %
+  -- let NAT n = num
+
+  clause 13 : (C, typ', val) = OK FUNC id as castRes
+  -- if typ' matches FUNC % % %
+  -- let FUNC tparam*{tparam <- tparam*} typ*{typ <- typ*} typ_ret = typ'
+  -- if val matches FUNC %
+  -- let FUNC id = val
+  -- let `{ id_local ':' typDef_local*{id_local <- id_local*, typDef_local <- typDef_local*} `} = C.LOCAL.TYP
+  -- let tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*{id_local <- id_local*}, typDef_local*{typDef_local <- typDef_local*})
+  -- if (OK true as subtypRes = $subtyp(C.GLOBAL.FUNC, tdenv, FUNC tparam*{tparam <- tparam*} typ*{typ <- typ*} typ_ret, FUNC id))
+
+  clause -1 : (C, typ, val) = ERROR as castRes
+
+def $upcasts(ctx, typ*, val*) : castsRes =
+
+  clause 0 : (C, typ*{typ <- typ*}, val*{val <- val*}) = OK [] as castsRes
+  -- if typ*{typ <- typ*} matches []
+  -- if val*{val <- val*} matches []
+
+  clause 1 : (C, typ*{typ <- typ*}, val*{val <- val*}) = OK val_cast :: val_t_cast*{val_t_cast <- val_t_cast*} as castsRes
+  -- if typ*{typ <- typ*} matches _ :: _
+  -- let typ_h :: typ_t*{typ_t <- typ_t*} = typ*{typ <- typ*}
+  -- if val*{val <- val*} matches _ :: _
+  -- let val_h :: val_t*{val_t <- val_t*} = val*{val <- val*}
+  -- let castRes = $upcast(C, typ_h, val_h)
+  -- if castRes <: ok<val>
+  -- let OK val_cast = castRes as ok<val>
+  -- let castsRes = $upcasts(C, typ_t*{typ_t <- typ_t*}, val_t*{val_t <- val_t*})
+  -- if castsRes <: ok<val*>
+  -- let OK val_t_cast*{val_t_cast <- val_t_cast*} = castsRes as ok<val*>
+
+  clause -1 : (C, typ*{typ <- typ*}, val*{val <- val*}) = ERROR as castsRes
+
+def $downcast(ctx, typ, val) : castRes =
+
+  clause 0 : (C, typ, val) = OK NAT n as val as castRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches NAT
+  -- if val <: num
+  -- let num = val as num
+  -- if num matches NAT %
+  -- let NAT n = num
+
+  clause 1 : (C, typ, val) = OK NAT n as val as castRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches NAT
+  -- if val <: num
+  -- let num = val as num
+  -- if num matches INT %
+  -- let INT i = num
+  -- let i' = i
+  -- if i' <: nat
+  -- let n = i' as nat
+
+  clause 2 : (C, typ', val) = $downcast(C, typ_subst, val)
+  -- if typ' matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ'
+  -- let typDef'?{typDef' <- typDef'?} = $find_typ(C, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches ALIAS %
+  -- let ALIAS typ = deftyp
+  -- if (|targ*{targ <- targ*}| = |tparam*{tparam <- tparam*}|)
+  -- let theta = `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `}
+  -- let typRes = $subst_typ(theta, typ)
+  -- if typRes <: ok<typ>
+  -- let OK typ_subst = typRes as ok<typ>
+
+  clause 3 : (C, typ, val) = OK val as castRes
+  -- if typ matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ
+  -- let typDef'?{typDef' <- typDef'?} = $find_typ(C, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches VARIANT %
+  -- let VARIANT typCase*{typCase <- typCase*} = deftyp
+  -- let `{ id_local ':' typDef_local*{id_local <- id_local*, typDef_local <- typDef_local*} `} = C.LOCAL.TYP
+  -- let tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*{id_local <- id_local*}, typDef_local*{typDef_local <- typDef_local*})
+  -- if (OK true as subtypRes = $subtyp(C.GLOBAL.FUNC, tdenv, VAR id targ*{targ <- targ*}, val))
+
+  clause 4 : (C, typ, val) = OK val as castRes
+  -- if typ matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ
+  -- let typDef'?{typDef' <- typDef'?} = $find_typ(C, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id tparam*{tparam <- tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches STRUCT %
+  -- let STRUCT typField*{typField <- typField*} = deftyp
+  -- let `{ id_local ':' typDef_local*{id_local <- id_local*, typDef_local <- typDef_local*} `} = C.LOCAL.TYP
+  -- let tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*{id_local <- id_local*}, typDef_local*{typDef_local <- typDef_local*})
+  -- if (OK true as subtypRes = $subtyp(C.GLOBAL.FUNC, tdenv, VAR id targ*{targ <- targ*}, val))
+
+  clause 5 : (C, typ, val) = OK EXT json as castRes
+  -- if typ matches VAR % %
+  -- let VAR id targ*{targ <- targ*} = typ
+  -- if targ*{targ <- targ*} matches []
+  -- if val matches EXT %
+  -- let EXT json = val
+  -- let typDef'?{typDef' <- typDef'?} = $find_typ(C, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: externTypDefn
+  -- let EXTTYP _id = typDef as externTypDefn
+
+  clause 6 : (C, typ', val') = OK TUP val_cast*{val_cast <- val_cast*} as castRes
+  -- if typ' matches TUP %
+  -- let TUP typ*{typ <- typ*} = typ'
+  -- if val' matches TUP %
+  -- let TUP val*{val <- val*} = val'
+  -- let castsRes = $downcasts(C, typ*{typ <- typ*}, val*{val <- val*})
+  -- if castsRes <: ok<val*>
+  -- let OK val_cast*{val_cast <- val_cast*} = castsRes as ok<val*>
+
+  clause 7 : (C, typ', val) = OK OPT ?() as castRes
+  -- if typ' matches ITER % %
+  -- let ITER typ iter = typ'
+  -- if iter matches QUEST
+  -- if (val = OPT ?())
+
+  clause 8 : (C, typ', val'') = OK OPT ?(val_cast) as castRes
+  -- if typ' matches ITER % %
+  -- let ITER typ iter = typ'
+  -- if iter matches QUEST
+  -- if val'' matches OPT %
+  -- let OPT val'?{val' <- val'?} = val''
+  -- if val'?{val' <- val'?} matches (_)
+  -- let ?(val) = val'?{val' <- val'?}
+  -- let castRes = $downcast(C, typ, val)
+  -- if castRes <: ok<val>
+  -- let OK val_cast = castRes as ok<val>
+
+  clause 9 : (C, typ', val') = OK LIST val_cast*{val_cast <- val_cast*} as castRes
+  -- if typ' matches ITER % %
+  -- let ITER typ iter = typ'
+  -- if iter matches STAR
+  -- if val' matches LIST %
+  -- let LIST val*{val <- val*} = val'
+  -- let castsRes = $downcasts(C, $repeat_<typ>(typ, |val*{val <- val*}|), val*{val <- val*})
+  -- if castsRes <: ok<val*>
+  -- let OK val_cast*{val_cast <- val_cast*} = castsRes as ok<val*>
+
+  clause 10 : (C, typ, val) = OK BOOL b as castRes
+  -- if typ <: optyp
+  -- let optyp = typ as optyp
+  -- if optyp matches BOOL
+  -- if val matches BOOL %
+  -- let BOOL b = val
+
+  clause 11 : (C, typ, val) = OK TEXT t as castRes
+  -- if typ <: optyp
+  -- let optyp = typ as optyp
+  -- if optyp matches TEXT
+  -- if val matches TEXT %
+  -- let TEXT t = val
+
+  clause 12 : (C, typ, val) = OK num as val as castRes
+  -- if typ <: numtyp
+  -- let numtyp = typ as numtyp
+  -- if numtyp matches INT
+  -- if val <: num
+  -- let num = val as num
+
+  clause 13 : (C, typ', val) = OK FUNC id as castRes
+  -- if typ' matches FUNC % % %
+  -- let FUNC tparam*{tparam <- tparam*} typ*{typ <- typ*} typ_ret = typ'
+  -- if val matches FUNC %
+  -- let FUNC id = val
+  -- let `{ id_local ':' typDef_local*{id_local <- id_local*, typDef_local <- typDef_local*} `} = C.LOCAL.TYP
+  -- let tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*{id_local <- id_local*}, typDef_local*{typDef_local <- typDef_local*})
+  -- if (OK true as subtypRes = $subtyp(C.GLOBAL.FUNC, tdenv, FUNC tparam*{tparam <- tparam*} typ*{typ <- typ*} typ_ret, FUNC id))
+
+  clause -1 : (C, typ, val) = ERROR as castRes
+
+def $downcasts(ctx, typ*, val*) : castsRes =
+
+  clause 0 : (C, typ*{typ <- typ*}, val*{val <- val*}) = OK [] as castsRes
+  -- if typ*{typ <- typ*} matches []
+  -- if val*{val <- val*} matches []
+
+  clause 1 : (C, typ*{typ <- typ*}, val*{val <- val*}) = OK val_cast :: val_t_cast*{val_t_cast <- val_t_cast*} as castsRes
+  -- if typ*{typ <- typ*} matches _ :: _
+  -- let typ_h :: typ_t*{typ_t <- typ_t*} = typ*{typ <- typ*}
+  -- if val*{val <- val*} matches _ :: _
+  -- let val_h :: val_t*{val_t <- val_t*} = val*{val <- val*}
+  -- let castRes = $downcast(C, typ_h, val_h)
+  -- if castRes <: ok<val>
+  -- let OK val_cast = castRes as ok<val>
+  -- let castsRes = $downcasts(C, typ_t*{typ_t <- typ_t*}, val_t*{val_t <- val_t*})
+  -- if castsRes <: ok<val*>
+  -- let OK val_t_cast*{val_t_cast <- val_t_cast*} = castsRes as ok<val*>
+
+  clause -1 : (C, typ*{typ <- typ*}, val*{val <- val*}) = ERROR as castsRes
+
+syntax assignRes =
+   | OK ctx (from ok<ctx>)
+   | ERROR (from error)
+
+relation Assign_exp: ctx |- exp := val : assignRes
+
+  rulegroup variable
+
+   match
+
+    (signature) C |- VAR id := val : %
+    C |- exp := val : %
+    -- if exp matches VAR %
+    -- let VAR id = exp
+
+   paths
+
+    rulepath variable
+    -- let C' = $add_varr(C, id [], val)
+    -- output: % |- % := % : OK C' as assignRes
+
+  rulegroup tup
+
+   match
+
+    (signature) C |- TUP exp*{exp <- exp*} := TUP val*{val <- val*} : %
+    C |- exp' := val' : %
+    -- if exp' matches TUP %
+    -- let TUP exp*{exp <- exp*} = exp'
+    -- if val' matches TUP %
+    -- let TUP val*{val <- val*} = val'
+
+   paths
+
+    rulepath tup
+    -- Assign_exps: C |- exp*{exp <- exp*} := val*{val <- val*} : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- output: % |- % := % : OK C' as assignRes
+
+  rulegroup inj
+
+   match
+
+    (signature) C |- INJ mixop exp*{exp <- exp*} := INJ mixop val*{val <- val*} : %
+    C |- exp' := val' : %
+    -- if exp' matches INJ %
+    -- let INJ mixop exp*{exp <- exp*} = exp'
+    -- if val' matches INJ %
+    -- let INJ mixop' val*{val <- val*} = val'
+    -- if (mixop = mixop')
+
+   paths
+
+    rulepath inj
+    -- Assign_exps: C |- exp*{exp <- exp*} := val*{val <- val*} : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- output: % |- % := % : OK C' as assignRes
+
+  rulegroup str
+
+   match
+
+    (signature) C |- STR expField*{expField <- expField*} := STR valField*{valField <- valField*} : %
+    C |- exp' := val' : %
+    -- if exp' matches STR %
+    -- let STR expField*{expField <- expField*} = exp'
+    -- if val' matches STR %
+    -- let STR valField*{valField <- valField*} = val'
+
+   paths
+
+    rulepath str
+    -- (let atom val = valField)*{valField <- valField*, atom -> atom*, val -> val*}
+    -- (let atom' exp = expField)*{expField <- expField*, atom' -> atom'*, exp -> exp*}
+    -- if (|atom*{atom <- atom*}| = |atom'*{atom' <- atom'*}|)
+    -- (if (atom' = atom))*{atom <- atom*, atom' <- atom'*}
+    -- Assign_exps: C |- exp*{exp <- exp*} := val*{val <- val*} : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- output: % |- % := % : OK C' as assignRes
+
+  rulegroup opt
+
+   match
+
+    (signature) C |- OPT exp'?{exp' <- exp'?} := OPT val'?{val' <- val'?} : %
+    C |- exp'' := val'' : %
+    -- if exp'' matches OPT %
+    -- let OPT exp'?{exp' <- exp'?} = exp''
+    -- if val'' matches OPT %
+    -- let OPT val'?{val' <- val'?} = val''
+
+   paths
+
+    rulepath opt-some
+    -- let exp'''?{exp''' <- exp'''?} = exp'?{exp' <- exp'?}
+    -- if exp'''?{exp''' <- exp'''?} matches (_)
+    -- let ?(exp) = exp'''?{exp''' <- exp'''?}
+    -- let val'''?{val''' <- val'''?} = val'?{val' <- val'?}
+    -- if val'''?{val''' <- val'''?} matches (_)
+    -- let ?(val) = val'''?{val''' <- val'''?}
+    -- Assign_exp: C |- exp := val : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- output: % |- % := % : OK C' as assignRes
+
+    rulepath opt-none
+    -- if (exp'?{exp' <- exp'?} = ?())
+    -- if (val'?{val' <- val'?} = ?())
+    -- output: % |- % := % : OK C as assignRes
+
+  rulegroup list
+
+   match
+
+    (signature) C |- LIST exp*{exp <- exp*} := LIST val*{val <- val*} : %
+    C |- exp' := val' : %
+    -- if exp' matches LIST %
+    -- let LIST exp*{exp <- exp*} = exp'
+    -- if val' matches LIST %
+    -- let LIST val*{val <- val*} = val'
+
+   paths
+
+    rulepath list
+    -- Assign_exps: C |- exp*{exp <- exp*} := val*{val <- val*} : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- output: % |- % := % : OK C' as assignRes
+
+  rulegroup cons
+
+   match
+
+    (signature) C |- CONS exp_h exp_t := LIST val_h :: val_t*{val_t <- val_t*} : %
+    C |- exp := val' : %
+    -- if exp matches CONS % %
+    -- let CONS exp_h exp_t = exp
+    -- if val' matches LIST %
+    -- let LIST val*{val <- val*} = val'
+    -- if val*{val <- val*} matches _ :: _
+    -- let val_h :: val_t*{val_t <- val_t*} = val*{val <- val*}
+
+   paths
+
+    rulepath cons
+    -- Assign_exp: C |- exp_h := val_h : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- Assign_exp: C' |- exp_t := LIST val_t*{val_t <- val_t*} : assignRes'
+    -- if assignRes' <: ok<ctx>
+    -- let OK C'' = assignRes' as ok<ctx>
+    -- output: % |- % := % : OK C'' as assignRes
+
+  rulegroup iter
+
+   match
+
+    (signature) C |- ITER exp iterExp := val' : %
+    C |- exp' := val' : %
+    -- if exp' matches ITER % %
+    -- let ITER exp iterExp = exp'
+
+   paths
+
+    rulepath simple
+    -- let val = val'
+    -- let varr'?{varr' <- varr'?} = $is_iter_on_var(ITER exp iterExp)
+    -- if varr'?{varr' <- varr'?} matches (_)
+    -- let ?(varr) = varr'?{varr' <- varr'?}
+    -- let C' = $add_varr(C, varr, val)
+    -- output: % |- % := % : OK C' as assignRes
+
+    rulepath opt-none
+    -- if (val' = OPT ?())
+    -- if (?() = $is_iter_on_var(ITER exp iterExp))
+    -- let iter vari*{vari <- vari*} = iterExp
+    -- if iter matches QUEST
+    -- (let vari_iter = $iter_vari(vari, QUEST))*{vari <- vari*, vari_iter -> vari_iter*}
+    -- let val_bind*{val_bind <- val_bind*} = $repeat_<val>(OPT ?(), |vari_iter*{vari_iter <- vari_iter*}|)
+    -- let C' = $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*})
+    -- output: % |- % := % : OK C' as assignRes
+
+    rulepath opt-some
+    -- let val''' = val'
+    -- if val''' matches OPT %
+    -- let OPT val''?{val'' <- val''?} = val'''
+    -- if val''?{val'' <- val''?} matches (_)
+    -- let ?(val) = val''?{val'' <- val''?}
+    -- if (?() = $is_iter_on_var(ITER exp iterExp))
+    -- let iter vari*{vari <- vari*} = iterExp
+    -- if iter matches QUEST
+    -- Assign_exp: C |- exp := val : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- (let vari_iter = $iter_vari(vari, QUEST))*{vari <- vari*, vari_iter -> vari_iter*}
+    -- (let val''''?{val'''' <- val''''?} = $find_vari(C', vari))*{vari <- vari*, val''''? -> val''''?*}
+    -- (if val''''?{val'''' <- val''''?} matches (_))*{val''''? <- val''''?*}
+    -- (let ?(val_sub) = val''''?{val'''' <- val''''?})*{val''''? <- val''''?*, val_sub -> val_sub*}
+    -- let C'' = $add_varis(C', vari_iter*{vari_iter <- vari_iter*}, OPT ?(val_sub)*{val_sub <- val_sub*})
+    -- output: % |- % := % : OK C'' as assignRes
+
+    rulepath list
+    -- let val'' = val'
+    -- if val'' matches LIST %
+    -- let LIST val*{val <- val*} = val''
+    -- if (?() = $is_iter_on_var(ITER exp iterExp))
+    -- let iter vari*{vari <- vari*} = iterExp
+    -- if iter matches STAR
+    -- let C_local = C[LOCAL.VAL = $empty_map<varr, val>]
+    -- (Assign_exp: C_local |- exp := val : assignRes)*{val <- val*, assignRes -> assignRes*}
+    -- (if assignRes <: ok<ctx>)*{assignRes <- assignRes*}
+    -- (let OK C_sub = assignRes as ok<ctx>)*{assignRes <- assignRes*, C_sub -> C_sub*}
+    -- (let vari_iter = $iter_vari(vari, STAR))*{vari <- vari*, vari_iter -> vari_iter*}
+    -- (let val'''*{val''' <- val'''*}?{val'''* <- val'''*?} = $finds_vari(C_sub*{C_sub <- C_sub*}, vari))*{vari <- vari*, val'''*? -> val'''*?*}
+    -- (if val'''*{val''' <- val'''*}?{val'''* <- val'''*?} matches (_))*{val'''*? <- val'''*?*}
+    -- (let ?(val_sub*{val_sub <- val_sub*}) = val'''*{val''' <- val'''*}?{val'''* <- val'''*?})*{val'''*? <- val'''*?*, val_sub* -> val_sub**}
+    -- (let val_bind = LIST val_sub*{val_sub <- val_sub*})*{val_sub* <- val_sub**, val_bind -> val_bind*}
+    -- let C' = $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*})
+    -- output: % |- % := % : OK C' as assignRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- exp := val : %
+    C |- exp := val : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % := % : ERROR as assignRes
+
+relation Assign_exps: ctx |- exp* := val* : assignRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- exp*{exp <- exp*} := val*{val <- val*} : %
+    C |- exp*{exp <- exp*} := val*{val <- val*} : %
+
+   paths
+
+    rulepath nil
+    -- if (exp*{exp <- exp*} = [])
+    -- if (val*{val <- val*} = [])
+    -- output: % |- % := % : OK C as assignRes
+
+    rulepath cons
+    -- let exp'*{exp' <- exp'*} = exp*{exp <- exp*}
+    -- if exp'*{exp' <- exp'*} matches _ :: _
+    -- let exp_h :: exp_t*{exp_t <- exp_t*} = exp'*{exp' <- exp'*}
+    -- let val'*{val' <- val'*} = val*{val <- val*}
+    -- if val'*{val' <- val'*} matches _ :: _
+    -- let val_h :: val_t*{val_t <- val_t*} = val'*{val' <- val'*}
+    -- Assign_exp: C |- exp_h := val_h : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- Assign_exps: C' |- exp_t*{exp_t <- exp_t*} := val_t*{val_t <- val_t*} : assignRes'
+    -- if assignRes' <: ok<ctx>
+    -- let OK C'' = assignRes' as ok<ctx>
+    -- output: % |- % := % : OK C'' as assignRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- exp*{exp <- exp*} := val*{val <- val*} : %
+    C |- exp*{exp <- exp*} := val*{val <- val*} : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % := % : ERROR as assignRes
+
+relation Assign_arg: ctx |- arg := val : assignRes
+
+  rulegroup exp
+
+   match
+
+    (signature) C |- EXP exp := val : %
+    C |- arg := val : %
+    -- if arg matches EXP %
+    -- let EXP exp = arg
+
+   paths
+
+    rulepath exp
+    -- Assign_exp: C |- exp := val : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- output: % |- % := % : OK C' as assignRes
+
+  rulegroup fun
+
+   match
+
+    (signature) C |- FUN id := FUNC id_global : %
+    C |- arg := val : %
+    -- if arg matches FUN %
+    -- let FUN id = arg
+    -- if val matches FUNC %
+    -- let FUNC id_global = val
+
+   paths
+
+    rulepath fun
+    -- let C' = $add_func(C, id, id_global)
+    -- output: % |- % := % : OK C' as assignRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- arg := val : %
+    C |- arg := val : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % := % : ERROR as assignRes
+
+relation Assign_args: ctx |- arg* := val* : assignRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- arg*{arg <- arg*} := val*{val <- val*} : %
+    C |- arg*{arg <- arg*} := val*{val <- val*} : %
+
+   paths
+
+    rulepath nil
+    -- if (arg*{arg <- arg*} = [])
+    -- if (val*{val <- val*} = [])
+    -- output: % |- % := % : OK C as assignRes
+
+    rulepath cons
+    -- let arg'*{arg' <- arg'*} = arg*{arg <- arg*}
+    -- if arg'*{arg' <- arg'*} matches _ :: _
+    -- let arg_h :: arg_t*{arg_t <- arg_t*} = arg'*{arg' <- arg'*}
+    -- let val'*{val' <- val'*} = val*{val <- val*}
+    -- if val'*{val' <- val'*} matches _ :: _
+    -- let val_h :: val_t*{val_t <- val_t*} = val'*{val' <- val'*}
+    -- Assign_arg: C |- arg_h := val_h : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- Assign_args: C' |- arg_t*{arg_t <- arg_t*} := val_t*{val_t <- val_t*} : assignRes'
+    -- if assignRes' <: ok<ctx>
+    -- let OK C'' = assignRes' as ok<ctx>
+    -- output: % |- % := % : OK C'' as assignRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- arg*{arg <- arg*} := val*{val <- val*} : %
+    C |- arg*{arg <- arg*} := val*{val <- val*} : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % := % : ERROR as assignRes
+
+relation Eval_clause: ctx |- clause `( val* `) : funcRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- clause `( val*{val <- val*} `) : %
+    C |- clause `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath premises-failure
+    -- let arg*{arg <- arg*} '=' exp_out '-' prem*{prem <- prem*} = clause
+    -- Assign_args: C |- arg*{arg <- arg*} := val*{val <- val*} : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- Eval_prems: C' |- prem*{prem <- prem*} : premRes
+    -- if premRes <: failure
+    -- let failure = premRes as failure
+    -- output: % |- % `( % `) : failure as funcRes
+
+    rulepath succ
+    -- let arg*{arg <- arg*} '=' exp_out '-' prem*{prem <- prem*} = clause
+    -- Assign_args: C |- arg*{arg <- arg*} := val*{val <- val*} : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- Eval_prems: C' |- prem*{prem <- prem*} : premRes
+    -- if premRes <: ok<ctx>
+    -- let OK C'' = premRes as ok<ctx>
+    -- Eval_exp: C'' |- exp_out : expRes
+    -- if expRes <: funcRes
+    -- let funcRes = expRes as funcRes
+    -- output: % |- % `( % `) : funcRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- clause `( val*{val <- val*} `) : %
+    C |- clause `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % `( % `) : ERROR as funcRes
+
+relation Eval_clauses: ctx |- clause* `( val* `) : funcRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- clause'*{clause' <- clause'*} `( val*{val <- val*} `) : %
+    C |- clause'*{clause' <- clause'*} `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath nil
+    -- if (clause'*{clause' <- clause'*} = [])
+    -- output: % |- % `( % `) : UNMATCH as funcRes
+
+    rulepath unmatch
+    -- let clause''*{clause'' <- clause''*} = clause'*{clause' <- clause'*}
+    -- if clause''*{clause'' <- clause''*} matches _ :: _
+    -- let clause_h :: clause_t*{clause_t <- clause_t*} = clause''*{clause'' <- clause''*}
+    -- Eval_clause: C |- clause_h `( val*{val <- val*} `) : funcRes'
+    -- if funcRes' <: unmatch
+    -- let unmatch = funcRes' as unmatch
+    -- if unmatch matches UNMATCH
+    -- Eval_clauses: C |- clause_t*{clause_t <- clause_t*} `( val*{val <- val*} `) : funcRes
+    -- output: % |- % `( % `) : funcRes
+
+    rulepath succ
+    -- let clause''*{clause'' <- clause''*} = clause'*{clause' <- clause'*}
+    -- if clause''*{clause'' <- clause''*} matches _ :: _
+    -- let clause_h :: clause_t*{clause_t <- clause_t*} = clause''*{clause'' <- clause''*}
+    -- Eval_clause: C |- clause_h `( val*{val <- val*} `) : funcRes'
+    -- if funcRes' <: ok<val>
+    -- let OK val_out = funcRes' as ok<val>
+    -- Eval_clauses_on_ok: C |- clause_t*{clause_t <- clause_t*} `( val*{val <- val*} `) : unitRes
+    -- if unitRes matches OK
+    -- output: % |- % `( % `) : OK val_out as funcRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- clause*{clause <- clause*} `( val*{val <- val*} `) : %
+    C |- clause*{clause <- clause*} `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % `( % `) : ERROR as funcRes
+
+relation Eval_clauses_on_ok: ctx |- clause* `( val* `) : unitRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- clause'*{clause' <- clause'*} `( val*{val <- val*} `) : %
+    C |- clause'*{clause' <- clause'*} `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath nil
+    -- if (clause'*{clause' <- clause'*} = [])
+    -- output: % |- % `( % `) : OK
+
+    rulepath unmatch
+    -- let clause''*{clause'' <- clause''*} = clause'*{clause' <- clause'*}
+    -- if clause''*{clause'' <- clause''*} matches _ :: _
+    -- let clause_h :: clause_t*{clause_t <- clause_t*} = clause''*{clause'' <- clause''*}
+    -- Eval_clause: C |- clause_h `( val*{val <- val*} `) : funcRes'
+    -- if funcRes' <: unmatch
+    -- let unmatch = funcRes' as unmatch
+    -- if unmatch matches UNMATCH
+    -- Eval_clauses_on_ok: C |- clause_t*{clause_t <- clause_t*} `( val*{val <- val*} `) : unitRes
+    -- output: % |- % `( % `) : unitRes
+
+    rulepath error
+    -- let clause''*{clause'' <- clause''*} = clause'*{clause' <- clause'*}
+    -- if clause''*{clause'' <- clause''*} matches _ :: _
+    -- let clause_h :: clause_t*{clause_t <- clause_t*} = clause''*{clause'' <- clause''*}
+    -- Eval_clause: C |- clause_h `( val*{val <- val*} `) : funcRes
+    -- if (funcRes =/= UNMATCH as funcRes)
+    -- output: % |- % `( % `) : ERROR as unitRes
+
+relation Eval_tblrow: ctx |- tblRow `( val* `) : funcRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- tblRow `( val*{val <- val*} `) : %
+    C |- tblRow `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath premises-failure
+    -- let arg*{arg <- arg*} '=' exp_out '-' prem*{prem <- prem*} = tblRow
+    -- let C_callee = C[LOCAL = $empty_localLayer]
+    -- Assign_args: C_callee |- arg*{arg <- arg*} := val*{val <- val*} : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C_callee' = assignRes as ok<ctx>
+    -- Eval_prems: C_callee' |- prem*{prem <- prem*} : premRes
+    -- if premRes <: failure
+    -- let failure = premRes as failure
+    -- output: % |- % `( % `) : failure as funcRes
+
+    rulepath succ
+    -- let arg*{arg <- arg*} '=' exp_out '-' prem*{prem <- prem*} = tblRow
+    -- let C_callee = C[LOCAL = $empty_localLayer]
+    -- Assign_args: C_callee |- arg*{arg <- arg*} := val*{val <- val*} : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C_callee' = assignRes as ok<ctx>
+    -- Eval_prems: C_callee' |- prem*{prem <- prem*} : premRes
+    -- if premRes <: ok<ctx>
+    -- let OK C_callee'' = premRes as ok<ctx>
+    -- Eval_exp: C_callee'' |- exp_out : expRes
+    -- if expRes <: funcRes
+    -- let funcRes = expRes as funcRes
+    -- output: % |- % `( % `) : funcRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- tblRow `( val*{val <- val*} `) : %
+    C |- tblRow `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % `( % `) : ERROR as funcRes
+
+relation Eval_tblrows: ctx |- tblRow* `( val* `) : funcRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- tblRow'*{tblRow' <- tblRow'*} `( val*{val <- val*} `) : %
+    C |- tblRow'*{tblRow' <- tblRow'*} `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath nil
+    -- if (tblRow'*{tblRow' <- tblRow'*} = [])
+    -- output: % |- % `( % `) : UNMATCH as funcRes
+
+    rulepath unmatch
+    -- let tblRow''*{tblRow'' <- tblRow''*} = tblRow'*{tblRow' <- tblRow'*}
+    -- if tblRow''*{tblRow'' <- tblRow''*} matches _ :: _
+    -- let tblRow_h :: tblRow_t*{tblRow_t <- tblRow_t*} = tblRow''*{tblRow'' <- tblRow''*}
+    -- Eval_tblrow: C |- tblRow_h `( val*{val <- val*} `) : funcRes'
+    -- if funcRes' <: unmatch
+    -- let unmatch = funcRes' as unmatch
+    -- if unmatch matches UNMATCH
+    -- Eval_tblrows: C |- tblRow_t*{tblRow_t <- tblRow_t*} `( val*{val <- val*} `) : funcRes
+    -- output: % |- % `( % `) : funcRes
+
+    rulepath cons-result
+    -- let tblRow''*{tblRow'' <- tblRow''*} = tblRow'*{tblRow' <- tblRow'*}
+    -- if tblRow''*{tblRow'' <- tblRow''*} matches _ :: _
+    -- let tblRow_h :: tblRow_t*{tblRow_t <- tblRow_t*} = tblRow''*{tblRow'' <- tblRow''*}
+    -- Eval_tblrow: C |- tblRow_h `( val*{val <- val*} `) : funcRes
+    -- if (funcRes =/= UNMATCH as funcRes)
+    -- output: % |- % `( % `) : funcRes
+
+relation Call_table_func: ctx |- tableFuncDefn `( val* `) : funcRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- tableFuncDefn `( val*{val <- val*} `) : %
+    C |- tableFuncDefn `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath
+    -- let TABLEFUNC _id _param*{_param <- _param*} ':' _typ '=' tblRow*{tblRow <- tblRow*} = tableFuncDefn
+    -- Eval_tblrows: C |- tblRow*{tblRow <- tblRow*} `( val*{val <- val*} `) : funcRes
+    -- output: % |- % `( % `) : funcRes
+
+relation Call_defined_func: ctx |- definedFuncDefn `< typ* `> `( val* `) : funcRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- definedFuncDefn `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
+    C |- definedFuncDefn `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath unmatch
+    -- let FUNC _id tparam*{tparam <- tparam*} _param*{_param <- _param*} ':' _typ '=' clause*{clause <- clause*} elsClause?{elsClause <- elsClause?} = definedFuncDefn
+    -- if (|tparam*{tparam <- tparam*}| = |typ*{typ <- typ*}|)
+    -- let tdenv = `{ tparam ':' TYP tparam [] '=' ALIAS typ as typDef*{tparam <- tparam*, typ <- typ*} `}
+    -- let C_callee = C[LOCAL = $empty_localLayer[TYP = tdenv]]
+    -- Eval_clauses: C_callee |- clause*{clause <- clause*} `( val*{val <- val*} `) : funcRes'
+    -- if funcRes' <: unmatch
+    -- let unmatch = funcRes' as unmatch
+    -- if unmatch matches UNMATCH
+    -- (Eval_clause: C_callee |- elsClause `( val*{val <- val*} `) : funcRes_els)?{elsClause <- elsClause?, funcRes_els -> funcRes_els?}
+    -- let funcRes = $deopt_<funcRes>(funcRes_els?{funcRes_els <- funcRes_els?}, UNMATCH as funcRes)
+    -- output: % |- % `< % `> `( % `) : funcRes
+
+    rulepath result
+    -- let FUNC _id tparam*{tparam <- tparam*} _param*{_param <- _param*} ':' _typ '=' clause*{clause <- clause*} elsClause?{elsClause <- elsClause?} = definedFuncDefn
+    -- if (|tparam*{tparam <- tparam*}| = |typ*{typ <- typ*}|)
+    -- let tdenv = `{ tparam ':' TYP tparam [] '=' ALIAS typ as typDef*{tparam <- tparam*, typ <- typ*} `}
+    -- let C_callee = C[LOCAL = $empty_localLayer[TYP = tdenv]]
+    -- Eval_clauses: C_callee |- clause*{clause <- clause*} `( val*{val <- val*} `) : funcRes
+    -- if (funcRes =/= UNMATCH as funcRes)
+    -- output: % |- % `< % `> `( % `) : funcRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- definedFuncDefn `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
+    C |- definedFuncDefn `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % `< % `> `( % `) : ERROR as funcRes
+
+syntax rul =
+   | rulMatch -> rulPath (from rul)
+
+relation Eval_rul: ctx |- rul `( val* `) : relRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- rulMatch -> rulPath `( val*{val <- val*} `) : %
+    C |- rulMatch -> rulPath `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath premises-failure
+    -- let id '=' exp_out*{exp_out <- exp_out*} '-' prem_path*{prem_path <- prem_path*} = rulPath
+    -- let exp*{exp <- exp*} '-' prem_match*{prem_match <- prem_match*} = rulMatch
+    -- Assign_exps: C |- exp*{exp <- exp*} := val*{val <- val*} : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- let prem*{prem <- prem*} = prem_match*{prem_match <- prem_match*} ++ prem_path*{prem_path <- prem_path*}
+    -- Eval_prems: C' |- prem*{prem <- prem*} : premRes
+    -- if premRes <: failure
+    -- let failure = premRes as failure
+    -- output: % |- % `( % `) : failure as relRes
+
+    rulepath succ
+    -- let id '=' exp_out*{exp_out <- exp_out*} '-' prem_path*{prem_path <- prem_path*} = rulPath
+    -- let exp*{exp <- exp*} '-' prem_match*{prem_match <- prem_match*} = rulMatch
+    -- Assign_exps: C |- exp*{exp <- exp*} := val*{val <- val*} : assignRes
+    -- if assignRes <: ok<ctx>
+    -- let OK C' = assignRes as ok<ctx>
+    -- let prem*{prem <- prem*} = prem_match*{prem_match <- prem_match*} ++ prem_path*{prem_path <- prem_path*}
+    -- Eval_prems: C' |- prem*{prem <- prem*} : premRes
+    -- if premRes <: ok<ctx>
+    -- let OK C'' = premRes as ok<ctx>
+    -- Eval_exps: C'' |- exp_out*{exp_out <- exp_out*} : expsRes
+    -- if expsRes <: relRes
+    -- let relRes = expsRes as relRes
+    -- output: % |- % `( % `) : relRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- rulMatch -> rulPath `( val*{val <- val*} `) : %
+    C |- rulMatch -> rulPath `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % `( % `) : ERROR as relRes
+
+relation Eval_ruls: ctx |- rul* `( val* `) : relRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- rul'*{rul' <- rul'*} `( val*{val <- val*} `) : %
+    C |- rul'*{rul' <- rul'*} `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath nil
+    -- if (rul'*{rul' <- rul'*} = [])
+    -- output: % |- % `( % `) : UNMATCH as relRes
+
+    rulepath unmatch
+    -- let rul''*{rul'' <- rul''*} = rul'*{rul' <- rul'*}
+    -- if rul''*{rul'' <- rul''*} matches _ :: _
+    -- let rul_h :: rul_t*{rul_t <- rul_t*} = rul''*{rul'' <- rul''*}
+    -- Eval_rul: C |- rul_h `( val*{val <- val*} `) : relRes'
+    -- if relRes' <: unmatch
+    -- let unmatch = relRes' as unmatch
+    -- if unmatch matches UNMATCH
+    -- Eval_ruls: C |- rul_t*{rul_t <- rul_t*} `( val*{val <- val*} `) : relRes
+    -- output: % |- % `( % `) : relRes
+
+    rulepath succ
+    -- let rul''*{rul'' <- rul''*} = rul'*{rul' <- rul'*}
+    -- if rul''*{rul'' <- rul''*} matches _ :: _
+    -- let rul_h :: rul_t*{rul_t <- rul_t*} = rul''*{rul'' <- rul''*}
+    -- Eval_rul: C |- rul_h `( val*{val <- val*} `) : relRes'
+    -- if relRes' <: ok<val*>
+    -- let OK val_out*{val_out <- val_out*} = relRes' as ok<val*>
+    -- Eval_ruls_on_ok: C |- rul_t*{rul_t <- rul_t*} `( val*{val <- val*} `) : unitRes
+    -- if unitRes matches OK
+    -- output: % |- % `( % `) : OK val_out*{val_out <- val_out*} as relRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- rul*{rul <- rul*} `( val*{val <- val*} `) : %
+    C |- rul*{rul <- rul*} `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % `( % `) : ERROR as relRes
+
+relation Eval_ruls_on_ok: ctx |- rul* `( val* `) : unitRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- rul'*{rul' <- rul'*} `( val*{val <- val*} `) : %
+    C |- rul'*{rul' <- rul'*} `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath nil
+    -- if (rul'*{rul' <- rul'*} = [])
+    -- output: % |- % `( % `) : OK
+
+    rulepath unmatch
+    -- let rul''*{rul'' <- rul''*} = rul'*{rul' <- rul'*}
+    -- if rul''*{rul'' <- rul''*} matches _ :: _
+    -- let rul_h :: rul_t*{rul_t <- rul_t*} = rul''*{rul'' <- rul''*}
+    -- Eval_rul: C |- rul_h `( val*{val <- val*} `) : relRes'
+    -- if relRes' <: unmatch
+    -- let unmatch = relRes' as unmatch
+    -- if unmatch matches UNMATCH
+    -- Eval_ruls_on_ok: C |- rul_t*{rul_t <- rul_t*} `( val*{val <- val*} `) : unitRes
+    -- output: % |- % `( % `) : unitRes
+
+    rulepath error
+    -- let rul''*{rul'' <- rul''*} = rul'*{rul' <- rul'*}
+    -- if rul''*{rul'' <- rul''*} matches _ :: _
+    -- let rul_h :: rul_t*{rul_t <- rul_t*} = rul''*{rul'' <- rul''*}
+    -- Eval_rul: C |- rul_h `( val*{val <- val*} `) : relRes
+    -- if (relRes =/= UNMATCH as relRes)
+    -- output: % |- % `( % `) : ERROR as unitRes
+
+relation Call_defined_rel: ctx |- definedRelDefn `( val* `) : relRes
+
+  rulegroup
+
+   match
+
+    (signature) C |- definedRelDefn `( val*{val <- val*} `) : %
+    C |- definedRelDefn `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath unmatch
+    -- let REL _id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} '=' rulGroup*{rulGroup <- rulGroup*} elsGroup?{elsGroup <- elsGroup?} = definedRelDefn
+    -- let C_local = C[LOCAL = $empty_localLayer]
+    -- let rul*{rul <- rul*} = $ruls_of_rulgroups(rulGroup*{rulGroup <- rulGroup*})
+    -- Eval_ruls: C_local |- rul*{rul <- rul*} `( val*{val <- val*} `) : relRes'
+    -- if relRes' <: unmatch
+    -- let unmatch = relRes' as unmatch
+    -- if unmatch matches UNMATCH
+    -- (let rul_els = $rul_of_elsgroup(elsGroup))?{elsGroup <- elsGroup?, rul_els -> rul_els?}
+    -- (Eval_rul: C_local |- rul_els `( val*{val <- val*} `) : relRes_els)?{rul_els <- rul_els?, relRes_els -> relRes_els?}
+    -- let relRes = $deopt_<relRes>(relRes_els?{relRes_els <- relRes_els?}, UNMATCH as relRes)
+    -- output: % |- % `( % `) : relRes
+
+    rulepath result
+    -- let REL _id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} '=' rulGroup*{rulGroup <- rulGroup*} elsGroup?{elsGroup <- elsGroup?} = definedRelDefn
+    -- let C_local = C[LOCAL = $empty_localLayer]
+    -- let rul*{rul <- rul*} = $ruls_of_rulgroups(rulGroup*{rulGroup <- rulGroup*})
+    -- Eval_ruls: C_local |- rul*{rul <- rul*} `( val*{val <- val*} `) : relRes
+    -- if (relRes =/= UNMATCH as relRes)
+    -- output: % |- % `( % `) : relRes
+
+  elsegroup
+
+  rulegroup error
+
+   match
+
+    (signature) C |- definedRelDefn `( val*{val <- val*} `) : %
+    C |- definedRelDefn `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath error
+    -- output: % |- % `( % `) : ERROR as relRes
+
+def $ruls_of_rulgroup(rulGroup) : rul* =
+
+  clause 0 : (id ':' rulMatch '=' rulPath*{rulPath <- rulPath*}) = rulMatch -> rulPath*{rulPath <- rulPath*}
+
+def $ruls_of_rulgroups(rulGroup*) : rul* =
+
+  clause 0 : (rulGroup*{rulGroup <- rulGroup*}) = []
+  -- if rulGroup*{rulGroup <- rulGroup*} matches []
+
+  clause 1 : (rulGroup*{rulGroup <- rulGroup*}) = $ruls_of_rulgroup(rulGroup_h) ++ $ruls_of_rulgroups(rulGroup_t*{rulGroup_t <- rulGroup_t*})
+  -- if rulGroup*{rulGroup <- rulGroup*} matches _ :: _
+  -- let rulGroup_h :: rulGroup_t*{rulGroup_t <- rulGroup_t*} = rulGroup*{rulGroup <- rulGroup*}
+
+def $rul_of_elsgroup(elsGroup) : rul =
+
+  clause 0 : (id ':' rulMatch '=' rulPath) = rulMatch -> rulPath
+
+relation Entry: |- spec : val
+
+  rulegroup
+
+   match
+
+    (signature) |- spec : %
+    |- spec : %
+
+   paths
+
+    rulepath
+    -- debug "entry-al"
+    -- let C = $load($empty_ctx, spec)
+    -- debug "load complete"
+    -- debug "into call"
+    -- Eval_exp: C |- CALL "main" [] [] : expRes
+    -- if expRes <: ok<val>
+    -- let OK val = expRes as ok<val>
+    -- debug val
+    -- output: |- % : val
