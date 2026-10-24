@@ -89,29 +89,6 @@ def $close_subsorts(subsort*) = $concat_<subsort>($subsorts_from(SM, sort_a)*)
   -- if SM = $supersort_map(subsort*)
   -- if `{ (sort_a ':' sort_b*)* `} = SM
 
-;; Equality of terms, as KEQUAL.eq: structural, except that maps and sets are
-;; compared as sets of entries
-
-dec $term_eq(term, term) : bool
-dec $terms_eq(term*, term*) : bool
-def $term_eq(APP symid sort* term*, APP symid' sort'* term'*)
-  = symid = symid' /\ sort* = sort'* /\ $terms_eq(term*, term'*)
-def $term_eq(MAP sort M, MAP sort' M')
-  = sort = sort' /\ $eq_set<pair<term, term>>(M, M')
-def $term_eq(SET sort S, SET sort' S') = sort = sort' /\ $eq_set<term>(S, S')
-def $term_eq(LIST sort term*, LIST sort' term'*)
-  = sort = sort' /\ $terms_eq(term*, term'*)
-def $term_eq(RANGEMAP sort (RANGE i_s i_e term)*,
-             RANGEMAP sort' (RANGE i_s' i_e' term')*)
-  = sort = sort' /\ i_s* = i_s'* /\ i_e* = i_e'* /\ $terms_eq(term*, term'*)
-def $term_eq(term_1, term_2) = term_1 = term_2
-  -- otherwise
-def $terms_eq(eps, eps) = true
-def $terms_eq(term_h :: term_t*, term_h' :: term_t'*)
-  = $term_eq(term_h, term_h') /\ $terms_eq(term_t*, term_t'*)
-def $terms_eq(term*, term'*) = false
-  -- otherwise
-
 ;; Building constructor terms: nested injections are composed,
 ;; inj{B,C}(inj{A,B}(t)) = inj{A,C}(t)
 

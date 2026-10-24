@@ -63,7 +63,7 @@ def $touches(i_s, i_e, RANGE i_rs i_re term) = $(i_re >= i_s) /\ $(i_e >= i_rs)
 
 dec $absorbs(int, int, term, rangeitem) : bool
 def $absorbs(i_s, i_e, term, RANGE i_rs i_re term_r)
-  = $term_eq(term_r, term) /\ $touches(i_s, i_e, RANGE i_rs i_re term_r)
+  = term_r = term /\ $touches(i_s, i_e, RANGE i_rs i_re term_r)
 
 ;; The parts of [i_rs, i_re) outside [i_a, i_b), with value V
 
@@ -186,10 +186,10 @@ def $agree_one(rangeitem, eps) = eps
 def $agree_one(RANGE i_s i_e term, (RANGE i_s' i_e' term') :: rangeitem_t*)
   = ($imax(i_s, i_s'),
      $imin(i_e, i_e')) :: $agree_one(RANGE i_s i_e term, rangeitem_t*)
-  -- if $overlaps(i_s, i_e, RANGE i_s' i_e' term') /\ $term_eq(term, term')
+  -- if $overlaps(i_s, i_e, RANGE i_s' i_e' term') /\ term = term'
 def $agree_one(RANGE i_s i_e term, (RANGE i_s' i_e' term') :: rangeitem_t*)
   = $agree_one(RANGE i_s i_e term, rangeitem_t*)
-  -- if ~($overlaps(i_s, i_e, RANGE i_s' i_e' term') /\ $term_eq(term, term'))
+  -- if ~($overlaps(i_s, i_e, RANGE i_s' i_e' term') /\ term = term')
 
 dec $agree(rangeitem*, rangeitem*) : (int, int)*
 def $agree(eps, rangeitem'*) = eps

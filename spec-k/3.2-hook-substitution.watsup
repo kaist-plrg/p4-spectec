@@ -62,17 +62,8 @@ def $rename(D, sort_x, t, t', APP symid sort* (DV sort_y t_y :: term*))
 def $rename(D, sort_x, t, t', APP symid sort* term*)
   = APP symid sort* $rename_list(D, sort_x, t, t', term*)
   -- if ~$is_binder(D, symid)
-def $rename(D, sort_x, t, t', INT i) = INT i
-def $rename(D, sort_x, t, t', BOOL b) = BOOL b
-def $rename(D, sort_x, t, t', STRING t_s) = STRING t_s
-def $rename(D, sort_x, t, t', FLOAT t_f) = FLOAT t_f
-def $rename(D, sort_x, t, t', BYTES n*) = BYTES n*
-def $rename(D, sort_x, t, t', MINT n_w n_v) = MINT n_w n_v
-def $rename(D, sort_x, t, t', MAP sort M) = MAP sort M
-def $rename(D, sort_x, t, t', SET sort S) = SET sort S
-def $rename(D, sort_x, t, t', LIST sort term*) = LIST sort term*
-def $rename(D, sort_x, t, t', RANGEMAP sort rangeitem*)
-  = RANGEMAP sort rangeitem*
+def $rename(D, sort_x, t, t', term) = term
+  -- otherwise
 def $rename_list(D, sort_x, t, t', eps) = eps
 def $rename_list(D, sort_x, t, t', term_h :: term_t*)
   = $rename(D, sort_x, t, t', term_h) :: $rename_list(D, sort_x, t, t', term_t*)
