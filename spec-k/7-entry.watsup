@@ -12,37 +12,36 @@ syntax runres =
   | INITFAIL         ;; the initial term cannot be evaluated
 
 ;; Rewriting from a configuration after n steps, up to n_max steps: a step
-;; by the rules that may rewrite it, then on from the next configuration
+;; by the rules in priority order, then on from the next configuration
 
 relation Run:
-  definition krule* ruleindex |- term nat nat? ~>* runres
-  hint(input %0 %1 %2 %3 %4 %5)
-  hint(prose_in "running from" %3 "after" %4 "steps")
-  hint(prose_out %6)
+  definition |- term nat nat? ~>* runres
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "running from" %1 "after" %2 "steps")
+  hint(prose_out %4)
 
 rule Run/limit:
-  D krule* ruleindex |- term n (n) ~>* FINAL n term
+  D |- term n (n) ~>* FINAL n term
 
 rule Run/final:
-  D krule* ruleindex |- term n n_max? ~>* FINAL n term
+  D |- term n n_max? ~>* FINAL n term
   -- if n_max? =/= (n)
-  -- Step: D |- term $candidates(krule*, ruleindex, term) ~> STUCK
+  -- Step: D |- term $rules_in_order(D) ~> STUCK
 
 rule Run/error:
-  D krule* ruleindex |- term n n_max? ~>* ERROR n term
+  D |- term n n_max? ~>* ERROR n term
   -- if n_max? =/= (n)
-  -- Step: D |- term $candidates(krule*, ruleindex, term) ~> ERROR
+  -- Step: D |- term $rules_in_order(D) ~> ERROR
 
 rule Run/step:
-  D krule* ruleindex |- term n n_max? ~>* runres
+  D |- term n n_max? ~>* runres
   -- if n_max? =/= (n)
-  -- Step: D |- term $candidates(krule*, ruleindex, term) ~> STEP term'
-  -- Run: D krule* ruleindex |- term' $(n + 1) n_max? ~>* runres
+  -- Step: D |- term $rules_in_order(D) ~> STEP term'
+  -- Run: D |- term' $(n + 1) n_max? ~>* runres
 
 ;; Starting from a definition: the initial term is evaluated (a call of
-;; initGeneratedTopCell), then rewritten. The definition is prepared once: its
-;; subsort relation closed, its equations ordered by priority, its rules
-;; ordered and indexed.
+;; initGeneratedTopCell), then rewritten. Its subsort relation is closed
+;; first, for matching.
 
 relation Start:
   definition |- pattern nat? : runres
@@ -52,16 +51,13 @@ relation Start:
 
 rule Start/run:
   D |- pattern n_max? : runres
-  -- if D_s = D[ .SUBSORTS = $close_subsorts(D.SUBSORTS) ]
-  -- if D' = D_s[ .EQUATIONS = $sorted_equations(D.EQUATIONS) ]
-  -- if krule* = $rules_in_order(D')
+  -- if D' = D[ .SUBSORTS = $close_subsorts(D.SUBSORTS) ]
   -- Eval: D' $empty_map<varid, term> |- pattern : OK term
-  -- Run: D' krule* $index_rules(D', krule*) |- term 0 n_max? ~>* runres
+  -- Run: D' |- term 0 n_max? ~>* runres
 
 rule Start/initfail:
   D |- pattern n_max? : INITFAIL
-  -- if D_s = D[ .SUBSORTS = $close_subsorts(D.SUBSORTS) ]
-  -- if D' = D_s[ .EQUATIONS = $sorted_equations(D.EQUATIONS) ]
+  -- if D' = D[ .SUBSORTS = $close_subsorts(D.SUBSORTS) ]
   -- Eval: D' $empty_map<varid, term> |- pattern : FAIL
 
 ;; krun: the definition is loaded from KORE (6-load), then run from the

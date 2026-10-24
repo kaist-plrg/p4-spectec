@@ -4,8 +4,10 @@
 ;;
 
 ;;; KORE also holds what symbolic execution and proofs use: properties of
-;;; symbols, simplification rules, ensures clauses. As the LLVM backend's
-;;; matching/Parser.scala, only rewrite rules and equations are executed.
+;;; symbols, simplification rules, ensures clauses. Loading reads every axiom
+;;; by its form: a rewrite rule, an equation, or a property, which is not used
+;;; to run. Simplifications and non-executable axioms are kept with their
+;;; attributes and skipped where rules and equations are tried ($runs).
 
 var KD : kdefinition
 var AM : map<symid, kalias>
@@ -37,6 +39,8 @@ dec $exec_attr(kattr) : attr*
 def $exec_attr(KATTR "owise" sort* kore*) = [ OWISE ]
 def $exec_attr(KATTR "cool" sort* kore*) = [ COOL ]
 def $exec_attr(KATTR "cool-like" sort* kore*) = [ COOLLIKE ]
+def $exec_attr(KATTR "simplification" sort* kore*) = [ SIMPLIFICATION ]
+def $exec_attr(KATTR "non-executable" sort* kore*) = [ NONEXECUTABLE ]
 def $exec_attr(KATTR "priority" sort* ([KSTR text])) = [ PRIORITY n ]
   -- if i = $string_to_int(text)
   -- if n = $nat_of(i)
@@ -45,17 +49,6 @@ def $exec_attr(kattr) = eps
 
 dec $exec_attrs(kattr*) : attr*
 def $exec_attrs(kattr*) = $concat_<attr>($exec_attr(kattr)*)
-
-;; Axioms left out by their attributes, as Parser.scala; other properties are
-;; left out by their form ($load_form)
-
-dec $is_proof_attr(kattr) : bool
-def $is_proof_attr(kattr) = $attr_name(kattr)
-  <- [ "assoc", "comm", "unit", "idem", "simplification", "non-executable" ]
-
-dec $proof_only(kattr*) : bool
-  hint(prose_in "an axiom with" %0 "is not executed")
-def $proof_only(kattr*) = $exists_($is_proof_attr(kattr)*)
 
 ;; Symbols
 
@@ -116,13 +109,6 @@ def $fresh_generator(symid, ksymdecl) = eps
 dec $fresh_generators(map<symid, ksymdecl>) : map<sort, symid>
 def $fresh_generators(`{ (symid ':' ksymdecl)* `})
   = `{ $concat_<pair<sort, symid>>($fresh_generator(symid, ksymdecl)*) `}
-
-dec $is_hooked(kdefinition, symid) : bool
-def $is_hooked(KD, symid) = $has_attr("hook", kattr*)
-  -- if (KSYMBOL sortid_p* sort_a* '->' sort kattr*)
-       = $find_map<symid, ksymdecl>(KD.KSYMBOLS, symid)
-def $is_hooked(KD, symid) = false
-  -- if eps = $find_map<symid, ksymdecl>(KD.KSYMBOLS, symid)
 
 ;; Sorts: the hook of a sort, and the number a sort like Sort8 stands for
 
@@ -200,11 +186,8 @@ def $expand_aliases(AM, kore) = kore
   -- otherwise
 
 dec $expand_axiom(kdefinition, kaxiom) : kaxiom
-def $expand_axiom(KD, AXIOM kore kattr*) = AXIOM kore kattr*
-  -- if KD.KALIASES = $empty_map<symid, kalias>
 def $expand_axiom(KD, AXIOM kore kattr*)
   = AXIOM $expand_aliases(KD.KALIASES, kore) kattr*
-  -- if KD.KALIASES =/= $empty_map<symid, kalias>
 
 ;; \left-assoc{}(f(a, b, c)) is f(f(a, b), c), \right-assoc{}(f(a, b, c)) is
 ;; f(a, f(b, c))
@@ -333,17 +316,15 @@ def $rule(KD, kore_l, kore_r, kattr*)
       'requires' $requires(KD, $side_conditions(kore_c*)) $exec_attrs(kattr*)
   -- if (kore_p, kore_c*) = $split_side(kore_l)
 
-;; An equation f(args) = rhs under conditions, of a symbol without a hook
+;; An equation f(args) = rhs under conditions. Those of a hooked symbol are
+;; kept too, and not used: the hook computes it (4.2-eval).
 
 dec $equation(kdefinition, symid, kore*, kore, kore, kattr*) : loaded*
-def $equation(KD, symid, kore_a*, kore_c, kore_r, kattr*) = eps
-  -- if $is_hooked(KD, symid)
 def $equation(KD, symid, kore_a*, kore_c, kore_r, kattr*)
   = [ LEQUATION symid
         (EQN symid $arguments(KD, condition*, kore_a*)
            '=' $pattern(KD, $without_ensures(kore_r))
            'requires' $requires(KD, condition*) $exec_attrs(kattr*)) ]
-  -- if ~$is_hooked(KD, symid)
   -- if condition* = $conditions(kore_c)
 
 ;; By its form, an axiom is a rewrite rule, an equation
@@ -370,17 +351,14 @@ dec $load_axiom(kdefinition, kaxiom) : loaded*
 def $load_axiom(KD, AXIOM kore kattr*) = [ LSUBSORT (sort_1 '<' sort_2) ]
   -- if (KATTR "subsort" ([sort_1, sort_2]) kore_s*)
        = $attr_named("subsort", kattr*)
-def $load_axiom(KD, AXIOM kore kattr*) = eps
-  -- if ~$has_attr("subsort", kattr*)
-  -- if $proof_only(kattr*)
 def $load_axiom(KD, AXIOM kore kattr*)
   = LOVERLOAD (symid_f '>' symid_g) :: $load_form(KD, kore, kattr*)
-  -- if ~$has_attr("subsort", kattr*) /\ ~$proof_only(kattr*)
+  -- if ~$has_attr("subsort", kattr*)
   -- if (KATTR "symbol-overload" sort*
          ([KAPP symid_f sort_f* kore_f*, KAPP symid_g sort_g* kore_g*]))
        = $attr_named("symbol-overload", kattr*)
 def $load_axiom(KD, AXIOM kore kattr*) = $load_form(KD, kore, kattr*)
-  -- if ~$has_attr("subsort", kattr*) /\ ~$proof_only(kattr*)
+  -- if ~$has_attr("subsort", kattr*)
   -- if ~$has_attr("symbol-overload", kattr*)
 
 ;; The definition from what the axioms give, equations grouped by the symbol

@@ -52,9 +52,14 @@ dec $sort_by_priority<X>((nat, X)*) : X*
 def $sort_by_priority<X>((n, X)*) = $by_priorities<X>(n_p*, (n, X)*)
   -- if `{ n_p* `} = $union_set<nat>(`{ n* `}, `{ eps `})
 
-;; Equations of a function symbol, in the order they are tried. The definition
-;; groups equations by the symbol they define, in file order; $krun orders each
-;; group by priority once (7-entry).
+;; Whether a rule or an equation is run: simplifications and non-executable
+;; axioms are for symbolic execution and proofs (matching/Parser.scala)
+
+dec $runs(attr*) : bool
+def $runs(attr*) = ~(SIMPLIFICATION <- attr*) /\ ~(NONEXECUTABLE <- attr*)
+
+;; Equations of a function symbol, in the order they are tried: the ones that
+;; run, by priority, and in file order within a priority
 
 dec $prioritized(equation*) : (nat, equation)*
 def $prioritized(eps) = eps
@@ -63,14 +68,15 @@ def $prioritized(
   = ($priority(attr*),
      EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*)
     :: $prioritized(eqn_t*)
-
-dec $sorted_equations(map<symid, equation*>) : map<symid, equation*>
-def $sorted_equations(`{ (symid ':' eqn*)* `})
-  = `{ (symid ':' $sort_by_priority<equation>($prioritized(eqn*)))* `}
+  -- if $runs(attr*)
+def $prioritized(
+    (EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*) :: eqn_t*)
+  = $prioritized(eqn_t*)
+  -- if ~$runs(attr*)
 
 dec $equations_of(definition, symid) : equation*
   hint(prose_in "the equations of" %1 "in priority order")
-def $equations_of(D, symid) = eqn*
+def $equations_of(D, symid) = $sort_by_priority<equation>($prioritized(eqn*))
   -- if (eqn*) = $find_map<symid, equation*>(D.EQUATIONS, symid)
 def $equations_of(D, symid) = eps
   -- otherwise
