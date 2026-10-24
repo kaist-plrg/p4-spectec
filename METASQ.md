@@ -117,6 +117,21 @@ tower and requires the p4c submodule. Both check determinism.
 The driver selects suites with `--input al` or `--input p4`,
 or one registered suite with `--suite <NAME>`, for example `--suite neg-run`.
 
+## Specification snapshots
+
+```sh
+make test-metacirc-elab
+make test-metacirc-algo
+make test-metacirc-structure
+make test-metacirc-prose
+make test-metacirc-promote
+```
+
+Compare the elaborated, algorithmic, structured (with and without rule
+groups), and prose forms of `spec-meta` with `expected/spec-meta/`,
+as registered in `suites/metacirc/`. `test-metacirc-promote` updates the
+elab, algo, and prose snapshots; structure snapshots are never promoted.
+
 ## OCaml reference
 
 The frozen OCaml implementation and its AL/SL meta specifications are preserved

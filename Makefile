@@ -33,8 +33,11 @@ TEST_TARGETS := test test-expected test-elab test-algo test-structure test-prose
 $(TEST_TARGETS):
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
-.PHONY: metacirc test-metacirc test-metacirc-micro
-metacirc test-metacirc test-metacirc-micro:
+METACIRC_TARGETS := metacirc test-metacirc test-metacirc-micro test-metacirc-elab \
+  test-metacirc-algo test-metacirc-structure test-metacirc-prose test-metacirc-promote
+
+.PHONY: $(METACIRC_TARGETS)
+$(METACIRC_TARGETS):
 	$(MAKE) -f METASQ.mk CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
 promote: test-promote

@@ -132,12 +132,23 @@ pub struct RunConfig {
     pub suites: Vec<RunSuite>,
 }
 
-/// Supplies metacircular corpus inputs, towers, and expectations.
+/// Names the snapshot registrations of the meta specification by stage.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MetacircSnapshots {
+    pub elab: PathBuf,
+    pub algo: PathBuf,
+    pub structure: PathBuf,
+    pub prose: PathBuf,
+}
+
+/// Supplies metacircular corpus inputs, towers, expectations, and snapshots.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MetacircConfig {
     pub includes: Vec<PathBuf>,
     pub excludes: Vec<PathBuf>,
+    pub snapshots: MetacircSnapshots,
     pub suites: Vec<MetacircSuite>,
 }
 
@@ -423,6 +434,13 @@ pub fn load_metacirc(path: &Path) -> Result<MetacircConfig> {
     }
     names_valid(config.suites.iter().map(|suite| suite.name.as_str()))?;
     let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
+    // Resolve snapshot registrations relative to this registration file
+    let snapshots = &mut config.snapshots;
+    for path in
+        [&mut snapshots.elab, &mut snapshots.algo, &mut snapshots.structure, &mut snapshots.prose]
+    {
+        *path = path_parent.join(&*path);
+    }
     for suite in &mut config.suites {
         // Resolve each tower relative to this registration file
         suite.tower = path_parent.join(&suite.tower);

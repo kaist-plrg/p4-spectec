@@ -1,9 +1,9 @@
 //! Execution entry point for the AL metacircular specification
 
-use clap::{Parser, ValueEnum};
+use clap::{Parser, Subcommand, ValueEnum};
 use p4spectec::metacirc::{TowerConfig, config::Lang};
 use p4spectec_test::{
-    Error, ExecutionOptions, Result, metacirc,
+    Error, ExecutionOptions, Result, algo, elab, metacirc, prose, structure,
     suite::{self, Index},
 };
 use std::{path::PathBuf, process::ExitCode};
@@ -17,9 +17,25 @@ enum Input {
     P4,
 }
 
+/// Selects a snapshot check of the meta specification instead of execution.
+#[derive(Clone, Copy, Subcommand)]
+enum Command {
+    /// Compare the elaborated meta specification with expected output
+    Elab,
+    /// Compare the algorithmic meta specification with expected output
+    Algo,
+    /// Compare the structured meta specification in both rule-group modes
+    Structure,
+    /// Compare the prose meta specification with expected output
+    Prose,
+}
+
 /// Compares P4 corpus and AL script outcomes through metacircular towers.
 #[derive(Parser)]
+#[command(args_conflicts_with_subcommands = true)]
 struct Cli {
+    #[command(subcommand)]
+    command: Option<Command>,
     /// Suite registration file, relative to the invoking directory.
     #[arg(long = "registry")]
     path_registry: Option<PathBuf>,
@@ -36,8 +52,12 @@ struct Cli {
 /// Resolves caller paths and runs the selected suites from the repository root.
 fn execute(cli: Cli) -> Result<()> {
     // Refuse baseline promotion before discovering or executing any inputs
-    if std::env::var_os("UPDATE_EXPECT").is_some() {
-        return Err(Error::Invalid("UPDATE_EXPECT is not supported for metacirc execution".into()));
+    if !matches!(cli.command, Some(Command::Elab | Command::Algo | Command::Prose))
+        && std::env::var_os("UPDATE_EXPECT").is_some()
+    {
+        return Err(Error::Invalid(
+            "UPDATE_EXPECT is supported only for metacirc elab, algo, and prose".into(),
+        ));
     }
     let path_registry = cli
         .path_registry
@@ -49,6 +69,17 @@ fn execute(cli: Cli) -> Result<()> {
     std::env::set_current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))?;
     let index = Index::load(&path_registry)?;
     let mut config = suite::load_metacirc(&index.suites.metacirc)?;
+    // Snapshot checks compile the meta specification without executing it
+    let snapshots = &config.snapshots;
+    match cli.command {
+        Some(Command::Elab) => return elab::run(&suite::load_snapshots(&snapshots.elab)?),
+        Some(Command::Algo) => return algo::run(&suite::load_snapshots(&snapshots.algo)?),
+        Some(Command::Structure) => {
+            return structure::run(&suite::load_structure(&snapshots.structure)?);
+        }
+        Some(Command::Prose) => return prose::run(&suite::load_snapshots(&snapshots.prose)?),
+        None => {}
+    }
     // Restrict the registered suites to the selected name
     if let Some(name) = &cli.suite {
         config.suites.retain(|suite| &suite.name == name);
