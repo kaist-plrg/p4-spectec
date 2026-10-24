@@ -15,7 +15,8 @@ Programs marked skip in suites.toml never run. Each run of the spec may take
 two hours (--timeout).
 
 Each definition is kompiled once into <work>/<suite>/ and kept there, with the
-search binary that step checks use. Each result row is shown as its program is
+search binary that step checks use and the K runtime library that computes
+the hooks of domain values (difftest.py builds it). Each result row is shown as its program is
 done, and the table of difftest.py goes to <work>/<suite>.md when all programs
 of the suite run.
 Two programs are tested at a time (--jobs). The exit code is 1 if a test fails.
@@ -85,22 +86,20 @@ def run_difftest(name, t, args, jobs=None):
     cmd += sum((["--exclude", e] for e in t.get("exclude", [])), [])
     cmd += sum((["--known", e] for e in t.get("known", [])), [])
     cmd += sum((["--check-steps-for", e] for e in t.get("check_steps", [])), [])
-    if args.cover:
-        cmd += ["--cover-dir", os.path.join(work, "coverage", name)]
-    if args.det:
-        cmd += ["--det"]
+    cmd += ["--runtime-flag=" + a.replace("{src}", t.get("src_dir", "")) for a in t.get("runtime", [])]
+    if args.no_det:
+        cmd += ["--no-det"]
     print("diff test %s" % name, flush=True)
-    env = dict(os.environ, SPECTEC_CACHE_SIZE=str(t["cache_size"])) if "cache_size" in t else None
     # each row is shown as its program is done, with the suite's name
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True, env=env)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
     output = []
     for line in p.stdout:
         output.append(line)
         if line.startswith("| ") and not line.startswith("| program"):
             print("%s %s" % (name, line.rstrip()), flush=True)
     p.wait()
-    # a run in deterministic mode checks the spec, not the result: the table stays
-    if not only and not args.det:
+    # a run without the check of determinism does not replace the table
+    if not only and not args.no_det:
         with open(os.path.join(work, name + ".md"), "w") as out:
             out.write("".join(output))
     lines = "".join(output).strip().splitlines()
@@ -398,10 +397,9 @@ def main():
     ap.add_argument("--timeout", type=float, default=None, help="seconds per run of the spec (default 7200)")
     ap.add_argument("--full", action="store_true",
                     help="run all programs (default: the quick lists, or all programs of the suites named)")
-    ap.add_argument("--det", action="store_true",
-                    help="run the spec in deterministic mode: a run fails when two rules or clauses of the spec "
-                         "both apply (the tables in <work> are not written)")
-    ap.add_argument("--cover", action="store_true", help="record spec coverage in <work>/coverage/<suite>/")
+    ap.add_argument("--no-det", action="store_true",
+                    help="run the spec without the check of determinism, which by default fails a run when two "
+                         "rules or clauses of the spec both apply (the tables in <work> are not written)")
     ap.add_argument("-j", "--jobs", type=int, default=2, help="programs to test at a time (default 2)")
     args = ap.parse_args()
     args.quick = not args.full and not args.suites

@@ -8,7 +8,7 @@
 
 use super::{
     ast::{Pattern, Sort},
-    parse::text_of_bytes,
+    parse::{parse_sort, text_of_bytes},
 };
 
 const MAGIC: &[u8] = b"\x7fKORE";
@@ -99,6 +99,20 @@ impl Decoder<'_> {
     }
 }
 
+/// A sort by its name and arguments. The runtime writes the sort of a domain
+/// value as one name without arguments: its text with the last two
+/// characters dropped, as `emit_token` in `runtime/util/ConfigurationSerializer.cpp`
+/// assumes a sort `S{}`. So the sort `SortMInt{Sort8{}}` of an MInt comes as
+/// the name `SortMInt{Sort8{`; such a name is read as the sort it was.
+fn sort_named(name: String, sorts: Vec<Sort>) -> Result<Sort> {
+    if sorts.is_empty() && name.contains('{') {
+        // The two characters dropped are the closing braces of the sort
+        return parse_sort((name.clone() + "}}").as_bytes())
+            .map_err(|error| format!("sort {name} in binary KORE: {}", error.message));
+    }
+    Ok(Sort::Sort(name, sorts))
+}
+
 fn pop_sorts(stack: &mut Vec<Item>, n: usize) -> Result<Vec<Sort>> {
     let start = stack
         .len()
@@ -143,7 +157,7 @@ pub fn decode(src: &[u8]) -> Result<Pattern> {
                 let arity = decoder.length(2)?;
                 let name = decoder.name()?;
                 let sorts = pop_sorts(&mut stack, arity)?;
-                stack.push(Item::Sort(Sort::Sort(name, sorts)));
+                stack.push(Item::Sort(sort_named(name, sorts)?));
             }
             0x07 => {
                 let name = decoder.name()?;
@@ -203,6 +217,13 @@ pub fn decode(src: &[u8]) -> Result<Pattern> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sort_of_an_mint_value() {
+        let sort = sort_named("SortMInt{Sort8{".to_owned(), vec![]).unwrap();
+        let sort8 = Sort::Sort("Sort8".to_owned(), vec![]);
+        assert_eq!(sort, Sort::Sort("SortMInt".to_owned(), vec![sort8]));
+    }
 
     #[test]
     fn domain_value_in_raw_term() {

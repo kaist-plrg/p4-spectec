@@ -411,6 +411,16 @@ pub fn parse_definition(src: &[u8]) -> Result<Definition> {
     Ok(Definition { modules })
 }
 
+/// Parses one sort, with nothing after it.
+pub fn parse_sort(src: &[u8]) -> Result<Sort> {
+    let mut parser = Parser::new(src)?;
+    let sort = parser.sort()?;
+    if parser.token != Token::Eof {
+        return parser.error("trailing input after sort");
+    }
+    Ok(sort)
+}
+
 /// Parses one pattern, with nothing after it.
 pub fn parse_pattern(src: &[u8]) -> Result<Pattern> {
     let mut parser = Parser::new(src)?;

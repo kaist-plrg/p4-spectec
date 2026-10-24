@@ -143,3 +143,16 @@ impl Display for Pattern {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn nested_sort() {
+        let sort = Sort::Sort("SortMInt".to_owned(), vec![Sort::Sort("Sort8".to_owned(), vec![])]);
+        assert_eq!(sort.to_string(), "SortMInt{Sort8{}}");
+        let dv = Pattern::App("\\dv".to_owned(), vec![sort], vec![Pattern::Str("1p8".to_owned())]);
+        assert_eq!(dv.to_string(), "\\dv{SortMInt{Sort8{}}}(\"1p8\")");
+    }
+}

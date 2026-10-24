@@ -6,11 +6,15 @@ run of the spec is checked step by step instead: each step must be one K
 allows, as K leaves some choices open (rules of the same priority, the order
 of map elements).
 
+The spec runs on the Rust executor (bin/p4spectec krun), which leaves the
+hooks of K's modules of domain values to the K runtime of the definition: a
+library llvm-kompile builds from it (runtime_library), kept beside it.
+
 usage:
   spec-k/tests/difftest.py -k imp-kompiled tests/*.imp
   spec-k/tests/difftest.py -k imp-kompiled tests/ --ext imp --timeout 600 -j 2
 
-spectec-boot must be built (make boot).
+bin/p4spectec must be built (make release).
 """
 import argparse
 import collections
@@ -28,16 +32,17 @@ import tempfile
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-SPEC = [os.path.join(ROOT, "spec-meta/common/0-stdlib.watsup")] + sorted(
+SPEC = [os.path.join(ROOT, "spec-meta/0-aux/0.0-stdlib.watsup")] + sorted(
     glob.glob(os.path.join(ROOT, "spec-k/[0-9]*.watsup")))
-BOOT = os.path.join(ROOT, "spectec-boot")
+BIN = os.path.join(ROOT, "bin/p4spectec")
 
-# The executor caches calls by their arguments; the K spec passes whole
-# configurations, so a smaller cache bounds memory without slowing it down
-# (32K entries: 63 s and 424 MB for 1,500 steps of KOOL factorial).
-SPEC_ENV = dict(os.environ, SPECTEC_CACHE_SIZE=os.environ.get("SPECTEC_CACHE_SIZE", "32768"))
+SpecRun = collections.namedtuple("SpecRun", "status steps ok secs msg signal", defaults=[None])
 
-SpecRun = collections.namedtuple("SpecRun", "status steps ok secs msg")
+# Hooks that end the process in the K runtime, in krun as in the spec, which
+# calls the runtime in its own process: a machine-integer division by zero and
+# ^%Int with a modulus of 0 (SIGFPE), and Int2Float with a precision below 1
+# (an MPFR assertion, SIGABRT)
+RUNTIME_SIGNALS = {6: "SIGABRT", 8: "SIGFPE"}
 
 
 def oneline(text, limit=160):
@@ -153,6 +158,42 @@ def failing_step(command, workdir, timeout):
     return ok, at(ok)
 
 
+def runtime_library(kompiled, flags):
+    """The K runtime of a kompiled definition, <kompiled>/runtime.so, built by
+    llvm-kompile <definition> <dt> c with the extra clang flags (e.g. the
+    plugin of KEVM), again when the definition is newer. Symbols with '@' in
+    their names (string literals of some rule labels) make the linker fail on
+    a shared library ("undefined version"); they are renamed in the object,
+    which alone defines and uses them, and the library is linked again."""
+    kompiled = os.path.abspath(kompiled)
+    out = os.path.join(kompiled, "runtime.so")
+    definition = os.path.join(kompiled, "definition.kore")
+    if os.path.exists(out) and os.path.getmtime(out) >= os.path.getmtime(definition):
+        return out
+    with tempfile.TemporaryDirectory() as tmp:
+        base = ["llvm-kompile", definition, os.path.join(kompiled, "dt"), "c"]
+        p = subprocess.run(base + ["--"] + flags + ["-o", out + ".tmp"], cwd=tmp, capture_output=True, text=True)
+        if p.returncode != 0:
+            if "undefined version" not in p.stderr:
+                raise RuntimeError("llvm-kompile failed: " + p.stderr[-2000:])
+            p = subprocess.run(base + ["--save-temps", "-v", "--"] + flags + ["-o", out + ".tmp"], cwd=tmp,
+                               capture_output=True, text=True)
+            link = next(l for l in reversed((p.stdout + p.stderr).splitlines())
+                        if re.search(r"clang\+\+-\d+ .*-shared", l))
+            link = re.sub(r"^\s*\|?\s*\+\s*", "", link)
+            obj = re.search(r"tmp\.\w+\.o", link).group(0)
+            nm = subprocess.run(["llvm-nm-17", obj], cwd=tmp, capture_output=True, text=True).stdout
+            names = sorted({l.split()[-1] for l in nm.splitlines() if "@" in l.split()[-1]})
+            with open(os.path.join(tmp, "rename.txt"), "w") as fh:
+                fh.writelines("%s %s\n" % (n, n.replace("@", "_AT_")) for n in names)
+            for cmd in (["llvm-objcopy-17", "--redefine-syms=rename.txt", obj], ["sh", "-c", link]):
+                q = subprocess.run(cmd, cwd=tmp, capture_output=True, text=True)
+                if q.returncode != 0:
+                    raise RuntimeError("relinking the K runtime failed: " + q.stderr[-2000:])
+    os.replace(out + ".tmp", out)
+    return out
+
+
 def capped(cmd, memory_max):
     """Run under a memory cap, so that only this process is killed when it is exceeded."""
     if not memory_max:
@@ -161,10 +202,11 @@ def capped(cmd, memory_max):
             "-p", "MemorySwapMax=0"] + cmd
 
 
-def run_spec(definition, init, out, compare, extra, timeout, memory_max):
-    """Run the K spec, comparing as compare says (-expect FILE or -check-steps DIR)."""
-    cmd = [BOOT, "krun"] + SPEC + ["-def", definition, "-init", init, "-o", out] + compare + extra
-    rc, stdout, stderr, secs = run(capped(cmd, memory_max), timeout, env=SPEC_ENV)
+def run_spec(definition, library, init, out, compare, extra, timeout, memory_max):
+    """Run the K spec, comparing as compare says (--expect FILE or --check-steps DIR)."""
+    cmd = [BIN, "krun"] + SPEC + ["--def", definition, "--lib", library, "--init", init, "--output", out] \
+        + compare + extra
+    rc, stdout, stderr, secs = run(capped(cmd, memory_max), timeout)
     if rc is None:
         return SpecRun("timeout", None, False, secs, "")
     m = re.search(r"^(final|ERROR) after (\d+) steps", stdout, re.M)
@@ -173,7 +215,8 @@ def run_spec(definition, init, out, compare, extra, timeout, memory_max):
             return SpecRun("initfail", 0, False, secs, "")
         lines = (stdout + stderr).strip().splitlines()
         # a negative exit code is the signal that killed the process (e.g. -9 when out of memory)
-        return SpecRun("crash", None, False, secs, "exit %s: %s" % (rc, oneline(lines[-1]) if lines else "no output"))
+        return SpecRun("crash", None, False, secs, "exit %s: %s" % (rc, oneline(lines[-1]) if lines else "no output"),
+                       -rc if rc < 0 else None)
     failed = re.search(r"^steps check FAILED: (.*)$", stdout, re.M)
     ok = "matches " in stdout or "steps check: each of" in stdout
     return SpecRun("final" if m.group(1) == "final" else "error", int(m.group(2)), ok, secs,
@@ -189,6 +232,8 @@ def judge(spec, k_steps, fails_at, check, limit):
     if fails_at is not False:
         if spec.status == "error" and spec.ok and spec.steps == fails_at:
             return "pass (both fail after %d steps)" % fails_at
+        if spec.status == "crash" and spec.signal in RUNTIME_SIGNALS:
+            return "pass (both end in the K runtime, %s)" % RUNTIME_SIGNALS[spec.signal]
         return "FAIL: krun fails after %d steps, the spec: %s after %s steps%s" % (
             fails_at, spec.status, spec.steps, "" if spec.ok else ", configuration differs")
     if spec.status != "final":
@@ -245,7 +290,7 @@ def krun_outcome(prog, work, args, depth):
     return steps, init, result, secs, err, fails_at
 
 
-def test_program(prog, root, definition, args):
+def test_program(prog, root, definition, library, args):
     """Diff test one program; returns (table row, verdict)."""
     name = os.path.basename(prog)
     work = os.path.join(root, name)
@@ -259,14 +304,11 @@ def test_program(prog, root, definition, args):
         return "| %s | - | - | skip: %s | %.1f | 0.0 |" % (name, err, k_secs), "skip: " + err
     if check:
         k_steps = "each step"
-    compare = ["-check-steps", os.path.abspath(args.kompiled)] if check else ["-expect", result or os.devnull]
-    extra = ["-depth", str(limit)] if limit else []
-    if args.det:
-        extra += ["-det"]
-    if args.cover_dir:
-        os.makedirs(args.cover_dir, exist_ok=True)
-        extra += ["-cover", os.path.join(os.path.abspath(args.cover_dir), name + ".log")]
-    spec = run_spec(definition, init, os.path.join(work, "spec.kore"), compare, extra, args.timeout,
+    compare = ["--check-steps", os.path.abspath(args.kompiled)] if check else ["--expect", result or os.devnull]
+    extra = ["--depth", str(limit)] if limit else []
+    if args.no_det:
+        extra += ["--no-det"]
+    spec = run_spec(definition, library, init, os.path.join(work, "spec.kore"), compare, extra, args.timeout,
                     args.memory_max)
     verdict = judge(spec, k_steps, fails_at, check, limit)
     # a run that ends elsewhere or in other steps than krun's may still take
@@ -274,8 +316,8 @@ def test_program(prog, root, definition, args):
     if verdict in ("FAIL: configuration differs", "FAIL: steps differ") \
             and os.path.exists(os.path.join(args.kompiled, "search")):
         differs = verdict[len("FAIL: "):]
-        compare = ["-check-steps", os.path.abspath(args.kompiled)]
-        spec = run_spec(definition, init, os.path.join(work, "spec.kore"), compare, extra, args.timeout,
+        compare = ["--check-steps", os.path.abspath(args.kompiled)]
+        spec = run_spec(definition, library, init, os.path.join(work, "spec.kore"), compare, extra, args.timeout,
                         args.memory_max)
         verdict = judge(spec, k_steps, fails_at, True, limit)
         verdict = verdict.replace("pass (each step is one K allows)",
@@ -310,12 +352,11 @@ def main():
     ap.add_argument("--memory-max", default="2500M" if shutil.which("systemd-run") else "",
                     help="memory cap for each run of the spec (systemd-run MemoryMax; empty for none, "
                          "the default without systemd)")
-    ap.add_argument("--cover-dir", default=None,
-                    help="write the spec with the instructions each run executes marked to <dir>/<program>.log "
-                         "(spectec-boot krun -cover; merge them with coverage_summary.py)")
-    ap.add_argument("--det", action="store_true",
-                    help="run the spec in deterministic mode (spectec-boot krun -det): a run fails when two "
-                         "rules or clauses of the spec both apply")
+    ap.add_argument("--no-det", action="store_true",
+                    help="run the spec without the check of determinism (p4spectec krun --no-det); by default "
+                         "a run fails when two rules or clauses of the spec both apply")
+    ap.add_argument("--runtime-flag", action="append", default=[],
+                    help="extra clang flag for the K runtime library (llvm-kompile ... c), e.g. a plugin")
     ap.add_argument("--kore-input", action="store_true",
                     help="the programs are initial terms in KORE, run by the interpreter of the kompiled "
                          "definition without krun")
@@ -350,12 +391,13 @@ def main():
         args.k_version = args.k_version or run(["krun", "--version"], 60)[1]
         args.definition_hash = hashlib.sha256(open(definition, "rb").read()).hexdigest()
     root = args.keep or tempfile.mkdtemp(prefix="difftest-")
+    library = runtime_library(args.kompiled, args.runtime_flag)
     Interpreter.preload = fast_throw()
     print("| program | krun steps | spec steps | result | krun s | spec s |")
     print("|---|---|---|---|---|---|")
     # programs run --jobs at a time; rows are printed in program order
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        futures = [pool.submit(test_program, prog, root, definition, args) for prog in programs]
+        futures = [pool.submit(test_program, prog, root, definition, library, args) for prog in programs]
         verdicts = []
         for future in futures:
             row, verdict = future.result()

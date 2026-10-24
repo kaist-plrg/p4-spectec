@@ -201,12 +201,20 @@ def $width(D, SORT sortid ([SORT sortid_w eps])) = n
 def $width(D, sort) = eps
   -- otherwise
 
-;; i modulo 2^n_w, also for MInt literals (6-load)
+;; 2^n, and i modulo 2^n_w, also for MInt literals (6-load)
+
+dec $two_to(nat) : nat
+  hint(prose_in "2 to the" %0)
+def $two_to(n) = 1
+  -- if n = 0
+def $two_to(n) = $(2 * $two_to(n'))
+  -- if $(n > 0)
+  -- if n' = $nat_of($(n - 1))
 
 dec $wrap(nat, int) : nat
   hint(prose_in %1 "modulo 2 to the" %0)
 def $wrap(n_w, i) = n
-  -- if i_m = $(2 ^ n_w)
+  -- if i_m = $two_to(n_w)
   -- if n = $nat_of($(((i \ i_m) + i_m) \ i_m))
 
 def $hook(D, "LIST.sizeMInt", sort, ([LIST sort_l term*]))

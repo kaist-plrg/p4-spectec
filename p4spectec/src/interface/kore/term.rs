@@ -471,3 +471,36 @@ impl Maker<'_> {
         self.case(self.shapes.fail, vec![], typ)
     }
 }
+
+/// A term as the runtime is given it. The runtime reads an MInt literal wider
+/// than 64 bits with its 64-bit words in the wrong order (`5p256` as
+/// `5 * 2^192`, `get_mint_token` of `runtime/util/ConfigurationParser.cpp`),
+/// so each MInt literal `vpw` is given as `Int2MInt{SortW}(v)`, which the
+/// runtime computes right.
+pub fn runtime_form(info: &Info, pattern: Pattern) -> Pattern {
+    stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match pattern {
+        Pattern::App(symbol, sorts, args) if symbol == "\\dv" => {
+            if let (Some(int2mint), [Sort::Sort(name, widths)], [Pattern::Str(text)]) =
+                (&info.int2mint, sorts.as_slice(), args.as_slice())
+                && info.sort_hook(name) == Some("MINT.MInt")
+                && let Some((value, _)) = text.split_once('p')
+                && let Ok(sort_int) = info.sort_of_hook("INT.Int")
+            {
+                return Pattern::App(
+                    int2mint.clone(),
+                    widths.clone(),
+                    vec![dv(sort_named(sort_int), value.to_owned())],
+                );
+            }
+            Pattern::App(symbol, sorts, args)
+        }
+        Pattern::App(symbol, sorts, args) => Pattern::App(
+            symbol,
+            sorts,
+            args.into_iter()
+                .map(|arg| runtime_form(info, arg))
+                .collect(),
+        ),
+        pattern => pattern,
+    })
+}

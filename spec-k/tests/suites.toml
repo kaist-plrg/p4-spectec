@@ -24,8 +24,8 @@
 #   kompile      extra kompile options (--enable-search is always added)
 #   krun         extra krun options
 #   depth        stop krun and the spec after this many steps
-#   cache_size   entries of the executor's call cache (SPECTEC_CACHE_SIZE;
-#                default 32768); fewer bound the memory of large configurations
+#   runtime      extra clang flags for the K runtime library of the definition
+#                (llvm-kompile <definition> <dt> c), e.g. a plugin
 #   skip         programs (glob patterns) never run, with why in comments
 #   known        known failures (glob patterns): programs on which the spec
 #                follows K's documentation and krun does not, or, as the
@@ -145,10 +145,6 @@ src = "k"
 dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/3_fun/1_untyped/1_environment"
 def = "fun-untyped.md"
 ext = "fun"
-# constructor-bst-sorting grows the store to 1,131 entries (a 1 MB
-# configuration): a smaller call cache keeps the spec under its memory limit,
-# and its 13,914 steps take about 66 minutes step by step
-cache_size = 1024
 tests = ["../../programs"]
 inputs = "tests"
 quick = ["empty-argument-2.fun", "tuple-2.fun"]
@@ -196,9 +192,6 @@ src = "kevm"
 dir = "kevm-pyk/src/kevm_pyk/kproj/evm-semantics"
 def = "driver.md"
 ext = "kore"
-# twoOps (51,547 steps) needs 1.3 GB with 4,096 entries, and more than 2.5 GB
-# with the default
-cache_size = 4096
 kompile = [
   "--main-module",
   "ETHEREUM-SIMULATION",
@@ -225,6 +218,14 @@ kompile = [
   "-ccopt",
   "-lsecp256k1",
   "-ccopt",
+  "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a",
+]
+# the K runtime library links the plugin too, as the interpreter does
+runtime = [
+  "-std=c++20",
+  "-lssl",
+  "-lcrypto",
+  "-lsecp256k1",
   "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a",
 ]
 skip = [
@@ -273,6 +274,11 @@ quick = ["sum.imp"]
 # and its programs *.prog), run as groups like the regression tests below. A
 # quick run runs all of them. skip and known name tests or <test>/<program>.
 [manual.behavior]
+# The hooks of K's modules of domain values are computed by the K runtime, so
+# where they differ from the documentation the spec agrees with krun
+# (constant-folding, float-literal-range, overlapping-occurrences,
+# padright-value, powmod, string2int-syntax). The hooks on K terms are
+# specified after the documentation.
 known = [
   # a fresh value of a rule and of a function it calls coincide
   "fresh-in-function",
@@ -281,27 +287,11 @@ known = [
   "rangemap-choice",
   # updateList does not check the bounds at index 0
   "updatelist-index0",
-  # occurrences overlap in countAllOccurrences and replaceAll, and replaceAll
-  # loses characters
-  "overlapping-occurrences",
-  "constant-folding",
-  # padding does not check the value when no byte is added
-  "padright-value",
-  # String2Int and String2Base take white space and radixes above 36
-  "string2int-syntax",
-  # a Float literal is not rounded to the exponent range
-  "float-literal-range",
-  # ^%Int takes an inverse for a negative exponent
-  "powmod/negative",
 ]
 
 [manual.errors]
 
 [manual.features]
-known = [
-  # countAllOccurrences counts overlapping occurrences (behavior/overlapping-occurrences)
-  "equality/strings",
-]
 
 # The regression tests of K (in dir) that kompile with the LLVM backend and
 # krun their programs through ktest.mak, with the settings of their Makefiles.

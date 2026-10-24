@@ -30,6 +30,8 @@ pub struct Info {
     pub nat_sorts: HashMap<String, String>,
     /// The symbols with the `binder` attribute, e.g. lambda.
     binders: HashSet<String>,
+    /// The symbol with the hook `MINT.integer`, `Int2MInt`.
+    pub int2mint: Option<String>,
 }
 
 fn string_attr<'a>(name: &str, attrs: &'a [Attr]) -> Option<&'a str> {
@@ -63,6 +65,11 @@ impl Info {
                 )
             {
                 info.binders.insert(name.clone());
+            }
+            if let Sentence::SymbolDecl { name, attrs, .. } = sentence
+                && string_attr("hook", attrs) == Some("MINT.integer")
+            {
+                info.int2mint = Some(name.clone());
             }
             let Sentence::SortDecl { name, attrs, .. } = sentence else {
                 continue;
