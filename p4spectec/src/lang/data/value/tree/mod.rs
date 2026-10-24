@@ -3,16 +3,14 @@
 //! `Value` owns its body, type, and source span.
 //! Case bodies contain filled notation whose argument leaves own values.
 //! Ordinary serde reads and writes these contents without an arena.
-
-use std::rc::Rc;
+//! An extern value holds its type name and arena-independent payload,
+//! which only a definition with a codec produces and reads.
 
 use serde::{Deserialize, Serialize};
 
-use crate::util::json::json;
-
 use crate::lang::{
     common::{Id, prim::num::Number, source::NotePhrase},
-    data::{notation::AtomPhrase, typ::TypKind},
+    data::{notation::AtomPhrase, typ::TypKind, value::extern_value::ExternEncoded},
 };
 
 mod convert;
@@ -55,5 +53,5 @@ pub enum ValueKind {
     Opt(Option<Box<Value>>),
     List(Vec<Value>),
     Func(Id),
-    Extern(Rc<json>),
+    Extern(ExternEncoded),
 }

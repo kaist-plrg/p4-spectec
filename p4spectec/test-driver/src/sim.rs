@@ -8,8 +8,6 @@ use std::{
 use expect_test::{ExpectFile, expect_file};
 use indicatif::{ProgressBar, ProgressStyle};
 
-use p4spectec::lang::data::encoding::Encoding;
-
 use p4spectec::runner::{Config, Spec};
 
 use p4spectec::sim_plugin::{self, io::Tx};
@@ -235,13 +233,9 @@ where
             })
             .count();
         let patched_arch = pairs_arch.filter(|pair| pair.patched).count();
-        let mut simulator = sim_plugin::build(
-            build_spec()?,
-            arch,
-            Config::new(cache_on, det, false),
-            Encoding::default(),
-        )
-        .map_err(|error| Error::Invalid(error.to_string()))?;
+        let mut simulator =
+            sim_plugin::build(build_spec()?, arch, Config::new(cache_on, det, false))
+                .map_err(|error| Error::Invalid(error.to_string()))?;
         for (suite, pairs) in suites.iter().filter(|(suite, _)| suite.arch == arch) {
             let mut results = Results::new(&suite.expected);
             let guard_stdout = crate::output::SilenceStdout::new()?;

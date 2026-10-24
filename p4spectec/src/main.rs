@@ -10,7 +10,7 @@ use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Args, Parser, Subcommand};
 
-use p4spectec::lang::{data::encoding::Encoding, traits::print::Print};
+use p4spectec::lang::traits::print::Print;
 
 use p4spectec::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
 
@@ -292,9 +292,6 @@ struct SimArgs {
     /// Target architecture: ebpf, psa, or v1model.
     #[arg(long, value_name = "ARCH")]
     arch: String,
-    /// Native plugin state encoding: arena-relative or arena-independent.
-    #[arg(long, default_value_t = Encoding::default(), value_name = "ENCODING")]
-    plugin_encoding: Encoding,
     /// P4 program to simulate.
     #[arg(short = 'p', value_name = "PROGRAM")]
     program: PathBuf,
@@ -327,7 +324,7 @@ fn sim_command(args: SimArgs) -> Result<(), ()> {
 
     // Build the requested native architecture
     let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard);
-    let mut simulator = p4spectec::build_simulator(spec, &args.arch, config, args.plugin_encoding)
+    let mut simulator = p4spectec::build_simulator(spec, &args.arch, config)
         .map_err(|report| render_report(&mut renderer, &report))?;
 
     // Print matched packets as execution proceeds

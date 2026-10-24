@@ -22,7 +22,7 @@ use crate::sim_plugin::{
     spec::{args, func, unpack},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 /// Counter array by `PSA_CounterType_t`.
 pub enum Counter {
     /// Packet counts.

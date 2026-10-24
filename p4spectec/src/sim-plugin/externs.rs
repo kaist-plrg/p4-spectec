@@ -7,7 +7,7 @@
 //! Compile-time known calls (`static_assert`) are handled here
 //! for all architectures.
 
-use crate::lang::data::value::flat::Value;
+use crate::lang::data::value::{extern_value::TypDefId, flat::Value};
 
 use crate::lang::il::ast::Typ;
 
@@ -21,6 +21,9 @@ use super::core;
 
 /// Architecture-specific extern behavior.
 pub(crate) trait Impl: Extern {
+    /// Definitions of `archState` and `objectState`.
+    fn typdefs(&self) -> Vec<TypDefId>;
+
     /// Creates the initial state of an extern object instance.
     fn eval_extern_init<Interp, Iface>(
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
@@ -72,6 +75,10 @@ pub(crate) trait Impl: Extern {
 // == Runner dispatch
 
 impl<Ext: Impl> Extern for Ext {
+    fn typdefs(&self) -> Vec<TypDefId> {
+        Impl::typdefs(self)
+    }
+
     fn eval_rel<Interp, Iface>(
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,

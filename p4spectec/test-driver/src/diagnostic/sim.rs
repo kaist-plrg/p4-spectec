@@ -6,8 +6,6 @@
 
 use std::path::Path;
 
-use p4spectec::lang::data::encoding::Encoding;
-
 use p4spectec::diagnostic::{Report, ReportKind};
 
 use p4spectec::runner::{self, Config, RunError, Spec};
@@ -48,7 +46,7 @@ fn run_case(case: &Case) -> Result<Vec<Report>> {
         let spec_al = p4spectec::algo(&[path]).map_err(|report| {
             failure(&case.name, format!("conversion failed before simulator admission: {report}"))
         })?;
-        let report = sim_plugin::build(Spec::Al(spec_al), arch, config, Encoding::default())
+        let report = sim_plugin::build(Spec::Al(spec_al), arch, config)
             .err()
             .ok_or_else(|| failure(&case.name, "simulator accepted negative architecture"))?;
         return Ok(vec![*report]);

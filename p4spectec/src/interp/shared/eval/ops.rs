@@ -143,7 +143,14 @@ pub(crate) fn sub(
         ctx.find_func_typ(&id).ok()
     };
     backtrack::from_result(
-        ops::value::check(arena, &find_typdef_opt, &find_func, subcheck, &value),
+        ops::value::check(
+            arena,
+            ctx.typdefs_extern(),
+            &find_typdef_opt,
+            &find_func,
+            subcheck,
+            &value,
+        ),
         span,
     )
 }

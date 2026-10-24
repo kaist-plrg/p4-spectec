@@ -1,0 +1,40 @@
+;; Host operations of the extern test suite
+
+extern syntax state
+
+;; A value of the definition the host reads, from a key and a note
+extern dec $make_state(text, text) : state
+
+;; A value of another definition with the same name and payload type
+extern dec $make_rogue_state(text, text) : state
+
+;; The note of a value of the definition the host reads
+extern dec $note_state(state) : text
+
+;; Calls of $note_state so far
+extern dec $calls_note : nat
+
+;; Values held by the host, through a definition with a codec
+extern syntax holder
+
+extern dec $hold<X>(X*) : holder
+
+var n : nat
+
+;; The argument, returned as is
+extern dec $keep<X>(X) : X
+
+;; The argument, with every state value made by the other definition
+extern dec $poison<X>(X) : X
+
+;; The output of S for a value of the other definition
+extern dec $reenter(text, text) : nat
+
+relation S: state |- nat
+  hint(input %0)
+rule S: state |- 0
+
+;; Shapes that hold state values
+syntax alias = state
+syntax box = {KEY text, STATE state}
+syntax wrap = WRAP state | EMPTY

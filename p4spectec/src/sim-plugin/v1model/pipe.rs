@@ -20,13 +20,13 @@ use crate::lang::{
     common::source::Span,
     data::{
         arena::Arena,
-        encoding::Encoding,
         typ,
         value::{
             ValueError,
+            extern_value::{TypDef, TypDefId},
             flat::{
                 self as value, Value,
-                external::{DecodeContext, EncodeContext, decode_with, encode_with},
+                external::{DecodeContext, EncodeContext},
             },
         },
     },
@@ -57,31 +57,35 @@ use super::{
 
 // == Configuration
 
-/// The v1model architecture, parameterized by its state encoding.
+/// The v1model architecture, with its definitions of the state types.
 pub struct V1Model {
-    /// Encoding of architecture and object states as external values.
-    encoding: Encoding,
-}
-
-impl Default for V1Model {
-    fn default() -> Self {
-        Self::new(Encoding::default())
-    }
+    /// Definition of `archState`.
+    typdef_arch: TypDef<Arch>,
+    /// Definition of `objectState`; stateless objects carry `None`.
+    typdef_object: TypDef<Option<ObjectState>>,
 }
 
 impl V1Model {
-    /// Creates the architecture with the given state encoding.
-    pub fn new(encoding: Encoding) -> Self {
-        Self { encoding }
+    /// Defines the architecture's extern syntax types in `arena`.
+    pub fn new(arena: &mut Arena) -> Result<Self, ValueError> {
+        Ok(Self {
+            typdef_arch: TypDef::with_codec(arena, "archState")?,
+            typdef_object: TypDef::with_codec(arena, "objectState")?,
+        })
+    }
+
+    /// The definitions of `archState` and `objectState`.
+    pub(super) fn typdefs(&self) -> Vec<TypDefId> {
+        vec![self.typdef_arch.id(), self.typdef_object.id()]
     }
 }
 
 // == Extern objects
 
 /// Core and v1model-specific extern objects.
-#[derive(Clone, Debug, PartialEq, Eq, SerializeState, DeserializeState)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, SerializeState, DeserializeState)]
 #[serde(serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
-#[serde(deserialize_state = "DecodeContext<'de>")]
+#[serde(deserialize_state = "DecodeContext<'arena>", de_parameters = "'arena")]
 pub enum ObjectState {
     /// The `packet_in` of the current packet.
     PacketIn(PacketIn),
@@ -98,28 +102,29 @@ pub enum ObjectState {
 }
 
 impl ObjectState {
-    // - Encoding
+    // - Wrapping
 
-    /// Encodes the object as the specification's `objectState` external value.
-    pub fn to_value(&self, arena: &mut Arena, encoding: Encoding) -> Result<Value, ExternError> {
-        let payload = encode_with(arena, encoding, self)?;
-        let typ = typ::make::var(
-            crate::phrase!(node: "objectState".into(), span: Span::default()),
-            Vec::new(),
-        );
-        Ok(value::make::external(arena, typ.node.into(), payload.into(), Span::default())?)
+    /// Wraps the object as the specification's `objectState` value.
+    pub fn to_value(
+        self,
+        arena: &mut Arena,
+        typdef: TypDef<Option<Self>>,
+    ) -> Result<Value, ExternError> {
+        Ok(typdef.make(arena, Some(self), Span::default())?)
     }
 
-    // - Decoding
+    // - Reading
 
-    /// Decodes an object from an `objectState` external value.
+    /// Reads the object from an `objectState` value; stateless objects fail.
     pub fn from_value(
-        arena: &mut Arena,
-        encoding: Encoding,
+        arena: &Arena,
+        typdef: TypDef<Option<Self>>,
         value: &Value,
     ) -> Result<Self, ExternError> {
-        let json = value::get::external(arena, value)?.clone();
-        decode_with(arena, encoding, json.as_ref()).map_err(ExternError::from)
+        typdef
+            .get(arena, value)?
+            .clone()
+            .ok_or_else(|| error::object_state_undefined("extern object has no state").into())
     }
 }
 
@@ -163,11 +168,11 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
-    Arch::default().to_value(ctx.arena_mut(), encoding)
+    let typdef_arch = ctx.external().typdef_arch;
+    Arch::default().to_value(ctx.arena_mut(), typdef_arch)
 }
 
-/// Decodes the architecture state stored in `value_arch`.
+/// Reads the architecture state stored in `value_arch`.
 pub fn find_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_arch: Value,
@@ -176,29 +181,29 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
+    let typdef_arch = ctx.external().typdef_arch;
     let value_state = func::find_arch_state_e(ctx, value_arch)?;
-    Arch::from_value(ctx.arena_mut(), encoding, &value_state)
+    Arch::from_value(ctx.arena(), typdef_arch, &value_state)
 }
 
-/// Encodes `arch` back into `value_arch`.
+/// Stores `arch` back into `value_arch`.
 pub fn update_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_arch: Value,
-    arch: &Arch,
+    arch: Arch,
 ) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
-    let value_state = arch.to_value(ctx.arena_mut(), encoding)?;
+    let typdef_arch = ctx.external().typdef_arch;
+    let value_state = arch.to_value(ctx.arena_mut(), typdef_arch)?;
     func::update_arch_state_e(ctx, value_arch, value_state).map_err(ExternError::from)
 }
 
 // == Object state
 
-/// Decodes the object named `value_id` from `value_arch`.
+/// Reads the object named `value_id` from `value_arch`.
 pub fn find_object_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_arch: Value,
@@ -208,9 +213,9 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
+    let typdef_object = ctx.external().typdef_object;
     let value_object = func::find_object_state_e(ctx, value_arch, value_id)?;
-    ObjectState::from_value(ctx.arena_mut(), encoding, &value_object)
+    ObjectState::from_value(ctx.arena(), typdef_object, &value_object)
 }
 
 /// The `packet_in` object of the current packet.
@@ -277,7 +282,7 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
+    let typdef_object = ctx.external().typdef_object;
     let (value_name, value_targs, value_ids, value_args) = value::get::four(values)?;
     let name = value::get::text(ctx.arena(), value_name)?.to_owned();
     let object = match name.as_str() {
@@ -306,21 +311,9 @@ where
         _ => None,
     };
     Ok(match object {
-        Some(object) => object.to_value(ctx.arena_mut(), encoding)?,
-        // No state: encode the unit value
-        None => {
-            let payload = encode_with(ctx.arena(), encoding, &())?;
-            let typ = typ::make::var(
-                crate::phrase!(node: "objectState".into(), span: Span::default()),
-                Vec::new(),
-            );
-            value::make::external(
-                ctx.arena_mut(),
-                typ.node.into(),
-                payload.into(),
-                Span::default(),
-            )?
-        }
+        Some(object) => object.to_value(ctx.arena_mut(), typdef_object)?,
+        // No state: wrap the absent payload
+        None => typdef_object.make(ctx.arena_mut(), None, Span::default())?,
     })
 }
 
@@ -396,7 +389,7 @@ where
 
 /// Dispatches an extern method call on the object named `value_id`.
 ///
-/// The object is decoded, updated by its method, and written back;
+/// The object is read, updated by its method, and written back;
 /// `values` holds the context, state, object id, method name,
 /// and parameter names.
 pub(super) fn eval_extern_method_call<Interp, Iface>(
@@ -407,7 +400,7 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
+    let typdef_object = ctx.external().typdef_object;
     // Context, state, object id, method name, parameter names
     let [value_ctx, value_arch, value_id, value_name, value_names] = values else {
         return Err(error::extern_argument_arity_mismatch(
@@ -503,7 +496,7 @@ where
             }
         };
     // Write the updated object back
-    let value_object = object.to_value(ctx.arena_mut(), encoding)?;
+    let value_object = object.to_value(ctx.arena_mut(), typdef_object)?;
     let value_arch = func::update_object_state_e(ctx, value_arch, *value_id, value_object)?;
     Ok(vec![value_ctx, value_arch, value_call_result])
 }
@@ -523,7 +516,7 @@ where
 {
     let mut arch = find_arch_state(ctx, value_arch)?;
     arch.mirrortable.insert(session, port);
-    update_arch_state(ctx, value_arch, &arch)
+    update_arch_state(ctx, value_arch, arch)
 }
 
 /// Multicast mirror sessions are not supported.
@@ -558,7 +551,7 @@ where
 {
     let mut arch = find_arch_state(ctx, value_arch)?;
     arch.multicast.group_create(group);
-    update_arch_state(ctx, value_arch, &arch)
+    update_arch_state(ctx, value_arch, arch)
 }
 
 /// Creates a multicast node with replication id `instance` on `ports`.
@@ -574,7 +567,7 @@ where
 {
     let mut arch = find_arch_state(ctx, value_arch)?;
     arch.multicast.node_create(instance, ports);
-    update_arch_state(ctx, value_arch, &arch)
+    update_arch_state(ctx, value_arch, arch)
 }
 
 /// Adds node `handle` to multicast group `group`.
@@ -590,7 +583,7 @@ where
 {
     let mut arch = find_arch_state(ctx, value_arch)?;
     arch.multicast.node_associate(group, handle);
-    update_arch_state(ctx, value_arch, &arch)
+    update_arch_state(ctx, value_arch, arch)
 }
 
 // == Register interface
@@ -673,9 +666,9 @@ where
         ));
         let value_id =
             value::make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
-        let encoding = ctx.external().encoding;
+        let typdef_object = ctx.external().typdef_object;
         let value_object =
-            ObjectState::PacketIn(packet.packet_in).to_value(ctx.arena_mut(), encoding)?;
+            ObjectState::PacketIn(packet.packet_in).to_value(ctx.arena_mut(), typdef_object)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
     }?;
     state.value_ctx = packet.value_ctx;
@@ -704,8 +697,8 @@ where
         ));
         let value_id =
             value::make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
-        let encoding = ctx.external().encoding;
-        let value_object = ObjectState::PacketIn(pkt).to_value(ctx.arena_mut(), encoding)?;
+        let typdef_object = ctx.external().typdef_object;
+        let value_object = ObjectState::PacketIn(pkt).to_value(ctx.arena_mut(), typdef_object)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
     }?;
     Ok(())
@@ -731,9 +724,9 @@ where
         ));
         let value_id =
             value::make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
-        let encoding = ctx.external().encoding;
-        let value_object =
-            ObjectState::PacketOut(PacketOut::default()).to_value(ctx.arena_mut(), encoding)?;
+        let typdef_object = ctx.external().typdef_object;
+        let value_object = ObjectState::PacketOut(PacketOut::default())
+            .to_value(ctx.arena_mut(), typdef_object)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
     }?;
     Ok(())
@@ -810,15 +803,15 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
+    let typdef_object = ctx.external().typdef_object;
     // Setup packet input, output and global variables in source order
-    let value_packet =
-        ObjectState::PacketIn(PacketIn::init(&rx.packet)?).to_value(ctx.arena_mut(), encoding)?;
+    let value_packet = ObjectState::PacketIn(PacketIn::init(&rx.packet)?)
+        .to_value(ctx.arena_mut(), typdef_object)?;
     let (value_ctx, value_arch) =
         rel::v1model_init_packet_in(ctx, state.value_ctx, state.value_arch, value_packet)?;
     (state.value_ctx, state.value_arch) = (value_ctx, value_arch);
     let value_packet =
-        ObjectState::PacketOut(PacketOut::default()).to_value(ctx.arena_mut(), encoding)?;
+        ObjectState::PacketOut(PacketOut::default()).to_value(ctx.arena_mut(), typdef_object)?;
     let (value_ctx, value_arch) =
         rel::v1model_init_packet_out(ctx, state.value_ctx, state.value_arch, value_packet)?;
     (state.value_ctx, state.value_arch) = (value_ctx, value_arch);
@@ -892,7 +885,7 @@ where
     let mut arch = find_arch_state(ctx, state.value_arch)?;
     // Forget the previous pass's requests
     arch.reset();
-    state.value_arch = update_arch_state(ctx, state.value_arch, &arch)?;
+    state.value_arch = update_arch_state(ctx, state.value_arch, arch)?;
     remove_packet_in(ctx, state)?;
     drive_p(ctx, state)?;
     drive_vr(ctx, state)
@@ -1137,7 +1130,7 @@ where
         Entrypoint::Ingress => arch.queue.push_front(packet),
         Entrypoint::Egress => arch.queue.push_back(packet),
     }
-    state.value_arch = update_arch_state(ctx, state.value_arch, &arch)?;
+    state.value_arch = update_arch_state(ctx, state.value_arch, arch)?;
     Ok(())
 }
 
@@ -1234,8 +1227,8 @@ where
         ));
         let value_id =
             value::make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
-        let encoding = ctx.external().encoding;
-        let value_object = pkt.to_value(ctx.arena_mut(), encoding)?;
+        let typdef_object = ctx.external().typdef_object;
+        let value_object = pkt.to_value(ctx.arena_mut(), typdef_object)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
     }?;
     // Parser and verify run before the ingress packet enters the queue
@@ -1400,7 +1393,7 @@ where
         };
         // Each packet starts with no pending requests
         arch.reset();
-        state.value_arch = update_arch_state(ctx, state.value_arch, &arch)?;
+        state.value_arch = update_arch_state(ctx, state.value_arch, arch)?;
         drive_packet(ctx, state, packet)?;
     }
 }

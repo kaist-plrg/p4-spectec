@@ -22,7 +22,7 @@ use crate::sim_plugin::{
     spec::{args, func, pack, unpack},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 /// A hash configured with one algorithm.
 pub struct HashExtern {
     /// The `hash` algorithm name.

@@ -2,6 +2,7 @@
 //!
 //! `sub` tests whether a value inhabits a type,
 //! unfolding definitions through a lookup closure;
+//! an extern type holds the values its registered host definition made;
 //! `check` runs a `Subcheck` that static subtyping left for runtime.
 //! Both use prepared type definitions and need a function lookup
 //! to type function values.
@@ -16,7 +17,10 @@ use crate::lang::{
     },
     data::{
         arena::Arena,
-        value::flat::{Value, ValueField, ValueKind},
+        value::{
+            extern_value::TypDefs,
+            flat::{Value, ValueField, ValueKind},
+        },
     },
     traits::eq::SyntaxEq,
 };
@@ -61,6 +65,7 @@ pub enum MatchError {
 /// Tests whether `value` inhabits `typ`.
 pub fn sub<'env, F>(
     arena: &Arena,
+    typdefs: &TypDefs,
     find_typdef_opt: &impl Fn(&Id) -> Option<&'env TypeDef>,
     find_func: &F,
     typ: &Typ,
@@ -96,8 +101,11 @@ where
                 TypeDef::Parameter | TypeDef::Defining(_) => {
                     Err(MatchError::TypeVariableUnexpected { span: typ.span })
                 }
-                // Extern types hold extern values
-                TypeDef::Extern => Ok(matches!(arena.value.kind(value.node), ValueKind::Extern(_))),
+                // Extern types hold values made by the registered definition
+                TypeDef::Extern => Ok(match arena.value.kind(value.node) {
+                    ValueKind::Extern(value_extern) => typdefs.admits(&id.node, value_extern),
+                    _ => false,
+                }),
                 // A defined type: instantiate, then match the body
                 TypeDef::Defined(tparams, def_typ) => {
                     // Type arguments must match the parameters
@@ -112,7 +120,7 @@ where
                         // An alias: test against the aliased type
                         (DefTypKind::Plain(typ), _) => {
                             let typ = subst_typ(&|id| theta.get(id), typ)?;
-                            sub(arena, find_typdef_opt, find_func, &typ, value)
+                            sub(arena, typdefs, find_typdef_opt, find_func, &typ, value)
                         }
                         // A struct: same fields, each in its field type
                         (DefTypKind::Struct(typ_fields), ValueKind::Struct(value_fields)) => {
@@ -128,7 +136,7 @@ where
                                     return Ok(false);
                                 }
                                 let typ = subst_typ(&|id| theta.get(id), typ)?;
-                                if !sub(arena, find_typdef_opt, find_func, &typ, value)? {
+                                if !sub(arena, typdefs, find_typdef_opt, find_func, &typ, value)? {
                                     return Ok(false);
                                 }
                             }
@@ -149,6 +157,7 @@ where
                                 let values = value_case.args();
                                 if subs_inner(
                                     arena,
+                                    typdefs,
                                     find_typdef_opt,
                                     find_func,
                                     typs.iter(),
@@ -168,7 +177,7 @@ where
         // Tuples: componentwise
         TypKind::Tuple(typs) => match arena.value.kind(value.node) {
             ValueKind::Tuple(values) => {
-                subs_inner(arena, find_typdef_opt, find_func, typs.iter(), values.iter())
+                subs_inner(arena, typdefs, find_typdef_opt, find_func, typs.iter(), values.iter())
             }
             // Not a tuple
             _ => Ok(false),
@@ -176,7 +185,9 @@ where
         // Options: absent, or present with the element type
         TypKind::Iter(typ_inner, Iter::Opt) => match arena.value.kind(value.node) {
             // A present option checks its payload
-            ValueKind::Opt(Some(value)) => sub(arena, find_typdef_opt, find_func, typ_inner, value),
+            ValueKind::Opt(Some(value)) => {
+                sub(arena, typdefs, find_typdef_opt, find_func, typ_inner, value)
+            }
             // An absent option has no payload to check
             ValueKind::Opt(None) => Ok(true),
             // Other value kinds are not options
@@ -186,7 +197,7 @@ where
         TypKind::Iter(typ_inner, Iter::List) => match arena.value.kind(value.node) {
             ValueKind::List(values) => {
                 for value in values {
-                    if !sub(arena, find_typdef_opt, find_func, typ_inner, value)? {
+                    if !sub(arena, typdefs, find_typdef_opt, find_func, typ_inner, value)? {
                         return Ok(false);
                     }
                 }
@@ -214,6 +225,7 @@ where
 /// Tests values against types pairwise.
 pub fn subs<'env, F>(
     arena: &Arena,
+    typdefs: &TypDefs,
     find_typdef_opt: &impl Fn(&Id) -> Option<&'env TypeDef>,
     find_func: &F,
     typs: &[Typ],
@@ -222,12 +234,13 @@ pub fn subs<'env, F>(
 where
     F: Fn(&str) -> Option<FuncTyp>,
 {
-    subs_inner(arena, find_typdef_opt, find_func, typs.iter(), values.iter())
+    subs_inner(arena, typdefs, find_typdef_opt, find_func, typs.iter(), values.iter())
 }
 
 /// Pairwise membership; differing counts fail.
 fn subs_inner<'env, 'typ, 'value, F, T, V>(
     arena: &Arena,
+    typdefs: &TypDefs,
     find_typdef_opt: &impl Fn(&Id) -> Option<&'env TypeDef>,
     find_func: &F,
     typs: T,
@@ -242,7 +255,7 @@ where
         return Ok(false);
     }
     for (typ, value) in typs.zip(values) {
-        if !sub(arena, find_typdef_opt, find_func, typ, value)? {
+        if !sub(arena, typdefs, find_typdef_opt, find_func, typ, value)? {
             return Ok(false);
         }
     }
@@ -254,6 +267,7 @@ where
 /// Runs a precomputed subtype check on a value.
 pub fn check<'env, F>(
     arena: &Arena,
+    typdefs: &TypDefs,
     find_typdef_opt: &impl Fn(&Id) -> Option<&'env TypeDef>,
     find_func: &F,
     subcheck: &Subcheck,
@@ -279,7 +293,7 @@ where
                 return Ok(false);
             }
             for (subcheck, value) in subchecks.iter().zip(values) {
-                if !check(arena, find_typdef_opt, find_func, subcheck, value)? {
+                if !check(arena, typdefs, find_typdef_opt, find_func, subcheck, value)? {
                     return Ok(false);
                 }
             }
@@ -289,19 +303,19 @@ where
         (Subcheck::Iter(Iter::Opt, _), ValueKind::Opt(None)) => Ok(true),
         // A present option checks its element
         (Subcheck::Iter(Iter::Opt, subcheck), ValueKind::Opt(Some(value))) => {
-            check(arena, find_typdef_opt, find_func, subcheck, value)
+            check(arena, typdefs, find_typdef_opt, find_func, subcheck, value)
         }
         // Every element
         (Subcheck::Iter(Iter::List, subcheck), ValueKind::List(values)) => {
             for value in values {
-                if !check(arena, find_typdef_opt, find_func, subcheck, value)? {
+                if !check(arena, typdefs, find_typdef_opt, find_func, subcheck, value)? {
                     return Ok(false);
                 }
             }
             Ok(true)
         }
         // Full membership test
-        (Subcheck::Recurse(typ), _) => sub(arena, find_typdef_opt, find_func, typ, value),
+        (Subcheck::Recurse(typ), _) => sub(arena, typdefs, find_typdef_opt, find_func, typ, value),
         // Check and value shapes disagree
         _ => Ok(false),
     }

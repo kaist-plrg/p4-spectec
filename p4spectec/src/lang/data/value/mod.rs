@@ -7,8 +7,10 @@
 //! `tree::ValueCase` owns its filled notation.
 //! `flat::make` allocates values of each kind with their type,
 //! `flat::get` projects a kind back out or fails with `ValueError`.
+//! `extern_value` wraps host payloads of extern syntax types.
 
 mod error;
+pub mod extern_value;
 pub mod flat;
 pub mod tree;
 

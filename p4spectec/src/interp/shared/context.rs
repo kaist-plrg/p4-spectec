@@ -13,7 +13,10 @@ use crate::lang::{
     data::{
         arena::Arena,
         typ,
-        value::flat::{self as value, Value},
+        value::{
+            extern_value::TypDefs,
+            flat::{self as value, Value},
+        },
         var::{SlotIdx, VarSlot},
     },
 };
@@ -65,6 +68,8 @@ pub trait ReadContext {
     fn find_typdef_local_opt(&self, id: &ast::Id) -> Option<&TypeDef>;
     /// Finds the parameters and body of a defined type or reports an error.
     fn find_defined_typdef(&self, id: &ast::Id) -> Result<(&[ast::TParam], &ast::DefTyp), Error>;
+    /// The host definitions that values of extern syntax types must come from.
+    fn typdefs_extern(&self) -> &TypDefs;
 
     // == Functions
 
@@ -158,6 +163,8 @@ pub enum Scope {
 #[derive(Debug)]
 pub struct Global<R, F> {
     tdenv: TDEnv,
+    /// Host definitions that values of extern syntax types must come from.
+    typdefs_extern: TypDefs,
     renv: IdMap<Callable<R>>,
     fenv: IdMap<Rc<Callable<F>>>,
 }
@@ -166,8 +173,15 @@ impl<R, F> Global<R, F> {
     // == Constructors
 
     /// Creates empty environments for a stage-specific loader.
-    pub(crate) fn new() -> Self {
-        Self { tdenv: TDEnv::new(), renv: IdMap::new(), fenv: IdMap::new() }
+    pub(crate) fn new(typdefs_extern: TypDefs) -> Self {
+        Self { tdenv: TDEnv::new(), typdefs_extern, renv: IdMap::new(), fenv: IdMap::new() }
+    }
+
+    // == Accessors
+
+    /// The host definitions that values of extern syntax types must come from.
+    pub(crate) fn typdefs_extern(&self) -> &TypDefs {
+        &self.typdefs_extern
     }
 
     // == Inserters
@@ -377,6 +391,10 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
 
     fn find_typdef_local_opt(&self, id: &ast::Id) -> Option<&TypeDef> {
         self.local.tdenv.get(id)
+    }
+
+    fn typdefs_extern(&self) -> &TypDefs {
+        self.global.typdefs_extern()
     }
 
     fn find_typdef_opt<'a>(&'a self, id: &ast::Id) -> Option<&'a TypeDef> {

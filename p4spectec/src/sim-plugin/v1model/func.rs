@@ -531,7 +531,7 @@ where
     // The scheduler acts on the request after the control returns
     let mut arch = pipe::find_arch_state(ctx, value_arch)?;
     arch.action.resubmit_opt = Some(idx);
-    let value_arch = pipe::update_arch_state(ctx, value_arch, &arch)?;
+    let value_arch = pipe::update_arch_state(ctx, value_arch, arch)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
         crate::phrase!(node: "value".into(), span: Span::default()),
@@ -584,7 +584,7 @@ where
     // The scheduler acts on the request after the control returns
     let mut arch = pipe::find_arch_state(ctx, value_arch)?;
     arch.action.recirculate_opt = Some(idx);
-    let value_arch = pipe::update_arch_state(ctx, value_arch, &arch)?;
+    let value_arch = pipe::update_arch_state(ctx, value_arch, arch)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
         crate::phrase!(node: "value".into(), span: Span::default()),
@@ -652,7 +652,7 @@ where
     let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
     arch.action.clone_opt =
         Some(CloneInfo::new(ctx.arena_mut(), &value_type, &value_session, &value_idx)?);
-    let value_arch = pipe::update_arch_state(ctx, value_arch, &arch)?;
+    let value_arch = pipe::update_arch_state(ctx, value_arch, arch)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
         crate::phrase!(node: "value".into(), span: Span::default()),

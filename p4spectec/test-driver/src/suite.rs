@@ -136,6 +136,8 @@ pub struct Modules {
     pub adoc: PathBuf,
     pub p4parse: PathBuf,
     pub run: PathBuf,
+    #[serde(rename = "extern")]
+    pub externs: PathBuf,
     pub sim: PathBuf,
     pub diagnostics: diagnostic::Modules,
 }
@@ -356,6 +358,7 @@ impl Index {
             &mut modules.adoc,
             &mut modules.p4parse,
             &mut modules.run,
+            &mut modules.externs,
             &mut modules.sim,
         ]
         .into_iter()
@@ -376,6 +379,7 @@ impl Index {
         println!("adoc: {:#?}", load_adoc(&self.suites.adoc)?);
         println!("p4parse: {:#?}", load_parsing(&self.suites.p4parse)?);
         println!("run: {:#?}", load_execution(&self.suites.run)?);
+        println!("extern: {:#?}", load::<crate::externs::Suite>(&self.suites.externs)?);
         println!("sim: {:#?}", load_simulation(&self.suites.sim)?);
         self.suites.diagnostics.list()
     }

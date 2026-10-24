@@ -4,7 +4,7 @@
 //! the PRE and BQE schedule clones, multicast, resubmit, and recirculate.
 //! Stateful objects live in `object`, the scheduler in `pipe`.
 
-use crate::lang::data::value::flat::Value;
+use crate::lang::data::value::{extern_value::TypDefId, flat::Value};
 
 use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
 
@@ -23,6 +23,10 @@ pub use pipe::{Psa, drive_pipe, init_pipe, transform_stf_stmt};
 
 /// Hands every extern hook to the pipeline module.
 impl externs::Impl for Psa {
+    fn typdefs(&self) -> Vec<TypDefId> {
+        pipe::Psa::typdefs(self)
+    }
+
     fn eval_extern_init<Interp, Iface>(
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],

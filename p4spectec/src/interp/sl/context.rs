@@ -7,6 +7,7 @@
 use crate::lang::data::{
     notation::MixopArena,
     typ::{FuncTyp, make},
+    value::extern_value::TypDefs,
 };
 
 use crate::lang::sl::{ast as source, prepared as ast};
@@ -18,7 +19,7 @@ use crate::runtime::envs::{
 
 use crate::interp::shared::{
     context::{self as shared, FuncSignature},
-    error::Error,
+    error::{self, Error},
     prepare::Prepare,
 };
 
@@ -44,17 +45,24 @@ impl SpecEnv {
     /// Panics if a global definition is repeated.
     pub fn load(
         arena_mixop: &mut MixopArena,
+        typdefs_extern: TypDefs,
         det: bool,
         spec: source::Spec,
     ) -> Result<Self, Error> {
-        let mut loaded = Self::new();
-        let tdenv = loaded.load_typdefs(arena_mixop, &spec);
+        let mut loaded = Self::new(typdefs_extern);
+        let tdenv = loaded.load_typdefs(arena_mixop, &spec)?;
         loaded.load_callables(arena_mixop, &tdenv, det, spec);
         Ok(loaded)
     }
 
     /// Inserts prepared type definitions and returns their source forms.
-    fn load_typdefs(&mut self, arena_mixop: &mut MixopArena, spec: &source::Spec) -> TDEnv {
+    ///
+    /// Fails on an extern syntax type without a host definition.
+    fn load_typdefs(
+        &mut self,
+        arena_mixop: &mut MixopArena,
+        spec: &source::Spec,
+    ) -> Result<TDEnv, Error> {
         let mut tdenv = TDEnv::new();
         for def in spec {
             // Only types load in this pass
@@ -64,6 +72,10 @@ impl SpecEnv {
             // Keep the source body for subtype checks
             let (id, typdef_source, typdef) = match typdef {
                 ast::TypDef::Extern(typdef) => {
+                    // Values of the type are read through the host's definition
+                    if self.typdefs_extern().find(&typdef.id.node).is_none() {
+                        return Err(error::context::extern_type_undefined(&typdef.id));
+                    }
                     (typdef.id.clone(), TypeDef::Extern, TypeDef::Extern)
                 }
                 ast::TypDef::Defined(typdef) => {
@@ -79,7 +91,7 @@ impl SpecEnv {
             tdenv.insert(id.clone(), typdef_source);
             self.insert_typdef(id, typdef);
         }
-        tdenv
+        Ok(tdenv)
     }
 
     /// Prepares relations and functions against the complete type definitions.

@@ -4,6 +4,7 @@
 //! handles belong to one arena; annotation changes preserve the stored body.
 //! Bodies are interned canonically, types by exact contents, spans exactly;
 //! the default span is interned first so generated values share it.
+//! Extern values take a serial from the arena when made.
 
 use std::rc::Rc;
 
@@ -30,6 +31,8 @@ pub struct ValueArena {
     types: Interner<Rc<TypKind>>,
     /// Spans, shared by equality.
     spans: Interner<Span>,
+    /// Serial of the next extern value.
+    serial_extern_next: u32,
 }
 
 impl Default for ValueArena {
@@ -38,7 +41,7 @@ impl Default for ValueArena {
         spans
             .intern_default()
             .expect("the first span fits in an interner index");
-        Self { values: CanonInterner::new(), types: Interner::new(), spans }
+        Self { values: CanonInterner::new(), types: Interner::new(), spans, serial_extern_next: 0 }
     }
 }
 
@@ -82,6 +85,13 @@ impl ValueArena {
         span: Span,
     ) -> Result<Interned<Span>, std::num::TryFromIntError> {
         self.spans.intern(span)
+    }
+
+    /// Issues the serial that identifies one extern value exactly.
+    pub(in crate::lang::data) fn issue_extern_serial(&mut self) -> Result<u32, ValueError> {
+        let serial = self.serial_extern_next;
+        self.serial_extern_next = serial.checked_add(1).ok_or(ValueError::IndexOverflow)?;
+        Ok(serial)
     }
 
     // - Lookup

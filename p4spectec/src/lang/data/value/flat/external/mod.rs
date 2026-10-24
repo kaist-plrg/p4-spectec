@@ -7,6 +7,9 @@
 //! Independent payloads retain the owned value format without arena indices.
 //! A case body is written as its filled notation in both modes,
 //! so mixop handles never appear in a payload.
+//! An extern value is written as its type name and its payload,
+//! which its definition's codec encodes in the same mode;
+//! decoding reads it through the definition the receiving runner registered.
 
 use std::rc::Rc;
 
@@ -17,7 +20,10 @@ use crate::util::json::json;
 
 use crate::lang::{
     common::source::Span,
-    data::{arena::Arena, encoding::Encoding, intern::Interned, typ::TypKind},
+    data::{
+        arena::Arena, encoding::Encoding, intern::Interned, typ::TypKind,
+        value::extern_value::TypDefs,
+    },
 };
 
 use super::super::flat;
@@ -48,38 +54,39 @@ impl<'arena> EncodeContext<'arena> {
     }
 
     /// The arena handles are read from.
-    fn arena(&self) -> &'arena Arena {
+    pub(in crate::lang::data::value) fn arena(&self) -> &'arena Arena {
         match self {
             Self::ArenaRelative(arena) | Self::ArenaIndependent(arena) => arena,
         }
     }
 }
 
-/// The target arena and the representation of handles in JSON.
+/// The target arena, the representation of handles in JSON,
+/// and the definitions extern values are decoded through.
 ///
 /// Relative handles are read as indices,
 /// but a case body's notation is still interned into the arena's mixops.
-pub enum DecodeContext<'arena> {
-    /// Read handles as indices.
-    ArenaRelative(&'arena mut Arena),
-    /// Intern contents into this arena.
-    ArenaIndependent(&'arena mut Arena),
+pub struct DecodeContext<'arena> {
+    arena: &'arena mut Arena,
+    encoding: Encoding,
+    /// The receiving runner's definitions, issued by `arena`.
+    typdefs: &'arena TypDefs,
 }
 
 impl<'arena> DecodeContext<'arena> {
-    /// Selects the representation for this target arena.
-    pub fn new(arena: &'arena mut Arena, encoding: Encoding) -> Self {
-        match encoding {
-            Encoding::ArenaRelative => Self::ArenaRelative(arena),
-            Encoding::ArenaIndependent => Self::ArenaIndependent(arena),
-        }
+    /// Selects the representation for this target arena and its definitions.
+    pub fn new(arena: &'arena mut Arena, encoding: Encoding, typdefs: &'arena TypDefs) -> Self {
+        Self { arena, encoding, typdefs }
     }
 
     /// The arena contents are interned into.
-    fn arena_mut(&mut self) -> &mut Arena {
-        match self {
-            Self::ArenaRelative(arena) | Self::ArenaIndependent(arena) => arena,
-        }
+    pub(in crate::lang::data::value) fn arena_mut(&mut self) -> &mut Arena {
+        self.arena
+    }
+
+    /// The definitions extern values are decoded through.
+    pub(in crate::lang::data::value) fn typdefs(&self) -> &'arena TypDefs {
+        self.typdefs
     }
 }
 
@@ -165,15 +172,18 @@ impl SerializeState<EncodeContext<'_>> for Interned<Span> {
 // - Entry points
 
 /// Decodes handles or flat bodies, interning contents in independent mode.
+///
+/// Extern values are read through the definitions in `typdefs`.
 pub fn decode_with<'de, T>(
     arena: &'de mut Arena,
     encoding: Encoding,
+    typdefs: &'de TypDefs,
     json: &'de json,
 ) -> Result<T, serde_json::Error>
 where
     T: DeserializeState<'de, DecodeContext<'de>>,
 {
-    let mut ctx = DecodeContext::new(arena, encoding);
+    let mut ctx = DecodeContext::new(arena, encoding, typdefs);
     match encoding {
         // Relative payloads are shallow; a stack-growing deserializer suffices
         Encoding::ArenaRelative => {
@@ -193,10 +203,10 @@ impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<flat::ValueKind>
         ctx: &mut DecodeContext<'_>,
         deserializer: D,
     ) -> Result<Self, D::Error> {
-        match ctx {
+        match ctx.encoding {
             // Relative: trust the index; independent: intern decoded children and body
-            DecodeContext::ArenaRelative(_) => u32::deserialize(deserializer).map(Self::from_index),
-            DecodeContext::ArenaIndependent(_) => {
+            Encoding::ArenaRelative => u32::deserialize(deserializer).map(Self::from_index),
+            Encoding::ArenaIndependent => {
                 let kind = flat::ValueKind::deserialize_state(ctx, deserializer)?;
                 let arena = ctx.arena_mut();
                 arena
@@ -213,11 +223,11 @@ impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<Rc<TypKind>> {
         ctx: &mut DecodeContext<'_>,
         deserializer: D,
     ) -> Result<Self, D::Error> {
-        match ctx {
-            DecodeContext::ArenaRelative(_) => u32::deserialize(deserializer).map(Self::from_index),
-            DecodeContext::ArenaIndependent(arena) => {
+        match ctx.encoding {
+            Encoding::ArenaRelative => u32::deserialize(deserializer).map(Self::from_index),
+            Encoding::ArenaIndependent => {
                 let typ = TypKind::deserialize(deserializer)?.into();
-                arena
+                ctx.arena
                     .value
                     .intern_typ(typ)
                     .map_err(::serde::de::Error::custom)
@@ -231,11 +241,11 @@ impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<Span> {
         ctx: &mut DecodeContext<'_>,
         deserializer: D,
     ) -> Result<Self, D::Error> {
-        match ctx {
-            DecodeContext::ArenaRelative(_) => u32::deserialize(deserializer).map(Self::from_index),
-            DecodeContext::ArenaIndependent(arena) => {
+        match ctx.encoding {
+            Encoding::ArenaRelative => u32::deserialize(deserializer).map(Self::from_index),
+            Encoding::ArenaIndependent => {
                 let span = Span::deserialize(deserializer)?;
-                arena
+                ctx.arena
                     .value
                     .intern_span(span)
                     .map_err(::serde::de::Error::custom)

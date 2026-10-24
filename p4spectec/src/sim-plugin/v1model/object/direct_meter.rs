@@ -23,7 +23,7 @@ use crate::sim_plugin::{
     spec::{args, func, pack, rel, unpack},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 /// Direct meter by `MeterType`; the state is never updated.
 pub enum DirectMeter {
     /// Meters packets regardless of size.

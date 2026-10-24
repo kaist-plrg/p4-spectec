@@ -8,8 +8,6 @@ use std::rc::Rc;
 
 use serde_derive_state::{DeserializeState, SerializeState};
 
-use crate::util::json::json;
-
 use crate::lang::{
     common::{
         Id,
@@ -23,7 +21,7 @@ use crate::lang::{
     },
 };
 
-use super::ValueTag;
+use super::{ValueTag, extern_value::ExternValue};
 
 use self::external::{DecodeContext, EncodeContext};
 
@@ -70,7 +68,7 @@ pub enum ValueKind {
     Opt(#[serde(state)] Option<Value>),
     List(#[serde(state)] Vec<Value>),
     Func(Id),
-    Extern(Rc<json>),
+    Extern(#[serde(state)] ExternValue),
 }
 
 // = Structural properties

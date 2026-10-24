@@ -2,7 +2,7 @@
 //!
 //! The packet queue, mirror sessions, multicast groups,
 //! and the current packet's requested actions,
-//! stored in the specification's architecture state as an encoded value.
+//! stored in the specification's architecture state as an extern value.
 
 use std::collections::VecDeque;
 
@@ -12,11 +12,12 @@ use crate::lang::{
     common::source::Span,
     data::{
         arena::Arena,
-        encoding::Encoding,
-        typ,
-        value::flat::{
-            self as value, Value,
-            external::{DecodeContext, EncodeContext, decode_with, encode_with},
+        value::{
+            extern_value::TypDef,
+            flat::{
+                Value,
+                external::{DecodeContext, EncodeContext},
+            },
         },
     },
 };
@@ -28,9 +29,11 @@ use super::{
     packet::{Action, Packet},
 };
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, SerializeState, DeserializeState)]
+#[derive(
+    Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, SerializeState, DeserializeState,
+)]
 #[serde(deny_unknown_fields, serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
-#[serde(deserialize_state = "DecodeContext<'de>")]
+#[serde(deserialize_state = "DecodeContext<'arena>", de_parameters = "'arena")]
 /// Architectural state with an empty-state default constructor.
 pub struct Arch {
     #[serde(state)]
@@ -50,23 +53,17 @@ impl Arch {
         self.action = Action::default();
     }
 
-    /// Encodes the state as the specification's `archState` external value.
-    pub fn to_value(&self, arena: &mut Arena, encoding: Encoding) -> Result<Value, ExternError> {
-        let payload = encode_with(arena, encoding, self).map_err(ExternError::from)?;
-        let typ = typ::make::var(
-            crate::phrase!(node: "archState".into(), span: Span::default()),
-            Vec::new(),
-        );
-        Ok(value::make::external(arena, typ.node.into(), payload.into(), Span::default())?)
+    /// Wraps the state as the specification's `archState` value.
+    pub fn to_value(self, arena: &mut Arena, typdef: TypDef<Self>) -> Result<Value, ExternError> {
+        Ok(typdef.make(arena, self, Span::default())?)
     }
 
-    /// Decodes the state from an `archState` external value.
+    /// Reads the state from an `archState` value.
     pub fn from_value(
-        arena: &mut Arena,
-        encoding: Encoding,
+        arena: &Arena,
+        typdef: TypDef<Self>,
         value: &Value,
     ) -> Result<Self, ExternError> {
-        let json = value::get::external(arena, value)?.clone();
-        decode_with(arena, encoding, json.as_ref()).map_err(ExternError::from)
+        Ok(typdef.get(arena, value)?.clone())
     }
 }

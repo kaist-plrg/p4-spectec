@@ -1,0 +1,12 @@
+;; Equal arguments share cached results, so a call with an equal value
+;; returns the first result without reaching the host again
+dec $echo(state) : text
+def $echo(state) = $note_state(state)
+
+relation R: nat |- (text, text, text, nat)
+  hint(input %0)
+rule R/cache:
+  n |- ( $echo($make_state("k", "a")),
+         $echo($make_state("k", "b")),
+         $echo($make_state("j", "c")),
+         $calls_note )
