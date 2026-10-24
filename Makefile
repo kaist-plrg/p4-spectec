@@ -26,7 +26,7 @@ fmt fmt-check lint rustdoc:
 # End-to-end acceptance and explicit snapshot updates
 TEST_TARGETS := test test-expected test-elab test-algo test-structure test-prose \
   test-adoc test-p4parse test-run-al test-run-sl test-run-pl \
-  test-sim-al test-sim-sl test-sim-pl test-diagnostics \
+  test-sim-al test-sim-sl test-sim-pl test-micro test-diagnostics \
   test-promote test-diagnostics-promote
 
 .PHONY: $(TEST_TARGETS)
