@@ -59,7 +59,7 @@ use crate::{
     sim_plugin::dummy::Dummy,
 };
 
-// == Level construction
+// == Helpers
 
 /// Converts the AL of a specification into the representation selected for the runner.
 fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
@@ -68,6 +68,8 @@ fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
         ExecutionMode::Sl => structure::convert(spec_al, true).map(Spec::Sl),
     }
 }
+
+// == Level parts
 
 /// A level's interface and extern, before it becomes the base runner or a host.
 enum Parts {
@@ -105,6 +107,8 @@ impl Parts {
         })
     }
 }
+
+// == Level construction
 
 /// Prepares a meta top level whose program's builtins go to an interface.
 fn build_terminal(lang_top: Lang, options: runner::Config) -> Parts {
