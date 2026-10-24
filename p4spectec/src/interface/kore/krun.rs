@@ -20,7 +20,9 @@ use crate::lang::{
 
 use crate::runner::{Config, NullExtern, RunError, Runner, Spec};
 
-use super::{KoreInterface, ast::Pattern, parse};
+use num_bigint::BigInt;
+
+use super::{KoreInterface, ast::Pattern, check::Checker, parse};
 
 /// A definition and an initial term read for a run.
 pub struct Krun {
@@ -114,8 +116,9 @@ pub enum Outcome {
 }
 
 impl Krun {
-    /// A `runres` with its configuration in KORE.
-    pub fn outcome(&mut self, result: &Value) -> Result<Outcome, String> {
+    /// A `runres`: whether it is `FINAL` (or `ERROR`), the steps, and the
+    /// configuration; none for `INITFAIL`.
+    fn runres(&mut self, result: &Value) -> Result<Option<(bool, u64, Value)>, String> {
         let arena = &mut self.arena;
         let selected = value::get::matches_string! { arena, result,
             "FINAL nat term" => |values| Some((true, values.to_vec())),
@@ -123,15 +126,95 @@ impl Krun {
             _ => None,
         };
         let Some((is_final, values)) = selected else {
-            return Ok(Outcome::InitFail);
+            return Ok(None);
         };
         let [steps, term] = values[..] else {
             return Err("a runres has two arguments".to_owned());
         };
         let steps = value::get::num(&self.arena, &steps).map_err(|error| error.to_string())?;
-        let steps = num::to_int(steps).to_string();
+        let steps = u64::try_from(num::to_int(steps)).map_err(|error| error.to_string())?;
+        Ok(Some((is_final, steps, term)))
+    }
+
+    /// A `runres` with its configuration in KORE.
+    pub fn outcome(&mut self, result: &Value) -> Result<Outcome, String> {
+        let Some((is_final, steps, term)) = self.runres(result)? else {
+            return Ok(Outcome::InitFail);
+        };
         let kore = self.runner.interface.kore_of_term(&self.arena, &term)?;
+        let steps = steps.to_string();
         Ok(if is_final { Outcome::Final(steps, kore) } else { Outcome::Error(steps, kore) })
+    }
+
+    /// Runs step by step, checking each step against K (`check`): the
+    /// specification's `Run` is taken one step at a time, from the initial
+    /// configuration `Krun` gives with no step. The outcome, and the check's
+    /// report and verdict.
+    pub fn run_checked(
+        &mut self,
+        kompiled: &Path,
+        depth: Option<u64>,
+    ) -> Result<(Outcome, String, bool), String> {
+        let eval_error = |error: RunError| error.to_string();
+        let run = |krun: &mut Self, name: &str, inputs: &[Value]| {
+            krun.runner
+                .eval_rel(&mut krun.arena, name, inputs)
+                .result
+                .map_err(|error| eval_error(RunError::Eval(error)))
+        };
+        let [value_kdefinition, value_term, _] = self.inputs;
+        let [value_definition] = run(self, "Load", &[value_kdefinition])?[..] else {
+            return Err("Load has one output".to_owned());
+        };
+        let value_none = depth_value(&mut self.arena, Some(0)).map_err(|e| e.to_string())?;
+        let [result] = run(self, "Krun", &[value_kdefinition, value_term, value_none])?[..] else {
+            return Err("Krun has one output".to_owned());
+        };
+        let Some((_, _, mut term)) = self.runres(&result)? else {
+            let checker = Checker::new(kompiled);
+            let (report, ok) = checker.finish(false)?;
+            return Ok((Outcome::InitFail, report, ok));
+        };
+        let value_zero = value::make::nat(
+            &mut self.arena,
+            Natural::try_from(BigInt::from(0)).expect("natural"),
+            Span::default(),
+        )
+        .map_err(|e| e.to_string())?;
+        let value_one = depth_value(&mut self.arena, Some(1)).map_err(|e| e.to_string())?;
+        let mut checker = Checker::new(kompiled);
+        let mut steps = 0;
+        let (is_final, ended) = loop {
+            let pattern = self.runner.interface.kore_of_term(&self.arena, &term)?;
+            let text = self.runner.interface.normal_text(&pattern)?;
+            let interface = &self.runner.interface;
+            checker.step(pattern, text, |pattern| {
+                interface.normal_text(pattern).unwrap_or_default()
+            })?;
+            if depth == Some(steps) {
+                break (true, false);
+            }
+            let [result] = run(self, "Run", &[value_definition, term, value_zero, value_one])?[..]
+            else {
+                return Err("Run has one output".to_owned());
+            };
+            match self.runres(&result)? {
+                Some((true, 1, next)) => {
+                    term = next;
+                    steps += 1;
+                }
+                Some((true, _, _)) => break (true, true),
+                _ => break (false, false),
+            }
+        };
+        let (report, ok) = checker.finish(ended)?;
+        let pattern = self.runner.interface.kore_of_term(&self.arena, &term)?;
+        let outcome = if is_final {
+            Outcome::Final(steps.to_string(), pattern)
+        } else {
+            Outcome::Error(steps.to_string(), pattern)
+        };
+        Ok((outcome, report, ok))
     }
 }
 

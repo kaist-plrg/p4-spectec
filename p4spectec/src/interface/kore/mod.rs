@@ -45,6 +45,7 @@ use self::{
 pub mod ast;
 pub mod binary;
 pub mod builtins;
+pub mod check;
 pub mod info;
 pub mod krun;
 pub mod llvm;

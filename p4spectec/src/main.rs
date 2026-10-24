@@ -307,6 +307,12 @@ struct KrunArgs {
     /// Compare the final configuration with krun's, up to a normal form.
     #[arg(long, value_name = "KORE")]
     expect: Option<PathBuf>,
+    /// Check each step against the search binary of this kompiled directory.
+    #[arg(long = "check-steps", value_name = "KOMPILED", conflicts_with = "expect")]
+    check_steps: Option<PathBuf>,
+    /// Write the final configuration to this file instead of the output.
+    #[arg(long, value_name = "FILE")]
+    output: Option<PathBuf>,
     /// Disable interpreter call caching.
     #[arg(long)]
     no_cache: bool,
@@ -339,11 +345,20 @@ fn krun_command(args: KrunArgs) -> Result<(), ()> {
     println!("read {} axioms ({:.2}s)", krun.axioms, krun.secs_load);
 
     let time = std::time::Instant::now();
-    let result = krun
-        .run()
-        .map_err(|error| render_error(&mut renderer, error))?;
+    let (outcome, report) = match &args.check_steps {
+        Some(kompiled) => match krun.run_checked(kompiled, args.depth) {
+            Ok((outcome, report, _)) => (Ok(outcome), Some(report)),
+            Err(message) => (Err(message), None),
+        },
+        None => {
+            let result = krun
+                .run()
+                .map_err(|error| render_error(&mut renderer, error))?;
+            (krun.outcome(&result), None)
+        }
+    };
     println!("ran ({:.2}s)", time.elapsed().as_secs_f64());
-    let (status, steps, pattern) = match krun.outcome(&result) {
+    let (status, steps, pattern) = match outcome {
         Ok(Outcome::Final(steps, pattern)) => ("final", steps, pattern),
         Ok(Outcome::Error(steps, pattern)) => ("ERROR", steps, pattern),
         Ok(Outcome::InitFail) => {
@@ -351,12 +366,23 @@ fn krun_command(args: KrunArgs) -> Result<(), ()> {
             return Ok(());
         }
         Err(message) => {
-            eprintln!("cannot write the result as KORE: {message}");
-            println!("{}", Print::to_string(&result.view(&krun.arena)));
+            eprintln!("runtime error: {message}");
             return Err(());
         }
     };
-    println!("{status} after {steps} steps\n{pattern}");
+    println!("{status} after {steps} steps");
+    match &args.output {
+        Some(path) => {
+            if let Err(error) = std::fs::write(path, format!("{pattern}\n")) {
+                eprintln!("{}: {error}", path.display());
+                return Err(());
+            }
+        }
+        None => println!("{pattern}"),
+    }
+    if let Some(report) = report {
+        println!("{report}");
+    }
     if let Some(path) = &args.expect {
         match krun.normal_texts(&pattern, path) {
             Ok((spec, expected)) if spec == expected => println!("matches {}", path.display()),
