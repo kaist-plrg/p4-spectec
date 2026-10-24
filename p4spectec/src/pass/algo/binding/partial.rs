@@ -100,6 +100,32 @@ impl RenameEnv {
     fn append(&mut self, mut other: Self) {
         self.renames.append(&mut other.renames);
     }
+
+    /// Lists bound sub-expressions with the iterations their checks read them under.
+    ///
+    /// In `-- let (z, y) = e`, an already bound `y` is read by `-- if int = y`.
+    pub fn bound_reads<'a>(
+        &'a self,
+        iter_ctx_prem: &'a ICtx,
+    ) -> impl Iterator<Item = (ICtx, &'a ast::Exp)> + 'a {
+        self.renames
+            .iter()
+            .filter_map(move |rename| match &rename.source {
+                Source::Bound { exp_from } => {
+                    Some((rename.iter_ctx_within(iter_ctx_prem), exp_from))
+                }
+                Source::BindMatch { .. } | Source::BindSub { .. } => None,
+            })
+    }
+}
+
+impl Rename {
+    /// Places the rename's own iterations inside the premise's.
+    fn iter_ctx_within(&self, iter_ctx_prem: &ICtx) -> ICtx {
+        let mut iterations = self.iter_ctx.as_slice().to_vec();
+        iterations.extend(iter_ctx_prem.as_slice().iter().cloned());
+        ICtx::from_iterations(iterations)
+    }
 }
 
 // == Premise generation
@@ -319,10 +345,7 @@ fn gen_prem_bind_sub(
 
 /// Builds the premises of one rename under the enclosing iterations.
 fn gen_prem(iter_ctx_prem: &ICtx, rename: &Rename) -> Vec<AnalyzedPrem> {
-    // The rename's own iterations sit inside the premise's
-    let mut iterations = rename.iter_ctx.as_slice().to_vec();
-    iterations.extend(iter_ctx_prem.as_slice().iter().cloned());
-    let iter_ctx = ICtx::from_iterations(iterations);
+    let iter_ctx = rename.iter_ctx_within(iter_ctx_prem);
     match &rename.source {
         Source::Bound { exp_from } => {
             let prem_analyzed = gen_prem_bound(&iter_ctx, &rename.destination, exp_from);
