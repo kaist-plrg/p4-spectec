@@ -68,7 +68,7 @@ use super::super::{AlgoError, error, otherwise};
 use super::{
     antiunify,
     bind::BEnv,
-    collect,
+    bound, collect,
     context::Context,
     dimension,
     iteration::{ICtx, Iteration},
@@ -176,21 +176,6 @@ impl AnalyzedPrem {
     }
 }
 
-/// Checks the bound reads of a partialbind rewrite, then builds its premises.
-///
-/// After `-- (if y = x + 1)*` binds `y` at `nat*`,
-/// `-- if (z, y) = e` reads `y` at `nat` through `-- if int = y` and is rejected.
-fn gen_prems_partial(
-    ctx: &Context,
-    iter_ctx: &ICtx,
-    renv: &partial::RenameEnv,
-) -> Result<Vec<partial::AnalyzedPrem>, AlgoError> {
-    for (iter_ctx_read, exp_from) in renv.bound_reads(iter_ctx) {
-        analyze_exp_as_bound(ctx, &iter_ctx_read, exp_from)?;
-    }
-    Ok(partial::gen_prems(iter_ctx, renv))
-}
-
 /// Orders partialbind premises before multibind checks.
 fn generated_prems(
     prems_partial: Vec<partial::AnalyzedPrem>,
@@ -235,25 +220,8 @@ fn analyze_exps_as_bind(
     let exps_al =
         partial::rename_exps(ctx, &mut renv_partial, &mut iter_ctx_exp, &venv.domain(), exps_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_partial = gen_prems_partial(ctx, iter_ctx, &renv_partial)?;
+    let prems_partial = partial::gen_prems(ctx, iter_ctx, &renv_partial)?;
     Ok((venv, exps_al, generated_prems(prems_partial, prems_multiple)))
-}
-
-/// Requires a read to cover the dimension its variable is bound at.
-///
-/// After `-- (if y = x + 1)*` binds `y` at `nat*`, a later read of `y` is rejected;
-/// a variable bound at `nat` may still be read inside an iteration.
-fn analyze_var_as_bound(iter_ctx: &ICtx, var: &ast::Var, dim_bound: &Dim) -> Result<(), AlgoError> {
-    // Lift the read through the enclosing iterations, as bindings are
-    let dim_read = iter_ctx
-        .iters()
-        .into_iter()
-        .fold(Dim::new(var.typ.clone(), var.iters.clone()), Dim::add_iter);
-    if dim_bound.sub(&dim_read) {
-        Ok(())
-    } else {
-        Err(error::binding::bound_dimension_mismatch(&var.id, dim_bound, &dim_read))
-    }
 }
 
 /// Requires an expression in bound position to bind nothing.
@@ -262,7 +230,7 @@ fn analyze_exp_as_bound(ctx: &Context, iter_ctx: &ICtx, exp: &ast::Exp) -> Resul
         let Some(dim_bound) = ctx.venv.get(&var.id) else {
             return Err(error::binding::expression_variable_unbound(&var.id));
         };
-        analyze_var_as_bound(iter_ctx, &var, dim_bound)?;
+        bound::check_read(iter_ctx, &var, dim_bound)?;
     }
     Ok(())
 }
@@ -283,7 +251,7 @@ fn analyze_relation_input_as_bound(
                 idx_input,
             ));
         };
-        analyze_var_as_bound(iter_ctx, &var, dim_bound)?;
+        bound::check_read(iter_ctx, &var, dim_bound)?;
     }
     Ok(())
 }
@@ -321,7 +289,7 @@ fn analyze_args_as_bind(
     let args_al =
         partial::rename_args(ctx, &mut renv_partial, &mut iter_ctx_arg, &venv.domain(), args_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_partial = gen_prems_partial(ctx, &ICtx::new(), &renv_partial)?;
+    let prems_partial = partial::gen_prems(ctx, &ICtx::new(), &renv_partial)?;
     Ok((venv, args_al, generated_prems(prems_partial, prems_multiple)))
 }
 
@@ -360,7 +328,7 @@ fn analyze_args_as_bind_shallow(
     let args_al =
         partial::rename_args(ctx, &mut renv_partial, &mut iter_ctx_arg, &venv.domain(), args_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_al = gen_prems_partial(ctx, &ICtx::new(), &renv_partial)?
+    let prems_al = partial::gen_prems(ctx, &ICtx::new(), &renv_partial)?
         .into_iter()
         .map(partial::AnalyzedPrem::into_prem)
         .collect();
@@ -611,7 +579,7 @@ fn lower_let_prem(
     let exp_l_al =
         partial::rename_exp(ctx, &mut renv_partial, &mut iter_ctx_exp, &venv.domain(), exp_l_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_partial = gen_prems_partial(ctx, &iter_ctx, &renv_partial)?;
+    let prems_partial = partial::gen_prems(ctx, &iter_ctx, &renv_partial)?;
     let prems_analyzed = generated_prems(prems_partial, prems_multiple);
 
     let prem_al = phrase! {
