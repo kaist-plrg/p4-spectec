@@ -72,7 +72,7 @@ fn kvar<'p>(info: &Info, pattern: &'p Pattern) -> Option<(&'p Sort, &'p str)> {
 }
 
 /// The variable a binder binds, its first argument `\dv{S}("x")`.
-fn bound<'p>(pattern: &'p Pattern) -> Option<(&'p Sort, &'p str)> {
+fn bound(pattern: &Pattern) -> Option<(&Sort, &str)> {
     match pattern {
         Pattern::App(dv, sorts, args) if dv == "\\dv" => {
             match (sorts.as_slice(), args.as_slice()) {
