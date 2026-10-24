@@ -109,14 +109,51 @@ pub struct RunSuite {
     pub languages: Vec<Language>,
 }
 
-/// Registers a metacircular corpus run through one tower.
-///
-/// The tower's top level decides the entry relation
-/// and whether inputs are P4 programs or AL scripts.
-/// P4 suites compare against an `expected` file of per-program results;
-/// AL suites give every script under `root` one `outcome`.
+/// Selects how IL is converted to AL at the base of a metacircular tower.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, clap::ValueEnum)]
+pub enum Conversion {
+    /// The native `algo` pass converts the base specification and AL inputs.
+    #[default]
+    Native,
+    /// The base level converts its IL input with the meta specification's `Algo_IL`.
+    Meta,
+}
+
+/// Names a value for each conversion; a missing value skips that conversion.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct ByConversion<T> {
+    pub native: Option<T>,
+    pub meta: Option<T>,
+}
+
+impl<T> ByConversion<T> {
+    fn take(self, conversion: Conversion) -> Option<T> {
+        match conversion {
+            Conversion::Native => self.native,
+            Conversion::Meta => self.meta,
+        }
+    }
+}
+
+/// Registers a metacircular corpus run through one tower per conversion.
+///
+/// The selected tower's top level decides the entry relation
+/// and whether inputs are P4 programs or AL or IL scripts.
+/// P4 suites compare against an `expected` file of per-program results;
+/// script suites give every script under `root` one `outcome`.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct MetacircSuiteJson {
+    name: String,
+    towers: ByConversion<PathBuf>,
+    root: PathBuf,
+    expected: Option<PathBuf>,
+    outcome: Option<diagnostic::Outcome>,
+}
+
+/// A metacircular suite with the tower of the selected conversion.
+#[derive(Debug)]
 pub struct MetacircSuite {
     pub name: String,
     pub tower: PathBuf,
@@ -170,6 +207,15 @@ pub struct MetacircSnapshots {
 /// Supplies metacircular corpus inputs, towers, expectations, and snapshots.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
+struct MetacircConfigJson {
+    includes: Vec<PathBuf>,
+    excludes: ByConversion<Vec<PathBuf>>,
+    snapshots: MetacircSnapshots,
+    suites: Vec<MetacircSuiteJson>,
+}
+
+/// Metacircular registrations for the selected conversion.
+#[derive(Debug)]
 pub struct MetacircConfig {
     pub includes: Vec<PathBuf>,
     pub excludes: Vec<PathBuf>,
@@ -473,26 +519,35 @@ pub fn load_execution(path: &Path) -> Result<RunConfig> {
     Ok(config)
 }
 
-/// Loads metacircular registrations with towers resolved against this file.
-pub fn load_metacirc(path: &Path) -> Result<MetacircConfig> {
-    let mut config: MetacircConfig = load(path)?;
+/// Loads metacircular registrations for one conversion,
+/// with towers resolved against this file.
+///
+/// Suites without a tower for the conversion are left out.
+pub fn load_metacirc(path: &Path, conversion: Conversion) -> Result<MetacircConfig> {
+    let config: MetacircConfigJson = load(path)?;
+    let excludes = config.excludes.take(conversion).unwrap_or_default();
     // Check include directories and exclusion lists before individual suites
     directories_exist(&config.includes, "execution include directories")?;
-    for path in &config.excludes {
+    for path in &excludes {
         directories_exist(std::slice::from_ref(path), "execution exclusions")?;
     }
     names_valid(config.suites.iter().map(|suite| suite.name.as_str()))?;
     let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
     // Resolve snapshot registrations relative to this registration file
-    let snapshots = &mut config.snapshots;
+    let mut snapshots = config.snapshots;
     for path in
         [&mut snapshots.elab, &mut snapshots.algo, &mut snapshots.structure, &mut snapshots.prose]
     {
         *path = path_parent.join(&*path);
     }
-    for suite in &mut config.suites {
+    let mut suites = Vec::new();
+    for suite in config.suites {
+        let MetacircSuiteJson { name, towers, root, expected, outcome } = suite;
+        let Some(tower) = towers.take(conversion) else {
+            continue;
+        };
         // Resolve each tower relative to this registration file
-        suite.tower = path_parent.join(&suite.tower);
+        let suite = MetacircSuite { name, tower: path_parent.join(tower), root, expected, outcome };
         let config_tower = TowerConfig::from_file(&suite.tower)
             .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
         directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
@@ -508,13 +563,14 @@ pub fn load_metacirc(path: &Path) -> Result<MetacircConfig> {
             }
             (Lang::Al | Lang::Il, _, _) => {
                 return Err(Error::Invalid(format!(
-                    "{}: an AL suite needs an outcome and no expected file",
+                    "{}: a script suite needs an outcome and no expected file",
                     suite.name
                 )));
             }
         }
+        suites.push(suite);
     }
-    Ok(config)
+    Ok(MetacircConfig { includes: config.includes, excludes, snapshots, suites })
 }
 
 /// Loads simulation dependencies and explicit P4/STF corpus pairing.
@@ -608,7 +664,10 @@ impl Index {
         println!("adoc: {:#?}", load_adoc(&self.suites.adoc)?);
         println!("p4parse: {:#?}", load_parsing(&self.suites.p4parse)?);
         println!("run: {:#?}", load_execution(&self.suites.run)?);
-        println!("metacirc: {:#?}", load_metacirc(&self.suites.metacirc)?);
+        for conversion in [Conversion::Native, Conversion::Meta] {
+            let config = load_metacirc(&self.suites.metacirc, conversion)?;
+            println!("metacirc ({conversion:?}): {config:#?}");
+        }
         println!("sim: {:#?}", load_simulation(&self.suites.sim)?);
         println!("micro: {:#?}", load_micro(&self.suites.micro)?);
         self.suites.diagnostics.list()

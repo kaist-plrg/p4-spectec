@@ -137,7 +137,9 @@ are the supplied towers entered through `Eval_IL`.
 
 ```sh
 make test-metacirc-micro
+make test-metacirc-micro-meta
 make test-metacirc
+make test-metacirc-meta
 ```
 
 `test-metacirc-micro` runs the spec-language sources under
@@ -145,6 +147,12 @@ make test-metacirc
 each expected to succeed or fail as its suite in `suites/metacirc.json`
 registers. `test-metacirc` runs the `test-run-sl` corpus through the AL/P4
 tower and requires the p4c submodule. Both check determinism.
+
+The `-meta` targets run the same suites with `--algo meta`:
+each suite registers a tower per conversion, and the `meta` tower is entered
+through `Eval_IL`, so the input is converted by `Algo_IL` instead of the
+native `algo` pass. They share the expectations of the native runs;
+sources whose outcome differs are listed in the `meta` exclusions.
 The driver selects suites with `--input al` or `--input p4`,
 or one registered suite with `--suite <NAME>`, for example `--suite neg-run`.
 
