@@ -15,23 +15,25 @@ def $occurrence_varis((_ typ iter*) '->' id_name*) = $rename_vari(typ, iter*, id
 rule Bind_exps:
   AC IC |- typedExp* : AC''' typedExp''* (premAL_part* ++ premAL_eq*)
   -- Collect_exps: AC |- typedExp* : vari_bind*
-  -- Multibind_renamer: |- vari_bind* : R
+  -- Multibind_renamer: |- vari_bind* : renaming*
+  -- if R = $renamer_of(renaming*)
   -- Multibind_exps: AC R |- typedExp* : AC' R' typedExp'*
   -- Partialbind_exps:
       AC' IC |- eps typedExp'* : AC'' _ typedExp''* premAL_part*
-  -- Multibind_eqs: IC |- R' : premAL_eq*
-  -- if renaming* = R'
-  -- if vari_rename* = $concat_<vari>($occurrence_varis(renaming)*)
+  -- if `{ (_ ':' renaming')* `} = R'
+  -- Multibind_eqs: IC |- renaming'* : premAL_eq*
+  -- if vari_rename* = $concat_<vari>($occurrence_varis(renaming')*)
   -- if vari_bound* = $lift_vari(IC, vari_bind)* ++ $lift_vari(IC, vari_rename)*
   -- if AC''' = $add_bound(AC'', vari_bound*)
 
 rule Bind_args:
   AC |- arg* : AC''' arg''* (premAL_part* ++ premAL_eq*)
   -- Collect_args: AC |- arg* : vari_bind*
-  -- Multibind_renamer: |- vari_bind* : R
+  -- Multibind_renamer: |- vari_bind* : renaming*
+  -- if R = $renamer_of(renaming*)
   -- Multibind_args: AC R |- arg* : AC' R' arg'*
   -- Partialbind_args: AC' |- arg'* : AC'' arg''* premAL_part*
-  -- Multibind_eqs: eps |- R' : premAL_eq*
-  -- if renaming* = R'
-  -- if vari_rename* = $concat_<vari>($occurrence_varis(renaming)*)
+  -- if `{ (_ ':' renaming')* `} = R'
+  -- Multibind_eqs: eps |- renaming'* : premAL_eq*
+  -- if vari_rename* = $concat_<vari>($occurrence_varis(renaming')*)
   -- if AC''' = $add_bound(AC'', vari_bind* ++ vari_rename*)
