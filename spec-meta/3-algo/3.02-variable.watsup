@@ -55,10 +55,11 @@ def $typ_name(TUP _) = "tuple"
 def $typ_name(FUNC _ _ _) = "func"
 
 dec $fresh_name(algoCtx, id) : (algoCtx, id)
-  hint(prose_in "an identifier based on" %1 "unused in" %0 "and the context using it")
+  hint(prose_in "an identifier based on" %1
+                "unused in" %0 "and the context using it")
 def $fresh_name(AC, id_base) = (AC', id_fresh)
-  -- if id_fresh = $fresh_id(id_base, AC.IDS)
-  -- if AC' = $add_used_ids(AC, id_fresh)
+  -- if id_fresh = $fresh_id(id_base, AC.USED)
+  -- if AC' = $add_used(AC, id_fresh)
 
 ;; A fresh variable stands for a sub-pattern and is bound by the premise
 ;; it is created for, so it is bound in the returned context
@@ -69,7 +70,7 @@ def $fresh_vari(AC, typ) = (AC'', id_fresh typ_elem iter*)
   -- if (typ_elem, iter*) = $typ_dim(typ)
   -- if id_base = $typ_name(typ_elem)
   -- if (AC', id_fresh) = $fresh_name(AC, id_base)
-  -- if AC'' = $add_bound_ids(AC', [ id_fresh ])
+  -- if AC'' = $add_bound(AC', [ id_fresh ])
 
 ;; Free variables
 

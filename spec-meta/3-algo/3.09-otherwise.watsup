@@ -120,7 +120,7 @@ rule Exp_pure/iter:
   |- (ITER typedExp _) '#' _
   -- Exp_pure: |- typedExp
 
-;;; Update paths
+;;; Paths
 
 rule Path_pure/root:
   |- ROOT '#' _
@@ -193,7 +193,9 @@ rulegroup Otherwise_pure/rel {
     AC |- REL _ ':' _ '->' _ '=' _ eps
 
   rule Otherwise_pure/else:
-    AC |- REL _ ':' _ '->' _ '=' _ (_ ':' (_ ':' typedExp_in* '->' typedExp_out* '-' premAL*))
+    AC |- REL _ ':' _ '->' _ '=' _ elsGroupAL
+    -- if _ ':' rulAL = elsGroupAL
+    -- if _ ':' typedExp_in* '->' typedExp_out* '-' premAL* = rulAL
     -- (Exp_pure: |- typedExp_in)*
     -- (Prem_pure: AC |- premAL)*
     -- (Exp_pure: |- typedExp_out)*
@@ -215,7 +217,8 @@ rulegroup Otherwise_pure/func {
     AC |- FUNC _ _ _ ':' _ '=' _ eps
 
   rule Otherwise_pure/else:
-    AC |- FUNC _ tparam* _ ':' _ '=' _ (arg* '=' typedExp '-' premAL*)
+    AC |- FUNC _ tparam* _ ':' _ '=' _ elsClauseAL
+    -- if arg* '=' typedExp '-' premAL* = elsClauseAL
     -- if AC_func = $add_tparams(AC, tparam*)
     -- (Arg_pure: |- arg)*
     -- (Prem_pure: AC_func |- premAL)*

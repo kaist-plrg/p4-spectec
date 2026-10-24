@@ -6,13 +6,16 @@
 syntax algoCtx =
   { TYP tdenv,
     BOUND id*,
-    IDS id* }
+    USED id* }
 
 var AC : algoCtx
 
 dec $empty_algoCtx : algoCtx
   hint(prose_in "empty algo context")
-def $empty_algoCtx = { TYP $empty_map<id, typDef>, BOUND eps, IDS eps }
+def $empty_algoCtx =
+  { TYP $empty_map<id, typDef>,
+    BOUND eps,
+    USED eps }
 
 ;;; Loading context from a spec
 
@@ -31,19 +34,23 @@ def $load_algoCtx(AC, definedTypDefn :: defnIL_t*)
   -- if tdenv_update = $add_map<id, typDef>(AC.TYP, id, definedTypDefn)
   -- if AC' = AC[ .TYP = tdenv_update ]
 
-def $load_algoCtx(AC, relDefnIL :: defnIL_t*) = $load_algoCtx(AC, defnIL_t*)
-def $load_algoCtx(AC, funcDefnIL :: defnIL_t*) = $load_algoCtx(AC, defnIL_t*)
+def $load_algoCtx(AC, relDefnIL :: defnIL_t*)
+  = $load_algoCtx(AC, defnIL_t*)
+
+def $load_algoCtx(AC, funcDefnIL :: defnIL_t*)
+  = $load_algoCtx(AC, defnIL_t*)
+
 def $load_algoCtx(AC, eps) = AC
 
 ;;; Adders
 
-dec $add_bound_ids(algoCtx, id*) : algoCtx
+dec $add_bound(algoCtx, id*) : algoCtx
   hint(prose_in %0 "with identifiers" %1 "bound")
-def $add_bound_ids(AC, id*) = AC[ .BOUND = AC.BOUND ++ id* ]
+def $add_bound(AC, id*) = AC[ .BOUND = AC.BOUND ++ id* ]
 
-dec $add_used_ids(algoCtx, id*) : algoCtx
+dec $add_used(algoCtx, id*) : algoCtx
   hint(prose_in %0 "with identifiers" %1 "in use")
-def $add_used_ids(AC, id*) = AC[ .IDS = AC.IDS ++ id* ]
+def $add_used(AC, id*) = AC[ .USED = AC.USED ++ id* ]
 
 dec $add_tparams(algoCtx, tparam*) : algoCtx
   hint(prose_in %0 "with type parameters" %1)
@@ -54,25 +61,7 @@ def $add_tparams(AC, tparam*)
 
 ;;; Bound identifiers
 
-dec $is_bound_ids(algoCtx, id*) : bool
+dec $is_bound(algoCtx, id*) : bool
   hint(prose_true "identifiers" %1 "are all bound in" %0)
   hint(prose_false "some identifier in" %1 "is not bound in" %0)
-def $is_bound_ids(AC, id*) = $forall_((id <- AC.BOUND)*)
-
-;; Iteration context
-
-;; Enclosing iterations, innermost first, each with its sources and binders
-
-syntax iterCtx = iterPremAL*
-
-var IC : iterCtx
-
-;; Renamer
-
-;; A repeated binder: its first occurrence with type and dimension,
-;; followed by the identifiers already given to its occurrences
-
-syntax renaming = vari '->' id*
-syntax renamer = renaming*
-
-var R : renamer
+def $is_bound(AC, id*) = $forall_((id <- AC.BOUND)*)

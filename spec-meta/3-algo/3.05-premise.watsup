@@ -4,7 +4,8 @@
 ;; the input positions and the remaining outputs, each in source order
 
 dec $split_inputs<X>(inputHint, X*) : (X*, X*)
-  hint(prose_in "the arguments" %1 "split into inputs at positions" %0 "and outputs")
+  hint(prose_in "the arguments" %1
+                "split into inputs at positions" %0 "and outputs")
 dec $split_inputs_from<X>(inputHint, nat, X*) : (X*, X*)
   hint(prose_in "the arguments" %2 "from position" %1
                 "split into inputs at positions" %0 "and outputs")
@@ -13,12 +14,16 @@ def $split_inputs<X>(n*, X*) = $split_inputs_from<X>(n*, 0, X*)
   -- if $forall_($(n < |X*|)*)
 
 def $split_inputs_from<X>(_, _, eps) = (eps, eps)
-def $split_inputs_from<X>(n*, n_pos, X_h :: X_t*) = (X_h :: X_in*, X_out*)
+def $split_inputs_from<X>(n*, n_pos, X_h :: X_t*)
+  = (X_h :: X_in*, X_out*)
   -- if n_pos <- n*
-  -- if (X_in*, X_out*) = $split_inputs_from<X>(n*, $(n_pos + 1), X_t*)
-def $split_inputs_from<X>(n*, n_pos, X_h :: X_t*) = (X_in*, X_h :: X_out*)
+  -- if (X_in*, X_out*)
+      = $split_inputs_from<X>(n*, $(n_pos + 1), X_t*)
+def $split_inputs_from<X>(n*, n_pos, X_h :: X_t*)
+  = (X_in*, X_h :: X_out*)
   -- if ~(n_pos <- n*)
-  -- if (X_in*, X_out*) = $split_inputs_from<X>(n*, $(n_pos + 1), X_t*)
+  -- if (X_in*, X_out*)
+      = $split_inputs_from<X>(n*, $(n_pos + 1), X_t*)
 
 ;; Premises
 
@@ -40,7 +45,7 @@ rule Algo_prem/rel:
   AC IC |- REL id ':' typedExp* `( inputHint `) : AC' (premAL_rel :: premAL_bind*)
   -- if (typedExp_in*, typedExp_out*) = $split_inputs<typedExp>(inputHint, typedExp*)
   -- if id_in* = $free_ids_exps(typedExp_in*)
-  -- if $is_bound_ids(AC, id_in*)
+  -- if $is_bound(AC, id_in*)
   -- Bind_exps: AC IC |- typedExp_out* : AC' typedExp_out'* premAL_bind*
   -- if vari_in* = $free_vars_exps(typedExp_in*)
   -- if vari_read* = $shallowest_vars(vari_in*)
@@ -60,7 +65,7 @@ rulegroup Algo_prem/cond {
   rule Algo_prem/test:
     AC IC |- IF typedExp : AC ([ premAL_if ])
     -- if id* = $free_ids_exp(typedExp)
-    -- if $is_bound_ids(AC, id*)
+    -- if $is_bound(AC, id*)
     -- Iter_prem: IC |- IF typedExp : premAL_if
 
   rule Algo_prem/let-left:
@@ -96,13 +101,13 @@ rule Algo_let:
 rule Algo_prem/ifhold:
   AC IC |- IFHOLD id ':' typedExp* : AC ([ premAL_hold ])
   -- if id_read* = $free_ids_exps(typedExp*)
-  -- if $is_bound_ids(AC, id_read*)
+  -- if $is_bound(AC, id_read*)
   -- Iter_prem: IC |- IFHOLD id ':' typedExp* : premAL_hold
 
 rule Algo_prem/ifnothold:
   AC IC |- IFNOTHOLD id ':' typedExp* : AC ([ premAL_hold ])
   -- if id_read* = $free_ids_exps(typedExp*)
-  -- if $is_bound_ids(AC, id_read*)
+  -- if $is_bound(AC, id_read*)
   -- Iter_prem: IC |- IFNOTHOLD id ':' typedExp* : premAL_hold
 
 ;;; Iterations
@@ -119,7 +124,7 @@ rule Algo_prem/iter:
 rule Algo_prem/dbg:
   AC IC |- DEBUG typedExp : AC ([ premAL_debug ])
   -- if id* = $free_ids_exp(typedExp)
-  -- if $is_bound_ids(AC, id*)
+  -- if $is_bound(AC, id*)
   -- Iter_prem: IC |- DEBUG typedExp : premAL_debug
 
 ;; Premise sequences

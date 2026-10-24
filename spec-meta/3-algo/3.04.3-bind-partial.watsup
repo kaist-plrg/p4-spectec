@@ -30,7 +30,7 @@ dec $decomposes(algoCtx, typedExp) : bool
   hint(prose_false "pattern" %1 "is compared under" %0)
 def $decomposes(AC, typedExp) = true
   -- if $is_upcast_nullary_exp(typedExp)
-def $decomposes(AC, typedExp) = ~$is_bound_ids(AC, id*)
+def $decomposes(AC, typedExp) = ~$is_bound(AC, id*)
   -- if ~$is_upcast_nullary_exp(typedExp)
   -- if id* = $free_ids_exp(typedExp)
 
@@ -39,10 +39,14 @@ def $decomposes(AC, typedExp) = ~$is_bound_ids(AC, id*)
 
 dec $check_exp(typedExp, typedExp) : typedExp
   hint(prose_in "the check that" %0 "is" %1)
-def $check_exp(typedExp_d, (INJ (mixop eps)) '#' _) = (MATCH typedExp_d (INJ mixop)) '#' BOOL
-def $check_exp(typedExp_d, (OPT eps) '#' _) = (MATCH typedExp_d NONE) '#' BOOL
-def $check_exp(typedExp_d, (LIST eps) '#' _) = (MATCH typedExp_d NIL) '#' BOOL
-def $check_exp(typedExp_d, typedExp) = (CMP EQ typedExp_d typedExp) '#' BOOL
+def $check_exp(typedExp_d, (INJ (mixop eps)) '#' _)
+  = (MATCH typedExp_d (INJ mixop)) '#' BOOL
+def $check_exp(typedExp_d, (OPT eps) '#' _)
+  = (MATCH typedExp_d NONE) '#' BOOL
+def $check_exp(typedExp_d, (LIST eps) '#' _)
+  = (MATCH typedExp_d NIL) '#' BOOL
+def $check_exp(typedExp_d, typedExp)
+  = (CMP EQ typedExp_d typedExp) '#' BOOL
   -- otherwise
 
 rulegroup Partialbind_exp {
@@ -236,7 +240,7 @@ rule Bind_exps:
   -- Multibind_eqs: IC |- R' : premAL_eq*
   -- if id_bind* = $ids_of_varis(vari_bind*)
   -- if id_rename* = $all_occurrence_ids(R')
-  -- if AC''' = $add_bound_ids(AC'', id_bind* ++ id_rename*)
+  -- if AC''' = $add_bound(AC'', id_bind* ++ id_rename*)
 
 rule Bind_args:
   AC |- arg* : AC''' arg''* (premAL_part* ++ premAL_eq*)
@@ -247,4 +251,4 @@ rule Bind_args:
   -- Multibind_eqs: eps |- R' : premAL_eq*
   -- if id_bind* = $ids_of_varis(vari_bind*)
   -- if id_rename* = $all_occurrence_ids(R')
-  -- if AC''' = $add_bound_ids(AC'', id_bind* ++ id_rename*)
+  -- if AC''' = $add_bound(AC'', id_bind* ++ id_rename*)
