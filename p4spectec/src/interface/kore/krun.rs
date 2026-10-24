@@ -20,7 +20,7 @@ use crate::lang::{
 
 use crate::runner::{Config, NullExtern, RunError, Runner, Spec};
 
-use super::KoreInterface;
+use super::{KoreInterface, ast::Pattern, parse};
 
 /// A definition and an initial term read for a run.
 pub struct Krun {
@@ -106,9 +106,9 @@ fn depth_value(
 /// The outcome of `Krun`, its `runres`.
 pub enum Outcome {
     /// The configuration after the steps taken, at the end or the step limit.
-    Final(String, String),
+    Final(String, Pattern),
     /// The configuration where a step failed, after the steps taken.
-    Error(String, String),
+    Error(String, Pattern),
     /// The initial term cannot be evaluated.
     InitFail,
 }
@@ -132,5 +132,28 @@ impl Krun {
         let steps = num::to_int(steps).to_string();
         let kore = self.runner.interface.kore_of_term(&self.arena, &term)?;
         Ok(if is_final { Outcome::Final(steps, kore) } else { Outcome::Error(steps, kore) })
+    }
+}
+
+impl Krun {
+    /// A configuration and krun's, read from its output file, in normal form
+    /// (`normal`). The file may start with the step count, as the interpreter
+    /// writes it with `--statistics`.
+    pub fn normal_texts(
+        &self,
+        pattern: &Pattern,
+        path_expected: &Path,
+    ) -> Result<(String, String), String> {
+        let src = std::fs::read(path_expected)
+            .map_err(|error| format!("{}: {error}", path_expected.display()))?;
+        let src = match src.iter().position(|&byte| byte == b'\n') {
+            Some(end) if src[..end].iter().all(u8::is_ascii_digit) && end > 0 => &src[end + 1..],
+            _ => &src[..],
+        };
+        let expected = parse::parse_pattern(src).map_err(|error| {
+            format!("{}:{}: {}", path_expected.display(), error.line, error.message)
+        })?;
+        let interface = &self.runner.interface;
+        Ok((interface.normal_text(pattern)?, interface.normal_text(&expected)?))
     }
 }

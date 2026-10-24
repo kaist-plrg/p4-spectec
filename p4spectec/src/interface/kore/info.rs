@@ -2,11 +2,12 @@
 //!
 //! Sorts by their hook (`INT.Int` is `SortInt`), the constructors of
 //! collection sorts from their `element`, `concat`, and `unit` attributes,
-//! and the sorts that stand for a number (`Sort8` for MInt widths).
+//! the sorts that stand for a number (`Sort8` for MInt widths), and the
+//! symbols that bind a variable.
 //! For example, `SortMap` has the element `_|->_`,
 //! the concatenation `_Map_`, and the unit `.Map`.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::ast::{Attr, Definition, Pattern, Sentence};
 
@@ -27,6 +28,8 @@ pub struct Info {
     pub collections: HashMap<String, Constructors>,
     /// The sort standing for each number, e.g. `8` for `Sort8`.
     pub nat_sorts: HashMap<String, String>,
+    /// The symbols with the `binder` attribute, e.g. lambda.
+    binders: HashSet<String>,
 }
 
 fn string_attr<'a>(name: &str, attrs: &'a [Attr]) -> Option<&'a str> {
@@ -54,6 +57,13 @@ impl Info {
     pub fn new(definition: &Definition) -> Self {
         let mut info = Self::default();
         for sentence in definition.sentences() {
+            if let Sentence::SymbolDecl { name, attrs, .. } = sentence
+                && attrs.iter().any(
+                    |attr| matches!(attr, Pattern::App(attr_name, _, _) if attr_name == "binder"),
+                )
+            {
+                info.binders.insert(name.clone());
+            }
             let Sentence::SortDecl { name, attrs, .. } = sentence else {
                 continue;
             };
@@ -82,6 +92,16 @@ impl Info {
     /// The hook of a sort.
     pub fn sort_hook(&self, sort: &str) -> Option<&str> {
         self.sort_hooks.get(sort).map(String::as_str)
+    }
+
+    /// Whether a symbol binds its first argument.
+    pub fn is_binder(&self, symbol: &str) -> bool {
+        self.binders.contains(symbol)
+    }
+
+    /// Whether the definition has binders.
+    pub fn has_binders(&self) -> bool {
+        !self.binders.is_empty()
     }
 
     /// The one sort with a hook, e.g. `SortInt` for `INT.Int`.

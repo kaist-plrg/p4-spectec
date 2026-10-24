@@ -304,6 +304,9 @@ struct KrunArgs {
     /// Stop after this many rewrite steps.
     #[arg(long, value_name = "N")]
     depth: Option<u64>,
+    /// Compare the final configuration with krun's, up to a normal form.
+    #[arg(long, value_name = "KORE")]
+    expect: Option<PathBuf>,
     /// Disable interpreter call caching.
     #[arg(long)]
     no_cache: bool,
@@ -340,14 +343,39 @@ fn krun_command(args: KrunArgs) -> Result<(), ()> {
         .run()
         .map_err(|error| render_error(&mut renderer, error))?;
     println!("ran ({:.2}s)", time.elapsed().as_secs_f64());
-    match krun.outcome(&result) {
-        Ok(Outcome::Final(steps, kore)) => println!("final after {steps} steps\n{kore}"),
-        Ok(Outcome::Error(steps, kore)) => println!("ERROR after {steps} steps\n{kore}"),
-        Ok(Outcome::InitFail) => println!("initial term failed to evaluate"),
+    let (status, steps, pattern) = match krun.outcome(&result) {
+        Ok(Outcome::Final(steps, pattern)) => ("final", steps, pattern),
+        Ok(Outcome::Error(steps, pattern)) => ("ERROR", steps, pattern),
+        Ok(Outcome::InitFail) => {
+            println!("initial term failed to evaluate");
+            return Ok(());
+        }
         Err(message) => {
             eprintln!("cannot write the result as KORE: {message}");
             println!("{}", Print::to_string(&result.view(&krun.arena)));
             return Err(());
+        }
+    };
+    println!("{status} after {steps} steps\n{pattern}");
+    if let Some(path) = &args.expect {
+        match krun.normal_texts(&pattern, path) {
+            Ok((spec, expected)) if spec == expected => println!("matches {}", path.display()),
+            Ok((spec, expected)) => {
+                println!("DIFFERS from {}", path.display());
+                // KORE_NORMAL_DIR: both normal forms, to see where they differ
+                if let Some(dir) = std::env::var_os("KORE_NORMAL_DIR") {
+                    let dir = PathBuf::from(dir);
+                    let written = std::fs::write(dir.join("spec.normal"), spec)
+                        .and_then(|()| std::fs::write(dir.join("krun.normal"), expected));
+                    if let Err(error) = written {
+                        eprintln!("cannot write normal forms: {error}");
+                    }
+                }
+            }
+            Err(message) => {
+                eprintln!("cannot compare: {message}");
+                return Err(());
+            }
         }
     }
     Ok(())

@@ -49,6 +49,7 @@ pub mod info;
 pub mod krun;
 pub mod llvm;
 pub mod load;
+pub mod normal;
 pub mod parse;
 pub mod term;
 
@@ -210,12 +211,20 @@ impl KoreInterface {
         value::make::opt(arena, typ, normal, Span::default()).map_err(|e| e.to_string())
     }
 
-    /// A term of the specification as KORE text.
-    pub fn kore_of_term(&self, arena: &Arena, value: &Value) -> Result<String, String> {
+    /// A term of the specification as a KORE pattern.
+    pub fn kore_of_term(&self, arena: &Arena, value: &Value) -> Result<Pattern, String> {
         let Some((info, shapes)) = &self.info else {
             return Err("no definition is loaded".to_owned());
         };
-        Ok(term::to_pattern(arena, info, shapes, value)?.to_string())
+        term::to_pattern(arena, info, shapes, value)
+    }
+
+    /// The normal form of a pattern for comparing runs (`normal`).
+    pub fn normal_text(&self, pattern: &Pattern) -> Result<String, String> {
+        let Some((info, _)) = &self.info else {
+            return Err("no definition is loaded".to_owned());
+        };
+        Ok(normal::normal_text(info, pattern))
     }
 
     /// `$fresh_nat() : nat`: 0, 1, 2, ... within a program.
