@@ -2,8 +2,8 @@
 //!
 //! `Index::load` resolves module filenames from the root index.
 //! Each module loader reads its own registration type and validates its paths.
-//! Corpus paths are relative to the repository;
-//! diagnostic inputs and expectations are relative to the driver.
+//! Corpus paths are relative to the repository, expectations to the driver,
+//! and diagnostic inputs and expectations to `testdata/spec`.
 
 use std::{
     collections::BTreeSet,
@@ -148,6 +148,79 @@ pub struct SimConfig {
     pub suites: Vec<SimSuite>,
 }
 
+/// Names a stage of the spec-language pipeline, in pipeline order.
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "lowercase")]
+pub enum Stage {
+    Parse,
+    Elab,
+    Algo,
+    Structure,
+    Prose,
+    Specdoc,
+    Run,
+}
+
+impl Stage {
+    /// Returns the stage's registration spelling.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Parse => "parse",
+            Self::Elab => "elab",
+            Self::Algo => "algo",
+            Self::Structure => "structure",
+            Self::Prose => "prose",
+            Self::Specdoc => "specdoc",
+            Self::Run => "run",
+        }
+    }
+}
+
+/// Lists the pipeline stages each interpreter language runs.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MicroStages {
+    pub al: Vec<Stage>,
+    pub sl: Vec<Stage>,
+    pub pl: Vec<Stage>,
+}
+
+impl MicroStages {
+    /// Returns the stages of one language.
+    pub fn get(&self, language: Language) -> &[Stage] {
+        match language {
+            Language::Al => &self.al,
+            Language::Sl => &self.sl,
+            Language::Pl => &self.pl,
+        }
+    }
+}
+
+/// Registers a directory of spec-language sources with one verdict.
+///
+/// With outcome success, every source passes the stages up to `stage`;
+/// with outcome failure, every source passes the earlier stages
+/// and fails at `stage`.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MicroSuite {
+    pub name: String,
+    pub root: PathBuf,
+    pub outcome: diagnostic::Outcome,
+    pub stage: Stage,
+}
+
+/// Supplies language stages, exclusions, and micro suites.
+///
+/// A missing `excludes` directory holds no entries.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MicroConfig {
+    pub excludes: PathBuf,
+    pub stages: MicroStages,
+    pub suites: Vec<MicroSuite>,
+}
+
 /// Names each runner's registration file without storing its tests.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -161,6 +234,7 @@ pub struct Modules {
     pub run: PathBuf,
     pub metacirc: PathBuf,
     pub sim: PathBuf,
+    pub micro: PathBuf,
     pub diagnostics: diagnostic::Modules,
 }
 
@@ -179,7 +253,7 @@ pub fn load<T: DeserializeOwned>(path: &Path) -> Result<T> {
         .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))
 }
 
-/// Resolves an expectation or diagnostic input relative to the driver.
+/// Resolves an expectation relative to the driver.
 pub fn expected_path(path: &Path) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join(path)
 }
@@ -386,6 +460,27 @@ pub fn load_simulation(path: &Path) -> Result<SimConfig> {
     Ok(config)
 }
 
+/// Loads micro suites and per-language stages.
+pub fn load_micro(path: &Path) -> Result<MicroConfig> {
+    let config: MicroConfig = load(path)?;
+    let suites = &config.suites;
+    names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
+    for suite in suites {
+        directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
+    }
+    // Stages run in pipeline order, each at most once
+    for language in [Language::Al, Language::Sl, Language::Pl] {
+        let stages = config.stages.get(language);
+        if stages.is_empty() || !stages.is_sorted_by(|stage_a, stage_b| stage_a < stage_b) {
+            return Err(Error::Invalid(format!(
+                "micro stages of {} must be nonempty and in pipeline order",
+                language.name()
+            )));
+        }
+    }
+    Ok(config)
+}
+
 impl Index {
     /// Resolves module paths relative to the index without loading their settings.
     pub fn load(path: &Path) -> Result<Self> {
@@ -403,6 +498,7 @@ impl Index {
             &mut modules.run,
             &mut modules.metacirc,
             &mut modules.sim,
+            &mut modules.micro,
         ]
         .into_iter()
         .chain(modules.diagnostics.paths_mut())
@@ -424,6 +520,7 @@ impl Index {
         println!("run: {:#?}", load_execution(&self.suites.run)?);
         println!("metacirc: {:#?}", load_metacirc(&self.suites.metacirc)?);
         println!("sim: {:#?}", load_simulation(&self.suites.sim)?);
+        println!("micro: {:#?}", load_micro(&self.suites.micro)?);
         self.suites.diagnostics.list()
     }
 }
