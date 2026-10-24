@@ -5025,9 +5025,9 @@ def $id_of_parameterIR(_annotationList _direction _typeIR id _parameterInitializ
 
 1. Return id
 
-def $is_default_parameterIR(_annotationList _direction _typeIR _id parameterInitializerOptIR)
+def $is_default_parameterIR(parameterIR)
 
-1. (Let parameterInitializerIR?{parameterInitializerIR <- parameterInitializerIR?} be parameterInitializerOptIR)
+1. (Let _annotationList _direction _typeIR _id parameterInitializerIR?{parameterInitializerIR <- parameterInitializerIR?} be parameterIR)
 
   1. If (parameterInitializerIR?{parameterInitializerIR <- parameterInitializerIR?} matches ()), then
 
@@ -12001,83 +12001,91 @@ def $callTargetKey'(argumentIR)
 
     1. Return ?()
 
-def $match_overloaded_named<V>(callTargetId ':' V, nameIR_f `( id_arg*{id_arg <- id_arg*} `), $get_parameterListIR(V) : parameterListIR)
+def $match_overloaded_named<V>(pair<callTargetId, V>, namedCallTargetKey, $get_parameterListIR(V) : parameterListIR)
 
-1. (Let nameIR `( id_param*{id_param <- id_param*} `) be callTargetId)
+1. (Let callTargetId ':' V be pair<callTargetId, V>)
 
-  1. If ((nameIR = nameIR_f)), then
+  1. (Let nameIR_f `( id_arg*{id_arg <- id_arg*} `) be namedCallTargetKey)
 
-    1. (Let parameterIR*{parameterIR <- parameterIR*} be $get_parameterListIR(V))
+    1. (Let nameIR `( id_param*{id_param <- id_param*} `) be callTargetId)
 
-      1. If ((|id_param*{id_param <- id_param*}| = |parameterIR*{parameterIR <- parameterIR*}|)), then
+      1. If ((nameIR = nameIR_f)), then
 
-        1. If ((id_param = $id_of_parameterIR(parameterIR)))*{id_param <- id_param*, parameterIR <- parameterIR*}, then
+        1. (Let parameterIR*{parameterIR <- parameterIR*} be $get_parameterListIR(V))
 
-          1. If ((|id_param*{id_param <- id_param*}| = |id_arg*{id_arg <- id_arg*}|)), then
+          1. If ((|id_param*{id_param <- id_param*}| = |parameterIR*{parameterIR <- parameterIR*}|)), then
 
-            1. Return $ite<callTargetMatch>($eq_set<id>(`{ id_param*{id_param <- id_param*} `}, `{ id_arg*{id_arg <- id_arg*} `}), MATCH [] [], NOMATCH)
+            1. If ((id_param = $id_of_parameterIR(parameterIR)))*{id_param <- id_param*, parameterIR <- parameterIR*}, then
 
-          2. (Let b_default be $is_default_parameterIR(parameterIR))*{parameterIR <- parameterIR*, b_default -> b_default*}
+              1. If ((|id_param*{id_param <- id_param*}| = |id_arg*{id_arg <- id_arg*}|)), then
 
-            1. (Let b_optional be $is_optional_parameterIR(parameterIR))*{parameterIR <- parameterIR*, b_optional -> b_optional*}
+                1. Return $ite<callTargetMatch>($eq_set<id>(`{ id_param*{id_param <- id_param*} `}, `{ id_arg*{id_arg <- id_arg*} `}), MATCH [] [], NOMATCH)
 
-              1. If ((|id_param*{id_param <- id_param*}| > |id_arg*{id_arg <- id_arg*}|)), then
+              2. (Let b_default be $is_default_parameterIR(parameterIR))*{parameterIR <- parameterIR*, b_default -> b_default*}
 
-                1. (Let `{ id_param_omitted*{id_param_omitted <- id_param_omitted*} `} be $diff_set<id>(`{ id_param*{id_param <- id_param*} `}, `{ id_arg*{id_arg <- id_arg*} `}))
+                1. (Let b_optional be $is_optional_parameterIR(parameterIR))*{parameterIR <- parameterIR*, b_optional -> b_optional*}
 
-                  1. (Let id_default_param*{id_default_param <- id_default_param*} be $filter_<id>(id_param*{id_param <- id_param*}, $is_default_parameterIR(parameterIR)*{parameterIR <- parameterIR*}))
+                  1. If ((|id_param*{id_param <- id_param*}| > |id_arg*{id_arg <- id_arg*}|)), then
 
-                    1. (Let id_default*{id_default <- id_default*} be $filter_<id>(id_param_omitted*{id_param_omitted <- id_param_omitted*}, id_param_omitted <- id_default_param*{id_default_param <- id_default_param*}*{id_param_omitted <- id_param_omitted*}))
+                    1. (Let `{ id_param_omitted*{id_param_omitted <- id_param_omitted*} `} be $diff_set<id>(`{ id_param*{id_param <- id_param*} `}, `{ id_arg*{id_arg <- id_arg*} `}))
 
-                      1. (Let id_optional_param*{id_optional_param <- id_optional_param*} be $filter_<id>(id_param*{id_param <- id_param*}, $is_optional_parameterIR(parameterIR)*{parameterIR <- parameterIR*}))
+                      1. (Let id_default_param*{id_default_param <- id_default_param*} be $filter_<id>(id_param*{id_param <- id_param*}, $is_default_parameterIR(parameterIR)*{parameterIR <- parameterIR*}))
 
-                        1. (Let id_optional*{id_optional <- id_optional*} be $filter_<id>(id_param_omitted*{id_param_omitted <- id_param_omitted*}, id_param_omitted <- id_optional_param*{id_optional_param <- id_optional_param*}*{id_param_omitted <- id_param_omitted*}))
+                        1. (Let id_default*{id_default <- id_default*} be $filter_<id>(id_param_omitted*{id_param_omitted <- id_param_omitted*}, id_param_omitted <- id_default_param*{id_default_param <- id_default_param*}*{id_param_omitted <- id_param_omitted*}))
 
-                          1. If ($eq_set<id>(`{ id_default*{id_default <- id_default*} ++ id_optional*{id_optional <- id_optional*} `}, `{ id_param_omitted*{id_param_omitted <- id_param_omitted*} `})), then
+                          1. (Let id_optional_param*{id_optional_param <- id_optional_param*} be $filter_<id>(id_param*{id_param <- id_param*}, $is_optional_parameterIR(parameterIR)*{parameterIR <- parameterIR*}))
 
-                            1. Return MATCH id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}
+                            1. (Let id_optional*{id_optional <- id_optional*} be $filter_<id>(id_param_omitted*{id_param_omitted <- id_param_omitted*}, id_param_omitted <- id_optional_param*{id_optional_param <- id_optional_param*}*{id_param_omitted <- id_param_omitted*}))
+
+                              1. If ($eq_set<id>(`{ id_default*{id_default <- id_default*} ++ id_optional*{id_optional <- id_optional*} `}, `{ id_param_omitted*{id_param_omitted <- id_param_omitted*} `})), then
+
+                                1. Return MATCH id_default*{id_default <- id_default*} id_optional*{id_optional <- id_optional*}
 
 2. Otherwise,
 
   1. Return NOMATCH
 
-def $match_overloaded_unnamed<V>(callTargetId ':' V, nameIR_f `( n_arg `), $get_parameterListIR(V) : parameterListIR)
+def $match_overloaded_unnamed<V>(pair<callTargetId, V>, unnamedCallTargetKey, $get_parameterListIR(V) : parameterListIR)
 
-1. (Let nameIR `( id_param*{id_param <- id_param*} `) be callTargetId)
+1. (Let callTargetId ':' V be pair<callTargetId, V>)
 
-  1. If ((nameIR = nameIR_f)), then
+  1. (Let nameIR_f `( n_arg `) be unnamedCallTargetKey)
 
-    1. (Let parameterIR*{parameterIR <- parameterIR*} be $get_parameterListIR(V))
+    1. (Let nameIR `( id_param*{id_param <- id_param*} `) be callTargetId)
 
-      1. (Let b_default be $is_default_parameterIR(parameterIR))*{parameterIR <- parameterIR*, b_default -> b_default*}
+      1. If ((nameIR = nameIR_f)), then
 
-        1. (Let b_optional be $is_optional_parameterIR(parameterIR))*{parameterIR <- parameterIR*, b_optional -> b_optional*}
+        1. (Let parameterIR*{parameterIR <- parameterIR*} be $get_parameterListIR(V))
 
-          1. If (~($exists_(b_default*{b_default <- b_default*}) /\ $exists_(b_optional*{b_optional <- b_optional*}))), then
+          1. (Let b_default be $is_default_parameterIR(parameterIR))*{parameterIR <- parameterIR*, b_default -> b_default*}
 
-            1. If ((|id_param*{id_param <- id_param*}| = n_arg)), then
+            1. (Let b_optional be $is_optional_parameterIR(parameterIR))*{parameterIR <- parameterIR*, b_optional -> b_optional*}
 
-              1. Return MATCH [] []
+              1. If (~($exists_(b_default*{b_default <- b_default*}) /\ $exists_(b_optional*{b_optional <- b_optional*}))), then
 
-            2. If ((|id_param*{id_param <- id_param*}| > n_arg)), then
+                1. If ((|id_param*{id_param <- id_param*}| = n_arg)), then
 
-              1. (Let (parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_omitted*{parameterIR_omitted <- parameterIR_omitted*}) be $partition_<parameterIR>(parameterIR*{parameterIR <- parameterIR*}, n_arg))
+                  1. Return MATCH [] []
 
-                1. If (~$is_optional_parameterIR(parameterIR_omitted))*{parameterIR_omitted <- parameterIR_omitted*}, then
+                2. If ((|id_param*{id_param <- id_param*}| > n_arg)), then
 
-                  1. If ($is_default_parameterIR(parameterIR_omitted))*{parameterIR_omitted <- parameterIR_omitted*}, then
+                  1. (Let (parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_omitted*{parameterIR_omitted <- parameterIR_omitted*}) be $partition_<parameterIR>(parameterIR*{parameterIR <- parameterIR*}, n_arg))
 
-                    1. (Let id_default be $id_of_parameterIR(parameterIR_omitted))*{parameterIR_omitted <- parameterIR_omitted*, id_default -> id_default*}
+                    1. If (~$is_optional_parameterIR(parameterIR_omitted))*{parameterIR_omitted <- parameterIR_omitted*}, then
 
-                      1. Return MATCH id_default*{id_default <- id_default*} []
+                      1. If ($is_default_parameterIR(parameterIR_omitted))*{parameterIR_omitted <- parameterIR_omitted*}, then
 
-                2. If (~$is_default_parameterIR(parameterIR_given))*{parameterIR_given <- parameterIR_given*}, then
+                        1. (Let id_default be $id_of_parameterIR(parameterIR_omitted))*{parameterIR_omitted <- parameterIR_omitted*, id_default -> id_default*}
 
-                  1. If ($is_optional_parameterIR(parameterIR_omitted))*{parameterIR_omitted <- parameterIR_omitted*}, then
+                          1. Return MATCH id_default*{id_default <- id_default*} []
 
-                    1. (Let id_optional be $id_of_parameterIR(parameterIR_omitted))*{parameterIR_omitted <- parameterIR_omitted*, id_optional -> id_optional*}
+                    2. If (~$is_default_parameterIR(parameterIR_given))*{parameterIR_given <- parameterIR_given*}, then
 
-                      1. Return MATCH [] id_optional*{id_optional <- id_optional*}
+                      1. If ($is_optional_parameterIR(parameterIR_omitted))*{parameterIR_omitted <- parameterIR_omitted*}, then
+
+                        1. (Let id_optional be $id_of_parameterIR(parameterIR_omitted))*{parameterIR_omitted <- parameterIR_omitted*, id_optional -> id_optional*}
+
+                          1. Return MATCH [] id_optional*{id_optional <- id_optional*}
 
 2. Otherwise,
 
@@ -12195,15 +12203,17 @@ def $find_overloaded<V>(`{ callableId ':' V*{V <- V*, callableId <- callableId*}
 
 2. Else Dangling
 
-def $find_non_overloaded<V>(`{ callableId ':' V*{V <- V*, callableId <- callableId*} `}, nameIR_f)
+def $find_non_overloaded<V>(map<callableId, V>, nameIR_f)
 
-1. (Let (callableId, V)*{(callableId, V) <- (callableId, V)*} be $find_non_overloadeds<V>(`{ callableId ':' V*{V <- V*, callableId <- callableId*} `}, nameIR_f))
+1. (Let `{ callableId ':' V*{V <- V*, callableId <- callableId*} `} be map<callableId, V>)
 
-  1. If ((callableId, V)*{(callableId, V) <- (callableId, V)*} matches [ _/1 ]), then
+  1. (Let (callableId, V)*{(callableId, V) <- (callableId, V)*} be $find_non_overloadeds<V>(`{ callableId ':' V*{V <- V*, callableId <- callableId*} `}, nameIR_f))
 
-    1. (Let [(callableId_found, V_found)] be (callableId, V)*{(callableId, V) <- (callableId, V)*})
+    1. If ((callableId, V)*{(callableId, V) <- (callableId, V)*} matches [ _/1 ]), then
 
-      1. Return ?((callableId_found, V_found))
+      1. (Let [(callableId_found, V_found)] be (callableId, V)*{(callableId, V) <- (callableId, V)*})
+
+        1. Return ?((callableId_found, V_found))
 
 2. Otherwise,
 
@@ -43827,25 +43837,27 @@ def $tableObject_create_entry_action(EC, ACTIONS '=' `{ tableActionIR*{tableActi
 
 2. Else Dangling
 
-def $tableObject_add_entry(EC, TABLE typeId `{ frame TBL `}, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
+def $tableObject_add_entry(EC, tableObject, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
 
-1. (Let tableEntryPriorityOptIR be $tableObject_create_entry_priority(tableEntryPriorityInterface))
+1. (Let TABLE typeId `{ frame TBL `} be tableObject)
 
-  1. If (($needs_priority_tableKeysPropertyIR(TBL.KEYS) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))), then
+  1. (Let tableEntryPriorityOptIR be $tableObject_create_entry_priority(tableEntryPriorityInterface))
 
-    1. (Let keysetExpressionIR be $tableObject_create_entry_keyset(EC, TBL.KEYS, tableKeysetInterface))
+    1. If (($needs_priority_tableKeysPropertyIR(TBL.KEYS) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))), then
 
-      1. (Let tableActionReferenceIR be $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface))
+      1. (Let keysetExpressionIR be $tableObject_create_entry_keyset(EC, TBL.KEYS, tableKeysetInterface))
 
-        1. (Let tableEntryIR_update be ?() tableEntryPriorityOptIR keysetExpressionIR ':' tableActionReferenceIR _EMPTY ';')
+        1. (Let tableActionReferenceIR be $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface))
 
-          1. (Let annotationList constOptIR ENTRIES '=' `{ tableEntryIR*{tableEntryIR <- tableEntryIR*} `} be TBL.ENTRIES)
+          1. (Let tableEntryIR_update be ?() tableEntryPriorityOptIR keysetExpressionIR ':' tableActionReferenceIR _EMPTY ';')
 
-            1. (Let tableEntriesPropertyIR_updated be annotationList constOptIR ENTRIES '=' `{ tableEntryIR*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] `})
+            1. (Let annotationList constOptIR ENTRIES '=' `{ tableEntryIR*{tableEntryIR <- tableEntryIR*} `} be TBL.ENTRIES)
 
-              1. (Let TBL_updated be TBL[ENTRIES = tableEntriesPropertyIR_updated])
+              1. (Let tableEntriesPropertyIR_updated be annotationList constOptIR ENTRIES '=' `{ tableEntryIR*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] `})
 
-                1. Return ?(TABLE typeId `{ frame TBL_updated `})
+                1. (Let TBL_updated be TBL[ENTRIES = tableEntriesPropertyIR_updated])
+
+                  1. Return ?(TABLE typeId `{ frame TBL_updated `})
 
 2. Otherwise,
 

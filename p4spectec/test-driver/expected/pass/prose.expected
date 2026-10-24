@@ -4753,9 +4753,9 @@ def $id_of_parameterIR((_annotationList _direction _typeIR id _parameterInitiali
 
 1. Return id
 
-def $is_default_parameterIR((_annotationList _direction _typeIR _id parameterInitializerOptIR))
+def $is_default_parameterIR(parameterIR)
 
-1. (Let (parameterInitializerIR)?{parameterInitializerIR <- parameterInitializerIR?} be parameterInitializerOptIR)
+1. (Destruct (_annotationList, _direction, _typeIR, _id, (parameterInitializerIR)?{parameterInitializerIR <- parameterInitializerIR?}) = parameterIR)
 
 2. If (((parameterInitializerIR)?{parameterInitializerIR <- parameterInitializerIR?} matches pattern ())), then
 
@@ -10761,11 +10761,15 @@ def $callTargetKey'(argumentIR)
 
     1. Return ?()
 
-def $match_overloaded_named<V>((callTargetId ':' V), (nameIR_f `( (id_arg)*{id_arg <- id_arg*} `)), $get_parameterListIR(V) : parameterListIR)
+def $match_overloaded_named<V>(pair<callTargetId, V>, namedCallTargetKey, $get_parameterListIR(V) : parameterListIR)
 
-1. (Let (nameIR `( (id_param)*{id_param <- id_param*} `)) be callTargetId)
+1. (Let (callTargetId ':' V) be pair<callTargetId, V>)
 
-2. If ((nameIR = nameIR_f)), then
+2. (Let (nameIR_f `( (id_arg)*{id_arg <- id_arg*} `)) be namedCallTargetKey)
+
+3. (Let (nameIR `( (id_param)*{id_param <- id_param*} `)) be callTargetId)
+
+4. If ((nameIR = nameIR_f)), then
 
   1. (Let (parameterIR)*{parameterIR <- parameterIR*} be $get_parameterListIR(V))
 
@@ -10809,15 +10813,19 @@ def $match_overloaded_named<V>((callTargetId ':' V), (nameIR_f `( (id_arg)*{id_a
 
             1. Return (MATCH (id_default)*{id_default <- id_default*} (id_optional)*{id_optional <- id_optional*})
 
-3. Otherwise,
+5. Otherwise,
 
   1. Return (NOMATCH)
 
-def $match_overloaded_unnamed<V>((callTargetId ':' V), (nameIR_f `( n_arg `)), $get_parameterListIR(V) : parameterListIR)
+def $match_overloaded_unnamed<V>(pair<callTargetId, V>, unnamedCallTargetKey, $get_parameterListIR(V) : parameterListIR)
 
-1. (Let (nameIR `( (id_param)*{id_param <- id_param*} `)) be callTargetId)
+1. (Let (callTargetId ':' V) be pair<callTargetId, V>)
 
-2. If ((nameIR = nameIR_f)), then
+2. (Let (nameIR_f `( n_arg `)) be unnamedCallTargetKey)
+
+3. (Let (nameIR `( (id_param)*{id_param <- id_param*} `)) be callTargetId)
+
+4. If ((nameIR = nameIR_f)), then
 
   1. (Let (parameterIR)*{parameterIR <- parameterIR*} be $get_parameterListIR(V))
 
@@ -10863,7 +10871,7 @@ def $match_overloaded_unnamed<V>((callTargetId ':' V), (nameIR_f `( n_arg `)), $
 
               2. Return (MATCH [] (id_optional)*{id_optional <- id_optional*})
 
-3. Otherwise,
+5. Otherwise,
 
   1. Return (NOMATCH)
 
@@ -11013,17 +11021,19 @@ Arm 2:
 
         2. Return ?((callableId_found ':' V_found '#' (id_omitted)*{id_omitted <- id_omitted*} '#' (id_optional)*{id_optional <- id_optional*}))
 
-def $find_non_overloaded<V>((`{ ((callableId ':' V))*{V <- V*, callableId <- callableId*} `}), nameIR_f)
+def $find_non_overloaded<V>(map<callableId, V>, nameIR_f)
 
-1. (Let ((callableId, V))*{(callableId, V) <- (callableId, V)*} be $find_non_overloadeds<V>((`{ ((callableId ':' V))*{V <- V*, callableId <- callableId*} `}), nameIR_f))
+1. (Let (`{ ((callableId ':' V))*{V <- V*, callableId <- callableId*} `}) be map<callableId, V>)
 
-2. If ((((callableId, V))*{(callableId, V) <- (callableId, V)*} matches pattern [ _/1 ])), then
+2. (Let ((callableId, V))*{(callableId, V) <- (callableId, V)*} be $find_non_overloadeds<V>((`{ ((callableId ':' V))*{V <- V*, callableId <- callableId*} `}), nameIR_f))
+
+3. If ((((callableId, V))*{(callableId, V) <- (callableId, V)*} matches pattern [ _/1 ])), then
 
   1. (Let [(callableId_found, V_found)] be ((callableId, V))*{(callableId, V) <- (callableId, V)*})
 
   2. Return ?((callableId_found, V_found))
 
-3. Otherwise,
+4. Otherwise,
 
   1. Return ?()
 
@@ -40769,11 +40779,13 @@ Arm 2:
 
           3. Return ((_BARE nameIR_found) controlPlaneNameIR `( (argumentIR)*{argumentIR <- argumentIR*} `))
 
-def $tableObject_add_entry(EC, (TABLE typeId `{ frame TBL `}), tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
+def $tableObject_add_entry(EC, tableObject, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
 
-1. (Let tableEntryPriorityOptIR be $tableObject_create_entry_priority(tableEntryPriorityInterface))
+1. (Let (TABLE typeId `{ frame TBL `}) be tableObject)
 
-2. If (($needs_priority_tableKeysPropertyIR(TBL.KEYS) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))), then
+2. (Let tableEntryPriorityOptIR be $tableObject_create_entry_priority(tableEntryPriorityInterface))
+
+3. If (($needs_priority_tableKeysPropertyIR(TBL.KEYS) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))), then
 
   1. (Let keysetExpressionIR be $tableObject_create_entry_keyset(EC, TBL.KEYS, tableKeysetInterface))
 
@@ -40789,7 +40801,7 @@ def $tableObject_add_entry(EC, (TABLE typeId `{ frame TBL `}), tableEntryPriorit
 
   7. Return ?((TABLE typeId `{ frame TBL_updated `}))
 
-3. Otherwise,
+4. Otherwise,
 
   1. Return ?()
 
