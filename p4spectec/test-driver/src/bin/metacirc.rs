@@ -3,7 +3,7 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use p4spectec::metacirc::{TowerConfig, config::Lang};
 use p4spectec_test::{
-    Error, ExecutionOptions, Result, algo, elab, metacirc, prose, structure,
+    Error, ExecutionOptions, Result, algo, elab, metacirc, metaparse, prose, structure,
     suite::{self, Conversion, Index},
 };
 use std::{path::PathBuf, process::ExitCode};
@@ -17,7 +17,7 @@ enum Input {
     P4,
 }
 
-/// Selects a snapshot check of the meta specification instead of execution.
+/// Selects a snapshot or codec check of the meta specification instead of execution.
 #[derive(Clone, Copy, Subcommand)]
 enum Command {
     /// Compare the elaborated meta specification with expected output
@@ -28,6 +28,8 @@ enum Command {
     Structure,
     /// Compare the prose meta specification with expected output
     Prose,
+    /// Check that IL and AL encodings are fixed points of decode-then-encode
+    Metaparse,
 }
 
 /// Compares P4 corpus and AL script outcomes through metacircular towers.
@@ -72,7 +74,7 @@ fn execute(cli: Cli) -> Result<()> {
     std::env::set_current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))?;
     let index = Index::load(&path_registry)?;
     let mut config = suite::load_metacirc(&index.suites.metacirc, cli.conversion)?;
-    // Snapshot checks compile the meta specification without executing it
+    // Snapshot and codec checks compile the meta specification without executing it
     let snapshots = &config.snapshots;
     match cli.command {
         Some(Command::Elab) => return elab::run(&suite::load_snapshots(&snapshots.elab)?),
@@ -81,6 +83,9 @@ fn execute(cli: Cli) -> Result<()> {
             return structure::run(&suite::load_structure(&snapshots.structure)?);
         }
         Some(Command::Prose) => return prose::run(&suite::load_snapshots(&snapshots.prose)?),
+        Some(Command::Metaparse) => {
+            return metaparse::run(&suite::load_metaparse(&config.metaparse)?);
+        }
         None => {}
     }
     // Restrict the registered suites to the selected name

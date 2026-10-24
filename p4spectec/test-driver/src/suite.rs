@@ -187,13 +187,15 @@ pub struct MetacircSnapshots {
     pub prose: PathBuf,
 }
 
-/// Supplies metacircular corpus inputs, towers, expectations, and snapshots.
+/// Supplies metacircular corpus inputs, towers, expectations, snapshots,
+/// and the meta codec round-trip inputs.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct MetacircConfigJson {
     includes: Vec<PathBuf>,
     excludes: ByConversion<Vec<PathBuf>>,
     snapshots: MetacircSnapshots,
+    metaparse: PathBuf,
     suites: Vec<MetacircSuiteJson>,
 }
 
@@ -203,6 +205,7 @@ pub struct MetacircConfig {
     pub includes: Vec<PathBuf>,
     pub excludes: Vec<PathBuf>,
     pub snapshots: MetacircSnapshots,
+    pub metaparse: PathBuf,
     pub suites: Vec<MetacircSuite>,
 }
 
@@ -295,7 +298,6 @@ pub struct MicroConfig {
 pub struct Modules {
     pub elab: PathBuf,
     pub algo: PathBuf,
-    pub metaparse: PathBuf,
     pub structure: PathBuf,
     pub prose: PathBuf,
     pub adoc: PathBuf,
@@ -503,13 +505,14 @@ pub fn load_metacirc(path: &Path, conversion: Conversion) -> Result<MetacircConf
     }
     names_valid(config.suites.iter().map(|suite| suite.name.as_str()))?;
     let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
-    // Resolve snapshot registrations relative to this registration file
+    // Resolve snapshot and codec registrations relative to this registration file
     let mut snapshots = config.snapshots;
     for path in
         [&mut snapshots.elab, &mut snapshots.algo, &mut snapshots.structure, &mut snapshots.prose]
     {
         *path = path_parent.join(&*path);
     }
+    let metaparse = path_parent.join(config.metaparse);
     let mut suites = Vec::new();
     for suite in config.suites {
         let MetacircSuiteJson { name, towers, root, expected, outcome } = suite;
@@ -540,7 +543,7 @@ pub fn load_metacirc(path: &Path, conversion: Conversion) -> Result<MetacircConf
         }
         suites.push(suite);
     }
-    Ok(MetacircConfig { includes: config.includes, excludes, snapshots, suites })
+    Ok(MetacircConfig { includes: config.includes, excludes, snapshots, metaparse, suites })
 }
 
 /// Loads simulation dependencies and explicit P4/STF corpus pairing.
@@ -603,7 +606,6 @@ impl Index {
         for path in [
             &mut modules.elab,
             &mut modules.algo,
-            &mut modules.metaparse,
             &mut modules.structure,
             &mut modules.prose,
             &mut modules.adoc,
@@ -626,7 +628,6 @@ impl Index {
         // Validate and display each module through its normal loader
         println!("elab: {:#?}", load_snapshots(&self.suites.elab)?);
         println!("algo: {:#?}", load_snapshots(&self.suites.algo)?);
-        println!("metaparse: {:#?}", load_metaparse(&self.suites.metaparse)?);
         println!("structure: {:#?}", load_structure(&self.suites.structure)?);
         println!("prose: {:#?}", load_snapshots(&self.suites.prose)?);
         println!("adoc: {:#?}", load_adoc(&self.suites.adoc)?);

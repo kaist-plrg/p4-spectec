@@ -171,6 +171,13 @@ groups), and prose forms of `spec-meta` with `expected/spec-meta/`,
 as registered in `suites/metacirc/`. `test-metacirc-promote` updates the
 elab, algo, and prose snapshots; structure snapshots are never promoted.
 
+```sh
+make test-metacirc-metaparse
+```
+
+Checks that the IL and AL meta encodings of `spec` and `spec-meta` are fixed
+points of decode-then-encode, as registered in `suites/metacirc/metaparse.json`.
+
 ## OCaml reference
 
 The frozen OCaml implementation and its AL/SL meta specifications are preserved
