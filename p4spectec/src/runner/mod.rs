@@ -2,14 +2,15 @@
 //!
 //! `Runner<Iface, Ext>` selects its prepared definitions and interpreter
 //! through `Backend`, while each evaluation keeps a typed `RunnerContext`.
-//! A runner built by `Runner::host` has no interpreter;
-//! it answers builtin and extern calls only.
+//! A `Host<Iface, Ext>` has no interpreter; it answers builtin and extern
+//! calls of a level that the level below interprets.
 //! Host calls and simulator operations borrow the same components,
 //! so externs can reenter the selected interpreter.
 //! `build_al`, `build_sl`, and `build_pl` prepare the selected stage.
 
 mod context;
 mod externs;
+mod host;
 mod interface;
 mod interpreter;
 
@@ -19,7 +20,7 @@ use crate::lang::data::{arena::Arena, value::flat::Value};
 
 use crate::lang::al;
 
-use crate::lang::il::ast::{Id, Typ};
+use crate::lang::il::ast::Typ;
 
 use crate::lang::sl;
 
@@ -39,6 +40,7 @@ use crate::sim_plugin::dummy::Dummy;
 
 pub use context::{Checkpoint, RunnerContext};
 pub use externs::{Extern, ExternError, NullExtern};
+pub use host::Host;
 pub use interface::{Interface, InterfaceError, NullInterface};
 pub use interpreter::{Eval, Interpreter, InterpreterError, NullInterp, SideEffect};
 
@@ -137,7 +139,6 @@ pub(crate) enum Backend {
     Al { spec_env: AlSpecEnv, interp: AlInterp },
     Sl { spec_env: SlSpecEnv, interp: SlInterp },
     Pl { spec_env: PlSpecEnv, interp: PlInterp },
-    Null { interp: NullInterp },
 }
 
 /// Splits a runner into the context of its selected backend for one evaluation.
@@ -182,18 +183,6 @@ macro_rules! with_context {
                 );
                 $body
             }
-            // A runner without an interpreter has no definitions
-            $crate::runner::Backend::Null { interp } => {
-                let mut $ctx = $crate::runner::RunnerContext::new(
-                    arena,
-                    &(),
-                    interp,
-                    &mut runner.interface,
-                    &mut runner.external,
-                    &mut runner.effects,
-                );
-                $body
-            }
         }
     }};
 }
@@ -225,14 +214,6 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
             },
         };
         Ok(Self { backend, interface, external, effects: 0 })
-    }
-
-    /// Prepares a runner without an interpreter, answering builtin and extern calls only.
-    ///
-    /// Calls of relations, functions, or a program entry fail as not configured.
-    pub fn host(interface: Iface, external: Ext) -> Self {
-        let backend = Backend::Null { interp: NullInterp };
-        Self { backend, interface, external, effects: 0 }
     }
 
     // - Parsing
@@ -288,52 +269,6 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
         with_context!(self, arena, |ctx| ctx.call_func(name, targs, values))
     }
 
-    // - Host dispatch
-
-    /// Calls a builtin through the interface, without consulting definitions.
-    pub fn eval_builtin(
-        &mut self,
-        arena: &mut Arena,
-        id: &Id,
-        targs: &[Typ],
-        values: &[Value],
-    ) -> Eval<Value, InterpreterError> {
-        with_context!(self, arena, |ctx| {
-            let checkpoint = ctx.effect_checkpoint();
-            let result = ctx.call_builtin(id, targs, values);
-            Eval::new(result, ctx.effect_since(checkpoint))
-        })
-    }
-
-    /// Calls a host relation through the extern, without consulting definitions.
-    pub fn eval_extern_rel(
-        &mut self,
-        arena: &mut Arena,
-        name: &str,
-        values: &[Value],
-    ) -> Eval<Vec<Value>, InterpreterError> {
-        with_context!(self, arena, |ctx| {
-            let checkpoint = ctx.effect_checkpoint();
-            let result = ctx.call_extern_rel(name, values);
-            Eval::new(result, ctx.effect_since(checkpoint))
-        })
-    }
-
-    /// Calls a host function through the extern, without consulting definitions.
-    pub fn eval_extern_func(
-        &mut self,
-        arena: &mut Arena,
-        name: &str,
-        targs: &[Typ],
-        values: &[Value],
-    ) -> Eval<Value, InterpreterError> {
-        with_context!(self, arena, |ctx| {
-            let checkpoint = ctx.effect_checkpoint();
-            let result = ctx.call_extern_func(name, targs, values);
-            Eval::new(result, ctx.effect_since(checkpoint))
-        })
-    }
-
     // - Lifecycle
 
     /// Starts an independent program, keeping definitions and configuration.
@@ -346,7 +281,6 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
             Backend::Al { interp, .. } => Interpreter::<Iface, Ext>::reset(interp),
             Backend::Sl { interp, .. } => Interpreter::<Iface, Ext>::reset(interp),
             Backend::Pl { interp, .. } => Interpreter::<Iface, Ext>::reset(interp),
-            Backend::Null { interp } => Interpreter::<Iface, Ext>::reset(interp),
         }
         self.external.clear();
         self.interface.clear();

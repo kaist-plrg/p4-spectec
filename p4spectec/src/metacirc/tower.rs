@@ -1,8 +1,8 @@
 //! Interpreter towers and their host-call layers
 //!
 //! The tower exposes program execution through its native entry point.
-//! Each level has one layer; only the base's layer has an interpreter,
-//! since every other level is interpreted by the level below.
+//! The base is a runner with an interpreter; every other level is a host,
+//! since the level below interprets it.
 //! A meta specification's extern hosts the script above it:
 //! the next level's layer, or the builtins of the AL or IL program.
 //! A single-level tower executes its top level directly as its base.
@@ -15,7 +15,7 @@ use crate::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{self as il, Id, Typ},
     },
-    runner::{Eval, Runner},
+    runner::{Eval, Host, NullInterp, Runner},
     sim_plugin::dummy::Dummy,
 };
 
@@ -23,7 +23,7 @@ use crate::{
 pub struct Tower {
     // Nonempty, ordered from base through intermediates to the top level
     pub(super) levels: Vec<Level>,
-    pub(super) base: Layer,
+    pub(super) base: BaseLayer,
 }
 
 /// A configured specification, by the form it is passed to the level below.
@@ -46,12 +46,20 @@ impl Level {
     }
 }
 
-/// The native runner of one level, selected by the language it interprets.
-pub(super) enum Layer {
+/// The native runner of the base, selected by the language it interprets.
+pub(super) enum BaseLayer {
     /// A P4 specification, interpreting a parsed P4 program.
     P4Spec(Runner<P4Interface, Dummy>),
     /// A meta specification interpreting an AL or IL script, hosting the script above it.
     MetaSpec(Runner<MetaInterface, MetaExtern>),
+}
+
+/// The host of a level above the base, which the level below interprets.
+pub(super) enum HostLayer {
+    /// A P4 specification, answering the builtins and externs of its program.
+    P4Spec(Host<P4Interface, Dummy>),
+    /// A meta specification, hosting the script above it.
+    MetaSpec(Host<MetaInterface, MetaExtern>),
 }
 
 impl Tower {
@@ -69,7 +77,7 @@ impl Tower {
     }
 }
 
-impl Layer {
+impl BaseLayer {
     /// Enters the native runner with the patched input value.
     fn eval_program(&mut self, arena: &mut Arena, name: &str, program: Value) -> Eval<Vec<Value>> {
         match self {
@@ -78,6 +86,16 @@ impl Layer {
         }
     }
 
+    /// Resets the runner and all layers owned by its extern implementation.
+    fn reset(&mut self) {
+        match self {
+            Self::P4Spec(runner) => runner.reset(),
+            Self::MetaSpec(runner) => runner.reset(),
+        }
+    }
+}
+
+impl HostLayer {
     /// Calls a decoded builtin at this layer.
     pub fn eval_builtin(
         &mut self,
@@ -87,43 +105,46 @@ impl Layer {
         values: &[Value],
     ) -> Eval<Value> {
         match self {
-            Self::P4Spec(runner) => runner.eval_builtin(arena, id, targs, values),
-            Self::MetaSpec(runner) => runner.eval_builtin(arena, id, targs, values),
+            Self::P4Spec(host) => host.eval_builtin(arena, id, targs, values),
+            Self::MetaSpec(host) => host.eval_builtin(arena, id, targs, values),
         }
+        .map_err(Into::into)
     }
 
-    /// Calls a decoded host relation at this layer.
+    /// Calls a decoded host relation at this layer; `interp` answers its reentry.
     pub fn eval_extern_rel(
         &mut self,
         arena: &mut Arena,
+        interp: &mut NullInterp,
         name: &str,
         values: &[Value],
     ) -> Eval<Vec<Value>> {
         match self {
-            Self::P4Spec(runner) => runner.eval_extern_rel(arena, name, values),
-            Self::MetaSpec(runner) => runner.eval_extern_rel(arena, name, values),
+            Self::P4Spec(host) => host.eval_extern_rel(arena, interp, name, values),
+            Self::MetaSpec(host) => host.eval_extern_rel(arena, interp, name, values),
         }
     }
 
-    /// Calls a decoded host function at this layer.
+    /// Calls a decoded host function at this layer; `interp` answers its reentry.
     pub fn eval_extern_func(
         &mut self,
         arena: &mut Arena,
+        interp: &mut NullInterp,
         name: &str,
         targs: &[Typ],
         values: &[Value],
     ) -> Eval<Value> {
         match self {
-            Self::P4Spec(runner) => runner.eval_extern_func(arena, name, targs, values),
-            Self::MetaSpec(runner) => runner.eval_extern_func(arena, name, targs, values),
+            Self::P4Spec(host) => host.eval_extern_func(arena, interp, name, targs, values),
+            Self::MetaSpec(host) => host.eval_extern_func(arena, interp, name, targs, values),
         }
     }
 
     /// Resets this layer and all layers owned by its extern implementation.
     pub fn reset(&mut self) {
         match self {
-            Self::P4Spec(runner) => runner.reset(),
-            Self::MetaSpec(runner) => runner.reset(),
+            Self::P4Spec(host) => host.reset(),
+            Self::MetaSpec(host) => host.reset(),
         }
     }
 }

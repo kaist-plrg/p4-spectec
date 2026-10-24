@@ -5,7 +5,7 @@
 //! TerminalExtern handles only builtins of the AL or IL program above the top level.
 //! Clearing an extern resets its owned runners before arena values are reset.
 
-use super::{codec, tower::Layer};
+use super::{codec, tower::HostLayer};
 use crate::{
     interface::meta::{MetaInterface, shared::Cache},
     lang::{
@@ -13,8 +13,7 @@ use crate::{
         il::ast::Typ,
     },
     runner::{
-        Eval, Extern, ExternError, Interface, Interpreter, NullExtern, Runner, RunnerContext,
-        SideEffect,
+        Eval, Extern, ExternError, Interface, Interpreter, NullInterp, RunnerContext, SideEffect,
     },
 };
 
@@ -26,16 +25,16 @@ pub(super) enum MetaExtern {
     Terminal(TerminalExtern),
 }
 
-/// Builtin calls of the program, answered by a runner without an interpreter.
+/// Builtin calls of the program, answered by the program's interface.
 pub(super) struct TerminalExtern {
     pub cache: Box<Cache>,
-    pub runner_program: Box<Runner<MetaInterface, NullExtern>>,
+    pub interface_program: Box<MetaInterface>,
 }
 
-/// Host calls resolved against the next layer in a runtime tower.
+/// Host calls resolved against the next level's host in a runtime tower.
 pub(super) struct RelayExtern {
     pub cache: Box<Cache>,
-    pub layer_next: Box<Layer>,
+    pub layer_next: Box<HostLayer>,
 }
 
 /// Rejects an operation outside the host boundary's contract.
@@ -102,14 +101,15 @@ impl TerminalExtern {
         };
         // Answer the builtin through the program's interface
         let eval = self
-            .runner_program
-            .eval_builtin(arena, &id, &targs, &values);
+            .interface_program
+            .call_builtin(arena, &id, &targs, &values)
+            .map_err(Into::into);
         codec::encode::func_result(arena, &mut self.cache, eval)
     }
 
     fn clear(&mut self) {
         self.cache.clear();
-        self.runner_program.reset();
+        self.interface_program.clear();
     }
 }
 
@@ -139,9 +139,13 @@ impl RelayExtern {
                         Ok(args) => args,
                         Err(error) => return Eval::new(Err(error), SideEffect::Pure),
                     };
-                let eval = self
-                    .layer_next
-                    .eval_extern_func(arena, &id.node, &targs, &values);
+                let eval = self.layer_next.eval_extern_func(
+                    arena,
+                    &mut NullInterp,
+                    &id.node,
+                    &targs,
+                    &values,
+                );
                 codec::encode::func_result(arena, &mut self.cache, eval)
             }
             // Host relations return an ordered list of outputs
@@ -150,7 +154,9 @@ impl RelayExtern {
                     Ok(args) => args,
                     Err(error) => return Eval::new(Err(error), SideEffect::Pure),
                 };
-                let eval = self.layer_next.eval_extern_rel(arena, &id.node, &values);
+                let eval =
+                    self.layer_next
+                        .eval_extern_rel(arena, &mut NullInterp, &id.node, &values);
                 codec::encode::rel_result(arena, &mut self.cache, eval)
             }
             // Host functions are reached through the three declared meta relations
