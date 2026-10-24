@@ -1,124 +1,71 @@
 ;; Iteration context
 
-;; Enclosing iterations, innermost first,
-;; each with its sources and binders
+;; Enclosing iterations, innermost first, each with the variables it
+;; iterates at the dimension inside it: the variables the elaboration lists,
+;; and the fresh variables that binding introduces under it
 
-syntax iterCtx = premIterAL*
+syntax iterCtx = premIterIL*
 
 var IC : iterCtx
 
-;; Each level of an iteration context lists the variables the iteration
-;; reads (sources) and the variables it binds, at the dimension inside it.
-;; Adding a variable lifts it by each level it passes outward.
+;;; Iterated variables
 
-;;; Source and binder selection
+dec $add_iterated(iterCtx, vari) : iterCtx
+  hint(prose_in %0 "with" %1 "iterated at every level")
+def $add_iterated(eps, _) = eps
+def $add_iterated((iter vari*) :: IC, vari_new)
+  = (iter (vari* ++ [ vari_new ])) :: $add_iterated(IC, vari_lift)
+  -- if vari_lift = $iterate_vari(iter, vari_new)
 
-dec $is_read_by(vari, vari*) : bool
-  hint(prose_true "source" %0 "is read by some variable in" %1)
-  hint(prose_false "source" %0 "is read by no variable in" %1)
-def $is_read_by(_, eps) = false
-def $is_read_by(vari, vari_h :: _) = true
-  -- if id _ _ = vari
-  -- if id _ _ = vari_h
-  -- if $is_prefix_dim(vari_h, vari)
-def $is_read_by(vari, vari_h :: vari_t*) = $is_read_by(vari, vari_t*)
-  -- if id _ _ = vari
-  -- if id_h _ _ = vari_h
-  -- if id_h =/= id \/ ~$is_prefix_dim(vari_h, vari)
+dec $lift_vari(iterCtx, vari) : vari
+  hint(prose_in %1 "lifted out of" %0)
+def $lift_vari(eps, vari) = vari
+def $lift_vari((iter _) :: IC, vari) = $lift_vari(IC, $iterate_vari(iter, vari))
 
-dec $sources_read(vari*, vari*) : vari*
-  hint(prose_in "the sources in" %0 "read by" %1)
-def $sources_read(eps, _) = eps
-def $sources_read(vari_h :: vari_t*, vari_read*) = vari_h :: vari_keep*
-  -- if $is_read_by(vari_h, vari_read*)
-  -- if vari_keep* = $sources_read(vari_t*, vari_read*)
-def $sources_read(vari_h :: vari_t*, vari_read*) = $sources_read(vari_t*, vari_read*)
-  -- if ~$is_read_by(vari_h, vari_read*)
-
-dec $sources_except(vari*, id*) : vari*
-  hint(prose_in "the sources in" %0 "whose identifiers are not in" %1)
-def $sources_except(eps, _) = eps
-def $sources_except(vari_h :: vari_t*, id*) = vari_h :: vari_keep*
-  -- if id_h _ _ = vari_h
-  -- if ~(id_h <- id*)
-  -- if vari_keep* = $sources_except(vari_t*, id*)
-def $sources_except(vari_h :: vari_t*, id*) = $sources_except(vari_t*, id*)
+dec $varis_in(vari*, id*) : vari*
+  hint(prose_in "the variables in" %0 "named in" %1)
+def $varis_in(eps, _) = eps
+def $varis_in(vari_h :: vari_t*, id*) = vari_h :: $varis_in(vari_t*, id*)
   -- if id_h _ _ = vari_h
   -- if id_h <- id*
+def $varis_in(vari_h :: vari_t*, id*) = $varis_in(vari_t*, id*)
+  -- if id_h _ _ = vari_h
+  -- if ~(id_h <- id*)
 
-;;; Restricting sources
+;;; Annotating iterations
 
-dec $restrict_iterCtx(iterCtx, vari*) : iterCtx
-  hint(prose_in %0 "with its sources restricted to those read by" %1)
-def $restrict_iterCtx(eps, _) = eps
-def $restrict_iterCtx(premIterAL :: IC, vari_read*)
-  = premIterAL' :: $restrict_iterCtx(IC, vari_read*)
-  -- if iter '<-' vari_src* '->' vari_bind* = premIterAL
-  -- if vari_keep* = $sources_read(vari_src*, vari_read*)
-  -- if premIterAL' = iter '<-' vari_keep* '->' vari_bind*
+;; A premise iterates over the iterated variables it reads,
+;; and binds the variables of its patterns at every level:
+;;
+;;   -- (let x = z + 1)*{x <- x*, z <- z*}
+;;
+;; becomes
+;;
+;;   -- (let x = z + 1)*{z <- z*, x -> x*}
 
-;;; Adding binders and sources
-
-dec $add_binders_iterCtx(iterCtx, vari*) : iterCtx
-  hint(prose_in %0 "with the binders" %1 "added")
-def $add_binders_iterCtx(eps, _) = eps
-def $add_binders_iterCtx(premIterAL :: IC, vari*)
-  = premIterAL' :: $add_binders_iterCtx(IC, vari_lift*)
-  -- if iter '<-' vari_src* '->' vari_bind* = premIterAL
-  -- if premIterAL' = iter '<-' vari_src* '->' (vari_bind* ++ vari*)
-  -- if (vari_lift = $iterate_vari(iter, vari))*
-
-dec $add_sources_iterCtx(iterCtx, vari*) : iterCtx
-  hint(prose_in %0 "with the sources" %1 "added")
-def $add_sources_iterCtx(eps, _) = eps
-def $add_sources_iterCtx(premIterAL :: IC, vari*)
-  = premIterAL' :: $add_sources_iterCtx(IC, vari_lift*)
-  -- if iter '<-' vari_src* '->' vari_bind* = premIterAL
-  -- if premIterAL' = iter '<-' (vari_src* ++ vari*) '->' vari_bind*
-  -- if (vari_lift = $iterate_vari(iter, vari))*
-
-;;; Replacing sources
-
-;; A fresh variable standing for a sub-pattern takes the place of the
-;; sources the sub-pattern mentions
-
-dec $replace_sources_iterCtx(iterCtx, id*, vari) : iterCtx
-  hint(prose_in %0 "with the sources" %1 "replaced by the variable" %2)
-def $replace_sources_iterCtx(eps, _, _) = eps
-def $replace_sources_iterCtx(premIterAL :: IC, id*, vari)
-  = premIterAL' :: $replace_sources_iterCtx(IC, id*, vari_lift)
-  -- if iter '<-' vari_src* '->' vari_bind* = premIterAL
-  -- if vari_keep* = $sources_except(vari_src*, id*)
-  -- if premIterAL' = iter '<-' (vari_keep* ++ [ vari ]) '->' vari_bind*
-  -- if vari_lift = $iterate_vari(iter, vari)
-
-;;; Checking sources
+dec $annotate(iterCtx, id*, vari*) : premIterAL*
+  hint(prose_in "the iterations of" %0 "reading" %1 "and binding" %2)
+def $annotate(eps, _, _) = eps
+def $annotate((iter vari*) :: IC, id_read*, vari_bind*)
+  = (iter '<-' vari_src* '->' vari_bind*) :: $annotate(IC, id_read*, vari_lift*)
+  -- if vari_src* = $varis_in(vari*, id_read*)
+  -- if (vari_lift = $iterate_vari(iter, vari_bind))*
 
 ;; An iteration without a source has no length to follow
 
 relation Iter_sourced:
-  |- iterCtx
+  |- premIterAL*
   hint(input %0)
   hint(prose_in "every iteration in" %0 "has a source")
 
 rule Iter_sourced:
-  |- IC
-  -- if (_ '<-' vari_src* '->' _)* = IC
+  |- premIterAL*
+  -- if (_ '<-' vari_src* '->' _)* = premIterAL*
   -- if (vari_src* =/= eps)*
 
-;;; Clearing sources and binders
-
-dec $clear_iterCtx(iterCtx) : iterCtx
-  hint(prose_in "the cleared iteration context of" %0)
-
-def $clear_iterCtx((iter '<-' _ '->' _)*)
-  = (iter '<-' eps '->' eps)*
-
-;;; Iterating premises
-
-dec $iterate_prem(iterCtx, premAL) : premAL
+dec $iterate_prem(premIterAL*, premAL) : premAL
   hint(prose_in "the iteration of" %1 "over" %0)
-
 def $iterate_prem(eps, premAL) = premAL
-def $iterate_prem(premIterAL :: IC, premAL)
-  = $iterate_prem(IC, ITER premAL premIterAL)
+def $iterate_prem(premIterAL :: premIterAL_t*, premAL)
+  = $iterate_prem(premIterAL_t*, ITER premAL premIterAL)
+

@@ -202,6 +202,18 @@ rulegroup Multibind_args {
 ;; dimension and the iterations of the premise:
 ;; `(x, x)*` binding `x*` and `x'*` requires `(x = x')*{x <- x*, x' <- x'*}`
 
+dec $occurrence_eq(iterCtx, vari, id) : premAL
+  hint(prose_in "the equality of" %1 "and its occurrence" %2 "inside iterations" %0)
+def $occurrence_eq(IC, id_first typ iter*, id_later) = $iterate_prem(premIterAL*, premAL_cmp)
+  -- if (iter_prem _)* = IC
+  -- if IC_dim = (iter eps)* ++ (iter_prem eps)*
+  -- if IC_first = $add_iterated(IC_dim, id_first typ eps)
+  -- if IC_eq = $add_iterated(IC_first, id_later typ eps)
+  -- if premIterAL* = $annotate(IC_eq, [ id_first, id_later ], eps)
+  -- if typedExp_first = (VAR id_first) '#' typ
+  -- if typedExp_later = (VAR id_later) '#' typ
+  -- if premAL_cmp = IF ((CMP EQ typedExp_first typedExp_later) '#' BOOL)
+
 rulegroup Multibind_eqs {
 
   rule Multibind_eqs/nil:
@@ -209,15 +221,8 @@ rulegroup Multibind_eqs {
 
   rule Multibind_eqs/cons:
     IC |- (vari '->' id_name*) :: R : premAL_eq* ++ premAL_t*
-    -- if _ typ iter* = vari
-    -- if id_first :: id_later* = id_name*
-    -- if IC_clear = $clear_iterCtx(IC)
-    -- if IC_dim = (iter '<-' eps '->' eps)* ++ IC_clear
-    -- if typedExp_first = (VAR id_first) '#' typ
-    -- (if typedExp_later = (VAR id_later) '#' typ)*
-    -- (if premAL_cmp = IF ((CMP EQ typedExp_first typedExp_later) '#' BOOL))*
-    -- (if IC_eq = $add_sources_iterCtx(IC_dim, [ id_first typ eps, id_later typ eps ]))*
-    -- if (premAL_eq = $iterate_prem(IC_eq, premAL_cmp))*
+    -- if _ :: id_later* = id_name*
+    -- (if premAL_eq = $occurrence_eq(IC, vari, id_later))*
     -- Multibind_eqs: IC |- R : premAL_t*
 
 }

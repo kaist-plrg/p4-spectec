@@ -58,14 +58,13 @@ rulegroup Partialbind_exp {
     -- if (AC', vari_d) = $fresh_vari(AC, typ)
     -- if typedExp_d = $exp_of_vari(vari_d)
     -- if typedExp_check = $check_exp(typedExp_d, typedExp)
-    ---- ;; iterate over the sources the compared value reads
-    -- if vari_read* = $free_vars_exp(typedExp)
-    -- if vari_read_min* = $shallowest_vars(vari_read*)
-    -- if IC_read = $restrict_iterCtx(IC ++ IC_prem, vari_read_min*)
-    -- if IC_check = $add_sources_iterCtx(IC_read, [ vari_d ])
-    -- if premAL_check = $iterate_prem(IC_check, IF typedExp_check)
-    -- if id_read* = $ids_of_varis(vari_read*)
-    -- if IC' = $replace_sources_iterCtx(IC, id_read*, vari_d)
+    ---- ;; iterate over the fresh variable and the sources the compared value reads
+    -- if id_d _ _ = vari_d
+    -- if id_read* = $free_ids_exp(typedExp)
+    -- if IC_d = $add_iterated(IC ++ IC_prem, vari_d)
+    -- if premIterAL* = $annotate(IC_d, id_d :: id_read*, eps)
+    -- if premAL_check = $iterate_prem(premIterAL*, IF typedExp_check)
+    -- if IC' = $add_iterated(IC, vari_d)
 
   rule Partialbind_exp/decomposed:
     AC IC_prem |- IC typedExp : AC' IC' typedExp' premAL*
@@ -81,20 +80,19 @@ rulegroup Partialbind_exp {
 
 rule Partialbind_check:
   IC vari_d |- typedExp_check : premAL_check
-  -- if IC_clear = $clear_iterCtx(IC)
-  -- if IC_check = $add_sources_iterCtx(IC_clear, [ vari_d ])
-  -- if premAL_check = $iterate_prem(IC_check, IF typedExp_check)
+  -- if id_d _ _ = vari_d
+  -- if premIterAL* = $annotate($add_iterated(IC, vari_d), [ id_d ], eps)
+  -- if premAL_check = $iterate_prem(premIterAL*, IF typedExp_check)
 
 ;; The destructuring iterates over the fresh variable and binds the pattern
 
 rule Partialbind_destructure:
   IC vari_d |- typedExp_l '=' typedExp_r : premAL_let
-  -- if IC_clear = $clear_iterCtx(IC)
+  -- if id_d _ _ = vari_d
   -- if vari_l* = $free_vars_exp(typedExp_l)
   -- if vari_bind* = $shallowest_vars(vari_l*)
-  -- if IC_bind = $add_binders_iterCtx(IC_clear, vari_bind*)
-  -- if IC_let = $add_sources_iterCtx(IC_bind, [ vari_d ])
-  -- if premAL_let = $iterate_prem(IC_let, LET typedExp_l '=' typedExp_r)
+  -- if premIterAL* = $annotate($add_iterated(IC, vari_d), [ id_d ], vari_bind*)
+  -- if premAL_let = $iterate_prem(premIterAL*, LET typedExp_l '=' typedExp_r)
 
 ;;; Decomposing binding patterns
 
@@ -114,8 +112,7 @@ rule Partialbind_exp_decomposed/upcast:
       (IC' ++ IC_prem) vari_d |- typedExp_check : premAL_check
   -- Partialbind_destructure:
       (IC' ++ IC_prem) vari_d |- typedExp_sub '=' typedExp_down : premAL_let
-  -- if id_sub* = $free_ids_exp(typedExp_sub)
-  -- if IC'' = $replace_sources_iterCtx(IC', id_sub*, vari_d)
+  -- if IC'' = $add_iterated(IC', vari_d)
 
 rule Partialbind_exp_decomposed/tuple:
   AC IC_prem |- IC ((TUP typedExp*) '#' typ) : AC' IC' ((TUP typedExp'*) '#' typ) premAL*
@@ -142,8 +139,7 @@ rule Partialbind_exp_decomposed/case:
   -- Partialbind_check: (IC' ++ IC_prem) vari_d |- typedExp_check : premAL_check
   -- Partialbind_destructure:
       (IC' ++ IC_prem) vari_d |- typedExp_case '=' typedExp_d : premAL_let
-  -- if id_case* = $free_ids_exp(typedExp_case)
-  -- if IC'' = $replace_sources_iterCtx(IC', id_case*, vari_d)
+  -- if IC'' = $add_iterated(IC', vari_d)
 
 rule Partialbind_exp_decomposed/opt:
   AC IC_prem |- IC ((OPT typedExp) '#' typ)
@@ -156,8 +152,7 @@ rule Partialbind_exp_decomposed/opt:
   -- Partialbind_check: (IC' ++ IC_prem) vari_d |- typedExp_check : premAL_check
   -- Partialbind_destructure:
       (IC' ++ IC_prem) vari_d |- typedExp_opt '=' typedExp_d : premAL_let
-  -- if id_opt* = $free_ids_exp(typedExp_opt)
-  -- if IC'' = $replace_sources_iterCtx(IC', id_opt*, vari_d)
+  -- if IC'' = $add_iterated(IC', vari_d)
 
 rule Partialbind_exp_decomposed/list:
   AC IC_prem |- IC ((LIST typedExp*) '#' typ)
@@ -171,8 +166,7 @@ rule Partialbind_exp_decomposed/list:
   -- Partialbind_check: (IC' ++ IC_prem) vari_d |- typedExp_check : premAL_check
   -- Partialbind_destructure:
       (IC' ++ IC_prem) vari_d |- typedExp_list '=' typedExp_d : premAL_let
-  -- if id_list* = $free_ids_exp(typedExp_list)
-  -- if IC'' = $replace_sources_iterCtx(IC', id_list*, vari_d)
+  -- if IC'' = $add_iterated(IC', vari_d)
 
 rule Partialbind_exp_decomposed/cons:
   AC IC_prem |- IC ((CONS typedExp_h typedExp_t) '#' typ)
@@ -189,18 +183,17 @@ rule Partialbind_exp_decomposed/cons:
       (IC'' ++ IC_prem) vari_d |- typedExp_check : premAL_check
   -- Partialbind_destructure:
       (IC'' ++ IC_prem) vari_d |- typedExp_cons '=' typedExp_d : premAL_let
-  -- if id_cons* = $free_ids_exp(typedExp_cons)
-  -- if IC''' = $replace_sources_iterCtx(IC'', id_cons*, vari_d)
+  -- if IC''' = $add_iterated(IC'', vari_d)
 
 ;; An iterated pattern is decomposed under one more iteration,
-;; whose sources then reflect the fresh variables inside it
+;; which then iterates the variables left in the decomposed pattern
 
 rule Partialbind_exp_decomposed/iter:
   AC IC_prem |- IC ((ITER typedExp (iter vari*)) '#' typ)
     : AC' IC' ((ITER typedExp' (iter vari'*)) '#' typ) premAL*
-  -- Partialbind_exp: AC IC_prem |- ((iter '<-' vari* '->' eps) :: IC) typedExp
-       : AC' (premIterAL :: IC') typedExp' premAL*
-  -- if iter '<-' vari'* '->' _ = premIterAL
+  -- Partialbind_exp: AC IC_prem |- ((iter vari*) :: IC) typedExp
+       : AC' ((iter vari_iter*) :: IC') typedExp' premAL*
+  -- if vari'* = $varis_in(vari_iter*, $free_ids_exp(typedExp'))
 
 ;;; Pattern sequences and arguments
 

@@ -46,19 +46,16 @@ rule Algo_prem/rel:
   -- if REL id ':' typedExp* `( inputHint `) = relPremIL
   -- if (typedExp_in*, typedExp_out*)
       = $split_inputs<typedExp>(inputHint, typedExp*)
-  -- if id_in* = $free_ids_exps(typedExp_in*)
-  -- if $is_bound(AC, id_in*)
+  -- if id_read* = $free_ids_exps(typedExp_in*)
+  -- if $is_bound(AC, id_read*)
   -- Bind_exps:
       AC IC |- typedExp_out* : AC' typedExp_out'* premAL_bind*
-  -- if vari_in* = $free_vars_exps(typedExp_in*)
-  -- if vari_read* = $shallowest_vars(vari_in*)
   -- if vari_out* = $free_vars_exps(typedExp_out'*)
   -- if vari_bind* = $shallowest_vars(vari_out*)
-  -- if IC_read = $restrict_iterCtx(IC, vari_read*)
-  -- if IC_rel = $add_binders_iterCtx(IC_read, vari_bind*)
-  -- Iter_sourced: |- IC_rel
+  -- if premIterAL* = $annotate(IC, id_read*, vari_bind*)
+  -- Iter_sourced: |- premIterAL*
   -- if relPremAL = REL id ':' typedExp_in* '->' typedExp_out'*
-  -- if premAL_rel = $iterate_prem(IC_rel, relPremAL)
+  -- if premAL_rel = $iterate_prem(premIterAL*, relPremAL)
   -- if premAL* = premAL_rel :: premAL_bind*
 
 ;;; Conditions
@@ -72,7 +69,8 @@ rulegroup Algo_prem/cond {
     -- if IF typedExp = ifPrem
     -- if id* = $free_ids_exp(typedExp)
     -- if $is_bound(AC, id*)
-    -- if premAL_if = $iterate_prem(IC, ifPrem)
+    -- if premIterAL* = $annotate(IC, id*, eps)
+    -- if premAL_if = $iterate_prem(premIterAL*, ifPrem)
 
   rule Algo_prem/let-left:
     AC IC |- ifPrem : AC' premAL*
@@ -102,14 +100,12 @@ rule Algo_let:
   -- Bind_exps:
       AC IC |- [ typedExp_l ] : AC' ([ typedExp_l' ]) premAL_bind*
   -- if vari_r* = $free_vars_exp(typedExp_r)
-  -- if vari_read* = $shallowest_vars(vari_r*)
   -- if vari_l* = $free_vars_exp(typedExp_l')
   -- if vari_bind* = $shallowest_vars(vari_l*)
-  -- if IC_read = $restrict_iterCtx(IC, vari_read*)
-  -- if IC_let = $add_binders_iterCtx(IC_read, vari_bind*)
-  -- Iter_sourced: |- IC_let
+  -- if premIterAL* = $annotate(IC, $ids_of_varis(vari_r*), vari_bind*)
+  -- Iter_sourced: |- premIterAL*
   -- if premAL_let
-      = $iterate_prem(IC_let, LET typedExp_l' '=' typedExp_r)
+      = $iterate_prem(premIterAL*, LET typedExp_l' '=' typedExp_r)
 
 ;;; Holding and non-holding relations
 
@@ -118,24 +114,25 @@ rule Algo_prem/ifhold:
   -- if IFHOLD id ':' typedExp* = ifHoldPrem
   -- if id_read* = $free_ids_exps(typedExp*)
   -- if $is_bound(AC, id_read*)
-  -- if premAL_hold = $iterate_prem(IC, ifHoldPrem)
+  -- if premIterAL* = $annotate(IC, id_read*, eps)
+  -- if premAL_hold = $iterate_prem(premIterAL*, ifHoldPrem)
 
 rule Algo_prem/ifnothold:
   AC IC |- ifNotHoldPrem : AC ([ premAL_hold ])
   -- if IFNOTHOLD id ':' typedExp* = ifNotHoldPrem
   -- if id_read* = $free_ids_exps(typedExp*)
   -- if $is_bound(AC, id_read*)
-  -- if premAL_hold = $iterate_prem(IC, ifNotHoldPrem)
+  -- if premIterAL* = $annotate(IC, id_read*, eps)
+  -- if premAL_hold = $iterate_prem(premIterAL*, ifNotHoldPrem)
 
 ;;; Iterations
 
-;; Binders of an iteration are decided by its premise; the elaborated
-;; iteration lists every iterated variable as a source
+;; The elaborated iteration lists every variable it iterates;
+;; the premise inside decides which it reads and which it binds
 
 rule Algo_prem/iter:
-  AC IC |- ITER premIL (iter vari*) : AC' premAL*
-  -- if premIterAL = iter '<-' vari* '->' eps
-  -- if IC' = premIterAL :: IC
+  AC IC |- ITER premIL premIterIL : AC' premAL*
+  -- if IC' = premIterIL :: IC
   -- Algo_prem: AC IC' |- premIL : AC' premAL*
 
 ;;; Debugging
@@ -145,7 +142,8 @@ rule Algo_prem/dbg:
   -- if DEBUG typedExp = debugPrem
   -- if id* = $free_ids_exp(typedExp)
   -- if $is_bound(AC, id*)
-  -- if premAL_debug = $iterate_prem(IC, debugPrem)
+  -- if premIterAL* = $annotate(IC, id*, eps)
+  -- if premAL_debug = $iterate_prem(premIterAL*, debugPrem)
 
 ;; Premise sequences
 
