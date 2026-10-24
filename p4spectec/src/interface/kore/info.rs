@@ -2,8 +2,7 @@
 //!
 //! Sorts by their hook (`INT.Int` is `SortInt`), the constructors of
 //! collection sorts from their `element`, `concat`, and `unit` attributes,
-//! the sorts that stand for a number (`Sort8` for MInt widths), and the
-//! symbols that bind a variable.
+//! and the symbols that bind a variable.
 //! For example, `SortMap` has the element `_|->_`,
 //! the concatenation `_Map_`, and the unit `.Map`.
 
@@ -26,12 +25,8 @@ pub struct Info {
     sort_hooks: HashMap<String, String>,
     /// The constructors of each collection sort.
     pub collections: HashMap<String, Constructors>,
-    /// The sort standing for each number, e.g. `8` for `Sort8`.
-    pub nat_sorts: HashMap<String, String>,
     /// The symbols with the `binder` attribute, e.g. lambda.
     binders: HashSet<String>,
-    /// The symbol with the hook `MINT.integer`, `Int2MInt`.
-    pub int2mint: Option<String>,
 }
 
 /// The string an attribute holds, as in `hook{}("INT.Int")`.
@@ -68,11 +63,6 @@ impl Info {
             {
                 info.binders.insert(name.clone());
             }
-            if let Sentence::SymbolDecl { name, attrs, .. } = sentence
-                && string_attr("hook", attrs) == Some("MINT.integer")
-            {
-                info.int2mint = Some(name.clone());
-            }
             let Sentence::SortDecl { name, attrs, .. } = sentence else {
                 continue;
             };
@@ -90,9 +80,6 @@ impl Info {
                     unit: unit.to_owned(),
                 };
                 info.collections.insert(name.clone(), constructors);
-            }
-            if let Some(n) = string_attr("nat", attrs) {
-                info.nat_sorts.insert(n.to_owned(), name.clone());
             }
         }
         info

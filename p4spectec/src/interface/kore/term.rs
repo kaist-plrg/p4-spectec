@@ -8,11 +8,6 @@
 //! their sort, from its `element`, `concat`, and `unit` attributes.
 //! `Maker::of_pattern` reads the result of such a hook back into a term:
 //! a domain value, or a constructor applied to such results.
-//!
-//! `runtime_form` writes MInt literals for the runtime as `Int2MInt` of their
-//! value: the runtime reads a literal wider than 64 bits with its 64-bit words
-//! in the wrong order (`5p256` as `5 * 2^192`, `get_mint_token` in
-//! `runtime/util/ConfigurationParser.cpp`), and computes `Int2MInt` right.
 
 use std::rc::Rc;
 
@@ -59,12 +54,9 @@ pub struct Shapes {
     string: Mixop,
     float: Mixop,
     bytes: Mixop,
-    mint: Mixop,
     map: Mixop,
     set: Mixop,
     list: Mixop,
-    rangemap: Mixop,
-    range: Mixop,
     sort: Mixop,
     sortvar: Mixop,
     pair: Mixop,
@@ -92,12 +84,9 @@ impl Shapes {
             string: mixop(arena, "STRING text")?,
             float: mixop(arena, "FLOAT text")?,
             bytes: mixop(arena, "BYTES nat*")?,
-            mint: mixop(arena, "MINT nat nat")?,
             map: mixop(arena, "MAP sort m")?,
             set: mixop(arena, "SET sort s")?,
             list: mixop(arena, "LIST sort term*")?,
-            rangemap: mixop(arena, "RANGEMAP sort rangeitem*")?,
-            range: mixop(arena, "RANGE int int term")?,
             sort: mixop(arena, "SORT sortid sort*")?,
             sortvar: mixop(arena, "SORTVAR sortid")?,
             pair: mixop(arena, "k ':' v")?,
@@ -255,16 +244,6 @@ pub fn to_pattern(arena: &Arena, info: &Info, shapes: &Shapes, value: &Value) ->
                     .collect::<Result<String>>()?;
                 Ok(dv(hooked("BYTES.Bytes")?, text))
             }
-            [width, n] if is(arena, mixop, shapes.mint) => {
-                let width = int(arena, width)?;
-                let sort_width = info
-                    .nat_sorts
-                    .get(&width.to_string())
-                    .ok_or_else(|| format!("no sort stands for the width {width}"))?;
-                let mint = info.sort_of_hook("MINT.MInt")?;
-                let sort = Sort::Sort(mint.to_owned(), vec![sort_named(sort_width)]);
-                Ok(dv(sort, format!("{}p{width}", int(arena, n)?)))
-            }
             [sort, map] if is(arena, mixop, shapes.map) => {
                 let sort = sort_of_value(arena, shapes, sort)?;
                 let element = element_symbol(info, &sort)?;
@@ -294,33 +273,6 @@ pub fn to_pattern(arena: &Arena, info: &Info, shapes: &Shapes, value: &Value) ->
                 let elems = list(arena, terms)?
                     .iter()
                     .map(|elem| Ok(app(element, vec![to(elem)?])))
-                    .collect::<Result<_>>()?;
-                collection(info, &sort, elems)
-            }
-            // Each range [a, b) |-> v as RangeMap:Range(a, b) r|-> v
-            [sort, items] if is(arena, mixop, shapes.rangemap) => {
-                let sort = sort_of_value(arena, shapes, sort)?;
-                let element = element_symbol(info, &sort)?;
-                let sort_int = hooked("INT.Int")?;
-                let key = |i: BigInt| {
-                    Pattern::App(
-                        "inj".to_owned(),
-                        vec![sort_int.clone(), sort_named("SortKItem")],
-                        vec![dv(sort_int.clone(), i.to_string())],
-                    )
-                };
-                let elems = list(arena, items)?
-                    .iter()
-                    .map(|item| match case(arena, item)? {
-                        (mixop, [a, b, v]) if is(arena, mixop, shapes.range) => {
-                            let range = app(
-                                "LblRangeMap'Coln'Range",
-                                vec![key(int(arena, a)?), key(int(arena, b)?)],
-                            );
-                            Ok(app(element, vec![range, to(v)?]))
-                        }
-                        _ => Err("not a range".to_owned()),
-                    })
                     .collect::<Result<_>>()?;
                 collection(info, &sort, elems)
             }
@@ -422,14 +374,6 @@ impl Maker<'_> {
                 let bytes = self.list(typ::make::nat(), bytes)?;
                 self.term(self.shapes.bytes, vec![bytes])
             }
-            Some("MINT.MInt") => {
-                let (n, width) = text.split_once('p').ok_or_else(bad)?;
-                let n = n.parse::<BigInt>().map_err(|_| bad())?;
-                let width = width.parse::<BigInt>().map_err(|_| bad())?;
-                let width = self.nat(width)?;
-                let n = self.nat(n)?;
-                self.term(self.shapes.mint, vec![width, n])
-            }
             _ => {
                 let sort = self.sort(sort)?;
                 let t = self.text(text)?;
@@ -477,34 +421,4 @@ impl Maker<'_> {
         let typ = typ::make::var(id("res"), vec![typ_named("term")]);
         self.case(self.shapes.fail, vec![], typ)
     }
-}
-
-/// A pattern as the runtime is given it: each MInt literal `vpw` as
-/// `Int2MInt{SortW}(v)`.
-pub fn runtime_form(info: &Info, pattern: Pattern) -> Pattern {
-    stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match pattern {
-        Pattern::App(symbol, sorts, args) if symbol == "\\dv" => {
-            if let (Some(int2mint), [Sort::Sort(name, widths)], [Pattern::Str(text)]) =
-                (&info.int2mint, sorts.as_slice(), args.as_slice())
-                && info.sort_hook(name) == Some("MINT.MInt")
-                && let Some((value, _)) = text.split_once('p')
-                && let Ok(sort_int) = info.sort_of_hook("INT.Int")
-            {
-                return Pattern::App(
-                    int2mint.clone(),
-                    widths.clone(),
-                    vec![dv(sort_named(sort_int), value.to_owned())],
-                );
-            }
-            Pattern::App(symbol, sorts, args)
-        }
-        Pattern::App(symbol, sorts, args) => Pattern::App(
-            symbol,
-            sorts,
-            args.into_iter()
-                .map(|arg| runtime_form(info, arg))
-                .collect(),
-        ),
-        pattern => pattern,
-    })
 }

@@ -165,7 +165,7 @@ impl KoreInterface {
             .iter()
             .map(|t| term::to_pattern(arena, info, shapes, t))
             .collect::<Result<Vec<_>, _>>()?;
-        let pattern = term::runtime_form(info, Pattern::App(symbol, sorts, terms));
+        let pattern = Pattern::App(symbol, sorts, terms);
         // KORE_TRACE: each call, before the runtime sees it
         if std::env::var_os("KORE_TRACE").is_some() {
             eprintln!("hook> {pattern} : {sort}");

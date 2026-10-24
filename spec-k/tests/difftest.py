@@ -36,13 +36,7 @@ SPEC = [os.path.join(ROOT, "spec-meta/0-aux/0.0-stdlib.watsup")] + sorted(
     glob.glob(os.path.join(ROOT, "spec-k/[0-9]*.watsup")))
 BIN = os.path.join(ROOT, "bin/p4spectec")
 
-SpecRun = collections.namedtuple("SpecRun", "status steps ok secs msg signal", defaults=[None])
-
-# Hooks that end the process in the K runtime, in krun as in the spec, which
-# calls the runtime in its own process: a machine-integer division by zero and
-# ^%Int with a modulus of 0 (SIGFPE), and Int2Float with a precision below 1
-# (an MPFR assertion, SIGABRT)
-RUNTIME_SIGNALS = {6: "SIGABRT", 8: "SIGFPE"}
+SpecRun = collections.namedtuple("SpecRun", "status steps ok secs msg")
 
 
 def oneline(text, limit=160):
@@ -215,8 +209,7 @@ def run_spec(definition, library, init, out, compare, extra, timeout, memory_max
             return SpecRun("initfail", 0, False, secs, "")
         lines = (stdout + stderr).strip().splitlines()
         # a negative exit code is the signal that killed the process (e.g. -9 when out of memory)
-        return SpecRun("crash", None, False, secs, "exit %s: %s" % (rc, oneline(lines[-1]) if lines else "no output"),
-                       -rc if rc < 0 else None)
+        return SpecRun("crash", None, False, secs, "exit %s: %s" % (rc, oneline(lines[-1]) if lines else "no output"))
     failed = re.search(r"^steps check FAILED: (.*)$", stdout, re.M)
     ok = "matches " in stdout or "steps check: each of" in stdout
     return SpecRun("final" if m.group(1) == "final" else "error", int(m.group(2)), ok, secs,
@@ -232,8 +225,6 @@ def judge(spec, k_steps, fails_at, check, limit):
     if fails_at is not False:
         if spec.status == "error" and spec.ok and spec.steps == fails_at:
             return "pass (both fail after %d steps)" % fails_at
-        if spec.status == "crash" and spec.signal in RUNTIME_SIGNALS:
-            return "pass (both end in the K runtime, %s)" % RUNTIME_SIGNALS[spec.signal]
         return "FAIL: krun fails after %d steps, the spec: %s after %s steps%s" % (
             fails_at, spec.status, spec.steps, "" if spec.ok else ", configuration differs")
     if spec.status != "final":

@@ -5,14 +5,10 @@
 //! For example, `\dv{SortInt{}}("5")` is the string pattern `5`,
 //! the sort `SortInt{}`, the symbol `\dv` with one sort, and arity 1.
 //! Strings are byte strings, kept with one character per byte (`parse`).
-//! The runtime writes the sort of a domain value as one name, the sort's text
-//! without its last two characters (`emit_token` in
-//! `runtime/util/ConfigurationSerializer.cpp` assumes `S{}`), so the sort
-//! `SortMInt{Sort8{}}` of an MInt comes as the name `SortMInt{Sort8{`.
 
 use super::{
     ast::{Pattern, Sort},
-    parse::{parse_sort, text_of_bytes},
+    parse::text_of_bytes,
 };
 
 /// The first bytes of binary KORE.
@@ -109,17 +105,6 @@ impl Decoder<'_> {
     }
 }
 
-/// A sort by its name and arguments; a name cut from a sort's text is read
-/// as that sort.
-fn sort_named(name: String, sorts: Vec<Sort>) -> Result<Sort> {
-    if sorts.is_empty() && name.contains('{') {
-        // The two characters dropped are the closing braces of the sort
-        return parse_sort((name.clone() + "}}").as_bytes())
-            .map_err(|error| format!("sort {name} in binary KORE: {}", error.message));
-    }
-    Ok(Sort::Sort(name, sorts))
-}
-
 /// The last `n` items of the stack, which must be sorts.
 fn pop_sorts(stack: &mut Vec<Item>, n: usize) -> Result<Vec<Sort>> {
     let start = stack
@@ -165,7 +150,7 @@ pub fn decode(src: &[u8]) -> Result<Pattern> {
                 let arity = decoder.length(2)?;
                 let name = decoder.name()?;
                 let sorts = pop_sorts(&mut stack, arity)?;
-                stack.push(Item::Sort(sort_named(name, sorts)?));
+                stack.push(Item::Sort(Sort::Sort(name, sorts)));
             }
             0x07 => {
                 let name = decoder.name()?;

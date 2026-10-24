@@ -277,14 +277,15 @@ quick = ["sum.imp"]
 # The hooks of K's modules of domain values are computed by the K runtime, so
 # where they differ from the documentation the spec agrees with krun
 # (constant-folding, float-literal-range, overlapping-occurrences,
-# padright-value, powmod, string2int-syntax). The hooks on K terms are
-# specified after the documentation.
+# padright-value, powmod, string2int-syntax), but on inputs where the runtime
+# ends the process (^%Int with a modulus of 0, Int2Float with a precision
+# below 1), which are not tested. The hooks on K terms are specified after the
+# documentation.
 known = [
   # a fresh value of a rule and of a function it calls coincide
   "fresh-in-function",
   # choice and Set2List differ on ==K-equal collections
   "choice",
-  "rangemap-choice",
   # updateList does not check the bounds at index 0
   "updatelist-index0",
 ]
@@ -327,6 +328,10 @@ skip = [
   "exit-code-no-gen-top",
   "trace",
   "unparseKORE",
+  # machine integers (MInt) and range maps, which the spec does not cover
+  "mint-llvm",
+  "mint-llvm-4",
+  "rangemap-tests-llvm",
   # the initializers take the configuration as an argument (fresh variables
   # in the configuration), but krun's initial term does not pass it
   "issue-3520-freshConfig",
@@ -346,43 +351,7 @@ quick = [
   "int2bytes-no-len/14.test",
   "issue-1186/1.test",
   "list-in-bug/test2.listin",
-  "mint-llvm-4/1.test",
-  "mint-llvm-4/10.test",
-  "mint-llvm-4/11.test",
-  "mint-llvm-4/12.test",
-  "mint-llvm-4/13.test",
-  "mint-llvm-4/2.test",
-  "mint-llvm-4/3.test",
-  "mint-llvm-4/4.test",
-  "mint-llvm-4/5.test",
-  "mint-llvm-4/6.test",
-  "mint-llvm-4/7.test",
-  "mint-llvm-4/8.test",
-  "mint-llvm-4/9.test",
-  "mint-llvm/1.test",
-  "mint-llvm/10.test",
-  "mint-llvm/11.test",
-  "mint-llvm/12.test",
-  "mint-llvm/13.test",
-  "mint-llvm/14.test",
-  "mint-llvm/15.test",
-  "mint-llvm/16.test",
-  "mint-llvm/18.test",
-  "mint-llvm/2.test",
-  "mint-llvm/3.test",
-  "mint-llvm/4.test",
-  "mint-llvm/5.test",
-  "mint-llvm/6.test",
-  "mint-llvm/7.test",
-  "mint-llvm/8.test",
-  "mint-llvm/9.test",
   "or-llvm/3.test",
-  "rangemap-tests-llvm/in-keys-02.test",
-  "rangemap-tests-llvm/in-keys-06.test",
-  "rangemap-tests-llvm/inclusion-9.test",
-  "rangemap-tests-llvm/keys-1.test",
-  "rangemap-tests-llvm/keys-list-0.test",
-  "rangemap-tests-llvm/lookup-0.test",
   "string_escape/1.a",
 ]
 
@@ -413,13 +382,18 @@ skip = [
   "test21",
   # JSON hooks, not in the spec yet
   "test34",
+  # machine integers (MInt) and range maps, which the spec does not cover
+  "hash-mint",
+  "mint",
+  "mint-literal",
+  "rangemap-simple",
+  "test30",
+  "imp-with-rangemaps",
   # a function recursing 2^19 deep in one step: the LLVM backend makes it a
   # tail call, the spec nests it (about 12 KB a level)
   "iterated-map-pointer-residual",
-  # the spec does not end them within the timeout of 7,200 seconds: 266,050 to
-  # 1,632,181 krun steps (imp-with-rangemaps-4, 408,117 steps, took 3,304
-  # seconds), and 2,000,006 steps (test-gc-stringbuffer)
-  "imp-with-rangemaps",
+  # the spec does not end it within the timeout of 7,200 seconds: 2,000,006
+  # krun steps
   "test-gc-stringbuffer",
 ]
 known = [
@@ -429,18 +403,6 @@ known = [
 ]
 quick = [
   "lambda/closed-variable-capture.in",
-  "mint-literal/mint-literal.in",
-  "rangemap-simple/rangemap-simple-1.in",
-  "rangemap-simple/rangemap-simple-100.in",
-  "rangemap-simple/rangemap-simple-13.in",
-  "rangemap-simple/rangemap-simple-17.in",
-  "rangemap-simple/rangemap-simple-55.in",
-  "rangemap-simple/rangemap-simple-68.in",
-  "rangemap-simple/rangemap-simple-71.in",
-  "rangemap-simple/rangemap-simple-78.in",
-  "rangemap-simple/rangemap-simple-79.in",
-  "rangemap-simple/rangemap-simple-87.in",
-  "rangemap-simple/rangemap-simple-97.in",
   "strip_injection/strip_injection.in",
   "test-list-get/11.in",
   "test32/test32.in",

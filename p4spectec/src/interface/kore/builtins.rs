@@ -1,9 +1,9 @@
 //! Text builtins of the K specification, outside hooks
 //!
-//! Reading domain values (`spec-k/6-load.watsup`) and fresh variables
-//! (`spec-k/4.2-eval.watsup`) takes text apart. A KORE string has
-//! one character per byte (`parse`), so positions and lengths are in bytes,
-//! as in the LLVM backend. For example, `$string_find("12p8", "p", 0)` is 2.
+//! Reading domain values and hooks (`spec-k/6-load.watsup`) and fresh
+//! variables (`spec-k/4.2-eval.watsup`) takes text apart. A KORE string has
+//! one character per byte (`parse`), so positions are in bytes, as in the
+//! LLVM backend. For example, `$string_find("INT.add", ".", 0)` is 3.
 
 use num_bigint::BigInt;
 
@@ -40,13 +40,6 @@ fn index(i: &BigInt) -> Result<usize> {
 /// An integer value.
 fn make_int(arena: &mut Arena, i: BigInt) -> Result<Value> {
     Ok(value::make::int(arena, i, Span::default())?)
-}
-
-/// `dec $string_length(text) : int`, in bytes.
-fn string_length(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value> {
-    extract::zero(targs)?;
-    let t = text(arena, extract::one(values)?)?;
-    make_int(arena, BigInt::from(t.chars().count()))
 }
 
 /// `dec $string_substr(text, int, int) : text`, the bytes in [start, end).
@@ -125,9 +118,8 @@ fn string_to_bytes(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result
 }
 
 /// The builtins above, by name.
-pub fn entries() -> [(&'static str, BuiltinImpl); 5] {
+pub fn entries() -> [(&'static str, BuiltinImpl); 4] {
     [
-        ("string_length", Box::new(string_length)),
         ("string_substr", Box::new(string_substr)),
         ("string_find", Box::new(string_find)),
         ("string_to_int", Box::new(string_to_int)),
