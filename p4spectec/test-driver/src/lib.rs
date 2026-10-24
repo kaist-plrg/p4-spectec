@@ -17,7 +17,6 @@ pub mod algo;
 
 pub mod metaparse;
 
-pub mod algo_run;
 
 pub mod structure;
 

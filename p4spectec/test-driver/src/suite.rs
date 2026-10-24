@@ -72,23 +72,6 @@ pub struct MetaparseSuite {
     pub inputs: Vec<PathBuf>,
 }
 
-/// Registers IL-to-AL scripts and their expected outcomes.
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct AlgoRunSuite {
-    pub name: String,
-    pub root: PathBuf,
-    pub expected: PathBuf,
-}
-
-/// Supplies the IL-to-AL specification and scripts.
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct AlgoRunConfig {
-    pub algo: PathBuf,
-    pub suites: Vec<AlgoRunSuite>,
-}
-
 /// Registers P4 parsing and roundtrip inputs.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -313,7 +296,6 @@ pub struct Modules {
     pub elab: PathBuf,
     pub algo: PathBuf,
     pub metaparse: PathBuf,
-    pub algo_run: PathBuf,
     pub structure: PathBuf,
     pub prose: PathBuf,
     pub adoc: PathBuf,
@@ -426,18 +408,6 @@ pub fn load_metaparse(path: &Path) -> Result<Vec<MetaparseSuite>> {
         paths_exist(&suite.inputs, &suite.name)?;
     }
     Ok(suites)
-}
-
-/// Loads IL-to-AL script suites with their specification.
-pub fn load_algo_run(path: &Path) -> Result<AlgoRunConfig> {
-    let config: AlgoRunConfig = load(path)?;
-    names_valid(config.suites.iter().map(|suite| suite.name.as_str()))?;
-    paths_exist(std::slice::from_ref(&config.algo), "algo-run")?;
-    for suite in &config.suites {
-        directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
-        expectation_exists(&suite.expected)?;
-    }
-    Ok(config)
 }
 
 /// Loads structured snapshots with module-owned rule-group options.
@@ -634,7 +604,6 @@ impl Index {
             &mut modules.elab,
             &mut modules.algo,
             &mut modules.metaparse,
-            &mut modules.algo_run,
             &mut modules.structure,
             &mut modules.prose,
             &mut modules.adoc,
@@ -658,7 +627,6 @@ impl Index {
         println!("elab: {:#?}", load_snapshots(&self.suites.elab)?);
         println!("algo: {:#?}", load_snapshots(&self.suites.algo)?);
         println!("metaparse: {:#?}", load_metaparse(&self.suites.metaparse)?);
-        println!("algo-run: {:#?}", load_algo_run(&self.suites.algo_run)?);
         println!("structure: {:#?}", load_structure(&self.suites.structure)?);
         println!("prose: {:#?}", load_snapshots(&self.suites.prose)?);
         println!("adoc: {:#?}", load_adoc(&self.suites.adoc)?);

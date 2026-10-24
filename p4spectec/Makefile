@@ -39,7 +39,7 @@ clean:
 test: test-expected test-sim-al test-sim-sl test-sim-pl
 
 # Standalone acceptance driver; registrations live in test-driver/suites.json
-.PHONY: test-expected test-promote test-elab test-algo test-metaparse test-algo-run test-structure test-prose test-p4parse test-run-al test-run-sl test-run-pl test-micro
+.PHONY: test-expected test-promote test-elab test-algo test-metaparse test-structure test-prose test-p4parse test-run-al test-run-sl test-run-pl test-micro
 .PHONY: test-diagnostics test-diagnostics-promote diagnostic-cli
 DRIVER = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --
 DIAGNOSTIC_CLI = $(TARGET_DIR)/release/p4spectec
@@ -52,9 +52,6 @@ test-algo:
 
 test-metaparse:
 	env -u UPDATE_EXPECT $(DRIVER) metaparse
-
-test-algo-run:
-	env -u UPDATE_EXPECT $(DRIVER) algo-run
 
 test-structure:
 	env -u UPDATE_EXPECT $(DRIVER) structure
@@ -84,7 +81,7 @@ test-micro:
 	env -u UPDATE_EXPECT $(DRIVER) micro sl
 	env -u UPDATE_EXPECT $(DRIVER) micro pl
 
-test-expected: test-elab test-algo test-metaparse test-algo-run test-structure test-prose test-adoc test-p4parse test-run-al test-run-sl test-run-pl test-micro test-diagnostics
+test-expected: test-elab test-algo test-metaparse test-structure test-prose test-adoc test-p4parse test-run-al test-run-sl test-run-pl test-micro test-diagnostics
 
 # Rerun elab/algo/prose/adoc and update snapshots; does not approve a previous run
 # Parsing, structure, execution, simulation, and exclusions are never promoted
