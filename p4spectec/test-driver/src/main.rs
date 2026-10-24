@@ -13,6 +13,7 @@ mod prose;
 
 mod adoc;
 
+mod micro;
 mod p4parse;
 mod run;
 mod sim;
@@ -78,6 +79,13 @@ enum Command {
         #[command(flatten)]
         options: ExecutionOptions,
     },
+    /// Run micro tests: standalone spec-language sources by pipeline stage
+    Micro {
+        #[command(subcommand)]
+        language: Language,
+        #[command(flatten)]
+        options: ExecutionOptions,
+    },
     /// Compare diagnostic output with stored snapshots
     Diagnostics {
         #[arg(long, value_enum)]
@@ -103,7 +111,11 @@ fn execute(mut cli: Cli) -> Result<()> {
     let command = &mut cli.command;
     if matches!(
         command,
-        Command::Structure | Command::P4parse | Command::Run { .. } | Command::Sim { .. }
+        Command::Structure
+            | Command::P4parse
+            | Command::Run { .. }
+            | Command::Sim { .. }
+            | Command::Micro { .. }
     ) && std::env::var_os("UPDATE_EXPECT").is_some()
     {
         return Err(Error::Invalid(
@@ -144,6 +156,9 @@ fn execute(mut cli: Cli) -> Result<()> {
         }
         Command::Sim { language, options } => {
             sim::run(&suite::load_simulation(&index.suites.sim)?, *language, *options)
+        }
+        Command::Micro { language, options } => {
+            micro::run(&suite::load_micro(&index.suites.micro)?, *language, *options)
         }
         Command::Diagnostics { suite, path_cli } => {
             diagnostic::run(&index.suites.diagnostics, *suite, path_cli.as_deref())
