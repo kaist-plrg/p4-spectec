@@ -4,6 +4,8 @@
 //! For example, `\dv{SortInt{}}("1")` is an application of `\dv`
 //! to the string `1`, with the sort `SortInt{}`.
 
+use std::fmt::{self, Display, Write};
+
 // == Sorts and patterns
 
 /// A sort: `SortInt{}`, `SortMap{}`, or a sort variable `S`.
@@ -82,5 +84,62 @@ impl Definition {
         self.modules
             .iter()
             .flat_map(|module| module.sentences.iter())
+    }
+}
+
+// == Printing
+//
+// KORE text, as the LLVM backend parses it. A string has one character
+// per byte; bytes outside printable ASCII are written as `\xHH`.
+
+impl Display for Sort {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Sort::Sort(name, sorts) => {
+                write!(f, "{name}{{")?;
+                write_list(f, sorts)?;
+                f.write_char('}')
+            }
+            Sort::Var(name) => f.write_str(name),
+        }
+    }
+}
+
+fn write_list<T: Display>(f: &mut fmt::Formatter<'_>, items: &[T]) -> fmt::Result {
+    for (idx, item) in items.iter().enumerate() {
+        if idx > 0 {
+            f.write_str(", ")?;
+        }
+        item.fmt(f)?;
+    }
+    Ok(())
+}
+
+impl Display for Pattern {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Terms nest deeply, e.g. long K sequences and maps
+        stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match self {
+            Pattern::Var(name, sort) | Pattern::SetVar(name, sort) => write!(f, "{name}:{sort}"),
+            Pattern::App(name, sorts, args) => {
+                write!(f, "{name}{{")?;
+                write_list(f, sorts)?;
+                f.write_str("}(")?;
+                write_list(f, args)?;
+                f.write_char(')')
+            }
+            Pattern::Str(text) => {
+                f.write_char('"')?;
+                for c in text.chars() {
+                    match c {
+                        '"' => f.write_str("\\\"")?,
+                        '\\' => f.write_str("\\\\")?,
+                        ' '..='~' => f.write_char(c)?,
+                        c if u32::from(c) <= 0xff => write!(f, "\\x{:02x}", u32::from(c))?,
+                        c => write!(f, "\\U{:08x}", u32::from(c))?,
+                    }
+                }
+                f.write_char('"')
+            }
+        })
     }
 }

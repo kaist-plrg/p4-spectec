@@ -7,7 +7,10 @@
 use std::{path::Path, rc::Rc, time::Instant};
 
 use crate::lang::{
-    common::{prim::num::Natural, source::Span},
+    common::{
+        prim::num::{self, Natural},
+        source::Span,
+    },
     data::{
         arena::Arena,
         typ,
@@ -37,6 +40,7 @@ impl Krun {
         spec: Spec,
         config: Config,
         path_definition: &Path,
+        path_library: Option<&Path>,
         path_term: &Path,
         depth: Option<u64>,
     ) -> Result<Self, RunError> {
@@ -45,8 +49,14 @@ impl Krun {
         let mut runner = Runner::new(&mut arena, spec, config, interface, NullExtern)
             .map_err(RunError::Build)?;
 
-        // Read the definition, then the initial term against its symbols
+        // Open the runtime, read the definition, then the initial term against its symbols
         let time = Instant::now();
+        if let Some(path_library) = path_library {
+            runner
+                .interface
+                .open_runtime(path_library)
+                .map_err(RunError::Parse)?;
+        }
         let (value_definition, axioms) = runner
             .interface
             .load_definition(&mut arena, path_definition)
@@ -91,4 +101,36 @@ fn depth_value(
         .map_err(to_error)?;
     let typ = Rc::new(typ::make::opt(typ::make::nat()).node);
     value::make::opt(arena, typ, value_depth, span).map_err(to_error)
+}
+
+/// The outcome of `Krun`, its `runres`.
+pub enum Outcome {
+    /// The configuration after the steps taken, at the end or the step limit.
+    Final(String, String),
+    /// The configuration where a step failed, after the steps taken.
+    Error(String, String),
+    /// The initial term cannot be evaluated.
+    InitFail,
+}
+
+impl Krun {
+    /// A `runres` with its configuration in KORE.
+    pub fn outcome(&mut self, result: &Value) -> Result<Outcome, String> {
+        let arena = &mut self.arena;
+        let selected = value::get::matches_string! { arena, result,
+            "FINAL nat term" => |values| Some((true, values.to_vec())),
+            "ERROR nat term" => |values| Some((false, values.to_vec())),
+            _ => None,
+        };
+        let Some((is_final, values)) = selected else {
+            return Ok(Outcome::InitFail);
+        };
+        let [steps, term] = values[..] else {
+            return Err("a runres has two arguments".to_owned());
+        };
+        let steps = value::get::num(&self.arena, &steps).map_err(|error| error.to_string())?;
+        let steps = num::to_int(steps).to_string();
+        let kore = self.runner.interface.kore_of_term(&self.arena, &term)?;
+        Ok(if is_final { Outcome::Final(steps, kore) } else { Outcome::Error(steps, kore) })
+    }
 }

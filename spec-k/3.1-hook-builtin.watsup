@@ -2,6 +2,13 @@
 ;; Hooks delegated to builtins
 ;;
 
+;;; A hooked symbol applied to terms is evaluated by the K runtime of the
+;;; definition, the LLVM backend's; FAIL if the runtime fails, as on a division
+;;; by zero
+
+builtin dec $call_hook(symid, sort*, sort, term*) : res<term>
+  hint(prose_in "the result of the K runtime on" %0 "applied to" %3)
+
 ;;; Implemented in p4spec/lib/interface/kore/builtins.ml after the LLVM
 ;;; backend's runtime; with P4-SpecTec's own builtins, the trusted base of hooks
 

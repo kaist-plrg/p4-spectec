@@ -16,7 +16,7 @@ use p4spectec::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
 
 use p4spectec::runner::{self, RunError};
 
-use p4spectec::interface::kore::krun::Krun;
+use p4spectec::interface::kore::krun::{Krun, Outcome};
 
 // = Helpers
 
@@ -294,6 +294,10 @@ struct KrunArgs {
     /// The kompiled definition, `definition.kore`.
     #[arg(long = "def", value_name = "KORE")]
     definition: PathBuf,
+    /// The K runtime of the definition, for hooks:
+    /// a library made by `llvm-kompile definition.kore dt c`.
+    #[arg(long = "lib", value_name = "SO")]
+    library: Option<PathBuf>,
     /// The initial term, as krun passes it to the interpreter.
     #[arg(long = "init", value_name = "KORE")]
     init: PathBuf,
@@ -326,8 +330,9 @@ fn krun_command(args: KrunArgs) -> Result<(), ()> {
         RunError::Parse(error) => render_report(renderer, &error.into_report()),
         RunError::Eval(error) => render_exec_report(&error.into_report()),
     };
-    let mut krun = Krun::load(spec, config, &args.definition, &args.init, args.depth)
-        .map_err(|error| render_error(&mut renderer, error))?;
+    let mut krun =
+        Krun::load(spec, config, &args.definition, args.library.as_deref(), &args.init, args.depth)
+            .map_err(|error| render_error(&mut renderer, error))?;
     println!("read {} axioms ({:.2}s)", krun.axioms, krun.secs_load);
 
     let time = std::time::Instant::now();
@@ -335,7 +340,16 @@ fn krun_command(args: KrunArgs) -> Result<(), ()> {
         .run()
         .map_err(|error| render_error(&mut renderer, error))?;
     println!("ran ({:.2}s)", time.elapsed().as_secs_f64());
-    println!("{}", Print::to_string(&result.view(&krun.arena)));
+    match krun.outcome(&result) {
+        Ok(Outcome::Final(steps, kore)) => println!("final after {steps} steps\n{kore}"),
+        Ok(Outcome::Error(steps, kore)) => println!("ERROR after {steps} steps\n{kore}"),
+        Ok(Outcome::InitFail) => println!("initial term failed to evaluate"),
+        Err(message) => {
+            eprintln!("cannot write the result as KORE: {message}");
+            println!("{}", Print::to_string(&result.view(&krun.arena)));
+            return Err(());
+        }
+    }
     Ok(())
 }
 

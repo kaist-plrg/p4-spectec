@@ -59,7 +59,8 @@ fn p4_with_unparser(unparser: P4Unparser) -> P4Interface {
 
 // == KORE
 
-/// Builds the KORE interface with the standard specification builtins.
+/// Builds the KORE interface with the standard specification builtins
+/// and the text builtins of the K specification.
 pub fn kore() -> KoreInterface {
-    KoreInterface::new(Builtins::new())
+    KoreInterface::new(Builtins::with_extensions(kore::builtins::entries()))
 }

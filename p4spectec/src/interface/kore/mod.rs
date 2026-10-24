@@ -5,23 +5,51 @@
 //! `KoreInterface` loads a kompiled definition (`definition.kore`)
 //! and then parses initial terms against its symbols.
 //! `krun` runs the specification's `Krun` relation from an initial term.
+//!
+//! Hooks are delegated to the K runtime of the definition (`llvm`):
+//! `$call_hook` writes its arguments as KORE (`term`), has the runtime
+//! evaluate the hooked symbol, and reads the result back (`binary`).
+//! `builtins` has the text builtins for reading domain values.
 
 use std::{collections::HashSet, path::Path, path::PathBuf};
 
-use crate::lang::data::{arena::Arena, value::flat::Value};
+use num_bigint::BigInt;
+
+use crate::lang::{
+    common::{prim::num::Natural, source::Span},
+    data::{
+        arena::Arena,
+        typ,
+        value::flat::{self as value, Value},
+    },
+};
 
 use crate::lang::il::ast::{Id, Typ};
 
 use crate::diagnostic::{Diagnostic, Report, Severity};
 
-use crate::runner::{Eval, Extern, Interface, InterfaceError, Interpreter, RunnerContext};
+use crate::runner::{
+    Eval, Extern, Interface, InterfaceError, Interpreter, RunnerContext, SideEffect,
+};
 
 use super::builtin::call::Builtins;
 
+use self::{
+    ast::{Pattern, Sort},
+    info::Info,
+    llvm::Runtime,
+    term::Shapes,
+};
+
 pub mod ast;
+pub mod binary;
+pub mod builtins;
+pub mod info;
 pub mod krun;
+pub mod llvm;
 pub mod load;
 pub mod parse;
+pub mod term;
 
 // == Errors
 
@@ -29,6 +57,7 @@ const KORE_READ: &str = "kore/read";
 const KORE_PARSE: &str = "kore/parse";
 const KORE_LOAD: &str = "kore/load";
 const KORE_INPUT: &str = "kore/input";
+const KORE_RUNTIME: &str = "kore/runtime";
 
 fn diagnostic(code: &str, message: impl Into<String>) -> InterfaceError {
     let report: Report =
@@ -63,12 +92,26 @@ pub struct KoreInterface {
     builtins: Builtins,
     /// The symbols and aliases of the loaded definition.
     known: Option<HashSet<String>>,
+    /// What converting terms needs of the loaded definition.
+    info: Option<(Info, Shapes)>,
+    /// The K runtime of the definition.
+    runtime: Option<Runtime>,
+    /// The next `$fresh_nat`.
+    fresh: u64,
 }
 
 impl KoreInterface {
     /// Assembles the KORE interface with its builtin table.
     pub(crate) fn new(builtins: Builtins) -> Self {
-        Self { builtins, known: None }
+        Self { builtins, known: None, info: None, runtime: None, fresh: 0 }
+    }
+
+    /// Opens the K runtime of the definition, a library made by
+    /// `llvm-kompile definition.kore dt c`.
+    pub fn open_runtime(&mut self, path: &Path) -> Result<(), InterfaceError> {
+        self.runtime =
+            Some(Runtime::open(path).map_err(|message| diagnostic(KORE_RUNTIME, message))?);
+        Ok(())
     }
 
     /// Loads a definition as a `kdefinition` value, with its number of axioms.
@@ -84,8 +127,106 @@ impl KoreInterface {
         let known = load::known_symbols(&definition);
         let loaded = load::load_definition(arena, &known, &definition)
             .map_err(|error| load_error(path, error))?;
+        let shapes = Shapes::new(arena).map_err(|message| diagnostic(KORE_LOAD, message))?;
         self.known = Some(known);
+        self.info = Some((Info::new(&definition), shapes));
         Ok(loaded)
+    }
+
+    /// `$call_hook(symid, sort*, sort, term*) : res<term>`: the hooked symbol
+    /// applied to the terms, by the K runtime; `FAIL` if the runtime fails.
+    fn call_hook(&self, arena: &mut Arena, values: &[Value]) -> Result<Value, String> {
+        let (Some((info, shapes)), Some(runtime)) = (&self.info, &self.runtime) else {
+            return Err("hooks need the K runtime of the definition (--lib)".to_owned());
+        };
+        let [symbol, sorts, sort, terms] = values else {
+            return Err(format!("$call_hook takes 4 arguments, not {}", values.len()));
+        };
+        let symbol = value::get::text(arena, symbol)
+            .map_err(|e| e.to_string())?
+            .to_owned();
+        let sorts = value::get::list(arena, sorts)
+            .map_err(|e| e.to_string())?
+            .iter()
+            .map(|sort| term::sort_of_value(arena, shapes, sort))
+            .collect::<Result<Vec<_>, _>>()?;
+        let sort = term::sort_of_value(arena, shapes, sort)?;
+        let terms = value::get::list(arena, terms)
+            .map_err(|e| e.to_string())?
+            .iter()
+            .map(|t| term::to_pattern(arena, info, shapes, t))
+            .collect::<Result<Vec<_>, _>>()?;
+        let pattern = Pattern::App(symbol, sorts, terms);
+        let mut maker = term::Maker { arena, info, shapes };
+        match runtime.simplify(&pattern.to_string(), &sort) {
+            Ok(result) => {
+                let result = unwrap_result(binary::decode(&result)?, &sort);
+                // Binary KORE loses the names of KVars; the printer keeps them
+                let result = if info.has_kvar(&result) {
+                    let text = runtime.print(&pattern.to_string(), &sort)?;
+                    let kseq = parse::parse_pattern(text.as_bytes())
+                        .map_err(|error| format!("the runtime prints {text}: {}", error.message))?;
+                    unwrap_printed(desugar_assoc(kseq), &sort)?
+                } else {
+                    result
+                };
+                let result = maker.of_pattern(&result)?;
+                maker.ok(result)
+            }
+            Err(message) => {
+                if std::env::var_os("KORE_TRACE").is_some() {
+                    eprintln!("hook failed: {pattern}: {message}");
+                }
+                maker.fail()
+            }
+        }
+    }
+
+    /// `$float_literal(text) : text?`: a Float literal in the runtime's
+    /// output format, e.g. `0.5` as `0.500000000000000000000000000000000000000e0`.
+    fn float_literal(&self, arena: &mut Arena, values: &[Value]) -> Result<Value, String> {
+        let (Some((info, _)), Some(runtime)) = (&self.info, &self.runtime) else {
+            return Err("Float literals need the K runtime of the definition (--lib)".to_owned());
+        };
+        let [text] = values else {
+            return Err(format!("$float_literal takes 1 argument, not {}", values.len()));
+        };
+        let text = value::get::text(arena, text)
+            .map_err(|e| e.to_string())?
+            .to_owned();
+        let sort = Sort::Sort(info.sort_of_hook("FLOAT.Float")?.to_owned(), vec![]);
+        let literal = Pattern::App("\\dv".to_owned(), vec![sort.clone()], vec![Pattern::Str(text)]);
+        let normal = match runtime.simplify(&literal.to_string(), &sort) {
+            Ok(result) => match unwrap_result(binary::decode(&result)?, &sort) {
+                Pattern::App(dv, _, args) if dv == "\\dv" => match args.as_slice() {
+                    [Pattern::Str(normal)] => Some(normal.clone()),
+                    _ => None,
+                },
+                _ => None,
+            },
+            Err(_) => None,
+        };
+        let normal = normal
+            .map(|normal| value::make::text(arena, normal, Span::default()))
+            .transpose()
+            .map_err(|e| e.to_string())?;
+        let typ = typ::make::opt(typ::make::text()).node.into();
+        value::make::opt(arena, typ, normal, Span::default()).map_err(|e| e.to_string())
+    }
+
+    /// A term of the specification as KORE text.
+    pub fn kore_of_term(&self, arena: &Arena, value: &Value) -> Result<String, String> {
+        let Some((info, shapes)) = &self.info else {
+            return Err("no definition is loaded".to_owned());
+        };
+        Ok(term::to_pattern(arena, info, shapes, value)?.to_string())
+    }
+
+    /// `$fresh_nat() : nat`: 0, 1, 2, ... within a program.
+    fn fresh_nat(&mut self, arena: &mut Arena) -> Result<Value, String> {
+        let n = Natural::try_from(BigInt::from(self.fresh)).map_err(|e| e.to_string())?;
+        self.fresh += 1;
+        value::make::nat(arena, n, Span::default()).map_err(|e| e.to_string())
     }
 }
 
@@ -119,14 +260,105 @@ impl Interface for KoreInterface {
         Interp: Interpreter<Self, Ext>,
     {
         let (arena, interface) = ctx.arena_and_interface_mut();
-        interface
-            .builtins
-            .invoke(arena, id, targs, values)
-            .map_err(InterfaceError::from)
+        let (result, effect) = match id.node.as_ref() {
+            "call_hook" => (interface.call_hook(arena, values), SideEffect::Pure),
+            "float_literal" => (interface.float_literal(arena, values), SideEffect::Pure),
+            "fresh_nat" => (interface.fresh_nat(arena), SideEffect::Impure),
+            _ => {
+                return interface
+                    .builtins
+                    .invoke(arena, id, targs, values)
+                    .map_err(InterfaceError::from);
+            }
+        };
+        // A failure of the boundary itself ends the run
+        let effect = if result.is_err() { SideEffect::Impure } else { effect };
+        let result = result.map_err(|message| diagnostic(KORE_RUNTIME, message));
+        Eval::new(result, effect)
     }
 
-    /// Keeps the loaded definition; resets builtin state.
+    /// Keeps the loaded definition and runtime; resets builtin state.
     fn clear(&mut self) {
         self.builtins.init();
+        self.fresh = 0;
     }
+}
+
+/// A term of sort `S` from its injection into `SortKItem`: the runtime
+/// joins injections, so `inj{A, SortKItem{}}(t)` stands for
+/// `inj{A, S}(t)` when `A` is a subsort of `S`, and for `t` when `A` is `S`.
+fn from_kitem(pattern: Pattern, sort: &Sort) -> Pattern {
+    match pattern {
+        Pattern::App(inj, mut sorts, mut args)
+            if inj == "inj"
+                && args.len() == 1
+                && sorts.len() == 2
+                && matches!(&sorts[1], Sort::Sort(kitem, _) if kitem == "SortKItem")
+                && !matches!(sort, Sort::Sort(name, _) if name == "SortKItem") =>
+        {
+            if &sorts[0] == sort {
+                args.remove(0)
+            } else {
+                sorts[1] = sort.clone();
+                Pattern::App(inj, sorts, args)
+            }
+        }
+        pattern => pattern,
+    }
+}
+
+/// The result of `kore_simplify` without its wrapping: the runtime gives
+/// `rawTerm{}(inj{A, SortKItem{}}(t))` for a term of sort `S` (`from_kitem`).
+fn unwrap_result(pattern: Pattern, sort: &Sort) -> Pattern {
+    let pattern = match pattern {
+        Pattern::App(raw, _, mut args) if raw == "rawTerm" && args.len() == 1 => args.remove(0),
+        pattern => pattern,
+    };
+    from_kitem(pattern, sort)
+}
+
+/// The term in the runtime's printing of a result (`Runtime::print`).
+fn unwrap_printed(pattern: Pattern, sort: &Sort) -> Result<Pattern, String> {
+    if matches!(sort, Sort::Sort(name, _) if name == "SortK") {
+        return Ok(pattern);
+    }
+    match pattern {
+        Pattern::App(kseq, _, mut args) if kseq == "kseq" && args.len() == 2 => {
+            Ok(from_kitem(args.swap_remove(0), sort))
+        }
+        _ => Err("the runtime prints no K sequence".to_owned()),
+    }
+}
+
+/// `\left-assoc{}(f(a, b, c))` as `f(f(a, b), c)`, and `\right-assoc{}(f(a, b, c))`
+/// as `f(a, f(b, c))`, as the runtime's printer writes collections.
+fn desugar_assoc(pattern: Pattern) -> Pattern {
+    stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match pattern {
+        Pattern::App(assoc, _, mut args)
+            if (assoc == "\\left-assoc" || assoc == "\\right-assoc") && args.len() == 1 =>
+        {
+            let Pattern::App(f, sorts, elems) = args.remove(0) else {
+                return Pattern::App(assoc, vec![], args);
+            };
+            let mut elems: Vec<Pattern> = elems.into_iter().map(desugar_assoc).collect();
+            if elems.is_empty() {
+                return Pattern::App(f, sorts, elems);
+            }
+            let join = |l, r| Pattern::App(f.clone(), sorts.clone(), vec![l, r]);
+            if assoc == "\\left-assoc" {
+                let first = elems.remove(0);
+                elems.into_iter().fold(first, join)
+            } else {
+                let last = elems.pop().expect("not empty");
+                elems
+                    .into_iter()
+                    .rev()
+                    .fold(last, |acc, elem| join(elem, acc))
+            }
+        }
+        Pattern::App(f, sorts, args) => {
+            Pattern::App(f, sorts, args.into_iter().map(desugar_assoc).collect())
+        }
+        pattern => pattern,
+    })
 }
