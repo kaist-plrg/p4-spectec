@@ -98,6 +98,29 @@ pub(crate) fn binding_dimension_mismatch(id: &Id, dim_l: &Dim, dim_r: &Dim) -> A
         vec!["A variable can have only one type and iteration dimension within a binder pattern. These two positions give the variable different dimensions.".into()])
 }
 
+const BOUND_DIMENSION_MISMATCH: &str = "algo/bound-dimension-mismatch";
+
+/// Relates a read of a variable to a binding at a larger dimension.
+pub(crate) fn bound_dimension_mismatch(id: &Id, dim_bound: &Dim, dim_read: &Dim) -> AlgoError {
+    cause(
+        BOUND_DIMENSION_MISMATCH,
+        format!(
+            "`{}` is read at dimension `{}` but bound at dimension `{}`",
+            id.node,
+            dim_read.to_string(),
+            dim_bound.to_string()
+        ),
+        vec![
+            Label::primary(&id.span, format!("`{}` is read here", id.node)),
+            Label::secondary(&dim_bound.typ.span, "bound here"),
+        ],
+        vec![format!(
+            "A variable bound inside an iteration holds one value per iteration. Read it inside the same iterations, or as a whole through an iteration such as `{}*`.",
+            id.node
+        )],
+    )
+}
+
 const EQUALITY_BINDING_INVALID: &str = "algo/equality-binding-invalid";
 
 /// Reports an equality that introduces variables on both sides.

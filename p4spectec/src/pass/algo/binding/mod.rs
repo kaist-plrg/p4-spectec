@@ -4,12 +4,14 @@
 //! `collect` finds binding occurrences,
 //! `multiple` and `partial` rewrite repeated and partially bound patterns,
 //! `antiunify` merges rule inputs into one template,
+//! `bound` checks the dimensions of bound reads,
 //! `iteration` and `dimension` track iteration scopes,
 //! `pattern` and `shallow` check table rows,
 //! and `context` and `bind` hold the environments.
 
 pub(in crate::pass::algo) mod antiunify;
 pub(in crate::pass::algo) mod bind;
+pub(in crate::pass::algo) mod bound;
 pub(in crate::pass::algo) mod collect;
 pub(in crate::pass::algo) mod context;
 pub(in crate::pass::algo) mod dimension;

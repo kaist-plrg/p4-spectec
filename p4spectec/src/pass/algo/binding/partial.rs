@@ -29,7 +29,7 @@ use std::rc::Rc;
 use crate::lang::{
     common::{ds::set::IdSet, prim, source::Span},
     data::notation::tree as notation,
-    traits::free::FreeIds,
+    traits::free::{FreeIds, FreeVars},
 };
 
 use crate::lang::il::{ast, fresh, var};
@@ -43,6 +43,7 @@ use crate::{note_phrase, phrase};
 use super::super::{AlgoError, error};
 
 use super::{
+    bound,
     context::Context,
     dimension,
     iteration::{ICtx, Iteration},
@@ -318,32 +319,53 @@ fn gen_prem_bind_sub(
 }
 
 /// Builds the premises of one rename under the enclosing iterations.
-fn gen_prem(iter_ctx_prem: &ICtx, rename: &Rename) -> Vec<AnalyzedPrem> {
+///
+/// A bound value is read by its condition, so its dimensions are checked here:
+/// after `-- (if y = x + 1)*`, `-- if (z, y) = e` reads `y` at `nat` and is rejected.
+fn gen_prem(
+    ctx: &Context,
+    iter_ctx_prem: &ICtx,
+    rename: &Rename,
+) -> Result<Vec<AnalyzedPrem>, AlgoError> {
     // The rename's own iterations sit inside the premise's
     let mut iterations = rename.iter_ctx.as_slice().to_vec();
     iterations.extend(iter_ctx_prem.as_slice().iter().cloned());
     let iter_ctx = ICtx::from_iterations(iterations);
     match &rename.source {
+        // Read the bound value under the iterations of its condition
         Source::Bound { exp_from } => {
+            for var in exp_from.free_vars() {
+                let dim_bound = ctx
+                    .venv
+                    .get(&var.id)
+                    .expect("variables outside the binders must be bound");
+                bound::check_read(&iter_ctx, &var, dim_bound)?;
+            }
             let prem_analyzed = gen_prem_bound(&iter_ctx, &rename.destination, exp_from);
-            vec![prem_analyzed]
+            Ok(vec![prem_analyzed])
         }
+        // Guard a variant, option, or list injection, then bind
         Source::BindMatch { pattern, exp_from } => {
-            gen_prem_bind_match(&iter_ctx, &rename.destination, pattern, exp_from)
+            Ok(gen_prem_bind_match(&iter_ctx, &rename.destination, pattern, exp_from))
         }
+        // Guard a subtype injection, then bind
         Source::BindSub { typ_sub, exp_sub, exp_from } => {
-            gen_prem_bind_sub(&iter_ctx, &rename.destination, typ_sub, exp_sub, exp_from)
+            Ok(gen_prem_bind_sub(&iter_ctx, &rename.destination, typ_sub, exp_sub, exp_from))
         }
     }
 }
 
 /// Builds partialbind checks and bindings in rewrite order.
-pub fn gen_prems(iter_ctx_prem: &ICtx, renv: &RenameEnv) -> Vec<AnalyzedPrem> {
+pub fn gen_prems(
+    ctx: &Context,
+    iter_ctx_prem: &ICtx,
+    renv: &RenameEnv,
+) -> Result<Vec<AnalyzedPrem>, AlgoError> {
     let mut prems = Vec::new();
     for rename in &renv.renames {
-        prems.extend(gen_prem(iter_ctx_prem, rename));
+        prems.extend(gen_prem(ctx, iter_ctx_prem, rename)?);
     }
-    prems
+    Ok(prems)
 }
 
 // == Expression rewriting
