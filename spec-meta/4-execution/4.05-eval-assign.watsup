@@ -69,31 +69,31 @@ rule Assign_exp/cons:
 rulegroup Assign_exp/iter {
 
   rule Assign_exp/simple:
-    C |- (ITER typedExp iterExp) '#' typ := val : OK C'
-    -- if varr = $is_iter_on_var((ITER typedExp iterExp) '#' typ)
+    C |- (ITER typedExp expIter) '#' typ := val : OK C'
+    -- if varr = $is_iter_on_var((ITER typedExp expIter) '#' typ)
     -- if C' = $add_varr(C, varr, val)
 
   rule Assign_exp/opt-none:
-    C |- (ITER typedExp iterExp) '#' typ := OPT eps : OK C'
-    -- if eps = $is_iter_on_var((ITER typedExp iterExp) '#' typ)
-    -- if QUEST vari* = iterExp
+    C |- (ITER typedExp expIter) '#' typ := OPT eps : OK C'
+    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
+    -- if QUEST vari* = expIter
     -- if (vari_iter = $iter_vari(vari, QUEST))*
     -- if val_bind* = $repeat_<val>(OPT eps, |vari_iter*|)
     -- if C' = $add_varis(C, vari_iter*, val_bind*)
 
   rule Assign_exp/opt-some:
-    C |- (ITER typedExp iterExp) '#' typ := OPT val : OK C''
-    -- if eps = $is_iter_on_var((ITER typedExp iterExp) '#' typ)
-    -- if QUEST vari* = iterExp
+    C |- (ITER typedExp expIter) '#' typ := OPT val : OK C''
+    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
+    -- if QUEST vari* = expIter
     -- Assign_exp: C |- typedExp := val : OK C'
     -- if (vari_iter = $iter_vari(vari, QUEST))*
     -- if (val_sub = $find_vari(C', vari))*
     -- if C'' = $add_varis(C', vari_iter*, (OPT val_sub)*)
 
   rule Assign_exp/list:
-    C |- (ITER typedExp iterExp) '#' typ := LIST val* : OK C'
-    -- if eps = $is_iter_on_var((ITER typedExp iterExp) '#' typ)
-    -- if STAR vari* = iterExp
+    C |- (ITER typedExp expIter) '#' typ := LIST val* : OK C'
+    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
+    -- if STAR vari* = expIter
     -- if C_local = C[ .LOCAL.VAL = $empty_map<varr, val> ]
     -- (Assign_exp: C_local |- typedExp := val : OK C_sub)*
     -- if (vari_iter = $iter_vari(vari, STAR))*

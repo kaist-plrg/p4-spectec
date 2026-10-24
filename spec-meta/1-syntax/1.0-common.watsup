@@ -90,7 +90,7 @@ syntax pat =
 
 ;; Expressions
 
-syntax exp, expField, expCase, typedPath, path, arg, iterExp
+syntax exp, expField, expCase, typedPath, path, arg, expIter
 
 syntax typedExp = exp '#' typ
 
@@ -120,12 +120,12 @@ syntax exp =
   | SLICE typedExp typedExp typedExp
   | UPD typedExp typedPath typedExp
   | CALL id targ* arg*
-  | ITER typedExp iterExp
+  | ITER typedExp expIter
 
 syntax expCase = mixop typedExp*
 syntax expField = atom typedExp
 
-syntax iterExp = iter vari*
+syntax expIter = iter vari*
 
 ;; Paths
 
@@ -154,6 +154,16 @@ syntax tparam = id
 syntax param =
   | EXP typ
   | FUN id ':' tparam* param* '->' typ
+
+;; Premises
+
+syntax ifPrem = IF typedExp
+
+syntax ifHoldPrem = IFHOLD id ':' typedExp*
+
+syntax ifNotHoldPrem = IFNOTHOLD id ':' typedExp*
+
+syntax debugPrem = DEBUG typedExp
 
 ;; Type definitions
 

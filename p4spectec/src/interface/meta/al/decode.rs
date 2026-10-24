@@ -192,7 +192,7 @@ impl Decode for al::Prem {
             m::PREM_ITER => |[value_prem, value_iter]| {
                 al::PremKind::Iter(al::IterPrem {
                     prem: Box::new(al::Prem::decode_cached(arena, cache, *value_prem)?),
-                    prem_iter: IterPremAl::decode_cached(arena, cache, *value_iter)?.0,
+                    prem_iter: PremIterAl::decode_cached(arena, cache, *value_iter)?.0,
                 })
             },
             m::PREM_DEBUG => |[value_exp]| {
@@ -204,11 +204,11 @@ impl Decode for al::Prem {
     }
 }
 
-/// An iteration premise as the meta `iterPremAL`; IL encodes the same type as `iterPremIL`.
-struct IterPremAl(al::PremIter);
+/// An iteration premise as the meta `premIterAL`; IL encodes the same type as `premIterIL`.
+struct PremIterAl(al::PremIter);
 
 /// Decodes bound and bound-by-iteration variable lists in order.
-impl Decode for IterPremAl {
+impl Decode for PremIterAl {
     fn decode_cached(
         arena: &mut Arena,
         cache: &mut Cache,

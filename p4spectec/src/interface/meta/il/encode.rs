@@ -86,7 +86,7 @@ impl Encode for il::Prem {
                 m::PREM_ITER,
                 vec![
                     prem_iter_il.prem.encode_cached(arena, cache)?,
-                    IterPremIl(&prem_iter_il.prem_iter).encode_cached(arena, cache)?,
+                    PremIterIl(&prem_iter_il.prem_iter).encode_cached(arena, cache)?,
                 ],
             ),
             il::PremKind::Debug(prem_debug_il) => {
@@ -97,11 +97,11 @@ impl Encode for il::Prem {
     }
 }
 
-/// An iteration premise as the meta `iterPremIL`; AL encodes the same type as `iterPremAL`.
-struct IterPremIl<'a>(&'a il::PremIter);
+/// An iteration premise as the meta `premIterIL`; AL encodes the same type as `premIterAL`.
+struct PremIterIl<'a>(&'a il::PremIter);
 
 /// Encodes an iteration premise, which elaboration leaves without binders.
-impl Encode for IterPremIl<'_> {
+impl Encode for PremIterIl<'_> {
     type Output = Value;
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
@@ -118,7 +118,7 @@ impl Encode for IterPremIl<'_> {
             prem_iter_il.iter.encode_cached(arena, cache)?,
             list(arena, cache, "vari", &prem_iter_il.vars_bound)?,
         ];
-        case(arena, m::ITER_PREM, "iterPremIL", values_meta, Span::default())
+        case(arena, m::ITER_PREM, "premIterIL", values_meta, Span::default())
     }
 }
 

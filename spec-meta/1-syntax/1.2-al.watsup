@@ -1,17 +1,28 @@
 ;; Iteration premises
 
-syntax iterPremAL = iter '<-' vari* '->' vari*
+syntax premIterAL = iter '<-' vari* '->' vari*
 
 ;; Premises
 
+syntax premAL
+
+syntax relPremAL =
+  REL id ':' typedExp* '->' typedExp*
+
+syntax letPremAL =
+  LET typedExp '=' typedExp
+
+syntax iterPremAL =
+  ITER premAL premIterAL
+
 syntax premAL =
-  | REL id ':' typedExp* '->' typedExp*
-  | IF typedExp
-  | IFHOLD id ':' typedExp*
-  | IFNOTHOLD id ':' typedExp*
-  | LET typedExp '=' typedExp
-  | ITER premAL iterPremAL
-  | DEBUG typedExp
+  | relPremAL
+  | ifPrem
+  | ifHoldPrem
+  | ifNotHoldPrem
+  | letPremAL
+  | iterPremAL
+  | debugPrem
 
 ;; Relation definitions
 

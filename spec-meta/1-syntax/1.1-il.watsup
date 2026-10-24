@@ -6,17 +6,25 @@ syntax inputHint = nat*
 
 ;; Elaborated iterations list their sources; binders are decided by `Algo_prem`
 
-syntax iterPremIL = iter vari*
+syntax premIterIL = iter vari*
 
 ;; Premises
 
+syntax premIL
+
+syntax relPremIL =
+  REL id ':' typedExp* `( inputHint `)
+
+syntax iterPremIL =
+  ITER premIL premIterIL
+
 syntax premIL =
-  | REL id ':' typedExp* `( inputHint `)
-  | IF typedExp
-  | IFHOLD id ':' typedExp*
-  | IFNOTHOLD id ':' typedExp*
-  | ITER premIL iterPremIL
-  | DEBUG typedExp
+  | relPremIL
+  | ifPrem
+  | ifHoldPrem
+  | ifNotHoldPrem
+  | iterPremIL
+  | debugPrem
 
 ;; Relation definitions
 

@@ -544,7 +544,7 @@ impl Encode for il::ExpIter {
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
         let values_meta =
             vec![self.iter.encode_cached(arena, cache)?, list(arena, cache, "vari", &self.vars)?];
-        case(arena, m::ITER_EXP, "iterExp", values_meta, Span::default())
+        case(arena, m::ITER_EXP, "expIter", values_meta, Span::default())
     }
 }
 

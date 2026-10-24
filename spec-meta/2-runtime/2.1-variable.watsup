@@ -7,10 +7,10 @@ syntax varr = id iter*
 dec $is_iter_on_var(typedExp) : varr?
   hint(prose_in "the runtime variable represented by" %0 "if any")
 def $is_iter_on_var((VAR id) '#' _) = id eps
-def $is_iter_on_var((ITER typedExp iterExp) '#' _)
+def $is_iter_on_var((ITER typedExp expIter) '#' _)
   = id (iter* ++ [ iter_outer ])
   -- if id iter* = $is_iter_on_var(typedExp)
-  -- if iter_outer (id _ iter*) = iterExp
+  -- if iter_outer (id _ iter*) = expIter
 def $is_iter_on_var(_) = eps
   -- otherwise
 

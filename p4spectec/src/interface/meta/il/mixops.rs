@@ -12,7 +12,7 @@ pub(super) use crate::interface::meta::shared::mixops::{
 
 pub(super) const ITER_PREM: &str = "iter vari*";
 pub(super) const PREM_REL: &str = "REL id ':' typedExp* `( inputHint `)";
-pub(super) const PREM_ITER: &str = "ITER premIL iterPremIL";
+pub(super) const PREM_ITER: &str = "ITER premIL premIterIL";
 
 // == Rules and clauses
 

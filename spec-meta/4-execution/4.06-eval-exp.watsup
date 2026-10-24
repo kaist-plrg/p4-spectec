@@ -429,35 +429,35 @@ rulegroup Eval_exp/call {
 rulegroup Eval_exp/iter {
 
   rule Eval_exp/simple:
-    C |- (ITER typedExp iterExp) '#' typ : OK val
-    -- if varr = $is_iter_on_var((ITER typedExp iterExp) '#' typ)
+    C |- (ITER typedExp expIter) '#' typ : OK val
+    -- if varr = $is_iter_on_var((ITER typedExp expIter) '#' typ)
     -- if val = $find_varr(C, varr)
 
   rule Eval_exp/opt-body-failure:
-    C |- (ITER typedExp iterExp) '#' typ : failure
-    -- if eps = $is_iter_on_var((ITER typedExp iterExp) '#' typ)
-    -- if QUEST vari* = iterExp
+    C |- (ITER typedExp expIter) '#' typ : failure
+    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
+    -- if QUEST vari* = expIter
     -- if OK C_sub? = $sub_opt(C, vari*)
     -- Eval_exp_maybe: C_sub? |- typedExp : failure
 
   rule Eval_exp/opt-succ:
-    C |- (ITER typedExp iterExp) '#' typ : OK (OPT val?)
-    -- if eps = $is_iter_on_var((ITER typedExp iterExp) '#' typ)
-    -- if QUEST vari* = iterExp
+    C |- (ITER typedExp expIter) '#' typ : OK (OPT val?)
+    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
+    -- if QUEST vari* = expIter
     -- if OK C_sub? = $sub_opt(C, vari*)
     -- Eval_exp_maybe: C_sub? |- typedExp : OK val?
 
   rule Eval_exp/list-body-failure:
-    C |- (ITER typedExp iterExp) '#' typ : failure
-    -- if eps = $is_iter_on_var((ITER typedExp iterExp) '#' typ)
-    -- if STAR vari* = iterExp
+    C |- (ITER typedExp expIter) '#' typ : failure
+    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
+    -- if STAR vari* = expIter
     -- if OK C_sub* = $sub_list(C, vari*)
     -- Eval_exp_each: C_sub* |- typedExp : failure
 
   rule Eval_exp/list-succ:
-    C |- (ITER typedExp iterExp) '#' typ : OK (LIST val*)
-    -- if eps = $is_iter_on_var((ITER typedExp iterExp) '#' typ)
-    -- if STAR vari* = iterExp
+    C |- (ITER typedExp expIter) '#' typ : OK (LIST val*)
+    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
+    -- if STAR vari* = expIter
     -- if OK C_sub* = $sub_list(C, vari*)
     -- Eval_exp_each: C_sub* |- typedExp : OK val*
 

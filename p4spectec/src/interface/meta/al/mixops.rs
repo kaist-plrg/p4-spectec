@@ -27,7 +27,7 @@ pub(super) const VAL_CASE: &str = "mixop val*";
 pub(super) const ITER_PREM: &str = "iter '<-' vari* '->' vari*";
 pub(super) const PREM_REL: &str = "REL id ':' typedExp* '->' typedExp*";
 pub(super) const PREM_LET: &str = "LET typedExp '=' typedExp";
-pub(super) const PREM_ITER: &str = "ITER premAL iterPremAL";
+pub(super) const PREM_ITER: &str = "ITER premAL premIterAL";
 
 // == Rules and clauses
 

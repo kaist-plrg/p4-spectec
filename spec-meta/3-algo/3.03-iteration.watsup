@@ -47,10 +47,10 @@ rulegroup Iter_restrict {
     eps |- _ : eps
 
   rule Iter_restrict/cons:
-    iterPremAL :: IC |- vari_read* : iterPremAL' :: IC'
-    -- if iter '<-' vari_src* '->' vari_bind* = iterPremAL
+    premIterAL :: IC |- vari_read* : premIterAL' :: IC'
+    -- if iter '<-' vari_src* '->' vari_bind* = premIterAL
     -- if vari_keep* = $sources_read(vari_src*, vari_read*)
-    -- if iterPremAL' = iter '<-' vari_keep* '->' vari_bind*
+    -- if premIterAL' = iter '<-' vari_keep* '->' vari_bind*
     -- Iter_restrict: IC |- vari_read* : IC'
 
 }
@@ -63,9 +63,9 @@ rulegroup Iter_bind {
     eps |- _ : eps
 
   rule Iter_bind/cons:
-    iterPremAL :: IC |- vari* : iterPremAL' :: IC'
-    -- if iter '<-' vari_src* '->' vari_bind* = iterPremAL
-    -- if iterPremAL' = iter '<-' vari_src* '->' (vari_bind* ++ vari*)
+    premIterAL :: IC |- vari* : premIterAL' :: IC'
+    -- if iter '<-' vari_src* '->' vari_bind* = premIterAL
+    -- if premIterAL' = iter '<-' vari_src* '->' (vari_bind* ++ vari*)
     -- if (vari_lift = $iter_vari(vari, iter))*
     -- Iter_bind: IC |- vari_lift* : IC'
 
@@ -77,9 +77,9 @@ rulegroup Iter_source {
     eps |- _ : eps
 
   rule Iter_source/cons:
-    iterPremAL :: IC |- vari* : iterPremAL' :: IC'
-    -- if iter '<-' vari_src* '->' vari_bind* = iterPremAL
-    -- if iterPremAL' = iter '<-' (vari_src* ++ vari*) '->' vari_bind*
+    premIterAL :: IC |- vari* : premIterAL' :: IC'
+    -- if iter '<-' vari_src* '->' vari_bind* = premIterAL
+    -- if premIterAL' = iter '<-' (vari_src* ++ vari*) '->' vari_bind*
     -- if (vari_lift = $iter_vari(vari, iter))*
     -- Iter_source: IC |- vari_lift* : IC'
 
@@ -96,10 +96,10 @@ rulegroup Iter_replace {
     eps _ |- _ : eps
 
   rule Iter_replace/cons:
-    (iterPremAL :: IC) id* |- vari : iterPremAL' :: IC'
-    -- if iter '<-' vari_src* '->' vari_bind* = iterPremAL
+    (premIterAL :: IC) id* |- vari : premIterAL' :: IC'
+    -- if iter '<-' vari_src* '->' vari_bind* = premIterAL
     -- if vari_keep* = $sources_except(vari_src*, id*)
-    -- if iterPremAL' = iter '<-' (vari_keep* ++ [ vari ]) '->' vari_bind*
+    -- if premIterAL' = iter '<-' (vari_keep* ++ [ vari ]) '->' vari_bind*
     -- if vari_lift = $iter_vari(vari, iter)
     -- Iter_replace: IC id* |- vari_lift : IC'
 
@@ -129,7 +129,7 @@ rulegroup Iter_prem {
     eps |- premAL : premAL
 
   rule Iter_prem/cons:
-    iterPremAL :: IC |- premAL : premAL'
-    -- Iter_prem: IC |- ITER premAL iterPremAL : premAL'
+    premIterAL :: IC |- premAL : premAL'
+    -- Iter_prem: IC |- ITER premAL premIterAL : premAL'
 
 }

@@ -83,7 +83,7 @@ impl Decode for il::Prem {
             m::PREM_ITER => |[value_prem, value_iter]| {
                 il::PremKind::Iter(il::IterPrem {
                     prem: Box::new(il::Prem::decode_cached(arena, cache, *value_prem)?),
-                    prem_iter: IterPremIl::decode_cached(arena, cache, *value_iter)?.0,
+                    prem_iter: PremIterIl::decode_cached(arena, cache, *value_iter)?.0,
                 })
             },
             m::PREM_DEBUG => |[value_exp]| {
@@ -95,11 +95,11 @@ impl Decode for il::Prem {
     }
 }
 
-/// An iteration premise as the meta `iterPremIL`; AL encodes the same type as `iterPremAL`.
-struct IterPremIl(il::PremIter);
+/// An iteration premise as the meta `premIterIL`; AL encodes the same type as `premIterAL`.
+struct PremIterIl(il::PremIter);
 
 /// Decodes an iteration premise, which elaboration leaves without binders.
-impl Decode for IterPremIl {
+impl Decode for PremIterIl {
     fn decode_cached(
         arena: &mut Arena,
         cache: &mut Cache,

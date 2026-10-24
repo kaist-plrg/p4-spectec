@@ -102,14 +102,14 @@ rulegroup Eval_prem/letpr {
 rulegroup Eval_prem/iterpr-opt {
 
   rule Eval_prem/body-failure:
-    C |- ITER premAL iterPremAL : failure
-    -- if QUEST '<-' vari_bound* '->' _ = iterPremAL
+    C |- ITER premAL premIterAL : failure
+    -- if QUEST '<-' vari_bound* '->' _ = premIterAL
     -- if OK C_sub? = $sub_opt(C, vari_bound*)
     -- Eval_prem_maybe: C_sub? |- premAL : failure
 
   rule Eval_prem/succ-none:
-    C |- ITER premAL iterPremAL : OK C_res
-    -- if QUEST '<-' vari_bound* '->' vari_bind* = iterPremAL
+    C |- ITER premAL premIterAL : OK C_res
+    -- if QUEST '<-' vari_bound* '->' vari_bind* = premIterAL
     -- if OK C_sub? = $sub_opt(C, vari_bound*)
     -- Eval_prem_maybe: C_sub? |- premAL : OK eps
     -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
@@ -117,8 +117,8 @@ rulegroup Eval_prem/iterpr-opt {
     -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
 
   rule Eval_prem/succ-some:
-    C |- ITER premAL iterPremAL : OK C_res
-    -- if QUEST '<-' vari_bound* '->' vari_bind* = iterPremAL
+    C |- ITER premAL premIterAL : OK C_res
+    -- if QUEST '<-' vari_bound* '->' vari_bind* = premIterAL
     -- if OK C_sub? = $sub_opt(C, vari_bound*)
     -- Eval_prem_maybe: C_sub? |- premAL : OK C_sub_res
     -- if (val_bind = $find_vari(C_sub_res, vari_bind))*
@@ -132,24 +132,24 @@ rulegroup Eval_prem/iterpr-opt {
 rulegroup Eval_prem/iterpr-list {
 
   rule Eval_prem/succ-empty:
-    C |- ITER premAL iterPremAL : OK C_res
-    -- if STAR '<-' vari_bound* '->' vari_bind* = iterPremAL
+    C |- ITER premAL premIterAL : OK C_res
+    -- if STAR '<-' vari_bound* '->' vari_bind* = premIterAL
     -- if OK eps = $sub_list(C, vari_bound*)
     -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
     -- if val_bind* = $repeat_<val>(LIST eps, |vari_bind*|)
     -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
 
   rule Eval_prem/body-failure:
-    C |- ITER premAL iterPremAL : failure
-    -- if STAR '<-' vari_bound* '->' _ = iterPremAL
+    C |- ITER premAL premIterAL : failure
+    -- if STAR '<-' vari_bound* '->' _ = premIterAL
     -- if OK C_sub* = $sub_list(C, vari_bound*)
     -- if C_sub* =/= eps
     -- Eval_prem_each: C_sub* |- premAL : failure
 
   rule Eval_prem/succ-list:
-    C |- ITER premAL iterPremAL : OK C_res
+    C |- ITER premAL premIterAL : OK C_res
     ----
-    -- if STAR '<-' vari_bound* '->' vari_bind* = iterPremAL
+    -- if STAR '<-' vari_bound* '->' vari_bind* = premIterAL
     ---- ;; decompose C into a list of subcontexts
     ---- ;; C_sub* corresponding to vari_bound*
     -- if OK C_sub* = $sub_list(C, vari_bound*)

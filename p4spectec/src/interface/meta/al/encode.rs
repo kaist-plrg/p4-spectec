@@ -173,7 +173,7 @@ impl Encode for al::Prem {
                 m::PREM_ITER,
                 vec![
                     prem_inner_al.prem.encode_cached(arena, cache)?,
-                    IterPremAl(&prem_inner_al.prem_iter).encode_cached(arena, cache)?,
+                    PremIterAl(&prem_inner_al.prem_iter).encode_cached(arena, cache)?,
                 ],
             ),
             al::PremKind::Debug(prem_inner_al) => {
@@ -184,11 +184,11 @@ impl Encode for al::Prem {
     }
 }
 
-/// An iteration premise as the meta `iterPremAL`; IL encodes the same type as `iterPremIL`.
-struct IterPremAl<'a>(&'a al::PremIter);
+/// An iteration premise as the meta `premIterAL`; IL encodes the same type as `premIterIL`.
+struct PremIterAl<'a>(&'a al::PremIter);
 
 /// Encodes bound and bound-by-iteration variable lists in order.
-impl Encode for IterPremAl<'_> {
+impl Encode for PremIterAl<'_> {
     type Output = Value;
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
@@ -198,7 +198,7 @@ impl Encode for IterPremAl<'_> {
             list(arena, cache, "vari", &prem_iter_al.vars_bound)?,
             list(arena, cache, "vari", &prem_iter_al.vars_bind)?,
         ];
-        case(arena, m::ITER_PREM, "iterPremAL", values_meta, Span::default())
+        case(arena, m::ITER_PREM, "premIterAL", values_meta, Span::default())
     }
 }
 
