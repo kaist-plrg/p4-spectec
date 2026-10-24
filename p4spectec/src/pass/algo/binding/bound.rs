@@ -18,11 +18,11 @@ use super::iteration::ICtx;
 ///
 /// A variable bound at `nat` may still be read inside an iteration.
 pub fn check_read(iter_ctx: &ICtx, var: &ast::Var, dim_bound: &Dim) -> Result<(), AlgoError> {
-    // Lift the read through the enclosing iterations, as bindings are
-    let dim_read = iter_ctx
-        .iters()
-        .into_iter()
-        .fold(Dim::new(var.typ.clone(), var.iters.clone()), Dim::add_iter);
+    // Lift through enclosing iterations, innermost first, as bindings are
+    let mut dim_read = Dim::new(var.typ.clone(), var.iters.clone());
+    for iter in iter_ctx.iters() {
+        dim_read = dim_read.add_iter(iter);
+    }
     if dim_bound.sub(&dim_read) {
         Ok(())
     } else {
