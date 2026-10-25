@@ -38,7 +38,7 @@ use crate::interface::{self as builtin, p4::P4Interface};
 
 use crate::sim_plugin::dummy::Dummy;
 
-pub use context::{Checkpoint, RunnerContext};
+pub use context::{Checkpoint, RunnerContext, RunnerContextParts};
 pub use externs::{Extern, ExternError, NullExtern};
 pub use host::Host;
 pub use interface::{Interface, InterfaceError, NullInterface};
