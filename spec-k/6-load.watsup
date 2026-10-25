@@ -12,7 +12,7 @@
 var KD : kdefinition
 var AM : map<symid, kalias>
 var SK : map<varid, kore>
-var EM : map<symid, equation*>
+var EM : map<symid, clause*>
 
 ;; Attributes
 
@@ -285,27 +285,29 @@ def $without_ensures(kore) = kore_p
 ;; The parts of the definition an axiom gives
 
 syntax loaded =
-  | LRULE krule
-  | LEQUATION symid equation
+  | LRULE clause
+  | LEQUATION symid clause
   | LSUBSORT subsort
   | LOVERLOAD overload
 
-;; A rewrite rule: \rewrites(\and(lhs, requires), \and(rhs, ensures))
+;; A rewrite rule: \rewrites(\and(lhs, requires), \and(rhs, ensures)), a
+;; clause with the one left-hand side
 
-dec $rule(kdefinition, kore, kore, kattr*) : krule
+dec $rule(kdefinition, kore, kore, kattr*) : clause
 def $rule(KD, kore_l, kore_r, kattr*)
-  = RULE $pattern(KD, kore_p) '=>' $pattern(KD, $without_ensures(kore_r))
+  = CLAUSE ([ $pattern(KD, kore_p) ]) '=>' $pattern(KD, $without_ensures(kore_r))
       'requires' $requires(KD, $side_conditions(kore_c*)) $exec_attrs(kattr*)
   -- if (kore_p, kore_c*) = $split_side(kore_l)
 
-;; An equation f(args) = rhs under conditions. Those of a hooked symbol are
-;; kept too, and not used: the hook computes it (4.2-eval).
+;; An equation f(args) = rhs under conditions, a clause with a left-hand side
+;; per argument. Those of a hooked symbol are kept too, and not used: the hook
+;; computes it (4.2-eval).
 
 dec $equation(kdefinition, symid, kore*, kore, kore, kattr*) : loaded*
 def $equation(KD, symid, kore_a*, kore_c, kore_r, kattr*)
   = [ LEQUATION symid
-        (EQN symid $arguments(KD, condition*, kore_a*)
-           '=' $pattern(KD, $without_ensures(kore_r))
+        (CLAUSE $arguments(KD, condition*, kore_a*)
+           '=>' $pattern(KD, $without_ensures(kore_r))
            'requires' $requires(KD, condition*) $exec_attrs(kattr*)) ]
   -- if condition* = $conditions(kore_c)
 
@@ -346,8 +348,8 @@ def $load_axiom(KD, AXIOM kore kattr*) = $load_form(KD, kore, kattr*)
 ;; The definition from what the axioms give, equations grouped by the symbol
 ;; they define, in file order
 
-dec $rules_of(loaded) : krule*
-def $rules_of(LRULE krule) = [ krule ]
+dec $rules_of(loaded) : clause*
+def $rules_of(LRULE clause) = [ clause ]
 def $rules_of(loaded) = eps
   -- otherwise
 
@@ -362,19 +364,19 @@ def $overloads_of(loaded) = eps
   -- otherwise
 
 dec $equations_of_loaded(loaded) : loaded*
-def $equations_of_loaded(LEQUATION symid eqn) = [ LEQUATION symid eqn ]
+def $equations_of_loaded(LEQUATION symid clause) = [ LEQUATION symid clause ]
 def $equations_of_loaded(loaded) = eps
   -- otherwise
 
-dec $group_equations(map<symid, equation*>, loaded*) : map<symid, equation*>
+dec $group_equations(map<symid, clause*>, loaded*) : map<symid, clause*>
 def $group_equations(EM, eps) = EM
-def $group_equations(EM, (LEQUATION symid eqn) :: loaded_t*)
+def $group_equations(EM, (LEQUATION symid clause) :: loaded_t*)
   = $group_equations(
-      $add_map<symid, equation*>(EM, symid, eqn_e* ++ [ eqn ]), loaded_t*)
-  -- if (eqn_e*) = $find_map<symid, equation*>(EM, symid)
-def $group_equations(EM, (LEQUATION symid eqn) :: loaded_t*)
-  = $group_equations($add_map<symid, equation*>(EM, symid, [ eqn ]), loaded_t*)
-  -- if eps = $find_map<symid, equation*>(EM, symid)
+      $add_map<symid, clause*>(EM, symid, clause_e* ++ [ clause ]), loaded_t*)
+  -- if (clause_e*) = $find_map<symid, clause*>(EM, symid)
+def $group_equations(EM, (LEQUATION symid clause) :: loaded_t*)
+  = $group_equations($add_map<symid, clause*>(EM, symid, [ clause ]), loaded_t*)
+  -- if eps = $find_map<symid, clause*>(EM, symid)
 
 relation Load:
   kdefinition ~> definition
@@ -386,8 +388,8 @@ rule Load:
   KD ~> { SYMBOLS $symdecls(KD.KSYMBOLS),
           SUBSORTS $close_subsorts($concat_<subsort>($subsorts_of(loaded)*)),
           OVERLOADS $concat_<overload>($overloads_of(loaded)*),
-          RULES $concat_<krule>($rules_of(loaded)*),
-          EQUATIONS $group_equations($empty_map<symid, equation*>,
+          RULES $concat_<clause>($rules_of(loaded)*),
+          EQUATIONS $group_equations($empty_map<symid, clause*>,
                       $concat_<loaded>($equations_of_loaded(loaded)*)),
           PARAMS $params(KD.KSYMBOLS),
           FRESH $fresh_generators(KD.KSYMBOLS) }

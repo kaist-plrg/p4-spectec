@@ -73,11 +73,11 @@ syntax attr =
   | SIMPLIFICATION  ;; for symbolic execution only, not run
   | NONEXECUTABLE   ;; not run
 
-;; Rules and equations
+;; Clauses: a rewrite rule is a clause with one left-hand side, the
+;; configuration; an equation of a function f is a clause with one left-hand
+;; side per argument of f
 
-syntax krule = RULE pattern '=>' pattern 'requires' pattern? attr*
-
-syntax equation = EQN symid pattern* '=' pattern 'requires' pattern? attr*
+syntax clause = CLAUSE pattern* '=>' pattern 'requires' pattern? attr*
 
 ;; Definitions
 
@@ -85,8 +85,8 @@ syntax definition =
   { SYMBOLS (map<symid, symdecl>),
     SUBSORTS subsort*,                  ;; closed under transitivity
     OVERLOADS overload*,
-    RULES krule*,
-    EQUATIONS (map<symid, equation*>),  ;; by the symbol defined, in file order
+    RULES clause*,
+    EQUATIONS (map<symid, clause*>),    ;; by the symbol defined, in file order
     PARAMS (map<symid, sortid*>),       ;; sort parameters of symbols
     FRESH (map<sort, symid>) }          ;; the freshGenerator of a sort, e.g. freshInt
 

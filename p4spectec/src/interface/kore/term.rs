@@ -92,7 +92,7 @@ impl Shapes {
             pair: mixop(arena, "k ':' v")?,
             braces: mixop(arena, "`{ k `}")?,
             ok: mixop(arena, "OK x")?,
-            fail: mixop(arena, "FAIL")?,
+            fail: mixop(arena, "ERROR")?,
         })
     }
 }

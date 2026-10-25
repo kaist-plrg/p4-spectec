@@ -41,9 +41,9 @@ rule Match_map/absent:
   -- if eps = $find_map<term, term>(M, term_k)
 
 rule Match_map/stuck:
-  D (OK subst) |- (APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*) pattern_o* ~~ sort M : [ FAIL ]
+  D (OK subst) |- (APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*) pattern_o* ~~ sort M : [ ERROR ]
   -- if $bound(subst, pattern_k)
-  -- Eval: D subst |- pattern_k : FAIL
+  -- Eval: D subst |- pattern_k : ERROR
 
 rule Match_map/choose:
   D (OK subst) |- (APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*) pattern_o* ~~ sort `{ (term_k ':' term_v)* `} : way*
@@ -82,9 +82,9 @@ rule Match_set/absent:
   -- if ~(term <- term_s*)
 
 rule Match_set/stuck:
-  D (OK subst) |- (APP symid sort_e* ([pattern]) :: pattern_e*) pattern_o* ~~ sort S : [ FAIL ]
+  D (OK subst) |- (APP symid sort_e* ([pattern]) :: pattern_e*) pattern_o* ~~ sort S : [ ERROR ]
   -- if $bound(subst, pattern)
-  -- Eval: D subst |- pattern : FAIL
+  -- Eval: D subst |- pattern : ERROR
 
 rule Match_set/choose:
   D (OK subst) |- (APP symid sort_e* ([pattern]) :: pattern_e*) pattern_o* ~~ sort `{ term_s* `} : way*

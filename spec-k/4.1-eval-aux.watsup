@@ -1,8 +1,6 @@
 ;;
-;; Equations in priority order, and symbol lookups
+;; Clauses in priority order, and symbol lookups
 ;;
-
-var eqn : equation
 
 ;; Priorities, as rulePriority in the LLVM backend's matching/Parser.scala
 ;; (a smaller number is tried first). cool and cool-like only occur on rewrite
@@ -52,32 +50,36 @@ dec $sort_by_priority<X>((nat, X)*) : X*
 def $sort_by_priority<X>((n, X)*) = $by_priorities<X>(n_p*, (n, X)*)
   -- if `{ n_p* `} = $union_set<nat>(`{ n* `}, `{ eps `})
 
-;; Whether a rule or an equation is run: simplifications and non-executable
-;; axioms are for symbolic execution and proofs (matching/Parser.scala)
+;; Whether a clause is run: simplifications and non-executable axioms are for
+;; symbolic execution and proofs (matching/Parser.scala)
 
 dec $runs(attr*) : bool
 def $runs(attr*) = ~(SIMPLIFICATION <- attr*) /\ ~(NONEXECUTABLE <- attr*)
 
-;; Equations of a function symbol, in the order they are tried: the ones that
-;; run, by priority, and in file order within a priority
+;; Clauses in the order they are tried: the ones that run, by priority, and in
+;; file order within a priority
 
-dec $prioritized(equation*) : (nat, equation)*
+dec $prioritized(clause*) : (nat, clause)*
 def $prioritized(eps) = eps
 def $prioritized(
-    (EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*) :: eqn_t*)
+    (CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c? attr*) :: clause_t*)
   = ($priority(attr*),
-     EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*)
-    :: $prioritized(eqn_t*)
+     CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c? attr*)
+    :: $prioritized(clause_t*)
   -- if $runs(attr*)
 def $prioritized(
-    (EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*) :: eqn_t*)
-  = $prioritized(eqn_t*)
+    (CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c? attr*) :: clause_t*)
+  = $prioritized(clause_t*)
   -- if ~$runs(attr*)
 
-dec $equations_of(definition, symid) : equation*
-  hint(prose_in "the equations of" %1 "in priority order")
-def $equations_of(D, symid) = $sort_by_priority<equation>($prioritized(eqn*))
-  -- if (eqn*) = $find_map<symid, equation*>(D.EQUATIONS, symid)
+dec $in_order(clause*) : clause*
+  hint(prose_in "the clauses" %0 "in the order they are tried")
+def $in_order(clause*) = $sort_by_priority<clause>($prioritized(clause*))
+
+dec $equations_of(definition, symid) : clause*
+  hint(prose_in "the equations of" %1 "in the order they are tried")
+def $equations_of(D, symid) = $in_order(clause*)
+  -- if (clause*) = $find_map<symid, clause*>(D.EQUATIONS, symid)
 def $equations_of(D, symid) = eps
   -- otherwise
 

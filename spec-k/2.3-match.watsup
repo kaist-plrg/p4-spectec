@@ -20,7 +20,7 @@ relation Eval:
 var result : res<term>
 
 ;; Matching: the ways a pattern matches a term, extending a substitution. A
-;; way is a substitution, or FAIL where a function in the pattern is stuck.
+;; way is a substitution, or ERROR where a function in the pattern is stuck.
 ;; Elements of maps and sets are tried in the order of their values; the LLVM
 ;; backend uses the order of its hash tries.
 
@@ -77,28 +77,28 @@ relation Match_seq:
 ;;; Matching after a stuck way stays stuck
 
 rule Match/stuck:
-  D FAIL |- pattern ~~ term : [ FAIL ]
+  D ERROR |- pattern ~~ term : [ ERROR ]
 
 rule Match_list/stuck:
-  D FAIL |- pattern* ~~ term* : [ FAIL ]
+  D ERROR |- pattern* ~~ term* : [ ERROR ]
 
 rule Match_rest/stuck:
-  D FAIL |- pattern* ~~ term : [ FAIL ]
+  D ERROR |- pattern* ~~ term : [ ERROR ]
 
 rule Match_map/stuck-before:
-  D FAIL |- pattern_e* pattern_o* ~~ sort M : [ FAIL ]
+  D ERROR |- pattern_e* pattern_o* ~~ sort M : [ ERROR ]
 
 rule Choose_map/stuck-before:
-  D FAIL |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort M (term_k, term_v)* : [ FAIL ]
+  D ERROR |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort M (term_k, term_v)* : [ ERROR ]
 
 rule Match_set/stuck-before:
-  D FAIL |- pattern_e* pattern_o* ~~ sort S : [ FAIL ]
+  D ERROR |- pattern_e* pattern_o* ~~ sort S : [ ERROR ]
 
 rule Choose_set/stuck-before:
-  D FAIL |- pattern pattern_e* pattern_o* ~~ sort S term* : [ FAIL ]
+  D ERROR |- pattern pattern_e* pattern_o* ~~ sort S term* : [ ERROR ]
 
 rule Match_seq/stuck:
-  D FAIL |- pattern* ~~ sort term* : [ FAIL ]
+  D ERROR |- pattern* ~~ sort term* : [ ERROR ]
 
 ;;; Variables bind the term, or must agree with an earlier binding
 
@@ -214,10 +214,10 @@ rule Match/list-update:
   -- (Match: D way_v |- pattern_f ~~ LIST sort term* : way_f*)*
 
 rule Match/list-update-stuck:
-  D (OK subst) |- APP symid sort_p* ([pattern_f, pattern_k, pattern_v]) ~~ LIST sort term* : [ FAIL ]
+  D (OK subst) |- APP symid sort_p* ([pattern_f, pattern_k, pattern_v]) ~~ LIST sort term* : [ ERROR ]
   -- if $hook_of(D, symid) = "LIST.update"
   -- if $bound(subst, pattern_k)
-  -- Eval: D subst |- pattern_k : FAIL
+  -- Eval: D subst |- pattern_k : ERROR
 
 ;;; Anything else fails
 

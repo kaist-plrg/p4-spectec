@@ -2,15 +2,22 @@
 ;; Auxiliary definitions on top of spec-meta/common/0-stdlib.watsup
 ;;
 
-;; Results that may fail, as in P4-SpecTec² (spec-meta/common/4-relation.watsup)
+;; Results, in the words of P4-SpecTec² (spec-meta/3-execution/3.00-result):
+;; a value, no match, or an error. An error is a function that is stuck, which
+;; ends the run (abort_when_stuck of the LLVM backend)
 
-syntax res<X> = OK X | FAIL
+syntax ok<X> = OK X
+syntax unmatch = UNMATCH
+syntax error = ERROR
 
-;; Whether a rule or an equation applies: its left-hand side matches and its
-;; requires clause holds, it does not, or the requires clause cannot be
-;; evaluated, which ends the run (abort_when_stuck of the LLVM backend)
+;; What evaluation gives: a value or an error
 
-syntax applies<X> = APPLIES X | SKIPS | UNDEFINED
+syntax res<X> = ok<X> | error
+
+;; Whether a clause applies: its left-hand sides match and its requires clause
+;; holds, they do not, or the requires clause cannot be evaluated
+
+syntax applies<X> = ok<X> | unmatch | error
 
 ;; Set and map builtins, implemented in p4spec/lib/interface/builtin
 ;; (declared the same way in spec/0-aux)
