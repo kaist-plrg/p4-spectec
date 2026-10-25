@@ -200,7 +200,7 @@ where
 }
 
 /// Executes a transformed statement through a stage-specific context.
-fn run_stf_stmt_kind<Interp, Iface, Arch>(
+pub(crate) fn run_stf_stmt_kind<Interp, Iface, Arch>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
     span: &Span,
     run: &mut Run,

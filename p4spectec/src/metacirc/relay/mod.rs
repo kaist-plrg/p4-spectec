@@ -5,12 +5,14 @@
 //! MetaExtern hosts the AL or IL script that a meta specification interprets.
 //! RelayExtern decodes one representation layer (`codec`)
 //! and delegates to the next level through a RelayTarget:
-//! the host the relay stores (`stored`).
+//! the host the relay stores (`stored`),
+//! or the P4 host lent to spec-meta for one P4 call (`lent`).
 //! TerminalExtern (`terminal`) handles only builtins of the AL or IL program
 //! above the top level.
 //! Clearing an extern resets the host it owns before arena values are reset.
 
-mod codec;
+pub(super) mod codec;
+pub(super) mod lent;
 mod stored;
 mod terminal;
 
@@ -44,11 +46,15 @@ pub(in crate::metacirc) struct RelayExtern<C: BorrowMut<Cache>, T: RelayTarget> 
 }
 
 /// The level a relay sends decoded host calls to.
+///
+/// Each call receives the relay's codec cache,
+/// which a target that runs another level shares.
 pub(in crate::metacirc) trait RelayTarget {
     /// Calls a decoded builtin at this level.
     fn eval_builtin(
         &mut self,
         arena: &mut Arena,
+        cache: &mut Cache,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
@@ -58,6 +64,7 @@ pub(in crate::metacirc) trait RelayTarget {
     fn eval_extern_rel(
         &mut self,
         arena: &mut Arena,
+        cache: &mut Cache,
         name: &str,
         values: &[Value],
     ) -> Eval<Vec<Value>>;
@@ -66,6 +73,7 @@ pub(in crate::metacirc) trait RelayTarget {
     fn eval_extern_func(
         &mut self,
         arena: &mut Arena,
+        cache: &mut Cache,
         name: &str,
         targs: &[Typ],
         values: &[Value],
@@ -121,6 +129,38 @@ impl<Ext: Extern> Extern for MetaExtern<Ext> {
     }
 }
 
+impl<C: BorrowMut<Cache>, T: RelayTarget> Extern for RelayExtern<C, T> {
+    fn eval_rel<Interp, Iface>(
+        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
+        name: &str,
+        values: &[Value],
+    ) -> Eval<Vec<Value>, ExternError>
+    where
+        Iface: Interface,
+        Interp: Interpreter<Iface, Self>,
+    {
+        let (arena, relay) = ctx.arena_and_external_mut();
+        relay.eval_rel(arena, name, values)
+    }
+
+    fn eval_func<Interp, Iface>(
+        _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
+        name: &str,
+        _targs: &[Typ],
+        _values: &[Value],
+    ) -> Eval<Value, ExternError>
+    where
+        Iface: Interface,
+        Interp: Interpreter<Iface, Self>,
+    {
+        unsupported(name)
+    }
+
+    fn clear(&mut self) {
+        RelayExtern::clear(self)
+    }
+}
+
 impl<C: BorrowMut<Cache>, T: RelayTarget> RelayExtern<C, T> {
     /// Decodes a host call of the next level and evaluates it at its target.
     fn eval_rel(
@@ -137,7 +177,9 @@ impl<C: BorrowMut<Cache>, T: RelayTarget> RelayExtern<C, T> {
                     Ok(args) => args,
                     Err(error) => return Eval::new(Err(error), SideEffect::Pure),
                 };
-                let eval = self.layer_next.eval_builtin(arena, &id, &targs, &values);
+                let eval = self
+                    .layer_next
+                    .eval_builtin(arena, cache, &id, &targs, &values);
                 codec::encode::func_result(arena, cache, eval)
             }
             // Host functions are answered by the next level's extern
@@ -148,7 +190,7 @@ impl<C: BorrowMut<Cache>, T: RelayTarget> RelayExtern<C, T> {
                 };
                 let eval = self
                     .layer_next
-                    .eval_extern_func(arena, &id.node, &targs, &values);
+                    .eval_extern_func(arena, cache, &id.node, &targs, &values);
                 codec::encode::func_result(arena, cache, eval)
             }
             // Host relations return an ordered list of outputs
@@ -157,7 +199,9 @@ impl<C: BorrowMut<Cache>, T: RelayTarget> RelayExtern<C, T> {
                     Ok(args) => args,
                     Err(error) => return Eval::new(Err(error), SideEffect::Pure),
                 };
-                let eval = self.layer_next.eval_extern_rel(arena, &id.node, &values);
+                let eval = self
+                    .layer_next
+                    .eval_extern_rel(arena, cache, &id.node, &values);
                 codec::encode::rel_result(arena, cache, eval)
             }
             // Host functions are reached through the three declared meta relations

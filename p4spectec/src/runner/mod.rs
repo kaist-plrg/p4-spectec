@@ -62,9 +62,9 @@ pub struct Config {
     /// Memoize pure calls and host-boundary conversions.
     pub(crate) cache: bool,
     /// Check determinism of candidate selection.
-    det: bool,
+    pub(crate) det: bool,
     /// Type-check arguments and results at call boundaries.
-    guard: bool,
+    pub(crate) guard: bool,
 }
 
 impl Config {

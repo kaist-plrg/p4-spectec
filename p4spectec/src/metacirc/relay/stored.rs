@@ -6,6 +6,7 @@
 use super::super::reentry::NoReentry;
 use super::{HostLayer, RelayTarget};
 use crate::{
+    interface::meta::shared::Cache,
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
@@ -17,6 +18,7 @@ impl<Ext: Extern> RelayTarget for Box<HostLayer<Ext>> {
     fn eval_builtin(
         &mut self,
         arena: &mut Arena,
+        _cache: &mut Cache,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
@@ -27,6 +29,7 @@ impl<Ext: Extern> RelayTarget for Box<HostLayer<Ext>> {
     fn eval_extern_rel(
         &mut self,
         arena: &mut Arena,
+        _cache: &mut Cache,
         name: &str,
         values: &[Value],
     ) -> Eval<Vec<Value>> {
@@ -36,6 +39,7 @@ impl<Ext: Extern> RelayTarget for Box<HostLayer<Ext>> {
     fn eval_extern_func(
         &mut self,
         arena: &mut Arena,
+        _cache: &mut Cache,
         name: &str,
         targs: &[Typ],
         values: &[Value],

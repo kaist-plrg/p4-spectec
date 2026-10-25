@@ -9,6 +9,7 @@ pub mod config;
 mod error;
 mod reentry;
 mod relay;
+mod sim;
 mod tower;
 
 use crate::{
@@ -23,6 +24,7 @@ use std::path::PathBuf;
 
 pub use error::Result;
 
+pub use sim::build_simulator;
 pub use tower::Tower;
 
 /// Executes a program through the configured interpreter tower.
