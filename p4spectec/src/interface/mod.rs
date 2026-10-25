@@ -7,7 +7,7 @@
 //! along the type `print_` is instantiated at.
 //!
 //! `meta` is the preset for meta specifications: standard builtins,
-//! with specification inputs parsed as AL scripts;
+//! with specification inputs parsed as AL or IL scripts;
 //! `meta` also converts IL and AL to and from meta-language values
 
 use crate::lang::{common::source::Span, data::value};
@@ -30,6 +30,8 @@ pub mod p4;
 pub enum Lang {
     /// An AL script, converted by the native `algo` pass.
     Al,
+    /// An IL script, converted to AL by the accepting specification.
+    Il,
     /// A P4 program, which only the P4 specification accepts.
     P4,
 }
@@ -38,15 +40,16 @@ impl Lang {
     /// Returns whether the language is a script the level above can be passed as,
     /// so that a level accepting it may sit below another level.
     pub fn is_script(self) -> bool {
-        matches!(self, Self::Al)
+        matches!(self, Self::Al | Self::Il)
     }
 }
 
 // == Meta
 
-/// Builds the interface of a meta specification with the standard specification builtins.
-pub fn meta() -> MetaInterface {
-    MetaInterface::new(Builtins::new())
+/// Builds the interface of a meta specification accepting `lang` scripts,
+/// with the standard specification builtins.
+pub fn meta(lang: Lang) -> MetaInterface {
+    MetaInterface::new(lang, Builtins::new())
 }
 
 // == P4

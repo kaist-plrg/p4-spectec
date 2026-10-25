@@ -1,8 +1,8 @@
 //! Native host operations requested by the AL interpreter specification
 //!
-//! MetaExtern hosts the AL script that a meta specification interprets.
+//! MetaExtern hosts the AL or IL script that a meta specification interprets.
 //! RelayExtern decodes one representation layer and delegates to the next level.
-//! TerminalExtern handles only builtins of the AL program above the top level.
+//! TerminalExtern handles only builtins of the AL or IL program above the top level.
 //! Clearing an extern resets the host it owns before arena values are reset.
 
 use super::{HostLayer, codec, reentry::NoReentry};
@@ -15,11 +15,11 @@ use crate::{
     runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext, SideEffect},
 };
 
-/// The host of the AL script that a meta specification interprets.
+/// The host of the AL or IL script that a meta specification interprets.
 pub(in crate::metacirc) enum MetaExtern {
     /// The script is the next level; host calls go to its layer.
     Relay(RelayExtern),
-    /// The script is the AL program; only its builtins are answered.
+    /// The script is the AL or IL program; only its builtins are answered.
     Terminal(TerminalExtern),
 }
 

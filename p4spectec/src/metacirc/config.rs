@@ -1,7 +1,9 @@
 //! JSON descriptions of AL interpreter towers
 //!
-//! Levels run from the native base toward a top level consuming AL or P4.
-//! The native backend is AL or SL; all meta interfaces represent AL scripts.
+//! Levels run from the native base toward a top level consuming AL, IL, or P4.
+//! Each level names the language it accepts:
+//! the level above it is passed to it as AL or IL.
+//! The native backend is AL or SL.
 //! Specification paths are resolved relative to the JSON file.
 
 use super::{Result, error::config_invalid};
@@ -86,7 +88,7 @@ impl TowerConfig {
         for (idx, level) in levels.iter().enumerate() {
             if idx != idx_top && !level.lang.is_script() {
                 return Err(config_invalid(format!(
-                    "invalid language at level {idx}: expected al"
+                    "invalid language at level {idx}: expected al or il"
                 )));
             }
             if level.rel.is_empty() || level.specdir.as_os_str().is_empty() {

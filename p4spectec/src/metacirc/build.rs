@@ -19,7 +19,7 @@
 //! Only the base runs natively, as a runner with an interpreter.
 //! A level above it is interpreted by the level below,
 //! so it is a host that answers relayed builtin and host calls.
-//! An AL top ends the chain at its program, whose builtins
+//! An AL or IL top ends the chain at its program, whose builtins
 //! go to the program's interface:
 //!
 //! ```text
@@ -38,6 +38,7 @@
 //! |---------------------|-----------|------------------------------|
 //! | none (base)         | `Base`    | —                            |
 //! | `al`                | `AboveAl` | AL                           |
+//! | `il`                | `AboveIl` | IL                           |
 
 use super::{
     ExecutionMode, Result, TowerConfig,
@@ -110,16 +111,16 @@ impl Parts {
 // == Level construction
 
 /// Prepares a meta top level whose program's builtins go to an interface.
-fn build_terminal(options: runner::Config) -> Parts {
+fn build_terminal(lang_top: Lang, options: runner::Config) -> Parts {
     // The meta specification interprets the program; nothing runs it natively
     let external = MetaExtern::Terminal(TerminalExtern {
         cache: Box::new(Cache::new(options.cache)),
-        interface_program: Box::new(interface::meta()),
+        interface_program: Box::new(interface::meta(Lang::Al)),
     });
-    Parts::MetaSpec(interface::meta(), external)
+    Parts::MetaSpec(interface::meta(lang_top), external)
 }
 
-/// Prepares the top level, hosting the AL program or taking a P4 program.
+/// Prepares the top level, hosting the AL or IL program or taking a P4 program.
 fn build_top(
     level_top: &Level,
     spec_base_al: &al::Spec,
@@ -127,12 +128,13 @@ fn build_top(
     options: runner::Config,
 ) -> Parts {
     match lang_top {
-        Lang::Al => build_terminal(options),
+        Lang::Al | Lang::Il => build_terminal(lang_top, options),
         Lang::P4 => {
             // Read print hints from the form the top level is prepared in
             let unparser = match level_top {
                 Level::Base { .. } => P4Unparser::from_al_spec(spec_base_al),
                 Level::AboveAl { spec_al, .. } => P4Unparser::from_al_spec(spec_al),
+                Level::AboveIl { spec_il, .. } => P4Unparser::from_il_spec(spec_il),
             };
             // Prepare the P4 host environment independently of program parsing
             Parts::P4Spec(interface::p4_with_unparser(unparser), Dummy)
@@ -141,12 +143,12 @@ fn build_top(
 }
 
 /// Prepares a level beneath an already built host, relaying host calls to it.
-fn build_relay(layer_next: HostLayer, options: runner::Config) -> Parts {
+fn build_relay(lang_level: Lang, layer_next: HostLayer, options: runner::Config) -> Parts {
     let external = MetaExtern::Relay(RelayExtern {
         cache: Box::new(Cache::new(options.cache)),
         layer_next: Box::new(layer_next),
     });
-    Parts::MetaSpec(interface::meta(), external)
+    Parts::MetaSpec(interface::meta(lang_level), external)
 }
 
 // == Tower assembly
@@ -175,9 +177,13 @@ impl Tower {
                         config: config_level.clone(),
                         spec_al: crate::algo(paths)?,
                     },
+                    Some(Lang::Il) => Level::AboveIl {
+                        config: config_level.clone(),
+                        spec_il: crate::elab(paths)?,
+                    },
                     Some(_) => {
                         return Err(config_invalid(format!(
-                            "invalid language at level {}: expected al",
+                            "invalid language at level {}: expected al or il",
                             idx - 1
                         )));
                     }
@@ -190,8 +196,8 @@ impl Tower {
         // becoming the host of the level beneath it
         let level_top = levels.last().expect("validated nonempty tower");
         let mut parts = build_top(level_top, &spec_base_al, config.top_lang(), options);
-        for _ in 0..levels.len() - 1 {
-            parts = build_relay(parts.into_host(), options);
+        for idx in (0..levels.len() - 1).rev() {
+            parts = build_relay(config.levels[idx].lang, parts.into_host(), options);
         }
         let base = parts.into_base(arena, spec_base_al, config.mode, options)?;
         Ok(Self { levels, base })

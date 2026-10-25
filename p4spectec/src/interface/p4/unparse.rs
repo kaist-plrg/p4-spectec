@@ -64,6 +64,29 @@ struct CaseTyp {
 impl P4Unparser {
     // - Construction
 
+    /// Collects case types and print hints from an IL specification.
+    pub fn from_il_spec(spec_il: &[il::ast::Def]) -> Self {
+        let mut unparser = Self::default();
+        for def_il in spec_il {
+            let il::ast::DefKind::Typ(typdef_il) = &def_il.node else {
+                continue;
+            };
+            match typdef_il {
+                // Extern types are opaque
+                il::ast::TypDef::Extern(extern_typ_il) => {
+                    unparser.insert_extern_typ(&extern_typ_il.id)
+                }
+                // Defined types record their parameters, body, and cases
+                il::ast::TypDef::Defined(defined_typ_il) => unparser.insert_defined_typ(
+                    &defined_typ_il.id,
+                    &defined_typ_il.tparams,
+                    &defined_typ_il.def_typ,
+                ),
+            }
+        }
+        unparser
+    }
+
     /// Collects case types and print hints from an AL specification.
     pub fn from_al_spec(spec_al: &[al::ast::Def]) -> Self {
         let mut unparser = Self::default();

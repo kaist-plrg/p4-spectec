@@ -1,7 +1,9 @@
 //! Synthetic entry functions for encoded programs
 //!
-//! The meta specification's `Eval_AL` invokes main() in its input script.
+//! The meta specification's `Eval_AL` and `Eval_IL` invoke main() in their input script.
 //! An added main calls the selected single-input relation and returns "pass".
+//! The main is added to the AL or the IL of a level,
+//! as the level consuming it accepts AL or IL.
 //! Relation notation, input positions, and output types come from the source AST;
 //! literal expressions retain the parsed program's types and spans.
 
@@ -46,6 +48,8 @@ fn entry_encoded(arena: &mut Arena, levels: &[Level], idx: usize, value: Value) 
     let name = &level.config().rel;
     let encoded = match level {
         Level::AboveAl { spec_al, .. } => entry_al(arena, spec_al, name, value)?.encode(arena),
+        // An IL consumer converts the patched IL itself
+        Level::AboveIl { spec_il, .. } => entry_il(arena, spec_il, name, value)?.encode(arena),
         Level::Base { .. } => {
             return Err(entry_invalid("the base is never passed to another level"));
         }
@@ -91,9 +95,9 @@ fn entry_not_exp(
         .map_err(|cause| entry_invalid(cause.to_string()))
 }
 
-/// Appends a main function to AL that succeeds only if the selected relation succeeds.
+/// Appends a main function to IL that succeeds only if the selected relation succeeds.
 ///
-/// For `Program_inst`, constructs the AL equivalent of this SpecTec sketch:
+/// For `Program_inst`, constructs the IL equivalent of this SpecTec sketch:
 ///
 /// ```text
 /// dec $main() : text
@@ -108,6 +112,54 @@ fn entry_not_exp(
 /// only after the premise succeeds.
 ///
 /// Other relations use their own notation, input positions, and output types.
+fn entry_il(arena: &Arena, spec_il: &il::Spec, name: &str, value: Value) -> Result<il::Spec> {
+    // A synthetic entry must never shadow a source function
+    for def_il in spec_il {
+        if let il::DefKind::MetaFunc(func_il) = &def_il.node {
+            let id = match func_il {
+                il::MetaFuncDef::Extern(func) => &func.id,
+                il::MetaFuncDef::Builtin(func) => &func.id,
+                il::MetaFuncDef::Table(func) => &func.id,
+                il::MetaFuncDef::Defined(func) => &func.id,
+            };
+            check_main_free(id)?;
+        }
+    }
+    // Read the actual notation and direction of the configured entry
+    let (id, not_typ, input_hint) = spec_il
+        .iter()
+        .find_map(|def_il| match &def_il.node {
+            il::DefKind::Rel(il::RelDef::Defined(rel)) if rel.id.node.as_ref() == name => {
+                Some((&rel.id, &rel.not_typ, &rel.input_hint))
+            }
+            il::DefKind::Rel(il::RelDef::Extern(rel)) if rel.id.node.as_ref() == name => {
+                Some((&rel.id, &rel.not_typ, &rel.input_hint))
+            }
+            _ => None,
+        })
+        .ok_or_else(|| entry_invalid(format!("entry relation {name} was not found")))?;
+    let not_exp = entry_not_exp(arena, name, not_typ, input_hint, value)?;
+    // Premise: -- Program_inst: |- <program literal> : result_0 result_1
+    let prem = phrase!(node: il::PremKind::Rule(il::RulePrem {
+        id: id.clone(), not_exp, input_hint: input_hint.clone(),
+    }), span: Span::default());
+    // Clause: def $main() = "pass" with the relation premise
+    let clause = phrase!(node: il::ClauseKind {
+        args: vec![], exp: exp_pass(), prems: vec![prem], otherwise_opt: None,
+    }, span: Span::default());
+    // Function: dec $main() : text, with the clause above
+    let def = phrase!(node: il::DefKind::MetaFunc(il::MetaFuncDef::Defined(Box::new(il::DefinedFunc {
+        id: phrase!(node: "main".into(), span: Span::default()),
+        tparams: vec![], params: vec![],
+        typ: phrase!(node: il::TypKind::Text, span: Span::default()),
+        clauses: vec![clause], else_clause: None, hints: vec![],
+    }))), span: Span::default());
+    let mut spec_patched_il = spec_il.clone();
+    spec_patched_il.push(def);
+    Ok(spec_patched_il)
+}
+
+/// Appends the main function of `entry_il` to AL instead.
 fn entry_al(arena: &Arena, spec_al: &al::Spec, name: &str, value: Value) -> Result<al::Spec> {
     // A synthetic entry must never shadow a source function
     for def_al in spec_al {
@@ -158,7 +210,8 @@ fn entry_al(arena: &Arena, spec_al: &al::Spec, name: &str, value: Value) -> Resu
 impl Tower {
     /// Wraps an input in scripts from the top level toward the native base.
     ///
-    /// Each level is entered through its configured relation.
+    /// Each level is entered through its configured relation,
+    /// and its script is encoded in the language of the level consuming it.
     /// Encoding errors remain separate from the subsequent program evaluation.
     pub fn patch(&self, arena: &mut Arena, program: Value) -> Result<Value> {
         // The base is never encoded; a direct tower consumes the input unchanged

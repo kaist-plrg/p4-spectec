@@ -48,7 +48,7 @@ pub fn run(config: &MetacircConfig, options: ExecutionOptions) -> Result<()> {
             .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
         match config_tower.top_lang() {
             Lang::P4 => suites_p4.push(suite),
-            Lang::Al => suites_al.push(suite),
+            Lang::Al | Lang::Il => suites_al.push(suite),
         }
     }
     if !suites_al.is_empty() {
@@ -241,9 +241,13 @@ fn run_scripts(suites: &[&MetacircSuite], options: ExecutionOptions) -> Result<(
             .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
         for path in corpus::collect(&suite.root, ".watsup")? {
             let paths_program = std::slice::from_ref(&path);
-            // Invalid scripts are test errors, not rejected executions
-            p4spectec::algo(paths_program)
-                .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
+            // Invalid scripts are test errors, not rejected executions;
+            // an IL top level converts the script itself, so it need only elaborate
+            let valid = match config_tower.top_lang() {
+                Lang::Il => p4spectec::elab(paths_program).map(|_| ()),
+                _ => p4spectec::algo(paths_program).map(|_| ()),
+            };
+            valid.map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
             let accepted =
                 metacirc::run(&config_tower, &[], paths_program, Config::new(cache_on, det, false))
                     .is_ok();

@@ -471,16 +471,16 @@ pub fn load_metacirc(path: &Path) -> Result<MetacircConfig> {
         // The tower's input language selects the kind of verdict
         match (config_tower.top_lang(), &suite.expected, suite.outcome) {
             (Lang::P4, Some(path_expected), None) => expectation_exists(path_expected)?,
-            (Lang::Al, None, Some(_)) => {}
+            (Lang::Al | Lang::Il, None, Some(_)) => {}
             (Lang::P4, _, _) => {
                 return Err(Error::Invalid(format!(
                     "{}: a P4 suite needs an expected file and no outcome",
                     suite.name
                 )));
             }
-            (Lang::Al, _, _) => {
+            (Lang::Al | Lang::Il, _, _) => {
                 return Err(Error::Invalid(format!(
-                    "{}: an AL suite needs an outcome and no expected file",
+                    "{}: a script suite needs an outcome and no expected file",
                     suite.name
                 )));
             }

@@ -3,7 +3,7 @@
 //! A level above the base is a host: the level below interprets it, so it
 //! only answers the builtin and host calls relayed from below. Each meta
 //! level's extern holds the host of the level above it (`relay`), relaying
-//! calls in the meta representation (`codec`); the AL program on top
+//! calls in the meta representation (`codec`); the AL or IL program on top
 //! answers only its builtins. A host's extern runs with an interpreter lent
 //! by the tower, which supports no reentry (`reentry`).
 

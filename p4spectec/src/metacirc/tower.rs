@@ -12,6 +12,7 @@ use crate::{
     lang::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},
+        il::ast as il,
     },
     runner::{Eval, Runner},
     sim_plugin::dummy::Dummy,
@@ -30,12 +31,16 @@ pub(super) enum Level {
     Base { config: LevelConfig },
     /// A level above one accepting AL, which receives the patched AL.
     AboveAl { config: LevelConfig, spec_al: al::Spec },
+    /// A level above one accepting IL, which receives the patched IL.
+    AboveIl { config: LevelConfig, spec_il: il::Spec },
 }
 
 impl Level {
     pub(super) fn config(&self) -> &LevelConfig {
         match self {
-            Self::Base { config, .. } | Self::AboveAl { config, .. } => config,
+            Self::Base { config, .. }
+            | Self::AboveAl { config, .. }
+            | Self::AboveIl { config, .. } => config,
         }
     }
 }
@@ -44,7 +49,7 @@ impl Level {
 pub(super) enum BaseLayer {
     /// A P4 specification, interpreting a parsed P4 program.
     P4Spec(Runner<P4Interface, Dummy>),
-    /// A meta specification interpreting an AL script, hosting the script above it.
+    /// A meta specification interpreting an AL or IL script, hosting the script above it.
     MetaSpec(Runner<MetaInterface, MetaExtern>),
 }
 

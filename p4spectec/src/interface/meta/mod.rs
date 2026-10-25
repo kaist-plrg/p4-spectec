@@ -2,16 +2,16 @@
 //!
 //! `shared` encodes and decodes the syntax IL and AL have in common,
 //! together with the conversion cache and errors;
-//! `il` adds the elaborated IL given to an IL-to-AL specification,
+//! `il` adds the elaborated IL given to the IL-to-AL specification,
 //! and `al` adds AL and runtime values.
-//! `MetaInterface::parse_program` lowers specification paths through `algo`
-//! and encodes the AL script in the caller's arena;
+//! `MetaInterface::parse_program` encodes specification paths as an AL or IL script,
+//! as the interpreting meta specification accepts;
 //! include search paths are unused because scripts are not preprocessed.
 
 use std::path::PathBuf;
 
 use crate::{
-    interface::builtin::call::Builtins,
+    interface::{Lang, builtin::call::Builtins},
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
@@ -25,15 +25,16 @@ pub mod al;
 pub mod il;
 pub mod shared;
 
-/// Provides AL script parsing and the standard specification builtins.
+/// Provides script parsing in one language and the standard specification builtins.
 pub struct MetaInterface {
+    lang: Lang,
     builtins: Builtins,
 }
 
 impl MetaInterface {
-    /// Assembles the meta interface with its builtin table.
-    pub(crate) fn new(builtins: Builtins) -> Self {
-        Self { builtins }
+    /// Assembles the meta interface for scripts in `lang` with its builtin table.
+    pub(crate) fn new(lang: Lang, builtins: Builtins) -> Self {
+        Self { lang, builtins }
     }
 }
 
@@ -44,12 +45,19 @@ impl Interface for MetaInterface {
         _includes: &[PathBuf],
         paths: &[PathBuf],
     ) -> Result<Value, InterfaceError> {
-        // Lower ordered specification inputs to source AL
-        let spec_al = crate::algo(paths).map_err(InterfaceError::from)?;
-        // Encode the program in the caller's arena and retain codec diagnostics
-        spec_al
-            .encode(arena)
-            .map_err(|error| InterfaceError::from(error.into_report()))
+        // Encode the ordered specification inputs in the caller's arena,
+        // retaining codec diagnostics
+        let encoded = match self.lang {
+            Lang::Al => crate::algo(paths)
+                .map_err(InterfaceError::from)?
+                .encode(arena),
+            Lang::Il => crate::elab(paths)
+                .map_err(InterfaceError::from)?
+                .encode(arena),
+            // A meta specification never interprets P4 directly
+            Lang::P4 => return Err(InterfaceError::diagnostic_unconfigured()),
+        };
+        encoded.map_err(|error| InterfaceError::from(error.into_report()))
     }
 
     fn call_builtin(

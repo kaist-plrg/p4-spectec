@@ -1,4 +1,4 @@
-//! Configured interpreter towers over AL or P4 inputs
+//! Configured interpreter towers over AL, IL, or P4 inputs
 //!
 //! Each runner is prepared in the arena used by all of its calls.
 //! Only the base runs natively; meta externs decode one level of arguments
@@ -44,7 +44,7 @@ pub fn run(
     let mut tower = Tower::build(&mut arena, config, options)?;
     // Parse the input in the language the top level accepts
     let value_program = match lang_top {
-        Lang::Al => interface::meta()
+        Lang::Al | Lang::Il => interface::meta(lang_top)
             .parse_program(&mut arena, includes, paths_program)
             .map_err(|error| error.into_report())?,
         Lang::P4 => parse_file(&mut arena, includes, &paths_program[0])
