@@ -16,14 +16,6 @@ def $equations_of(D, symid) = eps
 dec $kind_of_symbol(definition, symid) : symkind?
 def $kind_of_symbol(D, symid) = $kind_of($find_symdecl(D, symid))
 
-dec $sort_of_decl(symdecl?) : sort?
-def $sort_of_decl(eps) = eps
-def $sort_of_decl(SYMBOL sortid_p* sort_a* '->' sort kind) = sort
-
-dec $result_sort(definition, symid) : sort?
-  hint(prose_in "the result sort of" %1)
-def $result_sort(D, symid) = $sort_of_decl($find_symdecl(D, symid))
-
 ;; The result sort of an application of a parametric symbol, with its sort
 ;; parameters replaced by the sort arguments
 
@@ -52,12 +44,10 @@ def $result_instance(D, symid, sort_a*)
 def $result_instance(D, symid, sort_a*) = eps
   -- if eps = $find_symdecl(D, symid)
 
-;; The hook of a symbol if its arguments are evaluated lazily ($is_lazy,
-;; 3-load), or "" for any other symbol
+;; The hook of a symbol whose arguments are evaluated lazily (LAZY, 3-load)
 
-dec $lazy_hook(definition, symid) : text
+dec $lazy_hook(definition, symid) : hookid?
 def $lazy_hook(D, symid) = hookid
-  -- if hookid = $hook_of(D, symid)
-  -- if $is_lazy(hookid)
-def $lazy_hook(D, symid) = ""
+  -- if LAZY hookid = $kind_of_symbol(D, symid)
+def $lazy_hook(D, symid) = eps
   -- otherwise

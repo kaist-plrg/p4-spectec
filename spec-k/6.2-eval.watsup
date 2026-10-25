@@ -104,7 +104,7 @@ rule Eval/ite-else:
 
 rule Eval/app:
   D subst |- APP symid sort* pattern* : result
-  -- if "" = $lazy_hook(D, symid)
+  -- if eps = $lazy_hook(D, symid)
   -- (Eval: D subst |- pattern : OK term)*
   -- Apply: D |- symid sort* term* : result
 
@@ -119,11 +119,8 @@ rule Eval/fail:
 
 rule Apply/constructor:
   D |- symid sort* term* : OK $construct(symid, sort*, term*)
-  -- if CONSTRUCTOR = $kind_of_symbol(D, symid)
-
-rule Apply/binder:
-  D |- symid sort* term* : OK $construct(symid, sort*, term*)
-  -- if BINDER = $kind_of_symbol(D, symid)
+  -- if kind = $kind_of_symbol(D, symid)
+  -- if kind <- [ CONSTRUCTOR, BINDER ]
 
 rule Apply/hooked:
   D |- symid sort* term* : $hook(D, hookid, sort_r, term*)
@@ -132,7 +129,8 @@ rule Apply/hooked:
 
 ;;; A hook of a domain module is computed by the K runtime (2-relation). Its answer
 ;;; is KORE, a domain value or a constructor term, read as the initial term is
-;;; (3-load) and evaluated to a term
+;;; (3-load) and evaluated to a term. A failure of the runtime is an error
+;;; (Apply/fail).
 
 rule Apply/runtime:
   D |- symid sort* term* : result
@@ -141,28 +139,15 @@ rule Apply/runtime:
   -- Call_hook: |- symid sort* sort_r term* : OK kore
   -- Eval: D $empty_map<varid, term> |- $pattern(D.SORTHOOKS, kore) : result
 
-rule Apply/runtime-error:
-  D |- symid sort* term* : ERROR
-  -- if RUNTIME hookid = $kind_of_symbol(D, symid)
-  -- if sort_r = $result_instance(D, symid, sort*)
-  -- Call_hook: |- symid sort* sort_r term* : ERROR
+;;; A function or anywhere symbol is rewritten by its first equation that
+;;; applies, as a step rewrites the configuration by its first rule (7-step).
+;;; Failing to evaluate the right-hand side does not fall back to later
+;;; equations. An anywhere symbol stays a constructor when none applies.
 
-;;; A function symbol is rewritten by its first equation that applies, as a
-;;; step rewrites the configuration by its first rule (7-step). Failing to
-;;; evaluate the right-hand side does not fall back to later equations.
-
-rule Apply/function:
+rule Apply/equation:
   D |- symid sort* term* : result
-  -- if FUNCTION = $kind_of_symbol(D, symid)
-  -- First_clause: D |- $equations_of(D, symid) term* : OK (subst, pattern_r)
-  -- Eval: D subst |- pattern_r : result
-
-;;; An anywhere symbol is rewritten by its first equation that applies, and
-;;; stays a constructor when none does
-
-rule Apply/anywhere:
-  D |- symid sort* term* : result
-  -- if ANYWHERE = $kind_of_symbol(D, symid)
+  -- if kind = $kind_of_symbol(D, symid)
+  -- if kind <- [ FUNCTION, ANYWHERE ]
   -- First_clause: D |- $equations_of(D, symid) term* : OK (subst, pattern_r)
   -- Eval: D subst |- pattern_r : result
 
@@ -170,6 +155,9 @@ rule Apply/anywhere-none:
   D |- symid sort* term* : OK $construct(symid, sort*, term*)
   -- if ANYWHERE = $kind_of_symbol(D, symid)
   -- First_clause: D |- $equations_of(D, symid) term* : UNMATCH
+
+;;; Anything else (a stuck function, a failing hook, an undeclared symbol)
+;;; fails
 
 rule Apply/fail:
   D |- symid sort* term* : ERROR
@@ -187,14 +175,14 @@ rule First_clause/first:
   D |- (clause_h :: clause_t*) term* : OK (subst, $rhs_of(clause_h))
   -- Clause_applies: D |- clause_h term* : OK subst
 
-rule First_clause/error:
-  D |- (clause_h :: clause_t*) term* : ERROR
-  -- Clause_applies: D |- clause_h term* : ERROR
-
 rule First_clause/next:
   D |- (clause_h :: clause_t*) term* : found
   -- Clause_applies: D |- clause_h term* : UNMATCH
   -- First_clause: D |- clause_t* term* : found
+
+rule First_clause/error:
+  D |- clause* term* : ERROR
+  -- otherwise
 
 rule Clause_applies:
   D |- (CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c?) term* : matched
@@ -208,21 +196,20 @@ rule Clause_applies:
 rule First_holding/none:
   D |- eps pattern_c? : UNMATCH
 
-rule First_holding/stuck:
-  D |- (ERROR :: way_t*) pattern_c? : ERROR
-
 rule First_holding/first:
   D |- (OK subst_h :: way_t*) pattern_c? : OK subst_h
   -- Holds: D subst_h |- pattern_c? : OK true
-
-rule First_holding/error:
-  D |- (OK subst_h :: way_t*) pattern_c? : ERROR
-  -- Holds: D subst_h |- pattern_c? : ERROR
 
 rule First_holding/next:
   D |- (OK subst_h :: way_t*) pattern_c? : matched
   -- Holds: D subst_h |- pattern_c? : OK false
   -- First_holding: D |- way_t* pattern_c? : matched
+
+;;; a stuck way, or a requires clause that cannot be evaluated
+
+rule First_holding/error:
+  D |- way* pattern_c? : ERROR
+  -- otherwise
 
 ;;; A requires clause holds when there is none, or it evaluates to true; it
 ;;; fails when it cannot be evaluated (a function in it is stuck)
@@ -235,5 +222,5 @@ rule Holds/value:
   -- Eval: D subst |- pattern : OK (BOOL b)
 
 rule Holds/fail:
-  D subst |- (pattern) : ERROR
-  -- Eval: D subst |- pattern : ERROR
+  D subst |- pattern? : ERROR
+  -- otherwise

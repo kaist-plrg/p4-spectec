@@ -47,11 +47,8 @@ builtin dec $fresh_nat() : nat
 ;; Text builtins, for reading domain values and hook names (3-load): a KORE
 ;; string has one byte per character
 
-builtin dec $string_substr(text, int, int) : text
-  hint(prose_in "the bytes of" %0 "from" %1 "up to" %2)
-builtin dec $string_find(text, text, int) : int
-  hint(prose_in "the first position from" %2 "where" %1 "occurs in" %0
-                ", or -1")
+builtin dec $has_prefix(text, text) : bool
+  hint(prose_true %0 "begins with" %1)
 builtin dec $string_to_int(text) : int?
   hint(prose_in "the integer written in decimal as" %0)
 builtin dec $string_to_bytes(text) : nat*

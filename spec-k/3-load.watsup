@@ -133,12 +133,8 @@ def $close_subsorts(subsort*) = $concat_<subsort>($subsorts_from(SM, sort_a)*)
 ;; sort; the hooks on K terms are specified (HOOKED). JSON's two hooks convert
 ;; between a JSON term, a constructor term, and its text.
 
-dec $hook_module(hookid) : text
-def $hook_module(hookid) = $string_substr(hookid, 0, i)
-  -- if i = $string_find(hookid, ".", 0)
-  -- if $(i >= 0)
-def $hook_module(hookid) = hookid
-  -- if $string_find(hookid, ".", 0) = -1
+dec $in_module(hookid, text) : bool
+def $in_module(hookid, t_m) = $has_prefix(hookid, t_m ++ ".")
 
 ;; Hooks whose arguments are evaluated lazily (create_hardcoded_hook of the
 ;; LLVM backend); they are specified (6.2-eval)
@@ -149,18 +145,20 @@ def $is_lazy(hookid) = hookid <- [ "BOOL.and", "BOOL.andThen", "BOOL.or",
 
 dec $is_runtime(hookid) : bool
 def $is_runtime(hookid)
-  = $hook_module(hookid) <- [ "INT", "BOOL", "STRING", "BYTES", "FLOAT",
-                              "JSON", "KRYPTO" ]
-    /\ ~$is_lazy(hookid)
+  = $exists_($in_module(hookid, t_m)*)
     /\ ~(hookid <- [ "STRING.token2string", "STRING.string2token" ])
+  -- if t_m* = [ "INT", "BOOL", "STRING", "BYTES", "FLOAT", "JSON", "KRYPTO" ]
 
 dec $kind_by_attrs(kattr*) : symkind
+def $kind_by_attrs(kattr*) = LAZY hookid
+  -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
+  -- if $is_lazy(hookid)
 def $kind_by_attrs(kattr*) = RUNTIME hookid
   -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
-  -- if $is_runtime(hookid)
+  -- if ~$is_lazy(hookid) /\ $is_runtime(hookid)
 def $kind_by_attrs(kattr*) = HOOKED hookid
   -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
-  -- if ~$is_runtime(hookid)
+  -- if ~$is_lazy(hookid) /\ ~$is_runtime(hookid)
 def $kind_by_attrs(kattr*) = FUNCTION
   -- if ~$has_attr("hook", kattr*)
   -- if $has_attr("function", kattr*)
@@ -245,9 +243,9 @@ def $right_assoc(symid, sort*, kore_h :: kore_t*)
 dec $pattern(map<sortid, hookid>, kore) : pattern
   hint(prose_in "the pattern" %1 "stands for")
 def $pattern(SH, KVAR varid sort) = FRESH sort
-  -- if $string_find(varid, "Var'Bang", 0) = 0
+  -- if $has_prefix(varid, "Var'Bang")
 def $pattern(SH, KVAR varid sort) = VAR varid sort
-  -- if $string_find(varid, "Var'Bang", 0) =/= 0
+  -- if ~$has_prefix(varid, "Var'Bang")
 def $pattern(SH, KML "dv" ([sort]) ([KSTR text]))
   = $literal($sort_hook(SH, sort), sort, text)
 def $pattern(SH, KAPP symid sort* kore*) = APP symid sort* $pattern(SH, kore)*

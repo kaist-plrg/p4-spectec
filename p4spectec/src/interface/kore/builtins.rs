@@ -1,9 +1,8 @@
 //! Text builtins of the K specification, outside hooks
 //!
 //! Reading domain values and hook names (`spec-k/3-load.watsup`) takes
-//! text apart. A KORE string has one character per byte (`parse`), so
-//! positions are in bytes, as in the LLVM backend. For example,
-//! `$string_find("INT.add", ".", 0)` is 3.
+//! text apart. A KORE string has one character per byte (`parse`).
+//! For example, `$has_prefix("INT.add", "INT.")` is true.
 
 use num_bigint::BigInt;
 
@@ -27,51 +26,13 @@ fn text(arena: &Arena, value: &Value) -> Result<String> {
     Ok(value::get::text(arena, value)?.to_owned())
 }
 
-/// The number of a value, as an integer.
-fn int(arena: &Arena, value: &Value) -> Result<BigInt> {
-    Ok(num::to_int(value::get::num(arena, value)?).clone())
-}
-
-/// A position as an index into the text's characters.
-fn index(i: &BigInt) -> Result<usize> {
-    usize::try_from(i).map_err(|_| BuiltinError::argument_invalid(format!("bad position {i}")))
-}
-
-/// An integer value.
-fn make_int(arena: &mut Arena, i: BigInt) -> Result<Value> {
-    Ok(value::make::int(arena, i, Span::default())?)
-}
-
-/// `dec $string_substr(text, int, int) : text`, the bytes in [start, end).
-fn string_substr(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value> {
+/// `dec $has_prefix(text, text) : bool`, whether the first text begins
+/// with the second.
+fn has_prefix(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value> {
     extract::zero(targs)?;
-    let (t, start, end) = extract::three(values)?;
-    let t = text(arena, t)?;
-    let (start, end) = (index(&int(arena, start)?)?, index(&int(arena, end)?)?);
-    if start > end || end > t.chars().count() {
-        return Err(BuiltinError::argument_invalid(format!("bad range [{start}, {end})")));
-    }
-    let sub = t.chars().skip(start).take(end - start).collect();
-    Ok(value::make::text(arena, sub, Span::default())?)
-}
-
-/// `dec $string_find(text, text, int) : int`, the first position from the
-/// given one where the second text occurs in the first, or -1.
-fn string_find(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value> {
-    extract::zero(targs)?;
-    let (haystack, needle, pos) = extract::three(values)?;
-    let haystack: Vec<char> = text(arena, haystack)?.chars().collect();
-    let needle: Vec<char> = text(arena, needle)?.chars().collect();
-    let pos = int(arena, pos)?;
-    let found = usize::try_from(&pos)
-        .ok()
-        .filter(|&pos| pos < haystack.len())
-        .and_then(|pos| {
-            (pos..=haystack.len().saturating_sub(needle.len()))
-                .find(|&i| haystack[i..].starts_with(&needle))
-        });
-    let found = found.map_or(BigInt::from(-1), BigInt::from);
-    make_int(arena, found)
+    let (t, prefix) = extract::two(values)?;
+    let found = text(arena, t)?.starts_with(&text(arena, prefix)?);
+    Ok(value::make::bool(arena, found, Span::default())?)
 }
 
 /// The integer written in a base, as K's `String2Int` reads it: an optional
@@ -97,7 +58,9 @@ fn parse_base(t: &str, base: u32) -> Option<BigInt> {
 fn string_to_int(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value> {
     extract::zero(targs)?;
     let t = text(arena, extract::one(values)?)?;
-    let i = parse_base(&t, 10).map(|i| make_int(arena, i)).transpose()?;
+    let i = parse_base(&t, 10)
+        .map(|i| value::make::int(arena, i, Span::default()))
+        .transpose()?;
     let typ = typ::make::opt(typ::make::int()).node.into();
     Ok(value::make::opt(arena, typ, i, Span::default())?)
 }
@@ -118,10 +81,9 @@ fn string_to_bytes(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result
 }
 
 /// The builtins above, by name.
-pub fn entries() -> [(&'static str, BuiltinImpl); 4] {
+pub fn entries() -> [(&'static str, BuiltinImpl); 3] {
     [
-        ("string_substr", Box::new(string_substr)),
-        ("string_find", Box::new(string_find)),
+        ("has_prefix", Box::new(has_prefix)),
         ("string_to_int", Box::new(string_to_int)),
         ("string_to_bytes", Box::new(string_to_bytes)),
     ]
