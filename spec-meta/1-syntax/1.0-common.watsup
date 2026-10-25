@@ -90,55 +90,59 @@ syntax pat =
 
 ;; Expressions
 
-syntax expField, expCase, path, arg, iterExp
+syntax exp, expField, expCase, typedPath, path, arg, expIter
+
+syntax typedExp = exp '#' typ
 
 syntax exp =
   | BOOL bool
   | num
   | TEXT text
   | VAR id
-  | UN unop exp
-  | BIN binop exp exp
-  | CMP cmpop exp exp
-  | UPCAST typ exp
-  | DOWNCAST typ exp
-  | SUB exp typ
-  | MATCH exp pat
-  | TUP exp*
+  | UN unop typedExp
+  | BIN binop typedExp typedExp
+  | CMP cmpop typedExp typedExp
+  | UPCAST typ typedExp
+  | DOWNCAST typ typedExp
+  | SUB typedExp typ
+  | MATCH typedExp pat
+  | TUP typedExp*
   | INJ expCase
   | STR expField*
-  | OPT exp?
-  | LIST exp*
-  | CONS exp exp
-  | CAT exp exp
-  | MEM exp exp
-  | LEN exp
-  | DOT exp atom
-  | IDX exp exp
-  | SLICE exp exp exp
-  | UPD exp path exp
+  | OPT typedExp?
+  | LIST typedExp*
+  | CONS typedExp typedExp
+  | CAT typedExp typedExp
+  | MEM typedExp typedExp
+  | LEN typedExp
+  | DOT typedExp atom
+  | IDX typedExp typedExp
+  | SLICE typedExp typedExp typedExp
+  | UPD typedExp typedPath typedExp
   | CALL id targ* arg*
-  | ITER exp iterExp
+  | ITER typedExp expIter
 
-syntax expCase = mixop exp*
-syntax expField = atom exp
+syntax expCase = mixop typedExp*
+syntax expField = atom typedExp
 
-syntax iterExp = iter vari*
+syntax expIter = iter vari*
 
 ;; Paths
 
+syntax typedPath = path '#' typ
+
 syntax path =
   | ROOT
-  | IDX path exp
-  | SLICE path exp exp
-  | DOT path atom
+  | IDX typedPath typedExp
+  | SLICE typedPath typedExp typedExp
+  | DOT typedPath atom
 
 ;; Arguments
 
 syntax targ = typ
 
 syntax arg =
-  | EXP exp
+  | EXP typedExp
   | FUN id
 
 ;; Type parameters
@@ -153,18 +157,13 @@ syntax param =
 
 ;; Premises
 
-syntax iterPrem
+syntax ifPrem = IF typedExp
 
-syntax prem =
-  | REL id ':' exp* '->' exp*
-  | IF exp
-  | IFHOLD id ':' exp*
-  | IFNOTHOLD id ':' exp*
-  | LET exp '=' exp
-  | ITER prem iterPrem
-  | DEBUG exp
+syntax ifHoldPrem = IFHOLD id ':' typedExp*
 
-syntax iterPrem = iter vari* vari*
+syntax ifNotHoldPrem = IFNOTHOLD id ':' typedExp*
+
+syntax debugPrem = DEBUG typedExp
 
 ;; Type definitions
 
@@ -178,55 +177,10 @@ syntax typDefn =
   | externTypDefn
   | definedTypDefn
 
-;; Relation definitions
-
-syntax externRelDefn =
-  EXTREL id ':' typ* '->' typ*
-
-syntax rulMatch = exp* '-' prem*
-syntax rulPath = id '=' exp* '-' prem*
-syntax rulGroup = id ':' rulMatch '=' rulPath*
-syntax elsGroup = id ':' rulMatch '=' rulPath
-
-syntax definedRelDefn =
-  REL id ':' typ* '->' typ* '=' rulGroup* elsGroup?
-
-syntax relDefn =
-  | externRelDefn
-  | definedRelDefn
-
-;; Meta-functions
+;; Meta-functions without clauses
 
 syntax externFuncDefn =
   EXTFUNC id tparam* param* ':' typ
 
 syntax builtinFuncDefn =
   BUILTINFUNC id tparam* param* ':' typ
-
-syntax tblRow = arg* '=' exp '-' prem*
-
-syntax tableFuncDefn =
-  TABLEFUNC id param* ':' typ '=' tblRow*
-
-syntax clause = arg* '=' exp '-' prem*
-syntax elsClause = clause
-
-syntax definedFuncDefn =
-  FUNC id tparam* param* ':' typ '=' clause* elsClause?
-
-syntax funcDefn =
-  | externFuncDefn
-  | builtinFuncDefn
-  | tableFuncDefn
-  | definedFuncDefn
-
-;; Definitions
-
-syntax defn =
-  | typDefn
-  | relDefn
-  | funcDefn
-
-;; Spec
-
-syntax spec = defn*

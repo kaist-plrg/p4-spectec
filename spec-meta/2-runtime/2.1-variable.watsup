@@ -2,19 +2,30 @@
 
 syntax varr = id iter*
 
+;; Fresh identifiers
+
+dec $fresh(id*, id) : id
+  hint(prose_in "a fresh name based on" %1 "avoiding" %0)
+def $fresh(id_used*, id) = id
+  -- if ~(id <- id_used*)
+def $fresh(id_used*, id) = $fresh(id_used*, id ++ "'")
+  -- if id <- id_used*
+
 ;; Iteration helpers
 
-dec $is_iter_on_var(exp) : varr?
+dec $is_iter_on_var(typedExp) : varr?
   hint(prose_in "the runtime variable represented by" %0 "if any")
-def $is_iter_on_var(VAR id) = id eps
-def $is_iter_on_var(ITER exp iterExp)
+def $is_iter_on_var((VAR id) '#' _) = id eps
+def $is_iter_on_var((ITER typedExp expIter) '#' _)
   = id (iter* ++ [ iter_outer ])
-  -- if id iter* = $is_iter_on_var(exp)
-  -- if iter_outer (id _ iter*) = iterExp
+  -- if id iter* = $is_iter_on_var(typedExp)
+  -- if iter_outer (id _ iter*) = expIter
 def $is_iter_on_var(_) = eps
   -- otherwise
 
-dec $iter_vari(vari, iter) : vari
-  hint(prose_in %0 "iterated by" %1)
-def $iter_vari(id typ iter*, iter_add)
+;; Iterating variables
+
+dec $iterate_vari(iter, vari) : vari
+  hint(prose_in %1 "iterated by" %0)
+def $iterate_vari(iter_add, id typ iter*)
   = id typ (iter* ++ [ iter_add ])

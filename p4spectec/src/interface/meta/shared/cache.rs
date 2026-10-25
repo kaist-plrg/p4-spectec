@@ -1,4 +1,4 @@
-//! Successful AL representation conversions within one arena
+//! Successful meta representation conversions within one arena
 //!
 //! Each host boundary owns its cache and passes it through recursive conversions.
 //! Keys compare payloads without type notes or source locations;
@@ -21,8 +21,8 @@ const NUM_ENTRIES_MAX: usize = 65_536;
 /// Clear before resetting or replacing the arena; canonical ids and stored
 /// handles are only valid in the arena that produced them.
 pub struct Cache {
-    pub(super) values_encode: ClockCache<CanonId<ValueKind>, Value>,
-    pub(super) values_decode: ClockCache<CanonId<ValueKind>, Value>,
+    pub(in crate::interface::meta) values_encode: ClockCache<CanonId<ValueKind>, Value>,
+    pub(in crate::interface::meta) values_decode: ClockCache<CanonId<ValueKind>, Value>,
     pub(super) mixops_encode: ClockCache<CanonId<MixopKind>, Value>,
     pub(super) mixops_decode: ClockCache<CanonId<ValueKind>, Mixop>,
     pub(super) typs_decode: ClockCache<CanonId<ValueKind>, Typ>,

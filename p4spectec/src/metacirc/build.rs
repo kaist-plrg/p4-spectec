@@ -41,7 +41,7 @@ use super::{
     tower::{Layer, Level, Tower},
 };
 use crate::{
-    interface::{self, al::Cache},
+    interface::{self, meta::shared::Cache},
     lang::{al::ast as al, data::arena::Arena},
     pass::structure,
     runner::{self, NullExtern, Runner, Spec},
@@ -72,13 +72,13 @@ fn build_top(
             // Prepare the input script's definition environment for builtin calls
             let spec_program = into_runner_spec(mode, spec_al.clone())?;
             let runner_program =
-                Runner::new(arena, spec_program, options, interface::al(), NullExtern)?;
+                Runner::new(arena, spec_program, options, interface::meta(), NullExtern)?;
             // Run the AL specification with builtin calls delegated to runner_program
             let external = AlExtern::Terminal(TerminalExtern {
                 cache: Box::new(Cache::new(options.cache)),
                 runner_program: Box::new(runner_program),
             });
-            let runner = Runner::new(arena, spec_top, options, interface::al(), external)?;
+            let runner = Runner::new(arena, spec_top, options, interface::meta(), external)?;
             Ok(Layer::AlSpec(runner))
         }
         ProgramConfig::P4 => {
@@ -103,7 +103,7 @@ fn build_relay(
         cache: Box::new(Cache::new(options.cache)),
         layer_next: Box::new(layer_next),
     });
-    Ok(Layer::AlSpec(Runner::new(arena, spec, options, interface::al(), external)?))
+    Ok(Layer::AlSpec(Runner::new(arena, spec, options, interface::meta(), external)?))
 }
 
 // == Tower assembly

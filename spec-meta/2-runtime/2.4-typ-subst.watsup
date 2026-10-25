@@ -42,23 +42,17 @@ def $ids_typ(typ) = eps
 def $ids_typs(eps) = eps
 def $ids_typs(typ_h :: typ_t*) = $ids_typ(typ_h) ++ $ids_typs(typ_t*)
 
-dec $fresh_id(id, id*) : id
-  hint(prose_in "a fresh name based on" %0 "avoiding" %1)
-def $fresh_id(id, id_used*) = id
-  -- if ~(id <- id_used*)
-def $fresh_id(id, id_used*) = $fresh_id(id ++ "'", id_used*)
-  -- if id <- id_used*
-
 dec $fresh_ids(id*, id*) : id*
   hint(prose_in "distinct fresh names based on" %0 "avoiding" %1)
 def $fresh_ids(eps, id_used*) = eps
 def $fresh_ids(id_h :: id_t*, id_used*)
   = id_fresh ++ $fresh_ids(id_t*, id_fresh ++ id_used*)
-  -- if id_fresh = $fresh_id(id_h, id_used*)
+  -- if id_fresh = $fresh(id_used*, id_h)
 
 ;;; Substitution in types and type sequences
 
 syntax typRes = ok<typ> | error
+syntax typsRes = ok<typ*> | error
 
 dec $subst_typ(theta, typ) : typRes
   hint(prose_in "the result of substituting" %0 "into type" %1)

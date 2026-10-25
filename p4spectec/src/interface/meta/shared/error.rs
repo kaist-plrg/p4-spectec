@@ -1,4 +1,4 @@
-//! Located errors at the AL representation boundary
+//! Located errors at the meta representation boundary
 //!
 //! Conversion keeps allocation, notation, and malformed-data causes distinct.
 //! `into_report` attaches the meta value's location without rendering sources.
@@ -86,7 +86,7 @@ impl Error {
                 Severity::Error,
                 Some(code.into()),
                 kind.to_string(),
-                vec![Label::primary(&span, "invalid AL representation")],
+                vec![Label::primary(&span, "invalid meta representation")],
                 vec![],
             )
             .into(),

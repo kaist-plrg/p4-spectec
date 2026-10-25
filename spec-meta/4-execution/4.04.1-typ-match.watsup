@@ -139,18 +139,18 @@ def $param_typ(EXP typ) = typ
 def $param_typ(FUN id ':' tparam* param* '->' typ)
   = FUNC tparam* $param_typ(param)* typ
 
-dec $func_typ(funcDefn) : typ
+dec $func_typ(funcDefnAL) : typ
   hint(prose_in "the signature of function" %0)
 def $func_typ(EXTFUNC id tparam* param* ':' typ)
   = FUNC tparam* $param_typ(param)* typ
 def $func_typ(BUILTINFUNC id tparam* param* ':' typ)
   = FUNC tparam* $param_typ(param)* typ
-def $func_typ(TABLEFUNC _ param* ':' typ '=' tblRow*)
+def $func_typ(TABLEFUNC _ param* ':' typ '=' tblRowAL*)
   = FUNC eps $param_typ(param)* typ
-def $func_typ(FUNC _ tparam* param* ':' typ '=' clause* elsClause?)
+def $func_typ(FUNC _ tparam* param* ':' typ '=' clauseAL* elsClauseAL?)
   = FUNC tparam* $param_typ(param)* typ
 
-def $subtyp_func(fenv, tdenv, typ, id) = $equiv_func_typ(tdenv, typ, $func_typ(funcDefn))
-  -- if funcDefn = $find_map<id, funcDefn>(fenv, id)
+def $subtyp_func(fenv, tdenv, typ, id) = $equiv_func_typ(tdenv, typ, $func_typ(funcDefnAL))
+  -- if funcDefnAL = $find_map<id, funcDefnAL>(fenv, id)
 def $subtyp_func(fenv, tdenv, typ, id) = ERROR
   -- otherwise

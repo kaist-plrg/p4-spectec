@@ -7,7 +7,7 @@
 
 use super::{codec, tower::Layer};
 use crate::{
-    interface::al::{AlInterface, Cache},
+    interface::meta::{MetaInterface, shared::Cache},
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::Typ,
@@ -29,7 +29,7 @@ pub(super) enum AlExtern {
 /// Builtin calls resolved against the AL program's own specification.
 pub(super) struct TerminalExtern {
     pub cache: Box<Cache>,
-    pub runner_program: Box<Runner<AlInterface, NullExtern>>,
+    pub runner_program: Box<Runner<MetaInterface, NullExtern>>,
 }
 
 /// Host calls resolved against the next layer in a runtime tower.

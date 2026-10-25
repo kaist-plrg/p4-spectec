@@ -1,13 +1,16 @@
-//! AL program parsing and specification builtins
+//! Meta-language representations of specifications and the meta runner interface
 //!
-//! `AlInterface::parse_program` lowers specification paths through `algo`
-//! and encodes source AL as a meta `spec` in the caller's arena
-//! Paths follow the compiler's ordered file and directory loading rules
-//! Include search paths are unused because AL input is not preprocessed
+//! `shared` encodes and decodes the syntax IL and AL have in common,
+//! together with the conversion cache and errors;
+//! `al` adds AL and runtime values.
+//! `MetaInterface::parse_program` lowers specification paths through `algo`
+//! and encodes the AL script in the caller's arena;
+//! include search paths are unused because scripts are not preprocessed.
 
 use std::path::PathBuf;
 
 use crate::{
+    interface::builtin::call::Builtins,
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
@@ -15,32 +18,24 @@ use crate::{
     runner::{Eval, Extern, Interface, InterfaceError, Interpreter, RunnerContext},
 };
 
-use super::builtin::call::Builtins;
-use encode::Encode;
+use self::shared::encode::Encode;
 
-mod cache;
-pub mod decode;
-pub mod encode;
-mod error;
-mod mixops;
-mod stub;
-
-pub use cache::Cache;
-pub use error::{Error, ErrorKind};
+pub mod al;
+pub mod shared;
 
 /// Provides AL script parsing and the standard specification builtins.
-pub struct AlInterface {
+pub struct MetaInterface {
     builtins: Builtins,
 }
 
-impl AlInterface {
-    /// Assembles the AL interface with its configured builtin table.
+impl MetaInterface {
+    /// Assembles the meta interface with its builtin table.
     pub(crate) fn new(builtins: Builtins) -> Self {
         Self { builtins }
     }
 }
 
-impl Interface for AlInterface {
+impl Interface for MetaInterface {
     fn parse_program(
         &mut self,
         arena: &mut Arena,

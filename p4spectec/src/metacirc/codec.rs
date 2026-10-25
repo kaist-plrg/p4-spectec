@@ -5,7 +5,11 @@
 //! Fatal errors remain diagnostics, and every path retains the call's effects.
 
 use crate::{
-    interface::al::{self, Cache, decode::Decode, encode as encode_al},
+    interface::meta::shared::{
+        self as meta, Cache,
+        decode::Decode,
+        encode::{Encode, list},
+    },
     lang::{
         common::source::Span,
         data::{
@@ -74,13 +78,22 @@ pub(super) mod encode {
         cache: &mut Cache,
         eval: Eval<T>,
         text_typ: &str,
-        encode: impl FnOnce(&mut Arena, &mut Cache, T) -> Result<Value, al::Error>,
+        encode_output: impl FnOnce(&mut Arena, &mut Cache, T) -> Result<Value, meta::Error>,
     ) -> Eval<Vec<Value>, ExternError> {
         let result = match eval.result {
-            // Encode successful outputs in the same arena as the decoded arguments
-            Ok(output) => {
-                encode(arena, cache, output).map_err(|error| ExternError::from(error.into_report()))
-            }
+            // A successful call is OK of its outputs, encoded in the arena of the arguments
+            Ok(output) => encode_output(arena, cache, output)
+                .map_err(|error| ExternError::from(error.into_report()))
+                .and_then(|value_output| {
+                    make::case_string! {
+                        arena: arena,
+                        shape: "OK val",
+                        args: [value_output],
+                        typ: text_typ,
+                        span: Span::default(),
+                    }
+                    .map_err(|error| ExternError::from(meta::Error::from(error).into_report()))
+                }),
             // An exhausted relation or function is a meta-level UNMATCH, not a host abort
             Err(InterpreterError::Mismatch(_)) => make::case_string! {
                 arena: arena,
@@ -89,7 +102,7 @@ pub(super) mod encode {
                 typ: text_typ,
                 span: Span::default(),
             }
-            .map_err(|error| ExternError::from(al::Error::from(error).into_report())),
+            .map_err(|error| ExternError::from(meta::Error::from(error).into_report())),
             // Keep fatal failures outside the specification's backtracking protocol
             Err(InterpreterError::Fatal(report)) => Err(ExternError::from(report)),
         };
@@ -102,7 +115,9 @@ pub(super) mod encode {
         cache: &mut Cache,
         eval: Eval<Value>,
     ) -> Eval<Vec<Value>, ExternError> {
-        result(arena, cache, eval, "funcRes", encode_al::ok_value_cached)
+        result(arena, cache, eval, "funcRes", |arena, cache, value| {
+            value.encode_cached(arena, cache)
+        })
     }
 
     /// Encodes a native relation outcome as relRes.
@@ -112,7 +127,7 @@ pub(super) mod encode {
         eval: Eval<Vec<Value>>,
     ) -> Eval<Vec<Value>, ExternError> {
         result(arena, cache, eval, "relRes", |arena, cache, values| {
-            encode_al::ok_values_cached(arena, cache, &values)
+            list(arena, cache, "val", &values)
         })
     }
 }

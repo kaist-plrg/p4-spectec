@@ -7,7 +7,7 @@
 
 use super::{Result, error::entry_invalid, tower::Tower};
 use crate::{
-    interface::al::encode::Encode,
+    interface::meta::shared::encode::Encode,
     lang::{
         al::ast as al,
         common::source::Span,

@@ -6,27 +6,29 @@
 //! using the specification's print hints
 //! along the type `print_` is instantiated at.
 //!
-//! `al` lowers specification inputs to meta scripts with standard builtins
+//! `meta` is the preset for meta specifications: standard builtins,
+//! with specification inputs parsed as AL scripts;
+//! `meta` also converts AL to and from meta-language values
 
 use crate::lang::{common::source::Span, data::value};
 
 use crate::runner::Spec;
 
 use self::{
-    al::AlInterface,
     builtin::{call::Builtins, extract},
+    meta::MetaInterface,
     p4::{P4Interface, unparse::P4Unparser},
 };
 
-pub mod al;
 pub mod builtin;
+pub mod meta;
 pub mod p4;
 
-// == AL
+// == Meta
 
-/// Builds the AL interface with the standard specification builtins.
-pub fn al() -> AlInterface {
-    AlInterface::new(Builtins::new())
+/// Builds the interface of a meta specification with the standard specification builtins.
+pub fn meta() -> MetaInterface {
+    MetaInterface::new(Builtins::new())
 }
 
 // == P4
