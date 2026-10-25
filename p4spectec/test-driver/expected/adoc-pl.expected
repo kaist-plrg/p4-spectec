@@ -1227,9 +1227,9 @@ xref:id_of_parameterIR[The identifier of ``++_++`` ``++_++`` ``++_++`` ``id`` ``
 
 . Return ``id``.
 
-xref:is_default_parameterIR[``++_++`` ``++_++`` ``++_++`` ``++_++`` ``parameterInitializerOptIR`` is a parameter with a default value]
+xref:is_default_parameterIR[``parameterIR`` is a parameter with a default value]
 
-. Let ``parameterInitializerIR^?^`` be ``parameterInitializerOptIR``.
+. Let ``parameterInitializerIR^?^`` be the default initializer of ``parameterIR``.
 . If ``parameterInitializerIR^?^`` is none: return ``false``.
 
 . +++<span id="func:is_default_parameterIR-else"></span>+++Otherwise: return ``true``.
@@ -4626,8 +4626,10 @@ xref:callTargetKey'[$callTargetKey'(argumentIR)]
 . Else if let ``id~arg~`` ``+'='+`` ``+'_'+`` be ``argumentIR``: return ``id~arg~``.
 . Else: return ``·``.
 
-xref:match_overloaded_named[Matching ``callTargetId`` ``+':'+`` ``V`` against named key ``nameIR~f~`` ``+`(+`` ``id~arg~^{asterisk}^`` ``+`)+`` using parameter getter ``$get_parameterListIR``]
+xref:match_overloaded_named[Matching ``pair<callTargetId,`` ``V>`` against named key ``namedCallTargetKey`` using parameter getter ``$get_parameterListIR``]
 
+. Let ``callTargetId`` ``+':'+`` ``V`` be ``pair<callTargetId,`` ``V>``.
+. Let ``nameIR~f~`` ``+`(+`` ``id~arg~^{asterisk}^`` ``+`)+`` be ``namedCallTargetKey``.
 . Let ``nameIR`` ``+`(+`` ``id~param~^{asterisk}^`` ``+`)+`` be ``callTargetId``.
 . If ``nameIR`` is equal to ``nameIR~f~``:
  .. Let ``parameterIR^{asterisk}^`` be xref:get_parameterListIR[``$get_parameterListIR(V)``].
@@ -4677,8 +4679,10 @@ Let ``bool'^{asterisk}^`` be the resulting list.
 
 . +++<span id="func:match_overloaded_named-else"></span>+++Otherwise: return ``+NOMATCH+``.
 
-xref:match_overloaded_unnamed[Matching ``callTargetId`` ``+':'+`` ``V`` against unnamed key ``nameIR~f~`` ``+`(+`` ``n~arg~`` ``+`)+`` using parameter getter ``$get_parameterListIR``]
+xref:match_overloaded_unnamed[Matching ``pair<callTargetId,`` ``V>`` against unnamed key ``unnamedCallTargetKey`` using parameter getter ``$get_parameterListIR``]
 
+. Let ``callTargetId`` ``+':'+`` ``V`` be ``pair<callTargetId,`` ``V>``.
+. Let ``nameIR~f~`` ``+`(+`` ``n~arg~`` ``+`)+`` be ``unnamedCallTargetKey``.
 . Let ``nameIR`` ``+`(+`` ``id~param~^{asterisk}^`` ``+`)+`` be ``callTargetId``.
 . If ``nameIR`` is equal to ``nameIR~f~``:
  .. Let ``parameterIR^{asterisk}^`` be xref:get_parameterListIR[``$get_parameterListIR(V)``].
@@ -4793,8 +4797,9 @@ Let ``id~arg_inner~^{asterisk}^`` be the resulting list.
   ... Let ``callableId~found~`` ``+':'+`` ``V~found~`` ``+'#'+`` ``id~omitted~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<V>^{asterisk}^``.
   ... Return ``callableId~found~`` ``+':'+`` ``V~found~`` ``+'#'+`` ``id~omitted~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^``.
 
-xref:find_non_overloaded[$find_non_overloaded<V>(+`{+ ( callableId +':'+ V )^{asterisk}^ +`}+, nameIR~f~)]
+xref:find_non_overloaded[$find_non_overloaded<V>(map<callableId, V>, nameIR~f~)]
 
+. Let ``+`{+`` ``(`` ``callableId`` ``+':'+`` ``V`` ``)^{asterisk}^`` ``+`}+`` be ``map<callableId,`` ``V>``.
 . Let ``(callableId,`` ``V)^{asterisk}^`` be xref:find_non_overloadeds[``$find_non_overloadeds<V>(+`{+`` ``(`` ``callableId`` ``+':'+`` ``V`` ``)^{asterisk}^`` ``+`}+,`` ``nameIR~f~)``].
 . If ``(callableId,`` ``V)^{asterisk}^`` is a list of length 1:
  .. Let ``(`` ``callableId~found~,`` ``V~found~`` ``)`` be ``(callableId,`` ``V)^{asterisk}^``.
@@ -23207,8 +23212,9 @@ Let ``typedExpressionIR~arg_cast~^{asterisk}^`` be the resulting list.
  .. Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
  .. Return ``{nbsp}~BARE~`` ``nameIR~found~`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``.
 
-xref:tableObject_add_entry[$tableObject_add_entry(EC, +TABLE+ typeId +`{+ frame TBL +`}+, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)]
+xref:tableObject_add_entry[$tableObject_add_entry(EC, tableObject, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)]
 
+. Let ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL`` ``+`}+`` be ``tableObject``.
 . Let ``tableEntryPriorityOptIR`` be xref:tableObject_create_entry_priority[``$tableObject_create_entry_priority(tableEntryPriorityInterface)``].
 . If if xref:needs_priority_tableKeysPropertyIR[``$needs_priority_tableKeysPropertyIR(TBL.+KEYS+)``], then xref:is_some_[``$is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR)``]:
  .. Let ``keysetExpressionIR`` be xref:tableObject_create_entry_keyset[``$tableObject_create_entry_keyset(EC,`` ``TBL.+KEYS+,`` ``tableKeysetInterface)``].
