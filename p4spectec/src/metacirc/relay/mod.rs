@@ -1,13 +1,22 @@
-//! Native host operations requested by the AL interpreter specification
+//! Host calls relayed across one level boundary of a tower
 //!
+//! A level above the base is a host: the level below interprets it,
+//! so it only answers the builtin and host calls relayed from below.
 //! MetaExtern hosts the AL or IL script that a meta specification interprets.
-//! RelayExtern decodes one representation layer and delegates to the next level.
-//! TerminalExtern handles only builtins of the AL or IL program above the top level.
+//! RelayExtern decodes one representation layer (`codec`)
+//! and delegates to the next level.
+//! TerminalExtern (`terminal`) handles only builtins of the AL or IL program
+//! above the top level.
 //! Clearing an extern resets the host it owns before arena values are reset.
 
-use super::{HostLayer, codec, reentry::NoReentry};
+mod codec;
+mod terminal;
+
+pub(super) use terminal::TerminalExtern;
+
+use super::{reentry::NoReentry, tower::HostLayer};
 use crate::{
-    interface::meta::{MetaInterface, shared::Cache},
+    interface::meta::shared::Cache,
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::Typ,
@@ -21,12 +30,6 @@ pub(in crate::metacirc) enum MetaExtern<Ext: Extern> {
     Relay(RelayExtern<Ext>),
     /// The script is the AL or IL program; only its builtins are answered.
     Terminal(TerminalExtern),
-}
-
-/// Builtin calls of the program, answered by the program's interface.
-pub(in crate::metacirc) struct TerminalExtern {
-    pub cache: Box<Cache>,
-    pub interface_program: Box<MetaInterface>,
 }
 
 /// Host calls resolved against the next level's host in a runtime tower.
@@ -78,36 +81,6 @@ impl<Ext: Extern> Extern for MetaExtern<Ext> {
             Self::Relay(relay) => relay.clear(),
             Self::Terminal(terminal) => terminal.clear(),
         }
-    }
-}
-
-impl TerminalExtern {
-    /// Answers a builtin call of the program and rejects other meta relations.
-    fn eval_rel(
-        &mut self,
-        arena: &mut Arena,
-        name: &str,
-        values: &[Value],
-    ) -> Eval<Vec<Value>, ExternError> {
-        // The program exposes only its builtins to the meta interpreter
-        if name != "Call_builtin_func" {
-            return unsupported(name);
-        }
-        let (id, targs, values) = match codec::decode::func_args(arena, &mut self.cache, values) {
-            Ok(args) => args,
-            Err(error) => return Eval::new(Err(error), SideEffect::Pure),
-        };
-        // Answer the builtin through the program's interface
-        let eval = self
-            .interface_program
-            .call_builtin(arena, &id, &targs, &values)
-            .map_err(Into::into);
-        codec::encode::func_result(arena, &mut self.cache, eval)
-    }
-
-    fn clear(&mut self) {
-        self.cache.clear();
-        self.interface_program.clear();
     }
 }
 

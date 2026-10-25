@@ -7,11 +7,8 @@
 //! Relation notation, input positions, and output types come from the source AST;
 //! literal expressions retain the parsed program's types and spans.
 
-use super::{
-    Result,
-    error::entry_invalid,
-    tower::{Level, Tower},
-};
+use super::super::{Result, error::entry_invalid};
+use super::{Level, Tower};
 use crate::{
     interface::meta::shared::encode::Encode,
     lang::{

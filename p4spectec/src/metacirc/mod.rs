@@ -5,11 +5,10 @@
 //! and relay them to the host of the next level.
 //! The native base may execute AL or SL.
 
-mod build;
 pub mod config;
 mod error;
-mod host;
-mod patch;
+mod reentry;
+mod relay;
 mod tower;
 
 use crate::{

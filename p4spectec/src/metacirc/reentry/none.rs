@@ -13,7 +13,7 @@ use crate::{
 /// This tower lends none: a host extern that reenters fails with
 /// metacirc/reentry-unsupported. The meta relay and the Dummy P4 extern
 /// never reenter.
-pub(super) struct NoReentry;
+pub(in crate::metacirc) struct NoReentry;
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for NoReentry {
     type SpecEnv = ();

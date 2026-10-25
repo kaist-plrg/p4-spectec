@@ -3,18 +3,22 @@
 //! The tower exposes program execution through its native entry point.
 //! The base is a runner with an interpreter; every other level is a host,
 //! since the level below interprets it, and is reached through the base's
-//! extern (see `host`).
+//! extern (see `relay`).
 //! A single-level tower executes its top level directly as its base.
+//! `build` assembles the levels; `patch` adds the entry the base calls.
 
-use super::{config::LevelConfig, host::MetaExtern};
+mod build;
+mod patch;
+
+use super::{config::LevelConfig, reentry::NoReentry, relay::MetaExtern};
 use crate::{
     interface::{meta::MetaInterface, p4::P4Interface},
     lang::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},
-        il::ast as il,
+        il::ast::{self as il, Id, Typ},
     },
-    runner::{Eval, Extern, Runner},
+    runner::{Eval, Extern, Host, Runner},
     sim_plugin::dummy::Dummy,
 };
 
@@ -83,6 +87,68 @@ impl<Ext: Extern> BaseLayer<Ext> {
         match self {
             Self::P4Spec(runner) => runner.reset(),
             Self::MetaSpec(runner) => runner.reset(),
+        }
+    }
+}
+
+/// The host of a level above the base, which the level below interprets.
+pub(in crate::metacirc) enum HostLayer<Ext: Extern> {
+    /// A P4 specification, answering the builtins and externs of its program.
+    P4Spec(Host<P4Interface, Ext>),
+    /// A meta specification, hosting the script above it.
+    MetaSpec(Host<MetaInterface, MetaExtern<Ext>>),
+}
+
+impl<Ext: Extern> HostLayer<Ext> {
+    /// Calls a decoded builtin at this layer.
+    pub(in crate::metacirc) fn eval_builtin(
+        &mut self,
+        arena: &mut Arena,
+        id: &Id,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Eval<Value> {
+        match self {
+            Self::P4Spec(host) => host.eval_builtin(arena, id, targs, values),
+            Self::MetaSpec(host) => host.eval_builtin(arena, id, targs, values),
+        }
+        .map_err(Into::into)
+    }
+
+    /// Calls a decoded host relation at this layer; `interp` answers its reentry.
+    pub(in crate::metacirc) fn eval_extern_rel(
+        &mut self,
+        arena: &mut Arena,
+        interp: &mut NoReentry,
+        name: &str,
+        values: &[Value],
+    ) -> Eval<Vec<Value>> {
+        match self {
+            Self::P4Spec(host) => host.eval_extern_rel(arena, &(), interp, name, values),
+            Self::MetaSpec(host) => host.eval_extern_rel(arena, &(), interp, name, values),
+        }
+    }
+
+    /// Calls a decoded host function at this layer; `interp` answers its reentry.
+    pub(in crate::metacirc) fn eval_extern_func(
+        &mut self,
+        arena: &mut Arena,
+        interp: &mut NoReentry,
+        name: &str,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Eval<Value> {
+        match self {
+            Self::P4Spec(host) => host.eval_extern_func(arena, &(), interp, name, targs, values),
+            Self::MetaSpec(host) => host.eval_extern_func(arena, &(), interp, name, targs, values),
+        }
+    }
+
+    /// Resets this layer and all layers owned by its extern implementation.
+    pub(in crate::metacirc) fn reset(&mut self) {
+        match self {
+            Self::P4Spec(host) => host.reset(),
+            Self::MetaSpec(host) => host.reset(),
         }
     }
 }
