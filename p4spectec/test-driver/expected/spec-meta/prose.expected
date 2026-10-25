@@ -3561,6 +3561,478 @@ Arm 3:
 
     1. Else Dangling
 
+relation Exp_pure: |- (exp '#' typ')
+
+1. Block (2 arms)
+
+Arm 1:
+
+  1. Group literal: |- (exp '#' typ')
+
+    1. Case analysis on exp
+
+      1. Case (% matches pattern BOOL %)
+
+        1. The relation holds
+
+      2. Case (% has type num)
+
+        1. The relation holds
+
+      3. Case (% matches pattern TEXT %)
+
+        1. The relation holds
+
+    1. Else Dangling
+
+Arm 2:
+
+  1. Case analysis on exp
+
+    1. Case (% matches pattern VAR %, let (VAR id) = %)
+
+      1. Group variable: |- ((VAR id) '#' typ')
+
+        1. The relation holds
+
+    2. Case (% matches pattern UN % %, let (UN unop typedExp) = %)
+
+      1. Group unary: |- ((UN unop typedExp) '#' typ')
+
+        1. If (Exp_pure: |- typedExp) holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+    3. Case (% matches pattern BIN % % %, let (BIN binop typedExp_l typedExp_r) = %)
+
+      1. Group binary: |- ((BIN binop typedExp_l typedExp_r) '#' typ')
+
+        1. If (Exp_pure: |- typedExp_l) holds, then
+
+          1. If (Exp_pure: |- typedExp_r) holds, then
+
+            1. The relation holds
+
+          1. Else Dangling
+
+        1. Else Dangling
+
+    4. Case (% matches pattern CMP % % %, let (CMP cmpop typedExp_l typedExp_r) = %)
+
+      1. Group compare: |- ((CMP cmpop typedExp_l typedExp_r) '#' typ')
+
+        1. If (Exp_pure: |- typedExp_l) holds, then
+
+          1. If (Exp_pure: |- typedExp_r) holds, then
+
+            1. The relation holds
+
+          1. Else Dangling
+
+        1. Else Dangling
+
+    5. Case (% matches pattern UPCAST % %, let (UPCAST typ typedExp) = %)
+
+      1. Group upcast: |- ((UPCAST typ typedExp) '#' typ')
+
+        1. If (Exp_pure: |- typedExp) holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+    6. Case (% matches pattern DOWNCAST % %, let (DOWNCAST typ typedExp) = %)
+
+      1. Group downcast: |- ((DOWNCAST typ typedExp) '#' typ')
+
+        1. If (Exp_pure: |- typedExp) holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+    7. Case (% matches pattern SUB % %, let (SUB typedExp typ) = %)
+
+      1. Group subtype: |- ((SUB typedExp typ) '#' typ')
+
+        1. If (Exp_pure: |- typedExp) holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+    8. Case (% matches pattern MATCH % %, let (MATCH typedExp pat) = %)
+
+      1. Group match: |- ((MATCH typedExp pat) '#' typ')
+
+        1. If (Exp_pure: |- typedExp) holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+    9. Case (% matches pattern TUP %, let (TUP (typedExp)*{typedExp <- typedExp*}) = %)
+
+      1. Group tuple: |- ((TUP (typedExp)*{typedExp <- typedExp*}) '#' typ')
+
+        1. If (Exp_pure: |- typedExp)*{typedExp <- typedExp*} holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+    10. Case (% matches pattern INJ %, let (INJ (mixop (typedExp)*{typedExp <- typedExp*})) = %)
+
+      1. Group case: |- ((INJ (mixop (typedExp)*{typedExp <- typedExp*})) '#' typ')
+
+        1. If (Exp_pure: |- typedExp)*{typedExp <- typedExp*} holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+    11. Case (% matches pattern STR %, let (STR (expField)*{expField <- expField*}) = %)
+
+      1. Group struct: |- ((STR (expField)*{expField <- expField*}) '#' typ')
+
+        1. (Let (_atom typedExp) be expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
+
+        2. If (Exp_pure: |- typedExp)*{typedExp <- typedExp*} holds, then
+
+          1. The relation holds
+
+        2. Else Dangling
+
+    12. Case (% matches pattern OPT %, let (OPT (typedExp)?{typedExp <- typedExp?}) = %)
+
+      1. Group opt: |- ((OPT (typedExp)?{typedExp <- typedExp?}) '#' typ')
+
+        1. If (Exp_pure: |- typedExp)?{typedExp <- typedExp?} holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+    13. Case (% matches pattern LIST %, let (LIST (typedExp)*{typedExp <- typedExp*}) = %)
+
+      1. Group list: |- ((LIST (typedExp)*{typedExp <- typedExp*}) '#' typ')
+
+        1. If (Exp_pure: |- typedExp)*{typedExp <- typedExp*} holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+    14. Case (% matches pattern CONS % %, let (CONS typedExp_h typedExp_t) = %)
+
+      1. Group cons: |- ((CONS typedExp_h typedExp_t) '#' typ')
+
+        1. If (Exp_pure: |- typedExp_h) holds, then
+
+          1. If (Exp_pure: |- typedExp_t) holds, then
+
+            1. The relation holds
+
+          1. Else Dangling
+
+        1. Else Dangling
+
+    15. Case (% matches pattern CAT % %, let (CAT typedExp_l typedExp_r) = %)
+
+      1. Group concat: |- ((CAT typedExp_l typedExp_r) '#' typ')
+
+        1. If (Exp_pure: |- typedExp_l) holds, then
+
+          1. If (Exp_pure: |- typedExp_r) holds, then
+
+            1. The relation holds
+
+          1. Else Dangling
+
+        1. Else Dangling
+
+    16. Case (% matches pattern MEM % %, let (MEM typedExp_l typedExp_r) = %)
+
+      1. Group mem: |- ((MEM typedExp_l typedExp_r) '#' typ')
+
+        1. If (Exp_pure: |- typedExp_l) holds, then
+
+          1. If (Exp_pure: |- typedExp_r) holds, then
+
+            1. The relation holds
+
+          1. Else Dangling
+
+        1. Else Dangling
+
+    17. Case (% matches pattern LEN %, let (LEN typedExp) = %)
+
+      1. Group len: |- ((LEN typedExp) '#' typ')
+
+        1. If (Exp_pure: |- typedExp) holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+    18. Case (% matches pattern DOT % %, let (DOT typedExp atom) = %)
+
+      1. Group dot: |- ((DOT typedExp atom) '#' typ')
+
+        1. If (Exp_pure: |- typedExp) holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+    19. Case (% matches pattern IDX % %, let (IDX typedExp_b typedExp_i) = %)
+
+      1. Group idx: |- ((IDX typedExp_b typedExp_i) '#' typ')
+
+        1. If (Exp_pure: |- typedExp_b) holds, then
+
+          1. If (Exp_pure: |- typedExp_i) holds, then
+
+            1. The relation holds
+
+          1. Else Dangling
+
+        1. Else Dangling
+
+    20. Case (% matches pattern SLICE % % %, let (SLICE typedExp_b typedExp_i typedExp_n) = %)
+
+      1. Group slice: |- ((SLICE typedExp_b typedExp_i typedExp_n) '#' typ')
+
+        1. If (Exp_pure: |- typedExp_b) holds, then
+
+          1. If (Exp_pure: |- typedExp_i) holds, then
+
+            1. If (Exp_pure: |- typedExp_n) holds, then
+
+              1. The relation holds
+
+            1. Else Dangling
+
+          1. Else Dangling
+
+        1. Else Dangling
+
+    21. Case (% matches pattern UPD % % %, let (UPD typedExp_b typedPath typedExp_f) = %)
+
+      1. Group upd: |- ((UPD typedExp_b typedPath typedExp_f) '#' typ')
+
+        1. If (Exp_pure: |- typedExp_b) holds, then
+
+          1. If (Path_pure: |- typedPath) holds, then
+
+            1. If (Exp_pure: |- typedExp_f) holds, then
+
+              1. The relation holds
+
+            1. Else Dangling
+
+          1. Else Dangling
+
+        1. Else Dangling
+
+    22. Case (% matches pattern ITER % %, let (ITER typedExp expIter) = %)
+
+      1. Group iter: |- ((ITER typedExp expIter) '#' typ')
+
+        1. If (Exp_pure: |- typedExp) holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+  1. Else Dangling
+
+relation Path_pure: |- (path '#' typ)
+
+1. Case analysis on path (total)
+
+  1. Case (% matches pattern ROOT)
+
+    1. Group root: |- ((ROOT) '#' typ)
+
+      1. The relation holds
+
+  2. Case (% matches pattern IDX % %, let (IDX typedPath typedExp_i) = %)
+
+    1. Group idx: |- ((IDX typedPath typedExp_i) '#' typ)
+
+      1. If (Path_pure: |- typedPath) holds, then
+
+        1. If (Exp_pure: |- typedExp_i) holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+      1. Else Dangling
+
+  3. Case (% matches pattern SLICE % % %, let (SLICE typedPath typedExp_i typedExp_n) = %)
+
+    1. Group slice: |- ((SLICE typedPath typedExp_i typedExp_n) '#' typ)
+
+      1. If (Path_pure: |- typedPath) holds, then
+
+        1. If (Exp_pure: |- typedExp_i) holds, then
+
+          1. If (Exp_pure: |- typedExp_n) holds, then
+
+            1. The relation holds
+
+          1. Else Dangling
+
+        1. Else Dangling
+
+      1. Else Dangling
+
+  4. Case (% matches pattern DOT % %, let (DOT typedPath atom) = %)
+
+    1. Group dot: |- ((DOT typedPath atom) '#' typ)
+
+      1. If (Path_pure: |- typedPath) holds, then
+
+        1. The relation holds
+
+      1. Else Dangling
+
+relation Prem_pure: |- premAL'
+
+1. Case analysis on premAL'
+
+  1. Case (% has type letPremAL, let (LET typedExp '=' typedExp_r) = %)
+
+    1. Group let: |- ((LET typedExp '=' typedExp_r) as premAL)
+
+      1. If (Exp_pure: |- typedExp_r) holds, then
+
+        1. The relation holds
+
+      1. Else Dangling
+
+  2. Case (% has type debugPrem, let (DEBUG typedExp) = %)
+
+    1. Group dbg: |- ((DEBUG typedExp) as premAL)
+
+      1. If (Exp_pure: |- typedExp) holds, then
+
+        1. The relation holds
+
+      1. Else Dangling
+
+  3. Case (% has type iterPremAL, let (ITER premAL premIterAL) = %)
+
+    1. Group iter: |- ((ITER premAL premIterAL) as premAL)
+
+      1. If (Prem_pure: |- premAL) holds, then
+
+        1. The relation holds
+
+      1. Else Dangling
+
+1. Else Dangling
+
+relation Otherwise_pure: |- defnAL
+
+1. Block (3 arms)
+
+Arm 1:
+
+  1. If let typDefn of type typDefn be defnAL, then
+
+    1. Group typ: |- (typDefn as defnAL)
+
+      1. The relation holds
+
+  1. Else Dangling
+
+Arm 2:
+
+  1. Group rel: |- defnAL
+
+    1. Case analysis on defnAL
+
+      1. Case (% has type externRelDefnAL)
+
+        1. The relation holds
+
+      2. Case (% has type definedRelDefnAL, let (REL _id ':' (_typ)*{_typ <- _typ*} '->' (_typ')*{_typ' <- _typ'*} '=' (_rulGroupAL)*{_rulGroupAL <- _rulGroupAL*} (elsGroupAL')?{elsGroupAL' <- elsGroupAL'?}) = %)
+
+        1. Case analysis on (elsGroupAL')?{elsGroupAL' <- elsGroupAL'?} (total)
+
+          1. Case (% matches pattern ())
+
+            1. The relation holds
+
+          2. Case (% matches pattern (_))
+
+            1. (Let ?(elsGroupAL) be (elsGroupAL')?{elsGroupAL' <- elsGroupAL'?})
+
+            2. (Let (_id' ':' rulAL) be elsGroupAL)
+
+            3. (Let (_id'' ':' (_typedExp)*{_typedExp <- _typedExp*} '->' (typedExp_out)*{typedExp_out <- typedExp_out*} '-' (premAL)*{premAL <- premAL*}) be rulAL)
+
+            4. If (Prem_pure: |- premAL)*{premAL <- premAL*} holds, then
+
+              1. If (Exp_pure: |- typedExp_out)*{typedExp_out <- typedExp_out*} holds, then
+
+                1. The relation holds
+
+              1. Else Dangling
+
+            4. Else Dangling
+
+    1. Else Dangling
+
+Arm 3:
+
+  1. Group func: |- defnAL
+
+    1. Case analysis on defnAL
+
+      1. Case (% has type externFuncDefn)
+
+        1. The relation holds
+
+      2. Case (% has type builtinFuncDefn)
+
+        1. The relation holds
+
+      3. Case (% has type tableFuncDefnAL)
+
+        1. The relation holds
+
+      4. Case (% has type definedFuncDefnAL, let (FUNC _id (_tparam)*{_tparam <- _tparam*} (_param)*{_param <- _param*} ':' _typ '=' (_clauseAL)*{_clauseAL <- _clauseAL*} (elsClauseAL')?{elsClauseAL' <- elsClauseAL'?}) = %)
+
+        1. Case analysis on (elsClauseAL')?{elsClauseAL' <- elsClauseAL'?} (total)
+
+          1. Case (% matches pattern ())
+
+            1. The relation holds
+
+          2. Case (% matches pattern (_))
+
+            1. (Let ?(elsClauseAL) be (elsClauseAL')?{elsClauseAL' <- elsClauseAL'?})
+
+            2. (Let ((_arg)*{_arg <- _arg*} '=' typedExp '-' (premAL)*{premAL <- premAL*}) be elsClauseAL)
+
+            3. If (Prem_pure: |- premAL)*{premAL <- premAL*} holds, then
+
+              1. If (Exp_pure: |- typedExp) holds, then
+
+                1. The relation holds
+
+              1. Else Dangling
+
+            3. Else Dangling
+
+    1. Else Dangling
+
 def $ids_of_varis(((id _typ (_iter)*{_iter <- _iter*}))*{_iter* <- _iter**, _typ <- _typ*, id <- id*})
 
 1. Return (id)*{id <- id*}
@@ -8474,7 +8946,11 @@ relation Algo_IL: |- (defnIL)*{defnIL <- defnIL*} : %
 
   3. (Guard_def: AC |- defnAL : defnAL_guard)*{defnAL <- defnAL*, defnAL_guard -> defnAL_guard*}
 
-  4. Result in: |- % : (defnAL_guard)*{defnAL_guard <- defnAL_guard*}
+  4. If (Otherwise_pure: |- defnAL_guard)*{defnAL_guard <- defnAL_guard*} holds, then
+
+    1. Result in: |- % : (defnAL_guard)*{defnAL_guard <- defnAL_guard*}
+
+  4. Else Dangling
 
 relation Eval_IL: |- specIL : %
 

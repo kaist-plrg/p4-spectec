@@ -1,0 +1,13 @@
+;; Repeated binders of a type with one value still require an equality,
+;; so the otherwise clause binding them is rejected
+
+syntax unit = UNIT
+
+var u : unit
+
+dec $f(unit, unit) : nat
+def $f(u, u) = 1
+  -- otherwise
+
+dec $main() : nat
+def $main() = $f(UNIT, UNIT)

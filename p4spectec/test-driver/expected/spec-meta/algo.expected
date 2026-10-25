@@ -3652,6 +3652,580 @@ relation Guard_def: algoCtx |- defnAL : defnAL
     -- let definedFuncDefnAL_guard = FUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' clauseAL_guard*{clauseAL_guard <- clauseAL_guard*} elsClauseAL_guard?{elsClauseAL_guard <- elsClauseAL_guard?}
     -- output: % |- % : definedFuncDefnAL_guard as defnAL
 
+relation Exp_pure: |- typedExp
+
+  rulegroup literal
+
+   match
+
+    (signature) |- exp '#' _typ
+    |- exp '#' _typ
+
+   paths
+
+    rulepath boolean
+    -- let exp' = exp
+    -- if exp' matches BOOL %
+    -- let BOOL _b = exp'
+    -- the relation holds
+
+    rulepath number
+    -- let exp' = exp
+    -- if exp' <: num
+    -- let num = exp' as num
+    -- the relation holds
+
+    rulepath text
+    -- let exp' = exp
+    -- if exp' matches TEXT %
+    -- let TEXT _t = exp'
+    -- the relation holds
+
+  rulegroup variable
+
+   match
+
+    (signature) |- VAR _id '#' _typ
+    |- exp '#' _typ
+    -- if exp matches VAR %
+    -- let VAR _id = exp
+
+   paths
+
+    rulepath variable
+    -- the relation holds
+
+  rulegroup unary
+
+   match
+
+    (signature) |- UN _unop typedExp '#' _typ
+    |- exp '#' _typ
+    -- if exp matches UN % %
+    -- let UN _unop typedExp = exp
+
+   paths
+
+    rulepath unary
+    -- if Exp_pure: |- typedExp holds
+    -- the relation holds
+
+  rulegroup binary
+
+   match
+
+    (signature) |- BIN _binop typedExp_l typedExp_r '#' _typ
+    |- exp '#' _typ
+    -- if exp matches BIN % % %
+    -- let BIN _binop typedExp_l typedExp_r = exp
+
+   paths
+
+    rulepath binary
+    -- if Exp_pure: |- typedExp_l holds
+    -- if Exp_pure: |- typedExp_r holds
+    -- the relation holds
+
+  rulegroup compare
+
+   match
+
+    (signature) |- CMP _cmpop typedExp_l typedExp_r '#' _typ
+    |- exp '#' _typ
+    -- if exp matches CMP % % %
+    -- let CMP _cmpop typedExp_l typedExp_r = exp
+
+   paths
+
+    rulepath compare
+    -- if Exp_pure: |- typedExp_l holds
+    -- if Exp_pure: |- typedExp_r holds
+    -- the relation holds
+
+  rulegroup upcast
+
+   match
+
+    (signature) |- UPCAST _typ typedExp '#' _typ'
+    |- exp '#' _typ'
+    -- if exp matches UPCAST % %
+    -- let UPCAST _typ typedExp = exp
+
+   paths
+
+    rulepath upcast
+    -- if Exp_pure: |- typedExp holds
+    -- the relation holds
+
+  rulegroup downcast
+
+   match
+
+    (signature) |- DOWNCAST _typ typedExp '#' _typ'
+    |- exp '#' _typ'
+    -- if exp matches DOWNCAST % %
+    -- let DOWNCAST _typ typedExp = exp
+
+   paths
+
+    rulepath downcast
+    -- if Exp_pure: |- typedExp holds
+    -- the relation holds
+
+  rulegroup subtype
+
+   match
+
+    (signature) |- SUB typedExp _typ '#' _typ'
+    |- exp '#' _typ'
+    -- if exp matches SUB % %
+    -- let SUB typedExp _typ = exp
+
+   paths
+
+    rulepath subtype
+    -- if Exp_pure: |- typedExp holds
+    -- the relation holds
+
+  rulegroup match
+
+   match
+
+    (signature) |- MATCH typedExp _pat '#' _typ
+    |- exp '#' _typ
+    -- if exp matches MATCH % %
+    -- let MATCH typedExp _pat = exp
+
+   paths
+
+    rulepath match
+    -- if Exp_pure: |- typedExp holds
+    -- the relation holds
+
+  rulegroup tuple
+
+   match
+
+    (signature) |- TUP typedExp*{typedExp <- typedExp*} '#' _typ
+    |- exp '#' _typ
+    -- if exp matches TUP %
+    -- let TUP typedExp*{typedExp <- typedExp*} = exp
+
+   paths
+
+    rulepath tuple
+    -- (if Exp_pure: |- typedExp holds)*{typedExp <- typedExp*}
+    -- the relation holds
+
+  rulegroup case
+
+   match
+
+    (signature) |- INJ _mixop typedExp*{typedExp <- typedExp*} '#' _typ
+    |- exp '#' _typ
+    -- if exp matches INJ %
+    -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp
+
+   paths
+
+    rulepath case
+    -- (if Exp_pure: |- typedExp holds)*{typedExp <- typedExp*}
+    -- the relation holds
+
+  rulegroup struct
+
+   match
+
+    (signature) |- STR expField*{expField <- expField*} '#' _typ
+    |- exp '#' _typ
+    -- if exp matches STR %
+    -- let STR expField*{expField <- expField*} = exp
+
+   paths
+
+    rulepath struct
+    -- (let _atom typedExp = expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
+    -- (if Exp_pure: |- typedExp holds)*{typedExp <- typedExp*}
+    -- the relation holds
+
+  rulegroup opt
+
+   match
+
+    (signature) |- OPT typedExp?{typedExp <- typedExp?} '#' _typ
+    |- exp '#' _typ
+    -- if exp matches OPT %
+    -- let OPT typedExp?{typedExp <- typedExp?} = exp
+
+   paths
+
+    rulepath opt
+    -- (if Exp_pure: |- typedExp holds)?{typedExp <- typedExp?}
+    -- the relation holds
+
+  rulegroup list
+
+   match
+
+    (signature) |- LIST typedExp*{typedExp <- typedExp*} '#' _typ
+    |- exp '#' _typ
+    -- if exp matches LIST %
+    -- let LIST typedExp*{typedExp <- typedExp*} = exp
+
+   paths
+
+    rulepath list
+    -- (if Exp_pure: |- typedExp holds)*{typedExp <- typedExp*}
+    -- the relation holds
+
+  rulegroup cons
+
+   match
+
+    (signature) |- CONS typedExp_h typedExp_t '#' _typ
+    |- exp '#' _typ
+    -- if exp matches CONS % %
+    -- let CONS typedExp_h typedExp_t = exp
+
+   paths
+
+    rulepath cons
+    -- if Exp_pure: |- typedExp_h holds
+    -- if Exp_pure: |- typedExp_t holds
+    -- the relation holds
+
+  rulegroup concat
+
+   match
+
+    (signature) |- CAT typedExp_l typedExp_r '#' _typ
+    |- exp '#' _typ
+    -- if exp matches CAT % %
+    -- let CAT typedExp_l typedExp_r = exp
+
+   paths
+
+    rulepath concat
+    -- if Exp_pure: |- typedExp_l holds
+    -- if Exp_pure: |- typedExp_r holds
+    -- the relation holds
+
+  rulegroup mem
+
+   match
+
+    (signature) |- MEM typedExp_l typedExp_r '#' _typ
+    |- exp '#' _typ
+    -- if exp matches MEM % %
+    -- let MEM typedExp_l typedExp_r = exp
+
+   paths
+
+    rulepath mem
+    -- if Exp_pure: |- typedExp_l holds
+    -- if Exp_pure: |- typedExp_r holds
+    -- the relation holds
+
+  rulegroup len
+
+   match
+
+    (signature) |- LEN typedExp '#' _typ
+    |- exp '#' _typ
+    -- if exp matches LEN %
+    -- let LEN typedExp = exp
+
+   paths
+
+    rulepath len
+    -- if Exp_pure: |- typedExp holds
+    -- the relation holds
+
+  rulegroup dot
+
+   match
+
+    (signature) |- DOT typedExp _atom '#' _typ
+    |- exp '#' _typ
+    -- if exp matches DOT % %
+    -- let DOT typedExp _atom = exp
+
+   paths
+
+    rulepath dot
+    -- if Exp_pure: |- typedExp holds
+    -- the relation holds
+
+  rulegroup idx
+
+   match
+
+    (signature) |- IDX typedExp_b typedExp_i '#' _typ
+    |- exp '#' _typ
+    -- if exp matches IDX % %
+    -- let IDX typedExp_b typedExp_i = exp
+
+   paths
+
+    rulepath idx
+    -- if Exp_pure: |- typedExp_b holds
+    -- if Exp_pure: |- typedExp_i holds
+    -- the relation holds
+
+  rulegroup slice
+
+   match
+
+    (signature) |- SLICE typedExp_b typedExp_i typedExp_n '#' _typ
+    |- exp '#' _typ
+    -- if exp matches SLICE % % %
+    -- let SLICE typedExp_b typedExp_i typedExp_n = exp
+
+   paths
+
+    rulepath slice
+    -- if Exp_pure: |- typedExp_b holds
+    -- if Exp_pure: |- typedExp_i holds
+    -- if Exp_pure: |- typedExp_n holds
+    -- the relation holds
+
+  rulegroup upd
+
+   match
+
+    (signature) |- UPD typedExp_b typedPath typedExp_f '#' _typ
+    |- exp '#' _typ
+    -- if exp matches UPD % % %
+    -- let UPD typedExp_b typedPath typedExp_f = exp
+
+   paths
+
+    rulepath upd
+    -- if Exp_pure: |- typedExp_b holds
+    -- if Path_pure: |- typedPath holds
+    -- if Exp_pure: |- typedExp_f holds
+    -- the relation holds
+
+  rulegroup iter
+
+   match
+
+    (signature) |- ITER typedExp _expIter '#' _typ
+    |- exp '#' _typ
+    -- if exp matches ITER % %
+    -- let ITER typedExp _expIter = exp
+
+   paths
+
+    rulepath iter
+    -- if Exp_pure: |- typedExp holds
+    -- the relation holds
+
+relation Path_pure: |- typedPath
+
+  rulegroup root
+
+   match
+
+    (signature) |- ROOT '#' _typ
+    |- path '#' _typ
+    -- if path matches ROOT
+
+   paths
+
+    rulepath root
+    -- the relation holds
+
+  rulegroup idx
+
+   match
+
+    (signature) |- IDX typedPath typedExp_i '#' _typ
+    |- path '#' _typ
+    -- if path matches IDX % %
+    -- let IDX typedPath typedExp_i = path
+
+   paths
+
+    rulepath idx
+    -- if Path_pure: |- typedPath holds
+    -- if Exp_pure: |- typedExp_i holds
+    -- the relation holds
+
+  rulegroup slice
+
+   match
+
+    (signature) |- SLICE typedPath typedExp_i typedExp_n '#' _typ
+    |- path '#' _typ
+    -- if path matches SLICE % % %
+    -- let SLICE typedPath typedExp_i typedExp_n = path
+
+   paths
+
+    rulepath slice
+    -- if Path_pure: |- typedPath holds
+    -- if Exp_pure: |- typedExp_i holds
+    -- if Exp_pure: |- typedExp_n holds
+    -- the relation holds
+
+  rulegroup dot
+
+   match
+
+    (signature) |- DOT typedPath _atom '#' _typ
+    |- path '#' _typ
+    -- if path matches DOT % %
+    -- let DOT typedPath _atom = path
+
+   paths
+
+    rulepath dot
+    -- if Path_pure: |- typedPath holds
+    -- the relation holds
+
+relation Prem_pure: |- premAL
+
+  rulegroup let
+
+   match
+
+    (signature) |- LET _typedExp '=' typedExp_r as premAL
+    |- premAL
+    -- if premAL <: letPremAL
+    -- let LET _typedExp '=' typedExp_r = premAL as letPremAL
+
+   paths
+
+    rulepath let
+    -- if Exp_pure: |- typedExp_r holds
+    -- the relation holds
+
+  rulegroup dbg
+
+   match
+
+    (signature) |- DEBUG typedExp as premAL
+    |- premAL
+    -- if premAL <: debugPrem
+    -- let DEBUG typedExp = premAL as debugPrem
+
+   paths
+
+    rulepath dbg
+    -- if Exp_pure: |- typedExp holds
+    -- the relation holds
+
+  rulegroup iter
+
+   match
+
+    (signature) |- ITER premAL _premIterAL as premAL
+    |- premAL'
+    -- if premAL' <: iterPremAL
+    -- let ITER premAL _premIterAL = premAL' as iterPremAL
+
+   paths
+
+    rulepath iter
+    -- if Prem_pure: |- premAL holds
+    -- the relation holds
+
+relation Otherwise_pure: |- defnAL
+
+  rulegroup typ
+
+   match
+
+    (signature) |- typDefn as defnAL
+    |- defnAL
+    -- if defnAL <: typDefn
+    -- let typDefn = defnAL as typDefn
+
+   paths
+
+    rulepath typ
+    -- the relation holds
+
+  rulegroup rel
+
+   match
+
+    (signature) |- defnAL
+    |- defnAL
+
+   paths
+
+    rulepath extern
+    -- let defnAL' = defnAL
+    -- if defnAL' <: externRelDefnAL
+    -- let externRelDefnAL = defnAL' as externRelDefnAL
+    -- the relation holds
+
+    rulepath none
+    -- let defnAL' = defnAL
+    -- if defnAL' <: definedRelDefnAL
+    -- let REL _id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} '=' _rulGroupAL*{_rulGroupAL <- _rulGroupAL*} elsGroupAL'?{elsGroupAL' <- elsGroupAL'?} = defnAL' as definedRelDefnAL
+    -- if elsGroupAL'?{elsGroupAL' <- elsGroupAL'?} matches ()
+    -- the relation holds
+
+    rulepath else
+    -- let defnAL' = defnAL
+    -- if defnAL' <: definedRelDefnAL
+    -- let REL _id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} '=' _rulGroupAL*{_rulGroupAL <- _rulGroupAL*} elsGroupAL'?{elsGroupAL' <- elsGroupAL'?} = defnAL' as definedRelDefnAL
+    -- if elsGroupAL'?{elsGroupAL' <- elsGroupAL'?} matches (_)
+    -- let ?(elsGroupAL) = elsGroupAL'?{elsGroupAL' <- elsGroupAL'?}
+    -- let _id' ':' rulAL = elsGroupAL
+    -- let _id'' ':' _typedExp*{_typedExp <- _typedExp*} '->' typedExp_out*{typedExp_out <- typedExp_out*} '-' premAL*{premAL <- premAL*} = rulAL
+    -- (if Prem_pure: |- premAL holds)*{premAL <- premAL*}
+    -- (if Exp_pure: |- typedExp_out holds)*{typedExp_out <- typedExp_out*}
+    -- the relation holds
+
+  rulegroup func
+
+   match
+
+    (signature) |- defnAL
+    |- defnAL
+
+   paths
+
+    rulepath extern
+    -- let defnAL' = defnAL
+    -- if defnAL' <: externFuncDefn
+    -- let externFuncDefn = defnAL' as externFuncDefn
+    -- the relation holds
+
+    rulepath builtin
+    -- let defnAL' = defnAL
+    -- if defnAL' <: builtinFuncDefn
+    -- let builtinFuncDefn = defnAL' as builtinFuncDefn
+    -- the relation holds
+
+    rulepath table
+    -- let defnAL' = defnAL
+    -- if defnAL' <: tableFuncDefnAL
+    -- let tableFuncDefnAL = defnAL' as tableFuncDefnAL
+    -- the relation holds
+
+    rulepath none
+    -- let defnAL' = defnAL
+    -- if defnAL' <: definedFuncDefnAL
+    -- let FUNC _id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ '=' _clauseAL*{_clauseAL <- _clauseAL*} elsClauseAL'?{elsClauseAL' <- elsClauseAL'?} = defnAL' as definedFuncDefnAL
+    -- if elsClauseAL'?{elsClauseAL' <- elsClauseAL'?} matches ()
+    -- the relation holds
+
+    rulepath else
+    -- let defnAL' = defnAL
+    -- if defnAL' <: definedFuncDefnAL
+    -- let FUNC _id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ '=' _clauseAL*{_clauseAL <- _clauseAL*} elsClauseAL'?{elsClauseAL' <- elsClauseAL'?} = defnAL' as definedFuncDefnAL
+    -- if elsClauseAL'?{elsClauseAL' <- elsClauseAL'?} matches (_)
+    -- let ?(elsClauseAL) = elsClauseAL'?{elsClauseAL' <- elsClauseAL'?}
+    -- let _arg*{_arg <- _arg*} '=' typedExp '-' premAL*{premAL <- premAL*} = elsClauseAL
+    -- (if Prem_pure: |- premAL holds)*{premAL <- premAL*}
+    -- if Exp_pure: |- typedExp holds
+    -- the relation holds
+
 def $ids_of_varis(vari*) : id* =
 
   clause 0 : (id _typ _iter*{_iter <- _iter*}*{_iter* <- _iter**, _typ <- _typ*, id <- id*}) = id*{id <- id*}
@@ -8487,6 +9061,7 @@ relation Algo_IL: |- specIL : specAL
     -- let AC = $load_algoCtx($empty_algoCtx, defnIL*{defnIL <- defnIL*})
     -- (Algo_def: AC |- defnIL : defnAL)*{defnIL <- defnIL*, defnAL -> defnAL*}
     -- (Guard_def: AC |- defnAL : defnAL_guard)*{defnAL <- defnAL*, defnAL_guard -> defnAL_guard*}
+    -- (if Otherwise_pure: |- defnAL_guard holds)*{defnAL_guard <- defnAL_guard*}
     -- output: |- % : defnAL_guard*{defnAL_guard <- defnAL_guard*}
 
 relation Eval_IL: |- specIL : val
