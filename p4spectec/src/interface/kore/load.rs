@@ -2,8 +2,9 @@
 //!
 //! The parsed text is passed on as it is (`kore` and `kdefinition`
 //! in `spec-k/1-syntax.watsup`): every axiom with its attributes,
-//! and the declarations of sorts, symbols, and aliases.
-//! Connectives are named without their backslash.
+//! and the declarations of sorts and symbols. Alias declarations are not
+//! read, and an axiom that applies one is an error: kompile 7.1.337 applies
+//! none by default. Connectives are named without their backslash.
 //! Which axioms are executed and how they are read, down to domain values,
 //! is for the specification to decide (`spec-k/3-load.watsup`).
 //! For example, `\dv{SortInt{}}("1")` becomes
@@ -36,8 +37,10 @@ use super::ast::{Attr, Definition, Pattern, Sentence, Sort};
 /// A failure while turning KORE into values.
 #[derive(Debug)]
 pub enum LoadError {
-    /// A symbol that is neither declared nor an alias.
+    /// A symbol that is not declared.
     SymbolUndeclared(String),
+    /// An alias applied in an axiom, as an older kompile wrote rules.
+    AliasApplied(String),
     /// A declaration or attribute of an unexpected form.
     Malformed(String),
     Value(ValueError),
@@ -53,6 +56,10 @@ impl std::fmt::Display for LoadError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::SymbolUndeclared(name) => write!(f, "undeclared symbol {name}"),
+            Self::AliasApplied(name) => write!(
+                f,
+                "alias {name} is applied: aliases are not read (kompile writes rules so only with --enable-kore-antileft)"
+            ),
             Self::Malformed(what) => write!(f, "malformed {what}"),
             Self::Value(error) => error.fmt(f),
         }
@@ -94,8 +101,10 @@ fn rc(typ: Typ) -> Rc<TypKind> {
 /// A builder of the values of one definition, in one arena.
 pub struct Builder<'a> {
     arena: &'a mut Arena,
-    /// Declared symbols and aliases; applications must be of one of these.
+    /// Declared symbols; applications must be of one of these.
     known: &'a HashSet<String>,
+    /// Declared aliases, which may not be applied.
+    aliases: &'a HashSet<String>,
 }
 
 /// A case of the given notation and type, from its arguments.
@@ -113,8 +122,12 @@ macro_rules! case {
 
 impl<'a> Builder<'a> {
     /// A builder into an arena, checking applications against `known`.
-    pub fn new(arena: &'a mut Arena, known: &'a HashSet<String>) -> Self {
-        Self { arena, known }
+    pub fn new(
+        arena: &'a mut Arena,
+        known: &'a HashSet<String>,
+        aliases: &'a HashSet<String>,
+    ) -> Self {
+        Self { arena, known, aliases }
     }
 
     /// A text value.
@@ -198,7 +211,11 @@ impl<'a> Builder<'a> {
             Pattern::App(name, sorts, args) => {
                 let connective = name.strip_prefix('\\');
                 if connective.is_none() && check && !self.known.contains(name) {
-                    return Err(LoadError::SymbolUndeclared(name.clone()));
+                    return Err(if self.aliases.contains(name) {
+                        LoadError::AliasApplied(name.clone())
+                    } else {
+                        LoadError::SymbolUndeclared(name.clone())
+                    });
                 }
                 let value_name = self.text(connective.unwrap_or(name))?;
                 let value_sorts = self.sorts(sorts)?;
@@ -278,14 +295,23 @@ impl<'a> Builder<'a> {
 
 // == Definitions
 
-/// The names an application may use: declared symbols and aliases.
+/// The names an application may use: the declared symbols.
 pub fn known_symbols(definition: &Definition) -> HashSet<String> {
     definition
         .sentences()
         .filter_map(|sentence| match sentence {
-            Sentence::SymbolDecl { name, .. } | Sentence::AliasDecl { name, .. } => {
-                Some(name.clone())
-            }
+            Sentence::SymbolDecl { name, .. } => Some(name.clone()),
+            _ => None,
+        })
+        .collect()
+}
+
+/// The declared aliases, which an application may not use.
+fn alias_names(definition: &Definition) -> HashSet<String> {
+    definition
+        .sentences()
+        .filter_map(|sentence| match sentence {
+            Sentence::AliasDecl { name } => Some(name.clone()),
             _ => None,
         })
         .collect()
@@ -298,10 +324,10 @@ pub fn load_definition(
     definition: &Definition,
 ) -> Result<(Value, usize)> {
     // Each sentence goes to its part, in file order
-    let mut builder = Builder::new(arena, known);
+    let aliases = alias_names(definition);
+    let mut builder = Builder::new(arena, known, &aliases);
     let mut sorts = Vec::new();
     let mut symbols = Vec::new();
-    let mut aliases = Vec::new();
     let mut axioms = Vec::new();
     for sentence in definition.sentences() {
         match sentence {
@@ -328,30 +354,6 @@ pub fn load_definition(
                 )?;
                 symbols.push((value_name, value_decl));
             }
-            Sentence::AliasDecl { name, lhs, body } => {
-                let Pattern::App(_, _, params) = lhs else {
-                    return Err(LoadError::Malformed(format!("alias {name}")));
-                };
-                let value_params = params
-                    .iter()
-                    .map(|param| match param {
-                        Pattern::Var(x, _) | Pattern::SetVar(x, _) => builder.text(x),
-                        _ => Err(LoadError::Malformed(format!(
-                            "alias {name}: a parameter is not a variable"
-                        ))),
-                    })
-                    .collect::<Result<Vec<_>>>()?;
-                let value_params = builder.list(typ("varid"), value_params)?;
-                let value_body = builder.kore(body)?;
-                let value_name = builder.text(name)?;
-                let value_alias = case!(
-                    builder.arena,
-                    "ALIAS varid* ':=' kore",
-                    [value_params, value_body],
-                    "kalias"
-                )?;
-                aliases.push((value_name, value_alias));
-            }
             Sentence::Axiom { pattern, attrs } => {
                 let value_pattern = builder.kore(pattern)?;
                 let value_attrs = builder.kattrs(attrs)?;
@@ -362,14 +364,13 @@ pub fn load_definition(
                     "kaxiom"
                 )?);
             }
-            Sentence::Import(_) | Sentence::Claim { .. } => {}
+            Sentence::Import(_) | Sentence::Claim { .. } | Sentence::AliasDecl { .. } => {}
         }
     }
     // The parts, as the fields of a kdefinition
     let count = axioms.len();
     let value_sorts = builder.map(typ("sortid"), typ::make::list(typ("kattr")), sorts)?;
     let value_symbols = builder.map(typ("symid"), typ("ksymdecl"), symbols)?;
-    let value_aliases = builder.map(typ("symid"), typ("kalias"), aliases)?;
     let value_axioms = builder.list(typ("kaxiom"), axioms)?;
     let field = |name: &str, value| ValueField {
         atom: phrase!(node: Atom::Keyword(name.to_owned()), span: Span::default()),
@@ -378,7 +379,6 @@ pub fn load_definition(
     let fields = vec![
         field("KSORTS", value_sorts),
         field("KSYMBOLS", value_symbols),
-        field("KALIASES", value_aliases),
         field("AXIOMS", value_axioms),
     ];
     let value =
@@ -388,5 +388,5 @@ pub fn load_definition(
 
 /// A term, such as krun's initial term, as a `kore` value.
 pub fn load_term(arena: &mut Arena, known: &HashSet<String>, pattern: &Pattern) -> Result<Value> {
-    Builder::new(arena, known).kore(pattern)
+    Builder::new(arena, known, &HashSet::new()).kore(pattern)
 }

@@ -89,7 +89,8 @@ impl KoreExtern {
             eprintln!("hook> {pattern} : {sort}");
         }
         // The runtime's answer, as KORE for the specification; a failure there is ERROR
-        let mut builder = load::Builder::new(arena, &loaded.known);
+        let aliases = std::collections::HashSet::new();
+        let mut builder = load::Builder::new(arena, &loaded.known, &aliases);
         match runtime.simplify(&pattern.to_string(), &sort) {
             Ok(result) => {
                 let result = unwrap_result(binary::decode(&result)?);

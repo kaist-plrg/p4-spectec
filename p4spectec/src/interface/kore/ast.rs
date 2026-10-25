@@ -51,11 +51,10 @@ pub enum Sentence {
         result: Sort,
         attrs: Vec<Attr>,
     },
+    /// An alias declaration, which is not read: kompile applies none by
+    /// default (`spec-k/1-syntax.watsup`).
     AliasDecl {
         name: String,
-        /// The left-hand side, `name{}(X1, ..., Xn)`.
-        lhs: Pattern,
-        body: Pattern,
     },
     Axiom {
         pattern: Pattern,

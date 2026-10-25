@@ -13,8 +13,6 @@
 
 var KD : kdefinition
 var SH : map<sortid, hookid>
-var AM : map<symid, kalias>
-var SK : map<varid, kore>
 var EM : map<symid, (nat, clause)*>
 
 ;; Attributes
@@ -223,39 +221,6 @@ def $literal("FLOAT.Float", sort, text) = FLOAT text_f
 def $literal("BYTES.Bytes", sort, text) = BYTES $string_to_bytes(text)
 def $literal("KVAR.KVar", sort, text) = DV sort text
 def $literal("", sort, text) = DV sort text
-
-;; Aliases: an application f(p1, ..., pn) of an alias f(X1, ..., Xn) := body
-;; is body with Xi := pi, as Parser.scala expands them
-
-dec $subst_kore(map<varid, kore>, kore) : kore
-def $subst_kore(SK, KVAR varid sort) = kore
-  -- if (kore) = $find_map<varid, kore>(SK, varid)
-def $subst_kore(SK, KVAR varid sort) = KVAR varid sort
-  -- if eps = $find_map<varid, kore>(SK, varid)
-def $subst_kore(SK, KSETVAR varid sort) = kore
-  -- if (kore) = $find_map<varid, kore>(SK, varid)
-def $subst_kore(SK, KSETVAR varid sort) = KSETVAR varid sort
-  -- if eps = $find_map<varid, kore>(SK, varid)
-def $subst_kore(SK, KAPP symid sort* kore*) = KAPP symid sort* $subst_kore(SK, kore)*
-def $subst_kore(SK, KML text sort* kore*) = KML text sort* $subst_kore(SK, kore)*
-def $subst_kore(SK, KSTR text) = KSTR text
-
-dec $expand_aliases(map<symid, kalias>, kore) : kore
-def $expand_aliases(AM, KAPP symid sort* kore*)
-  = $expand_aliases(AM, $subst_kore(`{ (varid ':' kore_e)* `}, kore_b))
-  -- if (ALIAS varid* ':=' kore_b) = $find_map<symid, kalias>(AM, symid)
-  -- if kore_e* = $expand_aliases(AM, kore)*
-def $expand_aliases(AM, KAPP symid sort* kore*)
-  = KAPP symid sort* $expand_aliases(AM, kore)*
-  -- if eps = $find_map<symid, kalias>(AM, symid)
-def $expand_aliases(AM, KML text sort* kore*)
-  = KML text sort* $expand_aliases(AM, kore)*
-def $expand_aliases(AM, kore) = kore
-  -- otherwise
-
-dec $expand_axiom(kdefinition, kaxiom) : kaxiom
-def $expand_axiom(KD, AXIOM kore kattr*)
-  = AXIOM $expand_aliases(KD.KALIASES, kore) kattr*
 
 ;; \left-assoc{}(f(a, b, c)) is f(f(a, b), c), \right-assoc{}(f(a, b, c)) is
 ;; f(a, f(b, c))
@@ -474,5 +439,4 @@ rule Load:
                       $concat_<(symid, (nat, clause))>($equation_of(SH, kaxiom)*))),
           FRESH $fresh_generators(KD.KSYMBOLS) }
   -- if SH = $sort_hooks(KD.KSORTS)
-  -- if kaxiom_a* = KD.AXIOMS
-  -- if kaxiom* = $expand_axiom(KD, kaxiom_a)*
+  -- if kaxiom* = KD.AXIOMS

@@ -82,13 +82,16 @@ syntax definition =
                                         ;; order they are tried
     FRESH (map<sort, symid>) }          ;; the freshGenerator of a sort, e.g. freshInt
 
-;; KORE as kompile writes it, every axiom with its attributes; loading picks
-;; the definition above from it (3-load)
+;; KORE as kompile 7.1.337 writes it by default, every axiom with its
+;; attributes; loading picks the definition above from it (3-load). Alias
+;; declarations are not read: kompile declares three for proofs and applies
+;; none, and writes rule left-hand sides as aliases only under its hidden
+;; legacy option --enable-kore-antileft.
 
 syntax kore =
   | KVAR varid sort
   | KSETVAR varid sort      ;; a set variable, in properties only
-  | KAPP symid sort* kore*  ;; application of a symbol or an alias
+  | KAPP symid sort* kore*  ;; application of a symbol
   | KML text sort* kore*    ;; a connective, e.g. "rewrites" for \rewrites
   | KSTR text               ;; a string, e.g. of a domain value \dv{S}("1")
 
@@ -98,10 +101,7 @@ syntax kaxiom = AXIOM kore kattr*
 
 syntax ksymdecl = KSYMBOL sortid* sort* '->' sort kattr*  ;; with parameters
 
-syntax kalias = ALIAS varid* ':=' kore  ;; alias f(X1, ..., Xn) := body
-
 syntax kdefinition =
   { KSORTS (map<sortid, kattr*>),
     KSYMBOLS (map<symid, ksymdecl>),
-    KALIASES (map<symid, kalias>),
     AXIOMS kaxiom* }               ;; in file order

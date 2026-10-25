@@ -365,11 +365,11 @@ impl<'a> Parser<'a> {
                 self.expect(Token::Colon, "':'")?;
                 self.sort()?;
                 self.keyword("where")?;
-                let lhs = self.pattern()?;
+                self.pattern()?;
                 self.expect(Token::ColonEq, "':='")?;
-                let body = self.pattern()?;
+                self.pattern()?;
                 self.attrs()?;
-                Ok(Sentence::AliasDecl { name, lhs, body })
+                Ok(Sentence::AliasDecl { name })
             }
             "axiom" => {
                 self.sort_params()?;
