@@ -420,6 +420,9 @@ skip = [
   # a function recursing 2^19 deep in one step: the LLVM backend makes it a
   # tail call, the spec nests it (about 12 KB a level)
   "iterated-map-pointer-residual",
+  # 199,999 steps: the executor's call cache grows with every step (about
+  # 17 KB a step here) past the memory cap of 2,500 MB
+  "migrate-map-root",
   # the spec does not end it within the timeout of 7,200 seconds: 2,000,006
   # krun steps
   "test-gc-stringbuffer",
