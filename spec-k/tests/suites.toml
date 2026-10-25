@@ -32,6 +32,8 @@
 #                comments say, where the documentation leaves a value open and
 #                the spec picks another; reported as known failures, and as
 #                failures if they pass
+#   memory       <program>:<cap> for a long run, in place of the cap of 2,500 MB
+#                (the executor's memory grows with every step, D15)
 #   quick        programs of a quick run
 #
 # The tutorial languages leave out the programs that the tutorial Makefiles do
@@ -232,12 +234,12 @@ skip = [
   # vmPerformance, too long for the spec: loopExp (20,362,627 to 47,202,463
   # krun steps where known) and loopMul (132,302,402) do not end within the
   # timeout of 7,200 seconds, and are slow tests of KEVM itself
-  # (tests/slow.llvm); performanceTester-performanceTester_d0 (135,216 steps)
-  # did not end within 3,600 seconds
+  # (tests/slow.llvm)
   "loopExp-*",
   "loopMul-*",
-  "performanceTester-*",
 ]
+# performanceTester: 135,216 steps, about 2.3 GB
+memory = ["performanceTester-performanceTester_d0g0v0_Cancun.kore:3500M"]
 quick = ["arith-arith_d0g0v0_Cancun.kore", "byte-byte_d0g0v0_Cancun.kore"]
 
 # KMIR: the exec-smir tests of mir-semantics, as kmir run makes their initial
@@ -303,37 +305,27 @@ known = [
 dir = "k-distribution/tests/regression-new"
 # skip and known name tests or <test>/<program>, quick <test>/<program>
 skip = [
-  # they krun differently from a plain run of each program:
-  # krun --proof-hint
-  "proof-instrumentation",
-  "proof-instrumentation-debug",
-  # krun --dry-run
+  # nothing runs: krun --dry-run only, a definition in JSON with no program,
+  # kast only
   "issue-1602",
-  # a custom parser
-  "krun-deserialize",
-  "issue-582",
-  "star-multiplicity",
-  # a preprocessed definition
-  "issue-1169",
-  # a definition in JSON
   "imp-outer-json",
-  # kast tests
   "issue-2273",
-  # a custom krun target
-  "issue-946",
+  # a definition preprocessed with kompile -E and kompiled again, which the
+  # harness does not do
+  "issue-1169",
   # they use what the spec does not cover:
-  # file IO, random numbers, the exit code, #trace (IO), #unparseKORE (reflection)
+  # file IO, random numbers, #trace (IO), #unparseKORE (reflection)
   "io-llvm",
   "rand",
-  "exit-code-no-gen-top",
   "trace",
   "unparseKORE",
   # machine integers (MInt) and range maps, which the spec does not cover
   "mint-llvm",
   "mint-llvm-4",
   "rangemap-tests-llvm",
-  # the initializers take the configuration as an argument (fresh variables
-  # in the configuration), but krun's initial term does not pass it
+  # fresh variables in the configuration (<cell> !X:Int </cell>), which the
+  # spec does not cover: kompile gives the initializers the configuration as
+  # an argument, and krun's initial term does not pass it
   "issue-3520-freshConfig",
 ]
 known = [
@@ -408,8 +400,6 @@ skip = [
   "test9",
   # FFI hooks (native memory and calls)
   "test21",
-  # JSON hooks, not in the spec yet
-  "test34",
   # machine integers (MInt) and range maps, which the spec does not cover
   "hash-mint",
   "mint",
@@ -420,13 +410,12 @@ skip = [
   # a function recursing 2^19 deep in one step: the LLVM backend makes it a
   # tail call, the spec nests it (about 12 KB a level)
   "iterated-map-pointer-residual",
-  # 199,999 steps: the executor's call cache grows with every step (about
-  # 17 KB a step here) past the memory cap of 2,500 MB
-  "migrate-map-root",
   # the spec does not end it within the timeout of 7,200 seconds: 2,000,006
   # krun steps
   "test-gc-stringbuffer",
 ]
+# 199,999 steps, about 3.4 GB
+memory = ["migrate-map-root/migrate-map-root.in:4000M"]
 quick = [
   "lambda-anywhere/closed-variable-capture.in",
   "non-exec/non-exec.in",

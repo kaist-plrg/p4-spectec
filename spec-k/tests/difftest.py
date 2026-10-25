@@ -75,7 +75,11 @@ class Interpreter:
         rc, _, err, secs = run([self.binary, self.init, depth, raw, "--statistics"], timeout, self.stdin, env)
         if rc is None:
             return None, None, secs, "krun timeout"
-        if rc != 0 or not os.path.exists(raw):
+        # The interpreter exits 113 when the term is stuck (and still writes
+        # it), 134 on an uncaught exception (fastthrow.c), and with a negative
+        # code when a signal kills it. Any other code is the exit-code cell of
+        # the configuration (regression exit-code-no-gen-top): the run ended.
+        if rc in (113, 134) or rc < 0 or not os.path.exists(raw):
             return None, None, secs, "krun failed (exit %s): %s" % (rc, oneline(err))
         count, term = open(raw).read().split("\n", 1)
         with open(out, "w") as fh:
@@ -83,9 +87,15 @@ class Interpreter:
         return int(count), out, secs, None
 
 
+# A run of the definition alone, with no program (regression issue-946)
+NO_PROGRAM = "-"
+
+
 def program_input(program, input_dir):
     """The standard input of a program: <program>.in, or <input_dir>/<name>.in,
     when it exists, as in the tutorial Makefiles (RESULTDIR)"""
+    if program == NO_PROGRAM:
+        return ""
     inp = os.path.join(input_dir, os.path.basename(program)) + ".in" if input_dir else program + ".in"
     return open(inp).read() if os.path.exists(inp) else ""
 
@@ -107,7 +117,8 @@ def run_krun(kompiled, program, workdir, krun_args, timeout, input_dir=None, dep
         return steps, command, result, secs, err
     dry = os.path.join(workdir, "dry")
     os.makedirs(dry, exist_ok=True)
-    rc, out, err, _ = run(["krun", "-d", os.path.abspath(kompiled), os.path.abspath(program)] + krun_args
+    rc, out, err, _ = run(["krun", "-d", os.path.abspath(kompiled)]
+                          + ([] if program == NO_PROGRAM else [os.path.abspath(program)]) + krun_args
                           + ["--save-temps", "--temp-dir", dry, "--dry-run"], timeout, stdin)
     line = next((l for l in (out + err).splitlines() if re.search(r"(^|/)interpreter \S+ -?\d+ ", l)), None)
     if rc != 0 or line is None:
@@ -251,7 +262,8 @@ def krun_outcome(prog, work, args, depth):
     entry = None
     if args.krun_cache:
         h = hashlib.sha256()
-        for part in [args.k_version, args.definition_hash, open(prog, "rb").read().hex(),
+        for part in [args.k_version, args.definition_hash,
+                     "" if prog == NO_PROGRAM else open(prog, "rb").read().hex(),
                      program_input(prog, args.input_dir), json.dumps(krun_args), str(depth)]:
             h.update(part.encode() + b"\0")
         entry = os.path.join(args.krun_cache, h.hexdigest())
@@ -283,9 +295,10 @@ def krun_outcome(prog, work, args, depth):
 
 def test_program(prog, root, definition, library, args):
     """Diff test one program; returns (table row, verdict)."""
-    name = os.path.basename(prog)
+    name = "no-program" if prog == NO_PROGRAM else os.path.basename(prog)
     work = os.path.join(root, name)
     os.makedirs(work, exist_ok=True)
+    memory_max = dict(m.rsplit(":", 1) for m in args.memory_max_for).get(name, args.memory_max)
     limits = dict((c.split(":") + [None])[:2] for c in args.check_steps_for)
     check = name in limits
     limit = int(limits[name]) if check and limits[name] else args.depth
@@ -300,7 +313,7 @@ def test_program(prog, root, definition, library, args):
     if args.no_det:
         extra += ["--no-det"]
     spec = run_spec(definition, library, init, os.path.join(work, "spec.kore"), compare, extra, args.timeout,
-                    args.memory_max)
+                    memory_max)
     verdict = judge(spec, k_steps, fails_at, check, limit)
     # a run that ends elsewhere or in other steps than krun's may still take
     # only steps K allows
@@ -309,7 +322,7 @@ def test_program(prog, root, definition, library, args):
         differs = verdict[len("FAIL: "):]
         compare = ["--check-steps", os.path.abspath(args.kompiled)]
         spec = run_spec(definition, library, init, os.path.join(work, "spec.kore"), compare, extra, args.timeout,
-                        args.memory_max)
+                        memory_max)
         verdict = judge(spec, k_steps, fails_at, True, limit)
         verdict = verdict.replace("pass (each step is one K allows)",
                                   "pass by steps (%s; each step is one K allows)" % differs)
@@ -327,7 +340,7 @@ def test_program(prog, root, definition, library, args):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-k", "--kompiled", required=True, help="the <name>-kompiled directory")
-    ap.add_argument("programs", nargs="+", help="program files or directories")
+    ap.add_argument("programs", nargs="+", help="program files or directories; - runs the definition alone")
     ap.add_argument("--ext", default=None, help="extension of the programs in directories (e.g. imp)")
     ap.add_argument("--timeout", type=float, default=1800, help="seconds per run of the spec")
     ap.add_argument("--krun-arg", action="append", default=[], help="extra argument for krun")
@@ -343,6 +356,9 @@ def main():
     ap.add_argument("--memory-max", default="2500M" if shutil.which("systemd-run") else "",
                     help="memory cap for each run of the spec (systemd-run MemoryMax; empty for none, "
                          "the default without systemd)")
+    ap.add_argument("--memory-max-for", action="append", default=[], metavar="NAME:MEM",
+                    help="the memory cap for this program instead (a long run; the executor's memory grows "
+                         "with every step)")
     ap.add_argument("--no-det", action="store_true",
                     help="run the spec without the check of determinism (p4spectec krun --no-det); by default "
                          "a run fails when two rules or clauses of the spec both apply")

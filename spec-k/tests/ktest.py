@@ -86,6 +86,7 @@ def run_difftest(name, t, args, jobs=None):
     cmd += sum((["--exclude", e] for e in t.get("exclude", [])), [])
     cmd += sum((["--known", e] for e in t.get("known", [])), [])
     cmd += sum((["--check-steps-for", e] for e in t.get("check_steps", [])), [])
+    cmd += sum((["--memory-max-for", e] for e in t.get("memory", [])), [])
     cmd += ["--runtime-flag=" + a.replace("{src}", t.get("src_dir", "")) for a in t.get("runtime", [])]
     if args.no_det:
         cmd += ["--no-det"]
@@ -264,6 +265,12 @@ def group_known(group, d, prog=lambda p: p):
             if k == d or k.startswith(d + "/")]
 
 
+def group_memory(group, d):
+    """The memory caps of programs of test d of a group (<test>/<program>:<cap>
+    in the group's memory list)."""
+    return [k.split("/", 1)[1] for k in group.get("memory", []) if k.startswith(d + "/")]
+
+
 def manual_tests(group):
     """The tests written for the spec (manual/<group>/<test>/): a definition
     <test>.k and its programs *.prog. A quick run runs all of them. Programs in
@@ -293,10 +300,13 @@ def regression_tests(src, quick):
         if out or not os.path.isfile(makefile) or "ktest.mak" not in open(makefile).read():
             continue
         v = read_makefile(makefile)
-        if v.get("KOMPILE_BACKEND", "llvm") != "llvm" or "DEF" not in v or "EXT" not in v:
+        if v.get("KOMPILE_BACKEND", "llvm") != "llvm" or "DEF" not in v:
             continue
         testdir = os.path.join(root, d, v.get("TESTDIR", "tests"))
-        if not glob.glob(os.path.join(testdir, "*." + v["EXT"])):
+        programs = "EXT" in v and glob.glob(os.path.join(testdir, "*." + v["EXT"]))
+        # a test without programs may run the definition alone (issue-946)
+        alone = not programs and re.search(r"^krun:.*\n\t.*KRUN", open(makefile).read(), re.M)
+        if not programs and not alone:
             continue
         definition = os.path.join(root, d, v["DEF"] + ".k")
         if not os.path.exists(definition):
@@ -304,6 +314,7 @@ def regression_tests(src, quick):
         # difftest.py sets the output; a search is checked step by step, and
         # --depth limits both krun and the spec
         krun, search, depth, flags = [], False, None, shlex.split(v.get("KRUN_FLAGS", ""))
+        kore_input = False
         while flags:
             f = flags.pop(0)
             if f in ("-o", "--output", "--pattern", "--bound"):
@@ -312,17 +323,27 @@ def regression_tests(src, quick):
                 search = True
             elif f == "--depth":
                 depth = int(flags.pop(0))
-            elif f not in ("--profile", "--no-pattern"):
+            elif f == "--parser":
+                # cat: the program is the initial term already (krun-deserialize);
+                # a script calling kast parses as krun does (issue-582)
+                parser = flags.pop(0)
+                if parser == "cat":
+                    kore_input = True
+                elif "kast" not in open(os.path.join(root, d, parser)).read():
+                    sys.exit("%s: unknown parser %s" % (d, parser))
+            elif f not in ("--profile", "--no-pattern", "--proof-hint"):
+                # --proof-hint only writes proof hints beside the run
                 krun.append(f)
         # cells with a stream attribute buffer IO in the configuration; the spec
         # compares runs without IO
         if 'stream="' in open(definition).read():
             krun += ["--io", "off"]
-        tests[d] = dict(definition=definition, programs=[testdir], ext=v["EXT"],
-                        krun=["--no-exc-wrap"] + REGRESSION["krun"].get(d, krun),
+        tests[d] = dict(definition=definition, programs=["-"] if alone else [testdir], ext=v.get("EXT", ""),
+                        krun=["--no-exc-wrap"] + REGRESSION["krun"].get(d, krun), kore_input=kore_input,
                         kompile=shlex.split(v.get("KOMPILE_FLAGS", "")) + ["--no-exc-wrap", "--type-inference-mode",
                                                                            "checked"],
-                        exclude=exclude, only=only, known=group_known(REGRESSION, d))
+                        exclude=exclude, only=only, known=group_known(REGRESSION, d),
+                        memory=group_memory(REGRESSION, d))
         if search:
             tests[d]["check_steps"] = [os.path.basename(f) + ("" if depth is None else ":%d" % depth)
                                        for f in glob.glob(os.path.join(testdir, "*." + v["EXT"]))]
@@ -348,7 +369,7 @@ def llvm_tests(src, quick):
                   if os.path.exists(p)]
         if inputs:
             tests[name] = dict(definition=definition, programs=inputs, ext="in", kore=True, exclude=exclude,
-                               only=only, known=group_known(LLVM, name))
+                               only=only, known=group_known(LLVM, name), memory=group_memory(LLVM, name))
     return tests
 
 

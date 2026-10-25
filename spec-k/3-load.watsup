@@ -128,9 +128,10 @@ def $close_subsorts(subsort*) = $concat_<subsort>($subsorts_from(SM, sort_a)*)
 ;; the hook
 
 ;; The hooks of K's modules of domain values (INT, BOOL, STRING, BYTES, FLOAT,
-;; and the KRYPTO plugin) are computed by the K runtime (RUNTIME), but for
-;; the lazy ones and the conversions between strings and tokens of any sort;
-;; the hooks on K terms are specified (HOOKED)
+;; JSON, and the KRYPTO plugin) are computed by the K runtime (RUNTIME), but
+;; for the lazy ones and the conversions between strings and tokens of any
+;; sort; the hooks on K terms are specified (HOOKED). JSON's two hooks convert
+;; between a JSON term, a constructor term, and its text.
 
 dec $hook_module(hookid) : text
 def $hook_module(hookid) = $string_substr(hookid, 0, i)
@@ -149,7 +150,7 @@ def $is_lazy(hookid) = hookid <- [ "BOOL.and", "BOOL.andThen", "BOOL.or",
 dec $is_runtime(hookid) : bool
 def $is_runtime(hookid)
   = $hook_module(hookid) <- [ "INT", "BOOL", "STRING", "BYTES", "FLOAT",
-                              "KRYPTO" ]
+                              "JSON", "KRYPTO" ]
     /\ ~$is_lazy(hookid)
     /\ ~(hookid <- [ "STRING.token2string", "STRING.string2token" ])
 
