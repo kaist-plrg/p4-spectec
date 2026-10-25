@@ -15,7 +15,7 @@ use crate::lang::{
     il::ast::{Id, Typ},
 };
 
-use crate::runner::{Eval, Extern, Interface, InterfaceError, Interpreter, RunnerContext};
+use crate::runner::{Eval, Interface, InterfaceError};
 
 use self::error::{P4Error, P4ErrorKind};
 use super::builtin::call::Builtins;
@@ -63,19 +63,14 @@ impl Interface for P4Interface {
             .map_err(|error| InterfaceError::from(error.into_report()))
     }
 
-    fn call_builtin<Interp, Ext>(
-        ctx: &mut RunnerContext<'_, Interp, Self, Ext>,
+    fn call_builtin(
+        &mut self,
+        arena: &mut Arena,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
-    ) -> Eval<Value, InterfaceError>
-    where
-        Ext: Extern,
-        Interp: Interpreter<Self, Ext>,
-    {
-        let (arena, interface) = ctx.arena_and_interface_mut();
-        interface
-            .builtins
+    ) -> Eval<Value, InterfaceError> {
+        self.builtins
             .invoke(arena, id, targs, values)
             .map_err(InterfaceError::from)
     }

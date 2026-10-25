@@ -23,7 +23,7 @@ use crate::lang::{
 };
 
 use crate::runner::{
-    Backend, ExternError, Interface, InterfaceError, Interpreter, Runner, RunnerContext,
+    ExternError, Interface, InterfaceError, Interpreter, Runner, RunnerContext, with_context,
 };
 
 use crate::stf::{
@@ -161,42 +161,8 @@ where
     let program = runner
         .parse_program(arena, includes, &[path.to_path_buf()])
         .map_err(InterfaceError::into_report)?;
-    let state = match &mut runner.backend {
-        Backend::Al { spec_env, interp } => {
-            let mut ctx = RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut runner.interface,
-                &mut runner.external,
-                &mut runner.effects,
-            );
-            Arch::init_pipe(&mut ctx, program)
-        }
-        Backend::Sl { spec_env, interp } => {
-            let mut ctx = RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut runner.interface,
-                &mut runner.external,
-                &mut runner.effects,
-            );
-            Arch::init_pipe(&mut ctx, program)
-        }
-        Backend::Pl { spec_env, interp } => {
-            let mut ctx = RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut runner.interface,
-                &mut runner.external,
-                &mut runner.effects,
-            );
-            Arch::init_pipe(&mut ctx, program)
-        }
-    }
-    .map_err(ExternError::into_report)?;
+    let state = with_context!(runner, arena, |ctx| Arch::init_pipe(&mut ctx, program))
+        .map_err(ExternError::into_report)?;
     Ok(Run::new(state))
 }
 
@@ -216,41 +182,8 @@ where
     // Fresh output list; the architecture may rewrite the statement first
     run.state.txs.clear();
     let stmt_kind = Arch::transform_stf_stmt(stmt.node.clone());
-    let result = match &mut runner.backend {
-        Backend::Al { spec_env, interp } => {
-            let mut ctx = RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut runner.interface,
-                &mut runner.external,
-                &mut runner.effects,
-            );
-            run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
-        }
-        Backend::Sl { spec_env, interp } => {
-            let mut ctx = RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut runner.interface,
-                &mut runner.external,
-                &mut runner.effects,
-            );
-            run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
-        }
-        Backend::Pl { spec_env, interp } => {
-            let mut ctx = RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut runner.interface,
-                &mut runner.external,
-                &mut runner.effects,
-            );
-            run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
-        }
-    };
+    let result =
+        with_context!(runner, arena, |ctx| run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind));
     // Attach the statement's span to failures that have none
     let tx = result.map_err(|report| {
         if stmt.span == Span::default() {

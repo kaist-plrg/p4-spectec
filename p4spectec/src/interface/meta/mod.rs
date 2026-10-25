@@ -16,7 +16,7 @@ use crate::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
     },
-    runner::{Eval, Extern, Interface, InterfaceError, Interpreter, RunnerContext},
+    runner::{Eval, Interface, InterfaceError},
 };
 
 use self::shared::encode::Encode;
@@ -52,19 +52,14 @@ impl Interface for MetaInterface {
             .map_err(|error| InterfaceError::from(error.into_report()))
     }
 
-    fn call_builtin<Interp, Ext>(
-        ctx: &mut RunnerContext<'_, Interp, Self, Ext>,
+    fn call_builtin(
+        &mut self,
+        arena: &mut Arena,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
-    ) -> Eval<Value, InterfaceError>
-    where
-        Ext: Extern,
-        Interp: Interpreter<Self, Ext>,
-    {
-        let (arena, interface) = ctx.arena_and_interface_mut();
-        interface
-            .builtins
+    ) -> Eval<Value, InterfaceError> {
+        self.builtins
             .invoke(arena, id, targs, values)
             .map_err(InterfaceError::from)
     }
