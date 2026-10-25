@@ -1,0 +1,69 @@
+;; Algo context
+
+;; Type definitions, variables bound so far at their dimension outside
+;; every iteration, and identifiers in use that fresh identifiers must avoid
+
+syntax algoCtx =
+  { TYP tdenv,
+    BOUND vari*,
+    USED id* }
+
+var AC : algoCtx
+
+dec $empty_algoCtx : algoCtx
+  hint(prose_in "empty algo context")
+def $empty_algoCtx =
+  { TYP $empty_map<id, typDef>,
+    BOUND eps,
+    USED eps }
+
+;;; Loading context from a spec
+
+dec $load_algoCtx(algoCtx, specIL) : algoCtx
+  hint(prose_in %0 "with the type definitions of spec" %1 "loaded")
+
+def $load_algoCtx(AC, externTypDefn :: defnIL_t*)
+  = $load_algoCtx(AC', defnIL_t*)
+  -- if EXTTYP id = externTypDefn
+  -- if tdenv_update = $add_map<id, typDef>(AC.TYP, id, externTypDefn)
+  -- if AC' = AC[ .TYP = tdenv_update ]
+
+def $load_algoCtx(AC, definedTypDefn :: defnIL_t*)
+  = $load_algoCtx(AC', defnIL_t*)
+  -- if TYP id _ '=' _ = definedTypDefn
+  -- if tdenv_update = $add_map<id, typDef>(AC.TYP, id, definedTypDefn)
+  -- if AC' = AC[ .TYP = tdenv_update ]
+
+def $load_algoCtx(AC, relDefnIL :: defnIL_t*)
+  = $load_algoCtx(AC, defnIL_t*)
+
+def $load_algoCtx(AC, funcDefnIL :: defnIL_t*)
+  = $load_algoCtx(AC, defnIL_t*)
+
+def $load_algoCtx(AC, eps) = AC
+
+;;; Adders
+
+dec $add_bound(algoCtx, vari*) : algoCtx
+  hint(prose_in %0 "with variables" %1 "bound")
+def $add_bound(AC, vari*) = AC[ .BOUND = AC.BOUND ++ vari* ]
+
+dec $add_used(algoCtx, id*) : algoCtx
+  hint(prose_in %0 "with identifiers" %1 "in use")
+def $add_used(AC, id*) = AC[ .USED = AC.USED ++ id* ]
+
+;; Fresh identifiers only need to avoid the identifiers in use,
+;; so they share one base name
+
+dec $fresh_id(algoCtx) : (algoCtx, id)
+  hint(prose_in "an identifier unused in" %0 "and the context using it")
+def $fresh_id(AC) = (AC', id_fresh)
+  -- if id_fresh = $fresh(AC.USED, "fresh")
+  -- if AC' = $add_used(AC, id_fresh)
+
+dec $add_tparams(algoCtx, tparam*) : algoCtx
+  hint(prose_in %0 "with type parameters" %1)
+def $add_tparams(AC, tparam*)
+  = AC[ .TYP = tdenv ]
+  -- if typDef* = $repeat_<typDef>(PARAM, |tparam*|)
+  -- if tdenv = $adds_map<id, typDef>(AC.TYP, tparam*, typDef*)

@@ -1,0 +1,175 @@
+;; Free variables
+
+dec $ids_of_varis(vari*) : id*
+  hint(prose_in "the identifiers of" %0)
+def $ids_of_varis((id _ _)*) = id*
+
+dec $free_varis_exp(typedExp) : vari*
+  hint(prose_in "the variables occurring in" %0)
+dec $free_varis_exps(typedExp*) : vari*
+  hint(prose_in "the variables occurring in" %0)
+dec $free_varis_path(typedPath) : vari*
+  hint(prose_in "the variables occurring in" %0)
+dec $free_varis_arg(arg) : vari*
+  hint(prose_in "the variables occurring in" %0)
+dec $free_varis_args(arg*) : vari*
+  hint(prose_in "the variables occurring in" %0)
+
+;;; Expressions
+
+def $free_varis_exp((BOOL _) '#' _) = eps
+
+def $free_varis_exp(num '#' _) = eps
+
+def $free_varis_exp((TEXT _) '#' _) = eps
+
+def $free_varis_exp((VAR id) '#' typ) = [ id typ eps ]
+
+def $free_varis_exp((UN _ typedExp) '#' _)
+  = $free_varis_exp(typedExp)
+
+def $free_varis_exp((BIN _ typedExp_l typedExp_r) '#' _)
+  = $free_varis_exps([ typedExp_l, typedExp_r ])
+
+def $free_varis_exp((CMP _ typedExp_l typedExp_r) '#' _)
+  = $free_varis_exps([ typedExp_l, typedExp_r ])
+
+def $free_varis_exp((UPCAST _ typedExp) '#' _)
+  = $free_varis_exp(typedExp)
+
+def $free_varis_exp((DOWNCAST _ typedExp) '#' _)
+  = $free_varis_exp(typedExp)
+
+def $free_varis_exp((SUB typedExp _) '#' _)
+  = $free_varis_exp(typedExp)
+
+def $free_varis_exp((MATCH typedExp _) '#' _)
+  = $free_varis_exp(typedExp)
+
+def $free_varis_exp((TUP typedExp*) '#' _)
+  = $free_varis_exps(typedExp*)
+
+def $free_varis_exp((INJ (_ typedExp*)) '#' _)
+  = $free_varis_exps(typedExp*)
+
+def $free_varis_exp((STR expField*) '#' _)
+  = $free_varis_exps(typedExp*)
+  -- (if _ typedExp = expField)*
+
+def $free_varis_exp((OPT eps) '#' _) = eps
+def $free_varis_exp((OPT typedExp) '#' _)
+  = $free_varis_exp(typedExp)
+
+def $free_varis_exp((LIST typedExp*) '#' _)
+  = $free_varis_exps(typedExp*)
+
+def $free_varis_exp((CONS typedExp_h typedExp_t) '#' _)
+  = $free_varis_exps([ typedExp_h, typedExp_t ])
+
+def $free_varis_exp((CAT typedExp_l typedExp_r) '#' _)
+  = $free_varis_exps([ typedExp_l, typedExp_r ])
+
+def $free_varis_exp((MEM typedExp_l typedExp_r) '#' _)
+  = $free_varis_exps([ typedExp_l, typedExp_r ])
+
+def $free_varis_exp((LEN typedExp) '#' _)
+  = $free_varis_exp(typedExp)
+
+def $free_varis_exp((DOT typedExp _) '#' _)
+  = $free_varis_exp(typedExp)
+
+def $free_varis_exp((IDX typedExp_b typedExp_i) '#' _)
+  = $free_varis_exps([ typedExp_b, typedExp_i ])
+
+def $free_varis_exp((SLICE typedExp_b typedExp_i typedExp_n) '#' _)
+  = $free_varis_exps([ typedExp_b, typedExp_i, typedExp_n ])
+
+def $free_varis_exp((UPD typedExp_b typedPath typedExp_f) '#' _)
+  = $free_varis_exp(typedExp_b) ++ $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_f)
+
+def $free_varis_exp((CALL _ _ arg*) '#' _)
+  = $free_varis_args(arg*)
+
+def $free_varis_exp((ITER typedExp (iter _)) '#' _) = vari_iter*
+  -- if vari* = $free_varis_exp(typedExp)
+  -- if (vari_iter = $iterate_vari(iter, vari))*
+
+def $free_varis_exps(eps) = eps
+def $free_varis_exps(typedExp_h :: typedExp_t*)
+  = $free_varis_exp(typedExp_h) ++ $free_varis_exps(typedExp_t*)
+
+;;; Paths
+
+def $free_varis_path(ROOT '#' _) = eps
+
+def $free_varis_path((IDX typedPath typedExp_i) '#' _)
+  = $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_i)
+
+def $free_varis_path((SLICE typedPath typedExp_i typedExp_n) '#' _)
+  = $free_varis_path(typedPath) ++ $free_varis_exps([ typedExp_i, typedExp_n ])
+
+def $free_varis_path((DOT typedPath _) '#' _)
+  = $free_varis_path(typedPath)
+
+;;; Arguments
+
+def $free_varis_arg(EXP typedExp) = $free_varis_exp(typedExp)
+
+def $free_varis_arg(FUN _) = eps
+
+def $free_varis_args(eps) = eps
+def $free_varis_args(arg_h :: arg_t*)
+  = $free_varis_arg(arg_h) ++ $free_varis_args(arg_t*)
+
+;;; Premises
+
+dec $free_varis_premIL(premIL) : vari*
+  hint(prose_in "the variables occurring in" %0)
+dec $free_varis_premILs(premIL*) : vari*
+  hint(prose_in "the variables occurring in" %0)
+
+def $free_varis_premIL(REL _ ':' typedExp* `( _ `))
+  = $free_varis_exps(typedExp*)
+
+def $free_varis_premIL(IF typedExp) = $free_varis_exp(typedExp)
+
+def $free_varis_premIL(IFHOLD _ ':' typedExp*)
+  = $free_varis_exps(typedExp*)
+
+def $free_varis_premIL(IFNOTHOLD _ ':' typedExp*)
+  = $free_varis_exps(typedExp*)
+
+def $free_varis_premIL(ITER premIL (iter _)) = vari_iter*
+  -- if vari* = $free_varis_premIL(premIL)
+  -- if (vari_iter = $iterate_vari(iter, vari))*
+
+def $free_varis_premIL(DEBUG typedExp) = $free_varis_exp(typedExp)
+
+def $free_varis_premILs(eps) = eps
+def $free_varis_premILs(premIL_h :: premIL_t*)
+  = $free_varis_premIL(premIL_h) ++ $free_varis_premILs(premIL_t*)
+
+;;; Rules
+
+dec $free_varis_rulIL(rulIL) : vari*
+  hint(prose_in "the variables occurring in" %0)
+
+def $free_varis_rulIL(_ ':' typedExp* '-' premIL*)
+  = $free_varis_exps(typedExp*) ++ $free_varis_premILs(premIL*)
+
+;;; Clauses
+
+dec $free_varis_clauseIL(clauseIL) : vari*
+  hint(prose_in "the variables occurring in" %0)
+
+def $free_varis_clauseIL(arg* '=' typedExp '-' premIL*)
+  = $free_varis_args(arg*) ++ $free_varis_exp(typedExp)
+    ++ $free_varis_premILs(premIL*)
+
+;;; Tables
+
+dec $free_varis_tblRowIL(tblRowIL) : vari*
+  hint(prose_in "the variables occurring in" %0)
+
+def $free_varis_tblRowIL(arg* '=' typedExp)
+  = $free_varis_args(arg*) ++ $free_varis_exp(typedExp)

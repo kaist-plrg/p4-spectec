@@ -1,0 +1,16 @@
+;; Variable expressions
+
+;; `$exp_of_vari(x nat (STAR QUEST))` is `(x*{x <- x*})?{x* <- x*?}`,
+;; each iteration listing the variable at the dimension inside it
+
+dec $iter_exp(typedExp, vari, iter*) : typedExp
+  hint(prose_in %0 "of variable" %1 "iterated by" %2)
+def $iter_exp(typedExp, _, eps) = typedExp
+def $iter_exp(typedExp, vari, iter_h :: iter_t*) = $iter_exp(typedExp_iter, vari_iter, iter_t*)
+  -- if _ '#' typ = typedExp
+  -- if typedExp_iter = (ITER typedExp (iter_h vari)) '#' (ITER typ iter_h)
+  -- if vari_iter = $iterate_vari(iter_h, vari)
+
+dec $exp_of_vari(vari) : typedExp
+  hint(prose_in "the expression of variable" %0)
+def $exp_of_vari(id typ iter*) = $iter_exp((VAR id) '#' typ, id typ eps, iter*)
