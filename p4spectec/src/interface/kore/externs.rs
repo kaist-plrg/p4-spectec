@@ -1,6 +1,6 @@
 //! The K runtime of the definition, as the extern of the K specification
 //!
-//! `Call_hook` (`spec-k/3.1-hook-runtime.watsup`) applies a hooked symbol
+//! `Call_hook` (`spec-k/2-relation.watsup`) applies a hooked symbol
 //! of a domain module by the K runtime of the definition (`llvm`):
 //! the arguments, domain values and constructor terms, are written as KORE
 //! text (`term`), the runtime evaluates the application, and its answer,

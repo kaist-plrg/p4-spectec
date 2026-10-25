@@ -43,3 +43,26 @@ builtin dec $intersect_set<K>(set<K>, set<K>) : set<K>
 
 builtin dec $fresh_nat() : nat
   hint(prose_in "a new number")
+
+;; Text builtins, for reading domain values and hook names (3-load): a KORE
+;; string has one byte per character
+
+builtin dec $string_substr(text, int, int) : text
+  hint(prose_in "the bytes of" %0 "from" %1 "up to" %2)
+builtin dec $string_find(text, text, int) : int
+  hint(prose_in "the first position from" %2 "where" %1 "occurs in" %0
+                ", or -1")
+builtin dec $string_to_int(text) : int?
+  hint(prose_in "the integer written in decimal as" %0)
+builtin dec $string_to_bytes(text) : nat*
+  hint(prose_in "the bytes of" %0)
+
+;; An integer as a natural number, when it is not negative (hooks fail on a
+;; negative length, index, or shift amount)
+
+dec $nat_of(int) : nat?
+def $nat_of(i) = n
+  -- if i <: nat
+  -- if n = i
+def $nat_of(i) = eps
+  -- otherwise

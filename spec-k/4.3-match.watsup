@@ -6,73 +6,15 @@
 ;;; As the LLVM backend's decision trees. A pattern that picks an element out
 ;;; of a collection may match in several ways; Match gives them all, in order.
 
-;; Keys of map patterns and elements of set patterns are evaluated when their
-;; variables are bound (e.g. #ContextLookup(IDS, I) |-> ADDR in KWasm);
-;; otherwise the entries are tried in turn. A function stuck there makes the
-;; match stuck, which ends the run. The rules of Eval are in 4.2-eval.
-
-relation Eval:
-  definition subst |- pattern : res<term>
-  hint(input %0 %1 %2)
-  hint(prose_in "evaluating" %2 "under" %1)
-  hint(prose_out %3)
+;;; Keys of map patterns and elements of set patterns are evaluated when their
+;;; variables are bound (e.g. #ContextLookup(IDS, I) |-> ADDR in KWasm);
+;;; otherwise the entries are tried in turn. A function stuck there makes the
+;;; match stuck, which ends the run. Elements of maps and sets are tried in
+;;; the order of their values; the LLVM backend uses the order of its hash
+;;; tries. The relations are declared in 2-relation; the rules of Eval are in
+;;; 6.2-eval.
 
 var result : res<term>
-
-;; Matching: the ways a pattern matches a term, extending a substitution. A
-;; way is a substitution, or ERROR where a function in the pattern is stuck.
-;; Elements of maps and sets are tried in the order of their values; the LLVM
-;; backend uses the order of its hash tries.
-
-syntax way = res<subst>
-
-relation Match:
-  definition way |- pattern ~~ term : way*
-  hint(input %0 %1 %2 %3)
-  hint(prose_in "the ways" %2 "matches" %3 "extending" %1)
-  hint(prose_out %4)
-
-relation Match_list:
-  definition way |- pattern* ~~ term* : way*
-  hint(input %0 %1 %2 %3)
-  hint(prose_in "the ways" %2 "match" %3 "extending" %1)
-  hint(prose_out %4)
-
-relation Match_rest:
-  definition way |- pattern* ~~ term : way*
-  hint(input %0 %1 %2 %3)
-  hint(prose_in "the ways the other parts" %2 "match what is left," %3)
-  hint(prose_out %4)
-
-relation Match_map:
-  definition way |- pattern* pattern* ~~ sort (map<term, term>) : way*
-  hint(input %0 %1 %2 %3 %4 %5)
-  hint(prose_in "the ways the entries" %2 "and the other parts" %3 "match the map" %5)
-  hint(prose_out %6)
-
-relation Match_entry:
-  definition way |- pattern pattern pattern* pattern* ~~ sort (map<term, term>) (term, term) : way*
-  hint(input %0 %1 %2 %3 %4 %5 %6 %7 %8)
-  hint(prose_in "the ways the entry" %2 "|->" %3 "matches" %8 "and the rest match the other entries")
-  hint(prose_out %9)
-
-relation Match_set:
-  definition way |- pattern* pattern* ~~ sort (set<term>) : way*
-  hint(input %0 %1 %2 %3 %4 %5)
-  hint(prose_in "the ways the elements" %2 "and the other parts" %3 "match the set" %5)
-  hint(prose_out %6)
-
-relation Match_element:
-  definition way |- pattern pattern* pattern* ~~ sort (set<term>) term : way*
-  hint(input %0 %1 %2 %3 %4 %5 %6 %7)
-  hint(prose_in "the ways the element" %2 "matches" %7 "and the rest match the other elements")
-  hint(prose_out %8)
-
-relation Match_seq:
-  definition way |- pattern* ~~ sort term* : way*
-  hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "the ways" %2 "match the list" %4)
-  hint(prose_out %5)
 
 ;;; Matching after a stuck way stays stuck
 

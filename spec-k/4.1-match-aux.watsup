@@ -1,13 +1,11 @@
 ;;
-;; Definition lookups, subsorts, and equality and construction of terms
+;; Definition lookups, subsorts, and construction of terms
 ;;
 
 var D : definition
 var kind : symkind
 var M : map<term, term>
 var S : set<term>
-
-syntax subst = map<varid, term>
 
 ;; Whether the variables of a pattern are bound
 
@@ -44,50 +42,12 @@ dec $hook_of(definition, symid) : hookid?
   hint(prose_in "the hook of symbol" %1)
 def $hook_of(D, symid) = $hook_of_kind($kind_of($find_symdecl(D, symid)))
 
-;; Subsorting: D.SUBSORTS, which $krun closes transitively before running
+;; Subsorting: D.SUBSORTS, closed transitively when the definition is loaded
 ;; (kompile does not always, as in LAMBDA)
 
 dec $is_subsort(definition, sort, sort) : bool
   hint(prose_true %1 "is a subsort of" %2)
 def $is_subsort(D, sort_1, sort_2) = (sort_1 '<' sort_2) <- D.SUBSORTS
-
-;; Transitive closure of a subsort relation (the relation is acyclic)
-
-var SM : map<sort, sort*>
-
-dec $direct_supersorts(map<sort, sort*>, sort) : sort*
-  hint(prose_in "the direct supersorts of" %1)
-def $direct_supersorts(SM, sort) = sort_s*
-  -- if (sort_s*) = $find_map<sort, sort*>(SM, sort)
-def $direct_supersorts(SM, sort) = eps
-  -- otherwise
-
-dec $supersort_map(subsort*) : map<sort, sort*>
-def $supersort_map(eps) = $empty_map<sort, sort*>
-def $supersort_map((sort_a '<' sort_b) :: subsort_t*)
-  = $update_map<sort, sort*>(SM, sort_a,
-                             sort_b :: $direct_supersorts(SM, sort_a))
-  -- if SM = $supersort_map(subsort_t*)
-
-dec $reachable(map<sort, sort*>, sort*, sort*) : sort*
-def $reachable(SM, eps, sort_s*) = sort_s*
-def $reachable(SM, sort_h :: sort_t*, sort_s*)
-  = $reachable(SM, sort_t*, sort_s*)
-  -- if sort_h <- sort_s*
-def $reachable(SM, sort_h :: sort_t*, sort_s*)
-  = $reachable(SM, $direct_supersorts(SM, sort_h) ++ sort_t*,
-               sort_s* ++ [ sort_h ])
-  -- if ~(sort_h <- sort_s*)
-
-dec $subsorts_from(map<sort, sort*>, sort) : subsort*
-def $subsorts_from(SM, sort) = (sort '<' sort_u)*
-  -- if sort_u* = $reachable(SM, $direct_supersorts(SM, sort), eps)
-
-dec $close_subsorts(subsort*) : subsort*
-  hint(prose_in "the transitive closure of" %0)
-def $close_subsorts(subsort*) = $concat_<subsort>($subsorts_from(SM, sort_a)*)
-  -- if SM = $supersort_map(subsort*)
-  -- if `{ (sort_a ':' sort_b*)* `} = SM
 
 ;; Building constructor terms: nested injections are composed,
 ;; inj{B,C}(inj{A,B}(t)) = inj{A,C}(t)

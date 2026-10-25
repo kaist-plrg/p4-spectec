@@ -4,17 +4,11 @@
 ;;
 
 ;;; The rewrite rules are clauses with one left-hand side, the configuration.
-;;; A step tries them in the order they are loaded, by priority (6-load): the
+;;; A step tries them in the order they are loaded, by priority (3-load): the
 ;;; first rule that applies rewrites the configuration. Once a rule applies,
 ;;; failing to build its right-hand side is an error and does not fall back to
 ;;; later rules; so is a requires clause that cannot be evaluated. UNMATCH when
 ;;; no rule applies.
-
-relation Step:
-  definition |- term : applies<term>
-  hint(input %0 %1)
-  hint(prose_in "a rewrite step of" %1)
-  hint(prose_out %2)
 
 rule Step/rewrite:
   D |- term : OK term'

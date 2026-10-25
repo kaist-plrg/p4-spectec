@@ -2,7 +2,7 @@
 ;; Symbol lookups
 ;;
 
-;; The equations of a symbol, in the order they are tried (6-load)
+;; The equations of a symbol, in the order they are tried (3-load)
 
 dec $equations_of(definition, symid) : clause*
   hint(prose_in "the equations of" %1)
@@ -52,12 +52,8 @@ def $result_instance(D, symid, sort_a*)
 def $result_instance(D, symid, sort_a*) = eps
   -- if eps = $find_symdecl(D, symid)
 
-;; Hooks whose arguments are evaluated lazily (create_hardcoded_hook): the
-;; hook of the symbol, or "" for any other symbol
-
-dec $is_lazy(hookid) : bool
-def $is_lazy(hookid) = hookid <- [ "BOOL.and", "BOOL.andThen", "BOOL.or",
-                                   "BOOL.orElse", "BOOL.implies", "KEQUAL.ite" ]
+;; The hook of a symbol if its arguments are evaluated lazily ($is_lazy,
+;; 3-load), or "" for any other symbol
 
 dec $lazy_hook(definition, symid) : text
 def $lazy_hook(D, symid) = hookid

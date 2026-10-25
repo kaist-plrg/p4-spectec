@@ -85,6 +85,45 @@ dec $sort_by_priority<X>((nat, X)*) : X*
 def $sort_by_priority<X>((n, X)*) = $by_priorities<X>(n_p*, (n, X)*)
   -- if `{ n_p* `} = $union_set<nat>(`{ n* `}, `{ eps `})
 
+;; Subsorts: the transitive closure of the subsort relation (kompile does not
+;; always close it, as in LAMBDA)
+
+var SM : map<sort, sort*>
+
+dec $direct_supersorts(map<sort, sort*>, sort) : sort*
+  hint(prose_in "the direct supersorts of" %1)
+def $direct_supersorts(SM, sort) = sort_s*
+  -- if (sort_s*) = $find_map<sort, sort*>(SM, sort)
+def $direct_supersorts(SM, sort) = eps
+  -- otherwise
+
+dec $supersort_map(subsort*) : map<sort, sort*>
+def $supersort_map(eps) = $empty_map<sort, sort*>
+def $supersort_map((sort_a '<' sort_b) :: subsort_t*)
+  = $update_map<sort, sort*>(SM, sort_a,
+                             sort_b :: $direct_supersorts(SM, sort_a))
+  -- if SM = $supersort_map(subsort_t*)
+
+dec $reachable(map<sort, sort*>, sort*, sort*) : sort*
+def $reachable(SM, eps, sort_s*) = sort_s*
+def $reachable(SM, sort_h :: sort_t*, sort_s*)
+  = $reachable(SM, sort_t*, sort_s*)
+  -- if sort_h <- sort_s*
+def $reachable(SM, sort_h :: sort_t*, sort_s*)
+  = $reachable(SM, $direct_supersorts(SM, sort_h) ++ sort_t*,
+               sort_s* ++ [ sort_h ])
+  -- if ~(sort_h <- sort_s*)
+
+dec $subsorts_from(map<sort, sort*>, sort) : subsort*
+def $subsorts_from(SM, sort) = (sort '<' sort_u)*
+  -- if sort_u* = $reachable(SM, $direct_supersorts(SM, sort), eps)
+
+dec $close_subsorts(subsort*) : subsort*
+  hint(prose_in "the transitive closure of" %0)
+def $close_subsorts(subsort*) = $concat_<subsort>($subsorts_from(SM, sort_a)*)
+  -- if SM = $supersort_map(subsort*)
+  -- if `{ (sort_a ':' sort_b*)* `} = SM
+
 ;; Symbols
 
 ;; A hook comes before the equations of a function, as the LLVM backend calls
@@ -101,6 +140,13 @@ def $hook_module(hookid) = $string_substr(hookid, 0, i)
   -- if $(i >= 0)
 def $hook_module(hookid) = hookid
   -- if $string_find(hookid, ".", 0) = -1
+
+;; Hooks whose arguments are evaluated lazily (create_hardcoded_hook of the
+;; LLVM backend); they are specified (6.2-eval)
+
+dec $is_lazy(hookid) : bool
+def $is_lazy(hookid) = hookid <- [ "BOOL.and", "BOOL.andThen", "BOOL.or",
+                                   "BOOL.orElse", "BOOL.implies", "KEQUAL.ite" ]
 
 dec $is_runtime(hookid) : bool
 def $is_runtime(hookid)
@@ -227,9 +273,11 @@ def $right_assoc(symid, sort*, kore_h :: kore_t*)
   -- if $(|kore_t*| > 0)
 
 ;; Patterns of rules, equations, the initial term, and the K runtime's answers
-;; (4.2-eval), by the hooks of the sorts; declared in 3.1-hook-runtime. A
-;; variable named Var'Bang... is a fresh variable !X of a function equation.
+;; (6.2-eval), by the hooks of the sorts. A variable named Var'Bang... is a
+;; fresh variable !X of a function equation.
 
+dec $pattern(map<sortid, hookid>, kore) : pattern
+  hint(prose_in "the pattern" %1 "stands for")
 def $pattern(SH, KVAR varid sort) = FRESH sort
   -- if $string_find(varid, "Var'Bang", 0) = 0
 def $pattern(SH, KVAR varid sort) = VAR varid sort
@@ -337,7 +385,7 @@ def $rule(SH, kore_l, kore_r)
 
 ;; An equation f(args) = rhs under conditions, a clause with a left-hand side
 ;; per argument. Those of a hooked symbol are kept too, and not used: the hook
-;; computes it (4.2-eval).
+;; computes it (6.2-eval).
 
 dec $equation(map<sortid, hookid>, kore*, kore, kore) : clause
 def $equation(SH, kore_a*, kore_c, kore_r)
@@ -413,12 +461,6 @@ def $group_equations(EM, (symid, (n, clause)) :: (symid_t, (n_t, clause_t))*)
 dec $sorted_groups(map<symid, (nat, clause)*>) : map<symid, clause*>
 def $sorted_groups(`{ (symid ':' (n, clause)*)* `})
   = `{ (symid ':' $sort_by_priority<clause>((n, clause)*))* `}
-
-relation Load:
-  kdefinition ~> definition
-  hint(input %0)
-  hint(prose_in "loading" %0)
-  hint(prose_out %1)
 
 rule Load:
   KD ~> { SYMBOLS $symdecls(KD.KSYMBOLS),

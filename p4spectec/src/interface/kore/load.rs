@@ -5,7 +5,7 @@
 //! and the declarations of sorts, symbols, and aliases.
 //! Connectives are named without their backslash.
 //! Which axioms are executed and how they are read, down to domain values,
-//! is for the specification to decide (`spec-k/6-load.watsup`).
+//! is for the specification to decide (`spec-k/3-load.watsup`).
 //! For example, `\dv{SortInt{}}("1")` becomes
 //! `KML "dv" [SORT "SortInt" []] [KSTR "1"]`.
 

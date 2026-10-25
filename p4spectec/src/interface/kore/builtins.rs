@@ -1,9 +1,9 @@
 //! Text builtins of the K specification, outside hooks
 //!
-//! Reading domain values and hooks (`spec-k/6-load.watsup`) and fresh
-//! variables (`spec-k/4.2-eval.watsup`) takes text apart. A KORE string has
-//! one character per byte (`parse`), so positions are in bytes, as in the
-//! LLVM backend. For example, `$string_find("INT.add", ".", 0)` is 3.
+//! Reading domain values and hook names (`spec-k/3-load.watsup`) takes
+//! text apart. A KORE string has one character per byte (`parse`), so
+//! positions are in bytes, as in the LLVM backend. For example,
+//! `$string_find("INT.add", ".", 0)` is 3.
 
 use num_bigint::BigInt;
 

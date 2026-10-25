@@ -8,30 +8,6 @@
 
 ;; Evaluation
 
-relation First_clause:
-  definition |- clause* term* : applies<(subst, pattern)>
-  hint(input %0 %1 %2)
-  hint(prose_in "the first of the clauses" %1 "that applies to" %2)
-  hint(prose_out %3)
-
-relation Clause_applies:
-  definition |- clause term* : applies<subst>
-  hint(input %0 %1 %2)
-  hint(prose_in "the way" %1 "applies to" %2)
-  hint(prose_out %3)
-
-relation First_holding:
-  definition |- way* pattern? : applies<subst>
-  hint(input %0 %1 %2)
-  hint(prose_in "the first of" %1 "under which" %2 "holds")
-  hint(prose_out %3)
-
-relation Holds:
-  definition subst |- pattern? : res<bool>
-  hint(input %0 %1 %2)
-  hint(prose_in "whether" %2 "holds under" %1)
-  hint(prose_out %3)
-
 var found : applies<(subst, pattern)>
 var matched : applies<subst>
 
@@ -45,7 +21,7 @@ rule Eval/variable:
   D subst |- VAR varid sort : OK term
   -- if term = $find_map<varid, term>(subst, varid)
 
-;;; A fresh variable of a function equation (!X, 6-load), which kompile leaves
+;;; A fresh variable of a function equation (!X, 3-load), which kompile leaves
 ;;; unbound: the freshGenerator of its sort applied to a number below zero.
 ;;; The fresh values of rules come from the generatedCounter cell (0, 1, 2,
 ;;; ...), so the two never meet, as kast.md requires of all !X. The LLVM
@@ -154,9 +130,9 @@ rule Apply/hooked:
   -- if HOOKED hookid = $kind_of_symbol(D, symid)
   -- if sort_r = $result_instance(D, symid, sort*)
 
-;;; A hook of a domain module is computed by the K runtime (3.1). Its answer
+;;; A hook of a domain module is computed by the K runtime (2-relation). Its answer
 ;;; is KORE, a domain value or a constructor term, read as the initial term is
-;;; (6-load) and evaluated to a term
+;;; (3-load) and evaluated to a term
 
 rule Apply/runtime:
   D |- symid sort* term* : result
@@ -172,7 +148,7 @@ rule Apply/runtime-error:
   -- Call_hook: |- symid sort* sort_r term* : ERROR
 
 ;;; A function symbol is rewritten by its first equation that applies, as a
-;;; step rewrites the configuration by its first rule (5-step). Failing to
+;;; step rewrites the configuration by its first rule (7-step). Failing to
 ;;; evaluate the right-hand side does not fall back to later equations.
 
 rule Apply/function:
@@ -199,7 +175,7 @@ rule Apply/fail:
   D |- symid sort* term* : ERROR
   -- otherwise
 
-;;; The first clause, in the order given (6-load), that applies to the terms: its
+;;; The first clause, in the order given (3-load), that applies to the terms: its
 ;;; left-hand sides match them and its requires clause holds. It gives the
 ;;; substitution and the right-hand side. A requires clause that cannot be
 ;;; evaluated does not fall back to later clauses.

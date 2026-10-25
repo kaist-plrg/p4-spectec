@@ -6,19 +6,8 @@
 ;;; As the interpreter krun calls: evaluate the initial term, a call of
 ;;; initGeneratedTopCell, then rewrite until no rule applies or --depth
 
-syntax runres =
-  | FINAL nat term   ;; steps taken and the final configuration
-  | ERROR nat term   ;; steps taken and the configuration where a step failed
-  | INITFAIL         ;; the initial term cannot be evaluated
-
 ;; Rewriting from a configuration after n steps, up to n_max steps: a step,
 ;; then on from the next configuration
-
-relation Run:
-  definition |- term nat nat? ~>* runres
-  hint(input %0 %1 %2 %3)
-  hint(prose_in "running from" %1 "after" %2 "steps")
-  hint(prose_out %4)
 
 rule Run/limit:
   D |- term n (n) ~>* FINAL n term
@@ -42,12 +31,6 @@ rule Run/step:
 ;; Starting from a definition: the initial term is evaluated (a call of
 ;; initGeneratedTopCell), then rewritten.
 
-relation Start:
-  definition |- pattern nat? : runres
-  hint(input %0 %1 %2)
-  hint(prose_in "running" %1 "under" %0)
-  hint(prose_out %3)
-
 rule Start/run:
   D |- pattern n_max? : runres
   -- Eval: D $empty_map<varid, term> |- pattern : OK term
@@ -57,14 +40,8 @@ rule Start/initfail:
   D |- pattern n_max? : INITFAIL
   -- Eval: D $empty_map<varid, term> |- pattern : ERROR
 
-;; krun: the definition is loaded from KORE (6-load), then run from the
+;; krun: the definition is loaded from KORE (3-load), then run from the
 ;; initial term
-
-relation Krun:
-  kdefinition |- kore nat? : runres
-  hint(input %0 %1 %2)
-  hint(prose_in "running" %1 "under" %0)
-  hint(prose_out %3)
 
 rule Krun:
   KD |- kore n_max? : runres
