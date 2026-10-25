@@ -4,7 +4,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use p4spectec::metacirc::{TowerConfig, config::Lang};
 use p4spectec_test::{
     Error, ExecutionOptions, Result, algo, elab, metacirc, metaparse, prose, structure,
-    suite::{self, Index},
+    suite::{self, Conversion, Index},
 };
 use std::{path::PathBuf, process::ExitCode};
 
@@ -47,6 +47,9 @@ struct Cli {
     /// Run only the suites whose tower takes this input.
     #[arg(long, value_enum)]
     input: Option<Input>,
+    /// Convert IL to AL natively or by the meta specification's `Algo_IL`.
+    #[arg(long = "algo", value_enum, default_value_t)]
+    conversion: Conversion,
     #[command(flatten)]
     options: ExecutionOptions,
 }
@@ -70,7 +73,7 @@ fn execute(cli: Cli) -> Result<()> {
     // Resolve caller paths before selecting the corpus repository as working directory
     std::env::set_current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))?;
     let index = Index::load(&path_registry)?;
-    let mut config = suite::load_metacirc(&index.suites.metacirc)?;
+    let mut config = suite::load_metacirc(&index.suites.metacirc, cli.conversion)?;
     // Snapshot and codec checks compile the meta specification without executing it
     let snapshots = &config.snapshots;
     match cli.command {

@@ -1,0 +1,12 @@
+;; Nested iterations lift binders through every level
+
+var x : nat
+var y : nat
+
+dec $incs(nat**) : nat**
+def $incs(x**) = y**
+  -- ((if y = $(x + 1))*)*
+
+dec $main() : bool
+def $main() = true
+  -- if $incs([ [ 1, 2 ], eps, [ 3 ] ]) = [ [ 2, 3 ], eps, [ 4 ] ]
