@@ -4,14 +4,11 @@
 ;;
 
 ;;; The rewrite rules are clauses with one left-hand side, the configuration.
-;;; A step tries them in priority order: the first rule that applies rewrites
-;;; the configuration. Once a rule applies, failing to build its right-hand
-;;; side is an error and does not fall back to later rules; so is a requires
-;;; clause that cannot be evaluated. UNMATCH when no rule applies.
-
-dec $rules_in_order(definition) : clause*
-  hint(prose_in "the rewrite rules of" %0 "in the order they are tried")
-def $rules_in_order(D) = $in_order(D.RULES)
+;;; A step tries them in the order they are loaded, by priority (6-load): the
+;;; first rule that applies rewrites the configuration. Once a rule applies,
+;;; failing to build its right-hand side is an error and does not fall back to
+;;; later rules; so is a requires clause that cannot be evaluated. UNMATCH when
+;;; no rule applies.
 
 relation Step:
   definition |- term : applies<term>
@@ -21,18 +18,18 @@ relation Step:
 
 rule Step/rewrite:
   D |- term : OK term'
-  -- First_clause: D |- $rules_in_order(D) ([ term ]) : OK (subst, pattern_r)
+  -- First_clause: D |- D.RULES ([ term ]) : OK (subst, pattern_r)
   -- Eval: D subst |- pattern_r : OK term'
 
 rule Step/error:
   D |- term : ERROR
-  -- First_clause: D |- $rules_in_order(D) ([ term ]) : OK (subst, pattern_r)
+  -- First_clause: D |- D.RULES ([ term ]) : OK (subst, pattern_r)
   -- Eval: D subst |- pattern_r : ERROR
 
 rule Step/stuck:
   D |- term : UNMATCH
-  -- First_clause: D |- $rules_in_order(D) ([ term ]) : UNMATCH
+  -- First_clause: D |- D.RULES ([ term ]) : UNMATCH
 
 rule Step/undefined:
   D |- term : ERROR
-  -- First_clause: D |- $rules_in_order(D) ([ term ]) : ERROR
+  -- First_clause: D |- D.RULES ([ term ]) : ERROR

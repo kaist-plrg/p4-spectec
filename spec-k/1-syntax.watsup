@@ -63,21 +63,11 @@ syntax subsort = sort '<' sort
 
 syntax overload = symid '>' symid
 
-;; Attributes that affect execution
-
-syntax attr =
-  | OWISE
-  | PRIORITY nat
-  | COOL
-  | COOLLIKE
-  | SIMPLIFICATION  ;; for symbolic execution only, not run
-  | NONEXECUTABLE   ;; not run
-
 ;; Clauses: a rewrite rule is a clause with one left-hand side, the
 ;; configuration; an equation of a function f is a clause with one left-hand
 ;; side per argument of f
 
-syntax clause = CLAUSE pattern* '=>' pattern 'requires' pattern? attr*
+syntax clause = CLAUSE pattern* '=>' pattern 'requires' pattern?
 
 ;; Definitions
 
@@ -85,8 +75,9 @@ syntax definition =
   { SYMBOLS (map<symid, symdecl>),
     SUBSORTS subsort*,                  ;; closed under transitivity
     OVERLOADS overload*,
-    RULES clause*,
-    EQUATIONS (map<symid, clause*>),    ;; by the symbol defined, in file order
+    RULES clause*,                      ;; in the order they are tried
+    EQUATIONS (map<symid, clause*>),    ;; by the symbol defined, each in the
+                                        ;; order they are tried
     PARAMS (map<symid, sortid*>),       ;; sort parameters of symbols
     FRESH (map<sort, symid>) }          ;; the freshGenerator of a sort, e.g. freshInt
 

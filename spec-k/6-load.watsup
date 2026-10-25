@@ -6,13 +6,15 @@
 ;;; KORE also holds what symbolic execution and proofs use: properties of
 ;;; symbols, simplification rules, ensures clauses. Loading takes from every
 ;;; axiom what its form and attributes give: a rewrite rule, an equation, a
-;;; subsort, an overload; a property gives nothing. Simplifications and non-executable axioms are kept with their
+;;; subsort, an overload; a property gives nothing. The rules, and the
+;;; equations of each symbol, come out in the order they are tried, as the
+;;; LLVM backend sorts them when it reads them (matching/Parser.scala). Simplifications and non-executable axioms are kept with their
 ;;; attributes and skipped where rules and equations are tried ($runs).
 
 var KD : kdefinition
 var AM : map<symid, kalias>
 var SK : map<varid, kore>
-var EM : map<symid, clause*>
+var EM : map<symid, (nat, clause)*>
 
 ;; Attributes
 
@@ -33,22 +35,54 @@ def $attr_named(text, (KATTR text_h sort* kore*) :: kattr_t*)
   = $attr_named(text, kattr_t*)
   -- if text_h =/= text
 
-;; The attributes that give the priority of a rule or an equation
+;; Whether a clause is run: simplifications and non-executable axioms are for
+;; symbolic execution and proofs (matching/Parser.scala)
 
-dec $exec_attr(kattr) : attr*
-def $exec_attr(KATTR "owise" sort* kore*) = [ OWISE ]
-def $exec_attr(KATTR "cool" sort* kore*) = [ COOL ]
-def $exec_attr(KATTR "cool-like" sort* kore*) = [ COOLLIKE ]
-def $exec_attr(KATTR "simplification" sort* kore*) = [ SIMPLIFICATION ]
-def $exec_attr(KATTR "non-executable" sort* kore*) = [ NONEXECUTABLE ]
-def $exec_attr(KATTR "priority" sort* ([KSTR text])) = [ PRIORITY n ]
+dec $runs(kattr*) : bool
+def $runs(kattr*)
+  = ~$has_attr("simplification", kattr*) /\ ~$has_attr("non-executable", kattr*)
+
+;; Priorities, as rulePriority in the LLVM backend's matching/Parser.scala
+;; (a smaller number is tried first). cool and cool-like only occur on rewrite
+;; rules and only count outside --search mode.
+
+dec $priority(kattr*) : nat
+  hint(prose_in "the priority given by" %0)
+def $priority(kattr*) = 200
+  -- if $has_attr("owise", kattr*)
+def $priority(kattr*) = 150
+  -- if ~$has_attr("owise", kattr*) /\ $has_attr("cool", kattr*)
+def $priority(kattr*) = 100
+  -- if ~$has_attr("owise", kattr*) /\ ~$has_attr("cool", kattr*)
+  -- if $has_attr("cool-like", kattr*)
+def $priority(kattr*) = n
+  -- if ~$has_attr("owise", kattr*) /\ ~$has_attr("cool", kattr*)
+  -- if ~$has_attr("cool-like", kattr*)
+  -- if (KATTR "priority" sort* ([KSTR text])) = $attr_named("priority", kattr*)
   -- if i = $string_to_int(text)
   -- if n = $nat_of(i)
-def $exec_attr(kattr) = eps
+def $priority(kattr*) = 50
   -- otherwise
 
-dec $exec_attrs(kattr*) : attr*
-def $exec_attrs(kattr*) = $concat_<attr>($exec_attr(kattr)*)
+;; Stable sort by priority: for each priority, smallest first, the entries
+;; with that priority in their order, which is the order of the KORE file, as
+;; the LLVM backend sorts axioms stably by priority.
+
+dec $if_priority<X>(nat, nat, X) : X*
+def $if_priority<X>(n_p, n, X) = [ X ]
+  -- if n = n_p
+def $if_priority<X>(n_p, n, X) = eps
+  -- otherwise
+
+dec $by_priorities<X>(nat*, (nat, X)*) : X*
+def $by_priorities<X>(eps, (n, X)*) = eps
+def $by_priorities<X>(n_h :: n_t*, (n, X)*)
+  = $concat_<X>($if_priority<X>(n_h, n, X)*) ++ $by_priorities<X>(n_t*, (n, X)*)
+
+dec $sort_by_priority<X>((nat, X)*) : X*
+  hint(prose_in %0 "in the order of their priorities")
+def $sort_by_priority<X>((n, X)*) = $by_priorities<X>(n_p*, (n, X)*)
+  -- if `{ n_p* `} = $union_set<nat>(`{ n* `}, `{ eps `})
 
 ;; Symbols
 
@@ -285,31 +319,33 @@ def $without_ensures(kore) = kore_p
 ;; A rewrite rule: \rewrites(\and(lhs, requires), \and(rhs, ensures)), a
 ;; clause with the one left-hand side
 
-dec $rule(kdefinition, kore, kore, kattr*) : clause
-def $rule(KD, kore_l, kore_r, kattr*)
+dec $rule(kdefinition, kore, kore) : clause
+def $rule(KD, kore_l, kore_r)
   = CLAUSE ([ $pattern(KD, kore_p) ]) '=>' $pattern(KD, $without_ensures(kore_r))
-      'requires' $requires(KD, $side_conditions(kore_c*)) $exec_attrs(kattr*)
+      'requires' $requires(KD, $side_conditions(kore_c*))
   -- if (kore_p, kore_c*) = $split_side(kore_l)
 
 ;; An equation f(args) = rhs under conditions, a clause with a left-hand side
 ;; per argument. Those of a hooked symbol are kept too, and not used: the hook
 ;; computes it (4.2-eval).
 
-dec $equation(kdefinition, kore*, kore, kore, kattr*) : clause
-def $equation(KD, kore_a*, kore_c, kore_r, kattr*)
+dec $equation(kdefinition, kore*, kore, kore) : clause
+def $equation(KD, kore_a*, kore_c, kore_r)
   = CLAUSE $arguments(KD, condition*, kore_a*)
       '=>' $pattern(KD, $without_ensures(kore_r))
-      'requires' $requires(KD, condition*) $exec_attrs(kattr*)
+      'requires' $requires(KD, condition*)
   -- if condition* = $conditions(kore_c)
 
 ;; What an axiom gives to each part of the definition, by its form and its
-;; attributes. Other axioms are properties, which are not used to run.
+;; attributes. Other axioms are properties, which are not used to run; so are
+;; the clauses that are not run. Clauses come with their priority.
 
 ;;; a rewrite rule
 
-dec $rule_of(kdefinition, kaxiom) : clause*
+dec $rule_of(kdefinition, kaxiom) : (nat, clause)*
 def $rule_of(KD, AXIOM (KML "rewrites" sort* ([kore_l, kore_r])) kattr*)
-  = [ $rule(KD, kore_l, kore_r, kattr*) ]
+  = [ ($priority(kattr*), $rule(KD, kore_l, kore_r)) ]
+  -- if $runs(kattr*)
 def $rule_of(KD, kaxiom) = eps
   -- otherwise
 
@@ -317,15 +353,18 @@ def $rule_of(KD, kaxiom) = eps
 ;;; \equals(f(args), rhs), with the symbol f it defines; an overload axiom is
 ;;; one of the more general symbol
 
-dec $equation_of(kdefinition, kaxiom) : (symid, clause)*
+dec $equation_of(kdefinition, kaxiom) : (symid, (nat, clause))*
 def $equation_of(KD,
     AXIOM (KML "implies" sort*
       ([kore_c, KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r])]))
     kattr*)
-  = [ (symid, $equation(KD, kore_a*, kore_c, kore_r, kattr*)) ]
+  = [ (symid, ($priority(kattr*), $equation(KD, kore_a*, kore_c, kore_r))) ]
+  -- if $runs(kattr*)
 def $equation_of(KD,
     AXIOM (KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r])) kattr*)
-  = [ (symid, $equation(KD, kore_a*, KML "top" eps eps, kore_r, kattr*)) ]
+  = [ (symid, ($priority(kattr*),
+               $equation(KD, kore_a*, KML "top" eps eps, kore_r))) ]
+  -- if $runs(kattr*)
 def $equation_of(KD, kaxiom) = eps
   -- otherwise
 
@@ -348,14 +387,22 @@ def $overload_of(AXIOM kore kattr*) = [ symid_f '>' symid_g ]
 def $overload_of(kaxiom) = eps
   -- otherwise
 
-;; Equations grouped by the symbol they define, in file order
+;; Equations grouped by the symbol they define, in file order, and then each
+;; group in the order of its priorities
 
-dec $group_equations(map<symid, clause*>, (symid, clause)*) : map<symid, clause*>
+dec $group_equations(map<symid, (nat, clause)*>, (symid, (nat, clause))*)
+  : map<symid, (nat, clause)*>
 def $group_equations(EM, eps) = EM
-def $group_equations(EM, (symid, clause) :: (symid_t, clause_t)*)
-  = $group_equations($add_map<symid, clause*>(EM, symid, clause_e* ++ [ clause ]),
-                     (symid_t, clause_t)*)
-  -- if clause_e* = $deopt_<clause*>($find_map<symid, clause*>(EM, symid), eps)
+def $group_equations(EM, (symid, (n, clause)) :: (symid_t, (n_t, clause_t))*)
+  = $group_equations(
+      $add_map<symid, (nat, clause)*>(EM, symid, (n_e, clause_e)* ++ [ (n, clause) ]),
+      (symid_t, (n_t, clause_t))*)
+  -- if (n_e, clause_e)*
+       = $deopt_<(nat, clause)*>($find_map<symid, (nat, clause)*>(EM, symid), eps)
+
+dec $sorted_groups(map<symid, (nat, clause)*>) : map<symid, clause*>
+def $sorted_groups(`{ (symid ':' (n, clause)*)* `})
+  = `{ (symid ':' $sort_by_priority<clause>((n, clause)*))* `}
 
 relation Load:
   kdefinition ~> definition
@@ -367,9 +414,11 @@ rule Load:
   KD ~> { SYMBOLS $symdecls(KD.KSYMBOLS),
           SUBSORTS $close_subsorts($concat_<subsort>($subsort_of(kaxiom)*)),
           OVERLOADS $concat_<overload>($overload_of(kaxiom)*),
-          RULES $concat_<clause>($rule_of(KD, kaxiom)*),
-          EQUATIONS $group_equations($empty_map<symid, clause*>,
-                      $concat_<(symid, clause)>($equation_of(KD, kaxiom)*)),
+          RULES $sort_by_priority<clause>(
+                  $concat_<(nat, clause)>($rule_of(KD, kaxiom)*)),
+          EQUATIONS $sorted_groups($group_equations(
+                      $empty_map<symid, (nat, clause)*>,
+                      $concat_<(symid, (nat, clause))>($equation_of(KD, kaxiom)*))),
           PARAMS $params(KD.KSYMBOLS),
           FRESH $fresh_generators(KD.KSYMBOLS) }
   -- if kaxiom_a* = KD.AXIOMS

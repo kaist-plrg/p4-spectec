@@ -36,7 +36,7 @@ var found : applies<(subst, pattern)>
 var matched : applies<subst>
 
 dec $rhs_of(clause) : pattern
-def $rhs_of(CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c? attr*)
+def $rhs_of(CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c?)
   = pattern_r
 
 ;;; Variables and domain values
@@ -189,7 +189,7 @@ rule Apply/fail:
   D |- symid sort* term* : ERROR
   -- otherwise
 
-;;; The first clause, in the order given, that applies to the terms: its
+;;; The first clause, in the order given (6-load), that applies to the terms: its
 ;;; left-hand sides match them and its requires clause holds. It gives the
 ;;; substitution and the right-hand side. A requires clause that cannot be
 ;;; evaluated does not fall back to later clauses.
@@ -211,7 +211,7 @@ rule First_clause/next:
   -- First_clause: D |- clause_t* term* : found
 
 rule Clause_applies:
-  D |- (CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c? attr*) term* : matched
+  D |- (CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c?) term* : matched
   -- Match_list: D (OK $empty_map<varid, term>) |- pattern_a* ~~ term* : way*
   -- First_holding: D |- way* pattern_c? : matched
 

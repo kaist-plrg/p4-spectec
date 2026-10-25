@@ -1,84 +1,12 @@
 ;;
-;; Clauses in priority order, and symbol lookups
+;; Symbol lookups
 ;;
 
-;; Priorities, as rulePriority in the LLVM backend's matching/Parser.scala
-;; (a smaller number is tried first). cool and cool-like only occur on rewrite
-;; rules and only count outside --search mode.
-
-dec $is_priority(attr) : bool
-def $is_priority(PRIORITY n) = true
-def $is_priority(attr) = false
-  -- otherwise
-
-dec $priority_value(attr*) : nat?
-def $priority_value(eps) = eps
-def $priority_value((PRIORITY n) :: attr_t*) = n
-def $priority_value(attr_h :: attr_t*) = $priority_value(attr_t*)
-  -- if ~$is_priority(attr_h)
-
-dec $priority(attr*) : nat
-  hint(prose_in "the priority given by" %0)
-def $priority(attr*) = 200
-  -- if OWISE <- attr*
-def $priority(attr*) = 150
-  -- if ~(OWISE <- attr*) /\ COOL <- attr*
-def $priority(attr*) = 100
-  -- if ~(OWISE <- attr*) /\ ~(COOL <- attr*) /\ COOLLIKE <- attr*
-def $priority(attr*) = n
-  -- if ~(OWISE <- attr*) /\ ~(COOL <- attr*) /\ ~(COOLLIKE <- attr*)
-  -- if n = $priority_value(attr*)
-def $priority(attr*) = 50
-  -- otherwise
-
-;; Stable sort by priority: for each priority, smallest first, the entries
-;; with that priority in their order, which is the order of the KORE file, as
-;; the LLVM backend sorts axioms stably by priority.
-
-dec $if_priority<X>(nat, nat, X) : X*
-def $if_priority<X>(n_p, n, X) = [ X ]
-  -- if n = n_p
-def $if_priority<X>(n_p, n, X) = eps
-  -- otherwise
-
-dec $by_priorities<X>(nat*, (nat, X)*) : X*
-def $by_priorities<X>(eps, (n, X)*) = eps
-def $by_priorities<X>(n_h :: n_t*, (n, X)*)
-  = $concat_<X>($if_priority<X>(n_h, n, X)*) ++ $by_priorities<X>(n_t*, (n, X)*)
-
-dec $sort_by_priority<X>((nat, X)*) : X*
-def $sort_by_priority<X>((n, X)*) = $by_priorities<X>(n_p*, (n, X)*)
-  -- if `{ n_p* `} = $union_set<nat>(`{ n* `}, `{ eps `})
-
-;; Whether a clause is run: simplifications and non-executable axioms are for
-;; symbolic execution and proofs (matching/Parser.scala)
-
-dec $runs(attr*) : bool
-def $runs(attr*) = ~(SIMPLIFICATION <- attr*) /\ ~(NONEXECUTABLE <- attr*)
-
-;; Clauses in the order they are tried: the ones that run, by priority, and in
-;; file order within a priority
-
-dec $prioritized(clause*) : (nat, clause)*
-def $prioritized(eps) = eps
-def $prioritized(
-    (CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c? attr*) :: clause_t*)
-  = ($priority(attr*),
-     CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c? attr*)
-    :: $prioritized(clause_t*)
-  -- if $runs(attr*)
-def $prioritized(
-    (CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c? attr*) :: clause_t*)
-  = $prioritized(clause_t*)
-  -- if ~$runs(attr*)
-
-dec $in_order(clause*) : clause*
-  hint(prose_in "the clauses" %0 "in the order they are tried")
-def $in_order(clause*) = $sort_by_priority<clause>($prioritized(clause*))
+;; The equations of a symbol, in the order they are tried (6-load)
 
 dec $equations_of(definition, symid) : clause*
-  hint(prose_in "the equations of" %1 "in the order they are tried")
-def $equations_of(D, symid) = $in_order(clause*)
+  hint(prose_in "the equations of" %1)
+def $equations_of(D, symid) = clause*
   -- if (clause*) = $find_map<symid, clause*>(D.EQUATIONS, symid)
 def $equations_of(D, symid) = eps
   -- otherwise
