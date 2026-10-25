@@ -4,9 +4,9 @@
 ;;
 
 ;;; KORE also holds what symbolic execution and proofs use: properties of
-;;; symbols, simplification rules, ensures clauses. Loading reads every axiom
-;;; by its form: a rewrite rule, an equation, or a property, which is not used
-;;; to run. Simplifications and non-executable axioms are kept with their
+;;; symbols, simplification rules, ensures clauses. Loading takes from every
+;;; axiom what its form and attributes give: a rewrite rule, an equation, a
+;;; subsort, an overload; a property gives nothing. Simplifications and non-executable axioms are kept with their
 ;;; attributes and skipped where rules and equations are tried ($runs).
 
 var KD : kdefinition
@@ -282,14 +282,6 @@ dec $without_ensures(kore) : kore
 def $without_ensures(kore) = kore_p
   -- if (kore_p, kore_e*) = $split_side(kore)
 
-;; The parts of the definition an axiom gives
-
-syntax loaded =
-  | LRULE clause
-  | LEQUATION symid clause
-  | LSUBSORT subsort
-  | LOVERLOAD overload
-
 ;; A rewrite rule: \rewrites(\and(lhs, requires), \and(rhs, ensures)), a
 ;; clause with the one left-hand side
 
@@ -303,80 +295,67 @@ def $rule(KD, kore_l, kore_r, kattr*)
 ;; per argument. Those of a hooked symbol are kept too, and not used: the hook
 ;; computes it (4.2-eval).
 
-dec $equation(kdefinition, symid, kore*, kore, kore, kattr*) : loaded*
-def $equation(KD, symid, kore_a*, kore_c, kore_r, kattr*)
-  = [ LEQUATION symid
-        (CLAUSE $arguments(KD, condition*, kore_a*)
-           '=>' $pattern(KD, $without_ensures(kore_r))
-           'requires' $requires(KD, condition*) $exec_attrs(kattr*)) ]
+dec $equation(kdefinition, kore*, kore, kore, kattr*) : clause
+def $equation(KD, kore_a*, kore_c, kore_r, kattr*)
+  = CLAUSE $arguments(KD, condition*, kore_a*)
+      '=>' $pattern(KD, $without_ensures(kore_r))
+      'requires' $requires(KD, condition*) $exec_attrs(kattr*)
   -- if condition* = $conditions(kore_c)
 
-;; By its form, an axiom is a rewrite rule, an equation
-;; \implies(conditions, \equals(f(args), rhs)) or \equals(f(args), rhs), or a
-;; property
+;; What an axiom gives to each part of the definition, by its form and its
+;; attributes. Other axioms are properties, which are not used to run.
 
-dec $load_form(kdefinition, kore, kattr*) : loaded*
-def $load_form(KD, KML "rewrites" sort* ([kore_l, kore_r]), kattr*)
-  = [ LRULE $rule(KD, kore_l, kore_r, kattr*) ]
-def $load_form(KD, KML "implies" sort*
-      ([kore_c, KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r])]),
-    kattr*)
-  = $equation(KD, symid, kore_a*, kore_c, kore_r, kattr*)
-def $load_form(KD, KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r]),
-    kattr*)
-  = $equation(KD, symid, kore_a*, KML "top" eps eps, kore_r, kattr*)
-def $load_form(KD, kore, kattr*) = eps
+;;; a rewrite rule
+
+dec $rule_of(kdefinition, kaxiom) : clause*
+def $rule_of(KD, AXIOM (KML "rewrites" sort* ([kore_l, kore_r])) kattr*)
+  = [ $rule(KD, kore_l, kore_r, kattr*) ]
+def $rule_of(KD, kaxiom) = eps
   -- otherwise
 
-;; Subsorts and overloads are read from attributes; an overload axiom is also
-;; an equation of the more general symbol
+;;; an equation \implies(conditions, \equals(f(args), rhs)) or
+;;; \equals(f(args), rhs), with the symbol f it defines; an overload axiom is
+;;; one of the more general symbol
 
-dec $load_axiom(kdefinition, kaxiom) : loaded*
-def $load_axiom(KD, AXIOM kore kattr*) = [ LSUBSORT (sort_1 '<' sort_2) ]
+dec $equation_of(kdefinition, kaxiom) : (symid, clause)*
+def $equation_of(KD,
+    AXIOM (KML "implies" sort*
+      ([kore_c, KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r])]))
+    kattr*)
+  = [ (symid, $equation(KD, kore_a*, kore_c, kore_r, kattr*)) ]
+def $equation_of(KD,
+    AXIOM (KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r])) kattr*)
+  = [ (symid, $equation(KD, kore_a*, KML "top" eps eps, kore_r, kattr*)) ]
+def $equation_of(KD, kaxiom) = eps
+  -- otherwise
+
+;;; a subsort, from the subsort attribute
+
+dec $subsort_of(kaxiom) : subsort*
+def $subsort_of(AXIOM kore kattr*) = [ sort_1 '<' sort_2 ]
   -- if (KATTR "subsort" ([sort_1, sort_2]) kore_s*)
        = $attr_named("subsort", kattr*)
-def $load_axiom(KD, AXIOM kore kattr*)
-  = LOVERLOAD (symid_f '>' symid_g) :: $load_form(KD, kore, kattr*)
-  -- if ~$has_attr("subsort", kattr*)
+def $subsort_of(kaxiom) = eps
+  -- otherwise
+
+;;; an overload, from the symbol-overload attribute
+
+dec $overload_of(kaxiom) : overload*
+def $overload_of(AXIOM kore kattr*) = [ symid_f '>' symid_g ]
   -- if (KATTR "symbol-overload" sort*
          ([KAPP symid_f sort_f* kore_f*, KAPP symid_g sort_g* kore_g*]))
        = $attr_named("symbol-overload", kattr*)
-def $load_axiom(KD, AXIOM kore kattr*) = $load_form(KD, kore, kattr*)
-  -- if ~$has_attr("subsort", kattr*)
-  -- if ~$has_attr("symbol-overload", kattr*)
-
-;; The definition from what the axioms give, equations grouped by the symbol
-;; they define, in file order
-
-dec $rules_of(loaded) : clause*
-def $rules_of(LRULE clause) = [ clause ]
-def $rules_of(loaded) = eps
+def $overload_of(kaxiom) = eps
   -- otherwise
 
-dec $subsorts_of(loaded) : subsort*
-def $subsorts_of(LSUBSORT subsort) = [ subsort ]
-def $subsorts_of(loaded) = eps
-  -- otherwise
+;; Equations grouped by the symbol they define, in file order
 
-dec $overloads_of(loaded) : overload*
-def $overloads_of(LOVERLOAD overload) = [ overload ]
-def $overloads_of(loaded) = eps
-  -- otherwise
-
-dec $equations_of_loaded(loaded) : loaded*
-def $equations_of_loaded(LEQUATION symid clause) = [ LEQUATION symid clause ]
-def $equations_of_loaded(loaded) = eps
-  -- otherwise
-
-dec $group_equations(map<symid, clause*>, loaded*) : map<symid, clause*>
+dec $group_equations(map<symid, clause*>, (symid, clause)*) : map<symid, clause*>
 def $group_equations(EM, eps) = EM
-def $group_equations(EM, (LEQUATION symid clause) :: loaded_t*)
-  = $group_equations(
-      $add_map<symid, clause*>(EM, symid, clause_e* ++ [ clause ]), loaded_t*)
-  -- if (clause_e*) = $find_map<symid, clause*>(EM, symid)
-def $group_equations(EM, (LEQUATION symid clause) :: loaded_t*)
-  = $group_equations($add_map<symid, clause*>(EM, symid, [ clause ]), loaded_t*)
-  -- if eps = $find_map<symid, clause*>(EM, symid)
+def $group_equations(EM, (symid, clause) :: (symid_t, clause_t)*)
+  = $group_equations($add_map<symid, clause*>(EM, symid, clause_e* ++ [ clause ]),
+                     (symid_t, clause_t)*)
+  -- if clause_e* = $deopt_<clause*>($find_map<symid, clause*>(EM, symid), eps)
 
 relation Load:
   kdefinition ~> definition
@@ -386,12 +365,12 @@ relation Load:
 
 rule Load:
   KD ~> { SYMBOLS $symdecls(KD.KSYMBOLS),
-          SUBSORTS $close_subsorts($concat_<subsort>($subsorts_of(loaded)*)),
-          OVERLOADS $concat_<overload>($overloads_of(loaded)*),
-          RULES $concat_<clause>($rules_of(loaded)*),
+          SUBSORTS $close_subsorts($concat_<subsort>($subsort_of(kaxiom)*)),
+          OVERLOADS $concat_<overload>($overload_of(kaxiom)*),
+          RULES $concat_<clause>($rule_of(KD, kaxiom)*),
           EQUATIONS $group_equations($empty_map<symid, clause*>,
-                      $concat_<loaded>($equations_of_loaded(loaded)*)),
+                      $concat_<(symid, clause)>($equation_of(KD, kaxiom)*)),
           PARAMS $params(KD.KSYMBOLS),
           FRESH $fresh_generators(KD.KSYMBOLS) }
-  -- if kaxiom* = KD.AXIOMS
-  -- if loaded* = $concat_<loaded>($load_axiom(KD, $expand_axiom(KD, kaxiom))*)
+  -- if kaxiom_a* = KD.AXIOMS
+  -- if kaxiom* = $expand_axiom(KD, kaxiom_a)*
