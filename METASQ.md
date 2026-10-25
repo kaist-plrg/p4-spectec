@@ -75,6 +75,31 @@ declarations. A P4 top level takes exactly one `-p` path.
 `towers/al-p4-ok.json` is the same tower entered through `Program_ok`,
 which only type-checks the program.
 
+## P4 simulation
+
+`metacirc sim` runs an STF test on a two-level `sl` tower over P4 and prints
+each matched packet as `p4spectec sim` does:
+
+```sh
+./bin/metacirc sim towers/al-p4.json --arch v1model -i p4c/p4include \
+  -p p4c/testdata/p4_16_samples/issue1097-2-bmv2.p4 \
+  --stf p4c/testdata/p4_16_samples/issue1097-2-bmv2.stf
+```
+
+```
+[PASS] Transmitted (0) 001741
+[PASS] Transmitted (0) 01FF29
+passed
+```
+
+`--arch` selects `ebpf`, `psa`, or `v1model`. The simulator calls the P4
+specification's relations directly, so the levels' `rel` entries are unused.
+Each call runs as `Call_rel` (or `Call_func`) under a context `C` that loads
+the P4 specification once per program. When the architecture reenters the
+P4 specification, the call runs on a fresh SL interpreter one depth below.
+`make -C p4spectec test-sim-meta` checks the v1model and ebpf regression
+suites against the native expectations; it is not part of `make test`.
+
 ## Tower configuration
 
 Levels are ordered from native base through intermediates to top level.

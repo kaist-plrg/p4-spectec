@@ -10,9 +10,11 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 use p4spectec::lang::data::encoding::Encoding;
 
+use p4spectec::metacirc::{self, TowerConfig};
+
 use p4spectec::runner::{Config, Spec};
 
-use p4spectec::sim_plugin::{self, io::Tx};
+use p4spectec::sim_plugin::{self, Simulator, io::Tx};
 
 use crate::{
     Error, ExecutionOptions, Result, corpus,
@@ -153,20 +155,40 @@ impl Results {
 
 /// Runs registered simulation suites with the selected interpreter.
 pub fn run(config: &SimConfig, language: Language, options: ExecutionOptions) -> Result<()> {
-    run_with(config, language, options, || match language {
-        Language::Al => p4spectec::algo(&config.spec)
-            .map(Spec::Al)
-            .map_err(|error| Error::Invalid(error.to_string())),
-        Language::Sl => p4spectec::structure(&config.spec, true)
-            .map(Spec::Sl)
-            .map_err(|error| Error::Invalid(error.to_string())),
-        Language::Pl => p4spectec::prosify(&config.spec)
-            .map(Spec::Pl)
-            .map_err(|error| Error::Invalid(error.to_string())),
-    })
+    match language {
+        Language::Al => run_native(config, language, options, || {
+            p4spectec::algo(&config.spec)
+                .map(Spec::Al)
+                .map_err(|error| Error::Invalid(error.to_string()))
+        }),
+        Language::Sl => run_native(config, language, options, || {
+            p4spectec::structure(&config.spec, true)
+                .map(Spec::Sl)
+                .map_err(|error| Error::Invalid(error.to_string()))
+        }),
+        Language::Pl => run_native(config, language, options, || {
+            p4spectec::prosify(&config.spec)
+                .map(Spec::Pl)
+                .map_err(|error| Error::Invalid(error.to_string()))
+        }),
+        Language::Meta => {
+            // The registered tower replaces the native specification
+            let path_tower = config
+                .tower
+                .as_ref()
+                .ok_or_else(|| Error::Invalid("meta simulation requires a tower".into()))?;
+            let config_tower = TowerConfig::from_file(path_tower)
+                .map_err(|error| Error::Invalid(error.to_string()))?;
+            run_with(config, language, options, |arch, config_runner| {
+                metacirc::build_simulator(&config_tower, arch, config_runner, Encoding::default())
+                    .map_err(|error| Error::Invalid(error.to_string()))
+            })
+        }
+    }
 }
 
-fn run_with<BuildSpec>(
+/// Runs suites on native simulators built from the specification.
+fn run_native<BuildSpec>(
     config: &SimConfig,
     language: Language,
     options: ExecutionOptions,
@@ -174,6 +196,21 @@ fn run_with<BuildSpec>(
 ) -> Result<()>
 where
     BuildSpec: Fn() -> Result<Spec>,
+{
+    run_with(config, language, options, |arch, config_runner| {
+        sim_plugin::build(build_spec()?, arch, config_runner, Encoding::default())
+            .map_err(|error| Error::Invalid(error.to_string()))
+    })
+}
+
+fn run_with<BuildSimulator>(
+    config: &SimConfig,
+    language: Language,
+    options: ExecutionOptions,
+    build_simulator: BuildSimulator,
+) -> Result<()>
+where
+    BuildSimulator: Fn(&str, Config) -> Result<Simulator>,
 {
     let ExecutionOptions { cache_on, no_det } = options;
     let det = !no_det;
@@ -235,13 +272,7 @@ where
             })
             .count();
         let patched_arch = pairs_arch.filter(|pair| pair.patched).count();
-        let mut simulator = sim_plugin::build(
-            build_spec()?,
-            arch,
-            Config::new(cache_on, det, false),
-            Encoding::default(),
-        )
-        .map_err(|error| Error::Invalid(error.to_string()))?;
+        let mut simulator = build_simulator(arch, Config::new(cache_on, det, false))?;
         for (suite, pairs) in suites.iter().filter(|(suite, _)| suite.arch == arch) {
             let mut results = Results::new(&suite.expected);
             let guard_stdout = crate::output::SilenceStdout::new()?;

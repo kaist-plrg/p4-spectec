@@ -72,6 +72,8 @@ pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) ->
                     .map_err(|error| Error::Invalid(error.to_string()))
             })
         }
+        // Registration rejects meta execution suites
+        Language::Meta => Err(Error::Invalid("meta is only supported for simulation".into())),
     }
 }
 

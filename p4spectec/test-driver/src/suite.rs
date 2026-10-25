@@ -23,6 +23,8 @@ pub enum Language {
     Al,
     Sl,
     Pl,
+    /// The P4 specification executed by the SL-executed meta specification.
+    Meta,
 }
 
 impl Language {
@@ -32,6 +34,7 @@ impl Language {
             Self::Al => "al",
             Self::Sl => "sl",
             Self::Pl => "pl",
+            Self::Meta => "meta",
         }
     }
 }
@@ -214,6 +217,9 @@ pub struct MetacircConfig {
 #[serde(deny_unknown_fields)]
 pub struct SimConfig {
     pub spec: Vec<PathBuf>,
+    /// The tower run by `meta` suites, relative to this registration file.
+    #[serde(default)]
+    pub tower: Option<PathBuf>,
     pub includes: Vec<PathBuf>,
     pub excludes: Vec<PathBuf>,
     pub suites: Vec<SimSuite>,
@@ -263,6 +269,8 @@ impl MicroStages {
             Language::Al => &self.al,
             Language::Sl => &self.sl,
             Language::Pl => &self.pl,
+            // Meta runs only simulation, so it registers no micro stages
+            Language::Meta => &[],
         }
     }
 }
@@ -483,6 +491,13 @@ pub fn load_execution(path: &Path) -> Result<RunConfig> {
     for suite in suites {
         directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
         languages_valid(&suite.languages)?;
+        // Meta execution of P4 programs is registered in the metacirc driver
+        if suite.languages.contains(&Language::Meta) {
+            return Err(Error::Invalid(format!(
+                "{}: meta is only supported for simulation",
+                suite.name
+            )));
+        }
         if suite.relation.is_empty() {
             return Err(Error::Invalid(format!("{}: empty entry relation", suite.name)));
         }
@@ -548,9 +563,17 @@ pub fn load_metacirc(path: &Path, conversion: Conversion) -> Result<MetacircConf
 
 /// Loads simulation dependencies and explicit P4/STF corpus pairing.
 pub fn load_simulation(path: &Path) -> Result<SimConfig> {
-    let config: SimConfig = load(path)?;
+    let mut config: SimConfig = load(path)?;
     // Validate dependencies declared by this module before corpus discovery
     paths_exist(&config.spec, "simulation specification")?;
+    if let Some(tower) = &mut config.tower {
+        // Resolve the tower relative to this registration file
+        *tower = path
+            .parent()
+            .unwrap_or_else(|| Path::new("."))
+            .join(&*tower);
+        paths_exist(std::slice::from_ref(tower), "simulation tower")?;
+    }
     directories_exist(&config.includes, "simulation include directories")?;
     for path in &config.excludes {
         directories_exist(std::slice::from_ref(path), "simulation exclusions")?;
@@ -564,6 +587,12 @@ pub fn load_simulation(path: &Path) -> Result<SimConfig> {
             directories_exist(std::slice::from_ref(path), &suite.name)?;
         }
         languages_valid(&suite.languages)?;
+        if suite.languages.contains(&Language::Meta) && config.tower.is_none() {
+            return Err(Error::Invalid(format!(
+                "{}: meta requires a simulation tower",
+                suite.name
+            )));
+        }
         if !matches!(suite.arch.as_str(), "v1model" | "ebpf" | "psa") {
             return Err(Error::Invalid(format!(
                 "{}: unknown architecture {}",
