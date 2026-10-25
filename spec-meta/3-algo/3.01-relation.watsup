@@ -1,4 +1,6 @@
-;; Binder collection
+;;
+;;;; Binder collection
+;;
 
 relation Collectbind_exp:
   algoCtx |- typedExp : vari*
@@ -8,12 +10,6 @@ relation Collectbind_exp:
 
 relation Collectbind_exps:
   algoCtx |- typedExp* : vari*
-  hint(input %0 %1)
-  hint(prose_in "collecting the binders of" %1 "under" %0)
-  hint(prose_out %2)
-
-relation Collectbind_path:
-  algoCtx |- typedPath : vari*
   hint(input %0 %1)
   hint(prose_in "collecting the binders of" %1 "under" %0)
   hint(prose_out %2)
@@ -30,39 +26,26 @@ relation Collectbind_args:
   hint(prose_in "collecting the binders of" %1 "under" %0)
   hint(prose_out %2)
 
-;; Multibind
-
-relation Multibind_exp:
-  algoCtx renamer |- typedExp : algoCtx renamer typedExp
-  hint(input %0 %1 %2)
-  hint(prose_in "renaming the repeated binders of" %2 "with" %1 "under" %0)
-  hint(prose_out %3 %4 %5)
-
-relation Multibind_exp_repeated:
-  algoCtx renamer |- typedExp : algoCtx renamer typedExp
-  hint(input %0 %1 %2)
-  hint(prose_in "renaming the repeated binders inside pattern" %2 "with" %1 "under" %0)
-  hint(prose_out %3 %4 %5)
+;;
+;;;; Repeated binders
+;;
 
 relation Multibind_exps:
-  algoCtx renamer |- typedExp* : algoCtx renamer typedExp*
+  algoCtx iterCtx |- typedExp* : algoCtx typedExp* premAL*
   hint(input %0 %1 %2)
-  hint(prose_in "renaming the repeated binders of" %2 "with" %1 "under" %0)
+  hint(prose_in "renaming the repeated binders of patterns" %2
+                "of a premise iterated over" %1 "under" %0)
   hint(prose_out %3 %4 %5)
 
 relation Multibind_args:
-  algoCtx renamer |- arg* : algoCtx renamer arg*
-  hint(input %0 %1 %2)
-  hint(prose_in "renaming the repeated binders of" %2 "with" %1 "under" %0)
-  hint(prose_out %3 %4 %5)
+  algoCtx |- arg* : algoCtx arg* premAL*
+  hint(input %0 %1)
+  hint(prose_in "renaming the repeated binders of argument patterns" %1 "under" %0)
+  hint(prose_out %2 %3 %4)
 
-relation Multibind_eqs:
-  iterCtx vari* |- renamer : premAL*
-  hint(input %0 %1 %2)
-  hint(prose_in "the equalities of the occurrences in" %2 "of binders" %1 "under" %0)
-  hint(prose_out %3)
-
-;; Partialbind
+;;
+;;;; Partially bound patterns
+;;
 
 relation Partialbind_exp:
   algoCtx iterCtx |- iterCtx typedExp : algoCtx iterCtx typedExp premAL*
@@ -85,25 +68,21 @@ relation Partialbind_exps:
                 "of a premise iterated over" %1 "under" %0)
   hint(prose_out %4 %5 %6 %7)
 
+relation Partialbind_arg:
+  algoCtx |- arg : algoCtx arg premAL*
+  hint(input %0 %1)
+  hint(prose_in "decomposing argument pattern" %1 "under" %0)
+  hint(prose_out %2 %3 %4)
+
 relation Partialbind_args:
   algoCtx |- arg* : algoCtx arg* premAL*
   hint(input %0 %1)
   hint(prose_in "decomposing argument patterns" %1 "under" %0)
   hint(prose_out %2 %3 %4)
 
-relation Partialbind_check:
-  iterCtx vari |- typedExp : premAL
-  hint(input %0 %1 %2)
-  hint(prose_in "checking" %2 "on the fresh variable" %1 "over" %0)
-  hint(prose_out %3)
-
-relation Partialbind_destructure:
-  iterCtx vari |- typedExp '=' typedExp : premAL
-  hint(input %0 %1 %2 %3)
-  hint(prose_in "binding pattern" %2 "to" %3 "from the fresh variable" %1 "over" %0)
-  hint(prose_out %4)
-
-;; Binding
+;;
+;;;; Binding patterns
+;;
 
 relation Bind_exps:
   algoCtx iterCtx |- typedExp* : algoCtx typedExp* premAL*
@@ -117,7 +96,9 @@ relation Bind_args:
   hint(prose_in "binding argument patterns" %1 "under" %0)
   hint(prose_out %2 %3 %4)
 
-;; Premises
+;;
+;;;; Premises
+;;
 
 relation Algo_prem:
   algoCtx iterCtx |- premIL : algoCtx premAL*
@@ -137,17 +118,9 @@ relation Algo_prems:
   hint(prose_in "converting premises" %1 "in order under" %0)
   hint(prose_out %2 %3)
 
-;; Tables
-
-relation Exp_shallow:
-  algoCtx |- typedExp
-  hint(input %0 %1)
-  hint(prose_in %1 "is a shallow table pattern under" %0)
-
-relation Exp_irrefutable:
-  algoCtx |- typedExp
-  hint(input %0 %1)
-  hint(prose_in %1 "matches every value of its type under" %0)
+;;
+;;;; Table rows
+;;
 
 relation Algo_tblRow:
   algoCtx |- tblRowIL : tblRowAL
@@ -161,24 +134,14 @@ relation TblRows_cover:
   hint(prose_in "the rows" %2 "are exclusive and complete for parameter types" %1
                 "under" %0)
 
-;; Definitions
+;;
+;;;; Rules, clauses, and definitions
+;;
 
 relation Algo_rul:
   algoCtx inputHint |- rulIL : rulAL
   hint(input %0 %1 %2)
   hint(prose_in "converting rule" %2 "with input positions" %1 "under" %0)
-  hint(prose_out %3)
-
-relation Algo_rulGroup:
-  algoCtx inputHint |- rulGroupIL : rulGroupAL
-  hint(input %0 %1 %2)
-  hint(prose_in "converting rule group" %2 "with input positions" %1 "under" %0)
-  hint(prose_out %3)
-
-relation Algo_elsGroup:
-  algoCtx inputHint |- elsGroupIL : elsGroupAL
-  hint(input %0 %1 %2)
-  hint(prose_in "converting otherwise group" %2 "with input positions" %1 "under" %0)
   hint(prose_out %3)
 
 relation Algo_clause:
@@ -193,7 +156,9 @@ relation Algo_def:
   hint(prose_in "converting definition" %1 "under" %0)
   hint(prose_out %2)
 
-;; Guards
+;;
+;;;; Guards for partial operations
+;;
 
 relation Guard_exp:
   algoCtx |- typedExp : premAL*
@@ -205,6 +170,12 @@ relation Guard_exps:
   algoCtx |- typedExp* : premAL*
   hint(input %0 %1)
   hint(prose_in "the guards for evaluating" %1 "in order under" %0)
+  hint(prose_out %2)
+
+relation Guard_arg:
+  algoCtx |- arg : premAL*
+  hint(input %0 %1)
+  hint(prose_in "the guards for evaluating argument" %1 "under" %0)
   hint(prose_out %2)
 
 relation Guard_args:
@@ -249,7 +220,9 @@ relation Guard_def:
   hint(prose_in "guarding definition" %1 "under" %0)
   hint(prose_out %2)
 
-;; Otherwise purity
+;;
+;;;; Otherwise purity
+;;
 
 relation Exp_pure:
   |- typedExp

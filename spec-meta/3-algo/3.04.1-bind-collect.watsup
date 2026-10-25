@@ -1,11 +1,31 @@
-;; Binder collection
+;;
+;; Binder collection in expressions
+;;
+;; syntax typedExp
+;;
 
 ;; Unbound variables in a pattern are its binders.
-;; Binders may appear only through invertible constructs;
-;; a binder under any other construct has no derivation,
-;; so `-- if (x, y + 1) = e` with `y` unbound has no AL.
+;; Binders may appear only through invertible constructs:
+;; upcasts, tuples, constructors, structs, options, lists, conses, and iterations.
+;; Any other construct binds nothing, so all of its variables must be bound;
+;; `-- if (x, y + 1) = e` with `y` unbound has no AL.
 
-;; Expressions
+dec $is_invertible(typedExp) : bool
+  hint(prose_true %0 "is an invertible construct")
+  hint(prose_false %0 "is not an invertible construct")
+def $is_invertible((VAR _) '#' _) = true
+def $is_invertible((UPCAST _ _) '#' _) = true
+def $is_invertible((TUP _) '#' _) = true
+def $is_invertible((INJ _) '#' _) = true
+def $is_invertible((STR _) '#' _) = true
+def $is_invertible((OPT _) '#' _) = true
+def $is_invertible((LIST _) '#' _) = true
+def $is_invertible((CONS _ _) '#' _) = true
+def $is_invertible((ITER _ _) '#' _) = true
+def $is_invertible(_) = false
+  -- otherwise
+
+;;; VAR id
 
 rulegroup Collectbind_exp/variable {
 
@@ -19,24 +39,32 @@ rulegroup Collectbind_exp/variable {
 
 }
 
-;;; Invertible constructs
+;;; UPCAST typ typedExp
 
 rule Collectbind_exp/upcast:
   AC |- (UPCAST _ typedExp) '#' _ : vari*
   -- Collectbind_exp: AC |- typedExp : vari*
 
+;;; TUP typedExp*
+
 rule Collectbind_exp/tuple:
   AC |- (TUP typedExp*) '#' _ : vari*
   -- Collectbind_exps: AC |- typedExp* : vari*
+
+;;; INJ expCase
 
 rule Collectbind_exp/case:
   AC |- (INJ (_ typedExp*)) '#' _ : vari*
   -- Collectbind_exps: AC |- typedExp* : vari*
 
+;;; STR expField*
+
 rule Collectbind_exp/struct:
   AC |- (STR expField*) '#' _ : vari*
   -- (if _ typedExp = expField)*
   -- Collectbind_exps: AC |- typedExp* : vari*
+
+;;; OPT typedExp?
 
 rulegroup Collectbind_exp/opt {
 
@@ -49,100 +77,43 @@ rulegroup Collectbind_exp/opt {
 
 }
 
+;;; LIST typedExp*
+
 rule Collectbind_exp/list:
   AC |- (LIST typedExp*) '#' _ : vari*
   -- Collectbind_exps: AC |- typedExp* : vari*
+
+;;; CONS typedExp typedExp
 
 rule Collectbind_exp/cons:
   AC |- (CONS typedExp_h typedExp_t) '#' _ : vari*
   -- Collectbind_exps:
       AC |- [ typedExp_h, typedExp_t ] : vari*
 
+;;; ITER typedExp expIter
+
 rule Collectbind_exp/iter:
   AC |- (ITER typedExp (iter _)) '#' _ : vari_iter*
   -- Collectbind_exp: AC |- typedExp : vari*
   -- if (vari_iter = $iterate_vari(iter, vari))*
 
-;;; Non-invertible constructs bind nothing
+;;; BOOL bool | num | TEXT text | UN unop typedExp | BIN binop typedExp typedExp
+;;; CMP cmpop typedExp typedExp | DOWNCAST typ typedExp | SUB typedExp typ
+;;; MATCH typedExp pat | CAT typedExp typedExp | MEM typedExp typedExp | LEN typedExp
+;;; DOT typedExp atom | IDX typedExp typedExp | SLICE typedExp typedExp typedExp
+;;; UPD typedExp typedPath typedExp | CALL id targ* arg*
 
-rulegroup Collectbind_exp/literal {
+rule Collectbind_exp/noninvertible:
+  AC |- typedExp : eps
+  -- if ~$is_invertible(typedExp)
+  -- if id* = $ids_of_varis($free_varis_exp(typedExp))
+  -- if $forall_((id <- $ids_of_varis(AC.BOUND))*)
 
-  rule Collectbind_exp/boolean:
-    AC |- (BOOL _) '#' _ : eps
-
-  rule Collectbind_exp/number:
-    AC |- num '#' _ : eps
-
-  rule Collectbind_exp/text:
-    AC |- (TEXT _) '#' _ : eps
-
-}
-
-rule Collectbind_exp/unary:
-  AC |- (UN _ typedExp) '#' _ : eps
-  -- Collectbind_exp: AC |- typedExp : eps
-
-rule Collectbind_exp/binary:
-  AC |- (BIN _ typedExp_l typedExp_r) '#' _ : eps
-  -- Collectbind_exps:
-      AC |- [ typedExp_l, typedExp_r ] : eps
-
-rule Collectbind_exp/compare:
-  AC |- (CMP _ typedExp_l typedExp_r) '#' _ : eps
-  -- Collectbind_exps:
-      AC |- [ typedExp_l, typedExp_r ] : eps
-
-rule Collectbind_exp/downcast:
-  AC |- (DOWNCAST _ typedExp) '#' _ : eps
-  -- Collectbind_exp: AC |- typedExp : eps
-
-rule Collectbind_exp/subtype:
-  AC |- (SUB typedExp _) '#' _ : eps
-  -- Collectbind_exp: AC |- typedExp : eps
-
-rule Collectbind_exp/match:
-  AC |- (MATCH typedExp _) '#' _ : eps
-  -- Collectbind_exp: AC |- typedExp : eps
-
-rule Collectbind_exp/concat:
-  AC |- (CAT typedExp_l typedExp_r) '#' _ : eps
-  -- Collectbind_exps:
-      AC |- [ typedExp_l, typedExp_r ] : eps
-
-rule Collectbind_exp/mem:
-  AC |- (MEM typedExp_l typedExp_r) '#' _ : eps
-  -- Collectbind_exps:
-      AC |- [ typedExp_l, typedExp_r ] : eps
-
-rule Collectbind_exp/len:
-  AC |- (LEN typedExp) '#' _ : eps
-  -- Collectbind_exp: AC |- typedExp : eps
-
-rule Collectbind_exp/dot:
-  AC |- (DOT typedExp _) '#' _ : eps
-  -- Collectbind_exp: AC |- typedExp : eps
-
-rule Collectbind_exp/idx:
-  AC |- (IDX typedExp_b typedExp_i) '#' _ : eps
-  -- Collectbind_exps:
-      AC |- [ typedExp_b, typedExp_i ] : eps
-
-rule Collectbind_exp/slice:
-  AC |- (SLICE typedExp_b typedExp_i typedExp_n) '#' _ : eps
-  -- Collectbind_exps:
-      AC |- [ typedExp_b, typedExp_i, typedExp_n ] : eps
-
-rule Collectbind_exp/upd:
-  AC |- (UPD typedExp_b typedPath typedExp_f) '#' _ : eps
-  -- Collectbind_exps:
-      AC |- [ typedExp_b, typedExp_f ] : eps
-  -- Collectbind_path: AC |- typedPath : eps
-
-rule Collectbind_exp/call:
-  AC |- (CALL _ _ arg*) '#' _ : eps
-  -- Collectbind_args: AC |- arg* : eps
-
-;;; Sequences
+;;
+;; Binder collection in expression sequences
+;;
+;; syntax typedExp*
+;;
 
 rulegroup Collectbind_exps {
 
@@ -156,38 +127,28 @@ rulegroup Collectbind_exps {
 
 }
 
-;; Paths
+;;
+;; Binder collection in arguments
+;;
+;; syntax arg
+;;
 
-rule Collectbind_path/root:
-  AC |- ROOT '#' _ : eps
-
-rule Collectbind_path/idx:
-  AC |- (IDX typedPath typedExp_i) '#' _
-      : vari_p* ++ vari_i*
-  -- Collectbind_path: AC |- typedPath : vari_p*
-  -- Collectbind_exp: AC |- typedExp_i : vari_i*
-
-rule Collectbind_path/slice:
-  AC |- (SLICE typedPath typedExp_i typedExp_n) '#' _
-      : vari_p* ++ vari_e*
-  -- Collectbind_path: AC |- typedPath : vari_p*
-  -- Collectbind_exps:
-      AC |- [ typedExp_i, typedExp_n ] : vari_e*
-
-rule Collectbind_path/dot:
-  AC |- (DOT typedPath _) '#' _ : vari*
-  -- Collectbind_path: AC |- typedPath : vari*
-
-;; Arguments
+;;; EXP typedExp
 
 rule Collectbind_arg/exp:
   AC |- EXP typedExp : vari*
   -- Collectbind_exp: AC |- typedExp : vari*
 
+;;; FUN id
+
 rule Collectbind_arg/fun:
   AC |- FUN _ : eps
 
-;;; Sequences
+;;
+;; Binder collection in argument sequences
+;;
+;; syntax arg*
+;;
 
 rulegroup Collectbind_args {
 

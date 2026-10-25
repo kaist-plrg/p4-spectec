@@ -1,4 +1,8 @@
+;;
 ;; Rules
+;;
+;; syntax rulIL
+;;
 
 ;; A rule binds its inputs, then runs its premises and returns its outputs
 
@@ -10,27 +14,19 @@ rule Algo_rul:
   -- if (typedExp_in*, typedExp_out*)
       = $split_inputs<typedExp>(inputHint, typedExp*)
   -- Bind_exps:
-      AC_rul eps |- typedExp_in* : AC_in typedExp_in'* premAL_bind*
+      AC_rul eps |- typedExp_in* : AC_in typedExp_in_part* premAL_bind*
   -- Algo_prems: AC_in |- premIL* : AC_body premAL*
   -- if vari_out* = $free_varis_exps(typedExp_out*)
   -- if $is_bound(AC_body, eps, vari_out*)
   -- if rulAL
-      = id ':' typedExp_in'* '->' typedExp_out*
+      = id ':' typedExp_in_part* '->' typedExp_out*
         '-' (premAL_bind* ++ premAL*)
 
-rule Algo_rulGroup:
-  AC inputHint |- rulGroupIL : rulGroupAL
-  -- if id ':' rulIL* = rulGroupIL
-  -- (Algo_rul: AC inputHint |- rulIL : rulAL)*
-  -- if rulGroupAL = id ':' rulAL*
-
-rule Algo_elsGroup:
-  AC inputHint |- elsGroupIL : elsGroupAL
-  -- if id ':' rulIL = elsGroupIL
-  -- Algo_rul: AC inputHint |- rulIL : rulAL
-  -- if elsGroupAL = id ':' rulAL
-
+;;
 ;; Clauses
+;;
+;; syntax clauseIL
+;;
 
 ;; A clause binds its arguments, runs its premises, and returns its result
 
@@ -39,19 +35,29 @@ rule Algo_clause:
   -- if arg* '=' typedExp '-' premIL* = clauseIL
   -- if id_used* = $ids_of_varis($free_varis_clauseIL(clauseIL))
   -- if AC_clause = $add_used(AC, id_used*)
-  -- Bind_args: AC_clause |- arg* : AC_arg arg'* premAL_arg*
+  -- Bind_args: AC_clause |- arg* : AC_arg arg_part* premAL_arg*
   -- Algo_prems: AC_arg |- premIL* : AC_body premAL*
   -- if vari_body* = $free_varis_exp(typedExp)
   -- if $is_bound(AC_body, eps, vari_body*)
   -- if clauseAL
-      = arg'* '=' typedExp '-' (premAL_arg* ++ premAL*)
+      = arg_part* '=' typedExp '-' (premAL_arg* ++ premAL*)
 
+;;
 ;; Definitions
+;;
+;; syntax defnIL
+;;
+
+;;; typDefn
 
 rule Algo_def/typ:
   AC |- typDefn : typDefn
 
+;;; relDefnIL
+
 rulegroup Algo_def/rel {
+
+  ;;;; externRelDefnIL
 
   rule Algo_def/extern:
     AC |- externRelDefnIL : externRelDefnAL
@@ -59,25 +65,39 @@ rulegroup Algo_def/rel {
     -- if (typ_in*, typ_out*) = $split_inputs<typ>(inputHint, typ*)
     -- if externRelDefnAL = EXTREL id ':' typ_in* '->' typ_out*
 
+  ;;;; definedRelDefnIL
+
   rule Algo_def/defined:
     AC |- definedRelDefnIL : definedRelDefnAL
     -- if REL id ':' typ* `( inputHint `) '=' rulGroupIL* elsGroupIL?
         = definedRelDefnIL
     -- if (typ_in*, typ_out*) = $split_inputs<typ>(inputHint, typ*)
-    -- (Algo_rulGroup: AC inputHint |- rulGroupIL : rulGroupAL)*
-    -- (Algo_elsGroup: AC inputHint |- elsGroupIL : elsGroupAL)?
+    -- if (id_group ':' rulIL* = rulGroupIL)*
+    -- (Algo_rul: AC inputHint |- rulIL : rulAL)**
+    -- if (rulGroupAL = id_group ':' rulAL*)*
+    -- if (id_else ':' rulIL_else = elsGroupIL)?
+    -- (Algo_rul: AC inputHint |- rulIL_else : rulAL_else)?
+    -- if (elsGroupAL = id_else ':' rulAL_else)?
     -- if definedRelDefnAL
         = REL id ':' typ_in* '->' typ_out* '=' rulGroupAL* elsGroupAL?
 
 }
 
+;;; funcDefnIL
+
 rulegroup Algo_def/func {
+
+  ;;;; externFuncDefn
 
   rule Algo_def/extern:
     AC |- externFuncDefn : externFuncDefn
 
+  ;;;; builtinFuncDefn
+
   rule Algo_def/builtin:
     AC |- builtinFuncDefn : builtinFuncDefn
+
+  ;;;; tableFuncDefnIL
 
   rule Algo_def/table:
     AC |- tableFuncDefnIL : tableFuncDefnAL
@@ -88,6 +108,8 @@ rulegroup Algo_def/func {
     -- (Algo_tblRow: AC |- tblRowIL : tblRowAL)*
     -- TblRows_cover: AC typ_param* |- tblRowIL*
     -- if tableFuncDefnAL = TABLEFUNC id param* ':' typ '=' tblRowAL*
+
+  ;;;; definedFuncDefnIL
 
   rule Algo_def/defined:
     AC |- definedFuncDefnIL : definedFuncDefnAL

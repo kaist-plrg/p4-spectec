@@ -1,4 +1,6 @@
+;;
 ;; Algo context
+;;
 
 ;; Type definitions, variables bound so far at their dimension outside
 ;; every iteration, and identifiers in use that fresh identifiers must avoid
@@ -23,16 +25,16 @@ dec $load_algoCtx(algoCtx, specIL) : algoCtx
   hint(prose_in %0 "with the type definitions of spec" %1 "loaded")
 
 def $load_algoCtx(AC, externTypDefn :: defnIL_t*)
-  = $load_algoCtx(AC', defnIL_t*)
+  = $load_algoCtx(AC_load, defnIL_t*)
   -- if EXTTYP id = externTypDefn
   -- if tdenv_update = $add_map<id, typDef>(AC.TYP, id, externTypDefn)
-  -- if AC' = AC[ .TYP = tdenv_update ]
+  -- if AC_load = AC[ .TYP = tdenv_update ]
 
 def $load_algoCtx(AC, definedTypDefn :: defnIL_t*)
-  = $load_algoCtx(AC', defnIL_t*)
+  = $load_algoCtx(AC_load, defnIL_t*)
   -- if TYP id _ '=' _ = definedTypDefn
   -- if tdenv_update = $add_map<id, typDef>(AC.TYP, id, definedTypDefn)
-  -- if AC' = AC[ .TYP = tdenv_update ]
+  -- if AC_load = AC[ .TYP = tdenv_update ]
 
 def $load_algoCtx(AC, relDefnIL :: defnIL_t*)
   = $load_algoCtx(AC, defnIL_t*)
@@ -55,11 +57,10 @@ def $add_used(AC, id*) = AC[ .USED = AC.USED ++ id* ]
 ;; Fresh identifiers only need to avoid the identifiers in use,
 ;; so they share one base name
 
-dec $fresh_id(algoCtx) : (algoCtx, id)
-  hint(prose_in "an identifier unused in" %0 "and the context using it")
-def $fresh_id(AC) = (AC', id_fresh)
-  -- if id_fresh = $fresh(AC.USED, "fresh")
-  -- if AC' = $add_used(AC, id_fresh)
+dec $fresh_id(id*) : (id*, id)
+  hint(prose_in "an identifier unused in" %0 "and the identifiers using it")
+def $fresh_id(id_used*) = (id_used* ++ [ id_fresh ], id_fresh)
+  -- if id_fresh = $fresh(id_used*, "fresh")
 
 dec $add_tparams(algoCtx, tparam*) : algoCtx
   hint(prose_in %0 "with type parameters" %1)

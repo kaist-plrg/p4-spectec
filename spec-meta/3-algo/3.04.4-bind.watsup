@@ -1,39 +1,32 @@
+;;
 ;; Binding patterns
+;;
+;; syntax typedExp*
+;;
 
-;; Binders are collected, repeated binders renamed, and partially bound
-;; patterns decomposed. The decomposition premises come first; the
-;; equalities of repeated binders follow once every occurrence is bound.
-
-dec $rename_varis(vari, id*) : vari*
-  hint(prose_in "the variables" %1 "of the type and dimension of" %0)
-def $rename_varis(_, eps) = eps
-def $rename_varis(vari, id_h :: id_t*) = (id_h typ iter*) :: $rename_varis(vari, id_t*)
-  -- if _ typ iter* = vari
-
-dec $occurrence_varis(vari*, renamer) : vari*
-  hint(prose_in "the variables given to the occurrences of binders" %0 "by" %1)
-def $occurrence_varis(vari_bind*, `{ (id_bind ':' id_name*)* `}) = $concat_<vari>(vari_occ**)
-  -- (if vari_first = $vari_of(id_bind, vari_bind*))*
-  -- (if vari_occ* = $rename_varis(vari_first, id_name*))*
+;; Repeated binders are renamed with equalities of their occurrences,
+;; and partially bound patterns decomposed.
+;; Repeated binders are renamed first, so each occurrence is bound once.
+;; The equalities follow the decomposition premises,
+;; which bind the occurrences inside decomposed sub-patterns.
 
 rule Bind_exps:
-  AC IC |- typedExp* : AC''' typedExp''* (premAL_part* ++ premAL_eq*)
-  -- Collectbind_exps: AC |- typedExp* : vari_bind*
-  -- if R = $init_multibind(vari_bind*)
-  -- Multibind_exps: AC R |- typedExp* : AC' R' typedExp'*
+  AC IC |- typedExp* : AC_bound typedExp_part* (premAL_part* ++ premAL_eq*)
+  -- Multibind_exps: AC IC |- typedExp* : AC_multi typedExp_multi* premAL_eq*
   -- Partialbind_exps:
-      AC' IC |- eps typedExp'* : AC'' _ typedExp''* premAL_part*
-  -- Multibind_eqs: IC vari_bind* |- R' : premAL_eq*
-  -- if vari_rename* = $occurrence_varis(vari_bind*, R')
-  -- if vari_bound* = $lift_vari(IC, vari_bind)* ++ $lift_vari(IC, vari_rename)*
-  -- if AC''' = $add_bound(AC'', vari_bound*)
+      AC_multi IC |- eps typedExp_multi* : AC_part _ typedExp_part* premAL_part*
+  -- Collectbind_exps: AC_multi |- typedExp_multi* : vari_bind*
+  -- if AC_bound = $add_bound(AC_part, $lift_vari(IC, vari_bind)*)
+
+;;
+;; Binding argument patterns
+;;
+;; syntax arg*
+;;
 
 rule Bind_args:
-  AC |- arg* : AC''' arg''* (premAL_part* ++ premAL_eq*)
-  -- Collectbind_args: AC |- arg* : vari_bind*
-  -- if R = $init_multibind(vari_bind*)
-  -- Multibind_args: AC R |- arg* : AC' R' arg'*
-  -- Partialbind_args: AC' |- arg'* : AC'' arg''* premAL_part*
-  -- Multibind_eqs: eps vari_bind* |- R' : premAL_eq*
-  -- if vari_rename* = $occurrence_varis(vari_bind*, R')
-  -- if AC''' = $add_bound(AC'', vari_bind* ++ vari_rename*)
+  AC |- arg* : AC_bound arg_part* (premAL_part* ++ premAL_eq*)
+  -- Multibind_args: AC |- arg* : AC_multi arg_multi* premAL_eq*
+  -- Partialbind_args: AC_multi |- arg_multi* : AC_part arg_part* premAL_part*
+  -- Collectbind_args: AC_multi |- arg_multi* : vari_bind*
+  -- if AC_bound = $add_bound(AC_part, vari_bind*)

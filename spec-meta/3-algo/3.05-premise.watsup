@@ -1,4 +1,8 @@
+;;
 ;; Input positions
+;;
+;; syntax inputHint
+;;
 
 ;; Relation arguments in notation order, separated into the arguments at
 ;; the input positions and the remaining outputs, each in source order
@@ -25,7 +29,11 @@ def $split_inputs_from<X>(n*, n_pos, X_h :: X_t*)
   -- if (X_in*, X_out*)
       = $split_inputs_from<X>(n*, $(n_pos + 1), X_t*)
 
+;;
 ;; Premises
+;;
+;; syntax premIL
+;;
 
 ;; Each premise reads bound variables and binds the variables of its patterns.
 ;; Under an iteration, the variables a premise reads become its sources
@@ -37,29 +45,31 @@ def $split_inputs_from<X>(n*, n_pos, X_h :: X_t*)
 ;;
 ;;   -- (let x = z + 1)*{z <- z*, x -> x*}
 
-;;; Relation premises
+;;; relPremIL
+;;; syntax relPremIL = REL id ':' typedExp* `( inputHint `)
 
 ;; Inputs must be bound; outputs bind
 
 rule Algo_prem/rel:
-  AC IC |- relPremIL : AC' premAL*
+  AC IC |- relPremIL : AC_bound premAL*
   -- if REL id ':' typedExp* `( inputHint `) = relPremIL
   -- if (typedExp_in*, typedExp_out*)
       = $split_inputs<typedExp>(inputHint, typedExp*)
   -- if vari_in* = $free_varis_exps(typedExp_in*)
   -- if $is_bound(AC, IC, vari_in*)
   -- Bind_exps:
-      AC IC |- typedExp_out* : AC' typedExp_out'* premAL_bind*
+      AC IC |- typedExp_out* : AC_bound typedExp_out_part* premAL_bind*
   -- if id_read* = $ids_of_varis(vari_in*)
-  -- if vari_out* = $free_varis_exps(typedExp_out'*)
+  -- if vari_out* = $free_varis_exps(typedExp_out_part*)
   -- if vari_bind* = $shallowest_varis(vari_out*)
   -- if premIterAL* = $annotate(IC, id_read*, vari_bind*)
   -- Iter_sourced: |- premIterAL*
-  -- if relPremAL = REL id ':' typedExp_in* '->' typedExp_out'*
+  -- if relPremAL = REL id ':' typedExp_in* '->' typedExp_out_part*
   -- if premAL_rel = $iterate_prem(premIterAL*, relPremAL)
   -- if premAL* = premAL_rel :: premAL_bind*
 
-;;; Conditions
+;;; ifPrem
+;;; syntax ifPrem = IF typedExp
 
 ;; An equality with binders on one side binds that side
 
@@ -74,42 +84,29 @@ rulegroup Algo_prem/cond {
     -- if premAL_if = $iterate_prem(premIterAL*, ifPrem)
 
   rule Algo_prem/let-left:
-    AC IC |- ifPrem : AC' premAL*
+    AC IC |- ifPrem : AC_bound premAL*
     -- if IF typedExp = ifPrem
     -- if (CMP EQ typedExp_l typedExp_r) '#' _ = typedExp
     -- Collectbind_exp: AC |- typedExp_l : vari_l*
     -- if vari_l* =/= eps
     -- Collectbind_exp: AC |- typedExp_r : eps
     -- Algo_let:
-        AC IC |- typedExp_l '=' typedExp_r : AC' premAL*
+        AC IC |- typedExp_l '=' typedExp_r : AC_bound premAL*
 
   rule Algo_prem/let-right:
-    AC IC |- ifPrem : AC' premAL*
+    AC IC |- ifPrem : AC_bound premAL*
     -- if IF typedExp = ifPrem
     -- if (CMP EQ typedExp_l typedExp_r) '#' _ = typedExp
     -- Collectbind_exp: AC |- typedExp_l : eps
     -- Collectbind_exp: AC |- typedExp_r : vari_r*
     -- if vari_r* =/= eps
     -- Algo_let:
-        AC IC |- typedExp_r '=' typedExp_l : AC' premAL*
+        AC IC |- typedExp_r '=' typedExp_l : AC_bound premAL*
 
 }
 
-rule Algo_let:
-  AC IC |- typedExp_l '=' typedExp_r
-         : AC' (premAL_let :: premAL_bind*)
-  -- Bind_exps:
-      AC IC |- [ typedExp_l ] : AC' ([ typedExp_l' ]) premAL_bind*
-  -- if vari_r* = $free_varis_exp(typedExp_r)
-  -- if $is_bound(AC, IC, vari_r*)
-  -- if vari_l* = $free_varis_exp(typedExp_l')
-  -- if vari_bind* = $shallowest_varis(vari_l*)
-  -- if premIterAL* = $annotate(IC, $ids_of_varis(vari_r*), vari_bind*)
-  -- Iter_sourced: |- premIterAL*
-  -- if premAL_let
-      = $iterate_prem(premIterAL*, LET typedExp_l' '=' typedExp_r)
-
-;;; Holding and non-holding relations
+;;; ifHoldPrem
+;;; syntax ifHoldPrem = IFHOLD id ':' typedExp*
 
 rule Algo_prem/ifhold:
   AC IC |- ifHoldPrem : AC ([ premAL_hold ])
@@ -119,6 +116,9 @@ rule Algo_prem/ifhold:
   -- if premIterAL* = $annotate(IC, $ids_of_varis(vari_read*), eps)
   -- if premAL_hold = $iterate_prem(premIterAL*, ifHoldPrem)
 
+;;; ifNotHoldPrem
+;;; syntax ifNotHoldPrem = IFNOTHOLD id ':' typedExp*
+
 rule Algo_prem/ifnothold:
   AC IC |- ifNotHoldPrem : AC ([ premAL_hold ])
   -- if IFNOTHOLD id ':' typedExp* = ifNotHoldPrem
@@ -127,17 +127,19 @@ rule Algo_prem/ifnothold:
   -- if premIterAL* = $annotate(IC, $ids_of_varis(vari_read*), eps)
   -- if premAL_hold = $iterate_prem(premIterAL*, ifNotHoldPrem)
 
-;;; Iterations
+;;; iterPremIL
+;;; syntax iterPremIL = ITER premIL premIterIL
 
 ;; The elaborated iteration lists every variable it iterates;
 ;; the premise inside decides which it reads and which it binds
 
 rule Algo_prem/iter:
-  AC IC |- ITER premIL premIterIL : AC' premAL*
-  -- if IC' = premIterIL :: IC
-  -- Algo_prem: AC IC' |- premIL : AC' premAL*
+  AC IC |- ITER premIL premIterIL : AC_prem premAL*
+  -- if IC_iter = premIterIL :: IC
+  -- Algo_prem: AC IC_iter |- premIL : AC_prem premAL*
 
-;;; Debugging
+;;; debugPrem
+;;; syntax debugPrem = DEBUG typedExp
 
 rule Algo_prem/dbg:
   AC IC |- debugPrem : AC ([ premAL_debug ])
@@ -147,7 +149,34 @@ rule Algo_prem/dbg:
   -- if premIterAL* = $annotate(IC, $ids_of_varis(vari*), eps)
   -- if premAL_debug = $iterate_prem(premIterAL*, debugPrem)
 
+;;
+;; Bindings
+;;
+;; syntax typedExp '=' typedExp
+;;
+
+;; The left side binds, decomposing partially bound sub-patterns;
+;; the right side reads only bound variables
+
+rule Algo_let:
+  AC IC |- typedExp_l '=' typedExp_r
+         : AC_bound (premAL_let :: premAL_bind*)
+  -- Bind_exps:
+      AC IC |- [ typedExp_l ] : AC_bound ([ typedExp_l_part ]) premAL_bind*
+  -- if vari_r* = $free_varis_exp(typedExp_r)
+  -- if $is_bound(AC, IC, vari_r*)
+  -- if vari_l* = $free_varis_exp(typedExp_l_part)
+  -- if vari_bind* = $shallowest_varis(vari_l*)
+  -- if premIterAL* = $annotate(IC, $ids_of_varis(vari_r*), vari_bind*)
+  -- Iter_sourced: |- premIterAL*
+  -- if premAL_let
+      = $iterate_prem(premIterAL*, LET typedExp_l_part '=' typedExp_r)
+
+;;
 ;; Premise sequences
+;;
+;; syntax premIL*
+;;
 
 ;; Variables bound by a premise are bound for the following premises
 
@@ -157,9 +186,9 @@ rulegroup Algo_prems {
     AC |- eps : AC eps
 
   rule Algo_prems/cons:
-    AC |- premIL_h :: premIL_t* : AC'' (premAL_h* ++ premAL_t*)
+    AC |- premIL_h :: premIL_t* : AC_t (premAL_h* ++ premAL_t*)
     -- if IC = eps
-    -- Algo_prem: AC IC |- premIL_h : AC' premAL_h*
-    -- Algo_prems: AC' |- premIL_t* : AC'' premAL_t*
+    -- Algo_prem: AC IC |- premIL_h : AC_h premAL_h*
+    -- Algo_prems: AC_h |- premIL_t* : AC_t premAL_t*
 
 }
