@@ -50,10 +50,10 @@ relation Match_map:
   hint(prose_in "the ways the entries" %2 "and the other parts" %3 "match the map" %5)
   hint(prose_out %6)
 
-relation Choose_map:
-  definition way |- pattern pattern pattern* pattern* ~~ sort (map<term, term>) (term, term)* : way*
+relation Match_entry:
+  definition way |- pattern pattern pattern* pattern* ~~ sort (map<term, term>) (term, term) : way*
   hint(input %0 %1 %2 %3 %4 %5 %6 %7 %8)
-  hint(prose_in "the ways the entry" %2 "|->" %3 "matches one of" %8)
+  hint(prose_in "the ways the entry" %2 "|->" %3 "matches" %8 "and the rest match the other entries")
   hint(prose_out %9)
 
 relation Match_set:
@@ -62,10 +62,10 @@ relation Match_set:
   hint(prose_in "the ways the elements" %2 "and the other parts" %3 "match the set" %5)
   hint(prose_out %6)
 
-relation Choose_set:
-  definition way |- pattern pattern* pattern* ~~ sort (set<term>) term* : way*
+relation Match_element:
+  definition way |- pattern pattern* pattern* ~~ sort (set<term>) term : way*
   hint(input %0 %1 %2 %3 %4 %5 %6 %7)
-  hint(prose_in "the ways the element" %2 "matches one of" %7)
+  hint(prose_in "the ways the element" %2 "matches" %7 "and the rest match the other elements")
   hint(prose_out %8)
 
 relation Match_seq:
@@ -88,14 +88,8 @@ rule Match_rest/stuck:
 rule Match_map/stuck-before:
   D ERROR |- pattern_e* pattern_o* ~~ sort M : [ ERROR ]
 
-rule Choose_map/stuck-before:
-  D ERROR |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort M (term_k, term_v)* : [ ERROR ]
-
 rule Match_set/stuck-before:
   D ERROR |- pattern_e* pattern_o* ~~ sort S : [ ERROR ]
-
-rule Choose_set/stuck-before:
-  D ERROR |- pattern pattern_e* pattern_o* ~~ sort S term* : [ ERROR ]
 
 rule Match_seq/stuck:
   D ERROR |- pattern* ~~ sort term* : [ ERROR ]
@@ -175,8 +169,8 @@ rule Match/application:
 rule Match/overload:
   D (OK subst) |- APP symid_f sort_p* pattern* ~~ APP "inj" ([sort_b, sort_s]) ([APP symid_g sort_t* term*]) : way*
   -- if (symid_f '>' symid_g) <- D.OVERLOADS
-  -- if (sort_f* '->' sort_rf kind_f) = $find_symdecl(D, symid_f)
-  -- if (sort_g* '->' sort_rg kind_g) = $find_symdecl(D, symid_g)
+  -- if (SYMBOL sortid_f* sort_f* '->' sort_rf kind_f) = $find_symdecl(D, symid_f)
+  -- if (SYMBOL sortid_g* sort_g* '->' sort_rg kind_g) = $find_symdecl(D, symid_g)
   -- if sort_rf = sort_s /\ sort_rg = sort_b
   -- Match_list: D (OK subst) |- pattern* ~~ $coerce_all(sort_g*, sort_f*, term*) : way*
 

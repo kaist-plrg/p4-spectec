@@ -46,20 +46,17 @@ rule Match_map/stuck:
   -- Eval: D subst |- pattern_k : ERROR
 
 rule Match_map/choose:
-  D (OK subst) |- (APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*) pattern_o* ~~ sort `{ (term_k ':' term_v)* `} : way*
+  D (OK subst) |- (APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*) pattern_o* ~~ sort M : $concat_<way>(way_r**)
   -- if ~$bound(subst, pattern_k)
-  -- Choose_map: D (OK subst) |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort `{ (term_k ':' term_v)* `} (term_k, term_v)* : way*
+  -- if `{ (term_k ':' term_v)* `} = M
+  -- (Match_entry: D (OK subst) |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort M (term_k, term_v) : way_r*)*
 
-rule Choose_map/none:
-  D (OK subst) |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort M eps : eps
-
-rule Choose_map/entry:
-  D (OK subst) |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort M ((term_k, term_v) :: (term_k', term_v')*) : $concat_<way>(way_r**) ++ way_t*
+rule Match_entry:
+  D (OK subst) |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort M (term_k, term_v) : $concat_<way>(way_r**)
   -- Match: D (OK subst) |- pattern_k ~~ term_k : way_k*
   -- (Match: D way_k |- pattern_v ~~ term_v : way_v*)*
   -- if way_kv* = $concat_<way>(way_v**)
   -- (Match_map: D way_kv |- pattern_e* pattern_o* ~~ sort $diff_set<pair<term, term>>(M, `{ term_k ':' term_v `}) : way_r*)*
-  -- Choose_map: D (OK subst) |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort M (term_k', term_v')* : way_t*
 
 ;;; Sets: an element with its variables bound is checked for membership, as
 ;;; keys of maps are; otherwise each element is tried in turn
@@ -87,18 +84,15 @@ rule Match_set/stuck:
   -- Eval: D subst |- pattern : ERROR
 
 rule Match_set/choose:
-  D (OK subst) |- (APP symid sort_e* ([pattern]) :: pattern_e*) pattern_o* ~~ sort `{ term_s* `} : way*
+  D (OK subst) |- (APP symid sort_e* ([pattern]) :: pattern_e*) pattern_o* ~~ sort S : $concat_<way>(way_r**)
   -- if ~$bound(subst, pattern)
-  -- Choose_set: D (OK subst) |- pattern pattern_e* pattern_o* ~~ sort `{ term_s* `} term_s* : way*
+  -- if `{ term_s* `} = S
+  -- (Match_element: D (OK subst) |- pattern pattern_e* pattern_o* ~~ sort S term_s : way_r*)*
 
-rule Choose_set/none:
-  D (OK subst) |- pattern pattern_e* pattern_o* ~~ sort S eps : eps
-
-rule Choose_set/element:
-  D (OK subst) |- pattern pattern_e* pattern_o* ~~ sort S (term_h :: term_t*) : $concat_<way>(way_r**) ++ way_t*
-  -- Match: D (OK subst) |- pattern ~~ term_h : way_h*
-  -- (Match_set: D way_h |- pattern_e* pattern_o* ~~ sort $diff_set<term>(S, `{ term_h `}) : way_r*)*
-  -- Choose_set: D (OK subst) |- pattern pattern_e* pattern_o* ~~ sort S term_t* : way_t*
+rule Match_element:
+  D (OK subst) |- pattern pattern_e* pattern_o* ~~ sort S term : $concat_<way>(way_r**)
+  -- Match: D (OK subst) |- pattern ~~ term : way_h*
+  -- (Match_set: D way_h |- pattern_e* pattern_o* ~~ sort $diff_set<term>(S, `{ term `}) : way_r*)*
 
 ;;; Lists: elements before the other part match the front, elements after it
 ;;; match the back, and the other part matches the list in between

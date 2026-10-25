@@ -18,7 +18,7 @@ def $kind_of_symbol(D, symid) = $kind_of($find_symdecl(D, symid))
 
 dec $sort_of_decl(symdecl?) : sort?
 def $sort_of_decl(eps) = eps
-def $sort_of_decl(sort_a* '->' sort kind) = sort
+def $sort_of_decl(SYMBOL sortid_p* sort_a* '->' sort kind) = sort
 
 dec $result_sort(definition, symid) : sort?
   hint(prose_in "the result sort of" %1)
@@ -48,10 +48,9 @@ dec $result_instance(definition, symid, sort*) : sort?
   hint(prose_in "the result sort of" %1 "applied with sorts" %2)
 def $result_instance(D, symid, sort_a*)
   = $sort_instance(sortid_p*, sort_a*, sort_r)
-  -- if sort_r = $result_sort(D, symid)
-  -- if (sortid_p*) = $find_map<symid, sortid*>(D.PARAMS, symid)
-def $result_instance(D, symid, sort_a*) = $result_sort(D, symid)
-  -- if eps = $find_map<symid, sortid*>(D.PARAMS, symid)
+  -- if (SYMBOL sortid_p* sort_p* '->' sort_r kind) = $find_symdecl(D, symid)
+def $result_instance(D, symid, sort_a*) = eps
+  -- if eps = $find_symdecl(D, symid)
 
 ;; Hooks whose arguments are evaluated lazily (create_hardcoded_hook): the
 ;; hook of the symbol, or "" for any other symbol

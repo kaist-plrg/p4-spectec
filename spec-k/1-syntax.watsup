@@ -33,6 +33,7 @@ syntax term =
 
 syntax pattern =
   | VAR varid sort
+  | FRESH sort                      ;; a fresh variable !X of a function equation
   | AND sort pattern pattern        ;; \and, used as an as-pattern on the left
   | OR sort pattern pattern         ;; \or on the left: either side matches
   | APP symid sort* pattern*
@@ -53,7 +54,7 @@ syntax symkind =
   | HOOKED hookid  ;; a hook on K terms, specified (3.4); equations ignored
   | RUNTIME hookid ;; a hook of a domain module, by the K runtime (3.1)
 
-syntax symdecl = sort* '->' sort symkind
+syntax symdecl = SYMBOL sortid* sort* '->' sort symkind  ;; with sort parameters
 
 ;; Subsorts
 
@@ -79,7 +80,6 @@ syntax definition =
     RULES clause*,                      ;; in the order they are tried
     EQUATIONS (map<symid, clause*>),    ;; by the symbol defined, each in the
                                         ;; order they are tried
-    PARAMS (map<symid, sortid*>),       ;; sort parameters of symbols
     FRESH (map<sort, symid>) }          ;; the freshGenerator of a sort, e.g. freshInt
 
 ;; KORE as kompile writes it, every axiom with its attributes; loading picks

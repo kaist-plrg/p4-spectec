@@ -130,10 +130,6 @@ def $kind_by_attrs(kattr*) = CONSTRUCTOR
   -- if ~$has_attr("anywhere", kattr*) /\ ~$has_attr("binder", kattr*)
 
 
-dec $params(map<symid, ksymdecl>) : map<symid, sortid*>
-def $params(`{ (symid ':' (KSYMBOL sortid_p* sort_a* '->' sort kattr*))* `})
-  = `{ (symid ':' sortid_p*)* `}
-
 dec $fresh_generator(symid, ksymdecl) : pair<sort, symid>*
 def $fresh_generator(symid, KSYMBOL sortid_p* sort_a* '->' sort kattr*)
   = [ sort ':' symid ]
@@ -165,7 +161,7 @@ def $sort_hook(SH, sort) = ""
 
 dec $symdecls(map<symid, ksymdecl>) : map<symid, symdecl>
 def $symdecls(`{ (symid ':' (KSYMBOL sortid_p* sort_a* '->' sort kattr*))* `})
-  = `{ (symid ':' (sort_a* '->' sort $kind_by_attrs(kattr*)))* `}
+  = `{ (symid ':' (SYMBOL sortid_p* sort_a* '->' sort $kind_by_attrs(kattr*)))* `}
 
 ;; Domain values \dv{S}("text"), by the hook of S; those of other sorts stay
 ;; text
@@ -231,9 +227,13 @@ def $right_assoc(symid, sort*, kore_h :: kore_t*)
   -- if $(|kore_t*| > 0)
 
 ;; Patterns of rules, equations, the initial term, and the K runtime's answers
-;; (4.2-eval), by the hooks of the sorts; declared in 3.1-hook-runtime
+;; (4.2-eval), by the hooks of the sorts; declared in 3.1-hook-runtime. A
+;; variable named Var'Bang... is a fresh variable !X of a function equation.
 
+def $pattern(SH, KVAR varid sort) = FRESH sort
+  -- if $string_find(varid, "Var'Bang", 0) = 0
 def $pattern(SH, KVAR varid sort) = VAR varid sort
+  -- if $string_find(varid, "Var'Bang", 0) =/= 0
 def $pattern(SH, KML "dv" ([sort]) ([KSTR text]))
   = $literal($sort_hook(SH, sort), sort, text)
 def $pattern(SH, KAPP symid sort* kore*) = APP symid sort* $pattern(SH, kore)*
@@ -430,7 +430,6 @@ rule Load:
           EQUATIONS $sorted_groups($group_equations(
                       $empty_map<symid, (nat, clause)*>,
                       $concat_<(symid, (nat, clause))>($equation_of(SH, kaxiom)*))),
-          PARAMS $params(KD.KSYMBOLS),
           FRESH $fresh_generators(KD.KSYMBOLS) }
   -- if SH = $sort_hooks(KD.KSORTS)
   -- if kaxiom_a* = KD.AXIOMS
