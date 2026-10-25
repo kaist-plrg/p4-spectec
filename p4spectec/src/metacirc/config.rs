@@ -5,6 +5,7 @@
 //! Specification paths are resolved relative to the JSON file.
 
 use super::{Result, error::config_invalid};
+pub use crate::interface::Lang;
 use serde::Deserialize;
 use std::{
     fs,
@@ -41,16 +42,6 @@ pub struct LevelConfig {
     pub rel: String,
     /// The language accepted by this level.
     pub lang: Lang,
-}
-
-/// The language consumed at a specification boundary.
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-pub enum Lang {
-    /// An AL script.
-    Al,
-    /// A P4 program, at the top level only.
-    P4,
 }
 
 impl TowerConfig {
@@ -90,12 +81,12 @@ impl TowerConfig {
         if levels.is_empty() {
             return Err(config_invalid("a tower requires at least one level"));
         }
-        // Only the top level may consume a language other than AL
+        // A level below another receives the level above as a script
         let idx_top = levels.len() - 1;
         for (idx, level) in levels.iter().enumerate() {
-            if idx != idx_top && level.lang != Lang::Al {
+            if idx != idx_top && !level.lang.is_script() {
                 return Err(config_invalid(format!(
-                    "invalid language at level {idx}: expected Al"
+                    "invalid language at level {idx}: expected al"
                 )));
             }
             if level.rel.is_empty() || level.specdir.as_os_str().is_empty() {

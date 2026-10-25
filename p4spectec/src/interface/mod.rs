@@ -24,6 +24,24 @@ pub mod builtin;
 pub mod meta;
 pub mod p4;
 
+/// The language of the input a specification accepts.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Lang {
+    /// An AL script, converted by the native `algo` pass.
+    Al,
+    /// A P4 program, which only the P4 specification accepts.
+    P4,
+}
+
+impl Lang {
+    /// Returns whether the language is a script the level above can be passed as,
+    /// so that a level accepting it may sit below another level.
+    pub fn is_script(self) -> bool {
+        matches!(self, Self::Al)
+    }
+}
+
 // == Meta
 
 /// Builds the interface of a meta specification with the standard specification builtins.

@@ -175,9 +175,9 @@ impl Tower {
                         config: config_level.clone(),
                         spec_al: crate::algo(paths)?,
                     },
-                    Some(Lang::P4) => {
+                    Some(_) => {
                         return Err(config_invalid(format!(
-                            "invalid language at level {}: expected Al",
+                            "invalid language at level {}: expected al",
                             idx - 1
                         )));
                     }
