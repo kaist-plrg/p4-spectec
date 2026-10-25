@@ -43,10 +43,10 @@ def $ids_typs(eps) = eps
 def $ids_typs(typ_h :: typ_t*) = $ids_typ(typ_h) ++ $ids_typs(typ_t*)
 
 dec $fresh_ids(id*, id*) : id*
-  hint(prose_in "distinct fresh names based on" %0 "avoiding" %1)
-def $fresh_ids(eps, id_used*) = eps
-def $fresh_ids(id_h :: id_t*, id_used*)
-  = id_fresh ++ $fresh_ids(id_t*, id_fresh ++ id_used*)
+  hint(prose_in "distinct fresh names based on" %1 "avoiding" %0)
+def $fresh_ids(id_used*, eps) = eps
+def $fresh_ids(id_used*, id_h :: id_t*)
+  = id_fresh ++ $fresh_ids(id_fresh ++ id_used*, id_t*)
   -- if id_fresh = $fresh(id_used*, id_h)
 
 ;;; Substitution in types and type sequences
@@ -76,7 +76,7 @@ def $subst_typ(theta, FUNC tparam* typ* typ_ret)
   = OK (FUNC tparam_fresh* typ_subst* typ_ret_subst)
   -- if `{ (id ':' typ_arg)* `} = theta
   -- if id_used* = id* ++ $ids_typs(typ_arg*) ++ $ids_typ(FUNC tparam* typ* typ_ret)
-  -- if tparam_fresh* = $fresh_ids(tparam*, id_used*)
+  -- if tparam_fresh* = $fresh_ids(id_used*, tparam*)
   -- if theta_fresh = `{ (tparam ':' (VAR tparam_fresh eps))* `}
   -- if OK typ_fresh* = $subst_typs(theta_fresh, typ*)
   -- if OK typ_subst* = $subst_typs(theta, typ_fresh*)

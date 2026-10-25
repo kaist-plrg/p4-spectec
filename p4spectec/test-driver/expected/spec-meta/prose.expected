@@ -807,7 +807,7 @@ def $ids_typs((typ)*{typ <- typ*})
 
     4. Return (id)*{id <- id*} ++ (id')*{id' <- id'*}
 
-def $fresh_ids((id)*{id <- id*}, (id_used)*{id_used <- id_used*})
+def $fresh_ids((id_used)*{id_used <- id_used*}, (id)*{id <- id*})
 
 1. Case analysis on (id)*{id <- id*} (total)
 
@@ -821,7 +821,7 @@ def $fresh_ids((id)*{id <- id*}, (id_used)*{id_used <- id_used*})
 
     2. (Let id_fresh be $fresh((id_used)*{id_used <- id_used*}, id_h))
 
-    3. (Let (id')*{id' <- id'*} be $fresh_ids((id_t)*{id_t <- id_t*}, [id_fresh] ++ (id_used)*{id_used <- id_used*}))
+    3. (Let (id')*{id' <- id'*} be $fresh_ids([id_fresh] ++ (id_used)*{id_used <- id_used*}, (id_t)*{id_t <- id_t*}))
 
     4. Return [id_fresh] ++ (id')*{id' <- id'*}
 
@@ -905,7 +905,7 @@ Arm 1:
 
       4. (Let (id_used)*{id_used <- id_used*} be (id)*{id <- id*} ++ (id')*{id' <- id'*} ++ (id'')*{id'' <- id''*})
 
-      5. (Let (tparam_fresh)*{tparam_fresh <- tparam_fresh*} be $fresh_ids((tparam)*{tparam <- tparam*}, (id_used)*{id_used <- id_used*}))
+      5. (Let (tparam_fresh)*{tparam_fresh <- tparam_fresh*} be $fresh_ids((id_used)*{id_used <- id_used*}, (tparam)*{tparam <- tparam*}))
 
       6. If ((|(tparam)*{tparam <- tparam*}| = |(tparam_fresh)*{tparam_fresh <- tparam_fresh*}|)), then
 
@@ -1261,7 +1261,7 @@ def $equiv_func_typ(tdenv, typ, typ')
 
           4. (Let (id_used)*{id_used <- id_used*} be (id)*{id <- id*} ++ (id')*{id' <- id'*} ++ (id'')*{id'' <- id''*})
 
-          5. (Let (tparam_fresh)*{tparam_fresh <- tparam_fresh*} be $fresh_ids((tparam_l)*{tparam_l <- tparam_l*}, (id_used)*{id_used <- id_used*}))
+          5. (Let (tparam_fresh)*{tparam_fresh <- tparam_fresh*} be $fresh_ids((id_used)*{id_used <- id_used*}, (tparam_l)*{tparam_l <- tparam_l*}))
 
           6. If ((|(tparam_fresh)*{tparam_fresh <- tparam_fresh*}| = |(tparam_l)*{tparam_l <- tparam_l*}|)), then
 
