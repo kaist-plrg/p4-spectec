@@ -83,10 +83,12 @@ dec $is_bound_vari(vari*, vari) : bool
   hint(prose_false %1 "is bound by no variable in" %0)
 def $is_bound_vari(eps, _) = false
 def $is_bound_vari(vari_h :: _, vari) = true
+  ---- ;; a variable of the same name has a dimension the read extends
   -- if id _ _ = vari
   -- if id _ _ = vari_h
   -- if $is_prefix_dim(vari_h, vari)
 def $is_bound_vari(vari_h :: vari_t*, vari) = $is_bound_vari(vari_t*, vari)
+  ---- ;; the head has another name or a dimension the read does not extend
   -- if id _ _ = vari
   -- if id_h _ _ = vari_h
   -- if id_h =/= id \/ ~$is_prefix_dim(vari_h, vari)

@@ -10,8 +10,10 @@ dec $is_singleton_typ(tdenv, typ) : bool
   hint(prose_true "type" %1 "has a single constructor under" %0)
   hint(prose_false "type" %1 "does not have a single constructor under" %0)
 def $is_singleton_typ(tdenv, typ) = true
+  ---- ;; expand aliases to a variant type
   -- if OK (VAR id targ*) = $expand_typ(tdenv, typ)
   -- if TYP _ tparam* '=' (VARIANT typCase*) = $find_map<id, typDef>(tdenv, id)
+  ---- ;; the variant has exactly one case
   -- if |typCase*| = 1
   -- if |tparam*| = |targ*|
 def $is_singleton_typ(_, _) = false
@@ -67,12 +69,16 @@ def $is_irrefutable(_, _) = false
 rule Algo_tblRow:
   AC |- tblRowIL : arg_part* '=' typedExp '-' premAL*
   -- if arg* '=' typedExp = tblRowIL
+  ---- ;; fresh identifiers avoid those of the row
   -- if id_used* = $ids_of_varis($free_varis_tblRowIL(tblRowIL))
   -- if AC_row = $add_used(AC, id_used*)
+  ---- ;; no binder repeats across the arguments
   -- Collectbind_args: AC_row |- arg* : vari_bind*
   -- if `{ (id_bind ':' _)* `} = $init_renamer(eps, vari_bind*).NAMES
   -- if |id_bind*| = |vari_bind*|
+  ---- ;; the arguments bind, decomposing their cases
   -- Bind_args: AC_row |- arg* : AC_body arg_part* premAL*
+  ---- ;; the result reads only bound variables
   -- if vari_body* = $free_varis_exp(typedExp)
   -- if $is_bound(AC_body, eps, vari_body*)
 
@@ -154,25 +160,32 @@ rulegroup TblRows_cover {
 
   rule TblRows_cover/default:
     AC typ* |- tblRowIL*
+    ---- ;; every key has a variant type
     -- (if _ = $variant_cases(AC.TYP, typ))*
+    ---- ;; the last row consists of wildcard variables
     -- if $(|tblRowIL*| > 0)
     -- if n_init = $(|tblRowIL*| - 1)
     -- if (EXP typedExp_last)* '=' _ = tblRowIL*[n_init]
     -- if $forall_($is_wildcard_exp(typedExp_last)*)
+    ---- ;; the rows before it accept disjoint inputs
     -- if ((EXP typedExp)* '=' _)* = tblRowIL*[0 : n_init]
     -- (if (typCase_row* = $covered_cases(AC.TYP, typedExp))*)*
     -- if $is_exclusive(typCase_row***)
 
   rule TblRows_cover/exhaustive:
     AC typ* |- tblRowIL*
+    ---- ;; every key has a variant type
     -- (if typCase_total* = $variant_cases(AC.TYP, typ))*
+    ---- ;; the last row does not consist of wildcard variables
     -- if $(|tblRowIL*| > 0)
     -- if n_init = $(|tblRowIL*| - 1)
     -- if (EXP typedExp_last)* '=' _ = tblRowIL*[n_init]
     -- if ~$forall_($is_wildcard_exp(typedExp_last)*)
+    ---- ;; the rows accept disjoint inputs
     -- if ((EXP typedExp)* '=' _)* = tblRowIL*
     -- (if (typCase_row* = $covered_cases(AC.TYP, typedExp))*)*
     -- if $is_exclusive(typCase_row***)
+    ---- ;; and together cover every combination of cases
     -- if typCase_comb** = $combinations(typCase_total**)
     -- if $forall_($is_covered(typCase_row***, typCase_comb*)*)
 

@@ -82,6 +82,7 @@ def $sideconds_replace(tdenv, (SLICE _ _ typedExp_n) '#' _, typedExp_f) = [ prem
   -- if typedExp_len = $exp_len(typedExp_f)
   -- if premAL_len = $sidecond_cmp(EQ, typedExp_len, typedExp_n)
 def $sideconds_replace(tdenv, (IDX (_ '#' typ_b) _) '#' _, typedExp_f) = [ premAL_len ]
+  ---- ;; an index into text replaces one character
   -- if OK TEXT = $expand_typ(tdenv, typ_b)
   -- if typedExp_len = $exp_len(typedExp_f)
   -- if premAL_len = $sidecond_cmp(EQ, typedExp_len, (NAT 1) '#' NAT)
@@ -134,7 +135,9 @@ rulegroup Guard_exp/binary {
   rule Guard_exp/divide:
     AC |- (BIN binop typedExp_l typedExp_r) '#' _ : premAL*
     -- if binop <- [ DIV, MOD ]
+    ---- ;; guard the operands first
     -- Guard_exps: AC |- [ typedExp_l, typedExp_r ] : premAL_operand*
+    ---- ;; then require a nonzero divisor
     -- if _ '#' typ_r = typedExp_r
     -- if typedExp_zero = $exp_zero(AC.TYP, typ_r)
     -- if premAL_div = $sidecond_cmp(NE, typedExp_r, typedExp_zero)
@@ -244,7 +247,9 @@ rule Guard_exp/dot:
 
 rule Guard_exp/idx:
   AC |- (IDX typedExp_b typedExp_i) '#' _ : premAL*
+  ---- ;; guard the base and the index first
   -- Guard_exps: AC |- [ typedExp_b, typedExp_i ] : premAL_operand*
+  ---- ;; then require the index within the base
   -- if typedExp_len = $exp_len(typedExp_b)
   -- if premAL_idx = $sidecond_cmp(LT, typedExp_i, typedExp_len)
   -- if premAL* = premAL_operand* ++ [ premAL_idx ]
@@ -253,7 +258,9 @@ rule Guard_exp/idx:
 
 rule Guard_exp/slice:
   AC |- (SLICE typedExp_b typedExp_i typedExp_n) '#' _ : premAL*
+  ---- ;; guard the base and the bounds first
   -- Guard_exps: AC |- [ typedExp_b, typedExp_i, typedExp_n ] : premAL_operand*
+  ---- ;; then require the slice to end within the base
   -- if typedExp_end = (BIN ADD typedExp_i typedExp_n) '#' NAT
   -- if typedExp_len = $exp_len(typedExp_b)
   -- if premAL_slice = $sidecond_cmp(LE, typedExp_end, typedExp_len)
@@ -263,9 +270,12 @@ rule Guard_exp/slice:
 
 rule Guard_exp/upd:
   AC |- (UPD typedExp_b typedPath typedExp_f) '#' _ : premAL*
+  ---- ;; guard every prefix of the path against its own target
   -- if typedExp_acc = $access_exp(typedExp_b, typedPath)
   -- Guard_exp: AC |- typedExp_acc : premAL_acc*
+  ---- ;; guard the replacement
   -- Guard_exp: AC |- typedExp_f : premAL_f*
+  ---- ;; the replacement must fit the part it replaces
   -- if premAL_rep* = $sideconds_replace(AC.TYP, typedPath, typedExp_f)
   -- if premAL* = premAL_acc* ++ premAL_f* ++ premAL_rep*
 
@@ -279,7 +289,9 @@ rule Guard_exp/call:
 
 rule Guard_exp/iter:
   AC |- (ITER typedExp (iter vari*)) '#' _ : premAL*
+  ---- ;; the sources must agree in length before the body is guarded
   -- if premAL_src* = $sideconds_iter(iter, vari*)
+  ---- ;; guard the body under the same iteration
   -- Guard_exp: AC |- typedExp : premAL_body*
   -- (if premAL_body_iter = ITER premAL_body (iter '<-' vari* '->' eps))*
   -- if premAL* = premAL_src* ++ premAL_body_iter*
@@ -390,7 +402,9 @@ rule Guard_prem/let:
 
 rule Guard_prem/iter:
   AC |- ITER premAL (iter '<-' vari_src* '->' _) : premAL_guard*
+  ---- ;; the sources must agree in length before the body is guarded
   -- if premAL_src* = $sideconds_iter(iter, vari_src*)
+  ---- ;; guard the body over its sources alone
   -- Guard_prem: AC |- premAL : premAL_body*
   -- (if premAL_body_iter = ITER premAL_body (iter '<-' vari_src* '->' eps))*
   -- if premAL_guard* = premAL_src* ++ premAL_body_iter*
@@ -417,6 +431,7 @@ rulegroup Guard_prems {
 
   rule Guard_prems/cons:
     AC |- premAL_h :: premAL_t* : premAL*
+    ---- ;; each premise is preceded by its own guards
     -- Guard_prem: AC |- premAL_h : premAL_guard*
     -- Guard_prems: AC |- premAL_t* : premAL_t_guard*
     -- if premAL* = premAL_guard* ++ [ premAL_h ] ++ premAL_t_guard*
@@ -440,7 +455,9 @@ rulegroup Guard_prems {
 rule Guard_rul:
   AC |- rulAL : rulAL_guard
   -- if id ':' typedExp_in* '->' typedExp_out* '-' premAL* = rulAL
+  ---- ;; guard the premises in order
   -- Guard_prems: AC |- premAL* : premAL_guard*
+  ---- ;; then guard the outputs after the premises that bind them
   -- Guard_exps: AC |- typedExp_out* : premAL_out*
   -- if rulAL_guard
       = id ':' typedExp_in* '->' typedExp_out* '-' (premAL_guard* ++ premAL_out*)
@@ -451,7 +468,9 @@ rule Guard_rul:
 rule Guard_clause:
   AC |- clauseAL : clauseAL_guard
   -- if arg* '=' typedExp '-' premAL* = clauseAL
+  ---- ;; guard the premises in order
   -- Guard_prems: AC |- premAL* : premAL_guard*
+  ---- ;; then guard the result after the premises that bind it
   -- Guard_exp: AC |- typedExp : premAL_out*
   -- if clauseAL_guard = arg* '=' typedExp '-' (premAL_guard* ++ premAL_out*)
 
@@ -461,7 +480,9 @@ rule Guard_clause:
 rule Guard_tblRow:
   AC |- tblRowAL : tblRowAL_guard
   -- if arg* '=' typedExp '-' premAL* = tblRowAL
+  ---- ;; guard the premises in order
   -- Guard_prems: AC |- premAL* : premAL_guard*
+  ---- ;; then guard the result after the premises that bind it
   -- Guard_exp: AC |- typedExp : premAL_out*
   -- if tblRowAL_guard = arg* '=' typedExp '-' (premAL_guard* ++ premAL_out*)
 
@@ -491,9 +512,11 @@ rulegroup Guard_def/rel {
     AC |- definedRelDefnAL : definedRelDefnAL_guard
     -- if REL id ':' typ_in* '->' typ_out* '=' rulGroupAL* elsGroupAL?
         = definedRelDefnAL
+    ---- ;; guard every rule of each group
     -- if (id_group ':' rulAL* = rulGroupAL)*
     -- (Guard_rul: AC |- rulAL : rulAL_guard)**
     -- if (rulGroupAL_guard = id_group ':' rulAL_guard*)*
+    ---- ;; and the otherwise rule
     -- if (id_else ':' rulAL_else = elsGroupAL)?
     -- (Guard_rul: AC |- rulAL_else : rulAL_else_guard)?
     -- if (elsGroupAL_guard = id_else ':' rulAL_else_guard)?
@@ -531,6 +554,7 @@ rulegroup Guard_def/func {
     AC |- definedFuncDefnAL : definedFuncDefnAL_guard
     -- if FUNC id tparam* param* ':' typ '=' clauseAL* elsClauseAL?
         = definedFuncDefnAL
+    ---- ;; type parameters are in scope in every clause
     -- if AC_func = $add_tparams(AC, tparam*)
     -- (Guard_clause: AC_func |- clauseAL : clauseAL_guard)*
     -- (Guard_clause: AC_func |- elsClauseAL : elsClauseAL_guard)?

@@ -12,9 +12,12 @@
 
 rule Bind_exps:
   AC IC |- typedExp* : AC_bound typedExp_part* (premAL_part* ++ premAL_eq*)
+  ---- ;; rename repeated binders, requiring their occurrences to be equal
   -- Multibind_exps: AC IC |- typedExp* : AC_multi typedExp_multi* premAL_eq*
+  ---- ;; decompose partially bound sub-patterns into fresh variables
   -- Partialbind_exps:
       AC_multi IC |- eps typedExp_multi* : AC_part _ typedExp_part* premAL_part*
+  ---- ;; bind every occurrence, now distinct, outside the iterations
   -- Collectbind_exps: AC_multi |- typedExp_multi* : vari_bind*
   -- if AC_bound = $add_bound(AC_part, $lift_vari(IC, vari_bind)*)
 
@@ -26,7 +29,10 @@ rule Bind_exps:
 
 rule Bind_args:
   AC |- arg* : AC_bound arg_part* (premAL_part* ++ premAL_eq*)
+  ---- ;; rename repeated binders, requiring their occurrences to be equal
   -- Multibind_args: AC |- arg* : AC_multi arg_multi* premAL_eq*
+  ---- ;; decompose partially bound sub-patterns into fresh variables
   -- Partialbind_args: AC_multi |- arg_multi* : AC_part arg_part* premAL_part*
+  ---- ;; bind every occurrence, now distinct
   -- Collectbind_args: AC_multi |- arg_multi* : vari_bind*
   -- if AC_bound = $add_bound(AC_part, vari_bind*)

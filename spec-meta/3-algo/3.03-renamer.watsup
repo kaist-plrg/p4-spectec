@@ -30,12 +30,15 @@ def $init_renamer(id_used*, eps) = { USED id_used*, NAMES $empty_map<id, id*> }
 
 def $init_renamer(id_used*, vari_h :: vari_t*)
   = R[ .NAMES = $add_map<id, id*>(R.NAMES, id_h, eps) ]
+  ---- ;; a binder is added at its last occurrence
   -- if id_h _ _ = vari_h
   -- if ~(id_h <- $ids_of_varis(vari_t*))
+  ---- ;; the occurrences after it are added first
   -- if R = $init_renamer(id_used*, vari_t*)
 
 def $init_renamer(id_used*, vari_h :: vari_t*)
   = $init_renamer(id_used*, vari_t*)
+  ---- ;; an earlier occurrence must match a later one in type and dimension
   -- if vari_h <- vari_t*
 
 dec $vari_of(id, vari*) : vari
@@ -87,13 +90,17 @@ def $rename_iter_vari(R, vari, _) = [ vari ]
 ;;; VAR id
 
 def $rename_exp(R, (VAR id) '#' typ) = (R_multi, (VAR id) '#' typ)
+  ---- ;; no occurrence of the binder is named yet
   -- if id_name* = $find_map<id, id*>(R.NAMES, id)
   -- if id_name* = eps
+  ---- ;; the first occurrence keeps the binder's identifier
   -- if R_multi = R[ .NAMES = $add_map<id, id*>(R.NAMES, id, [ id ]) ]
 
 def $rename_exp(R, (VAR id) '#' typ) = (R_multi, (VAR id_fresh) '#' typ)
+  ---- ;; an earlier occurrence is already named
   -- if id_name* = $find_map<id, id*>(R.NAMES, id)
   -- if id_name* =/= eps
+  ---- ;; a later occurrence takes a fresh identifier
   -- if (id_used*, id_fresh) = $fresh_id(R.USED)
   -- if R_multi = { USED id_used*,
                NAMES $add_map<id, id*>(R.NAMES, id, id_name* ++ [ id_fresh ]) }
@@ -143,7 +150,9 @@ def $rename_exp(R, (CONS typedExp_h typedExp_t) '#' typ)
 
 def $rename_exp(R, (ITER typedExp (iter vari*)) '#' typ)
   = (R_multi, (ITER typedExp_multi (iter vari_occ*)) '#' typ)
+  ---- ;; rename the occurrences inside the iteration
   -- if (R_multi, typedExp_multi) = $rename_exp(R, typedExp)
+  ---- ;; iterate over the renamed occurrences the body still reads
   -- if id_free* = $ids_of_varis($free_varis_exp(typedExp_multi))
   -- if (vari_rename* = $rename_iter_vari(R_multi, vari, id_free*))*
   -- if vari_occ* = $concat_<vari>(vari_rename**)

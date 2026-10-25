@@ -9,13 +9,17 @@
 rule Algo_rul:
   AC inputHint |- rulIL : rulAL
   -- if id ':' typedExp* '-' premIL* = rulIL
+  ---- ;; fresh identifiers avoid those of the rule
   -- if id_used* = $ids_of_varis($free_varis_rulIL(rulIL))
   -- if AC_rul = $add_used(AC, id_used*)
+  ---- ;; the inputs bind, decomposing partially bound patterns
   -- if (typedExp_in*, typedExp_out*)
       = $split_inputs<typedExp>(inputHint, typedExp*)
   -- Bind_exps:
       AC_rul eps |- typedExp_in* : AC_in typedExp_in_part* premAL_bind*
+  ---- ;; the premises run in order after the inputs
   -- Algo_prems: AC_in |- premIL* : AC_body premAL*
+  ---- ;; the outputs read only bound variables
   -- if vari_out* = $free_varis_exps(typedExp_out*)
   -- if $is_bound(AC_body, eps, vari_out*)
   -- if rulAL
@@ -33,10 +37,14 @@ rule Algo_rul:
 rule Algo_clause:
   AC |- clauseIL : clauseAL
   -- if arg* '=' typedExp '-' premIL* = clauseIL
+  ---- ;; fresh identifiers avoid those of the clause
   -- if id_used* = $ids_of_varis($free_varis_clauseIL(clauseIL))
   -- if AC_clause = $add_used(AC, id_used*)
+  ---- ;; the arguments bind, decomposing partially bound patterns
   -- Bind_args: AC_clause |- arg* : AC_arg arg_part* premAL_arg*
+  ---- ;; the premises run in order after the arguments
   -- Algo_prems: AC_arg |- premIL* : AC_body premAL*
+  ---- ;; the result reads only bound variables
   -- if vari_body* = $free_varis_exp(typedExp)
   -- if $is_bound(AC_body, eps, vari_body*)
   -- if clauseAL
@@ -71,10 +79,13 @@ rulegroup Algo_def/rel {
     AC |- definedRelDefnIL : definedRelDefnAL
     -- if REL id ':' typ* `( inputHint `) '=' rulGroupIL* elsGroupIL?
         = definedRelDefnIL
+    ---- ;; split the types into inputs and outputs
     -- if (typ_in*, typ_out*) = $split_inputs<typ>(inputHint, typ*)
+    ---- ;; convert every rule of each group with the same split
     -- if (id_group ':' rulIL* = rulGroupIL)*
     -- (Algo_rul: AC inputHint |- rulIL : rulAL)**
     -- if (rulGroupAL = id_group ':' rulAL*)*
+    ---- ;; and the otherwise rule
     -- if (id_else ':' rulIL_else = elsGroupIL)?
     -- (Algo_rul: AC inputHint |- rulIL_else : rulAL_else)?
     -- if (elsGroupAL = id_else ':' rulAL_else)?
@@ -102,9 +113,11 @@ rulegroup Algo_def/func {
   rule Algo_def/table:
     AC |- tableFuncDefnIL : tableFuncDefnAL
     -- if TABLEFUNC id param* ':' typ '=' tblRowIL* = tableFuncDefnIL
+    ---- ;; every row has an argument per parameter
     -- if (EXP typ_param)* = param*
     -- (if arg* '=' _ = tblRowIL)*
     -- (if |arg*| = |param*|)*
+    ---- ;; convert the rows and check that they cover their keys
     -- (Algo_tblRow: AC |- tblRowIL : tblRowAL)*
     -- TblRows_cover: AC typ_param* |- tblRowIL*
     -- if tableFuncDefnAL = TABLEFUNC id param* ':' typ '=' tblRowAL*
@@ -115,6 +128,7 @@ rulegroup Algo_def/func {
     AC |- definedFuncDefnIL : definedFuncDefnAL
     -- if FUNC id tparam* param* ':' typ '=' clauseIL* elsClauseIL?
         = definedFuncDefnIL
+    ---- ;; type parameters are in scope in every clause
     -- if AC_func = $add_tparams(AC, tparam*)
     -- (Algo_clause: AC_func |- clauseIL : clauseAL)*
     -- (Algo_clause: AC_func |- elsClauseIL : elsClauseAL)?
