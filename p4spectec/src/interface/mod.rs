@@ -8,7 +8,7 @@
 //!
 //! `meta` is the preset for meta specifications: standard builtins,
 //! with specification inputs parsed as AL scripts;
-//! `meta` also converts AL to and from meta-language values
+//! `meta` also converts IL and AL to and from meta-language values
 
 use crate::lang::{common::source::Span, data::value};
 

@@ -34,7 +34,8 @@ $(TEST_TARGETS):
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
 METACIRC_TARGETS := metacirc test-metacirc test-metacirc-micro test-metacirc-elab \
-  test-metacirc-algo test-metacirc-structure test-metacirc-prose test-metacirc-promote
+  test-metacirc-algo test-metacirc-structure test-metacirc-prose test-metacirc-metaparse \
+  test-metacirc-promote
 
 .PHONY: $(METACIRC_TARGETS)
 $(METACIRC_TARGETS):

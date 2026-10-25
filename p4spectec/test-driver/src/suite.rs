@@ -64,6 +64,14 @@ pub struct AdocSuite {
     pub pl: Vec<StructureSnapshot>,
 }
 
+/// Registers specification inputs whose IL and AL codecs must round-trip.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MetaparseSuite {
+    pub name: String,
+    pub inputs: Vec<PathBuf>,
+}
+
 /// Registers P4 parsing and roundtrip inputs.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -142,13 +150,15 @@ pub struct MetacircSnapshots {
     pub prose: PathBuf,
 }
 
-/// Supplies metacircular corpus inputs, towers, expectations, and snapshots.
+/// Supplies metacircular corpus inputs, towers, expectations, snapshots,
+/// and the meta codec round-trip inputs.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MetacircConfig {
     pub includes: Vec<PathBuf>,
     pub excludes: Vec<PathBuf>,
     pub snapshots: MetacircSnapshots,
+    pub metaparse: PathBuf,
     pub suites: Vec<MetacircSuite>,
 }
 
@@ -345,6 +355,16 @@ pub fn load_snapshots(path: &Path) -> Result<Vec<Snapshot>> {
     Ok(snapshots)
 }
 
+/// Loads codec round-trip inputs.
+pub fn load_metaparse(path: &Path) -> Result<Vec<MetaparseSuite>> {
+    let suites: Vec<MetaparseSuite> = load(path)?;
+    names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
+    for suite in &suites {
+        paths_exist(&suite.inputs, &suite.name)?;
+    }
+    Ok(suites)
+}
+
 /// Loads structured snapshots with module-owned rule-group options.
 pub fn load_structure(path: &Path) -> Result<Vec<StructureSnapshot>> {
     let snapshots: Vec<StructureSnapshot> = load(path)?;
@@ -434,13 +454,14 @@ pub fn load_metacirc(path: &Path) -> Result<MetacircConfig> {
     }
     names_valid(config.suites.iter().map(|suite| suite.name.as_str()))?;
     let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
-    // Resolve snapshot registrations relative to this registration file
+    // Resolve snapshot and codec registrations relative to this registration file
     let snapshots = &mut config.snapshots;
     for path in
         [&mut snapshots.elab, &mut snapshots.algo, &mut snapshots.structure, &mut snapshots.prose]
     {
         *path = path_parent.join(&*path);
     }
+    config.metaparse = path_parent.join(&config.metaparse);
     for suite in &mut config.suites {
         // Resolve each tower relative to this registration file
         suite.tower = path_parent.join(&suite.tower);

@@ -2,7 +2,8 @@
 //!
 //! `shared` encodes and decodes the syntax IL and AL have in common,
 //! together with the conversion cache and errors;
-//! `al` adds AL and runtime values.
+//! `il` adds the elaborated IL given to an IL-to-AL specification,
+//! and `al` adds AL and runtime values.
 //! `MetaInterface::parse_program` lowers specification paths through `algo`
 //! and encodes the AL script in the caller's arena;
 //! include search paths are unused because scripts are not preprocessed.
@@ -21,6 +22,7 @@ use crate::{
 use self::shared::encode::Encode;
 
 pub mod al;
+pub mod il;
 pub mod shared;
 
 /// Provides AL script parsing and the standard specification builtins.
