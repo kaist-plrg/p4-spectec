@@ -49,6 +49,16 @@ impl From<ValueError> for LoadError {
     }
 }
 
+impl std::fmt::Display for LoadError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::SymbolUndeclared(name) => write!(f, "undeclared symbol {name}"),
+            Self::Malformed(what) => write!(f, "malformed {what}"),
+            Self::Value(error) => error.fmt(f),
+        }
+    }
+}
+
 /// A loading result.
 type Result<T> = std::result::Result<T, LoadError>;
 
@@ -219,6 +229,19 @@ impl<'a> Builder<'a> {
     /// A pattern whose applications are of known symbols.
     pub fn kore(&mut self, pattern: &Pattern) -> Result<Value> {
         self.kore_checked(pattern, true)
+    }
+
+    /// `OK kore` or `ERROR`, of `res<kore>`: the K runtime's answer, or its
+    /// failure.
+    pub fn res_kore(&mut self, pattern: Option<&Pattern>) -> Result<Value> {
+        let typ = typ::make::var(id("res"), vec![typ("kore")]);
+        match pattern {
+            Some(pattern) => {
+                let value = self.kore(pattern)?;
+                self.case_typed("OK x", vec![value], typ)
+            }
+            None => self.case_typed("ERROR", vec![], typ),
+        }
     }
 
     // - Attributes

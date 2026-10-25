@@ -6,31 +6,21 @@
 //! Domain values are written with the sort hooked to their kind:
 //! `INT 5` is `\dv{SortInt{}}("5")`; collections with the constructors of
 //! their sort, from its `element`, `concat`, and `unit` attributes.
-//! `Maker::of_pattern` reads the result of such a hook back into a term:
-//! a domain value, or a constructor applied to such results.
-
-use std::rc::Rc;
+//! What the runtime answers is read by the specification (`load`).
 
 use num_bigint::BigInt;
 
 use crate::lang::{
-    common::{
-        Id,
-        prim::num::{self, Natural},
-        source::Span,
-    },
+    common::prim::num,
     data::{
         arena::Arena,
         notation::flat::{
-            Mixfix, Mixop,
+            Mixop,
             parse::{ParseMixopError, ToMixop},
         },
-        typ::{self, Typ, TypKind},
         value::flat::{self as value, Value},
     },
 };
-
-use crate::phrase;
 
 use super::{
     ast::{Pattern, Sort},
@@ -61,8 +51,6 @@ pub struct Shapes {
     sortvar: Mixop,
     pair: Mixop,
     braces: Mixop,
-    ok: Mixop,
-    fail: Mixop,
 }
 
 fn mixop(arena: &mut Arena, shape: &str) -> Result<Mixop> {
@@ -91,24 +79,8 @@ impl Shapes {
             sortvar: mixop(arena, "SORTVAR sortid")?,
             pair: mixop(arena, "k ':' v")?,
             braces: mixop(arena, "`{ k `}")?,
-            ok: mixop(arena, "OK x")?,
-            fail: mixop(arena, "ERROR")?,
         })
     }
-}
-
-// == Types
-
-fn id(name: &str) -> Id {
-    phrase!(node: name.into(), span: Span::default())
-}
-
-fn typ_named(name: &str) -> Typ {
-    typ::make::var(id(name), vec![])
-}
-
-fn rc(typ: Typ) -> Rc<TypKind> {
-    Rc::new(typ.node)
 }
 
 // == Reading values
@@ -279,146 +251,4 @@ pub fn to_pattern(arena: &Arena, info: &Info, shapes: &Shapes, value: &Value) ->
             _ => Err("not a term".to_owned()),
         }
     })
-}
-
-// == Making values
-
-/// A builder of terms in an arena.
-pub struct Maker<'a> {
-    pub arena: &'a mut Arena,
-    pub info: &'a Info,
-    pub shapes: &'a Shapes,
-}
-
-impl Maker<'_> {
-    fn case(&mut self, mixop: Mixop, args: Vec<Value>, typ: Typ) -> Result<Value> {
-        let mixfix = Mixfix::new(&self.arena.mixop, mixop, args).expect("mixop arity matches");
-        value::make::case_flat(self.arena, rc(typ), mixfix, Span::default()).map_err(value_error)
-    }
-
-    fn term(&mut self, mixop: Mixop, args: Vec<Value>) -> Result<Value> {
-        self.case(mixop, args, typ_named("term"))
-    }
-
-    fn list(&mut self, typ_elem: Typ, values: Vec<Value>) -> Result<Value> {
-        let typ = rc(typ::make::list(typ_elem));
-        value::make::list(self.arena, typ, values, Span::default()).map_err(value_error)
-    }
-
-    fn text(&mut self, text: &str) -> Result<Value> {
-        value::make::text(self.arena, text.to_owned(), Span::default()).map_err(value_error)
-    }
-
-    fn int(&mut self, i: BigInt) -> Result<Value> {
-        value::make::int(self.arena, i, Span::default()).map_err(value_error)
-    }
-
-    fn nat(&mut self, n: BigInt) -> Result<Value> {
-        let n = Natural::try_from(n).map_err(value_error)?;
-        value::make::nat(self.arena, n, Span::default()).map_err(value_error)
-    }
-
-    pub fn sort(&mut self, sort: &Sort) -> Result<Value> {
-        match sort {
-            Sort::Sort(name, sorts) => {
-                let name = self.text(name)?;
-                let sorts = sorts
-                    .iter()
-                    .map(|sort| self.sort(sort))
-                    .collect::<Result<_>>()?;
-                let sorts = self.list(typ_named("sort"), sorts)?;
-                self.case(self.shapes.sort, vec![name, sorts], typ_named("sort"))
-            }
-            Sort::Var(name) => {
-                let name = self.text(name)?;
-                self.case(self.shapes.sortvar, vec![name], typ_named("sort"))
-            }
-        }
-    }
-
-    /// A domain value, by the hook of its sort.
-    fn domain_value(&mut self, sort: &Sort, text: &str) -> Result<Value> {
-        let Sort::Sort(name, _) = sort else {
-            return Err(format!("domain value of sort {sort}"));
-        };
-        let bad = || format!("bad domain value {text:?} of {sort}");
-        // The hook of the sort says how its text reads
-        match self.info.sort_hook(name) {
-            Some("INT.Int") => {
-                let i = text.parse::<BigInt>().map_err(|_| bad())?;
-                let i = self.int(i)?;
-                self.term(self.shapes.int, vec![i])
-            }
-            Some("BOOL.Bool") => {
-                let b = match text {
-                    "true" => true,
-                    "false" => false,
-                    _ => return Err(bad()),
-                };
-                let b = value::make::bool(self.arena, b, Span::default()).map_err(value_error)?;
-                self.term(self.shapes.bool, vec![b])
-            }
-            Some("STRING.String") => {
-                let t = self.text(text)?;
-                self.term(self.shapes.string, vec![t])
-            }
-            Some("FLOAT.Float") => {
-                let t = self.text(text)?;
-                self.term(self.shapes.float, vec![t])
-            }
-            Some("BYTES.Bytes") => {
-                let bytes = text
-                    .chars()
-                    .map(|c| self.nat(BigInt::from(u32::from(c))))
-                    .collect::<Result<_>>()?;
-                let bytes = self.list(typ::make::nat(), bytes)?;
-                self.term(self.shapes.bytes, vec![bytes])
-            }
-            _ => {
-                let sort = self.sort(sort)?;
-                let t = self.text(text)?;
-                self.term(self.shapes.dv, vec![sort, t])
-            }
-        }
-    }
-
-    /// The result of a hook computed by the runtime as a term: a domain value,
-    /// or a constructor applied to such results, as `G1Point(x, y)` of KRYPTO.
-    pub fn of_pattern(&mut self, pattern: &Pattern) -> Result<Value> {
-        match pattern {
-            Pattern::App(symbol, sorts, args) if symbol == "\\dv" => {
-                match (sorts.as_slice(), args.as_slice()) {
-                    ([sort], [Pattern::Str(text)]) => self.domain_value(sort, text),
-                    _ => Err(format!("bad domain value {pattern}")),
-                }
-            }
-            Pattern::App(symbol, sorts, args) => {
-                let symbol = self.text(symbol)?;
-                let sorts = sorts
-                    .iter()
-                    .map(|sort| self.sort(sort))
-                    .collect::<Result<_>>()?;
-                let sorts = self.list(typ_named("sort"), sorts)?;
-                let args = args
-                    .iter()
-                    .map(|arg| self.of_pattern(arg))
-                    .collect::<Result<_>>()?;
-                let args = self.list(typ_named("term"), args)?;
-                self.term(self.shapes.app, vec![symbol, sorts, args])
-            }
-            _ => Err(format!("the runtime gives {pattern}, not a term")),
-        }
-    }
-
-    /// `OK term`, of `res<term>`.
-    pub fn ok(&mut self, term: Value) -> Result<Value> {
-        let typ = typ::make::var(id("res"), vec![typ_named("term")]);
-        self.case(self.shapes.ok, vec![term], typ)
-    }
-
-    /// `FAIL`, of `res<term>`.
-    pub fn fail(&mut self) -> Result<Value> {
-        let typ = typ::make::var(id("res"), vec![typ_named("term")]);
-        self.case(self.shapes.fail, vec![], typ)
-    }
 }

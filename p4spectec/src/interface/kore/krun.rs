@@ -20,16 +20,16 @@ use crate::lang::{
     },
 };
 
-use crate::runner::{Config, NullExtern, RunError, Runner, Spec};
+use crate::runner::{Config, RunError, Runner, Spec};
 
 use num_bigint::BigInt;
 
-use super::{KoreInterface, ast::Pattern, check::Checker, parse};
+use super::{KoreInterface, ast::Pattern, check::Checker, externs::KoreExtern, parse};
 
 /// A definition and an initial term read for a run.
 pub struct Krun {
     pub arena: Arena,
-    runner: Runner<KoreInterface, NullExtern>,
+    runner: Runner<KoreInterface, KoreExtern>,
     /// `Krun`'s inputs: the definition, the initial term, the step limit.
     inputs: [Value; 3],
     /// The number of axioms in the definition.
@@ -50,21 +50,24 @@ impl Krun {
     ) -> Result<Self, RunError> {
         let mut arena = Arena::new();
         let interface = super::super::kore();
-        let mut runner = Runner::new(&mut arena, spec, config, interface, NullExtern)
+        let mut runner = Runner::new(&mut arena, spec, config, interface, KoreExtern::default())
             .map_err(RunError::Build)?;
 
         // Open the runtime, read the definition, then the initial term against its symbols
         let time = Instant::now();
         if let Some(path_library) = path_library {
             runner
-                .interface
+                .external
                 .open_runtime(path_library)
-                .map_err(RunError::Parse)?;
+                .map_err(|message| {
+                    RunError::Parse(super::diagnostic(super::KORE_RUNTIME, message))
+                })?;
         }
         let (value_definition, axioms) = runner
             .interface
             .load_definition(&mut arena, path_definition)
             .map_err(RunError::Parse)?;
+        runner.external.attach(runner.interface.loaded());
         let value_term = runner
             .parse_program(&mut arena, &[], &[path_term.to_path_buf()])
             .map_err(RunError::Parse)?;

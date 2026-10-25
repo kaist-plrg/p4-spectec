@@ -4,13 +4,30 @@
 
 ;;; A hook of K's modules of domain values (INT, BOOL, STRING, BYTES, FLOAT,
 ;;; KRYPTO) is computed by the K runtime of the definition, the LLVM
-;;; backend's (RUNTIME symbols, 6-load); ERROR if the runtime fails, as on a
-;;; division by zero. Hooks on K terms are specified (3.2 and 3.4).
+;;; backend's (RUNTIME symbols, 6-load), as P4-SpecTec² leaves builtins to
+;;; the next level (Call_builtin_func in spec-meta). The runtime answers in
+;;; KORE, which is read as the initial term is (4.2-eval); ERROR if the
+;;; runtime fails, as on a division by zero. Hooks on K terms are specified
+;;; (3.2 and 3.4).
 
-builtin dec $call_hook(symid, sort*, sort, term*) : res<term>
-  hint(prose_in "the result of the K runtime on" %0 "applied to" %3)
+extern relation Call_hook:
+  |- symid sort* sort term* : res<kore>
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "the K runtime applying" %0 "to" %3)
+  hint(prose_out %4)
 
-;;; Reading domain values (6-load): a KORE string has one byte per character
+;;; How KORE is read as a pattern, by the hooks of the sorts (6-load)
+
+dec $pattern(map<sortid, hookid>, kore) : pattern
+  hint(prose_in "the pattern" %1 "stands for")
+
+;;; A Float literal in the runtime's output format, by the K runtime
+
+extern dec $float_literal(text) : text?
+  hint(prose_in "the value of the float literal" %0)
+
+;;; Reading domain values and hook names (6-load): a KORE string has one byte
+;;; per character
 
 builtin dec $string_substr(text, int, int) : text
   hint(prose_in "the bytes of" %0 "from" %1 "up to" %2)
@@ -21,8 +38,3 @@ builtin dec $string_to_int(text) : int?
   hint(prose_in "the integer written in decimal as" %0)
 builtin dec $string_to_bytes(text) : nat*
   hint(prose_in "the bytes of" %0)
-
-;;; A Float literal in the runtime's output format, by the K runtime
-
-builtin dec $float_literal(text) : text?
-  hint(prose_in "the value of the float literal" %0)

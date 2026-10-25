@@ -156,10 +156,22 @@ rule Apply/hooked:
   -- if HOOKED hookid = $kind_of_symbol(D, symid)
   -- if sort_r = $result_instance(D, symid, sort*)
 
+;;; A hook of a domain module is computed by the K runtime (3.1). Its answer
+;;; is KORE, a domain value or a constructor term, read as the initial term is
+;;; (6-load) and evaluated to a term
+
 rule Apply/runtime:
-  D |- symid sort* term* : $call_hook(symid, sort*, sort_r, term*)
+  D |- symid sort* term* : result
   -- if RUNTIME hookid = $kind_of_symbol(D, symid)
   -- if sort_r = $result_instance(D, symid, sort*)
+  -- Call_hook: |- symid sort* sort_r term* : OK kore
+  -- Eval: D $empty_map<varid, term> |- $pattern(D.SORTHOOKS, kore) : result
+
+rule Apply/runtime-error:
+  D |- symid sort* term* : ERROR
+  -- if RUNTIME hookid = $kind_of_symbol(D, symid)
+  -- if sort_r = $result_instance(D, symid, sort*)
+  -- Call_hook: |- symid sort* sort_r term* : ERROR
 
 ;;; A function symbol is rewritten by its first equation that applies, as a
 ;;; step rewrites the configuration by its first rule (5-step). Failing to

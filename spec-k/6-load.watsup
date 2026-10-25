@@ -12,6 +12,7 @@
 ;;; attributes and skipped where rules and equations are tried ($runs).
 
 var KD : kdefinition
+var SH : map<sortid, hookid>
 var AM : map<symid, kalias>
 var SK : map<varid, kore>
 var EM : map<symid, (nat, clause)*>
@@ -144,13 +145,22 @@ dec $fresh_generators(map<symid, ksymdecl>) : map<sort, symid>
 def $fresh_generators(`{ (symid ':' ksymdecl)* `})
   = `{ $concat_<pair<sort, symid>>($fresh_generator(symid, ksymdecl)*) `}
 
-;; Sorts: the hook of a sort, and the number a sort like Sort8 stands for
+;; Sorts: the hook of each hooked sort, e.g. "INT.Int" of SortInt
 
-dec $sort_hook(kdefinition, sort) : text
-def $sort_hook(KD, SORT sortid sort*) = hookid
-  -- if (kattr*) = $find_map<sortid, kattr*>(KD.KSORTS, sortid)
-  -- if (KATTR "hook" sort_h* ([KSTR hookid])) = $attr_named("hook", kattr*)
-def $sort_hook(KD, sort) = ""
+dec $sort_hook_entry(sortid, kattr*) : pair<sortid, hookid>*
+def $sort_hook_entry(sortid, kattr*) = [ sortid ':' hookid ]
+  -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
+def $sort_hook_entry(sortid, kattr*) = eps
+  -- otherwise
+
+dec $sort_hooks(map<sortid, kattr*>) : map<sortid, hookid>
+def $sort_hooks(`{ (sortid ':' kattr*)* `})
+  = `{ $concat_<pair<sortid, hookid>>($sort_hook_entry(sortid, kattr*)*) `}
+
+dec $sort_hook(map<sortid, hookid>, sort) : text
+def $sort_hook(SH, SORT sortid sort*) = hookid
+  -- if hookid = $find_map<sortid, hookid>(SH, sortid)
+def $sort_hook(SH, sort) = ""
   -- otherwise
 
 dec $symdecls(map<symid, ksymdecl>) : map<symid, symdecl>
@@ -220,25 +230,25 @@ def $right_assoc(symid, sort*, kore_h :: kore_t*)
   = KAPP symid sort* ([kore_h, $right_assoc(symid, sort*, kore_t*)])
   -- if $(|kore_t*| > 0)
 
-;; Patterns of rules, equations, and the initial term
+;; Patterns of rules, equations, the initial term, and the K runtime's answers
+;; (4.2-eval), by the hooks of the sorts; declared in 3.1-hook-runtime
 
-dec $pattern(kdefinition, kore) : pattern
-def $pattern(KD, KVAR varid sort) = VAR varid sort
-def $pattern(KD, KML "dv" ([sort]) ([KSTR text]))
-  = $literal($sort_hook(KD, sort), sort, text)
-def $pattern(KD, KAPP symid sort* kore*) = APP symid sort* $pattern(KD, kore)*
-def $pattern(KD, KML "and" ([sort]) ([kore_1, kore_2]))
-  = AND sort $pattern(KD, kore_1) $pattern(KD, kore_2)
-def $pattern(KD, KML "or" ([sort]) ([kore_1, kore_2]))
-  = OR sort $pattern(KD, kore_1) $pattern(KD, kore_2)
+def $pattern(SH, KVAR varid sort) = VAR varid sort
+def $pattern(SH, KML "dv" ([sort]) ([KSTR text]))
+  = $literal($sort_hook(SH, sort), sort, text)
+def $pattern(SH, KAPP symid sort* kore*) = APP symid sort* $pattern(SH, kore)*
+def $pattern(SH, KML "and" ([sort]) ([kore_1, kore_2]))
+  = AND sort $pattern(SH, kore_1) $pattern(SH, kore_2)
+def $pattern(SH, KML "or" ([sort]) ([kore_1, kore_2]))
+  = OR sort $pattern(SH, kore_1) $pattern(SH, kore_2)
 ;; a longer \or is read from the right
-def $pattern(KD, KML "or" ([sort]) (kore_h :: kore_t*))
-  = OR sort $pattern(KD, kore_h) $pattern(KD, KML "or" ([sort]) kore_t*)
+def $pattern(SH, KML "or" ([sort]) (kore_h :: kore_t*))
+  = OR sort $pattern(SH, kore_h) $pattern(SH, KML "or" ([sort]) kore_t*)
   -- if $(|kore_t*| > 1)
-def $pattern(KD, KML "left-assoc" eps ([KAPP symid sort* (kore_h :: kore_t*)]))
-  = $pattern(KD, $left_assoc(symid, sort*, kore_h, kore_t*))
-def $pattern(KD, KML "right-assoc" eps ([KAPP symid sort* kore*]))
-  = $pattern(KD, $right_assoc(symid, sort*, kore*))
+def $pattern(SH, KML "left-assoc" eps ([KAPP symid sort* (kore_h :: kore_t*)]))
+  = $pattern(SH, $left_assoc(symid, sort*, kore_h, kore_t*))
+def $pattern(SH, KML "right-assoc" eps ([KAPP symid sort* kore*]))
+  = $pattern(SH, $right_assoc(symid, sort*, kore*))
 
 ;; Conditions: the predicates of a rule or an equation
 
@@ -271,11 +281,11 @@ dec $requires_of(condition) : kore*
 def $requires_of(REQUIRES kore) = [ kore ]
 def $requires_of(ARGUMENT varid kore) = eps
 
-dec $requires(kdefinition, condition*) : pattern?
+dec $requires(map<sortid, hookid>, condition*) : pattern?
   hint(prose_in "the requires clause of" %1)
-def $requires(KD, condition*) = eps
+def $requires(SH, condition*) = eps
   -- if eps = $concat_<kore>($requires_of(condition)*)
-def $requires(KD, condition*) = $pattern(KD, kore)
+def $requires(SH, condition*) = $pattern(SH, kore)
   -- if [ kore ] = $concat_<kore>($requires_of(condition)*)
 
 dec $argument_pattern(condition, kore) : kore*
@@ -290,11 +300,11 @@ def $argument(condition*, kore) = kore
 def $argument(condition*, kore) = kore_p
   -- if kore_p :: kore_t* = $concat_<kore>($argument_pattern(condition, kore)*)
 
-dec $arguments(kdefinition, condition*, kore*) : pattern*
-def $arguments(KD, condition*, eps) = eps
-def $arguments(KD, condition*, kore_h :: kore_t*)
-  = $pattern(KD, $argument(condition*, kore_h))
-    :: $arguments(KD, condition*, kore_t*)
+dec $arguments(map<sortid, hookid>, condition*, kore*) : pattern*
+def $arguments(SH, condition*, eps) = eps
+def $arguments(SH, condition*, kore_h :: kore_t*)
+  = $pattern(SH, $argument(condition*, kore_h))
+    :: $arguments(SH, condition*, kore_t*)
 
 ;; A side of a rule, \and(pattern, predicate) in either order: on the left,
 ;; the predicate holds the requires clause; on the right, the ensures clause.
@@ -319,21 +329,21 @@ def $without_ensures(kore) = kore_p
 ;; A rewrite rule: \rewrites(\and(lhs, requires), \and(rhs, ensures)), a
 ;; clause with the one left-hand side
 
-dec $rule(kdefinition, kore, kore) : clause
-def $rule(KD, kore_l, kore_r)
-  = CLAUSE ([ $pattern(KD, kore_p) ]) '=>' $pattern(KD, $without_ensures(kore_r))
-      'requires' $requires(KD, $side_conditions(kore_c*))
+dec $rule(map<sortid, hookid>, kore, kore) : clause
+def $rule(SH, kore_l, kore_r)
+  = CLAUSE ([ $pattern(SH, kore_p) ]) '=>' $pattern(SH, $without_ensures(kore_r))
+      'requires' $requires(SH, $side_conditions(kore_c*))
   -- if (kore_p, kore_c*) = $split_side(kore_l)
 
 ;; An equation f(args) = rhs under conditions, a clause with a left-hand side
 ;; per argument. Those of a hooked symbol are kept too, and not used: the hook
 ;; computes it (4.2-eval).
 
-dec $equation(kdefinition, kore*, kore, kore) : clause
-def $equation(KD, kore_a*, kore_c, kore_r)
-  = CLAUSE $arguments(KD, condition*, kore_a*)
-      '=>' $pattern(KD, $without_ensures(kore_r))
-      'requires' $requires(KD, condition*)
+dec $equation(map<sortid, hookid>, kore*, kore, kore) : clause
+def $equation(SH, kore_a*, kore_c, kore_r)
+  = CLAUSE $arguments(SH, condition*, kore_a*)
+      '=>' $pattern(SH, $without_ensures(kore_r))
+      'requires' $requires(SH, condition*)
   -- if condition* = $conditions(kore_c)
 
 ;; What an axiom gives to each part of the definition, by its form and its
@@ -342,30 +352,30 @@ def $equation(KD, kore_a*, kore_c, kore_r)
 
 ;;; a rewrite rule
 
-dec $rule_of(kdefinition, kaxiom) : (nat, clause)*
-def $rule_of(KD, AXIOM (KML "rewrites" sort* ([kore_l, kore_r])) kattr*)
-  = [ ($priority(kattr*), $rule(KD, kore_l, kore_r)) ]
+dec $rule_of(map<sortid, hookid>, kaxiom) : (nat, clause)*
+def $rule_of(SH, AXIOM (KML "rewrites" sort* ([kore_l, kore_r])) kattr*)
+  = [ ($priority(kattr*), $rule(SH, kore_l, kore_r)) ]
   -- if $runs(kattr*)
-def $rule_of(KD, kaxiom) = eps
+def $rule_of(SH, kaxiom) = eps
   -- otherwise
 
 ;;; an equation \implies(conditions, \equals(f(args), rhs)) or
 ;;; \equals(f(args), rhs), with the symbol f it defines; an overload axiom is
 ;;; one of the more general symbol
 
-dec $equation_of(kdefinition, kaxiom) : (symid, (nat, clause))*
-def $equation_of(KD,
+dec $equation_of(map<sortid, hookid>, kaxiom) : (symid, (nat, clause))*
+def $equation_of(SH,
     AXIOM (KML "implies" sort*
       ([kore_c, KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r])]))
     kattr*)
-  = [ (symid, ($priority(kattr*), $equation(KD, kore_a*, kore_c, kore_r))) ]
+  = [ (symid, ($priority(kattr*), $equation(SH, kore_a*, kore_c, kore_r))) ]
   -- if $runs(kattr*)
-def $equation_of(KD,
+def $equation_of(SH,
     AXIOM (KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r])) kattr*)
   = [ (symid, ($priority(kattr*),
-               $equation(KD, kore_a*, KML "top" eps eps, kore_r))) ]
+               $equation(SH, kore_a*, KML "top" eps eps, kore_r))) ]
   -- if $runs(kattr*)
-def $equation_of(KD, kaxiom) = eps
+def $equation_of(SH, kaxiom) = eps
   -- otherwise
 
 ;;; a subsort, from the subsort attribute
@@ -412,14 +422,16 @@ relation Load:
 
 rule Load:
   KD ~> { SYMBOLS $symdecls(KD.KSYMBOLS),
+          SORTHOOKS SH,
           SUBSORTS $close_subsorts($concat_<subsort>($subsort_of(kaxiom)*)),
           OVERLOADS $concat_<overload>($overload_of(kaxiom)*),
           RULES $sort_by_priority<clause>(
-                  $concat_<(nat, clause)>($rule_of(KD, kaxiom)*)),
+                  $concat_<(nat, clause)>($rule_of(SH, kaxiom)*)),
           EQUATIONS $sorted_groups($group_equations(
                       $empty_map<symid, (nat, clause)*>,
-                      $concat_<(symid, (nat, clause))>($equation_of(KD, kaxiom)*))),
+                      $concat_<(symid, (nat, clause))>($equation_of(SH, kaxiom)*))),
           PARAMS $params(KD.KSYMBOLS),
           FRESH $fresh_generators(KD.KSYMBOLS) }
+  -- if SH = $sort_hooks(KD.KSORTS)
   -- if kaxiom_a* = KD.AXIOMS
   -- if kaxiom* = $expand_axiom(KD, kaxiom_a)*
