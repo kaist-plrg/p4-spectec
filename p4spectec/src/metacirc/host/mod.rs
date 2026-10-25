@@ -19,21 +19,20 @@ use crate::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
     },
-    runner::{Eval, Host},
-    sim_plugin::dummy::Dummy,
+    runner::{Eval, Extern, Host},
 };
 
 use reentry::NoReentry;
 
 /// The host of a level above the base, which the level below interprets.
-pub(in crate::metacirc) enum HostLayer {
+pub(in crate::metacirc) enum HostLayer<Ext: Extern> {
     /// A P4 specification, answering the builtins and externs of its program.
-    P4Spec(Host<P4Interface, Dummy>),
+    P4Spec(Host<P4Interface, Ext>),
     /// A meta specification, hosting the script above it.
-    MetaSpec(Host<MetaInterface, MetaExtern>),
+    MetaSpec(Host<MetaInterface, MetaExtern<Ext>>),
 }
 
-impl HostLayer {
+impl<Ext: Extern> HostLayer<Ext> {
     /// Calls a decoded builtin at this layer.
     fn eval_builtin(
         &mut self,

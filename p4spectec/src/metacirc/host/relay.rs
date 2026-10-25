@@ -16,9 +16,9 @@ use crate::{
 };
 
 /// The host of the AL or IL script that a meta specification interprets.
-pub(in crate::metacirc) enum MetaExtern {
+pub(in crate::metacirc) enum MetaExtern<Ext: Extern> {
     /// The script is the next level; host calls go to its layer.
-    Relay(RelayExtern),
+    Relay(RelayExtern<Ext>),
     /// The script is the AL or IL program; only its builtins are answered.
     Terminal(TerminalExtern),
 }
@@ -30,9 +30,9 @@ pub(in crate::metacirc) struct TerminalExtern {
 }
 
 /// Host calls resolved against the next level's host in a runtime tower.
-pub(in crate::metacirc) struct RelayExtern {
+pub(in crate::metacirc) struct RelayExtern<Ext: Extern> {
     pub cache: Box<Cache>,
-    pub layer_next: Box<HostLayer>,
+    pub layer_next: Box<HostLayer<Ext>>,
 }
 
 /// Rejects an operation outside the host boundary's contract.
@@ -43,7 +43,7 @@ fn unsupported<T>(name: &str) -> Eval<T, ExternError> {
     )
 }
 
-impl Extern for MetaExtern {
+impl<Ext: Extern> Extern for MetaExtern<Ext> {
     fn eval_rel<Interp, Iface>(
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
@@ -111,7 +111,7 @@ impl TerminalExtern {
     }
 }
 
-impl RelayExtern {
+impl<Ext: Extern> RelayExtern<Ext> {
     /// Decodes a host call of the next level and evaluates it at its layer.
     fn eval_rel(
         &mut self,

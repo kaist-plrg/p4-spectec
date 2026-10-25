@@ -22,6 +22,7 @@ use crate::{
         il::ast as il,
     },
     note_phrase, phrase,
+    runner::Extern,
 };
 use std::rc::Rc;
 
@@ -207,7 +208,7 @@ fn entry_al(arena: &Arena, spec_al: &al::Spec, name: &str, value: Value) -> Resu
 
 // == Tower patching
 
-impl Tower {
+impl<Ext: Extern> Tower<Ext> {
     /// Wraps an input in scripts from the top level toward the native base.
     ///
     /// Each level is entered through its configured relation,

@@ -14,15 +14,16 @@ use crate::{
         data::{arena::Arena, value::flat::Value},
         il::ast as il,
     },
-    runner::{Eval, Runner},
+    runner::{Eval, Extern, Runner},
     sim_plugin::dummy::Dummy,
 };
 
-/// Prepared specifications and host layers of an interpreter tower.
-pub struct Tower {
+/// Prepared specifications and host layers of an interpreter tower,
+/// with `Ext` the extern of its P4 level.
+pub struct Tower<Ext: Extern = Dummy> {
     // Nonempty, ordered from base through intermediates to the top level
     pub(super) levels: Vec<Level>,
-    pub(super) base: BaseLayer,
+    pub(super) base: BaseLayer<Ext>,
 }
 
 /// A configured specification, by the form it is passed to the level below.
@@ -46,14 +47,14 @@ impl Level {
 }
 
 /// The native runner of the base, selected by the language it interprets.
-pub(super) enum BaseLayer {
+pub(super) enum BaseLayer<Ext: Extern> {
     /// A P4 specification, interpreting a parsed P4 program.
-    P4Spec(Runner<P4Interface, Dummy>),
+    P4Spec(Runner<P4Interface, Ext>),
     /// A meta specification interpreting an AL or IL script, hosting the script above it.
-    MetaSpec(Runner<MetaInterface, MetaExtern>),
+    MetaSpec(Runner<MetaInterface, MetaExtern<Ext>>),
 }
 
-impl Tower {
+impl<Ext: Extern> Tower<Ext> {
     /// Clears program state in the base and every owned host layer.
     ///
     /// Call before each input, and before resetting the arena values for parsing.
@@ -68,7 +69,7 @@ impl Tower {
     }
 }
 
-impl BaseLayer {
+impl<Ext: Extern> BaseLayer<Ext> {
     /// Enters the native runner with the patched input value.
     fn eval_program(&mut self, arena: &mut Arena, name: &str, program: Value) -> Eval<Vec<Value>> {
         match self {

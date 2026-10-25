@@ -24,6 +24,7 @@ use p4spectec::{
     lang::data::arena::Arena,
     metacirc::{self, Tower, TowerConfig, config::Lang},
     runner::Config,
+    sim_plugin::dummy::Dummy,
 };
 
 use crate::{
@@ -113,7 +114,7 @@ fn run_programs(
         let config_tower = TowerConfig::from_file(suite.path_tower)
             .map_err(|error| Error::Invalid(error.to_string()))?;
         let options_tower = Config::new(cache_on, det, false);
-        let tower = Tower::build(&mut arena, &config_tower, options_tower)
+        let tower = Tower::build(&mut arena, &config_tower, options_tower, Dummy)
             .map_err(|error| Error::Invalid(error.to_string()))?;
         towers.insert(suite.path_tower, tower);
     }

@@ -16,6 +16,7 @@ use crate::{
     interface::{self, p4::parse::parse_file},
     lang::data::arena::Arena,
     runner::{self, Interface},
+    sim_plugin::dummy::Dummy,
 };
 use config::Lang;
 pub use config::{ExecutionMode, TowerConfig};
@@ -41,7 +42,7 @@ pub fn run(
         return Err(error::input_invalid("a P4 top level requires exactly one program path"));
     }
     let mut arena = Arena::new();
-    let mut tower = Tower::build(&mut arena, config, options)?;
+    let mut tower = Tower::build(&mut arena, config, options, Dummy)?;
     // Parse the input in the language the top level accepts
     let value_program = match lang_top {
         Lang::Al | Lang::Il => interface::meta(lang_top)
