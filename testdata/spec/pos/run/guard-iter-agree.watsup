@@ -1,0 +1,12 @@
+;; Sources of an iteration must agree in length before its body guards run
+
+dec $pair_index(nat*, nat*, nat*) : nat*
+def $pair_index(nat_base*, nat_l*, nat_r*) = nat_base*[$(nat_l + nat_r)]*
+def $pair_index(nat_base*, nat_l*, nat_r*) = eps
+  -- otherwise
+
+dec $main() : bool
+def $main() = true
+  -- if $pair_index([ 7, 8, 9 ], [ 0, 1 ], [ 1, 1 ]) = [ 8, 9 ]
+  -- if $pair_index([ 7, 8, 9 ], [ 0, 1 ], [ 1 ]) = eps
+  -- if $pair_index([ 7, 8, 9 ], [ 0, 5 ], [ 1, 1 ]) = eps

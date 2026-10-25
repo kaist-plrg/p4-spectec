@@ -3235,6 +3235,608 @@ relation Algo_def: AC |- defnIL : %
 
   1. Else Dangling
 
+relation Guard_exp: AC |- exp '#' typ' : %
+
+1. Group literal: AC |- exp '#' typ' : %
+
+  1. Case analysis on exp
+
+    1. Case (% matches pattern BOOL %)
+
+      1. Result in: % |- % : []
+
+    2. Case (% has type num)
+
+      1. Result in: % |- % : []
+
+    3. Case (% matches pattern TEXT %)
+
+      1. Result in: % |- % : []
+
+  1. Else Dangling
+
+2. Case analysis on exp
+
+  1. Case (% matches pattern VAR %)
+
+    1. (Let VAR id be exp)
+
+      1. Group variable: AC |- VAR id '#' typ' : %
+
+        1. Result in: % |- % : []
+
+  2. Case (% matches pattern UN % %)
+
+    1. (Let UN unop typedExp be exp)
+
+      1. Group unary: AC |- UN unop typedExp '#' typ' : %
+
+        1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  3. Case (% matches pattern BIN % % %)
+
+    1. (Let BIN binop typedExp_l typedExp_r be exp)
+
+      1. Group binary: AC |- BIN binop typedExp_l typedExp_r '#' typ' : %
+
+        1. Case analysis on binop <- [DIV as binop, MOD as binop] (total)
+
+          1. Case false
+
+            1. (Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*})
+
+              1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+          2. Case true
+
+            1. (Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL_operand*{premAL_operand <- premAL_operand*})
+
+              1. (Let _exp '#' typ_r be typedExp_r)
+
+                1. (Let typedExp_zero be $exp_zero(AC.TYP, typ_r))
+
+                  1. (Let premAL_div be $guard_cmp(NE as cmpop, typedExp_r, typedExp_zero))
+
+                    1. (Let premAL*{premAL <- premAL*} be premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_div])
+
+                      1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  4. Case (% matches pattern CMP % % %)
+
+    1. (Let CMP cmpop typedExp_l typedExp_r be exp)
+
+      1. Group compare: AC |- CMP cmpop typedExp_l typedExp_r '#' typ' : %
+
+        1. (Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  5. Case (% matches pattern UPCAST % %)
+
+    1. (Let UPCAST typ typedExp be exp)
+
+      1. Group upcast: AC |- UPCAST typ typedExp '#' typ' : %
+
+        1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  6. Case (% matches pattern DOWNCAST % %)
+
+    1. (Let DOWNCAST typ typedExp be exp)
+
+      1. Group downcast: AC |- DOWNCAST typ typedExp '#' typ' : %
+
+        1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  7. Case (% matches pattern SUB % %)
+
+    1. (Let SUB typedExp typ be exp)
+
+      1. Group subtype: AC |- SUB typedExp typ '#' typ' : %
+
+        1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  8. Case (% matches pattern MATCH % %)
+
+    1. (Let MATCH typedExp pat be exp)
+
+      1. Group match: AC |- MATCH typedExp pat '#' typ' : %
+
+        1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  9. Case (% matches pattern TUP %)
+
+    1. (Let TUP typedExp*{typedExp <- typedExp*} be exp)
+
+      1. Group tuple: AC |- TUP typedExp*{typedExp <- typedExp*} '#' typ' : %
+
+        1. (Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  10. Case (% matches pattern INJ %)
+
+    1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp)
+
+      1. Group case: AC |- INJ mixop typedExp*{typedExp <- typedExp*} '#' typ' : %
+
+        1. (Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  11. Case (% matches pattern STR %)
+
+    1. (Let STR expField*{expField <- expField*} be exp)
+
+      1. Group struct: AC |- STR expField*{expField <- expField*} '#' typ' : %
+
+        1. (Let _atom typedExp be expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
+
+          1. (Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*})
+
+            1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  12. Case (% matches pattern OPT %)
+
+    1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp)
+
+      1. Group opt: AC |- OPT typedExp'?{typedExp' <- typedExp'?} '#' typ' : %
+
+        1. Case analysis on typedExp'?{typedExp' <- typedExp'?} (total)
+
+          1. Case (% matches pattern ())
+
+            1. Result in: % |- % : []
+
+          2. Case (% matches pattern (_))
+
+            1. (Let ?(typedExp) be typedExp'?{typedExp' <- typedExp'?})
+
+              1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
+
+                1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  13. Case (% matches pattern LIST %)
+
+    1. (Let LIST typedExp*{typedExp <- typedExp*} be exp)
+
+      1. Group list: AC |- LIST typedExp*{typedExp <- typedExp*} '#' typ' : %
+
+        1. (Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  14. Case (% matches pattern CONS % %)
+
+    1. (Let CONS typedExp_h typedExp_t be exp)
+
+      1. Group cons: AC |- CONS typedExp_h typedExp_t '#' typ' : %
+
+        1. (Guard_exps: AC |- [typedExp_h, typedExp_t] : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  15. Case (% matches pattern CAT % %)
+
+    1. (Let CAT typedExp_l typedExp_r be exp)
+
+      1. Group concat: AC |- CAT typedExp_l typedExp_r '#' typ' : %
+
+        1. (Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  16. Case (% matches pattern MEM % %)
+
+    1. (Let MEM typedExp_l typedExp_r be exp)
+
+      1. Group mem: AC |- MEM typedExp_l typedExp_r '#' typ' : %
+
+        1. (Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  17. Case (% matches pattern LEN %)
+
+    1. (Let LEN typedExp be exp)
+
+      1. Group len: AC |- LEN typedExp '#' typ' : %
+
+        1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  18. Case (% matches pattern DOT % %)
+
+    1. (Let DOT typedExp atom be exp)
+
+      1. Group dot: AC |- DOT typedExp atom '#' typ' : %
+
+        1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  19. Case (% matches pattern IDX % %)
+
+    1. (Let IDX typedExp_b typedExp_i be exp)
+
+      1. Group idx: AC |- IDX typedExp_b typedExp_i '#' typ' : %
+
+        1. (Guard_exps: AC |- [typedExp_b, typedExp_i] : premAL_operand*{premAL_operand <- premAL_operand*})
+
+          1. (Let typedExp_len be $exp_len(typedExp_b))
+
+            1. (Let premAL_idx be $guard_cmp(LT as cmpop, typedExp_i, typedExp_len))
+
+              1. (Let premAL*{premAL <- premAL*} be premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_idx])
+
+                1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  20. Case (% matches pattern SLICE % % %)
+
+    1. (Let SLICE typedExp_b typedExp_i typedExp_n be exp)
+
+      1. Group slice: AC |- SLICE typedExp_b typedExp_i typedExp_n '#' typ' : %
+
+        1. (Guard_exps: AC |- [typedExp_b, typedExp_i, typedExp_n] : premAL_operand*{premAL_operand <- premAL_operand*})
+
+          1. (Let typedExp_end be BIN ADD as binop typedExp_i typedExp_n '#' NAT as typ)
+
+            1. (Let typedExp_len be $exp_len(typedExp_b))
+
+              1. (Let premAL_slice be $guard_cmp(LE as cmpop, typedExp_end, typedExp_len))
+
+                1. (Let premAL*{premAL <- premAL*} be premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_slice])
+
+                  1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  21. Case (% matches pattern UPD % % %)
+
+    1. (Let UPD typedExp_b typedPath typedExp_f be exp)
+
+      1. Group upd: AC |- UPD typedExp_b typedPath typedExp_f '#' typ' : %
+
+        1. (Let typedExp_acc be $access_exp(typedExp_b, typedPath))
+
+          1. (Guard_exp: AC |- typedExp_acc : premAL_acc*{premAL_acc <- premAL_acc*})
+
+            1. (Guard_exp: AC |- typedExp_f : premAL_f*{premAL_f <- premAL_f*})
+
+              1. (Let premAL_rep*{premAL_rep <- premAL_rep*} be $replace_guards(AC.TYP, typedPath, typedExp_f))
+
+                1. (Let premAL*{premAL <- premAL*} be premAL_acc*{premAL_acc <- premAL_acc*} ++ premAL_f*{premAL_f <- premAL_f*} ++ premAL_rep*{premAL_rep <- premAL_rep*})
+
+                  1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  22. Case (% matches pattern CALL % % %)
+
+    1. (Let CALL id targ*{targ <- targ*} arg*{arg <- arg*} be exp)
+
+      1. Group call: AC |- CALL id targ*{targ <- targ*} arg*{arg <- arg*} '#' typ' : %
+
+        1. (Guard_args: AC |- arg*{arg <- arg*} : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  23. Case (% matches pattern ITER % %)
+
+    1. (Let ITER typedExp iter vari*{vari <- vari*} be exp)
+
+      1. Group iter: AC |- ITER typedExp iter vari*{vari <- vari*} '#' typ' : %
+
+        1. (Let premAL_agree*{premAL_agree <- premAL_agree*} be $agree_guards(iter, vari*{vari <- vari*}))
+
+          1. (Guard_exp: AC |- typedExp : premAL_body*{premAL_body <- premAL_body*})
+
+            1. (Let premAL_iter be ITER premAL_body iter '<-' vari*{vari <- vari*} '->' [] as premAL)*{premAL_body <- premAL_body*, premAL_iter -> premAL_iter*}
+
+              1. (Let premAL*{premAL <- premAL*} be premAL_agree*{premAL_agree <- premAL_agree*} ++ premAL_iter*{premAL_iter <- premAL_iter*})
+
+                1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+2. Else Dangling
+
+relation Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : %
+
+1. Group : AC |- typedExp*{typedExp <- typedExp*} : %
+
+  1. Case analysis on typedExp*{typedExp <- typedExp*} (total)
+
+    1. Case (% matches pattern [])
+
+      1. Result in: % |- % : []
+
+    2. Case (% matches pattern _ :: _)
+
+      1. (Let typedExp_h :: typedExp_t*{typedExp_t <- typedExp_t*} be typedExp*{typedExp <- typedExp*})
+
+        1. (Guard_exp: AC |- typedExp_h : premAL_h*{premAL_h <- premAL_h*})
+
+          1. (Guard_exps: AC |- typedExp_t*{typedExp_t <- typedExp_t*} : premAL_t*{premAL_t <- premAL_t*})
+
+            1. (Let premAL*{premAL <- premAL*} be premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*})
+
+              1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+relation Guard_args: AC |- arg*{arg <- arg*} : %
+
+1. Group : AC |- arg*{arg <- arg*} : %
+
+  1. Case analysis on arg*{arg <- arg*} (total)
+
+    1. Case (% matches pattern [])
+
+      1. Result in: % |- % : []
+
+    2. Case (% matches pattern _ :: _)
+
+      1. (Let arg' :: arg_t*{arg_t <- arg_t*} be arg*{arg <- arg*})
+
+        1. Case analysis on arg' (total)
+
+          1. Case (% matches pattern EXP %)
+
+            1. (Let EXP typedExp be arg')
+
+              1. (Guard_exp: AC |- typedExp : premAL_h*{premAL_h <- premAL_h*})
+
+                1. (Guard_args: AC |- arg_t*{arg_t <- arg_t*} : premAL_t*{premAL_t <- premAL_t*})
+
+                  1. (Let premAL*{premAL <- premAL*} be premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*})
+
+                    1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+          2. Case (% matches pattern FUN %)
+
+            1. (Guard_args: AC |- arg_t*{arg_t <- arg_t*} : premAL*{premAL <- premAL*})
+
+              1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+relation Guard_prem: AC |- premAL' : %
+
+1. Case analysis on premAL' (total)
+
+  1. Case (% has type relPremAL)
+
+    1. (Let REL id ':' typedExp_in*{typedExp_in <- typedExp_in*} '->' typedExp*{typedExp <- typedExp*} be premAL' as relPremAL)
+
+      1. Group rel: AC |- REL id ':' typedExp_in*{typedExp_in <- typedExp_in*} '->' typedExp*{typedExp <- typedExp*} as premAL : %
+
+        1. (Guard_exps: AC |- typedExp_in*{typedExp_in <- typedExp_in*} : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  2. Case (% has type ifPrem)
+
+    1. (Let IF typedExp be premAL' as ifPrem)
+
+      1. Group cond: AC |- IF typedExp as premAL : %
+
+        1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  3. Case (% has type ifHoldPrem)
+
+    1. (Let IFHOLD id ':' typedExp*{typedExp <- typedExp*} be premAL' as ifHoldPrem)
+
+      1. Group ifhold: AC |- IFHOLD id ':' typedExp*{typedExp <- typedExp*} as premAL : %
+
+        1. (Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  4. Case (% has type ifNotHoldPrem)
+
+    1. (Let IFNOTHOLD id ':' typedExp*{typedExp <- typedExp*} be premAL' as ifNotHoldPrem)
+
+      1. Group ifnothold: AC |- IFNOTHOLD id ':' typedExp*{typedExp <- typedExp*} as premAL : %
+
+        1. (Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  5. Case (% has type letPremAL)
+
+    1. (Let LET typedExp '=' typedExp_r be premAL' as letPremAL)
+
+      1. Group let: AC |- LET typedExp '=' typedExp_r as premAL : %
+
+        1. (Guard_exp: AC |- typedExp_r : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  6. Case (% has type iterPremAL)
+
+    1. (Let ITER premAL iter '<-' vari_src*{vari_src <- vari_src*} '->' vari*{vari <- vari*} be premAL' as iterPremAL)
+
+      1. Group iter: AC |- ITER premAL iter '<-' vari_src*{vari_src <- vari_src*} '->' vari*{vari <- vari*} as premAL : %
+
+        1. (Let premAL_agree*{premAL_agree <- premAL_agree*} be $agree_guards(iter, vari_src*{vari_src <- vari_src*}))
+
+          1. (Guard_prem: AC |- premAL : premAL_body*{premAL_body <- premAL_body*})
+
+            1. (Let premAL_iter be ITER premAL_body iter '<-' vari_src*{vari_src <- vari_src*} '->' [] as premAL)*{premAL_body <- premAL_body*, premAL_iter -> premAL_iter*}
+
+              1. (Let premAL_guard*{premAL_guard <- premAL_guard*} be premAL_agree*{premAL_agree <- premAL_agree*} ++ premAL_iter*{premAL_iter <- premAL_iter*})
+
+                1. Result in: % |- % : premAL_guard*{premAL_guard <- premAL_guard*}
+
+  7. Case (% has type debugPrem)
+
+    1. (Let DEBUG typedExp be premAL' as debugPrem)
+
+      1. Group dbg: AC |- DEBUG typedExp as premAL : %
+
+        1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
+
+          1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+relation Guard_prems: AC |- premAL'*{premAL' <- premAL'*} : %
+
+1. Group : AC |- premAL'*{premAL' <- premAL'*} : %
+
+  1. Case analysis on premAL'*{premAL' <- premAL'*} (total)
+
+    1. Case (% matches pattern [])
+
+      1. Result in: % |- % : []
+
+    2. Case (% matches pattern _ :: _)
+
+      1. (Let premAL_h :: premAL_t*{premAL_t <- premAL_t*} be premAL'*{premAL' <- premAL'*})
+
+        1. (Guard_prem: AC |- premAL_h : premAL_guard*{premAL_guard <- premAL_guard*})
+
+          1. (Guard_prems: AC |- premAL_t*{premAL_t <- premAL_t*} : premAL_t_guard*{premAL_t_guard <- premAL_t_guard*})
+
+            1. (Let premAL*{premAL <- premAL*} be premAL_guard*{premAL_guard <- premAL_guard*} ++ [premAL_h] ++ premAL_t_guard*{premAL_t_guard <- premAL_t_guard*})
+
+              1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+relation Guard_rul: AC |- rulAL : %
+
+1. Group : AC |- rulAL : %
+
+  1. (Let id ':' typedExp_in*{typedExp_in <- typedExp_in*} '->' typedExp_out*{typedExp_out <- typedExp_out*} '-' premAL*{premAL <- premAL*} be rulAL)
+
+    1. (Guard_prems: AC |- premAL*{premAL <- premAL*} : premAL_guard*{premAL_guard <- premAL_guard*})
+
+      1. (Guard_exps: AC |- typedExp_out*{typedExp_out <- typedExp_out*} : premAL_out*{premAL_out <- premAL_out*})
+
+        1. (Let rulAL_guard be id ':' typedExp_in*{typedExp_in <- typedExp_in*} '->' typedExp_out*{typedExp_out <- typedExp_out*} '-' premAL_guard*{premAL_guard <- premAL_guard*} ++ premAL_out*{premAL_out <- premAL_out*})
+
+          1. Result in: % |- % : rulAL_guard
+
+relation Guard_clause: AC |- clauseAL : %
+
+1. Group : AC |- clauseAL : %
+
+  1. (Let arg*{arg <- arg*} '=' typedExp '-' premAL*{premAL <- premAL*} be clauseAL)
+
+    1. (Guard_prems: AC |- premAL*{premAL <- premAL*} : premAL_guard*{premAL_guard <- premAL_guard*})
+
+      1. (Guard_exp: AC |- typedExp : premAL_out*{premAL_out <- premAL_out*})
+
+        1. (Let clauseAL_guard be arg*{arg <- arg*} '=' typedExp '-' premAL_guard*{premAL_guard <- premAL_guard*} ++ premAL_out*{premAL_out <- premAL_out*})
+
+          1. Result in: % |- % : clauseAL_guard
+
+relation Guard_tblRow: AC |- tblRowAL : %
+
+1. Group : AC |- tblRowAL : %
+
+  1. (Let arg*{arg <- arg*} '=' typedExp '-' premAL*{premAL <- premAL*} be tblRowAL)
+
+    1. (Guard_prems: AC |- premAL*{premAL <- premAL*} : premAL_guard*{premAL_guard <- premAL_guard*})
+
+      1. (Guard_exp: AC |- typedExp : premAL_out*{premAL_out <- premAL_out*})
+
+        1. (Let tblRowAL_guard be arg*{arg <- arg*} '=' typedExp '-' premAL_guard*{premAL_guard <- premAL_guard*} ++ premAL_out*{premAL_out <- premAL_out*})
+
+          1. Result in: % |- % : tblRowAL_guard
+
+relation Guard_def: AC |- defnAL : %
+
+1. If (defnAL <: typDefn), then
+
+  1. (Let typDefn be defnAL as typDefn)
+
+    1. Group typ: AC |- typDefn as defnAL : %
+
+      1. Result in: % |- % : typDefn as defnAL
+
+1. Else Dangling
+
+2. Group rel: AC |- defnAL : %
+
+  1. Case analysis on defnAL
+
+    1. Case (% has type externRelDefnAL)
+
+      1. (Let externRelDefnAL be defnAL as externRelDefnAL)
+
+        1. Result in: % |- % : externRelDefnAL as defnAL
+
+    2. Case (% has type definedRelDefnAL)
+
+      1. (Let definedRelDefnAL be defnAL as definedRelDefnAL)
+
+        1. (Let REL id ':' typ_in*{typ_in <- typ_in*} '->' typ_out*{typ_out <- typ_out*} '=' rulGroupAL*{rulGroupAL <- rulGroupAL*} elsGroupAL?{elsGroupAL <- elsGroupAL?} be definedRelDefnAL)
+
+          1. (Let id_group ':' rulAL*{rulAL <- rulAL*} be rulGroupAL)*{rulGroupAL <- rulGroupAL*, id_group -> id_group*, rulAL* -> rulAL**}
+
+            1. (Guard_rul: AC |- rulAL : rulAL_guard)*{rulAL <- rulAL*, rulAL_guard -> rulAL_guard*}*{rulAL* <- rulAL**, rulAL_guard* -> rulAL_guard**}
+
+              1. (Let rulGroupAL_guard be id_group ':' rulAL_guard*{rulAL_guard <- rulAL_guard*})*{id_group <- id_group*, rulAL_guard* <- rulAL_guard**, rulGroupAL_guard -> rulGroupAL_guard*}
+
+                1. (Let id_else ':' rulAL_else be elsGroupAL)?{elsGroupAL <- elsGroupAL?, id_else -> id_else?, rulAL_else -> rulAL_else?}
+
+                  1. (Guard_rul: AC |- rulAL_else : rulAL_else_guard)?{rulAL_else <- rulAL_else?, rulAL_else_guard -> rulAL_else_guard?}
+
+                    1. (Let elsGroupAL_guard be id_else ':' rulAL_else_guard)?{id_else <- id_else?, rulAL_else_guard <- rulAL_else_guard?, elsGroupAL_guard -> elsGroupAL_guard?}
+
+                      1. (Let definedRelDefnAL_guard be REL id ':' typ_in*{typ_in <- typ_in*} '->' typ_out*{typ_out <- typ_out*} '=' rulGroupAL_guard*{rulGroupAL_guard <- rulGroupAL_guard*} elsGroupAL_guard?{elsGroupAL_guard <- elsGroupAL_guard?})
+
+                        1. Result in: % |- % : definedRelDefnAL_guard as defnAL
+
+  1. Else Dangling
+
+3. Group func: AC |- defnAL : %
+
+  1. Case analysis on defnAL
+
+    1. Case (% has type externFuncDefn)
+
+      1. (Let externFuncDefn be defnAL as externFuncDefn)
+
+        1. Result in: % |- % : externFuncDefn as defnAL
+
+    2. Case (% has type builtinFuncDefn)
+
+      1. (Let builtinFuncDefn be defnAL as builtinFuncDefn)
+
+        1. Result in: % |- % : builtinFuncDefn as defnAL
+
+    3. Case (% has type tableFuncDefnAL)
+
+      1. (Let tableFuncDefnAL be defnAL as tableFuncDefnAL)
+
+        1. (Let TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL*{tblRowAL <- tblRowAL*} be tableFuncDefnAL)
+
+          1. (Guard_tblRow: AC |- tblRowAL : tblRowAL_guard)*{tblRowAL <- tblRowAL*, tblRowAL_guard -> tblRowAL_guard*}
+
+            1. (Let tableFuncDefnAL_guard be TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL_guard*{tblRowAL_guard <- tblRowAL_guard*})
+
+              1. Result in: % |- % : tableFuncDefnAL_guard as defnAL
+
+    4. Case (% has type definedFuncDefnAL)
+
+      1. (Let definedFuncDefnAL be defnAL as definedFuncDefnAL)
+
+        1. (Let FUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' clauseAL*{clauseAL <- clauseAL*} elsClauseAL?{elsClauseAL <- elsClauseAL?} be definedFuncDefnAL)
+
+          1. (Let AC_func be $add_tparams(AC, tparam*{tparam <- tparam*}))
+
+            1. (Guard_clause: AC_func |- clauseAL : clauseAL_guard)*{clauseAL <- clauseAL*, clauseAL_guard -> clauseAL_guard*}
+
+              1. (Guard_clause: AC_func |- elsClauseAL : elsClauseAL_guard)?{elsClauseAL <- elsClauseAL?, elsClauseAL_guard -> elsClauseAL_guard?}
+
+                1. (Let definedFuncDefnAL_guard be FUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' clauseAL_guard*{clauseAL_guard <- clauseAL_guard*} elsClauseAL_guard?{elsClauseAL_guard <- elsClauseAL_guard?})
+
+                  1. Result in: % |- % : definedFuncDefnAL_guard as defnAL
+
+  1. Else Dangling
+
 def $ids_of_varis(id _typ _iter*{_iter <- _iter*}*{_iter* <- _iter**, _typ <- _typ*, id <- id*})
 
 1. Return id*{id <- id*}
@@ -4032,6 +4634,164 @@ def $is_complete(typCase_total*{typCase_total <- typCase_total*}*{typCase_total*
   1. (Let b_cover be $covered_by_any(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***}, typCase_comb*{typCase_comb <- typCase_comb*}))*{typCase_comb* <- typCase_comb**, b_cover -> b_cover*}
 
     1. Return $forall_(b_cover*{b_cover <- b_cover*})
+
+def $exp_len(typedExp)
+
+1. Return LEN typedExp '#' NAT as typ
+
+def $guard_cmp(cmpop, typedExp_l, typedExp_r)
+
+1. Return IF CMP cmpop typedExp_l typedExp_r '#' BOOL as typ as premAL
+
+def $exp_zero(tdenv, typ)
+
+1. If ((OK NAT as typ as typRes = $expand_typ(tdenv, typ))), then
+
+  1. Return NAT 0 as exp '#' NAT as typ
+
+1. Else Dangling
+
+2. If ((OK INT as typ as typRes = $expand_typ(tdenv, typ))), then
+
+  1. Return INT 0 as int as exp '#' INT as typ
+
+2. Else Dangling
+
+def $agree_exp(iter, vari)
+
+1. Case analysis on iter (total)
+
+  1. Case (% matches pattern STAR)
+
+    1. (Let vari_iter be $iterate_vari(STAR, vari))
+
+      1. (Let typedExp_iter be $exp_of_vari(vari_iter))
+
+        1. Return $exp_len(typedExp_iter)
+
+  2. Case (% matches pattern QUEST)
+
+    1. (Let vari_iter be $iterate_vari(QUEST, vari))
+
+      1. (Let typedExp_iter be $exp_of_vari(vari_iter))
+
+        1. (Let _exp '#' typ_iter be typedExp_iter)
+
+          1. Return CMP EQ as cmpop typedExp_iter OPT ?() '#' typ_iter '#' BOOL as typ
+
+def $agree_guard(iter, vari_a, vari_b)
+
+1. Case analysis on iter (total)
+
+  1. Case (% matches pattern STAR)
+
+    1. (Let typedExp_a be $agree_exp(STAR, vari_a))
+
+      1. (Let typedExp_b be $agree_exp(STAR, vari_b))
+
+        1. Return $guard_cmp(EQ as cmpop, typedExp_a, typedExp_b)
+
+  2. Case (% matches pattern QUEST)
+
+    1. (Let typedExp_a be $agree_exp(QUEST, vari_a))
+
+      1. (Let typedExp_b be $agree_exp(QUEST, vari_b))
+
+        1. Return IF BIN EQUIV as binop typedExp_a typedExp_b '#' BOOL as typ as premAL
+
+def $agree_guards(iter, vari'*{vari' <- vari'*})
+
+1. Case analysis on vari'*{vari' <- vari'*}
+
+  1. Case (% matches pattern [])
+
+    1. Return []
+
+  2. Case (% matches pattern [ _/1 ])
+
+    1. Return []
+
+  3. Case (% matches pattern _ :: _)
+
+    1. (Let vari_a :: vari*{vari <- vari*} be vari'*{vari' <- vari'*})
+
+      1. If (vari*{vari <- vari*} matches _ :: _), then
+
+        1. (Let vari_b :: vari_t*{vari_t <- vari_t*} be vari*{vari <- vari*})
+
+          1. (Let premAL_ab be $agree_guard(iter, vari_a, vari_b))
+
+            1. (Let premAL_t*{premAL_t <- premAL_t*} be $agree_guards(iter, vari_b :: vari_t*{vari_t <- vari_t*}))
+
+              1. Return premAL_ab :: premAL_t*{premAL_t <- premAL_t*}
+
+      1. Else Dangling
+
+1. Else Dangling
+
+def $access_exp(typedExp_b, path '#' typ)
+
+1. Case analysis on path (total)
+
+  1. Case (% matches pattern ROOT)
+
+    1. Return typedExp_b
+
+  2. Case (% matches pattern IDX % %)
+
+    1. (Let IDX typedPath typedExp_i be path)
+
+      1. (Let typedExp_p be $access_exp(typedExp_b, typedPath))
+
+        1. Return IDX typedExp_p typedExp_i '#' typ
+
+  3. Case (% matches pattern SLICE % % %)
+
+    1. (Let SLICE typedPath typedExp_i typedExp_n be path)
+
+      1. (Let typedExp_p be $access_exp(typedExp_b, typedPath))
+
+        1. Return SLICE typedExp_p typedExp_i typedExp_n '#' typ
+
+  4. Case (% matches pattern DOT % %)
+
+    1. (Let DOT typedPath atom be path)
+
+      1. (Let typedExp_p be $access_exp(typedExp_b, typedPath))
+
+        1. Return DOT typedExp_p atom '#' typ
+
+def $replace_guards(tdenv, typedPath, typedExp_f)
+
+1. (Let path '#' _typ be typedPath)
+
+  1. Case analysis on path
+
+    1. Case (% matches pattern SLICE % % %)
+
+      1. (Let SLICE _typedPath _typedExp typedExp_n be path)
+
+        1. (Let typedExp_len be $exp_len(typedExp_f))
+
+          1. (Let premAL_len be $guard_cmp(EQ as cmpop, typedExp_len, typedExp_n))
+
+            1. Return [premAL_len]
+
+    2. Case (% matches pattern IDX % %)
+
+      1. (Let IDX _path '#' typ_b _typedExp be path)
+
+        1. If ((OK TEXT as typ as typRes = $expand_typ(tdenv, typ_b))), then
+
+          1. (Let typedExp_len be $exp_len(typedExp_f))
+
+            1. (Let premAL_len be $guard_cmp(EQ as cmpop, typedExp_len, NAT 1 as exp '#' NAT as typ))
+
+              1. Return [premAL_len]
+
+2. Otherwise,
+
+  1. Return []
 
 syntax venv = map<varr, val>
 
@@ -8748,7 +9508,9 @@ relation Algo_IL: |- defnIL*{defnIL <- defnIL*} : %
 
     1. (Algo_def: AC |- defnIL : defnAL)*{defnIL <- defnIL*, defnAL -> defnAL*}
 
-      1. Result in: |- % : defnAL*{defnAL <- defnAL*}
+      1. (Guard_def: AC |- defnAL : defnAL_guard)*{defnAL <- defnAL*, defnAL_guard -> defnAL_guard*}
+
+        1. Result in: |- % : defnAL_guard*{defnAL_guard <- defnAL_guard*}
 
 relation Eval_IL: |- specIL : %
 

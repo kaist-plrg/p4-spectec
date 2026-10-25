@@ -1618,6 +1618,300 @@ relation Algo_def: algoCtx |- defnIL : defnAL
     -- (Algo_clause: AC_func |- elsClauseIL : elsClauseAL)?{elsClauseAL <- elsClauseAL?, elsClauseIL <- elsClauseIL?}
     -- if (definedFuncDefnAL = FUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' clauseAL*{clauseAL <- clauseAL*} elsClauseAL?{elsClauseAL <- elsClauseAL?})
 
+relation Guard_exp: algoCtx |- typedExp : premAL*
+
+  rulegroup literal
+
+    rule boolean: AC |- BOOL _b '#' _typ : []
+
+    rule number: AC |- num as exp '#' _typ : []
+
+    rule text: AC |- TEXT _t '#' _typ : []
+
+  rulegroup variable
+
+    rule variable: AC |- VAR _id '#' _typ : []
+
+  rulegroup unary
+
+    rule unary: AC |- UN _unop typedExp '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
+
+  rulegroup binary
+
+    rule total: AC |- BIN binop typedExp_l typedExp_r '#' _typ : premAL*{premAL <- premAL*}
+    -- if ~binop <- [DIV as binop, MOD as binop]
+    -- Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*}
+
+    rule divide: AC |- BIN binop typedExp_l typedExp_r '#' _typ : premAL*{premAL <- premAL*}
+    -- if binop <- [DIV as binop, MOD as binop]
+    -- Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL_operand*{premAL_operand <- premAL_operand*}
+    -- if (_exp '#' typ_r = typedExp_r)
+    -- if (typedExp_zero = $exp_zero(AC.TYP, typ_r))
+    -- if (premAL_div = $guard_cmp(NE as cmpop, typedExp_r, typedExp_zero))
+    -- if (premAL*{premAL <- premAL*} = premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_div])
+
+  rulegroup compare
+
+    rule compare: AC |- CMP _cmpop typedExp_l typedExp_r '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*}
+
+  rulegroup upcast
+
+    rule upcast: AC |- UPCAST _typ typedExp '#' _typ' : premAL*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
+
+  rulegroup downcast
+
+    rule downcast: AC |- DOWNCAST _typ typedExp '#' _typ' : premAL*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
+
+  rulegroup subtype
+
+    rule subtype: AC |- SUB typedExp _typ '#' _typ' : premAL*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
+
+  rulegroup match
+
+    rule match: AC |- MATCH typedExp _pat '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
+
+  rulegroup tuple
+
+    rule tuple: AC |- TUP typedExp*{typedExp <- typedExp*} '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*}
+
+  rulegroup case
+
+    rule case: AC |- INJ _mixop typedExp*{typedExp <- typedExp*} '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*}
+
+  rulegroup struct
+
+    rule struct: AC |- STR expField*{expField <- expField*} '#' _typ : premAL*{premAL <- premAL*}
+    -- (if (_atom typedExp = expField))*{_atom <- _atom*, expField <- expField*, typedExp <- typedExp*}
+    -- Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*}
+
+  rulegroup opt
+
+    rule none: AC |- OPT ?() '#' _typ : []
+
+    rule some: AC |- OPT ?(typedExp) '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
+
+  rulegroup list
+
+    rule list: AC |- LIST typedExp*{typedExp <- typedExp*} '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*}
+
+  rulegroup cons
+
+    rule cons: AC |- CONS typedExp_h typedExp_t '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exps: AC |- [typedExp_h, typedExp_t] : premAL*{premAL <- premAL*}
+
+  rulegroup concat
+
+    rule concat: AC |- CAT typedExp_l typedExp_r '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*}
+
+  rulegroup mem
+
+    rule mem: AC |- MEM typedExp_l typedExp_r '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*}
+
+  rulegroup len
+
+    rule len: AC |- LEN typedExp '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
+
+  rulegroup dot
+
+    rule dot: AC |- DOT typedExp _atom '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
+
+  rulegroup idx
+
+    rule idx: AC |- IDX typedExp_b typedExp_i '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exps: AC |- [typedExp_b, typedExp_i] : premAL_operand*{premAL_operand <- premAL_operand*}
+    -- if (typedExp_len = $exp_len(typedExp_b))
+    -- if (premAL_idx = $guard_cmp(LT as cmpop, typedExp_i, typedExp_len))
+    -- if (premAL*{premAL <- premAL*} = premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_idx])
+
+  rulegroup slice
+
+    rule slice: AC |- SLICE typedExp_b typedExp_i typedExp_n '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_exps: AC |- [typedExp_b, typedExp_i, typedExp_n] : premAL_operand*{premAL_operand <- premAL_operand*}
+    -- if (typedExp_end = BIN ADD as binop typedExp_i typedExp_n '#' NAT as typ)
+    -- if (typedExp_len = $exp_len(typedExp_b))
+    -- if (premAL_slice = $guard_cmp(LE as cmpop, typedExp_end, typedExp_len))
+    -- if (premAL*{premAL <- premAL*} = premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_slice])
+
+  rulegroup upd
+
+    rule upd: AC |- UPD typedExp_b typedPath typedExp_f '#' _typ : premAL*{premAL <- premAL*}
+    -- if (typedExp_acc = $access_exp(typedExp_b, typedPath))
+    -- Guard_exp: AC |- typedExp_acc : premAL_acc*{premAL_acc <- premAL_acc*}
+    -- Guard_exp: AC |- typedExp_f : premAL_f*{premAL_f <- premAL_f*}
+    -- if (premAL_rep*{premAL_rep <- premAL_rep*} = $replace_guards(AC.TYP, typedPath, typedExp_f))
+    -- if (premAL*{premAL <- premAL*} = premAL_acc*{premAL_acc <- premAL_acc*} ++ premAL_f*{premAL_f <- premAL_f*} ++ premAL_rep*{premAL_rep <- premAL_rep*})
+
+  rulegroup call
+
+    rule call: AC |- CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} '#' _typ : premAL*{premAL <- premAL*}
+    -- Guard_args: AC |- arg*{arg <- arg*} : premAL*{premAL <- premAL*}
+
+  rulegroup iter
+
+    rule iter: AC |- ITER typedExp iter vari*{vari <- vari*} '#' _typ : premAL*{premAL <- premAL*}
+    -- if (premAL_agree*{premAL_agree <- premAL_agree*} = $agree_guards(iter, vari*{vari <- vari*}))
+    -- Guard_exp: AC |- typedExp : premAL_body*{premAL_body <- premAL_body*}
+    -- (if (premAL_iter = ITER premAL_body iter '<-' vari*{vari <- vari*} '->' [] as premAL))*{premAL_body <- premAL_body*, premAL_iter <- premAL_iter*}
+    -- if (premAL*{premAL <- premAL*} = premAL_agree*{premAL_agree <- premAL_agree*} ++ premAL_iter*{premAL_iter <- premAL_iter*})
+
+relation Guard_exps: algoCtx |- typedExp* : premAL*
+
+  rulegroup
+
+    rule nil: AC |- [] : []
+
+    rule cons: AC |- typedExp_h :: typedExp_t*{typedExp_t <- typedExp_t*} : premAL*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp_h : premAL_h*{premAL_h <- premAL_h*}
+    -- Guard_exps: AC |- typedExp_t*{typedExp_t <- typedExp_t*} : premAL_t*{premAL_t <- premAL_t*}
+    -- if (premAL*{premAL <- premAL*} = premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*})
+
+relation Guard_args: algoCtx |- arg* : premAL*
+
+  rulegroup
+
+    rule nil: AC |- [] : []
+
+    rule exp: AC |- EXP typedExp :: arg_t*{arg_t <- arg_t*} : premAL*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp : premAL_h*{premAL_h <- premAL_h*}
+    -- Guard_args: AC |- arg_t*{arg_t <- arg_t*} : premAL_t*{premAL_t <- premAL_t*}
+    -- if (premAL*{premAL <- premAL*} = premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*})
+
+    rule fun: AC |- FUN _id :: arg_t*{arg_t <- arg_t*} : premAL*{premAL <- premAL*}
+    -- Guard_args: AC |- arg_t*{arg_t <- arg_t*} : premAL*{premAL <- premAL*}
+
+relation Guard_prem: algoCtx |- premAL : premAL*
+
+  rulegroup rel
+
+    rule rel: AC |- REL _id ':' typedExp_in*{typedExp_in <- typedExp_in*} '->' _typedExp*{_typedExp <- _typedExp*} as premAL : premAL*{premAL <- premAL*}
+    -- Guard_exps: AC |- typedExp_in*{typedExp_in <- typedExp_in*} : premAL*{premAL <- premAL*}
+
+  rulegroup cond
+
+    rule cond: AC |- IF typedExp as premAL : premAL*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
+
+  rulegroup ifhold
+
+    rule ifhold: AC |- IFHOLD _id ':' typedExp*{typedExp <- typedExp*} as premAL : premAL*{premAL <- premAL*}
+    -- Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*}
+
+  rulegroup ifnothold
+
+    rule ifnothold: AC |- IFNOTHOLD _id ':' typedExp*{typedExp <- typedExp*} as premAL : premAL*{premAL <- premAL*}
+    -- Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*}
+
+  rulegroup let
+
+    rule let: AC |- LET _typedExp '=' typedExp_r as premAL : premAL*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp_r : premAL*{premAL <- premAL*}
+
+  rulegroup iter
+
+    rule iter: AC |- ITER premAL iter '<-' vari_src*{vari_src <- vari_src*} '->' _vari*{_vari <- _vari*} as premAL : premAL_guard*{premAL_guard <- premAL_guard*}
+    -- if (premAL_agree*{premAL_agree <- premAL_agree*} = $agree_guards(iter, vari_src*{vari_src <- vari_src*}))
+    -- Guard_prem: AC |- premAL : premAL_body*{premAL_body <- premAL_body*}
+    -- (if (premAL_iter = ITER premAL_body iter '<-' vari_src*{vari_src <- vari_src*} '->' [] as premAL))*{premAL_body <- premAL_body*, premAL_iter <- premAL_iter*}
+    -- if (premAL_guard*{premAL_guard <- premAL_guard*} = premAL_agree*{premAL_agree <- premAL_agree*} ++ premAL_iter*{premAL_iter <- premAL_iter*})
+
+  rulegroup dbg
+
+    rule dbg: AC |- DEBUG typedExp as premAL : premAL*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
+
+relation Guard_prems: algoCtx |- premAL* : premAL*
+
+  rulegroup
+
+    rule nil: AC |- [] : []
+
+    rule cons: AC |- premAL_h :: premAL_t*{premAL_t <- premAL_t*} : premAL*{premAL <- premAL*}
+    -- Guard_prem: AC |- premAL_h : premAL_guard*{premAL_guard <- premAL_guard*}
+    -- Guard_prems: AC |- premAL_t*{premAL_t <- premAL_t*} : premAL_t_guard*{premAL_t_guard <- premAL_t_guard*}
+    -- if (premAL*{premAL <- premAL*} = premAL_guard*{premAL_guard <- premAL_guard*} ++ [premAL_h] ++ premAL_t_guard*{premAL_t_guard <- premAL_t_guard*})
+
+relation Guard_rul: algoCtx |- rulAL : rulAL
+
+  rulegroup
+
+    rule : AC |- rulAL : rulAL_guard
+    -- if (id ':' typedExp_in*{typedExp_in <- typedExp_in*} '->' typedExp_out*{typedExp_out <- typedExp_out*} '-' premAL*{premAL <- premAL*} = rulAL)
+    -- Guard_prems: AC |- premAL*{premAL <- premAL*} : premAL_guard*{premAL_guard <- premAL_guard*}
+    -- Guard_exps: AC |- typedExp_out*{typedExp_out <- typedExp_out*} : premAL_out*{premAL_out <- premAL_out*}
+    -- if (rulAL_guard = id ':' typedExp_in*{typedExp_in <- typedExp_in*} '->' typedExp_out*{typedExp_out <- typedExp_out*} '-' premAL_guard*{premAL_guard <- premAL_guard*} ++ premAL_out*{premAL_out <- premAL_out*})
+
+relation Guard_clause: algoCtx |- clauseAL : clauseAL
+
+  rulegroup
+
+    rule : AC |- clauseAL : clauseAL_guard
+    -- if (arg*{arg <- arg*} '=' typedExp '-' premAL*{premAL <- premAL*} = clauseAL)
+    -- Guard_prems: AC |- premAL*{premAL <- premAL*} : premAL_guard*{premAL_guard <- premAL_guard*}
+    -- Guard_exp: AC |- typedExp : premAL_out*{premAL_out <- premAL_out*}
+    -- if (clauseAL_guard = arg*{arg <- arg*} '=' typedExp '-' premAL_guard*{premAL_guard <- premAL_guard*} ++ premAL_out*{premAL_out <- premAL_out*})
+
+relation Guard_tblRow: algoCtx |- tblRowAL : tblRowAL
+
+  rulegroup
+
+    rule : AC |- tblRowAL : tblRowAL_guard
+    -- if (arg*{arg <- arg*} '=' typedExp '-' premAL*{premAL <- premAL*} = tblRowAL)
+    -- Guard_prems: AC |- premAL*{premAL <- premAL*} : premAL_guard*{premAL_guard <- premAL_guard*}
+    -- Guard_exp: AC |- typedExp : premAL_out*{premAL_out <- premAL_out*}
+    -- if (tblRowAL_guard = arg*{arg <- arg*} '=' typedExp '-' premAL_guard*{premAL_guard <- premAL_guard*} ++ premAL_out*{premAL_out <- premAL_out*})
+
+relation Guard_def: algoCtx |- defnAL : defnAL
+
+  rulegroup typ
+
+    rule typ: AC |- typDefn as defnAL : typDefn as defnAL
+
+  rulegroup rel
+
+    rule extern: AC |- externRelDefnAL as defnAL : externRelDefnAL as defnAL
+
+    rule defined: AC |- definedRelDefnAL as defnAL : definedRelDefnAL_guard as defnAL
+    -- if (REL id ':' typ_in*{typ_in <- typ_in*} '->' typ_out*{typ_out <- typ_out*} '=' rulGroupAL*{rulGroupAL <- rulGroupAL*} elsGroupAL?{elsGroupAL <- elsGroupAL?} = definedRelDefnAL)
+    -- (if (id_group ':' rulAL*{rulAL <- rulAL*} = rulGroupAL))*{id_group <- id_group*, rulAL* <- rulAL**, rulGroupAL <- rulGroupAL*}
+    -- (Guard_rul: AC |- rulAL : rulAL_guard)*{rulAL <- rulAL*, rulAL_guard <- rulAL_guard*}*{rulAL* <- rulAL**, rulAL_guard* <- rulAL_guard**}
+    -- (if (rulGroupAL_guard = id_group ':' rulAL_guard*{rulAL_guard <- rulAL_guard*}))*{id_group <- id_group*, rulAL_guard* <- rulAL_guard**, rulGroupAL_guard <- rulGroupAL_guard*}
+    -- (if (id_else ':' rulAL_else = elsGroupAL))?{elsGroupAL <- elsGroupAL?, id_else <- id_else?, rulAL_else <- rulAL_else?}
+    -- (Guard_rul: AC |- rulAL_else : rulAL_else_guard)?{rulAL_else <- rulAL_else?, rulAL_else_guard <- rulAL_else_guard?}
+    -- (if (elsGroupAL_guard = id_else ':' rulAL_else_guard))?{elsGroupAL_guard <- elsGroupAL_guard?, id_else <- id_else?, rulAL_else_guard <- rulAL_else_guard?}
+    -- if (definedRelDefnAL_guard = REL id ':' typ_in*{typ_in <- typ_in*} '->' typ_out*{typ_out <- typ_out*} '=' rulGroupAL_guard*{rulGroupAL_guard <- rulGroupAL_guard*} elsGroupAL_guard?{elsGroupAL_guard <- elsGroupAL_guard?})
+
+  rulegroup func
+
+    rule extern: AC |- externFuncDefn as defnAL : externFuncDefn as defnAL
+
+    rule builtin: AC |- builtinFuncDefn as defnAL : builtinFuncDefn as defnAL
+
+    rule table: AC |- tableFuncDefnAL as defnAL : tableFuncDefnAL_guard as defnAL
+    -- if (TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL*{tblRowAL <- tblRowAL*} = tableFuncDefnAL)
+    -- (Guard_tblRow: AC |- tblRowAL : tblRowAL_guard)*{tblRowAL <- tblRowAL*, tblRowAL_guard <- tblRowAL_guard*}
+    -- if (tableFuncDefnAL_guard = TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL_guard*{tblRowAL_guard <- tblRowAL_guard*})
+
+    rule defined: AC |- definedFuncDefnAL as defnAL : definedFuncDefnAL_guard as defnAL
+    -- if (FUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' clauseAL*{clauseAL <- clauseAL*} elsClauseAL?{elsClauseAL <- elsClauseAL?} = definedFuncDefnAL)
+    -- if (AC_func = $add_tparams(AC, tparam*{tparam <- tparam*}))
+    -- (Guard_clause: AC_func |- clauseAL : clauseAL_guard)*{clauseAL <- clauseAL*, clauseAL_guard <- clauseAL_guard*}
+    -- (Guard_clause: AC_func |- elsClauseAL : elsClauseAL_guard)?{elsClauseAL <- elsClauseAL?, elsClauseAL_guard <- elsClauseAL_guard?}
+    -- if (definedFuncDefnAL_guard = FUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' clauseAL_guard*{clauseAL_guard <- clauseAL_guard*} elsClauseAL_guard?{elsClauseAL_guard <- elsClauseAL_guard?})
+
 def $ids_of_varis(vari*) : id* =
 
   clause 0 : (id _typ _iter*{_iter <- _iter*}*{_iter* <- _iter**, _typ <- _typ*, id <- id*}) = id*{id <- id*}
@@ -1959,6 +2253,79 @@ def $is_complete(typCase**, typCase***) : bool =
   clause 0 : (typCase_total*{typCase_total <- typCase_total*}*{typCase_total* <- typCase_total**}, typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***}) = $forall_(b_cover*{b_cover <- b_cover*})
   -- if (typCase_comb*{typCase_comb <- typCase_comb*}*{typCase_comb* <- typCase_comb**} = $combinations(typCase_total*{typCase_total <- typCase_total*}*{typCase_total* <- typCase_total**}))
   -- (if (b_cover = $covered_by_any(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***}, typCase_comb*{typCase_comb <- typCase_comb*})))*{b_cover <- b_cover*, typCase_comb* <- typCase_comb**}
+
+def $exp_len(typedExp) : typedExp =
+
+  clause 0 : (typedExp) = LEN typedExp '#' NAT as typ
+
+def $guard_cmp(cmpop, typedExp, typedExp) : premAL =
+
+  clause 0 : (cmpop, typedExp_l, typedExp_r) = IF CMP cmpop typedExp_l typedExp_r '#' BOOL as typ as premAL
+
+def $exp_zero(tdenv, typ) : typedExp =
+
+  clause 0 : (tdenv, typ) = NAT 0 as exp '#' NAT as typ
+  -- if (OK NAT as typ as typRes = $expand_typ(tdenv, typ))
+
+  clause 1 : (tdenv, typ) = INT 0 as int as exp '#' INT as typ
+  -- if (OK INT as typ as typRes = $expand_typ(tdenv, typ))
+
+def $agree_exp(iter, vari) : typedExp =
+
+  clause 0 : (STAR, vari) = $exp_len(typedExp_iter)
+  -- if (vari_iter = $iterate_vari(STAR, vari))
+  -- if (typedExp_iter = $exp_of_vari(vari_iter))
+
+  clause 1 : (QUEST, vari) = CMP EQ as cmpop typedExp_iter OPT ?() '#' typ_iter '#' BOOL as typ
+  -- if (vari_iter = $iterate_vari(QUEST, vari))
+  -- if (typedExp_iter = $exp_of_vari(vari_iter))
+  -- if (_exp '#' typ_iter = typedExp_iter)
+
+def $agree_guard(iter, vari, vari) : premAL =
+
+  clause 0 : (STAR, vari_a, vari_b) = $guard_cmp(EQ as cmpop, typedExp_a, typedExp_b)
+  -- if (typedExp_a = $agree_exp(STAR, vari_a))
+  -- if (typedExp_b = $agree_exp(STAR, vari_b))
+
+  clause 1 : (QUEST, vari_a, vari_b) = IF BIN EQUIV as binop typedExp_a typedExp_b '#' BOOL as typ as premAL
+  -- if (typedExp_a = $agree_exp(QUEST, vari_a))
+  -- if (typedExp_b = $agree_exp(QUEST, vari_b))
+
+def $agree_guards(iter, vari*) : premAL* =
+
+  clause 0 : (_iter, []) = []
+
+  clause 1 : (_iter, [_vari]) = []
+
+  clause 2 : (iter, vari_a :: vari_b :: vari_t*{vari_t <- vari_t*}) = premAL_ab :: premAL_t*{premAL_t <- premAL_t*}
+  -- if (premAL_ab = $agree_guard(iter, vari_a, vari_b))
+  -- if (premAL_t*{premAL_t <- premAL_t*} = $agree_guards(iter, vari_b :: vari_t*{vari_t <- vari_t*}))
+
+def $access_exp(typedExp, typedPath) : typedExp =
+
+  clause 0 : (typedExp_b, ROOT '#' _typ) = typedExp_b
+
+  clause 1 : (typedExp_b, IDX typedPath typedExp_i '#' typ) = IDX typedExp_p typedExp_i '#' typ
+  -- if (typedExp_p = $access_exp(typedExp_b, typedPath))
+
+  clause 2 : (typedExp_b, SLICE typedPath typedExp_i typedExp_n '#' typ) = SLICE typedExp_p typedExp_i typedExp_n '#' typ
+  -- if (typedExp_p = $access_exp(typedExp_b, typedPath))
+
+  clause 3 : (typedExp_b, DOT typedPath atom '#' typ) = DOT typedExp_p atom '#' typ
+  -- if (typedExp_p = $access_exp(typedExp_b, typedPath))
+
+def $replace_guards(tdenv, typedPath, typedExp) : premAL* =
+
+  clause 0 : (tdenv, SLICE _typedPath _typedExp typedExp_n '#' _typ, typedExp_f) = [premAL_len]
+  -- if (typedExp_len = $exp_len(typedExp_f))
+  -- if (premAL_len = $guard_cmp(EQ as cmpop, typedExp_len, typedExp_n))
+
+  clause 1 : (tdenv, IDX _path '#' typ_b _typedExp '#' _typ, typedExp_f) = [premAL_len]
+  -- if (OK TEXT as typ as typRes = $expand_typ(tdenv, typ_b))
+  -- if (typedExp_len = $exp_len(typedExp_f))
+  -- if (premAL_len = $guard_cmp(EQ as cmpop, typedExp_len, NAT 1 as exp '#' NAT as typ))
+
+  clause -1 : (_tdenv, _typedPath, _typedExp) = []
 
 syntax venv = map<varr, val>
 
@@ -3709,9 +4076,10 @@ relation Algo_IL: |- specIL : specAL
 
   rulegroup
 
-    rule : |- defnIL*{defnIL <- defnIL*} : defnAL*{defnAL <- defnAL*}
+    rule : |- defnIL*{defnIL <- defnIL*} : defnAL_guard*{defnAL_guard <- defnAL_guard*}
     -- if (AC = $load_algoCtx($empty_algoCtx, defnIL*{defnIL <- defnIL*}))
     -- (Algo_def: AC |- defnIL : defnAL)*{defnAL <- defnAL*, defnIL <- defnIL*}
+    -- (Guard_def: AC |- defnAL : defnAL_guard)*{defnAL <- defnAL*, defnAL_guard <- defnAL_guard*}
 
 relation Eval_IL: |- specIL : val
 
