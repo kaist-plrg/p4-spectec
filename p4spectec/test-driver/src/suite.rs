@@ -2,8 +2,8 @@
 //!
 //! `Index::load` resolves module filenames from the root index.
 //! Each module loader reads its own registration type and validates its paths.
-//! Corpus paths are relative to the repository;
-//! diagnostic inputs and expectations are relative to the driver.
+//! Corpus paths are relative to the repository, expectations to the driver,
+//! and diagnostic inputs and expectations to `testdata/spec`.
 
 use std::{
     collections::BTreeSet,
@@ -11,7 +11,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use p4spectec::metacirc::TowerConfig;
+use p4spectec::metacirc::{TowerConfig, config::Lang};
 use serde::{Deserialize, de::DeserializeOwned};
 
 use crate::{Error, Result, diagnostic};
@@ -86,15 +86,18 @@ pub struct RunSuite {
 
 /// Registers a metacircular corpus run through one tower.
 ///
-/// The tower's target decides the entry relation
+/// The tower's top level decides the entry relation
 /// and whether inputs are P4 programs or AL scripts.
+/// P4 suites compare against an `expected` file of per-program results;
+/// AL suites give every script under `root` one `outcome`.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MetacircSuite {
     pub name: String,
     pub tower: PathBuf,
     pub root: PathBuf,
-    pub expected: PathBuf,
+    pub expected: Option<PathBuf>,
+    pub outcome: Option<diagnostic::Outcome>,
 }
 
 /// Registers paired P4/STF corpus discovery and optional patches.
@@ -129,12 +132,23 @@ pub struct RunConfig {
     pub suites: Vec<RunSuite>,
 }
 
-/// Supplies metacircular corpus inputs, towers, and expectations.
+/// Names the snapshot registrations of the meta specification by stage.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MetacircSnapshots {
+    pub elab: PathBuf,
+    pub algo: PathBuf,
+    pub structure: PathBuf,
+    pub prose: PathBuf,
+}
+
+/// Supplies metacircular corpus inputs, towers, expectations, and snapshots.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MetacircConfig {
     pub includes: Vec<PathBuf>,
     pub excludes: Vec<PathBuf>,
+    pub snapshots: MetacircSnapshots,
     pub suites: Vec<MetacircSuite>,
 }
 
@@ -146,6 +160,79 @@ pub struct SimConfig {
     pub includes: Vec<PathBuf>,
     pub excludes: Vec<PathBuf>,
     pub suites: Vec<SimSuite>,
+}
+
+/// Names a stage of the spec-language pipeline, in pipeline order.
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "lowercase")]
+pub enum Stage {
+    Parse,
+    Elab,
+    Algo,
+    Structure,
+    Prose,
+    Specdoc,
+    Run,
+}
+
+impl Stage {
+    /// Returns the stage's registration spelling.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Parse => "parse",
+            Self::Elab => "elab",
+            Self::Algo => "algo",
+            Self::Structure => "structure",
+            Self::Prose => "prose",
+            Self::Specdoc => "specdoc",
+            Self::Run => "run",
+        }
+    }
+}
+
+/// Lists the pipeline stages each interpreter language runs.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MicroStages {
+    pub al: Vec<Stage>,
+    pub sl: Vec<Stage>,
+    pub pl: Vec<Stage>,
+}
+
+impl MicroStages {
+    /// Returns the stages of one language.
+    pub fn get(&self, language: Language) -> &[Stage] {
+        match language {
+            Language::Al => &self.al,
+            Language::Sl => &self.sl,
+            Language::Pl => &self.pl,
+        }
+    }
+}
+
+/// Registers a directory of spec-language sources with one verdict.
+///
+/// With outcome success, every source passes the stages up to `stage`;
+/// with outcome failure, every source passes the earlier stages
+/// and fails at `stage`.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MicroSuite {
+    pub name: String,
+    pub root: PathBuf,
+    pub outcome: diagnostic::Outcome,
+    pub stage: Stage,
+}
+
+/// Supplies language stages, exclusions, and micro suites.
+///
+/// A missing `excludes` directory holds no entries.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MicroConfig {
+    pub excludes: PathBuf,
+    pub stages: MicroStages,
+    pub suites: Vec<MicroSuite>,
 }
 
 /// Names each runner's registration file without storing its tests.
@@ -161,6 +248,7 @@ pub struct Modules {
     pub run: PathBuf,
     pub metacirc: PathBuf,
     pub sim: PathBuf,
+    pub micro: PathBuf,
     pub diagnostics: diagnostic::Modules,
 }
 
@@ -179,7 +267,7 @@ pub fn load<T: DeserializeOwned>(path: &Path) -> Result<T> {
         .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))
 }
 
-/// Resolves an expectation or diagnostic input relative to the driver.
+/// Resolves an expectation relative to the driver.
 pub fn expected_path(path: &Path) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join(path)
 }
@@ -346,13 +434,36 @@ pub fn load_metacirc(path: &Path) -> Result<MetacircConfig> {
     }
     names_valid(config.suites.iter().map(|suite| suite.name.as_str()))?;
     let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
+    // Resolve snapshot registrations relative to this registration file
+    let snapshots = &mut config.snapshots;
+    for path in
+        [&mut snapshots.elab, &mut snapshots.algo, &mut snapshots.structure, &mut snapshots.prose]
+    {
+        *path = path_parent.join(&*path);
+    }
     for suite in &mut config.suites {
         // Resolve each tower relative to this registration file
         suite.tower = path_parent.join(&suite.tower);
-        TowerConfig::from_file(&suite.tower)
+        let config_tower = TowerConfig::from_file(&suite.tower)
             .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
         directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
-        expectation_exists(&suite.expected)?;
+        // The tower's input language selects the kind of verdict
+        match (config_tower.top_lang(), &suite.expected, suite.outcome) {
+            (Lang::P4, Some(path_expected), None) => expectation_exists(path_expected)?,
+            (Lang::Al, None, Some(_)) => {}
+            (Lang::P4, _, _) => {
+                return Err(Error::Invalid(format!(
+                    "{}: a P4 suite needs an expected file and no outcome",
+                    suite.name
+                )));
+            }
+            (Lang::Al, _, _) => {
+                return Err(Error::Invalid(format!(
+                    "{}: an AL suite needs an outcome and no expected file",
+                    suite.name
+                )));
+            }
+        }
     }
     Ok(config)
 }
@@ -386,6 +497,27 @@ pub fn load_simulation(path: &Path) -> Result<SimConfig> {
     Ok(config)
 }
 
+/// Loads micro suites and per-language stages.
+pub fn load_micro(path: &Path) -> Result<MicroConfig> {
+    let config: MicroConfig = load(path)?;
+    let suites = &config.suites;
+    names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
+    for suite in suites {
+        directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
+    }
+    // Stages run in pipeline order, each at most once
+    for language in [Language::Al, Language::Sl, Language::Pl] {
+        let stages = config.stages.get(language);
+        if stages.is_empty() || !stages.is_sorted_by(|stage_a, stage_b| stage_a < stage_b) {
+            return Err(Error::Invalid(format!(
+                "micro stages of {} must be nonempty and in pipeline order",
+                language.name()
+            )));
+        }
+    }
+    Ok(config)
+}
+
 impl Index {
     /// Resolves module paths relative to the index without loading their settings.
     pub fn load(path: &Path) -> Result<Self> {
@@ -403,6 +535,7 @@ impl Index {
             &mut modules.run,
             &mut modules.metacirc,
             &mut modules.sim,
+            &mut modules.micro,
         ]
         .into_iter()
         .chain(modules.diagnostics.paths_mut())
@@ -424,6 +557,7 @@ impl Index {
         println!("run: {:#?}", load_execution(&self.suites.run)?);
         println!("metacirc: {:#?}", load_metacirc(&self.suites.metacirc)?);
         println!("sim: {:#?}", load_simulation(&self.suites.sim)?);
+        println!("micro: {:#?}", load_micro(&self.suites.micro)?);
         self.suites.diagnostics.list()
     }
 }

@@ -1,11 +1,11 @@
 //! P4 programs and AL scripts through AL metacircular towers
 //!
 //! This driver owns corpus traversal, preprocessing, execution, and comparison.
-//! `run` dispatches each suite by its tower's target language;
-//! every suite enters its target through the tower's target relation.
+//! `run` dispatches each suite by the language of its tower's top level;
+//! every suite enters its top level through that level's relation.
 //! `run_programs` prepares each P4 tower once and resets its state per program;
 //! `run_scripts` prepares a fresh tower per AL script,
-//! because an AL target supplies the builtin definitions of its own level.
+//! because each AL script supplies the builtin definitions for the top level.
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -32,6 +32,7 @@ use p4spectec::{
 use crate::{
     Error, ExecutionOptions, Result,
     corpus::{self, Outcome, Results},
+    diagnostic,
     suite::{self, MetacircConfig, MetacircSuite},
 };
 
@@ -48,7 +49,7 @@ pub fn run(config: &MetacircConfig, options: ExecutionOptions) -> Result<()> {
     for suite in &config.suites {
         let config_tower = TowerConfig::from_file(&suite.tower)
             .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
-        match config_tower.target_lang() {
+        match config_tower.top_lang() {
             Lang::P4 => suites_p4.push(suite),
             Lang::Al => suites_al.push(suite),
         }
@@ -77,7 +78,12 @@ fn run_programs(
     let mut suites = suites
         .iter()
         .map(|suite| {
-            let path_expected = suite::expected_path(&suite.expected);
+            let path_expected = suite::expected_path(
+                suite
+                    .expected
+                    .as_deref()
+                    .expect("loader requires a P4 expectation"),
+            );
             Ok(CollectedSuite {
                 paths: corpus::collect(&suite.root, ".p4")?,
                 path_tower: &suite.tower,
@@ -112,7 +118,7 @@ fn run_programs(
         let options_tower = Config::new(cache_on, det, false);
         let tower = Tower::build(&mut arena, &config_tower, &ProgramConfig::P4, options_tower)
             .map_err(|error| Error::Invalid(error.to_string()))?;
-        towers.insert(suite.path_tower, (tower, config_tower.target_rel().to_owned()));
+        towers.insert(suite.path_tower, tower);
     }
     let includes = &config.includes;
     for path in includes {
@@ -148,7 +154,7 @@ fn run_programs(
             }
         });
         for suite in &mut suites {
-            let (tower, id_relation) = towers
+            let tower = towers
                 .get_mut(suite.path_tower)
                 .expect("tower prepared per suite");
             for path in &suite.paths {
@@ -175,19 +181,13 @@ fn run_programs(
                     let outcome = match parse_string(&mut arena, path, &source) {
                         Ok(program) => {
                             // Patch failures abort; evaluation rejection is an outcome
-                            let value =
-                                tower
-                                    .patch(&mut arena, id_relation, program)
-                                    .map_err(|error| {
-                                        Error::Invalid(format!(
-                                            "{}: test execution error: {error}",
-                                            path.display()
-                                        ))
-                                    })?;
-                            let accepted = tower
-                                .eval_program(&mut arena, id_relation, value)
-                                .result
-                                .is_ok();
+                            let value = tower.patch(&mut arena, program).map_err(|error| {
+                                Error::Invalid(format!(
+                                    "{}: test execution error: {error}",
+                                    path.display()
+                                ))
+                            })?;
+                            let accepted = tower.eval_program(&mut arena, value).result.is_ok();
                             if accepted { Outcome::Pass } else { Outcome::Fail }
                         }
                         Err(P4Error {
@@ -228,7 +228,7 @@ fn run_programs(
     Ok(())
 }
 
-/// Runs AL suites through their towers and compares pass or fail.
+/// Runs AL suites through their towers and checks each script's outcome.
 fn run_scripts(suites: &[&MetacircSuite], options: ExecutionOptions) -> Result<()> {
     let ExecutionOptions { cache_on, no_det } = options;
     let det = !no_det;
@@ -236,10 +236,10 @@ fn run_scripts(suites: &[&MetacircSuite], options: ExecutionOptions) -> Result<(
     let text_mode = format!("metacirc AL cache={text_cache} det={det}");
     // Specification debug premises print to stdout
     let guard_stdout = crate::output::SilenceStdout::new()?;
-    let mut results_by_suite = Vec::with_capacity(suites.len());
+    let mut executed = 0;
+    let mut mismatches = Vec::new();
     for suite in suites {
-        let path_expected = suite::expected_path(&suite.expected);
-        let mut results = Results::new(expect_file![path_expected]);
+        let outcome_expect = suite.outcome.expect("loader requires an AL outcome");
         let config_tower = TowerConfig::from_file(&suite.tower)
             .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
         for path in corpus::collect(&suite.root, ".watsup")? {
@@ -250,14 +250,26 @@ fn run_scripts(suites: &[&MetacircSuite], options: ExecutionOptions) -> Result<(
             let accepted =
                 metacirc::run(&config_tower, &[], paths_program, Config::new(cache_on, det, false))
                     .is_ok();
-            results.record(&path, if accepted { Outcome::Pass } else { Outcome::Fail })?;
+            let outcome =
+                if accepted { diagnostic::Outcome::Success } else { diagnostic::Outcome::Failure };
+            if outcome != outcome_expect {
+                mismatches.push(format!(
+                    "{} ({}): expected {outcome_expect:?}, got {outcome:?}",
+                    path.display(),
+                    suite.name
+                ));
+            }
+            executed += 1;
         }
-        results_by_suite.push(results);
     }
     guard_stdout.finish()?;
-    for results in results_by_suite {
-        results.check();
+    // Report every mismatched script before failing
+    if !mismatches.is_empty() {
+        return Err(Error::Invalid(format!(
+            "{text_mode}: outcomes differ from their suite:\n{}",
+            mismatches.join("\n")
+        )));
     }
-    eprintln!("{text_mode}: all script results matched expected");
+    eprintln!("{text_mode}: all {executed} script outcomes matched their suite");
     Ok(())
 }

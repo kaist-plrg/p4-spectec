@@ -21,6 +21,7 @@ pub mod prose;
 
 pub mod adoc;
 
+pub mod micro;
 pub mod p4parse;
 pub mod run;
 pub mod sim;

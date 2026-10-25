@@ -19,17 +19,17 @@ use crate::{
 use std::rc::Rc;
 
 impl Tower {
-    /// Wraps an input in AL scripts from the target toward the native base.
+    /// Wraps an input in AL scripts from the top level toward the native base.
     ///
-    /// Uses `name` for the target entry and configured entries for intermediates.
+    /// Each level is entered through its configured relation.
     /// Encoding errors remain separate from the subsequent program evaluation.
-    pub fn patch(&self, arena: &mut Arena, name: &str, program: Value) -> Result<Value> {
+    pub fn patch(&self, arena: &mut Arena, program: Value) -> Result<Value> {
         // The base is never encoded; a direct tower consumes the input unchanged
-        let Some((target, interms)) = self.levels[1..].split_last() else {
+        let Some((top, interms)) = self.levels[1..].split_last() else {
             return Ok(program);
         };
-        // Patch the selected target relation around this input
-        let mut value = Self::entry(arena, &target.spec_al, name, program)?
+        // Patch the top level's configured relation around this input
+        let mut value = Self::entry(arena, &top.spec_al, &top.config.rel, program)?
             .encode(arena)
             .map_err(|error| error.into_report())?;
         // Each intermediate interprets the script immediately above it

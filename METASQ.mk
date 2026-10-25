@@ -10,7 +10,10 @@ endif
 export CARGO_TARGET_DIR
 
 .DEFAULT_GOAL := metacirc
-.PHONY: metacirc metacirc-cli test-metacirc clean
+METACIRC_TEST = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(CARGO_TARGET_DIR)" --bin metacirc-test --
+METACIRC_SNAPSHOTS := test-metacirc-elab test-metacirc-algo test-metacirc-structure test-metacirc-prose
+
+.PHONY: metacirc metacirc-cli test-metacirc test-metacirc-micro $(METACIRC_SNAPSHOTS) test-metacirc-promote clean
 
 metacirc-cli:
 	cd $(RUST_DIR) && $(CARGO) build --locked --release --bin metacirc --target-dir "$(CARGO_TARGET_DIR)"
@@ -20,8 +23,23 @@ metacirc: metacirc-cli
 	rm -f ./$(METACIRC)
 	cp "$(CARGO_TARGET_DIR)/release/metacirc" ./$(METACIRC)
 
+# P4 corpus through the AL/P4 towers
 test-metacirc:
-	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(CARGO_TARGET_DIR)" --bin metacirc-test
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) --input p4
+
+# Spec-language micro test sources through the AL tower
+test-metacirc-micro:
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) --input al
+
+# Snapshots of the meta specification in spec-meta
+$(METACIRC_SNAPSHOTS):
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) $(@:test-metacirc-%=%)
+
+# Rerun elab/algo/prose and update their snapshots; structure is never promoted
+test-metacirc-promote:
+	cd $(RUST_DIR) && UPDATE_EXPECT=1 $(METACIRC_TEST) elab
+	cd $(RUST_DIR) && UPDATE_EXPECT=1 $(METACIRC_TEST) algo
+	cd $(RUST_DIR) && UPDATE_EXPECT=1 $(METACIRC_TEST) prose
 
 clean:
 	rm -f ./$(METACIRC)

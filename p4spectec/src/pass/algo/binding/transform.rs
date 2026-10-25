@@ -68,7 +68,7 @@ use super::super::{AlgoError, error, otherwise};
 use super::{
     antiunify,
     bind::BEnv,
-    collect,
+    bound, collect,
     context::Context,
     dimension,
     iteration::{ICtx, Iteration},
@@ -220,44 +220,49 @@ fn analyze_exps_as_bind(
     let exps_al =
         partial::rename_exps(ctx, &mut renv_partial, &mut iter_ctx_exp, &venv.domain(), exps_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_partial = partial::gen_prems(iter_ctx, &renv_partial);
+    let prems_partial = partial::gen_prems(ctx, iter_ctx, &renv_partial)?;
     Ok((venv, exps_al, generated_prems(prems_partial, prems_multiple)))
 }
 
 /// Requires an expression in bound position to bind nothing.
-fn analyze_exp_as_bound(ctx: &Context, exp: &ast::Exp) -> Result<(), AlgoError> {
-    if let Some(var) = exp
-        .free_vars()
-        .iter()
-        .find(|var| !ctx.venv.contains_key(&var.id))
-    {
-        Err(error::binding::expression_variable_unbound(&var.id))
-    } else {
-        Ok(())
+fn analyze_exp_as_bound(ctx: &Context, iter_ctx: &ICtx, exp: &ast::Exp) -> Result<(), AlgoError> {
+    for var in exp.free_vars() {
+        let Some(dim_bound) = ctx.venv.get(&var.id) else {
+            return Err(error::binding::expression_variable_unbound(&var.id));
+        };
+        bound::check_read(iter_ctx, &var, dim_bound)?;
     }
+    Ok(())
 }
 
 /// Checks a relation input as a read-only expression at its input hint.
 fn analyze_relation_input_as_bound(
     ctx: &Context,
+    iter_ctx: &ICtx,
     exp_input_il: &ast::Exp,
     id_relation: &ast::Id,
     idx_input: &Phrase<usize>,
 ) -> Result<(), AlgoError> {
-    if let Some(var) = exp_input_il
-        .free_vars()
-        .iter()
-        .find(|var| !ctx.venv.contains_key(&var.id))
-    {
-        Err(error::binding::relation_input_variable_unbound(&var.id, id_relation, idx_input))
-    } else {
-        Ok(())
+    for var in exp_input_il.free_vars() {
+        let Some(dim_bound) = ctx.venv.get(&var.id) else {
+            return Err(error::binding::relation_input_variable_unbound(
+                &var.id,
+                id_relation,
+                idx_input,
+            ));
+        };
+        bound::check_read(iter_ctx, &var, dim_bound)?;
     }
+    Ok(())
 }
 
-fn analyze_exps_as_bound(ctx: &Context, exps: &[ast::Exp]) -> Result<(), AlgoError> {
+fn analyze_exps_as_bound(
+    ctx: &Context,
+    iter_ctx: &ICtx,
+    exps: &[ast::Exp],
+) -> Result<(), AlgoError> {
     for exp in exps {
-        analyze_exp_as_bound(ctx, exp)?;
+        analyze_exp_as_bound(ctx, iter_ctx, exp)?;
     }
     Ok(())
 }
@@ -284,7 +289,7 @@ fn analyze_args_as_bind(
     let args_al =
         partial::rename_args(ctx, &mut renv_partial, &mut iter_ctx_arg, &venv.domain(), args_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_partial = partial::gen_prems(&ICtx::new(), &renv_partial);
+    let prems_partial = partial::gen_prems(ctx, &ICtx::new(), &renv_partial)?;
     Ok((venv, args_al, generated_prems(prems_partial, prems_multiple)))
 }
 
@@ -323,7 +328,7 @@ fn analyze_args_as_bind_shallow(
     let args_al =
         partial::rename_args(ctx, &mut renv_partial, &mut iter_ctx_arg, &venv.domain(), args_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_al = partial::gen_prems(&ICtx::new(), &renv_partial)
+    let prems_al = partial::gen_prems(ctx, &ICtx::new(), &renv_partial)?
         .into_iter()
         .map(partial::AnalyzedPrem::into_prem)
         .collect();
@@ -412,7 +417,7 @@ fn lower_rule_prem(
     let mut idxs_input = rule_prem_il.input_hint.indices().iter().collect::<Vec<_>>();
     idxs_input.sort_by_key(|idx| idx.node);
     for (exp_input_il, idx_input) in exps_input_il.iter().zip(idxs_input) {
-        analyze_relation_input_as_bound(ctx, exp_input_il, &rule_prem_il.id, idx_input)?;
+        analyze_relation_input_as_bound(ctx, &iter_ctx, exp_input_il, &rule_prem_il.id, idx_input)?;
     }
     let (venv, exps_output_al, prem_sideconditions_al) =
         analyze_exps_as_bind(ctx, &iter_ctx, &exps_output_il)?;
@@ -459,6 +464,7 @@ fn lower_if_eq_prem(
     match (benv_l.is_empty(), benv_r.is_empty()) {
         // Neither side binds: keep the condition
         (true, true) => {
+            analyze_exp_as_bound(ctx, &iter_ctx, &if_prem_il.exp)?;
             let prem_al = phrase! {
                 node: al::ast::PremKind::If(al::ast::IfPrem {
                     exp: if_prem_il.exp.clone(),
@@ -489,7 +495,7 @@ fn lower_if_prem(
     {
         lower_if_eq_prem(ctx, iter_ctx, span, if_prem_il, exp_l_il, exp_r_il)
     } else {
-        analyze_exp_as_bound(ctx, &if_prem_il.exp)?;
+        analyze_exp_as_bound(ctx, &iter_ctx, &if_prem_il.exp)?;
         let prem_al = phrase! {
             node: al::ast::PremKind::If(al::ast::IfPrem {
                 exp: if_prem_il.exp.clone(),
@@ -511,7 +517,7 @@ fn lower_if_hold_prem(
 ) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
     // Every argument must already be bound
     for exp_il in if_prem_il.not_exp.args() {
-        analyze_exp_as_bound(ctx, exp_il)?;
+        analyze_exp_as_bound(ctx, &iter_ctx, exp_il)?;
     }
     let prem_al = phrase! {
         node: al::ast::PremKind::IfHold(al::ast::IfHoldPrem {
@@ -534,7 +540,7 @@ fn lower_if_not_hold_prem(
 ) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
     // Every argument must already be bound
     for exp_il in if_prem_il.not_exp.args() {
-        analyze_exp_as_bound(ctx, exp_il)?;
+        analyze_exp_as_bound(ctx, &iter_ctx, exp_il)?;
     }
     let prem_al = phrase! {
         node: al::ast::PremKind::IfNotHold(al::ast::IfNotHoldPrem {
@@ -557,6 +563,9 @@ fn lower_let_prem(
     benv_l: &BEnv,
     exp_r_il: &ast::Exp,
 ) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
+    // The value side is read
+    analyze_exp_as_bound(ctx, &iter_ctx, exp_r_il)?;
+
     // Rename repeated binders in the pattern
     let mut venv = benv_l.flatten();
     let mut renv_multiple = multiple::RenameEnv::from_bindings(benv_l);
@@ -570,7 +579,7 @@ fn lower_let_prem(
     let exp_l_al =
         partial::rename_exp(ctx, &mut renv_partial, &mut iter_ctx_exp, &venv.domain(), exp_l_al)?;
     update_venv_partial(&mut venv, &renv_partial);
-    let prems_partial = partial::gen_prems(&iter_ctx, &renv_partial);
+    let prems_partial = partial::gen_prems(ctx, &iter_ctx, &renv_partial)?;
     let prems_analyzed = generated_prems(prems_partial, prems_multiple);
 
     let prem_al = phrase! {
@@ -613,7 +622,11 @@ fn lower_iter_prem(
         vars_bind: vec![],
     }];
     iterations.extend(iter_ctx.as_slice().iter().cloned());
-    lower_prem(ctx, ICtx::from_iterations(iterations), &iter_prem_il.prem)
+    let (venv, prem_al, prems_analyzed) =
+        lower_prem(ctx, ICtx::from_iterations(iterations), &iter_prem_il.prem)?;
+    // Variables bound inside are seen outside under one more iteration
+    let venv = ICtx::add_iter(venv, iter_prem_il.prem_iter.iter);
+    Ok((venv, prem_al, prems_analyzed))
 }
 
 // - Debug premises
@@ -624,7 +637,7 @@ fn lower_debug_prem(
     span: &Span,
     debug_prem_il: &ast::DebugPrem,
 ) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
-    analyze_exp_as_bound(ctx, &debug_prem_il.exp)?;
+    analyze_exp_as_bound(ctx, &iter_ctx, &debug_prem_il.exp)?;
     let prem_al = phrase! {
         node: al::ast::PremKind::Debug(al::ast::DebugPrem {
             exp: debug_prem_il.exp.clone(),
@@ -667,7 +680,7 @@ fn lower_rule_match(
         analyze_exps_as_bind(ctx, &ICtx::new(), &exps_signature_al)?;
     // Nothing may remain free in the shared signature
     ctx.add_bounds(&venv);
-    analyze_exps_as_bound(ctx, &exps_signature_al)?;
+    analyze_exps_as_bound(ctx, &ICtx::new(), &exps_signature_al)?;
     if let Some(otherwise) = otherwise_opt {
         for exp in &exps_input_al {
             otherwise::check_exp(exp, otherwise)?;
@@ -698,7 +711,7 @@ fn lower_rule_path(
     let prems_analyzed = lower_prems(ctx, prems_il)?;
     let mut prems_all_analyzed = prems_unified_analyzed;
     prems_all_analyzed.extend(prems_analyzed);
-    analyze_exps_as_bound(ctx, &exps_output_il)?;
+    analyze_exps_as_bound(ctx, &ICtx::new(), &exps_output_il)?;
     if let Some(otherwise) = otherwise_opt {
         for exp in &exps_output_il {
             otherwise::check_exp(exp, otherwise)?;
@@ -816,7 +829,7 @@ fn lower_clause(
     let (venv, args_al, prems_generated) = analyze_args_as_bind(&mut ctx, &args_il)?;
     ctx.add_bounds(&venv);
     let prems_analyzed = lower_prems(&mut ctx, prems_il)?;
-    analyze_exp_as_bound(&ctx, &exp_il)?;
+    analyze_exp_as_bound(&ctx, &ICtx::new(), &exp_il)?;
     // Check normalized expressions and premises while provenance is available
     let mut prems_all_analyzed = prems_generated;
     prems_all_analyzed.extend(prems_analyzed);
@@ -981,7 +994,7 @@ fn lower_table_row(
         exps_signature_al.push(*exp_il);
     }
     // The body must be bound
-    analyze_exp_as_bound(&ctx, &exp_il)?;
+    analyze_exp_as_bound(&ctx, &ICtx::new(), &exp_il)?;
     let row_al = phrase! {
         node: al::ast::TableRowKind {
             exps_signature: exps_signature_al,
@@ -1025,60 +1038,16 @@ fn lower_table_rows(
     Ok(rows_al)
 }
 
-// - Type definitions
-
-fn lower_typ_def(typ_def_il: ast::TypDef) -> al::ast::TypDef {
-    match typ_def_il {
-        ast::TypDef::Extern(extern_typ_il) => {
-            al::ast::TypDef::Extern(lower_extern_typ(extern_typ_il))
-        }
-        ast::TypDef::Defined(defined_typ_il) => {
-            let defined_typ_al = lower_defined_typ(*defined_typ_il);
-            al::ast::TypDef::Defined(Box::new(defined_typ_al))
-        }
-    }
-}
-
-fn lower_extern_typ(extern_typ_il: ast::ExternTyp) -> al::ast::ExternTyp {
-    al::ast::ExternTyp { id: extern_typ_il.id, hints: extern_typ_il.hints }
-}
-
-fn lower_defined_typ(defined_typ_il: ast::DefinedTyp) -> al::ast::DefinedTyp {
-    al::ast::DefinedTyp {
-        id: defined_typ_il.id,
-        tparams: defined_typ_il.tparams,
-        def_typ: defined_typ_il.def_typ,
-        hints: defined_typ_il.hints,
-    }
-}
-
-// - Meta-variables
-
-fn lower_var_def(var_def_il: ast::VarDef) -> al::ast::VarDef {
-    al::ast::VarDef { id: var_def_il.id, typ: var_def_il.typ, hints: var_def_il.hints }
-}
-
 // - Relations
 
 fn lower_rel_def(ctx: &mut Context, rel_def_il: ast::RelDef) -> Result<al::ast::RelDef, AlgoError> {
     match rel_def_il {
-        ast::RelDef::Extern(extern_rel_il) => {
-            let extern_rel_al = lower_extern_rel(*extern_rel_il);
-            Ok(al::ast::RelDef::Extern(Box::new(extern_rel_al)))
-        }
+        // Extern relations are shared with IL
+        ast::RelDef::Extern(extern_rel) => Ok(al::ast::RelDef::Extern(extern_rel)),
         ast::RelDef::Defined(defined_rel_il) => {
             let defined_rel_al = lower_defined_rel(ctx, *defined_rel_il)?;
             Ok(al::ast::RelDef::Defined(Box::new(defined_rel_al)))
         }
-    }
-}
-
-fn lower_extern_rel(extern_rel_il: ast::ExternRel) -> al::ast::ExternRel {
-    al::ast::ExternRel {
-        id: extern_rel_il.id,
-        not_typ: extern_rel_il.not_typ,
-        input_hint: extern_rel_il.input_hint,
-        hints: extern_rel_il.hints,
     }
 }
 
@@ -1118,12 +1087,9 @@ fn lower_meta_func_def(
     span: &Span,
 ) -> Result<al::ast::MetaFuncDef, AlgoError> {
     match meta_func_def_il {
-        ast::MetaFuncDef::Extern(extern_func_il) => {
-            Ok(al::ast::MetaFuncDef::Extern(lower_extern_func(extern_func_il)))
-        }
-        ast::MetaFuncDef::Builtin(builtin_func_il) => {
-            Ok(al::ast::MetaFuncDef::Builtin(lower_builtin_func(builtin_func_il)))
-        }
+        // Extern and builtin declarations are shared with IL
+        ast::MetaFuncDef::Extern(extern_func) => Ok(al::ast::MetaFuncDef::Extern(extern_func)),
+        ast::MetaFuncDef::Builtin(builtin_func) => Ok(al::ast::MetaFuncDef::Builtin(builtin_func)),
         ast::MetaFuncDef::Table(table_func_il) => {
             Ok(al::ast::MetaFuncDef::Table(lower_table_func(ctx, table_func_il, span)?))
         }
@@ -1131,26 +1097,6 @@ fn lower_meta_func_def(
             let defined_func_al = lower_defined_func(ctx, *defined_func_il)?;
             Ok(al::ast::MetaFuncDef::Defined(Box::new(defined_func_al)))
         }
-    }
-}
-
-fn lower_extern_func(extern_func_il: ast::ExternFunc) -> al::ast::ExternFunc {
-    al::ast::ExternFunc {
-        id: extern_func_il.id,
-        tparams: extern_func_il.tparams,
-        params: extern_func_il.params,
-        typ: extern_func_il.typ,
-        hints: extern_func_il.hints,
-    }
-}
-
-fn lower_builtin_func(builtin_func_il: ast::BuiltinFunc) -> al::ast::BuiltinFunc {
-    al::ast::BuiltinFunc {
-        id: builtin_func_il.id,
-        tparams: builtin_func_il.tparams,
-        params: builtin_func_il.params,
-        typ: builtin_func_il.typ,
-        hints: builtin_func_il.hints,
     }
 }
 
@@ -1204,14 +1150,9 @@ fn lower_defined_func(
 fn lower_def(ctx: &mut Context, def_il: ast::Def) -> Result<al::ast::Def, AlgoError> {
     let span = def_il.span;
     let def_kind_al = match def_il.node {
-        ast::DefKind::Typ(typ_def_il) => {
-            let typ_def_al = lower_typ_def(typ_def_il);
-            al::ast::DefKind::Typ(typ_def_al)
-        }
-        ast::DefKind::Var(var_def_il) => {
-            let var_def_al = lower_var_def(var_def_il);
-            al::ast::DefKind::Var(var_def_al)
-        }
+        // Type and variable definitions are shared with IL
+        ast::DefKind::Typ(typ_def) => al::ast::DefKind::Typ(typ_def),
+        ast::DefKind::Var(var_def) => al::ast::DefKind::Var(var_def),
         ast::DefKind::Rel(rel_def_il) => {
             let rel_def_al = lower_rel_def(ctx, rel_def_il)?;
             al::ast::DefKind::Rel(rel_def_al)

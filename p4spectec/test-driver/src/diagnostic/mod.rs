@@ -1,6 +1,7 @@
 //! Registered negative diagnostic acceptance
 //!
-//! Module registrations supply source fixtures and expectations.
+//! Module registrations supply source fixtures and expectations,
+//! which live together under `testdata/spec`.
 //! CLI argument files contain their complete invocation and input paths.
 //! Reports render from a stable fixture directory before full-text comparison.
 //! Each stage rejects failures from preceding passes as setup errors.
@@ -162,7 +163,7 @@ pub enum Outcome {
     Failure,
 }
 
-/// Supplies fixture paths relative to the test-driver manifest directory.
+/// Supplies fixture paths relative to the fixture directory, `testdata/spec`.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Case {
@@ -215,13 +216,13 @@ fn load(path: &Path, cli_only: bool) -> Result<Vec<Group>> {
                 return Err(failure(&case.name, "requires an .args input"));
             }
             for path in [&case.input, &case.expected] {
-                if !crate::suite::expected_path(path).is_file() {
+                if !fixture_dir().join(path).is_file() {
                     return Err(failure(&case.name, format!("missing file {}", path.display())));
                 }
             }
             // Inputs supply API sources or isolated copies for CLI cases
             for path in &case.inputs {
-                if !crate::suite::expected_path(path).exists() {
+                if !fixture_dir().join(path).exists() {
                     return Err(failure(&case.name, format!("missing input {}", path.display())));
                 }
             }
@@ -248,24 +249,22 @@ impl Case {
         self.input.extension().is_some_and(|ext| ext == "args")
     }
 
-    /// Resolves an input from the diagnostic fixture working directory.
+    /// Returns the input as seen from the fixture working directory.
     fn path_input(&self) -> PathBuf {
-        fixture_path(&self.input)
+        self.input.clone()
     }
 
-    /// Resolves all auxiliary sources from the fixture working directory.
+    /// Returns the auxiliary sources as seen from the fixture working directory.
     fn paths_input(&self) -> Vec<PathBuf> {
-        self.inputs.iter().map(|path| fixture_path(path)).collect()
+        self.inputs.clone()
     }
 }
 
-/// Keeps source identities stable across checkout locations.
-fn fixture_path(path: &Path) -> PathBuf {
-    if let Ok(path) = path.strip_prefix("expected/diagnostic") {
-        path.to_owned()
-    } else {
-        Path::new("../..").join(path)
-    }
+/// Locates the fixture directory, the working directory while rendering.
+///
+/// Relative paths keep source identities stable across checkout locations.
+fn fixture_dir() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../testdata/spec")
 }
 
 /// Restores the caller's working directory after diagnostic rendering.
@@ -297,8 +296,8 @@ fn run_registered(
         return Err(failure(name, "--cli is required for argument-file acceptance"));
     }
     let _directory = Directory(std::env::current_dir()?);
-    let path_manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
-    std::env::set_current_dir(path_manifest.join("expected/diagnostic"))?;
+    let path_fixture = fixture_dir();
+    std::env::set_current_dir(&path_fixture)?;
 
     // Preserve group and case order from this module's registration file
     for group in groups {
@@ -320,7 +319,7 @@ fn run_registered(
                 text
             };
             // Every comparison uses the explicit registered expectation
-            let path = path_manifest.join(&case.expected);
+            let path = path_fixture.join(&case.expected);
             expect_file![path].assert_eq(&text);
             progress.inc(1);
         }

@@ -29,3 +29,11 @@ def test_walk_real_excludes():
     assert sns["repo"] == "67" and sns["upstream"] == "c5240"
     assert sns["layer"] == "static" and sns["category"] == "p4c" and sns["status"] == "confirmed"
     assert sns["pos"] == 0 and sns["neg"] == 1
+
+
+def test_walk_skips_non_mismatch_layers(tmp_path):
+    for layer in ("static", "micro"):
+        d = tmp_path / layer / "p4c" / "confirmed"
+        d.mkdir(parents=True)
+        (d / "i1-name.exclude").write_text("p4c/testdata/p4_16_errors/a.p4\n")
+    assert [r["layer"] for r in walk_excludes(tmp_path)] == ["static"]
