@@ -1,41 +1,38 @@
 //! Native host operations requested by the AL interpreter specification
 //!
-//! AlExtern hosts the script that an AL specification interprets.
+//! MetaExtern hosts the AL script that a meta specification interprets.
 //! RelayExtern decodes one representation layer and delegates to the next level.
 //! TerminalExtern handles only builtins of the AL program above the top level.
-//! Clearing an extern resets its owned runners before arena values are reset.
+//! Clearing an extern resets the host it owns before arena values are reset.
 
-use super::{codec, tower::Layer};
+use super::{HostLayer, codec, reentry::NoReentry};
 use crate::{
     interface::meta::{MetaInterface, shared::Cache},
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::Typ,
     },
-    runner::{
-        Eval, Extern, ExternError, Interface, Interpreter, NullExtern, Runner, RunnerContext,
-        SideEffect,
-    },
+    runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext, SideEffect},
 };
 
-/// The host of the script that an AL specification interprets.
-pub(super) enum AlExtern {
+/// The host of the AL script that a meta specification interprets.
+pub(in crate::metacirc) enum MetaExtern {
     /// The script is the next level; host calls go to its layer.
     Relay(RelayExtern),
     /// The script is the AL program; only its builtins are answered.
     Terminal(TerminalExtern),
 }
 
-/// Builtin calls resolved against the AL program's own specification.
-pub(super) struct TerminalExtern {
+/// Builtin calls of the program, answered by the program's interface.
+pub(in crate::metacirc) struct TerminalExtern {
     pub cache: Box<Cache>,
-    pub runner_program: Box<Runner<MetaInterface, NullExtern>>,
+    pub interface_program: Box<MetaInterface>,
 }
 
-/// Host calls resolved against the next layer in a runtime tower.
-pub(super) struct RelayExtern {
+/// Host calls resolved against the next level's host in a runtime tower.
+pub(in crate::metacirc) struct RelayExtern {
     pub cache: Box<Cache>,
-    pub layer_next: Box<Layer>,
+    pub layer_next: Box<HostLayer>,
 }
 
 /// Rejects an operation outside the host boundary's contract.
@@ -46,7 +43,7 @@ fn unsupported<T>(name: &str) -> Eval<T, ExternError> {
     )
 }
 
-impl Extern for AlExtern {
+impl Extern for MetaExtern {
     fn eval_rel<Interp, Iface>(
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
@@ -85,14 +82,14 @@ impl Extern for AlExtern {
 }
 
 impl TerminalExtern {
-    /// Answers a builtin call of the AL program and rejects other meta relations.
+    /// Answers a builtin call of the program and rejects other meta relations.
     fn eval_rel(
         &mut self,
         arena: &mut Arena,
         name: &str,
         values: &[Value],
     ) -> Eval<Vec<Value>, ExternError> {
-        // The AL program exposes only its builtins to the meta interpreter
+        // The program exposes only its builtins to the meta interpreter
         if name != "Call_builtin_func" {
             return unsupported(name);
         }
@@ -100,16 +97,17 @@ impl TerminalExtern {
             Ok(args) => args,
             Err(error) => return Eval::new(Err(error), SideEffect::Pure),
         };
-        // Dispatch through the separately prepared program definition environment
+        // Answer the builtin through the program's interface
         let eval = self
-            .runner_program
-            .eval_func(arena, &id.node, &targs, &values);
+            .interface_program
+            .call_builtin(arena, &id, &targs, &values)
+            .map_err(Into::into);
         codec::encode::func_result(arena, &mut self.cache, eval)
     }
 
     fn clear(&mut self) {
         self.cache.clear();
-        self.runner_program.reset();
+        self.interface_program.clear();
     }
 }
 
@@ -122,23 +120,41 @@ impl RelayExtern {
         values: &[Value],
     ) -> Eval<Vec<Value>, ExternError> {
         match name {
-            // Builtin and extern functions share a call shape and one result value
-            "Call_builtin_func" | "Call_extern_func" => {
+            // Builtins are answered by the next level's interface
+            "Call_builtin_func" => {
                 let (id, targs, values) =
                     match codec::decode::func_args(arena, &mut self.cache, values) {
                         Ok(args) => args,
                         Err(error) => return Eval::new(Err(error), SideEffect::Pure),
                     };
-                let eval = self.layer_next.eval_func(arena, &id.node, &targs, &values);
+                let eval = self.layer_next.eval_builtin(arena, &id, &targs, &values);
                 codec::encode::func_result(arena, &mut self.cache, eval)
             }
-            // Relations return an ordered list of outputs
+            // Host functions are answered by the next level's extern
+            "Call_extern_func" => {
+                let (id, targs, values) =
+                    match codec::decode::func_args(arena, &mut self.cache, values) {
+                        Ok(args) => args,
+                        Err(error) => return Eval::new(Err(error), SideEffect::Pure),
+                    };
+                let eval = self.layer_next.eval_extern_func(
+                    arena,
+                    &mut NoReentry,
+                    &id.node,
+                    &targs,
+                    &values,
+                );
+                codec::encode::func_result(arena, &mut self.cache, eval)
+            }
+            // Host relations return an ordered list of outputs
             "Call_extern_rel" => {
                 let (id, values) = match codec::decode::rel_args(arena, &mut self.cache, values) {
                     Ok(args) => args,
                     Err(error) => return Eval::new(Err(error), SideEffect::Pure),
                 };
-                let eval = self.layer_next.eval_rel(arena, &id.node, &values);
+                let eval =
+                    self.layer_next
+                        .eval_extern_rel(arena, &mut NoReentry, &id.node, &values);
                 codec::encode::rel_result(arena, &mut self.cache, eval)
             }
             // Host functions are reached through the three declared meta relations

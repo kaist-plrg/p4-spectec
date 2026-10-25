@@ -5,7 +5,6 @@
 //! Specification paths are resolved relative to the JSON file.
 
 use super::{Result, error::config_invalid};
-use crate::lang::al::ast as al;
 use serde::Deserialize;
 use std::{
     fs,
@@ -54,20 +53,11 @@ pub enum Lang {
     P4,
 }
 
-/// Supplies input definitions required by the top level's host interface.
-#[derive(Clone, Debug)]
-pub enum ProgramConfig {
-    /// The AL input whose definitions supply the terminal builtin environment.
-    Al { spec_al: al::Spec },
-    /// P4 inputs use builtins from the top level's specification.
-    P4,
-}
-
 impl TowerConfig {
     /// Reads tower roles from a JSON file.
     ///
-    /// Input definitions are supplied when the tower is built,
-    /// so a corpus can read a tower once and run many inputs through it.
+    /// Inputs are supplied only after the tower is built,
+    /// so a corpus can build a tower once and run many inputs through it.
     pub fn from_file(path: &Path) -> Result<Self> {
         /// Ordered levels at the JSON boundary.
         #[derive(Deserialize)]

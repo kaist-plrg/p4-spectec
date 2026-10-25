@@ -26,3 +26,11 @@ pub(super) fn input_invalid(message: impl Into<String>) -> Box<Report> {
 pub(super) fn entry_invalid(message: impl Into<String>) -> Box<Report> {
     diagnostic("metacirc/entry-invalid", message)
 }
+
+/// Reports a host extern that reenters a tower lending no interpreter.
+pub(super) fn reentry_unsupported() -> Box<Report> {
+    diagnostic(
+        "metacirc/reentry-unsupported",
+        "a host extern reentered the tower, which lends no interpreter to answer it",
+    )
+}

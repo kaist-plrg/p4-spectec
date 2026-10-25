@@ -22,10 +22,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use p4spectec::{
     interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess},
     lang::data::arena::Arena,
-    metacirc::{
-        self, Tower, TowerConfig,
-        config::{Lang, ProgramConfig},
-    },
+    metacirc::{self, Tower, TowerConfig, config::Lang},
     runner::Config,
 };
 
@@ -116,7 +113,7 @@ fn run_programs(
         let config_tower = TowerConfig::from_file(suite.path_tower)
             .map_err(|error| Error::Invalid(error.to_string()))?;
         let options_tower = Config::new(cache_on, det, false);
-        let tower = Tower::build(&mut arena, &config_tower, &ProgramConfig::P4, options_tower)
+        let tower = Tower::build(&mut arena, &config_tower, options_tower)
             .map_err(|error| Error::Invalid(error.to_string()))?;
         towers.insert(suite.path_tower, tower);
     }

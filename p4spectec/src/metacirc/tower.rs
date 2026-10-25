@@ -1,18 +1,17 @@
-//! Interpreter towers and their host-call layers
+//! Interpreter towers and their native base
 //!
 //! The tower exposes program execution through its native entry point.
-//! Each level runs natively as one layer.
-//! An AL specification's extern hosts the script above it:
-//! the next level's layer, or the builtins of the AL program.
+//! The base is a runner with an interpreter; every other level is a host,
+//! since the level below interprets it, and is reached through the base's
+//! extern (see `host`).
 //! A single-level tower executes its top level directly as its base.
 
-use super::{config::LevelConfig, externs::AlExtern};
+use super::{config::LevelConfig, host::MetaExtern};
 use crate::{
     interface::{meta::MetaInterface, p4::P4Interface},
     lang::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},
-        il::ast::Typ,
     },
     runner::{Eval, Runner},
     sim_plugin::dummy::Dummy,
@@ -22,25 +21,37 @@ use crate::{
 pub struct Tower {
     // Nonempty, ordered from base through intermediates to the top level
     pub(super) levels: Vec<Level>,
-    pub(super) base: Layer,
+    pub(super) base: BaseLayer,
 }
 
-/// A lowered specification paired with its configuration.
-pub(super) struct Level {
-    pub(super) config: LevelConfig,
-    pub(super) spec_al: al::Spec,
+/// A configured specification, by the form it is passed to the level below.
+pub(super) enum Level {
+    /// The base, which no level interprets.
+    Base { config: LevelConfig },
+    /// A level above one accepting AL, which receives the patched AL.
+    AboveAl { config: LevelConfig, spec_al: al::Spec },
 }
 
-/// The native runner of one level, selected by the language it interprets.
-pub(super) enum Layer {
+impl Level {
+    pub(super) fn config(&self) -> &LevelConfig {
+        match self {
+            Self::Base { config, .. } | Self::AboveAl { config, .. } => config,
+        }
+    }
+}
+
+/// The native runner of the base, selected by the language it interprets.
+pub(super) enum BaseLayer {
     /// A P4 specification, interpreting a parsed P4 program.
     P4Spec(Runner<P4Interface, Dummy>),
-    /// A specification interpreting AL, hosting the script above it.
-    AlSpec(Runner<MetaInterface, AlExtern>),
+    /// A meta specification interpreting an AL script, hosting the script above it.
+    MetaSpec(Runner<MetaInterface, MetaExtern>),
 }
 
 impl Tower {
     /// Clears program state in the base and every owned host layer.
+    ///
+    /// Call before each input, and before resetting the arena values for parsing.
     pub fn reset(&mut self) {
         self.base.reset();
     }
@@ -48,51 +59,24 @@ impl Tower {
     /// Executes a patched input at the native base's entry relation.
     pub fn eval_program(&mut self, arena: &mut Arena, program: Value) -> Eval<Vec<Value>> {
         self.base
-            .eval_program(arena, &self.levels[0].config.rel, program)
+            .eval_program(arena, &self.levels[0].config().rel, program)
     }
 }
 
-impl Layer {
+impl BaseLayer {
     /// Enters the native runner with the patched input value.
     fn eval_program(&mut self, arena: &mut Arena, name: &str, program: Value) -> Eval<Vec<Value>> {
         match self {
             Self::P4Spec(runner) => runner.eval_program(arena, name, program),
-            Self::AlSpec(runner) => runner.eval_program(arena, name, program),
+            Self::MetaSpec(runner) => runner.eval_program(arena, name, program),
         }
     }
 
-    /// Dispatches a decoded relation at this layer.
-    pub fn eval_rel(
-        &mut self,
-        arena: &mut Arena,
-        name: &str,
-        values: &[Value],
-    ) -> Eval<Vec<Value>> {
-        match self {
-            Self::P4Spec(runner) => runner.eval_rel(arena, name, values),
-            Self::AlSpec(runner) => runner.eval_rel(arena, name, values),
-        }
-    }
-
-    /// Dispatches a decoded function at this layer.
-    pub fn eval_func(
-        &mut self,
-        arena: &mut Arena,
-        name: &str,
-        targs: &[Typ],
-        values: &[Value],
-    ) -> Eval<Value> {
-        match self {
-            Self::P4Spec(runner) => runner.eval_func(arena, name, targs, values),
-            Self::AlSpec(runner) => runner.eval_func(arena, name, targs, values),
-        }
-    }
-
-    /// Resets this layer and all layers owned by its extern implementation.
-    pub fn reset(&mut self) {
+    /// Resets the runner and all layers owned by its extern implementation.
+    fn reset(&mut self) {
         match self {
             Self::P4Spec(runner) => runner.reset(),
-            Self::AlSpec(runner) => runner.reset(),
+            Self::MetaSpec(runner) => runner.reset(),
         }
     }
 }
