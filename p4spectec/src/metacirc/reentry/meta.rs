@@ -4,7 +4,7 @@
 //! `C = $load_ctx($empty_ctx, <P4 spec>)` once per program
 //! and runs `Call_rel(C, "V1Model_parser", values)` on its depth's SL interpreter.
 //! spec-meta's host calls relay to the P4 host the caller lent (`relay::lent`);
-//! a reentry from that host runs on the next `Depth`.
+//! a reentry from that host runs on the next `MetaDepth`.
 //! Depths share spec-meta, C, and the codec cache;
 //! each depth owns its SL memo and its meta builtins.
 
@@ -42,13 +42,13 @@ pub(in crate::metacirc) struct MetaEnv<'s> {
 }
 
 /// The interpreter state of one reentry depth beneath the base.
-pub(in crate::metacirc) struct Depth {
+pub(in crate::metacirc) struct MetaDepth {
     interp: SlInterp,
     interface: MetaInterface,
-    next: Option<Box<Depth>>,
+    next: Option<Box<MetaDepth>>,
 }
 
-impl Depth {
+impl MetaDepth {
     pub(in crate::metacirc) fn new(options: runner::Config) -> Self {
         Self {
             interp: SlInterp::new(SlConfig::new(options.cache, options.det, options.guard)),
@@ -79,7 +79,7 @@ pub(in crate::metacirc) struct MetaInterp<'s> {
     pub interp: &'s mut SlInterp,
     pub interface: &'s mut MetaInterface,
     /// The depths beneath this one, which answer reentry.
-    pub depth_next: &'s mut Option<Box<Depth>>,
+    pub depth_next: &'s mut Option<Box<MetaDepth>>,
     /// C for the current program, shared by every depth.
     pub ctx_target: &'s mut Option<Value>,
     /// The codec cache, shared by every depth.

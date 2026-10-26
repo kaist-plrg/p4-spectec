@@ -13,7 +13,7 @@ use crate::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
     },
-    metacirc::reentry::{Depth, MetaEnv, MetaInterp},
+    metacirc::reentry::{MetaDepth, MetaEnv, MetaInterp},
     runner::{Eval, Extern, Interface, InterpreterError, RunnerContext},
 };
 
@@ -23,7 +23,7 @@ pub(in crate::metacirc) struct LentHost<'h, 's, Ext: Extern> {
     pub interface: &'h mut P4Interface,
     pub external: &'h mut Ext,
     /// The depths beneath the calling one, which answer reentry.
-    pub depth_next: &'h mut Option<Box<Depth>>,
+    pub depth_next: &'h mut Option<Box<MetaDepth>>,
     /// C for the current program, shared by every depth.
     pub ctx_target: &'h mut Option<Value>,
 }
@@ -41,7 +41,7 @@ impl<Ext: Extern> LentHost<'_, '_, Ext> {
         // The next depth lives until the program is reset
         let depth = self
             .depth_next
-            .get_or_insert_with(|| Box::new(Depth::new(self.env.options)));
+            .get_or_insert_with(|| Box::new(MetaDepth::new(self.env.options)));
         let mut meta_next = depth.lend(self.ctx_target, cache);
         let mut effects = 0;
         let mut ctx_next = RunnerContext::new(

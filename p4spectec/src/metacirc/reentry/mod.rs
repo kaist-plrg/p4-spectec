@@ -8,5 +8,5 @@
 mod meta;
 mod none;
 
-pub(super) use meta::{Depth, MetaEnv, MetaInterp};
+pub(super) use meta::{MetaDepth, MetaEnv, MetaInterp};
 pub(super) use none::NoReentry;

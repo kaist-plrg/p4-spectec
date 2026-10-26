@@ -12,7 +12,7 @@ use super::{
     ExecutionMode, Result, TowerConfig,
     config::Lang,
     error::{config_invalid, input_invalid},
-    reentry::{Depth, MetaEnv, MetaInterp},
+    reentry::{MetaDepth, MetaEnv, MetaInterp},
     relay::{MetaExtern, RelayExtern},
     tower::{BaseLayer, HostLayer, Tower},
 };
@@ -43,7 +43,7 @@ pub(super) struct SimTower<Arch: Architecture> {
     tower: Tower<Arch>,
     options: runner::Config,
     /// Depths 1 and deeper, made on the first reentry of a program.
-    depth_next: Option<Box<Depth>>,
+    depth_next: Option<Box<MetaDepth>>,
     /// C for the current program.
     ctx_target: Option<Value>,
 }
