@@ -7,6 +7,8 @@ use thiserror::Error;
 
 use crate::lang::{common::source::Span, hints::alter::AlterationError};
 
+use crate::runtime::ops::typ::TypeError;
+
 use crate::diagnostic::{Diagnostic, Report, Severity};
 
 /// A classified parser failure with its original source location.
@@ -94,6 +96,15 @@ pub enum P4UnparseError {
     /// A print hint asked for an item that does not exist.
     #[error(transparent)]
     Alteration(#[from] AlterationError),
+    /// A value whose form does not fit its declared type.
+    #[error("value does not fit its declared type {0}")]
+    TypeMismatch(String),
+    /// A case shape its declared variant type does not have.
+    #[error("type {typ} has no case {mixop}")]
+    CaseUndefined { typ: String, mixop: String },
+    /// A declared type that does not resolve.
+    #[error(transparent)]
+    Type(#[from] TypeError),
 }
 
 const INPUT_COUNT_INVALID: &str = "p4/input-count-invalid";

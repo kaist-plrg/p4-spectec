@@ -4,6 +4,8 @@
 //! the P4 parser and standard builtins plus `print_`,
 //! which renders a value back to P4 syntax
 //! using the specification's print hints
+//! along the type `print_` is instantiated at.
+//!
 //! `al` lowers specification inputs to meta scripts with standard builtins
 
 use crate::lang::{common::source::Span, data::value};
@@ -45,9 +47,9 @@ fn p4_with_unparser(unparser: P4Unparser) -> P4Interface {
         "print_",
         // `print_<T>(T) : text`: one type argument, one value
         Box::new(move |arena, targs, values| {
-            let _typ = extract::one(targs)?;
+            let typ = extract::one(targs)?;
             let value = extract::one(values)?;
-            let text = unparser.render(arena, value)?;
+            let text = unparser.render(arena, typ, value)?;
             Ok(value::flat::make::text(arena, text, Span::default())?)
         }),
     )]);
