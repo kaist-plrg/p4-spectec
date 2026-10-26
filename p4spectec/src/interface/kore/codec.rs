@@ -7,7 +7,9 @@
 //! KORE pattern: the arguments of a hook the K runtime computes
 //! (`decode::hook_args`), and the final configuration of a run.
 //! `encode::hook_result` makes the runtime's answer a term again: a domain
-//! value, or a constructor applied to such answers.
+//! value, or a constructor applied to such answers. `encode::domain_value`
+//! reads a domain value by the hook of its sort, for the answers and for
+//! the definition and the initial term (`load`).
 //! Domain values are written with the sort hooked to their kind:
 //! `INT 5` is `\dv{SortInt{}}("5")`; collections with the constructors of
 //! their sort, from its `element`, `concat`, and `unit` attributes.
@@ -28,7 +30,7 @@ use crate::lang::{
             Mixfix, Mixop,
             parse::{ParseMixopError, ToMixop},
         },
-        typ::{self, Typ, TypKind},
+        typ::{self, Typ},
         value::flat::{self as value, Value},
     },
 };
@@ -317,134 +319,124 @@ pub mod encode {
         typ::make::var(id(name), vec![])
     }
 
-    fn rc(typ: Typ) -> Rc<TypKind> {
-        Rc::new(typ.node)
+    fn case(arena: &mut Arena, mixop: Mixop, args: Vec<Value>, typ: Typ) -> Result<Value> {
+        let mixfix = Mixfix::new(&arena.mixop, mixop, args).expect("mixop arity matches");
+        let typ = Rc::new(typ.node);
+        value::make::case_flat(arena, typ, mixfix, Span::default()).map_err(value_error)
     }
 
-    /// What encoding needs: the arena to make values in, and the definition.
-    struct Encoder<'a> {
-        arena: &'a mut Arena,
-        info: &'a Info,
-        shapes: &'a Shapes,
+    fn list(arena: &mut Arena, typ_elem: Typ, values: Vec<Value>) -> Result<Value> {
+        let typ = Rc::new(typ::make::list(typ_elem).node);
+        value::make::list(arena, typ, values, Span::default()).map_err(value_error)
     }
 
-    impl Encoder<'_> {
-        fn case(&mut self, mixop: Mixop, args: Vec<Value>, typ: Typ) -> Result<Value> {
-            let mixfix = Mixfix::new(&self.arena.mixop, mixop, args).expect("mixop arity matches");
-            value::make::case_flat(self.arena, rc(typ), mixfix, Span::default())
-                .map_err(value_error)
-        }
+    fn text(arena: &mut Arena, text: &str) -> Result<Value> {
+        value::make::text(arena, text.to_owned(), Span::default()).map_err(value_error)
+    }
 
-        fn term_case(&mut self, mixop: Mixop, args: Vec<Value>) -> Result<Value> {
-            self.case(mixop, args, typ_named("term"))
-        }
-
-        fn list(&mut self, typ_elem: Typ, values: Vec<Value>) -> Result<Value> {
-            let typ = rc(typ::make::list(typ_elem));
-            value::make::list(self.arena, typ, values, Span::default()).map_err(value_error)
-        }
-
-        fn text(&mut self, text: &str) -> Result<Value> {
-            value::make::text(self.arena, text.to_owned(), Span::default()).map_err(value_error)
-        }
-
-        fn sort(&mut self, sort: &Sort) -> Result<Value> {
-            match sort {
-                Sort::Sort(name, sorts) => {
-                    let name = self.text(name)?;
-                    let sorts = sorts
-                        .iter()
-                        .map(|sort| self.sort(sort))
-                        .collect::<Result<_>>()?;
-                    let sorts = self.list(typ_named("sort"), sorts)?;
-                    self.case(self.shapes.sort, vec![name, sorts], typ_named("sort"))
-                }
-                Sort::Var(name) => {
-                    let name = self.text(name)?;
-                    self.case(self.shapes.sortvar, vec![name], typ_named("sort"))
-                }
+    fn sort(arena: &mut Arena, shapes: &Shapes, sort: &Sort) -> Result<Value> {
+        match sort {
+            Sort::Sort(name, sorts) => {
+                let name = text(arena, name)?;
+                let sorts = sorts
+                    .iter()
+                    .map(|sort| self::sort(arena, shapes, sort))
+                    .collect::<Result<_>>()?;
+                let sorts = list(arena, typ_named("sort"), sorts)?;
+                case(arena, shapes.sort, vec![name, sorts], typ_named("sort"))
+            }
+            Sort::Var(name) => {
+                let name = text(arena, name)?;
+                case(arena, shapes.sortvar, vec![name], typ_named("sort"))
             }
         }
+    }
 
-        /// A domain value, by the hook of its sort. The runtime writes a Float
-        /// in its output format already, as `$float_literal` would.
-        fn domain_value(&mut self, sort: &Sort, text: &str) -> Result<Value> {
-            let Sort::Sort(name, _) = sort else {
-                return Err(format!("domain value of sort {sort}"));
-            };
-            let bad = || format!("bad domain value {text:?} of {sort}");
-            // The hook of the sort says how its text reads
-            match self.info.sort_hook(name) {
-                Some("INT.Int") => {
-                    let i = text.parse::<BigInt>().map_err(|_| bad())?;
-                    let i =
-                        value::make::int(self.arena, i, Span::default()).map_err(value_error)?;
-                    self.term_case(self.shapes.int, vec![i])
-                }
-                Some("BOOL.Bool") => {
-                    let b = match text {
-                        "true" => true,
-                        "false" => false,
-                        _ => return Err(bad()),
-                    };
-                    let b =
-                        value::make::bool(self.arena, b, Span::default()).map_err(value_error)?;
-                    self.term_case(self.shapes.bool, vec![b])
-                }
-                Some("STRING.String") => {
-                    let t = self.text(text)?;
-                    self.term_case(self.shapes.string, vec![t])
-                }
-                Some("FLOAT.Float") => {
-                    let t = self.text(text)?;
-                    self.term_case(self.shapes.float, vec![t])
-                }
-                Some("BYTES.Bytes") => {
-                    let bytes = text
-                        .chars()
-                        .map(|c| {
-                            let n = Natural::try_from(BigInt::from(u32::from(c)))
-                                .map_err(value_error)?;
-                            value::make::nat(self.arena, n, Span::default()).map_err(value_error)
-                        })
-                        .collect::<Result<_>>()?;
-                    let bytes = self.list(typ::make::nat(), bytes)?;
-                    self.term_case(self.shapes.bytes, vec![bytes])
-                }
-                _ => {
-                    let sort = self.sort(sort)?;
-                    let t = self.text(text)?;
-                    self.term_case(self.shapes.dv, vec![sort, t])
-                }
+    /// A domain value `\dv{S}("text")` by the hook of `S`, as a case of
+    /// `typ`, `term` or `pattern`, which share these cases. `float` writes a
+    /// Float in the runtime's output format; a KVar, and a value of a sort
+    /// without a hook, stay text.
+    pub fn domain_value(
+        arena: &mut Arena,
+        info: &Info,
+        shapes: &Shapes,
+        typ: &str,
+        sort: &Sort,
+        t: &str,
+        float: impl FnOnce(&str) -> Result<String>,
+    ) -> Result<Value> {
+        let bad = || format!("bad domain value {t:?} of {sort}");
+        let hook = match sort {
+            Sort::Sort(name, _) => info.sort_hook(name),
+            Sort::Var(_) => return Err(bad()),
+        };
+        // The hook of the sort says how its text reads
+        let (mixop, arg) = match hook {
+            Some("INT.Int") => {
+                let i = super::super::builtins::parse_base(t, 10).ok_or_else(bad)?;
+                let i = value::make::int(arena, i, Span::default()).map_err(value_error)?;
+                (shapes.int, i)
             }
-        }
+            Some("BOOL.Bool") => {
+                let b = match t {
+                    "true" => true,
+                    "false" => false,
+                    _ => return Err(bad()),
+                };
+                let b = value::make::bool(arena, b, Span::default()).map_err(value_error)?;
+                (shapes.bool, b)
+            }
+            Some("STRING.String") => (shapes.string, text(arena, t)?),
+            Some("FLOAT.Float") => (shapes.float, text(arena, &float(t)?)?),
+            Some("BYTES.Bytes") => {
+                let bytes = t
+                    .chars()
+                    .map(|c| {
+                        let n =
+                            Natural::try_from(BigInt::from(u32::from(c))).map_err(value_error)?;
+                        value::make::nat(arena, n, Span::default()).map_err(value_error)
+                    })
+                    .collect::<Result<_>>()?;
+                (shapes.bytes, list(arena, typ::make::nat(), bytes)?)
+            }
+            Some("KVAR.KVar") | None => {
+                let sort = self::sort(arena, shapes, sort)?;
+                let t = text(arena, t)?;
+                return case(arena, shapes.dv, vec![sort, t], typ_named(typ));
+            }
+            Some(hook) => return Err(format!("domain value of {sort}, hooked {hook}")),
+        };
+        case(arena, mixop, vec![arg], typ_named(typ))
+    }
 
-        /// A domain value, or a constructor applied to such terms, as
-        /// `G1Point(x, y)` of KRYPTO.
-        fn term(&mut self, pattern: &Pattern) -> Result<Value> {
-            match pattern {
-                Pattern::App(symbol, sorts, args) if symbol == "\\dv" => {
-                    match (sorts.as_slice(), args.as_slice()) {
-                        ([sort], [Pattern::Str(text)]) => self.domain_value(sort, text),
-                        _ => Err(format!("bad domain value {pattern}")),
+    /// A domain value, or a constructor applied to such terms, as
+    /// `G1Point(x, y)` of KRYPTO. The runtime writes a Float in its output
+    /// format already.
+    fn term(arena: &mut Arena, info: &Info, shapes: &Shapes, pattern: &Pattern) -> Result<Value> {
+        match pattern {
+            Pattern::App(symbol, sorts, args) if symbol == "\\dv" => {
+                match (sorts.as_slice(), args.as_slice()) {
+                    ([sort], [Pattern::Str(t)]) => {
+                        domain_value(arena, info, shapes, "term", sort, t, |t| Ok(t.to_owned()))
                     }
+                    _ => Err(format!("bad domain value {pattern}")),
                 }
-                Pattern::App(symbol, sorts, args) => {
-                    let symbol = self.text(symbol)?;
-                    let sorts = sorts
-                        .iter()
-                        .map(|sort| self.sort(sort))
-                        .collect::<Result<_>>()?;
-                    let sorts = self.list(typ_named("sort"), sorts)?;
-                    let args = args
-                        .iter()
-                        .map(|arg| self.term(arg))
-                        .collect::<Result<_>>()?;
-                    let args = self.list(typ_named("term"), args)?;
-                    self.term_case(self.shapes.app, vec![symbol, sorts, args])
-                }
-                _ => Err(format!("the runtime gives {pattern}, not a term")),
             }
+            Pattern::App(symbol, sorts, args) => {
+                let symbol = text(arena, symbol)?;
+                let sorts = sorts
+                    .iter()
+                    .map(|sort| self::sort(arena, shapes, sort))
+                    .collect::<Result<_>>()?;
+                let sorts = list(arena, typ_named("sort"), sorts)?;
+                let args = args
+                    .iter()
+                    .map(|arg| term(arena, info, shapes, arg))
+                    .collect::<Result<_>>()?;
+                let args = list(arena, typ_named("term"), args)?;
+                case(arena, shapes.app, vec![symbol, sorts, args], typ_named("term"))
+            }
+            _ => Err(format!("the runtime gives {pattern}, not a term")),
         }
     }
 
@@ -456,14 +448,13 @@ pub mod encode {
         shapes: &Shapes,
         answer: Option<&Pattern>,
     ) -> Result<Value> {
-        let mut encoder = Encoder { arena, info, shapes };
         let typ = typ::make::var(id("res"), vec![typ_named("term")]);
         match answer {
             Some(answer) => {
-                let term = encoder.term(answer)?;
-                encoder.case(shapes.ok, vec![term], typ)
+                let term = term(arena, info, shapes, answer)?;
+                case(arena, shapes.ok, vec![term], typ)
             }
-            None => encoder.case(shapes.error, vec![], typ),
+            None => case(arena, shapes.error, vec![], typ),
         }
     }
 }

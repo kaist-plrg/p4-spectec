@@ -1,13 +1,13 @@
 //! Text builtins of the K specification, outside hooks
 //!
-//! Reading domain values and hook names (`spec-k/3-load.watsup`) takes
-//! text apart. A KORE string has one character per byte (`parse`).
+//! Reading hook names and priorities (`spec-k/3-load.watsup`) takes text
+//! apart; domain values are read when parsed (`codec`). A KORE string has one character per byte (`parse`).
 //! For example, `$has_prefix("INT.add", "INT.")` is true.
 
 use num_bigint::BigInt;
 
 use crate::lang::{
-    common::{prim::num, source::Span},
+    common::source::Span,
     data::{
         arena::Arena,
         typ,
@@ -37,7 +37,7 @@ fn has_prefix(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Valu
 
 /// The integer written in a base, as K's `String2Int` reads it: an optional
 /// `+` or `-`, digits, and whitespace anywhere.
-fn parse_base(t: &str, base: u32) -> Option<BigInt> {
+pub(super) fn parse_base(t: &str, base: u32) -> Option<BigInt> {
     let t = t.strip_prefix('+').unwrap_or(t);
     let t: String = t
         .chars()
@@ -65,26 +65,7 @@ fn string_to_int(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<V
     Ok(value::make::opt(arena, typ, i, Span::default())?)
 }
 
-/// `dec $string_to_bytes(text) : nat*`, one number per byte.
-fn string_to_bytes(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value> {
-    extract::zero(targs)?;
-    let t = text(arena, extract::one(values)?)?;
-    let bytes = t
-        .chars()
-        .map(|c| {
-            let n = num::Natural::try_from(BigInt::from(u32::from(c)))?;
-            Ok(value::make::nat(arena, n, Span::default())?)
-        })
-        .collect::<Result<Vec<_>>>()?;
-    let typ = typ::make::list(typ::make::nat()).node.into();
-    Ok(value::make::list(arena, typ, bytes, Span::default())?)
-}
-
 /// The builtins above, by name.
-pub fn entries() -> [(&'static str, BuiltinImpl); 3] {
-    [
-        ("has_prefix", Box::new(has_prefix)),
-        ("string_to_int", Box::new(string_to_int)),
-        ("string_to_bytes", Box::new(string_to_bytes)),
-    ]
+pub fn entries() -> [(&'static str, BuiltinImpl); 2] {
+    [("has_prefix", Box::new(has_prefix)), ("string_to_int", Box::new(string_to_int))]
 }

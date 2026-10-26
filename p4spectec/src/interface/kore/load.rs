@@ -5,10 +5,10 @@
 //! and the declarations of sorts and symbols. Alias declarations are not
 //! read, and an axiom that applies one is an error: kompile 7.1.337 applies
 //! none by default. Connectives are named without their backslash.
-//! Which axioms are executed and how they are read, down to domain values,
-//! is for the specification to decide (`spec-k/3-load.watsup`).
-//! For example, `\dv{SortInt{}}("1")` becomes
-//! `KML "dv" [SORT "SortInt" []] [KSTR "1"]`.
+//! Domain values are read by the hook of their sort, as a parser reads
+//! literals (`codec`): `\dv{SortInt{}}("1")` becomes `KDV (INT 1)`.
+//! Which axioms are executed and how they are read is for the
+//! specification to decide (`spec-k/3-load.watsup`).
 
 use std::{collections::HashSet, rc::Rc};
 
@@ -30,7 +30,11 @@ use crate::lang::{
 
 use crate::phrase;
 
-use super::ast::{Attr, Definition, Pattern, Sentence, Sort};
+use super::{
+    Loaded,
+    ast::{Attr, Definition, Pattern, Sentence, Sort},
+    codec, externs,
+};
 
 // == Errors
 
@@ -43,6 +47,8 @@ pub enum LoadError {
     AliasApplied(String),
     /// A declaration or attribute of an unexpected form.
     Malformed(String),
+    /// A domain value that does not read by the hook of its sort.
+    Literal(String),
     Value(ValueError),
 }
 
@@ -61,6 +67,7 @@ impl std::fmt::Display for LoadError {
                 "alias {name} is applied: aliases are not read (kompile writes rules so only with --enable-kore-antileft)"
             ),
             Self::Malformed(what) => write!(f, "malformed {what}"),
+            Self::Literal(message) => write!(f, "{message}"),
             Self::Value(error) => error.fmt(f),
         }
     }
@@ -101,8 +108,9 @@ fn rc(typ: Typ) -> Rc<TypKind> {
 /// A builder of the values of one definition, in one arena.
 pub struct Builder<'a> {
     arena: &'a mut Arena,
-    /// Declared symbols; applications must be of one of these.
-    known: &'a HashSet<String>,
+    /// The definition: applications must be of its declared symbols, and
+    /// domain values read by the hooks of their sorts.
+    loaded: &'a Loaded,
     /// Declared aliases, which may not be applied.
     aliases: &'a HashSet<String>,
 }
@@ -121,13 +129,9 @@ macro_rules! case {
 }
 
 impl<'a> Builder<'a> {
-    /// A builder into an arena, checking applications against `known`.
-    pub fn new(
-        arena: &'a mut Arena,
-        known: &'a HashSet<String>,
-        aliases: &'a HashSet<String>,
-    ) -> Self {
-        Self { arena, known, aliases }
+    /// A builder into an arena, for the definition `loaded`.
+    pub fn new(arena: &'a mut Arena, loaded: &'a Loaded, aliases: &'a HashSet<String>) -> Self {
+        Self { arena, loaded, aliases }
     }
 
     /// A text value.
@@ -208,9 +212,21 @@ impl<'a> Builder<'a> {
                 let value_text = self.text(text)?;
                 Ok(case!(self.arena, "KSTR text", [value_text], "kore")?)
             }
+            Pattern::App(name, sorts, args) if name == "\\dv" => {
+                let ([sort], [Pattern::Str(text)]) = (sorts.as_slice(), args.as_slice()) else {
+                    return Err(LoadError::Malformed(format!("domain value {pattern}")));
+                };
+                let Loaded { info, shapes, runtime, .. } = self.loaded;
+                let float = |text: &str| externs::float_literal(runtime.as_deref(), info, text);
+                let value = codec::encode::domain_value(
+                    self.arena, info, shapes, "pattern", sort, text, float,
+                )
+                .map_err(LoadError::Literal)?;
+                Ok(case!(self.arena, "KDV pattern", [value], "kore")?)
+            }
             Pattern::App(name, sorts, args) => {
                 let connective = name.strip_prefix('\\');
-                if connective.is_none() && check && !self.known.contains(name) {
+                if connective.is_none() && check && !self.loaded.known.contains(name) {
                     return Err(if self.aliases.contains(name) {
                         LoadError::AliasApplied(name.clone())
                     } else {
@@ -307,12 +323,12 @@ fn alias_names(definition: &Definition) -> HashSet<String> {
 /// A definition as a `kdefinition` value, and its number of axioms.
 pub fn load_definition(
     arena: &mut Arena,
-    known: &HashSet<String>,
+    loaded: &Loaded,
     definition: &Definition,
 ) -> Result<(Value, usize)> {
     // Each sentence goes to its part, in file order
     let aliases = alias_names(definition);
-    let mut builder = Builder::new(arena, known, &aliases);
+    let mut builder = Builder::new(arena, loaded, &aliases);
     let mut sorts = Vec::new();
     let mut symbols = Vec::new();
     let mut axioms = Vec::new();
@@ -374,6 +390,6 @@ pub fn load_definition(
 }
 
 /// A term, such as krun's initial term, as a `kore` value.
-pub fn load_term(arena: &mut Arena, known: &HashSet<String>, pattern: &Pattern) -> Result<Value> {
-    Builder::new(arena, known, &HashSet::new()).kore(pattern)
+pub fn load_term(arena: &mut Arena, loaded: &Loaded, pattern: &Pattern) -> Result<Value> {
+    Builder::new(arena, loaded, &HashSet::new()).kore(pattern)
 }

@@ -1,7 +1,7 @@
 //! KORE frontend and runner interface for the K specification (`spec-k`)
 //!
 //! `parse` reads KORE text into `ast`, and `load` turns it into values
-//! of the specification as it is.
+//! of the specification as it is, its domain values read (`codec`).
 //! `KoreInterface` loads a kompiled definition (`definition.kore`)
 //! and then parses initial terms against its symbols.
 //! `krun` runs the specification's `Krun` relation from an initial term.
@@ -34,7 +34,7 @@ use crate::runner::{
 
 use super::builtin::call::Builtins;
 
-use self::{ast::Pattern, codec::Shapes, info::Info};
+use self::{ast::Pattern, codec::Shapes, info::Info, llvm::Runtime};
 
 pub mod ast;
 pub mod binary;
@@ -93,11 +93,15 @@ pub struct Loaded {
     pub info: Info,
     /// The notation of the specification's values.
     pub shapes: Shapes,
+    /// The K runtime of the definition, if opened.
+    pub runtime: Option<Rc<Runtime>>,
 }
 
 /// Reads KORE for the K specification, and provides its builtins.
 pub struct KoreInterface {
     builtins: Builtins,
+    /// The K runtime of the definition, opened before it is loaded.
+    runtime: Option<Rc<Runtime>>,
     /// The loaded definition, shared with the extern.
     loaded: Option<Rc<Loaded>>,
     /// The next `$fresh_nat`.
@@ -107,7 +111,15 @@ pub struct KoreInterface {
 impl KoreInterface {
     /// Assembles the KORE interface with its builtin table.
     pub(crate) fn new(builtins: Builtins) -> Self {
-        Self { builtins, loaded: None, fresh: 0 }
+        Self { builtins, runtime: None, loaded: None, fresh: 0 }
+    }
+
+    /// Opens the K runtime of the definition, a library made by
+    /// `llvm-kompile definition.kore dt c`. It writes Float literals in its
+    /// output format, and computes the hooks of domain modules (`externs`).
+    pub fn open_runtime(&mut self, path: &Path) -> Result<(), String> {
+        self.runtime = Some(Rc::new(Runtime::open(path)?));
+        Ok(())
     }
 
     /// Loads a definition as a `kdefinition` value, with its number of axioms.
@@ -120,12 +132,17 @@ impl KoreInterface {
     ) -> Result<(Value, usize), InterfaceError> {
         let src = read(path)?;
         let definition = parse::parse_definition(&src).map_err(|error| parse_error(path, error))?;
-        let known = load::known_symbols(&definition);
-        let loaded = load::load_definition(arena, &known, &definition)
-            .map_err(|error| load_error(path, error))?;
         let shapes = Shapes::new(arena).map_err(|message| diagnostic(KORE_LOAD, message))?;
-        self.loaded = Some(Rc::new(Loaded { known, info: Info::new(&definition), shapes }));
-        Ok(loaded)
+        let loaded = Rc::new(Loaded {
+            known: load::known_symbols(&definition),
+            info: Info::new(&definition),
+            shapes,
+            runtime: self.runtime.clone(),
+        });
+        let value = load::load_definition(arena, &loaded, &definition)
+            .map_err(|error| load_error(path, error))?;
+        self.loaded = Some(loaded);
+        Ok(value)
     }
 
     /// The loaded definition, for the extern.
@@ -173,7 +190,7 @@ impl Interface for KoreInterface {
         };
         let src = read(path)?;
         let pattern = parse::parse_pattern(&src).map_err(|error| parse_error(path, error))?;
-        load::load_term(arena, &loaded.known, &pattern).map_err(|error| load_error(path, error))
+        load::load_term(arena, loaded, &pattern).map_err(|error| load_error(path, error))
     }
 
     fn call_builtin<Interp, Ext>(

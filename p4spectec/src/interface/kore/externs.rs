@@ -5,18 +5,14 @@
 //! the arguments, domain values and constructor terms, are decoded as KORE
 //! text (`codec`), the runtime evaluates the application, and its answer,
 //! binary KORE (`binary`), is encoded as a term again (`codec`).
-//! `$float_literal` has the runtime write a Float literal in its output
-//! format, e.g. `0.5` as `0.500000000000000000000000000000000000000e0`.
+//! `float_literal` has the runtime write a Float literal of the definition
+//! in its output format, e.g. `0.5` as
+//! `0.500000000000000000000000000000000000000e0` (`load`).
 
-use std::{path::Path, rc::Rc};
+use std::rc::Rc;
 
 use crate::lang::{
-    common::source::Span,
-    data::{
-        arena::Arena,
-        typ,
-        value::flat::{self as value, Value},
-    },
+    data::{arena::Arena, value::flat::Value},
     il::ast::Typ,
 };
 
@@ -26,43 +22,31 @@ use super::{
     Loaded,
     ast::{Pattern, Sort},
     binary, codec,
+    info::Info,
     llvm::Runtime,
 };
 
 /// The K runtime of one definition, with what writing terms to it needs.
 #[derive(Default)]
 pub struct KoreExtern {
-    /// The loaded definition, shared with the interface that loaded it.
+    /// The loaded definition and its runtime, shared with the interface.
     loaded: Option<Rc<Loaded>>,
-    /// The K runtime of the definition.
-    runtime: Option<Runtime>,
 }
 
 impl KoreExtern {
-    /// Opens the K runtime of the definition, a library made by
-    /// `llvm-kompile definition.kore dt c`.
-    pub fn open_runtime(&mut self, path: &Path) -> Result<(), String> {
-        self.runtime = Some(Runtime::open(path)?);
-        Ok(())
-    }
-
     /// Takes the definition the interface loaded.
     pub fn attach(&mut self, loaded: Option<Rc<Loaded>>) {
         self.loaded = loaded;
     }
 
-    fn ready(&self, what: &str) -> Result<(&Loaded, &Runtime), String> {
-        match (&self.loaded, &self.runtime) {
-            (Some(loaded), Some(runtime)) => Ok((loaded, runtime)),
-            (None, _) => Err(format!("{what} needs a loaded definition")),
-            (_, None) => Err(format!("{what} needs the K runtime of the definition (--lib)")),
-        }
-    }
-
     /// `Call_hook: |- symid sort* sort term* : res<term>`: the hooked symbol
     /// applied to the terms, by the K runtime; `ERROR` if the runtime fails.
     fn call_hook(&self, arena: &mut Arena, values: &[Value]) -> Result<Value, String> {
-        let (loaded, runtime) = self.ready("Call_hook")?;
+        let loaded = self
+            .loaded
+            .as_deref()
+            .ok_or("Call_hook needs a loaded definition")?;
+        let runtime = runtime(loaded.runtime.as_deref(), "Call_hook")?;
         let (pattern, sort) =
             codec::decode::hook_args(arena, &loaded.info, &loaded.shapes, values)?;
         let trace = std::env::var_os("KORE_TRACE").is_some();
@@ -87,36 +71,30 @@ impl KoreExtern {
         };
         codec::encode::hook_result(arena, &loaded.info, &loaded.shapes, answer.as_ref())
     }
+}
 
-    /// `$float_literal(text) : text?`: a Float literal in the runtime's
-    /// output format.
-    fn float_literal(&self, arena: &mut Arena, values: &[Value]) -> Result<Value, String> {
-        let (loaded, runtime) = self.ready("$float_literal")?;
-        let [text] = values else {
-            return Err(format!("$float_literal takes 1 argument, not {}", values.len()));
-        };
-        let text = value::get::text(arena, text)
-            .map_err(|e| e.to_string())?
-            .to_owned();
-        // The literal as a Float domain value, evaluated by the runtime
-        let sort = Sort::Sort(loaded.info.sort_of_hook("FLOAT.Float")?.to_owned(), vec![]);
-        let literal = Pattern::App("\\dv".to_owned(), vec![sort.clone()], vec![Pattern::Str(text)]);
-        let normal = match runtime.simplify(&literal.to_string(), &sort) {
-            Ok(result) => match unwrap_result(binary::decode(&result)?) {
-                Pattern::App(dv, _, args) if dv == "\\dv" => match args.as_slice() {
-                    [Pattern::Str(normal)] => Some(normal.clone()),
-                    _ => None,
-                },
-                _ => None,
-            },
-            Err(_) => None,
-        };
-        let normal = normal
-            .map(|normal| value::make::text(arena, normal, Span::default()))
-            .transpose()
-            .map_err(|e| e.to_string())?;
-        let typ = typ::make::opt(typ::make::text()).node.into();
-        value::make::opt(arena, typ, normal, Span::default()).map_err(|e| e.to_string())
+/// The runtime, which `what` needs.
+fn runtime<'a>(runtime: Option<&'a Runtime>, what: &str) -> Result<&'a Runtime, String> {
+    runtime.ok_or_else(|| format!("{what} needs the K runtime of the definition (--lib)"))
+}
+
+/// A Float literal in the runtime's output format: the runtime evaluates it
+/// as a domain value.
+pub fn float_literal(runtime: Option<&Runtime>, info: &Info, text: &str) -> Result<String, String> {
+    let runtime = self::runtime(runtime, "a Float literal")?;
+    let sort = Sort::Sort(info.sort_of_hook("FLOAT.Float")?.to_owned(), vec![]);
+    let literal =
+        Pattern::App("\\dv".to_owned(), vec![sort.clone()], vec![Pattern::Str(text.into())]);
+    let bad = || format!("bad Float literal {text:?}");
+    let result = runtime
+        .simplify(&literal.to_string(), &sort)
+        .map_err(|_| bad())?;
+    match unwrap_result(binary::decode(&result)?) {
+        Pattern::App(dv, _, args) if dv == "\\dv" => match args.as_slice() {
+            [Pattern::Str(normal)] => Ok(normal.clone()),
+            _ => Err(bad()),
+        },
+        _ => Err(bad()),
     }
 }
 
@@ -158,20 +136,16 @@ impl Extern for KoreExtern {
     }
 
     fn eval_func<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
+        _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         _targs: &[Typ],
-        values: &[Value],
+        _values: &[Value],
     ) -> Eval<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        let (arena, external) = ctx.arena_and_external_mut();
-        eval(match name {
-            "float_literal" => external.float_literal(arena, values),
-            _ => Err(format!("unknown extern function {name}")),
-        })
+        eval(Err(format!("unknown extern function {name}")))
     }
 
     /// The definition and runtime stay for the next program.

@@ -57,7 +57,7 @@ impl Krun {
         let time = Instant::now();
         if let Some(path_library) = path_library {
             runner
-                .external
+                .interface
                 .open_runtime(path_library)
                 .map_err(|message| {
                     RunError::Parse(super::diagnostic(super::KORE_RUNTIME, message))
