@@ -1,12 +1,16 @@
 //! Pattern-set operations for table exclusiveness and exhaustiveness
 //!
-//! `PatternSet` contains the notation-type alternatives for one argument,
+//! `PatternSet` contains the case constructors for one argument,
 //! while `PatternSets` is their Cartesian product across one table row.
+//! Cases compare by mixop alone,
+//! so `A X` declared in `t<X>` and `A nat` matched at `t<nat>` are one case.
 //! Rows are exclusive when no two products overlap
 //! and exhaustive when subtracting them all from the type's product
 //! leaves nothing.
 
-use crate::lang::common::{ds::set::PhraseSet, source::Span};
+use std::{collections::BTreeSet, rc::Rc};
+
+use crate::lang::common::source::Span;
 
 use crate::lang::il::ast;
 
@@ -16,14 +20,14 @@ use super::super::{AlgoError, error};
 
 // - Single argument
 
-/// A notation-type set compared by syntax.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct PatternSet(PhraseSet<ast::NotTyp>);
+/// A set of variant cases compared by constructor.
+#[derive(Clone, Debug)]
+pub struct PatternSet(BTreeSet<Rc<ast::Mixop>>);
 
 impl PatternSet {
-    /// Iterates over notation alternatives in syntax order.
-    pub fn iter(&self) -> impl Iterator<Item = &ast::NotTyp> {
-        self.0.iter()
+    /// Iterates over case constructors in order.
+    pub fn iter(&self) -> impl Iterator<Item = &ast::Mixop> {
+        self.0.iter().map(Rc::as_ref)
     }
 
     fn is_empty(&self) -> bool {
@@ -31,27 +35,24 @@ impl PatternSet {
     }
 
     fn intersection(&self, other: &Self) -> Self {
-        let not_typs = self.0.intersection(&other.0);
-        Self(not_typs)
+        Self(self.0.intersection(&other.0).cloned().collect())
     }
 
     fn difference(&self, other: &Self) -> Self {
-        let not_typs = self.0.difference(&other.0);
-        Self(not_typs)
+        Self(self.0.difference(&other.0).cloned().collect())
     }
 }
 
-impl FromIterator<ast::NotTyp> for PatternSet {
-    fn from_iter<T: IntoIterator<Item = ast::NotTyp>>(not_typs: T) -> Self {
-        let not_typs = not_typs.into_iter().collect();
-        Self(not_typs)
+impl FromIterator<Rc<ast::Mixop>> for PatternSet {
+    fn from_iter<T: IntoIterator<Item = Rc<ast::Mixop>>>(mixops: T) -> Self {
+        Self(mixops.into_iter().collect())
     }
 }
 
 // - Table row
 
 /// Ordered pattern sets for the arguments of one table row.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct PatternSets(Vec<PatternSet>);
 
 impl PatternSets {
