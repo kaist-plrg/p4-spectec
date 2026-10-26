@@ -1,5 +1,5 @@
 ;;
-;; Auxiliary definitions on top of spec-meta/common/0-stdlib.watsup
+;; Auxiliary definitions on top of spec-meta/0-aux/0.0-stdlib.watsup
 ;;
 
 ;; Results, in the words of P4-SpecTec² (spec-meta/3-execution/3.00-result):
@@ -7,8 +7,9 @@
 ;; ends the run (abort_when_stuck of the LLVM backend)
 
 syntax ok<X> = OK X
-syntax unmatch = UNMATCH
 syntax error = ERROR
+syntax unmatch = UNMATCH
+syntax failure = error | unmatch
 
 ;; What evaluation gives: a value or an error
 
@@ -17,9 +18,9 @@ syntax res<X> = ok<X> | error
 ;; Whether a clause applies: its left-hand sides match and its requires clause
 ;; holds, they do not, or the requires clause cannot be evaluated
 
-syntax applies<X> = ok<X> | unmatch | error
+syntax applies<X> = ok<X> | failure
 
-;; Set and map builtins, implemented in p4spec/lib/interface/builtin
+;; Set and map builtins, implemented in p4spectec/src/interface/builtin
 ;; (declared the same way in spec/0-aux)
 
 builtin dec $diff_set<K>(set<K>, set<K>) : set<K>

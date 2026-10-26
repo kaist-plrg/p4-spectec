@@ -168,9 +168,11 @@ impl Krun {
         };
         // The loaded definition, and the initial configuration after no step
         let [value_kdefinition, value_term, _] = self.inputs;
-        let [value_definition] = run(self, "Load", &[value_kdefinition])?[..] else {
-            return Err("Load has one output".to_owned());
-        };
+        let value_definition = self
+            .runner
+            .eval_func(&mut self.arena, "load", &[], &[value_kdefinition])
+            .result
+            .map_err(|error| eval_error(RunError::Eval(error)))?;
         let value_none = depth_value(&mut self.arena, Some(0)).map_err(|e| e.to_string())?;
         let [result] = run(self, "Krun", &[value_kdefinition, value_term, value_none])?[..] else {
             return Err("Krun has one output".to_owned());

@@ -391,8 +391,9 @@ dec $sorted_groups(map<symid, (nat, clause)*>) : map<symid, clause*>
 def $sorted_groups(`{ (symid ':' (n, clause)*)* `})
   = `{ (symid ':' $sort_by_priority<clause>((n, clause)*))* `}
 
-rule Load:
-  KD ~> { SYMBOLS $symdecls(KD.KSYMBOLS),
+dec $load(kdefinition) : definition
+  hint(prose_in "the definition loaded from" %0)
+def $load(KD) = { SYMBOLS $symdecls(KD.KSYMBOLS),
           SUBSORTS $close_subsorts($concat_<subsort>($subsort_of(kaxiom)*)),
           OVERLOADS $concat_<overload>($overload_of(kaxiom)*),
           RULES $sort_by_priority<clause>(

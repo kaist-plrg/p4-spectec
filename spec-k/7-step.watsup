@@ -10,15 +10,6 @@
 ;;; later rules; so is a requires clause that cannot be evaluated. UNMATCH when
 ;;; no rule applies.
 
-rule Step/rewrite:
-  D |- term : OK term'
-  -- First_clause: D |- D.RULES ([ term ]) : OK (subst, pattern_r)
-  -- Eval: D subst |- pattern_r : OK term'
-
-rule Step/stuck:
-  D |- term : UNMATCH
-  -- First_clause: D |- D.RULES ([ term ]) : UNMATCH
-
-rule Step/error:
-  D |- term : ERROR
-  -- otherwise
+rule Step:
+  D |- term : evaluated
+  -- Eval_clauses: D |- D.RULES ([ term ]) : evaluated

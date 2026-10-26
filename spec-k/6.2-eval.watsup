@@ -8,12 +8,8 @@
 
 ;; Evaluation
 
-var found : applies<(subst, pattern)>
+var evaluated : applies<term>
 var matched : applies<subst>
-
-dec $rhs_of(clause) : pattern
-def $rhs_of(CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c?)
-  = pattern_r
 
 ;;; Variables and domain values
 
@@ -138,20 +134,18 @@ rule Apply/runtime:
 
 ;;; A function or anywhere symbol is rewritten by its first equation that
 ;;; applies, as a step rewrites the configuration by its first rule (7-step).
-;;; Failing to evaluate the right-hand side does not fall back to later
-;;; equations. An anywhere symbol stays a constructor when none applies.
+;;; An anywhere symbol stays a constructor when none applies.
 
 rule Apply/equation:
-  D |- symid sort* term* : result
+  D |- symid sort* term* : OK term'
   -- if kind = $kind_of_symbol(D, symid)
   -- if kind <- [ FUNCTION, ANYWHERE ]
-  -- First_clause: D |- $equations_of(D, symid) term* : OK (subst, pattern_r)
-  -- Eval: D subst |- pattern_r : result
+  -- Eval_clauses: D |- $equations_of(D, symid) term* : OK term'
 
 rule Apply/anywhere-none:
   D |- symid sort* term* : OK $construct(symid, sort*, term*)
   -- if ANYWHERE = $kind_of_symbol(D, symid)
-  -- First_clause: D |- $equations_of(D, symid) term* : UNMATCH
+  -- Eval_clauses: D |- $equations_of(D, symid) term* : UNMATCH
 
 ;;; Anything else (a stuck function, an undeclared symbol) fails
 
@@ -159,31 +153,45 @@ rule Apply/fail:
   D |- symid sort* term* : ERROR
   -- otherwise
 
-;;; The first clause, in the order given (3-load), that applies to the terms: its
-;;; left-hand sides match them and its requires clause holds. It gives the
-;;; substitution and the right-hand side. A requires clause that cannot be
-;;; evaluated does not fall back to later clauses.
+;;; A clause applies to the terms when its left-hand sides match them and its
+;;; requires clause holds; it gives its right-hand side, evaluated under that
+;;; match. Once it applies, failing to evaluate the right-hand side is an
+;;; error; so is a requires clause that cannot be evaluated.
 
-rule First_clause/none:
-  D |- eps term* : UNMATCH
+rule Eval_clause/apply:
+  D |- (CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c?) term* : OK term'
+  -- Match_list: D (OK $empty_map<varid, term>) |- pattern_a* ~~ term* : way*
+  -- First_holding: D |- way* pattern_c? : OK subst
+  -- Eval: D subst |- pattern_r : OK term'
 
-rule First_clause/first:
-  D |- (clause_h :: clause_t*) term* : OK (subst, $rhs_of(clause_h))
-  -- Clause_applies: D |- clause_h term* : OK subst
+rule Eval_clause/unmatch:
+  D |- (CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c?) term* : UNMATCH
+  -- Match_list: D (OK $empty_map<varid, term>) |- pattern_a* ~~ term* : way*
+  -- First_holding: D |- way* pattern_c? : UNMATCH
 
-rule First_clause/next:
-  D |- (clause_h :: clause_t*) term* : found
-  -- Clause_applies: D |- clause_h term* : UNMATCH
-  -- First_clause: D |- clause_t* term* : found
-
-rule First_clause/error:
-  D |- clause* term* : ERROR
+rule Eval_clause/error:
+  D |- clause term* : ERROR
   -- otherwise
 
-rule Clause_applies:
-  D |- (CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c?) term* : matched
-  -- Match_list: D (OK $empty_map<varid, term>) |- pattern_a* ~~ term* : way*
-  -- First_holding: D |- way* pattern_c? : matched
+;;; The first clause, in the order given (3-load), that applies to the terms.
+;;; Unlike the clauses of a P4-SpecTec² function, the later ones are not
+;;; checked: K tries them by priority.
+
+rule Eval_clauses/none:
+  D |- eps term* : UNMATCH
+
+rule Eval_clauses/first:
+  D |- (clause_h :: clause_t*) term* : OK term'
+  -- Eval_clause: D |- clause_h term* : OK term'
+
+rule Eval_clauses/next:
+  D |- (clause_h :: clause_t*) term* : evaluated
+  -- Eval_clause: D |- clause_h term* : UNMATCH
+  -- Eval_clauses: D |- clause_t* term* : evaluated
+
+rule Eval_clauses/error:
+  D |- clause* term* : ERROR
+  -- otherwise
 
 ;;; Among the ways a left-hand side matches, in order, the first one under
 ;;; which the requires clause holds, unless one before is stuck or cannot
