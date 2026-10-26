@@ -110,7 +110,7 @@ fn execute(cli: Cli) -> Result<()> {
                 Error::Invalid("no simulation tower registered for this conversion".into())
             })?;
             let config_sim = suite::load_simulation(&index.suites.sim)?;
-            metacirc::run_sim(&config_sim, metacirc_sim, cli.options)
+            metacirc::sim::run(&config_sim, metacirc_sim, cli.options)
         }
         // Snapshot and codec checks compile the meta specification without executing it
         Command::Elab => elab::run(&suite::load_snapshots(&config.snapshots.elab)?),
@@ -155,7 +155,7 @@ fn run(
         }
         config.suites = suites;
     }
-    metacirc::run(&config, options)
+    metacirc::run::run(&config, options)
 }
 
 fn main() -> ExitCode {
