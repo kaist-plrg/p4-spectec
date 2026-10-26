@@ -59,7 +59,7 @@ use crate::lang::il::ast;
 
 use crate::lang::al;
 
-use crate::runtime::{dim::Dim, envs::algo::VEnv, typdef::TypeDef};
+use crate::runtime::{dim::Dim, envs::algo::VEnv, ops::typ::expand_typ, typdef::TypeDef};
 
 use crate::phrase;
 
@@ -882,11 +882,16 @@ fn pattern_set_covered_by_typ(ctx: &Context, typ: &ast::Typ) -> Result<PatternSe
     let ast::TypKind::Var(id, _) = &typ.node else {
         return Err(error::table::table_pattern_type_invalid(typ, None));
     };
-    let (id_decl, typdef) = ctx
+    let (id_decl, _) = ctx
         .tdenv
         .get_key_value(id)
         .ok_or_else(|| error::typ::type_undefined(id))?;
-    let TypeDef::Defined(_, def_typ) = typdef else {
+    // Look through aliases to the nominal type that declares the cases
+    let typ_expanded = expand_typ(&ctx.tdenv, typ).map_err(error::typ::type_operation_invalid)?;
+    let ast::TypKind::Var(id_expanded, _) = &typ_expanded.node else {
+        return Err(error::table::table_pattern_type_invalid(typ, Some(&id_decl.span)));
+    };
+    let Some(TypeDef::Defined(_, def_typ)) = ctx.tdenv.get(id_expanded) else {
         return Err(error::table::table_pattern_type_invalid(typ, Some(&id_decl.span)));
     };
     let ast::DefTypKind::Variant(cases) = &def_typ.node else {
