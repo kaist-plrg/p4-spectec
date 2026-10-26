@@ -1,12 +1,16 @@
 //! Pattern-set operations for table exclusiveness and exhaustiveness
 //!
-//! `PatternSet` contains the notation-type alternatives for one argument,
+//! `PatternSet` contains the case constructors for one argument,
 //! while `PatternSets` is their Cartesian product across one table row.
+//! Cases compare by mixop alone,
+//! so `A X` declared in `t<X>` and `A nat` matched at `t<nat>` are one case.
 //! Rows are exclusive when no two products overlap
 //! and exhaustive when subtracting them all from the type's product
 //! leaves nothing.
 
-use crate::lang::common::{ds::set::PhraseSet, source::Span};
+use std::{collections::BTreeMap, rc::Rc};
+
+use crate::lang::common::source::Span;
 
 use crate::lang::il::ast;
 
@@ -16,14 +20,17 @@ use super::super::{AlgoError, error};
 
 // - Single argument
 
-/// A notation-type set compared by syntax.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct PatternSet(PhraseSet<ast::NotTyp>);
+/// A set of variant cases compared by constructor.
+///
+/// Each mixop keeps the first notation type inserted for it,
+/// so sets built from a declaration describe cases in its own terms.
+#[derive(Clone, Debug)]
+pub struct PatternSet(BTreeMap<Rc<ast::Mixop>, ast::NotTyp>);
 
 impl PatternSet {
-    /// Iterates over notation alternatives in syntax order.
+    /// Iterates over case notations in constructor order.
     pub fn iter(&self) -> impl Iterator<Item = &ast::NotTyp> {
-        self.0.iter()
+        self.0.values()
     }
 
     fn is_empty(&self) -> bool {
@@ -31,27 +38,40 @@ impl PatternSet {
     }
 
     fn intersection(&self, other: &Self) -> Self {
-        let not_typs = self.0.intersection(&other.0);
-        Self(not_typs)
+        let cases = self
+            .0
+            .iter()
+            .filter(|(mixop, _)| other.0.contains_key(*mixop));
+        let cases = cases.map(|(mixop, not_typ)| (Rc::clone(mixop), not_typ.clone()));
+        Self(cases.collect())
     }
 
     fn difference(&self, other: &Self) -> Self {
-        let not_typs = self.0.difference(&other.0);
-        Self(not_typs)
+        let cases = self
+            .0
+            .iter()
+            .filter(|(mixop, _)| !other.0.contains_key(*mixop));
+        let cases = cases.map(|(mixop, not_typ)| (Rc::clone(mixop), not_typ.clone()));
+        Self(cases.collect())
     }
 }
 
 impl FromIterator<ast::NotTyp> for PatternSet {
     fn from_iter<T: IntoIterator<Item = ast::NotTyp>>(not_typs: T) -> Self {
-        let not_typs = not_typs.into_iter().collect();
-        Self(not_typs)
+        let mut cases = BTreeMap::new();
+        for not_typ in not_typs {
+            cases
+                .entry(Rc::clone(not_typ.node.mixop()))
+                .or_insert(not_typ);
+        }
+        Self(cases)
     }
 }
 
 // - Table row
 
 /// Ordered pattern sets for the arguments of one table row.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct PatternSets(Vec<PatternSet>);
 
 impl PatternSets {
