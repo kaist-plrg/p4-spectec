@@ -414,39 +414,15 @@ impl Decode for il::TypCase {
 
 // - Operators
 
-/// Operators whose type the meta syntax leaves to the operands.
-trait TypedOperand {
-    /// Whether the operator works on booleans.
-    fn is_bool(&self) -> bool;
-
-    /// The operator type for operands of `typ_kind`.
-    fn op_typ(&self, typ_kind: &il::TypKind) -> il::OpTyp {
-        match typ_kind {
-            // Boolean operators carry their own type
-            _ if self.is_bool() => il::OpTyp::Bool,
-            // Integer operands select integer arithmetic
-            il::TypKind::Num(num::Typ::Int) => il::OpTyp::Int,
-            // Every other numeric operator works on naturals
-            _ => il::OpTyp::Nat,
-        }
-    }
-}
-
-impl TypedOperand for il::UnOp {
-    fn is_bool(&self) -> bool {
-        matches!(self, Self::Bool(_))
-    }
-}
-
-impl TypedOperand for il::BinOp {
-    fn is_bool(&self) -> bool {
-        matches!(self, Self::Bool(_))
-    }
-}
-
-impl TypedOperand for il::CmpOp {
-    fn is_bool(&self) -> bool {
-        matches!(self, Self::Bool(_))
+/// Restores the operator type that the meta syntax leaves to the operands.
+fn op_typ(is_bool: bool, typ_kind: &il::TypKind) -> il::OpTyp {
+    match typ_kind {
+        // Boolean operators carry their own type
+        _ if is_bool => il::OpTyp::Bool,
+        // Integer operands select integer arithmetic
+        il::TypKind::Num(num::Typ::Int) => il::OpTyp::Int,
+        // Every other numeric operator works on naturals
+        _ => il::OpTyp::Nat,
     }
 }
 
@@ -581,12 +557,12 @@ impl Decode for il::Exp {
             },
             m::EXP_UN => |[value_op, value_exp]| {
                 let op_al = il::UnOp::decode_cached(arena, cache, *value_op)?;
-                let typ_op_al = op_al.op_typ(&typ_al.node);
+                let typ_op_al = op_typ(matches!(op_al, il::UnOp::Bool(_)), &typ_al.node);
                 il::ExpKind::Un(op_al, typ_op_al, Box::new(il::Exp::decode_cached(arena, cache, *value_exp)?))
             },
             m::EXP_BIN => |[value_op, value_l, value_r]| {
                 let op_al = il::BinOp::decode_cached(arena, cache, *value_op)?;
-                let typ_op_al = op_al.op_typ(&typ_al.node);
+                let typ_op_al = op_typ(matches!(op_al, il::BinOp::Bool(_)), &typ_al.node);
                 il::ExpKind::Bin(
                     op_al,
                     typ_op_al,
@@ -598,7 +574,7 @@ impl Decode for il::Exp {
                 let op_al = il::CmpOp::decode_cached(arena, cache, *value_op)?;
                 let exp_l_al = il::Exp::decode_cached(arena, cache, *value_l)?;
                 // A comparison yields a boolean, so its operands decide the operator type
-                let typ_op_al = op_al.op_typ(&exp_l_al.note);
+                let typ_op_al = op_typ(matches!(op_al, il::CmpOp::Bool(_)), &exp_l_al.note);
                 il::ExpKind::Cmp(
                     op_al,
                     typ_op_al,
