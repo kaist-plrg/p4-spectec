@@ -1,0 +1,31 @@
+;;
+;; Input positions
+;;
+;; syntax inputHint
+;;
+
+;; Relation arguments in notation order, separated into the arguments at
+;; the input positions and the remaining outputs, each in source order
+
+dec $split_inputs<X>(inputHint, X*) : (X*, X*)
+  hint(prose_in "the arguments" %1
+                "split into inputs at positions" %0 "and outputs")
+
+dec $split_inputs_from<X>(inputHint, nat, X*) : (X*, X*)
+  hint(prose_in "the arguments" %2 "from position" %1
+                "split into inputs at positions" %0 "and outputs")
+
+def $split_inputs<X>(n*, X*) = $split_inputs_from<X>(n*, 0, X*)
+  -- if $forall_($(n < |X*|)*)
+
+def $split_inputs_from<X>(_, _, eps) = (eps, eps)
+def $split_inputs_from<X>(n*, n_pos, X_h :: X_t*)
+  = (X_h :: X_in*, X_out*)
+  -- if n_pos <- n*
+  -- if (X_in*, X_out*)
+      = $split_inputs_from<X>(n*, $(n_pos + 1), X_t*)
+def $split_inputs_from<X>(n*, n_pos, X_h :: X_t*)
+  = (X_in*, X_h :: X_out*)
+  -- if ~(n_pos <- n*)
+  -- if (X_in*, X_out*)
+      = $split_inputs_from<X>(n*, $(n_pos + 1), X_t*)

@@ -1,6 +1,8 @@
 ;;
 ;; Iteration context
 ;;
+;; syntax iterCtx
+;;
 
 ;; Enclosing iterations, innermost first,
 ;; each with the variables it iterates at the dimension inside it
@@ -26,13 +28,19 @@ dec $add_iterated(iterCtx, vari*) : iterCtx
 
 def $add_iterated(eps, _) = eps
 def $add_iterated((iter vari*) :: IC, vari_new*)
-  = (iter (vari* ++ vari_add*)) :: IC'
+  = (iter (vari* ++ vari_add*)) :: IC_outer
   ---- ;; a variable the level already iterates is not added again
   -- if vari_add* = $drop_varis(vari_new*, $ids_of_varis(vari*))
   -- (if vari_lift = $iterate_vari(vari_new, [ iter ]))*
-  -- if IC' = $add_iterated(IC, vari_lift*)
+  -- if IC_outer = $add_iterated(IC, vari_lift*)
 
-;;; Premise iterations
+;;
+;; Premise iterations
+;;
+;; syntax premIterAL*
+;;
+
+;;; Iterations from the context
 
 ;; Once its binders are added to the context,
 ;; each level's variables split into those a premise reads and those it binds:
@@ -54,48 +62,11 @@ def $prem_iters((iter vari*) :: IC, id_read*, id_bind*)
   -- if premIterAL_inner = iter '<-' vari_read* '->' vari_bind*
   -- if premIterAL_outer* = $prem_iters(IC, id_read*, id_bind*)
 
-;; An iteration without a source has no length to follow
-
-relation Iter_sourced:
-  |- premIterAL*
-  hint(input %0)
-  hint(prose_in "every iteration in" %0 "has a source")
-
-rule Iter_sourced:
-  |- premIterAL*
-  -- if (_ '<-' vari_src* '->' _)* = premIterAL*
-  -- if (vari_src* =/= eps)*
+;;; Iterated premises
 
 dec $iterate_prem(premAL, premIterAL*) : premAL
   hint(prose_in "the iteration of" %0 "over" %1)
+
 def $iterate_prem(premAL, eps) = premAL
 def $iterate_prem(premAL, premIterAL :: premIterAL_t*)
   = $iterate_prem(ITER premAL premIterAL, premIterAL_t*)
-
-;;; Bound variables
-
-;; A variable read under iterations is bound when a bound variable of its name
-;; has a dimension that the read, iterated by the enclosing iterations, extends:
-;; a scalar may be read inside an iteration, but an iterated variable
-;; may not be read as a scalar
-
-dec $is_bound_vari(vari*, vari) : bool
-  hint(prose_true %1 "is bound by some variable in" %0)
-  hint(prose_false %1 "is bound by no variable in" %0)
-def $is_bound_vari(eps, _) = false
-def $is_bound_vari(vari_h :: _, vari) = true
-  ---- ;; a variable of the same name has a dimension the read extends
-  -- if id _ _ = vari
-  -- if id _ _ = vari_h
-  -- if $is_prefix_dim(vari_h, vari)
-def $is_bound_vari(vari_h :: vari_t*, vari) = $is_bound_vari(vari_t*, vari)
-  ---- ;; the head has another name or a dimension the read does not extend
-  -- if id _ _ = vari
-  -- if id_h _ _ = vari_h
-  -- if id_h =/= id \/ ~$is_prefix_dim(vari_h, vari)
-
-dec $is_bound(algoCtx, iterCtx, vari*) : bool
-  hint(prose_true "variables" %2 "read under" %1 "are all bound in" %0)
-  hint(prose_false "some variable in" %2 "read under" %1 "is not bound in" %0)
-def $is_bound(AC, IC, vari*) = $forall_($is_bound_vari(AC.BOUND, $iterate_vari(vari, iter*))*)
-  -- if (iter _)* = IC

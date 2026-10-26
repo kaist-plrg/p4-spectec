@@ -22,14 +22,6 @@
 ;; A sub-pattern whose variables are all bound is compared for equality;
 ;; one with a binder is decomposed
 
-dec $is_bound_exp(algoCtx, typedExp) : bool
-  hint(prose_true "every variable of" %1 "is bound under" %0)
-  hint(prose_false "some variable of" %1 "is not bound under" %0)
-
-def $is_bound_exp(AC, typedExp) = $forall_((id <- id_bound*)*)
-  -- if id* = $ids_of_varis($free_varis_exp(typedExp))
-  -- if id_bound* = $ids_of_varis(AC.BOUND)
-
 rulegroup Partialbind_exp {
 
   rule Partialbind_exp/compared:
@@ -37,7 +29,7 @@ rulegroup Partialbind_exp {
     ---- ;; the sub-pattern has no binder, so its reads must be bound
     -- if $is_bound_exp(AC, typedExp)
     -- if vari_read* = $free_varis_exp(typedExp)
-    -- if $is_bound(AC, IC, vari_read*)
+    -- if $is_bound_varis(AC, IC, vari_read*)
     ---- ;; replace it by a fresh variable of its type
     -- if _ '#' typ = typedExp
     -- if (id_used*, id_d) = $fresh_id(AC.USED)

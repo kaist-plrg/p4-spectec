@@ -1215,12 +1215,12 @@ def $add_iterated(iterCtx, vari*) : iterCtx =
   clause 0 : (premIterIL*{premIterIL <- premIterIL*}, _vari*{_vari <- _vari*}) = []
   -- if premIterIL*{premIterIL <- premIterIL*} matches []
 
-  clause 1 : (premIterIL*{premIterIL <- premIterIL*}, vari_new*{vari_new <- vari_new*}) = iter vari*{vari <- vari*} ++ vari_add*{vari_add <- vari_add*} :: IC'
+  clause 1 : (premIterIL*{premIterIL <- premIterIL*}, vari_new*{vari_new <- vari_new*}) = iter vari*{vari <- vari*} ++ vari_add*{vari_add <- vari_add*} :: IC_outer
   -- if premIterIL*{premIterIL <- premIterIL*} matches _ :: _
   -- let iter vari*{vari <- vari*} :: IC = premIterIL*{premIterIL <- premIterIL*}
   -- let vari_add*{vari_add <- vari_add*} = $drop_varis(vari_new*{vari_new <- vari_new*}, $ids_of_varis(vari*{vari <- vari*}))
   -- (let vari_lift = $iterate_vari(vari_new, [iter]))*{vari_new <- vari_new*, vari_lift -> vari_lift*}
-  -- let IC' = $add_iterated(IC, vari_lift*{vari_lift <- vari_lift*})
+  -- let IC_outer = $add_iterated(IC, vari_lift*{vari_lift <- vari_lift*})
 
 def $prem_iters(iterCtx, id*, id*) : premIterAL* =
 
@@ -1235,22 +1235,6 @@ def $prem_iters(iterCtx, id*, id*) : premIterAL* =
   -- let premIterAL_inner = iter '<-' vari_read*{vari_read <- vari_read*} '->' vari_bind*{vari_bind <- vari_bind*}
   -- let premIterAL_outer*{premIterAL_outer <- premIterAL_outer*} = $prem_iters(IC, id_read*{id_read <- id_read*}, id_bind*{id_bind <- id_bind*})
 
-relation Iter_sourced: |- premIterAL*
-
-  rulegroup
-
-   match
-
-    (signature) |- premIterAL*{premIterAL <- premIterAL*}
-    |- premIterAL*{premIterAL <- premIterAL*}
-
-   paths
-
-    rulepath
-    -- let _iter '<-' vari_src*{vari_src <- vari_src*} '->' _vari*{_vari <- _vari*}*{_iter <- _iter*, _vari* <- _vari**, vari_src* <- vari_src**} = premIterAL*{premIterAL <- premIterAL*}
-    -- (if (vari_src*{vari_src <- vari_src*} =/= []))*{vari_src* <- vari_src**}
-    -- the relation holds
-
 def $iterate_prem(premAL, premIterAL*) : premAL =
 
   clause 0 : (premAL, premIterAL*{premIterAL <- premIterAL*}) = premAL
@@ -1260,30 +1244,27 @@ def $iterate_prem(premAL, premIterAL*) : premAL =
   -- if premIterAL'*{premIterAL' <- premIterAL'*} matches _ :: _
   -- let premIterAL :: premIterAL_t*{premIterAL_t <- premIterAL_t*} = premIterAL'*{premIterAL' <- premIterAL'*}
 
-def $is_bound_vari(vari*, vari) : bool =
+def $split_inputs<X>(inputHint, X*) : (X*, X*) =
 
-  clause 0 : (vari*{vari <- vari*}, _vari) = false
-  -- if vari*{vari <- vari*} matches []
+  clause 0 : (n*{n <- n*}, X*{X <- X*}) = $split_inputs_from<X>(n*{n <- n*}, 0, X*{X <- X*})
+  -- if $forall_((n < |X*{X <- X*}|)*{n <- n*})
 
-  clause 1 : (vari'*{vari' <- vari'*}, vari) = true
-  -- if vari'*{vari' <- vari'*} matches _ :: _
-  -- let vari_h :: _vari*{_vari <- _vari*} = vari'*{vari' <- vari'*}
-  -- let id _typ _iter*{_iter <- _iter*} = vari
-  -- let id' _typ' _iter'*{_iter' <- _iter'*} = vari_h
-  -- if (id' = id)
-  -- if $is_prefix_dim(vari_h, vari)
+def $split_inputs_from<X>(inputHint, nat, X*) : (X*, X*) =
 
-  clause 2 : (vari'*{vari' <- vari'*}, vari) = $is_bound_vari(vari_t*{vari_t <- vari_t*}, vari)
-  -- if vari'*{vari' <- vari'*} matches _ :: _
-  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari'*{vari' <- vari'*}
-  -- let id _typ _iter*{_iter <- _iter*} = vari
-  -- let id_h _typ' _iter'*{_iter' <- _iter'*} = vari_h
-  -- if ((id_h =/= id) \/ ~$is_prefix_dim(vari_h, vari))
+  clause 0 : (_inputHint, _n, X*{X <- X*}) = ([], [])
+  -- if X*{X <- X*} matches []
 
-def $is_bound(algoCtx, iterCtx, vari*) : bool =
+  clause 1 : (n*{n <- n*}, n_pos, X*{X <- X*}) = (X_h :: X_in*{X_in <- X_in*}, X_out*{X_out <- X_out*})
+  -- if X*{X <- X*} matches _ :: _
+  -- let X_h :: X_t*{X_t <- X_t*} = X*{X <- X*}
+  -- if n_pos <- n*{n <- n*}
+  -- let (X_in*{X_in <- X_in*}, X_out*{X_out <- X_out*}) = $split_inputs_from<X>(n*{n <- n*}, (n_pos + 1), X_t*{X_t <- X_t*})
 
-  clause 0 : (AC, IC, vari*{vari <- vari*}) = $forall_($is_bound_vari(AC.BOUND, $iterate_vari(vari, iter*{iter <- iter*}))*{vari <- vari*})
-  -- let iter _vari*{_vari <- _vari*}*{_vari* <- _vari**, iter <- iter*} = IC
+  clause 2 : (n*{n <- n*}, n_pos, X*{X <- X*}) = (X_in*{X_in <- X_in*}, X_h :: X_out*{X_out <- X_out*})
+  -- if X*{X <- X*} matches _ :: _
+  -- let X_h :: X_t*{X_t <- X_t*} = X*{X <- X*}
+  -- if ~n_pos <- n*{n <- n*}
+  -- let (X_in*{X_in <- X_in*}, X_out*{X_out <- X_out*}) = $split_inputs_from<X>(n*{n <- n*}, (n_pos + 1), X_t*{X_t <- X_t*})
 
 relation Collectbind_exp: algoCtx |- typedExp : vari*
 
@@ -1582,7 +1563,7 @@ relation Partialbind_exp: algoCtx iterCtx |- typedExp : algoCtx iterCtx typedExp
     rulepath compared
     -- if $is_bound_exp(AC, typedExp)
     -- let vari_read*{vari_read <- vari_read*} = $free_varis_exp(typedExp)
-    -- if $is_bound(AC, IC, vari_read*{vari_read <- vari_read*})
+    -- if $is_bound_varis(AC, IC, vari_read*{vari_read <- vari_read*})
     -- let _exp '#' typ = typedExp
     -- let (id_used*{id_used <- id_used*}, id_d) = $fresh_id(AC.USED)
     -- let AC_fresh = AC[USED = id_used*{id_used <- id_used*}]
@@ -1943,6 +1924,22 @@ relation Bind_args: algoCtx |- arg* : algoCtx arg* premAL*
     -- let AC_bound = $add_bound(AC_part, vari_bind*{vari_bind <- vari_bind*})
     -- output: % |- % : AC_bound arg_part*{arg_part <- arg_part*} premAL_part*{premAL_part <- premAL_part*} ++ premAL_eq*{premAL_eq <- premAL_eq*}
 
+relation Iter_sourced: |- premIterAL*
+
+  rulegroup
+
+   match
+
+    (signature) |- premIterAL*{premIterAL <- premIterAL*}
+    |- premIterAL*{premIterAL <- premIterAL*}
+
+   paths
+
+    rulepath
+    -- let _iter '<-' vari_src*{vari_src <- vari_src*} '->' _vari*{_vari <- _vari*}*{_iter <- _iter*, _vari* <- _vari**, vari_src* <- vari_src**} = premIterAL*{premIterAL <- premIterAL*}
+    -- (if (vari_src*{vari_src <- vari_src*} =/= []))*{vari_src* <- vari_src**}
+    -- the relation holds
+
 relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
 
   rulegroup rel
@@ -1960,7 +1957,7 @@ relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
     -- let REL id ':' typedExp*{typedExp <- typedExp*} `( inputHint `) = relPremIL
     -- let (typedExp_in*{typedExp_in <- typedExp_in*}, typedExp_out*{typedExp_out <- typedExp_out*}) = $split_inputs<typedExp>(inputHint, typedExp*{typedExp <- typedExp*})
     -- let vari_in*{vari_in <- vari_in*} = $free_varis_exps(typedExp_in*{typedExp_in <- typedExp_in*})
-    -- if $is_bound(AC, IC, vari_in*{vari_in <- vari_in*})
+    -- if $is_bound_varis(AC, IC, vari_in*{vari_in <- vari_in*})
     -- Bind_exps: AC IC |- typedExp_out*{typedExp_out <- typedExp_out*} : AC_bound typedExp_out_part*{typedExp_out_part <- typedExp_out_part*} premAL_bind*{premAL_bind <- premAL_bind*}
     -- let id_read*{id_read <- id_read*} = $ids_of_varis(vari_in*{vari_in <- vari_in*})
     -- let vari_out*{vari_out <- vari_out*} = $free_varis_exps(typedExp_out_part*{typedExp_out_part <- typedExp_out_part*})
@@ -1987,7 +1984,7 @@ relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
     rulepath test
     -- let IF typedExp = ifPrem
     -- let vari*{vari <- vari*} = $free_varis_exp(typedExp)
-    -- if $is_bound(AC, IC, vari*{vari <- vari*})
+    -- if $is_bound_varis(AC, IC, vari*{vari <- vari*})
     -- let premIterAL*{premIterAL <- premIterAL*} = $prem_iters(IC, $ids_of_varis(vari*{vari <- vari*}), [])
     -- let premAL_if = $iterate_prem(ifPrem as premAL, premIterAL*{premIterAL <- premIterAL*})
     -- output: % % |- % : AC [premAL_if]
@@ -2036,7 +2033,7 @@ relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
     rulepath ifhold
     -- let IFHOLD id ':' typedExp*{typedExp <- typedExp*} = ifHoldPrem
     -- let vari_read*{vari_read <- vari_read*} = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-    -- if $is_bound(AC, IC, vari_read*{vari_read <- vari_read*})
+    -- if $is_bound_varis(AC, IC, vari_read*{vari_read <- vari_read*})
     -- let premIterAL*{premIterAL <- premIterAL*} = $prem_iters(IC, $ids_of_varis(vari_read*{vari_read <- vari_read*}), [])
     -- let premAL_hold = $iterate_prem(ifHoldPrem as premAL, premIterAL*{premIterAL <- premIterAL*})
     -- output: % % |- % : AC [premAL_hold]
@@ -2055,7 +2052,7 @@ relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
     rulepath ifnothold
     -- let IFNOTHOLD id ':' typedExp*{typedExp <- typedExp*} = ifNotHoldPrem
     -- let vari_read*{vari_read <- vari_read*} = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-    -- if $is_bound(AC, IC, vari_read*{vari_read <- vari_read*})
+    -- if $is_bound_varis(AC, IC, vari_read*{vari_read <- vari_read*})
     -- let premIterAL*{premIterAL <- premIterAL*} = $prem_iters(IC, $ids_of_varis(vari_read*{vari_read <- vari_read*}), [])
     -- let premAL_hold = $iterate_prem(ifNotHoldPrem as premAL, premIterAL*{premIterAL <- premIterAL*})
     -- output: % % |- % : AC [premAL_hold]
@@ -2090,7 +2087,7 @@ relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
     rulepath dbg
     -- let DEBUG typedExp = debugPrem
     -- let vari*{vari <- vari*} = $free_varis_exp(typedExp)
-    -- if $is_bound(AC, IC, vari*{vari <- vari*})
+    -- if $is_bound_varis(AC, IC, vari*{vari <- vari*})
     -- let premIterAL*{premIterAL <- premIterAL*} = $prem_iters(IC, $ids_of_varis(vari*{vari <- vari*}), [])
     -- let premAL_debug = $iterate_prem(debugPrem as premAL, premIterAL*{premIterAL <- premIterAL*})
     -- output: % % |- % : AC [premAL_debug]
@@ -2111,14 +2108,15 @@ relation Algo_let: algoCtx iterCtx |- typedExp '=' typedExp : algoCtx premAL*
     -- if typedExp*{typedExp <- typedExp*} matches [ _/1 ]
     -- let [typedExp_l_part] = typedExp*{typedExp <- typedExp*}
     -- let vari_r*{vari_r <- vari_r*} = $free_varis_exp(typedExp_r)
-    -- if $is_bound(AC, IC, vari_r*{vari_r <- vari_r*})
+    -- if $is_bound_varis(AC, IC, vari_r*{vari_r <- vari_r*})
     -- let vari_l*{vari_l <- vari_l*} = $free_varis_exp(typedExp_l_part)
     -- let vari_bind*{vari_bind <- vari_bind*} = $shallowest_varis(vari_l*{vari_l <- vari_l*})
     -- let IC_bind = $add_iterated(IC, vari_bind*{vari_bind <- vari_bind*})
     -- let premIterAL*{premIterAL <- premIterAL*} = $prem_iters(IC_bind, $ids_of_varis(vari_r*{vari_r <- vari_r*}), $ids_of_varis(vari_bind*{vari_bind <- vari_bind*}))
     -- if Iter_sourced: |- premIterAL*{premIterAL <- premIterAL*} holds
     -- let premAL_let = $iterate_prem(LET typedExp_l_part '=' typedExp_r as premAL, premIterAL*{premIterAL <- premIterAL*})
-    -- output: % % |- % '=' % : AC_bound premAL_let :: premAL_bind*{premAL_bind <- premAL_bind*}
+    -- let premAL*{premAL <- premAL*} = premAL_let :: premAL_bind*{premAL_bind <- premAL_bind*}
+    -- output: % % |- % '=' % : AC_bound premAL*{premAL <- premAL*}
 
 relation Algo_prems: algoCtx |- premIL* : algoCtx premAL*
 
@@ -2164,7 +2162,7 @@ relation Algo_tblRow: algoCtx |- tblRowIL : tblRowAL
     -- if (|id_bind*{id_bind <- id_bind*}| = |vari_bind*{vari_bind <- vari_bind*}|)
     -- Bind_args: AC_row |- arg*{arg <- arg*} : AC_body arg_part*{arg_part <- arg_part*} premAL*{premAL <- premAL*}
     -- let vari_body*{vari_body <- vari_body*} = $free_varis_exp(typedExp)
-    -- if $is_bound(AC_body, [], vari_body*{vari_body <- vari_body*})
+    -- if $is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})
     -- output: % |- % : arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL*{premAL <- premAL*}
 
 relation TblRows_cover: algoCtx typ* |- tblRowIL*
@@ -2236,7 +2234,7 @@ relation Algo_rul: algoCtx inputHint |- rulIL : rulAL
     -- Bind_exps: AC_rul [] |- typedExp_in*{typedExp_in <- typedExp_in*} : AC_in typedExp_in_part*{typedExp_in_part <- typedExp_in_part*} premAL_bind*{premAL_bind <- premAL_bind*}
     -- Algo_prems: AC_in |- premIL*{premIL <- premIL*} : AC_body premAL*{premAL <- premAL*}
     -- let vari_out*{vari_out <- vari_out*} = $free_varis_exps(typedExp_out*{typedExp_out <- typedExp_out*})
-    -- if $is_bound(AC_body, [], vari_out*{vari_out <- vari_out*})
+    -- if $is_bound_varis(AC_body, [], vari_out*{vari_out <- vari_out*})
     -- let rulAL = id ':' typedExp_in_part*{typedExp_in_part <- typedExp_in_part*} '->' typedExp_out*{typedExp_out <- typedExp_out*} '-' premAL_bind*{premAL_bind <- premAL_bind*} ++ premAL*{premAL <- premAL*}
     -- output: % % |- % : rulAL
 
@@ -2258,7 +2256,7 @@ relation Algo_clause: algoCtx |- clauseIL : clauseAL
     -- Bind_args: AC_clause |- arg*{arg <- arg*} : AC_arg arg_part*{arg_part <- arg_part*} premAL_arg*{premAL_arg <- premAL_arg*}
     -- Algo_prems: AC_arg |- premIL*{premIL <- premIL*} : AC_body premAL*{premAL <- premAL*}
     -- let vari_body*{vari_body <- vari_body*} = $free_varis_exp(typedExp)
-    -- if $is_bound(AC_body, [], vari_body*{vari_body <- vari_body*})
+    -- if $is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})
     -- let clauseAL = arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL_arg*{premAL_arg <- premAL_arg*} ++ premAL*{premAL <- premAL*}
     -- output: % |- % : clauseAL
 
@@ -3884,6 +3882,37 @@ def $exp_of_vari(vari) : typedExp =
 
   clause 0 : (id typ iter*{iter <- iter*}) = $iter_exp(VAR id as exp '#' typ, id typ [], iter*{iter <- iter*})
 
+def $is_bound_vari(vari*, vari) : bool =
+
+  clause 0 : (vari*{vari <- vari*}, _vari) = false
+  -- if vari*{vari <- vari*} matches []
+
+  clause 1 : (vari'*{vari' <- vari'*}, vari) = true
+  -- if vari'*{vari' <- vari'*} matches _ :: _
+  -- let vari_h :: _vari*{_vari <- _vari*} = vari'*{vari' <- vari'*}
+  -- let id _typ _iter*{_iter <- _iter*} = vari
+  -- let id' _typ' _iter'*{_iter' <- _iter'*} = vari_h
+  -- if (id' = id)
+  -- if $is_prefix_dim(vari_h, vari)
+
+  clause 2 : (vari'*{vari' <- vari'*}, vari) = $is_bound_vari(vari_t*{vari_t <- vari_t*}, vari)
+  -- if vari'*{vari' <- vari'*} matches _ :: _
+  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari'*{vari' <- vari'*}
+  -- let id _typ _iter*{_iter <- _iter*} = vari
+  -- let id_h _typ' _iter'*{_iter' <- _iter'*} = vari_h
+  -- if ((id_h =/= id) \/ ~$is_prefix_dim(vari_h, vari))
+
+def $is_bound_varis(algoCtx, iterCtx, vari*) : bool =
+
+  clause 0 : (AC, IC, vari*{vari <- vari*}) = $forall_($is_bound_vari(AC.BOUND, $iterate_vari(vari, iter*{iter <- iter*}))*{vari <- vari*})
+  -- let iter _vari*{_vari <- _vari*}*{_vari* <- _vari**, iter <- iter*} = IC
+
+def $is_bound_exp(algoCtx, typedExp) : bool =
+
+  clause 0 : (AC, typedExp) = $forall_(id <- id_bound*{id_bound <- id_bound*}*{id <- id*})
+  -- let id*{id <- id*} = $ids_of_varis($free_varis_exp(typedExp))
+  -- let id_bound*{id_bound <- id_bound*} = $ids_of_varis(AC.BOUND)
+
 syntax occ = map<id, id*>
 
 syntax renamer = {USED id*, SEEN id*, OCC occ}
@@ -4062,12 +4091,6 @@ def $sidecond_multi_binder(iterCtx, vari, id) : premAL =
   -- let IC_cmp = $add_iterated(IC_inner ++ IC_outer, [vari_first, vari_later])
   -- let premIterAL*{premIterAL <- premIterAL*} = $prem_iters(IC_cmp, [id_first, id_later], [])
 
-def $is_bound_exp(algoCtx, typedExp) : bool =
-
-  clause 0 : (AC, typedExp) = $forall_(id <- id_bound*{id_bound <- id_bound*}*{id <- id*})
-  -- let id*{id <- id*} = $ids_of_varis($free_varis_exp(typedExp))
-  -- let id_bound*{id_bound <- id_bound*} = $ids_of_varis(AC.BOUND)
-
 def $sidecond_partial(iterCtx, vari, typedExp) : premAL =
 
   clause 0 : (IC, vari_d, typedExp_check) = $iterate_prem(IF typedExp_check as premAL, premIterAL*{premIterAL <- premIterAL*})
@@ -4082,28 +4105,6 @@ def $prem_let_partial(iterCtx, vari, typedExp, typedExp) : premAL =
   -- let vari_bind*{vari_bind <- vari_bind*} = $shallowest_varis(vari_l*{vari_l <- vari_l*})
   -- let IC_bind = $add_iterated(IC, vari_d :: vari_bind*{vari_bind <- vari_bind*})
   -- let premIterAL*{premIterAL <- premIterAL*} = $prem_iters(IC_bind, [id_d], $ids_of_varis(vari_bind*{vari_bind <- vari_bind*}))
-
-def $split_inputs<X>(inputHint, X*) : (X*, X*) =
-
-  clause 0 : (n*{n <- n*}, X*{X <- X*}) = $split_inputs_from<X>(n*{n <- n*}, 0, X*{X <- X*})
-  -- if $forall_((n < |X*{X <- X*}|)*{n <- n*})
-
-def $split_inputs_from<X>(inputHint, nat, X*) : (X*, X*) =
-
-  clause 0 : (_inputHint, _n, X*{X <- X*}) = ([], [])
-  -- if X*{X <- X*} matches []
-
-  clause 1 : (n*{n <- n*}, n_pos, X*{X <- X*}) = (X_h :: X_in*{X_in <- X_in*}, X_out*{X_out <- X_out*})
-  -- if X*{X <- X*} matches _ :: _
-  -- let X_h :: X_t*{X_t <- X_t*} = X*{X <- X*}
-  -- if n_pos <- n*{n <- n*}
-  -- let (X_in*{X_in <- X_in*}, X_out*{X_out <- X_out*}) = $split_inputs_from<X>(n*{n <- n*}, (n_pos + 1), X_t*{X_t <- X_t*})
-
-  clause 2 : (n*{n <- n*}, n_pos, X*{X <- X*}) = (X_in*{X_in <- X_in*}, X_h :: X_out*{X_out <- X_out*})
-  -- if X*{X <- X*} matches _ :: _
-  -- let X_h :: X_t*{X_t <- X_t*} = X*{X <- X*}
-  -- if ~n_pos <- n*{n <- n*}
-  -- let (X_in*{X_in <- X_in*}, X_out*{X_out <- X_out*}) = $split_inputs_from<X>(n*{n <- n*}, (n_pos + 1), X_t*{X_t <- X_t*})
 
 def $is_singleton_typ(tdenv, typ) : bool =
 
