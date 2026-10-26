@@ -85,6 +85,24 @@ pub(crate) fn table_pattern_overlapping(
     )
 }
 
+const TABLE_ROW_GUARD_REQUIRED: &str = "algo/table-row-guard-required";
+
+/// Relates a partial operation in a row to the guard it would need.
+pub(crate) fn table_row_guard_required(
+    row: &al::ast::TableRow,
+    prem_guard: &al::ast::Prem,
+) -> AlgoError {
+    cause(
+        TABLE_ROW_GUARD_REQUIRED,
+        "table row requires a guard",
+        vec![
+            Label::primary(&prem_guard.span, format!("requires `{}`", prem_guard.to_string())),
+            Label::secondary(&table_pattern_span(row), "in this row"),
+        ],
+        vec!["Table rows are exclusive and exhaustive, so a failing guard cannot fall through to the next row.".into()],
+    )
+}
+
 /// Describes uncovered products without flattening argument alternatives.
 fn describe_patterns(pattern_sets: &PatternSets) -> String {
     // Group notation alternatives within each argument position
