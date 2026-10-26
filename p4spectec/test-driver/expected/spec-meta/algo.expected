@@ -1195,16 +1195,16 @@ def $add_used(algoCtx, id*) : algoCtx =
 
   clause 0 : (AC, id*{id <- id*}) = AC[USED = AC.USED ++ id*{id <- id*}]
 
-def $fresh_id(id*) : (id*, id) =
-
-  clause 0 : (id_used*{id_used <- id_used*}) = (id_used*{id_used <- id_used*} ++ [id_fresh], id_fresh)
-  -- let id_fresh = $fresh(id_used*{id_used <- id_used*}, "fresh")
-
 def $add_tparams(algoCtx, tparam*) : algoCtx =
 
   clause 0 : (AC, tparam*{tparam <- tparam*}) = AC[TYP = tdenv]
   -- let typDef*{typDef <- typDef*} = $repeat_<typDef>(PARAM, |tparam*{tparam <- tparam*}|)
   -- let tdenv = $adds_map<id, typDef>(AC.TYP, tparam*{tparam <- tparam*}, typDef*{typDef <- typDef*})
+
+def $fresh_id(id*) : (id*, id) =
+
+  clause 0 : (id_used*{id_used <- id_used*}) = (id_used*{id_used <- id_used*} ++ [id_fresh], id_fresh)
+  -- let id_fresh = $fresh(id_used*{id_used <- id_used*}, "fresh")
 
 syntax iterCtx = premIterIL*
 

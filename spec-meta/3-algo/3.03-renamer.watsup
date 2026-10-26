@@ -1,10 +1,12 @@
 ;;
 ;; Renamer
 ;;
+;; syntax renamer
+;;
 
 ;; Identifiers that fresh identifiers must avoid,
 ;; the binders whose first occurrence was met,
-;; and each binder mapped to the identifiers given to its later occurrences;
+;; and each binder mapped to the identifiers given to its later occurrences
 
 syntax occ = map<id, id*>
 
@@ -21,7 +23,7 @@ var R : renamer
 ;; syntax vari*
 ;;
 
-;; Every binder starts unseen, with no later occurrence named;
+;; Every binder starts unseen, with no later occurrence named
 
 dec $init_renamer(id*, vari*) : renamer
   hint(prose_in "the renamer for binders" %1 "avoiding identifiers" %0)
@@ -50,7 +52,7 @@ def $init_renamer(id_used*, vari_h :: vari_t*)
 ;;
 
 ;; The first occurrence keeps its identifier; later ones take fresh identifiers:
-;; `(x, x, (y, y)*)` becomes `(x, x', (y, y')*)`.
+;; `(x, x, (y, y)*)` becomes `(x, fresh, (y, fresh')*)`.
 ;; Binders occur only under invertible constructs;
 ;; any other construct, and a bound variable, is unchanged.
 

@@ -12,12 +12,10 @@
 ;;
 ;; with `y` unbound and `n` bound, and `A` a case of `t = A nat | B`, becomes
 ;;
-;;   -- let (t*, nat) = e
-;;   -- (if t matches A)*{t <- t*}
-;;   -- (let A y = t)*{t <- t*, y -> y*}
-;;   -- if nat = n + 1
-
-;;; Compared sub-patterns
+;;   -- let (fresh*, fresh') = e
+;;   -- (if fresh matches A)*{fresh <- fresh*}
+;;   -- (let A y = fresh)*{fresh <- fresh*, y -> y*}
+;;   -- if fresh' = n + 1
 
 ;; A sub-pattern whose variables are all bound is compared for equality;
 ;; one with a binder is decomposed
@@ -92,6 +90,9 @@ def $prem_let_partial(IC, vari_d, typedExp_l, typedExp_r)
 ;; syntax typedExp
 ;;
 
+;; Tuples and structs decompose in place; an upcast, case, option, list, or cons
+;; pattern becomes a fresh variable, checked before it is destructured
+
 ;;; varExp
 ;;; syntax varExp = VAR id
 
@@ -135,8 +136,6 @@ rule Partialbind_binder_exp/tuple:
   -- Partialbind_exps:
       AC IC |- typedExp* : AC_sub IC_sub typedExp_part* premAL*
   -- if tupExp_part = TUP typedExp_part*
-
-;; Constructor, option, and list patterns match the fresh variable first
 
 ;;; injExp
 ;;; syntax injExp = INJ expCase

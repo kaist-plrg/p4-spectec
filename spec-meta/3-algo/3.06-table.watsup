@@ -25,8 +25,8 @@ def $is_singleton_typ(_, _) = false
 ;; syntax typedExp
 ;;
 
-;; Variables, tuples, structs, and iterations match every value;
-;; a case matches every value only if it is the single case of its type
+;; Variables match every value; tuples, structs, and iterations do
+;; when their components do, and a case when it is also the single case of its type
 
 dec $is_irrefutable(tdenv, typedExp) : bool
   hint(prose_true %1 "matches every value of its type under" %0)
@@ -76,7 +76,7 @@ def $is_irrefutable(_, exp '#' _) = false
 ;; their decomposition premises precede the row's result
 
 rule Algo_tblRow:
-  AC |- tblRowIL : tblRowAL 
+  AC |- tblRowIL : tblRowAL
   -- if arg* '=' typedExp = tblRowIL
   ---- ;; fresh identifiers avoid those of the row
   -- if id_used* = $ids_of_varis($free_varis_tblRowIL(tblRowIL))
@@ -96,12 +96,10 @@ rule Algo_tblRow:
 ;; syntax tblRowIL*
 ;;
 
-;; A row argument covers a set of cases of its variant type.
+;; A row argument is shallow: a variable, or a case whose arguments are
+;; irrefutable, possibly under an upcast; it covers a set of cases of its variant type.
 ;; No input may be covered by two rows, and unless the last row consists of
 ;; wildcard variables, every combination of cases must be covered by a row.
-
-;; A row argument is shallow: a variable, or a case whose arguments are
-;; irrefutable, possibly under an upcast; it covers a set of cases
 
 dec $variant_cases(tdenv, typ) : typCase*
   hint(prose_in "the cases of variant type" %1 "under" %0)

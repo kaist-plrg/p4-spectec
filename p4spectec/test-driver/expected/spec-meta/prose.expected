@@ -1505,12 +1505,6 @@ def $add_used(AC, (id)*{id <- id*})
 
 1. Return AC[USED = AC.USED ++ (id)*{id <- id*}]
 
-def $fresh_id((id_used)*{id_used <- id_used*})
-
-1. (Let id_fresh be $fresh((id_used)*{id_used <- id_used*}, "fresh"))
-
-2. Return ((id_used)*{id_used <- id_used*} ++ [id_fresh], id_fresh)
-
 def $add_tparams(AC, (tparam)*{tparam <- tparam*})
 
 1. (Let (typDef)*{typDef <- typDef*} be $repeat_<typDef>((PARAM), |(tparam)*{tparam <- tparam*}|))
@@ -1518,6 +1512,12 @@ def $add_tparams(AC, (tparam)*{tparam <- tparam*})
 2. (Let tdenv be $adds_map<id, typDef>(AC.TYP, (tparam)*{tparam <- tparam*}, (typDef)*{typDef <- typDef*}))
 
 3. Return AC[TYP = tdenv]
+
+def $fresh_id((id_used)*{id_used <- id_used*})
+
+1. (Let id_fresh be $fresh((id_used)*{id_used <- id_used*}, "fresh"))
+
+2. Return ((id_used)*{id_used <- id_used*} ++ [id_fresh], id_fresh)
 
 syntax iterCtx = premIterIL*
 

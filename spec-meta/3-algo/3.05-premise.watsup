@@ -19,13 +19,7 @@ rule Iter_sourced:
 
 ;; Each premise reads bound variables and binds the variables of its patterns.
 ;; Under an iteration, the variables a premise reads become its sources
-;; and the variables it binds become its binders:
-;;
-;;   -- (let x = z + 1)*{x <- x*, z <- z*}
-;;
-;; becomes
-;;
-;;   -- (let x = z + 1)*{z <- z*, x -> x*}
+;; and the variables it binds become its binders
 
 ;;; relPremIL
 ;;; syntax relPremIL = REL id ':' typedExp* `( inputHint `)
@@ -159,7 +153,7 @@ rule Algo_prem/dbg:
 ;; the right side reads only bound variables
 
 rule Algo_let:
-  AC IC |- typedExp_l '=' typedExp_r : AC_bound premAL* 
+  AC IC |- typedExp_l '=' typedExp_r : AC_bound premAL*
   ---- ;; the pattern binds, decomposing partially bound sub-patterns
   -- Bind_exps:
       AC IC |- [ typedExp_l ] : AC_bound ([ typedExp_l_part ]) premAL_bind*
