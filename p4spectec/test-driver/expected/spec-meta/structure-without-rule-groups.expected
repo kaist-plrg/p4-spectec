@@ -669,9 +669,6 @@ syntax valField =
 syntax valCase =
    | mixop val* (from valCase)
 
-syntax varr =
-   | id iter* (from varr)
-
 def $fresh(id_used*{id_used <- id_used*}, id)
 
 1. Case analysis on id <- id_used*{id_used <- id_used*} (total)
@@ -736,44 +733,6 @@ def $drop_varis(vari*{vari <- vari*}, id*{id <- id*})
 
             1. Return vari_h :: $drop_varis(vari_t*{vari_t <- vari_t*}, id*{id <- id*})
 
-def $is_iter_on_var(typedExp')
-
-1. (Let exp '#' _typ be typedExp')
-
-  1. Case analysis on exp
-
-    1. Case (% has type varExp)
-
-      1. (Let VAR id be exp as varExp)
-
-        1. Return ?(id [])
-
-    2. Case (% has type iterExp)
-
-      1. (Let ITER typedExp expIter be exp as iterExp)
-
-        1. (Let varr?{varr <- varr?} be $is_iter_on_var(typedExp))
-
-          1. If (varr?{varr <- varr?} matches (_)), then
-
-            1. (Let ?(id iter*{iter <- iter*}) be varr?{varr <- varr?})
-
-              1. (Let iter_outer vari*{vari <- vari*} be expIter)
-
-                1. If (vari*{vari <- vari*} matches [ _/1 ]), then
-
-                  1. (Let [id' _typ' iter'*{iter' <- iter'*}] be vari*{vari <- vari*})
-
-                    1. If ((id' = id)), then
-
-                      1. If ((iter'*{iter' <- iter'*} = iter*{iter <- iter*})), then
-
-                        1. Return ?(id iter*{iter <- iter*} ++ [iter_outer])
-
-2. Otherwise,
-
-  1. Return ?()
-
 def $iterate_vari(id typ iter*{iter <- iter*}, iter_add*{iter_add <- iter_add*})
 
 1. Return id typ iter*{iter <- iter*} ++ iter_add*{iter_add <- iter_add*}
@@ -798,59 +757,49 @@ def $is_prefix_dim(vari, vari')
 
   1. Return false
 
-def $merge_shallower(vari'*{vari' <- vari'*}, vari)
+def $shallowest_vari(vari, vari'*{vari' <- vari'*})
 
 1. Case analysis on vari'*{vari' <- vari'*} (total)
 
   1. Case (% matches pattern [])
 
-    1. Return [vari]
+    1. Return vari
 
   2. Case (% matches pattern _ :: _)
 
     1. (Let vari_h :: vari_t*{vari_t <- vari_t*} be vari'*{vari' <- vari'*})
 
-      1. (Let id _typ _iter*{_iter <- _iter*} be vari_h)
+      1. Case analysis on $is_prefix_dim(vari_h, vari) (total)
 
-        1. (Let id' _typ' _iter'*{_iter' <- _iter'*} be vari)
+        1. Case true
 
-          1. Case analysis on id' (total)
+          1. Return $shallowest_vari(vari_h, vari_t*{vari_t <- vari_t*})
 
-            1. Case (% = id)
+        2. Case false
 
-              1. Case analysis on $is_prefix_dim(vari, vari_h) (total)
+          1. Return $shallowest_vari(vari, vari_t*{vari_t <- vari_t*})
 
-                1. Case true
-
-                  1. Return vari :: vari_t*{vari_t <- vari_t*}
-
-                2. Case false
-
-                  1. Return vari_h :: vari_t*{vari_t <- vari_t*}
-
-            2. Case (% =/= id)
-
-              1. Return vari_h :: $merge_shallower(vari_t*{vari_t <- vari_t*}, vari)
-
-def $shallowest_into(vari_acc*{vari_acc <- vari_acc*}, vari*{vari <- vari*})
+def $shallowest_varis(vari*{vari <- vari*})
 
 1. Case analysis on vari*{vari <- vari*} (total)
 
   1. Case (% matches pattern [])
 
-    1. Return vari_acc*{vari_acc <- vari_acc*}
+    1. Return []
 
   2. Case (% matches pattern _ :: _)
 
     1. (Let vari_h :: vari_t*{vari_t <- vari_t*} be vari*{vari <- vari*})
 
-      1. (Let vari_merge*{vari_merge <- vari_merge*} be $merge_shallower(vari_acc*{vari_acc <- vari_acc*}, vari_h))
+      1. (Let id_h _typ _iter*{_iter <- _iter*} be vari_h)
 
-        1. Return $shallowest_into(vari_merge*{vari_merge <- vari_merge*}, vari_t*{vari_t <- vari_t*})
+        1. (Let vari_same*{vari_same <- vari_same*} be $select_varis(vari_t*{vari_t <- vari_t*}, [id_h]))
 
-def $shallowest_varis(vari*{vari <- vari*})
+          1. (Let vari_rest*{vari_rest <- vari_rest*} be $drop_varis(vari_t*{vari_t <- vari_t*}, [id_h]))
 
-1. Return $shallowest_into([], vari*{vari <- vari*})
+            1. (Let vari_min be $shallowest_vari(vari_h, vari_same*{vari_same <- vari_same*}))
+
+              1. Return vari_min :: $shallowest_varis(vari_rest*{vari_rest <- vari_rest*})
 
 syntax typDef =
    | EXTTYP id (from externTypDefn)
@@ -4742,6 +4691,9 @@ def $sideconds_replace(tdenv, typedPath, typedExp_f)
 
   1. Return []
 
+syntax varr =
+   | id iter* (from varr)
+
 syntax venv = map<varr, val>
 
 syntax renv = map<id, relDefnAL>
@@ -4945,6 +4897,44 @@ def $finds_vari(C*{C <- C*}, vari)
       1. (Let ?(val) be val'?{val' <- val'?})*{val'? <- val'?*, val -> val*}
 
         1. Return ?(val*{val <- val*})
+
+2. Otherwise,
+
+  1. Return ?()
+
+def $is_iter_on_var(typedExp')
+
+1. (Let exp '#' _typ be typedExp')
+
+  1. Case analysis on exp
+
+    1. Case (% has type varExp)
+
+      1. (Let VAR id be exp as varExp)
+
+        1. Return ?(id [])
+
+    2. Case (% has type iterExp)
+
+      1. (Let ITER typedExp expIter be exp as iterExp)
+
+        1. (Let varr?{varr <- varr?} be $is_iter_on_var(typedExp))
+
+          1. If (varr?{varr <- varr?} matches (_)), then
+
+            1. (Let ?(id iter*{iter <- iter*}) be varr?{varr <- varr?})
+
+              1. (Let iter_outer vari*{vari <- vari*} be expIter)
+
+                1. If (vari*{vari <- vari*} matches [ _/1 ]), then
+
+                  1. (Let [id' _typ' iter'*{iter' <- iter'*}] be vari*{vari <- vari*})
+
+                    1. If ((id' = id)), then
+
+                      1. If ((iter'*{iter' <- iter'*} = iter*{iter <- iter*})), then
+
+                        1. Return ?(id iter*{iter <- iter*} ++ [iter_outer])
 
 2. Otherwise,
 

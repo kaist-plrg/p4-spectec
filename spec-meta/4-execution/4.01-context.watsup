@@ -156,6 +156,20 @@ def $finds_vari(C*, vari) = val*
 def $finds_vari(C*, vari) = eps
   -- otherwise
 
+;;; Runtime variables of expressions
+
+;; A variable and an iteration of it, such as `x*?`, are each one runtime variable
+
+dec $is_iter_on_var(typedExp) : varr?
+  hint(prose_in "the runtime variable represented by" %0 "if any")
+def $is_iter_on_var((VAR id) '#' _) = id eps
+def $is_iter_on_var((ITER typedExp expIter) '#' _)
+  = id (iter* ++ [ iter_outer ])
+  -- if id iter* = $is_iter_on_var(typedExp)
+  -- if iter_outer (id _ iter*) = expIter
+def $is_iter_on_var(_) = eps
+  -- otherwise
+
 ;;; Typedef finders
 
 dec $find_typ(ctx, id) : typDef?

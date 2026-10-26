@@ -1,8 +1,10 @@
-;; Runtime variables
-
-syntax varr = id iter*
-
+;;
 ;; Fresh identifiers
+;;
+;; syntax id
+;;
+
+;; A name based on `x` that is not in use: `x`, then `x'`, `x''`, ...
 
 dec $fresh(id*, id) : id
   hint(prose_in "a fresh name based on" %1 "avoiding" %0)
@@ -11,14 +13,22 @@ def $fresh(id_used*, id) = id
 def $fresh(id_used*, id) = $fresh(id_used*, id ++ "'")
   -- if id <- id_used*
 
+;;
 ;; Variables by name
+;;
+;; syntax vari*
+;;
+
+;; Variables are selected by identifier, whatever their type and dimension
 
 dec $ids_of_varis(vari*) : id*
   hint(prose_in "the identifiers of" %0)
+
 def $ids_of_varis((id _ _)*) = id*
 
 dec $select_varis(vari*, id*) : vari*
   hint(prose_in "the variables in" %0 "named in" %1)
+
 def $select_varis(eps, _) = eps
 def $select_varis(vari_h :: vari_t*, id*) = vari_h :: $select_varis(vari_t*, id*)
   -- if id_h _ _ = vari_h
@@ -29,6 +39,7 @@ def $select_varis(vari_h :: vari_t*, id*) = $select_varis(vari_t*, id*)
 
 dec $drop_varis(vari*, id*) : vari*
   hint(prose_in "the variables in" %0 "not named in" %1)
+
 def $drop_varis(eps, _) = eps
 def $drop_varis(vari_h :: vari_t*, id*) = $drop_varis(vari_t*, id*)
   -- if id_h _ _ = vari_h
@@ -37,29 +48,24 @@ def $drop_varis(vari_h :: vari_t*, id*) = vari_h :: $drop_varis(vari_t*, id*)
   -- if id_h _ _ = vari_h
   -- if ~(id_h <- id*)
 
-;; Iteration helpers
+;;
+;; Dimensions
+;;
+;; syntax vari
+;;
 
-dec $is_iter_on_var(typedExp) : varr?
-  hint(prose_in "the runtime variable represented by" %0 "if any")
-def $is_iter_on_var((VAR id) '#' _) = id eps
-def $is_iter_on_var((ITER typedExp expIter) '#' _)
-  = id (iter* ++ [ iter_outer ])
-  -- if id iter* = $is_iter_on_var(typedExp)
-  -- if iter_outer (id _ iter*) = expIter
-def $is_iter_on_var(_) = eps
-  -- otherwise
-
-;; Iterating variables
+;; Iterating `x` by `[ *, ? ]` gives `x*?`;
+;; the dimension of `x*` is a prefix of that of `x*?`
 
 dec $iterate_vari(vari, iter*) : vari
   hint(prose_in %0 "iterated by" %1)
-def $iterate_vari(id typ iter*, iter_add*) = id typ (iter* ++ iter_add*)
 
-;; Comparing dimensions
+def $iterate_vari(id typ iter*, iter_add*) = id typ (iter* ++ iter_add*)
 
 dec $is_prefix_dim(vari, vari) : bool
   hint(prose_true "the dimension of" %0 "is a prefix of the dimension of" %1)
   hint(prose_false "the dimension of" %0 "is not a prefix of the dimension of" %1)
+
 def $is_prefix_dim(_ typ_a iter_a*, _ typ_b iter_b*) = true
   -- if typ_a = typ_b
   -- if $(|iter_a*| <= |iter_b*|)
@@ -67,33 +73,35 @@ def $is_prefix_dim(_ typ_a iter_a*, _ typ_b iter_b*) = true
 def $is_prefix_dim(_, _) = false
   -- otherwise
 
+;;
 ;; Shallowest occurrences
+;;
+;; syntax vari*
+;;
 
 ;; Each variable once, at its shallowest dimension;
 ;; `a :: (a + b)*` has `a` at no dimension and `b` at `*`
 
-dec $merge_shallower(vari*, vari) : vari*
-  hint(prose_in %0 "with" %1 "kept when it is shallower")
-def $merge_shallower(eps, vari) = [ vari ]
-def $merge_shallower(vari_h :: vari_t*, vari) = vari :: vari_t*
-  -- if id _ _ = vari_h
-  -- if id _ _ = vari
-  -- if $is_prefix_dim(vari, vari_h)
-def $merge_shallower(vari_h :: vari_t*, vari) = vari_h :: vari_t*
-  -- if id _ _ = vari_h
-  -- if id _ _ = vari
-  -- if ~$is_prefix_dim(vari, vari_h)
-def $merge_shallower(vari_h :: vari_t*, vari) = vari_h :: $merge_shallower(vari_t*, vari)
-  -- if id_h _ _ = vari_h
-  -- if id _ _ = vari
-  -- if id_h =/= id
+dec $shallowest_vari(vari, vari*) : vari
+  hint(prose_in "the shallowest of" %0 "and" %1)
 
-dec $shallowest_into(vari*, vari*) : vari*
-  hint(prose_in "the shallowest occurrences" %0 "merged with" %1)
-def $shallowest_into(vari_acc*, eps) = vari_acc*
-def $shallowest_into(vari_acc*, vari_h :: vari_t*) = $shallowest_into(vari_merge*, vari_t*)
-  -- if vari_merge* = $merge_shallower(vari_acc*, vari_h)
+def $shallowest_vari(vari, eps) = vari
+def $shallowest_vari(vari, vari_h :: vari_t*)
+  = $shallowest_vari(vari_h, vari_t*)
+  -- if $is_prefix_dim(vari_h, vari)
+def $shallowest_vari(vari, vari_h :: vari_t*)
+  = $shallowest_vari(vari, vari_t*)
+  -- if ~$is_prefix_dim(vari_h, vari)
 
 dec $shallowest_varis(vari*) : vari*
   hint(prose_in "the shallowest occurrence of each variable in" %0)
-def $shallowest_varis(vari*) = $shallowest_into(eps, vari*)
+
+def $shallowest_varis(eps) = eps
+def $shallowest_varis(vari_h :: vari_t*)
+  = vari_min :: $shallowest_varis(vari_rest*)
+  ---- ;; split off the occurrences sharing the head's identifier
+  -- if id_h _ _ = vari_h
+  -- if vari_same* = $select_varis(vari_t*, [ id_h ])
+  -- if vari_rest* = $drop_varis(vari_t*, [ id_h ])
+  ---- ;; and keep the shallowest of them
+  -- if vari_min = $shallowest_vari(vari_h, vari_same*)

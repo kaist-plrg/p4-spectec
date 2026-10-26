@@ -572,9 +572,6 @@ syntax valField =
 syntax valCase =
    | mixop val* (from valCase)
 
-syntax varr =
-   | id iter* (from varr)
-
 def $fresh(id*, id) : id =
 
   clause 0 : (id_used*{id_used <- id_used*}, id) = id
@@ -611,16 +608,6 @@ def $drop_varis(vari*, id*) : vari* =
   -- if (id_h _typ _iter*{_iter <- _iter*} = vari_h)
   -- if ~id_h <- id*{id <- id*}
 
-def $is_iter_on_var(typedExp) : varr? =
-
-  clause 0 : (VAR id as exp '#' _typ) = ?(id [])
-
-  clause 1 : (ITER typedExp expIter as exp '#' _typ) = ?(id iter*{iter <- iter*} ++ [iter_outer])
-  -- if (?(id iter*{iter <- iter*}) = $is_iter_on_var(typedExp))
-  -- if (iter_outer [id _typ' iter*{iter <- iter*}] = expIter)
-
-  clause -1 : (_typedExp) = ?()
-
 def $iterate_vari(vari, iter*) : vari =
 
   clause 0 : (id typ iter*{iter <- iter*}, iter_add*{iter_add <- iter_add*}) = id typ iter*{iter <- iter*} ++ iter_add*{iter_add <- iter_add*}
@@ -634,35 +621,25 @@ def $is_prefix_dim(vari, vari) : bool =
 
   clause -1 : (_vari, _vari') = false
 
-def $merge_shallower(vari*, vari) : vari* =
+def $shallowest_vari(vari, vari*) : vari =
 
-  clause 0 : ([], vari) = [vari]
+  clause 0 : (vari, []) = vari
 
-  clause 1 : (vari_h :: vari_t*{vari_t <- vari_t*}, vari) = vari :: vari_t*{vari_t <- vari_t*}
-  -- if (id _typ _iter*{_iter <- _iter*} = vari_h)
-  -- if (id _typ' _iter'*{_iter' <- _iter'*} = vari)
-  -- if $is_prefix_dim(vari, vari_h)
+  clause 1 : (vari, vari_h :: vari_t*{vari_t <- vari_t*}) = $shallowest_vari(vari_h, vari_t*{vari_t <- vari_t*})
+  -- if $is_prefix_dim(vari_h, vari)
 
-  clause 2 : (vari_h :: vari_t*{vari_t <- vari_t*}, vari) = vari_h :: vari_t*{vari_t <- vari_t*}
-  -- if (id _typ _iter*{_iter <- _iter*} = vari_h)
-  -- if (id _typ' _iter'*{_iter' <- _iter'*} = vari)
-  -- if ~$is_prefix_dim(vari, vari_h)
-
-  clause 3 : (vari_h :: vari_t*{vari_t <- vari_t*}, vari) = vari_h :: $merge_shallower(vari_t*{vari_t <- vari_t*}, vari)
-  -- if (id_h _typ _iter*{_iter <- _iter*} = vari_h)
-  -- if (id _typ' _iter'*{_iter' <- _iter'*} = vari)
-  -- if (id_h =/= id)
-
-def $shallowest_into(vari*, vari*) : vari* =
-
-  clause 0 : (vari_acc*{vari_acc <- vari_acc*}, []) = vari_acc*{vari_acc <- vari_acc*}
-
-  clause 1 : (vari_acc*{vari_acc <- vari_acc*}, vari_h :: vari_t*{vari_t <- vari_t*}) = $shallowest_into(vari_merge*{vari_merge <- vari_merge*}, vari_t*{vari_t <- vari_t*})
-  -- if (vari_merge*{vari_merge <- vari_merge*} = $merge_shallower(vari_acc*{vari_acc <- vari_acc*}, vari_h))
+  clause 2 : (vari, vari_h :: vari_t*{vari_t <- vari_t*}) = $shallowest_vari(vari, vari_t*{vari_t <- vari_t*})
+  -- if ~$is_prefix_dim(vari_h, vari)
 
 def $shallowest_varis(vari*) : vari* =
 
-  clause 0 : (vari*{vari <- vari*}) = $shallowest_into([], vari*{vari <- vari*})
+  clause 0 : ([]) = []
+
+  clause 1 : (vari_h :: vari_t*{vari_t <- vari_t*}) = vari_min :: $shallowest_varis(vari_rest*{vari_rest <- vari_rest*})
+  -- if (id_h _typ _iter*{_iter <- _iter*} = vari_h)
+  -- if (vari_same*{vari_same <- vari_same*} = $select_varis(vari_t*{vari_t <- vari_t*}, [id_h]))
+  -- if (vari_rest*{vari_rest <- vari_rest*} = $drop_varis(vari_t*{vari_t <- vari_t*}, [id_h]))
+  -- if (vari_min = $shallowest_vari(vari_h, vari_same*{vari_same <- vari_same*}))
 
 syntax typDef =
    | EXTTYP id (from externTypDefn)
@@ -2482,6 +2459,9 @@ def $sideconds_replace(tdenv, typedPath, typedExp) : premAL* =
 
   clause -1 : (_tdenv, _typedPath, _typedExp) = []
 
+syntax varr =
+   | id iter* (from varr)
+
 syntax venv = map<varr, val>
 
 syntax renv = map<id, relDefnAL>
@@ -2596,6 +2576,16 @@ def $finds_vari(ctx*, vari) : val*? =
   -- (if (?(val) = $find_map<varr, val>(C.LOCAL.VAL, id iter*{iter <- iter*})))*{C <- C*, val <- val*}
 
   clause -1 : (C*{C <- C*}, vari) = ?()
+
+def $is_iter_on_var(typedExp) : varr? =
+
+  clause 0 : (VAR id as exp '#' _typ) = ?(id [])
+
+  clause 1 : (ITER typedExp expIter as exp '#' _typ) = ?(id iter*{iter <- iter*} ++ [iter_outer])
+  -- if (?(id iter*{iter <- iter*}) = $is_iter_on_var(typedExp))
+  -- if (iter_outer [id _typ' iter*{iter <- iter*}] = expIter)
+
+  clause -1 : (_typedExp) = ?()
 
 def $find_typ(ctx, id) : typDef? =
 
