@@ -236,9 +236,9 @@ def $right_assoc(symid, sort*, kore_h :: kore_t*)
   = KAPP symid sort* ([kore_h, $right_assoc(symid, sort*, kore_t*)])
   -- if $(|kore_t*| > 0)
 
-;; Patterns of rules, equations, the initial term, and the K runtime's answers
-;; (6.2-eval), by the hooks of the sorts. A variable named Var'Bang... is a
-;; fresh variable !X of a function equation.
+;; Patterns of rules, equations, and the initial term, by the hooks of the
+;; sorts. A variable named Var'Bang... is a fresh variable !X of a function
+;; equation.
 
 dec $pattern(map<sortid, hookid>, kore) : pattern
   hint(prose_in "the pattern" %1 "stands for")
@@ -428,7 +428,6 @@ def $sorted_groups(`{ (symid ':' (n, clause)*)* `})
 
 rule Load:
   KD ~> { SYMBOLS $symdecls(KD.KSYMBOLS),
-          SORTHOOKS SH,
           SUBSORTS $close_subsorts($concat_<subsort>($subsort_of(kaxiom)*)),
           OVERLOADS $concat_<overload>($overload_of(kaxiom)*),
           RULES $sort_by_priority<clause>(

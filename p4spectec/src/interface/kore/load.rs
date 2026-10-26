@@ -248,19 +248,6 @@ impl<'a> Builder<'a> {
         self.kore_checked(pattern, true)
     }
 
-    /// `OK kore` or `ERROR`, of `res<kore>`: the K runtime's answer, or its
-    /// failure.
-    pub fn res_kore(&mut self, pattern: Option<&Pattern>) -> Result<Value> {
-        let typ = typ::make::var(id("res"), vec![typ("kore")]);
-        match pattern {
-            Some(pattern) => {
-                let value = self.kore(pattern)?;
-                self.case_typed("OK x", vec![value], typ)
-            }
-            None => self.case_typed("ERROR", vec![], typ),
-        }
-    }
-
     // - Attributes
 
     /// An attribute; its arguments may name symbols that are not declared.

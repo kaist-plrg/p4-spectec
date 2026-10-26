@@ -2,10 +2,9 @@
 //!
 //! `Call_hook` (`spec-k/2-relation.watsup`) applies a hooked symbol
 //! of a domain module by the K runtime of the definition (`llvm`):
-//! the arguments, domain values and constructor terms, are written as KORE
-//! text (`term`), the runtime evaluates the application, and its answer,
-//! binary KORE (`binary`), is given back as a `kore` value (`load`)
-//! for the specification to read as it reads any KORE.
+//! the arguments, domain values and constructor terms, are decoded as KORE
+//! text (`codec`), the runtime evaluates the application, and its answer,
+//! binary KORE (`binary`), is encoded as a term again (`codec`).
 //! `$float_literal` has the runtime write a Float literal in its output
 //! format, e.g. `0.5` as `0.500000000000000000000000000000000000000e0`.
 
@@ -26,9 +25,8 @@ use crate::runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerCon
 use super::{
     Loaded,
     ast::{Pattern, Sort},
-    binary,
+    binary, codec,
     llvm::Runtime,
-    load, term,
 };
 
 /// The K runtime of one definition, with what writing terms to it needs.
@@ -61,51 +59,33 @@ impl KoreExtern {
         }
     }
 
-    /// `Call_hook: |- symid sort* sort term* : res<kore>`: the hooked symbol
+    /// `Call_hook: |- symid sort* sort term* : res<term>`: the hooked symbol
     /// applied to the terms, by the K runtime; `ERROR` if the runtime fails.
     fn call_hook(&self, arena: &mut Arena, values: &[Value]) -> Result<Value, String> {
         let (loaded, runtime) = self.ready("Call_hook")?;
-        let [symbol, sorts, sort, terms] = values else {
-            return Err(format!("Call_hook takes 4 inputs, not {}", values.len()));
-        };
-        // The application of the hooked symbol, as KORE
-        let symbol = value::get::text(arena, symbol)
-            .map_err(|e| e.to_string())?
-            .to_owned();
-        let sorts = value::get::list(arena, sorts)
-            .map_err(|e| e.to_string())?
-            .iter()
-            .map(|sort| term::sort_of_value(arena, &loaded.shapes, sort))
-            .collect::<Result<Vec<_>, _>>()?;
-        let sort = term::sort_of_value(arena, &loaded.shapes, sort)?;
-        let terms = value::get::list(arena, terms)
-            .map_err(|e| e.to_string())?
-            .iter()
-            .map(|t| term::to_pattern(arena, &loaded.info, &loaded.shapes, t))
-            .collect::<Result<Vec<_>, _>>()?;
-        let pattern = Pattern::App(symbol, sorts, terms);
+        let (pattern, sort) =
+            codec::decode::hook_args(arena, &loaded.info, &loaded.shapes, values)?;
         let trace = std::env::var_os("KORE_TRACE").is_some();
         if trace {
             eprintln!("hook> {pattern} : {sort}");
         }
-        // The runtime's answer, as KORE for the specification; a failure there is ERROR
-        let aliases = std::collections::HashSet::new();
-        let mut builder = load::Builder::new(arena, &loaded.known, &aliases);
-        match runtime.simplify(&pattern.to_string(), &sort) {
+        // The runtime's answer as a term; a failure there is ERROR
+        let answer = match runtime.simplify(&pattern.to_string(), &sort) {
             Ok(result) => {
                 let result = unwrap_result(binary::decode(&result)?);
                 if trace {
                     eprintln!("hook< {result}");
                 }
-                builder.res_kore(Some(&result)).map_err(|e| e.to_string())
+                Some(result)
             }
             Err(message) => {
                 if trace {
                     eprintln!("hook failed: {pattern}: {message}");
                 }
-                builder.res_kore(None).map_err(|e| e.to_string())
+                None
             }
-        }
+        };
+        codec::encode::hook_result(arena, &loaded.info, &loaded.shapes, answer.as_ref())
     }
 
     /// `$float_literal(text) : text?`: a Float literal in the runtime's

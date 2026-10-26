@@ -149,12 +149,13 @@ relation Krun:
 ;; specification: it computes the hooks of K's modules of domain values (INT,
 ;; BOOL, STRING, BYTES, FLOAT, JSON, KRYPTO; RUNTIME symbols, 3-load), as
 ;; P4-SpecTec² leaves builtins to the next level (Call_builtin_func in
-;; spec-meta). It answers in KORE, which is read as the initial term is
-;; (6.2-eval); ERROR if the runtime fails, as on a division by zero. Hooks on
-;; K terms are specified (5.2-hook, 5.3-hook-collection).
+;; spec-meta). Terms go to it and come back as terms; the implementation
+;; writes them in KORE between, as the codec of P4-SpecTec² does values. ERROR
+;; if the runtime fails, as on a division by zero. Hooks on K terms are
+;; specified (5.2-hook, 5.3-hook-collection).
 
 extern relation Call_hook:
-  |- symid sort* sort term* : res<kore>
+  |- symid sort* sort term* : res<term>
   hint(input %0 %1 %2 %3)
   hint(prose_in "the K runtime applying" %0 "to" %3)
   hint(prose_out %4)

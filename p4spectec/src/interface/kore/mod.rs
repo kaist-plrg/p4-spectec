@@ -7,9 +7,9 @@
 //! `krun` runs the specification's `Krun` relation from an initial term.
 //!
 //! Hooks on domain values are computed by the K runtime of the definition,
-//! the specification's extern (`externs`, `llvm`): the arguments go as KORE
-//! (`term`), and the answer comes back as KORE (`binary`) for the
-//! specification to read. Hooks on K terms are specified.
+//! the specification's extern (`externs`, `llvm`): terms go to it as KORE
+//! and its answers come back as terms (`codec`). Hooks on K terms are
+//! specified.
 //! `builtins` has the text builtins for reading domain values.
 
 use std::{collections::HashSet, path::Path, path::PathBuf, rc::Rc};
@@ -34,12 +34,13 @@ use crate::runner::{
 
 use super::builtin::call::Builtins;
 
-use self::{ast::Pattern, info::Info, term::Shapes};
+use self::{ast::Pattern, codec::Shapes, info::Info};
 
 pub mod ast;
 pub mod binary;
 pub mod builtins;
 pub mod check;
+pub mod codec;
 pub mod externs;
 pub mod info;
 pub mod krun;
@@ -47,7 +48,6 @@ pub mod llvm;
 pub mod load;
 pub mod normal;
 pub mod parse;
-pub mod term;
 
 // == Errors
 
@@ -138,7 +138,7 @@ impl KoreInterface {
         let Some(loaded) = &self.loaded else {
             return Err("no definition is loaded".to_owned());
         };
-        term::to_pattern(arena, &loaded.info, &loaded.shapes, value)
+        codec::decode::term(arena, &loaded.info, &loaded.shapes, value)
     }
 
     /// The normal form of a pattern for comparing runs (`normal`).

@@ -127,17 +127,14 @@ rule Apply/hooked:
   -- if HOOKED hookid = $kind_of_symbol(D, symid)
   -- if sort_r = $result_instance(D, symid, sort*)
 
-;;; A hook of a domain module is computed by the K runtime (2-relation). Its answer
-;;; is KORE, a domain value or a constructor term, read as the initial term is
-;;; (3-load) and evaluated to a term. A failure of the runtime is an error
-;;; (Apply/fail).
+;;; A hook of a domain module is computed by the K runtime (2-relation), which
+;;; answers a term, or ERROR if it fails
 
 rule Apply/runtime:
   D |- symid sort* term* : result
   -- if RUNTIME hookid = $kind_of_symbol(D, symid)
   -- if sort_r = $result_instance(D, symid, sort*)
-  -- Call_hook: |- symid sort* sort_r term* : OK kore
-  -- Eval: D $empty_map<varid, term> |- $pattern(D.SORTHOOKS, kore) : result
+  -- Call_hook: |- symid sort* sort_r term* : result
 
 ;;; A function or anywhere symbol is rewritten by its first equation that
 ;;; applies, as a step rewrites the configuration by its first rule (7-step).
@@ -156,8 +153,7 @@ rule Apply/anywhere-none:
   -- if ANYWHERE = $kind_of_symbol(D, symid)
   -- First_clause: D |- $equations_of(D, symid) term* : UNMATCH
 
-;;; Anything else (a stuck function, a failing hook, an undeclared symbol)
-;;; fails
+;;; Anything else (a stuck function, an undeclared symbol) fails
 
 rule Apply/fail:
   D |- symid sort* term* : ERROR
