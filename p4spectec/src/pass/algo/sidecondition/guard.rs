@@ -70,7 +70,7 @@ use crate::lang::al::{self, ast};
 use crate::runtime::{ops::typ::expand_typ, typdef::TypeDef};
 use crate::{note_phrase, phrase};
 
-use super::super::{AlgoError, binding::context::Context, otherwise};
+use super::super::{AlgoError, binding::context::Context, error, otherwise};
 
 // == Equivalence filtering
 
@@ -952,6 +952,41 @@ fn insert_else_clause(
     ))
 }
 
+// - Table rows
+
+/// Rejects a table row that would need a guard, computed as for a clause.
+///
+/// Rows are exclusive and exhaustive,
+/// so a failing guard must not skip a row and fall through to the next.
+fn check_table_row(ctx: &Context, table_row_al: &ast::TableRow) -> Result<(), AlgoError> {
+    // Guards of the arguments are assumed, not inserted
+    let prems_args = collect_args(ctx, &table_row_al.node.args);
+    let prems_row_al = &table_row_al.node.prems;
+    // No guard is inserted, so the premises before each one stay unchanged
+    let mut prems_derived = Vec::new();
+    for (idx, prem_al) in prems_row_al.iter().enumerate() {
+        let collected = collect_prem(ctx, prem_al);
+        let prems_insert = filter_prems_insert(
+            &[&prems_args],
+            &prems_derived,
+            &prems_row_al[..idx],
+            collected.prems_insert,
+        );
+        if let Some(prem_guard_al) = prems_insert.first() {
+            return Err(error::table::table_row_guard_required(table_row_al, prem_guard_al));
+        }
+        prems_derived.extend(collected.prems_must);
+    }
+    // The body's guards follow the premises
+    let prems_output = collect_exp(ctx, &table_row_al.node.exp);
+    let prems_output =
+        filter_prems_insert(&[&prems_args], &prems_derived, prems_row_al, prems_output);
+    if let Some(prem_guard_al) = prems_output.first() {
+        return Err(error::table::table_row_guard_required(table_row_al, prem_guard_al));
+    }
+    Ok(())
+}
+
 // - Definitions
 
 fn insert_def(ctx: &Context, def_al: ast::Def) -> Result<ast::Def, AlgoError> {
@@ -988,12 +1023,21 @@ fn insert_rel_def(ctx: &Context, rel_def_al: ast::RelDef) -> Result<ast::RelDef,
 }
 
 /// Inserts guards into every clause of a defined function.
+///
+/// Table rows take no guards; a row that would need one is rejected.
 fn insert_meta_func_def(
     ctx: &Context,
     meta_func_def_al: ast::MetaFuncDef,
 ) -> Result<ast::MetaFuncDef, AlgoError> {
-    let ast::MetaFuncDef::Defined(mut defined_func_al) = meta_func_def_al else {
-        return Ok(meta_func_def_al);
+    let mut defined_func_al = match meta_func_def_al {
+        ast::MetaFuncDef::Defined(defined_func_al) => defined_func_al,
+        ast::MetaFuncDef::Table(table_func_al) => {
+            for table_row_al in &table_func_al.table_rows {
+                check_table_row(ctx, table_row_al)?;
+            }
+            return Ok(ast::MetaFuncDef::Table(table_func_al));
+        }
+        meta_func_def_al => return Ok(meta_func_def_al),
     };
     // Ordinary clauses only need guard insertion
     defined_func_al.clauses = defined_func_al
