@@ -11,6 +11,32 @@ def $fresh(id_used*, id) = id
 def $fresh(id_used*, id) = $fresh(id_used*, id ++ "'")
   -- if id <- id_used*
 
+;; Variables by name
+
+dec $ids_of_varis(vari*) : id*
+  hint(prose_in "the identifiers of" %0)
+def $ids_of_varis((id _ _)*) = id*
+
+dec $select_varis(vari*, id*) : vari*
+  hint(prose_in "the variables in" %0 "named in" %1)
+def $select_varis(eps, _) = eps
+def $select_varis(vari_h :: vari_t*, id*) = vari_h :: $select_varis(vari_t*, id*)
+  -- if id_h _ _ = vari_h
+  -- if id_h <- id*
+def $select_varis(vari_h :: vari_t*, id*) = $select_varis(vari_t*, id*)
+  -- if id_h _ _ = vari_h
+  -- if ~(id_h <- id*)
+
+dec $drop_varis(vari*, id*) : vari*
+  hint(prose_in "the variables in" %0 "not named in" %1)
+def $drop_varis(eps, _) = eps
+def $drop_varis(vari_h :: vari_t*, id*) = $drop_varis(vari_t*, id*)
+  -- if id_h _ _ = vari_h
+  -- if id_h <- id*
+def $drop_varis(vari_h :: vari_t*, id*) = vari_h :: $drop_varis(vari_t*, id*)
+  -- if id_h _ _ = vari_h
+  -- if ~(id_h <- id*)
+
 ;; Iteration helpers
 
 dec $is_iter_on_var(typedExp) : varr?
@@ -25,10 +51,9 @@ def $is_iter_on_var(_) = eps
 
 ;; Iterating variables
 
-dec $iterate_vari(iter, vari) : vari
-  hint(prose_in %1 "iterated by" %0)
-def $iterate_vari(iter_add, id typ iter*)
-  = id typ (iter* ++ [ iter_add ])
+dec $iterate_vari(vari, iter*) : vari
+  hint(prose_in %0 "iterated by" %1)
+def $iterate_vari(id typ iter*, iter_add*) = id typ (iter* ++ iter_add*)
 
 ;; Comparing dimensions
 

@@ -66,6 +66,14 @@ def $transpose_<X>((X_h :: X_t*)*) = X_h* :: X_trans**
   -- if X_h* =/= eps
   -- if X_trans** = $transpose_<X>(X_t**)
 
+dec $intersect_<X>(X*, X*) : X*
+  hint(prose_in "the elements of" %0 "that are also in" %1)
+def $intersect_<X>(eps, _) = eps
+def $intersect_<X>(X_h :: X_t*, X_in*) = X_h :: $intersect_<X>(X_t*, X_in*)
+  -- if X_h <- X_in*
+def $intersect_<X>(X_h :: X_t*, X_in*) = $intersect_<X>(X_t*, X_in*)
+  -- if ~(X_h <- X_in*)
+
 ;;
 ;; General set functions
 ;;

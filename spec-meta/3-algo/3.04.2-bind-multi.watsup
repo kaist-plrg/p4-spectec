@@ -8,39 +8,48 @@
 ;; dimension and the iterations of the premise:
 ;; `(x, x)*` binding `x*` and `x'*` requires `(x = x')*{x <- x*, x' <- x'*}`
 
-dec $sidecond_multi(iterCtx, vari, id) : premAL
-  hint(prose_in "the equality of" %1 "and its occurrence" %2 "inside iterations" %0)
-
-def $sidecond_multi(IC, id_first typ iter*, id_later)
-  = $iterate_prem(premIterAL*, premAL_cmp)
-  ---- ;; iterate by the binder's own dimension, then by the premise's iterations
-  -- if (iter_prem _)* = IC
-  -- if IC_dim = (iter eps)* ++ (iter_prem eps)*
-  ---- ;; both occurrences are scalars inside these iterations
-  -- if IC_first = $add_iterated(IC_dim, id_first typ eps)
-  -- if IC_eq = $add_iterated(IC_first, id_later typ eps)
-  -- if premIterAL* = $annotate(IC_eq, [ id_first, id_later ], eps)
-  ---- ;; compare the first occurrence with the later one
-  -- if typedExp_first = (VAR id_first) '#' typ
-  -- if typedExp_later = (VAR id_later) '#' typ
-  -- if premAL_cmp = IF ((CMP EQ typedExp_first typedExp_later) '#' BOOL)
-
-dec $sideconds_multi_binder(iterCtx, vari, id*) : premAL*
-  hint(prose_in "the equalities of the first of" %2 "and the others for" %1 "inside iterations" %0)
-
-def $sideconds_multi_binder(_, _, eps) = eps
-def $sideconds_multi_binder(IC, vari, _ :: id_later*)
-  = $sidecond_multi(IC, vari, id_later)*
-
 dec $sideconds_multi(iterCtx, vari*, renamer) : premAL*
   hint(prose_in "the equalities of the occurrences in" %2 "of binders" %1 "under" %0)
 
+dec $sideconds_multi_binder(iterCtx, vari, id*) : premAL*
+  hint(prose_in "the equalities of binder" %1 "and its later occurrences" %2 "inside iterations" %0)
+
+dec $sidecond_multi_binder(iterCtx, vari, id) : premAL
+  hint(prose_in "the equality of" %1 "and its occurrence" %2 "inside iterations" %0)
+
+;;; Every binder
+
 def $sideconds_multi(IC, vari_bind*, R) = $concat_<premAL>(premAL_eq**)
-  -- if `{ (id_bind ':' id_name*)* `} = R.NAMES
+  -- if `{ (id_bind ':' id_later*)* `} = R.OCC
   ---- ;; read the type and dimension of each binder
-  -- (if vari_first = $vari_of(id_bind, vari_bind*))*
-  ---- ;; equate the first occurrence of each binder with every later one
-  -- (if premAL_eq* = $sideconds_multi_binder(IC, vari_first, id_name*))*
+  -- (if vari_first = $select_varis(vari_bind*, [ id_bind ])[0])*
+  ---- ;; equate each binder with every later occurrence
+  -- (if premAL_eq* = $sideconds_multi_binder(IC, vari_first, id_later*))*
+
+;;; Every later occurrence of a binder
+
+def $sideconds_multi_binder(IC, vari, id_later*)
+  = $sidecond_multi_binder(IC, vari, id_later)*
+
+;;; One later occurrence of a binder
+
+def $sidecond_multi_binder(IC, id_first typ iter*, id_later)
+  = $iterate_prem(premAL_cmp, premIterAL*)
+  ---- ;; compare the first occurrence with the later one
+  -- if typedExp_first = (VAR id_first) '#' typ
+  -- if typedExp_later = (VAR id_later) '#' typ
+  -- if typedExp_cmp = (CMP EQ typedExp_first typedExp_later) '#' BOOL
+  -- if premAL_cmp = IF typedExp_cmp
+  ---- ;; iterate inside by the binder's own dimension
+  -- if IC_inner = (iter eps)*
+  ---- ;; and outside by the premise's iterations, whose variables the equality does not read
+  -- if (iter_outer _)* = IC
+  -- if IC_outer = (iter_outer eps)*
+  ---- ;; both occurrences are scalars inside these iterations
+  -- if vari_first = id_first typ eps
+  -- if vari_later = id_later typ eps
+  -- if IC_cmp = $add_iterated(IC_inner ++ IC_outer, [ vari_first, vari_later ])
+  -- if premIterAL* = $prem_iters(IC_cmp, [ id_first, id_later ], eps)
 
 ;;
 ;; Repeated binders in patterns

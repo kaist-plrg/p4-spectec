@@ -30,8 +30,9 @@ def $fresh_vari(AC, IC, typ) = (AC_fresh, vari_fresh)
   -- if (id_used*, id_fresh) = $fresh_id(AC.USED)
   -- if AC_used = AC[ .USED = id_used* ]
   -- if vari_fresh = id_fresh typ eps
-  ---- ;; bind the variable lifted out of the iterations
-  -- if AC_fresh = $add_bound(AC_used, [ $lift_vari(IC, vari_fresh) ])
+  ---- ;; bind the variable at its dimension outside the iterations
+  -- if (iter _)* = IC
+  -- if AC_fresh = $add_bound(AC_used, [ $iterate_vari(vari_fresh, iter*) ])
 
 ;;; Compared sub-patterns
 
@@ -63,11 +64,11 @@ rulegroup Partialbind_exp {
     ---- ;; iterate over the fresh variable and the sources the compared value reads
     -- if id_d _ _ = vari_d
     -- if id_read* = $ids_of_varis(vari_read*)
-    -- if IC_d = $add_iterated(IC ++ IC_prem, vari_d)
-    -- if premIterAL* = $annotate(IC_d, id_d :: id_read*, eps)
-    -- if premAL_check = $iterate_prem(premIterAL*, IF typedExp_check)
+    -- if IC_d = $add_iterated(IC ++ IC_prem, [ vari_d ])
+    -- if premIterAL* = $prem_iters(IC_d, id_d :: id_read*, eps)
+    -- if premAL_check = $iterate_prem(IF typedExp_check, premIterAL*)
     ---- ;; the fresh variable is iterated at every enclosing level
-    -- if IC_fresh = $add_iterated(IC, vari_d)
+    -- if IC_fresh = $add_iterated(IC, [ vari_d ])
 
   rule Partialbind_exp/decomposed:
     AC IC_prem |- IC typedExp : AC_part IC_part typedExp_part premAL*
@@ -87,22 +88,23 @@ rulegroup Partialbind_exp {
 
 dec $sidecond_partial(iterCtx, vari, typedExp) : premAL
   hint(prose_in "the check" %2 "on the fresh variable" %1 "over" %0)
-def $sidecond_partial(IC, vari_d, typedExp_check) = $iterate_prem(premIterAL*, IF typedExp_check)
+def $sidecond_partial(IC, vari_d, typedExp_check) = $iterate_prem(IF typedExp_check, premIterAL*)
   ---- ;; iterate the check over the fresh variable
   -- if id_d _ _ = vari_d
-  -- if premIterAL* = $annotate($add_iterated(IC, vari_d), [ id_d ], eps)
+  -- if premIterAL* = $prem_iters($add_iterated(IC, [ vari_d ]), [ id_d ], eps)
 
 ;; The destructuring iterates over the fresh variable and binds the pattern
 
 dec $let_partial(iterCtx, vari, typedExp, typedExp) : premAL
   hint(prose_in "binding pattern" %2 "to" %3 "from the fresh variable" %1 "over" %0)
 def $let_partial(IC, vari_d, typedExp_l, typedExp_r)
-  = $iterate_prem(premIterAL*, LET typedExp_l '=' typedExp_r)
+  = $iterate_prem(LET typedExp_l '=' typedExp_r, premIterAL*)
   ---- ;; iterate over the fresh variable and bind the pattern's variables
   -- if id_d _ _ = vari_d
   -- if vari_l* = $free_varis_exp(typedExp_l)
   -- if vari_bind* = $shallowest_varis(vari_l*)
-  -- if premIterAL* = $annotate($add_iterated(IC, vari_d), [ id_d ], vari_bind*)
+  -- if IC_bind = $add_iterated(IC, vari_d :: vari_bind*)
+  -- if premIterAL* = $prem_iters(IC_bind, [ id_d ], $ids_of_varis(vari_bind*))
 
 ;;
 ;; Decomposing patterns with binders
@@ -132,7 +134,7 @@ rule Partialbind_exp_decomposed/upcast:
   -- if premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check)
   -- if premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_sub, typedExp_down)
   ---- ;; the fresh variable is iterated at every enclosing level
-  -- if IC_fresh = $add_iterated(IC_sub, vari_d)
+  -- if IC_fresh = $add_iterated(IC_sub, [ vari_d ])
 
 ;;; TUP typedExp*
 
@@ -160,7 +162,7 @@ rule Partialbind_exp_decomposed/case:
   -- if premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check)
   -- if premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_case, typedExp_d)
   ---- ;; the fresh variable is iterated at every enclosing level
-  -- if IC_fresh = $add_iterated(IC_sub, vari_d)
+  -- if IC_fresh = $add_iterated(IC_sub, [ vari_d ])
 
 ;;; STR expField*
 
@@ -188,7 +190,7 @@ rule Partialbind_exp_decomposed/opt:
   -- if premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check)
   -- if premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_opt, typedExp_d)
   ---- ;; the fresh variable is iterated at every enclosing level
-  -- if IC_fresh = $add_iterated(IC_sub, vari_d)
+  -- if IC_fresh = $add_iterated(IC_sub, [ vari_d ])
 
 ;;; LIST typedExp*
 
@@ -207,7 +209,7 @@ rule Partialbind_exp_decomposed/list:
   -- if premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check)
   -- if premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_list, typedExp_d)
   ---- ;; the fresh variable is iterated at every enclosing level
-  -- if IC_fresh = $add_iterated(IC_sub, vari_d)
+  -- if IC_fresh = $add_iterated(IC_sub, [ vari_d ])
 
 ;;; CONS typedExp typedExp
 
@@ -228,7 +230,7 @@ rule Partialbind_exp_decomposed/cons:
   -- if premAL_check = $sidecond_partial(IC_t ++ IC_prem, vari_d, typedExp_check)
   -- if premAL_let = $let_partial(IC_t ++ IC_prem, vari_d, typedExp_cons, typedExp_d)
   ---- ;; the fresh variable is iterated at every enclosing level
-  -- if IC_fresh = $add_iterated(IC_t, vari_d)
+  -- if IC_fresh = $add_iterated(IC_t, [ vari_d ])
 
 ;;; ITER typedExp expIter
 
@@ -243,7 +245,7 @@ rule Partialbind_exp_decomposed/iter:
       AC IC_prem |- ((iter vari*) :: IC) typedExp
                   : AC_sub ((iter vari_iter*) :: IC_sub) typedExp_part premAL*
   ---- ;; iterate the variables the decomposed body still reads
-  -- if vari_part* = $varis_in(vari_iter*, $ids_of_varis($free_varis_exp(typedExp_part)))
+  -- if vari_part* = $select_varis(vari_iter*, $ids_of_varis($free_varis_exp(typedExp_part)))
 
 ;;
 ;; Decomposing pattern sequences

@@ -2,10 +2,6 @@
 ;; Free variables
 ;;
 
-dec $ids_of_varis(vari*) : id*
-  hint(prose_in "the identifiers of" %0)
-def $ids_of_varis((id _ _)*) = id*
-
 dec $free_varis_exp(typedExp) : vari*
   hint(prose_in "the variables occurring in" %0)
 dec $free_varis_exps(typedExp*) : vari*
@@ -94,7 +90,7 @@ def $free_varis_exp((CALL _ _ arg*) '#' _)
 
 def $free_varis_exp((ITER typedExp (iter _)) '#' _) = vari_iter*
   -- if vari* = $free_varis_exp(typedExp)
-  -- if (vari_iter = $iterate_vari(iter, vari))*
+  -- if (vari_iter = $iterate_vari(vari, [ iter ]))*
 
 def $free_varis_exps(eps) = eps
 def $free_varis_exps(typedExp_h :: typedExp_t*)
@@ -143,7 +139,7 @@ def $free_varis_premIL(IFNOTHOLD _ ':' typedExp*)
 
 def $free_varis_premIL(ITER premIL (iter _)) = vari_iter*
   -- if vari* = $free_varis_premIL(premIL)
-  -- if (vari_iter = $iterate_vari(iter, vari))*
+  -- if (vari_iter = $iterate_vari(vari, [ iter ]))*
 
 def $free_varis_premIL(DEBUG typedExp) = $free_varis_exp(typedExp)
 

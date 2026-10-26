@@ -66,11 +66,12 @@ rule Algo_prem/rel:
   -- if id_read* = $ids_of_varis(vari_in*)
   -- if vari_out* = $free_varis_exps(typedExp_out_part*)
   -- if vari_bind* = $shallowest_varis(vari_out*)
-  -- if premIterAL* = $annotate(IC, id_read*, vari_bind*)
+  -- if IC_bind = $add_iterated(IC, vari_bind*)
+  -- if premIterAL* = $prem_iters(IC_bind, id_read*, $ids_of_varis(vari_bind*))
   -- Iter_sourced: |- premIterAL*
   ---- ;; the relation premise precedes its binding premises
   -- if relPremAL = REL id ':' typedExp_in* '->' typedExp_out_part*
-  -- if premAL_rel = $iterate_prem(premIterAL*, relPremAL)
+  -- if premAL_rel = $iterate_prem(relPremAL, premIterAL*)
   -- if premAL* = premAL_rel :: premAL_bind*
 
 ;;; ifPrem
@@ -87,8 +88,8 @@ rulegroup Algo_prem/cond {
     -- if vari* = $free_varis_exp(typedExp)
     -- if $is_bound(AC, IC, vari*)
     ---- ;; iterate over the variables it reads
-    -- if premIterAL* = $annotate(IC, $ids_of_varis(vari*), eps)
-    -- if premAL_if = $iterate_prem(premIterAL*, ifPrem)
+    -- if premIterAL* = $prem_iters(IC, $ids_of_varis(vari*), eps)
+    -- if premAL_if = $iterate_prem(ifPrem, premIterAL*)
 
   rule Algo_prem/let-left:
     AC IC |- ifPrem : AC_bound premAL*
@@ -126,8 +127,8 @@ rule Algo_prem/ifhold:
   -- if vari_read* = $free_varis_exps(typedExp*)
   -- if $is_bound(AC, IC, vari_read*)
   ---- ;; iterate over the variables it reads
-  -- if premIterAL* = $annotate(IC, $ids_of_varis(vari_read*), eps)
-  -- if premAL_hold = $iterate_prem(premIterAL*, ifHoldPrem)
+  -- if premIterAL* = $prem_iters(IC, $ids_of_varis(vari_read*), eps)
+  -- if premAL_hold = $iterate_prem(ifHoldPrem, premIterAL*)
 
 ;;; ifNotHoldPrem
 ;;; syntax ifNotHoldPrem = IFNOTHOLD id ':' typedExp*
@@ -139,8 +140,8 @@ rule Algo_prem/ifnothold:
   -- if vari_read* = $free_varis_exps(typedExp*)
   -- if $is_bound(AC, IC, vari_read*)
   ---- ;; iterate over the variables it reads
-  -- if premIterAL* = $annotate(IC, $ids_of_varis(vari_read*), eps)
-  -- if premAL_hold = $iterate_prem(premIterAL*, ifNotHoldPrem)
+  -- if premIterAL* = $prem_iters(IC, $ids_of_varis(vari_read*), eps)
+  -- if premAL_hold = $iterate_prem(ifNotHoldPrem, premIterAL*)
 
 ;;; iterPremIL
 ;;; syntax iterPremIL = ITER premIL premIterIL
@@ -163,8 +164,8 @@ rule Algo_prem/dbg:
   -- if vari* = $free_varis_exp(typedExp)
   -- if $is_bound(AC, IC, vari*)
   ---- ;; iterate over the variables it reads
-  -- if premIterAL* = $annotate(IC, $ids_of_varis(vari*), eps)
-  -- if premAL_debug = $iterate_prem(premIterAL*, debugPrem)
+  -- if premIterAL* = $prem_iters(IC, $ids_of_varis(vari*), eps)
+  -- if premAL_debug = $iterate_prem(debugPrem, premIterAL*)
 
 ;;
 ;; Bindings
@@ -187,11 +188,12 @@ rule Algo_let:
   ---- ;; iterate over the right side's reads and bind the pattern at every level
   -- if vari_l* = $free_varis_exp(typedExp_l_part)
   -- if vari_bind* = $shallowest_varis(vari_l*)
-  -- if premIterAL* = $annotate(IC, $ids_of_varis(vari_r*), vari_bind*)
+  -- if IC_bind = $add_iterated(IC, vari_bind*)
+  -- if premIterAL* = $prem_iters(IC_bind, $ids_of_varis(vari_r*), $ids_of_varis(vari_bind*))
   -- Iter_sourced: |- premIterAL*
   ---- ;; the binding precedes the premises that decompose its pattern
   -- if premAL_let
-      = $iterate_prem(premIterAL*, LET typedExp_l_part '=' typedExp_r)
+      = $iterate_prem(LET typedExp_l_part '=' typedExp_r, premIterAL*)
 
 ;;
 ;; Premise sequences
