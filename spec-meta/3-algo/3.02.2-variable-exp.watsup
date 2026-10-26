@@ -7,14 +7,21 @@
 
 dec $iter_exp(typedExp, vari, iter*) : typedExp
   hint(prose_in %0 "of variable" %1 "iterated by" %2)
+
 def $iter_exp(typedExp, _, eps) = typedExp
-def $iter_exp(typedExp, vari, iter_h :: iter_t*) = $iter_exp(typedExp_iter, vari_iter, iter_t*)
+def $iter_exp(typedExp, vari, iter_h :: iter_t*)
+  = $iter_exp(typedExp_iter, vari_iter, iter_t*)
   ---- ;; iterate the expression by the innermost iterator
   -- if _ '#' typ = typedExp
-  -- if typedExp_iter = (ITER typedExp (iter_h vari)) '#' (ITER typ iter_h)
+  -- if iterExp = ITER typedExp (iter_h vari)
+  -- if typedExp_iter = iterExp '#' (ITER typ iter_h)
   ---- ;; the variable is listed at the dimension inside the iteration
   -- if vari_iter = $iterate_vari(vari, [ iter_h ])
 
 dec $exp_of_vari(vari) : typedExp
   hint(prose_in "the expression of variable" %0)
-def $exp_of_vari(id typ iter*) = $iter_exp((VAR id) '#' typ, id typ eps, iter*)
+
+def $exp_of_vari(id typ iter*)
+  = $iter_exp(typedExp, id typ eps, iter*)
+  -- if varExp = VAR id
+  -- if typedExp = varExp '#' typ

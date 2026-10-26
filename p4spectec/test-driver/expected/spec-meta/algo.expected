@@ -3873,12 +3873,15 @@ def $iter_exp(typedExp, vari, iter*) : typedExp =
   -- if iter*{iter <- iter*} matches _ :: _
   -- let iter_h :: iter_t*{iter_t <- iter_t*} = iter*{iter <- iter*}
   -- let _exp '#' typ = typedExp
-  -- let typedExp_iter = ITER typedExp iter_h [vari] as exp '#' ITER typ iter_h
+  -- let iterExp = ITER typedExp iter_h [vari]
+  -- let typedExp_iter = iterExp as exp '#' ITER typ iter_h
   -- let vari_iter = $iterate_vari(vari, [iter_h])
 
 def $exp_of_vari(vari) : typedExp =
 
-  clause 0 : (id typ iter*{iter <- iter*}) = $iter_exp(VAR id as exp '#' typ, id typ [], iter*{iter <- iter*})
+  clause 0 : (id typ iter*{iter <- iter*}) = $iter_exp(typedExp, id typ [], iter*{iter <- iter*})
+  -- let varExp = VAR id
+  -- let typedExp = varExp as exp '#' typ
 
 def $is_bound_vari(vari*, vari) : bool =
 
@@ -4235,9 +4238,12 @@ def $exp_len(typedExp) : typedExp =
 
   clause 0 : (typedExp) = LEN typedExp as exp '#' NAT as typ
 
-def $sidecond_cmp(cmpOp, typedExp, typedExp) : premAL =
+def $exp_none(typedExp) : typedExp =
 
-  clause 0 : (cmpOp, typedExp_l, typedExp_r) = IF CMP cmpOp typedExp_l typedExp_r as exp '#' BOOL as typ as premAL
+  clause 0 : (typedExp) = CMP EQ as cmpOp typedExp typedExp_none as exp '#' BOOL as typ
+  -- let _exp '#' typ = typedExp
+  -- let optExp_none = OPT ?()
+  -- let typedExp_none = optExp_none as exp '#' typ
 
 def $exp_zero(tdenv, typ) : typedExp =
 
@@ -4247,20 +4253,29 @@ def $exp_zero(tdenv, typ) : typedExp =
   clause 1 : (tdenv, typ) = INT 0 as int as exp '#' INT as typ
   -- if (OK INT as typ as typRes = $expand_typ(tdenv, typ))
 
+def $sidecond_cmp(cmpOp, typedExp, typedExp) : premAL =
+
+  clause 0 : (cmpOp, typedExp_l, typedExp_r) = IF typedExp_cmp as premAL
+  -- let cmpOpExp = CMP cmpOp typedExp_l typedExp_r
+  -- let typedExp_cmp = cmpOpExp as exp '#' BOOL as typ
+
 def $sidecond_iter(iter, vari, vari) : premAL =
 
-  clause 0 : (iter, vari_a, vari_b) = $sidecond_cmp(EQ as cmpOp, $exp_len(typedExp_a), $exp_len(typedExp_b))
+  clause 0 : (iter, vari_a, vari_b) = $sidecond_cmp(EQ as cmpOp, typedExp_a_len, typedExp_b_len)
   -- if iter matches STAR
   -- let typedExp_a = $exp_of_vari($iterate_vari(vari_a, [STAR]))
+  -- let typedExp_a_len = $exp_len(typedExp_a)
   -- let typedExp_b = $exp_of_vari($iterate_vari(vari_b, [STAR]))
+  -- let typedExp_b_len = $exp_len(typedExp_b)
 
-  clause 1 : (iter, vari_a, vari_b) = IF BIN EQUIV as binOp typedExp_none_a typedExp_none_b as exp '#' BOOL as typ as premAL
+  clause 1 : (iter, vari_a, vari_b) = IF typedExp as premAL
   -- if iter matches QUEST
   -- let typedExp_a = $exp_of_vari($iterate_vari(vari_a, [QUEST]))
+  -- let typedExp_a_none = $exp_none(typedExp_a)
   -- let typedExp_b = $exp_of_vari($iterate_vari(vari_b, [QUEST]))
-  -- let _exp '#' typ_opt = typedExp_a
-  -- let typedExp_none_a = CMP EQ as cmpOp typedExp_a OPT ?() as exp '#' typ_opt as exp '#' BOOL as typ
-  -- let typedExp_none_b = CMP EQ as cmpOp typedExp_b OPT ?() as exp '#' typ_opt as exp '#' BOOL as typ
+  -- let typedExp_b_none = $exp_none(typedExp_b)
+  -- let binOpExp = BIN EQUIV as binOp typedExp_a_none typedExp_b_none
+  -- let typedExp = binOpExp as exp '#' BOOL as typ
 
 def $sideconds_iter(iter, vari*) : premAL* =
 
@@ -4284,34 +4299,41 @@ def $access_exp(typedExp, typedPath) : typedExp =
   clause 0 : (typedExp_b, path '#' _typ) = typedExp_b
   -- if path <: rootPath
   -- let rootPath = path as rootPath
-  -- if rootPath matches ROOT
 
-  clause 1 : (typedExp_b, path '#' typ) = IDX typedExp_p typedExp_i as exp '#' typ
+  clause 1 : (typedExp_b, path '#' typ) = idxAccExp as exp '#' typ
   -- if path <: idxPath
-  -- let IDX typedPath typedExp_i = path as idxPath
+  -- let idxPath = path as idxPath
+  -- let IDX typedPath typedExp_i = idxPath
   -- let typedExp_p = $access_exp(typedExp_b, typedPath)
+  -- let idxAccExp = IDX typedExp_p typedExp_i
 
-  clause 2 : (typedExp_b, path '#' typ) = SLICE typedExp_p typedExp_i typedExp_n as exp '#' typ
+  clause 2 : (typedExp_b, path '#' typ) = sliceAccExp as exp '#' typ
   -- if path <: slicePath
-  -- let SLICE typedPath typedExp_i typedExp_n = path as slicePath
+  -- let slicePath = path as slicePath
+  -- let SLICE typedPath typedExp_i typedExp_n = slicePath
   -- let typedExp_p = $access_exp(typedExp_b, typedPath)
+  -- let sliceAccExp = SLICE typedExp_p typedExp_i typedExp_n
 
-  clause 3 : (typedExp_b, path '#' typ) = DOT typedExp_p atom as exp '#' typ
+  clause 3 : (typedExp_b, path '#' typ) = dotAccExp as exp '#' typ
   -- if path <: dotPath
-  -- let DOT typedPath atom = path as dotPath
+  -- let dotPath = path as dotPath
+  -- let DOT typedPath atom = dotPath
   -- let typedExp_p = $access_exp(typedExp_b, typedPath)
+  -- let dotAccExp = DOT typedExp_p atom
 
 def $sideconds_replace(tdenv, typedPath, typedExp) : premAL* =
 
   clause 0 : (tdenv, path '#' _typ, typedExp_f) = [premAL_len]
   -- if path <: slicePath
-  -- let SLICE _typedPath _typedExp typedExp_n = path as slicePath
+  -- let slicePath = path as slicePath
+  -- let SLICE _typedPath _typedExp typedExp_n = slicePath
   -- let typedExp_len = $exp_len(typedExp_f)
   -- let premAL_len = $sidecond_cmp(EQ as cmpOp, typedExp_len, typedExp_n)
 
   clause 1 : (tdenv, path '#' _typ, typedExp_f) = [premAL_len]
   -- if path <: idxPath
-  -- let IDX _path '#' typ_b _typedExp = path as idxPath
+  -- let idxPath = path as idxPath
+  -- let IDX _path '#' typ_b _typedExp = idxPath
   -- if (OK TEXT as typ as typRes = $expand_typ(tdenv, typ_b))
   -- let typedExp_len = $exp_len(typedExp_f)
   -- let premAL_len = $sidecond_cmp(EQ as cmpOp, typedExp_len, NAT 1 as exp '#' NAT as typ)

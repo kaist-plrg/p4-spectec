@@ -18,22 +18,41 @@
 ;; and then `(x + y < |a|)*{x <- x*, y <- y*}`.
 ;; An empty source repeats no guard.
 
+;;
+;; Guard conditions
+;;
+;; syntax premAL
+;;
+
 ;;; Guard expressions
 
 dec $exp_len(typedExp) : typedExp
   hint(prose_in "the length of" %0)
+
 def $exp_len(typedExp) = (LEN typedExp) '#' NAT
 
-dec $sidecond_cmp(cmpOp, typedExp, typedExp) : premAL
-  hint(prose_in "the condition that" %1 %0 %2)
-def $sidecond_cmp(cmpOp, typedExp_l, typedExp_r) = IF ((CMP cmpOp typedExp_l typedExp_r) '#' BOOL)
+dec $exp_none(typedExp) : typedExp
+  hint(prose_in "the condition that" %0 "is absent")
+
+def $exp_none(typedExp) = (CMP EQ typedExp typedExp_none) '#' BOOL
+  -- if _ '#' typ = typedExp
+  -- if optExp_none = OPT eps
+  -- if typedExp_none = optExp_none '#' typ
 
 dec $exp_zero(tdenv, typ) : typedExp
   hint(prose_in "zero of numeric type" %1 "under" %0)
+
 def $exp_zero(tdenv, typ) = (NAT 0) '#' NAT
   -- if OK NAT = $expand_typ(tdenv, typ)
 def $exp_zero(tdenv, typ) = (INT 0) '#' INT
   -- if OK INT = $expand_typ(tdenv, typ)
+
+dec $sidecond_cmp(cmpOp, typedExp, typedExp) : premAL
+  hint(prose_in "the condition that" %1 %0 %2)
+
+def $sidecond_cmp(cmpOp, typedExp_l, typedExp_r) = IF typedExp_cmp
+  -- if cmpOpExp = CMP cmpOp typedExp_l typedExp_r
+  -- if typedExp_cmp = cmpOpExp '#' BOOL
 
 ;;; Sources of an iteration
 
@@ -42,18 +61,25 @@ def $exp_zero(tdenv, typ) = (INT 0) '#' INT
 
 dec $sidecond_iter(iter, vari, vari) : premAL
   hint(prose_in "the condition that sources" %1 "and" %2 "agree under iteration" %0)
-def $sidecond_iter(STAR, vari_a, vari_b) = $sidecond_cmp(EQ, $exp_len(typedExp_a), $exp_len(typedExp_b))
+
+def $sidecond_iter(STAR, vari_a, vari_b)
+  = $sidecond_cmp(EQ, typedExp_a_len, typedExp_b_len)
   -- if typedExp_a = $exp_of_vari($iterate_vari(vari_a, [ STAR ]))
+  -- if typedExp_a_len = $exp_len(typedExp_a)
   -- if typedExp_b = $exp_of_vari($iterate_vari(vari_b, [ STAR ]))
-def $sidecond_iter(QUEST, vari_a, vari_b) = IF ((BIN EQUIV typedExp_none_a typedExp_none_b) '#' BOOL)
+  -- if typedExp_b_len = $exp_len(typedExp_b)
+
+def $sidecond_iter(QUEST, vari_a, vari_b) = IF typedExp
   -- if typedExp_a = $exp_of_vari($iterate_vari(vari_a, [ QUEST ]))
+  -- if typedExp_a_none = $exp_none(typedExp_a)
   -- if typedExp_b = $exp_of_vari($iterate_vari(vari_b, [ QUEST ]))
-  -- if _ '#' typ_opt = typedExp_a
-  -- if typedExp_none_a = (CMP EQ typedExp_a ((OPT eps) '#' typ_opt)) '#' BOOL
-  -- if typedExp_none_b = (CMP EQ typedExp_b ((OPT eps) '#' typ_opt)) '#' BOOL
+  -- if typedExp_b_none = $exp_none(typedExp_b)
+  -- if binOpExp = BIN EQUIV typedExp_a_none typedExp_b_none
+  -- if typedExp = binOpExp '#' BOOL
 
 dec $sideconds_iter(iter, vari*) : premAL*
   hint(prose_in "the conditions that the sources" %1 "agree under iteration" %0)
+
 def $sideconds_iter(_, eps) = eps
 def $sideconds_iter(_, [ _ ]) = eps
 def $sideconds_iter(iter, vari_a :: vari_b :: vari_t*) = premAL_ab :: premAL_t*
@@ -66,26 +92,46 @@ def $sideconds_iter(iter, vari_a :: vari_b :: vari_t*) = premAL_ab :: premAL_t*
 
 dec $access_exp(typedExp, typedPath) : typedExp
   hint(prose_in "the part of" %0 "at path" %1)
-def $access_exp(typedExp_b, ROOT '#' _) = typedExp_b
-def $access_exp(typedExp_b, (IDX typedPath typedExp_i) '#' typ) = (IDX typedExp_p typedExp_i) '#' typ
+
+def $access_exp(typedExp_b, rootPath '#' _) = typedExp_b
+
+def $access_exp(typedExp_b, idxPath '#' typ)
+  = idxAccExp '#' typ
+  -- if IDX typedPath typedExp_i = idxPath
   -- if typedExp_p = $access_exp(typedExp_b, typedPath)
-def $access_exp(typedExp_b, (SLICE typedPath typedExp_i typedExp_n) '#' typ) = (SLICE typedExp_p typedExp_i typedExp_n) '#' typ
+  -- if idxAccExp = IDX typedExp_p typedExp_i
+
+def $access_exp(typedExp_b, slicePath '#' typ)
+  = sliceAccExp '#' typ
+  -- if SLICE typedPath typedExp_i typedExp_n = slicePath
   -- if typedExp_p = $access_exp(typedExp_b, typedPath)
-def $access_exp(typedExp_b, (DOT typedPath atom) '#' typ) = (DOT typedExp_p atom) '#' typ
+  -- if sliceAccExp = SLICE typedExp_p typedExp_i typedExp_n
+
+def $access_exp(typedExp_b, dotPath '#' typ)
+  = dotAccExp '#' typ
+  -- if DOT typedPath atom = dotPath
   -- if typedExp_p = $access_exp(typedExp_b, typedPath)
+  -- if dotAccExp = DOT typedExp_p atom
 
 ;; A replacement must keep the length of a slice or of a text character
 
 dec $sideconds_replace(tdenv, typedPath, typedExp) : premAL*
   hint(prose_in "the conditions for replacing path" %1 "with" %2 "under" %0)
-def $sideconds_replace(tdenv, (SLICE _ _ typedExp_n) '#' _, typedExp_f) = [ premAL_len ]
+
+def $sideconds_replace(tdenv, slicePath '#' _, typedExp_f)
+  = [ premAL_len ]
+  -- if SLICE _ _ typedExp_n = slicePath
   -- if typedExp_len = $exp_len(typedExp_f)
   -- if premAL_len = $sidecond_cmp(EQ, typedExp_len, typedExp_n)
-def $sideconds_replace(tdenv, (IDX (_ '#' typ_b) _) '#' _, typedExp_f) = [ premAL_len ]
+
+def $sideconds_replace(tdenv, idxPath '#' _, typedExp_f)
+  = [ premAL_len ]
+  -- if IDX (_ '#' typ_b) _ = idxPath
   ---- ;; an index into text replaces one character
   -- if OK TEXT = $expand_typ(tdenv, typ_b)
   -- if typedExp_len = $exp_len(typedExp_f)
   -- if premAL_len = $sidecond_cmp(EQ, typedExp_len, (NAT 1) '#' NAT)
+
 def $sideconds_replace(_, _, _) = eps
   -- otherwise
 
@@ -474,7 +520,8 @@ rule Guard_rul:
   ---- ;; then guard the outputs after the premises that bind them
   -- Guard_exps: AC |- typedExp_out* : premAL_out*
   -- if rulAL_guard
-      = id ':' typedExp_in* '->' typedExp_out* '-' (premAL_guard* ++ premAL_out*)
+      = id ':' typedExp_in* '->' typedExp_out*
+        '-' (premAL_guard* ++ premAL_out*)
 
 ;;; clauseAL
 ;;; syntax clauseAL = arg* '=' typedExp '-' premAL*
@@ -486,7 +533,8 @@ rule Guard_clause:
   -- Guard_prems: AC |- premAL* : premAL_guard*
   ---- ;; then guard the result after the premises that bind it
   -- Guard_exp: AC |- typedExp : premAL_out*
-  -- if clauseAL_guard = arg* '=' typedExp '-' (premAL_guard* ++ premAL_out*)
+  -- if clauseAL_guard
+      = arg* '=' typedExp '-' (premAL_guard* ++ premAL_out*)
 
 ;;; tblRowAL
 ;;; syntax tblRowAL = arg* '=' typedExp '-' premAL*
@@ -498,7 +546,8 @@ rule Guard_tblRow:
   -- Guard_prems: AC |- premAL* : premAL_guard*
   ---- ;; then guard the result after the premises that bind it
   -- Guard_exp: AC |- typedExp : premAL_out*
-  -- if tblRowAL_guard = arg* '=' typedExp '-' (premAL_guard* ++ premAL_out*)
+  -- if tblRowAL_guard
+      = arg* '=' typedExp '-' (premAL_guard* ++ premAL_out*)
 
 ;;
 ;; Definition guards

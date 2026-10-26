@@ -4237,15 +4237,21 @@ def $iter_exp(typedExp, vari, iter*{iter <- iter*})
 
       1. (Let _exp '#' typ be typedExp)
 
-        1. (Let typedExp_iter be ITER typedExp iter_h [vari] as exp '#' ITER typ iter_h)
+        1. (Let iterExp be ITER typedExp iter_h [vari])
 
-          1. (Let vari_iter be $iterate_vari(vari, [iter_h]))
+          1. (Let typedExp_iter be iterExp as exp '#' ITER typ iter_h)
 
-            1. Return $iter_exp(typedExp_iter, vari_iter, iter_t*{iter_t <- iter_t*})
+            1. (Let vari_iter be $iterate_vari(vari, [iter_h]))
+
+              1. Return $iter_exp(typedExp_iter, vari_iter, iter_t*{iter_t <- iter_t*})
 
 def $exp_of_vari(id typ iter*{iter <- iter*})
 
-1. Return $iter_exp(VAR id as exp '#' typ, id typ [], iter*{iter <- iter*})
+1. (Let varExp be VAR id)
+
+  1. (Let typedExp be varExp as exp '#' typ)
+
+    1. Return $iter_exp(typedExp, id typ [], iter*{iter <- iter*})
 
 def $is_bound_vari(vari''*{vari'' <- vari''*}, vari')
 
@@ -4833,9 +4839,15 @@ def $exp_len(typedExp)
 
 1. Return LEN typedExp as exp '#' NAT as typ
 
-def $sidecond_cmp(cmpOp, typedExp_l, typedExp_r)
+def $exp_none(typedExp)
 
-1. Return IF CMP cmpOp typedExp_l typedExp_r as exp '#' BOOL as typ as premAL
+1. (Let _exp '#' typ be typedExp)
+
+  1. (Let optExp_none be OPT ?())
+
+    1. (Let typedExp_none be optExp_none as exp '#' typ)
+
+      1. Return CMP EQ as cmpOp typedExp typedExp_none as exp '#' BOOL as typ
 
 def $exp_zero(tdenv, typ)
 
@@ -4851,6 +4863,14 @@ def $exp_zero(tdenv, typ)
 
 2. Else Dangling
 
+def $sidecond_cmp(cmpOp, typedExp_l, typedExp_r)
+
+1. (Let cmpOpExp be CMP cmpOp typedExp_l typedExp_r)
+
+  1. (Let typedExp_cmp be cmpOpExp as exp '#' BOOL as typ)
+
+    1. Return IF typedExp_cmp as premAL
+
 def $sidecond_iter(iter, vari_a, vari_b)
 
 1. Case analysis on iter (total)
@@ -4859,23 +4879,29 @@ def $sidecond_iter(iter, vari_a, vari_b)
 
     1. (Let typedExp_a be $exp_of_vari($iterate_vari(vari_a, [STAR])))
 
-      1. (Let typedExp_b be $exp_of_vari($iterate_vari(vari_b, [STAR])))
+      1. (Let typedExp_a_len be $exp_len(typedExp_a))
 
-        1. Return $sidecond_cmp(EQ as cmpOp, $exp_len(typedExp_a), $exp_len(typedExp_b))
+        1. (Let typedExp_b be $exp_of_vari($iterate_vari(vari_b, [STAR])))
+
+          1. (Let typedExp_b_len be $exp_len(typedExp_b))
+
+            1. Return $sidecond_cmp(EQ as cmpOp, typedExp_a_len, typedExp_b_len)
 
   2. Case (% matches pattern QUEST)
 
     1. (Let typedExp_a be $exp_of_vari($iterate_vari(vari_a, [QUEST])))
 
-      1. (Let typedExp_b be $exp_of_vari($iterate_vari(vari_b, [QUEST])))
+      1. (Let typedExp_a_none be $exp_none(typedExp_a))
 
-        1. (Let _exp '#' typ_opt be typedExp_a)
+        1. (Let typedExp_b be $exp_of_vari($iterate_vari(vari_b, [QUEST])))
 
-          1. (Let typedExp_none_a be CMP EQ as cmpOp typedExp_a OPT ?() as exp '#' typ_opt as exp '#' BOOL as typ)
+          1. (Let typedExp_b_none be $exp_none(typedExp_b))
 
-            1. (Let typedExp_none_b be CMP EQ as cmpOp typedExp_b OPT ?() as exp '#' typ_opt as exp '#' BOOL as typ)
+            1. (Let binOpExp be BIN EQUIV as binOp typedExp_a_none typedExp_b_none)
 
-              1. Return IF BIN EQUIV as binOp typedExp_none_a typedExp_none_b as exp '#' BOOL as typ as premAL
+              1. (Let typedExp be binOpExp as exp '#' BOOL as typ)
+
+                1. Return IF typedExp as premAL
 
 def $sideconds_iter(iter, vari'*{vari' <- vari'*})
 
@@ -4913,33 +4939,43 @@ def $access_exp(typedExp_b, path '#' typ)
 
   1. Case (% has type rootPath)
 
-    1. (Let rootPath be path as rootPath)
-
-      1. Return typedExp_b
+    1. Return typedExp_b
 
   2. Case (% has type idxPath)
 
-    1. (Let IDX typedPath typedExp_i be path as idxPath)
+    1. (Let idxPath be path as idxPath)
 
-      1. (Let typedExp_p be $access_exp(typedExp_b, typedPath))
+      1. (Let IDX typedPath typedExp_i be idxPath)
 
-        1. Return IDX typedExp_p typedExp_i as exp '#' typ
+        1. (Let typedExp_p be $access_exp(typedExp_b, typedPath))
+
+          1. (Let idxAccExp be IDX typedExp_p typedExp_i)
+
+            1. Return idxAccExp as exp '#' typ
 
   3. Case (% has type slicePath)
 
-    1. (Let SLICE typedPath typedExp_i typedExp_n be path as slicePath)
+    1. (Let slicePath be path as slicePath)
 
-      1. (Let typedExp_p be $access_exp(typedExp_b, typedPath))
+      1. (Let SLICE typedPath typedExp_i typedExp_n be slicePath)
 
-        1. Return SLICE typedExp_p typedExp_i typedExp_n as exp '#' typ
+        1. (Let typedExp_p be $access_exp(typedExp_b, typedPath))
+
+          1. (Let sliceAccExp be SLICE typedExp_p typedExp_i typedExp_n)
+
+            1. Return sliceAccExp as exp '#' typ
 
   4. Case (% has type dotPath)
 
-    1. (Let DOT typedPath atom be path as dotPath)
+    1. (Let dotPath be path as dotPath)
 
-      1. (Let typedExp_p be $access_exp(typedExp_b, typedPath))
+      1. (Let DOT typedPath atom be dotPath)
 
-        1. Return DOT typedExp_p atom as exp '#' typ
+        1. (Let typedExp_p be $access_exp(typedExp_b, typedPath))
+
+          1. (Let dotAccExp be DOT typedExp_p atom)
+
+            1. Return dotAccExp as exp '#' typ
 
 def $sideconds_replace(tdenv, typedPath, typedExp_f)
 
@@ -4949,25 +4985,29 @@ def $sideconds_replace(tdenv, typedPath, typedExp_f)
 
     1. Case (% has type slicePath)
 
-      1. (Let SLICE _typedPath _typedExp typedExp_n be path as slicePath)
+      1. (Let slicePath be path as slicePath)
 
-        1. (Let typedExp_len be $exp_len(typedExp_f))
-
-          1. (Let premAL_len be $sidecond_cmp(EQ as cmpOp, typedExp_len, typedExp_n))
-
-            1. Return [premAL_len]
-
-    2. Case (% has type idxPath)
-
-      1. (Let IDX _path '#' typ_b _typedExp be path as idxPath)
-
-        1. If ((OK TEXT as typ as typRes = $expand_typ(tdenv, typ_b))), then
+        1. (Let SLICE _typedPath _typedExp typedExp_n be slicePath)
 
           1. (Let typedExp_len be $exp_len(typedExp_f))
 
-            1. (Let premAL_len be $sidecond_cmp(EQ as cmpOp, typedExp_len, NAT 1 as exp '#' NAT as typ))
+            1. (Let premAL_len be $sidecond_cmp(EQ as cmpOp, typedExp_len, typedExp_n))
 
               1. Return [premAL_len]
+
+    2. Case (% has type idxPath)
+
+      1. (Let idxPath be path as idxPath)
+
+        1. (Let IDX _path '#' typ_b _typedExp be idxPath)
+
+          1. If ((OK TEXT as typ as typRes = $expand_typ(tdenv, typ_b))), then
+
+            1. (Let typedExp_len be $exp_len(typedExp_f))
+
+              1. (Let premAL_len be $sidecond_cmp(EQ as cmpOp, typedExp_len, NAT 1 as exp '#' NAT as typ))
+
+                1. Return [premAL_len]
 
 2. Otherwise,
 
