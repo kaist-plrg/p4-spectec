@@ -3,8 +3,13 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use p4spectec::metacirc::{TowerConfig, config::Lang};
 use p4spectec_test::{
-    Error, ExecutionOptions, Result, algo, elab, metacirc, metaparse, prose, structure,
-    suite::{self, Conversion, Index, MetacircConfig},
+    Error, ExecutionOptions, Result, algo, elab,
+    metacirc::{
+        self, metaparse,
+        suite::{Conversion, MetacircConfig, load_metacirc, load_metaparse},
+    },
+    prose, structure,
+    suite::{self, Index},
 };
 use std::{path::PathBuf, process::ExitCode};
 
@@ -49,6 +54,8 @@ enum Command {
     Prose,
     /// Check that IL and AL encodings are fixed points of decode-then-encode
     Metaparse,
+    /// List the metacirc registrations of every conversion
+    List,
 }
 
 /// Compares P4 corpus and AL script outcomes through metacircular towers.
@@ -82,12 +89,20 @@ fn execute(cli: Cli) -> Result<()> {
     // Resolve caller paths before selecting the corpus repository as working directory
     std::env::set_current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))?;
     let index = Index::load(&path_registry)?;
+    // Listing validates and shows the registrations of every conversion
+    if let Command::List = cli.command {
+        for conversion in [Conversion::Native, Conversion::Meta] {
+            let config = load_metacirc(&index.suites.metacirc, conversion)?;
+            println!("metacirc ({conversion:?}): {config:#?}");
+        }
+        return Ok(());
+    }
     // Executions select a conversion; checks of the meta specification use none
     let conversion = match &cli.command {
         Command::Run { conversion, .. } | Command::Sim { conversion } => *conversion,
         _ => Conversion::default(),
     };
-    let config = suite::load_metacirc(&index.suites.metacirc, conversion)?;
+    let config = load_metacirc(&index.suites.metacirc, conversion)?;
     match cli.command {
         Command::Run { suite, input, .. } => run(config, suite, input, cli.options),
         Command::Sim { .. } => {
@@ -102,7 +117,8 @@ fn execute(cli: Cli) -> Result<()> {
         Command::Algo => algo::run(&suite::load_snapshots(&config.snapshots.algo)?),
         Command::Structure => structure::run(&suite::load_structure(&config.snapshots.structure)?),
         Command::Prose => prose::run(&suite::load_snapshots(&config.snapshots.prose)?),
-        Command::Metaparse => metaparse::run(&suite::load_metaparse(&config.metaparse)?),
+        Command::Metaparse => metaparse::run(&load_metaparse(&config.metaparse)?),
+        Command::List => unreachable!("listing returned before loading one conversion"),
     }
 }
 

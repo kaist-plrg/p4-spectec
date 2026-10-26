@@ -31,11 +31,12 @@ use p4spectec::{
     sim_plugin::dummy::Dummy,
 };
 
+use super::suite::{MetacircConfig, MetacircSim, MetacircSuite};
 use crate::{
     Error, ExecutionOptions, Result,
     corpus::{self, Outcome, Results},
     diagnostic, sim,
-    suite::{self, MetacircConfig, MetacircSim, MetacircSuite, SimConfig},
+    suite::{self, SimConfig},
 };
 
 struct CollectedSuite<'a> {
