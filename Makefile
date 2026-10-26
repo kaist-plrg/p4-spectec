@@ -30,8 +30,9 @@ TEST_TARGETS := test test-expected test-elab test-algo test-structure test-prose
   test-promote test-diagnostics-promote
 
 .PHONY: $(TEST_TARGETS)
+# Resolve TEST_LOG here; the recursive make runs inside the Rust crate
 $(TEST_TARGETS):
-	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
+	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $(if $(TEST_LOG),TEST_LOG="$(abspath $(TEST_LOG))") $@
 
 promote: test-promote
 
