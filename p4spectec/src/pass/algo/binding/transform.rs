@@ -926,48 +926,49 @@ fn pattern_set_covered_by_exp(ctx: &Context, exp_al: &ast::Exp) -> Result<Patter
     }
 }
 
-/// Checks that rows are exclusive and, without a wildcard closer, exhaustive.
+/// Checks that rows are exclusive and exhaustive, allowing a closing last row.
+///
+/// The last row closes the table when it covers every case at every position;
+/// only a closing row may overlap the rows before it.
 fn check_valid_table_rows(
     ctx: &Context,
     span: &Span,
     typs_match_il: &[ast::Typ],
     rows_al: &[al::ast::TableRow],
 ) -> Result<(), AlgoError> {
-    // Validate declared pattern types even when a wildcard row closes the table
+    // Validate declared pattern types even when a closing row covers them
     let pattern_sets_total = typs_match_il
         .iter()
         .map(|typ| pattern_set_covered_by_typ(ctx, typ))
         .collect::<Result<_, _>>()?;
-    // A final row of wildcards catches everything left
-    let has_closer =
-        if let Some(row_al) = rows_al.last() {
-            row_al.node.exps_signature.iter().all(
-                |exp_al| matches!(&exp_al.node, ast::ExpKind::Id(id) if id.node.starts_with('_')),
-            )
-        } else {
-            false
-        };
-    let rows_pattern_al = if has_closer { &rows_al[..rows_al.len() - 1] } else { rows_al };
-    let mut pattern_sets_by_row = Vec::with_capacity(rows_pattern_al.len());
-    for row_al in rows_pattern_al {
-        let mut pattern_sets = Vec::with_capacity(row_al.node.exps_signature.len());
-        for exp_al in &row_al.node.exps_signature {
-            let pattern_set = pattern_set_covered_by_exp(ctx, exp_al)?;
-            pattern_sets.push(pattern_set);
-        }
-        let pattern_sets = pattern_sets.into_iter().collect();
+    // Collect the cases each row matches, position by position
+    let mut pattern_sets_by_row = Vec::with_capacity(rows_al.len());
+    for row_al in rows_al {
+        let pattern_sets = row_al
+            .node
+            .exps_signature
+            .iter()
+            .map(|exp_al| pattern_set_covered_by_exp(ctx, exp_al))
+            .collect::<Result<_, _>>()?;
         pattern_sets_by_row.push(pattern_sets);
     }
+    // A last row that leaves nothing of the total catches everything left
+    let has_closer = match pattern_sets_by_row.last() {
+        Some(pattern_sets) => {
+            pattern::subtract(span, &pattern_sets_total, pattern_sets)?.is_empty()
+        }
+        None => false,
+    };
+    let rows_exclusive = if has_closer { rows_al.len() - 1 } else { rows_al.len() };
     // Pass the selected rows to the overlap diagnostic
-    if let Some((idx, idx_other)) = pattern::find_overlap(span, &pattern_sets_by_row)? {
-        return Err(error::table::table_pattern_overlapping(
-            &rows_pattern_al[idx_other],
-            &rows_pattern_al[idx],
-        ));
+    if let Some((idx, idx_other)) =
+        pattern::find_overlap(span, &pattern_sets_by_row[..rows_exclusive])?
+    {
+        return Err(error::table::table_pattern_overlapping(&rows_al[idx_other], &rows_al[idx]));
     }
-    // Without a closer, relate missing products to their case declarations
+    // Relate missing products to their case declarations
     let patterns_missing = pattern::find_missing(span, &pattern_sets_total, &pattern_sets_by_row)?;
-    if !has_closer && !patterns_missing.is_empty() {
+    if !patterns_missing.is_empty() {
         let span = rows_al
             .last()
             .map(|row| Span::new(row.span.right, row.span.right))
@@ -1021,7 +1022,7 @@ fn lower_table_rows(
 ) -> Result<Vec<al::ast::TableRow>, AlgoError> {
     let mut rows_al = Vec::with_capacity(rows_il.len());
     for row_il in rows_il {
-        // Validate public IL row widths before the wildcard-closer shortcut
+        // Validate public IL row widths before comparing row patterns
         if row_il.node.args.len() != params_il.len() {
             return Err(error::table::table_pattern_arity_mismatch(
                 &row_il.span,
