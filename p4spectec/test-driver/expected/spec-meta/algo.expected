@@ -3055,23 +3055,24 @@ relation Guard_clause: algoCtx |- clauseAL : clauseAL
     -- let clauseAL_guard = arg*{arg <- arg*} '=' typedExp '-' premAL_guard*{premAL_guard <- premAL_guard*} ++ premAL_out*{premAL_out <- premAL_out*}
     -- output: % |- % : clauseAL_guard
 
-relation Guard_tblRow: algoCtx |- tblRowAL : tblRowAL
+relation Guard_tblRow: algoCtx |- tblRowAL
 
   rulegroup
 
    match
 
-    (signature) AC |- tblRowAL : %
-    AC |- tblRowAL : %
+    (signature) AC |- tblRowAL
+    AC |- tblRowAL
 
    paths
 
     rulepath
     -- let arg*{arg <- arg*} '=' typedExp '-' premAL*{premAL <- premAL*} = tblRowAL
-    -- Guard_prems: AC |- premAL*{premAL <- premAL*} : premAL_guard*{premAL_guard <- premAL_guard*}
-    -- Guard_exp: AC |- typedExp : premAL_out*{premAL_out <- premAL_out*}
-    -- let tblRowAL_guard = arg*{arg <- arg*} '=' typedExp '-' premAL_guard*{premAL_guard <- premAL_guard*} ++ premAL_out*{premAL_out <- premAL_out*}
-    -- output: % |- % : tblRowAL_guard
+    -- (Guard_prem: AC |- premAL : premAL'*{premAL' <- premAL'*})*{premAL <- premAL*, premAL'* -> premAL'**}
+    -- (if premAL'*{premAL' <- premAL'*} matches [])*{premAL'* <- premAL'**}
+    -- Guard_exp: AC |- typedExp : premAL''*{premAL'' <- premAL''*}
+    -- if premAL''*{premAL'' <- premAL''*} matches []
+    -- the relation holds
 
 relation Guard_def: algoCtx |- defnAL : defnAL
 
@@ -3143,10 +3144,9 @@ relation Guard_def: algoCtx |- defnAL : defnAL
     -- let defnAL' = defnAL
     -- if defnAL' <: tableFuncDefnAL
     -- let tableFuncDefnAL = defnAL' as tableFuncDefnAL
-    -- let TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL*{tblRowAL <- tblRowAL*} = tableFuncDefnAL
-    -- (Guard_tblRow: AC |- tblRowAL : tblRowAL_guard)*{tblRowAL <- tblRowAL*, tblRowAL_guard -> tblRowAL_guard*}
-    -- let tableFuncDefnAL_guard = TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL_guard*{tblRowAL_guard <- tblRowAL_guard*}
-    -- output: % |- % : tableFuncDefnAL_guard as defnAL
+    -- let TABLEFUNC _id _param*{_param <- _param*} ':' _typ '=' tblRowAL*{tblRowAL <- tblRowAL*} = tableFuncDefnAL
+    -- (if Guard_tblRow: AC |- tblRowAL holds)*{tblRowAL <- tblRowAL*}
+    -- output: % |- % : tableFuncDefnAL as defnAL
 
     rulepath defined
     -- let defnAL' = defnAL

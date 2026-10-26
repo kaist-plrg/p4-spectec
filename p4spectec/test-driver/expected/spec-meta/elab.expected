@@ -1784,15 +1784,14 @@ relation Guard_clause: algoCtx |- clauseAL : clauseAL
     -- Guard_exp: AC |- typedExp : premAL_out*{premAL_out <- premAL_out*}
     -- if (clauseAL_guard = arg*{arg <- arg*} '=' typedExp '-' premAL_guard*{premAL_guard <- premAL_guard*} ++ premAL_out*{premAL_out <- premAL_out*})
 
-relation Guard_tblRow: algoCtx |- tblRowAL : tblRowAL
+relation Guard_tblRow: algoCtx |- tblRowAL
 
   rulegroup
 
-    rule : AC |- tblRowAL : tblRowAL_guard
+    rule : AC |- tblRowAL
     -- if (arg*{arg <- arg*} '=' typedExp '-' premAL*{premAL <- premAL*} = tblRowAL)
-    -- Guard_prems: AC |- premAL*{premAL <- premAL*} : premAL_guard*{premAL_guard <- premAL_guard*}
-    -- Guard_exp: AC |- typedExp : premAL_out*{premAL_out <- premAL_out*}
-    -- if (tblRowAL_guard = arg*{arg <- arg*} '=' typedExp '-' premAL_guard*{premAL_guard <- premAL_guard*} ++ premAL_out*{premAL_out <- premAL_out*})
+    -- (Guard_prem: AC |- premAL : [])*{premAL <- premAL*}
+    -- Guard_exp: AC |- typedExp : []
 
 relation Guard_def: algoCtx |- defnAL : defnAL
 
@@ -1820,10 +1819,9 @@ relation Guard_def: algoCtx |- defnAL : defnAL
 
     rule builtin: AC |- builtinFuncDefn as defnAL : builtinFuncDefn as defnAL
 
-    rule table: AC |- tableFuncDefnAL as defnAL : tableFuncDefnAL_guard as defnAL
-    -- if (TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL*{tblRowAL <- tblRowAL*} = tableFuncDefnAL)
-    -- (Guard_tblRow: AC |- tblRowAL : tblRowAL_guard)*{tblRowAL <- tblRowAL*, tblRowAL_guard <- tblRowAL_guard*}
-    -- if (tableFuncDefnAL_guard = TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL_guard*{tblRowAL_guard <- tblRowAL_guard*})
+    rule table: AC |- tableFuncDefnAL as defnAL : tableFuncDefnAL as defnAL
+    -- if (TABLEFUNC _id _param*{_param <- _param*} ':' _typ '=' tblRowAL*{tblRowAL <- tblRowAL*} = tableFuncDefnAL)
+    -- (if Guard_tblRow: AC |- tblRowAL holds)*{tblRowAL <- tblRowAL*}
 
     rule defined: AC |- definedFuncDefnAL as defnAL : definedFuncDefnAL_guard as defnAL
     -- if (FUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' clauseAL*{clauseAL <- clauseAL*} elsClauseAL?{elsClauseAL <- elsClauseAL?} = definedFuncDefnAL)

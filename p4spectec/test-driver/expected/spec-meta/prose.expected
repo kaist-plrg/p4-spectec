@@ -3167,19 +3167,21 @@ relation Guard_clause: AC |- clauseAL : %
 
   5. Result in: % |- % : clauseAL_guard
 
-relation Guard_tblRow: AC |- tblRowAL : %
+relation Guard_tblRow: AC |- tblRowAL
 
-1. Group : AC |- tblRowAL : %
+1. Group : AC |- tblRowAL
 
   1. (Let ((arg)*{arg <- arg*} '=' typedExp '-' (premAL)*{premAL <- premAL*}) be tblRowAL)
 
-  2. (Guard_prems: AC |- (premAL)*{premAL <- premAL*} : (premAL_guard)*{premAL_guard <- premAL_guard*})
+  2. (Guard_prem: AC |- premAL : (premAL')*{premAL' <- premAL'*})*{premAL <- premAL*, premAL'* -> premAL'**}
 
-  3. (Guard_exp: AC |- typedExp : (premAL_out)*{premAL_out <- premAL_out*})
+  3. Check (((premAL')*{premAL' <- premAL'*} matches pattern []))*{premAL'* <- premAL'**}
 
-  4. (Let tblRowAL_guard be ((arg)*{arg <- arg*} '=' typedExp '-' (premAL_guard)*{premAL_guard <- premAL_guard*} ++ (premAL_out)*{premAL_out <- premAL_out*}))
+    1. (Guard_exp: AC |- typedExp : (premAL'')*{premAL'' <- premAL''*})
 
-  5. Result in: % |- % : tblRowAL_guard
+    2. Check (((premAL'')*{premAL'' <- premAL''*} matches pattern []))
+
+      1. The relation holds
 
 relation Guard_def: AC |- defnAL : %
 
@@ -3243,13 +3245,13 @@ Arm 3:
 
       3. Case (% has type tableFuncDefnAL, let tableFuncDefnAL = %)
 
-        1. (Let (TABLEFUNC id (param)*{param <- param*} ':' typ '=' (tblRowAL)*{tblRowAL <- tblRowAL*}) be tableFuncDefnAL)
+        1. (Let (TABLEFUNC _id (_param)*{_param <- _param*} ':' _typ '=' (tblRowAL)*{tblRowAL <- tblRowAL*}) be tableFuncDefnAL)
 
-        2. (Guard_tblRow: AC |- tblRowAL : tblRowAL_guard)*{tblRowAL <- tblRowAL*, tblRowAL_guard -> tblRowAL_guard*}
+        2. If (Guard_tblRow: AC |- tblRowAL)*{tblRowAL <- tblRowAL*} holds, then
 
-        3. (Let tableFuncDefnAL_guard be (TABLEFUNC id (param)*{param <- param*} ':' typ '=' (tblRowAL_guard)*{tblRowAL_guard <- tblRowAL_guard*}))
+          1. Result in: % |- % : (tableFuncDefnAL as defnAL)
 
-        4. Result in: % |- % : (tableFuncDefnAL_guard as defnAL)
+        2. Else Dangling
 
       4. Case (% has type definedFuncDefnAL, let definedFuncDefnAL = %)
 

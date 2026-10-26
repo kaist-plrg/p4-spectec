@@ -540,15 +540,16 @@ rule Guard_clause:
 ;;; tblRowAL
 ;;; syntax tblRowAL = arg* '=' typedExp '-' premAL*
 
+;; A table row takes no guards: rows are exclusive and exhaustive,
+;; so a failing guard must not skip a row
+
 rule Guard_tblRow:
-  AC |- tblRowAL : tblRowAL_guard
+  AC |- tblRowAL
   -- if arg* '=' typedExp '-' premAL* = tblRowAL
-  ---- ;; guard the premises in order
-  -- Guard_prems: AC |- premAL* : premAL_guard*
-  ---- ;; then guard the result after the premises that bind it
-  -- Guard_exp: AC |- typedExp : premAL_out*
-  -- if tblRowAL_guard
-      = arg* '=' typedExp '-' (premAL_guard* ++ premAL_out*)
+  ---- ;; no premise needs a guard
+  -- (Guard_prem: AC |- premAL : eps)*
+  ---- ;; nor does the result
+  -- Guard_exp: AC |- typedExp : eps
 
 ;;
 ;; Definition guards
@@ -606,11 +607,9 @@ rulegroup Guard_def/func {
   ;;;; tableFuncDefnAL
 
   rule Guard_def/table:
-    AC |- tableFuncDefnAL : tableFuncDefnAL_guard
-    -- if TABLEFUNC id param* ':' typ '=' tblRowAL* = tableFuncDefnAL
-    -- (Guard_tblRow: AC |- tblRowAL : tblRowAL_guard)*
-    -- if tableFuncDefnAL_guard
-        = TABLEFUNC id param* ':' typ '=' tblRowAL_guard*
+    AC |- tableFuncDefnAL : tableFuncDefnAL
+    -- if TABLEFUNC _ _ ':' _ '=' tblRowAL* = tableFuncDefnAL
+    -- (Guard_tblRow: AC |- tblRowAL)*
 
   ;;;; definedFuncDefnAL
 
