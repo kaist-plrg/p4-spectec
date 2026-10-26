@@ -29,12 +29,15 @@ use self::external::{DecodeContext, EncodeContext};
 
 mod arena;
 mod cmp;
+mod composite;
 mod convert;
 pub mod external;
 pub mod get;
-mod hash;
+pub(crate) mod hash;
+mod lazy;
 pub mod make;
 mod print;
+pub(crate) mod projection;
 mod view;
 
 pub use arena::ValueArena;
@@ -56,7 +59,7 @@ pub struct ValueField {
 pub type ValueCase = Mixfix<Value>;
 
 /// A stored value body whose children belong to the same arena.
-#[derive(Debug, PartialEq, Eq, Hash, SerializeState, DeserializeState)]
+#[derive(Debug, PartialEq, Eq, SerializeState, DeserializeState)]
 #[serde(rename = "ValueKind")]
 #[serde(serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
 #[serde(deserialize_state = "DecodeContext<'arena>", de_parameters = "'arena")]
