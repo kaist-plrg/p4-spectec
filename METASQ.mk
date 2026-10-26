@@ -13,7 +13,7 @@ export CARGO_TARGET_DIR
 METACIRC_TEST = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(CARGO_TARGET_DIR)" --bin metacirc-test --
 METACIRC_SNAPSHOTS := test-metacirc-elab test-metacirc-algo test-metacirc-structure test-metacirc-prose
 
-.PHONY: metacirc metacirc-cli test-metacirc test-metacirc-meta test-metacirc-micro test-metacirc-micro-meta test-metacirc-sim test-metacirc-sim-meta $(METACIRC_SNAPSHOTS) test-metacirc-metaparse test-metacirc-promote clean
+.PHONY: metacirc metacirc-cli test-metacirc-run test-metacirc-run-meta test-metacirc-micro test-metacirc-micro-meta test-metacirc-sim test-metacirc-sim-meta $(METACIRC_SNAPSHOTS) test-metacirc-metaparse test-metacirc-promote clean
 
 metacirc-cli:
 	cd $(RUST_DIR) && $(CARGO) build --locked --release --bin metacirc --target-dir "$(CARGO_TARGET_DIR)"
@@ -24,11 +24,11 @@ metacirc: metacirc-cli
 	cp "$(CARGO_TARGET_DIR)/release/metacirc" ./$(METACIRC)
 
 # P4 corpus through the AL/P4 towers
-test-metacirc:
+test-metacirc-run:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) --input p4
 
 # P4 corpus through the IL/P4 towers, converted by Algo_IL
-test-metacirc-meta:
+test-metacirc-run-meta:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) --input p4 --algo meta
 
 # Spec-language micro test sources through the AL tower

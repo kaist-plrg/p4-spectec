@@ -161,8 +161,8 @@ are the supplied towers entered through `Eval_IL`.
 ```sh
 make test-metacirc-micro
 make test-metacirc-micro-meta
-make test-metacirc
-make test-metacirc-meta
+make test-metacirc-run
+make test-metacirc-run-meta
 make test-metacirc-sim
 make test-metacirc-sim-meta
 ```
@@ -170,7 +170,7 @@ make test-metacirc-sim-meta
 `test-metacirc-micro` runs the spec-language sources under
 `testdata/spec/pos/run` and `testdata/spec/neg/run` through the AL tower,
 each expected to succeed or fail as its suite in `suites/metacirc.json`
-registers. `test-metacirc` runs the `test-run-sl` corpus through the AL/P4
+registers. `test-metacirc-run` runs the `test-run-sl` corpus through the AL/P4
 tower and requires the p4c submodule. Both check determinism.
 `test-metacirc-sim` runs the simulation suites named under `sim` in
 `suites/metacirc.json`, the v1model and ebpf regression suites,
