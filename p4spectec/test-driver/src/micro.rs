@@ -29,6 +29,7 @@ use p4spectec::runner::{self, BuildError, Config, NullExtern, Runner};
 use crate::{
     Error, ExecutionOptions, Result, corpus,
     diagnostic::Outcome,
+    log::TestLog,
     suite::{Language, MicroConfig, Stage},
 };
 
@@ -44,7 +45,12 @@ enum Output {
 }
 
 /// Runs every corpus source through the stages of the selected language.
-pub fn run(config: &MicroConfig, language: Language, options: ExecutionOptions) -> Result<()> {
+pub fn run(
+    config: &MicroConfig,
+    language: Language,
+    options: ExecutionOptions,
+    path_log: Option<&Path>,
+) -> Result<()> {
     let ExecutionOptions { cache_on, no_det } = options;
     let det = !no_det;
     let config_runner = Config::new(cache_on, det, false);
@@ -61,14 +67,34 @@ pub fn run(config: &MicroConfig, language: Language, options: ExecutionOptions) 
         BTreeSet::new()
     };
 
+    // Collect every suite first so the log knows how many sources run
+    let suites = config
+        .suites
+        .iter()
+        .map(|suite| Ok((suite, corpus::collect(&suite.root, ".watsup")?)))
+        .collect::<Result<Vec<_>>>()?;
+    let len = suites
+        .iter()
+        .filter(|(suite, _)| stages.contains(&suite.stage))
+        .map(|(_, paths)| paths.len())
+        .sum();
+    let mut log = TestLog::create(path_log, &format!("micro-{}", language.name()), len)?;
+    log.note(&text_mode)?;
+
     // Compare each source's first failing stage with its suite's verdict
     let guard_stdout = crate::output::SilenceStdout::new()?;
     let (mut executed, mut skipped, mut excluded) = (0, 0, 0);
     let mut mismatches = Vec::new();
-    for suite in &config.suites {
-        let paths = corpus::collect(&suite.root, ".watsup")?;
+    for (suite, paths) in &suites {
+        log.suite(&suite.name, &suite.root)?;
         // Skip suites whose stage this language does not run
         let Some(idx) = stages.iter().position(|stage| *stage == suite.stage) else {
+            log.note(&format!(
+                "skipped {} sources: {} does not run stage {}",
+                paths.len(),
+                language.name(),
+                suite.stage.name()
+            ))?;
             skipped += paths.len();
             continue;
         };
@@ -80,11 +106,17 @@ pub fn run(config: &MicroConfig, language: Language, options: ExecutionOptions) 
         for path in paths {
             // Skip sources excluded for this language
             if path.to_str().is_some_and(|path| excludes.contains(path)) {
+                log.skip(path, "exclude")?;
                 excluded += 1;
                 continue;
             }
-            let stage_fail = first_failure(&path, stages_run, config_runner)?;
-            if stage_fail != stage_expect {
+            log.begin(path)?;
+            let stage_fail = first_failure(path, stages_run, config_runner)?;
+            // Name the expected outcome on lines that differ from their suite
+            if stage_fail == stage_expect {
+                log.end(&describe(stage_fail))?;
+            } else {
+                log.end(&format!("{}, expected {}", describe(stage_fail), describe(stage_expect)))?;
                 mismatches.push(format!(
                     "{} ({}): expected {}, got {}",
                     path.display(),
@@ -99,11 +131,13 @@ pub fn run(config: &MicroConfig, language: Language, options: ExecutionOptions) 
     guard_stdout.finish()?;
 
     // Report every mismatched source before failing
-    eprintln!(
+    let text_summary = format!(
         "{text_mode}: executed={executed} skipped={skipped} excluded={excluded} mismatched={} elapsed={:.3}s",
         mismatches.len(),
         start.elapsed().as_secs_f64()
     );
+    eprintln!("{text_summary}");
+    log.finish(&text_summary)?;
     if !mismatches.is_empty() {
         return Err(Error::Invalid(format!(
             "{text_mode}: outcomes differ from their suite:\n{}",
