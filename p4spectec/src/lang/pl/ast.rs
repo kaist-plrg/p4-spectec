@@ -436,7 +436,7 @@ pub enum RelDef<P: Stage = Source> {
     /// `extern relation id : not_typ hint(input %int*) hint*`
     Extern(ExternRel<P>),
     /// `relation id : not_typ hint(input %int*) rulegroup* hint*`
-    Defined(DefinedRel<P>),
+    Defined(P::Framed<DefinedRel<P>>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -467,9 +467,9 @@ pub enum MetaFuncDef<P: Stage = Source> {
     /// `builtin dec id <` list(tparam, `,`) `> list(param, `,`) : typ hint*`
     Builtin(BuiltinFunc<P>),
     /// `table dec id list(param, `,`) : typ hint*`
-    Table(TableFunc<P>),
+    Table(P::Framed<TableFunc<P>>),
     /// `dec id <` list(tparam, `,`) `> list(param, `,`) : typ clause* hint*`
-    Defined(DefinedFunc<P>),
+    Defined(P::Framed<DefinedFunc<P>>),
 }
 
 #[derive(Clone, Debug, PartialEq)]

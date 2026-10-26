@@ -1,12 +1,8 @@
-//! Shared execution environments and callable frames
+//! Shared execution environments
 //!
-//! `frame` maps names to slots,
-//! `callable` pairs prepared syntax with its layout,
 //! `caches` memoize calls.
 
 pub mod caches;
-pub mod callable;
-pub mod frame;
 
 use crate::lang::common::ds::map::IdMap;
 

@@ -10,6 +10,7 @@
 use crate::lang::{
     common::Id,
     data::{
+        frame::FrameLayout,
         notation::{self, MixopArena, flat, tree},
         var::{IdSlot, Var, VarSlot},
     },
@@ -17,10 +18,7 @@ use crate::lang::{
 
 use crate::lang::il::{ast as source, prepared::*};
 
-use crate::runtime::{
-    envs::{elab::TDEnv, interp::shared::frame::FrameLayout},
-    ops::typ::optimize_sub_typ,
-};
+use crate::runtime::{envs::elab::TDEnv, ops::typ::optimize_sub_typ};
 
 use super::{Prepare, mixop};
 
@@ -53,7 +51,7 @@ impl Prepare<PrepareContext<'_>> for Id {
     type Output = IdSlot;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ctx.layout.resolve_id(self)
+        ctx.layout.resolve_var_id(self)
     }
 }
 

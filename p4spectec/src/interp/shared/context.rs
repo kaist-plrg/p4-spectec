@@ -1,6 +1,6 @@
 //! Loaded definitions, local bindings, and shared context access
 //!
-//! Stage-specific loaders prepare callables into `Global<R, F>`.
+//! Stage-specific loaders prepare definitions into `Global<R, F>`.
 //! A `Context` borrows those globals and owns persistent local bindings;
 //! cloning preserves its scope, while `localize` starts a fresh one.
 //! `ReadContext`, `WriteContext`, and `IterContext` serve shared evaluation;
@@ -12,8 +12,9 @@ use crate::lang::{
     common::{ds::map::IdMap, source::Span},
     data::{
         arena::Arena,
+        frame::{Frame, FrameLayout},
         typ,
-        value::flat::{self as value, Value},
+        value::flat::{self as value, Value, ValueKind},
         var::{SlotIdx, VarSlot},
     },
 };
@@ -22,11 +23,7 @@ use crate::lang::il::prepared as ast;
 
 use crate::diagnostic::{Label, Report};
 
-use crate::runtime::envs::interp::shared::{
-    TDEnv, TypeDef,
-    callable::Callable,
-    frame::{Frame, FrameLayout},
-};
+use crate::runtime::envs::interp::shared::{TDEnv, TypeDef};
 
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap_from_result},
@@ -52,8 +49,8 @@ pub trait ReadContext {
     /// Finds the slot of `var` under one more iteration `iter`.
     fn find_var_iterated(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot;
 
-    /// Finds the prepared slot under one more iteration.
-    fn find_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
+    /// Finds the prepared slot of `var` under one more iteration.
+    fn find_var_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
         self.find_var_iterated(var, iter).slot
     }
 
@@ -71,10 +68,26 @@ pub trait ReadContext {
     /// The function definition type this context stores.
     type Func;
 
-    /// Finds a function definition by id.
+    /// Finds a global function definition by id.
     fn find_func(&self, id: &ast::Id) -> Result<&Rc<Self::Func>, Error>;
+    /// Finds the function value bound to `id`, if `id` is a function parameter of this call.
+    fn find_func_param_opt(&self, id: &ast::Id) -> Option<Value>;
     /// Finds the type of a function by id.
     fn find_func_typ(&self, id: &ast::Id) -> Result<ast::FuncTyp, Error>;
+
+    /// Names the global definition a call refers to: a parameter's function value, or `id` itself.
+    fn resolve_func_id(&self, arena: &Arena, id: &ast::Id) -> ast::Id {
+        match self
+            .find_func_param_opt(id)
+            .map(|value| arena.value.kind(value.node))
+        {
+            Some(ValueKind::Func(id_global)) => {
+                crate::phrase!(node: Rc::clone(&id_global.node), span: id.span)
+            }
+            Some(_) => unreachable!("function parameter must hold a function value"),
+            None => id.clone(),
+        }
+    }
 }
 
 /// Write access to type, value, and function bindings.
@@ -93,8 +106,8 @@ pub trait WriteContext: ReadContext + Clone {
 
     // == Functions
 
-    /// Binds a function definition to an id.
-    fn add_func(&mut self, id: ast::Id, func: Rc<Self::Func>) -> Result<(), Error>;
+    /// Binds a function parameter to the function value it receives.
+    fn add_func_param(&mut self, id: &ast::Id, value: Value);
 }
 
 /// Context operations used by shared iteration evaluation.
@@ -141,25 +154,14 @@ pub trait IterContext: WriteContext {
     ) -> Backtrack<()>;
 }
 
-// = Definition scopes
-
-/// Identifies the scope supplying a function definition.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Scope {
-    /// Loaded from the specification.
-    Global,
-    /// Bound by a function argument in the current call.
-    Local,
-}
-
 // = Global definitions
 
-/// Stores type definitions and prepared relation and function callables.
+/// Stores type definitions and prepared relation and function definitions.
 #[derive(Debug)]
 pub struct Global<R, F> {
     tdenv: TDEnv,
-    renv: IdMap<Callable<R>>,
-    fenv: IdMap<Rc<Callable<F>>>,
+    renv: IdMap<R>,
+    fenv: IdMap<Rc<F>>,
 }
 
 impl<R, F> Global<R, F> {
@@ -188,7 +190,7 @@ impl<R, F> Global<R, F> {
     // - Relations
 
     /// Inserts a prepared relation, panicking if its name is already defined.
-    pub(crate) fn insert_rel(&mut self, id: ast::Id, rel: Callable<R>)
+    pub(crate) fn insert_rel(&mut self, id: ast::Id, rel: R)
     where
         R: Clone,
     {
@@ -204,7 +206,7 @@ impl<R, F> Global<R, F> {
     // - Functions
 
     /// Inserts a prepared function, panicking if its name is already defined.
-    pub(crate) fn insert_func(&mut self, id: ast::Id, func: Callable<F>) {
+    pub(crate) fn insert_func(&mut self, id: ast::Id, func: F) {
         // Elaboration already rejects duplicate function names
         assert!(
             !self.fenv.contains_key(&id),
@@ -217,27 +219,13 @@ impl<R, F> Global<R, F> {
 
 // = Local bindings
 
-/// Holds type parameters, function arguments, and values of one call.
-#[derive(Debug)]
-struct Local<F> {
+/// Holds type parameters and values of one call; function arguments are values too.
+#[derive(Clone, Debug, Default)]
+struct Local {
     /// Type parameters bound to their type arguments.
     tdenv: TDEnv,
-    /// Function arguments bound to their prepared definitions.
-    fenv: IdMap<Rc<Callable<F>>>,
     /// Value slots of the current callable.
     frame: Frame,
-}
-
-impl<F> Default for Local<F> {
-    fn default() -> Self {
-        Self { tdenv: TDEnv::new(), fenv: IdMap::new(), frame: Frame::default() }
-    }
-}
-
-impl<F> Clone for Local<F> {
-    fn clone(&self) -> Self {
-        Self { tdenv: self.tdenv.clone(), fenv: self.fenv.clone(), frame: self.frame.clone() }
-    }
 }
 
 // = Execution context
@@ -246,7 +234,7 @@ impl<F> Clone for Local<F> {
 #[derive(Debug)]
 pub struct Context<'global, R, F> {
     global: &'global Global<R, F>,
-    local: Local<F>,
+    local: Local,
 }
 
 impl<R, F> Clone for Context<'_, R, F> {
@@ -272,11 +260,15 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     pub fn localize_with_layout(&self, layout: &Rc<FrameLayout>) -> Self {
         Self {
             global: self.global,
-            local: Local {
-                tdenv: TDEnv::new(),
-                fenv: IdMap::new(),
-                frame: Frame::new(Rc::clone(layout)),
-            },
+            local: Local { tdenv: TDEnv::new(), frame: Frame::new(Rc::clone(layout)) },
+        }
+    }
+
+    /// Keeps this call's type parameters and starts a fresh frame with the layout.
+    pub fn localize_frame(&self, layout: &Rc<FrameLayout>) -> Self {
+        Self {
+            global: self.global,
+            local: Local { frame: Frame::new(Rc::clone(layout)), ..self.local.clone() },
         }
     }
 
@@ -297,39 +289,15 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     // - Relations
 
     /// Finds a relation in the global definitions.
-    pub fn find_rel_opt(&self, id: &ast::Id) -> Option<&'global Callable<R>> {
+    pub fn find_rel_opt(&self, id: &ast::Id) -> Option<&'global R> {
         self.global.renv.get(id)
     }
 
     /// Finds a global relation or reports the lookup location.
-    pub fn find_rel(&self, id: &ast::Id) -> Result<&'global Callable<R>, Error> {
+    pub fn find_rel(&self, id: &ast::Id) -> Result<&'global R, Error> {
         self.find_rel_opt(id).ok_or_else(|| {
             let diagnostic =
                 error::context::binding_undefined(EntityKind::Relation, id.node.to_string())
-                    .with_label(Label::primary(&id.span, ""));
-            Box::new(Report::from(diagnostic))
-        })
-    }
-
-    // - Functions
-
-    /// Finds a function, preferring local arguments to global definitions.
-    pub fn find_func_opt<'a>(&'a self, id: &ast::Id) -> Option<(Scope, &'a Rc<Callable<F>>)> {
-        if let Some(func) = self.local.fenv.get(id) {
-            Some((Scope::Local, func))
-        } else {
-            self.global.fenv.get(id).map(|func| (Scope::Global, func))
-        }
-    }
-
-    /// Finds a function and its scope or reports the lookup location.
-    pub fn find_func_with_scope<'a>(
-        &'a self,
-        id: &ast::Id,
-    ) -> Result<(Scope, &'a Rc<Callable<F>>), Error> {
-        self.find_func_opt(id).ok_or_else(|| {
-            let diagnostic =
-                error::context::binding_undefined(EntityKind::Function, id.node.to_string())
                     .with_label(Label::primary(&id.span, ""));
             Box::new(Report::from(diagnostic))
         })
@@ -355,7 +323,7 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
 // = Read access
 
 impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
-    type Func = Callable<F>;
+    type Func = F;
 
     // == Finders
 
@@ -365,8 +333,11 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
         self.local.frame.get(slot)
     }
 
-    fn find_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
-        self.local.frame.layout().find_slot_iterated(var.slot, iter)
+    fn find_var_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
+        self.local
+            .frame
+            .layout()
+            .find_var_slot_iterated(var.slot, iter)
     }
 
     fn find_var_iterated(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot {
@@ -403,11 +374,27 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
     // - Functions
 
     fn find_func(&self, id: &ast::Id) -> Result<&Rc<Self::Func>, Error> {
-        self.find_func_with_scope(id).map(|(_, func)| func)
+        self.global.fenv.get(id).ok_or_else(|| {
+            let diagnostic =
+                error::context::binding_undefined(EntityKind::Function, id.node.to_string())
+                    .with_label(Label::primary(&id.span, ""));
+            Box::new(Report::from(diagnostic))
+        })
+    }
+
+    fn find_func_param_opt(&self, id: &ast::Id) -> Option<Value> {
+        let slot = self.local.frame.layout().find_func_slot(id)?;
+        // A callable binds its function parameters before running its body
+        let value = self
+            .local
+            .frame
+            .get(slot)
+            .expect("function parameter must be bound");
+        Some(*value)
     }
 
     fn find_func_typ(&self, id: &ast::Id) -> Result<ast::FuncTyp, Error> {
-        Ok(self.find_func(id)?.def.func_typ())
+        Ok(self.find_func(id)?.func_typ())
     }
 }
 
@@ -438,15 +425,14 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
 
     // - Functions
 
-    fn add_func(&mut self, id: ast::Id, func: Rc<Callable<F>>) -> Result<(), Error> {
-        if self.find_func_opt(&id).is_some() {
-            let diagnostic =
-                error::context::binding_repeated(EntityKind::Function, id.node.to_string())
-                    .with_label(Label::primary(&id.span, ""));
-            return Err(Box::new(Report::from(diagnostic)));
-        }
-        self.local.fenv.insert(id, func);
-        Ok(())
+    fn add_func_param(&mut self, id: &ast::Id, value: Value) {
+        let slot = self
+            .local
+            .frame
+            .layout()
+            .find_func_slot(id)
+            .expect("function parameter must have a prepared slot");
+        self.local.frame.set(slot, value);
     }
 
     // == Clearing
