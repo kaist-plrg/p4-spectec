@@ -2481,81 +2481,55 @@ relation Algo_tblRow: AC |- tblRowIL : %
 
         1. Else Dangling
 
-relation TblRows_cover: AC typ*{typ <- typ*} |- tblRowIL*{tblRowIL <- tblRowIL*}
+relation Cover_tblRows: AC typ*{typ <- typ*} |- tblRowIL*{tblRowIL <- tblRowIL*}
 
-1. (Let typCase*{typCase <- typCase*} be $variant_cases(AC.TYP, typ))*{typ <- typ*, typCase* -> typCase**}
+1. (Let cases_key be $cases_typ(AC.TYP, typ))*{typ <- typ*, cases_key -> cases_key*}
 
-  1. If ((|tblRowIL*{tblRowIL <- tblRowIL*}| > 0)), then
+  1. (Let combination*{combination <- combination*} be $combinations_cases(cases_key*{cases_key <- cases_key*}))
 
-    1. (Let i be (|tblRowIL*{tblRowIL <- tblRowIL*}| - 1))
+    1. (Let arg*{arg <- arg*} '=' _typedExp be tblRowIL)*{tblRowIL <- tblRowIL*, _typedExp -> _typedExp*, arg* -> arg**}
 
-      1. If (i <: nat), then
+      1. If (arg <: expArg)*{arg <- arg*}*{arg* <- arg**}, then
 
-        1. (Let n_init be i as nat)
+        1. (Let EXP typedExp be arg as expArg)*{arg <- arg*, typedExp -> typedExp*}*{arg* <- arg**, typedExp* -> typedExp**}
 
-          1. If ((n_init < |tblRowIL*{tblRowIL <- tblRowIL*}|)), then
+          1. (Let rowCases be $cases_exp(AC.TYP, typedExp)*{typedExp <- typedExp*})*{typedExp* <- typedExp**, rowCases -> rowCases*}
 
-            1. (Let arg*{arg <- arg*} '=' _typedExp be tblRowIL*{tblRowIL <- tblRowIL*}[n_init])
+            1. If ((|tblRowIL*{tblRowIL <- tblRowIL*}| > 0)), then
 
-              1. If (arg <: expArg)*{arg <- arg*}, then
+              1. (Let i be (|tblRowIL*{tblRowIL <- tblRowIL*}| - 1))
 
-                1. (Let EXP typedExp_last be arg as expArg)*{arg <- arg*, typedExp_last -> typedExp_last*}
+                1. If (i <: nat), then
 
-                  1. Case analysis on $forall_($is_wildcard_exp(typedExp_last)*{typedExp_last <- typedExp_last*}) (total)
+                  1. (Let n_last be i as nat)
 
-                    1. Case true
+                    1. If (((0 + n_last) <= |rowCases*{rowCases <- rowCases*}|)), then
 
-                      1. If (((0 + n_init) <= |tblRowIL*{tblRowIL <- tblRowIL*}|)), then
+                      1. If ($is_exclusive_rows(rowCases*{rowCases <- rowCases*}[0 : n_last])), then
 
-                        1. (Let arg'*{arg' <- arg'*} '=' _typedExp'*{_typedExp' <- _typedExp'*, arg'* <- arg'**} be tblRowIL*{tblRowIL <- tblRowIL*}[0 : n_init])
+                        1. If ((n_last < |rowCases*{rowCases <- rowCases*}|))*{combination <- combination*}, then
 
-                          1. If (arg' <: expArg)*{arg' <- arg'*}*{arg'* <- arg'**}, then
+                          1. If (($forall_($is_covered_combination([rowCases*{rowCases <- rowCases*}[n_last]], combination)*{combination <- combination*}) \/ $is_exclusive_rows(rowCases*{rowCases <- rowCases*}))), then
 
-                            1. (Let EXP typedExp be arg' as expArg)*{arg' <- arg'*, typedExp -> typedExp*}*{arg'* <- arg'**, typedExp* -> typedExp**}
+                            1. If ($forall_($is_covered_combination(rowCases*{rowCases <- rowCases*}, combination)*{combination <- combination*})), then
 
-                              1. (Let typCase_row*{typCase_row <- typCase_row*} be $covered_cases(AC.TYP, typedExp))*{typedExp <- typedExp*, typCase_row* -> typCase_row**}*{typedExp* <- typedExp**, typCase_row** -> typCase_row***}
+                              1. The relation holds
 
-                                1. If ($is_exclusive(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***})), then
-
-                                  1. The relation holds
-
-                                1. Else Dangling
+                            1. Else Dangling
 
                           1. Else Dangling
 
-                      1. Else Dangling
-
-                    2. Case false
-
-                      1. (Let arg'*{arg' <- arg'*} '=' _typedExp'*{_typedExp' <- _typedExp'*, arg'* <- arg'**} be tblRowIL*{tblRowIL <- tblRowIL*})
-
-                        1. If (arg' <: expArg)*{arg' <- arg'*}*{arg'* <- arg'**}, then
-
-                          1. (Let EXP typedExp be arg' as expArg)*{arg' <- arg'*, typedExp -> typedExp*}*{arg'* <- arg'**, typedExp* -> typedExp**}
-
-                            1. (Let typCase_row*{typCase_row <- typCase_row*} be $covered_cases(AC.TYP, typedExp))*{typedExp <- typedExp*, typCase_row* -> typCase_row**}*{typedExp* <- typedExp**, typCase_row** -> typCase_row***}
-
-                              1. If ($is_exclusive(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***})), then
-
-                                1. (Let typCase_comb*{typCase_comb <- typCase_comb*}*{typCase_comb* <- typCase_comb**} be $combinations(typCase*{typCase <- typCase*}*{typCase* <- typCase**}))
-
-                                  1. If ($forall_($is_covered(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***}, typCase_comb*{typCase_comb <- typCase_comb*})*{typCase_comb* <- typCase_comb**})), then
-
-                                    1. The relation holds
-
-                                  1. Else Dangling
-
-                              1. Else Dangling
-
                         1. Else Dangling
 
-              1. Else Dangling
+                      1. Else Dangling
 
-          1. Else Dangling
+                    1. Else Dangling
+
+                1. Else Dangling
+
+            1. Else Dangling
 
       1. Else Dangling
-
-  1. Else Dangling
 
 relation Algo_rul: AC inputHint |- rulIL : %
 
@@ -2673,7 +2647,7 @@ relation Algo_def: AC |- defnIL : %
 
             1. (Algo_tblRow: AC |- tblRowIL : tblRowAL)*{tblRowIL <- tblRowIL*, tblRowAL -> tblRowAL*}
 
-              1. If (TblRows_cover: AC typ_param*{typ_param <- typ_param*} |- tblRowIL*{tblRowIL <- tblRowIL*}) holds, then
+              1. If (Cover_tblRows: AC typ_param*{typ_param <- typ_param*} |- tblRowIL*{tblRowIL <- tblRowIL*}) holds, then
 
                 1. (Let tableFuncDefnAL be TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL*{tblRowAL <- tblRowAL*})
 
@@ -4331,7 +4305,13 @@ def $prem_let_partial(IC, vari_d, typedExp_l, typedExp_r)
 
           1. Return $iterate_prem(LET typedExp_l '=' typedExp_r as premAL, premIterAL*{premIterAL <- premIterAL*})
 
-def $is_singleton_typ(tdenv, typ)
+syntax cases = mixop*
+
+syntax rowCases = cases*
+
+syntax combination = mixop*
+
+def $cases_typ(tdenv, typ)
 
 1. (Let typRes be $expand_typ(tdenv, typ))
 
@@ -4341,7 +4321,7 @@ def $is_singleton_typ(tdenv, typ)
 
       1. If (typ' matches VAR % %), then
 
-        1. (Let VAR id targ*{targ <- targ*} be typ')
+        1. (Let VAR id _targ*{_targ <- _targ*} be typ')
 
           1. (Let typDef'?{typDef' <- typDef'?} be $find_map<id, typDef>(tdenv, id))
 
@@ -4351,23 +4331,25 @@ def $is_singleton_typ(tdenv, typ)
 
                 1. If (typDef <: definedTypDefn), then
 
-                  1. (Let TYP _id tparam*{tparam <- tparam*} '=' deftyp be typDef as definedTypDefn)
+                  1. (Let TYP _id _tparam*{_tparam <- _tparam*} '=' deftyp be typDef as definedTypDefn)
 
                     1. If (deftyp matches VARIANT %), then
 
-                      1. (Let VARIANT typCase*{typCase <- typCase*} be deftyp)
+                      1. (Let VARIANT mixop _typ*{_typ <- _typ*}*{_typ* <- _typ**, mixop <- mixop*} be deftyp)
 
-                        1. If ((|typCase*{typCase <- typCase*}| = 1)), then
+                        1. Return mixop*{mixop <- mixop*}
 
-                          1. If ((|tparam*{tparam <- tparam*}| = |targ*{targ <- targ*}|)), then
+                    1. Else Dangling
 
-                            1. Return true
+                1. Else Dangling
 
-2. Otherwise,
+            1. Else Dangling
 
-  1. Return false
+      1. Else Dangling
 
-def $is_irrefutable(tdenv, exp '#' typ)
+  1. Else Dangling
+
+def $is_irrefutable_exp(tdenv, exp '#' typ)
 
 1. Case analysis on exp
 
@@ -4379,13 +4361,13 @@ def $is_irrefutable(tdenv, exp '#' typ)
 
     1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
 
-      1. Return $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
+      1. Return $forall_($is_irrefutable_exp(tdenv, typedExp)*{typedExp <- typedExp*})
 
   3. Case (% has type injExp)
 
     1. (Let INJ _mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
 
-      1. Return ($is_singleton_typ(tdenv, typ) /\ $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*}))
+      1. Return ($is_singleton_typ(tdenv, typ) /\ $forall_($is_irrefutable_exp(tdenv, typedExp)*{typedExp <- typedExp*}))
 
   4. Case (% has type strExp)
 
@@ -4393,13 +4375,13 @@ def $is_irrefutable(tdenv, exp '#' typ)
 
       1. (Let _atom typedExp be expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
 
-        1. Return $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
+        1. Return $forall_($is_irrefutable_exp(tdenv, typedExp)*{typedExp <- typedExp*})
 
   5. Case (% has type iterExp)
 
     1. (Let ITER typedExp _expIter be exp as iterExp)
 
-      1. Return $is_irrefutable(tdenv, typedExp)
+      1. Return $is_irrefutable_exp(tdenv, typedExp)
 
 1. Else Dangling
 
@@ -4409,141 +4391,103 @@ def $is_irrefutable(tdenv, exp '#' typ)
 
 2. Else Dangling
 
-def $variant_cases(tdenv, typ)
+def $is_singleton_typ(tdenv, typ)
 
-1. If (typ matches VAR % %), then
+1. Return (|$cases_typ(tdenv, typ)| = 1)
 
-  1. (Let VAR id _targ*{_targ <- _targ*} be typ)
-
-    1. (Let typDef'?{typDef' <- typDef'?} be $find_map<id, typDef>(tdenv, id))
-
-      1. If (typDef'?{typDef' <- typDef'?} matches (_)), then
-
-        1. (Let ?(typDef) be typDef'?{typDef' <- typDef'?})
-
-          1. If (typDef <: definedTypDefn), then
-
-            1. (Let TYP _id _tparam*{_tparam <- _tparam*} '=' deftyp be typDef as definedTypDefn)
-
-              1. If (deftyp matches VARIANT %), then
-
-                1. (Let VARIANT typCase*{typCase <- typCase*} be deftyp)
-
-                  1. Return typCase*{typCase <- typCase*}
-
-              1. Else Dangling
-
-          1. Else Dangling
-
-      1. Else Dangling
-
-1. Else Dangling
-
-def $covered_cases(tdenv, exp '#' typ')
+def $cases_exp(tdenv, exp '#' typ)
 
 1. Case analysis on exp
 
   1. Case (% has type varExp)
 
-    1. Return $variant_cases(tdenv, typ')
+    1. Return $cases_typ(tdenv, typ)
 
   2. Case (% has type upCastExp)
 
     1. (Let UPCAST _typ typedExp be exp as upCastExp)
 
-      1. Return $covered_cases(tdenv, typedExp)
+      1. Return $cases_exp(tdenv, typedExp)
 
   3. Case (% has type injExp)
 
     1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
 
-      1. If ($forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})), then
+      1. If ($forall_($is_irrefutable_exp(tdenv, typedExp)*{typedExp <- typedExp*})), then
 
-        1. (Let _exp '#' typ be typedExp)*{typedExp <- typedExp*, _exp -> _exp*, typ -> typ*}
-
-          1. Return [mixop typ*{typ <- typ*}]
+        1. Return [mixop]
 
       1. Else Dangling
 
 1. Else Dangling
 
-def $is_wildcard_exp(typedExp)
+def $is_overlapping_cases(mixop_a*{mixop_a <- mixop_a*}, mixop_b*{mixop_b <- mixop_b*})
 
-1. (Let exp '#' _typ be typedExp)
+1. Return $exists_(mixop_a <- mixop_b*{mixop_b <- mixop_b*}*{mixop_a <- mixop_a*})
 
-  1. If (exp <: varExp), then
+def $is_overlapping_rows(mixop_a*{mixop_a <- mixop_a*}*{mixop_a* <- mixop_a**}, mixop_b*{mixop_b <- mixop_b*}*{mixop_b* <- mixop_b**})
 
-    1. (Let VAR id be exp as varExp)
+1. If ((|mixop_a*{mixop_a <- mixop_a*}*{mixop_a* <- mixop_a**}| = |mixop_b*{mixop_b <- mixop_b*}*{mixop_b* <- mixop_b**}|)), then
 
-      1. If ((|id| > 0)), then
-
-        1. If (((0 + 1) <= |id|)), then
-
-          1. If ((id[0 : 1] = "_")), then
-
-            1. Return true
-
-2. Otherwise,
-
-  1. Return false
-
-def $shares_case(typCase_a*{typCase_a <- typCase_a*}, typCase_b*{typCase_b <- typCase_b*})
-
-1. Return $exists_(typCase_a <- typCase_b*{typCase_b <- typCase_b*}*{typCase_a <- typCase_a*})
-
-def $overlaps(typCase_a*{typCase_a <- typCase_a*}*{typCase_a* <- typCase_a**}, typCase_b*{typCase_b <- typCase_b*}*{typCase_b* <- typCase_b**})
-
-1. If ((|typCase_a*{typCase_a <- typCase_a*}*{typCase_a* <- typCase_a**}| = |typCase_b*{typCase_b <- typCase_b*}*{typCase_b* <- typCase_b**}|)), then
-
-  1. (Let b_share be $shares_case(typCase_a*{typCase_a <- typCase_a*}, typCase_b*{typCase_b <- typCase_b*}))*{typCase_a* <- typCase_a**, typCase_b* <- typCase_b**, b_share -> b_share*}
+  1. (Let b_share be $is_overlapping_cases(mixop_a*{mixop_a <- mixop_a*}, mixop_b*{mixop_b <- mixop_b*}))*{mixop_a* <- mixop_a**, mixop_b* <- mixop_b**, b_share -> b_share*}
 
     1. Return $forall_(b_share*{b_share <- b_share*})
 
 1. Else Dangling
 
-def $is_exclusive(typCase*{typCase <- typCase*}*{typCase* <- typCase**}*{typCase** <- typCase***})
+def $is_exclusive_rows(rowCases*{rowCases <- rowCases*})
 
-1. Case analysis on typCase*{typCase <- typCase*}*{typCase* <- typCase**}*{typCase** <- typCase***} (total)
+1. If (rowCases*{rowCases <- rowCases*} matches []), then
 
-  1. Case (% matches pattern [])
+  1. Return true
 
-    1. Return true
+1. Else Dangling
 
-  2. Case (% matches pattern _ :: _)
+2. (Let mixop*{mixop <- mixop*}*{mixop* <- mixop**} be rowCases)*{rowCases <- rowCases*, mixop** -> mixop***}
 
-    1. (Let typCase_h*{typCase_h <- typCase_h*}*{typCase_h* <- typCase_h**} :: typCase_t*{typCase_t <- typCase_t*}*{typCase_t* <- typCase_t**}*{typCase_t** <- typCase_t***} be typCase*{typCase <- typCase*}*{typCase* <- typCase**}*{typCase** <- typCase***})
+  1. If (mixop*{mixop <- mixop*}*{mixop* <- mixop**}*{mixop** <- mixop***} matches _ :: _), then
 
-      1. (Let b_overlap be $overlaps(typCase_h*{typCase_h <- typCase_h*}*{typCase_h* <- typCase_h**}, typCase_t*{typCase_t <- typCase_t*}*{typCase_t* <- typCase_t**}))*{typCase_t** <- typCase_t***, b_overlap -> b_overlap*}
+    1. (Let mixop_h*{mixop_h <- mixop_h*}*{mixop_h* <- mixop_h**} :: mixop_t*{mixop_t <- mixop_t*}*{mixop_t* <- mixop_t**}*{mixop_t** <- mixop_t***} be mixop*{mixop <- mixop*}*{mixop* <- mixop**}*{mixop** <- mixop***})
 
-        1. Return (~$exists_(b_overlap*{b_overlap <- b_overlap*}) /\ $is_exclusive(typCase_t*{typCase_t <- typCase_t*}*{typCase_t* <- typCase_t**}*{typCase_t** <- typCase_t***}))
+      1. (Let b_overlap be $is_overlapping_rows(mixop_h*{mixop_h <- mixop_h*}*{mixop_h* <- mixop_h**}, mixop_t*{mixop_t <- mixop_t*}*{mixop_t* <- mixop_t**}))*{mixop_t** <- mixop_t***, b_overlap -> b_overlap*}
 
-def $prepend_each(typCase, typCase_rest*{typCase_rest <- typCase_rest*}*{typCase_rest* <- typCase_rest**})
+        1. Return (~$exists_(b_overlap*{b_overlap <- b_overlap*}) /\ $is_exclusive_rows(mixop_t*{mixop_t <- mixop_t*}*{mixop_t* <- mixop_t**}*{mixop_t** <- mixop_t***}))
 
-1. Return typCase :: typCase_rest*{typCase_rest <- typCase_rest*}*{typCase_rest* <- typCase_rest**}
+  1. Else Dangling
 
-def $combinations(typCase*{typCase <- typCase*}*{typCase* <- typCase**})
+def $combinations_cases(cases*{cases <- cases*})
 
-1. Case analysis on typCase*{typCase <- typCase*}*{typCase* <- typCase**} (total)
+1. If (cases*{cases <- cases*} matches []), then
 
-  1. Case (% matches pattern [])
+  1. (Let mixop_none*{mixop_none <- mixop_none*} be [])
 
-    1. Return [[]]
+    1. Return [mixop_none*{mixop_none <- mixop_none*}]
 
-  2. Case (% matches pattern _ :: _)
+1. Else Dangling
 
-    1. (Let typCase_h*{typCase_h <- typCase_h*} :: typCase_t*{typCase_t <- typCase_t*}*{typCase_t* <- typCase_t**} be typCase*{typCase <- typCase*}*{typCase* <- typCase**})
+2. (Let mixop*{mixop <- mixop*} be cases)*{cases <- cases*, mixop* -> mixop**}
 
-      1. (Let typCase_rest*{typCase_rest <- typCase_rest*}*{typCase_rest* <- typCase_rest**} be $combinations(typCase_t*{typCase_t <- typCase_t*}*{typCase_t* <- typCase_t**}))
+  1. If (mixop*{mixop <- mixop*}*{mixop* <- mixop**} matches _ :: _), then
 
-        1. (Let typCase_comb*{typCase_comb <- typCase_comb*}*{typCase_comb* <- typCase_comb**} be $prepend_each(typCase_h, typCase_rest*{typCase_rest <- typCase_rest*}*{typCase_rest* <- typCase_rest**}))*{typCase_h <- typCase_h*, typCase_comb** -> typCase_comb***}
+    1. (Let mixop_h*{mixop_h <- mixop_h*} :: mixop_t*{mixop_t <- mixop_t*}*{mixop_t* <- mixop_t**} be mixop*{mixop <- mixop*}*{mixop* <- mixop**})
 
-          1. Return $concat_<typCase*>(typCase_comb*{typCase_comb <- typCase_comb*}*{typCase_comb* <- typCase_comb**}*{typCase_comb** <- typCase_comb***})
+      1. (Let mixop_rest*{mixop_rest <- mixop_rest*}*{mixop_rest* <- mixop_rest**} be $combinations_cases(mixop_t*{mixop_t <- mixop_t*}*{mixop_t* <- mixop_t**}))
 
-def $is_covered(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***}, typCase*{typCase <- typCase*})
+        1. (Let mixop_comb*{mixop_comb <- mixop_comb*}*{mixop_comb* <- mixop_comb**} be $prepend_combinations(mixop_h, mixop_rest*{mixop_rest <- mixop_rest*}*{mixop_rest* <- mixop_rest**}))*{mixop_h <- mixop_h*, mixop_comb** -> mixop_comb***}
 
-1. If ((|typCase*{typCase <- typCase*}| = |typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}|))*{typCase_row** <- typCase_row***}, then
+          1. Return $concat_<mixop*>(mixop_comb*{mixop_comb <- mixop_comb*}*{mixop_comb* <- mixop_comb**}*{mixop_comb** <- mixop_comb***})
 
-  1. (Let b_cover be $forall_(typCase <- typCase_row*{typCase_row <- typCase_row*}*{typCase <- typCase*, typCase_row* <- typCase_row**}))*{typCase_row** <- typCase_row***, b_cover -> b_cover*}
+  1. Else Dangling
+
+def $prepend_combinations(mixop, mixop_rest*{mixop_rest <- mixop_rest*}*{mixop_rest* <- mixop_rest**})
+
+1. Return mixop :: mixop_rest*{mixop_rest <- mixop_rest*}*{mixop_rest* <- mixop_rest**}
+
+def $is_covered_combination(mixop_row*{mixop_row <- mixop_row*}*{mixop_row* <- mixop_row**}*{mixop_row** <- mixop_row***}, mixop*{mixop <- mixop*})
+
+1. If ((|mixop*{mixop <- mixop*}| = |mixop_row*{mixop_row <- mixop_row*}*{mixop_row* <- mixop_row**}|))*{mixop_row** <- mixop_row***}, then
+
+  1. (Let b_cover be $forall_(mixop <- mixop_row*{mixop_row <- mixop_row*}*{mixop <- mixop*, mixop_row* <- mixop_row**}))*{mixop_row** <- mixop_row***, b_cover -> b_cover*}
 
     1. Return $exists_(b_cover*{b_cover <- b_cover*})
 

@@ -1413,31 +1413,20 @@ relation Algo_tblRow: algoCtx |- tblRowIL : tblRowAL
     -- if $is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})
     -- if (tblRowAL = arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL*{premAL <- premAL*})
 
-relation TblRows_cover: algoCtx typ* |- tblRowIL*
+relation Cover_tblRows: algoCtx typ* |- tblRowIL*
 
   rulegroup
 
-    rule default: AC typ*{typ <- typ*} |- tblRowIL*{tblRowIL <- tblRowIL*}
-    -- (if (_typCase*{_typCase <- _typCase*} = $variant_cases(AC.TYP, typ)))*{_typCase* <- _typCase**, typ <- typ*}
+    rule : AC typ*{typ <- typ*} |- tblRowIL*{tblRowIL <- tblRowIL*}
+    -- (if (cases_key = $cases_typ(AC.TYP, typ)))*{cases_key <- cases_key*, typ <- typ*}
+    -- if (combination*{combination <- combination*} = $combinations_cases(cases_key*{cases_key <- cases_key*}))
+    -- (if (EXP typedExp as arg*{typedExp <- typedExp*} '=' _typedExp = tblRowIL))*{_typedExp <- _typedExp*, tblRowIL <- tblRowIL*, typedExp* <- typedExp**}
+    -- (if (rowCases = $cases_exp(AC.TYP, typedExp)*{typedExp <- typedExp*}))*{rowCases <- rowCases*, typedExp* <- typedExp**}
     -- if (|tblRowIL*{tblRowIL <- tblRowIL*}| > 0)
-    -- if (n_init as int = (|tblRowIL*{tblRowIL <- tblRowIL*}| - 1))
-    -- if (EXP typedExp_last as arg*{typedExp_last <- typedExp_last*} '=' _typedExp = tblRowIL*{tblRowIL <- tblRowIL*}[n_init])
-    -- if $forall_($is_wildcard_exp(typedExp_last)*{typedExp_last <- typedExp_last*})
-    -- if (EXP typedExp as arg*{typedExp <- typedExp*} '=' _typedExp'*{_typedExp' <- _typedExp'*, typedExp* <- typedExp**} = tblRowIL*{tblRowIL <- tblRowIL*}[0 : n_init])
-    -- (if (typCase_row*{typCase_row <- typCase_row*} = $covered_cases(AC.TYP, typedExp)))*{typCase_row* <- typCase_row**, typedExp <- typedExp*}*{typCase_row** <- typCase_row***, typedExp* <- typedExp**}
-    -- if $is_exclusive(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***})
-
-    rule exhaustive: AC typ*{typ <- typ*} |- tblRowIL*{tblRowIL <- tblRowIL*}
-    -- (if (typCase_total*{typCase_total <- typCase_total*} = $variant_cases(AC.TYP, typ)))*{typ <- typ*, typCase_total* <- typCase_total**}
-    -- if (|tblRowIL*{tblRowIL <- tblRowIL*}| > 0)
-    -- if (n_init as int = (|tblRowIL*{tblRowIL <- tblRowIL*}| - 1))
-    -- if (EXP typedExp_last as arg*{typedExp_last <- typedExp_last*} '=' _typedExp = tblRowIL*{tblRowIL <- tblRowIL*}[n_init])
-    -- if ~$forall_($is_wildcard_exp(typedExp_last)*{typedExp_last <- typedExp_last*})
-    -- if (EXP typedExp as arg*{typedExp <- typedExp*} '=' _typedExp'*{_typedExp' <- _typedExp'*, typedExp* <- typedExp**} = tblRowIL*{tblRowIL <- tblRowIL*})
-    -- (if (typCase_row*{typCase_row <- typCase_row*} = $covered_cases(AC.TYP, typedExp)))*{typCase_row* <- typCase_row**, typedExp <- typedExp*}*{typCase_row** <- typCase_row***, typedExp* <- typedExp**}
-    -- if $is_exclusive(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***})
-    -- if (typCase_comb*{typCase_comb <- typCase_comb*}*{typCase_comb* <- typCase_comb**} = $combinations(typCase_total*{typCase_total <- typCase_total*}*{typCase_total* <- typCase_total**}))
-    -- if $forall_($is_covered(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***}, typCase_comb*{typCase_comb <- typCase_comb*})*{typCase_comb* <- typCase_comb**})
+    -- if (n_last as int = (|tblRowIL*{tblRowIL <- tblRowIL*}| - 1))
+    -- if $is_exclusive_rows(rowCases*{rowCases <- rowCases*}[0 : n_last])
+    -- if ($forall_($is_covered_combination([rowCases*{rowCases <- rowCases*}[n_last]], combination)*{combination <- combination*}) \/ $is_exclusive_rows(rowCases*{rowCases <- rowCases*}))
+    -- if $forall_($is_covered_combination(rowCases*{rowCases <- rowCases*}, combination)*{combination <- combination*})
 
 relation Algo_rul: algoCtx inputHint |- rulIL : rulAL
 
@@ -1502,7 +1491,7 @@ relation Algo_def: algoCtx |- defnIL : defnAL
     -- if (TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowIL*{tblRowIL <- tblRowIL*} = tableFuncDefnIL)
     -- if (EXP typ_param as param*{typ_param <- typ_param*} = param*{param <- param*})
     -- (Algo_tblRow: AC |- tblRowIL : tblRowAL)*{tblRowAL <- tblRowAL*, tblRowIL <- tblRowIL*}
-    -- if TblRows_cover: AC typ_param*{typ_param <- typ_param*} |- tblRowIL*{tblRowIL <- tblRowIL*} holds
+    -- if Cover_tblRows: AC typ_param*{typ_param <- typ_param*} |- tblRowIL*{tblRowIL <- tblRowIL*} holds
     -- if (tableFuncDefnAL = TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL*{tblRowAL <- tblRowAL*})
 
     rule defined: AC |- definedFuncDefnIL as defnIL : definedFuncDefnAL as defnAL
@@ -2313,87 +2302,80 @@ def $prem_let_partial(iterCtx, vari, typedExp, typedExp) : premAL =
   -- if (IC_bind = $add_iterated(IC, vari_d :: vari_bind*{vari_bind <- vari_bind*}))
   -- if (premIterAL*{premIterAL <- premIterAL*} = $prem_iters(IC_bind, [id_d], $ids_of_varis(vari_bind*{vari_bind <- vari_bind*})))
 
-def $is_singleton_typ(tdenv, typ) : bool =
+syntax cases = mixop*
 
-  clause 0 : (tdenv, typ) = true
-  -- if (OK VAR id targ*{targ <- targ*} as typRes = $expand_typ(tdenv, typ))
-  -- if (?(TYP _id tparam*{tparam <- tparam*} '=' VARIANT typCase*{typCase <- typCase*} as typDef) = $find_map<id, typDef>(tdenv, id))
-  -- if (|typCase*{typCase <- typCase*}| = 1)
-  -- if (|tparam*{tparam <- tparam*}| = |targ*{targ <- targ*}|)
+syntax rowCases = cases*
 
-  clause -1 : (_tdenv, _typ) = false
+syntax combination = mixop*
 
-def $is_irrefutable(tdenv, typedExp) : bool =
+def $cases_typ(tdenv, typ) : cases =
+
+  clause 0 : (tdenv, typ) = mixop*{mixop <- mixop*}
+  -- if (OK VAR id _targ*{_targ <- _targ*} as typRes = $expand_typ(tdenv, typ))
+  -- if (?(TYP _id _tparam*{_tparam <- _tparam*} '=' VARIANT mixop _typ*{_typ <- _typ*}*{_typ* <- _typ**, mixop <- mixop*} as typDef) = $find_map<id, typDef>(tdenv, id))
+
+def $is_irrefutable_exp(tdenv, typedExp) : bool =
 
   clause 0 : (_tdenv, varExp as exp '#' _typ) = true
 
-  clause 1 : (tdenv, TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ) = $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
+  clause 1 : (tdenv, TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ) = $forall_($is_irrefutable_exp(tdenv, typedExp)*{typedExp <- typedExp*})
 
-  clause 2 : (tdenv, INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' typ) = ($is_singleton_typ(tdenv, typ) /\ $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*}))
+  clause 2 : (tdenv, INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' typ) = ($is_singleton_typ(tdenv, typ) /\ $forall_($is_irrefutable_exp(tdenv, typedExp)*{typedExp <- typedExp*}))
 
-  clause 3 : (tdenv, STR expField*{expField <- expField*} as exp '#' _typ) = $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
+  clause 3 : (tdenv, STR expField*{expField <- expField*} as exp '#' _typ) = $forall_($is_irrefutable_exp(tdenv, typedExp)*{typedExp <- typedExp*})
   -- (if (_atom typedExp = expField))*{_atom <- _atom*, expField <- expField*, typedExp <- typedExp*}
 
-  clause 4 : (tdenv, ITER typedExp _expIter as exp '#' _typ) = $is_irrefutable(tdenv, typedExp)
+  clause 4 : (tdenv, ITER typedExp _expIter as exp '#' _typ) = $is_irrefutable_exp(tdenv, typedExp)
 
   clause 5 : (_tdenv, exp '#' _typ) = false
   -- if ((((~exp <: varExp /\ ~exp <: tupExp) /\ ~exp <: injExp) /\ ~exp <: strExp) /\ ~exp <: iterExp)
 
-def $variant_cases(tdenv, typ) : typCase* =
+def $is_singleton_typ(tdenv, typ) : bool =
 
-  clause 0 : (tdenv, VAR id _targ*{_targ <- _targ*}) = typCase*{typCase <- typCase*}
-  -- if (?(TYP _id _tparam*{_tparam <- _tparam*} '=' VARIANT typCase*{typCase <- typCase*} as typDef) = $find_map<id, typDef>(tdenv, id))
+  clause 0 : (tdenv, typ) = (|$cases_typ(tdenv, typ)| = 1)
 
-def $covered_cases(tdenv, typedExp) : typCase* =
+def $cases_exp(tdenv, typedExp) : cases =
 
-  clause 0 : (tdenv, varExp as exp '#' typ) = $variant_cases(tdenv, typ)
+  clause 0 : (tdenv, varExp as exp '#' typ) = $cases_typ(tdenv, typ)
 
-  clause 1 : (tdenv, UPCAST _typ typedExp as exp '#' _typ') = $covered_cases(tdenv, typedExp)
+  clause 1 : (tdenv, UPCAST _typ typedExp as exp '#' _typ') = $cases_exp(tdenv, typedExp)
 
-  clause 2 : (tdenv, INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ) = [mixop typ*{typ <- typ*}]
-  -- if $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
-  -- (if (_exp '#' typ = typedExp))*{_exp <- _exp*, typ <- typ*, typedExp <- typedExp*}
+  clause 2 : (tdenv, INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ) = [mixop]
+  -- if $forall_($is_irrefutable_exp(tdenv, typedExp)*{typedExp <- typedExp*})
 
-def $is_wildcard_exp(typedExp) : bool =
+def $is_overlapping_cases(cases, cases) : bool =
 
-  clause 0 : (VAR id as exp '#' _typ) = true
-  -- if (|id| > 0)
-  -- if (id[0 : 1] = "_")
+  clause 0 : (mixop_a*{mixop_a <- mixop_a*}, mixop_b*{mixop_b <- mixop_b*}) = $exists_(mixop_a <- mixop_b*{mixop_b <- mixop_b*}*{mixop_a <- mixop_a*})
 
-  clause -1 : (_typedExp) = false
+def $is_overlapping_rows(rowCases, rowCases) : bool =
 
-def $shares_case(typCase*, typCase*) : bool =
+  clause 0 : (mixop_a*{mixop_a <- mixop_a*}*{mixop_a* <- mixop_a**}, mixop_b*{mixop_b <- mixop_b*}*{mixop_b* <- mixop_b**}) = $forall_(b_share*{b_share <- b_share*})
+  -- (if (b_share = $is_overlapping_cases(mixop_a*{mixop_a <- mixop_a*}, mixop_b*{mixop_b <- mixop_b*})))*{b_share <- b_share*, mixop_a* <- mixop_a**, mixop_b* <- mixop_b**}
 
-  clause 0 : (typCase_a*{typCase_a <- typCase_a*}, typCase_b*{typCase_b <- typCase_b*}) = $exists_(typCase_a <- typCase_b*{typCase_b <- typCase_b*}*{typCase_a <- typCase_a*})
-
-def $overlaps(typCase**, typCase**) : bool =
-
-  clause 0 : (typCase_a*{typCase_a <- typCase_a*}*{typCase_a* <- typCase_a**}, typCase_b*{typCase_b <- typCase_b*}*{typCase_b* <- typCase_b**}) = $forall_(b_share*{b_share <- b_share*})
-  -- (if (b_share = $shares_case(typCase_a*{typCase_a <- typCase_a*}, typCase_b*{typCase_b <- typCase_b*})))*{b_share <- b_share*, typCase_a* <- typCase_a**, typCase_b* <- typCase_b**}
-
-def $is_exclusive(typCase***) : bool =
+def $is_exclusive_rows(rowCases*) : bool =
 
   clause 0 : ([]) = true
 
-  clause 1 : (typCase_h*{typCase_h <- typCase_h*}*{typCase_h* <- typCase_h**} :: typCase_t*{typCase_t <- typCase_t*}*{typCase_t* <- typCase_t**}*{typCase_t** <- typCase_t***}) = (~$exists_(b_overlap*{b_overlap <- b_overlap*}) /\ $is_exclusive(typCase_t*{typCase_t <- typCase_t*}*{typCase_t* <- typCase_t**}*{typCase_t** <- typCase_t***}))
-  -- (if (b_overlap = $overlaps(typCase_h*{typCase_h <- typCase_h*}*{typCase_h* <- typCase_h**}, typCase_t*{typCase_t <- typCase_t*}*{typCase_t* <- typCase_t**})))*{b_overlap <- b_overlap*, typCase_t** <- typCase_t***}
+  clause 1 : (mixop_h*{mixop_h <- mixop_h*}*{mixop_h* <- mixop_h**} :: mixop_t*{mixop_t <- mixop_t*}*{mixop_t* <- mixop_t**}*{mixop_t** <- mixop_t***}) = (~$exists_(b_overlap*{b_overlap <- b_overlap*}) /\ $is_exclusive_rows(mixop_t*{mixop_t <- mixop_t*}*{mixop_t* <- mixop_t**}*{mixop_t** <- mixop_t***}))
+  -- (if (b_overlap = $is_overlapping_rows(mixop_h*{mixop_h <- mixop_h*}*{mixop_h* <- mixop_h**}, mixop_t*{mixop_t <- mixop_t*}*{mixop_t* <- mixop_t**})))*{b_overlap <- b_overlap*, mixop_t** <- mixop_t***}
 
-def $prepend_each(typCase, typCase**) : typCase** =
+def $combinations_cases(cases*) : combination* =
 
-  clause 0 : (typCase, typCase_rest*{typCase_rest <- typCase_rest*}*{typCase_rest* <- typCase_rest**}) = typCase :: typCase_rest*{typCase_rest <- typCase_rest*}*{typCase_rest* <- typCase_rest**}
+  clause 0 : ([]) = [mixop_none*{mixop_none <- mixop_none*}]
+  -- if (mixop_none*{mixop_none <- mixop_none*} = [])
 
-def $combinations(typCase**) : typCase** =
+  clause 1 : (mixop_h*{mixop_h <- mixop_h*} :: mixop_t*{mixop_t <- mixop_t*}*{mixop_t* <- mixop_t**}) = $concat_<mixop*>(mixop_comb*{mixop_comb <- mixop_comb*}*{mixop_comb* <- mixop_comb**}*{mixop_comb** <- mixop_comb***})
+  -- if (mixop_rest*{mixop_rest <- mixop_rest*}*{mixop_rest* <- mixop_rest**} = $combinations_cases(mixop_t*{mixop_t <- mixop_t*}*{mixop_t* <- mixop_t**}))
+  -- (if (mixop_comb*{mixop_comb <- mixop_comb*}*{mixop_comb* <- mixop_comb**} = $prepend_combinations(mixop_h, mixop_rest*{mixop_rest <- mixop_rest*}*{mixop_rest* <- mixop_rest**})))*{mixop_comb** <- mixop_comb***, mixop_h <- mixop_h*}
 
-  clause 0 : ([]) = [[]]
+def $prepend_combinations(mixop, combination*) : combination* =
 
-  clause 1 : (typCase_h*{typCase_h <- typCase_h*} :: typCase_t*{typCase_t <- typCase_t*}*{typCase_t* <- typCase_t**}) = $concat_<typCase*>(typCase_comb*{typCase_comb <- typCase_comb*}*{typCase_comb* <- typCase_comb**}*{typCase_comb** <- typCase_comb***})
-  -- if (typCase_rest*{typCase_rest <- typCase_rest*}*{typCase_rest* <- typCase_rest**} = $combinations(typCase_t*{typCase_t <- typCase_t*}*{typCase_t* <- typCase_t**}))
-  -- (if (typCase_comb*{typCase_comb <- typCase_comb*}*{typCase_comb* <- typCase_comb**} = $prepend_each(typCase_h, typCase_rest*{typCase_rest <- typCase_rest*}*{typCase_rest* <- typCase_rest**})))*{typCase_comb** <- typCase_comb***, typCase_h <- typCase_h*}
+  clause 0 : (mixop, mixop_rest*{mixop_rest <- mixop_rest*}*{mixop_rest* <- mixop_rest**}) = mixop :: mixop_rest*{mixop_rest <- mixop_rest*}*{mixop_rest* <- mixop_rest**}
 
-def $is_covered(typCase***, typCase*) : bool =
+def $is_covered_combination(rowCases*, combination) : bool =
 
-  clause 0 : (typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***}, typCase*{typCase <- typCase*}) = $exists_(b_cover*{b_cover <- b_cover*})
-  -- (if (b_cover = $forall_(typCase <- typCase_row*{typCase_row <- typCase_row*}*{typCase <- typCase*, typCase_row* <- typCase_row**})))*{b_cover <- b_cover*, typCase_row** <- typCase_row***}
+  clause 0 : (mixop_row*{mixop_row <- mixop_row*}*{mixop_row* <- mixop_row**}*{mixop_row** <- mixop_row***}, mixop*{mixop <- mixop*}) = $exists_(b_cover*{b_cover <- b_cover*})
+  -- (if (b_cover = $forall_(mixop <- mixop_row*{mixop_row <- mixop_row*}*{mixop <- mixop*, mixop_row* <- mixop_row**})))*{b_cover <- b_cover*, mixop_row** <- mixop_row***}
 
 def $exp_len(typedExp) : typedExp =
 
