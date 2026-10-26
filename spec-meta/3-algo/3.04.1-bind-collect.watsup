@@ -10,22 +10,8 @@
 ;; Any other construct binds nothing, so all of its variables must be bound;
 ;; `-- if (x, y + 1) = e` with `y` unbound has no AL.
 
-dec $is_invertible(typedExp) : bool
-  hint(prose_true %0 "is an invertible construct")
-  hint(prose_false %0 "is not an invertible construct")
-def $is_invertible((VAR _) '#' _) = true
-def $is_invertible((UPCAST _ _) '#' _) = true
-def $is_invertible((TUP _) '#' _) = true
-def $is_invertible((INJ _) '#' _) = true
-def $is_invertible((STR _) '#' _) = true
-def $is_invertible((OPT _) '#' _) = true
-def $is_invertible((LIST _) '#' _) = true
-def $is_invertible((CONS _ _) '#' _) = true
-def $is_invertible((ITER _ _) '#' _) = true
-def $is_invertible(_) = false
-  -- otherwise
-
-;;; VAR id
+;;; varExp
+;;; syntax varExp = VAR id
 
 rulegroup Collectbind_exp/variable {
 
@@ -39,32 +25,37 @@ rulegroup Collectbind_exp/variable {
 
 }
 
-;;; UPCAST typ typedExp
+;;; upCastExp
+;;; syntax upCastExp = UPCAST typ typedExp
 
 rule Collectbind_exp/upcast:
   AC |- (UPCAST _ typedExp) '#' _ : vari*
   -- Collectbind_exp: AC |- typedExp : vari*
 
-;;; TUP typedExp*
+;;; tupExp
+;;; syntax tupExp = TUP typedExp*
 
 rule Collectbind_exp/tuple:
   AC |- (TUP typedExp*) '#' _ : vari*
   -- Collectbind_exps: AC |- typedExp* : vari*
 
-;;; INJ expCase
+;;; injExp
+;;; syntax injExp = INJ expCase
 
 rule Collectbind_exp/case:
   AC |- (INJ (_ typedExp*)) '#' _ : vari*
   -- Collectbind_exps: AC |- typedExp* : vari*
 
-;;; STR expField*
+;;; strExp
+;;; syntax strExp = STR expField*
 
 rule Collectbind_exp/struct:
   AC |- (STR expField*) '#' _ : vari*
   -- (if _ typedExp = expField)*
   -- Collectbind_exps: AC |- typedExp* : vari*
 
-;;; OPT typedExp?
+;;; optExp
+;;; syntax optExp = OPT typedExp?
 
 rulegroup Collectbind_exp/opt {
 
@@ -77,35 +68,40 @@ rulegroup Collectbind_exp/opt {
 
 }
 
-;;; LIST typedExp*
+;;; listExp
+;;; syntax listExp = LIST typedExp*
 
 rule Collectbind_exp/list:
   AC |- (LIST typedExp*) '#' _ : vari*
   -- Collectbind_exps: AC |- typedExp* : vari*
 
-;;; CONS typedExp typedExp
+;;; consExp
+;;; syntax consExp = CONS typedExp typedExp
 
 rule Collectbind_exp/cons:
   AC |- (CONS typedExp_h typedExp_t) '#' _ : vari*
   -- Collectbind_exps:
       AC |- [ typedExp_h, typedExp_t ] : vari*
 
-;;; ITER typedExp expIter
+;;; iterExp
+;;; syntax iterExp = ITER typedExp expIter
 
 rule Collectbind_exp/iter:
   AC |- (ITER typedExp (iter _)) '#' _ : vari_iter*
   -- Collectbind_exp: AC |- typedExp : vari*
   -- if (vari_iter = $iterate_vari(vari, [ iter ]))*
 
-;;; BOOL bool | num | TEXT text | UN unOp typedExp | BIN binOp typedExp typedExp
-;;; CMP cmpOp typedExp typedExp | DOWNCAST typ typedExp | SUB typedExp typ
-;;; MATCH typedExp pat | CAT typedExp typedExp | MEM typedExp typedExp | LEN typedExp
-;;; DOT typedExp atom | IDX typedExp typedExp | SLICE typedExp typedExp typedExp
-;;; UPD typedExp typedPath typedExp | CALL id targ* arg*
+;;; literalExp | opExp | downCastExp | subExp | matchExp
+;;; catExp | memExp | lenExp | accExp | updExp | callExp
 
 rule Collectbind_exp/noninvertible:
   AC |- typedExp : eps
-  -- if ~$is_invertible(typedExp)
+  ---- ;; the construct is not invertible
+  -- if exp '#' _ = typedExp
+  -- if ~(exp <: varExp) /\ ~(exp <: upCastExp) /\ ~(exp <: tupExp)
+        /\ ~(exp <: injExp) /\ ~(exp <: strExp) /\ ~(exp <: optExp)
+        /\ ~(exp <: listExp) /\ ~(exp <: consExp) /\ ~(exp <: iterExp)
+  ---- ;; so all of its variables must be bound
   -- if id* = $ids_of_varis($free_varis_exp(typedExp))
   -- if $forall_((id <- $ids_of_varis(AC.BOUND))*)
 
@@ -133,16 +129,18 @@ rulegroup Collectbind_exps {
 ;; syntax arg
 ;;
 
-;;; EXP typedExp
+;;; expArg
+;;; syntax expArg = EXP typedExp
 
 rule Collectbind_arg/exp:
   AC |- EXP typedExp : vari*
   -- Collectbind_exp: AC |- typedExp : vari*
 
-;;; FUN id
+;;; funArg
+;;; syntax funArg = FUN id
 
 rule Collectbind_arg/fun:
-  AC |- FUN _ : eps
+  AC |- funArg : eps
 
 ;;
 ;; Binder collection in argument sequences

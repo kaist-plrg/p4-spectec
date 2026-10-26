@@ -1,5 +1,7 @@
 ;;
-;; Free variables
+;; Free variables in expressions
+;;
+;; syntax typedExp
 ;;
 
 dec $free_varis_exp(typedExp) : vari*
@@ -13,141 +15,277 @@ dec $free_varis_arg(arg) : vari*
 dec $free_varis_args(arg*) : vari*
   hint(prose_in "the variables occurring in" %0)
 
-;;; Expressions
+;;; literalExp
+;;; syntax literalExp = BOOL bool | num | TEXT text
 
-def $free_varis_exp((BOOL _) '#' _) = eps
+def $free_varis_exp(literalExp '#' _) = eps
 
-def $free_varis_exp(num '#' _) = eps
-
-def $free_varis_exp((TEXT _) '#' _) = eps
+;;; varExp
+;;; syntax varExp = VAR id
 
 def $free_varis_exp((VAR id) '#' typ) = [ id typ eps ]
+
+;;; unOpExp
+;;; syntax unOpExp = UN unOp typedExp
 
 def $free_varis_exp((UN _ typedExp) '#' _)
   = $free_varis_exp(typedExp)
 
+;;; binOpExp
+;;; syntax binOpExp = BIN binOp typedExp typedExp
+
 def $free_varis_exp((BIN _ typedExp_l typedExp_r) '#' _)
   = $free_varis_exps([ typedExp_l, typedExp_r ])
+
+;;; cmpOpExp
+;;; syntax cmpOpExp = CMP cmpOp typedExp typedExp
 
 def $free_varis_exp((CMP _ typedExp_l typedExp_r) '#' _)
   = $free_varis_exps([ typedExp_l, typedExp_r ])
 
+;;; upCastExp
+;;; syntax upCastExp = UPCAST typ typedExp
+
 def $free_varis_exp((UPCAST _ typedExp) '#' _)
   = $free_varis_exp(typedExp)
+
+;;; downCastExp
+;;; syntax downCastExp = DOWNCAST typ typedExp
 
 def $free_varis_exp((DOWNCAST _ typedExp) '#' _)
   = $free_varis_exp(typedExp)
 
+;;; subExp
+;;; syntax subExp = SUB typedExp typ
+
 def $free_varis_exp((SUB typedExp _) '#' _)
   = $free_varis_exp(typedExp)
+
+;;; matchExp
+;;; syntax matchExp = MATCH typedExp pat
 
 def $free_varis_exp((MATCH typedExp _) '#' _)
   = $free_varis_exp(typedExp)
 
+;;; tupExp
+;;; syntax tupExp = TUP typedExp*
+
 def $free_varis_exp((TUP typedExp*) '#' _)
   = $free_varis_exps(typedExp*)
 
+;;; injExp
+;;; syntax injExp = INJ expCase
+
 def $free_varis_exp((INJ (_ typedExp*)) '#' _)
   = $free_varis_exps(typedExp*)
+
+;;; strExp
+;;; syntax strExp = STR expField*
 
 def $free_varis_exp((STR expField*) '#' _)
   = $free_varis_exps(typedExp*)
   -- (if _ typedExp = expField)*
 
+;;; optExp
+;;; syntax optExp = OPT typedExp?
+
 def $free_varis_exp((OPT eps) '#' _) = eps
 def $free_varis_exp((OPT typedExp) '#' _)
   = $free_varis_exp(typedExp)
 
+;;; listExp
+;;; syntax listExp = LIST typedExp*
+
 def $free_varis_exp((LIST typedExp*) '#' _)
   = $free_varis_exps(typedExp*)
+
+;;; consExp
+;;; syntax consExp = CONS typedExp typedExp
 
 def $free_varis_exp((CONS typedExp_h typedExp_t) '#' _)
   = $free_varis_exps([ typedExp_h, typedExp_t ])
 
+;;; catExp
+;;; syntax catExp = CAT typedExp typedExp
+
 def $free_varis_exp((CAT typedExp_l typedExp_r) '#' _)
   = $free_varis_exps([ typedExp_l, typedExp_r ])
+
+;;; memExp
+;;; syntax memExp = MEM typedExp typedExp
 
 def $free_varis_exp((MEM typedExp_l typedExp_r) '#' _)
   = $free_varis_exps([ typedExp_l, typedExp_r ])
 
+;;; lenExp
+;;; syntax lenExp = LEN typedExp
+
 def $free_varis_exp((LEN typedExp) '#' _)
   = $free_varis_exp(typedExp)
+
+;;; dotAccExp
+;;; syntax dotAccExp = DOT typedExp atom
 
 def $free_varis_exp((DOT typedExp _) '#' _)
   = $free_varis_exp(typedExp)
 
+;;; idxAccExp
+;;; syntax idxAccExp = IDX typedExp typedExp
+
 def $free_varis_exp((IDX typedExp_b typedExp_i) '#' _)
   = $free_varis_exps([ typedExp_b, typedExp_i ])
+
+;;; sliceAccExp
+;;; syntax sliceAccExp = SLICE typedExp typedExp typedExp
 
 def $free_varis_exp((SLICE typedExp_b typedExp_i typedExp_n) '#' _)
   = $free_varis_exps([ typedExp_b, typedExp_i, typedExp_n ])
 
+;;; updExp
+;;; syntax updExp = UPD typedExp typedPath typedExp
+
 def $free_varis_exp((UPD typedExp_b typedPath typedExp_f) '#' _)
   = $free_varis_exp(typedExp_b) ++ $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_f)
 
+;;; callExp
+;;; syntax callExp = CALL id targ* arg*
+
 def $free_varis_exp((CALL _ _ arg*) '#' _)
   = $free_varis_args(arg*)
+
+;;; iterExp
+;;; syntax iterExp = ITER typedExp expIter
 
 def $free_varis_exp((ITER typedExp (iter _)) '#' _) = vari_iter*
   -- if vari* = $free_varis_exp(typedExp)
   -- if (vari_iter = $iterate_vari(vari, [ iter ]))*
 
+;;
+;; Free variables in expression sequences
+;;
+;; syntax typedExp*
+;;
+
 def $free_varis_exps(eps) = eps
 def $free_varis_exps(typedExp_h :: typedExp_t*)
   = $free_varis_exp(typedExp_h) ++ $free_varis_exps(typedExp_t*)
 
-;;; Paths
+;;
+;; Free variables in paths
+;;
+;; syntax typedPath
+;;
+
+;;; rootPath
+;;; syntax rootPath = ROOT
 
 def $free_varis_path(ROOT '#' _) = eps
+
+;;; idxPath
+;;; syntax idxPath = IDX typedPath typedExp
 
 def $free_varis_path((IDX typedPath typedExp_i) '#' _)
   = $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_i)
 
+;;; slicePath
+;;; syntax slicePath = SLICE typedPath typedExp typedExp
+
 def $free_varis_path((SLICE typedPath typedExp_i typedExp_n) '#' _)
   = $free_varis_path(typedPath) ++ $free_varis_exps([ typedExp_i, typedExp_n ])
+
+;;; dotPath
+;;; syntax dotPath = DOT typedPath atom
 
 def $free_varis_path((DOT typedPath _) '#' _)
   = $free_varis_path(typedPath)
 
-;;; Arguments
+;;
+;; Free variables in arguments
+;;
+;; syntax arg
+;;
+
+;;; expArg
+;;; syntax expArg = EXP typedExp
 
 def $free_varis_arg(EXP typedExp) = $free_varis_exp(typedExp)
 
-def $free_varis_arg(FUN _) = eps
+;;; funArg
+;;; syntax funArg = FUN id
+
+def $free_varis_arg(funArg) = eps
+
+;;
+;; Free variables in argument sequences
+;;
+;; syntax arg*
+;;
 
 def $free_varis_args(eps) = eps
 def $free_varis_args(arg_h :: arg_t*)
   = $free_varis_arg(arg_h) ++ $free_varis_args(arg_t*)
 
-;;; Premises
+;;
+;; Free variables in premises
+;;
+;; syntax premIL
+;;
 
 dec $free_varis_premIL(premIL) : vari*
   hint(prose_in "the variables occurring in" %0)
 dec $free_varis_premILs(premIL*) : vari*
   hint(prose_in "the variables occurring in" %0)
 
+;;; relPremIL
+;;; syntax relPremIL = REL id ':' typedExp* `( inputHint `)
+
 def $free_varis_premIL(REL _ ':' typedExp* `( _ `))
   = $free_varis_exps(typedExp*)
 
+;;; ifPrem
+;;; syntax ifPrem = IF typedExp
+
 def $free_varis_premIL(IF typedExp) = $free_varis_exp(typedExp)
+
+;;; ifHoldPrem
+;;; syntax ifHoldPrem = IFHOLD id ':' typedExp*
 
 def $free_varis_premIL(IFHOLD _ ':' typedExp*)
   = $free_varis_exps(typedExp*)
 
+;;; ifNotHoldPrem
+;;; syntax ifNotHoldPrem = IFNOTHOLD id ':' typedExp*
+
 def $free_varis_premIL(IFNOTHOLD _ ':' typedExp*)
   = $free_varis_exps(typedExp*)
+
+;;; iterPremIL
+;;; syntax iterPremIL = ITER premIL premIterIL
 
 def $free_varis_premIL(ITER premIL (iter _)) = vari_iter*
   -- if vari* = $free_varis_premIL(premIL)
   -- if (vari_iter = $iterate_vari(vari, [ iter ]))*
 
+;;; debugPrem
+;;; syntax debugPrem = DEBUG typedExp
+
 def $free_varis_premIL(DEBUG typedExp) = $free_varis_exp(typedExp)
+
+;;
+;; Free variables in premise sequences
+;;
+;; syntax premIL*
+;;
 
 def $free_varis_premILs(eps) = eps
 def $free_varis_premILs(premIL_h :: premIL_t*)
   = $free_varis_premIL(premIL_h) ++ $free_varis_premILs(premIL_t*)
 
-;;; Rules
+;;
+;; Free variables in rules
+;;
+;; syntax rulIL
+;;
 
 dec $free_varis_rulIL(rulIL) : vari*
   hint(prose_in "the variables occurring in" %0)
@@ -155,7 +293,11 @@ dec $free_varis_rulIL(rulIL) : vari*
 def $free_varis_rulIL(_ ':' typedExp* '-' premIL*)
   = $free_varis_exps(typedExp*) ++ $free_varis_premILs(premIL*)
 
-;;; Clauses
+;;
+;; Free variables in clauses
+;;
+;; syntax clauseIL
+;;
 
 dec $free_varis_clauseIL(clauseIL) : vari*
   hint(prose_in "the variables occurring in" %0)
@@ -164,7 +306,11 @@ def $free_varis_clauseIL(arg* '=' typedExp '-' premIL*)
   = $free_varis_args(arg*) ++ $free_varis_exp(typedExp)
     ++ $free_varis_premILs(premIL*)
 
-;;; Tables
+;;
+;; Free variables in table rows
+;;
+;; syntax tblRowIL
+;;
 
 dec $free_varis_tblRowIL(tblRowIL) : vari*
   hint(prose_in "the variables occurring in" %0)

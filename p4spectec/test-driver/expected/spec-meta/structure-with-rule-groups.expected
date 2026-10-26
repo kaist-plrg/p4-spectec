@@ -1822,17 +1822,19 @@ relation Collectbind_exp: AC |- typedExp'' : %
 
 2. Group noninvertible: AC |- typedExp'' : %
 
-  1. If (~$is_invertible(typedExp'')), then
+  1. (Let exp '#' _typ be typedExp'')
 
-    1. (Let id*{id <- id*} be $ids_of_varis($free_varis_exp(typedExp'')))
+    1. If (((((((((~exp <: varExp /\ ~exp <: upCastExp) /\ ~exp <: tupExp) /\ ~exp <: injExp) /\ ~exp <: strExp) /\ ~exp <: optExp) /\ ~exp <: listExp) /\ ~exp <: consExp) /\ ~exp <: iterExp)), then
 
-      1. If ($forall_(id <- $ids_of_varis(AC.BOUND)*{id <- id*})), then
+      1. (Let id*{id <- id*} be $ids_of_varis($free_varis_exp(typedExp'')))
 
-        1. Result in: % |- % : []
+        1. If ($forall_(id <- $ids_of_varis(AC.BOUND)*{id <- id*})), then
 
-      1. Else Dangling
+          1. Result in: % |- % : []
 
-  1. Else Dangling
+        1. Else Dangling
+
+    1. Else Dangling
 
 relation Collectbind_exps: AC |- typedExp*{typedExp <- typedExp*} : %
 
@@ -1870,9 +1872,9 @@ relation Collectbind_arg: AC |- arg : %
 
   2. Case (% has type funArg)
 
-    1. (Let FUN id be arg as funArg)
+    1. (Let funArg be arg as funArg)
 
-      1. Group fun: AC |- FUN id as arg : %
+      1. Group fun: AC |- funArg as arg : %
 
         1. Result in: % |- % : []
 
@@ -1932,9 +1934,9 @@ relation Partialbind_exp: AC IC |- typedExp : % % % %
 
 1. Group : AC IC |- typedExp : % % % %
 
-  1. Case analysis on $decomposes(AC, typedExp) (total)
+  1. Case analysis on $is_bound_exp(AC, typedExp) (total)
 
-    1. Case false
+    1. Case true
 
       1. (Let vari_read*{vari_read <- vari_read*} be $free_varis_exp(typedExp))
 
@@ -1942,235 +1944,315 @@ relation Partialbind_exp: AC IC |- typedExp : % % % %
 
           1. (Let _exp '#' typ be typedExp)
 
-            1. (Let (AC_fresh, vari_d) be $fresh_vari(AC, IC, typ))
+            1. (Let (id_used*{id_used <- id_used*}, id_d) be $fresh_id(AC.USED))
 
-              1. (Let typedExp_d be $exp_of_vari(vari_d))
+              1. (Let AC_fresh be AC[USED = id_used*{id_used <- id_used*}])
 
-                1. (Let typedExp_check be CMP EQ as cmpOp typedExp_d typedExp as exp '#' BOOL as typ)
+                1. (Let vari_d be id_d typ [])
 
-                  1. (Let id_d _typ _iter*{_iter <- _iter*} be vari_d)
+                  1. (Let typedExp_d be $exp_of_vari(vari_d))
 
-                    1. (Let id_read*{id_read <- id_read*} be $ids_of_varis(vari_read*{vari_read <- vari_read*}))
+                    1. (Let cmpOpExp be CMP EQ as cmpOp typedExp_d typedExp)
 
-                      1. (Let IC_d be $add_iterated(IC, [vari_d]))
+                      1. (Let typedExp_check be cmpOpExp as exp '#' BOOL as typ)
 
-                        1. (Let premIterAL*{premIterAL <- premIterAL*} be $prem_iters(IC_d, id_d :: id_read*{id_read <- id_read*}, []))
+                        1. (Let id_read*{id_read <- id_read*} be $ids_of_varis(vari_read*{vari_read <- vari_read*}))
 
-                          1. (Let premAL_check be $iterate_prem(IF typedExp_check as premAL, premIterAL*{premIterAL <- premIterAL*}))
+                          1. (Let IC_d be $add_iterated(IC, [vari_d]))
 
-                            1. (Let IC_fresh be $add_iterated(IC, [vari_d]))
+                            1. (Let premIterAL*{premIterAL <- premIterAL*} be $prem_iters(IC_d, id_d :: id_read*{id_read <- id_read*}, []))
 
-                              1. Result in: % % |- % : AC_fresh IC_fresh typedExp_d [premAL_check]
+                              1. (Let premAL_check be $iterate_prem(IF typedExp_check as premAL, premIterAL*{premIterAL <- premIterAL*}))
+
+                                1. (Let IC_fresh be $add_iterated(IC, [vari_d]))
+
+                                  1. Result in: % % |- % : AC_fresh IC_fresh typedExp_d [premAL_check]
 
         1. Else Dangling
 
-    2. Case true
+    2. Case false
 
-      1. (Partialbind_exp_decomposed: AC IC |- typedExp : AC_part IC_part typedExp_part premAL*{premAL <- premAL*})
+      1. (Partialbind_binder_exp: AC IC |- typedExp : AC_part IC_part typedExp_part premAL*{premAL <- premAL*})
 
         1. Result in: % % |- % : AC_part IC_part typedExp_part premAL*{premAL <- premAL*}
 
-relation Partialbind_exp_decomposed: AC IC |- exp '#' typ : % % % %
+relation Partialbind_binder_exp: AC IC |- exp '#' typ : % % % %
 
 1. Case analysis on exp
 
   1. Case (% has type varExp)
 
-    1. (Let VAR id be exp as varExp)
+    1. (Let varExp be exp as varExp)
 
-      1. Group variable: AC IC |- VAR id as exp '#' typ : % % % %
+      1. Group variable: AC IC |- varExp as exp '#' typ : % % % %
 
-        1. Result in: % % |- % : AC IC VAR id as exp '#' typ []
+        1. Result in: % % |- % : AC IC varExp as exp '#' typ []
 
   2. Case (% has type upCastExp)
 
-    1. (Let UPCAST typ' typedExp be exp as upCastExp)
+    1. (Let upCastExp be exp as upCastExp)
 
-      1. Group upcast: AC IC |- UPCAST typ' typedExp as exp '#' typ : % % % %
+      1. Group upcast: AC IC |- upCastExp as exp '#' typ : % % % %
 
-        1. (Partialbind_exp: AC IC |- typedExp : AC_sub IC_sub typedExp_sub premAL*{premAL <- premAL*})
+        1. (Let UPCAST _typ typedExp be upCastExp)
 
-          1. (Let _exp '#' typ_sub be typedExp_sub)
+          1. (Partialbind_exp: AC IC |- typedExp : AC_sub IC_sub typedExp_sub premAL*{premAL <- premAL*})
 
-            1. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub, typ))
+            1. (Let _exp '#' typ_sub be typedExp_sub)
 
-              1. (Let typedExp_d be $exp_of_vari(vari_d))
+              1. (Let (id_used*{id_used <- id_used*}, id_d) be $fresh_id(AC_sub.USED))
 
-                1. (Let typedExp_check be SUB typedExp_d typ_sub as exp '#' BOOL as typ)
+                1. (Let AC_fresh be AC_sub[USED = id_used*{id_used <- id_used*}])
 
-                  1. (Let typedExp_down be DOWNCAST typ_sub typedExp_d as exp '#' typ_sub)
+                  1. (Let vari_d be id_d typ [])
 
-                    1. (Let premAL_check be $sidecond_partial(IC_sub, vari_d, typedExp_check))
+                    1. (Let typedExp_d be $exp_of_vari(vari_d))
 
-                      1. (Let premAL_let be $let_partial(IC_sub, vari_d, typedExp_sub, typedExp_down))
+                      1. (Let subExp be SUB typedExp_d typ_sub)
 
-                        1. (Let IC_fresh be $add_iterated(IC_sub, [vari_d]))
+                        1. (Let typedExp_check be subExp as exp '#' BOOL as typ)
 
-                          1. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+                          1. (Let premAL_check be $sidecond_partial(IC_sub, vari_d, typedExp_check))
+
+                            1. (Let downCastExp be DOWNCAST typ_sub typedExp_d)
+
+                              1. (Let typedExp_down be downCastExp as exp '#' typ_sub)
+
+                                1. (Let premAL_let be $prem_let_partial(IC_sub, vari_d, typedExp_sub, typedExp_down))
+
+                                  1. (Let IC_fresh be $add_iterated(IC_sub, [vari_d]))
+
+                                    1. (Let premAL_part*{premAL_part <- premAL_part*} be premAL_check :: premAL_let :: premAL*{premAL <- premAL*})
+
+                                      1. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_part*{premAL_part <- premAL_part*}
 
   3. Case (% has type tupExp)
 
-    1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
+    1. (Let tupExp be exp as tupExp)
 
-      1. Group tuple: AC IC |- TUP typedExp*{typedExp <- typedExp*} as exp '#' typ : % % % %
+      1. Group tuple: AC IC |- tupExp as exp '#' typ : % % % %
 
-        1. (Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*})
-
-          1. Result in: % % |- % : AC_sub IC_sub TUP typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ premAL*{premAL <- premAL*}
-
-  4. Case (% has type injExp)
-
-    1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
-
-      1. Group case: AC IC |- INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' typ : % % % %
-
-        1. (Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*})
-
-          1. (Let typedExp_case be INJ mixop typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ)
-
-            1. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub, typ))
-
-              1. (Let typedExp_d be $exp_of_vari(vari_d))
-
-                1. (Let typedExp_check be MATCH typedExp_d INJ mixop as exp '#' BOOL as typ)
-
-                  1. (Let premAL_check be $sidecond_partial(IC_sub, vari_d, typedExp_check))
-
-                    1. (Let premAL_let be $let_partial(IC_sub, vari_d, typedExp_case, typedExp_d))
-
-                      1. (Let IC_fresh be $add_iterated(IC_sub, [vari_d]))
-
-                        1. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
-
-  5. Case (% has type strExp)
-
-    1. (Let STR expField*{expField <- expField*} be exp as strExp)
-
-      1. Group struct: AC IC |- STR expField*{expField <- expField*} as exp '#' typ : % % % %
-
-        1. (Let atom typedExp be expField)*{expField <- expField*, atom -> atom*, typedExp -> typedExp*}
+        1. (Let TUP typedExp*{typedExp <- typedExp*} be tupExp)
 
           1. (Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*})
 
-            1. If ((|atom*{atom <- atom*}| = |typedExp_part*{typedExp_part <- typedExp_part*}|)), then
+            1. (Let tupExp_part be TUP typedExp_part*{typedExp_part <- typedExp_part*})
 
-              1. (Let expField_part be atom typedExp_part)*{atom <- atom*, typedExp_part <- typedExp_part*, expField_part -> expField_part*}
+              1. Result in: % % |- % : AC_sub IC_sub tupExp_part as exp '#' typ premAL*{premAL <- premAL*}
 
-                1. Result in: % % |- % : AC_sub IC_sub STR expField_part*{expField_part <- expField_part*} as exp '#' typ premAL*{premAL <- premAL*}
+  4. Case (% has type injExp)
 
-            1. Else Dangling
+    1. (Let injExp be exp as injExp)
 
-  6. Case (% has type optExp)
+      1. Group case: AC IC |- injExp as exp '#' typ : % % % %
 
-    1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp as optExp)
+        1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be injExp)
 
-      1. If (typedExp'?{typedExp' <- typedExp'?} matches (_)), then
+          1. (Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*})
 
-        1. (Let ?(typedExp) be typedExp'?{typedExp' <- typedExp'?})
+            1. (Let (id_used*{id_used <- id_used*}, id_d) be $fresh_id(AC_sub.USED))
 
-          1. Group opt: AC IC |- OPT ?(typedExp) as exp '#' typ : % % % %
+              1. (Let AC_fresh be AC_sub[USED = id_used*{id_used <- id_used*}])
 
-            1. (Partialbind_exp: AC IC |- typedExp : AC_sub IC_sub typedExp_part premAL*{premAL <- premAL*})
-
-              1. (Let typedExp_opt be OPT ?(typedExp_part) as exp '#' typ)
-
-                1. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub, typ))
+                1. (Let vari_d be id_d typ [])
 
                   1. (Let typedExp_d be $exp_of_vari(vari_d))
 
-                    1. (Let typedExp_check be MATCH typedExp_d SOME as pat as exp '#' BOOL as typ)
+                    1. (Let matchExp be MATCH typedExp_d INJ mixop)
 
-                      1. (Let premAL_check be $sidecond_partial(IC_sub, vari_d, typedExp_check))
+                      1. (Let typedExp_check be matchExp as exp '#' BOOL as typ)
 
-                        1. (Let premAL_let be $let_partial(IC_sub, vari_d, typedExp_opt, typedExp_d))
+                        1. (Let premAL_check be $sidecond_partial(IC_sub, vari_d, typedExp_check))
 
-                          1. (Let IC_fresh be $add_iterated(IC_sub, [vari_d]))
+                          1. (Let injExp_part be INJ mixop typedExp_part*{typedExp_part <- typedExp_part*})
 
-                            1. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+                            1. (Let typedExp_case be injExp_part as exp '#' typ)
 
-      1. Else Dangling
+                              1. (Let premAL_let be $prem_let_partial(IC_sub, vari_d, typedExp_case, typedExp_d))
 
-  7. Case (% has type listExp)
+                                1. (Let IC_fresh be $add_iterated(IC_sub, [vari_d]))
 
-    1. (Let LIST typedExp*{typedExp <- typedExp*} be exp as listExp)
+                                  1. (Let premAL_part*{premAL_part <- premAL_part*} be premAL_check :: premAL_let :: premAL*{premAL <- premAL*})
 
-      1. Group list: AC IC |- LIST typedExp*{typedExp <- typedExp*} as exp '#' typ : % % % %
+                                    1. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_part*{premAL_part <- premAL_part*}
 
-        1. (Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*})
+  5. Case (% has type strExp)
 
-          1. (Let typedExp_list be LIST typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ)
+    1. (Let strExp be exp as strExp)
 
-            1. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub, typ))
+      1. Group struct: AC IC |- strExp as exp '#' typ : % % % %
 
-              1. (Let typedExp_d be $exp_of_vari(vari_d))
+        1. (Let STR expField*{expField <- expField*} be strExp)
 
-                1. (Let n be |typedExp*{typedExp <- typedExp*}|)
+          1. (Let atom typedExp be expField)*{expField <- expField*, atom -> atom*, typedExp -> typedExp*}
 
-                  1. (Let typedExp_check be MATCH typedExp_d FIXED n as pat as exp '#' BOOL as typ)
+            1. (Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*})
 
-                    1. (Let premAL_check be $sidecond_partial(IC_sub, vari_d, typedExp_check))
+              1. If ((|atom*{atom <- atom*}| = |typedExp_part*{typedExp_part <- typedExp_part*}|)), then
 
-                      1. (Let premAL_let be $let_partial(IC_sub, vari_d, typedExp_list, typedExp_d))
+                1. (Let expField_part be atom typedExp_part)*{atom <- atom*, typedExp_part <- typedExp_part*, expField_part -> expField_part*}
 
-                        1. (Let IC_fresh be $add_iterated(IC_sub, [vari_d]))
+                  1. (Let strExp_part be STR expField_part*{expField_part <- expField_part*})
 
-                          1. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
-
-  8. Case (% has type consExp)
-
-    1. (Let CONS typedExp_h typedExp_t be exp as consExp)
-
-      1. Group cons: AC IC |- CONS typedExp_h typedExp_t as exp '#' typ : % % % %
-
-        1. (Partialbind_exp: AC IC |- typedExp_h : AC_h IC_h typedExp_h_part premAL_h*{premAL_h <- premAL_h*})
-
-          1. (Partialbind_exp: AC_h IC_h |- typedExp_t : AC_t IC_t typedExp_t_part premAL_t*{premAL_t <- premAL_t*})
-
-            1. (Let typedExp_cons be CONS typedExp_h_part typedExp_t_part as exp '#' typ)
-
-              1. (Let (AC_fresh, vari_d) be $fresh_vari(AC_t, IC_t, typ))
-
-                1. (Let typedExp_d be $exp_of_vari(vari_d))
-
-                  1. (Let typedExp_check be MATCH typedExp_d CONS as pat as exp '#' BOOL as typ)
-
-                    1. (Let premAL_check be $sidecond_partial(IC_t, vari_d, typedExp_check))
-
-                      1. (Let premAL_let be $let_partial(IC_t, vari_d, typedExp_cons, typedExp_d))
-
-                        1. (Let IC_fresh be $add_iterated(IC_t, [vari_d]))
-
-                          1. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*}
-
-  9. Case (% has type iterExp)
-
-    1. (Let ITER typedExp iter vari*{vari <- vari*} be exp as iterExp)
-
-      1. Group iter: AC IC |- ITER typedExp iter vari*{vari <- vari*} as exp '#' typ : % % % %
-
-        1. (Partialbind_exp: AC iter vari*{vari <- vari*} :: IC |- typedExp : AC_sub premIterIL*{premIterIL <- premIterIL*} typedExp_part premAL*{premAL <- premAL*})
-
-          1. If (premIterIL*{premIterIL <- premIterIL*} matches _ :: _), then
-
-            1. (Let iter' vari_iter*{vari_iter <- vari_iter*} :: IC_sub be premIterIL*{premIterIL <- premIterIL*})
-
-              1. If ((iter' = iter)), then
-
-                1. (Let vari_part*{vari_part <- vari_part*} be $select_varis(vari_iter*{vari_iter <- vari_iter*}, $ids_of_varis($free_varis_exp(typedExp_part))))
-
-                  1. Result in: % % |- % : AC_sub IC_sub ITER typedExp_part iter vari_part*{vari_part <- vari_part*} as exp '#' typ premAL*{premAL <- premAL*}
+                    1. Result in: % % |- % : AC_sub IC_sub strExp_part as exp '#' typ premAL*{premAL <- premAL*}
 
               1. Else Dangling
 
+  6. Case (% has type optExp)
+
+    1. (Let optExp be exp as optExp)
+
+      1. Group opt: AC IC |- optExp as exp '#' typ : % % % %
+
+        1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be optExp)
+
+          1. If (typedExp'?{typedExp' <- typedExp'?} matches (_)), then
+
+            1. (Let ?(typedExp) be typedExp'?{typedExp' <- typedExp'?})
+
+              1. (Partialbind_exp: AC IC |- typedExp : AC_sub IC_sub typedExp_part premAL*{premAL <- premAL*})
+
+                1. (Let (id_used*{id_used <- id_used*}, id_d) be $fresh_id(AC_sub.USED))
+
+                  1. (Let AC_fresh be AC_sub[USED = id_used*{id_used <- id_used*}])
+
+                    1. (Let vari_d be id_d typ [])
+
+                      1. (Let typedExp_d be $exp_of_vari(vari_d))
+
+                        1. (Let matchExp be MATCH typedExp_d SOME as pat)
+
+                          1. (Let typedExp_check be matchExp as exp '#' BOOL as typ)
+
+                            1. (Let premAL_check be $sidecond_partial(IC_sub, vari_d, typedExp_check))
+
+                              1. (Let optExp_part be OPT ?(typedExp_part))
+
+                                1. (Let typedExp_opt be optExp_part as exp '#' typ)
+
+                                  1. (Let premAL_let be $prem_let_partial(IC_sub, vari_d, typedExp_opt, typedExp_d))
+
+                                    1. (Let IC_fresh be $add_iterated(IC_sub, [vari_d]))
+
+                                      1. (Let premAL_part*{premAL_part <- premAL_part*} be premAL_check :: premAL_let :: premAL*{premAL <- premAL*})
+
+                                        1. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_part*{premAL_part <- premAL_part*}
+
           1. Else Dangling
+
+  7. Case (% has type listExp)
+
+    1. (Let listExp be exp as listExp)
+
+      1. Group list: AC IC |- listExp as exp '#' typ : % % % %
+
+        1. (Let LIST typedExp*{typedExp <- typedExp*} be listExp)
+
+          1. (Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*})
+
+            1. (Let (id_used*{id_used <- id_used*}, id_d) be $fresh_id(AC_sub.USED))
+
+              1. (Let AC_fresh be AC_sub[USED = id_used*{id_used <- id_used*}])
+
+                1. (Let vari_d be id_d typ [])
+
+                  1. (Let typedExp_d be $exp_of_vari(vari_d))
+
+                    1. (Let n be |typedExp*{typedExp <- typedExp*}|)
+
+                      1. (Let matchExp be MATCH typedExp_d FIXED n as pat)
+
+                        1. (Let typedExp_check be matchExp as exp '#' BOOL as typ)
+
+                          1. (Let premAL_check be $sidecond_partial(IC_sub, vari_d, typedExp_check))
+
+                            1. (Let listExp_part be LIST typedExp_part*{typedExp_part <- typedExp_part*})
+
+                              1. (Let typedExp_list be listExp_part as exp '#' typ)
+
+                                1. (Let premAL_let be $prem_let_partial(IC_sub, vari_d, typedExp_list, typedExp_d))
+
+                                  1. (Let IC_fresh be $add_iterated(IC_sub, [vari_d]))
+
+                                    1. (Let premAL_part*{premAL_part <- premAL_part*} be premAL_check :: premAL_let :: premAL*{premAL <- premAL*})
+
+                                      1. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_part*{premAL_part <- premAL_part*}
+
+  8. Case (% has type consExp)
+
+    1. (Let consExp be exp as consExp)
+
+      1. Group cons: AC IC |- consExp as exp '#' typ : % % % %
+
+        1. (Let CONS typedExp_h typedExp_t be consExp)
+
+          1. (Partialbind_exp: AC IC |- typedExp_h : AC_h IC_h typedExp_h_part premAL_h*{premAL_h <- premAL_h*})
+
+            1. (Partialbind_exp: AC_h IC_h |- typedExp_t : AC_t IC_t typedExp_t_part premAL_t*{premAL_t <- premAL_t*})
+
+              1. (Let (id_used*{id_used <- id_used*}, id_d) be $fresh_id(AC_t.USED))
+
+                1. (Let AC_fresh be AC_t[USED = id_used*{id_used <- id_used*}])
+
+                  1. (Let vari_d be id_d typ [])
+
+                    1. (Let typedExp_d be $exp_of_vari(vari_d))
+
+                      1. (Let matchExp be MATCH typedExp_d CONS as pat)
+
+                        1. (Let typedExp_check be matchExp as exp '#' BOOL as typ)
+
+                          1. (Let premAL_check be $sidecond_partial(IC_t, vari_d, typedExp_check))
+
+                            1. (Let consExp_part be CONS typedExp_h_part typedExp_t_part)
+
+                              1. (Let typedExp_cons be consExp_part as exp '#' typ)
+
+                                1. (Let premAL_let be $prem_let_partial(IC_t, vari_d, typedExp_cons, typedExp_d))
+
+                                  1. (Let IC_fresh be $add_iterated(IC_t, [vari_d]))
+
+                                    1. (Let premAL_part*{premAL_part <- premAL_part*} be premAL_check :: premAL_let :: premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*})
+
+                                      1. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_part*{premAL_part <- premAL_part*}
+
+  9. Case (% has type iterExp)
+
+    1. (Let iterExp be exp as iterExp)
+
+      1. Group iter: AC IC |- iterExp as exp '#' typ : % % % %
+
+        1. (Let ITER typedExp iter vari*{vari <- vari*} be iterExp)
+
+          1. (Let IC' be iter vari*{vari <- vari*} :: IC)
+
+            1. (Partialbind_exp: AC IC' |- typedExp : AC_sub IC'' typedExp_part premAL*{premAL <- premAL*})
+
+              1. (Let premIterIL*{premIterIL <- premIterIL*} be IC'')
+
+                1. If (premIterIL*{premIterIL <- premIterIL*} matches _ :: _), then
+
+                  1. (Let iter' vari_iter*{vari_iter <- vari_iter*} :: IC_sub be premIterIL*{premIterIL <- premIterIL*})
+
+                    1. If ((iter' = iter)), then
+
+                      1. (Let vari_part*{vari_part <- vari_part*} be $select_varis(vari_iter*{vari_iter <- vari_iter*}, $ids_of_varis($free_varis_exp(typedExp_part))))
+
+                        1. (Let iterExp_part be ITER typedExp_part iter vari_part*{vari_part <- vari_part*})
+
+                          1. Result in: % % |- % : AC_sub IC_sub iterExp_part as exp '#' typ premAL*{premAL <- premAL*}
+
+                    1. Else Dangling
+
+                1. Else Dangling
 
 1. Else Dangling
 
-relation Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : % % % %
+relation Partialbind_exps: AC IC |- typedExp'*{typedExp' <- typedExp'*} : % % % %
 
-1. Group : AC IC |- typedExp*{typedExp <- typedExp*} : % % % %
+1. Group : AC IC |- typedExp'*{typedExp' <- typedExp'*} : % % % %
 
-  1. Case analysis on typedExp*{typedExp <- typedExp*} (total)
+  1. Case analysis on typedExp'*{typedExp' <- typedExp'*} (total)
 
     1. Case (% matches pattern [])
 
@@ -2178,13 +2260,17 @@ relation Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : % % % %
 
     2. Case (% matches pattern _ :: _)
 
-      1. (Let typedExp_h :: typedExp_t*{typedExp_t <- typedExp_t*} be typedExp*{typedExp <- typedExp*})
+      1. (Let typedExp_h :: typedExp_t*{typedExp_t <- typedExp_t*} be typedExp'*{typedExp' <- typedExp'*})
 
         1. (Partialbind_exp: AC IC |- typedExp_h : AC_h IC_h typedExp_h_part premAL_h*{premAL_h <- premAL_h*})
 
           1. (Partialbind_exps: AC_h IC_h |- typedExp_t*{typedExp_t <- typedExp_t*} : AC_t IC_t typedExp_t_part*{typedExp_t_part <- typedExp_t_part*} premAL_t*{premAL_t <- premAL_t*})
 
-            1. Result in: % % |- % : AC_t IC_t typedExp_h_part :: typedExp_t_part*{typedExp_t_part <- typedExp_t_part*} premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*}
+            1. (Let typedExp*{typedExp <- typedExp*} be typedExp_h_part :: typedExp_t_part*{typedExp_t_part <- typedExp_t_part*})
+
+              1. (Let premAL*{premAL <- premAL*} be premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*})
+
+                1. Result in: % % |- % : AC_t IC_t typedExp*{typedExp <- typedExp*} premAL*{premAL <- premAL*}
 
 relation Partialbind_arg: AC |- arg : % % %
 
@@ -2192,21 +2278,25 @@ relation Partialbind_arg: AC |- arg : % % %
 
   1. Case (% has type expArg)
 
-    1. (Let EXP typedExp be arg as expArg)
+    1. (Let expArg be arg as expArg)
 
-      1. Group exp: AC |- EXP typedExp as arg : % % %
+      1. Group exp: AC |- expArg as arg : % % %
 
-        1. (Partialbind_exp: AC [] |- typedExp : AC_part _IC typedExp_part premAL*{premAL <- premAL*})
+        1. (Let EXP typedExp be expArg)
 
-          1. Result in: % |- % : AC_part EXP typedExp_part as arg premAL*{premAL <- premAL*}
+          1. (Partialbind_exp: AC [] |- typedExp : AC_part _IC typedExp_part premAL*{premAL <- premAL*})
+
+            1. (Let expArg_part be EXP typedExp_part)
+
+              1. Result in: % |- % : AC_part expArg_part as arg premAL*{premAL <- premAL*}
 
   2. Case (% has type funArg)
 
-    1. (Let FUN id be arg as funArg)
+    1. (Let funArg be arg as funArg)
 
-      1. Group fun: AC |- FUN id as arg : % % %
+      1. Group fun: AC |- funArg as arg : % % %
 
-        1. Result in: % |- % : AC FUN id as arg []
+        1. Result in: % |- % : AC funArg as arg []
 
 relation Partialbind_args: AC |- arg'*{arg' <- arg'*} : % % %
 
@@ -2774,43 +2864,25 @@ relation Algo_def: AC |- defnIL : %
 
 relation Guard_exp: AC |- exp '#' typ' : %
 
-1. Group literal: AC |- exp '#' typ' : %
+1. Case analysis on exp (total)
 
-  1. If (exp <: literalExp), then
+  1. Case (% has type literalExp)
 
     1. (Let literalExp be exp as literalExp)
 
-      1. Case analysis on literalExp
-
-        1. Case (% matches pattern BOOL %)
-
-          1. Result in: % |- % : []
-
-        2. Case (% matches pattern TEXT %)
-
-          1. Result in: % |- % : []
-
-      1. Else Dangling
-
-  1. Else Dangling
-
-  2. If (exp <: num), then
-
-    1. Result in: % |- % : []
-
-  2. Else Dangling
-
-2. Case analysis on exp
-
-  1. Case (% has type varExp)
-
-    1. (Let VAR id be exp as varExp)
-
-      1. Group variable: AC |- VAR id as exp '#' typ' : %
+      1. Group literal: AC |- literalExp as exp '#' typ' : %
 
         1. Result in: % |- % : []
 
-  2. Case (% has type unOpExp)
+  2. Case (% has type varExp)
+
+    1. (Let varExp be exp as varExp)
+
+      1. Group variable: AC |- varExp as exp '#' typ' : %
+
+        1. Result in: % |- % : []
+
+  3. Case (% has type unOpExp)
 
     1. (Let UN unOp typedExp be exp as unOpExp)
 
@@ -2820,7 +2892,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  3. Case (% has type binOpExp)
+  4. Case (% has type binOpExp)
 
     1. (Let BIN binOp typedExp_l typedExp_r be exp as binOpExp)
 
@@ -2848,7 +2920,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
                       1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  4. Case (% has type cmpOpExp)
+  5. Case (% has type cmpOpExp)
 
     1. (Let CMP cmpOp typedExp_l typedExp_r be exp as cmpOpExp)
 
@@ -2858,7 +2930,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  5. Case (% has type upCastExp)
+  6. Case (% has type upCastExp)
 
     1. (Let UPCAST typ typedExp be exp as upCastExp)
 
@@ -2868,7 +2940,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  6. Case (% has type downCastExp)
+  7. Case (% has type downCastExp)
 
     1. (Let DOWNCAST typ typedExp be exp as downCastExp)
 
@@ -2878,7 +2950,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  7. Case (% has type subExp)
+  8. Case (% has type subExp)
 
     1. (Let SUB typedExp typ be exp as subExp)
 
@@ -2888,7 +2960,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  8. Case (% has type matchExp)
+  9. Case (% has type matchExp)
 
     1. (Let MATCH typedExp pat be exp as matchExp)
 
@@ -2898,7 +2970,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  9. Case (% has type tupExp)
+  10. Case (% has type tupExp)
 
     1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
 
@@ -2908,7 +2980,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  10. Case (% has type injExp)
+  11. Case (% has type injExp)
 
     1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
 
@@ -2918,7 +2990,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  11. Case (% has type strExp)
+  12. Case (% has type strExp)
 
     1. (Let STR expField*{expField <- expField*} be exp as strExp)
 
@@ -2930,7 +3002,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
             1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  12. Case (% has type optExp)
+  13. Case (% has type optExp)
 
     1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp as optExp)
 
@@ -2950,7 +3022,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
                 1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  13. Case (% has type listExp)
+  14. Case (% has type listExp)
 
     1. (Let LIST typedExp*{typedExp <- typedExp*} be exp as listExp)
 
@@ -2960,7 +3032,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  14. Case (% has type consExp)
+  15. Case (% has type consExp)
 
     1. (Let CONS typedExp_h typedExp_t be exp as consExp)
 
@@ -2970,7 +3042,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  15. Case (% has type catExp)
+  16. Case (% has type catExp)
 
     1. (Let CAT typedExp_l typedExp_r be exp as catExp)
 
@@ -2980,7 +3052,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  16. Case (% has type memExp)
+  17. Case (% has type memExp)
 
     1. (Let MEM typedExp_l typedExp_r be exp as memExp)
 
@@ -2990,7 +3062,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  17. Case (% has type lenExp)
+  18. Case (% has type lenExp)
 
     1. (Let LEN typedExp be exp as lenExp)
 
@@ -3000,7 +3072,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  18. Case (% has type dotAccExp)
+  19. Case (% has type dotAccExp)
 
     1. (Let DOT typedExp atom be exp as dotAccExp)
 
@@ -3010,7 +3082,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  19. Case (% has type idxAccExp)
+  20. Case (% has type idxAccExp)
 
     1. (Let IDX typedExp_b typedExp_i be exp as idxAccExp)
 
@@ -3026,7 +3098,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
                 1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  20. Case (% has type sliceAccExp)
+  21. Case (% has type sliceAccExp)
 
     1. (Let SLICE typedExp_b typedExp_i typedExp_n be exp as sliceAccExp)
 
@@ -3044,7 +3116,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
                   1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  21. Case (% has type updExp)
+  22. Case (% has type updExp)
 
     1. (Let UPD typedExp_b typedPath typedExp_f be exp as updExp)
 
@@ -3062,7 +3134,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
                   1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  22. Case (% has type callExp)
+  23. Case (% has type callExp)
 
     1. (Let CALL id targ*{targ <- targ*} arg*{arg <- arg*} be exp as callExp)
 
@@ -3072,7 +3144,7 @@ relation Guard_exp: AC |- exp '#' typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  23. Case (% has type iterExp)
+  24. Case (% has type iterExp)
 
     1. (Let ITER typedExp iter vari*{vari <- vari*} be exp as iterExp)
 
@@ -3087,8 +3159,6 @@ relation Guard_exp: AC |- exp '#' typ' : %
               1. (Let premAL*{premAL <- premAL*} be premAL_src*{premAL_src <- premAL_src*} ++ premAL_body_iter*{premAL_body_iter <- premAL_body_iter*})
 
                 1. Result in: % |- % : premAL*{premAL <- premAL*}
-
-2. Else Dangling
 
 relation Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : %
 
@@ -3128,9 +3198,9 @@ relation Guard_arg: AC |- arg : %
 
   2. Case (% has type funArg)
 
-    1. (Let FUN id be arg as funArg)
+    1. (Let funArg be arg as funArg)
 
-      1. Group fun: AC |- FUN id as arg : %
+      1. Group fun: AC |- funArg as arg : %
 
         1. Result in: % |- % : []
 
@@ -3394,43 +3464,25 @@ relation Guard_def: AC |- defnAL : %
 
 relation Exp_pure: |- exp '#' typ'
 
-1. Group literal: |- exp '#' typ'
+1. Case analysis on exp
 
-  1. If (exp <: literalExp), then
+  1. Case (% has type literalExp)
 
     1. (Let literalExp be exp as literalExp)
 
-      1. Case analysis on literalExp
-
-        1. Case (% matches pattern BOOL %)
-
-          1. The relation holds
-
-        2. Case (% matches pattern TEXT %)
-
-          1. The relation holds
-
-      1. Else Dangling
-
-  1. Else Dangling
-
-  2. If (exp <: num), then
-
-    1. The relation holds
-
-  2. Else Dangling
-
-2. Case analysis on exp
-
-  1. Case (% has type varExp)
-
-    1. (Let VAR id be exp as varExp)
-
-      1. Group variable: |- VAR id as exp '#' typ'
+      1. Group literal: |- literalExp as exp '#' typ'
 
         1. The relation holds
 
-  2. Case (% has type unOpExp)
+  2. Case (% has type varExp)
+
+    1. (Let varExp be exp as varExp)
+
+      1. Group variable: |- varExp as exp '#' typ'
+
+        1. The relation holds
+
+  3. Case (% has type unOpExp)
 
     1. (Let UN unOp typedExp be exp as unOpExp)
 
@@ -3442,7 +3494,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  3. Case (% has type binOpExp)
+  4. Case (% has type binOpExp)
 
     1. (Let BIN binOp typedExp_l typedExp_r be exp as binOpExp)
 
@@ -3458,7 +3510,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  4. Case (% has type cmpOpExp)
+  5. Case (% has type cmpOpExp)
 
     1. (Let CMP cmpOp typedExp_l typedExp_r be exp as cmpOpExp)
 
@@ -3474,7 +3526,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  5. Case (% has type upCastExp)
+  6. Case (% has type upCastExp)
 
     1. (Let UPCAST typ typedExp be exp as upCastExp)
 
@@ -3486,7 +3538,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  6. Case (% has type downCastExp)
+  7. Case (% has type downCastExp)
 
     1. (Let DOWNCAST typ typedExp be exp as downCastExp)
 
@@ -3498,7 +3550,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  7. Case (% has type subExp)
+  8. Case (% has type subExp)
 
     1. (Let SUB typedExp typ be exp as subExp)
 
@@ -3510,7 +3562,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  8. Case (% has type matchExp)
+  9. Case (% has type matchExp)
 
     1. (Let MATCH typedExp pat be exp as matchExp)
 
@@ -3522,7 +3574,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  9. Case (% has type tupExp)
+  10. Case (% has type tupExp)
 
     1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
 
@@ -3534,7 +3586,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  10. Case (% has type injExp)
+  11. Case (% has type injExp)
 
     1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
 
@@ -3546,7 +3598,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  11. Case (% has type strExp)
+  12. Case (% has type strExp)
 
     1. (Let STR expField*{expField <- expField*} be exp as strExp)
 
@@ -3560,7 +3612,7 @@ relation Exp_pure: |- exp '#' typ'
 
           1. Else Dangling
 
-  12. Case (% has type optExp)
+  13. Case (% has type optExp)
 
     1. (Let OPT typedExp?{typedExp <- typedExp?} be exp as optExp)
 
@@ -3572,7 +3624,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  13. Case (% has type listExp)
+  14. Case (% has type listExp)
 
     1. (Let LIST typedExp*{typedExp <- typedExp*} be exp as listExp)
 
@@ -3584,7 +3636,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  14. Case (% has type consExp)
+  15. Case (% has type consExp)
 
     1. (Let CONS typedExp_h typedExp_t be exp as consExp)
 
@@ -3600,7 +3652,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  15. Case (% has type catExp)
+  16. Case (% has type catExp)
 
     1. (Let CAT typedExp_l typedExp_r be exp as catExp)
 
@@ -3616,7 +3668,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  16. Case (% has type memExp)
+  17. Case (% has type memExp)
 
     1. (Let MEM typedExp_l typedExp_r be exp as memExp)
 
@@ -3632,7 +3684,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  17. Case (% has type lenExp)
+  18. Case (% has type lenExp)
 
     1. (Let LEN typedExp be exp as lenExp)
 
@@ -3644,7 +3696,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  18. Case (% has type dotAccExp)
+  19. Case (% has type dotAccExp)
 
     1. (Let DOT typedExp atom be exp as dotAccExp)
 
@@ -3656,7 +3708,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  19. Case (% has type idxAccExp)
+  20. Case (% has type idxAccExp)
 
     1. (Let IDX typedExp_b typedExp_i be exp as idxAccExp)
 
@@ -3672,7 +3724,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  20. Case (% has type sliceAccExp)
+  21. Case (% has type sliceAccExp)
 
     1. (Let SLICE typedExp_b typedExp_i typedExp_n be exp as sliceAccExp)
 
@@ -3692,7 +3744,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  21. Case (% has type updExp)
+  22. Case (% has type updExp)
 
     1. (Let UPD typedExp_b typedPath typedExp_f be exp as updExp)
 
@@ -3712,7 +3764,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-  22. Case (% has type iterExp)
+  23. Case (% has type iterExp)
 
     1. (Let ITER typedExp expIter be exp as iterExp)
 
@@ -3724,7 +3776,7 @@ relation Exp_pure: |- exp '#' typ'
 
         1. Else Dangling
 
-2. Else Dangling
+1. Else Dangling
 
 relation Path_pure: |- path '#' typ
 
@@ -3928,19 +3980,7 @@ def $free_varis_exp(exp '#' typ)
 
   1. Case (% has type literalExp)
 
-    1. (Let literalExp be exp as literalExp)
-
-      1. Case analysis on literalExp
-
-        1. Case (% matches pattern BOOL %)
-
-          1. Return []
-
-        2. Case (% matches pattern TEXT %)
-
-          1. Return []
-
-      1. Else Dangling
+    1. Return []
 
   2. Case (% has type varExp)
 
@@ -4092,17 +4132,11 @@ def $free_varis_exp(exp '#' typ)
 
           1. Return vari_iter*{vari_iter <- vari_iter*}
 
-2. If (exp <: num), then
+2. If ((exp = OPT ?() as exp)), then
 
   1. Return []
 
 2. Else Dangling
-
-3. If ((exp = OPT ?() as exp)), then
-
-  1. Return []
-
-3. Else Dangling
 
 def $free_varis_exps(typedExp*{typedExp <- typedExp*})
 
@@ -4314,7 +4348,15 @@ def $rename_exp(R, typedExp'')
 
       1. (Let VAR id be exp as varExp)
 
-        1. (Let id'*{id' <- id'*}?{id'* <- id'*?} be $find_map<id, id*>(R.OCC, id))
+        1. (Let `{ id_bind ':' _id*{_id <- _id*}*{_id* <- _id**, id_bind <- id_bind*} `} be R.OCC)
+
+          1. If (~id <- id_bind*{id_bind <- id_bind*}), then
+
+            1. Return (R, VAR id as exp '#' typ)
+
+          1. Else Dangling
+
+        2. (Let id'*{id' <- id'*}?{id'* <- id'*?} be $find_map<id, id*>(R.OCC, id))
 
           1. If (id'*{id' <- id'*}?{id'* <- id'*?} matches (_)), then
 
@@ -4337,6 +4379,8 @@ def $rename_exp(R, typedExp'')
                       1. (Let R_multi be {USED id_used*{id_used <- id_used*}, SEEN R.SEEN, OCC occ})
 
                         1. Return (R_multi, VAR id_fresh as exp '#' typ)
+
+          1. Else Dangling
 
     2. Case (% has type upCastExp)
 
@@ -4376,6 +4420,8 @@ def $rename_exp(R, typedExp'')
 
                 1. Return (R_multi, STR expField_multi*{expField_multi <- expField_multi*} as exp '#' typ)
 
+            1. Else Dangling
+
     6. Case (% has type optExp)
 
       1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp as optExp)
@@ -4387,6 +4433,8 @@ def $rename_exp(R, typedExp'')
             1. (Let (R_multi, typedExp_multi) be $rename_exp(R, typedExp))
 
               1. Return (R_multi, OPT ?(typedExp_multi) as exp '#' typ)
+
+        1. Else Dangling
 
     7. Case (% has type listExp)
 
@@ -4420,9 +4468,19 @@ def $rename_exp(R, typedExp'')
 
                 1. Return (R_multi, ITER typedExp_multi iter vari_occ*{vari_occ <- vari_occ*} as exp '#' typ)
 
-2. Otherwise,
+  1. Else Dangling
 
-  1. Return (R, typedExp'')
+  2. If ((exp = OPT ?() as exp)), then
+
+    1. Return (R, OPT ?() as exp '#' typ)
+
+  2. Else Dangling
+
+  3. If (((((((((~exp <: varExp /\ ~exp <: upCastExp) /\ ~exp <: tupExp) /\ ~exp <: injExp) /\ ~exp <: strExp) /\ ~exp <: optExp) /\ ~exp <: listExp) /\ ~exp <: consExp) /\ ~exp <: iterExp)), then
+
+    1. Return (R, typedExp'')
+
+  3. Else Dangling
 
 def $rename_exps(R, typedExp*{typedExp <- typedExp*})
 
@@ -4496,52 +4554,6 @@ def $rename_args(R, arg*{arg <- arg*})
 
           1. Return (R_t, arg_h_multi :: arg_t_multi*{arg_t_multi <- arg_t_multi*})
 
-def $is_invertible(typedExp)
-
-1. (Let exp '#' _typ be typedExp)
-
-  1. Case analysis on exp
-
-    1. Case (% has type varExp)
-
-      1. Return true
-
-    2. Case (% has type upCastExp)
-
-      1. Return true
-
-    3. Case (% has type tupExp)
-
-      1. Return true
-
-    4. Case (% has type injExp)
-
-      1. Return true
-
-    5. Case (% has type strExp)
-
-      1. Return true
-
-    6. Case (% has type optExp)
-
-      1. Return true
-
-    7. Case (% has type listExp)
-
-      1. Return true
-
-    8. Case (% has type consExp)
-
-      1. Return true
-
-    9. Case (% has type iterExp)
-
-      1. Return true
-
-2. Otherwise,
-
-  1. Return false
-
 def $sideconds_multi(IC, vari_bind*{vari_bind <- vari_bind*}, R)
 
 1. (Let `{ id_bind ':' id_later*{id_later <- id_later*}*{id_bind <- id_bind*, id_later* <- id_later**} `} be R.OCC)
@@ -4586,27 +4598,13 @@ def $sidecond_multi_binder(IC, id_first typ iter*{iter <- iter*}, id_later)
 
                       1. Return $iterate_prem(premAL_cmp, premIterAL*{premIterAL <- premIterAL*})
 
-def $fresh_vari(AC, IC, typ)
-
-1. (Let (id_used*{id_used <- id_used*}, id_fresh) be $fresh_id(AC.USED))
-
-  1. (Let AC_used be AC[USED = id_used*{id_used <- id_used*}])
-
-    1. (Let vari_fresh be id_fresh typ [])
-
-      1. (Let iter _vari*{_vari <- _vari*}*{_vari* <- _vari**, iter <- iter*} be IC)
-
-        1. (Let AC_fresh be $add_bound(AC_used, [$iterate_vari(vari_fresh, iter*{iter <- iter*})]))
-
-          1. Return (AC_fresh, vari_fresh)
-
-def $decomposes(AC, typedExp)
+def $is_bound_exp(AC, typedExp)
 
 1. (Let id*{id <- id*} be $ids_of_varis($free_varis_exp(typedExp)))
 
   1. (Let id_bound*{id_bound <- id_bound*} be $ids_of_varis(AC.BOUND))
 
-    1. Return ~$forall_(id <- id_bound*{id_bound <- id_bound*}*{id <- id*})
+    1. Return $forall_(id <- id_bound*{id_bound <- id_bound*}*{id <- id*})
 
 def $sidecond_partial(IC, vari_d, typedExp_check)
 
@@ -4616,7 +4614,7 @@ def $sidecond_partial(IC, vari_d, typedExp_check)
 
     1. Return $iterate_prem(IF typedExp_check as premAL, premIterAL*{premIterAL <- premIterAL*})
 
-def $let_partial(IC, vari_d, typedExp_l, typedExp_r)
+def $prem_let_partial(IC, vari_d, typedExp_l, typedExp_r)
 
 1. (Let id_d _typ _iter*{_iter <- _iter*} be vari_d)
 
@@ -4704,45 +4702,47 @@ def $is_singleton_typ(tdenv, typ)
 
   1. Return false
 
-def $is_irrefutable(tdenv, typedExp')
+def $is_irrefutable(tdenv, exp '#' typ)
 
-1. (Let exp '#' typ be typedExp')
+1. Case analysis on exp
 
-  1. Case analysis on exp
+  1. Case (% has type varExp)
 
-    1. Case (% has type varExp)
+    1. Return true
 
-      1. Return true
+  2. Case (% has type tupExp)
 
-    2. Case (% has type tupExp)
+    1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
 
-      1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
+      1. Return $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
+
+  3. Case (% has type injExp)
+
+    1. (Let INJ _mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
+
+      1. Return ($is_singleton_typ(tdenv, typ) /\ $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*}))
+
+  4. Case (% has type strExp)
+
+    1. (Let STR expField*{expField <- expField*} be exp as strExp)
+
+      1. (Let _atom typedExp be expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
 
         1. Return $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
 
-    3. Case (% has type injExp)
+  5. Case (% has type iterExp)
 
-      1. (Let INJ _mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
+    1. (Let ITER typedExp _expIter be exp as iterExp)
 
-        1. Return ($is_singleton_typ(tdenv, typ) /\ $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*}))
+      1. Return $is_irrefutable(tdenv, typedExp)
 
-    4. Case (% has type strExp)
+1. Else Dangling
 
-      1. (Let STR expField*{expField <- expField*} be exp as strExp)
-
-        1. (Let _atom typedExp be expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
-
-          1. Return $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
-
-    5. Case (% has type iterExp)
-
-      1. (Let ITER typedExp _expIter be exp as iterExp)
-
-        1. Return $is_irrefutable(tdenv, typedExp)
-
-2. Otherwise,
+2. If (((((~exp <: varExp /\ ~exp <: tupExp) /\ ~exp <: injExp) /\ ~exp <: strExp) /\ ~exp <: iterExp)), then
 
   1. Return false
+
+2. Else Dangling
 
 def $variant_cases(tdenv, typ)
 

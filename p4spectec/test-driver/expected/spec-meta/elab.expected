@@ -1053,7 +1053,8 @@ relation Collectbind_exp: algoCtx |- typedExp : vari*
   rulegroup noninvertible
 
     rule noninvertible: AC |- typedExp : []
-    -- if ~$is_invertible(typedExp)
+    -- if (exp '#' _typ = typedExp)
+    -- if ((((((((~exp <: varExp /\ ~exp <: upCastExp) /\ ~exp <: tupExp) /\ ~exp <: injExp) /\ ~exp <: strExp) /\ ~exp <: optExp) /\ ~exp <: listExp) /\ ~exp <: consExp) /\ ~exp <: iterExp)
     -- if (id*{id <- id*} = $ids_of_varis($free_varis_exp(typedExp)))
     -- if $forall_(id <- $ids_of_varis(AC.BOUND)*{id <- id*})
 
@@ -1076,7 +1077,7 @@ relation Collectbind_arg: algoCtx |- arg : vari*
 
   rulegroup fun
 
-    rule fun: AC |- FUN _id as arg : []
+    rule fun: AC |- funArg as arg : []
 
 relation Collectbind_args: algoCtx |- arg* : vari*
 
@@ -1115,14 +1116,16 @@ relation Partialbind_exp: algoCtx iterCtx |- typedExp : algoCtx iterCtx typedExp
   rulegroup
 
     rule compared: AC IC |- typedExp : AC_fresh IC_fresh typedExp_d [premAL_check]
-    -- if ~$decomposes(AC, typedExp)
+    -- if $is_bound_exp(AC, typedExp)
     -- if (vari_read*{vari_read <- vari_read*} = $free_varis_exp(typedExp))
     -- if $is_bound(AC, IC, vari_read*{vari_read <- vari_read*})
     -- if (_exp '#' typ = typedExp)
-    -- if ((AC_fresh, vari_d) = $fresh_vari(AC, IC, typ))
+    -- if ((id_used*{id_used <- id_used*}, id_d) = $fresh_id(AC.USED))
+    -- if (AC_fresh = AC[USED = id_used*{id_used <- id_used*}])
+    -- if (vari_d = id_d typ [])
     -- if (typedExp_d = $exp_of_vari(vari_d))
-    -- if (typedExp_check = CMP EQ as cmpOp typedExp_d typedExp as exp '#' BOOL as typ)
-    -- if (id_d _typ _iter*{_iter <- _iter*} = vari_d)
+    -- if (cmpOpExp = CMP EQ as cmpOp typedExp_d typedExp)
+    -- if (typedExp_check = cmpOpExp as exp '#' BOOL as typ)
     -- if (id_read*{id_read <- id_read*} = $ids_of_varis(vari_read*{vari_read <- vari_read*}))
     -- if (IC_d = $add_iterated(IC, [vari_d]))
     -- if (premIterAL*{premIterAL <- premIterAL*} = $prem_iters(IC_d, id_d :: id_read*{id_read <- id_read*}, []))
@@ -1130,95 +1133,133 @@ relation Partialbind_exp: algoCtx iterCtx |- typedExp : algoCtx iterCtx typedExp
     -- if (IC_fresh = $add_iterated(IC, [vari_d]))
 
     rule decomposed: AC IC |- typedExp : AC_part IC_part typedExp_part premAL*{premAL <- premAL*}
-    -- if $decomposes(AC, typedExp)
-    -- Partialbind_exp_decomposed: AC IC |- typedExp : AC_part IC_part typedExp_part premAL*{premAL <- premAL*}
+    -- if ~$is_bound_exp(AC, typedExp)
+    -- Partialbind_binder_exp: AC IC |- typedExp : AC_part IC_part typedExp_part premAL*{premAL <- premAL*}
 
-relation Partialbind_exp_decomposed: algoCtx iterCtx |- typedExp : algoCtx iterCtx typedExp premAL*
+relation Partialbind_binder_exp: algoCtx iterCtx |- typedExp : algoCtx iterCtx typedExp premAL*
 
   rulegroup variable
 
-    rule variable: AC IC |- VAR id as exp '#' typ : AC IC VAR id as exp '#' typ []
+    rule variable: AC IC |- varExp as exp '#' typ : AC IC varExp as exp '#' typ []
 
   rulegroup upcast
 
-    rule upcast: AC IC |- UPCAST _typ typedExp as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+    rule upcast: AC IC |- upCastExp as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_part*{premAL_part <- premAL_part*}
+    -- if (UPCAST _typ typedExp = upCastExp)
     -- Partialbind_exp: AC IC |- typedExp : AC_sub IC_sub typedExp_sub premAL*{premAL <- premAL*}
     -- if (_exp '#' typ_sub = typedExp_sub)
-    -- if ((AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub, typ))
+    -- if ((id_used*{id_used <- id_used*}, id_d) = $fresh_id(AC_sub.USED))
+    -- if (AC_fresh = AC_sub[USED = id_used*{id_used <- id_used*}])
+    -- if (vari_d = id_d typ [])
     -- if (typedExp_d = $exp_of_vari(vari_d))
-    -- if (typedExp_check = SUB typedExp_d typ_sub as exp '#' BOOL as typ)
-    -- if (typedExp_down = DOWNCAST typ_sub typedExp_d as exp '#' typ_sub)
+    -- if (subExp = SUB typedExp_d typ_sub)
+    -- if (typedExp_check = subExp as exp '#' BOOL as typ)
     -- if (premAL_check = $sidecond_partial(IC_sub, vari_d, typedExp_check))
-    -- if (premAL_let = $let_partial(IC_sub, vari_d, typedExp_sub, typedExp_down))
+    -- if (downCastExp = DOWNCAST typ_sub typedExp_d)
+    -- if (typedExp_down = downCastExp as exp '#' typ_sub)
+    -- if (premAL_let = $prem_let_partial(IC_sub, vari_d, typedExp_sub, typedExp_down))
     -- if (IC_fresh = $add_iterated(IC_sub, [vari_d]))
+    -- if (premAL_part*{premAL_part <- premAL_part*} = premAL_check :: premAL_let :: premAL*{premAL <- premAL*})
 
   rulegroup tuple
 
-    rule tuple: AC IC |- TUP typedExp*{typedExp <- typedExp*} as exp '#' typ : AC_sub IC_sub TUP typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ premAL*{premAL <- premAL*}
+    rule tuple: AC IC |- tupExp as exp '#' typ : AC_sub IC_sub tupExp_part as exp '#' typ premAL*{premAL <- premAL*}
+    -- if (TUP typedExp*{typedExp <- typedExp*} = tupExp)
     -- Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
+    -- if (tupExp_part = TUP typedExp_part*{typedExp_part <- typedExp_part*})
 
   rulegroup case
 
-    rule case: AC IC |- INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+    rule case: AC IC |- injExp as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_part*{premAL_part <- premAL_part*}
+    -- if (INJ mixop typedExp*{typedExp <- typedExp*} = injExp)
     -- Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
-    -- if (typedExp_case = INJ mixop typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ)
-    -- if ((AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub, typ))
+    -- if ((id_used*{id_used <- id_used*}, id_d) = $fresh_id(AC_sub.USED))
+    -- if (AC_fresh = AC_sub[USED = id_used*{id_used <- id_used*}])
+    -- if (vari_d = id_d typ [])
     -- if (typedExp_d = $exp_of_vari(vari_d))
-    -- if (typedExp_check = MATCH typedExp_d INJ mixop as exp '#' BOOL as typ)
+    -- if (matchExp = MATCH typedExp_d INJ mixop)
+    -- if (typedExp_check = matchExp as exp '#' BOOL as typ)
     -- if (premAL_check = $sidecond_partial(IC_sub, vari_d, typedExp_check))
-    -- if (premAL_let = $let_partial(IC_sub, vari_d, typedExp_case, typedExp_d))
+    -- if (injExp_part = INJ mixop typedExp_part*{typedExp_part <- typedExp_part*})
+    -- if (typedExp_case = injExp_part as exp '#' typ)
+    -- if (premAL_let = $prem_let_partial(IC_sub, vari_d, typedExp_case, typedExp_d))
     -- if (IC_fresh = $add_iterated(IC_sub, [vari_d]))
+    -- if (premAL_part*{premAL_part <- premAL_part*} = premAL_check :: premAL_let :: premAL*{premAL <- premAL*})
 
   rulegroup struct
 
-    rule struct: AC IC |- STR expField*{expField <- expField*} as exp '#' typ : AC_sub IC_sub STR expField_part*{expField_part <- expField_part*} as exp '#' typ premAL*{premAL <- premAL*}
+    rule struct: AC IC |- strExp as exp '#' typ : AC_sub IC_sub strExp_part as exp '#' typ premAL*{premAL <- premAL*}
+    -- if (STR expField*{expField <- expField*} = strExp)
     -- (if (atom typedExp = expField))*{atom <- atom*, expField <- expField*, typedExp <- typedExp*}
     -- Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
     -- (if (expField_part = atom typedExp_part))*{atom <- atom*, expField_part <- expField_part*, typedExp_part <- typedExp_part*}
+    -- if (strExp_part = STR expField_part*{expField_part <- expField_part*})
 
   rulegroup opt
 
-    rule opt: AC IC |- OPT ?(typedExp) as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+    rule opt: AC IC |- optExp as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_part*{premAL_part <- premAL_part*}
+    -- if (OPT ?(typedExp) = optExp)
     -- Partialbind_exp: AC IC |- typedExp : AC_sub IC_sub typedExp_part premAL*{premAL <- premAL*}
-    -- if (typedExp_opt = OPT ?(typedExp_part) as exp '#' typ)
-    -- if ((AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub, typ))
+    -- if ((id_used*{id_used <- id_used*}, id_d) = $fresh_id(AC_sub.USED))
+    -- if (AC_fresh = AC_sub[USED = id_used*{id_used <- id_used*}])
+    -- if (vari_d = id_d typ [])
     -- if (typedExp_d = $exp_of_vari(vari_d))
-    -- if (typedExp_check = MATCH typedExp_d SOME as pat as exp '#' BOOL as typ)
+    -- if (matchExp = MATCH typedExp_d SOME as pat)
+    -- if (typedExp_check = matchExp as exp '#' BOOL as typ)
     -- if (premAL_check = $sidecond_partial(IC_sub, vari_d, typedExp_check))
-    -- if (premAL_let = $let_partial(IC_sub, vari_d, typedExp_opt, typedExp_d))
+    -- if (optExp_part = OPT ?(typedExp_part))
+    -- if (typedExp_opt = optExp_part as exp '#' typ)
+    -- if (premAL_let = $prem_let_partial(IC_sub, vari_d, typedExp_opt, typedExp_d))
     -- if (IC_fresh = $add_iterated(IC_sub, [vari_d]))
+    -- if (premAL_part*{premAL_part <- premAL_part*} = premAL_check :: premAL_let :: premAL*{premAL <- premAL*})
 
   rulegroup list
 
-    rule list: AC IC |- LIST typedExp*{typedExp <- typedExp*} as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+    rule list: AC IC |- listExp as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_part*{premAL_part <- premAL_part*}
+    -- if (LIST typedExp*{typedExp <- typedExp*} = listExp)
     -- Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
-    -- if (typedExp_list = LIST typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ)
-    -- if ((AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub, typ))
+    -- if ((id_used*{id_used <- id_used*}, id_d) = $fresh_id(AC_sub.USED))
+    -- if (AC_fresh = AC_sub[USED = id_used*{id_used <- id_used*}])
+    -- if (vari_d = id_d typ [])
     -- if (typedExp_d = $exp_of_vari(vari_d))
     -- if (n = |typedExp*{typedExp <- typedExp*}|)
-    -- if (typedExp_check = MATCH typedExp_d FIXED n as pat as exp '#' BOOL as typ)
+    -- if (matchExp = MATCH typedExp_d FIXED n as pat)
+    -- if (typedExp_check = matchExp as exp '#' BOOL as typ)
     -- if (premAL_check = $sidecond_partial(IC_sub, vari_d, typedExp_check))
-    -- if (premAL_let = $let_partial(IC_sub, vari_d, typedExp_list, typedExp_d))
+    -- if (listExp_part = LIST typedExp_part*{typedExp_part <- typedExp_part*})
+    -- if (typedExp_list = listExp_part as exp '#' typ)
+    -- if (premAL_let = $prem_let_partial(IC_sub, vari_d, typedExp_list, typedExp_d))
     -- if (IC_fresh = $add_iterated(IC_sub, [vari_d]))
+    -- if (premAL_part*{premAL_part <- premAL_part*} = premAL_check :: premAL_let :: premAL*{premAL <- premAL*})
 
   rulegroup cons
 
-    rule cons: AC IC |- CONS typedExp_h typedExp_t as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*}
+    rule cons: AC IC |- consExp as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_part*{premAL_part <- premAL_part*}
+    -- if (CONS typedExp_h typedExp_t = consExp)
     -- Partialbind_exp: AC IC |- typedExp_h : AC_h IC_h typedExp_h_part premAL_h*{premAL_h <- premAL_h*}
     -- Partialbind_exp: AC_h IC_h |- typedExp_t : AC_t IC_t typedExp_t_part premAL_t*{premAL_t <- premAL_t*}
-    -- if (typedExp_cons = CONS typedExp_h_part typedExp_t_part as exp '#' typ)
-    -- if ((AC_fresh, vari_d) = $fresh_vari(AC_t, IC_t, typ))
+    -- if ((id_used*{id_used <- id_used*}, id_d) = $fresh_id(AC_t.USED))
+    -- if (AC_fresh = AC_t[USED = id_used*{id_used <- id_used*}])
+    -- if (vari_d = id_d typ [])
     -- if (typedExp_d = $exp_of_vari(vari_d))
-    -- if (typedExp_check = MATCH typedExp_d CONS as pat as exp '#' BOOL as typ)
+    -- if (matchExp = MATCH typedExp_d CONS as pat)
+    -- if (typedExp_check = matchExp as exp '#' BOOL as typ)
     -- if (premAL_check = $sidecond_partial(IC_t, vari_d, typedExp_check))
-    -- if (premAL_let = $let_partial(IC_t, vari_d, typedExp_cons, typedExp_d))
+    -- if (consExp_part = CONS typedExp_h_part typedExp_t_part)
+    -- if (typedExp_cons = consExp_part as exp '#' typ)
+    -- if (premAL_let = $prem_let_partial(IC_t, vari_d, typedExp_cons, typedExp_d))
     -- if (IC_fresh = $add_iterated(IC_t, [vari_d]))
+    -- if (premAL_part*{premAL_part <- premAL_part*} = premAL_check :: premAL_let :: premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*})
 
   rulegroup iter
 
-    rule iter: AC IC |- ITER typedExp iter vari*{vari <- vari*} as exp '#' typ : AC_sub IC_sub ITER typedExp_part iter vari_part*{vari_part <- vari_part*} as exp '#' typ premAL*{premAL <- premAL*}
-    -- Partialbind_exp: AC iter vari*{vari <- vari*} :: IC |- typedExp : AC_sub iter vari_iter*{vari_iter <- vari_iter*} :: IC_sub typedExp_part premAL*{premAL <- premAL*}
+    rule iter: AC IC |- iterExp as exp '#' typ : AC_sub IC_sub iterExp_part as exp '#' typ premAL*{premAL <- premAL*}
+    -- if (ITER typedExp iter vari*{vari <- vari*} = iterExp)
+    -- if (IC' = iter vari*{vari <- vari*} :: IC)
+    -- Partialbind_exp: AC IC' |- typedExp : AC_sub IC'' typedExp_part premAL*{premAL <- premAL*}
+    -- if (iter vari_iter*{vari_iter <- vari_iter*} :: IC_sub = IC'')
     -- if (vari_part*{vari_part <- vari_part*} = $select_varis(vari_iter*{vari_iter <- vari_iter*}, $ids_of_varis($free_varis_exp(typedExp_part))))
+    -- if (iterExp_part = ITER typedExp_part iter vari_part*{vari_part <- vari_part*})
 
 relation Partialbind_exps: algoCtx iterCtx |- typedExp* : algoCtx iterCtx typedExp* premAL*
 
@@ -1226,20 +1267,24 @@ relation Partialbind_exps: algoCtx iterCtx |- typedExp* : algoCtx iterCtx typedE
 
     rule nil: AC IC |- [] : AC IC [] []
 
-    rule cons: AC IC |- typedExp_h :: typedExp_t*{typedExp_t <- typedExp_t*} : AC_t IC_t typedExp_h_part :: typedExp_t_part*{typedExp_t_part <- typedExp_t_part*} premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*}
+    rule cons: AC IC |- typedExp_h :: typedExp_t*{typedExp_t <- typedExp_t*} : AC_t IC_t typedExp*{typedExp <- typedExp*} premAL*{premAL <- premAL*}
     -- Partialbind_exp: AC IC |- typedExp_h : AC_h IC_h typedExp_h_part premAL_h*{premAL_h <- premAL_h*}
     -- Partialbind_exps: AC_h IC_h |- typedExp_t*{typedExp_t <- typedExp_t*} : AC_t IC_t typedExp_t_part*{typedExp_t_part <- typedExp_t_part*} premAL_t*{premAL_t <- premAL_t*}
+    -- if (typedExp*{typedExp <- typedExp*} = typedExp_h_part :: typedExp_t_part*{typedExp_t_part <- typedExp_t_part*})
+    -- if (premAL*{premAL <- premAL*} = premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*})
 
 relation Partialbind_arg: algoCtx |- arg : algoCtx arg premAL*
 
   rulegroup exp
 
-    rule exp: AC |- EXP typedExp as arg : AC_part EXP typedExp_part as arg premAL*{premAL <- premAL*}
+    rule exp: AC |- expArg as arg : AC_part expArg_part as arg premAL*{premAL <- premAL*}
+    -- if (EXP typedExp = expArg)
     -- Partialbind_exp: AC [] |- typedExp : AC_part _IC typedExp_part premAL*{premAL <- premAL*}
+    -- if (expArg_part = EXP typedExp_part)
 
   rulegroup fun
 
-    rule fun: AC |- FUN id as arg : AC FUN id as arg []
+    rule fun: AC |- funArg as arg : AC funArg as arg []
 
 relation Partialbind_args: algoCtx |- arg* : algoCtx arg* premAL*
 
@@ -1498,15 +1543,11 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
   rulegroup literal
 
-    rule boolean: AC |- BOOL _b as exp '#' _typ : []
-
-    rule number: AC |- num as exp '#' _typ : []
-
-    rule text: AC |- TEXT _t as exp '#' _typ : []
+    rule literal: AC |- literalExp as exp '#' _typ : []
 
   rulegroup variable
 
-    rule variable: AC |- VAR _id as exp '#' _typ : []
+    rule variable: AC |- varExp as exp '#' _typ : []
 
   rulegroup unary
 
@@ -1664,7 +1705,7 @@ relation Guard_arg: algoCtx |- arg : premAL*
 
   rulegroup fun
 
-    rule fun: AC |- FUN _id as arg : []
+    rule fun: AC |- funArg as arg : []
 
 relation Guard_args: algoCtx |- arg* : premAL*
 
@@ -1800,15 +1841,11 @@ relation Exp_pure: |- typedExp
 
   rulegroup literal
 
-    rule boolean: |- BOOL _b as exp '#' _typ
-
-    rule number: |- num as exp '#' _typ
-
-    rule text: |- TEXT _t as exp '#' _typ
+    rule literal: |- literalExp as exp '#' _typ
 
   rulegroup variable
 
-    rule variable: |- VAR _id as exp '#' _typ
+    rule variable: |- varExp as exp '#' _typ
 
   rulegroup unary
 
@@ -2002,60 +2039,56 @@ relation Otherwise_pure: |- defnAL
 
 def $free_varis_exp(typedExp) : vari* =
 
-  clause 0 : (BOOL _b as exp '#' _typ) = []
+  clause 0 : (literalExp as exp '#' _typ) = []
 
-  clause 1 : (num as exp '#' _typ) = []
+  clause 1 : (VAR id as exp '#' typ) = [id typ []]
 
-  clause 2 : (TEXT _t as exp '#' _typ) = []
+  clause 2 : (UN _unOp typedExp as exp '#' _typ) = $free_varis_exp(typedExp)
 
-  clause 3 : (VAR id as exp '#' typ) = [id typ []]
+  clause 3 : (BIN _binOp typedExp_l typedExp_r as exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
 
-  clause 4 : (UN _unOp typedExp as exp '#' _typ) = $free_varis_exp(typedExp)
+  clause 4 : (CMP _cmpOp typedExp_l typedExp_r as exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
 
-  clause 5 : (BIN _binOp typedExp_l typedExp_r as exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
+  clause 5 : (UPCAST _typ typedExp as exp '#' _typ') = $free_varis_exp(typedExp)
 
-  clause 6 : (CMP _cmpOp typedExp_l typedExp_r as exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
+  clause 6 : (DOWNCAST _typ typedExp as exp '#' _typ') = $free_varis_exp(typedExp)
 
-  clause 7 : (UPCAST _typ typedExp as exp '#' _typ') = $free_varis_exp(typedExp)
+  clause 7 : (SUB typedExp _typ as exp '#' _typ') = $free_varis_exp(typedExp)
 
-  clause 8 : (DOWNCAST _typ typedExp as exp '#' _typ') = $free_varis_exp(typedExp)
+  clause 8 : (MATCH typedExp _pat as exp '#' _typ) = $free_varis_exp(typedExp)
 
-  clause 9 : (SUB typedExp _typ as exp '#' _typ') = $free_varis_exp(typedExp)
+  clause 9 : (TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
 
-  clause 10 : (MATCH typedExp _pat as exp '#' _typ) = $free_varis_exp(typedExp)
+  clause 10 : (INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
 
-  clause 11 : (TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-
-  clause 12 : (INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-
-  clause 13 : (STR expField*{expField <- expField*} as exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
+  clause 11 : (STR expField*{expField <- expField*} as exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
   -- (if (_atom typedExp = expField))*{_atom <- _atom*, expField <- expField*, typedExp <- typedExp*}
 
-  clause 14 : (OPT ?() as exp '#' _typ) = []
+  clause 12 : (OPT ?() as exp '#' _typ) = []
 
-  clause 15 : (OPT ?(typedExp) as exp '#' _typ) = $free_varis_exp(typedExp)
+  clause 13 : (OPT ?(typedExp) as exp '#' _typ) = $free_varis_exp(typedExp)
 
-  clause 16 : (LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
+  clause 14 : (LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
 
-  clause 17 : (CONS typedExp_h typedExp_t as exp '#' _typ) = $free_varis_exps([typedExp_h, typedExp_t])
+  clause 15 : (CONS typedExp_h typedExp_t as exp '#' _typ) = $free_varis_exps([typedExp_h, typedExp_t])
 
-  clause 18 : (CAT typedExp_l typedExp_r as exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
+  clause 16 : (CAT typedExp_l typedExp_r as exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
 
-  clause 19 : (MEM typedExp_l typedExp_r as exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
+  clause 17 : (MEM typedExp_l typedExp_r as exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
 
-  clause 20 : (LEN typedExp as exp '#' _typ) = $free_varis_exp(typedExp)
+  clause 18 : (LEN typedExp as exp '#' _typ) = $free_varis_exp(typedExp)
 
-  clause 21 : (DOT typedExp _atom as exp '#' _typ) = $free_varis_exp(typedExp)
+  clause 19 : (DOT typedExp _atom as exp '#' _typ) = $free_varis_exp(typedExp)
 
-  clause 22 : (IDX typedExp_b typedExp_i as exp '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i])
+  clause 20 : (IDX typedExp_b typedExp_i as exp '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i])
 
-  clause 23 : (SLICE typedExp_b typedExp_i typedExp_n as exp '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i, typedExp_n])
+  clause 21 : (SLICE typedExp_b typedExp_i typedExp_n as exp '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i, typedExp_n])
 
-  clause 24 : (UPD typedExp_b typedPath typedExp_f as exp '#' _typ) = $free_varis_exp(typedExp_b) ++ $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_f)
+  clause 22 : (UPD typedExp_b typedPath typedExp_f as exp '#' _typ) = $free_varis_exp(typedExp_b) ++ $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_f)
 
-  clause 25 : (CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} as exp '#' _typ) = $free_varis_args(arg*{arg <- arg*})
+  clause 23 : (CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} as exp '#' _typ) = $free_varis_args(arg*{arg <- arg*})
 
-  clause 26 : (ITER typedExp iter _vari*{_vari <- _vari*} as exp '#' _typ) = vari_iter*{vari_iter <- vari_iter*}
+  clause 24 : (ITER typedExp iter _vari*{_vari <- _vari*} as exp '#' _typ) = vari_iter*{vari_iter <- vari_iter*}
   -- if (vari*{vari <- vari*} = $free_varis_exp(typedExp))
   -- (if (vari_iter = $iterate_vari(vari, [iter])))*{vari <- vari*, vari_iter <- vari_iter*}
 
@@ -2079,7 +2112,7 @@ def $free_varis_arg(arg) : vari* =
 
   clause 0 : (EXP typedExp as arg) = $free_varis_exp(typedExp)
 
-  clause 1 : (FUN _id as arg) = []
+  clause 1 : (funArg as arg) = []
 
 def $free_varis_args(arg*) : vari* =
 
@@ -2155,49 +2188,57 @@ def $init_renamer(id*, vari*) : renamer =
 
 def $rename_exp(renamer, typedExp) : (renamer, typedExp) =
 
-  clause 0 : (R, VAR id as exp '#' typ) = (R_multi, VAR id as exp '#' typ)
+  clause 0 : (R, VAR id as exp '#' typ) = (R, VAR id as exp '#' typ)
+  -- if (`{ id_bind ':' _id*{_id <- _id*}*{_id* <- _id**, id_bind <- id_bind*} `} = R.OCC)
+  -- if ~id <- id_bind*{id_bind <- id_bind*}
+
+  clause 1 : (R, VAR id as exp '#' typ) = (R_multi, VAR id as exp '#' typ)
   -- if (?(id_later*{id_later <- id_later*}) = $find_map<id, id*>(R.OCC, id))
   -- if ~id <- R.SEEN
   -- if (R_multi = R[SEEN = R.SEEN ++ [id]])
 
-  clause 1 : (R, VAR id as exp '#' typ) = (R_multi, VAR id_fresh as exp '#' typ)
+  clause 2 : (R, VAR id as exp '#' typ) = (R_multi, VAR id_fresh as exp '#' typ)
   -- if (?(id_later*{id_later <- id_later*}) = $find_map<id, id*>(R.OCC, id))
   -- if id <- R.SEEN
   -- if ((id_used*{id_used <- id_used*}, id_fresh) = $fresh_id(R.USED))
   -- if (occ = $add_map<id, id*>(R.OCC, id, id_later*{id_later <- id_later*} ++ [id_fresh]))
   -- if (R_multi = {USED id_used*{id_used <- id_used*}, SEEN R.SEEN, OCC occ})
 
-  clause 2 : (R, UPCAST typ_sup typedExp as exp '#' typ) = (R_multi, UPCAST typ_sup typedExp_multi as exp '#' typ)
+  clause 3 : (R, UPCAST typ_sup typedExp as exp '#' typ) = (R_multi, UPCAST typ_sup typedExp_multi as exp '#' typ)
   -- if ((R_multi, typedExp_multi) = $rename_exp(R, typedExp))
 
-  clause 3 : (R, TUP typedExp*{typedExp <- typedExp*} as exp '#' typ) = (R_multi, TUP typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
+  clause 4 : (R, TUP typedExp*{typedExp <- typedExp*} as exp '#' typ) = (R_multi, TUP typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
   -- if ((R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) = $rename_exps(R, typedExp*{typedExp <- typedExp*}))
 
-  clause 4 : (R, INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' typ) = (R_multi, INJ mixop typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
+  clause 5 : (R, INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' typ) = (R_multi, INJ mixop typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
   -- if ((R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) = $rename_exps(R, typedExp*{typedExp <- typedExp*}))
 
-  clause 5 : (R, STR expField*{expField <- expField*} as exp '#' typ) = (R_multi, STR expField_multi*{expField_multi <- expField_multi*} as exp '#' typ)
+  clause 6 : (R, STR expField*{expField <- expField*} as exp '#' typ) = (R_multi, STR expField_multi*{expField_multi <- expField_multi*} as exp '#' typ)
   -- (if (atom typedExp = expField))*{atom <- atom*, expField <- expField*, typedExp <- typedExp*}
   -- if ((R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) = $rename_exps(R, typedExp*{typedExp <- typedExp*}))
   -- (if (expField_multi = atom typedExp_multi))*{atom <- atom*, expField_multi <- expField_multi*, typedExp_multi <- typedExp_multi*}
 
-  clause 6 : (R, OPT ?(typedExp) as exp '#' typ) = (R_multi, OPT ?(typedExp_multi) as exp '#' typ)
+  clause 7 : (R, OPT ?() as exp '#' typ) = (R, OPT ?() as exp '#' typ)
+
+  clause 8 : (R, OPT ?(typedExp) as exp '#' typ) = (R_multi, OPT ?(typedExp_multi) as exp '#' typ)
   -- if ((R_multi, typedExp_multi) = $rename_exp(R, typedExp))
 
-  clause 7 : (R, LIST typedExp*{typedExp <- typedExp*} as exp '#' typ) = (R_multi, LIST typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
+  clause 9 : (R, LIST typedExp*{typedExp <- typedExp*} as exp '#' typ) = (R_multi, LIST typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
   -- if ((R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) = $rename_exps(R, typedExp*{typedExp <- typedExp*}))
 
-  clause 8 : (R, CONS typedExp_h typedExp_t as exp '#' typ) = (R_t, CONS typedExp_h_multi typedExp_t_multi as exp '#' typ)
+  clause 10 : (R, CONS typedExp_h typedExp_t as exp '#' typ) = (R_t, CONS typedExp_h_multi typedExp_t_multi as exp '#' typ)
   -- if ((R_h, typedExp_h_multi) = $rename_exp(R, typedExp_h))
   -- if ((R_t, typedExp_t_multi) = $rename_exp(R_h, typedExp_t))
 
-  clause 9 : (R, ITER typedExp iter vari*{vari <- vari*} as exp '#' typ) = (R_multi, ITER typedExp_multi iter vari_occ*{vari_occ <- vari_occ*} as exp '#' typ)
+  clause 11 : (R, ITER typedExp iter vari*{vari <- vari*} as exp '#' typ) = (R_multi, ITER typedExp_multi iter vari_occ*{vari_occ <- vari_occ*} as exp '#' typ)
   -- if ((R_multi, typedExp_multi) = $rename_exp(R, typedExp))
   -- if (id_free*{id_free <- id_free*} = $ids_of_varis($free_varis_exp(typedExp_multi)))
   -- (if (vari_rename*{vari_rename <- vari_rename*} = $rename_iter_vari(R_multi.OCC, vari, id_free*{id_free <- id_free*})))*{vari <- vari*, vari_rename* <- vari_rename**}
   -- if (vari_occ*{vari_occ <- vari_occ*} = $concat_<vari>(vari_rename*{vari_rename <- vari_rename*}*{vari_rename* <- vari_rename**}))
 
-  clause -1 : (R, typedExp) = (R, typedExp)
+  clause 12 : (R, typedExp) = (R, typedExp)
+  -- if (exp '#' _typ = typedExp)
+  -- if ((((((((~exp <: varExp /\ ~exp <: upCastExp) /\ ~exp <: tupExp) /\ ~exp <: injExp) /\ ~exp <: strExp) /\ ~exp <: optExp) /\ ~exp <: listExp) /\ ~exp <: consExp) /\ ~exp <: iterExp)
 
 def $rename_exps(renamer, typedExp*) : (renamer, typedExp*) =
 
@@ -2230,28 +2271,6 @@ def $rename_args(renamer, arg*) : (renamer, arg*) =
   -- if ((R_h, arg_h_multi) = $rename_arg(R, arg_h))
   -- if ((R_t, arg_t_multi*{arg_t_multi <- arg_t_multi*}) = $rename_args(R_h, arg_t*{arg_t <- arg_t*}))
 
-def $is_invertible(typedExp) : bool =
-
-  clause 0 : (VAR _id as exp '#' _typ) = true
-
-  clause 1 : (UPCAST _typ _typedExp as exp '#' _typ') = true
-
-  clause 2 : (TUP _typedExp*{_typedExp <- _typedExp*} as exp '#' _typ) = true
-
-  clause 3 : (INJ _expCase as exp '#' _typ) = true
-
-  clause 4 : (STR _expField*{_expField <- _expField*} as exp '#' _typ) = true
-
-  clause 5 : (OPT _typedExp?{_typedExp <- _typedExp?} as exp '#' _typ) = true
-
-  clause 6 : (LIST _typedExp*{_typedExp <- _typedExp*} as exp '#' _typ) = true
-
-  clause 7 : (CONS _typedExp _typedExp' as exp '#' _typ) = true
-
-  clause 8 : (ITER _typedExp _expIter as exp '#' _typ) = true
-
-  clause -1 : (_typedExp) = false
-
 def $sideconds_multi(iterCtx, vari*, renamer) : premAL* =
 
   clause 0 : (IC, vari_bind*{vari_bind <- vari_bind*}, R) = $concat_<premAL>(premAL_eq*{premAL_eq <- premAL_eq*}*{premAL_eq* <- premAL_eq**})
@@ -2278,18 +2297,9 @@ def $sidecond_multi_binder(iterCtx, vari, id) : premAL =
   -- if (IC_cmp = $add_iterated(IC_inner ++ IC_outer, [vari_first, vari_later]))
   -- if (premIterAL*{premIterAL <- premIterAL*} = $prem_iters(IC_cmp, [id_first, id_later], []))
 
-def $fresh_vari(algoCtx, iterCtx, typ) : (algoCtx, vari) =
+def $is_bound_exp(algoCtx, typedExp) : bool =
 
-  clause 0 : (AC, IC, typ) = (AC_fresh, vari_fresh)
-  -- if ((id_used*{id_used <- id_used*}, id_fresh) = $fresh_id(AC.USED))
-  -- if (AC_used = AC[USED = id_used*{id_used <- id_used*}])
-  -- if (vari_fresh = id_fresh typ [])
-  -- if (iter _vari*{_vari <- _vari*}*{_vari* <- _vari**, iter <- iter*} = IC)
-  -- if (AC_fresh = $add_bound(AC_used, [$iterate_vari(vari_fresh, iter*{iter <- iter*})]))
-
-def $decomposes(algoCtx, typedExp) : bool =
-
-  clause 0 : (AC, typedExp) = ~$forall_(id <- id_bound*{id_bound <- id_bound*}*{id <- id*})
+  clause 0 : (AC, typedExp) = $forall_(id <- id_bound*{id_bound <- id_bound*}*{id <- id*})
   -- if (id*{id <- id*} = $ids_of_varis($free_varis_exp(typedExp)))
   -- if (id_bound*{id_bound <- id_bound*} = $ids_of_varis(AC.BOUND))
 
@@ -2299,7 +2309,7 @@ def $sidecond_partial(iterCtx, vari, typedExp) : premAL =
   -- if (id_d _typ _iter*{_iter <- _iter*} = vari_d)
   -- if (premIterAL*{premIterAL <- premIterAL*} = $prem_iters($add_iterated(IC, [vari_d]), [id_d], []))
 
-def $let_partial(iterCtx, vari, typedExp, typedExp) : premAL =
+def $prem_let_partial(iterCtx, vari, typedExp, typedExp) : premAL =
 
   clause 0 : (IC, vari_d, typedExp_l, typedExp_r) = $iterate_prem(LET typedExp_l '=' typedExp_r as premAL, premIterAL*{premIterAL <- premIterAL*})
   -- if (id_d _typ _iter*{_iter <- _iter*} = vari_d)
@@ -2337,7 +2347,7 @@ def $is_singleton_typ(tdenv, typ) : bool =
 
 def $is_irrefutable(tdenv, typedExp) : bool =
 
-  clause 0 : (tdenv, VAR _id as exp '#' _typ) = true
+  clause 0 : (_tdenv, varExp as exp '#' _typ) = true
 
   clause 1 : (tdenv, TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ) = $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
 
@@ -2348,7 +2358,8 @@ def $is_irrefutable(tdenv, typedExp) : bool =
 
   clause 4 : (tdenv, ITER typedExp _expIter as exp '#' _typ) = $is_irrefutable(tdenv, typedExp)
 
-  clause -1 : (_tdenv, _typedExp) = false
+  clause 5 : (_tdenv, exp '#' _typ) = false
+  -- if ((((~exp <: varExp /\ ~exp <: tupExp) /\ ~exp <: injExp) /\ ~exp <: strExp) /\ ~exp <: iterExp)
 
 def $variant_cases(tdenv, typ) : typCase* =
 
@@ -2357,7 +2368,7 @@ def $variant_cases(tdenv, typ) : typCase* =
 
 def $covered_cases(tdenv, typedExp) : typCase* =
 
-  clause 0 : (tdenv, VAR _id as exp '#' typ) = $variant_cases(tdenv, typ)
+  clause 0 : (tdenv, varExp as exp '#' typ) = $variant_cases(tdenv, typ)
 
   clause 1 : (tdenv, UPCAST _typ typedExp as exp '#' _typ') = $covered_cases(tdenv, typedExp)
 

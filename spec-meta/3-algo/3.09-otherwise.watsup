@@ -14,144 +14,153 @@
 
 ;; Evaluating an expression fails only by calling a function
 
-;;; BOOL bool
-;;; num
-;;; TEXT text
+;;; literalExp
+;;; syntax literalExp = BOOL bool | num | TEXT text
 
-rulegroup Exp_pure/literal {
+rule Exp_pure/literal:
+  |- literalExp '#' _
 
-  rule Exp_pure/boolean:
-    |- (BOOL _) '#' _
-
-  rule Exp_pure/number:
-    |- num '#' _
-
-  rule Exp_pure/text:
-    |- (TEXT _) '#' _
-
-}
-
-;;; VAR id
+;;; varExp
+;;; syntax varExp = VAR id
 
 rule Exp_pure/variable:
-  |- (VAR _) '#' _
+  |- varExp '#' _
 
-;;; UN unOp typedExp
+;;; unOpExp
+;;; syntax unOpExp = UN unOp typedExp
 
 rule Exp_pure/unary:
   |- (UN _ typedExp) '#' _
   -- Exp_pure: |- typedExp
 
-;;; BIN binOp typedExp typedExp
+;;; binOpExp
+;;; syntax binOpExp = BIN binOp typedExp typedExp
 
 rule Exp_pure/binary:
   |- (BIN _ typedExp_l typedExp_r) '#' _
   -- Exp_pure: |- typedExp_l
   -- Exp_pure: |- typedExp_r
 
-;;; CMP cmpOp typedExp typedExp
+;;; cmpOpExp
+;;; syntax cmpOpExp = CMP cmpOp typedExp typedExp
 
 rule Exp_pure/compare:
   |- (CMP _ typedExp_l typedExp_r) '#' _
   -- Exp_pure: |- typedExp_l
   -- Exp_pure: |- typedExp_r
 
-;;; UPCAST typ typedExp
+;;; upCastExp
+;;; syntax upCastExp = UPCAST typ typedExp
 
 rule Exp_pure/upcast:
   |- (UPCAST _ typedExp) '#' _
   -- Exp_pure: |- typedExp
 
-;;; DOWNCAST typ typedExp
+;;; downCastExp
+;;; syntax downCastExp = DOWNCAST typ typedExp
 
 rule Exp_pure/downcast:
   |- (DOWNCAST _ typedExp) '#' _
   -- Exp_pure: |- typedExp
 
-;;; SUB typedExp typ
+;;; subExp
+;;; syntax subExp = SUB typedExp typ
 
 rule Exp_pure/subtype:
   |- (SUB typedExp _) '#' _
   -- Exp_pure: |- typedExp
 
-;;; MATCH typedExp pat
+;;; matchExp
+;;; syntax matchExp = MATCH typedExp pat
 
 rule Exp_pure/match:
   |- (MATCH typedExp _) '#' _
   -- Exp_pure: |- typedExp
 
-;;; TUP typedExp*
+;;; tupExp
+;;; syntax tupExp = TUP typedExp*
 
 rule Exp_pure/tuple:
   |- (TUP typedExp*) '#' _
   -- (Exp_pure: |- typedExp)*
 
-;;; INJ expCase
+;;; injExp
+;;; syntax injExp = INJ expCase
 
 rule Exp_pure/case:
   |- (INJ (_ typedExp*)) '#' _
   -- (Exp_pure: |- typedExp)*
 
-;;; STR expField*
+;;; strExp
+;;; syntax strExp = STR expField*
 
 rule Exp_pure/struct:
   |- (STR expField*) '#' _
   -- (if _ typedExp = expField)*
   -- (Exp_pure: |- typedExp)*
 
-;;; OPT typedExp?
+;;; optExp
+;;; syntax optExp = OPT typedExp?
 
 rule Exp_pure/opt:
   |- (OPT typedExp?) '#' _
   -- (Exp_pure: |- typedExp)?
 
-;;; LIST typedExp*
+;;; listExp
+;;; syntax listExp = LIST typedExp*
 
 rule Exp_pure/list:
   |- (LIST typedExp*) '#' _
   -- (Exp_pure: |- typedExp)*
 
-;;; CONS typedExp typedExp
+;;; consExp
+;;; syntax consExp = CONS typedExp typedExp
 
 rule Exp_pure/cons:
   |- (CONS typedExp_h typedExp_t) '#' _
   -- Exp_pure: |- typedExp_h
   -- Exp_pure: |- typedExp_t
 
-;;; CAT typedExp typedExp
+;;; catExp
+;;; syntax catExp = CAT typedExp typedExp
 
 rule Exp_pure/concat:
   |- (CAT typedExp_l typedExp_r) '#' _
   -- Exp_pure: |- typedExp_l
   -- Exp_pure: |- typedExp_r
 
-;;; MEM typedExp typedExp
+;;; memExp
+;;; syntax memExp = MEM typedExp typedExp
 
 rule Exp_pure/mem:
   |- (MEM typedExp_l typedExp_r) '#' _
   -- Exp_pure: |- typedExp_l
   -- Exp_pure: |- typedExp_r
 
-;;; LEN typedExp
+;;; lenExp
+;;; syntax lenExp = LEN typedExp
 
 rule Exp_pure/len:
   |- (LEN typedExp) '#' _
   -- Exp_pure: |- typedExp
 
-;;; DOT typedExp atom
+;;; dotAccExp
+;;; syntax dotAccExp = DOT typedExp atom
 
 rule Exp_pure/dot:
   |- (DOT typedExp _) '#' _
   -- Exp_pure: |- typedExp
 
-;;; IDX typedExp typedExp
+;;; idxAccExp
+;;; syntax idxAccExp = IDX typedExp typedExp
 
 rule Exp_pure/idx:
   |- (IDX typedExp_b typedExp_i) '#' _
   -- Exp_pure: |- typedExp_b
   -- Exp_pure: |- typedExp_i
 
-;;; SLICE typedExp typedExp typedExp
+;;; sliceAccExp
+;;; syntax sliceAccExp = SLICE typedExp typedExp typedExp
 
 rule Exp_pure/slice:
   |- (SLICE typedExp_b typedExp_i typedExp_n) '#' _
@@ -159,7 +168,8 @@ rule Exp_pure/slice:
   -- Exp_pure: |- typedExp_i
   -- Exp_pure: |- typedExp_n
 
-;;; UPD typedExp typedPath typedExp
+;;; updExp
+;;; syntax updExp = UPD typedExp typedPath typedExp
 
 rule Exp_pure/upd:
   |- (UPD typedExp_b typedPath typedExp_f) '#' _
@@ -167,7 +177,8 @@ rule Exp_pure/upd:
   -- Path_pure: |- typedPath
   -- Exp_pure: |- typedExp_f
 
-;;; ITER typedExp expIter
+;;; iterExp
+;;; syntax iterExp = ITER typedExp expIter
 
 rule Exp_pure/iter:
   |- (ITER typedExp _) '#' _
@@ -179,19 +190,22 @@ rule Exp_pure/iter:
 ;; syntax typedPath
 ;;
 
-;;; ROOT
+;;; rootPath
+;;; syntax rootPath = ROOT
 
 rule Path_pure/root:
   |- ROOT '#' _
 
-;;; IDX typedPath typedExp
+;;; idxPath
+;;; syntax idxPath = IDX typedPath typedExp
 
 rule Path_pure/idx:
   |- (IDX typedPath typedExp_i) '#' _
   -- Path_pure: |- typedPath
   -- Exp_pure: |- typedExp_i
 
-;;; SLICE typedPath typedExp typedExp
+;;; slicePath
+;;; syntax slicePath = SLICE typedPath typedExp typedExp
 
 rule Path_pure/slice:
   |- (SLICE typedPath typedExp_i typedExp_n) '#' _
@@ -199,7 +213,8 @@ rule Path_pure/slice:
   -- Exp_pure: |- typedExp_i
   -- Exp_pure: |- typedExp_n
 
-;;; DOT typedPath atom
+;;; dotPath
+;;; syntax dotPath = DOT typedPath atom
 
 rule Path_pure/dot:
   |- (DOT typedPath _) '#' _

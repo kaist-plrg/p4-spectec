@@ -95,35 +95,27 @@ def $sideconds_replace(_, _, _) = eps
 ;; syntax typedExp
 ;;
 
-;;; BOOL bool
-;;; num
-;;; TEXT text
+;;; literalExp
+;;; syntax literalExp = BOOL bool | num | TEXT text
 
-rulegroup Guard_exp/literal {
+rule Guard_exp/literal:
+  AC |- literalExp '#' _ : eps
 
-  rule Guard_exp/boolean:
-    AC |- (BOOL _) '#' _ : eps
-
-  rule Guard_exp/number:
-    AC |- num '#' _ : eps
-
-  rule Guard_exp/text:
-    AC |- (TEXT _) '#' _ : eps
-
-}
-
-;;; VAR id
+;;; varExp
+;;; syntax varExp = VAR id
 
 rule Guard_exp/variable:
-  AC |- (VAR _) '#' _ : eps
+  AC |- varExp '#' _ : eps
 
-;;; UN unOp typedExp
+;;; unOpExp
+;;; syntax unOpExp = UN unOp typedExp
 
 rule Guard_exp/unary:
   AC |- (UN _ typedExp) '#' _ : premAL*
   -- Guard_exp: AC |- typedExp : premAL*
 
-;;; BIN binOp typedExp typedExp
+;;; binOpExp
+;;; syntax binOpExp = BIN binOp typedExp typedExp
 
 rulegroup Guard_exp/binary {
 
@@ -145,56 +137,65 @@ rulegroup Guard_exp/binary {
 
 }
 
-;;; CMP cmpOp typedExp typedExp
+;;; cmpOpExp
+;;; syntax cmpOpExp = CMP cmpOp typedExp typedExp
 
 rule Guard_exp/compare:
   AC |- (CMP _ typedExp_l typedExp_r) '#' _ : premAL*
   -- Guard_exps: AC |- [ typedExp_l, typedExp_r ] : premAL*
 
-;;; UPCAST typ typedExp
+;;; upCastExp
+;;; syntax upCastExp = UPCAST typ typedExp
 
 rule Guard_exp/upcast:
   AC |- (UPCAST _ typedExp) '#' _ : premAL*
   -- Guard_exp: AC |- typedExp : premAL*
 
-;;; DOWNCAST typ typedExp
+;;; downCastExp
+;;; syntax downCastExp = DOWNCAST typ typedExp
 
 rule Guard_exp/downcast:
   AC |- (DOWNCAST _ typedExp) '#' _ : premAL*
   -- Guard_exp: AC |- typedExp : premAL*
 
-;;; SUB typedExp typ
+;;; subExp
+;;; syntax subExp = SUB typedExp typ
 
 rule Guard_exp/subtype:
   AC |- (SUB typedExp _) '#' _ : premAL*
   -- Guard_exp: AC |- typedExp : premAL*
 
-;;; MATCH typedExp pat
+;;; matchExp
+;;; syntax matchExp = MATCH typedExp pat
 
 rule Guard_exp/match:
   AC |- (MATCH typedExp _) '#' _ : premAL*
   -- Guard_exp: AC |- typedExp : premAL*
 
-;;; TUP typedExp*
+;;; tupExp
+;;; syntax tupExp = TUP typedExp*
 
 rule Guard_exp/tuple:
   AC |- (TUP typedExp*) '#' _ : premAL*
   -- Guard_exps: AC |- typedExp* : premAL*
 
-;;; INJ expCase
+;;; injExp
+;;; syntax injExp = INJ expCase
 
 rule Guard_exp/case:
   AC |- (INJ (_ typedExp*)) '#' _ : premAL*
   -- Guard_exps: AC |- typedExp* : premAL*
 
-;;; STR expField*
+;;; strExp
+;;; syntax strExp = STR expField*
 
 rule Guard_exp/struct:
   AC |- (STR expField*) '#' _ : premAL*
   -- (if _ typedExp = expField)*
   -- Guard_exps: AC |- typedExp* : premAL*
 
-;;; OPT typedExp?
+;;; optExp
+;;; syntax optExp = OPT typedExp?
 
 rulegroup Guard_exp/opt {
 
@@ -207,43 +208,50 @@ rulegroup Guard_exp/opt {
 
 }
 
-;;; LIST typedExp*
+;;; listExp
+;;; syntax listExp = LIST typedExp*
 
 rule Guard_exp/list:
   AC |- (LIST typedExp*) '#' _ : premAL*
   -- Guard_exps: AC |- typedExp* : premAL*
 
-;;; CONS typedExp typedExp
+;;; consExp
+;;; syntax consExp = CONS typedExp typedExp
 
 rule Guard_exp/cons:
   AC |- (CONS typedExp_h typedExp_t) '#' _ : premAL*
   -- Guard_exps: AC |- [ typedExp_h, typedExp_t ] : premAL*
 
-;;; CAT typedExp typedExp
+;;; catExp
+;;; syntax catExp = CAT typedExp typedExp
 
 rule Guard_exp/concat:
   AC |- (CAT typedExp_l typedExp_r) '#' _ : premAL*
   -- Guard_exps: AC |- [ typedExp_l, typedExp_r ] : premAL*
 
-;;; MEM typedExp typedExp
+;;; memExp
+;;; syntax memExp = MEM typedExp typedExp
 
 rule Guard_exp/mem:
   AC |- (MEM typedExp_l typedExp_r) '#' _ : premAL*
   -- Guard_exps: AC |- [ typedExp_l, typedExp_r ] : premAL*
 
-;;; LEN typedExp
+;;; lenExp
+;;; syntax lenExp = LEN typedExp
 
 rule Guard_exp/len:
   AC |- (LEN typedExp) '#' _ : premAL*
   -- Guard_exp: AC |- typedExp : premAL*
 
-;;; DOT typedExp atom
+;;; dotAccExp
+;;; syntax dotAccExp = DOT typedExp atom
 
 rule Guard_exp/dot:
   AC |- (DOT typedExp _) '#' _ : premAL*
   -- Guard_exp: AC |- typedExp : premAL*
 
-;;; IDX typedExp typedExp
+;;; idxAccExp
+;;; syntax idxAccExp = IDX typedExp typedExp
 
 rule Guard_exp/idx:
   AC |- (IDX typedExp_b typedExp_i) '#' _ : premAL*
@@ -254,7 +262,8 @@ rule Guard_exp/idx:
   -- if premAL_idx = $sidecond_cmp(LT, typedExp_i, typedExp_len)
   -- if premAL* = premAL_operand* ++ [ premAL_idx ]
 
-;;; SLICE typedExp typedExp typedExp
+;;; sliceAccExp
+;;; syntax sliceAccExp = SLICE typedExp typedExp typedExp
 
 rule Guard_exp/slice:
   AC |- (SLICE typedExp_b typedExp_i typedExp_n) '#' _ : premAL*
@@ -266,7 +275,8 @@ rule Guard_exp/slice:
   -- if premAL_slice = $sidecond_cmp(LE, typedExp_end, typedExp_len)
   -- if premAL* = premAL_operand* ++ [ premAL_slice ]
 
-;;; UPD typedExp typedPath typedExp
+;;; updExp
+;;; syntax updExp = UPD typedExp typedPath typedExp
 
 rule Guard_exp/upd:
   AC |- (UPD typedExp_b typedPath typedExp_f) '#' _ : premAL*
@@ -279,13 +289,15 @@ rule Guard_exp/upd:
   -- if premAL_rep* = $sideconds_replace(AC.TYP, typedPath, typedExp_f)
   -- if premAL* = premAL_acc* ++ premAL_f* ++ premAL_rep*
 
-;;; CALL id targ* arg*
+;;; callExp
+;;; syntax callExp = CALL id targ* arg*
 
 rule Guard_exp/call:
   AC |- (CALL _ _ arg*) '#' _ : premAL*
   -- Guard_args: AC |- arg* : premAL*
 
-;;; ITER typedExp expIter
+;;; iterExp
+;;; syntax iterExp = ITER typedExp expIter
 
 rule Guard_exp/iter:
   AC |- (ITER typedExp (iter vari*)) '#' _ : premAL*
@@ -321,16 +333,18 @@ rulegroup Guard_exps {
 ;; syntax arg
 ;;
 
-;;; EXP typedExp
+;;; expArg
+;;; syntax expArg = EXP typedExp
 
 rule Guard_arg/exp:
   AC |- EXP typedExp : premAL*
   -- Guard_exp: AC |- typedExp : premAL*
 
-;;; FUN id
+;;; funArg
+;;; syntax funArg = FUN id
 
 rule Guard_arg/fun:
-  AC |- FUN _ : eps
+  AC |- funArg : eps
 
 ;;
 ;; Argument sequence guards

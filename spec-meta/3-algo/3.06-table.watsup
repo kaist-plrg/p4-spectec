@@ -32,30 +32,39 @@ dec $is_irrefutable(tdenv, typedExp) : bool
   hint(prose_true %1 "matches every value of its type under" %0)
   hint(prose_false %1 "does not match every value of its type under" %0)
 
-;;; VAR id
+;;; varExp
+;;; syntax varExp = VAR id
 
-def $is_irrefutable(tdenv, (VAR _) '#' _) = true
+def $is_irrefutable(_, varExp '#' _) = true
 
-;;; TUP typedExp*
+;;; tupExp
+;;; syntax tupExp = TUP typedExp*
 
 def $is_irrefutable(tdenv, (TUP typedExp*) '#' _) = $forall_($is_irrefutable(tdenv, typedExp)*)
 
-;;; INJ expCase
+;;; injExp
+;;; syntax injExp = INJ expCase
 
 def $is_irrefutable(tdenv, (INJ (_ typedExp*)) '#' typ)
   = $is_singleton_typ(tdenv, typ) /\ $forall_($is_irrefutable(tdenv, typedExp)*)
 
-;;; STR expField*
+;;; strExp
+;;; syntax strExp = STR expField*
 
 def $is_irrefutable(tdenv, (STR expField*) '#' _) = $forall_($is_irrefutable(tdenv, typedExp)*)
   -- (if _ typedExp = expField)*
 
-;;; ITER typedExp expIter
+;;; iterExp
+;;; syntax iterExp = ITER typedExp expIter
 
 def $is_irrefutable(tdenv, (ITER typedExp _) '#' _) = $is_irrefutable(tdenv, typedExp)
 
-def $is_irrefutable(_, _) = false
-  -- otherwise
+;;; literalExp | opExp | castExp | subExp | matchExp | optExp | listExp
+;;; consExp | catExp | memExp | lenExp | accExp | updExp | callExp
+
+def $is_irrefutable(_, exp '#' _) = false
+  -- if ~(exp <: varExp) /\ ~(exp <: tupExp) /\ ~(exp <: injExp)
+        /\ ~(exp <: strExp) /\ ~(exp <: iterExp)
 
 ;;
 ;; Table rows
@@ -102,7 +111,7 @@ def $variant_cases(tdenv, VAR id _) = typCase*
 
 dec $covered_cases(tdenv, typedExp) : typCase*
   hint(prose_in "the cases covered by row argument" %1 "under" %0)
-def $covered_cases(tdenv, (VAR _) '#' typ) = $variant_cases(tdenv, typ)
+def $covered_cases(tdenv, varExp '#' typ) = $variant_cases(tdenv, typ)
 def $covered_cases(tdenv, (UPCAST _ typedExp) '#' _) = $covered_cases(tdenv, typedExp)
 def $covered_cases(tdenv, (INJ (mixop typedExp*)) '#' _) = [ mixop typ* ]
   -- if $forall_($is_irrefutable(tdenv, typedExp)*)
