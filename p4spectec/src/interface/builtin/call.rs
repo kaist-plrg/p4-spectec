@@ -9,7 +9,8 @@
 
 use crate::runner::{Eval, SideEffect};
 
-use std::collections::HashMap;
+use foldhash::fast::RandomState;
+use hashbrown::HashMap;
 
 use crate::lang::data::{arena::Arena, value::flat::Value};
 
@@ -51,7 +52,7 @@ enum BuiltinEntry {
 /// The builtin table of one interface.
 pub struct Builtins {
     /// Entries by the specification's builtin name.
-    funcs: HashMap<String, BuiltinEntry>,
+    funcs: HashMap<String, BuiltinEntry, RandomState>,
 }
 
 impl Default for Builtins {
@@ -69,7 +70,7 @@ impl Builtins {
     /// The standard builtins plus `entries`,
     /// which override by name and count as pure.
     pub fn with_extensions<const N: usize>(entries: [(&str, BuiltinImpl); N]) -> Self {
-        let mut funcs = HashMap::from([
+        let mut funcs: HashMap<_, _, RandomState> = [
             // Nats
             ("sum_nat".to_owned(), BuiltinEntry::Pure(Box::new(nats::sum_nat))),
             ("max_nat".to_owned(), BuiltinEntry::Pure(Box::new(nats::max_nat))),
@@ -140,7 +141,9 @@ impl Builtins {
             ("bor".to_owned(), BuiltinEntry::Pure(Box::new(numerics::bor))),
             ("bitacc".to_owned(), BuiltinEntry::Pure(Box::new(numerics::bitacc))),
             ("bitacc_replace".to_owned(), BuiltinEntry::Pure(Box::new(numerics::bitacc_replace))),
-        ]);
+        ]
+        .into_iter()
+        .collect();
         // Extensions merge last so an interface can override standard entries
         for (name, builtin_impl) in entries {
             funcs.insert(name.to_owned(), BuiltinEntry::Pure(builtin_impl));

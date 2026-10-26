@@ -9,13 +9,12 @@
 use std::rc::Rc;
 
 use crate::lang::{
-    common::{ds::map::IdMap, source::Span},
+    common::{ds::map::FrozenIdMap, source::Span},
     data::{
         arena::Arena,
         frame::{Frame, FrameLayout},
-        typ,
         value::flat::{self as value, Value, ValueKind},
-        var::{SlotIdx, VarSlot},
+        var::SlotIdx,
     },
 };
 
@@ -23,7 +22,7 @@ use crate::lang::il::prepared as ast;
 
 use crate::diagnostic::{Label, Report};
 
-use crate::runtime::envs::interp::shared::{TDEnv, TypeDef};
+use crate::runtime::envs::interp::shared::{FrozenTDEnv, MicroTDEnv, TypeDef};
 
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap_from_result},
@@ -46,13 +45,6 @@ pub trait ReadContext {
 
     /// Finds the value bound at `slot`, if any.
     fn find_value_at_slot(&self, slot: SlotIdx) -> Option<&Value>;
-    /// Finds the slot of `var` under one more iteration `iter`.
-    fn find_var_iterated(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot;
-
-    /// Finds the prepared slot of `var` under one more iteration.
-    fn find_var_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
-        self.find_var_iterated(var, iter).slot
-    }
 
     // == Types
 
@@ -159,9 +151,9 @@ pub trait IterContext: WriteContext {
 /// Stores type definitions and prepared relation and function definitions.
 #[derive(Debug)]
 pub struct Global<R, F> {
-    tdenv: TDEnv,
-    renv: IdMap<R>,
-    fenv: IdMap<Rc<F>>,
+    tdenv: FrozenTDEnv,
+    renv: FrozenIdMap<R>,
+    fenv: FrozenIdMap<Rc<F>>,
 }
 
 impl<R, F> Global<R, F> {
@@ -169,7 +161,7 @@ impl<R, F> Global<R, F> {
 
     /// Creates empty environments for a stage-specific loader.
     pub(crate) fn new() -> Self {
-        Self { tdenv: TDEnv::new(), renv: IdMap::new(), fenv: IdMap::new() }
+        Self { tdenv: FrozenTDEnv::new(), renv: FrozenIdMap::new(), fenv: FrozenIdMap::new() }
     }
 
     // == Inserters
@@ -179,12 +171,9 @@ impl<R, F> Global<R, F> {
     /// Inserts a global type, panicking if its name is already defined.
     pub(crate) fn insert_typdef(&mut self, id: ast::Id, typdef: TypeDef) {
         // Elaboration already rejects duplicate type names
-        assert!(
-            !self.tdenv.contains_key(&id),
-            "global type definitions must be unique: {}",
-            id.node
-        );
-        self.tdenv.insert(id, typdef);
+        let name = Rc::clone(&id.node);
+        let typdef_prev = self.tdenv.insert(id, typdef);
+        assert!(typdef_prev.is_none(), "global type definitions must be unique: {name}");
     }
 
     // - Relations
@@ -195,12 +184,9 @@ impl<R, F> Global<R, F> {
         R: Clone,
     {
         // Elaboration already rejects duplicate relation names
-        assert!(
-            !self.renv.contains_key(&id),
-            "global relation definitions must be unique: {}",
-            id.node
-        );
-        self.renv.insert(id, rel);
+        let name = Rc::clone(&id.node);
+        let rel_prev = self.renv.insert(id, rel);
+        assert!(rel_prev.is_none(), "global relation definitions must be unique: {name}");
     }
 
     // - Functions
@@ -208,12 +194,18 @@ impl<R, F> Global<R, F> {
     /// Inserts a prepared function, panicking if its name is already defined.
     pub(crate) fn insert_func(&mut self, id: ast::Id, func: F) {
         // Elaboration already rejects duplicate function names
-        assert!(
-            !self.fenv.contains_key(&id),
-            "global function definitions must be unique: {}",
-            id.node
-        );
-        self.fenv.insert(id, Rc::new(func));
+        let name = Rc::clone(&id.node);
+        let func_prev = self.fenv.insert(id, Rc::new(func));
+        assert!(func_prev.is_none(), "global function definitions must be unique: {name}");
+    }
+
+    // == Freezing
+
+    /// Ends loading; later insertions panic.
+    pub(crate) fn freeze(&mut self) {
+        self.tdenv.freeze();
+        self.renv.freeze();
+        self.fenv.freeze();
     }
 }
 
@@ -223,7 +215,7 @@ impl<R, F> Global<R, F> {
 #[derive(Clone, Debug, Default)]
 struct Local {
     /// Type parameters bound to their type arguments.
-    tdenv: TDEnv,
+    tdenv: MicroTDEnv,
     /// Value slots of the current callable.
     frame: Frame,
 }
@@ -260,7 +252,7 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     pub fn localize_with_layout(&self, layout: &Rc<FrameLayout>) -> Self {
         Self {
             global: self.global,
-            local: Local { tdenv: TDEnv::new(), frame: Frame::new(Rc::clone(layout)) },
+            local: Local { tdenv: MicroTDEnv::new(), frame: Frame::new(Rc::clone(layout)) },
         }
     }
 
@@ -331,17 +323,6 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
 
     fn find_value_at_slot(&self, slot: SlotIdx) -> Option<&Value> {
         self.local.frame.get(slot)
-    }
-
-    fn find_var_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
-        self.local
-            .frame
-            .layout()
-            .find_var_slot_iterated(var.slot, iter)
-    }
-
-    fn find_var_iterated(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot {
-        self.local.frame.layout().find_var_iterated(var, iter)
     }
 
     // - Types
@@ -439,7 +420,7 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
 
     fn clear_value_bindings(&mut self) {
         // Keep the layout, drop the values
-        self.local.frame = self.local.frame.wipe();
+        self.local.frame.clear();
     }
 }
 
@@ -537,9 +518,9 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         values_by_var: Vec<Vec<Value>>,
     ) -> Backtrack<()> {
         for (var, values) in vars.iter().zip(values_by_var) {
-            let typ = typ::make::iterate(var.var.typ.clone(), &var.var.iters);
+            let typ = Rc::clone(&var.typ);
             // Each variable becomes a list one iteration outward
-            let value = value::make::list(arena, typ.node.into(), values, Span::default());
+            let value = value::make::list(arena, typ, values, Span::default());
             let value = unwrap_from_result!(value, &Span::default());
             self.add_value_at_slot(var.slot, value);
         }
@@ -553,14 +534,9 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         values_by_var: Vec<Vec<Value>>,
     ) -> Backtrack<()> {
         for (var, values) in vars.iter().zip(values_by_var) {
-            let typ = typ::make::iterate(var.var.typ.clone(), &var.var.iters);
+            let typ = Rc::clone(&var.typ);
             // Each variable becomes an option one iteration outward
-            let value = value::make::opt(
-                arena,
-                typ.node.into(),
-                values.into_iter().next(),
-                Span::default(),
-            );
+            let value = value::make::opt(arena, typ, values.into_iter().next(), Span::default());
             let value = unwrap_from_result!(value, &Span::default());
             self.add_value_at_slot(var.slot, value);
         }
