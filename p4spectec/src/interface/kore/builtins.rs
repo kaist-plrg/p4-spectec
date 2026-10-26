@@ -1,7 +1,7 @@
 //! Text builtins of the K specification, outside hooks
 //!
 //! Reading hook names and priorities (`spec-k/3-load.watsup`) takes text
-//! apart; domain values are read when parsed (`codec`). A KORE string has one character per byte (`parse`).
+//! apart; domain values are read when parsed (`encode`). A KORE string has one character per byte (`parse`).
 //! For example, `$has_prefix("INT.add", "INT.")` is true.
 
 use num_bigint::BigInt;

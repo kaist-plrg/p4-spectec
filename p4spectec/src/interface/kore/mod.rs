@@ -1,15 +1,15 @@
 //! KORE frontend and runner interface for the K specification (`spec-k`)
 //!
-//! `parse` reads KORE text into `ast`, and `load` turns it into values
-//! of the specification as it is, its domain values read (`codec`).
+//! `parse` reads KORE text into `ast`, and `encode` turns it into values
+//! of the specification as it is, its domain values read; `decode` writes
+//! them back as KORE.
 //! `KoreInterface` loads a kompiled definition (`definition.kore`)
 //! and then parses initial terms against its symbols.
 //! `krun` runs the specification's `Krun` relation from an initial term.
 //!
 //! Hooks on domain values are computed by the K runtime of the definition,
 //! the specification's extern (`externs`, `llvm`): terms go to it as KORE
-//! and its answers come back as terms (`codec`). Hooks on K terms are
-//! specified.
+//! and its answers come back as terms. Hooks on K terms are specified.
 //! `builtins` has the text builtins for reading domain values.
 
 use std::{collections::HashSet, path::Path, path::PathBuf, rc::Rc};
@@ -34,18 +34,19 @@ use crate::runner::{
 
 use super::builtin::call::Builtins;
 
-use self::{ast::Pattern, codec::Shapes, info::Info, llvm::Runtime};
+use self::{ast::Pattern, info::Info, llvm::Runtime, mixops::Mixops};
 
 pub mod ast;
 pub mod binary;
 pub mod builtins;
 pub mod check;
-pub mod codec;
+pub mod decode;
+pub mod encode;
 pub mod externs;
 pub mod info;
 pub mod krun;
 pub mod llvm;
-pub mod load;
+mod mixops;
 pub mod normal;
 pub mod parse;
 
@@ -79,7 +80,7 @@ fn parse_error(path: &Path, error: parse::ParseError) -> InterfaceError {
 }
 
 /// An error loading a file into values.
-fn load_error(path: &Path, error: load::LoadError) -> InterfaceError {
+fn load_error(path: &Path, error: encode::EncodeError) -> InterfaceError {
     diagnostic(KORE_LOAD, format!("{}: {error}", path.display()))
 }
 
@@ -92,7 +93,7 @@ pub struct Loaded {
     /// The sorts, collections, and binders of the definition.
     pub info: Info,
     /// The notation of the specification's values.
-    pub shapes: Shapes,
+    pub mixops: Mixops,
     /// The K runtime of the definition, if opened.
     pub runtime: Option<Rc<Runtime>>,
 }
@@ -132,14 +133,14 @@ impl KoreInterface {
     ) -> Result<(Value, usize), InterfaceError> {
         let src = read(path)?;
         let definition = parse::parse_definition(&src).map_err(|error| parse_error(path, error))?;
-        let shapes = Shapes::new(arena).map_err(|message| diagnostic(KORE_LOAD, message))?;
+        let mixops = Mixops::new(arena).map_err(|message| diagnostic(KORE_LOAD, message))?;
         let loaded = Rc::new(Loaded {
-            known: load::known_symbols(&definition),
+            known: encode::known_symbols(&definition),
             info: Info::new(&definition),
-            shapes,
+            mixops,
             runtime: self.runtime.clone(),
         });
-        let value = load::load_definition(arena, &loaded, &definition)
+        let value = encode::definition(arena, &loaded, &definition)
             .map_err(|error| load_error(path, error))?;
         self.loaded = Some(loaded);
         Ok(value)
@@ -155,7 +156,7 @@ impl KoreInterface {
         let Some(loaded) = &self.loaded else {
             return Err("no definition is loaded".to_owned());
         };
-        codec::decode::term(arena, &loaded.info, &loaded.shapes, value)
+        decode::term(arena, &loaded.info, &loaded.mixops, value)
     }
 
     /// The normal form of a pattern for comparing runs (`normal`).
@@ -190,7 +191,7 @@ impl Interface for KoreInterface {
         };
         let src = read(path)?;
         let pattern = parse::parse_pattern(&src).map_err(|error| parse_error(path, error))?;
-        load::load_term(arena, loaded, &pattern).map_err(|error| load_error(path, error))
+        encode::kore(arena, loaded, &pattern).map_err(|error| load_error(path, error))
     }
 
     fn call_builtin<Interp, Ext>(

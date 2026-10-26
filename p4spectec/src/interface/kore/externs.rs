@@ -3,16 +3,21 @@
 //! `Call_hook` (`spec-k/2-relation.watsup`) applies a hooked symbol
 //! of a domain module by the K runtime of the definition (`llvm`):
 //! the arguments, domain values and constructor terms, are decoded as KORE
-//! text (`codec`), the runtime evaluates the application, and its answer,
-//! binary KORE (`binary`), is encoded as a term again (`codec`).
+//! text (`decode`), the runtime evaluates the application, and its answer,
+//! binary KORE (`binary`), is encoded as a term again (`encode`). As the
+//! relay codec of P4-SpecTec² (`metacirc/codec.rs`), `hook_args` and
+//! `hook_result` take the arguments and give the result at this boundary.
 //! `float_literal` has the runtime write a Float literal of the definition
 //! in its output format, e.g. `0.5` as
-//! `0.500000000000000000000000000000000000000e0` (`load`).
+//! `0.500000000000000000000000000000000000000e0` (`encode`).
 
 use std::rc::Rc;
 
 use crate::lang::{
-    data::{arena::Arena, value::flat::Value},
+    data::{
+        arena::Arena,
+        value::flat::{self as value, Value},
+    },
     il::ast::Typ,
 };
 
@@ -21,7 +26,7 @@ use crate::runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerCon
 use super::{
     Loaded,
     ast::{Pattern, Sort},
-    binary, codec,
+    binary, decode, encode,
     info::Info,
     llvm::Runtime,
 };
@@ -47,8 +52,7 @@ impl KoreExtern {
             .as_deref()
             .ok_or("Call_hook needs a loaded definition")?;
         let runtime = runtime(loaded.runtime.as_deref(), "Call_hook")?;
-        let (pattern, sort) =
-            codec::decode::hook_args(arena, &loaded.info, &loaded.shapes, values)?;
+        let (pattern, sort) = hook_args(arena, loaded, values)?;
         let trace = std::env::var_os("KORE_TRACE").is_some();
         if trace {
             eprintln!("hook> {pattern} : {sort}");
@@ -69,7 +73,46 @@ impl KoreExtern {
                 None
             }
         };
-        codec::encode::hook_result(arena, &loaded.info, &loaded.shapes, answer.as_ref())
+        hook_result(arena, loaded, answer.as_ref())
+    }
+}
+
+/// The arguments of `Call_hook`, the hooked symbol, its sort parameters, its
+/// result sort, and the terms it applies to, as the application to evaluate
+/// and its sort.
+fn hook_args(arena: &Arena, loaded: &Loaded, values: &[Value]) -> Result<(Pattern, Sort), String> {
+    let [symbol, sorts, sort, terms] = values else {
+        return Err(format!("Call_hook takes 4 inputs, not {}", values.len()));
+    };
+    let list = |value| value::get::list(arena, value).map_err(|e| e.to_string());
+    let symbol = value::get::text(arena, symbol)
+        .map_err(|e| e.to_string())?
+        .to_owned();
+    let sorts = list(sorts)?
+        .iter()
+        .map(|sort| decode::sort(arena, &loaded.mixops, sort))
+        .collect::<Result<_, _>>()?;
+    let sort = decode::sort(arena, &loaded.mixops, sort)?;
+    let terms = list(terms)?
+        .iter()
+        .map(|term| decode::term(arena, &loaded.info, &loaded.mixops, term))
+        .collect::<Result<_, _>>()?;
+    Ok((Pattern::App(symbol, sorts, terms), sort))
+}
+
+/// The result of `Call_hook`, of `res<term>`: `OK` the runtime's answer as a
+/// term, or `ERROR` if it failed.
+fn hook_result(
+    arena: &mut Arena,
+    loaded: &Loaded,
+    answer: Option<&Pattern>,
+) -> Result<Value, String> {
+    match answer {
+        Some(answer) => {
+            let term = encode::term(arena, &loaded.info, &loaded.mixops, answer)?;
+            encode::ok(arena, &loaded.mixops, term)
+        }
+        None => encode::error(arena, &loaded.mixops),
     }
 }
 
