@@ -1286,6 +1286,39 @@ relation Bind_args: algoCtx |- arg* : algoCtx arg* premAL*
     -- Collectbind_args: AC_multi |- arg_multi*{arg_multi <- arg_multi*} : vari_bind*{vari_bind <- vari_bind*}
     -- if (AC_bound = $add_bound(AC_part, vari_bind*{vari_bind <- vari_bind*}))
 
+relation Shallowbind_exp: algoCtx |- typedExp
+
+  rulegroup variable
+
+    rule variable: AC |- varExp as exp '#' _typ
+
+  rulegroup upcast
+
+    rule upcast: AC |- UPCAST _typ typedExp as exp '#' _typ'
+    -- if (exp '#' _typ'' = typedExp)
+    -- if (exp <: varExp \/ exp <: injExp)
+    -- if Shallowbind_exp: AC |- typedExp holds
+
+  rulegroup case
+
+    rule case: AC |- INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ
+    -- if $forall_($is_irrefutable_exp(AC.TYP, typedExp)*{typedExp <- typedExp*})
+
+relation Shallowbind_arg: algoCtx |- arg
+
+  rulegroup exp
+
+    rule exp: AC |- EXP typedExp as arg
+    -- if Shallowbind_exp: AC |- typedExp holds
+
+relation Shallowbind_args: algoCtx |- arg*
+
+  rulegroup
+
+    rule : AC |- arg*{arg <- arg*}
+    -- (if Shallowbind_arg: AC |- arg holds)*{arg <- arg*}
+    -- Multibind_args: AC |- arg*{arg <- arg*} : _AC _arg*{_arg <- _arg*} []
+
 relation Iter_sourced: |- premIterAL*
 
   rulegroup
@@ -1407,7 +1440,7 @@ relation Algo_tblRow: algoCtx |- tblRowIL : tblRowAL
     -- if (arg*{arg <- arg*} '=' typedExp = tblRowIL)
     -- if (id_used*{id_used <- id_used*} = $ids_of_varis($free_varis_tblRowIL(tblRowIL)))
     -- if (AC_row = $add_used(AC, id_used*{id_used <- id_used*}))
-    -- Multibind_args: AC_row |- arg*{arg <- arg*} : _AC _arg*{_arg <- _arg*} []
+    -- if Shallowbind_args: AC_row |- arg*{arg <- arg*} holds
     -- Bind_args: AC_row |- arg*{arg <- arg*} : AC_body arg_part*{arg_part <- arg_part*} premAL*{premAL <- premAL*}
     -- if (vari_body*{vari_body <- vari_body*} = $free_varis_exp(typedExp))
     -- if $is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})
@@ -2302,18 +2335,6 @@ def $prem_let_partial(iterCtx, vari, typedExp, typedExp) : premAL =
   -- if (IC_bind = $add_iterated(IC, vari_d :: vari_bind*{vari_bind <- vari_bind*}))
   -- if (premIterAL*{premIterAL <- premIterAL*} = $prem_iters(IC_bind, [id_d], $ids_of_varis(vari_bind*{vari_bind <- vari_bind*})))
 
-syntax cases = mixop*
-
-syntax rowCases = cases*
-
-syntax combination = mixop*
-
-def $cases_typ(tdenv, typ) : cases =
-
-  clause 0 : (tdenv, typ) = mixop*{mixop <- mixop*}
-  -- if (OK VAR id _targ*{_targ <- _targ*} as typRes = $expand_typ(tdenv, typ))
-  -- if (?(TYP _id _tparam*{_tparam <- _tparam*} '=' VARIANT mixop _typ*{_typ <- _typ*}*{_typ* <- _typ**, mixop <- mixop*} as typDef) = $find_map<id, typDef>(tdenv, id))
-
 def $is_irrefutable_exp(tdenv, typedExp) : bool =
 
   clause 0 : (_tdenv, varExp as exp '#' _typ) = true
@@ -2332,7 +2353,21 @@ def $is_irrefutable_exp(tdenv, typedExp) : bool =
 
 def $is_singleton_typ(tdenv, typ) : bool =
 
-  clause 0 : (tdenv, typ) = (|$cases_typ(tdenv, typ)| = 1)
+  clause 0 : (tdenv, typ) = (|typCase*{typCase <- typCase*}| = 1)
+  -- if (OK VAR id _targ*{_targ <- _targ*} as typRes = $expand_typ(tdenv, typ))
+  -- if (?(TYP _id _tparam*{_tparam <- _tparam*} '=' VARIANT typCase*{typCase <- typCase*} as typDef) = $find_map<id, typDef>(tdenv, id))
+
+syntax cases = mixop*
+
+syntax rowCases = cases*
+
+syntax combination = mixop*
+
+def $cases_typ(tdenv, typ) : cases =
+
+  clause 0 : (tdenv, typ) = mixop*{mixop <- mixop*}
+  -- if (OK VAR id _targ*{_targ <- _targ*} as typRes = $expand_typ(tdenv, typ))
+  -- if (?(TYP _id _tparam*{_tparam <- _tparam*} '=' VARIANT mixop _typ*{_typ <- _typ*}*{_typ* <- _typ**, mixop <- mixop*} as typDef) = $find_map<id, typDef>(tdenv, id))
 
 def $cases_exp(tdenv, typedExp) : cases =
 
@@ -2340,8 +2375,7 @@ def $cases_exp(tdenv, typedExp) : cases =
 
   clause 1 : (tdenv, UPCAST _typ typedExp as exp '#' _typ') = $cases_exp(tdenv, typedExp)
 
-  clause 2 : (tdenv, INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ) = [mixop]
-  -- if $forall_($is_irrefutable_exp(tdenv, typedExp)*{typedExp <- typedExp*})
+  clause 2 : (tdenv, INJ mixop _typedExp*{_typedExp <- _typedExp*} as exp '#' _typ) = [mixop]
 
 def $is_overlapping_cases(cases, cases) : bool =
 

@@ -2289,6 +2289,82 @@ relation Bind_args: AC |- arg*{arg <- arg*} : % % %
 
           1. Result in: % |- % : AC_bound arg_part*{arg_part <- arg_part*} premAL_part*{premAL_part <- premAL_part*} ++ premAL_eq*{premAL_eq <- premAL_eq*}
 
+relation Shallowbind_exp: AC |- exp' '#' typ'
+
+1. Case analysis on exp'
+
+  1. Case (% has type varExp)
+
+    1. (Let varExp be exp' as varExp)
+
+      1. Group variable: AC |- varExp as exp '#' typ'
+
+        1. The relation holds
+
+  2. Case (% has type upCastExp)
+
+    1. (Let UPCAST typ typedExp be exp' as upCastExp)
+
+      1. Group upcast: AC |- UPCAST typ typedExp as exp '#' typ'
+
+        1. (Let exp '#' _typ be typedExp)
+
+          1. If ((exp <: varExp \/ exp <: injExp)), then
+
+            1. If (Shallowbind_exp: AC |- typedExp) holds, then
+
+              1. The relation holds
+
+            1. Else Dangling
+
+          1. Else Dangling
+
+  3. Case (% has type injExp)
+
+    1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp' as injExp)
+
+      1. Group case: AC |- INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' typ'
+
+        1. If ($forall_($is_irrefutable_exp(AC.TYP, typedExp)*{typedExp <- typedExp*})), then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+1. Else Dangling
+
+relation Shallowbind_arg: AC |- arg
+
+1. If (arg <: expArg), then
+
+  1. (Let EXP typedExp be arg as expArg)
+
+    1. Group exp: AC |- EXP typedExp as arg
+
+      1. If (Shallowbind_exp: AC |- typedExp) holds, then
+
+        1. The relation holds
+
+      1. Else Dangling
+
+1. Else Dangling
+
+relation Shallowbind_args: AC |- arg*{arg <- arg*}
+
+1. Group : AC |- arg*{arg <- arg*}
+
+  1. If (Shallowbind_arg: AC |- arg)*{arg <- arg*} holds, then
+
+    1. (Multibind_args: AC |- arg*{arg <- arg*} : _AC _arg*{_arg <- _arg*} premAL*{premAL <- premAL*})
+
+      1. If (premAL*{premAL <- premAL*} matches []), then
+
+        1. The relation holds
+
+      1. Else Dangling
+
+  1. Else Dangling
+
 relation Iter_sourced: |- premIterAL*{premIterAL <- premIterAL*}
 
 1. Group : |- premIterAL*{premIterAL <- premIterAL*}
@@ -2551,23 +2627,21 @@ relation Algo_tblRow: AC |- tblRowIL : %
 
       1. (Let AC_row be $add_used(AC, id_used*{id_used <- id_used*}))
 
-        1. (Multibind_args: AC_row |- arg*{arg <- arg*} : _AC _arg*{_arg <- _arg*} premAL'*{premAL' <- premAL'*})
+        1. If (Shallowbind_args: AC_row |- arg*{arg <- arg*}) holds, then
 
-          1. If (premAL'*{premAL' <- premAL'*} matches []), then
+          1. (Bind_args: AC_row |- arg*{arg <- arg*} : AC_body arg_part*{arg_part <- arg_part*} premAL*{premAL <- premAL*})
 
-            1. (Bind_args: AC_row |- arg*{arg <- arg*} : AC_body arg_part*{arg_part <- arg_part*} premAL*{premAL <- premAL*})
+            1. (Let vari_body*{vari_body <- vari_body*} be $free_varis_exp(typedExp))
 
-              1. (Let vari_body*{vari_body <- vari_body*} be $free_varis_exp(typedExp))
+              1. If ($is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})), then
 
-                1. If ($is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})), then
+                1. (Let tblRowAL be arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL*{premAL <- premAL*})
 
-                  1. (Let tblRowAL be arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL*{premAL <- premAL*})
+                  1. Result in: % |- % : tblRowAL
 
-                    1. Result in: % |- % : tblRowAL
+              1. Else Dangling
 
-                1. Else Dangling
-
-          1. Else Dangling
+        1. Else Dangling
 
 relation Cover_tblRows: AC typ*{typ <- typ*} |- tblRowIL*{tblRowIL <- tblRowIL*}
 
@@ -4591,50 +4665,6 @@ def $prem_let_partial(IC, vari_d, typedExp_l, typedExp_r)
 
           1. Return $iterate_prem(LET typedExp_l '=' typedExp_r as premAL, premIterAL*{premIterAL <- premIterAL*})
 
-syntax cases = mixop*
-
-syntax rowCases = cases*
-
-syntax combination = mixop*
-
-def $cases_typ(tdenv, typ)
-
-1. (Let typRes be $expand_typ(tdenv, typ))
-
-  1. If (typRes <: ok<typ>), then
-
-    1. (Let OK typ' be typRes as ok<typ>)
-
-      1. If (typ' matches VAR % %), then
-
-        1. (Let VAR id _targ*{_targ <- _targ*} be typ')
-
-          1. (Let typDef'?{typDef' <- typDef'?} be $find_map<id, typDef>(tdenv, id))
-
-            1. If (typDef'?{typDef' <- typDef'?} matches (_)), then
-
-              1. (Let ?(typDef) be typDef'?{typDef' <- typDef'?})
-
-                1. If (typDef <: definedTypDefn), then
-
-                  1. (Let TYP _id _tparam*{_tparam <- _tparam*} '=' deftyp be typDef as definedTypDefn)
-
-                    1. If (deftyp matches VARIANT %), then
-
-                      1. (Let VARIANT mixop _typ*{_typ <- _typ*}*{_typ* <- _typ**, mixop <- mixop*} be deftyp)
-
-                        1. Return mixop*{mixop <- mixop*}
-
-                    1. Else Dangling
-
-                1. Else Dangling
-
-            1. Else Dangling
-
-      1. Else Dangling
-
-  1. Else Dangling
-
 def $is_irrefutable_exp(tdenv, exp '#' typ)
 
 1. Case analysis on exp
@@ -4679,7 +4709,85 @@ def $is_irrefutable_exp(tdenv, exp '#' typ)
 
 def $is_singleton_typ(tdenv, typ)
 
-1. Return (|$cases_typ(tdenv, typ)| = 1)
+1. (Let typRes be $expand_typ(tdenv, typ))
+
+  1. If (typRes <: ok<typ>), then
+
+    1. (Let OK typ' be typRes as ok<typ>)
+
+      1. If (typ' matches VAR % %), then
+
+        1. (Let VAR id _targ*{_targ <- _targ*} be typ')
+
+          1. (Let typDef'?{typDef' <- typDef'?} be $find_map<id, typDef>(tdenv, id))
+
+            1. If (typDef'?{typDef' <- typDef'?} matches (_)), then
+
+              1. (Let ?(typDef) be typDef'?{typDef' <- typDef'?})
+
+                1. If (typDef <: definedTypDefn), then
+
+                  1. (Let TYP _id _tparam*{_tparam <- _tparam*} '=' deftyp be typDef as definedTypDefn)
+
+                    1. If (deftyp matches VARIANT %), then
+
+                      1. (Let VARIANT typCase*{typCase <- typCase*} be deftyp)
+
+                        1. Return (|typCase*{typCase <- typCase*}| = 1)
+
+                    1. Else Dangling
+
+                1. Else Dangling
+
+            1. Else Dangling
+
+      1. Else Dangling
+
+  1. Else Dangling
+
+syntax cases = mixop*
+
+syntax rowCases = cases*
+
+syntax combination = mixop*
+
+def $cases_typ(tdenv, typ)
+
+1. (Let typRes be $expand_typ(tdenv, typ))
+
+  1. If (typRes <: ok<typ>), then
+
+    1. (Let OK typ' be typRes as ok<typ>)
+
+      1. If (typ' matches VAR % %), then
+
+        1. (Let VAR id _targ*{_targ <- _targ*} be typ')
+
+          1. (Let typDef'?{typDef' <- typDef'?} be $find_map<id, typDef>(tdenv, id))
+
+            1. If (typDef'?{typDef' <- typDef'?} matches (_)), then
+
+              1. (Let ?(typDef) be typDef'?{typDef' <- typDef'?})
+
+                1. If (typDef <: definedTypDefn), then
+
+                  1. (Let TYP _id _tparam*{_tparam <- _tparam*} '=' deftyp be typDef as definedTypDefn)
+
+                    1. If (deftyp matches VARIANT %), then
+
+                      1. (Let VARIANT mixop _typ*{_typ <- _typ*}*{_typ* <- _typ**, mixop <- mixop*} be deftyp)
+
+                        1. Return mixop*{mixop <- mixop*}
+
+                    1. Else Dangling
+
+                1. Else Dangling
+
+            1. Else Dangling
+
+      1. Else Dangling
+
+  1. Else Dangling
 
 def $cases_exp(tdenv, exp '#' typ)
 
@@ -4697,13 +4805,9 @@ def $cases_exp(tdenv, exp '#' typ)
 
   3. Case (% has type injExp)
 
-    1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
+    1. (Let INJ mixop _typedExp*{_typedExp <- _typedExp*} be exp as injExp)
 
-      1. If ($forall_($is_irrefutable_exp(tdenv, typedExp)*{typedExp <- typedExp*})), then
-
-        1. Return [mixop]
-
-      1. Else Dangling
+      1. Return [mixop]
 
 1. Else Dangling
 

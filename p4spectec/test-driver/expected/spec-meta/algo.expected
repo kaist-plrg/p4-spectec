@@ -1924,6 +1924,88 @@ relation Bind_args: algoCtx |- arg* : algoCtx arg* premAL*
     -- let AC_bound = $add_bound(AC_part, vari_bind*{vari_bind <- vari_bind*})
     -- output: % |- % : AC_bound arg_part*{arg_part <- arg_part*} premAL_part*{premAL_part <- premAL_part*} ++ premAL_eq*{premAL_eq <- premAL_eq*}
 
+relation Shallowbind_exp: algoCtx |- typedExp
+
+  rulegroup variable
+
+   match
+
+    (signature) AC |- varExp as exp '#' _typ
+    AC |- exp '#' _typ
+    -- if exp <: varExp
+    -- let varExp = exp as varExp
+
+   paths
+
+    rulepath variable
+    -- the relation holds
+
+  rulegroup upcast
+
+   match
+
+    (signature) AC |- UPCAST _typ typedExp as exp '#' _typ'
+    AC |- exp' '#' _typ'
+    -- if exp' <: upCastExp
+    -- let UPCAST _typ typedExp = exp' as upCastExp
+
+   paths
+
+    rulepath upcast
+    -- let exp '#' _typ'' = typedExp
+    -- if (exp <: varExp \/ exp <: injExp)
+    -- if Shallowbind_exp: AC |- typedExp holds
+    -- the relation holds
+
+  rulegroup case
+
+   match
+
+    (signature) AC |- INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ
+    AC |- exp '#' _typ
+    -- if exp <: injExp
+    -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp as injExp
+
+   paths
+
+    rulepath case
+    -- if $forall_($is_irrefutable_exp(AC.TYP, typedExp)*{typedExp <- typedExp*})
+    -- the relation holds
+
+relation Shallowbind_arg: algoCtx |- arg
+
+  rulegroup exp
+
+   match
+
+    (signature) AC |- EXP typedExp as arg
+    AC |- arg
+    -- if arg <: expArg
+    -- let EXP typedExp = arg as expArg
+
+   paths
+
+    rulepath exp
+    -- if Shallowbind_exp: AC |- typedExp holds
+    -- the relation holds
+
+relation Shallowbind_args: algoCtx |- arg*
+
+  rulegroup
+
+   match
+
+    (signature) AC |- arg*{arg <- arg*}
+    AC |- arg*{arg <- arg*}
+
+   paths
+
+    rulepath
+    -- (if Shallowbind_arg: AC |- arg holds)*{arg <- arg*}
+    -- Multibind_args: AC |- arg*{arg <- arg*} : _AC _arg*{_arg <- _arg*} premAL*{premAL <- premAL*}
+    -- if premAL*{premAL <- premAL*} matches []
+    -- the relation holds
+
 relation Iter_sourced: |- premIterAL*
 
   rulegroup
@@ -2157,8 +2239,7 @@ relation Algo_tblRow: algoCtx |- tblRowIL : tblRowAL
     -- let arg*{arg <- arg*} '=' typedExp = tblRowIL
     -- let id_used*{id_used <- id_used*} = $ids_of_varis($free_varis_tblRowIL(tblRowIL))
     -- let AC_row = $add_used(AC, id_used*{id_used <- id_used*})
-    -- Multibind_args: AC_row |- arg*{arg <- arg*} : _AC _arg*{_arg <- _arg*} premAL'*{premAL' <- premAL'*}
-    -- if premAL'*{premAL' <- premAL'*} matches []
+    -- if Shallowbind_args: AC_row |- arg*{arg <- arg*} holds
     -- Bind_args: AC_row |- arg*{arg <- arg*} : AC_body arg_part*{arg_part <- arg_part*} premAL*{premAL <- premAL*}
     -- let vari_body*{vari_body <- vari_body*} = $free_varis_exp(typedExp)
     -- if $is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})
@@ -4086,28 +4167,6 @@ def $prem_let_partial(iterCtx, vari, typedExp, typedExp) : premAL =
   -- let IC_bind = $add_iterated(IC, vari_d :: vari_bind*{vari_bind <- vari_bind*})
   -- let premIterAL*{premIterAL <- premIterAL*} = $prem_iters(IC_bind, [id_d], $ids_of_varis(vari_bind*{vari_bind <- vari_bind*}))
 
-syntax cases = mixop*
-
-syntax rowCases = cases*
-
-syntax combination = mixop*
-
-def $cases_typ(tdenv, typ) : cases =
-
-  clause 0 : (tdenv, typ) = mixop*{mixop <- mixop*}
-  -- let typRes = $expand_typ(tdenv, typ)
-  -- if typRes <: ok<typ>
-  -- let OK typ' = typRes as ok<typ>
-  -- if typ' matches VAR % %
-  -- let VAR id _targ*{_targ <- _targ*} = typ'
-  -- let typDef'?{typDef' <- typDef'?} = $find_map<id, typDef>(tdenv, id)
-  -- if typDef'?{typDef' <- typDef'?} matches (_)
-  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
-  -- if typDef <: definedTypDefn
-  -- let TYP _id _tparam*{_tparam <- _tparam*} '=' deftyp = typDef as definedTypDefn
-  -- if deftyp matches VARIANT %
-  -- let VARIANT mixop _typ*{_typ <- _typ*}*{_typ* <- _typ**, mixop <- mixop*} = deftyp
-
 def $is_irrefutable_exp(tdenv, typedExp) : bool =
 
   clause 0 : (_tdenv, exp '#' _typ) = true
@@ -4136,7 +4195,41 @@ def $is_irrefutable_exp(tdenv, typedExp) : bool =
 
 def $is_singleton_typ(tdenv, typ) : bool =
 
-  clause 0 : (tdenv, typ) = (|$cases_typ(tdenv, typ)| = 1)
+  clause 0 : (tdenv, typ) = (|typCase*{typCase <- typCase*}| = 1)
+  -- let typRes = $expand_typ(tdenv, typ)
+  -- if typRes <: ok<typ>
+  -- let OK typ' = typRes as ok<typ>
+  -- if typ' matches VAR % %
+  -- let VAR id _targ*{_targ <- _targ*} = typ'
+  -- let typDef'?{typDef' <- typDef'?} = $find_map<id, typDef>(tdenv, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id _tparam*{_tparam <- _tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches VARIANT %
+  -- let VARIANT typCase*{typCase <- typCase*} = deftyp
+
+syntax cases = mixop*
+
+syntax rowCases = cases*
+
+syntax combination = mixop*
+
+def $cases_typ(tdenv, typ) : cases =
+
+  clause 0 : (tdenv, typ) = mixop*{mixop <- mixop*}
+  -- let typRes = $expand_typ(tdenv, typ)
+  -- if typRes <: ok<typ>
+  -- let OK typ' = typRes as ok<typ>
+  -- if typ' matches VAR % %
+  -- let VAR id _targ*{_targ <- _targ*} = typ'
+  -- let typDef'?{typDef' <- typDef'?} = $find_map<id, typDef>(tdenv, id)
+  -- if typDef'?{typDef' <- typDef'?} matches (_)
+  -- let ?(typDef) = typDef'?{typDef' <- typDef'?}
+  -- if typDef <: definedTypDefn
+  -- let TYP _id _tparam*{_tparam <- _tparam*} '=' deftyp = typDef as definedTypDefn
+  -- if deftyp matches VARIANT %
+  -- let VARIANT mixop _typ*{_typ <- _typ*}*{_typ* <- _typ**, mixop <- mixop*} = deftyp
 
 def $cases_exp(tdenv, typedExp) : cases =
 
@@ -4150,8 +4243,7 @@ def $cases_exp(tdenv, typedExp) : cases =
 
   clause 2 : (tdenv, exp '#' _typ) = [mixop]
   -- if exp <: injExp
-  -- let INJ mixop typedExp*{typedExp <- typedExp*} = exp as injExp
-  -- if $forall_($is_irrefutable_exp(tdenv, typedExp)*{typedExp <- typedExp*})
+  -- let INJ mixop _typedExp*{_typedExp <- _typedExp*} = exp as injExp
 
 def $is_overlapping_cases(cases, cases) : bool =
 

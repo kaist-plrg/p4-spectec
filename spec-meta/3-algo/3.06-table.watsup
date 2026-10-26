@@ -33,69 +33,13 @@ def $cases_typ(tdenv, typ) = mixop*
   -- if TYP _ _ '=' (VARIANT (mixop _)*) = $find_map<id, typDef>(tdenv, id)
 
 ;;
-;; Irrefutable patterns
-;;
-;; syntax typedExp
-;;
-
-;; A pattern is irrefutable when it matches every value of its type;
-;; a case is, only as the single case of its type
-
-dec $is_irrefutable_exp(tdenv, typedExp) : bool
-  hint(prose_true %1 "matches every value of its type under" %0)
-  hint(prose_false %1 "does not match every value of its type under" %0)
-
-;;; varExp
-;;; syntax varExp = VAR id
-
-def $is_irrefutable_exp(_, varExp '#' _) = true
-
-;;; tupExp
-;;; syntax tupExp = TUP typedExp*
-
-def $is_irrefutable_exp(tdenv, (TUP typedExp*) '#' _)
-  = $forall_($is_irrefutable_exp(tdenv, typedExp)*)
-
-;;; injExp
-;;; syntax injExp = INJ expCase
-
-dec $is_singleton_typ(tdenv, typ) : bool
-  hint(prose_true "type" %1 "has a single constructor under" %0)
-  hint(prose_false "type" %1 "does not have a single constructor under" %0)
-
-def $is_singleton_typ(tdenv, typ) = (|$cases_typ(tdenv, typ)| = 1)
-
-def $is_irrefutable_exp(tdenv, (INJ (_ typedExp*)) '#' typ)
-  = $is_singleton_typ(tdenv, typ) /\ $forall_($is_irrefutable_exp(tdenv, typedExp)*)
-
-;;; strExp
-;;; syntax strExp = STR expField*
-
-def $is_irrefutable_exp(tdenv, (STR expField*) '#' _)
-  = $forall_($is_irrefutable_exp(tdenv, typedExp)*)
-  -- (if _ typedExp = expField)*
-
-;;; iterExp
-;;; syntax iterExp = ITER typedExp expIter
-
-def $is_irrefutable_exp(tdenv, (ITER typedExp _) '#' _)
-  = $is_irrefutable_exp(tdenv, typedExp)
-
-;;; literalExp | opExp | castExp | subExp | matchExp | optExp | listExp
-;;; consExp | catExp | memExp | lenExp | accExp | updExp | callExp
-
-def $is_irrefutable_exp(_, exp '#' _) = false
-  -- if ~(exp <: varExp) /\ ~(exp <: tupExp) /\ ~(exp <: injExp)
-        /\ ~(exp <: strExp) /\ ~(exp <: iterExp)
-
-;;
 ;; Cases of row arguments
 ;;
 ;; syntax typedExp
 ;;
 
-;; A variable covers every case of its type, a case pattern only its own case,
-;; and only when its arguments are irrefutable
+;; A variable covers every case of its type, a case pattern only its own case;
+;; row arguments are shallow, so these are all the forms
 
 dec $cases_exp(tdenv, typedExp) : cases
   hint(prose_in "the cases covered by row argument" %1 "under" %0)
@@ -115,8 +59,7 @@ def $cases_exp(tdenv, (UPCAST _ typedExp) '#' _)
 ;;; injExp
 ;;; syntax injExp = INJ expCase
 
-def $cases_exp(tdenv, (INJ (mixop typedExp*)) '#' _) = [ mixop ]
-  -- if $forall_($is_irrefutable_exp(tdenv, typedExp)*)
+def $cases_exp(tdenv, (INJ (mixop _)) '#' _) = [ mixop ]
 
 ;;
 ;; Exclusive rows
@@ -214,7 +157,7 @@ rule Cover_tblRows:
 ;; syntax tblRowIL
 ;;
 
-;; A row binds its arguments and reads only them in its result
+;; A row binds its shallow arguments and reads only them in its result
 
 rule Algo_tblRow:
   AC |- tblRowIL : tblRowAL
@@ -222,8 +165,8 @@ rule Algo_tblRow:
   ---- ;; fresh identifiers avoid those of the row
   -- if id_used* = $ids_of_varis($free_varis_tblRowIL(tblRowIL))
   -- if AC_row = $add_used(AC, id_used*)
-  ---- ;; no binder repeats across the arguments
-  -- Multibind_args: AC_row |- arg* : _ _ eps
+  ---- ;; the arguments are shallow and bind each variable once
+  -- Shallowbind_args: AC_row |- arg*
   ---- ;; the arguments bind, decomposing their cases
   -- Bind_args: AC_row |- arg* : AC_body arg_part* premAL*
   ---- ;; the result reads only bound variables
