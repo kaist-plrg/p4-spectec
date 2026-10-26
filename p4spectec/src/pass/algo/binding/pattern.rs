@@ -8,7 +8,7 @@
 //! and exhaustive when subtracting them all from the type's product
 //! leaves nothing.
 
-use std::{collections::BTreeMap, rc::Rc};
+use std::{collections::BTreeSet, rc::Rc};
 
 use crate::lang::common::source::Span;
 
@@ -21,16 +21,13 @@ use super::super::{AlgoError, error};
 // - Single argument
 
 /// A set of variant cases compared by constructor.
-///
-/// Each mixop keeps the first notation type inserted for it,
-/// so sets built from a declaration describe cases in its own terms.
 #[derive(Clone, Debug)]
-pub struct PatternSet(BTreeMap<Rc<ast::Mixop>, ast::NotTyp>);
+pub struct PatternSet(BTreeSet<Rc<ast::Mixop>>);
 
 impl PatternSet {
-    /// Iterates over case notations in constructor order.
-    pub fn iter(&self) -> impl Iterator<Item = &ast::NotTyp> {
-        self.0.values()
+    /// Iterates over case constructors in order.
+    pub fn iter(&self) -> impl Iterator<Item = &ast::Mixop> {
+        self.0.iter().map(Rc::as_ref)
     }
 
     fn is_empty(&self) -> bool {
@@ -38,33 +35,17 @@ impl PatternSet {
     }
 
     fn intersection(&self, other: &Self) -> Self {
-        let cases = self
-            .0
-            .iter()
-            .filter(|(mixop, _)| other.0.contains_key(*mixop));
-        let cases = cases.map(|(mixop, not_typ)| (Rc::clone(mixop), not_typ.clone()));
-        Self(cases.collect())
+        Self(self.0.intersection(&other.0).cloned().collect())
     }
 
     fn difference(&self, other: &Self) -> Self {
-        let cases = self
-            .0
-            .iter()
-            .filter(|(mixop, _)| !other.0.contains_key(*mixop));
-        let cases = cases.map(|(mixop, not_typ)| (Rc::clone(mixop), not_typ.clone()));
-        Self(cases.collect())
+        Self(self.0.difference(&other.0).cloned().collect())
     }
 }
 
-impl FromIterator<ast::NotTyp> for PatternSet {
-    fn from_iter<T: IntoIterator<Item = ast::NotTyp>>(not_typs: T) -> Self {
-        let mut cases = BTreeMap::new();
-        for not_typ in not_typs {
-            cases
-                .entry(Rc::clone(not_typ.node.mixop()))
-                .or_insert(not_typ);
-        }
-        Self(cases)
+impl FromIterator<Rc<ast::Mixop>> for PatternSet {
+    fn from_iter<T: IntoIterator<Item = Rc<ast::Mixop>>>(mixops: T) -> Self {
+        Self(mixops.into_iter().collect())
     }
 }
 

@@ -899,7 +899,7 @@ fn pattern_set_covered_by_typ(ctx: &Context, typ: &ast::Typ) -> Result<PatternSe
     };
     let pattern_set = cases
         .iter()
-        .map(|ast::TypCase { not_typ, .. }| not_typ.clone())
+        .map(|ast::TypCase { not_typ, .. }| Rc::clone(not_typ.node.mixop()))
         .collect();
     Ok(pattern_set)
 }
@@ -914,13 +914,8 @@ fn pattern_set_covered_by_exp(ctx: &Context, exp_al: &ast::Exp) -> Result<Patter
         }
         // An upcast retains the source variable or case pattern
         ast::ExpKind::UpCast(_, exp_inner) => pattern_set_covered_by_exp(ctx, exp_inner),
-        // A case covers exactly its notation
-        ast::ExpKind::Case(not_exp) => {
-            let not_typ =
-                not_exp.map(|exp| phrase!(node: exp.note.as_ref().clone(), span: exp.span));
-            let not_typ = phrase!(node: not_typ, span: exp_al.span);
-            Ok([not_typ].into_iter().collect())
-        }
+        // A case covers exactly its constructor
+        ast::ExpKind::Case(not_exp) => Ok([Rc::clone(not_exp.mixop())].into_iter().collect()),
         // Row admission rejects every other top-level pattern shape
         _ => unreachable!("validated table signature must be a variable or case"),
     }
