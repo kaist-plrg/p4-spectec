@@ -215,5 +215,5 @@ fn build_for_arch<Arch: Architecture + 'static>(
 ) -> Result<Simulator> {
     let mut arena = Arena::new();
     let tower = SimTower::build(&mut arena, config, options, arch)?;
-    Ok(Simulator::from_runner(arena, Box::new(tower)))
+    Ok(Simulator::new(arena, tower))
 }

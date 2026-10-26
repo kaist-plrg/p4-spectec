@@ -72,17 +72,9 @@ pub struct Simulator {
 }
 
 impl Simulator {
-    /// Boxes a runner.
-    fn new<Arch>(arena: Arena, runner: Runner<P4Interface, Arch>) -> Self
-    where
-        Arch: Architecture + 'static,
-    {
+    /// Boxes a runner of STF tests, such as a native runner or a metacircular tower.
+    pub(crate) fn new(arena: Arena, runner: impl SimulatorRunner + 'static) -> Self {
         Self { arena, runner: Box::new(runner) }
-    }
-
-    /// Boxes any runner of STF tests, such as a metacircular tower.
-    pub(crate) fn from_runner(arena: Arena, runner: Box<dyn SimulatorRunner>) -> Self {
-        Self { arena, runner }
     }
 
     /// Runs one STF test, calling `on_match` for each matched output packet.
