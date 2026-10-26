@@ -1,4 +1,5 @@
 mod corpus;
+mod log;
 mod output;
 mod snapshot;
 mod suite;
@@ -41,6 +42,9 @@ struct Cli {
     /// Suite registration file, relative to the invoking directory
     #[arg(long = "registry", global = true)]
     path_registry: Option<PathBuf>,
+    /// Write a per-test timing log of run into a new file in this directory
+    #[arg(long = "log", global = true, value_name = "DIR")]
+    path_log: Option<PathBuf>,
     #[command(subcommand)]
     command: Command,
 }
@@ -124,6 +128,11 @@ fn execute(mut cli: Cli) -> Result<()> {
         ));
     }
     // Resolve output paths before changing to the specification repository
+    let path_log = cli
+        .path_log
+        .as_deref()
+        .map(std::path::absolute)
+        .transpose()?;
     if let Command::Adoc { path_output: Some(path_output) } = &mut *command {
         *path_output = std::path::absolute(&*path_output)?;
     }
@@ -151,9 +160,12 @@ fn execute(mut cli: Cli) -> Result<()> {
             adoc::run(&suite::load_adoc(&index.suites.adoc)?, path_output.as_deref())
         }
         Command::P4parse => p4parse::run(&suite::load_parsing(&index.suites.p4parse)?),
-        Command::Run { language, options } => {
-            run::run(&suite::load_execution(&index.suites.run)?, *language, *options)
-        }
+        Command::Run { language, options } => run::run(
+            &suite::load_execution(&index.suites.run)?,
+            *language,
+            *options,
+            path_log.as_deref(),
+        ),
         Command::Sim { language, options } => {
             sim::run(&suite::load_simulation(&index.suites.sim)?, *language, *options)
         }

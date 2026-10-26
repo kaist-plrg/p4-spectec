@@ -1,4 +1,11 @@
-use std::{collections::BTreeSet, fs, path::PathBuf, sync::mpsc, thread, time::Instant};
+use std::{
+    collections::BTreeSet,
+    fs,
+    path::{Path, PathBuf},
+    sync::mpsc,
+    thread,
+    time::Instant,
+};
 
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -16,17 +23,25 @@ use p4spectec::sim_plugin::dummy::Dummy;
 use crate::{
     Error, ExecutionOptions, Result,
     corpus::{self, Outcome, Results},
+    log::TestLog,
     suite::{self, Language, RunConfig},
 };
 
 struct CollectedSuite {
+    name: String,
+    root: PathBuf,
     paths: Vec<PathBuf>,
     id_relation: String,
     results: Results,
 }
 
 /// Runs registered execution suites with the selected interpreter.
-pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) -> Result<()> {
+pub fn run(
+    config: &RunConfig,
+    language: Language,
+    options: ExecutionOptions,
+    path_log: Option<&Path>,
+) -> Result<()> {
     let ExecutionOptions { cache_on, no_det } = options;
     let det = !no_det;
     let text_cache = if cache_on { "on" } else { "off" };
@@ -38,6 +53,8 @@ pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) ->
         .map(|suite| {
             let path_expected = suite::expected_path(&suite.expected);
             Ok(CollectedSuite {
+                name: suite.name.clone(),
+                root: suite.root.clone(),
                 paths: corpus::collect(&suite.root, ".p4")?,
                 id_relation: suite.relation.clone(),
                 results: Results::new(expect_file![path_expected]),
@@ -47,9 +64,11 @@ pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) ->
     if suites.is_empty() {
         return Err(Error::Invalid(format!("no {} execution suites registered", language.name())));
     }
+    let len = suites.iter().map(|suite| suite.paths.len()).sum();
+    let log = TestLog::create(path_log, &format!("run-{}", language.name()), len)?;
     match language {
         Language::Al => {
-            run_with(config, &format!("AL cache={text_cache} det={det}"), suites, |arena| {
+            run_with(config, &format!("AL cache={text_cache} det={det}"), suites, log, |arena| {
                 let spec_al = p4spectec::algo(&config.spec)
                     .map_err(|error| Error::Invalid(error.to_string()))?;
                 runner::build_al(arena, spec_al, Config::new(cache_on, det, false), Dummy)
@@ -57,7 +76,7 @@ pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) ->
             })
         }
         Language::Sl => {
-            run_with(config, &format!("SL cache={text_cache} det={det}"), suites, |arena| {
+            run_with(config, &format!("SL cache={text_cache} det={det}"), suites, log, |arena| {
                 let spec_sl = p4spectec::structure(&config.spec, true)
                     .map_err(|error| Error::Invalid(error.to_string()))?;
                 runner::build_sl(arena, spec_sl, Config::new(cache_on, det, false), Dummy)
@@ -65,7 +84,7 @@ pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) ->
             })
         }
         Language::Pl => {
-            run_with(config, &format!("PL cache={text_cache} det={det}"), suites, |arena| {
+            run_with(config, &format!("PL cache={text_cache} det={det}"), suites, log, |arena| {
                 let spec_pl = p4spectec::prosify(&config.spec)
                     .map_err(|error| Error::Invalid(error.to_string()))?;
                 runner::build_pl(arena, spec_pl, Config::new(cache_on, det, false), Dummy)
@@ -79,6 +98,7 @@ fn run_with<Build>(
     config: &RunConfig,
     text_mode: &str,
     mut suites: Vec<CollectedSuite>,
+    mut log: TestLog,
     build_runner: Build,
 ) -> Result<()>
 where
@@ -95,12 +115,15 @@ where
         .flat_map(|suite| &suite.paths)
         .filter(|path| path.to_str().is_some_and(|path| excludes.contains(path)))
         .count();
-    eprintln!(
+    let text_collect = format!(
         "{text_mode}: collected={collected} excluded={excluded} to execute={}; preparing specification",
         collected - excluded
     );
+    eprintln!("{text_collect}");
+    log.note(&text_collect)?;
     let mut arena = Arena::new();
     let mut runner = build_runner(&mut arena)?;
+    log.note(&format!("specification prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
     let includes = &config.includes;
     for path in includes {
         fs::read_dir(path)?;
@@ -135,12 +158,15 @@ where
             }
         });
         for suite in &mut suites {
+            log.suite(&suite.name, &suite.root)?;
             for path in &suite.paths {
                 progress.set_message(path.display().to_string());
                 let excluded = path.to_str().is_some_and(|path| excludes.contains(path));
                 let outcome = if excluded {
+                    log.skip(path, Outcome::Exclude.name())?;
                     Outcome::Exclude
                 } else {
+                    log.begin(path)?;
                     // Reset before parsing: no value may cross this program boundary
                     runner.reset();
                     arena.reset_values();
@@ -178,6 +204,7 @@ where
                             )));
                         }
                     };
+                    log.end(outcome.name())?;
                     executed += 1;
                     if outcome == Outcome::Pass {
                         passed += 1;
@@ -192,11 +219,13 @@ where
     })?;
     guard_stdout.finish()?;
     progress.finish_with_message("complete");
-    eprintln!(
+    let text_summary = format!(
         "{text_mode}: collected={collected} excluded={excluded} executed={executed} pass={passed} fail={} elapsed={:.3}s",
         executed - passed,
         start.elapsed().as_secs_f64()
     );
+    eprintln!("{text_summary}");
+    log.finish(&text_summary)?;
     for suite in suites {
         suite.results.check();
     }
