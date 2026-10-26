@@ -45,10 +45,6 @@ enum Output {
 
 /// Runs every corpus source through the stages of the selected language.
 pub fn run(config: &MicroConfig, language: Language, options: ExecutionOptions) -> Result<()> {
-    // Meta runs only simulation
-    if language == Language::Meta {
-        return Err(Error::Invalid("meta is only supported for simulation".into()));
-    }
     let ExecutionOptions { cache_on, no_det } = options;
     let det = !no_det;
     let config_runner = Config::new(cache_on, det, false);

@@ -23,8 +23,6 @@ pub enum Language {
     Al,
     Sl,
     Pl,
-    /// The P4 specification executed by the SL-executed meta specification.
-    Meta,
 }
 
 impl Language {
@@ -34,7 +32,6 @@ impl Language {
             Self::Al => "al",
             Self::Sl => "sl",
             Self::Pl => "pl",
-            Self::Meta => "meta",
         }
     }
 }
@@ -148,6 +145,24 @@ pub struct MetacircSuite {
     pub outcome: Option<diagnostic::Outcome>,
 }
 
+/// Registers simulation suites run through one P4 tower per conversion.
+///
+/// Suites are named from the simulation registration,
+/// whose corpus pairing, exclusions, and expected files they reuse.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct MetacircSimJson {
+    towers: ByConversion<PathBuf>,
+    suites: Vec<String>,
+}
+
+/// Simulation suite names with the tower of the selected conversion.
+#[derive(Debug)]
+pub struct MetacircSim {
+    pub tower: PathBuf,
+    pub suites: Vec<String>,
+}
+
 /// Registers paired P4/STF corpus discovery and optional patches.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -200,6 +215,7 @@ struct MetacircConfigJson {
     snapshots: MetacircSnapshots,
     metaparse: PathBuf,
     suites: Vec<MetacircSuiteJson>,
+    sim: MetacircSimJson,
 }
 
 /// Metacircular registrations for the selected conversion.
@@ -210,6 +226,8 @@ pub struct MetacircConfig {
     pub snapshots: MetacircSnapshots,
     pub metaparse: PathBuf,
     pub suites: Vec<MetacircSuite>,
+    /// Simulation through a tower, absent when the conversion registers none.
+    pub sim: Option<MetacircSim>,
 }
 
 /// Supplies simulation dependencies and P4/STF registrations.
@@ -217,9 +235,6 @@ pub struct MetacircConfig {
 #[serde(deny_unknown_fields)]
 pub struct SimConfig {
     pub spec: Vec<PathBuf>,
-    /// The tower run by `meta` suites, relative to this registration file.
-    #[serde(default)]
-    pub tower: Option<PathBuf>,
     pub includes: Vec<PathBuf>,
     pub excludes: Vec<PathBuf>,
     pub suites: Vec<SimSuite>,
@@ -269,8 +284,6 @@ impl MicroStages {
             Language::Al => &self.al,
             Language::Sl => &self.sl,
             Language::Pl => &self.pl,
-            // Meta runs only simulation, so it registers no micro stages
-            Language::Meta => &[],
         }
     }
 }
@@ -491,13 +504,6 @@ pub fn load_execution(path: &Path) -> Result<RunConfig> {
     for suite in suites {
         directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
         languages_valid(&suite.languages)?;
-        // Meta execution of P4 programs is registered in the metacirc driver
-        if suite.languages.contains(&Language::Meta) {
-            return Err(Error::Invalid(format!(
-                "{}: meta is only supported for simulation",
-                suite.name
-            )));
-        }
         if suite.relation.is_empty() {
             return Err(Error::Invalid(format!("{}: empty entry relation", suite.name)));
         }
@@ -558,22 +564,31 @@ pub fn load_metacirc(path: &Path, conversion: Conversion) -> Result<MetacircConf
         }
         suites.push(suite);
     }
-    Ok(MetacircConfig { includes: config.includes, excludes, snapshots, metaparse, suites })
+    let MetacircSimJson { towers: towers_sim, suites: names_sim } = config.sim;
+    let sim = match towers_sim.take(conversion) {
+        Some(tower) => {
+            // Resolve the simulation tower relative to this registration file
+            let tower = path_parent.join(tower);
+            let config_tower = TowerConfig::from_file(&tower)
+                .map_err(|error| Error::Invalid(format!("sim: {error}")))?;
+            // Simulation enters the P4 specification at the top level
+            if !matches!(config_tower.top_lang(), Lang::P4) {
+                return Err(Error::Invalid("sim: the tower must take P4 programs".into()));
+            }
+            names_valid(names_sim.iter().map(String::as_str))?;
+            Some(MetacircSim { tower, suites: names_sim })
+        }
+        // A conversion without a tower registers no simulation
+        None => None,
+    };
+    Ok(MetacircConfig { includes: config.includes, excludes, snapshots, metaparse, suites, sim })
 }
 
 /// Loads simulation dependencies and explicit P4/STF corpus pairing.
 pub fn load_simulation(path: &Path) -> Result<SimConfig> {
-    let mut config: SimConfig = load(path)?;
+    let config: SimConfig = load(path)?;
     // Validate dependencies declared by this module before corpus discovery
     paths_exist(&config.spec, "simulation specification")?;
-    if let Some(tower) = &mut config.tower {
-        // Resolve the tower relative to this registration file
-        *tower = path
-            .parent()
-            .unwrap_or_else(|| Path::new("."))
-            .join(&*tower);
-        paths_exist(std::slice::from_ref(tower), "simulation tower")?;
-    }
     directories_exist(&config.includes, "simulation include directories")?;
     for path in &config.excludes {
         directories_exist(std::slice::from_ref(path), "simulation exclusions")?;
@@ -587,12 +602,6 @@ pub fn load_simulation(path: &Path) -> Result<SimConfig> {
             directories_exist(std::slice::from_ref(path), &suite.name)?;
         }
         languages_valid(&suite.languages)?;
-        if suite.languages.contains(&Language::Meta) && config.tower.is_none() {
-            return Err(Error::Invalid(format!(
-                "{}: meta requires a simulation tower",
-                suite.name
-            )));
-        }
         if !matches!(suite.arch.as_str(), "v1model" | "ebpf" | "psa") {
             return Err(Error::Invalid(format!(
                 "{}: unknown architecture {}",

@@ -10,8 +10,6 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 use p4spectec::lang::data::encoding::Encoding;
 
-use p4spectec::metacirc::{self, TowerConfig};
-
 use p4spectec::runner::{Config, Spec};
 
 use p4spectec::sim_plugin::{self, Simulator, io::Tx};
@@ -155,57 +153,38 @@ impl Results {
 
 /// Runs registered simulation suites with the selected interpreter.
 pub fn run(config: &SimConfig, language: Language, options: ExecutionOptions) -> Result<()> {
-    match language {
-        Language::Al => run_native(config, language, options, || {
-            p4spectec::algo(&config.spec)
-                .map(Spec::Al)
-                .map_err(|error| Error::Invalid(error.to_string()))
-        }),
-        Language::Sl => run_native(config, language, options, || {
-            p4spectec::structure(&config.spec, true)
-                .map(Spec::Sl)
-                .map_err(|error| Error::Invalid(error.to_string()))
-        }),
-        Language::Pl => run_native(config, language, options, || {
-            p4spectec::prosify(&config.spec)
-                .map(Spec::Pl)
-                .map_err(|error| Error::Invalid(error.to_string()))
-        }),
-        Language::Meta => {
-            // The registered tower replaces the native specification
-            let path_tower = config
-                .tower
-                .as_ref()
-                .ok_or_else(|| Error::Invalid("meta simulation requires a tower".into()))?;
-            let config_tower = TowerConfig::from_file(path_tower)
-                .map_err(|error| Error::Invalid(error.to_string()))?;
-            run_with(config, language, options, |arch, config_runner| {
-                metacirc::build_simulator(&config_tower, arch, config_runner, Encoding::default())
-                    .map_err(|error| Error::Invalid(error.to_string()))
-            })
-        }
+    let suites = config
+        .suites
+        .iter()
+        .filter(|suite| suite.languages.contains(&language))
+        .collect::<Vec<_>>();
+    if suites.is_empty() {
+        return Err(Error::Invalid(format!("no {} simulation suites registered", language.name())));
     }
-}
-
-/// Runs suites on native simulators built from the specification.
-fn run_native<BuildSpec>(
-    config: &SimConfig,
-    language: Language,
-    options: ExecutionOptions,
-    build_spec: BuildSpec,
-) -> Result<()>
-where
-    BuildSpec: Fn() -> Result<Spec>,
-{
-    run_with(config, language, options, |arch, config_runner| {
+    let build_spec = || match language {
+        Language::Al => p4spectec::algo(&config.spec)
+            .map(Spec::Al)
+            .map_err(|error| Error::Invalid(error.to_string())),
+        Language::Sl => p4spectec::structure(&config.spec, true)
+            .map(Spec::Sl)
+            .map_err(|error| Error::Invalid(error.to_string())),
+        Language::Pl => p4spectec::prosify(&config.spec)
+            .map(Spec::Pl)
+            .map_err(|error| Error::Invalid(error.to_string())),
+    };
+    run_suites(config, &suites, options, |arch, config_runner| {
         sim_plugin::build(build_spec()?, arch, config_runner, Encoding::default())
             .map_err(|error| Error::Invalid(error.to_string()))
     })
 }
 
-fn run_with<BuildSimulator>(
+/// Runs the given suites of `config` on one simulator per architecture.
+///
+/// `build_simulator` builds the simulator of an architecture,
+/// and every suite compares its outcomes with its own expected file.
+pub fn run_suites<BuildSimulator>(
     config: &SimConfig,
-    language: Language,
+    suites: &[&SimSuite],
     options: ExecutionOptions,
     build_simulator: BuildSimulator,
 ) -> Result<()>
@@ -220,15 +199,10 @@ where
     for path in &config.excludes {
         excludes.extend(corpus::collect_excludes(path)?);
     }
-    let suites = config
-        .suites
+    let suites = suites
         .iter()
-        .filter(|suite| suite.languages.contains(&language))
-        .map(|suite| Ok((suite, suite.collect()?)))
+        .map(|suite| Ok((*suite, suite.collect()?)))
         .collect::<Result<Vec<_>>>()?;
-    if suites.is_empty() {
-        return Err(Error::Invalid(format!("no {} simulation suites registered", language.name())));
-    }
     let collected: usize = suites.iter().map(|(_, pairs)| pairs.len()).sum();
     let excluded = suites
         .iter()

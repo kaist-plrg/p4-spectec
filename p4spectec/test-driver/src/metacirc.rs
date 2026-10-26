@@ -7,6 +7,9 @@
 //! `run_scripts` prepares a fresh tower per script,
 //! because each script supplies the builtin definitions for the top level.
 //! Both skip the sources listed by the configuration's exclusions.
+//!
+//! `run_sim` runs registered simulation suites on simulators built
+//! from the registered P4 tower, against the native expected files.
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -22,7 +25,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 use p4spectec::{
     interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess},
-    lang::data::arena::Arena,
+    lang::data::{arena::Arena, encoding::Encoding},
     metacirc::{self, Tower, TowerConfig, config::Lang},
     runner::Config,
     sim_plugin::dummy::Dummy,
@@ -31,8 +34,8 @@ use p4spectec::{
 use crate::{
     Error, ExecutionOptions, Result,
     corpus::{self, Outcome, Results},
-    diagnostic,
-    suite::{self, MetacircConfig, MetacircSuite},
+    diagnostic, sim,
+    suite::{self, MetacircConfig, MetacircSim, MetacircSuite, SimConfig},
 };
 
 struct CollectedSuite<'a> {
@@ -60,6 +63,32 @@ pub fn run(config: &MetacircConfig, options: ExecutionOptions) -> Result<()> {
         run_programs(config, &suites_p4, options)?;
     }
     Ok(())
+}
+
+/// Runs the named simulation suites through the simulation tower.
+pub fn run_sim(
+    config_sim: &SimConfig,
+    metacirc_sim: &MetacircSim,
+    options: ExecutionOptions,
+) -> Result<()> {
+    // Look up each named suite in the simulation registration
+    let suites = metacirc_sim
+        .suites
+        .iter()
+        .map(|name| {
+            config_sim
+                .suites
+                .iter()
+                .find(|suite| &suite.name == name)
+                .ok_or_else(|| Error::Invalid(format!("unknown simulation suite {name}")))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let config_tower = TowerConfig::from_file(&metacirc_sim.tower)
+        .map_err(|error| Error::Invalid(error.to_string()))?;
+    sim::run_suites(config_sim, &suites, options, |arch, config_runner| {
+        metacirc::build_simulator(&config_tower, arch, config_runner, Encoding::default())
+            .map_err(|error| Error::Invalid(error.to_string()))
+    })
 }
 
 /// Runs P4 suites, preparing each distinct tower once.

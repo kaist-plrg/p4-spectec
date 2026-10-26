@@ -17,7 +17,8 @@ enum Input {
     P4,
 }
 
-/// Selects a snapshot or codec check of the meta specification instead of execution.
+/// Selects a snapshot or codec check of the meta specification,
+/// or simulation through a tower, instead of corpus execution.
 #[derive(Clone, Copy, Subcommand)]
 enum Command {
     /// Compare the elaborated meta specification with expected output
@@ -30,6 +31,12 @@ enum Command {
     Prose,
     /// Check that IL and AL encodings are fixed points of decode-then-encode
     Metaparse,
+    /// Compare registered simulation suites through a tower with native expectations
+    Sim {
+        /// Convert IL to AL natively or by the meta specification's `Algo_IL`.
+        #[arg(long = "algo", value_enum, default_value_t)]
+        conversion: Conversion,
+    },
 }
 
 /// Compares P4 corpus and AL script outcomes through metacircular towers.
@@ -73,7 +80,12 @@ fn execute(cli: Cli) -> Result<()> {
     // Resolve caller paths before selecting the corpus repository as working directory
     std::env::set_current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))?;
     let index = Index::load(&path_registry)?;
-    let mut config = suite::load_metacirc(&index.suites.metacirc, cli.conversion)?;
+    // Simulation takes its conversion on its own subcommand
+    let conversion = match cli.command {
+        Some(Command::Sim { conversion }) => conversion,
+        _ => cli.conversion,
+    };
+    let mut config = suite::load_metacirc(&index.suites.metacirc, conversion)?;
     // Snapshot and codec checks compile the meta specification without executing it
     let snapshots = &config.snapshots;
     match cli.command {
@@ -85,6 +97,13 @@ fn execute(cli: Cli) -> Result<()> {
         Some(Command::Prose) => return prose::run(&suite::load_snapshots(&snapshots.prose)?),
         Some(Command::Metaparse) => {
             return metaparse::run(&suite::load_metaparse(&config.metaparse)?);
+        }
+        Some(Command::Sim { .. }) => {
+            let metacirc_sim = config.sim.as_ref().ok_or_else(|| {
+                Error::Invalid("no simulation tower registered for this conversion".into())
+            })?;
+            let config_sim = suite::load_simulation(&index.suites.sim)?;
+            return metacirc::run_sim(&config_sim, metacirc_sim, cli.options);
         }
         None => {}
     }

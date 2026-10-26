@@ -97,8 +97,6 @@ specification's relations directly, so the levels' `rel` entries are unused.
 Each call runs as `Call_rel` (or `Call_func`) under a context `C` that loads
 the P4 specification once per program. When the architecture reenters the
 P4 specification, the call runs on a fresh SL interpreter one depth below.
-`make -C p4spectec test-sim-meta` checks the v1model and ebpf regression
-suites against the native expectations; it is not part of `make test`.
 
 ## Tower configuration
 
@@ -165,6 +163,8 @@ make test-metacirc-micro
 make test-metacirc-micro-meta
 make test-metacirc
 make test-metacirc-meta
+make test-metacirc-sim
+make test-metacirc-sim-meta
 ```
 
 `test-metacirc-micro` runs the spec-language sources under
@@ -172,6 +172,9 @@ make test-metacirc-meta
 each expected to succeed or fail as its suite in `suites/metacirc.json`
 registers. `test-metacirc` runs the `test-run-sl` corpus through the AL/P4
 tower and requires the p4c submodule. Both check determinism.
+`test-metacirc-sim` runs the simulation suites named under `sim` in
+`suites/metacirc.json`, the v1model and ebpf regression suites,
+through the AL/P4 tower against the native simulation expectations.
 
 The `-meta` targets run the same suites with `--algo meta`:
 each suite registers a tower per conversion, and the `meta` tower is entered
