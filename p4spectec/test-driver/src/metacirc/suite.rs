@@ -149,7 +149,7 @@ pub fn load_metaparse(path: &Path) -> Result<Vec<MetaparseSuite>> {
 }
 
 /// Loads corpus and script registrations of every conversion.
-pub fn load_execution(path: &Path) -> Result<RunConfig> {
+pub fn load_run(path: &Path) -> Result<RunConfig> {
     let mut config: RunConfig = load(path)?;
     // Check include directories and every conversion's exclusions before suites
     directories_exist(&config.includes, "execution include directories")?;
@@ -185,7 +185,7 @@ pub fn load_execution(path: &Path) -> Result<RunConfig> {
 }
 
 /// Loads the simulation suite names and their P4 towers.
-pub fn load_simulation(path: &Path) -> Result<SimConfig> {
+pub fn load_sim(path: &Path) -> Result<SimConfig> {
     let mut config: SimConfig = load(path)?;
     names_valid(config.suites.iter().map(String::as_str))?;
     let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
@@ -229,8 +229,8 @@ impl Index {
         println!("algo: {:#?}", load_snapshots(&self.suites.algo)?);
         println!("structure: {:#?}", load_structure(&self.suites.structure)?);
         println!("prose: {:#?}", load_snapshots(&self.suites.prose)?);
-        println!("run: {:#?}", load_execution(&self.suites.run)?);
-        println!("sim: {:#?}", load_simulation(&self.suites.sim)?);
+        println!("run: {:#?}", load_run(&self.suites.run)?);
+        println!("sim: {:#?}", load_sim(&self.suites.sim)?);
         println!("metaparse: {:#?}", load_metaparse(&self.suites.metaparse)?);
         Ok(())
     }

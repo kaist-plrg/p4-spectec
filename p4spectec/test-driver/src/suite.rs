@@ -349,7 +349,7 @@ pub fn load_adoc(path: &Path) -> Result<AdocSuite> {
 }
 
 /// Loads parser dependencies and roundtrip corpus registrations.
-pub fn load_parsing(path: &Path) -> Result<ParseConfig> {
+pub fn load_parse(path: &Path) -> Result<ParseConfig> {
     let config: ParseConfig = load(path)?;
     // Validate dependencies declared by this module before corpus discovery
     paths_exist(&config.spec, "parser specification")?;
@@ -365,7 +365,7 @@ pub fn load_parsing(path: &Path) -> Result<ParseConfig> {
 }
 
 /// Loads execution dependencies and corpus registrations.
-pub fn load_execution(path: &Path) -> Result<RunConfig> {
+pub fn load_run(path: &Path) -> Result<RunConfig> {
     let config: RunConfig = load(path)?;
     // Validate dependencies declared by this module before corpus discovery
     paths_exist(&config.spec, "execution specification")?;
@@ -388,7 +388,7 @@ pub fn load_execution(path: &Path) -> Result<RunConfig> {
 }
 
 /// Loads simulation dependencies and explicit P4/STF corpus pairing.
-pub fn load_simulation(path: &Path) -> Result<SimConfig> {
+pub fn load_sim(path: &Path) -> Result<SimConfig> {
     let config: SimConfig = load(path)?;
     // Validate dependencies declared by this module before corpus discovery
     paths_exist(&config.spec, "simulation specification")?;
@@ -472,9 +472,9 @@ impl Index {
         println!("structure: {:#?}", load_structure(&self.suites.structure)?);
         println!("prose: {:#?}", load_snapshots(&self.suites.prose)?);
         println!("adoc: {:#?}", load_adoc(&self.suites.adoc)?);
-        println!("p4parse: {:#?}", load_parsing(&self.suites.p4parse)?);
-        println!("run: {:#?}", load_execution(&self.suites.run)?);
-        println!("sim: {:#?}", load_simulation(&self.suites.sim)?);
+        println!("p4parse: {:#?}", load_parse(&self.suites.p4parse)?);
+        println!("run: {:#?}", load_run(&self.suites.run)?);
+        println!("sim: {:#?}", load_sim(&self.suites.sim)?);
         println!("micro: {:#?}", load_micro(&self.suites.micro)?);
         self.suites.diagnostics.list()
     }

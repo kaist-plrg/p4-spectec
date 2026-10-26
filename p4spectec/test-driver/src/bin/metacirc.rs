@@ -96,12 +96,12 @@ fn execute(cli: Cli) -> Result<()> {
     let modules = &index_metacirc.suites;
     match cli.command {
         Command::Run { suite, input, conversion, options } => {
-            let config = metacirc::suite::load_execution(&modules.run)?;
+            let config = metacirc::suite::load_run(&modules.run)?;
             run(config, suite, input, conversion, options)
         }
         Command::Sim { conversion, options } => {
-            let config_sim = suite::load_simulation(&index.suites.sim)?;
-            let config = metacirc::suite::load_simulation(&modules.sim)?;
+            let config_sim = suite::load_sim(&index.suites.sim)?;
+            let config = metacirc::suite::load_sim(&modules.sim)?;
             metacirc::sim::run(&config_sim, &config, conversion, options)
         }
         // Snapshot and codec checks compile the meta specification without executing it

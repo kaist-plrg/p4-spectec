@@ -112,12 +112,12 @@ fn execute(mut cli: Cli) -> Result<()> {
         Command::Adoc { path_output } => {
             adoc::run(&suite::load_adoc(&index.suites.adoc)?, path_output.as_deref())
         }
-        Command::P4parse => p4parse::run(&suite::load_parsing(&index.suites.p4parse)?),
+        Command::P4parse => p4parse::run(&suite::load_parse(&index.suites.p4parse)?),
         Command::Run { language, options } => {
-            run::run(&suite::load_execution(&index.suites.run)?, *language, *options)
+            run::run(&suite::load_run(&index.suites.run)?, *language, *options)
         }
         Command::Sim { language, options } => {
-            sim::run(&suite::load_simulation(&index.suites.sim)?, *language, *options)
+            sim::run(&suite::load_sim(&index.suites.sim)?, *language, *options)
         }
         Command::Micro { language, options } => {
             micro::run(&suite::load_micro(&index.suites.micro)?, *language, *options)
