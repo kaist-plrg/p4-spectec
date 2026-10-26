@@ -467,7 +467,7 @@ impl Decode for il::UnOp {
             m::UNOP_MINUS => |[]| {
                 Ok(il::UnOp::Num(num::UnOp::Minus))
             },
-            _ => Err(Error::unexpected(arena, value_meta, "a nullary unop constructor")),
+            _ => Err(Error::unexpected(arena, value_meta, "a nullary unOp constructor")),
         }
     }
 }
@@ -510,7 +510,7 @@ impl Decode for il::BinOp {
             m::BINOP_POW => |[]| {
                 Ok(il::BinOp::Num(num::BinOp::Pow))
             },
-            _ => Err(Error::unexpected(arena, value_meta, "a nullary binop constructor")),
+            _ => Err(Error::unexpected(arena, value_meta, "a nullary binOp constructor")),
         }
     }
 }
@@ -541,7 +541,7 @@ impl Decode for il::CmpOp {
             m::CMPOP_GE => |[]| {
                 Ok(il::CmpOp::Num(num::CmpOp::Ge))
             },
-            _ => Err(Error::unexpected(arena, value_meta, "a nullary cmpop constructor")),
+            _ => Err(Error::unexpected(arena, value_meta, "a nullary cmpOp constructor")),
         }
     }
 }

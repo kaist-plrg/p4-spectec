@@ -48,29 +48,29 @@ syntax vari = id typ iter*
 
 ;; Operators
 
-syntax boolUnop =
+syntax boolUnOp =
   | NOT
 
-syntax numUnop =
+syntax numUnOp =
   | PLUS | MINUS
 
-syntax unop = boolUnop | numUnop
+syntax unOp = boolUnOp | numUnOp
 
-syntax boolBinop =
+syntax boolBinOp =
   | AND | OR | IMPL | EQUIV
 
-syntax numBinop =
+syntax numBinOp =
   | ADD | SUB | MUL | DIV | MOD | POW
 
-syntax binop = boolBinop | numBinop
+syntax binOp = boolBinOp | numBinOp
 
-syntax numCmpop =
+syntax numCmpOp =
   | LT | GT | LE | GE
 
-syntax polyCmpop =
+syntax polyCmpOp =
   | EQ | NE
 
-syntax cmpop = polyCmpop | numCmpop
+syntax cmpOp = polyCmpOp | numCmpOp
 
 ;; Patterns
 
@@ -94,33 +94,64 @@ syntax exp, expField, expCase, typedPath, path, arg, expIter
 
 syntax typedExp = exp '#' typ
 
+syntax literalExp =
+  | BOOL bool | num | TEXT text
+
+syntax varExp = VAR id
+
+syntax unOpExp = UN unOp typedExp
+syntax binOpExp = BIN binOp typedExp typedExp
+syntax cmpOpExp = CMP cmpOp typedExp typedExp
+syntax opExp =
+  | unOpExp | binOpExp | cmpOpExp
+
+syntax upCastExp = UPCAST typ typedExp
+syntax downCastExp = DOWNCAST typ typedExp
+syntax castExp =
+  | upCastExp | downCastExp
+
+syntax subExp = SUB typedExp typ
+
+syntax matchExp = MATCH typedExp pat
+
+syntax tupExp = TUP typedExp*
+
+syntax injExp = INJ expCase
+
+syntax strExp = STR expField*
+
+syntax optExp = OPT typedExp?
+
+syntax listExp = LIST typedExp*
+
+syntax consExp = CONS typedExp typedExp
+
+syntax catExp = CAT typedExp typedExp
+
+syntax memExp = MEM typedExp typedExp
+
+syntax lenExp = LEN typedExp
+
+syntax dotAccExp = DOT typedExp atom
+syntax idxAccExp = IDX typedExp typedExp
+syntax sliceAccExp = SLICE typedExp typedExp typedExp
+syntax accExp =
+  | dotAccExp | idxAccExp | sliceAccExp
+
+syntax updExp = UPD typedExp typedPath typedExp
+
+syntax callExp = CALL id targ* arg*
+
+syntax iterExp = ITER typedExp expIter
+
 syntax exp =
-  | BOOL bool
-  | num
-  | TEXT text
-  | VAR id
-  | UN unop typedExp
-  | BIN binop typedExp typedExp
-  | CMP cmpop typedExp typedExp
-  | UPCAST typ typedExp
-  | DOWNCAST typ typedExp
-  | SUB typedExp typ
-  | MATCH typedExp pat
-  | TUP typedExp*
-  | INJ expCase
-  | STR expField*
-  | OPT typedExp?
-  | LIST typedExp*
-  | CONS typedExp typedExp
-  | CAT typedExp typedExp
-  | MEM typedExp typedExp
-  | LEN typedExp
-  | DOT typedExp atom
-  | IDX typedExp typedExp
-  | SLICE typedExp typedExp typedExp
-  | UPD typedExp typedPath typedExp
-  | CALL id targ* arg*
-  | ITER typedExp expIter
+  | literalExp | varExp
+  | opExp | castExp | subExp | matchExp
+  | tupExp | injExp | strExp | optExp | listExp
+  | consExp | catExp | memExp | lenExp
+  | accExp | updExp
+  | callExp
+  | iterExp
 
 syntax expCase = mixop typedExp*
 syntax expField = atom typedExp
@@ -131,19 +162,21 @@ syntax expIter = iter vari*
 
 syntax typedPath = path '#' typ
 
+syntax rootPath = ROOT
+syntax idxPath = IDX typedPath typedExp
+syntax slicePath = SLICE typedPath typedExp typedExp
+syntax dotPath = DOT typedPath atom
 syntax path =
-  | ROOT
-  | IDX typedPath typedExp
-  | SLICE typedPath typedExp typedExp
-  | DOT typedPath atom
+  | rootPath | idxPath | slicePath | dotPath
 
 ;; Arguments
 
 syntax targ = typ
 
+syntax expArg = EXP typedExp
+syntax funArg = FUN id
 syntax arg =
-  | EXP typedExp
-  | FUN id
+  | expArg | funArg
 
 ;; Type parameters
 
@@ -151,9 +184,12 @@ syntax tparam = id
 
 ;; Parameters
 
+syntax param
+
+syntax expParam = EXP typ
+syntax funParam = FUN id ':' tparam* param* '->' typ
 syntax param =
-  | EXP typ
-  | FUN id ':' tparam* param* '->' typ
+  | expParam | funParam
 
 ;; Premises
 

@@ -35,81 +35,81 @@ rulegroup Eval_exp/unary {
     -- if b_res = ~b
 
   rule Eval_exp/number-operand-failure:
-    C |- (UN numUnop typedExp) '#' _ : failure
+    C |- (UN numUnOp typedExp) '#' _ : failure
     -- Eval_exp: C |- typedExp : failure
 
   rule Eval_exp/number-succ:
-    C |- (UN numUnop typedExp) '#' _ : OK val_res
+    C |- (UN numUnOp typedExp) '#' _ : OK val_res
     -- Eval_exp: C |- typedExp : OK num
-    -- if val_res = $numUnop(numUnop, num)
+    -- if val_res = $numUnOp(numUnOp, num)
 
 }
 
 rulegroup Eval_exp/binary {
 
   rule Eval_exp/boolean-left-failure:
-    C |- (BIN boolBinop typedExp_l typedExp_r) '#' _ : failure
+    C |- (BIN boolBinOp typedExp_l typedExp_r) '#' _ : failure
     -- Eval_exp: C |- typedExp_l : failure
 
   rule Eval_exp/boolean-right-failure:
-    C |- (BIN boolBinop typedExp_l typedExp_r) '#' _ : failure
+    C |- (BIN boolBinOp typedExp_l typedExp_r) '#' _ : failure
     -- Eval_exp: C |- typedExp_l : OK (BOOL b_l)
     -- Eval_exp: C |- typedExp_r : failure
 
   rule Eval_exp/boolean-succ:
-    C |- (BIN boolBinop typedExp_l typedExp_r) '#' _ : OK (BOOL b_res)
+    C |- (BIN boolBinOp typedExp_l typedExp_r) '#' _ : OK (BOOL b_res)
     -- Eval_exp: C |- typedExp_l : OK (BOOL b_l)
     -- Eval_exp: C |- typedExp_r : OK (BOOL b_r)
-    -- if b_res = $boolBinop(boolBinop, b_l, b_r)
+    -- if b_res = $boolBinOp(boolBinOp, b_l, b_r)
 
   rule Eval_exp/number-left-failure:
-    C |- (BIN numBinop typedExp_l typedExp_r) '#' _ : failure
+    C |- (BIN numBinOp typedExp_l typedExp_r) '#' _ : failure
     -- Eval_exp: C |- typedExp_l : failure
 
   rule Eval_exp/number-right-failure:
-    C |- (BIN numBinop typedExp_l typedExp_r) '#' _ : failure
+    C |- (BIN numBinOp typedExp_l typedExp_r) '#' _ : failure
     -- Eval_exp: C |- typedExp_l : OK num_l
     -- Eval_exp: C |- typedExp_r : failure
 
   rule Eval_exp/number-succ:
-    C |- (BIN numBinop typedExp_l typedExp_r) '#' _ : numBinopRes
+    C |- (BIN numBinOp typedExp_l typedExp_r) '#' _ : numBinOpRes
     -- Eval_exp: C |- typedExp_l : OK num_l
     -- Eval_exp: C |- typedExp_r : OK num_r
-    -- if numBinopRes = $numBinop(numBinop, num_l, num_r)
+    -- if numBinOpRes = $numBinOp(numBinOp, num_l, num_r)
 
 }
 
 rulegroup Eval_exp/compare {
 
   rule Eval_exp/poly-left-failure:
-    C |- (CMP polyCmpop typedExp_l typedExp_r) '#' _ : failure
+    C |- (CMP polyCmpOp typedExp_l typedExp_r) '#' _ : failure
     -- Eval_exp: C |- typedExp_l : failure
 
   rule Eval_exp/poly-right-failure:
-    C |- (CMP polyCmpop typedExp_l typedExp_r) '#' _ : failure
+    C |- (CMP polyCmpOp typedExp_l typedExp_r) '#' _ : failure
     -- Eval_exp: C |- typedExp_l : OK val_l
     -- Eval_exp: C |- typedExp_r : failure
 
   rule Eval_exp/poly-succ:
-    C |- (CMP polyCmpop typedExp_l typedExp_r) '#' _ : OK (BOOL b_res)
+    C |- (CMP polyCmpOp typedExp_l typedExp_r) '#' _ : OK (BOOL b_res)
     -- Eval_exp: C |- typedExp_l : OK val_l
     -- Eval_exp: C |- typedExp_r : OK val_r
-    -- if b_res = $polyCmpop(polyCmpop, val_l, val_r)
+    -- if b_res = $polyCmpOp(polyCmpOp, val_l, val_r)
 
   rule Eval_exp/number-left-failure:
-    C |- (CMP numCmpop typedExp_l typedExp_r) '#' _ : failure
+    C |- (CMP numCmpOp typedExp_l typedExp_r) '#' _ : failure
     -- Eval_exp: C |- typedExp_l : failure
 
   rule Eval_exp/number-right-failure:
-    C |- (CMP numCmpop typedExp_l typedExp_r) '#' _ : failure
+    C |- (CMP numCmpOp typedExp_l typedExp_r) '#' _ : failure
     -- Eval_exp: C |- typedExp_l : OK num_l
     -- Eval_exp: C |- typedExp_r : failure
 
   rule Eval_exp/number-succ:
-    C |- (CMP numCmpop typedExp_l typedExp_r) '#' _ : OK (BOOL b_res)
+    C |- (CMP numCmpOp typedExp_l typedExp_r) '#' _ : OK (BOOL b_res)
     -- Eval_exp: C |- typedExp_l : OK num_l
     -- Eval_exp: C |- typedExp_r : OK num_r
-    -- if OK b_res = $numCmpop(numCmpop, num_l, num_r)
+    -- if OK b_res = $numCmpOp(numCmpOp, num_l, num_r)
 
 }
 

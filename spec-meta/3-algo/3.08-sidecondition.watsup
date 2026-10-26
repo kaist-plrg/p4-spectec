@@ -24,9 +24,9 @@ dec $exp_len(typedExp) : typedExp
   hint(prose_in "the length of" %0)
 def $exp_len(typedExp) = (LEN typedExp) '#' NAT
 
-dec $sidecond_cmp(cmpop, typedExp, typedExp) : premAL
+dec $sidecond_cmp(cmpOp, typedExp, typedExp) : premAL
   hint(prose_in "the condition that" %1 %0 %2)
-def $sidecond_cmp(cmpop, typedExp_l, typedExp_r) = IF ((CMP cmpop typedExp_l typedExp_r) '#' BOOL)
+def $sidecond_cmp(cmpOp, typedExp_l, typedExp_r) = IF ((CMP cmpOp typedExp_l typedExp_r) '#' BOOL)
 
 dec $exp_zero(tdenv, typ) : typedExp
   hint(prose_in "zero of numeric type" %1 "under" %0)
@@ -117,24 +117,24 @@ rulegroup Guard_exp/literal {
 rule Guard_exp/variable:
   AC |- (VAR _) '#' _ : eps
 
-;;; UN unop typedExp
+;;; UN unOp typedExp
 
 rule Guard_exp/unary:
   AC |- (UN _ typedExp) '#' _ : premAL*
   -- Guard_exp: AC |- typedExp : premAL*
 
-;;; BIN binop typedExp typedExp
+;;; BIN binOp typedExp typedExp
 
 rulegroup Guard_exp/binary {
 
   rule Guard_exp/total:
-    AC |- (BIN binop typedExp_l typedExp_r) '#' _ : premAL*
-    -- if ~(binop <- [ DIV, MOD ])
+    AC |- (BIN binOp typedExp_l typedExp_r) '#' _ : premAL*
+    -- if ~(binOp <- [ DIV, MOD ])
     -- Guard_exps: AC |- [ typedExp_l, typedExp_r ] : premAL*
 
   rule Guard_exp/divide:
-    AC |- (BIN binop typedExp_l typedExp_r) '#' _ : premAL*
-    -- if binop <- [ DIV, MOD ]
+    AC |- (BIN binOp typedExp_l typedExp_r) '#' _ : premAL*
+    -- if binOp <- [ DIV, MOD ]
     ---- ;; guard the operands first
     -- Guard_exps: AC |- [ typedExp_l, typedExp_r ] : premAL_operand*
     ---- ;; then require a nonzero divisor
@@ -145,7 +145,7 @@ rulegroup Guard_exp/binary {
 
 }
 
-;;; CMP cmpop typedExp typedExp
+;;; CMP cmpOp typedExp typedExp
 
 rule Guard_exp/compare:
   AC |- (CMP _ typedExp_l typedExp_r) '#' _ : premAL*

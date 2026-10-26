@@ -164,61 +164,61 @@ syntax iter =
 syntax vari =
    | id typ iter* (from vari)
 
-syntax boolUnop =
-   | NOT (from boolUnop)
+syntax boolUnOp =
+   | NOT (from boolUnOp)
 
-syntax numUnop =
-   | PLUS (from numUnop)
-   | MINUS (from numUnop)
+syntax numUnOp =
+   | PLUS (from numUnOp)
+   | MINUS (from numUnOp)
 
-syntax unop =
-   | NOT (from boolUnop)
-   | PLUS (from numUnop)
-   | MINUS (from numUnop)
+syntax unOp =
+   | NOT (from boolUnOp)
+   | PLUS (from numUnOp)
+   | MINUS (from numUnOp)
 
-syntax boolBinop =
-   | AND (from boolBinop)
-   | OR (from boolBinop)
-   | IMPL (from boolBinop)
-   | EQUIV (from boolBinop)
+syntax boolBinOp =
+   | AND (from boolBinOp)
+   | OR (from boolBinOp)
+   | IMPL (from boolBinOp)
+   | EQUIV (from boolBinOp)
 
-syntax numBinop =
-   | ADD (from numBinop)
-   | SUB (from numBinop)
-   | MUL (from numBinop)
-   | DIV (from numBinop)
-   | MOD (from numBinop)
-   | POW (from numBinop)
+syntax numBinOp =
+   | ADD (from numBinOp)
+   | SUB (from numBinOp)
+   | MUL (from numBinOp)
+   | DIV (from numBinOp)
+   | MOD (from numBinOp)
+   | POW (from numBinOp)
 
-syntax binop =
-   | AND (from boolBinop)
-   | OR (from boolBinop)
-   | IMPL (from boolBinop)
-   | EQUIV (from boolBinop)
-   | ADD (from numBinop)
-   | SUB (from numBinop)
-   | MUL (from numBinop)
-   | DIV (from numBinop)
-   | MOD (from numBinop)
-   | POW (from numBinop)
+syntax binOp =
+   | AND (from boolBinOp)
+   | OR (from boolBinOp)
+   | IMPL (from boolBinOp)
+   | EQUIV (from boolBinOp)
+   | ADD (from numBinOp)
+   | SUB (from numBinOp)
+   | MUL (from numBinOp)
+   | DIV (from numBinOp)
+   | MOD (from numBinOp)
+   | POW (from numBinOp)
 
-syntax numCmpop =
-   | LT (from numCmpop)
-   | GT (from numCmpop)
-   | LE (from numCmpop)
-   | GE (from numCmpop)
+syntax numCmpOp =
+   | LT (from numCmpOp)
+   | GT (from numCmpOp)
+   | LE (from numCmpOp)
+   | GE (from numCmpOp)
 
-syntax polyCmpop =
-   | EQ (from polyCmpop)
-   | NE (from polyCmpop)
+syntax polyCmpOp =
+   | EQ (from polyCmpOp)
+   | NE (from polyCmpOp)
 
-syntax cmpop =
-   | EQ (from polyCmpop)
-   | NE (from polyCmpop)
-   | LT (from numCmpop)
-   | GT (from numCmpop)
-   | LE (from numCmpop)
-   | GE (from numCmpop)
+syntax cmpOp =
+   | EQ (from polyCmpOp)
+   | NE (from polyCmpOp)
+   | LT (from numCmpOp)
+   | GT (from numCmpOp)
+   | LE (from numCmpOp)
+   | GE (from numCmpOp)
 
 syntax listPat =
    | CONS (from listPat)
@@ -240,34 +240,123 @@ syntax pat =
 syntax typedExp =
    | exp '#' typ (from typedExp)
 
-syntax exp =
-   | BOOL bool (from exp)
+syntax literalExp =
+   | BOOL bool (from literalExp)
    | NAT nat (from num)
    | INT int (from num)
-   | TEXT text (from exp)
-   | VAR id (from exp)
-   | UN unop typedExp (from exp)
-   | BIN binop typedExp typedExp (from exp)
-   | CMP cmpop typedExp typedExp (from exp)
-   | UPCAST typ typedExp (from exp)
-   | DOWNCAST typ typedExp (from exp)
-   | SUB typedExp typ (from exp)
-   | MATCH typedExp pat (from exp)
-   | TUP typedExp* (from exp)
-   | INJ expCase (from exp)
-   | STR expField* (from exp)
-   | OPT typedExp? (from exp)
-   | LIST typedExp* (from exp)
-   | CONS typedExp typedExp (from exp)
-   | CAT typedExp typedExp (from exp)
-   | MEM typedExp typedExp (from exp)
-   | LEN typedExp (from exp)
-   | DOT typedExp atom (from exp)
-   | IDX typedExp typedExp (from exp)
-   | SLICE typedExp typedExp typedExp (from exp)
-   | UPD typedExp typedPath typedExp (from exp)
-   | CALL id targ* arg* (from exp)
-   | ITER typedExp expIter (from exp)
+   | TEXT text (from literalExp)
+
+syntax varExp =
+   | VAR id (from varExp)
+
+syntax unOpExp =
+   | UN unOp typedExp (from unOpExp)
+
+syntax binOpExp =
+   | BIN binOp typedExp typedExp (from binOpExp)
+
+syntax cmpOpExp =
+   | CMP cmpOp typedExp typedExp (from cmpOpExp)
+
+syntax opExp =
+   | UN unOp typedExp (from unOpExp)
+   | BIN binOp typedExp typedExp (from binOpExp)
+   | CMP cmpOp typedExp typedExp (from cmpOpExp)
+
+syntax upCastExp =
+   | UPCAST typ typedExp (from upCastExp)
+
+syntax downCastExp =
+   | DOWNCAST typ typedExp (from downCastExp)
+
+syntax castExp =
+   | UPCAST typ typedExp (from upCastExp)
+   | DOWNCAST typ typedExp (from downCastExp)
+
+syntax subExp =
+   | SUB typedExp typ (from subExp)
+
+syntax matchExp =
+   | MATCH typedExp pat (from matchExp)
+
+syntax tupExp =
+   | TUP typedExp* (from tupExp)
+
+syntax injExp =
+   | INJ expCase (from injExp)
+
+syntax strExp =
+   | STR expField* (from strExp)
+
+syntax optExp =
+   | OPT typedExp? (from optExp)
+
+syntax listExp =
+   | LIST typedExp* (from listExp)
+
+syntax consExp =
+   | CONS typedExp typedExp (from consExp)
+
+syntax catExp =
+   | CAT typedExp typedExp (from catExp)
+
+syntax memExp =
+   | MEM typedExp typedExp (from memExp)
+
+syntax lenExp =
+   | LEN typedExp (from lenExp)
+
+syntax dotAccExp =
+   | DOT typedExp atom (from dotAccExp)
+
+syntax idxAccExp =
+   | IDX typedExp typedExp (from idxAccExp)
+
+syntax sliceAccExp =
+   | SLICE typedExp typedExp typedExp (from sliceAccExp)
+
+syntax accExp =
+   | DOT typedExp atom (from dotAccExp)
+   | IDX typedExp typedExp (from idxAccExp)
+   | SLICE typedExp typedExp typedExp (from sliceAccExp)
+
+syntax updExp =
+   | UPD typedExp typedPath typedExp (from updExp)
+
+syntax callExp =
+   | CALL id targ* arg* (from callExp)
+
+syntax iterExp =
+   | ITER typedExp expIter (from iterExp)
+
+syntax exp =
+   | BOOL bool (from literalExp)
+   | NAT nat (from num)
+   | INT int (from num)
+   | TEXT text (from literalExp)
+   | VAR id (from varExp)
+   | UN unOp typedExp (from unOpExp)
+   | BIN binOp typedExp typedExp (from binOpExp)
+   | CMP cmpOp typedExp typedExp (from cmpOpExp)
+   | UPCAST typ typedExp (from upCastExp)
+   | DOWNCAST typ typedExp (from downCastExp)
+   | SUB typedExp typ (from subExp)
+   | MATCH typedExp pat (from matchExp)
+   | TUP typedExp* (from tupExp)
+   | INJ expCase (from injExp)
+   | STR expField* (from strExp)
+   | OPT typedExp? (from optExp)
+   | LIST typedExp* (from listExp)
+   | CONS typedExp typedExp (from consExp)
+   | CAT typedExp typedExp (from catExp)
+   | MEM typedExp typedExp (from memExp)
+   | LEN typedExp (from lenExp)
+   | DOT typedExp atom (from dotAccExp)
+   | IDX typedExp typedExp (from idxAccExp)
+   | SLICE typedExp typedExp typedExp (from sliceAccExp)
+   | UPD typedExp typedPath typedExp (from updExp)
+   | CALL id targ* arg* (from callExp)
+   | ITER typedExp expIter (from iterExp)
 
 syntax expCase =
    | mixop typedExp* (from expCase)
@@ -281,23 +370,47 @@ syntax expIter =
 syntax typedPath =
    | path '#' typ (from typedPath)
 
+syntax rootPath =
+   | ROOT (from rootPath)
+
+syntax idxPath =
+   | IDX typedPath typedExp (from idxPath)
+
+syntax slicePath =
+   | SLICE typedPath typedExp typedExp (from slicePath)
+
+syntax dotPath =
+   | DOT typedPath atom (from dotPath)
+
 syntax path =
-   | ROOT (from path)
-   | IDX typedPath typedExp (from path)
-   | SLICE typedPath typedExp typedExp (from path)
-   | DOT typedPath atom (from path)
+   | ROOT (from rootPath)
+   | IDX typedPath typedExp (from idxPath)
+   | SLICE typedPath typedExp typedExp (from slicePath)
+   | DOT typedPath atom (from dotPath)
 
 syntax targ = typ
 
+syntax expArg =
+   | EXP typedExp (from expArg)
+
+syntax funArg =
+   | FUN id (from funArg)
+
 syntax arg =
-   | EXP typedExp (from arg)
-   | FUN id (from arg)
+   | EXP typedExp (from expArg)
+   | FUN id (from funArg)
 
 syntax tparam = id
 
+syntax expParam =
+   | EXP typ (from expParam)
+
+syntax funParam =
+   | FUN id ':' tparam* param* '->' typ (from funParam)
+
 syntax param =
-   | EXP typ (from param)
-   | FUN id ':' tparam* param* '->' typ (from param)
+   | EXP typ (from expParam)
+   | FUN id ':' tparam* param* '->' typ (from funParam)
 
 syntax ifPrem =
    | IF typedExp (from ifPrem)
@@ -542,12 +655,12 @@ def $drop_varis(vari*, id*) : vari* =
 def $is_iter_on_var(typedExp) : varr? =
 
   clause 0 : (exp '#' _typ) = ?(id [])
-  -- if exp matches VAR %
-  -- let VAR id = exp
+  -- if exp <: varExp
+  -- let VAR id = exp as varExp
 
   clause 1 : (exp '#' _typ) = ?(id iter*{iter <- iter*} ++ [iter_outer])
-  -- if exp matches ITER % %
-  -- let ITER typedExp expIter = exp
+  -- if exp <: iterExp
+  -- let ITER typedExp expIter = exp as iterExp
   -- let varr?{varr <- varr?} = $is_iter_on_var(typedExp)
   -- if varr?{varr <- varr?} matches (_)
   -- let ?(id iter*{iter <- iter*}) = varr?{varr <- varr?}
@@ -1215,10 +1328,10 @@ relation Collectbind_exp: algoCtx |- typedExp : vari*
 
    match
 
-    (signature) AC |- VAR id '#' typ' : %
+    (signature) AC |- VAR id as exp '#' typ' : %
     AC |- exp '#' typ' : %
-    -- if exp matches VAR %
-    -- let VAR id = exp
+    -- if exp <: varExp
+    -- let VAR id = exp as varExp
 
    paths
 
@@ -1236,10 +1349,10 @@ relation Collectbind_exp: algoCtx |- typedExp : vari*
 
    match
 
-    (signature) AC |- UPCAST _typ typedExp '#' _typ' : %
+    (signature) AC |- UPCAST _typ typedExp as exp '#' _typ' : %
     AC |- exp '#' _typ' : %
-    -- if exp matches UPCAST % %
-    -- let UPCAST _typ typedExp = exp
+    -- if exp <: upCastExp
+    -- let UPCAST _typ typedExp = exp as upCastExp
 
    paths
 
@@ -1251,10 +1364,10 @@ relation Collectbind_exp: algoCtx |- typedExp : vari*
 
    match
 
-    (signature) AC |- TUP typedExp*{typedExp <- typedExp*} '#' _typ : %
+    (signature) AC |- TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches TUP %
-    -- let TUP typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: tupExp
+    -- let TUP typedExp*{typedExp <- typedExp*} = exp as tupExp
 
    paths
 
@@ -1266,10 +1379,10 @@ relation Collectbind_exp: algoCtx |- typedExp : vari*
 
    match
 
-    (signature) AC |- INJ _mixop typedExp*{typedExp <- typedExp*} '#' _typ : %
+    (signature) AC |- INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches INJ %
-    -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: injExp
+    -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp as injExp
 
    paths
 
@@ -1281,10 +1394,10 @@ relation Collectbind_exp: algoCtx |- typedExp : vari*
 
    match
 
-    (signature) AC |- STR expField*{expField <- expField*} '#' _typ : %
+    (signature) AC |- STR expField*{expField <- expField*} as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches STR %
-    -- let STR expField*{expField <- expField*} = exp
+    -- if exp <: strExp
+    -- let STR expField*{expField <- expField*} = exp as strExp
 
    paths
 
@@ -1297,10 +1410,10 @@ relation Collectbind_exp: algoCtx |- typedExp : vari*
 
    match
 
-    (signature) AC |- OPT typedExp'?{typedExp' <- typedExp'?} '#' _typ : %
+    (signature) AC |- OPT typedExp'?{typedExp' <- typedExp'?} as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches OPT %
-    -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp
+    -- if exp <: optExp
+    -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp as optExp
 
    paths
 
@@ -1319,10 +1432,10 @@ relation Collectbind_exp: algoCtx |- typedExp : vari*
 
    match
 
-    (signature) AC |- LIST typedExp*{typedExp <- typedExp*} '#' _typ : %
+    (signature) AC |- LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches LIST %
-    -- let LIST typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: listExp
+    -- let LIST typedExp*{typedExp <- typedExp*} = exp as listExp
 
    paths
 
@@ -1334,10 +1447,10 @@ relation Collectbind_exp: algoCtx |- typedExp : vari*
 
    match
 
-    (signature) AC |- CONS typedExp_h typedExp_t '#' _typ : %
+    (signature) AC |- CONS typedExp_h typedExp_t as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches CONS % %
-    -- let CONS typedExp_h typedExp_t = exp
+    -- if exp <: consExp
+    -- let CONS typedExp_h typedExp_t = exp as consExp
 
    paths
 
@@ -1349,10 +1462,10 @@ relation Collectbind_exp: algoCtx |- typedExp : vari*
 
    match
 
-    (signature) AC |- ITER typedExp iter _vari*{_vari <- _vari*} '#' _typ : %
+    (signature) AC |- ITER typedExp iter _vari*{_vari <- _vari*} as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches ITER % %
-    -- let ITER typedExp iter _vari*{_vari <- _vari*} = exp
+    -- if exp <: iterExp
+    -- let ITER typedExp iter _vari*{_vari <- _vari*} = exp as iterExp
 
    paths
 
@@ -1405,10 +1518,10 @@ relation Collectbind_arg: algoCtx |- arg : vari*
 
    match
 
-    (signature) AC |- EXP typedExp : %
+    (signature) AC |- EXP typedExp as arg : %
     AC |- arg : %
-    -- if arg matches EXP %
-    -- let EXP typedExp = arg
+    -- if arg <: expArg
+    -- let EXP typedExp = arg as expArg
 
    paths
 
@@ -1420,10 +1533,10 @@ relation Collectbind_arg: algoCtx |- arg : vari*
 
    match
 
-    (signature) AC |- FUN _id : %
+    (signature) AC |- FUN _id as arg : %
     AC |- arg : %
-    -- if arg matches FUN %
-    -- let FUN _id = arg
+    -- if arg <: funArg
+    -- let FUN _id = arg as funArg
 
    paths
 
@@ -1509,7 +1622,7 @@ relation Partialbind_exp: algoCtx iterCtx |- iterCtx typedExp : algoCtx iterCtx 
     -- let _exp '#' typ = typedExp
     -- let (AC_fresh, vari_d) = $fresh_vari(AC, IC ++ IC_prem, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
-    -- let typedExp_check = CMP EQ as cmpop typedExp_d typedExp '#' BOOL as typ
+    -- let typedExp_check = CMP EQ as cmpOp typedExp_d typedExp as exp '#' BOOL as typ
     -- let id_d _typ _iter*{_iter <- _iter*} = vari_d
     -- let id_read*{id_read <- id_read*} = $ids_of_varis(vari_read*{vari_read <- vari_read*})
     -- let IC_d = $add_iterated(IC ++ IC_prem, [vari_d])
@@ -1529,24 +1642,24 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
 
    match
 
-    (signature) AC IC_prem |- IC VAR id '#' typ : % % % %
+    (signature) AC IC_prem |- IC VAR id as exp '#' typ : % % % %
     AC IC_prem |- IC exp '#' typ : % % % %
-    -- if exp matches VAR %
-    -- let VAR id = exp
+    -- if exp <: varExp
+    -- let VAR id = exp as varExp
 
    paths
 
     rulepath variable
-    -- output: % % |- % % : AC IC VAR id '#' typ []
+    -- output: % % |- % % : AC IC VAR id as exp '#' typ []
 
   rulegroup upcast
 
    match
 
-    (signature) AC IC_prem |- IC UPCAST _typ typedExp '#' typ : % % % %
+    (signature) AC IC_prem |- IC UPCAST _typ typedExp as exp '#' typ : % % % %
     AC IC_prem |- IC exp '#' typ : % % % %
-    -- if exp matches UPCAST % %
-    -- let UPCAST _typ typedExp = exp
+    -- if exp <: upCastExp
+    -- let UPCAST _typ typedExp = exp as upCastExp
 
    paths
 
@@ -1555,8 +1668,8 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
     -- let _exp '#' typ_sub = typedExp_sub
     -- let (AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
-    -- let typedExp_check = SUB typedExp_d typ_sub '#' BOOL as typ
-    -- let typedExp_down = DOWNCAST typ_sub typedExp_d '#' typ_sub
+    -- let typedExp_check = SUB typedExp_d typ_sub as exp '#' BOOL as typ
+    -- let typedExp_down = DOWNCAST typ_sub typedExp_d as exp '#' typ_sub
     -- let premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check)
     -- let premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_sub, typedExp_down)
     -- let IC_fresh = $add_iterated(IC_sub, [vari_d])
@@ -1566,34 +1679,34 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
 
    match
 
-    (signature) AC IC_prem |- IC TUP typedExp*{typedExp <- typedExp*} '#' typ : % % % %
+    (signature) AC IC_prem |- IC TUP typedExp*{typedExp <- typedExp*} as exp '#' typ : % % % %
     AC IC_prem |- IC exp '#' typ : % % % %
-    -- if exp matches TUP %
-    -- let TUP typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: tupExp
+    -- let TUP typedExp*{typedExp <- typedExp*} = exp as tupExp
 
    paths
 
     rulepath tuple
     -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
-    -- output: % % |- % % : AC_sub IC_sub TUP typedExp_part*{typedExp_part <- typedExp_part*} '#' typ premAL*{premAL <- premAL*}
+    -- output: % % |- % % : AC_sub IC_sub TUP typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ premAL*{premAL <- premAL*}
 
   rulegroup case
 
    match
 
-    (signature) AC IC_prem |- IC INJ mixop typedExp*{typedExp <- typedExp*} '#' typ : % % % %
+    (signature) AC IC_prem |- IC INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' typ : % % % %
     AC IC_prem |- IC exp '#' typ : % % % %
-    -- if exp matches INJ %
-    -- let INJ mixop typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: injExp
+    -- let INJ mixop typedExp*{typedExp <- typedExp*} = exp as injExp
 
    paths
 
     rulepath case
     -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
-    -- let typedExp_case = INJ mixop typedExp_part*{typedExp_part <- typedExp_part*} '#' typ
+    -- let typedExp_case = INJ mixop typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ
     -- let (AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
-    -- let typedExp_check = MATCH typedExp_d INJ mixop '#' BOOL as typ
+    -- let typedExp_check = MATCH typedExp_d INJ mixop as exp '#' BOOL as typ
     -- let premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check)
     -- let premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_case, typedExp_d)
     -- let IC_fresh = $add_iterated(IC_sub, [vari_d])
@@ -1603,10 +1716,10 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
 
    match
 
-    (signature) AC IC_prem |- IC STR expField*{expField <- expField*} '#' typ : % % % %
+    (signature) AC IC_prem |- IC STR expField*{expField <- expField*} as exp '#' typ : % % % %
     AC IC_prem |- IC exp '#' typ : % % % %
-    -- if exp matches STR %
-    -- let STR expField*{expField <- expField*} = exp
+    -- if exp <: strExp
+    -- let STR expField*{expField <- expField*} = exp as strExp
 
    paths
 
@@ -1615,16 +1728,16 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
     -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
     -- if (|atom*{atom <- atom*}| = |typedExp_part*{typedExp_part <- typedExp_part*}|)
     -- (let expField_part = atom typedExp_part)*{atom <- atom*, typedExp_part <- typedExp_part*, expField_part -> expField_part*}
-    -- output: % % |- % % : AC_sub IC_sub STR expField_part*{expField_part <- expField_part*} '#' typ premAL*{premAL <- premAL*}
+    -- output: % % |- % % : AC_sub IC_sub STR expField_part*{expField_part <- expField_part*} as exp '#' typ premAL*{premAL <- premAL*}
 
   rulegroup opt
 
    match
 
-    (signature) AC IC_prem |- IC OPT ?(typedExp) '#' typ : % % % %
+    (signature) AC IC_prem |- IC OPT ?(typedExp) as exp '#' typ : % % % %
     AC IC_prem |- IC exp '#' typ : % % % %
-    -- if exp matches OPT %
-    -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp
+    -- if exp <: optExp
+    -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp as optExp
     -- if typedExp'?{typedExp' <- typedExp'?} matches (_)
     -- let ?(typedExp) = typedExp'?{typedExp' <- typedExp'?}
 
@@ -1632,10 +1745,10 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
 
     rulepath opt
     -- Partialbind_exp: AC IC_prem |- IC typedExp : AC_sub IC_sub typedExp_part premAL*{premAL <- premAL*}
-    -- let typedExp_opt = OPT ?(typedExp_part) '#' typ
+    -- let typedExp_opt = OPT ?(typedExp_part) as exp '#' typ
     -- let (AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
-    -- let typedExp_check = MATCH typedExp_d SOME as pat '#' BOOL as typ
+    -- let typedExp_check = MATCH typedExp_d SOME as pat as exp '#' BOOL as typ
     -- let premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check)
     -- let premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_opt, typedExp_d)
     -- let IC_fresh = $add_iterated(IC_sub, [vari_d])
@@ -1645,20 +1758,20 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
 
    match
 
-    (signature) AC IC_prem |- IC LIST typedExp*{typedExp <- typedExp*} '#' typ : % % % %
+    (signature) AC IC_prem |- IC LIST typedExp*{typedExp <- typedExp*} as exp '#' typ : % % % %
     AC IC_prem |- IC exp '#' typ : % % % %
-    -- if exp matches LIST %
-    -- let LIST typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: listExp
+    -- let LIST typedExp*{typedExp <- typedExp*} = exp as listExp
 
    paths
 
     rulepath list
     -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
-    -- let typedExp_list = LIST typedExp_part*{typedExp_part <- typedExp_part*} '#' typ
+    -- let typedExp_list = LIST typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ
     -- let (AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
     -- let n = |typedExp*{typedExp <- typedExp*}|
-    -- let typedExp_check = MATCH typedExp_d FIXED n as pat '#' BOOL as typ
+    -- let typedExp_check = MATCH typedExp_d FIXED n as pat as exp '#' BOOL as typ
     -- let premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check)
     -- let premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_list, typedExp_d)
     -- let IC_fresh = $add_iterated(IC_sub, [vari_d])
@@ -1668,20 +1781,20 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
 
    match
 
-    (signature) AC IC_prem |- IC CONS typedExp_h typedExp_t '#' typ : % % % %
+    (signature) AC IC_prem |- IC CONS typedExp_h typedExp_t as exp '#' typ : % % % %
     AC IC_prem |- IC exp '#' typ : % % % %
-    -- if exp matches CONS % %
-    -- let CONS typedExp_h typedExp_t = exp
+    -- if exp <: consExp
+    -- let CONS typedExp_h typedExp_t = exp as consExp
 
    paths
 
     rulepath cons
     -- Partialbind_exp: AC IC_prem |- IC typedExp_h : AC_h IC_h typedExp_h_part premAL_h*{premAL_h <- premAL_h*}
     -- Partialbind_exp: AC_h IC_prem |- IC_h typedExp_t : AC_t IC_t typedExp_t_part premAL_t*{premAL_t <- premAL_t*}
-    -- let typedExp_cons = CONS typedExp_h_part typedExp_t_part '#' typ
+    -- let typedExp_cons = CONS typedExp_h_part typedExp_t_part as exp '#' typ
     -- let (AC_fresh, vari_d) = $fresh_vari(AC_t, IC_t ++ IC_prem, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
-    -- let typedExp_check = MATCH typedExp_d CONS as pat '#' BOOL as typ
+    -- let typedExp_check = MATCH typedExp_d CONS as pat as exp '#' BOOL as typ
     -- let premAL_check = $sidecond_partial(IC_t ++ IC_prem, vari_d, typedExp_check)
     -- let premAL_let = $let_partial(IC_t ++ IC_prem, vari_d, typedExp_cons, typedExp_d)
     -- let IC_fresh = $add_iterated(IC_t, [vari_d])
@@ -1691,10 +1804,10 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
 
    match
 
-    (signature) AC IC_prem |- IC ITER typedExp iter vari*{vari <- vari*} '#' typ : % % % %
+    (signature) AC IC_prem |- IC ITER typedExp iter vari*{vari <- vari*} as exp '#' typ : % % % %
     AC IC_prem |- IC exp '#' typ : % % % %
-    -- if exp matches ITER % %
-    -- let ITER typedExp iter vari*{vari <- vari*} = exp
+    -- if exp <: iterExp
+    -- let ITER typedExp iter vari*{vari <- vari*} = exp as iterExp
 
    paths
 
@@ -1704,7 +1817,7 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
     -- let iter' vari_iter*{vari_iter <- vari_iter*} :: IC_sub = premIterIL*{premIterIL <- premIterIL*}
     -- if (iter' = iter)
     -- let vari_part*{vari_part <- vari_part*} = $select_varis(vari_iter*{vari_iter <- vari_iter*}, $ids_of_varis($free_varis_exp(typedExp_part)))
-    -- output: % % |- % % : AC_sub IC_sub ITER typedExp_part iter vari_part*{vari_part <- vari_part*} '#' typ premAL*{premAL <- premAL*}
+    -- output: % % |- % % : AC_sub IC_sub ITER typedExp_part iter vari_part*{vari_part <- vari_part*} as exp '#' typ premAL*{premAL <- premAL*}
 
 relation Partialbind_exps: algoCtx iterCtx |- iterCtx typedExp* : algoCtx iterCtx typedExp* premAL*
 
@@ -1735,30 +1848,30 @@ relation Partialbind_arg: algoCtx |- arg : algoCtx arg premAL*
 
    match
 
-    (signature) AC |- EXP typedExp : % % %
+    (signature) AC |- EXP typedExp as arg : % % %
     AC |- arg : % % %
-    -- if arg matches EXP %
-    -- let EXP typedExp = arg
+    -- if arg <: expArg
+    -- let EXP typedExp = arg as expArg
 
    paths
 
     rulepath exp
     -- Partialbind_exp: AC [] |- [] typedExp : AC_part _IC typedExp_part premAL*{premAL <- premAL*}
-    -- output: % |- % : AC_part EXP typedExp_part premAL*{premAL <- premAL*}
+    -- output: % |- % : AC_part EXP typedExp_part as arg premAL*{premAL <- premAL*}
 
   rulegroup fun
 
    match
 
-    (signature) AC |- FUN id : % % %
+    (signature) AC |- FUN id as arg : % % %
     AC |- arg : % % %
-    -- if arg matches FUN %
-    -- let FUN id = arg
+    -- if arg <: funArg
+    -- let FUN id = arg as funArg
 
    paths
 
     rulepath fun
-    -- output: % |- % : AC FUN id []
+    -- output: % |- % : AC FUN id as arg []
 
 relation Partialbind_args: algoCtx |- arg* : algoCtx arg* premAL*
 
@@ -1874,11 +1987,11 @@ relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
     rulepath let-left
     -- let IF typedExp = ifPrem
     -- let exp '#' _typ = typedExp
-    -- if exp matches CMP % % %
-    -- let CMP cmpop typedExp_l typedExp_r = exp
-    -- if cmpop <: polyCmpop
-    -- let polyCmpop = cmpop as polyCmpop
-    -- if polyCmpop matches EQ
+    -- if exp <: cmpOpExp
+    -- let CMP cmpOp typedExp_l typedExp_r = exp as cmpOpExp
+    -- if cmpOp <: polyCmpOp
+    -- let polyCmpOp = cmpOp as polyCmpOp
+    -- if polyCmpOp matches EQ
     -- Collectbind_exp: AC |- typedExp_l : vari_l*{vari_l <- vari_l*}
     -- if (vari_l*{vari_l <- vari_l*} =/= [])
     -- Collectbind_exp: AC |- typedExp_r : vari'*{vari' <- vari'*}
@@ -1889,11 +2002,11 @@ relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
     rulepath let-right
     -- let IF typedExp = ifPrem
     -- let exp '#' _typ = typedExp
-    -- if exp matches CMP % % %
-    -- let CMP cmpop typedExp_l typedExp_r = exp
-    -- if cmpop <: polyCmpop
-    -- let polyCmpop = cmpop as polyCmpop
-    -- if polyCmpop matches EQ
+    -- if exp <: cmpOpExp
+    -- let CMP cmpOp typedExp_l typedExp_r = exp as cmpOpExp
+    -- if cmpOp <: polyCmpOp
+    -- let polyCmpOp = cmpOp as polyCmpOp
+    -- if polyCmpOp matches EQ
     -- Collectbind_exp: AC |- typedExp_l : vari'*{vari' <- vari'*}
     -- if vari'*{vari' <- vari'*} matches []
     -- Collectbind_exp: AC |- typedExp_r : vari_r*{vari_r <- vari_r*}
@@ -2065,13 +2178,13 @@ relation TblRows_cover: algoCtx typ* |- tblRowIL*
     -- let n_init = i as nat
     -- if (n_init < |tblRowIL*{tblRowIL <- tblRowIL*}|)
     -- let arg*{arg <- arg*} '=' _typedExp = tblRowIL*{tblRowIL <- tblRowIL*}[n_init]
-    -- (if arg matches EXP %)*{arg <- arg*}
-    -- (let EXP typedExp_last = arg)*{arg <- arg*, typedExp_last -> typedExp_last*}
+    -- (if arg <: expArg)*{arg <- arg*}
+    -- (let EXP typedExp_last = arg as expArg)*{arg <- arg*, typedExp_last -> typedExp_last*}
     -- if $forall_($is_wildcard_exp(typedExp_last)*{typedExp_last <- typedExp_last*})
     -- if ((0 + n_init) <= |tblRowIL*{tblRowIL <- tblRowIL*}|)
     -- let arg'*{arg' <- arg'*} '=' _typedExp'*{_typedExp' <- _typedExp'*, arg'* <- arg'**} = tblRowIL*{tblRowIL <- tblRowIL*}[0 : n_init]
-    -- (if arg' matches EXP %)*{arg' <- arg'*}*{arg'* <- arg'**}
-    -- (let EXP typedExp = arg')*{arg' <- arg'*, typedExp -> typedExp*}*{arg'* <- arg'**, typedExp* -> typedExp**}
+    -- (if arg' <: expArg)*{arg' <- arg'*}*{arg'* <- arg'**}
+    -- (let EXP typedExp = arg' as expArg)*{arg' <- arg'*, typedExp -> typedExp*}*{arg'* <- arg'**, typedExp* -> typedExp**}
     -- (let typCase_row*{typCase_row <- typCase_row*} = $covered_cases(AC.TYP, typedExp))*{typedExp <- typedExp*, typCase_row* -> typCase_row**}*{typedExp* <- typedExp**, typCase_row** -> typCase_row***}
     -- if $is_exclusive(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***})
     -- the relation holds
@@ -2084,12 +2197,12 @@ relation TblRows_cover: algoCtx typ* |- tblRowIL*
     -- let n_init = i as nat
     -- if (n_init < |tblRowIL*{tblRowIL <- tblRowIL*}|)
     -- let arg*{arg <- arg*} '=' _typedExp = tblRowIL*{tblRowIL <- tblRowIL*}[n_init]
-    -- (if arg matches EXP %)*{arg <- arg*}
-    -- (let EXP typedExp_last = arg)*{arg <- arg*, typedExp_last -> typedExp_last*}
+    -- (if arg <: expArg)*{arg <- arg*}
+    -- (let EXP typedExp_last = arg as expArg)*{arg <- arg*, typedExp_last -> typedExp_last*}
     -- if ~$forall_($is_wildcard_exp(typedExp_last)*{typedExp_last <- typedExp_last*})
     -- let arg'*{arg' <- arg'*} '=' _typedExp'*{_typedExp' <- _typedExp'*, arg'* <- arg'**} = tblRowIL*{tblRowIL <- tblRowIL*}
-    -- (if arg' matches EXP %)*{arg' <- arg'*}*{arg'* <- arg'**}
-    -- (let EXP typedExp = arg')*{arg' <- arg'*, typedExp -> typedExp*}*{arg'* <- arg'**, typedExp* -> typedExp**}
+    -- (if arg' <: expArg)*{arg' <- arg'*}*{arg'* <- arg'**}
+    -- (let EXP typedExp = arg' as expArg)*{arg' <- arg'*, typedExp -> typedExp*}*{arg'* <- arg'**, typedExp* -> typedExp**}
     -- (let typCase_row*{typCase_row <- typCase_row*} = $covered_cases(AC.TYP, typedExp))*{typedExp <- typedExp*, typCase_row* -> typCase_row**}*{typedExp* <- typedExp**, typCase_row** -> typCase_row***}
     -- if $is_exclusive(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***})
     -- let typCase_comb*{typCase_comb <- typCase_comb*}*{typCase_comb* <- typCase_comb**} = $combinations(typCase_total*{typCase_total <- typCase_total*}*{typCase_total* <- typCase_total**})
@@ -2217,8 +2330,8 @@ relation Algo_def: algoCtx |- defnIL : defnAL
     -- let tableFuncDefnIL = defnIL' as tableFuncDefnIL
     -- let TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowIL*{tblRowIL <- tblRowIL*} = tableFuncDefnIL
     -- let param'*{param' <- param'*} = param*{param <- param*}
-    -- (if param' matches EXP %)*{param' <- param'*}
-    -- (let EXP typ_param = param')*{param' <- param'*, typ_param -> typ_param*}
+    -- (if param' <: expParam)*{param' <- param'*}
+    -- (let EXP typ_param = param' as expParam)*{param' <- param'*, typ_param -> typ_param*}
     -- (let arg*{arg <- arg*} '=' _typedExp = tblRowIL)*{tblRowIL <- tblRowIL*, _typedExp -> _typedExp*, arg* -> arg**}
     -- (if (|arg*{arg <- arg*}| = |param*{param <- param*}|))*{arg* <- arg**}
     -- (Algo_tblRow: AC |- tblRowIL : tblRowAL)*{tblRowIL <- tblRowIL*, tblRowAL -> tblRowAL*}
@@ -2250,8 +2363,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
     rulepath boolean
     -- let exp' = exp
-    -- if exp' matches BOOL %
-    -- let BOOL _b = exp'
+    -- if exp' <: literalExp
+    -- let literalExp = exp' as literalExp
+    -- if literalExp matches BOOL %
+    -- let BOOL _b = literalExp
     -- output: % |- % : []
 
     rulepath number
@@ -2262,18 +2377,20 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
     rulepath text
     -- let exp' = exp
-    -- if exp' matches TEXT %
-    -- let TEXT _t = exp'
+    -- if exp' <: literalExp
+    -- let literalExp = exp' as literalExp
+    -- if literalExp matches TEXT %
+    -- let TEXT _t = literalExp
     -- output: % |- % : []
 
   rulegroup variable
 
    match
 
-    (signature) AC |- VAR _id '#' _typ : %
+    (signature) AC |- VAR _id as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches VAR %
-    -- let VAR _id = exp
+    -- if exp <: varExp
+    -- let VAR _id = exp as varExp
 
    paths
 
@@ -2284,10 +2401,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- UN _unop typedExp '#' _typ : %
+    (signature) AC |- UN _unOp typedExp as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches UN % %
-    -- let UN _unop typedExp = exp
+    -- if exp <: unOpExp
+    -- let UN _unOp typedExp = exp as unOpExp
 
    paths
 
@@ -2299,24 +2416,24 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- BIN binop typedExp_l typedExp_r '#' _typ : %
+    (signature) AC |- BIN binOp typedExp_l typedExp_r as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches BIN % % %
-    -- let BIN binop typedExp_l typedExp_r = exp
+    -- if exp <: binOpExp
+    -- let BIN binOp typedExp_l typedExp_r = exp as binOpExp
 
    paths
 
     rulepath total
-    -- if ~binop <- [DIV as binop, MOD as binop]
+    -- if ~binOp <- [DIV as binOp, MOD as binOp]
     -- Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*}
     -- output: % |- % : premAL*{premAL <- premAL*}
 
     rulepath divide
-    -- if binop <- [DIV as binop, MOD as binop]
+    -- if binOp <- [DIV as binOp, MOD as binOp]
     -- Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL_operand*{premAL_operand <- premAL_operand*}
     -- let _exp '#' typ_r = typedExp_r
     -- let typedExp_zero = $exp_zero(AC.TYP, typ_r)
-    -- let premAL_div = $sidecond_cmp(NE as cmpop, typedExp_r, typedExp_zero)
+    -- let premAL_div = $sidecond_cmp(NE as cmpOp, typedExp_r, typedExp_zero)
     -- let premAL*{premAL <- premAL*} = premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_div]
     -- output: % |- % : premAL*{premAL <- premAL*}
 
@@ -2324,10 +2441,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- CMP _cmpop typedExp_l typedExp_r '#' _typ : %
+    (signature) AC |- CMP _cmpOp typedExp_l typedExp_r as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches CMP % % %
-    -- let CMP _cmpop typedExp_l typedExp_r = exp
+    -- if exp <: cmpOpExp
+    -- let CMP _cmpOp typedExp_l typedExp_r = exp as cmpOpExp
 
    paths
 
@@ -2339,10 +2456,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- UPCAST _typ typedExp '#' _typ' : %
+    (signature) AC |- UPCAST _typ typedExp as exp '#' _typ' : %
     AC |- exp '#' _typ' : %
-    -- if exp matches UPCAST % %
-    -- let UPCAST _typ typedExp = exp
+    -- if exp <: upCastExp
+    -- let UPCAST _typ typedExp = exp as upCastExp
 
    paths
 
@@ -2354,10 +2471,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- DOWNCAST _typ typedExp '#' _typ' : %
+    (signature) AC |- DOWNCAST _typ typedExp as exp '#' _typ' : %
     AC |- exp '#' _typ' : %
-    -- if exp matches DOWNCAST % %
-    -- let DOWNCAST _typ typedExp = exp
+    -- if exp <: downCastExp
+    -- let DOWNCAST _typ typedExp = exp as downCastExp
 
    paths
 
@@ -2369,10 +2486,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- SUB typedExp _typ '#' _typ' : %
+    (signature) AC |- SUB typedExp _typ as exp '#' _typ' : %
     AC |- exp '#' _typ' : %
-    -- if exp matches SUB % %
-    -- let SUB typedExp _typ = exp
+    -- if exp <: subExp
+    -- let SUB typedExp _typ = exp as subExp
 
    paths
 
@@ -2384,10 +2501,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- MATCH typedExp _pat '#' _typ : %
+    (signature) AC |- MATCH typedExp _pat as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches MATCH % %
-    -- let MATCH typedExp _pat = exp
+    -- if exp <: matchExp
+    -- let MATCH typedExp _pat = exp as matchExp
 
    paths
 
@@ -2399,10 +2516,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- TUP typedExp*{typedExp <- typedExp*} '#' _typ : %
+    (signature) AC |- TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches TUP %
-    -- let TUP typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: tupExp
+    -- let TUP typedExp*{typedExp <- typedExp*} = exp as tupExp
 
    paths
 
@@ -2414,10 +2531,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- INJ _mixop typedExp*{typedExp <- typedExp*} '#' _typ : %
+    (signature) AC |- INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches INJ %
-    -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: injExp
+    -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp as injExp
 
    paths
 
@@ -2429,10 +2546,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- STR expField*{expField <- expField*} '#' _typ : %
+    (signature) AC |- STR expField*{expField <- expField*} as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches STR %
-    -- let STR expField*{expField <- expField*} = exp
+    -- if exp <: strExp
+    -- let STR expField*{expField <- expField*} = exp as strExp
 
    paths
 
@@ -2445,10 +2562,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- OPT typedExp'?{typedExp' <- typedExp'?} '#' _typ : %
+    (signature) AC |- OPT typedExp'?{typedExp' <- typedExp'?} as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches OPT %
-    -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp
+    -- if exp <: optExp
+    -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp as optExp
 
    paths
 
@@ -2467,10 +2584,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- LIST typedExp*{typedExp <- typedExp*} '#' _typ : %
+    (signature) AC |- LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches LIST %
-    -- let LIST typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: listExp
+    -- let LIST typedExp*{typedExp <- typedExp*} = exp as listExp
 
    paths
 
@@ -2482,10 +2599,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- CONS typedExp_h typedExp_t '#' _typ : %
+    (signature) AC |- CONS typedExp_h typedExp_t as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches CONS % %
-    -- let CONS typedExp_h typedExp_t = exp
+    -- if exp <: consExp
+    -- let CONS typedExp_h typedExp_t = exp as consExp
 
    paths
 
@@ -2497,10 +2614,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- CAT typedExp_l typedExp_r '#' _typ : %
+    (signature) AC |- CAT typedExp_l typedExp_r as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches CAT % %
-    -- let CAT typedExp_l typedExp_r = exp
+    -- if exp <: catExp
+    -- let CAT typedExp_l typedExp_r = exp as catExp
 
    paths
 
@@ -2512,10 +2629,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- MEM typedExp_l typedExp_r '#' _typ : %
+    (signature) AC |- MEM typedExp_l typedExp_r as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches MEM % %
-    -- let MEM typedExp_l typedExp_r = exp
+    -- if exp <: memExp
+    -- let MEM typedExp_l typedExp_r = exp as memExp
 
    paths
 
@@ -2527,10 +2644,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- LEN typedExp '#' _typ : %
+    (signature) AC |- LEN typedExp as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches LEN %
-    -- let LEN typedExp = exp
+    -- if exp <: lenExp
+    -- let LEN typedExp = exp as lenExp
 
    paths
 
@@ -2542,10 +2659,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- DOT typedExp _atom '#' _typ : %
+    (signature) AC |- DOT typedExp _atom as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches DOT % %
-    -- let DOT typedExp _atom = exp
+    -- if exp <: dotAccExp
+    -- let DOT typedExp _atom = exp as dotAccExp
 
    paths
 
@@ -2557,17 +2674,17 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- IDX typedExp_b typedExp_i '#' _typ : %
+    (signature) AC |- IDX typedExp_b typedExp_i as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches IDX % %
-    -- let IDX typedExp_b typedExp_i = exp
+    -- if exp <: idxAccExp
+    -- let IDX typedExp_b typedExp_i = exp as idxAccExp
 
    paths
 
     rulepath idx
     -- Guard_exps: AC |- [typedExp_b, typedExp_i] : premAL_operand*{premAL_operand <- premAL_operand*}
     -- let typedExp_len = $exp_len(typedExp_b)
-    -- let premAL_idx = $sidecond_cmp(LT as cmpop, typedExp_i, typedExp_len)
+    -- let premAL_idx = $sidecond_cmp(LT as cmpOp, typedExp_i, typedExp_len)
     -- let premAL*{premAL <- premAL*} = premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_idx]
     -- output: % |- % : premAL*{premAL <- premAL*}
 
@@ -2575,18 +2692,18 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- SLICE typedExp_b typedExp_i typedExp_n '#' _typ : %
+    (signature) AC |- SLICE typedExp_b typedExp_i typedExp_n as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches SLICE % % %
-    -- let SLICE typedExp_b typedExp_i typedExp_n = exp
+    -- if exp <: sliceAccExp
+    -- let SLICE typedExp_b typedExp_i typedExp_n = exp as sliceAccExp
 
    paths
 
     rulepath slice
     -- Guard_exps: AC |- [typedExp_b, typedExp_i, typedExp_n] : premAL_operand*{premAL_operand <- premAL_operand*}
-    -- let typedExp_end = BIN ADD as binop typedExp_i typedExp_n '#' NAT as typ
+    -- let typedExp_end = BIN ADD as binOp typedExp_i typedExp_n as exp '#' NAT as typ
     -- let typedExp_len = $exp_len(typedExp_b)
-    -- let premAL_slice = $sidecond_cmp(LE as cmpop, typedExp_end, typedExp_len)
+    -- let premAL_slice = $sidecond_cmp(LE as cmpOp, typedExp_end, typedExp_len)
     -- let premAL*{premAL <- premAL*} = premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_slice]
     -- output: % |- % : premAL*{premAL <- premAL*}
 
@@ -2594,10 +2711,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- UPD typedExp_b typedPath typedExp_f '#' _typ : %
+    (signature) AC |- UPD typedExp_b typedPath typedExp_f as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches UPD % % %
-    -- let UPD typedExp_b typedPath typedExp_f = exp
+    -- if exp <: updExp
+    -- let UPD typedExp_b typedPath typedExp_f = exp as updExp
 
    paths
 
@@ -2613,10 +2730,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} '#' _typ : %
+    (signature) AC |- CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches CALL % % %
-    -- let CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} = exp
+    -- if exp <: callExp
+    -- let CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} = exp as callExp
 
    paths
 
@@ -2628,10 +2745,10 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
    match
 
-    (signature) AC |- ITER typedExp iter vari*{vari <- vari*} '#' _typ : %
+    (signature) AC |- ITER typedExp iter vari*{vari <- vari*} as exp '#' _typ : %
     AC |- exp '#' _typ : %
-    -- if exp matches ITER % %
-    -- let ITER typedExp iter vari*{vari <- vari*} = exp
+    -- if exp <: iterExp
+    -- let ITER typedExp iter vari*{vari <- vari*} = exp as iterExp
 
    paths
 
@@ -2672,10 +2789,10 @@ relation Guard_arg: algoCtx |- arg : premAL*
 
    match
 
-    (signature) AC |- EXP typedExp : %
+    (signature) AC |- EXP typedExp as arg : %
     AC |- arg : %
-    -- if arg matches EXP %
-    -- let EXP typedExp = arg
+    -- if arg <: expArg
+    -- let EXP typedExp = arg as expArg
 
    paths
 
@@ -2687,10 +2804,10 @@ relation Guard_arg: algoCtx |- arg : premAL*
 
    match
 
-    (signature) AC |- FUN _id : %
+    (signature) AC |- FUN _id as arg : %
     AC |- arg : %
-    -- if arg matches FUN %
-    -- let FUN _id = arg
+    -- if arg <: funArg
+    -- let FUN _id = arg as funArg
 
    paths
 
@@ -3008,8 +3125,10 @@ relation Exp_pure: |- typedExp
 
     rulepath boolean
     -- let exp' = exp
-    -- if exp' matches BOOL %
-    -- let BOOL _b = exp'
+    -- if exp' <: literalExp
+    -- let literalExp = exp' as literalExp
+    -- if literalExp matches BOOL %
+    -- let BOOL _b = literalExp
     -- the relation holds
 
     rulepath number
@@ -3020,18 +3139,20 @@ relation Exp_pure: |- typedExp
 
     rulepath text
     -- let exp' = exp
-    -- if exp' matches TEXT %
-    -- let TEXT _t = exp'
+    -- if exp' <: literalExp
+    -- let literalExp = exp' as literalExp
+    -- if literalExp matches TEXT %
+    -- let TEXT _t = literalExp
     -- the relation holds
 
   rulegroup variable
 
    match
 
-    (signature) |- VAR _id '#' _typ
+    (signature) |- VAR _id as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches VAR %
-    -- let VAR _id = exp
+    -- if exp <: varExp
+    -- let VAR _id = exp as varExp
 
    paths
 
@@ -3042,10 +3163,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- UN _unop typedExp '#' _typ
+    (signature) |- UN _unOp typedExp as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches UN % %
-    -- let UN _unop typedExp = exp
+    -- if exp <: unOpExp
+    -- let UN _unOp typedExp = exp as unOpExp
 
    paths
 
@@ -3057,10 +3178,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- BIN _binop typedExp_l typedExp_r '#' _typ
+    (signature) |- BIN _binOp typedExp_l typedExp_r as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches BIN % % %
-    -- let BIN _binop typedExp_l typedExp_r = exp
+    -- if exp <: binOpExp
+    -- let BIN _binOp typedExp_l typedExp_r = exp as binOpExp
 
    paths
 
@@ -3073,10 +3194,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- CMP _cmpop typedExp_l typedExp_r '#' _typ
+    (signature) |- CMP _cmpOp typedExp_l typedExp_r as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches CMP % % %
-    -- let CMP _cmpop typedExp_l typedExp_r = exp
+    -- if exp <: cmpOpExp
+    -- let CMP _cmpOp typedExp_l typedExp_r = exp as cmpOpExp
 
    paths
 
@@ -3089,10 +3210,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- UPCAST _typ typedExp '#' _typ'
+    (signature) |- UPCAST _typ typedExp as exp '#' _typ'
     |- exp '#' _typ'
-    -- if exp matches UPCAST % %
-    -- let UPCAST _typ typedExp = exp
+    -- if exp <: upCastExp
+    -- let UPCAST _typ typedExp = exp as upCastExp
 
    paths
 
@@ -3104,10 +3225,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- DOWNCAST _typ typedExp '#' _typ'
+    (signature) |- DOWNCAST _typ typedExp as exp '#' _typ'
     |- exp '#' _typ'
-    -- if exp matches DOWNCAST % %
-    -- let DOWNCAST _typ typedExp = exp
+    -- if exp <: downCastExp
+    -- let DOWNCAST _typ typedExp = exp as downCastExp
 
    paths
 
@@ -3119,10 +3240,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- SUB typedExp _typ '#' _typ'
+    (signature) |- SUB typedExp _typ as exp '#' _typ'
     |- exp '#' _typ'
-    -- if exp matches SUB % %
-    -- let SUB typedExp _typ = exp
+    -- if exp <: subExp
+    -- let SUB typedExp _typ = exp as subExp
 
    paths
 
@@ -3134,10 +3255,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- MATCH typedExp _pat '#' _typ
+    (signature) |- MATCH typedExp _pat as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches MATCH % %
-    -- let MATCH typedExp _pat = exp
+    -- if exp <: matchExp
+    -- let MATCH typedExp _pat = exp as matchExp
 
    paths
 
@@ -3149,10 +3270,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- TUP typedExp*{typedExp <- typedExp*} '#' _typ
+    (signature) |- TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches TUP %
-    -- let TUP typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: tupExp
+    -- let TUP typedExp*{typedExp <- typedExp*} = exp as tupExp
 
    paths
 
@@ -3164,10 +3285,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- INJ _mixop typedExp*{typedExp <- typedExp*} '#' _typ
+    (signature) |- INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches INJ %
-    -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: injExp
+    -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp as injExp
 
    paths
 
@@ -3179,10 +3300,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- STR expField*{expField <- expField*} '#' _typ
+    (signature) |- STR expField*{expField <- expField*} as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches STR %
-    -- let STR expField*{expField <- expField*} = exp
+    -- if exp <: strExp
+    -- let STR expField*{expField <- expField*} = exp as strExp
 
    paths
 
@@ -3195,10 +3316,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- OPT typedExp?{typedExp <- typedExp?} '#' _typ
+    (signature) |- OPT typedExp?{typedExp <- typedExp?} as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches OPT %
-    -- let OPT typedExp?{typedExp <- typedExp?} = exp
+    -- if exp <: optExp
+    -- let OPT typedExp?{typedExp <- typedExp?} = exp as optExp
 
    paths
 
@@ -3210,10 +3331,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- LIST typedExp*{typedExp <- typedExp*} '#' _typ
+    (signature) |- LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches LIST %
-    -- let LIST typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: listExp
+    -- let LIST typedExp*{typedExp <- typedExp*} = exp as listExp
 
    paths
 
@@ -3225,10 +3346,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- CONS typedExp_h typedExp_t '#' _typ
+    (signature) |- CONS typedExp_h typedExp_t as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches CONS % %
-    -- let CONS typedExp_h typedExp_t = exp
+    -- if exp <: consExp
+    -- let CONS typedExp_h typedExp_t = exp as consExp
 
    paths
 
@@ -3241,10 +3362,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- CAT typedExp_l typedExp_r '#' _typ
+    (signature) |- CAT typedExp_l typedExp_r as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches CAT % %
-    -- let CAT typedExp_l typedExp_r = exp
+    -- if exp <: catExp
+    -- let CAT typedExp_l typedExp_r = exp as catExp
 
    paths
 
@@ -3257,10 +3378,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- MEM typedExp_l typedExp_r '#' _typ
+    (signature) |- MEM typedExp_l typedExp_r as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches MEM % %
-    -- let MEM typedExp_l typedExp_r = exp
+    -- if exp <: memExp
+    -- let MEM typedExp_l typedExp_r = exp as memExp
 
    paths
 
@@ -3273,10 +3394,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- LEN typedExp '#' _typ
+    (signature) |- LEN typedExp as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches LEN %
-    -- let LEN typedExp = exp
+    -- if exp <: lenExp
+    -- let LEN typedExp = exp as lenExp
 
    paths
 
@@ -3288,10 +3409,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- DOT typedExp _atom '#' _typ
+    (signature) |- DOT typedExp _atom as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches DOT % %
-    -- let DOT typedExp _atom = exp
+    -- if exp <: dotAccExp
+    -- let DOT typedExp _atom = exp as dotAccExp
 
    paths
 
@@ -3303,10 +3424,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- IDX typedExp_b typedExp_i '#' _typ
+    (signature) |- IDX typedExp_b typedExp_i as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches IDX % %
-    -- let IDX typedExp_b typedExp_i = exp
+    -- if exp <: idxAccExp
+    -- let IDX typedExp_b typedExp_i = exp as idxAccExp
 
    paths
 
@@ -3319,10 +3440,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- SLICE typedExp_b typedExp_i typedExp_n '#' _typ
+    (signature) |- SLICE typedExp_b typedExp_i typedExp_n as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches SLICE % % %
-    -- let SLICE typedExp_b typedExp_i typedExp_n = exp
+    -- if exp <: sliceAccExp
+    -- let SLICE typedExp_b typedExp_i typedExp_n = exp as sliceAccExp
 
    paths
 
@@ -3336,10 +3457,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- UPD typedExp_b typedPath typedExp_f '#' _typ
+    (signature) |- UPD typedExp_b typedPath typedExp_f as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches UPD % % %
-    -- let UPD typedExp_b typedPath typedExp_f = exp
+    -- if exp <: updExp
+    -- let UPD typedExp_b typedPath typedExp_f = exp as updExp
 
    paths
 
@@ -3353,10 +3474,10 @@ relation Exp_pure: |- typedExp
 
    match
 
-    (signature) |- ITER typedExp _expIter '#' _typ
+    (signature) |- ITER typedExp _expIter as exp '#' _typ
     |- exp '#' _typ
-    -- if exp matches ITER % %
-    -- let ITER typedExp _expIter = exp
+    -- if exp <: iterExp
+    -- let ITER typedExp _expIter = exp as iterExp
 
    paths
 
@@ -3370,9 +3491,11 @@ relation Path_pure: |- typedPath
 
    match
 
-    (signature) |- ROOT '#' _typ
+    (signature) |- ROOT as path '#' _typ
     |- path '#' _typ
-    -- if path matches ROOT
+    -- if path <: rootPath
+    -- let rootPath = path as rootPath
+    -- if rootPath matches ROOT
 
    paths
 
@@ -3383,10 +3506,10 @@ relation Path_pure: |- typedPath
 
    match
 
-    (signature) |- IDX typedPath typedExp_i '#' _typ
+    (signature) |- IDX typedPath typedExp_i as path '#' _typ
     |- path '#' _typ
-    -- if path matches IDX % %
-    -- let IDX typedPath typedExp_i = path
+    -- if path <: idxPath
+    -- let IDX typedPath typedExp_i = path as idxPath
 
    paths
 
@@ -3399,10 +3522,10 @@ relation Path_pure: |- typedPath
 
    match
 
-    (signature) |- SLICE typedPath typedExp_i typedExp_n '#' _typ
+    (signature) |- SLICE typedPath typedExp_i typedExp_n as path '#' _typ
     |- path '#' _typ
-    -- if path matches SLICE % % %
-    -- let SLICE typedPath typedExp_i typedExp_n = path
+    -- if path <: slicePath
+    -- let SLICE typedPath typedExp_i typedExp_n = path as slicePath
 
    paths
 
@@ -3416,10 +3539,10 @@ relation Path_pure: |- typedPath
 
    match
 
-    (signature) |- DOT typedPath _atom '#' _typ
+    (signature) |- DOT typedPath _atom as path '#' _typ
     |- path '#' _typ
-    -- if path matches DOT % %
-    -- let DOT typedPath _atom = path
+    -- if path <: dotPath
+    -- let DOT typedPath _atom = path as dotPath
 
    paths
 
@@ -3572,114 +3695,118 @@ relation Otherwise_pure: |- defnAL
 def $free_varis_exp(typedExp) : vari* =
 
   clause 0 : (exp '#' _typ) = []
-  -- if exp matches BOOL %
-  -- let BOOL _b = exp
+  -- if exp <: literalExp
+  -- let literalExp = exp as literalExp
+  -- if literalExp matches BOOL %
+  -- let BOOL _b = literalExp
 
   clause 1 : (exp '#' _typ) = []
   -- if exp <: num
   -- let num = exp as num
 
   clause 2 : (exp '#' _typ) = []
-  -- if exp matches TEXT %
-  -- let TEXT _t = exp
+  -- if exp <: literalExp
+  -- let literalExp = exp as literalExp
+  -- if literalExp matches TEXT %
+  -- let TEXT _t = literalExp
 
   clause 3 : (exp '#' typ) = [id typ []]
-  -- if exp matches VAR %
-  -- let VAR id = exp
+  -- if exp <: varExp
+  -- let VAR id = exp as varExp
 
   clause 4 : (exp '#' _typ) = $free_varis_exp(typedExp)
-  -- if exp matches UN % %
-  -- let UN _unop typedExp = exp
+  -- if exp <: unOpExp
+  -- let UN _unOp typedExp = exp as unOpExp
 
   clause 5 : (exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
-  -- if exp matches BIN % % %
-  -- let BIN _binop typedExp_l typedExp_r = exp
+  -- if exp <: binOpExp
+  -- let BIN _binOp typedExp_l typedExp_r = exp as binOpExp
 
   clause 6 : (exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
-  -- if exp matches CMP % % %
-  -- let CMP _cmpop typedExp_l typedExp_r = exp
+  -- if exp <: cmpOpExp
+  -- let CMP _cmpOp typedExp_l typedExp_r = exp as cmpOpExp
 
   clause 7 : (exp '#' _typ') = $free_varis_exp(typedExp)
-  -- if exp matches UPCAST % %
-  -- let UPCAST _typ typedExp = exp
+  -- if exp <: upCastExp
+  -- let UPCAST _typ typedExp = exp as upCastExp
 
   clause 8 : (exp '#' _typ') = $free_varis_exp(typedExp)
-  -- if exp matches DOWNCAST % %
-  -- let DOWNCAST _typ typedExp = exp
+  -- if exp <: downCastExp
+  -- let DOWNCAST _typ typedExp = exp as downCastExp
 
   clause 9 : (exp '#' _typ') = $free_varis_exp(typedExp)
-  -- if exp matches SUB % %
-  -- let SUB typedExp _typ = exp
+  -- if exp <: subExp
+  -- let SUB typedExp _typ = exp as subExp
 
   clause 10 : (exp '#' _typ) = $free_varis_exp(typedExp)
-  -- if exp matches MATCH % %
-  -- let MATCH typedExp _pat = exp
+  -- if exp <: matchExp
+  -- let MATCH typedExp _pat = exp as matchExp
 
   clause 11 : (exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-  -- if exp matches TUP %
-  -- let TUP typedExp*{typedExp <- typedExp*} = exp
+  -- if exp <: tupExp
+  -- let TUP typedExp*{typedExp <- typedExp*} = exp as tupExp
 
   clause 12 : (exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-  -- if exp matches INJ %
-  -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp
+  -- if exp <: injExp
+  -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp as injExp
 
   clause 13 : (exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-  -- if exp matches STR %
-  -- let STR expField*{expField <- expField*} = exp
+  -- if exp <: strExp
+  -- let STR expField*{expField <- expField*} = exp as strExp
   -- (let _atom typedExp = expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
 
   clause 14 : (exp '#' _typ) = []
-  -- if (exp = OPT ?())
+  -- if (exp = OPT ?() as exp)
 
   clause 15 : (exp '#' _typ) = $free_varis_exp(typedExp)
-  -- if exp matches OPT %
-  -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp
+  -- if exp <: optExp
+  -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp as optExp
   -- if typedExp'?{typedExp' <- typedExp'?} matches (_)
   -- let ?(typedExp) = typedExp'?{typedExp' <- typedExp'?}
 
   clause 16 : (exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-  -- if exp matches LIST %
-  -- let LIST typedExp*{typedExp <- typedExp*} = exp
+  -- if exp <: listExp
+  -- let LIST typedExp*{typedExp <- typedExp*} = exp as listExp
 
   clause 17 : (exp '#' _typ) = $free_varis_exps([typedExp_h, typedExp_t])
-  -- if exp matches CONS % %
-  -- let CONS typedExp_h typedExp_t = exp
+  -- if exp <: consExp
+  -- let CONS typedExp_h typedExp_t = exp as consExp
 
   clause 18 : (exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
-  -- if exp matches CAT % %
-  -- let CAT typedExp_l typedExp_r = exp
+  -- if exp <: catExp
+  -- let CAT typedExp_l typedExp_r = exp as catExp
 
   clause 19 : (exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
-  -- if exp matches MEM % %
-  -- let MEM typedExp_l typedExp_r = exp
+  -- if exp <: memExp
+  -- let MEM typedExp_l typedExp_r = exp as memExp
 
   clause 20 : (exp '#' _typ) = $free_varis_exp(typedExp)
-  -- if exp matches LEN %
-  -- let LEN typedExp = exp
+  -- if exp <: lenExp
+  -- let LEN typedExp = exp as lenExp
 
   clause 21 : (exp '#' _typ) = $free_varis_exp(typedExp)
-  -- if exp matches DOT % %
-  -- let DOT typedExp _atom = exp
+  -- if exp <: dotAccExp
+  -- let DOT typedExp _atom = exp as dotAccExp
 
   clause 22 : (exp '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i])
-  -- if exp matches IDX % %
-  -- let IDX typedExp_b typedExp_i = exp
+  -- if exp <: idxAccExp
+  -- let IDX typedExp_b typedExp_i = exp as idxAccExp
 
   clause 23 : (exp '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i, typedExp_n])
-  -- if exp matches SLICE % % %
-  -- let SLICE typedExp_b typedExp_i typedExp_n = exp
+  -- if exp <: sliceAccExp
+  -- let SLICE typedExp_b typedExp_i typedExp_n = exp as sliceAccExp
 
   clause 24 : (exp '#' _typ) = $free_varis_exp(typedExp_b) ++ $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_f)
-  -- if exp matches UPD % % %
-  -- let UPD typedExp_b typedPath typedExp_f = exp
+  -- if exp <: updExp
+  -- let UPD typedExp_b typedPath typedExp_f = exp as updExp
 
   clause 25 : (exp '#' _typ) = $free_varis_args(arg*{arg <- arg*})
-  -- if exp matches CALL % % %
-  -- let CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} = exp
+  -- if exp <: callExp
+  -- let CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} = exp as callExp
 
   clause 26 : (exp '#' _typ) = vari_iter*{vari_iter <- vari_iter*}
-  -- if exp matches ITER % %
-  -- let ITER typedExp iter _vari*{_vari <- _vari*} = exp
+  -- if exp <: iterExp
+  -- let ITER typedExp iter _vari*{_vari <- _vari*} = exp as iterExp
   -- let vari*{vari <- vari*} = $free_varis_exp(typedExp)
   -- (let vari_iter = $iterate_vari(vari, [iter]))*{vari <- vari*, vari_iter -> vari_iter*}
 
@@ -3695,29 +3822,31 @@ def $free_varis_exps(typedExp*) : vari* =
 def $free_varis_path(typedPath) : vari* =
 
   clause 0 : (path '#' _typ) = []
-  -- if path matches ROOT
+  -- if path <: rootPath
+  -- let rootPath = path as rootPath
+  -- if rootPath matches ROOT
 
   clause 1 : (path '#' _typ) = $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_i)
-  -- if path matches IDX % %
-  -- let IDX typedPath typedExp_i = path
+  -- if path <: idxPath
+  -- let IDX typedPath typedExp_i = path as idxPath
 
   clause 2 : (path '#' _typ) = $free_varis_path(typedPath) ++ $free_varis_exps([typedExp_i, typedExp_n])
-  -- if path matches SLICE % % %
-  -- let SLICE typedPath typedExp_i typedExp_n = path
+  -- if path <: slicePath
+  -- let SLICE typedPath typedExp_i typedExp_n = path as slicePath
 
   clause 3 : (path '#' _typ) = $free_varis_path(typedPath)
-  -- if path matches DOT % %
-  -- let DOT typedPath _atom = path
+  -- if path <: dotPath
+  -- let DOT typedPath _atom = path as dotPath
 
 def $free_varis_arg(arg) : vari* =
 
   clause 0 : (arg) = $free_varis_exp(typedExp)
-  -- if arg matches EXP %
-  -- let EXP typedExp = arg
+  -- if arg <: expArg
+  -- let EXP typedExp = arg as expArg
 
   clause 1 : (arg) = []
-  -- if arg matches FUN %
-  -- let FUN _id = arg
+  -- if arg <: funArg
+  -- let FUN _id = arg as funArg
 
 def $free_varis_args(arg*) : vari* =
 
@@ -3786,12 +3915,12 @@ def $iter_exp(typedExp, vari, iter*) : typedExp =
   -- if iter*{iter <- iter*} matches _ :: _
   -- let iter_h :: iter_t*{iter_t <- iter_t*} = iter*{iter <- iter*}
   -- let _exp '#' typ = typedExp
-  -- let typedExp_iter = ITER typedExp iter_h [vari] '#' ITER typ iter_h
+  -- let typedExp_iter = ITER typedExp iter_h [vari] as exp '#' ITER typ iter_h
   -- let vari_iter = $iterate_vari(vari, [iter_h])
 
 def $exp_of_vari(vari) : typedExp =
 
-  clause 0 : (id typ iter*{iter <- iter*}) = $iter_exp(VAR id '#' typ, id typ [], iter*{iter <- iter*})
+  clause 0 : (id typ iter*{iter <- iter*}) = $iter_exp(VAR id as exp '#' typ, id typ [], iter*{iter <- iter*})
 
 syntax occ = map<id, id*>
 
@@ -3819,18 +3948,18 @@ def $init_renamer(id*, vari*) : renamer =
 
 def $rename_exp(renamer, typedExp) : (renamer, typedExp) =
 
-  clause 0 : (R, exp '#' typ) = (R_multi, VAR id '#' typ)
-  -- if exp matches VAR %
-  -- let VAR id = exp
+  clause 0 : (R, exp '#' typ) = (R_multi, VAR id as exp '#' typ)
+  -- if exp <: varExp
+  -- let VAR id = exp as varExp
   -- let id'*{id' <- id'*}?{id'* <- id'*?} = $find_map<id, id*>(R.OCC, id)
   -- if id'*{id' <- id'*}?{id'* <- id'*?} matches (_)
   -- let ?(id_later*{id_later <- id_later*}) = id'*{id' <- id'*}?{id'* <- id'*?}
   -- if ~id <- R.SEEN
   -- let R_multi = R[SEEN = R.SEEN ++ [id]]
 
-  clause 1 : (R, exp '#' typ) = (R_multi, VAR id_fresh '#' typ)
-  -- if exp matches VAR %
-  -- let VAR id = exp
+  clause 1 : (R, exp '#' typ) = (R_multi, VAR id_fresh as exp '#' typ)
+  -- if exp <: varExp
+  -- let VAR id = exp as varExp
   -- let id'*{id' <- id'*}?{id'* <- id'*?} = $find_map<id, id*>(R.OCC, id)
   -- if id'*{id' <- id'*}?{id'* <- id'*?} matches (_)
   -- let ?(id_later*{id_later <- id_later*}) = id'*{id' <- id'*}?{id'* <- id'*?}
@@ -3839,50 +3968,50 @@ def $rename_exp(renamer, typedExp) : (renamer, typedExp) =
   -- let occ = $add_map<id, id*>(R.OCC, id, id_later*{id_later <- id_later*} ++ [id_fresh])
   -- let R_multi = {USED id_used*{id_used <- id_used*}, SEEN R.SEEN, OCC occ}
 
-  clause 2 : (R, exp '#' typ) = (R_multi, UPCAST typ_sup typedExp_multi '#' typ)
-  -- if exp matches UPCAST % %
-  -- let UPCAST typ_sup typedExp = exp
+  clause 2 : (R, exp '#' typ) = (R_multi, UPCAST typ_sup typedExp_multi as exp '#' typ)
+  -- if exp <: upCastExp
+  -- let UPCAST typ_sup typedExp = exp as upCastExp
   -- let (R_multi, typedExp_multi) = $rename_exp(R, typedExp)
 
-  clause 3 : (R, exp '#' typ) = (R_multi, TUP typedExp_multi*{typedExp_multi <- typedExp_multi*} '#' typ)
-  -- if exp matches TUP %
-  -- let TUP typedExp*{typedExp <- typedExp*} = exp
+  clause 3 : (R, exp '#' typ) = (R_multi, TUP typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
+  -- if exp <: tupExp
+  -- let TUP typedExp*{typedExp <- typedExp*} = exp as tupExp
   -- let (R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) = $rename_exps(R, typedExp*{typedExp <- typedExp*})
 
-  clause 4 : (R, exp '#' typ) = (R_multi, INJ mixop typedExp_multi*{typedExp_multi <- typedExp_multi*} '#' typ)
-  -- if exp matches INJ %
-  -- let INJ mixop typedExp*{typedExp <- typedExp*} = exp
+  clause 4 : (R, exp '#' typ) = (R_multi, INJ mixop typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
+  -- if exp <: injExp
+  -- let INJ mixop typedExp*{typedExp <- typedExp*} = exp as injExp
   -- let (R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) = $rename_exps(R, typedExp*{typedExp <- typedExp*})
 
-  clause 5 : (R, exp '#' typ) = (R_multi, STR expField_multi*{expField_multi <- expField_multi*} '#' typ)
-  -- if exp matches STR %
-  -- let STR expField*{expField <- expField*} = exp
+  clause 5 : (R, exp '#' typ) = (R_multi, STR expField_multi*{expField_multi <- expField_multi*} as exp '#' typ)
+  -- if exp <: strExp
+  -- let STR expField*{expField <- expField*} = exp as strExp
   -- (let atom typedExp = expField)*{expField <- expField*, atom -> atom*, typedExp -> typedExp*}
   -- let (R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) = $rename_exps(R, typedExp*{typedExp <- typedExp*})
   -- if (|atom*{atom <- atom*}| = |typedExp_multi*{typedExp_multi <- typedExp_multi*}|)
   -- (let expField_multi = atom typedExp_multi)*{atom <- atom*, typedExp_multi <- typedExp_multi*, expField_multi -> expField_multi*}
 
-  clause 6 : (R, exp '#' typ) = (R_multi, OPT ?(typedExp_multi) '#' typ)
-  -- if exp matches OPT %
-  -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp
+  clause 6 : (R, exp '#' typ) = (R_multi, OPT ?(typedExp_multi) as exp '#' typ)
+  -- if exp <: optExp
+  -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp as optExp
   -- if typedExp'?{typedExp' <- typedExp'?} matches (_)
   -- let ?(typedExp) = typedExp'?{typedExp' <- typedExp'?}
   -- let (R_multi, typedExp_multi) = $rename_exp(R, typedExp)
 
-  clause 7 : (R, exp '#' typ) = (R_multi, LIST typedExp_multi*{typedExp_multi <- typedExp_multi*} '#' typ)
-  -- if exp matches LIST %
-  -- let LIST typedExp*{typedExp <- typedExp*} = exp
+  clause 7 : (R, exp '#' typ) = (R_multi, LIST typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
+  -- if exp <: listExp
+  -- let LIST typedExp*{typedExp <- typedExp*} = exp as listExp
   -- let (R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) = $rename_exps(R, typedExp*{typedExp <- typedExp*})
 
-  clause 8 : (R, exp '#' typ) = (R_t, CONS typedExp_h_multi typedExp_t_multi '#' typ)
-  -- if exp matches CONS % %
-  -- let CONS typedExp_h typedExp_t = exp
+  clause 8 : (R, exp '#' typ) = (R_t, CONS typedExp_h_multi typedExp_t_multi as exp '#' typ)
+  -- if exp <: consExp
+  -- let CONS typedExp_h typedExp_t = exp as consExp
   -- let (R_h, typedExp_h_multi) = $rename_exp(R, typedExp_h)
   -- let (R_t, typedExp_t_multi) = $rename_exp(R_h, typedExp_t)
 
-  clause 9 : (R, exp '#' typ) = (R_multi, ITER typedExp_multi iter vari_occ*{vari_occ <- vari_occ*} '#' typ)
-  -- if exp matches ITER % %
-  -- let ITER typedExp iter vari*{vari <- vari*} = exp
+  clause 9 : (R, exp '#' typ) = (R_multi, ITER typedExp_multi iter vari_occ*{vari_occ <- vari_occ*} as exp '#' typ)
+  -- if exp <: iterExp
+  -- let ITER typedExp iter vari*{vari <- vari*} = exp as iterExp
   -- let (R_multi, typedExp_multi) = $rename_exp(R, typedExp)
   -- let id_free*{id_free <- id_free*} = $ids_of_varis($free_varis_exp(typedExp_multi))
   -- (let vari_rename*{vari_rename <- vari_rename*} = $rename_iter_vari(R_multi.OCC, vari, id_free*{id_free <- id_free*}))*{vari <- vari*, vari_rename* -> vari_rename**}
@@ -3913,14 +4042,14 @@ def $rename_iter_vari(occ, vari, id*) : vari* =
 
 def $rename_arg(renamer, arg) : (renamer, arg) =
 
-  clause 0 : (R, arg) = (R_multi, EXP typedExp_multi)
-  -- if arg matches EXP %
-  -- let EXP typedExp = arg
+  clause 0 : (R, arg) = (R_multi, EXP typedExp_multi as arg)
+  -- if arg <: expArg
+  -- let EXP typedExp = arg as expArg
   -- let (R_multi, typedExp_multi) = $rename_exp(R, typedExp)
 
-  clause 1 : (R, arg) = (R, FUN id)
-  -- if arg matches FUN %
-  -- let FUN id = arg
+  clause 1 : (R, arg) = (R, FUN id as arg)
+  -- if arg <: funArg
+  -- let FUN id = arg as funArg
 
 def $rename_args(renamer, arg*) : (renamer, arg*) =
 
@@ -3936,40 +4065,40 @@ def $rename_args(renamer, arg*) : (renamer, arg*) =
 def $is_invertible(typedExp) : bool =
 
   clause 0 : (exp '#' _typ) = true
-  -- if exp matches VAR %
-  -- let VAR _id = exp
+  -- if exp <: varExp
+  -- let VAR _id = exp as varExp
 
   clause 1 : (exp '#' _typ') = true
-  -- if exp matches UPCAST % %
-  -- let UPCAST _typ _typedExp = exp
+  -- if exp <: upCastExp
+  -- let UPCAST _typ _typedExp = exp as upCastExp
 
   clause 2 : (exp '#' _typ) = true
-  -- if exp matches TUP %
-  -- let TUP _typedExp*{_typedExp <- _typedExp*} = exp
+  -- if exp <: tupExp
+  -- let TUP _typedExp*{_typedExp <- _typedExp*} = exp as tupExp
 
   clause 3 : (exp '#' _typ) = true
-  -- if exp matches INJ %
-  -- let INJ _expCase = exp
+  -- if exp <: injExp
+  -- let INJ _expCase = exp as injExp
 
   clause 4 : (exp '#' _typ) = true
-  -- if exp matches STR %
-  -- let STR _expField*{_expField <- _expField*} = exp
+  -- if exp <: strExp
+  -- let STR _expField*{_expField <- _expField*} = exp as strExp
 
   clause 5 : (exp '#' _typ) = true
-  -- if exp matches OPT %
-  -- let OPT _typedExp?{_typedExp <- _typedExp?} = exp
+  -- if exp <: optExp
+  -- let OPT _typedExp?{_typedExp <- _typedExp?} = exp as optExp
 
   clause 6 : (exp '#' _typ) = true
-  -- if exp matches LIST %
-  -- let LIST _typedExp*{_typedExp <- _typedExp*} = exp
+  -- if exp <: listExp
+  -- let LIST _typedExp*{_typedExp <- _typedExp*} = exp as listExp
 
   clause 7 : (exp '#' _typ) = true
-  -- if exp matches CONS % %
-  -- let CONS _typedExp _typedExp' = exp
+  -- if exp <: consExp
+  -- let CONS _typedExp _typedExp' = exp as consExp
 
   clause 8 : (exp '#' _typ) = true
-  -- if exp matches ITER % %
-  -- let ITER _typedExp _expIter = exp
+  -- if exp <: iterExp
+  -- let ITER _typedExp _expIter = exp as iterExp
 
   clause -1 : (_typedExp) = false
 
@@ -3988,9 +4117,9 @@ def $sideconds_multi_binder(iterCtx, vari, id*) : premAL* =
 def $sidecond_multi_binder(iterCtx, vari, id) : premAL =
 
   clause 0 : (IC, id_first typ iter*{iter <- iter*}, id_later) = $iterate_prem(premAL_cmp, premIterAL*{premIterAL <- premIterAL*})
-  -- let typedExp_first = VAR id_first '#' typ
-  -- let typedExp_later = VAR id_later '#' typ
-  -- let typedExp_cmp = CMP EQ as cmpop typedExp_first typedExp_later '#' BOOL as typ
+  -- let typedExp_first = VAR id_first as exp '#' typ
+  -- let typedExp_later = VAR id_later as exp '#' typ
+  -- let typedExp_cmp = CMP EQ as cmpOp typedExp_first typedExp_later as exp '#' BOOL as typ
   -- let premAL_cmp = IF typedExp_cmp as premAL
   -- let IC_inner = iter []*{iter <- iter*}
   -- let iter_outer _vari*{_vari <- _vari*}*{_vari* <- _vari**, iter_outer <- iter_outer*} = IC
@@ -4075,25 +4204,25 @@ def $is_singleton_typ(tdenv, typ) : bool =
 def $is_irrefutable(tdenv, typedExp) : bool =
 
   clause 0 : (tdenv, exp '#' _typ) = true
-  -- if exp matches VAR %
-  -- let VAR _id = exp
+  -- if exp <: varExp
+  -- let VAR _id = exp as varExp
 
   clause 1 : (tdenv, exp '#' _typ) = $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
-  -- if exp matches TUP %
-  -- let TUP typedExp*{typedExp <- typedExp*} = exp
+  -- if exp <: tupExp
+  -- let TUP typedExp*{typedExp <- typedExp*} = exp as tupExp
 
   clause 2 : (tdenv, exp '#' typ) = ($is_singleton_typ(tdenv, typ) /\ $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*}))
-  -- if exp matches INJ %
-  -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp
+  -- if exp <: injExp
+  -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp as injExp
 
   clause 3 : (tdenv, exp '#' _typ) = $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
-  -- if exp matches STR %
-  -- let STR expField*{expField <- expField*} = exp
+  -- if exp <: strExp
+  -- let STR expField*{expField <- expField*} = exp as strExp
   -- (let _atom typedExp = expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
 
   clause 4 : (tdenv, exp '#' _typ) = $is_irrefutable(tdenv, typedExp)
-  -- if exp matches ITER % %
-  -- let ITER typedExp _expIter = exp
+  -- if exp <: iterExp
+  -- let ITER typedExp _expIter = exp as iterExp
 
   clause -1 : (_tdenv, _typedExp) = false
 
@@ -4113,24 +4242,24 @@ def $variant_cases(tdenv, typ) : typCase* =
 def $covered_cases(tdenv, typedExp) : typCase* =
 
   clause 0 : (tdenv, exp '#' typ) = $variant_cases(tdenv, typ)
-  -- if exp matches VAR %
-  -- let VAR _id = exp
+  -- if exp <: varExp
+  -- let VAR _id = exp as varExp
 
   clause 1 : (tdenv, exp '#' _typ') = $covered_cases(tdenv, typedExp)
-  -- if exp matches UPCAST % %
-  -- let UPCAST _typ typedExp = exp
+  -- if exp <: upCastExp
+  -- let UPCAST _typ typedExp = exp as upCastExp
 
   clause 2 : (tdenv, exp '#' _typ) = [mixop typ*{typ <- typ*}]
-  -- if exp matches INJ %
-  -- let INJ mixop typedExp*{typedExp <- typedExp*} = exp
+  -- if exp <: injExp
+  -- let INJ mixop typedExp*{typedExp <- typedExp*} = exp as injExp
   -- if $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
   -- (let _exp '#' typ = typedExp)*{typedExp <- typedExp*, _exp -> _exp*, typ -> typ*}
 
 def $is_wildcard_exp(typedExp) : bool =
 
   clause 0 : (exp '#' _typ) = true
-  -- if exp matches VAR %
-  -- let VAR id = exp
+  -- if exp <: varExp
+  -- let VAR id = exp as varExp
   -- if (|id| > 0)
   -- if ((0 + 1) <= |id|)
   -- if (id[0 : 1] = "_")
@@ -4180,11 +4309,11 @@ def $is_covered(typCase***, typCase*) : bool =
 
 def $exp_len(typedExp) : typedExp =
 
-  clause 0 : (typedExp) = LEN typedExp '#' NAT as typ
+  clause 0 : (typedExp) = LEN typedExp as exp '#' NAT as typ
 
-def $sidecond_cmp(cmpop, typedExp, typedExp) : premAL =
+def $sidecond_cmp(cmpOp, typedExp, typedExp) : premAL =
 
-  clause 0 : (cmpop, typedExp_l, typedExp_r) = IF CMP cmpop typedExp_l typedExp_r '#' BOOL as typ as premAL
+  clause 0 : (cmpOp, typedExp_l, typedExp_r) = IF CMP cmpOp typedExp_l typedExp_r as exp '#' BOOL as typ as premAL
 
 def $exp_zero(tdenv, typ) : typedExp =
 
@@ -4196,18 +4325,18 @@ def $exp_zero(tdenv, typ) : typedExp =
 
 def $sidecond_iter(iter, vari, vari) : premAL =
 
-  clause 0 : (iter, vari_a, vari_b) = $sidecond_cmp(EQ as cmpop, $exp_len(typedExp_a), $exp_len(typedExp_b))
+  clause 0 : (iter, vari_a, vari_b) = $sidecond_cmp(EQ as cmpOp, $exp_len(typedExp_a), $exp_len(typedExp_b))
   -- if iter matches STAR
   -- let typedExp_a = $exp_of_vari($iterate_vari(vari_a, [STAR]))
   -- let typedExp_b = $exp_of_vari($iterate_vari(vari_b, [STAR]))
 
-  clause 1 : (iter, vari_a, vari_b) = IF BIN EQUIV as binop typedExp_none_a typedExp_none_b '#' BOOL as typ as premAL
+  clause 1 : (iter, vari_a, vari_b) = IF BIN EQUIV as binOp typedExp_none_a typedExp_none_b as exp '#' BOOL as typ as premAL
   -- if iter matches QUEST
   -- let typedExp_a = $exp_of_vari($iterate_vari(vari_a, [QUEST]))
   -- let typedExp_b = $exp_of_vari($iterate_vari(vari_b, [QUEST]))
   -- let _exp '#' typ_opt = typedExp_a
-  -- let typedExp_none_a = CMP EQ as cmpop typedExp_a OPT ?() '#' typ_opt '#' BOOL as typ
-  -- let typedExp_none_b = CMP EQ as cmpop typedExp_b OPT ?() '#' typ_opt '#' BOOL as typ
+  -- let typedExp_none_a = CMP EQ as cmpOp typedExp_a OPT ?() as exp '#' typ_opt as exp '#' BOOL as typ
+  -- let typedExp_none_b = CMP EQ as cmpOp typedExp_b OPT ?() as exp '#' typ_opt as exp '#' BOOL as typ
 
 def $sideconds_iter(iter, vari*) : premAL* =
 
@@ -4229,37 +4358,39 @@ def $sideconds_iter(iter, vari*) : premAL* =
 def $access_exp(typedExp, typedPath) : typedExp =
 
   clause 0 : (typedExp_b, path '#' _typ) = typedExp_b
-  -- if path matches ROOT
+  -- if path <: rootPath
+  -- let rootPath = path as rootPath
+  -- if rootPath matches ROOT
 
-  clause 1 : (typedExp_b, path '#' typ) = IDX typedExp_p typedExp_i '#' typ
-  -- if path matches IDX % %
-  -- let IDX typedPath typedExp_i = path
+  clause 1 : (typedExp_b, path '#' typ) = IDX typedExp_p typedExp_i as exp '#' typ
+  -- if path <: idxPath
+  -- let IDX typedPath typedExp_i = path as idxPath
   -- let typedExp_p = $access_exp(typedExp_b, typedPath)
 
-  clause 2 : (typedExp_b, path '#' typ) = SLICE typedExp_p typedExp_i typedExp_n '#' typ
-  -- if path matches SLICE % % %
-  -- let SLICE typedPath typedExp_i typedExp_n = path
+  clause 2 : (typedExp_b, path '#' typ) = SLICE typedExp_p typedExp_i typedExp_n as exp '#' typ
+  -- if path <: slicePath
+  -- let SLICE typedPath typedExp_i typedExp_n = path as slicePath
   -- let typedExp_p = $access_exp(typedExp_b, typedPath)
 
-  clause 3 : (typedExp_b, path '#' typ) = DOT typedExp_p atom '#' typ
-  -- if path matches DOT % %
-  -- let DOT typedPath atom = path
+  clause 3 : (typedExp_b, path '#' typ) = DOT typedExp_p atom as exp '#' typ
+  -- if path <: dotPath
+  -- let DOT typedPath atom = path as dotPath
   -- let typedExp_p = $access_exp(typedExp_b, typedPath)
 
 def $sideconds_replace(tdenv, typedPath, typedExp) : premAL* =
 
   clause 0 : (tdenv, path '#' _typ, typedExp_f) = [premAL_len]
-  -- if path matches SLICE % % %
-  -- let SLICE _typedPath _typedExp typedExp_n = path
+  -- if path <: slicePath
+  -- let SLICE _typedPath _typedExp typedExp_n = path as slicePath
   -- let typedExp_len = $exp_len(typedExp_f)
-  -- let premAL_len = $sidecond_cmp(EQ as cmpop, typedExp_len, typedExp_n)
+  -- let premAL_len = $sidecond_cmp(EQ as cmpOp, typedExp_len, typedExp_n)
 
   clause 1 : (tdenv, path '#' _typ, typedExp_f) = [premAL_len]
-  -- if path matches IDX % %
-  -- let IDX _path '#' typ_b _typedExp = path
+  -- if path <: idxPath
+  -- let IDX _path '#' typ_b _typedExp = path as idxPath
   -- if (OK TEXT as typ as typRes = $expand_typ(tdenv, typ_b))
   -- let typedExp_len = $exp_len(typedExp_f)
-  -- let premAL_len = $sidecond_cmp(EQ as cmpop, typedExp_len, NAT 1 as exp '#' NAT as typ)
+  -- let premAL_len = $sidecond_cmp(EQ as cmpOp, typedExp_len, NAT 1 as exp '#' NAT as typ)
 
   clause -1 : (_tdenv, _typedPath, _typedExp) = []
 
@@ -4525,8 +4656,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
     rulepath boolean
     -- let exp' = exp
-    -- if exp' matches BOOL %
-    -- let BOOL b = exp'
+    -- if exp' <: literalExp
+    -- let literalExp = exp' as literalExp
+    -- if literalExp matches BOOL %
+    -- let BOOL b = literalExp
     -- output: % |- % : OK BOOL b as expRes
 
     rulepath number
@@ -4537,18 +4670,20 @@ relation Eval_exp: ctx |- typedExp : expRes
 
     rulepath string
     -- let exp' = exp
-    -- if exp' matches TEXT %
-    -- let TEXT t = exp'
+    -- if exp' <: literalExp
+    -- let literalExp = exp' as literalExp
+    -- if literalExp matches TEXT %
+    -- let TEXT t = literalExp
     -- output: % |- % : OK TEXT t as expRes
 
   rulegroup variable
 
    match
 
-    (signature) C |- VAR id '#' _typ : %
+    (signature) C |- VAR id as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches VAR %
-    -- let VAR id = exp
+    -- if exp <: varExp
+    -- let VAR id = exp as varExp
 
    paths
 
@@ -4562,22 +4697,22 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- UN unop typedExp '#' _typ : %
+    (signature) C |- UN unOp typedExp as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches UN % %
-    -- let UN unop typedExp = exp
+    -- if exp <: unOpExp
+    -- let UN unOp typedExp = exp as unOpExp
 
    paths
 
     rulepath boolean-operand-failure
-    -- if (unop = NOT as unop)
+    -- if (unOp = NOT as unOp)
     -- Eval_exp: C |- typedExp : expRes
     -- if expRes <: failure
     -- let failure = expRes as failure
     -- output: % |- % : failure as expRes
 
     rulepath boolean-succ
-    -- if (unop = NOT as unop)
+    -- if (unOp = NOT as unOp)
     -- Eval_exp: C |- typedExp : expRes
     -- if expRes <: ok<val>
     -- let OK val = expRes as ok<val>
@@ -4587,50 +4722,50 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- output: % |- % : OK BOOL b_res as expRes
 
     rulepath number-operand-failure
-    -- let unop' = unop
-    -- if unop' <: numUnop
-    -- let numUnop = unop' as numUnop
+    -- let unOp' = unOp
+    -- if unOp' <: numUnOp
+    -- let numUnOp = unOp' as numUnOp
     -- Eval_exp: C |- typedExp : expRes
     -- if expRes <: failure
     -- let failure = expRes as failure
     -- output: % |- % : failure as expRes
 
     rulepath number-succ
-    -- let unop' = unop
-    -- if unop' <: numUnop
-    -- let numUnop = unop' as numUnop
+    -- let unOp' = unOp
+    -- if unOp' <: numUnOp
+    -- let numUnOp = unOp' as numUnOp
     -- Eval_exp: C |- typedExp : expRes
     -- if expRes <: ok<val>
     -- let OK val = expRes as ok<val>
     -- if val <: num
     -- let num = val as num
-    -- let val_res = $numUnop(numUnop, num)
+    -- let val_res = $numUnOp(numUnOp, num)
     -- output: % |- % : OK val_res as expRes
 
   rulegroup binary
 
    match
 
-    (signature) C |- BIN binop typedExp_l typedExp_r '#' _typ : %
+    (signature) C |- BIN binOp typedExp_l typedExp_r as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches BIN % % %
-    -- let BIN binop typedExp_l typedExp_r = exp
+    -- if exp <: binOpExp
+    -- let BIN binOp typedExp_l typedExp_r = exp as binOpExp
 
    paths
 
     rulepath boolean-left-failure
-    -- let binop' = binop
-    -- if binop' <: boolBinop
-    -- let boolBinop = binop' as boolBinop
+    -- let binOp' = binOp
+    -- if binOp' <: boolBinOp
+    -- let boolBinOp = binOp' as boolBinOp
     -- Eval_exp: C |- typedExp_l : expRes
     -- if expRes <: failure
     -- let failure = expRes as failure
     -- output: % |- % : failure as expRes
 
     rulepath boolean-right-failure
-    -- let binop' = binop
-    -- if binop' <: boolBinop
-    -- let boolBinop = binop' as boolBinop
+    -- let binOp' = binOp
+    -- if binOp' <: boolBinOp
+    -- let boolBinOp = binOp' as boolBinOp
     -- Eval_exp: C |- typedExp_l : expRes
     -- if expRes <: ok<val>
     -- let OK val = expRes as ok<val>
@@ -4642,9 +4777,9 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- output: % |- % : failure as expRes
 
     rulepath boolean-succ
-    -- let binop' = binop
-    -- if binop' <: boolBinop
-    -- let boolBinop = binop' as boolBinop
+    -- let binOp' = binOp
+    -- if binOp' <: boolBinOp
+    -- let boolBinOp = binOp' as boolBinOp
     -- Eval_exp: C |- typedExp_l : expRes
     -- if expRes <: ok<val>
     -- let OK val = expRes as ok<val>
@@ -4655,22 +4790,22 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- let OK val' = expRes' as ok<val>
     -- if val' matches BOOL %
     -- let BOOL b_r = val'
-    -- let b_res = $boolBinop(boolBinop, b_l, b_r)
+    -- let b_res = $boolBinOp(boolBinOp, b_l, b_r)
     -- output: % |- % : OK BOOL b_res as expRes
 
     rulepath number-left-failure
-    -- let binop' = binop
-    -- if binop' <: numBinop
-    -- let numBinop = binop' as numBinop
+    -- let binOp' = binOp
+    -- if binOp' <: numBinOp
+    -- let numBinOp = binOp' as numBinOp
     -- Eval_exp: C |- typedExp_l : expRes
     -- if expRes <: failure
     -- let failure = expRes as failure
     -- output: % |- % : failure as expRes
 
     rulepath number-right-failure
-    -- let binop' = binop
-    -- if binop' <: numBinop
-    -- let numBinop = binop' as numBinop
+    -- let binOp' = binOp
+    -- if binOp' <: numBinOp
+    -- let numBinOp = binOp' as numBinOp
     -- Eval_exp: C |- typedExp_l : expRes
     -- if expRes <: ok<val>
     -- let OK val = expRes as ok<val>
@@ -4682,9 +4817,9 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- output: % |- % : failure as expRes
 
     rulepath number-succ
-    -- let binop' = binop
-    -- if binop' <: numBinop
-    -- let numBinop = binop' as numBinop
+    -- let binOp' = binOp
+    -- if binOp' <: numBinOp
+    -- let numBinOp = binOp' as numBinOp
     -- Eval_exp: C |- typedExp_l : expRes
     -- if expRes <: ok<val>
     -- let OK val = expRes as ok<val>
@@ -4695,33 +4830,33 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- let OK val' = expRes' as ok<val>
     -- if val' <: num
     -- let num_r = val' as num
-    -- let numBinopRes = $numBinop(numBinop, num_l, num_r)
-    -- output: % |- % : numBinopRes as expRes
+    -- let numBinOpRes = $numBinOp(numBinOp, num_l, num_r)
+    -- output: % |- % : numBinOpRes as expRes
 
   rulegroup compare
 
    match
 
-    (signature) C |- CMP cmpop typedExp_l typedExp_r '#' _typ : %
+    (signature) C |- CMP cmpOp typedExp_l typedExp_r as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches CMP % % %
-    -- let CMP cmpop typedExp_l typedExp_r = exp
+    -- if exp <: cmpOpExp
+    -- let CMP cmpOp typedExp_l typedExp_r = exp as cmpOpExp
 
    paths
 
     rulepath poly-left-failure
-    -- let cmpop' = cmpop
-    -- if cmpop' <: polyCmpop
-    -- let polyCmpop = cmpop' as polyCmpop
+    -- let cmpOp' = cmpOp
+    -- if cmpOp' <: polyCmpOp
+    -- let polyCmpOp = cmpOp' as polyCmpOp
     -- Eval_exp: C |- typedExp_l : expRes
     -- if expRes <: failure
     -- let failure = expRes as failure
     -- output: % |- % : failure as expRes
 
     rulepath poly-right-failure
-    -- let cmpop' = cmpop
-    -- if cmpop' <: polyCmpop
-    -- let polyCmpop = cmpop' as polyCmpop
+    -- let cmpOp' = cmpOp
+    -- if cmpOp' <: polyCmpOp
+    -- let polyCmpOp = cmpOp' as polyCmpOp
     -- Eval_exp: C |- typedExp_l : expRes
     -- if expRes <: ok<val>
     -- let OK val_l = expRes as ok<val>
@@ -4731,31 +4866,31 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- output: % |- % : failure as expRes
 
     rulepath poly-succ
-    -- let cmpop' = cmpop
-    -- if cmpop' <: polyCmpop
-    -- let polyCmpop = cmpop' as polyCmpop
+    -- let cmpOp' = cmpOp
+    -- if cmpOp' <: polyCmpOp
+    -- let polyCmpOp = cmpOp' as polyCmpOp
     -- Eval_exp: C |- typedExp_l : expRes
     -- if expRes <: ok<val>
     -- let OK val_l = expRes as ok<val>
     -- Eval_exp: C |- typedExp_r : expRes'
     -- if expRes' <: ok<val>
     -- let OK val_r = expRes' as ok<val>
-    -- let b_res = $polyCmpop(polyCmpop, val_l, val_r)
+    -- let b_res = $polyCmpOp(polyCmpOp, val_l, val_r)
     -- output: % |- % : OK BOOL b_res as expRes
 
     rulepath number-left-failure
-    -- let cmpop' = cmpop
-    -- if cmpop' <: numCmpop
-    -- let numCmpop = cmpop' as numCmpop
+    -- let cmpOp' = cmpOp
+    -- if cmpOp' <: numCmpOp
+    -- let numCmpOp = cmpOp' as numCmpOp
     -- Eval_exp: C |- typedExp_l : expRes
     -- if expRes <: failure
     -- let failure = expRes as failure
     -- output: % |- % : failure as expRes
 
     rulepath number-right-failure
-    -- let cmpop' = cmpop
-    -- if cmpop' <: numCmpop
-    -- let numCmpop = cmpop' as numCmpop
+    -- let cmpOp' = cmpOp
+    -- if cmpOp' <: numCmpOp
+    -- let numCmpOp = cmpOp' as numCmpOp
     -- Eval_exp: C |- typedExp_l : expRes
     -- if expRes <: ok<val>
     -- let OK val = expRes as ok<val>
@@ -4767,9 +4902,9 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- output: % |- % : failure as expRes
 
     rulepath number-succ
-    -- let cmpop' = cmpop
-    -- if cmpop' <: numCmpop
-    -- let numCmpop = cmpop' as numCmpop
+    -- let cmpOp' = cmpOp
+    -- if cmpOp' <: numCmpOp
+    -- let numCmpOp = cmpOp' as numCmpOp
     -- Eval_exp: C |- typedExp_l : expRes
     -- if expRes <: ok<val>
     -- let OK val = expRes as ok<val>
@@ -4780,7 +4915,7 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- let OK val' = expRes' as ok<val>
     -- if val' <: num
     -- let num_r = val' as num
-    -- let numCmpRes = $numCmpop(numCmpop, num_l, num_r)
+    -- let numCmpRes = $numCmpOp(numCmpOp, num_l, num_r)
     -- if numCmpRes <: ok<bool>
     -- let OK b_res = numCmpRes as ok<bool>
     -- output: % |- % : OK BOOL b_res as expRes
@@ -4789,10 +4924,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- UPCAST typ typedExp '#' _typ : %
+    (signature) C |- UPCAST typ typedExp as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches UPCAST % %
-    -- let UPCAST typ typedExp = exp
+    -- if exp <: upCastExp
+    -- let UPCAST typ typedExp = exp as upCastExp
 
    paths
 
@@ -4813,10 +4948,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- DOWNCAST typ typedExp '#' _typ : %
+    (signature) C |- DOWNCAST typ typedExp as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches DOWNCAST % %
-    -- let DOWNCAST typ typedExp = exp
+    -- if exp <: downCastExp
+    -- let DOWNCAST typ typedExp = exp as downCastExp
 
    paths
 
@@ -4837,10 +4972,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- SUB typedExp typ '#' _typ : %
+    (signature) C |- SUB typedExp typ as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches SUB % %
-    -- let SUB typedExp typ = exp
+    -- if exp <: subExp
+    -- let SUB typedExp typ = exp as subExp
 
    paths
 
@@ -4865,10 +5000,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- MATCH typedExp pat '#' _typ : %
+    (signature) C |- MATCH typedExp pat as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches MATCH % %
-    -- let MATCH typedExp pat = exp
+    -- if exp <: matchExp
+    -- let MATCH typedExp pat = exp as matchExp
 
    paths
 
@@ -4889,10 +5024,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- TUP typedExp*{typedExp <- typedExp*} '#' _typ : %
+    (signature) C |- TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches TUP %
-    -- let TUP typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: tupExp
+    -- let TUP typedExp*{typedExp <- typedExp*} = exp as tupExp
 
    paths
 
@@ -4912,10 +5047,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- INJ mixop typedExp*{typedExp <- typedExp*} '#' _typ : %
+    (signature) C |- INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches INJ %
-    -- let INJ mixop typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: injExp
+    -- let INJ mixop typedExp*{typedExp <- typedExp*} = exp as injExp
 
    paths
 
@@ -4935,10 +5070,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- STR expField*{expField <- expField*} '#' _typ : %
+    (signature) C |- STR expField*{expField <- expField*} as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches STR %
-    -- let STR expField*{expField <- expField*} = exp
+    -- if exp <: strExp
+    -- let STR expField*{expField <- expField*} = exp as strExp
 
    paths
 
@@ -4962,10 +5097,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- OPT typedExp''?{typedExp'' <- typedExp''?} '#' _typ : %
+    (signature) C |- OPT typedExp''?{typedExp'' <- typedExp''?} as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches OPT %
-    -- let OPT typedExp''?{typedExp'' <- typedExp''?} = exp
+    -- if exp <: optExp
+    -- let OPT typedExp''?{typedExp'' <- typedExp''?} = exp as optExp
 
    paths
 
@@ -4995,10 +5130,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- LIST typedExp*{typedExp <- typedExp*} '#' _typ : %
+    (signature) C |- LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches LIST %
-    -- let LIST typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: listExp
+    -- let LIST typedExp*{typedExp <- typedExp*} = exp as listExp
 
    paths
 
@@ -5018,10 +5153,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- CONS typedExp_h typedExp_t '#' _typ : %
+    (signature) C |- CONS typedExp_h typedExp_t as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches CONS % %
-    -- let CONS typedExp_h typedExp_t = exp
+    -- if exp <: consExp
+    -- let CONS typedExp_h typedExp_t = exp as consExp
 
    paths
 
@@ -5055,10 +5190,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- CAT typedExp_l typedExp_r '#' _typ : %
+    (signature) C |- CAT typedExp_l typedExp_r as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches CAT % %
-    -- let CAT typedExp_l typedExp_r = exp
+    -- if exp <: catExp
+    -- let CAT typedExp_l typedExp_r = exp as catExp
 
    paths
 
@@ -5122,10 +5257,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- MEM typedExp_e typedExp_s '#' _typ : %
+    (signature) C |- MEM typedExp_e typedExp_s as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches MEM % %
-    -- let MEM typedExp_e typedExp_s = exp
+    -- if exp <: memExp
+    -- let MEM typedExp_e typedExp_s = exp as memExp
 
    paths
 
@@ -5160,10 +5295,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- LEN typedExp '#' _typ : %
+    (signature) C |- LEN typedExp as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches LEN %
-    -- let LEN typedExp = exp
+    -- if exp <: lenExp
+    -- let LEN typedExp = exp as lenExp
 
    paths
 
@@ -5195,10 +5330,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- DOT typedExp atom '#' typ' : %
+    (signature) C |- DOT typedExp atom as exp '#' typ' : %
     C |- exp '#' typ' : %
-    -- if exp matches DOT % %
-    -- let DOT typedExp atom = exp
+    -- if exp <: dotAccExp
+    -- let DOT typedExp atom = exp as dotAccExp
 
    paths
 
@@ -5215,7 +5350,7 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- if expRes <: ok<val>
     -- let OK val = expRes as ok<val>
     -- let _exp '#' typ_b = typedExp
-    -- let typedPath = DOT ROOT '#' typ_b atom '#' typ
+    -- let typedPath = DOT ROOT as path '#' typ_b atom as path '#' typ
     -- Eval_path_acc: C |- val typedPath : pathRes
     -- output: % |- % : pathRes as expRes
 
@@ -5223,10 +5358,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- IDX typedExp_b typedExp_i '#' typ' : %
+    (signature) C |- IDX typedExp_b typedExp_i as exp '#' typ' : %
     C |- exp '#' typ' : %
-    -- if exp matches IDX % %
-    -- let IDX typedExp_b typedExp_i = exp
+    -- if exp <: idxAccExp
+    -- let IDX typedExp_b typedExp_i = exp as idxAccExp
 
    paths
 
@@ -5243,7 +5378,7 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- if expRes <: ok<val>
     -- let OK val_b = expRes as ok<val>
     -- let _exp '#' typ_b = typedExp_b
-    -- let typedPath = IDX ROOT '#' typ_b typedExp_i '#' typ
+    -- let typedPath = IDX ROOT as path '#' typ_b typedExp_i as path '#' typ
     -- Eval_path_acc: C |- val_b typedPath : pathRes
     -- output: % |- % : pathRes as expRes
 
@@ -5251,10 +5386,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- SLICE typedExp_b typedExp_i typedExp_n '#' typ' : %
+    (signature) C |- SLICE typedExp_b typedExp_i typedExp_n as exp '#' typ' : %
     C |- exp '#' typ' : %
-    -- if exp matches SLICE % % %
-    -- let SLICE typedExp_b typedExp_i typedExp_n = exp
+    -- if exp <: sliceAccExp
+    -- let SLICE typedExp_b typedExp_i typedExp_n = exp as sliceAccExp
 
    paths
 
@@ -5271,7 +5406,7 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- if expRes <: ok<val>
     -- let OK val_b = expRes as ok<val>
     -- let _exp '#' typ_b = typedExp_b
-    -- let typedPath = SLICE ROOT '#' typ_b typedExp_i typedExp_n '#' typ
+    -- let typedPath = SLICE ROOT as path '#' typ_b typedExp_i typedExp_n as path '#' typ
     -- Eval_path_acc: C |- val_b typedPath : pathRes
     -- output: % |- % : pathRes as expRes
 
@@ -5279,10 +5414,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- UPD typedExp_b typedPath typedExp_f '#' _typ : %
+    (signature) C |- UPD typedExp_b typedPath typedExp_f as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches UPD % % %
-    -- let UPD typedExp_b typedPath typedExp_f = exp
+    -- if exp <: updExp
+    -- let UPD typedExp_b typedPath typedExp_f = exp as updExp
 
    paths
 
@@ -5315,10 +5450,10 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- CALL id targ*{targ <- targ*} arg*{arg <- arg*} '#' _typ : %
+    (signature) C |- CALL id targ*{targ <- targ*} arg*{arg <- arg*} as exp '#' _typ : %
     C |- exp '#' _typ : %
-    -- if exp matches CALL % % %
-    -- let CALL id targ*{targ <- targ*} arg*{arg <- arg*} = exp
+    -- if exp <: callExp
+    -- let CALL id targ*{targ <- targ*} arg*{arg <- arg*} = exp as callExp
 
    paths
 
@@ -5345,15 +5480,15 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- ITER typedExp expIter '#' typ : %
+    (signature) C |- ITER typedExp expIter as exp '#' typ : %
     C |- exp '#' typ : %
-    -- if exp matches ITER % %
-    -- let ITER typedExp expIter = exp
+    -- if exp <: iterExp
+    -- let ITER typedExp expIter = exp as iterExp
 
    paths
 
     rulepath simple
-    -- let varr'?{varr' <- varr'?} = $is_iter_on_var(ITER typedExp expIter '#' typ)
+    -- let varr'?{varr' <- varr'?} = $is_iter_on_var(ITER typedExp expIter as exp '#' typ)
     -- if varr'?{varr' <- varr'?} matches (_)
     -- let ?(varr) = varr'?{varr' <- varr'?}
     -- let val'?{val' <- val'?} = $find_varr(C, varr)
@@ -5362,7 +5497,7 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- output: % |- % : OK val as expRes
 
     rulepath opt-body-failure
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- let iter vari*{vari <- vari*} = expIter
     -- if iter matches QUEST
     -- let subOptRes = $sub_opt(C, vari*{vari <- vari*})
@@ -5374,7 +5509,7 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- output: % |- % : failure as expRes
 
     rulepath opt-succ
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- let iter vari*{vari <- vari*} = expIter
     -- if iter matches QUEST
     -- let subOptRes = $sub_opt(C, vari*{vari <- vari*})
@@ -5386,7 +5521,7 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- output: % |- % : OK OPT val?{val <- val?} as expRes
 
     rulepath list-body-failure
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- let iter vari*{vari <- vari*} = expIter
     -- if iter matches STAR
     -- let subListRes = $sub_list(C, vari*{vari <- vari*})
@@ -5398,7 +5533,7 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- output: % |- % : failure as expRes
 
     rulepath list-succ
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- let iter vari*{vari <- vari*} = expIter
     -- if iter matches STAR
     -- let subListRes = $sub_list(C, vari*{vari <- vari*})
@@ -5573,9 +5708,11 @@ relation Eval_path_acc: ctx |- val typedPath : pathRes
 
    match
 
-    (signature) C |- val_b ROOT '#' _typ : %
+    (signature) C |- val_b ROOT as path '#' _typ : %
     C |- val_b path '#' _typ : %
-    -- if path matches ROOT
+    -- if path <: rootPath
+    -- let rootPath = path as rootPath
+    -- if rootPath matches ROOT
 
    paths
 
@@ -5586,10 +5723,10 @@ relation Eval_path_acc: ctx |- val typedPath : pathRes
 
    match
 
-    (signature) C |- val_b DOT typedPath atom '#' _typ : %
+    (signature) C |- val_b DOT typedPath atom as path '#' _typ : %
     C |- val_b path '#' _typ : %
-    -- if path matches DOT % %
-    -- let DOT typedPath atom = path
+    -- if path <: dotPath
+    -- let DOT typedPath atom = path as dotPath
 
    paths
 
@@ -5615,10 +5752,10 @@ relation Eval_path_acc: ctx |- val typedPath : pathRes
 
    match
 
-    (signature) C |- val_b IDX typedPath typedExp_i '#' _typ : %
+    (signature) C |- val_b IDX typedPath typedExp_i as path '#' _typ : %
     C |- val_b path '#' _typ : %
-    -- if path matches IDX % %
-    -- let IDX typedPath typedExp_i = path
+    -- if path <: idxPath
+    -- let IDX typedPath typedExp_i = path as idxPath
 
    paths
 
@@ -5688,10 +5825,10 @@ relation Eval_path_acc: ctx |- val typedPath : pathRes
 
    match
 
-    (signature) C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ : %
+    (signature) C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ : %
     C |- val_b path '#' _typ : %
-    -- if path matches SLICE % % %
-    -- let SLICE typedPath typedExp_i typedExp_n = path
+    -- if path <: slicePath
+    -- let SLICE typedPath typedExp_i typedExp_n = path as slicePath
 
    paths
 
@@ -5827,9 +5964,11 @@ relation Eval_path_upd: ctx |- val typedPath := val : pathRes
 
    match
 
-    (signature) C |- val_b ROOT '#' _typ := val_n : %
+    (signature) C |- val_b ROOT as path '#' _typ := val_n : %
     C |- val_b path '#' _typ := val_n : %
-    -- if path matches ROOT
+    -- if path <: rootPath
+    -- let rootPath = path as rootPath
+    -- if rootPath matches ROOT
 
    paths
 
@@ -5840,10 +5979,10 @@ relation Eval_path_upd: ctx |- val typedPath := val : pathRes
 
    match
 
-    (signature) C |- val_b IDX typedPath typedExp_i '#' _typ := val' : %
+    (signature) C |- val_b IDX typedPath typedExp_i as path '#' _typ := val' : %
     C |- val_b path '#' _typ := val' : %
-    -- if path matches IDX % %
-    -- let IDX typedPath typedExp_i = path
+    -- if path <: idxPath
+    -- let IDX typedPath typedExp_i = path as idxPath
 
    paths
 
@@ -5923,10 +6062,10 @@ relation Eval_path_upd: ctx |- val typedPath := val : pathRes
 
    match
 
-    (signature) C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ := val' : %
+    (signature) C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ := val' : %
     C |- val_b path '#' _typ := val' : %
-    -- if path matches SLICE % % %
-    -- let SLICE typedPath typedExp_i typedExp_n = path
+    -- if path <: slicePath
+    -- let SLICE typedPath typedExp_i typedExp_n = path as slicePath
 
    paths
 
@@ -6061,10 +6200,10 @@ relation Eval_path_upd: ctx |- val typedPath := val : pathRes
 
    match
 
-    (signature) C |- val_b DOT typedPath atom '#' _typ := val_n : %
+    (signature) C |- val_b DOT typedPath atom as path '#' _typ := val_n : %
     C |- val_b path '#' _typ := val_n : %
-    -- if path matches DOT % %
-    -- let DOT typedPath atom = path
+    -- if path <: dotPath
+    -- let DOT typedPath atom = path as dotPath
 
    paths
 
@@ -6141,10 +6280,10 @@ relation Eval_arg: ctx |- arg : argRes
 
    match
 
-    (signature) C |- EXP typedExp : %
+    (signature) C |- EXP typedExp as arg : %
     C |- arg : %
-    -- if arg matches EXP %
-    -- let EXP typedExp = arg
+    -- if arg <: expArg
+    -- let EXP typedExp = arg as expArg
 
    paths
 
@@ -6158,10 +6297,10 @@ relation Eval_arg: ctx |- arg : argRes
 
    match
 
-    (signature) C |- FUN id : %
+    (signature) C |- FUN id as arg : %
     C |- arg : %
-    -- if arg matches FUN %
-    -- let FUN id = arg
+    -- if arg <: funArg
+    -- let FUN id = arg as funArg
 
    paths
 
@@ -6793,195 +6932,195 @@ relation Call_rel: ctx |- id `( val* `) : relRes
     rulepath error
     -- output: % |- % `( % `) : ERROR as relRes
 
-def $numUnop(numUnop, num) : val =
+def $numUnOp(numUnOp, num) : val =
 
-  clause 0 : (numUnop, num) = NAT n as val
-  -- if numUnop matches PLUS
+  clause 0 : (numUnOp, num) = NAT n as val
+  -- if numUnOp matches PLUS
   -- if num matches NAT %
   -- let NAT n = num
 
-  clause 1 : (numUnop, num) = INT i as val
-  -- if numUnop matches PLUS
+  clause 1 : (numUnOp, num) = INT i as val
+  -- if numUnOp matches PLUS
   -- if num matches INT %
   -- let INT i = num
 
-  clause 2 : (numUnop, num) = INT -n as int as val
-  -- if numUnop matches MINUS
+  clause 2 : (numUnOp, num) = INT -n as int as val
+  -- if numUnOp matches MINUS
   -- if num matches NAT %
   -- let NAT n = num
 
-  clause 3 : (numUnop, num) = INT -i as val
-  -- if numUnop matches MINUS
+  clause 3 : (numUnOp, num) = INT -i as val
+  -- if numUnOp matches MINUS
   -- if num matches INT %
   -- let INT i = num
 
-def $boolBinop(boolBinop, bool, bool) : bool =
+def $boolBinOp(boolBinOp, bool, bool) : bool =
 
-  clause 0 : (boolBinop, b_l, b_r) = (b_l /\ b_r)
-  -- if boolBinop matches AND
+  clause 0 : (boolBinOp, b_l, b_r) = (b_l /\ b_r)
+  -- if boolBinOp matches AND
 
-  clause 1 : (boolBinop, b_l, b_r) = (b_l \/ b_r)
-  -- if boolBinop matches OR
+  clause 1 : (boolBinOp, b_l, b_r) = (b_l \/ b_r)
+  -- if boolBinOp matches OR
 
-  clause 2 : (boolBinop, b_l, b_r) = (b_l => b_r)
-  -- if boolBinop matches IMPL
+  clause 2 : (boolBinOp, b_l, b_r) = (b_l => b_r)
+  -- if boolBinOp matches IMPL
 
-  clause 3 : (boolBinop, b_l, b_r) = (b_l <=> b_r)
-  -- if boolBinop matches EQUIV
+  clause 3 : (boolBinOp, b_l, b_r) = (b_l <=> b_r)
+  -- if boolBinOp matches EQUIV
 
-syntax numBinopRes =
+syntax numBinOpRes =
    | OK val (from ok<val>)
    | ERROR (from error)
 
-def $numBinop(numBinop, num, num) : numBinopRes =
+def $numBinOp(numBinOp, num, num) : numBinOpRes =
 
-  clause 0 : (numBinop, num, num') = OK NAT (n_l + n_r) as val as numBinopRes
-  -- if numBinop matches ADD
+  clause 0 : (numBinOp, num, num') = OK NAT (n_l + n_r) as val as numBinOpRes
+  -- if numBinOp matches ADD
   -- if num matches NAT %
   -- let NAT n_l = num
   -- if num' matches NAT %
   -- let NAT n_r = num'
 
-  clause 1 : (numBinop, num, num') = OK INT (i_l + i_r) as val as numBinopRes
-  -- if numBinop matches ADD
+  clause 1 : (numBinOp, num, num') = OK INT (i_l + i_r) as val as numBinOpRes
+  -- if numBinOp matches ADD
   -- if num matches INT %
   -- let INT i_l = num
   -- if num' matches INT %
   -- let INT i_r = num'
 
-  clause 2 : (numBinop, num, num') = OK INT (n_l - n_r) as val as numBinopRes
-  -- if numBinop matches SUB
+  clause 2 : (numBinOp, num, num') = OK INT (n_l - n_r) as val as numBinOpRes
+  -- if numBinOp matches SUB
   -- if num matches NAT %
   -- let NAT n_l = num
   -- if num' matches NAT %
   -- let NAT n_r = num'
 
-  clause 3 : (numBinop, num, num') = OK INT (i_l - i_r) as val as numBinopRes
-  -- if numBinop matches SUB
+  clause 3 : (numBinOp, num, num') = OK INT (i_l - i_r) as val as numBinOpRes
+  -- if numBinOp matches SUB
   -- if num matches INT %
   -- let INT i_l = num
   -- if num' matches INT %
   -- let INT i_r = num'
 
-  clause 4 : (numBinop, num, num') = OK NAT (n_l * n_r) as val as numBinopRes
-  -- if numBinop matches MUL
+  clause 4 : (numBinOp, num, num') = OK NAT (n_l * n_r) as val as numBinOpRes
+  -- if numBinOp matches MUL
   -- if num matches NAT %
   -- let NAT n_l = num
   -- if num' matches NAT %
   -- let NAT n_r = num'
 
-  clause 5 : (numBinop, num, num') = OK INT (i_l * i_r) as val as numBinopRes
-  -- if numBinop matches MUL
+  clause 5 : (numBinOp, num, num') = OK INT (i_l * i_r) as val as numBinOpRes
+  -- if numBinOp matches MUL
   -- if num matches INT %
   -- let INT i_l = num
   -- if num' matches INT %
   -- let INT i_r = num'
 
-  clause 6 : (numBinop, num, num') = OK NAT (n_l / n_r) as val as numBinopRes
-  -- if numBinop matches DIV
-  -- if num matches NAT %
-  -- let NAT n_l = num
-  -- if num' matches NAT %
-  -- let NAT n_r = num'
-  -- if (n_r =/= 0)
-
-  clause 7 : (numBinop, num, num') = OK INT (i_l / i_r) as val as numBinopRes
-  -- if numBinop matches DIV
-  -- if num matches INT %
-  -- let INT i_l = num
-  -- if num' matches INT %
-  -- let INT i_r = num'
-  -- if (i_r =/= +0)
-
-  clause 8 : (numBinop, num, num') = OK NAT (n_l \ n_r) as val as numBinopRes
-  -- if numBinop matches MOD
+  clause 6 : (numBinOp, num, num') = OK NAT (n_l / n_r) as val as numBinOpRes
+  -- if numBinOp matches DIV
   -- if num matches NAT %
   -- let NAT n_l = num
   -- if num' matches NAT %
   -- let NAT n_r = num'
   -- if (n_r =/= 0)
 
-  clause 9 : (numBinop, num, num') = OK INT (i_l \ i_r) as val as numBinopRes
-  -- if numBinop matches MOD
+  clause 7 : (numBinOp, num, num') = OK INT (i_l / i_r) as val as numBinOpRes
+  -- if numBinOp matches DIV
   -- if num matches INT %
   -- let INT i_l = num
   -- if num' matches INT %
   -- let INT i_r = num'
   -- if (i_r =/= +0)
 
-  clause -1 : (numBinop, num_l, num_r) = ERROR as numBinopRes
+  clause 8 : (numBinOp, num, num') = OK NAT (n_l \ n_r) as val as numBinOpRes
+  -- if numBinOp matches MOD
+  -- if num matches NAT %
+  -- let NAT n_l = num
+  -- if num' matches NAT %
+  -- let NAT n_r = num'
+  -- if (n_r =/= 0)
 
-def $polyCmpop(polyCmpop, val, val) : bool =
+  clause 9 : (numBinOp, num, num') = OK INT (i_l \ i_r) as val as numBinOpRes
+  -- if numBinOp matches MOD
+  -- if num matches INT %
+  -- let INT i_l = num
+  -- if num' matches INT %
+  -- let INT i_r = num'
+  -- if (i_r =/= +0)
 
-  clause 0 : (polyCmpop, val_l, val_r) = (val_l = val_r)
-  -- if polyCmpop matches EQ
+  clause -1 : (numBinOp, num_l, num_r) = ERROR as numBinOpRes
 
-  clause 1 : (polyCmpop, val_l, val_r) = (val_l =/= val_r)
-  -- if polyCmpop matches NE
+def $polyCmpOp(polyCmpOp, val, val) : bool =
+
+  clause 0 : (polyCmpOp, val_l, val_r) = (val_l = val_r)
+  -- if polyCmpOp matches EQ
+
+  clause 1 : (polyCmpOp, val_l, val_r) = (val_l =/= val_r)
+  -- if polyCmpOp matches NE
 
 syntax numCmpRes =
    | OK bool (from ok<bool>)
    | ERROR (from error)
 
-def $numCmpop(numCmpop, num, num) : numCmpRes =
+def $numCmpOp(numCmpOp, num, num) : numCmpRes =
 
-  clause 0 : (numCmpop, num, num') = OK (n_l < n_r) as numCmpRes
-  -- if numCmpop matches LT
+  clause 0 : (numCmpOp, num, num') = OK (n_l < n_r) as numCmpRes
+  -- if numCmpOp matches LT
   -- if num matches NAT %
   -- let NAT n_l = num
   -- if num' matches NAT %
   -- let NAT n_r = num'
 
-  clause 1 : (numCmpop, num, num') = OK (i_l < i_r) as numCmpRes
-  -- if numCmpop matches LT
+  clause 1 : (numCmpOp, num, num') = OK (i_l < i_r) as numCmpRes
+  -- if numCmpOp matches LT
   -- if num matches INT %
   -- let INT i_l = num
   -- if num' matches INT %
   -- let INT i_r = num'
 
-  clause 2 : (numCmpop, num, num') = OK (n_l > n_r) as numCmpRes
-  -- if numCmpop matches GT
+  clause 2 : (numCmpOp, num, num') = OK (n_l > n_r) as numCmpRes
+  -- if numCmpOp matches GT
   -- if num matches NAT %
   -- let NAT n_l = num
   -- if num' matches NAT %
   -- let NAT n_r = num'
 
-  clause 3 : (numCmpop, num, num') = OK (i_l > i_r) as numCmpRes
-  -- if numCmpop matches GT
+  clause 3 : (numCmpOp, num, num') = OK (i_l > i_r) as numCmpRes
+  -- if numCmpOp matches GT
   -- if num matches INT %
   -- let INT i_l = num
   -- if num' matches INT %
   -- let INT i_r = num'
 
-  clause 4 : (numCmpop, num, num') = OK (n_l <= n_r) as numCmpRes
-  -- if numCmpop matches LE
+  clause 4 : (numCmpOp, num, num') = OK (n_l <= n_r) as numCmpRes
+  -- if numCmpOp matches LE
   -- if num matches NAT %
   -- let NAT n_l = num
   -- if num' matches NAT %
   -- let NAT n_r = num'
 
-  clause 5 : (numCmpop, num, num') = OK (i_l <= i_r) as numCmpRes
-  -- if numCmpop matches LE
+  clause 5 : (numCmpOp, num, num') = OK (i_l <= i_r) as numCmpRes
+  -- if numCmpOp matches LE
   -- if num matches INT %
   -- let INT i_l = num
   -- if num' matches INT %
   -- let INT i_r = num'
 
-  clause 6 : (numCmpop, num, num') = OK (n_l >= n_r) as numCmpRes
-  -- if numCmpop matches GE
+  clause 6 : (numCmpOp, num, num') = OK (n_l >= n_r) as numCmpRes
+  -- if numCmpOp matches GE
   -- if num matches NAT %
   -- let NAT n_l = num
   -- if num' matches NAT %
   -- let NAT n_r = num'
 
-  clause 7 : (numCmpop, num, num') = OK (i_l >= i_r) as numCmpRes
-  -- if numCmpop matches GE
+  clause 7 : (numCmpOp, num, num') = OK (i_l >= i_r) as numCmpRes
+  -- if numCmpOp matches GE
   -- if num matches INT %
   -- let INT i_l = num
   -- if num' matches INT %
   -- let INT i_r = num'
 
-  clause -1 : (numCmpop, num_l, num_r) = ERROR as numCmpRes
+  clause -1 : (numCmpOp, num_l, num_r) = ERROR as numCmpRes
 
 def $matches(val, pat) : bool =
 
@@ -7259,12 +7398,12 @@ def $subtyp_func(fenv, tdenv, typ, id) : subtypRes =
 def $param_typ(param) : typ =
 
   clause 0 : (param) = typ
-  -- if param matches EXP %
-  -- let EXP typ = param
+  -- if param <: expParam
+  -- let EXP typ = param as expParam
 
   clause 1 : (param') = FUNC tparam*{tparam <- tparam*} $param_typ(param)*{param <- param*} typ
-  -- if param' matches FUN % ':' % % '->' %
-  -- let FUN id ':' tparam*{tparam <- tparam*} param*{param <- param*} '->' typ = param'
+  -- if param' <: funParam
+  -- let FUN id ':' tparam*{tparam <- tparam*} param*{param <- param*} '->' typ = param' as funParam
 
 def $func_typ(funcDefnAL) : typ =
 
@@ -7637,10 +7776,10 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
 
    match
 
-    (signature) C |- VAR id '#' _typ := val : %
+    (signature) C |- VAR id as exp '#' _typ := val : %
     C |- exp '#' _typ := val : %
-    -- if exp matches VAR %
-    -- let VAR id = exp
+    -- if exp <: varExp
+    -- let VAR id = exp as varExp
 
    paths
 
@@ -7652,10 +7791,10 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
 
    match
 
-    (signature) C |- TUP typedExp*{typedExp <- typedExp*} '#' _typ := TUP val*{val <- val*} : %
+    (signature) C |- TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ := TUP val*{val <- val*} : %
     C |- exp '#' _typ := val' : %
-    -- if exp matches TUP %
-    -- let TUP typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: tupExp
+    -- let TUP typedExp*{typedExp <- typedExp*} = exp as tupExp
     -- if val' matches TUP %
     -- let TUP val*{val <- val*} = val'
 
@@ -7671,10 +7810,10 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
 
    match
 
-    (signature) C |- INJ mixop typedExp*{typedExp <- typedExp*} '#' _typ := INJ mixop val*{val <- val*} : %
+    (signature) C |- INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ := INJ mixop val*{val <- val*} : %
     C |- exp '#' _typ := val' : %
-    -- if exp matches INJ %
-    -- let INJ mixop typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: injExp
+    -- let INJ mixop typedExp*{typedExp <- typedExp*} = exp as injExp
     -- if val' matches INJ %
     -- let INJ mixop' val*{val <- val*} = val'
     -- if (mixop = mixop')
@@ -7691,10 +7830,10 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
 
    match
 
-    (signature) C |- STR expField*{expField <- expField*} '#' _typ := STR valField*{valField <- valField*} : %
+    (signature) C |- STR expField*{expField <- expField*} as exp '#' _typ := STR valField*{valField <- valField*} : %
     C |- exp '#' _typ := val' : %
-    -- if exp matches STR %
-    -- let STR expField*{expField <- expField*} = exp
+    -- if exp <: strExp
+    -- let STR expField*{expField <- expField*} = exp as strExp
     -- if val' matches STR %
     -- let STR valField*{valField <- valField*} = val'
 
@@ -7714,10 +7853,10 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
 
    match
 
-    (signature) C |- OPT typedExp'?{typedExp' <- typedExp'?} '#' _typ := OPT val'?{val' <- val'?} : %
+    (signature) C |- OPT typedExp'?{typedExp' <- typedExp'?} as exp '#' _typ := OPT val'?{val' <- val'?} : %
     C |- exp '#' _typ := val'' : %
-    -- if exp matches OPT %
-    -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp
+    -- if exp <: optExp
+    -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp as optExp
     -- if val'' matches OPT %
     -- let OPT val'?{val' <- val'?} = val''
 
@@ -7744,10 +7883,10 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
 
    match
 
-    (signature) C |- LIST typedExp*{typedExp <- typedExp*} '#' _typ := LIST val*{val <- val*} : %
+    (signature) C |- LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ := LIST val*{val <- val*} : %
     C |- exp '#' _typ := val' : %
-    -- if exp matches LIST %
-    -- let LIST typedExp*{typedExp <- typedExp*} = exp
+    -- if exp <: listExp
+    -- let LIST typedExp*{typedExp <- typedExp*} = exp as listExp
     -- if val' matches LIST %
     -- let LIST val*{val <- val*} = val'
 
@@ -7763,10 +7902,10 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
 
    match
 
-    (signature) C |- CONS typedExp_h typedExp_t '#' _typ := LIST val_h :: val_t*{val_t <- val_t*} : %
+    (signature) C |- CONS typedExp_h typedExp_t as exp '#' _typ := LIST val_h :: val_t*{val_t <- val_t*} : %
     C |- exp '#' _typ := val' : %
-    -- if exp matches CONS % %
-    -- let CONS typedExp_h typedExp_t = exp
+    -- if exp <: consExp
+    -- let CONS typedExp_h typedExp_t = exp as consExp
     -- if val' matches LIST %
     -- let LIST val*{val <- val*} = val'
     -- if val*{val <- val*} matches _ :: _
@@ -7787,16 +7926,16 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
 
    match
 
-    (signature) C |- ITER typedExp expIter '#' typ := val' : %
+    (signature) C |- ITER typedExp expIter as exp '#' typ := val' : %
     C |- exp '#' typ := val' : %
-    -- if exp matches ITER % %
-    -- let ITER typedExp expIter = exp
+    -- if exp <: iterExp
+    -- let ITER typedExp expIter = exp as iterExp
 
    paths
 
     rulepath simple
     -- let val = val'
-    -- let varr'?{varr' <- varr'?} = $is_iter_on_var(ITER typedExp expIter '#' typ)
+    -- let varr'?{varr' <- varr'?} = $is_iter_on_var(ITER typedExp expIter as exp '#' typ)
     -- if varr'?{varr' <- varr'?} matches (_)
     -- let ?(varr) = varr'?{varr' <- varr'?}
     -- let C' = $add_varr(C, varr, val)
@@ -7804,7 +7943,7 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
 
     rulepath opt-none
     -- if (val' = OPT ?())
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- let iter vari*{vari <- vari*} = expIter
     -- if iter matches QUEST
     -- (let vari_iter = $iterate_vari(vari, [QUEST]))*{vari <- vari*, vari_iter -> vari_iter*}
@@ -7818,7 +7957,7 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
     -- let OPT val''?{val'' <- val''?} = val'''
     -- if val''?{val'' <- val''?} matches (_)
     -- let ?(val) = val''?{val'' <- val''?}
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- let iter vari*{vari <- vari*} = expIter
     -- if iter matches QUEST
     -- Assign_exp: C |- typedExp := val : assignRes
@@ -7835,7 +7974,7 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
     -- let val'' = val'
     -- if val'' matches LIST %
     -- let LIST val*{val <- val*} = val''
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- let iter vari*{vari <- vari*} = expIter
     -- if iter matches STAR
     -- let C_local = C[LOCAL.VAL = $empty_map<varr, val>]
@@ -7915,10 +8054,10 @@ relation Assign_arg: ctx |- arg := val : assignRes
 
    match
 
-    (signature) C |- EXP typedExp := val : %
+    (signature) C |- EXP typedExp as arg := val : %
     C |- arg := val : %
-    -- if arg matches EXP %
-    -- let EXP typedExp = arg
+    -- if arg <: expArg
+    -- let EXP typedExp = arg as expArg
 
    paths
 
@@ -7932,10 +8071,10 @@ relation Assign_arg: ctx |- arg := val : assignRes
 
    match
 
-    (signature) C |- FUN id := FUNC id_global : %
+    (signature) C |- FUN id as arg := FUNC id_global : %
     C |- arg := val : %
-    -- if arg matches FUN %
-    -- let FUN id = arg
+    -- if arg <: funArg
+    -- let FUN id = arg as funArg
     -- if val matches FUNC %
     -- let FUNC id_global = val
 

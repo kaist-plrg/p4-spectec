@@ -230,61 +230,61 @@ syntax iter =
 syntax vari =
    | id typ iter* (from vari)
 
-syntax boolUnop =
-   | NOT (from boolUnop)
+syntax boolUnOp =
+   | NOT (from boolUnOp)
 
-syntax numUnop =
-   | PLUS (from numUnop)
-   | MINUS (from numUnop)
+syntax numUnOp =
+   | PLUS (from numUnOp)
+   | MINUS (from numUnOp)
 
-syntax unop =
-   | NOT (from boolUnop)
-   | PLUS (from numUnop)
-   | MINUS (from numUnop)
+syntax unOp =
+   | NOT (from boolUnOp)
+   | PLUS (from numUnOp)
+   | MINUS (from numUnOp)
 
-syntax boolBinop =
-   | AND (from boolBinop)
-   | OR (from boolBinop)
-   | IMPL (from boolBinop)
-   | EQUIV (from boolBinop)
+syntax boolBinOp =
+   | AND (from boolBinOp)
+   | OR (from boolBinOp)
+   | IMPL (from boolBinOp)
+   | EQUIV (from boolBinOp)
 
-syntax numBinop =
-   | ADD (from numBinop)
-   | SUB (from numBinop)
-   | MUL (from numBinop)
-   | DIV (from numBinop)
-   | MOD (from numBinop)
-   | POW (from numBinop)
+syntax numBinOp =
+   | ADD (from numBinOp)
+   | SUB (from numBinOp)
+   | MUL (from numBinOp)
+   | DIV (from numBinOp)
+   | MOD (from numBinOp)
+   | POW (from numBinOp)
 
-syntax binop =
-   | AND (from boolBinop)
-   | OR (from boolBinop)
-   | IMPL (from boolBinop)
-   | EQUIV (from boolBinop)
-   | ADD (from numBinop)
-   | SUB (from numBinop)
-   | MUL (from numBinop)
-   | DIV (from numBinop)
-   | MOD (from numBinop)
-   | POW (from numBinop)
+syntax binOp =
+   | AND (from boolBinOp)
+   | OR (from boolBinOp)
+   | IMPL (from boolBinOp)
+   | EQUIV (from boolBinOp)
+   | ADD (from numBinOp)
+   | SUB (from numBinOp)
+   | MUL (from numBinOp)
+   | DIV (from numBinOp)
+   | MOD (from numBinOp)
+   | POW (from numBinOp)
 
-syntax numCmpop =
-   | LT (from numCmpop)
-   | GT (from numCmpop)
-   | LE (from numCmpop)
-   | GE (from numCmpop)
+syntax numCmpOp =
+   | LT (from numCmpOp)
+   | GT (from numCmpOp)
+   | LE (from numCmpOp)
+   | GE (from numCmpOp)
 
-syntax polyCmpop =
-   | EQ (from polyCmpop)
-   | NE (from polyCmpop)
+syntax polyCmpOp =
+   | EQ (from polyCmpOp)
+   | NE (from polyCmpOp)
 
-syntax cmpop =
-   | EQ (from polyCmpop)
-   | NE (from polyCmpop)
-   | LT (from numCmpop)
-   | GT (from numCmpop)
-   | LE (from numCmpop)
-   | GE (from numCmpop)
+syntax cmpOp =
+   | EQ (from polyCmpOp)
+   | NE (from polyCmpOp)
+   | LT (from numCmpOp)
+   | GT (from numCmpOp)
+   | LE (from numCmpOp)
+   | GE (from numCmpOp)
 
 syntax listPat =
    | CONS (from listPat)
@@ -306,34 +306,123 @@ syntax pat =
 syntax typedExp =
    | exp '#' typ (from typedExp)
 
-syntax exp =
-   | BOOL bool (from exp)
+syntax literalExp =
+   | BOOL bool (from literalExp)
    | NAT nat (from num)
    | INT int (from num)
-   | TEXT text (from exp)
-   | VAR id (from exp)
-   | UN unop typedExp (from exp)
-   | BIN binop typedExp typedExp (from exp)
-   | CMP cmpop typedExp typedExp (from exp)
-   | UPCAST typ typedExp (from exp)
-   | DOWNCAST typ typedExp (from exp)
-   | SUB typedExp typ (from exp)
-   | MATCH typedExp pat (from exp)
-   | TUP typedExp* (from exp)
-   | INJ expCase (from exp)
-   | STR expField* (from exp)
-   | OPT typedExp? (from exp)
-   | LIST typedExp* (from exp)
-   | CONS typedExp typedExp (from exp)
-   | CAT typedExp typedExp (from exp)
-   | MEM typedExp typedExp (from exp)
-   | LEN typedExp (from exp)
-   | DOT typedExp atom (from exp)
-   | IDX typedExp typedExp (from exp)
-   | SLICE typedExp typedExp typedExp (from exp)
-   | UPD typedExp typedPath typedExp (from exp)
-   | CALL id targ* arg* (from exp)
-   | ITER typedExp expIter (from exp)
+   | TEXT text (from literalExp)
+
+syntax varExp =
+   | VAR id (from varExp)
+
+syntax unOpExp =
+   | UN unOp typedExp (from unOpExp)
+
+syntax binOpExp =
+   | BIN binOp typedExp typedExp (from binOpExp)
+
+syntax cmpOpExp =
+   | CMP cmpOp typedExp typedExp (from cmpOpExp)
+
+syntax opExp =
+   | UN unOp typedExp (from unOpExp)
+   | BIN binOp typedExp typedExp (from binOpExp)
+   | CMP cmpOp typedExp typedExp (from cmpOpExp)
+
+syntax upCastExp =
+   | UPCAST typ typedExp (from upCastExp)
+
+syntax downCastExp =
+   | DOWNCAST typ typedExp (from downCastExp)
+
+syntax castExp =
+   | UPCAST typ typedExp (from upCastExp)
+   | DOWNCAST typ typedExp (from downCastExp)
+
+syntax subExp =
+   | SUB typedExp typ (from subExp)
+
+syntax matchExp =
+   | MATCH typedExp pat (from matchExp)
+
+syntax tupExp =
+   | TUP typedExp* (from tupExp)
+
+syntax injExp =
+   | INJ expCase (from injExp)
+
+syntax strExp =
+   | STR expField* (from strExp)
+
+syntax optExp =
+   | OPT typedExp? (from optExp)
+
+syntax listExp =
+   | LIST typedExp* (from listExp)
+
+syntax consExp =
+   | CONS typedExp typedExp (from consExp)
+
+syntax catExp =
+   | CAT typedExp typedExp (from catExp)
+
+syntax memExp =
+   | MEM typedExp typedExp (from memExp)
+
+syntax lenExp =
+   | LEN typedExp (from lenExp)
+
+syntax dotAccExp =
+   | DOT typedExp atom (from dotAccExp)
+
+syntax idxAccExp =
+   | IDX typedExp typedExp (from idxAccExp)
+
+syntax sliceAccExp =
+   | SLICE typedExp typedExp typedExp (from sliceAccExp)
+
+syntax accExp =
+   | DOT typedExp atom (from dotAccExp)
+   | IDX typedExp typedExp (from idxAccExp)
+   | SLICE typedExp typedExp typedExp (from sliceAccExp)
+
+syntax updExp =
+   | UPD typedExp typedPath typedExp (from updExp)
+
+syntax callExp =
+   | CALL id targ* arg* (from callExp)
+
+syntax iterExp =
+   | ITER typedExp expIter (from iterExp)
+
+syntax exp =
+   | BOOL bool (from literalExp)
+   | NAT nat (from num)
+   | INT int (from num)
+   | TEXT text (from literalExp)
+   | VAR id (from varExp)
+   | UN unOp typedExp (from unOpExp)
+   | BIN binOp typedExp typedExp (from binOpExp)
+   | CMP cmpOp typedExp typedExp (from cmpOpExp)
+   | UPCAST typ typedExp (from upCastExp)
+   | DOWNCAST typ typedExp (from downCastExp)
+   | SUB typedExp typ (from subExp)
+   | MATCH typedExp pat (from matchExp)
+   | TUP typedExp* (from tupExp)
+   | INJ expCase (from injExp)
+   | STR expField* (from strExp)
+   | OPT typedExp? (from optExp)
+   | LIST typedExp* (from listExp)
+   | CONS typedExp typedExp (from consExp)
+   | CAT typedExp typedExp (from catExp)
+   | MEM typedExp typedExp (from memExp)
+   | LEN typedExp (from lenExp)
+   | DOT typedExp atom (from dotAccExp)
+   | IDX typedExp typedExp (from idxAccExp)
+   | SLICE typedExp typedExp typedExp (from sliceAccExp)
+   | UPD typedExp typedPath typedExp (from updExp)
+   | CALL id targ* arg* (from callExp)
+   | ITER typedExp expIter (from iterExp)
 
 syntax expCase =
    | mixop typedExp* (from expCase)
@@ -347,23 +436,47 @@ syntax expIter =
 syntax typedPath =
    | path '#' typ (from typedPath)
 
+syntax rootPath =
+   | ROOT (from rootPath)
+
+syntax idxPath =
+   | IDX typedPath typedExp (from idxPath)
+
+syntax slicePath =
+   | SLICE typedPath typedExp typedExp (from slicePath)
+
+syntax dotPath =
+   | DOT typedPath atom (from dotPath)
+
 syntax path =
-   | ROOT (from path)
-   | IDX typedPath typedExp (from path)
-   | SLICE typedPath typedExp typedExp (from path)
-   | DOT typedPath atom (from path)
+   | ROOT (from rootPath)
+   | IDX typedPath typedExp (from idxPath)
+   | SLICE typedPath typedExp typedExp (from slicePath)
+   | DOT typedPath atom (from dotPath)
 
 syntax targ = typ
 
+syntax expArg =
+   | EXP typedExp (from expArg)
+
+syntax funArg =
+   | FUN id (from funArg)
+
 syntax arg =
-   | EXP typedExp (from arg)
-   | FUN id (from arg)
+   | EXP typedExp (from expArg)
+   | FUN id (from funArg)
 
 syntax tparam = id
 
+syntax expParam =
+   | EXP typ (from expParam)
+
+syntax funParam =
+   | FUN id ':' tparam* param* '->' typ (from funParam)
+
 syntax param =
-   | EXP typ (from param)
-   | FUN id ':' tparam* param* '->' typ (from param)
+   | EXP typ (from expParam)
+   | FUN id ':' tparam* param* '->' typ (from funParam)
 
 syntax ifPrem =
    | IF typedExp (from ifPrem)
@@ -629,15 +742,15 @@ def $is_iter_on_var(typedExp')
 
   1. Case analysis on exp
 
-    1. Case (% matches pattern VAR %)
+    1. Case (% has type varExp)
 
-      1. (Let VAR id be exp)
+      1. (Let VAR id be exp as varExp)
 
         1. Return ?(id [])
 
-    2. Case (% matches pattern ITER % %)
+    2. Case (% has type iterExp)
 
-      1. (Let ITER typedExp expIter be exp)
+      1. (Let ITER typedExp expIter be exp as iterExp)
 
         1. (Let varr?{varr <- varr?} be $is_iter_on_var(typedExp))
 
@@ -1593,9 +1706,9 @@ relation Collectbind_exp: AC |- typedExp'' : %
 
   1. Case analysis on exp
 
-    1. Case (% matches pattern VAR %)
+    1. Case (% has type varExp)
 
-      1. (Let VAR id be exp)
+      1. (Let VAR id be exp as varExp)
 
         1. Case analysis on id <- $ids_of_varis(AC.BOUND) (total)
 
@@ -1607,33 +1720,33 @@ relation Collectbind_exp: AC |- typedExp'' : %
 
             1. Result in: % |- % : [id typ []]
 
-    2. Case (% matches pattern UPCAST % %)
+    2. Case (% has type upCastExp)
 
-      1. (Let UPCAST _typ typedExp be exp)
+      1. (Let UPCAST _typ typedExp be exp as upCastExp)
 
         1. (Collectbind_exp: AC |- typedExp : vari*{vari <- vari*})
 
           1. Result in: % |- % : vari*{vari <- vari*}
 
-    3. Case (% matches pattern TUP %)
+    3. Case (% has type tupExp)
 
-      1. (Let TUP typedExp*{typedExp <- typedExp*} be exp)
-
-        1. (Collectbind_exps: AC |- typedExp*{typedExp <- typedExp*} : vari*{vari <- vari*})
-
-          1. Result in: % |- % : vari*{vari <- vari*}
-
-    4. Case (% matches pattern INJ %)
-
-      1. (Let INJ _mixop typedExp*{typedExp <- typedExp*} be exp)
+      1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
 
         1. (Collectbind_exps: AC |- typedExp*{typedExp <- typedExp*} : vari*{vari <- vari*})
 
           1. Result in: % |- % : vari*{vari <- vari*}
 
-    5. Case (% matches pattern STR %)
+    4. Case (% has type injExp)
 
-      1. (Let STR expField*{expField <- expField*} be exp)
+      1. (Let INJ _mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
+
+        1. (Collectbind_exps: AC |- typedExp*{typedExp <- typedExp*} : vari*{vari <- vari*})
+
+          1. Result in: % |- % : vari*{vari <- vari*}
+
+    5. Case (% has type strExp)
+
+      1. (Let STR expField*{expField <- expField*} be exp as strExp)
 
         1. (Let _atom typedExp be expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
 
@@ -1641,9 +1754,9 @@ relation Collectbind_exp: AC |- typedExp'' : %
 
             1. Result in: % |- % : vari*{vari <- vari*}
 
-    6. Case (% matches pattern OPT %)
+    6. Case (% has type optExp)
 
-      1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp)
+      1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp as optExp)
 
         1. Case analysis on typedExp'?{typedExp' <- typedExp'?} (total)
 
@@ -1659,25 +1772,25 @@ relation Collectbind_exp: AC |- typedExp'' : %
 
                 1. Result in: % |- % : vari*{vari <- vari*}
 
-    7. Case (% matches pattern LIST %)
+    7. Case (% has type listExp)
 
-      1. (Let LIST typedExp*{typedExp <- typedExp*} be exp)
+      1. (Let LIST typedExp*{typedExp <- typedExp*} be exp as listExp)
 
         1. (Collectbind_exps: AC |- typedExp*{typedExp <- typedExp*} : vari*{vari <- vari*})
 
           1. Result in: % |- % : vari*{vari <- vari*}
 
-    8. Case (% matches pattern CONS % %)
+    8. Case (% has type consExp)
 
-      1. (Let CONS typedExp_h typedExp_t be exp)
+      1. (Let CONS typedExp_h typedExp_t be exp as consExp)
 
         1. (Collectbind_exps: AC |- [typedExp_h, typedExp_t] : vari*{vari <- vari*})
 
           1. Result in: % |- % : vari*{vari <- vari*}
 
-    9. Case (% matches pattern ITER % %)
+    9. Case (% has type iterExp)
 
-      1. (Let ITER typedExp iter _vari*{_vari <- _vari*} be exp)
+      1. (Let ITER typedExp iter _vari*{_vari <- _vari*} be exp as iterExp)
 
         1. (Collectbind_exp: AC |- typedExp : vari*{vari <- vari*})
 
@@ -1721,15 +1834,15 @@ relation Collectbind_arg: AC |- arg : %
 
 1. Case analysis on arg (total)
 
-  1. Case (% matches pattern EXP %)
+  1. Case (% has type expArg)
 
-    1. (Let EXP typedExp be arg)
+    1. (Let EXP typedExp be arg as expArg)
 
       1. (Collectbind_exp: AC |- typedExp : vari*{vari <- vari*})
 
         1. Result in: % |- % : vari*{vari <- vari*}
 
-  2. Case (% matches pattern FUN %)
+  2. Case (% has type funArg)
 
     1. Result in: % |- % : []
 
@@ -1795,7 +1908,7 @@ relation Partialbind_exp: AC IC_prem |- IC typedExp : % % % %
 
             1. (Let typedExp_d be $exp_of_vari(vari_d))
 
-              1. (Let typedExp_check be CMP EQ as cmpop typedExp_d typedExp '#' BOOL as typ)
+              1. (Let typedExp_check be CMP EQ as cmpOp typedExp_d typedExp as exp '#' BOOL as typ)
 
                 1. (Let id_d _typ _iter*{_iter <- _iter*} be vari_d)
 
@@ -1823,15 +1936,15 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC exp '#' typ : % % % %
 
 1. Case analysis on exp
 
-  1. Case (% matches pattern VAR %)
+  1. Case (% has type varExp)
 
-    1. (Let VAR id be exp)
+    1. (Let VAR id be exp as varExp)
 
-      1. Result in: % % |- % % : AC IC VAR id '#' typ []
+      1. Result in: % % |- % % : AC IC VAR id as exp '#' typ []
 
-  2. Case (% matches pattern UPCAST % %)
+  2. Case (% has type upCastExp)
 
-    1. (Let UPCAST _typ typedExp be exp)
+    1. (Let UPCAST _typ typedExp be exp as upCastExp)
 
       1. (Partialbind_exp: AC IC_prem |- IC typedExp : AC_sub IC_sub typedExp_sub premAL*{premAL <- premAL*})
 
@@ -1841,9 +1954,9 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC exp '#' typ : % % % %
 
             1. (Let typedExp_d be $exp_of_vari(vari_d))
 
-              1. (Let typedExp_check be SUB typedExp_d typ_sub '#' BOOL as typ)
+              1. (Let typedExp_check be SUB typedExp_d typ_sub as exp '#' BOOL as typ)
 
-                1. (Let typedExp_down be DOWNCAST typ_sub typedExp_d '#' typ_sub)
+                1. (Let typedExp_down be DOWNCAST typ_sub typedExp_d as exp '#' typ_sub)
 
                   1. (Let premAL_check be $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check))
 
@@ -1853,27 +1966,27 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC exp '#' typ : % % % %
 
                         1. Result in: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
 
-  3. Case (% matches pattern TUP %)
+  3. Case (% has type tupExp)
 
-    1. (Let TUP typedExp*{typedExp <- typedExp*} be exp)
-
-      1. (Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*})
-
-        1. Result in: % % |- % % : AC_sub IC_sub TUP typedExp_part*{typedExp_part <- typedExp_part*} '#' typ premAL*{premAL <- premAL*}
-
-  4. Case (% matches pattern INJ %)
-
-    1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp)
+    1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
 
       1. (Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*})
 
-        1. (Let typedExp_case be INJ mixop typedExp_part*{typedExp_part <- typedExp_part*} '#' typ)
+        1. Result in: % % |- % % : AC_sub IC_sub TUP typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ premAL*{premAL <- premAL*}
+
+  4. Case (% has type injExp)
+
+    1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
+
+      1. (Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*})
+
+        1. (Let typedExp_case be INJ mixop typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ)
 
           1. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ))
 
             1. (Let typedExp_d be $exp_of_vari(vari_d))
 
-              1. (Let typedExp_check be MATCH typedExp_d INJ mixop '#' BOOL as typ)
+              1. (Let typedExp_check be MATCH typedExp_d INJ mixop as exp '#' BOOL as typ)
 
                 1. (Let premAL_check be $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check))
 
@@ -1883,9 +1996,9 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC exp '#' typ : % % % %
 
                       1. Result in: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
 
-  5. Case (% matches pattern STR %)
+  5. Case (% has type strExp)
 
-    1. (Let STR expField*{expField <- expField*} be exp)
+    1. (Let STR expField*{expField <- expField*} be exp as strExp)
 
       1. (Let atom typedExp be expField)*{expField <- expField*, atom -> atom*, typedExp -> typedExp*}
 
@@ -1895,13 +2008,13 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC exp '#' typ : % % % %
 
             1. (Let expField_part be atom typedExp_part)*{atom <- atom*, typedExp_part <- typedExp_part*, expField_part -> expField_part*}
 
-              1. Result in: % % |- % % : AC_sub IC_sub STR expField_part*{expField_part <- expField_part*} '#' typ premAL*{premAL <- premAL*}
+              1. Result in: % % |- % % : AC_sub IC_sub STR expField_part*{expField_part <- expField_part*} as exp '#' typ premAL*{premAL <- premAL*}
 
           1. Else Dangling
 
-  6. Case (% matches pattern OPT %)
+  6. Case (% has type optExp)
 
-    1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp)
+    1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp as optExp)
 
       1. If (typedExp'?{typedExp' <- typedExp'?} matches (_)), then
 
@@ -1909,13 +2022,13 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC exp '#' typ : % % % %
 
           1. (Partialbind_exp: AC IC_prem |- IC typedExp : AC_sub IC_sub typedExp_part premAL*{premAL <- premAL*})
 
-            1. (Let typedExp_opt be OPT ?(typedExp_part) '#' typ)
+            1. (Let typedExp_opt be OPT ?(typedExp_part) as exp '#' typ)
 
               1. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ))
 
                 1. (Let typedExp_d be $exp_of_vari(vari_d))
 
-                  1. (Let typedExp_check be MATCH typedExp_d SOME as pat '#' BOOL as typ)
+                  1. (Let typedExp_check be MATCH typedExp_d SOME as pat as exp '#' BOOL as typ)
 
                     1. (Let premAL_check be $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check))
 
@@ -1927,13 +2040,13 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC exp '#' typ : % % % %
 
       1. Else Dangling
 
-  7. Case (% matches pattern LIST %)
+  7. Case (% has type listExp)
 
-    1. (Let LIST typedExp*{typedExp <- typedExp*} be exp)
+    1. (Let LIST typedExp*{typedExp <- typedExp*} be exp as listExp)
 
       1. (Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*})
 
-        1. (Let typedExp_list be LIST typedExp_part*{typedExp_part <- typedExp_part*} '#' typ)
+        1. (Let typedExp_list be LIST typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ)
 
           1. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ))
 
@@ -1941,7 +2054,7 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC exp '#' typ : % % % %
 
               1. (Let n be |typedExp*{typedExp <- typedExp*}|)
 
-                1. (Let typedExp_check be MATCH typedExp_d FIXED n as pat '#' BOOL as typ)
+                1. (Let typedExp_check be MATCH typedExp_d FIXED n as pat as exp '#' BOOL as typ)
 
                   1. (Let premAL_check be $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check))
 
@@ -1951,21 +2064,21 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC exp '#' typ : % % % %
 
                         1. Result in: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
 
-  8. Case (% matches pattern CONS % %)
+  8. Case (% has type consExp)
 
-    1. (Let CONS typedExp_h typedExp_t be exp)
+    1. (Let CONS typedExp_h typedExp_t be exp as consExp)
 
       1. (Partialbind_exp: AC IC_prem |- IC typedExp_h : AC_h IC_h typedExp_h_part premAL_h*{premAL_h <- premAL_h*})
 
         1. (Partialbind_exp: AC_h IC_prem |- IC_h typedExp_t : AC_t IC_t typedExp_t_part premAL_t*{premAL_t <- premAL_t*})
 
-          1. (Let typedExp_cons be CONS typedExp_h_part typedExp_t_part '#' typ)
+          1. (Let typedExp_cons be CONS typedExp_h_part typedExp_t_part as exp '#' typ)
 
             1. (Let (AC_fresh, vari_d) be $fresh_vari(AC_t, IC_t ++ IC_prem, typ))
 
               1. (Let typedExp_d be $exp_of_vari(vari_d))
 
-                1. (Let typedExp_check be MATCH typedExp_d CONS as pat '#' BOOL as typ)
+                1. (Let typedExp_check be MATCH typedExp_d CONS as pat as exp '#' BOOL as typ)
 
                   1. (Let premAL_check be $sidecond_partial(IC_t ++ IC_prem, vari_d, typedExp_check))
 
@@ -1975,9 +2088,9 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC exp '#' typ : % % % %
 
                         1. Result in: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*}
 
-  9. Case (% matches pattern ITER % %)
+  9. Case (% has type iterExp)
 
-    1. (Let ITER typedExp iter vari*{vari <- vari*} be exp)
+    1. (Let ITER typedExp iter vari*{vari <- vari*} be exp as iterExp)
 
       1. (Partialbind_exp: AC IC_prem |- iter vari*{vari <- vari*} :: IC typedExp : AC_sub premIterIL*{premIterIL <- premIterIL*} typedExp_part premAL*{premAL <- premAL*})
 
@@ -1989,7 +2102,7 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC exp '#' typ : % % % %
 
               1. (Let vari_part*{vari_part <- vari_part*} be $select_varis(vari_iter*{vari_iter <- vari_iter*}, $ids_of_varis($free_varis_exp(typedExp_part))))
 
-                1. Result in: % % |- % % : AC_sub IC_sub ITER typedExp_part iter vari_part*{vari_part <- vari_part*} '#' typ premAL*{premAL <- premAL*}
+                1. Result in: % % |- % % : AC_sub IC_sub ITER typedExp_part iter vari_part*{vari_part <- vari_part*} as exp '#' typ premAL*{premAL <- premAL*}
 
             1. Else Dangling
 
@@ -2019,19 +2132,19 @@ relation Partialbind_arg: AC |- arg : % % %
 
 1. Case analysis on arg (total)
 
-  1. Case (% matches pattern EXP %)
+  1. Case (% has type expArg)
 
-    1. (Let EXP typedExp be arg)
+    1. (Let EXP typedExp be arg as expArg)
 
       1. (Partialbind_exp: AC [] |- [] typedExp : AC_part _IC typedExp_part premAL*{premAL <- premAL*})
 
-        1. Result in: % |- % : AC_part EXP typedExp_part premAL*{premAL <- premAL*}
+        1. Result in: % |- % : AC_part EXP typedExp_part as arg premAL*{premAL <- premAL*}
 
-  2. Case (% matches pattern FUN %)
+  2. Case (% has type funArg)
 
-    1. (Let FUN id be arg)
+    1. (Let FUN id be arg as funArg)
 
-      1. Result in: % |- % : AC FUN id []
+      1. Result in: % |- % : AC FUN id as arg []
 
 relation Partialbind_args: AC |- arg'*{arg' <- arg'*} : % % %
 
@@ -2143,15 +2256,15 @@ relation Algo_prem: AC IC |- premIL' : % %
 
         2. (Let exp '#' _typ be typedExp)
 
-          1. If (exp matches CMP % % %), then
+          1. If (exp <: cmpOpExp), then
 
-            1. (Let CMP cmpop typedExp_l typedExp_r be exp)
+            1. (Let CMP cmpOp typedExp_l typedExp_r be exp as cmpOpExp)
 
-              1. If (cmpop <: polyCmpop), then
+              1. If (cmpOp <: polyCmpOp), then
 
-                1. (Let polyCmpop be cmpop as polyCmpop)
+                1. (Let polyCmpOp be cmpOp as polyCmpOp)
 
-                  1. If (polyCmpop matches EQ), then
+                  1. If (polyCmpOp matches EQ), then
 
                     1. (Collectbind_exp: AC |- typedExp_l : vari_l*{vari_l <- vari_l*})
 
@@ -2345,9 +2458,9 @@ relation TblRows_cover: AC typ*{typ <- typ*} |- tblRowIL*{tblRowIL <- tblRowIL*}
 
             1. (Let arg*{arg <- arg*} '=' _typedExp be tblRowIL*{tblRowIL <- tblRowIL*}[n_init])
 
-              1. If (arg matches EXP %)*{arg <- arg*}, then
+              1. If (arg <: expArg)*{arg <- arg*}, then
 
-                1. (Let EXP typedExp_last be arg)*{arg <- arg*, typedExp_last -> typedExp_last*}
+                1. (Let EXP typedExp_last be arg as expArg)*{arg <- arg*, typedExp_last -> typedExp_last*}
 
                   1. Case analysis on $forall_($is_wildcard_exp(typedExp_last)*{typedExp_last <- typedExp_last*}) (total)
 
@@ -2357,9 +2470,9 @@ relation TblRows_cover: AC typ*{typ <- typ*} |- tblRowIL*{tblRowIL <- tblRowIL*}
 
                         1. (Let arg'*{arg' <- arg'*} '=' _typedExp'*{_typedExp' <- _typedExp'*, arg'* <- arg'**} be tblRowIL*{tblRowIL <- tblRowIL*}[0 : n_init])
 
-                          1. If (arg' matches EXP %)*{arg' <- arg'*}*{arg'* <- arg'**}, then
+                          1. If (arg' <: expArg)*{arg' <- arg'*}*{arg'* <- arg'**}, then
 
-                            1. (Let EXP typedExp be arg')*{arg' <- arg'*, typedExp -> typedExp*}*{arg'* <- arg'**, typedExp* -> typedExp**}
+                            1. (Let EXP typedExp be arg' as expArg)*{arg' <- arg'*, typedExp -> typedExp*}*{arg'* <- arg'**, typedExp* -> typedExp**}
 
                               1. (Let typCase_row*{typCase_row <- typCase_row*} be $covered_cases(AC.TYP, typedExp))*{typedExp <- typedExp*, typCase_row* -> typCase_row**}*{typedExp* <- typedExp**, typCase_row** -> typCase_row***}
 
@@ -2377,9 +2490,9 @@ relation TblRows_cover: AC typ*{typ <- typ*} |- tblRowIL*{tblRowIL <- tblRowIL*}
 
                       1. (Let arg'*{arg' <- arg'*} '=' _typedExp'*{_typedExp' <- _typedExp'*, arg'* <- arg'**} be tblRowIL*{tblRowIL <- tblRowIL*})
 
-                        1. If (arg' matches EXP %)*{arg' <- arg'*}*{arg'* <- arg'**}, then
+                        1. If (arg' <: expArg)*{arg' <- arg'*}*{arg'* <- arg'**}, then
 
-                          1. (Let EXP typedExp be arg')*{arg' <- arg'*, typedExp -> typedExp*}*{arg'* <- arg'**, typedExp* -> typedExp**}
+                          1. (Let EXP typedExp be arg' as expArg)*{arg' <- arg'*, typedExp -> typedExp*}*{arg'* <- arg'**, typedExp* -> typedExp**}
 
                             1. (Let typCase_row*{typCase_row <- typCase_row*} be $covered_cases(AC.TYP, typedExp))*{typedExp <- typedExp*, typCase_row* -> typCase_row**}*{typedExp* <- typedExp**, typCase_row** -> typCase_row***}
 
@@ -2515,9 +2628,9 @@ relation Algo_def: AC |- defnIL : %
 
       1. (Let TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowIL*{tblRowIL <- tblRowIL*} be tableFuncDefnIL)
 
-        1. If (param matches EXP %)*{param <- param*}, then
+        1. If (param <: expParam)*{param <- param*}, then
 
-          1. (Let EXP typ_param be param)*{param <- param*, typ_param -> typ_param*}
+          1. (Let EXP typ_param be param as expParam)*{param <- param*, typ_param -> typ_param*}
 
             1. (Let arg*{arg <- arg*} '=' _typedExp be tblRowIL)*{tblRowIL <- tblRowIL*, _typedExp -> _typedExp*, arg* -> arg**}
 
@@ -2557,35 +2670,39 @@ relation Guard_exp: AC |- exp '#' _typ' : %
 
 1. Case analysis on exp (total)
 
-  1. Case (% matches pattern BOOL %)
+  1. Case (% has type literalExp)
+
+    1. (Let literalExp be exp as literalExp)
+
+      1. Case analysis on literalExp
+
+        1. Case (% matches pattern BOOL %)
+
+          1. Result in: % |- % : []
+
+        2. Case (% matches pattern TEXT %)
+
+          1. Result in: % |- % : []
+
+      1. Else Dangling
+
+  2. Case (% has type varExp)
 
     1. Result in: % |- % : []
 
-  2. Case (% has type num)
+  3. Case (% has type unOpExp)
 
-    1. Result in: % |- % : []
-
-  3. Case (% matches pattern TEXT %)
-
-    1. Result in: % |- % : []
-
-  4. Case (% matches pattern VAR %)
-
-    1. Result in: % |- % : []
-
-  5. Case (% matches pattern UN % %)
-
-    1. (Let UN _unop typedExp be exp)
+    1. (Let UN _unOp typedExp be exp as unOpExp)
 
       1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
 
         1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  6. Case (% matches pattern BIN % % %)
+  4. Case (% has type binOpExp)
 
-    1. (Let BIN binop typedExp_l typedExp_r be exp)
+    1. (Let BIN binOp typedExp_l typedExp_r be exp as binOpExp)
 
-      1. Case analysis on binop <- [DIV as binop, MOD as binop] (total)
+      1. Case analysis on binOp <- [DIV as binOp, MOD as binOp] (total)
 
         1. Case false
 
@@ -2601,71 +2718,71 @@ relation Guard_exp: AC |- exp '#' _typ' : %
 
               1. (Let typedExp_zero be $exp_zero(AC.TYP, typ_r))
 
-                1. (Let premAL_div be $sidecond_cmp(NE as cmpop, typedExp_r, typedExp_zero))
+                1. (Let premAL_div be $sidecond_cmp(NE as cmpOp, typedExp_r, typedExp_zero))
 
                   1. (Let premAL*{premAL <- premAL*} be premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_div])
 
                     1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  7. Case (% matches pattern CMP % % %)
+  5. Case (% has type cmpOpExp)
 
-    1. (Let CMP _cmpop typedExp_l typedExp_r be exp)
+    1. (Let CMP _cmpOp typedExp_l typedExp_r be exp as cmpOpExp)
 
       1. (Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*})
 
         1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  8. Case (% matches pattern UPCAST % %)
+  6. Case (% has type upCastExp)
 
-    1. (Let UPCAST _typ typedExp be exp)
-
-      1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
-
-        1. Result in: % |- % : premAL*{premAL <- premAL*}
-
-  9. Case (% matches pattern DOWNCAST % %)
-
-    1. (Let DOWNCAST _typ typedExp be exp)
+    1. (Let UPCAST _typ typedExp be exp as upCastExp)
 
       1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
 
         1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  10. Case (% matches pattern SUB % %)
+  7. Case (% has type downCastExp)
 
-    1. (Let SUB typedExp _typ be exp)
-
-      1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
-
-        1. Result in: % |- % : premAL*{premAL <- premAL*}
-
-  11. Case (% matches pattern MATCH % %)
-
-    1. (Let MATCH typedExp _pat be exp)
+    1. (Let DOWNCAST _typ typedExp be exp as downCastExp)
 
       1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
 
         1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  12. Case (% matches pattern TUP %)
+  8. Case (% has type subExp)
 
-    1. (Let TUP typedExp*{typedExp <- typedExp*} be exp)
+    1. (Let SUB typedExp _typ be exp as subExp)
+
+      1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
+
+        1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  9. Case (% has type matchExp)
+
+    1. (Let MATCH typedExp _pat be exp as matchExp)
+
+      1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
+
+        1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  10. Case (% has type tupExp)
+
+    1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
 
       1. (Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*})
 
         1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  13. Case (% matches pattern INJ %)
+  11. Case (% has type injExp)
 
-    1. (Let INJ _mixop typedExp*{typedExp <- typedExp*} be exp)
+    1. (Let INJ _mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
 
       1. (Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*})
 
         1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  14. Case (% matches pattern STR %)
+  12. Case (% has type strExp)
 
-    1. (Let STR expField*{expField <- expField*} be exp)
+    1. (Let STR expField*{expField <- expField*} be exp as strExp)
 
       1. (Let _atom typedExp be expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
 
@@ -2673,9 +2790,9 @@ relation Guard_exp: AC |- exp '#' _typ' : %
 
           1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  15. Case (% matches pattern OPT %)
+  13. Case (% has type optExp)
 
-    1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp)
+    1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp as optExp)
 
       1. Case analysis on typedExp'?{typedExp' <- typedExp'?} (total)
 
@@ -2691,87 +2808,87 @@ relation Guard_exp: AC |- exp '#' _typ' : %
 
               1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  16. Case (% matches pattern LIST %)
+  14. Case (% has type listExp)
 
-    1. (Let LIST typedExp*{typedExp <- typedExp*} be exp)
+    1. (Let LIST typedExp*{typedExp <- typedExp*} be exp as listExp)
 
       1. (Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*})
 
         1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  17. Case (% matches pattern CONS % %)
+  15. Case (% has type consExp)
 
-    1. (Let CONS typedExp_h typedExp_t be exp)
+    1. (Let CONS typedExp_h typedExp_t be exp as consExp)
 
       1. (Guard_exps: AC |- [typedExp_h, typedExp_t] : premAL*{premAL <- premAL*})
 
         1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  18. Case (% matches pattern CAT % %)
+  16. Case (% has type catExp)
 
-    1. (Let CAT typedExp_l typedExp_r be exp)
-
-      1. (Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*})
-
-        1. Result in: % |- % : premAL*{premAL <- premAL*}
-
-  19. Case (% matches pattern MEM % %)
-
-    1. (Let MEM typedExp_l typedExp_r be exp)
+    1. (Let CAT typedExp_l typedExp_r be exp as catExp)
 
       1. (Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*})
 
         1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  20. Case (% matches pattern LEN %)
+  17. Case (% has type memExp)
 
-    1. (Let LEN typedExp be exp)
+    1. (Let MEM typedExp_l typedExp_r be exp as memExp)
+
+      1. (Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*})
+
+        1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+  18. Case (% has type lenExp)
+
+    1. (Let LEN typedExp be exp as lenExp)
 
       1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
 
         1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  21. Case (% matches pattern DOT % %)
+  19. Case (% has type dotAccExp)
 
-    1. (Let DOT typedExp _atom be exp)
+    1. (Let DOT typedExp _atom be exp as dotAccExp)
 
       1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
 
         1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  22. Case (% matches pattern IDX % %)
+  20. Case (% has type idxAccExp)
 
-    1. (Let IDX typedExp_b typedExp_i be exp)
+    1. (Let IDX typedExp_b typedExp_i be exp as idxAccExp)
 
       1. (Guard_exps: AC |- [typedExp_b, typedExp_i] : premAL_operand*{premAL_operand <- premAL_operand*})
 
         1. (Let typedExp_len be $exp_len(typedExp_b))
 
-          1. (Let premAL_idx be $sidecond_cmp(LT as cmpop, typedExp_i, typedExp_len))
+          1. (Let premAL_idx be $sidecond_cmp(LT as cmpOp, typedExp_i, typedExp_len))
 
             1. (Let premAL*{premAL <- premAL*} be premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_idx])
 
               1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  23. Case (% matches pattern SLICE % % %)
+  21. Case (% has type sliceAccExp)
 
-    1. (Let SLICE typedExp_b typedExp_i typedExp_n be exp)
+    1. (Let SLICE typedExp_b typedExp_i typedExp_n be exp as sliceAccExp)
 
       1. (Guard_exps: AC |- [typedExp_b, typedExp_i, typedExp_n] : premAL_operand*{premAL_operand <- premAL_operand*})
 
-        1. (Let typedExp_end be BIN ADD as binop typedExp_i typedExp_n '#' NAT as typ)
+        1. (Let typedExp_end be BIN ADD as binOp typedExp_i typedExp_n as exp '#' NAT as typ)
 
           1. (Let typedExp_len be $exp_len(typedExp_b))
 
-            1. (Let premAL_slice be $sidecond_cmp(LE as cmpop, typedExp_end, typedExp_len))
+            1. (Let premAL_slice be $sidecond_cmp(LE as cmpOp, typedExp_end, typedExp_len))
 
               1. (Let premAL*{premAL <- premAL*} be premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_slice])
 
                 1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  24. Case (% matches pattern UPD % % %)
+  22. Case (% has type updExp)
 
-    1. (Let UPD typedExp_b typedPath typedExp_f be exp)
+    1. (Let UPD typedExp_b typedPath typedExp_f be exp as updExp)
 
       1. (Let typedExp_acc be $access_exp(typedExp_b, typedPath))
 
@@ -2785,17 +2902,17 @@ relation Guard_exp: AC |- exp '#' _typ' : %
 
                 1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  25. Case (% matches pattern CALL % % %)
+  23. Case (% has type callExp)
 
-    1. (Let CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} be exp)
+    1. (Let CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} be exp as callExp)
 
       1. (Guard_args: AC |- arg*{arg <- arg*} : premAL*{premAL <- premAL*})
 
         1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  26. Case (% matches pattern ITER % %)
+  24. Case (% has type iterExp)
 
-    1. (Let ITER typedExp iter vari*{vari <- vari*} be exp)
+    1. (Let ITER typedExp iter vari*{vari <- vari*} be exp as iterExp)
 
       1. (Let premAL_src*{premAL_src <- premAL_src*} be $sideconds_iter(iter, vari*{vari <- vari*}))
 
@@ -2806,6 +2923,12 @@ relation Guard_exp: AC |- exp '#' _typ' : %
             1. (Let premAL*{premAL <- premAL*} be premAL_src*{premAL_src <- premAL_src*} ++ premAL_body_iter*{premAL_body_iter <- premAL_body_iter*})
 
               1. Result in: % |- % : premAL*{premAL <- premAL*}
+
+2. If (exp <: num), then
+
+  1. Result in: % |- % : []
+
+2. Else Dangling
 
 relation Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : %
 
@@ -2831,15 +2954,15 @@ relation Guard_arg: AC |- arg : %
 
 1. Case analysis on arg (total)
 
-  1. Case (% matches pattern EXP %)
+  1. Case (% has type expArg)
 
-    1. (Let EXP typedExp be arg)
+    1. (Let EXP typedExp be arg as expArg)
 
       1. (Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*})
 
         1. Result in: % |- % : premAL*{premAL <- premAL*}
 
-  2. Case (% matches pattern FUN %)
+  2. Case (% has type funArg)
 
     1. Result in: % |- % : []
 
@@ -3067,25 +3190,29 @@ relation Exp_pure: |- exp '#' _typ'
 
 1. Case analysis on exp
 
-  1. Case (% matches pattern BOOL %)
+  1. Case (% has type literalExp)
+
+    1. (Let literalExp be exp as literalExp)
+
+      1. Case analysis on literalExp
+
+        1. Case (% matches pattern BOOL %)
+
+          1. The relation holds
+
+        2. Case (% matches pattern TEXT %)
+
+          1. The relation holds
+
+      1. Else Dangling
+
+  2. Case (% has type varExp)
 
     1. The relation holds
 
-  2. Case (% has type num)
+  3. Case (% has type unOpExp)
 
-    1. The relation holds
-
-  3. Case (% matches pattern TEXT %)
-
-    1. The relation holds
-
-  4. Case (% matches pattern VAR %)
-
-    1. The relation holds
-
-  5. Case (% matches pattern UN % %)
-
-    1. (Let UN _unop typedExp be exp)
+    1. (Let UN _unOp typedExp be exp as unOpExp)
 
       1. If (Exp_pure: |- typedExp) holds, then
 
@@ -3093,9 +3220,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  6. Case (% matches pattern BIN % % %)
+  4. Case (% has type binOpExp)
 
-    1. (Let BIN _binop typedExp_l typedExp_r be exp)
+    1. (Let BIN _binOp typedExp_l typedExp_r be exp as binOpExp)
 
       1. If (Exp_pure: |- typedExp_l) holds, then
 
@@ -3107,9 +3234,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  7. Case (% matches pattern CMP % % %)
+  5. Case (% has type cmpOpExp)
 
-    1. (Let CMP _cmpop typedExp_l typedExp_r be exp)
+    1. (Let CMP _cmpOp typedExp_l typedExp_r be exp as cmpOpExp)
 
       1. If (Exp_pure: |- typedExp_l) holds, then
 
@@ -3121,19 +3248,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  8. Case (% matches pattern UPCAST % %)
+  6. Case (% has type upCastExp)
 
-    1. (Let UPCAST _typ typedExp be exp)
-
-      1. If (Exp_pure: |- typedExp) holds, then
-
-        1. The relation holds
-
-      1. Else Dangling
-
-  9. Case (% matches pattern DOWNCAST % %)
-
-    1. (Let DOWNCAST _typ typedExp be exp)
+    1. (Let UPCAST _typ typedExp be exp as upCastExp)
 
       1. If (Exp_pure: |- typedExp) holds, then
 
@@ -3141,19 +3258,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  10. Case (% matches pattern SUB % %)
+  7. Case (% has type downCastExp)
 
-    1. (Let SUB typedExp _typ be exp)
-
-      1. If (Exp_pure: |- typedExp) holds, then
-
-        1. The relation holds
-
-      1. Else Dangling
-
-  11. Case (% matches pattern MATCH % %)
-
-    1. (Let MATCH typedExp _pat be exp)
+    1. (Let DOWNCAST _typ typedExp be exp as downCastExp)
 
       1. If (Exp_pure: |- typedExp) holds, then
 
@@ -3161,9 +3268,29 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  12. Case (% matches pattern TUP %)
+  8. Case (% has type subExp)
 
-    1. (Let TUP typedExp*{typedExp <- typedExp*} be exp)
+    1. (Let SUB typedExp _typ be exp as subExp)
+
+      1. If (Exp_pure: |- typedExp) holds, then
+
+        1. The relation holds
+
+      1. Else Dangling
+
+  9. Case (% has type matchExp)
+
+    1. (Let MATCH typedExp _pat be exp as matchExp)
+
+      1. If (Exp_pure: |- typedExp) holds, then
+
+        1. The relation holds
+
+      1. Else Dangling
+
+  10. Case (% has type tupExp)
+
+    1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
 
       1. If (Exp_pure: |- typedExp)*{typedExp <- typedExp*} holds, then
 
@@ -3171,9 +3298,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  13. Case (% matches pattern INJ %)
+  11. Case (% has type injExp)
 
-    1. (Let INJ _mixop typedExp*{typedExp <- typedExp*} be exp)
+    1. (Let INJ _mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
 
       1. If (Exp_pure: |- typedExp)*{typedExp <- typedExp*} holds, then
 
@@ -3181,9 +3308,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  14. Case (% matches pattern STR %)
+  12. Case (% has type strExp)
 
-    1. (Let STR expField*{expField <- expField*} be exp)
+    1. (Let STR expField*{expField <- expField*} be exp as strExp)
 
       1. (Let _atom typedExp be expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
 
@@ -3193,9 +3320,9 @@ relation Exp_pure: |- exp '#' _typ'
 
         1. Else Dangling
 
-  15. Case (% matches pattern OPT %)
+  13. Case (% has type optExp)
 
-    1. (Let OPT typedExp?{typedExp <- typedExp?} be exp)
+    1. (Let OPT typedExp?{typedExp <- typedExp?} be exp as optExp)
 
       1. If (Exp_pure: |- typedExp)?{typedExp <- typedExp?} holds, then
 
@@ -3203,9 +3330,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  16. Case (% matches pattern LIST %)
+  14. Case (% has type listExp)
 
-    1. (Let LIST typedExp*{typedExp <- typedExp*} be exp)
+    1. (Let LIST typedExp*{typedExp <- typedExp*} be exp as listExp)
 
       1. If (Exp_pure: |- typedExp)*{typedExp <- typedExp*} holds, then
 
@@ -3213,9 +3340,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  17. Case (% matches pattern CONS % %)
+  15. Case (% has type consExp)
 
-    1. (Let CONS typedExp_h typedExp_t be exp)
+    1. (Let CONS typedExp_h typedExp_t be exp as consExp)
 
       1. If (Exp_pure: |- typedExp_h) holds, then
 
@@ -3227,23 +3354,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  18. Case (% matches pattern CAT % %)
+  16. Case (% has type catExp)
 
-    1. (Let CAT typedExp_l typedExp_r be exp)
-
-      1. If (Exp_pure: |- typedExp_l) holds, then
-
-        1. If (Exp_pure: |- typedExp_r) holds, then
-
-          1. The relation holds
-
-        1. Else Dangling
-
-      1. Else Dangling
-
-  19. Case (% matches pattern MEM % %)
-
-    1. (Let MEM typedExp_l typedExp_r be exp)
+    1. (Let CAT typedExp_l typedExp_r be exp as catExp)
 
       1. If (Exp_pure: |- typedExp_l) holds, then
 
@@ -3255,9 +3368,23 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  20. Case (% matches pattern LEN %)
+  17. Case (% has type memExp)
 
-    1. (Let LEN typedExp be exp)
+    1. (Let MEM typedExp_l typedExp_r be exp as memExp)
+
+      1. If (Exp_pure: |- typedExp_l) holds, then
+
+        1. If (Exp_pure: |- typedExp_r) holds, then
+
+          1. The relation holds
+
+        1. Else Dangling
+
+      1. Else Dangling
+
+  18. Case (% has type lenExp)
+
+    1. (Let LEN typedExp be exp as lenExp)
 
       1. If (Exp_pure: |- typedExp) holds, then
 
@@ -3265,9 +3392,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  21. Case (% matches pattern DOT % %)
+  19. Case (% has type dotAccExp)
 
-    1. (Let DOT typedExp _atom be exp)
+    1. (Let DOT typedExp _atom be exp as dotAccExp)
 
       1. If (Exp_pure: |- typedExp) holds, then
 
@@ -3275,9 +3402,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  22. Case (% matches pattern IDX % %)
+  20. Case (% has type idxAccExp)
 
-    1. (Let IDX typedExp_b typedExp_i be exp)
+    1. (Let IDX typedExp_b typedExp_i be exp as idxAccExp)
 
       1. If (Exp_pure: |- typedExp_b) holds, then
 
@@ -3289,9 +3416,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  23. Case (% matches pattern SLICE % % %)
+  21. Case (% has type sliceAccExp)
 
-    1. (Let SLICE typedExp_b typedExp_i typedExp_n be exp)
+    1. (Let SLICE typedExp_b typedExp_i typedExp_n be exp as sliceAccExp)
 
       1. If (Exp_pure: |- typedExp_b) holds, then
 
@@ -3307,9 +3434,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  24. Case (% matches pattern UPD % % %)
+  22. Case (% has type updExp)
 
-    1. (Let UPD typedExp_b typedPath typedExp_f be exp)
+    1. (Let UPD typedExp_b typedPath typedExp_f be exp as updExp)
 
       1. If (Exp_pure: |- typedExp_b) holds, then
 
@@ -3325,9 +3452,9 @@ relation Exp_pure: |- exp '#' _typ'
 
       1. Else Dangling
 
-  25. Case (% matches pattern ITER % %)
+  23. Case (% has type iterExp)
 
-    1. (Let ITER typedExp _expIter be exp)
+    1. (Let ITER typedExp _expIter be exp as iterExp)
 
       1. If (Exp_pure: |- typedExp) holds, then
 
@@ -3337,17 +3464,25 @@ relation Exp_pure: |- exp '#' _typ'
 
 1. Else Dangling
 
+2. If (exp <: num), then
+
+  1. The relation holds
+
+2. Else Dangling
+
 relation Path_pure: |- path '#' _typ
 
 1. Case analysis on path (total)
 
-  1. Case (% matches pattern ROOT)
+  1. Case (% has type rootPath)
 
-    1. The relation holds
+    1. (Let rootPath be path as rootPath)
 
-  2. Case (% matches pattern IDX % %)
+      1. The relation holds
 
-    1. (Let IDX typedPath typedExp_i be path)
+  2. Case (% has type idxPath)
+
+    1. (Let IDX typedPath typedExp_i be path as idxPath)
 
       1. If (Path_pure: |- typedPath) holds, then
 
@@ -3359,9 +3494,9 @@ relation Path_pure: |- path '#' _typ
 
       1. Else Dangling
 
-  3. Case (% matches pattern SLICE % % %)
+  3. Case (% has type slicePath)
 
-    1. (Let SLICE typedPath typedExp_i typedExp_n be path)
+    1. (Let SLICE typedPath typedExp_i typedExp_n be path as slicePath)
 
       1. If (Path_pure: |- typedPath) holds, then
 
@@ -3377,9 +3512,9 @@ relation Path_pure: |- path '#' _typ
 
       1. Else Dangling
 
-  4. Case (% matches pattern DOT % %)
+  4. Case (% has type dotPath)
 
-    1. (Let DOT typedPath _atom be path)
+    1. (Let DOT typedPath _atom be path as dotPath)
 
       1. If (Path_pure: |- typedPath) holds, then
 
@@ -3505,89 +3640,93 @@ def $free_varis_exp(exp '#' typ)
 
 1. Case analysis on exp (total)
 
-  1. Case (% matches pattern BOOL %)
+  1. Case (% has type literalExp)
 
-    1. Return []
+    1. (Let literalExp be exp as literalExp)
 
-  2. Case (% has type num)
+      1. Case analysis on literalExp
 
-    1. Return []
+        1. Case (% matches pattern BOOL %)
 
-  3. Case (% matches pattern TEXT %)
+          1. Return []
 
-    1. Return []
+        2. Case (% matches pattern TEXT %)
 
-  4. Case (% matches pattern VAR %)
+          1. Return []
 
-    1. (Let VAR id be exp)
+      1. Else Dangling
+
+  2. Case (% has type varExp)
+
+    1. (Let VAR id be exp as varExp)
 
       1. Return [id typ []]
 
-  5. Case (% matches pattern UN % %)
+  3. Case (% has type unOpExp)
 
-    1. (Let UN _unop typedExp be exp)
+    1. (Let UN _unOp typedExp be exp as unOpExp)
 
       1. Return $free_varis_exp(typedExp)
 
-  6. Case (% matches pattern BIN % % %)
+  4. Case (% has type binOpExp)
 
-    1. (Let BIN _binop typedExp_l typedExp_r be exp)
+    1. (Let BIN _binOp typedExp_l typedExp_r be exp as binOpExp)
 
       1. Return $free_varis_exps([typedExp_l, typedExp_r])
 
-  7. Case (% matches pattern CMP % % %)
+  5. Case (% has type cmpOpExp)
 
-    1. (Let CMP _cmpop typedExp_l typedExp_r be exp)
+    1. (Let CMP _cmpOp typedExp_l typedExp_r be exp as cmpOpExp)
 
       1. Return $free_varis_exps([typedExp_l, typedExp_r])
 
-  8. Case (% matches pattern UPCAST % %)
+  6. Case (% has type upCastExp)
 
-    1. (Let UPCAST _typ typedExp be exp)
-
-      1. Return $free_varis_exp(typedExp)
-
-  9. Case (% matches pattern DOWNCAST % %)
-
-    1. (Let DOWNCAST _typ typedExp be exp)
+    1. (Let UPCAST _typ typedExp be exp as upCastExp)
 
       1. Return $free_varis_exp(typedExp)
 
-  10. Case (% matches pattern SUB % %)
+  7. Case (% has type downCastExp)
 
-    1. (Let SUB typedExp _typ be exp)
-
-      1. Return $free_varis_exp(typedExp)
-
-  11. Case (% matches pattern MATCH % %)
-
-    1. (Let MATCH typedExp _pat be exp)
+    1. (Let DOWNCAST _typ typedExp be exp as downCastExp)
 
       1. Return $free_varis_exp(typedExp)
 
-  12. Case (% matches pattern TUP %)
+  8. Case (% has type subExp)
 
-    1. (Let TUP typedExp*{typedExp <- typedExp*} be exp)
+    1. (Let SUB typedExp _typ be exp as subExp)
+
+      1. Return $free_varis_exp(typedExp)
+
+  9. Case (% has type matchExp)
+
+    1. (Let MATCH typedExp _pat be exp as matchExp)
+
+      1. Return $free_varis_exp(typedExp)
+
+  10. Case (% has type tupExp)
+
+    1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
 
       1. Return $free_varis_exps(typedExp*{typedExp <- typedExp*})
 
-  13. Case (% matches pattern INJ %)
+  11. Case (% has type injExp)
 
-    1. (Let INJ _mixop typedExp*{typedExp <- typedExp*} be exp)
+    1. (Let INJ _mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
 
       1. Return $free_varis_exps(typedExp*{typedExp <- typedExp*})
 
-  14. Case (% matches pattern STR %)
+  12. Case (% has type strExp)
 
-    1. (Let STR expField*{expField <- expField*} be exp)
+    1. (Let STR expField*{expField <- expField*} be exp as strExp)
 
       1. (Let _atom typedExp be expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
 
         1. Return $free_varis_exps(typedExp*{typedExp <- typedExp*})
 
-  15. Case (% matches pattern OPT %)
+  13. Case (% has type optExp)
 
-    1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp)
+    1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp as optExp)
 
       1. If (typedExp'?{typedExp' <- typedExp'?} matches (_)), then
 
@@ -3597,69 +3736,69 @@ def $free_varis_exp(exp '#' typ)
 
       1. Else Dangling
 
-  16. Case (% matches pattern LIST %)
+  14. Case (% has type listExp)
 
-    1. (Let LIST typedExp*{typedExp <- typedExp*} be exp)
+    1. (Let LIST typedExp*{typedExp <- typedExp*} be exp as listExp)
 
       1. Return $free_varis_exps(typedExp*{typedExp <- typedExp*})
 
-  17. Case (% matches pattern CONS % %)
+  15. Case (% has type consExp)
 
-    1. (Let CONS typedExp_h typedExp_t be exp)
+    1. (Let CONS typedExp_h typedExp_t be exp as consExp)
 
       1. Return $free_varis_exps([typedExp_h, typedExp_t])
 
-  18. Case (% matches pattern CAT % %)
+  16. Case (% has type catExp)
 
-    1. (Let CAT typedExp_l typedExp_r be exp)
-
-      1. Return $free_varis_exps([typedExp_l, typedExp_r])
-
-  19. Case (% matches pattern MEM % %)
-
-    1. (Let MEM typedExp_l typedExp_r be exp)
+    1. (Let CAT typedExp_l typedExp_r be exp as catExp)
 
       1. Return $free_varis_exps([typedExp_l, typedExp_r])
 
-  20. Case (% matches pattern LEN %)
+  17. Case (% has type memExp)
 
-    1. (Let LEN typedExp be exp)
+    1. (Let MEM typedExp_l typedExp_r be exp as memExp)
+
+      1. Return $free_varis_exps([typedExp_l, typedExp_r])
+
+  18. Case (% has type lenExp)
+
+    1. (Let LEN typedExp be exp as lenExp)
 
       1. Return $free_varis_exp(typedExp)
 
-  21. Case (% matches pattern DOT % %)
+  19. Case (% has type dotAccExp)
 
-    1. (Let DOT typedExp _atom be exp)
+    1. (Let DOT typedExp _atom be exp as dotAccExp)
 
       1. Return $free_varis_exp(typedExp)
 
-  22. Case (% matches pattern IDX % %)
+  20. Case (% has type idxAccExp)
 
-    1. (Let IDX typedExp_b typedExp_i be exp)
+    1. (Let IDX typedExp_b typedExp_i be exp as idxAccExp)
 
       1. Return $free_varis_exps([typedExp_b, typedExp_i])
 
-  23. Case (% matches pattern SLICE % % %)
+  21. Case (% has type sliceAccExp)
 
-    1. (Let SLICE typedExp_b typedExp_i typedExp_n be exp)
+    1. (Let SLICE typedExp_b typedExp_i typedExp_n be exp as sliceAccExp)
 
       1. Return $free_varis_exps([typedExp_b, typedExp_i, typedExp_n])
 
-  24. Case (% matches pattern UPD % % %)
+  22. Case (% has type updExp)
 
-    1. (Let UPD typedExp_b typedPath typedExp_f be exp)
+    1. (Let UPD typedExp_b typedPath typedExp_f be exp as updExp)
 
       1. Return $free_varis_exp(typedExp_b) ++ $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_f)
 
-  25. Case (% matches pattern CALL % % %)
+  23. Case (% has type callExp)
 
-    1. (Let CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} be exp)
+    1. (Let CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} be exp as callExp)
 
       1. Return $free_varis_args(arg*{arg <- arg*})
 
-  26. Case (% matches pattern ITER % %)
+  24. Case (% has type iterExp)
 
-    1. (Let ITER typedExp iter _vari*{_vari <- _vari*} be exp)
+    1. (Let ITER typedExp iter _vari*{_vari <- _vari*} be exp as iterExp)
 
       1. (Let vari*{vari <- vari*} be $free_varis_exp(typedExp))
 
@@ -3667,11 +3806,17 @@ def $free_varis_exp(exp '#' typ)
 
           1. Return vari_iter*{vari_iter <- vari_iter*}
 
-2. If ((exp = OPT ?())), then
+2. If (exp <: num), then
 
   1. Return []
 
 2. Else Dangling
+
+3. If ((exp = OPT ?() as exp)), then
+
+  1. Return []
+
+3. Else Dangling
 
 def $free_varis_exps(typedExp*{typedExp <- typedExp*})
 
@@ -3691,25 +3836,27 @@ def $free_varis_path(path '#' _typ)
 
 1. Case analysis on path (total)
 
-  1. Case (% matches pattern ROOT)
+  1. Case (% has type rootPath)
 
-    1. Return []
+    1. (Let rootPath be path as rootPath)
 
-  2. Case (% matches pattern IDX % %)
+      1. Return []
 
-    1. (Let IDX typedPath typedExp_i be path)
+  2. Case (% has type idxPath)
+
+    1. (Let IDX typedPath typedExp_i be path as idxPath)
 
       1. Return $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_i)
 
-  3. Case (% matches pattern SLICE % % %)
+  3. Case (% has type slicePath)
 
-    1. (Let SLICE typedPath typedExp_i typedExp_n be path)
+    1. (Let SLICE typedPath typedExp_i typedExp_n be path as slicePath)
 
       1. Return $free_varis_path(typedPath) ++ $free_varis_exps([typedExp_i, typedExp_n])
 
-  4. Case (% matches pattern DOT % %)
+  4. Case (% has type dotPath)
 
-    1. (Let DOT typedPath _atom be path)
+    1. (Let DOT typedPath _atom be path as dotPath)
 
       1. Return $free_varis_path(typedPath)
 
@@ -3717,13 +3864,13 @@ def $free_varis_arg(arg)
 
 1. Case analysis on arg (total)
 
-  1. Case (% matches pattern EXP %)
+  1. Case (% has type expArg)
 
-    1. (Let EXP typedExp be arg)
+    1. (Let EXP typedExp be arg as expArg)
 
       1. Return $free_varis_exp(typedExp)
 
-  2. Case (% matches pattern FUN %)
+  2. Case (% has type funArg)
 
     1. Return []
 
@@ -3825,7 +3972,7 @@ def $iter_exp(typedExp, vari, iter*{iter <- iter*})
 
       1. (Let _exp '#' typ be typedExp)
 
-        1. (Let typedExp_iter be ITER typedExp iter_h [vari] '#' ITER typ iter_h)
+        1. (Let typedExp_iter be ITER typedExp iter_h [vari] as exp '#' ITER typ iter_h)
 
           1. (Let vari_iter be $iterate_vari(vari, [iter_h]))
 
@@ -3833,7 +3980,7 @@ def $iter_exp(typedExp, vari, iter*{iter <- iter*})
 
 def $exp_of_vari(id typ iter*{iter <- iter*})
 
-1. Return $iter_exp(VAR id '#' typ, id typ [], iter*{iter <- iter*})
+1. Return $iter_exp(VAR id as exp '#' typ, id typ [], iter*{iter <- iter*})
 
 syntax occ = map<id, id*>
 
@@ -3877,9 +4024,9 @@ def $rename_exp(R, typedExp'')
 
   1. Case analysis on exp
 
-    1. Case (% matches pattern VAR %)
+    1. Case (% has type varExp)
 
-      1. (Let VAR id be exp)
+      1. (Let VAR id be exp as varExp)
 
         1. (Let id'*{id' <- id'*}?{id'* <- id'*?} be $find_map<id, id*>(R.OCC, id))
 
@@ -3893,7 +4040,7 @@ def $rename_exp(R, typedExp'')
 
                   1. (Let R_multi be R[SEEN = R.SEEN ++ [id]])
 
-                    1. Return (R_multi, VAR id '#' typ)
+                    1. Return (R_multi, VAR id as exp '#' typ)
 
                 2. Case true
 
@@ -3903,35 +4050,35 @@ def $rename_exp(R, typedExp'')
 
                       1. (Let R_multi be {USED id_used*{id_used <- id_used*}, SEEN R.SEEN, OCC occ})
 
-                        1. Return (R_multi, VAR id_fresh '#' typ)
+                        1. Return (R_multi, VAR id_fresh as exp '#' typ)
 
-    2. Case (% matches pattern UPCAST % %)
+    2. Case (% has type upCastExp)
 
-      1. (Let UPCAST typ_sup typedExp be exp)
+      1. (Let UPCAST typ_sup typedExp be exp as upCastExp)
 
         1. (Let (R_multi, typedExp_multi) be $rename_exp(R, typedExp))
 
-          1. Return (R_multi, UPCAST typ_sup typedExp_multi '#' typ)
+          1. Return (R_multi, UPCAST typ_sup typedExp_multi as exp '#' typ)
 
-    3. Case (% matches pattern TUP %)
+    3. Case (% has type tupExp)
 
-      1. (Let TUP typedExp*{typedExp <- typedExp*} be exp)
-
-        1. (Let (R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) be $rename_exps(R, typedExp*{typedExp <- typedExp*}))
-
-          1. Return (R_multi, TUP typedExp_multi*{typedExp_multi <- typedExp_multi*} '#' typ)
-
-    4. Case (% matches pattern INJ %)
-
-      1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp)
+      1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
 
         1. (Let (R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) be $rename_exps(R, typedExp*{typedExp <- typedExp*}))
 
-          1. Return (R_multi, INJ mixop typedExp_multi*{typedExp_multi <- typedExp_multi*} '#' typ)
+          1. Return (R_multi, TUP typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
 
-    5. Case (% matches pattern STR %)
+    4. Case (% has type injExp)
 
-      1. (Let STR expField*{expField <- expField*} be exp)
+      1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
+
+        1. (Let (R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) be $rename_exps(R, typedExp*{typedExp <- typedExp*}))
+
+          1. Return (R_multi, INJ mixop typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
+
+    5. Case (% has type strExp)
+
+      1. (Let STR expField*{expField <- expField*} be exp as strExp)
 
         1. (Let atom typedExp be expField)*{expField <- expField*, atom -> atom*, typedExp -> typedExp*}
 
@@ -3941,11 +4088,11 @@ def $rename_exp(R, typedExp'')
 
               1. (Let expField_multi be atom typedExp_multi)*{atom <- atom*, typedExp_multi <- typedExp_multi*, expField_multi -> expField_multi*}
 
-                1. Return (R_multi, STR expField_multi*{expField_multi <- expField_multi*} '#' typ)
+                1. Return (R_multi, STR expField_multi*{expField_multi <- expField_multi*} as exp '#' typ)
 
-    6. Case (% matches pattern OPT %)
+    6. Case (% has type optExp)
 
-      1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp)
+      1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp as optExp)
 
         1. If (typedExp'?{typedExp' <- typedExp'?} matches (_)), then
 
@@ -3953,29 +4100,29 @@ def $rename_exp(R, typedExp'')
 
             1. (Let (R_multi, typedExp_multi) be $rename_exp(R, typedExp))
 
-              1. Return (R_multi, OPT ?(typedExp_multi) '#' typ)
+              1. Return (R_multi, OPT ?(typedExp_multi) as exp '#' typ)
 
-    7. Case (% matches pattern LIST %)
+    7. Case (% has type listExp)
 
-      1. (Let LIST typedExp*{typedExp <- typedExp*} be exp)
+      1. (Let LIST typedExp*{typedExp <- typedExp*} be exp as listExp)
 
         1. (Let (R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) be $rename_exps(R, typedExp*{typedExp <- typedExp*}))
 
-          1. Return (R_multi, LIST typedExp_multi*{typedExp_multi <- typedExp_multi*} '#' typ)
+          1. Return (R_multi, LIST typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
 
-    8. Case (% matches pattern CONS % %)
+    8. Case (% has type consExp)
 
-      1. (Let CONS typedExp_h typedExp_t be exp)
+      1. (Let CONS typedExp_h typedExp_t be exp as consExp)
 
         1. (Let (R_h, typedExp_h_multi) be $rename_exp(R, typedExp_h))
 
           1. (Let (R_t, typedExp_t_multi) be $rename_exp(R_h, typedExp_t))
 
-            1. Return (R_t, CONS typedExp_h_multi typedExp_t_multi '#' typ)
+            1. Return (R_t, CONS typedExp_h_multi typedExp_t_multi as exp '#' typ)
 
-    9. Case (% matches pattern ITER % %)
+    9. Case (% has type iterExp)
 
-      1. (Let ITER typedExp iter vari*{vari <- vari*} be exp)
+      1. (Let ITER typedExp iter vari*{vari <- vari*} be exp as iterExp)
 
         1. (Let (R_multi, typedExp_multi) be $rename_exp(R, typedExp))
 
@@ -3985,7 +4132,7 @@ def $rename_exp(R, typedExp'')
 
               1. (Let vari_occ*{vari_occ <- vari_occ*} be $concat_<vari>(vari_rename*{vari_rename <- vari_rename*}*{vari_rename* <- vari_rename**}))
 
-                1. Return (R_multi, ITER typedExp_multi iter vari_occ*{vari_occ <- vari_occ*} '#' typ)
+                1. Return (R_multi, ITER typedExp_multi iter vari_occ*{vari_occ <- vari_occ*} as exp '#' typ)
 
 2. Otherwise,
 
@@ -4031,19 +4178,19 @@ def $rename_arg(R, arg)
 
 1. Case analysis on arg (total)
 
-  1. Case (% matches pattern EXP %)
+  1. Case (% has type expArg)
 
-    1. (Let EXP typedExp be arg)
+    1. (Let EXP typedExp be arg as expArg)
 
       1. (Let (R_multi, typedExp_multi) be $rename_exp(R, typedExp))
 
-        1. Return (R_multi, EXP typedExp_multi)
+        1. Return (R_multi, EXP typedExp_multi as arg)
 
-  2. Case (% matches pattern FUN %)
+  2. Case (% has type funArg)
 
-    1. (Let FUN id be arg)
+    1. (Let FUN id be arg as funArg)
 
-      1. Return (R, FUN id)
+      1. Return (R, FUN id as arg)
 
 def $rename_args(R, arg*{arg <- arg*})
 
@@ -4069,39 +4216,39 @@ def $is_invertible(typedExp)
 
   1. Case analysis on exp
 
-    1. Case (% matches pattern VAR %)
+    1. Case (% has type varExp)
 
       1. Return true
 
-    2. Case (% matches pattern UPCAST % %)
+    2. Case (% has type upCastExp)
 
       1. Return true
 
-    3. Case (% matches pattern TUP %)
+    3. Case (% has type tupExp)
 
       1. Return true
 
-    4. Case (% matches pattern INJ %)
+    4. Case (% has type injExp)
 
       1. Return true
 
-    5. Case (% matches pattern STR %)
+    5. Case (% has type strExp)
 
       1. Return true
 
-    6. Case (% matches pattern OPT %)
+    6. Case (% has type optExp)
 
       1. Return true
 
-    7. Case (% matches pattern LIST %)
+    7. Case (% has type listExp)
 
       1. Return true
 
-    8. Case (% matches pattern CONS % %)
+    8. Case (% has type consExp)
 
       1. Return true
 
-    9. Case (% matches pattern ITER % %)
+    9. Case (% has type iterExp)
 
       1. Return true
 
@@ -4129,11 +4276,11 @@ def $sideconds_multi_binder(IC, vari, id_later*{id_later <- id_later*})
 
 def $sidecond_multi_binder(IC, id_first typ iter*{iter <- iter*}, id_later)
 
-1. (Let typedExp_first be VAR id_first '#' typ)
+1. (Let typedExp_first be VAR id_first as exp '#' typ)
 
-  1. (Let typedExp_later be VAR id_later '#' typ)
+  1. (Let typedExp_later be VAR id_later as exp '#' typ)
 
-    1. (Let typedExp_cmp be CMP EQ as cmpop typedExp_first typedExp_later '#' BOOL as typ)
+    1. (Let typedExp_cmp be CMP EQ as cmpOp typedExp_first typedExp_later as exp '#' BOOL as typ)
 
       1. (Let premAL_cmp be IF typedExp_cmp as premAL)
 
@@ -4277,33 +4424,33 @@ def $is_irrefutable(tdenv, typedExp')
 
   1. Case analysis on exp
 
-    1. Case (% matches pattern VAR %)
+    1. Case (% has type varExp)
 
       1. Return true
 
-    2. Case (% matches pattern TUP %)
+    2. Case (% has type tupExp)
 
-      1. (Let TUP typedExp*{typedExp <- typedExp*} be exp)
+      1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
 
         1. Return $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
 
-    3. Case (% matches pattern INJ %)
+    3. Case (% has type injExp)
 
-      1. (Let INJ _mixop typedExp*{typedExp <- typedExp*} be exp)
+      1. (Let INJ _mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
 
         1. Return ($is_singleton_typ(tdenv, typ) /\ $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*}))
 
-    4. Case (% matches pattern STR %)
+    4. Case (% has type strExp)
 
-      1. (Let STR expField*{expField <- expField*} be exp)
+      1. (Let STR expField*{expField <- expField*} be exp as strExp)
 
         1. (Let _atom typedExp be expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
 
           1. Return $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
 
-    5. Case (% matches pattern ITER % %)
+    5. Case (% has type iterExp)
 
-      1. (Let ITER typedExp _expIter be exp)
+      1. (Let ITER typedExp _expIter be exp as iterExp)
 
         1. Return $is_irrefutable(tdenv, typedExp)
 
@@ -4345,19 +4492,19 @@ def $covered_cases(tdenv, exp '#' typ')
 
 1. Case analysis on exp
 
-  1. Case (% matches pattern VAR %)
+  1. Case (% has type varExp)
 
     1. Return $variant_cases(tdenv, typ')
 
-  2. Case (% matches pattern UPCAST % %)
+  2. Case (% has type upCastExp)
 
-    1. (Let UPCAST _typ typedExp be exp)
+    1. (Let UPCAST _typ typedExp be exp as upCastExp)
 
       1. Return $covered_cases(tdenv, typedExp)
 
-  3. Case (% matches pattern INJ %)
+  3. Case (% has type injExp)
 
-    1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp)
+    1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
 
       1. If ($forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})), then
 
@@ -4373,9 +4520,9 @@ def $is_wildcard_exp(typedExp)
 
 1. (Let exp '#' _typ be typedExp)
 
-  1. If (exp matches VAR %), then
+  1. If (exp <: varExp), then
 
-    1. (Let VAR id be exp)
+    1. (Let VAR id be exp as varExp)
 
       1. If ((|id| > 0)), then
 
@@ -4453,11 +4600,11 @@ def $is_covered(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCa
 
 def $exp_len(typedExp)
 
-1. Return LEN typedExp '#' NAT as typ
+1. Return LEN typedExp as exp '#' NAT as typ
 
-def $sidecond_cmp(cmpop, typedExp_l, typedExp_r)
+def $sidecond_cmp(cmpOp, typedExp_l, typedExp_r)
 
-1. Return IF CMP cmpop typedExp_l typedExp_r '#' BOOL as typ as premAL
+1. Return IF CMP cmpOp typedExp_l typedExp_r as exp '#' BOOL as typ as premAL
 
 def $exp_zero(tdenv, typ)
 
@@ -4483,7 +4630,7 @@ def $sidecond_iter(iter, vari_a, vari_b)
 
       1. (Let typedExp_b be $exp_of_vari($iterate_vari(vari_b, [STAR])))
 
-        1. Return $sidecond_cmp(EQ as cmpop, $exp_len(typedExp_a), $exp_len(typedExp_b))
+        1. Return $sidecond_cmp(EQ as cmpOp, $exp_len(typedExp_a), $exp_len(typedExp_b))
 
   2. Case (% matches pattern QUEST)
 
@@ -4493,11 +4640,11 @@ def $sidecond_iter(iter, vari_a, vari_b)
 
         1. (Let _exp '#' typ_opt be typedExp_a)
 
-          1. (Let typedExp_none_a be CMP EQ as cmpop typedExp_a OPT ?() '#' typ_opt '#' BOOL as typ)
+          1. (Let typedExp_none_a be CMP EQ as cmpOp typedExp_a OPT ?() as exp '#' typ_opt as exp '#' BOOL as typ)
 
-            1. (Let typedExp_none_b be CMP EQ as cmpop typedExp_b OPT ?() '#' typ_opt '#' BOOL as typ)
+            1. (Let typedExp_none_b be CMP EQ as cmpOp typedExp_b OPT ?() as exp '#' typ_opt as exp '#' BOOL as typ)
 
-              1. Return IF BIN EQUIV as binop typedExp_none_a typedExp_none_b '#' BOOL as typ as premAL
+              1. Return IF BIN EQUIV as binOp typedExp_none_a typedExp_none_b as exp '#' BOOL as typ as premAL
 
 def $sideconds_iter(iter, vari'*{vari' <- vari'*})
 
@@ -4533,33 +4680,35 @@ def $access_exp(typedExp_b, path '#' typ)
 
 1. Case analysis on path (total)
 
-  1. Case (% matches pattern ROOT)
+  1. Case (% has type rootPath)
 
-    1. Return typedExp_b
+    1. (Let rootPath be path as rootPath)
 
-  2. Case (% matches pattern IDX % %)
+      1. Return typedExp_b
 
-    1. (Let IDX typedPath typedExp_i be path)
+  2. Case (% has type idxPath)
 
-      1. (Let typedExp_p be $access_exp(typedExp_b, typedPath))
-
-        1. Return IDX typedExp_p typedExp_i '#' typ
-
-  3. Case (% matches pattern SLICE % % %)
-
-    1. (Let SLICE typedPath typedExp_i typedExp_n be path)
+    1. (Let IDX typedPath typedExp_i be path as idxPath)
 
       1. (Let typedExp_p be $access_exp(typedExp_b, typedPath))
 
-        1. Return SLICE typedExp_p typedExp_i typedExp_n '#' typ
+        1. Return IDX typedExp_p typedExp_i as exp '#' typ
 
-  4. Case (% matches pattern DOT % %)
+  3. Case (% has type slicePath)
 
-    1. (Let DOT typedPath atom be path)
+    1. (Let SLICE typedPath typedExp_i typedExp_n be path as slicePath)
 
       1. (Let typedExp_p be $access_exp(typedExp_b, typedPath))
 
-        1. Return DOT typedExp_p atom '#' typ
+        1. Return SLICE typedExp_p typedExp_i typedExp_n as exp '#' typ
+
+  4. Case (% has type dotPath)
+
+    1. (Let DOT typedPath atom be path as dotPath)
+
+      1. (Let typedExp_p be $access_exp(typedExp_b, typedPath))
+
+        1. Return DOT typedExp_p atom as exp '#' typ
 
 def $sideconds_replace(tdenv, typedPath, typedExp_f)
 
@@ -4567,25 +4716,25 @@ def $sideconds_replace(tdenv, typedPath, typedExp_f)
 
   1. Case analysis on path
 
-    1. Case (% matches pattern SLICE % % %)
+    1. Case (% has type slicePath)
 
-      1. (Let SLICE _typedPath _typedExp typedExp_n be path)
+      1. (Let SLICE _typedPath _typedExp typedExp_n be path as slicePath)
 
         1. (Let typedExp_len be $exp_len(typedExp_f))
 
-          1. (Let premAL_len be $sidecond_cmp(EQ as cmpop, typedExp_len, typedExp_n))
+          1. (Let premAL_len be $sidecond_cmp(EQ as cmpOp, typedExp_len, typedExp_n))
 
             1. Return [premAL_len]
 
-    2. Case (% matches pattern IDX % %)
+    2. Case (% has type idxPath)
 
-      1. (Let IDX _path '#' typ_b _typedExp be path)
+      1. (Let IDX _path '#' typ_b _typedExp be path as idxPath)
 
         1. If ((OK TEXT as typ as typRes = $expand_typ(tdenv, typ_b))), then
 
           1. (Let typedExp_len be $exp_len(typedExp_f))
 
-            1. (Let premAL_len be $sidecond_cmp(EQ as cmpop, typedExp_len, NAT 1 as exp '#' NAT as typ))
+            1. (Let premAL_len be $sidecond_cmp(EQ as cmpOp, typedExp_len, NAT 1 as exp '#' NAT as typ))
 
               1. Return [premAL_len]
 
@@ -4936,27 +5085,27 @@ relation Eval_exp: C |- typedExp' : %
 
   1. Case analysis on exp (total)
 
-    1. Case (% matches pattern BOOL %)
+    1. Case (% has type literalExp)
 
-      1. (Let BOOL b be exp)
+      1. (Let literalExp be exp as literalExp)
 
-        1. Result in: % |- % : OK BOOL b as expRes
+        1. Case analysis on literalExp
 
-    2. Case (% has type num)
+          1. Case (% matches pattern BOOL %)
 
-      1. (Let num be exp as num)
+            1. (Let BOOL b be literalExp)
 
-        1. Result in: % |- % : OK num as val as expRes
+              1. Result in: % |- % : OK BOOL b as expRes
 
-    3. Case (% matches pattern TEXT %)
+          2. Case (% matches pattern TEXT %)
 
-      1. (Let TEXT t be exp)
+            1. (Let TEXT t be literalExp)
 
-        1. Result in: % |- % : OK TEXT t as expRes
+              1. Result in: % |- % : OK TEXT t as expRes
 
-    4. Case (% matches pattern VAR %)
+    2. Case (% has type varExp)
 
-      1. (Let VAR id be exp)
+      1. (Let VAR id be exp as varExp)
 
         1. (Let val'?{val' <- val'?} be $find_varr(C, id []))
 
@@ -4966,11 +5115,11 @@ relation Eval_exp: C |- typedExp' : %
 
               1. Result in: % |- % : OK val as expRes
 
-    5. Case (% matches pattern UN % %)
+    3. Case (% has type unOpExp)
 
-      1. (Let UN unop typedExp be exp)
+      1. (Let UN unOp typedExp be exp as unOpExp)
 
-        1. If ((unop = NOT as unop)), then
+        1. If ((unOp = NOT as unOp)), then
 
           1. (Eval_exp: C |- typedExp : expRes)
 
@@ -4994,9 +5143,9 @@ relation Eval_exp: C |- typedExp' : %
 
                         1. Result in: % |- % : OK BOOL b_res as expRes
 
-        2. If (unop <: numUnop), then
+        2. If (unOp <: numUnOp), then
 
-          1. (Let numUnop be unop as numUnop)
+          1. (Let numUnOp be unOp as numUnOp)
 
             1. (Eval_exp: C |- typedExp : expRes)
 
@@ -5016,19 +5165,19 @@ relation Eval_exp: C |- typedExp' : %
 
                       1. (Let num be val as num)
 
-                        1. (Let val_res be $numUnop(numUnop, num))
+                        1. (Let val_res be $numUnOp(numUnOp, num))
 
                           1. Result in: % |- % : OK val_res as expRes
 
-    6. Case (% matches pattern BIN % % %)
+    4. Case (% has type binOpExp)
 
-      1. (Let BIN binop typedExp_l typedExp_r be exp)
+      1. (Let BIN binOp typedExp_l typedExp_r be exp as binOpExp)
 
-        1. Case analysis on binop (total)
+        1. Case analysis on binOp (total)
 
-          1. Case (% has type boolBinop)
+          1. Case (% has type boolBinOp)
 
-            1. (Let boolBinop be binop as boolBinop)
+            1. (Let boolBinOp be binOp as boolBinOp)
 
               1. (Eval_exp: C |- typedExp_l : expRes)
 
@@ -5066,13 +5215,13 @@ relation Eval_exp: C |- typedExp' : %
 
                                     1. (Let BOOL b_r be val')
 
-                                      1. (Let b_res be $boolBinop(boolBinop, b_l, b_r))
+                                      1. (Let b_res be $boolBinOp(boolBinOp, b_l, b_r))
 
                                         1. Result in: % |- % : OK BOOL b_res as expRes
 
-          2. Case (% has type numBinop)
+          2. Case (% has type numBinOp)
 
-            1. (Let numBinop be binop as numBinop)
+            1. (Let numBinOp be binOp as numBinOp)
 
               1. (Eval_exp: C |- typedExp_l : expRes)
 
@@ -5110,19 +5259,19 @@ relation Eval_exp: C |- typedExp' : %
 
                                     1. (Let num_r be val' as num)
 
-                                      1. (Let numBinopRes be $numBinop(numBinop, num_l, num_r))
+                                      1. (Let numBinOpRes be $numBinOp(numBinOp, num_l, num_r))
 
-                                        1. Result in: % |- % : numBinopRes as expRes
+                                        1. Result in: % |- % : numBinOpRes as expRes
 
-    7. Case (% matches pattern CMP % % %)
+    5. Case (% has type cmpOpExp)
 
-      1. (Let CMP cmpop typedExp_l typedExp_r be exp)
+      1. (Let CMP cmpOp typedExp_l typedExp_r be exp as cmpOpExp)
 
-        1. Case analysis on cmpop (total)
+        1. Case analysis on cmpOp (total)
 
-          1. Case (% has type polyCmpop)
+          1. Case (% has type polyCmpOp)
 
-            1. (Let polyCmpop be cmpop as polyCmpop)
+            1. (Let polyCmpOp be cmpOp as polyCmpOp)
 
               1. (Eval_exp: C |- typedExp_l : expRes)
 
@@ -5152,13 +5301,13 @@ relation Eval_exp: C |- typedExp' : %
 
                             1. (Let OK val_r be expRes' as ok<val>)
 
-                              1. (Let b_res be $polyCmpop(polyCmpop, val_l, val_r))
+                              1. (Let b_res be $polyCmpOp(polyCmpOp, val_l, val_r))
 
                                 1. Result in: % |- % : OK BOOL b_res as expRes
 
-          2. Case (% has type numCmpop)
+          2. Case (% has type numCmpOp)
 
-            1. (Let numCmpop be cmpop as numCmpop)
+            1. (Let numCmpOp be cmpOp as numCmpOp)
 
               1. (Eval_exp: C |- typedExp_l : expRes)
 
@@ -5196,7 +5345,7 @@ relation Eval_exp: C |- typedExp' : %
 
                                     1. (Let num_r be val' as num)
 
-                                      1. (Let numCmpRes be $numCmpop(numCmpop, num_l, num_r))
+                                      1. (Let numCmpRes be $numCmpOp(numCmpOp, num_l, num_r))
 
                                         1. If (numCmpRes <: ok<bool>), then
 
@@ -5204,9 +5353,9 @@ relation Eval_exp: C |- typedExp' : %
 
                                             1. Result in: % |- % : OK BOOL b_res as expRes
 
-    8. Case (% matches pattern UPCAST % %)
+    6. Case (% has type upCastExp)
 
-      1. (Let UPCAST typ typedExp be exp)
+      1. (Let UPCAST typ typedExp be exp as upCastExp)
 
         1. (Eval_exp: C |- typedExp : expRes)
 
@@ -5226,9 +5375,9 @@ relation Eval_exp: C |- typedExp' : %
 
                   1. Result in: % |- % : castRes as expRes
 
-    9. Case (% matches pattern DOWNCAST % %)
+    7. Case (% has type downCastExp)
 
-      1. (Let DOWNCAST typ typedExp be exp)
+      1. (Let DOWNCAST typ typedExp be exp as downCastExp)
 
         1. (Eval_exp: C |- typedExp : expRes)
 
@@ -5248,9 +5397,9 @@ relation Eval_exp: C |- typedExp' : %
 
                   1. Result in: % |- % : castRes as expRes
 
-    10. Case (% matches pattern SUB % %)
+    8. Case (% has type subExp)
 
-      1. (Let SUB typedExp typ be exp)
+      1. (Let SUB typedExp typ be exp as subExp)
 
         1. (Eval_exp: C |- typedExp : expRes)
 
@@ -5278,9 +5427,9 @@ relation Eval_exp: C |- typedExp' : %
 
                           1. Result in: % |- % : OK BOOL b as expRes
 
-    11. Case (% matches pattern MATCH % %)
+    9. Case (% has type matchExp)
 
-      1. (Let MATCH typedExp pat be exp)
+      1. (Let MATCH typedExp pat be exp as matchExp)
 
         1. (Eval_exp: C |- typedExp : expRes)
 
@@ -5300,9 +5449,9 @@ relation Eval_exp: C |- typedExp' : %
 
                   1. Result in: % |- % : OK BOOL b_matches as expRes
 
-    12. Case (% matches pattern TUP %)
+    10. Case (% has type tupExp)
 
-      1. (Let TUP typedExp*{typedExp <- typedExp*} be exp)
+      1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
 
         1. (Eval_exps: C |- typedExp*{typedExp <- typedExp*} : expsRes)
 
@@ -5320,9 +5469,9 @@ relation Eval_exp: C |- typedExp' : %
 
                 1. Result in: % |- % : OK TUP val*{val <- val*} as expRes
 
-    13. Case (% matches pattern INJ %)
+    11. Case (% has type injExp)
 
-      1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp)
+      1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
 
         1. (Eval_exps: C |- typedExp*{typedExp <- typedExp*} : expsRes)
 
@@ -5340,9 +5489,9 @@ relation Eval_exp: C |- typedExp' : %
 
                 1. Result in: % |- % : OK INJ mixop val*{val <- val*} as expRes
 
-    14. Case (% matches pattern STR %)
+    12. Case (% has type strExp)
 
-      1. (Let STR expField*{expField <- expField*} be exp)
+      1. (Let STR expField*{expField <- expField*} be exp as strExp)
 
         1. (Let atom typedExp be expField)*{expField <- expField*, atom -> atom*, typedExp -> typedExp*}
 
@@ -5366,9 +5515,9 @@ relation Eval_exp: C |- typedExp' : %
 
                       1. Result in: % |- % : OK STR valField*{valField <- valField*} as expRes
 
-    15. Case (% matches pattern OPT %)
+    13. Case (% has type optExp)
 
-      1. (Let OPT typedExp''?{typedExp'' <- typedExp''?} be exp)
+      1. (Let OPT typedExp''?{typedExp'' <- typedExp''?} be exp as optExp)
 
         1. Case analysis on typedExp''?{typedExp'' <- typedExp''?} (total)
 
@@ -5396,9 +5545,9 @@ relation Eval_exp: C |- typedExp' : %
 
                       1. Result in: % |- % : OK OPT ?(val) as expRes
 
-    16. Case (% matches pattern LIST %)
+    14. Case (% has type listExp)
 
-      1. (Let LIST typedExp*{typedExp <- typedExp*} be exp)
+      1. (Let LIST typedExp*{typedExp <- typedExp*} be exp as listExp)
 
         1. (Eval_exps: C |- typedExp*{typedExp <- typedExp*} : expsRes)
 
@@ -5416,9 +5565,9 @@ relation Eval_exp: C |- typedExp' : %
 
                 1. Result in: % |- % : OK LIST val*{val <- val*} as expRes
 
-    17. Case (% matches pattern CONS % %)
+    15. Case (% has type consExp)
 
-      1. (Let CONS typedExp_h typedExp_t be exp)
+      1. (Let CONS typedExp_h typedExp_t be exp as consExp)
 
         1. (Eval_exp: C |- typedExp_h : expRes)
 
@@ -5454,9 +5603,9 @@ relation Eval_exp: C |- typedExp' : %
 
                             1. Result in: % |- % : OK LIST val_h :: val_t*{val_t <- val_t*} as expRes
 
-    18. Case (% matches pattern CAT % %)
+    16. Case (% has type catExp)
 
-      1. (Let CAT typedExp_l typedExp_r be exp)
+      1. (Let CAT typedExp_l typedExp_r be exp as catExp)
 
         1. (Eval_exp: C |- typedExp_l : expRes)
 
@@ -5526,9 +5675,9 @@ relation Eval_exp: C |- typedExp' : %
 
                                     1. Result in: % |- % : OK TEXT t_res as expRes
 
-    19. Case (% matches pattern MEM % %)
+    17. Case (% has type memExp)
 
-      1. (Let MEM typedExp_e typedExp_s be exp)
+      1. (Let MEM typedExp_e typedExp_s be exp as memExp)
 
         1. (Eval_exp: C |- typedExp_e : expRes)
 
@@ -5566,9 +5715,9 @@ relation Eval_exp: C |- typedExp' : %
 
                               1. Result in: % |- % : OK BOOL b_mem as expRes
 
-    20. Case (% matches pattern LEN %)
+    18. Case (% has type lenExp)
 
-      1. (Let LEN typedExp be exp)
+      1. (Let LEN typedExp be exp as lenExp)
 
         1. (Eval_exp: C |- typedExp : expRes)
 
@@ -5602,9 +5751,9 @@ relation Eval_exp: C |- typedExp' : %
 
                         1. Result in: % |- % : OK NAT n as val as expRes
 
-    21. Case (% matches pattern DOT % %)
+    19. Case (% has type dotAccExp)
 
-      1. (Let DOT typedExp atom be exp)
+      1. (Let DOT typedExp atom be exp as dotAccExp)
 
         1. (Eval_exp: C |- typedExp : expRes)
 
@@ -5622,41 +5771,15 @@ relation Eval_exp: C |- typedExp' : %
 
                 1. (Let _exp '#' typ_b be typedExp)
 
-                  1. (Let typedPath be DOT ROOT '#' typ_b atom '#' typ')
+                  1. (Let typedPath be DOT ROOT as path '#' typ_b atom as path '#' typ')
 
                     1. (Eval_path_acc: C |- val typedPath : pathRes)
 
                       1. Result in: % |- % : pathRes as expRes
 
-    22. Case (% matches pattern IDX % %)
+    20. Case (% has type idxAccExp)
 
-      1. (Let IDX typedExp_b typedExp_i be exp)
-
-        1. (Eval_exp: C |- typedExp_b : expRes)
-
-          1. Case analysis on expRes (total)
-
-            1. Case (% has type failure)
-
-              1. (Let failure be expRes as failure)
-
-                1. Result in: % |- % : failure as expRes
-
-            2. Case (% has type ok<val>)
-
-              1. (Let OK val_b be expRes as ok<val>)
-
-                1. (Let _exp '#' typ_b be typedExp_b)
-
-                  1. (Let typedPath be IDX ROOT '#' typ_b typedExp_i '#' typ')
-
-                    1. (Eval_path_acc: C |- val_b typedPath : pathRes)
-
-                      1. Result in: % |- % : pathRes as expRes
-
-    23. Case (% matches pattern SLICE % % %)
-
-      1. (Let SLICE typedExp_b typedExp_i typedExp_n be exp)
+      1. (Let IDX typedExp_b typedExp_i be exp as idxAccExp)
 
         1. (Eval_exp: C |- typedExp_b : expRes)
 
@@ -5674,15 +5797,41 @@ relation Eval_exp: C |- typedExp' : %
 
                 1. (Let _exp '#' typ_b be typedExp_b)
 
-                  1. (Let typedPath be SLICE ROOT '#' typ_b typedExp_i typedExp_n '#' typ')
+                  1. (Let typedPath be IDX ROOT as path '#' typ_b typedExp_i as path '#' typ')
 
                     1. (Eval_path_acc: C |- val_b typedPath : pathRes)
 
                       1. Result in: % |- % : pathRes as expRes
 
-    24. Case (% matches pattern UPD % % %)
+    21. Case (% has type sliceAccExp)
 
-      1. (Let UPD typedExp_b typedPath typedExp_f be exp)
+      1. (Let SLICE typedExp_b typedExp_i typedExp_n be exp as sliceAccExp)
+
+        1. (Eval_exp: C |- typedExp_b : expRes)
+
+          1. Case analysis on expRes (total)
+
+            1. Case (% has type failure)
+
+              1. (Let failure be expRes as failure)
+
+                1. Result in: % |- % : failure as expRes
+
+            2. Case (% has type ok<val>)
+
+              1. (Let OK val_b be expRes as ok<val>)
+
+                1. (Let _exp '#' typ_b be typedExp_b)
+
+                  1. (Let typedPath be SLICE ROOT as path '#' typ_b typedExp_i typedExp_n as path '#' typ')
+
+                    1. (Eval_path_acc: C |- val_b typedPath : pathRes)
+
+                      1. Result in: % |- % : pathRes as expRes
+
+    22. Case (% has type updExp)
+
+      1. (Let UPD typedExp_b typedPath typedExp_f be exp as updExp)
 
         1. (Eval_exp: C |- typedExp_b : expRes)
 
@@ -5716,9 +5865,9 @@ relation Eval_exp: C |- typedExp' : %
 
                           1. Result in: % |- % : pathRes as expRes
 
-    25. Case (% matches pattern CALL % % %)
+    23. Case (% has type callExp)
 
-      1. (Let CALL id targ*{targ <- targ*} arg*{arg <- arg*} be exp)
+      1. (Let CALL id targ*{targ <- targ*} arg*{arg <- arg*} be exp as callExp)
 
         1. (Eval_targs: C |- targ*{targ <- targ*} : typsRes)
 
@@ -5744,11 +5893,11 @@ relation Eval_exp: C |- typedExp' : %
 
                         1. Result in: % |- % : funcRes as expRes
 
-    26. Case (% matches pattern ITER % %)
+    24. Case (% has type iterExp)
 
-      1. (Let ITER typedExp expIter be exp)
+      1. (Let ITER typedExp expIter be exp as iterExp)
 
-        1. (Let varr'?{varr' <- varr'?} be $is_iter_on_var(ITER typedExp expIter '#' typ'))
+        1. (Let varr'?{varr' <- varr'?} be $is_iter_on_var(ITER typedExp expIter as exp '#' typ'))
 
           1. If (varr'?{varr' <- varr'?} matches (_)), then
 
@@ -5762,7 +5911,7 @@ relation Eval_exp: C |- typedExp' : %
 
                     1. Result in: % |- % : OK val as expRes
 
-        2. If ($is_iter_on_var(ITER typedExp expIter '#' typ') matches ()), then
+        2. If ($is_iter_on_var(ITER typedExp expIter as exp '#' typ') matches ()), then
 
           1. (Let iter vari*{vari <- vari*} be expIter)
 
@@ -5815,6 +5964,12 @@ relation Eval_exp: C |- typedExp' : %
                             1. (Let OK val*{val <- val*} be expsRes as ok<val*>)
 
                               1. Result in: % |- % : OK LIST val*{val <- val*} as expRes
+
+  2. If (exp <: num), then
+
+    1. (Let num be exp as num)
+
+      1. Result in: % |- % : OK num as val as expRes
 
 2. Otherwise,
 
@@ -5953,13 +6108,15 @@ relation Eval_path_acc: C |- val_b typedPath' : %
 
   1. Case analysis on path (total)
 
-    1. Case (% matches pattern ROOT)
+    1. Case (% has type rootPath)
 
-      1. Result in: % |- % % : OK val_b as pathRes
+      1. (Let rootPath be path as rootPath)
 
-    2. Case (% matches pattern DOT % %)
+        1. Result in: % |- % % : OK val_b as pathRes
 
-      1. (Let DOT typedPath atom be path)
+    2. Case (% has type dotPath)
+
+      1. (Let DOT typedPath atom be path as dotPath)
 
         1. (Eval_path_acc: C |- val_b typedPath : pathRes)
 
@@ -5989,9 +6146,9 @@ relation Eval_path_acc: C |- val_b typedPath' : %
 
                             1. Result in: % |- % % : OK val as pathRes
 
-    3. Case (% matches pattern IDX % %)
+    3. Case (% has type idxPath)
 
-      1. (Let IDX typedPath typedExp_i be path)
+      1. (Let IDX typedPath typedExp_i be path as idxPath)
 
         1. (Eval_path_acc: C |- val_b typedPath : pathRes)
 
@@ -6073,9 +6230,9 @@ relation Eval_path_acc: C |- val_b typedPath' : %
 
                                           1. Result in: % |- % % : OK TEXT t_idx as pathRes
 
-    4. Case (% matches pattern SLICE % % %)
+    4. Case (% has type slicePath)
 
-      1. (Let SLICE typedPath typedExp_i typedExp_n be path)
+      1. (Let SLICE typedPath typedExp_i typedExp_n be path as slicePath)
 
         1. (Eval_path_acc: C |- val_b typedPath : pathRes)
 
@@ -6211,13 +6368,15 @@ relation Eval_path_upd: C |- val_b typedPath' := val_n' : %
 
   1. Case analysis on path (total)
 
-    1. Case (% matches pattern ROOT)
+    1. Case (% has type rootPath)
 
-      1. Result in: % |- % % := % : OK val_n' as pathRes
+      1. (Let rootPath be path as rootPath)
 
-    2. Case (% matches pattern IDX % %)
+        1. Result in: % |- % % := % : OK val_n' as pathRes
 
-      1. (Let IDX typedPath typedExp_i be path)
+    2. Case (% has type idxPath)
+
+      1. (Let IDX typedPath typedExp_i be path as idxPath)
 
         1. (Eval_path_acc: C |- val_b typedPath : pathRes')
 
@@ -6317,9 +6476,9 @@ relation Eval_path_upd: C |- val_b typedPath' := val_n' : %
 
                                             1. Result in: % |- % % := % : pathRes
 
-    3. Case (% matches pattern SLICE % % %)
+    3. Case (% has type slicePath)
 
-      1. (Let SLICE typedPath typedExp_i typedExp_n be path)
+      1. (Let SLICE typedPath typedExp_i typedExp_n be path as slicePath)
 
         1. (Eval_path_acc: C |- val_b typedPath : pathRes)
 
@@ -6505,9 +6664,9 @@ relation Eval_path_upd: C |- val_b typedPath' := val_n' : %
 
                                                           1. Result in: % |- % % := % : pathRes
 
-    4. Case (% matches pattern DOT % %)
+    4. Case (% has type dotPath)
 
-      1. (Let DOT typedPath atom be path)
+      1. (Let DOT typedPath atom be path as dotPath)
 
         1. (Eval_path_acc: C |- val_b typedPath : pathRes')
 
@@ -6562,9 +6721,9 @@ relation Eval_arg: C |- arg : %
 
 1. Case analysis on arg (total)
 
-  1. Case (% matches pattern EXP %)
+  1. Case (% has type expArg)
 
-    1. (Let EXP typedExp be arg)
+    1. (Let EXP typedExp be arg as expArg)
 
       1. (Eval_exp: C |- typedExp : expRes)
 
@@ -6574,9 +6733,9 @@ relation Eval_arg: C |- arg : %
 
             1. Result in: % |- % : argRes
 
-  2. Case (% matches pattern FUN %)
+  2. Case (% has type funArg)
 
-    1. (Let FUN id be arg)
+    1. (Let FUN id be arg as funArg)
 
       1. (Let id_global be $resolve_func_param(C, id))
 
@@ -7136,9 +7295,9 @@ relation Call_rel: C |- id `( val*{val <- val*} `) : %
 
   1. Result in: % |- % `( % `) : ERROR as relRes
 
-def $numUnop(numUnop, num)
+def $numUnOp(numUnOp, num)
 
-1. Case analysis on numUnop (total)
+1. Case analysis on numUnOp (total)
 
   1. Case (% matches pattern PLUS)
 
@@ -7172,9 +7331,9 @@ def $numUnop(numUnop, num)
 
           1. Return INT -i as val
 
-def $boolBinop(boolBinop, b_l, b_r)
+def $boolBinOp(boolBinOp, b_l, b_r)
 
-1. Case analysis on boolBinop (total)
+1. Case analysis on boolBinOp (total)
 
   1. Case (% matches pattern AND)
 
@@ -7192,13 +7351,13 @@ def $boolBinop(boolBinop, b_l, b_r)
 
     1. Return (b_l <=> b_r)
 
-syntax numBinopRes =
+syntax numBinOpRes =
    | OK val (from ok<val>)
    | ERROR (from error)
 
-def $numBinop(numBinop, num, num')
+def $numBinOp(numBinOp, num, num')
 
-1. Case analysis on numBinop
+1. Case analysis on numBinOp
 
   1. Case (% matches pattern ADD)
 
@@ -7212,7 +7371,7 @@ def $numBinop(numBinop, num, num')
 
             1. (Let NAT n_r be num')
 
-              1. Return OK NAT (n_l + n_r) as val as numBinopRes
+              1. Return OK NAT (n_l + n_r) as val as numBinOpRes
 
       2. Case (% matches pattern INT %)
 
@@ -7222,7 +7381,7 @@ def $numBinop(numBinop, num, num')
 
             1. (Let INT i_r be num')
 
-              1. Return OK INT (i_l + i_r) as val as numBinopRes
+              1. Return OK INT (i_l + i_r) as val as numBinOpRes
 
   2. Case (% matches pattern SUB)
 
@@ -7236,7 +7395,7 @@ def $numBinop(numBinop, num, num')
 
             1. (Let NAT n_r be num')
 
-              1. Return OK INT (n_l - n_r) as val as numBinopRes
+              1. Return OK INT (n_l - n_r) as val as numBinOpRes
 
       2. Case (% matches pattern INT %)
 
@@ -7246,7 +7405,7 @@ def $numBinop(numBinop, num, num')
 
             1. (Let INT i_r be num')
 
-              1. Return OK INT (i_l - i_r) as val as numBinopRes
+              1. Return OK INT (i_l - i_r) as val as numBinOpRes
 
   3. Case (% matches pattern MUL)
 
@@ -7260,7 +7419,7 @@ def $numBinop(numBinop, num, num')
 
             1. (Let NAT n_r be num')
 
-              1. Return OK NAT (n_l * n_r) as val as numBinopRes
+              1. Return OK NAT (n_l * n_r) as val as numBinOpRes
 
       2. Case (% matches pattern INT %)
 
@@ -7270,7 +7429,7 @@ def $numBinop(numBinop, num, num')
 
             1. (Let INT i_r be num')
 
-              1. Return OK INT (i_l * i_r) as val as numBinopRes
+              1. Return OK INT (i_l * i_r) as val as numBinOpRes
 
   4. Case (% matches pattern DIV)
 
@@ -7286,7 +7445,7 @@ def $numBinop(numBinop, num, num')
 
               1. If ((n_r =/= 0)), then
 
-                1. Return OK NAT (n_l / n_r) as val as numBinopRes
+                1. Return OK NAT (n_l / n_r) as val as numBinOpRes
 
       2. Case (% matches pattern INT %)
 
@@ -7298,7 +7457,7 @@ def $numBinop(numBinop, num, num')
 
               1. If ((i_r =/= +0)), then
 
-                1. Return OK INT (i_l / i_r) as val as numBinopRes
+                1. Return OK INT (i_l / i_r) as val as numBinOpRes
 
   5. Case (% matches pattern MOD)
 
@@ -7314,7 +7473,7 @@ def $numBinop(numBinop, num, num')
 
               1. If ((n_r =/= 0)), then
 
-                1. Return OK NAT (n_l \ n_r) as val as numBinopRes
+                1. Return OK NAT (n_l \ n_r) as val as numBinOpRes
 
       2. Case (% matches pattern INT %)
 
@@ -7326,15 +7485,15 @@ def $numBinop(numBinop, num, num')
 
               1. If ((i_r =/= +0)), then
 
-                1. Return OK INT (i_l \ i_r) as val as numBinopRes
+                1. Return OK INT (i_l \ i_r) as val as numBinOpRes
 
 2. Otherwise,
 
-  1. Return ERROR as numBinopRes
+  1. Return ERROR as numBinOpRes
 
-def $polyCmpop(polyCmpop, val_l, val_r)
+def $polyCmpOp(polyCmpOp, val_l, val_r)
 
-1. Case analysis on polyCmpop (total)
+1. Case analysis on polyCmpOp (total)
 
   1. Case (% matches pattern EQ)
 
@@ -7348,9 +7507,9 @@ syntax numCmpRes =
    | OK bool (from ok<bool>)
    | ERROR (from error)
 
-def $numCmpop(numCmpop, num, num')
+def $numCmpOp(numCmpOp, num, num')
 
-1. Case analysis on numCmpop (total)
+1. Case analysis on numCmpOp (total)
 
   1. Case (% matches pattern LT)
 
@@ -7850,15 +8009,15 @@ def $param_typ(param')
 
 1. Case analysis on param' (total)
 
-  1. Case (% matches pattern EXP %)
+  1. Case (% has type expParam)
 
-    1. (Let EXP typ be param')
+    1. (Let EXP typ be param' as expParam)
 
       1. Return typ
 
-  2. Case (% matches pattern FUN % ':' % % '->' %)
+  2. Case (% has type funParam)
 
-    1. (Let FUN id ':' tparam*{tparam <- tparam*} param*{param <- param*} '->' typ be param')
+    1. (Let FUN id ':' tparam*{tparam <- tparam*} param*{param <- param*} '->' typ be param' as funParam)
 
       1. Return FUNC tparam*{tparam <- tparam*} $param_typ(param)*{param <- param*} typ
 
@@ -8400,17 +8559,17 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
   1. Case analysis on exp
 
-    1. Case (% matches pattern VAR %)
+    1. Case (% has type varExp)
 
-      1. (Let VAR id be exp)
+      1. (Let VAR id be exp as varExp)
 
         1. (Let C' be $add_varr(C, id [], val'''))
 
           1. Result in: % |- % := % : OK C' as assignRes
 
-    2. Case (% matches pattern TUP %)
+    2. Case (% has type tupExp)
 
-      1. (Let TUP typedExp*{typedExp <- typedExp*} be exp)
+      1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
 
         1. If (val''' matches TUP %), then
 
@@ -8424,9 +8583,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                   1. Result in: % |- % := % : OK C' as assignRes
 
-    3. Case (% matches pattern INJ %)
+    3. Case (% has type injExp)
 
-      1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp)
+      1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
 
         1. If (val''' matches INJ %), then
 
@@ -8442,9 +8601,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                     1. Result in: % |- % := % : OK C' as assignRes
 
-    4. Case (% matches pattern STR %)
+    4. Case (% has type strExp)
 
-      1. (Let STR expField*{expField <- expField*} be exp)
+      1. (Let STR expField*{expField <- expField*} be exp as strExp)
 
         1. If (val''' matches STR %), then
 
@@ -8466,9 +8625,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                           1. Result in: % |- % := % : OK C' as assignRes
 
-    5. Case (% matches pattern OPT %)
+    5. Case (% has type optExp)
 
-      1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp)
+      1. (Let OPT typedExp'?{typedExp' <- typedExp'?} be exp as optExp)
 
         1. If (val''' matches OPT %), then
 
@@ -8498,9 +8657,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                   1. Result in: % |- % := % : OK C as assignRes
 
-    6. Case (% matches pattern LIST %)
+    6. Case (% has type listExp)
 
-      1. (Let LIST typedExp*{typedExp <- typedExp*} be exp)
+      1. (Let LIST typedExp*{typedExp <- typedExp*} be exp as listExp)
 
         1. If (val''' matches LIST %), then
 
@@ -8514,9 +8673,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                   1. Result in: % |- % := % : OK C' as assignRes
 
-    7. Case (% matches pattern CONS % %)
+    7. Case (% has type consExp)
 
-      1. (Let CONS typedExp_h typedExp_t be exp)
+      1. (Let CONS typedExp_h typedExp_t be exp as consExp)
 
         1. If (val''' matches LIST %), then
 
@@ -8540,11 +8699,11 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                             1. Result in: % |- % := % : OK C'' as assignRes
 
-    8. Case (% matches pattern ITER % %)
+    8. Case (% has type iterExp)
 
-      1. (Let ITER typedExp expIter be exp)
+      1. (Let ITER typedExp expIter be exp as iterExp)
 
-        1. (Let varr'?{varr' <- varr'?} be $is_iter_on_var(ITER typedExp expIter '#' typ))
+        1. (Let varr'?{varr' <- varr'?} be $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
 
           1. If (varr'?{varr' <- varr'?} matches (_)), then
 
@@ -8556,7 +8715,7 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
         2. If ((val''' = OPT ?())), then
 
-          1. If ($is_iter_on_var(ITER typedExp expIter '#' typ) matches ()), then
+          1. If ($is_iter_on_var(ITER typedExp expIter as exp '#' typ) matches ()), then
 
             1. (Let iter vari*{vari <- vari*} be expIter)
 
@@ -8580,7 +8739,7 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                 1. (Let ?(val) be val'?{val' <- val'?})
 
-                  1. If ($is_iter_on_var(ITER typedExp expIter '#' typ) matches ()), then
+                  1. If ($is_iter_on_var(ITER typedExp expIter as exp '#' typ) matches ()), then
 
                     1. (Let iter vari*{vari <- vari*} be expIter)
 
@@ -8608,7 +8767,7 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
             1. (Let LIST val*{val <- val*} be val''')
 
-              1. If ($is_iter_on_var(ITER typedExp expIter '#' typ) matches ()), then
+              1. If ($is_iter_on_var(ITER typedExp expIter as exp '#' typ) matches ()), then
 
                 1. (Let iter vari*{vari <- vari*} be expIter)
 
@@ -8680,9 +8839,9 @@ relation Assign_arg: C |- arg := val : %
 
 1. Case analysis on arg (total)
 
-  1. Case (% matches pattern EXP %)
+  1. Case (% has type expArg)
 
-    1. (Let EXP typedExp be arg)
+    1. (Let EXP typedExp be arg as expArg)
 
       1. (Assign_exp: C |- typedExp := val : assignRes)
 
@@ -8692,9 +8851,9 @@ relation Assign_arg: C |- arg := val : %
 
             1. Result in: % |- % := % : OK C' as assignRes
 
-  2. Case (% matches pattern FUN %)
+  2. Case (% has type funArg)
 
-    1. (Let FUN id be arg)
+    1. (Let FUN id be arg as funArg)
 
       1. If (val matches FUNC %), then
 

@@ -133,61 +133,61 @@ syntax iter =
 syntax vari =
    | id typ iter* (from vari)
 
-syntax boolUnop =
-   | NOT (from boolUnop)
+syntax boolUnOp =
+   | NOT (from boolUnOp)
 
-syntax numUnop =
-   | PLUS (from numUnop)
-   | MINUS (from numUnop)
+syntax numUnOp =
+   | PLUS (from numUnOp)
+   | MINUS (from numUnOp)
 
-syntax unop =
-   | NOT (from boolUnop)
-   | PLUS (from numUnop)
-   | MINUS (from numUnop)
+syntax unOp =
+   | NOT (from boolUnOp)
+   | PLUS (from numUnOp)
+   | MINUS (from numUnOp)
 
-syntax boolBinop =
-   | AND (from boolBinop)
-   | OR (from boolBinop)
-   | IMPL (from boolBinop)
-   | EQUIV (from boolBinop)
+syntax boolBinOp =
+   | AND (from boolBinOp)
+   | OR (from boolBinOp)
+   | IMPL (from boolBinOp)
+   | EQUIV (from boolBinOp)
 
-syntax numBinop =
-   | ADD (from numBinop)
-   | SUB (from numBinop)
-   | MUL (from numBinop)
-   | DIV (from numBinop)
-   | MOD (from numBinop)
-   | POW (from numBinop)
+syntax numBinOp =
+   | ADD (from numBinOp)
+   | SUB (from numBinOp)
+   | MUL (from numBinOp)
+   | DIV (from numBinOp)
+   | MOD (from numBinOp)
+   | POW (from numBinOp)
 
-syntax binop =
-   | AND (from boolBinop)
-   | OR (from boolBinop)
-   | IMPL (from boolBinop)
-   | EQUIV (from boolBinop)
-   | ADD (from numBinop)
-   | SUB (from numBinop)
-   | MUL (from numBinop)
-   | DIV (from numBinop)
-   | MOD (from numBinop)
-   | POW (from numBinop)
+syntax binOp =
+   | AND (from boolBinOp)
+   | OR (from boolBinOp)
+   | IMPL (from boolBinOp)
+   | EQUIV (from boolBinOp)
+   | ADD (from numBinOp)
+   | SUB (from numBinOp)
+   | MUL (from numBinOp)
+   | DIV (from numBinOp)
+   | MOD (from numBinOp)
+   | POW (from numBinOp)
 
-syntax numCmpop =
-   | LT (from numCmpop)
-   | GT (from numCmpop)
-   | LE (from numCmpop)
-   | GE (from numCmpop)
+syntax numCmpOp =
+   | LT (from numCmpOp)
+   | GT (from numCmpOp)
+   | LE (from numCmpOp)
+   | GE (from numCmpOp)
 
-syntax polyCmpop =
-   | EQ (from polyCmpop)
-   | NE (from polyCmpop)
+syntax polyCmpOp =
+   | EQ (from polyCmpOp)
+   | NE (from polyCmpOp)
 
-syntax cmpop =
-   | EQ (from polyCmpop)
-   | NE (from polyCmpop)
-   | LT (from numCmpop)
-   | GT (from numCmpop)
-   | LE (from numCmpop)
-   | GE (from numCmpop)
+syntax cmpOp =
+   | EQ (from polyCmpOp)
+   | NE (from polyCmpOp)
+   | LT (from numCmpOp)
+   | GT (from numCmpOp)
+   | LE (from numCmpOp)
+   | GE (from numCmpOp)
 
 syntax listPat =
    | CONS (from listPat)
@@ -209,34 +209,123 @@ syntax pat =
 syntax typedExp =
    | exp '#' typ (from typedExp)
 
-syntax exp =
-   | BOOL bool (from exp)
+syntax literalExp =
+   | BOOL bool (from literalExp)
    | NAT nat (from num)
    | INT int (from num)
-   | TEXT text (from exp)
-   | VAR id (from exp)
-   | UN unop typedExp (from exp)
-   | BIN binop typedExp typedExp (from exp)
-   | CMP cmpop typedExp typedExp (from exp)
-   | UPCAST typ typedExp (from exp)
-   | DOWNCAST typ typedExp (from exp)
-   | SUB typedExp typ (from exp)
-   | MATCH typedExp pat (from exp)
-   | TUP typedExp* (from exp)
-   | INJ expCase (from exp)
-   | STR expField* (from exp)
-   | OPT typedExp? (from exp)
-   | LIST typedExp* (from exp)
-   | CONS typedExp typedExp (from exp)
-   | CAT typedExp typedExp (from exp)
-   | MEM typedExp typedExp (from exp)
-   | LEN typedExp (from exp)
-   | DOT typedExp atom (from exp)
-   | IDX typedExp typedExp (from exp)
-   | SLICE typedExp typedExp typedExp (from exp)
-   | UPD typedExp typedPath typedExp (from exp)
-   | CALL id targ* arg* (from exp)
-   | ITER typedExp expIter (from exp)
+   | TEXT text (from literalExp)
+
+syntax varExp =
+   | VAR id (from varExp)
+
+syntax unOpExp =
+   | UN unOp typedExp (from unOpExp)
+
+syntax binOpExp =
+   | BIN binOp typedExp typedExp (from binOpExp)
+
+syntax cmpOpExp =
+   | CMP cmpOp typedExp typedExp (from cmpOpExp)
+
+syntax opExp =
+   | UN unOp typedExp (from unOpExp)
+   | BIN binOp typedExp typedExp (from binOpExp)
+   | CMP cmpOp typedExp typedExp (from cmpOpExp)
+
+syntax upCastExp =
+   | UPCAST typ typedExp (from upCastExp)
+
+syntax downCastExp =
+   | DOWNCAST typ typedExp (from downCastExp)
+
+syntax castExp =
+   | UPCAST typ typedExp (from upCastExp)
+   | DOWNCAST typ typedExp (from downCastExp)
+
+syntax subExp =
+   | SUB typedExp typ (from subExp)
+
+syntax matchExp =
+   | MATCH typedExp pat (from matchExp)
+
+syntax tupExp =
+   | TUP typedExp* (from tupExp)
+
+syntax injExp =
+   | INJ expCase (from injExp)
+
+syntax strExp =
+   | STR expField* (from strExp)
+
+syntax optExp =
+   | OPT typedExp? (from optExp)
+
+syntax listExp =
+   | LIST typedExp* (from listExp)
+
+syntax consExp =
+   | CONS typedExp typedExp (from consExp)
+
+syntax catExp =
+   | CAT typedExp typedExp (from catExp)
+
+syntax memExp =
+   | MEM typedExp typedExp (from memExp)
+
+syntax lenExp =
+   | LEN typedExp (from lenExp)
+
+syntax dotAccExp =
+   | DOT typedExp atom (from dotAccExp)
+
+syntax idxAccExp =
+   | IDX typedExp typedExp (from idxAccExp)
+
+syntax sliceAccExp =
+   | SLICE typedExp typedExp typedExp (from sliceAccExp)
+
+syntax accExp =
+   | DOT typedExp atom (from dotAccExp)
+   | IDX typedExp typedExp (from idxAccExp)
+   | SLICE typedExp typedExp typedExp (from sliceAccExp)
+
+syntax updExp =
+   | UPD typedExp typedPath typedExp (from updExp)
+
+syntax callExp =
+   | CALL id targ* arg* (from callExp)
+
+syntax iterExp =
+   | ITER typedExp expIter (from iterExp)
+
+syntax exp =
+   | BOOL bool (from literalExp)
+   | NAT nat (from num)
+   | INT int (from num)
+   | TEXT text (from literalExp)
+   | VAR id (from varExp)
+   | UN unOp typedExp (from unOpExp)
+   | BIN binOp typedExp typedExp (from binOpExp)
+   | CMP cmpOp typedExp typedExp (from cmpOpExp)
+   | UPCAST typ typedExp (from upCastExp)
+   | DOWNCAST typ typedExp (from downCastExp)
+   | SUB typedExp typ (from subExp)
+   | MATCH typedExp pat (from matchExp)
+   | TUP typedExp* (from tupExp)
+   | INJ expCase (from injExp)
+   | STR expField* (from strExp)
+   | OPT typedExp? (from optExp)
+   | LIST typedExp* (from listExp)
+   | CONS typedExp typedExp (from consExp)
+   | CAT typedExp typedExp (from catExp)
+   | MEM typedExp typedExp (from memExp)
+   | LEN typedExp (from lenExp)
+   | DOT typedExp atom (from dotAccExp)
+   | IDX typedExp typedExp (from idxAccExp)
+   | SLICE typedExp typedExp typedExp (from sliceAccExp)
+   | UPD typedExp typedPath typedExp (from updExp)
+   | CALL id targ* arg* (from callExp)
+   | ITER typedExp expIter (from iterExp)
 
 syntax expCase =
    | mixop typedExp* (from expCase)
@@ -250,23 +339,47 @@ syntax expIter =
 syntax typedPath =
    | path '#' typ (from typedPath)
 
+syntax rootPath =
+   | ROOT (from rootPath)
+
+syntax idxPath =
+   | IDX typedPath typedExp (from idxPath)
+
+syntax slicePath =
+   | SLICE typedPath typedExp typedExp (from slicePath)
+
+syntax dotPath =
+   | DOT typedPath atom (from dotPath)
+
 syntax path =
-   | ROOT (from path)
-   | IDX typedPath typedExp (from path)
-   | SLICE typedPath typedExp typedExp (from path)
-   | DOT typedPath atom (from path)
+   | ROOT (from rootPath)
+   | IDX typedPath typedExp (from idxPath)
+   | SLICE typedPath typedExp typedExp (from slicePath)
+   | DOT typedPath atom (from dotPath)
 
 syntax targ = typ
 
+syntax expArg =
+   | EXP typedExp (from expArg)
+
+syntax funArg =
+   | FUN id (from funArg)
+
 syntax arg =
-   | EXP typedExp (from arg)
-   | FUN id (from arg)
+   | EXP typedExp (from expArg)
+   | FUN id (from funArg)
 
 syntax tparam = id
 
+syntax expParam =
+   | EXP typ (from expParam)
+
+syntax funParam =
+   | FUN id ':' tparam* param* '->' typ (from funParam)
+
 syntax param =
-   | EXP typ (from param)
-   | FUN id ':' tparam* param* '->' typ (from param)
+   | EXP typ (from expParam)
+   | FUN id ':' tparam* param* '->' typ (from funParam)
 
 syntax ifPrem =
    | IF typedExp (from ifPrem)
@@ -500,9 +613,9 @@ def $drop_varis(vari*, id*) : vari* =
 
 def $is_iter_on_var(typedExp) : varr? =
 
-  clause 0 : (VAR id '#' _typ) = ?(id [])
+  clause 0 : (VAR id as exp '#' _typ) = ?(id [])
 
-  clause 1 : (ITER typedExp expIter '#' _typ) = ?(id iter*{iter <- iter*} ++ [iter_outer])
+  clause 1 : (ITER typedExp expIter as exp '#' _typ) = ?(id iter*{iter <- iter*} ++ [iter_outer])
   -- if (?(id iter*{iter <- iter*}) = $is_iter_on_var(typedExp))
   -- if (iter_outer [id _typ' iter*{iter <- iter*}] = expIter)
 
@@ -887,53 +1000,53 @@ relation Collectbind_exp: algoCtx |- typedExp : vari*
 
   rulegroup variable
 
-    rule bound: AC |- VAR id '#' _typ : []
+    rule bound: AC |- VAR id as exp '#' _typ : []
     -- if id <- $ids_of_varis(AC.BOUND)
 
-    rule binder: AC |- VAR id '#' typ : [id typ []]
+    rule binder: AC |- VAR id as exp '#' typ : [id typ []]
     -- if ~id <- $ids_of_varis(AC.BOUND)
 
   rulegroup upcast
 
-    rule upcast: AC |- UPCAST _typ typedExp '#' _typ' : vari*{vari <- vari*}
+    rule upcast: AC |- UPCAST _typ typedExp as exp '#' _typ' : vari*{vari <- vari*}
     -- Collectbind_exp: AC |- typedExp : vari*{vari <- vari*}
 
   rulegroup tuple
 
-    rule tuple: AC |- TUP typedExp*{typedExp <- typedExp*} '#' _typ : vari*{vari <- vari*}
+    rule tuple: AC |- TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ : vari*{vari <- vari*}
     -- Collectbind_exps: AC |- typedExp*{typedExp <- typedExp*} : vari*{vari <- vari*}
 
   rulegroup case
 
-    rule case: AC |- INJ _mixop typedExp*{typedExp <- typedExp*} '#' _typ : vari*{vari <- vari*}
+    rule case: AC |- INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ : vari*{vari <- vari*}
     -- Collectbind_exps: AC |- typedExp*{typedExp <- typedExp*} : vari*{vari <- vari*}
 
   rulegroup struct
 
-    rule struct: AC |- STR expField*{expField <- expField*} '#' _typ : vari*{vari <- vari*}
+    rule struct: AC |- STR expField*{expField <- expField*} as exp '#' _typ : vari*{vari <- vari*}
     -- (if (_atom typedExp = expField))*{_atom <- _atom*, expField <- expField*, typedExp <- typedExp*}
     -- Collectbind_exps: AC |- typedExp*{typedExp <- typedExp*} : vari*{vari <- vari*}
 
   rulegroup opt
 
-    rule none: AC |- OPT ?() '#' _typ : []
+    rule none: AC |- OPT ?() as exp '#' _typ : []
 
-    rule some: AC |- OPT ?(typedExp) '#' _typ : vari*{vari <- vari*}
+    rule some: AC |- OPT ?(typedExp) as exp '#' _typ : vari*{vari <- vari*}
     -- Collectbind_exp: AC |- typedExp : vari*{vari <- vari*}
 
   rulegroup list
 
-    rule list: AC |- LIST typedExp*{typedExp <- typedExp*} '#' _typ : vari*{vari <- vari*}
+    rule list: AC |- LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ : vari*{vari <- vari*}
     -- Collectbind_exps: AC |- typedExp*{typedExp <- typedExp*} : vari*{vari <- vari*}
 
   rulegroup cons
 
-    rule cons: AC |- CONS typedExp_h typedExp_t '#' _typ : vari*{vari <- vari*}
+    rule cons: AC |- CONS typedExp_h typedExp_t as exp '#' _typ : vari*{vari <- vari*}
     -- Collectbind_exps: AC |- [typedExp_h, typedExp_t] : vari*{vari <- vari*}
 
   rulegroup iter
 
-    rule iter: AC |- ITER typedExp iter _vari*{_vari <- _vari*} '#' _typ : vari_iter*{vari_iter <- vari_iter*}
+    rule iter: AC |- ITER typedExp iter _vari*{_vari <- _vari*} as exp '#' _typ : vari_iter*{vari_iter <- vari_iter*}
     -- Collectbind_exp: AC |- typedExp : vari*{vari <- vari*}
     -- (if (vari_iter = $iterate_vari(vari, [iter])))*{vari <- vari*, vari_iter <- vari_iter*}
 
@@ -958,12 +1071,12 @@ relation Collectbind_arg: algoCtx |- arg : vari*
 
   rulegroup exp
 
-    rule exp: AC |- EXP typedExp : vari*{vari <- vari*}
+    rule exp: AC |- EXP typedExp as arg : vari*{vari <- vari*}
     -- Collectbind_exp: AC |- typedExp : vari*{vari <- vari*}
 
   rulegroup fun
 
-    rule fun: AC |- FUN _id : []
+    rule fun: AC |- FUN _id as arg : []
 
 relation Collectbind_args: algoCtx |- arg* : vari*
 
@@ -1008,7 +1121,7 @@ relation Partialbind_exp: algoCtx iterCtx |- iterCtx typedExp : algoCtx iterCtx 
     -- if (_exp '#' typ = typedExp)
     -- if ((AC_fresh, vari_d) = $fresh_vari(AC, IC ++ IC_prem, typ))
     -- if (typedExp_d = $exp_of_vari(vari_d))
-    -- if (typedExp_check = CMP EQ as cmpop typedExp_d typedExp '#' BOOL as typ)
+    -- if (typedExp_check = CMP EQ as cmpOp typedExp_d typedExp as exp '#' BOOL as typ)
     -- if (id_d _typ _iter*{_iter <- _iter*} = vari_d)
     -- if (id_read*{id_read <- id_read*} = $ids_of_varis(vari_read*{vari_read <- vari_read*}))
     -- if (IC_d = $add_iterated(IC ++ IC_prem, [vari_d]))
@@ -1024,86 +1137,86 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
 
   rulegroup variable
 
-    rule variable: AC IC_prem |- IC VAR id '#' typ : AC IC VAR id '#' typ []
+    rule variable: AC IC_prem |- IC VAR id as exp '#' typ : AC IC VAR id as exp '#' typ []
 
   rulegroup upcast
 
-    rule upcast: AC IC_prem |- IC UPCAST _typ typedExp '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+    rule upcast: AC IC_prem |- IC UPCAST _typ typedExp as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
     -- Partialbind_exp: AC IC_prem |- IC typedExp : AC_sub IC_sub typedExp_sub premAL*{premAL <- premAL*}
     -- if (_exp '#' typ_sub = typedExp_sub)
     -- if ((AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ))
     -- if (typedExp_d = $exp_of_vari(vari_d))
-    -- if (typedExp_check = SUB typedExp_d typ_sub '#' BOOL as typ)
-    -- if (typedExp_down = DOWNCAST typ_sub typedExp_d '#' typ_sub)
+    -- if (typedExp_check = SUB typedExp_d typ_sub as exp '#' BOOL as typ)
+    -- if (typedExp_down = DOWNCAST typ_sub typedExp_d as exp '#' typ_sub)
     -- if (premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check))
     -- if (premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_sub, typedExp_down))
     -- if (IC_fresh = $add_iterated(IC_sub, [vari_d]))
 
   rulegroup tuple
 
-    rule tuple: AC IC_prem |- IC TUP typedExp*{typedExp <- typedExp*} '#' typ : AC_sub IC_sub TUP typedExp_part*{typedExp_part <- typedExp_part*} '#' typ premAL*{premAL <- premAL*}
+    rule tuple: AC IC_prem |- IC TUP typedExp*{typedExp <- typedExp*} as exp '#' typ : AC_sub IC_sub TUP typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ premAL*{premAL <- premAL*}
     -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
 
   rulegroup case
 
-    rule case: AC IC_prem |- IC INJ mixop typedExp*{typedExp <- typedExp*} '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+    rule case: AC IC_prem |- IC INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
     -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
-    -- if (typedExp_case = INJ mixop typedExp_part*{typedExp_part <- typedExp_part*} '#' typ)
+    -- if (typedExp_case = INJ mixop typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ)
     -- if ((AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ))
     -- if (typedExp_d = $exp_of_vari(vari_d))
-    -- if (typedExp_check = MATCH typedExp_d INJ mixop '#' BOOL as typ)
+    -- if (typedExp_check = MATCH typedExp_d INJ mixop as exp '#' BOOL as typ)
     -- if (premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check))
     -- if (premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_case, typedExp_d))
     -- if (IC_fresh = $add_iterated(IC_sub, [vari_d]))
 
   rulegroup struct
 
-    rule struct: AC IC_prem |- IC STR expField*{expField <- expField*} '#' typ : AC_sub IC_sub STR expField_part*{expField_part <- expField_part*} '#' typ premAL*{premAL <- premAL*}
+    rule struct: AC IC_prem |- IC STR expField*{expField <- expField*} as exp '#' typ : AC_sub IC_sub STR expField_part*{expField_part <- expField_part*} as exp '#' typ premAL*{premAL <- premAL*}
     -- (if (atom typedExp = expField))*{atom <- atom*, expField <- expField*, typedExp <- typedExp*}
     -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
     -- (if (expField_part = atom typedExp_part))*{atom <- atom*, expField_part <- expField_part*, typedExp_part <- typedExp_part*}
 
   rulegroup opt
 
-    rule opt: AC IC_prem |- IC OPT ?(typedExp) '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+    rule opt: AC IC_prem |- IC OPT ?(typedExp) as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
     -- Partialbind_exp: AC IC_prem |- IC typedExp : AC_sub IC_sub typedExp_part premAL*{premAL <- premAL*}
-    -- if (typedExp_opt = OPT ?(typedExp_part) '#' typ)
+    -- if (typedExp_opt = OPT ?(typedExp_part) as exp '#' typ)
     -- if ((AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ))
     -- if (typedExp_d = $exp_of_vari(vari_d))
-    -- if (typedExp_check = MATCH typedExp_d SOME as pat '#' BOOL as typ)
+    -- if (typedExp_check = MATCH typedExp_d SOME as pat as exp '#' BOOL as typ)
     -- if (premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check))
     -- if (premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_opt, typedExp_d))
     -- if (IC_fresh = $add_iterated(IC_sub, [vari_d]))
 
   rulegroup list
 
-    rule list: AC IC_prem |- IC LIST typedExp*{typedExp <- typedExp*} '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+    rule list: AC IC_prem |- IC LIST typedExp*{typedExp <- typedExp*} as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
     -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
-    -- if (typedExp_list = LIST typedExp_part*{typedExp_part <- typedExp_part*} '#' typ)
+    -- if (typedExp_list = LIST typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ)
     -- if ((AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ))
     -- if (typedExp_d = $exp_of_vari(vari_d))
     -- if (n = |typedExp*{typedExp <- typedExp*}|)
-    -- if (typedExp_check = MATCH typedExp_d FIXED n as pat '#' BOOL as typ)
+    -- if (typedExp_check = MATCH typedExp_d FIXED n as pat as exp '#' BOOL as typ)
     -- if (premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check))
     -- if (premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_list, typedExp_d))
     -- if (IC_fresh = $add_iterated(IC_sub, [vari_d]))
 
   rulegroup cons
 
-    rule cons: AC IC_prem |- IC CONS typedExp_h typedExp_t '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*}
+    rule cons: AC IC_prem |- IC CONS typedExp_h typedExp_t as exp '#' typ : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*}
     -- Partialbind_exp: AC IC_prem |- IC typedExp_h : AC_h IC_h typedExp_h_part premAL_h*{premAL_h <- premAL_h*}
     -- Partialbind_exp: AC_h IC_prem |- IC_h typedExp_t : AC_t IC_t typedExp_t_part premAL_t*{premAL_t <- premAL_t*}
-    -- if (typedExp_cons = CONS typedExp_h_part typedExp_t_part '#' typ)
+    -- if (typedExp_cons = CONS typedExp_h_part typedExp_t_part as exp '#' typ)
     -- if ((AC_fresh, vari_d) = $fresh_vari(AC_t, IC_t ++ IC_prem, typ))
     -- if (typedExp_d = $exp_of_vari(vari_d))
-    -- if (typedExp_check = MATCH typedExp_d CONS as pat '#' BOOL as typ)
+    -- if (typedExp_check = MATCH typedExp_d CONS as pat as exp '#' BOOL as typ)
     -- if (premAL_check = $sidecond_partial(IC_t ++ IC_prem, vari_d, typedExp_check))
     -- if (premAL_let = $let_partial(IC_t ++ IC_prem, vari_d, typedExp_cons, typedExp_d))
     -- if (IC_fresh = $add_iterated(IC_t, [vari_d]))
 
   rulegroup iter
 
-    rule iter: AC IC_prem |- IC ITER typedExp iter vari*{vari <- vari*} '#' typ : AC_sub IC_sub ITER typedExp_part iter vari_part*{vari_part <- vari_part*} '#' typ premAL*{premAL <- premAL*}
+    rule iter: AC IC_prem |- IC ITER typedExp iter vari*{vari <- vari*} as exp '#' typ : AC_sub IC_sub ITER typedExp_part iter vari_part*{vari_part <- vari_part*} as exp '#' typ premAL*{premAL <- premAL*}
     -- Partialbind_exp: AC IC_prem |- iter vari*{vari <- vari*} :: IC typedExp : AC_sub iter vari_iter*{vari_iter <- vari_iter*} :: IC_sub typedExp_part premAL*{premAL <- premAL*}
     -- if (vari_part*{vari_part <- vari_part*} = $select_varis(vari_iter*{vari_iter <- vari_iter*}, $ids_of_varis($free_varis_exp(typedExp_part))))
 
@@ -1121,12 +1234,12 @@ relation Partialbind_arg: algoCtx |- arg : algoCtx arg premAL*
 
   rulegroup exp
 
-    rule exp: AC |- EXP typedExp : AC_part EXP typedExp_part premAL*{premAL <- premAL*}
+    rule exp: AC |- EXP typedExp as arg : AC_part EXP typedExp_part as arg premAL*{premAL <- premAL*}
     -- Partialbind_exp: AC [] |- [] typedExp : AC_part _IC typedExp_part premAL*{premAL <- premAL*}
 
   rulegroup fun
 
-    rule fun: AC |- FUN id : AC FUN id []
+    rule fun: AC |- FUN id as arg : AC FUN id as arg []
 
 relation Partialbind_args: algoCtx |- arg* : algoCtx arg* premAL*
 
@@ -1192,7 +1305,7 @@ relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
 
     rule let-left: AC IC |- ifPrem as premIL : AC_bound premAL*{premAL <- premAL*}
     -- if (IF typedExp = ifPrem)
-    -- if (CMP EQ as cmpop typedExp_l typedExp_r '#' _typ = typedExp)
+    -- if (CMP EQ as cmpOp typedExp_l typedExp_r as exp '#' _typ = typedExp)
     -- Collectbind_exp: AC |- typedExp_l : vari_l*{vari_l <- vari_l*}
     -- if (vari_l*{vari_l <- vari_l*} =/= [])
     -- Collectbind_exp: AC |- typedExp_r : []
@@ -1200,7 +1313,7 @@ relation Algo_prem: algoCtx iterCtx |- premIL : algoCtx premAL*
 
     rule let-right: AC IC |- ifPrem as premIL : AC_bound premAL*{premAL <- premAL*}
     -- if (IF typedExp = ifPrem)
-    -- if (CMP EQ as cmpop typedExp_l typedExp_r '#' _typ = typedExp)
+    -- if (CMP EQ as cmpOp typedExp_l typedExp_r as exp '#' _typ = typedExp)
     -- Collectbind_exp: AC |- typedExp_l : []
     -- Collectbind_exp: AC |- typedExp_r : vari_r*{vari_r <- vari_r*}
     -- if (vari_r*{vari_r <- vari_r*} =/= [])
@@ -1288,9 +1401,9 @@ relation TblRows_cover: algoCtx typ* |- tblRowIL*
     -- (if (_typCase*{_typCase <- _typCase*} = $variant_cases(AC.TYP, typ)))*{_typCase* <- _typCase**, typ <- typ*}
     -- if (|tblRowIL*{tblRowIL <- tblRowIL*}| > 0)
     -- if (n_init as int = (|tblRowIL*{tblRowIL <- tblRowIL*}| - 1))
-    -- if (EXP typedExp_last*{typedExp_last <- typedExp_last*} '=' _typedExp = tblRowIL*{tblRowIL <- tblRowIL*}[n_init])
+    -- if (EXP typedExp_last as arg*{typedExp_last <- typedExp_last*} '=' _typedExp = tblRowIL*{tblRowIL <- tblRowIL*}[n_init])
     -- if $forall_($is_wildcard_exp(typedExp_last)*{typedExp_last <- typedExp_last*})
-    -- if (EXP typedExp*{typedExp <- typedExp*} '=' _typedExp'*{_typedExp' <- _typedExp'*, typedExp* <- typedExp**} = tblRowIL*{tblRowIL <- tblRowIL*}[0 : n_init])
+    -- if (EXP typedExp as arg*{typedExp <- typedExp*} '=' _typedExp'*{_typedExp' <- _typedExp'*, typedExp* <- typedExp**} = tblRowIL*{tblRowIL <- tblRowIL*}[0 : n_init])
     -- (if (typCase_row*{typCase_row <- typCase_row*} = $covered_cases(AC.TYP, typedExp)))*{typCase_row* <- typCase_row**, typedExp <- typedExp*}*{typCase_row** <- typCase_row***, typedExp* <- typedExp**}
     -- if $is_exclusive(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***})
 
@@ -1298,9 +1411,9 @@ relation TblRows_cover: algoCtx typ* |- tblRowIL*
     -- (if (typCase_total*{typCase_total <- typCase_total*} = $variant_cases(AC.TYP, typ)))*{typ <- typ*, typCase_total* <- typCase_total**}
     -- if (|tblRowIL*{tblRowIL <- tblRowIL*}| > 0)
     -- if (n_init as int = (|tblRowIL*{tblRowIL <- tblRowIL*}| - 1))
-    -- if (EXP typedExp_last*{typedExp_last <- typedExp_last*} '=' _typedExp = tblRowIL*{tblRowIL <- tblRowIL*}[n_init])
+    -- if (EXP typedExp_last as arg*{typedExp_last <- typedExp_last*} '=' _typedExp = tblRowIL*{tblRowIL <- tblRowIL*}[n_init])
     -- if ~$forall_($is_wildcard_exp(typedExp_last)*{typedExp_last <- typedExp_last*})
-    -- if (EXP typedExp*{typedExp <- typedExp*} '=' _typedExp'*{_typedExp' <- _typedExp'*, typedExp* <- typedExp**} = tblRowIL*{tblRowIL <- tblRowIL*})
+    -- if (EXP typedExp as arg*{typedExp <- typedExp*} '=' _typedExp'*{_typedExp' <- _typedExp'*, typedExp* <- typedExp**} = tblRowIL*{tblRowIL <- tblRowIL*})
     -- (if (typCase_row*{typCase_row <- typCase_row*} = $covered_cases(AC.TYP, typedExp)))*{typCase_row* <- typCase_row**, typedExp <- typedExp*}*{typCase_row** <- typCase_row***, typedExp* <- typedExp**}
     -- if $is_exclusive(typCase_row*{typCase_row <- typCase_row*}*{typCase_row* <- typCase_row**}*{typCase_row** <- typCase_row***})
     -- if (typCase_comb*{typCase_comb <- typCase_comb*}*{typCase_comb* <- typCase_comb**} = $combinations(typCase_total*{typCase_total <- typCase_total*}*{typCase_total* <- typCase_total**}))
@@ -1367,7 +1480,7 @@ relation Algo_def: algoCtx |- defnIL : defnAL
 
     rule table: AC |- tableFuncDefnIL as defnIL : tableFuncDefnAL as defnAL
     -- if (TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowIL*{tblRowIL <- tblRowIL*} = tableFuncDefnIL)
-    -- if (EXP typ_param*{typ_param <- typ_param*} = param*{param <- param*})
+    -- if (EXP typ_param as param*{typ_param <- typ_param*} = param*{param <- param*})
     -- (if (arg*{arg <- arg*} '=' _typedExp = tblRowIL))*{_typedExp <- _typedExp*, arg* <- arg**, tblRowIL <- tblRowIL*}
     -- (if (|arg*{arg <- arg*}| = |param*{param <- param*}|))*{arg* <- arg**}
     -- (Algo_tblRow: AC |- tblRowIL : tblRowAL)*{tblRowAL <- tblRowAL*, tblRowIL <- tblRowIL*}
@@ -1385,133 +1498,133 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
   rulegroup literal
 
-    rule boolean: AC |- BOOL _b '#' _typ : []
+    rule boolean: AC |- BOOL _b as exp '#' _typ : []
 
     rule number: AC |- num as exp '#' _typ : []
 
-    rule text: AC |- TEXT _t '#' _typ : []
+    rule text: AC |- TEXT _t as exp '#' _typ : []
 
   rulegroup variable
 
-    rule variable: AC |- VAR _id '#' _typ : []
+    rule variable: AC |- VAR _id as exp '#' _typ : []
 
   rulegroup unary
 
-    rule unary: AC |- UN _unop typedExp '#' _typ : premAL*{premAL <- premAL*}
+    rule unary: AC |- UN _unOp typedExp as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
 
   rulegroup binary
 
-    rule total: AC |- BIN binop typedExp_l typedExp_r '#' _typ : premAL*{premAL <- premAL*}
-    -- if ~binop <- [DIV as binop, MOD as binop]
+    rule total: AC |- BIN binOp typedExp_l typedExp_r as exp '#' _typ : premAL*{premAL <- premAL*}
+    -- if ~binOp <- [DIV as binOp, MOD as binOp]
     -- Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*}
 
-    rule divide: AC |- BIN binop typedExp_l typedExp_r '#' _typ : premAL*{premAL <- premAL*}
-    -- if binop <- [DIV as binop, MOD as binop]
+    rule divide: AC |- BIN binOp typedExp_l typedExp_r as exp '#' _typ : premAL*{premAL <- premAL*}
+    -- if binOp <- [DIV as binOp, MOD as binOp]
     -- Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL_operand*{premAL_operand <- premAL_operand*}
     -- if (_exp '#' typ_r = typedExp_r)
     -- if (typedExp_zero = $exp_zero(AC.TYP, typ_r))
-    -- if (premAL_div = $sidecond_cmp(NE as cmpop, typedExp_r, typedExp_zero))
+    -- if (premAL_div = $sidecond_cmp(NE as cmpOp, typedExp_r, typedExp_zero))
     -- if (premAL*{premAL <- premAL*} = premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_div])
 
   rulegroup compare
 
-    rule compare: AC |- CMP _cmpop typedExp_l typedExp_r '#' _typ : premAL*{premAL <- premAL*}
+    rule compare: AC |- CMP _cmpOp typedExp_l typedExp_r as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*}
 
   rulegroup upcast
 
-    rule upcast: AC |- UPCAST _typ typedExp '#' _typ' : premAL*{premAL <- premAL*}
+    rule upcast: AC |- UPCAST _typ typedExp as exp '#' _typ' : premAL*{premAL <- premAL*}
     -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
 
   rulegroup downcast
 
-    rule downcast: AC |- DOWNCAST _typ typedExp '#' _typ' : premAL*{premAL <- premAL*}
+    rule downcast: AC |- DOWNCAST _typ typedExp as exp '#' _typ' : premAL*{premAL <- premAL*}
     -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
 
   rulegroup subtype
 
-    rule subtype: AC |- SUB typedExp _typ '#' _typ' : premAL*{premAL <- premAL*}
+    rule subtype: AC |- SUB typedExp _typ as exp '#' _typ' : premAL*{premAL <- premAL*}
     -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
 
   rulegroup match
 
-    rule match: AC |- MATCH typedExp _pat '#' _typ : premAL*{premAL <- premAL*}
+    rule match: AC |- MATCH typedExp _pat as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
 
   rulegroup tuple
 
-    rule tuple: AC |- TUP typedExp*{typedExp <- typedExp*} '#' _typ : premAL*{premAL <- premAL*}
+    rule tuple: AC |- TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*}
 
   rulegroup case
 
-    rule case: AC |- INJ _mixop typedExp*{typedExp <- typedExp*} '#' _typ : premAL*{premAL <- premAL*}
+    rule case: AC |- INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*}
 
   rulegroup struct
 
-    rule struct: AC |- STR expField*{expField <- expField*} '#' _typ : premAL*{premAL <- premAL*}
+    rule struct: AC |- STR expField*{expField <- expField*} as exp '#' _typ : premAL*{premAL <- premAL*}
     -- (if (_atom typedExp = expField))*{_atom <- _atom*, expField <- expField*, typedExp <- typedExp*}
     -- Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*}
 
   rulegroup opt
 
-    rule none: AC |- OPT ?() '#' _typ : []
+    rule none: AC |- OPT ?() as exp '#' _typ : []
 
-    rule some: AC |- OPT ?(typedExp) '#' _typ : premAL*{premAL <- premAL*}
+    rule some: AC |- OPT ?(typedExp) as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
 
   rulegroup list
 
-    rule list: AC |- LIST typedExp*{typedExp <- typedExp*} '#' _typ : premAL*{premAL <- premAL*}
+    rule list: AC |- LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exps: AC |- typedExp*{typedExp <- typedExp*} : premAL*{premAL <- premAL*}
 
   rulegroup cons
 
-    rule cons: AC |- CONS typedExp_h typedExp_t '#' _typ : premAL*{premAL <- premAL*}
+    rule cons: AC |- CONS typedExp_h typedExp_t as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exps: AC |- [typedExp_h, typedExp_t] : premAL*{premAL <- premAL*}
 
   rulegroup concat
 
-    rule concat: AC |- CAT typedExp_l typedExp_r '#' _typ : premAL*{premAL <- premAL*}
+    rule concat: AC |- CAT typedExp_l typedExp_r as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*}
 
   rulegroup mem
 
-    rule mem: AC |- MEM typedExp_l typedExp_r '#' _typ : premAL*{premAL <- premAL*}
+    rule mem: AC |- MEM typedExp_l typedExp_r as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exps: AC |- [typedExp_l, typedExp_r] : premAL*{premAL <- premAL*}
 
   rulegroup len
 
-    rule len: AC |- LEN typedExp '#' _typ : premAL*{premAL <- premAL*}
+    rule len: AC |- LEN typedExp as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
 
   rulegroup dot
 
-    rule dot: AC |- DOT typedExp _atom '#' _typ : premAL*{premAL <- premAL*}
+    rule dot: AC |- DOT typedExp _atom as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
 
   rulegroup idx
 
-    rule idx: AC |- IDX typedExp_b typedExp_i '#' _typ : premAL*{premAL <- premAL*}
+    rule idx: AC |- IDX typedExp_b typedExp_i as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exps: AC |- [typedExp_b, typedExp_i] : premAL_operand*{premAL_operand <- premAL_operand*}
     -- if (typedExp_len = $exp_len(typedExp_b))
-    -- if (premAL_idx = $sidecond_cmp(LT as cmpop, typedExp_i, typedExp_len))
+    -- if (premAL_idx = $sidecond_cmp(LT as cmpOp, typedExp_i, typedExp_len))
     -- if (premAL*{premAL <- premAL*} = premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_idx])
 
   rulegroup slice
 
-    rule slice: AC |- SLICE typedExp_b typedExp_i typedExp_n '#' _typ : premAL*{premAL <- premAL*}
+    rule slice: AC |- SLICE typedExp_b typedExp_i typedExp_n as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_exps: AC |- [typedExp_b, typedExp_i, typedExp_n] : premAL_operand*{premAL_operand <- premAL_operand*}
-    -- if (typedExp_end = BIN ADD as binop typedExp_i typedExp_n '#' NAT as typ)
+    -- if (typedExp_end = BIN ADD as binOp typedExp_i typedExp_n as exp '#' NAT as typ)
     -- if (typedExp_len = $exp_len(typedExp_b))
-    -- if (premAL_slice = $sidecond_cmp(LE as cmpop, typedExp_end, typedExp_len))
+    -- if (premAL_slice = $sidecond_cmp(LE as cmpOp, typedExp_end, typedExp_len))
     -- if (premAL*{premAL <- premAL*} = premAL_operand*{premAL_operand <- premAL_operand*} ++ [premAL_slice])
 
   rulegroup upd
 
-    rule upd: AC |- UPD typedExp_b typedPath typedExp_f '#' _typ : premAL*{premAL <- premAL*}
+    rule upd: AC |- UPD typedExp_b typedPath typedExp_f as exp '#' _typ : premAL*{premAL <- premAL*}
     -- if (typedExp_acc = $access_exp(typedExp_b, typedPath))
     -- Guard_exp: AC |- typedExp_acc : premAL_acc*{premAL_acc <- premAL_acc*}
     -- Guard_exp: AC |- typedExp_f : premAL_f*{premAL_f <- premAL_f*}
@@ -1520,12 +1633,12 @@ relation Guard_exp: algoCtx |- typedExp : premAL*
 
   rulegroup call
 
-    rule call: AC |- CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} '#' _typ : premAL*{premAL <- premAL*}
+    rule call: AC |- CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} as exp '#' _typ : premAL*{premAL <- premAL*}
     -- Guard_args: AC |- arg*{arg <- arg*} : premAL*{premAL <- premAL*}
 
   rulegroup iter
 
-    rule iter: AC |- ITER typedExp iter vari*{vari <- vari*} '#' _typ : premAL*{premAL <- premAL*}
+    rule iter: AC |- ITER typedExp iter vari*{vari <- vari*} as exp '#' _typ : premAL*{premAL <- premAL*}
     -- if (premAL_src*{premAL_src <- premAL_src*} = $sideconds_iter(iter, vari*{vari <- vari*}))
     -- Guard_exp: AC |- typedExp : premAL_body*{premAL_body <- premAL_body*}
     -- (if (premAL_body_iter = ITER premAL_body iter '<-' vari*{vari <- vari*} '->' [] as premAL))*{premAL_body <- premAL_body*, premAL_body_iter <- premAL_body_iter*}
@@ -1546,12 +1659,12 @@ relation Guard_arg: algoCtx |- arg : premAL*
 
   rulegroup exp
 
-    rule exp: AC |- EXP typedExp : premAL*{premAL <- premAL*}
+    rule exp: AC |- EXP typedExp as arg : premAL*{premAL <- premAL*}
     -- Guard_exp: AC |- typedExp : premAL*{premAL <- premAL*}
 
   rulegroup fun
 
-    rule fun: AC |- FUN _id : []
+    rule fun: AC |- FUN _id as arg : []
 
 relation Guard_args: algoCtx |- arg* : premAL*
 
@@ -1687,154 +1800,154 @@ relation Exp_pure: |- typedExp
 
   rulegroup literal
 
-    rule boolean: |- BOOL _b '#' _typ
+    rule boolean: |- BOOL _b as exp '#' _typ
 
     rule number: |- num as exp '#' _typ
 
-    rule text: |- TEXT _t '#' _typ
+    rule text: |- TEXT _t as exp '#' _typ
 
   rulegroup variable
 
-    rule variable: |- VAR _id '#' _typ
+    rule variable: |- VAR _id as exp '#' _typ
 
   rulegroup unary
 
-    rule unary: |- UN _unop typedExp '#' _typ
+    rule unary: |- UN _unOp typedExp as exp '#' _typ
     -- if Exp_pure: |- typedExp holds
 
   rulegroup binary
 
-    rule binary: |- BIN _binop typedExp_l typedExp_r '#' _typ
+    rule binary: |- BIN _binOp typedExp_l typedExp_r as exp '#' _typ
     -- if Exp_pure: |- typedExp_l holds
     -- if Exp_pure: |- typedExp_r holds
 
   rulegroup compare
 
-    rule compare: |- CMP _cmpop typedExp_l typedExp_r '#' _typ
+    rule compare: |- CMP _cmpOp typedExp_l typedExp_r as exp '#' _typ
     -- if Exp_pure: |- typedExp_l holds
     -- if Exp_pure: |- typedExp_r holds
 
   rulegroup upcast
 
-    rule upcast: |- UPCAST _typ typedExp '#' _typ'
+    rule upcast: |- UPCAST _typ typedExp as exp '#' _typ'
     -- if Exp_pure: |- typedExp holds
 
   rulegroup downcast
 
-    rule downcast: |- DOWNCAST _typ typedExp '#' _typ'
+    rule downcast: |- DOWNCAST _typ typedExp as exp '#' _typ'
     -- if Exp_pure: |- typedExp holds
 
   rulegroup subtype
 
-    rule subtype: |- SUB typedExp _typ '#' _typ'
+    rule subtype: |- SUB typedExp _typ as exp '#' _typ'
     -- if Exp_pure: |- typedExp holds
 
   rulegroup match
 
-    rule match: |- MATCH typedExp _pat '#' _typ
+    rule match: |- MATCH typedExp _pat as exp '#' _typ
     -- if Exp_pure: |- typedExp holds
 
   rulegroup tuple
 
-    rule tuple: |- TUP typedExp*{typedExp <- typedExp*} '#' _typ
+    rule tuple: |- TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ
     -- (if Exp_pure: |- typedExp holds)*{typedExp <- typedExp*}
 
   rulegroup case
 
-    rule case: |- INJ _mixop typedExp*{typedExp <- typedExp*} '#' _typ
+    rule case: |- INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ
     -- (if Exp_pure: |- typedExp holds)*{typedExp <- typedExp*}
 
   rulegroup struct
 
-    rule struct: |- STR expField*{expField <- expField*} '#' _typ
+    rule struct: |- STR expField*{expField <- expField*} as exp '#' _typ
     -- (if (_atom typedExp = expField))*{_atom <- _atom*, expField <- expField*, typedExp <- typedExp*}
     -- (if Exp_pure: |- typedExp holds)*{typedExp <- typedExp*}
 
   rulegroup opt
 
-    rule opt: |- OPT typedExp?{typedExp <- typedExp?} '#' _typ
+    rule opt: |- OPT typedExp?{typedExp <- typedExp?} as exp '#' _typ
     -- (if Exp_pure: |- typedExp holds)?{typedExp <- typedExp?}
 
   rulegroup list
 
-    rule list: |- LIST typedExp*{typedExp <- typedExp*} '#' _typ
+    rule list: |- LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ
     -- (if Exp_pure: |- typedExp holds)*{typedExp <- typedExp*}
 
   rulegroup cons
 
-    rule cons: |- CONS typedExp_h typedExp_t '#' _typ
+    rule cons: |- CONS typedExp_h typedExp_t as exp '#' _typ
     -- if Exp_pure: |- typedExp_h holds
     -- if Exp_pure: |- typedExp_t holds
 
   rulegroup concat
 
-    rule concat: |- CAT typedExp_l typedExp_r '#' _typ
+    rule concat: |- CAT typedExp_l typedExp_r as exp '#' _typ
     -- if Exp_pure: |- typedExp_l holds
     -- if Exp_pure: |- typedExp_r holds
 
   rulegroup mem
 
-    rule mem: |- MEM typedExp_l typedExp_r '#' _typ
+    rule mem: |- MEM typedExp_l typedExp_r as exp '#' _typ
     -- if Exp_pure: |- typedExp_l holds
     -- if Exp_pure: |- typedExp_r holds
 
   rulegroup len
 
-    rule len: |- LEN typedExp '#' _typ
+    rule len: |- LEN typedExp as exp '#' _typ
     -- if Exp_pure: |- typedExp holds
 
   rulegroup dot
 
-    rule dot: |- DOT typedExp _atom '#' _typ
+    rule dot: |- DOT typedExp _atom as exp '#' _typ
     -- if Exp_pure: |- typedExp holds
 
   rulegroup idx
 
-    rule idx: |- IDX typedExp_b typedExp_i '#' _typ
+    rule idx: |- IDX typedExp_b typedExp_i as exp '#' _typ
     -- if Exp_pure: |- typedExp_b holds
     -- if Exp_pure: |- typedExp_i holds
 
   rulegroup slice
 
-    rule slice: |- SLICE typedExp_b typedExp_i typedExp_n '#' _typ
+    rule slice: |- SLICE typedExp_b typedExp_i typedExp_n as exp '#' _typ
     -- if Exp_pure: |- typedExp_b holds
     -- if Exp_pure: |- typedExp_i holds
     -- if Exp_pure: |- typedExp_n holds
 
   rulegroup upd
 
-    rule upd: |- UPD typedExp_b typedPath typedExp_f '#' _typ
+    rule upd: |- UPD typedExp_b typedPath typedExp_f as exp '#' _typ
     -- if Exp_pure: |- typedExp_b holds
     -- if Path_pure: |- typedPath holds
     -- if Exp_pure: |- typedExp_f holds
 
   rulegroup iter
 
-    rule iter: |- ITER typedExp _expIter '#' _typ
+    rule iter: |- ITER typedExp _expIter as exp '#' _typ
     -- if Exp_pure: |- typedExp holds
 
 relation Path_pure: |- typedPath
 
   rulegroup root
 
-    rule root: |- ROOT '#' _typ
+    rule root: |- ROOT as path '#' _typ
 
   rulegroup idx
 
-    rule idx: |- IDX typedPath typedExp_i '#' _typ
+    rule idx: |- IDX typedPath typedExp_i as path '#' _typ
     -- if Path_pure: |- typedPath holds
     -- if Exp_pure: |- typedExp_i holds
 
   rulegroup slice
 
-    rule slice: |- SLICE typedPath typedExp_i typedExp_n '#' _typ
+    rule slice: |- SLICE typedPath typedExp_i typedExp_n as path '#' _typ
     -- if Path_pure: |- typedPath holds
     -- if Exp_pure: |- typedExp_i holds
     -- if Exp_pure: |- typedExp_n holds
 
   rulegroup dot
 
-    rule dot: |- DOT typedPath _atom '#' _typ
+    rule dot: |- DOT typedPath _atom as path '#' _typ
     -- if Path_pure: |- typedPath holds
 
 relation Prem_pure: |- premAL
@@ -1889,60 +2002,60 @@ relation Otherwise_pure: |- defnAL
 
 def $free_varis_exp(typedExp) : vari* =
 
-  clause 0 : (BOOL _b '#' _typ) = []
+  clause 0 : (BOOL _b as exp '#' _typ) = []
 
   clause 1 : (num as exp '#' _typ) = []
 
-  clause 2 : (TEXT _t '#' _typ) = []
+  clause 2 : (TEXT _t as exp '#' _typ) = []
 
-  clause 3 : (VAR id '#' typ) = [id typ []]
+  clause 3 : (VAR id as exp '#' typ) = [id typ []]
 
-  clause 4 : (UN _unop typedExp '#' _typ) = $free_varis_exp(typedExp)
+  clause 4 : (UN _unOp typedExp as exp '#' _typ) = $free_varis_exp(typedExp)
 
-  clause 5 : (BIN _binop typedExp_l typedExp_r '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
+  clause 5 : (BIN _binOp typedExp_l typedExp_r as exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
 
-  clause 6 : (CMP _cmpop typedExp_l typedExp_r '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
+  clause 6 : (CMP _cmpOp typedExp_l typedExp_r as exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
 
-  clause 7 : (UPCAST _typ typedExp '#' _typ') = $free_varis_exp(typedExp)
+  clause 7 : (UPCAST _typ typedExp as exp '#' _typ') = $free_varis_exp(typedExp)
 
-  clause 8 : (DOWNCAST _typ typedExp '#' _typ') = $free_varis_exp(typedExp)
+  clause 8 : (DOWNCAST _typ typedExp as exp '#' _typ') = $free_varis_exp(typedExp)
 
-  clause 9 : (SUB typedExp _typ '#' _typ') = $free_varis_exp(typedExp)
+  clause 9 : (SUB typedExp _typ as exp '#' _typ') = $free_varis_exp(typedExp)
 
-  clause 10 : (MATCH typedExp _pat '#' _typ) = $free_varis_exp(typedExp)
+  clause 10 : (MATCH typedExp _pat as exp '#' _typ) = $free_varis_exp(typedExp)
 
-  clause 11 : (TUP typedExp*{typedExp <- typedExp*} '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
+  clause 11 : (TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
 
-  clause 12 : (INJ _mixop typedExp*{typedExp <- typedExp*} '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
+  clause 12 : (INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
 
-  clause 13 : (STR expField*{expField <- expField*} '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
+  clause 13 : (STR expField*{expField <- expField*} as exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
   -- (if (_atom typedExp = expField))*{_atom <- _atom*, expField <- expField*, typedExp <- typedExp*}
 
-  clause 14 : (OPT ?() '#' _typ) = []
+  clause 14 : (OPT ?() as exp '#' _typ) = []
 
-  clause 15 : (OPT ?(typedExp) '#' _typ) = $free_varis_exp(typedExp)
+  clause 15 : (OPT ?(typedExp) as exp '#' _typ) = $free_varis_exp(typedExp)
 
-  clause 16 : (LIST typedExp*{typedExp <- typedExp*} '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
+  clause 16 : (LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
 
-  clause 17 : (CONS typedExp_h typedExp_t '#' _typ) = $free_varis_exps([typedExp_h, typedExp_t])
+  clause 17 : (CONS typedExp_h typedExp_t as exp '#' _typ) = $free_varis_exps([typedExp_h, typedExp_t])
 
-  clause 18 : (CAT typedExp_l typedExp_r '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
+  clause 18 : (CAT typedExp_l typedExp_r as exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
 
-  clause 19 : (MEM typedExp_l typedExp_r '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
+  clause 19 : (MEM typedExp_l typedExp_r as exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
 
-  clause 20 : (LEN typedExp '#' _typ) = $free_varis_exp(typedExp)
+  clause 20 : (LEN typedExp as exp '#' _typ) = $free_varis_exp(typedExp)
 
-  clause 21 : (DOT typedExp _atom '#' _typ) = $free_varis_exp(typedExp)
+  clause 21 : (DOT typedExp _atom as exp '#' _typ) = $free_varis_exp(typedExp)
 
-  clause 22 : (IDX typedExp_b typedExp_i '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i])
+  clause 22 : (IDX typedExp_b typedExp_i as exp '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i])
 
-  clause 23 : (SLICE typedExp_b typedExp_i typedExp_n '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i, typedExp_n])
+  clause 23 : (SLICE typedExp_b typedExp_i typedExp_n as exp '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i, typedExp_n])
 
-  clause 24 : (UPD typedExp_b typedPath typedExp_f '#' _typ) = $free_varis_exp(typedExp_b) ++ $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_f)
+  clause 24 : (UPD typedExp_b typedPath typedExp_f as exp '#' _typ) = $free_varis_exp(typedExp_b) ++ $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_f)
 
-  clause 25 : (CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} '#' _typ) = $free_varis_args(arg*{arg <- arg*})
+  clause 25 : (CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} as exp '#' _typ) = $free_varis_args(arg*{arg <- arg*})
 
-  clause 26 : (ITER typedExp iter _vari*{_vari <- _vari*} '#' _typ) = vari_iter*{vari_iter <- vari_iter*}
+  clause 26 : (ITER typedExp iter _vari*{_vari <- _vari*} as exp '#' _typ) = vari_iter*{vari_iter <- vari_iter*}
   -- if (vari*{vari <- vari*} = $free_varis_exp(typedExp))
   -- (if (vari_iter = $iterate_vari(vari, [iter])))*{vari <- vari*, vari_iter <- vari_iter*}
 
@@ -1954,19 +2067,19 @@ def $free_varis_exps(typedExp*) : vari* =
 
 def $free_varis_path(typedPath) : vari* =
 
-  clause 0 : (ROOT '#' _typ) = []
+  clause 0 : (ROOT as path '#' _typ) = []
 
-  clause 1 : (IDX typedPath typedExp_i '#' _typ) = $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_i)
+  clause 1 : (IDX typedPath typedExp_i as path '#' _typ) = $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_i)
 
-  clause 2 : (SLICE typedPath typedExp_i typedExp_n '#' _typ) = $free_varis_path(typedPath) ++ $free_varis_exps([typedExp_i, typedExp_n])
+  clause 2 : (SLICE typedPath typedExp_i typedExp_n as path '#' _typ) = $free_varis_path(typedPath) ++ $free_varis_exps([typedExp_i, typedExp_n])
 
-  clause 3 : (DOT typedPath _atom '#' _typ) = $free_varis_path(typedPath)
+  clause 3 : (DOT typedPath _atom as path '#' _typ) = $free_varis_path(typedPath)
 
 def $free_varis_arg(arg) : vari* =
 
-  clause 0 : (EXP typedExp) = $free_varis_exp(typedExp)
+  clause 0 : (EXP typedExp as arg) = $free_varis_exp(typedExp)
 
-  clause 1 : (FUN _id) = []
+  clause 1 : (FUN _id as arg) = []
 
 def $free_varis_args(arg*) : vari* =
 
@@ -2014,12 +2127,12 @@ def $iter_exp(typedExp, vari, iter*) : typedExp =
 
   clause 1 : (typedExp, vari, iter_h :: iter_t*{iter_t <- iter_t*}) = $iter_exp(typedExp_iter, vari_iter, iter_t*{iter_t <- iter_t*})
   -- if (_exp '#' typ = typedExp)
-  -- if (typedExp_iter = ITER typedExp iter_h [vari] '#' ITER typ iter_h)
+  -- if (typedExp_iter = ITER typedExp iter_h [vari] as exp '#' ITER typ iter_h)
   -- if (vari_iter = $iterate_vari(vari, [iter_h]))
 
 def $exp_of_vari(vari) : typedExp =
 
-  clause 0 : (id typ iter*{iter <- iter*}) = $iter_exp(VAR id '#' typ, id typ [], iter*{iter <- iter*})
+  clause 0 : (id typ iter*{iter <- iter*}) = $iter_exp(VAR id as exp '#' typ, id typ [], iter*{iter <- iter*})
 
 syntax occ = map<id, id*>
 
@@ -2042,43 +2155,43 @@ def $init_renamer(id*, vari*) : renamer =
 
 def $rename_exp(renamer, typedExp) : (renamer, typedExp) =
 
-  clause 0 : (R, VAR id '#' typ) = (R_multi, VAR id '#' typ)
+  clause 0 : (R, VAR id as exp '#' typ) = (R_multi, VAR id as exp '#' typ)
   -- if (?(id_later*{id_later <- id_later*}) = $find_map<id, id*>(R.OCC, id))
   -- if ~id <- R.SEEN
   -- if (R_multi = R[SEEN = R.SEEN ++ [id]])
 
-  clause 1 : (R, VAR id '#' typ) = (R_multi, VAR id_fresh '#' typ)
+  clause 1 : (R, VAR id as exp '#' typ) = (R_multi, VAR id_fresh as exp '#' typ)
   -- if (?(id_later*{id_later <- id_later*}) = $find_map<id, id*>(R.OCC, id))
   -- if id <- R.SEEN
   -- if ((id_used*{id_used <- id_used*}, id_fresh) = $fresh_id(R.USED))
   -- if (occ = $add_map<id, id*>(R.OCC, id, id_later*{id_later <- id_later*} ++ [id_fresh]))
   -- if (R_multi = {USED id_used*{id_used <- id_used*}, SEEN R.SEEN, OCC occ})
 
-  clause 2 : (R, UPCAST typ_sup typedExp '#' typ) = (R_multi, UPCAST typ_sup typedExp_multi '#' typ)
+  clause 2 : (R, UPCAST typ_sup typedExp as exp '#' typ) = (R_multi, UPCAST typ_sup typedExp_multi as exp '#' typ)
   -- if ((R_multi, typedExp_multi) = $rename_exp(R, typedExp))
 
-  clause 3 : (R, TUP typedExp*{typedExp <- typedExp*} '#' typ) = (R_multi, TUP typedExp_multi*{typedExp_multi <- typedExp_multi*} '#' typ)
+  clause 3 : (R, TUP typedExp*{typedExp <- typedExp*} as exp '#' typ) = (R_multi, TUP typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
   -- if ((R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) = $rename_exps(R, typedExp*{typedExp <- typedExp*}))
 
-  clause 4 : (R, INJ mixop typedExp*{typedExp <- typedExp*} '#' typ) = (R_multi, INJ mixop typedExp_multi*{typedExp_multi <- typedExp_multi*} '#' typ)
+  clause 4 : (R, INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' typ) = (R_multi, INJ mixop typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
   -- if ((R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) = $rename_exps(R, typedExp*{typedExp <- typedExp*}))
 
-  clause 5 : (R, STR expField*{expField <- expField*} '#' typ) = (R_multi, STR expField_multi*{expField_multi <- expField_multi*} '#' typ)
+  clause 5 : (R, STR expField*{expField <- expField*} as exp '#' typ) = (R_multi, STR expField_multi*{expField_multi <- expField_multi*} as exp '#' typ)
   -- (if (atom typedExp = expField))*{atom <- atom*, expField <- expField*, typedExp <- typedExp*}
   -- if ((R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) = $rename_exps(R, typedExp*{typedExp <- typedExp*}))
   -- (if (expField_multi = atom typedExp_multi))*{atom <- atom*, expField_multi <- expField_multi*, typedExp_multi <- typedExp_multi*}
 
-  clause 6 : (R, OPT ?(typedExp) '#' typ) = (R_multi, OPT ?(typedExp_multi) '#' typ)
+  clause 6 : (R, OPT ?(typedExp) as exp '#' typ) = (R_multi, OPT ?(typedExp_multi) as exp '#' typ)
   -- if ((R_multi, typedExp_multi) = $rename_exp(R, typedExp))
 
-  clause 7 : (R, LIST typedExp*{typedExp <- typedExp*} '#' typ) = (R_multi, LIST typedExp_multi*{typedExp_multi <- typedExp_multi*} '#' typ)
+  clause 7 : (R, LIST typedExp*{typedExp <- typedExp*} as exp '#' typ) = (R_multi, LIST typedExp_multi*{typedExp_multi <- typedExp_multi*} as exp '#' typ)
   -- if ((R_multi, typedExp_multi*{typedExp_multi <- typedExp_multi*}) = $rename_exps(R, typedExp*{typedExp <- typedExp*}))
 
-  clause 8 : (R, CONS typedExp_h typedExp_t '#' typ) = (R_t, CONS typedExp_h_multi typedExp_t_multi '#' typ)
+  clause 8 : (R, CONS typedExp_h typedExp_t as exp '#' typ) = (R_t, CONS typedExp_h_multi typedExp_t_multi as exp '#' typ)
   -- if ((R_h, typedExp_h_multi) = $rename_exp(R, typedExp_h))
   -- if ((R_t, typedExp_t_multi) = $rename_exp(R_h, typedExp_t))
 
-  clause 9 : (R, ITER typedExp iter vari*{vari <- vari*} '#' typ) = (R_multi, ITER typedExp_multi iter vari_occ*{vari_occ <- vari_occ*} '#' typ)
+  clause 9 : (R, ITER typedExp iter vari*{vari <- vari*} as exp '#' typ) = (R_multi, ITER typedExp_multi iter vari_occ*{vari_occ <- vari_occ*} as exp '#' typ)
   -- if ((R_multi, typedExp_multi) = $rename_exp(R, typedExp))
   -- if (id_free*{id_free <- id_free*} = $ids_of_varis($free_varis_exp(typedExp_multi)))
   -- (if (vari_rename*{vari_rename <- vari_rename*} = $rename_iter_vari(R_multi.OCC, vari, id_free*{id_free <- id_free*})))*{vari <- vari*, vari_rename* <- vari_rename**}
@@ -2104,10 +2217,10 @@ def $rename_iter_vari(occ, vari, id*) : vari* =
 
 def $rename_arg(renamer, arg) : (renamer, arg) =
 
-  clause 0 : (R, EXP typedExp) = (R_multi, EXP typedExp_multi)
+  clause 0 : (R, EXP typedExp as arg) = (R_multi, EXP typedExp_multi as arg)
   -- if ((R_multi, typedExp_multi) = $rename_exp(R, typedExp))
 
-  clause 1 : (R, FUN id) = (R, FUN id)
+  clause 1 : (R, FUN id as arg) = (R, FUN id as arg)
 
 def $rename_args(renamer, arg*) : (renamer, arg*) =
 
@@ -2119,23 +2232,23 @@ def $rename_args(renamer, arg*) : (renamer, arg*) =
 
 def $is_invertible(typedExp) : bool =
 
-  clause 0 : (VAR _id '#' _typ) = true
+  clause 0 : (VAR _id as exp '#' _typ) = true
 
-  clause 1 : (UPCAST _typ _typedExp '#' _typ') = true
+  clause 1 : (UPCAST _typ _typedExp as exp '#' _typ') = true
 
-  clause 2 : (TUP _typedExp*{_typedExp <- _typedExp*} '#' _typ) = true
+  clause 2 : (TUP _typedExp*{_typedExp <- _typedExp*} as exp '#' _typ) = true
 
-  clause 3 : (INJ _expCase '#' _typ) = true
+  clause 3 : (INJ _expCase as exp '#' _typ) = true
 
-  clause 4 : (STR _expField*{_expField <- _expField*} '#' _typ) = true
+  clause 4 : (STR _expField*{_expField <- _expField*} as exp '#' _typ) = true
 
-  clause 5 : (OPT _typedExp?{_typedExp <- _typedExp?} '#' _typ) = true
+  clause 5 : (OPT _typedExp?{_typedExp <- _typedExp?} as exp '#' _typ) = true
 
-  clause 6 : (LIST _typedExp*{_typedExp <- _typedExp*} '#' _typ) = true
+  clause 6 : (LIST _typedExp*{_typedExp <- _typedExp*} as exp '#' _typ) = true
 
-  clause 7 : (CONS _typedExp _typedExp' '#' _typ) = true
+  clause 7 : (CONS _typedExp _typedExp' as exp '#' _typ) = true
 
-  clause 8 : (ITER _typedExp _expIter '#' _typ) = true
+  clause 8 : (ITER _typedExp _expIter as exp '#' _typ) = true
 
   clause -1 : (_typedExp) = false
 
@@ -2153,9 +2266,9 @@ def $sideconds_multi_binder(iterCtx, vari, id*) : premAL* =
 def $sidecond_multi_binder(iterCtx, vari, id) : premAL =
 
   clause 0 : (IC, id_first typ iter*{iter <- iter*}, id_later) = $iterate_prem(premAL_cmp, premIterAL*{premIterAL <- premIterAL*})
-  -- if (typedExp_first = VAR id_first '#' typ)
-  -- if (typedExp_later = VAR id_later '#' typ)
-  -- if (typedExp_cmp = CMP EQ as cmpop typedExp_first typedExp_later '#' BOOL as typ)
+  -- if (typedExp_first = VAR id_first as exp '#' typ)
+  -- if (typedExp_later = VAR id_later as exp '#' typ)
+  -- if (typedExp_cmp = CMP EQ as cmpOp typedExp_first typedExp_later as exp '#' BOOL as typ)
   -- if (premAL_cmp = IF typedExp_cmp as premAL)
   -- if (IC_inner = iter []*{iter <- iter*})
   -- if (iter_outer _vari*{_vari <- _vari*}*{_vari* <- _vari**, iter_outer <- iter_outer*} = IC)
@@ -2224,16 +2337,16 @@ def $is_singleton_typ(tdenv, typ) : bool =
 
 def $is_irrefutable(tdenv, typedExp) : bool =
 
-  clause 0 : (tdenv, VAR _id '#' _typ) = true
+  clause 0 : (tdenv, VAR _id as exp '#' _typ) = true
 
-  clause 1 : (tdenv, TUP typedExp*{typedExp <- typedExp*} '#' _typ) = $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
+  clause 1 : (tdenv, TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ) = $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
 
-  clause 2 : (tdenv, INJ _mixop typedExp*{typedExp <- typedExp*} '#' typ) = ($is_singleton_typ(tdenv, typ) /\ $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*}))
+  clause 2 : (tdenv, INJ _mixop typedExp*{typedExp <- typedExp*} as exp '#' typ) = ($is_singleton_typ(tdenv, typ) /\ $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*}))
 
-  clause 3 : (tdenv, STR expField*{expField <- expField*} '#' _typ) = $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
+  clause 3 : (tdenv, STR expField*{expField <- expField*} as exp '#' _typ) = $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
   -- (if (_atom typedExp = expField))*{_atom <- _atom*, expField <- expField*, typedExp <- typedExp*}
 
-  clause 4 : (tdenv, ITER typedExp _expIter '#' _typ) = $is_irrefutable(tdenv, typedExp)
+  clause 4 : (tdenv, ITER typedExp _expIter as exp '#' _typ) = $is_irrefutable(tdenv, typedExp)
 
   clause -1 : (_tdenv, _typedExp) = false
 
@@ -2244,17 +2357,17 @@ def $variant_cases(tdenv, typ) : typCase* =
 
 def $covered_cases(tdenv, typedExp) : typCase* =
 
-  clause 0 : (tdenv, VAR _id '#' typ) = $variant_cases(tdenv, typ)
+  clause 0 : (tdenv, VAR _id as exp '#' typ) = $variant_cases(tdenv, typ)
 
-  clause 1 : (tdenv, UPCAST _typ typedExp '#' _typ') = $covered_cases(tdenv, typedExp)
+  clause 1 : (tdenv, UPCAST _typ typedExp as exp '#' _typ') = $covered_cases(tdenv, typedExp)
 
-  clause 2 : (tdenv, INJ mixop typedExp*{typedExp <- typedExp*} '#' _typ) = [mixop typ*{typ <- typ*}]
+  clause 2 : (tdenv, INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ) = [mixop typ*{typ <- typ*}]
   -- if $forall_($is_irrefutable(tdenv, typedExp)*{typedExp <- typedExp*})
   -- (if (_exp '#' typ = typedExp))*{_exp <- _exp*, typ <- typ*, typedExp <- typedExp*}
 
 def $is_wildcard_exp(typedExp) : bool =
 
-  clause 0 : (VAR id '#' _typ) = true
+  clause 0 : (VAR id as exp '#' _typ) = true
   -- if (|id| > 0)
   -- if (id[0 : 1] = "_")
 
@@ -2295,11 +2408,11 @@ def $is_covered(typCase***, typCase*) : bool =
 
 def $exp_len(typedExp) : typedExp =
 
-  clause 0 : (typedExp) = LEN typedExp '#' NAT as typ
+  clause 0 : (typedExp) = LEN typedExp as exp '#' NAT as typ
 
-def $sidecond_cmp(cmpop, typedExp, typedExp) : premAL =
+def $sidecond_cmp(cmpOp, typedExp, typedExp) : premAL =
 
-  clause 0 : (cmpop, typedExp_l, typedExp_r) = IF CMP cmpop typedExp_l typedExp_r '#' BOOL as typ as premAL
+  clause 0 : (cmpOp, typedExp_l, typedExp_r) = IF CMP cmpOp typedExp_l typedExp_r as exp '#' BOOL as typ as premAL
 
 def $exp_zero(tdenv, typ) : typedExp =
 
@@ -2311,16 +2424,16 @@ def $exp_zero(tdenv, typ) : typedExp =
 
 def $sidecond_iter(iter, vari, vari) : premAL =
 
-  clause 0 : (STAR, vari_a, vari_b) = $sidecond_cmp(EQ as cmpop, $exp_len(typedExp_a), $exp_len(typedExp_b))
+  clause 0 : (STAR, vari_a, vari_b) = $sidecond_cmp(EQ as cmpOp, $exp_len(typedExp_a), $exp_len(typedExp_b))
   -- if (typedExp_a = $exp_of_vari($iterate_vari(vari_a, [STAR])))
   -- if (typedExp_b = $exp_of_vari($iterate_vari(vari_b, [STAR])))
 
-  clause 1 : (QUEST, vari_a, vari_b) = IF BIN EQUIV as binop typedExp_none_a typedExp_none_b '#' BOOL as typ as premAL
+  clause 1 : (QUEST, vari_a, vari_b) = IF BIN EQUIV as binOp typedExp_none_a typedExp_none_b as exp '#' BOOL as typ as premAL
   -- if (typedExp_a = $exp_of_vari($iterate_vari(vari_a, [QUEST])))
   -- if (typedExp_b = $exp_of_vari($iterate_vari(vari_b, [QUEST])))
   -- if (_exp '#' typ_opt = typedExp_a)
-  -- if (typedExp_none_a = CMP EQ as cmpop typedExp_a OPT ?() '#' typ_opt '#' BOOL as typ)
-  -- if (typedExp_none_b = CMP EQ as cmpop typedExp_b OPT ?() '#' typ_opt '#' BOOL as typ)
+  -- if (typedExp_none_a = CMP EQ as cmpOp typedExp_a OPT ?() as exp '#' typ_opt as exp '#' BOOL as typ)
+  -- if (typedExp_none_b = CMP EQ as cmpOp typedExp_b OPT ?() as exp '#' typ_opt as exp '#' BOOL as typ)
 
 def $sideconds_iter(iter, vari*) : premAL* =
 
@@ -2334,27 +2447,27 @@ def $sideconds_iter(iter, vari*) : premAL* =
 
 def $access_exp(typedExp, typedPath) : typedExp =
 
-  clause 0 : (typedExp_b, ROOT '#' _typ) = typedExp_b
+  clause 0 : (typedExp_b, ROOT as path '#' _typ) = typedExp_b
 
-  clause 1 : (typedExp_b, IDX typedPath typedExp_i '#' typ) = IDX typedExp_p typedExp_i '#' typ
+  clause 1 : (typedExp_b, IDX typedPath typedExp_i as path '#' typ) = IDX typedExp_p typedExp_i as exp '#' typ
   -- if (typedExp_p = $access_exp(typedExp_b, typedPath))
 
-  clause 2 : (typedExp_b, SLICE typedPath typedExp_i typedExp_n '#' typ) = SLICE typedExp_p typedExp_i typedExp_n '#' typ
+  clause 2 : (typedExp_b, SLICE typedPath typedExp_i typedExp_n as path '#' typ) = SLICE typedExp_p typedExp_i typedExp_n as exp '#' typ
   -- if (typedExp_p = $access_exp(typedExp_b, typedPath))
 
-  clause 3 : (typedExp_b, DOT typedPath atom '#' typ) = DOT typedExp_p atom '#' typ
+  clause 3 : (typedExp_b, DOT typedPath atom as path '#' typ) = DOT typedExp_p atom as exp '#' typ
   -- if (typedExp_p = $access_exp(typedExp_b, typedPath))
 
 def $sideconds_replace(tdenv, typedPath, typedExp) : premAL* =
 
-  clause 0 : (tdenv, SLICE _typedPath _typedExp typedExp_n '#' _typ, typedExp_f) = [premAL_len]
+  clause 0 : (tdenv, SLICE _typedPath _typedExp typedExp_n as path '#' _typ, typedExp_f) = [premAL_len]
   -- if (typedExp_len = $exp_len(typedExp_f))
-  -- if (premAL_len = $sidecond_cmp(EQ as cmpop, typedExp_len, typedExp_n))
+  -- if (premAL_len = $sidecond_cmp(EQ as cmpOp, typedExp_len, typedExp_n))
 
-  clause 1 : (tdenv, IDX _path '#' typ_b _typedExp '#' _typ, typedExp_f) = [premAL_len]
+  clause 1 : (tdenv, IDX _path '#' typ_b _typedExp as path '#' _typ, typedExp_f) = [premAL_len]
   -- if (OK TEXT as typ as typRes = $expand_typ(tdenv, typ_b))
   -- if (typedExp_len = $exp_len(typedExp_f))
-  -- if (premAL_len = $sidecond_cmp(EQ as cmpop, typedExp_len, NAT 1 as exp '#' NAT as typ))
+  -- if (premAL_len = $sidecond_cmp(EQ as cmpOp, typedExp_len, NAT 1 as exp '#' NAT as typ))
 
   clause -1 : (_tdenv, _typedPath, _typedExp) = []
 
@@ -2558,109 +2671,109 @@ relation Eval_exp: ctx |- typedExp : expRes
 
   rulegroup literal
 
-    rule boolean: C |- BOOL b '#' _typ : OK BOOL b as expRes
+    rule boolean: C |- BOOL b as exp '#' _typ : OK BOOL b as expRes
 
     rule number: C |- num as exp '#' _typ : OK num as val as expRes
 
-    rule string: C |- TEXT t '#' _typ : OK TEXT t as expRes
+    rule string: C |- TEXT t as exp '#' _typ : OK TEXT t as expRes
 
   rulegroup variable
 
-    rule variable: C |- VAR id '#' _typ : OK val as expRes
+    rule variable: C |- VAR id as exp '#' _typ : OK val as expRes
     -- if (?(val) = $find_varr(C, id []))
 
   rulegroup unary
 
-    rule boolean-operand-failure: C |- UN NOT as unop typedExp '#' _typ : failure as expRes
+    rule boolean-operand-failure: C |- UN NOT as unOp typedExp as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp : failure as expRes
 
-    rule boolean-succ: C |- UN NOT as unop typedExp '#' _typ : OK BOOL b_res as expRes
+    rule boolean-succ: C |- UN NOT as unOp typedExp as exp '#' _typ : OK BOOL b_res as expRes
     -- Eval_exp: C |- typedExp : OK BOOL b as expRes
     -- if (b_res = ~b)
 
-    rule number-operand-failure: C |- UN numUnop as unop typedExp '#' _typ : failure as expRes
+    rule number-operand-failure: C |- UN numUnOp as unOp typedExp as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp : failure as expRes
 
-    rule number-succ: C |- UN numUnop as unop typedExp '#' _typ : OK val_res as expRes
+    rule number-succ: C |- UN numUnOp as unOp typedExp as exp '#' _typ : OK val_res as expRes
     -- Eval_exp: C |- typedExp : OK num as val as expRes
-    -- if (val_res = $numUnop(numUnop, num))
+    -- if (val_res = $numUnOp(numUnOp, num))
 
   rulegroup binary
 
-    rule boolean-left-failure: C |- BIN boolBinop as binop typedExp_l typedExp_r '#' _typ : failure as expRes
+    rule boolean-left-failure: C |- BIN boolBinOp as binOp typedExp_l typedExp_r as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_l : failure as expRes
 
-    rule boolean-right-failure: C |- BIN boolBinop as binop typedExp_l typedExp_r '#' _typ : failure as expRes
+    rule boolean-right-failure: C |- BIN boolBinOp as binOp typedExp_l typedExp_r as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_l : OK BOOL b_l as expRes
     -- Eval_exp: C |- typedExp_r : failure as expRes
 
-    rule boolean-succ: C |- BIN boolBinop as binop typedExp_l typedExp_r '#' _typ : OK BOOL b_res as expRes
+    rule boolean-succ: C |- BIN boolBinOp as binOp typedExp_l typedExp_r as exp '#' _typ : OK BOOL b_res as expRes
     -- Eval_exp: C |- typedExp_l : OK BOOL b_l as expRes
     -- Eval_exp: C |- typedExp_r : OK BOOL b_r as expRes
-    -- if (b_res = $boolBinop(boolBinop, b_l, b_r))
+    -- if (b_res = $boolBinOp(boolBinOp, b_l, b_r))
 
-    rule number-left-failure: C |- BIN numBinop as binop typedExp_l typedExp_r '#' _typ : failure as expRes
+    rule number-left-failure: C |- BIN numBinOp as binOp typedExp_l typedExp_r as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_l : failure as expRes
 
-    rule number-right-failure: C |- BIN numBinop as binop typedExp_l typedExp_r '#' _typ : failure as expRes
+    rule number-right-failure: C |- BIN numBinOp as binOp typedExp_l typedExp_r as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_l : OK num_l as val as expRes
     -- Eval_exp: C |- typedExp_r : failure as expRes
 
-    rule number-succ: C |- BIN numBinop as binop typedExp_l typedExp_r '#' _typ : numBinopRes as expRes
+    rule number-succ: C |- BIN numBinOp as binOp typedExp_l typedExp_r as exp '#' _typ : numBinOpRes as expRes
     -- Eval_exp: C |- typedExp_l : OK num_l as val as expRes
     -- Eval_exp: C |- typedExp_r : OK num_r as val as expRes
-    -- if (numBinopRes = $numBinop(numBinop, num_l, num_r))
+    -- if (numBinOpRes = $numBinOp(numBinOp, num_l, num_r))
 
   rulegroup compare
 
-    rule poly-left-failure: C |- CMP polyCmpop as cmpop typedExp_l typedExp_r '#' _typ : failure as expRes
+    rule poly-left-failure: C |- CMP polyCmpOp as cmpOp typedExp_l typedExp_r as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_l : failure as expRes
 
-    rule poly-right-failure: C |- CMP polyCmpop as cmpop typedExp_l typedExp_r '#' _typ : failure as expRes
+    rule poly-right-failure: C |- CMP polyCmpOp as cmpOp typedExp_l typedExp_r as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_l : OK val_l as expRes
     -- Eval_exp: C |- typedExp_r : failure as expRes
 
-    rule poly-succ: C |- CMP polyCmpop as cmpop typedExp_l typedExp_r '#' _typ : OK BOOL b_res as expRes
+    rule poly-succ: C |- CMP polyCmpOp as cmpOp typedExp_l typedExp_r as exp '#' _typ : OK BOOL b_res as expRes
     -- Eval_exp: C |- typedExp_l : OK val_l as expRes
     -- Eval_exp: C |- typedExp_r : OK val_r as expRes
-    -- if (b_res = $polyCmpop(polyCmpop, val_l, val_r))
+    -- if (b_res = $polyCmpOp(polyCmpOp, val_l, val_r))
 
-    rule number-left-failure: C |- CMP numCmpop as cmpop typedExp_l typedExp_r '#' _typ : failure as expRes
+    rule number-left-failure: C |- CMP numCmpOp as cmpOp typedExp_l typedExp_r as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_l : failure as expRes
 
-    rule number-right-failure: C |- CMP numCmpop as cmpop typedExp_l typedExp_r '#' _typ : failure as expRes
+    rule number-right-failure: C |- CMP numCmpOp as cmpOp typedExp_l typedExp_r as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_l : OK num_l as val as expRes
     -- Eval_exp: C |- typedExp_r : failure as expRes
 
-    rule number-succ: C |- CMP numCmpop as cmpop typedExp_l typedExp_r '#' _typ : OK BOOL b_res as expRes
+    rule number-succ: C |- CMP numCmpOp as cmpOp typedExp_l typedExp_r as exp '#' _typ : OK BOOL b_res as expRes
     -- Eval_exp: C |- typedExp_l : OK num_l as val as expRes
     -- Eval_exp: C |- typedExp_r : OK num_r as val as expRes
-    -- if (OK b_res as numCmpRes = $numCmpop(numCmpop, num_l, num_r))
+    -- if (OK b_res as numCmpRes = $numCmpOp(numCmpOp, num_l, num_r))
 
   rulegroup upcast
 
-    rule operand-failure: C |- UPCAST typ typedExp '#' _typ : failure as expRes
+    rule operand-failure: C |- UPCAST typ typedExp as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp : failure as expRes
 
-    rule succ: C |- UPCAST typ typedExp '#' _typ : castRes as expRes
+    rule succ: C |- UPCAST typ typedExp as exp '#' _typ : castRes as expRes
     -- Eval_exp: C |- typedExp : OK val as expRes
     -- if (castRes = $upcast(C, typ, val))
 
   rulegroup downcast
 
-    rule operand-failure: C |- DOWNCAST typ typedExp '#' _typ : failure as expRes
+    rule operand-failure: C |- DOWNCAST typ typedExp as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp : failure as expRes
 
-    rule succ: C |- DOWNCAST typ typedExp '#' _typ : castRes as expRes
+    rule succ: C |- DOWNCAST typ typedExp as exp '#' _typ : castRes as expRes
     -- Eval_exp: C |- typedExp : OK val as expRes
     -- if (castRes = $downcast(C, typ, val))
 
   rulegroup subtype
 
-    rule operand-failure: C |- SUB typedExp typ '#' _typ : failure as expRes
+    rule operand-failure: C |- SUB typedExp typ as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp : failure as expRes
 
-    rule succ: C |- SUB typedExp typ '#' _typ : OK BOOL b as expRes
+    rule succ: C |- SUB typedExp typ as exp '#' _typ : OK BOOL b as expRes
     -- Eval_exp: C |- typedExp : OK val as expRes
     -- if (`{ id_local ':' typDef_local*{id_local <- id_local*, typDef_local <- typDef_local*} `} = C.LOCAL.TYP)
     -- if (tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*{id_local <- id_local*}, typDef_local*{typDef_local <- typDef_local*}))
@@ -2668,205 +2781,205 @@ relation Eval_exp: ctx |- typedExp : expRes
 
   rulegroup match
 
-    rule operand-failure: C |- MATCH typedExp pat '#' _typ : failure as expRes
+    rule operand-failure: C |- MATCH typedExp pat as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp : failure as expRes
 
-    rule succ: C |- MATCH typedExp pat '#' _typ : OK BOOL b_matches as expRes
+    rule succ: C |- MATCH typedExp pat as exp '#' _typ : OK BOOL b_matches as expRes
     -- Eval_exp: C |- typedExp : OK val as expRes
     -- if (b_matches = $matches(val, pat))
 
   rulegroup tuple
 
-    rule expressions-failure: C |- TUP typedExp*{typedExp <- typedExp*} '#' _typ : failure as expRes
+    rule expressions-failure: C |- TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ : failure as expRes
     -- Eval_exps: C |- typedExp*{typedExp <- typedExp*} : failure as expsRes
 
-    rule succ: C |- TUP typedExp*{typedExp <- typedExp*} '#' _typ : OK TUP val*{val <- val*} as expRes
+    rule succ: C |- TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ : OK TUP val*{val <- val*} as expRes
     -- Eval_exps: C |- typedExp*{typedExp <- typedExp*} : OK val*{val <- val*} as expsRes
 
   rulegroup case
 
-    rule expressions-failure: C |- INJ mixop typedExp*{typedExp <- typedExp*} '#' _typ : failure as expRes
+    rule expressions-failure: C |- INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ : failure as expRes
     -- Eval_exps: C |- typedExp*{typedExp <- typedExp*} : failure as expsRes
 
-    rule succ: C |- INJ mixop typedExp*{typedExp <- typedExp*} '#' _typ : OK INJ mixop val*{val <- val*} as expRes
+    rule succ: C |- INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ : OK INJ mixop val*{val <- val*} as expRes
     -- Eval_exps: C |- typedExp*{typedExp <- typedExp*} : OK val*{val <- val*} as expsRes
 
   rulegroup struct
 
-    rule expressions-failure: C |- STR expField*{expField <- expField*} '#' _typ : failure as expRes
+    rule expressions-failure: C |- STR expField*{expField <- expField*} as exp '#' _typ : failure as expRes
     -- (if (atom typedExp = expField))*{atom <- atom*, expField <- expField*, typedExp <- typedExp*}
     -- Eval_exps: C |- typedExp*{typedExp <- typedExp*} : failure as expsRes
 
-    rule succ: C |- STR expField*{expField <- expField*} '#' _typ : OK STR valField*{valField <- valField*} as expRes
+    rule succ: C |- STR expField*{expField <- expField*} as exp '#' _typ : OK STR valField*{valField <- valField*} as expRes
     -- (if (atom typedExp = expField))*{atom <- atom*, expField <- expField*, typedExp <- typedExp*}
     -- Eval_exps: C |- typedExp*{typedExp <- typedExp*} : OK val*{val <- val*} as expsRes
     -- (if (valField = atom val))*{atom <- atom*, val <- val*, valField <- valField*}
 
   rulegroup opt
 
-    rule succ-none: C |- OPT ?() '#' _typ : OK OPT ?() as expRes
+    rule succ-none: C |- OPT ?() as exp '#' _typ : OK OPT ?() as expRes
 
-    rule operand-failure: C |- OPT ?(typedExp) '#' _typ : failure as expRes
+    rule operand-failure: C |- OPT ?(typedExp) as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp : failure as expRes
 
-    rule succ-some: C |- OPT ?(typedExp) '#' _typ : OK OPT ?(val) as expRes
+    rule succ-some: C |- OPT ?(typedExp) as exp '#' _typ : OK OPT ?(val) as expRes
     -- Eval_exp: C |- typedExp : OK val as expRes
 
   rulegroup list
 
-    rule expressions-failure: C |- LIST typedExp*{typedExp <- typedExp*} '#' _typ : failure as expRes
+    rule expressions-failure: C |- LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ : failure as expRes
     -- Eval_exps: C |- typedExp*{typedExp <- typedExp*} : failure as expsRes
 
-    rule succ: C |- LIST typedExp*{typedExp <- typedExp*} '#' _typ : OK LIST val*{val <- val*} as expRes
+    rule succ: C |- LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ : OK LIST val*{val <- val*} as expRes
     -- Eval_exps: C |- typedExp*{typedExp <- typedExp*} : OK val*{val <- val*} as expsRes
 
   rulegroup cons
 
-    rule head-failure: C |- CONS typedExp_h typedExp_t '#' _typ : failure as expRes
+    rule head-failure: C |- CONS typedExp_h typedExp_t as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_h : failure as expRes
 
-    rule tail-failure: C |- CONS typedExp_h typedExp_t '#' _typ : failure as expRes
+    rule tail-failure: C |- CONS typedExp_h typedExp_t as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_h : OK val_h as expRes
     -- Eval_exp: C |- typedExp_t : failure as expRes
 
-    rule succ: C |- CONS typedExp_h typedExp_t '#' _typ : OK LIST val_h :: val_t*{val_t <- val_t*} as expRes
+    rule succ: C |- CONS typedExp_h typedExp_t as exp '#' _typ : OK LIST val_h :: val_t*{val_t <- val_t*} as expRes
     -- Eval_exp: C |- typedExp_h : OK val_h as expRes
     -- Eval_exp: C |- typedExp_t : OK LIST val_t*{val_t <- val_t*} as expRes
 
   rulegroup concat
 
-    rule left-failure: C |- CAT typedExp_l typedExp_r '#' _typ : failure as expRes
+    rule left-failure: C |- CAT typedExp_l typedExp_r as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_l : failure as expRes
 
-    rule list-right-failure: C |- CAT typedExp_l typedExp_r '#' _typ : failure as expRes
+    rule list-right-failure: C |- CAT typedExp_l typedExp_r as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_l : OK LIST val_l*{val_l <- val_l*} as expRes
     -- Eval_exp: C |- typedExp_r : failure as expRes
 
-    rule list-succ: C |- CAT typedExp_l typedExp_r '#' _typ : OK LIST val_res*{val_res <- val_res*} as expRes
+    rule list-succ: C |- CAT typedExp_l typedExp_r as exp '#' _typ : OK LIST val_res*{val_res <- val_res*} as expRes
     -- Eval_exp: C |- typedExp_l : OK LIST val_l*{val_l <- val_l*} as expRes
     -- Eval_exp: C |- typedExp_r : OK LIST val_r*{val_r <- val_r*} as expRes
     -- if (val_res*{val_res <- val_res*} = val_l*{val_l <- val_l*} ++ val_r*{val_r <- val_r*})
 
-    rule text-right-failure: C |- CAT typedExp_l typedExp_r '#' _typ : failure as expRes
+    rule text-right-failure: C |- CAT typedExp_l typedExp_r as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_l : OK TEXT text_l as expRes
     -- Eval_exp: C |- typedExp_r : failure as expRes
 
-    rule text-succ: C |- CAT typedExp_l typedExp_r '#' _typ : OK TEXT t_res as expRes
+    rule text-succ: C |- CAT typedExp_l typedExp_r as exp '#' _typ : OK TEXT t_res as expRes
     -- Eval_exp: C |- typedExp_l : OK TEXT t_l as expRes
     -- Eval_exp: C |- typedExp_r : OK TEXT t_r as expRes
     -- if (t_res = t_l ++ t_r)
 
   rulegroup mem
 
-    rule elem-failure: C |- MEM typedExp_e typedExp_s '#' _typ : failure as expRes
+    rule elem-failure: C |- MEM typedExp_e typedExp_s as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_e : failure as expRes
 
-    rule list-failure: C |- MEM typedExp_e typedExp_s '#' _typ : failure as expRes
+    rule list-failure: C |- MEM typedExp_e typedExp_s as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_e : OK val_e as expRes
     -- Eval_exp: C |- typedExp_s : failure as expRes
 
-    rule succ: C |- MEM typedExp_e typedExp_s '#' _typ : OK BOOL b_mem as expRes
+    rule succ: C |- MEM typedExp_e typedExp_s as exp '#' _typ : OK BOOL b_mem as expRes
     -- Eval_exp: C |- typedExp_e : OK val_e as expRes
     -- Eval_exp: C |- typedExp_s : OK LIST val*{val <- val*} as expRes
     -- if (b_mem = $exists_((val_e = val)*{val <- val*}))
 
   rulegroup len
 
-    rule operand-failure: C |- LEN typedExp '#' _typ : failure as expRes
+    rule operand-failure: C |- LEN typedExp as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp : failure as expRes
 
-    rule text: C |- LEN typedExp '#' _typ : OK NAT n as val as expRes
+    rule text: C |- LEN typedExp as exp '#' _typ : OK NAT n as val as expRes
     -- Eval_exp: C |- typedExp : OK TEXT t as expRes
     -- if (n = |t|)
 
-    rule list: C |- LEN typedExp '#' _typ : OK NAT n as val as expRes
+    rule list: C |- LEN typedExp as exp '#' _typ : OK NAT n as val as expRes
     -- Eval_exp: C |- typedExp : OK LIST val*{val <- val*} as expRes
     -- if (n = |val*{val <- val*}|)
 
   rulegroup dot
 
-    rule operand-failure: C |- DOT typedExp atom '#' _typ : failure as expRes
+    rule operand-failure: C |- DOT typedExp atom as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp : failure as expRes
 
-    rule succ: C |- DOT typedExp atom '#' typ : pathRes as expRes
+    rule succ: C |- DOT typedExp atom as exp '#' typ : pathRes as expRes
     -- Eval_exp: C |- typedExp : OK val as expRes
     -- if (_exp '#' typ_b = typedExp)
-    -- if (typedPath = DOT ROOT '#' typ_b atom '#' typ)
+    -- if (typedPath = DOT ROOT as path '#' typ_b atom as path '#' typ)
     -- Eval_path_acc: C |- val typedPath : pathRes
 
   rulegroup idx
 
-    rule base-failure: C |- IDX typedExp_b typedExp_i '#' _typ : failure as expRes
+    rule base-failure: C |- IDX typedExp_b typedExp_i as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_b : failure as expRes
 
-    rule succ: C |- IDX typedExp_b typedExp_i '#' typ : pathRes as expRes
+    rule succ: C |- IDX typedExp_b typedExp_i as exp '#' typ : pathRes as expRes
     -- Eval_exp: C |- typedExp_b : OK val_b as expRes
     -- if (_exp '#' typ_b = typedExp_b)
-    -- if (typedPath = IDX ROOT '#' typ_b typedExp_i '#' typ)
+    -- if (typedPath = IDX ROOT as path '#' typ_b typedExp_i as path '#' typ)
     -- Eval_path_acc: C |- val_b typedPath : pathRes
 
   rulegroup slice
 
-    rule base-failure: C |- SLICE typedExp_b typedExp_i typedExp_n '#' _typ : failure as expRes
+    rule base-failure: C |- SLICE typedExp_b typedExp_i typedExp_n as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_b : failure as expRes
 
-    rule succ: C |- SLICE typedExp_b typedExp_i typedExp_n '#' typ : pathRes as expRes
+    rule succ: C |- SLICE typedExp_b typedExp_i typedExp_n as exp '#' typ : pathRes as expRes
     -- Eval_exp: C |- typedExp_b : OK val_b as expRes
     -- if (_exp '#' typ_b = typedExp_b)
-    -- if (typedPath = SLICE ROOT '#' typ_b typedExp_i typedExp_n '#' typ)
+    -- if (typedPath = SLICE ROOT as path '#' typ_b typedExp_i typedExp_n as path '#' typ)
     -- Eval_path_acc: C |- val_b typedPath : pathRes
 
   rulegroup upd
 
-    rule base-failure: C |- UPD typedExp_b typedPath typedExp_f '#' _typ : failure as expRes
+    rule base-failure: C |- UPD typedExp_b typedPath typedExp_f as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_b : failure as expRes
 
-    rule value-failure: C |- UPD typedExp_b typedPath typedExp_f '#' _typ : failure as expRes
+    rule value-failure: C |- UPD typedExp_b typedPath typedExp_f as exp '#' _typ : failure as expRes
     -- Eval_exp: C |- typedExp_b : OK val_b as expRes
     -- Eval_exp: C |- typedExp_f : failure as expRes
 
-    rule succ: C |- UPD typedExp_b typedPath typedExp_f '#' _typ : pathRes as expRes
+    rule succ: C |- UPD typedExp_b typedPath typedExp_f as exp '#' _typ : pathRes as expRes
     -- Eval_exp: C |- typedExp_b : OK val_b as expRes
     -- Eval_exp: C |- typedExp_f : OK val_f as expRes
     -- Eval_path_upd: C |- val_b typedPath := val_f : pathRes
 
   rulegroup call
 
-    rule arguments-failure: C |- CALL id targ*{targ <- targ*} arg*{arg <- arg*} '#' _typ : failure as expRes
+    rule arguments-failure: C |- CALL id targ*{targ <- targ*} arg*{arg <- arg*} as exp '#' _typ : failure as expRes
     -- Eval_targs: C |- targ*{targ <- targ*} : OK typ_input*{typ_input <- typ_input*} as typsRes
     -- Eval_args: C |- arg*{arg <- arg*} : failure as argsRes
 
-    rule succ: C |- CALL id targ*{targ <- targ*} arg*{arg <- arg*} '#' _typ : funcRes as expRes
+    rule succ: C |- CALL id targ*{targ <- targ*} arg*{arg <- arg*} as exp '#' _typ : funcRes as expRes
     -- Eval_targs: C |- targ*{targ <- targ*} : OK typ_input*{typ_input <- typ_input*} as typsRes
     -- Eval_args: C |- arg*{arg <- arg*} : OK val_input*{val_input <- val_input*} as argsRes
     -- Call_func: C |- id `< typ_input*{typ_input <- typ_input*} `> `( val_input*{val_input <- val_input*} `) : funcRes
 
   rulegroup iter
 
-    rule simple: C |- ITER typedExp expIter '#' typ : OK val as expRes
-    -- if (?(varr) = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    rule simple: C |- ITER typedExp expIter as exp '#' typ : OK val as expRes
+    -- if (?(varr) = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- if (?(val) = $find_varr(C, varr))
 
-    rule opt-body-failure: C |- ITER typedExp expIter '#' typ : failure as expRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    rule opt-body-failure: C |- ITER typedExp expIter as exp '#' typ : failure as expRes
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- if (QUEST vari*{vari <- vari*} = expIter)
     -- if (OK C_sub?{C_sub <- C_sub?} as subOptRes = $sub_opt(C, vari*{vari <- vari*}))
     -- Eval_exp_maybe: C_sub?{C_sub <- C_sub?} |- typedExp : failure as expOptRes
 
-    rule opt-succ: C |- ITER typedExp expIter '#' typ : OK OPT val?{val <- val?} as expRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    rule opt-succ: C |- ITER typedExp expIter as exp '#' typ : OK OPT val?{val <- val?} as expRes
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- if (QUEST vari*{vari <- vari*} = expIter)
     -- if (OK C_sub?{C_sub <- C_sub?} as subOptRes = $sub_opt(C, vari*{vari <- vari*}))
     -- Eval_exp_maybe: C_sub?{C_sub <- C_sub?} |- typedExp : OK val?{val <- val?} as expOptRes
 
-    rule list-body-failure: C |- ITER typedExp expIter '#' typ : failure as expRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    rule list-body-failure: C |- ITER typedExp expIter as exp '#' typ : failure as expRes
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- if (STAR vari*{vari <- vari*} = expIter)
     -- if (OK C_sub*{C_sub <- C_sub*} as subListRes = $sub_list(C, vari*{vari <- vari*}))
     -- Eval_exp_each: C_sub*{C_sub <- C_sub*} |- typedExp : failure as expsRes
 
-    rule list-succ: C |- ITER typedExp expIter '#' typ : OK LIST val*{val <- val*} as expRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    rule list-succ: C |- ITER typedExp expIter as exp '#' typ : OK LIST val*{val <- val*} as expRes
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- if (STAR vari*{vari <- vari*} = expIter)
     -- if (OK C_sub*{C_sub <- C_sub*} as subListRes = $sub_list(C, vari*{vari <- vari*}))
     -- Eval_exp_each: C_sub*{C_sub <- C_sub*} |- typedExp : OK val*{val <- val*} as expsRes
@@ -2942,71 +3055,71 @@ relation Eval_path_acc: ctx |- val typedPath : pathRes
 
   rulegroup root
 
-    rule root: C |- val_b ROOT '#' _typ : OK val_b as pathRes
+    rule root: C |- val_b ROOT as path '#' _typ : OK val_b as pathRes
 
   rulegroup dot
 
-    rule path-failure: C |- val_b DOT typedPath atom '#' _typ : failure as pathRes
+    rule path-failure: C |- val_b DOT typedPath atom as path '#' _typ : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : failure as pathRes
 
-    rule succ: C |- val_b DOT typedPath atom '#' _typ : OK val as pathRes
+    rule succ: C |- val_b DOT typedPath atom as path '#' _typ : OK val as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK STR valField*{valField <- valField*} as pathRes
     -- (if (atom_field val_field = valField))*{atom_field <- atom_field*, valField <- valField*, val_field <- val_field*}
     -- if (?(val) = $assoc_<atom, val>(atom, (atom_field, val_field)*{atom_field <- atom_field*, val_field <- val_field*}))
 
   rulegroup idx
 
-    rule path-failure: C |- val_b IDX typedPath typedExp_i '#' _typ : failure as pathRes
+    rule path-failure: C |- val_b IDX typedPath typedExp_i as path '#' _typ : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : failure as pathRes
 
-    rule list-index-failure: C |- val_b IDX typedPath typedExp_i '#' _typ : failure as pathRes
+    rule list-index-failure: C |- val_b IDX typedPath typedExp_i as path '#' _typ : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK LIST val*{val <- val*} as pathRes
     -- Eval_exp: C |- typedExp_i : failure as expRes
 
-    rule list-succ: C |- val_b IDX typedPath typedExp_i '#' _typ : OK val_idx as pathRes
+    rule list-succ: C |- val_b IDX typedPath typedExp_i as path '#' _typ : OK val_idx as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK LIST val*{val <- val*} as pathRes
     -- Eval_exp: C |- typedExp_i : OK NAT n as val as expRes
     -- if (val_idx = val*{val <- val*}[n])
 
-    rule text-index-failure: C |- val_b IDX typedPath typedExp_i '#' _typ : failure as pathRes
+    rule text-index-failure: C |- val_b IDX typedPath typedExp_i as path '#' _typ : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK TEXT t as pathRes
     -- Eval_exp: C |- typedExp_i : failure as expRes
 
-    rule text-succ: C |- val_b IDX typedPath typedExp_i '#' _typ : OK TEXT t_idx as pathRes
+    rule text-succ: C |- val_b IDX typedPath typedExp_i as path '#' _typ : OK TEXT t_idx as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK TEXT t as pathRes
     -- Eval_exp: C |- typedExp_i : OK NAT n as val as expRes
     -- if (t_idx = t[n])
 
   rulegroup slice
 
-    rule path-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ : failure as pathRes
+    rule path-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : failure as pathRes
 
-    rule text-index-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ : failure as pathRes
+    rule text-index-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK TEXT t as pathRes
     -- Eval_exp: C |- typedExp_i : failure as expRes
 
-    rule text-length-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ : failure as pathRes
+    rule text-length-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK TEXT t as pathRes
     -- Eval_exp: C |- typedExp_i : OK NAT n_i as val as expRes
     -- Eval_exp: C |- typedExp_n : failure as expRes
 
-    rule text-succ: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ : OK val_slice as pathRes
+    rule text-succ: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ : OK val_slice as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK TEXT t as pathRes
     -- Eval_exp: C |- typedExp_i : OK NAT n_i as val as expRes
     -- Eval_exp: C |- typedExp_n : OK NAT n_n as val as expRes
     -- if (val_slice = TEXT t[n_i : n_n])
 
-    rule list-index-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ : failure as pathRes
+    rule list-index-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK LIST val*{val <- val*} as pathRes
     -- Eval_exp: C |- typedExp_i : failure as expRes
 
-    rule list-length-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ : failure as pathRes
+    rule list-length-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK LIST val*{val <- val*} as pathRes
     -- Eval_exp: C |- typedExp_i : OK NAT n_i as val as expRes
     -- Eval_exp: C |- typedExp_n : failure as expRes
 
-    rule list-succ: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ : OK val_slice as pathRes
+    rule list-succ: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ : OK val_slice as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK LIST val*{val <- val*} as pathRes
     -- Eval_exp: C |- typedExp_i : OK NAT n_i as val as expRes
     -- Eval_exp: C |- typedExp_n : OK NAT n_n as val as expRes
@@ -3022,28 +3135,28 @@ relation Eval_path_upd: ctx |- val typedPath := val : pathRes
 
   rulegroup root
 
-    rule root: C |- val_b ROOT '#' _typ := val_n : OK val_n as pathRes
+    rule root: C |- val_b ROOT as path '#' _typ := val_n : OK val_n as pathRes
 
   rulegroup idx
 
-    rule path-failure: C |- val_b IDX typedPath typedExp_i '#' _typ := val_n : failure as pathRes
+    rule path-failure: C |- val_b IDX typedPath typedExp_i as path '#' _typ := val_n : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : failure as pathRes
 
-    rule list-index-failure: C |- val_b IDX typedPath typedExp_i '#' _typ := val_n : failure as pathRes
+    rule list-index-failure: C |- val_b IDX typedPath typedExp_i as path '#' _typ := val_n : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK LIST val*{val <- val*} as pathRes
     -- Eval_exp: C |- typedExp_i : failure as expRes
 
-    rule list-succ: C |- val_b IDX typedPath typedExp_i '#' _typ := val_n : pathRes
+    rule list-succ: C |- val_b IDX typedPath typedExp_i as path '#' _typ := val_n : pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK LIST val*{val <- val*} as pathRes
     -- Eval_exp: C |- typedExp_i : OK NAT n_target as val as expRes
     -- if (val_upd = LIST val*{val <- val*}[[n_target] = val_n])
     -- Eval_path_upd: C |- val_b typedPath := val_upd : pathRes
 
-    rule text-index-failure: C |- val_b IDX typedPath typedExp_i '#' _typ := val_n : failure as pathRes
+    rule text-index-failure: C |- val_b IDX typedPath typedExp_i as path '#' _typ := val_n : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK TEXT t as pathRes
     -- Eval_exp: C |- typedExp_i : failure as expRes
 
-    rule text-succ: C |- val_b IDX typedPath typedExp_i '#' _typ := TEXT t_n : pathRes
+    rule text-succ: C |- val_b IDX typedPath typedExp_i as path '#' _typ := TEXT t_n : pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK TEXT t as pathRes
     -- Eval_exp: C |- typedExp_i : OK NAT n_target as val as expRes
     -- if (val_upd = TEXT t[[n_target] = t_n])
@@ -3051,35 +3164,35 @@ relation Eval_path_upd: ctx |- val typedPath := val : pathRes
 
   rulegroup slice
 
-    rule path-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ := val_n : failure as pathRes
+    rule path-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ := val_n : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : failure as pathRes
 
-    rule text-index-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ := val_n : failure as pathRes
+    rule text-index-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ := val_n : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK TEXT t as pathRes
     -- Eval_exp: C |- typedExp_i : failure as expRes
 
-    rule text-length-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ := val_n : failure as pathRes
+    rule text-length-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ := val_n : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK TEXT t as pathRes
     -- Eval_exp: C |- typedExp_i : OK NAT n_i as val as expRes
     -- Eval_exp: C |- typedExp_n : failure as expRes
 
-    rule text-succ: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ := TEXT t_n : pathRes
+    rule text-succ: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ := TEXT t_n : pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK TEXT t as pathRes
     -- Eval_exp: C |- typedExp_i : OK NAT n_i as val as expRes
     -- Eval_exp: C |- typedExp_n : OK NAT n_n as val as expRes
     -- if (val_upd = TEXT t[[n_i : n_n] = t_n])
     -- Eval_path_upd: C |- val_b typedPath := val_upd : pathRes
 
-    rule list-index-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ := val_n : failure as pathRes
+    rule list-index-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ := val_n : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK LIST val*{val <- val*} as pathRes
     -- Eval_exp: C |- typedExp_i : failure as expRes
 
-    rule list-length-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ := val_n : failure as pathRes
+    rule list-length-failure: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ := val_n : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK LIST val*{val <- val*} as pathRes
     -- Eval_exp: C |- typedExp_i : OK NAT n_i as val as expRes
     -- Eval_exp: C |- typedExp_n : failure as expRes
 
-    rule list-succ: C |- val_b SLICE typedPath typedExp_i typedExp_n '#' _typ := LIST val_n*{val_n <- val_n*} : pathRes
+    rule list-succ: C |- val_b SLICE typedPath typedExp_i typedExp_n as path '#' _typ := LIST val_n*{val_n <- val_n*} : pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK LIST val*{val <- val*} as pathRes
     -- Eval_exp: C |- typedExp_i : OK NAT n_i as val as expRes
     -- Eval_exp: C |- typedExp_n : OK NAT n_n as val as expRes
@@ -3088,10 +3201,10 @@ relation Eval_path_upd: ctx |- val typedPath := val : pathRes
 
   rulegroup dot
 
-    rule path-failure: C |- val_b DOT typedPath atom '#' _typ := val_n : failure as pathRes
+    rule path-failure: C |- val_b DOT typedPath atom as path '#' _typ := val_n : failure as pathRes
     -- Eval_path_acc: C |- val_b typedPath : failure as pathRes
 
-    rule succ: C |- val_b DOT typedPath atom '#' _typ := val_n : pathRes
+    rule succ: C |- val_b DOT typedPath atom as path '#' _typ := val_n : pathRes
     -- Eval_path_acc: C |- val_b typedPath : OK STR valField*{valField <- valField*} as pathRes
     -- (if (atom_field val_field = valField))*{atom_field <- atom_field*, valField <- valField*, val_field <- val_field*}
     -- (if (valField_new = atom_field $ite<val>((atom = atom_field), val_n, val_field)))*{atom_field <- atom_field*, valField_new <- valField_new*, val_field <- val_field*}
@@ -3127,12 +3240,12 @@ relation Eval_arg: ctx |- arg : argRes
 
   rulegroup exp
 
-    rule exp: C |- EXP typedExp : argRes
+    rule exp: C |- EXP typedExp as arg : argRes
     -- Eval_exp: C |- typedExp : argRes as expRes
 
   rulegroup fun
 
-    rule fun: C |- FUN id : OK FUNC id_global as argRes
+    rule fun: C |- FUN id as arg : OK FUNC id_global as argRes
     -- if (id_global = $resolve_func_param(C, id))
 
   elsegroup
@@ -3398,7 +3511,7 @@ relation Call_rel: ctx |- id `( val* `) : relRes
 
     rule error: C |- id `( val*{val <- val*} `) : ERROR as relRes
 
-def $numUnop(numUnop, num) : val =
+def $numUnOp(numUnOp, num) : val =
 
   clause 0 : (PLUS, NAT n) = NAT n as val
 
@@ -3408,7 +3521,7 @@ def $numUnop(numUnop, num) : val =
 
   clause 3 : (MINUS, INT i) = INT -i as val
 
-def $boolBinop(boolBinop, bool, bool) : bool =
+def $boolBinOp(boolBinOp, bool, bool) : bool =
 
   clause 0 : (AND, b_l, b_r) = (b_l /\ b_r)
 
@@ -3418,35 +3531,35 @@ def $boolBinop(boolBinop, bool, bool) : bool =
 
   clause 3 : (EQUIV, b_l, b_r) = (b_l <=> b_r)
 
-syntax numBinopRes =
+syntax numBinOpRes =
    | OK val (from ok<val>)
    | ERROR (from error)
 
-def $numBinop(numBinop, num, num) : numBinopRes =
+def $numBinOp(numBinOp, num, num) : numBinOpRes =
 
-  clause 0 : (ADD, NAT n_l, NAT n_r) = OK NAT (n_l + n_r) as val as numBinopRes
+  clause 0 : (ADD, NAT n_l, NAT n_r) = OK NAT (n_l + n_r) as val as numBinOpRes
 
-  clause 1 : (ADD, INT i_l, INT i_r) = OK INT (i_l + i_r) as val as numBinopRes
+  clause 1 : (ADD, INT i_l, INT i_r) = OK INT (i_l + i_r) as val as numBinOpRes
 
-  clause 2 : (SUB, NAT n_l, NAT n_r) = OK INT (n_l - n_r) as val as numBinopRes
+  clause 2 : (SUB, NAT n_l, NAT n_r) = OK INT (n_l - n_r) as val as numBinOpRes
 
-  clause 3 : (SUB, INT i_l, INT i_r) = OK INT (i_l - i_r) as val as numBinopRes
+  clause 3 : (SUB, INT i_l, INT i_r) = OK INT (i_l - i_r) as val as numBinOpRes
 
-  clause 4 : (MUL, NAT n_l, NAT n_r) = OK NAT (n_l * n_r) as val as numBinopRes
+  clause 4 : (MUL, NAT n_l, NAT n_r) = OK NAT (n_l * n_r) as val as numBinOpRes
 
-  clause 5 : (MUL, INT i_l, INT i_r) = OK INT (i_l * i_r) as val as numBinopRes
+  clause 5 : (MUL, INT i_l, INT i_r) = OK INT (i_l * i_r) as val as numBinOpRes
 
-  clause 6 : (DIV, NAT n_l, NAT n_r) = OK NAT (n_l / n_r) as val as numBinopRes
+  clause 6 : (DIV, NAT n_l, NAT n_r) = OK NAT (n_l / n_r) as val as numBinOpRes
 
-  clause 7 : (DIV, INT i_l, INT i_r) = OK INT (i_l / i_r) as val as numBinopRes
+  clause 7 : (DIV, INT i_l, INT i_r) = OK INT (i_l / i_r) as val as numBinOpRes
 
-  clause 8 : (MOD, NAT n_l, NAT n_r) = OK NAT (n_l \ n_r) as val as numBinopRes
+  clause 8 : (MOD, NAT n_l, NAT n_r) = OK NAT (n_l \ n_r) as val as numBinOpRes
 
-  clause 9 : (MOD, INT i_l, INT i_r) = OK INT (i_l \ i_r) as val as numBinopRes
+  clause 9 : (MOD, INT i_l, INT i_r) = OK INT (i_l \ i_r) as val as numBinOpRes
 
-  clause -1 : (numBinop, num_l, num_r) = ERROR as numBinopRes
+  clause -1 : (numBinOp, num_l, num_r) = ERROR as numBinOpRes
 
-def $polyCmpop(polyCmpop, val, val) : bool =
+def $polyCmpOp(polyCmpOp, val, val) : bool =
 
   clause 0 : (EQ, val_l, val_r) = (val_l = val_r)
 
@@ -3456,7 +3569,7 @@ syntax numCmpRes =
    | OK bool (from ok<bool>)
    | ERROR (from error)
 
-def $numCmpop(numCmpop, num, num) : numCmpRes =
+def $numCmpOp(numCmpOp, num, num) : numCmpRes =
 
   clause 0 : (LT, NAT n_l, NAT n_r) = OK (n_l < n_r) as numCmpRes
 
@@ -3474,7 +3587,7 @@ def $numCmpop(numCmpop, num, num) : numCmpRes =
 
   clause 7 : (GE, INT i_l, INT i_r) = OK (i_l >= i_r) as numCmpRes
 
-  clause -1 : (numCmpop, num_l, num_r) = ERROR as numCmpRes
+  clause -1 : (numCmpOp, num_l, num_r) = ERROR as numCmpRes
 
 def $matches(val, pat) : bool =
 
@@ -3609,9 +3722,9 @@ def $subtyp_func(fenv, tdenv, typ, id) : subtypRes =
 
 def $param_typ(param) : typ =
 
-  clause 0 : (EXP typ) = typ
+  clause 0 : (EXP typ as param) = typ
 
-  clause 1 : (FUN id ':' tparam*{tparam <- tparam*} param*{param <- param*} '->' typ) = FUNC tparam*{tparam <- tparam*} $param_typ(param)*{param <- param*} typ
+  clause 1 : (FUN id ':' tparam*{tparam <- tparam*} param*{param <- param*} '->' typ as param) = FUNC tparam*{tparam <- tparam*} $param_typ(param)*{param <- param*} typ
 
 def $func_typ(funcDefnAL) : typ =
 
@@ -3760,67 +3873,67 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
 
   rulegroup variable
 
-    rule variable: C |- VAR id '#' _typ := val : OK C' as assignRes
+    rule variable: C |- VAR id as exp '#' _typ := val : OK C' as assignRes
     -- if (C' = $add_varr(C, id [], val))
 
   rulegroup tup
 
-    rule tup: C |- TUP typedExp*{typedExp <- typedExp*} '#' _typ := TUP val*{val <- val*} : OK C' as assignRes
+    rule tup: C |- TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ := TUP val*{val <- val*} : OK C' as assignRes
     -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C' as assignRes
 
   rulegroup inj
 
-    rule inj: C |- INJ mixop typedExp*{typedExp <- typedExp*} '#' _typ := INJ mixop val*{val <- val*} : OK C' as assignRes
+    rule inj: C |- INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ := INJ mixop val*{val <- val*} : OK C' as assignRes
     -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C' as assignRes
 
   rulegroup str
 
-    rule str: C |- STR expField*{expField <- expField*} '#' _typ := STR valField*{valField <- valField*} : OK C' as assignRes
+    rule str: C |- STR expField*{expField <- expField*} as exp '#' _typ := STR valField*{valField <- valField*} : OK C' as assignRes
     -- (if (atom val = valField))*{atom <- atom*, val <- val*, valField <- valField*}
     -- (if (atom typedExp = expField))*{atom <- atom*, expField <- expField*, typedExp <- typedExp*}
     -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C' as assignRes
 
   rulegroup opt
 
-    rule opt-some: C |- OPT ?(typedExp) '#' _typ := OPT ?(val) : OK C' as assignRes
+    rule opt-some: C |- OPT ?(typedExp) as exp '#' _typ := OPT ?(val) : OK C' as assignRes
     -- Assign_exp: C |- typedExp := val : OK C' as assignRes
 
-    rule opt-none: C |- OPT ?() '#' _typ := OPT ?() : OK C as assignRes
+    rule opt-none: C |- OPT ?() as exp '#' _typ := OPT ?() : OK C as assignRes
 
   rulegroup list
 
-    rule list: C |- LIST typedExp*{typedExp <- typedExp*} '#' _typ := LIST val*{val <- val*} : OK C' as assignRes
+    rule list: C |- LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ := LIST val*{val <- val*} : OK C' as assignRes
     -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C' as assignRes
 
   rulegroup cons
 
-    rule cons: C |- CONS typedExp_h typedExp_t '#' _typ := LIST val_h :: val_t*{val_t <- val_t*} : OK C'' as assignRes
+    rule cons: C |- CONS typedExp_h typedExp_t as exp '#' _typ := LIST val_h :: val_t*{val_t <- val_t*} : OK C'' as assignRes
     -- Assign_exp: C |- typedExp_h := val_h : OK C' as assignRes
     -- Assign_exp: C' |- typedExp_t := LIST val_t*{val_t <- val_t*} : OK C'' as assignRes
 
   rulegroup iter
 
-    rule simple: C |- ITER typedExp expIter '#' typ := val : OK C' as assignRes
-    -- if (?(varr) = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    rule simple: C |- ITER typedExp expIter as exp '#' typ := val : OK C' as assignRes
+    -- if (?(varr) = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- if (C' = $add_varr(C, varr, val))
 
-    rule opt-none: C |- ITER typedExp expIter '#' typ := OPT ?() : OK C' as assignRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    rule opt-none: C |- ITER typedExp expIter as exp '#' typ := OPT ?() : OK C' as assignRes
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- if (QUEST vari*{vari <- vari*} = expIter)
     -- (if (vari_iter = $iterate_vari(vari, [QUEST])))*{vari <- vari*, vari_iter <- vari_iter*}
     -- if (val_bind*{val_bind <- val_bind*} = $repeat_<val>(OPT ?(), |vari_iter*{vari_iter <- vari_iter*}|))
     -- if (C' = $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*}))
 
-    rule opt-some: C |- ITER typedExp expIter '#' typ := OPT ?(val) : OK C'' as assignRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    rule opt-some: C |- ITER typedExp expIter as exp '#' typ := OPT ?(val) : OK C'' as assignRes
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- if (QUEST vari*{vari <- vari*} = expIter)
     -- Assign_exp: C |- typedExp := val : OK C' as assignRes
     -- (if (vari_iter = $iterate_vari(vari, [QUEST])))*{vari <- vari*, vari_iter <- vari_iter*}
     -- (if (?(val_sub) = $find_vari(C', vari)))*{val_sub <- val_sub*, vari <- vari*}
     -- if (C'' = $add_varis(C', vari_iter*{vari_iter <- vari_iter*}, OPT ?(val_sub)*{val_sub <- val_sub*}))
 
-    rule list: C |- ITER typedExp expIter '#' typ := LIST val*{val <- val*} : OK C' as assignRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter '#' typ))
+    rule list: C |- ITER typedExp expIter as exp '#' typ := LIST val*{val <- val*} : OK C' as assignRes
+    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
     -- if (STAR vari*{vari <- vari*} = expIter)
     -- if (C_local = C[LOCAL.VAL = $empty_map<varr, val>])
     -- (Assign_exp: C_local |- typedExp := val : OK C_sub as assignRes)*{C_sub <- C_sub*, val <- val*}
@@ -3855,12 +3968,12 @@ relation Assign_arg: ctx |- arg := val : assignRes
 
   rulegroup exp
 
-    rule exp: C |- EXP typedExp := val : OK C' as assignRes
+    rule exp: C |- EXP typedExp as arg := val : OK C' as assignRes
     -- Assign_exp: C |- typedExp := val : OK C' as assignRes
 
   rulegroup fun
 
-    rule fun: C |- FUN id := FUNC id_global : OK C' as assignRes
+    rule fun: C |- FUN id as arg := FUNC id_global : OK C' as assignRes
     -- if (C' = $add_func(C, id, id_global))
 
   elsegroup

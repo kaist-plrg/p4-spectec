@@ -1,69 +1,69 @@
 ;; Unary numeric operations
 
-dec $numUnop(numUnop, num) : val
+dec $numUnOp(numUnOp, num) : val
   hint(print %0 %1)
   hint(prose_in "the value of applying" %0 "to" %1)
-def $numUnop(PLUS, NAT n) = NAT n
-def $numUnop(PLUS, INT i) = INT i
-def $numUnop(MINUS, NAT n) = INT $(-n)
-def $numUnop(MINUS, INT i) = INT $(-i)
+def $numUnOp(PLUS, NAT n) = NAT n
+def $numUnOp(PLUS, INT i) = INT i
+def $numUnOp(MINUS, NAT n) = INT $(-n)
+def $numUnOp(MINUS, INT i) = INT $(-i)
 
 ;; Binary boolean operations
 
-dec $boolBinop(boolBinop, bool, bool) : bool
+dec $boolBinOp(boolBinOp, bool, bool) : bool
   hint(print %1 %0 %2)
   hint(prose_true "applying" %0 "to" %1 "and" %2 "yields true")
   hint(prose_false "applying" %0 "to" %1 "and" %2 "yields false")
-def $boolBinop(AND, b_l, b_r) = (b_l /\ b_r)
-def $boolBinop(OR, b_l, b_r) = (b_l \/ b_r)
-def $boolBinop(IMPL, b_l, b_r) = (b_l => b_r)
-def $boolBinop(EQUIV, b_l, b_r) = (b_l <=> b_r)
+def $boolBinOp(AND, b_l, b_r) = (b_l /\ b_r)
+def $boolBinOp(OR, b_l, b_r) = (b_l \/ b_r)
+def $boolBinOp(IMPL, b_l, b_r) = (b_l => b_r)
+def $boolBinOp(EQUIV, b_l, b_r) = (b_l <=> b_r)
 
 ;; Binary numeric operations
 
-syntax numBinopRes = ok<val> | error
+syntax numBinOpRes = ok<val> | error
 
-dec $numBinop(numBinop, num, num) : numBinopRes
+dec $numBinOp(numBinOp, num, num) : numBinOpRes
   hint(print %1 %0 %2)
   hint(prose_in "the result of applying" %0 "to" %1 "and" %2)
-def $numBinop(ADD, NAT n_l, NAT n_r) = OK (NAT $(n_l + n_r))
-def $numBinop(ADD, INT i_l, INT i_r) = OK (INT $(i_l + i_r))
-def $numBinop(SUB, NAT n_l, NAT n_r) = OK (INT $(n_l - n_r))
-def $numBinop(SUB, INT i_l, INT i_r) = OK (INT $(i_l - i_r))
-def $numBinop(MUL, NAT n_l, NAT n_r) = OK (NAT $(n_l * n_r))
-def $numBinop(MUL, INT i_l, INT i_r) = OK (INT $(i_l * i_r))
-def $numBinop(DIV, NAT n_l, NAT n_r) = OK (NAT $(n_l / n_r))
-def $numBinop(DIV, INT i_l, INT i_r) = OK (INT $(i_l / i_r))
-def $numBinop(MOD, NAT n_l, NAT n_r) = OK (NAT $(n_l \ n_r))
-def $numBinop(MOD, INT i_l, INT i_r) = OK (INT $(i_l \ i_r))
-def $numBinop(numBinop, num_l, num_r) = ERROR
+def $numBinOp(ADD, NAT n_l, NAT n_r) = OK (NAT $(n_l + n_r))
+def $numBinOp(ADD, INT i_l, INT i_r) = OK (INT $(i_l + i_r))
+def $numBinOp(SUB, NAT n_l, NAT n_r) = OK (INT $(n_l - n_r))
+def $numBinOp(SUB, INT i_l, INT i_r) = OK (INT $(i_l - i_r))
+def $numBinOp(MUL, NAT n_l, NAT n_r) = OK (NAT $(n_l * n_r))
+def $numBinOp(MUL, INT i_l, INT i_r) = OK (INT $(i_l * i_r))
+def $numBinOp(DIV, NAT n_l, NAT n_r) = OK (NAT $(n_l / n_r))
+def $numBinOp(DIV, INT i_l, INT i_r) = OK (INT $(i_l / i_r))
+def $numBinOp(MOD, NAT n_l, NAT n_r) = OK (NAT $(n_l \ n_r))
+def $numBinOp(MOD, INT i_l, INT i_r) = OK (INT $(i_l \ i_r))
+def $numBinOp(numBinOp, num_l, num_r) = ERROR
   -- otherwise
 
 ;; Polymorphic comparison operations
 
-dec $polyCmpop(polyCmpop, val, val) : bool
+dec $polyCmpOp(polyCmpOp, val, val) : bool
   hint(print %1 %0 %2)
   hint(prose_true "comparing" %1 "and" %2 "using" %0 "yields true")
   hint(prose_false "comparing" %1 "and" %2 "using" %0 "yields false")
-def $polyCmpop(EQ, val_l, val_r) = (val_l = val_r)
-def $polyCmpop(NE, val_l, val_r) = (val_l =/= val_r)
+def $polyCmpOp(EQ, val_l, val_r) = (val_l = val_r)
+def $polyCmpOp(NE, val_l, val_r) = (val_l =/= val_r)
 
 ;; Numeric comparison operations
 
 syntax numCmpRes = ok<bool> | error
 
-dec $numCmpop(numCmpop, num, num) : numCmpRes
+dec $numCmpOp(numCmpOp, num, num) : numCmpRes
   hint(print %1 %0 %2)
   hint(prose_in "the result of comparing" %1 "and" %2 "using" %0)
-def $numCmpop(LT, NAT n_l, NAT n_r) = OK ($(n_l < n_r))
-def $numCmpop(LT, INT i_l, INT i_r) = OK ($(i_l < i_r))
-def $numCmpop(GT, NAT n_l, NAT n_r) = OK ($(n_l > n_r))
-def $numCmpop(GT, INT i_l, INT i_r) = OK ($(i_l > i_r))
-def $numCmpop(LE, NAT n_l, NAT n_r) = OK ($(n_l <= n_r))
-def $numCmpop(LE, INT i_l, INT i_r) = OK ($(i_l <= i_r))
-def $numCmpop(GE, NAT n_l, NAT n_r) = OK ($(n_l >= n_r))
-def $numCmpop(GE, INT i_l, INT i_r) = OK ($(i_l >= i_r))
-def $numCmpop(numCmpop, num_l, num_r) = ERROR
+def $numCmpOp(LT, NAT n_l, NAT n_r) = OK ($(n_l < n_r))
+def $numCmpOp(LT, INT i_l, INT i_r) = OK ($(i_l < i_r))
+def $numCmpOp(GT, NAT n_l, NAT n_r) = OK ($(n_l > n_r))
+def $numCmpOp(GT, INT i_l, INT i_r) = OK ($(i_l > i_r))
+def $numCmpOp(LE, NAT n_l, NAT n_r) = OK ($(n_l <= n_r))
+def $numCmpOp(LE, INT i_l, INT i_r) = OK ($(i_l <= i_r))
+def $numCmpOp(GE, NAT n_l, NAT n_r) = OK ($(n_l >= n_r))
+def $numCmpOp(GE, INT i_l, INT i_r) = OK ($(i_l >= i_r))
+def $numCmpOp(numCmpOp, num_l, num_r) = ERROR
   -- otherwise
 
 ;; Pattern tests
