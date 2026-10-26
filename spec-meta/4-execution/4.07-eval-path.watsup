@@ -1,24 +1,17 @@
-;; Path evaluation rules
+;;
+;; Path access
+;;
+;; syntax typedPath
+;;
 
-;;; Access evaluation rules
+;;; rootPath
+;;; syntax rootPath = ROOT
 
 rule Eval_path_acc/root:
   C |- val_b (ROOT '#' _) : OK val_b
 
-rulegroup Eval_path_acc/dot {
-
-  rule Eval_path_acc/path-failure:
-    C |- val_b ((DOT typedPath atom) '#' _) : failure
-    -- Eval_path_acc: C |- val_b typedPath : failure
-
-  rule Eval_path_acc/succ:
-    C |- val_b ((DOT typedPath atom) '#' _) : OK val
-    -- Eval_path_acc: C |- val_b typedPath : OK (STR valField*)
-    -- if (atom_field val_field = valField)*
-    -- if val
-        = $assoc_<atom, val>(atom, (atom_field, val_field)*)
-
-}
+;;; idxPath
+;;; syntax idxPath = IDX typedPath typedExp
 
 rulegroup Eval_path_acc/idx {
 
@@ -49,6 +42,9 @@ rulegroup Eval_path_acc/idx {
     -- if t_idx = t[n]
 
 }
+
+;;; slicePath
+;;; syntax slicePath = SLICE typedPath typedExp typedExp
 
 rulegroup Eval_path_acc/slice {
 
@@ -94,14 +90,44 @@ rulegroup Eval_path_acc/slice {
 
 }
 
+;;; dotPath
+;;; syntax dotPath = DOT typedPath atom
+
+rulegroup Eval_path_acc/dot {
+
+  rule Eval_path_acc/path-failure:
+    C |- val_b ((DOT typedPath atom) '#' _) : failure
+    -- Eval_path_acc: C |- val_b typedPath : failure
+
+  rule Eval_path_acc/succ:
+    C |- val_b ((DOT typedPath atom) '#' _) : OK val
+    -- Eval_path_acc: C |- val_b typedPath : OK (STR valField*)
+    -- if (atom_field val_field = valField)*
+    -- if val
+        = $assoc_<atom, val>(atom, (atom_field, val_field)*)
+
+}
+
+;; Any other path is an error
+
 rule Eval_path_acc/error:
   C |- val typedPath : ERROR
   -- otherwise
 
-;;; Update evaluation rules
+;;
+;; Path update
+;;
+;; syntax typedPath
+;;
+
+;;; rootPath
+;;; syntax rootPath = ROOT
 
 rule Eval_path_upd/root:
   C |- val_b (ROOT '#' _) := val_n : OK val_n
+
+;;; idxPath
+;;; syntax idxPath = IDX typedPath typedExp
 
 rulegroup Eval_path_upd/idx {
 
@@ -136,6 +162,9 @@ rulegroup Eval_path_upd/idx {
         C |- val_b typedPath := val_upd : pathRes
 
 }
+
+;;; slicePath
+;;; syntax slicePath = SLICE typedPath typedExp typedExp
 
 rulegroup Eval_path_upd/slice {
 
@@ -185,6 +214,9 @@ rulegroup Eval_path_upd/slice {
 
 }
 
+;;; dotPath
+;;; syntax dotPath = DOT typedPath atom
+
 rulegroup Eval_path_upd/dot {
 
   rule Eval_path_upd/path-failure:
@@ -202,6 +234,8 @@ rulegroup Eval_path_upd/dot {
         C |- val_b typedPath := val_upd : pathRes
 
 }
+
+;; Any other path is an error
 
 rule Eval_path_upd/error:
   C |- val_b typedPath := val_n : ERROR

@@ -1,4 +1,6 @@
+;;
 ;; Meta-function invocation
+;;
 
 ;;; Clause invocation
 
@@ -13,15 +15,15 @@ rulegroup Eval_clause {
   rule Eval_clause/premises-failure:
     C |- clauseAL `( val* `) : failure
     -- if arg* '=' typedExp_out '-' premAL* = clauseAL
-    -- Assign_args: C |- arg* := val* : OK C'
-    -- Eval_prems: C' |- premAL* : failure
+    -- Assign_args: C |- arg* := val* : OK C_assign
+    -- Eval_prems: C_assign |- premAL* : failure
 
   rule Eval_clause/succ:
     C |- clauseAL `( val* `) : funcRes
     -- if arg* '=' typedExp_out '-' premAL* = clauseAL
-    -- Assign_args: C |- arg* := val* : OK C'
-    -- Eval_prems: C' |- premAL* : OK C''
-    -- Eval_exp : C'' |- typedExp_out : funcRes
+    -- Assign_args: C |- arg* := val* : OK C_assign
+    -- Eval_prems: C_assign |- premAL* : OK C_prem
+    -- Eval_exp : C_prem |- typedExp_out : funcRes
 
 }
 
@@ -97,16 +99,16 @@ rulegroup Eval_tblrow {
     C |- tblRowAL `( val* `) : failure
     -- if arg* '=' typedExp_out '-' premAL* = tblRowAL
     -- if C_callee = C[ .LOCAL = $empty_localLayer ]
-    -- Assign_args: C_callee |- arg* := val* : OK C_callee'
-    -- Eval_prems: C_callee' |- premAL* : failure
+    -- Assign_args: C_callee |- arg* := val* : OK C_callee_assign
+    -- Eval_prems: C_callee_assign |- premAL* : failure
 
   rule Eval_tblrow/succ:
     C |- tblRowAL `( val* `) : funcRes
     -- if arg* '=' typedExp_out '-' premAL* = tblRowAL
     -- if C_callee = C[ .LOCAL = $empty_localLayer ]
-    -- Assign_args: C_callee |- arg* := val* : OK C_callee'
-    -- Eval_prems: C_callee' |- premAL* : OK C_callee''
-    -- Eval_exp: C_callee'' |- typedExp_out : funcRes
+    -- Assign_args: C_callee |- arg* := val* : OK C_callee_assign
+    -- Eval_prems: C_callee_assign |- premAL* : OK C_callee_prem
+    -- Eval_exp: C_callee_prem |- typedExp_out : funcRes
 
 }
 
@@ -187,7 +189,9 @@ rule Call_defined_func/error:
   C |- definedFuncDefnAL `< typ* `> `( val* `) : ERROR
   -- otherwise
 
+;;
 ;; Meta-function call
+;;
 
 rulegroup Call_func {
 

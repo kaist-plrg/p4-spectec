@@ -4386,77 +4386,77 @@ var C : ctx
 
 def $load_ctx(ctx, specAL) : ctx =
 
-  clause 0 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 0 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if defnAL'*{defnAL' <- defnAL'*} matches _ :: _
   -- let defnAL :: defnAL_t*{defnAL_t <- defnAL_t*} = defnAL'*{defnAL' <- defnAL'*}
   -- if defnAL <: externTypDefn
   -- let externTypDefn = defnAL as externTypDefn
   -- let EXTTYP id = externTypDefn
   -- let tdenv_update = $add_map<id, typDef>(C.GLOBAL.TYP, id, externTypDefn as typDef)
-  -- let C' = C[GLOBAL.TYP = tdenv_update]
+  -- let C_load = C[GLOBAL.TYP = tdenv_update]
 
-  clause 1 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 1 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if defnAL'*{defnAL' <- defnAL'*} matches _ :: _
   -- let defnAL :: defnAL_t*{defnAL_t <- defnAL_t*} = defnAL'*{defnAL' <- defnAL'*}
   -- if defnAL <: definedTypDefn
   -- let definedTypDefn = defnAL as definedTypDefn
   -- let TYP id _tparam*{_tparam <- _tparam*} '=' _deftyp = definedTypDefn
   -- let tdenv_update = $add_map<id, typDef>(C.GLOBAL.TYP, id, definedTypDefn as typDef)
-  -- let C' = C[GLOBAL.TYP = tdenv_update]
+  -- let C_load = C[GLOBAL.TYP = tdenv_update]
 
-  clause 2 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 2 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if defnAL'*{defnAL' <- defnAL'*} matches _ :: _
   -- let defnAL :: defnAL_t*{defnAL_t <- defnAL_t*} = defnAL'*{defnAL' <- defnAL'*}
   -- if defnAL <: externRelDefnAL
   -- let externRelDefnAL = defnAL as externRelDefnAL
   -- let EXTREL id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} = externRelDefnAL
   -- let renv_update = $add_map<id, relDefnAL>(C.GLOBAL.REL, id, externRelDefnAL as relDefnAL)
-  -- let C' = C[GLOBAL.REL = renv_update]
+  -- let C_load = C[GLOBAL.REL = renv_update]
 
-  clause 3 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 3 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if defnAL'*{defnAL' <- defnAL'*} matches _ :: _
   -- let defnAL :: defnAL_t*{defnAL_t <- defnAL_t*} = defnAL'*{defnAL' <- defnAL'*}
   -- if defnAL <: definedRelDefnAL
   -- let definedRelDefnAL = defnAL as definedRelDefnAL
   -- let REL id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} '=' _rulGroupAL*{_rulGroupAL <- _rulGroupAL*} _elsGroupAL?{_elsGroupAL <- _elsGroupAL?} = definedRelDefnAL
   -- let renv_update = $add_map<id, relDefnAL>(C.GLOBAL.REL, id, definedRelDefnAL as relDefnAL)
-  -- let C' = C[GLOBAL.REL = renv_update]
+  -- let C_load = C[GLOBAL.REL = renv_update]
 
-  clause 4 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 4 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if defnAL'*{defnAL' <- defnAL'*} matches _ :: _
   -- let defnAL :: defnAL_t*{defnAL_t <- defnAL_t*} = defnAL'*{defnAL' <- defnAL'*}
   -- if defnAL <: externFuncDefn
   -- let externFuncDefn = defnAL as externFuncDefn
   -- let EXTFUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ = externFuncDefn
   -- let fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, externFuncDefn as funcDefnAL)
-  -- let C' = C[GLOBAL.FUNC = fenv_update]
+  -- let C_load = C[GLOBAL.FUNC = fenv_update]
 
-  clause 5 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 5 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if defnAL'*{defnAL' <- defnAL'*} matches _ :: _
   -- let defnAL :: defnAL_t*{defnAL_t <- defnAL_t*} = defnAL'*{defnAL' <- defnAL'*}
   -- if defnAL <: builtinFuncDefn
   -- let builtinFuncDefn = defnAL as builtinFuncDefn
   -- let BUILTINFUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ = builtinFuncDefn
   -- let fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, builtinFuncDefn as funcDefnAL)
-  -- let C' = C[GLOBAL.FUNC = fenv_update]
+  -- let C_load = C[GLOBAL.FUNC = fenv_update]
 
-  clause 6 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 6 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if defnAL'*{defnAL' <- defnAL'*} matches _ :: _
   -- let defnAL :: defnAL_t*{defnAL_t <- defnAL_t*} = defnAL'*{defnAL' <- defnAL'*}
   -- if defnAL <: tableFuncDefnAL
   -- let tableFuncDefnAL = defnAL as tableFuncDefnAL
   -- let TABLEFUNC id _param*{_param <- _param*} ':' _typ '=' _tblRowAL*{_tblRowAL <- _tblRowAL*} = tableFuncDefnAL
   -- let fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, tableFuncDefnAL as funcDefnAL)
-  -- let C' = C[GLOBAL.FUNC = fenv_update]
+  -- let C_load = C[GLOBAL.FUNC = fenv_update]
 
-  clause 7 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 7 : (C, defnAL'*{defnAL' <- defnAL'*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if defnAL'*{defnAL' <- defnAL'*} matches _ :: _
   -- let defnAL :: defnAL_t*{defnAL_t <- defnAL_t*} = defnAL'*{defnAL' <- defnAL'*}
   -- if defnAL <: definedFuncDefnAL
   -- let definedFuncDefnAL = defnAL as definedFuncDefnAL
   -- let FUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ '=' _clauseAL*{_clauseAL <- _clauseAL*} _elsClauseAL?{_elsClauseAL <- _elsClauseAL?} = definedFuncDefnAL
   -- let fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, definedFuncDefnAL as funcDefnAL)
-  -- let C' = C[GLOBAL.FUNC = fenv_update]
+  -- let C_load = C[GLOBAL.FUNC = fenv_update]
 
   clause 8 : (C, defnAL*{defnAL <- defnAL*}) = C
   -- if defnAL*{defnAL <- defnAL*} matches []
@@ -4570,7 +4570,7 @@ syntax subListRes =
 
 def $sub_list(ctx, vari*) : subListRes =
 
-  clause 0 : (C, vari*{vari <- vari*}) = OK C'*{C' <- C'*} as subListRes
+  clause 0 : (C, vari*{vari <- vari*}) = OK C_sub*{C_sub <- C_sub*} as subListRes
   -- (let vari_iter = $iterate_vari(vari, [STAR]))*{vari <- vari*, vari_iter -> vari_iter*}
   -- (let val''?{val'' <- val''?} = $find_vari(C, vari_iter))*{vari_iter <- vari_iter*, val''? -> val''?*}
   -- (if val''?{val'' <- val''?} matches (_))*{val''? <- val''?*}
@@ -4580,7 +4580,7 @@ def $sub_list(ctx, vari*) : subListRes =
   -- (if (0 < |val*{val <- val*}*{val* <- val**}|))*{val* <- val**}
   -- if $forall_((|val*{val <- val*}| = |val*{val <- val*}*{val* <- val**}[0]|)*{val* <- val**})
   -- let val_trans*{val_trans <- val_trans*}*{val_trans* <- val_trans**} = $transpose_<val>(val*{val <- val*}*{val* <- val**})
-  -- (let C' = $add_varis(C, vari*{vari <- vari*}, val_trans*{val_trans <- val_trans*}))*{val_trans* <- val_trans**, C' -> C'*}
+  -- (let C_sub = $add_varis(C, vari*{vari <- vari*}, val_trans*{val_trans <- val_trans*}))*{val_trans* <- val_trans**, C_sub -> C_sub*}
 
   clause -1 : (C, vari*{vari <- vari*}) = ERROR as subListRes
 
@@ -5442,15 +5442,15 @@ relation Eval_exp: ctx |- typedExp : expRes
 
    match
 
-    (signature) C |- ITER typedExp expIter as exp '#' typ : %
+    (signature) C |- iterExp as exp '#' typ : %
     C |- exp '#' typ : %
     -- if exp <: iterExp
-    -- let ITER typedExp expIter = exp as iterExp
+    -- let iterExp = exp as iterExp
 
    paths
 
     rulepath simple
-    -- let varr'?{varr' <- varr'?} = $is_iter_on_var(ITER typedExp expIter as exp '#' typ)
+    -- let varr'?{varr' <- varr'?} = $is_iter_on_var(iterExp as exp '#' typ)
     -- if varr'?{varr' <- varr'?} matches (_)
     -- let ?(varr) = varr'?{varr' <- varr'?}
     -- let val'?{val' <- val'?} = $find_varr(C, varr)
@@ -5459,8 +5459,8 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- output: % |- % : OK val as expRes
 
     rulepath opt-body-failure
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- let iter vari*{vari <- vari*} = expIter
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- let ITER typedExp iter vari*{vari <- vari*} = iterExp
     -- if iter matches QUEST
     -- let subOptRes = $sub_opt(C, vari*{vari <- vari*})
     -- if subOptRes <: ok<ctx?>
@@ -5471,8 +5471,8 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- output: % |- % : failure as expRes
 
     rulepath opt-succ
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- let iter vari*{vari <- vari*} = expIter
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- let ITER typedExp iter vari*{vari <- vari*} = iterExp
     -- if iter matches QUEST
     -- let subOptRes = $sub_opt(C, vari*{vari <- vari*})
     -- if subOptRes <: ok<ctx?>
@@ -5483,8 +5483,8 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- output: % |- % : OK OPT val?{val <- val?} as expRes
 
     rulepath list-body-failure
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- let iter vari*{vari <- vari*} = expIter
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- let ITER typedExp iter vari*{vari <- vari*} = iterExp
     -- if iter matches STAR
     -- let subListRes = $sub_list(C, vari*{vari <- vari*})
     -- if subListRes <: ok<ctx*>
@@ -5495,8 +5495,8 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- output: % |- % : failure as expRes
 
     rulepath list-succ
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- let iter vari*{vari <- vari*} = expIter
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- let ITER typedExp iter vari*{vari <- vari*} = iterExp
     -- if iter matches STAR
     -- let subListRes = $sub_list(C, vari*{vari <- vari*})
     -- if subListRes <: ok<ctx*>
@@ -5680,35 +5680,6 @@ relation Eval_path_acc: ctx |- val typedPath : pathRes
 
     rulepath root
     -- output: % |- % % : OK val_b as pathRes
-
-  rulegroup dot
-
-   match
-
-    (signature) C |- val_b DOT typedPath atom as path '#' _typ : %
-    C |- val_b path '#' _typ : %
-    -- if path <: dotPath
-    -- let DOT typedPath atom = path as dotPath
-
-   paths
-
-    rulepath path-failure
-    -- Eval_path_acc: C |- val_b typedPath : pathRes
-    -- if pathRes <: failure
-    -- let failure = pathRes as failure
-    -- output: % |- % % : failure as pathRes
-
-    rulepath succ
-    -- Eval_path_acc: C |- val_b typedPath : pathRes
-    -- if pathRes <: ok<val>
-    -- let OK val' = pathRes as ok<val>
-    -- if val' matches STR %
-    -- let STR valField*{valField <- valField*} = val'
-    -- (let atom_field val_field = valField)*{valField <- valField*, atom_field -> atom_field*, val_field -> val_field*}
-    -- let val''?{val'' <- val''?} = $assoc_<atom, val>(atom, (atom_field, val_field)*{atom_field <- atom_field*, val_field <- val_field*})
-    -- if val''?{val'' <- val''?} matches (_)
-    -- let ?(val) = val''?{val'' <- val''?}
-    -- output: % |- % % : OK val as pathRes
 
   rulegroup idx
 
@@ -5905,6 +5876,35 @@ relation Eval_path_acc: ctx |- val typedPath : pathRes
     -- if ((n_i + n_n) <= |val*{val <- val*}|)
     -- let val_slice = LIST val*{val <- val*}[n_i : n_n]
     -- output: % |- % % : OK val_slice as pathRes
+
+  rulegroup dot
+
+   match
+
+    (signature) C |- val_b DOT typedPath atom as path '#' _typ : %
+    C |- val_b path '#' _typ : %
+    -- if path <: dotPath
+    -- let DOT typedPath atom = path as dotPath
+
+   paths
+
+    rulepath path-failure
+    -- Eval_path_acc: C |- val_b typedPath : pathRes
+    -- if pathRes <: failure
+    -- let failure = pathRes as failure
+    -- output: % |- % % : failure as pathRes
+
+    rulepath succ
+    -- Eval_path_acc: C |- val_b typedPath : pathRes
+    -- if pathRes <: ok<val>
+    -- let OK val' = pathRes as ok<val>
+    -- if val' matches STR %
+    -- let STR valField*{valField <- valField*} = val'
+    -- (let atom_field val_field = valField)*{valField <- valField*, atom_field -> atom_field*, val_field -> val_field*}
+    -- let val''?{val'' <- val''?} = $assoc_<atom, val>(atom, (atom_field, val_field)*{atom_field <- atom_field*, val_field <- val_field*})
+    -- if val''?{val'' <- val''?} matches (_)
+    -- let ?(val) = val''?{val'' <- val''?}
+    -- output: % |- % % : OK val as pathRes
 
   elsegroup
 
@@ -6379,8 +6379,8 @@ relation Eval_prem: ctx |- premAL : premRes
     -- let OK val_out*{val_out <- val_out*} = relRes as ok<val*>
     -- Assign_exps: C |- typedExp_out*{typedExp_out <- typedExp_out*} := val_out*{val_out <- val_out*} : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- output: % |- % : OK C' as premRes
+    -- let OK C_assign = assignRes as ok<ctx>
+    -- output: % |- % : OK C_assign as premRes
 
   rulegroup ifpr
 
@@ -6512,23 +6512,23 @@ relation Eval_prem: ctx |- premAL : premRes
     -- let OK val_r = expRes as ok<val>
     -- Assign_exp: C |- typedExp_l := val_r : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- output: % |- % : OK C' as premRes
+    -- let OK C_assign = assignRes as ok<ctx>
+    -- output: % |- % : OK C_assign as premRes
 
   rulegroup iterpr-opt
 
    match
 
-    (signature) C |- ITER premAL premIterAL as premAL : %
+    (signature) C |- ITER premAL QUEST '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari'*{vari' <- vari'*} as premAL : %
     C |- premAL' : %
     -- if premAL' <: iterPremAL
-    -- let ITER premAL premIterAL = premAL' as iterPremAL
+    -- let ITER premAL iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari'*{vari' <- vari'*} = premAL' as iterPremAL
+    -- if iter matches QUEST
 
    paths
 
     rulepath body-failure
-    -- let iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' _vari*{_vari <- _vari*} = premIterAL
-    -- if iter matches QUEST
+    -- let _vari*{_vari <- _vari*} = vari'*{vari' <- vari'*}
     -- let subOptRes = $sub_opt(C, vari_bound*{vari_bound <- vari_bound*})
     -- if subOptRes <: ok<ctx?>
     -- let OK C_sub?{C_sub <- C_sub?} = subOptRes as ok<ctx?>
@@ -6538,8 +6538,7 @@ relation Eval_prem: ctx |- premAL : premRes
     -- output: % |- % : failure as premRes
 
     rulepath succ-none
-    -- let iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} = premIterAL
-    -- if iter matches QUEST
+    -- let vari_bind*{vari_bind <- vari_bind*} = vari'*{vari' <- vari'*}
     -- let subOptRes = $sub_opt(C, vari_bound*{vari_bound <- vari_bound*})
     -- if subOptRes <: ok<ctx?>
     -- let OK C_sub?{C_sub <- C_sub?} = subOptRes as ok<ctx?>
@@ -6551,8 +6550,7 @@ relation Eval_prem: ctx |- premAL : premRes
     -- output: % |- % : OK C_res as premRes
 
     rulepath succ-some
-    -- let iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} = premIterAL
-    -- if iter matches QUEST
+    -- let vari_bind*{vari_bind <- vari_bind*} = vari'*{vari' <- vari'*}
     -- let subOptRes = $sub_opt(C, vari_bound*{vari_bound <- vari_bound*})
     -- if subOptRes <: ok<ctx?>
     -- let OK C_sub?{C_sub <- C_sub?} = subOptRes as ok<ctx?>
@@ -6572,16 +6570,16 @@ relation Eval_prem: ctx |- premAL : premRes
 
    match
 
-    (signature) C |- ITER premAL premIterAL as premAL : %
+    (signature) C |- ITER premAL STAR '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari'*{vari' <- vari'*} as premAL : %
     C |- premAL' : %
     -- if premAL' <: iterPremAL
-    -- let ITER premAL premIterAL = premAL' as iterPremAL
+    -- let ITER premAL iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari'*{vari' <- vari'*} = premAL' as iterPremAL
+    -- if iter matches STAR
 
    paths
 
     rulepath succ-empty
-    -- let iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} = premIterAL
-    -- if iter matches STAR
+    -- let vari_bind*{vari_bind <- vari_bind*} = vari'*{vari' <- vari'*}
     -- if (OK [] as subListRes = $sub_list(C, vari_bound*{vari_bound <- vari_bound*}))
     -- (let vari_bind_iter = $iterate_vari(vari_bind, [STAR]))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
     -- let val_bind*{val_bind <- val_bind*} = $repeat_<val>(LIST [], |vari_bind*{vari_bind <- vari_bind*}|)
@@ -6589,8 +6587,7 @@ relation Eval_prem: ctx |- premAL : premRes
     -- output: % |- % : OK C_res as premRes
 
     rulepath body-failure
-    -- let iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' _vari*{_vari <- _vari*} = premIterAL
-    -- if iter matches STAR
+    -- let _vari*{_vari <- _vari*} = vari'*{vari' <- vari'*}
     -- let subListRes = $sub_list(C, vari_bound*{vari_bound <- vari_bound*})
     -- if subListRes <: ok<ctx*>
     -- let OK C_sub*{C_sub <- C_sub*} = subListRes as ok<ctx*>
@@ -6601,8 +6598,7 @@ relation Eval_prem: ctx |- premAL : premRes
     -- output: % |- % : failure as premRes
 
     rulepath succ-list
-    -- let iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} = premIterAL
-    -- if iter matches STAR
+    -- let vari_bind*{vari_bind <- vari_bind*} = vari'*{vari' <- vari'*}
     -- let subListRes = $sub_list(C, vari_bound*{vari_bound <- vari_bound*})
     -- if subListRes <: ok<ctx*>
     -- let OK C_sub*{C_sub <- C_sub*} = subListRes as ok<ctx*>
@@ -6687,8 +6683,8 @@ relation Eval_prems: ctx |- premAL* : premRes
     -- let premAL_h :: premAL_t*{premAL_t <- premAL_t*} = premAL''*{premAL'' <- premAL''*}
     -- Eval_prem: C |- premAL_h : premRes'
     -- if premRes' <: ok<ctx>
-    -- let OK C' = premRes' as ok<ctx>
-    -- Eval_prems: C' |- premAL_t*{premAL_t <- premAL_t*} : premRes
+    -- let OK C_h = premRes' as ok<ctx>
+    -- Eval_prems: C_h |- premAL_t*{premAL_t <- premAL_t*} : premRes
     -- output: % |- % : premRes
 
 syntax premOptRes =
@@ -7746,8 +7742,8 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
    paths
 
     rulepath variable
-    -- let C' = $add_varr(C, id [], val)
-    -- output: % |- % := % : OK C' as assignRes
+    -- let C_assign = $add_varr(C, id [], val)
+    -- output: % |- % := % : OK C_assign as assignRes
 
   rulegroup tup
 
@@ -7765,8 +7761,8 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
     rulepath tup
     -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- output: % |- % := % : OK C' as assignRes
+    -- let OK C_assign = assignRes as ok<ctx>
+    -- output: % |- % := % : OK C_assign as assignRes
 
   rulegroup inj
 
@@ -7785,8 +7781,8 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
     rulepath inj
     -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- output: % |- % := % : OK C' as assignRes
+    -- let OK C_assign = assignRes as ok<ctx>
+    -- output: % |- % := % : OK C_assign as assignRes
 
   rulegroup str
 
@@ -7808,8 +7804,8 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
     -- (if (atom' = atom))*{atom <- atom*, atom' <- atom'*}
     -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- output: % |- % := % : OK C' as assignRes
+    -- let OK C_assign = assignRes as ok<ctx>
+    -- output: % |- % := % : OK C_assign as assignRes
 
   rulegroup opt
 
@@ -7833,8 +7829,8 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
     -- let ?(val) = val'''?{val''' <- val'''?}
     -- Assign_exp: C |- typedExp := val : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- output: % |- % := % : OK C' as assignRes
+    -- let OK C_assign = assignRes as ok<ctx>
+    -- output: % |- % := % : OK C_assign as assignRes
 
     rulepath opt-none
     -- if (typedExp'?{typedExp' <- typedExp'?} = ?())
@@ -7857,8 +7853,8 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
     rulepath list
     -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- output: % |- % := % : OK C' as assignRes
+    -- let OK C_assign = assignRes as ok<ctx>
+    -- output: % |- % := % : OK C_assign as assignRes
 
   rulegroup cons
 
@@ -7878,40 +7874,40 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
     rulepath cons
     -- Assign_exp: C |- typedExp_h := val_h : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- Assign_exp: C' |- typedExp_t := LIST val_t*{val_t <- val_t*} : assignRes'
+    -- let OK C_h = assignRes as ok<ctx>
+    -- Assign_exp: C_h |- typedExp_t := LIST val_t*{val_t <- val_t*} : assignRes'
     -- if assignRes' <: ok<ctx>
-    -- let OK C'' = assignRes' as ok<ctx>
-    -- output: % |- % := % : OK C'' as assignRes
+    -- let OK C_t = assignRes' as ok<ctx>
+    -- output: % |- % := % : OK C_t as assignRes
 
   rulegroup iter
 
    match
 
-    (signature) C |- ITER typedExp expIter as exp '#' typ := val' : %
+    (signature) C |- iterExp as exp '#' typ := val' : %
     C |- exp '#' typ := val' : %
     -- if exp <: iterExp
-    -- let ITER typedExp expIter = exp as iterExp
+    -- let iterExp = exp as iterExp
 
    paths
 
     rulepath simple
     -- let val = val'
-    -- let varr'?{varr' <- varr'?} = $is_iter_on_var(ITER typedExp expIter as exp '#' typ)
+    -- let varr'?{varr' <- varr'?} = $is_iter_on_var(iterExp as exp '#' typ)
     -- if varr'?{varr' <- varr'?} matches (_)
     -- let ?(varr) = varr'?{varr' <- varr'?}
-    -- let C' = $add_varr(C, varr, val)
-    -- output: % |- % := % : OK C' as assignRes
+    -- let C_assign = $add_varr(C, varr, val)
+    -- output: % |- % := % : OK C_assign as assignRes
 
     rulepath opt-none
     -- if (val' = OPT ?())
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- let iter vari*{vari <- vari*} = expIter
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- let ITER typedExp iter vari*{vari <- vari*} = iterExp
     -- if iter matches QUEST
     -- (let vari_iter = $iterate_vari(vari, [QUEST]))*{vari <- vari*, vari_iter -> vari_iter*}
     -- let val_bind*{val_bind <- val_bind*} = $repeat_<val>(OPT ?(), |vari_iter*{vari_iter <- vari_iter*}|)
-    -- let C' = $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*})
-    -- output: % |- % := % : OK C' as assignRes
+    -- let C_assign = $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*})
+    -- output: % |- % := % : OK C_assign as assignRes
 
     rulepath opt-some
     -- let val''' = val'
@@ -7919,25 +7915,25 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
     -- let OPT val''?{val'' <- val''?} = val'''
     -- if val''?{val'' <- val''?} matches (_)
     -- let ?(val) = val''?{val'' <- val''?}
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- let iter vari*{vari <- vari*} = expIter
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- let ITER typedExp iter vari*{vari <- vari*} = iterExp
     -- if iter matches QUEST
     -- Assign_exp: C |- typedExp := val : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
+    -- let OK C_body = assignRes as ok<ctx>
     -- (let vari_iter = $iterate_vari(vari, [QUEST]))*{vari <- vari*, vari_iter -> vari_iter*}
-    -- (let val''''?{val'''' <- val''''?} = $find_vari(C', vari))*{vari <- vari*, val''''? -> val''''?*}
+    -- (let val''''?{val'''' <- val''''?} = $find_vari(C_body, vari))*{vari <- vari*, val''''? -> val''''?*}
     -- (if val''''?{val'''' <- val''''?} matches (_))*{val''''? <- val''''?*}
     -- (let ?(val_sub) = val''''?{val'''' <- val''''?})*{val''''? <- val''''?*, val_sub -> val_sub*}
-    -- let C'' = $add_varis(C', vari_iter*{vari_iter <- vari_iter*}, OPT ?(val_sub)*{val_sub <- val_sub*})
-    -- output: % |- % := % : OK C'' as assignRes
+    -- let C_assign = $add_varis(C_body, vari_iter*{vari_iter <- vari_iter*}, OPT ?(val_sub)*{val_sub <- val_sub*})
+    -- output: % |- % := % : OK C_assign as assignRes
 
     rulepath list
     -- let val'' = val'
     -- if val'' matches LIST %
     -- let LIST val*{val <- val*} = val''
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- let iter vari*{vari <- vari*} = expIter
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- let ITER typedExp iter vari*{vari <- vari*} = iterExp
     -- if iter matches STAR
     -- let C_local = C[LOCAL.VAL = $empty_map<varr, val>]
     -- (Assign_exp: C_local |- typedExp := val : assignRes)*{val <- val*, assignRes -> assignRes*}
@@ -7948,8 +7944,8 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
     -- (if val'''*{val''' <- val'''*}?{val'''* <- val'''*?} matches (_))*{val'''*? <- val'''*?*}
     -- (let ?(val_sub*{val_sub <- val_sub*}) = val'''*{val''' <- val'''*}?{val'''* <- val'''*?})*{val'''*? <- val'''*?*, val_sub* -> val_sub**}
     -- (let val_bind = LIST val_sub*{val_sub <- val_sub*})*{val_sub* <- val_sub**, val_bind -> val_bind*}
-    -- let C' = $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*})
-    -- output: % |- % := % : OK C' as assignRes
+    -- let C_assign = $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*})
+    -- output: % |- % := % : OK C_assign as assignRes
 
   elsegroup
 
@@ -7990,11 +7986,11 @@ relation Assign_exps: ctx |- typedExp* := val* : assignRes
     -- let val_h :: val_t*{val_t <- val_t*} = val'*{val' <- val'*}
     -- Assign_exp: C |- typedExp_h := val_h : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- Assign_exps: C' |- typedExp_t*{typedExp_t <- typedExp_t*} := val_t*{val_t <- val_t*} : assignRes'
+    -- let OK C_h = assignRes as ok<ctx>
+    -- Assign_exps: C_h |- typedExp_t*{typedExp_t <- typedExp_t*} := val_t*{val_t <- val_t*} : assignRes'
     -- if assignRes' <: ok<ctx>
-    -- let OK C'' = assignRes' as ok<ctx>
-    -- output: % |- % := % : OK C'' as assignRes
+    -- let OK C_t = assignRes' as ok<ctx>
+    -- output: % |- % := % : OK C_t as assignRes
 
   elsegroup
 
@@ -8026,8 +8022,8 @@ relation Assign_arg: ctx |- arg := val : assignRes
     rulepath exp
     -- Assign_exp: C |- typedExp := val : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- output: % |- % := % : OK C' as assignRes
+    -- let OK C_assign = assignRes as ok<ctx>
+    -- output: % |- % := % : OK C_assign as assignRes
 
   rulegroup fun
 
@@ -8043,8 +8039,8 @@ relation Assign_arg: ctx |- arg := val : assignRes
    paths
 
     rulepath fun
-    -- let C' = $add_func(C, id, id_global)
-    -- output: % |- % := % : OK C' as assignRes
+    -- let C_assign = $add_func(C, id, id_global)
+    -- output: % |- % := % : OK C_assign as assignRes
 
   elsegroup
 
@@ -8085,11 +8081,11 @@ relation Assign_args: ctx |- arg* := val* : assignRes
     -- let val_h :: val_t*{val_t <- val_t*} = val'*{val' <- val'*}
     -- Assign_arg: C |- arg_h := val_h : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- Assign_args: C' |- arg_t*{arg_t <- arg_t*} := val_t*{val_t <- val_t*} : assignRes'
+    -- let OK C_h = assignRes as ok<ctx>
+    -- Assign_args: C_h |- arg_t*{arg_t <- arg_t*} := val_t*{val_t <- val_t*} : assignRes'
     -- if assignRes' <: ok<ctx>
-    -- let OK C'' = assignRes' as ok<ctx>
-    -- output: % |- % := % : OK C'' as assignRes
+    -- let OK C_t = assignRes' as ok<ctx>
+    -- output: % |- % := % : OK C_t as assignRes
 
   elsegroup
 
@@ -8120,8 +8116,8 @@ relation Eval_clause: ctx |- clauseAL `( val* `) : funcRes
     -- let arg*{arg <- arg*} '=' typedExp_out '-' premAL*{premAL <- premAL*} = clauseAL
     -- Assign_args: C |- arg*{arg <- arg*} := val*{val <- val*} : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- Eval_prems: C' |- premAL*{premAL <- premAL*} : premRes
+    -- let OK C_assign = assignRes as ok<ctx>
+    -- Eval_prems: C_assign |- premAL*{premAL <- premAL*} : premRes
     -- if premRes <: failure
     -- let failure = premRes as failure
     -- output: % |- % `( % `) : failure as funcRes
@@ -8130,11 +8126,11 @@ relation Eval_clause: ctx |- clauseAL `( val* `) : funcRes
     -- let arg*{arg <- arg*} '=' typedExp_out '-' premAL*{premAL <- premAL*} = clauseAL
     -- Assign_args: C |- arg*{arg <- arg*} := val*{val <- val*} : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- Eval_prems: C' |- premAL*{premAL <- premAL*} : premRes
+    -- let OK C_assign = assignRes as ok<ctx>
+    -- Eval_prems: C_assign |- premAL*{premAL <- premAL*} : premRes
     -- if premRes <: ok<ctx>
-    -- let OK C'' = premRes as ok<ctx>
-    -- Eval_exp: C'' |- typedExp_out : expRes
+    -- let OK C_prem = premRes as ok<ctx>
+    -- Eval_exp: C_prem |- typedExp_out : expRes
     -- if expRes <: funcRes
     -- let funcRes = expRes as funcRes
     -- output: % |- % `( % `) : funcRes
@@ -8254,8 +8250,8 @@ relation Eval_tblrow: ctx |- tblRowAL `( val* `) : funcRes
     -- let C_callee = C[LOCAL = $empty_localLayer]
     -- Assign_args: C_callee |- arg*{arg <- arg*} := val*{val <- val*} : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C_callee' = assignRes as ok<ctx>
-    -- Eval_prems: C_callee' |- premAL*{premAL <- premAL*} : premRes
+    -- let OK C_callee_assign = assignRes as ok<ctx>
+    -- Eval_prems: C_callee_assign |- premAL*{premAL <- premAL*} : premRes
     -- if premRes <: failure
     -- let failure = premRes as failure
     -- output: % |- % `( % `) : failure as funcRes
@@ -8265,11 +8261,11 @@ relation Eval_tblrow: ctx |- tblRowAL `( val* `) : funcRes
     -- let C_callee = C[LOCAL = $empty_localLayer]
     -- Assign_args: C_callee |- arg*{arg <- arg*} := val*{val <- val*} : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C_callee' = assignRes as ok<ctx>
-    -- Eval_prems: C_callee' |- premAL*{premAL <- premAL*} : premRes
+    -- let OK C_callee_assign = assignRes as ok<ctx>
+    -- Eval_prems: C_callee_assign |- premAL*{premAL <- premAL*} : premRes
     -- if premRes <: ok<ctx>
-    -- let OK C_callee'' = premRes as ok<ctx>
-    -- Eval_exp: C_callee'' |- typedExp_out : expRes
+    -- let OK C_callee_prem = premRes as ok<ctx>
+    -- Eval_exp: C_callee_prem |- typedExp_out : expRes
     -- if expRes <: funcRes
     -- let funcRes = expRes as funcRes
     -- output: % |- % `( % `) : funcRes
@@ -8400,8 +8396,8 @@ relation Eval_rul: ctx |- rulAL `( val* `) : relRes
     -- let _typedExp*{_typedExp <- _typedExp*} = typedExp'*{typedExp' <- typedExp'*}
     -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- Eval_prems: C' |- premAL*{premAL <- premAL*} : premRes
+    -- let OK C_assign = assignRes as ok<ctx>
+    -- Eval_prems: C_assign |- premAL*{premAL <- premAL*} : premRes
     -- if premRes <: failure
     -- let failure = premRes as failure
     -- output: % |- % `( % `) : failure as relRes
@@ -8410,11 +8406,11 @@ relation Eval_rul: ctx |- rulAL `( val* `) : relRes
     -- let typedExp_out*{typedExp_out <- typedExp_out*} = typedExp'*{typedExp' <- typedExp'*}
     -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : assignRes
     -- if assignRes <: ok<ctx>
-    -- let OK C' = assignRes as ok<ctx>
-    -- Eval_prems: C' |- premAL*{premAL <- premAL*} : premRes
+    -- let OK C_assign = assignRes as ok<ctx>
+    -- Eval_prems: C_assign |- premAL*{premAL <- premAL*} : premRes
     -- if premRes <: ok<ctx>
-    -- let OK C'' = premRes as ok<ctx>
-    -- Eval_exps: C'' |- typedExp_out*{typedExp_out <- typedExp_out*} : expsRes
+    -- let OK C_prem = premRes as ok<ctx>
+    -- Eval_exps: C_prem |- typedExp_out*{typedExp_out <- typedExp_out*} : expsRes
     -- if expsRes <: relRes
     -- let relRes = expsRes as relRes
     -- output: % |- % `( % `) : relRes

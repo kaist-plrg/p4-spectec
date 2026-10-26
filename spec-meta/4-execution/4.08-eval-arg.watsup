@@ -1,18 +1,34 @@
-;; Argument evaluation rules
+;;
+;; Argument evaluation
+;;
+;; syntax arg
+;;
+
+;;; expArg
+;;; syntax expArg = EXP typedExp
 
 rule Eval_arg/exp:
   C |- EXP typedExp : argRes
   -- Eval_exp: C |- typedExp : argRes
 
+;;; funArg
+;;; syntax funArg = FUN id
+
 rule Eval_arg/fun:
   C |- FUN id : OK (FUNC id_global)
   -- if id_global = $resolve_func_param(C, id)
+
+;; Any other argument is an error
 
 rule Eval_arg/error:
   C |- arg : ERROR
   -- otherwise
 
-;; Argument sequence evaluation rules
+;;
+;; Argument sequence evaluation
+;;
+;; syntax arg*
+;;
 
 rulegroup Eval_args {
 
@@ -35,7 +51,11 @@ rulegroup Eval_args {
 
 }
 
-;; Type argument evaluation rules
+;;
+;; Type argument evaluation
+;;
+;; syntax targ*
+;;
 
 rule Eval_targs:
   C |- targ* : typsRes

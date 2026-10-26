@@ -2512,45 +2512,45 @@ var C : ctx
 
 def $load_ctx(ctx, specAL) : ctx =
 
-  clause 0 : (C, externTypDefn as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 0 : (C, externTypDefn as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if (EXTTYP id = externTypDefn)
   -- if (tdenv_update = $add_map<id, typDef>(C.GLOBAL.TYP, id, externTypDefn as typDef))
-  -- if (C' = C[GLOBAL.TYP = tdenv_update])
+  -- if (C_load = C[GLOBAL.TYP = tdenv_update])
 
-  clause 1 : (C, definedTypDefn as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 1 : (C, definedTypDefn as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if (TYP id _tparam*{_tparam <- _tparam*} '=' _deftyp = definedTypDefn)
   -- if (tdenv_update = $add_map<id, typDef>(C.GLOBAL.TYP, id, definedTypDefn as typDef))
-  -- if (C' = C[GLOBAL.TYP = tdenv_update])
+  -- if (C_load = C[GLOBAL.TYP = tdenv_update])
 
-  clause 2 : (C, externRelDefnAL as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 2 : (C, externRelDefnAL as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if (EXTREL id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} = externRelDefnAL)
   -- if (renv_update = $add_map<id, relDefnAL>(C.GLOBAL.REL, id, externRelDefnAL as relDefnAL))
-  -- if (C' = C[GLOBAL.REL = renv_update])
+  -- if (C_load = C[GLOBAL.REL = renv_update])
 
-  clause 3 : (C, definedRelDefnAL as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 3 : (C, definedRelDefnAL as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if (REL id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} '=' _rulGroupAL*{_rulGroupAL <- _rulGroupAL*} _elsGroupAL?{_elsGroupAL <- _elsGroupAL?} = definedRelDefnAL)
   -- if (renv_update = $add_map<id, relDefnAL>(C.GLOBAL.REL, id, definedRelDefnAL as relDefnAL))
-  -- if (C' = C[GLOBAL.REL = renv_update])
+  -- if (C_load = C[GLOBAL.REL = renv_update])
 
-  clause 4 : (C, externFuncDefn as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 4 : (C, externFuncDefn as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if (EXTFUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ = externFuncDefn)
   -- if (fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, externFuncDefn as funcDefnAL))
-  -- if (C' = C[GLOBAL.FUNC = fenv_update])
+  -- if (C_load = C[GLOBAL.FUNC = fenv_update])
 
-  clause 5 : (C, builtinFuncDefn as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 5 : (C, builtinFuncDefn as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if (BUILTINFUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ = builtinFuncDefn)
   -- if (fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, builtinFuncDefn as funcDefnAL))
-  -- if (C' = C[GLOBAL.FUNC = fenv_update])
+  -- if (C_load = C[GLOBAL.FUNC = fenv_update])
 
-  clause 6 : (C, tableFuncDefnAL as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 6 : (C, tableFuncDefnAL as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if (TABLEFUNC id _param*{_param <- _param*} ':' _typ '=' _tblRowAL*{_tblRowAL <- _tblRowAL*} = tableFuncDefnAL)
   -- if (fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, tableFuncDefnAL as funcDefnAL))
-  -- if (C' = C[GLOBAL.FUNC = fenv_update])
+  -- if (C_load = C[GLOBAL.FUNC = fenv_update])
 
-  clause 7 : (C, definedFuncDefnAL as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+  clause 7 : (C, definedFuncDefnAL as defnAL :: defnAL_t*{defnAL_t <- defnAL_t*}) = $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
   -- if (FUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ '=' _clauseAL*{_clauseAL <- _clauseAL*} _elsClauseAL?{_elsClauseAL <- _elsClauseAL?} = definedFuncDefnAL)
   -- if (fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, definedFuncDefnAL as funcDefnAL))
-  -- if (C' = C[GLOBAL.FUNC = fenv_update])
+  -- if (C_load = C[GLOBAL.FUNC = fenv_update])
 
   clause 8 : (C, []) = C
 
@@ -2648,12 +2648,12 @@ syntax subListRes =
 
 def $sub_list(ctx, vari*) : subListRes =
 
-  clause 0 : (C, vari*{vari <- vari*}) = OK C'*{C' <- C'*} as subListRes
+  clause 0 : (C, vari*{vari <- vari*}) = OK C_sub*{C_sub <- C_sub*} as subListRes
   -- (if (vari_iter = $iterate_vari(vari, [STAR])))*{vari <- vari*, vari_iter <- vari_iter*}
   -- (if (?(LIST val*{val <- val*}) = $find_vari(C, vari_iter)))*{val* <- val**, vari_iter <- vari_iter*}
   -- if $forall_((|val*{val <- val*}| = |val*{val <- val*}*{val* <- val**}[0]|)*{val* <- val**})
   -- if (val_trans*{val_trans <- val_trans*}*{val_trans* <- val_trans**} = $transpose_<val>(val*{val <- val*}*{val* <- val**}))
-  -- (if (C' = $add_varis(C, vari*{vari <- vari*}, val_trans*{val_trans <- val_trans*})))*{C' <- C'*, val_trans* <- val_trans**}
+  -- (if (C_sub = $add_varis(C, vari*{vari <- vari*}, val_trans*{val_trans <- val_trans*})))*{C_sub <- C_sub*, val_trans* <- val_trans**}
 
   clause -1 : (C, vari*{vari <- vari*}) = ERROR as subListRes
 
@@ -2967,31 +2967,31 @@ relation Eval_exp: ctx |- typedExp : expRes
 
   rulegroup iter
 
-    rule simple: C |- ITER typedExp expIter as exp '#' typ : OK val as expRes
-    -- if (?(varr) = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
+    rule simple: C |- iterExp as exp '#' typ : OK val as expRes
+    -- if (?(varr) = $is_iter_on_var(iterExp as exp '#' typ))
     -- if (?(val) = $find_varr(C, varr))
 
-    rule opt-body-failure: C |- ITER typedExp expIter as exp '#' typ : failure as expRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- if (QUEST vari*{vari <- vari*} = expIter)
+    rule opt-body-failure: C |- iterExp as exp '#' typ : failure as expRes
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- if (ITER typedExp QUEST vari*{vari <- vari*} = iterExp)
     -- if (OK C_sub?{C_sub <- C_sub?} as subOptRes = $sub_opt(C, vari*{vari <- vari*}))
     -- Eval_exp_maybe: C_sub?{C_sub <- C_sub?} |- typedExp : failure as expOptRes
 
-    rule opt-succ: C |- ITER typedExp expIter as exp '#' typ : OK OPT val?{val <- val?} as expRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- if (QUEST vari*{vari <- vari*} = expIter)
+    rule opt-succ: C |- iterExp as exp '#' typ : OK OPT val?{val <- val?} as expRes
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- if (ITER typedExp QUEST vari*{vari <- vari*} = iterExp)
     -- if (OK C_sub?{C_sub <- C_sub?} as subOptRes = $sub_opt(C, vari*{vari <- vari*}))
     -- Eval_exp_maybe: C_sub?{C_sub <- C_sub?} |- typedExp : OK val?{val <- val?} as expOptRes
 
-    rule list-body-failure: C |- ITER typedExp expIter as exp '#' typ : failure as expRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- if (STAR vari*{vari <- vari*} = expIter)
+    rule list-body-failure: C |- iterExp as exp '#' typ : failure as expRes
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- if (ITER typedExp STAR vari*{vari <- vari*} = iterExp)
     -- if (OK C_sub*{C_sub <- C_sub*} as subListRes = $sub_list(C, vari*{vari <- vari*}))
     -- Eval_exp_each: C_sub*{C_sub <- C_sub*} |- typedExp : failure as expsRes
 
-    rule list-succ: C |- ITER typedExp expIter as exp '#' typ : OK LIST val*{val <- val*} as expRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- if (STAR vari*{vari <- vari*} = expIter)
+    rule list-succ: C |- iterExp as exp '#' typ : OK LIST val*{val <- val*} as expRes
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- if (ITER typedExp STAR vari*{vari <- vari*} = iterExp)
     -- if (OK C_sub*{C_sub <- C_sub*} as subListRes = $sub_list(C, vari*{vari <- vari*}))
     -- Eval_exp_each: C_sub*{C_sub <- C_sub*} |- typedExp : OK val*{val <- val*} as expsRes
 
@@ -3068,16 +3068,6 @@ relation Eval_path_acc: ctx |- val typedPath : pathRes
 
     rule root: C |- val_b ROOT as path '#' _typ : OK val_b as pathRes
 
-  rulegroup dot
-
-    rule path-failure: C |- val_b DOT typedPath atom as path '#' _typ : failure as pathRes
-    -- Eval_path_acc: C |- val_b typedPath : failure as pathRes
-
-    rule succ: C |- val_b DOT typedPath atom as path '#' _typ : OK val as pathRes
-    -- Eval_path_acc: C |- val_b typedPath : OK STR valField*{valField <- valField*} as pathRes
-    -- (if (atom_field val_field = valField))*{atom_field <- atom_field*, valField <- valField*, val_field <- val_field*}
-    -- if (?(val) = $assoc_<atom, val>(atom, (atom_field, val_field)*{atom_field <- atom_field*, val_field <- val_field*}))
-
   rulegroup idx
 
     rule path-failure: C |- val_b IDX typedPath typedExp_i as path '#' _typ : failure as pathRes
@@ -3135,6 +3125,16 @@ relation Eval_path_acc: ctx |- val typedPath : pathRes
     -- Eval_exp: C |- typedExp_i : OK NAT n_i as val as expRes
     -- Eval_exp: C |- typedExp_n : OK NAT n_n as val as expRes
     -- if (val_slice = LIST val*{val <- val*}[n_i : n_n])
+
+  rulegroup dot
+
+    rule path-failure: C |- val_b DOT typedPath atom as path '#' _typ : failure as pathRes
+    -- Eval_path_acc: C |- val_b typedPath : failure as pathRes
+
+    rule succ: C |- val_b DOT typedPath atom as path '#' _typ : OK val as pathRes
+    -- Eval_path_acc: C |- val_b typedPath : OK STR valField*{valField <- valField*} as pathRes
+    -- (if (atom_field val_field = valField))*{atom_field <- atom_field*, valField <- valField*, val_field <- val_field*}
+    -- if (?(val) = $assoc_<atom, val>(atom, (atom_field, val_field)*{atom_field <- atom_field*, val_field <- val_field*}))
 
   elsegroup
 
@@ -3303,10 +3303,10 @@ relation Eval_prem: ctx |- premAL : premRes
     -- Eval_exps: C |- typedExp*{typedExp <- typedExp*} : OK val*{val <- val*} as expsRes
     -- Call_rel: C |- id `( val*{val <- val*} `) : failure as relRes
 
-    rule succ: C |- REL id ':' typedExp*{typedExp <- typedExp*} '->' typedExp_out*{typedExp_out <- typedExp_out*} as premAL : OK C' as premRes
+    rule succ: C |- REL id ':' typedExp*{typedExp <- typedExp*} '->' typedExp_out*{typedExp_out <- typedExp_out*} as premAL : OK C_assign as premRes
     -- Eval_exps: C |- typedExp*{typedExp <- typedExp*} : OK val*{val <- val*} as expsRes
     -- Call_rel: C |- id `( val*{val <- val*} `) : OK val_out*{val_out <- val_out*} as relRes
-    -- Assign_exps: C |- typedExp_out*{typedExp_out <- typedExp_out*} := val_out*{val_out <- val_out*} : OK C' as assignRes
+    -- Assign_exps: C |- typedExp_out*{typedExp_out <- typedExp_out*} := val_out*{val_out <- val_out*} : OK C_assign as assignRes
 
   rulegroup ifpr
 
@@ -3354,27 +3354,24 @@ relation Eval_prem: ctx |- premAL : premRes
     rule right-failure: C |- LET typedExp_l '=' typedExp_r as premAL : failure as premRes
     -- Eval_exp: C |- typedExp_r : failure as expRes
 
-    rule succ: C |- LET typedExp_l '=' typedExp_r as premAL : OK C' as premRes
+    rule succ: C |- LET typedExp_l '=' typedExp_r as premAL : OK C_assign as premRes
     -- Eval_exp: C |- typedExp_r : OK val_r as expRes
-    -- Assign_exp: C |- typedExp_l := val_r : OK C' as assignRes
+    -- Assign_exp: C |- typedExp_l := val_r : OK C_assign as assignRes
 
   rulegroup iterpr-opt
 
-    rule body-failure: C |- ITER premAL premIterAL as premAL : failure as premRes
-    -- if (QUEST '<-' vari_bound*{vari_bound <- vari_bound*} '->' _vari*{_vari <- _vari*} = premIterAL)
+    rule body-failure: C |- ITER premAL QUEST '<-' vari_bound*{vari_bound <- vari_bound*} '->' _vari*{_vari <- _vari*} as premAL : failure as premRes
     -- if (OK C_sub?{C_sub <- C_sub?} as subOptRes = $sub_opt(C, vari_bound*{vari_bound <- vari_bound*}))
     -- Eval_prem_maybe: C_sub?{C_sub <- C_sub?} |- premAL : failure as premOptRes
 
-    rule succ-none: C |- ITER premAL premIterAL as premAL : OK C_res as premRes
-    -- if (QUEST '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} = premIterAL)
+    rule succ-none: C |- ITER premAL QUEST '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} as premAL : OK C_res as premRes
     -- if (OK C_sub?{C_sub <- C_sub?} as subOptRes = $sub_opt(C, vari_bound*{vari_bound <- vari_bound*}))
     -- Eval_prem_maybe: C_sub?{C_sub <- C_sub?} |- premAL : OK ?() as premOptRes
     -- (if (vari_bind_iter = $iterate_vari(vari_bind, [QUEST])))*{vari_bind <- vari_bind*, vari_bind_iter <- vari_bind_iter*}
     -- if (val_bind*{val_bind <- val_bind*} = $repeat_<val>(OPT ?(), |vari_bind*{vari_bind <- vari_bind*}|))
     -- if (C_res = $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, val_bind*{val_bind <- val_bind*}))
 
-    rule succ-some: C |- ITER premAL premIterAL as premAL : OK C_res as premRes
-    -- if (QUEST '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} = premIterAL)
+    rule succ-some: C |- ITER premAL QUEST '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} as premAL : OK C_res as premRes
     -- if (OK C_sub?{C_sub <- C_sub?} as subOptRes = $sub_opt(C, vari_bound*{vari_bound <- vari_bound*}))
     -- Eval_prem_maybe: C_sub?{C_sub <- C_sub?} |- premAL : OK ?(C_sub_res) as premOptRes
     -- (if (?(val_bind) = $find_vari(C_sub_res, vari_bind)))*{val_bind <- val_bind*, vari_bind <- vari_bind*}
@@ -3383,21 +3380,18 @@ relation Eval_prem: ctx |- premAL : premRes
 
   rulegroup iterpr-list
 
-    rule succ-empty: C |- ITER premAL premIterAL as premAL : OK C_res as premRes
-    -- if (STAR '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} = premIterAL)
+    rule succ-empty: C |- ITER premAL STAR '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} as premAL : OK C_res as premRes
     -- if (OK [] as subListRes = $sub_list(C, vari_bound*{vari_bound <- vari_bound*}))
     -- (if (vari_bind_iter = $iterate_vari(vari_bind, [STAR])))*{vari_bind <- vari_bind*, vari_bind_iter <- vari_bind_iter*}
     -- if (val_bind*{val_bind <- val_bind*} = $repeat_<val>(LIST [], |vari_bind*{vari_bind <- vari_bind*}|))
     -- if (C_res = $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, val_bind*{val_bind <- val_bind*}))
 
-    rule body-failure: C |- ITER premAL premIterAL as premAL : failure as premRes
-    -- if (STAR '<-' vari_bound*{vari_bound <- vari_bound*} '->' _vari*{_vari <- _vari*} = premIterAL)
+    rule body-failure: C |- ITER premAL STAR '<-' vari_bound*{vari_bound <- vari_bound*} '->' _vari*{_vari <- _vari*} as premAL : failure as premRes
     -- if (OK C_sub*{C_sub <- C_sub*} as subListRes = $sub_list(C, vari_bound*{vari_bound <- vari_bound*}))
     -- if (C_sub*{C_sub <- C_sub*} =/= [])
     -- Eval_prem_each: C_sub*{C_sub <- C_sub*} |- premAL : failure as premIterRes
 
-    rule succ-list: C |- ITER premAL premIterAL as premAL : OK C_res as premRes
-    -- if (STAR '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} = premIterAL)
+    rule succ-list: C |- ITER premAL STAR '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} as premAL : OK C_res as premRes
     -- if (OK C_sub*{C_sub <- C_sub*} as subListRes = $sub_list(C, vari_bound*{vari_bound <- vari_bound*}))
     -- if (C_sub*{C_sub <- C_sub*} =/= [])
     -- Eval_prem_each: C_sub*{C_sub <- C_sub*} |- premAL : OK C_sub_res*{C_sub_res <- C_sub_res*} as premIterRes
@@ -3432,8 +3426,8 @@ relation Eval_prems: ctx |- premAL* : premRes
     -- Eval_prem: C |- premAL_h : failure as premRes
 
     rule head-succ: C |- premAL_h :: premAL_t*{premAL_t <- premAL_t*} : premRes
-    -- Eval_prem: C |- premAL_h : OK C' as premRes
-    -- Eval_prems: C' |- premAL_t*{premAL_t <- premAL_t*} : premRes
+    -- Eval_prem: C |- premAL_h : OK C_h as premRes
+    -- Eval_prems: C_h |- premAL_t*{premAL_t <- premAL_t*} : premRes
 
 syntax premOptRes =
    | OK ctx? (from ok<ctx?>)
@@ -3884,74 +3878,74 @@ relation Assign_exp: ctx |- typedExp := val : assignRes
 
   rulegroup variable
 
-    rule variable: C |- VAR id as exp '#' _typ := val : OK C' as assignRes
-    -- if (C' = $add_varr(C, id [], val))
+    rule variable: C |- VAR id as exp '#' _typ := val : OK C_assign as assignRes
+    -- if (C_assign = $add_varr(C, id [], val))
 
   rulegroup tup
 
-    rule tup: C |- TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ := TUP val*{val <- val*} : OK C' as assignRes
-    -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C' as assignRes
+    rule tup: C |- TUP typedExp*{typedExp <- typedExp*} as exp '#' _typ := TUP val*{val <- val*} : OK C_assign as assignRes
+    -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C_assign as assignRes
 
   rulegroup inj
 
-    rule inj: C |- INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ := INJ mixop val*{val <- val*} : OK C' as assignRes
-    -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C' as assignRes
+    rule inj: C |- INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' _typ := INJ mixop val*{val <- val*} : OK C_assign as assignRes
+    -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C_assign as assignRes
 
   rulegroup str
 
-    rule str: C |- STR expField*{expField <- expField*} as exp '#' _typ := STR valField*{valField <- valField*} : OK C' as assignRes
+    rule str: C |- STR expField*{expField <- expField*} as exp '#' _typ := STR valField*{valField <- valField*} : OK C_assign as assignRes
     -- (if (atom val = valField))*{atom <- atom*, val <- val*, valField <- valField*}
     -- (if (atom typedExp = expField))*{atom <- atom*, expField <- expField*, typedExp <- typedExp*}
-    -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C' as assignRes
+    -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C_assign as assignRes
 
   rulegroup opt
 
-    rule opt-some: C |- OPT ?(typedExp) as exp '#' _typ := OPT ?(val) : OK C' as assignRes
-    -- Assign_exp: C |- typedExp := val : OK C' as assignRes
+    rule opt-some: C |- OPT ?(typedExp) as exp '#' _typ := OPT ?(val) : OK C_assign as assignRes
+    -- Assign_exp: C |- typedExp := val : OK C_assign as assignRes
 
     rule opt-none: C |- OPT ?() as exp '#' _typ := OPT ?() : OK C as assignRes
 
   rulegroup list
 
-    rule list: C |- LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ := LIST val*{val <- val*} : OK C' as assignRes
-    -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C' as assignRes
+    rule list: C |- LIST typedExp*{typedExp <- typedExp*} as exp '#' _typ := LIST val*{val <- val*} : OK C_assign as assignRes
+    -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C_assign as assignRes
 
   rulegroup cons
 
-    rule cons: C |- CONS typedExp_h typedExp_t as exp '#' _typ := LIST val_h :: val_t*{val_t <- val_t*} : OK C'' as assignRes
-    -- Assign_exp: C |- typedExp_h := val_h : OK C' as assignRes
-    -- Assign_exp: C' |- typedExp_t := LIST val_t*{val_t <- val_t*} : OK C'' as assignRes
+    rule cons: C |- CONS typedExp_h typedExp_t as exp '#' _typ := LIST val_h :: val_t*{val_t <- val_t*} : OK C_t as assignRes
+    -- Assign_exp: C |- typedExp_h := val_h : OK C_h as assignRes
+    -- Assign_exp: C_h |- typedExp_t := LIST val_t*{val_t <- val_t*} : OK C_t as assignRes
 
   rulegroup iter
 
-    rule simple: C |- ITER typedExp expIter as exp '#' typ := val : OK C' as assignRes
-    -- if (?(varr) = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- if (C' = $add_varr(C, varr, val))
+    rule simple: C |- iterExp as exp '#' typ := val : OK C_assign as assignRes
+    -- if (?(varr) = $is_iter_on_var(iterExp as exp '#' typ))
+    -- if (C_assign = $add_varr(C, varr, val))
 
-    rule opt-none: C |- ITER typedExp expIter as exp '#' typ := OPT ?() : OK C' as assignRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- if (QUEST vari*{vari <- vari*} = expIter)
+    rule opt-none: C |- iterExp as exp '#' typ := OPT ?() : OK C_assign as assignRes
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- if (ITER typedExp QUEST vari*{vari <- vari*} = iterExp)
     -- (if (vari_iter = $iterate_vari(vari, [QUEST])))*{vari <- vari*, vari_iter <- vari_iter*}
     -- if (val_bind*{val_bind <- val_bind*} = $repeat_<val>(OPT ?(), |vari_iter*{vari_iter <- vari_iter*}|))
-    -- if (C' = $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*}))
+    -- if (C_assign = $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*}))
 
-    rule opt-some: C |- ITER typedExp expIter as exp '#' typ := OPT ?(val) : OK C'' as assignRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- if (QUEST vari*{vari <- vari*} = expIter)
-    -- Assign_exp: C |- typedExp := val : OK C' as assignRes
+    rule opt-some: C |- iterExp as exp '#' typ := OPT ?(val) : OK C_assign as assignRes
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- if (ITER typedExp QUEST vari*{vari <- vari*} = iterExp)
+    -- Assign_exp: C |- typedExp := val : OK C_body as assignRes
     -- (if (vari_iter = $iterate_vari(vari, [QUEST])))*{vari <- vari*, vari_iter <- vari_iter*}
-    -- (if (?(val_sub) = $find_vari(C', vari)))*{val_sub <- val_sub*, vari <- vari*}
-    -- if (C'' = $add_varis(C', vari_iter*{vari_iter <- vari_iter*}, OPT ?(val_sub)*{val_sub <- val_sub*}))
+    -- (if (?(val_sub) = $find_vari(C_body, vari)))*{val_sub <- val_sub*, vari <- vari*}
+    -- if (C_assign = $add_varis(C_body, vari_iter*{vari_iter <- vari_iter*}, OPT ?(val_sub)*{val_sub <- val_sub*}))
 
-    rule list: C |- ITER typedExp expIter as exp '#' typ := LIST val*{val <- val*} : OK C' as assignRes
-    -- if (?() = $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
-    -- if (STAR vari*{vari <- vari*} = expIter)
+    rule list: C |- iterExp as exp '#' typ := LIST val*{val <- val*} : OK C_assign as assignRes
+    -- if (?() = $is_iter_on_var(iterExp as exp '#' typ))
+    -- if (ITER typedExp STAR vari*{vari <- vari*} = iterExp)
     -- if (C_local = C[LOCAL.VAL = $empty_map<varr, val>])
     -- (Assign_exp: C_local |- typedExp := val : OK C_sub as assignRes)*{C_sub <- C_sub*, val <- val*}
     -- (if (vari_iter = $iterate_vari(vari, [STAR])))*{vari <- vari*, vari_iter <- vari_iter*}
     -- (if (?(val_sub*{val_sub <- val_sub*}) = $finds_vari(C_sub*{C_sub <- C_sub*}, vari)))*{val_sub* <- val_sub**, vari <- vari*}
     -- (if (val_bind = LIST val_sub*{val_sub <- val_sub*}))*{val_bind <- val_bind*, val_sub* <- val_sub**}
-    -- if (C' = $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*}))
+    -- if (C_assign = $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*}))
 
   elsegroup
 
@@ -3965,9 +3959,9 @@ relation Assign_exps: ctx |- typedExp* := val* : assignRes
 
     rule nil: C |- [] := [] : OK C as assignRes
 
-    rule cons: C |- typedExp_h :: typedExp_t*{typedExp_t <- typedExp_t*} := val_h :: val_t*{val_t <- val_t*} : OK C'' as assignRes
-    -- Assign_exp: C |- typedExp_h := val_h : OK C' as assignRes
-    -- Assign_exps: C' |- typedExp_t*{typedExp_t <- typedExp_t*} := val_t*{val_t <- val_t*} : OK C'' as assignRes
+    rule cons: C |- typedExp_h :: typedExp_t*{typedExp_t <- typedExp_t*} := val_h :: val_t*{val_t <- val_t*} : OK C_t as assignRes
+    -- Assign_exp: C |- typedExp_h := val_h : OK C_h as assignRes
+    -- Assign_exps: C_h |- typedExp_t*{typedExp_t <- typedExp_t*} := val_t*{val_t <- val_t*} : OK C_t as assignRes
 
   elsegroup
 
@@ -3979,13 +3973,13 @@ relation Assign_arg: ctx |- arg := val : assignRes
 
   rulegroup exp
 
-    rule exp: C |- EXP typedExp as arg := val : OK C' as assignRes
-    -- Assign_exp: C |- typedExp := val : OK C' as assignRes
+    rule exp: C |- EXP typedExp as arg := val : OK C_assign as assignRes
+    -- Assign_exp: C |- typedExp := val : OK C_assign as assignRes
 
   rulegroup fun
 
-    rule fun: C |- FUN id as arg := FUNC id_global : OK C' as assignRes
-    -- if (C' = $add_func(C, id, id_global))
+    rule fun: C |- FUN id as arg := FUNC id_global : OK C_assign as assignRes
+    -- if (C_assign = $add_func(C, id, id_global))
 
   elsegroup
 
@@ -3999,9 +3993,9 @@ relation Assign_args: ctx |- arg* := val* : assignRes
 
     rule nil: C |- [] := [] : OK C as assignRes
 
-    rule cons: C |- arg_h :: arg_t*{arg_t <- arg_t*} := val_h :: val_t*{val_t <- val_t*} : OK C'' as assignRes
-    -- Assign_arg: C |- arg_h := val_h : OK C' as assignRes
-    -- Assign_args: C' |- arg_t*{arg_t <- arg_t*} := val_t*{val_t <- val_t*} : OK C'' as assignRes
+    rule cons: C |- arg_h :: arg_t*{arg_t <- arg_t*} := val_h :: val_t*{val_t <- val_t*} : OK C_t as assignRes
+    -- Assign_arg: C |- arg_h := val_h : OK C_h as assignRes
+    -- Assign_args: C_h |- arg_t*{arg_t <- arg_t*} := val_t*{val_t <- val_t*} : OK C_t as assignRes
 
   elsegroup
 
@@ -4015,14 +4009,14 @@ relation Eval_clause: ctx |- clauseAL `( val* `) : funcRes
 
     rule premises-failure: C |- clauseAL `( val*{val <- val*} `) : failure as funcRes
     -- if (arg*{arg <- arg*} '=' typedExp_out '-' premAL*{premAL <- premAL*} = clauseAL)
-    -- Assign_args: C |- arg*{arg <- arg*} := val*{val <- val*} : OK C' as assignRes
-    -- Eval_prems: C' |- premAL*{premAL <- premAL*} : failure as premRes
+    -- Assign_args: C |- arg*{arg <- arg*} := val*{val <- val*} : OK C_assign as assignRes
+    -- Eval_prems: C_assign |- premAL*{premAL <- premAL*} : failure as premRes
 
     rule succ: C |- clauseAL `( val*{val <- val*} `) : funcRes
     -- if (arg*{arg <- arg*} '=' typedExp_out '-' premAL*{premAL <- premAL*} = clauseAL)
-    -- Assign_args: C |- arg*{arg <- arg*} := val*{val <- val*} : OK C' as assignRes
-    -- Eval_prems: C' |- premAL*{premAL <- premAL*} : OK C'' as premRes
-    -- Eval_exp: C'' |- typedExp_out : funcRes as expRes
+    -- Assign_args: C |- arg*{arg <- arg*} := val*{val <- val*} : OK C_assign as assignRes
+    -- Eval_prems: C_assign |- premAL*{premAL <- premAL*} : OK C_prem as premRes
+    -- Eval_exp: C_prem |- typedExp_out : funcRes as expRes
 
   elsegroup
 
@@ -4071,15 +4065,15 @@ relation Eval_tblrow: ctx |- tblRowAL `( val* `) : funcRes
     rule premises-failure: C |- tblRowAL `( val*{val <- val*} `) : failure as funcRes
     -- if (arg*{arg <- arg*} '=' typedExp_out '-' premAL*{premAL <- premAL*} = tblRowAL)
     -- if (C_callee = C[LOCAL = $empty_localLayer])
-    -- Assign_args: C_callee |- arg*{arg <- arg*} := val*{val <- val*} : OK C_callee' as assignRes
-    -- Eval_prems: C_callee' |- premAL*{premAL <- premAL*} : failure as premRes
+    -- Assign_args: C_callee |- arg*{arg <- arg*} := val*{val <- val*} : OK C_callee_assign as assignRes
+    -- Eval_prems: C_callee_assign |- premAL*{premAL <- premAL*} : failure as premRes
 
     rule succ: C |- tblRowAL `( val*{val <- val*} `) : funcRes
     -- if (arg*{arg <- arg*} '=' typedExp_out '-' premAL*{premAL <- premAL*} = tblRowAL)
     -- if (C_callee = C[LOCAL = $empty_localLayer])
-    -- Assign_args: C_callee |- arg*{arg <- arg*} := val*{val <- val*} : OK C_callee' as assignRes
-    -- Eval_prems: C_callee' |- premAL*{premAL <- premAL*} : OK C_callee'' as premRes
-    -- Eval_exp: C_callee'' |- typedExp_out : funcRes as expRes
+    -- Assign_args: C_callee |- arg*{arg <- arg*} := val*{val <- val*} : OK C_callee_assign as assignRes
+    -- Eval_prems: C_callee_assign |- premAL*{premAL <- premAL*} : OK C_callee_prem as premRes
+    -- Eval_exp: C_callee_prem |- typedExp_out : funcRes as expRes
 
   elsegroup
 
@@ -4139,13 +4133,13 @@ relation Eval_rul: ctx |- rulAL `( val* `) : relRes
   rulegroup
 
     rule premises-failure: C |- _id ':' typedExp*{typedExp <- typedExp*} '->' _typedExp*{_typedExp <- _typedExp*} '-' premAL*{premAL <- premAL*} `( val*{val <- val*} `) : failure as relRes
-    -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C' as assignRes
-    -- Eval_prems: C' |- premAL*{premAL <- premAL*} : failure as premRes
+    -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C_assign as assignRes
+    -- Eval_prems: C_assign |- premAL*{premAL <- premAL*} : failure as premRes
 
     rule succ: C |- _id ':' typedExp*{typedExp <- typedExp*} '->' typedExp_out*{typedExp_out <- typedExp_out*} '-' premAL*{premAL <- premAL*} `( val*{val <- val*} `) : relRes
-    -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C' as assignRes
-    -- Eval_prems: C' |- premAL*{premAL <- premAL*} : OK C'' as premRes
-    -- Eval_exps: C'' |- typedExp_out*{typedExp_out <- typedExp_out*} : relRes as expsRes
+    -- Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : OK C_assign as assignRes
+    -- Eval_prems: C_assign |- premAL*{premAL <- premAL*} : OK C_prem as premRes
+    -- Eval_exps: C_prem |- typedExp_out*{typedExp_out <- typedExp_out*} : relRes as expsRes
 
   elsegroup
 

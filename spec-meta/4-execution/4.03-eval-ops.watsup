@@ -1,4 +1,8 @@
+;;
 ;; Unary numeric operations
+;;
+;; syntax numUnOp
+;;
 
 dec $numUnOp(numUnOp, num) : val
   hint(print %0 %1)
@@ -8,7 +12,11 @@ def $numUnOp(PLUS, INT i) = INT i
 def $numUnOp(MINUS, NAT n) = INT $(-n)
 def $numUnOp(MINUS, INT i) = INT $(-i)
 
+;;
 ;; Binary boolean operations
+;;
+;; syntax boolBinOp
+;;
 
 dec $boolBinOp(boolBinOp, bool, bool) : bool
   hint(print %1 %0 %2)
@@ -19,7 +27,11 @@ def $boolBinOp(OR, b_l, b_r) = (b_l \/ b_r)
 def $boolBinOp(IMPL, b_l, b_r) = (b_l => b_r)
 def $boolBinOp(EQUIV, b_l, b_r) = (b_l <=> b_r)
 
+;;
 ;; Binary numeric operations
+;;
+;; syntax numBinOp
+;;
 
 syntax numBinOpRes = ok<val> | error
 
@@ -39,7 +51,11 @@ def $numBinOp(MOD, INT i_l, INT i_r) = OK (INT $(i_l \ i_r))
 def $numBinOp(numBinOp, num_l, num_r) = ERROR
   -- otherwise
 
+;;
 ;; Polymorphic comparison operations
+;;
+;; syntax polyCmpOp
+;;
 
 dec $polyCmpOp(polyCmpOp, val, val) : bool
   hint(print %1 %0 %2)
@@ -48,7 +64,11 @@ dec $polyCmpOp(polyCmpOp, val, val) : bool
 def $polyCmpOp(EQ, val_l, val_r) = (val_l = val_r)
 def $polyCmpOp(NE, val_l, val_r) = (val_l =/= val_r)
 
+;;
 ;; Numeric comparison operations
+;;
+;; syntax numCmpOp
+;;
 
 syntax numCmpRes = ok<bool> | error
 
@@ -66,7 +86,11 @@ def $numCmpOp(GE, INT i_l, INT i_r) = OK ($(i_l >= i_r))
 def $numCmpOp(numCmpOp, num_l, num_r) = ERROR
   -- otherwise
 
+;;
 ;; Pattern tests
+;;
+;; syntax pat
+;;
 
 dec $matches(val, pat) : bool
   hint(prose_true %0 "matches pattern" %1)

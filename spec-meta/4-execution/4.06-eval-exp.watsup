@@ -1,6 +1,11 @@
-;; Expression evaluation rules
+;;
+;; Expression evaluation
+;;
+;; syntax typedExp
+;;
 
-;;; Boolean, number, and text evaluation rules
+;;; literalExp
+;;; syntax literalExp = BOOL bool | num | TEXT text
 
 rulegroup Eval_exp/literal {
 
@@ -15,13 +20,15 @@ rulegroup Eval_exp/literal {
 
 }
 
-;;; Variable evaluation rules
+;;; varExp
+;;; syntax varExp = VAR id
 
 rule Eval_exp/variable:
   C |- (VAR id) '#' _ : OK val
   -- if val = $find_varr(C, id eps)
 
-;;; Unary, binary, and comparison evaluation rules
+;;; unOpExp
+;;; syntax unOpExp = UN unOp typedExp
 
 rulegroup Eval_exp/unary {
 
@@ -44,6 +51,9 @@ rulegroup Eval_exp/unary {
     -- if val_res = $numUnOp(numUnOp, num)
 
 }
+
+;;; binOpExp
+;;; syntax binOpExp = BIN binOp typedExp typedExp
 
 rulegroup Eval_exp/binary {
 
@@ -79,6 +89,9 @@ rulegroup Eval_exp/binary {
 
 }
 
+;;; cmpOpExp
+;;; syntax cmpOpExp = CMP cmpOp typedExp typedExp
+
 rulegroup Eval_exp/compare {
 
   rule Eval_exp/poly-left-failure:
@@ -113,7 +126,8 @@ rulegroup Eval_exp/compare {
 
 }
 
-;;; Upcasting, downcasting, and subtyping evaluation rules
+;;; upCastExp
+;;; syntax upCastExp = UPCAST typ typedExp
 
 rulegroup Eval_exp/upcast {
 
@@ -128,6 +142,9 @@ rulegroup Eval_exp/upcast {
 
 }
 
+;;; downCastExp
+;;; syntax downCastExp = DOWNCAST typ typedExp
+
 rulegroup Eval_exp/downcast {
 
   rule Eval_exp/operand-failure:
@@ -140,6 +157,9 @@ rulegroup Eval_exp/downcast {
     -- if castRes = $downcast(C, typ, val)
 
 }
+
+;;; subExp
+;;; syntax subExp = SUB typedExp typ
 
 rulegroup Eval_exp/subtype {
 
@@ -156,7 +176,8 @@ rulegroup Eval_exp/subtype {
 
 }
 
-;;; Match evaluation rules
+;;; matchExp
+;;; syntax matchExp = MATCH typedExp pat
 
 rulegroup Eval_exp/match {
 
@@ -171,7 +192,8 @@ rulegroup Eval_exp/match {
 
 }
 
-;;; Tuple evaluation rules
+;;; tupExp
+;;; syntax tupExp = TUP typedExp*
 
 rulegroup Eval_exp/tuple {
 
@@ -185,7 +207,8 @@ rulegroup Eval_exp/tuple {
 
 }
 
-;;; Case evaluation rules
+;;; injExp
+;;; syntax injExp = INJ expCase
 
 rulegroup Eval_exp/case {
 
@@ -199,7 +222,8 @@ rulegroup Eval_exp/case {
 
 }
 
-;;; Struct evaluation rules
+;;; strExp
+;;; syntax strExp = STR expField*
 
 rulegroup Eval_exp/struct {
 
@@ -216,7 +240,8 @@ rulegroup Eval_exp/struct {
 
 }
 
-;;; Option evaluation rules
+;;; optExp
+;;; syntax optExp = OPT typedExp?
 
 rulegroup Eval_exp/opt {
 
@@ -233,7 +258,8 @@ rulegroup Eval_exp/opt {
 
 }
 
-;;; List evaluation rules
+;;; listExp
+;;; syntax listExp = LIST typedExp*
 
 rulegroup Eval_exp/list {
 
@@ -247,7 +273,8 @@ rulegroup Eval_exp/list {
 
 }
 
-;;; Cons-list evaluation rules
+;;; consExp
+;;; syntax consExp = CONS typedExp typedExp
 
 rulegroup Eval_exp/cons {
 
@@ -267,7 +294,8 @@ rulegroup Eval_exp/cons {
 
 }
 
-;;; Concatentation evaluation rules
+;;; catExp
+;;; syntax catExp = CAT typedExp typedExp
 
 rulegroup Eval_exp/concat {
 
@@ -299,7 +327,8 @@ rulegroup Eval_exp/concat {
 
 }
 
-;;; Membership evaluation rules
+;;; memExp
+;;; syntax memExp = MEM typedExp typedExp
 
 rulegroup Eval_exp/mem {
 
@@ -320,7 +349,8 @@ rulegroup Eval_exp/mem {
 
 }
 
-;;; Length evaluation rules
+;;; lenExp
+;;; syntax lenExp = LEN typedExp
 
 rulegroup Eval_exp/len {
 
@@ -340,7 +370,8 @@ rulegroup Eval_exp/len {
 
 }
 
-;;; Dot, indexing, and slicing evaluation rules
+;;; dotAccExp
+;;; syntax dotAccExp = DOT typedExp atom
 
 rulegroup Eval_exp/dot {
 
@@ -357,6 +388,9 @@ rulegroup Eval_exp/dot {
 
 }
 
+;;; idxAccExp
+;;; syntax idxAccExp = IDX typedExp typedExp
+
 rulegroup Eval_exp/idx {
 
   rule Eval_exp/base-failure:
@@ -372,6 +406,9 @@ rulegroup Eval_exp/idx {
 
 }
 
+;;; sliceAccExp
+;;; syntax sliceAccExp = SLICE typedExp typedExp typedExp
+
 rulegroup Eval_exp/slice {
 
   rule Eval_exp/base-failure:
@@ -386,6 +423,9 @@ rulegroup Eval_exp/slice {
     -- Eval_path_acc: C |- val_b typedPath : pathRes
 
 }
+
+;;; updExp
+;;; syntax updExp = UPD typedExp typedPath typedExp
 
 rulegroup Eval_exp/upd {
 
@@ -406,7 +446,8 @@ rulegroup Eval_exp/upd {
 
 }
 
-;;; Meta-function call evaluation rules
+;;; callExp
+;;; syntax callExp = CALL id targ* arg*
 
 rulegroup Eval_exp/call {
 
@@ -424,50 +465,57 @@ rulegroup Eval_exp/call {
 
 }
 
-;;; Iterated expression evaluation rules
+;;; iterExp
+;;; syntax iterExp = ITER typedExp expIter
 
 rulegroup Eval_exp/iter {
 
   rule Eval_exp/simple:
-    C |- (ITER typedExp expIter) '#' typ : OK val
-    -- if varr = $is_iter_on_var((ITER typedExp expIter) '#' typ)
+    C |- iterExp '#' typ : OK val
+    -- if varr = $is_iter_on_var(iterExp '#' typ)
     -- if val = $find_varr(C, varr)
 
   rule Eval_exp/opt-body-failure:
-    C |- (ITER typedExp expIter) '#' typ : failure
-    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
-    -- if QUEST vari* = expIter
+    C |- iterExp '#' typ : failure
+    -- if eps = $is_iter_on_var(iterExp '#' typ)
+    -- if ITER typedExp (QUEST vari*) = iterExp
     -- if OK C_sub? = $sub_opt(C, vari*)
     -- Eval_exp_maybe: C_sub? |- typedExp : failure
 
   rule Eval_exp/opt-succ:
-    C |- (ITER typedExp expIter) '#' typ : OK (OPT val?)
-    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
-    -- if QUEST vari* = expIter
+    C |- iterExp '#' typ : OK (OPT val?)
+    -- if eps = $is_iter_on_var(iterExp '#' typ)
+    -- if ITER typedExp (QUEST vari*) = iterExp
     -- if OK C_sub? = $sub_opt(C, vari*)
     -- Eval_exp_maybe: C_sub? |- typedExp : OK val?
 
   rule Eval_exp/list-body-failure:
-    C |- (ITER typedExp expIter) '#' typ : failure
-    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
-    -- if STAR vari* = expIter
+    C |- iterExp '#' typ : failure
+    -- if eps = $is_iter_on_var(iterExp '#' typ)
+    -- if ITER typedExp (STAR vari*) = iterExp
     -- if OK C_sub* = $sub_list(C, vari*)
     -- Eval_exp_each: C_sub* |- typedExp : failure
 
   rule Eval_exp/list-succ:
-    C |- (ITER typedExp expIter) '#' typ : OK (LIST val*)
-    -- if eps = $is_iter_on_var((ITER typedExp expIter) '#' typ)
-    -- if STAR vari* = expIter
+    C |- iterExp '#' typ : OK (LIST val*)
+    -- if eps = $is_iter_on_var(iterExp '#' typ)
+    -- if ITER typedExp (STAR vari*) = iterExp
     -- if OK C_sub* = $sub_list(C, vari*)
     -- Eval_exp_each: C_sub* |- typedExp : OK val*
 
 }
 
+;; Any other expression is an error
+
 rule Eval_exp/error:
   C |- typedExp : ERROR
   -- otherwise
 
-;; Expression sequence evaluation rules
+;;
+;; Expression sequence evaluation
+;;
+;; syntax typedExp*
+;;
 
 rulegroup Eval_exps {
 
@@ -490,9 +538,11 @@ rulegroup Eval_exps {
 
 }
 
-;; Expression iteration evaluation rules
-
-;;; Optional contexts
+;;
+;; Expression evaluation in optional contexts
+;;
+;; syntax typedExp
+;;
 
 rulegroup Eval_exp_maybe {
 
@@ -509,7 +559,11 @@ rulegroup Eval_exp_maybe {
 
 }
 
-;;; List contexts
+;;
+;; Expression evaluation in list contexts
+;;
+;; syntax typedExp
+;;
 
 rulegroup Eval_exp_each {
 

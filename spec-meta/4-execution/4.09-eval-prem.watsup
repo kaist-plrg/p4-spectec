@@ -1,6 +1,11 @@
-;; Premise evaluation rules
+;;
+;; Premise evaluation
+;;
+;; syntax premAL
+;;
 
-;;; Relation premises
+;;; relPremAL
+;;; syntax relPremAL = REL id ':' typedExp* '->' typedExp*
 
 rulegroup Eval_prem/relpr {
 
@@ -14,14 +19,15 @@ rulegroup Eval_prem/relpr {
     -- Call_rel: C |- id `( val* `) : failure
 
   rule Eval_prem/succ:
-    C |- REL id ':' typedExp* '->' typedExp_out* : OK C'
+    C |- REL id ':' typedExp* '->' typedExp_out* : OK C_assign
     -- Eval_exps: C |- typedExp* : OK val*
     -- Call_rel: C |- id `( val* `) : OK val_out*
-    -- Assign_exps : C |- typedExp_out* := val_out* : OK C'
+    -- Assign_exps : C |- typedExp_out* := val_out* : OK C_assign
 
 }
 
-;;; If premises
+;;; ifPrem
+;;; syntax ifPrem = IF typedExp
 
 rulegroup Eval_prem/ifpr {
 
@@ -39,7 +45,8 @@ rulegroup Eval_prem/ifpr {
 
 }
 
-;;; If-hold and if-not-hold premises
+;;; ifHoldPrem
+;;; syntax ifHoldPrem = IFHOLD id ':' typedExp*
 
 rulegroup Eval_prem/ifholdpr {
 
@@ -58,6 +65,9 @@ rulegroup Eval_prem/ifholdpr {
     -- Call_rel: C |- id `( val_input* `) : OK eps
 
 }
+
+;;; ifNotHoldPrem
+;;; syntax ifNotHoldPrem = IFNOTHOLD id ':' typedExp*
 
 rulegroup Eval_prem/ifnotholdpr {
 
@@ -82,7 +92,8 @@ rulegroup Eval_prem/ifnotholdpr {
 
 }
 
-;;; Let premises
+;;; letPremAL
+;;; syntax letPremAL = LET typedExp '=' typedExp
 
 rulegroup Eval_prem/letpr {
 
@@ -91,25 +102,24 @@ rulegroup Eval_prem/letpr {
     -- Eval_exp: C |- typedExp_r : failure
 
   rule Eval_prem/succ:
-    C |- LET typedExp_l '=' typedExp_r : OK C'
+    C |- LET typedExp_l '=' typedExp_r : OK C_assign
     -- Eval_exp: C |- typedExp_r : OK val_r
-    -- Assign_exp: C |- typedExp_l := val_r : OK C'
+    -- Assign_exp: C |- typedExp_l := val_r : OK C_assign
 
 }
 
-;;; Iteration premises - optional
+;;; iterPremAL
+;;; syntax iterPremAL = ITER premAL premIterAL
 
 rulegroup Eval_prem/iterpr-opt {
 
   rule Eval_prem/body-failure:
-    C |- ITER premAL premIterAL : failure
-    -- if QUEST '<-' vari_bound* '->' _ = premIterAL
+    C |- ITER premAL (QUEST '<-' vari_bound* '->' _) : failure
     -- if OK C_sub? = $sub_opt(C, vari_bound*)
     -- Eval_prem_maybe: C_sub? |- premAL : failure
 
   rule Eval_prem/succ-none:
-    C |- ITER premAL premIterAL : OK C_res
-    -- if QUEST '<-' vari_bound* '->' vari_bind* = premIterAL
+    C |- ITER premAL (QUEST '<-' vari_bound* '->' vari_bind*) : OK C_res
     -- if OK C_sub? = $sub_opt(C, vari_bound*)
     -- Eval_prem_maybe: C_sub? |- premAL : OK eps
     -- if (vari_bind_iter = $iterate_vari(vari_bind, [ QUEST ]))*
@@ -117,8 +127,7 @@ rulegroup Eval_prem/iterpr-opt {
     -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
 
   rule Eval_prem/succ-some:
-    C |- ITER premAL premIterAL : OK C_res
-    -- if QUEST '<-' vari_bound* '->' vari_bind* = premIterAL
+    C |- ITER premAL (QUEST '<-' vari_bound* '->' vari_bind*) : OK C_res
     -- if OK C_sub? = $sub_opt(C, vari_bound*)
     -- Eval_prem_maybe: C_sub? |- premAL : OK C_sub_res
     -- if (val_bind = $find_vari(C_sub_res, vari_bind))*
@@ -127,39 +136,30 @@ rulegroup Eval_prem/iterpr-opt {
 
 }
 
-;;; Iteration premises - list
-
 rulegroup Eval_prem/iterpr-list {
 
   rule Eval_prem/succ-empty:
-    C |- ITER premAL premIterAL : OK C_res
-    -- if STAR '<-' vari_bound* '->' vari_bind* = premIterAL
+    C |- ITER premAL (STAR '<-' vari_bound* '->' vari_bind*) : OK C_res
     -- if OK eps = $sub_list(C, vari_bound*)
     -- if (vari_bind_iter = $iterate_vari(vari_bind, [ STAR ]))*
     -- if val_bind* = $repeat_<val>(LIST eps, |vari_bind*|)
     -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
 
   rule Eval_prem/body-failure:
-    C |- ITER premAL premIterAL : failure
-    -- if STAR '<-' vari_bound* '->' _ = premIterAL
+    C |- ITER premAL (STAR '<-' vari_bound* '->' _) : failure
     -- if OK C_sub* = $sub_list(C, vari_bound*)
     -- if C_sub* =/= eps
     -- Eval_prem_each: C_sub* |- premAL : failure
 
   rule Eval_prem/succ-list:
-    C |- ITER premAL premIterAL : OK C_res
-    ----
-    -- if STAR '<-' vari_bound* '->' vari_bind* = premIterAL
-    ---- ;; decompose C into a list of subcontexts
-    ---- ;; C_sub* corresponding to vari_bound*
+    C |- ITER premAL (STAR '<-' vari_bound* '->' vari_bind*) : OK C_res
+    ---- ;; split the context into one sub-context per element of the sources
     -- if OK C_sub* = $sub_list(C, vari_bound*)
     -- if C_sub* =/= eps
-    ---- ;; for each C_sub in C_sub*, evaluate prem
-    ---- ;; this yields val_sub_bind* for each C_sub
+    ---- ;; evaluate the premise in each sub-context
     -- Eval_prem_each: C_sub* |- premAL : OK C_sub_res*
     -- if (val_sub_bind* = $find_varis(C_sub_res, vari_bind*))*
-    ---- ;; transpose val_sub_bind** to get val_bind**
-    ---- ;; then combine val_bind* as a LIST, which is the value to be bind
+    ---- ;; bind each binder to the list of its values
     -- if val_bind** = $transpose_<val>(val_sub_bind**)
     -- if (val_res_bind = LIST val_bind*)*
     -- if (vari_bind_iter = $iterate_vari(vari_bind, [ STAR ]))*
@@ -167,7 +167,8 @@ rulegroup Eval_prem/iterpr-list {
 
 }
 
-;;; Debug premises
+;;; debugPrem
+;;; syntax debugPrem = DEBUG typedExp
 
 rulegroup Eval_prem/dbg {
 
@@ -182,11 +183,17 @@ rulegroup Eval_prem/dbg {
 
 }
 
+;; Any other premise is an error
+
 rule Eval_prem/error:
   C |- premAL : ERROR
   -- otherwise
 
-;; Premise sequence evaluation rules
+;;
+;; Premise sequence evaluation
+;;
+;; syntax premAL*
+;;
 
 rulegroup Eval_prems {
 
@@ -199,14 +206,16 @@ rulegroup Eval_prems {
 
   rule Eval_prems/head-succ:
     C |- premAL_h :: premAL_t* : premRes
-    -- Eval_prem: C |- premAL_h : OK C'
-    -- Eval_prems: C' |- premAL_t* : premRes
+    -- Eval_prem: C |- premAL_h : OK C_h
+    -- Eval_prems: C_h |- premAL_t* : premRes
 
 }
 
-;; Premise iteration evaluation rules
-
-;;; Optional contexts
+;;
+;; Premise evaluation in optional contexts
+;;
+;; syntax premAL
+;;
 
 rulegroup Eval_prem_maybe {
 
@@ -223,7 +232,11 @@ rulegroup Eval_prem_maybe {
 
 }
 
-;;; List contexts
+;;
+;; Premise evaluation in list contexts
+;;
+;; syntax premAL
+;;
 
 rulegroup Eval_prem_each {
 

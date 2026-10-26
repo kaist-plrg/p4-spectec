@@ -1,4 +1,6 @@
+;;
 ;; Relation invocation
+;;
 
 ;;; Rule evaluation
 
@@ -12,14 +14,14 @@ rulegroup Eval_rul {
 
   rule Eval_rul/premises-failure:
     C |- (_ ':' typedExp* '->' _ '-' premAL*) `( val* `) : failure
-    -- Assign_exps: C |- typedExp* := val* : OK C'
-    -- Eval_prems: C' |- premAL* : failure
+    -- Assign_exps: C |- typedExp* := val* : OK C_assign
+    -- Eval_prems: C_assign |- premAL* : failure
 
   rule Eval_rul/succ:
     C |- (_ ':' typedExp* '->' typedExp_out* '-' premAL*) `( val* `) : relRes
-    -- Assign_exps: C |- typedExp* := val* : OK C'
-    -- Eval_prems: C' |- premAL* : OK C''
-    -- Eval_exps: C'' |- typedExp_out* : relRes
+    -- Assign_exps: C |- typedExp* := val* : OK C_assign
+    -- Eval_prems: C_assign |- premAL* : OK C_prem
+    -- Eval_exps: C_prem |- typedExp_out* : relRes
 
 }
 
@@ -132,7 +134,9 @@ rule Call_defined_rel/error:
   C |- definedRelDefnAL `( val* `) : ERROR
   -- otherwise
 
+;;
 ;; Relation call
+;;
 
 rulegroup Call_rel {
 

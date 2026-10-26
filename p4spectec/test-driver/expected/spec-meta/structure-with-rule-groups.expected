@@ -5074,9 +5074,9 @@ def $load_ctx(C, defnAL'*{defnAL' <- defnAL'*})
 
               1. (Let tdenv_update be $add_map<id, typDef>(C.GLOBAL.TYP, id, externTypDefn as typDef))
 
-                1. (Let C' be C[GLOBAL.TYP = tdenv_update])
+                1. (Let C_load be C[GLOBAL.TYP = tdenv_update])
 
-                  1. Return $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
 
         2. Case (% has type definedTypDefn)
 
@@ -5086,9 +5086,9 @@ def $load_ctx(C, defnAL'*{defnAL' <- defnAL'*})
 
               1. (Let tdenv_update be $add_map<id, typDef>(C.GLOBAL.TYP, id, definedTypDefn as typDef))
 
-                1. (Let C' be C[GLOBAL.TYP = tdenv_update])
+                1. (Let C_load be C[GLOBAL.TYP = tdenv_update])
 
-                  1. Return $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
 
         3. Case (% has type externRelDefnAL)
 
@@ -5098,9 +5098,9 @@ def $load_ctx(C, defnAL'*{defnAL' <- defnAL'*})
 
               1. (Let renv_update be $add_map<id, relDefnAL>(C.GLOBAL.REL, id, externRelDefnAL as relDefnAL))
 
-                1. (Let C' be C[GLOBAL.REL = renv_update])
+                1. (Let C_load be C[GLOBAL.REL = renv_update])
 
-                  1. Return $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
 
         4. Case (% has type definedRelDefnAL)
 
@@ -5110,9 +5110,9 @@ def $load_ctx(C, defnAL'*{defnAL' <- defnAL'*})
 
               1. (Let renv_update be $add_map<id, relDefnAL>(C.GLOBAL.REL, id, definedRelDefnAL as relDefnAL))
 
-                1. (Let C' be C[GLOBAL.REL = renv_update])
+                1. (Let C_load be C[GLOBAL.REL = renv_update])
 
-                  1. Return $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
 
         5. Case (% has type externFuncDefn)
 
@@ -5122,9 +5122,9 @@ def $load_ctx(C, defnAL'*{defnAL' <- defnAL'*})
 
               1. (Let fenv_update be $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, externFuncDefn as funcDefnAL))
 
-                1. (Let C' be C[GLOBAL.FUNC = fenv_update])
+                1. (Let C_load be C[GLOBAL.FUNC = fenv_update])
 
-                  1. Return $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
 
         6. Case (% has type builtinFuncDefn)
 
@@ -5134,9 +5134,9 @@ def $load_ctx(C, defnAL'*{defnAL' <- defnAL'*})
 
               1. (Let fenv_update be $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, builtinFuncDefn as funcDefnAL))
 
-                1. (Let C' be C[GLOBAL.FUNC = fenv_update])
+                1. (Let C_load be C[GLOBAL.FUNC = fenv_update])
 
-                  1. Return $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
 
         7. Case (% has type tableFuncDefnAL)
 
@@ -5146,9 +5146,9 @@ def $load_ctx(C, defnAL'*{defnAL' <- defnAL'*})
 
               1. (Let fenv_update be $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, tableFuncDefnAL as funcDefnAL))
 
-                1. (Let C' be C[GLOBAL.FUNC = fenv_update])
+                1. (Let C_load be C[GLOBAL.FUNC = fenv_update])
 
-                  1. Return $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
 
         8. Case (% has type definedFuncDefnAL)
 
@@ -5158,9 +5158,9 @@ def $load_ctx(C, defnAL'*{defnAL' <- defnAL'*})
 
               1. (Let fenv_update be $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, definedFuncDefnAL as funcDefnAL))
 
-                1. (Let C' be C[GLOBAL.FUNC = fenv_update])
+                1. (Let C_load be C[GLOBAL.FUNC = fenv_update])
 
-                  1. Return $load_ctx(C', defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
 
   2. Case (% matches pattern [])
 
@@ -5336,9 +5336,9 @@ def $sub_list(C, vari*{vari <- vari*})
 
                 1. (Let val_trans*{val_trans <- val_trans*}*{val_trans* <- val_trans**} be $transpose_<val>(val*{val <- val*}*{val* <- val**}))
 
-                  1. (Let C' be $add_varis(C, vari*{vari <- vari*}, val_trans*{val_trans <- val_trans*}))*{val_trans* <- val_trans**, C' -> C'*}
+                  1. (Let C_sub be $add_varis(C, vari*{vari <- vari*}, val_trans*{val_trans <- val_trans*}))*{val_trans* <- val_trans**, C_sub -> C_sub*}
 
-                    1. Return OK C'*{C' <- C'*} as subListRes
+                    1. Return OK C_sub*{C_sub <- C_sub*} as subListRes
 
 2. Otherwise,
 
@@ -6233,11 +6233,11 @@ relation Eval_exp: C |- typedExp' : %
 
     23. Case (% has type iterExp)
 
-      1. (Let ITER typedExp expIter be exp as iterExp)
+      1. (Let iterExp be exp as iterExp)
 
-        1. Group iter: C |- ITER typedExp expIter as exp '#' typ' : %
+        1. Group iter: C |- iterExp as exp '#' typ' : %
 
-          1. (Let varr'?{varr' <- varr'?} be $is_iter_on_var(ITER typedExp expIter as exp '#' typ'))
+          1. (Let varr'?{varr' <- varr'?} be $is_iter_on_var(iterExp as exp '#' typ'))
 
             1. If (varr'?{varr' <- varr'?} matches (_)), then
 
@@ -6251,9 +6251,9 @@ relation Eval_exp: C |- typedExp' : %
 
                       1. Result in: % |- % : OK val as expRes
 
-          2. If ($is_iter_on_var(ITER typedExp expIter as exp '#' typ') matches ()), then
+          2. If ($is_iter_on_var(iterExp as exp '#' typ') matches ()), then
 
-            1. (Let iter vari*{vari <- vari*} be expIter)
+            1. (Let ITER typedExp iter vari*{vari <- vari*} be iterExp)
 
               1. Case analysis on iter (total)
 
@@ -6458,41 +6458,7 @@ relation Eval_path_acc: C |- val_b typedPath' : %
 
           1. Result in: % |- % % : OK val_b as pathRes
 
-    2. Case (% has type dotPath)
-
-      1. (Let DOT typedPath atom be path as dotPath)
-
-        1. Group dot: C |- val_b DOT typedPath atom as path '#' typ : %
-
-          1. (Eval_path_acc: C |- val_b typedPath : pathRes)
-
-            1. Case analysis on pathRes (total)
-
-              1. Case (% has type failure)
-
-                1. (Let failure be pathRes as failure)
-
-                  1. Result in: % |- % % : failure as pathRes
-
-              2. Case (% has type ok<val>)
-
-                1. (Let OK val' be pathRes as ok<val>)
-
-                  1. If (val' matches STR %), then
-
-                    1. (Let STR valField*{valField <- valField*} be val')
-
-                      1. (Let atom_field val_field be valField)*{valField <- valField*, atom_field -> atom_field*, val_field -> val_field*}
-
-                        1. (Let val''?{val'' <- val''?} be $assoc_<atom, val>(atom, (atom_field, val_field)*{atom_field <- atom_field*, val_field <- val_field*}))
-
-                          1. If (val''?{val'' <- val''?} matches (_)), then
-
-                            1. (Let ?(val) be val''?{val'' <- val''?})
-
-                              1. Result in: % |- % % : OK val as pathRes
-
-    3. Case (% has type idxPath)
+    2. Case (% has type idxPath)
 
       1. (Let IDX typedPath typedExp_i be path as idxPath)
 
@@ -6578,7 +6544,7 @@ relation Eval_path_acc: C |- val_b typedPath' : %
 
                                             1. Result in: % |- % % : OK TEXT t_idx as pathRes
 
-    4. Case (% has type slicePath)
+    3. Case (% has type slicePath)
 
       1. (Let SLICE typedPath typedExp_i typedExp_n be path as slicePath)
 
@@ -6707,6 +6673,40 @@ relation Eval_path_acc: C |- val_b typedPath' : %
                                                           1. (Let val_slice be LIST val*{val <- val*}[n_i : n_n])
 
                                                             1. Result in: % |- % % : OK val_slice as pathRes
+
+    4. Case (% has type dotPath)
+
+      1. (Let DOT typedPath atom be path as dotPath)
+
+        1. Group dot: C |- val_b DOT typedPath atom as path '#' typ : %
+
+          1. (Eval_path_acc: C |- val_b typedPath : pathRes)
+
+            1. Case analysis on pathRes (total)
+
+              1. Case (% has type failure)
+
+                1. (Let failure be pathRes as failure)
+
+                  1. Result in: % |- % % : failure as pathRes
+
+              2. Case (% has type ok<val>)
+
+                1. (Let OK val' be pathRes as ok<val>)
+
+                  1. If (val' matches STR %), then
+
+                    1. (Let STR valField*{valField <- valField*} be val')
+
+                      1. (Let atom_field val_field be valField)*{valField <- valField*, atom_field -> atom_field*, val_field -> val_field*}
+
+                        1. (Let val''?{val'' <- val''?} be $assoc_<atom, val>(atom, (atom_field, val_field)*{atom_field <- atom_field*, val_field <- val_field*}))
+
+                          1. If (val''?{val'' <- val''?} matches (_)), then
+
+                            1. (Let ?(val) be val''?{val'' <- val''?})
+
+                              1. Result in: % |- % % : OK val as pathRes
 
 2. Otherwise,
 
@@ -7213,9 +7213,9 @@ relation Eval_prem: C |- premAL' : %
 
                           1. If (assignRes <: ok<ctx>), then
 
-                            1. (Let OK C' be assignRes as ok<ctx>)
+                            1. (Let OK C_assign be assignRes as ok<ctx>)
 
-                              1. Result in: % |- % : OK C' as premRes
+                              1. Result in: % |- % : OK C_assign as premRes
 
   2. Case (% has type ifPrem)
 
@@ -7337,19 +7337,19 @@ relation Eval_prem: C |- premAL' : %
 
                   1. If (assignRes <: ok<ctx>), then
 
-                    1. (Let OK C' be assignRes as ok<ctx>)
+                    1. (Let OK C_assign be assignRes as ok<ctx>)
 
-                      1. Result in: % |- % : OK C' as premRes
+                      1. Result in: % |- % : OK C_assign as premRes
 
   6. Case (% has type iterPremAL)
 
-    1. (Let ITER premAL premIterAL be premAL' as iterPremAL)
+    1. (Let ITER premAL iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari*{vari <- vari*} be premAL' as iterPremAL)
 
-      1. Group iterpr-opt: C |- ITER premAL premIterAL as premAL : %
+      1. Case analysis on iter (total)
 
-        1. (Let iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' _vari*{_vari <- _vari*} be premIterAL)
+        1. Case (% matches pattern QUEST)
 
-          1. If (iter matches QUEST), then
+          1. Group iterpr-opt: C |- ITER premAL QUEST '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari*{vari <- vari*} as premAL : %
 
             1. (Let subOptRes be $sub_opt(C, vari_bound*{vari_bound <- vari_bound*}))
 
@@ -7375,13 +7375,13 @@ relation Eval_prem: C |- premAL' : %
 
                             1. (Let ?(C_sub_res) be C'?{C' <- C'?})
 
-                              1. (Let val?{val <- val?} be $find_vari(C_sub_res, _vari))*{_vari <- _vari*, val? -> val?*}
+                              1. (Let val?{val <- val?} be $find_vari(C_sub_res, vari))*{vari <- vari*, val? -> val?*}
 
                                 1. If (val?{val <- val?} matches (_))*{val? <- val?*}, then
 
                                   1. (Let ?(val_bind) be val?{val <- val?})*{val? <- val?*, val_bind -> val_bind*}
 
-                                    1. (Let vari_bind_iter be $iterate_vari(_vari, [QUEST]))*{_vari <- _vari*, vari_bind_iter -> vari_bind_iter*}
+                                    1. (Let vari_bind_iter be $iterate_vari(vari, [QUEST]))*{vari <- vari*, vari_bind_iter -> vari_bind_iter*}
 
                                       1. (Let C_res be $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, OPT ?(val_bind)*{val_bind <- val_bind*}))
 
@@ -7389,25 +7389,23 @@ relation Eval_prem: C |- premAL' : %
 
                     2. If ((premOptRes = OK ?() as premOptRes)), then
 
-                      1. (Let vari_bind_iter be $iterate_vari(_vari, [QUEST]))*{_vari <- _vari*, vari_bind_iter -> vari_bind_iter*}
+                      1. (Let vari_bind_iter be $iterate_vari(vari, [QUEST]))*{vari <- vari*, vari_bind_iter -> vari_bind_iter*}
 
-                        1. (Let val_bind*{val_bind <- val_bind*} be $repeat_<val>(OPT ?(), |_vari*{_vari <- _vari*}|))
+                        1. (Let val_bind*{val_bind <- val_bind*} be $repeat_<val>(OPT ?(), |vari*{vari <- vari*}|))
 
                           1. (Let C_res be $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, val_bind*{val_bind <- val_bind*}))
 
                             1. Result in: % |- % : OK C_res as premRes
 
-      2. Group iterpr-list: C |- ITER premAL premIterAL as premAL : %
+        2. Case (% matches pattern STAR)
 
-        1. (Let iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari_bind*{vari_bind <- vari_bind*} be premIterAL)
-
-          1. If (iter matches STAR), then
+          1. Group iterpr-list: C |- ITER premAL STAR '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari*{vari <- vari*} as premAL : %
 
             1. If ((OK [] as subListRes = $sub_list(C, vari_bound*{vari_bound <- vari_bound*}))), then
 
-              1. (Let vari_bind_iter be $iterate_vari(vari_bind, [STAR]))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
+              1. (Let vari_bind_iter be $iterate_vari(vari, [STAR]))*{vari <- vari*, vari_bind_iter -> vari_bind_iter*}
 
-                1. (Let val_bind*{val_bind <- val_bind*} be $repeat_<val>(LIST [], |vari_bind*{vari_bind <- vari_bind*}|))
+                1. (Let val_bind*{val_bind <- val_bind*} be $repeat_<val>(LIST [], |vari*{vari <- vari*}|))
 
                   1. (Let C_res be $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, val_bind*{val_bind <- val_bind*}))
 
@@ -7435,7 +7433,7 @@ relation Eval_prem: C |- premAL' : %
 
                           1. (Let OK C_sub_res*{C_sub_res <- C_sub_res*} be premIterRes as ok<ctx*>)
 
-                            1. (Let val*{val <- val*}?{val* <- val*?} be $find_varis(C_sub_res, vari_bind*{vari_bind <- vari_bind*}))*{C_sub_res <- C_sub_res*, val*? -> val*?*}
+                            1. (Let val*{val <- val*}?{val* <- val*?} be $find_varis(C_sub_res, vari*{vari <- vari*}))*{C_sub_res <- C_sub_res*, val*? -> val*?*}
 
                               1. If (val*{val <- val*}?{val* <- val*?} matches (_))*{val*? <- val*?*}, then
 
@@ -7445,7 +7443,7 @@ relation Eval_prem: C |- premAL' : %
 
                                     1. (Let val_res_bind be LIST val_bind*{val_bind <- val_bind*})*{val_bind* <- val_bind**, val_res_bind -> val_res_bind*}
 
-                                      1. (Let vari_bind_iter be $iterate_vari(vari_bind, [STAR]))*{vari_bind <- vari_bind*, vari_bind_iter -> vari_bind_iter*}
+                                      1. (Let vari_bind_iter be $iterate_vari(vari, [STAR]))*{vari <- vari*, vari_bind_iter -> vari_bind_iter*}
 
                                         1. (Let C_res be $add_varis(C, vari_bind_iter*{vari_bind_iter <- vari_bind_iter*}, val_res_bind*{val_res_bind <- val_res_bind*}))
 
@@ -7507,9 +7505,9 @@ relation Eval_prems: C |- premAL*{premAL <- premAL*} : %
 
             2. Case (% has type ok<ctx>)
 
-              1. (Let OK C' be premRes' as ok<ctx>)
+              1. (Let OK C_h be premRes' as ok<ctx>)
 
-                1. (Eval_prems: C' |- premAL_t*{premAL_t <- premAL_t*} : premRes)
+                1. (Eval_prems: C_h |- premAL_t*{premAL_t <- premAL_t*} : premRes)
 
                   1. Result in: % |- % : premRes
 
@@ -8971,9 +8969,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
         1. Group variable: C |- VAR id as exp '#' typ := val''' : %
 
-          1. (Let C' be $add_varr(C, id [], val'''))
+          1. (Let C_assign be $add_varr(C, id [], val'''))
 
-            1. Result in: % |- % := % : OK C' as assignRes
+            1. Result in: % |- % := % : OK C_assign as assignRes
 
     2. Case (% has type tupExp)
 
@@ -8989,9 +8987,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                 1. If (assignRes <: ok<ctx>), then
 
-                  1. (Let OK C' be assignRes as ok<ctx>)
+                  1. (Let OK C_assign be assignRes as ok<ctx>)
 
-                    1. Result in: % |- % := % : OK C' as assignRes
+                    1. Result in: % |- % := % : OK C_assign as assignRes
 
     3. Case (% has type injExp)
 
@@ -9009,9 +9007,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                   1. If (assignRes <: ok<ctx>), then
 
-                    1. (Let OK C' be assignRes as ok<ctx>)
+                    1. (Let OK C_assign be assignRes as ok<ctx>)
 
-                      1. Result in: % |- % := % : OK C' as assignRes
+                      1. Result in: % |- % := % : OK C_assign as assignRes
 
     4. Case (% has type strExp)
 
@@ -9035,9 +9033,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                         1. If (assignRes <: ok<ctx>), then
 
-                          1. (Let OK C' be assignRes as ok<ctx>)
+                          1. (Let OK C_assign be assignRes as ok<ctx>)
 
-                            1. Result in: % |- % := % : OK C' as assignRes
+                            1. Result in: % |- % := % : OK C_assign as assignRes
 
     5. Case (% has type optExp)
 
@@ -9063,9 +9061,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                           1. If (assignRes <: ok<ctx>), then
 
-                            1. (Let OK C' be assignRes as ok<ctx>)
+                            1. (Let OK C_assign be assignRes as ok<ctx>)
 
-                              1. Result in: % |- % := % : OK C' as assignRes
+                              1. Result in: % |- % := % : OK C_assign as assignRes
 
                 2. Case (% matches pattern ())
 
@@ -9087,9 +9085,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                 1. If (assignRes <: ok<ctx>), then
 
-                  1. (Let OK C' be assignRes as ok<ctx>)
+                  1. (Let OK C_assign be assignRes as ok<ctx>)
 
-                    1. Result in: % |- % := % : OK C' as assignRes
+                    1. Result in: % |- % := % : OK C_assign as assignRes
 
     7. Case (% has type consExp)
 
@@ -9109,37 +9107,37 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                     1. If (assignRes <: ok<ctx>), then
 
-                      1. (Let OK C' be assignRes as ok<ctx>)
+                      1. (Let OK C_h be assignRes as ok<ctx>)
 
-                        1. (Assign_exp: C' |- typedExp_t := LIST val_t*{val_t <- val_t*} : assignRes')
+                        1. (Assign_exp: C_h |- typedExp_t := LIST val_t*{val_t <- val_t*} : assignRes')
 
                           1. If (assignRes' <: ok<ctx>), then
 
-                            1. (Let OK C'' be assignRes' as ok<ctx>)
+                            1. (Let OK C_t be assignRes' as ok<ctx>)
 
-                              1. Result in: % |- % := % : OK C'' as assignRes
+                              1. Result in: % |- % := % : OK C_t as assignRes
 
     8. Case (% has type iterExp)
 
-      1. (Let ITER typedExp expIter be exp as iterExp)
+      1. (Let iterExp be exp as iterExp)
 
-        1. Group iter: C |- ITER typedExp expIter as exp '#' typ := val''' : %
+        1. Group iter: C |- iterExp as exp '#' typ := val''' : %
 
-          1. (Let varr'?{varr' <- varr'?} be $is_iter_on_var(ITER typedExp expIter as exp '#' typ))
+          1. (Let varr'?{varr' <- varr'?} be $is_iter_on_var(iterExp as exp '#' typ))
 
             1. If (varr'?{varr' <- varr'?} matches (_)), then
 
               1. (Let ?(varr) be varr'?{varr' <- varr'?})
 
-                1. (Let C' be $add_varr(C, varr, val'''))
+                1. (Let C_assign be $add_varr(C, varr, val'''))
 
-                  1. Result in: % |- % := % : OK C' as assignRes
+                  1. Result in: % |- % := % : OK C_assign as assignRes
 
           2. If ((val''' = OPT ?())), then
 
-            1. If ($is_iter_on_var(ITER typedExp expIter as exp '#' typ) matches ()), then
+            1. If ($is_iter_on_var(iterExp as exp '#' typ) matches ()), then
 
-              1. (Let iter vari*{vari <- vari*} be expIter)
+              1. (Let ITER typedExp iter vari*{vari <- vari*} be iterExp)
 
                 1. If (iter matches QUEST), then
 
@@ -9147,9 +9145,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                     1. (Let val_bind*{val_bind <- val_bind*} be $repeat_<val>(OPT ?(), |vari_iter*{vari_iter <- vari_iter*}|))
 
-                      1. (Let C' be $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*}))
+                      1. (Let C_assign be $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*}))
 
-                        1. Result in: % |- % := % : OK C' as assignRes
+                        1. Result in: % |- % := % : OK C_assign as assignRes
 
           3. Case analysis on val'''
 
@@ -9161,9 +9159,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                   1. (Let ?(val) be val'?{val' <- val'?})
 
-                    1. If ($is_iter_on_var(ITER typedExp expIter as exp '#' typ) matches ()), then
+                    1. If ($is_iter_on_var(iterExp as exp '#' typ) matches ()), then
 
-                      1. (Let iter vari*{vari <- vari*} be expIter)
+                      1. (Let ITER typedExp iter vari*{vari <- vari*} be iterExp)
 
                         1. If (iter matches QUEST), then
 
@@ -9171,27 +9169,27 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                             1. If (assignRes <: ok<ctx>), then
 
-                              1. (Let OK C' be assignRes as ok<ctx>)
+                              1. (Let OK C_body be assignRes as ok<ctx>)
 
                                 1. (Let vari_iter be $iterate_vari(vari, [QUEST]))*{vari <- vari*, vari_iter -> vari_iter*}
 
-                                  1. (Let val''?{val'' <- val''?} be $find_vari(C', vari))*{vari <- vari*, val''? -> val''?*}
+                                  1. (Let val''?{val'' <- val''?} be $find_vari(C_body, vari))*{vari <- vari*, val''? -> val''?*}
 
                                     1. If (val''?{val'' <- val''?} matches (_))*{val''? <- val''?*}, then
 
                                       1. (Let ?(val_sub) be val''?{val'' <- val''?})*{val''? <- val''?*, val_sub -> val_sub*}
 
-                                        1. (Let C'' be $add_varis(C', vari_iter*{vari_iter <- vari_iter*}, OPT ?(val_sub)*{val_sub <- val_sub*}))
+                                        1. (Let C_assign be $add_varis(C_body, vari_iter*{vari_iter <- vari_iter*}, OPT ?(val_sub)*{val_sub <- val_sub*}))
 
-                                          1. Result in: % |- % := % : OK C'' as assignRes
+                                          1. Result in: % |- % := % : OK C_assign as assignRes
 
             2. Case (% matches pattern LIST %)
 
               1. (Let LIST val*{val <- val*} be val''')
 
-                1. If ($is_iter_on_var(ITER typedExp expIter as exp '#' typ) matches ()), then
+                1. If ($is_iter_on_var(iterExp as exp '#' typ) matches ()), then
 
-                  1. (Let iter vari*{vari <- vari*} be expIter)
+                  1. (Let ITER typedExp iter vari*{vari <- vari*} be iterExp)
 
                     1. If (iter matches STAR), then
 
@@ -9213,9 +9211,9 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                                       1. (Let val_bind be LIST val_sub*{val_sub <- val_sub*})*{val_sub* <- val_sub**, val_bind -> val_bind*}
 
-                                        1. (Let C' be $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*}))
+                                        1. (Let C_assign be $add_varis(C, vari_iter*{vari_iter <- vari_iter*}, val_bind*{val_bind <- val_bind*}))
 
-                                          1. Result in: % |- % := % : OK C' as assignRes
+                                          1. Result in: % |- % := % : OK C_assign as assignRes
 
 2. Otherwise,
 
@@ -9247,15 +9245,15 @@ relation Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*}
 
               1. If (assignRes <: ok<ctx>), then
 
-                1. (Let OK C' be assignRes as ok<ctx>)
+                1. (Let OK C_h be assignRes as ok<ctx>)
 
-                  1. (Assign_exps: C' |- typedExp_t*{typedExp_t <- typedExp_t*} := val_t*{val_t <- val_t*} : assignRes')
+                  1. (Assign_exps: C_h |- typedExp_t*{typedExp_t <- typedExp_t*} := val_t*{val_t <- val_t*} : assignRes')
 
                     1. If (assignRes' <: ok<ctx>), then
 
-                      1. (Let OK C'' be assignRes' as ok<ctx>)
+                      1. (Let OK C_t be assignRes' as ok<ctx>)
 
-                        1. Result in: % |- % := % : OK C'' as assignRes
+                        1. Result in: % |- % := % : OK C_t as assignRes
 
 2. Otherwise,
 
@@ -9277,9 +9275,9 @@ relation Assign_arg: C |- arg := val : %
 
           1. If (assignRes <: ok<ctx>), then
 
-            1. (Let OK C' be assignRes as ok<ctx>)
+            1. (Let OK C_assign be assignRes as ok<ctx>)
 
-              1. Result in: % |- % := % : OK C' as assignRes
+              1. Result in: % |- % := % : OK C_assign as assignRes
 
   2. Case (% has type funArg)
 
@@ -9291,9 +9289,9 @@ relation Assign_arg: C |- arg := val : %
 
           1. Group fun: C |- FUN id as arg := FUNC id_global : %
 
-            1. (Let C' be $add_func(C, id, id_global))
+            1. (Let C_assign be $add_func(C, id, id_global))
 
-              1. Result in: % |- % := % : OK C' as assignRes
+              1. Result in: % |- % := % : OK C_assign as assignRes
 
 2. Otherwise,
 
@@ -9325,15 +9323,15 @@ relation Assign_args: C |- arg*{arg <- arg*} := val*{val <- val*} : %
 
               1. If (assignRes <: ok<ctx>), then
 
-                1. (Let OK C' be assignRes as ok<ctx>)
+                1. (Let OK C_h be assignRes as ok<ctx>)
 
-                  1. (Assign_args: C' |- arg_t*{arg_t <- arg_t*} := val_t*{val_t <- val_t*} : assignRes')
+                  1. (Assign_args: C_h |- arg_t*{arg_t <- arg_t*} := val_t*{val_t <- val_t*} : assignRes')
 
                     1. If (assignRes' <: ok<ctx>), then
 
-                      1. (Let OK C'' be assignRes' as ok<ctx>)
+                      1. (Let OK C_t be assignRes' as ok<ctx>)
 
-                        1. Result in: % |- % := % : OK C'' as assignRes
+                        1. Result in: % |- % := % : OK C_t as assignRes
 
 2. Otherwise,
 
@@ -9351,9 +9349,9 @@ relation Eval_clause: C |- clauseAL `( val*{val <- val*} `) : %
 
       1. If (assignRes <: ok<ctx>), then
 
-        1. (Let OK C' be assignRes as ok<ctx>)
+        1. (Let OK C_assign be assignRes as ok<ctx>)
 
-          1. (Eval_prems: C' |- premAL*{premAL <- premAL*} : premRes)
+          1. (Eval_prems: C_assign |- premAL*{premAL <- premAL*} : premRes)
 
             1. Case analysis on premRes (total)
 
@@ -9365,9 +9363,9 @@ relation Eval_clause: C |- clauseAL `( val*{val <- val*} `) : %
 
               2. Case (% has type ok<ctx>)
 
-                1. (Let OK C'' be premRes as ok<ctx>)
+                1. (Let OK C_prem be premRes as ok<ctx>)
 
-                  1. (Eval_exp: C'' |- typedExp_out : expRes)
+                  1. (Eval_exp: C_prem |- typedExp_out : expRes)
 
                     1. If (expRes <: funcRes), then
 
@@ -9467,9 +9465,9 @@ relation Eval_tblrow: C |- tblRowAL `( val*{val <- val*} `) : %
 
         1. If (assignRes <: ok<ctx>), then
 
-          1. (Let OK C_callee' be assignRes as ok<ctx>)
+          1. (Let OK C_callee_assign be assignRes as ok<ctx>)
 
-            1. (Eval_prems: C_callee' |- premAL*{premAL <- premAL*} : premRes)
+            1. (Eval_prems: C_callee_assign |- premAL*{premAL <- premAL*} : premRes)
 
               1. Case analysis on premRes (total)
 
@@ -9481,9 +9479,9 @@ relation Eval_tblrow: C |- tblRowAL `( val*{val <- val*} `) : %
 
                 2. Case (% has type ok<ctx>)
 
-                  1. (Let OK C_callee'' be premRes as ok<ctx>)
+                  1. (Let OK C_callee_prem be premRes as ok<ctx>)
 
-                    1. (Eval_exp: C_callee'' |- typedExp_out : expRes)
+                    1. (Eval_exp: C_callee_prem |- typedExp_out : expRes)
 
                       1. If (expRes <: funcRes), then
 
@@ -9583,9 +9581,9 @@ relation Eval_rul: C |- rulAL `( val*{val <- val*} `) : %
 
       1. If (assignRes <: ok<ctx>), then
 
-        1. (Let OK C' be assignRes as ok<ctx>)
+        1. (Let OK C_assign be assignRes as ok<ctx>)
 
-          1. (Eval_prems: C' |- premAL*{premAL <- premAL*} : premRes)
+          1. (Eval_prems: C_assign |- premAL*{premAL <- premAL*} : premRes)
 
             1. Case analysis on premRes (total)
 
@@ -9597,9 +9595,9 @@ relation Eval_rul: C |- rulAL `( val*{val <- val*} `) : %
 
               2. Case (% has type ok<ctx>)
 
-                1. (Let OK C'' be premRes as ok<ctx>)
+                1. (Let OK C_prem be premRes as ok<ctx>)
 
-                  1. (Eval_exps: C'' |- typedExp'*{typedExp' <- typedExp'*} : expsRes)
+                  1. (Eval_exps: C_prem |- typedExp'*{typedExp' <- typedExp'*} : expsRes)
 
                     1. If (expsRes <: relRes), then
 
