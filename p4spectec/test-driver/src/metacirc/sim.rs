@@ -11,17 +11,24 @@ use p4spectec::{
     metacirc::{self, TowerConfig},
 };
 
-use super::suite::MetacircSim;
-use crate::{Error, ExecutionOptions, Result, sim, suite::SimConfig};
+use super::suite::{self as metacirc_suite, Conversion};
+use crate::{Error, ExecutionOptions, Result, sim, suite};
 
-/// Runs the named simulation suites through the simulation tower.
+/// Runs the named simulation suites through the tower of `conversion`.
+///
+/// `config_sim` is the main driver's simulation registration,
+/// from which `config` names the suites to run.
 pub fn run(
-    config_sim: &SimConfig,
-    metacirc_sim: &MetacircSim,
+    config_sim: &suite::SimConfig,
+    config: &metacirc_suite::SimConfig,
+    conversion: Conversion,
     options: ExecutionOptions,
 ) -> Result<()> {
+    let path_tower = config.towers.get(conversion).ok_or_else(|| {
+        Error::Invalid(format!("no {} simulation tower registered", conversion.name()))
+    })?;
     // Look up each named suite in the simulation registration
-    let suites = metacirc_sim
+    let suites = config
         .suites
         .iter()
         .map(|name| {
@@ -32,8 +39,8 @@ pub fn run(
                 .ok_or_else(|| Error::Invalid(format!("unknown simulation suite {name}")))
         })
         .collect::<Result<Vec<_>>>()?;
-    let config_tower = TowerConfig::from_file(&metacirc_sim.tower)
-        .map_err(|error| Error::Invalid(error.to_string()))?;
+    let config_tower =
+        TowerConfig::from_file(path_tower).map_err(|error| Error::Invalid(error.to_string()))?;
     sim::run_suites(config_sim, &suites, options, |arch, config_runner| {
         metacirc::build_simulator(&config_tower, arch, config_runner, Encoding::default())
             .map_err(|error| Error::Invalid(error.to_string()))

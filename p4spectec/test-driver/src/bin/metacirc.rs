@@ -6,7 +6,7 @@ use p4spectec_test::{
     Error, ExecutionOptions, Result, algo, elab,
     metacirc::{
         self, metaparse,
-        suite::{Conversion, MetacircConfig, load_metacirc, load_metaparse},
+        suite::{Conversion, RunConfig},
     },
     prose, structure,
     suite::{self, Index},
@@ -37,12 +37,16 @@ enum Command {
         /// Convert IL to AL natively or by the meta specification's `Algo_IL`.
         #[arg(long = "algo", value_enum, default_value_t)]
         conversion: Conversion,
+        #[command(flatten)]
+        options: ExecutionOptions,
     },
     /// Compare registered simulation suites through a tower with native expectations
     Sim {
         /// Convert IL to AL natively or by the meta specification's `Algo_IL`.
         #[arg(long = "algo", value_enum, default_value_t)]
         conversion: Conversion,
+        #[command(flatten)]
+        options: ExecutionOptions,
     },
     /// Compare the elaborated meta specification with expected output
     Elab,
@@ -54,7 +58,7 @@ enum Command {
     Prose,
     /// Check that IL and AL encodings are fixed points of decode-then-encode
     Metaparse,
-    /// List the metacirc registrations of every conversion
+    /// List all metacirc registrations, inputs, and expectation files
     List,
 }
 
@@ -66,8 +70,6 @@ struct Cli {
     /// Suite registration file, relative to the invoking directory.
     #[arg(long = "registry", global = true)]
     path_registry: Option<PathBuf>,
-    #[command(flatten)]
-    options: ExecutionOptions,
 }
 
 /// Resolves caller paths and runs the selected command from the repository root.
@@ -89,44 +91,35 @@ fn execute(cli: Cli) -> Result<()> {
     // Resolve caller paths before selecting the corpus repository as working directory
     std::env::set_current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))?;
     let index = Index::load(&path_registry)?;
-    // Listing validates and shows the registrations of every conversion
-    if let Command::List = cli.command {
-        for conversion in [Conversion::Native, Conversion::Meta] {
-            let config = load_metacirc(&index.suites.metacirc, conversion)?;
-            println!("metacirc ({conversion:?}): {config:#?}");
-        }
-        return Ok(());
-    }
-    // Executions select a conversion; checks of the meta specification use none
-    let conversion = match &cli.command {
-        Command::Run { conversion, .. } | Command::Sim { conversion } => *conversion,
-        _ => Conversion::default(),
-    };
-    let config = load_metacirc(&index.suites.metacirc, conversion)?;
+    // The main index names the metacirc index, which names each metacirc module
+    let index_metacirc = metacirc::suite::Index::load(&index.suites.metacirc)?;
+    let modules = &index_metacirc.suites;
     match cli.command {
-        Command::Run { suite, input, .. } => run(config, suite, input, cli.options),
-        Command::Sim { .. } => {
-            let metacirc_sim = config.sim.as_ref().ok_or_else(|| {
-                Error::Invalid("no simulation tower registered for this conversion".into())
-            })?;
+        Command::Run { suite, input, conversion, options } => {
+            let config = metacirc::suite::load_execution(&modules.run)?;
+            run(config, suite, input, conversion, options)
+        }
+        Command::Sim { conversion, options } => {
             let config_sim = suite::load_simulation(&index.suites.sim)?;
-            metacirc::sim::run(&config_sim, metacirc_sim, cli.options)
+            let config = metacirc::suite::load_simulation(&modules.sim)?;
+            metacirc::sim::run(&config_sim, &config, conversion, options)
         }
         // Snapshot and codec checks compile the meta specification without executing it
-        Command::Elab => elab::run(&suite::load_snapshots(&config.snapshots.elab)?),
-        Command::Algo => algo::run(&suite::load_snapshots(&config.snapshots.algo)?),
-        Command::Structure => structure::run(&suite::load_structure(&config.snapshots.structure)?),
-        Command::Prose => prose::run(&suite::load_snapshots(&config.snapshots.prose)?),
-        Command::Metaparse => metaparse::run(&load_metaparse(&config.metaparse)?),
-        Command::List => unreachable!("listing returned before loading one conversion"),
+        Command::Elab => elab::run(&suite::load_snapshots(&modules.elab)?),
+        Command::Algo => algo::run(&suite::load_snapshots(&modules.algo)?),
+        Command::Structure => structure::run(&suite::load_structure(&modules.structure)?),
+        Command::Prose => prose::run(&suite::load_snapshots(&modules.prose)?),
+        Command::Metaparse => metaparse::run(&metacirc::suite::load_metaparse(&modules.metaparse)?),
+        Command::List => index_metacirc.list(),
     }
 }
 
-/// Runs the registered corpus suites, restricted by name and input language.
+/// Runs the corpus suites of `conversion`, restricted by name and input language.
 fn run(
-    mut config: MetacircConfig,
+    mut config: RunConfig,
     name: Option<String>,
     input: Option<Input>,
+    conversion: Conversion,
     options: ExecutionOptions,
 ) -> Result<()> {
     // Restrict the registered suites to the selected name
@@ -140,7 +133,11 @@ fn run(
     if let Some(input) = input {
         let mut suites = Vec::new();
         for suite in config.suites {
-            let config_tower = TowerConfig::from_file(&suite.tower)
+            // A suite without a tower for the conversion takes no input
+            let Some(path_tower) = suite.towers.get(conversion) else {
+                continue;
+            };
+            let config_tower = TowerConfig::from_file(path_tower)
                 .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
             let input_suite = match config_tower.top_lang() {
                 Lang::Al | Lang::Il => Input::Al,
@@ -155,7 +152,7 @@ fn run(
         }
         config.suites = suites;
     }
-    metacirc::run::run(&config, options)
+    metacirc::run::run(&config, conversion, options)
 }
 
 fn main() -> ExitCode {

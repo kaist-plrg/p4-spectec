@@ -169,13 +169,13 @@ make test-metacirc-sim-meta
 
 `test-metacirc-micro` runs the spec-language sources under
 `testdata/spec/pos/run` and `testdata/spec/neg/run` through the AL tower,
-each expected to succeed or fail as its suite in
-`suites/metacirc/metacirc.json` registers. `test-metacirc-run` runs the
-`test-run-sl` corpus through the AL/P4 tower and requires the p4c submodule.
-Both check determinism.
-`test-metacirc-sim` runs the simulation suites named under `sim` in
-`suites/metacirc/metacirc.json`, the v1model and ebpf regression suites,
+each expected to succeed or fail as its suite in `suites/metacirc/run.json`
+registers. `test-metacirc-run` runs the `test-run-sl` corpus through the AL/P4
+tower and requires the p4c submodule. Both check determinism.
+`test-metacirc-sim` runs the simulation suites named in
+`suites/metacirc/sim.json`, the v1model and ebpf regression suites,
 through the AL/P4 tower against the native simulation expectations.
+`suites/metacirc/metacirc.json` indexes these and the snapshot registrations.
 
 The `-meta` targets run the same suites with `--algo meta`:
 each suite registers a tower per conversion, and the `meta` tower is entered
