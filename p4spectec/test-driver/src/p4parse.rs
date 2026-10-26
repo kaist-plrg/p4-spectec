@@ -7,7 +7,10 @@ use std::{
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 
-use p4spectec::lang::data::arena::Arena;
+use p4spectec::lang::{
+    common::source::Span,
+    data::{arena::Arena, typ},
+};
 
 use p4spectec::interface::p4::{
     error::P4Error,
@@ -35,8 +38,13 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
             }
         },
     };
+    // The parser's root nonterminal is the program's declared type
+    let typ_program = typ::make::var(
+        p4spectec::phrase!(node: "p4program".into(), span: Span::default()),
+        Vec::new(),
+    );
     let text = unparser
-        .render(&arena, &program)
+        .render(&arena, &typ_program, &program)
         .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
     let program_roundtrip = match parse_string(&mut arena, path, &text) {
         Ok(program) => program,
