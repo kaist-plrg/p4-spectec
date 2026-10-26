@@ -1604,120 +1604,120 @@ relation Multibind_args: algoCtx |- arg* : algoCtx arg* premAL*
     -- let AC_multi = AC[USED = R_multi.USED]
     -- output: % |- % : AC_multi arg_multi*{arg_multi <- arg_multi*} premAL_eq*{premAL_eq <- premAL_eq*}
 
-relation Partialbind_exp: algoCtx iterCtx |- iterCtx typedExp : algoCtx iterCtx typedExp premAL*
+relation Partialbind_exp: algoCtx iterCtx |- typedExp : algoCtx iterCtx typedExp premAL*
 
   rulegroup
 
    match
 
-    (signature) AC IC_prem |- IC typedExp : % % % %
-    AC IC_prem |- IC typedExp : % % % %
+    (signature) AC IC |- typedExp : % % % %
+    AC IC |- typedExp : % % % %
 
    paths
 
     rulepath compared
     -- if ~$decomposes(AC, typedExp)
     -- let vari_read*{vari_read <- vari_read*} = $free_varis_exp(typedExp)
-    -- if $is_bound(AC, IC ++ IC_prem, vari_read*{vari_read <- vari_read*})
+    -- if $is_bound(AC, IC, vari_read*{vari_read <- vari_read*})
     -- let _exp '#' typ = typedExp
-    -- let (AC_fresh, vari_d) = $fresh_vari(AC, IC ++ IC_prem, typ)
+    -- let (AC_fresh, vari_d) = $fresh_vari(AC, IC, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
     -- let typedExp_check = CMP EQ as cmpOp typedExp_d typedExp as exp '#' BOOL as typ
     -- let id_d _typ _iter*{_iter <- _iter*} = vari_d
     -- let id_read*{id_read <- id_read*} = $ids_of_varis(vari_read*{vari_read <- vari_read*})
-    -- let IC_d = $add_iterated(IC ++ IC_prem, [vari_d])
+    -- let IC_d = $add_iterated(IC, [vari_d])
     -- let premIterAL*{premIterAL <- premIterAL*} = $prem_iters(IC_d, id_d :: id_read*{id_read <- id_read*}, [])
     -- let premAL_check = $iterate_prem(IF typedExp_check as premAL, premIterAL*{premIterAL <- premIterAL*})
     -- let IC_fresh = $add_iterated(IC, [vari_d])
-    -- output: % % |- % % : AC_fresh IC_fresh typedExp_d [premAL_check]
+    -- output: % % |- % : AC_fresh IC_fresh typedExp_d [premAL_check]
 
     rulepath decomposed
     -- if $decomposes(AC, typedExp)
-    -- Partialbind_exp_decomposed: AC IC_prem |- IC typedExp : AC_part IC_part typedExp_part premAL*{premAL <- premAL*}
-    -- output: % % |- % % : AC_part IC_part typedExp_part premAL*{premAL <- premAL*}
+    -- Partialbind_exp_decomposed: AC IC |- typedExp : AC_part IC_part typedExp_part premAL*{premAL <- premAL*}
+    -- output: % % |- % : AC_part IC_part typedExp_part premAL*{premAL <- premAL*}
 
-relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoCtx iterCtx typedExp premAL*
+relation Partialbind_exp_decomposed: algoCtx iterCtx |- typedExp : algoCtx iterCtx typedExp premAL*
 
   rulegroup variable
 
    match
 
-    (signature) AC IC_prem |- IC VAR id as exp '#' typ : % % % %
-    AC IC_prem |- IC exp '#' typ : % % % %
+    (signature) AC IC |- VAR id as exp '#' typ : % % % %
+    AC IC |- exp '#' typ : % % % %
     -- if exp <: varExp
     -- let VAR id = exp as varExp
 
    paths
 
     rulepath variable
-    -- output: % % |- % % : AC IC VAR id as exp '#' typ []
+    -- output: % % |- % : AC IC VAR id as exp '#' typ []
 
   rulegroup upcast
 
    match
 
-    (signature) AC IC_prem |- IC UPCAST _typ typedExp as exp '#' typ : % % % %
-    AC IC_prem |- IC exp '#' typ : % % % %
+    (signature) AC IC |- UPCAST _typ typedExp as exp '#' typ : % % % %
+    AC IC |- exp '#' typ : % % % %
     -- if exp <: upCastExp
     -- let UPCAST _typ typedExp = exp as upCastExp
 
    paths
 
     rulepath upcast
-    -- Partialbind_exp: AC IC_prem |- IC typedExp : AC_sub IC_sub typedExp_sub premAL*{premAL <- premAL*}
+    -- Partialbind_exp: AC IC |- typedExp : AC_sub IC_sub typedExp_sub premAL*{premAL <- premAL*}
     -- let _exp '#' typ_sub = typedExp_sub
-    -- let (AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ)
+    -- let (AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
     -- let typedExp_check = SUB typedExp_d typ_sub as exp '#' BOOL as typ
     -- let typedExp_down = DOWNCAST typ_sub typedExp_d as exp '#' typ_sub
-    -- let premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check)
-    -- let premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_sub, typedExp_down)
+    -- let premAL_check = $sidecond_partial(IC_sub, vari_d, typedExp_check)
+    -- let premAL_let = $let_partial(IC_sub, vari_d, typedExp_sub, typedExp_down)
     -- let IC_fresh = $add_iterated(IC_sub, [vari_d])
-    -- output: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+    -- output: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
 
   rulegroup tuple
 
    match
 
-    (signature) AC IC_prem |- IC TUP typedExp*{typedExp <- typedExp*} as exp '#' typ : % % % %
-    AC IC_prem |- IC exp '#' typ : % % % %
+    (signature) AC IC |- TUP typedExp*{typedExp <- typedExp*} as exp '#' typ : % % % %
+    AC IC |- exp '#' typ : % % % %
     -- if exp <: tupExp
     -- let TUP typedExp*{typedExp <- typedExp*} = exp as tupExp
 
    paths
 
     rulepath tuple
-    -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
-    -- output: % % |- % % : AC_sub IC_sub TUP typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ premAL*{premAL <- premAL*}
+    -- Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
+    -- output: % % |- % : AC_sub IC_sub TUP typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ premAL*{premAL <- premAL*}
 
   rulegroup case
 
    match
 
-    (signature) AC IC_prem |- IC INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' typ : % % % %
-    AC IC_prem |- IC exp '#' typ : % % % %
+    (signature) AC IC |- INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' typ : % % % %
+    AC IC |- exp '#' typ : % % % %
     -- if exp <: injExp
     -- let INJ mixop typedExp*{typedExp <- typedExp*} = exp as injExp
 
    paths
 
     rulepath case
-    -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
+    -- Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
     -- let typedExp_case = INJ mixop typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ
-    -- let (AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ)
+    -- let (AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
     -- let typedExp_check = MATCH typedExp_d INJ mixop as exp '#' BOOL as typ
-    -- let premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check)
-    -- let premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_case, typedExp_d)
+    -- let premAL_check = $sidecond_partial(IC_sub, vari_d, typedExp_check)
+    -- let premAL_let = $let_partial(IC_sub, vari_d, typedExp_case, typedExp_d)
     -- let IC_fresh = $add_iterated(IC_sub, [vari_d])
-    -- output: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+    -- output: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
 
   rulegroup struct
 
    match
 
-    (signature) AC IC_prem |- IC STR expField*{expField <- expField*} as exp '#' typ : % % % %
-    AC IC_prem |- IC exp '#' typ : % % % %
+    (signature) AC IC |- STR expField*{expField <- expField*} as exp '#' typ : % % % %
+    AC IC |- exp '#' typ : % % % %
     -- if exp <: strExp
     -- let STR expField*{expField <- expField*} = exp as strExp
 
@@ -1725,17 +1725,17 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
 
     rulepath struct
     -- (let atom typedExp = expField)*{expField <- expField*, atom -> atom*, typedExp -> typedExp*}
-    -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
+    -- Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
     -- if (|atom*{atom <- atom*}| = |typedExp_part*{typedExp_part <- typedExp_part*}|)
     -- (let expField_part = atom typedExp_part)*{atom <- atom*, typedExp_part <- typedExp_part*, expField_part -> expField_part*}
-    -- output: % % |- % % : AC_sub IC_sub STR expField_part*{expField_part <- expField_part*} as exp '#' typ premAL*{premAL <- premAL*}
+    -- output: % % |- % : AC_sub IC_sub STR expField_part*{expField_part <- expField_part*} as exp '#' typ premAL*{premAL <- premAL*}
 
   rulegroup opt
 
    match
 
-    (signature) AC IC_prem |- IC OPT ?(typedExp) as exp '#' typ : % % % %
-    AC IC_prem |- IC exp '#' typ : % % % %
+    (signature) AC IC |- OPT ?(typedExp) as exp '#' typ : % % % %
+    AC IC |- exp '#' typ : % % % %
     -- if exp <: optExp
     -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp as optExp
     -- if typedExp'?{typedExp' <- typedExp'?} matches (_)
@@ -1744,103 +1744,103 @@ relation Partialbind_exp_decomposed: algoCtx iterCtx |- iterCtx typedExp : algoC
    paths
 
     rulepath opt
-    -- Partialbind_exp: AC IC_prem |- IC typedExp : AC_sub IC_sub typedExp_part premAL*{premAL <- premAL*}
+    -- Partialbind_exp: AC IC |- typedExp : AC_sub IC_sub typedExp_part premAL*{premAL <- premAL*}
     -- let typedExp_opt = OPT ?(typedExp_part) as exp '#' typ
-    -- let (AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ)
+    -- let (AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
     -- let typedExp_check = MATCH typedExp_d SOME as pat as exp '#' BOOL as typ
-    -- let premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check)
-    -- let premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_opt, typedExp_d)
+    -- let premAL_check = $sidecond_partial(IC_sub, vari_d, typedExp_check)
+    -- let premAL_let = $let_partial(IC_sub, vari_d, typedExp_opt, typedExp_d)
     -- let IC_fresh = $add_iterated(IC_sub, [vari_d])
-    -- output: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+    -- output: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
 
   rulegroup list
 
    match
 
-    (signature) AC IC_prem |- IC LIST typedExp*{typedExp <- typedExp*} as exp '#' typ : % % % %
-    AC IC_prem |- IC exp '#' typ : % % % %
+    (signature) AC IC |- LIST typedExp*{typedExp <- typedExp*} as exp '#' typ : % % % %
+    AC IC |- exp '#' typ : % % % %
     -- if exp <: listExp
     -- let LIST typedExp*{typedExp <- typedExp*} = exp as listExp
 
    paths
 
     rulepath list
-    -- Partialbind_exps: AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
+    -- Partialbind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_sub IC_sub typedExp_part*{typedExp_part <- typedExp_part*} premAL*{premAL <- premAL*}
     -- let typedExp_list = LIST typedExp_part*{typedExp_part <- typedExp_part*} as exp '#' typ
-    -- let (AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ)
+    -- let (AC_fresh, vari_d) = $fresh_vari(AC_sub, IC_sub, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
     -- let n = |typedExp*{typedExp <- typedExp*}|
     -- let typedExp_check = MATCH typedExp_d FIXED n as pat as exp '#' BOOL as typ
-    -- let premAL_check = $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check)
-    -- let premAL_let = $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_list, typedExp_d)
+    -- let premAL_check = $sidecond_partial(IC_sub, vari_d, typedExp_check)
+    -- let premAL_let = $let_partial(IC_sub, vari_d, typedExp_list, typedExp_d)
     -- let IC_fresh = $add_iterated(IC_sub, [vari_d])
-    -- output: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
+    -- output: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL*{premAL <- premAL*}
 
   rulegroup cons
 
    match
 
-    (signature) AC IC_prem |- IC CONS typedExp_h typedExp_t as exp '#' typ : % % % %
-    AC IC_prem |- IC exp '#' typ : % % % %
+    (signature) AC IC |- CONS typedExp_h typedExp_t as exp '#' typ : % % % %
+    AC IC |- exp '#' typ : % % % %
     -- if exp <: consExp
     -- let CONS typedExp_h typedExp_t = exp as consExp
 
    paths
 
     rulepath cons
-    -- Partialbind_exp: AC IC_prem |- IC typedExp_h : AC_h IC_h typedExp_h_part premAL_h*{premAL_h <- premAL_h*}
-    -- Partialbind_exp: AC_h IC_prem |- IC_h typedExp_t : AC_t IC_t typedExp_t_part premAL_t*{premAL_t <- premAL_t*}
+    -- Partialbind_exp: AC IC |- typedExp_h : AC_h IC_h typedExp_h_part premAL_h*{premAL_h <- premAL_h*}
+    -- Partialbind_exp: AC_h IC_h |- typedExp_t : AC_t IC_t typedExp_t_part premAL_t*{premAL_t <- premAL_t*}
     -- let typedExp_cons = CONS typedExp_h_part typedExp_t_part as exp '#' typ
-    -- let (AC_fresh, vari_d) = $fresh_vari(AC_t, IC_t ++ IC_prem, typ)
+    -- let (AC_fresh, vari_d) = $fresh_vari(AC_t, IC_t, typ)
     -- let typedExp_d = $exp_of_vari(vari_d)
     -- let typedExp_check = MATCH typedExp_d CONS as pat as exp '#' BOOL as typ
-    -- let premAL_check = $sidecond_partial(IC_t ++ IC_prem, vari_d, typedExp_check)
-    -- let premAL_let = $let_partial(IC_t ++ IC_prem, vari_d, typedExp_cons, typedExp_d)
+    -- let premAL_check = $sidecond_partial(IC_t, vari_d, typedExp_check)
+    -- let premAL_let = $let_partial(IC_t, vari_d, typedExp_cons, typedExp_d)
     -- let IC_fresh = $add_iterated(IC_t, [vari_d])
-    -- output: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*}
+    -- output: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*}
 
   rulegroup iter
 
    match
 
-    (signature) AC IC_prem |- IC ITER typedExp iter vari*{vari <- vari*} as exp '#' typ : % % % %
-    AC IC_prem |- IC exp '#' typ : % % % %
+    (signature) AC IC |- ITER typedExp iter vari*{vari <- vari*} as exp '#' typ : % % % %
+    AC IC |- exp '#' typ : % % % %
     -- if exp <: iterExp
     -- let ITER typedExp iter vari*{vari <- vari*} = exp as iterExp
 
    paths
 
     rulepath iter
-    -- Partialbind_exp: AC IC_prem |- iter vari*{vari <- vari*} :: IC typedExp : AC_sub premIterIL*{premIterIL <- premIterIL*} typedExp_part premAL*{premAL <- premAL*}
+    -- Partialbind_exp: AC iter vari*{vari <- vari*} :: IC |- typedExp : AC_sub premIterIL*{premIterIL <- premIterIL*} typedExp_part premAL*{premAL <- premAL*}
     -- if premIterIL*{premIterIL <- premIterIL*} matches _ :: _
     -- let iter' vari_iter*{vari_iter <- vari_iter*} :: IC_sub = premIterIL*{premIterIL <- premIterIL*}
     -- if (iter' = iter)
     -- let vari_part*{vari_part <- vari_part*} = $select_varis(vari_iter*{vari_iter <- vari_iter*}, $ids_of_varis($free_varis_exp(typedExp_part)))
-    -- output: % % |- % % : AC_sub IC_sub ITER typedExp_part iter vari_part*{vari_part <- vari_part*} as exp '#' typ premAL*{premAL <- premAL*}
+    -- output: % % |- % : AC_sub IC_sub ITER typedExp_part iter vari_part*{vari_part <- vari_part*} as exp '#' typ premAL*{premAL <- premAL*}
 
-relation Partialbind_exps: algoCtx iterCtx |- iterCtx typedExp* : algoCtx iterCtx typedExp* premAL*
+relation Partialbind_exps: algoCtx iterCtx |- typedExp* : algoCtx iterCtx typedExp* premAL*
 
   rulegroup
 
    match
 
-    (signature) AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : % % % %
-    AC IC_prem |- IC typedExp*{typedExp <- typedExp*} : % % % %
+    (signature) AC IC |- typedExp*{typedExp <- typedExp*} : % % % %
+    AC IC |- typedExp*{typedExp <- typedExp*} : % % % %
 
    paths
 
     rulepath nil
     -- if (typedExp*{typedExp <- typedExp*} = [])
-    -- output: % % |- % % : AC IC [] []
+    -- output: % % |- % : AC IC [] []
 
     rulepath cons
     -- let typedExp'*{typedExp' <- typedExp'*} = typedExp*{typedExp <- typedExp*}
     -- if typedExp'*{typedExp' <- typedExp'*} matches _ :: _
     -- let typedExp_h :: typedExp_t*{typedExp_t <- typedExp_t*} = typedExp'*{typedExp' <- typedExp'*}
-    -- Partialbind_exp: AC IC_prem |- IC typedExp_h : AC_h IC_h typedExp_h_part premAL_h*{premAL_h <- premAL_h*}
-    -- Partialbind_exps: AC_h IC_prem |- IC_h typedExp_t*{typedExp_t <- typedExp_t*} : AC_t IC_t typedExp_t_part*{typedExp_t_part <- typedExp_t_part*} premAL_t*{premAL_t <- premAL_t*}
-    -- output: % % |- % % : AC_t IC_t typedExp_h_part :: typedExp_t_part*{typedExp_t_part <- typedExp_t_part*} premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*}
+    -- Partialbind_exp: AC IC |- typedExp_h : AC_h IC_h typedExp_h_part premAL_h*{premAL_h <- premAL_h*}
+    -- Partialbind_exps: AC_h IC_h |- typedExp_t*{typedExp_t <- typedExp_t*} : AC_t IC_t typedExp_t_part*{typedExp_t_part <- typedExp_t_part*} premAL_t*{premAL_t <- premAL_t*}
+    -- output: % % |- % : AC_t IC_t typedExp_h_part :: typedExp_t_part*{typedExp_t_part <- typedExp_t_part*} premAL_h*{premAL_h <- premAL_h*} ++ premAL_t*{premAL_t <- premAL_t*}
 
 relation Partialbind_arg: algoCtx |- arg : algoCtx arg premAL*
 
@@ -1856,7 +1856,7 @@ relation Partialbind_arg: algoCtx |- arg : algoCtx arg premAL*
    paths
 
     rulepath exp
-    -- Partialbind_exp: AC [] |- [] typedExp : AC_part _IC typedExp_part premAL*{premAL <- premAL*}
+    -- Partialbind_exp: AC [] |- typedExp : AC_part _IC typedExp_part premAL*{premAL <- premAL*}
     -- output: % |- % : AC_part EXP typedExp_part as arg premAL*{premAL <- premAL*}
 
   rulegroup fun
@@ -1911,7 +1911,7 @@ relation Bind_exps: algoCtx iterCtx |- typedExp* : algoCtx typedExp* premAL*
 
     rulepath
     -- Multibind_exps: AC IC |- typedExp*{typedExp <- typedExp*} : AC_multi typedExp_multi*{typedExp_multi <- typedExp_multi*} premAL_eq*{premAL_eq <- premAL_eq*}
-    -- Partialbind_exps: AC_multi IC |- [] typedExp_multi*{typedExp_multi <- typedExp_multi*} : AC_part _IC typedExp_part*{typedExp_part <- typedExp_part*} premAL_part*{premAL_part <- premAL_part*}
+    -- Partialbind_exps: AC_multi IC |- typedExp_multi*{typedExp_multi <- typedExp_multi*} : AC_part _IC typedExp_part*{typedExp_part <- typedExp_part*} premAL_part*{premAL_part <- premAL_part*}
     -- Collectbind_exps: AC_multi |- typedExp_multi*{typedExp_multi <- typedExp_multi*} : vari_bind*{vari_bind <- vari_bind*}
     -- let iter _vari*{_vari <- _vari*}*{_vari* <- _vari**, iter <- iter*} = IC
     -- let AC_bound = $add_bound(AC_part, $iterate_vari(vari_bind, iter*{iter <- iter*})*{vari_bind <- vari_bind*})

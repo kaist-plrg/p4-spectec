@@ -1892,9 +1892,9 @@ relation Multibind_args: AC |- (arg)*{arg <- arg*} : % % %
 
   6. Result in: % |- % : AC_multi (arg_multi)*{arg_multi <- arg_multi*} (premAL_eq)*{premAL_eq <- premAL_eq*}
 
-relation Partialbind_exp: AC IC_prem |- IC typedExp : % % % %
+relation Partialbind_exp: AC IC |- typedExp : % % % %
 
-1. Group : AC IC_prem |- IC typedExp : % % % %
+1. Group : AC IC |- typedExp : % % % %
 
   1. Case analysis on $decomposes(AC, typedExp) (total)
 
@@ -1902,11 +1902,11 @@ relation Partialbind_exp: AC IC_prem |- IC typedExp : % % % %
 
       1. (Let (vari_read)*{vari_read <- vari_read*} be $free_varis_exp(typedExp))
 
-      2. Check ($is_bound(AC, IC ++ IC_prem, (vari_read)*{vari_read <- vari_read*}))
+      2. Check ($is_bound(AC, IC, (vari_read)*{vari_read <- vari_read*}))
 
         1. (Let (_exp '#' typ) be typedExp)
 
-        2. (Let (AC_fresh, vari_d) be $fresh_vari(AC, IC ++ IC_prem, typ))
+        2. (Let (AC_fresh, vari_d) be $fresh_vari(AC, IC, typ))
 
         3. (Let typedExp_d be $exp_of_vari(vari_d))
 
@@ -1916,7 +1916,7 @@ relation Partialbind_exp: AC IC_prem |- IC typedExp : % % % %
 
         6. (Let (id_read)*{id_read <- id_read*} be $ids_of_varis((vari_read)*{vari_read <- vari_read*}))
 
-        7. (Let IC_d be $add_iterated(IC ++ IC_prem, [vari_d]))
+        7. (Let IC_d be $add_iterated(IC, [vari_d]))
 
         8. (Let (premIterAL)*{premIterAL <- premIterAL*} be $prem_iters(IC_d, id_d :: (id_read)*{id_read <- id_read*}, []))
 
@@ -1924,33 +1924,33 @@ relation Partialbind_exp: AC IC_prem |- IC typedExp : % % % %
 
         10. (Let IC_fresh be $add_iterated(IC, [vari_d]))
 
-        11. Result in: % % |- % % : AC_fresh IC_fresh typedExp_d [premAL_check]
+        11. Result in: % % |- % : AC_fresh IC_fresh typedExp_d [premAL_check]
 
     2. Case true
 
-      1. (Partialbind_exp_decomposed: AC IC_prem |- IC typedExp : AC_part IC_part typedExp_part (premAL)*{premAL <- premAL*})
+      1. (Partialbind_exp_decomposed: AC IC |- typedExp : AC_part IC_part typedExp_part (premAL)*{premAL <- premAL*})
 
-      2. Result in: % % |- % % : AC_part IC_part typedExp_part (premAL)*{premAL <- premAL*}
+      2. Result in: % % |- % : AC_part IC_part typedExp_part (premAL)*{premAL <- premAL*}
 
-relation Partialbind_exp_decomposed: AC IC_prem |- IC (exp '#' typ) : % % % %
+relation Partialbind_exp_decomposed: AC IC |- (exp '#' typ) : % % % %
 
 1. Case analysis on exp
 
   1. Case (% has type varExp, let (VAR id) = %)
 
-    1. Group variable: AC IC_prem |- IC (((VAR id) as exp) '#' typ) : % % % %
+    1. Group variable: AC IC |- (((VAR id) as exp) '#' typ) : % % % %
 
-      1. Result in: % % |- % % : AC IC (((VAR id) as exp) '#' typ) []
+      1. Result in: % % |- % : AC IC (((VAR id) as exp) '#' typ) []
 
   2. Case (% has type upCastExp, let (UPCAST typ' typedExp) = %)
 
-    1. Group upcast: AC IC_prem |- IC (((UPCAST typ' typedExp) as exp) '#' typ) : % % % %
+    1. Group upcast: AC IC |- (((UPCAST typ' typedExp) as exp) '#' typ) : % % % %
 
-      1. (Partialbind_exp: AC IC_prem |- IC typedExp : AC_sub IC_sub typedExp_sub (premAL)*{premAL <- premAL*})
+      1. (Partialbind_exp: AC IC |- typedExp : AC_sub IC_sub typedExp_sub (premAL)*{premAL <- premAL*})
 
       2. (Let (_exp '#' typ_sub) be typedExp_sub)
 
-      3. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ))
+      3. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub, typ))
 
       4. (Let typedExp_d be $exp_of_vari(vari_d))
 
@@ -1958,57 +1958,57 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC (exp '#' typ) : % % % %
 
       6. (Let typedExp_down be (((DOWNCAST typ_sub typedExp_d) as exp) '#' typ_sub))
 
-      7. (Let premAL_check be $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check))
+      7. (Let premAL_check be $sidecond_partial(IC_sub, vari_d, typedExp_check))
 
-      8. (Let premAL_let be $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_sub, typedExp_down))
+      8. (Let premAL_let be $let_partial(IC_sub, vari_d, typedExp_sub, typedExp_down))
 
       9. (Let IC_fresh be $add_iterated(IC_sub, [vari_d]))
 
-      10. Result in: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: (premAL)*{premAL <- premAL*}
+      10. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: (premAL)*{premAL <- premAL*}
 
   3. Case (% has type tupExp, let (TUP (typedExp)*{typedExp <- typedExp*}) = %)
 
-    1. Group tuple: AC IC_prem |- IC (((TUP (typedExp)*{typedExp <- typedExp*}) as exp) '#' typ) : % % % %
+    1. Group tuple: AC IC |- (((TUP (typedExp)*{typedExp <- typedExp*}) as exp) '#' typ) : % % % %
 
-      1. (Partialbind_exps: AC IC_prem |- IC (typedExp)*{typedExp <- typedExp*} : AC_sub IC_sub (typedExp_part)*{typedExp_part <- typedExp_part*} (premAL)*{premAL <- premAL*})
+      1. (Partialbind_exps: AC IC |- (typedExp)*{typedExp <- typedExp*} : AC_sub IC_sub (typedExp_part)*{typedExp_part <- typedExp_part*} (premAL)*{premAL <- premAL*})
 
-      2. Result in: % % |- % % : AC_sub IC_sub (((TUP (typedExp_part)*{typedExp_part <- typedExp_part*}) as exp) '#' typ) (premAL)*{premAL <- premAL*}
+      2. Result in: % % |- % : AC_sub IC_sub (((TUP (typedExp_part)*{typedExp_part <- typedExp_part*}) as exp) '#' typ) (premAL)*{premAL <- premAL*}
 
   4. Case (% has type injExp, let (INJ (mixop (typedExp)*{typedExp <- typedExp*})) = %)
 
-    1. Group case: AC IC_prem |- IC (((INJ (mixop (typedExp)*{typedExp <- typedExp*})) as exp) '#' typ) : % % % %
+    1. Group case: AC IC |- (((INJ (mixop (typedExp)*{typedExp <- typedExp*})) as exp) '#' typ) : % % % %
 
-      1. (Partialbind_exps: AC IC_prem |- IC (typedExp)*{typedExp <- typedExp*} : AC_sub IC_sub (typedExp_part)*{typedExp_part <- typedExp_part*} (premAL)*{premAL <- premAL*})
+      1. (Partialbind_exps: AC IC |- (typedExp)*{typedExp <- typedExp*} : AC_sub IC_sub (typedExp_part)*{typedExp_part <- typedExp_part*} (premAL)*{premAL <- premAL*})
 
       2. (Let typedExp_case be (((INJ (mixop (typedExp_part)*{typedExp_part <- typedExp_part*})) as exp) '#' typ))
 
-      3. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ))
+      3. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub, typ))
 
       4. (Let typedExp_d be $exp_of_vari(vari_d))
 
       5. (Let typedExp_check be (((MATCH typedExp_d (INJ mixop)) as exp) '#' ((BOOL) as typ)))
 
-      6. (Let premAL_check be $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check))
+      6. (Let premAL_check be $sidecond_partial(IC_sub, vari_d, typedExp_check))
 
-      7. (Let premAL_let be $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_case, typedExp_d))
+      7. (Let premAL_let be $let_partial(IC_sub, vari_d, typedExp_case, typedExp_d))
 
       8. (Let IC_fresh be $add_iterated(IC_sub, [vari_d]))
 
-      9. Result in: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: (premAL)*{premAL <- premAL*}
+      9. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: (premAL)*{premAL <- premAL*}
 
   5. Case (% has type strExp, let (STR (expField)*{expField <- expField*}) = %)
 
-    1. Group struct: AC IC_prem |- IC (((STR (expField)*{expField <- expField*}) as exp) '#' typ) : % % % %
+    1. Group struct: AC IC |- (((STR (expField)*{expField <- expField*}) as exp) '#' typ) : % % % %
 
       1. (Let (atom typedExp) be expField)*{expField <- expField*, atom -> atom*, typedExp -> typedExp*}
 
-      2. (Partialbind_exps: AC IC_prem |- IC (typedExp)*{typedExp <- typedExp*} : AC_sub IC_sub (typedExp_part)*{typedExp_part <- typedExp_part*} (premAL)*{premAL <- premAL*})
+      2. (Partialbind_exps: AC IC |- (typedExp)*{typedExp <- typedExp*} : AC_sub IC_sub (typedExp_part)*{typedExp_part <- typedExp_part*} (premAL)*{premAL <- premAL*})
 
       3. Check ((|(atom)*{atom <- atom*}| = |(typedExp_part)*{typedExp_part <- typedExp_part*}|))
 
         1. (Let expField_part be (atom typedExp_part))*{atom <- atom*, typedExp_part <- typedExp_part*, expField_part -> expField_part*}
 
-        2. Result in: % % |- % % : AC_sub IC_sub (((STR (expField_part)*{expField_part <- expField_part*}) as exp) '#' typ) (premAL)*{premAL <- premAL*}
+        2. Result in: % % |- % : AC_sub IC_sub (((STR (expField_part)*{expField_part <- expField_part*}) as exp) '#' typ) (premAL)*{premAL <- premAL*}
 
   6. Case (% has type optExp, let (OPT (typedExp')?{typedExp' <- typedExp'?}) = %)
 
@@ -2016,35 +2016,35 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC (exp '#' typ) : % % % %
 
       1. (Let ?(typedExp) be (typedExp')?{typedExp' <- typedExp'?})
 
-      2. Group opt: AC IC_prem |- IC (((OPT ?(typedExp)) as exp) '#' typ) : % % % %
+      2. Group opt: AC IC |- (((OPT ?(typedExp)) as exp) '#' typ) : % % % %
 
-        1. (Partialbind_exp: AC IC_prem |- IC typedExp : AC_sub IC_sub typedExp_part (premAL)*{premAL <- premAL*})
+        1. (Partialbind_exp: AC IC |- typedExp : AC_sub IC_sub typedExp_part (premAL)*{premAL <- premAL*})
 
         2. (Let typedExp_opt be (((OPT ?(typedExp_part)) as exp) '#' typ))
 
-        3. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ))
+        3. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub, typ))
 
         4. (Let typedExp_d be $exp_of_vari(vari_d))
 
         5. (Let typedExp_check be (((MATCH typedExp_d ((SOME) as pat)) as exp) '#' ((BOOL) as typ)))
 
-        6. (Let premAL_check be $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check))
+        6. (Let premAL_check be $sidecond_partial(IC_sub, vari_d, typedExp_check))
 
-        7. (Let premAL_let be $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_opt, typedExp_d))
+        7. (Let premAL_let be $let_partial(IC_sub, vari_d, typedExp_opt, typedExp_d))
 
         8. (Let IC_fresh be $add_iterated(IC_sub, [vari_d]))
 
-        9. Result in: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: (premAL)*{premAL <- premAL*}
+        9. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: (premAL)*{premAL <- premAL*}
 
   7. Case (% has type listExp, let (LIST (typedExp)*{typedExp <- typedExp*}) = %)
 
-    1. Group list: AC IC_prem |- IC (((LIST (typedExp)*{typedExp <- typedExp*}) as exp) '#' typ) : % % % %
+    1. Group list: AC IC |- (((LIST (typedExp)*{typedExp <- typedExp*}) as exp) '#' typ) : % % % %
 
-      1. (Partialbind_exps: AC IC_prem |- IC (typedExp)*{typedExp <- typedExp*} : AC_sub IC_sub (typedExp_part)*{typedExp_part <- typedExp_part*} (premAL)*{premAL <- premAL*})
+      1. (Partialbind_exps: AC IC |- (typedExp)*{typedExp <- typedExp*} : AC_sub IC_sub (typedExp_part)*{typedExp_part <- typedExp_part*} (premAL)*{premAL <- premAL*})
 
       2. (Let typedExp_list be (((LIST (typedExp_part)*{typedExp_part <- typedExp_part*}) as exp) '#' typ))
 
-      3. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub ++ IC_prem, typ))
+      3. (Let (AC_fresh, vari_d) be $fresh_vari(AC_sub, IC_sub, typ))
 
       4. (Let typedExp_d be $exp_of_vari(vari_d))
 
@@ -2052,43 +2052,43 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC (exp '#' typ) : % % % %
 
       6. (Let typedExp_check be (((MATCH typedExp_d ((FIXED n) as pat)) as exp) '#' ((BOOL) as typ)))
 
-      7. (Let premAL_check be $sidecond_partial(IC_sub ++ IC_prem, vari_d, typedExp_check))
+      7. (Let premAL_check be $sidecond_partial(IC_sub, vari_d, typedExp_check))
 
-      8. (Let premAL_let be $let_partial(IC_sub ++ IC_prem, vari_d, typedExp_list, typedExp_d))
+      8. (Let premAL_let be $let_partial(IC_sub, vari_d, typedExp_list, typedExp_d))
 
       9. (Let IC_fresh be $add_iterated(IC_sub, [vari_d]))
 
-      10. Result in: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: (premAL)*{premAL <- premAL*}
+      10. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: (premAL)*{premAL <- premAL*}
 
   8. Case (% has type consExp, let (CONS typedExp_h typedExp_t) = %)
 
-    1. Group cons: AC IC_prem |- IC (((CONS typedExp_h typedExp_t) as exp) '#' typ) : % % % %
+    1. Group cons: AC IC |- (((CONS typedExp_h typedExp_t) as exp) '#' typ) : % % % %
 
-      1. (Partialbind_exp: AC IC_prem |- IC typedExp_h : AC_h IC_h typedExp_h_part (premAL_h)*{premAL_h <- premAL_h*})
+      1. (Partialbind_exp: AC IC |- typedExp_h : AC_h IC_h typedExp_h_part (premAL_h)*{premAL_h <- premAL_h*})
 
-      2. (Partialbind_exp: AC_h IC_prem |- IC_h typedExp_t : AC_t IC_t typedExp_t_part (premAL_t)*{premAL_t <- premAL_t*})
+      2. (Partialbind_exp: AC_h IC_h |- typedExp_t : AC_t IC_t typedExp_t_part (premAL_t)*{premAL_t <- premAL_t*})
 
       3. (Let typedExp_cons be (((CONS typedExp_h_part typedExp_t_part) as exp) '#' typ))
 
-      4. (Let (AC_fresh, vari_d) be $fresh_vari(AC_t, IC_t ++ IC_prem, typ))
+      4. (Let (AC_fresh, vari_d) be $fresh_vari(AC_t, IC_t, typ))
 
       5. (Let typedExp_d be $exp_of_vari(vari_d))
 
       6. (Let typedExp_check be (((MATCH typedExp_d ((CONS) as pat)) as exp) '#' ((BOOL) as typ)))
 
-      7. (Let premAL_check be $sidecond_partial(IC_t ++ IC_prem, vari_d, typedExp_check))
+      7. (Let premAL_check be $sidecond_partial(IC_t, vari_d, typedExp_check))
 
-      8. (Let premAL_let be $let_partial(IC_t ++ IC_prem, vari_d, typedExp_cons, typedExp_d))
+      8. (Let premAL_let be $let_partial(IC_t, vari_d, typedExp_cons, typedExp_d))
 
       9. (Let IC_fresh be $add_iterated(IC_t, [vari_d]))
 
-      10. Result in: % % |- % % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: (premAL_h)*{premAL_h <- premAL_h*} ++ (premAL_t)*{premAL_t <- premAL_t*}
+      10. Result in: % % |- % : AC_fresh IC_fresh typedExp_d premAL_check :: premAL_let :: (premAL_h)*{premAL_h <- premAL_h*} ++ (premAL_t)*{premAL_t <- premAL_t*}
 
   9. Case (% has type iterExp, let (ITER typedExp (iter (vari)*{vari <- vari*})) = %)
 
-    1. Group iter: AC IC_prem |- IC (((ITER typedExp (iter (vari)*{vari <- vari*})) as exp) '#' typ) : % % % %
+    1. Group iter: AC IC |- (((ITER typedExp (iter (vari)*{vari <- vari*})) as exp) '#' typ) : % % % %
 
-      1. (Partialbind_exp: AC IC_prem |- (iter (vari)*{vari <- vari*}) :: IC typedExp : AC_sub (premIterIL)*{premIterIL <- premIterIL*} typedExp_part (premAL)*{premAL <- premAL*})
+      1. (Partialbind_exp: AC (iter (vari)*{vari <- vari*}) :: IC |- typedExp : AC_sub (premIterIL)*{premIterIL <- premIterIL*} typedExp_part (premAL)*{premAL <- premAL*})
 
       2. Check (((premIterIL)*{premIterIL <- premIterIL*} matches pattern _ :: _))
 
@@ -2102,29 +2102,29 @@ relation Partialbind_exp_decomposed: AC IC_prem |- IC (exp '#' typ) : % % % %
 
           3. (Let (vari_part)*{vari_part <- vari_part*} be $select_varis((vari_iter)*{vari_iter <- vari_iter*}, (id')*{id' <- id'*}))
 
-          4. Result in: % % |- % % : AC_sub IC_sub (((ITER typedExp_part (iter (vari_part)*{vari_part <- vari_part*})) as exp) '#' typ) (premAL)*{premAL <- premAL*}
+          4. Result in: % % |- % : AC_sub IC_sub (((ITER typedExp_part (iter (vari_part)*{vari_part <- vari_part*})) as exp) '#' typ) (premAL)*{premAL <- premAL*}
 
 1. Else Dangling
 
-relation Partialbind_exps: AC IC_prem |- IC (typedExp)*{typedExp <- typedExp*} : % % % %
+relation Partialbind_exps: AC IC |- (typedExp)*{typedExp <- typedExp*} : % % % %
 
-1. Group : AC IC_prem |- IC (typedExp)*{typedExp <- typedExp*} : % % % %
+1. Group : AC IC |- (typedExp)*{typedExp <- typedExp*} : % % % %
 
   1. Case analysis on (typedExp)*{typedExp <- typedExp*} (total)
 
     1. Case (% matches pattern [])
 
-      1. Result in: % % |- % % : AC IC [] []
+      1. Result in: % % |- % : AC IC [] []
 
     2. Case (% matches pattern _ :: _)
 
       1. (Let typedExp_h :: (typedExp_t)*{typedExp_t <- typedExp_t*} be (typedExp)*{typedExp <- typedExp*})
 
-      2. (Partialbind_exp: AC IC_prem |- IC typedExp_h : AC_h IC_h typedExp_h_part (premAL_h)*{premAL_h <- premAL_h*})
+      2. (Partialbind_exp: AC IC |- typedExp_h : AC_h IC_h typedExp_h_part (premAL_h)*{premAL_h <- premAL_h*})
 
-      3. (Partialbind_exps: AC_h IC_prem |- IC_h (typedExp_t)*{typedExp_t <- typedExp_t*} : AC_t IC_t (typedExp_t_part)*{typedExp_t_part <- typedExp_t_part*} (premAL_t)*{premAL_t <- premAL_t*})
+      3. (Partialbind_exps: AC_h IC_h |- (typedExp_t)*{typedExp_t <- typedExp_t*} : AC_t IC_t (typedExp_t_part)*{typedExp_t_part <- typedExp_t_part*} (premAL_t)*{premAL_t <- premAL_t*})
 
-      4. Result in: % % |- % % : AC_t IC_t typedExp_h_part :: (typedExp_t_part)*{typedExp_t_part <- typedExp_t_part*} (premAL_h)*{premAL_h <- premAL_h*} ++ (premAL_t)*{premAL_t <- premAL_t*}
+      4. Result in: % % |- % : AC_t IC_t typedExp_h_part :: (typedExp_t_part)*{typedExp_t_part <- typedExp_t_part*} (premAL_h)*{premAL_h <- premAL_h*} ++ (premAL_t)*{premAL_t <- premAL_t*}
 
 relation Partialbind_arg: AC |- arg : % % %
 
@@ -2134,7 +2134,7 @@ relation Partialbind_arg: AC |- arg : % % %
 
     1. Group exp: AC |- ((EXP typedExp) as arg) : % % %
 
-      1. (Partialbind_exp: AC [] |- [] typedExp : AC_part _IC typedExp_part (premAL)*{premAL <- premAL*})
+      1. (Partialbind_exp: AC [] |- typedExp : AC_part _IC typedExp_part (premAL)*{premAL <- premAL*})
 
       2. Result in: % |- % : AC_part ((EXP typedExp_part) as arg) (premAL)*{premAL <- premAL*}
 
@@ -2174,7 +2174,7 @@ relation Bind_exps: AC IC |- (typedExp)*{typedExp <- typedExp*} : % % %
 
   1. (Multibind_exps: AC IC |- (typedExp)*{typedExp <- typedExp*} : AC_multi (typedExp_multi)*{typedExp_multi <- typedExp_multi*} (premAL_eq)*{premAL_eq <- premAL_eq*})
 
-  2. (Partialbind_exps: AC_multi IC |- [] (typedExp_multi)*{typedExp_multi <- typedExp_multi*} : AC_part _IC (typedExp_part)*{typedExp_part <- typedExp_part*} (premAL_part)*{premAL_part <- premAL_part*})
+  2. (Partialbind_exps: AC_multi IC |- (typedExp_multi)*{typedExp_multi <- typedExp_multi*} : AC_part _IC (typedExp_part)*{typedExp_part <- typedExp_part*} (premAL_part)*{premAL_part <- premAL_part*})
 
   3. (Collectbind_exps: AC_multi |- (typedExp_multi)*{typedExp_multi <- typedExp_multi*} : (vari_bind)*{vari_bind <- vari_bind*})
 
