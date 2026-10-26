@@ -25,19 +25,19 @@ metacirc: metacirc-cli
 
 # P4 corpus through the AL/P4 towers
 test-metacirc-run:
-	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) --input p4
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run --input p4
 
 # P4 corpus through the IL/P4 towers, converted by Algo_IL
 test-metacirc-run-meta:
-	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) --input p4 --algo meta
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run --input p4 --algo meta
 
 # Spec-language micro test sources through the AL tower
 test-metacirc-micro:
-	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) --input al
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run --input al
 
 # Spec-language micro test sources through the IL tower, converted by Algo_IL
 test-metacirc-micro-meta:
-	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) --input al --algo meta
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run --input al --algo meta
 
 # Registered simulation suites through the AL/P4 tower, against native expectations
 test-metacirc-sim:

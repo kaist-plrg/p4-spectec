@@ -181,7 +181,8 @@ each suite registers a tower per conversion, and the `meta` tower is entered
 through `Eval_IL`, so the input is converted by `Algo_IL` instead of the
 native `algo` pass. They share the expectations of the native runs;
 sources whose outcome differs are listed in the `meta` exclusions.
-The driver selects suites with `--input al` or `--input p4`,
+The driver's `run` and `sim` subcommands take `--algo`;
+`run` selects suites with `--input al` or `--input p4`,
 or one registered suite with `--suite <NAME>`, for example `--suite neg-run`.
 
 ## Specification snapshots

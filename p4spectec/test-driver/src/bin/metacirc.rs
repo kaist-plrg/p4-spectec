@@ -4,7 +4,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use p4spectec::metacirc::{TowerConfig, config::Lang};
 use p4spectec_test::{
     Error, ExecutionOptions, Result, algo, elab, metacirc, metaparse, prose, structure,
-    suite::{self, Conversion, Index},
+    suite::{self, Conversion, Index, MetacircConfig},
 };
 use std::{path::PathBuf, process::ExitCode};
 
@@ -17,10 +17,28 @@ enum Input {
     P4,
 }
 
-/// Selects a snapshot or codec check of the meta specification,
-/// or simulation through a tower, instead of corpus execution.
-#[derive(Clone, Copy, Subcommand)]
+/// Selects an execution through towers,
+/// or a snapshot or codec check of the meta specification.
+#[derive(Clone, Subcommand)]
 enum Command {
+    /// Compare registered P4 corpus and script outcomes through towers
+    Run {
+        /// Run only the registered suite with this name.
+        #[arg(long, value_name = "NAME")]
+        suite: Option<String>,
+        /// Run only the suites whose tower takes this input.
+        #[arg(long, value_enum)]
+        input: Option<Input>,
+        /// Convert IL to AL natively or by the meta specification's `Algo_IL`.
+        #[arg(long = "algo", value_enum, default_value_t)]
+        conversion: Conversion,
+    },
+    /// Compare registered simulation suites through a tower with native expectations
+    Sim {
+        /// Convert IL to AL natively or by the meta specification's `Algo_IL`.
+        #[arg(long = "algo", value_enum, default_value_t)]
+        conversion: Conversion,
+    },
     /// Compare the elaborated meta specification with expected output
     Elab,
     /// Compare the algorithmic meta specification with expected output
@@ -31,40 +49,24 @@ enum Command {
     Prose,
     /// Check that IL and AL encodings are fixed points of decode-then-encode
     Metaparse,
-    /// Compare registered simulation suites through a tower with native expectations
-    Sim {
-        /// Convert IL to AL natively or by the meta specification's `Algo_IL`.
-        #[arg(long = "algo", value_enum, default_value_t)]
-        conversion: Conversion,
-    },
 }
 
 /// Compares P4 corpus and AL script outcomes through metacircular towers.
 #[derive(Parser)]
-#[command(args_conflicts_with_subcommands = true)]
 struct Cli {
     #[command(subcommand)]
-    command: Option<Command>,
+    command: Command,
     /// Suite registration file, relative to the invoking directory.
-    #[arg(long = "registry")]
+    #[arg(long = "registry", global = true)]
     path_registry: Option<PathBuf>,
-    /// Run only the registered suite with this name.
-    #[arg(long, value_name = "NAME")]
-    suite: Option<String>,
-    /// Run only the suites whose tower takes this input.
-    #[arg(long, value_enum)]
-    input: Option<Input>,
-    /// Convert IL to AL natively or by the meta specification's `Algo_IL`.
-    #[arg(long = "algo", value_enum, default_value_t)]
-    conversion: Conversion,
     #[command(flatten)]
     options: ExecutionOptions,
 }
 
-/// Resolves caller paths and runs the selected suites from the repository root.
+/// Resolves caller paths and runs the selected command from the repository root.
 fn execute(cli: Cli) -> Result<()> {
     // Refuse baseline promotion before discovering or executing any inputs
-    if !matches!(cli.command, Some(Command::Elab | Command::Algo | Command::Prose))
+    if !matches!(cli.command, Command::Elab | Command::Algo | Command::Prose)
         && std::env::var_os("UPDATE_EXPECT").is_some()
     {
         return Err(Error::Invalid(
@@ -80,42 +82,46 @@ fn execute(cli: Cli) -> Result<()> {
     // Resolve caller paths before selecting the corpus repository as working directory
     std::env::set_current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))?;
     let index = Index::load(&path_registry)?;
-    // Simulation takes its conversion on its own subcommand
-    let conversion = match cli.command {
-        Some(Command::Sim { conversion }) => conversion,
-        _ => cli.conversion,
+    // Executions select a conversion; checks of the meta specification use none
+    let conversion = match &cli.command {
+        Command::Run { conversion, .. } | Command::Sim { conversion } => *conversion,
+        _ => Conversion::default(),
     };
-    let mut config = suite::load_metacirc(&index.suites.metacirc, conversion)?;
-    // Snapshot and codec checks compile the meta specification without executing it
-    let snapshots = &config.snapshots;
+    let config = suite::load_metacirc(&index.suites.metacirc, conversion)?;
     match cli.command {
-        Some(Command::Elab) => return elab::run(&suite::load_snapshots(&snapshots.elab)?),
-        Some(Command::Algo) => return algo::run(&suite::load_snapshots(&snapshots.algo)?),
-        Some(Command::Structure) => {
-            return structure::run(&suite::load_structure(&snapshots.structure)?);
-        }
-        Some(Command::Prose) => return prose::run(&suite::load_snapshots(&snapshots.prose)?),
-        Some(Command::Metaparse) => {
-            return metaparse::run(&suite::load_metaparse(&config.metaparse)?);
-        }
-        Some(Command::Sim { .. }) => {
+        Command::Run { suite, input, .. } => run(config, suite, input, cli.options),
+        Command::Sim { .. } => {
             let metacirc_sim = config.sim.as_ref().ok_or_else(|| {
                 Error::Invalid("no simulation tower registered for this conversion".into())
             })?;
             let config_sim = suite::load_simulation(&index.suites.sim)?;
-            return metacirc::run_sim(&config_sim, metacirc_sim, cli.options);
+            metacirc::run_sim(&config_sim, metacirc_sim, cli.options)
         }
-        None => {}
+        // Snapshot and codec checks compile the meta specification without executing it
+        Command::Elab => elab::run(&suite::load_snapshots(&config.snapshots.elab)?),
+        Command::Algo => algo::run(&suite::load_snapshots(&config.snapshots.algo)?),
+        Command::Structure => structure::run(&suite::load_structure(&config.snapshots.structure)?),
+        Command::Prose => prose::run(&suite::load_snapshots(&config.snapshots.prose)?),
+        Command::Metaparse => metaparse::run(&suite::load_metaparse(&config.metaparse)?),
     }
+}
+
+/// Runs the registered corpus suites, restricted by name and input language.
+fn run(
+    mut config: MetacircConfig,
+    name: Option<String>,
+    input: Option<Input>,
+    options: ExecutionOptions,
+) -> Result<()> {
     // Restrict the registered suites to the selected name
-    if let Some(name) = &cli.suite {
+    if let Some(name) = &name {
         config.suites.retain(|suite| &suite.name == name);
         if config.suites.is_empty() {
             return Err(Error::Invalid(format!("unknown metacirc suite {name}")));
         }
     }
     // Restrict the registered suites to the selected input language
-    if let Some(input) = cli.input {
+    if let Some(input) = input {
         let mut suites = Vec::new();
         for suite in config.suites {
             let config_tower = TowerConfig::from_file(&suite.tower)
@@ -133,7 +139,7 @@ fn execute(cli: Cli) -> Result<()> {
         }
         config.suites = suites;
     }
-    metacirc::run(&config, cli.options)
+    metacirc::run(&config, options)
 }
 
 fn main() -> ExitCode {
