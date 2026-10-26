@@ -19,10 +19,10 @@ use super::{
 use crate::{
     interface::p4::P4Interface,
     lang::{
-        common::source::{Phrase, Span},
+        common::source::Phrase,
         data::{arena::Arena, encoding::Encoding, value::flat::Value},
     },
-    runner::{self, Backend, ExternError, Host, InterfaceError, Runner, RunnerContext},
+    runner::{self, Backend, Runner, RunnerContext},
     sim_plugin::{
         SimError, Simulator, SimulatorRunner,
         arch::Architecture,
@@ -67,20 +67,6 @@ impl<Arch: Architecture> SimTower<Arch> {
         }
         let tower = Tower::build(arena, config, options, arch)?;
         Ok(Self { tower, options, depth_next: None, ctx_target: None })
-    }
-
-    /// The P4 host stored in the base relay.
-    fn host(&mut self) -> &mut Host<P4Interface, Arch> {
-        let BaseLayer::MetaSpec(runner) = &mut self.tower.base else {
-            unreachable!("a simulated tower has a meta base");
-        };
-        let MetaExtern::Relay(relay) = &mut runner.external else {
-            unreachable!("a simulated tower relays to its top level");
-        };
-        let HostLayer::P4Spec(host) = &mut *relay.layer_next else {
-            unreachable!("a simulated tower has a P4 top level");
-        };
-        host
     }
 
     /// Runs `body` in the P4 context of depth 0, over the stored P4 host.
@@ -129,14 +115,7 @@ impl<Arch: Architecture> SimTower<Arch> {
         self.depth_next = None;
         self.ctx_target = None;
         arena.reset_values();
-        let program = self
-            .host()
-            .parse_program(arena, includes, &[path.to_path_buf()])
-            .map_err(InterfaceError::into_report)?;
-        let state = self
-            .with_context(arena, |ctx| Arch::init_pipe(ctx, program))
-            .map_err(ExternError::into_report)?;
-        Ok(Run::new(state))
+        self.with_context(arena, |ctx| stf_runner::init_pipe_in(ctx, includes, path))
     }
 
     /// Executes one statement; returns the output packet it matched, if any.
@@ -146,25 +125,7 @@ impl<Arch: Architecture> SimTower<Arch> {
         run: &mut Run,
         stmt: &Phrase<Statement>,
     ) -> std::result::Result<Option<Tx>, SimError> {
-        // Fresh output list; the architecture may rewrite the statement first
-        run.state.txs.clear();
-        let stmt_kind = Arch::transform_stf_stmt(stmt.node.clone());
-        let result = self.with_context(arena, |ctx| {
-            stf_runner::run_stf_stmt_kind(ctx, &stmt.span, run, stmt_kind)
-        });
-        // Attach the statement's span to failures that have none
-        let tx = result.map_err(|report| {
-            if stmt.span == Span::default() {
-                report
-            } else {
-                Box::new((*report).with_span(&stmt.span))
-            }
-        })?;
-        // Record matched outputs for the caller
-        if let Some(tx) = &tx {
-            run.matches.push(tx.clone());
-        }
-        Ok(tx)
+        self.with_context(arena, |ctx| stf_runner::run_stf_stmt_in(ctx, run, stmt))
     }
 }
 

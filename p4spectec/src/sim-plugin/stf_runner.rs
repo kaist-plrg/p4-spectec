@@ -23,7 +23,8 @@ use crate::lang::{
 };
 
 use crate::runner::{
-    ExternError, Interface, InterfaceError, Interpreter, Runner, RunnerContext, with_context,
+    ExternError, Interface, InterfaceError, Interpreter, Runner, RunnerContext, RunnerContextParts,
+    with_context,
 };
 
 use crate::stf::{
@@ -158,11 +159,28 @@ where
     // Each program starts from an empty arena and cleared extern state
     runner.reset();
     arena.reset_values();
-    let program = runner
+    with_context!(runner, arena, |ctx| init_pipe_in(&mut ctx, includes, path))
+}
+
+/// Parses the program and initializes the pipeline under `ctx`.
+///
+/// The caller first resets its own state and the arena's values.
+pub(crate) fn init_pipe_in<Interp, Iface, Arch>(
+    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    includes: &[PathBuf],
+    path: &Path,
+) -> Result<Run, SimError>
+where
+    Iface: Interface,
+    Arch: Architecture,
+    Interp: Interpreter<Iface, Arch>,
+{
+    // Parse through the context's interface into its arena
+    let RunnerContextParts { arena, interface, .. } = ctx.parts_mut();
+    let program = interface
         .parse_program(arena, includes, &[path.to_path_buf()])
         .map_err(InterfaceError::into_report)?;
-    let state = with_context!(runner, arena, |ctx| Arch::init_pipe(&mut ctx, program))
-        .map_err(ExternError::into_report)?;
+    let state = Arch::init_pipe(ctx, program).map_err(ExternError::into_report)?;
     Ok(Run::new(state))
 }
 
@@ -179,13 +197,28 @@ where
     Iface: Interface,
     Arch: Architecture,
 {
+    with_context!(runner, arena, |ctx| run_stf_stmt_in(&mut ctx, run, stmt))
+}
+
+/// Executes one statement under `ctx`; returns the output packet it matched, if any.
+///
+/// The context may come from any interpreter,
+/// such as a native runner or a tower that runs the P4 specification.
+pub(crate) fn run_stf_stmt_in<Interp, Iface, Arch>(
+    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    run: &mut Run,
+    stmt: &Phrase<Statement>,
+) -> Result<Option<Tx>, SimError>
+where
+    Iface: Interface,
+    Arch: Architecture,
+    Interp: Interpreter<Iface, Arch>,
+{
     // Fresh output list; the architecture may rewrite the statement first
     run.state.txs.clear();
     let stmt_kind = Arch::transform_stf_stmt(stmt.node.clone());
-    let result =
-        with_context!(runner, arena, |ctx| run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind));
     // Attach the statement's span to failures that have none
-    let tx = result.map_err(|report| {
+    let tx = run_stf_stmt_kind(ctx, &stmt.span, run, stmt_kind).map_err(|report| {
         if stmt.span == Span::default() {
             report
         } else {
@@ -200,7 +233,7 @@ where
 }
 
 /// Executes a transformed statement through a stage-specific context.
-pub(crate) fn run_stf_stmt_kind<Interp, Iface, Arch>(
+fn run_stf_stmt_kind<Interp, Iface, Arch>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
     span: &Span,
     run: &mut Run,
