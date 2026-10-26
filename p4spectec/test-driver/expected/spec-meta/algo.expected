@@ -2157,13 +2157,13 @@ relation Algo_tblRow: algoCtx |- tblRowIL : tblRowAL
     -- let arg*{arg <- arg*} '=' typedExp = tblRowIL
     -- let id_used*{id_used <- id_used*} = $ids_of_varis($free_varis_tblRowIL(tblRowIL))
     -- let AC_row = $add_used(AC, id_used*{id_used <- id_used*})
-    -- Collectbind_args: AC_row |- arg*{arg <- arg*} : vari_bind*{vari_bind <- vari_bind*}
-    -- let `{ id_bind ':' _id*{_id <- _id*}*{_id* <- _id**, id_bind <- id_bind*} `} = $init_renamer([], vari_bind*{vari_bind <- vari_bind*}).OCC
-    -- if (|id_bind*{id_bind <- id_bind*}| = |vari_bind*{vari_bind <- vari_bind*}|)
+    -- Multibind_args: AC_row |- arg*{arg <- arg*} : _AC _arg*{_arg <- _arg*} premAL'*{premAL' <- premAL'*}
+    -- if premAL'*{premAL' <- premAL'*} matches []
     -- Bind_args: AC_row |- arg*{arg <- arg*} : AC_body arg_part*{arg_part <- arg_part*} premAL*{premAL <- premAL*}
     -- let vari_body*{vari_body <- vari_body*} = $free_varis_exp(typedExp)
     -- if $is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})
-    -- output: % |- % : arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL*{premAL <- premAL*}
+    -- let tblRowAL = arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL*{premAL <- premAL*}
+    -- output: % |- % : tblRowAL
 
 relation TblRows_cover: algoCtx typ* |- tblRowIL*
 
@@ -2338,8 +2338,6 @@ relation Algo_def: algoCtx |- defnIL : defnAL
     -- let param'*{param' <- param'*} = param*{param <- param*}
     -- (if param' <: expParam)*{param' <- param'*}
     -- (let EXP typ_param = param' as expParam)*{param' <- param'*, typ_param -> typ_param*}
-    -- (let arg*{arg <- arg*} '=' _typedExp = tblRowIL)*{tblRowIL <- tblRowIL*, _typedExp -> _typedExp*, arg* -> arg**}
-    -- (if (|arg*{arg <- arg*}| = |param*{param <- param*}|))*{arg* <- arg**}
     -- (Algo_tblRow: AC |- tblRowIL : tblRowAL)*{tblRowIL <- tblRowIL*, tblRowAL -> tblRowAL*}
     -- if TblRows_cover: AC typ_param*{typ_param <- typ_param*} |- tblRowIL*{tblRowIL <- tblRowIL*} holds
     -- let tableFuncDefnAL = TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL*{tblRowAL <- tblRowAL*}

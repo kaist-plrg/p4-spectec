@@ -76,20 +76,19 @@ def $is_irrefutable(_, exp '#' _) = false
 ;; their decomposition premises precede the row's result
 
 rule Algo_tblRow:
-  AC |- tblRowIL : arg_part* '=' typedExp '-' premAL*
+  AC |- tblRowIL : tblRowAL 
   -- if arg* '=' typedExp = tblRowIL
   ---- ;; fresh identifiers avoid those of the row
   -- if id_used* = $ids_of_varis($free_varis_tblRowIL(tblRowIL))
   -- if AC_row = $add_used(AC, id_used*)
   ---- ;; no binder repeats across the arguments
-  -- Collectbind_args: AC_row |- arg* : vari_bind*
-  -- if `{ (id_bind ':' _)* `} = $init_renamer(eps, vari_bind*).OCC
-  -- if |id_bind*| = |vari_bind*|
+  -- Multibind_args: AC_row |- arg* : _ _ eps
   ---- ;; the arguments bind, decomposing their cases
   -- Bind_args: AC_row |- arg* : AC_body arg_part* premAL*
   ---- ;; the result reads only bound variables
   -- if vari_body* = $free_varis_exp(typedExp)
   -- if $is_bound_varis(AC_body, eps, vari_body*)
+  -- if tblRowAL = arg_part* '=' typedExp '-' premAL*
 
 ;;
 ;; Table coverage

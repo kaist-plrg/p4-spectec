@@ -1403,16 +1403,15 @@ relation Algo_tblRow: algoCtx |- tblRowIL : tblRowAL
 
   rulegroup
 
-    rule : AC |- tblRowIL : arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL*{premAL <- premAL*}
+    rule : AC |- tblRowIL : tblRowAL
     -- if (arg*{arg <- arg*} '=' typedExp = tblRowIL)
     -- if (id_used*{id_used <- id_used*} = $ids_of_varis($free_varis_tblRowIL(tblRowIL)))
     -- if (AC_row = $add_used(AC, id_used*{id_used <- id_used*}))
-    -- Collectbind_args: AC_row |- arg*{arg <- arg*} : vari_bind*{vari_bind <- vari_bind*}
-    -- if (`{ id_bind ':' _id*{_id <- _id*}*{_id* <- _id**, id_bind <- id_bind*} `} = $init_renamer([], vari_bind*{vari_bind <- vari_bind*}).OCC)
-    -- if (|id_bind*{id_bind <- id_bind*}| = |vari_bind*{vari_bind <- vari_bind*}|)
+    -- Multibind_args: AC_row |- arg*{arg <- arg*} : _AC _arg*{_arg <- _arg*} []
     -- Bind_args: AC_row |- arg*{arg <- arg*} : AC_body arg_part*{arg_part <- arg_part*} premAL*{premAL <- premAL*}
     -- if (vari_body*{vari_body <- vari_body*} = $free_varis_exp(typedExp))
     -- if $is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})
+    -- if (tblRowAL = arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL*{premAL <- premAL*})
 
 relation TblRows_cover: algoCtx typ* |- tblRowIL*
 
@@ -1502,8 +1501,6 @@ relation Algo_def: algoCtx |- defnIL : defnAL
     rule table: AC |- tableFuncDefnIL as defnIL : tableFuncDefnAL as defnAL
     -- if (TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowIL*{tblRowIL <- tblRowIL*} = tableFuncDefnIL)
     -- if (EXP typ_param as param*{typ_param <- typ_param*} = param*{param <- param*})
-    -- (if (arg*{arg <- arg*} '=' _typedExp = tblRowIL))*{_typedExp <- _typedExp*, arg* <- arg**, tblRowIL <- tblRowIL*}
-    -- (if (|arg*{arg <- arg*}| = |param*{param <- param*}|))*{arg* <- arg**}
     -- (Algo_tblRow: AC |- tblRowIL : tblRowAL)*{tblRowAL <- tblRowAL*, tblRowIL <- tblRowIL*}
     -- if TblRows_cover: AC typ_param*{typ_param <- typ_param*} |- tblRowIL*{tblRowIL <- tblRowIL*} holds
     -- if (tableFuncDefnAL = TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL*{tblRowAL <- tblRowAL*})

@@ -2475,13 +2475,9 @@ relation Algo_tblRow: AC |- tblRowIL : %
 
   4. (Let AC_row be $add_used(AC, (id_used)*{id_used <- id_used*}))
 
-  5. (Collectbind_args: AC_row |- (arg)*{arg <- arg*} : (vari_bind)*{vari_bind <- vari_bind*})
+  5. (Multibind_args: AC_row |- (arg)*{arg <- arg*} : _AC (_arg)*{_arg <- _arg*} (premAL')*{premAL' <- premAL'*})
 
-  6. (Let renamer be $init_renamer([], (vari_bind)*{vari_bind <- vari_bind*}))
-
-  7. (Let (`{ ((id_bind ':' (_id)*{_id <- _id*}))*{_id* <- _id**, id_bind <- id_bind*} `}) be renamer.OCC)
-
-  8. Check ((|(id_bind)*{id_bind <- id_bind*}| = |(vari_bind)*{vari_bind <- vari_bind*}|))
+  6. Check (((premAL')*{premAL' <- premAL'*} matches pattern []))
 
     1. (Bind_args: AC_row |- (arg)*{arg <- arg*} : AC_body (arg_part)*{arg_part <- arg_part*} (premAL)*{premAL <- premAL*})
 
@@ -2489,7 +2485,9 @@ relation Algo_tblRow: AC |- tblRowIL : %
 
     3. Check ($is_bound_varis(AC_body, [], (vari_body)*{vari_body <- vari_body*}))
 
-      1. Result in: % |- % : ((arg_part)*{arg_part <- arg_part*} '=' typedExp '-' (premAL)*{premAL <- premAL*})
+      1. (Let tblRowAL be ((arg_part)*{arg_part <- arg_part*} '=' typedExp '-' (premAL)*{premAL <- premAL*}))
+
+      2. Result in: % |- % : tblRowAL
 
 relation TblRows_cover: AC (typ)*{typ <- typ*} |- (tblRowIL)*{tblRowIL <- tblRowIL*}
 
@@ -2675,19 +2673,15 @@ Arm 3:
 
           1. (Let (EXP typ_param) be (param as expParam))*{param <- param*, typ_param -> typ_param*}
 
-          2. (Let ((arg)*{arg <- arg*} '=' _typedExp) be tblRowIL)*{tblRowIL <- tblRowIL*, _typedExp -> _typedExp*, arg* -> arg**}
+          2. (Algo_tblRow: AC |- tblRowIL : tblRowAL)*{tblRowIL <- tblRowIL*, tblRowAL -> tblRowAL*}
 
-          3. Check ((|(arg)*{arg <- arg*}| = |(param)*{param <- param*}|))*{arg* <- arg**}
+          3. If (TblRows_cover: AC (typ_param)*{typ_param <- typ_param*} |- (tblRowIL)*{tblRowIL <- tblRowIL*}) holds, then
 
-            1. (Algo_tblRow: AC |- tblRowIL : tblRowAL)*{tblRowIL <- tblRowIL*, tblRowAL -> tblRowAL*}
+            1. (Let tableFuncDefnAL be (TABLEFUNC id (param)*{param <- param*} ':' typ '=' (tblRowAL)*{tblRowAL <- tblRowAL*}))
 
-            2. If (TblRows_cover: AC (typ_param)*{typ_param <- typ_param*} |- (tblRowIL)*{tblRowIL <- tblRowIL*}) holds, then
+            2. Result in: % |- % : (tableFuncDefnAL as defnAL)
 
-              1. (Let tableFuncDefnAL be (TABLEFUNC id (param)*{param <- param*} ':' typ '=' (tblRowAL)*{tblRowAL <- tblRowAL*}))
-
-              2. Result in: % |- % : (tableFuncDefnAL as defnAL)
-
-            2. Else Dangling
+          3. Else Dangling
 
       4. Case (% has type definedFuncDefnIL, let definedFuncDefnIL = %)
 

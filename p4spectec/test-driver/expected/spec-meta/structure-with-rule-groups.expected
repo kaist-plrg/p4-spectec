@@ -2551,23 +2551,23 @@ relation Algo_tblRow: AC |- tblRowIL : %
 
       1. (Let AC_row be $add_used(AC, id_used*{id_used <- id_used*}))
 
-        1. (Collectbind_args: AC_row |- arg*{arg <- arg*} : vari_bind*{vari_bind <- vari_bind*})
+        1. (Multibind_args: AC_row |- arg*{arg <- arg*} : _AC _arg*{_arg <- _arg*} premAL'*{premAL' <- premAL'*})
 
-          1. (Let `{ id_bind ':' _id*{_id <- _id*}*{_id* <- _id**, id_bind <- id_bind*} `} be $init_renamer([], vari_bind*{vari_bind <- vari_bind*}).OCC)
+          1. If (premAL'*{premAL' <- premAL'*} matches []), then
 
-            1. If ((|id_bind*{id_bind <- id_bind*}| = |vari_bind*{vari_bind <- vari_bind*}|)), then
+            1. (Bind_args: AC_row |- arg*{arg <- arg*} : AC_body arg_part*{arg_part <- arg_part*} premAL*{premAL <- premAL*})
 
-              1. (Bind_args: AC_row |- arg*{arg <- arg*} : AC_body arg_part*{arg_part <- arg_part*} premAL*{premAL <- premAL*})
+              1. (Let vari_body*{vari_body <- vari_body*} be $free_varis_exp(typedExp))
 
-                1. (Let vari_body*{vari_body <- vari_body*} be $free_varis_exp(typedExp))
+                1. If ($is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})), then
 
-                  1. If ($is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})), then
+                  1. (Let tblRowAL be arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL*{premAL <- premAL*})
 
-                    1. Result in: % |- % : arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL*{premAL <- premAL*}
+                    1. Result in: % |- % : tblRowAL
 
-                  1. Else Dangling
+                1. Else Dangling
 
-            1. Else Dangling
+          1. Else Dangling
 
 relation TblRows_cover: AC typ*{typ <- typ*} |- tblRowIL*{tblRowIL <- tblRowIL*}
 
@@ -2777,19 +2777,13 @@ relation Algo_def: AC |- defnIL : %
 
             1. (Let EXP typ_param be param as expParam)*{param <- param*, typ_param -> typ_param*}
 
-              1. (Let arg*{arg <- arg*} '=' _typedExp be tblRowIL)*{tblRowIL <- tblRowIL*, _typedExp -> _typedExp*, arg* -> arg**}
+              1. (Algo_tblRow: AC |- tblRowIL : tblRowAL)*{tblRowIL <- tblRowIL*, tblRowAL -> tblRowAL*}
 
-                1. If ((|arg*{arg <- arg*}| = |param*{param <- param*}|))*{arg* <- arg**}, then
+                1. If (TblRows_cover: AC typ_param*{typ_param <- typ_param*} |- tblRowIL*{tblRowIL <- tblRowIL*}) holds, then
 
-                  1. (Algo_tblRow: AC |- tblRowIL : tblRowAL)*{tblRowIL <- tblRowIL*, tblRowAL -> tblRowAL*}
+                  1. (Let tableFuncDefnAL be TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL*{tblRowAL <- tblRowAL*})
 
-                    1. If (TblRows_cover: AC typ_param*{typ_param <- typ_param*} |- tblRowIL*{tblRowIL <- tblRowIL*}) holds, then
-
-                      1. (Let tableFuncDefnAL be TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowAL*{tblRowAL <- tblRowAL*})
-
-                        1. Result in: % |- % : tableFuncDefnAL as defnAL
-
-                    1. Else Dangling
+                    1. Result in: % |- % : tableFuncDefnAL as defnAL
 
                 1. Else Dangling
 
