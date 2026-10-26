@@ -26,15 +26,18 @@ fmt fmt-check lint rustdoc:
 # End-to-end acceptance and explicit snapshot updates
 TEST_TARGETS := test test-expected test-elab test-algo test-structure test-prose \
   test-adoc test-p4parse test-run-al test-run-sl test-run-pl \
-  test-sim-al test-sim-sl test-sim-pl test-diagnostics \
+  test-sim-al test-sim-sl test-sim-pl test-micro test-diagnostics \
   test-promote test-diagnostics-promote
 
 .PHONY: $(TEST_TARGETS)
 $(TEST_TARGETS):
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
-.PHONY: metacirc test-metacirc
-metacirc test-metacirc:
+METACIRC_TARGETS := metacirc test-metacirc test-metacirc-micro test-metacirc-elab \
+  test-metacirc-algo test-metacirc-structure test-metacirc-prose test-metacirc-promote
+
+.PHONY: $(METACIRC_TARGETS)
+$(METACIRC_TARGETS):
 	$(MAKE) -f METASQ.mk CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
 # K and PLT Redex cross-checking

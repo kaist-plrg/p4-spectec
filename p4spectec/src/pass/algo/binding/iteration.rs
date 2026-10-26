@@ -103,7 +103,7 @@ impl ICtx {
     // == Adders
 
     /// Adds one iteration to every dimension.
-    fn add_iter(venv: VEnv, iter: ast::Iter) -> VEnv {
+    pub fn add_iter(venv: VEnv, iter: ast::Iter) -> VEnv {
         venv.iter()
             .map(|(id, dim)| (id.clone(), dim.clone().add_iter(iter)))
             .collect()

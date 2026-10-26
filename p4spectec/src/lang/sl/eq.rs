@@ -202,47 +202,6 @@ impl SyntaxEq for TableRow {
     }
 }
 
-// == Type definitions
-
-impl SyntaxEq for TypDef {
-    fn syntax_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Extern(extern_typ_l), Self::Extern(extern_typ_r)) => {
-                extern_typ_l.syntax_eq(extern_typ_r)
-            }
-            (Self::Defined(defined_typ_l), Self::Defined(defined_typ_r)) => {
-                defined_typ_l.syntax_eq(defined_typ_r)
-            }
-            _ => false,
-        }
-    }
-}
-
-impl SyntaxEq for ExternTyp {
-    fn syntax_eq(&self, other: &Self) -> bool {
-        self.id.syntax_eq(&other.id) && self.hints.syntax_eq(&other.hints)
-    }
-}
-
-impl SyntaxEq for DefinedTyp {
-    fn syntax_eq(&self, other: &Self) -> bool {
-        self.id.syntax_eq(&other.id)
-            && self.tparams.syntax_eq(&other.tparams)
-            && self.def_typ.syntax_eq(&other.def_typ)
-            && self.hints.syntax_eq(&other.hints)
-    }
-}
-
-// == Meta-variable definitions
-
-impl SyntaxEq for VarDef {
-    fn syntax_eq(&self, other: &Self) -> bool {
-        self.id.syntax_eq(&other.id)
-            && self.typ.syntax_eq(&other.typ)
-            && self.hints.syntax_eq(&other.hints)
-    }
-}
-
 // == Relation definitions
 
 impl SyntaxEq for RelDef {

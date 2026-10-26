@@ -264,40 +264,13 @@ pub type Hint = el::ast::Hint;
 
 // Type definitions
 
-/// A type definition: extern or defined.
-#[derive(Clone, Debug, PartialEq)]
-pub enum TypDef {
-    /// `extern syntax id hint*`
-    Extern(ExternTyp),
-    /// `syntax id <` list(tparam, `,`) `> : typ hint*`
-    Defined(Box<DefinedTyp>),
-}
-
-/// A type defined outside the specification.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExternTyp {
-    pub id: Id,
-    pub hints: Vec<Hint>,
-}
-
-/// A type with parameters and a body.
-#[derive(Clone, Debug, PartialEq)]
-pub struct DefinedTyp {
-    pub id: Id,
-    pub tparams: Vec<TParam>,
-    pub def_typ: DefTyp,
-    pub hints: Vec<Hint>,
-}
+pub type TypDef = il::ast::TypDef;
+pub type ExternTyp = il::ast::ExternTyp;
+pub type DefinedTyp = il::ast::DefinedTyp;
 
 // Meta-variables
 
-/// A meta-variable naming a type.
-#[derive(Clone, Debug, PartialEq)]
-pub struct VarDef {
-    pub id: Id,
-    pub typ: Typ,
-    pub hints: Vec<Hint>,
-}
+pub type VarDef = il::ast::VarDef;
 
 // Relations
 
@@ -310,14 +283,7 @@ pub enum RelDef<P: Stage = Source> {
     Defined(Box<DefinedRel<P>>),
 }
 
-/// A relation provided by the host.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExternRel {
-    pub id: Id,
-    pub not_typ: NotTyp,
-    pub input_hint: InputHint,
-    pub hints: Vec<Hint>,
-}
+pub type ExternRel = il::ast::ExternRel;
 
 /// A relation with its rule groups and optional otherwise group.
 #[derive(Clone, Debug, PartialEq)]
@@ -345,25 +311,8 @@ pub enum MetaFuncDef<P: Stage = Source> {
     Defined(Box<DefinedFunc<P>>),
 }
 
-/// A function provided by the host.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExternFunc {
-    pub id: Id,
-    pub tparams: Vec<TParam>,
-    pub params: Vec<Param>,
-    pub typ: Typ,
-    pub hints: Vec<Hint>,
-}
-
-/// A function provided by the interpreter.
-#[derive(Clone, Debug, PartialEq)]
-pub struct BuiltinFunc {
-    pub id: Id,
-    pub tparams: Vec<TParam>,
-    pub params: Vec<Param>,
-    pub typ: Typ,
-    pub hints: Vec<Hint>,
-}
+pub type ExternFunc = il::ast::ExternFunc;
+pub type BuiltinFunc = il::ast::BuiltinFunc;
 
 /// A function defined by table rows.
 #[derive(Clone, Debug, PartialEq)]

@@ -32,6 +32,7 @@ use p4spectec::{
 use crate::{
     Error, ExecutionOptions, Result,
     corpus::{self, Outcome, Results},
+    diagnostic,
     suite::{self, MetacircConfig, MetacircSuite},
 };
 
@@ -77,7 +78,12 @@ fn run_programs(
     let mut suites = suites
         .iter()
         .map(|suite| {
-            let path_expected = suite::expected_path(&suite.expected);
+            let path_expected = suite::expected_path(
+                suite
+                    .expected
+                    .as_deref()
+                    .expect("loader requires a P4 expectation"),
+            );
             Ok(CollectedSuite {
                 paths: corpus::collect(&suite.root, ".p4")?,
                 path_tower: &suite.tower,
@@ -222,7 +228,7 @@ fn run_programs(
     Ok(())
 }
 
-/// Runs AL suites through their towers and compares pass or fail.
+/// Runs AL suites through their towers and checks each script's outcome.
 fn run_scripts(suites: &[&MetacircSuite], options: ExecutionOptions) -> Result<()> {
     let ExecutionOptions { cache_on, no_det } = options;
     let det = !no_det;
@@ -230,10 +236,10 @@ fn run_scripts(suites: &[&MetacircSuite], options: ExecutionOptions) -> Result<(
     let text_mode = format!("metacirc AL cache={text_cache} det={det}");
     // Specification debug premises print to stdout
     let guard_stdout = crate::output::SilenceStdout::new()?;
-    let mut results_by_suite = Vec::with_capacity(suites.len());
+    let mut executed = 0;
+    let mut mismatches = Vec::new();
     for suite in suites {
-        let path_expected = suite::expected_path(&suite.expected);
-        let mut results = Results::new(expect_file![path_expected]);
+        let outcome_expect = suite.outcome.expect("loader requires an AL outcome");
         let config_tower = TowerConfig::from_file(&suite.tower)
             .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
         for path in corpus::collect(&suite.root, ".watsup")? {
@@ -244,14 +250,26 @@ fn run_scripts(suites: &[&MetacircSuite], options: ExecutionOptions) -> Result<(
             let accepted =
                 metacirc::run(&config_tower, &[], paths_program, Config::new(cache_on, det, false))
                     .is_ok();
-            results.record(&path, if accepted { Outcome::Pass } else { Outcome::Fail })?;
+            let outcome =
+                if accepted { diagnostic::Outcome::Success } else { diagnostic::Outcome::Failure };
+            if outcome != outcome_expect {
+                mismatches.push(format!(
+                    "{} ({}): expected {outcome_expect:?}, got {outcome:?}",
+                    path.display(),
+                    suite.name
+                ));
+            }
+            executed += 1;
         }
-        results_by_suite.push(results);
     }
     guard_stdout.finish()?;
-    for results in results_by_suite {
-        results.check();
+    // Report every mismatched script before failing
+    if !mismatches.is_empty() {
+        return Err(Error::Invalid(format!(
+            "{text_mode}: outcomes differ from their suite:\n{}",
+            mismatches.join("\n")
+        )));
     }
-    eprintln!("{text_mode}: all script results matched expected");
+    eprintln!("{text_mode}: all {executed} script outcomes matched their suite");
     Ok(())
 }

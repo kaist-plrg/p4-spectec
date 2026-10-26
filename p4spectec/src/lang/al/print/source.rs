@@ -301,30 +301,6 @@ impl Print for [TableRow] {
     }
 }
 
-// == Type definitions
-
-impl Print for TypDef {
-    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
-        match self {
-            Self::Extern(extern_typ) => {
-                printer.write_str("extern syntax ")?;
-                extern_typ.id.print(printer)
-            }
-            Self::Defined(defined_typ) => {
-                printer.write_str("syntax ")?;
-                defined_typ.id.print(printer)?;
-                if !defined_typ.tparams.is_empty() {
-                    printer.write_char('<')?;
-                    printer.separated(&defined_typ.tparams, ", ")?;
-                    printer.write_char('>')?;
-                }
-                printer.write_str(" = ")?;
-                defined_typ.def_typ.print(printer)
-            }
-        }
-    }
-}
-
 // == Relation definitions
 
 impl Print for RelDef {

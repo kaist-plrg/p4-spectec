@@ -278,40 +278,13 @@ pub type Hint = el::ast::Hint;
 
 // Type definitions
 
-/// A type definition: extern or defined.
-#[derive(Clone, Debug, PartialEq)]
-pub enum TypDef {
-    /// `extern syntax id hint*`
-    Extern(ExternTyp),
-    /// `syntax id <` list(tparam, `,`) `> : typ hint*`
-    Defined(Box<DefinedTyp>),
-}
-
-/// A type defined outside the specification.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExternTyp {
-    pub id: Id,
-    pub hints: Vec<Hint>,
-}
-
-/// A type with parameters and a body.
-#[derive(Clone, Debug, PartialEq)]
-pub struct DefinedTyp {
-    pub id: Id,
-    pub tparams: Vec<TParam>,
-    pub def_typ: DefTyp,
-    pub hints: Vec<Hint>,
-}
+pub type TypDef = il::ast::TypDef;
+pub type ExternTyp = il::ast::ExternTyp;
+pub type DefinedTyp = il::ast::DefinedTyp;
 
 // Meta-variables
 
-/// A meta-variable naming a type.
-#[derive(Clone, Debug, PartialEq)]
-pub struct VarDef {
-    pub id: Id,
-    pub typ: Typ,
-    pub hints: Vec<Hint>,
-}
+pub type VarDef = il::ast::VarDef;
 
 // Relations
 
