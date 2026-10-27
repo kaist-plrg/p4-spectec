@@ -5,6 +5,7 @@
 //! sending the host calls it makes to the levels lent above it.
 //! Depth 0 borrows the base runner's interpreter; each deeper depth owns one.
 //! `EngineKind` stores the engines; `spectec` executes AL or SL.
+//! `InterfaceKind` answers the builtins of a base executed by `spectec`.
 
 mod spectec;
 
@@ -12,12 +13,14 @@ pub(super) use spectec::{SpecTecEngine, SpecTecEngineState, SpecTecSpec};
 
 use super::tower::UpperMut;
 use crate::{
+    interface::meta::MetaInterface,
     lang::{
         data::{arena::Arena, value::flat::Value},
-        il::ast::Typ,
+        il::ast::{Id, Typ},
     },
-    runner::{Eval, Extern, InterpreterError},
+    runner::{Eval, Extern, Interface, InterfaceError, InterpreterError},
 };
+use std::path::PathBuf;
 
 /// A native executor of the base specification at one depth.
 pub(in crate::metacirc) trait Engine {
@@ -115,6 +118,46 @@ impl Engine for EngineKind<'_> {
     fn reset(&mut self) {
         match self {
             Self::SpecTec(engine) => engine.reset(),
+        }
+    }
+}
+
+// == Base builtins
+
+/// The builtins of a base specification that `SpecTecEngine` executes,
+/// by the language the base interprets.
+pub(in crate::metacirc) enum InterfaceKind {
+    /// spec-meta, interpreting AL or IL.
+    Meta(MetaInterface),
+}
+
+impl Interface for InterfaceKind {
+    fn parse_program(
+        &mut self,
+        arena: &mut Arena,
+        includes: &[PathBuf],
+        paths: &[PathBuf],
+    ) -> Result<Value, InterfaceError> {
+        match self {
+            Self::Meta(interface) => interface.parse_program(arena, includes, paths),
+        }
+    }
+
+    fn call_builtin(
+        &mut self,
+        arena: &mut Arena,
+        id: &Id,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Eval<Value, InterfaceError> {
+        match self {
+            Self::Meta(interface) => interface.call_builtin(arena, id, targs, values),
+        }
+    }
+
+    fn clear(&mut self) {
+        match self {
+            Self::Meta(interface) => interface.clear(),
         }
     }
 }

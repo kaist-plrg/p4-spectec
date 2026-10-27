@@ -1,15 +1,15 @@
 //! The AL or SL interpreter of a P4-SpecTec base specification
 //!
 //! `SpecTecEngine` pairs the base's definitions, in the representation it executes,
-//! with one depth's interpreter of them and that depth's meta builtins.
+//! with one depth's interpreter of them and that depth's base builtins.
 //! Depth 0 borrows the base runner's (`SpecTecEngine::lend_base`);
 //! a deeper depth owns a `SpecTecEngineState` interpreting the same representation
 //! and lends it with `SpecTecEngine::lend_depth`.
 
 use super::super::tower::UpperMut;
-use super::Engine;
+use super::{Engine, InterfaceKind};
 use crate::{
-    interface::{self, Lang, meta::MetaInterface},
+    interface::{self, Lang},
     interp::{
         al::{AlInterp, Config as AlConfig, context::SpecEnv as AlSpecEnv},
         sl::{Config as SlConfig, SlInterp, context::SpecEnv as SlSpecEnv},
@@ -26,10 +26,10 @@ use crate::{
 
 // == Engine
 
-/// The base's native interpreter at one depth, with that depth's meta builtins.
+/// The base's native interpreter at one depth, with that depth's base builtins.
 pub(in crate::metacirc) struct SpecTecEngine<'s> {
     backend: SpecTecBackend<'s>,
-    interface: &'s mut MetaInterface,
+    interface: &'s mut InterfaceKind,
 }
 
 /// The base's definitions and a depth's interpreter of them.
@@ -42,7 +42,7 @@ impl<'s> SpecTecEngine<'s> {
     /// Lends the base runner's backend and interface as depth 0.
     pub(in crate::metacirc) fn lend_base(
         backend: &'s mut Backend,
-        interface: &'s mut MetaInterface,
+        interface: &'s mut InterfaceKind,
     ) -> (Self, SpecTecSpec<'s>) {
         let (backend, spec) = match backend {
             Backend::Al { spec_env, interp } => {
@@ -144,10 +144,10 @@ impl Engine for SpecTecEngine<'_> {
     fn clear(&mut self) {
         match &mut self.backend {
             SpecTecBackend::Al { interp, .. } => {
-                Interpreter::<MetaInterface, NullExtern>::clear(&mut **interp)
+                Interpreter::<InterfaceKind, NullExtern>::clear(&mut **interp)
             }
             SpecTecBackend::Sl { interp, .. } => {
-                Interpreter::<MetaInterface, NullExtern>::clear(&mut **interp)
+                Interpreter::<InterfaceKind, NullExtern>::clear(&mut **interp)
             }
         }
     }
@@ -155,10 +155,10 @@ impl Engine for SpecTecEngine<'_> {
     fn reset(&mut self) {
         match &mut self.backend {
             SpecTecBackend::Al { interp, .. } => {
-                Interpreter::<MetaInterface, NullExtern>::reset(&mut **interp)
+                Interpreter::<InterfaceKind, NullExtern>::reset(&mut **interp)
             }
             SpecTecBackend::Sl { interp, .. } => {
-                Interpreter::<MetaInterface, NullExtern>::reset(&mut **interp)
+                Interpreter::<InterfaceKind, NullExtern>::reset(&mut **interp)
             }
         }
         self.interface.clear();
@@ -179,7 +179,7 @@ pub(in crate::metacirc) enum SpecTecSpec<'s> {
 /// The engine state a depth beneath the base owns.
 pub(in crate::metacirc) struct SpecTecEngineState {
     interp: SpecTecInterp,
-    interface: MetaInterface,
+    interface: InterfaceKind,
 }
 
 /// An interpreter of the base's definitions, owned by a depth beneath the base.
@@ -204,6 +204,6 @@ impl SpecTecEngineState {
             ))),
         };
         // Only the builtins are used; the base never parses at a depth
-        Self { interp, interface: interface::meta(Lang::Al) }
+        Self { interp, interface: InterfaceKind::Meta(interface::meta(Lang::Al)) }
     }
 }

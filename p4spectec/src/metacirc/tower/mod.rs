@@ -16,12 +16,12 @@ pub(in crate::metacirc) use upper::{Top, TopMut, Upper, UpperMut};
 
 use super::{
     config::LevelConfig,
-    engine::{Engine, EngineKind, SpecTecEngine},
+    engine::{Engine, EngineKind, InterfaceKind, SpecTecEngine},
     interp::TowerEnv,
     protocol::ProtocolKind,
 };
 use crate::{
-    interface::{meta::MetaInterface, p4::P4Interface},
+    interface::p4::P4Interface,
     lang::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},
@@ -61,7 +61,7 @@ pub(super) enum BaseRunner<Ext: Extern> {
     /// A P4 specification, interpreting a parsed P4 program.
     P4(Runner<P4Interface, Ext>),
     /// A meta specification interpreting an AL or IL script, hosting the levels above it.
-    Meta(Runner<MetaInterface, Upper<Ext>>),
+    Meta(Runner<InterfaceKind, Upper<Ext>>),
 }
 
 impl<Ext: Extern> Tower<Ext> {

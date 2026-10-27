@@ -29,6 +29,7 @@
 //! | `al`                | `Al`            | AL                           |
 //! | `il`                | `Il`            | IL                           |
 
+use super::super::engine::InterfaceKind;
 use super::super::protocol::{MetaProtocol, ProtocolKind};
 use super::super::{ExecutionMode, Result, TowerConfig, config::Lang, error::config_invalid};
 use super::{BaseRunner, PreparedLevel, Top, Tower, Upper};
@@ -165,7 +166,7 @@ impl<Ext: Extern> Tower<Ext> {
             lang_base => {
                 let (upper, protocols) =
                     build_upper(config, level_top, &spec_base_al, options, external_p4);
-                let interface = interface::meta(lang_base);
+                let interface = InterfaceKind::Meta(interface::meta(lang_base));
                 let spec_base = into_runner_spec(config.mode, spec_base_al)?;
                 let runner = Runner::new(arena, spec_base, options, interface, upper)?;
                 (BaseRunner::Meta(runner), protocols)
