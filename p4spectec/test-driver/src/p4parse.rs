@@ -21,6 +21,7 @@ use p4spectec::interface::p4::{
 use crate::{
     Error, Result,
     corpus::{self, Outcome, Results},
+    log::TestLog,
     suite::{self, ParseConfig},
 };
 
@@ -68,25 +69,35 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
 }
 
 /// Checks registered P4 parsing corpora against their expected outcomes.
-pub fn run(config: &ParseConfig) -> Result<()> {
+pub fn run(config: &ParseConfig, path_log: Option<&Path>) -> Result<()> {
     let start = Instant::now();
+    // Keep each root's paths apart so the log shows them by root
     let mut suites = Vec::new();
     for suite in &config.suites {
         let path_expected = suite::expected_path(&suite.expected);
-        let mut paths = Vec::new();
-        for path in &suite.roots {
-            paths.extend(corpus::collect(path, ".p4")?);
+        let mut roots = Vec::new();
+        for root in &suite.roots {
+            roots.push((root, corpus::collect(root, ".p4")?));
         }
-        suites.push((paths, Results::new(expect_file![path_expected])));
+        suites.push((&suite.name, roots, Results::new(expect_file![path_expected])));
     }
     if suites.is_empty() {
         return Err(Error::Invalid("no P4 parsing suites registered".into()));
     }
-    let collected: usize = suites.iter().map(|(paths, _)| paths.len()).sum();
-    eprintln!("P4 parser: collected={collected}, excluded=0; preparing print hints");
+    let collected: usize = suites
+        .iter()
+        .flat_map(|(_, roots, _)| roots)
+        .map(|(_, paths)| paths.len())
+        .sum();
+    let mut log = TestLog::create(path_log, "p4parse", collected)?;
+    let text_collect =
+        format!("P4 parser: collected={collected}, excluded=0; preparing print hints");
+    eprintln!("{text_collect}");
+    log.note(&text_collect)?;
     let spec_al =
         p4spectec::algo(&config.spec).map_err(|error| Error::Invalid(error.to_string()))?;
     let unparser = P4Unparser::from_al_spec(&spec_al);
+    log.note(&format!("print hints prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
     let includes = &config.includes;
     for path in includes {
         fs::read_dir(path)?;
@@ -96,24 +107,31 @@ pub fn run(config: &ParseConfig) -> Result<()> {
             .map_err(|error| Error::Invalid(error.to_string()))?,
     );
     let mut passed = 0;
-    for (paths, results) in &mut suites {
-        for path in paths.iter() {
-            progress.set_message(path.display().to_string());
-            let outcome = roundtrip(&unparser, includes, path)?;
-            if outcome == Outcome::Pass {
-                passed += 1;
+    for (name, roots, results) in &mut suites {
+        for (root, paths) in roots.iter() {
+            log.suite(name, root)?;
+            for path in paths {
+                progress.set_message(path.display().to_string());
+                log.begin(path)?;
+                let outcome = roundtrip(&unparser, includes, path)?;
+                log.end(outcome.name())?;
+                if outcome == Outcome::Pass {
+                    passed += 1;
+                }
+                results.record(path, outcome)?;
+                progress.inc(1);
             }
-            results.record(path, outcome)?;
-            progress.inc(1);
         }
     }
     progress.finish_with_message("complete");
-    eprintln!(
+    let text_summary = format!(
         "P4 parser collected={collected} excluded=0 executed={collected} pass={passed} fail={} elapsed={:.3}s",
         collected - passed,
         start.elapsed().as_secs_f64()
     );
-    for (_, results) in suites {
+    eprintln!("{text_summary}");
+    log.finish(&text_summary)?;
+    for (_, _, results) in suites {
         results.check();
     }
     eprintln!("P4 parser: all {collected} file results matched expected");

@@ -18,6 +18,20 @@ pub enum Outcome {
     Exclude,
 }
 
+impl Outcome {
+    /// Spells the outcome as recorded in expected files.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Pass => "pass",
+            Self::Fail => "fail",
+            Self::ParseFail => "parse-fail",
+            Self::ReparseFail => "reparse-fail",
+            Self::RoundtripFail => "roundtrip-fail",
+            Self::Exclude => "exclude",
+        }
+    }
+}
+
 pub fn collect(dir: &Path, suffix: &str) -> Result<Vec<PathBuf>> {
     let mut paths = fs::read_dir(dir)?
         .map(|entry| entry.map(|entry| entry.path()))
@@ -76,15 +90,7 @@ impl Results {
     pub fn check(&self) {
         let mut actual = String::new();
         for (path, outcome) in &self.records {
-            let status = match outcome {
-                Outcome::Pass => "pass",
-                Outcome::Fail => "fail",
-                Outcome::ParseFail => "parse-fail",
-                Outcome::ReparseFail => "reparse-fail",
-                Outcome::RoundtripFail => "roundtrip-fail",
-                Outcome::Exclude => "exclude",
-            };
-            actual.push_str(status);
+            actual.push_str(outcome.name());
             actual.push('\t');
             actual.push_str(&path.to_string_lossy());
             actual.push('\n');

@@ -16,6 +16,7 @@ use p4spectec::sim_plugin::{self, io::Tx};
 
 use crate::{
     Error, ExecutionOptions, Result, corpus,
+    log::TestLog,
     suite::{self, Language, SimConfig, SimSuite},
 };
 
@@ -152,8 +153,13 @@ impl Results {
 }
 
 /// Runs registered simulation suites with the selected interpreter.
-pub fn run(config: &SimConfig, language: Language, options: ExecutionOptions) -> Result<()> {
-    run_with(config, language, options, || match language {
+pub fn run(
+    config: &SimConfig,
+    language: Language,
+    options: ExecutionOptions,
+    path_log: Option<&Path>,
+) -> Result<()> {
+    run_with(config, language, options, path_log, || match language {
         Language::Al => p4spectec::algo(&config.spec)
             .map(Spec::Al)
             .map_err(|error| Error::Invalid(error.to_string())),
@@ -170,6 +176,7 @@ fn run_with<BuildSpec>(
     config: &SimConfig,
     language: Language,
     options: ExecutionOptions,
+    path_log: Option<&Path>,
     build_spec: BuildSpec,
 ) -> Result<()>
 where
@@ -201,9 +208,12 @@ where
                 || excludes.contains(&pair.path_stf.to_string_lossy().into_owned())
         })
         .count();
-    eprintln!(
+    let mut log = TestLog::create(path_log, &format!("sim-{}", language.name()), collected)?;
+    let text_collect = format!(
         "Simulation cache={text_cache} det={det}: collected={collected} excluded={excluded}; preparing specification"
     );
+    eprintln!("{text_collect}");
+    log.note(&text_collect)?;
     let includes = &config.includes;
     let progress = ProgressBar::new(collected as u64).with_style(
         ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
@@ -235,6 +245,7 @@ where
             })
             .count();
         let patched_arch = pairs_arch.filter(|pair| pair.patched).count();
+        let start_arch = Instant::now();
         let mut simulator = sim_plugin::build(
             build_spec()?,
             arch,
@@ -242,9 +253,14 @@ where
             Encoding::default(),
         )
         .map_err(|error| Error::Invalid(error.to_string()))?;
+        log.note(&format!(
+            "{arch} specification prepared in {:.1}s",
+            start_arch.elapsed().as_secs_f64()
+        ))?;
         for (suite, pairs) in suites.iter().filter(|(suite, _)| suite.arch == arch) {
             let mut results = Results::new(&suite.expected);
             let guard_stdout = crate::output::SilenceStdout::new()?;
+            log.suite(&suite.name, &suite.stf)?;
             for pair in pairs {
                 let id = format!(
                     "{}:{}:{}",
@@ -260,12 +276,14 @@ where
                     || excludes.contains(&pair.path_stf.to_string_lossy().into_owned())
                 {
                     results.record(pair, "exclude", &[])?;
+                    log.skip(&pair.path_stf, "exclude")?;
                     progress.inc(1);
                     continue;
                 }
                 // File access failures are execution errors, never expected exclusions
                 fs::File::open(&pair.path_p4)?;
                 fs::File::open(&pair.path_stf)?;
+                log.begin(&pair.path_stf)?;
                 let mut txs = Vec::new();
                 simulator
                     .run_stf_test(includes, &pair.path_p4, &pair.path_stf, |tx| {
@@ -274,6 +292,7 @@ where
                     .map_err(|error| Error::Invalid(format!("{id}: {error}")))?;
                 matched += txs.len();
                 results.record(pair, "pass", &txs)?;
+                log.end("pass")?;
                 executed += 1;
                 progress.inc(1);
             }
@@ -286,9 +305,11 @@ where
         );
     }
     progress.finish_with_message("complete");
-    eprintln!(
+    let text_summary = format!(
         "Simulation cache={text_cache} det={det}: collected={collected} excluded={excluded} executed={executed} patched={patched} matches={matched} elapsed={:.3}s; all expected records matched",
         start.elapsed().as_secs_f64()
     );
+    eprintln!("{text_summary}");
+    log.finish(&text_summary)?;
     Ok(())
 }
