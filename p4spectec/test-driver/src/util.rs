@@ -1,6 +1,6 @@
 //! Helpers shared by the snapshot, corpus, and diagnostic runners
 //!
-//! Each runner reads its registration from `suites/<name>.toml` with `load`.
+//! Corpus and diagnostic runners read `suites/<name>.toml` with `load`.
 //! Corpus paths are relative to the repository, expectations to the driver,
 //! and diagnostic inputs and expectations to `testdata/spec`.
 

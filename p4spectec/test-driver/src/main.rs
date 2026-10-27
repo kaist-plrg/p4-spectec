@@ -28,7 +28,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// List all registered suites, inputs, and expectation files
+    /// List corpus and diagnostic registrations
     List,
     /// Compare the elaborated P4 specification with expected output
     Elab,
