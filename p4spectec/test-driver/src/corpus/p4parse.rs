@@ -3,8 +3,6 @@ use std::{
     time::Instant,
 };
 
-use expect_test::expect_file;
-
 use p4spectec::lang::{
     common::source::Span,
     data::{arena::Arena, typ},
@@ -96,7 +94,7 @@ pub fn run(path_log: Option<&Path>) -> Result<()> {
         for root in &suite.roots {
             roots.push((root, corpus::collect(root, ".p4")?));
         }
-        suites.push((&suite.name, roots, Results::new(expect_file![path_expected])));
+        suites.push((&suite.name, roots, Results::new(&path_expected)));
     }
     let collected: usize = suites
         .iter()
@@ -125,7 +123,7 @@ pub fn run(path_log: Option<&Path>) -> Result<()> {
                 if outcome == Outcome::Pass {
                     passed += 1;
                 }
-                results.record(path, outcome)?;
+                results.record(&[path], outcome.name(), "")?;
                 progress.inc(1);
             }
         }

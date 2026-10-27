@@ -1,23 +1,21 @@
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::BTreeSet,
     fs,
     path::{Path, PathBuf},
     time::Instant,
 };
 
-use expect_test::{ExpectFile, expect_file};
-
 use p4spectec::lang::data::encoding::Encoding;
 
-use p4spectec::runner::{Config, Spec};
+use p4spectec::runner::Config;
 
-use p4spectec::sim_plugin::{self, io::Tx};
+use p4spectec::sim_plugin::{self};
 
 use serde::Deserialize;
 
 use crate::{
     Error, ExecutionOptions, Result,
-    corpus::{self, log::TestLog},
+    corpus::{self, Results, log::TestLog},
     util::{self, Language},
 };
 
@@ -77,10 +75,11 @@ struct Pair {
     path_p4: PathBuf,
     path_stf: PathBuf,
     patched: bool,
+    excluded: bool,
 }
 
 impl SimSuite {
-    fn collect(&self) -> Result<Vec<Pair>> {
+    fn collect(&self, excludes: &BTreeSet<String>) -> Result<Vec<Pair>> {
         let mut inputs_p4 = collect(&self.p4, ".p4")?;
         let include = match self.arch.as_str() {
             "v1model" => "v1model.p4",
@@ -113,11 +112,14 @@ impl SimSuite {
                     || (input_p4.path.parent() == input_stf.path.parent()
                         && stem_p4 == input_stf.path.file_stem())
                 {
-                    pairs.push(Pair {
-                        path_p4: input_p4.dir.join(&input_p4.path),
-                        path_stf: input_stf.dir.join(&input_stf.path),
-                        patched: input_p4.patched || input_stf.patched,
-                    });
+                    let path_p4 = input_p4.dir.join(&input_p4.path);
+                    let path_stf = input_stf.dir.join(&input_stf.path);
+                    // Exclude the pair when either file is listed
+                    let excluded = [&path_p4, &path_stf]
+                        .iter()
+                        .any(|path| excludes.contains(&*path.to_string_lossy()));
+                    let patched = input_p4.patched || input_stf.patched;
+                    pairs.push(Pair { path_p4, path_stf, patched, excluded });
                 }
             }
         }
@@ -125,80 +127,9 @@ impl SimSuite {
     }
 }
 
-struct Results {
-    expected: ExpectFile,
-    records: BTreeMap<(PathBuf, PathBuf), String>,
-}
-
-impl Results {
-    fn new(path_expected: &Path) -> Self {
-        let path_expected = util::expected_path(path_expected);
-        Self { expected: expect_file![path_expected], records: BTreeMap::new() }
-    }
-
-    fn record(&mut self, pair: &Pair, status: &str, txs: &[Tx]) -> Result<()> {
-        for path in [&pair.path_p4, &pair.path_stf] {
-            if !path
-                .to_str()
-                .is_some_and(|path| !path.contains(['\t', '\r', '\n']))
-            {
-                return Err(Error::from(format!(
-                    "invalid simulation result path: {}",
-                    path.display()
-                )));
-            }
-        }
-        let mut text =
-            format!("{status}\t{}\t{}\n", pair.path_p4.display(), pair.path_stf.display());
-        for tx in txs {
-            text.push_str(&format!("tx\t{}\t{}\n", tx.port, tx.packet));
-        }
-        if self
-            .records
-            .insert((pair.path_p4.clone(), pair.path_stf.clone()), text)
-            .is_some()
-        {
-            return Err(Error::from(format!(
-                "duplicate simulation result: {} / {}",
-                pair.path_p4.display(),
-                pair.path_stf.display()
-            )));
-        }
-        Ok(())
-    }
-
-    fn check(self) {
-        self.expected
-            .assert_eq(&self.records.into_values().collect::<String>());
-    }
-}
-
 /// Runs registered simulation suites with the selected interpreter.
 pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path>) -> Result<()> {
     let config: SimConfig = util::load("sim")?;
-    run_with(&config, language, options, path_log, || match language {
-        Language::Al => p4spectec::algo(&config.spec)
-            .map(Spec::Al)
-            .map_err(Error::from),
-        Language::Sl => p4spectec::structure(&config.spec, true)
-            .map(Spec::Sl)
-            .map_err(Error::from),
-        Language::Pl => p4spectec::prosify(&config.spec)
-            .map(Spec::Pl)
-            .map_err(Error::from),
-    })
-}
-
-fn run_with<BuildSpec>(
-    config: &SimConfig,
-    language: Language,
-    options: ExecutionOptions,
-    path_log: Option<&Path>,
-    build_spec: BuildSpec,
-) -> Result<()>
-where
-    BuildSpec: Fn() -> Result<Spec>,
-{
     let ExecutionOptions { cache_on, no_det } = options;
     let det = !no_det;
     let text_cache = if cache_on { "on" } else { "off" };
@@ -211,28 +142,20 @@ where
         .suites
         .iter()
         .filter(|suite| suite.languages.contains(&language))
-        .map(|suite| Ok((suite, suite.collect()?)))
+        .map(|suite| Ok((suite, suite.collect(&excludes)?)))
         .collect::<Result<Vec<_>>>()?;
-    let collected: usize = suites.iter().map(|(_, pairs)| pairs.len()).sum();
-    let excluded = suites
-        .iter()
-        .flat_map(|(_, pairs)| pairs)
-        .filter(|pair| {
-            excludes.contains(&pair.path_p4.to_string_lossy().into_owned())
-                || excludes.contains(&pair.path_stf.to_string_lossy().into_owned())
-        })
-        .count();
+    let pairs = suites.iter().flat_map(|(_, pairs)| pairs);
+    let collected = pairs.clone().count();
+    let excluded = pairs.clone().filter(|pair| pair.excluded).count();
+    let patched = pairs.filter(|pair| pair.patched).count();
     let mut log = TestLog::create(path_log, &format!("sim-{}", language.name()), collected)?;
     let text_collect = format!(
         "Simulation cache={text_cache} det={det}: collected={collected} excluded={excluded}; preparing specification"
     );
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
-    let includes = &config.includes;
     let progress = util::progress_bar(collected)?;
-    let mut executed = 0;
     let mut matched = 0;
-    let mut patched = 0;
     // Build one simulator per registered architecture in first-suite order
     let mut archs = Vec::new();
     for (suite, _) in &suites {
@@ -241,66 +164,53 @@ where
         }
     }
     for arch in archs {
-        let pairs_arch = suites
+        let suites_arch: Vec<_> = suites
             .iter()
             .filter(|(suite, _)| suite.arch == arch)
-            .flat_map(|(_, pairs)| pairs);
+            .collect();
+        let pairs_arch = suites_arch.iter().flat_map(|(_, pairs)| pairs);
         let collected_arch = pairs_arch.clone().count();
-        let excluded_arch = suites
-            .iter()
-            .filter(|(suite, _)| suite.arch == arch)
-            .flat_map(|(_, pairs)| pairs)
-            .filter(|pair| {
-                excludes.contains(&pair.path_p4.to_string_lossy().into_owned())
-                    || excludes.contains(&pair.path_stf.to_string_lossy().into_owned())
-            })
-            .count();
+        let excluded_arch = pairs_arch.clone().filter(|pair| pair.excluded).count();
         let patched_arch = pairs_arch.filter(|pair| pair.patched).count();
         let start_arch = Instant::now();
-        let mut simulator = sim_plugin::build(
-            build_spec()?,
-            arch,
-            Config::new(cache_on, det, false),
-            Encoding::default(),
-        )?;
+        let spec = language.spec(&config.spec)?;
+        let config_runner = Config::new(cache_on, det, false);
+        let mut simulator = sim_plugin::build(spec, arch, config_runner, Encoding::default())?;
         log.note(&format!(
             "{arch} specification prepared in {:.1}s",
             start_arch.elapsed().as_secs_f64()
         ))?;
-        for (suite, pairs) in suites.iter().filter(|(suite, _)| suite.arch == arch) {
-            let mut results = Results::new(&suite.expected);
+        for (suite, pairs) in suites_arch {
+            let mut results = Results::new(&util::expected_path(&suite.expected));
             let guard_stdout = super::output::SilenceStdout::new()?;
             log.suite(&suite.name, &suite.stf)?;
             for pair in pairs {
-                let id = format!(
-                    "{}:{}:{}",
-                    suite.name,
-                    pair.path_p4.display(),
-                    pair.path_stf.display()
-                );
                 progress.set_message(pair.path_stf.display().to_string());
-                if pair.patched {
-                    patched += 1;
-                }
-                if excludes.contains(&pair.path_p4.to_string_lossy().into_owned())
-                    || excludes.contains(&pair.path_stf.to_string_lossy().into_owned())
-                {
-                    results.record(pair, "exclude", &[])?;
+                let paths = [pair.path_p4.as_path(), pair.path_stf.as_path()];
+                // Record excluded pairs without running them
+                if pair.excluded {
+                    results.record(&paths, "exclude", "")?;
                     log.skip(&pair.path_stf, "exclude")?;
                     progress.inc(1);
                     continue;
                 }
                 log.begin(&pair.path_stf)?;
-                let mut txs = Vec::new();
+                let mut text_txs = String::new();
                 simulator
-                    .run_stf_test(includes, &pair.path_p4, &pair.path_stf, |tx| {
-                        txs.push(tx.clone());
+                    .run_stf_test(&config.includes, &pair.path_p4, &pair.path_stf, |tx| {
+                        matched += 1;
+                        text_txs.push_str(&format!("tx\t{}\t{}\n", tx.port, tx.packet));
                     })
-                    .map_err(|error| Error::from(format!("{id}: {error}")))?;
-                matched += txs.len();
-                results.record(pair, "pass", &txs)?;
+                    .map_err(|error| {
+                        Error::from(format!(
+                            "{}:{}:{}: {error}",
+                            suite.name,
+                            pair.path_p4.display(),
+                            pair.path_stf.display()
+                        ))
+                    })?;
+                results.record(&paths, "pass", &text_txs)?;
                 log.end("pass")?;
-                executed += 1;
                 progress.inc(1);
             }
             guard_stdout.finish()?;
@@ -313,7 +223,8 @@ where
     }
     progress.finish_with_message("complete");
     let text_summary = format!(
-        "Simulation cache={text_cache} det={det}: collected={collected} excluded={excluded} executed={executed} patched={patched} matches={matched} elapsed={:.3}s; all expected records matched",
+        "Simulation cache={text_cache} det={det}: collected={collected} excluded={excluded} executed={} patched={patched} matches={matched} elapsed={:.3}s; all expected records matched",
+        collected - excluded,
         start.elapsed().as_secs_f64()
     );
     eprintln!("{text_summary}");

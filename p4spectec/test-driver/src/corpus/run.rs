@@ -6,15 +6,11 @@ use std::{
     time::Instant,
 };
 
-use expect_test::expect_file;
-
 use p4spectec::lang::data::arena::Arena;
 
-use p4spectec::runner::{self, Config, Runner};
+use p4spectec::runner::Config;
 
-use p4spectec::interface::p4::{
-    P4Interface, error::P4Error, parse::parse_string, preprocessor::preprocess,
-};
+use p4spectec::interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess};
 
 use p4spectec::sim_plugin::dummy::Dummy;
 
@@ -61,56 +57,24 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
     let ExecutionOptions { cache_on, no_det } = options;
     let det = !no_det;
     let text_cache = if cache_on { "on" } else { "off" };
+    let text_mode = format!("{} cache={text_cache} det={det}", language.name().to_uppercase());
     // Collect registered corpus roots in suite order
-    let suites = config
+    let mut suites = config
         .suites
         .iter()
         .filter(|suite| suite.languages.contains(&language))
         .map(|suite| {
-            let path_expected = util::expected_path(&suite.expected);
             Ok(CollectedSuite {
                 name: suite.name.clone(),
                 root: suite.root.clone(),
                 paths: corpus::collect(&suite.root, ".p4")?,
                 id_relation: suite.relation.clone(),
-                results: Results::new(expect_file![path_expected]),
+                results: Results::new(&util::expected_path(&suite.expected)),
             })
         })
         .collect::<Result<Vec<_>>>()?;
     let len = suites.iter().map(|suite| suite.paths.len()).sum();
-    let log = TestLog::create(path_log, &format!("run-{}", language.name()), len)?;
-    match language {
-        Language::Al => {
-            run_with(&config, &format!("AL cache={text_cache} det={det}"), suites, log, |arena| {
-                let spec_al = p4spectec::algo(&config.spec)?;
-                Ok(runner::build_al(arena, spec_al, Config::new(cache_on, det, false), Dummy)?)
-            })
-        }
-        Language::Sl => {
-            run_with(&config, &format!("SL cache={text_cache} det={det}"), suites, log, |arena| {
-                let spec_sl = p4spectec::structure(&config.spec, true)?;
-                Ok(runner::build_sl(arena, spec_sl, Config::new(cache_on, det, false), Dummy)?)
-            })
-        }
-        Language::Pl => {
-            run_with(&config, &format!("PL cache={text_cache} det={det}"), suites, log, |arena| {
-                let spec_pl = p4spectec::prosify(&config.spec)?;
-                Ok(runner::build_pl(arena, spec_pl, Config::new(cache_on, det, false), Dummy)?)
-            })
-        }
-    }
-}
-
-fn run_with<Build>(
-    config: &RunConfig,
-    text_mode: &str,
-    mut suites: Vec<CollectedSuite>,
-    mut log: TestLog,
-    build_runner: Build,
-) -> Result<()>
-where
-    Build: FnOnce(&mut Arena) -> Result<Runner<P4Interface, Dummy>>,
-{
+    let mut log = TestLog::create(path_log, &format!("run-{}", language.name()), len)?;
     let start = Instant::now();
     let mut excludes = BTreeSet::new();
     for path in &config.excludes {
@@ -129,7 +93,8 @@ where
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
     let mut arena = Arena::new();
-    let mut runner = build_runner(&mut arena)?;
+    let spec = language.spec(&config.spec)?;
+    let mut runner = util::build(&mut arena, spec, Config::new(cache_on, det, false), Dummy)?;
     log.note(&format!("specification prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
     let includes = &config.includes;
     // Preprocess upcoming files while the runner parses and evaluates in order
@@ -211,7 +176,7 @@ where
                     }
                     outcome
                 };
-                suite.results.record(path, outcome)?;
+                suite.results.record(&[path], outcome.name(), "")?;
                 progress.inc(1);
             }
         }

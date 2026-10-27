@@ -22,15 +22,13 @@ use p4spectec::pass::{algo, elaborate, prosify, structure};
 
 use p4spectec::specdoc::adoc;
 
-use p4spectec::interface::p4::P4Interface;
-
-use p4spectec::runner::{self, BuildError, Config, NullExtern, Runner};
+use p4spectec::runner::{Config, NullExtern, Spec};
 
 use crate::{
     Error, ExecutionOptions, Result,
     corpus::{self, log::TestLog},
     diagnostic::Outcome,
-    util::Language,
+    util::{self, Language},
 };
 
 /// Names a stage of the spec-language pipeline, in pipeline order.
@@ -235,15 +233,9 @@ fn first_failure(path: &Path, stages: &[Stage], config: Config) -> Result<Option
                 adoc::pl::render_spec(&mut warnings, &spec_pl);
                 warnings.is_empty().then_some(Output::Pl(spec_pl))
             }
-            (Stage::Run, Output::Al(spec_al)) => {
-                eval_main(|arena| runner::build_al(arena, spec_al, config, NullExtern))
-            }
-            (Stage::Run, Output::Sl(spec_sl)) => {
-                eval_main(|arena| runner::build_sl(arena, spec_sl, config, NullExtern))
-            }
-            (Stage::Run, Output::Pl(spec_pl)) => {
-                eval_main(|arena| runner::build_pl(arena, spec_pl, config, NullExtern))
-            }
+            (Stage::Run, Output::Al(spec_al)) => eval_main(Spec::Al(spec_al), config),
+            (Stage::Run, Output::Sl(spec_sl)) => eval_main(Spec::Sl(spec_sl), config),
+            (Stage::Run, Output::Pl(spec_pl)) => eval_main(Spec::Pl(spec_pl), config),
             // Registered stages must chain from one language to the next
             (stage, _) => {
                 return Err(Error::from(format!(
@@ -262,11 +254,9 @@ fn first_failure(path: &Path, stages: &[Stage], config: Config) -> Result<Option
 }
 
 /// Builds a runner and evaluates `$main()`, returning `None` on failure.
-fn eval_main(
-    build: impl FnOnce(&mut Arena) -> std::result::Result<Runner<P4Interface, NullExtern>, BuildError>,
-) -> Option<Output> {
+fn eval_main(spec: Spec, config: Config) -> Option<Output> {
     let mut arena = Arena::new();
-    let mut runner = build(&mut arena).ok()?;
+    let mut runner = util::build(&mut arena, spec, config, NullExtern).ok()?;
     runner
         .eval_func(&mut arena, "main", &[], &[])
         .result

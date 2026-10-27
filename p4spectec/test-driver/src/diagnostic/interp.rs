@@ -15,9 +15,12 @@ use p4spectec::diagnostic::Report;
 
 use p4spectec::interface::p4::P4Interface;
 
-use p4spectec::runner::{self, Config, InterpreterError, NullExtern, Runner};
+use p4spectec::runner::{Config, InterpreterError, NullExtern, Runner};
 
-use crate::Result;
+use crate::{
+    Result,
+    util::{self, Language},
+};
 
 use super::{Case, failure};
 
@@ -107,29 +110,17 @@ fn run_case(case: &Case) -> Result<Vec<Report>> {
     let config = Config::new(true, det, false);
     let paths = std::slice::from_ref(&case.input);
 
-    let mut arena = Arena::new();
+    let language = match stage.as_str() {
+        "al" => Language::Al,
+        "sl" => Language::Sl,
+        "pl" => Language::Pl,
+        _ => return Err(failure(name, "unknown interpreter stage")),
+    };
 
     // Keep parse, elaboration, lowering, and loading failures out of snapshots
-    match stage.as_str() {
-        "al" => {
-            let spec_al = p4spectec::algo(paths).map_err(|error| failure(name, error))?;
-            let runner = runner::build_al(&mut arena, spec_al, config, NullExtern)
-                .map_err(|error| failure(name, error))?;
-            reject(name, &mut arena, runner, kind, code)
-        }
-        "sl" => {
-            let spec_sl =
-                p4spectec::structure(paths, true).map_err(|error| failure(name, error))?;
-            let runner = runner::build_sl(&mut arena, spec_sl, config, NullExtern)
-                .map_err(|error| failure(name, error))?;
-            reject(name, &mut arena, runner, kind, code)
-        }
-        "pl" => {
-            let spec_pl = p4spectec::prosify(paths).map_err(|error| failure(name, error))?;
-            let runner = runner::build_pl(&mut arena, spec_pl, config, NullExtern)
-                .map_err(|error| failure(name, error))?;
-            reject(name, &mut arena, runner, kind, code)
-        }
-        _ => Err(failure(name, "unknown interpreter stage")),
-    }
+    let mut arena = Arena::new();
+    let spec = language.spec(paths).map_err(|error| failure(name, error))?;
+    let runner =
+        util::build(&mut arena, spec, config, NullExtern).map_err(|error| failure(name, error))?;
+    reject(name, &mut arena, runner, kind, code)
 }

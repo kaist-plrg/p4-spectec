@@ -12,6 +12,12 @@ use std::{
 use indicatif::{ProgressBar, ProgressStyle};
 use serde::{Deserialize, de::DeserializeOwned};
 
+use p4spectec::lang::data::arena::Arena;
+
+use p4spectec::interface::p4::P4Interface;
+
+use p4spectec::runner::{self, Config, Extern, Runner, Spec};
+
 use crate::{Error, Result};
 
 /// Selects the production interpreter used by a corpus suite.
@@ -32,6 +38,31 @@ impl Language {
             Self::Pl => "pl",
         }
     }
+
+    /// Converts specification sources into this language's runner specification.
+    pub fn spec(self, paths: &[PathBuf]) -> Result<Spec> {
+        let spec_lang = match self {
+            Self::Al => p4spectec::SpecLang::Al,
+            Self::Sl => p4spectec::SpecLang::Sl,
+            Self::Pl => p4spectec::SpecLang::Pl,
+        };
+        Ok(p4spectec::runner_spec_with_warnings(spec_lang, paths).0?)
+    }
+}
+
+/// Builds a P4 runner from an AL, SL, or PL specification.
+pub fn build<Ext: Extern>(
+    arena: &mut Arena,
+    spec: Spec,
+    config: Config,
+    external: Ext,
+) -> Result<Runner<P4Interface, Ext>> {
+    let runner = match spec {
+        Spec::Al(spec_al) => runner::build_al(arena, spec_al, config, external),
+        Spec::Sl(spec_sl) => runner::build_sl(arena, spec_sl, config, external),
+        Spec::Pl(spec_pl) => runner::build_pl(arena, spec_pl, config, external),
+    }?;
+    Ok(runner)
 }
 
 /// Reads the registration `suites/<name>.json` with its path attached to errors.

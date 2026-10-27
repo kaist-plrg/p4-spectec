@@ -18,7 +18,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use expect_test::ExpectFile;
+use expect_test::{ExpectFile, expect_file};
 
 use crate::{Error, Result};
 
@@ -78,37 +78,45 @@ pub fn collect_excludes(dir: &Path) -> Result<BTreeSet<String>> {
     Ok(excludes)
 }
 
+/// Collects per-test records of one suite for comparison with its expected file.
+///
+/// Each record is a status line, `<status>\t<path>...`,
+/// followed by optional detail lines;
+/// records are sorted by their paths.
 pub struct Results {
     expected: ExpectFile,
-    records: BTreeMap<PathBuf, Outcome>,
+    records: BTreeMap<Vec<PathBuf>, String>,
 }
 
 impl Results {
-    pub fn new(expected: ExpectFile) -> Self {
-        Self { expected, records: BTreeMap::new() }
+    pub fn new(path_expected: &Path) -> Self {
+        Self { expected: expect_file![path_expected], records: BTreeMap::new() }
     }
 
-    pub fn record(&mut self, path: &Path, outcome: Outcome) -> Result<()> {
-        if !path
-            .to_str()
-            .is_some_and(|path| !path.contains(['\t', '\r', '\n']))
-        {
-            return Err(Error::from(format!("invalid result path: {}", path.display())));
+    /// Records one test under its paths, which must be unique and line-safe.
+    pub fn record(&mut self, paths: &[&Path], status: &str, details: &str) -> Result<()> {
+        let mut text = status.to_owned();
+        for path in paths {
+            let Some(text_path) = path
+                .to_str()
+                .filter(|path| !path.contains(['\t', '\r', '\n']))
+            else {
+                return Err(Error::from(format!("invalid result path: {}", path.display())));
+            };
+            text.push('\t');
+            text.push_str(text_path);
         }
-        if self.records.insert(path.to_owned(), outcome).is_some() {
-            return Err(Error::from(format!("duplicate result: {}", path.display())));
+        text.push('\n');
+        text.push_str(details);
+        let key = paths.iter().map(|path| path.to_path_buf()).collect();
+        if self.records.insert(key, text).is_some() {
+            return Err(Error::from(format!("duplicate result: {}", paths[0].display())));
         }
         Ok(())
     }
 
-    pub fn check(&self) {
-        let mut actual = String::new();
-        for (path, outcome) in &self.records {
-            actual.push_str(outcome.name());
-            actual.push('\t');
-            actual.push_str(&path.to_string_lossy());
-            actual.push('\n');
-        }
-        self.expected.assert_eq(&actual);
+    pub fn check(self) {
+        self.expected
+            .assert_eq(&self.records.into_values().collect::<String>());
     }
 }
