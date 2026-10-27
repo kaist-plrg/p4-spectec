@@ -4,7 +4,7 @@
 //! `KRuntime::load` opens it once per tower (`libloading`)
 //! and resolves the K runtime's entry points;
 //! every depth's `KEngineState` runs on the same library.
-//! Calls into the library go through `ffi`, the only module allowed `unsafe`.
+//! Calls into the library go through `ffi`, ST-in-K's only module allowed `unsafe`.
 
 use crate::metacirc::{Result, error};
 use std::path::{Path, PathBuf};

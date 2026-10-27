@@ -62,7 +62,7 @@ Add code only in these places; add new files inside the directories freely.
 Do not change any other file. If you think you have to, the template is
 missing something: ask the template's owner to add it first.
 
-`engine/k/ffi.rs` is the only file in the crate where `unsafe` is allowed.
+`engine/k/ffi.rs` is the only file in your places where `unsafe` is allowed.
 Keep every `unsafe` block there.
 
 ## 3. Where #387's code goes

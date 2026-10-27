@@ -1,4 +1,4 @@
-//! The C ABI between this process and the K library, the only `unsafe` module
+//! The C ABI between this process and the K library, ST-in-K's `unsafe` module
 //!
 //! `KRuntime` calls into the library through the functions declared here.
 //! The library calls back with `#ffiCall`, finding its host functions

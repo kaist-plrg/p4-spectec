@@ -26,7 +26,7 @@ use super::{
     protocol::ProtocolKind,
 };
 use crate::{
-    interface::p4::P4Interface,
+    interface::{kore::KoreInterface, p4::P4Interface},
     lang::{
         al::ast as al,
         common::{prim::num::Natural, source::Span},
@@ -158,6 +158,19 @@ impl<Ext: Extern> Tower<Ext> {
         value::get::one(&outputs)
             .copied()
             .map_err(|error| error::input_invalid(error.to_string()))
+    }
+}
+
+impl<Ext: Extern> Tower<Ext> {
+    /// Returns the base's interface if the base is spec-k,
+    /// which parses a KORE input, answers spec-k's hooks, and prints its run.
+    pub(super) fn kore_interface(&mut self) -> Option<&mut KoreInterface> {
+        match &mut self.base {
+            BaseRunner::Meta(Runner { interface: InterfaceKind::Kore(interface), .. }) => {
+                Some(interface)
+            }
+            _ => None,
+        }
     }
 }
 

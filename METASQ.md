@@ -189,8 +189,9 @@ registrations are `pending`, so they are skipped without failing.
 ST-in-K adds `KEngine` (`engine/k/`) and `MetaKProtocol` (`protocol/meta_k/`);
 `make kompile` builds the library, and `make test-metacirc-run-k`,
 `test-metacirc-micro-k`, and `test-metacirc-sim-k` reuse the native expected
-files. K-in-ST adds `KoreInterface` (`p4spectec/src/interface/kore/`), and
-`metacirc run-meta towers/k-in-st.json -p definition.kore -p init.kore --depth N`
+files. K-in-ST adds `KoreInterface` (`p4spectec/src/interface/kore/`), which offloads
+most K hooks to the K library kompiled with the definition, and
+`metacirc run-meta towers/k-in-st.json -p imp-kompiled/definition.kore -p init.kore --depth N`
 prints the run as `krun` does; `make test-metacirc-k-in-st` compares it with
 `krun`. `protocol/kore/` describes how a level would stack over a K
 definition, which is not implemented.

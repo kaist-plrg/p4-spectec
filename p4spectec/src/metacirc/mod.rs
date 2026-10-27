@@ -68,8 +68,11 @@ pub fn krun(
     }
     let mut arena = Arena::new();
     let mut tower = Tower::build(&mut arena, config, options, Dummy)?;
-    // Read the definition and the initial term as spec-k's values
-    let mut interface = interface::kore();
+    // Read the definition and the initial term with the base's own interface,
+    // which loads the definition's K library for the hooks it answers
+    let interface = tower
+        .kore_interface()
+        .ok_or_else(|| error::input_invalid("a KORE input requires spec-k as the base"))?;
     let value_program = interface
         .parse_program(&mut arena, &[], paths_program)
         .map_err(|error| error.into_report())?;
@@ -79,6 +82,7 @@ pub fn krun(
         .map_err(|error| error::input_invalid(error.to_string()))?;
     // Run Krun on the base and print its runres
     let runres = tower.eval_krun(&mut arena, definition, init, depth)?;
+    let interface = tower.kore_interface().expect("spec-k is the base");
     interface
         .print_runres(&arena, runres)
         .map_err(|error| error.into_report())
