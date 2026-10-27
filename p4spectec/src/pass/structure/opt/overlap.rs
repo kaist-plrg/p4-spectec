@@ -347,13 +347,13 @@ fn overlap_match_exp(exp: &Exp, pattern_a: &Pattern, pattern_b: &Pattern) -> Ove
         (Pattern::Case(_), Pattern::Case(_)) => {
             Overlap::Disjoint { exp: exp.clone(), guard_a, guard_b }
         }
-        // Cons vs Fixed(0) -> Partition; Cons vs Fixed(2) -> Disjoint
+        // Cons vs Fixed(0) -> Partition; Cons vs Fixed(1) -> Fuzzy: [x] is both
         (Pattern::List(ListPattern::Cons), Pattern::List(ListPattern::Fixed(num)))
         | (Pattern::List(ListPattern::Fixed(num)), Pattern::List(ListPattern::Cons)) => {
             if *num == 0 {
                 Overlap::Partition { exp: exp.clone(), guard_a, guard_b }
             } else {
-                Overlap::Disjoint { exp: exp.clone(), guard_a, guard_b }
+                Overlap::Fuzzy
             }
         }
         // Cons vs Nil -> Partition
