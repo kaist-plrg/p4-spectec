@@ -34,6 +34,7 @@ use crate::{
     harness::{
         self, Error, Result,
         corpus::{self, Outcome, Results},
+        log::TestLog,
     },
     suite::diagnostic,
 };
@@ -80,6 +81,8 @@ struct SelectedSuite<'a> {
 }
 
 struct CollectedSuite<'a> {
+    name: &'a str,
+    root: &'a Path,
     paths: Vec<PathBuf>,
     path_tower: &'a Path,
     results: Results,
@@ -89,7 +92,14 @@ struct CollectedSuite<'a> {
 ///
 /// `name_suite` restricts the run to the registered suite of that name,
 /// and `input` to the suites whose tower takes that input.
-pub fn run(name_config: &str, name_suite: Option<&str>, input: Option<Input>) -> Result<()> {
+/// `path_log` names the directory of the timing logs,
+/// one for the scripts and one for the programs.
+pub fn run(
+    name_config: &str,
+    name_suite: Option<&str>,
+    input: Option<Input>,
+    path_log: Option<&Path>,
+) -> Result<()> {
     let registration: Registration = harness::load("metacirc/run")?;
     let config = Configuration::find(&registration.configs, name_config)?;
     if let Some(name) = name_suite
@@ -123,10 +133,10 @@ pub fn run(name_config: &str, name_suite: Option<&str>, input: Option<Input>) ->
     }
     let excludes = collect_excludes(&registration, config.base)?;
     if !suites_al.is_empty() {
-        run_scripts(config, &excludes, &suites_al)?;
+        run_scripts(config, &excludes, &suites_al, path_log)?;
     }
     if !suites_p4.is_empty() {
-        run_programs(&registration, config, &excludes, &suites_p4)?;
+        run_programs(&registration, config, &excludes, &suites_p4, path_log)?;
     }
     Ok(())
 }
@@ -137,6 +147,7 @@ fn run_programs(
     config: &Configuration,
     excludes: &BTreeSet<String>,
     suites: &[SelectedSuite<'_>],
+    path_log: Option<&Path>,
 ) -> Result<()> {
     let text_mode = format!("metacirc P4 {}", config.describe());
     let start = Instant::now();
@@ -148,6 +159,8 @@ fn run_programs(
                 Error::from(format!("{}: a P4 suite needs an expected file", suite.name))
             })?;
             Ok(CollectedSuite {
+                name: &suite.name,
+                root: &suite.root,
                 paths: corpus::collect(&suite.root, ".p4")?,
                 path_tower,
                 results: Results::new(&std::path::absolute(path_expected)?),
@@ -161,10 +174,13 @@ fn run_programs(
         .flat_map(|suite| &suite.paths)
         .filter(|path| path.to_str().is_some_and(|path| excludes.contains(path)))
         .count();
-    eprintln!(
+    let mut log = TestLog::create(path_log, &format!("metacirc-p4-{}", config.name), collected)?;
+    let text_collect = format!(
         "{text_mode}: collected={collected} excluded={excluded} to execute={}; preparing specification",
         collected - excluded
     );
+    eprintln!("{text_collect}");
+    log.note(&text_collect)?;
     let mut arena = Arena::new();
     // Suites sharing a tower file share its prepared runners
     let mut towers = BTreeMap::new();
@@ -176,6 +192,7 @@ fn run_programs(
         let tower = Tower::build(&mut arena, &config_tower, config.runner(), Dummy)?;
         towers.insert(suite.path_tower, tower);
     }
+    log.note(&format!("towers prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
     let includes = &registration.includes;
     for path in includes {
         fs::read_dir(path)?;
@@ -210,12 +227,15 @@ fn run_programs(
             let tower = towers
                 .get_mut(suite.path_tower)
                 .expect("tower prepared per suite");
+            log.suite(suite.name, suite.root)?;
             for path in &suite.paths {
                 progress.set_message(path.display().to_string());
                 let excluded = path.to_str().is_some_and(|path| excludes.contains(path));
                 let outcome = if excluded {
+                    log.skip(path, Outcome::Exclude.name())?;
                     Outcome::Exclude
                 } else {
+                    log.begin(path)?;
                     // Reset before parsing: no value may cross this program boundary
                     tower.reset();
                     arena.reset_values();
@@ -255,6 +275,7 @@ fn run_programs(
                             )));
                         }
                     };
+                    log.end(outcome.name())?;
                     executed += 1;
                     if outcome == Outcome::Pass {
                         passed += 1;
@@ -269,11 +290,13 @@ fn run_programs(
     })?;
     guard_stdout.finish()?;
     progress.finish_with_message("complete");
-    eprintln!(
+    let text_summary = format!(
         "{text_mode}: collected={collected} excluded={excluded} executed={executed} pass={passed} fail={} elapsed={:.3}s",
         executed - passed,
         start.elapsed().as_secs_f64()
     );
+    eprintln!("{text_summary}");
+    log.finish(&text_summary)?;
     for suite in suites {
         suite.results.check();
     }
@@ -295,25 +318,41 @@ fn run_scripts(
     config: &Configuration,
     excludes: &BTreeSet<String>,
     suites: &[SelectedSuite<'_>],
+    path_log: Option<&Path>,
 ) -> Result<()> {
     let text_mode = format!("metacirc script {}", config.describe());
+    let start = Instant::now();
+    // Collect every suite's scripts first so the log knows the total
+    let suites = suites
+        .iter()
+        .map(|SelectedSuite { suite, path_tower }| {
+            let outcome_expect = suite.outcome.ok_or_else(|| {
+                Error::from(format!("{}: a script suite needs an outcome", suite.name))
+            })?;
+            let config_tower = TowerConfig::from_file(path_tower)
+                .map_err(|error| Error::from(format!("{}: {error}", suite.name)))?;
+            let paths = corpus::collect(&suite.root, ".watsup")?;
+            Ok((*suite, config_tower, outcome_expect, paths))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let collected = suites.iter().map(|(_, _, _, paths)| paths.len()).sum();
+    let mut log =
+        TestLog::create(path_log, &format!("metacirc-script-{}", config.name), collected)?;
     // Specification debug premises print to stdout
     let guard_stdout = harness::output::SilenceStdout::new()?;
     let mut executed = 0;
     let mut excluded = 0;
     let mut mismatches = Vec::new();
-    for SelectedSuite { suite, path_tower } in suites {
-        let outcome_expect = suite.outcome.ok_or_else(|| {
-            Error::from(format!("{}: a script suite needs an outcome", suite.name))
-        })?;
-        let config_tower = TowerConfig::from_file(path_tower)
-            .map_err(|error| Error::from(format!("{}: {error}", suite.name)))?;
-        for path in corpus::collect(&suite.root, ".watsup")? {
+    for (suite, config_tower, outcome_expect, paths) in &suites {
+        log.suite(&suite.name, &suite.root)?;
+        for path in paths {
             if path.to_str().is_some_and(|path| excludes.contains(path)) {
+                log.skip(path, "exclude")?;
                 excluded += 1;
                 continue;
             }
-            let paths_program = std::slice::from_ref(&path);
+            log.begin(path)?;
+            let paths_program = std::slice::from_ref(path);
             // Invalid scripts are test errors, not rejected executions;
             // an IL top level converts the script itself, so it need only elaborate
             let valid = match config_tower.top_lang() {
@@ -321,11 +360,13 @@ fn run_scripts(
                 _ => p4spectec::algo(paths_program).map(|_| ()),
             };
             valid.map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
-            let accepted =
-                metacirc::run(&config_tower, &[], paths_program, config.runner()).is_ok();
+            let accepted = metacirc::run(config_tower, &[], paths_program, config.runner()).is_ok();
             let outcome =
                 if accepted { diagnostic::Outcome::Success } else { diagnostic::Outcome::Failure };
-            if outcome != outcome_expect {
+            if outcome == *outcome_expect {
+                log.end(&format!("{outcome:?}"))?;
+            } else {
+                log.end(&format!("{outcome:?}, expected {outcome_expect:?}"))?;
                 mismatches.push(format!(
                     "{} ({}): expected {outcome_expect:?}, got {outcome:?}",
                     path.display(),
@@ -336,6 +377,13 @@ fn run_scripts(
         }
     }
     guard_stdout.finish()?;
+    let text_summary = format!(
+        "{text_mode}: collected={collected} excluded={excluded} executed={executed} mismatched={} elapsed={:.3}s",
+        mismatches.len(),
+        start.elapsed().as_secs_f64()
+    );
+    eprintln!("{text_summary}");
+    log.finish(&text_summary)?;
     // Report every mismatched script before failing
     if !mismatches.is_empty() {
         return Err(Error::from(format!(
@@ -343,8 +391,6 @@ fn run_scripts(
             mismatches.join("\n")
         )));
     }
-    eprintln!(
-        "{text_mode}: all {executed} script outcomes matched their suite, excluded={excluded}"
-    );
+    eprintln!("{text_mode}: all {executed} script outcomes matched their suite");
     Ok(())
 }

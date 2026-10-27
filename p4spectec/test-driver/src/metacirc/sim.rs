@@ -6,7 +6,7 @@
 //! on simulators built from the configuration's P4 tower,
 //! so each suite compares with its native expected file.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use p4spectec::{
     lang::data::encoding::Encoding,
@@ -31,8 +31,9 @@ pub struct Registration {
 
 /// Runs the simulation suites of `suites/sim.toml` under the named configuration.
 ///
-/// `name_suite` restricts the run to the registered suite of that name.
-pub fn run(name_config: &str, name_suite: Option<&str>) -> Result<()> {
+/// `name_suite` restricts the run to the registered suite of that name,
+/// and `path_log` names the directory of the timing log.
+pub fn run(name_config: &str, name_suite: Option<&str>, path_log: Option<&Path>) -> Result<()> {
     let registration: Registration = harness::load("metacirc/sim")?;
     let config = Configuration::find(&registration.configs, name_config)?;
     let path_tower = registration.towers.get(config.base).ok_or_else(|| {
@@ -51,7 +52,7 @@ pub fn run(name_config: &str, name_suite: Option<&str>) -> Result<()> {
     let config_tower = TowerConfig::from_file(path_tower)?;
     let text_mode = format!("metacirc sim {}", config.describe());
     let name_log = format!("metacirc-sim-{}", config.name);
-    sim::run_suites(&registration_sim, &suites, &text_mode, &name_log, None, |arch| {
+    sim::run_suites(&registration_sim, &suites, &text_mode, &name_log, path_log, |arch| {
         Ok(metacirc::build_simulator(&config_tower, arch, config.runner(), Encoding::default())?)
     })
 }

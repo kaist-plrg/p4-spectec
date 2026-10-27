@@ -50,6 +50,9 @@ enum Command {
 /// Compares P4 corpus and AL script outcomes through metacircular towers.
 #[derive(Parser)]
 struct Cli {
+    /// Write a per-test timing log of run or sim into a new file in this directory
+    #[arg(long = "log", global = true, value_name = "DIR")]
+    path_log: Option<PathBuf>,
     #[command(subcommand)]
     command: Command,
 }
@@ -64,15 +67,23 @@ fn execute(cli: Cli) -> Result<()> {
             "UPDATE_EXPECT is supported only for metacirc elab, algo, and prose",
         ));
     }
+    // Resolve the log directory before changing to the specification repository
+    let path_log = cli
+        .path_log
+        .as_deref()
+        .map(std::path::absolute)
+        .transpose()?;
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
         .canonicalize()?;
     std::env::set_current_dir(&root)?;
     match cli.command {
         Command::Run { config, name_suite, input } => {
-            run::run(&config, name_suite.as_deref(), input)
+            run::run(&config, name_suite.as_deref(), input, path_log.as_deref())
         }
-        Command::Sim { config, name_suite } => sim::run(&config, name_suite.as_deref()),
+        Command::Sim { config, name_suite } => {
+            sim::run(&config, name_suite.as_deref(), path_log.as_deref())
+        }
         // Snapshot and codec checks compile the meta specification without executing it
         Command::Elab => snapshot::run("metacirc/snapshot", &[Stage::Elab], None),
         Command::Algo => snapshot::run("metacirc/snapshot", &[Stage::Algo], None),
