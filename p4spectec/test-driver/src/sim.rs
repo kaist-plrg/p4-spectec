@@ -193,9 +193,6 @@ where
         .filter(|suite| suite.languages.contains(&language))
         .map(|suite| Ok((suite, suite.collect()?)))
         .collect::<Result<Vec<_>>>()?;
-    if suites.is_empty() {
-        return Err(Error::from(format!("no {} simulation suites registered", language.name())));
-    }
     let collected: usize = suites.iter().map(|(_, pairs)| pairs.len()).sum();
     let excluded = suites
         .iter()

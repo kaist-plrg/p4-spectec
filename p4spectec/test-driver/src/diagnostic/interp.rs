@@ -23,10 +23,10 @@ use super::{Case, failure};
 
 /// Loads and compares this module's diagnostic fixtures.
 pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
-    let groups = super::load(path, false)?;
+    let cases = super::load(path)?;
     super::run_registered(
         "interp",
-        &groups,
+        &cases,
         path_cli,
         Some(run_case),
         p4spectec::diagnostic::RenderConfig {

@@ -8,6 +8,6 @@ use crate::Result;
 
 /// Loads and compares this module's CLI diagnostic fixtures.
 pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
-    let groups = super::load(path, true)?;
-    super::run_registered("command", &groups, path_cli, None, Default::default())
+    let cases = super::load(path)?;
+    super::run_registered("command", &cases, path_cli, None, Default::default())
 }

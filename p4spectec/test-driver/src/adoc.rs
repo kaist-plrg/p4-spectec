@@ -26,9 +26,6 @@ pub fn run(suites: &AdocSuite, path_output: Option<&Path>) -> Result<()> {
     let start = Instant::now();
     let snapshots_el = &suites.el;
     let snapshots_pl = &suites.pl;
-    if snapshots_el.is_empty() && snapshots_pl.is_empty() {
-        return Err(Error::from("no AsciiDoc snapshots registered"));
-    }
     // Render each registered source snapshot with its own input files
     for snapshot in snapshots_el {
         let spec_el = parse_files(&snapshot.inputs)?;

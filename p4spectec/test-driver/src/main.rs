@@ -146,34 +146,25 @@ fn execute(mut cli: Cli) -> Result<()> {
     let index = Index::load(&path_registry)?;
     match command {
         Command::List => index.list(),
-        Command::Elab => elab::run(&suite::load_snapshots(&index.suites.elab)?),
-        Command::Algo => algo::run(&suite::load_snapshots(&index.suites.algo)?),
-        Command::Structure => structure::run(&suite::load_structure(&index.suites.structure)?),
-        Command::Prose => prose::run(&suite::load_snapshots(&index.suites.prose)?),
+        Command::Elab => elab::run(&suite::load::<Vec<suite::Snapshot>>(&index.suites.elab)?),
+        Command::Algo => algo::run(&suite::load::<Vec<suite::Snapshot>>(&index.suites.algo)?),
+        Command::Structure => {
+            structure::run(&suite::load::<Vec<suite::StructureSnapshot>>(&index.suites.structure)?)
+        }
+        Command::Prose => prose::run(&suite::load::<Vec<suite::Snapshot>>(&index.suites.prose)?),
         Command::Adoc { path_output } => {
-            adoc::run(&suite::load_adoc(&index.suites.adoc)?, path_output.as_deref())
+            adoc::run(&suite::load(&index.suites.adoc)?, path_output.as_deref())
         }
-        Command::P4parse => {
-            p4parse::run(&suite::load_parsing(&index.suites.p4parse)?, path_log.as_deref())
+        Command::P4parse => p4parse::run(&suite::load(&index.suites.p4parse)?, path_log.as_deref()),
+        Command::Run { language, options } => {
+            run::run(&suite::load(&index.suites.run)?, *language, *options, path_log.as_deref())
         }
-        Command::Run { language, options } => run::run(
-            &suite::load_execution(&index.suites.run)?,
-            *language,
-            *options,
-            path_log.as_deref(),
-        ),
-        Command::Sim { language, options } => sim::run(
-            &suite::load_simulation(&index.suites.sim)?,
-            *language,
-            *options,
-            path_log.as_deref(),
-        ),
-        Command::Micro { language, options } => micro::run(
-            &suite::load_micro(&index.suites.micro)?,
-            *language,
-            *options,
-            path_log.as_deref(),
-        ),
+        Command::Sim { language, options } => {
+            sim::run(&suite::load(&index.suites.sim)?, *language, *options, path_log.as_deref())
+        }
+        Command::Micro { language, options } => {
+            micro::run(&suite::load(&index.suites.micro)?, *language, *options, path_log.as_deref())
+        }
         Command::Diagnostics { suite, path_cli } => {
             diagnostic::run(&index.suites.diagnostics, *suite, path_cli.as_deref())
         }

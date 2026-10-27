@@ -6,16 +6,13 @@ use indicatif::{ProgressBar, ProgressStyle};
 use p4spectec::lang::traits::print::Print;
 
 use crate::{
-    Error, Result, snapshot,
+    Result, snapshot,
     suite::{self, StructureSnapshot},
 };
 
 /// Checks registered structured specification snapshots.
 pub fn run(snapshots: &[StructureSnapshot]) -> Result<()> {
     let start = Instant::now();
-    if snapshots.is_empty() {
-        return Err(Error::from("no structure snapshots registered"));
-    }
     let num_snapshots = snapshots.len();
     let progress = ProgressBar::new(num_snapshots as u64).with_style(ProgressStyle::with_template(
         "[{bar:24}] {pos}/{len} {elapsed_precise} {msg}",

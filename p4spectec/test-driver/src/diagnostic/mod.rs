@@ -28,10 +28,7 @@ mod command;
 mod run;
 mod sim;
 
-use std::{
-    collections::BTreeSet,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use clap::ValueEnum;
 use expect_test::expect_file;
@@ -99,17 +96,17 @@ impl Modules {
 
     /// Prints each module through the same validation used for execution.
     pub fn list(&self) -> Result<()> {
-        println!("diagnostics/frontend: {:#?}", load(&self.frontend, false)?);
-        println!("diagnostics/elab: {:#?}", load(&self.elab, false)?);
-        println!("diagnostics/algo: {:#?}", load(&self.algo, false)?);
-        println!("diagnostics/structure: {:#?}", load(&self.structure, false)?);
-        println!("diagnostics/prose: {:#?}", load(&self.prose, false)?);
-        println!("diagnostics/specdoc: {:#?}", load(&self.specdoc, false)?);
-        println!("diagnostics/splice: {:#?}", load(&self.splice, false)?);
-        println!("diagnostics/interp: {:#?}", load(&self.interp, false)?);
-        println!("diagnostics/command: {:#?}", load(&self.command, true)?);
-        println!("diagnostics/run: {:#?}", load(&self.run, true)?);
-        println!("diagnostics/sim: {:#?}", load(&self.sim, false)?);
+        println!("diagnostics/frontend: {:#?}", load(&self.frontend)?);
+        println!("diagnostics/elab: {:#?}", load(&self.elab)?);
+        println!("diagnostics/algo: {:#?}", load(&self.algo)?);
+        println!("diagnostics/structure: {:#?}", load(&self.structure)?);
+        println!("diagnostics/prose: {:#?}", load(&self.prose)?);
+        println!("diagnostics/specdoc: {:#?}", load(&self.specdoc)?);
+        println!("diagnostics/splice: {:#?}", load(&self.splice)?);
+        println!("diagnostics/interp: {:#?}", load(&self.interp)?);
+        println!("diagnostics/command: {:#?}", load(&self.command)?);
+        println!("diagnostics/run: {:#?}", load(&self.run)?);
+        println!("diagnostics/sim: {:#?}", load(&self.sim)?);
         Ok(())
     }
 }
@@ -180,55 +177,9 @@ pub struct Case {
     pub args: Vec<String>,
 }
 
-/// Registers diagnostics separately from transformation and corpus tests.
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Group {
-    pub name: String,
-    pub cases: Vec<Case>,
-}
-
-/// Loads one module and validates its source/expectation pairs.
-fn load(path: &Path, cli_only: bool) -> Result<Vec<Group>> {
-    let groups: Vec<Group> = crate::suite::load(path)?;
-    let mut names = BTreeSet::new();
-    if groups.is_empty() {
-        return Err(failure("diagnostics", "no groups registered"));
-    }
-    // Validate every registered pair before running this module's diagnostics
-    for group in &groups {
-        if group.name.is_empty() || !names.insert(&group.name) {
-            return Err(failure(&group.name, "empty or duplicate diagnostic group"));
-        }
-        if group.cases.is_empty() {
-            return Err(failure(&group.name, "no negative cases"));
-        }
-        let mut names_case = BTreeSet::new();
-        for case in &group.cases {
-            if case.name.is_empty() || !names_case.insert(&case.name) {
-                return Err(failure(&group.name, "empty or duplicate case"));
-            }
-            // Complete invocations belong in the argument file
-            if case.uses_cli() && !case.args.is_empty() {
-                return Err(failure(&case.name, "arguments belong in the .args file"));
-            }
-            if cli_only && !case.uses_cli() {
-                return Err(failure(&case.name, "requires an .args input"));
-            }
-            for path in [&case.input, &case.expected] {
-                if !fixture_dir().join(path).is_file() {
-                    return Err(failure(&case.name, format!("missing file {}", path.display())));
-                }
-            }
-            // Inputs supply API sources or isolated copies for CLI cases
-            for path in &case.inputs {
-                if !fixture_dir().join(path).exists() {
-                    return Err(failure(&case.name, format!("missing input {}", path.display())));
-                }
-            }
-        }
-    }
-    Ok(groups)
+/// Loads one module's diagnostic cases.
+fn load(path: &Path) -> Result<Vec<Case>> {
+    crate::suite::load(path)
 }
 
 impl Case {
@@ -288,50 +239,44 @@ type RunCase = fn(&Case) -> Result<Vec<Report>>;
 /// Compares module-owned fixture output with its registered expectations.
 fn run_registered(
     name: &str,
-    groups: &[Group],
+    cases: &[Case],
     path_cli: Option<&Path>,
     run_case: Option<RunCase>,
     config: RenderConfig,
 ) -> Result<()> {
     // Resolve subprocess paths before entering the stable fixture directory
     let path_cli = path_cli.map(std::path::absolute).transpose()?;
-    if groups
-        .iter()
-        .any(|group| group.cases.iter().any(Case::uses_cli))
-        && path_cli.is_none()
-    {
+    if cases.iter().any(Case::uses_cli) && path_cli.is_none() {
         return Err(failure(name, "--cli is required for argument-file acceptance"));
     }
     let _directory = Directory(std::env::current_dir()?);
     let path_fixture = fixture_dir();
     std::env::set_current_dir(&path_fixture)?;
 
-    // Preserve group and case order from this module's registration file
-    for group in groups {
-        let progress = ProgressBar::new(group.cases.len() as u64);
-        for case in &group.cases {
-            let text = if case.uses_cli() {
-                // Argument files compare product stderr verbatim
-                cli::run(path_cli.as_deref().expect("CLI admission checked"), case)?
-            } else {
-                // The owning module supplies its source runner and report style
-                let reports = run_case.expect("source runner supplied by owning module")(case)?;
-                let mut text = String::new();
-                for report in reports {
-                    let rendered = Renderer::new(config.clone())
-                        .render_to_string(&report)
-                        .map_err(|error| failure(&case.name, error))?;
-                    text.push_str(&rendered);
-                }
-                text
-            };
-            // Every comparison uses the explicit registered expectation
-            let path = path_fixture.join(&case.expected);
-            expect_file![path].assert_eq(&text);
-            progress.inc(1);
-        }
-        progress.finish_and_clear();
-        eprintln!("diagnostics/{name}: {} cases passed", group.cases.len());
+    // Preserve case order from this module's registration file
+    let progress = ProgressBar::new(cases.len() as u64);
+    for case in cases {
+        let text = if case.uses_cli() {
+            // Argument files compare product stderr verbatim
+            cli::run(path_cli.as_deref().expect("CLI admission checked"), case)?
+        } else {
+            // The owning module supplies its source runner and report style
+            let reports = run_case.expect("source runner supplied by owning module")(case)?;
+            let mut text = String::new();
+            for report in reports {
+                let rendered = Renderer::new(config.clone())
+                    .render_to_string(&report)
+                    .map_err(|error| failure(&case.name, error))?;
+                text.push_str(&rendered);
+            }
+            text
+        };
+        // Every comparison uses the explicit registered expectation
+        let path = path_fixture.join(&case.expected);
+        expect_file![path].assert_eq(&text);
+        progress.inc(1);
     }
+    progress.finish_and_clear();
+    eprintln!("diagnostics/{name}: {} cases passed", cases.len());
     Ok(())
 }

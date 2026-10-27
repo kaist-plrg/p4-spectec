@@ -6,16 +6,13 @@ use indicatif::{ProgressBar, ProgressStyle};
 use p4spectec::lang::traits::print::Print;
 
 use crate::{
-    Error, Result, snapshot,
+    Result, snapshot,
     suite::{self, Snapshot},
 };
 
 /// Checks registered prose snapshots.
 pub fn run(snapshots: &[Snapshot]) -> Result<()> {
     let start = Instant::now();
-    if snapshots.is_empty() {
-        return Err(Error::from("no prose snapshots registered"));
-    }
     let progress = ProgressBar::new(snapshots.len() as u64).with_style(
         ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")?,
     );

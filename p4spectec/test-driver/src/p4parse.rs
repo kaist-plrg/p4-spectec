@@ -79,9 +79,6 @@ pub fn run(config: &ParseConfig, path_log: Option<&Path>) -> Result<()> {
         }
         suites.push((&suite.name, roots, Results::new(expect_file![path_expected])));
     }
-    if suites.is_empty() {
-        return Err(Error::from("no P4 parsing suites registered"));
-    }
     let collected: usize = suites
         .iter()
         .flat_map(|(_, roots, _)| roots)

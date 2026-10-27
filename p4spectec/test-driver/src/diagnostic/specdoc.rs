@@ -15,8 +15,8 @@ use super::{Case, failure};
 
 /// Loads and compares this module's diagnostic fixtures.
 pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
-    let groups = super::load(path, false)?;
-    super::run_registered("specdoc", &groups, path_cli, Some(run_case), Default::default())
+    let cases = super::load(path)?;
+    super::run_registered("specdoc", &cases, path_cli, Some(run_case), Default::default())
 }
 
 /// Renders one source specification and requires located markup warnings.

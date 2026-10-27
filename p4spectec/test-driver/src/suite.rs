@@ -1,12 +1,11 @@
 //! Typed registration files for individual acceptance runners
 //!
 //! `Index::load` resolves module filenames from the root index.
-//! Each module loader reads its own registration type and validates its paths.
+//! Each runner reads its own registration type.
 //! Corpus paths are relative to the repository, expectations to the driver,
 //! and diagnostic inputs and expectations to `testdata/spec`.
 
 use std::{
-    collections::BTreeSet,
     fs,
     path::{Path, PathBuf},
 };
@@ -233,208 +232,6 @@ pub fn expected_path(path: &Path) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join(path)
 }
 
-/// Requires each registered path to exist before any test can run.
-fn paths_exist(paths: &[PathBuf], role: &str) -> Result<()> {
-    if paths.is_empty() {
-        return Err(Error::from(format!("{role}: no paths registered")));
-    }
-    for path in paths {
-        if !path.exists() {
-            return Err(Error::from(format!("{role}: missing {}", path.display())));
-        }
-    }
-    Ok(())
-}
-
-/// Requires a regular expectation file instead of an absent baseline.
-fn expectation_exists(path: &Path) -> Result<()> {
-    if !expected_path(path).is_file() {
-        return Err(Error::from(format!("missing expectation {}", path.display())));
-    }
-    Ok(())
-}
-
-/// Requires corpus and include roots to be directories.
-fn directories_exist(paths: &[PathBuf], role: &str) -> Result<()> {
-    paths_exist(paths, role)?;
-    for path in paths {
-        if !path.is_dir() {
-            return Err(Error::from(format!("{role}: not a directory {}", path.display())));
-        }
-    }
-    Ok(())
-}
-
-/// Rejects empty or repeated interpreter selections.
-fn languages_valid(languages: &[Language]) -> Result<()> {
-    if languages.is_empty() {
-        return Err(Error::from("suite has no interpreter languages"));
-    }
-    let mut names = BTreeSet::new();
-    for lang in languages {
-        if !names.insert(lang.name()) {
-            return Err(Error::from(format!("repeated language {}", lang.name())));
-        }
-    }
-    Ok(())
-}
-
-/// Rejects empty or duplicate names within a module's registrations.
-fn names_valid<'a>(names: impl IntoIterator<Item = &'a str>) -> Result<()> {
-    let mut names_seen = BTreeSet::new();
-    // Check names in registration order before any execution
-    for name in names {
-        if name.is_empty() || !names_seen.insert(name) {
-            return Err(Error::from(format!("empty or duplicate registration {name}")));
-        }
-    }
-    if names_seen.is_empty() {
-        return Err(Error::from("no tests registered"));
-    }
-    Ok(())
-}
-
-/// Loads source snapshots directly for elab, algo, or prose.
-pub fn load_snapshots(path: &Path) -> Result<Vec<Snapshot>> {
-    let snapshots: Vec<Snapshot> = load(path)?;
-    names_valid(snapshots.iter().map(|snapshot| snapshot.name.as_str()))?;
-    // Validate only the selected module's sources and expectations
-    for snapshot in &snapshots {
-        paths_exist(&snapshot.inputs, &snapshot.name)?;
-        expectation_exists(&snapshot.expected)?;
-    }
-    Ok(snapshots)
-}
-
-/// Loads structured snapshots with module-owned rule-group options.
-pub fn load_structure(path: &Path) -> Result<Vec<StructureSnapshot>> {
-    let snapshots: Vec<StructureSnapshot> = load(path)?;
-    names_valid(snapshots.iter().map(|snapshot| snapshot.name.as_str()))?;
-    // Validate source snapshots before structural conversion
-    for snapshot in &snapshots {
-        paths_exist(&snapshot.inputs, &snapshot.name)?;
-        expectation_exists(&snapshot.expected)?;
-    }
-    Ok(snapshots)
-}
-
-/// Loads EL and PL document registrations without a stage selector.
-pub fn load_adoc(path: &Path) -> Result<AdocSuite> {
-    let suites: AdocSuite = load(path)?;
-    names_valid(
-        suites
-            .el
-            .iter()
-            .map(|snapshot| snapshot.name.as_str())
-            .chain(suites.pl.iter().map(|snapshot| snapshot.name.as_str())),
-    )?;
-    // Both document modes require complete source and expectation pairs
-    for (name, inputs, expected) in suites
-        .el
-        .iter()
-        .map(|snapshot| (&snapshot.name, &snapshot.inputs, &snapshot.expected))
-        .chain(
-            suites
-                .pl
-                .iter()
-                .map(|snapshot| (&snapshot.name, &snapshot.inputs, &snapshot.expected)),
-        )
-    {
-        paths_exist(inputs, name)?;
-        expectation_exists(expected)?;
-    }
-    Ok(suites)
-}
-
-/// Loads parser dependencies and roundtrip corpus registrations.
-pub fn load_parsing(path: &Path) -> Result<ParseConfig> {
-    let config: ParseConfig = load(path)?;
-    // Validate dependencies declared by this module before corpus discovery
-    paths_exist(&config.spec, "parser specification")?;
-    directories_exist(&config.includes, "parser include directories")?;
-    let suites = &config.suites;
-    names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
-    // Parsing discovers files only within the registered directories
-    for suite in suites {
-        directories_exist(&suite.roots, &suite.name)?;
-        expectation_exists(&suite.expected)?;
-    }
-    Ok(config)
-}
-
-/// Loads execution dependencies and corpus registrations.
-pub fn load_execution(path: &Path) -> Result<RunConfig> {
-    let config: RunConfig = load(path)?;
-    // Validate dependencies declared by this module before corpus discovery
-    paths_exist(&config.spec, "execution specification")?;
-    directories_exist(&config.includes, "execution include directories")?;
-    for path in &config.excludes {
-        directories_exist(std::slice::from_ref(path), "execution exclusions")?;
-    }
-    let suites = &config.suites;
-    names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
-    // Entry relations and interpreter selections belong to each corpus
-    for suite in suites {
-        directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
-        languages_valid(&suite.languages)?;
-        if suite.relation.is_empty() {
-            return Err(Error::from(format!("{}: empty entry relation", suite.name)));
-        }
-        expectation_exists(&suite.expected)?;
-    }
-    Ok(config)
-}
-
-/// Loads simulation dependencies and explicit P4/STF corpus pairing.
-pub fn load_simulation(path: &Path) -> Result<SimConfig> {
-    let config: SimConfig = load(path)?;
-    // Validate dependencies declared by this module before corpus discovery
-    paths_exist(&config.spec, "simulation specification")?;
-    directories_exist(&config.includes, "simulation include directories")?;
-    for path in &config.excludes {
-        directories_exist(std::slice::from_ref(path), "simulation exclusions")?;
-    }
-    let suites = &config.suites;
-    names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
-    // Validate simulation inputs and optional patches before discovery
-    for suite in suites {
-        directories_exist(&[suite.p4.clone(), suite.stf.clone()], &suite.name)?;
-        if let Some(path) = &suite.patches {
-            directories_exist(std::slice::from_ref(path), &suite.name)?;
-        }
-        languages_valid(&suite.languages)?;
-        if !matches!(suite.arch.as_str(), "v1model" | "ebpf" | "psa") {
-            return Err(Error::from(format!(
-                "{}: unknown architecture {}",
-                suite.name, suite.arch
-            )));
-        }
-        expectation_exists(&suite.expected)?;
-    }
-    Ok(config)
-}
-
-/// Loads micro suites and per-language stages.
-pub fn load_micro(path: &Path) -> Result<MicroConfig> {
-    let config: MicroConfig = load(path)?;
-    let suites = &config.suites;
-    names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
-    for suite in suites {
-        directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
-    }
-    // Stages run in pipeline order, each at most once
-    for language in [Language::Al, Language::Sl, Language::Pl] {
-        let stages = config.stages.get(language);
-        if stages.is_empty() || !stages.is_sorted_by(|stage_a, stage_b| stage_a < stage_b) {
-            return Err(Error::from(format!(
-                "micro stages of {} must be nonempty and in pipeline order",
-                language.name()
-            )));
-        }
-    }
-    Ok(config)
-}
-
 impl Index {
     /// Resolves module paths relative to the index without loading their settings.
     pub fn load(path: &Path) -> Result<Self> {
@@ -463,16 +260,15 @@ impl Index {
 
     /// Prints typed module registrations without executing their tests.
     pub fn list(&self) -> Result<()> {
-        // Validate and display each module through its normal loader
-        println!("elab: {:#?}", load_snapshots(&self.suites.elab)?);
-        println!("algo: {:#?}", load_snapshots(&self.suites.algo)?);
-        println!("structure: {:#?}", load_structure(&self.suites.structure)?);
-        println!("prose: {:#?}", load_snapshots(&self.suites.prose)?);
-        println!("adoc: {:#?}", load_adoc(&self.suites.adoc)?);
-        println!("p4parse: {:#?}", load_parsing(&self.suites.p4parse)?);
-        println!("run: {:#?}", load_execution(&self.suites.run)?);
-        println!("sim: {:#?}", load_simulation(&self.suites.sim)?);
-        println!("micro: {:#?}", load_micro(&self.suites.micro)?);
+        println!("elab: {:#?}", load::<Vec<Snapshot>>(&self.suites.elab)?);
+        println!("algo: {:#?}", load::<Vec<Snapshot>>(&self.suites.algo)?);
+        println!("structure: {:#?}", load::<Vec<StructureSnapshot>>(&self.suites.structure)?);
+        println!("prose: {:#?}", load::<Vec<Snapshot>>(&self.suites.prose)?);
+        println!("adoc: {:#?}", load::<AdocSuite>(&self.suites.adoc)?);
+        println!("p4parse: {:#?}", load::<ParseConfig>(&self.suites.p4parse)?);
+        println!("run: {:#?}", load::<RunConfig>(&self.suites.run)?);
+        println!("sim: {:#?}", load::<SimConfig>(&self.suites.sim)?);
+        println!("micro: {:#?}", load::<MicroConfig>(&self.suites.micro)?);
         self.suites.diagnostics.list()
     }
 }

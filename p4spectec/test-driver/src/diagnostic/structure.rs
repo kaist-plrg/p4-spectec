@@ -15,8 +15,8 @@ use super::{Case, failure};
 
 /// Loads and compares this module's diagnostic fixtures.
 pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
-    let groups = super::load(path, false)?;
-    super::run_registered("structure", &groups, path_cli, Some(run_case), Default::default())
+    let cases = super::load(path)?;
+    super::run_registered("structure", &cases, path_cli, Some(run_case), Default::default())
 }
 
 /// Requires a structure failure after successful source-to-AL conversion.

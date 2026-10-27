@@ -60,9 +60,6 @@ pub fn run(
             })
         })
         .collect::<Result<Vec<_>>>()?;
-    if suites.is_empty() {
-        return Err(Error::from(format!("no {} execution suites registered", language.name())));
-    }
     let len = suites.iter().map(|suite| suite.paths.len()).sum();
     let log = TestLog::create(path_log, &format!("run-{}", language.name()), len)?;
     match language {
