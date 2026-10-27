@@ -2,45 +2,22 @@
 //!
 //! A level above the base is a host: the level below interprets it,
 //! so it only answers the builtin and host calls relayed from below.
-//! MetaExtern hosts the AL or IL script that a meta specification interprets.
 //! `eval_rel` decodes one representation layer (`codec`)
 //! and delegates to the level above a boundary through a RelayTarget:
-//! the host a RelayExtern stores (`stored`),
+//! the levels a tower stores (`boundary`),
 //! or the levels lent to spec-meta for one P4 call (`lent`).
-//! TerminalExtern (`terminal`) handles only builtins of the AL or IL program
-//! above the top level.
-//! Clearing an extern resets the host it owns before arena values are reset.
 
 pub(super) mod codec;
 pub(super) mod lent;
-mod stored;
-mod terminal;
 
-pub(super) use terminal::TerminalExtern;
-
-use super::tower::HostLayer;
 use crate::{
     interface::meta::shared::Cache,
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
     },
-    runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext, SideEffect},
+    runner::{Eval, ExternError, SideEffect},
 };
-
-/// The host of the AL or IL script that a meta specification interprets.
-pub(in crate::metacirc) enum MetaExtern<Ext: Extern> {
-    /// The script is the next level; host calls go to its layer.
-    Relay(RelayExtern<Ext>),
-    /// The script is the AL or IL program; only its builtins are answered.
-    Terminal(TerminalExtern),
-}
-
-/// Host calls resolved against the next level's host in a runtime tower.
-pub(in crate::metacirc) struct RelayExtern<Ext: Extern> {
-    pub cache: Box<Cache>,
-    pub layer_next: Box<HostLayer<Ext>>,
-}
 
 /// A level boundary, sending decoded host calls to the level above it.
 pub(in crate::metacirc) trait RelayTarget {
@@ -75,53 +52,15 @@ pub(in crate::metacirc) trait RelayTarget {
 }
 
 /// Rejects an operation outside the host boundary's contract.
-fn unsupported<T>(name: &str) -> Eval<T, ExternError> {
+pub(super) fn unsupported<T>(name: &str) -> Eval<T, ExternError> {
     Eval::new(
         Err(ExternError::diagnostic_message(format!("unsupported meta extern: {name}"))),
         SideEffect::Pure,
     )
 }
 
-impl<Ext: Extern> Extern for MetaExtern<Ext> {
-    fn eval_rel<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        name: &str,
-        values: &[Value],
-    ) -> Eval<Vec<Value>, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        let (arena, external) = ctx.arena_and_external_mut();
-        match external {
-            Self::Relay(relay) => eval_rel(relay, arena, name, values),
-            Self::Terminal(terminal) => terminal.eval_rel(arena, name, values),
-        }
-    }
-
-    fn eval_func<Interp, Iface>(
-        _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        name: &str,
-        _targs: &[Typ],
-        _values: &[Value],
-    ) -> Eval<Value, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        unsupported(name)
-    }
-
-    fn clear(&mut self) {
-        match self {
-            Self::Relay(relay) => relay.clear(),
-            Self::Terminal(terminal) => terminal.clear(),
-        }
-    }
-}
-
 /// Decodes a host call from above a boundary and evaluates it at `target`.
-fn eval_rel<T: RelayTarget>(
+pub(super) fn eval_rel<T: RelayTarget>(
     target: &mut T,
     arena: &mut Arena,
     name: &str,
@@ -159,12 +98,5 @@ fn eval_rel<T: RelayTarget>(
         }
         // Host functions are reached through the three declared meta relations
         _ => unsupported(name),
-    }
-}
-
-impl<Ext: Extern> RelayExtern<Ext> {
-    fn clear(&mut self) {
-        self.cache.clear();
-        self.layer_next.reset();
     }
 }

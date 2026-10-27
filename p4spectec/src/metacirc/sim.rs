@@ -2,8 +2,8 @@
 //!
 //! `SimTower` keeps a tower of two or more levels: spec-meta runs natively
 //! at its base, each level above interprets the next through spec-meta,
-//! and the P4 host with the architecture is stored at the end of the relays.
-//! For each STF operation, `with_context` walks the relays up to the P4 host
+//! and the P4 host with the architecture is the top of the tower's `Upper`.
+//! For each STF operation, `with_context` reaches that host
 //! and lends it the base's SL interpreter as depth 0 (`MetaInterp`),
 //! so the architecture drives the levels' execution of the P4 specification;
 //! deeper depths are made when the architecture reenters.
@@ -14,8 +14,7 @@ use super::{
     config::Lang,
     error::{config_invalid, input_invalid},
     reentry::{MetaDepth, MetaEnv, MetaInterp},
-    relay::MetaExtern,
-    tower::{BaseLayer, HostLayer, Tower},
+    tower::{BaseLayer, Top, Tower, Upper},
 };
 use crate::{
     interface::{meta::shared::Cache, p4::P4Interface},
@@ -87,26 +86,16 @@ impl<Arch: Architecture> SimTower<Arch> {
         let BaseLayer::MetaSpec(runner) = base else {
             unreachable!("a simulated tower has a meta base");
         };
-        let Runner { backend, interface, external, .. } = runner;
+        let Runner { backend, interface, external: upper, .. } = runner;
         let Backend::Sl { spec_env, interp } = backend else {
             unreachable!("a simulated tower executes SL");
         };
-        // Walk the relays up to the P4 top, lending each meta level's builtins
-        let mut interfaces = Vec::new();
-        let mut external_level = external;
-        let host = loop {
-            let MetaExtern::Relay(relay) = external_level else {
-                unreachable!("a simulated tower relays up to its top level");
-            };
-            match &mut *relay.layer_next {
-                HostLayer::MetaSpec(host) => {
-                    let (interface_level, external_next) = host.parts_mut();
-                    interfaces.push(interface_level);
-                    external_level = external_next;
-                }
-                HostLayer::P4Spec(host) => break host,
-            }
+        // Lend each meta level's builtins and reach the P4 top
+        let Upper { hosts, top, .. } = upper;
+        let Top::P4(host) = top else {
+            unreachable!("a simulated tower has a P4 top level");
         };
+        let interfaces = hosts.iter_mut().collect();
         // Share the definitions, and lend depth 0 to the host
         let env = MetaEnv { spec_meta: spec_env, levels, options: *options };
         let mut meta =

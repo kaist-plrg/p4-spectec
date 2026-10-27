@@ -5,6 +5,7 @@
 //! and relay them to the host of the next level.
 //! The native base may execute AL or SL.
 
+mod boundary;
 pub mod config;
 mod error;
 mod reentry;
