@@ -6,6 +6,17 @@
 //! Calls go down the levels (`interp`), host calls come up across each
 //! `boundary`, and a P4 extern that reenters runs on the next depth.
 //! `tower` builds the levels, `sim` drives them with an STF test.
+//!
+//! ```text
+//! Tower
+//! ├─ specs: [LevelSpec]
+//! ├─ protocols: [ProtocolKind]                    : Protocol
+//! └─ BaseRunner
+//!    └─ Upper              ─lend→ UpperMut        : Extern
+//!       ├─ Top             ─lend→ TopMut
+//!       └─ Depth           ─lend→ TowerInterp     : Interpreter
+//!          └─ SpecTecState ─lend→ SpecTecEngine   : Engine
+//! ```
 
 mod boundary;
 pub mod config;
