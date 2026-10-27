@@ -14,7 +14,7 @@ export CARGO_TARGET_DIR
 METACIRC_TEST = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(CARGO_TARGET_DIR)" --bin metacirc-test -- $(if $(TEST_LOG),--log "$(abspath $(TEST_LOG))")
 METACIRC_SNAPSHOTS := test-metacirc-elab test-metacirc-algo test-metacirc-structure test-metacirc-prose
 
-.PHONY: metacirc metacirc-cli test-metacirc-run-al test-metacirc-run-il test-metacirc-micro-al test-metacirc-micro-il test-metacirc-sim-al test-metacirc-sim-il $(METACIRC_SNAPSHOTS) test-metacirc-metaparse test-metacirc-promote clean
+.PHONY: metacirc metacirc-cli kompile test-metacirc-run-al test-metacirc-run-il test-metacirc-micro-al test-metacirc-micro-il test-metacirc-sim-al test-metacirc-sim-il $(METACIRC_SNAPSHOTS) test-metacirc-metaparse test-metacirc-promote clean
 
 metacirc-cli:
 	cd $(RUST_DIR) && $(CARGO) build --locked --release --bin metacirc --target-dir "$(CARGO_TARGET_DIR)"
@@ -23,6 +23,11 @@ metacirc: metacirc-cli
 	mkdir -p $(dir $(METACIRC))
 	rm -f ./$(METACIRC)
 	cp "$(CARGO_TARGET_DIR)/release/metacirc" ./$(METACIRC)
+
+# The library a k tower loads, compiled from spec-meta-k (`kompiled` in towers/k-*.json)
+kompile:
+	@echo "kompile: compiling spec-meta-k is not implemented yet" >&2
+	@exit 1
 
 # P4 corpus through the AL/P4 towers
 test-metacirc-run-al:

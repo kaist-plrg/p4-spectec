@@ -2,7 +2,7 @@
 //!
 //! `algo`, `struct`, and `prose` transform ordered specification paths natively.
 //! `run-meta` requires a tower configuration for AL, IL, and P4 inputs.
-//! `sim` runs an STF test on an SL tower of two or more levels over P4,
+//! `sim` runs an STF test on an SL or K tower of two or more levels over P4,
 //! printing each matched packet as `p4spectec sim` does.
 //! Structured diagnostics are rendered at the CLI boundary.
 //! Success is printed only after the configured outer entry finishes.
@@ -33,7 +33,7 @@ enum Command {
     Prose(SpecArgs),
     /// Execute a program through a JSON-configured interpreter tower.
     RunMeta(RunMetaArgs),
-    /// Simulate a P4 program and STF test through an SL tower over P4.
+    /// Simulate a P4 program and STF test through an SL or K tower over P4.
     Sim(SimArgs),
 }
 
@@ -79,7 +79,7 @@ struct RunMetaArgs {
 
 #[derive(Args)]
 struct SimArgs {
-    /// Tower configuration: an SL-executed meta specification over a P4 top level.
+    /// Tower configuration: an SL-executed or K meta specification over a P4 top level.
     config: PathBuf,
     /// Target architecture: ebpf, psa, or v1model.
     #[arg(long, value_name = "ARCH")]

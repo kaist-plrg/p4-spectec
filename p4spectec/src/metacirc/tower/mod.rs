@@ -16,7 +16,9 @@ pub(in crate::metacirc) use upper::{Top, TopMut, Upper, UpperMut};
 
 use super::{
     config::LevelConfig,
-    engine::{BaseSpec, Engine, EngineKind, InterfaceKind, SpecTecEngine},
+    engine::{
+        BaseSpec, Engine, EngineKind, InterfaceKind, KEngine, KEngineState, KRuntime, SpecTecEngine,
+    },
     interp::TowerEnv,
     protocol::ProtocolKind,
 };
@@ -62,6 +64,28 @@ pub(super) enum BaseRunner<Ext: Extern> {
     P4(Runner<P4Interface, Ext>),
     /// A meta specification interpreting an AL or IL script, hosting the levels above it.
     Meta(Runner<InterfaceKind, Upper<Ext>>),
+    /// A K specification, compiled to a library, interpreting an AL script
+    /// and hosting the levels above it.
+    K(KBase<Ext>),
+}
+
+/// A base written in K: its library, depth 0's K thread, and the levels above it.
+pub(super) struct KBase<Ext: Extern> {
+    pub(super) runtime: KRuntime,
+    pub(super) state: KEngineState,
+    pub(super) upper: Upper<Ext>,
+    pub(super) effects: u64,
+}
+
+/// A base that hosts levels above it, lent for one execution.
+pub(super) struct LentBase<'b, Ext: Extern> {
+    /// Depth 0's engine.
+    pub(super) engine: EngineKind<'b>,
+    /// The base's definitions, which deeper depths share.
+    pub(super) spec_base: BaseSpec<'b>,
+    /// The stored levels above the base.
+    pub(super) upper: &'b mut Upper<Ext>,
+    pub(super) effects: &'b mut u64,
 }
 
 impl<Ext: Extern> Tower<Ext> {
@@ -76,19 +100,16 @@ impl<Ext: Extern> Tower<Ext> {
     pub fn eval_program(&mut self, arena: &mut Arena, program: Value) -> Eval<Vec<Value>> {
         let Self { levels, protocols, base, options } = self;
         let name = &levels[0].config().rel;
-        match base {
-            // A P4 base runs the program directly
-            BaseRunner::P4(runner) => runner.eval_program(arena, name, program),
-            // A meta base lends the levels above it with its definitions
-            BaseRunner::Meta(runner) => {
-                let Runner { backend, interface, external: upper, effects } = runner;
-                let (engine, spec_base) = SpecTecEngine::lend_base(backend, interface);
-                let spec_base = BaseSpec::SpecTec(spec_base);
-                let env = TowerEnv { spec_base, levels, protocols, options: *options };
-                let mut upper = upper.lend(&env);
-                EngineKind::SpecTec(engine).call_program(arena, &mut upper, effects, name, program)
-            }
+        // A P4 base runs the program directly
+        if let BaseRunner::P4(runner) = base {
+            return runner.eval_program(arena, name, program);
         }
+        // Any other base lends the levels above it with its definitions
+        let LentBase { mut engine, spec_base, upper, effects } =
+            base.lend().expect("a base other than P4 hosts levels");
+        let env = TowerEnv { spec_base, levels, protocols, options: *options };
+        let mut upper = upper.lend(&env);
+        engine.call_program(arena, &mut upper, effects, name, program)
     }
 }
 
@@ -106,6 +127,31 @@ impl<Ext: Extern> BaseRunner<Ext> {
         match self {
             Self::P4(runner) => runner.reset(),
             Self::Meta(runner) => runner.reset(),
+            Self::K(base) => {
+                base.effects = 0;
+                KEngine::lend(&base.runtime, &mut base.state).reset();
+                base.upper.clear();
+            }
+        }
+    }
+
+    /// Lends depth 0's engine and the levels above the base,
+    /// or nothing for a P4 base, which hosts no levels.
+    pub(super) fn lend(&mut self) -> Option<LentBase<'_, Ext>> {
+        match self {
+            Self::P4(_) => None,
+            Self::Meta(runner) => {
+                let Runner { backend, interface, external: upper, effects } = runner;
+                let (engine, spec_base) = SpecTecEngine::lend_base(backend, interface);
+                let engine = EngineKind::SpecTec(engine);
+                let spec_base = BaseSpec::SpecTec(spec_base);
+                Some(LentBase { engine, spec_base, upper, effects })
+            }
+            Self::K(KBase { runtime, state, upper, effects }) => {
+                let engine = EngineKind::K(KEngine::lend(runtime, state));
+                let spec_base = BaseSpec::K(runtime);
+                Some(LentBase { engine, spec_base, upper, effects })
+            }
         }
     }
 }

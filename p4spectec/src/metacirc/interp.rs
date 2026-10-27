@@ -9,6 +9,7 @@
 //! the base's definitions, C, and the codec caches with this one.
 
 use super::{
+    Result as MetacircResult,
     engine::{BaseSpec, Engine, EngineKind, EngineStateKind},
     protocol::{Below, Call, CodecCache, Output, Protocol, ProtocolKind, Values},
     tower::{HostLevel, LevelAt, PreparedLevel, TopMut, UpperMut},
@@ -249,12 +250,12 @@ impl TowerInterpState {
         options: runner::Config,
         spec_base: BaseSpec<'_>,
         count: usize,
-    ) -> Self {
-        Self {
-            engine: EngineStateKind::new(options, spec_base),
+    ) -> MetacircResult<Self> {
+        Ok(Self {
+            engine: EngineStateKind::new(options, spec_base)?,
             hosts: (0..count).map(|_| interface::meta(Lang::Al)).collect(),
             next: None,
-        }
+        })
     }
 
     /// Lends this depth, executing `spec_base`, as the P4 level's interpreter.
