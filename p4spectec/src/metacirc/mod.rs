@@ -15,7 +15,7 @@
 //!    └─ Upper                    ─lend→ UpperMut        : Extern
 //!       ├─ Top                   ─lend→ TopMut
 //!       └─ TowerInterpState      ─lend→ TowerInterp     : Interpreter
-//!          └─ SpecTecEngineState ─lend→ SpecTecEngine   : Engine
+//!          └─ EngineStateKind    ─lend→ EngineKind      : Engine
 //! ```
 
 mod boundary;

@@ -16,7 +16,7 @@ pub(in crate::metacirc) use upper::{Top, TopMut, Upper, UpperMut};
 
 use super::{
     config::LevelConfig,
-    engine::{Engine, EngineKind, InterfaceKind, SpecTecEngine},
+    engine::{BaseSpec, Engine, EngineKind, InterfaceKind, SpecTecEngine},
     interp::TowerEnv,
     protocol::ProtocolKind,
 };
@@ -83,6 +83,7 @@ impl<Ext: Extern> Tower<Ext> {
             BaseRunner::Meta(runner) => {
                 let Runner { backend, interface, external: upper, effects } = runner;
                 let (engine, spec_base) = SpecTecEngine::lend_base(backend, interface);
+                let spec_base = BaseSpec::SpecTec(spec_base);
                 let env = TowerEnv { spec_base, levels, protocols, options: *options };
                 let mut upper = upper.lend(&env);
                 EngineKind::SpecTec(engine).call_program(arena, &mut upper, effects, name, program)

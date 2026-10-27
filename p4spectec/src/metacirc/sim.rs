@@ -12,7 +12,7 @@
 use super::{
     ExecutionMode, Result, TowerConfig,
     config::Lang,
-    engine::{EngineKind, SpecTecEngine},
+    engine::{BaseSpec, EngineKind, SpecTecEngine},
     error::{config_invalid, input_invalid},
     interp::{TowerEnv, TowerInterp},
     tower::{BaseRunner, Top, Tower, Upper},
@@ -84,6 +84,7 @@ impl<Arch: Architecture> SimTower<Arch> {
             unreachable!("a simulated tower has a P4 top level");
         };
         // Share the definitions, and lend depth 0 to the host
+        let spec_base = BaseSpec::SpecTec(spec_base);
         let env = TowerEnv { spec_base, levels, protocols, options: *options };
         let engine = EngineKind::SpecTec(engine);
         let mut interp = TowerInterp { engine, hosts, depth_next, caches, ctxs };

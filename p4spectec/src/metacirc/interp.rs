@@ -9,7 +9,7 @@
 //! the base's definitions, C, and the codec caches with this one.
 
 use super::{
-    engine::{Engine, EngineKind, SpecTecEngine, SpecTecEngineState, SpecTecSpec},
+    engine::{BaseSpec, Engine, EngineKind, EngineStateKind},
     protocol::{Below, Call, CodecCache, Output, Protocol, ProtocolKind, Values},
     tower::{HostLevel, LevelAt, PreparedLevel, TopMut, UpperMut},
 };
@@ -123,7 +123,7 @@ impl<'s> TowerInterp<'s> {
 /// Definitions shared by every depth.
 pub(in crate::metacirc) struct TowerEnv<'s> {
     /// The base specification, executed natively.
-    pub spec_base: SpecTecSpec<'s>,
+    pub spec_base: BaseSpec<'s>,
     /// Every level of the tower, from the base to the top.
     pub levels: &'s [PreparedLevel],
     /// The protocol of the boundary below each level above the base.
@@ -236,7 +236,7 @@ impl<Ext: Extern> Below for LevelBelow<'_, '_, '_, Ext> {
 
 /// The state of one reentry depth beneath the base.
 pub(in crate::metacirc) struct TowerInterpState {
-    engine: SpecTecEngineState,
+    engine: EngineStateKind,
     /// The meta builtins of each level between the base and the top.
     hosts: Vec<MetaInterface>,
     next: Option<Box<TowerInterpState>>,
@@ -247,11 +247,11 @@ impl TowerInterpState {
     /// between base and top.
     pub(in crate::metacirc) fn new(
         options: runner::Config,
-        spec_base: SpecTecSpec<'_>,
+        spec_base: BaseSpec<'_>,
         count: usize,
     ) -> Self {
         Self {
-            engine: SpecTecEngineState::new(options, spec_base),
+            engine: EngineStateKind::new(options, spec_base),
             hosts: (0..count).map(|_| interface::meta(Lang::Al)).collect(),
             next: None,
         }
@@ -260,12 +260,12 @@ impl TowerInterpState {
     /// Lends this depth, executing `spec_base`, as the P4 level's interpreter.
     pub(in crate::metacirc) fn lend<'d>(
         &'d mut self,
-        spec_base: SpecTecSpec<'d>,
+        spec_base: BaseSpec<'d>,
         caches: &'d mut [CodecCache],
         ctxs: &'d mut [Option<Value>],
     ) -> TowerInterp<'d> {
         TowerInterp {
-            engine: EngineKind::SpecTec(SpecTecEngine::lend_depth(&mut self.engine, spec_base)),
+            engine: self.engine.lend(spec_base),
             hosts: &mut self.hosts,
             depth_next: &mut self.next,
             caches,

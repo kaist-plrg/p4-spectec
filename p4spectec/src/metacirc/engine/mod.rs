@@ -4,12 +4,15 @@
 //! an `Engine` calls its relations and functions,
 //! sending the host calls it makes to the levels lent above it.
 //! Depth 0 borrows the base runner's interpreter; each deeper depth owns one.
-//! `EngineKind` stores the engines; `spectec` executes AL or SL.
+//! `EngineKind` lends the engines, `EngineStateKind` stores a deeper depth's,
+//! and `BaseSpec` is the base's definitions they share;
+//! `spectec` executes AL or SL.
 //! `InterfaceKind` answers the builtins of a base executed by `spectec`.
 
 mod spectec;
 
-pub(super) use spectec::{SpecTecEngine, SpecTecEngineState, SpecTecSpec};
+pub(super) use spectec::SpecTecEngine;
+use spectec::{SpecTecEngineState, SpecTecSpec};
 
 use super::tower::UpperMut;
 use crate::{
@@ -18,7 +21,7 @@ use crate::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
     },
-    runner::{Eval, Extern, Interface, InterfaceError, InterpreterError},
+    runner::{self, Eval, Extern, Interface, InterfaceError, InterpreterError},
 };
 use std::path::PathBuf;
 
@@ -66,6 +69,35 @@ pub(in crate::metacirc) trait Engine {
 pub(in crate::metacirc) enum EngineKind<'s> {
     /// The AL or SL interpreter of a P4-SpecTec specification.
     SpecTec(SpecTecEngine<'s>),
+}
+
+/// The engine state a depth beneath the base owns.
+pub(in crate::metacirc) enum EngineStateKind {
+    SpecTec(SpecTecEngineState),
+}
+
+/// The base's definitions, shared by every depth's engine.
+#[derive(Clone, Copy)]
+pub(in crate::metacirc) enum BaseSpec<'s> {
+    SpecTec(SpecTecSpec<'s>),
+}
+
+impl EngineStateKind {
+    /// Makes the state of a depth executing `spec`.
+    pub(in crate::metacirc) fn new(options: runner::Config, spec: BaseSpec<'_>) -> Self {
+        match spec {
+            BaseSpec::SpecTec(spec) => Self::SpecTec(SpecTecEngineState::new(options, spec)),
+        }
+    }
+
+    /// Lends this depth's engine, executing `spec`.
+    pub(in crate::metacirc) fn lend<'s>(&'s mut self, spec: BaseSpec<'s>) -> EngineKind<'s> {
+        match (self, spec) {
+            (Self::SpecTec(state), BaseSpec::SpecTec(spec)) => {
+                EngineKind::SpecTec(SpecTecEngine::lend_depth(state, spec))
+            }
+        }
+    }
 }
 
 impl Engine for EngineKind<'_> {
