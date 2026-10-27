@@ -1,6 +1,6 @@
 //! Specification snapshots registered in `suites/snapshot.toml`
 //!
-//! Each snapshot converts the registered `spec` sources to its `stage`
+//! Each snapshot converts its registered `spec` sources to its `stage`
 //! and compares the printed or rendered text with its `expected` file.
 //! `adoc-pl` also checks that repeated rendering keeps the same anchors.
 
@@ -32,22 +32,22 @@ pub enum Stage {
     AdocPl,
 }
 
-/// Registers one snapshot of the shared specification.
+/// Registers one snapshot of a specification.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Snapshot {
     pub name: String,
+    pub spec: Vec<PathBuf>,
     pub stage: Stage,
     pub expected: PathBuf,
     #[serde(default)]
     pub without_rule_groups: bool,
 }
 
-/// Supplies the specification sources and snapshots.
+/// Supplies the snapshots.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Registration {
-    pub spec: Vec<PathBuf>,
     pub snapshots: Vec<Snapshot>,
 }
 
@@ -56,11 +56,11 @@ pub struct Registration {
 /// With `path_output`, AsciiDoc snapshots also save `el.adoc` and `pl.adoc` there.
 pub fn run(stages: &[Stage], path_output: Option<&Path>) -> Result<()> {
     let registration: Registration = harness::load("snapshot")?;
-    let spec = &registration.spec;
     for snapshot in &registration.snapshots {
         if !stages.contains(&snapshot.stage) {
             continue;
         }
+        let spec = &snapshot.spec;
         let text = match snapshot.stage {
             // Print each conversion, ending with a newline
             Stage::Elab => Print::to_string(&p4spectec::elab(spec)?) + "\n",
