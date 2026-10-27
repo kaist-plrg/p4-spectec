@@ -3,14 +3,12 @@
 //! `load` encodes the level above as AL (IL through `Algo_IL` below first)
 //! and makes C = `$load_ctx($empty_ctx, spec)` on the level below.
 //! `lower` turns `name(values)` into `Call_rel(C, name, values)`
-//! or `Call_func(C, name, targs, values)`,
-//! and `raise` maps its relRes or funcRes, OK, UNMATCH, or ERROR,
+//! or `Call_func(C, name, targs, values)`; `raise` maps OK, UNMATCH, or ERROR
 //! to outputs, a mismatch, or a fatal failure.
-//! `host` decodes `Call_builtin_func`, `Call_extern_func`, and `Call_extern_rel`,
-//! and `reply` encodes a native outcome as OK or UNMATCH.
-//! Every path keeps the call's effects; values go through the AL codec.
+//! `host` decodes `Call_builtin_func`, `Call_extern_func`, and `Call_extern_rel`;
+//! `reply` encodes a native outcome as OK or UNMATCH, keeping its effects.
 
-use super::{Below, Call, HostCall, Output, Protocol, unsupported};
+use super::{Below, Call, HostCall, Output, Protocol, Values, unsupported};
 use crate::{
     interface::meta::shared::{
         self as meta, Cache,
@@ -29,6 +27,7 @@ use crate::{
     phrase,
     runner::{Eval, ExternError, InterpreterError},
 };
+use smallvec::smallvec;
 use std::borrow::Cow;
 
 // == Protocol
@@ -47,20 +46,24 @@ impl Protocol for MetaProtocol {
                 let value_spec_il = spec_il
                     .encode(below.arena())
                     .map_err(|error| InterpreterError::Fatal(error.into_report()))?;
-                let call = Call::Rel { name: "Algo_IL", values: Cow::Borrowed(&[value_spec_il]) };
+                let call =
+                    Call::Rel { name: "Algo_IL", values: Values::Borrowed(&[value_spec_il]) };
                 let values = below.call(call)?.into_rel();
                 *value::get::one(&values).map_err(ExternError::from)?
             }
             Level::Base { .. } => unreachable!("the base is never loaded by a level below"),
         };
         // C = $load_ctx($empty_ctx, spec), on the level below
-        let call =
-            Call::Func { name: "empty_ctx", targs: Cow::Borrowed(&[]), values: Cow::Borrowed(&[]) };
+        let call = Call::Func {
+            name: "empty_ctx",
+            targs: Cow::Borrowed(&[]),
+            values: Values::Borrowed(&[]),
+        };
         let value_ctx_empty = below.call(call)?.into_func();
         let call = Call::Func {
             name: "load_ctx",
             targs: Cow::Borrowed(&[]),
-            values: Cow::Borrowed(&[value_ctx_empty, value_spec_al]),
+            values: Values::Borrowed(&[value_ctx_empty, value_spec_al]),
         };
         Ok(below.call(call)?.into_func())
     }
@@ -79,15 +82,15 @@ impl Protocol for MetaProtocol {
                 let [value_id, value_args] = encode::rel_args(arena, cache, &id, values)?;
                 Call::Rel {
                     name: "Call_rel",
-                    values: Cow::Owned(vec![value_ctx, value_id, value_args]),
+                    values: Values::Lowered(smallvec![value_ctx, value_id, value_args]),
                 }
             }
             // Call_func(C, name, targs, values) : funcRes
             Call::Func { targs, values, .. } => {
                 let [value_id, value_targs, value_args] =
                     encode::func_args(arena, cache, &id, targs, values)?;
-                let values = vec![value_ctx, value_id, value_targs, value_args];
-                Call::Rel { name: "Call_func", values: Cow::Owned(values) }
+                let values = smallvec![value_ctx, value_id, value_targs, value_args];
+                Call::Rel { name: "Call_func", values: Values::Lowered(values) }
             }
         };
         Ok(values)

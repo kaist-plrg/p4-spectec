@@ -1,19 +1,17 @@
 //! The P4 level's interpreter at one reentry depth, run through the tower
 //!
-//! For a P4 call `eval_rel(V1Model_parser, values)` on a tower of n levels,
+//! For a P4 call `eval_rel(V1Model_parser, values)`,
 //! `TowerInterp` calls the relation at the top `HostLevel`:
-//! each level above the base runs through its `Protocol`, lowered to a call
+//! each level runs through the `Protocol` below it, lowered to a call
 //! on the level below, down to the depth's `Engine` at `Floor::Base`;
-//! C, the level loaded into the level below, is made once per program.
-//! The base's host calls go up through the levels lent to it
-//! (`boundary::Levels`); a reentry from the P4 host runs on the next `Depth`.
-//! Depths share the base's definitions, each level's C, and the codec caches;
-//! each depth owns its engine and its meta builtins.
+//! C, a level loaded into the level below, is made once per program.
+//! A reentry from the P4 host runs on the next `Depth`, which shares
+//! the base's definitions, C, and the codec caches with this one.
 
 use super::{
     boundary::{Levels, TopMut},
     engine::{Engine, EngineKind, StSpec, StState},
-    protocol::{Below, Call, Output, Protocol, ProtocolKind},
+    protocol::{Below, Call, Output, Protocol, ProtocolKind, Values},
     tower::{Floor, HostLevel, Level},
 };
 use crate::{
@@ -191,9 +189,11 @@ impl<Ext: Extern> TowerCall<'_, '_, Ext> {
 
     /// Returns C of `level`, loading it into the level below on first use.
     fn load_ctx(&mut self, level: HostLevel) -> Result<Value, InterpreterError> {
+        // A level's C lives until the program is reset
         if let Some(value_ctx) = self.levels.ctx(level) {
             return Ok(value_ctx);
         }
+        // Load the specification through the protocol, on the level below
         let env = self.levels.env;
         let mut below = BelowFloor { tower: self, floor: level.below() };
         let value_ctx = env.protocol(level).load(&mut below, env.spec(level))?;
@@ -244,7 +244,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for TowerInterp<'s> {
     ) -> Result<Vec<Value>, InterpreterError> {
         Self::with_tower(ctx, |tower| {
             let level_top = tower.levels.level_top();
-            let call = Call::Rel { name, values: Cow::Borrowed(values) };
+            let call = Call::Rel { name, values: Values::Borrowed(values) };
             tower
                 .call(Floor::Host(level_top), call)
                 .map(Output::into_rel)
@@ -260,7 +260,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for TowerInterp<'s> {
         Self::with_tower(ctx, |tower| {
             let level_top = tower.levels.level_top();
             let call =
-                Call::Func { name, targs: Cow::Borrowed(targs), values: Cow::Borrowed(values) };
+                Call::Func { name, targs: Cow::Borrowed(targs), values: Values::Borrowed(values) };
             tower
                 .call(Floor::Host(level_top), call)
                 .map(Output::into_func)

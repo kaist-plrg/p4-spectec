@@ -76,9 +76,9 @@ impl HostLevel {
     /// The first level above the base.
     pub(in crate::metacirc) const FIRST: Self = Self(NonZeroUsize::MIN);
 
-    /// Returns the level at `number` among all levels, the base at 0.
-    pub(in crate::metacirc) fn new(number: usize) -> Self {
-        Self(NonZeroUsize::new(number).expect("a host level is above the base"))
+    /// Returns the level at `num` among all levels, the base at 0.
+    pub(in crate::metacirc) fn new(num: usize) -> Self {
+        Self(NonZeroUsize::new(num).expect("a host level is above the base"))
     }
 
     /// Returns the level below this one.

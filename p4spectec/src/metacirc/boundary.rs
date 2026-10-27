@@ -1,14 +1,11 @@
 //! Host calls across the boundary below one level of a tower
 //!
-//! The base's specification interprets the levels above it,
-//! so its host calls reach `Levels`, the levels lent for one execution,
-//! and enter `Boundary { level: HostLevel::FIRST }`.
-//! A boundary decodes the call with the protocol of the level below it:
-//! a meta level answers its builtins and sends its own host calls
-//! across the boundary above it, up to the top.
-//! The top answers P4 builtins and externs, or the program's builtins.
-//! A P4 extern that reenters, such as V1Model calling find_var_e
-//! or static_assert reading its arguments,
+//! The base's host calls reach `Levels`, the levels lent for one execution,
+//! and enter `Boundary { level: HostLevel::FIRST }`,
+//! which decodes them with the protocol of the level below it.
+//! A meta level answers its builtins and sends its own host calls up;
+//! the top answers P4 builtins and externs, or the program's builtins.
+//! A P4 extern that reenters, as static_assert does to read its arguments,
 //! runs on the next depth, made on its first use and kept for the program.
 
 use super::{
@@ -94,6 +91,9 @@ impl<'l, Ext: Extern> Levels<'l, Ext> {
     }
 
     /// Returns the level of the top, the highest level with a boundary.
+    ///
+    /// A program top is one level above the last `Level`:
+    /// it has a boundary but no specification, and it never reenters.
     pub(in crate::metacirc) fn level_top(&self) -> HostLevel {
         HostLevel::new(self.caches.len())
     }
@@ -106,6 +106,7 @@ impl<'l, Ext: Extern> Levels<'l, Ext> {
             &mut RunnerContext<'_, TowerInterp<'_>, P4Interface, Ext>,
         ) -> Result<T, InterpreterError>,
     ) -> Eval<T> {
+        // Only the P4 top's interface and extern join the next depth's context
         let Self { env, caches, ctxs, hosts, top, depth_next } = self;
         let env = *env;
         let TopMut::P4 { interface, external } = top else {
@@ -116,6 +117,7 @@ impl<'l, Ext: Extern> Levels<'l, Ext> {
         let depth = depth_next
             .get_or_insert_with(|| Box::new(Depth::new(env.options, env.spec_base, count)));
         let mut interp = depth.lend(env.spec_base, caches, ctxs);
+        // Count the call's effects apart from the calling depth's
         let mut effects = 0;
         let mut ctx = RunnerContext::new(
             arena,
@@ -316,6 +318,14 @@ impl<Ext: Extern> Extern for Levels<'_, Ext> {
     fn clear(&mut self) {}
 }
 
+/// Rejects a host call that reached the stored levels without lending them.
+fn not_lent<T>(name: &str) -> Eval<T, ExternError> {
+    let message = format!(
+        "meta extern {name} reached a meta base run directly; enter it through Tower::eval_program"
+    );
+    Eval::new(Err(ExternError::diagnostic_message(message)), SideEffect::Pure)
+}
+
 /// The base runner never executes with the stored levels as its extern:
 /// `Tower::eval_program` and `SimTower` lend them as `Levels`,
 /// with the spec-meta definitions a reentry runs on.
@@ -330,7 +340,7 @@ impl<Ext: Extern> Extern for Upper<Ext> {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        unsupported(name)
+        not_lent(name)
     }
 
     fn eval_func<Interp, Iface>(
@@ -343,7 +353,7 @@ impl<Ext: Extern> Extern for Upper<Ext> {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        unsupported(name)
+        not_lent(name)
     }
 
     fn clear(&mut self) {

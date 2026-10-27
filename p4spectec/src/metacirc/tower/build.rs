@@ -65,7 +65,8 @@ fn interface_p4(level_top: &Level, spec_base_al: &al::Spec) -> P4Interface {
 
 // == Level construction
 
-/// Prepares the levels above a meta base, up to the P4 top or the program.
+/// Prepares the levels above a meta base, up to the P4 top or the program,
+/// and the protocol of each boundary below them.
 ///
 /// Only a P4 top level uses `external_p4`.
 fn build_upper<Ext: Extern>(
@@ -74,7 +75,7 @@ fn build_upper<Ext: Extern>(
     spec_base_al: &al::Spec,
     options: runner::Config,
     external_p4: Ext,
-) -> Upper<Ext> {
+) -> (Upper<Ext>, Vec<ProtocolKind>) {
     let (top, configs_host) = match config.top_lang() {
         // Above a meta top level is its program; every level above the base is meta
         Lang::Al | Lang::Il => {
@@ -95,7 +96,12 @@ fn build_upper<Ext: Extern>(
     // Each level through the top has C and the codec cache of the boundary below it
     let count = hosts.len() + 1;
     let caches = (0..count).map(|_| Cache::new(options.cache)).collect();
-    Upper { caches, ctxs: vec![None; count], hosts, top, depth_next: None }
+    let upper = Upper { caches, ctxs: vec![None; count], hosts, top, depth_next: None };
+    // spec-meta interprets the level above it at every boundary
+    let protocols = (0..count)
+        .map(|_| ProtocolKind::Meta(MetaProtocol))
+        .collect();
+    (upper, protocols)
 }
 
 // == Tower assembly
@@ -147,29 +153,24 @@ impl<Ext: Extern> Tower<Ext> {
 
         // Only the base runs natively
         let level_top = levels.last().expect("validated nonempty tower");
-        let base = match config.levels[0].lang {
+        let (base, protocols) = match config.levels[0].lang {
             // A P4 base is the whole tower
             Lang::P4 => {
                 let interface = interface_p4(level_top, &spec_base_al);
                 let spec_base = into_runner_spec(config.mode, spec_base_al)?;
-                BaseLayer::P4Spec(Runner::new(arena, spec_base, options, interface, external_p4)?)
+                let runner = Runner::new(arena, spec_base, options, interface, external_p4)?;
+                (BaseLayer::P4Spec(runner), Vec::new())
             }
             // A meta base hosts the levels above it as its extern
             lang_base => {
-                let upper = build_upper(config, level_top, &spec_base_al, options, external_p4);
+                let (upper, protocols) =
+                    build_upper(config, level_top, &spec_base_al, options, external_p4);
                 let interface = interface::meta(lang_base);
                 let spec_base = into_runner_spec(config.mode, spec_base_al)?;
-                BaseLayer::MetaSpec(Runner::new(arena, spec_base, options, interface, upper)?)
+                let runner = Runner::new(arena, spec_base, options, interface, upper)?;
+                (BaseLayer::MetaSpec(runner), protocols)
             }
         };
-        // spec-meta interprets the level above it at every boundary
-        let count = match &base {
-            BaseLayer::P4Spec(_) => 0,
-            BaseLayer::MetaSpec(runner) => runner.external.caches.len(),
-        };
-        let protocols = (0..count)
-            .map(|_| ProtocolKind::Meta(MetaProtocol))
-            .collect();
         Ok(Self { levels, protocols, base, options })
     }
 }

@@ -21,14 +21,32 @@ use crate::{
     },
     runner::{Eval, ExternError, InterpreterError},
 };
-use std::borrow::Cow;
+use smallvec::SmallVec;
+use std::{borrow::Cow, ops::Deref};
 
 // == Calls across a boundary
 
 /// A relation or function call on one level.
 pub(in crate::metacirc) enum Call<'a> {
-    Rel { name: &'a str, values: Cow<'a, [Value]> },
-    Func { name: &'a str, targs: Cow<'a, [Typ]>, values: Cow<'a, [Value]> },
+    Rel { name: &'a str, values: Values<'a> },
+    Func { name: &'a str, targs: Cow<'a, [Typ]>, values: Values<'a> },
+}
+
+/// The values of a `Call`: the caller's, or the few a protocol lowers them to.
+pub(in crate::metacirc) enum Values<'a> {
+    Borrowed(&'a [Value]),
+    Lowered(SmallVec<[Value; 4]>),
+}
+
+impl Deref for Values<'_> {
+    type Target = [Value];
+
+    fn deref(&self) -> &[Value] {
+        match self {
+            Self::Borrowed(values) => values,
+            Self::Lowered(values) => values,
+        }
+    }
 }
 
 /// The outcome of a `Call`, of the same kind.
