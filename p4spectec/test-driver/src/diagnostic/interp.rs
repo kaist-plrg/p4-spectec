@@ -1,6 +1,7 @@
 //! Pinned interpreter failures
 //!
-//! Each source runs through AL, SL, and PL with nat 1 as the input to R.
+//! Each source runs in its registered language,
+//! applying the registered relation to the registered natural-number arguments.
 //! Cases check the runtime failure kind and code before rendering a snapshot.
 //! Setup failures and unexpected success fail the test.
 
@@ -36,19 +37,24 @@ pub enum FailureKind {
 
 // = Execution
 
-/// Checks that R fails with the expected kind and code.
-pub(super) fn reject(
+/// Checks that the relation fails on the arguments with the expected kind and code.
+fn reject(
     name: &str,
     arena: &mut Arena,
     mut runner: Runner<P4Interface, NullExtern>,
+    relation: &str,
+    nats: &[u64],
     kind_expect: FailureKind,
     code: &str,
 ) -> Result<Vec<Report>> {
-    // Keep the entry relation and input common to all cases
-    let value =
-        value::make::nat(arena, 1.into(), Span::default()).map_err(|error| failure(name, error))?;
+    let mut values = Vec::new();
+    for &nat in nats {
+        let value = value::make::nat(arena, nat.into(), Span::default())
+            .map_err(|error| failure(name, error))?;
+        values.push(value);
+    }
     let error = runner
-        .eval_rel(arena, "R", &[value])
+        .eval_rel(arena, relation, &values)
         .result
         .err()
         .ok_or_else(|| failure(name, "relation unexpectedly matched"))?;
@@ -84,8 +90,10 @@ pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     }
     let name = case.name.as_str();
     // Interpreter language and acceptance guards come from the registration
-    let (Some(language), Some(kind), Some(code)) = (case.language, case.kind, &case.code) else {
-        return Err(failure(name, "interpreter requires languages, kind, and code"));
+    let (Some(language), Some(relation), Some(kind), Some(code)) =
+        (case.language, &case.relation, case.kind, &case.code)
+    else {
+        return Err(failure(name, "interpreter requires languages, relation, kind, and code"));
     };
     let config = Config::new(true, case.det, false);
     let paths = std::slice::from_ref(&case.input);
@@ -95,5 +103,5 @@ pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     let spec = language.spec(paths).map_err(|error| failure(name, error))?;
     let runner =
         util::build(&mut arena, spec, config, NullExtern).map_err(|error| failure(name, error))?;
-    reject(name, &mut arena, runner, kind, code)
+    reject(name, &mut arena, runner, relation, &case.nats, kind, code)
 }

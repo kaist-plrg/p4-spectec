@@ -128,6 +128,10 @@ pub struct Case {
     #[serde(skip)]
     pub language: Option<Language>,
     #[serde(default)]
+    pub relation: Option<String>,
+    #[serde(default)]
+    pub nats: Vec<u64>,
+    #[serde(default)]
     pub kind: Option<interp::FailureKind>,
     #[serde(default)]
     pub det: bool,

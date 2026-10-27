@@ -33,6 +33,9 @@ pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
             .ok_or_else(|| failure(&case.name, "simulator accepted negative architecture"))?;
         return Ok(vec![*report]);
     }
+    let (Some(relation), Some(code)) = (&case.relation, &case.code) else {
+        return Err(failure(&case.name, "simulation requires a relation and a code"));
+    };
     let [path_spec, path_include] = case.inputs.as_slice() else {
         return Err(failure(&case.name, "simulation requires specification and include inputs"));
     };
@@ -43,7 +46,7 @@ pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     let report = match runner::run(
         Spec::Al(spec_al),
         config,
-        "Program_ok",
+        relation,
         std::slice::from_ref(path_include),
         path,
     ) {
@@ -53,9 +56,9 @@ pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
         }
         Ok(()) => return Err(failure(&case.name, "simulation accepted negative source")),
     };
-    // Require the actual simulator assertion diagnostic beneath runtime frames
-    if !super::codes(&report).contains(&"sim/assertion-unmet") {
-        return Err(failure(&case.name, "missing simulator assertion failure"));
+    // Require the registered diagnostic beneath runtime frames
+    if !super::codes(&report).contains(&code.as_str()) {
+        return Err(failure(&case.name, format!("missing expected diagnostic {code}")));
     }
     Ok(vec![*report])
 }

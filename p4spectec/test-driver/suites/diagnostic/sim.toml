@@ -1,7 +1,7 @@
 # Simulator diagnostics: `diagnostics --suite sim`.
 # A .watsup input with `arch` must convert to AL and fail simulator admission.
 # A .p4 input with `inputs` = [specification, include directory]
-# must fail `Program_ok` with a `sim/assertion-unmet` report.
+# must fail `relation` with a report containing `code`.
 #
 # Paths in cases are relative to `root`, the working directory while they run.
 # Each case renders its reports and compares the text with `expected`;
@@ -14,8 +14,8 @@ root = "testdata/spec"
 
 cases = [
   { name = "sim-unsupported-architecture", input = "cli/sim/sim-unsupported-architecture.watsup", expected = "cli/sim/sim-unsupported-architecture.expect", arch = "unsupported" },
-  { name = "static-assert-false-custom", input = "cli/sim/static-assert-false-custom.p4", expected = "cli/sim/static-assert-false-custom.expect", inputs = ["../../spec", "../../p4c/p4include"] },
-  { name = "static-assert-false-default", input = "cli/sim/static-assert-false-default.p4", expected = "cli/sim/static-assert-false-default.expect", inputs = ["../../spec", "../../p4c/p4include"] },
+  { name = "static-assert-false-custom", input = "cli/sim/static-assert-false-custom.p4", expected = "cli/sim/static-assert-false-custom.expect", inputs = ["../../spec", "../../p4c/p4include"], relation = "Program_ok", code = "sim/assertion-unmet" },
+  { name = "static-assert-false-default", input = "cli/sim/static-assert-false-default.p4", expected = "cli/sim/static-assert-false-default.expect", inputs = ["../../spec", "../../p4c/p4include"], relation = "Program_ok", code = "sim/assertion-unmet" },
   { name = "sim-al-syntax", input = "cli/sim/sim-al-syntax.args", expected = "cli/sim/sim-syntax.expect", code = "p4/syntax-invalid" },
   { name = "sim-al-undefined-relation", input = "cli/sim/sim-al-undefined-relation.args", expected = "cli/sim/sim-undefined-relation.expect", code = "runtime/binding-undefined" },
   { name = "sim-sl-syntax", input = "cli/sim/sim-sl-syntax.args", expected = "cli/sim/sim-syntax.expect", code = "p4/syntax-invalid" },
