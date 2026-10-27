@@ -35,7 +35,7 @@ use serde::Deserialize;
 
 use p4spectec::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report, ReportKind};
 
-use crate::{Error, Result};
+use crate::{Error, Result, util::Language};
 
 fn failure(name: &str, message: impl std::fmt::Display) -> Error {
     Error::from(format!("{name}: {message}"))
@@ -121,8 +121,19 @@ pub struct Case {
     pub code: Option<String>,
     #[serde(default)]
     pub inputs: Vec<PathBuf>,
+    /// Expands the case into one case per language, each with `language` set.
     #[serde(default)]
-    pub args: Vec<String>,
+    pub languages: Vec<Language>,
+    #[serde(skip)]
+    pub language: Option<Language>,
+    #[serde(default)]
+    pub kind: Option<interp::FailureKind>,
+    #[serde(default)]
+    pub det: bool,
+    #[serde(default)]
+    pub without_rule_groups: bool,
+    #[serde(default)]
+    pub arch: Option<String>,
 }
 
 /// Lists the cases of one diagnostic registration file.
@@ -135,7 +146,19 @@ struct Registration {
 /// Loads the cases registered in `suites/diagnostic/<name>.toml`.
 fn load(name: &str) -> Result<Vec<Case>> {
     let registration: Registration = crate::util::load(&format!("diagnostic/{name}"))?;
-    Ok(registration.cases)
+    let mut cases = Vec::new();
+    for case in registration.cases {
+        // Expand a case listing languages into one case per language
+        if case.languages.is_empty() {
+            cases.push(case);
+            continue;
+        }
+        for &language in &case.languages {
+            let name = format!("{}-{}", case.name, language.name());
+            cases.push(Case { name, language: Some(language), ..case.clone() });
+        }
+    }
+    Ok(cases)
 }
 
 impl Case {

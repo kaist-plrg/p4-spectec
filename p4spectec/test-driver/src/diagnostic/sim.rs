@@ -22,11 +22,8 @@ pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     let config = Config::new(true, false, false);
     // A source specification exercises architecture admission normally
     if path.extension().is_some_and(|ext| ext == "watsup") {
-        let [arch] = case.args.as_slice() else {
-            return Err(failure(
-                &case.name,
-                "architecture case requires one architecture argument",
-            ));
+        let Some(arch) = &case.arch else {
+            return Err(failure(&case.name, "architecture case requires an architecture"));
         };
         let spec_al = p4spectec::algo(std::slice::from_ref(path)).map_err(|report| {
             failure(&case.name, format!("conversion failed before simulator admission: {report}"))

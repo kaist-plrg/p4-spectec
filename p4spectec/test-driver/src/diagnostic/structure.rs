@@ -17,13 +17,8 @@ pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     let spec_al = p4spectec::algo(std::slice::from_ref(&case.input)).map_err(|report| {
         failure(&case.name, format!("conversion failed before structuring: {report}"))
     })?;
-    let without_rule_groups = match case.args.as_slice() {
-        [] => false,
-        [arg] if arg == "without-rule-groups" => true,
-        _ => return Err(failure(&case.name, "invalid structure arguments")),
-    };
     // Reject success even when promoting expectations
-    let report = structure::convert(spec_al, without_rule_groups)
+    let report = structure::convert(spec_al, case.without_rule_groups)
         .err()
         .ok_or_else(|| failure(&case.name, "structuring accepted negative input"))?;
     Ok(vec![*report])

@@ -17,16 +17,19 @@ use p4spectec::runner::{Config, InterpreterError, NullExtern, Runner};
 
 use crate::{
     Result,
-    util::{self, Language},
+    util::{self},
 };
+
+use serde::Deserialize;
 
 use super::{Case, failure};
 
 // = Expectations
 
 /// Distinguishes fatal failures from recoverable mismatches.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum FailureKind {
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum FailureKind {
     Fatal,
     Mismatch,
 }
@@ -81,24 +84,11 @@ pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     }
     let name = case.name.as_str();
     // Interpreter language and acceptance guards come from the registration
-    let [stage, arg_kind, code, arg_det] = case.args.as_slice() else {
-        return Err(failure(name, "interpreter requires stage, kind, code, and det arguments"));
+    let (Some(language), Some(kind), Some(code)) = (case.language, case.kind, &case.code) else {
+        return Err(failure(name, "interpreter requires languages, kind, and code"));
     };
-    let kind = match arg_kind.as_str() {
-        "fatal" => FailureKind::Fatal,
-        "mismatch" => FailureKind::Mismatch,
-        _ => return Err(failure(name, "invalid interpreter failure kind")),
-    };
-    let det = arg_det.parse().map_err(|error| failure(name, error))?;
-    let config = Config::new(true, det, false);
+    let config = Config::new(true, case.det, false);
     let paths = std::slice::from_ref(&case.input);
-
-    let language = match stage.as_str() {
-        "al" => Language::Al,
-        "sl" => Language::Sl,
-        "pl" => Language::Pl,
-        _ => return Err(failure(name, "unknown interpreter stage")),
-    };
 
     // Keep parse, elaboration, lowering, and loading failures out of snapshots
     let mut arena = Arena::new();
