@@ -9,7 +9,7 @@
 //! the base's definitions, C, and the codec caches with this one.
 
 use super::{
-    engine::{Engine, EngineKind, SpecTecEngine, SpecTecSpec, SpecTecState},
+    engine::{Engine, EngineKind, SpecTecEngine, SpecTecEngineState, SpecTecSpec},
     protocol::{Below, Call, Output, Protocol, ProtocolKind, Values},
     tower::{HostLevel, LevelAt, LevelSpec, TopMut, UpperMut},
 };
@@ -240,7 +240,7 @@ impl<Ext: Extern> Below for LevelBelow<'_, '_, '_, Ext> {
 
 /// The state of one reentry depth beneath the base.
 pub(in crate::metacirc) struct TowerInterpState {
-    engine: SpecTecState,
+    engine: SpecTecEngineState,
     /// The meta builtins of each level between the base and the top.
     hosts: Vec<MetaInterface>,
     next: Option<Box<TowerInterpState>>,
@@ -255,7 +255,7 @@ impl TowerInterpState {
         count: usize,
     ) -> Self {
         Self {
-            engine: SpecTecState::new(options, spec_base),
+            engine: SpecTecEngineState::new(options, spec_base),
             hosts: (0..count).map(|_| interface::meta(Lang::Al)).collect(),
             next: None,
         }

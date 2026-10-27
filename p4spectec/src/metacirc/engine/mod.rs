@@ -8,7 +8,7 @@
 
 mod spectec;
 
-pub(super) use spectec::{SpecTecEngine, SpecTecSpec, SpecTecState};
+pub(super) use spectec::{SpecTecEngine, SpecTecEngineState, SpecTecSpec};
 
 use super::tower::UpperMut;
 use crate::{

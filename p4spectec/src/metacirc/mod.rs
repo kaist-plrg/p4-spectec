@@ -10,12 +10,12 @@
 //! ```text
 //! Tower
 //! ├─ specs: [LevelSpec]
-//! ├─ protocols: [ProtocolKind]                     : Protocol
+//! ├─ protocols: [ProtocolKind]                          : Protocol
 //! └─ BaseRunner
-//!    └─ Upper               ─lend→ UpperMut        : Extern
-//!       ├─ Top              ─lend→ TopMut
-//!       └─ TowerInterpState ─lend→ TowerInterp     : Interpreter
-//!          └─ SpecTecState  ─lend→ SpecTecEngine   : Engine
+//!    └─ Upper                    ─lend→ UpperMut        : Extern
+//!       ├─ Top                   ─lend→ TopMut
+//!       └─ TowerInterpState      ─lend→ TowerInterp     : Interpreter
+//!          └─ SpecTecEngineState ─lend→ SpecTecEngine   : Engine
 //! ```
 
 mod boundary;

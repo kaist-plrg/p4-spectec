@@ -3,7 +3,7 @@
 //! `SpecTecEngine` pairs the base's definitions, in the representation it executes,
 //! with one depth's interpreter of them and that depth's meta builtins.
 //! Depth 0 borrows the base runner's (`SpecTecEngine::lend_base`);
-//! a deeper depth owns a `SpecTecState` interpreting the same representation
+//! a deeper depth owns a `SpecTecEngineState` interpreting the same representation
 //! and lends it with `SpecTecEngine::lend_depth`.
 
 use super::super::tower::UpperMut;
@@ -58,7 +58,7 @@ impl<'s> SpecTecEngine<'s> {
 
     /// Lends a deeper depth's state, interpreting the base's `spec`.
     pub(in crate::metacirc) fn lend_depth(
-        state: &'s mut SpecTecState,
+        state: &'s mut SpecTecEngineState,
         spec: SpecTecSpec<'s>,
     ) -> Self {
         let backend = match (spec, &mut state.interp) {
@@ -177,7 +177,7 @@ pub(in crate::metacirc) enum SpecTecSpec<'s> {
 // == Depth state
 
 /// The engine state a depth beneath the base owns.
-pub(in crate::metacirc) struct SpecTecState {
+pub(in crate::metacirc) struct SpecTecEngineState {
     interp: SpecTecInterp,
     interface: MetaInterface,
 }
@@ -188,7 +188,7 @@ enum SpecTecInterp {
     Sl(SlInterp),
 }
 
-impl SpecTecState {
+impl SpecTecEngineState {
     /// Makes the state of a depth interpreting `spec`.
     pub(in crate::metacirc) fn new(options: runner::Config, spec: SpecTecSpec<'_>) -> Self {
         let interp = match spec {
