@@ -102,14 +102,13 @@ pub struct RunConfig {
     pub suites: Vec<RunSuite>,
 }
 
-/// Names the main driver's simulation suites run through one P4 tower per conversion.
+/// Names the P4 tower per conversion that runs the main driver's simulation suites.
 ///
 /// The suites keep their corpus pairing, exclusions, and expected files.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SimConfig {
     pub towers: ByConversion<PathBuf>,
-    pub suites: Vec<String>,
 }
 
 /// Names each runner's registration file without storing its tests.
@@ -184,10 +183,9 @@ pub fn load_run(path: &Path) -> Result<RunConfig> {
     Ok(config)
 }
 
-/// Loads the simulation suite names and their P4 towers.
+/// Loads the P4 towers of simulation.
 pub fn load_sim(path: &Path) -> Result<SimConfig> {
     let mut config: SimConfig = load(path)?;
-    names_valid(config.suites.iter().map(String::as_str))?;
     let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
     for tower in config.towers.iter_mut() {
         let config_tower = tower_resolve(path_parent, tower, "simulation tower")?;

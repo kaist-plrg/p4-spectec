@@ -172,9 +172,9 @@ make test-metacirc-sim-meta
 each expected to succeed or fail as its suite in `suites/metacirc/run.json`
 registers. `test-metacirc-run` runs the `test-run-sl` corpus through the AL/P4
 tower and requires the p4c submodule. Both check determinism.
-`test-metacirc-sim` runs the simulation suites named in
-`suites/metacirc/sim.json`, the v1model and ebpf regression suites,
-through the AL/P4 tower against the native simulation expectations.
+`test-metacirc-sim` runs the `test-sim-sl` corpus, every suite of
+`suites/sim.json`, through the AL/P4 tower that `suites/metacirc/sim.json`
+names, against the native simulation expectations; it requires the p4c submodule.
 `suites/metacirc/metacirc.json` indexes these and the snapshot registrations.
 
 The `-meta` targets run the same suites with `--algo meta`:
@@ -184,7 +184,8 @@ native `algo` pass. They share the expectations of the native runs;
 sources whose outcome differs are listed in the `meta` exclusions.
 The driver's `run` and `sim` subcommands take `--algo`;
 `run` selects suites with `--input al` or `--input p4`,
-or one registered suite with `--suite <NAME>`, for example `--suite neg-run`.
+and both select one registered suite with `--suite <NAME>`,
+for example `run --suite neg-run` or `sim --suite v1model-regression`.
 
 ## Specification snapshots
 

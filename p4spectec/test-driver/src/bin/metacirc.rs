@@ -42,6 +42,9 @@ enum Command {
     },
     /// Compare registered simulation suites through a tower with native expectations
     Sim {
+        /// Run only the registered simulation suite with this name.
+        #[arg(long, value_name = "NAME")]
+        suite: Option<String>,
         /// Convert IL to AL natively or by the meta specification's `Algo_IL`.
         #[arg(long = "algo", value_enum, default_value_t)]
         conversion: Conversion,
@@ -99,10 +102,10 @@ fn execute(cli: Cli) -> Result<()> {
             let config = metacirc::suite::load_run(&modules.run)?;
             run(config, suite, input, conversion, options)
         }
-        Command::Sim { conversion, options } => {
+        Command::Sim { suite, conversion, options } => {
             let config_sim = suite::load_sim(&index.suites.sim)?;
             let config = metacirc::suite::load_sim(&modules.sim)?;
-            metacirc::sim::run(&config_sim, &config, conversion, options)
+            metacirc::sim::run(&config_sim, &config, suite.as_deref(), conversion, options)
         }
         // Snapshot and codec checks compile the meta specification without executing it
         Command::Elab => elab::run(&suite::load_snapshots(&modules.elab)?),
