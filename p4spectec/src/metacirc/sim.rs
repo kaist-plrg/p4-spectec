@@ -4,7 +4,7 @@
 //! at its base, each level above interprets the next through spec-meta,
 //! and the P4 host with the architecture is the top of the tower's `Upper`.
 //! For each STF operation, `with_context` reaches that host
-//! and lends it the base's native interpreter as depth 0 (`MetaInterp`),
+//! and lends it the base's native interpreter as depth 0 (`TowerInterp`),
 //! so the architecture drives the levels' execution of the P4 specification;
 //! deeper depths are made when the architecture reenters.
 //! `build_simulator` selects the architecture and boxes the tower as a `Simulator`.
@@ -12,8 +12,9 @@
 use super::{
     ExecutionMode, Result, TowerConfig,
     config::Lang,
+    engine::{EngineKind, StEngine},
     error::{config_invalid, input_invalid},
-    reentry::{MetaEnv, MetaInterp, Native},
+    interp::{TowerEnv, TowerInterp},
     tower::{BaseLayer, Top, Tower, Upper},
 };
 use crate::{
@@ -68,24 +69,25 @@ impl<Arch: Architecture> SimTower<Arch> {
     fn with_context<T>(
         &mut self,
         arena: &mut Arena,
-        body: impl FnOnce(&mut RunnerContext<'_, MetaInterp<'_>, P4Interface, Arch>) -> T,
+        body: impl FnOnce(&mut RunnerContext<'_, TowerInterp<'_>, P4Interface, Arch>) -> T,
     ) -> T {
-        let Tower { levels, base, options } = &mut self.tower;
+        let Tower { levels, protocols, base, options } = &mut self.tower;
         // Reach depth 0 and the P4 host in the base runner
         let BaseLayer::MetaSpec(runner) = base else {
             unreachable!("a simulated tower has a meta base");
         };
         let Runner { backend, interface, external: upper, .. } = runner;
-        let (native, spec_meta) = Native::lend(backend, interface);
+        let (engine, spec_base) = StEngine::lend_base(backend, interface);
         // Lend the levels' storage at depth 0 and reach the P4 top
         let Upper { caches, ctxs, hosts, top, depth_next } = upper;
         let Top::P4(host) = top else {
             unreachable!("a simulated tower has a P4 top level");
         };
         // Share the definitions, and lend depth 0 to the host
-        let env = MetaEnv { spec_meta, levels, options: *options };
-        let mut meta = MetaInterp { native, hosts, depth_next, caches, ctxs };
-        host.with_context(arena, &env, &mut meta, body)
+        let env = TowerEnv { spec_base, levels, protocols, options: *options };
+        let engine = EngineKind::St(engine);
+        let mut interp = TowerInterp { engine, hosts, depth_next, caches, ctxs };
+        host.with_context(arena, &env, &mut interp, body)
     }
 
     // - STF execution

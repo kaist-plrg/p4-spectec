@@ -1,14 +1,16 @@
-//! Host-call arguments and results at one AL representation boundary
+//! spec-meta's protocol: the level above is AL, and calls go through Call_rel
 //!
-//! Calls decode identifiers, types, and values through the shared AL codec.
-//! Successful native calls become OK; exhausted alternatives become UNMATCH.
-//! Fatal errors remain diagnostics, and every path retains the call's effects.
-//!
-//! The reverse direction enters the meta specification from the host:
-//! `encode::rel_args` builds the name and inputs of `Call_rel`,
-//! and `decode::rel_result` maps OK, UNMATCH, and ERROR back to native outcomes.
+//! `load` encodes the level above as AL (IL through `Algo_IL` below first)
+//! and makes C = `$load_ctx($empty_ctx, spec)` on the level below.
+//! `lower` turns `name(values)` into `Call_rel(C, name, values)`
+//! or `Call_func(C, name, targs, values)`,
+//! and `raise` maps its relRes or funcRes, OK, UNMATCH, or ERROR,
+//! to outputs, a mismatch, or a fatal failure.
+//! `host` decodes `Call_builtin_func`, `Call_extern_func`, and `Call_extern_rel`,
+//! and `reply` encodes a native outcome as OK or UNMATCH.
+//! Every path keeps the call's effects; values go through the AL codec.
 
-use super::super::error;
+use super::{Below, Call, HostCall, Output, Protocol, unsupported};
 use crate::{
     interface::meta::shared::{
         self as meta, Cache,
@@ -19,12 +21,151 @@ use crate::{
         common::source::Span,
         data::{
             arena::Arena,
-            value::flat::{Value, get, make},
+            value::flat::{self as value, Value, get, make},
         },
         il::ast::{Id, Typ},
     },
+    metacirc::{error, tower::Level},
+    phrase,
     runner::{Eval, ExternError, InterpreterError},
 };
+use std::borrow::Cow;
+
+// == Protocol
+
+/// The protocol of spec-meta toward the AL or IL specification above it.
+pub(in crate::metacirc) struct MetaProtocol;
+
+impl Protocol for MetaProtocol {
+    fn load(&self, below: &mut dyn Below, above: &Level) -> Result<Value, InterpreterError> {
+        // Encode the specification as AL, converting IL through spec-meta below
+        let value_spec_al = match above {
+            Level::AboveAl { spec_al, .. } => spec_al
+                .encode(below.arena())
+                .map_err(|error| InterpreterError::Fatal(error.into_report()))?,
+            Level::AboveIl { spec_il, .. } => {
+                let value_spec_il = spec_il
+                    .encode(below.arena())
+                    .map_err(|error| InterpreterError::Fatal(error.into_report()))?;
+                let call = Call::Rel { name: "Algo_IL", values: Cow::Borrowed(&[value_spec_il]) };
+                let values = below.call(call)?.into_rel();
+                *value::get::one(&values).map_err(ExternError::from)?
+            }
+            Level::Base { .. } => unreachable!("the base is never loaded by a level below"),
+        };
+        // C = $load_ctx($empty_ctx, spec), on the level below
+        let call =
+            Call::Func { name: "empty_ctx", targs: Cow::Borrowed(&[]), values: Cow::Borrowed(&[]) };
+        let value_ctx_empty = below.call(call)?.into_func();
+        let call = Call::Func {
+            name: "load_ctx",
+            targs: Cow::Borrowed(&[]),
+            values: Cow::Borrowed(&[value_ctx_empty, value_spec_al]),
+        };
+        Ok(below.call(call)?.into_func())
+    }
+
+    fn lower(
+        &self,
+        arena: &mut Arena,
+        cache: &mut Cache,
+        value_ctx: Value,
+        call: &Call<'_>,
+    ) -> Result<Call<'static>, InterpreterError> {
+        let id = phrase!(node: call.name().into(), span: Span::default());
+        let values = match call {
+            // Call_rel(C, name, values) : relRes
+            Call::Rel { values, .. } => {
+                let [value_id, value_args] = encode::rel_args(arena, cache, &id, values)?;
+                Call::Rel {
+                    name: "Call_rel",
+                    values: Cow::Owned(vec![value_ctx, value_id, value_args]),
+                }
+            }
+            // Call_func(C, name, targs, values) : funcRes
+            Call::Func { targs, values, .. } => {
+                let [value_id, value_targs, value_args] =
+                    encode::func_args(arena, cache, &id, targs, values)?;
+                let values = vec![value_ctx, value_id, value_targs, value_args];
+                Call::Rel { name: "Call_func", values: Cow::Owned(values) }
+            }
+        };
+        Ok(values)
+    }
+
+    fn raise(
+        &self,
+        arena: &mut Arena,
+        cache: &mut Cache,
+        output: Output,
+        call: &Call<'_>,
+    ) -> Result<Output, InterpreterError> {
+        let values_res = output.into_rel();
+        let value_res = *value::get::one(&values_res).map_err(ExternError::from)?;
+        match call {
+            // OK outputs, UNMATCH a mismatch, ERROR a fatal failure
+            Call::Rel { name, .. } => {
+                decode::rel_result(arena, cache, value_res, name).map(Output::Rel)
+            }
+            // OK the result, UNMATCH a mismatch, ERROR a fatal failure
+            Call::Func { name, .. } => {
+                decode::func_result(arena, cache, value_res, name).map(Output::Func)
+            }
+        }
+    }
+
+    fn host(
+        &self,
+        arena: &mut Arena,
+        cache: &mut Cache,
+        name: &str,
+        values: &[Value],
+    ) -> Result<HostCall, ExternError> {
+        match name {
+            // Builtins are answered by the interface of the level above
+            "Call_builtin_func" => {
+                let (id, targs, values) = decode::func_args(arena, cache, values)?;
+                Ok(HostCall::Builtin { id, targs, values })
+            }
+            // Host functions are answered by the extern of the level above
+            "Call_extern_func" => {
+                let (id, targs, values) = decode::func_args(arena, cache, values)?;
+                Ok(HostCall::ExternFunc { id, targs, values })
+            }
+            // Host relations return an ordered list of outputs
+            "Call_extern_rel" => {
+                let (id, values) = decode::rel_args(arena, cache, values)?;
+                Ok(HostCall::ExternRel { id, values })
+            }
+            // Host calls are reached through the three declared meta relations
+            _ => Err(unsupported(name)),
+        }
+    }
+
+    fn reply(
+        &self,
+        arena: &mut Arena,
+        cache: &mut Cache,
+        call: &HostCall,
+        eval: Eval<Output>,
+    ) -> Eval<Vec<Value>, ExternError> {
+        let Eval { result, effect } = eval;
+        match call {
+            // A function outcome is funcRes
+            HostCall::Builtin { .. } | HostCall::ExternFunc { .. } => {
+                let eval = Eval::new(result.map(Output::into_func), effect);
+                encode::func_result(arena, cache, eval)
+            }
+            // A relation outcome is relRes
+            HostCall::ExternRel { .. } => {
+                let eval = Eval::new(result.map(Output::into_rel), effect);
+                encode::rel_result(arena, cache, eval)
+            }
+        }
+    }
+}
+
+// == Codec
 
 /// Constructors of the meta specification's call results.
 mod m {
@@ -34,7 +175,7 @@ mod m {
 }
 
 /// Decoding of host-call arguments and meta call results.
-pub(in crate::metacirc) mod decode {
+mod decode {
     use super::*;
 
     /// Decodes one checked AL representation without flattening its diagnostic.
@@ -48,7 +189,7 @@ pub(in crate::metacirc) mod decode {
     }
 
     /// Decodes the three arguments shared by builtin and extern function calls.
-    pub(in crate::metacirc) fn func_args(
+    pub(super) fn func_args(
         arena: &mut Arena,
         cache: &mut Cache,
         values: &[Value],
@@ -66,7 +207,7 @@ pub(in crate::metacirc) mod decode {
     }
 
     /// Decodes an extern relation name and its input values.
-    pub(in crate::metacirc) fn rel_args(
+    pub(super) fn rel_args(
         arena: &mut Arena,
         cache: &mut Cache,
         values: &[Value],
@@ -92,7 +233,7 @@ pub(in crate::metacirc) mod decode {
     }
 
     /// Decodes a funcRes into the native function result.
-    pub(in crate::metacirc) fn func_result(
+    pub(super) fn func_result(
         arena: &mut Arena,
         cache: &mut Cache,
         value: Value,
@@ -103,7 +244,7 @@ pub(in crate::metacirc) mod decode {
     }
 
     /// Decodes a relRes into the native relation outputs.
-    pub(in crate::metacirc) fn rel_result(
+    pub(super) fn rel_result(
         arena: &mut Arena,
         cache: &mut Cache,
         value: Value,
@@ -115,11 +256,11 @@ pub(in crate::metacirc) mod decode {
 }
 
 /// Encoding of call arguments and native outcomes.
-pub(in crate::metacirc) mod encode {
+mod encode {
     use super::*;
 
     /// Encodes a function name, type arguments, and values for `Call_func`.
-    pub(in crate::metacirc) fn func_args(
+    pub(super) fn func_args(
         arena: &mut Arena,
         cache: &mut Cache,
         id: &Id,
@@ -137,7 +278,7 @@ pub(in crate::metacirc) mod encode {
     }
 
     /// Encodes a relation name and its input values for `Call_rel`.
-    pub(in crate::metacirc) fn rel_args(
+    pub(super) fn rel_args(
         arena: &mut Arena,
         cache: &mut Cache,
         id: &Id,
@@ -187,7 +328,7 @@ pub(in crate::metacirc) mod encode {
     }
 
     /// Encodes a native function outcome as funcRes.
-    pub(in crate::metacirc) fn func_result(
+    pub(super) fn func_result(
         arena: &mut Arena,
         cache: &mut Cache,
         eval: Eval<Value>,
@@ -198,7 +339,7 @@ pub(in crate::metacirc) mod encode {
     }
 
     /// Encodes a native relation outcome as relRes.
-    pub(in crate::metacirc) fn rel_result(
+    pub(super) fn rel_result(
         arena: &mut Arena,
         cache: &mut Cache,
         eval: Eval<Vec<Value>>,

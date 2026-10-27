@@ -12,7 +12,9 @@ mod patch;
 
 use super::{
     config::LevelConfig,
-    reentry::{MetaDepth, MetaEnv, Native},
+    engine::{Engine, EngineKind, StEngine},
+    interp::{Depth, TowerEnv},
+    protocol::ProtocolKind,
 };
 use crate::{
     interface::{
@@ -34,6 +36,8 @@ use std::num::NonZeroUsize;
 pub struct Tower<Ext: Extern = Dummy> {
     // Nonempty, ordered from base through intermediates to the top level
     pub(super) levels: Vec<Level>,
+    /// The protocol of the boundary below each level above the base.
+    pub(super) protocols: Vec<ProtocolKind>,
     pub(super) base: BaseLayer<Ext>,
     /// Options for the interpreters of reentry depths.
     pub(super) options: runner::Config,
@@ -130,18 +134,18 @@ impl<Ext: Extern> Tower<Ext> {
 
     /// Executes a patched input at the native base's entry relation.
     pub fn eval_program(&mut self, arena: &mut Arena, program: Value) -> Eval<Vec<Value>> {
-        let Self { levels, base, options } = self;
+        let Self { levels, protocols, base, options } = self;
         let name = &levels[0].config().rel;
         match base {
             // A P4 base runs the program directly
             BaseLayer::P4Spec(runner) => runner.eval_program(arena, name, program),
-            // A meta base lends the levels above it with spec-meta's definitions
+            // A meta base lends the levels above it with its definitions
             BaseLayer::MetaSpec(runner) => {
                 let Runner { backend, interface, external: upper, effects } = runner;
-                let (mut native, spec_meta) = Native::lend(backend, interface);
-                let env = MetaEnv { spec_meta, levels, options: *options };
+                let (engine, spec_base) = StEngine::lend_base(backend, interface);
+                let env = TowerEnv { spec_base, levels, protocols, options: *options };
                 let mut levels = upper.lend(&env);
-                native.call_program(arena, &mut levels, effects, name, program)
+                EngineKind::St(engine).call_program(arena, &mut levels, effects, name, program)
             }
         }
     }
@@ -175,7 +179,7 @@ pub(in crate::metacirc) struct Upper<Ext: Extern> {
     pub hosts: Vec<MetaInterface>,
     pub top: Top<Ext>,
     /// Depths 1 and deeper, made on the first reentry of a program.
-    pub depth_next: Option<Box<MetaDepth>>,
+    pub depth_next: Option<Box<Depth>>,
 }
 
 /// The highest level above a meta base.

@@ -3,17 +3,17 @@
 //! The base's specification interprets the levels above it,
 //! so its host calls reach `Levels`, the levels lent for one execution,
 //! and enter `Boundary { level: HostLevel::FIRST }`.
-//! A boundary decodes one representation layer (`relay::codec`) for its level:
+//! A boundary decodes the call with the protocol of the level below it:
 //! a meta level answers its builtins and sends its own host calls
 //! across the boundary above it, up to the top.
 //! The top answers P4 builtins and externs, or the program's builtins.
 //! A P4 extern that reenters, such as V1Model calling find_var_e
-//! or static_assert evaluating its condition,
+//! or static_assert reading its arguments,
 //! runs on the next depth, made on its first use and kept for the program.
 
 use super::{
-    reentry::{MetaDepth, MetaEnv, MetaInterp},
-    relay::codec,
+    interp::{Depth, TowerEnv, TowerInterp},
+    protocol::{self, HostCall, Output, Protocol},
     tower::{HostLevel, Top, Upper},
 };
 use crate::{
@@ -36,7 +36,7 @@ use crate::{
 /// The levels above the base, borrowed for one execution of the base's specification.
 pub(in crate::metacirc) struct Levels<'l, Ext: Extern> {
     /// Definitions shared by every depth, which a reentry runs on.
-    pub env: &'l MetaEnv<'l>,
+    pub env: &'l TowerEnv<'l>,
     /// The codec cache of the boundary below each level, shared by every depth.
     pub caches: &'l mut [Cache],
     /// C of each level for the current program, shared by every depth.
@@ -45,7 +45,7 @@ pub(in crate::metacirc) struct Levels<'l, Ext: Extern> {
     pub hosts: &'l mut [MetaInterface],
     pub top: TopMut<'l, Ext>,
     /// The depths beneath this one, which answer reentry.
-    pub depth_next: &'l mut Option<Box<MetaDepth>>,
+    pub depth_next: &'l mut Option<Box<Depth>>,
 }
 
 /// The top of `Levels`, borrowed from `Top` or from the context of a P4 call.
@@ -58,7 +58,7 @@ pub(in crate::metacirc) enum TopMut<'l, Ext: Extern> {
 
 impl<Ext: Extern> Upper<Ext> {
     /// Lends the stored levels at depth 0, with the definitions reentry runs on.
-    pub(in crate::metacirc) fn lend<'l>(&'l mut self, env: &'l MetaEnv<'l>) -> Levels<'l, Ext> {
+    pub(in crate::metacirc) fn lend<'l>(&'l mut self, env: &'l TowerEnv<'l>) -> Levels<'l, Ext> {
         let top = match &mut self.top {
             Top::P4(host) => {
                 let (interface, external) = host.parts_mut();
@@ -103,7 +103,7 @@ impl<'l, Ext: Extern> Levels<'l, Ext> {
         &mut self,
         arena: &mut Arena,
         call: impl FnOnce(
-            &mut RunnerContext<'_, MetaInterp<'_>, P4Interface, Ext>,
+            &mut RunnerContext<'_, TowerInterp<'_>, P4Interface, Ext>,
         ) -> Result<T, InterpreterError>,
     ) -> Eval<T> {
         let Self { env, caches, ctxs, hosts, top, depth_next } = self;
@@ -114,8 +114,8 @@ impl<'l, Ext: Extern> Levels<'l, Ext> {
         // The next depth lives until the program is reset
         let count = hosts.len();
         let depth = depth_next
-            .get_or_insert_with(|| Box::new(MetaDepth::new(env.options, env.spec_meta, count)));
-        let mut interp = depth.lend(env.spec_meta, caches, ctxs);
+            .get_or_insert_with(|| Box::new(Depth::new(env.options, env.spec_base, count)));
+        let mut interp = depth.lend(env.spec_base, caches, ctxs);
         let mut effects = 0;
         let mut ctx = RunnerContext::new(
             arena,
@@ -145,6 +145,30 @@ where
 
 // == Boundary
 
+/// The levels above a boundary, answering the host calls decoded below it.
+pub(in crate::metacirc) trait HostCalls {
+    /// Calls a decoded builtin at this level.
+    fn builtin(
+        &mut self,
+        arena: &mut Arena,
+        id: &Id,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Eval<Value>;
+
+    /// Calls a decoded host relation at this level.
+    fn extern_rel(&mut self, arena: &mut Arena, name: &str, values: &[Value]) -> Eval<Vec<Value>>;
+
+    /// Calls a decoded host function at this level.
+    fn extern_func(
+        &mut self,
+        arena: &mut Arena,
+        name: &str,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Eval<Value>;
+}
+
 /// The boundary below `level`, sending decoded host calls up to it.
 pub(in crate::metacirc) struct Boundary<'b, 'l, Ext: Extern> {
     pub levels: &'b mut Levels<'l, Ext>,
@@ -153,18 +177,10 @@ pub(in crate::metacirc) struct Boundary<'b, 'l, Ext: Extern> {
 
 /// Rejects an operation outside the host boundary's contract.
 fn unsupported<T>(name: &str) -> Eval<T, ExternError> {
-    Eval::new(
-        Err(ExternError::diagnostic_message(format!("unsupported meta extern: {name}"))),
-        SideEffect::Pure,
-    )
+    Eval::new(Err(protocol::unsupported(name)), SideEffect::Pure)
 }
 
 impl<Ext: Extern> Boundary<'_, '_, Ext> {
-    /// Returns the codec cache of this boundary.
-    fn cache(&mut self) -> &mut Cache {
-        self.levels.cache(self.level)
-    }
-
     /// Returns whether this boundary is below the top.
     fn is_top(&self) -> bool {
         self.level == self.levels.level_top()
@@ -177,43 +193,39 @@ impl<Ext: Extern> Boundary<'_, '_, Ext> {
         name: &str,
         values: &[Value],
     ) -> Eval<Vec<Value>, ExternError> {
-        match name {
+        let env = self.levels.env;
+        let protocol = env.protocol(self.level);
+        // Decode with the protocol of the level below
+        let call = match protocol.host(arena, self.levels.cache(self.level), name, values) {
+            Ok(call) => call,
+            Err(error) => return Eval::new(Err(error), SideEffect::Pure),
+        };
+        let eval = match &call {
             // Builtins are answered by this level's interface
-            "Call_builtin_func" => {
-                let (id, targs, values) =
-                    match codec::decode::func_args(arena, self.cache(), values) {
-                        Ok(args) => args,
-                        Err(error) => return Eval::new(Err(error), SideEffect::Pure),
-                    };
-                let eval = self.eval_builtin(arena, &id, &targs, &values);
-                codec::encode::func_result(arena, self.cache(), eval)
-            }
-            // Host functions are answered by this level's extern
-            "Call_extern_func" => {
-                let (id, targs, values) =
-                    match codec::decode::func_args(arena, self.cache(), values) {
-                        Ok(args) => args,
-                        Err(error) => return Eval::new(Err(error), SideEffect::Pure),
-                    };
-                let eval = self.eval_extern_func(arena, &id.node, &targs, &values);
-                codec::encode::func_result(arena, self.cache(), eval)
+            HostCall::Builtin { id, targs, values } => {
+                into_output(self.builtin(arena, id, targs, values), Output::Func)
             }
             // Host relations return an ordered list of outputs
-            "Call_extern_rel" => {
-                let (id, values) = match codec::decode::rel_args(arena, self.cache(), values) {
-                    Ok(args) => args,
-                    Err(error) => return Eval::new(Err(error), SideEffect::Pure),
-                };
-                let eval = self.eval_extern_rel(arena, &id.node, &values);
-                codec::encode::rel_result(arena, self.cache(), eval)
+            HostCall::ExternRel { id, values } => {
+                into_output(self.extern_rel(arena, &id.node, values), Output::Rel)
             }
-            // Host functions are reached through the three declared meta relations
-            _ => unsupported(name),
-        }
+            // Host functions are answered by this level's extern
+            HostCall::ExternFunc { id, targs, values } => {
+                into_output(self.extern_func(arena, &id.node, targs, values), Output::Func)
+            }
+        };
+        // Encode the outcome for the level below
+        protocol.reply(arena, self.levels.cache(self.level), &call, eval)
     }
+}
 
-    /// Calls a decoded builtin at this level.
-    fn eval_builtin(
+/// Wraps the result of an evaluation as an `Output`.
+fn into_output<T>(eval: Eval<T>, output: impl FnOnce(T) -> Output) -> Eval<Output> {
+    Eval::new(eval.result.map(output), eval.effect)
+}
+
+impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
+    fn builtin(
         &mut self,
         arena: &mut Arena,
         id: &Id,
@@ -232,13 +244,7 @@ impl<Ext: Extern> Boundary<'_, '_, Ext> {
         eval.map_err(Into::into)
     }
 
-    /// Calls a decoded host relation at this level.
-    fn eval_extern_rel(
-        &mut self,
-        arena: &mut Arena,
-        name: &str,
-        values: &[Value],
-    ) -> Eval<Vec<Value>> {
+    fn extern_rel(&mut self, arena: &mut Arena, name: &str, values: &[Value]) -> Eval<Vec<Value>> {
         // A meta level's host calls cross the boundary above it
         if !self.is_top() {
             let mut boundary = Boundary { levels: &mut *self.levels, level: self.level.above() };
@@ -254,8 +260,7 @@ impl<Ext: Extern> Boundary<'_, '_, Ext> {
         }
     }
 
-    /// Calls a decoded host function at this level.
-    fn eval_extern_func(
+    fn extern_func(
         &mut self,
         arena: &mut Arena,
         name: &str,

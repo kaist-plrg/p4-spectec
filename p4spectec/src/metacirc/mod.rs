@@ -7,9 +7,10 @@
 
 mod boundary;
 pub mod config;
+mod engine;
 mod error;
-mod reentry;
-mod relay;
+mod interp;
+mod protocol;
 mod sim;
 mod tower;
 

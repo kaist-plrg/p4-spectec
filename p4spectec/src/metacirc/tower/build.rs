@@ -29,6 +29,7 @@
 //! | `al`                | `AboveAl` | AL                           |
 //! | `il`                | `AboveIl` | IL                           |
 
+use super::super::protocol::{MetaProtocol, ProtocolKind};
 use super::super::{ExecutionMode, Result, TowerConfig, config::Lang, error::config_invalid};
 use super::{BaseLayer, Level, Top, Tower, Upper};
 use crate::{
@@ -161,6 +162,14 @@ impl<Ext: Extern> Tower<Ext> {
                 BaseLayer::MetaSpec(Runner::new(arena, spec_base, options, interface, upper)?)
             }
         };
-        Ok(Self { levels, base, options })
+        // spec-meta interprets the level above it at every boundary
+        let count = match &base {
+            BaseLayer::P4Spec(_) => 0,
+            BaseLayer::MetaSpec(runner) => runner.external.caches.len(),
+        };
+        let protocols = (0..count)
+            .map(|_| ProtocolKind::Meta(MetaProtocol))
+            .collect();
+        Ok(Self { levels, protocols, base, options })
     }
 }
