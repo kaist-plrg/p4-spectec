@@ -5,7 +5,7 @@
 //! with the definitions a reentry runs on.
 //! `Top` and `TopMut` are the highest level, stored and lent.
 
-use super::super::interp::{Depth, TowerEnv};
+use super::super::interp::{TowerEnv, TowerInterpState};
 use super::HostLevel;
 use crate::{
     interface::{
@@ -36,7 +36,7 @@ pub(in crate::metacirc) struct Upper<Ext: Extern> {
     pub hosts: Vec<MetaInterface>,
     pub top: Top<Ext>,
     /// Depths 1 and deeper, made on the first reentry of a program.
-    pub depth_next: Option<Box<Depth>>,
+    pub depth_next: Option<Box<TowerInterpState>>,
 }
 
 /// The highest level above a meta base.
@@ -94,7 +94,7 @@ pub(in crate::metacirc) struct UpperMut<'l, Ext: Extern> {
     pub hosts: &'l mut [MetaInterface],
     pub top: TopMut<'l, Ext>,
     /// The depths beneath this one, which answer reentry.
-    pub depth_next: &'l mut Option<Box<Depth>>,
+    pub depth_next: &'l mut Option<Box<TowerInterpState>>,
 }
 
 /// The top of `UpperMut`, borrowed from `Top` or from the context of a P4 call.

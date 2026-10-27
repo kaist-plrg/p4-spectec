@@ -10,7 +10,7 @@
 
 use super::{
     error,
-    interp::{Depth, TowerInterp},
+    interp::{TowerInterp, TowerInterpState},
     protocol::{HostCall, Output, Protocol},
     tower::{HostLevel, TopMut, Upper, UpperMut},
 };
@@ -258,8 +258,9 @@ impl<'l, Ext: Extern> UpperMut<'l, Ext> {
         };
         // The next depth lives until the program is reset
         let count = hosts.len();
-        let depth = depth_next
-            .get_or_insert_with(|| Box::new(Depth::new(env.options, env.spec_base, count)));
+        let depth = depth_next.get_or_insert_with(|| {
+            Box::new(TowerInterpState::new(env.options, env.spec_base, count))
+        });
         let mut interp = depth.lend(env.spec_base, caches, ctxs);
         // Count the call's effects apart from the calling depth's
         let mut effects = 0;

@@ -5,7 +5,7 @@
 //! each level runs through the `Protocol` below it, lowered to a call
 //! on the level below, down to the depth's `Engine` at `LevelAt::Base`;
 //! C, a level loaded into the level below, is made once per program.
-//! A reentry from the P4 host runs on the next `Depth`, which shares
+//! A reentry from the P4 host runs on the next depth's `TowerInterpState`, which shares
 //! the base's definitions, C, and the codec caches with this one.
 
 use super::{
@@ -37,7 +37,7 @@ pub(in crate::metacirc) struct TowerInterp<'s> {
     /// The meta builtins of each level between the base and the top.
     pub hosts: &'s mut [MetaInterface],
     /// The depths beneath this one, which answer reentry.
-    pub depth_next: &'s mut Option<Box<Depth>>,
+    pub depth_next: &'s mut Option<Box<TowerInterpState>>,
     /// The codec cache of each level boundary, shared by every depth.
     pub caches: &'s mut [Cache],
     /// C of each level above the base, shared by every depth.
@@ -239,14 +239,14 @@ impl<Ext: Extern> Below for LevelBelow<'_, '_, '_, Ext> {
 // == Depth state
 
 /// The state of one reentry depth beneath the base.
-pub(in crate::metacirc) struct Depth {
+pub(in crate::metacirc) struct TowerInterpState {
     engine: SpecTecState,
     /// The meta builtins of each level between the base and the top.
     hosts: Vec<MetaInterface>,
-    next: Option<Box<Depth>>,
+    next: Option<Box<TowerInterpState>>,
 }
 
-impl Depth {
+impl TowerInterpState {
     /// Makes a depth executing `spec_base`, with builtins for `count` levels
     /// between base and top.
     pub(in crate::metacirc) fn new(
