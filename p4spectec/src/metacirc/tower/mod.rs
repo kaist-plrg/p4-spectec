@@ -21,6 +21,7 @@ use crate::{
     runner::{Eval, Extern, Host, Runner},
     sim_plugin::dummy::Dummy,
 };
+use std::num::NonZeroUsize;
 
 /// Prepared specifications and host layers of an interpreter tower,
 /// with `Ext` the extern of its P4 level.
@@ -47,6 +48,45 @@ impl Level {
             | Self::AboveAl { config, .. }
             | Self::AboveIl { config, .. } => config,
         }
+    }
+}
+
+/// A level above the base, which the level below it interprets.
+///
+/// Level k pairs with the boundary below it:
+/// per-level storage keeps its C, that boundary's codec cache,
+/// and its meta builtins at `index`, in order from level 1.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in crate::metacirc) struct HostLevel(NonZeroUsize);
+
+impl HostLevel {
+    /// The first level above the base.
+    pub(in crate::metacirc) const FIRST: Self = Self(NonZeroUsize::MIN);
+
+    /// Returns the top level of a tower of `levels`.
+    pub(in crate::metacirc) fn top(levels: &[Level]) -> Self {
+        let number = NonZeroUsize::new(levels.len() - 1);
+        Self(number.expect("a tower with a host level has two or more levels"))
+    }
+
+    /// Returns the host level below this one, or `None` when the base is below.
+    pub(in crate::metacirc) fn below(self) -> Option<Self> {
+        NonZeroUsize::new(self.0.get() - 1).map(Self)
+    }
+
+    /// Returns the host level above this one.
+    pub(in crate::metacirc) fn above(self) -> Self {
+        Self(self.0.saturating_add(1))
+    }
+
+    /// Returns this level's position among all levels, the base at 0.
+    pub(in crate::metacirc) fn number(self) -> usize {
+        self.0.get()
+    }
+
+    /// Returns this level's position in per-level storage, level 1 at 0.
+    pub(in crate::metacirc) fn index(self) -> usize {
+        self.0.get() - 1
     }
 }
 

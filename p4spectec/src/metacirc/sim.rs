@@ -13,7 +13,7 @@ use super::{
     config::Lang,
     error::{config_invalid, input_invalid},
     reentry::{MetaDepth, MetaEnv, MetaInterp},
-    relay::{MetaExtern, RelayExtern},
+    relay::MetaExtern,
     tower::{BaseLayer, HostLayer, Tower},
 };
 use crate::{
@@ -90,15 +90,26 @@ impl<Arch: Architecture> SimTower<Arch> {
         let Backend::Sl { spec_env, interp } = backend else {
             unreachable!("a simulated tower executes SL");
         };
-        let MetaExtern::Relay(RelayExtern { layer_next, .. }) = external else {
-            unreachable!("a simulated tower relays to its top level");
-        };
-        let HostLayer::P4Spec(host) = &mut **layer_next else {
-            unreachable!("a simulated tower has a P4 top level");
+        // Walk the relays up to the P4 top, lending each meta level's builtins
+        let mut interfaces = Vec::new();
+        let mut external_level = external;
+        let host = loop {
+            let MetaExtern::Relay(relay) = external_level else {
+                unreachable!("a simulated tower relays up to its top level");
+            };
+            match &mut *relay.layer_next {
+                HostLayer::MetaSpec(host) => {
+                    let (interface_level, external_next) = host.parts_mut();
+                    interfaces.push(interface_level);
+                    external_level = external_next;
+                }
+                HostLayer::P4Spec(host) => break host,
+            }
         };
         // Share the definitions, and lend depth 0 to the host
         let env = MetaEnv { spec_meta: spec_env, levels, options: *options };
-        let mut meta = MetaInterp { interp, interface, depth_next, ctx_targets, caches };
+        let mut meta =
+            MetaInterp { interp, interface, interfaces, depth_next, ctx_targets, caches };
         host.with_context(arena, &env, &mut meta, body)
     }
 

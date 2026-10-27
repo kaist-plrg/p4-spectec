@@ -26,6 +26,11 @@ impl<Iface: Interface, Ext: Extern> Host<Iface, Ext> {
         Self { interface, external }
     }
 
+    /// Borrows the interface and the extern together.
+    pub fn parts_mut(&mut self) -> (&mut Iface, &mut Ext) {
+        (&mut self.interface, &mut self.external)
+    }
+
     /// Calls a builtin through the interface.
     pub fn eval_builtin(
         &mut self,
