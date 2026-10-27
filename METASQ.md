@@ -141,7 +141,7 @@ exit code.
 ## Tower structure
 
 `Tower` (`p4spectec/src/metacirc/tower/`) keeps every level's specification
-(`Level`), one `Protocol` per boundary, and the base runner. A P4 base is a
+(`LevelSpec`), one `Protocol` per boundary, and the base runner. A P4 base is a
 plain runner. A meta base's runner stores the levels above it in `Upper`:
 
 ```

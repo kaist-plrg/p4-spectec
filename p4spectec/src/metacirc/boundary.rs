@@ -1,6 +1,6 @@
 //! Host calls across the boundary below one level of a tower
 //!
-//! The base's host calls reach `Levels`, the levels lent for one execution,
+//! The base's host calls reach `UpperMut`, the levels lent for one execution,
 //! and enter `Boundary { level: HostLevel::FIRST }`,
 //! which decodes them with the protocol of the level below it.
 //! A meta level answers its builtins and sends its own host calls up;
@@ -31,7 +31,7 @@ use crate::{
 // == Lent levels
 
 /// The levels above the base, borrowed for one execution of the base's specification.
-pub(in crate::metacirc) struct Levels<'l, Ext: Extern> {
+pub(in crate::metacirc) struct UpperMut<'l, Ext: Extern> {
     /// Definitions shared by every depth, which a reentry runs on.
     pub env: &'l TowerEnv<'l>,
     /// The codec cache of the boundary below each level, shared by every depth.
@@ -45,7 +45,7 @@ pub(in crate::metacirc) struct Levels<'l, Ext: Extern> {
     pub depth_next: &'l mut Option<Box<Depth>>,
 }
 
-/// The top of `Levels`, borrowed from `Top` or from the context of a P4 call.
+/// The top of `UpperMut`, borrowed from `Top` or from the context of a P4 call.
 pub(in crate::metacirc) enum TopMut<'l, Ext: Extern> {
     /// A P4 specification, answering the builtins and externs of its program.
     P4 { interface: &'l mut P4Interface, external: &'l mut Ext },
@@ -55,7 +55,7 @@ pub(in crate::metacirc) enum TopMut<'l, Ext: Extern> {
 
 impl<Ext: Extern> Upper<Ext> {
     /// Lends the stored levels at depth 0, with the definitions reentry runs on.
-    pub(in crate::metacirc) fn lend<'l>(&'l mut self, env: &'l TowerEnv<'l>) -> Levels<'l, Ext> {
+    pub(in crate::metacirc) fn lend<'l>(&'l mut self, env: &'l TowerEnv<'l>) -> UpperMut<'l, Ext> {
         let top = match &mut self.top {
             Top::P4(host) => {
                 let (interface, external) = host.parts_mut();
@@ -63,7 +63,7 @@ impl<Ext: Extern> Upper<Ext> {
             }
             Top::Program(interface) => TopMut::Program(interface),
         };
-        Levels {
+        UpperMut {
             env,
             caches: &mut self.caches,
             ctxs: &mut self.ctxs,
@@ -74,7 +74,7 @@ impl<Ext: Extern> Upper<Ext> {
     }
 }
 
-impl<'l, Ext: Extern> Levels<'l, Ext> {
+impl<'l, Ext: Extern> UpperMut<'l, Ext> {
     /// Returns the codec cache of the boundary below `level`.
     pub(in crate::metacirc) fn cache(&mut self, level: HostLevel) -> &mut Cache {
         &mut self.caches[level.index()]
@@ -92,7 +92,7 @@ impl<'l, Ext: Extern> Levels<'l, Ext> {
 
     /// Returns the level of the top, the highest level with a boundary.
     ///
-    /// A program top is one level above the last `Level`:
+    /// A program top is one level above the last `LevelSpec`:
     /// it has a boundary but no specification, and it never reenters.
     pub(in crate::metacirc) fn level_top(&self) -> HostLevel {
         HostLevel::new(self.caches.len())
@@ -173,7 +173,7 @@ pub(in crate::metacirc) trait HostCalls {
 
 /// The boundary below `level`, sending decoded host calls up to it.
 pub(in crate::metacirc) struct Boundary<'b, 'l, Ext: Extern> {
-    pub levels: &'b mut Levels<'l, Ext>,
+    pub upper: &'b mut UpperMut<'l, Ext>,
     pub level: HostLevel,
 }
 
@@ -185,7 +185,7 @@ fn unsupported<T>(name: &str) -> Eval<T, ExternError> {
 impl<Ext: Extern> Boundary<'_, '_, Ext> {
     /// Returns whether this boundary is below the top.
     fn is_top(&self) -> bool {
-        self.level == self.levels.level_top()
+        self.level == self.upper.level_top()
     }
 
     /// Decodes a host call from the level below and evaluates it at this level.
@@ -195,10 +195,10 @@ impl<Ext: Extern> Boundary<'_, '_, Ext> {
         name: &str,
         values: &[Value],
     ) -> Eval<Vec<Value>, ExternError> {
-        let env = self.levels.env;
+        let env = self.upper.env;
         let protocol = env.protocol(self.level);
         // Decode with the protocol of the level below
-        let call = match protocol.host(arena, self.levels.cache(self.level), name, values) {
+        let call = match protocol.host(arena, self.upper.cache(self.level), name, values) {
             Ok(call) => call,
             Err(error) => return Eval::new(Err(error), SideEffect::Pure),
         };
@@ -217,7 +217,7 @@ impl<Ext: Extern> Boundary<'_, '_, Ext> {
             }
         };
         // Encode the outcome for the level below
-        protocol.reply(arena, self.levels.cache(self.level), &call, eval)
+        protocol.reply(arena, self.upper.cache(self.level), &call, eval)
     }
 }
 
@@ -236,12 +236,12 @@ impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
     ) -> Eval<Value> {
         // The top answers P4 or program builtins; a meta level answers meta builtins
         let eval = if self.is_top() {
-            match &mut self.levels.top {
+            match &mut self.upper.top {
                 TopMut::P4 { interface, .. } => interface.call_builtin(arena, id, targs, values),
                 TopMut::Program(interface) => interface.call_builtin(arena, id, targs, values),
             }
         } else {
-            self.levels.hosts[self.level.index()].call_builtin(arena, id, targs, values)
+            self.upper.hosts[self.level.index()].call_builtin(arena, id, targs, values)
         };
         eval.map_err(Into::into)
     }
@@ -249,13 +249,13 @@ impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
     fn extern_rel(&mut self, arena: &mut Arena, name: &str, values: &[Value]) -> Eval<Vec<Value>> {
         // A meta level's host calls cross the boundary above it
         if !self.is_top() {
-            let mut boundary = Boundary { levels: &mut *self.levels, level: self.level.above() };
+            let mut boundary = Boundary { upper: &mut *self.upper, level: self.level.above() };
             return boundary.eval_rel(arena, name, values).map_err(Into::into);
         }
-        match self.levels.top {
+        match self.upper.top {
             // A P4 extern may reenter, on the next depth
             TopMut::P4 { .. } => self
-                .levels
+                .upper
                 .with_next(arena, |ctx| ctx.call_extern_rel(name, values)),
             // The program declares no host relations
             TopMut::Program(_) => unsupported(name).map_err(Into::into),
@@ -273,10 +273,10 @@ impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
         if !self.is_top() {
             return unsupported(name).map_err(Into::into);
         }
-        match self.levels.top {
+        match self.upper.top {
             // A P4 extern may reenter, on the next depth
             TopMut::P4 { .. } => self
-                .levels
+                .upper
                 .with_next(arena, |ctx| ctx.call_extern_func(name, targs, values)),
             // The program declares no host functions
             TopMut::Program(_) => unsupported(name).map_err(Into::into),
@@ -286,7 +286,7 @@ impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
 
 // == Externs of the base's specification
 
-impl<Ext: Extern> Extern for Levels<'_, Ext> {
+impl<Ext: Extern> Extern for UpperMut<'_, Ext> {
     fn eval_rel<Interp, Iface>(
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
@@ -297,8 +297,8 @@ impl<Ext: Extern> Extern for Levels<'_, Ext> {
         Interp: Interpreter<Iface, Self>,
     {
         // The base's specification sends host calls to the first level above it
-        let (arena, levels) = ctx.arena_and_external_mut();
-        Boundary { levels, level: HostLevel::FIRST }.eval_rel(arena, name, values)
+        let (arena, upper) = ctx.arena_and_external_mut();
+        Boundary { upper, level: HostLevel::FIRST }.eval_rel(arena, name, values)
     }
 
     fn eval_func<Interp, Iface>(
@@ -327,7 +327,7 @@ fn not_lent<T>(name: &str) -> Eval<T, ExternError> {
 }
 
 /// The base runner never executes with the stored levels as its extern:
-/// `Tower::eval_program` and `SimTower` lend them as `Levels`,
+/// `Tower::eval_program` and `SimTower` lend them as `UpperMut`,
 /// with the spec-meta definitions a reentry runs on.
 /// The runner only clears them between programs.
 impl<Ext: Extern> Extern for Upper<Ext> {

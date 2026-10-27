@@ -3,16 +3,16 @@
 //! For a P4 call `eval_rel(V1Model_parser, values)`,
 //! `TowerInterp` calls the relation at the top `HostLevel`:
 //! each level runs through the `Protocol` below it, lowered to a call
-//! on the level below, down to the depth's `Engine` at `Floor::Base`;
+//! on the level below, down to the depth's `Engine` at `LevelAt::Base`;
 //! C, a level loaded into the level below, is made once per program.
 //! A reentry from the P4 host runs on the next `Depth`, which shares
 //! the base's definitions, C, and the codec caches with this one.
 
 use super::{
-    boundary::{Levels, TopMut},
+    boundary::{TopMut, UpperMut},
     engine::{Engine, EngineKind, SpecTecEngine, SpecTecSpec, SpecTecState},
     protocol::{Below, Call, Output, Protocol, ProtocolKind, Values},
-    tower::{Floor, HostLevel, Level},
+    tower::{HostLevel, LevelAt, LevelSpec},
 };
 use crate::{
     interface::{
@@ -37,7 +37,7 @@ pub(in crate::metacirc) struct TowerEnv<'s> {
     /// The base specification, executed natively.
     pub spec_base: SpecTecSpec<'s>,
     /// Every level of the tower, from the base to the top.
-    pub levels: &'s [Level],
+    pub specs: &'s [LevelSpec],
     /// The protocol of the boundary below each level above the base.
     pub protocols: &'s [ProtocolKind],
     /// Options for the engines of deeper depths.
@@ -46,8 +46,8 @@ pub(in crate::metacirc) struct TowerEnv<'s> {
 
 impl TowerEnv<'_> {
     /// Returns the specification of `level`, in the form the level below loads.
-    fn spec(&self, level: HostLevel) -> &Level {
-        &self.levels[level.number()]
+    fn spec(&self, level: HostLevel) -> &LevelSpec {
+        &self.specs[level.number()]
     }
 
     /// Returns the protocol of the boundary below `level`.
@@ -100,10 +100,10 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for TowerInterp<'s> {
         values: &[Value],
     ) -> Result<Vec<Value>, InterpreterError> {
         Self::with_tower(ctx, |tower| {
-            let level_top = tower.levels.level_top();
+            let level_top = tower.upper.level_top();
             let call = Call::Rel { name, values: Values::Borrowed(values) };
             tower
-                .call(Floor::Host(level_top), call)
+                .call(LevelAt::Host(level_top), call)
                 .map(Output::into_rel)
         })
     }
@@ -115,11 +115,11 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for TowerInterp<'s> {
         values: &[Value],
     ) -> Result<Value, InterpreterError> {
         Self::with_tower(ctx, |tower| {
-            let level_top = tower.levels.level_top();
+            let level_top = tower.upper.level_top();
             let call =
                 Call::Func { name, targs: Cow::Borrowed(targs), values: Values::Borrowed(values) };
             tower
-                .call(Floor::Host(level_top), call)
+                .call(LevelAt::Host(level_top), call)
                 .map(Output::into_func)
         })
     }
@@ -136,7 +136,7 @@ impl<'s> TowerInterp<'s> {
         let RunnerContextParts { arena, spec_env: env, interp, interface, external, effects } =
             ctx.parts_mut();
         let TowerInterp { engine, hosts, depth_next, caches, ctxs } = interp;
-        let levels = Levels {
+        let upper = UpperMut {
             env,
             caches,
             ctxs,
@@ -145,14 +145,14 @@ impl<'s> TowerInterp<'s> {
             depth_next,
         };
         // Run the base in the same arena and effect count
-        body(&mut TowerCall { arena, engine, levels, effects })
+        body(&mut TowerCall { arena, engine, upper, effects })
     }
 }
 
 // == Calls down the tower
 //
 //   eval_rel(ctx, "V1Model_parser", vals)        ctx.interp: depth d
-//     with_tower                                 P4 host -> Levels
+//     with_tower                                 P4 host -> UpperMut
 //       call(top, Rel V1Model_parser vals)       on the top level
 //         load_ctx(top) -> C                     once per program
 //         lower -> Rel Call_rel [C, name, vals]  one level down, until
@@ -166,48 +166,48 @@ impl<'s> TowerInterp<'s> {
 struct TowerCall<'c, 's, Ext: Extern> {
     arena: &'c mut Arena,
     engine: &'c mut EngineKind<'s>,
-    levels: Levels<'c, Ext>,
+    upper: UpperMut<'c, Ext>,
     effects: &'c mut u64,
 }
 
 impl<Ext: Extern> TowerCall<'_, '_, Ext> {
     /// Calls a relation or function of the specification at `floor`.
-    fn call(&mut self, floor: Floor, call: Call<'_>) -> Result<Output, InterpreterError> {
+    fn call(&mut self, floor: LevelAt, call: Call<'_>) -> Result<Output, InterpreterError> {
         let level = match floor {
             // The base runs natively
-            Floor::Base => {
-                let Self { arena, engine, levels, effects } = self;
+            LevelAt::Base => {
+                let Self { arena, engine, upper, effects } = self;
                 return match call {
                     Call::Rel { name, values } => engine
-                        .call_rel(arena, levels, effects, name, &values)
+                        .call_rel(arena, upper, effects, name, &values)
                         .map(Output::Rel),
                     Call::Func { name, targs, values } => engine
-                        .call_func(arena, levels, effects, name, &targs, &values)
+                        .call_func(arena, upper, effects, name, &targs, &values)
                         .map(Output::Func),
                 };
             }
             // A host level runs through the protocol of the level below
-            Floor::Host(level) => level,
+            LevelAt::Host(level) => level,
         };
         let value_ctx = self.load_ctx(level)?;
-        let env = self.levels.env;
+        let env = self.upper.env;
         let protocol = env.protocol(level);
-        let call_below = protocol.lower(self.arena, self.levels.cache(level), value_ctx, &call)?;
+        let call_below = protocol.lower(self.arena, self.upper.cache(level), value_ctx, &call)?;
         let output = self.call(level.below(), call_below)?;
-        protocol.raise(self.arena, self.levels.cache(level), output, &call)
+        protocol.raise(self.arena, self.upper.cache(level), output, &call)
     }
 
     /// Returns C of `level`, loading it into the level below on first use.
     fn load_ctx(&mut self, level: HostLevel) -> Result<Value, InterpreterError> {
         // A level's C lives until the program is reset
-        if let Some(value_ctx) = self.levels.ctx(level) {
+        if let Some(value_ctx) = self.upper.ctx(level) {
             return Ok(value_ctx);
         }
         // Load the specification through the protocol, on the level below
-        let env = self.levels.env;
+        let env = self.upper.env;
         let mut below = BelowFloor { tower: self, floor: level.below() };
         let value_ctx = env.protocol(level).load(&mut below, env.spec(level))?;
-        self.levels.set_ctx(level, value_ctx);
+        self.upper.set_ctx(level, value_ctx);
         Ok(value_ctx)
     }
 }
@@ -215,7 +215,7 @@ impl<Ext: Extern> TowerCall<'_, '_, Ext> {
 /// The level below a boundary, on which a protocol loads C.
 struct BelowFloor<'b, 'c, 's, Ext: Extern> {
     tower: &'b mut TowerCall<'c, 's, Ext>,
-    floor: Floor,
+    floor: LevelAt,
 }
 
 impl<Ext: Extern> Below for BelowFloor<'_, '_, '_, Ext> {

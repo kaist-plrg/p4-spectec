@@ -15,7 +15,7 @@ use super::{
     engine::{EngineKind, SpecTecEngine},
     error::{config_invalid, input_invalid},
     interp::{TowerEnv, TowerInterp},
-    tower::{BaseLayer, Top, Tower, Upper},
+    tower::{BaseRunner, Top, Tower, Upper},
 };
 use crate::{
     interface::p4::P4Interface,
@@ -71,9 +71,9 @@ impl<Arch: Architecture> SimTower<Arch> {
         arena: &mut Arena,
         body: impl FnOnce(&mut RunnerContext<'_, TowerInterp<'_>, P4Interface, Arch>) -> T,
     ) -> T {
-        let Tower { levels, protocols, base, options } = &mut self.tower;
+        let Tower { specs, protocols, base, options } = &mut self.tower;
         // Reach depth 0 and the P4 host in the base runner
-        let BaseLayer::MetaSpec(runner) = base else {
+        let BaseRunner::Meta(runner) = base else {
             unreachable!("a simulated tower has a meta base");
         };
         let Runner { backend, interface, external: upper, .. } = runner;
@@ -84,7 +84,7 @@ impl<Arch: Architecture> SimTower<Arch> {
             unreachable!("a simulated tower has a P4 top level");
         };
         // Share the definitions, and lend depth 0 to the host
-        let env = TowerEnv { spec_base, levels, protocols, options: *options };
+        let env = TowerEnv { spec_base, specs, protocols, options: *options };
         let engine = EngineKind::SpecTec(engine);
         let mut interp = TowerInterp { engine, hosts, depth_next, caches, ctxs };
         host.with_context(arena, &env, &mut interp, body)

@@ -3,7 +3,7 @@
 //! The tower exposes program execution through its native entry point.
 //! The base is a runner with an interpreter; every other level is a host,
 //! since the level below interprets it, and `Upper` stores them all
-//! in its extern slot, lent per call as `boundary::Levels`.
+//! in its extern slot, lent per call as `boundary::UpperMut`.
 //! A single-level tower executes its top level directly as its base.
 //! `build` assembles the levels; `patch` adds the entry the base calls;
 //! `Tower::eval_program` runs it on the base's `Engine`.
@@ -36,16 +36,16 @@ use std::num::NonZeroUsize;
 /// with `Ext` the extern of its P4 level.
 pub struct Tower<Ext: Extern = Dummy> {
     // Nonempty, ordered from base through intermediates to the top level
-    pub(super) levels: Vec<Level>,
+    pub(super) specs: Vec<LevelSpec>,
     /// The protocol of the boundary below each level above the base.
     pub(super) protocols: Vec<ProtocolKind>,
-    pub(super) base: BaseLayer<Ext>,
+    pub(super) base: BaseRunner<Ext>,
     /// Options for the interpreters of reentry depths.
     pub(super) options: runner::Config,
 }
 
 /// A configured specification, by the form it is passed to the level below.
-pub(super) enum Level {
+pub(super) enum LevelSpec {
     /// The base, which no level interprets.
     Base { config: LevelConfig },
     /// A level above one accepting AL, which receives the patched AL.
@@ -54,7 +54,7 @@ pub(super) enum Level {
     AboveIl { config: LevelConfig, spec_il: il::Spec },
 }
 
-impl Level {
+impl LevelSpec {
     pub(super) fn config(&self) -> &LevelConfig {
         match self {
             Self::Base { config, .. }
@@ -82,8 +82,9 @@ impl HostLevel {
     }
 
     /// Returns the level below this one.
-    pub(in crate::metacirc) fn below(self) -> Floor {
-        NonZeroUsize::new(self.0.get() - 1).map_or(Floor::Base, |number| Floor::Host(Self(number)))
+    pub(in crate::metacirc) fn below(self) -> LevelAt {
+        NonZeroUsize::new(self.0.get() - 1)
+            .map_or(LevelAt::Base, |number| LevelAt::Host(Self(number)))
     }
 
     /// Returns the host level above this one.
@@ -104,7 +105,7 @@ impl HostLevel {
 
 /// A level of the tower: the base, or a host level above it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(in crate::metacirc) enum Floor {
+pub(in crate::metacirc) enum LevelAt {
     /// The base, which runs natively.
     Base,
     /// A level above the base, which the level below interprets.
@@ -112,11 +113,11 @@ pub(in crate::metacirc) enum Floor {
 }
 
 /// The native runner of the base, selected by the language it interprets.
-pub(super) enum BaseLayer<Ext: Extern> {
+pub(super) enum BaseRunner<Ext: Extern> {
     /// A P4 specification, interpreting a parsed P4 program.
-    P4Spec(Runner<P4Interface, Ext>),
+    P4(Runner<P4Interface, Ext>),
     /// A meta specification interpreting an AL or IL script, hosting the levels above it.
-    MetaSpec(Runner<MetaInterface, Upper<Ext>>),
+    Meta(Runner<MetaInterface, Upper<Ext>>),
 }
 
 impl<Ext: Extern> Tower<Ext> {
@@ -129,29 +130,29 @@ impl<Ext: Extern> Tower<Ext> {
 
     /// Executes a patched input at the native base's entry relation.
     pub fn eval_program(&mut self, arena: &mut Arena, program: Value) -> Eval<Vec<Value>> {
-        let Self { levels, protocols, base, options } = self;
-        let name = &levels[0].config().rel;
+        let Self { specs, protocols, base, options } = self;
+        let name = &specs[0].config().rel;
         match base {
             // A P4 base runs the program directly
-            BaseLayer::P4Spec(runner) => runner.eval_program(arena, name, program),
+            BaseRunner::P4(runner) => runner.eval_program(arena, name, program),
             // A meta base lends the levels above it with its definitions
-            BaseLayer::MetaSpec(runner) => {
+            BaseRunner::Meta(runner) => {
                 let Runner { backend, interface, external: upper, effects } = runner;
                 let (engine, spec_base) = SpecTecEngine::lend_base(backend, interface);
-                let env = TowerEnv { spec_base, levels, protocols, options: *options };
-                let mut levels = upper.lend(&env);
-                EngineKind::SpecTec(engine).call_program(arena, &mut levels, effects, name, program)
+                let env = TowerEnv { spec_base, specs, protocols, options: *options };
+                let mut upper = upper.lend(&env);
+                EngineKind::SpecTec(engine).call_program(arena, &mut upper, effects, name, program)
             }
         }
     }
 }
 
-impl<Ext: Extern> BaseLayer<Ext> {
+impl<Ext: Extern> BaseRunner<Ext> {
     /// Resets the runner and the levels its extern stores.
     fn reset(&mut self) {
         match self {
-            Self::P4Spec(runner) => runner.reset(),
-            Self::MetaSpec(runner) => runner.reset(),
+            Self::P4(runner) => runner.reset(),
+            Self::Meta(runner) => runner.reset(),
         }
     }
 }

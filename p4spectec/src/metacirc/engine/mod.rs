@@ -10,7 +10,7 @@ mod spectec;
 
 pub(super) use spectec::{SpecTecEngine, SpecTecSpec, SpecTecState};
 
-use super::boundary::Levels;
+use super::boundary::UpperMut;
 use crate::{
     lang::{
         data::{arena::Arena, value::flat::Value},
@@ -25,7 +25,7 @@ pub(in crate::metacirc) trait Engine {
     fn call_program<Ext: Extern>(
         &mut self,
         arena: &mut Arena,
-        levels: &mut Levels<'_, Ext>,
+        upper: &mut UpperMut<'_, Ext>,
         effects: &mut u64,
         name: &str,
         program: Value,
@@ -35,7 +35,7 @@ pub(in crate::metacirc) trait Engine {
     fn call_rel<Ext: Extern>(
         &mut self,
         arena: &mut Arena,
-        levels: &mut Levels<'_, Ext>,
+        upper: &mut UpperMut<'_, Ext>,
         effects: &mut u64,
         name: &str,
         values: &[Value],
@@ -45,7 +45,7 @@ pub(in crate::metacirc) trait Engine {
     fn call_func<Ext: Extern>(
         &mut self,
         arena: &mut Arena,
-        levels: &mut Levels<'_, Ext>,
+        upper: &mut UpperMut<'_, Ext>,
         effects: &mut u64,
         name: &str,
         targs: &[Typ],
@@ -69,40 +69,40 @@ impl Engine for EngineKind<'_> {
     fn call_program<Ext: Extern>(
         &mut self,
         arena: &mut Arena,
-        levels: &mut Levels<'_, Ext>,
+        upper: &mut UpperMut<'_, Ext>,
         effects: &mut u64,
         name: &str,
         program: Value,
     ) -> Eval<Vec<Value>, InterpreterError> {
         match self {
-            Self::SpecTec(engine) => engine.call_program(arena, levels, effects, name, program),
+            Self::SpecTec(engine) => engine.call_program(arena, upper, effects, name, program),
         }
     }
 
     fn call_rel<Ext: Extern>(
         &mut self,
         arena: &mut Arena,
-        levels: &mut Levels<'_, Ext>,
+        upper: &mut UpperMut<'_, Ext>,
         effects: &mut u64,
         name: &str,
         values: &[Value],
     ) -> Result<Vec<Value>, InterpreterError> {
         match self {
-            Self::SpecTec(engine) => engine.call_rel(arena, levels, effects, name, values),
+            Self::SpecTec(engine) => engine.call_rel(arena, upper, effects, name, values),
         }
     }
 
     fn call_func<Ext: Extern>(
         &mut self,
         arena: &mut Arena,
-        levels: &mut Levels<'_, Ext>,
+        upper: &mut UpperMut<'_, Ext>,
         effects: &mut u64,
         name: &str,
         targs: &[Typ],
         values: &[Value],
     ) -> Result<Value, InterpreterError> {
         match self {
-            Self::SpecTec(engine) => engine.call_func(arena, levels, effects, name, targs, values),
+            Self::SpecTec(engine) => engine.call_func(arena, upper, effects, name, targs, values),
         }
     }
 

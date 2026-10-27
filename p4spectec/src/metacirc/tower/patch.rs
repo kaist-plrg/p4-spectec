@@ -8,7 +8,7 @@
 //! literal expressions retain the parsed program's types and spans.
 
 use super::super::{Result, error::entry_invalid};
-use super::{Level, Tower};
+use super::{LevelSpec, Tower};
 use crate::{
     interface::meta::shared::encode::Encode,
     lang::{
@@ -41,14 +41,19 @@ fn exp_pass() -> il::Exp {
 // == Entry construction
 
 /// Patches level `idx` and encodes it in the form the level below accepts.
-fn entry_encoded(arena: &mut Arena, levels: &[Level], idx: usize, value: Value) -> Result<Value> {
-    let level = &levels[idx];
-    let name = &level.config().rel;
-    let encoded = match level {
-        Level::AboveAl { spec_al, .. } => entry_al(arena, spec_al, name, value)?.encode(arena),
+fn entry_encoded(
+    arena: &mut Arena,
+    specs: &[LevelSpec],
+    idx: usize,
+    value: Value,
+) -> Result<Value> {
+    let spec = &specs[idx];
+    let name = &spec.config().rel;
+    let encoded = match spec {
+        LevelSpec::AboveAl { spec_al, .. } => entry_al(arena, spec_al, name, value)?.encode(arena),
         // An IL consumer converts the patched IL itself
-        Level::AboveIl { spec_il, .. } => entry_il(arena, spec_il, name, value)?.encode(arena),
-        Level::Base { .. } => {
+        LevelSpec::AboveIl { spec_il, .. } => entry_il(arena, spec_il, name, value)?.encode(arena),
+        LevelSpec::Base { .. } => {
             return Err(entry_invalid("the base is never passed to another level"));
         }
     };
@@ -215,8 +220,8 @@ impl<Ext: Extern> Tower<Ext> {
         // The base is never encoded; a direct tower consumes the input unchanged
         let mut value = program;
         // Each level interprets the script immediately above it
-        for idx in (1..self.levels.len()).rev() {
-            value = entry_encoded(arena, &self.levels, idx, value)?;
+        for idx in (1..self.specs.len()).rev() {
+            value = entry_encoded(arena, &self.specs, idx, value)?;
         }
         Ok(value)
     }

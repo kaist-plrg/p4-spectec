@@ -6,7 +6,7 @@
 //! a deeper depth owns a `SpecTecState` interpreting the same representation
 //! and lends it with `SpecTecEngine::lend_depth`.
 
-use super::super::boundary::Levels;
+use super::super::boundary::UpperMut;
 use super::Engine;
 use crate::{
     interface::{self, Lang, meta::MetaInterface},
@@ -77,7 +77,7 @@ impl SpecTecState {
 
 /// Runs `$body` with `$ctx` bound to a context of `$engine`'s backend.
 macro_rules! with_backend {
-    ($engine:expr, $arena:expr, $levels:expr, $effects:expr, |$ctx:ident| $body:expr) => {{
+    ($engine:expr, $arena:expr, $upper:expr, $effects:expr, |$ctx:ident| $body:expr) => {{
         let engine = &mut *$engine;
         match &mut engine.backend {
             SpecTecBackend::Al { spec_env, interp } => {
@@ -86,7 +86,7 @@ macro_rules! with_backend {
                     *spec_env,
                     &mut **interp,
                     &mut *engine.interface,
-                    $levels,
+                    $upper,
                     $effects,
                 );
                 $body
@@ -97,7 +97,7 @@ macro_rules! with_backend {
                     *spec_env,
                     &mut **interp,
                     &mut *engine.interface,
-                    $levels,
+                    $upper,
                     $effects,
                 );
                 $body
@@ -125,7 +125,10 @@ impl<'s> SpecTecEngine<'s> {
     }
 
     /// Lends a deeper depth's state, interpreting the base's `spec`.
-    pub(in crate::metacirc) fn lend_depth(state: &'s mut SpecTecState, spec: SpecTecSpec<'s>) -> Self {
+    pub(in crate::metacirc) fn lend_depth(
+        state: &'s mut SpecTecState,
+        spec: SpecTecSpec<'s>,
+    ) -> Self {
         let backend = match (spec, &mut state.interp) {
             (SpecTecSpec::Al(spec_env), SpecTecInterp::Al(interp)) => {
                 SpecTecBackend::Al { spec_env, interp }
@@ -144,35 +147,35 @@ impl Engine for SpecTecEngine<'_> {
     fn call_program<Ext: Extern>(
         &mut self,
         arena: &mut Arena,
-        levels: &mut Levels<'_, Ext>,
+        upper: &mut UpperMut<'_, Ext>,
         effects: &mut u64,
         name: &str,
         program: Value,
     ) -> Eval<Vec<Value>, InterpreterError> {
-        with_backend!(self, arena, levels, effects, |ctx| ctx.call_program(name, program))
+        with_backend!(self, arena, upper, effects, |ctx| ctx.call_program(name, program))
     }
 
     fn call_rel<Ext: Extern>(
         &mut self,
         arena: &mut Arena,
-        levels: &mut Levels<'_, Ext>,
+        upper: &mut UpperMut<'_, Ext>,
         effects: &mut u64,
         name: &str,
         values: &[Value],
     ) -> Result<Vec<Value>, InterpreterError> {
-        with_backend!(self, arena, levels, effects, |ctx| ctx.call_rel(name, values).result)
+        with_backend!(self, arena, upper, effects, |ctx| ctx.call_rel(name, values).result)
     }
 
     fn call_func<Ext: Extern>(
         &mut self,
         arena: &mut Arena,
-        levels: &mut Levels<'_, Ext>,
+        upper: &mut UpperMut<'_, Ext>,
         effects: &mut u64,
         name: &str,
         targs: &[Typ],
         values: &[Value],
     ) -> Result<Value, InterpreterError> {
-        with_backend!(self, arena, levels, effects, |ctx| ctx.call_func(name, targs, values).result)
+        with_backend!(self, arena, upper, effects, |ctx| ctx.call_func(name, targs, values).result)
     }
 
     fn clear(&mut self) {
