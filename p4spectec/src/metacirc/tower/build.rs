@@ -31,7 +31,11 @@
 
 use super::super::engine::InterfaceKind;
 use super::super::protocol::{MetaProtocol, Protocol, ProtocolKind};
-use super::super::{ExecutionMode, Result, TowerConfig, config::Lang, error::config_invalid};
+use super::super::{
+    ExecutionMode, Result, TowerConfig,
+    config::Lang,
+    error::{self, config_invalid},
+};
 use super::{BaseRunner, PreparedLevel, Top, Tower, Upper};
 use crate::{
     interface::{
@@ -50,6 +54,7 @@ fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
     match mode {
         ExecutionMode::Al => Ok(Spec::Al(spec_al)),
         ExecutionMode::Sl => structure::convert(spec_al, true).map(Spec::Sl),
+        ExecutionMode::K => unreachable!("a K base has no AL or SL runner"),
     }
 }
 
@@ -77,8 +82,8 @@ fn build_upper<Ext: Extern>(
     external_p4: Ext,
 ) -> (Upper<Ext>, Vec<ProtocolKind>) {
     let (top, configs_host) = match config.top_lang() {
-        // Above a meta top level is its program; every level above the base is meta
-        Lang::Al | Lang::Il => {
+        // Above a meta or KORE top level is its program; every level above the base is meta
+        Lang::Al | Lang::Il | Lang::Kore => {
             let top = Top::Program(interface::meta(Lang::Al));
             (top, &config.levels[1..])
         }
@@ -122,6 +127,13 @@ impl<Ext: Extern> Tower<Ext> {
         options: runner::Config,
         external_p4: Ext,
     ) -> Result<Self> {
+        // K bases and KORE inputs are template slots without implementations yet
+        if matches!(config.mode, ExecutionMode::K) {
+            return Err(error::unimplemented("a K base (mode k)"));
+        }
+        if config.top_lang() == Lang::Kore {
+            return Err(error::unimplemented("a KORE input (K-in-ST)"));
+        }
         // Prepare each specification once, from base to top, into its PreparedLevel;
         // the base is also converted for its native runner
         let levels = config

@@ -66,6 +66,7 @@ pub fn run(
             .map_err(|error| error.into_report())?,
         Lang::P4 => parse_file(&mut arena, includes, &paths_program[0])
             .map_err(|error| error.into_report())?,
+        Lang::Kore => return Err(error::unimplemented("a KORE input (K-in-ST)")),
     };
     // Encoding errors propagate before entering the native base
     let value = tower.patch(&mut arena, value_program)?;

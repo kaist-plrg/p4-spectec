@@ -34,6 +34,8 @@ pub enum Lang {
     Il,
     /// A P4 program, which only the P4 specification accepts.
     P4,
+    /// A K definition and initial term in KORE, which only spec-k accepts.
+    Kore,
 }
 
 impl Lang {
