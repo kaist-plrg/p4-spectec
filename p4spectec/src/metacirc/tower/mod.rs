@@ -10,7 +10,7 @@
 mod build;
 mod patch;
 
-use super::config::LevelConfig;
+use super::{config::LevelConfig, reentry::MetaDepth};
 use crate::{
     interface::{
         meta::{MetaInterface, shared::Cache},
@@ -67,7 +67,7 @@ impl HostLevel {
     pub(in crate::metacirc) const FIRST: Self = Self(NonZeroUsize::MIN);
 
     /// Returns the level at `number` among all levels, the base at 0.
-    fn new(number: usize) -> Self {
+    pub(in crate::metacirc) fn new(number: usize) -> Self {
         Self(NonZeroUsize::new(number).expect("a host level is above the base"))
     }
 
@@ -151,16 +151,22 @@ impl<Ext: Extern> BaseLayer<Ext> {
 /// The levels above a meta base, which the base's specification interprets.
 ///
 /// Storage is per `HostLevel`, at its `index`:
-/// the codec cache of the boundary below each level,
+/// the codec cache of the boundary below each level, C of each level,
 /// and the meta builtins of each level below the top.
 /// The top is the P4 specification,
 /// or the AL or IL program that the highest meta level interprets.
+/// Caches and C are shared by every reentry depth;
+/// depth 0 uses `hosts`, and each deeper depth its own.
 pub(in crate::metacirc) struct Upper<Ext: Extern> {
     /// The codec cache of the boundary below each level, through the top.
     pub caches: Vec<Cache>,
-    /// The meta builtins of each level between the base and the top.
+    /// C of each level for the current program, loaded on first use.
+    pub ctxs: Vec<Option<Value>>,
+    /// The meta builtins of each level between the base and the top, at depth 0.
     pub hosts: Vec<MetaInterface>,
     pub top: Top<Ext>,
+    /// Depths 1 and deeper, made on the first reentry of a program.
+    pub depth_next: Option<Box<MetaDepth>>,
 }
 
 /// The highest level above a meta base.
@@ -172,18 +178,15 @@ pub(in crate::metacirc) enum Top<Ext: Extern> {
 }
 
 impl<Ext: Extern> Upper<Ext> {
-    /// Returns the level of the top, the highest level with a boundary.
-    pub(in crate::metacirc) fn level_top(&self) -> HostLevel {
-        HostLevel::new(self.caches.len())
-    }
-
     /// Clears every level's state between programs.
     pub(in crate::metacirc) fn clear(&mut self) {
         self.caches.iter_mut().for_each(Cache::clear);
+        self.ctxs.fill(None);
         self.hosts.iter_mut().for_each(Interface::clear);
         match &mut self.top {
             Top::P4(host) => host.reset(),
             Top::Program(interface) => interface.clear(),
         }
+        self.depth_next = None;
     }
 }

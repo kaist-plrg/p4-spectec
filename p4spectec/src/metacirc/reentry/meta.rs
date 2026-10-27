@@ -5,13 +5,14 @@
 //! each level above the base runs as `Call_rel(C, name, values)`
 //! on spec-meta at the level below, down to the depth's SL interpreter,
 //! where C loads that level's specification once per program.
-//! spec-meta's host calls relay up through the levels the caller lent
-//! (`relay::lent`); a reentry from the P4 host runs on the next `MetaDepth`.
+//! spec-meta's host calls go up through the levels the caller lent
+//! (`boundary::Levels`); a reentry from the P4 host runs on the next `MetaDepth`.
 //! Depths share spec-meta, each level's C, and the codec caches;
 //! each depth owns its SL memo and its meta builtins.
 
 use super::super::{
-    relay::{codec, lent::LentLevels},
+    boundary::{Levels, TopMut},
+    relay::codec,
     tower::{Floor, HostLevel, Level},
 };
 use crate::{
@@ -43,7 +44,7 @@ pub(in crate::metacirc) struct MetaDepth {
     interp: SlInterp,
     interface: MetaInterface,
     /// The meta builtins of each level between the base and the top.
-    interfaces: Vec<MetaInterface>,
+    hosts: Vec<MetaInterface>,
     next: Option<Box<MetaDepth>>,
 }
 
@@ -54,7 +55,7 @@ impl MetaDepth {
             interp: SlInterp::new(SlConfig::new(options.cache, options.det, options.guard)),
             // Only the builtins are used; spec-meta never parses at a depth
             interface: interface::meta(Lang::Al),
-            interfaces: (0..count).map(|_| interface::meta(Lang::Al)).collect(),
+            hosts: (0..count).map(|_| interface::meta(Lang::Al)).collect(),
             next: None,
         }
     }
@@ -62,16 +63,16 @@ impl MetaDepth {
     /// Lends this depth as the P4 level's interpreter.
     pub(in crate::metacirc) fn lend<'d>(
         &'d mut self,
-        ctx_targets: &'d mut [Option<Value>],
         caches: &'d mut [Cache],
+        ctxs: &'d mut [Option<Value>],
     ) -> MetaInterp<'d> {
         MetaInterp {
             interp: &mut self.interp,
             interface: &mut self.interface,
-            interfaces: self.interfaces.iter_mut().collect(),
+            hosts: &mut self.hosts,
             depth_next: &mut self.next,
-            ctx_targets,
             caches,
+            ctxs,
         }
     }
 }
@@ -91,58 +92,50 @@ pub(in crate::metacirc) struct MetaInterp<'s> {
     pub interp: &'s mut SlInterp,
     pub interface: &'s mut MetaInterface,
     /// The meta builtins of each level between the base and the top.
-    pub interfaces: Vec<&'s mut MetaInterface>,
+    pub hosts: &'s mut [MetaInterface],
     /// The depths beneath this one, which answer reentry.
     pub depth_next: &'s mut Option<Box<MetaDepth>>,
-    /// C of each level above the base, shared by every depth.
-    pub ctx_targets: &'s mut [Option<Value>],
     /// The codec cache of each level boundary, shared by every depth.
     pub caches: &'s mut [Cache],
+    /// C of each level above the base, shared by every depth.
+    pub ctxs: &'s mut [Option<Value>],
 }
 
 // == Calls into spec-meta
 //
 //   eval_rel(ctx, "V1Model_parser", vals)        ctx.interp: depth d
-//     with_meta                                  P4 host -> LentLevels
+//     with_meta                                  P4 host -> Levels
 //       call_rel(top, "V1Model_parser", vals)    on the top level
 //         load_ctx(top) -> C                     once per program
 //         call_rel(top.below(), "Call_rel",      one level down, until
 //                  [C, "V1Model_parser", vals])  the base runs natively
-//           Call_extern_rel(..) -> LentLevels    up each boundary
+//           Call_extern_rel(..) -> Boundary      up each boundary
 //             Ext::eval_rel(ctx', ..)            ctx'.interp: depth d+1
 //               ctx'.call_func("find_var_e")     reentry with the same C
 //         relRes -> Ok | Mismatch | Fatal
 
 /// The spec-meta context of one P4 call.
-type MetaContext<'r, 'h, 's, Ext> =
-    RunnerContext<'r, SlInterp, MetaInterface, LentLevels<'h, 's, Ext>>;
+type MetaContext<'r, 'l, Ext> = RunnerContext<'r, SlInterp, MetaInterface, Levels<'l, Ext>>;
 
 impl<'s> MetaInterp<'s> {
     /// Runs `call` on spec-meta at this depth,
     /// relaying its host calls up to the P4 host of `ctx`.
     fn with_meta<Ext: Extern, T>(
         ctx: &mut RunnerContext<'_, Self, P4Interface, Ext>,
-        call: impl FnOnce(&mut MetaContext<'_, '_, 's, Ext>) -> Result<T, InterpreterError>,
+        call: impl FnOnce(&mut MetaContext<'_, '_, Ext>) -> Result<T, InterpreterError>,
     ) -> Result<T, InterpreterError> {
         // Split the P4 context: the host goes to the lent levels, the depth runs spec-meta
         let RunnerContextParts { arena, spec_env: env, interp: meta, interface, external, effects } =
             ctx.parts_mut();
-        let MetaInterp {
-            interp,
-            interface: interface_meta,
-            interfaces,
-            depth_next,
-            ctx_targets,
+        let MetaInterp { interp, interface: interface_meta, hosts, depth_next, caches, ctxs } =
+            meta;
+        let mut levels = Levels {
+            env: Some(env),
             caches,
-        } = meta;
-        let mut levels = LentLevels {
-            env,
-            interfaces,
-            interface_top: interface,
-            external_top: external,
+            ctxs,
+            hosts,
+            top: TopMut::P4 { interface, external },
             depth_next,
-            ctx_targets,
-            caches,
         };
         // Run spec-meta in the same arena and effect count
         let mut ctx_meta = RunnerContext::new(
@@ -158,7 +151,7 @@ impl<'s> MetaInterp<'s> {
 
     /// Calls relation `name` of the specification at `floor`.
     fn call_rel<Ext: Extern>(
-        ctx_meta: &mut MetaContext<'_, '_, '_, Ext>,
+        ctx_meta: &mut MetaContext<'_, '_, Ext>,
         floor: Floor,
         name: &str,
         values: &[Value],
@@ -189,7 +182,7 @@ impl<'s> MetaInterp<'s> {
 
     /// Calls function `name` of the specification at `floor`.
     fn call_func<Ext: Extern>(
-        ctx_meta: &mut MetaContext<'_, '_, '_, Ext>,
+        ctx_meta: &mut MetaContext<'_, '_, Ext>,
         floor: Floor,
         name: &str,
         targs: &[Typ],
@@ -221,14 +214,14 @@ impl<'s> MetaInterp<'s> {
 
     /// Returns C of `level`, loading it into the level below on first use.
     fn load_ctx<Ext: Extern>(
-        ctx_meta: &mut MetaContext<'_, '_, '_, Ext>,
+        ctx_meta: &mut MetaContext<'_, '_, Ext>,
         level: HostLevel,
     ) -> Result<Value, InterpreterError> {
         if let Some(value_ctx) = ctx_meta.external().ctx(level) {
             return Ok(value_ctx);
         }
         // Encode the specification as AL, converting IL through spec-meta below
-        let env = ctx_meta.external().env;
+        let env = ctx_meta.external().env();
         let value_spec_al = match env.spec(level) {
             Level::AboveAl { spec_al, .. } => spec_al
                 .encode(ctx_meta.arena_mut())
@@ -267,19 +260,17 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for MetaInterp<'s> {
     type SpecEnv = MetaEnv<'s>;
 
     fn clear(&mut self) {
-        Interpreter::<MetaInterface, LentLevels<'_, 's, Ext>>::clear(&mut *self.interp);
+        Interpreter::<MetaInterface, Levels<'_, Ext>>::clear(&mut *self.interp);
         *self.depth_next = None;
         self.caches.iter_mut().for_each(Cache::clear);
     }
 
     fn reset(&mut self) {
-        Interpreter::<MetaInterface, LentLevels<'_, 's, Ext>>::reset(&mut *self.interp);
+        Interpreter::<MetaInterface, Levels<'_, Ext>>::reset(&mut *self.interp);
         self.interface.clear();
-        self.interfaces
-            .iter_mut()
-            .for_each(|interface| interface.clear());
+        self.hosts.iter_mut().for_each(Interface::clear);
         *self.depth_next = None;
-        self.ctx_targets.fill(None);
+        self.ctxs.fill(None);
         self.caches.iter_mut().for_each(Cache::clear);
     }
 
@@ -297,7 +288,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for MetaInterp<'s> {
         values: &[Value],
     ) -> Result<Vec<Value>, InterpreterError> {
         Self::with_meta(ctx, |ctx_meta| {
-            let level_top = HostLevel::top(ctx_meta.external().env.levels);
+            let level_top = HostLevel::top(ctx_meta.external().env().levels);
             Self::call_rel(ctx_meta, Floor::Host(level_top), name, values)
         })
     }
@@ -309,7 +300,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for MetaInterp<'s> {
         values: &[Value],
     ) -> Result<Value, InterpreterError> {
         Self::with_meta(ctx, |ctx_meta| {
-            let level_top = HostLevel::top(ctx_meta.external().env.levels);
+            let level_top = HostLevel::top(ctx_meta.external().env().levels);
             Self::call_func(ctx_meta, Floor::Host(level_top), name, targs, values)
         })
     }

@@ -91,11 +91,10 @@ fn build_upper<Ext: Extern>(
         .iter()
         .map(|config_level| interface::meta(config_level.lang))
         .collect::<Vec<_>>();
-    // Each level through the top has the codec cache of the boundary below it
-    let caches = (0..=hosts.len())
-        .map(|_| Cache::new(options.cache))
-        .collect();
-    Upper { caches, hosts, top }
+    // Each level through the top has C and the codec cache of the boundary below it
+    let count = hosts.len() + 1;
+    let caches = (0..count).map(|_| Cache::new(options.cache)).collect();
+    Upper { caches, ctxs: vec![None; count], hosts, top, depth_next: None }
 }
 
 // == Tower assembly
