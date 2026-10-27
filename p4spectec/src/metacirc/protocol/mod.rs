@@ -3,7 +3,8 @@
 //! The boundary between levels k and k+1 belongs to level k's `Protocol`.
 //! Going down, `lower` turns a call of a level-(k+1) relation or function
 //! into a call on level k, and `raise` turns its result back;
-//! `load` makes C, level k+1's specification loaded into level k.
+//! `load` makes C, level k+1's specification loaded into level k,
+//! and `encode_script` encodes level k+1 patched with a program entry.
 //! Going up, `host` decodes a host call that level k's specification made
 //! for level k+1, and `reply` encodes its outcome.
 //! `ProtocolKind` stores the protocols; `meta` is spec-meta's,
@@ -15,12 +16,13 @@ mod meta_k;
 pub(super) use meta::MetaProtocol;
 pub(super) use meta_k::MetaKProtocol;
 
-use super::tower::PreparedLevel;
+use super::{Result as MetacircResult, tower::PreparedLevel};
 use crate::{
     interface::meta::shared::Cache,
     lang::{
+        al::ast as al,
         data::{arena::Arena, value::flat::Value},
-        il::ast::{Id, Typ},
+        il::ast::{self as il, Id, Typ},
     },
     runner::{Eval, ExternError, InterpreterError},
 };
@@ -43,6 +45,10 @@ pub(in crate::metacirc) trait Protocol {
     /// Loads the specification of `above` into the level below, returning C.
     fn load(&self, below: &mut dyn Below, above: &PreparedLevel)
     -> Result<Value, InterpreterError>;
+
+    /// Encodes `script`, the level above patched with a program entry,
+    /// as the input of this level's entry relation.
+    fn encode_script(&self, arena: &mut Arena, script: Script) -> MetacircResult<Value>;
 
     /// Turns `call` of the level above into a call on this level, given C.
     fn lower(
@@ -128,6 +134,13 @@ impl Protocol for ProtocolKind {
         }
     }
 
+    fn encode_script(&self, arena: &mut Arena, script: Script) -> MetacircResult<Value> {
+        match self {
+            Self::Meta(protocol) => protocol.encode_script(arena, script),
+            Self::MetaK(protocol) => protocol.encode_script(arena, script),
+        }
+    }
+
     fn lower(
         &self,
         arena: &mut Arena,
@@ -199,6 +212,12 @@ impl Protocol for ProtocolKind {
             _ => unreachable!("a boundary keeps the cache its protocol made"),
         }
     }
+}
+
+/// A level's specification patched with a program entry, in the form it was prepared in.
+pub(in crate::metacirc) enum Script {
+    Al(al::Spec),
+    Il(il::Spec),
 }
 
 /// Calls on the level below a boundary, which `Protocol::load` runs.

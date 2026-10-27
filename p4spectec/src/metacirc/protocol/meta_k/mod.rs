@@ -4,17 +4,18 @@
 //! on a `KEngine`. Every payload crossing this boundary is JSON text
 //! held in a `text` value (`make::text`, `get::text`),
 //! in the format of `spec-meta-k/3-execution/3.04.1-extern-json.k`.
-//! `load` passes the AL specification above to the base, making C;
+//! `load` passes the AL specification above to the base, making C,
+//! and `encode_script` encodes a patched AL script for the base's entry;
 //! `lower` and `raise` wrap a call of the level above as a request
 //! to spec-meta-k's `serve()` loop and unwrap its response;
 //! `host` and `reply` decode a `#ffiCall` request and encode its outcome.
 //! Each function is a slot that the ST-in-K implementation fills;
 //! `docs/metacirc/st-in-k.md` says how.
 
-use super::{Below, Call, HostCall, Output, Protocol};
+use super::{Below, Call, HostCall, Output, Protocol, Script};
 use crate::{
     lang::data::{arena::Arena, value::flat::Value},
-    metacirc::{error, tower::PreparedLevel},
+    metacirc::{Result as MetacircResult, error, tower::PreparedLevel},
     runner::{Eval, ExternError, InterpreterError, SideEffect},
 };
 
@@ -53,6 +54,14 @@ impl Protocol for MetaKProtocol {
         _above: &PreparedLevel,
     ) -> Result<Value, InterpreterError> {
         Err(InterpreterError::Fatal(error::unimplemented("MetaKProtocol::load")))
+    }
+
+    /// Encodes a patched AL script as the JSON text of the base's entry input.
+    ///
+    /// `script` is `Script::Al`, the specification above with a synthetic `main`,
+    /// as `KEngine::call_program` passes it to spec-meta-k's `Eval_AL`.
+    fn encode_script(&self, _arena: &mut Arena, _script: Script) -> MetacircResult<Value> {
+        Err(error::unimplemented("MetaKProtocol::encode_script"))
     }
 
     /// Wraps `call` of the AL level above as a request to spec-meta-k under C.
