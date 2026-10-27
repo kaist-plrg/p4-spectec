@@ -1,6 +1,15 @@
-# STF simulation of P4 programs under `p4` paired with tests under `stf`,
-# compared with `expected/sim/<name>.expected`;
-# `patches` replaces files with the same stem
+# STF simulation: `sim <config>` (make test-sim-al, test-sim-sl, test-sim-pl).
+#
+# A configuration selects the interpreter `language` for `spec`,
+# memoization (`cache`), and determinism checking (`det`).
+# Each suite pairs every .p4 file under `p4` that includes the `arch` model
+# with each .stf test under `stf` at the same relative directory and stem,
+# or in a directory named after the P4 file's stem;
+# files under `patches` replace those with the same stem.
+# Each pair's status and transmitted packets are recorded
+# in `expected/sim/<name>.expected`, which every configuration shares.
+# `excludes` lists directories of .exclude files naming skipped P4 or STF files.
+# Paths are relative to the repository root.
 
 spec = ["spec"]
 includes = ["p4c/p4include"]
