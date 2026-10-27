@@ -1,7 +1,7 @@
 //! Registered negative diagnostic acceptance
 //!
 //! Module registrations supply source fixtures and expectations,
-//! which live together under `testdata/spec`.
+//! relative to the registration's `root`.
 //! CLI argument files contain their complete invocation and input paths.
 //! Reports render from a stable fixture directory before full-text comparison.
 //! Each stage rejects failures from preceding passes as setup errors.
@@ -94,7 +94,8 @@ pub fn run(suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
             frame_style: frame_short.then_some(DisplayStyle::Short),
             ..Default::default()
         };
-        run_registered(name, &load(name)?, path_cli, run_case, config)?;
+        let registration = load(name)?;
+        run_registered(name, &registration, path_cli, run_case, config)?;
     }
     Ok(())
 }
@@ -136,15 +137,16 @@ pub struct Case {
     pub arch: Option<String>,
 }
 
-/// Lists the cases of one diagnostic registration file.
+/// Lists the cases of one diagnostic registration file and their fixture root.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Registration {
+    root: PathBuf,
     cases: Vec<Case>,
 }
 
 /// Loads the cases registered in `suites/diagnostic/<name>.toml`.
-fn load(name: &str) -> Result<Vec<Case>> {
+fn load(name: &str) -> Result<Registration> {
     let registration: Registration = crate::util::load(&format!("diagnostic/{name}"))?;
     let mut cases = Vec::new();
     for case in registration.cases {
@@ -158,7 +160,7 @@ fn load(name: &str) -> Result<Vec<Case>> {
             cases.push(Case { name, language: Some(language), ..case.clone() });
         }
     }
-    Ok(cases)
+    Ok(Registration { root: registration.root, cases })
 }
 
 impl Case {
@@ -197,13 +199,6 @@ fn codes(report: &Report) -> Vec<&str> {
     codes
 }
 
-/// Locates the fixture directory, the working directory while rendering.
-///
-/// Relative paths keep source identities stable across checkout locations.
-fn fixture_dir() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../testdata/spec")
-}
-
 /// Restores the caller's working directory after diagnostic rendering.
 struct Directory(PathBuf);
 
@@ -216,18 +211,20 @@ impl Drop for Directory {
 /// Compares module-owned fixture output with its registered expectations.
 fn run_registered(
     name: &str,
-    cases: &[Case],
+    registration: &Registration,
     path_cli: Option<&Path>,
     run_case: Option<RunCase>,
     config: RenderConfig,
 ) -> Result<()> {
     // Resolve subprocess paths before entering the stable fixture directory
     let path_cli = path_cli.map(std::path::absolute).transpose()?;
+    let cases = &registration.cases;
     if cases.iter().any(Case::uses_cli) && path_cli.is_none() {
         return Err(failure(name, "--cli is required for argument-file acceptance"));
     }
     let _directory = Directory(std::env::current_dir()?);
-    let path_fixture = fixture_dir();
+    // Render from the fixture root so reports show stable relative paths
+    let path_fixture = std::path::absolute(&registration.root)?;
     std::env::set_current_dir(&path_fixture)?;
 
     // Preserve case order from this module's registration file

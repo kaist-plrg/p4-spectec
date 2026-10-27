@@ -2,12 +2,14 @@
 # `inputs` are the specification sources, which must convert to PL;
 # splicing the .adoc `input` against them must fail.
 #
-# Paths are relative to `testdata/spec`. Each case renders its reports
-# and compares the text with `expected`;
+# Paths in cases are relative to `root`, the working directory while they run.
+# Each case renders its reports and compares the text with `expected`;
 # `make test-diagnostics-promote` rewrites the expected files.
 # An `.args` input instead runs the product CLI with one argument per line,
 # copying `inputs` into a temporary directory, and compares its stderr,
 # which must contain `code`; `outcome` is the expected exit status.
+
+root = "testdata/spec"
 
 cases = [
   { name = "identifier-invalid", input = "cli/splice/identifier-invalid.adoc", expected = "cli/splice/identifier-invalid.expect", inputs = ["cli/splice/minimal.watsup"] },
