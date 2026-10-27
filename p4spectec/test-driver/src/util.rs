@@ -1,6 +1,6 @@
 //! Helpers shared by the snapshot, corpus, and diagnostic runners
 //!
-//! Corpus and diagnostic runners read `suites/<name>.toml` with `load`.
+//! Each runner reads its registration `suites/<name>.toml` with `load`.
 //! Corpus paths are relative to the repository, expectations to the driver,
 //! and diagnostic inputs and expectations to `testdata/spec`.
 
@@ -101,16 +101,6 @@ pub fn load<T: DeserializeOwned>(name: &str) -> Result<T> {
     let text = fs::read_to_string(&path)
         .map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
     toml::from_str(&text).map_err(|error| Error::from(format!("{}: {error}", path.display())))
-}
-
-/// Returns the specification sources shared by every runner.
-pub fn spec() -> [PathBuf; 1] {
-    [PathBuf::from("spec")]
-}
-
-/// Returns the P4 include directories shared by every corpus runner.
-pub fn includes() -> [PathBuf; 1] {
-    [PathBuf::from("p4c/p4include")]
 }
 
 /// Resolves the expectation `expected/<module>/<name>.expected` of one suite.

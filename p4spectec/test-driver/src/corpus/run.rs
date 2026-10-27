@@ -20,10 +20,12 @@ use crate::{
     util::{self, Configuration},
 };
 
-/// Supplies execution exclusions, configurations, and corpus registrations.
+/// Supplies the specification, includes, exclusions, configurations, and suites.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Registration {
+    pub spec: Vec<PathBuf>,
+    pub includes: Vec<PathBuf>,
     pub excludes: Vec<PathBuf>,
     pub configs: Vec<Configuration>,
     pub suites: Vec<RunSuite>,
@@ -86,10 +88,10 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
     let mut arena = Arena::new();
-    let spec = config.language.spec(&util::spec())?;
+    let spec = config.language.spec(&registration.spec)?;
     let mut runner = util::build(&mut arena, spec, config.runner(), Dummy)?;
     log.note(&format!("specification prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
-    let includes = &util::includes();
+    let includes = &registration.includes;
     // Preprocess upcoming files while the runner parses and evaluates in order
     let paths_preprocess: Vec<_> = suites
         .iter()

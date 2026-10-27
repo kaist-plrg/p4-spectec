@@ -17,10 +17,12 @@ use crate::{
     util::{self, Configuration},
 };
 
-/// Supplies simulation exclusions, configurations, and P4/STF registrations.
+/// Supplies the specification, includes, exclusions, configurations, and suites.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Registration {
+    pub spec: Vec<PathBuf>,
+    pub includes: Vec<PathBuf>,
     pub excludes: Vec<PathBuf>,
     pub configs: Vec<Configuration>,
     pub suites: Vec<SimSuite>,
@@ -147,7 +149,7 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
         format!("{text_mode}: collected={collected} excluded={excluded}; preparing specification");
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
-    let includes = util::includes();
+    let includes = &registration.includes;
     let progress = util::progress_bar(collected)?;
     let mut matched = 0;
     // Build one simulator per registered architecture in first-suite order
@@ -167,7 +169,7 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
         let excluded_arch = pairs_arch.clone().filter(|pair| pair.excluded).count();
         let patched_arch = pairs_arch.filter(|pair| pair.patched).count();
         let start_arch = Instant::now();
-        let spec = config.language.spec(&util::spec())?;
+        let spec = config.language.spec(&registration.spec)?;
         let config_runner = config.runner();
         let mut simulator = sim_plugin::build(spec, arch, config_runner, Encoding::default())?;
         log.note(&format!(
@@ -191,7 +193,7 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
                 log.begin(&pair.path_stf)?;
                 let mut text_txs = String::new();
                 simulator
-                    .run_stf_test(&includes, &pair.path_p4, &pair.path_stf, |tx| {
+                    .run_stf_test(includes, &pair.path_p4, &pair.path_stf, |tx| {
                         matched += 1;
                         text_txs.push_str(&format!("tx\t{}\t{}\n", tx.port, tx.packet));
                     })

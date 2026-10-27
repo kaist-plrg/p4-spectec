@@ -22,10 +22,12 @@ use crate::{
     util,
 };
 
-/// Supplies the parsing corpus registrations.
+/// Supplies the parser specification, includes, and corpus registrations.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Registration {
+    pub spec: Vec<PathBuf>,
+    pub includes: Vec<PathBuf>,
     pub suites: Vec<ParseSuite>,
 }
 
@@ -104,10 +106,10 @@ pub fn run(path_log: Option<&Path>) -> Result<()> {
         format!("P4 parser: collected={collected}, excluded=0; preparing print hints");
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
-    let spec_al = p4spectec::algo(&util::spec())?;
+    let spec_al = p4spectec::algo(&registration.spec)?;
     let unparser = P4Unparser::from_al_spec(&spec_al);
     log.note(&format!("print hints prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
-    let includes = &util::includes();
+    let includes = &registration.includes;
     let progress = util::progress_bar(collected)?;
     let mut passed = 0;
     for (name, roots, results) in &mut suites {

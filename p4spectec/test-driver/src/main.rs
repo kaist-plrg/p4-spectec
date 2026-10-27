@@ -11,6 +11,7 @@ use std::{path::PathBuf, process::ExitCode};
 use clap::{Parser, Subcommand};
 
 use corpus::{micro, p4parse, run, sim};
+use snapshot::Stage;
 
 type Error = Box<dyn std::error::Error>;
 type Result<T> = std::result::Result<T, Error>;
@@ -103,11 +104,13 @@ fn execute(mut cli: Cli) -> Result<()> {
     std::env::set_current_dir(&root)?;
     match command {
         Command::List => list(),
-        Command::Elab => snapshot::elab(),
-        Command::Algo => snapshot::algo(),
-        Command::Structure => snapshot::structure(),
-        Command::Prose => snapshot::prose(),
-        Command::Adoc { path_output } => snapshot::adoc(path_output.as_deref()),
+        Command::Elab => snapshot::run(&[Stage::Elab], None),
+        Command::Algo => snapshot::run(&[Stage::Algo], None),
+        Command::Structure => snapshot::run(&[Stage::Structure], None),
+        Command::Prose => snapshot::run(&[Stage::Prose], None),
+        Command::Adoc { path_output } => {
+            snapshot::run(&[Stage::AdocEl, Stage::AdocPl], path_output.as_deref())
+        }
         Command::P4parse => p4parse::run(path_log.as_deref()),
         Command::Run { config } => run::run(config, path_log.as_deref()),
         Command::Sim { config } => sim::run(config, path_log.as_deref()),
@@ -118,6 +121,7 @@ fn execute(mut cli: Cli) -> Result<()> {
 
 /// Prints every registration without running its tests.
 fn list() -> Result<()> {
+    println!("snapshot: {:#?}", util::load::<snapshot::Registration>("snapshot")?);
     println!("p4parse: {:#?}", util::load::<p4parse::Registration>("p4parse")?);
     println!("run: {:#?}", util::load::<run::Registration>("run")?);
     println!("sim: {:#?}", util::load::<sim::Registration>("sim")?);
