@@ -12,7 +12,7 @@
 use super::{
     ExecutionMode, Result, TowerConfig,
     config::Lang,
-    engine::{EngineKind, StEngine},
+    engine::{EngineKind, SpecTecEngine},
     error::{config_invalid, input_invalid},
     interp::{TowerEnv, TowerInterp},
     tower::{BaseLayer, Top, Tower, Upper},
@@ -77,7 +77,7 @@ impl<Arch: Architecture> SimTower<Arch> {
             unreachable!("a simulated tower has a meta base");
         };
         let Runner { backend, interface, external: upper, .. } = runner;
-        let (engine, spec_base) = StEngine::lend_base(backend, interface);
+        let (engine, spec_base) = SpecTecEngine::lend_base(backend, interface);
         // Lend the levels' storage at depth 0 and reach the P4 top
         let Upper { caches, ctxs, hosts, top, depth_next } = upper;
         let Top::P4(host) = top else {
@@ -85,7 +85,7 @@ impl<Arch: Architecture> SimTower<Arch> {
         };
         // Share the definitions, and lend depth 0 to the host
         let env = TowerEnv { spec_base, levels, protocols, options: *options };
-        let engine = EngineKind::St(engine);
+        let engine = EngineKind::SpecTec(engine);
         let mut interp = TowerInterp { engine, hosts, depth_next, caches, ctxs };
         host.with_context(arena, &env, &mut interp, body)
     }

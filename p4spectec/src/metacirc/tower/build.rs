@@ -1,19 +1,19 @@
 //! Construction of a tower's levels and the storage above its base
 //!
 //! ```text
-//!   +-------------+-------------+
-//!   | Builtin P4  | Extern P4   |   top     Top::P4, Ext
-//!   +-------------+-------------+
-//!                 ^ caches[1]
-//!   +-------------+-------------+
-//!   | Builtin ST  | Extern ST   |   interm  hosts[0], Boundary
-//!   +-------------+-------------+
-//!                 ^ caches[0]
-//!   +-------------+-------------+
-//!   | Builtin ST  | Extern ST   |   base    BaseLayer::MetaSpec, Upper
-//!   +-------------+-------------+
-//!   |  Interp(base AL): entry   |
-//!   +---------------------------+
+//!   +-----------------+-----------------+
+//!   | Builtin P4      | Extern P4       |   top     Top::P4, Ext
+//!   +-----------------+-----------------+
+//!                     ^ caches[1]
+//!   +-----------------+-----------------+
+//!   | Builtin SpecTec | Extern SpecTec  |   interm  hosts[0], Boundary
+//!   +-----------------+-----------------+
+//!                     ^ caches[0]
+//!   +-----------------+-----------------+
+//!   | Builtin SpecTec | Extern SpecTec  |   base    BaseLayer::MetaSpec, Upper
+//!   +-----------------+-----------------+
+//!   |      Interp(base AL): entry       |
+//!   +-----------------------------------+
 //! ```
 //!
 //! Only the base runs natively, as a runner with an interpreter.

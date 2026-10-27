@@ -1,9 +1,9 @@
 //! The AL or SL interpreter of a P4-SpecTec base specification
 //!
-//! `StEngine` pairs the base's definitions in the representation it executes
+//! `SpecTecEngine` pairs the base's definitions, in the representation it executes,
 //! with one depth's interpreter of them and that depth's meta builtins.
-//! Depth 0 borrows the base runner's (`StEngine::lend_base`);
-//! a deeper depth owns an `StState` interpreting the same representation.
+//! Depth 0 borrows the base runner's (`SpecTecEngine::lend_base`);
+//! a deeper depth owns a `SpecTecState` interpreting the same representation.
 
 use super::super::boundary::Levels;
 use super::Engine;
@@ -25,45 +25,45 @@ use crate::{
 
 /// The base's definitions, in the representation it executes.
 #[derive(Clone, Copy)]
-pub(in crate::metacirc) enum StSpec<'s> {
+pub(in crate::metacirc) enum SpecTecSpec<'s> {
     Al(&'s AlSpecEnv),
     Sl(&'s SlSpecEnv),
 }
 
 /// An interpreter of the base's definitions, owned by a depth beneath the base.
-enum StInterp {
+enum SpecTecInterp {
     Al(AlInterp),
     Sl(SlInterp),
 }
 
 /// The engine state a depth beneath the base owns.
-pub(in crate::metacirc) struct StState {
-    interp: StInterp,
+pub(in crate::metacirc) struct SpecTecState {
+    interp: SpecTecInterp,
     interface: MetaInterface,
 }
 
 /// The base's definitions and a depth's interpreter of them.
-enum StBackend<'s> {
+enum SpecTecBackend<'s> {
     Al { spec_env: &'s AlSpecEnv, interp: &'s mut AlInterp },
     Sl { spec_env: &'s SlSpecEnv, interp: &'s mut SlInterp },
 }
 
 /// The base's native interpreter at one depth, with that depth's meta builtins.
-pub(in crate::metacirc) struct StEngine<'s> {
-    backend: StBackend<'s>,
+pub(in crate::metacirc) struct SpecTecEngine<'s> {
+    backend: SpecTecBackend<'s>,
     interface: &'s mut MetaInterface,
 }
 
-impl StState {
+impl SpecTecState {
     /// Makes the state of a depth interpreting `spec`.
-    pub(in crate::metacirc) fn new(options: runner::Config, spec: StSpec<'_>) -> Self {
+    pub(in crate::metacirc) fn new(options: runner::Config, spec: SpecTecSpec<'_>) -> Self {
         let interp = match spec {
-            StSpec::Al(_) => StInterp::Al(AlInterp::new(AlConfig::new(
+            SpecTecSpec::Al(_) => SpecTecInterp::Al(AlInterp::new(AlConfig::new(
                 options.cache,
                 options.det,
                 options.guard,
             ))),
-            StSpec::Sl(_) => StInterp::Sl(SlInterp::new(SlConfig::new(
+            SpecTecSpec::Sl(_) => SpecTecInterp::Sl(SlInterp::new(SlConfig::new(
                 options.cache,
                 options.det,
                 options.guard,
@@ -74,13 +74,17 @@ impl StState {
     }
 
     /// Lends this state as an engine interpreting `spec`.
-    pub(in crate::metacirc) fn lend<'s>(&'s mut self, spec: StSpec<'s>) -> StEngine<'s> {
+    pub(in crate::metacirc) fn lend<'s>(&'s mut self, spec: SpecTecSpec<'s>) -> SpecTecEngine<'s> {
         let backend = match (spec, &mut self.interp) {
-            (StSpec::Al(spec_env), StInterp::Al(interp)) => StBackend::Al { spec_env, interp },
-            (StSpec::Sl(spec_env), StInterp::Sl(interp)) => StBackend::Sl { spec_env, interp },
+            (SpecTecSpec::Al(spec_env), SpecTecInterp::Al(interp)) => {
+                SpecTecBackend::Al { spec_env, interp }
+            }
+            (SpecTecSpec::Sl(spec_env), SpecTecInterp::Sl(interp)) => {
+                SpecTecBackend::Sl { spec_env, interp }
+            }
             _ => unreachable!("a depth interprets the representation it was made for"),
         };
-        StEngine { backend, interface: &mut self.interface }
+        SpecTecEngine { backend, interface: &mut self.interface }
     }
 }
 
@@ -89,7 +93,7 @@ macro_rules! with_backend {
     ($engine:expr, $arena:expr, $levels:expr, $effects:expr, |$ctx:ident| $body:expr) => {{
         let engine = &mut *$engine;
         match &mut engine.backend {
-            StBackend::Al { spec_env, interp } => {
+            SpecTecBackend::Al { spec_env, interp } => {
                 let mut $ctx = RunnerContext::new(
                     $arena,
                     *spec_env,
@@ -100,7 +104,7 @@ macro_rules! with_backend {
                 );
                 $body
             }
-            StBackend::Sl { spec_env, interp } => {
+            SpecTecBackend::Sl { spec_env, interp } => {
                 let mut $ctx = RunnerContext::new(
                     $arena,
                     *spec_env,
@@ -115,18 +119,18 @@ macro_rules! with_backend {
     }};
 }
 
-impl<'s> StEngine<'s> {
+impl<'s> SpecTecEngine<'s> {
     /// Lends the base runner's backend and interface as depth 0.
     pub(in crate::metacirc) fn lend_base(
         backend: &'s mut Backend,
         interface: &'s mut MetaInterface,
-    ) -> (Self, StSpec<'s>) {
+    ) -> (Self, SpecTecSpec<'s>) {
         let (backend, spec) = match backend {
             Backend::Al { spec_env, interp } => {
-                (StBackend::Al { spec_env, interp }, StSpec::Al(spec_env))
+                (SpecTecBackend::Al { spec_env, interp }, SpecTecSpec::Al(spec_env))
             }
             Backend::Sl { spec_env, interp } => {
-                (StBackend::Sl { spec_env, interp }, StSpec::Sl(spec_env))
+                (SpecTecBackend::Sl { spec_env, interp }, SpecTecSpec::Sl(spec_env))
             }
             Backend::Pl { .. } => unreachable!("a tower executes AL or SL natively"),
         };
@@ -135,7 +139,7 @@ impl<'s> StEngine<'s> {
 }
 
 // The interpreters are generic in their extern; clearing uses none
-impl Engine for StEngine<'_> {
+impl Engine for SpecTecEngine<'_> {
     fn call_program<Ext: Extern>(
         &mut self,
         arena: &mut Arena,
@@ -172,10 +176,10 @@ impl Engine for StEngine<'_> {
 
     fn clear(&mut self) {
         match &mut self.backend {
-            StBackend::Al { interp, .. } => {
+            SpecTecBackend::Al { interp, .. } => {
                 Interpreter::<MetaInterface, NullExtern>::clear(&mut **interp)
             }
-            StBackend::Sl { interp, .. } => {
+            SpecTecBackend::Sl { interp, .. } => {
                 Interpreter::<MetaInterface, NullExtern>::clear(&mut **interp)
             }
         }
@@ -183,10 +187,10 @@ impl Engine for StEngine<'_> {
 
     fn reset(&mut self) {
         match &mut self.backend {
-            StBackend::Al { interp, .. } => {
+            SpecTecBackend::Al { interp, .. } => {
                 Interpreter::<MetaInterface, NullExtern>::reset(&mut **interp)
             }
-            StBackend::Sl { interp, .. } => {
+            SpecTecBackend::Sl { interp, .. } => {
                 Interpreter::<MetaInterface, NullExtern>::reset(&mut **interp)
             }
         }

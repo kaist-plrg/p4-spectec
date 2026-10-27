@@ -160,7 +160,7 @@ Three traits divide the work, each with one implementation stored as an enum:
 
 | trait | implementation | role |
 |---|---|---|
-| `Engine` (`engine/`) | `StEngine` | runs the base natively, on AL or SL |
+| `Engine` (`engine/`) | `SpecTecEngine` | runs the base natively, on AL or SL |
 | `Protocol` (`protocol/`) | `MetaProtocol` | how spec-meta interprets the level above: load C, lower a call to `Call_rel`/`Call_func`, raise its result, decode and encode host calls |
 | `HostCalls` (`boundary.rs`) | `Boundary` | answers a decoded host call at the level above a boundary |
 

@@ -10,7 +10,7 @@
 
 use super::{
     boundary::{Levels, TopMut},
-    engine::{Engine, EngineKind, StSpec, StState},
+    engine::{Engine, EngineKind, SpecTecSpec, SpecTecState},
     protocol::{Below, Call, Output, Protocol, ProtocolKind, Values},
     tower::{Floor, HostLevel, Level},
 };
@@ -34,7 +34,7 @@ use std::borrow::Cow;
 
 /// The state of one reentry depth beneath the base.
 pub(in crate::metacirc) struct Depth {
-    engine: StState,
+    engine: SpecTecState,
     /// The meta builtins of each level between the base and the top.
     hosts: Vec<MetaInterface>,
     next: Option<Box<Depth>>,
@@ -45,11 +45,11 @@ impl Depth {
     /// between base and top.
     pub(in crate::metacirc) fn new(
         options: runner::Config,
-        spec_base: StSpec<'_>,
+        spec_base: SpecTecSpec<'_>,
         count: usize,
     ) -> Self {
         Self {
-            engine: StState::new(options, spec_base),
+            engine: SpecTecState::new(options, spec_base),
             hosts: (0..count).map(|_| interface::meta(Lang::Al)).collect(),
             next: None,
         }
@@ -58,12 +58,12 @@ impl Depth {
     /// Lends this depth, executing `spec_base`, as the P4 level's interpreter.
     pub(in crate::metacirc) fn lend<'d>(
         &'d mut self,
-        spec_base: StSpec<'d>,
+        spec_base: SpecTecSpec<'d>,
         caches: &'d mut [Cache],
         ctxs: &'d mut [Option<Value>],
     ) -> TowerInterp<'d> {
         TowerInterp {
-            engine: EngineKind::St(self.engine.lend(spec_base)),
+            engine: EngineKind::SpecTec(self.engine.lend(spec_base)),
             hosts: &mut self.hosts,
             depth_next: &mut self.next,
             caches,
@@ -75,7 +75,7 @@ impl Depth {
 /// Definitions shared by every depth.
 pub(in crate::metacirc) struct TowerEnv<'s> {
     /// The base specification, executed natively.
-    pub spec_base: StSpec<'s>,
+    pub spec_base: SpecTecSpec<'s>,
     /// Every level of the tower, from the base to the top.
     pub levels: &'s [Level],
     /// The protocol of the boundary below each level above the base.

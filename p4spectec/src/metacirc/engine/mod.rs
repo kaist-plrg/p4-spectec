@@ -4,11 +4,11 @@
 //! an `Engine` calls its relations and functions,
 //! sending the host calls it makes to the levels lent above it.
 //! Depth 0 borrows the base runner's interpreter; each deeper depth owns one.
-//! `EngineKind` stores the engines; `st` executes AL or SL.
+//! `EngineKind` stores the engines; `spectec` executes AL or SL.
 
-mod st;
+mod spectec;
 
-pub(super) use st::{StEngine, StSpec, StState};
+pub(super) use spectec::{SpecTecEngine, SpecTecSpec, SpecTecState};
 
 use super::boundary::Levels;
 use crate::{
@@ -62,7 +62,7 @@ pub(in crate::metacirc) trait Engine {
 /// A lent engine.
 pub(in crate::metacirc) enum EngineKind<'s> {
     /// The AL or SL interpreter of a P4-SpecTec specification.
-    St(StEngine<'s>),
+    SpecTec(SpecTecEngine<'s>),
 }
 
 impl Engine for EngineKind<'_> {
@@ -75,7 +75,7 @@ impl Engine for EngineKind<'_> {
         program: Value,
     ) -> Eval<Vec<Value>, InterpreterError> {
         match self {
-            Self::St(engine) => engine.call_program(arena, levels, effects, name, program),
+            Self::SpecTec(engine) => engine.call_program(arena, levels, effects, name, program),
         }
     }
 
@@ -88,7 +88,7 @@ impl Engine for EngineKind<'_> {
         values: &[Value],
     ) -> Result<Vec<Value>, InterpreterError> {
         match self {
-            Self::St(engine) => engine.call_rel(arena, levels, effects, name, values),
+            Self::SpecTec(engine) => engine.call_rel(arena, levels, effects, name, values),
         }
     }
 
@@ -102,19 +102,19 @@ impl Engine for EngineKind<'_> {
         values: &[Value],
     ) -> Result<Value, InterpreterError> {
         match self {
-            Self::St(engine) => engine.call_func(arena, levels, effects, name, targs, values),
+            Self::SpecTec(engine) => engine.call_func(arena, levels, effects, name, targs, values),
         }
     }
 
     fn clear(&mut self) {
         match self {
-            Self::St(engine) => engine.clear(),
+            Self::SpecTec(engine) => engine.clear(),
         }
     }
 
     fn reset(&mut self) {
         match self {
-            Self::St(engine) => engine.reset(),
+            Self::SpecTec(engine) => engine.reset(),
         }
     }
 }

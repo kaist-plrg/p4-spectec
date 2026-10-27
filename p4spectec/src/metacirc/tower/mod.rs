@@ -13,7 +13,7 @@ mod patch;
 
 use super::{
     config::LevelConfig,
-    engine::{Engine, EngineKind, StEngine},
+    engine::{Engine, EngineKind, SpecTecEngine},
     interp::{Depth, TowerEnv},
     protocol::ProtocolKind,
 };
@@ -137,10 +137,10 @@ impl<Ext: Extern> Tower<Ext> {
             // A meta base lends the levels above it with its definitions
             BaseLayer::MetaSpec(runner) => {
                 let Runner { backend, interface, external: upper, effects } = runner;
-                let (engine, spec_base) = StEngine::lend_base(backend, interface);
+                let (engine, spec_base) = SpecTecEngine::lend_base(backend, interface);
                 let env = TowerEnv { spec_base, levels, protocols, options: *options };
                 let mut levels = upper.lend(&env);
-                EngineKind::St(engine).call_program(arena, &mut levels, effects, name, program)
+                EngineKind::SpecTec(engine).call_program(arena, &mut levels, effects, name, program)
             }
         }
     }
