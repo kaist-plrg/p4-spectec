@@ -36,6 +36,9 @@ pub struct Registration {
 pub fn run(name_config: &str, name_suite: Option<&str>, path_log: Option<&Path>) -> Result<()> {
     let registration: Registration = harness::load("metacirc/sim")?;
     let config = Configuration::find(&registration.configs, name_config)?;
+    if config.skip_pending("sim") {
+        return Ok(());
+    }
     let path_tower = registration.towers.get(config.base).ok_or_else(|| {
         Error::from(format!("no {} simulation tower registered", config.base.name()))
     })?;

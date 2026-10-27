@@ -102,6 +102,9 @@ pub fn run(
 ) -> Result<()> {
     let registration: Registration = harness::load("metacirc/run")?;
     let config = Configuration::find(&registration.configs, name_config)?;
+    if config.skip_pending("run") {
+        return Ok(());
+    }
     if let Some(name) = name_suite
         && !registration.suites.iter().any(|suite| suite.name == name)
     {

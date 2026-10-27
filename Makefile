@@ -34,8 +34,9 @@ TEST_TARGETS := test test-expected test-elab test-algo test-structure test-prose
 $(TEST_TARGETS):
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $(if $(TEST_LOG),TEST_LOG="$(abspath $(TEST_LOG))") $@
 
-METACIRC_TARGETS := metacirc kompile test-metacirc-run-al test-metacirc-run-il test-metacirc-micro-al \
-  test-metacirc-micro-il test-metacirc-sim-al test-metacirc-sim-il test-metacirc-elab \
+METACIRC_TARGETS := metacirc kompile test-metacirc-run-al test-metacirc-run-il test-metacirc-run-k \
+  test-metacirc-micro-al test-metacirc-micro-il test-metacirc-micro-k test-metacirc-sim-al \
+  test-metacirc-sim-il test-metacirc-sim-k test-metacirc-elab \
   test-metacirc-algo test-metacirc-structure test-metacirc-prose test-metacirc-metaparse \
   test-metacirc-promote
 
