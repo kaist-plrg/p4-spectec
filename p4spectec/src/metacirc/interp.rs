@@ -170,24 +170,33 @@ struct TowerCall<'c, 's, Ext: Extern> {
 }
 
 impl<Ext: Extern> TowerCall<'_, '_, Ext> {
-    /// Calls a relation or function of the specification at `floor`.
-    fn call(&mut self, floor: LevelAt, call: Call<'_>) -> Result<Output, InterpreterError> {
-        let level = match floor {
+    /// Calls a relation or function of the specification at `level_at`.
+    fn call(&mut self, level_at: LevelAt, call: Call<'_>) -> Result<Output, InterpreterError> {
+        match level_at {
             // The base runs natively
-            LevelAt::Base => {
-                let Self { arena, engine, upper, effects } = self;
-                return match call {
-                    Call::Rel { name, values } => engine
-                        .call_rel(arena, upper, effects, name, &values)
-                        .map(Output::Rel),
-                    Call::Func { name, targs, values } => engine
-                        .call_func(arena, upper, effects, name, &targs, &values)
-                        .map(Output::Func),
-                };
-            }
+            LevelAt::Base => self.call_base(call),
             // A host level runs through the protocol of the level below
-            LevelAt::Host(level) => level,
-        };
+            LevelAt::Host(level) => self.call_host(level, call),
+        }
+    }
+
+    /// Calls the depth's engine on the base specification.
+    fn call_base(&mut self, call: Call<'_>) -> Result<Output, InterpreterError> {
+        match call {
+            Call::Rel { name, values } => self
+                .engine
+                .call_rel(self.arena, &mut self.upper, self.effects, name, &values)
+                .map(Output::Rel),
+            Call::Func { name, targs, values } => self
+                .engine
+                .call_func(self.arena, &mut self.upper, self.effects, name, &targs, &values)
+                .map(Output::Func),
+        }
+    }
+
+    /// Lowers `call` of `level` through the protocol below it, calls the level below,
+    /// and raises the result.
+    fn call_host(&mut self, level: HostLevel, call: Call<'_>) -> Result<Output, InterpreterError> {
         let value_ctx = self.load_ctx(level)?;
         let env = self.upper.env;
         let protocol = env.protocol(level);
@@ -204,7 +213,7 @@ impl<Ext: Extern> TowerCall<'_, '_, Ext> {
         }
         // Load the specification through the protocol, on the level below
         let env = self.upper.env;
-        let mut below = BelowFloor { tower: self, floor: level.below() };
+        let mut below = LevelBelow { tower: self, level_at: level.below() };
         let value_ctx = env.protocol(level).load(&mut below, env.spec(level))?;
         self.upper.set_ctx(level, value_ctx);
         Ok(value_ctx)
@@ -212,18 +221,18 @@ impl<Ext: Extern> TowerCall<'_, '_, Ext> {
 }
 
 /// The level below a boundary, on which a protocol loads C.
-struct BelowFloor<'b, 'c, 's, Ext: Extern> {
+struct LevelBelow<'b, 'c, 's, Ext: Extern> {
     tower: &'b mut TowerCall<'c, 's, Ext>,
-    floor: LevelAt,
+    level_at: LevelAt,
 }
 
-impl<Ext: Extern> Below for BelowFloor<'_, '_, '_, Ext> {
+impl<Ext: Extern> Below for LevelBelow<'_, '_, '_, Ext> {
     fn arena(&mut self) -> &mut Arena {
         self.tower.arena
     }
 
     fn call(&mut self, call: Call<'_>) -> Result<Output, InterpreterError> {
-        self.tower.call(self.floor, call)
+        self.tower.call(self.level_at, call)
     }
 }
 
