@@ -24,78 +24,6 @@ use crate::{
 use smallvec::SmallVec;
 use std::{borrow::Cow, ops::Deref};
 
-// == Calls across a boundary
-
-/// A relation or function call on one level.
-pub(in crate::metacirc) enum Call<'a> {
-    Rel { name: &'a str, values: Values<'a> },
-    Func { name: &'a str, targs: Cow<'a, [Typ]>, values: Values<'a> },
-}
-
-/// The values of a `Call`: the caller's, or the few a protocol lowers them to.
-pub(in crate::metacirc) enum Values<'a> {
-    Borrowed(&'a [Value]),
-    Lowered(SmallVec<[Value; 4]>),
-}
-
-impl Deref for Values<'_> {
-    type Target = [Value];
-
-    fn deref(&self) -> &[Value] {
-        match self {
-            Self::Borrowed(values) => values,
-            Self::Lowered(values) => values,
-        }
-    }
-}
-
-/// The outcome of a `Call`, of the same kind.
-pub(in crate::metacirc) enum Output {
-    Rel(Vec<Value>),
-    Func(Value),
-}
-
-/// A host call that a level's specification made, decoded for the level above.
-pub(in crate::metacirc) enum HostCall {
-    Builtin { id: Id, targs: Vec<Typ>, values: Vec<Value> },
-    ExternRel { id: Id, values: Vec<Value> },
-    ExternFunc { id: Id, targs: Vec<Typ>, values: Vec<Value> },
-}
-
-impl Call<'_> {
-    /// Returns the name of the called relation or function.
-    pub(in crate::metacirc) fn name(&self) -> &str {
-        match self {
-            Self::Rel { name, .. } | Self::Func { name, .. } => name,
-        }
-    }
-}
-
-impl Output {
-    /// Returns the outputs of a relation call.
-    pub(in crate::metacirc) fn into_rel(self) -> Vec<Value> {
-        match self {
-            Self::Rel(values) => values,
-            Self::Func(_) => unreachable!("a relation call outputs a list"),
-        }
-    }
-
-    /// Returns the result of a function call.
-    pub(in crate::metacirc) fn into_func(self) -> Value {
-        match self {
-            Self::Func(value) => value,
-            Self::Rel(_) => unreachable!("a function call outputs one value"),
-        }
-    }
-}
-
-/// Calls on the level below a boundary, which `Protocol::load` runs.
-pub(in crate::metacirc) trait Below {
-    fn arena(&mut self) -> &mut Arena;
-
-    fn call(&mut self, call: Call<'_>) -> Result<Output, InterpreterError>;
-}
-
 // == Protocols
 
 /// The protocol of a level's specification toward the level above it.
@@ -202,4 +130,76 @@ impl Protocol for ProtocolKind {
             Self::Meta(protocol) => protocol.reply(arena, cache, call, eval),
         }
     }
+}
+
+/// Calls on the level below a boundary, which `Protocol::load` runs.
+pub(in crate::metacirc) trait Below {
+    fn arena(&mut self) -> &mut Arena;
+
+    fn call(&mut self, call: Call<'_>) -> Result<Output, InterpreterError>;
+}
+
+// == Calls across a boundary
+
+/// A relation or function call on one level.
+pub(in crate::metacirc) enum Call<'a> {
+    Rel { name: &'a str, values: Values<'a> },
+    Func { name: &'a str, targs: Cow<'a, [Typ]>, values: Values<'a> },
+}
+
+impl Call<'_> {
+    /// Returns the name of the called relation or function.
+    pub(in crate::metacirc) fn name(&self) -> &str {
+        match self {
+            Self::Rel { name, .. } | Self::Func { name, .. } => name,
+        }
+    }
+}
+
+/// The values of a `Call`: the caller's, or the few a protocol lowers them to.
+pub(in crate::metacirc) enum Values<'a> {
+    Borrowed(&'a [Value]),
+    Lowered(SmallVec<[Value; 4]>),
+}
+
+impl Deref for Values<'_> {
+    type Target = [Value];
+
+    fn deref(&self) -> &[Value] {
+        match self {
+            Self::Borrowed(values) => values,
+            Self::Lowered(values) => values,
+        }
+    }
+}
+
+/// The outcome of a `Call`, of the same kind.
+pub(in crate::metacirc) enum Output {
+    Rel(Vec<Value>),
+    Func(Value),
+}
+
+impl Output {
+    /// Returns the outputs of a relation call.
+    pub(in crate::metacirc) fn into_rel(self) -> Vec<Value> {
+        match self {
+            Self::Rel(values) => values,
+            Self::Func(_) => unreachable!("a relation call outputs a list"),
+        }
+    }
+
+    /// Returns the result of a function call.
+    pub(in crate::metacirc) fn into_func(self) -> Value {
+        match self {
+            Self::Func(value) => value,
+            Self::Rel(_) => unreachable!("a function call outputs one value"),
+        }
+    }
+}
+
+/// A host call that a level's specification made, decoded for the level above.
+pub(in crate::metacirc) enum HostCall {
+    Builtin { id: Id, targs: Vec<Typ>, values: Vec<Value> },
+    ExternRel { id: Id, values: Vec<Value> },
+    ExternFunc { id: Id, targs: Vec<Typ>, values: Vec<Value> },
 }

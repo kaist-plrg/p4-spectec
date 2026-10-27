@@ -31,30 +31,6 @@ use std::borrow::Cow;
 
 // == The P4 level's interpreter
 
-/// Definitions shared by every depth.
-pub(in crate::metacirc) struct TowerEnv<'s> {
-    /// The base specification, executed natively.
-    pub spec_base: SpecTecSpec<'s>,
-    /// Every level of the tower, from the base to the top.
-    pub specs: &'s [LevelSpec],
-    /// The protocol of the boundary below each level above the base.
-    pub protocols: &'s [ProtocolKind],
-    /// Options for the engines of deeper depths.
-    pub options: runner::Config,
-}
-
-impl TowerEnv<'_> {
-    /// Returns the specification of `level`, in the form the level below loads.
-    fn spec(&self, level: HostLevel) -> &LevelSpec {
-        &self.specs[level.number()]
-    }
-
-    /// Returns the protocol of the boundary below `level`.
-    pub(in crate::metacirc) fn protocol(&self, level: HostLevel) -> &ProtocolKind {
-        &self.protocols[level.index()]
-    }
-}
-
 /// The P4 level's interpreter at one depth, borrowing that depth's state.
 pub(in crate::metacirc) struct TowerInterp<'s> {
     pub engine: EngineKind<'s>,
@@ -145,6 +121,30 @@ impl<'s> TowerInterp<'s> {
         };
         // Run the base in the same arena and effect count
         body(&mut TowerCall { arena, engine, upper, effects })
+    }
+}
+
+/// Definitions shared by every depth.
+pub(in crate::metacirc) struct TowerEnv<'s> {
+    /// The base specification, executed natively.
+    pub spec_base: SpecTecSpec<'s>,
+    /// Every level of the tower, from the base to the top.
+    pub specs: &'s [LevelSpec],
+    /// The protocol of the boundary below each level above the base.
+    pub protocols: &'s [ProtocolKind],
+    /// Options for the engines of deeper depths.
+    pub options: runner::Config,
+}
+
+impl TowerEnv<'_> {
+    /// Returns the specification of `level`, in the form the level below loads.
+    fn spec(&self, level: HostLevel) -> &LevelSpec {
+        &self.specs[level.number()]
+    }
+
+    /// Returns the protocol of the boundary below `level`.
+    pub(in crate::metacirc) fn protocol(&self, level: HostLevel) -> &ProtocolKind {
+        &self.protocols[level.index()]
     }
 }
 

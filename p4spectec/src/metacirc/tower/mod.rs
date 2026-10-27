@@ -32,6 +32,8 @@ use crate::{
 };
 use std::num::NonZeroUsize;
 
+// == Tower
+
 /// Prepared specifications and host layers of an interpreter tower,
 /// with `Ext` the extern of its P4 level.
 pub struct Tower<Ext: Extern = Dummy> {
@@ -42,6 +44,51 @@ pub struct Tower<Ext: Extern = Dummy> {
     pub(super) base: BaseRunner<Ext>,
     /// Options for the interpreters of reentry depths.
     pub(super) options: runner::Config,
+}
+
+impl<Ext: Extern> Tower<Ext> {
+    /// Clears program state in the base and every level above it.
+    ///
+    /// Call before each input, and before resetting the arena values for parsing.
+    pub fn reset(&mut self) {
+        self.base.reset();
+    }
+
+    /// Executes a patched input at the native base's entry relation.
+    pub fn eval_program(&mut self, arena: &mut Arena, program: Value) -> Eval<Vec<Value>> {
+        let Self { specs, protocols, base, options } = self;
+        let name = &specs[0].config().rel;
+        match base {
+            // A P4 base runs the program directly
+            BaseRunner::P4(runner) => runner.eval_program(arena, name, program),
+            // A meta base lends the levels above it with its definitions
+            BaseRunner::Meta(runner) => {
+                let Runner { backend, interface, external: upper, effects } = runner;
+                let (engine, spec_base) = SpecTecEngine::lend_base(backend, interface);
+                let env = TowerEnv { spec_base, specs, protocols, options: *options };
+                let mut upper = upper.lend(&env);
+                EngineKind::SpecTec(engine).call_program(arena, &mut upper, effects, name, program)
+            }
+        }
+    }
+}
+
+/// The native runner of the base, selected by the language it interprets.
+pub(super) enum BaseRunner<Ext: Extern> {
+    /// A P4 specification, interpreting a parsed P4 program.
+    P4(Runner<P4Interface, Ext>),
+    /// A meta specification interpreting an AL or IL script, hosting the levels above it.
+    Meta(Runner<MetaInterface, Upper<Ext>>),
+}
+
+impl<Ext: Extern> BaseRunner<Ext> {
+    /// Resets the runner and the levels its extern stores.
+    fn reset(&mut self) {
+        match self {
+            Self::P4(runner) => runner.reset(),
+            Self::Meta(runner) => runner.reset(),
+        }
+    }
 }
 
 /// A configured specification, by the form it is passed to the level below.
@@ -62,6 +109,17 @@ impl LevelSpec {
             | Self::AboveIl { config, .. } => config,
         }
     }
+}
+
+// == Positions
+
+/// A level of the tower: the base, or a host level above it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in crate::metacirc) enum LevelAt {
+    /// The base, which runs natively.
+    Base,
+    /// A level above the base, which the level below interprets.
+    Host(HostLevel),
 }
 
 /// A level above the base, which the level below it interprets.
@@ -100,59 +158,5 @@ impl HostLevel {
     /// Returns this level's position in per-level storage, level 1 at 0.
     pub(in crate::metacirc) fn index(self) -> usize {
         self.0.get() - 1
-    }
-}
-
-/// A level of the tower: the base, or a host level above it.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(in crate::metacirc) enum LevelAt {
-    /// The base, which runs natively.
-    Base,
-    /// A level above the base, which the level below interprets.
-    Host(HostLevel),
-}
-
-/// The native runner of the base, selected by the language it interprets.
-pub(super) enum BaseRunner<Ext: Extern> {
-    /// A P4 specification, interpreting a parsed P4 program.
-    P4(Runner<P4Interface, Ext>),
-    /// A meta specification interpreting an AL or IL script, hosting the levels above it.
-    Meta(Runner<MetaInterface, Upper<Ext>>),
-}
-
-impl<Ext: Extern> Tower<Ext> {
-    /// Clears program state in the base and every level above it.
-    ///
-    /// Call before each input, and before resetting the arena values for parsing.
-    pub fn reset(&mut self) {
-        self.base.reset();
-    }
-
-    /// Executes a patched input at the native base's entry relation.
-    pub fn eval_program(&mut self, arena: &mut Arena, program: Value) -> Eval<Vec<Value>> {
-        let Self { specs, protocols, base, options } = self;
-        let name = &specs[0].config().rel;
-        match base {
-            // A P4 base runs the program directly
-            BaseRunner::P4(runner) => runner.eval_program(arena, name, program),
-            // A meta base lends the levels above it with its definitions
-            BaseRunner::Meta(runner) => {
-                let Runner { backend, interface, external: upper, effects } = runner;
-                let (engine, spec_base) = SpecTecEngine::lend_base(backend, interface);
-                let env = TowerEnv { spec_base, specs, protocols, options: *options };
-                let mut upper = upper.lend(&env);
-                EngineKind::SpecTec(engine).call_program(arena, &mut upper, effects, name, program)
-            }
-        }
-    }
-}
-
-impl<Ext: Extern> BaseRunner<Ext> {
-    /// Resets the runner and the levels its extern stores.
-    fn reset(&mut self) {
-        match self {
-            Self::P4(runner) => runner.reset(),
-            Self::Meta(runner) => runner.reset(),
-        }
     }
 }

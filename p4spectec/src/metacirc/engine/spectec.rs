@@ -24,86 +24,12 @@ use crate::{
     },
 };
 
-/// The base's definitions, in the representation it executes.
-#[derive(Clone, Copy)]
-pub(in crate::metacirc) enum SpecTecSpec<'s> {
-    Al(&'s AlSpecEnv),
-    Sl(&'s SlSpecEnv),
-}
-
-/// An interpreter of the base's definitions, owned by a depth beneath the base.
-enum SpecTecInterp {
-    Al(AlInterp),
-    Sl(SlInterp),
-}
-
-/// The engine state a depth beneath the base owns.
-pub(in crate::metacirc) struct SpecTecState {
-    interp: SpecTecInterp,
-    interface: MetaInterface,
-}
-
-/// The base's definitions and a depth's interpreter of them.
-enum SpecTecBackend<'s> {
-    Al { spec_env: &'s AlSpecEnv, interp: &'s mut AlInterp },
-    Sl { spec_env: &'s SlSpecEnv, interp: &'s mut SlInterp },
-}
+// == Engine
 
 /// The base's native interpreter at one depth, with that depth's meta builtins.
 pub(in crate::metacirc) struct SpecTecEngine<'s> {
     backend: SpecTecBackend<'s>,
     interface: &'s mut MetaInterface,
-}
-
-impl SpecTecState {
-    /// Makes the state of a depth interpreting `spec`.
-    pub(in crate::metacirc) fn new(options: runner::Config, spec: SpecTecSpec<'_>) -> Self {
-        let interp = match spec {
-            SpecTecSpec::Al(_) => SpecTecInterp::Al(AlInterp::new(AlConfig::new(
-                options.cache,
-                options.det,
-                options.guard,
-            ))),
-            SpecTecSpec::Sl(_) => SpecTecInterp::Sl(SlInterp::new(SlConfig::new(
-                options.cache,
-                options.det,
-                options.guard,
-            ))),
-        };
-        // Only the builtins are used; the base never parses at a depth
-        Self { interp, interface: interface::meta(Lang::Al) }
-    }
-}
-
-/// Runs `$body` with `$ctx` bound to a context of `$engine`'s backend.
-macro_rules! with_backend {
-    ($engine:expr, $arena:expr, $upper:expr, $effects:expr, |$ctx:ident| $body:expr) => {{
-        let engine = &mut *$engine;
-        match &mut engine.backend {
-            SpecTecBackend::Al { spec_env, interp } => {
-                let mut $ctx = RunnerContext::new(
-                    $arena,
-                    *spec_env,
-                    &mut **interp,
-                    &mut *engine.interface,
-                    $upper,
-                    $effects,
-                );
-                $body
-            }
-            SpecTecBackend::Sl { spec_env, interp } => {
-                let mut $ctx = RunnerContext::new(
-                    $arena,
-                    *spec_env,
-                    &mut **interp,
-                    &mut *engine.interface,
-                    $upper,
-                    $effects,
-                );
-                $body
-            }
-        }
-    }};
 }
 
 impl<'s> SpecTecEngine<'s> {
@@ -140,6 +66,37 @@ impl<'s> SpecTecEngine<'s> {
         };
         Self { backend, interface: &mut state.interface }
     }
+}
+
+/// Runs `$body` with `$ctx` bound to a context of `$engine`'s backend.
+macro_rules! with_backend {
+    ($engine:expr, $arena:expr, $upper:expr, $effects:expr, |$ctx:ident| $body:expr) => {{
+        let engine = &mut *$engine;
+        match &mut engine.backend {
+            SpecTecBackend::Al { spec_env, interp } => {
+                let mut $ctx = RunnerContext::new(
+                    $arena,
+                    *spec_env,
+                    &mut **interp,
+                    &mut *engine.interface,
+                    $upper,
+                    $effects,
+                );
+                $body
+            }
+            SpecTecBackend::Sl { spec_env, interp } => {
+                let mut $ctx = RunnerContext::new(
+                    $arena,
+                    *spec_env,
+                    &mut **interp,
+                    &mut *engine.interface,
+                    $upper,
+                    $effects,
+                );
+                $body
+            }
+        }
+    }};
 }
 
 // The interpreters are generic in their extern; clearing uses none
@@ -200,4 +157,51 @@ impl Engine for SpecTecEngine<'_> {
         }
         self.interface.clear();
     }
+}
+
+/// The base's definitions and a depth's interpreter of them.
+enum SpecTecBackend<'s> {
+    Al { spec_env: &'s AlSpecEnv, interp: &'s mut AlInterp },
+    Sl { spec_env: &'s SlSpecEnv, interp: &'s mut SlInterp },
+}
+
+/// The base's definitions, in the representation it executes.
+#[derive(Clone, Copy)]
+pub(in crate::metacirc) enum SpecTecSpec<'s> {
+    Al(&'s AlSpecEnv),
+    Sl(&'s SlSpecEnv),
+}
+
+// == Depth state
+
+/// The engine state a depth beneath the base owns.
+pub(in crate::metacirc) struct SpecTecState {
+    interp: SpecTecInterp,
+    interface: MetaInterface,
+}
+
+impl SpecTecState {
+    /// Makes the state of a depth interpreting `spec`.
+    pub(in crate::metacirc) fn new(options: runner::Config, spec: SpecTecSpec<'_>) -> Self {
+        let interp = match spec {
+            SpecTecSpec::Al(_) => SpecTecInterp::Al(AlInterp::new(AlConfig::new(
+                options.cache,
+                options.det,
+                options.guard,
+            ))),
+            SpecTecSpec::Sl(_) => SpecTecInterp::Sl(SlInterp::new(SlConfig::new(
+                options.cache,
+                options.det,
+                options.guard,
+            ))),
+        };
+        // Only the builtins are used; the base never parses at a depth
+        Self { interp, interface: interface::meta(Lang::Al) }
+    }
+}
+
+/// An interpreter of the base's definitions, owned by a depth beneath the base.
+enum SpecTecInterp {
+    Al(AlInterp),
+    Sl(SlInterp),
 }

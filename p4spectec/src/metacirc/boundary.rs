@@ -26,91 +26,86 @@ use crate::{
     },
 };
 
-// == Reentry
+// == Externs of the base's specification
 
-impl<'l, Ext: Extern> UpperMut<'l, Ext> {
-    /// Runs `call` in a P4 context whose interpreter is the next depth.
-    fn with_next<T>(
-        &mut self,
-        arena: &mut Arena,
-        call: impl FnOnce(
-            &mut RunnerContext<'_, TowerInterp<'_>, P4Interface, Ext>,
-        ) -> Result<T, InterpreterError>,
-    ) -> Eval<T> {
-        // Only the P4 top's interface and extern join the next depth's context
-        let Self { env, caches, ctxs, hosts, top, depth_next } = self;
-        let env = *env;
-        let TopMut::P4 { interface, external } = top else {
-            unreachable!("only a P4 top reenters");
-        };
-        // The next depth lives until the program is reset
-        let count = hosts.len();
-        let depth = depth_next
-            .get_or_insert_with(|| Box::new(Depth::new(env.options, env.spec_base, count)));
-        let mut interp = depth.lend(env.spec_base, caches, ctxs);
-        // Count the call's effects apart from the calling depth's
-        let mut effects = 0;
-        let mut ctx = RunnerContext::new(
-            arena,
-            env,
-            &mut interp,
-            &mut **interface,
-            &mut **external,
-            &mut effects,
-        );
-        eval_in(&mut ctx, call)
+impl<Ext: Extern> Extern for UpperMut<'_, Ext> {
+    fn eval_rel<Interp, Iface>(
+        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
+        name: &str,
+        values: &[Value],
+    ) -> Eval<Vec<Value>, ExternError>
+    where
+        Iface: Interface,
+        Interp: Interpreter<Iface, Self>,
+    {
+        // The base's specification sends host calls to the first level above it
+        let (arena, upper) = ctx.arena_and_external_mut();
+        Boundary { upper, level: HostLevel::FIRST }.eval_rel(arena, name, values)
+    }
+
+    fn eval_func<Interp, Iface>(
+        _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
+        name: &str,
+        _targs: &[Typ],
+        _values: &[Value],
+    ) -> Eval<Value, ExternError>
+    where
+        Iface: Interface,
+        Interp: Interpreter<Iface, Self>,
+    {
+        unsupported(name)
+    }
+
+    // The call that lent these levels clears them through their owner
+    fn clear(&mut self) {}
+}
+
+/// The base runner never executes with the stored levels as its extern:
+/// `Tower::eval_program` and `SimTower` lend them as `UpperMut`,
+/// with the spec-meta definitions a reentry runs on.
+/// The runner only clears them between programs.
+impl<Ext: Extern> Extern for Upper<Ext> {
+    fn eval_rel<Interp, Iface>(
+        _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
+        name: &str,
+        _values: &[Value],
+    ) -> Eval<Vec<Value>, ExternError>
+    where
+        Iface: Interface,
+        Interp: Interpreter<Iface, Self>,
+    {
+        not_lent(name)
+    }
+
+    fn eval_func<Interp, Iface>(
+        _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
+        name: &str,
+        _targs: &[Typ],
+        _values: &[Value],
+    ) -> Eval<Value, ExternError>
+    where
+        Iface: Interface,
+        Interp: Interpreter<Iface, Self>,
+    {
+        not_lent(name)
+    }
+
+    fn clear(&mut self) {
+        Upper::clear(self);
     }
 }
 
-/// Runs `call` in `ctx`, reporting the effects it records.
-fn eval_in<Interp, Ext, T>(
-    ctx: &mut RunnerContext<'_, Interp, P4Interface, Ext>,
-    call: impl FnOnce(&mut RunnerContext<'_, Interp, P4Interface, Ext>) -> Result<T, InterpreterError>,
-) -> Eval<T>
-where
-    Interp: Interpreter<P4Interface, Ext>,
-    Ext: Extern,
-{
-    let checkpoint = ctx.effect_checkpoint();
-    let result = call(ctx);
-    Eval::new(result, ctx.effect_since(checkpoint))
+/// Rejects a host call that reached the stored levels without lending them.
+fn not_lent<T>(name: &str) -> Eval<T, ExternError> {
+    Eval::new(Err(error::base_not_lent(name).into()), SideEffect::Pure)
 }
 
 // == Boundary
-
-/// The levels above a boundary, answering the host calls decoded below it.
-pub(in crate::metacirc) trait HostCalls {
-    /// Calls a decoded builtin at this level.
-    fn builtin(
-        &mut self,
-        arena: &mut Arena,
-        id: &Id,
-        targs: &[Typ],
-        values: &[Value],
-    ) -> Eval<Value>;
-
-    /// Calls a decoded host relation at this level.
-    fn extern_rel(&mut self, arena: &mut Arena, name: &str, values: &[Value]) -> Eval<Vec<Value>>;
-
-    /// Calls a decoded host function at this level.
-    fn extern_func(
-        &mut self,
-        arena: &mut Arena,
-        name: &str,
-        targs: &[Typ],
-        values: &[Value],
-    ) -> Eval<Value>;
-}
 
 /// The boundary below `level`, sending decoded host calls up to it.
 pub(in crate::metacirc) struct Boundary<'b, 'l, Ext: Extern> {
     pub upper: &'b mut UpperMut<'l, Ext>,
     pub level: HostLevel,
-}
-
-/// Rejects an operation outside the host boundary's contract.
-fn unsupported<T>(name: &str) -> Eval<T, ExternError> {
-    Eval::new(Err(error::extern_unsupported(name).into()), SideEffect::Pure)
 }
 
 impl<Ext: Extern> Boundary<'_, '_, Ext> {
@@ -155,6 +150,30 @@ impl<Ext: Extern> Boundary<'_, '_, Ext> {
 /// Wraps the result of an evaluation as an `Output`.
 fn into_output<T>(eval: Eval<T>, output: impl FnOnce(T) -> Output) -> Eval<Output> {
     Eval::new(eval.result.map(output), eval.effect)
+}
+
+/// The levels above a boundary, answering the host calls decoded below it.
+pub(in crate::metacirc) trait HostCalls {
+    /// Calls a decoded builtin at this level.
+    fn builtin(
+        &mut self,
+        arena: &mut Arena,
+        id: &Id,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Eval<Value>;
+
+    /// Calls a decoded host relation at this level.
+    fn extern_rel(&mut self, arena: &mut Arena, name: &str, values: &[Value]) -> Eval<Vec<Value>>;
+
+    /// Calls a decoded host function at this level.
+    fn extern_func(
+        &mut self,
+        arena: &mut Arena,
+        name: &str,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Eval<Value>;
 }
 
 impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
@@ -215,76 +234,57 @@ impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
     }
 }
 
-// == Externs of the base's specification
-
-impl<Ext: Extern> Extern for UpperMut<'_, Ext> {
-    fn eval_rel<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        name: &str,
-        values: &[Value],
-    ) -> Eval<Vec<Value>, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        // The base's specification sends host calls to the first level above it
-        let (arena, upper) = ctx.arena_and_external_mut();
-        Boundary { upper, level: HostLevel::FIRST }.eval_rel(arena, name, values)
-    }
-
-    fn eval_func<Interp, Iface>(
-        _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        name: &str,
-        _targs: &[Typ],
-        _values: &[Value],
-    ) -> Eval<Value, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        unsupported(name)
-    }
-
-    // The call that lent these levels clears them through their owner
-    fn clear(&mut self) {}
+/// Rejects an operation outside the host boundary's contract.
+fn unsupported<T>(name: &str) -> Eval<T, ExternError> {
+    Eval::new(Err(error::extern_unsupported(name).into()), SideEffect::Pure)
 }
 
-/// Rejects a host call that reached the stored levels without lending them.
-fn not_lent<T>(name: &str) -> Eval<T, ExternError> {
-    Eval::new(Err(error::base_not_lent(name).into()), SideEffect::Pure)
+// == Reentry
+
+impl<'l, Ext: Extern> UpperMut<'l, Ext> {
+    /// Runs `call` in a P4 context whose interpreter is the next depth.
+    fn with_next<T>(
+        &mut self,
+        arena: &mut Arena,
+        call: impl FnOnce(
+            &mut RunnerContext<'_, TowerInterp<'_>, P4Interface, Ext>,
+        ) -> Result<T, InterpreterError>,
+    ) -> Eval<T> {
+        // Only the P4 top's interface and extern join the next depth's context
+        let Self { env, caches, ctxs, hosts, top, depth_next } = self;
+        let env = *env;
+        let TopMut::P4 { interface, external } = top else {
+            unreachable!("only a P4 top reenters");
+        };
+        // The next depth lives until the program is reset
+        let count = hosts.len();
+        let depth = depth_next
+            .get_or_insert_with(|| Box::new(Depth::new(env.options, env.spec_base, count)));
+        let mut interp = depth.lend(env.spec_base, caches, ctxs);
+        // Count the call's effects apart from the calling depth's
+        let mut effects = 0;
+        let mut ctx = RunnerContext::new(
+            arena,
+            env,
+            &mut interp,
+            &mut **interface,
+            &mut **external,
+            &mut effects,
+        );
+        eval_in(&mut ctx, call)
+    }
 }
 
-/// The base runner never executes with the stored levels as its extern:
-/// `Tower::eval_program` and `SimTower` lend them as `UpperMut`,
-/// with the spec-meta definitions a reentry runs on.
-/// The runner only clears them between programs.
-impl<Ext: Extern> Extern for Upper<Ext> {
-    fn eval_rel<Interp, Iface>(
-        _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        name: &str,
-        _values: &[Value],
-    ) -> Eval<Vec<Value>, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        not_lent(name)
-    }
-
-    fn eval_func<Interp, Iface>(
-        _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        name: &str,
-        _targs: &[Typ],
-        _values: &[Value],
-    ) -> Eval<Value, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        not_lent(name)
-    }
-
-    fn clear(&mut self) {
-        Upper::clear(self);
-    }
+/// Runs `call` in `ctx`, reporting the effects it records.
+fn eval_in<Interp, Ext, T>(
+    ctx: &mut RunnerContext<'_, Interp, P4Interface, Ext>,
+    call: impl FnOnce(&mut RunnerContext<'_, Interp, P4Interface, Ext>) -> Result<T, InterpreterError>,
+) -> Eval<T>
+where
+    Interp: Interpreter<P4Interface, Ext>,
+    Ext: Extern,
+{
+    let checkpoint = ctx.effect_checkpoint();
+    let result = call(ctx);
+    Eval::new(result, ctx.effect_since(checkpoint))
 }
