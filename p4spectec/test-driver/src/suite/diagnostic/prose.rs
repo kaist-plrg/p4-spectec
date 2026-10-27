@@ -1,0 +1,43 @@
+//! Pinned prose-hint failures from the reference annotate suite
+//!
+//! Earlier stages must succeed before prosify rejects a source hint.
+//! The shared runner compares each complete rendered report with its expectation.
+
+use p4spectec::diagnostic::Report;
+
+use p4spectec::frontend::parse::parse_files;
+
+use p4spectec::pass::elaborate;
+
+use p4spectec::pass::algo;
+
+use p4spectec::pass::structure;
+
+use p4spectec::pass::prosify;
+
+use crate::harness::Result;
+
+use super::{Case, failure};
+
+/// Runs one source fixture through its intended prose failure.
+pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
+    let name = case.name.as_str();
+    // Earlier stage failures are setup errors, never accepted snapshots
+    let spec_el = parse_files([&case.input]).map_err(|report| {
+        failure(name, format!("parser failed before prose conversion: {report}"))
+    })?;
+    let spec_il = elaborate::convert(spec_el).map_err(|report| {
+        failure(name, format!("elaboration failed before prose conversion: {report}"))
+    })?;
+    let spec_al = algo::convert(spec_il).map_err(|report| {
+        failure(name, format!("algorithmic conversion failed before prose conversion: {report}"))
+    })?;
+    let spec_sl = structure::convert(spec_al, false).map_err(|report| {
+        failure(name, format!("structuring failed before prose conversion: {report}"))
+    })?;
+    // Reject unexpected success even during snapshot promotion
+    let report = prosify::convert(spec_sl)
+        .err()
+        .ok_or_else(|| failure(name, "prose conversion unexpectedly succeeded"))?;
+    Ok(vec![*report])
+}

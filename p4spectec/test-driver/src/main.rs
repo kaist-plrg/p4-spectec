@@ -1,47 +1,16 @@
-mod corpus;
-mod log;
-mod output;
-mod snapshot;
+mod harness;
 mod suite;
-
-mod elab;
-
-mod algo;
-
-mod structure;
-
-mod prose;
-
-mod adoc;
-
-mod micro;
-mod p4parse;
-mod run;
-mod sim;
-
-mod diagnostic;
 
 use std::{path::PathBuf, process::ExitCode};
 
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 
-use suite::{Index, Language};
-
-#[derive(Debug, thiserror::Error)]
-enum Error {
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-    #[error("{0}")]
-    Invalid(String),
-}
-type Result<T> = std::result::Result<T, Error>;
+use harness::{Error, Result};
+use suite::{diagnostic, micro, p4parse, run, sim, snapshot, snapshot::Stage};
 
 /// Source and expected-file acceptance for the Rust implementation
 #[derive(Parser)]
 struct Cli {
-    /// Suite registration file, relative to the invoking directory
-    #[arg(long = "registry", global = true)]
-    path_registry: Option<PathBuf>,
     /// Write a per-test timing log of p4parse, run, sim, or micro into a new file in this directory
     #[arg(long = "log", global = true, value_name = "DIR")]
     path_log: Option<PathBuf>,
@@ -51,7 +20,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// List all registered suites, inputs, and expectation files
+    /// List every registration
     List,
     /// Compare the elaborated P4 specification with expected output
     Elab,
@@ -71,24 +40,18 @@ enum Command {
     P4parse,
     /// Compare execution outcomes with stored file results
     Run {
-        #[command(subcommand)]
-        language: Language,
-        #[command(flatten)]
-        options: ExecutionOptions,
+        /// Configuration name in `suites/run.toml`
+        config: String,
     },
     /// Compare simulation outcomes and matched packets
     Sim {
-        #[command(subcommand)]
-        language: Language,
-        #[command(flatten)]
-        options: ExecutionOptions,
+        /// Configuration name in `suites/sim.toml`
+        config: String,
     },
     /// Run micro tests: standalone spec-language sources by pipeline stage
     Micro {
-        #[command(subcommand)]
-        language: Language,
-        #[command(flatten)]
-        options: ExecutionOptions,
+        /// Configuration name in `suites/micro.toml`
+        config: String,
     },
     /// Compare diagnostic output with stored snapshots
     Diagnostics {
@@ -98,17 +61,6 @@ enum Command {
         #[arg(long = "cli", value_name = "PATH")]
         path_cli: Option<PathBuf>,
     },
-}
-
-/// Configures interpreter execution consistently for run and sim.
-#[derive(Clone, Copy, Args)]
-struct ExecutionOptions {
-    /// Disable deterministic execution checks
-    #[arg(long, global = true)]
-    no_det: bool,
-    /// Enable or disable interpreter caching
-    #[arg(long, global = true, default_value_t = true, action = clap::ArgAction::Set)]
-    cache_on: bool,
 }
 
 fn execute(mut cli: Cli) -> Result<()> {
@@ -122,9 +74,8 @@ fn execute(mut cli: Cli) -> Result<()> {
             | Command::Micro { .. }
     ) && std::env::var_os("UPDATE_EXPECT").is_some()
     {
-        return Err(Error::Invalid(
-            "UPDATE_EXPECT is supported only for elab, algo, prose, adoc, and diagnostics"
-                .to_owned(),
+        return Err(Error::from(
+            "UPDATE_EXPECT is supported only for elab, algo, prose, adoc, and diagnostics",
         ));
     }
     // Resolve output paths before changing to the specification repository
@@ -139,51 +90,35 @@ fn execute(mut cli: Cli) -> Result<()> {
     if let Command::Diagnostics { path_cli: Some(path_cli), .. } = &mut *command {
         *path_cli = std::path::absolute(&*path_cli)?;
     }
-    let path_registry = cli
-        .path_registry
-        .as_deref()
-        .map(std::path::absolute)
-        .transpose()?
-        .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("suites.json"));
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
         .canonicalize()?;
     std::env::set_current_dir(&root)?;
-    let index = Index::load(&path_registry)?;
     match command {
-        Command::List => index.list(),
-        Command::Elab => elab::run(&suite::load_snapshots(&index.suites.elab)?),
-        Command::Algo => algo::run(&suite::load_snapshots(&index.suites.algo)?),
-        Command::Structure => structure::run(&suite::load_structure(&index.suites.structure)?),
-        Command::Prose => prose::run(&suite::load_snapshots(&index.suites.prose)?),
+        Command::List => list(),
+        Command::Elab => snapshot::run(&[Stage::Elab], None),
+        Command::Algo => snapshot::run(&[Stage::Algo], None),
+        Command::Structure => snapshot::run(&[Stage::Structure], None),
+        Command::Prose => snapshot::run(&[Stage::Prose], None),
         Command::Adoc { path_output } => {
-            adoc::run(&suite::load_adoc(&index.suites.adoc)?, path_output.as_deref())
+            snapshot::run(&[Stage::AdocEl, Stage::AdocPl], path_output.as_deref())
         }
-        Command::P4parse => {
-            p4parse::run(&suite::load_parsing(&index.suites.p4parse)?, path_log.as_deref())
-        }
-        Command::Run { language, options } => run::run(
-            &suite::load_execution(&index.suites.run)?,
-            *language,
-            *options,
-            path_log.as_deref(),
-        ),
-        Command::Sim { language, options } => sim::run(
-            &suite::load_simulation(&index.suites.sim)?,
-            *language,
-            *options,
-            path_log.as_deref(),
-        ),
-        Command::Micro { language, options } => micro::run(
-            &suite::load_micro(&index.suites.micro)?,
-            *language,
-            *options,
-            path_log.as_deref(),
-        ),
-        Command::Diagnostics { suite, path_cli } => {
-            diagnostic::run(&index.suites.diagnostics, *suite, path_cli.as_deref())
-        }
+        Command::P4parse => p4parse::run(path_log.as_deref()),
+        Command::Run { config } => run::run(config, path_log.as_deref()),
+        Command::Sim { config } => sim::run(config, path_log.as_deref()),
+        Command::Micro { config } => micro::run(config, path_log.as_deref()),
+        Command::Diagnostics { suite, path_cli } => diagnostic::run(*suite, path_cli.as_deref()),
     }
+}
+
+/// Prints every registration without running its tests.
+fn list() -> Result<()> {
+    println!("snapshot: {:#?}", harness::load::<snapshot::Registration>("snapshot")?);
+    println!("p4parse: {:#?}", harness::load::<p4parse::Registration>("p4parse")?);
+    println!("run: {:#?}", harness::load::<run::Registration>("run")?);
+    println!("sim: {:#?}", harness::load::<sim::Registration>("sim")?);
+    println!("micro: {:#?}", harness::load::<micro::Registration>("micro")?);
+    diagnostic::list()
 }
 
 fn main() -> ExitCode {
@@ -191,7 +126,7 @@ fn main() -> ExitCode {
     let result = std::thread::Builder::new()
         .name("expected-driver".to_owned())
         .stack_size(64 * 1024 * 1024)
-        .spawn(move || execute(cli));
+        .spawn(move || execute(cli).map_err(|error| error.to_string()));
     match result {
         Ok(thread) => match thread.join() {
             Ok(Ok(())) => ExitCode::SUCCESS,

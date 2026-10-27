@@ -1,0 +1,20 @@
+# P4 parse/unparse/parse roundtrips: `p4parse` (make test-p4parse).
+#
+# Each suite parses every .p4 file under `roots` with `includes`,
+# prints it with the printer derived from `spec`, parses the text again,
+# and records pass, parse-fail, reparse-fail, or roundtrip-fail per file
+# in `expected`.
+# Paths are relative to the repository root.
+
+spec = ["spec"]
+includes = ["p4c/p4include"]
+
+[[suites]]
+name = "pos"
+roots = ["p4c/testdata/p4_16_samples", "testdata/custom"]
+expected = "p4spectec/test-driver/expected/p4parse/pos.expected"
+
+[[suites]]
+name = "neg"
+roots = ["p4c/testdata/p4_16_errors"]
+expected = "p4spectec/test-driver/expected/p4parse/neg.expected"

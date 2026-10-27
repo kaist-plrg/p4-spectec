@@ -1,0 +1,85 @@
+# Micro tests: `micro <config>` (make test-micro runs al, sl, and pl).
+#
+# Each suite gives every .watsup source under `root` one verdict at `stage`:
+# outcome "success" passes every stage up to `stage`,
+# outcome "failure" passes every earlier stage and fails at `stage`.
+#
+# A configuration runs its `stages` in order and skips suites whose `stage`
+# is not among them; the last conversion stage picks the interpreter language.
+# `excludes` lists directories of .exclude files naming sources to skip.
+# Paths are relative to the repository root.
+
+[[configs]]
+name = "al"
+cache = true
+det = true
+stages = ["parse", "elab", "algo", "run"]
+excludes = []
+
+[[configs]]
+name = "sl"
+cache = true
+det = true
+stages = ["parse", "elab", "algo", "structure", "run"]
+excludes = []
+
+[[configs]]
+name = "pl"
+cache = true
+det = true
+stages = ["parse", "elab", "algo", "structure", "prose", "specdoc", "run"]
+excludes = []
+
+[[suites]]
+name = "neg-parse"
+root = "testdata/spec/neg/parse"
+outcome = "failure"
+stage = "parse"
+
+[[suites]]
+name = "neg-elab"
+root = "testdata/spec/neg/elab"
+outcome = "failure"
+stage = "elab"
+
+[[suites]]
+name = "neg-algo"
+root = "testdata/spec/neg/algo"
+outcome = "failure"
+stage = "algo"
+
+[[suites]]
+name = "neg-structure"
+root = "testdata/spec/neg/structure"
+outcome = "failure"
+stage = "structure"
+
+[[suites]]
+name = "neg-prose"
+root = "testdata/spec/neg/prose"
+outcome = "failure"
+stage = "prose"
+
+[[suites]]
+name = "neg-specdoc"
+root = "testdata/spec/neg/specdoc"
+outcome = "failure"
+stage = "specdoc"
+
+[[suites]]
+name = "neg-run"
+root = "testdata/spec/neg/run"
+outcome = "failure"
+stage = "run"
+
+[[suites]]
+name = "pos-elab"
+root = "testdata/spec/pos/elab"
+outcome = "success"
+stage = "elab"
+
+[[suites]]
+name = "pos-run"
+root = "testdata/spec/pos/run"
+outcome = "success"
+stage = "run"
