@@ -10,7 +10,10 @@
 mod build;
 mod patch;
 
-use super::{config::LevelConfig, reentry::MetaDepth};
+use super::{
+    config::LevelConfig,
+    reentry::{MetaDepth, MetaEnv, Native},
+};
 use crate::{
     interface::{
         meta::{MetaInterface, shared::Cache},
@@ -21,7 +24,7 @@ use crate::{
         data::{arena::Arena, value::flat::Value},
         il::ast as il,
     },
-    runner::{Eval, Extern, Host, Interface, Runner},
+    runner::{self, Eval, Extern, Host, Interface, Runner},
     sim_plugin::dummy::Dummy,
 };
 use std::num::NonZeroUsize;
@@ -32,6 +35,8 @@ pub struct Tower<Ext: Extern = Dummy> {
     // Nonempty, ordered from base through intermediates to the top level
     pub(super) levels: Vec<Level>,
     pub(super) base: BaseLayer<Ext>,
+    /// Options for the interpreters of reentry depths.
+    pub(super) options: runner::Config,
 }
 
 /// A configured specification, by the form it is passed to the level below.
@@ -125,20 +130,24 @@ impl<Ext: Extern> Tower<Ext> {
 
     /// Executes a patched input at the native base's entry relation.
     pub fn eval_program(&mut self, arena: &mut Arena, program: Value) -> Eval<Vec<Value>> {
-        self.base
-            .eval_program(arena, &self.levels[0].config().rel, program)
+        let Self { levels, base, options } = self;
+        let name = &levels[0].config().rel;
+        match base {
+            // A P4 base runs the program directly
+            BaseLayer::P4Spec(runner) => runner.eval_program(arena, name, program),
+            // A meta base lends the levels above it with spec-meta's definitions
+            BaseLayer::MetaSpec(runner) => {
+                let Runner { backend, interface, external: upper, effects } = runner;
+                let (mut native, spec_meta) = Native::lend(backend, interface);
+                let env = MetaEnv { spec_meta, levels, options: *options };
+                let mut levels = upper.lend(&env);
+                native.call_program(arena, &mut levels, effects, name, program)
+            }
+        }
     }
 }
 
 impl<Ext: Extern> BaseLayer<Ext> {
-    /// Enters the native runner with the patched input value.
-    fn eval_program(&mut self, arena: &mut Arena, name: &str, program: Value) -> Eval<Vec<Value>> {
-        match self {
-            Self::P4Spec(runner) => runner.eval_program(arena, name, program),
-            Self::MetaSpec(runner) => runner.eval_program(arena, name, program),
-        }
-    }
-
     /// Resets the runner and the levels its extern stores.
     fn reset(&mut self) {
         match self {

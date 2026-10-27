@@ -27,14 +27,6 @@ pub(super) fn entry_invalid(message: impl Into<String>) -> Box<Report> {
     diagnostic("metacirc/entry-invalid", message)
 }
 
-/// Reports a host extern that reenters a tower lending no interpreter.
-pub(super) fn reentry_unsupported() -> Box<Report> {
-    diagnostic(
-        "metacirc/reentry-unsupported",
-        "a host extern reentered the tower, which lends no interpreter to answer it",
-    )
-}
-
 /// Reports a meta execution whose result is UNMATCH.
 pub(super) fn execution_unmatched(name: &str) -> Box<Report> {
     diagnostic("metacirc/execution-unmatched", format!("meta execution of {name} unmatched"))

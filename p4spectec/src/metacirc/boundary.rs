@@ -7,12 +7,12 @@
 //! a meta level answers its builtins and sends its own host calls
 //! across the boundary above it, up to the top.
 //! The top answers P4 builtins and externs, or the program's builtins.
-//! A P4 extern that reenters, such as V1Model calling find_var_e,
-//! runs on the next depth, made on its first use and kept for the program;
-//! the run path lends no definitions for it, so its reentry fails.
+//! A P4 extern that reenters, such as V1Model calling find_var_e
+//! or static_assert evaluating its condition,
+//! runs on the next depth, made on its first use and kept for the program.
 
 use super::{
-    reentry::{MetaDepth, MetaEnv, MetaInterp, NoReentry},
+    reentry::{MetaDepth, MetaEnv, MetaInterp},
     relay::codec,
     tower::{HostLevel, Top, Upper},
 };
@@ -36,7 +36,7 @@ use crate::{
 /// The levels above the base, borrowed for one execution of the base's specification.
 pub(in crate::metacirc) struct Levels<'l, Ext: Extern> {
     /// Definitions shared by every depth, which a reentry runs on.
-    pub env: Option<&'l MetaEnv<'l>>,
+    pub env: &'l MetaEnv<'l>,
     /// The codec cache of the boundary below each level, shared by every depth.
     pub caches: &'l mut [Cache],
     /// C of each level for the current program, shared by every depth.
@@ -57,11 +57,8 @@ pub(in crate::metacirc) enum TopMut<'l, Ext: Extern> {
 }
 
 impl<Ext: Extern> Upper<Ext> {
-    /// Lends the stored levels at depth 0; `env`, if any, answers reentry.
-    pub(in crate::metacirc) fn lend<'l>(
-        &'l mut self,
-        env: Option<&'l MetaEnv<'l>>,
-    ) -> Levels<'l, Ext> {
+    /// Lends the stored levels at depth 0, with the definitions reentry runs on.
+    pub(in crate::metacirc) fn lend<'l>(&'l mut self, env: &'l MetaEnv<'l>) -> Levels<'l, Ext> {
         let top = match &mut self.top {
             Top::P4(host) => {
                 let (interface, external) = host.parts_mut();
@@ -81,11 +78,6 @@ impl<Ext: Extern> Upper<Ext> {
 }
 
 impl<'l, Ext: Extern> Levels<'l, Ext> {
-    /// Returns the definitions of a P4 call, which always lends them.
-    pub(in crate::metacirc) fn env(&self) -> &'l MetaEnv<'l> {
-        self.env.expect("a P4 call lends its definitions")
-    }
-
     /// Returns the codec cache of the boundary below `level`.
     pub(in crate::metacirc) fn cache(&mut self, level: HostLevel) -> &mut Cache {
         &mut self.caches[level.index()]
@@ -114,43 +106,20 @@ impl<'l, Ext: Extern> Levels<'l, Ext> {
             &mut RunnerContext<'_, MetaInterp<'_>, P4Interface, Ext>,
         ) -> Result<T, InterpreterError>,
     ) -> Eval<T> {
-        let env = self.env();
-        let Self { caches, ctxs, hosts, top, depth_next, .. } = self;
+        let Self { env, caches, ctxs, hosts, top, depth_next } = self;
+        let env = *env;
         let TopMut::P4 { interface, external } = top else {
             unreachable!("only a P4 top reenters");
         };
         // The next depth lives until the program is reset
         let count = hosts.len();
-        let depth = depth_next.get_or_insert_with(|| Box::new(MetaDepth::new(env.options, count)));
-        let mut interp = depth.lend(caches, ctxs);
+        let depth = depth_next
+            .get_or_insert_with(|| Box::new(MetaDepth::new(env.options, env.spec_meta, count)));
+        let mut interp = depth.lend(env.spec_meta, caches, ctxs);
         let mut effects = 0;
         let mut ctx = RunnerContext::new(
             arena,
             env,
-            &mut interp,
-            &mut **interface,
-            &mut **external,
-            &mut effects,
-        );
-        eval_in(&mut ctx, call)
-    }
-
-    /// Runs `call` in a P4 context whose interpreter fails on reentry.
-    fn without_next<T>(
-        &mut self,
-        arena: &mut Arena,
-        call: impl FnOnce(
-            &mut RunnerContext<'_, NoReentry, P4Interface, Ext>,
-        ) -> Result<T, InterpreterError>,
-    ) -> Eval<T> {
-        let TopMut::P4 { interface, external } = &mut self.top else {
-            unreachable!("only a P4 top answers externs");
-        };
-        let mut effects = 0;
-        let mut interp = NoReentry;
-        let mut ctx = RunnerContext::new(
-            arena,
-            &(),
             &mut interp,
             &mut **interface,
             &mut **external,
@@ -275,17 +244,13 @@ impl<Ext: Extern> Boundary<'_, '_, Ext> {
             let mut boundary = Boundary { levels: &mut *self.levels, level: self.level.above() };
             return boundary.eval_rel(arena, name, values).map_err(Into::into);
         }
-        match (&self.levels.top, self.levels.env) {
+        match self.levels.top {
             // A P4 extern may reenter, on the next depth
-            (TopMut::P4 { .. }, Some(_)) => self
+            TopMut::P4 { .. } => self
                 .levels
                 .with_next(arena, |ctx| ctx.call_extern_rel(name, values)),
-            // Without definitions for a next depth, its reentry fails
-            (TopMut::P4 { .. }, None) => self
-                .levels
-                .without_next(arena, |ctx| ctx.call_extern_rel(name, values)),
             // The program declares no host relations
-            (TopMut::Program(_), _) => unsupported(name).map_err(Into::into),
+            TopMut::Program(_) => unsupported(name).map_err(Into::into),
         }
     }
 
@@ -301,17 +266,13 @@ impl<Ext: Extern> Boundary<'_, '_, Ext> {
         if !self.is_top() {
             return unsupported(name).map_err(Into::into);
         }
-        match (&self.levels.top, self.levels.env) {
+        match self.levels.top {
             // A P4 extern may reenter, on the next depth
-            (TopMut::P4 { .. }, Some(_)) => self
+            TopMut::P4 { .. } => self
                 .levels
                 .with_next(arena, |ctx| ctx.call_extern_func(name, targs, values)),
-            // Without definitions for a next depth, its reentry fails
-            (TopMut::P4 { .. }, None) => self
-                .levels
-                .without_next(arena, |ctx| ctx.call_extern_func(name, targs, values)),
             // The program declares no host functions
-            (TopMut::Program(_), _) => unsupported(name).map_err(Into::into),
+            TopMut::Program(_) => unsupported(name).map_err(Into::into),
         }
     }
 }
@@ -350,20 +311,21 @@ impl<Ext: Extern> Extern for Levels<'_, Ext> {
     fn clear(&mut self) {}
 }
 
+/// The base runner never executes with the stored levels as its extern:
+/// `Tower::eval_program` and `SimTower` lend them as `Levels`,
+/// with the spec-meta definitions a reentry runs on.
+/// The runner only clears them between programs.
 impl<Ext: Extern> Extern for Upper<Ext> {
     fn eval_rel<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
+        _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
-        values: &[Value],
+        _values: &[Value],
     ) -> Eval<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        // The base runner lends its stored levels, without definitions for reentry
-        let (arena, upper) = ctx.arena_and_external_mut();
-        let mut levels = upper.lend(None);
-        Boundary { levels: &mut levels, level: HostLevel::FIRST }.eval_rel(arena, name, values)
+        unsupported(name)
     }
 
     fn eval_func<Interp, Iface>(

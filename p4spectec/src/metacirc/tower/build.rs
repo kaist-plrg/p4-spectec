@@ -161,6 +161,6 @@ impl<Ext: Extern> Tower<Ext> {
                 BaseLayer::MetaSpec(Runner::new(arena, spec_base, options, interface, upper)?)
             }
         };
-        Ok(Self { levels, base })
+        Ok(Self { levels, base, options })
     }
 }

@@ -4,7 +4,7 @@
 //! at its base, each level above interprets the next through spec-meta,
 //! and the P4 host with the architecture is the top of the tower's `Upper`.
 //! For each STF operation, `with_context` reaches that host
-//! and lends it the base's SL interpreter as depth 0 (`MetaInterp`),
+//! and lends it the base's native interpreter as depth 0 (`MetaInterp`),
 //! so the architecture drives the levels' execution of the P4 specification;
 //! deeper depths are made when the architecture reenters.
 //! `build_simulator` selects the architecture and boxes the tower as a `Simulator`.
@@ -13,7 +13,7 @@ use super::{
     ExecutionMode, Result, TowerConfig,
     config::Lang,
     error::{config_invalid, input_invalid},
-    reentry::{MetaEnv, MetaInterp},
+    reentry::{MetaEnv, MetaInterp, Native},
     tower::{BaseLayer, Top, Tower, Upper},
 };
 use crate::{
@@ -22,7 +22,7 @@ use crate::{
         common::source::Phrase,
         data::{arena::Arena, encoding::Encoding},
     },
-    runner::{self, Backend, Runner, RunnerContext},
+    runner::{self, Runner, RunnerContext},
     sim_plugin::{
         SimError, Simulator, SimulatorRunner,
         arch::Architecture,
@@ -41,7 +41,6 @@ use std::path::{Path, PathBuf};
 /// A tower simulating its P4 top level through the spec-meta levels below it.
 pub(super) struct SimTower<Arch: Architecture> {
     tower: Tower<Arch>,
-    options: runner::Config,
 }
 
 impl<Arch: Architecture> SimTower<Arch> {
@@ -62,7 +61,7 @@ impl<Arch: Architecture> SimTower<Arch> {
             ));
         }
         let tower = Tower::build(arena, config, options, arch)?;
-        Ok(Self { tower, options })
+        Ok(Self { tower })
     }
 
     /// Runs `body` in the P4 context of depth 0, over the stored P4 host.
@@ -71,24 +70,21 @@ impl<Arch: Architecture> SimTower<Arch> {
         arena: &mut Arena,
         body: impl FnOnce(&mut RunnerContext<'_, MetaInterp<'_>, P4Interface, Arch>) -> T,
     ) -> T {
-        let Self { tower, options } = self;
-        let Tower { levels, base } = tower;
+        let Tower { levels, base, options } = &mut self.tower;
         // Reach depth 0 and the P4 host in the base runner
         let BaseLayer::MetaSpec(runner) = base else {
             unreachable!("a simulated tower has a meta base");
         };
         let Runner { backend, interface, external: upper, .. } = runner;
-        let Backend::Sl { spec_env, interp } = backend else {
-            unreachable!("a simulated tower executes SL");
-        };
+        let (native, spec_meta) = Native::lend(backend, interface);
         // Lend the levels' storage at depth 0 and reach the P4 top
         let Upper { caches, ctxs, hosts, top, depth_next } = upper;
         let Top::P4(host) = top else {
             unreachable!("a simulated tower has a P4 top level");
         };
         // Share the definitions, and lend depth 0 to the host
-        let env = MetaEnv { spec_meta: spec_env, levels, options: *options };
-        let mut meta = MetaInterp { interp, interface, hosts, depth_next, caches, ctxs };
+        let env = MetaEnv { spec_meta, levels, options: *options };
+        let mut meta = MetaInterp { native, hosts, depth_next, caches, ctxs };
         host.with_context(arena, &env, &mut meta, body)
     }
 
