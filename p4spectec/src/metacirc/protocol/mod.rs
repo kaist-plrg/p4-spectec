@@ -102,8 +102,8 @@ pub(in crate::metacirc) enum ProtocolKind {
 
 /// The codec state of a boundary, of the kind its `ProtocolKind` keeps.
 pub(in crate::metacirc) enum CodecCache {
-    /// spec-meta's AL encodings and decodings.
-    Meta(Cache),
+    /// spec-meta's AL encodings and decodings, boxed as the largest.
+    Meta(Box<Cache>),
     /// spec-meta-k's JSON codec state.
     MetaK(meta_k::Cache),
     /// spec-k's KORE codec state.
@@ -126,7 +126,7 @@ impl Protocol for ProtocolKind {
 
     fn new_cache(&self, enabled: bool) -> CodecCache {
         match self {
-            Self::Meta(protocol) => CodecCache::Meta(protocol.new_cache(enabled)),
+            Self::Meta(protocol) => CodecCache::Meta(Box::new(protocol.new_cache(enabled))),
             Self::MetaK(protocol) => CodecCache::MetaK(protocol.new_cache(enabled)),
             Self::Kore(protocol) => CodecCache::Kore(protocol.new_cache(enabled)),
         }
