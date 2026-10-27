@@ -9,15 +9,12 @@
 //! runs on the next depth, made on its first use and kept for the program.
 
 use super::{
-    interp::{Depth, TowerEnv, TowerInterp},
+    interp::{Depth, TowerInterp},
     protocol::{self, HostCall, Output, Protocol},
-    tower::{HostLevel, Top, Upper},
+    tower::{HostLevel, TopMut, Upper, UpperMut},
 };
 use crate::{
-    interface::{
-        meta::{MetaInterface, shared::Cache},
-        p4::P4Interface,
-    },
+    interface::p4::P4Interface,
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
@@ -28,76 +25,9 @@ use crate::{
     },
 };
 
-// == Lent levels
-
-/// The levels above the base, borrowed for one execution of the base's specification.
-pub(in crate::metacirc) struct UpperMut<'l, Ext: Extern> {
-    /// Definitions shared by every depth, which a reentry runs on.
-    pub env: &'l TowerEnv<'l>,
-    /// The codec cache of the boundary below each level, shared by every depth.
-    pub caches: &'l mut [Cache],
-    /// C of each level for the current program, shared by every depth.
-    pub ctxs: &'l mut [Option<Value>],
-    /// The meta builtins of each level between the base and the top, at this depth.
-    pub hosts: &'l mut [MetaInterface],
-    pub top: TopMut<'l, Ext>,
-    /// The depths beneath this one, which answer reentry.
-    pub depth_next: &'l mut Option<Box<Depth>>,
-}
-
-/// The top of `UpperMut`, borrowed from `Top` or from the context of a P4 call.
-pub(in crate::metacirc) enum TopMut<'l, Ext: Extern> {
-    /// A P4 specification, answering the builtins and externs of its program.
-    P4 { interface: &'l mut P4Interface, external: &'l mut Ext },
-    /// The AL or IL program of the highest meta level, answering only its builtins.
-    Program(&'l mut MetaInterface),
-}
-
-impl<Ext: Extern> Upper<Ext> {
-    /// Lends the stored levels at depth 0, with the definitions reentry runs on.
-    pub(in crate::metacirc) fn lend<'l>(&'l mut self, env: &'l TowerEnv<'l>) -> UpperMut<'l, Ext> {
-        let top = match &mut self.top {
-            Top::P4(host) => {
-                let (interface, external) = host.parts_mut();
-                TopMut::P4 { interface, external }
-            }
-            Top::Program(interface) => TopMut::Program(interface),
-        };
-        UpperMut {
-            env,
-            caches: &mut self.caches,
-            ctxs: &mut self.ctxs,
-            hosts: &mut self.hosts,
-            top,
-            depth_next: &mut self.depth_next,
-        }
-    }
-}
+// == Reentry
 
 impl<'l, Ext: Extern> UpperMut<'l, Ext> {
-    /// Returns the codec cache of the boundary below `level`.
-    pub(in crate::metacirc) fn cache(&mut self, level: HostLevel) -> &mut Cache {
-        &mut self.caches[level.index()]
-    }
-
-    /// Returns C of `level`, if loaded for the current program.
-    pub(in crate::metacirc) fn ctx(&self, level: HostLevel) -> Option<Value> {
-        self.ctxs[level.index()]
-    }
-
-    /// Records C of `level` for the current program.
-    pub(in crate::metacirc) fn set_ctx(&mut self, level: HostLevel, value_ctx: Value) {
-        self.ctxs[level.index()] = Some(value_ctx);
-    }
-
-    /// Returns the level of the top, the highest level with a boundary.
-    ///
-    /// A program top is one level above the last `LevelSpec`:
-    /// it has a boundary but no specification, and it never reenters.
-    pub(in crate::metacirc) fn level_top(&self) -> HostLevel {
-        HostLevel::new(self.caches.len())
-    }
-
     /// Runs `call` in a P4 context whose interpreter is the next depth.
     fn with_next<T>(
         &mut self,

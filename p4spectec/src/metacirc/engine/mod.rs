@@ -10,7 +10,7 @@ mod spectec;
 
 pub(super) use spectec::{SpecTecEngine, SpecTecSpec, SpecTecState};
 
-use super::boundary::UpperMut;
+use super::tower::UpperMut;
 use crate::{
     lang::{
         data::{arena::Arena, value::flat::Value},

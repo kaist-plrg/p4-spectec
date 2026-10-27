@@ -9,10 +9,9 @@
 //! the base's definitions, C, and the codec caches with this one.
 
 use super::{
-    boundary::{TopMut, UpperMut},
     engine::{Engine, EngineKind, SpecTecEngine, SpecTecSpec, SpecTecState},
     protocol::{Below, Call, Output, Protocol, ProtocolKind, Values},
-    tower::{HostLevel, LevelAt, LevelSpec},
+    tower::{HostLevel, LevelAt, LevelSpec, TopMut, UpperMut},
 };
 use crate::{
     interface::{

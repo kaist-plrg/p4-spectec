@@ -3,31 +3,31 @@
 //! The tower exposes program execution through its native entry point.
 //! The base is a runner with an interpreter; every other level is a host,
 //! since the level below interprets it, and `Upper` stores them all
-//! in its extern slot, lent per call as `boundary::UpperMut`.
+//! in its extern slot, lent per call as `UpperMut` (see `upper`).
 //! A single-level tower executes its top level directly as its base.
 //! `build` assembles the levels; `patch` adds the entry the base calls;
 //! `Tower::eval_program` runs it on the base's `Engine`.
 
 mod build;
 mod patch;
+mod upper;
+
+pub(in crate::metacirc) use upper::{Top, TopMut, Upper, UpperMut};
 
 use super::{
     config::LevelConfig,
     engine::{Engine, EngineKind, SpecTecEngine},
-    interp::{Depth, TowerEnv},
+    interp::TowerEnv,
     protocol::ProtocolKind,
 };
 use crate::{
-    interface::{
-        meta::{MetaInterface, shared::Cache},
-        p4::P4Interface,
-    },
+    interface::{meta::MetaInterface, p4::P4Interface},
     lang::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},
         il::ast as il,
     },
-    runner::{self, Eval, Extern, Host, Interface, Runner},
+    runner::{self, Eval, Extern, Runner},
     sim_plugin::dummy::Dummy,
 };
 use std::num::NonZeroUsize;
@@ -154,48 +154,5 @@ impl<Ext: Extern> BaseRunner<Ext> {
             Self::P4(runner) => runner.reset(),
             Self::Meta(runner) => runner.reset(),
         }
-    }
-}
-
-/// The levels above a meta base, which the base's specification interprets.
-///
-/// Storage is per `HostLevel`, at its `index`:
-/// the codec cache of the boundary below each level, C of each level,
-/// and the meta builtins of each level below the top.
-/// The top is the P4 specification,
-/// or the AL or IL program that the highest meta level interprets.
-/// Caches and C are shared by every reentry depth;
-/// depth 0 uses `hosts`, and each deeper depth its own.
-pub(in crate::metacirc) struct Upper<Ext: Extern> {
-    /// The codec cache of the boundary below each level, through the top.
-    pub caches: Vec<Cache>,
-    /// C of each level for the current program, loaded on first use.
-    pub ctxs: Vec<Option<Value>>,
-    /// The meta builtins of each level between the base and the top, at depth 0.
-    pub hosts: Vec<MetaInterface>,
-    pub top: Top<Ext>,
-    /// Depths 1 and deeper, made on the first reentry of a program.
-    pub depth_next: Option<Box<Depth>>,
-}
-
-/// The highest level above a meta base.
-pub(in crate::metacirc) enum Top<Ext: Extern> {
-    /// A P4 specification, answering the builtins and externs of its program.
-    P4(Host<P4Interface, Ext>),
-    /// The AL or IL program of the highest meta level, answering only its builtins.
-    Program(MetaInterface),
-}
-
-impl<Ext: Extern> Upper<Ext> {
-    /// Clears every level's state between programs.
-    pub(in crate::metacirc) fn clear(&mut self) {
-        self.caches.iter_mut().for_each(Cache::clear);
-        self.ctxs.fill(None);
-        self.hosts.iter_mut().for_each(Interface::clear);
-        match &mut self.top {
-            Top::P4(host) => host.reset(),
-            Top::Program(interface) => interface.clear(),
-        }
-        self.depth_next = None;
     }
 }

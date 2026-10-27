@@ -6,7 +6,7 @@
 //! a deeper depth owns a `SpecTecState` interpreting the same representation
 //! and lends it with `SpecTecEngine::lend_depth`.
 
-use super::super::boundary::UpperMut;
+use super::super::tower::UpperMut;
 use super::Engine;
 use crate::{
     interface::{self, Lang, meta::MetaInterface},
