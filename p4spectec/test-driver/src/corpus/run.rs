@@ -22,25 +22,22 @@ use crate::{
     util::{self, Language},
 };
 
-/// Supplies execution dependencies and corpus registrations.
+/// Supplies execution exclusions and corpus registrations.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RunConfig {
-    pub spec: Vec<PathBuf>,
-    pub includes: Vec<PathBuf>,
     pub excludes: Vec<PathBuf>,
     pub suites: Vec<RunSuite>,
 }
 
-/// Registers a P4 execution corpus and its entry relation.
+/// Registers a P4 execution corpus and its entry relation,
+/// expected in `expected/run/<name>.expected`.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RunSuite {
     pub name: String,
     pub root: PathBuf,
     pub relation: String,
-    pub expected: PathBuf,
-    pub languages: Vec<Language>,
 }
 
 struct CollectedSuite {
@@ -62,14 +59,13 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
     let mut suites = config
         .suites
         .iter()
-        .filter(|suite| suite.languages.contains(&language))
         .map(|suite| {
             Ok(CollectedSuite {
                 name: suite.name.clone(),
                 root: suite.root.clone(),
                 paths: corpus::collect(&suite.root, ".p4")?,
                 id_relation: suite.relation.clone(),
-                results: Results::new(&util::expected_path(&suite.expected)),
+                results: Results::new(&util::expected_path("run", &suite.name)),
             })
         })
         .collect::<Result<Vec<_>>>()?;
@@ -93,10 +89,10 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
     let mut arena = Arena::new();
-    let spec = language.spec(&config.spec)?;
+    let spec = language.spec(&util::spec())?;
     let mut runner = util::build(&mut arena, spec, Config::new(cache_on, det, false), Dummy)?;
     log.note(&format!("specification prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
-    let includes = &config.includes;
+    let includes = &util::includes();
     // Preprocess upcoming files while the runner parses and evaluates in order
     let paths_preprocess: Vec<_> = suites
         .iter()

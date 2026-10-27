@@ -1,6 +1,6 @@
 //! Helpers shared by the snapshot, corpus, and diagnostic runners
 //!
-//! Each runner reads its registration from `suites/<name>.json` with `load`.
+//! Each runner reads its registration from `suites/<name>.toml` with `load`.
 //! Corpus paths are relative to the repository, expectations to the driver,
 //! and diagnostic inputs and expectations to `testdata/spec`.
 
@@ -65,12 +65,12 @@ pub fn build<Ext: Extern>(
     Ok(runner)
 }
 
-/// Reads the registration `suites/<name>.json` with its path attached to errors.
+/// Reads the registration `suites/<name>.toml` with its path attached to errors.
 pub fn load<T: DeserializeOwned>(name: &str) -> Result<T> {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("suites/{name}.json"));
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("suites/{name}.toml"));
     let text = fs::read_to_string(&path)
         .map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
-    serde_json::from_str(&text).map_err(|error| Error::from(format!("{}: {error}", path.display())))
+    toml::from_str(&text).map_err(|error| Error::from(format!("{}: {error}", path.display())))
 }
 
 /// Returns the specification sources shared by every runner.
@@ -78,9 +78,14 @@ pub fn spec() -> [PathBuf; 1] {
     [PathBuf::from("spec")]
 }
 
-/// Resolves an expectation relative to the driver.
-pub fn expected_path(path: &Path) -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join(path)
+/// Returns the P4 include directories shared by every corpus runner.
+pub fn includes() -> [PathBuf; 1] {
+    [PathBuf::from("p4c/p4include")]
+}
+
+/// Resolves the expectation `expected/<module>/<name>.expected` of one suite.
+pub fn expected_path(module: &str, name: &str) -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/{module}/{name}.expected"))
 }
 
 /// Creates a progress bar over `len` tests.

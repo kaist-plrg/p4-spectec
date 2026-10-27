@@ -88,8 +88,7 @@ fn check(name: &str, text: &str) {
         .map(|line| line.trim_end_matches([' ', '\t']))
         .collect::<Vec<_>>()
         .join("\n");
-    let path_expected =
-        util::expected_path(Path::new(&format!("expected/snapshot/{name}.expected")));
+    let path_expected = util::expected_path("snapshot", name);
     expect_file![path_expected].assert_eq(&text);
     eprintln!("{name}: snapshot checked");
 }

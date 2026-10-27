@@ -22,22 +22,20 @@ use crate::{
     util,
 };
 
-/// Supplies the parser's specification, includes, and corpus registrations.
+/// Supplies the parsing corpus registrations.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ParseConfig {
-    pub spec: Vec<PathBuf>,
-    pub includes: Vec<PathBuf>,
     pub suites: Vec<ParseSuite>,
 }
 
-/// Registers P4 parsing and roundtrip inputs.
+/// Registers P4 parsing and roundtrip inputs,
+/// expected in `expected/p4parse/<name>.expected`.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ParseSuite {
     pub name: String,
     pub roots: Vec<PathBuf>,
-    pub expected: PathBuf,
 }
 
 fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result<Outcome> {
@@ -89,7 +87,7 @@ pub fn run(path_log: Option<&Path>) -> Result<()> {
     // Keep each root's paths apart so the log shows them by root
     let mut suites = Vec::new();
     for suite in &config.suites {
-        let path_expected = util::expected_path(&suite.expected);
+        let path_expected = util::expected_path("p4parse", &suite.name);
         let mut roots = Vec::new();
         for root in &suite.roots {
             roots.push((root, corpus::collect(root, ".p4")?));
@@ -106,10 +104,10 @@ pub fn run(path_log: Option<&Path>) -> Result<()> {
         format!("P4 parser: collected={collected}, excluded=0; preparing print hints");
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
-    let spec_al = p4spectec::algo(&config.spec)?;
+    let spec_al = p4spectec::algo(&util::spec())?;
     let unparser = P4Unparser::from_al_spec(&spec_al);
     log.note(&format!("print hints prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
-    let includes = &config.includes;
+    let includes = &util::includes();
     let progress = util::progress_bar(collected)?;
     let mut passed = 0;
     for (name, roots, results) in &mut suites {

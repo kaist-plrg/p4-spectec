@@ -19,17 +19,16 @@ use crate::{
     util::{self, Language},
 };
 
-/// Supplies simulation dependencies and P4/STF registrations.
+/// Supplies simulation exclusions and P4/STF registrations.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SimConfig {
-    pub spec: Vec<PathBuf>,
-    pub includes: Vec<PathBuf>,
     pub excludes: Vec<PathBuf>,
     pub suites: Vec<SimSuite>,
 }
 
-/// Registers paired P4/STF corpus discovery and optional patches.
+/// Registers paired P4/STF corpus discovery and optional patches,
+/// expected in `expected/sim/<name>.expected`.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SimSuite {
@@ -38,8 +37,6 @@ pub struct SimSuite {
     pub p4: PathBuf,
     pub stf: PathBuf,
     pub patches: Option<PathBuf>,
-    pub expected: PathBuf,
-    pub languages: Vec<Language>,
 }
 
 struct Input {
@@ -141,7 +138,6 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
     let suites = config
         .suites
         .iter()
-        .filter(|suite| suite.languages.contains(&language))
         .map(|suite| Ok((suite, suite.collect(&excludes)?)))
         .collect::<Result<Vec<_>>>()?;
     let pairs = suites.iter().flat_map(|(_, pairs)| pairs);
@@ -154,6 +150,7 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
     );
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
+    let includes = util::includes();
     let progress = util::progress_bar(collected)?;
     let mut matched = 0;
     // Build one simulator per registered architecture in first-suite order
@@ -173,7 +170,7 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
         let excluded_arch = pairs_arch.clone().filter(|pair| pair.excluded).count();
         let patched_arch = pairs_arch.filter(|pair| pair.patched).count();
         let start_arch = Instant::now();
-        let spec = language.spec(&config.spec)?;
+        let spec = language.spec(&util::spec())?;
         let config_runner = Config::new(cache_on, det, false);
         let mut simulator = sim_plugin::build(spec, arch, config_runner, Encoding::default())?;
         log.note(&format!(
@@ -181,7 +178,7 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
             start_arch.elapsed().as_secs_f64()
         ))?;
         for (suite, pairs) in suites_arch {
-            let mut results = Results::new(&util::expected_path(&suite.expected));
+            let mut results = Results::new(&util::expected_path("sim", &suite.name));
             let guard_stdout = super::output::SilenceStdout::new()?;
             log.suite(&suite.name, &suite.stf)?;
             for pair in pairs {
@@ -197,7 +194,7 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
                 log.begin(&pair.path_stf)?;
                 let mut text_txs = String::new();
                 simulator
-                    .run_stf_test(&config.includes, &pair.path_p4, &pair.path_stf, |tx| {
+                    .run_stf_test(&includes, &pair.path_p4, &pair.path_stf, |tx| {
                         matched += 1;
                         text_txs.push_str(&format!("tx\t{}\t{}\n", tx.port, tx.packet));
                     })

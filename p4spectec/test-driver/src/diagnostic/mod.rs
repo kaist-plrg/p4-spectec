@@ -125,9 +125,17 @@ pub struct Case {
     pub args: Vec<String>,
 }
 
-/// Loads the cases registered in `suites/diagnostic/<name>.json`.
+/// Lists the cases of one diagnostic registration file.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Registration {
+    cases: Vec<Case>,
+}
+
+/// Loads the cases registered in `suites/diagnostic/<name>.toml`.
 fn load(name: &str) -> Result<Vec<Case>> {
-    crate::util::load(&format!("diagnostic/{name}"))
+    let registration: Registration = crate::util::load(&format!("diagnostic/{name}"))?;
+    Ok(registration.cases)
 }
 
 impl Case {
