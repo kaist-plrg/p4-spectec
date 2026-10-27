@@ -25,7 +25,7 @@ use crate::{
 /// Supplies the parsing corpus registrations.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct ParseConfig {
+pub struct Registration {
     pub suites: Vec<ParseSuite>,
 }
 
@@ -82,11 +82,11 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
 
 /// Checks registered P4 parsing corpora against their expected outcomes.
 pub fn run(path_log: Option<&Path>) -> Result<()> {
-    let config: ParseConfig = util::load("p4parse")?;
+    let registration: Registration = util::load("p4parse")?;
     let start = Instant::now();
     // Keep each root's paths apart so the log shows them by root
     let mut suites = Vec::new();
-    for suite in &config.suites {
+    for suite in &registration.suites {
         let path_expected = util::expected_path("p4parse", &suite.name);
         let mut roots = Vec::new();
         for root in &suite.roots {

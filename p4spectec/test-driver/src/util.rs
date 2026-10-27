@@ -20,8 +20,8 @@ use p4spectec::runner::{self, Config, Extern, Runner, Spec};
 
 use crate::{Error, Result};
 
-/// Selects the production interpreter used by a corpus suite.
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, clap::Subcommand)]
+/// Selects the production interpreter used by a configuration or diagnostic case.
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Language {
     Al,
@@ -47,6 +47,36 @@ impl Language {
             Self::Pl => p4spectec::SpecLang::Pl,
         };
         Ok(p4spectec::runner_spec_with_warnings(spec_lang, paths).0?)
+    }
+}
+
+/// Names one interpreter setup under which a corpus runs every suite.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Configuration {
+    pub name: String,
+    pub language: Language,
+    pub cache: bool,
+    pub det: bool,
+}
+
+impl Configuration {
+    /// Finds the configuration named on the command line.
+    pub fn find<'a>(configs: &'a [Self], name: &str) -> Result<&'a Self> {
+        configs
+            .iter()
+            .find(|config| config.name == name)
+            .ok_or_else(|| Error::from(format!("no configuration named {name}")))
+    }
+
+    /// Returns the runner options of this configuration.
+    pub fn runner(&self) -> Config {
+        Config::new(self.cache, self.det, false)
+    }
+
+    /// Describes the configuration in progress and summary lines.
+    pub fn describe(&self) -> String {
+        format!("{} cache={} det={}", self.name, self.cache, self.det)
     }
 }
 

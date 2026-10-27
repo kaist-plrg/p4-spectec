@@ -7,23 +7,22 @@ use std::{
 
 use p4spectec::lang::data::encoding::Encoding;
 
-use p4spectec::runner::Config;
-
 use p4spectec::sim_plugin::{self};
 
 use serde::Deserialize;
 
 use crate::{
-    Error, ExecutionOptions, Result,
+    Error, Result,
     corpus::{self, Results, log::TestLog},
-    util::{self, Language},
+    util::{self, Configuration},
 };
 
-/// Supplies simulation exclusions and P4/STF registrations.
+/// Supplies simulation exclusions, configurations, and P4/STF registrations.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct SimConfig {
+pub struct Registration {
     pub excludes: Vec<PathBuf>,
+    pub configs: Vec<Configuration>,
     pub suites: Vec<SimSuite>,
 }
 
@@ -124,18 +123,17 @@ impl SimSuite {
     }
 }
 
-/// Runs registered simulation suites with the selected interpreter.
-pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path>) -> Result<()> {
-    let config: SimConfig = util::load("sim")?;
-    let ExecutionOptions { cache_on, no_det } = options;
-    let det = !no_det;
-    let text_cache = if cache_on { "on" } else { "off" };
+/// Runs registered simulation suites under the named configuration.
+pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
+    let registration: Registration = util::load("sim")?;
+    let config = Configuration::find(&registration.configs, name_config)?;
+    let text_mode = format!("sim {}", config.describe());
     let start = Instant::now();
     let mut excludes = BTreeSet::new();
-    for path in &config.excludes {
+    for path in &registration.excludes {
         excludes.extend(corpus::collect_excludes(path)?);
     }
-    let suites = config
+    let suites = registration
         .suites
         .iter()
         .map(|suite| Ok((suite, suite.collect(&excludes)?)))
@@ -144,10 +142,9 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
     let collected = pairs.clone().count();
     let excluded = pairs.clone().filter(|pair| pair.excluded).count();
     let patched = pairs.filter(|pair| pair.patched).count();
-    let mut log = TestLog::create(path_log, &format!("sim-{}", language.name()), collected)?;
-    let text_collect = format!(
-        "Simulation cache={text_cache} det={det}: collected={collected} excluded={excluded}; preparing specification"
-    );
+    let mut log = TestLog::create(path_log, &format!("sim-{}", config.name), collected)?;
+    let text_collect =
+        format!("{text_mode}: collected={collected} excluded={excluded}; preparing specification");
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
     let includes = util::includes();
@@ -170,8 +167,8 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
         let excluded_arch = pairs_arch.clone().filter(|pair| pair.excluded).count();
         let patched_arch = pairs_arch.filter(|pair| pair.patched).count();
         let start_arch = Instant::now();
-        let spec = language.spec(&util::spec())?;
-        let config_runner = Config::new(cache_on, det, false);
+        let spec = config.language.spec(&util::spec())?;
+        let config_runner = config.runner();
         let mut simulator = sim_plugin::build(spec, arch, config_runner, Encoding::default())?;
         log.note(&format!(
             "{arch} specification prepared in {:.1}s",
@@ -214,13 +211,13 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
             results.check();
         }
         eprintln!(
-            "Simulation {arch} cache={text_cache} det={det}: collected={collected_arch} excluded={excluded_arch} executed={} patched={patched_arch}",
+            "{text_mode} {arch}: collected={collected_arch} excluded={excluded_arch} executed={} patched={patched_arch}",
             collected_arch - excluded_arch
         );
     }
     progress.finish_with_message("complete");
     let text_summary = format!(
-        "Simulation cache={text_cache} det={det}: collected={collected} excluded={excluded} executed={} patched={patched} matches={matched} elapsed={:.3}s; all expected records matched",
+        "{text_mode}: collected={collected} excluded={excluded} executed={} patched={patched} matches={matched} elapsed={:.3}s; all expected records matched",
         collected - excluded,
         start.elapsed().as_secs_f64()
     );

@@ -8,8 +8,6 @@ use std::{
 
 use p4spectec::lang::data::arena::Arena;
 
-use p4spectec::runner::Config;
-
 use p4spectec::interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess};
 
 use p4spectec::sim_plugin::dummy::Dummy;
@@ -17,16 +15,17 @@ use p4spectec::sim_plugin::dummy::Dummy;
 use serde::Deserialize;
 
 use crate::{
-    Error, ExecutionOptions, Result,
+    Error, Result,
     corpus::{self, Outcome, Results, log::TestLog},
-    util::{self, Language},
+    util::{self, Configuration},
 };
 
-/// Supplies execution exclusions and corpus registrations.
+/// Supplies execution exclusions, configurations, and corpus registrations.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct RunConfig {
+pub struct Registration {
     pub excludes: Vec<PathBuf>,
+    pub configs: Vec<Configuration>,
     pub suites: Vec<RunSuite>,
 }
 
@@ -48,15 +47,13 @@ struct CollectedSuite {
     results: Results,
 }
 
-/// Runs registered execution suites with the selected interpreter.
-pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path>) -> Result<()> {
-    let config: RunConfig = util::load("run")?;
-    let ExecutionOptions { cache_on, no_det } = options;
-    let det = !no_det;
-    let text_cache = if cache_on { "on" } else { "off" };
-    let text_mode = format!("{} cache={text_cache} det={det}", language.name().to_uppercase());
+/// Runs registered execution suites under the named configuration.
+pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
+    let registration: Registration = util::load("run")?;
+    let config = Configuration::find(&registration.configs, name_config)?;
+    let text_mode = format!("run {}", config.describe());
     // Collect registered corpus roots in suite order
-    let mut suites = config
+    let mut suites = registration
         .suites
         .iter()
         .map(|suite| {
@@ -70,10 +67,10 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
         })
         .collect::<Result<Vec<_>>>()?;
     let len = suites.iter().map(|suite| suite.paths.len()).sum();
-    let mut log = TestLog::create(path_log, &format!("run-{}", language.name()), len)?;
+    let mut log = TestLog::create(path_log, &format!("run-{}", config.name), len)?;
     let start = Instant::now();
     let mut excludes = BTreeSet::new();
-    for path in &config.excludes {
+    for path in &registration.excludes {
         excludes.extend(corpus::collect_excludes(path)?);
     }
     let collected: usize = suites.iter().map(|suite| suite.paths.len()).sum();
@@ -89,8 +86,8 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
     let mut arena = Arena::new();
-    let spec = language.spec(&util::spec())?;
-    let mut runner = util::build(&mut arena, spec, Config::new(cache_on, det, false), Dummy)?;
+    let spec = config.language.spec(&util::spec())?;
+    let mut runner = util::build(&mut arena, spec, config.runner(), Dummy)?;
     log.note(&format!("specification prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
     let includes = &util::includes();
     // Preprocess upcoming files while the runner parses and evaluates in order

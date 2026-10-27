@@ -8,10 +8,9 @@ mod diagnostic;
 
 use std::{path::PathBuf, process::ExitCode};
 
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 
 use corpus::{micro, p4parse, run, sim};
-use util::Language;
 
 type Error = Box<dyn std::error::Error>;
 type Result<T> = std::result::Result<T, Error>;
@@ -48,24 +47,18 @@ enum Command {
     P4parse,
     /// Compare execution outcomes with stored file results
     Run {
-        #[command(subcommand)]
-        language: Language,
-        #[command(flatten)]
-        options: ExecutionOptions,
+        /// Configuration name in `suites/run.toml`
+        config: String,
     },
     /// Compare simulation outcomes and matched packets
     Sim {
-        #[command(subcommand)]
-        language: Language,
-        #[command(flatten)]
-        options: ExecutionOptions,
+        /// Configuration name in `suites/sim.toml`
+        config: String,
     },
     /// Run micro tests: standalone spec-language sources by pipeline stage
     Micro {
-        #[command(subcommand)]
-        language: Language,
-        #[command(flatten)]
-        options: ExecutionOptions,
+        /// Configuration name in `suites/micro.toml`
+        config: String,
     },
     /// Compare diagnostic output with stored snapshots
     Diagnostics {
@@ -75,17 +68,6 @@ enum Command {
         #[arg(long = "cli", value_name = "PATH")]
         path_cli: Option<PathBuf>,
     },
-}
-
-/// Configures interpreter execution consistently for run and sim.
-#[derive(Clone, Copy, Args)]
-struct ExecutionOptions {
-    /// Disable deterministic execution checks
-    #[arg(long, global = true)]
-    no_det: bool,
-    /// Enable or disable interpreter caching
-    #[arg(long, global = true, default_value_t = true, action = clap::ArgAction::Set)]
-    cache_on: bool,
 }
 
 fn execute(mut cli: Cli) -> Result<()> {
@@ -127,20 +109,19 @@ fn execute(mut cli: Cli) -> Result<()> {
         Command::Prose => snapshot::prose(),
         Command::Adoc { path_output } => snapshot::adoc(path_output.as_deref()),
         Command::P4parse => p4parse::run(path_log.as_deref()),
-        Command::Run { language, options } => run::run(*language, *options, path_log.as_deref()),
-        Command::Sim { language, options } => sim::run(*language, *options, path_log.as_deref()),
-        Command::Micro { language, options } => {
-            micro::run(*language, *options, path_log.as_deref())
-        }
+        Command::Run { config } => run::run(config, path_log.as_deref()),
+        Command::Sim { config } => sim::run(config, path_log.as_deref()),
+        Command::Micro { config } => micro::run(config, path_log.as_deref()),
         Command::Diagnostics { suite, path_cli } => diagnostic::run(*suite, path_cli.as_deref()),
     }
 }
 
 /// Prints every registration without running its tests.
 fn list() -> Result<()> {
-    println!("p4parse: {:#?}", util::load::<p4parse::ParseConfig>("p4parse")?);
-    println!("run: {:#?}", util::load::<run::RunConfig>("run")?);
-    println!("sim: {:#?}", util::load::<sim::SimConfig>("sim")?);
+    println!("p4parse: {:#?}", util::load::<p4parse::Registration>("p4parse")?);
+    println!("run: {:#?}", util::load::<run::Registration>("run")?);
+    println!("sim: {:#?}", util::load::<sim::Registration>("sim")?);
+    println!("micro: {:#?}", util::load::<micro::Registration>("micro")?);
     diagnostic::list()
 }
 
