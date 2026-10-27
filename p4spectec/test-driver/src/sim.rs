@@ -275,9 +275,6 @@ where
                     progress.inc(1);
                     continue;
                 }
-                // File access failures are execution errors, never expected exclusions
-                fs::File::open(&pair.path_p4)?;
-                fs::File::open(&pair.path_stf)?;
                 log.begin(&pair.path_stf)?;
                 let mut txs = Vec::new();
                 simulator

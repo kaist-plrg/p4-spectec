@@ -38,7 +38,7 @@ use expect_test::expect_file;
 use indicatif::ProgressBar;
 use serde::Deserialize;
 
-use p4spectec::diagnostic::{RenderConfig, Renderer, Report};
+use p4spectec::diagnostic::{RenderConfig, Renderer, Report, ReportKind};
 
 use crate::{Error, Result};
 
@@ -248,16 +248,23 @@ impl Case {
     pub fn uses_cli(&self) -> bool {
         self.input.extension().is_some_and(|ext| ext == "args")
     }
+}
 
-    /// Returns the input as seen from the fixture working directory.
-    fn path_input(&self) -> PathBuf {
-        self.input.clone()
+/// Collects diagnostic codes from a report and its nested causes.
+fn codes(report: &Report) -> Vec<&str> {
+    let mut codes = Vec::new();
+    let mut reports_pending = vec![report];
+    while let Some(report) = reports_pending.pop() {
+        // Inspect causes without depending on rendered text
+        if let ReportKind::Cause(diagnostic) = &report.kind
+            && let Some(code) = diagnostic.code.as_deref()
+        {
+            codes.push(code);
+        }
+        // Include causes nested under operation frames
+        reports_pending.extend(&report.children);
     }
-
-    /// Returns the auxiliary sources as seen from the fixture working directory.
-    fn paths_input(&self) -> Vec<PathBuf> {
-        self.inputs.clone()
-    }
+    codes
 }
 
 /// Locates the fixture directory, the working directory while rendering.

@@ -26,7 +26,7 @@ pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
 fn run_case(case: &Case) -> Result<Vec<Report>> {
     let name = case.name.as_str();
     // Reject setup failures from the earlier frontend stage
-    let spec_el = parse_files([case.path_input()])
+    let spec_el = parse_files([&case.input])
         .map_err(|report| failure(name, format!("parser failed before elaboration: {report}")))?;
 
     // Preserve warnings emitted before the final elaboration result

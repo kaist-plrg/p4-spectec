@@ -21,9 +21,9 @@ pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
 
 /// Renders one source specification and requires located markup warnings.
 fn run_case(case: &Case) -> Result<Vec<Report>> {
-    let path = case.path_input();
+    let path = &case.input;
     // Earlier diagnostics reject setup before backend acceptance
-    let (result, reports) = p4spectec::prosify_with_warnings(std::slice::from_ref(&path));
+    let (result, reports) = p4spectec::prosify_with_warnings(std::slice::from_ref(path));
     let spec_pl = result.map_err(|report| {
         failure(&case.name, format!("conversion failed before AsciiDoc rendering: {report}"))
     })?;

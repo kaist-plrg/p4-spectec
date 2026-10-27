@@ -1,5 +1,4 @@
 use std::{
-    fs,
     path::{Path, PathBuf},
     time::Instant,
 };
@@ -27,7 +26,6 @@ use crate::{
 
 fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result<Outcome> {
     let mut arena = Arena::new();
-    fs::File::open(path)?;
     let program = match parse_file(&mut arena, includes, path) {
         Ok(program) => program,
         Err(error) => match error {
@@ -98,9 +96,6 @@ pub fn run(config: &ParseConfig, path_log: Option<&Path>) -> Result<()> {
     let unparser = P4Unparser::from_al_spec(&spec_al);
     log.note(&format!("print hints prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
     let includes = &config.includes;
-    for path in includes {
-        fs::read_dir(path)?;
-    }
     let progress = ProgressBar::new(collected as u64).with_style(ProgressStyle::with_template(
         "[{bar:24}] {pos}/{len} {elapsed_precise} {msg}",
     )?);

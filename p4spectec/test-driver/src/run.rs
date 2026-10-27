@@ -1,6 +1,5 @@
 use std::{
     collections::BTreeSet,
-    fs,
     path::{Path, PathBuf},
     sync::mpsc,
     thread,
@@ -119,9 +118,6 @@ where
     let mut runner = build_runner(&mut arena)?;
     log.note(&format!("specification prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
     let includes = &config.includes;
-    for path in includes {
-        fs::read_dir(path)?;
-    }
     // Preprocess upcoming files while the runner parses and evaluates in order
     let paths_preprocess: Vec<_> = suites
         .iter()
@@ -163,7 +159,6 @@ where
                     // Reset before parsing: no value may cross this program boundary
                     runner.reset();
                     arena.reset_values();
-                    fs::File::open(path)?;
                     let source = receiver
                         .recv()
                         .map_err(|error| {

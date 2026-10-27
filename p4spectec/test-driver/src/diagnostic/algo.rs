@@ -27,7 +27,7 @@ pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
 fn run_case(case: &Case) -> Result<Vec<Report>> {
     let name = case.name.as_str();
     // Earlier stage failures are setup errors, never accepted snapshots
-    let spec_el = parse_files([case.path_input()]).map_err(|report| {
+    let spec_el = parse_files([&case.input]).map_err(|report| {
         failure(name, format!("parser failed before algorithmic conversion: {report}"))
     })?;
     let spec_il = elaborate::convert(spec_el).map_err(|report| {

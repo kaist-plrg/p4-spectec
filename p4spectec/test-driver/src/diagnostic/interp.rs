@@ -11,7 +11,7 @@ use p4spectec::lang::{
     data::{arena::Arena, value::flat as value},
 };
 
-use p4spectec::diagnostic::{Report, ReportKind};
+use p4spectec::diagnostic::Report;
 
 use p4spectec::interface::p4::P4Interface;
 
@@ -45,23 +45,6 @@ pub(super) enum FailureKind {
     Mismatch,
 }
 
-/// Collects runtime codes beneath invocation and expression frames.
-fn codes(report: &Report) -> Vec<&str> {
-    let mut codes_found = Vec::new();
-    let mut pending = vec![report];
-    while let Some(report) = pending.pop() {
-        // Inspect causes without depending on rendered text
-        if let ReportKind::Cause(diagnostic) = &report.kind
-            && let Some(code) = diagnostic.code.as_deref()
-        {
-            codes_found.push(code);
-        }
-        // Include causes nested under operation frames
-        pending.extend(&report.children);
-    }
-    codes_found
-}
-
 // = Execution
 
 /// Checks that R fails with the expected kind and code.
@@ -92,7 +75,7 @@ pub(super) fn reject(
 
     // Reject unrelated runtime errors even when updating snapshots
     let report = error.into_report();
-    let codes_actual = codes(&report);
+    let codes_actual = super::codes(&report);
     if !codes_actual.contains(&code) {
         return Err(failure(
             name,
@@ -122,27 +105,27 @@ fn run_case(case: &Case) -> Result<Vec<Report>> {
     };
     let det = arg_det.parse().map_err(|error| failure(name, error))?;
     let config = Config::new(true, det, false);
-    let path = case.path_input();
+    let paths = std::slice::from_ref(&case.input);
 
     let mut arena = Arena::new();
 
     // Keep parse, elaboration, lowering, and loading failures out of snapshots
     match stage.as_str() {
         "al" => {
-            let spec_al = p4spectec::algo(&[path]).map_err(|error| failure(name, error))?;
+            let spec_al = p4spectec::algo(paths).map_err(|error| failure(name, error))?;
             let runner = runner::build_al(&mut arena, spec_al, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
             reject(name, &mut arena, runner, kind, code)
         }
         "sl" => {
             let spec_sl =
-                p4spectec::structure(&[path], true).map_err(|error| failure(name, error))?;
+                p4spectec::structure(paths, true).map_err(|error| failure(name, error))?;
             let runner = runner::build_sl(&mut arena, spec_sl, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
             reject(name, &mut arena, runner, kind, code)
         }
         "pl" => {
-            let spec_pl = p4spectec::prosify(&[path]).map_err(|error| failure(name, error))?;
+            let spec_pl = p4spectec::prosify(paths).map_err(|error| failure(name, error))?;
             let runner = runner::build_pl(&mut arena, spec_pl, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
             reject(name, &mut arena, runner, kind, code)

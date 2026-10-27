@@ -21,7 +21,7 @@ pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
 
 /// Requires the registered parser input to produce a diagnostic.
 fn run_case(case: &Case) -> Result<Vec<Report>> {
-    let path = case.path_input();
+    let path = &case.input;
     // Notation types are a distinct public parser entry point
     let report = if path.extension().is_some_and(|ext| ext == "mixop") {
         parse_typ(&std::fs::read_to_string(path)?).err()
