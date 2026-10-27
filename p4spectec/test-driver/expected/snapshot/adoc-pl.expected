@@ -22801,156 +22801,212 @@ xref:needs_priority_tableKeysPropertyIR[$needs_priority_tableKeysPropertyIR(+KEY
 Let ``nameIR~matchKind~^{asterisk}^`` be the resulting list.
 . Return xref:exists_[some of ``(`` ``nameIR~matchKind~`` ``=`` ``"ternary"`` ``)^{asterisk}^`` is true].
 
-xref:tableObject_create_entry_key[$tableObject_create_entry_key(EC, ( nameIR~key~, t, typeIR ), tableKeyInterface^{asterisk}^)]
+xref:TableObject_create_entry_key[TableObject_create_entry_key: ``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``t,`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]
 
-. If ``t`` is equal to ``"exact"``:
- .. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
- .. Check that ``tableKeyValueInterface'^?^`` is defined.
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"exact",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. Check that ``tableKeyValueInterface'^?^`` is defined.
+. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
+. Let ``t'^?^`` be xref:text_of_number_tableKeyValueInterface[``$text_of_number_tableKeyValueInterface(tableKeyValueInterface)``].
+. Check that ``t'^?^`` is defined.
+. Let ``text~key_value~`` be ``t'^?^``.
+. Let ``i~key_value~`` be xref:text_to_int[``$text_to_int(text~key_value~)``].
+. Let ``typedExpressionIR`` be xref:typedExpressionIR[``+D+`` ``i~key_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+. Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR`` in ``EC``].
+. Check that ``typedExpressionIR'^?^`` is defined.
+. Let ``typedExpressionIR~cast~`` be ``typedExpressionIR'^?^``.
+. Let ``typeIR~set~`` be ``+SET+`` ``+`<+`` ``typeIR`` ``+`>+``.
+. Let ``simpleKeysetExpressionIR`` be ``+`(+`` ``typeIR~set~`` ``+`)+`` ``typedExpressionIR~cast~`` ``+'#'+`` ``+`(+`` ``typeIR~set~`` ``+DYN+`` ``+`)+``.
+. The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"ternary",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. If ``tableKeyValueInterface'^?^`` is defined:
  .. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
- .. Let ``t'^?^`` be xref:text_of_number_tableKeyValueInterface[``$text_of_number_tableKeyValueInterface(tableKeyValueInterface)``].
- .. Check that ``t'^?^`` is defined.
- .. Let ``text~key_value~`` be ``t'^?^``.
- .. Let ``i~key_value~`` be xref:text_to_int[``$text_to_int(text~key_value~)``].
- .. Let ``typedExpressionIR`` be xref:typedExpressionIR[``+D+`` ``i~key_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
- .. Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR`` in ``EC``].
- .. Check that ``typedExpressionIR'^?^`` is defined.
- .. Let ``typedExpressionIR~cast~`` be ``typedExpressionIR'^?^``.
- .. Let ``typeIR~set~`` be ``+SET+`` ``+`<+`` ``typeIR`` ``+`>+``.
- .. Let ``simpleKeysetExpressionIR`` be ``+`(+`` ``typeIR~set~`` ``+`)+`` ``typedExpressionIR~cast~`` ``+'#'+`` ``+`(+`` ``typeIR~set~`` ``+DYN+`` ``+`)+``.
- .. Return ``simpleKeysetExpressionIR``.
+ .. If let ``{nbsp}~HEX~`` ``text~key_value~`` be ``tableKeyValueInterface``:
+  ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+  ... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)``].
+  ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+  ... Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
+  ... If ``typedExpressionIR^?^`` is defined:
+   .... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
+   .... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``].
+   .... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+   .... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)``].
+   .... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
+   .... If ``typedExpressionIR'^?^`` is defined:
+    ..... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
+    ..... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
+    ..... The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"ternary",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. Check that ``tableKeyValueInterface'^?^`` is defined.
+. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
+. Check that ``tableKeyValueInterface`` matches pattern ``{nbsp}~BIN~`` ``%``.
+. Let ``{nbsp}~BIN~`` ``text~key_value~`` be ``tableKeyValueInterface``.
+. Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+. Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)``].
+. Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+. Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
+. Check that ``typedExpressionIR^?^`` is defined.
+. Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
+. Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
+. Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+. Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)``].
+. Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
+. Check that ``typedExpressionIR'^?^`` is defined.
+. Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
+. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
+. The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"lpm",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. If ``tableKeyValueInterface'^?^`` is defined:
+ .. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
+ .. If let ``{nbsp}~HEX~`` ``text~key_value~`` be ``tableKeyValueInterface``:
+  ... Let ``text~key_value_prefix~`` be xref:strip_suffix_rec[the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible].
+  ... If ``~``xref:contains[``$contains(text~key_value_prefix~,`` ``"*")``]:
+   .... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+   .... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)``].
+   .... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+   .... Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
+   .... If ``typedExpressionIR^?^`` is defined:
+    ..... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
+    ..... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``].
+    ..... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+    ..... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)``].
+    ..... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
+    ..... If ``typedExpressionIR'^?^`` is defined:
+     ...... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
+     ...... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
+     ...... The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"lpm",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. If ``tableKeyValueInterface'^?^`` is defined:
+ .. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
+ .. If let ``{nbsp}~BIN~`` ``text~key_value~`` be ``tableKeyValueInterface``:
+  ... Let ``text~key_value_prefix~`` be xref:strip_suffix_rec[the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible].
+  ... If ``~``xref:contains[``$contains(text~key_value_prefix~,`` ``"*")``]:
+   .... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+   .... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)``].
+   .... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+   .... Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
+   .... If ``typedExpressionIR^?^`` is defined:
+    ..... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
+    ..... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
+    ..... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+    ..... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)``].
+    ..... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
+    ..... If ``typedExpressionIR'^?^`` is defined:
+     ...... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
+     ...... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
+     ...... The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"lpm",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. Check that ``tableKeyValueInterface'^?^`` is defined.
+. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
+. Check that ``tableKeyValueInterface`` matches pattern ``%`` ``{nbsp}~SLASH~`` ``%``.
+. Let ``text~key_prefix_value~`` ``{nbsp}~SLASH~`` ``n~key_prefix_width~`` be ``tableKeyValueInterface``.
+. Let ``text~key_prefix_value_rev~`` be xref:reverse_bytes_of_hex[``$reverse_bytes_of_hex(text~key_prefix_value~)``].
+. Let ``i~key_prefix_value~`` be xref:text_to_int[``$text_to_int(text~key_prefix_value_rev~)``].
+. Let ``n~key_type_width~`` be xref:sizeof_maxSizeInBits'[``$sizeof_maxSizeInBits'(typeIR)``].
+. Check that ``n~key_prefix_width~`` is less than or equal to ``n~key_type_width~``.
+. Let ``i`` be ``n~key_type_width~`` ``-`` ``n~key_prefix_width~``.
+. Check that ``i`` has type ``nat``.
+. Let ``n~key_remaining_width~`` be ``i``.
+. Let ``i~key_base_value~`` be xref:shl[the left shift of ``i~key_prefix_value~`` by ``n~key_remaining_width~``].
+. Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+. Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
+. Check that ``typedExpressionIR^?^`` is defined.
+. Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
+. Let ``int`` be xref:pow2[2 to the power of ``n~key_type_width~``].
+. Let ``int'`` be xref:pow2[2 to the power of ``n~key_remaining_width~``].
+. Let ``i~key_mask_value~`` be ``int`` ``-`` ``int'``.
+. Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
+. Check that ``typedExpressionIR'^?^`` is defined.
+. Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
+. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
+. The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"optional",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. Check that ``tableKeyValueInterface'^?^`` is defined.
+. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
+. Check that ``tableKeyValueInterface`` matches pattern ``{nbsp}~BIN~`` ``%``.
+. Let ``{nbsp}~BIN~`` ``text~key_value~`` be ``tableKeyValueInterface``.
+. Check that ``~``xref:contains[``$contains(text~key_value~,`` ``"*")``] or xref:strip_suffix_rec[the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible] is equal to ``""``.
+. Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+. Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)``].
+. Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+. Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
+. Check that ``typedExpressionIR^?^`` is defined.
+. Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
+. Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
+. Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+. Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)``].
+. Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
+. Check that ``typedExpressionIR'^?^`` is defined.
+. Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
+. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
+. The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"selector",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``typedExpressionIR~zero~`` be xref:typedExpressionIR[``+D+`` ``0`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+. Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~zero~`` from control plane cast to ``typeIR`` in ``EC``].
+. Check that ``typedExpressionIR^?^`` is defined.
+. Let ``typedExpressionIR~cast~`` be ``typedExpressionIR^?^``.
+. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~cast~`` ``+'&&&'+`` ``typedExpressionIR~cast~``.
+. The result is ``simpleKeysetExpressionIR``.
+
+TableObject_create_entry_key dispatch:
+
+. If ``t`` is equal to ``"exact"``: goto xref:TableObject_create_entry_key-exact[exact]
 . Else if ``t`` is equal to ``"ternary"``:
- .. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
- .. Check that ``tableKeyValueInterface'^?^`` is defined.
- .. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
- .. If let ``{nbsp}~HEX~`` ``text~key_value~`` be ``tableKeyValueInterface``:
-  ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)``].
-  ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR^?^`` is defined.
-  ... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
-  ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``].
-  ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)``].
-  ... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR'^?^`` is defined.
-  ... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
-  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
-  ... Return ``simpleKeysetExpressionIR``.
- .. Else if let ``{nbsp}~BIN~`` ``text~key_value~`` be ``tableKeyValueInterface``:
-  ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)``].
-  ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR^?^`` is defined.
-  ... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
-  ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
-  ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)``].
-  ... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR'^?^`` is defined.
-  ... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
-  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
-  ... Return ``simpleKeysetExpressionIR``.
+ .. Try:
+  ... Goto xref:TableObject_create_entry_key-ternary-hex[ternary-hex]
+ .. Then, try:
+  ... Goto xref:TableObject_create_entry_key-ternary-bin[ternary-bin]
 . Else if ``t`` is equal to ``"lpm"``:
- .. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
- .. Check that ``tableKeyValueInterface'^?^`` is defined.
- .. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
- .. If let ``{nbsp}~HEX~`` ``text~key_value~`` be ``tableKeyValueInterface``:
-  ... Let ``text~key_value_prefix~`` be xref:strip_suffix_rec[the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible].
-  ... Check that ``~``xref:contains[``$contains(text~key_value_prefix~,`` ``"*")``].
-  ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)``].
-  ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR^?^`` is defined.
-  ... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
-  ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``].
-  ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)``].
-  ... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR'^?^`` is defined.
-  ... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
-  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
-  ... Return ``simpleKeysetExpressionIR``.
- .. Else if let ``{nbsp}~BIN~`` ``text~key_value~`` be ``tableKeyValueInterface``:
-  ... Let ``text~key_value_prefix~`` be xref:strip_suffix_rec[the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible].
-  ... Check that ``~``xref:contains[``$contains(text~key_value_prefix~,`` ``"*")``].
-  ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)``].
-  ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR^?^`` is defined.
-  ... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
-  ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
-  ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)``].
-  ... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR'^?^`` is defined.
-  ... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
-  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
-  ... Return ``simpleKeysetExpressionIR``.
- .. Else if let ``text~key_prefix_value~`` ``{nbsp}~SLASH~`` ``n~key_prefix_width~`` be ``tableKeyValueInterface``:
-  ... Let ``text~key_prefix_value_rev~`` be xref:reverse_bytes_of_hex[``$reverse_bytes_of_hex(text~key_prefix_value~)``].
-  ... Let ``i~key_prefix_value~`` be xref:text_to_int[``$text_to_int(text~key_prefix_value_rev~)``].
-  ... Let ``n~key_type_width~`` be xref:sizeof_maxSizeInBits'[``$sizeof_maxSizeInBits'(typeIR)``].
-  ... Check that ``n~key_prefix_width~`` is less than or equal to ``n~key_type_width~``.
-  ... Let ``i`` be ``n~key_type_width~`` ``-`` ``n~key_prefix_width~``.
-  ... Check that ``i`` has type ``nat``.
-  ... Let ``n~key_remaining_width~`` be ``i``.
-  ... Let ``i~key_base_value~`` be xref:shl[the left shift of ``i~key_prefix_value~`` by ``n~key_remaining_width~``].
-  ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR^?^`` is defined.
-  ... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
-  ... Let ``int`` be xref:pow2[2 to the power of ``n~key_type_width~``].
-  ... Let ``int'`` be xref:pow2[2 to the power of ``n~key_remaining_width~``].
-  ... Let ``i~key_mask_value~`` be ``int`` ``-`` ``int'``.
-  ... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR'^?^`` is defined.
-  ... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
-  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
-  ... Return ``simpleKeysetExpressionIR``.
-. Else if ``t`` is equal to ``"optional"``:
- .. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
- .. Check that ``tableKeyValueInterface'^?^`` is defined.
- .. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
- .. Check that ``tableKeyValueInterface`` matches pattern ``{nbsp}~BIN~`` ``%``.
- .. Let ``{nbsp}~BIN~`` ``text~key_value~`` be ``tableKeyValueInterface``.
- .. Check that ``~``xref:contains[``$contains(text~key_value~,`` ``"*")``] or xref:strip_suffix_rec[the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible] is equal to ``""``.
- .. Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
- .. Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)``].
- .. Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
- .. Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
- .. Check that ``typedExpressionIR^?^`` is defined.
- .. Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
- .. Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
- .. Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
- .. Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)``].
- .. Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
- .. Check that ``typedExpressionIR'^?^`` is defined.
- .. Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
- .. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
- .. Return ``simpleKeysetExpressionIR``.
-. Else if ``t`` is equal to ``"selector"``:
- .. Let ``typedExpressionIR~zero~`` be xref:typedExpressionIR[``+D+`` ``0`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
- .. Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~zero~`` from control plane cast to ``typeIR`` in ``EC``].
- .. Check that ``typedExpressionIR^?^`` is defined.
- .. Let ``typedExpressionIR~cast~`` be ``typedExpressionIR^?^``.
- .. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~cast~`` ``+'&&&'+`` ``typedExpressionIR~cast~``.
- .. Return ``simpleKeysetExpressionIR``.
+ .. Try:
+  ... Goto xref:TableObject_create_entry_key-lpm-hex[lpm-hex]
+ .. Then, try:
+  ... Goto xref:TableObject_create_entry_key-lpm-bin[lpm-bin]
+ .. Then, try:
+  ... Goto xref:TableObject_create_entry_key-lpm-prefix[lpm-prefix]
+. Else if ``t`` is equal to ``"optional"``: goto xref:TableObject_create_entry_key-optional[optional]
+. Else if ``t`` is equal to ``"selector"``: goto xref:TableObject_create_entry_key-selector[selector]
 
-xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC, (nameIR, nameIR, typeIR)^{asterisk}^, tableKeysetInterface)]
+xref:TableObject_create_entry_keys[TableObject_create_entry_keys: ``EC`` ``+|-+`` ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^`` ``+'@'+`` ``tableKeysetInterface`` ``+:+`` ``%``]
+
+xref:TableObject_create_entry_keys[``EC`` ``+|-+`` ``·`` ``+'@'+`` ``tableKeysetInterface`` ``+:+`` ``%``]:
+ the result is ``·``.
+
+xref:TableObject_create_entry_keys[``EC`` ``+|-+`` ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``)`` ``{two-colons}`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``simpleKeysetExpressionIR~h~``].
+. Let xref:TableObject_create_entry_keys[``EC`` ``+|-+`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``simpleKeysetExpressionIR~t~^{asterisk}^``].
+. The result is ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR~t~^{asterisk}^``.
+
+TableObject_create_entry_keys dispatch:
 
 . Try:
- .. If ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^`` is an empty list: return ``·``.
+ .. If ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^`` is an empty list: goto xref:TableObject_create_entry_keys-nil[nil]
 . Then, try:
  .. Let ``tableKeyInterface^{asterisk}^`` be ``tableKeysetInterface``.
  .. Check that ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^`` is a non-empty list.
  .. Let ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``)`` ``{two-colons}`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^`` be ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^``.
- .. Let ``simpleKeysetExpressionIR~h~`` be xref:tableObject_create_entry_key[``$tableObject_create_entry_key(EC,`` ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``),`` ``tableKeyInterface^{asterisk}^)``].
- .. Let ``simpleKeysetExpressionIR^{asterisk}^`` be xref:tableObject_create_entry_keys[``$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)``].
- .. Return ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR^{asterisk}^``.
+ .. Goto xref:TableObject_create_entry_keys-cons[cons]
 
 xref:interface_of_tableKeyIR[$interface_of_tableKeyIR(typedExpressionIR +'#'+ nameIR~key~ +':'+ nameIR~matchKind~ annotationList +';'+)]
 
@@ -22969,7 +23025,9 @@ xref:key_interface_of_tableObject[$key_interface_of_tableObject(+TABLE+ typeId +
 Let ``nameIR~key~^{asterisk}^``, ``nameIR~matchKind~^{asterisk}^``, and ``typeIR^{asterisk}^`` be the resulting lists.
 . Return ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^``.
 
-xref:tableObject_create_entry_keyset[$tableObject_create_entry_keyset(EC, +KEY+ +'='+ +`{+ tableKeyIR^{asterisk}^ +`}+, tableKeyInterface^{asterisk}^)]
+xref:TableObject_create_entry_keyset[TableObject_create_entry_keyset: ``EC`` ``+|-+`` ``+KEY+`` ``+'='+`` ``+`{+`` ``tableKeyIR^{asterisk}^`` ``+`}+`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]
+
+xref:TableObject_create_entry_keyset[``EC`` ``+|-+`` ``+KEY+`` ``+'='+`` ``+`{+`` ``tableKeyIR^{asterisk}^`` ``+`}+`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
 
 . For each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``:
 +
@@ -22987,8 +23045,11 @@ Let ``nameIR~key~^{asterisk}^``, ``nameIR~matchKind~^{asterisk}^``, and ``typeIR
 Let ``nameIR~key_update~^{asterisk}^`` and ``tableKeyValueInterface~update~^{asterisk}^`` be the resulting lists.
 . Let ``nameIR~key_non_selector~^{asterisk}^`` be xref:filter_[``nameIR~key~^{asterisk}^`` filtered by ``(`` ``nameIR~matchKind~`` ``=/=`` ``"selector"`` ``)^{asterisk}^``].
 . Check that xref:eq_set[``+`{+`` ``nameIR~key_non_selector~^{asterisk}^`` ``+`}+`` is equal to ``+`{+`` ``nameIR~key_update~^{asterisk}^`` ``+`}+``].
-. Let ``simpleKeysetExpressionIR^{asterisk}^`` be xref:tableObject_create_entry_keys[``$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)``].
-. Return ``+`(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+`)+``.
+. Let xref:TableObject_create_entry_keys[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``simpleKeysetExpressionIR^{asterisk}^``].
+. The result is ``+`(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+`)+``.
+
+TableObject_create_entry_keyset dispatch:
+ Goto xref:TableObject_create_entry_keyset-[]
 
 xref:alias_to_original_lookup_map[$alias_to_original_lookup_map(parameterIR^{asterisk}^)]
 
@@ -23137,50 +23198,12 @@ xref:find_tableActionIR_unqualified'[$find_tableActionIR_unqualified'(tableActio
   ... Let ``nameIR~action~`` be xref:flatten_prefixedNameIR[the string form of  ``prefixedNameIR``].
   ... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
 
-xref:tableObject_create_entry_action[$tableObject_create_entry_action(EC, +ACTIONS+ +'='+ +`{+ tableActionIR^{asterisk}^ +`}+, ( nameIR~action_update~, tableActionArgumentInterface~update~^{asterisk}^ ))]
+xref:TableObject_create_entry_action[TableObject_create_entry_action: ``EC`` ``+|-+`` ``+ACTIONS+`` ``+'='+`` ``+`{+`` ``tableActionIR^{asterisk}^`` ``+`}+`` ``+'@'+`` ``(`` ``nameIR~action_update~,`` ``tableActionArgumentInterface~update~^{asterisk}^`` ``)`` ``+:+`` ``%``]
 
-. Try:
- .. Let ``(nameIR,`` ``tableActionIR)^?^`` be xref:find_tableActionIR_qualified[``$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)``].
- .. If ``(nameIR,`` ``tableActionIR)^?^`` is defined:
-  ... Let ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be ``(nameIR,`` ``tableActionIR)^?^``.
-  ... Let ``annotationList`` ``prefixedNameIR`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR~data~^{asterisk}^`` ``+`)+`` ``+'#'+`` ``+`(+`` ``++_++`` ``+','+`` ``parameterIR~control~^{asterisk}^`` ``+`)+`` ``+';'+`` be ``tableActionIR~found~``.
-  ... Let ``i~arg_aligned~^{asterisk}^`` be xref:align_tableActionArgumentInterfaces[``$align_tableActionArgumentInterfaces(parameterIR~control~^{asterisk}^,`` ``tableActionArgumentInterface~update~^{asterisk}^)``].
-  ... For each ``parameterIR~control~`` in ``parameterIR~control~^{asterisk}^``:
-+
---
-   **** Let ``++_++`` ``++_++`` ``typeIR~param~`` ``++_++`` ``++_++`` be ``parameterIR~control~``.
---
-+
-Let ``typeIR~param~^{asterisk}^`` be the resulting list.
-  ... For each ``i~arg_aligned~`` in ``i~arg_aligned~^{asterisk}^``:
-+
---
-   **** Let ``typedExpressionIR~arg~`` be xref:typedExpressionIR[``+D+`` ``i~arg_aligned~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
---
-+
-Let ``typedExpressionIR~arg~^{asterisk}^`` be the resulting list.
-  ... If the length of ``typeIR~param~^{asterisk}^`` is equal to the length of ``typedExpressionIR~arg~^{asterisk}^``:
-   .... For each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``:
-+
---
-    ***** Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~arg~`` from control plane cast to ``typeIR~param~`` in ``EC``].
---
-+
-Let ``typedExpressionIR^?^^{asterisk}^`` be the resulting list.
-   .... If ``typedExpressionIR^?^`` is defined, for all ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``:
-    ..... For each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``:
-+
---
-     ****** Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
---
-+
-Let ``typedExpressionIR~arg_cast~^{asterisk}^`` be the resulting list.
-    ..... Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
-    ..... Return ``{nbsp}~BARE~`` ``nameIR~found~`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``.
-. Then, try:
- .. Check that xref:find_tableActionIR_qualified[``$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)``] is none.
- .. Let ``(nameIR,`` ``tableActionIR)^?^`` be xref:find_tableActionIR_unqualified[``$find_tableActionIR_unqualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)``].
- .. Check that ``(nameIR,`` ``tableActionIR)^?^`` is defined.
+xref:TableObject_create_entry_action[``EC`` ``+|-+`` ``+ACTIONS+`` ``+'='+`` ``+`{+`` ``tableActionIR^{asterisk}^`` ``+`}+`` ``+'@'+`` ``(`` ``nameIR~action_update~,`` ``tableActionArgumentInterface~update~^{asterisk}^`` ``)`` ``+:+`` ``%``]:
+
+. Let ``(nameIR,`` ``tableActionIR)^?^`` be xref:find_tableActionIR_qualified[``$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)``].
+. If ``(nameIR,`` ``tableActionIR)^?^`` is defined:
  .. Let ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be ``(nameIR,`` ``tableActionIR)^?^``.
  .. Let ``annotationList`` ``prefixedNameIR`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR~data~^{asterisk}^`` ``+`)+`` ``+'#'+`` ``+`(+`` ``++_++`` ``+','+`` ``parameterIR~control~^{asterisk}^`` ``+`)+`` ``+';'+`` be ``tableActionIR~found~``.
  .. Let ``i~arg_aligned~^{asterisk}^`` be xref:align_tableActionArgumentInterfaces[``$align_tableActionArgumentInterfaces(parameterIR~control~^{asterisk}^,`` ``tableActionArgumentInterface~update~^{asterisk}^)``].
@@ -23198,47 +23221,106 @@ Let ``typeIR~param~^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typedExpressionIR~arg~^{asterisk}^`` be the resulting list.
- .. Check that the length of ``typeIR~param~^{asterisk}^`` is equal to the length of ``typedExpressionIR~arg~^{asterisk}^``.
- .. For each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``:
+ .. If the length of ``typeIR~param~^{asterisk}^`` is equal to the length of ``typedExpressionIR~arg~^{asterisk}^``:
+  ... For each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``:
 +
 --
-  *** Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~arg~`` from control plane cast to ``typeIR~param~`` in ``EC``].
+   **** Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~arg~`` from control plane cast to ``typeIR~param~`` in ``EC``].
 --
 +
 Let ``typedExpressionIR^?^^{asterisk}^`` be the resulting list.
- .. Check that ``typedExpressionIR^?^`` is defined, for all ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``.
- .. For each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``:
+  ... If ``typedExpressionIR^?^`` is defined, for all ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``:
+   .... For each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``:
 +
 --
-  *** Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
+    ***** Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
 --
 +
 Let ``typedExpressionIR~arg_cast~^{asterisk}^`` be the resulting list.
- .. Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
- .. Return ``{nbsp}~BARE~`` ``nameIR~found~`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``.
+   .... Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
+   .... The result is ``{nbsp}~BARE~`` ``nameIR~found~`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``.
 
-xref:tableObject_add_entry[$tableObject_add_entry(EC, +TABLE+ typeId +`{+ frame TBL +`}+, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)]
+xref:TableObject_create_entry_action[``EC`` ``+|-+`` ``+ACTIONS+`` ``+'='+`` ``+`{+`` ``tableActionIR^{asterisk}^`` ``+`}+`` ``+'@'+`` ``(`` ``nameIR~action_update~,`` ``tableActionArgumentInterface~update~^{asterisk}^`` ``)`` ``+:+`` ``%``]:
+
+. Check that xref:find_tableActionIR_qualified[``$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)``] is none.
+. Let ``(nameIR,`` ``tableActionIR)^?^`` be xref:find_tableActionIR_unqualified[``$find_tableActionIR_unqualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)``].
+. Check that ``(nameIR,`` ``tableActionIR)^?^`` is defined.
+. Let ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be ``(nameIR,`` ``tableActionIR)^?^``.
+. Let ``annotationList`` ``prefixedNameIR`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR~data~^{asterisk}^`` ``+`)+`` ``+'#'+`` ``+`(+`` ``++_++`` ``+','+`` ``parameterIR~control~^{asterisk}^`` ``+`)+`` ``+';'+`` be ``tableActionIR~found~``.
+. Let ``i~arg_aligned~^{asterisk}^`` be xref:align_tableActionArgumentInterfaces[``$align_tableActionArgumentInterfaces(parameterIR~control~^{asterisk}^,`` ``tableActionArgumentInterface~update~^{asterisk}^)``].
+. For each ``parameterIR~control~`` in ``parameterIR~control~^{asterisk}^``:
++
+--
+ ** Let ``++_++`` ``++_++`` ``typeIR~param~`` ``++_++`` ``++_++`` be ``parameterIR~control~``.
+--
++
+Let ``typeIR~param~^{asterisk}^`` be the resulting list.
+. For each ``i~arg_aligned~`` in ``i~arg_aligned~^{asterisk}^``:
++
+--
+ ** Let ``typedExpressionIR~arg~`` be xref:typedExpressionIR[``+D+`` ``i~arg_aligned~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+--
++
+Let ``typedExpressionIR~arg~^{asterisk}^`` be the resulting list.
+. Check that the length of ``typeIR~param~^{asterisk}^`` is equal to the length of ``typedExpressionIR~arg~^{asterisk}^``.
+. For each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``:
++
+--
+ ** Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~arg~`` from control plane cast to ``typeIR~param~`` in ``EC``].
+--
++
+Let ``typedExpressionIR^?^^{asterisk}^`` be the resulting list.
+. Check that ``typedExpressionIR^?^`` is defined, for all ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``.
+. For each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``:
++
+--
+ ** Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
+--
++
+Let ``typedExpressionIR~arg_cast~^{asterisk}^`` be the resulting list.
+. Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
+. The result is ``{nbsp}~BARE~`` ``nameIR~found~`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``.
+
+TableObject_create_entry_action dispatch:
+
+. Try:
+ .. Goto xref:TableObject_create_entry_action-qualified[qualified]
+. Then, try:
+ .. Goto xref:TableObject_create_entry_action-unqualified[unqualified]
+
+xref:TableObject_add_entry[TableObject_add_entry: ``EC`` ``+|-+`` ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL`` ``+`}+`` ``+'@'+`` ``tableEntryPriorityInterface`` ``+','+`` ``tableKeysetInterface`` ``+','+`` ``tableActionInterface`` ``+:+`` ``%``]
+
+xref:TableObject_add_entry[``EC`` ``+|-+`` ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL`` ``+`}+`` ``+'@'+`` ``tableEntryPriorityInterface`` ``+','+`` ``tableKeysetInterface`` ``+','+`` ``tableActionInterface`` ``+:+`` ``%``]:
 
 . Let ``tableEntryPriorityOptIR`` be xref:tableObject_create_entry_priority[``$tableObject_create_entry_priority(tableEntryPriorityInterface)``].
 . If if xref:needs_priority_tableKeysPropertyIR[``$needs_priority_tableKeysPropertyIR(TBL.+KEYS+)``], then xref:is_some_[``$is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR)``]:
- .. Let ``keysetExpressionIR`` be xref:tableObject_create_entry_keyset[``$tableObject_create_entry_keyset(EC,`` ``TBL.+KEYS+,`` ``tableKeysetInterface)``].
- .. Let ``tableActionReferenceIR`` be xref:tableObject_create_entry_action[``$tableObject_create_entry_action(EC,`` ``TBL.+ACTIONS+,`` ``tableActionInterface)``].
+ .. Let xref:TableObject_create_entry_keyset[``EC`` ``+|-+`` ``TBL.+KEYS+`` ``+'@'+`` ``tableKeysetInterface`` ``+:+`` ``keysetExpressionIR``].
+ .. Let xref:TableObject_create_entry_action[``EC`` ``+|-+`` ``TBL.+ACTIONS+`` ``+'@'+`` ``tableActionInterface`` ``+:+`` ``tableActionReferenceIR``].
  .. Let ``tableEntryIR~update~`` be ``·`` ``tableEntryPriorityOptIR`` ``keysetExpressionIR`` ``+':'+`` ``tableActionReferenceIR`` ``{nbsp}~EMPTY~`` ``+';'+``.
  .. Let ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+'='+`` ``+`{+`` ``tableEntryIR^{asterisk}^`` ``+`}+`` be ``TBL.+ENTRIES+``.
  .. Let ``tableEntriesPropertyIR~updated~`` be ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+'='+`` ``+`{+`` ``tableEntryIR^{asterisk}^`` ``{pp}`` ``tableEntryIR~update~`` ``+`}+``.
  .. Let ``TBL~updated~`` be ``TBL`` with ``+ENTRIES+`` set to ``tableEntriesPropertyIR~updated~``.
- .. Return ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL~updated~`` ``+`}+``.
+ .. The result is ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL~updated~`` ``+`}+``.
 
-. +++<span id="func:tableObject_add_entry-else"></span>+++Otherwise: return ``·``.
+. +++<span id="rel:TableObject_add_entry-else"></span>+++Otherwise:
+ .. xref:TableObject_add_entry[``EC`` ``+|-+`` ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL`` ``+`}+`` ``+'@'+`` ``tableEntryPriorityInterface`` ``+','+`` ``tableKeysetInterface`` ``+','+`` ``tableActionInterface`` ``+:+`` ``%``]: the result is ``·``.
 
-xref:tableObject_add_default_action[$tableObject_add_default_action(EC, +TABLE+ typeId +`{+ frame TBL +`}+, tableActionInterface)]
+TableObject_add_entry dispatch:
+ Goto xref:TableObject_add_entry-ok[ok]
+
+xref:TableObject_add_default_action[TableObject_add_default_action: ``EC`` ``+|-+`` ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL`` ``+`}+`` ``+'@'+`` ``tableActionInterface`` ``+:+`` ``%``]
+
+xref:TableObject_add_default_action[``EC`` ``+|-+`` ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL`` ``+`}+`` ``+'@'+`` ``tableActionInterface`` ``+:+`` ``%``]:
 
 . Let ``++_++`` ``constIR^?^`` ``+DEFAULT_ACTION+`` ``+'='+`` ``++_++`` ``+';'+`` be ``TBL.+DEFAULT_ACTION+``.
 . Check that ``constIR^?^`` is none.
-. Let ``tableActionReferenceIR`` be xref:tableObject_create_entry_action[``$tableObject_create_entry_action(EC,`` ``TBL.+ACTIONS+,`` ``tableActionInterface)``].
+. Let xref:TableObject_create_entry_action[``EC`` ``+|-+`` ``TBL.+ACTIONS+`` ``+'@'+`` ``tableActionInterface`` ``+:+`` ``tableActionReferenceIR``].
 . Let ``tableDefaultActionPropertyIR`` be ``{nbsp}~EMPTY~`` ``·`` ``+DEFAULT_ACTION+`` ``+'='+`` ``tableActionReferenceIR`` ``+';'+``.
 . Let ``TBL~updated~`` be ``TBL`` with ``+DEFAULT_ACTION+`` set to ``tableDefaultActionPropertyIR``.
-. Return ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL~updated~`` ``+`}+``.
+. The result is ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL~updated~`` ``+`}+``.
+
+TableObject_add_default_action dispatch:
+ Goto xref:TableObject_add_default_action-[]
 
 xref:V1Model_init[V1Model_init]:
 

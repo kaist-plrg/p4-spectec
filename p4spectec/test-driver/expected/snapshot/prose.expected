@@ -40225,127 +40225,57 @@ def $needs_priority_tableKeysPropertyIR((KEY '=' `{ (tableKeyIR)*{tableKeyIR <- 
 
 2. Return $exists_(((nameIR_matchKind = "ternary"))*{nameIR_matchKind <- nameIR_matchKind*})
 
-def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*})
+relation TableObject_create_entry_key: EC |- (nameIR_key, t, typeIR) '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : %
 
 1. Case analysis on t
 
   1. Case (% = "exact")
 
-    1. (Let (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
+    1. Group exact: EC |- (nameIR_key, "exact", typeIR) '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : %
 
-    2. Check (((tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches pattern (_)))
+      1. (Let (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
 
-      1. (Let ?(tableKeyValueInterface) be (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+      2. Check (((tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches pattern (_)))
 
-      2. (Let (t')?{t' <- t'?} be $text_of_number_tableKeyValueInterface(tableKeyValueInterface))
+        1. (Let ?(tableKeyValueInterface) be (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?})
 
-      3. Check (((t')?{t' <- t'?} matches pattern (_)))
+        2. (Let (t')?{t' <- t'?} be $text_of_number_tableKeyValueInterface(tableKeyValueInterface))
 
-        1. (Let ?(text_key_value) be (t')?{t' <- t'?})
+        3. Check (((t')?{t' <- t'?} matches pattern (_)))
 
-        2. (Let i_key_value be $text_to_int(text_key_value))
+          1. (Let ?(text_key_value) be (t')?{t' <- t'?})
 
-        3. (Let typedExpressionIR be (((D i_key_value) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))
+          2. (Let i_key_value be $text_to_int(text_key_value))
 
-        4. (Let (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR, typeIR))
+          3. (Let typedExpressionIR be (((D i_key_value) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))
 
-        5. Check (((typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_)))
+          4. (Let (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR, typeIR))
 
-          1. (Let ?(typedExpressionIR_cast) be (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?})
+          5. Check (((typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_)))
 
-          2. (Let typeIR_set be ((SET `< typeIR `>) as typeIR))
+            1. (Let ?(typedExpressionIR_cast) be (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?})
 
-          3. (Let simpleKeysetExpressionIR be ((((`( typeIR_set `) typedExpressionIR_cast) as expressionIR) '#' (`( typeIR_set (DYN) `))) as simpleKeysetExpressionIR))
+            2. (Let typeIR_set be ((SET `< typeIR `>) as typeIR))
 
-          4. Return simpleKeysetExpressionIR
+            3. (Let simpleKeysetExpressionIR be ((((`( typeIR_set `) typedExpressionIR_cast) as expressionIR) '#' (`( typeIR_set (DYN) `))) as simpleKeysetExpressionIR))
+
+            4. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
   2. Case (% = "ternary")
 
-    1. (Let (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
+    1. Block (2 arms)
 
-    2. Check (((tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches pattern (_)))
+    Arm 1:
 
-      1. (Let ?(tableKeyValueInterface) be (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+      1. Group ternary-hex: EC |- (nameIR_key, "ternary", typeIR) '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : %
 
-      2. Case analysis on tableKeyValueInterface
+        1. (Let (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
 
-        1. Case (% matches pattern _HEX %, let (_HEX text_key_value) = %)
+        2. If (((tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches pattern (_))), then
 
-          1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
+          1. (Let ?(tableKeyValueInterface) be (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?})
 
-          2. (Let i_key_base_value be $text_to_int("0x" ++ text_key_base_value))
-
-          3. (Let typedExpressionIR_base be (((D i_key_base_value) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))
-
-          4. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
-
-          5. Check (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_)))
-
-            1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})
-
-            2. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "F"))
-
-            3. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
-
-            4. (Let i_key_mask_value be $text_to_int("0x" ++ text_key_mask_value'))
-
-            5. (Let (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
-
-            6. Check (((typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_)))
-
-              1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?})
-
-              2. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast))
-
-              3. Return simpleKeysetExpressionIR
-
-        2. Case (% matches pattern _BIN %, let (_BIN text_key_value) = %)
-
-          1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
-
-          2. (Let i_key_base_value be $text_to_int("0b" ++ text_key_base_value))
-
-          3. (Let typedExpressionIR_base be (((D i_key_base_value) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))
-
-          4. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
-
-          5. Check (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_)))
-
-            1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})
-
-            2. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "1"))
-
-            3. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
-
-            4. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
-
-            5. (Let (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
-
-            6. Check (((typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_)))
-
-              1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?})
-
-              2. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast))
-
-              3. Return simpleKeysetExpressionIR
-
-      2. Else Dangling
-
-  3. Case (% = "lpm")
-
-    1. (Let (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
-
-    2. Check (((tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches pattern (_)))
-
-      1. (Let ?(tableKeyValueInterface) be (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?})
-
-      2. Case analysis on tableKeyValueInterface
-
-        1. Case (% matches pattern _HEX %, let (_HEX text_key_value) = %)
-
-          1. (Let text_key_value_prefix be $strip_suffix_rec(text_key_value, "*"))
-
-          2. Check (~$contains(text_key_value_prefix, "*"))
+          2. If let (_HEX text_key_value) be tableKeyValueInterface matching pattern _HEX %, then
 
             1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
 
@@ -40355,7 +40285,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
             4. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
 
-            5. Check (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_)))
+            5. If (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_))), then
 
               1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})
 
@@ -40367,19 +40297,245 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
               5. (Let (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
 
+              6. If (((typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_))), then
+
+                1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?})
+
+                2. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast))
+
+                3. Result in: % |- % '@' % : simpleKeysetExpressionIR
+
+              6. Else Dangling
+
+            5. Else Dangling
+
+          2. Else Dangling
+
+        2. Else Dangling
+
+    Arm 2:
+
+      1. Group ternary-bin: EC |- (nameIR_key, "ternary", typeIR) '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : %
+
+        1. (Let (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
+
+        2. Check (((tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches pattern (_)))
+
+          1. (Let ?(tableKeyValueInterface) be (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+
+          2. Check ((tableKeyValueInterface matches pattern _BIN %))
+
+            1. (Let (_BIN text_key_value) be tableKeyValueInterface)
+
+            2. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
+
+            3. (Let i_key_base_value be $text_to_int("0b" ++ text_key_base_value))
+
+            4. (Let typedExpressionIR_base be (((D i_key_base_value) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))
+
+            5. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+            6. Check (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_)))
+
+              1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})
+
+              2. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "1"))
+
+              3. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
+
+              4. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
+
+              5. (Let (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
               6. Check (((typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_)))
 
                 1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?})
 
                 2. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast))
 
-                3. Return simpleKeysetExpressionIR
+                3. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
-        2. Case (% matches pattern _BIN %, let (_BIN text_key_value) = %)
+  3. Case (% = "lpm")
 
-          1. (Let text_key_value_prefix be $strip_suffix_rec(text_key_value, "*"))
+    1. Block (3 arms)
 
-          2. Check (~$contains(text_key_value_prefix, "*"))
+    Arm 1:
+
+      1. Group lpm-hex: EC |- (nameIR_key, "lpm", typeIR) '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : %
+
+        1. (Let (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
+
+        2. If (((tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches pattern (_))), then
+
+          1. (Let ?(tableKeyValueInterface) be (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+
+          2. If let (_HEX text_key_value) be tableKeyValueInterface matching pattern _HEX %, then
+
+            1. (Let text_key_value_prefix be $strip_suffix_rec(text_key_value, "*"))
+
+            2. If (~$contains(text_key_value_prefix, "*")), then
+
+              1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
+
+              2. (Let i_key_base_value be $text_to_int("0x" ++ text_key_base_value))
+
+              3. (Let typedExpressionIR_base be (((D i_key_base_value) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))
+
+              4. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+              5. If (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_))), then
+
+                1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})
+
+                2. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "F"))
+
+                3. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
+
+                4. (Let i_key_mask_value be $text_to_int("0x" ++ text_key_mask_value'))
+
+                5. (Let (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                6. If (((typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_))), then
+
+                  1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?})
+
+                  2. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast))
+
+                  3. Result in: % |- % '@' % : simpleKeysetExpressionIR
+
+                6. Else Dangling
+
+              5. Else Dangling
+
+            2. Else Dangling
+
+          2. Else Dangling
+
+        2. Else Dangling
+
+    Arm 2:
+
+      1. Group lpm-bin: EC |- (nameIR_key, "lpm", typeIR) '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : %
+
+        1. (Let (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
+
+        2. If (((tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches pattern (_))), then
+
+          1. (Let ?(tableKeyValueInterface) be (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+
+          2. If let (_BIN text_key_value) be tableKeyValueInterface matching pattern _BIN %, then
+
+            1. (Let text_key_value_prefix be $strip_suffix_rec(text_key_value, "*"))
+
+            2. If (~$contains(text_key_value_prefix, "*")), then
+
+              1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
+
+              2. (Let i_key_base_value be $text_to_int("0b" ++ text_key_base_value))
+
+              3. (Let typedExpressionIR_base be (((D i_key_base_value) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))
+
+              4. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+              5. If (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_))), then
+
+                1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})
+
+                2. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "1"))
+
+                3. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
+
+                4. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
+
+                5. (Let (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                6. If (((typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_))), then
+
+                  1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?})
+
+                  2. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast))
+
+                  3. Result in: % |- % '@' % : simpleKeysetExpressionIR
+
+                6. Else Dangling
+
+              5. Else Dangling
+
+            2. Else Dangling
+
+          2. Else Dangling
+
+        2. Else Dangling
+
+    Arm 3:
+
+      1. Group lpm-prefix: EC |- (nameIR_key, "lpm", typeIR) '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : %
+
+        1. (Let (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
+
+        2. Check (((tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches pattern (_)))
+
+          1. (Let ?(tableKeyValueInterface) be (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+
+          2. Check ((tableKeyValueInterface matches pattern % _SLASH %))
+
+            1. (Let (text_key_prefix_value _SLASH n_key_prefix_width) be tableKeyValueInterface)
+
+            2. (Let text_key_prefix_value_rev be $reverse_bytes_of_hex(text_key_prefix_value))
+
+            3. (Let i_key_prefix_value be $text_to_int(text_key_prefix_value_rev))
+
+            4. (Let n_key_type_width be $sizeof_maxSizeInBits'(typeIR))
+
+            5. Check ((n_key_prefix_width <= n_key_type_width))
+
+              1. (Let i be (n_key_type_width - n_key_prefix_width))
+
+              2. Check ((i has type nat))
+
+                1. (Let n_key_remaining_width be (i as nat))
+
+                2. (Let i_key_base_value be $shl(i_key_prefix_value, (n_key_remaining_width as int)))
+
+                3. (Let typedExpressionIR_base be (((D i_key_base_value) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))
+
+                4. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                5. Check (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_)))
+
+                  1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})
+
+                  2. (Let int be $pow2(n_key_type_width))
+
+                  3. (Let int' be $pow2(n_key_remaining_width))
+
+                  4. (Let i_key_mask_value be (int - int'))
+
+                  5. (Let (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                  6. Check (((typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_)))
+
+                    1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?})
+
+                    2. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast))
+
+                    3. Result in: % |- % '@' % : simpleKeysetExpressionIR
+
+  4. Case (% = "optional")
+
+    1. Group optional: EC |- (nameIR_key, "optional", typeIR) '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : %
+
+      1. (Let (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
+
+      2. Check (((tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches pattern (_)))
+
+        1. (Let ?(tableKeyValueInterface) be (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+
+        2. Check ((tableKeyValueInterface matches pattern _BIN %))
+
+          1. (Let (_BIN text_key_value) be tableKeyValueInterface)
+
+          2. Check ((~$contains(text_key_value, "*") \/ ($strip_suffix_rec(text_key_value, "*") = "")))
 
             1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
 
@@ -40407,111 +40563,27 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
                 2. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast))
 
-                3. Return simpleKeysetExpressionIR
-
-        3. Case (% matches pattern % _SLASH %, let (text_key_prefix_value _SLASH n_key_prefix_width) = %)
-
-          1. (Let text_key_prefix_value_rev be $reverse_bytes_of_hex(text_key_prefix_value))
-
-          2. (Let i_key_prefix_value be $text_to_int(text_key_prefix_value_rev))
-
-          3. (Let n_key_type_width be $sizeof_maxSizeInBits'(typeIR))
-
-          4. Check ((n_key_prefix_width <= n_key_type_width))
-
-            1. (Let i be (n_key_type_width - n_key_prefix_width))
-
-            2. Check ((i has type nat))
-
-              1. (Let n_key_remaining_width be (i as nat))
-
-              2. (Let i_key_base_value be $shl(i_key_prefix_value, (n_key_remaining_width as int)))
-
-              3. (Let typedExpressionIR_base be (((D i_key_base_value) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))
-
-              4. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
-
-              5. Check (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_)))
-
-                1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})
-
-                2. (Let int be $pow2(n_key_type_width))
-
-                3. (Let int' be $pow2(n_key_remaining_width))
-
-                4. (Let i_key_mask_value be (int - int'))
-
-                5. (Let (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
-
-                6. Check (((typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_)))
-
-                  1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?})
-
-                  2. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast))
-
-                  3. Return simpleKeysetExpressionIR
-
-      2. Else Dangling
-
-  4. Case (% = "optional")
-
-    1. (Let (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
-
-    2. Check (((tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches pattern (_)))
-
-      1. (Let ?(tableKeyValueInterface) be (tableKeyValueInterface')?{tableKeyValueInterface' <- tableKeyValueInterface'?})
-
-      2. Check ((tableKeyValueInterface matches pattern _BIN %))
-
-        1. (Let (_BIN text_key_value) be tableKeyValueInterface)
-
-        2. Check ((~$contains(text_key_value, "*") \/ ($strip_suffix_rec(text_key_value, "*") = "")))
-
-          1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
-
-          2. (Let i_key_base_value be $text_to_int("0b" ++ text_key_base_value))
-
-          3. (Let typedExpressionIR_base be (((D i_key_base_value) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))
-
-          4. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
-
-          5. Check (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_)))
-
-            1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})
-
-            2. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "1"))
-
-            3. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
-
-            4. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
-
-            5. (Let (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
-
-            6. Check (((typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?} matches pattern (_)))
-
-              1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?{typedExpressionIR' <- typedExpressionIR'?})
-
-              2. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast))
-
-              3. Return simpleKeysetExpressionIR
+                3. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
   5. Case (% = "selector")
 
-    1. (Let typedExpressionIR_zero be (((D (0 as int)) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))
+    1. Group selector: EC |- (nameIR_key, "selector", typeIR) '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : %
 
-    2. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_zero, typeIR))
+      1. (Let typedExpressionIR_zero be (((D (0 as int)) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))
 
-    3. Check (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_)))
+      2. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_zero, typeIR))
 
-      1. (Let ?(typedExpressionIR_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})
+      3. Check (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_)))
 
-      2. (Let simpleKeysetExpressionIR be (typedExpressionIR_cast '&&&' typedExpressionIR_cast))
+        1. (Let ?(typedExpressionIR_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})
 
-      3. Return simpleKeysetExpressionIR
+        2. (Let simpleKeysetExpressionIR be (typedExpressionIR_cast '&&&' typedExpressionIR_cast))
+
+        3. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
 1. Else Dangling
 
-def $tableObject_create_entry_keys(EC, ((nameIR, nameIR, typeIR))*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, tableKeysetInterface)
+relation TableObject_create_entry_keys: EC |- ((nameIR, nameIR, typeIR))*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} '@' tableKeysetInterface : %
 
 1. Block (2 arms)
 
@@ -40519,7 +40591,9 @@ Arm 1:
 
   1. If ((((nameIR, nameIR, typeIR))*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} matches pattern [])), then
 
-    1. Return []
+    1. Group nil: EC |- [] '@' tableKeysetInterface : %
+
+      1. Result in: % |- % '@' % : []
 
   1. Else Dangling
 
@@ -40531,11 +40605,13 @@ Arm 2:
 
     1. (Let (nameIR_key_h, nameIR_matchKind_h, typeIR_h) :: ((nameIR_key_t, nameIR_matchKind_t, typeIR_t))*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} be ((nameIR, nameIR, typeIR))*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*})
 
-    2. (Let simpleKeysetExpressionIR_h be $tableObject_create_entry_key(EC, (nameIR_key_h, nameIR_matchKind_h, typeIR_h), (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
+    2. Group cons: EC |- (nameIR_key_h, nameIR_matchKind_h, typeIR_h) :: ((nameIR_key_t, nameIR_matchKind_t, typeIR_t))*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : %
 
-    3. (Let (simpleKeysetExpressionIR)*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} be $tableObject_create_entry_keys(EC, ((nameIR_key_t, nameIR_matchKind_t, typeIR_t))*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*}, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
+      1. (TableObject_create_entry_key: EC |- (nameIR_key_h, nameIR_matchKind_h, typeIR_h) '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : simpleKeysetExpressionIR_h)
 
-    4. Return simpleKeysetExpressionIR_h :: (simpleKeysetExpressionIR)*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*}
+      2. (TableObject_create_entry_keys: EC |- ((nameIR_key_t, nameIR_matchKind_t, typeIR_t))*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : (simpleKeysetExpressionIR_t)*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*})
+
+      3. Result in: % |- % '@' % : simpleKeysetExpressionIR_h :: (simpleKeysetExpressionIR_t)*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*}
 
 def $interface_of_tableKeyIR((typedExpressionIR '#' nameIR_key ':' nameIR_matchKind annotationList ';'))
 
@@ -40551,19 +40627,21 @@ def $key_interface_of_tableObject((TABLE typeId `{ frame TBL `}))
 
 3. Return ((nameIR_key, nameIR_matchKind, typeIR))*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*}
 
-def $tableObject_create_entry_keyset(EC, (KEY '=' `{ (tableKeyIR)*{tableKeyIR <- tableKeyIR*} `}), (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*})
+relation TableObject_create_entry_keyset: EC |- (KEY '=' `{ (tableKeyIR)*{tableKeyIR <- tableKeyIR*} `}) '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : %
 
-1. (Let (nameIR_key, nameIR_matchKind, typeIR) be $interface_of_tableKeyIR(tableKeyIR))*{tableKeyIR <- tableKeyIR*, nameIR_key -> nameIR_key*, nameIR_matchKind -> nameIR_matchKind*, typeIR -> typeIR*}
+1. Group : EC |- (KEY '=' `{ (tableKeyIR)*{tableKeyIR <- tableKeyIR*} `}) '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : %
 
-2. (Let (nameIR_key_update, tableKeyValueInterface_update) be tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*, nameIR_key_update -> nameIR_key_update*, tableKeyValueInterface_update -> tableKeyValueInterface_update*}
+  1. (Let (nameIR_key, nameIR_matchKind, typeIR) be $interface_of_tableKeyIR(tableKeyIR))*{tableKeyIR <- tableKeyIR*, nameIR_key -> nameIR_key*, nameIR_matchKind -> nameIR_matchKind*, typeIR -> typeIR*}
 
-3. (Let (nameIR_key_non_selector)*{nameIR_key_non_selector <- nameIR_key_non_selector*} be $filter_<nameIR>((nameIR_key)*{nameIR_key <- nameIR_key*}, ((nameIR_matchKind =/= "selector"))*{nameIR_matchKind <- nameIR_matchKind*}))
+  2. (Let (nameIR_key_update, tableKeyValueInterface_update) be tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*, nameIR_key_update -> nameIR_key_update*, tableKeyValueInterface_update -> tableKeyValueInterface_update*}
 
-4. Check ($eq_set<nameIR>((`{ (nameIR_key_non_selector)*{nameIR_key_non_selector <- nameIR_key_non_selector*} `}), (`{ (nameIR_key_update)*{nameIR_key_update <- nameIR_key_update*} `})))
+  3. (Let (nameIR_key_non_selector)*{nameIR_key_non_selector <- nameIR_key_non_selector*} be $filter_<nameIR>((nameIR_key)*{nameIR_key <- nameIR_key*}, ((nameIR_matchKind =/= "selector"))*{nameIR_matchKind <- nameIR_matchKind*}))
 
-  1. (Let (simpleKeysetExpressionIR)*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} be $tableObject_create_entry_keys(EC, ((nameIR_key, nameIR_matchKind, typeIR))*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*}, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*}))
+  4. Check ($eq_set<nameIR>((`{ (nameIR_key_non_selector)*{nameIR_key_non_selector <- nameIR_key_non_selector*} `}), (`{ (nameIR_key_update)*{nameIR_key_update <- nameIR_key_update*} `})))
 
-  2. Return ((`( (simpleKeysetExpressionIR)*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} `)) as keysetExpressionIR)
+    1. (TableObject_create_entry_keys: EC |- ((nameIR_key, nameIR_matchKind, typeIR))*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*} '@' (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} : (simpleKeysetExpressionIR)*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*})
+
+    2. Result in: % |- % '@' % : ((`( (simpleKeysetExpressionIR)*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} `)) as keysetExpressionIR)
 
 def $alias_to_original_lookup_map((parameterIR)*{parameterIR <- parameterIR*})
 
@@ -40723,51 +40801,17 @@ def $find_tableActionIR_unqualified'((tableActionIR)*{tableActionIR <- tableActi
 
             2. Return ?((nameIR_action, tableActionIR_h))
 
-def $tableObject_create_entry_action(EC, (ACTIONS '=' `{ (tableActionIR)*{tableActionIR <- tableActionIR*} `}), (nameIR_action_update, (tableActionArgumentInterface_update)*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}))
+relation TableObject_create_entry_action: EC |- (ACTIONS '=' `{ (tableActionIR)*{tableActionIR <- tableActionIR*} `}) '@' (nameIR_action_update, (tableActionArgumentInterface_update)*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}) : %
 
 1. Block (2 arms)
 
 Arm 1:
 
-  1. (Let ((nameIR, tableActionIR))?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} be $find_tableActionIR_qualified((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR_action_update))
+  1. Group qualified: EC |- (ACTIONS '=' `{ (tableActionIR)*{tableActionIR <- tableActionIR*} `}) '@' (nameIR_action_update, (tableActionArgumentInterface_update)*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}) : %
 
-  2. If ((((nameIR, tableActionIR))?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches pattern (_))), then
+    1. (Let ((nameIR, tableActionIR))?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} be $find_tableActionIR_qualified((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR_action_update))
 
-    1. (Let ?((nameIR_found, tableActionIR_found)) be ((nameIR, tableActionIR))?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?})
-
-    2. (Let (annotationList (prefixedNameIR controlPlaneNameIR `( (argumentIR_data)*{argumentIR_data <- argumentIR_data*} `)) '#' `( _parameterListIR ',' (parameterIR_control)*{parameterIR_control <- parameterIR_control*} `) ';') be tableActionIR_found)
-
-    3. (Let (i_arg_aligned)*{i_arg_aligned <- i_arg_aligned*} be $align_tableActionArgumentInterfaces((parameterIR_control)*{parameterIR_control <- parameterIR_control*}, (tableActionArgumentInterface_update)*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}))
-
-    4. (Let (_annotationList _direction typeIR_param _id _parameterInitializerOptIR) be parameterIR_control)*{parameterIR_control <- parameterIR_control*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR_param -> typeIR_param*}
-
-    5. (Let typedExpressionIR_arg be (((D i_arg_aligned) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
-
-    6. If ((|(typeIR_param)*{typeIR_param <- typeIR_param*}| = |(typedExpressionIR_arg)*{typedExpressionIR_arg <- typedExpressionIR_arg*}|)), then
-
-      1. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param))*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
-
-      2. If (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_)))*{typedExpressionIR? <- typedExpressionIR?*}, then
-
-        1. (Let ?(typedExpressionIR_arg_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
-
-        2. (Let (argumentIR)*{argumentIR <- argumentIR*} be (argumentIR_data)*{argumentIR_data <- argumentIR_data*} ++ ((typedExpressionIR_arg_cast)*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*))
-
-        3. Return ((_BARE nameIR_found) controlPlaneNameIR `( (argumentIR)*{argumentIR <- argumentIR*} `))
-
-      2. Else Dangling
-
-    6. Else Dangling
-
-  2. Else Dangling
-
-Arm 2:
-
-  1. Check (($find_tableActionIR_qualified((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR_action_update) matches pattern ()))
-
-    1. (Let ((nameIR, tableActionIR))?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} be $find_tableActionIR_unqualified((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR_action_update))
-
-    2. Check ((((nameIR, tableActionIR))?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches pattern (_)))
+    2. If ((((nameIR, tableActionIR))?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches pattern (_))), then
 
       1. (Let ?((nameIR_found, tableActionIR_found)) be ((nameIR, tableActionIR))?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?})
 
@@ -40779,55 +40823,99 @@ Arm 2:
 
       5. (Let typedExpressionIR_arg be (((D i_arg_aligned) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
 
-      6. Check ((|(typeIR_param)*{typeIR_param <- typeIR_param*}| = |(typedExpressionIR_arg)*{typedExpressionIR_arg <- typedExpressionIR_arg*}|))
+      6. If ((|(typeIR_param)*{typeIR_param <- typeIR_param*}| = |(typedExpressionIR_arg)*{typedExpressionIR_arg <- typedExpressionIR_arg*}|)), then
 
         1. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param))*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
 
-        2. Check (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_)))*{typedExpressionIR? <- typedExpressionIR?*}
+        2. If (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_)))*{typedExpressionIR? <- typedExpressionIR?*}, then
 
           1. (Let ?(typedExpressionIR_arg_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
 
           2. (Let (argumentIR)*{argumentIR <- argumentIR*} be (argumentIR_data)*{argumentIR_data <- argumentIR_data*} ++ ((typedExpressionIR_arg_cast)*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*))
 
-          3. Return ((_BARE nameIR_found) controlPlaneNameIR `( (argumentIR)*{argumentIR <- argumentIR*} `))
+          3. Result in: % |- % '@' % : ((_BARE nameIR_found) controlPlaneNameIR `( (argumentIR)*{argumentIR <- argumentIR*} `))
 
-def $tableObject_add_entry(EC, (TABLE typeId `{ frame TBL `}), tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
+        2. Else Dangling
 
-1. (Let tableEntryPriorityOptIR be $tableObject_create_entry_priority(tableEntryPriorityInterface))
+      6. Else Dangling
 
-2. If (($needs_priority_tableKeysPropertyIR(TBL.KEYS) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))), then
+    2. Else Dangling
 
-  1. (Let keysetExpressionIR be $tableObject_create_entry_keyset(EC, TBL.KEYS, tableKeysetInterface))
+Arm 2:
 
-  2. (Let tableActionReferenceIR be $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface))
+  1. Group unqualified: EC |- (ACTIONS '=' `{ (tableActionIR)*{tableActionIR <- tableActionIR*} `}) '@' (nameIR_action_update, (tableActionArgumentInterface_update)*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}) : %
 
-  3. (Let tableEntryIR_update be (?() tableEntryPriorityOptIR keysetExpressionIR ':' tableActionReferenceIR (_EMPTY) ';'))
+    1. Check (($find_tableActionIR_qualified((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR_action_update) matches pattern ()))
 
-  4. (Let (annotationList constOptIR ENTRIES '=' `{ (tableEntryIR)*{tableEntryIR <- tableEntryIR*} `}) be TBL.ENTRIES)
+      1. (Let ((nameIR, tableActionIR))?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} be $find_tableActionIR_unqualified((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR_action_update))
 
-  5. (Let tableEntriesPropertyIR_updated be (annotationList constOptIR ENTRIES '=' `{ (tableEntryIR)*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] `}))
+      2. Check ((((nameIR, tableActionIR))?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches pattern (_)))
 
-  6. (Let TBL_updated be TBL[ENTRIES = tableEntriesPropertyIR_updated])
+        1. (Let ?((nameIR_found, tableActionIR_found)) be ((nameIR, tableActionIR))?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?})
 
-  7. Return ?((TABLE typeId `{ frame TBL_updated `}))
+        2. (Let (annotationList (prefixedNameIR controlPlaneNameIR `( (argumentIR_data)*{argumentIR_data <- argumentIR_data*} `)) '#' `( _parameterListIR ',' (parameterIR_control)*{parameterIR_control <- parameterIR_control*} `) ';') be tableActionIR_found)
 
-3. Otherwise,
+        3. (Let (i_arg_aligned)*{i_arg_aligned <- i_arg_aligned*} be $align_tableActionArgumentInterfaces((parameterIR_control)*{parameterIR_control <- parameterIR_control*}, (tableActionArgumentInterface_update)*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}))
 
-  1. Return ?()
+        4. (Let (_annotationList _direction typeIR_param _id _parameterInitializerOptIR) be parameterIR_control)*{parameterIR_control <- parameterIR_control*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR_param -> typeIR_param*}
 
-def $tableObject_add_default_action(EC, (TABLE typeId `{ frame TBL `}), tableActionInterface)
+        5. (Let typedExpressionIR_arg be (((D i_arg_aligned) as expressionIR) '#' (`( ((INT) as typeIR) (DYN) `))))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
 
-1. (Let (_annotationList (constIR)?{constIR <- constIR?} DEFAULT_ACTION '=' _tableActionReferenceIR ';') be TBL.DEFAULT_ACTION)
+        6. Check ((|(typeIR_param)*{typeIR_param <- typeIR_param*}| = |(typedExpressionIR_arg)*{typedExpressionIR_arg <- typedExpressionIR_arg*}|))
 
-2. Check (((constIR)?{constIR <- constIR?} matches pattern ()))
+          1. (Let (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param))*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
 
-  1. (Let tableActionReferenceIR be $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface))
+          2. Check (((typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?} matches pattern (_)))*{typedExpressionIR? <- typedExpressionIR?*}
 
-  2. (Let tableDefaultActionPropertyIR be ((_EMPTY) ?() DEFAULT_ACTION '=' tableActionReferenceIR ';'))
+            1. (Let ?(typedExpressionIR_arg_cast) be (typedExpressionIR)?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
 
-  3. (Let TBL_updated be TBL[DEFAULT_ACTION = tableDefaultActionPropertyIR])
+            2. (Let (argumentIR)*{argumentIR <- argumentIR*} be (argumentIR_data)*{argumentIR_data <- argumentIR_data*} ++ ((typedExpressionIR_arg_cast)*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*))
 
-  4. Return (TABLE typeId `{ frame TBL_updated `})
+            3. Result in: % |- % '@' % : ((_BARE nameIR_found) controlPlaneNameIR `( (argumentIR)*{argumentIR <- argumentIR*} `))
+
+relation TableObject_add_entry: EC |- (TABLE typeId `{ frame TBL `}) '@' tableEntryPriorityInterface ',' tableKeysetInterface ',' tableActionInterface : %
+
+1. Group ok: EC |- (TABLE typeId `{ frame TBL `}) '@' tableEntryPriorityInterface ',' tableKeysetInterface ',' tableActionInterface : %
+
+  1. (Let tableEntryPriorityOptIR be $tableObject_create_entry_priority(tableEntryPriorityInterface))
+
+  2. If (($needs_priority_tableKeysPropertyIR(TBL.KEYS) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))), then
+
+    1. (TableObject_create_entry_keyset: EC |- TBL.KEYS '@' tableKeysetInterface : keysetExpressionIR)
+
+    2. (TableObject_create_entry_action: EC |- TBL.ACTIONS '@' tableActionInterface : tableActionReferenceIR)
+
+    3. (Let tableEntryIR_update be (?() tableEntryPriorityOptIR keysetExpressionIR ':' tableActionReferenceIR (_EMPTY) ';'))
+
+    4. (Let (annotationList constOptIR ENTRIES '=' `{ (tableEntryIR)*{tableEntryIR <- tableEntryIR*} `}) be TBL.ENTRIES)
+
+    5. (Let tableEntriesPropertyIR_updated be (annotationList constOptIR ENTRIES '=' `{ (tableEntryIR)*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] `}))
+
+    6. (Let TBL_updated be TBL[ENTRIES = tableEntriesPropertyIR_updated])
+
+    7. Result in: % |- % '@' % ',' % ',' % : ?((TABLE typeId `{ frame TBL_updated `}))
+
+2. Otherwise,
+
+  1. Group fail: EC |- (TABLE typeId `{ frame TBL `}) '@' tableEntryPriorityInterface ',' tableKeysetInterface ',' tableActionInterface : %
+
+    1. Result in: % |- % '@' % ',' % ',' % : ?()
+
+relation TableObject_add_default_action: EC |- (TABLE typeId `{ frame TBL `}) '@' tableActionInterface : %
+
+1. Group : EC |- (TABLE typeId `{ frame TBL `}) '@' tableActionInterface : %
+
+  1. (Let (_annotationList (constIR)?{constIR <- constIR?} DEFAULT_ACTION '=' _tableActionReferenceIR ';') be TBL.DEFAULT_ACTION)
+
+  2. Check (((constIR)?{constIR <- constIR?} matches pattern ()))
+
+    1. (TableObject_create_entry_action: EC |- TBL.ACTIONS '@' tableActionInterface : tableActionReferenceIR)
+
+    2. (Let tableDefaultActionPropertyIR be ((_EMPTY) ?() DEFAULT_ACTION '=' tableActionReferenceIR ';'))
+
+    3. (Let TBL_updated be TBL[DEFAULT_ACTION = tableDefaultActionPropertyIR])
+
+    4. Result in: % |- % '@' % : (TABLE typeId `{ frame TBL_updated `})
 
 relation V1Model_init: |- p4program : % %
 
