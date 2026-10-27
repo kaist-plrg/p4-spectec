@@ -10,7 +10,7 @@
 
 use super::{
     boundary::{Levels, TopMut},
-    engine::{Engine, EngineKind, SpecTecSpec, SpecTecState},
+    engine::{Engine, EngineKind, SpecTecEngine, SpecTecSpec, SpecTecState},
     protocol::{Below, Call, Output, Protocol, ProtocolKind, Values},
     tower::{Floor, HostLevel, Level},
 };
@@ -63,7 +63,7 @@ impl Depth {
         ctxs: &'d mut [Option<Value>],
     ) -> TowerInterp<'d> {
         TowerInterp {
-            engine: EngineKind::SpecTec(self.engine.lend(spec_base)),
+            engine: EngineKind::SpecTec(SpecTecEngine::depth(&mut self.engine, spec_base)),
             hosts: &mut self.hosts,
             depth_next: &mut self.next,
             caches,

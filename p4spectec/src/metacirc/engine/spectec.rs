@@ -2,8 +2,9 @@
 //!
 //! `SpecTecEngine` pairs the base's definitions, in the representation it executes,
 //! with one depth's interpreter of them and that depth's meta builtins.
-//! Depth 0 borrows the base runner's (`SpecTecEngine::lend_base`);
-//! a deeper depth owns a `SpecTecState` interpreting the same representation.
+//! Depth 0 borrows the base runner's (`SpecTecEngine::base`);
+//! a deeper depth owns a `SpecTecState` interpreting the same representation
+//! and lends it with `SpecTecEngine::depth`.
 
 use super::super::boundary::Levels;
 use super::Engine;
@@ -72,20 +73,6 @@ impl SpecTecState {
         // Only the builtins are used; the base never parses at a depth
         Self { interp, interface: interface::meta(Lang::Al) }
     }
-
-    /// Lends this state as an engine interpreting `spec`.
-    pub(in crate::metacirc) fn lend<'s>(&'s mut self, spec: SpecTecSpec<'s>) -> SpecTecEngine<'s> {
-        let backend = match (spec, &mut self.interp) {
-            (SpecTecSpec::Al(spec_env), SpecTecInterp::Al(interp)) => {
-                SpecTecBackend::Al { spec_env, interp }
-            }
-            (SpecTecSpec::Sl(spec_env), SpecTecInterp::Sl(interp)) => {
-                SpecTecBackend::Sl { spec_env, interp }
-            }
-            _ => unreachable!("a depth interprets the representation it was made for"),
-        };
-        SpecTecEngine { backend, interface: &mut self.interface }
-    }
 }
 
 /// Runs `$body` with `$ctx` bound to a context of `$engine`'s backend.
@@ -121,7 +108,7 @@ macro_rules! with_backend {
 
 impl<'s> SpecTecEngine<'s> {
     /// Lends the base runner's backend and interface as depth 0.
-    pub(in crate::metacirc) fn lend_base(
+    pub(in crate::metacirc) fn base(
         backend: &'s mut Backend,
         interface: &'s mut MetaInterface,
     ) -> (Self, SpecTecSpec<'s>) {
@@ -135,6 +122,20 @@ impl<'s> SpecTecEngine<'s> {
             Backend::Pl { .. } => unreachable!("a tower executes AL or SL natively"),
         };
         (Self { backend, interface }, spec)
+    }
+
+    /// Lends a deeper depth's state, interpreting the base's `spec`.
+    pub(in crate::metacirc) fn depth(state: &'s mut SpecTecState, spec: SpecTecSpec<'s>) -> Self {
+        let backend = match (spec, &mut state.interp) {
+            (SpecTecSpec::Al(spec_env), SpecTecInterp::Al(interp)) => {
+                SpecTecBackend::Al { spec_env, interp }
+            }
+            (SpecTecSpec::Sl(spec_env), SpecTecInterp::Sl(interp)) => {
+                SpecTecBackend::Sl { spec_env, interp }
+            }
+            _ => unreachable!("a depth interprets the representation it was made for"),
+        };
+        Self { backend, interface: &mut state.interface }
     }
 }
 
