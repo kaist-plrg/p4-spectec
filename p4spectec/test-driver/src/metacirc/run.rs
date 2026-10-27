@@ -1,7 +1,9 @@
-//! P4 programs and spec-language scripts through metacircular towers
+//! P4 programs and spec-language scripts through metacircular towers,
+//! registered in `suites/metacirc/run.toml`
 //!
 //! This driver owns corpus traversal, preprocessing, execution, and comparison.
-//! `run` dispatches each suite by the language of its tower's top level;
+//! `run` takes the suites with a tower for the configuration's base
+//! and dispatches each by the language of its tower's top level;
 //! every suite enters its top level through that level's relation.
 //! `run_programs` prepares each P4 tower once and resets its state per program;
 //! `run_scripts` prepares a fresh tower per script,
@@ -17,25 +19,61 @@ use std::{
     time::Instant,
 };
 
-use expect_test::expect_file;
-use indicatif::{ProgressBar, ProgressStyle};
+use clap::ValueEnum;
+use serde::Deserialize;
 
 use p4spectec::{
     interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess},
     lang::data::arena::Arena,
     metacirc::{self, Tower, TowerConfig, config::Lang},
-    runner::Config,
     sim_plugin::dummy::Dummy,
 };
 
-use super::suite::{Conversion, RunConfig, RunSuite};
+use super::config::{Base, ByBase, Configuration};
 use crate::{
-    Error, ExecutionOptions, Result,
-    corpus::{self, Outcome, Results},
-    diagnostic, suite,
+    harness::{
+        self, Error, Result,
+        corpus::{self, Outcome, Results},
+    },
+    suite::diagnostic,
 };
 
-/// A registered suite with the tower of the selected conversion.
+/// Supplies execution includes, exclusions per base, configurations, and suites.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Registration {
+    pub includes: Vec<PathBuf>,
+    pub excludes: ByBase<Vec<PathBuf>>,
+    pub configs: Vec<Configuration>,
+    pub suites: Vec<RunSuite>,
+}
+
+/// Registers a corpus run through one tower per base.
+///
+/// The tower's top level decides the entry relation
+/// and whether inputs are P4 programs or AL or IL scripts.
+/// P4 suites compare against an `expected` file of per-program results;
+/// script suites give every script under `root` one `outcome`.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RunSuite {
+    pub name: String,
+    pub towers: ByBase<PathBuf>,
+    pub root: PathBuf,
+    pub expected: Option<PathBuf>,
+    pub outcome: Option<diagnostic::Outcome>,
+}
+
+/// Selects suites by the input language of their tower's top level.
+#[derive(Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum Input {
+    /// AL scripts
+    Al,
+    /// P4 programs
+    P4,
+}
+
+/// A registered suite with the tower of the configuration's base.
 struct SelectedSuite<'a> {
     suite: &'a RunSuite,
     path_tower: &'a Path,
@@ -47,66 +85,72 @@ struct CollectedSuite<'a> {
     results: Results,
 }
 
-/// Runs the suites registered for `conversion`, AL scripts first, then P4 programs.
-pub fn run(config: &RunConfig, conversion: Conversion, options: ExecutionOptions) -> Result<()> {
-    // Select the suites with a tower for the conversion
-    let suites = config
-        .suites
-        .iter()
-        .filter_map(|suite| {
-            let path_tower = suite.towers.get(conversion)?;
-            Some(SelectedSuite { suite, path_tower })
-        })
-        .collect::<Vec<_>>();
-    if suites.is_empty() {
-        return Err(Error::Invalid(format!("no {} metacirc suites registered", conversion.name())));
+/// Runs the suites under the named configuration, AL scripts first, then P4 programs.
+///
+/// `name_suite` restricts the run to the registered suite of that name,
+/// and `input` to the suites whose tower takes that input.
+pub fn run(name_config: &str, name_suite: Option<&str>, input: Option<Input>) -> Result<()> {
+    let registration: Registration = harness::load("metacirc/run")?;
+    let config = Configuration::find(&registration.configs, name_config)?;
+    if let Some(name) = name_suite
+        && !registration.suites.iter().any(|suite| suite.name == name)
+    {
+        return Err(Error::from(format!("unknown metacirc suite {name}")));
     }
     let mut suites_p4 = Vec::new();
     let mut suites_al = Vec::new();
-    for selected in suites {
-        let config_tower = TowerConfig::from_file(selected.path_tower)
-            .map_err(|error| Error::Invalid(format!("{}: {error}", selected.suite.name)))?;
-        match config_tower.top_lang() {
-            Lang::P4 => suites_p4.push(selected),
-            Lang::Al | Lang::Il => suites_al.push(selected),
+    for suite in &registration.suites {
+        // Skip suites of other names and suites without a tower for the base
+        if name_suite.is_some_and(|name| suite.name != name) {
+            continue;
+        }
+        let Some(path_tower) = suite.towers.get(config.base) else {
+            continue;
+        };
+        // The tower's top level decides the input
+        let config_tower = TowerConfig::from_file(path_tower)
+            .map_err(|error| Error::from(format!("{}: {error}", suite.name)))?;
+        let (input_suite, suites_input) = match config_tower.top_lang() {
+            Lang::P4 => (Input::P4, &mut suites_p4),
+            Lang::Al | Lang::Il => (Input::Al, &mut suites_al),
+        };
+        if input.is_none_or(|input| input == input_suite) {
+            suites_input.push(SelectedSuite { suite, path_tower });
         }
     }
-    let excludes = collect_excludes(config, conversion)?;
+    if suites_p4.is_empty() && suites_al.is_empty() {
+        return Err(Error::from(format!("no metacirc suites selected under {name_config}")));
+    }
+    let excludes = collect_excludes(&registration, config.base)?;
     if !suites_al.is_empty() {
-        run_scripts(&excludes, &suites_al, options)?;
+        run_scripts(config, &excludes, &suites_al)?;
     }
     if !suites_p4.is_empty() {
-        run_programs(config, &excludes, &suites_p4, options)?;
+        run_programs(&registration, config, &excludes, &suites_p4)?;
     }
     Ok(())
 }
 
 /// Runs P4 suites, preparing each distinct tower once.
 fn run_programs(
-    config: &RunConfig,
+    registration: &Registration,
+    config: &Configuration,
     excludes: &BTreeSet<String>,
     suites: &[SelectedSuite<'_>],
-    options: ExecutionOptions,
 ) -> Result<()> {
-    let ExecutionOptions { cache_on, no_det } = options;
-    let det = !no_det;
-    let text_cache = if cache_on { "on" } else { "off" };
-    let text_mode = format!("metacirc P4 cache={text_cache} det={det}");
+    let text_mode = format!("metacirc P4 {}", config.describe());
     let start = Instant::now();
     // Collect registered corpus roots in suite order
     let mut suites = suites
         .iter()
         .map(|SelectedSuite { suite, path_tower }| {
-            let path_expected = suite::expected_path(
-                suite
-                    .expected
-                    .as_deref()
-                    .expect("loader requires a P4 expectation"),
-            );
+            let path_expected = suite.expected.as_deref().ok_or_else(|| {
+                Error::from(format!("{}: a P4 suite needs an expected file", suite.name))
+            })?;
             Ok(CollectedSuite {
                 paths: corpus::collect(&suite.root, ".p4")?,
                 path_tower,
-                results: Results::new(expect_file![path_expected]),
+                results: Results::new(&std::path::absolute(path_expected)?),
             })
         })
         .collect::<Result<Vec<_>>>()?;
@@ -128,14 +172,11 @@ fn run_programs(
         if towers.contains_key(suite.path_tower) {
             continue;
         }
-        let config_tower = TowerConfig::from_file(suite.path_tower)
-            .map_err(|error| Error::Invalid(error.to_string()))?;
-        let options_tower = Config::new(cache_on, det, false);
-        let tower = Tower::build(&mut arena, &config_tower, options_tower, Dummy)
-            .map_err(|error| Error::Invalid(error.to_string()))?;
+        let config_tower = TowerConfig::from_file(suite.path_tower)?;
+        let tower = Tower::build(&mut arena, &config_tower, config.runner(), Dummy)?;
         towers.insert(suite.path_tower, tower);
     }
-    let includes = &config.includes;
+    let includes = &registration.includes;
     for path in includes {
         fs::read_dir(path)?;
     }
@@ -150,13 +191,10 @@ fn run_programs(
         })
         .cloned()
         .collect();
-    let progress = ProgressBar::new(collected as u64).with_style(
-        ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
-            .map_err(|error| Error::Invalid(error.to_string()))?,
-    );
+    let progress = corpus::progress_bar(collected)?;
     let mut executed = 0;
     let mut passed = 0;
-    let guard_stdout = crate::output::SilenceStdout::new()?;
+    let guard_stdout = harness::output::SilenceStdout::new()?;
     thread::scope(|scope| -> Result<()> {
         let (sender, receiver) = mpsc::sync_channel(2);
         scope.spawn(move || {
@@ -185,10 +223,10 @@ fn run_programs(
                     let source = receiver
                         .recv()
                         .map_err(|error| {
-                            Error::Invalid(format!("preprocessor worker stopped: {error}"))
+                            Error::from(format!("preprocessor worker stopped: {error}"))
                         })?
                         .map_err(|error| {
-                            Error::Invalid(format!(
+                            Error::from(format!(
                                 "{}: test execution error: {error}",
                                 path.display()
                             ))
@@ -197,7 +235,7 @@ fn run_programs(
                         Ok(program) => {
                             // Patch failures abort; evaluation rejection is an outcome
                             let value = tower.patch(&mut arena, program).map_err(|error| {
-                                Error::Invalid(format!(
+                                Error::from(format!(
                                     "{}: test execution error: {error}",
                                     path.display()
                                 ))
@@ -210,7 +248,7 @@ fn run_programs(
                             ..
                         }) => Outcome::Fail,
                         Err(error) => {
-                            return Err(Error::Invalid(format!(
+                            return Err(Error::from(format!(
                                 "{}: test execution error: {}",
                                 path.display(),
                                 error.into_report()
@@ -223,7 +261,7 @@ fn run_programs(
                     }
                     outcome
                 };
-                suite.results.record(path, outcome)?;
+                suite.results.record(&[path], outcome.name(), "")?;
                 progress.inc(1);
             }
         }
@@ -243,10 +281,10 @@ fn run_programs(
     Ok(())
 }
 
-/// Gathers the excluded corpus paths of the selected conversion.
-fn collect_excludes(config: &RunConfig, conversion: Conversion) -> Result<BTreeSet<String>> {
+/// Gathers the excluded corpus paths of `base`.
+fn collect_excludes(registration: &Registration, base: Base) -> Result<BTreeSet<String>> {
     let mut excludes = BTreeSet::new();
-    for path in config.excludes.get(conversion).into_iter().flatten() {
+    for path in registration.excludes.get(base).into_iter().flatten() {
         excludes.extend(corpus::collect_excludes(path)?);
     }
     Ok(excludes)
@@ -254,23 +292,22 @@ fn collect_excludes(config: &RunConfig, conversion: Conversion) -> Result<BTreeS
 
 /// Runs script suites through their towers and checks each script's outcome.
 fn run_scripts(
+    config: &Configuration,
     excludes: &BTreeSet<String>,
     suites: &[SelectedSuite<'_>],
-    options: ExecutionOptions,
 ) -> Result<()> {
-    let ExecutionOptions { cache_on, no_det } = options;
-    let det = !no_det;
-    let text_cache = if cache_on { "on" } else { "off" };
-    let text_mode = format!("metacirc script cache={text_cache} det={det}");
+    let text_mode = format!("metacirc script {}", config.describe());
     // Specification debug premises print to stdout
-    let guard_stdout = crate::output::SilenceStdout::new()?;
+    let guard_stdout = harness::output::SilenceStdout::new()?;
     let mut executed = 0;
     let mut excluded = 0;
     let mut mismatches = Vec::new();
     for SelectedSuite { suite, path_tower } in suites {
-        let outcome_expect = suite.outcome.expect("loader requires an AL outcome");
+        let outcome_expect = suite.outcome.ok_or_else(|| {
+            Error::from(format!("{}: a script suite needs an outcome", suite.name))
+        })?;
         let config_tower = TowerConfig::from_file(path_tower)
-            .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
+            .map_err(|error| Error::from(format!("{}: {error}", suite.name)))?;
         for path in corpus::collect(&suite.root, ".watsup")? {
             if path.to_str().is_some_and(|path| excludes.contains(path)) {
                 excluded += 1;
@@ -283,10 +320,9 @@ fn run_scripts(
                 Lang::Il => p4spectec::elab(paths_program).map(|_| ()),
                 _ => p4spectec::algo(paths_program).map(|_| ()),
             };
-            valid.map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
+            valid.map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
             let accepted =
-                metacirc::run(&config_tower, &[], paths_program, Config::new(cache_on, det, false))
-                    .is_ok();
+                metacirc::run(&config_tower, &[], paths_program, config.runner()).is_ok();
             let outcome =
                 if accepted { diagnostic::Outcome::Success } else { diagnostic::Outcome::Failure };
             if outcome != outcome_expect {
@@ -302,7 +338,7 @@ fn run_scripts(
     guard_stdout.finish()?;
     // Report every mismatched script before failing
     if !mismatches.is_empty() {
-        return Err(Error::Invalid(format!(
+        return Err(Error::from(format!(
             "{text_mode}: outcomes differ from their suite:\n{}",
             mismatches.join("\n")
         )));

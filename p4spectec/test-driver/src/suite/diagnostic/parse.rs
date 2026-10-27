@@ -1,0 +1,26 @@
+//! File-driven SpecTec parser rejection
+//!
+//! Binary lexical fixtures pass unchanged through the public file parser.
+//! A .mixop file supplies text to the public notation type parser.
+
+use p4spectec::diagnostic::Report;
+
+use p4spectec::frontend::parse::{parse_files, parse_typ};
+
+use crate::harness::Result;
+
+use super::{Case, failure};
+
+/// Requires the registered parser input to produce a diagnostic.
+pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
+    let path = &case.input;
+    // Notation types are a distinct public parser entry point
+    let report = if path.extension().is_some_and(|ext| ext == "mixop") {
+        parse_typ(&std::fs::read_to_string(path)?).err()
+    } else {
+        parse_files([path]).err()
+    };
+    // Unexpected acceptance cannot be promoted into a negative expectation
+    let report = report.ok_or_else(|| failure(&case.name, "parser accepted negative input"))?;
+    Ok(vec![*report])
+}

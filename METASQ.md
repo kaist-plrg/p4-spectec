@@ -165,33 +165,32 @@ are the supplied towers entered through `Eval_IL`.
 ## Execution corpus
 
 ```sh
-make test-metacirc-micro
-make test-metacirc-micro-meta
-make test-metacirc-run
-make test-metacirc-run-meta
-make test-metacirc-sim
-make test-metacirc-sim-meta
+make test-metacirc-micro-al
+make test-metacirc-micro-il
+make test-metacirc-run-al
+make test-metacirc-run-il
+make test-metacirc-sim-al
+make test-metacirc-sim-il
 ```
 
-`test-metacirc-micro` runs the spec-language sources under
+`test-metacirc-micro-al` runs the spec-language sources under
 `testdata/spec/pos/run` and `testdata/spec/neg/run` through the AL tower,
-each expected to succeed or fail as its suite in `suites/metacirc/run.json`
-registers. `test-metacirc-run` runs the `test-run-sl` corpus through the AL/P4
+each expected to succeed or fail as its suite in `suites/metacirc/run.toml`
+registers. `test-metacirc-run-al` runs the `test-run-sl` corpus through the AL/P4
 tower and requires the p4c submodule. Both check determinism.
-`test-metacirc-sim` runs the `test-sim-sl` corpus, every suite of
-`suites/sim.json`, through the AL/P4 tower that `suites/metacirc/sim.json`
+`test-metacirc-sim-al` runs the `test-sim-sl` corpus, every suite of
+`suites/sim.toml`, through the AL/P4 tower that `suites/metacirc/sim.toml`
 names, against the native simulation expectations; it requires the p4c submodule.
-`suites/metacirc/metacirc.json` indexes these and the snapshot registrations.
 
-The `-meta` targets run the same suites with `--algo meta`:
-each suite registers a tower per conversion, and the `meta` tower is entered
-through `Eval_IL`, so the input is converted by `Algo_IL` instead of the
-native `algo` pass. They share the expectations of the native runs;
-sources whose outcome differs are listed in the `meta` exclusions.
-The driver's `run` and `sim` subcommands take `--algo`;
+The driver's `run` and `sim` subcommands take a configuration name,
+`al` or `il`, which selects the language the towers' base level takes.
+Each suite registers a tower per base; the `-il` targets run the same suites
+through towers entered by `Eval_IL`, so the input is converted by `Algo_IL`
+instead of the native `algo` pass. They share the expectations of the `al` runs;
+sources whose outcome differs are listed in the `il` exclusions.
 `run` selects suites with `--input al` or `--input p4`,
 and both select one registered suite with `--suite <NAME>`,
-for example `run --suite neg-run` or `sim --suite v1model-regression`.
+for example `run al --suite neg-run` or `sim il --suite v1model-regression`.
 
 ## Specification snapshots
 
@@ -205,7 +204,7 @@ make test-metacirc-promote
 
 Compare the elaborated, algorithmic, structured (with and without rule
 groups), and prose forms of `spec-meta` with `expected/spec-meta/`,
-as registered in `suites/metacirc/`. `test-metacirc-promote` updates the
+as registered in `suites/metacirc/snapshot.toml`. `test-metacirc-promote` updates the
 elab, algo, and prose snapshots; structure snapshots are never promoted.
 
 ```sh
@@ -213,7 +212,7 @@ make test-metacirc-metaparse
 ```
 
 Checks that the IL and AL meta encodings of `spec` and `spec-meta` are fixed
-points of decode-then-encode, as registered in `suites/metacirc/metaparse.json`.
+points of decode-then-encode, as registered in `suites/metacirc/metaparse.toml`.
 
 ## OCaml reference
 

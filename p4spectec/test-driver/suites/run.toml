@@ -1,0 +1,55 @@
+# P4 execution: `run <config>` (make test-run-al, test-run-sl, test-run-pl).
+#
+# A configuration selects the interpreter `language` for `spec`,
+# memoization (`cache`), and determinism checking (`det`).
+# Each suite evaluates every .p4 file under `root` through `relation`
+# and records pass, fail, or exclude per file in `expected`,
+# which every configuration shares.
+# `excludes` lists directories of .exclude files naming skipped programs.
+# Paths are relative to the repository root.
+
+spec = ["spec"]
+includes = ["p4c/p4include"]
+excludes = ["excludes/static"]
+
+[[configs]]
+name = "al"
+language = "al"
+cache = true
+det = true
+
+[[configs]]
+name = "sl"
+language = "sl"
+cache = true
+det = true
+
+[[configs]]
+name = "pl"
+language = "pl"
+cache = true
+det = true
+
+[[suites]]
+name = "pos"
+root = "p4c/testdata/p4_16_samples"
+relation = "Program_inst"
+expected = "p4spectec/test-driver/expected/run/pos.expected"
+
+[[suites]]
+name = "neg"
+root = "p4c/testdata/p4_16_errors"
+relation = "Program_ok"
+expected = "p4spectec/test-driver/expected/run/neg.expected"
+
+[[suites]]
+name = "regression-pos"
+root = "testdata/regression/pos"
+relation = "Program_inst"
+expected = "p4spectec/test-driver/expected/run/regression-pos.expected"
+
+[[suites]]
+name = "regression-neg"
+root = "testdata/regression/neg"
+relation = "Program_ok"
+expected = "p4spectec/test-driver/expected/run/regression-neg.expected"

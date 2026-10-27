@@ -1,0 +1,81 @@
+# `run` command diagnostics: `diagnostics --suite run`.
+#
+# Paths in cases are relative to `root`, the working directory while they run.
+# Each `.args` input runs the product CLI with one argument per line,
+# copying `inputs` into a temporary directory, and compares its stderr,
+# which must contain `code`; `outcome` is the expected exit status.
+# `make test-diagnostics-promote` rewrites the expected files.
+
+root = "testdata/spec"
+
+[[cases]]
+name = "run-al-syntax"
+input = "cli/run/run-al-syntax.args"
+expected = "cli/run/run-syntax.expect"
+code = "p4/syntax-invalid"
+
+[[cases]]
+name = "run-al-reject"
+input = "cli/run/run-al-reject.args"
+expected = "cli/run/run-reject.expect"
+code = "runtime/condition-unmet"
+
+[[cases]]
+name = "run-al-det"
+input = "cli/run/run-al-det.args"
+expected = "cli/run/run-al-det.expect"
+code = "runtime/relation-nondeterministic"
+
+[[cases]]
+name = "run-al-guard"
+input = "cli/run/run-al-guard.args"
+expected = "cli/run/run-guard.expect"
+code = "runtime/relation-input-type-mismatch"
+
+[[cases]]
+name = "run-sl-syntax"
+input = "cli/run/run-sl-syntax.args"
+expected = "cli/run/run-syntax.expect"
+code = "p4/syntax-invalid"
+
+[[cases]]
+name = "run-sl-reject"
+input = "cli/run/run-sl-reject.args"
+expected = "cli/run/run-reject.expect"
+code = "runtime/condition-unmet"
+
+[[cases]]
+name = "run-sl-det"
+input = "cli/run/run-sl-det.args"
+expected = "cli/run/run-det.expect"
+code = "runtime/instruction-nondeterministic"
+
+[[cases]]
+name = "run-sl-guard"
+input = "cli/run/run-sl-guard.args"
+expected = "cli/run/run-guard.expect"
+code = "runtime/relation-input-type-mismatch"
+
+[[cases]]
+name = "run-pl-syntax"
+input = "cli/run/run-pl-syntax.args"
+expected = "cli/run/run-syntax.expect"
+code = "p4/syntax-invalid"
+
+[[cases]]
+name = "run-pl-reject"
+input = "cli/run/run-pl-reject.args"
+expected = "cli/run/run-reject.expect"
+code = "runtime/condition-unmet"
+
+[[cases]]
+name = "run-pl-det"
+input = "cli/run/run-pl-det.args"
+expected = "cli/run/run-det.expect"
+code = "runtime/instruction-nondeterministic"
+
+[[cases]]
+name = "run-pl-guard"
+input = "cli/run/run-pl-guard.args"
+expected = "cli/run/run-guard.expect"
+code = "runtime/relation-input-type-mismatch"

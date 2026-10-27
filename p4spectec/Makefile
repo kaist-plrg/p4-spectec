@@ -38,10 +38,11 @@ clean:
 
 test: test-expected test-sim-al test-sim-sl test-sim-pl
 
-# Standalone acceptance driver; registrations live in test-driver/suites.json
+# Standalone acceptance driver; registrations live in test-driver/suites/
+# TEST_LOG=DIR writes per-test timing logs of p4parse, run, sim, and micro
 .PHONY: test-expected test-promote test-elab test-algo test-structure test-prose test-p4parse test-run-al test-run-sl test-run-pl test-micro
 .PHONY: test-diagnostics test-diagnostics-promote diagnostic-cli
-DRIVER = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --
+DRIVER = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" -- $(if $(TEST_LOG),--log "$(abspath $(TEST_LOG))")
 DIAGNOSTIC_CLI = $(TARGET_DIR)/release/p4spectec
 
 test-elab:

@@ -1,0 +1,252 @@
+# Interpreter diagnostics: `diagnostics --suite interp`.
+# A .p4 input must fail the P4 parser with a syntax error.
+# A .watsup input is converted to each language in `languages`;
+# applying `relation` to the natural numbers `nats` must fail
+# with `kind` ("fatal" or "mismatch") and a report containing `code`.
+# `languages` runs the case once per language, named `<name>-<language>`;
+# `det` enables determinism checking (default false).
+#
+# Paths in cases are relative to `root`, the working directory while they run.
+# Each case renders its reports and compares the text with `expected`;
+# `make test-diagnostics-promote` rewrites the expected files.
+
+root = "testdata/spec"
+
+[[cases]]
+name = "p4-syntax"
+input = "p4/p4-syntax.p4"
+expected = "p4/p4-syntax.expect"
+
+[[cases]]
+name = "p4-source-line-overflow"
+input = "p4/p4-source-line-overflow.p4"
+expected = "p4/p4-source-line-overflow.expect"
+
+[[cases]]
+name = "p4-source-newline-overflow"
+input = "p4/p4-source-newline-overflow.p4"
+expected = "p4/p4-source-newline-overflow.expect"
+
+[[cases]]
+name = "backtrack"
+input = "neg/run/backtrack.watsup"
+expected = "neg/run/backtrack.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "mismatch"
+code = "runtime/condition-unmet"
+
+[[cases]]
+name = "index-out-of-bounds"
+input = "neg/run/index-out-of-bounds.watsup"
+expected = "neg/run/index-out-of-bounds.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "mismatch"
+code = "runtime/condition-unmet"
+
+[[cases]]
+name = "slice-out-of-bounds"
+input = "neg/run/slice-out-of-bounds.watsup"
+expected = "neg/run/slice-out-of-bounds.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "mismatch"
+code = "runtime/condition-unmet"
+
+[[cases]]
+name = "numeric-invalid"
+input = "neg/run/numeric-invalid.watsup"
+expected = "neg/run/numeric-invalid.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "mismatch"
+code = "runtime/condition-unmet"
+
+[[cases]]
+name = "builtin-failed"
+input = "neg/run/builtin-failed.watsup"
+expected = "neg/run/builtin-failed.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "fatal"
+code = "runtime/builtin-argument-invalid"
+
+[[cases]]
+name = "fatal-skips-otherwise"
+input = "neg/run/fatal-skips-otherwise.watsup"
+expected = "neg/run/fatal-skips-otherwise.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "fatal"
+code = "runtime/extern-unconfigured"
+
+[[cases]]
+name = "builtin-fallback"
+input = "neg/run/builtin-fallback.watsup"
+expected = "neg/run/builtin-fallback.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "fatal"
+code = "runtime/builtin-argument-invalid"
+
+[[cases]]
+name = "nested-call"
+input = "neg/run/nested-call.watsup"
+expected = "neg/run/nested-call.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "pl"]
+kind = "mismatch"
+code = "runtime/condition-unmet"
+
+[[cases]]
+name = "nested-call"
+input = "neg/run/nested-call.watsup"
+expected = "neg/run/nested-call.sl.expect"
+relation = "R"
+nats = [1]
+languages = ["sl"]
+kind = "mismatch"
+code = "runtime/condition-unmet"
+
+[[cases]]
+name = "deepest-failure"
+input = "neg/run/deepest-failure.watsup"
+expected = "neg/run/deepest-failure.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "mismatch"
+code = "runtime/condition-unmet"
+
+[[cases]]
+name = "rule-output-iter-guard"
+input = "neg/run/rule-output-iter-guard.watsup"
+expected = "neg/run/rule-output-iter-guard.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl"]
+kind = "mismatch"
+code = "runtime/condition-unmet"
+
+[[cases]]
+name = "rule-output-iter-guard"
+input = "neg/run/rule-output-iter-guard.watsup"
+expected = "neg/run/rule-output-iter-guard.pl.expect"
+relation = "R"
+nats = [1]
+languages = ["pl"]
+kind = "mismatch"
+code = "runtime/condition-unmet"
+
+[[cases]]
+name = "later-tie"
+input = "neg/run/later-tie.watsup"
+expected = "neg/run/later-tie.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "mismatch"
+code = "runtime/condition-unmet"
+
+[[cases]]
+name = "relation-nondeterministic"
+input = "neg/run/relation-nondeterministic.watsup"
+expected = "neg/run/relation-nondeterministic.al.expect"
+relation = "R"
+nats = [1]
+languages = ["al"]
+kind = "fatal"
+code = "runtime/relation-nondeterministic"
+det = true
+
+[[cases]]
+name = "relation-nondeterministic"
+input = "neg/run/relation-nondeterministic.watsup"
+expected = "neg/run/relation-nondeterministic.expect"
+relation = "R"
+nats = [1]
+languages = ["sl", "pl"]
+kind = "fatal"
+code = "runtime/instruction-nondeterministic"
+det = true
+
+[[cases]]
+name = "function-nondeterministic"
+input = "neg/run/function-nondeterministic.watsup"
+expected = "neg/run/function-nondeterministic.al.expect"
+relation = "R"
+nats = [1]
+languages = ["al"]
+kind = "fatal"
+code = "runtime/function-nondeterministic"
+det = true
+
+[[cases]]
+name = "function-nondeterministic"
+input = "neg/run/function-nondeterministic.watsup"
+expected = "neg/run/function-nondeterministic.expect"
+relation = "R"
+nats = [1]
+languages = ["sl", "pl"]
+kind = "fatal"
+code = "runtime/instruction-nondeterministic"
+det = true
+
+[[cases]]
+name = "extern-failed"
+input = "neg/run/extern-failed.watsup"
+expected = "neg/run/extern-failed.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "fatal"
+code = "runtime/extern-unconfigured"
+
+[[cases]]
+name = "hold-failed"
+input = "neg/run/hold-failed.watsup"
+expected = "neg/run/hold-failed.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "mismatch"
+code = "runtime/hold-condition-unmet"
+
+[[cases]]
+name = "hold-iter-failed"
+input = "neg/run/hold-iter-failed.watsup"
+expected = "neg/run/hold-iter-failed.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "mismatch"
+code = "runtime/hold-condition-unmet"
+
+[[cases]]
+name = "not-hold-failed"
+input = "neg/run/not-hold-failed.watsup"
+expected = "neg/run/not-hold-failed.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "mismatch"
+code = "runtime/not-hold-condition-unmet"
+
+[[cases]]
+name = "hold-fatal"
+input = "neg/run/hold-fatal.watsup"
+expected = "neg/run/hold-fatal.expect"
+relation = "R"
+nats = [1]
+languages = ["al", "sl", "pl"]
+kind = "fatal"
+code = "runtime/extern-unconfigured"
