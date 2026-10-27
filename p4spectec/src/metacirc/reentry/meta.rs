@@ -56,15 +56,15 @@ impl MetaDepth {
     /// Lends this depth as the P4 level's interpreter.
     pub(in crate::metacirc) fn lend<'d>(
         &'d mut self,
-        ctx_target: &'d mut Option<Value>,
-        cache: &'d mut Cache,
+        ctx_targets: &'d mut [Option<Value>],
+        caches: &'d mut [Cache],
     ) -> MetaInterp<'d> {
         MetaInterp {
             interp: &mut self.interp,
             interface: &mut self.interface,
             depth_next: &mut self.next,
-            ctx_target,
-            cache,
+            ctx_targets,
+            caches,
         }
     }
 }
@@ -73,8 +73,8 @@ impl MetaDepth {
 pub(in crate::metacirc) struct MetaEnv<'s> {
     /// spec-meta, executed natively.
     pub spec_meta: &'s SlSpecEnv,
-    /// The P4 specification, in the form spec-meta loads.
-    pub target: &'s Level,
+    /// Every level of the tower, from the base to the P4 top.
+    pub levels: &'s [Level],
     /// Options for the interpreters of deeper levels.
     pub options: runner::Config,
 }
@@ -85,10 +85,10 @@ pub(in crate::metacirc) struct MetaInterp<'s> {
     pub interface: &'s mut MetaInterface,
     /// The depths beneath this one, which answer reentry.
     pub depth_next: &'s mut Option<Box<MetaDepth>>,
-    /// C for the current program, shared by every depth.
-    pub ctx_target: &'s mut Option<Value>,
-    /// The codec cache, shared by every depth.
-    pub cache: &'s mut Cache,
+    /// C of each level above the base for the current program, shared by every depth.
+    pub ctx_targets: &'s mut [Option<Value>],
+    /// The codec cache of each level boundary, shared by every depth.
+    pub caches: &'s mut [Cache],
 }
 
 // == Calls into spec-meta
@@ -121,10 +121,11 @@ impl<'s> MetaInterp<'s> {
         // Split the P4 context: the host goes to the relay, the depth runs spec-meta
         let RunnerContextParts { arena, spec_env: env, interp: meta, interface, external, effects } =
             ctx.parts_mut();
-        let MetaInterp { interp, interface: interface_meta, depth_next, ctx_target, cache } = meta;
+        let MetaInterp { interp, interface: interface_meta, depth_next, ctx_targets, caches } =
+            meta;
         let mut relay = RelayExtern {
-            cache: &mut **cache,
-            layer_next: LentHost { env, interface, external, depth_next, ctx_target },
+            cache: &mut caches[0],
+            layer_next: LentHost { env, interface, external, depth_next, ctx_targets },
         };
         // Run spec-meta in the same arena and effect count
         let mut ctx_meta = RunnerContext::new(
@@ -143,12 +144,12 @@ impl<'s> MetaInterp<'s> {
     fn load_ctx_target<Ext: Extern>(
         ctx_meta: &mut MetaContext<'_, '_, '_, Ext>,
     ) -> Result<Value, InterpreterError> {
-        if let Some(value_ctx) = *ctx_meta.external().layer_next.ctx_target {
+        if let Some(value_ctx) = ctx_meta.external().layer_next.ctx_targets[0] {
             return Ok(value_ctx);
         }
         // Encode the specification as AL, converting IL through spec-meta
         let env = ctx_meta.external().layer_next.env;
-        let value_spec_al = match env.target {
+        let value_spec_al = match &env.levels[1] {
             Level::AboveAl { spec_al, .. } => spec_al
                 .encode(ctx_meta.arena_mut())
                 .map_err(|error| InterpreterError::Fatal(error.into_report()))?,
@@ -166,7 +167,7 @@ impl<'s> MetaInterp<'s> {
         let value_ctx = ctx_meta
             .call_func("load_ctx", &[], &[value_ctx_empty, value_spec_al])
             .result?;
-        *ctx_meta.external_mut().layer_next.ctx_target = Some(value_ctx);
+        ctx_meta.external_mut().layer_next.ctx_targets[0] = Some(value_ctx);
         Ok(value_ctx)
     }
 }
@@ -177,15 +178,15 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for MetaInterp<'s> {
     fn clear(&mut self) {
         Interpreter::<MetaInterface, LentRelay<'_, 's, Ext>>::clear(&mut *self.interp);
         *self.depth_next = None;
-        self.cache.clear();
+        self.caches.iter_mut().for_each(Cache::clear);
     }
 
     fn reset(&mut self) {
         Interpreter::<MetaInterface, LentRelay<'_, 's, Ext>>::reset(&mut *self.interp);
         self.interface.clear();
         *self.depth_next = None;
-        *self.ctx_target = None;
-        self.cache.clear();
+        self.ctx_targets.fill(None);
+        self.caches.iter_mut().for_each(Cache::clear);
     }
 
     fn eval_program(

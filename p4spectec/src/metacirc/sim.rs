@@ -17,7 +17,7 @@ use super::{
     tower::{BaseLayer, HostLayer, Tower},
 };
 use crate::{
-    interface::p4::P4Interface,
+    interface::{meta::shared::Cache, p4::P4Interface},
     lang::{
         common::source::Phrase,
         data::{arena::Arena, encoding::Encoding, value::flat::Value},
@@ -44,8 +44,10 @@ pub(super) struct SimTower<Arch: Architecture> {
     options: runner::Config,
     /// Depths 1 and deeper, made on the first reentry of a program.
     depth_next: Option<Box<MetaDepth>>,
-    /// C for the current program.
-    ctx_target: Option<Value>,
+    /// C of each level above the base for the current program, from level 1.
+    ctx_targets: Vec<Option<Value>>,
+    /// The codec cache of each level boundary, from the base up.
+    caches: Vec<Cache>,
 }
 
 impl<Arch: Architecture> SimTower<Arch> {
@@ -66,7 +68,10 @@ impl<Arch: Architecture> SimTower<Arch> {
             ));
         }
         let tower = Tower::build(arena, config, options, arch)?;
-        Ok(Self { tower, options, depth_next: None, ctx_target: None })
+        // Each level above the base has its C and the codec cache below it
+        let count = config.levels.len() - 1;
+        let caches = (0..count).map(|_| Cache::new(options.cache)).collect();
+        Ok(Self { tower, options, depth_next: None, ctx_targets: vec![None; count], caches })
     }
 
     /// Runs `body` in the P4 context of depth 0, over the stored P4 host.
@@ -75,9 +80,9 @@ impl<Arch: Architecture> SimTower<Arch> {
         arena: &mut Arena,
         body: impl FnOnce(&mut RunnerContext<'_, MetaInterp<'_>, P4Interface, Arch>) -> T,
     ) -> T {
-        let Self { tower, options, depth_next, ctx_target } = self;
+        let Self { tower, options, depth_next, ctx_targets, caches } = self;
         let Tower { levels, base } = tower;
-        // Reach depth 0, the codec cache, and the P4 host in the base runner
+        // Reach depth 0 and the P4 host in the base runner
         let BaseLayer::MetaSpec(runner) = base else {
             unreachable!("a simulated tower has a meta base");
         };
@@ -85,19 +90,15 @@ impl<Arch: Architecture> SimTower<Arch> {
         let Backend::Sl { spec_env, interp } = backend else {
             unreachable!("a simulated tower executes SL");
         };
-        let MetaExtern::Relay(RelayExtern { cache, layer_next }) = external else {
+        let MetaExtern::Relay(RelayExtern { layer_next, .. }) = external else {
             unreachable!("a simulated tower relays to its top level");
         };
         let HostLayer::P4Spec(host) = &mut **layer_next else {
             unreachable!("a simulated tower has a P4 top level");
         };
         // Share the definitions, and lend depth 0 to the host
-        let env = MetaEnv {
-            spec_meta: spec_env,
-            target: levels.last().expect("a built tower is nonempty"),
-            options: *options,
-        };
-        let mut meta = MetaInterp { interp, interface, depth_next, ctx_target, cache };
+        let env = MetaEnv { spec_meta: spec_env, levels, options: *options };
+        let mut meta = MetaInterp { interp, interface, depth_next, ctx_targets, caches };
         host.with_context(arena, &env, &mut meta, body)
     }
 
@@ -113,7 +114,8 @@ impl<Arch: Architecture> SimTower<Arch> {
         // Each program starts from an empty arena, cleared host state, and no C
         self.tower.reset();
         self.depth_next = None;
-        self.ctx_target = None;
+        self.ctx_targets.fill(None);
+        self.caches.iter_mut().for_each(Cache::clear);
         arena.reset_values();
         self.with_context(arena, |ctx| stf_runner::init_pipe_in(ctx, includes, path))
     }
