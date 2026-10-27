@@ -6,11 +6,14 @@
 //! `load` makes C, level k+1's specification loaded into level k.
 //! Going up, `host` decodes a host call that level k's specification made
 //! for level k+1, and `reply` encodes its outcome.
-//! `ProtocolKind` stores the protocols; `meta` is spec-meta's.
+//! `ProtocolKind` stores the protocols; `meta` is spec-meta's,
+//! and `meta_k` is spec-meta-k's, the AL semantics written in K.
 
 mod meta;
+mod meta_k;
 
 pub(super) use meta::MetaProtocol;
+pub(super) use meta_k::MetaKProtocol;
 
 use super::tower::PreparedLevel;
 use crate::{
@@ -82,12 +85,16 @@ pub(in crate::metacirc) trait Protocol {
 pub(in crate::metacirc) enum ProtocolKind {
     /// spec-meta interprets the level above as AL.
     Meta(MetaProtocol),
+    /// spec-meta-k, run by a `KEngine`, interprets the level above as AL.
+    MetaK(MetaKProtocol),
 }
 
 /// The codec state of a boundary, of the kind its `ProtocolKind` keeps.
 pub(in crate::metacirc) enum CodecCache {
     /// spec-meta's AL encodings and decodings.
     Meta(Cache),
+    /// spec-meta-k's JSON codec state.
+    MetaK(meta_k::Cache),
 }
 
 impl CodecCache {
@@ -95,6 +102,7 @@ impl CodecCache {
     pub(in crate::metacirc) fn clear(&mut self) {
         match self {
             Self::Meta(cache) => cache.clear(),
+            Self::MetaK(cache) => cache.clear(),
         }
     }
 }
@@ -105,6 +113,7 @@ impl Protocol for ProtocolKind {
     fn new_cache(&self, enabled: bool) -> CodecCache {
         match self {
             Self::Meta(protocol) => CodecCache::Meta(protocol.new_cache(enabled)),
+            Self::MetaK(protocol) => CodecCache::MetaK(protocol.new_cache(enabled)),
         }
     }
 
@@ -115,6 +124,7 @@ impl Protocol for ProtocolKind {
     ) -> Result<Value, InterpreterError> {
         match self {
             Self::Meta(protocol) => protocol.load(below, above),
+            Self::MetaK(protocol) => protocol.load(below, above),
         }
     }
 
@@ -129,6 +139,10 @@ impl Protocol for ProtocolKind {
             (Self::Meta(protocol), CodecCache::Meta(cache)) => {
                 protocol.lower(arena, cache, value_ctx, call)
             }
+            (Self::MetaK(protocol), CodecCache::MetaK(cache)) => {
+                protocol.lower(arena, cache, value_ctx, call)
+            }
+            _ => unreachable!("a boundary keeps the cache its protocol made"),
         }
     }
 
@@ -143,6 +157,10 @@ impl Protocol for ProtocolKind {
             (Self::Meta(protocol), CodecCache::Meta(cache)) => {
                 protocol.raise(arena, cache, output, call)
             }
+            (Self::MetaK(protocol), CodecCache::MetaK(cache)) => {
+                protocol.raise(arena, cache, output, call)
+            }
+            _ => unreachable!("a boundary keeps the cache its protocol made"),
         }
     }
 
@@ -157,6 +175,10 @@ impl Protocol for ProtocolKind {
             (Self::Meta(protocol), CodecCache::Meta(cache)) => {
                 protocol.host(arena, cache, name, values)
             }
+            (Self::MetaK(protocol), CodecCache::MetaK(cache)) => {
+                protocol.host(arena, cache, name, values)
+            }
+            _ => unreachable!("a boundary keeps the cache its protocol made"),
         }
     }
 
@@ -171,6 +193,10 @@ impl Protocol for ProtocolKind {
             (Self::Meta(protocol), CodecCache::Meta(cache)) => {
                 protocol.reply(arena, cache, call, eval)
             }
+            (Self::MetaK(protocol), CodecCache::MetaK(cache)) => {
+                protocol.reply(arena, cache, call, eval)
+            }
+            _ => unreachable!("a boundary keeps the cache its protocol made"),
         }
     }
 }

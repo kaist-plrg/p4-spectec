@@ -30,7 +30,7 @@
 //! | `il`                | `Il`            | IL                           |
 
 use super::super::engine::InterfaceKind;
-use super::super::protocol::{MetaProtocol, Protocol, ProtocolKind};
+use super::super::protocol::{MetaKProtocol, MetaProtocol, Protocol, ProtocolKind};
 use super::super::{
     ExecutionMode, Result, TowerConfig,
     config::Lang,
@@ -98,10 +98,14 @@ fn build_upper<Ext: Extern>(
         .iter()
         .map(|config_level| interface::meta(config_level.lang))
         .collect::<Vec<_>>();
-    // spec-meta interprets the level above it at every boundary
+    // The level below each boundary interprets the level above it:
+    // a K base runs spec-meta-k, and every other level is spec-meta
     let count = hosts.len() + 1;
     let protocols = (0..count)
-        .map(|_| ProtocolKind::Meta(MetaProtocol))
+        .map(|idx_below| match config.mode {
+            ExecutionMode::K if idx_below == 0 => ProtocolKind::MetaK(MetaKProtocol),
+            _ => ProtocolKind::Meta(MetaProtocol),
+        })
         .collect::<Vec<_>>();
     // Each level through the top has C and the codec cache of the boundary below it
     let caches = protocols
