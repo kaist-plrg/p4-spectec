@@ -28,8 +28,15 @@ use std::{borrow::Cow, ops::Deref};
 
 /// The protocol of a level's specification toward the level above it.
 ///
-/// A protocol keeps no state of its own; `cache` is its boundary's.
+/// A protocol keeps no state of its own; `cache` is its boundary's,
+/// of the kind `new_cache` makes.
 pub(in crate::metacirc) trait Protocol {
+    /// The codec state of one boundary, shared by every reentry depth.
+    type Cache;
+
+    /// Makes the empty codec state of a boundary, memoizing if `enabled`.
+    fn new_cache(&self, enabled: bool) -> Self::Cache;
+
     /// Loads the specification of `above` into the level below, returning C.
     fn load(&self, below: &mut dyn Below, above: &PreparedLevel)
     -> Result<Value, InterpreterError>;
@@ -38,7 +45,7 @@ pub(in crate::metacirc) trait Protocol {
     fn lower(
         &self,
         arena: &mut Arena,
-        cache: &mut Cache,
+        cache: &mut Self::Cache,
         value_ctx: Value,
         call: &Call<'_>,
     ) -> Result<Call<'static>, InterpreterError>;
@@ -47,7 +54,7 @@ pub(in crate::metacirc) trait Protocol {
     fn raise(
         &self,
         arena: &mut Arena,
-        cache: &mut Cache,
+        cache: &mut Self::Cache,
         output: Output,
         call: &Call<'_>,
     ) -> Result<Output, InterpreterError>;
@@ -56,7 +63,7 @@ pub(in crate::metacirc) trait Protocol {
     fn host(
         &self,
         arena: &mut Arena,
-        cache: &mut Cache,
+        cache: &mut Self::Cache,
         name: &str,
         values: &[Value],
     ) -> Result<HostCall, ExternError>;
@@ -65,7 +72,7 @@ pub(in crate::metacirc) trait Protocol {
     fn reply(
         &self,
         arena: &mut Arena,
-        cache: &mut Cache,
+        cache: &mut Self::Cache,
         call: &HostCall,
         eval: Eval<Output>,
     ) -> Eval<Vec<Value>, ExternError>;
@@ -77,7 +84,30 @@ pub(in crate::metacirc) enum ProtocolKind {
     Meta(MetaProtocol),
 }
 
+/// The codec state of a boundary, of the kind its `ProtocolKind` keeps.
+pub(in crate::metacirc) enum CodecCache {
+    /// spec-meta's AL encodings and decodings.
+    Meta(Cache),
+}
+
+impl CodecCache {
+    /// Clears the conversions, keeping their capacity.
+    pub(in crate::metacirc) fn clear(&mut self) {
+        match self {
+            Self::Meta(cache) => cache.clear(),
+        }
+    }
+}
+
 impl Protocol for ProtocolKind {
+    type Cache = CodecCache;
+
+    fn new_cache(&self, enabled: bool) -> CodecCache {
+        match self {
+            Self::Meta(protocol) => CodecCache::Meta(protocol.new_cache(enabled)),
+        }
+    }
+
     fn load(
         &self,
         below: &mut dyn Below,
@@ -91,48 +121,56 @@ impl Protocol for ProtocolKind {
     fn lower(
         &self,
         arena: &mut Arena,
-        cache: &mut Cache,
+        cache: &mut CodecCache,
         value_ctx: Value,
         call: &Call<'_>,
     ) -> Result<Call<'static>, InterpreterError> {
-        match self {
-            Self::Meta(protocol) => protocol.lower(arena, cache, value_ctx, call),
+        match (self, cache) {
+            (Self::Meta(protocol), CodecCache::Meta(cache)) => {
+                protocol.lower(arena, cache, value_ctx, call)
+            }
         }
     }
 
     fn raise(
         &self,
         arena: &mut Arena,
-        cache: &mut Cache,
+        cache: &mut CodecCache,
         output: Output,
         call: &Call<'_>,
     ) -> Result<Output, InterpreterError> {
-        match self {
-            Self::Meta(protocol) => protocol.raise(arena, cache, output, call),
+        match (self, cache) {
+            (Self::Meta(protocol), CodecCache::Meta(cache)) => {
+                protocol.raise(arena, cache, output, call)
+            }
         }
     }
 
     fn host(
         &self,
         arena: &mut Arena,
-        cache: &mut Cache,
+        cache: &mut CodecCache,
         name: &str,
         values: &[Value],
     ) -> Result<HostCall, ExternError> {
-        match self {
-            Self::Meta(protocol) => protocol.host(arena, cache, name, values),
+        match (self, cache) {
+            (Self::Meta(protocol), CodecCache::Meta(cache)) => {
+                protocol.host(arena, cache, name, values)
+            }
         }
     }
 
     fn reply(
         &self,
         arena: &mut Arena,
-        cache: &mut Cache,
+        cache: &mut CodecCache,
         call: &HostCall,
         eval: Eval<Output>,
     ) -> Eval<Vec<Value>, ExternError> {
-        match self {
-            Self::Meta(protocol) => protocol.reply(arena, cache, call, eval),
+        match (self, cache) {
+            (Self::Meta(protocol), CodecCache::Meta(cache)) => {
+                protocol.reply(arena, cache, call, eval)
+            }
         }
     }
 }

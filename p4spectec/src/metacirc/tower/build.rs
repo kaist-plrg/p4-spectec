@@ -30,13 +30,12 @@
 //! | `il`                | `Il`            | IL                           |
 
 use super::super::engine::InterfaceKind;
-use super::super::protocol::{MetaProtocol, ProtocolKind};
+use super::super::protocol::{MetaProtocol, Protocol, ProtocolKind};
 use super::super::{ExecutionMode, Result, TowerConfig, config::Lang, error::config_invalid};
 use super::{BaseRunner, PreparedLevel, Top, Tower, Upper};
 use crate::{
     interface::{
         self,
-        meta::shared::Cache,
         p4::{P4Interface, unparse::P4Unparser},
     },
     lang::{al::ast as al, data::arena::Arena},
@@ -94,14 +93,17 @@ fn build_upper<Ext: Extern>(
         .iter()
         .map(|config_level| interface::meta(config_level.lang))
         .collect::<Vec<_>>();
-    // Each level through the top has C and the codec cache of the boundary below it
-    let count = hosts.len() + 1;
-    let caches = (0..count).map(|_| Cache::new(options.cache)).collect();
-    let upper = Upper { caches, ctxs: vec![None; count], hosts, top, depth_next: None };
     // spec-meta interprets the level above it at every boundary
+    let count = hosts.len() + 1;
     let protocols = (0..count)
         .map(|_| ProtocolKind::Meta(MetaProtocol))
+        .collect::<Vec<_>>();
+    // Each level through the top has C and the codec cache of the boundary below it
+    let caches = protocols
+        .iter()
+        .map(|protocol| protocol.new_cache(options.cache))
         .collect();
+    let upper = Upper { caches, ctxs: vec![None; count], hosts, top, depth_next: None };
     (upper, protocols)
 }
 

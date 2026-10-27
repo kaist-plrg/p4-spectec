@@ -10,15 +10,11 @@
 
 use super::{
     engine::{Engine, EngineKind, SpecTecEngine, SpecTecEngineState, SpecTecSpec},
-    protocol::{Below, Call, Output, Protocol, ProtocolKind, Values},
+    protocol::{Below, Call, CodecCache, Output, Protocol, ProtocolKind, Values},
     tower::{HostLevel, LevelAt, PreparedLevel, TopMut, UpperMut},
 };
 use crate::{
-    interface::{
-        self, Lang,
-        meta::{MetaInterface, shared::Cache},
-        p4::P4Interface,
-    },
+    interface::{self, Lang, meta::MetaInterface, p4::P4Interface},
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::Typ,
@@ -39,7 +35,7 @@ pub(in crate::metacirc) struct TowerInterp<'s> {
     /// The depths beneath this one, which answer reentry.
     pub depth_next: &'s mut Option<Box<TowerInterpState>>,
     /// The codec cache of each level boundary, shared by every depth.
-    pub caches: &'s mut [Cache],
+    pub caches: &'s mut [CodecCache],
     /// C of each level above the base, shared by every depth.
     pub ctxs: &'s mut [Option<Value>],
 }
@@ -50,7 +46,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for TowerInterp<'s> {
     fn clear(&mut self) {
         self.engine.clear();
         *self.depth_next = None;
-        self.caches.iter_mut().for_each(Cache::clear);
+        self.caches.iter_mut().for_each(CodecCache::clear);
     }
 
     fn reset(&mut self) {
@@ -58,7 +54,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for TowerInterp<'s> {
         self.hosts.iter_mut().for_each(Interface::clear);
         *self.depth_next = None;
         self.ctxs.fill(None);
-        self.caches.iter_mut().for_each(Cache::clear);
+        self.caches.iter_mut().for_each(CodecCache::clear);
     }
 
     fn eval_program(
@@ -265,7 +261,7 @@ impl TowerInterpState {
     pub(in crate::metacirc) fn lend<'d>(
         &'d mut self,
         spec_base: SpecTecSpec<'d>,
-        caches: &'d mut [Cache],
+        caches: &'d mut [CodecCache],
         ctxs: &'d mut [Option<Value>],
     ) -> TowerInterp<'d> {
         TowerInterp {

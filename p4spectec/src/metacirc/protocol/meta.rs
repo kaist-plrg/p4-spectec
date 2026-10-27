@@ -36,6 +36,12 @@ use std::borrow::Cow;
 pub(in crate::metacirc) struct MetaProtocol;
 
 impl Protocol for MetaProtocol {
+    type Cache = Cache;
+
+    fn new_cache(&self, enabled: bool) -> Cache {
+        Cache::new(enabled)
+    }
+
     fn load(
         &self,
         below: &mut dyn Below,
