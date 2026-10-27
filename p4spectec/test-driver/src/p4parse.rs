@@ -35,7 +35,7 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
                 return Ok(Outcome::ParseFail);
             }
             _ => {
-                return Err(Error::Invalid(format!("{}: {}", path.display(), error.into_report())));
+                return Err(Error::from(format!("{}: {}", path.display(), error.into_report())));
             }
         },
     };
@@ -46,7 +46,7 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
     );
     let text = unparser
         .render(&arena, &typ_program, &program)
-        .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
+        .map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
     let program_roundtrip = match parse_string(&mut arena, path, &text) {
         Ok(program) => program,
         Err(error) => match error {
@@ -54,7 +54,7 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
                 return Ok(Outcome::ReparseFail);
             }
             _ => {
-                return Err(Error::Invalid(format!("{}: {}", path.display(), error.into_report())));
+                return Err(Error::from(format!("{}: {}", path.display(), error.into_report())));
             }
         },
     };
@@ -82,7 +82,7 @@ pub fn run(config: &ParseConfig, path_log: Option<&Path>) -> Result<()> {
         suites.push((&suite.name, roots, Results::new(expect_file![path_expected])));
     }
     if suites.is_empty() {
-        return Err(Error::Invalid("no P4 parsing suites registered".into()));
+        return Err(Error::from("no P4 parsing suites registered"));
     }
     let collected: usize = suites
         .iter()
@@ -94,18 +94,16 @@ pub fn run(config: &ParseConfig, path_log: Option<&Path>) -> Result<()> {
         format!("P4 parser: collected={collected}, excluded=0; preparing print hints");
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
-    let spec_al =
-        p4spectec::algo(&config.spec).map_err(|error| Error::Invalid(error.to_string()))?;
+    let spec_al = p4spectec::algo(&config.spec)?;
     let unparser = P4Unparser::from_al_spec(&spec_al);
     log.note(&format!("print hints prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
     let includes = &config.includes;
     for path in includes {
         fs::read_dir(path)?;
     }
-    let progress = ProgressBar::new(collected as u64).with_style(
-        ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
-            .map_err(|error| Error::Invalid(error.to_string()))?,
-    );
+    let progress = ProgressBar::new(collected as u64).with_style(ProgressStyle::with_template(
+        "[{bar:24}] {pos}/{len} {elapsed_precise} {msg}",
+    )?);
     let mut passed = 0;
     for (name, roots, results) in &mut suites {
         for (root, paths) in roots.iter() {

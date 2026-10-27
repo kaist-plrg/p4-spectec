@@ -43,7 +43,7 @@ use p4spectec::diagnostic::{RenderConfig, Renderer, Report};
 use crate::{Error, Result};
 
 fn failure(name: &str, message: impl std::fmt::Display) -> Error {
-    Error::Invalid(format!("{name}: {message}"))
+    Error::from(format!("{name}: {message}"))
 }
 
 /// Selects a diagnostic module from the driver's command line.

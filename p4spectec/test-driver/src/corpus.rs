@@ -79,10 +79,10 @@ impl Results {
             .to_str()
             .is_some_and(|path| !path.contains(['\t', '\r', '\n']))
         {
-            return Err(Error::Invalid(format!("invalid result path: {}", path.display())));
+            return Err(Error::from(format!("invalid result path: {}", path.display())));
         }
         if self.records.insert(path.to_owned(), outcome).is_some() {
-            return Err(Error::Invalid(format!("duplicate result: {}", path.display())));
+            return Err(Error::from(format!("duplicate result: {}", path.display())));
         }
         Ok(())
     }

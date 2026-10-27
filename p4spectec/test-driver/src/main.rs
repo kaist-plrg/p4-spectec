@@ -27,13 +27,7 @@ use clap::{Args, Parser, Subcommand};
 
 use suite::{Index, Language};
 
-#[derive(Debug, thiserror::Error)]
-enum Error {
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-    #[error("{0}")]
-    Invalid(String),
-}
+type Error = Box<dyn std::error::Error>;
 type Result<T> = std::result::Result<T, Error>;
 
 /// Source and expected-file acceptance for the Rust implementation
@@ -122,7 +116,7 @@ fn execute(mut cli: Cli) -> Result<()> {
             | Command::Micro { .. }
     ) && std::env::var_os("UPDATE_EXPECT").is_some()
     {
-        return Err(Error::Invalid(
+        return Err(Error::from(
             "UPDATE_EXPECT is supported only for elab, algo, prose, adoc, and diagnostics"
                 .to_owned(),
         ));
@@ -191,7 +185,7 @@ fn main() -> ExitCode {
     let result = std::thread::Builder::new()
         .name("expected-driver".to_owned())
         .stack_size(64 * 1024 * 1024)
-        .spawn(move || execute(cli));
+        .spawn(move || execute(cli).map_err(|error| error.to_string()));
     match result {
         Ok(thread) => match thread.join() {
             Ok(Ok(())) => ExitCode::SUCCESS,

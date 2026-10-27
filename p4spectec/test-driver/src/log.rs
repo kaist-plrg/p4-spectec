@@ -52,8 +52,7 @@ impl TestLog {
             return Ok(log);
         };
         let secs = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .map_err(|error| Error::Invalid(error.to_string()))?
+            .duration_since(SystemTime::UNIX_EPOCH)?
             .as_secs();
         let (year, month, day, hour, minute, second) = utc(secs);
         // Each run owns a new file; a name taken within the same second fails
@@ -65,7 +64,7 @@ impl TestLog {
             .write(true)
             .create_new(true)
             .open(&path)
-            .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
+            .map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
         writeln!(file, "p4spectec-test {name}")?;
         writeln!(
             file,

@@ -224,9 +224,8 @@ pub struct Index {
 /// Reads typed JSON with its file path attached to errors.
 pub fn load<T: DeserializeOwned>(path: &Path) -> Result<T> {
     let text = fs::read_to_string(path)
-        .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
-    serde_json::from_str(&text)
-        .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))
+        .map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
+    serde_json::from_str(&text).map_err(|error| Error::from(format!("{}: {error}", path.display())))
 }
 
 /// Resolves an expectation relative to the driver.
@@ -237,11 +236,11 @@ pub fn expected_path(path: &Path) -> PathBuf {
 /// Requires each registered path to exist before any test can run.
 fn paths_exist(paths: &[PathBuf], role: &str) -> Result<()> {
     if paths.is_empty() {
-        return Err(Error::Invalid(format!("{role}: no paths registered")));
+        return Err(Error::from(format!("{role}: no paths registered")));
     }
     for path in paths {
         if !path.exists() {
-            return Err(Error::Invalid(format!("{role}: missing {}", path.display())));
+            return Err(Error::from(format!("{role}: missing {}", path.display())));
         }
     }
     Ok(())
@@ -250,7 +249,7 @@ fn paths_exist(paths: &[PathBuf], role: &str) -> Result<()> {
 /// Requires a regular expectation file instead of an absent baseline.
 fn expectation_exists(path: &Path) -> Result<()> {
     if !expected_path(path).is_file() {
-        return Err(Error::Invalid(format!("missing expectation {}", path.display())));
+        return Err(Error::from(format!("missing expectation {}", path.display())));
     }
     Ok(())
 }
@@ -260,7 +259,7 @@ fn directories_exist(paths: &[PathBuf], role: &str) -> Result<()> {
     paths_exist(paths, role)?;
     for path in paths {
         if !path.is_dir() {
-            return Err(Error::Invalid(format!("{role}: not a directory {}", path.display())));
+            return Err(Error::from(format!("{role}: not a directory {}", path.display())));
         }
     }
     Ok(())
@@ -269,12 +268,12 @@ fn directories_exist(paths: &[PathBuf], role: &str) -> Result<()> {
 /// Rejects empty or repeated interpreter selections.
 fn languages_valid(languages: &[Language]) -> Result<()> {
     if languages.is_empty() {
-        return Err(Error::Invalid("suite has no interpreter languages".into()));
+        return Err(Error::from("suite has no interpreter languages"));
     }
     let mut names = BTreeSet::new();
     for lang in languages {
         if !names.insert(lang.name()) {
-            return Err(Error::Invalid(format!("repeated language {}", lang.name())));
+            return Err(Error::from(format!("repeated language {}", lang.name())));
         }
     }
     Ok(())
@@ -286,11 +285,11 @@ fn names_valid<'a>(names: impl IntoIterator<Item = &'a str>) -> Result<()> {
     // Check names in registration order before any execution
     for name in names {
         if name.is_empty() || !names_seen.insert(name) {
-            return Err(Error::Invalid(format!("empty or duplicate registration {name}")));
+            return Err(Error::from(format!("empty or duplicate registration {name}")));
         }
     }
     if names_seen.is_empty() {
-        return Err(Error::Invalid("no tests registered".into()));
+        return Err(Error::from("no tests registered"));
     }
     Ok(())
 }
@@ -379,7 +378,7 @@ pub fn load_execution(path: &Path) -> Result<RunConfig> {
         directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
         languages_valid(&suite.languages)?;
         if suite.relation.is_empty() {
-            return Err(Error::Invalid(format!("{}: empty entry relation", suite.name)));
+            return Err(Error::from(format!("{}: empty entry relation", suite.name)));
         }
         expectation_exists(&suite.expected)?;
     }
@@ -405,7 +404,7 @@ pub fn load_simulation(path: &Path) -> Result<SimConfig> {
         }
         languages_valid(&suite.languages)?;
         if !matches!(suite.arch.as_str(), "v1model" | "ebpf" | "psa") {
-            return Err(Error::Invalid(format!(
+            return Err(Error::from(format!(
                 "{}: unknown architecture {}",
                 suite.name, suite.arch
             )));
@@ -427,7 +426,7 @@ pub fn load_micro(path: &Path) -> Result<MicroConfig> {
     for language in [Language::Al, Language::Sl, Language::Pl] {
         let stages = config.stages.get(language);
         if stages.is_empty() || !stages.is_sorted_by(|stage_a, stage_b| stage_a < stage_b) {
-            return Err(Error::Invalid(format!(
+            return Err(Error::from(format!(
                 "micro stages of {} must be nonempty and in pipeline order",
                 language.name()
             )));

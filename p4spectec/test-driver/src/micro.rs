@@ -139,7 +139,7 @@ pub fn run(
     eprintln!("{text_summary}");
     log.finish(&text_summary)?;
     if !mismatches.is_empty() {
-        return Err(Error::Invalid(format!(
+        return Err(Error::from(format!(
             "{text_mode}: outcomes differ from their suite:\n{}",
             mismatches.join("\n")
         )));
@@ -191,7 +191,7 @@ fn first_failure(path: &Path, stages: &[Stage], config: Config) -> Result<Option
             }
             // Registered stages must chain from one language to the next
             (stage, _) => {
-                return Err(Error::Invalid(format!(
+                return Err(Error::from(format!(
                     "micro stage {} cannot follow the stages before it",
                     stage.name()
                 )));

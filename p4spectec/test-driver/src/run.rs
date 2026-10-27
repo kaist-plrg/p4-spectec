@@ -62,33 +62,27 @@ pub fn run(
         })
         .collect::<Result<Vec<_>>>()?;
     if suites.is_empty() {
-        return Err(Error::Invalid(format!("no {} execution suites registered", language.name())));
+        return Err(Error::from(format!("no {} execution suites registered", language.name())));
     }
     let len = suites.iter().map(|suite| suite.paths.len()).sum();
     let log = TestLog::create(path_log, &format!("run-{}", language.name()), len)?;
     match language {
         Language::Al => {
             run_with(config, &format!("AL cache={text_cache} det={det}"), suites, log, |arena| {
-                let spec_al = p4spectec::algo(&config.spec)
-                    .map_err(|error| Error::Invalid(error.to_string()))?;
-                runner::build_al(arena, spec_al, Config::new(cache_on, det, false), Dummy)
-                    .map_err(|error| Error::Invalid(error.to_string()))
+                let spec_al = p4spectec::algo(&config.spec)?;
+                Ok(runner::build_al(arena, spec_al, Config::new(cache_on, det, false), Dummy)?)
             })
         }
         Language::Sl => {
             run_with(config, &format!("SL cache={text_cache} det={det}"), suites, log, |arena| {
-                let spec_sl = p4spectec::structure(&config.spec, true)
-                    .map_err(|error| Error::Invalid(error.to_string()))?;
-                runner::build_sl(arena, spec_sl, Config::new(cache_on, det, false), Dummy)
-                    .map_err(|error| Error::Invalid(error.to_string()))
+                let spec_sl = p4spectec::structure(&config.spec, true)?;
+                Ok(runner::build_sl(arena, spec_sl, Config::new(cache_on, det, false), Dummy)?)
             })
         }
         Language::Pl => {
             run_with(config, &format!("PL cache={text_cache} det={det}"), suites, log, |arena| {
-                let spec_pl = p4spectec::prosify(&config.spec)
-                    .map_err(|error| Error::Invalid(error.to_string()))?;
-                runner::build_pl(arena, spec_pl, Config::new(cache_on, det, false), Dummy)
-                    .map_err(|error| Error::Invalid(error.to_string()))
+                let spec_pl = p4spectec::prosify(&config.spec)?;
+                Ok(runner::build_pl(arena, spec_pl, Config::new(cache_on, det, false), Dummy)?)
             })
         }
     }
@@ -139,10 +133,9 @@ where
         })
         .cloned()
         .collect();
-    let progress = ProgressBar::new(collected as u64).with_style(
-        ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
-            .map_err(|error| Error::Invalid(error.to_string()))?,
-    );
+    let progress = ProgressBar::new(collected as u64).with_style(ProgressStyle::with_template(
+        "[{bar:24}] {pos}/{len} {elapsed_precise} {msg}",
+    )?);
     let mut executed = 0;
     let mut passed = 0;
     let guard_stdout = crate::output::SilenceStdout::new()?;
@@ -174,10 +167,10 @@ where
                     let source = receiver
                         .recv()
                         .map_err(|error| {
-                            Error::Invalid(format!("preprocessor worker stopped: {error}"))
+                            Error::from(format!("preprocessor worker stopped: {error}"))
                         })?
                         .map_err(|error| {
-                            Error::Invalid(format!(
+                            Error::from(format!(
                                 "{}: test execution error: {error}",
                                 path.display()
                             ))
@@ -197,7 +190,7 @@ where
                             ..
                         }) => Outcome::Fail,
                         Err(error) => {
-                            return Err(Error::Invalid(format!(
+                            return Err(Error::from(format!(
                                 "{}: test execution error: {}",
                                 path.display(),
                                 error.into_report()

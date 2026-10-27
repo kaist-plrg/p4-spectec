@@ -27,12 +27,11 @@ pub fn run(suites: &AdocSuite, path_output: Option<&Path>) -> Result<()> {
     let snapshots_el = &suites.el;
     let snapshots_pl = &suites.pl;
     if snapshots_el.is_empty() && snapshots_pl.is_empty() {
-        return Err(Error::Invalid("no AsciiDoc snapshots registered".into()));
+        return Err(Error::from("no AsciiDoc snapshots registered"));
     }
     // Render each registered source snapshot with its own input files
     for snapshot in snapshots_el {
-        let spec_el =
-            parse_files(&snapshot.inputs).map_err(|error| Error::Invalid(error.to_string()))?;
+        let spec_el = parse_files(&snapshot.inputs)?;
         let text_el = spec_el
             .iter()
             .map(adoc::el::render_def)
@@ -47,29 +46,21 @@ pub fn run(suites: &AdocSuite, path_output: Option<&Path>) -> Result<()> {
     }
     // Preserve the registered rule-group mode while producing annotated PL
     for snapshot in snapshots_pl {
-        let spec_el =
-            parse_files(&snapshot.inputs).map_err(|error| Error::Invalid(error.to_string()))?;
-        let spec_il =
-            elaborate::convert(spec_el).map_err(|error| Error::Invalid(error.to_string()))?;
-        let spec_al = algo::convert(spec_il).map_err(|error| Error::Invalid(error.to_string()))?;
-        let spec_sl = structure::convert(spec_al, snapshot.without_rule_groups)
-            .map_err(|error| Error::Invalid(error.to_string()))?;
-        let spec_pl =
-            prosify::convert(spec_sl).map_err(|error| Error::Invalid(error.to_string()))?;
+        let spec_el = parse_files(&snapshot.inputs)?;
+        let spec_il = elaborate::convert(spec_el)?;
+        let spec_al = algo::convert(spec_il)?;
+        let spec_sl = structure::convert(spec_al, snapshot.without_rule_groups)?;
+        let spec_pl = prosify::convert(spec_sl)?;
 
         // Repeated rendering must start with fresh document anchor state
         let mut warnings = Vec::new();
         let text_pl = adoc::pl::render_spec(&mut warnings, &spec_pl);
         for report in warnings {
-            let text = Renderer::new(RenderConfig::default())
-                .render_to_string(&report)
-                .map_err(|error| Error::Invalid(error.to_string()))?;
+            let text = Renderer::new(RenderConfig::default()).render_to_string(&report)?;
             eprint!("{text}");
         }
         if text_pl != adoc::pl::render_spec(&mut Vec::new(), &spec_pl) {
-            return Err(Error::Invalid(
-                "AsciiDoc arm anchors changed on repeated rendering".into(),
-            ));
+            return Err(Error::from("AsciiDoc arm anchors changed on repeated rendering"));
         }
         // Save raw fragments for comparison and Asciidoctor validation
         if let Some(path_output) = path_output {

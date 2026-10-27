@@ -30,10 +30,7 @@ fn collect(dir: &Path, suffix: &str) -> Result<Vec<Input>> {
     corpus::collect(dir, suffix)?
         .into_iter()
         .map(|path| {
-            let path = path
-                .strip_prefix(dir)
-                .map_err(|error| Error::Invalid(error.to_string()))?
-                .to_owned();
+            let path = path.strip_prefix(dir)?.to_owned();
             Ok(Input { dir: dir.to_owned(), path, patched: false })
         })
         .collect()
@@ -66,7 +63,7 @@ impl SimSuite {
             "ebpf" => "ebpf_model.p4",
             "psa" => "bmv2/psa.p4",
             _ => {
-                return Err(Error::Invalid(format!("unknown architecture {}", self.arch)));
+                return Err(Error::from(format!("unknown architecture {}", self.arch)));
             }
         };
         let mut inputs_arch = Vec::new();
@@ -121,7 +118,7 @@ impl Results {
                 .to_str()
                 .is_some_and(|path| !path.contains(['\t', '\r', '\n']))
             {
-                return Err(Error::Invalid(format!(
+                return Err(Error::from(format!(
                     "invalid simulation result path: {}",
                     path.display()
                 )));
@@ -137,7 +134,7 @@ impl Results {
             .insert((pair.path_p4.clone(), pair.path_stf.clone()), text)
             .is_some()
         {
-            return Err(Error::Invalid(format!(
+            return Err(Error::from(format!(
                 "duplicate simulation result: {} / {}",
                 pair.path_p4.display(),
                 pair.path_stf.display()
@@ -162,13 +159,13 @@ pub fn run(
     run_with(config, language, options, path_log, || match language {
         Language::Al => p4spectec::algo(&config.spec)
             .map(Spec::Al)
-            .map_err(|error| Error::Invalid(error.to_string())),
+            .map_err(Error::from),
         Language::Sl => p4spectec::structure(&config.spec, true)
             .map(Spec::Sl)
-            .map_err(|error| Error::Invalid(error.to_string())),
+            .map_err(Error::from),
         Language::Pl => p4spectec::prosify(&config.spec)
             .map(Spec::Pl)
-            .map_err(|error| Error::Invalid(error.to_string())),
+            .map_err(Error::from),
     })
 }
 
@@ -197,7 +194,7 @@ where
         .map(|suite| Ok((suite, suite.collect()?)))
         .collect::<Result<Vec<_>>>()?;
     if suites.is_empty() {
-        return Err(Error::Invalid(format!("no {} simulation suites registered", language.name())));
+        return Err(Error::from(format!("no {} simulation suites registered", language.name())));
     }
     let collected: usize = suites.iter().map(|(_, pairs)| pairs.len()).sum();
     let excluded = suites
@@ -215,10 +212,9 @@ where
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
     let includes = &config.includes;
-    let progress = ProgressBar::new(collected as u64).with_style(
-        ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
-            .map_err(|error| Error::Invalid(error.to_string()))?,
-    );
+    let progress = ProgressBar::new(collected as u64).with_style(ProgressStyle::with_template(
+        "[{bar:24}] {pos}/{len} {elapsed_precise} {msg}",
+    )?);
     let mut executed = 0;
     let mut matched = 0;
     let mut patched = 0;
@@ -251,8 +247,7 @@ where
             arch,
             Config::new(cache_on, det, false),
             Encoding::default(),
-        )
-        .map_err(|error| Error::Invalid(error.to_string()))?;
+        )?;
         log.note(&format!(
             "{arch} specification prepared in {:.1}s",
             start_arch.elapsed().as_secs_f64()
@@ -289,7 +284,7 @@ where
                     .run_stf_test(includes, &pair.path_p4, &pair.path_stf, |tx| {
                         txs.push(tx.clone());
                     })
-                    .map_err(|error| Error::Invalid(format!("{id}: {error}")))?;
+                    .map_err(|error| Error::from(format!("{id}: {error}")))?;
                 matched += txs.len();
                 results.record(pair, "pass", &txs)?;
                 log.end("pass")?;

@@ -14,18 +14,16 @@ use crate::{
 pub fn run(snapshots: &[StructureSnapshot]) -> Result<()> {
     let start = Instant::now();
     if snapshots.is_empty() {
-        return Err(Error::Invalid("no structure snapshots registered".into()));
+        return Err(Error::from("no structure snapshots registered"));
     }
     let num_snapshots = snapshots.len();
-    let progress = ProgressBar::new(num_snapshots as u64).with_style(
-        ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
-            .map_err(|error| Error::Invalid(error.to_string()))?,
-    );
+    let progress = ProgressBar::new(num_snapshots as u64).with_style(ProgressStyle::with_template(
+        "[{bar:24}] {pos}/{len} {elapsed_precise} {msg}",
+    )?);
     let mut num_defs = 0;
     for snapshot in snapshots {
         progress.set_message(format!("structure: {}", snapshot.name));
-        let spec_sl = p4spectec::structure(&snapshot.inputs, snapshot.without_rule_groups)
-            .map_err(|error| Error::Invalid(error.to_string()))?;
+        let spec_sl = p4spectec::structure(&snapshot.inputs, snapshot.without_rule_groups)?;
         num_defs = spec_sl.len();
         let text_actual = Print::to_string(&spec_sl) + "\n";
         let path_expected = suite::expected_path(&snapshot.expected);

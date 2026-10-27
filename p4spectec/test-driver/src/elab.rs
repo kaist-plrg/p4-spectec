@@ -14,16 +14,14 @@ use crate::{
 pub fn run(snapshots: &[Snapshot]) -> Result<()> {
     let start = Instant::now();
     if snapshots.is_empty() {
-        return Err(Error::Invalid("no elab snapshots registered".into()));
+        return Err(Error::from("no elab snapshots registered"));
     }
     let progress = ProgressBar::new(snapshots.len() as u64).with_style(
-        ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
-            .map_err(|error| Error::Invalid(error.to_string()))?,
+        ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")?,
     );
     for snapshot in snapshots {
         progress.set_message(format!("elab: {}", snapshot.name));
-        let spec_il =
-            p4spectec::elab(&snapshot.inputs).map_err(|error| Error::Invalid(error.to_string()))?;
+        let spec_il = p4spectec::elab(&snapshot.inputs)?;
         let actual = Print::to_string(&spec_il) + "\n";
         let path_expected = suite::expected_path(&snapshot.expected);
         snapshot::check(expect_file![path_expected], &actual);

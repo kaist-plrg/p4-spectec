@@ -14,16 +14,14 @@ use crate::{
 pub fn run(snapshots: &[Snapshot]) -> Result<()> {
     let start = Instant::now();
     if snapshots.is_empty() {
-        return Err(Error::Invalid("no prose snapshots registered".into()));
+        return Err(Error::from("no prose snapshots registered"));
     }
     let progress = ProgressBar::new(snapshots.len() as u64).with_style(
-        ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
-            .map_err(|error| Error::Invalid(error.to_string()))?,
+        ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")?,
     );
     for snapshot in snapshots {
         progress.set_message(format!("prose: {}", snapshot.name));
-        let spec_pl = p4spectec::prosify(&snapshot.inputs)
-            .map_err(|error| Error::Invalid(error.to_string()))?;
+        let spec_pl = p4spectec::prosify(&snapshot.inputs)?;
         let text_actual = Print::to_string(&spec_pl) + "\n";
         let path_expected = suite::expected_path(&snapshot.expected);
         snapshot::check(expect_file![path_expected], &text_actual);
