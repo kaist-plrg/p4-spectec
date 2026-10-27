@@ -191,6 +191,51 @@ where
     Ok(*value::get::one(&values).map_err(ExternError::from)?)
 }
 
+// == Tables
+
+/// Adds an entry to a table object; `None` when the entry was rejected.
+pub fn table_object_add_entry<Interp, Iface, Ext>(
+    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
+    value_ctx: Value,
+    value_table: Value,
+    value_priority: Value,
+    value_keys: Value,
+    value_action: Value,
+) -> Result<Option<Value>, InterpreterError>
+where
+    Iface: Interface,
+    Ext: Extern,
+    Interp: Interpreter<Iface, Ext>,
+{
+    // The relation returns the updated table, or `eps` on rejection
+    let values = ctx
+        .call_rel(
+            "TableObject_add_entry",
+            &[value_ctx, value_table, value_priority, value_keys, value_action],
+        )
+        .result?;
+    let value_opt = value::get::one(&values).map_err(ExternError::from)?;
+    Ok(value::get::opt(ctx.arena(), value_opt).map_err(ExternError::from)?)
+}
+
+/// Sets a table object's default action.
+pub fn table_object_add_default_action<Interp, Iface, Ext>(
+    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
+    value_ctx: Value,
+    value_table: Value,
+    value_action: Value,
+) -> Result<Value, InterpreterError>
+where
+    Iface: Interface,
+    Ext: Extern,
+    Interp: Interpreter<Iface, Ext>,
+{
+    let values = ctx
+        .call_rel("TableObject_add_default_action", &[value_ctx, value_table, value_action])
+        .result?;
+    Ok(*value::get::one(&values).map_err(ExternError::from)?)
+}
+
 // == eBPF
 
 // - Initialization
