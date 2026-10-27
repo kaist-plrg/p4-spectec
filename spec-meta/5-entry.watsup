@@ -1,0 +1,42 @@
+;; Entry point for specifications in IL and AL
+
+relation Algo_IL:
+  |- specIL : specAL
+  hint(input %0)
+  hint(prose_in "converting specification" %0 "to the algorithmic language")
+  hint(prose_out %1)
+
+relation Eval_IL:
+  |- specIL : val
+  hint(input %0)
+  hint(prose_in "converting specification" %0
+                "to AL and executing its main function")
+  hint(prose_out "value" %1)
+
+relation Eval_AL:
+  |- specAL : val
+  hint(input %0)
+  hint(prose_in "executing the main function of specification" %0)
+  hint(prose_out "value" %1)
+
+rule Algo_IL:
+  |- defnIL* : defnAL_guard*
+  -- if AC = $load_algoCtx($empty_algoCtx, defnIL*)
+  -- (Algo_def: AC |- defnIL : defnAL)*
+  -- (Guard_def: AC |- defnAL : defnAL_guard)*
+  -- (Otherwise_pure: |- defnAL_guard)*
+
+rule Eval_IL:
+  |- specIL : val
+  -- Algo_IL: |- specIL : specAL
+  -- Eval_AL: |- specAL : val
+
+rule Eval_AL:
+  |- specAL : val
+  -- debug "entry-al"
+  -- if C = $load_ctx($empty_ctx, specAL)
+  -- debug "load complete"
+  ---- ;; calls $main(), assuming it exists in the given spec
+  -- debug "into call"
+  -- Call_func: C |- "main" `< eps `> `( eps `) : OK val
+  -- debug val

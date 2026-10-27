@@ -1,0 +1,23 @@
+;; An otherwise rule may not invoke a relation
+
+var n : nat
+
+relation Id: nat |- nat
+  hint(input %0)
+
+rule Id:
+  n |- n
+
+relation R: nat |- nat
+  hint(input %0)
+
+rule R/zero:
+  0 |- 1
+
+rule R/else:
+  n |- n
+  -- Id: n |- n
+  -- otherwise
+
+dec $main() : nat
+def $main() = 0

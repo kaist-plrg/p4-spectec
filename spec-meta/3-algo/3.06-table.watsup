@@ -1,0 +1,175 @@
+;;
+;; Case sets
+;;
+;; syntax cases
+;; syntax rowCases
+;; syntax combination
+;;
+
+;; Coverage compares cases by constructor alone:
+;; `SOME X` declared in `opt<X>` and `SOME _` at `opt<nat>` are one case
+
+;; The cases of a key type, or those a row argument covers
+syntax cases = mixop*
+
+;; The cases each argument of a row covers
+syntax rowCases = cases*
+
+;; One case for each key
+syntax combination = mixop*
+
+;;
+;; Cases of key types
+;;
+;; syntax typ
+;;
+
+dec $cases_typ(tdenv, typ) : cases
+  hint(prose_in "the cases of variant type" %1 "under" %0)
+
+def $cases_typ(tdenv, typ) = mixop*
+  ---- ;; expand aliases to a variant type
+  -- if OK (VAR id _) = $expand_typ(tdenv, typ)
+  -- if TYP _ _ '=' (VARIANT (mixop _)*) = $find_map<id, typDef>(tdenv, id)
+
+;;
+;; Cases of row arguments
+;;
+;; syntax typedExp
+;;
+
+;; A variable covers every case of its type, a case pattern only its own case;
+;; row arguments are shallow, so these are all the forms
+
+dec $cases_exp(tdenv, typedExp) : cases
+  hint(prose_in "the cases covered by row argument" %1 "under" %0)
+
+;;; varExp
+;;; syntax varExp = VAR id
+
+def $cases_exp(tdenv, varExp '#' typ)
+  = $cases_typ(tdenv, typ)
+
+;;; upCastExp
+;;; syntax upCastExp = UPCAST typ typedExp
+
+def $cases_exp(tdenv, (UPCAST _ typedExp) '#' _)
+  = $cases_exp(tdenv, typedExp)
+
+;;; injExp
+;;; syntax injExp = INJ expCase
+
+def $cases_exp(tdenv, (INJ (mixop _)) '#' _) = [ mixop ]
+
+;;
+;; Exclusive rows
+;;
+;; syntax rowCases*
+;;
+
+;; Two rows overlap when every argument position shares a case
+
+dec $is_overlapping_cases(cases, cases) : bool
+  hint(prose_true %0 "and" %1 "share a case")
+  hint(prose_false %0 "and" %1 "share no case")
+
+def $is_overlapping_cases(mixop_a*, mixop_b*)
+  = $exists_((mixop_a <- mixop_b*)*)
+
+dec $is_overlapping_rows(rowCases, rowCases) : bool
+  hint(prose_true "rows covering" %0 "and" %1 "accept a common input")
+  hint(prose_false "rows covering" %0 "and" %1 "accept no common input")
+
+def $is_overlapping_rows(mixop_a**, mixop_b**) = $forall_(b_share*)
+  -- (if b_share = $is_overlapping_cases(mixop_a*, mixop_b*))*
+
+dec $is_exclusive_rows(rowCases*) : bool
+  hint(prose_true "the rows covering" %0 "accept disjoint inputs")
+  hint(prose_false "two rows covering" %0 "accept a common input")
+
+def $is_exclusive_rows(eps) = true
+def $is_exclusive_rows(mixop_h** :: mixop_t***)
+  = ~$exists_(b_overlap*) /\ $is_exclusive_rows(mixop_t***)
+  -- (if b_overlap = $is_overlapping_rows(mixop_h**, mixop_t**))*
+
+;;
+;; Exhaustive rows
+;;
+;; syntax rowCases*
+;;
+
+;; Every choice of one case per key:
+;; `[ [A, B], [C, D] ]` gives `[ [A, C], [A, D], [B, C], [B, D] ]`
+
+dec $combinations_cases(cases*) : combination*
+  hint(prose_in "every choice of one case from each of" %0)
+
+dec $prepend_combinations(mixop, combination*) : combination*
+  hint(prose_in "the choices" %1 "each preceded by" %0)
+
+def $combinations_cases(eps) = [ mixop_none* ]
+  -- if mixop_none* = eps
+def $combinations_cases(mixop_h* :: mixop_t**) = $concat_<mixop*>(mixop_comb***)
+  -- if mixop_rest** = $combinations_cases(mixop_t**)
+  -- (if mixop_comb** = $prepend_combinations(mixop_h, mixop_rest**))*
+
+def $prepend_combinations(mixop, mixop_rest**) = (mixop :: mixop_rest*)*
+
+;; A combination is covered when some row accepts its case at every position
+
+dec $is_covered_combination(rowCases*, combination) : bool
+  hint(prose_true "some row covering" %0 "accepts the cases" %1)
+  hint(prose_false "no row covering" %0 "accepts the cases" %1)
+
+def $is_covered_combination(mixop_row***, mixop*) = $exists_(b_cover*)
+  -- (if b_cover = $forall_((mixop <- mixop_row*)*))*
+
+;;
+;; Table coverage
+;;
+;; syntax tblRowIL*
+;;
+
+;; No input is covered by two rows, and every input by some row;
+;; only a last row covering every combination may overlap the rows before it
+
+rule Cover_tblRows:
+  AC typ* |- tblRowIL*
+  ---- ;; every key has a variant type
+  -- (if cases_key = $cases_typ(AC.TYP, typ))*
+  -- if combination* = $combinations_cases(cases_key*)
+  ---- ;; the cases each row argument covers
+  -- (if (EXP typedExp)* '=' _ = tblRowIL)*
+  -- (if rowCases = $cases_exp(AC.TYP, typedExp)*)*
+  ---- ;; the rows before the last accept disjoint inputs
+  -- if $(|tblRowIL*| > 0)
+  -- if n_last = $(|tblRowIL*| - 1)
+  -- if $is_exclusive_rows(rowCases*[0 : n_last])
+  ---- ;; so does the last, unless it covers every combination and closes the table
+  -- if $forall_($is_covered_combination([ rowCases*[n_last] ], combination)*)
+        \/ $is_exclusive_rows(rowCases*)
+  ---- ;; and together the rows cover every combination
+  -- if $forall_($is_covered_combination(rowCases*, combination)*)
+
+;;
+;; Table rows
+;;
+;; syntax tblRowIL
+;;
+
+;; A row binds its shallow arguments and reads only them in its result
+
+rule Algo_tblRow:
+  AC |- tblRowIL : tblRowAL
+  -- if arg* '=' typedExp = tblRowIL
+  ---- ;; fresh identifiers avoid those of the row
+  -- if id_used* = $ids_of_varis($free_varis_tblRowIL(tblRowIL))
+  -- if AC_row = $add_used(AC, id_used*)
+  ---- ;; the arguments are shallow and bind each variable once
+  -- Shallowbind_args: AC_row |- arg*
+  ---- ;; the arguments bind, decomposing their cases
+  -- Bind_args: AC_row |- arg* : AC_body arg_part* premAL*
+  ---- ;; the result reads only bound variables
+  -- if vari_body* = $free_varis_exp(typedExp)
+  -- if $is_bound_varis(AC_body, eps, vari_body*)
+  -- if tblRowAL = arg_part* '=' typedExp '-' premAL*

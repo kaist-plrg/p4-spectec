@@ -1,0 +1,163 @@
+;;
+;; Extern calls
+;;
+
+;;; Extern meta-function invocation
+
+syntax funcRes = ok<val> | failure
+
+extern relation Call_extern_func:
+  |- id `< typ* `> `( val* `) : funcRes
+  hint(input %0 %1 %2)
+  hint(prose_in "calling extern function" %0 "with types" %1 "and inputs" %2)
+  hint(prose_out %3)
+
+;;; Builtin meta-function invocation
+
+extern relation Call_builtin_func:
+  |- id `< typ* `> `( val* `) : funcRes
+  hint(input %0 %1 %2)
+  hint(prose_in "calling builtin function" %0 "with types" %1 "and inputs" %2)
+  hint(prose_out %3)
+
+;;; Extern relations
+
+syntax relRes = ok<val*> | failure
+
+extern relation Call_extern_rel:
+  |- id `( val* `) : relRes
+  hint(input %0 %1)
+  hint(prose_in "calling extern relation" %0 "with inputs" %1)
+  hint(prose_out %2)
+
+;;
+;; Evaluation relations
+;;
+
+;;; Expression evaluation
+
+syntax expRes = ok<val> | failure
+
+relation Eval_exp:
+  ctx |- typedExp : expRes
+  hint(input %0 %1)
+  hint(prose_in "evaluating expression" %1 "under context" %0)
+  hint(prose_out %2)
+
+syntax expsRes = ok<val*> | failure
+
+relation Eval_exps:
+  ctx |- typedExp* : expsRes
+  hint(input %0 %1)
+  hint(prose_in "evaluating expressions" %1 "sequentially under context" %0)
+  hint(prose_out %2)
+
+syntax expOptRes = ok<val?> | failure
+
+relation Eval_exp_maybe:
+  ctx? |- typedExp : expOptRes
+  hint(input %0 %1)
+  hint(prose_in "evaluating expression" %1 "under the optional context" %0
+                "when present")
+  hint(prose_out %2)
+
+relation Eval_exp_each:
+  ctx* |- typedExp : expsRes
+  hint(input %0 %1)
+  hint(prose_in "evaluating expression" %1 "sequentially under each context in" %0)
+  hint(prose_out %2)
+
+;;; Path evaluation
+
+syntax pathRes = ok<val> | failure
+
+relation Eval_path_acc:
+  ctx |- val typedPath : pathRes
+  hint(input %0 %1 %2)
+  hint(prose_in "accessing path" %2 "of value" %1 "under context" %0)
+  hint(prose_out %3)
+
+relation Eval_path_upd:
+  ctx |- val typedPath := val : pathRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "updating path" %2 "of value" %1 "with value" %3 "under context" %0)
+  hint(prose_out %4)
+
+;;; Type argument evaluation
+
+relation Eval_targs:
+  ctx |- targ* : typsRes
+  hint(input %0 %1)
+  hint(prose_in "evaluating type arguments" %1 "under context" %0)
+  hint(prose_out %2)
+
+;;; Argument evaluation
+
+syntax argRes = ok<val> | failure
+
+relation Eval_arg:
+  ctx |- arg : argRes
+  hint(input %0 %1)
+  hint(prose_in "evaluating argument" %1 "under context" %0)
+  hint(prose_out %2)
+
+syntax argsRes = ok<val*> | failure
+
+relation Eval_args:
+  ctx |- arg* : argsRes
+  hint(input %0 %1)
+  hint(prose_in "evaluating arguments" %1 "sequentially under context" %0)
+  hint(prose_out %2)
+
+;;; Premise evaluation
+
+syntax premRes = ok<ctx> | failure
+
+relation Eval_prem:
+  ctx |- premAL : premRes
+  hint(input %0 %1)
+  hint(prose_in "evaluating premise" %1 "under context" %0)
+  hint(prose_out %2)
+
+relation Eval_prems:
+  ctx |- premAL* : premRes
+  hint(input %0 %1)
+  hint(prose_in "evaluating premises" %1 "sequentially starting from context" %0)
+  hint(prose_out %2)
+
+syntax premOptRes = ok<ctx?> | failure
+
+relation Eval_prem_maybe:
+  ctx? |- premAL : premOptRes
+  hint(input %0 %1)
+  hint(prose_in "evaluating premise" %1 "under the optional context" %0 "when present")
+  hint(prose_out %2)
+
+syntax premIterRes = ok<ctx*> | failure
+
+relation Eval_prem_each:
+  ctx* |- premAL : premIterRes
+  hint(input %0 %1)
+  hint(prose_in "evaluating premise" %1 "sequentially under each context in" %0)
+  hint(prose_out %2)
+
+;;
+;; Call relations
+;;
+
+;;; Meta-function calls
+
+relation Call_func:
+  ctx |- id `< targ* `> `( val* `) : funcRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "calling function" %1 "with types" %2 "and inputs" %3
+                "under context" %0)
+  hint(prose_out %4)
+
+;;; Relation calls
+
+relation Call_rel:
+  ctx |- id `( val* `) : relRes
+  hint(input %0 %1 %2)
+  hint(prose_in "calling relation" %1 "with inputs" %2 "under context" %0)
+  hint(prose_out %3)

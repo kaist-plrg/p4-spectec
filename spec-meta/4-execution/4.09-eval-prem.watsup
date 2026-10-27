@@ -1,0 +1,260 @@
+;;
+;; Premise evaluation
+;;
+;; syntax premAL
+;;
+
+;;; relPremAL
+;;; syntax relPremAL = REL id ':' typedExp* '->' typedExp*
+
+rulegroup Eval_prem/relpr {
+
+  rule Eval_prem/expressions-failure:
+    C |- REL id ':' typedExp* '->' typedExp_out* : failure
+    -- Eval_exps: C |- typedExp* : failure
+
+  rule Eval_prem/call-failure:
+    C |- REL id ':' typedExp* '->' typedExp_out* : failure
+    -- Eval_exps: C |- typedExp* : OK val*
+    -- Call_rel: C |- id `( val* `) : failure
+
+  rule Eval_prem/succ:
+    C |- REL id ':' typedExp* '->' typedExp_out* : OK C_assign
+    -- Eval_exps: C |- typedExp* : OK val*
+    -- Call_rel: C |- id `( val* `) : OK val_out*
+    -- Assign_exps : C |- typedExp_out* := val_out* : OK C_assign
+
+}
+
+;;; ifPrem
+;;; syntax ifPrem = IF typedExp
+
+rulegroup Eval_prem/ifpr {
+
+  rule Eval_prem/cond-failure:
+    C |- IF typedExp : failure
+    -- Eval_exp: C |- typedExp : failure
+
+  rule Eval_prem/succ-false:
+    C |- IF typedExp : UNMATCH
+    -- Eval_exp: C |- typedExp : OK (BOOL false)
+
+  rule Eval_prem/succ-true:
+    C |- IF typedExp : OK C
+    -- Eval_exp: C |- typedExp : OK (BOOL true)
+
+}
+
+;;; ifHoldPrem
+;;; syntax ifHoldPrem = IFHOLD id ':' typedExp*
+
+rulegroup Eval_prem/ifholdpr {
+
+  rule Eval_prem/expressions-failure:
+    C |- IFHOLD id ':' typedExp* : failure
+    -- Eval_exps: C |- typedExp* : failure
+
+  rule Eval_prem/call-failure:
+    C |- IFHOLD id ':' typedExp* : failure
+    -- Eval_exps: C |- typedExp* : OK val_input*
+    -- Call_rel: C |- id `( val_input* `) : failure
+
+  rule Eval_prem/succ:
+    C |- IFHOLD id ':' typedExp* : OK C
+    -- Eval_exps: C |- typedExp* : OK val_input*
+    -- Call_rel: C |- id `( val_input* `) : OK eps
+
+}
+
+;;; ifNotHoldPrem
+;;; syntax ifNotHoldPrem = IFNOTHOLD id ':' typedExp*
+
+rulegroup Eval_prem/ifnotholdpr {
+
+  rule Eval_prem/expressions-failure:
+    C |- IFNOTHOLD id ':' typedExp* : failure
+    -- Eval_exps: C |- typedExp* : failure
+
+  rule Eval_prem/error:
+    C |- IFNOTHOLD id ':' typedExp* : ERROR
+    -- Eval_exps: C |- typedExp* : OK val_input*
+    -- Call_rel: C |- id `( val_input* `) : ERROR
+
+  rule Eval_prem/succ-unmatch:
+    C |- IFNOTHOLD id ':' typedExp* : UNMATCH
+    -- Eval_exps: C |- typedExp* : OK val_input*
+    -- Call_rel: C |- id `( val_input* `) : OK val_out*
+
+  rule Eval_prem/succ-ok:
+    C |- IFNOTHOLD id ':' typedExp* : OK C
+    -- Eval_exps: C |- typedExp* : OK val_input*
+    -- Call_rel: C |- id `( val_input* `) : UNMATCH
+
+}
+
+;;; letPremAL
+;;; syntax letPremAL = LET typedExp '=' typedExp
+
+rulegroup Eval_prem/letpr {
+
+  rule Eval_prem/right-failure:
+    C |- LET typedExp_l '=' typedExp_r : failure
+    -- Eval_exp: C |- typedExp_r : failure
+
+  rule Eval_prem/succ:
+    C |- LET typedExp_l '=' typedExp_r : OK C_assign
+    -- Eval_exp: C |- typedExp_r : OK val_r
+    -- Assign_exp: C |- typedExp_l := val_r : OK C_assign
+
+}
+
+;;; iterPremAL
+;;; syntax iterPremAL = ITER premAL premIterAL
+
+rulegroup Eval_prem/iterpr-opt {
+
+  rule Eval_prem/body-failure:
+    C |- ITER premAL (QUEST '<-' vari_bound* '->' _) : failure
+    -- if OK C_sub? = $sub_opt(C, vari_bound*)
+    -- Eval_prem_maybe: C_sub? |- premAL : failure
+
+  rule Eval_prem/succ-none:
+    C |- ITER premAL (QUEST '<-' vari_bound* '->' vari_bind*) : OK C_res
+    -- if OK C_sub? = $sub_opt(C, vari_bound*)
+    -- Eval_prem_maybe: C_sub? |- premAL : OK eps
+    -- if (vari_bind_iter = $iterate_vari(vari_bind, [ QUEST ]))*
+    -- if val_bind* = $repeat_<val>(OPT eps, |vari_bind*|)
+    -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
+
+  rule Eval_prem/succ-some:
+    C |- ITER premAL (QUEST '<-' vari_bound* '->' vari_bind*) : OK C_res
+    -- if OK C_sub? = $sub_opt(C, vari_bound*)
+    -- Eval_prem_maybe: C_sub? |- premAL : OK C_sub_res
+    -- if (val_bind = $find_vari(C_sub_res, vari_bind))*
+    -- if (vari_bind_iter = $iterate_vari(vari_bind, [ QUEST ]))*
+    -- if C_res = $add_varis(C, vari_bind_iter*, (OPT val_bind)*)
+
+}
+
+rulegroup Eval_prem/iterpr-list {
+
+  rule Eval_prem/succ-empty:
+    C |- ITER premAL (STAR '<-' vari_bound* '->' vari_bind*) : OK C_res
+    -- if OK eps = $sub_list(C, vari_bound*)
+    -- if (vari_bind_iter = $iterate_vari(vari_bind, [ STAR ]))*
+    -- if val_bind* = $repeat_<val>(LIST eps, |vari_bind*|)
+    -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
+
+  rule Eval_prem/body-failure:
+    C |- ITER premAL (STAR '<-' vari_bound* '->' _) : failure
+    -- if OK C_sub* = $sub_list(C, vari_bound*)
+    -- if C_sub* =/= eps
+    -- Eval_prem_each: C_sub* |- premAL : failure
+
+  rule Eval_prem/succ-list:
+    C |- ITER premAL (STAR '<-' vari_bound* '->' vari_bind*) : OK C_res
+    ---- ;; split the context into one sub-context per element of the sources
+    -- if OK C_sub* = $sub_list(C, vari_bound*)
+    -- if C_sub* =/= eps
+    ---- ;; evaluate the premise in each sub-context
+    -- Eval_prem_each: C_sub* |- premAL : OK C_sub_res*
+    -- if (val_sub_bind* = $find_varis(C_sub_res, vari_bind*))*
+    ---- ;; bind each binder to the list of its values
+    -- if val_bind** = $transpose_<val>(val_sub_bind**)
+    -- if (val_res_bind = LIST val_bind*)*
+    -- if (vari_bind_iter = $iterate_vari(vari_bind, [ STAR ]))*
+    -- if C_res = $add_varis(C, vari_bind_iter*, val_res_bind*)
+
+}
+
+;;; debugPrem
+;;; syntax debugPrem = DEBUG typedExp
+
+rulegroup Eval_prem/dbg {
+
+  rule Eval_prem/operand-failure:
+    C |- DEBUG typedExp : failure
+    -- Eval_exp: C |- typedExp : failure
+
+  rule Eval_prem/succ:
+    C |- DEBUG typedExp : OK C
+    -- Eval_exp: C |- typedExp : OK val
+    -- debug val
+
+}
+
+;; Any other premise is an error
+
+rule Eval_prem/error:
+  C |- premAL : ERROR
+  -- otherwise
+
+;;
+;; Premise sequence evaluation
+;;
+;; syntax premAL*
+;;
+
+rulegroup Eval_prems {
+
+  rule Eval_prems/empty:
+    C |- eps : OK C
+
+  rule Eval_prems/head-failure:
+    C |- premAL_h :: premAL_t* : failure
+    -- Eval_prem: C |- premAL_h : failure
+
+  rule Eval_prems/head-succ:
+    C |- premAL_h :: premAL_t* : premRes
+    -- Eval_prem: C |- premAL_h : OK C_h
+    -- Eval_prems: C_h |- premAL_t* : premRes
+
+}
+
+;;
+;; Premise evaluation in optional contexts
+;;
+;; syntax premAL
+;;
+
+rulegroup Eval_prem_maybe {
+
+  rule Eval_prem_maybe/none:
+    eps |- premAL : OK eps
+
+  rule Eval_prem_maybe/failure:
+    C |- premAL : failure
+    -- Eval_prem: C |- premAL : failure
+
+  rule Eval_prem_maybe/some:
+    C |- premAL : OK C_res
+    -- Eval_prem: C |- premAL : OK C_res
+
+}
+
+;;
+;; Premise evaluation in list contexts
+;;
+;; syntax premAL
+;;
+
+rulegroup Eval_prem_each {
+
+  rule Eval_prem_each/nil:
+    eps |- premAL : OK eps
+
+  rule Eval_prem_each/head-failure:
+    (C_h :: C_t*) |- premAL : failure
+    -- Eval_prem: C_h |- premAL : failure
+
+  rule Eval_prem_each/tail-failure:
+    (C_h :: C_t*) |- premAL : failure
+    -- Eval_prem: C_h |- premAL : OK C_res
+    -- Eval_prem_each: C_t* |- premAL : failure
+
+  rule Eval_prem_each/cons-succ:
+    (C_h :: C_t*) |- premAL : OK (C_res :: C_t_res*)
+    -- Eval_prem: C_h |- premAL : OK C_res
+    -- Eval_prem_each: C_t* |- premAL : OK C_t_res*
+
+}

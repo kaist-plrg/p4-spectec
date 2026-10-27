@@ -1,0 +1,72 @@
+;;
+;; Iteration context
+;;
+;; syntax iterCtx
+;;
+
+;; Enclosing iterations, innermost first,
+;; each with the variables it iterates at the dimension inside it
+
+syntax iterCtx = premIterIL*
+
+var IC : iterCtx
+
+;;; Adding iterated variables
+
+;; A variable bound inside the iterations is iterated at every level,
+;; at its dimension inside that level, unless the level already lists it.
+;; Adding `x` to the context of `((-- let x = z + 1)*{z})?{z*}`
+;;
+;;   [ *{z}, ?{z*} ]
+;;
+;; gives
+;;
+;;   [ *{z, x}, ?{z*, x*} ]
+
+dec $add_iterated(iterCtx, vari*) : iterCtx
+  hint(prose_in %0 "with" %1 "iterated at every level")
+
+def $add_iterated(eps, _) = eps
+def $add_iterated((iter vari*) :: IC, vari_new*)
+  = (iter (vari* ++ vari_add*)) :: IC_outer
+  ---- ;; a variable the level already iterates is not added again
+  -- if vari_add* = $drop_varis(vari_new*, $ids_of_varis(vari*))
+  -- (if vari_lift = $iterate_vari(vari_new, [ iter ]))*
+  -- if IC_outer = $add_iterated(IC, vari_lift*)
+
+;;
+;; Premise iterations
+;;
+;; syntax premIterAL*
+;;
+
+;;; Iterations from the context
+
+;; Once its binders are added to the context,
+;; each level's variables split into those a premise reads and those it binds:
+;;
+;;   -- (let x = z + 1)*{x <- x*, z <- z*}
+;;
+;; becomes
+;;
+;;   -- (let x = z + 1)*{z <- z*, x -> x*}
+
+dec $prem_iters(iterCtx, id*, id*) : premIterAL*
+  hint(prose_in "the iterations of" %0 "reading" %1 "and binding" %2)
+
+def $prem_iters(eps, _, _) = eps
+def $prem_iters((iter vari*) :: IC, id_read*, id_bind*)
+  = premIterAL_inner :: premIterAL_outer*
+  -- if vari_read* = $select_varis(vari*, id_read*)
+  -- if vari_bind* = $select_varis(vari*, id_bind*)
+  -- if premIterAL_inner = iter '<-' vari_read* '->' vari_bind*
+  -- if premIterAL_outer* = $prem_iters(IC, id_read*, id_bind*)
+
+;;; Iterated premises
+
+dec $iterate_prem(premAL, premIterAL*) : premAL
+  hint(prose_in "the iteration of" %0 "over" %1)
+
+def $iterate_prem(premAL, eps) = premAL
+def $iterate_prem(premAL, premIterAL :: premIterAL_t*)
+  = $iterate_prem(ITER premAL premIterAL, premIterAL_t*)

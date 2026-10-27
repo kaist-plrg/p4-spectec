@@ -1,0 +1,196 @@
+;;
+;; Sources of premise iterations
+;;
+;; syntax premIterAL*
+;;
+
+;; An iteration without a source has no length to follow
+
+rule Iter_sourced:
+  |- premIterAL*
+  -- if (_ '<-' vari_src* '->' _)* = premIterAL*
+  -- if (vari_src* =/= eps)*
+
+;;
+;; Premises
+;;
+;; syntax premIL
+;;
+
+;; Each premise reads bound variables and binds the variables of its patterns.
+;; Under an iteration, the variables a premise reads become its sources
+;; and the variables it binds become its binders
+
+;;; relPremIL
+;;; syntax relPremIL = REL id ':' typedExp* `( inputHint `)
+
+;; Inputs must be bound; outputs bind
+
+rule Algo_prem/rel:
+  AC IC |- relPremIL : AC_bound premAL*
+  ---- ;; split the arguments into inputs and outputs
+  -- if REL id ':' typedExp* `( inputHint `) = relPremIL
+  -- if (typedExp_in*, typedExp_out*)
+      = $split_inputs<typedExp>(inputHint, typedExp*)
+  ---- ;; inputs must be bound
+  -- if vari_in* = $free_varis_exps(typedExp_in*)
+  -- if $is_bound_varis(AC, IC, vari_in*)
+  ---- ;; outputs bind, decomposing partially bound patterns
+  -- Bind_exps:
+      AC IC |- typedExp_out* : AC_bound typedExp_out_part* premAL_bind*
+  ---- ;; iterate over the inputs read and bind the outputs at every level
+  -- if id_read* = $ids_of_varis(vari_in*)
+  -- if vari_out* = $free_varis_exps(typedExp_out_part*)
+  -- if vari_bind* = $shallowest_varis(vari_out*)
+  -- if IC_bind = $add_iterated(IC, vari_bind*)
+  -- if premIterAL* = $prem_iters(IC_bind, id_read*, $ids_of_varis(vari_bind*))
+  -- Iter_sourced: |- premIterAL*
+  ---- ;; the relation premise precedes its binding premises
+  -- if relPremAL = REL id ':' typedExp_in* '->' typedExp_out_part*
+  -- if premAL_rel = $iterate_prem(relPremAL, premIterAL*)
+  -- if premAL* = premAL_rel :: premAL_bind*
+
+;;; ifPrem
+;;; syntax ifPrem = IF typedExp
+
+;; An equality with binders on one side binds that side
+
+rulegroup Algo_prem/cond {
+
+  rule Algo_prem/test:
+    AC IC |- ifPrem : AC ([ premAL_if ])
+    -- if IF typedExp = ifPrem
+    ---- ;; every variable the condition reads must be bound
+    -- if vari* = $free_varis_exp(typedExp)
+    -- if $is_bound_varis(AC, IC, vari*)
+    ---- ;; iterate over the variables it reads
+    -- if premIterAL* = $prem_iters(IC, $ids_of_varis(vari*), eps)
+    -- if premAL_if = $iterate_prem(ifPrem, premIterAL*)
+
+  rule Algo_prem/let-left:
+    AC IC |- ifPrem : AC_bound premAL*
+    -- if IF typedExp = ifPrem
+    ---- ;; the equality has binders on its left side only
+    -- if (CMP EQ typedExp_l typedExp_r) '#' _ = typedExp
+    -- Collectbind_exp: AC |- typedExp_l : vari_l*
+    -- if vari_l* =/= eps
+    -- Collectbind_exp: AC |- typedExp_r : eps
+    ---- ;; bind the left side to the right side
+    -- Algo_let:
+        AC IC |- typedExp_l '=' typedExp_r : AC_bound premAL*
+
+  rule Algo_prem/let-right:
+    AC IC |- ifPrem : AC_bound premAL*
+    -- if IF typedExp = ifPrem
+    ---- ;; the equality has binders on its right side only
+    -- if (CMP EQ typedExp_l typedExp_r) '#' _ = typedExp
+    -- Collectbind_exp: AC |- typedExp_l : eps
+    -- Collectbind_exp: AC |- typedExp_r : vari_r*
+    -- if vari_r* =/= eps
+    ---- ;; bind the right side to the left side
+    -- Algo_let:
+        AC IC |- typedExp_r '=' typedExp_l : AC_bound premAL*
+
+}
+
+;;; ifHoldPrem
+;;; syntax ifHoldPrem = IFHOLD id ':' typedExp*
+
+rule Algo_prem/ifhold:
+  AC IC |- ifHoldPrem : AC ([ premAL_hold ])
+  -- if IFHOLD id ':' typedExp* = ifHoldPrem
+  ---- ;; every argument must be bound
+  -- if vari_read* = $free_varis_exps(typedExp*)
+  -- if $is_bound_varis(AC, IC, vari_read*)
+  ---- ;; iterate over the variables it reads
+  -- if premIterAL* = $prem_iters(IC, $ids_of_varis(vari_read*), eps)
+  -- if premAL_hold = $iterate_prem(ifHoldPrem, premIterAL*)
+
+;;; ifNotHoldPrem
+;;; syntax ifNotHoldPrem = IFNOTHOLD id ':' typedExp*
+
+rule Algo_prem/ifnothold:
+  AC IC |- ifNotHoldPrem : AC ([ premAL_hold ])
+  -- if IFNOTHOLD id ':' typedExp* = ifNotHoldPrem
+  ---- ;; every argument must be bound
+  -- if vari_read* = $free_varis_exps(typedExp*)
+  -- if $is_bound_varis(AC, IC, vari_read*)
+  ---- ;; iterate over the variables it reads
+  -- if premIterAL* = $prem_iters(IC, $ids_of_varis(vari_read*), eps)
+  -- if premAL_hold = $iterate_prem(ifNotHoldPrem, premIterAL*)
+
+;;; iterPremIL
+;;; syntax iterPremIL = ITER premIL premIterIL
+
+;; The elaborated iteration lists every variable it iterates;
+;; the premise inside decides which it reads and which it binds
+
+rule Algo_prem/iter:
+  AC IC |- ITER premIL premIterIL : AC_prem premAL*
+  -- if IC_iter = premIterIL :: IC
+  -- Algo_prem: AC IC_iter |- premIL : AC_prem premAL*
+
+;;; debugPrem
+;;; syntax debugPrem = DEBUG typedExp
+
+rule Algo_prem/dbg:
+  AC IC |- debugPrem : AC ([ premAL_debug ])
+  -- if DEBUG typedExp = debugPrem
+  ---- ;; every variable the expression reads must be bound
+  -- if vari* = $free_varis_exp(typedExp)
+  -- if $is_bound_varis(AC, IC, vari*)
+  ---- ;; iterate over the variables it reads
+  -- if premIterAL* = $prem_iters(IC, $ids_of_varis(vari*), eps)
+  -- if premAL_debug = $iterate_prem(debugPrem, premIterAL*)
+
+;;
+;; Bindings
+;;
+;; syntax typedExp '=' typedExp
+;;
+
+;; The left side binds, decomposing partially bound sub-patterns;
+;; the right side reads only bound variables
+
+rule Algo_let:
+  AC IC |- typedExp_l '=' typedExp_r : AC_bound premAL*
+  ---- ;; the pattern binds, decomposing partially bound sub-patterns
+  -- Bind_exps:
+      AC IC |- [ typedExp_l ] : AC_bound ([ typedExp_l_part ]) premAL_bind*
+  ---- ;; the right side must be bound
+  -- if vari_r* = $free_varis_exp(typedExp_r)
+  -- if $is_bound_varis(AC, IC, vari_r*)
+  ---- ;; iterate over the right side's reads and bind the pattern at every level
+  -- if vari_l* = $free_varis_exp(typedExp_l_part)
+  -- if vari_bind* = $shallowest_varis(vari_l*)
+  -- if IC_bind = $add_iterated(IC, vari_bind*)
+  -- if premIterAL*
+      = $prem_iters(IC_bind, $ids_of_varis(vari_r*), $ids_of_varis(vari_bind*))
+  -- Iter_sourced: |- premIterAL*
+  ---- ;; the binding precedes the premises that decompose its pattern
+  -- if premAL_let
+      = $iterate_prem(LET typedExp_l_part '=' typedExp_r, premIterAL*)
+  -- if premAL* = premAL_let :: premAL_bind*
+
+;;
+;; Premise sequences
+;;
+;; syntax premIL*
+;;
+
+;; Variables bound by a premise are bound for the following premises
+
+rulegroup Algo_prems {
+
+  rule Algo_prems/nil:
+    AC |- eps : AC eps
+
+  rule Algo_prems/cons:
+    AC |- premIL_h :: premIL_t* : AC_t (premAL_h* ++ premAL_t*)
+    ---- ;; convert the first premise outside any iteration
+    -- if IC = eps
+    -- Algo_prem: AC IC |- premIL_h : AC_h premAL_h*
+    ---- ;; the rest sees the variables it binds
+    -- Algo_prems: AC_h |- premIL_t* : AC_t premAL_t*
+
+}

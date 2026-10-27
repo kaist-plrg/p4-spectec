@@ -1,0 +1,212 @@
+;;
+;; Renamer
+;;
+;; syntax renamer
+;;
+
+;; Identifiers that fresh identifiers must avoid,
+;; the binders whose first occurrence was met,
+;; and each binder mapped to the identifiers given to its later occurrences
+
+syntax occ = map<id, id*>
+
+syntax renamer =
+  { USED id*,
+    SEEN id*,
+    OCC occ }
+
+var R : renamer
+
+;;
+;; Renamer construction
+;;
+;; syntax vari*
+;;
+
+;; Every binder starts unseen, with no later occurrence named
+
+dec $init_renamer(id*, vari*) : renamer
+  hint(prose_in "the renamer for binders" %1 "avoiding identifiers" %0)
+
+def $init_renamer(id_used*, eps)
+  = { USED id_used*, SEEN eps, OCC $empty_map<id, id*> }
+
+def $init_renamer(id_used*, vari_h :: vari_t*)
+  = R[ .OCC = occ ]
+  ---- ;; a binder is added at its last occurrence
+  -- if id_h _ _ = vari_h
+  -- if ~(id_h <- $ids_of_varis(vari_t*))
+  ---- ;; the occurrences after it are added first
+  -- if R = $init_renamer(id_used*, vari_t*)
+  -- if occ = $add_map<id, id*>(R.OCC, id_h, eps)
+
+def $init_renamer(id_used*, vari_h :: vari_t*)
+  = $init_renamer(id_used*, vari_t*)
+  ---- ;; an earlier occurrence must match a later one in type and dimension
+  -- if vari_h <- vari_t*
+
+;;
+;; Renaming repeated binders in patterns
+;;
+;; syntax typedExp
+;;
+
+;; The first occurrence keeps its identifier; later ones take fresh identifiers:
+;; `(x, x, (y, y)*)` becomes `(x, fresh, (y, fresh')*)`.
+;; Binders occur only under invertible constructs;
+;; any other construct, and a bound variable, is unchanged.
+
+dec $rename_exp(renamer, typedExp) : (renamer, typedExp)
+  hint(prose_in "renaming the repeated binders of" %1 "with" %0)
+dec $rename_exps(renamer, typedExp*) : (renamer, typedExp*)
+  hint(prose_in "renaming the repeated binders of" %1 "with" %0)
+
+;;; varExp
+;;; syntax varExp = VAR id
+
+def $rename_exp(R, (VAR id) '#' typ) = (R, (VAR id) '#' typ)
+  ---- ;; a bound variable is unchanged
+  -- if `{ (id_bind ':' _)* `} = R.OCC
+  -- if ~(id <- id_bind*)
+
+def $rename_exp(R, (VAR id) '#' typ) = (R_multi, (VAR id) '#' typ)
+  ---- ;; the first occurrence of a binder keeps its identifier
+  -- if id_later* = $find_map<id, id*>(R.OCC, id)
+  -- if ~(id <- R.SEEN)
+  -- if R_multi = R[ .SEEN = R.SEEN ++ [ id ] ]
+
+def $rename_exp(R, (VAR id) '#' typ) = (R_multi, (VAR id_fresh) '#' typ)
+  ---- ;; a later occurrence takes a fresh identifier
+  -- if id_later* = $find_map<id, id*>(R.OCC, id)
+  -- if id <- R.SEEN
+  -- if (id_used*, id_fresh) = $fresh_id(R.USED)
+  -- if occ = $add_map<id, id*>(R.OCC, id, id_later* ++ [ id_fresh ])
+  -- if R_multi = { USED id_used*, SEEN R.SEEN, OCC occ }
+
+;;; upCastExp
+;;; syntax upCastExp = UPCAST typ typedExp
+
+def $rename_exp(R, (UPCAST typ_sup typedExp) '#' typ)
+  = (R_multi, (UPCAST typ_sup typedExp_multi) '#' typ)
+  -- if (R_multi, typedExp_multi) = $rename_exp(R, typedExp)
+
+;;; tupExp
+;;; syntax tupExp = TUP typedExp*
+
+def $rename_exp(R, (TUP typedExp*) '#' typ) = (R_multi, (TUP typedExp_multi*) '#' typ)
+  -- if (R_multi, typedExp_multi*) = $rename_exps(R, typedExp*)
+
+;;; injExp
+;;; syntax injExp = INJ expCase
+
+def $rename_exp(R, (INJ (mixop typedExp*)) '#' typ)
+  = (R_multi, (INJ (mixop typedExp_multi*)) '#' typ)
+  -- if (R_multi, typedExp_multi*) = $rename_exps(R, typedExp*)
+
+;;; strExp
+;;; syntax strExp = STR expField*
+
+def $rename_exp(R, (STR expField*) '#' typ) = (R_multi, (STR expField_multi*) '#' typ)
+  -- (if atom typedExp = expField)*
+  -- if (R_multi, typedExp_multi*) = $rename_exps(R, typedExp*)
+  -- (if expField_multi = atom typedExp_multi)*
+
+;;; optExp
+;;; syntax optExp = OPT typedExp?
+
+def $rename_exp(R, (OPT eps) '#' typ) = (R, (OPT eps) '#' typ)
+def $rename_exp(R, (OPT typedExp) '#' typ) = (R_multi, (OPT typedExp_multi) '#' typ)
+  -- if (R_multi, typedExp_multi) = $rename_exp(R, typedExp)
+
+;;; listExp
+;;; syntax listExp = LIST typedExp*
+
+def $rename_exp(R, (LIST typedExp*) '#' typ) = (R_multi, (LIST typedExp_multi*) '#' typ)
+  -- if (R_multi, typedExp_multi*) = $rename_exps(R, typedExp*)
+
+;;; consExp
+;;; syntax consExp = CONS typedExp typedExp
+
+def $rename_exp(R, (CONS typedExp_h typedExp_t) '#' typ)
+  = (R_t, (CONS typedExp_h_multi typedExp_t_multi) '#' typ)
+  -- if (R_h, typedExp_h_multi) = $rename_exp(R, typedExp_h)
+  -- if (R_t, typedExp_t_multi) = $rename_exp(R_h, typedExp_t)
+
+;;; iterExp
+;;; syntax iterExp = ITER typedExp expIter
+
+;; An iteration lists the renamed occurrences it now contains
+
+dec $rename_iter_vari(occ, vari, id*) : vari*
+  hint(prose_in "the variables replacing iteration variable" %1
+                "by its renamed occurrences among" %2 "under" %0)
+
+def $rename_iter_vari(occ, id typ iter*, id_free*) = (id_occ typ iter*)*
+  -- if id_later* = $find_map<id, id*>(occ, id)
+  -- if id_occ* = $intersect_<id>(id :: id_later*, id_free*)
+def $rename_iter_vari(_, vari, _) = [ vari ]
+  -- otherwise
+
+def $rename_exp(R, (ITER typedExp (iter vari*)) '#' typ)
+  = (R_multi, (ITER typedExp_multi (iter vari_occ*)) '#' typ)
+  ---- ;; rename the occurrences inside the iteration
+  -- if (R_multi, typedExp_multi) = $rename_exp(R, typedExp)
+  ---- ;; iterate over the renamed occurrences the body still reads
+  -- if id_free* = $ids_of_varis($free_varis_exp(typedExp_multi))
+  -- if (vari_rename* = $rename_iter_vari(R_multi.OCC, vari, id_free*))*
+  -- if vari_occ* = $concat_<vari>(vari_rename**)
+
+;;; literalExp | opExp | downCastExp | subExp | matchExp
+;;; catExp | memExp | lenExp | accExp | updExp | callExp
+
+def $rename_exp(R, typedExp) = (R, typedExp)
+  -- if exp '#' _ = typedExp
+  -- if ~(exp <: varExp) /\ ~(exp <: upCastExp) /\ ~(exp <: tupExp)
+        /\ ~(exp <: injExp) /\ ~(exp <: strExp) /\ ~(exp <: optExp)
+        /\ ~(exp <: listExp) /\ ~(exp <: consExp) /\ ~(exp <: iterExp)
+
+;;
+;; Renaming repeated binders in pattern sequences
+;;
+;; syntax typedExp*
+;;
+
+def $rename_exps(R, eps) = (R, eps)
+def $rename_exps(R, typedExp_h :: typedExp_t*)
+  = (R_t, typedExp_h_multi :: typedExp_t_multi*)
+  -- if (R_h, typedExp_h_multi) = $rename_exp(R, typedExp_h)
+  -- if (R_t, typedExp_t_multi*) = $rename_exps(R_h, typedExp_t*)
+
+;;
+;; Renaming repeated binders in arguments
+;;
+;; syntax arg
+;;
+
+dec $rename_arg(renamer, arg) : (renamer, arg)
+  hint(prose_in "renaming the repeated binders of" %1 "with" %0)
+
+;;; expArg
+;;; syntax expArg = EXP typedExp
+
+def $rename_arg(R, EXP typedExp) = (R_multi, EXP typedExp_multi)
+  -- if (R_multi, typedExp_multi) = $rename_exp(R, typedExp)
+
+;;; funArg
+;;; syntax funArg = FUN id
+
+def $rename_arg(R, FUN id) = (R, FUN id)
+
+;;
+;; Renaming repeated binders in argument sequences
+;;
+;; syntax arg*
+;;
+
+dec $rename_args(renamer, arg*) : (renamer, arg*)
+  hint(prose_in "renaming the repeated binders of" %1 "with" %0)
+
+def $rename_args(R, eps) = (R, eps)
+def $rename_args(R, arg_h :: arg_t*) = (R_t, arg_h_multi :: arg_t_multi*)
+  -- if (R_h, arg_h_multi) = $rename_arg(R, arg_h)
+  -- if (R_t, arg_t_multi*) = $rename_args(R_h, arg_t*)

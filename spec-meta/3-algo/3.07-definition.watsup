@@ -1,0 +1,136 @@
+;;
+;; Rules
+;;
+;; syntax rulIL
+;;
+
+;; A rule binds its inputs, then runs its premises and returns its outputs
+
+rule Algo_rul:
+  AC inputHint |- rulIL : rulAL
+  -- if id ':' typedExp* '-' premIL* = rulIL
+  ---- ;; fresh identifiers avoid those of the rule
+  -- if id_used* = $ids_of_varis($free_varis_rulIL(rulIL))
+  -- if AC_rul = $add_used(AC, id_used*)
+  ---- ;; the inputs bind, decomposing partially bound patterns
+  -- if (typedExp_in*, typedExp_out*)
+      = $split_inputs<typedExp>(inputHint, typedExp*)
+  -- Bind_exps:
+      AC_rul eps |- typedExp_in* : AC_in typedExp_in_part* premAL_bind*
+  ---- ;; the premises run in order after the inputs
+  -- Algo_prems: AC_in |- premIL* : AC_body premAL*
+  ---- ;; the outputs read only bound variables
+  -- if vari_out* = $free_varis_exps(typedExp_out*)
+  -- if $is_bound_varis(AC_body, eps, vari_out*)
+  -- if rulAL
+      = id ':' typedExp_in_part* '->' typedExp_out*
+        '-' (premAL_bind* ++ premAL*)
+
+;;
+;; Clauses
+;;
+;; syntax clauseIL
+;;
+
+;; A clause binds its arguments, runs its premises, and returns its result
+
+rule Algo_clause:
+  AC |- clauseIL : clauseAL
+  -- if arg* '=' typedExp '-' premIL* = clauseIL
+  ---- ;; fresh identifiers avoid those of the clause
+  -- if id_used* = $ids_of_varis($free_varis_clauseIL(clauseIL))
+  -- if AC_clause = $add_used(AC, id_used*)
+  ---- ;; the arguments bind, decomposing partially bound patterns
+  -- Bind_args: AC_clause |- arg* : AC_arg arg_part* premAL_arg*
+  ---- ;; the premises run in order after the arguments
+  -- Algo_prems: AC_arg |- premIL* : AC_body premAL*
+  ---- ;; the result reads only bound variables
+  -- if vari_body* = $free_varis_exp(typedExp)
+  -- if $is_bound_varis(AC_body, eps, vari_body*)
+  -- if clauseAL
+      = arg_part* '=' typedExp '-' (premAL_arg* ++ premAL*)
+
+;;
+;; Definitions
+;;
+;; syntax defnIL
+;;
+
+;;; typDefn
+
+rule Algo_def/typ:
+  AC |- typDefn : typDefn
+
+;;; relDefnIL
+
+rulegroup Algo_def/rel {
+
+  ;;;; externRelDefnIL
+
+  rule Algo_def/extern:
+    AC |- externRelDefnIL : externRelDefnAL
+    -- if EXTREL id ':' typ* `( inputHint `) = externRelDefnIL
+    -- if (typ_in*, typ_out*) = $split_inputs<typ>(inputHint, typ*)
+    -- if externRelDefnAL = EXTREL id ':' typ_in* '->' typ_out*
+
+  ;;;; definedRelDefnIL
+
+  rule Algo_def/defined:
+    AC |- definedRelDefnIL : definedRelDefnAL
+    -- if REL id ':' typ* `( inputHint `) '=' rulGroupIL* elsGroupIL?
+        = definedRelDefnIL
+    ---- ;; split the types into inputs and outputs
+    -- if (typ_in*, typ_out*) = $split_inputs<typ>(inputHint, typ*)
+    ---- ;; convert every rule of each group with the same split
+    -- if (id_group ':' rulIL* = rulGroupIL)*
+    -- (Algo_rul: AC inputHint |- rulIL : rulAL)**
+    -- if (rulGroupAL = id_group ':' rulAL*)*
+    ---- ;; and the otherwise rule
+    -- if (id_else ':' rulIL_else = elsGroupIL)?
+    -- (Algo_rul: AC inputHint |- rulIL_else : rulAL_else)?
+    -- if (elsGroupAL = id_else ':' rulAL_else)?
+    -- if definedRelDefnAL
+        = REL id ':' typ_in* '->' typ_out* '=' rulGroupAL* elsGroupAL?
+
+}
+
+;;; funcDefnIL
+
+rulegroup Algo_def/func {
+
+  ;;;; externFuncDefn
+
+  rule Algo_def/extern:
+    AC |- externFuncDefn : externFuncDefn
+
+  ;;;; builtinFuncDefn
+
+  rule Algo_def/builtin:
+    AC |- builtinFuncDefn : builtinFuncDefn
+
+  ;;;; tableFuncDefnIL
+
+  rule Algo_def/table:
+    AC |- tableFuncDefnIL : tableFuncDefnAL
+    -- if TABLEFUNC id param* ':' typ '=' tblRowIL* = tableFuncDefnIL
+    ---- ;; the parameters are the keys of the table
+    -- if (EXP typ_param)* = param*
+    ---- ;; convert the rows and check that they cover their keys
+    -- (Algo_tblRow: AC |- tblRowIL : tblRowAL)*
+    -- Cover_tblRows: AC typ_param* |- tblRowIL*
+    -- if tableFuncDefnAL = TABLEFUNC id param* ':' typ '=' tblRowAL*
+
+  ;;;; definedFuncDefnIL
+
+  rule Algo_def/defined:
+    AC |- definedFuncDefnIL : definedFuncDefnAL
+    -- if FUNC id tparam* param* ':' typ '=' clauseIL* elsClauseIL?
+        = definedFuncDefnIL
+    ---- ;; type parameters are in scope in every clause
+    -- if AC_func = $add_tparams(AC, tparam*)
+    -- (Algo_clause: AC_func |- clauseIL : clauseAL)*
+    -- (Algo_clause: AC_func |- elsClauseIL : elsClauseAL)?
+    -- if definedFuncDefnAL
+        = FUNC id tparam* param* ':' typ '=' clauseAL* elsClauseAL?
+
+}

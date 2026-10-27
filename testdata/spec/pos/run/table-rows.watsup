@@ -1,0 +1,16 @@
+;; Table rows select cases, take the first matching row, and fall back to a wildcard
+
+syntax color = RED | GREEN | BLUE
+syntax warm = RED
+
+tbl dec $is_cool(color) : bool
+tbl def $is_cool =
+  | warm => false
+  | GREEN => true
+  | _ => true
+
+dec $main() : bool
+def $main() = true
+  -- if ~$is_cool(RED)
+  -- if $is_cool(GREEN)
+  -- if $is_cool(BLUE)

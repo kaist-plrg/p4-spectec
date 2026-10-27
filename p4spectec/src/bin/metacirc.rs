@@ -1,7 +1,7 @@
 //! Command-line specification transformation and AL metacircular execution
 //!
-//! Transformation commands accept ordered specification paths.
-//! The run command requires a tower configuration for AL and P4 inputs.
+//! `algo`, `struct`, and `prose` transform ordered specification paths natively.
+//! `run-meta` requires a tower configuration for AL, IL, and P4 inputs.
 //! Structured diagnostics are rendered at the CLI boundary.
 //! Success is printed only after the configured outer entry finishes.
 
@@ -30,7 +30,7 @@ enum Command {
     /// Convert specifications and print the prose representation.
     Prose(SpecArgs),
     /// Execute a program through a JSON-configured interpreter tower.
-    Run(RunArgs),
+    RunMeta(RunMetaArgs),
 }
 
 #[derive(Args)]
@@ -60,7 +60,7 @@ impl Options {
 }
 
 #[derive(Args)]
-struct RunArgs {
+struct RunMetaArgs {
     /// Tower configuration, ordered from native base to top level.
     config: PathBuf,
     /// Program source paths in processing order; P4 requires exactly one.
@@ -100,7 +100,7 @@ fn run(cli: Cli) -> metacirc::Result<()> {
         Command::Algo(args) => print_spec(p4spectec::algo_with_warnings(&args.paths)),
         Command::Struct(args) => print_spec(p4spectec::structure_with_warnings(&args.paths, true)),
         Command::Prose(args) => print_spec(p4spectec::prosify_with_warnings(&args.paths)),
-        Command::Run(args) => {
+        Command::RunMeta(args) => {
             let config = TowerConfig::from_file(&args.config)?;
             metacirc::run(&config, &args.includes, &args.program, args.options.config())?;
             println!("passed");

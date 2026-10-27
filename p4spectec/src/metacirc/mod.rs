@@ -1,24 +1,25 @@
-//! Configured AL interpreter towers over AL or P4 inputs
+//! Configured interpreter towers over AL, IL, or P4 inputs
 //!
 //! Each runner is prepared in the arena used by all of its calls.
-//! Meta externs decode one level of arguments and reenter the next runner.
-//! The outer interpreter may execute AL or SL; every represented script is AL.
+//! Only the base runs natively; meta externs decode one level of arguments
+//! and relay them to the host of the next level.
+//! The native base may execute AL or SL.
 
 mod build;
-mod codec;
 pub mod config;
 mod error;
-mod externs;
+mod host;
 mod patch;
 mod tower;
 
 use crate::{
-    interface::{al::encode::Encode, p4::parse::parse_file},
+    interface::{self, p4::parse::parse_file},
     lang::data::arena::Arena,
-    runner,
+    runner::{self, Interface},
+    sim_plugin::dummy::Dummy,
 };
+use config::Lang;
 pub use config::{ExecutionMode, TowerConfig};
-use config::{Lang, ProgramConfig};
 use std::path::PathBuf;
 
 pub use error::Result;
@@ -35,24 +36,19 @@ pub fn run(
     if paths_program.is_empty() {
         return Err(error::input_invalid("a tower requires at least one program path"));
     }
+    let lang_top = config.top_lang();
+    // P4 inputs contain exactly one translation unit
+    if lang_top == Lang::P4 && paths_program.len() != 1 {
+        return Err(error::input_invalid("a P4 top level requires exactly one program path"));
+    }
     let mut arena = Arena::new();
-    // Prepare the input environment by the top level's configured language
-    let program = match config.top_lang() {
-        // AL builtins must resolve against the actual input definitions
-        Lang::Al => ProgramConfig::Al { spec_al: crate::algo(paths_program)? },
-        // P4 inputs contain exactly one translation unit
-        Lang::P4 if paths_program.len() == 1 => ProgramConfig::P4,
-        Lang::P4 => {
-            return Err(error::input_invalid("a P4 top level requires exactly one program path"));
-        }
-    };
-    let mut tower = Tower::build(&mut arena, config, &program, options)?;
-    let value_program = match &program {
-        // Use the same AL definitions for builtin calls and input encoding
-        ProgramConfig::Al { spec_al } => spec_al
-            .encode(&mut arena)
+    let mut tower = Tower::build(&mut arena, config, options, Dummy)?;
+    // Parse the input in the language the top level accepts
+    let value_program = match lang_top {
+        Lang::Al | Lang::Il => interface::meta(lang_top)
+            .parse_program(&mut arena, includes, paths_program)
             .map_err(|error| error.into_report())?,
-        ProgramConfig::P4 => parse_file(&mut arena, includes, &paths_program[0])
+        Lang::P4 => parse_file(&mut arena, includes, &paths_program[0])
             .map_err(|error| error.into_report())?,
     };
     // Encoding errors propagate before entering the native base

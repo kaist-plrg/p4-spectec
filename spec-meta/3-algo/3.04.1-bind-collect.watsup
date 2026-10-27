@@ -1,0 +1,161 @@
+;;
+;; Binder collection in expressions
+;;
+;; syntax typedExp
+;;
+
+;; Unbound variables in a pattern are its binders.
+;; Binders may appear only through invertible constructs:
+;; upcasts, tuples, constructors, structs, options, lists, conses, and iterations.
+;; Any other construct binds nothing, so all of its variables must be bound;
+;; `-- if (x, y + 1) = e` with `y` unbound has no AL.
+
+;;; varExp
+;;; syntax varExp = VAR id
+
+rulegroup Collectbind_exp/variable {
+
+  rule Collectbind_exp/bound:
+    AC |- (VAR id) '#' _ : eps
+    -- if id <- $ids_of_varis(AC.BOUND)
+
+  rule Collectbind_exp/binder:
+    AC |- (VAR id) '#' typ : [ id typ eps ]
+    -- if ~(id <- $ids_of_varis(AC.BOUND))
+
+}
+
+;;; upCastExp
+;;; syntax upCastExp = UPCAST typ typedExp
+
+rule Collectbind_exp/upcast:
+  AC |- (UPCAST _ typedExp) '#' _ : vari*
+  -- Collectbind_exp: AC |- typedExp : vari*
+
+;;; tupExp
+;;; syntax tupExp = TUP typedExp*
+
+rule Collectbind_exp/tuple:
+  AC |- (TUP typedExp*) '#' _ : vari*
+  -- Collectbind_exps: AC |- typedExp* : vari*
+
+;;; injExp
+;;; syntax injExp = INJ expCase
+
+rule Collectbind_exp/case:
+  AC |- (INJ (_ typedExp*)) '#' _ : vari*
+  -- Collectbind_exps: AC |- typedExp* : vari*
+
+;;; strExp
+;;; syntax strExp = STR expField*
+
+rule Collectbind_exp/struct:
+  AC |- (STR expField*) '#' _ : vari*
+  -- (if _ typedExp = expField)*
+  -- Collectbind_exps: AC |- typedExp* : vari*
+
+;;; optExp
+;;; syntax optExp = OPT typedExp?
+
+rulegroup Collectbind_exp/opt {
+
+  rule Collectbind_exp/none:
+    AC |- (OPT eps) '#' _ : eps
+
+  rule Collectbind_exp/some:
+    AC |- (OPT typedExp) '#' _ : vari*
+    -- Collectbind_exp: AC |- typedExp : vari*
+
+}
+
+;;; listExp
+;;; syntax listExp = LIST typedExp*
+
+rule Collectbind_exp/list:
+  AC |- (LIST typedExp*) '#' _ : vari*
+  -- Collectbind_exps: AC |- typedExp* : vari*
+
+;;; consExp
+;;; syntax consExp = CONS typedExp typedExp
+
+rule Collectbind_exp/cons:
+  AC |- (CONS typedExp_h typedExp_t) '#' _ : vari*
+  -- Collectbind_exps:
+      AC |- [ typedExp_h, typedExp_t ] : vari*
+
+;;; iterExp
+;;; syntax iterExp = ITER typedExp expIter
+
+rule Collectbind_exp/iter:
+  AC |- (ITER typedExp (iter _)) '#' _ : vari_iter*
+  -- Collectbind_exp: AC |- typedExp : vari*
+  -- if (vari_iter = $iterate_vari(vari, [ iter ]))*
+
+;;; literalExp | opExp | downCastExp | subExp | matchExp
+;;; catExp | memExp | lenExp | accExp | updExp | callExp
+
+rule Collectbind_exp/noninvertible:
+  AC |- typedExp : eps
+  ---- ;; the construct is not invertible
+  -- if exp '#' _ = typedExp
+  -- if ~(exp <: varExp) /\ ~(exp <: upCastExp) /\ ~(exp <: tupExp)
+        /\ ~(exp <: injExp) /\ ~(exp <: strExp) /\ ~(exp <: optExp)
+        /\ ~(exp <: listExp) /\ ~(exp <: consExp) /\ ~(exp <: iterExp)
+  ---- ;; so all of its variables must be bound
+  -- if id* = $ids_of_varis($free_varis_exp(typedExp))
+  -- if $forall_((id <- $ids_of_varis(AC.BOUND))*)
+
+;;
+;; Binder collection in expression sequences
+;;
+;; syntax typedExp*
+;;
+
+rulegroup Collectbind_exps {
+
+  rule Collectbind_exps/nil:
+    AC |- eps : eps
+
+  rule Collectbind_exps/cons:
+    AC |- typedExp_h :: typedExp_t* : vari_h* ++ vari_t*
+    -- Collectbind_exp: AC |- typedExp_h : vari_h*
+    -- Collectbind_exps: AC |- typedExp_t* : vari_t*
+
+}
+
+;;
+;; Binder collection in arguments
+;;
+;; syntax arg
+;;
+
+;;; expArg
+;;; syntax expArg = EXP typedExp
+
+rule Collectbind_arg/exp:
+  AC |- EXP typedExp : vari*
+  -- Collectbind_exp: AC |- typedExp : vari*
+
+;;; funArg
+;;; syntax funArg = FUN id
+
+rule Collectbind_arg/fun:
+  AC |- funArg : eps
+
+;;
+;; Binder collection in argument sequences
+;;
+;; syntax arg*
+;;
+
+rulegroup Collectbind_args {
+
+  rule Collectbind_args/nil:
+    AC |- eps : eps
+
+  rule Collectbind_args/cons:
+    AC |- arg_h :: arg_t* : vari_h* ++ vari_t*
+    -- Collectbind_arg: AC |- arg_h : vari_h*
+    -- Collectbind_args: AC |- arg_t* : vari_t*
+
+}

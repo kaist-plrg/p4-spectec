@@ -1,0 +1,73 @@
+;; Input positions
+
+syntax inputHint = nat*
+
+;; Iteration premises
+
+;; Elaborated iterations list their sources; binders are decided by `Algo_prem`
+
+syntax premIterIL = iter vari*
+
+;; Premises
+
+syntax premIL
+
+syntax relPremIL =
+  REL id ':' typedExp* `( inputHint `)
+
+syntax iterPremIL =
+  ITER premIL premIterIL
+
+syntax premIL =
+  | relPremIL
+  | ifPrem
+  | ifHoldPrem
+  | ifNotHoldPrem
+  | iterPremIL
+  | debugPrem
+
+;; Relation definitions
+
+syntax externRelDefnIL =
+  EXTREL id ':' typ* `( inputHint `)
+
+syntax rulIL = id ':' typedExp* '-' premIL*
+syntax rulGroupIL = id ':' rulIL*
+syntax elsGroupIL = id ':' rulIL
+
+syntax definedRelDefnIL =
+  REL id ':' typ* `( inputHint `) '=' rulGroupIL* elsGroupIL?
+
+syntax relDefnIL =
+  | externRelDefnIL
+  | definedRelDefnIL
+
+;; Meta-functions
+
+syntax tblRowIL = arg* '=' typedExp
+
+syntax tableFuncDefnIL =
+  TABLEFUNC id param* ':' typ '=' tblRowIL*
+
+syntax clauseIL = arg* '=' typedExp '-' premIL*
+syntax elsClauseIL = clauseIL
+
+syntax definedFuncDefnIL =
+  FUNC id tparam* param* ':' typ '=' clauseIL* elsClauseIL?
+
+syntax funcDefnIL =
+  | externFuncDefn
+  | builtinFuncDefn
+  | tableFuncDefnIL
+  | definedFuncDefnIL
+
+;; Definitions
+
+syntax defnIL =
+  | typDefn
+  | relDefnIL
+  | funcDefnIL
+
+;; Specifications
+
+syntax specIL = defnIL*

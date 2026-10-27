@@ -1,56 +1,66 @@
-//! Preparation of top, intermediate, and base levels
-//!
-//! Lowered specifications stay paired with their configured entry and input language.
-//! Layers are assembled from the top level toward the base;
-//! patched scripts carry each inner entry to the interpreter consuming them.
-//!
-//! Construction and execution for `[base, interm, top]`:
+//! Construction of a tower's levels and layers
 //!
 //! ```text
-//! Tower::build(config) -- once          Tower::patch(program) -- per input
-//!             |                                      |
-//!       lower levels                        parsed program Value
-//!             |                                      |
-//!       build_top(top)                      entry(top) + encode
-//!             |                                      |
-//!       Layer::AlSpec or Layer::P4Spec      encoded top script
-//!             |                                      |
-//!       build_relay(interm, layer)          entry(interm) + encode
-//!             |                                      |
-//!       Layer::AlSpec                       encoded intermediate script
-//!             |                                      |
-//!       build_relay(base, layer)                     |
-//!             |                                      |
-//!       Tower { levels, base }                       Value
-//!             |                                      |
-//!             +-------------------+------------------+
-//!                                 |
-//!                        Tower::eval_program
+//!   +-------------+-------------+
+//!   | Builtin P4  | Extern P4   |   top     HostLayer::P4Spec, Ext
+//!   +-------------+-------------+
+//!                 ^ layer_next
+//!   +-------------+-------------+
+//!   | Builtin ST  | Extern ST   |   interm  HostLayer::MetaSpec, RelayExtern
+//!   +-------------+-------------+
+//!                 ^ layer_next
+//!   +-------------+-------------+
+//!   | Builtin ST  | Extern ST   |   base    BaseLayer::MetaSpec, RelayExtern
+//!   +-------------+-------------+
+//!   |  Interp(base AL): entry   |
+//!   +---------------------------+
 //! ```
 //!
-//! Both chains run from top toward base; the base is never encoded.
-//! Before each input, reset every runner and then the arena values before parsing.
-//! A single-level tower uses its top level as the base and consumes the input unchanged.
-//! AL input definitions supply the terminal builtin runner during construction.
+//! Only the base runs natively, as a runner with an interpreter.
+//! A level above it is interpreted by the level below,
+//! so it is a host that answers relayed builtin and host calls.
+//! An AL or IL top ends the chain at its program, whose builtins
+//! go to the program's interface:
+//!
+//! ```text
+//!   +-------------+
+//!   | Builtin     |                 interface_program
+//!   +-------------+
+//!                 ^ builtin calls only
+//!   +-------------+-------------+
+//!   | Builtin ST  | Extern ST   |   top     MetaSpec, TerminalExtern
+//!   +-------------+-------------+
+//!   | Interp(top AL) if base    |
+//!   +---------------------------+
+//! ```
+//!
+//! | level below accepts | `Level`   | patched into the level below |
+//! |---------------------|-----------|------------------------------|
+//! | none (base)         | `Base`    | —                            |
+//! | `al`                | `AboveAl` | AL                           |
+//! | `il`                | `AboveIl` | IL                           |
 
 use super::{
     ExecutionMode, Result, TowerConfig,
-    config::{Lang, ProgramConfig},
+    config::Lang,
     error::config_invalid,
-    externs::{AlExtern, RelayExtern, TerminalExtern},
-    tower::{Layer, Level, Tower},
+    host::{HostLayer, MetaExtern, RelayExtern, TerminalExtern},
+    tower::{BaseLayer, Level, Tower},
 };
 use crate::{
-    interface::{self, al::Cache},
+    interface::{
+        self,
+        meta::{MetaInterface, shared::Cache},
+        p4::{P4Interface, unparse::P4Unparser},
+    },
     lang::{al::ast as al, data::arena::Arena},
     pass::structure,
-    runner::{self, NullExtern, Runner, Spec},
-    sim_plugin::dummy::Dummy,
+    runner::{self, Extern, Host, Runner, Spec},
 };
 
-// == Runner construction
+// == Helpers
 
-/// Converts lowered AL into the representation selected for the runner.
+/// Converts the AL of a specification into the representation selected for the runner.
 fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
     match mode {
         ExecutionMode::Al => Ok(Spec::Al(spec_al)),
@@ -58,95 +68,151 @@ fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
     }
 }
 
-/// Prepares the top level, hosting the AL program or taking a P4 program.
-fn build_top(
-    arena: &mut Arena,
-    top: &Level,
-    mode: ExecutionMode,
-    program: &ProgramConfig,
-    options: runner::Config,
-) -> Result<Layer> {
-    let spec_top = into_runner_spec(mode, top.spec_al.clone())?;
-    match program {
-        ProgramConfig::Al { spec_al } => {
-            // Prepare the input script's definition environment for builtin calls
-            let spec_program = into_runner_spec(mode, spec_al.clone())?;
-            let runner_program =
-                Runner::new(arena, spec_program, options, interface::al(), NullExtern)?;
-            // Run the AL specification with builtin calls delegated to runner_program
-            let external = AlExtern::Terminal(TerminalExtern {
-                cache: Box::new(Cache::new(options.cache)),
-                runner_program: Box::new(runner_program),
-            });
-            let runner = Runner::new(arena, spec_top, options, interface::al(), external)?;
-            Ok(Layer::AlSpec(runner))
+// == Level parts
+
+/// A level's interface and extern, before it becomes the base runner or a host.
+enum Parts<Ext: Extern> {
+    P4Spec(P4Interface, Ext),
+    MetaSpec(MetaInterface, MetaExtern<Ext>),
+}
+
+impl<Ext: Extern> Parts<Ext> {
+    /// Makes a level above the base, which the level below interprets.
+    fn into_host(self) -> HostLayer<Ext> {
+        match self {
+            Self::P4Spec(interface, external) => HostLayer::P4Spec(Host::new(interface, external)),
+            Self::MetaSpec(interface, external) => {
+                HostLayer::MetaSpec(Host::new(interface, external))
+            }
         }
-        ProgramConfig::P4 => {
+    }
+
+    /// Makes the base, which executes its specification natively.
+    fn into_base(
+        self,
+        arena: &mut Arena,
+        spec_base_al: al::Spec,
+        mode: ExecutionMode,
+        options: runner::Config,
+    ) -> Result<BaseLayer<Ext>> {
+        let spec_base = into_runner_spec(mode, spec_base_al)?;
+        Ok(match self {
+            Self::P4Spec(interface, external) => {
+                BaseLayer::P4Spec(Runner::new(arena, spec_base, options, interface, external)?)
+            }
+            Self::MetaSpec(interface, external) => {
+                BaseLayer::MetaSpec(Runner::new(arena, spec_base, options, interface, external)?)
+            }
+        })
+    }
+}
+
+// == Level construction
+
+/// Prepares a meta top level whose program's builtins go to an interface.
+fn build_terminal<Ext: Extern>(lang_top: Lang, options: runner::Config) -> Parts<Ext> {
+    // The meta specification interprets the program; nothing runs it natively
+    let external = MetaExtern::Terminal(TerminalExtern {
+        cache: Box::new(Cache::new(options.cache)),
+        interface_program: Box::new(interface::meta(Lang::Al)),
+    });
+    Parts::MetaSpec(interface::meta(lang_top), external)
+}
+
+/// Prepares the top level, hosting the AL or IL program or taking a P4 program.
+///
+/// Only a P4 top level uses `external_p4`.
+fn build_top<Ext: Extern>(
+    level_top: &Level,
+    spec_base_al: &al::Spec,
+    lang_top: Lang,
+    options: runner::Config,
+    external_p4: Ext,
+) -> Parts<Ext> {
+    match lang_top {
+        Lang::Al | Lang::Il => build_terminal(lang_top, options),
+        Lang::P4 => {
+            // Read print hints from the form the top level is prepared in
+            let unparser = match level_top {
+                Level::Base { .. } => P4Unparser::from_al_spec(spec_base_al),
+                Level::AboveAl { spec_al, .. } => P4Unparser::from_al_spec(spec_al),
+                Level::AboveIl { spec_il, .. } => P4Unparser::from_il_spec(spec_il),
+            };
             // Prepare the P4 host environment independently of program parsing
-            let interface_top = interface::p4(&spec_top);
-            let runner = Runner::new(arena, spec_top, options, interface_top, Dummy)?;
-            Ok(Layer::P4Spec(runner))
+            Parts::P4Spec(interface::p4_with_unparser(unparser), external_p4)
         }
     }
 }
 
-/// Prepares a level beneath an already built layer, relaying host calls to it.
-fn build_relay(
-    arena: &mut Arena,
-    level: &Level,
-    mode: ExecutionMode,
-    layer_next: Layer,
+/// Prepares a level beneath an already built host, relaying host calls to it.
+fn build_relay<Ext: Extern>(
+    lang_level: Lang,
+    layer_next: HostLayer<Ext>,
     options: runner::Config,
-) -> Result<Layer> {
-    let spec = into_runner_spec(mode, level.spec_al.clone())?;
-    let external = AlExtern::Relay(RelayExtern {
+) -> Parts<Ext> {
+    let external = MetaExtern::Relay(RelayExtern {
         cache: Box::new(Cache::new(options.cache)),
         layer_next: Box::new(layer_next),
     });
-    Ok(Layer::AlSpec(Runner::new(arena, spec, options, interface::al(), external)?))
+    Parts::MetaSpec(interface::meta(lang_level), external)
 }
 
 // == Tower assembly
 
-impl Tower {
+impl<Ext: Extern> Tower<Ext> {
     /// Prepares a tower without parsing or encoding its input.
     ///
-    /// The program supplies AL input definitions for terminal builtin calls.
+    /// Only the base is converted for a native runner;
+    /// every other level is prepared in the form the level below accepts.
     /// All calls must use the construction arena.
+    /// A P4 top level uses `external_p4` as its extern.
     pub fn build(
         arena: &mut Arena,
         config: &TowerConfig,
-        program: &ProgramConfig,
         options: runner::Config,
+        external_p4: Ext,
     ) -> Result<Self> {
-        // The input environment must match the top level's language
-        match (config.top_lang(), program) {
-            (Lang::Al, ProgramConfig::Al { .. }) | (Lang::P4, ProgramConfig::P4) => {}
-            _ => {
-                return Err(config_invalid(
-                    "program language must match the top level of the tower",
-                ));
-            }
-        }
-        // Lower each specification once, preserving base-to-top order
+        // Prepare each specification once, from base to top, into its Level;
+        // the base is also converted for its native runner
         let levels = config
             .levels
             .iter()
-            .map(|config| {
-                let spec_al = crate::algo(std::slice::from_ref(&config.specdir))?;
-                Ok(Level { config: config.clone(), spec_al })
+            .enumerate()
+            .map(|(idx, config_level)| {
+                let paths = std::slice::from_ref(&config_level.specdir);
+                let lang_below = idx
+                    .checked_sub(1)
+                    .map(|idx_below| config.levels[idx_below].lang);
+                Ok(match lang_below {
+                    None => Level::Base { config: config_level.clone() },
+                    Some(Lang::Al) => Level::AboveAl {
+                        config: config_level.clone(),
+                        spec_al: crate::algo(paths)?,
+                    },
+                    Some(Lang::Il) => Level::AboveIl {
+                        config: config_level.clone(),
+                        spec_il: crate::elab(paths)?,
+                    },
+                    Some(_) => {
+                        return Err(config_invalid(format!(
+                            "invalid language at level {}: expected al or il",
+                            idx - 1
+                        )));
+                    }
+                })
             })
             .collect::<Result<Vec<_>>>()?;
+        let spec_base_al = crate::algo(std::slice::from_ref(&config.levels[0].specdir))?;
 
-        // Only the base uses the configured native execution mode
-        let mode = |idx| if idx == 0 { config.mode } else { ExecutionMode::Sl };
-        let (top, levels_lower) = levels.split_last().expect("validated nonempty tower");
-        let mut layer = build_top(arena, top, mode(levels_lower.len()), program, options)?;
-
-        // Assemble the levels beneath the top level down to the native base
-        for (idx, level) in levels_lower.iter().enumerate().rev() {
-            layer = build_relay(arena, level, mode(idx), layer, options)?;
+        // Assemble the levels from the top down, each level above the base
+        // becoming the host of the level beneath it
+        let level_top = levels.last().expect("validated nonempty tower");
+        let mut parts =
+            build_top(level_top, &spec_base_al, config.top_lang(), options, external_p4);
+        for idx in (0..levels.len() - 1).rev() {
+            parts = build_relay(config.levels[idx].lang, parts.into_host(), options);
         }
-        Ok(Self { levels, base: layer })
+        let base = parts.into_base(arena, spec_base_al, config.mode, options)?;
+        Ok(Self { levels, base })
     }
 }

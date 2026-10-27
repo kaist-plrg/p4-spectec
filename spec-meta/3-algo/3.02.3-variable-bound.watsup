@@ -1,0 +1,49 @@
+;;
+;; Bound variables
+;;
+;; syntax vari*
+;;
+
+;;; Variable reads
+
+;; A variable read under iterations is bound when a bound variable of its name
+;; has a dimension that the read, iterated by the enclosing iterations, extends:
+;; a scalar may be read inside an iteration, but an iterated variable
+;; may not be read as a scalar
+
+dec $is_bound_vari(vari*, vari) : bool
+  hint(prose_true %1 "is bound by some variable in" %0)
+  hint(prose_false %1 "is bound by no variable in" %0)
+
+def $is_bound_vari(eps, _) = false
+def $is_bound_vari(vari_h :: _, vari) = true
+  ---- ;; a variable of the same name has a dimension the read extends
+  -- if id _ _ = vari
+  -- if id _ _ = vari_h
+  -- if $is_prefix_dim(vari_h, vari)
+def $is_bound_vari(vari_h :: vari_t*, vari) = $is_bound_vari(vari_t*, vari)
+  ---- ;; the head has another name or a dimension the read does not extend
+  -- if id _ _ = vari
+  -- if id_h _ _ = vari_h
+  -- if id_h =/= id \/ ~$is_prefix_dim(vari_h, vari)
+
+dec $is_bound_varis(algoCtx, iterCtx, vari*) : bool
+  hint(prose_true "variables" %2 "read under" %1 "are all bound in" %0)
+  hint(prose_false "some variable in" %2 "read under" %1 "is not bound in" %0)
+
+def $is_bound_varis(AC, IC, vari*)
+  = $forall_($is_bound_vari(AC.BOUND, $iterate_vari(vari, iter*))*)
+  -- if (iter _)* = IC
+
+;;; Sub-patterns
+
+;; A sub-pattern is compared rather than decomposed
+;; when all of its variables are bound, by name alone
+
+dec $is_bound_exp(algoCtx, typedExp) : bool
+  hint(prose_true "every variable of" %1 "is bound under" %0)
+  hint(prose_false "some variable of" %1 "is not bound under" %0)
+
+def $is_bound_exp(AC, typedExp) = $forall_((id <- id_bound*)*)
+  -- if id* = $ids_of_varis($free_varis_exp(typedExp))
+  -- if id_bound* = $ids_of_varis(AC.BOUND)

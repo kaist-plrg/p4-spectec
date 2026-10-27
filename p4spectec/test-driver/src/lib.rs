@@ -15,6 +15,8 @@ pub mod elab;
 
 pub mod algo;
 
+pub mod metaparse;
+
 pub mod structure;
 
 pub mod prose;

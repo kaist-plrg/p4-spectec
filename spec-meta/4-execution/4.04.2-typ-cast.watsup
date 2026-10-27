@@ -1,0 +1,105 @@
+;;
+;; Type casts
+;;
+
+syntax castRes = ok<val> | error
+syntax castsRes = ok<val*> | error
+
+;;; Upcasts
+
+dec $upcast(ctx, typ, val) : castRes
+  hint(prose_in "the result of upcasting" %2 "to" %1 "under context" %0)
+dec $upcasts(ctx, typ*, val*) : castsRes
+  hint(prose_in "the result of upcasting values" %2 "to types" %1 "under context" %0)
+
+def $upcast(C, INT, INT i) = OK (INT i)
+def $upcast(C, INT, NAT n) = OK (INT n)
+def $upcast(C, VAR id targ*, val) = $upcast(C, typ_subst, val)
+  -- if TYP _ tparam* '=' (ALIAS typ) = $find_typ(C, id)
+  -- if theta = `{ (tparam ':' targ)* `}
+  -- if OK typ_subst = $subst_typ(theta, typ)
+def $upcast(C, VAR id targ*, val) = OK val
+  -- if TYP _ tparam* '=' (VARIANT typCase*) = $find_typ(C, id)
+  -- if `{ (id_local ':' typDef_local)* `} = C.LOCAL.TYP
+  -- if tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*, typDef_local*)
+  -- if OK true = $subtyp(C.GLOBAL.FUNC, tdenv, VAR id targ*, val)
+def $upcast(C, VAR id targ*, val) = OK val
+  -- if TYP _ tparam* '=' (STRUCT typField*) = $find_typ(C, id)
+  -- if `{ (id_local ':' typDef_local)* `} = C.LOCAL.TYP
+  -- if tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*, typDef_local*)
+  -- if OK true = $subtyp(C.GLOBAL.FUNC, tdenv, VAR id targ*, val)
+def $upcast(C, VAR id eps, EXT json) = OK (EXT json)
+  -- if EXTTYP _ = $find_typ(C, id)
+def $upcast(C, TUP typ*, TUP val*) = OK (TUP val_cast*)
+  -- if OK val_cast* = $upcasts(C, typ*, val*)
+def $upcast(C, ITER typ QUEST, OPT eps) = OK (OPT eps)
+def $upcast(C, ITER typ QUEST, OPT val) = OK (OPT val_cast)
+  -- if OK val_cast = $upcast(C, typ, val)
+def $upcast(C, ITER typ STAR, LIST val*) = OK (LIST val_cast*)
+  -- if OK val_cast* = $upcasts(C, $repeat_<typ>(typ, |val*|), val*)
+def $upcast(C, BOOL, BOOL b) = OK (BOOL b)
+def $upcast(C, TEXT, TEXT t) = OK (TEXT t)
+def $upcast(C, NAT, NAT n) = OK (NAT n)
+def $upcast(C, FUNC tparam* typ* typ_ret, FUNC id) = OK (FUNC id)
+  -- if `{ (id_local ':' typDef_local)* `} = C.LOCAL.TYP
+  -- if tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*, typDef_local*)
+  -- if OK true = $subtyp(C.GLOBAL.FUNC, tdenv, FUNC tparam* typ* typ_ret, FUNC id)
+def $upcast(C, typ, val) = ERROR
+  -- otherwise
+
+def $upcasts(C, eps, eps) = OK eps
+def $upcasts(C, typ_h :: typ_t*, val_h :: val_t*) = OK (val_cast :: val_t_cast*)
+  -- if OK val_cast = $upcast(C, typ_h, val_h)
+  -- if OK val_t_cast* = $upcasts(C, typ_t*, val_t*)
+def $upcasts(C, typ*, val*) = ERROR
+  -- otherwise
+
+;;; Downcasts
+
+dec $downcast(ctx, typ, val) : castRes
+  hint(prose_in "the result of downcasting" %2 "to" %1 "under context" %0)
+dec $downcasts(ctx, typ*, val*) : castsRes
+  hint(prose_in "the result of downcasting values" %2 "to types" %1 "under context" %0)
+
+def $downcast(C, NAT, NAT n) = OK (NAT n)
+def $downcast(C, NAT, INT i) = OK (NAT n)
+  -- if n = i
+def $downcast(C, VAR id targ*, val) = $downcast(C, typ_subst, val)
+  -- if TYP _ tparam* '=' (ALIAS typ) = $find_typ(C, id)
+  -- if theta = `{ (tparam ':' targ)* `}
+  -- if OK typ_subst = $subst_typ(theta, typ)
+def $downcast(C, VAR id targ*, val) = OK val
+  -- if TYP _ tparam* '=' (VARIANT typCase*) = $find_typ(C, id)
+  -- if `{ (id_local ':' typDef_local)* `} = C.LOCAL.TYP
+  -- if tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*, typDef_local*)
+  -- if OK true = $subtyp(C.GLOBAL.FUNC, tdenv, VAR id targ*, val)
+def $downcast(C, VAR id targ*, val) = OK val
+  -- if TYP _ tparam* '=' (STRUCT typField*) = $find_typ(C, id)
+  -- if `{ (id_local ':' typDef_local)* `} = C.LOCAL.TYP
+  -- if tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*, typDef_local*)
+  -- if OK true = $subtyp(C.GLOBAL.FUNC, tdenv, VAR id targ*, val)
+def $downcast(C, VAR id eps, EXT json) = OK (EXT json)
+  -- if EXTTYP _ = $find_typ(C, id)
+def $downcast(C, TUP typ*, TUP val*) = OK (TUP val_cast*)
+  -- if OK val_cast* = $downcasts(C, typ*, val*)
+def $downcast(C, ITER typ QUEST, OPT eps) = OK (OPT eps)
+def $downcast(C, ITER typ QUEST, OPT val) = OK (OPT val_cast)
+  -- if OK val_cast = $downcast(C, typ, val)
+def $downcast(C, ITER typ STAR, LIST val*) = OK (LIST val_cast*)
+  -- if OK val_cast* = $downcasts(C, $repeat_<typ>(typ, |val*|), val*)
+def $downcast(C, BOOL, BOOL b) = OK (BOOL b)
+def $downcast(C, TEXT, TEXT t) = OK (TEXT t)
+def $downcast(C, INT, num) = OK num
+def $downcast(C, FUNC tparam* typ* typ_ret, FUNC id) = OK (FUNC id)
+  -- if `{ (id_local ':' typDef_local)* `} = C.LOCAL.TYP
+  -- if tdenv = $adds_map<id, typDef>(C.GLOBAL.TYP, id_local*, typDef_local*)
+  -- if OK true = $subtyp(C.GLOBAL.FUNC, tdenv, FUNC tparam* typ* typ_ret, FUNC id)
+def $downcast(C, typ, val) = ERROR
+  -- otherwise
+
+def $downcasts(C, eps, eps) = OK eps
+def $downcasts(C, typ_h :: typ_t*, val_h :: val_t*) = OK (val_cast :: val_t_cast*)
+  -- if OK val_cast = $downcast(C, typ_h, val_h)
+  -- if OK val_t_cast* = $downcasts(C, typ_t*, val_t*)
+def $downcasts(C, typ*, val*) = ERROR
+  -- otherwise

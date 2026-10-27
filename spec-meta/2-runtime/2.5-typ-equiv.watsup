@@ -1,0 +1,104 @@
+;; Type equivalence
+
+;;; Outer alias expansion
+
+dec $expand_typ(tdenv, typ) : typRes
+  hint(prose_in "the result of expanding outer type aliases of" %1
+                "under type environment" %0)
+def $expand_typ(tdenv, VAR id targ*) = $expand_typ(tdenv, typ_subst)
+  -- if TYP _ tparam* '=' (ALIAS typ) = $find_map<id, typDef>(tdenv, id)
+  -- if theta = `{ (tparam ':' targ)* `}
+  -- if OK typ_subst = $subst_typ(theta, typ)
+def $expand_typ(tdenv, VAR id targ*) = OK (VAR id targ*)
+  -- if typDef = $find_map<id, typDef>(tdenv, id)
+  -- if typDef = PARAM
+  -- if targ* = eps
+def $expand_typ(tdenv, VAR id eps) = OK (VAR id eps)
+  -- if EXTTYP _ = $find_map<id, typDef>(tdenv, id)
+def $expand_typ(tdenv, VAR id targ*) = OK (VAR id targ*)
+  -- if TYP _ tparam* '=' (STRUCT typField*) = $find_map<id, typDef>(tdenv, id)
+  -- if |tparam*| = |targ*|
+def $expand_typ(tdenv, VAR id targ*) = OK (VAR id targ*)
+  -- if TYP _ tparam* '=' (VARIANT typCase*) = $find_map<id, typDef>(tdenv, id)
+  -- if |tparam*| = |targ*|
+def $expand_typ(tdenv, BOOL) = OK BOOL
+def $expand_typ(tdenv, NAT) = OK NAT
+def $expand_typ(tdenv, INT) = OK INT
+def $expand_typ(tdenv, TEXT) = OK TEXT
+def $expand_typ(tdenv, TUP typ*) = OK (TUP typ*)
+def $expand_typ(tdenv, ITER typ iter) = OK (ITER typ iter)
+def $expand_typ(tdenv, FUNC tparam* typ* typ_ret) = OK (FUNC tparam* typ* typ_ret)
+def $expand_typ(tdenv, typ) = ERROR
+  -- otherwise
+
+;;; Structural equivalence
+
+syntax equivRes = ok<bool> | error
+
+dec $equiv_typ(tdenv, typ, typ) : equivRes
+  hint(prose_in "the result of checking equivalence of" %1 "and" %2
+                "under type environment" %0)
+dec $equiv_typs(tdenv, typ*, typ*) : equivRes
+  hint(prose_in "the result of checking pairwise equivalence of" %1 "and" %2
+                "under type environment" %0)
+dec $equiv_typ'(tdenv, typ, typ) : equivRes
+  hint(prose_in "the result of comparing expanded types" %1 "and" %2
+                "under type environment" %0)
+
+def $equiv_typ(tdenv, typ_l, typ_r) = $equiv_typ'(tdenv, typ_l_expand, typ_r_expand)
+  -- if OK typ_l_expand = $expand_typ(tdenv, typ_l)
+  -- if OK typ_r_expand = $expand_typ(tdenv, typ_r)
+def $equiv_typ(tdenv, typ_l, typ_r) = ERROR
+  -- otherwise
+
+def $equiv_typs(tdenv, eps, eps) = OK true
+def $equiv_typs(tdenv, typ_l :: typ_l_t*, typ_r :: typ_r_t*)
+  = $equiv_typs(tdenv, typ_l_t*, typ_r_t*)
+  -- if OK true = $equiv_typ(tdenv, typ_l, typ_r)
+def $equiv_typs(tdenv, typ_l :: typ_l_t*, typ_r :: typ_r_t*) = equivRes
+  -- if equivRes = $equiv_typ(tdenv, typ_l, typ_r)
+  -- if equivRes =/= OK true
+def $equiv_typs(tdenv, eps, typ_r :: typ_r_t*) = OK false
+def $equiv_typs(tdenv, typ_l :: typ_l_t*, eps) = OK false
+
+;; Native structural equivalence excludes nested function types
+;; Only function-value membership invokes signature alpha-equivalence
+
+def $equiv_typ'(tdenv, BOOL, BOOL) = OK true
+def $equiv_typ'(tdenv, NAT, NAT) = OK true
+def $equiv_typ'(tdenv, INT, INT) = OK true
+def $equiv_typ'(tdenv, TEXT, TEXT) = OK true
+def $equiv_typ'(tdenv, VAR id_l targ_l*, VAR id_r targ_r*)
+  = $equiv_typs(tdenv, targ_l*, targ_r*)
+  -- if id_l = id_r
+def $equiv_typ'(tdenv, TUP typ_l*, TUP typ_r*) = $equiv_typs(tdenv, typ_l*, typ_r*)
+def $equiv_typ'(tdenv, ITER typ_l iter_l, ITER typ_r iter_r) = $equiv_typ(tdenv, typ_l, typ_r)
+  -- if iter_l = iter_r
+def $equiv_typ'(tdenv, typ_l, typ_r) = OK false
+  -- otherwise
+
+;;; Function signature alpha-equivalence
+
+dec $equiv_func_typ(tdenv, typ, typ) : equivRes
+  hint(prose_in "the result of checking alpha-equivalence of function types" %1
+                "and" %2 "under type environment" %0)
+def $equiv_func_typ(tdenv, FUNC tparam_l* typ_l* typ_ret_l, FUNC tparam_r* typ_r* typ_ret_r)
+  = $equiv_typs(tdenv_fresh, typ_l_subst* ++ [ typ_ret_l_subst ], typ_r_subst* ++ [ typ_ret_r_subst ])
+  -- if |tparam_l*| = |tparam_r*|
+  -- if |typ_l*| = |typ_r*|
+  -- if `{ (id ':' typDef)* `} = tdenv
+  -- if id_used* = id*
+    ++ $ids_typ(FUNC tparam_l* typ_l* typ_ret_l)
+    ++ $ids_typ(FUNC tparam_r* typ_r* typ_ret_r)
+  -- if tparam_fresh* = $fresh_ids(id_used*, tparam_l*)
+  -- if theta_l = `{ (tparam_l ':' (VAR tparam_fresh eps))* `}
+  -- if theta_r = `{ (tparam_r ':' (VAR tparam_fresh eps))* `}
+  -- if OK typ_l_subst* = $subst_typs(theta_l, typ_l*)
+  -- if OK typ_r_subst* = $subst_typs(theta_r, typ_r*)
+  -- if OK typ_ret_l_subst = $subst_typ(theta_l, typ_ret_l)
+  -- if OK typ_ret_r_subst = $subst_typ(theta_r, typ_ret_r)
+  -- if tdenv_fresh = $adds_map<id, typDef>(tdenv, tparam_fresh*, $repeat_<typDef>(PARAM, |tparam_fresh*|))
+def $equiv_func_typ(tdenv, FUNC tparam_l* typ_l* typ_ret_l, FUNC tparam_r* typ_r* typ_ret_r) = OK false
+  -- if |tparam_l*| =/= |tparam_r*| \/ |typ_l*| =/= |typ_r*|
+def $equiv_func_typ(tdenv, typ_l, typ_r) = ERROR
+  -- otherwise

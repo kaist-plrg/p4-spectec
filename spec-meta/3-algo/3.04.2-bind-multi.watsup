@@ -1,0 +1,89 @@
+;;
+;; Side conditions of repeated binders
+;;
+;; syntax renamer
+;;
+
+;; Each later occurrence must equal the first, under the binder's own
+;; dimension and the iterations of the premise:
+;; `(x, x)*` renamed to `(x, fresh)*` requires `(x = fresh)*{x <- x*, fresh <- fresh*}`
+
+dec $sideconds_multi(iterCtx, vari*, renamer) : premAL*
+  hint(prose_in "the equalities of the occurrences in" %2 "of binders" %1 "under" %0)
+
+dec $sideconds_multi_binder(iterCtx, vari, id*) : premAL*
+  hint(prose_in "the equalities of binder" %1 "and its later occurrences" %2 "inside iterations" %0)
+
+dec $sidecond_multi_binder(iterCtx, vari, id) : premAL
+  hint(prose_in "the equality of" %1 "and its occurrence" %2 "inside iterations" %0)
+
+;;; Every binder
+
+def $sideconds_multi(IC, vari_bind*, R) = $concat_<premAL>(premAL_eq**)
+  -- if `{ (id_bind ':' id_later*)* `} = R.OCC
+  ---- ;; read the type and dimension of each binder
+  -- (if vari_first = $select_varis(vari_bind*, [ id_bind ])[0])*
+  ---- ;; equate each binder with every later occurrence
+  -- (if premAL_eq* = $sideconds_multi_binder(IC, vari_first, id_later*))*
+
+;;; Every later occurrence of a binder
+
+def $sideconds_multi_binder(IC, vari, id_later*)
+  = $sidecond_multi_binder(IC, vari, id_later)*
+
+;;; One later occurrence of a binder
+
+def $sidecond_multi_binder(IC, id_first typ iter*, id_later)
+  = $iterate_prem(premAL_cmp, premIterAL*)
+  ---- ;; compare the first occurrence with the later one
+  -- if typedExp_first = (VAR id_first) '#' typ
+  -- if typedExp_later = (VAR id_later) '#' typ
+  -- if typedExp_cmp = (CMP EQ typedExp_first typedExp_later) '#' BOOL
+  -- if premAL_cmp = IF typedExp_cmp
+  ---- ;; iterate inside by the binder's own dimension
+  -- if IC_inner = (iter eps)*
+  ---- ;; and outside by the premise's iterations, whose variables the equality does not read
+  -- if (iter_outer _)* = IC
+  -- if IC_outer = (iter_outer eps)*
+  ---- ;; both occurrences are scalars inside these iterations
+  -- if vari_first = id_first typ eps
+  -- if vari_later = id_later typ eps
+  -- if IC_cmp = $add_iterated(IC_inner ++ IC_outer, [ vari_first, vari_later ])
+  -- if premIterAL* = $prem_iters(IC_cmp, [ id_first, id_later ], eps)
+
+;;
+;; Repeated binders in patterns
+;;
+;; syntax typedExp*
+;;
+
+;; The renamer takes the identifiers in use from the context
+;; and returns them with the fresh identifiers it gave
+
+rule Multibind_exps:
+  AC IC |- typedExp* : AC_multi typedExp_multi* premAL_eq*
+  ---- ;; collect the binders of the patterns
+  -- Collectbind_exps: AC |- typedExp* : vari_bind*
+  ---- ;; rename the later occurrences of repeated binders
+  -- if R = $init_renamer(AC.USED, vari_bind*)
+  -- if (R_multi, typedExp_multi*) = $rename_exps(R, typedExp*)
+  ---- ;; require the occurrences of each binder to be equal
+  -- if premAL_eq* = $sideconds_multi(IC, vari_bind*, R_multi)
+  -- if AC_multi = AC[ .USED = R_multi.USED ]
+
+;;
+;; Repeated binders in arguments
+;;
+;; syntax arg*
+;;
+
+rule Multibind_args:
+  AC |- arg* : AC_multi arg_multi* premAL_eq*
+  ---- ;; collect the binders of the arguments
+  -- Collectbind_args: AC |- arg* : vari_bind*
+  ---- ;; rename the later occurrences of repeated binders
+  -- if R = $init_renamer(AC.USED, vari_bind*)
+  -- if (R_multi, arg_multi*) = $rename_args(R, arg*)
+  ---- ;; require the occurrences of each binder to be equal
+  -- if premAL_eq* = $sideconds_multi(eps, vari_bind*, R_multi)
+  -- if AC_multi = AC[ .USED = R_multi.USED ]

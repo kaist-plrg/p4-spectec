@@ -6,27 +6,50 @@
 //! using the specification's print hints
 //! along the type `print_` is instantiated at.
 //!
-//! `al` lowers specification inputs to meta scripts with standard builtins
+//! `meta` is the preset for meta specifications: standard builtins,
+//! with specification inputs parsed as AL or IL scripts;
+//! `meta` also converts IL and AL to and from meta-language values
 
 use crate::lang::{common::source::Span, data::value};
 
 use crate::runner::Spec;
 
 use self::{
-    al::AlInterface,
     builtin::{call::Builtins, extract},
+    meta::MetaInterface,
     p4::{P4Interface, unparse::P4Unparser},
 };
 
-pub mod al;
 pub mod builtin;
+pub mod meta;
 pub mod p4;
 
-// == AL
+/// The language of the input a specification accepts.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Lang {
+    /// An AL script, converted by the native `algo` pass.
+    Al,
+    /// An IL script, converted to AL by the accepting specification.
+    Il,
+    /// A P4 program, which only the P4 specification accepts.
+    P4,
+}
 
-/// Builds the AL interface with the standard specification builtins.
-pub fn al() -> AlInterface {
-    AlInterface::new(Builtins::new())
+impl Lang {
+    /// Returns whether the language is a script the level above can be passed as,
+    /// so that a level accepting it may sit below another level.
+    pub fn is_script(self) -> bool {
+        matches!(self, Self::Al | Self::Il)
+    }
+}
+
+// == Meta
+
+/// Builds the interface of a meta specification accepting `lang` scripts,
+/// with the standard specification builtins.
+pub fn meta(lang: Lang) -> MetaInterface {
+    MetaInterface::new(lang, Builtins::new())
 }
 
 // == P4
@@ -41,8 +64,8 @@ pub fn p4(spec: &Spec) -> P4Interface {
     p4_with_unparser(unparser)
 }
 
-/// Installs `print_` over the standard builtins.
-fn p4_with_unparser(unparser: P4Unparser) -> P4Interface {
+/// Builds the P4 interface, with `print_` rendering through `unparser`.
+pub fn p4_with_unparser(unparser: P4Unparser) -> P4Interface {
     let builtins = Builtins::with_extensions([(
         "print_",
         // `print_<T>(T) : text`: one type argument, one value

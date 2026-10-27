@@ -10,7 +10,7 @@
 
 use std::path::PathBuf;
 
-use crate::runner::{Eval, Extern, Interpreter, RunnerContext, SideEffect};
+use crate::runner::{Eval, SideEffect};
 
 use thiserror::Error;
 
@@ -72,15 +72,13 @@ pub trait Interface: Sized {
     ) -> Result<Value, InterfaceError>;
 
     /// Calls a builtin; retains its effect even if the call fails.
-    fn call_builtin<Interp, Ext>(
-        ctx: &mut RunnerContext<'_, Interp, Self, Ext>,
+    fn call_builtin(
+        &mut self,
+        arena: &mut Arena,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
-    ) -> Eval<Value, InterfaceError>
-    where
-        Ext: Extern,
-        Interp: Interpreter<Self, Ext>;
+    ) -> Eval<Value, InterfaceError>;
 
     /// Resets interface state between programs.
     fn clear(&mut self);
@@ -101,16 +99,13 @@ impl Interface for NullInterface {
         Err(InterfaceError::diagnostic_unconfigured())
     }
 
-    fn call_builtin<Interp, Ext>(
-        _ctx: &mut RunnerContext<'_, Interp, Self, Ext>,
+    fn call_builtin(
+        &mut self,
+        _arena: &mut Arena,
         _id: &Id,
         _targs: &[Typ],
         _values: &[Value],
-    ) -> Eval<Value, InterfaceError>
-    where
-        Ext: Extern,
-        Interp: Interpreter<Self, Ext>,
-    {
+    ) -> Eval<Value, InterfaceError> {
         Eval::new(Err(InterfaceError::diagnostic_unconfigured()), SideEffect::Impure)
     }
 

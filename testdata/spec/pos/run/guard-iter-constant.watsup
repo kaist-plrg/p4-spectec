@@ -1,0 +1,10 @@
+;; A guard of an iteration body repeats over every source,
+;; even one the guard does not read, so an empty source checks nothing
+
+dec $constant_index(nat*, nat, nat*) : nat*
+def $constant_index(nat_base*, nat_idx, nat_elem*) = (nat_base*[nat_idx] + nat_elem)*
+
+dec $main() : bool
+def $main() = true
+  -- if $constant_index([ 1, 2 ], 5, eps) = eps
+  -- if $constant_index([ 1, 2 ], 1, [ 10, 20 ]) = [ 12, 22 ]

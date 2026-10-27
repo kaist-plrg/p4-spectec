@@ -9,7 +9,7 @@ use crate::lang::{common::source::Span, data::value::flat::Value};
 
 use crate::lang::il::ast::Typ;
 
-use crate::diagnostic::Report;
+use crate::diagnostic::{Diagnostic, Report, Severity};
 
 use crate::runner::{ExternError, InterfaceError};
 
@@ -58,9 +58,26 @@ pub enum InterpreterError {
     Mismatch(Vec<Report>),
 }
 
+const INTERPRETER_UNCONFIGURED: &str = "runtime/interpreter-unconfigured";
+
 // = Error reports
 
 impl InterpreterError {
+    /// Describes an interpreter that has not been configured.
+    pub fn diagnostic_unconfigured() -> Self {
+        Self::Fatal(Box::new(
+            Diagnostic::new(
+                "runtime",
+                Severity::Error,
+                Some(INTERPRETER_UNCONFIGURED.to_owned()),
+                "interpreter is not configured",
+                vec![],
+                vec![],
+            )
+            .into(),
+        ))
+    }
+
     /// Returns the fatal report or groups mismatches under an execution frame.
     pub fn into_report(self) -> Box<Report> {
         match self {

@@ -3111,7 +3111,7 @@ dec $is_default_parameterIR(parameterIR) : bool
 
 def $is_default_parameterIR(_ _ _ _ eps) = false
 
-def $is_default_parameterIR(_ _ _ _ _) = true
+def $is_default_parameterIR(_) = true
   -- otherwise
 
 
@@ -6924,11 +6924,7 @@ def $match_overloaded_named<V>(
 
 
 
-def $match_overloaded_named<V>(
-    (callTargetId ':' V),
-    nameIR_f `( id_arg* `),
-    def $get_parameterListIR)
-  = NOMATCH
+def $match_overloaded_named<V>(_, _, def $get_parameterListIR) = NOMATCH
   -- otherwise
 
 
@@ -7003,11 +6999,7 @@ def $match_overloaded_unnamed<V>(
 
 
 
-def $match_overloaded_unnamed<V>(
-    (callTargetId ':' V),
-    nameIR_f `( n_arg `),
-    def $get_parameterListIR)
-  = NOMATCH
+def $match_overloaded_unnamed<V>(_, _, def $get_parameterListIR) = NOMATCH
   -- otherwise
 
 
@@ -7181,7 +7173,7 @@ def $find_non_overloaded<V>(`{ (callableId ':' V)* `}, nameIR_f)
   -- if (callableId_found, V_found)
       = $find_non_overloadeds<V>(`{ (callableId ':' V)* `}, nameIR_f)
 
-def $find_non_overloaded<V>(`{ (callableId ':' V)* `}, nameIR_f) = eps
+def $find_non_overloaded<V>(_, nameIR_f) = eps
   -- otherwise
 
 def $find_non_overloadeds<V>(`{ eps `}, nameIR_f) = eps
@@ -29518,7 +29510,7 @@ def $tableObject_add_entry(
 
 def $tableObject_add_entry(
     EC,
-    TABLE typeId `{ frame TBL `},
+    _,
     tableEntryPriorityInterface,
     tableKeysetInterface,
     tableActionInterface)
