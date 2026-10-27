@@ -2,16 +2,6 @@ mod util;
 
 mod snapshot;
 
-mod elab;
-
-mod algo;
-
-mod structure;
-
-mod prose;
-
-mod adoc;
-
 mod corpus;
 
 mod diagnostic;
@@ -131,11 +121,11 @@ fn execute(mut cli: Cli) -> Result<()> {
     std::env::set_current_dir(&root)?;
     match command {
         Command::List => list(),
-        Command::Elab => elab::run(),
-        Command::Algo => algo::run(),
-        Command::Structure => structure::run(),
-        Command::Prose => prose::run(),
-        Command::Adoc { path_output } => adoc::run(path_output.as_deref()),
+        Command::Elab => snapshot::elab(),
+        Command::Algo => snapshot::algo(),
+        Command::Structure => snapshot::structure(),
+        Command::Prose => snapshot::prose(),
+        Command::Adoc { path_output } => snapshot::adoc(path_output.as_deref()),
         Command::P4parse => p4parse::run(path_log.as_deref()),
         Command::Run { language, options } => run::run(*language, *options, path_log.as_deref()),
         Command::Sim { language, options } => sim::run(*language, *options, path_log.as_deref()),
@@ -148,15 +138,9 @@ fn execute(mut cli: Cli) -> Result<()> {
 
 /// Prints every registration without running its tests.
 fn list() -> Result<()> {
-    println!("elab: {:#?}", util::load::<Vec<snapshot::Snapshot>>("elab")?);
-    println!("algo: {:#?}", util::load::<Vec<snapshot::Snapshot>>("algo")?);
-    println!("structure: {:#?}", util::load::<Vec<structure::StructureSnapshot>>("structure")?);
-    println!("prose: {:#?}", util::load::<Vec<snapshot::Snapshot>>("prose")?);
-    println!("adoc: {:#?}", util::load::<adoc::AdocSuite>("adoc")?);
     println!("p4parse: {:#?}", util::load::<p4parse::ParseConfig>("p4parse")?);
     println!("run: {:#?}", util::load::<run::RunConfig>("run")?);
     println!("sim: {:#?}", util::load::<sim::SimConfig>("sim")?);
-    println!("micro: {:#?}", util::load::<micro::MicroConfig>("micro")?);
     diagnostic::list()
 }
 

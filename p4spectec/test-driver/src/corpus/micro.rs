@@ -1,14 +1,14 @@
 //! Micro tests: native execution of standalone spec-language sources
 //!
-//! Each source is a standalone specification in a registered suite,
-//! which gives every source under its root one outcome at one stage.
-//! A success source must pass every stage up to that stage;
-//! a failure source must pass every earlier stage and fail at it.
+//! Each `testdata/spec/{neg,pos}/<stage>` directory is one suite,
+//! which gives every source under it one outcome at one stage.
+//! A `pos` source must pass every stage up to that stage;
+//! a `neg` source must pass every earlier stage and fail at it.
 //! The specdoc stage fails when AsciiDoc rendering of PL warns;
 //! the run stage builds a runner and evaluates `$main()`.
-//! Each language runs the stages registered for it,
+//! Each language runs the stages listed by `stages`,
 //! and skips suites whose stage is outside them.
-//! `<excludes>/<language>/*.exclude` lists sources skipped for one language.
+//! `excludes/micro/<language>/*.exclude` lists sources skipped for one language.
 
 use std::{
     collections::BTreeSet,
@@ -26,19 +26,16 @@ use p4spectec::interface::p4::P4Interface;
 
 use p4spectec::runner::{self, BuildError, Config, NullExtern, Runner};
 
-use serde::Deserialize;
-
 use crate::{
     Error, ExecutionOptions, Result,
     corpus::{self, log::TestLog},
     diagnostic::Outcome,
-    util::{self, Language},
+    util::Language,
 };
 
 /// Names a stage of the spec-language pipeline, in pipeline order.
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-#[serde(rename_all = "lowercase")]
-pub enum Stage {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Stage {
     Parse,
     Elab,
     Algo,
@@ -49,8 +46,18 @@ pub enum Stage {
 }
 
 impl Stage {
-    /// Returns the stage's registration spelling.
-    pub fn name(self) -> &'static str {
+    const ALL: [Self; 7] = [
+        Self::Parse,
+        Self::Elab,
+        Self::Algo,
+        Self::Structure,
+        Self::Prose,
+        Self::Specdoc,
+        Self::Run,
+    ];
+
+    /// Returns the stage's directory name.
+    fn name(self) -> &'static str {
         match self {
             Self::Parse => "parse",
             Self::Elab => "elab",
@@ -63,49 +70,21 @@ impl Stage {
     }
 }
 
-/// Lists the pipeline stages each interpreter language runs.
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct MicroStages {
-    pub al: Vec<Stage>,
-    pub sl: Vec<Stage>,
-    pub pl: Vec<Stage>,
-}
-
-impl MicroStages {
-    /// Returns the stages of one language.
-    pub fn get(&self, language: Language) -> &[Stage] {
-        match language {
-            Language::Al => &self.al,
-            Language::Sl => &self.sl,
-            Language::Pl => &self.pl,
-        }
+/// Lists the stages one interpreter language runs, in pipeline order.
+fn stages(language: Language) -> &'static [Stage] {
+    match language {
+        Language::Al => &[Stage::Parse, Stage::Elab, Stage::Algo, Stage::Run],
+        Language::Sl => &[Stage::Parse, Stage::Elab, Stage::Algo, Stage::Structure, Stage::Run],
+        Language::Pl => &Stage::ALL,
     }
 }
 
-/// Registers a directory of spec-language sources with one verdict.
-///
-/// With outcome success, every source passes the stages up to `stage`;
-/// with outcome failure, every source passes the earlier stages
-/// and fails at `stage`.
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct MicroSuite {
-    pub name: String,
-    pub root: PathBuf,
-    pub outcome: Outcome,
-    pub stage: Stage,
-}
-
-/// Supplies language stages, exclusions, and micro suites.
-///
-/// A missing `excludes` directory holds no entries.
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct MicroConfig {
-    pub excludes: PathBuf,
-    pub stages: MicroStages,
-    pub suites: Vec<MicroSuite>,
+/// Holds a directory of spec-language sources with one verdict.
+struct Suite {
+    name: String,
+    root: PathBuf,
+    outcome: Outcome,
+    stage: Stage,
 }
 
 /// Holds what the last completed stage produced for one source.
@@ -121,17 +100,16 @@ enum Output {
 
 /// Runs every corpus source through the stages of the selected language.
 pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path>) -> Result<()> {
-    let config: MicroConfig = util::load("micro")?;
     let ExecutionOptions { cache_on, no_det } = options;
     let det = !no_det;
     let config_runner = Config::new(cache_on, det, false);
     let text_cache = if cache_on { "on" } else { "off" };
     let text_mode = format!("micro {} cache={text_cache} det={det}", language.name());
     let start = Instant::now();
-    let stages = config.stages.get(language);
+    let stages = stages(language);
 
     // A missing exclusion directory lists no entries
-    let path_excludes = config.excludes.join(language.name());
+    let path_excludes = Path::new("excludes/micro").join(language.name());
     let excludes = if path_excludes.is_dir() {
         corpus::collect_excludes(&path_excludes)?
     } else {
@@ -139,11 +117,17 @@ pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path
     };
 
     // Collect every suite first so the log knows how many sources run
-    let suites = config
-        .suites
-        .iter()
-        .map(|suite| Ok((suite, corpus::collect(&suite.root, ".watsup")?)))
-        .collect::<Result<Vec<_>>>()?;
+    let mut suites = Vec::new();
+    for (dir, outcome) in [("neg", Outcome::Failure), ("pos", Outcome::Success)] {
+        for stage in Stage::ALL {
+            let root = Path::new("testdata/spec").join(dir).join(stage.name());
+            if root.is_dir() {
+                let paths = corpus::collect(&root, ".watsup")?;
+                let name = format!("{dir}-{}", stage.name());
+                suites.push((Suite { name, root, outcome, stage }, paths));
+            }
+        }
+    }
     let len = suites
         .iter()
         .filter(|(suite, _)| stages.contains(&suite.stage))

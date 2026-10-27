@@ -42,6 +42,11 @@ pub fn load<T: DeserializeOwned>(name: &str) -> Result<T> {
     serde_json::from_str(&text).map_err(|error| Error::from(format!("{}: {error}", path.display())))
 }
 
+/// Returns the specification sources shared by every runner.
+pub fn spec() -> [PathBuf; 1] {
+    [PathBuf::from("spec")]
+}
+
 /// Resolves an expectation relative to the driver.
 pub fn expected_path(path: &Path) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join(path)
