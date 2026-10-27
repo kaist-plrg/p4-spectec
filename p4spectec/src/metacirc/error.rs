@@ -36,3 +36,18 @@ pub(super) fn execution_unmatched(name: &str) -> Box<Report> {
 pub(super) fn execution_failed(name: &str) -> Box<Report> {
     diagnostic("metacirc/execution-failed", format!("meta execution of {name} failed"))
 }
+
+/// Reports a host call outside a boundary's contract.
+pub(super) fn extern_unsupported(name: &str) -> Box<Report> {
+    diagnostic("metacirc/extern-unsupported", format!("unsupported meta extern: {name}"))
+}
+
+/// Reports a host call that reached a meta base run without lending its levels.
+pub(super) fn base_not_lent(name: &str) -> Box<Report> {
+    diagnostic(
+        "metacirc/base-not-lent",
+        format!(
+            "meta extern {name} reached a meta base run directly; enter it through Tower::eval_program"
+        ),
+    )
+}

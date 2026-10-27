@@ -203,8 +203,3 @@ impl Protocol for ProtocolKind {
         }
     }
 }
-
-/// Rejects a host call outside a boundary's contract.
-pub(in crate::metacirc) fn unsupported(name: &str) -> ExternError {
-    ExternError::diagnostic_message(format!("unsupported meta extern: {name}"))
-}

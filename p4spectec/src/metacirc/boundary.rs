@@ -9,8 +9,9 @@
 //! runs on the next depth, made on its first use and kept for the program.
 
 use super::{
+    error,
     interp::{Depth, TowerInterp},
-    protocol::{self, HostCall, Output, Protocol},
+    protocol::{HostCall, Output, Protocol},
     tower::{HostLevel, TopMut, Upper, UpperMut},
 };
 use crate::{
@@ -109,7 +110,7 @@ pub(in crate::metacirc) struct Boundary<'b, 'l, Ext: Extern> {
 
 /// Rejects an operation outside the host boundary's contract.
 fn unsupported<T>(name: &str) -> Eval<T, ExternError> {
-    Eval::new(Err(protocol::unsupported(name)), SideEffect::Pure)
+    Eval::new(Err(error::extern_unsupported(name).into()), SideEffect::Pure)
 }
 
 impl<Ext: Extern> Boundary<'_, '_, Ext> {
@@ -250,10 +251,7 @@ impl<Ext: Extern> Extern for UpperMut<'_, Ext> {
 
 /// Rejects a host call that reached the stored levels without lending them.
 fn not_lent<T>(name: &str) -> Eval<T, ExternError> {
-    let message = format!(
-        "meta extern {name} reached a meta base run directly; enter it through Tower::eval_program"
-    );
-    Eval::new(Err(ExternError::diagnostic_message(message)), SideEffect::Pure)
+    Eval::new(Err(error::base_not_lent(name).into()), SideEffect::Pure)
 }
 
 /// The base runner never executes with the stored levels as its extern:

@@ -8,7 +8,7 @@
 //! `host` decodes `Call_builtin_func`, `Call_extern_func`, and `Call_extern_rel`;
 //! `reply` encodes a native outcome as OK or UNMATCH, keeping its effects.
 
-use super::{Below, Call, HostCall, Output, Protocol, Values, unsupported};
+use super::{Below, Call, HostCall, Output, Protocol, Values};
 use crate::{
     interface::meta::shared::{
         self as meta, Cache,
@@ -141,7 +141,7 @@ impl Protocol for MetaProtocol {
                 Ok(HostCall::ExternRel { id, values })
             }
             // Host calls are reached through the three declared meta relations
-            _ => Err(unsupported(name)),
+            _ => Err(error::extern_unsupported(name).into()),
         }
     }
 
