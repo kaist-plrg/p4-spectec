@@ -77,7 +77,7 @@ impl<Arch: Architecture> SimTower<Arch> {
             unreachable!("a simulated tower has a meta base");
         };
         let Runner { backend, interface, external: upper, .. } = runner;
-        let (engine, spec_base) = SpecTecEngine::base(backend, interface);
+        let (engine, spec_base) = SpecTecEngine::lend_base(backend, interface);
         // Lend the levels' storage at depth 0 and reach the P4 top
         let Upper { caches, ctxs, hosts, top, depth_next } = upper;
         let Top::P4(host) = top else {

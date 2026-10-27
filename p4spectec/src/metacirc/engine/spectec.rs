@@ -2,9 +2,9 @@
 //!
 //! `SpecTecEngine` pairs the base's definitions, in the representation it executes,
 //! with one depth's interpreter of them and that depth's meta builtins.
-//! Depth 0 borrows the base runner's (`SpecTecEngine::base`);
+//! Depth 0 borrows the base runner's (`SpecTecEngine::lend_base`);
 //! a deeper depth owns a `SpecTecState` interpreting the same representation
-//! and lends it with `SpecTecEngine::depth`.
+//! and lends it with `SpecTecEngine::lend_depth`.
 
 use super::super::boundary::Levels;
 use super::Engine;
@@ -108,7 +108,7 @@ macro_rules! with_backend {
 
 impl<'s> SpecTecEngine<'s> {
     /// Lends the base runner's backend and interface as depth 0.
-    pub(in crate::metacirc) fn base(
+    pub(in crate::metacirc) fn lend_base(
         backend: &'s mut Backend,
         interface: &'s mut MetaInterface,
     ) -> (Self, SpecTecSpec<'s>) {
@@ -125,7 +125,7 @@ impl<'s> SpecTecEngine<'s> {
     }
 
     /// Lends a deeper depth's state, interpreting the base's `spec`.
-    pub(in crate::metacirc) fn depth(state: &'s mut SpecTecState, spec: SpecTecSpec<'s>) -> Self {
+    pub(in crate::metacirc) fn lend_depth(state: &'s mut SpecTecState, spec: SpecTecSpec<'s>) -> Self {
         let backend = match (spec, &mut state.interp) {
             (SpecTecSpec::Al(spec_env), SpecTecInterp::Al(interp)) => {
                 SpecTecBackend::Al { spec_env, interp }

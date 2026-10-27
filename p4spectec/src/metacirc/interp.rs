@@ -261,7 +261,7 @@ impl Depth {
         ctxs: &'d mut [Option<Value>],
     ) -> TowerInterp<'d> {
         TowerInterp {
-            engine: EngineKind::SpecTec(SpecTecEngine::depth(&mut self.engine, spec_base)),
+            engine: EngineKind::SpecTec(SpecTecEngine::lend_depth(&mut self.engine, spec_base)),
             hosts: &mut self.hosts,
             depth_next: &mut self.next,
             caches,
