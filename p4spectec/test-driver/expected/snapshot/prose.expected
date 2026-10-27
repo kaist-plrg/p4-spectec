@@ -56,19 +56,27 @@ def $concat_text((t)*{t <- t*})
 
 def $join_text((t')*{t' <- t'*}, t_sep)
 
-1. Case analysis on (t')*{t' <- t'*}
+1. Block (2 arms)
 
-  1. Case (% matches pattern [])
+Arm 1:
 
-    1. Return ""
+  1. Case analysis on (t')*{t' <- t'*}
 
-  2. Case (% matches pattern [ _/1 ])
+    1. Case (% matches pattern [])
 
-    1. (Let [t_h] be (t')*{t' <- t'*})
+      1. Return ""
 
-    2. Return t_h
+    2. Case (% matches pattern [ _/1 ])
 
-  3. Case (% matches pattern _ :: _)
+      1. (Let [t_h] be (t')*{t' <- t'*})
+
+      2. Return t_h
+
+  1. Else Dangling
+
+Arm 2:
+
+  1. Check (((t')*{t' <- t'*} matches pattern _ :: _))
 
     1. (Let t_h1 :: (t)*{t <- t*} be (t')*{t' <- t'*})
 
@@ -79,8 +87,6 @@ def $join_text((t')*{t' <- t'*}, t_sep)
       2. (Let text be $join_text(t_h2 :: (t_t)*{t_t <- t_t*}, t_sep))
 
       3. Return t_h1 ++ t_sep ++ text
-
-1. Else Dangling
 
 def $replace_text(t, t_old, t_new)
 
@@ -6553,31 +6559,45 @@ def $join_ctk(ctk, ctk')
 
 def $joins_ctk((ctk')*{ctk' <- ctk'*})
 
-1. Case analysis on (ctk')*{ctk' <- ctk'*}
+1. Block (2 arms)
 
-  1. Case (% matches pattern [])
+Arm 1:
 
-    1. Return (LCTK)
+  1. Case analysis on (ctk')*{ctk' <- ctk'*}
 
-  2. Case (% matches pattern [ _/1 ])
+    1. Case (% matches pattern [])
 
-    1. (Let [ctk] be (ctk')*{ctk' <- ctk'*})
+      1. Return (LCTK)
 
-    2. Return ctk
+    2. Case (% matches pattern [ _/1 ])
 
-  3. Case (% matches pattern _ :: _)
+      1. (Let [ctk] be (ctk')*{ctk' <- ctk'*})
+
+      2. Return ctk
+
+  1. Else Dangling
+
+Arm 2:
+
+  1. Check (((ctk')*{ctk' <- ctk'*} matches pattern _ :: _))
 
     1. (Let ctk_a :: (ctk)*{ctk <- ctk*} be (ctk')*{ctk' <- ctk'*})
 
-    2. Case analysis on (ctk)*{ctk <- ctk*}
+    2. Block (2 arms)
 
-      1. Case (% matches pattern [ _/1 ])
+    Arm 1:
+
+      1. If (((ctk)*{ctk <- ctk*} matches pattern [ _/1 ])), then
 
         1. (Let [ctk_b] be (ctk)*{ctk <- ctk*})
 
         2. Return $join_ctk(ctk_a, ctk_b)
 
-      2. Case (% matches pattern _ :: _)
+      1. Else Dangling
+
+    Arm 2:
+
+      1. Check (((ctk)*{ctk <- ctk*} matches pattern _ :: _))
 
         1. (Let ctk_b :: (ctk_c)*{ctk_c <- ctk_c*} be (ctk)*{ctk <- ctk*})
 
@@ -6586,10 +6606,6 @@ def $joins_ctk((ctk')*{ctk' <- ctk'*})
           1. (Let ctk_d be $join_ctk(ctk_a, ctk_b))
 
           2. Return $joins_ctk(ctk_d :: (ctk_c)*{ctk_c <- ctk_c*})
-
-    2. Else Dangling
-
-1. Else Dangling
 
 builtin def $pow2(nat)
 
@@ -12307,9 +12323,11 @@ def $lift_castExpressionIR((`( typeIR `) typedExpressionIR))
 
 def $unflatten_recordElementExpression((namedExpression)*{namedExpression <- namedExpression*})
 
-1. Case analysis on (namedExpression)*{namedExpression <- namedExpression*}
+1. Block (2 arms)
 
-  1. Case (% matches pattern [ _/1 ])
+Arm 1:
+
+  1. If (((namedExpression)*{namedExpression <- namedExpression*} matches pattern [ _/1 ])), then
 
     1. (Let [namedExpression_h] be (namedExpression)*{namedExpression <- namedExpression*})
 
@@ -12317,7 +12335,11 @@ def $unflatten_recordElementExpression((namedExpression)*{namedExpression <- nam
 
     3. Return (name_h '=' expression_h)
 
-  2. Case (% matches pattern _ :: _)
+  1. Else Dangling
+
+Arm 2:
+
+  1. Check (((namedExpression)*{namedExpression <- namedExpression*} matches pattern _ :: _))
 
     1. (Let namedExpression_h :: (namedExpression_t)*{namedExpression_t <- namedExpression_t*} be (namedExpression)*{namedExpression <- namedExpression*})
 
@@ -12329,13 +12351,13 @@ def $unflatten_recordElementExpression((namedExpression)*{namedExpression <- nam
 
       3. Return (name_h '=' expression_h ',' namedExpressionList)
 
-1. Else Dangling
-
 def $unflatten_recordElementExpression_with_default((namedExpression)*{namedExpression <- namedExpression*})
 
-1. Case analysis on (namedExpression)*{namedExpression <- namedExpression*}
+1. Block (2 arms)
 
-  1. Case (% matches pattern [ _/1 ])
+Arm 1:
+
+  1. If (((namedExpression)*{namedExpression <- namedExpression*} matches pattern [ _/1 ])), then
 
     1. (Let [namedExpression_h] be (namedExpression)*{namedExpression <- namedExpression*})
 
@@ -12343,7 +12365,11 @@ def $unflatten_recordElementExpression_with_default((namedExpression)*{namedExpr
 
     3. Return (name_h '=' expression_h ',' '...')
 
-  2. Case (% matches pattern _ :: _)
+  1. Else Dangling
+
+Arm 2:
+
+  1. Check (((namedExpression)*{namedExpression <- namedExpression*} matches pattern _ :: _))
 
     1. (Let namedExpression_h :: (namedExpression_t)*{namedExpression_t <- namedExpression_t*} be (namedExpression)*{namedExpression <- namedExpression*})
 
@@ -12354,8 +12380,6 @@ def $unflatten_recordElementExpression_with_default((namedExpression)*{namedExpr
       2. (Let namedExpressionList be $unflatten_namedExpressionList((namedExpression_t)*{namedExpression_t <- namedExpression_t*}))
 
       3. Return (name_h '=' expression_h ',' namedExpressionList ',' '...')
-
-1. Else Dangling
 
 def $lift_dataExpressionIR(dataExpressionIR)
 
@@ -38618,7 +38642,7 @@ extern relation ExternMethodCall_eval: EC ARCH |- objectId '.' nameIR `( (nameIR
 
 def $match_keysets((setValue')*{setValue' <- setValue'*}, (value)*{value <- value*})
 
-1. Block (2 arms)
+1. Block (3 arms)
 
 Arm 1:
 
@@ -38648,41 +38672,39 @@ Arm 1:
 
       2. Else Dangling
 
-    3. Case (% matches pattern _ :: _)
-
-      1. (Let setValue_h :: (setValue_t)*{setValue_t <- setValue_t*} be (setValue')*{setValue' <- setValue'*})
-
-      2. If (((value)*{value <- value*} matches pattern _ :: _)), then
-
-        1. (Let value_key_h :: (value_key_t)*{value_key_t <- value_key_t*} be (value)*{value <- value*})
-
-        2. If (((setValue_t)*{setValue_t <- setValue_t*} matches pattern _ :: _)), then
-
-          1. If (((value_key_t)*{value_key_t <- value_key_t*} matches pattern _ :: _)), then
-
-            1. Case analysis on $match_keyset(setValue_h, value_key_h) (total)
-
-              1. Case true
-
-                1. Return $match_keysets((setValue_t)*{setValue_t <- setValue_t*}, (value_key_t)*{value_key_t <- value_key_t*})
-
-              2. Case false
-
-                1. Return false
-
-          1. Else Dangling
-
-        2. Else Dangling
-
-      2. Else Dangling
-
   1. Else Dangling
 
 Arm 2:
 
-  1. Check (((setValue')*{setValue' <- setValue'*} = [(SET `{ '...' `})]))
+  1. If (((setValue')*{setValue' <- setValue'*} = [(SET `{ '...' `})])), then
 
     1. Return true
+
+  1. Else Dangling
+
+Arm 3:
+
+  1. Check (((setValue')*{setValue' <- setValue'*} matches pattern _ :: _))
+
+    1. (Let setValue_h :: (setValue_t)*{setValue_t <- setValue_t*} be (setValue')*{setValue' <- setValue'*})
+
+    2. Check (((value)*{value <- value*} matches pattern _ :: _))
+
+      1. (Let value_key_h :: (value_key_t)*{value_key_t <- value_key_t*} be (value)*{value <- value*})
+
+      2. Check (((setValue_t)*{setValue_t <- setValue_t*} matches pattern _ :: _))
+
+        1. Check (((value_key_t)*{value_key_t <- value_key_t*} matches pattern _ :: _))
+
+          1. Case analysis on $match_keyset(setValue_h, value_key_h) (total)
+
+            1. Case true
+
+              1. Return $match_keysets((setValue_t)*{setValue_t <- setValue_t*}, (value_key_t)*{value_key_t <- value_key_t*})
+
+            2. Case false
+
+              1. Return false
 
 def $match_keyset(setValue, value_key)
 
