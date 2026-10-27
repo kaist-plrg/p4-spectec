@@ -94,8 +94,9 @@ impl Protocol for MetaKProtocol {
 
     /// Decodes a `#ffiCall` request of spec-meta-k for the level above.
     ///
-    /// `name` and `values` are what `KEngine` received from K:
-    /// the request's kind and its JSON text, as `host_eval` read it in #387.
+    /// `KEngine` passes each request it receives from `host_eval` as
+    /// `upper.host_call(arena, "host_eval", &[request])`,
+    /// so `name` is `host_eval` and `values` is the one JSON text request.
     fn host(
         &self,
         _arena: &mut Arena,
@@ -106,7 +107,8 @@ impl Protocol for MetaKProtocol {
         Err(error::unimplemented("MetaKProtocol::host").into())
     }
 
-    /// Encodes the outcome of a host call as the JSON text answering `#ffiCall`.
+    /// Encodes the outcome of a host call as the JSON text answering `#ffiCall`,
+    /// the one value that `KEngine` passes back to `host_eval`.
     fn reply(
         &self,
         _arena: &mut Arena,

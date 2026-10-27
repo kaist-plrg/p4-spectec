@@ -61,8 +61,8 @@ impl Engine for KEngine<'_> {
     }
 
     /// Sends relation `name` with JSON text `values` to `serve()`,
-    /// answering each `#ffiCall` of the K thread through `upper.host_call`
-    /// until the response arrives.
+    /// answering each `#ffiCall` of the K thread with
+    /// `upper.host_call(arena, "host_eval", &[request])` until the response arrives.
     fn call_rel<Ext: Extern>(
         &mut self,
         _arena: &mut Arena,

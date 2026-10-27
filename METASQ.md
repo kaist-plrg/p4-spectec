@@ -156,12 +156,13 @@ Upper { caches, ctxs, hosts, top, depth_next }
 Above a meta top level is its AL or IL program, one more boundary whose
 builtins `Top::Program` answers.
 
-Three traits divide the work, each with one implementation stored as an enum:
+Three traits divide the work, their implementations stored as enums
+(`EngineKind`, `ProtocolKind`); the K implementations are slots (see K towers):
 
 | trait | implementation | role |
 |---|---|---|
-| `Engine` (`engine/`) | `SpecTecEngine` | runs the base natively, on AL or SL |
-| `Protocol` (`protocol/`) | `MetaProtocol` | how spec-meta interprets the level above: load C, lower a call to `Call_rel`/`Call_func`, raise its result, decode and encode host calls |
+| `Engine` (`engine/`) | `SpecTecEngine`, `KEngine` | runs the base natively, on AL or SL, or from a K library |
+| `Protocol` (`protocol/`) | `MetaProtocol`, `MetaKProtocol`, `KoreProtocol` | how spec-meta interprets the level above: load C, encode a patched script, lower a call to `Call_rel`/`Call_func`, raise its result, decode and encode host calls; likewise for spec-meta-k and spec-k |
 | `HostCalls` (`boundary.rs`) | `Boundary` | answers a decoded host call at the level above a boundary |
 
 A call goes down from the P4 top through each level's protocol to the engine
@@ -173,6 +174,26 @@ extern reenters the specification, as `static_assert` does to read its
 arguments and the architectures do through `find_var_e`, the call runs on the
 next depth: a fresh interpreter of the base's representation and fresh meta
 builtins, sharing C and the codec caches.
+
+## K towers
+
+Two towers cross into the K framework. Their Rust parts are slots that
+report `metacirc/unimplemented` until implemented, and their test
+registrations are `pending`, so they are skipped without failing.
+
+| tower | base | top | configuration | guide |
+|---|---|---|---|---|
+| ST-in-K | spec-meta-k, the AL semantics in K, run from its compiled library | AL or P4 | `"mode": "k"`, `kompiled` at the base (`towers/k*.json`) | [`docs/metacirc/st-in-k.md`](docs/metacirc/st-in-k.md) |
+| K-in-ST | spec-k, the K semantics in P4-SpecTec | a K definition and initial term in KORE | a single level with `"lang": "kore"` (`towers/k-in-st.json`) | [`docs/metacirc/k-in-st.md`](docs/metacirc/k-in-st.md) |
+
+ST-in-K adds `KEngine` (`engine/k/`) and `MetaKProtocol` (`protocol/meta_k/`);
+`make kompile` builds the library, and `make test-metacirc-run-k`,
+`test-metacirc-micro-k`, and `test-metacirc-sim-k` reuse the native expected
+files. K-in-ST adds `KoreInterface` (`p4spectec/src/interface/kore/`), and
+`metacirc run-meta towers/k-in-st.json -p definition.kore -p init.kore --depth N`
+prints the run as `krun` does; `make test-metacirc-k-in-st` compares it with
+`krun`. `protocol/kore/` describes how a level would stack over a K
+definition, which is not implemented.
 
 ## Algo through the IL-to-AL specification
 
