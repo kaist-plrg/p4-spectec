@@ -46,6 +46,24 @@ pub struct Tower<Ext: Extern = Dummy> {
     pub(super) options: runner::Config,
 }
 
+/// A configured specification, by the form it is passed to the level below.
+pub(super) enum LevelSpec {
+    /// The base, which no level interprets.
+    Base { config: LevelConfig },
+    /// A level above one accepting AL, which receives the patched AL.
+    AboveAl { config: LevelConfig, spec_al: al::Spec },
+    /// A level above one accepting IL, which receives the patched IL.
+    AboveIl { config: LevelConfig, spec_il: il::Spec },
+}
+
+/// The native runner of the base, selected by the language it interprets.
+pub(super) enum BaseRunner<Ext: Extern> {
+    /// A P4 specification, interpreting a parsed P4 program.
+    P4(Runner<P4Interface, Ext>),
+    /// A meta specification interpreting an AL or IL script, hosting the levels above it.
+    Meta(Runner<MetaInterface, Upper<Ext>>),
+}
+
 impl<Ext: Extern> Tower<Ext> {
     /// Clears program state in the base and every level above it.
     ///
@@ -73,12 +91,14 @@ impl<Ext: Extern> Tower<Ext> {
     }
 }
 
-/// The native runner of the base, selected by the language it interprets.
-pub(super) enum BaseRunner<Ext: Extern> {
-    /// A P4 specification, interpreting a parsed P4 program.
-    P4(Runner<P4Interface, Ext>),
-    /// A meta specification interpreting an AL or IL script, hosting the levels above it.
-    Meta(Runner<MetaInterface, Upper<Ext>>),
+impl LevelSpec {
+    pub(super) fn config(&self) -> &LevelConfig {
+        match self {
+            Self::Base { config, .. }
+            | Self::AboveAl { config, .. }
+            | Self::AboveIl { config, .. } => config,
+        }
+    }
 }
 
 impl<Ext: Extern> BaseRunner<Ext> {
@@ -87,26 +107,6 @@ impl<Ext: Extern> BaseRunner<Ext> {
         match self {
             Self::P4(runner) => runner.reset(),
             Self::Meta(runner) => runner.reset(),
-        }
-    }
-}
-
-/// A configured specification, by the form it is passed to the level below.
-pub(super) enum LevelSpec {
-    /// The base, which no level interprets.
-    Base { config: LevelConfig },
-    /// A level above one accepting AL, which receives the patched AL.
-    AboveAl { config: LevelConfig, spec_al: al::Spec },
-    /// A level above one accepting IL, which receives the patched IL.
-    AboveIl { config: LevelConfig, spec_il: il::Spec },
-}
-
-impl LevelSpec {
-    pub(super) fn config(&self) -> &LevelConfig {
-        match self {
-            Self::Base { config, .. }
-            | Self::AboveAl { config, .. }
-            | Self::AboveIl { config, .. } => config,
         }
     }
 }

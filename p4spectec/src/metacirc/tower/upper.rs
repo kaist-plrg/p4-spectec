@@ -39,6 +39,14 @@ pub(in crate::metacirc) struct Upper<Ext: Extern> {
     pub depth_next: Option<Box<Depth>>,
 }
 
+/// The highest level above a meta base.
+pub(in crate::metacirc) enum Top<Ext: Extern> {
+    /// A P4 specification, answering the builtins and externs of its program.
+    P4(Host<P4Interface, Ext>),
+    /// The AL or IL program of the highest meta level, answering only its builtins.
+    Program(MetaInterface),
+}
+
 impl<Ext: Extern> Upper<Ext> {
     /// Clears every level's state between programs.
     pub(in crate::metacirc) fn clear(&mut self) {
@@ -72,14 +80,6 @@ impl<Ext: Extern> Upper<Ext> {
     }
 }
 
-/// The highest level above a meta base.
-pub(in crate::metacirc) enum Top<Ext: Extern> {
-    /// A P4 specification, answering the builtins and externs of its program.
-    P4(Host<P4Interface, Ext>),
-    /// The AL or IL program of the highest meta level, answering only its builtins.
-    Program(MetaInterface),
-}
-
 // == Lent levels
 
 /// The levels above the base, borrowed for one execution of the base's specification.
@@ -95,6 +95,14 @@ pub(in crate::metacirc) struct UpperMut<'l, Ext: Extern> {
     pub top: TopMut<'l, Ext>,
     /// The depths beneath this one, which answer reentry.
     pub depth_next: &'l mut Option<Box<Depth>>,
+}
+
+/// The top of `UpperMut`, borrowed from `Top` or from the context of a P4 call.
+pub(in crate::metacirc) enum TopMut<'l, Ext: Extern> {
+    /// A P4 specification, answering the builtins and externs of its program.
+    P4 { interface: &'l mut P4Interface, external: &'l mut Ext },
+    /// The AL or IL program of the highest meta level, answering only its builtins.
+    Program(&'l mut MetaInterface),
 }
 
 impl<'l, Ext: Extern> UpperMut<'l, Ext> {
@@ -120,12 +128,4 @@ impl<'l, Ext: Extern> UpperMut<'l, Ext> {
     pub(in crate::metacirc) fn level_top(&self) -> HostLevel {
         HostLevel::new(self.caches.len())
     }
-}
-
-/// The top of `UpperMut`, borrowed from `Top` or from the context of a P4 call.
-pub(in crate::metacirc) enum TopMut<'l, Ext: Extern> {
-    /// A P4 specification, answering the builtins and externs of its program.
-    P4 { interface: &'l mut P4Interface, external: &'l mut Ext },
-    /// The AL or IL program of the highest meta level, answering only its builtins.
-    Program(&'l mut MetaInterface),
 }

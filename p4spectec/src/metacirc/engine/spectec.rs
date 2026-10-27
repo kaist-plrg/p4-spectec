@@ -32,6 +32,12 @@ pub(in crate::metacirc) struct SpecTecEngine<'s> {
     interface: &'s mut MetaInterface,
 }
 
+/// The base's definitions and a depth's interpreter of them.
+enum SpecTecBackend<'s> {
+    Al { spec_env: &'s AlSpecEnv, interp: &'s mut AlInterp },
+    Sl { spec_env: &'s SlSpecEnv, interp: &'s mut SlInterp },
+}
+
 impl<'s> SpecTecEngine<'s> {
     /// Lends the base runner's backend and interface as depth 0.
     pub(in crate::metacirc) fn lend_base(
@@ -159,11 +165,7 @@ impl Engine for SpecTecEngine<'_> {
     }
 }
 
-/// The base's definitions and a depth's interpreter of them.
-enum SpecTecBackend<'s> {
-    Al { spec_env: &'s AlSpecEnv, interp: &'s mut AlInterp },
-    Sl { spec_env: &'s SlSpecEnv, interp: &'s mut SlInterp },
-}
+// == Shared definitions
 
 /// The base's definitions, in the representation it executes.
 #[derive(Clone, Copy)]
@@ -178,6 +180,12 @@ pub(in crate::metacirc) enum SpecTecSpec<'s> {
 pub(in crate::metacirc) struct SpecTecState {
     interp: SpecTecInterp,
     interface: MetaInterface,
+}
+
+/// An interpreter of the base's definitions, owned by a depth beneath the base.
+enum SpecTecInterp {
+    Al(AlInterp),
+    Sl(SlInterp),
 }
 
 impl SpecTecState {
@@ -198,10 +206,4 @@ impl SpecTecState {
         // Only the builtins are used; the base never parses at a depth
         Self { interp, interface: interface::meta(Lang::Al) }
     }
-}
-
-/// An interpreter of the base's definitions, owned by a depth beneath the base.
-enum SpecTecInterp {
-    Al(AlInterp),
-    Sl(SlInterp),
 }

@@ -147,6 +147,12 @@ pub(in crate::metacirc) enum Call<'a> {
     Func { name: &'a str, targs: Cow<'a, [Typ]>, values: Values<'a> },
 }
 
+/// The values of a `Call`: the caller's, or the few a protocol lowers them to.
+pub(in crate::metacirc) enum Values<'a> {
+    Borrowed(&'a [Value]),
+    Lowered(SmallVec<[Value; 4]>),
+}
+
 impl Call<'_> {
     /// Returns the name of the called relation or function.
     pub(in crate::metacirc) fn name(&self) -> &str {
@@ -154,12 +160,6 @@ impl Call<'_> {
             Self::Rel { name, .. } | Self::Func { name, .. } => name,
         }
     }
-}
-
-/// The values of a `Call`: the caller's, or the few a protocol lowers them to.
-pub(in crate::metacirc) enum Values<'a> {
-    Borrowed(&'a [Value]),
-    Lowered(SmallVec<[Value; 4]>),
 }
 
 impl Deref for Values<'_> {
