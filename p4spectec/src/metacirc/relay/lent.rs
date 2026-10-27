@@ -62,6 +62,7 @@ impl<Ext: Extern> LentLevels<'_, '_, Ext> {
         self.interfaces[level.index()]
     }
 
+    /// Returns whether `level` is the P4 top of the tower.
     fn is_top(&self, level: HostLevel) -> bool {
         level == HostLevel::top(self.env.levels)
     }

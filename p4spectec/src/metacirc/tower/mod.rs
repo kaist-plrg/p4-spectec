@@ -76,7 +76,7 @@ impl HostLevel {
 
     /// Returns the host level above this one.
     pub(in crate::metacirc) fn above(self) -> Self {
-        Self(self.0.saturating_add(1))
+        Self(self.0.checked_add(1).expect("a level number fits in usize"))
     }
 
     /// Returns this level's position among all levels, the base at 0.
