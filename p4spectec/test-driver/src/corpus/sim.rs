@@ -28,8 +28,7 @@ pub struct Registration {
     pub suites: Vec<SimSuite>,
 }
 
-/// Registers paired P4/STF corpus discovery and optional patches,
-/// expected in `expected/sim/<name>.expected`.
+/// Registers paired P4/STF corpus discovery, optional patches, and expected results.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SimSuite {
@@ -38,6 +37,7 @@ pub struct SimSuite {
     pub p4: PathBuf,
     pub stf: PathBuf,
     pub patches: Option<PathBuf>,
+    pub expected: PathBuf,
 }
 
 struct Input {
@@ -177,7 +177,7 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
             start_arch.elapsed().as_secs_f64()
         ))?;
         for (suite, pairs) in suites_arch {
-            let mut results = Results::new(&util::expected_path("sim", &suite.name));
+            let mut results = Results::new(&std::path::absolute(&suite.expected)?);
             let guard_stdout = super::output::SilenceStdout::new()?;
             log.suite(&suite.name, &suite.stf)?;
             for pair in pairs {

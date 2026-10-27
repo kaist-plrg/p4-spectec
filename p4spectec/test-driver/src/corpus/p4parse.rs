@@ -31,13 +31,13 @@ pub struct Registration {
     pub suites: Vec<ParseSuite>,
 }
 
-/// Registers P4 parsing and roundtrip inputs,
-/// expected in `expected/p4parse/<name>.expected`.
+/// Registers P4 parsing and roundtrip inputs and their expected results.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ParseSuite {
     pub name: String,
     pub roots: Vec<PathBuf>,
+    pub expected: PathBuf,
 }
 
 fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result<Outcome> {
@@ -89,7 +89,7 @@ pub fn run(path_log: Option<&Path>) -> Result<()> {
     // Keep each root's paths apart so the log shows them by root
     let mut suites = Vec::new();
     for suite in &registration.suites {
-        let path_expected = util::expected_path("p4parse", &suite.name);
+        let path_expected = std::path::absolute(&suite.expected)?;
         let mut roots = Vec::new();
         for root in &suite.roots {
             roots.push((root, corpus::collect(root, ".p4")?));

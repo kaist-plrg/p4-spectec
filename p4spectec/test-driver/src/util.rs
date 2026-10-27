@@ -103,11 +103,6 @@ pub fn load<T: DeserializeOwned>(name: &str) -> Result<T> {
     toml::from_str(&text).map_err(|error| Error::from(format!("{}: {error}", path.display())))
 }
 
-/// Resolves the expectation `expected/<module>/<name>.expected` of one suite.
-pub fn expected_path(module: &str, name: &str) -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/{module}/{name}.expected"))
-}
-
 /// Creates a progress bar over `len` tests.
 pub fn progress_bar(len: usize) -> Result<ProgressBar> {
     let style = ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")?;

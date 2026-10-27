@@ -1,7 +1,7 @@
 //! Specification snapshots registered in `suites/snapshot.toml`
 //!
 //! Each snapshot converts the registered `spec` sources to its `stage`
-//! and compares the printed or rendered text with `expected/snapshot/<name>.expected`.
+//! and compares the printed or rendered text with its `expected` file.
 //! `adoc-pl` also checks that repeated rendering keeps the same anchors.
 
 use std::{
@@ -38,6 +38,7 @@ pub enum Stage {
 pub struct Snapshot {
     pub name: String,
     pub stage: Stage,
+    pub expected: PathBuf,
     #[serde(default)]
     pub without_rule_groups: bool,
 }
@@ -100,22 +101,22 @@ pub fn run(stages: &[Stage], path_output: Option<&Path>) -> Result<()> {
             fs::create_dir_all(path_output)?;
             fs::write(path_output.join(name_output), &text)?;
         }
-        check(&snapshot.name, &text);
+        check(snapshot, &text)?;
     }
     Ok(())
 }
 
-/// Compares `text` with `expected/snapshot/<name>.expected`.
+/// Compares `text` with the snapshot's expected file.
 ///
 /// Renderers leave decorative spaces after declarations and rule-group headers,
 /// so trailing spaces and tabs are stripped from every line first.
-fn check(name: &str, text: &str) {
+fn check(snapshot: &Snapshot, text: &str) -> Result<()> {
     let text = text
         .split('\n')
         .map(|line| line.trim_end_matches([' ', '\t']))
         .collect::<Vec<_>>()
         .join("\n");
-    let path_expected = util::expected_path("snapshot", name);
-    expect_file![path_expected].assert_eq(&text);
-    eprintln!("{name}: snapshot checked");
+    expect_file![std::path::absolute(&snapshot.expected)?].assert_eq(&text);
+    eprintln!("{}: snapshot checked", snapshot.name);
+    Ok(())
 }

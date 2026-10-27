@@ -31,14 +31,14 @@ pub struct Registration {
     pub suites: Vec<RunSuite>,
 }
 
-/// Registers a P4 execution corpus and its entry relation,
-/// expected in `expected/run/<name>.expected`.
+/// Registers a P4 execution corpus, its entry relation, and its expected results.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RunSuite {
     pub name: String,
     pub root: PathBuf,
     pub relation: String,
+    pub expected: PathBuf,
 }
 
 struct CollectedSuite {
@@ -64,7 +64,7 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
                 root: suite.root.clone(),
                 paths: corpus::collect(&suite.root, ".p4")?,
                 id_relation: suite.relation.clone(),
-                results: Results::new(&util::expected_path("run", &suite.name)),
+                results: Results::new(&std::path::absolute(&suite.expected)?),
             })
         })
         .collect::<Result<Vec<_>>>()?;
