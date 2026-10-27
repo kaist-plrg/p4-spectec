@@ -14,7 +14,7 @@ export CARGO_TARGET_DIR
 METACIRC_TEST = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(CARGO_TARGET_DIR)" --bin metacirc-test -- $(if $(TEST_LOG),--log "$(abspath $(TEST_LOG))")
 METACIRC_SNAPSHOTS := test-metacirc-elab test-metacirc-algo test-metacirc-structure test-metacirc-prose
 
-.PHONY: metacirc metacirc-cli kompile test-metacirc-run-al test-metacirc-run-il test-metacirc-run-k test-metacirc-micro-al test-metacirc-micro-il test-metacirc-micro-k test-metacirc-sim-al test-metacirc-sim-il test-metacirc-sim-k $(METACIRC_SNAPSHOTS) test-metacirc-metaparse test-metacirc-promote clean
+.PHONY: metacirc metacirc-cli kompile test-metacirc-run-al test-metacirc-run-il test-metacirc-run-k test-metacirc-micro-al test-metacirc-micro-il test-metacirc-micro-k test-metacirc-sim-al test-metacirc-sim-il test-metacirc-sim-k test-metacirc-k-in-st $(METACIRC_SNAPSHOTS) test-metacirc-metaparse test-metacirc-promote clean
 
 metacirc-cli:
 	cd $(RUST_DIR) && $(CARGO) build --locked --release --bin metacirc --target-dir "$(CARGO_TARGET_DIR)"
@@ -64,6 +64,10 @@ test-metacirc-sim-il:
 # Registered simulation suites through the K/P4 tower (ST-in-K), against native expectations
 test-metacirc-sim-k:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) sim k
+
+# K definitions run through spec-k over KORE (K-in-ST), against krun's output
+test-metacirc-k-in-st:
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) k-in-st sl
 
 # Snapshots of the meta specification in spec-meta
 $(METACIRC_SNAPSHOTS):

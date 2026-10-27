@@ -36,7 +36,7 @@ $(TEST_TARGETS):
 
 METACIRC_TARGETS := metacirc kompile test-metacirc-run-al test-metacirc-run-il test-metacirc-run-k \
   test-metacirc-micro-al test-metacirc-micro-il test-metacirc-micro-k test-metacirc-sim-al \
-  test-metacirc-sim-il test-metacirc-sim-k test-metacirc-elab \
+  test-metacirc-sim-il test-metacirc-sim-k test-metacirc-k-in-st test-metacirc-elab \
   test-metacirc-algo test-metacirc-structure test-metacirc-prose test-metacirc-metaparse \
   test-metacirc-promote
 
