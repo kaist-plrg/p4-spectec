@@ -7,7 +7,8 @@
 //! `EngineKind` lends the engines, `EngineStateKind` stores a deeper depth's,
 //! and `BaseSpec` is the base's definitions they share;
 //! `spectec` executes AL or SL, and `k` a library compiled from a K base.
-//! `InterfaceKind` answers the builtins of a base executed by `spectec`.
+//! `InterfaceKind` answers the builtins of a base executed by `spectec`,
+//! spec-meta or spec-k.
 
 mod k;
 mod spectec;
@@ -18,7 +19,7 @@ use spectec::{SpecTecEngineState, SpecTecSpec};
 
 use super::{Result as MetacircResult, tower::UpperMut};
 use crate::{
-    interface::meta::MetaInterface,
+    interface::{kore::KoreInterface, meta::MetaInterface},
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
@@ -178,6 +179,8 @@ impl Engine for EngineKind<'_> {
 pub(in crate::metacirc) enum InterfaceKind {
     /// spec-meta, interpreting AL or IL.
     Meta(MetaInterface),
+    /// spec-k, interpreting KORE.
+    Kore(KoreInterface),
 }
 
 impl Interface for InterfaceKind {
@@ -189,6 +192,7 @@ impl Interface for InterfaceKind {
     ) -> Result<Value, InterfaceError> {
         match self {
             Self::Meta(interface) => interface.parse_program(arena, includes, paths),
+            Self::Kore(interface) => interface.parse_program(arena, includes, paths),
         }
     }
 
@@ -201,12 +205,14 @@ impl Interface for InterfaceKind {
     ) -> Eval<Value, InterfaceError> {
         match self {
             Self::Meta(interface) => interface.call_builtin(arena, id, targs, values),
+            Self::Kore(interface) => interface.call_builtin(arena, id, targs, values),
         }
     }
 
     fn clear(&mut self) {
         match self {
             Self::Meta(interface) => interface.clear(),
+            Self::Kore(interface) => interface.clear(),
         }
     }
 }

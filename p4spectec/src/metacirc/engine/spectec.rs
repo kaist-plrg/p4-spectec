@@ -203,7 +203,8 @@ impl SpecTecEngineState {
                 options.guard,
             ))),
         };
-        // Only the builtins are used; the base never parses at a depth
+        // Only the builtins are used; the base never parses at a depth.
+        // A depth beneath the base exists only under a P4 top, over spec-meta
         Self { interp, interface: InterfaceKind::Meta(interface::meta(Lang::Al)) }
     }
 }

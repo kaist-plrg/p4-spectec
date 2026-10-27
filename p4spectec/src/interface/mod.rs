@@ -8,7 +8,11 @@
 //!
 //! `meta` is the preset for meta specifications: standard builtins,
 //! with specification inputs parsed as AL or IL scripts;
-//! `meta` also converts IL and AL to and from meta-language values
+//! `meta` also converts IL and AL to and from meta-language values.
+//!
+//! `kore` is the preset for spec-k, the K semantics:
+//! standard builtins plus the K hooks spec-k delegates,
+//! with a K definition and initial term parsed from KORE
 
 use crate::lang::{common::source::Span, data::value};
 
@@ -16,11 +20,13 @@ use crate::runner::Spec;
 
 use self::{
     builtin::{call::Builtins, extract},
+    kore::KoreInterface,
     meta::MetaInterface,
     p4::{P4Interface, unparse::P4Unparser},
 };
 
 pub mod builtin;
+pub mod kore;
 pub mod meta;
 pub mod p4;
 
@@ -52,6 +58,13 @@ impl Lang {
 /// with the standard specification builtins.
 pub fn meta(lang: Lang) -> MetaInterface {
     MetaInterface::new(lang, Builtins::new())
+}
+
+// == KORE
+
+/// Builds the interface of spec-k, with the standard builtins and the K hooks.
+pub fn kore() -> KoreInterface {
+    KoreInterface::new()
 }
 
 // == P4

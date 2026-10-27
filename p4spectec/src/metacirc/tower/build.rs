@@ -31,11 +31,7 @@
 
 use super::super::engine::{InterfaceKind, KEngineState, KRuntime};
 use super::super::protocol::{KoreProtocol, MetaKProtocol, MetaProtocol, Protocol, ProtocolKind};
-use super::super::{
-    ExecutionMode, Result, TowerConfig,
-    config::Lang,
-    error::{self, config_invalid},
-};
+use super::super::{ExecutionMode, Result, TowerConfig, config::Lang, error::config_invalid};
 use super::{BaseRunner, KBase, PreparedLevel, Top, Tower, Upper};
 use crate::{
     interface::{
@@ -137,10 +133,6 @@ impl<Ext: Extern> Tower<Ext> {
         options: runner::Config,
         external_p4: Ext,
     ) -> Result<Self> {
-        // KORE inputs are a template slot without an implementation yet
-        if config.top_lang() == Lang::Kore {
-            return Err(error::unimplemented("a KORE input (K-in-ST)"));
-        }
         // Prepare each specification once, from base to top, into its PreparedLevel;
         // the base is also converted for its native runner
         let levels = config
@@ -193,11 +185,14 @@ impl<Ext: Extern> Tower<Ext> {
                 let runner = Runner::new(arena, spec_base, options, interface, external_p4)?;
                 (BaseRunner::P4(runner), Vec::new())
             }
-            // A meta base hosts the levels above it as its extern
+            // A meta base or spec-k hosts the levels above it as its extern
             lang_base => {
                 let (upper, protocols) =
                     build_upper(config, level_top, Some(&spec_base_al), options, external_p4);
-                let interface = InterfaceKind::Meta(interface::meta(lang_base));
+                let interface = match lang_base {
+                    Lang::Kore => InterfaceKind::Kore(interface::kore()),
+                    _ => InterfaceKind::Meta(interface::meta(lang_base)),
+                };
                 let spec_base = into_runner_spec(config.mode, spec_base_al)?;
                 let runner = Runner::new(arena, spec_base, options, interface, upper)?;
                 (BaseRunner::Meta(runner), protocols)
