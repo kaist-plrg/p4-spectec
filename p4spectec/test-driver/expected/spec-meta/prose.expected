@@ -4697,17 +4697,25 @@ def $sidecond_iter(iter, vari_a, vari_b)
 
 def $sideconds_iter(iter, (vari')*{vari' <- vari'*})
 
-1. Case analysis on (vari')*{vari' <- vari'*}
+1. Block (2 arms)
 
-  1. Case (% matches pattern [])
+Arm 1:
 
-    1. Return []
+  1. Case analysis on (vari')*{vari' <- vari'*}
 
-  2. Case (% matches pattern [ _/1 ])
+    1. Case (% matches pattern [])
 
-    1. Return []
+      1. Return []
 
-  3. Case (% matches pattern _ :: _)
+    2. Case (% matches pattern [ _/1 ])
+
+      1. Return []
+
+  1. Else Dangling
+
+Arm 2:
+
+  1. Check (((vari')*{vari' <- vari'*} matches pattern _ :: _))
 
     1. (Let vari_a :: (vari)*{vari <- vari*} be (vari')*{vari' <- vari'*})
 
@@ -4720,8 +4728,6 @@ def $sideconds_iter(iter, (vari')*{vari' <- vari'*})
       3. (Let (premAL_t)*{premAL_t <- premAL_t*} be $sideconds_iter(iter, vari_b :: (vari_t)*{vari_t <- vari_t*}))
 
       4. Return premAL_ab :: (premAL_t)*{premAL_t <- premAL_t*}
-
-1. Else Dangling
 
 def $access_exp(typedExp_b, (path '#' typ))
 
