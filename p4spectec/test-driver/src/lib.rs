@@ -1,8 +1,8 @@
 //! Shared acceptance utilities and suite implementations
 //!
-//! The main driver selects registered compiler, execution, and simulation suites
-//! The metacirc binary runs the SL execution corpus through an AL tower
-//! Snapshot normalization is shared by both drivers
+//! The main driver selects registered compiler, execution, and simulation suites;
+//! the metacirc driver, under `metacirc`, runs them through towers.
+//! Snapshot normalization and expectations are shared by both drivers.
 
 use clap::Args;
 
@@ -14,8 +14,6 @@ pub mod suite;
 pub mod elab;
 
 pub mod algo;
-
-pub mod metaparse;
 
 pub mod structure;
 

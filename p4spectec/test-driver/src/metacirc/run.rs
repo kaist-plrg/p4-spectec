@@ -28,12 +28,18 @@ use p4spectec::{
     sim_plugin::dummy::Dummy,
 };
 
+use super::suite::{Conversion, RunConfig, RunSuite};
 use crate::{
     Error, ExecutionOptions, Result,
     corpus::{self, Outcome, Results},
-    diagnostic,
-    suite::{self, MetacircConfig, MetacircSuite},
+    diagnostic, suite,
 };
+
+/// A registered suite with the tower of the selected conversion.
+struct SelectedSuite<'a> {
+    suite: &'a RunSuite,
+    path_tower: &'a Path,
+}
 
 struct CollectedSuite<'a> {
     paths: Vec<PathBuf>,
@@ -41,31 +47,45 @@ struct CollectedSuite<'a> {
     results: Results,
 }
 
-/// Runs the registered suites, AL scripts first, then P4 programs.
-pub fn run(config: &MetacircConfig, options: ExecutionOptions) -> Result<()> {
+/// Runs the suites registered for `conversion`, AL scripts first, then P4 programs.
+pub fn run(config: &RunConfig, conversion: Conversion, options: ExecutionOptions) -> Result<()> {
+    // Select the suites with a tower for the conversion
+    let suites = config
+        .suites
+        .iter()
+        .filter_map(|suite| {
+            let path_tower = suite.towers.get(conversion)?;
+            Some(SelectedSuite { suite, path_tower })
+        })
+        .collect::<Vec<_>>();
+    if suites.is_empty() {
+        return Err(Error::Invalid(format!("no {} metacirc suites registered", conversion.name())));
+    }
     let mut suites_p4 = Vec::new();
     let mut suites_al = Vec::new();
-    for suite in &config.suites {
-        let config_tower = TowerConfig::from_file(&suite.tower)
-            .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
+    for selected in suites {
+        let config_tower = TowerConfig::from_file(selected.path_tower)
+            .map_err(|error| Error::Invalid(format!("{}: {error}", selected.suite.name)))?;
         match config_tower.top_lang() {
-            Lang::P4 => suites_p4.push(suite),
-            Lang::Al | Lang::Il => suites_al.push(suite),
+            Lang::P4 => suites_p4.push(selected),
+            Lang::Al | Lang::Il => suites_al.push(selected),
         }
     }
+    let excludes = collect_excludes(config, conversion)?;
     if !suites_al.is_empty() {
-        run_scripts(config, &suites_al, options)?;
+        run_scripts(&excludes, &suites_al, options)?;
     }
     if !suites_p4.is_empty() {
-        run_programs(config, &suites_p4, options)?;
+        run_programs(config, &excludes, &suites_p4, options)?;
     }
     Ok(())
 }
 
 /// Runs P4 suites, preparing each distinct tower once.
 fn run_programs(
-    config: &MetacircConfig,
-    suites: &[&MetacircSuite],
+    config: &RunConfig,
+    excludes: &BTreeSet<String>,
+    suites: &[SelectedSuite<'_>],
     options: ExecutionOptions,
 ) -> Result<()> {
     let ExecutionOptions { cache_on, no_det } = options;
@@ -76,7 +96,7 @@ fn run_programs(
     // Collect registered corpus roots in suite order
     let mut suites = suites
         .iter()
-        .map(|suite| {
+        .map(|SelectedSuite { suite, path_tower }| {
             let path_expected = suite::expected_path(
                 suite
                     .expected
@@ -85,13 +105,12 @@ fn run_programs(
             );
             Ok(CollectedSuite {
                 paths: corpus::collect(&suite.root, ".p4")?,
-                path_tower: &suite.tower,
+                path_tower,
                 results: Results::new(expect_file![path_expected]),
             })
         })
         .collect::<Result<Vec<_>>>()?;
 
-    let excludes = collect_excludes(config)?;
     let collected: usize = suites.iter().map(|suite| suite.paths.len()).sum();
     let excluded = suites
         .iter()
@@ -225,9 +244,9 @@ fn run_programs(
 }
 
 /// Gathers the excluded corpus paths of the selected conversion.
-fn collect_excludes(config: &MetacircConfig) -> Result<BTreeSet<String>> {
+fn collect_excludes(config: &RunConfig, conversion: Conversion) -> Result<BTreeSet<String>> {
     let mut excludes = BTreeSet::new();
-    for path in &config.excludes {
+    for path in config.excludes.get(conversion).into_iter().flatten() {
         excludes.extend(corpus::collect_excludes(path)?);
     }
     Ok(excludes)
@@ -235,23 +254,22 @@ fn collect_excludes(config: &MetacircConfig) -> Result<BTreeSet<String>> {
 
 /// Runs script suites through their towers and checks each script's outcome.
 fn run_scripts(
-    config: &MetacircConfig,
-    suites: &[&MetacircSuite],
+    excludes: &BTreeSet<String>,
+    suites: &[SelectedSuite<'_>],
     options: ExecutionOptions,
 ) -> Result<()> {
     let ExecutionOptions { cache_on, no_det } = options;
     let det = !no_det;
     let text_cache = if cache_on { "on" } else { "off" };
     let text_mode = format!("metacirc script cache={text_cache} det={det}");
-    let excludes = collect_excludes(config)?;
     // Specification debug premises print to stdout
     let guard_stdout = crate::output::SilenceStdout::new()?;
     let mut executed = 0;
     let mut excluded = 0;
     let mut mismatches = Vec::new();
-    for suite in suites {
+    for SelectedSuite { suite, path_tower } in suites {
         let outcome_expect = suite.outcome.expect("loader requires an AL outcome");
-        let config_tower = TowerConfig::from_file(&suite.tower)
+        let config_tower = TowerConfig::from_file(path_tower)
             .map_err(|error| Error::Invalid(format!("{}: {error}", suite.name)))?;
         for path in corpus::collect(&suite.root, ".watsup")? {
             if path.to_str().is_some_and(|path| excludes.contains(path)) {

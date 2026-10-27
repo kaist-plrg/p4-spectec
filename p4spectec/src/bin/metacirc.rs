@@ -2,13 +2,15 @@
 //!
 //! `algo`, `struct`, and `prose` transform ordered specification paths natively.
 //! `run-meta` requires a tower configuration for AL, IL, and P4 inputs.
+//! `sim` runs an STF test on an SL tower of two or more levels over P4,
+//! printing each matched packet as `p4spectec sim` does.
 //! Structured diagnostics are rendered at the CLI boundary.
 //! Success is printed only after the configured outer entry finishes.
 
 use clap::{Args, Parser, Subcommand};
 use p4spectec::{
     diagnostic::{DisplayStyle, RenderConfig, Renderer, Report},
-    lang::traits::print::Print,
+    lang::{data::encoding::Encoding, traits::print::Print},
     metacirc::{self, TowerConfig},
     runner,
 };
@@ -31,6 +33,8 @@ enum Command {
     Prose(SpecArgs),
     /// Execute a program through a JSON-configured interpreter tower.
     RunMeta(RunMetaArgs),
+    /// Simulate a P4 program and STF test through an SL tower over P4.
+    Sim(SimArgs),
 }
 
 #[derive(Args)]
@@ -73,6 +77,26 @@ struct RunMetaArgs {
     options: Options,
 }
 
+#[derive(Args)]
+struct SimArgs {
+    /// Tower configuration: an SL-executed meta specification over a P4 top level.
+    config: PathBuf,
+    /// Target architecture: ebpf, psa, or v1model.
+    #[arg(long, value_name = "ARCH")]
+    arch: String,
+    /// P4 program to simulate.
+    #[arg(short = 'p', value_name = "PROGRAM")]
+    program: PathBuf,
+    /// STF test to execute.
+    #[arg(long, value_name = "STF")]
+    stf: PathBuf,
+    /// Include search directories for the P4 program.
+    #[arg(short = 'i', value_name = "DIR")]
+    includes: Vec<PathBuf>,
+    #[command(flatten)]
+    options: Options,
+}
+
 /// Renders reports without changing their structured payloads.
 fn render_report(renderer: &mut Renderer, report: &Report) {
     if let Err(error) = renderer.render_to_stderr(report) {
@@ -106,7 +130,20 @@ fn run(cli: Cli) -> metacirc::Result<()> {
             println!("passed");
             Ok(())
         }
+        Command::Sim(args) => sim(args),
     }
+}
+
+/// Runs an STF test through the tower, printing packets as they match.
+fn sim(args: SimArgs) -> metacirc::Result<()> {
+    let config = TowerConfig::from_file(&args.config)?;
+    let mut simulator =
+        metacirc::build_simulator(&config, &args.arch, args.options.config(), Encoding::default())?;
+    simulator.run_stf_test(&args.includes, &args.program, &args.stf, |tx| {
+        println!("[PASS] Transmitted {tx}");
+    })?;
+    println!("passed");
+    Ok(())
 }
 
 fn main() -> ExitCode {

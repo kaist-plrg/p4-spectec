@@ -34,3 +34,13 @@ pub(super) fn reentry_unsupported() -> Box<Report> {
         "a host extern reentered the tower, which lends no interpreter to answer it",
     )
 }
+
+/// Reports a meta execution whose result is UNMATCH.
+pub(super) fn execution_unmatched(name: &str) -> Box<Report> {
+    diagnostic("metacirc/execution-unmatched", format!("meta execution of {name} unmatched"))
+}
+
+/// Reports a meta execution whose result is ERROR.
+pub(super) fn execution_failed(name: &str) -> Box<Report> {
+    diagnostic("metacirc/execution-failed", format!("meta execution of {name} failed"))
+}

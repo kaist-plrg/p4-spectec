@@ -7,6 +7,8 @@
 //! which answer if the extern reenters;
 //! a caller that supports no reentry lends one that always fails.
 
+use std::path::PathBuf;
+
 use crate::lang::data::{arena::Arena, value::flat::Value};
 
 use crate::lang::il::ast::{Id, Typ};
@@ -24,6 +26,11 @@ impl<Iface: Interface, Ext: Extern> Host<Iface, Ext> {
         Self { interface, external }
     }
 
+    /// Borrows the interface and the extern together.
+    pub fn parts_mut(&mut self) -> (&mut Iface, &mut Ext) {
+        (&mut self.interface, &mut self.external)
+    }
+
     /// Calls a builtin through the interface.
     pub fn eval_builtin(
         &mut self,
@@ -33,6 +40,41 @@ impl<Iface: Interface, Ext: Extern> Host<Iface, Ext> {
         values: &[Value],
     ) -> Eval<Value, InterfaceError> {
         self.interface.call_builtin(arena, id, targs, values)
+    }
+
+    /// Parses input files through the interface into the shared arena.
+    pub fn parse_program(
+        &mut self,
+        arena: &mut Arena,
+        includes: &[PathBuf],
+        paths: &[PathBuf],
+    ) -> Result<Value, InterfaceError> {
+        self.interface.parse_program(arena, includes, paths)
+    }
+
+    /// Runs `body` in a context around a lent interpreter, which answers its reentry.
+    ///
+    /// The interface and extern stay borrowed until `body` returns.
+    pub fn with_context<Interp, T>(
+        &mut self,
+        arena: &mut Arena,
+        spec_env: &Interp::SpecEnv,
+        interp: &mut Interp,
+        body: impl FnOnce(&mut RunnerContext<'_, Interp, Iface, Ext>) -> T,
+    ) -> T
+    where
+        Interp: Interpreter<Iface, Ext>,
+    {
+        let mut effects = 0;
+        let mut ctx = RunnerContext::new(
+            arena,
+            spec_env,
+            interp,
+            &mut self.interface,
+            &mut self.external,
+            &mut effects,
+        );
+        body(&mut ctx)
     }
 
     /// Calls a host relation through the extern; `interp` answers its reentry.

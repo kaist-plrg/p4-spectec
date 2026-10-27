@@ -12,7 +12,7 @@ use p4spectec::lang::data::encoding::Encoding;
 
 use p4spectec::runner::{Config, Spec};
 
-use p4spectec::sim_plugin::{self, io::Tx};
+use p4spectec::sim_plugin::{self, Simulator, io::Tx};
 
 use crate::{
     Error, ExecutionOptions, Result, corpus,
@@ -153,7 +153,15 @@ impl Results {
 
 /// Runs registered simulation suites with the selected interpreter.
 pub fn run(config: &SimConfig, language: Language, options: ExecutionOptions) -> Result<()> {
-    run_with(config, language, options, || match language {
+    let suites = config
+        .suites
+        .iter()
+        .filter(|suite| suite.languages.contains(&language))
+        .collect::<Vec<_>>();
+    if suites.is_empty() {
+        return Err(Error::Invalid(format!("no {} simulation suites registered", language.name())));
+    }
+    let build_spec = || match language {
         Language::Al => p4spectec::algo(&config.spec)
             .map(Spec::Al)
             .map_err(|error| Error::Invalid(error.to_string())),
@@ -163,17 +171,25 @@ pub fn run(config: &SimConfig, language: Language, options: ExecutionOptions) ->
         Language::Pl => p4spectec::prosify(&config.spec)
             .map(Spec::Pl)
             .map_err(|error| Error::Invalid(error.to_string())),
+    };
+    run_suites(config, &suites, options, |arch, config_runner| {
+        sim_plugin::build(build_spec()?, arch, config_runner, Encoding::default())
+            .map_err(|error| Error::Invalid(error.to_string()))
     })
 }
 
-fn run_with<BuildSpec>(
+/// Runs the given suites of `config` on one simulator per architecture.
+///
+/// `build_simulator` builds the simulator of an architecture,
+/// and every suite compares its outcomes with its own expected file.
+pub fn run_suites<BuildSimulator>(
     config: &SimConfig,
-    language: Language,
+    suites: &[&SimSuite],
     options: ExecutionOptions,
-    build_spec: BuildSpec,
+    build_simulator: BuildSimulator,
 ) -> Result<()>
 where
-    BuildSpec: Fn() -> Result<Spec>,
+    BuildSimulator: Fn(&str, Config) -> Result<Simulator>,
 {
     let ExecutionOptions { cache_on, no_det } = options;
     let det = !no_det;
@@ -183,15 +199,10 @@ where
     for path in &config.excludes {
         excludes.extend(corpus::collect_excludes(path)?);
     }
-    let suites = config
-        .suites
+    let suites = suites
         .iter()
-        .filter(|suite| suite.languages.contains(&language))
-        .map(|suite| Ok((suite, suite.collect()?)))
+        .map(|suite| Ok((*suite, suite.collect()?)))
         .collect::<Result<Vec<_>>>()?;
-    if suites.is_empty() {
-        return Err(Error::Invalid(format!("no {} simulation suites registered", language.name())));
-    }
     let collected: usize = suites.iter().map(|(_, pairs)| pairs.len()).sum();
     let excluded = suites
         .iter()
@@ -235,13 +246,7 @@ where
             })
             .count();
         let patched_arch = pairs_arch.filter(|pair| pair.patched).count();
-        let mut simulator = sim_plugin::build(
-            build_spec()?,
-            arch,
-            Config::new(cache_on, det, false),
-            Encoding::default(),
-        )
-        .map_err(|error| Error::Invalid(error.to_string()))?;
+        let mut simulator = build_simulator(arch, Config::new(cache_on, det, false))?;
         for (suite, pairs) in suites.iter().filter(|(suite, _)| suite.arch == arch) {
             let mut results = Results::new(&suite.expected);
             let guard_stdout = crate::output::SilenceStdout::new()?;

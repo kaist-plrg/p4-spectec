@@ -5,11 +5,11 @@
 //! and relay them to the host of the next level.
 //! The native base may execute AL or SL.
 
-mod build;
 pub mod config;
 mod error;
-mod host;
-mod patch;
+mod reentry;
+mod relay;
+mod sim;
 mod tower;
 
 use crate::{
@@ -24,6 +24,7 @@ use std::path::PathBuf;
 
 pub use error::Result;
 
+pub use sim::build_simulator;
 pub use tower::Tower;
 
 /// Executes a program through the configured interpreter tower.

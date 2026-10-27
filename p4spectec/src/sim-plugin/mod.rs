@@ -37,7 +37,7 @@ pub use error::SimError;
 // == Simulator
 
 /// Object-safe view of a runner, so `Simulator` can hold any architecture.
-trait SimulatorRunner {
+pub(crate) trait SimulatorRunner {
     fn run_stf_test(
         &mut self,
         arena: &mut Arena,
@@ -72,11 +72,8 @@ pub struct Simulator {
 }
 
 impl Simulator {
-    /// Boxes a runner.
-    fn new<Arch>(arena: Arena, runner: Runner<P4Interface, Arch>) -> Self
-    where
-        Arch: Architecture + 'static,
-    {
+    /// Boxes a runner of STF tests, such as a native runner or a metacircular tower.
+    pub(crate) fn new(arena: Arena, runner: impl SimulatorRunner + 'static) -> Self {
         Self { arena, runner: Box::new(runner) }
     }
 

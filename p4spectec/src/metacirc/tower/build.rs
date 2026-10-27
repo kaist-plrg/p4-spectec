@@ -40,13 +40,13 @@
 //! | `al`                | `AboveAl` | AL                           |
 //! | `il`                | `AboveIl` | IL                           |
 
-use super::{
+use super::super::{
     ExecutionMode, Result, TowerConfig,
     config::Lang,
     error::config_invalid,
-    host::{HostLayer, MetaExtern, RelayExtern, TerminalExtern},
-    tower::{BaseLayer, Level, Tower},
+    relay::{MetaExtern, RelayExtern, TerminalExtern},
 };
+use super::{BaseLayer, HostLayer, Level, Tower};
 use crate::{
     interface::{
         self,

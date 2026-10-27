@@ -75,6 +75,35 @@ declarations. A P4 top level takes exactly one `-p` path.
 `towers/al-p4-ok.json` is the same tower entered through `Program_ok`,
 which only type-checks the program.
 
+## P4 simulation
+
+`metacirc sim` runs an STF test on an `sl` tower of two or more levels whose
+top level is P4, and prints each matched packet as `p4spectec sim` does:
+
+```sh
+./bin/metacirc sim towers/al-p4.json --arch v1model -i p4c/p4include \
+  -p p4c/testdata/p4_16_samples/issue1097-2-bmv2.p4 \
+  --stf p4c/testdata/p4_16_samples/issue1097-2-bmv2.stf
+```
+
+```
+[PASS] Transmitted (0) 001741
+[PASS] Transmitted (0) 01FF29
+passed
+```
+
+`--arch` selects `ebpf`, `psa`, or `v1model`. The simulator calls the P4
+specification's relations directly, so the levels' `rel` entries are unused.
+A call of a level above the base runs as `Call_rel` (or `Call_func`) on
+spec-meta at the level below, under a context `C` that loads that level's
+specification once per program; the base runs natively. In a three-level
+tower such as `towers/al-al-p4.json`, a P4 call becomes `Call_rel` at the
+middle level, which itself runs as `Call_rel` at the base. Host calls relay
+back up one level at a time. Each added level interprets spec-meta once more,
+so a three-level simulation is too slow for the STF corpus. When the
+architecture reenters the P4 specification, the call runs on a fresh SL
+interpreter one depth below.
+
 ## Tower configuration
 
 Levels are ordered from native base through intermediates to top level.
@@ -95,9 +124,9 @@ resolved relative to the current working directory.
 
 To add an AL interpretation layer, insert another
 `{ "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" }`
-below the top level. Names such as `al-al.json` and `al-al-p4.json` describe
-these additional configurations; only `al.json`, `al-p4.json`, and
-`al-p4-ok.json` are supplied.
+below the top level, as the supplied three-level `al-al-p4.json` does;
+`al-il-p4.json` instead makes the middle level accept IL. A name such as
+`al-al.json` describes another configuration of this kind.
 
 In a multi-level tower, top-level and intermediate specifications must not
 define `main`.
@@ -138,23 +167,31 @@ are the supplied towers entered through `Eval_IL`.
 ```sh
 make test-metacirc-micro
 make test-metacirc-micro-meta
-make test-metacirc
-make test-metacirc-meta
+make test-metacirc-run
+make test-metacirc-run-meta
+make test-metacirc-sim
+make test-metacirc-sim-meta
 ```
 
 `test-metacirc-micro` runs the spec-language sources under
 `testdata/spec/pos/run` and `testdata/spec/neg/run` through the AL tower,
-each expected to succeed or fail as its suite in `suites/metacirc.json`
-registers. `test-metacirc` runs the `test-run-sl` corpus through the AL/P4
+each expected to succeed or fail as its suite in `suites/metacirc/run.json`
+registers. `test-metacirc-run` runs the `test-run-sl` corpus through the AL/P4
 tower and requires the p4c submodule. Both check determinism.
+`test-metacirc-sim` runs the `test-sim-sl` corpus, every suite of
+`suites/sim.json`, through the AL/P4 tower that `suites/metacirc/sim.json`
+names, against the native simulation expectations; it requires the p4c submodule.
+`suites/metacirc/metacirc.json` indexes these and the snapshot registrations.
 
 The `-meta` targets run the same suites with `--algo meta`:
 each suite registers a tower per conversion, and the `meta` tower is entered
 through `Eval_IL`, so the input is converted by `Algo_IL` instead of the
 native `algo` pass. They share the expectations of the native runs;
 sources whose outcome differs are listed in the `meta` exclusions.
-The driver selects suites with `--input al` or `--input p4`,
-or one registered suite with `--suite <NAME>`, for example `--suite neg-run`.
+The driver's `run` and `sim` subcommands take `--algo`;
+`run` selects suites with `--input al` or `--input p4`,
+and both select one registered suite with `--suite <NAME>`,
+for example `run --suite neg-run` or `sim --suite v1model-regression`.
 
 ## Specification snapshots
 

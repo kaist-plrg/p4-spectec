@@ -15,7 +15,8 @@ use p4spectec::{
     },
 };
 
-use crate::{Error, Result, suite::MetaparseSuite};
+use super::suite::MetaparseSuite;
+use crate::{Error, Result};
 
 /// Renders a meta value through its arena.
 fn render(arena: &Arena, value: Value) -> String {

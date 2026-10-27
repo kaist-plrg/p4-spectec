@@ -38,7 +38,7 @@ use crate::interface::{self as builtin, p4::P4Interface};
 
 use crate::sim_plugin::dummy::Dummy;
 
-pub use context::{Checkpoint, RunnerContext};
+pub use context::{Checkpoint, RunnerContext, RunnerContextParts};
 pub use externs::{Extern, ExternError, NullExtern};
 pub use host::Host;
 pub use interface::{Interface, InterfaceError, NullInterface};
@@ -62,9 +62,9 @@ pub struct Config {
     /// Memoize pure calls and host-boundary conversions.
     pub(crate) cache: bool,
     /// Check determinism of candidate selection.
-    det: bool,
+    pub(crate) det: bool,
     /// Type-check arguments and results at call boundaries.
-    guard: bool,
+    pub(crate) guard: bool,
 }
 
 impl Config {
