@@ -41,7 +41,7 @@ METACIRC_TARGETS := metacirc test-metacirc-run-al test-metacirc-run-il test-meta
 
 .PHONY: $(METACIRC_TARGETS)
 $(METACIRC_TARGETS):
-	$(MAKE) -f METASQ.mk CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
+	$(MAKE) -f METASQ.mk CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $(if $(TEST_LOG),TEST_LOG="$(abspath $(TEST_LOG))") $@
 
 promote: test-promote
 

@@ -1,4 +1,5 @@
 # Independent metacircular build and P4 execution corpus
+# TEST_LOG=DIR writes per-test timing logs of the metacirc run, micro, and sim targets
 
 CARGO := cargo
 RUST_DIR = p4spectec
@@ -10,7 +11,7 @@ endif
 export CARGO_TARGET_DIR
 
 .DEFAULT_GOAL := metacirc
-METACIRC_TEST = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(CARGO_TARGET_DIR)" --bin metacirc-test --
+METACIRC_TEST = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(CARGO_TARGET_DIR)" --bin metacirc-test -- $(if $(TEST_LOG),--log "$(abspath $(TEST_LOG))")
 METACIRC_SNAPSHOTS := test-metacirc-elab test-metacirc-algo test-metacirc-structure test-metacirc-prose
 
 .PHONY: metacirc metacirc-cli test-metacirc-run-al test-metacirc-run-il test-metacirc-micro-al test-metacirc-micro-il test-metacirc-sim-al test-metacirc-sim-il $(METACIRC_SNAPSHOTS) test-metacirc-metaparse test-metacirc-promote clean
