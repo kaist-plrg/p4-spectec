@@ -77,8 +77,8 @@ which only type-checks the program.
 
 ## P4 simulation
 
-`metacirc sim` runs an STF test on a two-level `sl` tower over P4 and prints
-each matched packet as `p4spectec sim` does:
+`metacirc sim` runs an STF test on an `sl` tower of two or more levels whose
+top level is P4, and prints each matched packet as `p4spectec sim` does:
 
 ```sh
 ./bin/metacirc sim towers/al-p4.json --arch v1model -i p4c/p4include \
@@ -94,9 +94,14 @@ passed
 
 `--arch` selects `ebpf`, `psa`, or `v1model`. The simulator calls the P4
 specification's relations directly, so the levels' `rel` entries are unused.
-Each call runs as `Call_rel` (or `Call_func`) under a context `C` that loads
-the P4 specification once per program. When the architecture reenters the
-P4 specification, the call runs on a fresh SL interpreter one depth below.
+A call of a level above the base runs as `Call_rel` (or `Call_func`) on
+spec-meta at the level below, under a context `C` that loads that level's
+specification once per program; the base runs natively. In a three-level
+tower such as `towers/al-al-p4.json`, a P4 call becomes `Call_rel` at the
+middle level, which itself runs as `Call_rel` at the base. Host calls relay
+back up one level at a time. Each added level interprets spec-meta once more,
+so a three-level simulation is too slow for the STF corpus. When the architecture reenters the P4
+specification, the call runs on a fresh SL interpreter one depth below.
 
 ## Tower configuration
 
@@ -119,8 +124,8 @@ resolved relative to the current working directory.
 To add an AL interpretation layer, insert another
 `{ "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" }`
 below the top level. Names such as `al-al.json` and `al-al-p4.json` describe
-these additional configurations; only `al.json`, `al-p4.json`, and
-`al-p4-ok.json` are supplied.
+these additional configurations; `al.json`, `al-p4.json`, `al-p4-ok.json`,
+and the three-level `al-al-p4.json` and `al-il-p4.json` are supplied.
 
 In a multi-level tower, top-level and intermediate specifications must not
 define `main`.

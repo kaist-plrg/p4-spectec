@@ -1,10 +1,11 @@
 //! STF simulation of a P4 program executed by spec-meta
 //!
-//! `SimTower` keeps a two-level tower: spec-meta runs natively at its base,
-//! and the P4 host with the architecture is stored in the base relay.
-//! For each STF operation, `with_context` lends the base's SL interpreter
-//! to the P4 host as depth 0 (`MetaInterp`),
-//! so the architecture drives spec-meta's execution of the P4 specification;
+//! `SimTower` keeps a tower of two or more levels: spec-meta runs natively
+//! at its base, each level above interprets the next through spec-meta,
+//! and the P4 host with the architecture is stored at the end of the relays.
+//! For each STF operation, `with_context` walks the relays up to the P4 host
+//! and lends it the base's SL interpreter as depth 0 (`MetaInterp`),
+//! so the architecture drives the levels' execution of the P4 specification;
 //! deeper depths are made when the architecture reenters.
 //! `build_simulator` selects the architecture and boxes the tower as a `Simulator`.
 
@@ -38,7 +39,7 @@ use std::path::{Path, PathBuf};
 
 // == Tower
 
-/// A two-level tower simulating its P4 top level through spec-meta.
+/// A tower simulating its P4 top level through the spec-meta levels below it.
 pub(super) struct SimTower<Arch: Architecture> {
     tower: Tower<Arch>,
     options: runner::Config,
@@ -58,13 +59,13 @@ impl<Arch: Architecture> SimTower<Arch> {
         options: runner::Config,
         arch: Arch,
     ) -> Result<Self> {
-        // Depth 0 is the base's SL interpreter, and the host above it is P4
-        if config.levels.len() != 2
+        // Depth 0 is the base's SL interpreter, and the top level is P4
+        if config.levels.len() < 2
             || config.top_lang() != Lang::P4
             || !matches!(config.mode, ExecutionMode::Sl)
         {
             return Err(config_invalid(
-                "simulation requires a two-level sl tower with a P4 top level",
+                "simulation requires an sl tower of two or more levels with a P4 top level",
             ));
         }
         let tower = Tower::build(arena, config, options, arch)?;
@@ -165,7 +166,7 @@ impl<Arch: Architecture + 'static> SimulatorRunner for SimTower<Arch> {
 
 // == Construction
 
-/// Builds a simulator for the named architecture on a two-level SL tower over P4.
+/// Builds a simulator for the named architecture on an SL tower over P4.
 pub fn build_simulator(
     config: &TowerConfig,
     arch: &str,
