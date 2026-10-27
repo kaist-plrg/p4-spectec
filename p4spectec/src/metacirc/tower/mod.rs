@@ -38,7 +38,7 @@ use std::num::NonZeroUsize;
 /// with `Ext` the extern of its P4 level.
 pub struct Tower<Ext: Extern = Dummy> {
     // Nonempty, ordered from base through intermediates to the top level
-    pub(super) specs: Vec<LevelSpec>,
+    pub(super) levels: Vec<PreparedLevel>,
     /// The protocol of the boundary below each level above the base.
     pub(super) protocols: Vec<ProtocolKind>,
     pub(super) base: BaseRunner<Ext>,
@@ -46,14 +46,14 @@ pub struct Tower<Ext: Extern = Dummy> {
     pub(super) options: runner::Config,
 }
 
-/// A configured specification, by the form it is passed to the level below.
-pub(super) enum LevelSpec {
+/// A configured level, prepared in the form the level below loads.
+pub(super) enum PreparedLevel {
     /// The base, which no level interprets.
     Base { config: LevelConfig },
-    /// A level above one accepting AL, which receives the patched AL.
-    AboveAl { config: LevelConfig, spec_al: al::Spec },
-    /// A level above one accepting IL, which receives the patched IL.
-    AboveIl { config: LevelConfig, spec_il: il::Spec },
+    /// A level passed to the level below as AL.
+    Al { config: LevelConfig, spec_al: al::Spec },
+    /// A level passed to the level below as IL.
+    Il { config: LevelConfig, spec_il: il::Spec },
 }
 
 /// The native runner of the base, selected by the language it interprets.
@@ -74,8 +74,8 @@ impl<Ext: Extern> Tower<Ext> {
 
     /// Executes a patched input at the native base's entry relation.
     pub fn eval_program(&mut self, arena: &mut Arena, program: Value) -> Eval<Vec<Value>> {
-        let Self { specs, protocols, base, options } = self;
-        let name = &specs[0].config().rel;
+        let Self { levels, protocols, base, options } = self;
+        let name = &levels[0].config().rel;
         match base {
             // A P4 base runs the program directly
             BaseRunner::P4(runner) => runner.eval_program(arena, name, program),
@@ -83,7 +83,7 @@ impl<Ext: Extern> Tower<Ext> {
             BaseRunner::Meta(runner) => {
                 let Runner { backend, interface, external: upper, effects } = runner;
                 let (engine, spec_base) = SpecTecEngine::lend_base(backend, interface);
-                let env = TowerEnv { spec_base, specs, protocols, options: *options };
+                let env = TowerEnv { spec_base, levels, protocols, options: *options };
                 let mut upper = upper.lend(&env);
                 EngineKind::SpecTec(engine).call_program(arena, &mut upper, effects, name, program)
             }
@@ -91,12 +91,10 @@ impl<Ext: Extern> Tower<Ext> {
     }
 }
 
-impl LevelSpec {
+impl PreparedLevel {
     pub(super) fn config(&self) -> &LevelConfig {
         match self {
-            Self::Base { config, .. }
-            | Self::AboveAl { config, .. }
-            | Self::AboveIl { config, .. } => config,
+            Self::Base { config, .. } | Self::Al { config, .. } | Self::Il { config, .. } => config,
         }
     }
 }

@@ -11,7 +11,7 @@
 use super::{
     engine::{Engine, EngineKind, SpecTecEngine, SpecTecEngineState, SpecTecSpec},
     protocol::{Below, Call, Output, Protocol, ProtocolKind, Values},
-    tower::{HostLevel, LevelAt, LevelSpec, TopMut, UpperMut},
+    tower::{HostLevel, LevelAt, PreparedLevel, TopMut, UpperMut},
 };
 use crate::{
     interface::{
@@ -129,7 +129,7 @@ pub(in crate::metacirc) struct TowerEnv<'s> {
     /// The base specification, executed natively.
     pub spec_base: SpecTecSpec<'s>,
     /// Every level of the tower, from the base to the top.
-    pub specs: &'s [LevelSpec],
+    pub levels: &'s [PreparedLevel],
     /// The protocol of the boundary below each level above the base.
     pub protocols: &'s [ProtocolKind],
     /// Options for the engines of deeper depths.
@@ -138,8 +138,8 @@ pub(in crate::metacirc) struct TowerEnv<'s> {
 
 impl TowerEnv<'_> {
     /// Returns the specification of `level`, in the form the level below loads.
-    fn spec(&self, level: HostLevel) -> &LevelSpec {
-        &self.specs[level.number()]
+    fn prepared(&self, level: HostLevel) -> &PreparedLevel {
+        &self.levels[level.number()]
     }
 
     /// Returns the protocol of the boundary below `level`.
@@ -214,7 +214,7 @@ impl<Ext: Extern> TowerCall<'_, '_, Ext> {
         // Load the specification through the protocol, on the level below
         let env = self.upper.env;
         let mut below = LevelBelow { tower: self, level_at: level.below() };
-        let value_ctx = env.protocol(level).load(&mut below, env.spec(level))?;
+        let value_ctx = env.protocol(level).load(&mut below, env.prepared(level))?;
         self.upper.set_ctx(level, value_ctx);
         Ok(value_ctx)
     }

@@ -123,7 +123,7 @@ impl<'l, Ext: Extern> UpperMut<'l, Ext> {
 
     /// Returns the level of the top, the highest level with a boundary.
     ///
-    /// A program top is one level above the last `LevelSpec`:
+    /// A program top is one level above the last `PreparedLevel`:
     /// it has a boundary but no specification, and it never reenters.
     pub(in crate::metacirc) fn level_top(&self) -> HostLevel {
         HostLevel::new(self.caches.len())

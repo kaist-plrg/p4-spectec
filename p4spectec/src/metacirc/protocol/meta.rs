@@ -23,7 +23,7 @@ use crate::{
         },
         il::ast::{Id, Typ},
     },
-    metacirc::{error, tower::LevelSpec},
+    metacirc::{error, tower::PreparedLevel},
     phrase,
     runner::{Eval, ExternError, InterpreterError},
 };
@@ -36,13 +36,17 @@ use std::borrow::Cow;
 pub(in crate::metacirc) struct MetaProtocol;
 
 impl Protocol for MetaProtocol {
-    fn load(&self, below: &mut dyn Below, above: &LevelSpec) -> Result<Value, InterpreterError> {
+    fn load(
+        &self,
+        below: &mut dyn Below,
+        above: &PreparedLevel,
+    ) -> Result<Value, InterpreterError> {
         // Encode the specification as AL, converting IL through spec-meta below
         let value_spec_al = match above {
-            LevelSpec::AboveAl { spec_al, .. } => spec_al
+            PreparedLevel::Al { spec_al, .. } => spec_al
                 .encode(below.arena())
                 .map_err(|error| InterpreterError::Fatal(error.into_report()))?,
-            LevelSpec::AboveIl { spec_il, .. } => {
+            PreparedLevel::Il { spec_il, .. } => {
                 let value_spec_il = spec_il
                     .encode(below.arena())
                     .map_err(|error| InterpreterError::Fatal(error.into_report()))?;
@@ -51,7 +55,7 @@ impl Protocol for MetaProtocol {
                 let values = below.call(call)?.into_rel();
                 *value::get::one(&values).map_err(ExternError::from)?
             }
-            LevelSpec::Base { .. } => unreachable!("the base is never loaded by a level below"),
+            PreparedLevel::Base { .. } => unreachable!("the base is never loaded by a level below"),
         };
         // C = $load_ctx($empty_ctx, spec), on the level below
         let call = Call::Func {

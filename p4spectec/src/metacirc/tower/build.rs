@@ -23,15 +23,15 @@
 //! which answers only the program's builtins
 //! across one more boundary above the highest meta level.
 //!
-//! | level below accepts | `LevelSpec` | patched into the level below |
-//! |---------------------|-------------|------------------------------|
-//! | none (base)         | `Base`      | —                            |
-//! | `al`                | `AboveAl`   | AL                           |
-//! | `il`                | `AboveIl`   | IL                           |
+//! | level below accepts | `PreparedLevel` | patched into the level below |
+//! |---------------------|-----------------|------------------------------|
+//! | none (base)         | `Base`          | —                            |
+//! | `al`                | `Al`            | AL                           |
+//! | `il`                | `Il`            | IL                           |
 
 use super::super::protocol::{MetaProtocol, ProtocolKind};
 use super::super::{ExecutionMode, Result, TowerConfig, config::Lang, error::config_invalid};
-use super::{BaseRunner, LevelSpec, Top, Tower, Upper};
+use super::{BaseRunner, PreparedLevel, Top, Tower, Upper};
 use crate::{
     interface::{
         self,
@@ -54,11 +54,11 @@ fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
 }
 
 /// Prepares the P4 interface, with print hints from the form the top level is prepared in.
-fn interface_p4(level_top: &LevelSpec, spec_base_al: &al::Spec) -> P4Interface {
+fn interface_p4(level_top: &PreparedLevel, spec_base_al: &al::Spec) -> P4Interface {
     let unparser = match level_top {
-        LevelSpec::Base { .. } => P4Unparser::from_al_spec(spec_base_al),
-        LevelSpec::AboveAl { spec_al, .. } => P4Unparser::from_al_spec(spec_al),
-        LevelSpec::AboveIl { spec_il, .. } => P4Unparser::from_il_spec(spec_il),
+        PreparedLevel::Base { .. } => P4Unparser::from_al_spec(spec_base_al),
+        PreparedLevel::Al { spec_al, .. } => P4Unparser::from_al_spec(spec_al),
+        PreparedLevel::Il { spec_il, .. } => P4Unparser::from_il_spec(spec_il),
     };
     interface::p4_with_unparser(unparser)
 }
@@ -71,7 +71,7 @@ fn interface_p4(level_top: &LevelSpec, spec_base_al: &al::Spec) -> P4Interface {
 /// Only a P4 top level uses `external_p4`.
 fn build_upper<Ext: Extern>(
     config: &TowerConfig,
-    level_top: &LevelSpec,
+    level_top: &PreparedLevel,
     spec_base_al: &al::Spec,
     options: runner::Config,
     external_p4: Ext,
@@ -119,9 +119,9 @@ impl<Ext: Extern> Tower<Ext> {
         options: runner::Config,
         external_p4: Ext,
     ) -> Result<Self> {
-        // Prepare each specification once, from base to top, into its LevelSpec;
+        // Prepare each specification once, from base to top, into its PreparedLevel;
         // the base is also converted for its native runner
-        let specs = config
+        let levels = config
             .levels
             .iter()
             .enumerate()
@@ -131,12 +131,12 @@ impl<Ext: Extern> Tower<Ext> {
                     .checked_sub(1)
                     .map(|idx_below| config.levels[idx_below].lang);
                 Ok(match lang_below {
-                    None => LevelSpec::Base { config: config_level.clone() },
-                    Some(Lang::Al) => LevelSpec::AboveAl {
+                    None => PreparedLevel::Base { config: config_level.clone() },
+                    Some(Lang::Al) => PreparedLevel::Al {
                         config: config_level.clone(),
                         spec_al: crate::algo(paths)?,
                     },
-                    Some(Lang::Il) => LevelSpec::AboveIl {
+                    Some(Lang::Il) => PreparedLevel::Il {
                         config: config_level.clone(),
                         spec_il: crate::elab(paths)?,
                     },
@@ -152,7 +152,7 @@ impl<Ext: Extern> Tower<Ext> {
         let spec_base_al = crate::algo(std::slice::from_ref(&config.levels[0].specdir))?;
 
         // Only the base runs natively
-        let level_top = specs.last().expect("validated nonempty tower");
+        let level_top = levels.last().expect("validated nonempty tower");
         let (base, protocols) = match config.levels[0].lang {
             // A P4 base is the whole tower
             Lang::P4 => {
@@ -171,6 +171,6 @@ impl<Ext: Extern> Tower<Ext> {
                 (BaseRunner::Meta(runner), protocols)
             }
         };
-        Ok(Self { specs, protocols, base, options })
+        Ok(Self { levels, protocols, base, options })
     }
 }

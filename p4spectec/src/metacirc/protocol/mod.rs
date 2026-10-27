@@ -12,7 +12,7 @@ mod meta;
 
 pub(super) use meta::MetaProtocol;
 
-use super::tower::LevelSpec;
+use super::tower::PreparedLevel;
 use crate::{
     interface::meta::shared::Cache,
     lang::{
@@ -31,7 +31,8 @@ use std::{borrow::Cow, ops::Deref};
 /// A protocol keeps no state of its own; `cache` is its boundary's.
 pub(in crate::metacirc) trait Protocol {
     /// Loads the specification of `above` into the level below, returning C.
-    fn load(&self, below: &mut dyn Below, above: &LevelSpec) -> Result<Value, InterpreterError>;
+    fn load(&self, below: &mut dyn Below, above: &PreparedLevel)
+    -> Result<Value, InterpreterError>;
 
     /// Turns `call` of the level above into a call on this level, given C.
     fn lower(
@@ -77,7 +78,11 @@ pub(in crate::metacirc) enum ProtocolKind {
 }
 
 impl Protocol for ProtocolKind {
-    fn load(&self, below: &mut dyn Below, above: &LevelSpec) -> Result<Value, InterpreterError> {
+    fn load(
+        &self,
+        below: &mut dyn Below,
+        above: &PreparedLevel,
+    ) -> Result<Value, InterpreterError> {
         match self {
             Self::Meta(protocol) => protocol.load(below, above),
         }

@@ -9,7 +9,7 @@
 //!
 //! ```text
 //! Tower
-//! ├─ specs: [LevelSpec]
+//! ├─ levels: [PreparedLevel]
 //! ├─ protocols: [ProtocolKind]                          : Protocol
 //! └─ BaseRunner
 //!    └─ Upper                    ─lend→ UpperMut        : Extern
