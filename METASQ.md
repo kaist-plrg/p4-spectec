@@ -100,8 +100,9 @@ specification once per program; the base runs natively. In a three-level
 tower such as `towers/al-al-p4.json`, a P4 call becomes `Call_rel` at the
 middle level, which itself runs as `Call_rel` at the base. Host calls relay
 back up one level at a time. Each added level interprets spec-meta once more,
-so a three-level simulation is too slow for the STF corpus. When the architecture reenters the P4
-specification, the call runs on a fresh SL interpreter one depth below.
+so a three-level simulation is too slow for the STF corpus. When the
+architecture reenters the P4 specification, the call runs on a fresh SL
+interpreter one depth below.
 
 ## Tower configuration
 
@@ -123,9 +124,9 @@ resolved relative to the current working directory.
 
 To add an AL interpretation layer, insert another
 `{ "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" }`
-below the top level. Names such as `al-al.json` and `al-al-p4.json` describe
-these additional configurations; `al.json`, `al-p4.json`, `al-p4-ok.json`,
-and the three-level `al-al-p4.json` and `al-il-p4.json` are supplied.
+below the top level, as the supplied three-level `al-al-p4.json` does;
+`al-il-p4.json` instead makes the middle level accept IL. A name such as
+`al-al.json` describes another configuration of this kind.
 
 In a multi-level tower, top-level and intermediate specifications must not
 define `main`.
