@@ -3,9 +3,10 @@
 //! The tower exposes program execution through its native entry point.
 //! The base is a runner with an interpreter; every other level is a host,
 //! since the level below interprets it, and `Upper` stores them all
-//! as the base's extern (see `boundary`).
+//! in its extern slot, lent per call as `boundary::Levels`.
 //! A single-level tower executes its top level directly as its base.
-//! `build` assembles the levels; `patch` adds the entry the base calls.
+//! `build` assembles the levels; `patch` adds the entry the base calls;
+//! `Tower::eval_program` runs it on the base's `Engine`.
 
 mod build;
 mod patch;
@@ -78,12 +79,6 @@ impl HostLevel {
     /// Returns the level at `number` among all levels, the base at 0.
     pub(in crate::metacirc) fn new(number: usize) -> Self {
         Self(NonZeroUsize::new(number).expect("a host level is above the base"))
-    }
-
-    /// Returns the top level of a tower of `levels`.
-    pub(in crate::metacirc) fn top(levels: &[Level]) -> Self {
-        let number = NonZeroUsize::new(levels.len() - 1);
-        Self(number.expect("a tower with a host level has two or more levels"))
     }
 
     /// Returns the level below this one.

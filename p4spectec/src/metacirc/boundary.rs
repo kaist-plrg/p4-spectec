@@ -94,7 +94,7 @@ impl<'l, Ext: Extern> Levels<'l, Ext> {
     }
 
     /// Returns the level of the top, the highest level with a boundary.
-    fn level_top(&self) -> HostLevel {
+    pub(in crate::metacirc) fn level_top(&self) -> HostLevel {
         HostLevel::new(self.caches.len())
     }
 

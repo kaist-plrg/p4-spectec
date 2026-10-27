@@ -101,8 +101,8 @@ tower such as `towers/al-al-p4.json`, a P4 call becomes `Call_rel` at the
 middle level, which itself runs as `Call_rel` at the base. Host calls relay
 back up one level at a time. Each added level interprets spec-meta once more,
 so a three-level simulation is too slow for the STF corpus. When the
-architecture reenters the P4 specification, the call runs on a fresh SL
-interpreter one depth below.
+architecture reenters the P4 specification, the call runs one depth below
+(see Tower structure).
 
 ## Tower configuration
 
@@ -137,6 +137,42 @@ caching and AL encode/decode caching are enabled together by default;
 `--no-cache` disables both. `run-meta` prints `passed`
 only after the configured base entry succeeds; diagnostics cause a nonzero
 exit code.
+
+## Tower structure
+
+`Tower` (`p4spectec/src/metacirc/tower/`) keeps every level's specification
+(`Level`), one `Protocol` per boundary, and the base runner. A P4 base is a
+plain runner. A meta base's runner stores the levels above it in `Upper`:
+
+```
+Upper { caches, ctxs, hosts, top, depth_next }
+  caches[k-1]  codec cache of the boundary below level k
+  ctxs[k-1]    C of level k for the current program, loaded on first use
+  hosts[k-1]   meta builtins of level k, between the base and the top
+  top          Top::P4(P4 interface + architecture) | Top::Program(builtins)
+  depth_next   reentry depths 1 and deeper
+```
+
+Above a meta top level is its AL or IL program, one more boundary whose
+builtins `Top::Program` answers.
+
+Three traits divide the work, each with one implementation stored as an enum:
+
+| trait | implementation | role |
+|---|---|---|
+| `Engine` (`engine/`) | `StEngine` | runs the base natively, on AL or SL |
+| `Protocol` (`protocol/`) | `MetaProtocol` | how spec-meta interprets the level above: load C, lower a call to `Call_rel`/`Call_func`, raise its result, decode and encode host calls |
+| `HostCalls` (`boundary.rs`) | `Boundary` | answers a decoded host call at the level above a boundary |
+
+A call goes down from the P4 top through each level's protocol to the engine
+(`interp.rs`, `TowerInterp`); a host call goes up from the engine through
+`Boundary { level }`, one level at a time, to the P4 interface and the
+architecture. `run-meta` enters at the base's configured relation and `sim` at
+the P4 relations the architecture calls; both lend the same levels. When a P4
+extern reenters the specification, as `static_assert` does to read its
+arguments and the architectures do through `find_var_e`, the call runs on the
+next depth: a fresh interpreter of the base's representation and fresh meta
+builtins, sharing C and the codec caches.
 
 ## Algo through the IL-to-AL specification
 

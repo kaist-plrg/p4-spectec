@@ -243,7 +243,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for TowerInterp<'s> {
         values: &[Value],
     ) -> Result<Vec<Value>, InterpreterError> {
         Self::with_tower(ctx, |tower| {
-            let level_top = HostLevel::top(tower.levels.env.levels);
+            let level_top = tower.levels.level_top();
             let call = Call::Rel { name, values: Cow::Borrowed(values) };
             tower
                 .call(Floor::Host(level_top), call)
@@ -258,7 +258,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for TowerInterp<'s> {
         values: &[Value],
     ) -> Result<Value, InterpreterError> {
         Self::with_tower(ctx, |tower| {
-            let level_top = HostLevel::top(tower.levels.env.levels);
+            let level_top = tower.levels.level_top();
             let call =
                 Call::Func { name, targs: Cow::Borrowed(targs), values: Cow::Borrowed(values) };
             tower

@@ -1,9 +1,11 @@
 //! Configured interpreter towers over AL, IL, or P4 inputs
 //!
 //! Each runner is prepared in the arena used by all of its calls.
-//! Only the base runs natively; meta externs decode one level of arguments
-//! and relay them to the host of the next level.
-//! The native base may execute AL or SL.
+//! Only the base runs natively, on an `engine` executing AL or SL;
+//! each level above is interpreted by the level below through its `protocol`.
+//! Calls go down the levels (`interp`), host calls come up across each
+//! `boundary`, and a P4 extern that reenters runs on the next depth.
+//! `tower` builds the levels, `sim` drives them with an STF test.
 
 mod boundary;
 pub mod config;
