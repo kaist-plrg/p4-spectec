@@ -43209,7 +43209,7 @@ def $needs_priority_tableKeysPropertyIR(KEY '=' `{ tableKeyIR*{tableKeyIR <- tab
 
   1. Return $exists_((nameIR_matchKind = "ternary")*{nameIR_matchKind <- nameIR_matchKind*})
 
-def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+relation TableObject_create_entry_key: EC |- (nameIR_key, t, typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
 
 1. Case analysis on t
 
@@ -43241,7 +43241,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                             1. (Let simpleKeysetExpressionIR be `( typeIR_set `) typedExpressionIR_cast as expressionIR '#' `( typeIR_set DYN `) as simpleKeysetExpressionIR)
 
-                              1. Return simpleKeysetExpressionIR
+                              1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
                       1. Else Dangling
 
@@ -43289,7 +43289,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                         1. (Let simpleKeysetExpressionIR be typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast)
 
-                                          1. Return simpleKeysetExpressionIR
+                                          1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
                                     1. Else Dangling
 
@@ -43325,7 +43325,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                         1. (Let simpleKeysetExpressionIR be typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast)
 
-                                          1. Return simpleKeysetExpressionIR
+                                          1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
                                     1. Else Dangling
 
@@ -43379,7 +43379,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                             1. (Let simpleKeysetExpressionIR be typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast)
 
-                                              1. Return simpleKeysetExpressionIR
+                                              1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
                                         1. Else Dangling
 
@@ -43421,7 +43421,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                             1. (Let simpleKeysetExpressionIR be typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast)
 
-                                              1. Return simpleKeysetExpressionIR
+                                              1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
                                         1. Else Dangling
 
@@ -43467,7 +43467,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                                 1. (Let simpleKeysetExpressionIR be typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast)
 
-                                                  1. Return simpleKeysetExpressionIR
+                                                  1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
                                             1. Else Dangling
 
@@ -43521,7 +43521,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                         1. (Let simpleKeysetExpressionIR be typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast)
 
-                                          1. Return simpleKeysetExpressionIR
+                                          1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
                                     1. Else Dangling
 
@@ -43545,17 +43545,17 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
             1. (Let simpleKeysetExpressionIR be typedExpressionIR_cast '&&&' typedExpressionIR_cast)
 
-              1. Return simpleKeysetExpressionIR
+              1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
         1. Else Dangling
 
 1. Else Dangling
 
-def $tableObject_create_entry_keys(EC, (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, tableKeysetInterface)
+relation TableObject_create_entry_keys: EC |- (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} '@' tableKeysetInterface : %
 
 1. If ((nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} matches []), then
 
-  1. Return []
+  1. Result in: % |- % '@' % : []
 
 1. Else Dangling
 
@@ -43565,9 +43565,11 @@ def $tableObject_create_entry_keys(EC, (nameIR, nameIR, typeIR)*{(nameIR, nameIR
 
     1. (Let (nameIR_key_h, nameIR_matchKind_h, typeIR_h) :: (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} be (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*})
 
-      1. (Let simpleKeysetExpressionIR_h be $tableObject_create_entry_key(EC, (nameIR_key_h, nameIR_matchKind_h, typeIR_h), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
+      1. (TableObject_create_entry_key: EC |- (nameIR_key_h, nameIR_matchKind_h, typeIR_h) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : simpleKeysetExpressionIR_h)
 
-        1. Return simpleKeysetExpressionIR_h :: $tableObject_create_entry_keys(EC, (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+        1. (TableObject_create_entry_keys: EC |- (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*})
+
+          1. Result in: % |- % '@' % : simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*}
 
   1. Else Dangling
 
@@ -43585,7 +43587,7 @@ def $key_interface_of_tableObject(TABLE typeId `{ frame TBL `})
 
     1. Return (nameIR_key, nameIR_matchKind, typeIR)*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*}
 
-def $tableObject_create_entry_keyset(EC, KEY '=' `{ tableKeyIR*{tableKeyIR <- tableKeyIR*} `}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+relation TableObject_create_entry_keyset: EC |- KEY '=' `{ tableKeyIR*{tableKeyIR <- tableKeyIR*} `} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
 
 1. (Let (nameIR_key, nameIR_matchKind, typeIR) be $interface_of_tableKeyIR(tableKeyIR))*{tableKeyIR <- tableKeyIR*, nameIR_key -> nameIR_key*, nameIR_matchKind -> nameIR_matchKind*, typeIR -> typeIR*}
 
@@ -43595,9 +43597,9 @@ def $tableObject_create_entry_keyset(EC, KEY '=' `{ tableKeyIR*{tableKeyIR <- ta
 
       1. If ($eq_set<nameIR>(`{ nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} `}, `{ nameIR_key_update*{nameIR_key_update <- nameIR_key_update*} `})), then
 
-        1. (Let simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} be $tableObject_create_entry_keys(EC, (nameIR_key, nameIR_matchKind, typeIR)*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
+        1. (TableObject_create_entry_keys: EC |- (nameIR_key, nameIR_matchKind, typeIR)*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*})
 
-          1. Return `( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} `) as keysetExpressionIR
+          1. Result in: % |- % '@' % : `( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} `) as keysetExpressionIR
 
       1. Else Dangling
 
@@ -43763,7 +43765,7 @@ def $find_tableActionIR_unqualified'(tableActionIR*{tableActionIR <- tableAction
 
           1. Else Dangling
 
-def $tableObject_create_entry_action(EC, ACTIONS '=' `{ tableActionIR*{tableActionIR <- tableActionIR*} `}, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}))
+relation TableObject_create_entry_action: EC |- ACTIONS '=' `{ tableActionIR*{tableActionIR <- tableActionIR*} `} '@' (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}) : %
 
 1. (Let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} be $find_tableActionIR_qualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update))
 
@@ -43789,7 +43791,7 @@ def $tableObject_create_entry_action(EC, ACTIONS '=' `{ tableActionIR*{tableActi
 
                       1. (Let argumentIR*{argumentIR <- argumentIR*} be argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*)
 
-                        1. Return _BARE nameIR_found controlPlaneNameIR `( argumentIR*{argumentIR <- argumentIR*} `)
+                        1. Result in: % |- % '@' % : _BARE nameIR_found controlPlaneNameIR `( argumentIR*{argumentIR <- argumentIR*} `)
 
                   1. Else Dangling
 
@@ -43823,7 +43825,7 @@ def $tableObject_create_entry_action(EC, ACTIONS '=' `{ tableActionIR*{tableActi
 
                         1. (Let argumentIR*{argumentIR <- argumentIR*} be argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*)
 
-                          1. Return _BARE nameIR_found controlPlaneNameIR `( argumentIR*{argumentIR <- argumentIR*} `)
+                          1. Result in: % |- % '@' % : _BARE nameIR_found controlPlaneNameIR `( argumentIR*{argumentIR <- argumentIR*} `)
 
                     1. Else Dangling
 
@@ -43833,15 +43835,15 @@ def $tableObject_create_entry_action(EC, ACTIONS '=' `{ tableActionIR*{tableActi
 
 2. Else Dangling
 
-def $tableObject_add_entry(EC, TABLE typeId `{ frame TBL `}, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
+relation TableObject_add_entry: EC |- TABLE typeId `{ frame TBL `} '@' tableEntryPriorityInterface ',' tableKeysetInterface ',' tableActionInterface : %
 
 1. (Let tableEntryPriorityOptIR be $tableObject_create_entry_priority(tableEntryPriorityInterface))
 
   1. If (($needs_priority_tableKeysPropertyIR(TBL.KEYS) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))), then
 
-    1. (Let keysetExpressionIR be $tableObject_create_entry_keyset(EC, TBL.KEYS, tableKeysetInterface))
+    1. (TableObject_create_entry_keyset: EC |- TBL.KEYS '@' tableKeysetInterface : keysetExpressionIR)
 
-      1. (Let tableActionReferenceIR be $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface))
+      1. (TableObject_create_entry_action: EC |- TBL.ACTIONS '@' tableActionInterface : tableActionReferenceIR)
 
         1. (Let tableEntryIR_update be ?() tableEntryPriorityOptIR keysetExpressionIR ':' tableActionReferenceIR _EMPTY ';')
 
@@ -43851,25 +43853,25 @@ def $tableObject_add_entry(EC, TABLE typeId `{ frame TBL `}, tableEntryPriorityI
 
               1. (Let TBL_updated be TBL[ENTRIES = tableEntriesPropertyIR_updated])
 
-                1. Return ?(TABLE typeId `{ frame TBL_updated `})
+                1. Result in: % |- % '@' % ',' % ',' % : ?(TABLE typeId `{ frame TBL_updated `})
 
 2. Otherwise,
 
-  1. Return ?()
+  1. Result in: % |- % '@' % ',' % ',' % : ?()
 
-def $tableObject_add_default_action(EC, TABLE typeId `{ frame TBL `}, tableActionInterface)
+relation TableObject_add_default_action: EC |- TABLE typeId `{ frame TBL `} '@' tableActionInterface : %
 
 1. (Let _annotationList constIR?{constIR <- constIR?} DEFAULT_ACTION '=' _tableActionReferenceIR ';' be TBL.DEFAULT_ACTION)
 
   1. If (constIR?{constIR <- constIR?} matches ()), then
 
-    1. (Let tableActionReferenceIR be $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface))
+    1. (TableObject_create_entry_action: EC |- TBL.ACTIONS '@' tableActionInterface : tableActionReferenceIR)
 
       1. (Let tableDefaultActionPropertyIR be _EMPTY ?() DEFAULT_ACTION '=' tableActionReferenceIR ';')
 
         1. (Let TBL_updated be TBL[DEFAULT_ACTION = tableDefaultActionPropertyIR])
 
-          1. Return TABLE typeId `{ frame TBL_updated `}
+          1. Result in: % |- % '@' % : TABLE typeId `{ frame TBL_updated `}
 
   1. Else Dangling
 
