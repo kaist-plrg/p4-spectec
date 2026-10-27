@@ -30,7 +30,7 @@
 //! | `il`                | `Il`            | IL                           |
 
 use super::super::engine::{InterfaceKind, KEngineState, KRuntime};
-use super::super::protocol::{MetaKProtocol, MetaProtocol, Protocol, ProtocolKind};
+use super::super::protocol::{KoreProtocol, MetaKProtocol, MetaProtocol, Protocol, ProtocolKind};
 use super::super::{
     ExecutionMode, Result, TowerConfig,
     config::Lang,
@@ -103,11 +103,13 @@ fn build_upper<Ext: Extern>(
         .map(|config_level| interface::meta(config_level.lang))
         .collect::<Vec<_>>();
     // The level below each boundary interprets the level above it:
-    // a K base runs spec-meta-k, and every other level is spec-meta
+    // a K base runs spec-meta-k, a level accepting KORE is spec-k,
+    // and every other level is spec-meta
     let count = hosts.len() + 1;
     let protocols = (0..count)
-        .map(|idx_below| match config.mode {
-            ExecutionMode::K if idx_below == 0 => ProtocolKind::MetaK(MetaKProtocol),
+        .map(|idx_below| match (config.mode, config.levels[idx_below].lang) {
+            (ExecutionMode::K, _) if idx_below == 0 => ProtocolKind::MetaK(MetaKProtocol),
+            (_, Lang::Kore) => ProtocolKind::Kore(KoreProtocol),
             _ => ProtocolKind::Meta(MetaProtocol),
         })
         .collect::<Vec<_>>();

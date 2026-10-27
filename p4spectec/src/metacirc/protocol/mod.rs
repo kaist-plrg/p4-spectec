@@ -8,11 +8,14 @@
 //! Going up, `host` decodes a host call that level k's specification made
 //! for level k+1, and `reply` encodes its outcome.
 //! `ProtocolKind` stores the protocols; `meta` is spec-meta's,
-//! and `meta_k` is spec-meta-k's, the AL semantics written in K.
+//! `meta_k` is spec-meta-k's, the AL semantics written in K,
+//! and `kore` is spec-k's, the K semantics written in P4-SpecTec.
 
+mod kore;
 mod meta;
 mod meta_k;
 
+pub(super) use kore::KoreProtocol;
 pub(super) use meta::MetaProtocol;
 pub(super) use meta_k::MetaKProtocol;
 
@@ -93,6 +96,8 @@ pub(in crate::metacirc) enum ProtocolKind {
     Meta(MetaProtocol),
     /// spec-meta-k, run by a `KEngine`, interprets the level above as AL.
     MetaK(MetaKProtocol),
+    /// spec-k interprets the level above as KORE.
+    Kore(KoreProtocol),
 }
 
 /// The codec state of a boundary, of the kind its `ProtocolKind` keeps.
@@ -101,6 +106,8 @@ pub(in crate::metacirc) enum CodecCache {
     Meta(Cache),
     /// spec-meta-k's JSON codec state.
     MetaK(meta_k::Cache),
+    /// spec-k's KORE codec state.
+    Kore(kore::Cache),
 }
 
 impl CodecCache {
@@ -109,6 +116,7 @@ impl CodecCache {
         match self {
             Self::Meta(cache) => cache.clear(),
             Self::MetaK(cache) => cache.clear(),
+            Self::Kore(cache) => cache.clear(),
         }
     }
 }
@@ -120,6 +128,7 @@ impl Protocol for ProtocolKind {
         match self {
             Self::Meta(protocol) => CodecCache::Meta(protocol.new_cache(enabled)),
             Self::MetaK(protocol) => CodecCache::MetaK(protocol.new_cache(enabled)),
+            Self::Kore(protocol) => CodecCache::Kore(protocol.new_cache(enabled)),
         }
     }
 
@@ -131,6 +140,7 @@ impl Protocol for ProtocolKind {
         match self {
             Self::Meta(protocol) => protocol.load(below, above),
             Self::MetaK(protocol) => protocol.load(below, above),
+            Self::Kore(protocol) => protocol.load(below, above),
         }
     }
 
@@ -138,6 +148,7 @@ impl Protocol for ProtocolKind {
         match self {
             Self::Meta(protocol) => protocol.encode_script(arena, script),
             Self::MetaK(protocol) => protocol.encode_script(arena, script),
+            Self::Kore(protocol) => protocol.encode_script(arena, script),
         }
     }
 
@@ -153,6 +164,9 @@ impl Protocol for ProtocolKind {
                 protocol.lower(arena, cache, value_ctx, call)
             }
             (Self::MetaK(protocol), CodecCache::MetaK(cache)) => {
+                protocol.lower(arena, cache, value_ctx, call)
+            }
+            (Self::Kore(protocol), CodecCache::Kore(cache)) => {
                 protocol.lower(arena, cache, value_ctx, call)
             }
             _ => unreachable!("a boundary keeps the cache its protocol made"),
@@ -173,6 +187,9 @@ impl Protocol for ProtocolKind {
             (Self::MetaK(protocol), CodecCache::MetaK(cache)) => {
                 protocol.raise(arena, cache, output, call)
             }
+            (Self::Kore(protocol), CodecCache::Kore(cache)) => {
+                protocol.raise(arena, cache, output, call)
+            }
             _ => unreachable!("a boundary keeps the cache its protocol made"),
         }
     }
@@ -191,6 +208,9 @@ impl Protocol for ProtocolKind {
             (Self::MetaK(protocol), CodecCache::MetaK(cache)) => {
                 protocol.host(arena, cache, name, values)
             }
+            (Self::Kore(protocol), CodecCache::Kore(cache)) => {
+                protocol.host(arena, cache, name, values)
+            }
             _ => unreachable!("a boundary keeps the cache its protocol made"),
         }
     }
@@ -207,6 +227,9 @@ impl Protocol for ProtocolKind {
                 protocol.reply(arena, cache, call, eval)
             }
             (Self::MetaK(protocol), CodecCache::MetaK(cache)) => {
+                protocol.reply(arena, cache, call, eval)
+            }
+            (Self::Kore(protocol), CodecCache::Kore(cache)) => {
                 protocol.reply(arena, cache, call, eval)
             }
             _ => unreachable!("a boundary keeps the cache its protocol made"),
