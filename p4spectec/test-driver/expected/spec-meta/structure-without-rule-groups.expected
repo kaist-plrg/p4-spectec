@@ -9369,14 +9369,20 @@ relation Eval_AL: |- specAL : %
 
   2. Debug: "into call"
 
-  3. (Call_func: C |- "main" `< [] `> `( [] `) : funcRes)
+  3. (Call_rel: C |- "MAIN" `( [] `) : relRes)
 
-    1. If (funcRes <: ok<val>), then
+    1. If (relRes <: ok<val*>), then
 
-      1. (Let OK val be funcRes as ok<val>)
+      1. (Let OK val'*{val' <- val'*} be relRes as ok<val*>)
 
-        1. Debug: val
+        1. If (val'*{val' <- val'*} matches [ _/1 ]), then
 
-        2. Result in: |- % : val
+          1. (Let [val] be val'*{val' <- val'*})
+
+            1. Debug: val
+
+            2. Result in: |- % : val
+
+        1. Else Dangling
 
     1. Else Dangling

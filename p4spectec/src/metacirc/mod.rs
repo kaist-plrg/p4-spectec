@@ -28,9 +28,9 @@ mod sim;
 mod tower;
 
 use crate::{
-    interface::{self, p4::parse::parse_file},
+    interface::p4::parse::parse_file,
     lang::data::arena::Arena,
-    runner::{self, Interface},
+    runner,
     sim_plugin::dummy::Dummy,
 };
 use config::Lang;
@@ -59,11 +59,10 @@ pub fn run(
     }
     let mut arena = Arena::new();
     let mut tower = Tower::build(&mut arena, config, options, Dummy)?;
-    // Parse the input in the language the top level accepts
+    // Parse the input in the language the top level accepts;
+    // a script is entered through a MAIN relation over its $main()
     let value_program = match lang_top {
-        Lang::Al | Lang::Il => interface::meta(lang_top)
-            .parse_program(&mut arena, includes, paths_program)
-            .map_err(|error| error.into_report())?,
+        Lang::Al | Lang::Il => tower::parse_script(&mut arena, lang_top, paths_program)?,
         Lang::P4 => parse_file(&mut arena, includes, &paths_program[0])
             .map_err(|error| error.into_report())?,
     };

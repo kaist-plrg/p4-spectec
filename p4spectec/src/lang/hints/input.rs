@@ -130,9 +130,9 @@ pub fn validate(hint: &InputHint, arity: usize) -> Result<(), InputError> {
     Ok(())
 }
 
-/// Validates operational positions, including a zero-arity relation's default.
+/// Validates operational positions; an empty hint makes every position an output.
 fn validate_items(hint: &InputHint, arity: usize) -> Result<(), InputError> {
-    if arity == 0 && hint.indices.is_empty() { Ok(()) } else { validate(hint, arity) }
+    if hint.indices.is_empty() { Ok(()) } else { validate(hint, arity) }
 }
 
 // Splitting and combining expressions based on input hints

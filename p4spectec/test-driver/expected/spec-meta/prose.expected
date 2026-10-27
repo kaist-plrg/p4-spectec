@@ -8863,12 +8863,16 @@ relation Eval_AL: |- specAL : %
 
   4. Debug: "into call"
 
-  5. (Call_func: C |- "main" `< [] `> `( [] `) : funcRes)
+  5. (Call_rel: C |- "MAIN" `( [] `) : relRes)
 
-  6. Check ((funcRes has type ok<val>))
+  6. Check ((relRes has type ok<val*>))
 
-    1. (Let (OK val) be (funcRes as ok<val>))
+    1. (Let (OK (val')*{val' <- val'*}) be (relRes as ok<val*>))
 
-    2. Debug: val
+    2. Check (((val')*{val' <- val'*} matches pattern [ _/1 ]))
 
-    3. Result in: |- % : val
+      1. (Let [val] be (val')*{val' <- val'*})
+
+      2. Debug: val
+
+      3. Result in: |- % : val

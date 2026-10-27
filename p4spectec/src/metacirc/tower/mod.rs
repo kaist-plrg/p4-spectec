@@ -5,13 +5,14 @@
 //! since the level below interprets it, and `Upper` stores them all
 //! in its extern slot, lent per call as `UpperMut` (see `upper`).
 //! A single-level tower executes its top level directly as its base.
-//! `build` assembles the levels; `patch` adds the entry the base calls;
+//! `build` assembles the levels; `patch` adds the MAIN entry each level calls;
 //! `Tower::eval_program` runs it on the base's `Engine`.
 
 mod build;
 mod patch;
 mod upper;
 
+pub(in crate::metacirc) use patch::parse_script;
 pub(in crate::metacirc) use upper::{Top, TopMut, Upper, UpperMut};
 
 use super::{

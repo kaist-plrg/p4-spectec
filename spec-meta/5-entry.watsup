@@ -10,13 +10,13 @@ relation Eval_IL:
   |- specIL : val
   hint(input %0)
   hint(prose_in "converting specification" %0
-                "to AL and executing its main function")
+                "to AL and executing its relation MAIN")
   hint(prose_out "value" %1)
 
 relation Eval_AL:
   |- specAL : val
   hint(input %0)
-  hint(prose_in "executing the main function of specification" %0)
+  hint(prose_in "executing relation MAIN of specification" %0)
   hint(prose_out "value" %1)
 
 rule Algo_IL:
@@ -36,7 +36,7 @@ rule Eval_AL:
   -- debug "entry-al"
   -- if C = $load_ctx($empty_ctx, specAL)
   -- debug "load complete"
-  ---- ;; calls $main(), assuming it exists in the given spec
+  ---- ;; calls relation MAIN, assuming it exists in the given spec
   -- debug "into call"
-  -- Call_func: C |- "main" `< eps `> `( eps `) : OK val
+  -- Call_rel: C |- "MAIN" `( eps `) : OK val
   -- debug val

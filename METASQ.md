@@ -27,6 +27,10 @@ dec $main() : nat
 def $main() = 42
 ```
 
+`Eval_AL` and `Eval_IL` call the relation `MAIN` of their script, so
+`run-meta` appends `relation MAIN: |- nat` with `rule MAIN: |- $main()`
+before passing the script to the tower.
+
 Run it with the supplied AL tower:
 
 ```sh
@@ -128,8 +132,10 @@ below the top level, as the supplied three-level `al-al-p4.json` does;
 `al-il-p4.json` instead makes the middle level accept IL. A name such as
 `al-al.json` describes another configuration of this kind.
 
-In a multi-level tower, top-level and intermediate specifications must not
-define `main`.
+Each level above the base is entered through a synthetic relation `MAIN` that
+calls the level's configured relation on the encoded input and outputs
+`"pass"`. Top-level and intermediate specifications must therefore not define
+a relation `MAIN`.
 
 `run-meta` accepts `--no-cache`, `--no-det`, and `--guard`. `--no-det` disables
 determinism checks only in the native base interpreter. Interpreter call
