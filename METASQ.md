@@ -45,7 +45,7 @@ Run it with the supplied AL tower:
 ```
 
 The single level is both top level and native base. Its `Eval_AL` interprets the
-AL script. Builtin calls of the script are answered by the native builtins;
+AL script, calling its `main` with no inputs. Builtin calls of the script are answered by the native builtins;
 other host operations are unsupported.
 Repeat `-p` for ordered specification source paths.
 
@@ -71,7 +71,10 @@ Use the supplied AL/P4 tower:
 
 The path is Rust SL interpreter → AL specification → P4 specification →
 P4 program. `Program_inst` type-checks the program and instantiates its
-declarations. A P4 top level takes exactly one `-p` path.
+declarations. The base runs `Eval_AL: |- specAL id val* : val*` natively on
+the P4 specification as AL, the name `"Program_inst"`, and the program
+encoded as a spec-meta `val`; `Eval_AL` calls `Program_inst` through
+`Call_rel` and outputs its results. A P4 top level takes exactly one `-p` path.
 `towers/al-p4-ok.json` is the same tower entered through `Program_ok`,
 which only type-checks the program.
 
@@ -118,6 +121,11 @@ Only the base runs on a native interpreter. Every level above it is
 interpreted by the level below, so natively it only answers the builtin and
 host calls relayed from below, without consulting its own definitions.
 
+`rel` names the relation entering a level. A level above an `al` or `il` level
+is encoded as the inputs of `Eval_AL` or `Eval_IL` at the level below: the
+specification, its `rel`, and the inputs of that `rel` as `val`s. An `id` naming
+a function, such as the `main` of a script, is called through `Call_func`.
+
 Each `specdir` accepts a specification file or directory and is resolved
 relative to the configuration file. CLI program and include paths are
 resolved relative to the current working directory.
@@ -127,9 +135,6 @@ To add an AL interpretation layer, insert another
 below the top level, as the supplied three-level `al-al-p4.json` does;
 `al-il-p4.json` instead makes the middle level accept IL. A name such as
 `al-al.json` describes another configuration of this kind.
-
-In a multi-level tower, top-level and intermediate specifications must not
-define `main`.
 
 `run-meta` accepts `--no-cache`, `--no-det`, and `--guard`. `--no-det` disables
 determinism checks only in the native base interpreter. Interpreter call

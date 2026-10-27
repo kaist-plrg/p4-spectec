@@ -23,7 +23,7 @@
 //! which answers only the program's builtins
 //! across one more boundary above the highest meta level.
 //!
-//! | level below accepts | `PreparedLevel` | patched into the level below |
+//! | level below accepts | `PreparedLevel` | encoded for the level below  |
 //! |---------------------|-----------------|------------------------------|
 //! | none (base)         | `Base`          | —                            |
 //! | `al`                | `Al`            | AL                           |

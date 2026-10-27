@@ -8655,40 +8655,49 @@ relation Algo_IL: |- specIL : specAL
     -- (if Otherwise_pure: |- defnAL_guard holds)*{defnAL_guard <- defnAL_guard*}
     -- output: |- % : defnAL_guard*{defnAL_guard <- defnAL_guard*}
 
-relation Eval_IL: |- specIL : val
+relation Eval_IL: |- specIL id val* : val*
 
   rulegroup
 
    match
 
-    (signature) |- specIL : %
-    |- specIL : %
+    (signature) |- specIL id val*{val <- val*} : %
+    |- specIL id val*{val <- val*} : %
 
    paths
 
     rulepath
     -- Algo_IL: |- specIL : specAL
-    -- Eval_AL: |- specAL : val
-    -- output: |- % : val
+    -- Eval_AL: |- specAL id val*{val <- val*} : val'*{val' <- val'*}
+    -- output: |- % % % : val'*{val' <- val'*}
 
-relation Eval_AL: |- specAL : val
+relation Eval_AL: |- specAL id val* : val*
 
   rulegroup
 
    match
 
-    (signature) |- specAL : %
-    |- specAL : %
+    (signature) |- specAL id val*{val <- val*} : %
+    |- specAL id val*{val <- val*} : %
 
    paths
 
-    rulepath
-    -- debug "entry-al"
+    rulepath rel
     -- let C = $load_ctx($empty_ctx, specAL)
-    -- debug "load complete"
-    -- debug "into call"
-    -- Call_func: C |- "main" `< [] `> `( [] `) : funcRes
+    -- let relDefnAL'?{relDefnAL' <- relDefnAL'?} = $find_rel(C, id)
+    -- if relDefnAL'?{relDefnAL' <- relDefnAL'?} matches (_)
+    -- let ?(relDefnAL) = relDefnAL'?{relDefnAL' <- relDefnAL'?}
+    -- Call_rel: C |- id `( val*{val <- val*} `) : relRes
+    -- if relRes <: ok<val*>
+    -- let OK val'*{val' <- val'*} = relRes as ok<val*>
+    -- output: |- % % % : val'*{val' <- val'*}
+
+    rulepath func
+    -- let C = $load_ctx($empty_ctx, specAL)
+    -- let funcDefnAL'?{funcDefnAL' <- funcDefnAL'?} = $find_func(C, id)
+    -- if funcDefnAL'?{funcDefnAL' <- funcDefnAL'?} matches (_)
+    -- let ?(funcDefnAL) = funcDefnAL'?{funcDefnAL' <- funcDefnAL'?}
+    -- Call_func: C |- id `< [] `> `( val*{val <- val*} `) : funcRes
     -- if funcRes <: ok<val>
-    -- let OK val = funcRes as ok<val>
-    -- debug val
-    -- output: |- % : val
+    -- let OK val' = funcRes as ok<val>
+    -- output: |- % % % : [val']

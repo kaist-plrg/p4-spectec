@@ -40,7 +40,7 @@ pub enum ExecutionMode {
 pub struct LevelConfig {
     /// A specification file or directory.
     pub specdir: PathBuf,
-    /// The single-input entry relation.
+    /// The relation entering this level, called with the inputs from above.
     pub rel: String,
     /// The language accepted by this level.
     pub lang: Lang,

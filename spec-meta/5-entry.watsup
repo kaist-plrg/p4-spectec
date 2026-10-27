@@ -7,17 +7,17 @@ relation Algo_IL:
   hint(prose_out %1)
 
 relation Eval_IL:
-  |- specIL : val
-  hint(input %0)
+  |- specIL id val* : val*
+  hint(input %0 %1 %2)
   hint(prose_in "converting specification" %0
-                "to AL and executing its main function")
-  hint(prose_out "value" %1)
+                "to AL and calling" %1 "with inputs" %2)
+  hint(prose_out "values" %3)
 
 relation Eval_AL:
-  |- specAL : val
-  hint(input %0)
-  hint(prose_in "executing the main function of specification" %0)
-  hint(prose_out "value" %1)
+  |- specAL id val* : val*
+  hint(input %0 %1 %2)
+  hint(prose_in "calling" %1 "with inputs" %2 "in specification" %0)
+  hint(prose_out "values" %3)
 
 rule Algo_IL:
   |- defnIL* : defnAL_guard*
@@ -27,16 +27,24 @@ rule Algo_IL:
   -- (Otherwise_pure: |- defnAL_guard)*
 
 rule Eval_IL:
-  |- specIL : val
+  |- specIL id val* : val'*
   -- Algo_IL: |- specIL : specAL
-  -- Eval_AL: |- specAL : val
+  -- Eval_AL: |- specAL id val* : val'*
 
-rule Eval_AL:
-  |- specAL : val
-  -- debug "entry-al"
-  -- if C = $load_ctx($empty_ctx, specAL)
-  -- debug "load complete"
-  ---- ;; calls $main(), assuming it exists in the given spec
-  -- debug "into call"
-  -- Call_func: C |- "main" `< eps `> `( eps `) : OK val
-  -- debug val
+;; The entry is a relation, or a function whose output is the only value
+
+rulegroup Eval_AL {
+
+  rule Eval_AL/rel:
+    |- specAL id val* : val'*
+    -- if C = $load_ctx($empty_ctx, specAL)
+    -- if relDefnAL = $find_rel(C, id)
+    -- Call_rel: C |- id `( val* `) : OK val'*
+
+  rule Eval_AL/func:
+    |- specAL id val* : val'
+    -- if C = $load_ctx($empty_ctx, specAL)
+    -- if funcDefnAL = $find_func(C, id)
+    -- Call_func: C |- id `< eps `> `( val* `) : OK val'
+
+}

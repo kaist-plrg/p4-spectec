@@ -4697,17 +4697,25 @@ def $sidecond_iter(iter, vari_a, vari_b)
 
 def $sideconds_iter(iter, (vari')*{vari' <- vari'*})
 
-1. Case analysis on (vari')*{vari' <- vari'*}
+1. Block (2 arms)
 
-  1. Case (% matches pattern [])
+Arm 1:
 
-    1. Return []
+  1. Case analysis on (vari')*{vari' <- vari'*}
 
-  2. Case (% matches pattern [ _/1 ])
+    1. Case (% matches pattern [])
 
-    1. Return []
+      1. Return []
 
-  3. Case (% matches pattern _ :: _)
+    2. Case (% matches pattern [ _/1 ])
+
+      1. Return []
+
+  1. Else Dangling
+
+Arm 2:
+
+  1. Check (((vari')*{vari' <- vari'*} matches pattern _ :: _))
 
     1. (Let vari_a :: (vari)*{vari <- vari*} be (vari')*{vari' <- vari'*})
 
@@ -4720,8 +4728,6 @@ def $sideconds_iter(iter, (vari')*{vari' <- vari'*})
       3. (Let (premAL_t)*{premAL_t <- premAL_t*} be $sideconds_iter(iter, vari_b :: (vari_t)*{vari_t <- vari_t*}))
 
       4. Return premAL_ab :: (premAL_t)*{premAL_t <- premAL_t*}
-
-1. Else Dangling
 
 def $access_exp(typedExp_b, (path '#' typ))
 
@@ -8835,34 +8841,50 @@ relation Algo_IL: |- (defnIL)*{defnIL <- defnIL*} : %
 
   4. Else Dangling
 
-relation Eval_IL: |- specIL : %
+relation Eval_IL: |- specIL id (val)*{val <- val*} : %
 
-1. Group : |- specIL : %
+1. Group : |- specIL id (val)*{val <- val*} : %
 
   1. (Algo_IL: |- specIL : specAL)
 
-  2. (Eval_AL: |- specAL : val)
+  2. (Eval_AL: |- specAL id (val)*{val <- val*} : (val')*{val' <- val'*})
 
-  3. Result in: |- % : val
+  3. Result in: |- % % % : (val')*{val' <- val'*}
 
-relation Eval_AL: |- specAL : %
+relation Eval_AL: |- specAL id (val)*{val <- val*} : %
 
-1. Group : |- specAL : %
+1. Group : |- specAL id (val)*{val <- val*} : %
 
-  1. Debug: "entry-al"
+  1. (Let C be $load_ctx($empty_ctx, specAL))
 
-  2. (Let C be $load_ctx($empty_ctx, specAL))
+  2. Block (2 arms)
 
-  3. Debug: "load complete"
+  Arm 1:
 
-  4. Debug: "into call"
+    1. (Let (relDefnAL)?{relDefnAL <- relDefnAL?} be $find_rel(C, id))
 
-  5. (Call_func: C |- "main" `< [] `> `( [] `) : funcRes)
+    2. If (((relDefnAL)?{relDefnAL <- relDefnAL?} matches pattern (_))), then
 
-  6. Check ((funcRes has type ok<val>))
+      1. (Call_rel: C |- id `( (val)*{val <- val*} `) : relRes)
 
-    1. (Let (OK val) be (funcRes as ok<val>))
+      2. If let (OK (val')*{val' <- val'*}) of type ok<val*> be relRes, then
 
-    2. Debug: val
+        1. Result in: |- % % % : (val')*{val' <- val'*}
 
-    3. Result in: |- % : val
+      2. Else Dangling
+
+    2. Else Dangling
+
+  Arm 2:
+
+    1. (Let (funcDefnAL)?{funcDefnAL <- funcDefnAL?} be $find_func(C, id))
+
+    2. Check (((funcDefnAL)?{funcDefnAL <- funcDefnAL?} matches pattern (_)))
+
+      1. (Call_func: C |- id `< [] `> `( (val)*{val <- val*} `) : funcRes)
+
+      2. Check ((funcRes has type ok<val>))
+
+        1. (Let (OK val') be (funcRes as ok<val>))
+
+        2. Result in: |- % % % : [val']

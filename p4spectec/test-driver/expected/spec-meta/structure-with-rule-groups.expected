@@ -4969,23 +4969,25 @@ def $sideconds_iter(iter, vari'*{vari' <- vari'*})
 
     1. Return []
 
-  3. Case (% matches pattern _ :: _)
-
-    1. (Let vari_a :: vari*{vari <- vari*} be vari'*{vari' <- vari'*})
-
-      1. If (vari*{vari <- vari*} matches _ :: _), then
-
-        1. (Let vari_b :: vari_t*{vari_t <- vari_t*} be vari*{vari <- vari*})
-
-          1. (Let premAL_ab be $sidecond_iter(iter, vari_a, vari_b))
-
-            1. (Let premAL_t*{premAL_t <- premAL_t*} be $sideconds_iter(iter, vari_b :: vari_t*{vari_t <- vari_t*}))
-
-              1. Return premAL_ab :: premAL_t*{premAL_t <- premAL_t*}
-
-      1. Else Dangling
-
 1. Else Dangling
+
+2. If (vari'*{vari' <- vari'*} matches _ :: _), then
+
+  1. (Let vari_a :: vari*{vari <- vari*} be vari'*{vari' <- vari'*})
+
+    1. If (vari*{vari <- vari*} matches _ :: _), then
+
+      1. (Let vari_b :: vari_t*{vari_t <- vari_t*} be vari*{vari <- vari*})
+
+        1. (Let premAL_ab be $sidecond_iter(iter, vari_a, vari_b))
+
+          1. (Let premAL_t*{premAL_t <- premAL_t*} be $sideconds_iter(iter, vari_b :: vari_t*{vari_t <- vari_t*}))
+
+            1. Return premAL_ab :: premAL_t*{premAL_t <- premAL_t*}
+
+    1. Else Dangling
+
+2. Else Dangling
 
 def $access_exp(typedExp_b, path '#' typ)
 
@@ -9837,36 +9839,50 @@ relation Algo_IL: |- defnIL*{defnIL <- defnIL*} : %
 
         1. Else Dangling
 
-relation Eval_IL: |- specIL : %
+relation Eval_IL: |- specIL id val*{val <- val*} : %
 
-1. Group : |- specIL : %
+1. Group : |- specIL id val*{val <- val*} : %
 
   1. (Algo_IL: |- specIL : specAL)
 
-    1. (Eval_AL: |- specAL : val)
+    1. (Eval_AL: |- specAL id val*{val <- val*} : val'*{val' <- val'*})
 
-      1. Result in: |- % : val
+      1. Result in: |- % % % : val'*{val' <- val'*}
 
-relation Eval_AL: |- specAL : %
+relation Eval_AL: |- specAL id val*{val <- val*} : %
 
-1. Group : |- specAL : %
+1. Group : |- specAL id val*{val <- val*} : %
 
-  1. Debug: "entry-al"
+  1. (Let C be $load_ctx($empty_ctx, specAL))
 
-  2. (Let C be $load_ctx($empty_ctx, specAL))
+    1. (Let relDefnAL?{relDefnAL <- relDefnAL?} be $find_rel(C, id))
 
-    1. Debug: "load complete"
+      1. If (relDefnAL?{relDefnAL <- relDefnAL?} matches (_)), then
 
-    2. Debug: "into call"
+        1. (Call_rel: C |- id `( val*{val <- val*} `) : relRes)
 
-    3. (Call_func: C |- "main" `< [] `> `( [] `) : funcRes)
+          1. If (relRes <: ok<val*>), then
 
-      1. If (funcRes <: ok<val>), then
+            1. (Let OK val'*{val' <- val'*} be relRes as ok<val*>)
 
-        1. (Let OK val be funcRes as ok<val>)
+              1. Result in: |- % % % : val'*{val' <- val'*}
 
-          1. Debug: val
+          1. Else Dangling
 
-          2. Result in: |- % : val
+      1. Else Dangling
+
+    2. (Let funcDefnAL?{funcDefnAL <- funcDefnAL?} be $find_func(C, id))
+
+      1. If (funcDefnAL?{funcDefnAL <- funcDefnAL?} matches (_)), then
+
+        1. (Call_func: C |- id `< [] `> `( val*{val <- val*} `) : funcRes)
+
+          1. If (funcRes <: ok<val>), then
+
+            1. (Let OK val' be funcRes as ok<val>)
+
+              1. Result in: |- % % % : [val']
+
+          1. Else Dangling
 
       1. Else Dangling
