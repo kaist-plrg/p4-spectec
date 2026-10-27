@@ -15,7 +15,7 @@ use p4spectec::pass::structure;
 
 use p4spectec::pass::prosify;
 
-use crate::Result;
+use crate::harness::Result;
 
 use super::{Case, failure};
 

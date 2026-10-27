@@ -6,7 +6,7 @@ use p4spectec::diagnostic::Report;
 
 use p4spectec::interface::p4::{error::P4ErrorKind, parse};
 
-use crate::Result;
+use crate::harness::Result;
 
 use super::{Case, failure};
 

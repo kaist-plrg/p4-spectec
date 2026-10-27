@@ -11,7 +11,7 @@ use std::{
     process::Command,
 };
 
-use crate::Result;
+use crate::harness::Result;
 
 use super::{Case, failure};
 

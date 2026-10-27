@@ -1,16 +1,12 @@
-//! Helpers shared by the snapshot, corpus, and diagnostic runners
+//! Interpreter construction shared by corpus and diagnostic suites
 //!
-//! Each runner reads its registration `suites/<name>.toml` with `load`.
-//! Corpus paths are relative to the repository, expectations to the driver,
-//! and diagnostic inputs and expectations to `testdata/spec`.
+//! `Language::spec` converts specification sources for one interpreter,
+//! `build` builds a P4 runner from the result,
+//! and `Configuration` names the language and runner options a corpus runs under.
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::PathBuf;
 
-use indicatif::{ProgressBar, ProgressStyle};
-use serde::{Deserialize, de::DeserializeOwned};
+use serde::Deserialize;
 
 use p4spectec::lang::data::arena::Arena;
 
@@ -18,7 +14,7 @@ use p4spectec::interface::p4::P4Interface;
 
 use p4spectec::runner::{self, Config, Extern, Runner, Spec};
 
-use crate::{Error, Result};
+use super::{Error, Result};
 
 /// Selects the production interpreter used by a configuration or diagnostic case.
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
@@ -93,18 +89,4 @@ pub fn build<Ext: Extern>(
         Spec::Pl(spec_pl) => runner::build_pl(arena, spec_pl, config, external),
     }?;
     Ok(runner)
-}
-
-/// Reads the registration `suites/<name>.toml` with its path attached to errors.
-pub fn load<T: DeserializeOwned>(name: &str) -> Result<T> {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("suites/{name}.toml"));
-    let text = fs::read_to_string(&path)
-        .map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
-    toml::from_str(&text).map_err(|error| Error::from(format!("{}: {error}", path.display())))
-}
-
-/// Creates a progress bar over `len` tests.
-pub fn progress_bar(len: usize) -> Result<ProgressBar> {
-    let style = ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")?;
-    Ok(ProgressBar::new(len as u64).with_style(style))
 }

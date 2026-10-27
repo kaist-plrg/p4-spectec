@@ -14,10 +14,11 @@ use p4spectec::sim_plugin::dummy::Dummy;
 
 use serde::Deserialize;
 
-use crate::{
-    Error, Result,
-    corpus::{self, Outcome, Results, log::TestLog},
-    util::{self, Configuration},
+use crate::harness::{
+    self, Error, Result,
+    corpus::{self, Outcome, Results},
+    interpreter::{self, Configuration},
+    log::TestLog,
 };
 
 /// Supplies the specification, includes, exclusions, configurations, and suites.
@@ -51,7 +52,7 @@ struct CollectedSuite {
 
 /// Runs registered execution suites under the named configuration.
 pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
-    let registration: Registration = util::load("run")?;
+    let registration: Registration = harness::load("run")?;
     let config = Configuration::find(&registration.configs, name_config)?;
     let text_mode = format!("run {}", config.describe());
     // Collect registered corpus roots in suite order
@@ -89,7 +90,7 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
     log.note(&text_collect)?;
     let mut arena = Arena::new();
     let spec = config.language.spec(&registration.spec)?;
-    let mut runner = util::build(&mut arena, spec, config.runner(), Dummy)?;
+    let mut runner = interpreter::build(&mut arena, spec, config.runner(), Dummy)?;
     log.note(&format!("specification prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
     let includes = &registration.includes;
     // Preprocess upcoming files while the runner parses and evaluates in order
@@ -103,10 +104,10 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
         })
         .cloned()
         .collect();
-    let progress = util::progress_bar(collected)?;
+    let progress = corpus::progress_bar(collected)?;
     let mut executed = 0;
     let mut passed = 0;
-    let guard_stdout = super::output::SilenceStdout::new()?;
+    let guard_stdout = harness::output::SilenceStdout::new()?;
     thread::scope(|scope| -> Result<()> {
         let (sender, receiver) = mpsc::sync_channel(2);
         scope.spawn(move || {

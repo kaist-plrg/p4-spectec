@@ -18,7 +18,7 @@ use p4spectec::diagnostic::{RenderConfig, Renderer};
 
 use p4spectec::specdoc::adoc;
 
-use crate::{Error, Result, util};
+use crate::harness::{self, Error, Result};
 
 /// Names the conversion a snapshot prints.
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
@@ -55,7 +55,7 @@ pub struct Registration {
 ///
 /// With `path_output`, AsciiDoc snapshots also save `el.adoc` and `pl.adoc` there.
 pub fn run(stages: &[Stage], path_output: Option<&Path>) -> Result<()> {
-    let registration: Registration = util::load("snapshot")?;
+    let registration: Registration = harness::load("snapshot")?;
     let spec = &registration.spec;
     for snapshot in &registration.snapshots {
         if !stages.contains(&snapshot.stage) {

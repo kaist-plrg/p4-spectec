@@ -12,7 +12,7 @@ use p4spectec::runner::{self, Config, RunError, Spec};
 
 use p4spectec::sim_plugin;
 
-use crate::Result;
+use crate::harness::Result;
 
 use super::{Case, failure};
 

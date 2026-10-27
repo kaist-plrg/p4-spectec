@@ -1,20 +1,12 @@
-mod util;
-
-mod snapshot;
-
-mod corpus;
-
-mod diagnostic;
+mod harness;
+mod suite;
 
 use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Parser, Subcommand};
 
-use corpus::{micro, p4parse, run, sim};
-use snapshot::Stage;
-
-type Error = Box<dyn std::error::Error>;
-type Result<T> = std::result::Result<T, Error>;
+use harness::{Error, Result};
+use suite::{diagnostic, micro, p4parse, run, sim, snapshot, snapshot::Stage};
 
 /// Source and expected-file acceptance for the Rust implementation
 #[derive(Parser)]
@@ -28,7 +20,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// List corpus and diagnostic registrations
+    /// List every registration
     List,
     /// Compare the elaborated P4 specification with expected output
     Elab,
@@ -121,11 +113,11 @@ fn execute(mut cli: Cli) -> Result<()> {
 
 /// Prints every registration without running its tests.
 fn list() -> Result<()> {
-    println!("snapshot: {:#?}", util::load::<snapshot::Registration>("snapshot")?);
-    println!("p4parse: {:#?}", util::load::<p4parse::Registration>("p4parse")?);
-    println!("run: {:#?}", util::load::<run::Registration>("run")?);
-    println!("sim: {:#?}", util::load::<sim::Registration>("sim")?);
-    println!("micro: {:#?}", util::load::<micro::Registration>("micro")?);
+    println!("snapshot: {:#?}", harness::load::<snapshot::Registration>("snapshot")?);
+    println!("p4parse: {:#?}", harness::load::<p4parse::Registration>("p4parse")?);
+    println!("run: {:#?}", harness::load::<run::Registration>("run")?);
+    println!("sim: {:#?}", harness::load::<sim::Registration>("sim")?);
+    println!("micro: {:#?}", harness::load::<micro::Registration>("micro")?);
     diagnostic::list()
 }
 

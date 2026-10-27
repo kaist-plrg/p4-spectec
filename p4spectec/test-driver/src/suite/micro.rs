@@ -26,10 +26,8 @@ use p4spectec::runner::{Config, NullExtern, Spec};
 use serde::Deserialize;
 
 use crate::{
-    Error, Result,
-    corpus::{self, log::TestLog},
-    diagnostic::Outcome,
-    util,
+    harness::{self, Error, Result, corpus, interpreter, log::TestLog},
+    suite::diagnostic::Outcome,
 };
 
 /// Names a stage of the spec-language pipeline, in pipeline order.
@@ -102,7 +100,7 @@ enum Output {
 
 /// Runs every registered source through the stages of the named configuration.
 pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
-    let registration: Registration = util::load("micro")?;
+    let registration: Registration = harness::load("micro")?;
     let config = registration
         .configs
         .iter()
@@ -132,7 +130,7 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
     log.note(&text_mode)?;
 
     // Compare each source's first failing stage with its suite's verdict
-    let guard_stdout = super::output::SilenceStdout::new()?;
+    let guard_stdout = harness::output::SilenceStdout::new()?;
     let (mut executed, mut skipped, mut excluded) = (0, 0, 0);
     let mut mismatches = Vec::new();
     for (suite, paths) in &suites {
@@ -253,7 +251,7 @@ fn first_failure(path: &Path, stages: &[Stage], config: Config) -> Result<Option
 /// Builds a runner and evaluates `$main()`, returning `None` on failure.
 fn eval_main(spec: Spec, config: Config) -> Option<Output> {
     let mut arena = Arena::new();
-    let mut runner = util::build(&mut arena, spec, config, NullExtern).ok()?;
+    let mut runner = interpreter::build(&mut arena, spec, config, NullExtern).ok()?;
     runner
         .eval_func(&mut arena, "main", &[], &[])
         .result

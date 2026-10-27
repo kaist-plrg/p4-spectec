@@ -1,16 +1,8 @@
-//! Corpus runners over P4 and spec-language source directories
+//! Source discovery and per-file results for corpus suites
 //!
 //! `collect` discovers sources under a root,
 //! and `collect_excludes` reads exclusion lists.
 //! `Results` compares per-file outcomes with one expected file per suite.
-
-mod log;
-mod output;
-
-pub mod micro;
-pub mod p4parse;
-pub mod run;
-pub mod sim;
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -19,8 +11,9 @@ use std::{
 };
 
 use expect_test::{ExpectFile, expect_file};
+use indicatif::{ProgressBar, ProgressStyle};
 
-use crate::{Error, Result};
+use super::{Error, Result};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Outcome {
@@ -119,4 +112,10 @@ impl Results {
         self.expected
             .assert_eq(&self.records.into_values().collect::<String>());
     }
+}
+
+/// Creates a progress bar over `len` tests.
+pub fn progress_bar(len: usize) -> Result<ProgressBar> {
+    let style = ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")?;
+    Ok(ProgressBar::new(len as u64).with_style(style))
 }

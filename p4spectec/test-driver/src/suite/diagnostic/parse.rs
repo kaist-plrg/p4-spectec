@@ -7,7 +7,7 @@ use p4spectec::diagnostic::Report;
 
 use p4spectec::frontend::parse::{parse_files, parse_typ};
 
-use crate::Result;
+use crate::harness::Result;
 
 use super::{Case, failure};
 

@@ -11,10 +11,11 @@ use p4spectec::sim_plugin::{self};
 
 use serde::Deserialize;
 
-use crate::{
-    Error, Result,
-    corpus::{self, Results, log::TestLog},
-    util::{self, Configuration},
+use crate::harness::{
+    self, Error, Result,
+    corpus::{self, Results},
+    interpreter::Configuration,
+    log::TestLog,
 };
 
 /// Supplies the specification, includes, exclusions, configurations, and suites.
@@ -127,7 +128,7 @@ impl SimSuite {
 
 /// Runs registered simulation suites under the named configuration.
 pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
-    let registration: Registration = util::load("sim")?;
+    let registration: Registration = harness::load("sim")?;
     let config = Configuration::find(&registration.configs, name_config)?;
     let text_mode = format!("sim {}", config.describe());
     let start = Instant::now();
@@ -150,7 +151,7 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
     let includes = &registration.includes;
-    let progress = util::progress_bar(collected)?;
+    let progress = corpus::progress_bar(collected)?;
     let mut matched = 0;
     // Build one simulator per registered architecture in first-suite order
     let mut archs = Vec::new();
@@ -178,7 +179,7 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
         ))?;
         for (suite, pairs) in suites_arch {
             let mut results = Results::new(&std::path::absolute(&suite.expected)?);
-            let guard_stdout = super::output::SilenceStdout::new()?;
+            let guard_stdout = harness::output::SilenceStdout::new()?;
             log.suite(&suite.name, &suite.stf)?;
             for pair in pairs {
                 progress.set_message(pair.path_stf.display().to_string());

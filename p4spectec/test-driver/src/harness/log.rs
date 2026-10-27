@@ -15,7 +15,7 @@ use std::{
     time::{Instant, SystemTime},
 };
 
-use crate::{Error, Result};
+use super::{Error, Result};
 
 /// Number of slowest tests listed when a run finishes.
 const LEN_SLOWEST: usize = 10;

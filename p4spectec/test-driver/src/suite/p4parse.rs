@@ -16,10 +16,10 @@ use p4spectec::interface::p4::{
 
 use serde::Deserialize;
 
-use crate::{
-    Error, Result,
-    corpus::{self, Outcome, Results, log::TestLog},
-    util,
+use crate::harness::{
+    self, Error, Result,
+    corpus::{self, Outcome, Results},
+    log::TestLog,
 };
 
 /// Supplies the parser specification, includes, and corpus registrations.
@@ -84,7 +84,7 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
 
 /// Checks registered P4 parsing corpora against their expected outcomes.
 pub fn run(path_log: Option<&Path>) -> Result<()> {
-    let registration: Registration = util::load("p4parse")?;
+    let registration: Registration = harness::load("p4parse")?;
     let start = Instant::now();
     // Keep each root's paths apart so the log shows them by root
     let mut suites = Vec::new();
@@ -110,7 +110,7 @@ pub fn run(path_log: Option<&Path>) -> Result<()> {
     let unparser = P4Unparser::from_al_spec(&spec_al);
     log.note(&format!("print hints prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
     let includes = &registration.includes;
-    let progress = util::progress_bar(collected)?;
+    let progress = corpus::progress_bar(collected)?;
     let mut passed = 0;
     for (name, roots, results) in &mut suites {
         for (root, paths) in roots.iter() {

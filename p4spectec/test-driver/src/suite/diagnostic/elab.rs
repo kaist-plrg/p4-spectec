@@ -10,7 +10,7 @@ use p4spectec::frontend::parse::parse_files;
 
 use p4spectec::pass::elaborate::convert_with_warnings;
 
-use crate::Result;
+use crate::harness::Result;
 
 use super::{Case, failure};
 

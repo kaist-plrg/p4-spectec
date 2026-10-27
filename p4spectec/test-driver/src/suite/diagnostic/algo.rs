@@ -11,7 +11,7 @@ use p4spectec::pass::elaborate;
 
 use p4spectec::pass::algo;
 
-use crate::Result;
+use crate::harness::Result;
 
 use super::{Case, failure};
 

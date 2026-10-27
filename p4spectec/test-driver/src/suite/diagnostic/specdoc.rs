@@ -7,7 +7,7 @@ use p4spectec::diagnostic::{Report, ReportKind, Severity};
 
 use p4spectec::specdoc::adoc;
 
-use crate::Result;
+use crate::harness::Result;
 
 use super::{Case, failure};
 

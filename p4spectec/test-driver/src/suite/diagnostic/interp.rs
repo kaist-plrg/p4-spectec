@@ -16,10 +16,7 @@ use p4spectec::interface::p4::P4Interface;
 
 use p4spectec::runner::{Config, InterpreterError, NullExtern, Runner};
 
-use crate::{
-    Result,
-    util::{self},
-};
+use crate::harness::{Result, interpreter};
 
 use serde::Deserialize;
 
@@ -101,7 +98,7 @@ pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     // Keep parse, elaboration, lowering, and loading failures out of snapshots
     let mut arena = Arena::new();
     let spec = language.spec(paths).map_err(|error| failure(name, error))?;
-    let runner =
-        util::build(&mut arena, spec, config, NullExtern).map_err(|error| failure(name, error))?;
+    let runner = interpreter::build(&mut arena, spec, config, NullExtern)
+        .map_err(|error| failure(name, error))?;
     reject(name, &mut arena, runner, relation, &case.nats, kind, code)
 }

@@ -35,7 +35,7 @@ use serde::Deserialize;
 
 use p4spectec::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report, ReportKind};
 
-use crate::{Error, Result, util::Language};
+use crate::harness::{Error, Result, interpreter::Language};
 
 fn failure(name: &str, message: impl std::fmt::Display) -> Error {
     Error::from(format!("{name}: {message}"))
@@ -151,7 +151,7 @@ struct Registration {
 
 /// Loads the cases registered in `suites/diagnostic/<name>.toml`.
 fn load(name: &str) -> Result<Registration> {
-    let registration: Registration = crate::util::load(&format!("diagnostic/{name}"))?;
+    let registration: Registration = crate::harness::load(&format!("diagnostic/{name}"))?;
     let mut cases = Vec::new();
     for case in registration.cases {
         // Expand a case listing languages into one case per language
