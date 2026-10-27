@@ -19,8 +19,7 @@ use crate::{
         il::ast::Typ,
     },
     runner::{
-        self, Backend, Eval, Extern, Interface, Interpreter, InterpreterError, NullExtern,
-        RunnerContext,
+        self, Backend, Extern, Interface, Interpreter, InterpreterError, NullExtern, RunnerContext,
     },
 };
 
@@ -107,17 +106,6 @@ macro_rules! with_backend {
 
 // The interpreters are generic in their extern; clearing uses none
 impl Engine for SpecTecEngine<'_> {
-    fn call_program<Ext: Extern>(
-        &mut self,
-        arena: &mut Arena,
-        upper: &mut UpperMut<'_, Ext>,
-        effects: &mut u64,
-        name: &str,
-        program: Value,
-    ) -> Eval<Vec<Value>, InterpreterError> {
-        with_backend!(self, arena, upper, effects, |ctx| ctx.call_program(name, program))
-    }
-
     fn call_rel<Ext: Extern>(
         &mut self,
         arena: &mut Arena,

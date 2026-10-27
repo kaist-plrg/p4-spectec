@@ -68,10 +68,9 @@ pub fn run(
             .map_err(|error| error.into_report())?,
     };
     // Encoding errors propagate before entering the native base
-    let value = tower.patch(&mut arena, value_program)?;
+    let values = tower.encode_input(&mut arena, value_program)?;
     tower
-        .eval_program(&mut arena, value)
-        .result
+        .eval_input(&mut arena, &values)
         .map_err(|error| error.into_report())?;
     Ok(())
 }

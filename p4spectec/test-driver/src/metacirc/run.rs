@@ -253,14 +253,15 @@ fn run_programs(
                         })?;
                     let outcome = match parse_string(&mut arena, path, &source) {
                         Ok(program) => {
-                            // Patch failures abort; evaluation rejection is an outcome
-                            let value = tower.patch(&mut arena, program).map_err(|error| {
-                                Error::from(format!(
-                                    "{}: test execution error: {error}",
-                                    path.display()
-                                ))
-                            })?;
-                            let accepted = tower.eval_program(&mut arena, value).result.is_ok();
+                            // Encoding failures abort; evaluation rejection is an outcome
+                            let values =
+                                tower.encode_input(&mut arena, program).map_err(|error| {
+                                    Error::from(format!(
+                                        "{}: test execution error: {error}",
+                                        path.display()
+                                    ))
+                                })?;
+                            let accepted = tower.eval_input(&mut arena, &values).is_ok();
                             if accepted { Outcome::Pass } else { Outcome::Fail }
                         }
                         Err(P4Error {

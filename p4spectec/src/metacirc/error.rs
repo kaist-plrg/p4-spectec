@@ -1,4 +1,4 @@
-//! Diagnostics for tower configuration, program input, and synthetic entries
+//! Diagnostics for tower configuration, program input, and meta execution
 
 use crate::diagnostic::{Diagnostic, Report, Severity};
 
@@ -22,11 +22,6 @@ pub(super) fn input_invalid(message: impl Into<String>) -> Box<Report> {
     diagnostic("metacirc/input-invalid", message)
 }
 
-/// Reports a failure to construct a synthetic entry.
-pub(super) fn entry_invalid(message: impl Into<String>) -> Box<Report> {
-    diagnostic("metacirc/entry-invalid", message)
-}
-
 /// Reports a meta execution whose result is UNMATCH.
 pub(super) fn execution_unmatched(name: &str) -> Box<Report> {
     diagnostic("metacirc/execution-unmatched", format!("meta execution of {name} unmatched"))
@@ -47,7 +42,7 @@ pub(super) fn base_not_lent(name: &str) -> Box<Report> {
     diagnostic(
         "metacirc/base-not-lent",
         format!(
-            "meta extern {name} reached a meta base run directly; enter it through Tower::eval_program"
+            "meta extern {name} reached a meta base run directly; enter it through Tower::eval_input"
         ),
     )
 }

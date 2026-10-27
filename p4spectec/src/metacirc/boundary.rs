@@ -61,7 +61,7 @@ impl<Ext: Extern> Extern for UpperMut<'_, Ext> {
 }
 
 /// The base runner never executes with the stored levels as its extern:
-/// `Tower::eval_program` and `SimTower` lend them as `UpperMut`,
+/// `Tower::eval_input` and `SimTower` lend them as `UpperMut`,
 /// with the spec-meta definitions a reentry runs on.
 /// The runner only clears them between programs.
 impl<Ext: Extern> Extern for Upper<Ext> {
