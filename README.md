@@ -186,7 +186,7 @@ make test         # Run all registered E2E suites
 `make test` runs specification/document snapshots, P4 parsing, diagnostics,
 and AL/SL/PL execution and simulation. Execution and simulation each run with
 cache enabled and determinism checking both disabled and enabled.
-The suite registrations live in `p4spectec/test-driver/suites.json`.
+Suite registrations live in `p4spectec/test-driver/suites/`, one file per runner.
 
 Individual targets are available for focused runs:
 

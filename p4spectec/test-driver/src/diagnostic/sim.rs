@@ -19,8 +19,8 @@ use crate::Result;
 use super::{Case, failure};
 
 /// Loads and compares this module's diagnostic fixtures.
-pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
-    let cases = super::load(path)?;
+pub fn run(path_cli: Option<&Path>) -> Result<()> {
+    let cases = super::load("sim")?;
     super::run_registered(
         "sim",
         &cases,

@@ -7,7 +7,7 @@ use std::path::Path;
 use crate::Result;
 
 /// Loads and compares this module's CLI diagnostic fixtures.
-pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
-    let cases = super::load(path)?;
+pub fn run(path_cli: Option<&Path>) -> Result<()> {
+    let cases = super::load("run")?;
     super::run_registered("run", &cases, path_cli, None, Default::default())
 }

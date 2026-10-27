@@ -1,3 +1,17 @@
+//! Corpus runners over P4 and spec-language source directories
+//!
+//! `collect` discovers sources under a root,
+//! and `collect_excludes` reads exclusion lists.
+//! `Results` compares per-file outcomes with one expected file per suite.
+
+mod log;
+mod output;
+
+pub mod micro;
+pub mod p4parse;
+pub mod run;
+pub mod sim;
+
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,

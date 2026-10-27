@@ -6,7 +6,6 @@ use std::{
 };
 
 use expect_test::{ExpectFile, expect_file};
-use indicatif::{ProgressBar, ProgressStyle};
 
 use p4spectec::lang::data::encoding::Encoding;
 
@@ -14,11 +13,36 @@ use p4spectec::runner::{Config, Spec};
 
 use p4spectec::sim_plugin::{self, io::Tx};
 
+use serde::Deserialize;
+
 use crate::{
-    Error, ExecutionOptions, Result, corpus,
-    log::TestLog,
-    suite::{self, Language, SimConfig, SimSuite},
+    Error, ExecutionOptions, Result,
+    corpus::{self, log::TestLog},
+    util::{self, Language},
 };
+
+/// Supplies simulation dependencies and P4/STF registrations.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SimConfig {
+    pub spec: Vec<PathBuf>,
+    pub includes: Vec<PathBuf>,
+    pub excludes: Vec<PathBuf>,
+    pub suites: Vec<SimSuite>,
+}
+
+/// Registers paired P4/STF corpus discovery and optional patches.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SimSuite {
+    pub name: String,
+    pub arch: String,
+    pub p4: PathBuf,
+    pub stf: PathBuf,
+    pub patches: Option<PathBuf>,
+    pub expected: PathBuf,
+    pub languages: Vec<Language>,
+}
 
 struct Input {
     dir: PathBuf,
@@ -108,7 +132,7 @@ struct Results {
 
 impl Results {
     fn new(path_expected: &Path) -> Self {
-        let path_expected = suite::expected_path(path_expected);
+        let path_expected = util::expected_path(path_expected);
         Self { expected: expect_file![path_expected], records: BTreeMap::new() }
     }
 
@@ -150,13 +174,9 @@ impl Results {
 }
 
 /// Runs registered simulation suites with the selected interpreter.
-pub fn run(
-    config: &SimConfig,
-    language: Language,
-    options: ExecutionOptions,
-    path_log: Option<&Path>,
-) -> Result<()> {
-    run_with(config, language, options, path_log, || match language {
+pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path>) -> Result<()> {
+    let config: SimConfig = util::load("sim")?;
+    run_with(&config, language, options, path_log, || match language {
         Language::Al => p4spectec::algo(&config.spec)
             .map(Spec::Al)
             .map_err(Error::from),
@@ -209,9 +229,7 @@ where
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
     let includes = &config.includes;
-    let progress = ProgressBar::new(collected as u64).with_style(ProgressStyle::with_template(
-        "[{bar:24}] {pos}/{len} {elapsed_precise} {msg}",
-    )?);
+    let progress = util::progress_bar(collected)?;
     let mut executed = 0;
     let mut matched = 0;
     let mut patched = 0;
@@ -251,7 +269,7 @@ where
         ))?;
         for (suite, pairs) in suites.iter().filter(|(suite, _)| suite.arch == arch) {
             let mut results = Results::new(&suite.expected);
-            let guard_stdout = crate::output::SilenceStdout::new()?;
+            let guard_stdout = super::output::SilenceStdout::new()?;
             log.suite(&suite.name, &suite.stf)?;
             for pair in pairs {
                 let id = format!(

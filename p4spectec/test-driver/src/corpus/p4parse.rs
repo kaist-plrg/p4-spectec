@@ -4,7 +4,6 @@ use std::{
 };
 
 use expect_test::expect_file;
-use indicatif::{ProgressBar, ProgressStyle};
 
 use p4spectec::lang::{
     common::source::Span,
@@ -17,12 +16,31 @@ use p4spectec::interface::p4::{
     unparse::P4Unparser,
 };
 
+use serde::Deserialize;
+
 use crate::{
     Error, Result,
-    corpus::{self, Outcome, Results},
-    log::TestLog,
-    suite::{self, ParseConfig},
+    corpus::{self, Outcome, Results, log::TestLog},
+    util,
 };
+
+/// Supplies the parser's specification, includes, and corpus registrations.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ParseConfig {
+    pub spec: Vec<PathBuf>,
+    pub includes: Vec<PathBuf>,
+    pub suites: Vec<ParseSuite>,
+}
+
+/// Registers P4 parsing and roundtrip inputs.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ParseSuite {
+    pub name: String,
+    pub roots: Vec<PathBuf>,
+    pub expected: PathBuf,
+}
 
 fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result<Outcome> {
     let mut arena = Arena::new();
@@ -67,12 +85,13 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
 }
 
 /// Checks registered P4 parsing corpora against their expected outcomes.
-pub fn run(config: &ParseConfig, path_log: Option<&Path>) -> Result<()> {
+pub fn run(path_log: Option<&Path>) -> Result<()> {
+    let config: ParseConfig = util::load("p4parse")?;
     let start = Instant::now();
     // Keep each root's paths apart so the log shows them by root
     let mut suites = Vec::new();
     for suite in &config.suites {
-        let path_expected = suite::expected_path(&suite.expected);
+        let path_expected = util::expected_path(&suite.expected);
         let mut roots = Vec::new();
         for root in &suite.roots {
             roots.push((root, corpus::collect(root, ".p4")?));
@@ -93,9 +112,7 @@ pub fn run(config: &ParseConfig, path_log: Option<&Path>) -> Result<()> {
     let unparser = P4Unparser::from_al_spec(&spec_al);
     log.note(&format!("print hints prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
     let includes = &config.includes;
-    let progress = ProgressBar::new(collected as u64).with_style(ProgressStyle::with_template(
-        "[{bar:24}] {pos}/{len} {elapsed_precise} {msg}",
-    )?);
+    let progress = util::progress_bar(collected)?;
     let mut passed = 0;
     for (name, roots, results) in &mut suites {
         for (root, paths) in roots.iter() {

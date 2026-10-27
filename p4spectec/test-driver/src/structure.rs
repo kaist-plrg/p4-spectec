@@ -1,29 +1,37 @@
-use std::time::Instant;
+use std::{path::PathBuf, time::Instant};
 
 use expect_test::expect_file;
-use indicatif::{ProgressBar, ProgressStyle};
 
 use p4spectec::lang::traits::print::Print;
 
-use crate::{
-    Result, snapshot,
-    suite::{self, StructureSnapshot},
-};
+use serde::Deserialize;
+
+use crate::{Result, snapshot, util};
+
+/// Registers a structured snapshot with its rule-group setting.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StructureSnapshot {
+    pub name: String,
+    pub inputs: Vec<PathBuf>,
+    pub expected: PathBuf,
+    #[serde(default)]
+    pub without_rule_groups: bool,
+}
 
 /// Checks registered structured specification snapshots.
-pub fn run(snapshots: &[StructureSnapshot]) -> Result<()> {
+pub fn run() -> Result<()> {
+    let snapshots: Vec<StructureSnapshot> = util::load("structure")?;
     let start = Instant::now();
     let num_snapshots = snapshots.len();
-    let progress = ProgressBar::new(num_snapshots as u64).with_style(ProgressStyle::with_template(
-        "[{bar:24}] {pos}/{len} {elapsed_precise} {msg}",
-    )?);
+    let progress = util::progress_bar(num_snapshots)?;
     let mut num_defs = 0;
-    for snapshot in snapshots {
+    for snapshot in &snapshots {
         progress.set_message(format!("structure: {}", snapshot.name));
         let spec_sl = p4spectec::structure(&snapshot.inputs, snapshot.without_rule_groups)?;
         num_defs = spec_sl.len();
         let text_actual = Print::to_string(&spec_sl) + "\n";
-        let path_expected = suite::expected_path(&snapshot.expected);
+        let path_expected = util::expected_path(&snapshot.expected);
         snapshot::check(expect_file![path_expected], &text_actual);
         progress.inc(1);
     }

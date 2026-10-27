@@ -1,8 +1,6 @@
-mod corpus;
-mod log;
-mod output;
+mod util;
+
 mod snapshot;
-mod suite;
 
 mod elab;
 
@@ -14,10 +12,7 @@ mod prose;
 
 mod adoc;
 
-mod micro;
-mod p4parse;
-mod run;
-mod sim;
+mod corpus;
 
 mod diagnostic;
 
@@ -25,7 +20,8 @@ use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Args, Parser, Subcommand};
 
-use suite::{Index, Language};
+use corpus::{micro, p4parse, run, sim};
+use util::Language;
 
 type Error = Box<dyn std::error::Error>;
 type Result<T> = std::result::Result<T, Error>;
@@ -33,9 +29,6 @@ type Result<T> = std::result::Result<T, Error>;
 /// Source and expected-file acceptance for the Rust implementation
 #[derive(Parser)]
 struct Cli {
-    /// Suite registration file, relative to the invoking directory
-    #[arg(long = "registry", global = true)]
-    path_registry: Option<PathBuf>,
     /// Write a per-test timing log of p4parse, run, sim, or micro into a new file in this directory
     #[arg(long = "log", global = true, value_name = "DIR")]
     path_log: Option<PathBuf>,
@@ -117,8 +110,7 @@ fn execute(mut cli: Cli) -> Result<()> {
     ) && std::env::var_os("UPDATE_EXPECT").is_some()
     {
         return Err(Error::from(
-            "UPDATE_EXPECT is supported only for elab, algo, prose, adoc, and diagnostics"
-                .to_owned(),
+            "UPDATE_EXPECT is supported only for elab, algo, prose, adoc, and diagnostics",
         ));
     }
     // Resolve output paths before changing to the specification repository
@@ -133,42 +125,39 @@ fn execute(mut cli: Cli) -> Result<()> {
     if let Command::Diagnostics { path_cli: Some(path_cli), .. } = &mut *command {
         *path_cli = std::path::absolute(&*path_cli)?;
     }
-    let path_registry = cli
-        .path_registry
-        .as_deref()
-        .map(std::path::absolute)
-        .transpose()?
-        .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("suites.json"));
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
         .canonicalize()?;
     std::env::set_current_dir(&root)?;
-    let index = Index::load(&path_registry)?;
     match command {
-        Command::List => index.list(),
-        Command::Elab => elab::run(&suite::load::<Vec<suite::Snapshot>>(&index.suites.elab)?),
-        Command::Algo => algo::run(&suite::load::<Vec<suite::Snapshot>>(&index.suites.algo)?),
-        Command::Structure => {
-            structure::run(&suite::load::<Vec<suite::StructureSnapshot>>(&index.suites.structure)?)
-        }
-        Command::Prose => prose::run(&suite::load::<Vec<suite::Snapshot>>(&index.suites.prose)?),
-        Command::Adoc { path_output } => {
-            adoc::run(&suite::load(&index.suites.adoc)?, path_output.as_deref())
-        }
-        Command::P4parse => p4parse::run(&suite::load(&index.suites.p4parse)?, path_log.as_deref()),
-        Command::Run { language, options } => {
-            run::run(&suite::load(&index.suites.run)?, *language, *options, path_log.as_deref())
-        }
-        Command::Sim { language, options } => {
-            sim::run(&suite::load(&index.suites.sim)?, *language, *options, path_log.as_deref())
-        }
+        Command::List => list(),
+        Command::Elab => elab::run(),
+        Command::Algo => algo::run(),
+        Command::Structure => structure::run(),
+        Command::Prose => prose::run(),
+        Command::Adoc { path_output } => adoc::run(path_output.as_deref()),
+        Command::P4parse => p4parse::run(path_log.as_deref()),
+        Command::Run { language, options } => run::run(*language, *options, path_log.as_deref()),
+        Command::Sim { language, options } => sim::run(*language, *options, path_log.as_deref()),
         Command::Micro { language, options } => {
-            micro::run(&suite::load(&index.suites.micro)?, *language, *options, path_log.as_deref())
+            micro::run(*language, *options, path_log.as_deref())
         }
-        Command::Diagnostics { suite, path_cli } => {
-            diagnostic::run(&index.suites.diagnostics, *suite, path_cli.as_deref())
-        }
+        Command::Diagnostics { suite, path_cli } => diagnostic::run(*suite, path_cli.as_deref()),
     }
+}
+
+/// Prints every registration without running its tests.
+fn list() -> Result<()> {
+    println!("elab: {:#?}", util::load::<Vec<snapshot::Snapshot>>("elab")?);
+    println!("algo: {:#?}", util::load::<Vec<snapshot::Snapshot>>("algo")?);
+    println!("structure: {:#?}", util::load::<Vec<structure::StructureSnapshot>>("structure")?);
+    println!("prose: {:#?}", util::load::<Vec<snapshot::Snapshot>>("prose")?);
+    println!("adoc: {:#?}", util::load::<adoc::AdocSuite>("adoc")?);
+    println!("p4parse: {:#?}", util::load::<p4parse::ParseConfig>("p4parse")?);
+    println!("run: {:#?}", util::load::<run::RunConfig>("run")?);
+    println!("sim: {:#?}", util::load::<sim::SimConfig>("sim")?);
+    println!("micro: {:#?}", util::load::<micro::MicroConfig>("micro")?);
+    diagnostic::list()
 }
 
 fn main() -> ExitCode {

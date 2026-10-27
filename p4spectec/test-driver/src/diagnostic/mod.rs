@@ -59,94 +59,62 @@ pub enum Suite {
     Sim,
 }
 
-/// Names diagnostic registration files by their owning Rust modules.
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Modules {
-    pub frontend: PathBuf,
-    pub elab: PathBuf,
-    pub algo: PathBuf,
-    pub structure: PathBuf,
-    pub prose: PathBuf,
-    pub specdoc: PathBuf,
-    pub splice: PathBuf,
-    pub interp: PathBuf,
-    pub command: PathBuf,
-    pub run: PathBuf,
-    pub sim: PathBuf,
-}
-
-impl Modules {
-    /// Returns module filenames for resolution relative to the root index.
-    pub fn paths_mut(&mut self) -> [&mut PathBuf; 11] {
-        [
-            &mut self.frontend,
-            &mut self.elab,
-            &mut self.algo,
-            &mut self.structure,
-            &mut self.prose,
-            &mut self.specdoc,
-            &mut self.splice,
-            &mut self.interp,
-            &mut self.command,
-            &mut self.run,
-            &mut self.sim,
-        ]
+/// Prints each module's registered cases.
+pub fn list() -> Result<()> {
+    for name in [
+        "frontend",
+        "elab",
+        "algo",
+        "structure",
+        "prose",
+        "specdoc",
+        "splice",
+        "interp",
+        "command",
+        "run",
+        "sim",
+    ] {
+        println!("diagnostics/{name}: {:#?}", load(name)?);
     }
-
-    /// Prints each module through the same validation used for execution.
-    pub fn list(&self) -> Result<()> {
-        println!("diagnostics/frontend: {:#?}", load(&self.frontend)?);
-        println!("diagnostics/elab: {:#?}", load(&self.elab)?);
-        println!("diagnostics/algo: {:#?}", load(&self.algo)?);
-        println!("diagnostics/structure: {:#?}", load(&self.structure)?);
-        println!("diagnostics/prose: {:#?}", load(&self.prose)?);
-        println!("diagnostics/specdoc: {:#?}", load(&self.specdoc)?);
-        println!("diagnostics/splice: {:#?}", load(&self.splice)?);
-        println!("diagnostics/interp: {:#?}", load(&self.interp)?);
-        println!("diagnostics/command: {:#?}", load(&self.command)?);
-        println!("diagnostics/run: {:#?}", load(&self.run)?);
-        println!("diagnostics/sim: {:#?}", load(&self.sim)?);
-        Ok(())
-    }
+    Ok(())
 }
 
 /// Runs the selected module or all modules in registration order.
-pub fn run(modules: &Modules, suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
+pub fn run(suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
     // The CLI selector chooses modules without inspecting their registrations
     if suite.is_none_or(|suite| suite == Suite::Frontend) {
-        frontend::run(&modules.frontend, path_cli)?;
+        frontend::run(path_cli)?;
     }
     if suite.is_none_or(|suite| suite == Suite::Elab) {
-        elab::run(&modules.elab, path_cli)?;
+        elab::run(path_cli)?;
     }
     if suite.is_none_or(|suite| suite == Suite::Algo) {
-        algo::run(&modules.algo, path_cli)?;
+        algo::run(path_cli)?;
     }
     if suite.is_none_or(|suite| suite == Suite::Structure) {
-        structure::run(&modules.structure, path_cli)?;
+        structure::run(path_cli)?;
     }
     if suite.is_none_or(|suite| suite == Suite::Prose) {
-        prose::run(&modules.prose, path_cli)?;
+        prose::run(path_cli)?;
     }
     // Specdoc owns both rendered document and skeleton splicing diagnostics
     if suite.is_none_or(|suite| suite == Suite::Specdoc) {
-        specdoc::run(&modules.specdoc, path_cli)?;
+        specdoc::run(path_cli)?;
     }
     if suite.is_none_or(|suite| suite == Suite::Specdoc) {
-        splice::run(&modules.splice, path_cli)?;
+        splice::run(path_cli)?;
     }
     if suite.is_none_or(|suite| suite == Suite::Interp) {
-        interp::run(&modules.interp, path_cli)?;
+        interp::run(path_cli)?;
     }
     if suite.is_none_or(|suite| suite == Suite::Command) {
-        command::run(&modules.command, path_cli)?;
+        command::run(path_cli)?;
     }
     if suite.is_none_or(|suite| suite == Suite::Run) {
-        run::run(&modules.run, path_cli)?;
+        run::run(path_cli)?;
     }
     if suite.is_none_or(|suite| suite == Suite::Sim) {
-        sim::run(&modules.sim, path_cli)?;
+        sim::run(path_cli)?;
     }
     Ok(())
 }
@@ -177,9 +145,9 @@ pub struct Case {
     pub args: Vec<String>,
 }
 
-/// Loads one module's diagnostic cases.
-fn load(path: &Path) -> Result<Vec<Case>> {
-    crate::suite::load(path)
+/// Loads the cases registered in `suites/diagnostic/<name>.json`.
+fn load(name: &str) -> Result<Vec<Case>> {
+    crate::util::load(&format!("diagnostic/{name}"))
 }
 
 impl Case {

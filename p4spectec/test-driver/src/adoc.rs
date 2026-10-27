@@ -16,13 +16,26 @@ use p4spectec::pass::prosify;
 
 use p4spectec::specdoc::adoc;
 
+use serde::Deserialize;
+
 use crate::{
-    Error, Result, snapshot,
-    suite::{self, AdocSuite},
+    Error, Result,
+    snapshot::{self, Snapshot},
+    structure::StructureSnapshot,
+    util,
 };
 
+/// Groups EL and PL document snapshots by their rendering entry points.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AdocSuite {
+    pub el: Vec<Snapshot>,
+    pub pl: Vec<StructureSnapshot>,
+}
+
 /// Checks full-specification snapshots and optionally exports AsciiDoc documents.
-pub fn run(suites: &AdocSuite, path_output: Option<&Path>) -> Result<()> {
+pub fn run(path_output: Option<&Path>) -> Result<()> {
+    let suites: AdocSuite = util::load("adoc")?;
     let start = Instant::now();
     let snapshots_el = &suites.el;
     let snapshots_pl = &suites.pl;
@@ -38,7 +51,7 @@ pub fn run(suites: &AdocSuite, path_output: Option<&Path>) -> Result<()> {
             fs::create_dir_all(path_output)?;
             fs::write(path_output.join("el.adoc"), &text_el)?;
         }
-        let path_expected = suite::expected_path(&snapshot.expected);
+        let path_expected = util::expected_path(&snapshot.expected);
         snapshot::check(expect_file![path_expected], &text_el);
     }
     // Preserve the registered rule-group mode while producing annotated PL
@@ -64,7 +77,7 @@ pub fn run(suites: &AdocSuite, path_output: Option<&Path>) -> Result<()> {
             fs::create_dir_all(path_output)?;
             fs::write(path_output.join("pl.adoc"), &text_pl)?;
         }
-        let path_expected = suite::expected_path(&snapshot.expected);
+        let path_expected = util::expected_path(&snapshot.expected);
         snapshot::check(expect_file![path_expected], &text_pl);
     }
     eprintln!(

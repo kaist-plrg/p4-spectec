@@ -18,8 +18,8 @@ use crate::Result;
 use super::{Case, failure};
 
 /// Loads and compares this module's diagnostic fixtures.
-pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
-    let cases = super::load(path)?;
+pub fn run(path_cli: Option<&Path>) -> Result<()> {
+    let cases = super::load("algo")?;
     super::run_registered("algo", &cases, path_cli, Some(run_case), Default::default())
 }
 

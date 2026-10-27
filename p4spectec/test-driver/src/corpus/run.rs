@@ -7,7 +7,6 @@ use std::{
 };
 
 use expect_test::expect_file;
-use indicatif::{ProgressBar, ProgressStyle};
 
 use p4spectec::lang::data::arena::Arena;
 
@@ -19,12 +18,34 @@ use p4spectec::interface::p4::{
 
 use p4spectec::sim_plugin::dummy::Dummy;
 
+use serde::Deserialize;
+
 use crate::{
     Error, ExecutionOptions, Result,
-    corpus::{self, Outcome, Results},
-    log::TestLog,
-    suite::{self, Language, RunConfig},
+    corpus::{self, Outcome, Results, log::TestLog},
+    util::{self, Language},
 };
+
+/// Supplies execution dependencies and corpus registrations.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RunConfig {
+    pub spec: Vec<PathBuf>,
+    pub includes: Vec<PathBuf>,
+    pub excludes: Vec<PathBuf>,
+    pub suites: Vec<RunSuite>,
+}
+
+/// Registers a P4 execution corpus and its entry relation.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RunSuite {
+    pub name: String,
+    pub root: PathBuf,
+    pub relation: String,
+    pub expected: PathBuf,
+    pub languages: Vec<Language>,
+}
 
 struct CollectedSuite {
     name: String,
@@ -35,12 +56,8 @@ struct CollectedSuite {
 }
 
 /// Runs registered execution suites with the selected interpreter.
-pub fn run(
-    config: &RunConfig,
-    language: Language,
-    options: ExecutionOptions,
-    path_log: Option<&Path>,
-) -> Result<()> {
+pub fn run(language: Language, options: ExecutionOptions, path_log: Option<&Path>) -> Result<()> {
+    let config: RunConfig = util::load("run")?;
     let ExecutionOptions { cache_on, no_det } = options;
     let det = !no_det;
     let text_cache = if cache_on { "on" } else { "off" };
@@ -50,7 +67,7 @@ pub fn run(
         .iter()
         .filter(|suite| suite.languages.contains(&language))
         .map(|suite| {
-            let path_expected = suite::expected_path(&suite.expected);
+            let path_expected = util::expected_path(&suite.expected);
             Ok(CollectedSuite {
                 name: suite.name.clone(),
                 root: suite.root.clone(),
@@ -64,19 +81,19 @@ pub fn run(
     let log = TestLog::create(path_log, &format!("run-{}", language.name()), len)?;
     match language {
         Language::Al => {
-            run_with(config, &format!("AL cache={text_cache} det={det}"), suites, log, |arena| {
+            run_with(&config, &format!("AL cache={text_cache} det={det}"), suites, log, |arena| {
                 let spec_al = p4spectec::algo(&config.spec)?;
                 Ok(runner::build_al(arena, spec_al, Config::new(cache_on, det, false), Dummy)?)
             })
         }
         Language::Sl => {
-            run_with(config, &format!("SL cache={text_cache} det={det}"), suites, log, |arena| {
+            run_with(&config, &format!("SL cache={text_cache} det={det}"), suites, log, |arena| {
                 let spec_sl = p4spectec::structure(&config.spec, true)?;
                 Ok(runner::build_sl(arena, spec_sl, Config::new(cache_on, det, false), Dummy)?)
             })
         }
         Language::Pl => {
-            run_with(config, &format!("PL cache={text_cache} det={det}"), suites, log, |arena| {
+            run_with(&config, &format!("PL cache={text_cache} det={det}"), suites, log, |arena| {
                 let spec_pl = p4spectec::prosify(&config.spec)?;
                 Ok(runner::build_pl(arena, spec_pl, Config::new(cache_on, det, false), Dummy)?)
             })
@@ -126,12 +143,10 @@ where
         })
         .cloned()
         .collect();
-    let progress = ProgressBar::new(collected as u64).with_style(ProgressStyle::with_template(
-        "[{bar:24}] {pos}/{len} {elapsed_precise} {msg}",
-    )?);
+    let progress = util::progress_bar(collected)?;
     let mut executed = 0;
     let mut passed = 0;
-    let guard_stdout = crate::output::SilenceStdout::new()?;
+    let guard_stdout = super::output::SilenceStdout::new()?;
     thread::scope(|scope| -> Result<()> {
         let (sender, receiver) = mpsc::sync_channel(2);
         scope.spawn(move || {
