@@ -7,6 +7,7 @@
 //! A single-level tower executes its top level directly as its base.
 //! `build` assembles the levels; `patch` adds the entry the base calls;
 //! `Tower::eval_program` runs it on the base's `Engine`.
+//! A KORE input enters spec-k through `Tower::eval_krun` instead.
 
 mod build;
 mod patch;
@@ -15,10 +16,12 @@ mod upper;
 pub(in crate::metacirc) use upper::{Top, TopMut, Upper, UpperMut};
 
 use super::{
+    Result,
     config::LevelConfig,
     engine::{
         BaseSpec, Engine, EngineKind, InterfaceKind, KEngine, KEngineState, KRuntime, SpecTecEngine,
     },
+    error,
     interp::TowerEnv,
     protocol::ProtocolKind,
 };
@@ -26,10 +29,15 @@ use crate::{
     interface::p4::P4Interface,
     lang::{
         al::ast as al,
-        data::{arena::Arena, value::flat::Value},
+        common::{prim::num::Natural, source::Span},
+        data::{
+            arena::Arena,
+            typ,
+            value::flat::{self as value, Value},
+        },
         il::ast as il,
     },
-    runner::{self, Eval, Extern, Runner},
+    runner::{self, Eval, Extern, InterpreterError, Runner},
     sim_plugin::dummy::Dummy,
 };
 use std::num::NonZeroUsize;
@@ -110,6 +118,46 @@ impl<Ext: Extern> Tower<Ext> {
         let env = TowerEnv { spec_base, levels, protocols, options: *options };
         let mut upper = upper.lend(&env);
         engine.call_program(arena, &mut upper, effects, name, program)
+    }
+}
+
+impl<Ext: Extern> Tower<Ext> {
+    /// Runs spec-k's entry relation `Krun` on a K definition and an initial term,
+    /// rewriting at most `depth` steps if given, as `krun --depth` does.
+    ///
+    /// `definition` and `init` are what `KoreInterface::parse_program` read;
+    /// the result is the `runres` that `KoreInterface::print_runres` prints.
+    pub fn eval_krun(
+        &mut self,
+        arena: &mut Arena,
+        definition: Value,
+        init: Value,
+        depth: Option<u64>,
+    ) -> Result<Value> {
+        let Self { levels, protocols, base, options } = self;
+        let name = &levels[0].config().rel;
+        // The step bound is spec-k's nat?
+        let value_depth = depth
+            .map(|depth| value::make::nat(arena, Natural::from(depth), Span::default()))
+            .transpose()
+            .map_err(|error| error::input_invalid(error.to_string()))?;
+        let typ_depth = typ::make::opt(typ::make::nat());
+        let value_depth =
+            value::make::opt(arena, typ_depth.node.into(), value_depth, Span::default())
+                .map_err(|error| error::input_invalid(error.to_string()))?;
+        // spec-k is the base, which hosts the program's empty level above it
+        let Some(LentBase { mut engine, spec_base, upper, effects }) = base.lend() else {
+            return Err(error::input_invalid("a KORE input requires spec-k as the base"));
+        };
+        let env = TowerEnv { spec_base, levels, protocols, options: *options };
+        let mut upper = upper.lend(&env);
+        let values = [definition, init, value_depth];
+        let outputs = engine
+            .call_rel(arena, &mut upper, effects, name, &values)
+            .map_err(InterpreterError::into_report)?;
+        value::get::one(&outputs)
+            .copied()
+            .map_err(|error| error::input_invalid(error.to_string()))
     }
 }
 

@@ -6,7 +6,9 @@
 //! the inputs of its entry relation `Krun`.
 //! Builtins are the standard ones plus the K hooks that spec-k delegates
 //! (`builtin dec $…`), registered in `hooks`.
-//! The parser and the hooks are slots that the K-in-ST implementation fills;
+//! `KoreInterface::print_runres` prints the `runres` that `Krun` returns
+//! as `krun` reports the final configuration.
+//! The parser, the printer, and the hooks are slots that the K-in-ST implementation fills;
 //! `docs/metacirc/k-in-st.md` says how.
 
 mod hooks;
@@ -47,6 +49,16 @@ impl KoreInterface {
     /// Builds the interface with the K hooks over the standard builtins.
     pub fn new() -> Self {
         Self { builtins: Builtins::with_extensions(hooks::hooks()) }
+    }
+
+    /// Prints `runres`, the result of spec-k's `Krun`, as `krun` prints a run.
+    ///
+    /// `FINAL n term` prints `term`, the final configuration, as KORE text,
+    /// so that it compares with `krun`'s output;
+    /// `ERROR n term` and `INITFAIL` report how the run failed.
+    /// #395 prints them in `interface/kore/unparse.ml` and `krun.ml`.
+    pub fn print_runres(&self, _arena: &Arena, _runres: Value) -> Result<String, InterfaceError> {
+        Err(unimplemented("KoreInterface::print_runres"))
     }
 }
 
