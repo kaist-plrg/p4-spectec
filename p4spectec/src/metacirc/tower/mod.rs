@@ -69,9 +69,9 @@ impl HostLevel {
         Self(number.expect("a tower with a host level has two or more levels"))
     }
 
-    /// Returns the host level below this one, or `None` when the base is below.
-    pub(in crate::metacirc) fn below(self) -> Option<Self> {
-        NonZeroUsize::new(self.0.get() - 1).map(Self)
+    /// Returns the level below this one.
+    pub(in crate::metacirc) fn below(self) -> Floor {
+        NonZeroUsize::new(self.0.get() - 1).map_or(Floor::Base, |number| Floor::Host(Self(number)))
     }
 
     /// Returns the host level above this one.
@@ -88,6 +88,15 @@ impl HostLevel {
     pub(in crate::metacirc) fn index(self) -> usize {
         self.0.get() - 1
     }
+}
+
+/// A level of the tower: the base, or a host level above it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in crate::metacirc) enum Floor {
+    /// The base, which runs natively.
+    Base,
+    /// A level above the base, which the level below interprets.
+    Host(HostLevel),
 }
 
 /// The native runner of the base, selected by the language it interprets.

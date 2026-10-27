@@ -12,7 +12,7 @@
 
 use super::super::{
     relay::{codec, lent::LentLevels},
-    tower::{HostLevel, Level},
+    tower::{Floor, HostLevel, Level},
 };
 use crate::{
     interface::{
@@ -156,16 +156,18 @@ impl<'s> MetaInterp<'s> {
         call(&mut ctx_meta)
     }
 
-    /// Calls relation `name` of `level`, or of the base if `None`.
+    /// Calls relation `name` of the specification at `floor`.
     fn call_rel<Ext: Extern>(
         ctx_meta: &mut MetaContext<'_, '_, '_, Ext>,
-        level: Option<HostLevel>,
+        floor: Floor,
         name: &str,
         values: &[Value],
     ) -> Result<Vec<Value>, InterpreterError> {
-        // The base runs natively
-        let Some(level) = level else {
-            return ctx_meta.call_rel(name, values).result;
+        let level = match floor {
+            // The base runs spec-meta natively
+            Floor::Base => return ctx_meta.call_rel(name, values).result,
+            // A host level runs through spec-meta at the level below
+            Floor::Host(level) => level,
         };
         // Call_rel(C, name, values) : relRes, on the level below
         let value_ctx = Self::load_ctx(ctx_meta, level)?;
@@ -185,17 +187,19 @@ impl<'s> MetaInterp<'s> {
         codec::decode::rel_result(arena, levels.cache(level), value_res, name)
     }
 
-    /// Calls function `name` of `level`, or of the base if `None`.
+    /// Calls function `name` of the specification at `floor`.
     fn call_func<Ext: Extern>(
         ctx_meta: &mut MetaContext<'_, '_, '_, Ext>,
-        level: Option<HostLevel>,
+        floor: Floor,
         name: &str,
         targs: &[Typ],
         values: &[Value],
     ) -> Result<Value, InterpreterError> {
-        // The base runs natively
-        let Some(level) = level else {
-            return ctx_meta.call_func(name, targs, values).result;
+        let level = match floor {
+            // The base runs spec-meta natively
+            Floor::Base => return ctx_meta.call_func(name, targs, values).result,
+            // A host level runs through spec-meta at the level below
+            Floor::Host(level) => level,
         };
         // Call_func(C, name, targs, values) : funcRes, on the level below
         let value_ctx = Self::load_ctx(ctx_meta, level)?;
@@ -294,7 +298,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for MetaInterp<'s> {
     ) -> Result<Vec<Value>, InterpreterError> {
         Self::with_meta(ctx, |ctx_meta| {
             let level_top = HostLevel::top(ctx_meta.external().env.levels);
-            Self::call_rel(ctx_meta, Some(level_top), name, values)
+            Self::call_rel(ctx_meta, Floor::Host(level_top), name, values)
         })
     }
 
@@ -306,7 +310,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for MetaInterp<'s> {
     ) -> Result<Value, InterpreterError> {
         Self::with_meta(ctx, |ctx_meta| {
             let level_top = HostLevel::top(ctx_meta.external().env.levels);
-            Self::call_func(ctx_meta, Some(level_top), name, targs, values)
+            Self::call_func(ctx_meta, Floor::Host(level_top), name, targs, values)
         })
     }
 }
