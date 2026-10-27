@@ -4,8 +4,6 @@
 //! Warnings and errors are returned in emission order for the shared runner
 //! to render and compare with the expected text.
 
-use std::path::Path;
-
 use p4spectec::diagnostic::Report;
 
 use p4spectec::frontend::parse::parse_files;
@@ -16,14 +14,8 @@ use crate::Result;
 
 use super::{Case, failure};
 
-/// Loads and compares this module's diagnostic fixtures.
-pub fn run(path_cli: Option<&Path>) -> Result<()> {
-    let cases = super::load("elab")?;
-    super::run_registered("elab", &cases, path_cli, Some(run_case), Default::default())
-}
-
 /// Parses and elaborates one fixture, returning all emitted diagnostics.
-fn run_case(case: &Case) -> Result<Vec<Report>> {
+pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     let name = case.name.as_str();
     // Reject setup failures from the earlier frontend stage
     let spec_el = parse_files([&case.input])

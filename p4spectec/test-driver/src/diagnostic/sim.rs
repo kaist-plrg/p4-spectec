@@ -4,8 +4,6 @@
 //! P4 assertion cases use the full declared specification and include directory,
 //! then evaluate Program_ok through the production runner with dummy externs.
 
-use std::path::Path;
-
 use p4spectec::lang::data::encoding::Encoding;
 
 use p4spectec::diagnostic::Report;
@@ -18,23 +16,8 @@ use crate::Result;
 
 use super::{Case, failure};
 
-/// Loads and compares this module's diagnostic fixtures.
-pub fn run(path_cli: Option<&Path>) -> Result<()> {
-    let cases = super::load("sim")?;
-    super::run_registered(
-        "sim",
-        &cases,
-        path_cli,
-        Some(run_case),
-        p4spectec::diagnostic::RenderConfig {
-            frame_style: Some(p4spectec::diagnostic::DisplayStyle::Short),
-            ..Default::default()
-        },
-    )
-}
-
 /// Requires simulator admission or source program evaluation to reject.
-fn run_case(case: &Case) -> Result<Vec<Report>> {
+pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     let path = &case.input;
     let config = Config::new(true, false, false);
     // A source specification exercises architecture admission normally

@@ -4,8 +4,6 @@
 //! Cases check the runtime failure kind and code before rendering a snapshot.
 //! Setup failures and unexpected success fail the test.
 
-use std::path::Path;
-
 use p4spectec::lang::{
     common::source::Span,
     data::{arena::Arena, value::flat as value},
@@ -23,21 +21,6 @@ use crate::{
 };
 
 use super::{Case, failure};
-
-/// Loads and compares this module's diagnostic fixtures.
-pub fn run(path_cli: Option<&Path>) -> Result<()> {
-    let cases = super::load("interp")?;
-    super::run_registered(
-        "interp",
-        &cases,
-        path_cli,
-        Some(run_case),
-        p4spectec::diagnostic::RenderConfig {
-            frame_style: Some(p4spectec::diagnostic::DisplayStyle::Short),
-            ..Default::default()
-        },
-    )
-}
 
 // = Expectations
 
@@ -91,7 +74,7 @@ pub(super) fn reject(
 // = Cases
 
 /// Runs a local negative case through its selected interpreter.
-fn run_case(case: &Case) -> Result<Vec<Report>> {
+pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     // P4 syntax fixtures use the production source parser
     if case.input.extension().is_some_and(|ext| ext == "p4") {
         return super::syntax::run(case);

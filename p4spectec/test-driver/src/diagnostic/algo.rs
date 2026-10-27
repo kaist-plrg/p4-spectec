@@ -3,8 +3,6 @@
 //! Every fixture must parse and elaborate before the algorithmic check fails.
 //! The runner compares the complete rendered report with its adjacent expectation.
 
-use std::path::Path;
-
 use p4spectec::diagnostic::Report;
 
 use p4spectec::frontend::parse::parse_files;
@@ -17,14 +15,8 @@ use crate::Result;
 
 use super::{Case, failure};
 
-/// Loads and compares this module's diagnostic fixtures.
-pub fn run(path_cli: Option<&Path>) -> Result<()> {
-    let cases = super::load("algo")?;
-    super::run_registered("algo", &cases, path_cli, Some(run_case), Default::default())
-}
-
 /// Runs one source fixture through its intended algorithmic failure.
-fn run_case(case: &Case) -> Result<Vec<Report>> {
+pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     let name = case.name.as_str();
     // Earlier stage failures are setup errors, never accepted snapshots
     let spec_el = parse_files([&case.input]).map_err(|report| {

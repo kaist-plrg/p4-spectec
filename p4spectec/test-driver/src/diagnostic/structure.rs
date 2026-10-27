@@ -3,8 +3,6 @@
 //! Parsing, elaboration, and AL conversion must succeed before structuring fails.
 //! Both rule-group modes exercise the same registered source independently.
 
-use std::path::Path;
-
 use p4spectec::diagnostic::Report;
 
 use p4spectec::pass::structure;
@@ -13,14 +11,8 @@ use crate::Result;
 
 use super::{Case, failure};
 
-/// Loads and compares this module's diagnostic fixtures.
-pub fn run(path_cli: Option<&Path>) -> Result<()> {
-    let cases = super::load("structure")?;
-    super::run_registered("structure", &cases, path_cli, Some(run_case), Default::default())
-}
-
 /// Requires a structure failure after successful source-to-AL conversion.
-fn run_case(case: &Case) -> Result<Vec<Report>> {
+pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     // Keep earlier pass failures out of the structure snapshot
     let spec_al = p4spectec::algo(std::slice::from_ref(&case.input)).map_err(|report| {
         failure(&case.name, format!("conversion failed before structuring: {report}"))

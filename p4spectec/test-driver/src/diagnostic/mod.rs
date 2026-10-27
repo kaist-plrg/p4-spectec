@@ -9,7 +9,7 @@
 mod cli;
 mod syntax;
 
-mod frontend;
+mod parse;
 
 mod elab;
 
@@ -24,8 +24,6 @@ mod splice;
 
 mod interp;
 
-mod command;
-mod run;
 mod sim;
 
 use std::path::{Path, PathBuf};
@@ -35,7 +33,7 @@ use expect_test::expect_file;
 use indicatif::ProgressBar;
 use serde::Deserialize;
 
-use p4spectec::diagnostic::{RenderConfig, Renderer, Report, ReportKind};
+use p4spectec::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report, ReportKind};
 
 use crate::{Error, Result};
 
@@ -46,8 +44,7 @@ fn failure(name: &str, message: impl std::fmt::Display) -> Error {
 /// Selects a diagnostic module from the driver's command line.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
 pub enum Suite {
-    #[value(alias = "parse")]
-    Frontend,
+    Parse,
     Elab,
     Algo,
     Structure,
@@ -59,21 +56,29 @@ pub enum Suite {
     Sim,
 }
 
+type RunCase = fn(&Case) -> Result<Vec<Report>>;
+
+/// Lists each registration in run order with its selector and source runner,
+/// and whether reports render runtime frames in the short style.
+///
+/// Modules without a source runner register only `.args` command cases.
+const MODULES: [(Suite, &str, Option<RunCase>, bool); 11] = [
+    (Suite::Parse, "parse", Some(parse::run_case), false),
+    (Suite::Elab, "elab", Some(elab::run_case), false),
+    (Suite::Algo, "algo", Some(algo::run_case), false),
+    (Suite::Structure, "structure", Some(structure::run_case), false),
+    (Suite::Prose, "prose", Some(prose::run_case), false),
+    (Suite::Specdoc, "specdoc", Some(specdoc::run_case), false),
+    (Suite::Specdoc, "splice", Some(splice::run_case), false),
+    (Suite::Interp, "interp", Some(interp::run_case), true),
+    (Suite::Command, "command", None, false),
+    (Suite::Run, "run", None, false),
+    (Suite::Sim, "sim", Some(sim::run_case), true),
+];
+
 /// Prints each module's registered cases.
 pub fn list() -> Result<()> {
-    for name in [
-        "frontend",
-        "elab",
-        "algo",
-        "structure",
-        "prose",
-        "specdoc",
-        "splice",
-        "interp",
-        "command",
-        "run",
-        "sim",
-    ] {
+    for (_, name, _, _) in MODULES {
         println!("diagnostics/{name}: {:#?}", load(name)?);
     }
     Ok(())
@@ -81,40 +86,15 @@ pub fn list() -> Result<()> {
 
 /// Runs the selected module or all modules in registration order.
 pub fn run(suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
-    // The CLI selector chooses modules without inspecting their registrations
-    if suite.is_none_or(|suite| suite == Suite::Frontend) {
-        frontend::run(path_cli)?;
-    }
-    if suite.is_none_or(|suite| suite == Suite::Elab) {
-        elab::run(path_cli)?;
-    }
-    if suite.is_none_or(|suite| suite == Suite::Algo) {
-        algo::run(path_cli)?;
-    }
-    if suite.is_none_or(|suite| suite == Suite::Structure) {
-        structure::run(path_cli)?;
-    }
-    if suite.is_none_or(|suite| suite == Suite::Prose) {
-        prose::run(path_cli)?;
-    }
-    // Specdoc owns both rendered document and skeleton splicing diagnostics
-    if suite.is_none_or(|suite| suite == Suite::Specdoc) {
-        specdoc::run(path_cli)?;
-    }
-    if suite.is_none_or(|suite| suite == Suite::Specdoc) {
-        splice::run(path_cli)?;
-    }
-    if suite.is_none_or(|suite| suite == Suite::Interp) {
-        interp::run(path_cli)?;
-    }
-    if suite.is_none_or(|suite| suite == Suite::Command) {
-        command::run(path_cli)?;
-    }
-    if suite.is_none_or(|suite| suite == Suite::Run) {
-        run::run(path_cli)?;
-    }
-    if suite.is_none_or(|suite| suite == Suite::Sim) {
-        sim::run(path_cli)?;
+    for (suite_module, name, run_case, frame_short) in MODULES {
+        if suite.is_some_and(|suite| suite != suite_module) {
+            continue;
+        }
+        let config = RenderConfig {
+            frame_style: frame_short.then_some(DisplayStyle::Short),
+            ..Default::default()
+        };
+        run_registered(name, &load(name)?, path_cli, run_case, config)?;
     }
     Ok(())
 }
@@ -201,8 +181,6 @@ impl Drop for Directory {
         let _ = std::env::set_current_dir(&self.0);
     }
 }
-
-type RunCase = fn(&Case) -> Result<Vec<Report>>;
 
 /// Compares module-owned fixture output with its registered expectations.
 fn run_registered(
