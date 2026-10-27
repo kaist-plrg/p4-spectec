@@ -3,6 +3,8 @@
 //! A configuration names the `Base` language of the towers it runs,
 //! and registrations name one tower or value per base in `ByBase`;
 //! runners take the entries of the configuration's base.
+//! A configuration whose implementation has not landed is `pending`:
+//! runners skip it without failing.
 
 use p4spectec::runner::Config;
 
@@ -18,6 +20,8 @@ pub enum Base {
     Al,
     /// The base level converts its IL input with the meta specification's `Algo_IL`.
     Il,
+    /// The base runs from the library compiled from spec-meta-k, which takes AL (ST-in-K).
+    K,
 }
 
 impl Base {
@@ -26,6 +30,7 @@ impl Base {
         match self {
             Self::Al => "al",
             Self::Il => "il",
+            Self::K => "k",
         }
     }
 }
@@ -36,6 +41,7 @@ impl Base {
 pub struct ByBase<T> {
     pub al: Option<T>,
     pub il: Option<T>,
+    pub k: Option<T>,
 }
 
 impl<T> ByBase<T> {
@@ -44,6 +50,7 @@ impl<T> ByBase<T> {
         match base {
             Base::Al => self.al.as_ref(),
             Base::Il => self.il.as_ref(),
+            Base::K => self.k.as_ref(),
         }
     }
 }
@@ -56,6 +63,8 @@ pub struct Configuration {
     pub base: Base,
     pub cache: bool,
     pub det: bool,
+    /// The work this configuration awaits; a pending configuration is skipped.
+    pub pending: Option<String>,
 }
 
 impl Configuration {
@@ -65,6 +74,18 @@ impl Configuration {
             .iter()
             .find(|config| config.name == name)
             .ok_or_else(|| Error::from(format!("no metacirc configuration named {name}")))
+    }
+
+    /// Reports a pending configuration and returns whether the runner skips it.
+    ///
+    /// A skipped configuration counts as no failure,
+    /// and the expected files of its suites need not exist yet.
+    pub fn skip_pending(&self, command: &str) -> bool {
+        let Some(pending) = &self.pending else {
+            return false;
+        };
+        println!("metacirc {command} {}: skipped, pending {pending}", self.name);
+        true
     }
 
     /// Returns the runner options of this configuration.

@@ -1,7 +1,8 @@
-//! STF simulation of a P4 program executed by spec-meta
+//! STF simulation of a P4 program executed by spec-meta or spec-meta-k
 //!
 //! `SimTower` keeps a tower of two or more levels: spec-meta runs natively
-//! at its base, each level above interprets the next through spec-meta,
+//! at its base, or spec-meta-k from its K library in a `k` tower,
+//! each level above interprets the next through spec-meta,
 //! and the P4 host with the architecture is the top of the tower's `Upper`.
 //! For each STF operation, `with_context` reaches that host
 //! and lends it the base's native interpreter as depth 0 (`TowerInterp`),
@@ -12,10 +13,9 @@
 use super::{
     ExecutionMode, Result, TowerConfig,
     config::Lang,
-    engine::{EngineKind, SpecTecEngine},
     error::{config_invalid, input_invalid},
     interp::{TowerEnv, TowerInterp},
-    tower::{BaseRunner, Top, Tower, Upper},
+    tower::{LentBase, Top, Tower, Upper},
 };
 use crate::{
     interface::p4::P4Interface,
@@ -23,7 +23,7 @@ use crate::{
         common::source::Phrase,
         data::{arena::Arena, encoding::Encoding},
     },
-    runner::{self, Runner, RunnerContext},
+    runner::{self, RunnerContext},
     sim_plugin::{
         SimError, Simulator, SimulatorRunner,
         arch::Architecture,
@@ -45,20 +45,20 @@ pub(super) struct SimTower<Arch: Architecture> {
 }
 
 impl<Arch: Architecture> SimTower<Arch> {
-    /// Builds a tower of an SL-executed meta specification over a P4 top level.
+    /// Builds a tower of an SL-executed or K meta specification over a P4 top level.
     fn build(
         arena: &mut Arena,
         config: &TowerConfig,
         options: runner::Config,
         arch: Arch,
     ) -> Result<Self> {
-        // Depth 0 is the base's SL interpreter, and the top level is P4
+        // Depth 0 is the base's SL interpreter or K library, and the top level is P4
         if config.levels.len() < 2
             || config.top_lang() != Lang::P4
-            || !matches!(config.mode, ExecutionMode::Sl)
+            || !matches!(config.mode, ExecutionMode::Sl | ExecutionMode::K)
         {
             return Err(config_invalid(
-                "simulation requires an sl tower of two or more levels with a P4 top level",
+                "simulation requires an sl or k tower of two or more levels with a P4 top level",
             ));
         }
         let tower = Tower::build(arena, config, options, arch)?;
@@ -72,12 +72,10 @@ impl<Arch: Architecture> SimTower<Arch> {
         body: impl FnOnce(&mut RunnerContext<'_, TowerInterp<'_>, P4Interface, Arch>) -> T,
     ) -> T {
         let Tower { levels, protocols, base, options } = &mut self.tower;
-        // Reach depth 0 and the P4 host in the base runner
-        let BaseRunner::Meta(runner) = base else {
-            unreachable!("a simulated tower has a meta base");
+        // Reach depth 0 and the P4 host in the base
+        let Some(LentBase { engine, spec_base, upper, .. }) = base.lend() else {
+            unreachable!("a simulated tower has a base below its P4 top");
         };
-        let Runner { backend, interface, external: upper, .. } = runner;
-        let (engine, spec_base) = SpecTecEngine::lend_base(backend, interface);
         // Lend the levels' storage at depth 0 and reach the P4 top
         let Upper { caches, ctxs, hosts, top, depth_next } = upper;
         let Top::P4(host) = top else {
@@ -85,7 +83,6 @@ impl<Arch: Architecture> SimTower<Arch> {
         };
         // Share the definitions, and lend depth 0 to the host
         let env = TowerEnv { spec_base, levels, protocols, options: *options };
-        let engine = EngineKind::SpecTec(engine);
         let mut interp = TowerInterp { engine, hosts, depth_next, caches, ctxs };
         host.with_context(arena, &env, &mut interp, body)
     }
@@ -139,7 +136,7 @@ impl<Arch: Architecture + 'static> SimulatorRunner for SimTower<Arch> {
 
 // == Construction
 
-/// Builds a simulator for the named architecture on an SL tower over P4.
+/// Builds a simulator for the named architecture on an SL or K tower over P4.
 pub fn build_simulator(
     config: &TowerConfig,
     arch: &str,

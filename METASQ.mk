@@ -14,7 +14,7 @@ export CARGO_TARGET_DIR
 METACIRC_TEST = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(CARGO_TARGET_DIR)" --bin metacirc-test -- $(if $(TEST_LOG),--log "$(abspath $(TEST_LOG))")
 METACIRC_SNAPSHOTS := test-metacirc-elab test-metacirc-algo test-metacirc-structure test-metacirc-prose
 
-.PHONY: metacirc metacirc-cli test-metacirc-run-al test-metacirc-run-il test-metacirc-micro-al test-metacirc-micro-il test-metacirc-sim-al test-metacirc-sim-il $(METACIRC_SNAPSHOTS) test-metacirc-metaparse test-metacirc-promote clean
+.PHONY: metacirc metacirc-cli kompile test-metacirc-run-al test-metacirc-run-il test-metacirc-run-k test-metacirc-micro-al test-metacirc-micro-il test-metacirc-micro-k test-metacirc-sim-al test-metacirc-sim-il test-metacirc-sim-k test-metacirc-k-in-st $(METACIRC_SNAPSHOTS) test-metacirc-metaparse test-metacirc-promote clean
 
 metacirc-cli:
 	cd $(RUST_DIR) && $(CARGO) build --locked --release --bin metacirc --target-dir "$(CARGO_TARGET_DIR)"
@@ -24,6 +24,11 @@ metacirc: metacirc-cli
 	rm -f ./$(METACIRC)
 	cp "$(CARGO_TARGET_DIR)/release/metacirc" ./$(METACIRC)
 
+# The library a k tower loads, compiled from spec-meta-k (`kompiled` in towers/k-*.json)
+kompile:
+	@echo "kompile: compiling spec-meta-k is not implemented yet" >&2
+	@exit 1
+
 # P4 corpus through the AL/P4 towers
 test-metacirc-run-al:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run al --input p4
@@ -31,6 +36,10 @@ test-metacirc-run-al:
 # P4 corpus through the IL/P4 towers, converted by Algo_IL
 test-metacirc-run-il:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run il --input p4
+
+# P4 corpus through the K/P4 towers, spec-meta-k on its K library (ST-in-K)
+test-metacirc-run-k:
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run k --input p4
 
 # Spec-language micro test sources through the AL tower
 test-metacirc-micro-al:
@@ -40,6 +49,10 @@ test-metacirc-micro-al:
 test-metacirc-micro-il:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run il --input al
 
+# Spec-language micro test sources through the K tower (ST-in-K)
+test-metacirc-micro-k:
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run k --input al
+
 # Registered simulation suites through the AL/P4 tower, against native expectations
 test-metacirc-sim-al:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) sim al
@@ -47,6 +60,14 @@ test-metacirc-sim-al:
 # Registered simulation suites through the IL/P4 tower, converted by Algo_IL
 test-metacirc-sim-il:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) sim il
+
+# Registered simulation suites through the K/P4 tower (ST-in-K), against native expectations
+test-metacirc-sim-k:
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) sim k
+
+# K definitions run through spec-k over KORE (K-in-ST), against krun's output
+test-metacirc-k-in-st:
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) k-in-st sl
 
 # Snapshots of the meta specification in spec-meta
 $(METACIRC_SNAPSHOTS):

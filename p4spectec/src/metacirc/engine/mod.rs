@@ -4,20 +4,29 @@
 //! an `Engine` calls its relations and functions,
 //! sending the host calls it makes to the levels lent above it.
 //! Depth 0 borrows the base runner's interpreter; each deeper depth owns one.
-//! `EngineKind` stores the engines; `spectec` executes AL or SL.
+//! `EngineKind` lends the engines, `EngineStateKind` stores a deeper depth's,
+//! and `BaseSpec` is the base's definitions they share;
+//! `spectec` executes AL or SL, and `k` a library compiled from a K base.
+//! `InterfaceKind` answers the builtins of a base executed by `spectec`,
+//! spec-meta or spec-k.
 
+mod k;
 mod spectec;
 
-pub(super) use spectec::{SpecTecEngine, SpecTecEngineState, SpecTecSpec};
+pub(super) use k::{KEngine, KEngineState, KRuntime};
+pub(super) use spectec::SpecTecEngine;
+use spectec::{SpecTecEngineState, SpecTecSpec};
 
-use super::tower::UpperMut;
+use super::{Result as MetacircResult, tower::UpperMut};
 use crate::{
+    interface::{kore::KoreInterface, meta::MetaInterface},
     lang::{
         data::{arena::Arena, value::flat::Value},
-        il::ast::Typ,
+        il::ast::{Id, Typ},
     },
-    runner::{Eval, Extern, InterpreterError},
+    runner::{self, Eval, Extern, Interface, InterfaceError, InterpreterError},
 };
+use std::path::PathBuf;
 
 /// A native executor of the base specification at one depth.
 pub(in crate::metacirc) trait Engine {
@@ -63,6 +72,45 @@ pub(in crate::metacirc) trait Engine {
 pub(in crate::metacirc) enum EngineKind<'s> {
     /// The AL or SL interpreter of a P4-SpecTec specification.
     SpecTec(SpecTecEngine<'s>),
+    /// The library compiled from a K specification.
+    K(KEngine<'s>),
+}
+
+/// The engine state a depth beneath the base owns.
+pub(in crate::metacirc) enum EngineStateKind {
+    SpecTec(SpecTecEngineState),
+    K(KEngineState),
+}
+
+/// The base's definitions, shared by every depth's engine.
+#[derive(Clone, Copy)]
+pub(in crate::metacirc) enum BaseSpec<'s> {
+    SpecTec(SpecTecSpec<'s>),
+    K(&'s KRuntime),
+}
+
+impl EngineStateKind {
+    /// Makes the state of a depth executing `spec`.
+    pub(in crate::metacirc) fn new(
+        options: runner::Config,
+        spec: BaseSpec<'_>,
+    ) -> MetacircResult<Self> {
+        match spec {
+            BaseSpec::SpecTec(spec) => Ok(Self::SpecTec(SpecTecEngineState::new(options, spec))),
+            BaseSpec::K(runtime) => KEngineState::new(runtime).map(Self::K),
+        }
+    }
+
+    /// Lends this depth's engine, executing `spec`.
+    pub(in crate::metacirc) fn lend<'s>(&'s mut self, spec: BaseSpec<'s>) -> EngineKind<'s> {
+        match (self, spec) {
+            (Self::SpecTec(state), BaseSpec::SpecTec(spec)) => {
+                EngineKind::SpecTec(SpecTecEngine::lend_depth(state, spec))
+            }
+            (Self::K(state), BaseSpec::K(runtime)) => EngineKind::K(KEngine::lend(runtime, state)),
+            _ => unreachable!("a depth runs the engine of the base it was made for"),
+        }
+    }
 }
 
 impl Engine for EngineKind<'_> {
@@ -76,6 +124,7 @@ impl Engine for EngineKind<'_> {
     ) -> Eval<Vec<Value>, InterpreterError> {
         match self {
             Self::SpecTec(engine) => engine.call_program(arena, upper, effects, name, program),
+            Self::K(engine) => engine.call_program(arena, upper, effects, name, program),
         }
     }
 
@@ -89,6 +138,7 @@ impl Engine for EngineKind<'_> {
     ) -> Result<Vec<Value>, InterpreterError> {
         match self {
             Self::SpecTec(engine) => engine.call_rel(arena, upper, effects, name, values),
+            Self::K(engine) => engine.call_rel(arena, upper, effects, name, values),
         }
     }
 
@@ -103,18 +153,66 @@ impl Engine for EngineKind<'_> {
     ) -> Result<Value, InterpreterError> {
         match self {
             Self::SpecTec(engine) => engine.call_func(arena, upper, effects, name, targs, values),
+            Self::K(engine) => engine.call_func(arena, upper, effects, name, targs, values),
         }
     }
 
     fn clear(&mut self) {
         match self {
             Self::SpecTec(engine) => engine.clear(),
+            Self::K(engine) => engine.clear(),
         }
     }
 
     fn reset(&mut self) {
         match self {
             Self::SpecTec(engine) => engine.reset(),
+            Self::K(engine) => engine.reset(),
+        }
+    }
+}
+
+// == Base builtins
+
+/// The builtins of a base specification that `SpecTecEngine` executes,
+/// by the language the base interprets.
+pub(in crate::metacirc) enum InterfaceKind {
+    /// spec-meta, interpreting AL or IL.
+    Meta(MetaInterface),
+    /// spec-k, interpreting KORE.
+    Kore(KoreInterface),
+}
+
+impl Interface for InterfaceKind {
+    fn parse_program(
+        &mut self,
+        arena: &mut Arena,
+        includes: &[PathBuf],
+        paths: &[PathBuf],
+    ) -> Result<Value, InterfaceError> {
+        match self {
+            Self::Meta(interface) => interface.parse_program(arena, includes, paths),
+            Self::Kore(interface) => interface.parse_program(arena, includes, paths),
+        }
+    }
+
+    fn call_builtin(
+        &mut self,
+        arena: &mut Arena,
+        id: &Id,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Eval<Value, InterfaceError> {
+        match self {
+            Self::Meta(interface) => interface.call_builtin(arena, id, targs, values),
+            Self::Kore(interface) => interface.call_builtin(arena, id, targs, values),
+        }
+    }
+
+    fn clear(&mut self) {
+        match self {
+            Self::Meta(interface) => interface.clear(),
+            Self::Kore(interface) => interface.clear(),
         }
     }
 }

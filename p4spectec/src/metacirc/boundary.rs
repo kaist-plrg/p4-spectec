@@ -38,9 +38,8 @@ impl<Ext: Extern> Extern for UpperMut<'_, Ext> {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        // The base's specification sends host calls to the first level above it
         let (arena, upper) = ctx.arena_and_external_mut();
-        Boundary { upper, level: HostLevel::FIRST }.eval_rel(arena, name, values)
+        upper.host_call(arena, name, values)
     }
 
     fn eval_func<Interp, Iface>(
@@ -239,6 +238,22 @@ fn unsupported<T>(name: &str) -> Eval<T, ExternError> {
     Eval::new(Err(error::extern_unsupported(name).into()), SideEffect::Pure)
 }
 
+impl<Ext: Extern> UpperMut<'_, Ext> {
+    /// Sends host call `name` of the base's specification up the first boundary.
+    ///
+    /// The extern of a base run by a `RunnerContext` calls this;
+    /// an engine that runs without one, as `KEngine` does, calls it directly.
+    pub(in crate::metacirc) fn host_call(
+        &mut self,
+        arena: &mut Arena,
+        name: &str,
+        values: &[Value],
+    ) -> Eval<Vec<Value>, ExternError> {
+        // The base's specification sends host calls to the first level above it
+        Boundary { upper: self, level: HostLevel::FIRST }.eval_rel(arena, name, values)
+    }
+}
+
 // == Reentry
 
 impl<'l, Ext: Extern> UpperMut<'l, Ext> {
@@ -257,10 +272,15 @@ impl<'l, Ext: Extern> UpperMut<'l, Ext> {
             unreachable!("only a P4 top reenters");
         };
         // The next depth lives until the program is reset
-        let count = hosts.len();
-        let depth = depth_next.get_or_insert_with(|| {
-            Box::new(TowerInterpState::new(env.options, env.spec_base, count))
-        });
+        if depth_next.is_none() {
+            match TowerInterpState::new(env.options, env.spec_base, hosts.len()) {
+                Ok(depth) => **depth_next = Some(Box::new(depth)),
+                Err(report) => {
+                    return Eval::new(Err(InterpreterError::Fatal(report)), SideEffect::Pure);
+                }
+            }
+        }
+        let depth = depth_next.as_mut().expect("the next depth was just made");
         let mut interp = depth.lend(env.spec_base, caches, ctxs);
         // Count the call's effects apart from the calling depth's
         let mut effects = 0;

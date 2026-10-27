@@ -3,14 +3,18 @@
 //! The meta specification's `Eval_AL` and `Eval_IL` invoke main() in their input script.
 //! An added main calls the selected single-input relation and returns "pass".
 //! The main is added to the AL or the IL of a level,
-//! as the level consuming it accepts AL or IL.
+//! as the level consuming it accepts AL or IL,
+//! and the protocol of the boundary below encodes the patched script.
 //! Relation notation, input positions, and output types come from the source AST;
 //! literal expressions retain the parsed program's types and spans.
 
-use super::super::{Result, error::entry_invalid};
+use super::super::{
+    Result,
+    error::entry_invalid,
+    protocol::{Protocol, Script},
+};
 use super::{PreparedLevel, Tower};
 use crate::{
-    interface::meta::shared::encode::Encode,
     lang::{
         al::ast as al,
         common::source::Span,
@@ -40,24 +44,25 @@ fn exp_pass() -> il::Exp {
 
 // == Entry construction
 
-/// Patches level `idx` and encodes it in the form the level below accepts.
+/// Patches level `idx` and encodes it through `protocol`, its boundary's.
 fn entry_encoded(
     arena: &mut Arena,
     levels: &[PreparedLevel],
+    protocol: &impl Protocol,
     idx: usize,
     value: Value,
 ) -> Result<Value> {
     let level = &levels[idx];
     let name = &level.config().rel;
-    let encoded = match level {
-        PreparedLevel::Al { spec_al, .. } => entry_al(arena, spec_al, name, value)?.encode(arena),
+    let script = match level {
+        PreparedLevel::Al { spec_al, .. } => Script::Al(entry_al(arena, spec_al, name, value)?),
         // An IL consumer converts the patched IL itself
-        PreparedLevel::Il { spec_il, .. } => entry_il(arena, spec_il, name, value)?.encode(arena),
+        PreparedLevel::Il { spec_il, .. } => Script::Il(entry_il(arena, spec_il, name, value)?),
         PreparedLevel::Base { .. } => {
             return Err(entry_invalid("the base is never passed to another level"));
         }
     };
-    encoded.map_err(|error| error.into_report())
+    protocol.encode_script(arena, script)
 }
 
 /// Builds the entry relation's notation over the program literal and fresh outputs.
@@ -221,7 +226,8 @@ impl<Ext: Extern> Tower<Ext> {
         let mut value = program;
         // Each level interprets the script immediately above it
         for idx in (1..self.levels.len()).rev() {
-            value = entry_encoded(arena, &self.levels, idx, value)?;
+            let protocol = &self.protocols[idx - 1];
+            value = entry_encoded(arena, &self.levels, protocol, idx, value)?;
         }
         Ok(value)
     }

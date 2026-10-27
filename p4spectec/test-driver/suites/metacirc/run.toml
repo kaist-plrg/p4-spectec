@@ -1,11 +1,14 @@
 # Corpus runs through metacircular towers: `run <config>`
-# (make test-metacirc-run-al, test-metacirc-run-il, test-metacirc-micro-al, test-metacirc-micro-il).
+# (make test-metacirc-run-al, test-metacirc-run-il, test-metacirc-micro-al, test-metacirc-micro-il,
+# and test-metacirc-run-k, test-metacirc-micro-k).
 #
 # A configuration selects the `base` language of the towers it runs,
 # memoization (`cache`), and determinism checking (`det`).
 # Base "al" converts the specifications and AL inputs with the native `algo` pass;
 # base "il" enters the base level through `Eval_IL`,
-# so `Algo_IL` of the meta specification converts its IL input.
+# so `Algo_IL` of the meta specification converts its IL input;
+# base "k" runs spec-meta-k, the AL semantics in K, from its compiled library.
+# A configuration with `pending` is skipped without failing until its implementation lands.
 # Each suite names one tower per base; a suite without a tower for the base is skipped.
 # The tower's top level decides the entry relation and the inputs:
 # a P4 suite records pass, fail, or exclude per .p4 file under `root` in `expected`,
@@ -15,7 +18,7 @@
 # Paths are relative to the repository root.
 
 includes = ["p4c/p4include"]
-excludes = { al = ["excludes/static"], il = ["excludes/static", "excludes/metacirc-meta"] }
+excludes = { al = ["excludes/static"], il = ["excludes/static", "excludes/metacirc-meta"], k = ["excludes/static"] }
 
 [[configs]]
 name = "al"
@@ -29,39 +32,46 @@ base = "il"
 cache = true
 det = true
 
+[[configs]]
+name = "k"
+base = "k"
+cache = true
+det = true
+pending = "ST-in-K: spec-meta-k on its K library, see docs/metacirc/st-in-k.md"
+
 [[suites]]
 name = "run-positive"
-towers = { al = "towers/al-p4.json", il = "towers/il-p4.json" }
+towers = { al = "towers/al-p4.json", il = "towers/il-p4.json", k = "towers/k-p4.json" }
 root = "p4c/testdata/p4_16_samples"
 expected = "p4spectec/test-driver/expected/run/pos.expected"
 
 [[suites]]
 name = "run-negative"
-towers = { al = "towers/al-p4-ok.json", il = "towers/il-p4-ok.json" }
+towers = { al = "towers/al-p4-ok.json", il = "towers/il-p4-ok.json", k = "towers/k-p4-ok.json" }
 root = "p4c/testdata/p4_16_errors"
 expected = "p4spectec/test-driver/expected/run/neg.expected"
 
 [[suites]]
 name = "regression-positive"
-towers = { al = "towers/al-p4.json", il = "towers/il-p4.json" }
+towers = { al = "towers/al-p4.json", il = "towers/il-p4.json", k = "towers/k-p4.json" }
 root = "testdata/regression/pos"
 expected = "p4spectec/test-driver/expected/run/regression-pos.expected"
 
 [[suites]]
 name = "regression-negative"
-towers = { al = "towers/al-p4-ok.json", il = "towers/il-p4-ok.json" }
+towers = { al = "towers/al-p4-ok.json", il = "towers/il-p4-ok.json", k = "towers/k-p4-ok.json" }
 root = "testdata/regression/neg"
 expected = "p4spectec/test-driver/expected/run/regression-neg.expected"
 
 [[suites]]
 name = "pos-run"
-towers = { al = "towers/al.json", il = "towers/il.json" }
+towers = { al = "towers/al.json", il = "towers/il.json", k = "towers/k.json" }
 root = "testdata/spec/pos/run"
 outcome = "success"
 
 [[suites]]
 name = "neg-run"
-towers = { al = "towers/al.json", il = "towers/il.json" }
+towers = { al = "towers/al.json", il = "towers/il.json", k = "towers/k.json" }
 root = "testdata/spec/neg/run"
 outcome = "failure"
 
