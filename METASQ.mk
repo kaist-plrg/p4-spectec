@@ -13,7 +13,7 @@ export CARGO_TARGET_DIR
 METACIRC_TEST = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(CARGO_TARGET_DIR)" --bin metacirc-test --
 METACIRC_SNAPSHOTS := test-metacirc-elab test-metacirc-algo test-metacirc-structure test-metacirc-prose
 
-.PHONY: metacirc metacirc-cli test-metacirc-run test-metacirc-run-meta test-metacirc-micro test-metacirc-micro-meta test-metacirc-sim test-metacirc-sim-meta $(METACIRC_SNAPSHOTS) test-metacirc-metaparse test-metacirc-promote clean
+.PHONY: metacirc metacirc-cli test-metacirc-run-al test-metacirc-run-il test-metacirc-micro-al test-metacirc-micro-il test-metacirc-sim-al test-metacirc-sim-il $(METACIRC_SNAPSHOTS) test-metacirc-metaparse test-metacirc-promote clean
 
 metacirc-cli:
 	cd $(RUST_DIR) && $(CARGO) build --locked --release --bin metacirc --target-dir "$(CARGO_TARGET_DIR)"
@@ -24,28 +24,28 @@ metacirc: metacirc-cli
 	cp "$(CARGO_TARGET_DIR)/release/metacirc" ./$(METACIRC)
 
 # P4 corpus through the AL/P4 towers
-test-metacirc-run:
-	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run --input p4
+test-metacirc-run-al:
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run al --input p4
 
 # P4 corpus through the IL/P4 towers, converted by Algo_IL
-test-metacirc-run-meta:
-	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run --input p4 --algo meta
+test-metacirc-run-il:
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run il --input p4
 
 # Spec-language micro test sources through the AL tower
-test-metacirc-micro:
-	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run --input al
+test-metacirc-micro-al:
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run al --input al
 
 # Spec-language micro test sources through the IL tower, converted by Algo_IL
-test-metacirc-micro-meta:
-	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run --input al --algo meta
+test-metacirc-micro-il:
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run il --input al
 
 # Registered simulation suites through the AL/P4 tower, against native expectations
-test-metacirc-sim:
-	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) sim
+test-metacirc-sim-al:
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) sim al
 
 # Registered simulation suites through the IL/P4 tower, converted by Algo_IL
-test-metacirc-sim-meta:
-	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) sim --algo meta
+test-metacirc-sim-il:
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) sim il
 
 # Snapshots of the meta specification in spec-meta
 $(METACIRC_SNAPSHOTS):

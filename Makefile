@@ -30,11 +30,12 @@ TEST_TARGETS := test test-expected test-elab test-algo test-structure test-prose
   test-promote test-diagnostics-promote
 
 .PHONY: $(TEST_TARGETS)
+# Resolve TEST_LOG here; the recursive make runs inside the Rust crate
 $(TEST_TARGETS):
-	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
+	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $(if $(TEST_LOG),TEST_LOG="$(abspath $(TEST_LOG))") $@
 
-METACIRC_TARGETS := metacirc test-metacirc-run test-metacirc-run-meta test-metacirc-micro \
-  test-metacirc-micro-meta test-metacirc-sim test-metacirc-sim-meta test-metacirc-elab \
+METACIRC_TARGETS := metacirc test-metacirc-run-al test-metacirc-run-il test-metacirc-micro-al \
+  test-metacirc-micro-il test-metacirc-sim-al test-metacirc-sim-il test-metacirc-elab \
   test-metacirc-algo test-metacirc-structure test-metacirc-prose test-metacirc-metaparse \
   test-metacirc-promote
 

@@ -1,0 +1,32 @@
+//! Real elaboration inputs for diagnostic snapshot acceptance
+//!
+//! Fixtures must parse before elaboration is exercised.
+//! Warnings and errors are returned in emission order for the shared runner
+//! to render and compare with the expected text.
+
+use p4spectec::diagnostic::Report;
+
+use p4spectec::frontend::parse::parse_files;
+
+use p4spectec::pass::elaborate::convert_with_warnings;
+
+use crate::harness::Result;
+
+use super::{Case, failure};
+
+/// Parses and elaborates one fixture, returning all emitted diagnostics.
+pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
+    let name = case.name.as_str();
+    // Reject setup failures from the earlier frontend stage
+    let spec_el = parse_files([&case.input])
+        .map_err(|report| failure(name, format!("parser failed before elaboration: {report}")))?;
+
+    // Preserve warnings emitted before the final elaboration result
+    let (result, mut reports) = convert_with_warnings(spec_el);
+    // Check success and failure independently of the emitted warnings
+    case.check_outcome(result.is_ok())?;
+    if let Err(report) = result {
+        reports.push(*report);
+    }
+    Ok(reports)
+}

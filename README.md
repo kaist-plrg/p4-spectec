@@ -184,9 +184,11 @@ make test         # Run all registered E2E suites
 ```
 
 `make test` runs specification/document snapshots, P4 parsing, diagnostics,
-and AL/SL/PL execution and simulation. Execution and simulation each run with
-cache enabled and determinism checking both disabled and enabled.
-The suite registrations live in `p4spectec/test-driver/suites.json`.
+and AL/SL/PL execution and simulation.
+Suite registrations live in `p4spectec/test-driver/suites/`, one TOML file per runner.
+Execution, simulation, and micro tests run one named configuration at a time
+(`run sl` runs the `sl` configuration of `suites/run.toml`),
+which sets the interpreter language, caching, and determinism checking.
 
 Individual targets are available for focused runs:
 

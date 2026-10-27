@@ -1,0 +1,93 @@
+# STF simulation: `sim <config>` (make test-sim-al, test-sim-sl, test-sim-pl).
+#
+# A configuration selects the interpreter `language` for `spec`,
+# memoization (`cache`), and determinism checking (`det`).
+# Each suite pairs every .p4 file under `p4` that includes the `arch` model
+# with each .stf test under `stf` at the same relative directory and stem,
+# or in a directory named after the P4 file's stem;
+# files under `patches` replace those with the same stem.
+# Each pair's status and transmitted packets are recorded
+# in `expected`, which every configuration shares.
+# `excludes` lists directories of .exclude files naming skipped P4 or STF files.
+# Paths are relative to the repository root.
+
+spec = ["spec"]
+includes = ["p4c/p4include"]
+excludes = ["excludes/static", "excludes/dynamic"]
+
+[[configs]]
+name = "al"
+language = "al"
+cache = true
+det = true
+
+[[configs]]
+name = "sl"
+language = "sl"
+cache = true
+det = true
+
+[[configs]]
+name = "pl"
+language = "pl"
+cache = true
+det = true
+
+[[suites]]
+name = "v1model-p4c"
+arch = "v1model"
+p4 = "p4c/testdata/p4_16_samples"
+stf = "p4c/testdata/p4_16_samples"
+patches = "patches/v1model"
+expected = "p4spectec/test-driver/expected/sim/v1model-p4c.expected"
+
+[[suites]]
+name = "v1model-p4testgen"
+arch = "v1model"
+p4 = "p4c/testdata/p4_16_samples"
+stf = "testdata/p4testgen"
+patches = "patches/v1model"
+expected = "p4spectec/test-driver/expected/sim/v1model-p4testgen.expected"
+
+[[suites]]
+name = "v1model-custom"
+arch = "v1model"
+p4 = "testdata/custom"
+stf = "testdata/custom"
+patches = "patches/v1model"
+expected = "p4spectec/test-driver/expected/sim/v1model-custom.expected"
+
+[[suites]]
+name = "ebpf-p4c"
+arch = "ebpf"
+p4 = "p4c/testdata/p4_16_samples"
+stf = "p4c/testdata/p4_16_samples"
+expected = "p4spectec/test-driver/expected/sim/ebpf-p4c.expected"
+
+[[suites]]
+name = "ebpf-p4testgen"
+arch = "ebpf"
+p4 = "p4c/testdata/p4_16_samples"
+stf = "testdata/p4testgen"
+expected = "p4spectec/test-driver/expected/sim/ebpf-p4testgen.expected"
+
+[[suites]]
+name = "psa-p4c"
+arch = "psa"
+p4 = "p4c/testdata/p4_16_samples"
+stf = "p4c/testdata/p4_16_samples"
+expected = "p4spectec/test-driver/expected/sim/psa-p4c.expected"
+
+[[suites]]
+name = "v1model-regression"
+arch = "v1model"
+p4 = "testdata/regression/sim"
+stf = "testdata/regression/sim"
+expected = "p4spectec/test-driver/expected/sim/v1model-regression.expected"
+
+[[suites]]
+name = "ebpf-regression"
+arch = "ebpf"
+p4 = "testdata/regression/sim"
+stf = "testdata/regression/sim"
+expected = "p4spectec/test-driver/expected/sim/ebpf-regression.expected"

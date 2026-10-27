@@ -1,0 +1,46 @@
+# Skeleton splicing diagnostics: `diagnostics --suite specdoc`.
+# `inputs` are the specification sources, which must convert to PL;
+# splicing the .adoc `input` against them must fail.
+#
+# Paths in cases are relative to `root`, the working directory while they run.
+# Each case renders its reports and compares the text with `expected`;
+# `make test-diagnostics-promote` rewrites the expected files.
+# An `.args` input instead runs the product CLI with one argument per line,
+# copying `inputs` into a temporary directory, and compares its stderr,
+# which must contain `code`; `outcome` is the expected exit status.
+
+root = "testdata/spec"
+
+[[cases]]
+name = "identifier-invalid"
+input = "cli/splice/identifier-invalid.adoc"
+expected = "cli/splice/identifier-invalid.expect"
+inputs = ["cli/splice/minimal.watsup"]
+
+[[cases]]
+name = "marker-incomplete"
+input = "cli/splice/marker-incomplete.adoc"
+expected = "cli/splice/marker-incomplete.expect"
+inputs = ["cli/splice/minimal.watsup"]
+
+[[cases]]
+name = "group-identifier-missing"
+input = "cli/splice/group-identifier-missing.adoc"
+expected = "cli/splice/group-identifier-missing.expect"
+inputs = ["cli/splice/minimal.watsup"]
+
+[[cases]]
+name = "warning-inplace"
+input = "cli/splice/warning-inplace.args"
+expected = "cli/splice/warning-original.expect"
+outcome = "success"
+code = "splice/key-not-found"
+inputs = ["cli/splice/minimal.watsup", "cli/splice/warning-original.adoc"]
+
+[[cases]]
+name = "warning-overlapping-output"
+input = "cli/splice/warning-overlapping-output.args"
+expected = "cli/splice/warning-original.expect"
+outcome = "success"
+code = "splice/key-not-found"
+inputs = ["cli/splice/minimal.watsup", "cli/splice/warning-original.adoc"]
