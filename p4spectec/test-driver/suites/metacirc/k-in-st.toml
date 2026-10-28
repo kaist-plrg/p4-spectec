@@ -1,18 +1,13 @@
 # K definitions run through spec-k and compared with krun: `k-in-st <config>`
 # (make test-metacirc-k-in-st).
 #
-# A configuration selects the `base` of the tower (spec-k is converted by the
-# native `algo` pass, so `al`), memoization (`cache`), and determinism checking (`det`).
-# Each suite names the K-in-ST tower per base and its definitions: `root`, a
-# directory of cases written for spec-k (a .k file, its programs with extension
-# `ext`, `prog` if none, and what krun gives for them), or `src`, `dir`, and `def`,
-# a definition in the checkout of another repository that the environment variable
-# `src` gives, with its `programs` and the directory `expected` of what krun gives
-# for them (K_SRC, KWASM_SRC, KEVM_SRC, KMIR_SRC, LLVM_SRC; a suite whose variable
-# is not set is skipped). The other options are in test-driver/src/metacirc/k_in_st.rs.
-# Running needs K: the definitions are kompiled, and the initial terms made with krun,
-# into $CARGO_TARGET_DIR/k-in-st. UPDATE_EXPECT=1 writes what krun gives.
-# A configuration with `pending` is skipped without failing until its implementation lands.
+# A configuration selects the `base` of the tower, memoization (`cache`),
+# and determinism checking (`det`).
+# A suite names its definitions: `root`, a directory of cases written for spec-k,
+# or `def` in `dir` of the checkout that the environment variable `src` names
+# (a suite whose variable is not set is skipped). The layout of a case and the
+# other options are in test-driver/src/metacirc/k_in_st.rs.
+# Running needs K; UPDATE_EXPECT=1 writes what krun gives.
 # Paths are relative to the repository root.
 
 [[configs]]
@@ -21,25 +16,14 @@ base = "al"
 cache = true
 det = true
 
+# Left out, as known differences from krun: behavior/choice,
+# behavior/fresh-in-function, behavior/updatelist-index0
 [[suites]]
-# Small definitions written to test spec-k: K's behavior where its documentation
-# is silent or differs (behavior), failing hooks and functions (errors), and
-# features the tutorial languages do not use (features). behavior/or-pattern/left
-# ends elsewhere than krun, at another final configuration K allows (left.search).
-# Left out are known differences:
-# behavior/choice (choice and Set2List differ on ==K-equal collections),
-# behavior/fresh-in-function (a fresh value of a rule and of a function it calls
-# coincide), and behavior/updatelist-index0 (updateList does not check the bounds
-# at index 0)
 name = "manual"
 towers = { al = "towers/k-in-st.json" }
 root = "testdata/k-in-st/manual"
 
-# The languages of the K tutorial, in the checkout of K given by K_SRC
-# (runtimeverification/k v7.1.337), with the programs of a quick run of the
-# spec-k harness: together they cover what the runs of all their programs cover.
-# Their options are those of the tutorial Makefiles.
-
+# The K tutorial, K v7.1.337
 [[suites]]
 name = "imp"
 towers = { al = "towers/k-in-st.json" }
@@ -155,7 +139,6 @@ programs = ["../../programs/empty-argument-2.fun", "../../programs/tuple-2.fun"]
 expected = "testdata/k-in-st/fun"
 
 [[suites]]
-# A run stopped after 20 steps, as krun --depth 20
 name = "depth"
 towers = { al = "towers/k-in-st.json" }
 src = "K_SRC"
@@ -165,10 +148,7 @@ depth = 20
 programs = ["tests/sum.imp"]
 expected = "testdata/k-in-st/depth"
 
-# Regression tests of K that kompile with the LLVM backend and krun their
-# programs (k-distribution/tests/regression-new, in K_SRC), with the settings of
-# their Makefiles and the programs of a quick run of the spec-k harness.
-
+# Regression tests of K, k-distribution/tests/regression-new
 [[suites]]
 name = "regression/bytes-memset"
 towers = { al = "towers/k-in-st.json" }
@@ -268,10 +248,7 @@ krun = ["--no-exc-wrap"]
 programs = ["1.a"]
 expected = "testdata/k-in-st/regression/string_escape"
 
-# Tests of the LLVM backend that run its interpreter on initial terms (test/defn
-# and test/input, in LLVM_SRC, runtimeverification/llvm-backend f02284f), with the programs of a quick run of the spec-k
-# harness: the definitions are KORE already and the programs initial terms.
-
+# Tests of the LLVM backend, llvm-backend f02284f
 [[suites]]
 name = "llvm/lambda-anywhere"
 towers = { al = "towers/k-in-st.json" }
@@ -332,10 +309,7 @@ kore = true
 programs = ["input/wasm-maps.in"]
 expected = "testdata/k-in-st/llvm/wasm-maps"
 
-# KWasm (runtimeverification/wasm-semantics 212271b, in KWASM_SRC), with the programs of
-# a quick run of the spec-k harness: its simple tests and the conformance tests of
-# the Wasm test suite, preprocessed as kwasm run does.
-
+# wasm-semantics 212271b
 [[suites]]
 name = "kwasm"
 towers = { al = "towers/k-in-st.json" }
@@ -347,12 +321,8 @@ prepare = ["python3", "-I", "{src}/pykwasm/src/pykwasm/scripts/preprocessor.py"]
 programs = ["{src}/tests/wasm-tests/test/core/local_set.wast", "{src}/tests/wasm-tests/test/core/table.wast", "{src}/tests/simple/bitwise.wast", "{src}/tests/simple/constants.wast", "{src}/tests/simple/f64-cs.wast", "{src}/tests/simple/f64_bitwise-cs.wast", "{src}/tests/simple/f64_cmp-cs.wast", "{src}/tests/simple/modules.wast"]
 expected = "testdata/k-in-st/kwasm"
 
-# KEVM (runtimeverification/evm-semantics 866e563, in KEVM_SRC), with the
-# programs of a quick run of the spec-k harness: VMTests of ethereum-tests
-# (c30599fb), one test of a file each. kevm-pyk makes their initial terms
-# (kevm/init.py, in its uv environment), and the K library links the KRYPTO
-# plugin, built once in the checkout (make in kevm-pyk/src/kevm_pyk/kproj/plugin).
-
+# evm-semantics 866e563, with ethereum-tests c30599fb; the KRYPTO plugin is built
+# once in the checkout
 [[suites]]
 name = "kevm"
 towers = { al = "towers/k-in-st.json" }
@@ -368,10 +338,7 @@ programs = [
 ]
 expected = "testdata/k-in-st/kevm"
 
-# KMIR (runtimeverification/mir-semantics 4d79325, in KMIR_SRC), with the program
-# of a quick run of the spec-k harness, from its SMIR JSON. kmir makes the initial
-# term (kmir/init.py, in its uv environment).
-
+# mir-semantics 4d79325
 [[suites]]
 name = "kmir"
 towers = { al = "towers/k-in-st.json" }
