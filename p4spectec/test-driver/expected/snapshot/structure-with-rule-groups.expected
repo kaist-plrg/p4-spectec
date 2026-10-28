@@ -11362,95 +11362,87 @@ def $typedLvalueIR_as_typedExpressionIR(lvalueIR '#' `( typeIR `))
 
 1. Else Dangling
 
-def $typedExpressionIR_as_typedLvalueIR(expressionIR '#' `( typeIR _ctk `))
+def $typedExpressionIR_as_typedLvalueIR(typedExpressionIR')
 
-1. Case analysis on expressionIR
+1. (Let expressionIR '#' `( typeIR _ctk `) be typedExpressionIR')
 
-  1. Case (% has type referenceExpressionIR)
+  1. Case analysis on expressionIR
 
-    1. (Let referenceExpressionIR be expressionIR as referenceExpressionIR)
+    1. Case (% has type referenceExpressionIR)
 
-      1. Return ?(referenceExpressionIR as lvalueIR '#' `( typeIR `))
+      1. (Let referenceExpressionIR be expressionIR as referenceExpressionIR)
 
-  2. Case (% has type memberAccessExpressionIR)
+        1. Return ?(referenceExpressionIR as lvalueIR '#' `( typeIR `))
 
-    1. (Let memberAccessBaseIR '.' nameIR be expressionIR as memberAccessExpressionIR)
+    2. Case (% has type memberAccessExpressionIR)
 
-      1. If (memberAccessBaseIR <: typedExpressionIR), then
+      1. (Let memberAccessBaseIR '.' nameIR be expressionIR as memberAccessExpressionIR)
 
-        1. (Let typedExpressionIR be memberAccessBaseIR as typedExpressionIR)
+        1. If (memberAccessBaseIR <: typedExpressionIR), then
 
-          1. (Let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
+          1. (Let typedExpressionIR be memberAccessBaseIR as typedExpressionIR)
 
-            1. If (typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)), then
+            1. (Let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
 
-              1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
+              1. If (typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)), then
 
-                1. Return ?(typedLvalueIR '.' nameIR '#' `( typeIR `))
+                1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
 
-            1. Else Dangling
+                  1. Return ?(typedLvalueIR '.' nameIR '#' `( typeIR `))
 
-      1. Else Dangling
+    3. Case (% has type indexAccessExpressionIR)
 
-  3. Case (% has type indexAccessExpressionIR)
+      1. (Let typedExpressionIR_base `[ typedExpressionIR_index `] be expressionIR as indexAccessExpressionIR)
 
-    1. (Let typedExpressionIR_base `[ typedExpressionIR_index `] be expressionIR as indexAccessExpressionIR)
+        1. (Let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
 
-      1. (Let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
+          1. If (typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)), then
 
-        1. If (typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)), then
+            1. (Let ?(typedLvalueIR_base) be typedLvalueIR?{typedLvalueIR <- typedLvalueIR?})
 
-          1. (Let ?(typedLvalueIR_base) be typedLvalueIR?{typedLvalueIR <- typedLvalueIR?})
+              1. Return ?(typedLvalueIR_base `[ typedExpressionIR_index `] '#' `( typeIR `))
 
-            1. Return ?(typedLvalueIR_base `[ typedExpressionIR_index `] '#' `( typeIR `))
+    4. Case (% has type sliceAccessExpressionIR)
 
-        1. Else Dangling
+      1. (Let typedExpressionIR_base `[ typedExpressionIR_hi sliceop typedExpressionIR_lo `] be expressionIR as sliceAccessExpressionIR)
 
-  4. Case (% has type sliceAccessExpressionIR)
+        1. Case analysis on sliceop (total)
 
-    1. (Let typedExpressionIR_base `[ typedExpressionIR_hi sliceop typedExpressionIR_lo `] be expressionIR as sliceAccessExpressionIR)
+          1. Case (% matches pattern ':')
 
-      1. Case analysis on sliceop (total)
+            1. (Let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
 
-        1. Case (% matches pattern ':')
+              1. If (typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)), then
 
-          1. (Let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
+                1. (Let ?(typedLvalueIR_base) be typedLvalueIR?{typedLvalueIR <- typedLvalueIR?})
 
-            1. If (typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)), then
+                  1. Return ?(typedLvalueIR_base `[ typedExpressionIR_hi ':' typedExpressionIR_lo `] '#' `( typeIR `))
 
-              1. (Let ?(typedLvalueIR_base) be typedLvalueIR?{typedLvalueIR <- typedLvalueIR?})
+          2. Case (% matches pattern '+:')
 
-                1. Return ?(typedLvalueIR_base `[ typedExpressionIR_hi ':' typedExpressionIR_lo `] '#' `( typeIR `))
+            1. (Let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
 
-            1. Else Dangling
+              1. If (typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)), then
 
-        2. Case (% matches pattern '+:')
+                1. (Let ?(typedLvalueIR_base) be typedLvalueIR?{typedLvalueIR <- typedLvalueIR?})
 
-          1. (Let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
+                  1. Return ?(typedLvalueIR_base `[ typedExpressionIR_hi '+:' typedExpressionIR_lo `] '#' `( typeIR `))
 
-            1. If (typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)), then
+    5. Case (% has type parenthesizedExpressionIR)
 
-              1. (Let ?(typedLvalueIR_base) be typedLvalueIR?{typedLvalueIR <- typedLvalueIR?})
+      1. (Let `( typedExpressionIR `) be expressionIR as parenthesizedExpressionIR)
 
-                1. Return ?(typedLvalueIR_base `[ typedExpressionIR_hi '+:' typedExpressionIR_lo `] '#' `( typeIR `))
+        1. (Let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
 
-            1. Else Dangling
+          1. If (typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)), then
 
-  5. Case (% has type parenthesizedExpressionIR)
+            1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
 
-    1. (Let `( typedExpressionIR `) be expressionIR as parenthesizedExpressionIR)
+              1. Return ?(`( typedLvalueIR `) '#' `( typeIR `))
 
-      1. (Let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
+2. Otherwise,
 
-        1. If (typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)), then
-
-          1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
-
-            1. Return ?(`( typedLvalueIR `) '#' `( typeIR `))
-
-        1. Else Dangling
-
-1. Else Dangling
+  1. Return ?()
 
 syntax emptyStatementIR = emptyStatement
 
@@ -23892,31 +23884,37 @@ relation Expr_ok: p TC |- expression'' : %
 
             1. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-              1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
+              1. (Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
+                1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
-                  1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+                  1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                    1. (Let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_plusminusmult))
+                    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
-                      1. If ((typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)), then
+                      1. (Let ?(typedExpressionIR_r_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                        1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
+                        1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_plusminusmult))
 
-                          1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                          1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
 
-                            1. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                            1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-                              1. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
+                              1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                                1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
+                                1. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                                  1. (Let expressionNoteIR be `( typeIR_reduced ctk_reduced `))
+                                  1. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
 
-                                    1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
+                                    1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
-                      1. Else Dangling
+                                      1. (Let expressionNoteIR be `( typeIR_reduced ctk_reduced `))
+
+                                        1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
+
+                          1. Else Dangling
+
+                    1. Else Dangling
 
                 1. Else Dangling
 
@@ -23930,31 +23928,37 @@ relation Expr_ok: p TC |- expression'' : %
 
             1. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-              1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
+              1. (Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
+                1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
-                  1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+                  1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                    1. (Let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_satplusminus))
+                    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
-                      1. If ((typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)), then
+                      1. (Let ?(typedExpressionIR_r_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                        1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
+                        1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_satplusminus))
 
-                          1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                          1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
 
-                            1. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                            1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-                              1. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
+                              1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                                1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
+                                1. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                                  1. (Let expressionNoteIR be `( typeIR_reduced ctk_reduced `))
+                                  1. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
 
-                                    1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
+                                    1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
-                      1. Else Dangling
+                                      1. (Let expressionNoteIR be `( typeIR_reduced ctk_reduced `))
+
+                                        1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
+
+                          1. Else Dangling
+
+                    1. Else Dangling
 
                 1. Else Dangling
 
@@ -23968,63 +23972,69 @@ relation Expr_ok: p TC |- expression'' : %
 
             1. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-              1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
+              1. (Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
+                1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
-                  1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+                  1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                    1. (Let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod))
+                    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
-                      1. If ((typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)), then
+                      1. (Let ?(typedExpressionIR_r_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                        1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
+                        1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod))
 
-                          1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                          1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
 
-                            1. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                            1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-                              1. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
+                              1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                                1. Case analysis on ctk_r_reduced matches LCTK (total)
+                                1. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                                  1. Case true
+                                  1. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
 
-                                    1. (Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~> value)
+                                    1. Case analysis on ctk_r_reduced matches LCTK (total)
 
-                                      1. If (value <: integerValue), then
+                                      1. Case true
 
-                                        1. (Let integerValue_r be value as integerValue)
+                                        1. (Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~> value)
 
-                                          1. (Let nat?{nat <- nat?} be $nat_of_integerValue(integerValue_r))
+                                          1. If (value <: integerValue), then
 
-                                            1. If (nat?{nat <- nat?} matches (_)), then
+                                            1. (Let integerValue_r be value as integerValue)
 
-                                              1. (Let ?(n_r) be nat?{nat <- nat?})
+                                              1. (Let nat?{nat <- nat?} be $nat_of_integerValue(integerValue_r))
 
-                                                1. If ((n_r > 0)), then
+                                                1. If (nat?{nat <- nat?} matches (_)), then
 
-                                                  1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
+                                                  1. (Let ?(n_r) be nat?{nat <- nat?})
 
-                                                    1. (Let expressionNoteIR be `( typeIR_reduced ctk_reduced `))
+                                                    1. If ((n_r > 0)), then
 
-                                                      1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
+                                                      1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
+
+                                                        1. (Let expressionNoteIR be `( typeIR_reduced ctk_reduced `))
+
+                                                          1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
+
+                                                    1. Else Dangling
 
                                                 1. Else Dangling
 
-                                            1. Else Dangling
+                                          1. Else Dangling
 
-                                      1. Else Dangling
+                                      2. Case false
 
-                                  2. Case false
+                                        1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
-                                    1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
+                                          1. (Let expressionNoteIR be `( typeIR_reduced ctk_reduced `))
 
-                                      1. (Let expressionNoteIR be `( typeIR_reduced ctk_reduced `))
+                                            1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
 
-                                        1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
+                          1. Else Dangling
 
-                      1. Else Dangling
+                    1. Else Dangling
 
                 1. Else Dangling
 
@@ -24108,27 +24118,33 @@ relation Expr_ok: p TC |- expression'' : %
 
             1. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-              1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
+              1. (Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
+                1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
-                  1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+                  1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                    1. (Let typeIR_cast be $type_of_typedExpressionIR(typedExpressionIR_l_cast))
+                    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
-                      1. (Let ctk_l_cast be $ctk_of_typedExpressionIR(typedExpressionIR_l_cast))
+                      1. (Let ?(typedExpressionIR_r_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                        1. (Let ctk_r_cast be $ctk_of_typedExpressionIR(typedExpressionIR_r_cast))
+                        1. (Let typeIR_cast be $type_of_typedExpressionIR(typedExpressionIR_l_cast))
 
-                          1. If ($is_equalable_typeIR(typeIR_cast)), then
+                          1. (Let ctk_l_cast be $ctk_of_typedExpressionIR(typedExpressionIR_l_cast))
 
-                            1. (Let ctk_cast be $join_ctk(ctk_l_cast, ctk_r_cast))
+                            1. (Let ctk_r_cast be $ctk_of_typedExpressionIR(typedExpressionIR_r_cast))
 
-                              1. (Let expressionNoteIR be `( BOOL as typeIR ctk_cast `))
+                              1. If ($is_equalable_typeIR(typeIR_cast)), then
 
-                                1. Result in: % % |- % : typedExpressionIR_l_cast binop typedExpressionIR_r_cast as expressionIR '#' expressionNoteIR
+                                1. (Let ctk_cast be $join_ctk(ctk_l_cast, ctk_r_cast))
 
-                          1. Else Dangling
+                                  1. (Let expressionNoteIR be `( BOOL as typeIR ctk_cast `))
+
+                                    1. Result in: % % |- % : typedExpressionIR_l_cast binop typedExpressionIR_r_cast as expressionIR '#' expressionNoteIR
+
+                              1. Else Dangling
+
+                    1. Else Dangling
 
                 1. Else Dangling
 
@@ -24142,31 +24158,37 @@ relation Expr_ok: p TC |- expression'' : %
 
             1. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-              1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
+              1. (Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
+                1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
-                  1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+                  1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                    1. (Let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_compare))
+                    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
-                      1. If ((typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)), then
+                      1. (Let ?(typedExpressionIR_r_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                        1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
+                        1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_compare))
 
-                          1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                          1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
 
-                            1. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                            1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-                              1. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
+                              1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                                1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
+                                1. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                                  1. (Let expressionNoteIR be `( BOOL as typeIR ctk_reduced `))
+                                  1. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
 
-                                    1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
+                                    1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
-                      1. Else Dangling
+                                      1. (Let expressionNoteIR be `( BOOL as typeIR ctk_reduced `))
+
+                                        1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
+
+                          1. Else Dangling
+
+                    1. Else Dangling
 
                 1. Else Dangling
 
@@ -24180,31 +24202,37 @@ relation Expr_ok: p TC |- expression'' : %
 
             1. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-              1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
+              1. (Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
+                1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
-                  1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+                  1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                    1. (Let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_bitwise))
+                    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
-                      1. If ((typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)), then
+                      1. (Let ?(typedExpressionIR_r_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                        1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
+                        1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_bitwise))
 
-                          1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                          1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
 
-                            1. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                            1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-                              1. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
+                              1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                                1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
+                                1. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                                  1. (Let expressionNoteIR be `( typeIR_reduced ctk_reduced `))
+                                  1. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
 
-                                    1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
+                                    1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
-                      1. Else Dangling
+                                      1. (Let expressionNoteIR be `( typeIR_reduced ctk_reduced `))
+
+                                        1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
+
+                          1. Else Dangling
+
+                    1. Else Dangling
 
                 1. Else Dangling
 
@@ -24256,31 +24284,37 @@ relation Expr_ok: p TC |- expression'' : %
 
             1. (Expr_ok: p TC |- expression_r : typedExpressionIR_r)
 
-              1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
+              1. (Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
+                1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
-                  1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+                  1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                    1. (Let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_logical))
+                    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
-                      1. If ((typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)), then
+                      1. (Let ?(typedExpressionIR_r_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                        1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
+                        1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_logical))
 
-                          1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                          1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
 
-                            1. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                            1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-                              1. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
+                              1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                                1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
+                                1. (Let ctk_l_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                                  1. (Let expressionNoteIR be `( typeIR_reduced ctk_reduced `))
+                                  1. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
 
-                                    1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
+                                    1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
-                      1. Else Dangling
+                                      1. (Let expressionNoteIR be `( typeIR_reduced ctk_reduced `))
+
+                                        1. Result in: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR '#' expressionNoteIR
+
+                          1. Else Dangling
+
+                    1. Else Dangling
 
                 1. Else Dangling
 
@@ -24304,27 +24338,33 @@ relation Expr_ok: p TC |- expression'' : %
 
                   1. (Expr_ok: p TC |- expression_false : typedExpressionIR_false)
 
-                    1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $cast_binary(typedExpressionIR_true, typedExpressionIR_false))
+                    1. (Cast_binary: typedExpressionIR_true ',' typedExpressionIR_false : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                      1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
+                      1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
-                        1. (Let ?((typedExpressionIR_true_cast, typedExpressionIR_false_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+                        1. (Let ?(typedExpressionIR_true_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                          1. (Let typeIR_cast be $type_of_typedExpressionIR(typedExpressionIR_true_cast))
+                          1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
-                            1. (Let ctk_true_cast be $ctk_of_typedExpressionIR(typedExpressionIR_true_cast))
+                            1. (Let ?(typedExpressionIR_false_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                              1. (Let ctk_false_cast be $ctk_of_typedExpressionIR(typedExpressionIR_false_cast))
+                              1. (Let typeIR_cast be $type_of_typedExpressionIR(typedExpressionIR_true_cast))
 
-                                1. If (((typeIR_cast = INT as typeIR) => (ctk_cond =/= DYN))), then
+                                1. (Let ctk_true_cast be $ctk_of_typedExpressionIR(typedExpressionIR_true_cast))
 
-                                  1. (Let ctk be $joins_ctk([ctk_cond, ctk_true_cast, ctk_false_cast]))
+                                  1. (Let ctk_false_cast be $ctk_of_typedExpressionIR(typedExpressionIR_false_cast))
 
-                                    1. (Let expressionNoteIR be `( typeIR_cast ctk `))
+                                    1. If (((typeIR_cast = INT as typeIR) => (ctk_cond =/= DYN))), then
 
-                                      1. Result in: % % |- % : typedExpressionIR_cond '?' typedExpressionIR_true_cast ':' typedExpressionIR_false_cast as expressionIR '#' expressionNoteIR
+                                      1. (Let ctk be $joins_ctk([ctk_cond, ctk_true_cast, ctk_false_cast]))
 
-                                1. Else Dangling
+                                        1. (Let expressionNoteIR be `( typeIR_cast ctk `))
+
+                                          1. Result in: % % |- % : typedExpressionIR_cond '?' typedExpressionIR_true_cast ':' typedExpressionIR_false_cast as expressionIR '#' expressionNoteIR
+
+                                    1. Else Dangling
+
+                          1. Else Dangling
 
                       1. Else Dangling
 
@@ -25854,7 +25894,7 @@ relation Stmt_ok: p TC |- statement' : % %
 
                   1. (Let typeIR_r be $type_of_typedExpressionIR(typedExpressionIR))
 
-                    1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_unary(typedExpressionIR, typeIR_l))
+                    1. (Cast_unary: `( typeIR_l `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
                       1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
@@ -25882,7 +25922,7 @@ relation Stmt_ok: p TC |- statement' : % %
 
                           1. (Let _lvalueIR '#' `( typeIR_lvalue `) be typedLvalueIR)
 
-                            1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_binary, typeIR_lvalue))
+                            1. (Cast_unary: `( typeIR_lvalue `) typedExpressionIR_binary : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
                               1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -26144,7 +26184,7 @@ relation Stmt_ok: p TC |- statement' : % %
 
                         1. (Let ?(typeIR_ret) be typeIR'?{typeIR' <- typeIR'?})
 
-                          1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_unary(typedExpressionIR, typeIR_ret))
+                          1. (Cast_unary: `( typeIR_ret `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
                             1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
@@ -26448,7 +26488,7 @@ relation Parameter_ok: p TC |- annotationList direction type name initializerOpt
 
                     1. Case (% matches pattern CTK)
 
-                      1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_init, typeIR))
+                      1. (Cast_unary: `( typeIR `) typedExpressionIR_init : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
                         1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -26466,7 +26506,7 @@ relation Parameter_ok: p TC |- annotationList direction type name initializerOpt
 
                     2. Case (% matches pattern LCTK)
 
-                      1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_init, typeIR))
+                      1. (Cast_unary: `( typeIR `) typedExpressionIR_init : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
                         1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -28106,7 +28146,7 @@ relation VarDecl_ok: p TC_0 |- annotationList type name initializerOpt ';' : % %
 
                 1. (Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init)
 
-                  1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_init, typeIR))
+                  1. (Cast_unary: `( typeIR `) typedExpressionIR_init : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
                     1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -28142,7 +28182,7 @@ relation ConstDecl_ok: p TC_0 |- annotationList CONST type name '=' expression_v
 
           1. If ($ctk_of_typedExpressionIR(typedExpressionIR_value) matches LCTK), then
 
-            1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_value, typeIR))
+            1. (Cast_unary: `( typeIR `) typedExpressionIR_value : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
               1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -29038,7 +29078,7 @@ relation Call_convention_expr_ok: p TC actctxt |- annotationList direction typeI
 
   1. Group in: p TC actctxt |- annotationList IN typeIR_param id parameterInitializerOptIR '@' typedExpressionIR_arg : %
 
-    1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_arg, typeIR_param))
+    1. (Cast_unary: `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
       1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -29090,7 +29130,7 @@ relation Call_convention_expr_ok: p TC actctxt |- annotationList direction typeI
 
       1. Case (% matches pattern ACTION)
 
-        1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_arg, typeIR_param))
+        1. (Cast_unary: `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
           1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -29102,7 +29142,7 @@ relation Call_convention_expr_ok: p TC actctxt |- annotationList direction typeI
 
       2. Case (% matches pattern NOACTION)
 
-        1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_arg, typeIR_param))
+        1. (Cast_unary: `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
           1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -29748,7 +29788,7 @@ relation Call_ok: p TC |- callableTypeIR `< typeArgumentIR*{typeArgumentIR <- ty
 
           1. (Let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} be $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
 
-            1. (Let inference be $infer(typeId*{typeId <- typeId*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}))
+            1. (Infer: typeId*{typeId <- typeId*} |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} ',' parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} '@' argumentIR*{argumentIR <- argumentIR*} : inference)
 
               1. (Let typeArgumentIR_inferred be $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
 
@@ -29782,7 +29822,7 @@ relation Call_ok: p TC |- callableTypeIR `< typeArgumentIR*{typeArgumentIR <- ty
 
           1. (Let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} be $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
 
-            1. (Let inference be $infer(typeId*{typeId <- typeId*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}))
+            1. (Infer: typeId*{typeId <- typeId*} |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} ',' parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} '@' argumentIR*{argumentIR <- argumentIR*} : inference)
 
               1. (Let typeArgumentIR_inferred be $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
 
@@ -29838,7 +29878,7 @@ relation Call_ok: p TC |- callableTypeIR `< typeArgumentIR*{typeArgumentIR <- ty
 
               1. (Let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} be $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
 
-                1. (Let inference be $infer(typeId*{typeId <- typeId*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}))
+                1. (Infer: typeId*{typeId <- typeId*} |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} ',' parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} '@' argumentIR*{argumentIR <- argumentIR*} : inference)
 
                   1. (Let typeArgumentIR_inferred be $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
 
@@ -29868,7 +29908,7 @@ relation Call_ok: p TC |- callableTypeIR `< typeArgumentIR*{typeArgumentIR <- ty
 
               1. (Let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} be $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
 
-                1. (Let inference be $infer(typeId*{typeId <- typeId*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}))
+                1. (Infer: typeId*{typeId <- typeId*} |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} ',' parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} '@' argumentIR*{argumentIR <- argumentIR*} : inference)
 
                   1. (Let typeArgumentIR_inferred be $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
 
@@ -30066,7 +30106,7 @@ relation Inst_ok: p TC instctxt |- constructorTypeIR `< typeArgumentIR*{typeArgu
 
     1. (Let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} be $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
 
-      1. (Let inference be $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}))
+      1. (Infer: typeId_infer*{typeId_infer <- typeId_infer*} |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} ',' parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} '@' argumentIR*{argumentIR <- argumentIR*} : inference)
 
         1. (Let typeArgumentIR_inferred be $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
 
@@ -30280,75 +30320,119 @@ def $apply_cast(typedExpressionIR, typeIR*{typeIR <- typeIR*})
 
           1. Return $apply_cast(typedExpressionIR_cast, typeIR_t*{typeIR_t <- typeIR_t*})
 
-def $cast_unary(typedExpressionIR, typeIR_to)
+relation Cast_unary: `( typeIR_to `) typedExpressionIR : %
 
-1. (Let _expressionIR '#' `( typeIR _ctk `) be typedExpressionIR)
+1. Group ok: `( typeIR_to `) typedExpressionIR : %
 
-  1. (Cast_impl: typeIR -> typeIR_to : castResult)
+  1. (Let _expressionIR '#' `( typeIR_from _ctk `) be typedExpressionIR)
 
-    1. If (castResult matches OK %), then
+    1. (Cast_impl: typeIR_from -> typeIR_to : castResult)
 
-      1. (Let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} be castResult)
+      1. If (castResult matches OK %), then
 
-        1. (Let typedExpressionIR_cast be $apply_cast(typedExpressionIR, typeIR_cast*{typeIR_cast <- typeIR_cast*}))
+        1. (Let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} be castResult)
 
-          1. Return ?(typedExpressionIR_cast)
+          1. (Let typedExpressionIR_cast be $apply_cast(typedExpressionIR, typeIR_cast*{typeIR_cast <- typeIR_cast*}))
+
+            1. Result in: `( % `) % : ?(typedExpressionIR_cast)
 
 2. Otherwise,
 
-  1. Return ?()
+  1. Group fail: `( typeIR_to `) typedExpressionIR : %
 
-def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+    1. Result in: `( % `) % : ?()
 
-1. (Let _expressionIR '#' `( typeIR_l _ctk `) be typedExpressionIR_l)
+relation Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
 
-  1. (Let _expressionIR' '#' `( typeIR_r _ctk' `) be typedExpressionIR_r)
+1. Group left-to-right: typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
 
-    1. (Cast_impl: typeIR_l -> typeIR_r : castResult)
+  1. (Let _expressionIR '#' `( typeIR_l _ctk `) be typedExpressionIR_l)
 
-      1. Case analysis on castResult (total)
+    1. (Let _expressionIR' '#' `( typeIR_r _ctk' `) be typedExpressionIR_r)
 
-        1. Case (% matches pattern OK %)
+      1. (Cast_impl: typeIR_l -> typeIR_r : castResult)
+
+        1. If (castResult matches OK %), then
 
           1. (Let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} be castResult)
 
             1. (Let typedExpressionIR_l_cast be $apply_cast(typedExpressionIR_l, typeIR_cast*{typeIR_cast <- typeIR_cast*}))
 
-              1. Return ?((typedExpressionIR_l_cast, typedExpressionIR_r))
+              1. Result in: % ',' % : ?(typedExpressionIR_l_cast) ',' ?(typedExpressionIR_r)
 
-        2. Case (% matches pattern FAIL)
+2. Group right-to-left: typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
+
+  1. (Let _expressionIR '#' `( typeIR_l _ctk `) be typedExpressionIR_l)
+
+    1. (Let _expressionIR' '#' `( typeIR_r _ctk' `) be typedExpressionIR_r)
+
+      1. (Cast_impl: typeIR_l -> typeIR_r : castResult)
+
+        1. If (castResult matches FAIL), then
 
           1. (Cast_impl: typeIR_r -> typeIR_l : castResult')
 
-            1. Case analysis on castResult' (total)
+            1. If (castResult' matches OK %), then
 
-              1. Case (% matches pattern OK %)
+              1. (Let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} be castResult')
 
-                1. (Let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} be castResult')
+                1. (Let typedExpressionIR_r_cast be $apply_cast(typedExpressionIR_r, typeIR_cast*{typeIR_cast <- typeIR_cast*}))
 
-                  1. (Let typedExpressionIR_r_cast be $apply_cast(typedExpressionIR_r, typeIR_cast*{typeIR_cast <- typeIR_cast*}))
+                  1. Result in: % ',' % : ?(typedExpressionIR_l) ',' ?(typedExpressionIR_r_cast)
 
-                    1. Return ?((typedExpressionIR_l, typedExpressionIR_r_cast))
+3. Group retry-left: typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
 
-              2. Case (% matches pattern FAIL)
+  1. (Let _expressionIR '#' `( typeIR_l _ctk `) be typedExpressionIR_l)
 
-                1. (Let typedExpressionIR_l_cast be $reduce_serenum(typedExpressionIR_l))
+    1. (Let _expressionIR' '#' `( typeIR_r _ctk' `) be typedExpressionIR_r)
 
-                  1. If ((typedExpressionIR_l =/= typedExpressionIR_l_cast)), then
+      1. (Cast_impl: typeIR_l -> typeIR_r : castResult)
 
-                    1. Return $cast_binary(typedExpressionIR_l_cast, typedExpressionIR_r)
+        1. If (castResult matches FAIL), then
 
-                  2. If ((typedExpressionIR_l = typedExpressionIR_l_cast)), then
+          1. (Cast_impl: typeIR_r -> typeIR_l : castResult')
 
-                    1. (Let typedExpressionIR_r_cast be $reduce_serenum(typedExpressionIR_r))
+            1. If (castResult' matches FAIL), then
 
-                      1. If ((typedExpressionIR_r =/= typedExpressionIR_r_cast)), then
+              1. (Let typedExpressionIR_l_reduced be $reduce_serenum(typedExpressionIR_l))
 
-                        1. Return $cast_binary(typedExpressionIR_l, typedExpressionIR_r_cast)
+                1. If ((typedExpressionIR_l =/= typedExpressionIR_l_reduced)), then
 
-2. Otherwise,
+                  1. (Cast_binary: typedExpressionIR_l_reduced ',' typedExpressionIR_r : typedExpressionIR_l_cast?{typedExpressionIR_l_cast <- typedExpressionIR_l_cast?} ',' typedExpressionIR_r_cast?{typedExpressionIR_r_cast <- typedExpressionIR_r_cast?})
 
-  1. Return ?()
+                    1. Result in: % ',' % : typedExpressionIR_l_cast?{typedExpressionIR_l_cast <- typedExpressionIR_l_cast?} ',' typedExpressionIR_r_cast?{typedExpressionIR_r_cast <- typedExpressionIR_r_cast?}
+
+4. Group retry-right: typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
+
+  1. (Let _expressionIR '#' `( typeIR_l _ctk `) be typedExpressionIR_l)
+
+    1. (Let _expressionIR' '#' `( typeIR_r _ctk' `) be typedExpressionIR_r)
+
+      1. (Cast_impl: typeIR_l -> typeIR_r : castResult)
+
+        1. If (castResult matches FAIL), then
+
+          1. (Cast_impl: typeIR_r -> typeIR_l : castResult')
+
+            1. If (castResult' matches FAIL), then
+
+              1. (Let typedExpressionIR_l_reduced be $reduce_serenum(typedExpressionIR_l))
+
+                1. If ((typedExpressionIR_l = typedExpressionIR_l_reduced)), then
+
+                  1. (Let typedExpressionIR_r_reduced be $reduce_serenum(typedExpressionIR_r))
+
+                    1. If ((typedExpressionIR_r =/= typedExpressionIR_r_reduced)), then
+
+                      1. (Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r_reduced : typedExpressionIR_l_cast?{typedExpressionIR_l_cast <- typedExpressionIR_l_cast?} ',' typedExpressionIR_r_cast?{typedExpressionIR_r_cast <- typedExpressionIR_r_cast?})
+
+                        1. Result in: % ',' % : typedExpressionIR_l_cast?{typedExpressionIR_l_cast <- typedExpressionIR_l_cast?} ',' typedExpressionIR_r_cast?{typedExpressionIR_r_cast <- typedExpressionIR_r_cast?}
+
+5. Otherwise,
+
+  1. Group fail: typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
+
+    1. Result in: % ',' % : ?() ',' ?()
 
 tbl def $compat_lnot(typeIR'')
 =
@@ -31296,7 +31380,7 @@ relation ForInitStmt_ok: TC |- forInitStatement : % %
 
                       1. (Expr_ok: LOCAL TC |- expression_init : typedExpressionIR_init)
 
-                        1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_init, typeIR))
+                        1. (Cast_unary: `( typeIR `) typedExpressionIR_init : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
                           1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -31422,13 +31506,13 @@ relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
           1. (Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r)
 
-            1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_l, typeIR_var))
+            1. (Cast_unary: `( typeIR_var `) typedExpressionIR_l : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
               1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
                 1. (Let ?(typedExpressionIR_l_casted) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                  1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_unary(typedExpressionIR_r, typeIR_var))
+                  1. (Cast_unary: `( typeIR_var `) typedExpressionIR_r : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
                     1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
@@ -31658,7 +31742,7 @@ relation SwitchLabel_general_ok: TC typeIR |- switchLabel : %
 
           1. (Expr_ok: LOCAL TC |- expression_label : typedExpressionIR_label)
 
-            1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_label, typeIR))
+            1. (Cast_unary: `( typeIR `) typedExpressionIR_label : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
               1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -31949,47 +32033,47 @@ relation ObjectDeclList_ok: p TC |- objectDeclarationList : % % %
 
       1. Result in: % % |- % : typeFrame externMethodTypeDefEnv objectDeclarationListIR
 
-def $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, set<pair<callableId, externMethodTypeDefIR>>)
+relation Subst_externMethodTypeDefEnv: externMethodTypeDefEnv_extern |- `{ pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*} `} : %
 
-1. If ((set<pair<callableId, externMethodTypeDefIR>> = `{ [] `})), then
+1. Group : externMethodTypeDefEnv_extern |- `{ pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*} `} : %
 
-  1. Return externMethodTypeDefEnv_extern
+  1. Case analysis on pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*} (total)
 
-1. Else Dangling
+    1. Case (% matches pattern [])
 
-2. (Let `{ pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*} `} be set<pair<callableId, externMethodTypeDefIR>>)
+      1. Result in: % |- % : externMethodTypeDefEnv_extern
 
-  1. If (pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*} matches _ :: _), then
+    2. Case (% matches pattern _ :: _)
 
-    1. (Let callableId_init_h ':' externMethodTypeDefIR_init_h :: callableId_init_t ':' externMethodTypeDefIR_init_t*{callableId_init_t <- callableId_init_t*, externMethodTypeDefIR_init_t <- externMethodTypeDefIR_init_t*} be pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*})
+      1. (Let callableId_init_h ':' externMethodTypeDefIR_init_h :: callableId_init_t ':' externMethodTypeDefIR_init_t*{callableId_init_t <- callableId_init_t*, externMethodTypeDefIR_init_t <- externMethodTypeDefIR_init_t*} be pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*})
 
-      1. (Let nameIR_init_h `( _id*{_id <- _id*} `) be callableId_init_h)
+        1. (Let nameIR_init_h `( _id*{_id <- _id*} `) be callableId_init_h)
 
-        1. (Let (callableId, externMethodTypeDefIR)?{(callableId, externMethodTypeDefIR) <- (callableId, externMethodTypeDefIR)?} be $find_non_overloaded<externMethodTypeDefIR>(externMethodTypeDefEnv_extern, nameIR_init_h))
+          1. (Let (callableId, externMethodTypeDefIR)?{(callableId, externMethodTypeDefIR) <- (callableId, externMethodTypeDefIR)?} be $find_non_overloaded<externMethodTypeDefIR>(externMethodTypeDefEnv_extern, nameIR_init_h))
 
-          1. If ((callableId, externMethodTypeDefIR)?{(callableId, externMethodTypeDefIR) <- (callableId, externMethodTypeDefIR)?} matches (_)), then
+            1. If ((callableId, externMethodTypeDefIR)?{(callableId, externMethodTypeDefIR) <- (callableId, externMethodTypeDefIR)?} matches (_)), then
 
-            1. (Let ?((callableId, externMethodTypeDefIR_abstract)) be (callableId, externMethodTypeDefIR)?{(callableId, externMethodTypeDefIR) <- (callableId, externMethodTypeDefIR)?})
+              1. (Let ?((callableId, externMethodTypeDefIR_abstract)) be (callableId, externMethodTypeDefIR)?{(callableId, externMethodTypeDefIR) <- (callableId, externMethodTypeDefIR)?})
 
-              1. If (externMethodTypeDefIR_abstract matches EXTERN_METHOD ABSTRACT % `< % ',' % `> `( % `) ':' %), then
+                1. If (externMethodTypeDefIR_abstract matches EXTERN_METHOD ABSTRACT % `< % ',' % `> `( % `) ':' %), then
 
-                1. (Let EXTERN_METHOD ABSTRACT nameIR `< typeId_expl*{typeId_expl <- typeId_expl*} ',' typeId_impl*{typeId_impl <- typeId_impl*} `> `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret be externMethodTypeDefIR_abstract)
+                  1. (Let EXTERN_METHOD ABSTRACT nameIR `< typeId_expl*{typeId_expl <- typeId_expl*} ',' typeId_impl*{typeId_impl <- typeId_impl*} `> `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret be externMethodTypeDefIR_abstract)
 
-                  1. (Let externMethodTypeDefIR_concrete be EXTERN_METHOD nameIR `< typeId_expl*{typeId_expl <- typeId_expl*} ',' typeId_impl*{typeId_impl <- typeId_impl*} `> `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret)
+                    1. (Let externMethodTypeDefIR_concrete be EXTERN_METHOD nameIR `< typeId_expl*{typeId_expl <- typeId_expl*} ',' typeId_impl*{typeId_impl <- typeId_impl*} `> `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret)
 
-                    1. If (ExternMethodTypeDef_alpha: externMethodTypeDefIR_concrete ~~ externMethodTypeDefIR_init_h) holds, then
+                      1. If (ExternMethodTypeDef_alpha: externMethodTypeDefIR_concrete ~~ externMethodTypeDefIR_init_h) holds, then
 
-                      1. (Let externMethodTypeDefEnv_extern_subst be $update_map<callableId, externMethodTypeDefIR>(externMethodTypeDefEnv_extern, callableId, externMethodTypeDefIR_concrete))
+                        1. (Let externMethodTypeDefEnv_extern_subst be $update_map<callableId, externMethodTypeDefIR>(externMethodTypeDefEnv_extern, callableId, externMethodTypeDefIR_concrete))
 
-                        1. Return $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern_subst, `{ callableId_init_t ':' externMethodTypeDefIR_init_t*{callableId_init_t <- callableId_init_t*, externMethodTypeDefIR_init_t <- externMethodTypeDefIR_init_t*} `})
+                          1. (Subst_externMethodTypeDefEnv: externMethodTypeDefEnv_extern_subst |- `{ callableId_init_t ':' externMethodTypeDefIR_init_t*{callableId_init_t <- callableId_init_t*, externMethodTypeDefIR_init_t <- externMethodTypeDefIR_init_t*} `} : externMethodTypeDefEnv_extern_subst_t)
 
-                    1. Else Dangling
+                            1. Result in: % |- % : externMethodTypeDefEnv_extern_subst_t
 
-              1. Else Dangling
+                      1. Else Dangling
 
-          1. Else Dangling
+                1. Else Dangling
 
-  1. Else Dangling
+            1. Else Dangling
 
 relation InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `< typeArgumentList `> `( argumentList `) name '=' `{ objectDeclarationList `} ';' : % %
 
@@ -32023,7 +32107,7 @@ relation InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeNam
 
                             1. (ObjectDeclList_ok: p TC_1 |- objectDeclarationList : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*})
 
-                              1. (Let externMethodTypeDefEnv_init_subst be $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init))
+                              1. (Subst_externMethodTypeDefEnv: externMethodTypeDefEnv_extern |- externMethodTypeDefEnv_init : externMethodTypeDefEnv_init_subst)
 
                                 1. (Let typeIR_object_init be EXTERN typeId_extern `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> externMethodTypeDefEnv_init_subst as typeIR)
 
@@ -32079,7 +32163,7 @@ relation Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- name '=' express
 
   1. (Expr_ok: BLOCK TC_0 |- expression : typedExpressionIR)
 
-    1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_unary(typedExpressionIR, typeIR))
+    1. (Cast_unary: `( typeIR `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
       1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
@@ -32197,39 +32281,45 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
           1. (Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r)
 
-            1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
+            1. (Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-              1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
+              1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
-                1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+                1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                  1. (Let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask))
+                  1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
-                    1. If ((typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)), then
+                    1. (Let ?(typedExpressionIR_r_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                      1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
+                      1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask))
 
-                        1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                        1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
 
-                          1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_l_reduced, typeIR_key))
+                          1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-                            1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
+                            1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                              1. (Let ?(typedExpressionIR_l_casted) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
+                              1. (Cast_unary: `( typeIR_key `) typedExpressionIR_l_reduced : typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?})
 
-                                1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_unary(typedExpressionIR_r_reduced, typeIR_key))
+                                1. If (typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} matches (_)), then
 
-                                  1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
+                                  1. (Let ?(typedExpressionIR_l_casted) be typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?})
 
-                                    1. (Let ?(typedExpressionIR_r_casted) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
+                                    1. (Cast_unary: `( typeIR_key `) typedExpressionIR_r_reduced : typedExpressionIR'''?{typedExpressionIR''' <- typedExpressionIR'''?})
 
-                                      1. Result in: % % |- % : typedExpressionIR_l_casted '&&&' typedExpressionIR_r_casted
+                                      1. If (typedExpressionIR'''?{typedExpressionIR''' <- typedExpressionIR'''?} matches (_)), then
 
-                                  1. Else Dangling
+                                        1. (Let ?(typedExpressionIR_r_casted) be typedExpressionIR'''?{typedExpressionIR''' <- typedExpressionIR'''?})
 
-                            1. Else Dangling
+                                          1. Result in: % % |- % : typedExpressionIR_l_casted '&&&' typedExpressionIR_r_casted
 
-                    1. Else Dangling
+                                      1. Else Dangling
+
+                                1. Else Dangling
+
+                        1. Else Dangling
+
+                  1. Else Dangling
 
               1. Else Dangling
 
@@ -32243,43 +32333,49 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
           1. (Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r)
 
-            1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $cast_binary(typedExpressionIR_l, typedExpressionIR_r))
+            1. (Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-              1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
+              1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
-                1. (Let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
+                1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                  1. (Let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_range))
+                  1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
-                    1. If ((typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)), then
+                    1. (Let ?(typedExpressionIR_r_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                      1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?})
+                      1. (Let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} be $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_range))
 
-                        1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
+                        1. If ((typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)), then
 
-                          1. If ((typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced))), then
+                          1. (Let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) be (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?})
 
-                            1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_l_reduced, typeIR_key))
+                            1. (Let typeIR_reduced be $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
 
-                              1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
+                              1. If ((typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced))), then
 
-                                1. (Let ?(typedExpressionIR_l_casted) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
+                                1. (Cast_unary: `( typeIR_key `) typedExpressionIR_l_reduced : typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?})
 
-                                  1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_unary(typedExpressionIR_r_reduced, typeIR_key))
+                                  1. If (typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} matches (_)), then
 
-                                    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
+                                    1. (Let ?(typedExpressionIR_l_casted) be typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?})
 
-                                      1. (Let ?(typedExpressionIR_r_casted) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
+                                      1. (Cast_unary: `( typeIR_key `) typedExpressionIR_r_reduced : typedExpressionIR'''?{typedExpressionIR''' <- typedExpressionIR'''?})
 
-                                        1. Result in: % % |- % : typedExpressionIR_l_casted '..' typedExpressionIR_r_casted
+                                        1. If (typedExpressionIR'''?{typedExpressionIR''' <- typedExpressionIR'''?} matches (_)), then
 
-                                    1. Else Dangling
+                                          1. (Let ?(typedExpressionIR_r_casted) be typedExpressionIR'''?{typedExpressionIR''' <- typedExpressionIR'''?})
+
+                                            1. Result in: % % |- % : typedExpressionIR_l_casted '..' typedExpressionIR_r_casted
+
+                                        1. Else Dangling
+
+                                  1. Else Dangling
 
                               1. Else Dangling
 
-                          1. Else Dangling
+                        1. Else Dangling
 
-                    1. Else Dangling
+                  1. Else Dangling
 
               1. Else Dangling
 
@@ -32891,13 +32987,13 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- typeIR_key ':' t '@' simpleKeys
 
                     1. (Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r)
 
-                      1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_l, typeIR_key))
+                      1. (Cast_unary: `( typeIR_key `) typedExpressionIR_l : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
                         1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
                           1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                            1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_unary(typedExpressionIR_r, typeIR_key))
+                            1. (Cast_unary: `( typeIR_key `) typedExpressionIR_r : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
                               1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
@@ -32949,13 +33045,13 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- typeIR_key ':' t '@' simpleKeys
 
               1. (Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r)
 
-                1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_l, typeIR_key))
+                1. (Cast_unary: `( typeIR_key `) typedExpressionIR_l : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
                   1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
                     1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                      1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_unary(typedExpressionIR_r, typeIR_key))
+                      1. (Cast_unary: `( typeIR_key `) typedExpressionIR_r : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
                         1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
@@ -33041,13 +33137,13 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- typeIR_key ':' t '@' simpleKeys
 
           1. (Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r)
 
-            1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_unary(typedExpressionIR_l, typeIR_key))
+            1. (Cast_unary: `( typeIR_key `) typedExpressionIR_l : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
               1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
                 1. (Let ?(typedExpressionIR_l_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                  1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_unary(typedExpressionIR_r, typeIR_key))
+                  1. (Cast_unary: `( typeIR_key `) typedExpressionIR_r : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
                     1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
@@ -33253,21 +33349,25 @@ def $empty_constraint(typeId*{typeId <- typeId*})
 
 syntax inference = map<typeId, typeIR>
 
-def $infer(typeId*{typeId <- typeId*}, parameterIR*{parameterIR <- parameterIR*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
+relation Infer: typeId*{typeId <- typeId*} |- parameterIR*{parameterIR <- parameterIR*} ',' parameterIR'*{parameterIR' <- parameterIR'*} '@' argumentIR*{argumentIR <- argumentIR*} : %
 
-1. Case analysis on typeId*{typeId <- typeId*} (total)
+1. If (typeId*{typeId <- typeId*} matches []), then
 
-  1. Case (% matches pattern [])
+  1. Group empty: [] |- parameterIR*{parameterIR <- parameterIR*} ',' parameterIR'*{parameterIR' <- parameterIR'*} '@' argumentIR*{argumentIR <- argumentIR*} : %
 
-    1. Return $empty_map<typeId, typeIR>
+    1. Result in: % |- % ',' % '@' % : `{ [] `}
 
-  2. Case (% matches pattern _ :: _)
+1. Else Dangling
+
+2. Group nonempty: typeId*{typeId <- typeId*} |- parameterIR*{parameterIR <- parameterIR*} ',' parameterIR'*{parameterIR' <- parameterIR'*} '@' argumentIR*{argumentIR <- argumentIR*} : %
+
+  1. If (typeId*{typeId <- typeId*} matches _ :: _), then
 
     1. (Let strictness_init be $empty_strictness(typeId*{typeId <- typeId*}))
 
       1. (Let B be $free_parameterIRs(parameterIR*{parameterIR <- parameterIR*}))
 
-        1. (Let B_optional be $free_parameterIRs(parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}))
+        1. (Let B_optional be $free_parameterIRs(parameterIR'*{parameterIR' <- parameterIR'*}))
 
           1. (Let `{ typeId_free*{typeId_free <- typeId_free*} `} be $diff_set<typeId>(B_optional, B))
 
@@ -33279,19 +33379,21 @@ def $infer(typeId*{typeId <- typeId*}, parameterIR*{parameterIR <- parameterIR*}
 
                   1. If ((|argumentIR*{argumentIR <- argumentIR*}| = |parameterIR*{parameterIR <- parameterIR*}|)), then
 
-                    1. (Let constraint_pair be $infer_pair(constraint_init, parameterIR, argumentIR))*{argumentIR <- argumentIR*, parameterIR <- parameterIR*, constraint_pair -> constraint_pair*}
+                    1. (Infer_pair: constraint_init |- parameterIR '@' argumentIR : constraint_pair)*{argumentIR <- argumentIR*, parameterIR <- parameterIR*, constraint_pair -> constraint_pair*}
 
-                      1. (Let constraint_inferred be $merge_constraints(constraint_init, constraint_pair*{constraint_pair <- constraint_pair*}))
+                      1. (Merge_constraints: |- constraint_init ',' constraint_pair*{constraint_pair <- constraint_pair*} : constraint_inferred)
 
                         1. (Let inference be $resolve_constraint(strictness, constraint_inferred))
 
                           1. (Let inference_resolved be $resolve_inference(inference))
 
-                            1. Return inference_resolved
+                            1. Result in: % |- % ',' % '@' % : inference_resolved
 
                   1. Else Dangling
 
-def $infer_pair(constraint, parameterIR, argumentIR)
+  1. Else Dangling
+
+relation Infer_pair: constraint |- parameterIR '@' argumentIR : %
 
 1. Case analysis on argumentIR (total)
 
@@ -33299,29 +33401,411 @@ def $infer_pair(constraint, parameterIR, argumentIR)
 
     1. (Let typedExpressionIR be argumentIR as typedExpressionIR)
 
-      1. (Let _annotationList _direction typeIR_param _id _parameterInitializerOptIR be parameterIR)
+      1. Group expression: constraint |- parameterIR '@' typedExpressionIR as argumentIR : %
 
-        1. (Let typeIR_arg be $type_of_typedExpressionIR(typedExpressionIR))
+        1. (Let _annotationList _direction typeIR_param _id _parameterInitializerOptIR be parameterIR)
 
-          1. Return $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
+          1. (Let typeIR_arg be $type_of_typedExpressionIR(typedExpressionIR))
+
+            1. (Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated)
+
+              1. Result in: % |- % '@' % : constraint_updated
 
   2. Case (% matches pattern % '=' %)
 
     1. (Let nameIR '=' typedExpressionIR be argumentIR)
 
-      1. (Let _annotationList _direction typeIR_param _id _parameterInitializerOptIR be parameterIR)
+      1. Group named-expression: constraint |- parameterIR '@' nameIR '=' typedExpressionIR : %
 
-        1. (Let typeIR_arg be $type_of_typedExpressionIR(typedExpressionIR))
+        1. (Let _annotationList _direction typeIR_param _id _parameterInitializerOptIR be parameterIR)
 
-          1. Return $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
+          1. (Let typeIR_arg be $type_of_typedExpressionIR(typedExpressionIR))
+
+            1. (Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated)
+
+              1. Result in: % |- % '@' % : constraint_updated
 
   3. Case (% matches pattern % '=' '_')
 
-    1. Return constraint
+    1. (Let nameIR '=' '_' be argumentIR)
+
+      1. Group named-missing: constraint |- parameterIR '@' nameIR '=' '_' : %
+
+        1. Result in: % |- % '@' % : constraint
 
   4. Case (% matches pattern '_')
 
-    1. Return constraint
+    1. Group missing: constraint |- parameterIR '@' '_' : %
+
+      1. Result in: % |- % '@' % : constraint
+
+relation Gen_constraint: constraint |- typeIR_param*{typeIR_param <- typeIR_param*} '@' typeIR_arg*{typeIR_arg <- typeIR_arg*} : %
+
+1. Group : constraint |- typeIR_param*{typeIR_param <- typeIR_param*} '@' typeIR_arg*{typeIR_arg <- typeIR_arg*} : %
+
+  1. If ((|typeIR_arg*{typeIR_arg <- typeIR_arg*}| = |typeIR_param*{typeIR_param <- typeIR_param*}|)), then
+
+    1. (Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_pair)*{typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*, constraint_pair -> constraint_pair*}
+
+      1. (Merge_constraints: |- constraint ',' constraint_pair*{constraint_pair <- constraint_pair*} : constraint_merged)
+
+        1. Result in: % |- % '@' % : constraint_merged
+
+  1. Else Dangling
+
+relation Gen_constraint_pair: constraint |- typeIR '@' typeIR_arg' : %
+
+1. Case analysis on typeIR
+
+  1. Case (% has type nameTypeIR)
+
+    1. (Let _NAME typeId_param be typeIR as nameTypeIR)
+
+      1. Group name: constraint |- _NAME typeId_param as typeIR '@' typeIR_arg' : %
+
+        1. If ($in_set<typeId>(typeId_param, $dom_map<typeId, infer>(constraint))), then
+
+          1. (Let constraint_updated be $update_map<typeId, infer>(constraint, typeId_param, KNOWN AS typeIR_arg'))
+
+            1. Result in: % |- % '@' % : constraint_updated
+
+  2. Case (% has type typedefTypeIR)
+
+    1. (Let TYPEDEF typeId typeIR_param be typeIR as typedefTypeIR)
+
+      1. Group typedef-param: constraint |- TYPEDEF typeId typeIR_param as typeIR '@' typeIR_arg' : %
+
+        1. (Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg' : constraint_updated)
+
+          1. Result in: % |- % '@' % : constraint_updated
+
+  3. Case (% has type newTypeIR)
+
+    1. (Let TYPE typeId typeIR_param be typeIR as newTypeIR)
+
+      1. If (typeIR_arg' <: newTypeIR), then
+
+        1. (Let TYPE typeId' typeIR_arg be typeIR_arg' as newTypeIR)
+
+          1. If ((typeId = typeId')), then
+
+            1. Group newtype: constraint |- TYPE typeId typeIR_param as typeIR '@' TYPE typeId typeIR_arg as typeIR : %
+
+              1. (Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated)
+
+                1. Result in: % |- % '@' % : constraint_updated
+
+  4. Case (% has type listTypeIR)
+
+    1. (Let LIST `< typeIR_param `> be typeIR as listTypeIR)
+
+      1. If (typeIR_arg' <: listTypeIR), then
+
+        1. (Let LIST `< typeIR_arg `> be typeIR_arg' as listTypeIR)
+
+          1. Group list: constraint |- LIST `< typeIR_param `> as typeIR '@' LIST `< typeIR_arg `> as typeIR : %
+
+            1. (Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated)
+
+              1. Result in: % |- % '@' % : constraint_updated
+
+  5. Case (% has type tupleTypeIR)
+
+    1. (Let TUPLE `< typeIR_param*{typeIR_param <- typeIR_param*} `> be typeIR as tupleTypeIR)
+
+      1. If (typeIR_arg' <: tupleTypeIR), then
+
+        1. (Let TUPLE `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> be typeIR_arg' as tupleTypeIR)
+
+          1. Group tuple: constraint |- TUPLE `< typeIR_param*{typeIR_param <- typeIR_param*} `> as typeIR '@' TUPLE `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> as typeIR : %
+
+            1. (Gen_constraint: constraint |- typeIR_param*{typeIR_param <- typeIR_param*} '@' typeIR_arg*{typeIR_arg <- typeIR_arg*} : constraint_updated)
+
+              1. Result in: % |- % '@' % : constraint_updated
+
+  6. Case (% has type arrayTypeIR)
+
+    1. (Let ARRAY typeIR_param `[ n_size `] be typeIR as arrayTypeIR)
+
+      1. If (typeIR_arg' <: arrayTypeIR), then
+
+        1. (Let ARRAY typeIR_arg `[ n_size' `] be typeIR_arg' as arrayTypeIR)
+
+          1. If ((n_size = n_size')), then
+
+            1. Group array: constraint |- ARRAY typeIR_param `[ n_size `] as typeIR '@' ARRAY typeIR_arg `[ n_size `] as typeIR : %
+
+              1. (Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated)
+
+                1. Result in: % |- % '@' % : constraint_updated
+
+  7. Case (% has type headerStackTypeIR)
+
+    1. (Let HEADER_STACK typeIR_param `[ n_size `] be typeIR as headerStackTypeIR)
+
+      1. If (typeIR_arg' <: headerStackTypeIR), then
+
+        1. (Let HEADER_STACK typeIR_arg `[ n_size' `] be typeIR_arg' as headerStackTypeIR)
+
+          1. If ((n_size = n_size')), then
+
+            1. Group header-stack: constraint |- HEADER_STACK typeIR_param `[ n_size `] as typeIR '@' HEADER_STACK typeIR_arg `[ n_size `] as typeIR : %
+
+              1. (Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated)
+
+                1. Result in: % |- % '@' % : constraint_updated
+
+  8. Case (% has type structTypeIR)
+
+    1. (Let STRUCT typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} `} be typeIR as structTypeIR)
+
+      1. If (typeIR_arg' <: structTypeIR), then
+
+        1. (Let STRUCT typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} be typeIR_arg' as structTypeIR)
+
+          1. If ((typeId = typeId')), then
+
+            1. Group struct: constraint |- STRUCT typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} `} as typeIR '@' STRUCT typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR : %
+
+              1. (Gen_constraint: constraint |- typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} '@' typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} : constraint_updated)
+
+                1. Result in: % |- % '@' % : constraint_updated
+
+  9. Case (% has type headerTypeIR)
+
+    1. (Let HEADER typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} `} be typeIR as headerTypeIR)
+
+      1. If (typeIR_arg' <: headerTypeIR), then
+
+        1. (Let HEADER typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} be typeIR_arg' as headerTypeIR)
+
+          1. If ((typeId = typeId')), then
+
+            1. Group header: constraint |- HEADER typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} `} as typeIR '@' HEADER typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR : %
+
+              1. (Gen_constraint: constraint |- typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} '@' typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} : constraint_updated)
+
+                1. Result in: % |- % '@' % : constraint_updated
+
+  10. Case (% has type headerUnionTypeIR)
+
+    1. (Let HEADER_UNION typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} `} be typeIR as headerUnionTypeIR)
+
+      1. If (typeIR_arg' <: headerUnionTypeIR), then
+
+        1. (Let HEADER_UNION typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} be typeIR_arg' as headerUnionTypeIR)
+
+          1. If ((typeId = typeId')), then
+
+            1. Group header-union: constraint |- HEADER_UNION typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} `} as typeIR '@' HEADER_UNION typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR : %
+
+              1. (Gen_constraint: constraint |- typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} '@' typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} : constraint_updated)
+
+                1. Result in: % |- % '@' % : constraint_updated
+
+  11. Case (% has type externObjectTypeIR)
+
+    1. (Let EXTERN typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*} `} be typeIR as externObjectTypeIR)
+
+      1. If (typeIR_arg' <: externObjectTypeIR), then
+
+        1. (Let EXTERN typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} `} be typeIR_arg' as externObjectTypeIR)
+
+          1. If ((typeId = typeId')), then
+
+            1. Group extern: constraint |- EXTERN typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*} `} as typeIR '@' EXTERN typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} `} as typeIR : %
+
+              1. (Gen_constraint: constraint |- typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} '@' typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} : constraint_updated)
+
+                1. Result in: % |- % '@' % : constraint_updated
+
+  12. Case (% has type parserObjectTypeIR)
+
+    1. (Let PARSER typeId `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) be typeIR as parserObjectTypeIR)
+
+      1. If (typeIR_arg' <: parserObjectTypeIR), then
+
+        1. (Let PARSER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) be typeIR_arg' as parserObjectTypeIR)
+
+          1. Group parser: constraint |- PARSER typeId `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) as typeIR '@' PARSER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) as typeIR : %
+
+            1. (Let _annotationList direction typeIR_param _id _parameterInitializerOptIR be parameterIR_param)*{parameterIR_param <- parameterIR_param*, _annotationList -> _annotationList*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, direction -> direction*, typeIR_param -> typeIR_param*}
+
+              1. (Let _annotationList' direction' typeIR_arg _id' _parameterInitializerOptIR' be parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _id' -> _id'*, _parameterInitializerOptIR' -> _parameterInitializerOptIR'*, direction' -> direction'*, typeIR_arg -> typeIR_arg*}
+
+                1. If ((|direction*{direction <- direction*}| = |direction'*{direction' <- direction'*}|)), then
+
+                  1. If ((direction' = direction))*{direction <- direction*, direction' <- direction'*}, then
+
+                    1. (Gen_constraint: constraint |- typeIR_param*{typeIR_param <- typeIR_param*} '@' typeIR_arg*{typeIR_arg <- typeIR_arg*} : constraint_updated)
+
+                      1. Result in: % |- % '@' % : constraint_updated
+
+  13. Case (% has type controlObjectTypeIR)
+
+    1. (Let CONTROL typeId `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) be typeIR as controlObjectTypeIR)
+
+      1. If (typeIR_arg' <: controlObjectTypeIR), then
+
+        1. (Let CONTROL _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) be typeIR_arg' as controlObjectTypeIR)
+
+          1. Group control: constraint |- CONTROL typeId `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) as typeIR '@' CONTROL _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) as typeIR : %
+
+            1. (Let _annotationList direction typeIR_param _id _parameterInitializerOptIR be parameterIR_param)*{parameterIR_param <- parameterIR_param*, _annotationList -> _annotationList*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, direction -> direction*, typeIR_param -> typeIR_param*}
+
+              1. (Let _annotationList' direction' typeIR_arg _id' _parameterInitializerOptIR' be parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _id' -> _id'*, _parameterInitializerOptIR' -> _parameterInitializerOptIR'*, direction' -> direction'*, typeIR_arg -> typeIR_arg*}
+
+                1. If ((|direction*{direction <- direction*}| = |direction'*{direction' <- direction'*}|)), then
+
+                  1. If ((direction' = direction))*{direction <- direction*, direction' <- direction'*}, then
+
+                    1. (Gen_constraint: constraint |- typeIR_param*{typeIR_param <- typeIR_param*} '@' typeIR_arg*{typeIR_arg <- typeIR_arg*} : constraint_updated)
+
+                      1. Result in: % |- % '@' % : constraint_updated
+
+  14. Case (% has type packageObjectTypeIR)
+
+    1. (Let PACKAGE typeId `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `{ typeIR_param*{typeIR_param <- typeIR_param*} `} be typeIR as packageObjectTypeIR)
+
+      1. If (typeIR_arg' <: packageObjectTypeIR), then
+
+        1. (Let PACKAGE _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ typeIR_arg*{typeIR_arg <- typeIR_arg*} `} be typeIR_arg' as packageObjectTypeIR)
+
+          1. Group package: constraint |- PACKAGE typeId `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `{ typeIR_param*{typeIR_param <- typeIR_param*} `} as typeIR '@' PACKAGE _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ typeIR_arg*{typeIR_arg <- typeIR_arg*} `} as typeIR : %
+
+            1. (Gen_constraint: constraint |- typeIR_param*{typeIR_param <- typeIR_param*} '@' typeIR_arg*{typeIR_arg <- typeIR_arg*} : constraint_updated)
+
+              1. Result in: % |- % '@' % : constraint_updated
+
+2. If (typeIR_arg' <: typedefTypeIR), then
+
+  1. (Let TYPEDEF typeId typeIR_arg be typeIR_arg' as typedefTypeIR)
+
+    1. Group typedef-arg: constraint |- typeIR '@' TYPEDEF typeId typeIR_arg as typeIR : %
+
+      1. If (~typeIR <: nameTypeIR), then
+
+        1. If (~typeIR <: typedefTypeIR), then
+
+          1. (Gen_constraint_pair: constraint |- typeIR '@' typeIR_arg : constraint_updated)
+
+            1. Result in: % |- % '@' % : constraint_updated
+
+3. Otherwise,
+
+  1. Group default: constraint |- typeIR '@' typeIR_arg' : %
+
+    1. Result in: % |- % '@' % : constraint
+
+relation Merge_constraint: |- constraint_pre ',' constraint_post : %
+
+1. Group : |- constraint_pre ',' constraint_post : %
+
+  1. (Let `{ typeId ':' infer_pre*{infer_pre <- infer_pre*, typeId <- typeId*} `} be constraint_pre)
+
+    1. (Let `{ typeId_post*{typeId_post <- typeId_post*} `} be $dom_map<typeId, infer>(constraint_post))
+
+      1. If ($eq_set<typeId>(`{ typeId*{typeId <- typeId*} `}, `{ typeId_post*{typeId_post <- typeId_post*} `})), then
+
+        1. (Let infer'?{infer' <- infer'?} be $find_map<typeId, infer>(constraint_post, typeId))*{typeId <- typeId*, infer'? -> infer'?*}
+
+          1. If (infer'?{infer' <- infer'?} matches (_))*{infer'? <- infer'?*}, then
+
+            1. (Let ?(infer_post) be infer'?{infer' <- infer'?})*{infer'? <- infer'?*, infer_post -> infer_post*}
+
+              1. (Merge_infer: |- infer_pre ',' infer_post : infer)*{infer_post <- infer_post*, infer_pre <- infer_pre*, infer -> infer*}
+
+                1. Result in: |- % ',' % : `{ typeId ':' infer*{infer <- infer*, typeId <- typeId*} `}
+
+          1. Else Dangling
+
+      1. Else Dangling
+
+relation Merge_constraints: |- constraint_pre ',' constraint*{constraint <- constraint*} : %
+
+1. Case analysis on constraint*{constraint <- constraint*} (total)
+
+  1. Case (% matches pattern [])
+
+    1. Group nil: |- constraint_pre ',' [] : %
+
+      1. Result in: |- % ',' % : constraint_pre
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let constraint_post_h :: constraint_post_t*{constraint_post_t <- constraint_post_t*} be constraint*{constraint <- constraint*})
+
+      1. Group cons: |- constraint_pre ',' constraint_post_h :: constraint_post_t*{constraint_post_t <- constraint_post_t*} : %
+
+        1. (Merge_constraint: |- constraint_pre ',' constraint_post_h : constraint_pre_1)
+
+          1. (Merge_constraints: |- constraint_pre_1 ',' constraint_post_t*{constraint_post_t <- constraint_post_t*} : constraint_pre_2)
+
+            1. Result in: |- % ',' % : constraint_pre_2
+
+relation Merge_infer: |- infer ',' infer' : %
+
+1. Case analysis on infer (total)
+
+  1. Case (% matches pattern UNKNOWN)
+
+    1. Case analysis on infer' (total)
+
+      1. Case (% matches pattern UNKNOWN)
+
+        1. Group unknown: |- UNKNOWN ',' UNKNOWN : %
+
+          1. Result in: |- % ',' % : UNKNOWN
+
+      2. Case (% matches pattern KNOWN AS %)
+
+        1. (Let KNOWN AS typeIR_post be infer')
+
+          1. Group known-post: |- UNKNOWN ',' KNOWN AS typeIR_post : %
+
+            1. Result in: |- % ',' % : KNOWN AS typeIR_post
+
+  2. Case (% matches pattern KNOWN AS %)
+
+    1. (Let KNOWN AS typeIR_pre be infer)
+
+      1. Case analysis on infer' (total)
+
+        1. Case (% matches pattern UNKNOWN)
+
+          1. Group known-pre: |- KNOWN AS typeIR_pre ',' UNKNOWN : %
+
+            1. Result in: |- % ',' % : KNOWN AS typeIR_pre
+
+        2. Case (% matches pattern KNOWN AS %)
+
+          1. (Let KNOWN AS typeIR_post be infer')
+
+            1. Group cast-pre: |- KNOWN AS typeIR_pre ',' KNOWN AS typeIR_post : %
+
+              1. (Cast_impl: typeIR_pre -> typeIR_post : castResult)
+
+                1. If (castResult matches OK %), then
+
+                  1. Result in: |- % ',' % : KNOWN AS typeIR_post
+
+                1. Else Dangling
+
+            2. Group cast-post: |- KNOWN AS typeIR_pre ',' KNOWN AS typeIR_post : %
+
+              1. (Cast_impl: typeIR_pre -> typeIR_post : castResult)
+
+                1. If (castResult matches FAIL), then
+
+                  1. (Cast_impl: typeIR_post -> typeIR_pre : castResult')
+
+                    1. If (castResult' matches OK %), then
+
+                      1. Result in: |- % ',' % : KNOWN AS typeIR_pre
+
+                    1. Else Dangling
+
+                1. Else Dangling
 
 def $resolve_inference(`{ typeId ':' typeIR*{typeIR <- typeIR*, typeId <- typeId*} `})
 
@@ -33348,328 +33832,6 @@ def $resolve_inference'(typeIR)
 2. Otherwise,
 
   1. Return typeIR
-
-def $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
-
-1. If ((|typeIR_arg*{typeIR_arg <- typeIR_arg*}| = |typeIR_param*{typeIR_param <- typeIR_param*}|)), then
-
-  1. (Let constraint_pair be $gen_constraint_pair(constraint, typeIR_param, typeIR_arg))*{typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*, constraint_pair -> constraint_pair*}
-
-    1. Return $merge_constraints(constraint, constraint_pair*{constraint_pair <- constraint_pair*})
-
-1. Else Dangling
-
-def $gen_constraint_pair(constraint, typeIR, typeIR_arg')
-
-1. Case analysis on typeIR
-
-  1. Case (% has type nameTypeIR)
-
-    1. (Let _NAME typeId_param be typeIR as nameTypeIR)
-
-      1. If ($in_set<typeId>(typeId_param, $dom_map<typeId, infer>(constraint))), then
-
-        1. Return $update_map<typeId, infer>(constraint, typeId_param, KNOWN AS typeIR_arg')
-
-  2. Case (% has type typedefTypeIR)
-
-    1. (Let TYPEDEF _typeId typeIR_param be typeIR as typedefTypeIR)
-
-      1. Return $gen_constraint_pair(constraint, typeIR_param, typeIR_arg')
-
-  3. Case (% has type newTypeIR)
-
-    1. (Let TYPE typeId typeIR_param be typeIR as newTypeIR)
-
-      1. If (typeIR_arg' <: newTypeIR), then
-
-        1. (Let TYPE typeId' typeIR_arg be typeIR_arg' as newTypeIR)
-
-          1. If ((typeId = typeId')), then
-
-            1. Return $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-
-  4. Case (% has type listTypeIR)
-
-    1. (Let LIST `< typeIR_param `> be typeIR as listTypeIR)
-
-      1. If (typeIR_arg' <: listTypeIR), then
-
-        1. (Let LIST `< typeIR_arg `> be typeIR_arg' as listTypeIR)
-
-          1. Return $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-
-  5. Case (% has type tupleTypeIR)
-
-    1. (Let TUPLE `< typeIR_param*{typeIR_param <- typeIR_param*} `> be typeIR as tupleTypeIR)
-
-      1. If (typeIR_arg' <: tupleTypeIR), then
-
-        1. (Let TUPLE `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> be typeIR_arg' as tupleTypeIR)
-
-          1. Return $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
-
-  6. Case (% has type arrayTypeIR)
-
-    1. (Let ARRAY typeIR_param `[ n_size `] be typeIR as arrayTypeIR)
-
-      1. If (typeIR_arg' <: arrayTypeIR), then
-
-        1. (Let ARRAY typeIR_arg `[ n_size' `] be typeIR_arg' as arrayTypeIR)
-
-          1. If ((n_size = n_size')), then
-
-            1. Return $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-
-  7. Case (% has type headerStackTypeIR)
-
-    1. (Let HEADER_STACK typeIR_param `[ n_size `] be typeIR as headerStackTypeIR)
-
-      1. If (typeIR_arg' <: headerStackTypeIR), then
-
-        1. (Let HEADER_STACK typeIR_arg `[ n_size' `] be typeIR_arg' as headerStackTypeIR)
-
-          1. If ((n_size = n_size')), then
-
-            1. Return $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-
-  8. Case (% has type structTypeIR)
-
-    1. (Let STRUCT typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} be typeIR as structTypeIR)
-
-      1. If (typeIR_arg' <: structTypeIR), then
-
-        1. (Let STRUCT typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} be typeIR_arg' as structTypeIR)
-
-          1. If ((typeId = typeId')), then
-
-            1. Return $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
-
-  9. Case (% has type headerTypeIR)
-
-    1. (Let HEADER typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} be typeIR as headerTypeIR)
-
-      1. If (typeIR_arg' <: headerTypeIR), then
-
-        1. (Let HEADER typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} be typeIR_arg' as headerTypeIR)
-
-          1. If ((typeId = typeId')), then
-
-            1. Return $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
-
-  10. Case (% has type headerUnionTypeIR)
-
-    1. (Let HEADER_UNION typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} be typeIR as headerUnionTypeIR)
-
-      1. If (typeIR_arg' <: headerUnionTypeIR), then
-
-        1. (Let HEADER_UNION typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} be typeIR_arg' as headerUnionTypeIR)
-
-          1. If ((typeId = typeId')), then
-
-            1. Return $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
-
-  11. Case (% has type externObjectTypeIR)
-
-    1. (Let EXTERN typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} `} be typeIR as externObjectTypeIR)
-
-      1. If (typeIR_arg' <: externObjectTypeIR), then
-
-        1. (Let EXTERN typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _pair<callableId, externMethodTypeDefIR>'*{_pair<callableId, externMethodTypeDefIR>' <- _pair<callableId, externMethodTypeDefIR>'*} `} be typeIR_arg' as externObjectTypeIR)
-
-          1. If ((typeId = typeId')), then
-
-            1. Return $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
-
-  12. Case (% has type parserObjectTypeIR)
-
-    1. (Let PARSER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) be typeIR as parserObjectTypeIR)
-
-      1. If (typeIR_arg' <: parserObjectTypeIR), then
-
-        1. (Let PARSER _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) be typeIR_arg' as parserObjectTypeIR)
-
-          1. (Let _annotationList direction typeIR_param _id _parameterInitializerOptIR be parameterIR_param)*{parameterIR_param <- parameterIR_param*, _annotationList -> _annotationList*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, direction -> direction*, typeIR_param -> typeIR_param*}
-
-            1. (Let _annotationList' direction' typeIR_arg _id' _parameterInitializerOptIR' be parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _id' -> _id'*, _parameterInitializerOptIR' -> _parameterInitializerOptIR'*, direction' -> direction'*, typeIR_arg -> typeIR_arg*}
-
-              1. If ((|direction*{direction <- direction*}| = |direction'*{direction' <- direction'*}|)), then
-
-                1. If ((direction' = direction))*{direction <- direction*, direction' <- direction'*}, then
-
-                  1. Return $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
-
-  13. Case (% has type controlObjectTypeIR)
-
-    1. (Let CONTROL _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) be typeIR as controlObjectTypeIR)
-
-      1. If (typeIR_arg' <: controlObjectTypeIR), then
-
-        1. (Let CONTROL _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) be typeIR_arg' as controlObjectTypeIR)
-
-          1. (Let _annotationList direction typeIR_param _id _parameterInitializerOptIR be parameterIR_param)*{parameterIR_param <- parameterIR_param*, _annotationList -> _annotationList*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, direction -> direction*, typeIR_param -> typeIR_param*}
-
-            1. (Let _annotationList' direction' typeIR_arg _id' _parameterInitializerOptIR' be parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _id' -> _id'*, _parameterInitializerOptIR' -> _parameterInitializerOptIR'*, direction' -> direction'*, typeIR_arg -> typeIR_arg*}
-
-              1. If ((|direction*{direction <- direction*}| = |direction'*{direction' <- direction'*}|)), then
-
-                1. If ((direction' = direction))*{direction <- direction*, direction' <- direction'*}, then
-
-                  1. Return $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
-
-  14. Case (% has type packageObjectTypeIR)
-
-    1. (Let PACKAGE _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ typeIR_param*{typeIR_param <- typeIR_param*} `} be typeIR as packageObjectTypeIR)
-
-      1. If (typeIR_arg' <: packageObjectTypeIR), then
-
-        1. (Let PACKAGE _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `{ typeIR_arg*{typeIR_arg <- typeIR_arg*} `} be typeIR_arg' as packageObjectTypeIR)
-
-          1. Return $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
-
-2. If (typeIR_arg' <: typedefTypeIR), then
-
-  1. (Let TYPEDEF _typeId typeIR_arg be typeIR_arg' as typedefTypeIR)
-
-    1. If (~typeIR <: nameTypeIR), then
-
-      1. If (~typeIR <: typedefTypeIR), then
-
-        1. Return $gen_constraint_pair(constraint, typeIR, typeIR_arg)
-
-3. Otherwise,
-
-  1. Return constraint
-
-def $merge_constraint(constraint_pre, constraint_post)
-
-1. (Let `{ typeId_pre*{typeId_pre <- typeId_pre*} `} be $dom_map<typeId, infer>(constraint_pre))
-
-  1. (Let `{ typeId_post*{typeId_post <- typeId_post*} `} be $dom_map<typeId, infer>(constraint_post))
-
-    1. If ($eq_set<typeId>(`{ typeId_pre*{typeId_pre <- typeId_pre*} `}, `{ typeId_post*{typeId_post <- typeId_post*} `})), then
-
-      1. Return $merge_constraint'(constraint_pre, constraint_post, typeId_pre*{typeId_pre <- typeId_pre*}, `{ [] `})
-
-    1. Else Dangling
-
-def $merge_constraint'(constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint)
-
-1. Case analysis on typeId*{typeId <- typeId*} (total)
-
-  1. Case (% matches pattern [])
-
-    1. Return constraint
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let typeId_h :: typeId_t*{typeId_t <- typeId_t*} be typeId*{typeId <- typeId*})
-
-      1. If ((?(UNKNOWN) = $find_map<typeId, infer>(constraint_pre, typeId_h))), then
-
-        1. If ((?(UNKNOWN) = $find_map<typeId, infer>(constraint_post, typeId_h))), then
-
-          1. (Let constraint_updated be $update_map<typeId, infer>(constraint, typeId_h, UNKNOWN))
-
-            1. Return $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
-
-        1. Else Dangling
-
-        2. (Let infer'?{infer' <- infer'?} be $find_map<typeId, infer>(constraint_post, typeId_h))
-
-          1. If (infer'?{infer' <- infer'?} matches (_)), then
-
-            1. (Let ?(infer) be infer'?{infer' <- infer'?})
-
-              1. If (infer matches KNOWN AS %), then
-
-                1. (Let KNOWN AS typeIR_post be infer)
-
-                  1. (Let constraint_updated be $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_post))
-
-                    1. Return $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
-
-              1. Else Dangling
-
-          1. Else Dangling
-
-      1. Else Dangling
-
-      2. (Let infer'?{infer' <- infer'?} be $find_map<typeId, infer>(constraint_pre, typeId_h))
-
-        1. If (infer'?{infer' <- infer'?} matches (_)), then
-
-          1. (Let ?(infer) be infer'?{infer' <- infer'?})
-
-            1. If (infer matches KNOWN AS %), then
-
-              1. (Let KNOWN AS typeIR_pre be infer)
-
-                1. If ((?(UNKNOWN) = $find_map<typeId, infer>(constraint_post, typeId_h))), then
-
-                  1. (Let constraint_updated be $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_pre))
-
-                    1. Return $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
-
-                1. Else Dangling
-
-                2. (Let infer'''?{infer''' <- infer'''?} be $find_map<typeId, infer>(constraint_post, typeId_h))
-
-                  1. If (infer'''?{infer''' <- infer'''?} matches (_)), then
-
-                    1. (Let ?(infer'') be infer'''?{infer''' <- infer'''?})
-
-                      1. If (infer'' matches KNOWN AS %), then
-
-                        1. (Let KNOWN AS typeIR_post be infer'')
-
-                          1. (Cast_impl: typeIR_pre -> typeIR_post : castResult)
-
-                            1. Case analysis on castResult (total)
-
-                              1. Case (% matches pattern OK %)
-
-                                1. (Let constraint_updated be $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_post))
-
-                                  1. Return $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
-
-                              2. Case (% matches pattern FAIL)
-
-                                1. (Cast_impl: typeIR_post -> typeIR_pre : castResult')
-
-                                  1. If (castResult' matches OK %), then
-
-                                    1. (Let constraint_updated be $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_pre))
-
-                                      1. Return $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
-
-                                  1. Else Dangling
-
-                      1. Else Dangling
-
-                  1. Else Dangling
-
-            1. Else Dangling
-
-        1. Else Dangling
-
-def $merge_constraints(constraint_pre, constraint*{constraint <- constraint*})
-
-1. Case analysis on constraint*{constraint <- constraint*} (total)
-
-  1. Case (% matches pattern [])
-
-    1. Return constraint_pre
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let constraint_post_h :: constraint_post_t*{constraint_post_t <- constraint_post_t*} be constraint*{constraint <- constraint*})
-
-      1. (Let constraint_pre_1 be $merge_constraint(constraint_pre, constraint_post_h))
-
-        1. (Let constraint_pre_2 be $merge_constraints(constraint_pre_1, constraint_post_t*{constraint_post_t <- constraint_post_t*}))
-
-          1. Return constraint_pre_2
 
 def $resolve_constraint(strictness, set<pair<typeId, infer>>)
 
@@ -44367,117 +44529,147 @@ relation Program_init: |- p4program : % %
 
           1. Result in: |- % : EC STO
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to)
+relation Cast_control_plane: EC |- `( typeIR_to `) typedExpressionIR : %
 
-1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_unary(typedExpressionIR, typeIR_to))
+1. Group ok: EC |- `( typeIR_to `) typedExpressionIR : %
 
-  1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
+  1. (Cast_unary: `( typeIR_to `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-    1. (Let ?(typedExpressionIR_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
+    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
-      1. Return ?(typedExpressionIR_cast)
+      1. (Let ?(typedExpressionIR_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-2. If ($cast_unary(typedExpressionIR, typeIR_to) matches ()), then
+        1. Result in: % |- `( % `) % : ?(typedExpressionIR_cast)
 
-  1. If ((BOOL as typeIR = typeIR_to)), then
+2. Group boolean-to-integer: EC |- `( typeIR_to `) typedExpressionIR : %
 
-    1. If ((INT as typeIR = $type_of_typedExpressionIR(typedExpressionIR))), then
+  1. (Cast_unary: `( typeIR_to `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-      1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR))
+    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches ()), then
 
-        1. (Let typedExpressionIR_cast be `( typeIR_to `) typedExpressionIR as expressionIR '#' `( typeIR_to ctk `))
+      1. If ((BOOL as typeIR = typeIR_to)), then
 
-          1. Return ?(typedExpressionIR_cast)
+        1. If ((INT as typeIR = $type_of_typedExpressionIR(typedExpressionIR))), then
 
-  2. If ((ERROR as typeIR = typeIR_to)), then
+          1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR))
 
-    1. (Let expressionIR '#' `( typeIR ctk `) be typedExpressionIR)
+            1. (Let typedExpressionIR_cast be `( typeIR_to `) typedExpressionIR as expressionIR '#' `( typeIR_to ctk `))
 
-      1. If (expressionIR <: integerLiteral), then
+              1. Result in: % |- `( % `) % : ?(typedExpressionIR_cast)
 
-        1. (Let integerLiteral be expressionIR as integerLiteral)
+3. Group integer-to-error: EC |- `( typeIR_to `) typedExpressionIR : %
 
-          1. If (integerLiteral matches D %), then
+  1. (Cast_unary: `( typeIR_to `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-            1. (Let D i be integerLiteral)
+    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches ()), then
 
-              1. If (i <: nat), then
+      1. If ((ERROR as typeIR = typeIR_to)), then
 
-                1. (Let n be i as nat)
+        1. (Let expressionIR '#' `( typeIR ctk `) be typedExpressionIR)
 
-                  1. If (typeIR <: intTypeIR), then
+          1. If (expressionIR <: integerLiteral), then
 
-                    1. (Let intTypeIR be typeIR as intTypeIR)
+            1. (Let integerLiteral be expressionIR as integerLiteral)
 
-                      1. (Let `{ value_frame*{value_frame <- value_frame*} `} be $codom_map<id, value>(EC.GLOBAL.FRAME))
+              1. If (integerLiteral matches D %), then
 
-                        1. (Let value_error*{value_error <- value_error*} be $filter_<value>(value_frame*{value_frame <- value_frame*}, value_frame <: errorValue*{value_frame <- value_frame*}))
+                1. (Let D i be integerLiteral)
 
-                          1. If ((n < |value_error*{value_error <- value_error*}|)), then
+                  1. If (i <: nat), then
 
-                            1. (Let value be value_error*{value_error <- value_error*}[n])
+                    1. (Let n be i as nat)
 
-                              1. If (value <: errorValue), then
+                      1. If (typeIR <: intTypeIR), then
 
-                                1. (Let ERROR '.' nameIR_error be value as errorValue)
+                        1. (Let intTypeIR be typeIR as intTypeIR)
 
-                                  1. (Let typedExpressionIR_error be ERROR '.' nameIR_error as expressionIR '#' `( typeIR_to ctk `))
+                          1. (Let `{ value_frame*{value_frame <- value_frame*} `} be $codom_map<id, value>(EC.GLOBAL.FRAME))
 
-                                    1. Return ?(typedExpressionIR_error)
+                            1. (Let value_error*{value_error <- value_error*} be $filter_<value>(value_frame*{value_frame <- value_frame*}, value_frame <: errorValue*{value_frame <- value_frame*}))
 
-  3. Case analysis on typeIR_to
+                              1. If ((n < |value_error*{value_error <- value_error*}|)), then
 
-    1. Case (% has type typedefTypeIR)
+                                1. (Let value be value_error*{value_error <- value_error*}[n])
 
-      1. (Let TYPEDEF _typeId typeIR_base be typeIR_to as typedefTypeIR)
+                                  1. If (value <: errorValue), then
 
-        1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR, typeIR_base))
+                                    1. (Let ERROR '.' nameIR_error be value as errorValue)
 
-          1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
+                                      1. (Let typedExpressionIR_error be ERROR '.' nameIR_error as expressionIR '#' `( typeIR_to ctk `))
 
-            1. (Let ?(typedExpressionIR_typedef) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
+                                        1. Result in: % |- `( % `) % : ?(typedExpressionIR_error)
 
-              1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR_typedef))
+4. Group typedef: EC |- `( typeIR_to `) typedExpressionIR : %
 
-                1. (Let typedExpressionIR_cast be `( typeIR_to `) typedExpressionIR_typedef as expressionIR '#' `( typeIR_to ctk `))
+  1. (Cast_unary: `( typeIR_to `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                  1. Return ?(typedExpressionIR_cast)
+    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches ()), then
 
-    2. Case (% has type newTypeIR)
+      1. If (typeIR_to <: typedefTypeIR), then
 
-      1. (Let TYPE _typeId typeIR_base be typeIR_to as newTypeIR)
+        1. (Let TYPEDEF _typeId typeIR_base be typeIR_to as typedefTypeIR)
 
-        1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR, typeIR_base))
+          1. (Cast_control_plane: EC |- `( typeIR_base `) typedExpressionIR : typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?})
 
-          1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
+            1. If (typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} matches (_)), then
 
-            1. (Let ?(typedExpressionIR_newtype) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
+              1. (Let ?(typedExpressionIR_typedef) be typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?})
 
-              1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR_newtype))
+                1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR_typedef))
 
-                1. (Let typedExpressionIR_cast be `( typeIR_to `) typedExpressionIR_newtype as expressionIR '#' `( typeIR_to ctk `))
+                  1. (Let typedExpressionIR_cast be `( typeIR_to `) typedExpressionIR_typedef as expressionIR '#' `( typeIR_to ctk `))
 
-                  1. Return ?(typedExpressionIR_cast)
+                    1. Result in: % |- `( % `) % : ?(typedExpressionIR_cast)
 
-    3. Case (% has type serializableEnumTypeIR)
+5. Group newtype: EC |- `( typeIR_to `) typedExpressionIR : %
 
-      1. (Let ENUM _typeId `< typeIR_base `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} be typeIR_to as serializableEnumTypeIR)
+  1. (Cast_unary: `( typeIR_to `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-        1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR, typeIR_base))
+    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches ()), then
 
-          1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
+      1. If (typeIR_to <: newTypeIR), then
 
-            1. (Let ?(typedExpressionIR_enum) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
+        1. (Let TYPE _typeId typeIR_base be typeIR_to as newTypeIR)
 
-              1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR_enum))
+          1. (Cast_control_plane: EC |- `( typeIR_base `) typedExpressionIR : typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?})
 
-                1. (Let typedExpressionIR_cast be `( typeIR_to `) typedExpressionIR_enum as expressionIR '#' `( typeIR_to ctk `))
+            1. If (typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} matches (_)), then
 
-                  1. Return ?(typedExpressionIR_cast)
+              1. (Let ?(typedExpressionIR_newtype) be typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?})
 
-3. Otherwise,
+                1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR_newtype))
 
-  1. Return ?()
+                  1. (Let typedExpressionIR_cast be `( typeIR_to `) typedExpressionIR_newtype as expressionIR '#' `( typeIR_to ctk `))
+
+                    1. Result in: % |- `( % `) % : ?(typedExpressionIR_cast)
+
+6. Group ser-enum: EC |- `( typeIR_to `) typedExpressionIR : %
+
+  1. (Cast_unary: `( typeIR_to `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
+
+    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches ()), then
+
+      1. If (typeIR_to <: serializableEnumTypeIR), then
+
+        1. (Let ENUM _typeId `< typeIR_base `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} be typeIR_to as serializableEnumTypeIR)
+
+          1. (Cast_control_plane: EC |- `( typeIR_base `) typedExpressionIR : typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?})
+
+            1. If (typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} matches (_)), then
+
+              1. (Let ?(typedExpressionIR_enum) be typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?})
+
+                1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR_enum))
+
+                  1. (Let typedExpressionIR_cast be `( typeIR_to `) typedExpressionIR_enum as expressionIR '#' `( typeIR_to ctk `))
+
+                    1. Result in: % |- `( % `) % : ?(typedExpressionIR_cast)
+
+7. Otherwise,
+
+  1. Group fail: EC |- `( typeIR_to `) typedExpressionIR : %
+
+    1. Result in: % |- `( % `) % : ?()
 
 def $reverse_bytes_of_hex(t)
 
@@ -44615,57 +44807,59 @@ def $needs_priority_tableKeysPropertyIR(KEY '=' `{ tableKeyIR*{tableKeyIR <- tab
 
   1. Return $exists_((nameIR_matchKind = "ternary")*{nameIR_matchKind <- nameIR_matchKind*})
 
-def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+relation TableObject_create_entry_key: EC |- (nameIR_key, t, typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
 
 1. Case analysis on t
 
   1. Case (% = "exact")
 
-    1. (Let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
+    1. Group exact: EC |- (nameIR_key, "exact", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
 
-      1. If (tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)), then
+      1. (Let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
 
-        1. (Let ?(tableKeyValueInterface) be tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+        1. If (tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)), then
 
-          1. (Let t'?{t' <- t'?} be $text_of_number_tableKeyValueInterface(tableKeyValueInterface))
+          1. (Let ?(tableKeyValueInterface) be tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?})
 
-            1. If (t'?{t' <- t'?} matches (_)), then
+            1. (Let t'?{t' <- t'?} be $text_of_number_tableKeyValueInterface(tableKeyValueInterface))
 
-              1. (Let ?(text_key_value) be t'?{t' <- t'?})
+              1. If (t'?{t' <- t'?} matches (_)), then
 
-                1. (Let i_key_value be $text_to_int(text_key_value))
+                1. (Let ?(text_key_value) be t'?{t' <- t'?})
 
-                  1. (Let typedExpressionIR be D i_key_value as expressionIR '#' `( INT as typeIR DYN `))
+                  1. (Let i_key_value be $text_to_int(text_key_value))
 
-                    1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR, typeIR))
+                    1. (Let typedExpressionIR be D i_key_value as expressionIR '#' `( INT as typeIR DYN `))
 
-                      1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
+                      1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                        1. (Let ?(typedExpressionIR_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
+                        1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
-                          1. (Let typeIR_set be SET `< typeIR `> as typeIR)
+                          1. (Let ?(typedExpressionIR_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
-                            1. (Let simpleKeysetExpressionIR be `( typeIR_set `) typedExpressionIR_cast as expressionIR '#' `( typeIR_set DYN `) as simpleKeysetExpressionIR)
+                            1. (Let typeIR_set be SET `< typeIR `> as typeIR)
 
-                              1. Return simpleKeysetExpressionIR
+                              1. (Let simpleKeysetExpressionIR be `( typeIR_set `) typedExpressionIR_cast as expressionIR '#' `( typeIR_set DYN `) as simpleKeysetExpressionIR)
 
-                      1. Else Dangling
+                                1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
-            1. Else Dangling
+                        1. Else Dangling
 
-      1. Else Dangling
+              1. Else Dangling
+
+        1. Else Dangling
 
   2. Case (% = "ternary")
 
-    1. (Let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
+    1. Group ternary-hex: EC |- (nameIR_key, "ternary", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
 
-      1. If (tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)), then
+      1. (Let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
 
-        1. (Let ?(tableKeyValueInterface) be tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+        1. If (tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)), then
 
-          1. Case analysis on tableKeyValueInterface
+          1. (Let ?(tableKeyValueInterface) be tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?})
 
-            1. Case (% matches pattern _HEX %)
+            1. If (tableKeyValueInterface matches _HEX %), then
 
               1. (Let _HEX text_key_value be tableKeyValueInterface)
 
@@ -44675,7 +44869,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                     1. (Let typedExpressionIR_base be D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `))
 
-                      1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+                      1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
                         1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -44687,7 +44881,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                 1. (Let i_key_mask_value be $text_to_int("0x" ++ text_key_mask_value'))
 
-                                  1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+                                  1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
                                     1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
@@ -44695,13 +44889,25 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                         1. (Let simpleKeysetExpressionIR be typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast)
 
-                                          1. Return simpleKeysetExpressionIR
+                                          1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
                                     1. Else Dangling
 
                         1. Else Dangling
 
-            2. Case (% matches pattern _BIN %)
+            1. Else Dangling
+
+        1. Else Dangling
+
+    2. Group ternary-bin: EC |- (nameIR_key, "ternary", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+
+      1. (Let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
+
+        1. If (tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)), then
+
+          1. (Let ?(tableKeyValueInterface) be tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+
+            1. If (tableKeyValueInterface matches _BIN %), then
 
               1. (Let _BIN text_key_value be tableKeyValueInterface)
 
@@ -44711,7 +44917,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                     1. (Let typedExpressionIR_base be D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `))
 
-                      1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+                      1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
                         1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -44723,7 +44929,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                 1. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
 
-                                  1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+                                  1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
                                     1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
@@ -44731,27 +44937,27 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                         1. (Let simpleKeysetExpressionIR be typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast)
 
-                                          1. Return simpleKeysetExpressionIR
+                                          1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
                                     1. Else Dangling
 
                         1. Else Dangling
 
-          1. Else Dangling
+            1. Else Dangling
 
-      1. Else Dangling
+        1. Else Dangling
 
   3. Case (% = "lpm")
 
-    1. (Let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
+    1. Group lpm-hex: EC |- (nameIR_key, "lpm", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
 
-      1. If (tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)), then
+      1. (Let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
 
-        1. (Let ?(tableKeyValueInterface) be tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+        1. If (tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)), then
 
-          1. Case analysis on tableKeyValueInterface
+          1. (Let ?(tableKeyValueInterface) be tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?})
 
-            1. Case (% matches pattern _HEX %)
+            1. If (tableKeyValueInterface matches _HEX %), then
 
               1. (Let _HEX text_key_value be tableKeyValueInterface)
 
@@ -44765,7 +44971,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                         1. (Let typedExpressionIR_base be D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `))
 
-                          1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+                          1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
                             1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -44777,7 +44983,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                     1. (Let i_key_mask_value be $text_to_int("0x" ++ text_key_mask_value'))
 
-                                      1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+                                      1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
                                         1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
@@ -44785,7 +44991,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                             1. (Let simpleKeysetExpressionIR be typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast)
 
-                                              1. Return simpleKeysetExpressionIR
+                                              1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
                                         1. Else Dangling
 
@@ -44793,7 +44999,19 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                   1. Else Dangling
 
-            2. Case (% matches pattern _BIN %)
+            1. Else Dangling
+
+        1. Else Dangling
+
+    2. Group lpm-bin: EC |- (nameIR_key, "lpm", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+
+      1. (Let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
+
+        1. If (tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)), then
+
+          1. (Let ?(tableKeyValueInterface) be tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+
+            1. If (tableKeyValueInterface matches _BIN %), then
 
               1. (Let _BIN text_key_value be tableKeyValueInterface)
 
@@ -44807,7 +45025,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                         1. (Let typedExpressionIR_base be D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `))
 
-                          1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+                          1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
                             1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -44819,7 +45037,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                     1. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
 
-                                      1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+                                      1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
                                         1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
@@ -44827,7 +45045,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                             1. (Let simpleKeysetExpressionIR be typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast)
 
-                                              1. Return simpleKeysetExpressionIR
+                                              1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
                                         1. Else Dangling
 
@@ -44835,7 +45053,19 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                   1. Else Dangling
 
-            3. Case (% matches pattern % _SLASH %)
+            1. Else Dangling
+
+        1. Else Dangling
+
+    3. Group lpm-prefix: EC |- (nameIR_key, "lpm", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+
+      1. (Let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
+
+        1. If (tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)), then
+
+          1. (Let ?(tableKeyValueInterface) be tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+
+            1. If (tableKeyValueInterface matches % _SLASH %), then
 
               1. (Let text_key_prefix_value _SLASH n_key_prefix_width be tableKeyValueInterface)
 
@@ -44857,7 +45087,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                 1. (Let typedExpressionIR_base be D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `))
 
-                                  1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+                                  1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
                                     1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
 
@@ -44865,7 +45095,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                         1. (Let i_key_mask_value be ($pow2(n_key_type_width) - $pow2(n_key_remaining_width)))
 
-                                          1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+                                          1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
 
                                             1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
 
@@ -44873,7 +45103,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                                                 1. (Let simpleKeysetExpressionIR be typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast)
 
-                                                  1. Return simpleKeysetExpressionIR
+                                                  1. Result in: % |- % '@' % : simpleKeysetExpressionIR
 
                                             1. Else Dangling
 
@@ -44883,85 +45113,91 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), tableKeyInterface
 
                       1. Else Dangling
 
-          1. Else Dangling
-
-      1. Else Dangling
-
-  4. Case (% = "optional")
-
-    1. (Let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
-
-      1. If (tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)), then
-
-        1. (Let ?(tableKeyValueInterface) be tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?})
-
-          1. If (tableKeyValueInterface matches _BIN %), then
-
-            1. (Let _BIN text_key_value be tableKeyValueInterface)
-
-              1. If ((~$contains(text_key_value, "*") \/ ($strip_suffix_rec(text_key_value, "*") = ""))), then
-
-                1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
-
-                  1. (Let i_key_base_value be $text_to_int("0b" ++ text_key_base_value))
-
-                    1. (Let typedExpressionIR_base be D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `))
-
-                      1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
-
-                        1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
-
-                          1. (Let ?(typedExpressionIR_base_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
-
-                            1. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "1"))
-
-                              1. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
-
-                                1. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
-
-                                  1. (Let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
-
-                                    1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
-
-                                      1. (Let ?(typedExpressionIR_mask_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
-
-                                        1. (Let simpleKeysetExpressionIR be typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast)
-
-                                          1. Return simpleKeysetExpressionIR
-
-                                    1. Else Dangling
-
-                        1. Else Dangling
-
-              1. Else Dangling
-
-          1. Else Dangling
-
-      1. Else Dangling
-
-  5. Case (% = "selector")
-
-    1. (Let typedExpressionIR_zero be D 0 as int as expressionIR '#' `( INT as typeIR DYN `))
-
-      1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_zero, typeIR))
-
-        1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
-
-          1. (Let ?(typedExpressionIR_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
-
-            1. (Let simpleKeysetExpressionIR be typedExpressionIR_cast '&&&' typedExpressionIR_cast)
-
-              1. Return simpleKeysetExpressionIR
+            1. Else Dangling
 
         1. Else Dangling
 
+  4. Case (% = "optional")
+
+    1. Group optional: EC |- (nameIR_key, "optional", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+
+      1. (Let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
+
+        1. If (tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)), then
+
+          1. (Let ?(tableKeyValueInterface) be tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?})
+
+            1. If (tableKeyValueInterface matches _BIN %), then
+
+              1. (Let _BIN text_key_value be tableKeyValueInterface)
+
+                1. If ((~$contains(text_key_value, "*") \/ ($strip_suffix_rec(text_key_value, "*") = ""))), then
+
+                  1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
+
+                    1. (Let i_key_base_value be $text_to_int("0b" ++ text_key_base_value))
+
+                      1. (Let typedExpressionIR_base be D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `))
+
+                        1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
+
+                          1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
+
+                            1. (Let ?(typedExpressionIR_base_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
+
+                              1. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "1"))
+
+                                1. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
+
+                                  1. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
+
+                                    1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
+
+                                      1. If (typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)), then
+
+                                        1. (Let ?(typedExpressionIR_mask_cast) be typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?})
+
+                                          1. (Let simpleKeysetExpressionIR be typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast)
+
+                                            1. Result in: % |- % '@' % : simpleKeysetExpressionIR
+
+                                      1. Else Dangling
+
+                          1. Else Dangling
+
+                1. Else Dangling
+
+            1. Else Dangling
+
+        1. Else Dangling
+
+  5. Case (% = "selector")
+
+    1. Group selector: EC |- (nameIR_key, "selector", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+
+      1. (Let typedExpressionIR_zero be D 0 as int as expressionIR '#' `( INT as typeIR DYN `))
+
+        1. (Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_zero : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
+
+          1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)), then
+
+            1. (Let ?(typedExpressionIR_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
+
+              1. (Let simpleKeysetExpressionIR be typedExpressionIR_cast '&&&' typedExpressionIR_cast)
+
+                1. Result in: % |- % '@' % : simpleKeysetExpressionIR
+
+          1. Else Dangling
+
 1. Else Dangling
 
-def $tableObject_create_entry_keys(EC, (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, tableKeysetInterface)
+relation TableObject_create_entry_keys: EC |- (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} '@' tableKeysetInterface : %
 
 1. If ((nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} matches []), then
 
-  1. Return []
+  1. Group nil: EC |- [] '@' tableKeysetInterface : %
+
+    1. Result in: % |- % '@' % : []
 
 1. Else Dangling
 
@@ -44971,9 +45207,13 @@ def $tableObject_create_entry_keys(EC, (nameIR, nameIR, typeIR)*{(nameIR, nameIR
 
     1. (Let (nameIR_key_h, nameIR_matchKind_h, typeIR_h) :: (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} be (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*})
 
-      1. (Let simpleKeysetExpressionIR_h be $tableObject_create_entry_key(EC, (nameIR_key_h, nameIR_matchKind_h, typeIR_h), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
+      1. Group cons: EC |- (nameIR_key_h, nameIR_matchKind_h, typeIR_h) :: (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
 
-        1. Return simpleKeysetExpressionIR_h :: $tableObject_create_entry_keys(EC, (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+        1. (TableObject_create_entry_key: EC |- (nameIR_key_h, nameIR_matchKind_h, typeIR_h) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : simpleKeysetExpressionIR_h)
+
+          1. (TableObject_create_entry_keys: EC |- (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*})
+
+            1. Result in: % |- % '@' % : simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*}
 
   1. Else Dangling
 
@@ -44991,21 +45231,23 @@ def $key_interface_of_tableObject(TABLE typeId `{ frame TBL `})
 
     1. Return (nameIR_key, nameIR_matchKind, typeIR)*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*}
 
-def $tableObject_create_entry_keyset(EC, KEY '=' `{ tableKeyIR*{tableKeyIR <- tableKeyIR*} `}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+relation TableObject_create_entry_keyset: EC |- KEY '=' `{ tableKeyIR*{tableKeyIR <- tableKeyIR*} `} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
 
-1. (Let (nameIR_key, nameIR_matchKind, typeIR) be $interface_of_tableKeyIR(tableKeyIR))*{tableKeyIR <- tableKeyIR*, nameIR_key -> nameIR_key*, nameIR_matchKind -> nameIR_matchKind*, typeIR -> typeIR*}
+1. Group : EC |- KEY '=' `{ tableKeyIR*{tableKeyIR <- tableKeyIR*} `} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
 
-  1. (Let (nameIR_key_update, tableKeyValueInterface_update) be tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*, nameIR_key_update -> nameIR_key_update*, tableKeyValueInterface_update -> tableKeyValueInterface_update*}
+  1. (Let (nameIR_key, nameIR_matchKind, typeIR) be $interface_of_tableKeyIR(tableKeyIR))*{tableKeyIR <- tableKeyIR*, nameIR_key -> nameIR_key*, nameIR_matchKind -> nameIR_matchKind*, typeIR -> typeIR*}
 
-    1. (Let nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} be $filter_<nameIR>(nameIR_key*{nameIR_key <- nameIR_key*}, (nameIR_matchKind =/= "selector")*{nameIR_matchKind <- nameIR_matchKind*}))
+    1. (Let (nameIR_key_update, tableKeyValueInterface_update) be tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*, nameIR_key_update -> nameIR_key_update*, tableKeyValueInterface_update -> tableKeyValueInterface_update*}
 
-      1. If ($eq_set<nameIR>(`{ nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} `}, `{ nameIR_key_update*{nameIR_key_update <- nameIR_key_update*} `})), then
+      1. (Let nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} be $filter_<nameIR>(nameIR_key*{nameIR_key <- nameIR_key*}, (nameIR_matchKind =/= "selector")*{nameIR_matchKind <- nameIR_matchKind*}))
 
-        1. (Let simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} be $tableObject_create_entry_keys(EC, (nameIR_key, nameIR_matchKind, typeIR)*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}))
+        1. If ($eq_set<nameIR>(`{ nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} `}, `{ nameIR_key_update*{nameIR_key_update <- nameIR_key_update*} `})), then
 
-          1. Return `( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} `) as keysetExpressionIR
+          1. (TableObject_create_entry_keys: EC |- (nameIR_key, nameIR_matchKind, typeIR)*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*})
 
-      1. Else Dangling
+            1. Result in: % |- % '@' % : `( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} `) as keysetExpressionIR
+
+        1. Else Dangling
 
 def $alias_to_original_lookup_map(parameterIR*{parameterIR <- parameterIR*})
 
@@ -45169,43 +45411,11 @@ def $find_tableActionIR_unqualified'(tableActionIR*{tableActionIR <- tableAction
 
           1. Else Dangling
 
-def $tableObject_create_entry_action(EC, ACTIONS '=' `{ tableActionIR*{tableActionIR <- tableActionIR*} `}, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}))
+relation TableObject_create_entry_action: EC |- ACTIONS '=' `{ tableActionIR*{tableActionIR <- tableActionIR*} `} '@' (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}) : %
 
-1. (Let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} be $find_tableActionIR_qualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update))
+1. Group qualified: EC |- ACTIONS '=' `{ tableActionIR*{tableActionIR <- tableActionIR*} `} '@' (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}) : %
 
-  1. If ((nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches (_)), then
-
-    1. (Let ?((nameIR_found, tableActionIR_found)) be (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?})
-
-      1. (Let annotationList prefixedNameIR controlPlaneNameIR `( argumentIR_data*{argumentIR_data <- argumentIR_data*} `) '#' `( _parameterListIR ',' parameterIR_control*{parameterIR_control <- parameterIR_control*} `) ';' be tableActionIR_found)
-
-        1. (Let i_arg_aligned*{i_arg_aligned <- i_arg_aligned*} be $align_tableActionArgumentInterfaces(parameterIR_control*{parameterIR_control <- parameterIR_control*}, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}))
-
-          1. (Let _annotationList _direction typeIR_param _id _parameterInitializerOptIR be parameterIR_control)*{parameterIR_control <- parameterIR_control*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR_param -> typeIR_param*}
-
-            1. (Let typedExpressionIR_arg be D i_arg_aligned as expressionIR '#' `( INT as typeIR DYN `))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
-
-              1. If ((|typeIR_param*{typeIR_param <- typeIR_param*}| = |typedExpressionIR_arg*{typedExpressionIR_arg <- typedExpressionIR_arg*}|)), then
-
-                1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param))*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
-
-                  1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_))*{typedExpressionIR? <- typedExpressionIR?*}, then
-
-                    1. (Let ?(typedExpressionIR_arg_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
-
-                      1. (Let argumentIR*{argumentIR <- argumentIR*} be argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*)
-
-                        1. Return _BARE nameIR_found controlPlaneNameIR `( argumentIR*{argumentIR <- argumentIR*} `)
-
-                  1. Else Dangling
-
-              1. Else Dangling
-
-  1. Else Dangling
-
-2. If ($find_tableActionIR_qualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update) matches ()), then
-
-  1. (Let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} be $find_tableActionIR_unqualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update))
+  1. (Let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} be $find_tableActionIR_qualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update))
 
     1. If ((nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches (_)), then
 
@@ -45221,7 +45431,7 @@ def $tableObject_create_entry_action(EC, ACTIONS '=' `{ tableActionIR*{tableActi
 
                 1. If ((|typeIR_param*{typeIR_param <- typeIR_param*}| = |typedExpressionIR_arg*{typedExpressionIR_arg <- typedExpressionIR_arg*}|)), then
 
-                  1. (Let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} be $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param))*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
+                  1. (Cast_control_plane: EC |- `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
 
                     1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_))*{typedExpressionIR? <- typedExpressionIR?*}, then
 
@@ -45229,7 +45439,7 @@ def $tableObject_create_entry_action(EC, ACTIONS '=' `{ tableActionIR*{tableActi
 
                         1. (Let argumentIR*{argumentIR <- argumentIR*} be argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*)
 
-                          1. Return _BARE nameIR_found controlPlaneNameIR `( argumentIR*{argumentIR <- argumentIR*} `)
+                          1. Result in: % |- % '@' % : _BARE nameIR_found controlPlaneNameIR `( argumentIR*{argumentIR <- argumentIR*} `)
 
                     1. Else Dangling
 
@@ -45237,49 +45447,91 @@ def $tableObject_create_entry_action(EC, ACTIONS '=' `{ tableActionIR*{tableActi
 
     1. Else Dangling
 
-2. Else Dangling
+2. Group unqualified: EC |- ACTIONS '=' `{ tableActionIR*{tableActionIR <- tableActionIR*} `} '@' (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}) : %
 
-def $tableObject_add_entry(EC, tableObject, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
+  1. If ($find_tableActionIR_qualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update) matches ()), then
+
+    1. (Let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} be $find_tableActionIR_unqualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update))
+
+      1. If ((nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches (_)), then
+
+        1. (Let ?((nameIR_found, tableActionIR_found)) be (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?})
+
+          1. (Let annotationList prefixedNameIR controlPlaneNameIR `( argumentIR_data*{argumentIR_data <- argumentIR_data*} `) '#' `( _parameterListIR ',' parameterIR_control*{parameterIR_control <- parameterIR_control*} `) ';' be tableActionIR_found)
+
+            1. (Let i_arg_aligned*{i_arg_aligned <- i_arg_aligned*} be $align_tableActionArgumentInterfaces(parameterIR_control*{parameterIR_control <- parameterIR_control*}, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}))
+
+              1. (Let _annotationList _direction typeIR_param _id _parameterInitializerOptIR be parameterIR_control)*{parameterIR_control <- parameterIR_control*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR_param -> typeIR_param*}
+
+                1. (Let typedExpressionIR_arg be D i_arg_aligned as expressionIR '#' `( INT as typeIR DYN `))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
+
+                  1. If ((|typeIR_param*{typeIR_param <- typeIR_param*}| = |typedExpressionIR_arg*{typedExpressionIR_arg <- typedExpressionIR_arg*}|)), then
+
+                    1. (Cast_control_plane: EC |- `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
+
+                      1. If (typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_))*{typedExpressionIR? <- typedExpressionIR?*}, then
+
+                        1. (Let ?(typedExpressionIR_arg_cast) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
+
+                          1. (Let argumentIR*{argumentIR <- argumentIR*} be argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*)
+
+                            1. Result in: % |- % '@' % : _BARE nameIR_found controlPlaneNameIR `( argumentIR*{argumentIR <- argumentIR*} `)
+
+                      1. Else Dangling
+
+                  1. Else Dangling
+
+      1. Else Dangling
+
+  1. Else Dangling
+
+relation TableObject_add_entry: EC |- tableObject '@' tableEntryPriorityInterface ',' tableKeysetInterface ',' tableActionInterface : %
 
 1. (Let TABLE typeId `{ frame TBL `} be tableObject)
 
-  1. (Let tableEntryPriorityOptIR be $tableObject_create_entry_priority(tableEntryPriorityInterface))
+  1. Group ok: EC |- TABLE typeId `{ frame TBL `} '@' tableEntryPriorityInterface ',' tableKeysetInterface ',' tableActionInterface : %
 
-    1. If (($needs_priority_tableKeysPropertyIR(TBL.KEYS) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))), then
+    1. (Let tableEntryPriorityOptIR be $tableObject_create_entry_priority(tableEntryPriorityInterface))
 
-      1. (Let keysetExpressionIR be $tableObject_create_entry_keyset(EC, TBL.KEYS, tableKeysetInterface))
+      1. If (($needs_priority_tableKeysPropertyIR(TBL.KEYS) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))), then
 
-        1. (Let tableActionReferenceIR be $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface))
+        1. (TableObject_create_entry_keyset: EC |- TBL.KEYS '@' tableKeysetInterface : keysetExpressionIR)
 
-          1. (Let tableEntryIR_update be ?() tableEntryPriorityOptIR keysetExpressionIR ':' tableActionReferenceIR _EMPTY ';')
+          1. (TableObject_create_entry_action: EC |- TBL.ACTIONS '@' tableActionInterface : tableActionReferenceIR)
 
-            1. (Let annotationList constOptIR ENTRIES '=' `{ tableEntryIR*{tableEntryIR <- tableEntryIR*} `} be TBL.ENTRIES)
+            1. (Let tableEntryIR_update be ?() tableEntryPriorityOptIR keysetExpressionIR ':' tableActionReferenceIR _EMPTY ';')
 
-              1. (Let tableEntriesPropertyIR_updated be annotationList constOptIR ENTRIES '=' `{ tableEntryIR*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] `})
+              1. (Let annotationList constOptIR ENTRIES '=' `{ tableEntryIR*{tableEntryIR <- tableEntryIR*} `} be TBL.ENTRIES)
 
-                1. (Let TBL_updated be TBL[ENTRIES = tableEntriesPropertyIR_updated])
+                1. (Let tableEntriesPropertyIR_updated be annotationList constOptIR ENTRIES '=' `{ tableEntryIR*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] `})
 
-                  1. Return ?(TABLE typeId `{ frame TBL_updated `})
+                  1. (Let TBL_updated be TBL[ENTRIES = tableEntriesPropertyIR_updated])
+
+                    1. Result in: % |- % '@' % ',' % ',' % : ?(TABLE typeId `{ frame TBL_updated `})
 
 2. Otherwise,
 
-  1. Return ?()
+  1. Group fail: EC |- tableObject '@' tableEntryPriorityInterface ',' tableKeysetInterface ',' tableActionInterface : %
 
-def $tableObject_add_default_action(EC, TABLE typeId `{ frame TBL `}, tableActionInterface)
+    1. Result in: % |- % '@' % ',' % ',' % : ?()
 
-1. (Let _annotationList constIR?{constIR <- constIR?} DEFAULT_ACTION '=' _tableActionReferenceIR ';' be TBL.DEFAULT_ACTION)
+relation TableObject_add_default_action: EC |- TABLE typeId `{ frame TBL `} '@' tableActionInterface : %
 
-  1. If (constIR?{constIR <- constIR?} matches ()), then
+1. Group : EC |- TABLE typeId `{ frame TBL `} '@' tableActionInterface : %
 
-    1. (Let tableActionReferenceIR be $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface))
+  1. (Let _annotationList constIR?{constIR <- constIR?} DEFAULT_ACTION '=' _tableActionReferenceIR ';' be TBL.DEFAULT_ACTION)
 
-      1. (Let tableDefaultActionPropertyIR be _EMPTY ?() DEFAULT_ACTION '=' tableActionReferenceIR ';')
+    1. If (constIR?{constIR <- constIR?} matches ()), then
 
-        1. (Let TBL_updated be TBL[DEFAULT_ACTION = tableDefaultActionPropertyIR])
+      1. (TableObject_create_entry_action: EC |- TBL.ACTIONS '@' tableActionInterface : tableActionReferenceIR)
 
-          1. Return TABLE typeId `{ frame TBL_updated `}
+        1. (Let tableDefaultActionPropertyIR be _EMPTY ?() DEFAULT_ACTION '=' tableActionReferenceIR ';')
 
-  1. Else Dangling
+          1. (Let TBL_updated be TBL[DEFAULT_ACTION = tableDefaultActionPropertyIR])
+
+            1. Result in: % |- % '@' % : TABLE typeId `{ frame TBL_updated `}
+
+    1. Else Dangling
 
 relation V1Model_init: |- p4program : % %
 

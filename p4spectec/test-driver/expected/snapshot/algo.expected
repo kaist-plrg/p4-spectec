@@ -8043,6 +8043,8 @@ def $typedExpressionIR_as_typedLvalueIR(typedExpressionIR) : typedLvalueIR? =
   -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
   -- let ?(typedLvalueIR) = typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?}
 
+  clause -1 : (typedExpressionIR) = ?()
+
 syntax emptyStatementIR = emptyStatement
 
 syntax assignmentStatementIR =
@@ -16597,12 +16599,14 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- ['+', '-', '*']
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_plusminusmult)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
-    -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
-    -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_plusminusmult)
-    -- if (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)
-    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?}
+    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
@@ -16625,12 +16629,14 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- ['|+|', '|-|']
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_satplusminus)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
-    -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
-    -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_satplusminus)
-    -- if (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)
-    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?}
+    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
@@ -16653,12 +16659,14 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- ['/', '%']
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
-    -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
-    -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod)
-    -- if (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)
-    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?}
+    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
@@ -16678,12 +16686,14 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- ['/', '%']
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
-    -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
-    -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_divmod)
-    -- if (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)
-    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?}
+    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
@@ -16759,9 +16769,11 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- ['==', '!=']
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
-    -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
-    -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
+    -- Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- let typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_l_cast)
     -- let ctk_l_cast = $ctk_of_typedExpressionIR(typedExpressionIR_l_cast)
     -- let ctk_r_cast = $ctk_of_typedExpressionIR(typedExpressionIR_r_cast)
@@ -16785,12 +16797,14 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- ['<=', '>=', '<', '>']
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_compare)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
-    -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
-    -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_compare)
-    -- if (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)
-    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?}
+    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
@@ -16813,12 +16827,14 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- ['&', '^', '|']
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_bitwise)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
-    -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
-    -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_bitwise)
-    -- if (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)
-    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?}
+    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
@@ -16869,12 +16885,14 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if binop <- ['&&', '||']
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_logical)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
-    -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
-    -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_logical)
-    -- if (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)
-    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?}
+    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
@@ -16900,9 +16918,11 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (BOOL as typeIR = $unroll_typeIR(typeIR_cond))
     -- Expr_ok: p TC |- expression_true : typedExpressionIR_true
     -- Expr_ok: p TC |- expression_false : typedExpressionIR_false
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_true, typedExpressionIR_false)
-    -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
-    -- let ?((typedExpressionIR_true_cast, typedExpressionIR_false_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
+    -- Cast_binary: typedExpressionIR_true ',' typedExpressionIR_false : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_true_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_false_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- let typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_true_cast)
     -- let ctk_true_cast = $ctk_of_typedExpressionIR(typedExpressionIR_true_cast)
     -- let ctk_false_cast = $ctk_of_typedExpressionIR(typedExpressionIR_false_cast)
@@ -18000,7 +18020,7 @@ relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- let typeIR_l = $type_of_typedLvalueIR(typedLvalueIR)
     -- let typeIR_r = $type_of_typedExpressionIR(typedExpressionIR)
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR, typeIR_l)
+    -- Cast_unary: `( typeIR_l `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- output: % % |- % : TC typedLvalueIR '=' typedExpressionIR_cast ';' as statementIR
@@ -18016,7 +18036,7 @@ relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
     -- let expression_binary = expression_lvalue binop expression as expression
     -- Expr_ok: p TC |- expression_binary : typedExpressionIR_binary
     -- let _lvalueIR '#' `( typeIR_lvalue `) = typedLvalueIR
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_binary, typeIR_lvalue)
+    -- Cast_unary: `( typeIR_lvalue `) typedExpressionIR_binary : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(expressionIR '#' _expressionNoteIR) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- if expressionIR <: binaryExpressionIR
@@ -18143,7 +18163,7 @@ relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
     -- let typeIR'?{typeIR' <- typeIR'?} = $find_local_return_type_t(TC_0)
     -- if typeIR'?{typeIR' <- typeIR'?} matches (_)
     -- let ?(typeIR_ret) = typeIR'?{typeIR' <- typeIR'?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR, typeIR_ret)
+    -- Cast_unary: `( typeIR_ret `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- let TC_1 = $set_control_t(TC_0, RET)
@@ -18453,7 +18473,7 @@ relation Parameter_ok: cursor typingContext |- parameter : parameterIR '#' typeI
     -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
     -- let typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init)
     -- if (CTK = $ctk_of_typedExpressionIR(typedExpressionIR_init))
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_init, typeIR)
+    -- Cast_unary: `( typeIR `) typedExpressionIR_init : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_init_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- let nameIR = $name(name)
@@ -18471,7 +18491,7 @@ relation Parameter_ok: cursor typingContext |- parameter : parameterIR '#' typeI
     -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
     -- let typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init)
     -- if (LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_init))
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_init, typeIR)
+    -- Cast_unary: `( typeIR `) typedExpressionIR_init : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_init_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- let nameIR = $name(name)
@@ -19830,7 +19850,7 @@ relation VarDecl_ok: cursor typingContext |- variableDeclaration : typingContext
     -- if Type_wf: $bound(p, TC_0) |- typeIR holds
     -- if $is_assignable_typeIR(typeIR)
     -- Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_init, typeIR)
+    -- Cast_unary: `( typeIR `) typedExpressionIR_init : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_init_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- let nameIR = $name(name)
@@ -19855,7 +19875,7 @@ relation ConstDecl_ok: cursor typingContext |- constantDeclaration : typingConte
     -- if Type_wf: $bound(p, TC_0) |- typeIR holds
     -- Expr_ok: p TC_0 |- expression_value : typedExpressionIR_value
     -- if (LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_value))
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_value, typeIR)
+    -- Cast_unary: `( typeIR `) typedExpressionIR_value : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_value_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- Expr_eval_lctk: p TC_0 |- typedExpressionIR_value_cast ~> value
@@ -20552,7 +20572,7 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR '@
    paths
 
     rulepath in
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_arg, typeIR_param)
+    -- Cast_unary: `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- output: % % % |- % '@' % : typedExpressionIR_arg_cast
@@ -20591,14 +20611,14 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR '@
 
     rulepath action
     -- if (actctxt = ACTION)
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_arg, typeIR_param)
+    -- Cast_unary: `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- output: % % % |- % '@' % : typedExpressionIR_arg_cast
 
     rulepath non-action
     -- if (actctxt = NOACTION)
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_arg, typeIR_param)
+    -- Cast_unary: `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if (DYN =/= $ctk_of_typedExpressionIR(typedExpressionIR_arg))
@@ -21109,7 +21129,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
     rulepath definedFunctionTypeIR
     -- let FUNCTION nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = definedFunctionTypeIR
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
+    -- Infer: typeId_infer*{typeId_infer <- typeId_infer*} |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} ',' parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} '@' argumentIR*{argumentIR <- argumentIR*} : inference
     -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
@@ -21134,7 +21154,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
     rulepath externFunctionTypeIR
     -- let EXTERN_FUNCTION nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = externFunctionTypeIR
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
+    -- Infer: typeId_infer*{typeId_infer <- typeId_infer*} |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} ',' parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} '@' argumentIR*{argumentIR <- argumentIR*} : inference
     -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
@@ -21179,7 +21199,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
     -- if externMethodTypeIR' matches EXTERN_METHOD % `( % `) ':' %
     -- let EXTERN_METHOD nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = externMethodTypeIR'
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
+    -- Infer: typeId_infer*{typeId_infer <- typeId_infer*} |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} ',' parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} '@' argumentIR*{argumentIR <- argumentIR*} : inference
     -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
@@ -21195,7 +21215,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
     -- if externMethodTypeIR' matches EXTERN_METHOD ABSTRACT % `( % `) ':' %
     -- let EXTERN_METHOD ABSTRACT nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = externMethodTypeIR'
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
+    -- Infer: typeId_infer*{typeId_infer <- typeId_infer*} |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} ',' parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} '@' argumentIR*{argumentIR <- argumentIR*} : inference
     -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
@@ -21331,7 +21351,7 @@ relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR `< typeArgu
     rulepath package
     -- let CONSTRUCTOR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_object = constructorTypeIR
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
+    -- Infer: typeId_infer*{typeId_infer <- typeId_infer*} |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} ',' parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} '@' argumentIR*{argumentIR <- argumentIR*} : inference
     -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_object_inferred = $subst_typeIR(inference, typeIR_object)
@@ -21347,7 +21367,7 @@ relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR `< typeArgu
     rulepath non-package
     -- let CONSTRUCTOR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_object = constructorTypeIR
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
+    -- Infer: typeId_infer*{typeId_infer <- typeId_infer*} |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} ',' parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} '@' argumentIR*{argumentIR <- argumentIR*} : inference
     -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_object_inferred = $subst_typeIR(inference, typeIR_object)
@@ -21471,60 +21491,136 @@ def $apply_cast(typedExpressionIR, typeIR*) : typedExpressionIR =
   -- let _expressionIR '#' `( _typeIR ctk `) = typedExpressionIR
   -- let typedExpressionIR_cast = `( typeIR_h `) typedExpressionIR as expressionIR '#' `( typeIR_h ctk `)
 
-def $cast_unary(typedExpressionIR, typeIR) : typedExpressionIR? =
+relation Cast_unary: `( typeIR `) typedExpressionIR : typedExpressionIR?
 
-  clause 0 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
-  -- let _expressionIR '#' `( typeIR _ctk `) = typedExpressionIR
-  -- Cast_impl: typeIR -> typeIR_to : castResult
-  -- if castResult matches OK %
-  -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
-  -- let typedExpressionIR_cast = $apply_cast(typedExpressionIR, typeIR_cast*{typeIR_cast <- typeIR_cast*})
+  rulegroup ok
 
-  clause -1 : (typedExpressionIR, typeIR_to) = ?()
+   match
 
-def $cast_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typedExpressionIR)? =
+    (signature) `( typeIR_to `) typedExpressionIR : %
+    `( typeIR_to `) typedExpressionIR : %
 
-  clause 0 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l_cast, typedExpressionIR_r))
-  -- let _expressionIR '#' `( typeIR_l _ctk `) = typedExpressionIR_l
-  -- let _expressionIR' '#' `( typeIR_r _ctk' `) = typedExpressionIR_r
-  -- Cast_impl: typeIR_l -> typeIR_r : castResult
-  -- if castResult matches OK %
-  -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
-  -- let typedExpressionIR_l_cast = $apply_cast(typedExpressionIR_l, typeIR_cast*{typeIR_cast <- typeIR_cast*})
+   paths
 
-  clause 1 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l, typedExpressionIR_r_cast))
-  -- let _expressionIR '#' `( typeIR_l _ctk `) = typedExpressionIR_l
-  -- let _expressionIR' '#' `( typeIR_r _ctk' `) = typedExpressionIR_r
-  -- Cast_impl: typeIR_l -> typeIR_r : castResult
-  -- if castResult matches FAIL
-  -- Cast_impl: typeIR_r -> typeIR_l : castResult'
-  -- if castResult' matches OK %
-  -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult'
-  -- let typedExpressionIR_r_cast = $apply_cast(typedExpressionIR_r, typeIR_cast*{typeIR_cast <- typeIR_cast*})
+    rulepath ok
+    -- let _expressionIR '#' `( typeIR_from _ctk `) = typedExpressionIR
+    -- Cast_impl: typeIR_from -> typeIR_to : castResult
+    -- if castResult matches OK %
+    -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
+    -- let typedExpressionIR_cast = $apply_cast(typedExpressionIR, typeIR_cast*{typeIR_cast <- typeIR_cast*})
+    -- output: `( % `) % : ?(typedExpressionIR_cast)
 
-  clause 2 : (typedExpressionIR_l, typedExpressionIR_r) = $cast_binary(typedExpressionIR_l_cast, typedExpressionIR_r)
-  -- let _expressionIR '#' `( typeIR_l _ctk `) = typedExpressionIR_l
-  -- let _expressionIR' '#' `( typeIR_r _ctk' `) = typedExpressionIR_r
-  -- Cast_impl: typeIR_l -> typeIR_r : castResult
-  -- if castResult matches FAIL
-  -- Cast_impl: typeIR_r -> typeIR_l : castResult'
-  -- if castResult' matches FAIL
-  -- let typedExpressionIR_l_cast = $reduce_serenum(typedExpressionIR_l)
-  -- if (typedExpressionIR_l =/= typedExpressionIR_l_cast)
+  elsegroup
 
-  clause 3 : (typedExpressionIR_l, typedExpressionIR_r) = $cast_binary(typedExpressionIR_l, typedExpressionIR_r_cast)
-  -- let _expressionIR '#' `( typeIR_l _ctk `) = typedExpressionIR_l
-  -- let _expressionIR' '#' `( typeIR_r _ctk' `) = typedExpressionIR_r
-  -- Cast_impl: typeIR_l -> typeIR_r : castResult
-  -- if castResult matches FAIL
-  -- Cast_impl: typeIR_r -> typeIR_l : castResult'
-  -- if castResult' matches FAIL
-  -- let typedExpressionIR_l_cast = $reduce_serenum(typedExpressionIR_l)
-  -- if (typedExpressionIR_l = typedExpressionIR_l_cast)
-  -- let typedExpressionIR_r_cast = $reduce_serenum(typedExpressionIR_r)
-  -- if (typedExpressionIR_r =/= typedExpressionIR_r_cast)
+  rulegroup fail
 
-  clause -1 : (typedExpressionIR_l, typedExpressionIR_r) = ?()
+   match
+
+    (signature) `( typeIR_to `) typedExpressionIR : %
+    `( typeIR_to `) typedExpressionIR : %
+
+   paths
+
+    rulepath fail
+    -- output: `( % `) % : ?()
+
+relation Cast_binary: typedExpressionIR ',' typedExpressionIR : typedExpressionIR? ',' typedExpressionIR?
+
+  rulegroup left-to-right
+
+   match
+
+    (signature) typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
+    typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
+
+   paths
+
+    rulepath left-to-right
+    -- let _expressionIR '#' `( typeIR_l _ctk `) = typedExpressionIR_l
+    -- let _expressionIR' '#' `( typeIR_r _ctk' `) = typedExpressionIR_r
+    -- Cast_impl: typeIR_l -> typeIR_r : castResult
+    -- if castResult matches OK %
+    -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
+    -- let typedExpressionIR_l_cast = $apply_cast(typedExpressionIR_l, typeIR_cast*{typeIR_cast <- typeIR_cast*})
+    -- output: % ',' % : ?(typedExpressionIR_l_cast) ',' ?(typedExpressionIR_r)
+
+  rulegroup right-to-left
+
+   match
+
+    (signature) typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
+    typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
+
+   paths
+
+    rulepath right-to-left
+    -- let _expressionIR '#' `( typeIR_l _ctk `) = typedExpressionIR_l
+    -- let _expressionIR' '#' `( typeIR_r _ctk' `) = typedExpressionIR_r
+    -- Cast_impl: typeIR_l -> typeIR_r : castResult
+    -- if castResult matches FAIL
+    -- Cast_impl: typeIR_r -> typeIR_l : castResult'
+    -- if castResult' matches OK %
+    -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult'
+    -- let typedExpressionIR_r_cast = $apply_cast(typedExpressionIR_r, typeIR_cast*{typeIR_cast <- typeIR_cast*})
+    -- output: % ',' % : ?(typedExpressionIR_l) ',' ?(typedExpressionIR_r_cast)
+
+  rulegroup retry-left
+
+   match
+
+    (signature) typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
+    typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
+
+   paths
+
+    rulepath retry-left
+    -- let _expressionIR '#' `( typeIR_l _ctk `) = typedExpressionIR_l
+    -- let _expressionIR' '#' `( typeIR_r _ctk' `) = typedExpressionIR_r
+    -- Cast_impl: typeIR_l -> typeIR_r : castResult
+    -- if castResult matches FAIL
+    -- Cast_impl: typeIR_r -> typeIR_l : castResult'
+    -- if castResult' matches FAIL
+    -- let typedExpressionIR_l_reduced = $reduce_serenum(typedExpressionIR_l)
+    -- if (typedExpressionIR_l =/= typedExpressionIR_l_reduced)
+    -- Cast_binary: typedExpressionIR_l_reduced ',' typedExpressionIR_r : typedExpressionIR_l_cast?{typedExpressionIR_l_cast <- typedExpressionIR_l_cast?} ',' typedExpressionIR_r_cast?{typedExpressionIR_r_cast <- typedExpressionIR_r_cast?}
+    -- output: % ',' % : typedExpressionIR_l_cast?{typedExpressionIR_l_cast <- typedExpressionIR_l_cast?} ',' typedExpressionIR_r_cast?{typedExpressionIR_r_cast <- typedExpressionIR_r_cast?}
+
+  rulegroup retry-right
+
+   match
+
+    (signature) typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
+    typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
+
+   paths
+
+    rulepath retry-right
+    -- let _expressionIR '#' `( typeIR_l _ctk `) = typedExpressionIR_l
+    -- let _expressionIR' '#' `( typeIR_r _ctk' `) = typedExpressionIR_r
+    -- Cast_impl: typeIR_l -> typeIR_r : castResult
+    -- if castResult matches FAIL
+    -- Cast_impl: typeIR_r -> typeIR_l : castResult'
+    -- if castResult' matches FAIL
+    -- let typedExpressionIR_l_reduced = $reduce_serenum(typedExpressionIR_l)
+    -- if (typedExpressionIR_l = typedExpressionIR_l_reduced)
+    -- let typedExpressionIR_r_reduced = $reduce_serenum(typedExpressionIR_r)
+    -- if (typedExpressionIR_r =/= typedExpressionIR_r_reduced)
+    -- Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r_reduced : typedExpressionIR_l_cast?{typedExpressionIR_l_cast <- typedExpressionIR_l_cast?} ',' typedExpressionIR_r_cast?{typedExpressionIR_r_cast <- typedExpressionIR_r_cast?}
+    -- output: % ',' % : typedExpressionIR_l_cast?{typedExpressionIR_l_cast <- typedExpressionIR_l_cast?} ',' typedExpressionIR_r_cast?{typedExpressionIR_r_cast <- typedExpressionIR_r_cast?}
+
+  elsegroup
+
+  rulegroup fail
+
+   match
+
+    (signature) typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
+    typedExpressionIR_l ',' typedExpressionIR_r : % ',' %
+
+   paths
+
+    rulepath fail
+    -- output: % ',' % : ?() ',' ?()
 
 tbl def $compat_lnot(typeIR) : bool =
   row 0 :
@@ -22211,7 +22307,7 @@ relation ForInitStmt_ok: typingContext |- forInitStatement : typingContext forIn
     -- if Type_wf: $bound(LOCAL, TC_0) |- typeIR holds
     -- if $is_assignable_typeIR(typeIR)
     -- Expr_ok: LOCAL TC_0 |- expression_init : typedExpressionIR_init
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_init, typeIR)
+    -- Cast_unary: `( typeIR `) typedExpressionIR_init : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_init_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- let nameIR = $name(name)
@@ -22325,10 +22421,10 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     rulepath
     -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l, typeIR_var)
+    -- Cast_unary: `( typeIR_var `) typedExpressionIR_l : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_l_casted) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r, typeIR_var)
+    -- Cast_unary: `( typeIR_var `) typedExpressionIR_r : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_r_casted) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- let typeIR_l = $type_of_typedExpressionIR(typedExpressionIR_l_casted)
@@ -22525,7 +22621,7 @@ relation SwitchLabel_general_ok: typingContext typeIR |- switchLabel : switchLab
     -- let expressionNonBrace_label = switchLabel' as expressionNonBrace
     -- let expression_label = $expressionNonBrace_as_expression(expressionNonBrace_label)
     -- Expr_ok: LOCAL TC |- expression_label : typedExpressionIR_label
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_label, typeIR_switch)
+    -- Cast_unary: `( typeIR_switch `) typedExpressionIR_label : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_label_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- let _expressionIR '#' `( _typeIR ctk `) = typedExpressionIR_label_cast
@@ -22789,24 +22885,37 @@ relation ObjectDeclList_ok: cursor typingContext |- objectDeclarationList : type
     -- ObjectDecls_ok: p TC `{ [] `} `{ [] `} |- objectDeclaration*{objectDeclaration <- objectDeclaration*} : typeFrame externMethodTypeDefEnv objectDeclarationListIR
     -- output: % % |- % : typeFrame externMethodTypeDefEnv objectDeclarationListIR
 
-def $subst_externMethodTypeDefEnv(externMethodTypeDefEnv, externMethodTypeDefEnv) : externMethodTypeDefEnv =
+relation Subst_externMethodTypeDefEnv: externMethodTypeDefEnv |- externMethodTypeDefEnv : externMethodTypeDefEnv
 
-  clause 0 : (externMethodTypeDefEnv_extern, set<pair<callableId, externMethodTypeDefIR>>) = externMethodTypeDefEnv_extern
-  -- if (set<pair<callableId, externMethodTypeDefIR>> = `{ [] `})
+  rulegroup
 
-  clause 1 : (externMethodTypeDefEnv_extern, `{ pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*} `}) = $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern_subst, `{ callableId_init_t ':' externMethodTypeDefIR_init_t*{callableId_init_t <- callableId_init_t*, externMethodTypeDefIR_init_t <- externMethodTypeDefIR_init_t*} `})
-  -- if pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*} matches _ :: _
-  -- let callableId_init_h ':' externMethodTypeDefIR_init_h :: callableId_init_t ':' externMethodTypeDefIR_init_t*{callableId_init_t <- callableId_init_t*, externMethodTypeDefIR_init_t <- externMethodTypeDefIR_init_t*} = pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*}
-  -- let nameIR_init_h `( _id*{_id <- _id*} `) = callableId_init_h
-  -- let (callableId, externMethodTypeDefIR)?{(callableId, externMethodTypeDefIR) <- (callableId, externMethodTypeDefIR)?} = $find_non_overloaded<externMethodTypeDefIR>(externMethodTypeDefEnv_extern, nameIR_init_h)
-  -- if (callableId, externMethodTypeDefIR)?{(callableId, externMethodTypeDefIR) <- (callableId, externMethodTypeDefIR)?} matches (_)
-  -- let ?((callableId, externMethodTypeDefIR_abstract)) = (callableId, externMethodTypeDefIR)?{(callableId, externMethodTypeDefIR) <- (callableId, externMethodTypeDefIR)?}
-  -- let externMethodTypeDefIR = externMethodTypeDefIR_abstract
-  -- if externMethodTypeDefIR matches EXTERN_METHOD ABSTRACT % `< % ',' % `> `( % `) ':' %
-  -- let EXTERN_METHOD ABSTRACT nameIR `< typeId_expl*{typeId_expl <- typeId_expl*} ',' typeId_impl*{typeId_impl <- typeId_impl*} `> `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = externMethodTypeDefIR
-  -- let externMethodTypeDefIR_concrete = EXTERN_METHOD nameIR `< typeId_expl*{typeId_expl <- typeId_expl*} ',' typeId_impl*{typeId_impl <- typeId_impl*} `> `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret
-  -- if ExternMethodTypeDef_alpha: externMethodTypeDefIR_concrete ~~ externMethodTypeDefIR_init_h holds
-  -- let externMethodTypeDefEnv_extern_subst = $update_map<callableId, externMethodTypeDefIR>(externMethodTypeDefEnv_extern, callableId, externMethodTypeDefIR_concrete)
+   match
+
+    (signature) externMethodTypeDefEnv_extern |- `{ pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*} `} : %
+    externMethodTypeDefEnv_extern |- `{ pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*} `} : %
+
+   paths
+
+    rulepath nil
+    -- if (pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*} = [])
+    -- output: % |- % : externMethodTypeDefEnv_extern
+
+    rulepath cons
+    -- let pair<callableId, externMethodTypeDefIR>'*{pair<callableId, externMethodTypeDefIR>' <- pair<callableId, externMethodTypeDefIR>'*} = pair<callableId, externMethodTypeDefIR>*{pair<callableId, externMethodTypeDefIR> <- pair<callableId, externMethodTypeDefIR>*}
+    -- if pair<callableId, externMethodTypeDefIR>'*{pair<callableId, externMethodTypeDefIR>' <- pair<callableId, externMethodTypeDefIR>'*} matches _ :: _
+    -- let callableId_init_h ':' externMethodTypeDefIR_init_h :: callableId_init_t ':' externMethodTypeDefIR_init_t*{callableId_init_t <- callableId_init_t*, externMethodTypeDefIR_init_t <- externMethodTypeDefIR_init_t*} = pair<callableId, externMethodTypeDefIR>'*{pair<callableId, externMethodTypeDefIR>' <- pair<callableId, externMethodTypeDefIR>'*}
+    -- let nameIR_init_h `( _id*{_id <- _id*} `) = callableId_init_h
+    -- let (callableId, externMethodTypeDefIR)?{(callableId, externMethodTypeDefIR) <- (callableId, externMethodTypeDefIR)?} = $find_non_overloaded<externMethodTypeDefIR>(externMethodTypeDefEnv_extern, nameIR_init_h)
+    -- if (callableId, externMethodTypeDefIR)?{(callableId, externMethodTypeDefIR) <- (callableId, externMethodTypeDefIR)?} matches (_)
+    -- let ?((callableId, externMethodTypeDefIR_abstract)) = (callableId, externMethodTypeDefIR)?{(callableId, externMethodTypeDefIR) <- (callableId, externMethodTypeDefIR)?}
+    -- let externMethodTypeDefIR = externMethodTypeDefIR_abstract
+    -- if externMethodTypeDefIR matches EXTERN_METHOD ABSTRACT % `< % ',' % `> `( % `) ':' %
+    -- let EXTERN_METHOD ABSTRACT nameIR `< typeId_expl*{typeId_expl <- typeId_expl*} ',' typeId_impl*{typeId_impl <- typeId_impl*} `> `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = externMethodTypeDefIR
+    -- let externMethodTypeDefIR_concrete = EXTERN_METHOD nameIR `< typeId_expl*{typeId_expl <- typeId_expl*} ',' typeId_impl*{typeId_impl <- typeId_impl*} `> `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret
+    -- if ExternMethodTypeDef_alpha: externMethodTypeDefIR_concrete ~~ externMethodTypeDefIR_init_h holds
+    -- let externMethodTypeDefEnv_extern_subst = $update_map<callableId, externMethodTypeDefIR>(externMethodTypeDefEnv_extern, callableId, externMethodTypeDefIR_concrete)
+    -- Subst_externMethodTypeDefEnv: externMethodTypeDefEnv_extern_subst |- `{ callableId_init_t ':' externMethodTypeDefIR_init_t*{callableId_init_t <- callableId_init_t*, externMethodTypeDefIR_init_t <- externMethodTypeDefIR_init_t*} `} : externMethodTypeDefEnv_extern_subst_t
+    -- output: % |- % : externMethodTypeDefEnv_extern_subst_t
 
 relation InstDecl_objectInitializer_ok: cursor typingContext |- annotationList prefixedTypeName `< typeArgumentList `> `( argumentList `) name '=' `{ objectDeclarationList `} ';' : typingContext instantiationIR
 
@@ -22834,7 +22943,7 @@ relation InstDecl_objectInitializer_ok: cursor typingContext |- annotationList p
     -- let EXTERN typeId_extern `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> externMethodTypeDefEnv_extern = typeIR as externObjectTypeIR
     -- let TC_1 = $add_var_t(LOCAL, TC_0, "this", _EMPTY typeIR_object CTK ?())
     -- ObjectDeclList_ok: p TC_1 |- objectDeclarationList : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*}
-    -- let externMethodTypeDefEnv_init_subst = $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
+    -- Subst_externMethodTypeDefEnv: externMethodTypeDefEnv_extern |- externMethodTypeDefEnv_init : externMethodTypeDefEnv_init_subst
     -- let typeIR_object_init = EXTERN typeId_extern `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> externMethodTypeDefEnv_init_subst as typeIR
     -- if $is_concrete_extern_object(typeIR_object_init)
     -- let nameIR = $name(name)
@@ -22873,7 +22982,7 @@ relation Enum_serializable_field_ok: typingContext nameIR typeIR |- namedExpress
 
     rulepath
     -- Expr_ok: BLOCK TC_0 |- expression : typedExpressionIR
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR, typeIR)
+    -- Cast_unary: `( typeIR `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- if (LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_cast))
@@ -22987,19 +23096,21 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     rulepath mask
     -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
-    -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
-    -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
-    -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask)
-    -- if (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)
-    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?}
-    -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
+    -- Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-    -- let ?(typedExpressionIR_l_casted) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
+    -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-    -- let ?(typedExpressionIR_r_casted) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask)
+    -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
+    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
+    -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- Cast_unary: `( typeIR_key `) typedExpressionIR_l_reduced : typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?}
+    -- if typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} matches (_)
+    -- let ?(typedExpressionIR_l_casted) = typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?}
+    -- Cast_unary: `( typeIR_key `) typedExpressionIR_r_reduced : typedExpressionIR'''?{typedExpressionIR''' <- typedExpressionIR'''?}
+    -- if typedExpressionIR'''?{typedExpressionIR''' <- typedExpressionIR'''?} matches (_)
+    -- let ?(typedExpressionIR_r_casted) = typedExpressionIR'''?{typedExpressionIR''' <- typedExpressionIR'''?}
     -- output: % % |- % : typedExpressionIR_l_casted '&&&' typedExpressionIR_r_casted
 
   rulegroup range
@@ -23016,20 +23127,22 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     rulepath range
     -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- Cast_binary: typedExpressionIR_l ',' typedExpressionIR_r : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} ',' typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_range)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
-    -- let ?((typedExpressionIR_l_cast, typedExpressionIR_r_cast)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
-    -- let (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_range)
-    -- if (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?} matches (_)
-    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)'?{(typedExpressionIR, typedExpressionIR)' <- (typedExpressionIR, typedExpressionIR)'?}
+    -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
     -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if (typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced))
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
-    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-    -- let ?(typedExpressionIR_l_casted) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
-    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-    -- let ?(typedExpressionIR_r_casted) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- Cast_unary: `( typeIR_key `) typedExpressionIR_l_reduced : typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?}
+    -- if typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} matches (_)
+    -- let ?(typedExpressionIR_l_casted) = typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?}
+    -- Cast_unary: `( typeIR_key `) typedExpressionIR_r_reduced : typedExpressionIR'''?{typedExpressionIR''' <- typedExpressionIR'''?}
+    -- if typedExpressionIR'''?{typedExpressionIR''' <- typedExpressionIR'''?} matches (_)
+    -- let ?(typedExpressionIR_r_casted) = typedExpressionIR'''?{typedExpressionIR''' <- typedExpressionIR'''?}
     -- output: % % |- % : typedExpressionIR_l_casted '..' typedExpressionIR_r_casted
 
   rulegroup default
@@ -23521,10 +23634,10 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey '@'
     -- let LPM n = matchMode
     -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l, typeIR_key)
+    -- Cast_unary: `( typeIR_key `) typedExpressionIR_l : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r, typeIR_key)
+    -- Cast_unary: `( typeIR_key `) typedExpressionIR_r : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask)
@@ -23545,10 +23658,10 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey '@'
     -- if (t = "ternary")
     -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l, typeIR_key)
+    -- Cast_unary: `( typeIR_key `) typedExpressionIR_l : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r, typeIR_key)
+    -- Cast_unary: `( typeIR_key `) typedExpressionIR_r : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask)
@@ -23571,10 +23684,10 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey '@'
     rulepath range
     -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l, typeIR_key)
+    -- Cast_unary: `( typeIR_key `) typedExpressionIR_l : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_l_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r, typeIR_key)
+    -- Cast_unary: `( typeIR_key `) typedExpressionIR_r : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_r_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_range)
@@ -23785,46 +23898,546 @@ def $empty_constraint(typeId*) : constraint =
 
 syntax inference = map<typeId, typeIR>
 
-def $infer(typeId*, parameterIR*, parameterIR*, argumentIR*) : inference =
+relation Infer: typeId* |- parameterIR* ',' parameterIR* '@' argumentIR* : inference
 
-  clause 0 : (typeId*{typeId <- typeId*}, parameterIR*{parameterIR <- parameterIR*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}) = $empty_map<typeId, typeIR>
-  -- if typeId*{typeId <- typeId*} matches []
+  rulegroup empty
 
-  clause 1 : (typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR*{parameterIR <- parameterIR*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}) = inference_resolved
-  -- if (typeId_infer*{typeId_infer <- typeId_infer*} =/= [])
-  -- let strictness_init = $empty_strictness(typeId_infer*{typeId_infer <- typeId_infer*})
-  -- let B = $free_parameterIRs(parameterIR*{parameterIR <- parameterIR*})
-  -- let B_optional = $free_parameterIRs(parameterIR_optional*{parameterIR_optional <- parameterIR_optional*})
-  -- let `{ typeId_free*{typeId_free <- typeId_free*} `} = $diff_set<typeId>(B_optional, B)
-  -- let strict*{strict <- strict*} = $repeat_<strict>(LAX, |typeId_free*{typeId_free <- typeId_free*}|)
-  -- let strictness = $adds_map<typeId, strict>(strictness_init, typeId_free*{typeId_free <- typeId_free*}, strict*{strict <- strict*})
-  -- let constraint_init = $empty_constraint(typeId_infer*{typeId_infer <- typeId_infer*})
-  -- if (|argumentIR*{argumentIR <- argumentIR*}| = |parameterIR*{parameterIR <- parameterIR*}|)
-  -- (let constraint_pair = $infer_pair(constraint_init, parameterIR, argumentIR))*{argumentIR <- argumentIR*, parameterIR <- parameterIR*, constraint_pair -> constraint_pair*}
-  -- let constraint_inferred = $merge_constraints(constraint_init, constraint_pair*{constraint_pair <- constraint_pair*})
-  -- let inference = $resolve_constraint(strictness, constraint_inferred)
-  -- let inference_resolved = $resolve_inference(inference)
+   match
 
-def $infer_pair(constraint, parameterIR, argumentIR) : constraint =
+    (signature) [] |- _parameterIR*{_parameterIR <- _parameterIR*} ',' _parameterIR'*{_parameterIR' <- _parameterIR'*} '@' _argumentIR*{_argumentIR <- _argumentIR*} : %
+    typeId*{typeId <- typeId*} |- _parameterIR*{_parameterIR <- _parameterIR*} ',' _parameterIR'*{_parameterIR' <- _parameterIR'*} '@' _argumentIR*{_argumentIR <- _argumentIR*} : %
+    -- if typeId*{typeId <- typeId*} matches []
 
-  clause 0 : (constraint, parameterIR, argumentIR) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-  -- if argumentIR <: typedExpressionIR
-  -- let typedExpressionIR = argumentIR as typedExpressionIR
-  -- let _annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR
-  -- let typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR)
+   paths
 
-  clause 1 : (constraint, parameterIR, argumentIR) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-  -- if argumentIR matches % '=' %
-  -- let nameIR '=' typedExpressionIR = argumentIR
-  -- let _annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR
-  -- let typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR)
+    rulepath empty
+    -- output: % |- % ',' % '@' % : `{ [] `}
 
-  clause 2 : (constraint, parameterIR, argumentIR) = constraint
-  -- if argumentIR matches % '=' '_'
-  -- let nameIR '=' '_' = argumentIR
+  rulegroup nonempty
 
-  clause 3 : (constraint, parameterIR, argumentIR) = constraint
-  -- if argumentIR matches '_'
+   match
+
+    (signature) typeId_infer*{typeId_infer <- typeId_infer*} |- parameterIR*{parameterIR <- parameterIR*} ',' parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} '@' argumentIR*{argumentIR <- argumentIR*} : %
+    typeId_infer*{typeId_infer <- typeId_infer*} |- parameterIR*{parameterIR <- parameterIR*} ',' parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} '@' argumentIR*{argumentIR <- argumentIR*} : %
+
+   paths
+
+    rulepath nonempty
+    -- if (typeId_infer*{typeId_infer <- typeId_infer*} =/= [])
+    -- let strictness_init = $empty_strictness(typeId_infer*{typeId_infer <- typeId_infer*})
+    -- let B = $free_parameterIRs(parameterIR*{parameterIR <- parameterIR*})
+    -- let B_optional = $free_parameterIRs(parameterIR_optional*{parameterIR_optional <- parameterIR_optional*})
+    -- let `{ typeId_free*{typeId_free <- typeId_free*} `} = $diff_set<typeId>(B_optional, B)
+    -- let strict*{strict <- strict*} = $repeat_<strict>(LAX, |typeId_free*{typeId_free <- typeId_free*}|)
+    -- let strictness = $adds_map<typeId, strict>(strictness_init, typeId_free*{typeId_free <- typeId_free*}, strict*{strict <- strict*})
+    -- let constraint_init = $empty_constraint(typeId_infer*{typeId_infer <- typeId_infer*})
+    -- if (|argumentIR*{argumentIR <- argumentIR*}| = |parameterIR*{parameterIR <- parameterIR*}|)
+    -- (Infer_pair: constraint_init |- parameterIR '@' argumentIR : constraint_pair)*{argumentIR <- argumentIR*, parameterIR <- parameterIR*, constraint_pair -> constraint_pair*}
+    -- Merge_constraints: |- constraint_init ',' constraint_pair*{constraint_pair <- constraint_pair*} : constraint_inferred
+    -- let inference = $resolve_constraint(strictness, constraint_inferred)
+    -- let inference_resolved = $resolve_inference(inference)
+    -- output: % |- % ',' % '@' % : inference_resolved
+
+relation Infer_pair: constraint |- parameterIR '@' argumentIR : constraint
+
+  rulegroup expression
+
+   match
+
+    (signature) constraint |- parameterIR '@' typedExpressionIR as argumentIR : %
+    constraint |- parameterIR '@' argumentIR : %
+    -- if argumentIR <: typedExpressionIR
+    -- let typedExpressionIR = argumentIR as typedExpressionIR
+
+   paths
+
+    rulepath expression
+    -- let _annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR
+    -- let typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR)
+    -- Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup named-expression
+
+   match
+
+    (signature) constraint |- parameterIR '@' nameIR '=' typedExpressionIR : %
+    constraint |- parameterIR '@' argumentIR : %
+    -- if argumentIR matches % '=' %
+    -- let nameIR '=' typedExpressionIR = argumentIR
+
+   paths
+
+    rulepath named-expression
+    -- let _annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR
+    -- let typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR)
+    -- Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup named-missing
+
+   match
+
+    (signature) constraint |- _parameterIR '@' _nameIR '=' '_' : %
+    constraint |- _parameterIR '@' argumentIR : %
+    -- if argumentIR matches % '=' '_'
+    -- let _nameIR '=' '_' = argumentIR
+
+   paths
+
+    rulepath named-missing
+    -- output: % |- % '@' % : constraint
+
+  rulegroup missing
+
+   match
+
+    (signature) constraint |- _parameterIR '@' '_' : %
+    constraint |- _parameterIR '@' argumentIR : %
+    -- if argumentIR matches '_'
+
+   paths
+
+    rulepath missing
+    -- output: % |- % '@' % : constraint
+
+relation Gen_constraint: constraint |- typeIR* '@' typeIR* : constraint
+
+  rulegroup
+
+   match
+
+    (signature) constraint |- typeIR_param*{typeIR_param <- typeIR_param*} '@' typeIR_arg*{typeIR_arg <- typeIR_arg*} : %
+    constraint |- typeIR_param*{typeIR_param <- typeIR_param*} '@' typeIR_arg*{typeIR_arg <- typeIR_arg*} : %
+
+   paths
+
+    rulepath
+    -- if (|typeIR_arg*{typeIR_arg <- typeIR_arg*}| = |typeIR_param*{typeIR_param <- typeIR_param*}|)
+    -- (Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_pair)*{typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*, constraint_pair -> constraint_pair*}
+    -- Merge_constraints: |- constraint ',' constraint_pair*{constraint_pair <- constraint_pair*} : constraint_merged
+    -- output: % |- % '@' % : constraint_merged
+
+relation Gen_constraint_pair: constraint |- typeIR '@' typeIR : constraint
+
+  rulegroup name
+
+   match
+
+    (signature) constraint |- _NAME typeId_param as typeIR '@' typeIR_arg : %
+    constraint |- typeIR '@' typeIR_arg : %
+    -- if typeIR <: nameTypeIR
+    -- let _NAME typeId_param = typeIR as nameTypeIR
+
+   paths
+
+    rulepath name
+    -- if $in_set<typeId>(typeId_param, $dom_map<typeId, infer>(constraint))
+    -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_param, KNOWN AS typeIR_arg)
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup typedef-param
+
+   match
+
+    (signature) constraint |- TYPEDEF _typeId typeIR_param as typeIR '@' typeIR_arg : %
+    constraint |- typeIR '@' typeIR_arg : %
+    -- if typeIR <: typedefTypeIR
+    -- let TYPEDEF _typeId typeIR_param = typeIR as typedefTypeIR
+
+   paths
+
+    rulepath typedef-param
+    -- Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup typedef-arg
+
+   match
+
+    (signature) constraint |- typeIR_param '@' TYPEDEF _typeId typeIR_arg as typeIR : %
+    constraint |- typeIR_param '@' typeIR : %
+    -- if typeIR <: typedefTypeIR
+    -- let TYPEDEF _typeId typeIR_arg = typeIR as typedefTypeIR
+
+   paths
+
+    rulepath typedef-arg
+    -- if ~typeIR_param <: nameTypeIR
+    -- if ~typeIR_param <: typedefTypeIR
+    -- Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup newtype
+
+   match
+
+    (signature) constraint |- TYPE typeId typeIR_param as typeIR '@' TYPE typeId typeIR_arg as typeIR : %
+    constraint |- typeIR '@' typeIR' : %
+    -- if typeIR <: newTypeIR
+    -- let TYPE typeId typeIR_param = typeIR as newTypeIR
+    -- if typeIR' <: newTypeIR
+    -- let TYPE typeId' typeIR_arg = typeIR' as newTypeIR
+    -- if (typeId = typeId')
+
+   paths
+
+    rulepath newtype
+    -- Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup list
+
+   match
+
+    (signature) constraint |- LIST `< typeIR_param `> as typeIR '@' LIST `< typeIR_arg `> as typeIR : %
+    constraint |- typeIR '@' typeIR' : %
+    -- if typeIR <: listTypeIR
+    -- let LIST `< typeIR_param `> = typeIR as listTypeIR
+    -- if typeIR' <: listTypeIR
+    -- let LIST `< typeIR_arg `> = typeIR' as listTypeIR
+
+   paths
+
+    rulepath list
+    -- Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup tuple
+
+   match
+
+    (signature) constraint |- TUPLE `< typeIR_param*{typeIR_param <- typeIR_param*} `> as typeIR '@' TUPLE `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> as typeIR : %
+    constraint |- typeIR '@' typeIR' : %
+    -- if typeIR <: tupleTypeIR
+    -- let TUPLE `< typeIR_param*{typeIR_param <- typeIR_param*} `> = typeIR as tupleTypeIR
+    -- if typeIR' <: tupleTypeIR
+    -- let TUPLE `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> = typeIR' as tupleTypeIR
+
+   paths
+
+    rulepath tuple
+    -- Gen_constraint: constraint |- typeIR_param*{typeIR_param <- typeIR_param*} '@' typeIR_arg*{typeIR_arg <- typeIR_arg*} : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup array
+
+   match
+
+    (signature) constraint |- ARRAY typeIR_param `[ n_size `] as typeIR '@' ARRAY typeIR_arg `[ n_size `] as typeIR : %
+    constraint |- typeIR '@' typeIR' : %
+    -- if typeIR <: arrayTypeIR
+    -- let ARRAY typeIR_param `[ n_size `] = typeIR as arrayTypeIR
+    -- if typeIR' <: arrayTypeIR
+    -- let ARRAY typeIR_arg `[ n_size' `] = typeIR' as arrayTypeIR
+    -- if (n_size = n_size')
+
+   paths
+
+    rulepath array
+    -- Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup header-stack
+
+   match
+
+    (signature) constraint |- HEADER_STACK typeIR_param `[ n_size `] as typeIR '@' HEADER_STACK typeIR_arg `[ n_size `] as typeIR : %
+    constraint |- typeIR '@' typeIR' : %
+    -- if typeIR <: headerStackTypeIR
+    -- let HEADER_STACK typeIR_param `[ n_size `] = typeIR as headerStackTypeIR
+    -- if typeIR' <: headerStackTypeIR
+    -- let HEADER_STACK typeIR_arg `[ n_size' `] = typeIR' as headerStackTypeIR
+    -- if (n_size = n_size')
+
+   paths
+
+    rulepath header-stack
+    -- Gen_constraint_pair: constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup struct
+
+   match
+
+    (signature) constraint |- STRUCT typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR '@' STRUCT typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} as typeIR : %
+    constraint |- typeIR '@' typeIR' : %
+    -- if typeIR <: structTypeIR
+    -- let STRUCT typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as structTypeIR
+    -- if typeIR' <: structTypeIR
+    -- let STRUCT typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} = typeIR' as structTypeIR
+    -- if (typeId = typeId')
+
+   paths
+
+    rulepath struct
+    -- Gen_constraint: constraint |- typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} '@' typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup header
+
+   match
+
+    (signature) constraint |- HEADER typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR '@' HEADER typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} as typeIR : %
+    constraint |- typeIR '@' typeIR' : %
+    -- if typeIR <: headerTypeIR
+    -- let HEADER typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerTypeIR
+    -- if typeIR' <: headerTypeIR
+    -- let HEADER typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} = typeIR' as headerTypeIR
+    -- if (typeId = typeId')
+
+   paths
+
+    rulepath header
+    -- Gen_constraint: constraint |- typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} '@' typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup header-union
+
+   match
+
+    (signature) constraint |- HEADER_UNION typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR '@' HEADER_UNION typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} as typeIR : %
+    constraint |- typeIR '@' typeIR' : %
+    -- if typeIR <: headerUnionTypeIR
+    -- let HEADER_UNION typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerUnionTypeIR
+    -- if typeIR' <: headerUnionTypeIR
+    -- let HEADER_UNION typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} = typeIR' as headerUnionTypeIR
+    -- if (typeId = typeId')
+
+   paths
+
+    rulepath header-union
+    -- Gen_constraint: constraint |- typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} '@' typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup extern
+
+   match
+
+    (signature) constraint |- EXTERN typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} `} as typeIR '@' EXTERN typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _pair<callableId, externMethodTypeDefIR>'*{_pair<callableId, externMethodTypeDefIR>' <- _pair<callableId, externMethodTypeDefIR>'*} `} as typeIR : %
+    constraint |- typeIR '@' typeIR' : %
+    -- if typeIR <: externObjectTypeIR
+    -- let EXTERN typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} `} = typeIR as externObjectTypeIR
+    -- if typeIR' <: externObjectTypeIR
+    -- let EXTERN typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _pair<callableId, externMethodTypeDefIR>'*{_pair<callableId, externMethodTypeDefIR>' <- _pair<callableId, externMethodTypeDefIR>'*} `} = typeIR' as externObjectTypeIR
+    -- if (typeId = typeId')
+
+   paths
+
+    rulepath extern
+    -- Gen_constraint: constraint |- typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} '@' typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup parser
+
+   match
+
+    (signature) constraint |- PARSER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) as typeIR '@' PARSER _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) as typeIR : %
+    constraint |- typeIR '@' typeIR' : %
+    -- if typeIR <: parserObjectTypeIR
+    -- let PARSER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) = typeIR as parserObjectTypeIR
+    -- if typeIR' <: parserObjectTypeIR
+    -- let PARSER _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) = typeIR' as parserObjectTypeIR
+
+   paths
+
+    rulepath parser
+    -- (let _annotationList direction typeIR_param _id _parameterInitializerOptIR = parameterIR_param)*{parameterIR_param <- parameterIR_param*, _annotationList -> _annotationList*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, direction -> direction*, typeIR_param -> typeIR_param*}
+    -- (let _annotationList' direction' typeIR_arg _id' _parameterInitializerOptIR' = parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _id' -> _id'*, _parameterInitializerOptIR' -> _parameterInitializerOptIR'*, direction' -> direction'*, typeIR_arg -> typeIR_arg*}
+    -- if (|direction*{direction <- direction*}| = |direction'*{direction' <- direction'*}|)
+    -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
+    -- Gen_constraint: constraint |- typeIR_param*{typeIR_param <- typeIR_param*} '@' typeIR_arg*{typeIR_arg <- typeIR_arg*} : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup control
+
+   match
+
+    (signature) constraint |- CONTROL _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) as typeIR '@' CONTROL _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) as typeIR : %
+    constraint |- typeIR '@' typeIR' : %
+    -- if typeIR <: controlObjectTypeIR
+    -- let CONTROL _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) = typeIR as controlObjectTypeIR
+    -- if typeIR' <: controlObjectTypeIR
+    -- let CONTROL _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) = typeIR' as controlObjectTypeIR
+
+   paths
+
+    rulepath control
+    -- (let _annotationList direction typeIR_param _id _parameterInitializerOptIR = parameterIR_param)*{parameterIR_param <- parameterIR_param*, _annotationList -> _annotationList*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, direction -> direction*, typeIR_param -> typeIR_param*}
+    -- (let _annotationList' direction' typeIR_arg _id' _parameterInitializerOptIR' = parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _id' -> _id'*, _parameterInitializerOptIR' -> _parameterInitializerOptIR'*, direction' -> direction'*, typeIR_arg -> typeIR_arg*}
+    -- if (|direction*{direction <- direction*}| = |direction'*{direction' <- direction'*}|)
+    -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
+    -- Gen_constraint: constraint |- typeIR_param*{typeIR_param <- typeIR_param*} '@' typeIR_arg*{typeIR_arg <- typeIR_arg*} : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  rulegroup package
+
+   match
+
+    (signature) constraint |- PACKAGE _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ typeIR_param*{typeIR_param <- typeIR_param*} `} as typeIR '@' PACKAGE _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `{ typeIR_arg*{typeIR_arg <- typeIR_arg*} `} as typeIR : %
+    constraint |- typeIR '@' typeIR' : %
+    -- if typeIR <: packageObjectTypeIR
+    -- let PACKAGE _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ typeIR_param*{typeIR_param <- typeIR_param*} `} = typeIR as packageObjectTypeIR
+    -- if typeIR' <: packageObjectTypeIR
+    -- let PACKAGE _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `{ typeIR_arg*{typeIR_arg <- typeIR_arg*} `} = typeIR' as packageObjectTypeIR
+
+   paths
+
+    rulepath package
+    -- Gen_constraint: constraint |- typeIR_param*{typeIR_param <- typeIR_param*} '@' typeIR_arg*{typeIR_arg <- typeIR_arg*} : constraint_updated
+    -- output: % |- % '@' % : constraint_updated
+
+  elsegroup
+
+  rulegroup default
+
+   match
+
+    (signature) constraint |- _typeIR '@' _typeIR' : %
+    constraint |- _typeIR '@' _typeIR' : %
+
+   paths
+
+    rulepath default
+    -- output: % |- % '@' % : constraint
+
+relation Merge_constraint: |- constraint ',' constraint : constraint
+
+  rulegroup
+
+   match
+
+    (signature) |- constraint_pre ',' constraint_post : %
+    |- constraint_pre ',' constraint_post : %
+
+   paths
+
+    rulepath
+    -- let `{ typeId ':' infer_pre*{infer_pre <- infer_pre*, typeId <- typeId*} `} = constraint_pre
+    -- let `{ typeId_post*{typeId_post <- typeId_post*} `} = $dom_map<typeId, infer>(constraint_post)
+    -- if $eq_set<typeId>(`{ typeId*{typeId <- typeId*} `}, `{ typeId_post*{typeId_post <- typeId_post*} `})
+    -- (let infer'?{infer' <- infer'?} = $find_map<typeId, infer>(constraint_post, typeId))*{typeId <- typeId*, infer'? -> infer'?*}
+    -- (if infer'?{infer' <- infer'?} matches (_))*{infer'? <- infer'?*}
+    -- (let ?(infer_post) = infer'?{infer' <- infer'?})*{infer'? <- infer'?*, infer_post -> infer_post*}
+    -- (Merge_infer: |- infer_pre ',' infer_post : infer)*{infer_post <- infer_post*, infer_pre <- infer_pre*, infer -> infer*}
+    -- output: |- % ',' % : `{ typeId ':' infer*{infer <- infer*, typeId <- typeId*} `}
+
+relation Merge_constraints: |- constraint ',' constraint* : constraint
+
+  rulegroup nil
+
+   match
+
+    (signature) |- constraint_pre ',' [] : %
+    |- constraint_pre ',' constraint*{constraint <- constraint*} : %
+    -- if constraint*{constraint <- constraint*} matches []
+
+   paths
+
+    rulepath nil
+    -- output: |- % ',' % : constraint_pre
+
+  rulegroup cons
+
+   match
+
+    (signature) |- constraint_pre_0 ',' constraint_post_h :: constraint_post_t*{constraint_post_t <- constraint_post_t*} : %
+    |- constraint_pre_0 ',' constraint*{constraint <- constraint*} : %
+    -- if constraint*{constraint <- constraint*} matches _ :: _
+    -- let constraint_post_h :: constraint_post_t*{constraint_post_t <- constraint_post_t*} = constraint*{constraint <- constraint*}
+
+   paths
+
+    rulepath cons
+    -- Merge_constraint: |- constraint_pre_0 ',' constraint_post_h : constraint_pre_1
+    -- Merge_constraints: |- constraint_pre_1 ',' constraint_post_t*{constraint_post_t <- constraint_post_t*} : constraint_pre_2
+    -- output: |- % ',' % : constraint_pre_2
+
+relation Merge_infer: |- infer ',' infer : infer
+
+  rulegroup unknown
+
+   match
+
+    (signature) |- UNKNOWN ',' UNKNOWN : %
+    |- infer ',' infer' : %
+    -- if infer matches UNKNOWN
+    -- if infer' matches UNKNOWN
+
+   paths
+
+    rulepath unknown
+    -- output: |- % ',' % : UNKNOWN
+
+  rulegroup known-post
+
+   match
+
+    (signature) |- UNKNOWN ',' KNOWN AS typeIR_post : %
+    |- infer ',' infer' : %
+    -- if infer matches UNKNOWN
+    -- if infer' matches KNOWN AS %
+    -- let KNOWN AS typeIR_post = infer'
+
+   paths
+
+    rulepath known-post
+    -- output: |- % ',' % : KNOWN AS typeIR_post
+
+  rulegroup known-pre
+
+   match
+
+    (signature) |- KNOWN AS typeIR_pre ',' UNKNOWN : %
+    |- infer ',' infer' : %
+    -- if infer matches KNOWN AS %
+    -- let KNOWN AS typeIR_pre = infer
+    -- if infer' matches UNKNOWN
+
+   paths
+
+    rulepath known-pre
+    -- output: |- % ',' % : KNOWN AS typeIR_pre
+
+  rulegroup cast-pre
+
+   match
+
+    (signature) |- KNOWN AS typeIR_pre ',' KNOWN AS typeIR_post : %
+    |- infer ',' infer' : %
+    -- if infer matches KNOWN AS %
+    -- let KNOWN AS typeIR_pre = infer
+    -- if infer' matches KNOWN AS %
+    -- let KNOWN AS typeIR_post = infer'
+
+   paths
+
+    rulepath cast-pre
+    -- Cast_impl: typeIR_pre -> typeIR_post : castResult
+    -- if castResult matches OK %
+    -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult
+    -- output: |- % ',' % : KNOWN AS typeIR_post
+
+  rulegroup cast-post
+
+   match
+
+    (signature) |- KNOWN AS typeIR_pre ',' KNOWN AS typeIR_post : %
+    |- infer ',' infer' : %
+    -- if infer matches KNOWN AS %
+    -- let KNOWN AS typeIR_pre = infer
+    -- if infer' matches KNOWN AS %
+    -- let KNOWN AS typeIR_post = infer'
+
+   paths
+
+    rulepath cast-post
+    -- Cast_impl: typeIR_pre -> typeIR_post : castResult
+    -- if castResult matches FAIL
+    -- Cast_impl: typeIR_post -> typeIR_pre : castResult'
+    -- if castResult' matches OK %
+    -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult'
+    -- output: |- % ',' % : KNOWN AS typeIR_pre
 
 def $resolve_inference(inference) : inference =
 
@@ -23842,208 +24455,6 @@ def $resolve_inference'(typeIR) : typeIR =
   -- let typeIR_resolved = TUPLE `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> as typeIR
 
   clause -1 : (typeIR) = typeIR
-
-def $gen_constraint(constraint, typeIR*, typeIR*) : constraint =
-
-  clause 0 : (constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = $merge_constraints(constraint, constraint_pair*{constraint_pair <- constraint_pair*})
-  -- if (|typeIR_arg*{typeIR_arg <- typeIR_arg*}| = |typeIR_param*{typeIR_param <- typeIR_param*}|)
-  -- (let constraint_pair = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg))*{typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*, constraint_pair -> constraint_pair*}
-
-def $gen_constraint_pair(constraint, typeIR, typeIR) : constraint =
-
-  clause 0 : (constraint, typeIR, typeIR_arg) = $update_map<typeId, infer>(constraint, typeId_param, KNOWN AS typeIR_arg)
-  -- if typeIR <: nameTypeIR
-  -- let _NAME typeId_param = typeIR as nameTypeIR
-  -- if $in_set<typeId>(typeId_param, $dom_map<typeId, infer>(constraint))
-
-  clause 1 : (constraint, typeIR, typeIR_arg) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-  -- if typeIR <: typedefTypeIR
-  -- let TYPEDEF _typeId typeIR_param = typeIR as typedefTypeIR
-
-  clause 2 : (constraint, typeIR_param, typeIR) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-  -- if typeIR <: typedefTypeIR
-  -- let TYPEDEF _typeId typeIR_arg = typeIR as typedefTypeIR
-  -- if ~typeIR_param <: nameTypeIR
-  -- if ~typeIR_param <: typedefTypeIR
-
-  clause 3 : (constraint, typeIR, typeIR') = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-  -- if typeIR <: newTypeIR
-  -- let TYPE typeId typeIR_param = typeIR as newTypeIR
-  -- if typeIR' <: newTypeIR
-  -- let TYPE typeId' typeIR_arg = typeIR' as newTypeIR
-  -- if (typeId = typeId')
-
-  clause 4 : (constraint, typeIR, typeIR') = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-  -- if typeIR <: listTypeIR
-  -- let LIST `< typeIR_param `> = typeIR as listTypeIR
-  -- if typeIR' <: listTypeIR
-  -- let LIST `< typeIR_arg `> = typeIR' as listTypeIR
-
-  clause 5 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
-  -- if typeIR <: tupleTypeIR
-  -- let TUPLE `< typeIR_param*{typeIR_param <- typeIR_param*} `> = typeIR as tupleTypeIR
-  -- if typeIR' <: tupleTypeIR
-  -- let TUPLE `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> = typeIR' as tupleTypeIR
-
-  clause 6 : (constraint, typeIR, typeIR') = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-  -- if typeIR <: arrayTypeIR
-  -- let ARRAY typeIR_param `[ n_size `] = typeIR as arrayTypeIR
-  -- if typeIR' <: arrayTypeIR
-  -- let ARRAY typeIR_arg `[ n_size' `] = typeIR' as arrayTypeIR
-  -- if (n_size = n_size')
-
-  clause 7 : (constraint, typeIR, typeIR') = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-  -- if typeIR <: headerStackTypeIR
-  -- let HEADER_STACK typeIR_param `[ n_size `] = typeIR as headerStackTypeIR
-  -- if typeIR' <: headerStackTypeIR
-  -- let HEADER_STACK typeIR_arg `[ n_size' `] = typeIR' as headerStackTypeIR
-  -- if (n_size = n_size')
-
-  clause 8 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
-  -- if typeIR <: structTypeIR
-  -- let STRUCT typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as structTypeIR
-  -- if typeIR' <: structTypeIR
-  -- let STRUCT typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} = typeIR' as structTypeIR
-  -- if (typeId = typeId')
-
-  clause 9 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
-  -- if typeIR <: headerTypeIR
-  -- let HEADER typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerTypeIR
-  -- if typeIR' <: headerTypeIR
-  -- let HEADER typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} = typeIR' as headerTypeIR
-  -- if (typeId = typeId')
-
-  clause 10 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
-  -- if typeIR <: headerUnionTypeIR
-  -- let HEADER_UNION typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerUnionTypeIR
-  -- if typeIR' <: headerUnionTypeIR
-  -- let HEADER_UNION typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} = typeIR' as headerUnionTypeIR
-  -- if (typeId = typeId')
-
-  clause 11 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
-  -- if typeIR <: externObjectTypeIR
-  -- let EXTERN typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} `} = typeIR as externObjectTypeIR
-  -- if typeIR' <: externObjectTypeIR
-  -- let EXTERN typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _pair<callableId, externMethodTypeDefIR>'*{_pair<callableId, externMethodTypeDefIR>' <- _pair<callableId, externMethodTypeDefIR>'*} `} = typeIR' as externObjectTypeIR
-  -- if (typeId = typeId')
-
-  clause 12 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
-  -- if typeIR <: parserObjectTypeIR
-  -- let PARSER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) = typeIR as parserObjectTypeIR
-  -- if typeIR' <: parserObjectTypeIR
-  -- let PARSER _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) = typeIR' as parserObjectTypeIR
-  -- (let _annotationList direction typeIR_param _id _parameterInitializerOptIR = parameterIR_param)*{parameterIR_param <- parameterIR_param*, _annotationList -> _annotationList*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, direction -> direction*, typeIR_param -> typeIR_param*}
-  -- (let _annotationList' direction' typeIR_arg _id' _parameterInitializerOptIR' = parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _id' -> _id'*, _parameterInitializerOptIR' -> _parameterInitializerOptIR'*, direction' -> direction'*, typeIR_arg -> typeIR_arg*}
-  -- if (|direction*{direction <- direction*}| = |direction'*{direction' <- direction'*}|)
-  -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
-
-  clause 13 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
-  -- if typeIR <: controlObjectTypeIR
-  -- let CONTROL _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) = typeIR as controlObjectTypeIR
-  -- if typeIR' <: controlObjectTypeIR
-  -- let CONTROL _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) = typeIR' as controlObjectTypeIR
-  -- (let _annotationList direction typeIR_param _id _parameterInitializerOptIR = parameterIR_param)*{parameterIR_param <- parameterIR_param*, _annotationList -> _annotationList*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, direction -> direction*, typeIR_param -> typeIR_param*}
-  -- (let _annotationList' direction' typeIR_arg _id' _parameterInitializerOptIR' = parameterIR_arg)*{parameterIR_arg <- parameterIR_arg*, _annotationList' -> _annotationList'*, _id' -> _id'*, _parameterInitializerOptIR' -> _parameterInitializerOptIR'*, direction' -> direction'*, typeIR_arg -> typeIR_arg*}
-  -- if (|direction*{direction <- direction*}| = |direction'*{direction' <- direction'*}|)
-  -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
-
-  clause 14 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
-  -- if typeIR <: packageObjectTypeIR
-  -- let PACKAGE _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ typeIR_param*{typeIR_param <- typeIR_param*} `} = typeIR as packageObjectTypeIR
-  -- if typeIR' <: packageObjectTypeIR
-  -- let PACKAGE _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `{ typeIR_arg*{typeIR_arg <- typeIR_arg*} `} = typeIR' as packageObjectTypeIR
-
-  clause -1 : (constraint, typeIR_param, typeIR_arg) = constraint
-
-def $merge_constraint(constraint, constraint) : constraint =
-
-  clause 0 : (constraint_pre, constraint_post) = $merge_constraint'(constraint_pre, constraint_post, typeId_pre*{typeId_pre <- typeId_pre*}, `{ [] `})
-  -- let `{ typeId_pre*{typeId_pre <- typeId_pre*} `} = $dom_map<typeId, infer>(constraint_pre)
-  -- let `{ typeId_post*{typeId_post <- typeId_post*} `} = $dom_map<typeId, infer>(constraint_post)
-  -- if $eq_set<typeId>(`{ typeId_pre*{typeId_pre <- typeId_pre*} `}, `{ typeId_post*{typeId_post <- typeId_post*} `})
-
-def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint =
-
-  clause 0 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = constraint
-  -- if typeId*{typeId <- typeId*} matches []
-
-  clause 1 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
-  -- if typeId*{typeId <- typeId*} matches _ :: _
-  -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
-  -- if (?(UNKNOWN) = $find_map<typeId, infer>(constraint_pre, typeId_h))
-  -- if (?(UNKNOWN) = $find_map<typeId, infer>(constraint_post, typeId_h))
-  -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, UNKNOWN)
-
-  clause 2 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
-  -- if typeId*{typeId <- typeId*} matches _ :: _
-  -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
-  -- if (?(UNKNOWN) = $find_map<typeId, infer>(constraint_pre, typeId_h))
-  -- let infer'?{infer' <- infer'?} = $find_map<typeId, infer>(constraint_post, typeId_h)
-  -- if infer'?{infer' <- infer'?} matches (_)
-  -- let ?(infer) = infer'?{infer' <- infer'?}
-  -- if infer matches KNOWN AS %
-  -- let KNOWN AS typeIR_post = infer
-  -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_post)
-
-  clause 3 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
-  -- if typeId*{typeId <- typeId*} matches _ :: _
-  -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
-  -- let infer'?{infer' <- infer'?} = $find_map<typeId, infer>(constraint_pre, typeId_h)
-  -- if infer'?{infer' <- infer'?} matches (_)
-  -- let ?(infer) = infer'?{infer' <- infer'?}
-  -- if infer matches KNOWN AS %
-  -- let KNOWN AS typeIR_pre = infer
-  -- if (?(UNKNOWN) = $find_map<typeId, infer>(constraint_post, typeId_h))
-  -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_pre)
-
-  clause 4 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
-  -- if typeId*{typeId <- typeId*} matches _ :: _
-  -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
-  -- let infer'?{infer' <- infer'?} = $find_map<typeId, infer>(constraint_pre, typeId_h)
-  -- if infer'?{infer' <- infer'?} matches (_)
-  -- let ?(infer) = infer'?{infer' <- infer'?}
-  -- if infer matches KNOWN AS %
-  -- let KNOWN AS typeIR_pre = infer
-  -- let infer'''?{infer''' <- infer'''?} = $find_map<typeId, infer>(constraint_post, typeId_h)
-  -- if infer'''?{infer''' <- infer'''?} matches (_)
-  -- let ?(infer'') = infer'''?{infer''' <- infer'''?}
-  -- if infer'' matches KNOWN AS %
-  -- let KNOWN AS typeIR_post = infer''
-  -- Cast_impl: typeIR_pre -> typeIR_post : castResult
-  -- if castResult matches OK %
-  -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult
-  -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_post)
-
-  clause 5 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
-  -- if typeId*{typeId <- typeId*} matches _ :: _
-  -- let typeId_h :: typeId_t*{typeId_t <- typeId_t*} = typeId*{typeId <- typeId*}
-  -- let infer'?{infer' <- infer'?} = $find_map<typeId, infer>(constraint_pre, typeId_h)
-  -- if infer'?{infer' <- infer'?} matches (_)
-  -- let ?(infer) = infer'?{infer' <- infer'?}
-  -- if infer matches KNOWN AS %
-  -- let KNOWN AS typeIR_pre = infer
-  -- let infer'''?{infer''' <- infer'''?} = $find_map<typeId, infer>(constraint_post, typeId_h)
-  -- if infer'''?{infer''' <- infer'''?} matches (_)
-  -- let ?(infer'') = infer'''?{infer''' <- infer'''?}
-  -- if infer'' matches KNOWN AS %
-  -- let KNOWN AS typeIR_post = infer''
-  -- Cast_impl: typeIR_pre -> typeIR_post : castResult
-  -- if castResult matches FAIL
-  -- Cast_impl: typeIR_post -> typeIR_pre : castResult'
-  -- if castResult' matches OK %
-  -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult'
-  -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_pre)
-
-def $merge_constraints(constraint, constraint*) : constraint =
-
-  clause 0 : (constraint_pre, constraint*{constraint <- constraint*}) = constraint_pre
-  -- if constraint*{constraint <- constraint*} matches []
-
-  clause 1 : (constraint_pre_0, constraint*{constraint <- constraint*}) = constraint_pre_2
-  -- if constraint*{constraint <- constraint*} matches _ :: _
-  -- let constraint_post_h :: constraint_post_t*{constraint_post_t <- constraint_post_t*} = constraint*{constraint <- constraint*}
-  -- let constraint_pre_1 = $merge_constraint(constraint_pre_0, constraint_post_h)
-  -- let constraint_pre_2 = $merge_constraints(constraint_pre_1, constraint_post_t*{constraint_post_t <- constraint_post_t*})
 
 def $resolve_constraint(strictness, constraint) : inference =
 
@@ -33602,75 +34013,152 @@ relation Program_init: |- p4program : evalContext store
     -- let EC = {GLOBAL globalEvalLayer, BLOCK blockEvalLayer, LOCAL localEvalLayer}
     -- output: |- % : EC STO
 
-def $cast_control_plane(evalContext, typedExpressionIR, typeIR) : typedExpressionIR? =
+relation Cast_control_plane: evalContext |- `( typeIR `) typedExpressionIR : typedExpressionIR?
 
-  clause 0 : (EC, typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR, typeIR_to)
-  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-  -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+  rulegroup ok
 
-  clause 1 : (EC, typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
-  -- if (?() = $cast_unary(typedExpressionIR, typeIR_to))
-  -- if (BOOL as typeIR = typeIR_to)
-  -- if (INT as typeIR = $type_of_typedExpressionIR(typedExpressionIR))
-  -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
-  -- let typedExpressionIR_cast = `( typeIR_to `) typedExpressionIR as expressionIR '#' `( typeIR_to ctk `)
+   match
 
-  clause 2 : (EC, typedExpressionIR, typeIR_to) = ?(typedExpressionIR_error)
-  -- if (?() = $cast_unary(typedExpressionIR, typeIR_to))
-  -- if (ERROR as typeIR = typeIR_to)
-  -- let expressionIR '#' `( typeIR ctk `) = typedExpressionIR
-  -- if expressionIR <: integerLiteral
-  -- let integerLiteral = expressionIR as integerLiteral
-  -- if integerLiteral matches D %
-  -- let D i = integerLiteral
-  -- if i <: nat
-  -- let n = i as nat
-  -- if typeIR <: intTypeIR
-  -- let intTypeIR = typeIR as intTypeIR
-  -- if intTypeIR matches INT
-  -- let `{ value_frame*{value_frame <- value_frame*} `} = $codom_map<id, value>(EC.GLOBAL.FRAME)
-  -- let value_error*{value_error <- value_error*} = $filter_<value>(value_frame*{value_frame <- value_frame*}, value_frame <: errorValue*{value_frame <- value_frame*})
-  -- if (n < |value_error*{value_error <- value_error*}|)
-  -- let value = value_error*{value_error <- value_error*}[n]
-  -- if value <: errorValue
-  -- let ERROR '.' nameIR_error = value as errorValue
-  -- let typedExpressionIR_error = ERROR '.' nameIR_error as expressionIR '#' `( typeIR_to ctk `)
+    (signature) EC |- `( typeIR_to `) typedExpressionIR : %
+    EC |- `( typeIR_to `) typedExpressionIR : %
 
-  clause 3 : (EC, typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
-  -- if (?() = $cast_unary(typedExpressionIR, typeIR_to))
-  -- let typeIR = typeIR_to
-  -- if typeIR <: typedefTypeIR
-  -- let TYPEDEF _typeId typeIR_base = typeIR as typedefTypeIR
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(EC, typedExpressionIR, typeIR_base)
-  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-  -- let ?(typedExpressionIR_typedef) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-  -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR_typedef)
-  -- let typedExpressionIR_cast = `( typeIR_to `) typedExpressionIR_typedef as expressionIR '#' `( typeIR_to ctk `)
+   paths
 
-  clause 4 : (EC, typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
-  -- if (?() = $cast_unary(typedExpressionIR, typeIR_to))
-  -- let typeIR = typeIR_to
-  -- if typeIR <: newTypeIR
-  -- let TYPE _typeId typeIR_base = typeIR as newTypeIR
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(EC, typedExpressionIR, typeIR_base)
-  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-  -- let ?(typedExpressionIR_newtype) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-  -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR_newtype)
-  -- let typedExpressionIR_cast = `( typeIR_to `) typedExpressionIR_newtype as expressionIR '#' `( typeIR_to ctk `)
+    rulepath ok
+    -- Cast_unary: `( typeIR_to `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- output: % |- `( % `) % : ?(typedExpressionIR_cast)
 
-  clause 5 : (EC, typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
-  -- if (?() = $cast_unary(typedExpressionIR, typeIR_to))
-  -- let typeIR = typeIR_to
-  -- if typeIR <: serializableEnumTypeIR
-  -- let ENUM _typeId `< typeIR_base `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = typeIR as serializableEnumTypeIR
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(EC, typedExpressionIR, typeIR_base)
-  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-  -- let ?(typedExpressionIR_enum) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-  -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR_enum)
-  -- let typedExpressionIR_cast = `( typeIR_to `) typedExpressionIR_enum as expressionIR '#' `( typeIR_to ctk `)
+  rulegroup boolean-to-integer
 
-  clause -1 : (EC, typedExpressionIR, typeIR_to) = ?()
+   match
+
+    (signature) EC |- `( typeIR_to `) typedExpressionIR : %
+    EC |- `( typeIR_to `) typedExpressionIR : %
+
+   paths
+
+    rulepath boolean-to-integer
+    -- Cast_unary: `( typeIR_to `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches ()
+    -- if (BOOL as typeIR = typeIR_to)
+    -- if (INT as typeIR = $type_of_typedExpressionIR(typedExpressionIR))
+    -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
+    -- let typedExpressionIR_cast = `( typeIR_to `) typedExpressionIR as expressionIR '#' `( typeIR_to ctk `)
+    -- output: % |- `( % `) % : ?(typedExpressionIR_cast)
+
+  rulegroup integer-to-error
+
+   match
+
+    (signature) EC |- `( typeIR_to `) typedExpressionIR : %
+    EC |- `( typeIR_to `) typedExpressionIR : %
+
+   paths
+
+    rulepath integer-to-error
+    -- Cast_unary: `( typeIR_to `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches ()
+    -- if (ERROR as typeIR = typeIR_to)
+    -- let expressionIR '#' `( typeIR ctk `) = typedExpressionIR
+    -- if expressionIR <: integerLiteral
+    -- let integerLiteral = expressionIR as integerLiteral
+    -- if integerLiteral matches D %
+    -- let D i = integerLiteral
+    -- if i <: nat
+    -- let n = i as nat
+    -- if typeIR <: intTypeIR
+    -- let intTypeIR = typeIR as intTypeIR
+    -- if intTypeIR matches INT
+    -- let `{ value_frame*{value_frame <- value_frame*} `} = $codom_map<id, value>(EC.GLOBAL.FRAME)
+    -- let value_error*{value_error <- value_error*} = $filter_<value>(value_frame*{value_frame <- value_frame*}, value_frame <: errorValue*{value_frame <- value_frame*})
+    -- if (n < |value_error*{value_error <- value_error*}|)
+    -- let value = value_error*{value_error <- value_error*}[n]
+    -- if value <: errorValue
+    -- let ERROR '.' nameIR_error = value as errorValue
+    -- let typedExpressionIR_error = ERROR '.' nameIR_error as expressionIR '#' `( typeIR_to ctk `)
+    -- output: % |- `( % `) % : ?(typedExpressionIR_error)
+
+  rulegroup typedef
+
+   match
+
+    (signature) EC |- `( typeIR_to `) typedExpressionIR : %
+    EC |- `( typeIR_to `) typedExpressionIR : %
+
+   paths
+
+    rulepath typedef
+    -- Cast_unary: `( typeIR_to `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches ()
+    -- let typeIR = typeIR_to
+    -- if typeIR <: typedefTypeIR
+    -- let TYPEDEF _typeId typeIR_base = typeIR as typedefTypeIR
+    -- Cast_control_plane: EC |- `( typeIR_base `) typedExpressionIR : typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?}
+    -- if typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} matches (_)
+    -- let ?(typedExpressionIR_typedef) = typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?}
+    -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR_typedef)
+    -- let typedExpressionIR_cast = `( typeIR_to `) typedExpressionIR_typedef as expressionIR '#' `( typeIR_to ctk `)
+    -- output: % |- `( % `) % : ?(typedExpressionIR_cast)
+
+  rulegroup newtype
+
+   match
+
+    (signature) EC |- `( typeIR_to `) typedExpressionIR : %
+    EC |- `( typeIR_to `) typedExpressionIR : %
+
+   paths
+
+    rulepath newtype
+    -- Cast_unary: `( typeIR_to `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches ()
+    -- let typeIR = typeIR_to
+    -- if typeIR <: newTypeIR
+    -- let TYPE _typeId typeIR_base = typeIR as newTypeIR
+    -- Cast_control_plane: EC |- `( typeIR_base `) typedExpressionIR : typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?}
+    -- if typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} matches (_)
+    -- let ?(typedExpressionIR_newtype) = typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?}
+    -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR_newtype)
+    -- let typedExpressionIR_cast = `( typeIR_to `) typedExpressionIR_newtype as expressionIR '#' `( typeIR_to ctk `)
+    -- output: % |- `( % `) % : ?(typedExpressionIR_cast)
+
+  rulegroup ser-enum
+
+   match
+
+    (signature) EC |- `( typeIR_to `) typedExpressionIR : %
+    EC |- `( typeIR_to `) typedExpressionIR : %
+
+   paths
+
+    rulepath ser-enum
+    -- Cast_unary: `( typeIR_to `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches ()
+    -- let typeIR = typeIR_to
+    -- if typeIR <: serializableEnumTypeIR
+    -- let ENUM _typeId `< typeIR_base `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = typeIR as serializableEnumTypeIR
+    -- Cast_control_plane: EC |- `( typeIR_base `) typedExpressionIR : typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?}
+    -- if typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} matches (_)
+    -- let ?(typedExpressionIR_enum) = typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?}
+    -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR_enum)
+    -- let typedExpressionIR_cast = `( typeIR_to `) typedExpressionIR_enum as expressionIR '#' `( typeIR_to ctk `)
+    -- output: % |- `( % `) % : ?(typedExpressionIR_cast)
+
+  elsegroup
+
+  rulegroup fail
+
+   match
+
+    (signature) _EC |- `( _typeIR `) _typedExpressionIR : %
+    _EC |- `( _typeIR `) _typedExpressionIR : %
+
+   paths
+
+    rulepath fail
+    -- output: % |- `( % `) % : ?()
 
 def $reverse_bytes_of_hex(text) : text =
 
@@ -33750,182 +34238,283 @@ def $needs_priority_tableKeysPropertyIR(tableKeysPropertyIR) : bool =
   clause 0 : (KEY '=' `{ tableKeyIR*{tableKeyIR <- tableKeyIR*} `}) = $exists_((nameIR_matchKind = "ternary")*{nameIR_matchKind <- nameIR_matchKind*})
   -- (let _typedExpressionIR '#' _nameIR ':' nameIR_matchKind _annotationList ';' = tableKeyIR)*{tableKeyIR <- tableKeyIR*, _annotationList -> _annotationList*, _nameIR -> _nameIR*, _typedExpressionIR -> _typedExpressionIR*, nameIR_matchKind -> nameIR_matchKind*}
 
-def $tableObject_create_entry_key(evalContext, (nameIR, nameIR, typeIR), tableKeysetInterface) : simpleKeysetExpressionIR =
+relation TableObject_create_entry_key: evalContext |- (nameIR, nameIR, typeIR) '@' tableKeysetInterface : simpleKeysetExpressionIR
 
-  clause 0 : (EC, (nameIR_key, t, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
-  -- if (t = "exact")
-  -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
-  -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
-  -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
-  -- let t'?{t' <- t'?} = $text_of_number_tableKeyValueInterface(tableKeyValueInterface)
-  -- if t'?{t' <- t'?} matches (_)
-  -- let ?(text_key_value) = t'?{t' <- t'?}
-  -- let i_key_value = $text_to_int(text_key_value)
-  -- let typedExpressionIR = D i_key_value as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(EC, typedExpressionIR, typeIR)
-  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-  -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-  -- let typeIR_set = SET `< typeIR `> as typeIR
-  -- let simpleKeysetExpressionIR = `( typeIR_set `) typedExpressionIR_cast as expressionIR '#' `( typeIR_set DYN `) as simpleKeysetExpressionIR
+  rulegroup exact
 
-  clause 1 : (EC, (nameIR_key, t, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
-  -- if (t = "ternary")
-  -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
-  -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
-  -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
-  -- if tableKeyValueInterface matches _HEX %
-  -- let _HEX text_key_value = tableKeyValueInterface
-  -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
-  -- let i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
-  -- let typedExpressionIR_base = D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
-  -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-  -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-  -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
-  -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
-  -- let i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
-  -- let typedExpressionIR_mask = D i_key_mask_value as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
-  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-  -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-  -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
+   match
 
-  clause 2 : (EC, (nameIR_key, t, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
-  -- if (t = "ternary")
-  -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
-  -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
-  -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
-  -- if tableKeyValueInterface matches _BIN %
-  -- let _BIN text_key_value = tableKeyValueInterface
-  -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
-  -- let i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
-  -- let typedExpressionIR_base = D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
-  -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-  -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-  -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
-  -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
-  -- let i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
-  -- let typedExpressionIR_mask = D i_key_mask_value as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
-  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-  -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-  -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
+    (signature) EC |- (nameIR_key, "exact", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    EC |- (nameIR_key, t, typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    -- if (t = "exact")
 
-  clause 3 : (EC, (nameIR_key, t, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
-  -- if (t = "lpm")
-  -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
-  -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
-  -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
-  -- if tableKeyValueInterface matches _HEX %
-  -- let _HEX text_key_value = tableKeyValueInterface
-  -- let text_key_value_prefix = $strip_suffix_rec(text_key_value, "*")
-  -- if ~$contains(text_key_value_prefix, "*")
-  -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
-  -- let i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
-  -- let typedExpressionIR_base = D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
-  -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-  -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-  -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
-  -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
-  -- let i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
-  -- let typedExpressionIR_mask = D i_key_mask_value as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
-  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-  -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-  -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
+   paths
 
-  clause 4 : (EC, (nameIR_key, t, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
-  -- if (t = "lpm")
-  -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
-  -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
-  -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
-  -- if tableKeyValueInterface matches _BIN %
-  -- let _BIN text_key_value = tableKeyValueInterface
-  -- let text_key_value_prefix = $strip_suffix_rec(text_key_value, "*")
-  -- if ~$contains(text_key_value_prefix, "*")
-  -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
-  -- let i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
-  -- let typedExpressionIR_base = D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
-  -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-  -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-  -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
-  -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
-  -- let i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
-  -- let typedExpressionIR_mask = D i_key_mask_value as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
-  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-  -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-  -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
+    rulepath exact
+    -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+    -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
+    -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
+    -- let t'?{t' <- t'?} = $text_of_number_tableKeyValueInterface(tableKeyValueInterface)
+    -- if t'?{t' <- t'?} matches (_)
+    -- let ?(text_key_value) = t'?{t' <- t'?}
+    -- let i_key_value = $text_to_int(text_key_value)
+    -- let typedExpressionIR = D i_key_value as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let typeIR_set = SET `< typeIR `> as typeIR
+    -- let simpleKeysetExpressionIR = `( typeIR_set `) typedExpressionIR_cast as expressionIR '#' `( typeIR_set DYN `) as simpleKeysetExpressionIR
+    -- output: % |- % '@' % : simpleKeysetExpressionIR
 
-  clause 5 : (EC, (nameIR_key, t, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
-  -- if (t = "lpm")
-  -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
-  -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
-  -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
-  -- if tableKeyValueInterface matches % _SLASH %
-  -- let text_key_prefix_value _SLASH n_key_prefix_width = tableKeyValueInterface
-  -- let text_key_prefix_value_rev = $reverse_bytes_of_hex(text_key_prefix_value)
-  -- let i_key_prefix_value = $text_to_int(text_key_prefix_value_rev)
-  -- let n_key_type_width = $sizeof_maxSizeInBits'(typeIR)
-  -- if (n_key_prefix_width <= n_key_type_width)
-  -- let i = (n_key_type_width - n_key_prefix_width)
-  -- if i <: nat
-  -- let n_key_remaining_width = i as nat
-  -- let i_key_base_value = $shl(i_key_prefix_value, n_key_remaining_width as int)
-  -- let typedExpressionIR_base = D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
-  -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-  -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-  -- let i_key_mask_value = ($pow2(n_key_type_width) - $pow2(n_key_remaining_width))
-  -- let typedExpressionIR_mask = D i_key_mask_value as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
-  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-  -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-  -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
+  rulegroup ternary-hex
 
-  clause 6 : (EC, (nameIR_key, t, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
-  -- if (t = "optional")
-  -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
-  -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
-  -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
-  -- if tableKeyValueInterface matches _BIN %
-  -- let _BIN text_key_value = tableKeyValueInterface
-  -- if (~$contains(text_key_value, "*") \/ ($strip_suffix_rec(text_key_value, "*") = ""))
-  -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
-  -- let i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
-  -- let typedExpressionIR_base = D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
-  -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-  -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-  -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
-  -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
-  -- let i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
-  -- let typedExpressionIR_mask = D i_key_mask_value as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
-  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-  -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-  -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
+   match
 
-  clause 7 : (EC, (nameIR_key, t, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
-  -- if (t = "selector")
-  -- let typedExpressionIR_zero = D 0 as int as expressionIR '#' `( INT as typeIR DYN `)
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(EC, typedExpressionIR_zero, typeIR)
-  -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
-  -- let ?(typedExpressionIR_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-  -- let simpleKeysetExpressionIR = typedExpressionIR_cast '&&&' typedExpressionIR_cast
+    (signature) EC |- (nameIR_key, "ternary", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    EC |- (nameIR_key, t, typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    -- if (t = "ternary")
 
-def $tableObject_create_entry_keys(evalContext, (nameIR, nameIR, typeIR)*, tableKeysetInterface) : simpleKeysetExpressionIR* =
+   paths
 
-  clause 0 : (_EC, (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, _tableKeysetInterface) = []
-  -- if (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} matches []
+    rulepath ternary-hex
+    -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+    -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
+    -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
+    -- if tableKeyValueInterface matches _HEX %
+    -- let _HEX text_key_value = tableKeyValueInterface
+    -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
+    -- let i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
+    -- let typedExpressionIR_base = D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
+    -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
+    -- let i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
+    -- let typedExpressionIR_mask = D i_key_mask_value as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
+    -- output: % |- % '@' % : simpleKeysetExpressionIR
 
-  clause 1 : (EC, (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR_h :: $tableObject_create_entry_keys(EC, (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
-  -- if (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} matches _ :: _
-  -- let (nameIR_key_h, nameIR_matchKind_h, typeIR_h) :: (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} = (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}
-  -- let simpleKeysetExpressionIR_h = $tableObject_create_entry_key(EC, (nameIR_key_h, nameIR_matchKind_h, typeIR_h), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+  rulegroup ternary-bin
+
+   match
+
+    (signature) EC |- (nameIR_key, "ternary", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    EC |- (nameIR_key, t, typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    -- if (t = "ternary")
+
+   paths
+
+    rulepath ternary-bin
+    -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+    -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
+    -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
+    -- if tableKeyValueInterface matches _BIN %
+    -- let _BIN text_key_value = tableKeyValueInterface
+    -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
+    -- let i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
+    -- let typedExpressionIR_base = D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
+    -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
+    -- let i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
+    -- let typedExpressionIR_mask = D i_key_mask_value as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
+    -- output: % |- % '@' % : simpleKeysetExpressionIR
+
+  rulegroup lpm-hex
+
+   match
+
+    (signature) EC |- (nameIR_key, "lpm", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    EC |- (nameIR_key, t, typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    -- if (t = "lpm")
+
+   paths
+
+    rulepath lpm-hex
+    -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+    -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
+    -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
+    -- if tableKeyValueInterface matches _HEX %
+    -- let _HEX text_key_value = tableKeyValueInterface
+    -- let text_key_value_prefix = $strip_suffix_rec(text_key_value, "*")
+    -- if ~$contains(text_key_value_prefix, "*")
+    -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
+    -- let i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
+    -- let typedExpressionIR_base = D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
+    -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
+    -- let i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
+    -- let typedExpressionIR_mask = D i_key_mask_value as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
+    -- output: % |- % '@' % : simpleKeysetExpressionIR
+
+  rulegroup lpm-bin
+
+   match
+
+    (signature) EC |- (nameIR_key, "lpm", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    EC |- (nameIR_key, t, typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    -- if (t = "lpm")
+
+   paths
+
+    rulepath lpm-bin
+    -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+    -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
+    -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
+    -- if tableKeyValueInterface matches _BIN %
+    -- let _BIN text_key_value = tableKeyValueInterface
+    -- let text_key_value_prefix = $strip_suffix_rec(text_key_value, "*")
+    -- if ~$contains(text_key_value_prefix, "*")
+    -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
+    -- let i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
+    -- let typedExpressionIR_base = D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
+    -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
+    -- let i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
+    -- let typedExpressionIR_mask = D i_key_mask_value as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
+    -- output: % |- % '@' % : simpleKeysetExpressionIR
+
+  rulegroup lpm-prefix
+
+   match
+
+    (signature) EC |- (nameIR_key, "lpm", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    EC |- (nameIR_key, t, typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    -- if (t = "lpm")
+
+   paths
+
+    rulepath lpm-prefix
+    -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+    -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
+    -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
+    -- if tableKeyValueInterface matches % _SLASH %
+    -- let text_key_prefix_value _SLASH n_key_prefix_width = tableKeyValueInterface
+    -- let text_key_prefix_value_rev = $reverse_bytes_of_hex(text_key_prefix_value)
+    -- let i_key_prefix_value = $text_to_int(text_key_prefix_value_rev)
+    -- let n_key_type_width = $sizeof_maxSizeInBits'(typeIR)
+    -- if (n_key_prefix_width <= n_key_type_width)
+    -- let i = (n_key_type_width - n_key_prefix_width)
+    -- if i <: nat
+    -- let n_key_remaining_width = i as nat
+    -- let i_key_base_value = $shl(i_key_prefix_value, n_key_remaining_width as int)
+    -- let typedExpressionIR_base = D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let i_key_mask_value = ($pow2(n_key_type_width) - $pow2(n_key_remaining_width))
+    -- let typedExpressionIR_mask = D i_key_mask_value as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
+    -- output: % |- % '@' % : simpleKeysetExpressionIR
+
+  rulegroup optional
+
+   match
+
+    (signature) EC |- (nameIR_key, "optional", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    EC |- (nameIR_key, t, typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    -- if (t = "optional")
+
+   paths
+
+    rulepath optional
+    -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+    -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
+    -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
+    -- if tableKeyValueInterface matches _BIN %
+    -- let _BIN text_key_value = tableKeyValueInterface
+    -- if (~$contains(text_key_value, "*") \/ ($strip_suffix_rec(text_key_value, "*") = ""))
+    -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
+    -- let i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
+    -- let typedExpressionIR_base = D i_key_base_value as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
+    -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
+    -- let i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
+    -- let typedExpressionIR_mask = D i_key_mask_value as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+    -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+    -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
+    -- output: % |- % '@' % : simpleKeysetExpressionIR
+
+  rulegroup selector
+
+   match
+
+    (signature) EC |- (nameIR_key, "selector", typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    EC |- (nameIR_key, t, typeIR) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    -- if (t = "selector")
+
+   paths
+
+    rulepath selector
+    -- let typedExpressionIR_zero = D 0 as int as expressionIR '#' `( INT as typeIR DYN `)
+    -- Cast_control_plane: EC |- `( typeIR `) typedExpressionIR_zero : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let simpleKeysetExpressionIR = typedExpressionIR_cast '&&&' typedExpressionIR_cast
+    -- output: % |- % '@' % : simpleKeysetExpressionIR
+
+relation TableObject_create_entry_keys: evalContext |- (nameIR, nameIR, typeIR)* '@' tableKeysetInterface : simpleKeysetExpressionIR*
+
+  rulegroup nil
+
+   match
+
+    (signature) _EC |- [] '@' _tableKeysetInterface : %
+    _EC |- (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} '@' _tableKeysetInterface : %
+    -- if (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} matches []
+
+   paths
+
+    rulepath nil
+    -- output: % |- % '@' % : []
+
+  rulegroup cons
+
+   match
+
+    (signature) EC |- (nameIR_key_h, nameIR_matchKind_h, typeIR_h) :: (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    EC |- (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    -- if (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*} matches _ :: _
+    -- let (nameIR_key_h, nameIR_matchKind_h, typeIR_h) :: (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} = (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}
+
+   paths
+
+    rulepath cons
+    -- TableObject_create_entry_key: EC |- (nameIR_key_h, nameIR_matchKind_h, typeIR_h) '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : simpleKeysetExpressionIR_h
+    -- TableObject_create_entry_keys: EC |- (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*}
+    -- output: % |- % '@' % : simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*}
 
 def $interface_of_tableKeyIR(tableKeyIR) : (nameIR, nameIR, typeIR) =
 
@@ -33938,14 +34527,24 @@ def $key_interface_of_tableObject(tableObject) : (nameIR, nameIR, typeIR)* =
   -- let KEY '=' `{ tableKeyIR*{tableKeyIR <- tableKeyIR*} `} = TBL.KEYS
   -- (let (nameIR_key, nameIR_matchKind, typeIR) = $interface_of_tableKeyIR(tableKeyIR))*{tableKeyIR <- tableKeyIR*, nameIR_key -> nameIR_key*, nameIR_matchKind -> nameIR_matchKind*, typeIR -> typeIR*}
 
-def $tableObject_create_entry_keyset(evalContext, tableKeysPropertyIR, tableKeysetInterface) : keysetExpressionIR =
+relation TableObject_create_entry_keyset: evalContext |- tableKeysPropertyIR '@' tableKeysetInterface : keysetExpressionIR
 
-  clause 0 : (EC, KEY '=' `{ tableKeyIR*{tableKeyIR <- tableKeyIR*} `}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = `( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} `) as keysetExpressionIR
-  -- (let (nameIR_key, nameIR_matchKind, typeIR) = $interface_of_tableKeyIR(tableKeyIR))*{tableKeyIR <- tableKeyIR*, nameIR_key -> nameIR_key*, nameIR_matchKind -> nameIR_matchKind*, typeIR -> typeIR*}
-  -- (let (nameIR_key_update, tableKeyValueInterface_update) = tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*, nameIR_key_update -> nameIR_key_update*, tableKeyValueInterface_update -> tableKeyValueInterface_update*}
-  -- let nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} = $filter_<nameIR>(nameIR_key*{nameIR_key <- nameIR_key*}, (nameIR_matchKind =/= "selector")*{nameIR_matchKind <- nameIR_matchKind*})
-  -- if $eq_set<nameIR>(`{ nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} `}, `{ nameIR_key_update*{nameIR_key_update <- nameIR_key_update*} `})
-  -- let simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} = $tableObject_create_entry_keys(EC, (nameIR_key, nameIR_matchKind, typeIR)*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+  rulegroup
+
+   match
+
+    (signature) EC |- KEY '=' `{ tableKeyIR*{tableKeyIR <- tableKeyIR*} `} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+    EC |- KEY '=' `{ tableKeyIR*{tableKeyIR <- tableKeyIR*} `} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : %
+
+   paths
+
+    rulepath
+    -- (let (nameIR_key, nameIR_matchKind, typeIR) = $interface_of_tableKeyIR(tableKeyIR))*{tableKeyIR <- tableKeyIR*, nameIR_key -> nameIR_key*, nameIR_matchKind -> nameIR_matchKind*, typeIR -> typeIR*}
+    -- (let (nameIR_key_update, tableKeyValueInterface_update) = tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*, nameIR_key_update -> nameIR_key_update*, tableKeyValueInterface_update -> tableKeyValueInterface_update*}
+    -- let nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} = $filter_<nameIR>(nameIR_key*{nameIR_key <- nameIR_key*}, (nameIR_matchKind =/= "selector")*{nameIR_matchKind <- nameIR_matchKind*})
+    -- if $eq_set<nameIR>(`{ nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} `}, `{ nameIR_key_update*{nameIR_key_update <- nameIR_key_update*} `})
+    -- TableObject_create_entry_keys: EC |- (nameIR_key, nameIR_matchKind, typeIR)*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*} '@' tableKeyInterface*{tableKeyInterface <- tableKeyInterface*} : simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*}
+    -- output: % |- % '@' % : `( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} `) as keysetExpressionIR
 
 def $alias_to_original_lookup_map(parameterIR*) : map<nameIR, nameIR> =
 
@@ -34042,59 +34641,111 @@ def $find_tableActionIR_unqualified'(tableActionIR*, nameIR) : (nameIR, tableAct
   -- if (nameIR = nameIR_unqualified)
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
 
-def $tableObject_create_entry_action(evalContext, tableActionsPropertyIR, tableActionInterface) : tableActionReferenceIR =
+relation TableObject_create_entry_action: evalContext |- tableActionsPropertyIR '@' tableActionInterface : tableActionReferenceIR
 
-  clause 0 : (EC, ACTIONS '=' `{ tableActionIR*{tableActionIR <- tableActionIR*} `}, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})) = _BARE nameIR_found controlPlaneNameIR `( argumentIR*{argumentIR <- argumentIR*} `)
-  -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_qualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
-  -- if (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches (_)
-  -- let ?((nameIR_found, tableActionIR_found)) = (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?}
-  -- let annotationList prefixedNameIR controlPlaneNameIR `( argumentIR_data*{argumentIR_data <- argumentIR_data*} `) '#' `( _parameterListIR ',' parameterIR_control*{parameterIR_control <- parameterIR_control*} `) ';' = tableActionIR_found
-  -- let i_arg_aligned*{i_arg_aligned <- i_arg_aligned*} = $align_tableActionArgumentInterfaces(parameterIR_control*{parameterIR_control <- parameterIR_control*}, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})
-  -- (let _annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR_control)*{parameterIR_control <- parameterIR_control*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR_param -> typeIR_param*}
-  -- (let typedExpressionIR_arg = D i_arg_aligned as expressionIR '#' `( INT as typeIR DYN `))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
-  -- if (|typeIR_param*{typeIR_param <- typeIR_param*}| = |typedExpressionIR_arg*{typedExpressionIR_arg <- typedExpressionIR_arg*}|)
-  -- (let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param))*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
-  -- (if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_))*{typedExpressionIR? <- typedExpressionIR?*}
-  -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
-  -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
+  rulegroup qualified
 
-  clause 1 : (EC, ACTIONS '=' `{ tableActionIR*{tableActionIR <- tableActionIR*} `}, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})) = _BARE nameIR_found controlPlaneNameIR `( argumentIR*{argumentIR <- argumentIR*} `)
-  -- if (?() = $find_tableActionIR_qualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update))
-  -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_unqualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
-  -- if (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches (_)
-  -- let ?((nameIR_found, tableActionIR_found)) = (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?}
-  -- let annotationList prefixedNameIR controlPlaneNameIR `( argumentIR_data*{argumentIR_data <- argumentIR_data*} `) '#' `( _parameterListIR ',' parameterIR_control*{parameterIR_control <- parameterIR_control*} `) ';' = tableActionIR_found
-  -- let i_arg_aligned*{i_arg_aligned <- i_arg_aligned*} = $align_tableActionArgumentInterfaces(parameterIR_control*{parameterIR_control <- parameterIR_control*}, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})
-  -- (let _annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR_control)*{parameterIR_control <- parameterIR_control*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR_param -> typeIR_param*}
-  -- (let typedExpressionIR_arg = D i_arg_aligned as expressionIR '#' `( INT as typeIR DYN `))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
-  -- if (|typeIR_param*{typeIR_param <- typeIR_param*}| = |typedExpressionIR_arg*{typedExpressionIR_arg <- typedExpressionIR_arg*}|)
-  -- (let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param))*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
-  -- (if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_))*{typedExpressionIR? <- typedExpressionIR?*}
-  -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
-  -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
+   match
 
-def $tableObject_add_entry(evalContext, tableObject, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) : tableObject? =
+    (signature) EC |- ACTIONS '=' `{ tableActionIR*{tableActionIR <- tableActionIR*} `} '@' (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}) : %
+    EC |- ACTIONS '=' `{ tableActionIR*{tableActionIR <- tableActionIR*} `} '@' (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}) : %
 
-  clause 0 : (EC, TABLE typeId `{ frame TBL `}, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) = ?(TABLE typeId `{ frame TBL_updated `})
-  -- let tableEntryPriorityOptIR = $tableObject_create_entry_priority(tableEntryPriorityInterface)
-  -- if ($needs_priority_tableKeysPropertyIR(TBL.KEYS) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))
-  -- let keysetExpressionIR = $tableObject_create_entry_keyset(EC, TBL.KEYS, tableKeysetInterface)
-  -- let tableActionReferenceIR = $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface)
-  -- let tableEntryIR_update = ?() tableEntryPriorityOptIR keysetExpressionIR ':' tableActionReferenceIR _EMPTY ';'
-  -- let annotationList constOptIR ENTRIES '=' `{ tableEntryIR*{tableEntryIR <- tableEntryIR*} `} = TBL.ENTRIES
-  -- let tableEntriesPropertyIR_updated = annotationList constOptIR ENTRIES '=' `{ tableEntryIR*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] `}
-  -- let TBL_updated = TBL[ENTRIES = tableEntriesPropertyIR_updated]
+   paths
 
-  clause -1 : (EC, _tableObject, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface) = ?()
+    rulepath qualified
+    -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_qualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
+    -- if (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches (_)
+    -- let ?((nameIR_found, tableActionIR_found)) = (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?}
+    -- let annotationList prefixedNameIR controlPlaneNameIR `( argumentIR_data*{argumentIR_data <- argumentIR_data*} `) '#' `( _parameterListIR ',' parameterIR_control*{parameterIR_control <- parameterIR_control*} `) ';' = tableActionIR_found
+    -- let i_arg_aligned*{i_arg_aligned <- i_arg_aligned*} = $align_tableActionArgumentInterfaces(parameterIR_control*{parameterIR_control <- parameterIR_control*}, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})
+    -- (let _annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR_control)*{parameterIR_control <- parameterIR_control*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR_param -> typeIR_param*}
+    -- (let typedExpressionIR_arg = D i_arg_aligned as expressionIR '#' `( INT as typeIR DYN `))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
+    -- if (|typeIR_param*{typeIR_param <- typeIR_param*}| = |typedExpressionIR_arg*{typedExpressionIR_arg <- typedExpressionIR_arg*}|)
+    -- (Cast_control_plane: EC |- `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
+    -- (if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_))*{typedExpressionIR? <- typedExpressionIR?*}
+    -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
+    -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
+    -- output: % |- % '@' % : _BARE nameIR_found controlPlaneNameIR `( argumentIR*{argumentIR <- argumentIR*} `)
 
-def $tableObject_add_default_action(evalContext, tableObject, tableActionInterface) : tableObject =
+  rulegroup unqualified
 
-  clause 0 : (EC, TABLE typeId `{ frame TBL `}, tableActionInterface) = TABLE typeId `{ frame TBL_updated `}
-  -- let _annotationList constIR?{constIR <- constIR?} DEFAULT_ACTION '=' _tableActionReferenceIR ';' = TBL.DEFAULT_ACTION
-  -- if constIR?{constIR <- constIR?} matches ()
-  -- let tableActionReferenceIR = $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface)
-  -- let tableDefaultActionPropertyIR = _EMPTY ?() DEFAULT_ACTION '=' tableActionReferenceIR ';'
-  -- let TBL_updated = TBL[DEFAULT_ACTION = tableDefaultActionPropertyIR]
+   match
+
+    (signature) EC |- ACTIONS '=' `{ tableActionIR*{tableActionIR <- tableActionIR*} `} '@' (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}) : %
+    EC |- ACTIONS '=' `{ tableActionIR*{tableActionIR <- tableActionIR*} `} '@' (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}) : %
+
+   paths
+
+    rulepath unqualified
+    -- if (?() = $find_tableActionIR_qualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update))
+    -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_unqualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
+    -- if (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches (_)
+    -- let ?((nameIR_found, tableActionIR_found)) = (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?}
+    -- let annotationList prefixedNameIR controlPlaneNameIR `( argumentIR_data*{argumentIR_data <- argumentIR_data*} `) '#' `( _parameterListIR ',' parameterIR_control*{parameterIR_control <- parameterIR_control*} `) ';' = tableActionIR_found
+    -- let i_arg_aligned*{i_arg_aligned <- i_arg_aligned*} = $align_tableActionArgumentInterfaces(parameterIR_control*{parameterIR_control <- parameterIR_control*}, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})
+    -- (let _annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR_control)*{parameterIR_control <- parameterIR_control*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR_param -> typeIR_param*}
+    -- (let typedExpressionIR_arg = D i_arg_aligned as expressionIR '#' `( INT as typeIR DYN `))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
+    -- if (|typeIR_param*{typeIR_param <- typeIR_param*}| = |typedExpressionIR_arg*{typedExpressionIR_arg <- typedExpressionIR_arg*}|)
+    -- (Cast_control_plane: EC |- `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
+    -- (if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_))*{typedExpressionIR? <- typedExpressionIR?*}
+    -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
+    -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
+    -- output: % |- % '@' % : _BARE nameIR_found controlPlaneNameIR `( argumentIR*{argumentIR <- argumentIR*} `)
+
+relation TableObject_add_entry: evalContext |- tableObject '@' tableEntryPriorityInterface ',' tableKeysetInterface ',' tableActionInterface : tableObject?
+
+  rulegroup ok
+
+   match
+
+    (signature) EC |- TABLE typeId `{ frame TBL `} '@' tableEntryPriorityInterface ',' tableKeysetInterface ',' tableActionInterface : %
+    EC |- TABLE typeId `{ frame TBL `} '@' tableEntryPriorityInterface ',' tableKeysetInterface ',' tableActionInterface : %
+
+   paths
+
+    rulepath ok
+    -- let tableEntryPriorityOptIR = $tableObject_create_entry_priority(tableEntryPriorityInterface)
+    -- if ($needs_priority_tableKeysPropertyIR(TBL.KEYS) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))
+    -- TableObject_create_entry_keyset: EC |- TBL.KEYS '@' tableKeysetInterface : keysetExpressionIR
+    -- TableObject_create_entry_action: EC |- TBL.ACTIONS '@' tableActionInterface : tableActionReferenceIR
+    -- let tableEntryIR_update = ?() tableEntryPriorityOptIR keysetExpressionIR ':' tableActionReferenceIR _EMPTY ';'
+    -- let annotationList constOptIR ENTRIES '=' `{ tableEntryIR*{tableEntryIR <- tableEntryIR*} `} = TBL.ENTRIES
+    -- let tableEntriesPropertyIR_updated = annotationList constOptIR ENTRIES '=' `{ tableEntryIR*{tableEntryIR <- tableEntryIR*} ++ [tableEntryIR_update] `}
+    -- let TBL_updated = TBL[ENTRIES = tableEntriesPropertyIR_updated]
+    -- output: % |- % '@' % ',' % ',' % : ?(TABLE typeId `{ frame TBL_updated `})
+
+  elsegroup
+
+  rulegroup fail
+
+   match
+
+    (signature) _EC |- _tableObject '@' _tableEntryPriorityInterface ',' _tableKeysetInterface ',' _tableActionInterface : %
+    _EC |- _tableObject '@' _tableEntryPriorityInterface ',' _tableKeysetInterface ',' _tableActionInterface : %
+
+   paths
+
+    rulepath fail
+    -- output: % |- % '@' % ',' % ',' % : ?()
+
+relation TableObject_add_default_action: evalContext |- tableObject '@' tableActionInterface : tableObject
+
+  rulegroup
+
+   match
+
+    (signature) EC |- TABLE typeId `{ frame TBL `} '@' tableActionInterface : %
+    EC |- TABLE typeId `{ frame TBL `} '@' tableActionInterface : %
+
+   paths
+
+    rulepath
+    -- let _annotationList constIR?{constIR <- constIR?} DEFAULT_ACTION '=' _tableActionReferenceIR ';' = TBL.DEFAULT_ACTION
+    -- if constIR?{constIR <- constIR?} matches ()
+    -- TableObject_create_entry_action: EC |- TBL.ACTIONS '@' tableActionInterface : tableActionReferenceIR
+    -- let tableDefaultActionPropertyIR = _EMPTY ?() DEFAULT_ACTION '=' tableActionReferenceIR ';'
+    -- let TBL_updated = TBL[DEFAULT_ACTION = tableDefaultActionPropertyIR]
+    -- output: % |- % '@' % : TABLE typeId `{ frame TBL_updated `}
 
 relation V1Model_init: |- p4program : evalContext arch
 
