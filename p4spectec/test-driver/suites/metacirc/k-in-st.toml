@@ -3,9 +3,13 @@
 #
 # A configuration selects the `base` of the tower (spec-k is converted by the
 # native `algo` pass, so `al`), memoization (`cache`), and determinism checking (`det`).
-# Each suite names the K-in-ST tower per base, `root`, its directory of cases, and
-# `ext`, the extension of their programs (`prog` if none). A case is a K definition,
-# its programs, and what krun's runs gave (layout in test-driver/src/metacirc/k_in_st.rs).
+# Each suite names the K-in-ST tower per base and its definitions: `root`, a
+# directory of cases written for spec-k (a .k file, its programs with extension
+# `ext`, `prog` if none, and what krun gives for them), or `src`, `dir`, and `def`,
+# a definition in the checkout of another repository that the environment variable
+# `src` gives, with its `programs` and the directory `expected` of what krun gives
+# for them (K_SRC, KWASM_SRC, KEVM_SRC, KMIR_SRC, LLVM_SRC; a suite whose variable
+# is not set is skipped). The other options are in test-driver/src/metacirc/k_in_st.rs.
 # Running needs K: the definitions are kompiled, and the initial terms made with krun,
 # into $CARGO_TARGET_DIR/k-in-st. UPDATE_EXPECT=1 writes what krun gives.
 # A configuration with `pending` is skipped without failing until its implementation lands.

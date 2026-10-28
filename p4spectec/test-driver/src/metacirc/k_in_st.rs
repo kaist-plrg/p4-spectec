@@ -22,6 +22,16 @@
 //! ```
 //!
 //! A program reads `<program>.in` beside it, or in `inputs` of the suite, as its standard input.
+//! A suite with `prepare` passes each program through that command first (its standard
+//! output is what krun takes), as KWasm preprocesses its tests. A suite with `kore`
+//! has a definition already in KORE and programs that are initial terms, as the tests
+//! of the LLVM backend: it is built with `llvm-kompile` alone, and krun is not run.
+//! A suite with `init` makes the initial term of each program with that command instead
+//! of krun, as KEVM and KMIR make theirs with their own tools: in it, `{program}` is the
+//! program, `{name}` its name, `{kompiled}` the kompiled directory, and `{output}` the
+//! file to write. A program `<path>#<name>` is named `<name>` rather than by its file,
+//! as one file of KEVM tests holds several.
+//! In `kompile`, `krun`, `runtime`, `prepare`, `init`, and `programs`, `{src}` is the checkout.
 //! Running a suite needs K: `run` kompiles the definition with the LLVM backend
 //! (`kompile --enable-search`, and `kompile` of the suite), builds its K library
 //! (`llvm-kompile … c`, `runtime.so`, with `runtime` of the suite as clang flags),
@@ -87,7 +97,7 @@ pub struct KInStSuite {
     pub dir: Option<PathBuf>,
     /// The definition, in `dir`.
     pub def: Option<PathBuf>,
-    /// The programs, in `dir`.
+    /// The programs, in `dir` (or in the checkout, from `{src}`).
     #[serde(default)]
     pub programs: Vec<PathBuf>,
     /// The directory of the programs' `<program>.in`, in `dir`, if not beside them.
@@ -105,6 +115,45 @@ pub struct KInStSuite {
     pub runtime: Vec<String>,
     /// The step bound of every run.
     pub depth: Option<u64>,
+    /// A command the programs pass through before krun takes them.
+    #[serde(default)]
+    pub prepare: Vec<String>,
+    /// Whether the definition is KORE already, and the programs initial terms.
+    #[serde(default)]
+    pub kore: bool,
+    /// A command that makes the initial term of a program, in place of krun.
+    #[serde(default)]
+    pub init: Vec<String>,
+}
+
+/// The options of a suite with `{src}` replaced by its checkout.
+struct Options {
+    kompile: Vec<String>,
+    krun: Vec<String>,
+    runtime: Vec<String>,
+    prepare: Vec<String>,
+    init: Vec<String>,
+    kore: bool,
+}
+
+impl Options {
+    /// The options of `suite`, in the checkout `src` (none for cases of its own).
+    fn new(suite: &KInStSuite, src: &str) -> Self {
+        let resolve = |words: &[String]| {
+            words
+                .iter()
+                .map(|word| word.replace("{src}", src))
+                .collect()
+        };
+        Self {
+            kompile: resolve(&suite.kompile),
+            krun: resolve(&suite.krun),
+            runtime: resolve(&suite.runtime),
+            prepare: resolve(&suite.prepare),
+            init: resolve(&suite.init),
+            kore: suite.kore,
+        }
+    }
 }
 
 /// The extension of programs when a suite names none.
@@ -199,7 +248,7 @@ pub fn run(name_config: &str, name_suite: Option<&str>) -> Result<()> {
             for program in programs {
                 let start_program = Instant::now();
                 let name = program.expected.display().to_string();
-                let path_init = case.init(&program, &suite.krun)?;
+                let path_init = case.init(&program)?;
                 let depth = match suite.depth {
                     Some(depth) => Some(depth),
                     None => read_depth(Path::new(&format!("{name}.depth")))?,
@@ -272,6 +321,8 @@ pub fn run(name_config: &str, name_suite: Option<&str>) -> Result<()> {
 struct Program {
     /// The program, as krun takes it.
     path: PathBuf,
+    /// Its name, which names its initial term and its expectations.
+    name: String,
     /// Its standard input, if any.
     input: Option<PathBuf>,
     /// What krun gives for it, without the extension (`.out`, `.search`, `.depth`).
@@ -281,18 +332,31 @@ struct Program {
 impl Program {
     /// A program, with its input beside it or in `dir_inputs`, and its expectations
     /// in `dir_expected`.
+    /// `path` may end in `#<name>`, which names the program.
     fn new(path: PathBuf, dir_inputs: Option<&Path>, dir_expected: &Path) -> Self {
-        let name = path
+        let text = path.to_string_lossy().into_owned();
+        let (path, name) = match text.rsplit_once('#') {
+            Some((path, name)) => (PathBuf::from(path), name.to_owned()),
+            None => {
+                let stem = path
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .into_owned();
+                (path, stem)
+            }
+        };
+        let file = path
             .file_name()
             .unwrap_or_default()
             .to_string_lossy()
             .into_owned();
-        let stem = path.file_stem().unwrap_or_default().to_owned();
         let input = dir_inputs
             .unwrap_or_else(|| path.parent().unwrap_or(Path::new(".")))
-            .join(format!("{name}.in"));
+            .join(format!("{file}.in"));
         let input = input.is_file().then_some(input);
-        Self { path, input, expected: dir_expected.join(stem) }
+        let expected = dir_expected.join(&name);
+        Self { path, name, input, expected }
     }
 }
 
@@ -314,7 +378,7 @@ fn groups(suite: &KInStSuite) -> Result<Option<Vec<Group>>> {
             let (Some(source), None) = (sources.pop(), sources.pop()) else {
                 return Err(Error::from(format!("{}: a case has one .k file", dir_case.display())));
             };
-            let case = Case::build(&source, suite, dir_build().join(&dir_case))?;
+            let case = Case::build(&source, Options::new(suite, ""), dir_build().join(&dir_case))?;
             let mut programs: Vec<_> = files(&dir_case)?
                 .into_iter()
                 .filter(|path| has_extension(path, &suite.ext))
@@ -330,18 +394,26 @@ fn groups(suite: &KInStSuite) -> Result<Option<Vec<Group>>> {
         eprintln!("metacirc k-in-st {}: skipped, {src} is not set", suite.name);
         return Ok(None);
     };
-    let dir = PathBuf::from(checkout).join(suite.dir.as_deref().ok_or_else(|| missing("dir"))?);
+    let options = Options::new(suite, &checkout.to_string_lossy());
+    let dir = PathBuf::from(&checkout).join(suite.dir.as_deref().ok_or_else(|| missing("dir"))?);
     let source = dir.join(suite.def.as_deref().ok_or_else(|| missing("def"))?);
     let dir_expected = suite
         .expected
         .as_deref()
         .ok_or_else(|| missing("expected"))?;
     let dir_inputs = suite.inputs.as_ref().map(|inputs| dir.join(inputs));
-    let case = Case::build(&source, suite, dir_build().join(&suite.name))?;
+    let case = Case::build(&source, options, dir_build().join(&suite.name))?;
     let programs = suite
         .programs
         .iter()
-        .map(|path| Program::new(dir.join(path), dir_inputs.as_deref(), dir_expected))
+        .map(|path| {
+            // A path may start at the checkout, `{src}`, rather than in `dir`
+            let path = PathBuf::from(
+                path.to_string_lossy()
+                    .replace("{src}", &checkout.to_string_lossy()),
+            );
+            Program::new(dir.join(path), dir_inputs.as_deref(), dir_expected)
+        })
         .collect();
     Ok(Some(vec![(case, programs)]))
 }
@@ -418,6 +490,8 @@ fn run_command(
 struct Case {
     /// The directory of what is built for it.
     dir_build: PathBuf,
+    /// The options of its suite.
+    options: Options,
     /// The sorts, collections, and binders of the kompiled definition.
     info: Info,
 }
@@ -425,31 +499,35 @@ struct Case {
 impl Case {
     /// Kompiles a definition with the options of its suite into `dir_build`,
     /// and builds its K library, if not up to date.
-    fn build(source: &Path, suite: &KInStSuite, dir_build: PathBuf) -> Result<Self> {
+    fn build(source: &Path, options: Options, dir_build: PathBuf) -> Result<Self> {
         let kompiled = dir_build.join("kompiled");
         if stale(&kompiled.join("timestamp"), &[source]) {
             eprintln!("{}: kompiling", source.display());
             fs::create_dir_all(&dir_build)?;
-            run_command(
-                Command::new("kompile")
-                    .args(["--backend", "llvm", "--enable-search", "--output-definition"])
-                    .arg(&kompiled)
-                    .args(&suite.kompile)
-                    .arg(source),
-                None,
-                &format!("kompile {}", source.display()),
-            )?;
+            if options.kore {
+                build_kore(source, &kompiled)?;
+            } else {
+                run_command(
+                    Command::new("kompile")
+                        .args(["--backend", "llvm", "--enable-search", "--output-definition"])
+                        .arg(&kompiled)
+                        .args(&options.kompile)
+                        .arg(source),
+                    None,
+                    &format!("kompile {}", source.display()),
+                )?;
+            }
         }
         let path_definition = kompiled.join("definition.kore");
         // The library Offload opens, next to definition.kore
         if stale(&kompiled.join("runtime.so"), &[&path_definition]) {
-            build_library(&kompiled, &suite.runtime)?;
+            build_library(&kompiled, &options.runtime)?;
         }
         let definition =
             parse::parse_definition(&fs::read(&path_definition)?).map_err(|error| {
                 Error::from(format!("{}: {}", path_definition.display(), error.message))
             })?;
-        Ok(Self { dir_build, info: Info::new(&definition) })
+        Ok(Self { dir_build, options, info: Info::new(&definition) })
     }
 
     /// The kompiled directory.
@@ -464,26 +542,59 @@ impl Case {
 
     /// The initial term krun makes of a program, made again when the program
     /// or the definition is newer: the input that `krun --dry-run` gives the interpreter.
-    fn init(&self, program: &Program, krun: &[String]) -> Result<PathBuf> {
-        let stem = program
-            .path
-            .file_stem()
-            .unwrap_or_default()
-            .to_string_lossy();
-        let path_init = self.dir_build.join(format!("{stem}.init.kore"));
+    fn init(&self, program: &Program) -> Result<PathBuf> {
+        // An initial term already
+        if self.options.kore {
+            return Ok(program.path.clone());
+        }
+        let path_init = self.dir_build.join(format!("{}.init.kore", program.name));
         let stamp = self.kompiled().join("timestamp");
         let mut sources = vec![program.path.as_path(), stamp.as_path()];
         sources.extend(program.input.as_deref());
         if !stale(&path_init, &sources) {
             return Ok(path_init);
         }
+        // A tool of the language makes it
+        if let Some((command, args)) = self.options.init.split_first() {
+            let kompiled = self.kompiled();
+            let args: Vec<String> = args
+                .iter()
+                .map(|arg| {
+                    arg.replace("{program}", &program.path.to_string_lossy())
+                        .replace("{name}", &program.name)
+                        .replace("{kompiled}", &kompiled.to_string_lossy())
+                        .replace("{output}", &path_init.to_string_lossy())
+                })
+                .collect();
+            run_command(
+                Command::new(command).args(&args),
+                None,
+                &format!("{command} {}", program.path.display()),
+            )?;
+            return Ok(path_init);
+        }
+        // What krun takes: the program, or what `prepare` makes of it
+        let path_program = match self.options.prepare.split_first() {
+            Some((command, args)) => {
+                let name = program.path.file_name().unwrap_or_default();
+                let path_prepared = self.dir_build.join(name);
+                let output = run_command(
+                    Command::new(command).args(args).arg(&program.path),
+                    None,
+                    &format!("{command} {}", program.path.display()),
+                )?;
+                fs::write(&path_prepared, output.stdout)?;
+                path_prepared
+            }
+            None => program.path.clone(),
+        };
         let dir_temp = tempfile::tempdir()?;
         let output = run_command(
             Command::new("krun")
                 .arg("-d")
                 .arg(self.kompiled())
-                .arg(&program.path)
-                .args(krun)
+                .arg(&path_program)
+                .args(&self.options.krun)
                 .args(["--save-temps", "--temp-dir"])
                 .arg(dir_temp.path())
                 .arg("--dry-run"),
@@ -601,6 +712,29 @@ impl Case {
         )?;
         Ok(())
     }
+}
+
+/// A kompiled directory for a definition in KORE already, as `kompile --enable-search`
+/// makes one: the definition, its decision trees, the interpreter, and the search binary.
+fn build_kore(source: &Path, kompiled: &Path) -> Result<()> {
+    fs::create_dir_all(kompiled.join("dt"))?;
+    fs::copy(source, kompiled.join("definition.kore"))?;
+    let commands: [&[&str]; 3] = [
+        &["llvm-kompile-matching", "definition.kore", "qbaL", "dt", "0"],
+        &["llvm-kompile", "definition.kore", "dt", "main", "-o", "interpreter"],
+        &["llvm-kompile", "definition.kore", "dt", "search", "-o", "search"],
+    ];
+    for words in commands {
+        run_command(
+            Command::new(words[0])
+                .args(&words[1..])
+                .current_dir(kompiled),
+            None,
+            &format!("{} {}", words[0], source.display()),
+        )?;
+    }
+    fs::write(kompiled.join("timestamp"), "")?;
+    Ok(())
 }
 
 /// Builds the K library of a kompiled definition, `runtime.so`, from the
