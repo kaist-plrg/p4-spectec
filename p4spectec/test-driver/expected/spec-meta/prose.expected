@@ -2487,6 +2487,22 @@ def $as_list_typ(tdenv, typ)
 
   1. Return ?()
 
+def $is_list_typ(tdenv, typ)
+
+1. (Let typRes be $expand_typ(tdenv, typ))
+
+2. If let (OK typ') of type ok<typ> be typRes, then
+
+  1. If let (ITER _typ iter) be typ' matching pattern ITER % %, then
+
+    1. If ((iter matches pattern STAR)), then
+
+      1. Return true
+
+3. Otherwise,
+
+  1. Return false
+
 def $is_text_typ(tdenv, typ)
 
 1. (Let typRes be $expand_typ(tdenv, typ))
@@ -4102,9 +4118,9 @@ relation Infer_exp_first: EC |- expEL' : %
 
         1. (Let (_exp '#' typ) be typedExp)
 
-        2. (Let (_typ)?{_typ <- _typ?} be $as_list_typ(EC.TYP, typ))
+        2. If ($is_list_typ(EC.TYP, typ)), then
 
-        3. Result in: % |- % : ((OK (((LEN typedExp) as exp) '#' ((NAT) as typ))) as expElabRes)
+          1. Result in: % |- % : ((OK (((LEN typedExp) as exp) '#' ((NAT) as typ))) as expElabRes)
 
   4. Case (% matches pattern MEM % %, let (MEM expEL_e expEL_s) = %)
 
@@ -4154,17 +4170,17 @@ relation Infer_exp_first: EC |- expEL' : %
 
         1. (Let (_exp '#' typ_b) be typedExp_b)
 
-        2. (Let (_typ)?{_typ <- _typ?} be $as_list_typ(EC.TYP, typ_b))
+        2. If ($is_list_typ(EC.TYP, typ_b)), then
 
-        3. (Elab_exp: EC |- expEL_i '<=' ((NAT) as typ) : expElabRes')
+          1. (Elab_exp: EC |- expEL_i '<=' ((NAT) as typ) : expElabRes')
 
-        4. If let (OK typedExp_i) of type ok<typedExp> be expElabRes', then
+          2. If let (OK typedExp_i) of type ok<typedExp> be expElabRes', then
 
-          1. (Elab_exp: EC |- expEL_n '<=' ((NAT) as typ) : expElabRes'')
+            1. (Elab_exp: EC |- expEL_n '<=' ((NAT) as typ) : expElabRes'')
 
-          2. If let (OK typedExp_n) of type ok<typedExp> be expElabRes'', then
+            2. If let (OK typedExp_n) of type ok<typedExp> be expElabRes'', then
 
-            1. Result in: % |- % : ((OK (((SLICE typedExp_b typedExp_i typedExp_n) as exp) '#' typ_b)) as expElabRes)
+              1. Result in: % |- % : ((OK (((SLICE typedExp_b typedExp_i typedExp_n) as exp) '#' typ_b)) as expElabRes)
 
 2. Otherwise,
 
@@ -4906,9 +4922,9 @@ relation Elab_path: EC |- pathEL' '<=' typ : %
 
             2. If let (OK typedExp_n) of type ok<typedExp> be expElabRes', then
 
-              1. (Let (_typ)?{_typ <- _typ?} be $as_list_typ(EC.TYP, typ_path))
+              1. If ($is_list_typ(EC.TYP, typ_path)), then
 
-              2. Result in: % |- % '<=' % : ((OK (((SLICE typedPath typedExp_i typedExp_n) as path) '#' typ_path)) as pathElabRes)
+                1. Result in: % |- % '<=' % : ((OK (((SLICE typedPath typedExp_i typedExp_n) as path) '#' typ_path)) as pathElabRes)
 
     Arm 2:
 

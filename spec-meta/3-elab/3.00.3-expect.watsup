@@ -20,6 +20,13 @@ def $as_list_typ(tdenv, typ) = typ_elem
 def $as_list_typ(tdenv, typ) = eps
   -- otherwise
 
+dec $is_list_typ(tdenv, typ) : bool
+  hint(prose_in %1 "is a list type under" %0)
+def $is_list_typ(tdenv, typ) = true
+  -- if OK (ITER _ STAR) = $expand_typ(tdenv, typ)
+def $is_list_typ(tdenv, typ) = false
+  -- otherwise
+
 dec $is_text_typ(tdenv, typ) : bool
   hint(prose_in %1 "is text under" %0)
 def $is_text_typ(tdenv, typ) = (typRes = OK TEXT)

@@ -1429,6 +1429,13 @@ def $as_list_typ(tdenv, typ) : typ? =
 
   clause -1 : (tdenv, typ) = ?()
 
+def $is_list_typ(tdenv, typ) : bool =
+
+  clause 0 : (tdenv, typ) = true
+  -- if (OK ITER _typ STAR as typRes = $expand_typ(tdenv, typ))
+
+  clause -1 : (tdenv, typ) = false
+
 def $is_text_typ(tdenv, typ) : bool =
 
   clause 0 : (tdenv, typ) = (typRes = OK TEXT as typ as typRes)
@@ -2151,7 +2158,7 @@ relation Infer_exp_first: elabCtx |- expEL : expElabRes
     rule len: EC |- LEN expEL : OK LEN typedExp as exp '#' NAT as typ as expElabRes
     -- Infer_exp: EC |- expEL : OK typedExp as expElabRes
     -- if (_exp '#' typ = typedExp)
-    -- if (_typ?{_typ <- _typ?} = $as_list_typ(EC.TYP, typ))
+    -- if $is_list_typ(EC.TYP, typ)
 
   rulegroup mem
 
@@ -2173,7 +2180,7 @@ relation Infer_exp_first: elabCtx |- expEL : expElabRes
     rule slice: EC |- SLICE expEL_b expEL_i expEL_n : OK SLICE typedExp_b typedExp_i typedExp_n as exp '#' typ_b as expElabRes
     -- Infer_exp: EC |- expEL_b : OK typedExp_b as expElabRes
     -- if (_exp '#' typ_b = typedExp_b)
-    -- if (_typ?{_typ <- _typ?} = $as_list_typ(EC.TYP, typ_b))
+    -- if $is_list_typ(EC.TYP, typ_b)
     -- Elab_exp: EC |- expEL_i '<=' NAT as typ : OK typedExp_i as expElabRes
     -- Elab_exp: EC |- expEL_n '<=' NAT as typ : OK typedExp_n as expElabRes
 
@@ -2514,7 +2521,7 @@ relation Elab_path: elabCtx |- pathEL '<=' typ : pathElabRes
     -- if (_path '#' typ_path = typedPath)
     -- Elab_exp: EC |- expEL_i '<=' NAT as typ : OK typedExp_i as expElabRes
     -- Elab_exp: EC |- expEL_n '<=' NAT as typ : OK typedExp_n as expElabRes
-    -- if (_typ?{_typ <- _typ?} = $as_list_typ(EC.TYP, typ_path))
+    -- if $is_list_typ(EC.TYP, typ_path)
 
   rulegroup slice-string
 

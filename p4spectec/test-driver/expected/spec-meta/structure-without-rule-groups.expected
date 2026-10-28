@@ -2555,6 +2555,26 @@ def $as_list_typ(tdenv, typ)
 
   1. Return ?()
 
+def $is_list_typ(tdenv, typ)
+
+1. (Let typRes be $expand_typ(tdenv, typ))
+
+  1. If (typRes <: ok<typ>), then
+
+    1. (Let OK typ' be typRes as ok<typ>)
+
+      1. If (typ' matches ITER % %), then
+
+        1. (Let ITER _typ iter be typ')
+
+          1. If (iter matches STAR), then
+
+            1. Return true
+
+2. Otherwise,
+
+  1. Return false
+
 def $is_text_typ(tdenv, typ)
 
 1. (Let typRes be $expand_typ(tdenv, typ))
@@ -4250,7 +4270,7 @@ relation Infer_exp_first: EC |- expEL' : %
 
             1. (Let _exp '#' typ be typedExp)
 
-              1. (Let _typ?{_typ <- _typ?} be $as_list_typ(EC.TYP, typ))
+              1. If ($is_list_typ(EC.TYP, typ)), then
 
                 1. Result in: % |- % : OK LEN typedExp as exp '#' NAT as typ as expElabRes
 
@@ -4312,7 +4332,7 @@ relation Infer_exp_first: EC |- expEL' : %
 
             1. (Let _exp '#' typ_b be typedExp_b)
 
-              1. (Let _typ?{_typ <- _typ?} be $as_list_typ(EC.TYP, typ_b))
+              1. If ($is_list_typ(EC.TYP, typ_b)), then
 
                 1. (Elab_exp: EC |- expEL_i '<=' NAT as typ : expElabRes')
 
@@ -4968,7 +4988,7 @@ relation Elab_path: EC |- pathEL' '<=' typ : %
 
                         1. (Let OK typedExp_n be expElabRes' as ok<typedExp>)
 
-                          1. (Let _typ?{_typ <- _typ?} be $as_list_typ(EC.TYP, typ_path))
+                          1. If ($is_list_typ(EC.TYP, typ_path)), then
 
                             1. Result in: % |- % '<=' % : OK SLICE typedPath typedExp_i typedExp_n as path '#' typ_path as pathElabRes
 
