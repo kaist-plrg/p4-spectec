@@ -1,0 +1,405 @@
+;;
+;; Loading a definition: the axioms that are executed
+;;
+;;
+
+;;; KORE also holds what symbolic execution and proofs use: properties of
+;;; symbols, simplification rules, ensures clauses. Loading takes from every
+;;; axiom what its form and attributes give: a rewrite rule, an equation, a
+;;; subsort, an overload; a property gives nothing, and so does a clause that
+;;; is not run (simplification, non-executable). The rules, and the equations
+;;; of each symbol, come out in the order they are tried, as the LLVM backend
+;;; sorts them when it reads them (matching/Parser.scala).
+
+var KD : kdefinition
+var EM : map<symid, (nat, clause)*>
+
+;; Attributes
+
+dec $attr_name(kattr) : text
+def $attr_name(KATTR text sort* kore*) = text
+
+dec $has_attr(text, kattr*) : bool
+  hint(prose_in %1 "has the attribute" %0)
+def $has_attr(text, kattr*) = text <- $attr_name(kattr)*
+
+dec $attr_named(text, kattr*) : kattr?
+  hint(prose_in "the attribute" %0 "of" %1)
+def $attr_named(text, eps) = eps
+def $attr_named(text, (KATTR text_h sort* kore*) :: kattr_t*)
+  = KATTR text_h sort* kore*
+  -- if text_h = text
+def $attr_named(text, (KATTR text_h sort* kore*) :: kattr_t*)
+  = $attr_named(text, kattr_t*)
+  -- if text_h =/= text
+
+;; Whether a clause is run: simplifications and non-executable axioms are for
+;; symbolic execution and proofs (matching/Parser.scala)
+
+dec $runs(kattr*) : bool
+def $runs(kattr*)
+  = ~$has_attr("simplification", kattr*) /\ ~$has_attr("non-executable", kattr*)
+
+;; Priorities, as rulePriority in the LLVM backend's matching/Parser.scala
+;; (a smaller number is tried first). cool and cool-like only occur on rewrite
+;; rules and only count outside --search mode.
+
+dec $priority(kattr*) : nat
+  hint(prose_in "the priority given by" %0)
+def $priority(kattr*) = 200
+  -- if $has_attr("owise", kattr*)
+def $priority(kattr*) = 150
+  -- if ~$has_attr("owise", kattr*) /\ $has_attr("cool", kattr*)
+def $priority(kattr*) = 100
+  -- if ~$has_attr("owise", kattr*) /\ ~$has_attr("cool", kattr*)
+  -- if $has_attr("cool-like", kattr*)
+def $priority(kattr*) = n
+  -- if ~$has_attr("owise", kattr*) /\ ~$has_attr("cool", kattr*)
+  -- if ~$has_attr("cool-like", kattr*)
+  -- if (KATTR "priority" sort* ([KSTR text])) = $attr_named("priority", kattr*)
+  -- if i = $string_to_int(text)
+  -- if n = $nat_of(i)
+def $priority(kattr*) = 50
+  -- otherwise
+
+;; Stable sort by priority: for each priority, smallest first, the entries
+;; with that priority in their order, which is the order of the KORE file, as
+;; the LLVM backend sorts axioms stably by priority.
+
+dec $if_priority<X>(nat, nat, X) : X*
+def $if_priority<X>(n_p, n, X) = [ X ]
+  -- if n = n_p
+def $if_priority<X>(n_p, n, X) = eps
+  -- otherwise
+
+dec $by_priorities<X>(nat*, (nat, X)*) : X*
+def $by_priorities<X>(eps, (n, X)*) = eps
+def $by_priorities<X>(n_h :: n_t*, (n, X)*)
+  = $concat_<X>($if_priority<X>(n_h, n, X)*) ++ $by_priorities<X>(n_t*, (n, X)*)
+
+dec $sort_by_priority<X>((nat, X)*) : X*
+  hint(prose_in %0 "in the order of their priorities")
+def $sort_by_priority<X>((n, X)*) = $by_priorities<X>(n_p*, (n, X)*)
+  -- if `{ n_p* `} = $union_set<nat>(`{ n* `}, `{ eps `})
+
+;; Subsorts: the transitive closure of the subsort relation (kompile does not
+;; always close it, as in LAMBDA)
+
+var SM : map<sort, sort*>
+
+dec $direct_supersorts(map<sort, sort*>, sort) : sort*
+  hint(prose_in "the direct supersorts of" %1)
+def $direct_supersorts(SM, sort) = sort_s*
+  -- if (sort_s*) = $find_map<sort, sort*>(SM, sort)
+def $direct_supersorts(SM, sort) = eps
+  -- otherwise
+
+dec $supersort_map(subsort*) : map<sort, sort*>
+def $supersort_map(eps) = $empty_map<sort, sort*>
+def $supersort_map((sort_a '<' sort_b) :: subsort_t*)
+  = $update_map<sort, sort*>(SM, sort_a,
+                             sort_b :: $direct_supersorts(SM, sort_a))
+  -- if SM = $supersort_map(subsort_t*)
+
+dec $reachable(map<sort, sort*>, sort*, sort*) : sort*
+def $reachable(SM, eps, sort_s*) = sort_s*
+def $reachable(SM, sort_h :: sort_t*, sort_s*)
+  = $reachable(SM, sort_t*, sort_s*)
+  -- if sort_h <- sort_s*
+def $reachable(SM, sort_h :: sort_t*, sort_s*)
+  = $reachable(SM, $direct_supersorts(SM, sort_h) ++ sort_t*,
+               sort_s* ++ [ sort_h ])
+  -- if ~(sort_h <- sort_s*)
+
+dec $subsorts_from(map<sort, sort*>, sort) : subsort*
+def $subsorts_from(SM, sort) = (sort '<' sort_u)*
+  -- if sort_u* = $reachable(SM, $direct_supersorts(SM, sort), eps)
+
+dec $close_subsorts(subsort*) : subsort*
+  hint(prose_in "the transitive closure of" %0)
+def $close_subsorts(subsort*) = $concat_<subsort>($subsorts_from(SM, sort_a)*)
+  -- if SM = $supersort_map(subsort*)
+  -- if `{ (sort_a ':' sort_b*)* `} = SM
+
+;; Symbols
+
+;; A hook comes before the equations of a function, as the LLVM backend calls
+;; the hook
+
+;; The hooks of K's modules of domain values (INT, BOOL, STRING, BYTES, FLOAT,
+;; JSON, and the KRYPTO plugin) are computed by the K runtime (RUNTIME), but
+;; for the lazy ones and the conversions between strings and tokens of any
+;; sort; the hooks on K terms are specified (HOOKED). JSON's two hooks convert
+;; between a JSON term, a constructor term, and its text.
+
+dec $in_module(hookid, text) : bool
+def $in_module(hookid, t_m) = $has_prefix(hookid, t_m ++ ".")
+
+;; Hooks whose arguments are evaluated lazily (create_hardcoded_hook of the
+;; LLVM backend); they are specified (6.2-eval)
+
+dec $is_lazy(hookid) : bool
+def $is_lazy(hookid) = hookid <- [ "BOOL.and", "BOOL.andThen", "BOOL.or",
+                                   "BOOL.orElse", "BOOL.implies", "KEQUAL.ite" ]
+
+dec $is_runtime(hookid) : bool
+def $is_runtime(hookid)
+  = $exists_($in_module(hookid, t_m)*)
+    /\ ~(hookid <- [ "STRING.token2string", "STRING.string2token" ])
+  -- if t_m* = [ "INT", "BOOL", "STRING", "BYTES", "FLOAT", "JSON", "KRYPTO" ]
+
+dec $kind_by_attrs(kattr*) : symkind
+def $kind_by_attrs(kattr*) = LAZY hookid
+  -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
+  -- if $is_lazy(hookid)
+def $kind_by_attrs(kattr*) = RUNTIME hookid
+  -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
+  -- if ~$is_lazy(hookid) /\ $is_runtime(hookid)
+def $kind_by_attrs(kattr*) = HOOKED hookid
+  -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
+  -- if ~$is_lazy(hookid) /\ ~$is_runtime(hookid)
+def $kind_by_attrs(kattr*) = FUNCTION
+  -- if ~$has_attr("hook", kattr*)
+  -- if $has_attr("function", kattr*)
+def $kind_by_attrs(kattr*) = ANYWHERE
+  -- if ~$has_attr("hook", kattr*) /\ ~$has_attr("function", kattr*)
+  -- if $has_attr("anywhere", kattr*)
+def $kind_by_attrs(kattr*) = BINDER
+  -- if ~$has_attr("hook", kattr*) /\ ~$has_attr("function", kattr*)
+  -- if ~$has_attr("anywhere", kattr*) /\ $has_attr("binder", kattr*)
+def $kind_by_attrs(kattr*) = CONSTRUCTOR
+  -- if ~$has_attr("hook", kattr*) /\ ~$has_attr("function", kattr*)
+  -- if ~$has_attr("anywhere", kattr*) /\ ~$has_attr("binder", kattr*)
+
+
+dec $fresh_generator(symid, ksymdecl) : pair<sort, symid>*
+def $fresh_generator(symid, KSYMBOL sortid_p* sort_a* '->' sort kattr*)
+  = [ sort ':' symid ]
+  -- if $has_attr("freshGenerator", kattr*)
+def $fresh_generator(symid, ksymdecl) = eps
+  -- otherwise
+
+dec $fresh_generators(map<symid, ksymdecl>) : map<sort, symid>
+def $fresh_generators(`{ (symid ':' ksymdecl)* `})
+  = `{ $concat_<pair<sort, symid>>($fresh_generator(symid, ksymdecl)*) `}
+
+dec $symdecls(map<symid, ksymdecl>) : map<symid, symdecl>
+def $symdecls(`{ (symid ':' (KSYMBOL sortid_p* sort_a* '->' sort kattr*))* `})
+  = `{ (symid ':' (SYMBOL sortid_p* sort_a* '->' sort $kind_by_attrs(kattr*)))* `}
+
+;; \left-assoc{}(f(a, b, c)) is f(f(a, b), c), \right-assoc{}(f(a, b, c)) is
+;; f(a, f(b, c))
+
+dec $left_assoc(symid, sort*, kore, kore*) : kore
+def $left_assoc(symid, sort*, kore_a, eps) = kore_a
+def $left_assoc(symid, sort*, kore_a, kore_h :: kore_t*)
+  = $left_assoc(symid, sort*, KAPP symid sort* ([kore_a, kore_h]), kore_t*)
+
+dec $right_assoc(symid, sort*, kore*) : kore
+def $right_assoc(symid, sort*, eps) = KAPP symid sort* eps
+def $right_assoc(symid, sort*, [ kore ]) = kore
+def $right_assoc(symid, sort*, kore_h :: kore_t*)
+  = KAPP symid sort* ([kore_h, $right_assoc(symid, sort*, kore_t*)])
+  -- if $(|kore_t*| > 0)
+
+;; Patterns of rules, equations, and the initial term; domain values are read
+;; already (1-syntax). A variable named Var'Bang... is a fresh variable !X of
+;; a function equation.
+
+dec $pattern(kore) : pattern
+  hint(prose_in "the pattern" %0 "stands for")
+def $pattern(KVAR varid sort) = FRESH sort
+  -- if $has_prefix(varid, "Var'Bang")
+def $pattern(KVAR varid sort) = VAR varid sort
+  -- if ~$has_prefix(varid, "Var'Bang")
+def $pattern(KDV pattern) = pattern
+def $pattern(KAPP symid sort* kore*) = APP symid sort* $pattern(kore)*
+def $pattern(KML "and" ([sort]) ([kore_1, kore_2]))
+  = AND sort $pattern(kore_1) $pattern(kore_2)
+def $pattern(KML "or" ([sort]) ([kore_1, kore_2]))
+  = OR sort $pattern(kore_1) $pattern(kore_2)
+;; a longer \or is read from the right
+def $pattern(KML "or" ([sort]) (kore_h :: kore_t*))
+  = OR sort $pattern(kore_h) $pattern(KML "or" ([sort]) kore_t*)
+  -- if $(|kore_t*| > 1)
+def $pattern(KML "left-assoc" eps ([KAPP symid sort* (kore_h :: kore_t*)]))
+  = $pattern($left_assoc(symid, sort*, kore_h, kore_t*))
+def $pattern(KML "right-assoc" eps ([KAPP symid sort* kore*]))
+  = $pattern($right_assoc(symid, sort*, kore*))
+
+;; Conditions: the predicates of a rule or an equation
+
+dec $is_predicate(kore) : bool
+def $is_predicate(KML "and" sort* kore*) = $forall_($is_predicate(kore)*)
+def $is_predicate(KML text sort* kore*) = true
+  -- if text <- [ "top", "not", "in", "ceil", "equals" ]
+def $is_predicate(kore) = false
+  -- otherwise
+
+syntax condition =
+  | REQUIRES kore         ;; the requires clause
+  | ARGUMENT varid kore   ;; the argument X of an equation has this pattern
+
+;; The requires clause is \equals(c, true); \in(X, p) gives the pattern of an
+;; equation's argument X. The \not kompile adds to owise ones is dropped, as
+;; Parser.scala: they are tried last by priority instead.
+
+dec $conditions(kore) : condition*
+def $conditions(KML "top" sort* eps) = eps
+def $conditions(KML "not" sort* kore*) = eps
+def $conditions(KML "equals" sort* ([kore_c, KDV (BOOL true)]))
+  = [ REQUIRES kore_c ]
+def $conditions(KML "in" sort* ([KVAR varid sort_x, kore_p]))
+  = [ ARGUMENT varid kore_p ]
+def $conditions(KML "and" sort* kore*)
+  = $concat_<condition>($conditions(kore)*)
+
+dec $requires_of(condition) : kore*
+def $requires_of(REQUIRES kore) = [ kore ]
+def $requires_of(ARGUMENT varid kore) = eps
+
+dec $requires(condition*) : pattern?
+  hint(prose_in "the requires clause of" %0)
+def $requires(condition*) = eps
+  -- if eps = $concat_<kore>($requires_of(condition)*)
+def $requires(condition*) = $pattern(kore)
+  -- if [ kore ] = $concat_<kore>($requires_of(condition)*)
+
+dec $argument_pattern(condition, kore) : kore*
+def $argument_pattern(ARGUMENT varid_c kore_p, KVAR varid sort) = [ kore_p ]
+  -- if varid_c = varid
+def $argument_pattern(condition, kore) = eps
+  -- otherwise
+
+dec $argument(condition*, kore) : kore
+def $argument(condition*, kore) = kore
+  -- if eps = $concat_<kore>($argument_pattern(condition, kore)*)
+def $argument(condition*, kore) = kore_p
+  -- if kore_p :: kore_t* = $concat_<kore>($argument_pattern(condition, kore)*)
+
+dec $arguments(condition*, kore*) : pattern*
+def $arguments(condition*, eps) = eps
+def $arguments(condition*, kore_h :: kore_t*)
+  = $pattern($argument(condition*, kore_h))
+    :: $arguments(condition*, kore_t*)
+
+;; A side of a rule, \and(pattern, predicate) in either order: on the left,
+;; the predicate holds the requires clause; on the right, the ensures clause.
+
+dec $split_side(kore) : (kore, kore*)
+def $split_side(KML "and" sort* ([kore_1, kore_2])) = (kore_1, [ kore_2 ])
+  -- if ~$is_predicate(kore_1) /\ $is_predicate(kore_2)
+def $split_side(KML "and" sort* ([kore_1, kore_2])) = (kore_2, [ kore_1 ])
+  -- if $is_predicate(kore_1) /\ ~$is_predicate(kore_2)
+def $split_side(kore) = (kore, eps)
+  -- otherwise
+
+dec $side_conditions(kore*) : condition*
+def $side_conditions(kore*) = $concat_<condition>($conditions(kore)*)
+
+;; The ensures clause is not used, as in the LLVM backend
+
+dec $without_ensures(kore) : kore
+def $without_ensures(kore) = kore_p
+  -- if (kore_p, kore_e*) = $split_side(kore)
+
+;; A rewrite rule: \rewrites(\and(lhs, requires), \and(rhs, ensures)), a
+;; clause with the one left-hand side
+
+dec $rule(kore, kore) : clause
+def $rule(kore_l, kore_r)
+  = CLAUSE ([ $pattern(kore_p) ]) '=>' $pattern($without_ensures(kore_r))
+      'requires' $requires($side_conditions(kore_c*))
+  -- if (kore_p, kore_c*) = $split_side(kore_l)
+
+;; An equation f(args) = rhs under conditions, a clause with a left-hand side
+;; per argument. Those of a hooked symbol are kept too, and not used: the hook
+;; computes it (6.2-eval).
+
+dec $equation(kore*, kore, kore) : clause
+def $equation(kore_a*, kore_c, kore_r)
+  = CLAUSE $arguments(condition*, kore_a*)
+      '=>' $pattern($without_ensures(kore_r))
+      'requires' $requires(condition*)
+  -- if condition* = $conditions(kore_c)
+
+;; What an axiom gives to each part of the definition, by its form and its
+;; attributes. Other axioms are properties, which are not used to run; so are
+;; the clauses that are not run. Clauses come with their priority.
+
+;;; a rewrite rule
+
+dec $rule_of(kaxiom) : (nat, clause)*
+def $rule_of(AXIOM (KML "rewrites" sort* ([kore_l, kore_r])) kattr*)
+  = [ ($priority(kattr*), $rule(kore_l, kore_r)) ]
+  -- if $runs(kattr*)
+def $rule_of(kaxiom) = eps
+  -- otherwise
+
+;;; an equation \implies(conditions, \equals(f(args), rhs)) or
+;;; \equals(f(args), rhs), with the symbol f it defines; an overload axiom is
+;;; one of the more general symbol
+
+dec $equation_of(kaxiom) : (symid, (nat, clause))*
+def $equation_of(
+    AXIOM (KML "implies" sort*
+      ([kore_c, KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r])]))
+    kattr*)
+  = [ (symid, ($priority(kattr*), $equation(kore_a*, kore_c, kore_r))) ]
+  -- if $runs(kattr*)
+def $equation_of(
+    AXIOM (KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r])) kattr*)
+  = [ (symid, ($priority(kattr*),
+               $equation(kore_a*, KML "top" eps eps, kore_r))) ]
+  -- if $runs(kattr*)
+def $equation_of(kaxiom) = eps
+  -- otherwise
+
+;;; a subsort, from the subsort attribute
+
+dec $subsort_of(kaxiom) : subsort*
+def $subsort_of(AXIOM kore kattr*) = [ sort_1 '<' sort_2 ]
+  -- if (KATTR "subsort" ([sort_1, sort_2]) kore_s*)
+       = $attr_named("subsort", kattr*)
+def $subsort_of(kaxiom) = eps
+  -- otherwise
+
+;;; an overload, from the symbol-overload attribute
+
+dec $overload_of(kaxiom) : overload*
+def $overload_of(AXIOM kore kattr*) = [ symid_f '>' symid_g ]
+  -- if (KATTR "symbol-overload" sort*
+         ([KAPP symid_f sort_f* kore_f*, KAPP symid_g sort_g* kore_g*]))
+       = $attr_named("symbol-overload", kattr*)
+def $overload_of(kaxiom) = eps
+  -- otherwise
+
+;; Equations grouped by the symbol they define, in file order, and then each
+;; group in the order of its priorities
+
+dec $group_equations(map<symid, (nat, clause)*>, (symid, (nat, clause))*)
+  : map<symid, (nat, clause)*>
+def $group_equations(EM, eps) = EM
+def $group_equations(EM, (symid, (n, clause)) :: (symid_t, (n_t, clause_t))*)
+  = $group_equations(
+      $add_map<symid, (nat, clause)*>(EM, symid, (n_e, clause_e)* ++ [ (n, clause) ]),
+      (symid_t, (n_t, clause_t))*)
+  -- if (n_e, clause_e)*
+       = $deopt_<(nat, clause)*>($find_map<symid, (nat, clause)*>(EM, symid), eps)
+
+dec $sorted_groups(map<symid, (nat, clause)*>) : map<symid, clause*>
+def $sorted_groups(`{ (symid ':' (n, clause)*)* `})
+  = `{ (symid ':' $sort_by_priority<clause>((n, clause)*))* `}
+
+dec $load(kdefinition) : definition
+  hint(prose_in "the definition loaded from" %0)
+def $load(KD) = { SYMBOLS $symdecls(KD.KSYMBOLS),
+          SUBSORTS $close_subsorts($concat_<subsort>($subsort_of(kaxiom)*)),
+          OVERLOADS $concat_<overload>($overload_of(kaxiom)*),
+          RULES $sort_by_priority<clause>(
+                  $concat_<(nat, clause)>($rule_of(kaxiom)*)),
+          EQUATIONS $sorted_groups($group_equations(
+                      $empty_map<symid, (nat, clause)*>,
+                      $concat_<(symid, (nat, clause))>($equation_of(kaxiom)*))),
+          FRESH $fresh_generators(KD.KSYMBOLS) }
+  -- if kaxiom* = KD.AXIOMS

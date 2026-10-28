@@ -1,0 +1,52 @@
+;;
+;; Hooks on K terms: equality, tokens, string buffers, substitution
+;;
+
+;;; Hooks on domain values are computed by the K runtime (2-relation); the ones here
+;;; take or give K terms. Lazy hooks (BOOL.and, KEQUAL.ite, ...) are in the
+;;; evaluator (6.2-eval).
+
+dec $hook(definition, hookid, sort, term*) : res<term>
+  hint(prose_in "the result of hook" %0 "on" %2)
+
+;;; KEQUAL (#if is lazy and handled by the evaluator). Terms are kept in one
+;;; form: maps and sets with their elements in order, floats in the runtime's
+;;; output format. So K's equality of terms is equality of values.
+
+def $hook(D, "KEQUAL.eq", sort, ([term_1, term_2])) = OK (BOOL (term_1 = term_2))
+def $hook(D, "KEQUAL.ne", sort, ([term_1, term_2])) = OK (BOOL (term_1 =/= term_2))
+
+;;; The text of a token, possibly under one injection, or of a string
+
+def $hook(D, "STRING.token2string", sort, ([DV sort_t t])) = OK (STRING t)
+def $hook(D, "STRING.token2string", sort,
+          ([APP "inj" ([sort_1, sort_2]) ([DV sort_t t])]))
+  = OK (STRING t)
+def $hook(D, "STRING.token2string", sort, ([STRING t])) = OK (STRING t)
+
+;;; A token of the result sort with the text of a string (String2KVar in
+;;; substitution.md)
+
+def $hook(D, "STRING.string2token", sort, ([STRING t])) = OK (DV sort t)
+
+;;; BUFFER: a string buffer is its text so far, a token of its sort
+
+def $hook(D, "BUFFER.empty", sort, eps) = OK (DV sort "")
+def $hook(D, "BUFFER.concat", sort, ([DV sort_1 t_1, STRING t_2]))
+  = OK (DV sort_1 (t_1 ++ t_2))
+def $hook(D, "BUFFER.toString", sort, ([DV sort_1 t])) = OK (STRING t)
+
+;;; SUBSTITUTION
+;;; E[V / X], renaming binders so that V is not captured; bound names agree
+;;; with the LLVM backend's only up to renaming
+
+def $hook(D, "SUBSTITUTION.substOne", sort,
+          ([term_e, APP "inj" ([sort_v, sort_k]) ([term_v]),
+            APP "inj" ([sort_x, sort_k']) ([DV sort_x' t_x])]))
+  = $subst(D, sort_x, t_x, sort_v, term_v, term_e)
+  -- if sort_x = sort_x'
+
+;;; Anything else is not supported (yet)
+
+def $hook(D, hookid, sort, term*) = ERROR
+  -- otherwise

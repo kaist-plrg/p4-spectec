@@ -1,0 +1,15 @@
+;;
+;; One rewrite step on the whole configuration
+;;
+;;
+
+;;; The rewrite rules are clauses with one left-hand side, the configuration.
+;;; A step tries them in the order they are loaded, by priority (3-load): the
+;;; first rule that applies rewrites the configuration. Once a rule applies,
+;;; failing to build its right-hand side is an error and does not fall back to
+;;; later rules; so is a requires clause that cannot be evaluated. UNMATCH when
+;;; no rule applies.
+
+rule Step:
+  D |- term : evaluated
+  -- Eval_clauses: D |- D.RULES ([ term ]) : evaluated

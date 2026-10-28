@@ -1,0 +1,155 @@
+;;
+;; The relations of the specification, and what they give
+;;
+
+;;; Declared together, as in P4-SpecTec² (spec-meta/4-execution/4.02-relation).
+;;; The rules are in the files named; the results are those of 0.1-aux.
+
+;; Matching a pattern against a term (4.3-match, 4.4-match-collection): the
+;; ways it matches, extending a substitution. A way is a substitution, or
+;; ERROR where a function in the pattern is stuck, which ends the run.
+
+syntax subst = map<varid, term>
+
+syntax way = res<subst>
+
+relation Match:
+  definition way |- pattern ~~ term : way*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "the ways" %2 "matches" %3 "extending" %1)
+  hint(prose_out %4)
+
+relation Match_list:
+  definition way |- pattern* ~~ term* : way*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "the ways" %2 "match" %3 "extending" %1)
+  hint(prose_out %4)
+
+relation Match_rest:
+  definition way |- pattern* ~~ term : way*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "the ways the other parts" %2 "match what is left," %3)
+  hint(prose_out %4)
+
+relation Match_map:
+  definition way |- pattern* pattern* ~~ sort (map<term, term>) : way*
+  hint(input %0 %1 %2 %3 %4 %5)
+  hint(prose_in "the ways the entries" %2 "and the other parts" %3 "match the map" %5)
+  hint(prose_out %6)
+
+relation Match_entry:
+  definition way |- pattern pattern pattern* pattern* ~~ sort (map<term, term>) (term, term) : way*
+  hint(input %0 %1 %2 %3 %4 %5 %6 %7 %8)
+  hint(prose_in "the ways the entry" %2 "|->" %3 "matches" %8 "and the rest match the other entries")
+  hint(prose_out %9)
+
+relation Match_set:
+  definition way |- pattern* pattern* ~~ sort (set<term>) : way*
+  hint(input %0 %1 %2 %3 %4 %5)
+  hint(prose_in "the ways the elements" %2 "and the other parts" %3 "match the set" %5)
+  hint(prose_out %6)
+
+relation Match_element:
+  definition way |- pattern pattern* pattern* ~~ sort (set<term>) term : way*
+  hint(input %0 %1 %2 %3 %4 %5 %6 %7)
+  hint(prose_in "the ways the element" %2 "matches" %7 "and the rest match the other elements")
+  hint(prose_out %8)
+
+relation Match_seq:
+  definition way |- pattern* ~~ sort term* : way*
+  hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "the ways" %2 "match the list" %4)
+  hint(prose_out %5)
+
+;; Evaluating a pattern under a substitution to a term, and applying a symbol
+;; to terms (6.2-eval)
+
+relation Eval:
+  definition subst |- pattern : res<term>
+  hint(input %0 %1 %2)
+  hint(prose_in "evaluating" %2 "under" %1)
+  hint(prose_out %3)
+
+relation Apply:
+  definition |- symid sort* term* : res<term>
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "applying" %1 "to" %3)
+  hint(prose_out %4)
+
+;; Evaluating clauses on terms (6.2-eval), as P4-SpecTec² evaluates the
+;; clauses of a function: rules on the configuration, equations on the
+;; arguments of a function. A clause gives its right-hand side, UNMATCH when
+;; it does not apply, or ERROR.
+
+relation Eval_clause:
+  definition |- clause term* : applies<term>
+  hint(input %0 %1 %2)
+  hint(prose_in "evaluating clause" %1 "on" %2)
+  hint(prose_out %3)
+
+relation Eval_clauses:
+  definition |- clause* term* : applies<term>
+  hint(input %0 %1 %2)
+  hint(prose_in "evaluating the first of the clauses" %1 "that applies to" %2)
+  hint(prose_out %3)
+
+relation First_holding:
+  definition |- way* pattern? : applies<subst>
+  hint(input %0 %1 %2)
+  hint(prose_in "the first of" %1 "under which" %2 "holds")
+  hint(prose_out %3)
+
+relation Holds:
+  definition subst |- pattern? : res<bool>
+  hint(input %0 %1 %2)
+  hint(prose_in "whether" %2 "holds under" %1)
+  hint(prose_out %3)
+
+;; One rewrite step on the configuration (7-step): the next configuration,
+;; UNMATCH when no rule applies, or ERROR
+
+relation Step:
+  definition |- term : applies<term>
+  hint(input %0 %1)
+  hint(prose_in "a rewrite step of" %1)
+  hint(prose_out %2)
+
+;; Running a program (8-entry)
+
+syntax runres =
+  | FINAL nat term   ;; steps taken and the final configuration
+  | ERROR nat term   ;; steps taken and the configuration where a step failed
+  | INITFAIL         ;; the initial term cannot be evaluated
+
+relation Run:
+  definition |- term nat nat? ~>* runres
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "running from" %1 "after" %2 "steps")
+  hint(prose_out %4)
+
+relation Start:
+  definition |- pattern nat? : runres
+  hint(input %0 %1 %2)
+  hint(prose_in "running" %1 "under" %0)
+  hint(prose_out %3)
+
+relation Krun:
+  kdefinition |- kore nat? : runres
+  hint(input %0 %1 %2)
+  hint(prose_in "running" %1 "under" %0)
+  hint(prose_out %3)
+
+;; The K runtime of the definition, the LLVM backend's, as the extern of the
+;; specification: it computes the hooks of K's modules of domain values (INT,
+;; BOOL, STRING, BYTES, FLOAT, JSON, KRYPTO; RUNTIME symbols, 3-load), as
+;; P4-SpecTec² leaves builtins to the next level (Call_builtin_func in
+;; spec-meta). Terms go to it and come back as terms; the implementation
+;; writes them in KORE between, as the codec of P4-SpecTec² does values. ERROR
+;; if the runtime fails, as on a division by zero. Hooks on K terms are
+;; specified (5.2-hook, 5.3-hook-collection).
+
+extern relation Call_hook:
+  |- symid sort* sort term* : res<term>
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "the K runtime applying" %0 "to" %3)
+  hint(prose_out %4)

@@ -1,0 +1,230 @@
+;;
+;; Evaluation: building a term from a pattern and a substitution
+;;
+;;
+
+;;; As create_term of the LLVM backend: bottom-up, evaluating each function
+;;; symbol as soon as its term is built
+
+;; Evaluation
+
+var evaluated : applies<term>
+var matched : applies<subst>
+
+;;; Variables and domain values
+
+rule Eval/variable:
+  D subst |- VAR varid sort : OK term
+  -- if term = $find_map<varid, term>(subst, varid)
+
+;;; A fresh variable of a function equation (!X, 3-load), which kompile leaves
+;;; unbound: the freshGenerator of its sort applied to a number below zero.
+;;; The fresh values of rules come from the generatedCounter cell (0, 1, 2,
+;;; ...), so the two never meet, as kast.md requires of all !X. The LLVM
+;;; backend reads the counter of the configuration the calling rule matched,
+;;; and may give a value of that rule again.
+
+rule Eval/fresh:
+  D subst |- FRESH sort : result
+  -- if symid = $find_map<sort, symid>(D.FRESH, sort)
+  -- if n = $fresh_nat()
+  -- Apply: D |- symid eps ([INT $(0 - (n + 1))]) : result
+
+rule Eval/token:
+  D subst |- DV sort t : OK (DV sort t)
+
+rule Eval/integer:
+  D subst |- INT i : OK (INT i)
+
+rule Eval/boolean:
+  D subst |- BOOL b : OK (BOOL b)
+
+rule Eval/string:
+  D subst |- STRING t : OK (STRING t)
+
+rule Eval/float:
+  D subst |- FLOAT t : OK (FLOAT t)
+
+rule Eval/bytes:
+  D subst |- BYTES n* : OK (BYTES n*)
+
+
+;;; Lazy hooks: the second argument is evaluated only when the first does not
+;;; decide
+
+rule Eval/and-false:
+  D subst |- APP symid sort* ([pattern_1, pattern_2]) : OK (BOOL false)
+  -- if t = $lazy_hook(D, symid)
+  -- if t = "BOOL.and" \/ t = "BOOL.andThen"
+  -- Eval: D subst |- pattern_1 : OK (BOOL false)
+
+rule Eval/or-true:
+  D subst |- APP symid sort* ([pattern_1, pattern_2]) : OK (BOOL true)
+  -- if t = $lazy_hook(D, symid)
+  -- if t = "BOOL.or" \/ t = "BOOL.orElse"
+  -- Eval: D subst |- pattern_1 : OK (BOOL true)
+
+rule Eval/implies-true:
+  D subst |- APP symid sort* ([pattern_1, pattern_2]) : OK (BOOL true)
+  -- if t = $lazy_hook(D, symid)
+  -- if t = "BOOL.implies"
+  -- Eval: D subst |- pattern_1 : OK (BOOL false)
+
+rule Eval/and-second:
+  D subst |- APP symid sort* ([pattern_1, pattern_2]) : result
+  -- if t = $lazy_hook(D, symid)
+  -- if t = "BOOL.and" \/ t = "BOOL.andThen" \/ t = "BOOL.implies"
+  -- Eval: D subst |- pattern_1 : OK (BOOL true)
+  -- Eval: D subst |- pattern_2 : result
+
+rule Eval/or-second:
+  D subst |- APP symid sort* ([pattern_1, pattern_2]) : result
+  -- if t = $lazy_hook(D, symid)
+  -- if t = "BOOL.or" \/ t = "BOOL.orElse"
+  -- Eval: D subst |- pattern_1 : OK (BOOL false)
+  -- Eval: D subst |- pattern_2 : result
+
+rule Eval/ite-then:
+  D subst |- APP symid sort* ([pattern_c, pattern_t, pattern_e]) : result
+  -- if "KEQUAL.ite" = $lazy_hook(D, symid)
+  -- Eval: D subst |- pattern_c : OK (BOOL true)
+  -- Eval: D subst |- pattern_t : result
+
+rule Eval/ite-else:
+  D subst |- APP symid sort* ([pattern_c, pattern_t, pattern_e]) : result
+  -- if "KEQUAL.ite" = $lazy_hook(D, symid)
+  -- Eval: D subst |- pattern_c : OK (BOOL false)
+  -- Eval: D subst |- pattern_e : result
+
+;;; Other symbols: arguments first, left to right, then the symbol
+
+rule Eval/app:
+  D subst |- APP symid sort* pattern* : result
+  -- if eps = $lazy_hook(D, symid)
+  -- (Eval: D subst |- pattern : OK term)*
+  -- Apply: D |- symid sort* term* : result
+
+;;; Anything else (an unbound variable, \and outside a left-hand side, a
+;;; failing argument) fails
+
+rule Eval/fail:
+  D subst |- pattern : ERROR
+  -- otherwise
+
+;;; A symbol applied to evaluated arguments, by its kind
+
+rule Apply/constructor:
+  D |- symid sort* term* : OK $construct(symid, sort*, term*)
+  -- if kind = $kind_of_symbol(D, symid)
+  -- if kind <- [ CONSTRUCTOR, BINDER ]
+
+rule Apply/hooked:
+  D |- symid sort* term* : $hook(D, hookid, sort_r, term*)
+  -- if HOOKED hookid = $kind_of_symbol(D, symid)
+  -- if sort_r = $result_instance(D, symid, sort*)
+
+;;; A hook of a domain module is computed by the K runtime (2-relation), which
+;;; answers a term, or ERROR if it fails
+
+rule Apply/runtime:
+  D |- symid sort* term* : result
+  -- if RUNTIME hookid = $kind_of_symbol(D, symid)
+  -- if sort_r = $result_instance(D, symid, sort*)
+  -- Call_hook: |- symid sort* sort_r term* : result
+
+;;; A function or anywhere symbol is rewritten by its first equation that
+;;; applies, as a step rewrites the configuration by its first rule (7-step).
+;;; An anywhere symbol stays a constructor when none applies.
+
+rule Apply/equation:
+  D |- symid sort* term* : OK term'
+  -- if kind = $kind_of_symbol(D, symid)
+  -- if kind <- [ FUNCTION, ANYWHERE ]
+  -- Eval_clauses: D |- $equations_of(D, symid) term* : OK term'
+
+rule Apply/anywhere-none:
+  D |- symid sort* term* : OK $construct(symid, sort*, term*)
+  -- if ANYWHERE = $kind_of_symbol(D, symid)
+  -- Eval_clauses: D |- $equations_of(D, symid) term* : UNMATCH
+
+;;; Anything else (a stuck function, an undeclared symbol) fails
+
+rule Apply/fail:
+  D |- symid sort* term* : ERROR
+  -- otherwise
+
+;;; A clause applies to the terms when its left-hand sides match them and its
+;;; requires clause holds; it gives its right-hand side, evaluated under that
+;;; match. Once it applies, failing to evaluate the right-hand side is an
+;;; error; so is a requires clause that cannot be evaluated.
+
+rule Eval_clause/apply:
+  D |- (CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c?) term* : OK term'
+  -- Match_list: D (OK $empty_map<varid, term>) |- pattern_a* ~~ term* : way*
+  -- First_holding: D |- way* pattern_c? : OK subst
+  -- Eval: D subst |- pattern_r : OK term'
+
+rule Eval_clause/unmatch:
+  D |- (CLAUSE pattern_a* '=>' pattern_r 'requires' pattern_c?) term* : UNMATCH
+  -- Match_list: D (OK $empty_map<varid, term>) |- pattern_a* ~~ term* : way*
+  -- First_holding: D |- way* pattern_c? : UNMATCH
+
+rule Eval_clause/error:
+  D |- clause term* : ERROR
+  -- otherwise
+
+;;; The first clause, in the order given (3-load), that applies to the terms.
+;;; Unlike the clauses of a P4-SpecTec² function, the later ones are not
+;;; checked: K tries them by priority.
+
+rule Eval_clauses/none:
+  D |- eps term* : UNMATCH
+
+rule Eval_clauses/first:
+  D |- (clause_h :: clause_t*) term* : OK term'
+  -- Eval_clause: D |- clause_h term* : OK term'
+
+rule Eval_clauses/next:
+  D |- (clause_h :: clause_t*) term* : evaluated
+  -- Eval_clause: D |- clause_h term* : UNMATCH
+  -- Eval_clauses: D |- clause_t* term* : evaluated
+
+rule Eval_clauses/error:
+  D |- clause* term* : ERROR
+  -- otherwise
+
+;;; Among the ways a left-hand side matches, in order, the first one under
+;;; which the requires clause holds, unless one before is stuck or cannot
+;;; evaluate it
+
+rule First_holding/none:
+  D |- eps pattern_c? : UNMATCH
+
+rule First_holding/first:
+  D |- (OK subst_h :: way_t*) pattern_c? : OK subst_h
+  -- Holds: D subst_h |- pattern_c? : OK true
+
+rule First_holding/next:
+  D |- (OK subst_h :: way_t*) pattern_c? : matched
+  -- Holds: D subst_h |- pattern_c? : OK false
+  -- First_holding: D |- way_t* pattern_c? : matched
+
+;;; a stuck way, or a requires clause that cannot be evaluated
+
+rule First_holding/error:
+  D |- way* pattern_c? : ERROR
+  -- otherwise
+
+;;; A requires clause holds when there is none, or it evaluates to true; it
+;;; fails when it cannot be evaluated (a function in it is stuck)
+
+rule Holds/none:
+  D subst |- eps : OK true
+
+rule Holds/value:
+  D subst |- (pattern) : OK b
+  -- Eval: D subst |- pattern : OK (BOOL b)
+
+rule Holds/fail:
+  D subst |- pattern? : ERROR
+  -- otherwise
