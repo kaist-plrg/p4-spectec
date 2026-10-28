@@ -26,30 +26,36 @@ use crate::{
     },
     runner::InterfaceError,
 };
-use std::{cell::RefCell, path::Path, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    path::Path,
+    rc::Rc,
+};
 
 /// The file name of the K library in a kompiled directory.
 pub(super) const LIBRARY: &str = "runtime.so";
 
-/// The definition being run, with its K library, shared by every offloaded hook.
+/// The K library of the definition being run, shared by every offloaded hook.
 ///
-/// A library is loaded per definition, so `KoreInterface::parse_program` loads
-/// it and attaches the definition read before `Krun` calls a hook; the hooks
-/// registered in `hooks` hold an `Rc` of the offload.
+/// It is loaded per definition, so `KoreInterface::parse_program` loads it,
+/// and attaches the definition read, before `Krun` calls a hook; the hooks
+/// registered in `hooks` hold an `Rc` of it.
 pub(super) struct Offload {
-    /// The definition read, with its runtime, whose sorts and notation the
-    /// hooks' terms use.
+    /// The runtime of the library, once loaded.
+    runtime: Cell<Option<&'static Runtime>>,
+    /// The definition read, whose sorts and notation the hooks' terms use.
     loaded: RefCell<Option<Rc<Loaded>>>,
 }
 
 impl Offload {
-    /// Makes an offload with no definition attached.
+    /// Makes an offload with no library loaded.
     pub(super) fn new() -> Self {
-        Self { loaded: RefCell::new(None) }
+        Self { runtime: Cell::new(None), loaded: RefCell::new(None) }
     }
 
-    /// Opens the K library in `dir_kompiled`, the directory of `definition.kore`.
-    pub(super) fn load(dir_kompiled: &Path) -> Result<&'static Runtime, InterfaceError> {
+    /// Opens the K library in `dir_kompiled`, the directory of `definition.kore`,
+    /// and gives its runtime.
+    pub(super) fn load(&self, dir_kompiled: &Path) -> Result<&'static Runtime, InterfaceError> {
         let path = dir_kompiled.join(LIBRARY);
         let error = |message| InterfaceError(diagnostic("kore/library", message));
         if !path.is_file() {
@@ -58,10 +64,12 @@ impl Offload {
                 path.display()
             )));
         }
-        Runtime::open(&path).map_err(error)
+        let runtime = Runtime::open(&path).map_err(error)?;
+        self.runtime.set(Some(runtime));
+        Ok(runtime)
     }
 
-    /// Keeps the definition read, with its runtime, for the hooks.
+    /// Keeps the definition read, for the terms of the hooks.
     pub(super) fn attach(&self, loaded: Rc<Loaded>) {
         *self.loaded.borrow_mut() = Some(loaded);
     }
@@ -96,13 +104,17 @@ impl Offload {
         let loaded = self
             .loaded()
             .ok_or("$call_hook needs a loaded definition")?;
+        let runtime = self
+            .runtime
+            .get()
+            .ok_or("$call_hook needs the K library of the definition")?;
         let (pattern, sort) = hook_args(arena, &loaded, values)?;
         let trace = std::env::var_os("KORE_TRACE").is_some();
         if trace {
             eprintln!("hook> {pattern} : {sort}");
         }
         // The runtime's answer as a term; a failure there is ERROR
-        let answer = match loaded.runtime.simplify(&pattern.to_string(), &sort) {
+        let answer = match runtime.simplify(&pattern.to_string(), &sort) {
             Ok(result) => {
                 let result = unwrap_result(binary::decode(&result)?);
                 if trace {

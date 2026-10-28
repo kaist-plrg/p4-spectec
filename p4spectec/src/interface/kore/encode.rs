@@ -35,6 +35,7 @@ use crate::phrase;
 use super::{
     Loaded,
     ast::{Attr, Definition, Pattern, Sentence, Sort},
+    ffi::Runtime,
     info::Info,
     mixops::Mixops,
     offload,
@@ -188,14 +189,21 @@ pub struct Builder<'a> {
     /// The definition: applications must be of its declared symbols, and
     /// domain values read by the hooks of their sorts.
     loaded: &'a Loaded,
+    /// The definition's K runtime, which writes Float literals in its output format.
+    runtime: &'a Runtime,
     /// Declared aliases, which may not be applied.
     aliases: &'a HashSet<String>,
 }
 
 impl<'a> Builder<'a> {
     /// A builder into an arena, for the definition `loaded`.
-    pub fn new(arena: &'a mut Arena, loaded: &'a Loaded, aliases: &'a HashSet<String>) -> Self {
-        Self { arena, loaded, aliases }
+    pub fn new(
+        arena: &'a mut Arena,
+        loaded: &'a Loaded,
+        runtime: &'a Runtime,
+        aliases: &'a HashSet<String>,
+    ) -> Self {
+        Self { arena, loaded, runtime, aliases }
     }
 
     /// A text value.
@@ -230,8 +238,8 @@ impl<'a> Builder<'a> {
                 let ([sort], [Pattern::Str(text)]) = (sorts.as_slice(), args.as_slice()) else {
                     return Err(EncodeError::Malformed(format!("domain value {pattern}")));
                 };
-                let Loaded { info, mixops, runtime, .. } = self.loaded;
-                let float = |text: &str| offload::float_literal(runtime, info, text);
+                let Loaded { info, mixops, .. } = self.loaded;
+                let float = |text: &str| offload::float_literal(self.runtime, info, text);
                 let value = domain_value(self.arena, info, mixops, "pattern", sort, text, float)?;
                 Ok(case!(self.arena, "KDV pattern", [value], "kore")?)
             }
@@ -332,10 +340,15 @@ fn alias_names(definition: &Definition) -> HashSet<String> {
 }
 
 /// A definition as a `kdefinition` value.
-pub fn definition(arena: &mut Arena, loaded: &Loaded, definition: &Definition) -> Result<Value> {
+pub fn definition(
+    arena: &mut Arena,
+    loaded: &Loaded,
+    runtime: &Runtime,
+    definition: &Definition,
+) -> Result<Value> {
     // Each sentence goes to its part, in file order
     let aliases = alias_names(definition);
-    let mut builder = Builder::new(arena, loaded, &aliases);
+    let mut builder = Builder::new(arena, loaded, runtime, &aliases);
     let mut sorts = Vec::new();
     let mut symbols = Vec::new();
     let mut axioms = Vec::new();
@@ -396,8 +409,13 @@ pub fn definition(arena: &mut Arena, loaded: &Loaded, definition: &Definition) -
 }
 
 /// A pattern, such as krun's initial term, as a `kore` value.
-pub fn kore(arena: &mut Arena, loaded: &Loaded, pattern: &Pattern) -> Result<Value> {
-    Builder::new(arena, loaded, &HashSet::new()).kore(pattern)
+pub fn kore(
+    arena: &mut Arena,
+    loaded: &Loaded,
+    runtime: &Runtime,
+    pattern: &Pattern,
+) -> Result<Value> {
+    Builder::new(arena, loaded, runtime, &HashSet::new()).kore(pattern)
 }
 
 /// The input of `Krun`, a definition and an initial term, as one tuple.
