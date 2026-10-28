@@ -17,25 +17,41 @@ def $remove_text(t_h :: t_t*, t) = $remove_text(t_t*, t)
 def $remove_text(t_h :: t_t*, t) = t_h :: $remove_text(t_t*, t)
   -- if t_h =/= t
 
-;; Variables of sort sort_x occurring in a term: free ones, or all of them
+;; The variables of sort sort_x free in a term: a binder hides its own
 
-dec $vars(definition, sort, bool, term) : text*
-dec $vars_list(definition, sort, bool, term*) : text*
-def $vars(D, sort_x, b, DV sort t) = [ t ]
+dec $free_vars(definition, sort, term) : text*
+dec $free_vars_list(definition, sort, term*) : text*
+def $free_vars(D, sort_x, DV sort t) = [ t ]
   -- if sort = sort_x
-def $vars(D, sort_x, true, APP symid sort* (DV sort_y t_y :: term*))
-  = $remove_text($vars_list(D, sort_x, true, term*), t_y)
+def $free_vars(D, sort_x, APP symid sort* (DV sort_y t_y :: term*))
+  = $remove_text($free_vars_list(D, sort_x, term*), t_y)
   -- if $is_binder(D, symid)
-def $vars(D, sort_x, false, APP symid sort* (DV sort_y t_y :: term*))
-  = t_y :: $vars_list(D, sort_x, false, term*)
-  -- if $is_binder(D, symid)
-def $vars(D, sort_x, b, APP symid sort* term*) = $vars_list(D, sort_x, b, term*)
+def $free_vars(D, sort_x, APP symid sort* term*)
+  = $free_vars_list(D, sort_x, term*)
   -- if ~$is_binder(D, symid)
-def $vars(D, sort_x, b, term) = eps
+def $free_vars(D, sort_x, term) = eps
   -- otherwise
-def $vars_list(D, sort_x, b, eps) = eps
-def $vars_list(D, sort_x, b, term_h :: term_t*)
-  = $vars(D, sort_x, b, term_h) ++ $vars_list(D, sort_x, b, term_t*)
+def $free_vars_list(D, sort_x, eps) = eps
+def $free_vars_list(D, sort_x, term_h :: term_t*)
+  = $free_vars(D, sort_x, term_h) ++ $free_vars_list(D, sort_x, term_t*)
+
+;; The variables of sort sort_x in a term, free or bound: a binder adds its own
+
+dec $all_vars(definition, sort, term) : text*
+dec $all_vars_list(definition, sort, term*) : text*
+def $all_vars(D, sort_x, DV sort t) = [ t ]
+  -- if sort = sort_x
+def $all_vars(D, sort_x, APP symid sort* (DV sort_y t_y :: term*))
+  = t_y :: $all_vars_list(D, sort_x, term*)
+  -- if $is_binder(D, symid)
+def $all_vars(D, sort_x, APP symid sort* term*)
+  = $all_vars_list(D, sort_x, term*)
+  -- if ~$is_binder(D, symid)
+def $all_vars(D, sort_x, term) = eps
+  -- otherwise
+def $all_vars_list(D, sort_x, eps) = eps
+def $all_vars_list(D, sort_x, term_h :: term_t*)
+  = $all_vars(D, sort_x, term_h) ++ $all_vars_list(D, sort_x, term_t*)
 
 ;; A variable name not among the given ones, made by adding primes
 
@@ -104,17 +120,18 @@ def $subst(D, sort_x, t_x, sort_v, term_v,
            APP symid sort* (DV sort_y t_y :: term*))
   = OK (APP symid sort* (DV sort_y t_y :: term'*))
   -- if $is_binder(D, symid) /\ t_y =/= t_x
-  -- if ~(t_y <- $vars(D, sort_x, true, term_v))
+  -- if ~(t_y <- $free_vars(D, sort_x, term_v))
   -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v, term*)
-;;; a binder of a variable that occurs free in V is renamed first
+;;; a binder of a variable that occurs free in V is renamed first, to a name
+;;; not free in V and not used in the body, free or bound, so that renaming
+;;; captures nothing
 def $subst(D, sort_x, t_x, sort_v, term_v,
            APP symid sort* (DV sort_y t_y :: term*))
   = OK (APP symid sort* (DV sort_y t_y' :: term'*))
   -- if $is_binder(D, symid) /\ t_y =/= t_x
-  -- if t_y <- $vars(D, sort_x, true, term_v)
-  -- if t_y' = $fresh_var(t_y,
-                          $vars(D, sort_x, true,
-                                term_v) ++ $vars_list(D, sort_x, false, term*))
+  -- if t_y <- $free_vars(D, sort_x, term_v)
+  -- if t_y' = $fresh_var(t_y, $free_vars(D, sort_x, term_v)
+                               ++ $all_vars_list(D, sort_x, term*))
   -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v,
                                 $rename_list(D, sort_x, t_y, t_y', term*))
 ;;; other symbol applications, built again as evaluation builds them: the
