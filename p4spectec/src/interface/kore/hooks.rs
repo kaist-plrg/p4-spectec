@@ -2,8 +2,8 @@
 //!
 //! spec-k delegates the K hooks of domain values with one builtin,
 //! `builtin dec $call_hook(symid, sort*, sort, term*) : res<term>`
-//! (`spec-k/6.2-eval.watsup`). Offloaded hooks, named in `OFFLOADED`,
-//! forward to `Offload::call`, which runs the K framework's own implementation.
+//! (`spec-k/6.2-eval.watsup`). It is offloaded: `OFFLOADED` names it,
+//! and it forwards to `Offload::call`, which runs the K framework's own implementation.
 //! The other entries are spec-k's text builtins for reading hook names (`texts`),
 //! which are not K hooks. `$fresh_nat`, the one with a state,
 //! is answered by `KoreInterface::call_builtin` itself.
@@ -15,14 +15,14 @@ use crate::interface::builtin::call::BuiltinImpl;
 use std::rc::Rc;
 
 /// The hooks the K library answers, by the name spec-k declares them with.
-const OFFLOADED: [&str; 0] = [];
+const OFFLOADED: [&str; 1] = ["call_hook"];
 
 /// Returns the builtins of spec-k by name: the offloaded hooks, answered
 /// through `offload`, and the text builtins.
-pub(super) fn hooks(offload: &Rc<Offload>) -> [(&'static str, BuiltinImpl); 2] {
-    let [] = OFFLOADED.map(|name| (name, offloaded(Rc::clone(offload), name)));
+pub(super) fn hooks(offload: &Rc<Offload>) -> [(&'static str, BuiltinImpl); 3] {
+    let [call_hook] = OFFLOADED.map(|name| (name, offloaded(Rc::clone(offload), name)));
     let [has_prefix, string_to_int] = texts::entries();
-    [has_prefix, string_to_int]
+    [call_hook, has_prefix, string_to_int]
 }
 
 /// Forwards hook `name` to the K library.

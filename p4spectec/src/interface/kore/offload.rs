@@ -8,13 +8,16 @@
 //! `runtime.so` in the kompiled directory next to its `definition.kore`.
 //! `Offload::load` opens that library before `parse_program` reads the definition,
 //! since reading a Float literal asks the runtime for its normal form (`float_literal`).
-//! `Offload::call` is a slot still.
+//! `Offload::call` writes the arguments as a KORE application (`decode`),
+//! the runtime evaluates it, and its answer, binary KORE (`binary`),
+//! is read back as a spec-k term (`encode`): `OK` the term, or `ERROR` if the
+//! runtime fails, as on a division by zero.
 //! Calls into the library go through `ffi`.
 
 use super::{
     Loaded,
     ast::{Pattern, Sort},
-    binary,
+    binary, decode, encode,
     ffi::Runtime,
     info::Info,
     unimplemented,
@@ -22,7 +25,10 @@ use super::{
 use crate::{
     interface::builtin::error::BuiltinError,
     lang::{
-        data::{arena::Arena, value::flat::Value},
+        data::{
+            arena::Arena,
+            value::flat::{self as value, Value},
+        },
         il::ast::Typ,
     },
     runner::InterfaceError,
@@ -72,15 +78,91 @@ impl Offload {
     /// Calls K hook `name` of the loaded library on `values`.
     ///
     /// `name` is the hook as spec-k declares it (`$name` without `$`);
-    /// which library symbol answers it is this function's choice.
+    /// `call_hook` is the only one, and the hooked symbol, its first argument,
+    /// chooses what the library computes.
     pub(super) fn call(
         &self,
-        _arena: &mut Arena,
+        arena: &mut Arena,
         name: &str,
         _targs: &[Typ],
-        _values: &[Value],
+        values: &[Value],
     ) -> Result<Value, BuiltinError> {
-        Err(BuiltinError(unimplemented(&format!("offloading K hook {name}"))))
+        let result = match name {
+            "call_hook" => self.call_hook(arena, values),
+            _ => return Err(BuiltinError(unimplemented(&format!("offloading K hook {name}")))),
+        };
+        result.map_err(|message| BuiltinError(super::diagnostic("kore/runtime", message)))
+    }
+
+    /// `$call_hook(symid, sort*, sort, term*) : res<term>`: the hooked symbol
+    /// applied to the terms, by the K runtime; `ERROR` if the runtime fails.
+    fn call_hook(&self, arena: &mut Arena, values: &[Value]) -> Result<Value, String> {
+        let loaded = self.loaded.borrow();
+        let loaded = loaded
+            .as_deref()
+            .ok_or("$call_hook needs a loaded definition")?;
+        let runtime = runtime(*self.runtime.borrow(), "$call_hook")?;
+        let (pattern, sort) = hook_args(arena, loaded, values)?;
+        let trace = std::env::var_os("KORE_TRACE").is_some();
+        if trace {
+            eprintln!("hook> {pattern} : {sort}");
+        }
+        // The runtime's answer as a term; a failure there is ERROR
+        let answer = match runtime.simplify(&pattern.to_string(), &sort) {
+            Ok(result) => {
+                let result = unwrap_result(binary::decode(&result)?);
+                if trace {
+                    eprintln!("hook< {result}");
+                }
+                Some(result)
+            }
+            Err(message) => {
+                if trace {
+                    eprintln!("hook failed: {pattern}: {message}");
+                }
+                None
+            }
+        };
+        hook_result(arena, loaded, answer.as_ref())
+    }
+}
+
+/// The arguments of `$call_hook`, the hooked symbol, its sort parameters, its
+/// result sort, and the terms it applies to, as the application to evaluate
+/// and its sort.
+fn hook_args(arena: &Arena, loaded: &Loaded, values: &[Value]) -> Result<(Pattern, Sort), String> {
+    let [symbol, sorts, sort, terms] = values else {
+        return Err(format!("$call_hook takes 4 arguments, not {}", values.len()));
+    };
+    let list = |value| value::get::list(arena, value).map_err(|e| e.to_string());
+    let symbol = value::get::text(arena, symbol)
+        .map_err(|e| e.to_string())?
+        .to_owned();
+    let sorts = list(sorts)?
+        .iter()
+        .map(|sort| decode::sort(arena, &loaded.mixops, sort))
+        .collect::<Result<_, _>>()?;
+    let sort = decode::sort(arena, &loaded.mixops, sort)?;
+    let terms = list(terms)?
+        .iter()
+        .map(|term| decode::term(arena, &loaded.info, &loaded.mixops, term))
+        .collect::<Result<_, _>>()?;
+    Ok((Pattern::App(symbol, sorts, terms), sort))
+}
+
+/// The result of `$call_hook`, of `res<term>`: `OK` the runtime's answer as a
+/// term, or `ERROR` if it failed.
+fn hook_result(
+    arena: &mut Arena,
+    loaded: &Loaded,
+    answer: Option<&Pattern>,
+) -> Result<Value, String> {
+    match answer {
+        Some(answer) => {
+            let term = encode::term(arena, &loaded.info, &loaded.mixops, answer)?;
+            encode::ok(arena, &loaded.mixops, term)
+        }
+        None => encode::error(arena, &loaded.mixops),
     }
 }
 
