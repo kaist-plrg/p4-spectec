@@ -22,6 +22,8 @@ pub enum Base {
     Il,
     /// The base runs from the library compiled from spec-meta-k, which takes AL (ST-in-K).
     K,
+    /// The base runs spec-meta-redex in a racket process, which takes AL (ST-in-Redex).
+    Redex,
 }
 
 impl Base {
@@ -31,6 +33,7 @@ impl Base {
             Self::Al => "al",
             Self::Il => "il",
             Self::K => "k",
+            Self::Redex => "redex",
         }
     }
 }
@@ -42,6 +45,7 @@ pub struct ByBase<T> {
     pub al: Option<T>,
     pub il: Option<T>,
     pub k: Option<T>,
+    pub redex: Option<T>,
 }
 
 impl<T> ByBase<T> {
@@ -51,6 +55,7 @@ impl<T> ByBase<T> {
             Base::Al => self.al.as_ref(),
             Base::Il => self.il.as_ref(),
             Base::K => self.k.as_ref(),
+            Base::Redex => self.redex.as_ref(),
         }
     }
 }
