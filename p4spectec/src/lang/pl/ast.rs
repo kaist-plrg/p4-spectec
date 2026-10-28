@@ -2,6 +2,8 @@
 //!
 //! Types, values, operators, and patterns are re-exported from SL.
 //! Expressions, instructions, and definitions carry prose hints.
+//! Instructions and case arms carry an optional `Fallthrough` note
+//! saying where control goes when they fail and no following instruction recovers.
 //! Instructions are generic over a `Tier`, the instruction kind it alone has:
 //! `DispatchInstr` selects a rule group, `GroupInstr` runs its body.
 //! The stage parameter `P` (`stage::Stage`) resolves identifiers,
@@ -184,6 +186,8 @@ pub type Totality = sl::ast::Totality;
 pub struct Case<Tier, P: Stage = Source> {
     pub guard: Guard<P>,
     pub block: Block<Tier, P>,
+    /// Where control goes when testing this arm fails.
+    pub fallthrough: Option<Fallthrough>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -207,8 +211,21 @@ pub enum Guard<P: Stage = Source> {
 
 // Instructions
 
-/// An instruction before prose annotation.
-pub type InstrNode<Tier, P = Source> = Phrase<InstrKind<Tier, P>>;
+#[derive(Clone, Debug, PartialEq)]
+/// Where control goes when an instruction fails and no following instruction recovers.
+pub enum Fallthrough {
+    /// To the named rule group.
+    Group(Id),
+    /// To the next alternative.
+    Next,
+    /// To the otherwise block.
+    Else,
+    /// Nowhere: evaluation fails.
+    Fail,
+}
+
+/// An instruction with its fall-through note, before annotation.
+pub type InstrNode<Tier, P = Source> = NotePhrase<InstrKind<Tier, P>, Option<Fallthrough>>;
 /// An instruction with prose hints.
 pub type Instr<Tier, P = Source> = annot::Annotated<InstrNode<Tier, P>>;
 
