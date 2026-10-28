@@ -36,6 +36,14 @@ builtin dec $union_set<K>(set<K>, set<K>) : set<K>
 builtin dec $intersect_set<K>(set<K>, set<K>) : set<K>
   hint(prose_in "the intersection of" %0 "and" %1)
 
+;; A set in order: its elements sorted, each once, as the set builtins give
+;; their results. A set written out, `{ X* `}, has its elements as written,
+;; and $update_map adds a new entry at the end of a map.
+
+dec $sorted_set<X>(set<X>) : set<X>
+  hint(prose_in %0 "in order")
+def $sorted_set<X>(`{ X* `}) = $union_set<X>(`{ X* `}, `{ eps `})
+
 ;; A number not given before: 0, 1, 2, ... The one builtin with a state, as
 ;; $fresh_typeId of the P4 spec; the interpreter does not cache a call that
 ;; takes one.
