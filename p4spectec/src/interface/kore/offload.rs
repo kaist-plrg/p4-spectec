@@ -109,25 +109,10 @@ impl Offload {
             .get()
             .ok_or("$call_hook needs the K library of the definition")?;
         let (pattern, sort) = hook_args(arena, &loaded, values)?;
-        let trace = std::env::var_os("KORE_TRACE").is_some();
-        if trace {
-            eprintln!("hook> {pattern} : {sort}");
-        }
         // The runtime's answer as a term; a failure there is ERROR
         let answer = match runtime.simplify(&pattern.to_string(), &sort) {
-            Ok(result) => {
-                let result = unwrap_result(binary::decode(&result)?);
-                if trace {
-                    eprintln!("hook< {result}");
-                }
-                Some(result)
-            }
-            Err(message) => {
-                if trace {
-                    eprintln!("hook failed: {pattern}: {message}");
-                }
-                None
-            }
+            Ok(result) => Some(unwrap_result(binary::decode(&result)?)),
+            Err(_) => None,
         };
         hook_result(arena, &loaded, answer.as_ref())
     }
