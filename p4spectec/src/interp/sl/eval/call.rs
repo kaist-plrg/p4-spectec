@@ -406,6 +406,8 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
                 }
             }
         });
+        // A function call that did not match is an error
+        let result = backtrack::abort_unmatched(result, id.span, || id.node.to_string());
         // Nest failures under this call and then under the tail-calling callers
         if runner_ctx.effect_since(checkpoint) == SideEffect::Impure {
             // An effect invalidates this prefix and every earlier tail caller
@@ -499,7 +501,7 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
             }
             ok!(value)
         }
-        // Builtin failures let the caller try another candidate
+        // Builtin failures are fatal
         Err(failure) => Err(failure.with_span(&id.span)),
     }
 }

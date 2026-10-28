@@ -389,6 +389,8 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
             }
         }
     });
+    // A function call that did not match is an error
+    let result = backtrack::abort_unmatched(result, id.span, || id.node.to_string());
     // Memoize a pure result
     let pure = runner_ctx.effect_since(checkpoint) == SideEffect::Pure;
     if pure && let (Some(key), ok!(value)) = (key, &result) {
@@ -457,7 +459,7 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
             }
             ok!(value)
         }
-        // Builtin failures let the caller try another candidate
+        // Builtin failures are fatal
         Err(failure) => Err(failure.with_span(&id.span)),
     }
 }
