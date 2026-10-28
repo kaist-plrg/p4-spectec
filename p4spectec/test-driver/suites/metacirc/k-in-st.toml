@@ -331,3 +331,18 @@ def = "defn/wasm-maps.kore"
 kore = true
 programs = ["input/wasm-maps.in"]
 expected = "testdata/k-in-st/llvm/wasm-maps"
+
+# KWasm (runtimeverification/wasm-semantics 212271b, in KWASM_SRC), with the programs of
+# a quick run of the spec-k harness: its simple tests and the conformance tests of
+# the Wasm test suite, preprocessed as kwasm run does.
+
+[[suites]]
+name = "kwasm"
+towers = { al = "towers/k-in-st.json" }
+src = "KWASM_SRC"
+dir = "pykwasm/src/pykwasm/kdist/wasm-semantics"
+def = "test.md"
+kompile = ["--main-module", "WASM-TEST", "--syntax-module", "WASM-TEST-SYNTAX", "--md-selector", "k", "--gen-glr-bison-parser", "-O3"]
+prepare = ["python3", "-I", "{src}/pykwasm/src/pykwasm/scripts/preprocessor.py"]
+programs = ["{src}/tests/wasm-tests/test/core/local_set.wast", "{src}/tests/wasm-tests/test/core/table.wast", "{src}/tests/simple/bitwise.wast", "{src}/tests/simple/constants.wast", "{src}/tests/simple/f64-cs.wast", "{src}/tests/simple/f64_bitwise-cs.wast", "{src}/tests/simple/f64_cmp-cs.wast", "{src}/tests/simple/modules.wast"]
+expected = "testdata/k-in-st/kwasm"
