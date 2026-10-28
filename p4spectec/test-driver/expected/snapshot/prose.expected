@@ -10100,9 +10100,11 @@ def $typedLvalueIR_as_typedExpressionIR((lvalueIR '#' (`( typeIR `))))
 
 1. Else Dangling
 
-def $typedExpressionIR_as_typedLvalueIR((expressionIR '#' (`( typeIR _ctk `))))
+def $typedExpressionIR_as_typedLvalueIR(typedExpressionIR')
 
-1. Case analysis on expressionIR
+1. (Destruct (expressionIR, (`( typeIR _ctk `))) = typedExpressionIR')
+
+2. Case analysis on expressionIR
 
   1. Case (% has type referenceExpressionIR, let referenceExpressionIR = %)
 
@@ -10110,13 +10112,11 @@ def $typedExpressionIR_as_typedLvalueIR((expressionIR '#' (`( typeIR _ctk `))))
 
   2. Case (% has type memberAccessExpressionIR, let (memberAccessBaseIR '.' nameIR) = %)
 
-    1. Check ((memberAccessBaseIR has type typedExpressionIR))
+    1. If let typedExpressionIR of type typedExpressionIR be memberAccessBaseIR, then
 
-      1. (Let typedExpressionIR be (memberAccessBaseIR as typedExpressionIR))
+      1. (Let (typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)) [→ otherwise]
 
-      2. (Let (typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)) [FAIL]
-
-      3. Check (((typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} matches pattern (_)))
+      2. If (((typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} matches pattern (_))), then
 
         1. (Let ?(typedLvalueIR) be (typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?})
 
@@ -10124,9 +10124,9 @@ def $typedExpressionIR_as_typedLvalueIR((expressionIR '#' (`( typeIR _ctk `))))
 
   3. Case (% has type indexAccessExpressionIR, let (typedExpressionIR_base `[ typedExpressionIR_index `]) = %)
 
-    1. (Let (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)) [FAIL]
+    1. (Let (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)) [→ otherwise]
 
-    2. Check (((typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} matches pattern (_)))
+    2. If (((typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} matches pattern (_))), then
 
       1. (Let ?(typedLvalueIR_base) be (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?})
 
@@ -10138,9 +10138,9 @@ def $typedExpressionIR_as_typedLvalueIR((expressionIR '#' (`( typeIR _ctk `))))
 
       1. Case (% matches pattern ':')
 
-        1. (Let (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)) [FAIL]
+        1. (Let (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)) [→ otherwise]
 
-        2. Check (((typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} matches pattern (_)))
+        2. If (((typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} matches pattern (_))), then
 
           1. (Let ?(typedLvalueIR_base) be (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?})
 
@@ -10148,9 +10148,9 @@ def $typedExpressionIR_as_typedLvalueIR((expressionIR '#' (`( typeIR _ctk `))))
 
       2. Case (% matches pattern '+:')
 
-        1. (Let (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)) [FAIL]
+        1. (Let (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)) [→ otherwise]
 
-        2. Check (((typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} matches pattern (_)))
+        2. If (((typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?} matches pattern (_))), then
 
           1. (Let ?(typedLvalueIR_base) be (typedLvalueIR)?{typedLvalueIR <- typedLvalueIR?})
 
@@ -10158,15 +10158,17 @@ def $typedExpressionIR_as_typedLvalueIR((expressionIR '#' (`( typeIR _ctk `))))
 
   5. Case (% has type parenthesizedExpressionIR, let (`( typedExpressionIR `)) = %)
 
-    1. (Let (typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)) [FAIL]
+    1. (Let (typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)) [→ otherwise]
 
-    2. Check (((typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} matches pattern (_)))
+    2. If (((typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} matches pattern (_))), then
 
       1. (Let ?(typedLvalueIR) be (typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?})
 
       2. Return ?(((`( typedLvalueIR `)) '#' (`( typeIR `))))
 
-1. Else Dangling
+3. Otherwise,
+
+  1. Return ?()
 
 syntax emptyStatementIR = emptyStatement
 

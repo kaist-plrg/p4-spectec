@@ -4500,38 +4500,40 @@ xref:typedLvalueIR_as_typedExpressionIR[The expression form of ``lvalueIR`` with
   ... Let ``typedExpressionIR~base~`` be ``typedExpressionIR^?^``.
   ... Return <<typedExpressionIR,``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``{apos}{plus}:{apos}`` ``typedExpressionIR~lo~`` ``+`]+`` annotated with a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``>>.
 
-xref:typedExpressionIR_as_typedLvalueIR[The l-value form of ``expressionIR`` annotated with a pair of type ``typeIR`` and compile-time known-ness ``++_++``]
+xref:typedExpressionIR_as_typedLvalueIR[The l-value form of ``typedExpressionIR'``]
 
+. Let ``expressionIR`` and xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``++_++``] be the expression and the note of ``typedExpressionIR'``.
 . If let ``referenceExpressionIR`` of type ``referenceExpressionIR`` be ``expressionIR``:
  .. Return xref:typedLvalueIR[``referenceExpressionIR`` with note ``+`(+`` ``typeIR`` ``+`)+``].
 . Else if let ``memberAccessBaseIR`` ``+'.'+`` ``nameIR`` of type ``memberAccessExpressionIR`` be ``expressionIR``:
- .. Check that ``memberAccessBaseIR`` has type ``typedExpressionIR``.
- .. Let ``typedExpressionIR`` be ``memberAccessBaseIR``.
- .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Check that ``typedLvalueIR'^?^`` is defined.
- .. Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
- .. Return xref:typedLvalueIR[``typedLvalueIR`` ``+'.'+`` ``nameIR`` with note ``+`(+`` ``typeIR`` ``+`)+``].
+ .. If let ``typedExpressionIR`` of type ``typedExpressionIR`` be ``memberAccessBaseIR``:
+  ... Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#func:typedExpressionIR_as_typedLvalueIR-else">→ ⋅</a>]</sub>+++
+  ... If ``typedLvalueIR'^?^`` is defined:
+   .... Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
+   .... Return xref:typedLvalueIR[``typedLvalueIR`` ``+'.'+`` ``nameIR`` with note ``+`(+`` ``typeIR`` ``+`)+``].
 . Else if let ``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~index~`` ``+`]+`` of type ``indexAccessExpressionIR`` be ``expressionIR``:
- .. Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Check that ``typedLvalueIR^?^`` is defined.
- .. Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
- .. Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~index~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
+ .. Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].+++<sub class="bk-mark">[<a href="#func:typedExpressionIR_as_typedLvalueIR-else">→ ⋅</a>]</sub>+++
+ .. If ``typedLvalueIR^?^`` is defined:
+  ... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
+  ... Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~index~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
 . Else if let ``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``sliceop`` ``typedExpressionIR~lo~`` ``+`]+`` of type ``sliceAccessExpressionIR`` be ``expressionIR``:
  .. If ``sliceop`` matches pattern ``+':'+``:
-  ... Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... Check that ``typedLvalueIR^?^`` is defined.
-  ... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
-  ... Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``+':'+`` ``typedExpressionIR~lo~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
+  ... Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].+++<sub class="bk-mark">[<a href="#func:typedExpressionIR_as_typedLvalueIR-else">→ ⋅</a>]</sub>+++
+  ... If ``typedLvalueIR^?^`` is defined:
+   .... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
+   .... Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``+':'+`` ``typedExpressionIR~lo~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
  .. Else:
-  ... Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... Check that ``typedLvalueIR^?^`` is defined.
-  ... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
-  ... Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``{apos}{plus}:{apos}`` ``typedExpressionIR~lo~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
+  ... Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].+++<sub class="bk-mark">[<a href="#func:typedExpressionIR_as_typedLvalueIR-else">→ ⋅</a>]</sub>+++
+  ... If ``typedLvalueIR^?^`` is defined:
+   .... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
+   .... Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``{apos}{plus}:{apos}`` ``typedExpressionIR~lo~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
 . Else if let ``+`(+`` ``typedExpressionIR`` ``+`)+`` of type ``parenthesizedExpressionIR`` be ``expressionIR``:
- .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Check that ``typedLvalueIR'^?^`` is defined.
- .. Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
- .. Return xref:typedLvalueIR[``+`(+`` ``typedLvalueIR`` ``+`)+`` with note ``+`(+`` ``typeIR`` ``+`)+``].
+ .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#func:typedExpressionIR_as_typedLvalueIR-else">→ ⋅</a>]</sub>+++
+ .. If ``typedLvalueIR'^?^`` is defined:
+  ... Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
+  ... Return xref:typedLvalueIR[``+`(+`` ``typedLvalueIR`` ``+`)+`` with note ``+`(+`` ``typeIR`` ``+`)+``].
+
+. +++<span id="func:typedExpressionIR_as_typedLvalueIR-else"></span>+++Otherwise: return ``·``.
 
 xref:switchLabelIR_of_switchCaseIR[The label of ``switchCaseIR``]
 

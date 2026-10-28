@@ -11362,95 +11362,87 @@ def $typedLvalueIR_as_typedExpressionIR(lvalueIR '#' `( typeIR `))
 
 1. Else Dangling
 
-def $typedExpressionIR_as_typedLvalueIR(expressionIR '#' `( typeIR _ctk `))
+def $typedExpressionIR_as_typedLvalueIR(typedExpressionIR')
 
-1. Case analysis on expressionIR
+1. (Let expressionIR '#' `( typeIR _ctk `) be typedExpressionIR')
 
-  1. Case (% has type referenceExpressionIR)
+  1. Case analysis on expressionIR
 
-    1. (Let referenceExpressionIR be expressionIR as referenceExpressionIR)
+    1. Case (% has type referenceExpressionIR)
 
-      1. Return ?(referenceExpressionIR as lvalueIR '#' `( typeIR `))
+      1. (Let referenceExpressionIR be expressionIR as referenceExpressionIR)
 
-  2. Case (% has type memberAccessExpressionIR)
+        1. Return ?(referenceExpressionIR as lvalueIR '#' `( typeIR `))
 
-    1. (Let memberAccessBaseIR '.' nameIR be expressionIR as memberAccessExpressionIR)
+    2. Case (% has type memberAccessExpressionIR)
 
-      1. If (memberAccessBaseIR <: typedExpressionIR), then
+      1. (Let memberAccessBaseIR '.' nameIR be expressionIR as memberAccessExpressionIR)
 
-        1. (Let typedExpressionIR be memberAccessBaseIR as typedExpressionIR)
+        1. If (memberAccessBaseIR <: typedExpressionIR), then
 
-          1. (Let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
+          1. (Let typedExpressionIR be memberAccessBaseIR as typedExpressionIR)
 
-            1. If (typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)), then
+            1. (Let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
 
-              1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
+              1. If (typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)), then
 
-                1. Return ?(typedLvalueIR '.' nameIR '#' `( typeIR `))
+                1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
 
-            1. Else Dangling
+                  1. Return ?(typedLvalueIR '.' nameIR '#' `( typeIR `))
 
-      1. Else Dangling
+    3. Case (% has type indexAccessExpressionIR)
 
-  3. Case (% has type indexAccessExpressionIR)
+      1. (Let typedExpressionIR_base `[ typedExpressionIR_index `] be expressionIR as indexAccessExpressionIR)
 
-    1. (Let typedExpressionIR_base `[ typedExpressionIR_index `] be expressionIR as indexAccessExpressionIR)
+        1. (Let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
 
-      1. (Let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
+          1. If (typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)), then
 
-        1. If (typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)), then
+            1. (Let ?(typedLvalueIR_base) be typedLvalueIR?{typedLvalueIR <- typedLvalueIR?})
 
-          1. (Let ?(typedLvalueIR_base) be typedLvalueIR?{typedLvalueIR <- typedLvalueIR?})
+              1. Return ?(typedLvalueIR_base `[ typedExpressionIR_index `] '#' `( typeIR `))
 
-            1. Return ?(typedLvalueIR_base `[ typedExpressionIR_index `] '#' `( typeIR `))
+    4. Case (% has type sliceAccessExpressionIR)
 
-        1. Else Dangling
+      1. (Let typedExpressionIR_base `[ typedExpressionIR_hi sliceop typedExpressionIR_lo `] be expressionIR as sliceAccessExpressionIR)
 
-  4. Case (% has type sliceAccessExpressionIR)
+        1. Case analysis on sliceop (total)
 
-    1. (Let typedExpressionIR_base `[ typedExpressionIR_hi sliceop typedExpressionIR_lo `] be expressionIR as sliceAccessExpressionIR)
+          1. Case (% matches pattern ':')
 
-      1. Case analysis on sliceop (total)
+            1. (Let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
 
-        1. Case (% matches pattern ':')
+              1. If (typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)), then
 
-          1. (Let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
+                1. (Let ?(typedLvalueIR_base) be typedLvalueIR?{typedLvalueIR <- typedLvalueIR?})
 
-            1. If (typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)), then
+                  1. Return ?(typedLvalueIR_base `[ typedExpressionIR_hi ':' typedExpressionIR_lo `] '#' `( typeIR `))
 
-              1. (Let ?(typedLvalueIR_base) be typedLvalueIR?{typedLvalueIR <- typedLvalueIR?})
+          2. Case (% matches pattern '+:')
 
-                1. Return ?(typedLvalueIR_base `[ typedExpressionIR_hi ':' typedExpressionIR_lo `] '#' `( typeIR `))
+            1. (Let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
 
-            1. Else Dangling
+              1. If (typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)), then
 
-        2. Case (% matches pattern '+:')
+                1. (Let ?(typedLvalueIR_base) be typedLvalueIR?{typedLvalueIR <- typedLvalueIR?})
 
-          1. (Let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
+                  1. Return ?(typedLvalueIR_base `[ typedExpressionIR_hi '+:' typedExpressionIR_lo `] '#' `( typeIR `))
 
-            1. If (typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)), then
+    5. Case (% has type parenthesizedExpressionIR)
 
-              1. (Let ?(typedLvalueIR_base) be typedLvalueIR?{typedLvalueIR <- typedLvalueIR?})
+      1. (Let `( typedExpressionIR `) be expressionIR as parenthesizedExpressionIR)
 
-                1. Return ?(typedLvalueIR_base `[ typedExpressionIR_hi '+:' typedExpressionIR_lo `] '#' `( typeIR `))
+        1. (Let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
 
-            1. Else Dangling
+          1. If (typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)), then
 
-  5. Case (% has type parenthesizedExpressionIR)
+            1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
 
-    1. (Let `( typedExpressionIR `) be expressionIR as parenthesizedExpressionIR)
+              1. Return ?(`( typedLvalueIR `) '#' `( typeIR `))
 
-      1. (Let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
+2. Otherwise,
 
-        1. If (typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)), then
-
-          1. (Let ?(typedLvalueIR) be typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?})
-
-            1. Return ?(`( typedLvalueIR `) '#' `( typeIR `))
-
-        1. Else Dangling
-
-1. Else Dangling
+  1. Return ?()
 
 syntax emptyStatementIR = emptyStatement
 
