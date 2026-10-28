@@ -1105,6 +1105,30 @@ def $empty_ctx : ctx =
 
 var C : ctx
 
+def $is_partial_prem(prem) : bool =
+
+  clause 0 : (prem) = true
+  -- if prem <: relPrem
+  -- let relPrem = prem as relPrem
+
+  clause 1 : (prem) = true
+  -- if prem <: ifHoldPrem
+  -- let ifHoldPrem = prem as ifHoldPrem
+
+  clause 2 : (prem) = true
+  -- if prem <: ifNotHoldPrem
+  -- let ifNotHoldPrem = prem as ifNotHoldPrem
+
+  clause 3 : (prem') = $is_partial_prem(prem)
+  -- if prem' <: iterPrem
+  -- let ITER prem _premIter = prem' as iterPrem
+
+  clause -1 : (_prem) = false
+
+def $is_partial_clause(clause) : bool =
+
+  clause 0 : (_arg*{_arg <- _arg*} '=' _typedExp '-' prem*{prem <- prem*}) = $exists_($is_partial_prem(prem)*{prem <- prem*})
+
 def $load_ctx(ctx, spec) : ctx =
 
   clause 0 : (C, defn'*{defn' <- defn'*}) = $load_ctx(C_load, defn_t*{defn_t <- defn_t*})
@@ -1175,7 +1199,9 @@ def $load_ctx(ctx, spec) : ctx =
   -- let defn :: defn_t*{defn_t <- defn_t*} = defn'*{defn' <- defn'*}
   -- if defn <: definedFuncDefn
   -- let definedFuncDefn = defn as definedFuncDefn
-  -- let FUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ '=' _clause*{_clause <- _clause*} _elsClause?{_elsClause <- _elsClause?} = definedFuncDefn
+  -- let FUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ '=' clause*{clause <- clause*} elsClause?{elsClause <- elsClause?} = definedFuncDefn
+  -- if $forall_(~$is_partial_clause(clause)*{clause <- clause*})
+  -- (if ~$is_partial_clause(elsClause))?{elsClause <- elsClause?}
   -- let fenv_update = $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, definedFuncDefn as funcDefn)
   -- let C_load = C[GLOBAL.FUNC = fenv_update]
 

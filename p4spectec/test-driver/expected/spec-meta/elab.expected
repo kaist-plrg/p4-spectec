@@ -833,6 +833,22 @@ def $empty_ctx : ctx =
 
 var C : ctx
 
+def $is_partial_prem(prem) : bool =
+
+  clause 0 : (relPrem as prem) = true
+
+  clause 1 : (ifHoldPrem as prem) = true
+
+  clause 2 : (ifNotHoldPrem as prem) = true
+
+  clause 3 : (ITER prem _premIter as prem) = $is_partial_prem(prem)
+
+  clause -1 : (_prem) = false
+
+def $is_partial_clause(clause) : bool =
+
+  clause 0 : (_arg*{_arg <- _arg*} '=' _typedExp '-' prem*{prem <- prem*}) = $exists_($is_partial_prem(prem)*{prem <- prem*})
+
 def $load_ctx(ctx, spec) : ctx =
 
   clause 0 : (C, externTypDefn as defn :: defn_t*{defn_t <- defn_t*}) = $load_ctx(C_load, defn_t*{defn_t <- defn_t*})
@@ -871,7 +887,9 @@ def $load_ctx(ctx, spec) : ctx =
   -- if (C_load = C[GLOBAL.FUNC = fenv_update])
 
   clause 7 : (C, definedFuncDefn as defn :: defn_t*{defn_t <- defn_t*}) = $load_ctx(C_load, defn_t*{defn_t <- defn_t*})
-  -- if (FUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ '=' _clause*{_clause <- _clause*} _elsClause?{_elsClause <- _elsClause?} = definedFuncDefn)
+  -- if (FUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ '=' clause*{clause <- clause*} elsClause?{elsClause <- elsClause?} = definedFuncDefn)
+  -- if $forall_(~$is_partial_clause(clause)*{clause <- clause*})
+  -- (if ~$is_partial_clause(elsClause))?{elsClause <- elsClause?}
   -- if (fenv_update = $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, definedFuncDefn as funcDefn))
   -- if (C_load = C[GLOBAL.FUNC = fenv_update])
 
