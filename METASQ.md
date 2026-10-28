@@ -30,10 +30,10 @@ def $main() = 42
 Run it with the supplied AL tower:
 
 ```sh
-./bin/metacirc run-meta towers/al.json -p /path/to/script.watsup
+./bin/metacirc run-meta towers/al-func.json -p /path/to/script.watsup
 ```
 
-`towers/al.json` contains:
+`towers/al-func.json` contains:
 
 ```json
 {
@@ -204,7 +204,7 @@ The conversion runs for every input, in the level that accepts the IL.
 Only the base, here the IL-to-AL specification itself, is converted by the
 native `algo` pass; the specification above it reaches native code only
 through its builtin and host calls.
-`towers/il.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
+`towers/il-func.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
 are the supplied towers entered through `Eval_IL_func` and `Eval_IL_rel`.
 
 ## Execution corpus
