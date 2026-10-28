@@ -83,8 +83,9 @@ pub struct Loaded {
     pub info: Info,
     /// The notation of spec-k's values.
     pub mixops: Mixops,
-    /// The K runtime of the definition, which writes Float literals in its output format.
-    runtime: Option<&'static Runtime>,
+    /// The K runtime of the definition, which answers offloaded hooks and
+    /// writes Float literals in its output format.
+    runtime: &'static Runtime,
 }
 
 /// Reads `path_definition` and `path_init`, both KORE text,
@@ -106,7 +107,7 @@ fn parse_kore(
         known: encode::known_symbols(&definition),
         info: Info::new(&definition),
         mixops,
-        runtime: Some(runtime),
+        runtime,
     });
     let (value_definition, _) = encode::definition(arena, &loaded, &definition)
         .map_err(|error| load_error(path_definition, error))?;
@@ -125,10 +126,9 @@ fn parse_kore(
 pub struct KoreInterface {
     /// The standard builtins and spec-k's of `hooks::hooks`.
     builtins: Builtins,
-    /// The K library of the definition being run, which offloaded hooks call.
+    /// The definition being run and its K library, which offloaded hooks call
+    /// and printing a configuration reads.
     offload: Rc<Offload>,
-    /// The definition read, for printing its configurations.
-    loaded: Option<Rc<Loaded>>,
     /// The next `$fresh_nat`.
     fresh: u64,
 }
@@ -138,14 +138,14 @@ impl KoreInterface {
     pub fn new() -> Self {
         let offload = Rc::new(Offload::new());
         let builtins = Builtins::with_extensions(hooks::hooks(&offload));
-        Self { builtins, offload, loaded: None, fresh: 0 }
+        Self { builtins, offload, fresh: 0 }
     }
 
     /// Prints `runres` as the interpreter krun runs prints a run with `--statistics`:
     /// for `FINAL n term`, `n` and then `term` as KORE; for `ERROR n term`,
     /// `error after n steps` and `term`; for `INITFAIL`, `error on the initial term`.
     pub fn print_runres(&self, arena: &Arena, runres: Value) -> Result<String, InterfaceError> {
-        let loaded = self.loaded.as_deref().ok_or_else(|| {
+        let loaded = self.offload.loaded().ok_or_else(|| {
             InterfaceError(diagnostic(
                 "kore/print",
                 "a run is printed after its definition is read",
@@ -192,10 +192,9 @@ impl Interface for KoreInterface {
         };
         // The definition's hooks run in the library kompiled next to it
         let dir_kompiled = path_definition.parent().unwrap_or(Path::new("."));
-        let runtime = self.offload.load(dir_kompiled)?;
+        let runtime = Offload::load(dir_kompiled)?;
         let (value_program, loaded) = parse_kore(arena, runtime, path_definition, path_init)?;
-        self.offload.attach(Rc::clone(&loaded));
-        self.loaded = Some(loaded);
+        self.offload.attach(loaded);
         Ok(value_program)
     }
 

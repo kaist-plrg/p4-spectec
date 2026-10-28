@@ -231,7 +231,7 @@ impl<'a> Builder<'a> {
                     return Err(EncodeError::Malformed(format!("domain value {pattern}")));
                 };
                 let Loaded { info, mixops, runtime, .. } = self.loaded;
-                let float = |text: &str| offload::float_literal(*runtime, info, text);
+                let float = |text: &str| offload::float_literal(runtime, info, text);
                 let value = domain_value(self.arena, info, mixops, "pattern", sort, text, float)
                     .map_err(EncodeError::Literal)?;
                 Ok(case!(self.arena, "KDV pattern", [value], "kore")?)
