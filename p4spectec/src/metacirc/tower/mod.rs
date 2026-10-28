@@ -46,6 +46,8 @@ pub struct Tower<Ext: Extern = Dummy> {
     pub(super) base: Base<Ext>,
     /// Options for the interpreters of reentry depths.
     pub(super) options: runner::Config,
+    /// The function or relation entering a script above the top level.
+    pub(super) entry: String,
 }
 
 /// The input of a tower, prepared in the form the top accepts:
@@ -67,7 +69,7 @@ pub struct Kore {
     pub depth: Option<u64>,
 }
 
-/// A script above the top level, entered at its function `main`.
+/// A script above the top level, entered at the tower's configured entry.
 pub enum Script {
     Al(al::Spec),
     Il(il::Spec),
@@ -148,7 +150,7 @@ impl<Ext: Extern> Tower<Ext> {
         arena: &mut Arena,
         values: &[Value],
     ) -> std::result::Result<Vec<Value>, InterpreterError> {
-        let Self { levels, base, options } = self;
+        let Self { levels, base, options, .. } = self;
         let name = &levels[0].config().rel;
         // A P4 base runs the program directly
         if let Base::P4(runner) = base {

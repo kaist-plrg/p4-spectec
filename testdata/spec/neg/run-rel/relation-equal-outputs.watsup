@@ -1,0 +1,17 @@
+;; Two rule paths succeed with equal outputs: ERROR, not a recoverable mismatch
+
+var n : nat
+var m : nat
+
+relation R: nat |- nat
+  hint(input %0)
+
+rule R/a: n |- n
+rule R/b: n |- n
+
+relation Main: OK
+
+rule Main/call: OK
+  -- R: 1 |- m
+rule Main/else: OK
+  -- otherwise
