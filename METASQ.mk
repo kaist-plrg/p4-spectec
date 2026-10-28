@@ -35,10 +35,13 @@ $(KLIBRARY): $(wildcard $(KSPECDIR)/*/*.k)
 	kompile $(KSPECDIR)/3-execution/3.14-entry.k --main-module AL --syntax-module SYNTAX \
 	  -o $(dir $(KLIBRARY)) --llvm-kompile-type c --llvm-kompile-output $(notdir $(KLIBRARY))
 
-# The compiled entry module a redex tower runs, from spec-meta-redex (`module` in towers/redex*.json)
-redex:
-	@echo "redex: compiling spec-meta-redex is not implemented yet" >&2
-	@exit 1
+# The entry module a redex tower runs, compiled from spec-meta-redex (`module` in towers/redex*.json),
+# with the metacirc binary that runs it; raco make recompiles only what changed
+REDEXSPECDIR = spec-meta-redex
+REDEXMODULE = $(REDEXSPECDIR)/3-execution/3.16-entry.rkt
+
+redex: metacirc
+	raco make -v $(REDEXMODULE)
 
 # P4 corpus through the AL/P4 towers
 test-metacirc-run-al:
