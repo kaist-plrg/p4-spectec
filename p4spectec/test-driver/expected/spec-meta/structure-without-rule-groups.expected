@@ -5991,9 +5991,9 @@ relation Eval_exp: C |- typedExp' : %
 
                     1. (Let OK val_input*{val_input <- val_input*} be argsRes as ok<val*>)
 
-                      1. (Call_func: C |- id `< typ_input*{typ_input <- typ_input*} `> `( val_input*{val_input <- val_input*} `) : funcRes)
+                      1. (Call_func: C |- id `< typ_input*{typ_input <- typ_input*} `> `( val_input*{val_input <- val_input*} `) : callFuncRes)
 
-                        1. Result in: % |- % : funcRes as expRes
+                        1. Result in: % |- % : callFuncRes as expRes
 
     24. Case (% has type iterExp)
 
@@ -7299,6 +7299,10 @@ relation Eval_prem_each: C*{C <- C*} |- premAL : %
 
                       1. Result in: % |- % : OK C_res :: C_t_res*{C_t_res <- C_t_res*} as premIterRes
 
+syntax callFuncRes =
+   | OK val (from ok<val>)
+   | ERROR (from error)
+
 relation Call_func: C |- id `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
 
 1. (Let id_global be $resolve_func_param(C, id))
@@ -7317,7 +7321,11 @@ relation Call_func: C |- id `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
 
               1. (Call_extern_func: |- id_func `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : funcRes)
 
-                1. Result in: % |- % `< % `> `( % `) : funcRes
+                1. If (funcRes <: ok<val>), then
+
+                  1. (Let OK val_out be funcRes as ok<val>)
+
+                    1. Result in: % |- % `< % `> `( % `) : OK val_out as callFuncRes
 
           2. Case (% has type builtinFuncDefn)
 
@@ -7325,7 +7333,11 @@ relation Call_func: C |- id `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
 
               1. (Call_builtin_func: |- id_func `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : funcRes)
 
-                1. Result in: % |- % `< % `> `( % `) : funcRes
+                1. If (funcRes <: ok<val>), then
+
+                  1. (Let OK val_out be funcRes as ok<val>)
+
+                    1. Result in: % |- % `< % `> `( % `) : OK val_out as callFuncRes
 
 2. If (typ*{typ <- typ*} matches []), then
 
@@ -7341,9 +7353,9 @@ relation Call_func: C |- id `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
 
             1. (Let tableFuncDefnAL be funcDefnAL as tableFuncDefnAL)
 
-              1. (Call_table_func: C |- tableFuncDefnAL `( val*{val <- val*} `) : funcRes)
+              1. (Call_table_func: C |- tableFuncDefnAL `( val*{val <- val*} `) : callFuncRes)
 
-                1. Result in: % |- % `< % `> `( % `) : funcRes
+                1. Result in: % |- % `< % `> `( % `) : callFuncRes
 
 3. (Let id_global be $resolve_func_param(C, id))
 
@@ -7357,13 +7369,13 @@ relation Call_func: C |- id `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
 
           1. (Let definedFuncDefnAL be funcDefnAL as definedFuncDefnAL)
 
-            1. (Call_defined_func: C |- definedFuncDefnAL `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : funcRes)
+            1. (Call_defined_func: C |- definedFuncDefnAL `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : callFuncRes)
 
-              1. Result in: % |- % `< % `> `( % `) : funcRes
+              1. Result in: % |- % `< % `> `( % `) : callFuncRes
 
 4. Otherwise,
 
-  1. Result in: % |- % `< % `> `( % `) : ERROR as funcRes
+  1. Result in: % |- % `< % `> `( % `) : ERROR as callFuncRes
 
 relation Call_rel: C |- id `( val*{val <- val*} `) : %
 
@@ -9003,6 +9015,11 @@ relation Assign_args: C |- arg*{arg <- arg*} := val*{val <- val*} : %
 
   1. Result in: % |- % := % : ERROR as assignRes
 
+syntax clauseRes =
+   | OK val (from ok<val>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
 relation Eval_clause: C |- clauseAL `( val*{val <- val*} `) : %
 
 1. (Let arg*{arg <- arg*} '=' typedExp_out '-' premAL*{premAL <- premAL*} be clauseAL)
@@ -9021,7 +9038,7 @@ relation Eval_clause: C |- clauseAL `( val*{val <- val*} `) : %
 
               1. (Let failure be premRes as failure)
 
-                1. Result in: % |- % `( % `) : failure as funcRes
+                1. Result in: % |- % `( % `) : failure as clauseRes
 
             2. Case (% has type ok<ctx>)
 
@@ -9029,15 +9046,15 @@ relation Eval_clause: C |- clauseAL `( val*{val <- val*} `) : %
 
                 1. (Eval_exp: C_prem |- typedExp_out : expRes)
 
-                  1. If (expRes <: funcRes), then
+                  1. If (expRes <: clauseRes), then
 
-                    1. (Let funcRes be expRes as funcRes)
+                    1. (Let clauseRes be expRes as clauseRes)
 
-                      1. Result in: % |- % `( % `) : funcRes
+                      1. Result in: % |- % `( % `) : clauseRes
 
 2. Otherwise,
 
-  1. Result in: % |- % `( % `) : ERROR as funcRes
+  1. Result in: % |- % `( % `) : ERROR as clauseRes
 
 relation Eval_clauses: C |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <- val*} `) : %
 
@@ -9045,37 +9062,37 @@ relation Eval_clauses: C |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <- val*
 
   1. Case (% matches pattern [])
 
-    1. Result in: % |- % `( % `) : UNMATCH as funcRes
+    1. Result in: % |- % `( % `) : UNMATCH as clauseRes
 
   2. Case (% matches pattern _ :: _)
 
     1. (Let clauseAL_h :: clauseAL_t*{clauseAL_t <- clauseAL_t*} be clauseAL*{clauseAL <- clauseAL*})
 
-      1. (Eval_clause: C |- clauseAL_h `( val*{val <- val*} `) : funcRes')
+      1. (Eval_clause: C |- clauseAL_h `( val*{val <- val*} `) : clauseRes')
 
-        1. Case analysis on funcRes'
+        1. Case analysis on clauseRes'
 
           1. Case (% has type unmatch)
 
-            1. (Let unmatch be funcRes' as unmatch)
+            1. (Let unmatch be clauseRes' as unmatch)
 
-              1. (Eval_clauses: C |- clauseAL_t*{clauseAL_t <- clauseAL_t*} `( val*{val <- val*} `) : funcRes)
+              1. (Eval_clauses: C |- clauseAL_t*{clauseAL_t <- clauseAL_t*} `( val*{val <- val*} `) : clauseRes)
 
-                1. Result in: % |- % `( % `) : funcRes
+                1. Result in: % |- % `( % `) : clauseRes
 
           2. Case (% has type ok<val>)
 
-            1. (Let OK val_out be funcRes' as ok<val>)
+            1. (Let OK val_out be clauseRes' as ok<val>)
 
               1. (Eval_clauses_on_ok: C |- clauseAL_t*{clauseAL_t <- clauseAL_t*} `( val*{val <- val*} `) : unitRes)
 
                 1. If (unitRes matches OK), then
 
-                  1. Result in: % |- % `( % `) : OK val_out as funcRes
+                  1. Result in: % |- % `( % `) : OK val_out as clauseRes
 
 2. Otherwise,
 
-  1. Result in: % |- % `( % `) : ERROR as funcRes
+  1. Result in: % |- % `( % `) : ERROR as clauseRes
 
 relation Eval_clauses_on_ok: C |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <- val*} `) : %
 
@@ -9089,11 +9106,11 @@ relation Eval_clauses_on_ok: C |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <
 
     1. (Let clauseAL_h :: clauseAL_t*{clauseAL_t <- clauseAL_t*} be clauseAL*{clauseAL <- clauseAL*})
 
-      1. (Eval_clause: C |- clauseAL_h `( val*{val <- val*} `) : funcRes)
+      1. (Eval_clause: C |- clauseAL_h `( val*{val <- val*} `) : clauseRes)
 
-        1. If (funcRes <: unmatch), then
+        1. If (clauseRes <: unmatch), then
 
-          1. (Let unmatch be funcRes as unmatch)
+          1. (Let unmatch be clauseRes as unmatch)
 
             1. (Eval_clauses_on_ok: C |- clauseAL_t*{clauseAL_t <- clauseAL_t*} `( val*{val <- val*} `) : unitRes)
 
@@ -9101,11 +9118,16 @@ relation Eval_clauses_on_ok: C |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <
 
         1. Else Dangling
 
-        2. If ((funcRes =/= UNMATCH as funcRes)), then
+        2. If ((clauseRes =/= UNMATCH as clauseRes)), then
 
           1. Result in: % |- % `( % `) : ERROR as unitRes
 
         2. Else Dangling
+
+syntax tblRowRes =
+   | OK val (from ok<val>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
 
 relation Eval_tblrow: C |- tblRowAL `( val*{val <- val*} `) : %
 
@@ -9127,7 +9149,7 @@ relation Eval_tblrow: C |- tblRowAL `( val*{val <- val*} `) : %
 
                 1. (Let failure be premRes as failure)
 
-                  1. Result in: % |- % `( % `) : failure as funcRes
+                  1. Result in: % |- % `( % `) : failure as tblRowRes
 
               2. Case (% has type ok<ctx>)
 
@@ -9135,15 +9157,15 @@ relation Eval_tblrow: C |- tblRowAL `( val*{val <- val*} `) : %
 
                   1. (Eval_exp: C_callee_prem |- typedExp_out : expRes)
 
-                    1. If (expRes <: funcRes), then
+                    1. If (expRes <: tblRowRes), then
 
-                      1. (Let funcRes be expRes as funcRes)
+                      1. (Let tblRowRes be expRes as tblRowRes)
 
-                        1. Result in: % |- % `( % `) : funcRes
+                        1. Result in: % |- % `( % `) : tblRowRes
 
 2. Otherwise,
 
-  1. Result in: % |- % `( % `) : ERROR as funcRes
+  1. Result in: % |- % `( % `) : ERROR as tblRowRes
 
 relation Eval_tblrows: C |- tblRowAL*{tblRowAL <- tblRowAL*} `( val*{val <- val*} `) : %
 
@@ -9151,27 +9173,27 @@ relation Eval_tblrows: C |- tblRowAL*{tblRowAL <- tblRowAL*} `( val*{val <- val*
 
   1. Case (% matches pattern [])
 
-    1. Result in: % |- % `( % `) : UNMATCH as funcRes
+    1. Result in: % |- % `( % `) : UNMATCH as tblRowRes
 
   2. Case (% matches pattern _ :: _)
 
     1. (Let tblRowAL_h :: tblRowAL_t*{tblRowAL_t <- tblRowAL_t*} be tblRowAL*{tblRowAL <- tblRowAL*})
 
-      1. (Eval_tblrow: C |- tblRowAL_h `( val*{val <- val*} `) : funcRes')
+      1. (Eval_tblrow: C |- tblRowAL_h `( val*{val <- val*} `) : tblRowRes')
 
-        1. If (funcRes' <: unmatch), then
+        1. If (tblRowRes' <: unmatch), then
 
-          1. (Let unmatch be funcRes' as unmatch)
+          1. (Let unmatch be tblRowRes' as unmatch)
 
-            1. (Eval_tblrows: C |- tblRowAL_t*{tblRowAL_t <- tblRowAL_t*} `( val*{val <- val*} `) : funcRes)
+            1. (Eval_tblrows: C |- tblRowAL_t*{tblRowAL_t <- tblRowAL_t*} `( val*{val <- val*} `) : tblRowRes)
 
-              1. Result in: % |- % `( % `) : funcRes
+              1. Result in: % |- % `( % `) : tblRowRes
 
         1. Else Dangling
 
-        2. If ((funcRes' =/= UNMATCH as funcRes)), then
+        2. If ((tblRowRes' =/= UNMATCH as tblRowRes)), then
 
-          1. Result in: % |- % `( % `) : funcRes'
+          1. Result in: % |- % `( % `) : tblRowRes'
 
         2. Else Dangling
 
@@ -9179,9 +9201,15 @@ relation Call_table_func: C |- tableFuncDefnAL `( val*{val <- val*} `) : %
 
 1. (Let TABLEFUNC _id _param*{_param <- _param*} ':' _typ '=' tblRowAL*{tblRowAL <- tblRowAL*} be tableFuncDefnAL)
 
-  1. (Eval_tblrows: C |- tblRowAL*{tblRowAL <- tblRowAL*} `( val*{val <- val*} `) : funcRes)
+  1. (Eval_tblrows: C |- tblRowAL*{tblRowAL <- tblRowAL*} `( val*{val <- val*} `) : tblRowRes)
 
-    1. Result in: % |- % `( % `) : funcRes
+    1. If (tblRowRes <: callFuncRes), then
+
+      1. (Let callFuncRes be tblRowRes as callFuncRes)
+
+        1. Result in: % |- % `( % `) : callFuncRes
+
+    1. Else Dangling
 
 relation Call_defined_func: C |- definedFuncDefnAL `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
 
@@ -9193,25 +9221,37 @@ relation Call_defined_func: C |- definedFuncDefnAL `< typ*{typ <- typ*} `> `( va
 
       1. (Let C_callee be C[LOCAL = $empty_localLayer[TYP = tdenv]])
 
-        1. (Eval_clauses: C_callee |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <- val*} `) : funcRes')
+        1. (Eval_clauses: C_callee |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <- val*} `) : clauseRes)
 
-          1. If (funcRes' <: unmatch), then
+          1. Case analysis on clauseRes (total)
 
-            1. (Let unmatch be funcRes' as unmatch)
+            1. Case (% has type unmatch)
 
-              1. (Eval_clause: C_callee |- elsClauseAL `( val*{val <- val*} `) : funcRes_els)?{elsClauseAL <- elsClauseAL?, funcRes_els -> funcRes_els?}
+              1. (Let unmatch be clauseRes as unmatch)
 
-                1. (Let funcRes be $deopt_<funcRes>(funcRes_els?{funcRes_els <- funcRes_els?}, UNMATCH as funcRes))
+                1. (Eval_clause: C_callee |- elsClauseAL `( val*{val <- val*} `) : clauseRes_els)?{elsClauseAL <- elsClauseAL?, clauseRes_els -> clauseRes_els?}
 
-                  1. Result in: % |- % `< % `> `( % `) : funcRes
+                  1. If ((UNMATCH as clauseRes = $deopt_<clauseRes>(clauseRes_els?{clauseRes_els <- clauseRes_els?}, UNMATCH as clauseRes))), then
 
-          2. If ((funcRes' =/= UNMATCH as funcRes)), then
+                    1. Result in: % |- % `< % `> `( % `) : ERROR as callFuncRes
 
-            1. Result in: % |- % `< % `> `( % `) : funcRes'
+                  2. (Let clauseRes' be $deopt_<clauseRes>(clauseRes_els?{clauseRes_els <- clauseRes_els?}, UNMATCH as clauseRes))
+
+                    1. If (clauseRes' <: callFuncRes), then
+
+                      1. (Let callFuncRes be clauseRes' as callFuncRes)
+
+                        1. Result in: % |- % `< % `> `( % `) : callFuncRes
+
+            2. Case (% has type callFuncRes)
+
+              1. (Let callFuncRes be clauseRes as callFuncRes)
+
+                1. Result in: % |- % `< % `> `( % `) : callFuncRes
 
 2. Otherwise,
 
-  1. Result in: % |- % `< % `> `( % `) : ERROR as funcRes
+  1. Result in: % |- % `< % `> `( % `) : ERROR as callFuncRes
 
 relation Eval_rul: C |- rulAL `( val*{val <- val*} `) : %
 
@@ -9417,11 +9457,11 @@ relation Eval_AL_func: specAL |- id `( val*{val <- val*} `) : %
 
 1. (Let C be $load_ctx($empty_ctx, specAL))
 
-  1. (Call_func: C |- id `< [] `> `( val*{val <- val*} `) : funcRes)
+  1. (Call_func: C |- id `< [] `> `( val*{val <- val*} `) : callFuncRes)
 
-    1. If (funcRes <: ok<val>), then
+    1. If (callFuncRes <: ok<val>), then
 
-      1. (Let OK val' be funcRes as ok<val>)
+      1. (Let OK val' be callFuncRes as ok<val>)
 
         1. Result in: % |- % `( % `) : val'
 
