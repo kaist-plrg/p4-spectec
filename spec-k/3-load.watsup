@@ -123,9 +123,6 @@ def $close_subsorts(subsort*) = $concat_<subsort>($subsorts_from(SM, sort_a)*)
 
 ;; Symbols
 
-;; A hook comes before the equations of a function, as the LLVM backend calls
-;; the hook
-
 ;; The hooks of K's modules of domain values (INT, BOOL, STRING, BYTES, FLOAT,
 ;; JSON, and the KRYPTO plugin) are computed by the K runtime (RUNTIME), but
 ;; for the lazy ones and the conversions between strings and tokens of any
@@ -148,29 +145,38 @@ def $is_runtime(hookid)
     /\ ~(hookid <- [ "STRING.token2string", "STRING.string2token" ])
   -- if t_m* = [ "INT", "BOOL", "STRING", "BYTES", "FLOAT", "JSON", "KRYPTO" ]
 
-dec $kind_by_attrs(kattr*) : symkind
-def $kind_by_attrs(kattr*) = LAZY hookid
-  -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
-  -- if $is_lazy(hookid)
-def $kind_by_attrs(kattr*) = RUNTIME hookid
-  -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
-  -- if ~$is_lazy(hookid) /\ $is_runtime(hookid)
-def $kind_by_attrs(kattr*) = HOOKED hookid
-  -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
-  -- if ~$is_lazy(hookid) /\ ~$is_runtime(hookid)
-def $kind_by_attrs(kattr*) = FUNCTION
-  -- if ~$has_attr("hook", kattr*)
-  -- if $has_attr("function", kattr*)
-def $kind_by_attrs(kattr*) = ANYWHERE
-  -- if ~$has_attr("hook", kattr*) /\ ~$has_attr("function", kattr*)
-  -- if $has_attr("anywhere", kattr*)
-def $kind_by_attrs(kattr*) = BINDER
-  -- if ~$has_attr("hook", kattr*) /\ ~$has_attr("function", kattr*)
-  -- if ~$has_attr("anywhere", kattr*) /\ $has_attr("binder", kattr*)
-def $kind_by_attrs(kattr*) = CONSTRUCTOR
-  -- if ~$has_attr("hook", kattr*) /\ ~$has_attr("function", kattr*)
-  -- if ~$has_attr("anywhere", kattr*) /\ ~$has_attr("binder", kattr*)
+;; The kind of a symbol with a hook, by the hook: lazy, computed by the K
+;; runtime, or specified
 
+dec $kind_of_hook(hookid) : symkind
+def $kind_of_hook(hookid) = LAZY hookid
+  -- if $is_lazy(hookid)
+def $kind_of_hook(hookid) = RUNTIME hookid
+  -- if ~$is_lazy(hookid) /\ $is_runtime(hookid)
+def $kind_of_hook(hookid) = HOOKED hookid
+  -- otherwise
+
+;; The kind of a symbol without a hook, by its attributes in this order
+
+dec $kind_of_unhooked(kattr*) : symkind
+def $kind_of_unhooked(kattr*) = FUNCTION
+  -- if $has_attr("function", kattr*)
+def $kind_of_unhooked(kattr*) = ANYWHERE
+  -- if ~$has_attr("function", kattr*) /\ $has_attr("anywhere", kattr*)
+def $kind_of_unhooked(kattr*) = BINDER
+  -- if ~$has_attr("function", kattr*) /\ ~$has_attr("anywhere", kattr*)
+  -- if $has_attr("binder", kattr*)
+def $kind_of_unhooked(kattr*) = CONSTRUCTOR
+  -- otherwise
+
+;; A hook comes before the equations of a function, as the LLVM backend calls
+;; the hook
+
+dec $kind_by_attrs(kattr*) : symkind
+def $kind_by_attrs(kattr*) = $kind_of_hook(hookid)
+  -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
+def $kind_by_attrs(kattr*) = $kind_of_unhooked(kattr*)
+  -- if ~$has_attr("hook", kattr*)
 
 dec $fresh_generator(symid, ksymdecl) : pair<sort, symid>*
 def $fresh_generator(symid, KSYMBOL sortid_p* sort_a* '->' sort kattr*)
