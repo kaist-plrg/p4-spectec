@@ -29,10 +29,12 @@
 //! | `al`                | `Al`            | AL                           |
 //! | `il`                | `Il`            | IL                           |
 
-use super::super::engine::{InterfaceKind, KEngineState, KRuntime};
-use super::super::protocol::{KoreProtocol, MetaKProtocol, MetaProtocol, Protocol, ProtocolKind};
+use super::super::engine::{InterfaceKind, KEngineState, KRuntime, RedexEngineState, RedexRuntime};
+use super::super::protocol::{
+    KoreProtocol, MetaKProtocol, MetaProtocol, MetaRedexProtocol, Protocol, ProtocolKind,
+};
 use super::super::{ExecutionMode, Result, TowerConfig, config::Lang, error::config_invalid};
-use super::{BaseRunner, KBase, PreparedLevel, Top, Tower, Upper};
+use super::{BaseRunner, KBase, PreparedLevel, RedexBase, Top, Tower, Upper};
 use crate::{
     interface::{
         self,
@@ -50,7 +52,9 @@ fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
     match mode {
         ExecutionMode::Al => Ok(Spec::Al(spec_al)),
         ExecutionMode::Sl => structure::convert(spec_al, true).map(Spec::Sl),
-        ExecutionMode::K => unreachable!("a K base has no AL or SL runner"),
+        ExecutionMode::K | ExecutionMode::Redex => {
+            unreachable!("a K or Redex base has no AL or SL runner")
+        }
     }
 }
 
@@ -99,12 +103,15 @@ fn build_upper<Ext: Extern>(
         .map(|config_level| interface::meta(config_level.lang))
         .collect::<Vec<_>>();
     // The level below each boundary interprets the level above it:
-    // a K base runs spec-meta-k, a level accepting KORE is spec-k,
-    // and every other level is spec-meta
+    // a K base runs spec-meta-k, a Redex base runs spec-meta-redex,
+    // a level accepting KORE is spec-k, and every other level is spec-meta
     let count = hosts.len() + 1;
     let protocols = (0..count)
         .map(|idx_below| match (config.mode, config.levels[idx_below].lang) {
             (ExecutionMode::K, _) if idx_below == 0 => ProtocolKind::MetaK(MetaKProtocol),
+            (ExecutionMode::Redex, _) if idx_below == 0 => {
+                ProtocolKind::MetaRedex(MetaRedexProtocol)
+            }
             (_, Lang::Kore) => ProtocolKind::Kore(KoreProtocol),
             _ => ProtocolKind::Meta(MetaProtocol),
         })
@@ -174,6 +181,15 @@ impl<Ext: Extern> Tower<Ext> {
             let state = KEngineState::new(&runtime)?;
             let (upper, protocols) = build_upper(config, level_top, None, options, external_p4);
             let base = BaseRunner::K(KBase { runtime, state, upper, effects: 0 });
+            return Ok(Self { levels, protocols, base, options });
+        }
+        // A Redex base runs in a racket process and hosts the levels above it
+        if let ExecutionMode::Redex = config.mode {
+            let module = config_base.module.as_ref().expect("validated redex base");
+            let runtime = RedexRuntime::load(module)?;
+            let state = RedexEngineState::new(&runtime)?;
+            let (upper, protocols) = build_upper(config, level_top, None, options, external_p4);
+            let base = BaseRunner::Redex(RedexBase { runtime, state, upper, effects: 0 });
             return Ok(Self { levels, protocols, base, options });
         }
         let spec_base_al = crate::algo(std::slice::from_ref(&config_base.specdir))?;

@@ -19,7 +19,8 @@ use super::{
     Result,
     config::LevelConfig,
     engine::{
-        BaseSpec, Engine, EngineKind, InterfaceKind, KEngine, KEngineState, KRuntime, SpecTecEngine,
+        BaseSpec, Engine, EngineKind, InterfaceKind, KEngine, KEngineState, KRuntime, RedexEngine,
+        RedexEngineState, RedexRuntime, SpecTecEngine,
     },
     error,
     interp::TowerEnv,
@@ -75,12 +76,23 @@ pub(super) enum BaseRunner<Ext: Extern> {
     /// A K specification, compiled to a library, interpreting an AL script
     /// and hosting the levels above it.
     K(KBase<Ext>),
+    /// A PLT Redex specification, run by a `racket` process,
+    /// interpreting an AL script and hosting the levels above it.
+    Redex(RedexBase<Ext>),
 }
 
 /// A base written in K: its library, depth 0's K thread, and the levels above it.
 pub(super) struct KBase<Ext: Extern> {
     pub(super) runtime: KRuntime,
     pub(super) state: KEngineState,
+    pub(super) upper: Upper<Ext>,
+    pub(super) effects: u64,
+}
+
+/// A base written in PLT Redex: its process, depth 0's state, and the levels above it.
+pub(super) struct RedexBase<Ext: Extern> {
+    pub(super) runtime: RedexRuntime,
+    pub(super) state: RedexEngineState,
     pub(super) upper: Upper<Ext>,
     pub(super) effects: u64,
 }
@@ -193,6 +205,11 @@ impl<Ext: Extern> BaseRunner<Ext> {
                 KEngine::lend(&base.runtime, &mut base.state).reset();
                 base.upper.clear();
             }
+            Self::Redex(base) => {
+                base.effects = 0;
+                RedexEngine::lend(&base.runtime, &mut base.state).reset();
+                base.upper.clear();
+            }
         }
     }
 
@@ -211,6 +228,11 @@ impl<Ext: Extern> BaseRunner<Ext> {
             Self::K(KBase { runtime, state, upper, effects }) => {
                 let engine = EngineKind::K(KEngine::lend(runtime, state));
                 let spec_base = BaseSpec::K(runtime);
+                Some(LentBase { engine, spec_base, upper, effects })
+            }
+            Self::Redex(RedexBase { runtime, state, upper, effects }) => {
+                let engine = EngineKind::Redex(RedexEngine::lend(runtime, state));
+                let spec_base = BaseSpec::Redex(runtime);
                 Some(LentBase { engine, spec_base, upper, effects })
             }
         }

@@ -6,14 +6,17 @@
 //! Depth 0 borrows the base runner's interpreter; each deeper depth owns one.
 //! `EngineKind` lends the engines, `EngineStateKind` stores a deeper depth's,
 //! and `BaseSpec` is the base's definitions they share;
-//! `spectec` executes AL or SL, and `k` a library compiled from a K base.
+//! `spectec` executes AL or SL, `k` a library compiled from a K base,
+//! and `redex` a `racket` process running a PLT Redex base.
 //! `InterfaceKind` answers the builtins of a base executed by `spectec`,
 //! spec-meta or spec-k.
 
 mod k;
+mod redex;
 mod spectec;
 
 pub(super) use k::{KEngine, KEngineState, KRuntime};
+pub(super) use redex::{RedexEngine, RedexEngineState, RedexRuntime};
 pub(super) use spectec::SpecTecEngine;
 use spectec::{SpecTecEngineState, SpecTecSpec};
 
@@ -74,12 +77,15 @@ pub(in crate::metacirc) enum EngineKind<'s> {
     SpecTec(SpecTecEngine<'s>),
     /// The library compiled from a K specification.
     K(KEngine<'s>),
+    /// The `racket` process running a PLT Redex specification.
+    Redex(RedexEngine<'s>),
 }
 
 /// The engine state a depth beneath the base owns.
 pub(in crate::metacirc) enum EngineStateKind {
     SpecTec(SpecTecEngineState),
     K(KEngineState),
+    Redex(RedexEngineState),
 }
 
 /// The base's definitions, shared by every depth's engine.
@@ -87,6 +93,7 @@ pub(in crate::metacirc) enum EngineStateKind {
 pub(in crate::metacirc) enum BaseSpec<'s> {
     SpecTec(SpecTecSpec<'s>),
     K(&'s KRuntime),
+    Redex(&'s RedexRuntime),
 }
 
 impl EngineStateKind {
@@ -98,6 +105,7 @@ impl EngineStateKind {
         match spec {
             BaseSpec::SpecTec(spec) => Ok(Self::SpecTec(SpecTecEngineState::new(options, spec))),
             BaseSpec::K(runtime) => KEngineState::new(runtime).map(Self::K),
+            BaseSpec::Redex(runtime) => RedexEngineState::new(runtime).map(Self::Redex),
         }
     }
 
@@ -108,6 +116,9 @@ impl EngineStateKind {
                 EngineKind::SpecTec(SpecTecEngine::lend_depth(state, spec))
             }
             (Self::K(state), BaseSpec::K(runtime)) => EngineKind::K(KEngine::lend(runtime, state)),
+            (Self::Redex(state), BaseSpec::Redex(runtime)) => {
+                EngineKind::Redex(RedexEngine::lend(runtime, state))
+            }
             _ => unreachable!("a depth runs the engine of the base it was made for"),
         }
     }
@@ -125,6 +136,7 @@ impl Engine for EngineKind<'_> {
         match self {
             Self::SpecTec(engine) => engine.call_program(arena, upper, effects, name, program),
             Self::K(engine) => engine.call_program(arena, upper, effects, name, program),
+            Self::Redex(engine) => engine.call_program(arena, upper, effects, name, program),
         }
     }
 
@@ -139,6 +151,7 @@ impl Engine for EngineKind<'_> {
         match self {
             Self::SpecTec(engine) => engine.call_rel(arena, upper, effects, name, values),
             Self::K(engine) => engine.call_rel(arena, upper, effects, name, values),
+            Self::Redex(engine) => engine.call_rel(arena, upper, effects, name, values),
         }
     }
 
@@ -154,6 +167,7 @@ impl Engine for EngineKind<'_> {
         match self {
             Self::SpecTec(engine) => engine.call_func(arena, upper, effects, name, targs, values),
             Self::K(engine) => engine.call_func(arena, upper, effects, name, targs, values),
+            Self::Redex(engine) => engine.call_func(arena, upper, effects, name, targs, values),
         }
     }
 
@@ -161,6 +175,7 @@ impl Engine for EngineKind<'_> {
         match self {
             Self::SpecTec(engine) => engine.clear(),
             Self::K(engine) => engine.clear(),
+            Self::Redex(engine) => engine.clear(),
         }
     }
 
@@ -168,6 +183,7 @@ impl Engine for EngineKind<'_> {
         match self {
             Self::SpecTec(engine) => engine.reset(),
             Self::K(engine) => engine.reset(),
+            Self::Redex(engine) => engine.reset(),
         }
     }
 }
