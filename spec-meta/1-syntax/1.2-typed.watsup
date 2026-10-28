@@ -12,7 +12,7 @@ syntax mixop =
 
 ;; Types
 
-syntax targ, typField, typCase
+syntax targ, typField, typCase, typOrigin
 
 syntax optyp =
   | BOOL
@@ -32,7 +32,11 @@ syntax deftyp =
   | VARIANT typCase*
 
 syntax typField = atom typ
-syntax typCase = mixop typ*
+;; A case records the type that introduced it,
+;; which differs from the variant when the case is inherited
+
+syntax typCase = mixop typ* FROM typOrigin
+syntax typOrigin = id targ*
 
 ;; Variables
 

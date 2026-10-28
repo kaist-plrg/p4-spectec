@@ -222,7 +222,10 @@ syntax typField =
    | atom typ (from typField)
 
 syntax typCase =
-   | mixop typ* (from typCase)
+   | mixop typ* FROM typOrigin (from typCase)
+
+syntax typOrigin =
+   | id targ* (from typOrigin)
 
 syntax vari =
    | id typ iter* (from vari)
@@ -4234,7 +4237,7 @@ def $cases_typ(tdenv, typ) : cases =
   -- if typDef <: definedTypDefn
   -- let TYP _id _tparam*{_tparam <- _tparam*} '=' deftyp = typDef as definedTypDefn
   -- if deftyp matches VARIANT %
-  -- let VARIANT mixop _typ*{_typ <- _typ*}*{_typ* <- _typ**, mixop <- mixop*} = deftyp
+  -- let VARIANT mixop _typ*{_typ <- _typ*} FROM _typOrigin*{_typ* <- _typ**, _typOrigin <- _typOrigin*, mixop <- mixop*} = deftyp
 
 def $cases_exp(tdenv, typedExp) : cases =
 
@@ -7334,7 +7337,7 @@ def $subtyp_variant(fenv, tdenv, theta, typCase*, val) : subtypRes =
   clause 0 : (fenv, tdenv, theta, typCase*{typCase <- typCase*}, val') = $subtyp_case(fenv, tdenv, theta, typ_case_found*{typ_case_found <- typ_case_found*}, val*{val <- val*})
   -- if val' matches INJ %
   -- let INJ mixop val*{val <- val*} = val'
-  -- (let mixop_case typ_case*{typ_case <- typ_case*} = typCase)*{typCase <- typCase*, mixop_case -> mixop_case*, typ_case* -> typ_case**}
+  -- (let mixop_case typ_case*{typ_case <- typ_case*} FROM _typOrigin = typCase)*{typCase <- typCase*, _typOrigin -> _typOrigin*, mixop_case -> mixop_case*, typ_case* -> typ_case**}
   -- let typ*{typ <- typ*}?{typ* <- typ*?} = $assoc_<mixop, typ*>(mixop, (mixop_case, typ_case*{typ_case <- typ_case*})*{mixop_case <- mixop_case*, typ_case* <- typ_case**})
   -- if typ*{typ <- typ*}?{typ* <- typ*?} matches (_)
   -- let ?(typ_case_found*{typ_case_found <- typ_case_found*}) = typ*{typ <- typ*}?{typ* <- typ*?}

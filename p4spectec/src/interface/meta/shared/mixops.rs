@@ -36,7 +36,8 @@ pub(in crate::interface::meta) const DEFTYP_ALIAS: &str = "ALIAS typ";
 pub(in crate::interface::meta) const DEFTYP_STRUCT: &str = "STRUCT typField*";
 pub(in crate::interface::meta) const DEFTYP_VARIANT: &str = "VARIANT typCase*";
 pub(in crate::interface::meta) const TYP_FIELD: &str = "atom typ";
-pub(in crate::interface::meta) const TYP_CASE: &str = "mixop typ*";
+pub(in crate::interface::meta) const TYP_CASE: &str = "mixop typ* FROM typOrigin";
+pub(in crate::interface::meta) const TYP_ORIGIN: &str = "id targ*";
 
 // == Operators
 

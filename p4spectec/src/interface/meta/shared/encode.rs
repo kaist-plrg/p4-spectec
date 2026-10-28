@@ -310,7 +310,7 @@ impl Encode for il::TypField {
     }
 }
 
-/// Encodes one variant case without its origin or hints.
+/// Encodes one variant case with its origin, without hints.
 impl Encode for il::TypCase {
     type Output = Value;
 
@@ -318,8 +318,22 @@ impl Encode for il::TypCase {
         let values_meta = vec![
             self.not_typ.node.mixop().encode_cached(arena, cache)?,
             list(arena, cache, "typ", self.not_typ.node.args())?,
+            self.typ_origin.encode_cached(arena, cache)?,
         ];
         case(arena, m::TYP_CASE, "typCase", values_meta, self.not_typ.span)
+    }
+}
+
+/// Encodes the type that introduced a variant case.
+impl Encode for il::TypOrigin {
+    type Output = Value;
+
+    fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
+        let values_meta = vec![
+            self.node.id.encode_cached(arena, cache)?,
+            list(arena, cache, "targ", &self.node.targs)?,
+        ];
+        case(arena, m::TYP_ORIGIN, "typOrigin", values_meta, self.span)
     }
 }
 

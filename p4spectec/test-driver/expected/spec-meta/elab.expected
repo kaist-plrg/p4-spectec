@@ -191,7 +191,10 @@ syntax typField =
    | atom typ (from typField)
 
 syntax typCase =
-   | mixop typ* (from typCase)
+   | mixop typ* FROM typOrigin (from typCase)
+
+syntax typOrigin =
+   | id targ* (from typOrigin)
 
 syntax vari =
    | id typ iter* (from vari)
@@ -2370,7 +2373,7 @@ def $cases_typ(tdenv, typ) : cases =
 
   clause 0 : (tdenv, typ) = mixop*{mixop <- mixop*}
   -- if (OK VAR id _targ*{_targ <- _targ*} as typRes = $expand_typ(tdenv, typ))
-  -- if (?(TYP _id _tparam*{_tparam <- _tparam*} '=' VARIANT mixop _typ*{_typ <- _typ*}*{_typ* <- _typ**, mixop <- mixop*} as typDef) = $find_map<id, typDef>(tdenv, id))
+  -- if (?(TYP _id _tparam*{_tparam <- _tparam*} '=' VARIANT mixop _typ*{_typ <- _typ*} FROM _typOrigin*{_typ* <- _typ**, _typOrigin <- _typOrigin*, mixop <- mixop*} as typDef) = $find_map<id, typDef>(tdenv, id))
 
 def $cases_exp(tdenv, typedExp) : cases =
 
@@ -3702,7 +3705,7 @@ def $subtyp_extern(val) : subtypRes =
 def $subtyp_variant(fenv, tdenv, theta, typCase*, val) : subtypRes =
 
   clause 0 : (fenv, tdenv, theta, typCase*{typCase <- typCase*}, INJ mixop val*{val <- val*}) = $subtyp_case(fenv, tdenv, theta, typ_case_found*{typ_case_found <- typ_case_found*}, val*{val <- val*})
-  -- (if (mixop_case typ_case*{typ_case <- typ_case*} = typCase))*{mixop_case <- mixop_case*, typCase <- typCase*, typ_case* <- typ_case**}
+  -- (if (mixop_case typ_case*{typ_case <- typ_case*} FROM _typOrigin = typCase))*{_typOrigin <- _typOrigin*, mixop_case <- mixop_case*, typCase <- typCase*, typ_case* <- typ_case**}
   -- if (?(typ_case_found*{typ_case_found <- typ_case_found*}) = $assoc_<mixop, typ*>(mixop, (mixop_case, typ_case*{typ_case <- typ_case*})*{mixop_case <- mixop_case*, typ_case* <- typ_case**}))
 
   clause -1 : (fenv, tdenv, theta, typCase*{typCase <- typCase*}, val) = OK false as subtypRes

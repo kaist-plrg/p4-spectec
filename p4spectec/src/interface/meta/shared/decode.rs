@@ -202,25 +202,6 @@ impl Decode for FlatMixop {
 
 // - Mixfixes
 
-/// Decodes a type notation case.
-impl Decode for TreeMixfix<il::Typ> {
-    fn decode_cached(
-        arena: &mut Arena,
-        cache: &mut Cache,
-        value_meta: Value,
-    ) -> Result<Self, Error> {
-        get::matches_string! { arena, &value_meta,
-            m::TYP_CASE => |[value_mixop, values_arg]| {
-                Ok(TreeMixfix::new(
-                    Rc::<Mixop>::decode_cached(arena, cache, *value_mixop)?,
-                    Vec::<il::Typ>::decode_cached(arena, cache, *values_arg)?,
-                )?)
-            },
-            _ => Err(Error::unexpected(arena, value_meta, "mixop elem*")),
-        }
-    }
-}
-
 /// Decodes an expression notation case.
 impl Decode for TreeMixfix<il::Exp> {
     fn decode_cached(
@@ -380,7 +361,7 @@ impl Decode for il::TypField {
     }
 }
 
-/// Decodes one variant case without its origin or hints.
+/// Decodes one variant case with its origin, without hints.
 impl Decode for il::TypCase {
     fn decode_cached(
         arena: &mut Arena,
@@ -388,12 +369,41 @@ impl Decode for il::TypCase {
         value_meta: Value,
     ) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
-        let mixfix_typ_al = TreeMixfix::<il::Typ>::decode_cached(arena, cache, value_meta)?;
-        Ok(il::TypCase {
-            not_typ: phrase!(node: mixfix_typ_al, span: span),
-            typ_origin: stub::typ_origin(),
-            hints: stub::hints(),
-        })
+        get::matches_string! { arena, &value_meta,
+            m::TYP_CASE => |[value_mixop, values_arg, value_origin]| {
+                let mixfix_typ_al = TreeMixfix::new(
+                    Rc::<Mixop>::decode_cached(arena, cache, *value_mixop)?,
+                    Vec::<il::Typ>::decode_cached(arena, cache, *values_arg)?,
+                )?;
+                Ok(il::TypCase {
+                    not_typ: phrase!(node: mixfix_typ_al, span: span),
+                    typ_origin: il::TypOrigin::decode_cached(arena, cache, *value_origin)?,
+                    hints: stub::hints(),
+                })
+            },
+            _ => Err(Error::unexpected(arena, value_meta, "mixop typ* FROM typOrigin")),
+        }
+    }
+}
+
+/// Decodes the type that introduced a variant case.
+impl Decode for il::TypOrigin {
+    fn decode_cached(
+        arena: &mut Arena,
+        cache: &mut Cache,
+        value_meta: Value,
+    ) -> Result<Self, Error> {
+        let span = *arena.value.span(value_meta.span);
+        get::matches_string! { arena, &value_meta,
+            m::TYP_ORIGIN => |[value_id, values_targ]| {
+                let typ_origin_kind = il::TypOriginKind {
+                    id: Id::decode_cached(arena, cache, *value_id)?,
+                    targs: Vec::<il::Typ>::decode_cached(arena, cache, *values_targ)?,
+                };
+                Ok(phrase!(node: typ_origin_kind, span: span))
+            },
+            _ => Err(Error::unexpected(arena, value_meta, "id targ*")),
+        }
     }
 }
 
