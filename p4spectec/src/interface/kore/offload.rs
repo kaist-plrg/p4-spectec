@@ -37,9 +37,10 @@ pub(super) const LIBRARY: &str = "runtime.so";
 
 /// The K library of the definition being run, shared by every offloaded hook.
 ///
-/// It is loaded per definition, so `KoreInterface::parse_program` loads it,
-/// and attaches the definition read, before `Krun` calls a hook; the hooks
-/// registered in `hooks` hold an `Rc` of it.
+/// It is loaded per definition, in two steps before `Krun` calls a hook:
+/// `KoreInterface::parse_program` loads the library first, since reading the
+/// definition needs its runtime for Float literals, and attaches the
+/// definition read after. The hooks registered in `hooks` hold an `Rc` of it.
 pub(super) struct Offload {
     /// The runtime of the library, once loaded.
     runtime: Cell<Option<&'static Runtime>>,
