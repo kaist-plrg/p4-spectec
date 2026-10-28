@@ -3,9 +3,11 @@
 #
 # A configuration selects the `base` of the tower (spec-k is converted by the
 # native `algo` pass, so `al`), memoization (`cache`), and determinism checking (`det`).
-# Each suite names the K-in-ST tower per base and `root`, its directory of cases:
-# a K definition compiled to KORE, initial terms krun made for programs,
-# and the final configurations krun printed for them.
+# Each suite names the K-in-ST tower per base, `root`, its directory of cases, and
+# `ext`, the extension of their programs (`prog` if none). A case is a K definition,
+# its programs, and what krun's runs gave (layout in test-driver/src/metacirc/k_in_st.rs).
+# Running needs K: the definitions are kompiled, and the initial terms made with krun,
+# into $CARGO_TARGET_DIR/k-in-st. UPDATE_EXPECT=1 writes what krun gives.
 # A configuration with `pending` is skipped without failing until its implementation lands.
 # Paths are relative to the repository root.
 
@@ -14,9 +16,17 @@ name = "sl"
 base = "al"
 cache = true
 det = true
-pending = "K-in-ST: spec-k over KORE, see docs/metacirc/k-in-st.md"
 
 [[suites]]
+# Small definitions written to test spec-k: K's behavior where its documentation
+# is silent or differs (behavior), failing hooks and functions (errors), and
+# features the tutorial languages do not use (features). behavior/or-pattern/left
+# ends elsewhere than krun, at another final configuration K allows (left.search).
+# Left out are known differences:
+# behavior/choice (choice and Set2List differ on ==K-equal collections),
+# behavior/fresh-in-function (a fresh value of a rule and of a function it calls
+# coincide), and behavior/updatelist-index0 (updateList does not check the bounds
+# at index 0)
 name = "manual"
 towers = { al = "towers/k-in-st.json" }
 root = "testdata/k-in-st/manual"
