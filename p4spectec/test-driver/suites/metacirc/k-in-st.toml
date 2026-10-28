@@ -164,3 +164,170 @@ def = "imp.k"
 depth = 20
 programs = ["tests/sum.imp"]
 expected = "testdata/k-in-st/depth"
+
+# Regression tests of K that kompile with the LLVM backend and krun their
+# programs (k-distribution/tests/regression-new, in K_SRC), with the settings of
+# their Makefiles and the programs of a quick run of the spec-k harness.
+
+[[suites]]
+name = "regression/bytes-memset"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/bytes-memset"
+def = "test.k"
+kompile = ["--syntax-module", "TEST", "--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = ["1.test"]
+expected = "testdata/k-in-st/regression/bytes-memset"
+
+[[suites]]
+name = "regression/f32-mul"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/f32-mul"
+def = "float-mul.k"
+kompile = ["--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = ["1.mul"]
+expected = "testdata/k-in-st/regression/f32-mul"
+
+[[suites]]
+name = "regression/group"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/group"
+def = "test.k"
+kompile = ["--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = ["1.test"]
+expected = "testdata/k-in-st/regression/group"
+
+[[suites]]
+name = "regression/int-llvm"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/int-llvm"
+def = "llvm-int.k"
+kompile = ["--syntax-module", "LLVM-INT", "--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = ["test2.llvmint"]
+expected = "testdata/k-in-st/regression/int-llvm"
+
+[[suites]]
+name = "regression/int2bytes-no-len"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/int2bytes-no-len"
+def = "test.k"
+kompile = ["--syntax-module", "TEST", "--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = ["14.test"]
+expected = "testdata/k-in-st/regression/int2bytes-no-len"
+
+[[suites]]
+name = "regression/issue-1186"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/issue-1186"
+def = "test.k"
+kompile = ["--syntax-module", "TEST", "--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = ["1.test"]
+expected = "testdata/k-in-st/regression/issue-1186"
+
+[[suites]]
+name = "regression/list-in-bug"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/list-in-bug"
+def = "list-in.k"
+kompile = ["--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = ["test2.listin"]
+expected = "testdata/k-in-st/regression/list-in-bug"
+
+[[suites]]
+name = "regression/or-llvm"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/or-llvm"
+def = "test.k"
+kompile = ["--syntax-module", "TEST", "--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = ["3.test"]
+expected = "testdata/k-in-st/regression/or-llvm"
+
+[[suites]]
+name = "regression/string_escape"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/string_escape"
+def = "a.k"
+kompile = ["--syntax-module", "A", "--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = ["1.a"]
+expected = "testdata/k-in-st/regression/string_escape"
+
+# Tests of the LLVM backend that run its interpreter on initial terms (test/defn
+# and test/input, in LLVM_SRC, runtimeverification/llvm-backend f02284f), with the programs of a quick run of the spec-k
+# harness: the definitions are KORE already and the programs initial terms.
+
+[[suites]]
+name = "llvm/lambda-anywhere"
+towers = { al = "towers/k-in-st.json" }
+src = "LLVM_SRC"
+dir = "test"
+def = "defn/lambda-anywhere.kore"
+kore = true
+programs = ["input/lambda-anywhere/closed-variable-capture.in"]
+expected = "testdata/k-in-st/llvm/lambda-anywhere"
+
+[[suites]]
+name = "llvm/non-exec"
+towers = { al = "towers/k-in-st.json" }
+src = "LLVM_SRC"
+dir = "test"
+def = "defn/non-exec.kore"
+kore = true
+programs = ["input/non-exec.in"]
+expected = "testdata/k-in-st/llvm/non-exec"
+
+[[suites]]
+name = "llvm/test-list-get"
+towers = { al = "towers/k-in-st.json" }
+src = "LLVM_SRC"
+dir = "test"
+def = "defn/test-list-get.kore"
+kore = true
+programs = ["input/test-list-get/11.in"]
+expected = "testdata/k-in-st/llvm/test-list-get"
+
+[[suites]]
+name = "llvm/test4"
+towers = { al = "towers/k-in-st.json" }
+src = "LLVM_SRC"
+dir = "test"
+def = "defn/test4.kore"
+kore = true
+programs = ["input/test4.in"]
+expected = "testdata/k-in-st/llvm/test4"
+
+[[suites]]
+name = "llvm/test6"
+towers = { al = "towers/k-in-st.json" }
+src = "LLVM_SRC"
+dir = "test"
+def = "defn/test6.kore"
+kore = true
+programs = ["input/test6.in"]
+expected = "testdata/k-in-st/llvm/test6"
+
+[[suites]]
+name = "llvm/wasm-maps"
+towers = { al = "towers/k-in-st.json" }
+src = "LLVM_SRC"
+dir = "test"
+def = "defn/wasm-maps.kore"
+kore = true
+programs = ["input/wasm-maps.in"]
+expected = "testdata/k-in-st/llvm/wasm-maps"
