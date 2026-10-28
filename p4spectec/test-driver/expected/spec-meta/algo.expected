@@ -1152,6 +1152,208 @@ def $equiv_func_typ(tdenv, typ, typ) : equivRes =
 
   clause -1 : (tdenv, typ_l, typ_r) = ERROR as equivRes
 
+def $free_varis_exp(typedExp) : vari* =
+
+  clause 0 : (exp '#' _typ) = []
+  -- if exp <: literalExp
+  -- let literalExp = exp as literalExp
+
+  clause 1 : (exp '#' typ) = [id typ []]
+  -- if exp <: varExp
+  -- let VAR id = exp as varExp
+
+  clause 2 : (exp '#' _typ) = $free_varis_exp(typedExp)
+  -- if exp <: unOpExp
+  -- let UN _unOp typedExp = exp as unOpExp
+
+  clause 3 : (exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
+  -- if exp <: binOpExp
+  -- let BIN _binOp typedExp_l typedExp_r = exp as binOpExp
+
+  clause 4 : (exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
+  -- if exp <: cmpOpExp
+  -- let CMP _cmpOp typedExp_l typedExp_r = exp as cmpOpExp
+
+  clause 5 : (exp '#' _typ') = $free_varis_exp(typedExp)
+  -- if exp <: upCastExp
+  -- let UPCAST _typ typedExp = exp as upCastExp
+
+  clause 6 : (exp '#' _typ') = $free_varis_exp(typedExp)
+  -- if exp <: downCastExp
+  -- let DOWNCAST _typ typedExp = exp as downCastExp
+
+  clause 7 : (exp '#' _typ') = $free_varis_exp(typedExp)
+  -- if exp <: subExp
+  -- let SUB typedExp _typ = exp as subExp
+
+  clause 8 : (exp '#' _typ) = $free_varis_exp(typedExp)
+  -- if exp <: matchExp
+  -- let MATCH typedExp _pat = exp as matchExp
+
+  clause 9 : (exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
+  -- if exp <: tupExp
+  -- let TUP typedExp*{typedExp <- typedExp*} = exp as tupExp
+
+  clause 10 : (exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
+  -- if exp <: injExp
+  -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp as injExp
+
+  clause 11 : (exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
+  -- if exp <: strExp
+  -- let STR expField*{expField <- expField*} = exp as strExp
+  -- (let _atom typedExp = expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
+
+  clause 12 : (exp '#' _typ) = []
+  -- if (exp = OPT ?() as exp)
+
+  clause 13 : (exp '#' _typ) = $free_varis_exp(typedExp)
+  -- if exp <: optExp
+  -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp as optExp
+  -- if typedExp'?{typedExp' <- typedExp'?} matches (_)
+  -- let ?(typedExp) = typedExp'?{typedExp' <- typedExp'?}
+
+  clause 14 : (exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
+  -- if exp <: listExp
+  -- let LIST typedExp*{typedExp <- typedExp*} = exp as listExp
+
+  clause 15 : (exp '#' _typ) = $free_varis_exps([typedExp_h, typedExp_t])
+  -- if exp <: consExp
+  -- let CONS typedExp_h typedExp_t = exp as consExp
+
+  clause 16 : (exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
+  -- if exp <: catExp
+  -- let CAT typedExp_l typedExp_r = exp as catExp
+
+  clause 17 : (exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
+  -- if exp <: memExp
+  -- let MEM typedExp_l typedExp_r = exp as memExp
+
+  clause 18 : (exp '#' _typ) = $free_varis_exp(typedExp)
+  -- if exp <: lenExp
+  -- let LEN typedExp = exp as lenExp
+
+  clause 19 : (exp '#' _typ) = $free_varis_exp(typedExp)
+  -- if exp <: dotAccExp
+  -- let DOT typedExp _atom = exp as dotAccExp
+
+  clause 20 : (exp '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i])
+  -- if exp <: idxAccExp
+  -- let IDX typedExp_b typedExp_i = exp as idxAccExp
+
+  clause 21 : (exp '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i, typedExp_n])
+  -- if exp <: sliceAccExp
+  -- let SLICE typedExp_b typedExp_i typedExp_n = exp as sliceAccExp
+
+  clause 22 : (exp '#' _typ) = $free_varis_exp(typedExp_b) ++ $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_f)
+  -- if exp <: updExp
+  -- let UPD typedExp_b typedPath typedExp_f = exp as updExp
+
+  clause 23 : (exp '#' _typ) = $free_varis_args(arg*{arg <- arg*})
+  -- if exp <: callExp
+  -- let CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} = exp as callExp
+
+  clause 24 : (exp '#' _typ) = vari_iter*{vari_iter <- vari_iter*}
+  -- if exp <: iterExp
+  -- let ITER typedExp iter _vari*{_vari <- _vari*} = exp as iterExp
+  -- let vari*{vari <- vari*} = $free_varis_exp(typedExp)
+  -- (let vari_iter = $iterate_vari(vari, [iter]))*{vari <- vari*, vari_iter -> vari_iter*}
+
+def $free_varis_exps(typedExp*) : vari* =
+
+  clause 0 : (typedExp*{typedExp <- typedExp*}) = []
+  -- if typedExp*{typedExp <- typedExp*} matches []
+
+  clause 1 : (typedExp*{typedExp <- typedExp*}) = $free_varis_exp(typedExp_h) ++ $free_varis_exps(typedExp_t*{typedExp_t <- typedExp_t*})
+  -- if typedExp*{typedExp <- typedExp*} matches _ :: _
+  -- let typedExp_h :: typedExp_t*{typedExp_t <- typedExp_t*} = typedExp*{typedExp <- typedExp*}
+
+def $free_varis_path(typedPath) : vari* =
+
+  clause 0 : (path '#' _typ) = []
+  -- if path <: rootPath
+  -- let rootPath = path as rootPath
+  -- if rootPath matches ROOT
+
+  clause 1 : (path '#' _typ) = $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_i)
+  -- if path <: idxPath
+  -- let IDX typedPath typedExp_i = path as idxPath
+
+  clause 2 : (path '#' _typ) = $free_varis_path(typedPath) ++ $free_varis_exps([typedExp_i, typedExp_n])
+  -- if path <: slicePath
+  -- let SLICE typedPath typedExp_i typedExp_n = path as slicePath
+
+  clause 3 : (path '#' _typ) = $free_varis_path(typedPath)
+  -- if path <: dotPath
+  -- let DOT typedPath _atom = path as dotPath
+
+def $free_varis_arg(arg) : vari* =
+
+  clause 0 : (arg) = $free_varis_exp(typedExp)
+  -- if arg <: expArg
+  -- let EXP typedExp = arg as expArg
+
+  clause 1 : (arg) = []
+  -- if arg <: funArg
+  -- let funArg = arg as funArg
+
+def $free_varis_args(arg*) : vari* =
+
+  clause 0 : (arg*{arg <- arg*}) = []
+  -- if arg*{arg <- arg*} matches []
+
+  clause 1 : (arg*{arg <- arg*}) = $free_varis_arg(arg_h) ++ $free_varis_args(arg_t*{arg_t <- arg_t*})
+  -- if arg*{arg <- arg*} matches _ :: _
+  -- let arg_h :: arg_t*{arg_t <- arg_t*} = arg*{arg <- arg*}
+
+def $free_varis_premIL(premIL) : vari* =
+
+  clause 0 : (premIL) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
+  -- if premIL <: relPremIL
+  -- let REL _id ':' typedExp*{typedExp <- typedExp*} `( _inputHint `) = premIL as relPremIL
+
+  clause 1 : (premIL) = $free_varis_exp(typedExp)
+  -- if premIL <: ifPrem
+  -- let IF typedExp = premIL as ifPrem
+
+  clause 2 : (premIL) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
+  -- if premIL <: ifHoldPrem
+  -- let IFHOLD _id ':' typedExp*{typedExp <- typedExp*} = premIL as ifHoldPrem
+
+  clause 3 : (premIL) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
+  -- if premIL <: ifNotHoldPrem
+  -- let IFNOTHOLD _id ':' typedExp*{typedExp <- typedExp*} = premIL as ifNotHoldPrem
+
+  clause 4 : (premIL') = vari_iter*{vari_iter <- vari_iter*}
+  -- if premIL' <: iterPremIL
+  -- let ITER premIL iter _vari*{_vari <- _vari*} = premIL' as iterPremIL
+  -- let vari*{vari <- vari*} = $free_varis_premIL(premIL)
+  -- (let vari_iter = $iterate_vari(vari, [iter]))*{vari <- vari*, vari_iter -> vari_iter*}
+
+  clause 5 : (premIL) = $free_varis_exp(typedExp)
+  -- if premIL <: debugPrem
+  -- let DEBUG typedExp = premIL as debugPrem
+
+def $free_varis_premILs(premIL*) : vari* =
+
+  clause 0 : (premIL*{premIL <- premIL*}) = []
+  -- if premIL*{premIL <- premIL*} matches []
+
+  clause 1 : (premIL*{premIL <- premIL*}) = $free_varis_premIL(premIL_h) ++ $free_varis_premILs(premIL_t*{premIL_t <- premIL_t*})
+  -- if premIL*{premIL <- premIL*} matches _ :: _
+  -- let premIL_h :: premIL_t*{premIL_t <- premIL_t*} = premIL*{premIL <- premIL*}
+
+def $free_varis_rulIL(rulIL) : vari* =
+
+  clause 0 : (_id ':' typedExp*{typedExp <- typedExp*} '-' premIL*{premIL <- premIL*}) = $free_varis_exps(typedExp*{typedExp <- typedExp*}) ++ $free_varis_premILs(premIL*{premIL <- premIL*})
+
+def $free_varis_clauseIL(clauseIL) : vari* =
+
+  clause 0 : (arg*{arg <- arg*} '=' typedExp '-' premIL*{premIL <- premIL*}) = $free_varis_args(arg*{arg <- arg*}) ++ $free_varis_exp(typedExp) ++ $free_varis_premILs(premIL*{premIL <- premIL*})
+
+def $free_varis_tblRowIL(tblRowIL) : vari* =
+
+  clause 0 : (arg*{arg <- arg*} '=' typedExp) = $free_varis_args(arg*{arg <- arg*}) ++ $free_varis_exp(typedExp)
+
 syntax algoCtx = {TYP tdenv, BOUND vari*, USED id*}
 
 var AC : algoCtx
@@ -3729,208 +3931,6 @@ relation Otherwise_pure: |- defnAL
     -- (if Prem_pure: |- premAL holds)*{premAL <- premAL*}
     -- if Exp_pure: |- typedExp holds
     -- the relation holds
-
-def $free_varis_exp(typedExp) : vari* =
-
-  clause 0 : (exp '#' _typ) = []
-  -- if exp <: literalExp
-  -- let literalExp = exp as literalExp
-
-  clause 1 : (exp '#' typ) = [id typ []]
-  -- if exp <: varExp
-  -- let VAR id = exp as varExp
-
-  clause 2 : (exp '#' _typ) = $free_varis_exp(typedExp)
-  -- if exp <: unOpExp
-  -- let UN _unOp typedExp = exp as unOpExp
-
-  clause 3 : (exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
-  -- if exp <: binOpExp
-  -- let BIN _binOp typedExp_l typedExp_r = exp as binOpExp
-
-  clause 4 : (exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
-  -- if exp <: cmpOpExp
-  -- let CMP _cmpOp typedExp_l typedExp_r = exp as cmpOpExp
-
-  clause 5 : (exp '#' _typ') = $free_varis_exp(typedExp)
-  -- if exp <: upCastExp
-  -- let UPCAST _typ typedExp = exp as upCastExp
-
-  clause 6 : (exp '#' _typ') = $free_varis_exp(typedExp)
-  -- if exp <: downCastExp
-  -- let DOWNCAST _typ typedExp = exp as downCastExp
-
-  clause 7 : (exp '#' _typ') = $free_varis_exp(typedExp)
-  -- if exp <: subExp
-  -- let SUB typedExp _typ = exp as subExp
-
-  clause 8 : (exp '#' _typ) = $free_varis_exp(typedExp)
-  -- if exp <: matchExp
-  -- let MATCH typedExp _pat = exp as matchExp
-
-  clause 9 : (exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-  -- if exp <: tupExp
-  -- let TUP typedExp*{typedExp <- typedExp*} = exp as tupExp
-
-  clause 10 : (exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-  -- if exp <: injExp
-  -- let INJ _mixop typedExp*{typedExp <- typedExp*} = exp as injExp
-
-  clause 11 : (exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-  -- if exp <: strExp
-  -- let STR expField*{expField <- expField*} = exp as strExp
-  -- (let _atom typedExp = expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
-
-  clause 12 : (exp '#' _typ) = []
-  -- if (exp = OPT ?() as exp)
-
-  clause 13 : (exp '#' _typ) = $free_varis_exp(typedExp)
-  -- if exp <: optExp
-  -- let OPT typedExp'?{typedExp' <- typedExp'?} = exp as optExp
-  -- if typedExp'?{typedExp' <- typedExp'?} matches (_)
-  -- let ?(typedExp) = typedExp'?{typedExp' <- typedExp'?}
-
-  clause 14 : (exp '#' _typ) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-  -- if exp <: listExp
-  -- let LIST typedExp*{typedExp <- typedExp*} = exp as listExp
-
-  clause 15 : (exp '#' _typ) = $free_varis_exps([typedExp_h, typedExp_t])
-  -- if exp <: consExp
-  -- let CONS typedExp_h typedExp_t = exp as consExp
-
-  clause 16 : (exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
-  -- if exp <: catExp
-  -- let CAT typedExp_l typedExp_r = exp as catExp
-
-  clause 17 : (exp '#' _typ) = $free_varis_exps([typedExp_l, typedExp_r])
-  -- if exp <: memExp
-  -- let MEM typedExp_l typedExp_r = exp as memExp
-
-  clause 18 : (exp '#' _typ) = $free_varis_exp(typedExp)
-  -- if exp <: lenExp
-  -- let LEN typedExp = exp as lenExp
-
-  clause 19 : (exp '#' _typ) = $free_varis_exp(typedExp)
-  -- if exp <: dotAccExp
-  -- let DOT typedExp _atom = exp as dotAccExp
-
-  clause 20 : (exp '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i])
-  -- if exp <: idxAccExp
-  -- let IDX typedExp_b typedExp_i = exp as idxAccExp
-
-  clause 21 : (exp '#' _typ) = $free_varis_exps([typedExp_b, typedExp_i, typedExp_n])
-  -- if exp <: sliceAccExp
-  -- let SLICE typedExp_b typedExp_i typedExp_n = exp as sliceAccExp
-
-  clause 22 : (exp '#' _typ) = $free_varis_exp(typedExp_b) ++ $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_f)
-  -- if exp <: updExp
-  -- let UPD typedExp_b typedPath typedExp_f = exp as updExp
-
-  clause 23 : (exp '#' _typ) = $free_varis_args(arg*{arg <- arg*})
-  -- if exp <: callExp
-  -- let CALL _id _targ*{_targ <- _targ*} arg*{arg <- arg*} = exp as callExp
-
-  clause 24 : (exp '#' _typ) = vari_iter*{vari_iter <- vari_iter*}
-  -- if exp <: iterExp
-  -- let ITER typedExp iter _vari*{_vari <- _vari*} = exp as iterExp
-  -- let vari*{vari <- vari*} = $free_varis_exp(typedExp)
-  -- (let vari_iter = $iterate_vari(vari, [iter]))*{vari <- vari*, vari_iter -> vari_iter*}
-
-def $free_varis_exps(typedExp*) : vari* =
-
-  clause 0 : (typedExp*{typedExp <- typedExp*}) = []
-  -- if typedExp*{typedExp <- typedExp*} matches []
-
-  clause 1 : (typedExp*{typedExp <- typedExp*}) = $free_varis_exp(typedExp_h) ++ $free_varis_exps(typedExp_t*{typedExp_t <- typedExp_t*})
-  -- if typedExp*{typedExp <- typedExp*} matches _ :: _
-  -- let typedExp_h :: typedExp_t*{typedExp_t <- typedExp_t*} = typedExp*{typedExp <- typedExp*}
-
-def $free_varis_path(typedPath) : vari* =
-
-  clause 0 : (path '#' _typ) = []
-  -- if path <: rootPath
-  -- let rootPath = path as rootPath
-  -- if rootPath matches ROOT
-
-  clause 1 : (path '#' _typ) = $free_varis_path(typedPath) ++ $free_varis_exp(typedExp_i)
-  -- if path <: idxPath
-  -- let IDX typedPath typedExp_i = path as idxPath
-
-  clause 2 : (path '#' _typ) = $free_varis_path(typedPath) ++ $free_varis_exps([typedExp_i, typedExp_n])
-  -- if path <: slicePath
-  -- let SLICE typedPath typedExp_i typedExp_n = path as slicePath
-
-  clause 3 : (path '#' _typ) = $free_varis_path(typedPath)
-  -- if path <: dotPath
-  -- let DOT typedPath _atom = path as dotPath
-
-def $free_varis_arg(arg) : vari* =
-
-  clause 0 : (arg) = $free_varis_exp(typedExp)
-  -- if arg <: expArg
-  -- let EXP typedExp = arg as expArg
-
-  clause 1 : (arg) = []
-  -- if arg <: funArg
-  -- let funArg = arg as funArg
-
-def $free_varis_args(arg*) : vari* =
-
-  clause 0 : (arg*{arg <- arg*}) = []
-  -- if arg*{arg <- arg*} matches []
-
-  clause 1 : (arg*{arg <- arg*}) = $free_varis_arg(arg_h) ++ $free_varis_args(arg_t*{arg_t <- arg_t*})
-  -- if arg*{arg <- arg*} matches _ :: _
-  -- let arg_h :: arg_t*{arg_t <- arg_t*} = arg*{arg <- arg*}
-
-def $free_varis_premIL(premIL) : vari* =
-
-  clause 0 : (premIL) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-  -- if premIL <: relPremIL
-  -- let REL _id ':' typedExp*{typedExp <- typedExp*} `( _inputHint `) = premIL as relPremIL
-
-  clause 1 : (premIL) = $free_varis_exp(typedExp)
-  -- if premIL <: ifPrem
-  -- let IF typedExp = premIL as ifPrem
-
-  clause 2 : (premIL) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-  -- if premIL <: ifHoldPrem
-  -- let IFHOLD _id ':' typedExp*{typedExp <- typedExp*} = premIL as ifHoldPrem
-
-  clause 3 : (premIL) = $free_varis_exps(typedExp*{typedExp <- typedExp*})
-  -- if premIL <: ifNotHoldPrem
-  -- let IFNOTHOLD _id ':' typedExp*{typedExp <- typedExp*} = premIL as ifNotHoldPrem
-
-  clause 4 : (premIL') = vari_iter*{vari_iter <- vari_iter*}
-  -- if premIL' <: iterPremIL
-  -- let ITER premIL iter _vari*{_vari <- _vari*} = premIL' as iterPremIL
-  -- let vari*{vari <- vari*} = $free_varis_premIL(premIL)
-  -- (let vari_iter = $iterate_vari(vari, [iter]))*{vari <- vari*, vari_iter -> vari_iter*}
-
-  clause 5 : (premIL) = $free_varis_exp(typedExp)
-  -- if premIL <: debugPrem
-  -- let DEBUG typedExp = premIL as debugPrem
-
-def $free_varis_premILs(premIL*) : vari* =
-
-  clause 0 : (premIL*{premIL <- premIL*}) = []
-  -- if premIL*{premIL <- premIL*} matches []
-
-  clause 1 : (premIL*{premIL <- premIL*}) = $free_varis_premIL(premIL_h) ++ $free_varis_premILs(premIL_t*{premIL_t <- premIL_t*})
-  -- if premIL*{premIL <- premIL*} matches _ :: _
-  -- let premIL_h :: premIL_t*{premIL_t <- premIL_t*} = premIL*{premIL <- premIL*}
-
-def $free_varis_rulIL(rulIL) : vari* =
-
-  clause 0 : (_id ':' typedExp*{typedExp <- typedExp*} '-' premIL*{premIL <- premIL*}) = $free_varis_exps(typedExp*{typedExp <- typedExp*}) ++ $free_varis_premILs(premIL*{premIL <- premIL*})
-
-def $free_varis_clauseIL(clauseIL) : vari* =
-
-  clause 0 : (arg*{arg <- arg*} '=' typedExp '-' premIL*{premIL <- premIL*}) = $free_varis_args(arg*{arg <- arg*}) ++ $free_varis_exp(typedExp) ++ $free_varis_premILs(premIL*{premIL <- premIL*})
-
-def $free_varis_tblRowIL(tblRowIL) : vari* =
-
-  clause 0 : (arg*{arg <- arg*} '=' typedExp) = $free_varis_args(arg*{arg <- arg*}) ++ $free_varis_exp(typedExp)
 
 def $iter_exp(typedExp, vari, iter*) : typedExp =
 

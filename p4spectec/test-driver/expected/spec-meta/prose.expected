@@ -1455,6 +1455,286 @@ def $equiv_func_typ(tdenv, typ, typ')
 
   1. Return ((ERROR) as equivRes)
 
+def $free_varis_exp((exp '#' typ))
+
+1. Block (2 arms)
+
+Arm 1:
+
+  1. Case analysis on exp (total)
+
+    1. Case (% has type literalExp)
+
+      1. Return []
+
+    2. Case (% has type varExp, let (VAR id) = %)
+
+      1. Return [(id typ [])]
+
+    3. Case (% has type unOpExp, let (UN _unOp typedExp) = %)
+
+      1. Return $free_varis_exp(typedExp)
+
+    4. Case (% has type binOpExp, let (BIN _binOp typedExp_l typedExp_r) = %)
+
+      1. Return $free_varis_exps([typedExp_l, typedExp_r])
+
+    5. Case (% has type cmpOpExp, let (CMP _cmpOp typedExp_l typedExp_r) = %)
+
+      1. Return $free_varis_exps([typedExp_l, typedExp_r])
+
+    6. Case (% has type upCastExp, let (UPCAST _typ typedExp) = %)
+
+      1. Return $free_varis_exp(typedExp)
+
+    7. Case (% has type downCastExp, let (DOWNCAST _typ typedExp) = %)
+
+      1. Return $free_varis_exp(typedExp)
+
+    8. Case (% has type subExp, let (SUB typedExp _typ) = %)
+
+      1. Return $free_varis_exp(typedExp)
+
+    9. Case (% has type matchExp, let (MATCH typedExp _pat) = %)
+
+      1. Return $free_varis_exp(typedExp)
+
+    10. Case (% has type tupExp, let (TUP (typedExp)*{typedExp <- typedExp*}) = %)
+
+      1. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
+
+    11. Case (% has type injExp, let (INJ (_mixop (typedExp)*{typedExp <- typedExp*})) = %)
+
+      1. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
+
+    12. Case (% has type strExp, let (STR (expField)*{expField <- expField*}) = %)
+
+      1. (Let (_atom typedExp) be expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
+
+      2. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
+
+    13. Case (% has type optExp, let (OPT (typedExp')?{typedExp' <- typedExp'?}) = %)
+
+      1. If (((typedExp')?{typedExp' <- typedExp'?} matches pattern (_))), then
+
+        1. (Let ?(typedExp) be (typedExp')?{typedExp' <- typedExp'?})
+
+        2. Return $free_varis_exp(typedExp)
+
+      1. Else Dangling
+
+    14. Case (% has type listExp, let (LIST (typedExp)*{typedExp <- typedExp*}) = %)
+
+      1. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
+
+    15. Case (% has type consExp, let (CONS typedExp_h typedExp_t) = %)
+
+      1. Return $free_varis_exps([typedExp_h, typedExp_t])
+
+    16. Case (% has type catExp, let (CAT typedExp_l typedExp_r) = %)
+
+      1. Return $free_varis_exps([typedExp_l, typedExp_r])
+
+    17. Case (% has type memExp, let (MEM typedExp_l typedExp_r) = %)
+
+      1. Return $free_varis_exps([typedExp_l, typedExp_r])
+
+    18. Case (% has type lenExp, let (LEN typedExp) = %)
+
+      1. Return $free_varis_exp(typedExp)
+
+    19. Case (% has type dotAccExp, let (DOT typedExp _atom) = %)
+
+      1. Return $free_varis_exp(typedExp)
+
+    20. Case (% has type idxAccExp, let (IDX typedExp_b typedExp_i) = %)
+
+      1. Return $free_varis_exps([typedExp_b, typedExp_i])
+
+    21. Case (% has type sliceAccExp, let (SLICE typedExp_b typedExp_i typedExp_n) = %)
+
+      1. Return $free_varis_exps([typedExp_b, typedExp_i, typedExp_n])
+
+    22. Case (% has type updExp, let (UPD typedExp_b typedPath typedExp_f) = %)
+
+      1. (Let (vari')*{vari' <- vari'*} be $free_varis_exp(typedExp_b))
+
+      2. (Let (vari'')*{vari'' <- vari''*} be $free_varis_path(typedPath))
+
+      3. (Let (vari''')*{vari''' <- vari'''*} be $free_varis_exp(typedExp_f))
+
+      4. Return (vari')*{vari' <- vari'*} ++ (vari'')*{vari'' <- vari''*} ++ (vari''')*{vari''' <- vari'''*}
+
+    23. Case (% has type callExp, let (CALL _id (_targ)*{_targ <- _targ*} (arg)*{arg <- arg*}) = %)
+
+      1. Return $free_varis_args((arg)*{arg <- arg*})
+
+    24. Case (% has type iterExp, let (ITER typedExp (iter (_vari)*{_vari <- _vari*})) = %)
+
+      1. (Let (vari)*{vari <- vari*} be $free_varis_exp(typedExp))
+
+      2. (Let vari_iter be $iterate_vari(vari, [iter]))*{vari <- vari*, vari_iter -> vari_iter*}
+
+      3. Return (vari_iter)*{vari_iter <- vari_iter*}
+
+Arm 2:
+
+  1. Check ((exp = ((OPT ?()) as exp)))
+
+    1. Return []
+
+def $free_varis_exps((typedExp)*{typedExp <- typedExp*})
+
+1. Case analysis on (typedExp)*{typedExp <- typedExp*} (total)
+
+  1. Case (% matches pattern [])
+
+    1. Return []
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let typedExp_h :: (typedExp_t)*{typedExp_t <- typedExp_t*} be (typedExp)*{typedExp <- typedExp*})
+
+    2. (Let (vari)*{vari <- vari*} be $free_varis_exp(typedExp_h))
+
+    3. (Let (vari')*{vari' <- vari'*} be $free_varis_exps((typedExp_t)*{typedExp_t <- typedExp_t*}))
+
+    4. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*}
+
+def $free_varis_path((path '#' _typ))
+
+1. Case analysis on path (total)
+
+  1. Case (% has type rootPath, let rootPath = %)
+
+    1. Return []
+
+  2. Case (% has type idxPath, let (IDX typedPath typedExp_i) = %)
+
+    1. (Let (vari)*{vari <- vari*} be $free_varis_path(typedPath))
+
+    2. (Let (vari')*{vari' <- vari'*} be $free_varis_exp(typedExp_i))
+
+    3. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*}
+
+  3. Case (% has type slicePath, let (SLICE typedPath typedExp_i typedExp_n) = %)
+
+    1. (Let (vari'')*{vari'' <- vari''*} be $free_varis_path(typedPath))
+
+    2. (Let (vari''')*{vari''' <- vari'''*} be $free_varis_exps([typedExp_i, typedExp_n]))
+
+    3. Return (vari'')*{vari'' <- vari''*} ++ (vari''')*{vari''' <- vari'''*}
+
+  4. Case (% has type dotPath, let (DOT typedPath _atom) = %)
+
+    1. Return $free_varis_path(typedPath)
+
+def $free_varis_arg(arg)
+
+1. Case analysis on arg (total)
+
+  1. Case (% has type expArg, let (EXP typedExp) = %)
+
+    1. Return $free_varis_exp(typedExp)
+
+  2. Case (% has type funArg)
+
+    1. Return []
+
+def $free_varis_args((arg)*{arg <- arg*})
+
+1. Case analysis on (arg)*{arg <- arg*} (total)
+
+  1. Case (% matches pattern [])
+
+    1. Return []
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let arg_h :: (arg_t)*{arg_t <- arg_t*} be (arg)*{arg <- arg*})
+
+    2. (Let (vari)*{vari <- vari*} be $free_varis_arg(arg_h))
+
+    3. (Let (vari')*{vari' <- vari'*} be $free_varis_args((arg_t)*{arg_t <- arg_t*}))
+
+    4. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*}
+
+def $free_varis_premIL(premIL')
+
+1. Case analysis on premIL' (total)
+
+  1. Case (% has type relPremIL, let (REL _id ':' (typedExp)*{typedExp <- typedExp*} `( _inputHint `)) = %)
+
+    1. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
+
+  2. Case (% has type ifPrem, let (IF typedExp) = %)
+
+    1. Return $free_varis_exp(typedExp)
+
+  3. Case (% has type ifHoldPrem, let (IFHOLD _id ':' (typedExp)*{typedExp <- typedExp*}) = %)
+
+    1. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
+
+  4. Case (% has type ifNotHoldPrem, let (IFNOTHOLD _id ':' (typedExp)*{typedExp <- typedExp*}) = %)
+
+    1. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
+
+  5. Case (% has type iterPremIL, let (ITER premIL (iter (_vari)*{_vari <- _vari*})) = %)
+
+    1. (Let (vari)*{vari <- vari*} be $free_varis_premIL(premIL))
+
+    2. (Let vari_iter be $iterate_vari(vari, [iter]))*{vari <- vari*, vari_iter -> vari_iter*}
+
+    3. Return (vari_iter)*{vari_iter <- vari_iter*}
+
+  6. Case (% has type debugPrem, let (DEBUG typedExp) = %)
+
+    1. Return $free_varis_exp(typedExp)
+
+def $free_varis_premILs((premIL)*{premIL <- premIL*})
+
+1. Case analysis on (premIL)*{premIL <- premIL*} (total)
+
+  1. Case (% matches pattern [])
+
+    1. Return []
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let premIL_h :: (premIL_t)*{premIL_t <- premIL_t*} be (premIL)*{premIL <- premIL*})
+
+    2. (Let (vari)*{vari <- vari*} be $free_varis_premIL(premIL_h))
+
+    3. (Let (vari')*{vari' <- vari'*} be $free_varis_premILs((premIL_t)*{premIL_t <- premIL_t*}))
+
+    4. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*}
+
+def $free_varis_rulIL((_id ':' (typedExp)*{typedExp <- typedExp*} '-' (premIL)*{premIL <- premIL*}))
+
+1. (Let (vari)*{vari <- vari*} be $free_varis_exps((typedExp)*{typedExp <- typedExp*}))
+
+2. (Let (vari')*{vari' <- vari'*} be $free_varis_premILs((premIL)*{premIL <- premIL*}))
+
+3. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*}
+
+def $free_varis_clauseIL(((arg)*{arg <- arg*} '=' typedExp '-' (premIL)*{premIL <- premIL*}))
+
+1. (Let (vari)*{vari <- vari*} be $free_varis_args((arg)*{arg <- arg*}))
+
+2. (Let (vari')*{vari' <- vari'*} be $free_varis_exp(typedExp))
+
+3. (Let (vari'')*{vari'' <- vari''*} be $free_varis_premILs((premIL)*{premIL <- premIL*}))
+
+4. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*} ++ (vari'')*{vari'' <- vari''*}
+
+def $free_varis_tblRowIL(((arg)*{arg <- arg*} '=' typedExp))
+
+1. (Let (vari)*{vari <- vari*} be $free_varis_args((arg)*{arg <- arg*}))
+
+2. (Let (vari')*{vari' <- vari'*} be $free_varis_exp(typedExp))
+
+3. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*}
+
 syntax algoCtx = {TYP tdenv, BOUND vari*, USED id*}
 
 var AC : algoCtx
@@ -3730,286 +4010,6 @@ Arm 3:
             3. Else Dangling
 
     1. Else Dangling
-
-def $free_varis_exp((exp '#' typ))
-
-1. Block (2 arms)
-
-Arm 1:
-
-  1. Case analysis on exp (total)
-
-    1. Case (% has type literalExp)
-
-      1. Return []
-
-    2. Case (% has type varExp, let (VAR id) = %)
-
-      1. Return [(id typ [])]
-
-    3. Case (% has type unOpExp, let (UN _unOp typedExp) = %)
-
-      1. Return $free_varis_exp(typedExp)
-
-    4. Case (% has type binOpExp, let (BIN _binOp typedExp_l typedExp_r) = %)
-
-      1. Return $free_varis_exps([typedExp_l, typedExp_r])
-
-    5. Case (% has type cmpOpExp, let (CMP _cmpOp typedExp_l typedExp_r) = %)
-
-      1. Return $free_varis_exps([typedExp_l, typedExp_r])
-
-    6. Case (% has type upCastExp, let (UPCAST _typ typedExp) = %)
-
-      1. Return $free_varis_exp(typedExp)
-
-    7. Case (% has type downCastExp, let (DOWNCAST _typ typedExp) = %)
-
-      1. Return $free_varis_exp(typedExp)
-
-    8. Case (% has type subExp, let (SUB typedExp _typ) = %)
-
-      1. Return $free_varis_exp(typedExp)
-
-    9. Case (% has type matchExp, let (MATCH typedExp _pat) = %)
-
-      1. Return $free_varis_exp(typedExp)
-
-    10. Case (% has type tupExp, let (TUP (typedExp)*{typedExp <- typedExp*}) = %)
-
-      1. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
-
-    11. Case (% has type injExp, let (INJ (_mixop (typedExp)*{typedExp <- typedExp*})) = %)
-
-      1. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
-
-    12. Case (% has type strExp, let (STR (expField)*{expField <- expField*}) = %)
-
-      1. (Let (_atom typedExp) be expField)*{expField <- expField*, _atom -> _atom*, typedExp -> typedExp*}
-
-      2. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
-
-    13. Case (% has type optExp, let (OPT (typedExp')?{typedExp' <- typedExp'?}) = %)
-
-      1. If (((typedExp')?{typedExp' <- typedExp'?} matches pattern (_))), then
-
-        1. (Let ?(typedExp) be (typedExp')?{typedExp' <- typedExp'?})
-
-        2. Return $free_varis_exp(typedExp)
-
-      1. Else Dangling
-
-    14. Case (% has type listExp, let (LIST (typedExp)*{typedExp <- typedExp*}) = %)
-
-      1. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
-
-    15. Case (% has type consExp, let (CONS typedExp_h typedExp_t) = %)
-
-      1. Return $free_varis_exps([typedExp_h, typedExp_t])
-
-    16. Case (% has type catExp, let (CAT typedExp_l typedExp_r) = %)
-
-      1. Return $free_varis_exps([typedExp_l, typedExp_r])
-
-    17. Case (% has type memExp, let (MEM typedExp_l typedExp_r) = %)
-
-      1. Return $free_varis_exps([typedExp_l, typedExp_r])
-
-    18. Case (% has type lenExp, let (LEN typedExp) = %)
-
-      1. Return $free_varis_exp(typedExp)
-
-    19. Case (% has type dotAccExp, let (DOT typedExp _atom) = %)
-
-      1. Return $free_varis_exp(typedExp)
-
-    20. Case (% has type idxAccExp, let (IDX typedExp_b typedExp_i) = %)
-
-      1. Return $free_varis_exps([typedExp_b, typedExp_i])
-
-    21. Case (% has type sliceAccExp, let (SLICE typedExp_b typedExp_i typedExp_n) = %)
-
-      1. Return $free_varis_exps([typedExp_b, typedExp_i, typedExp_n])
-
-    22. Case (% has type updExp, let (UPD typedExp_b typedPath typedExp_f) = %)
-
-      1. (Let (vari')*{vari' <- vari'*} be $free_varis_exp(typedExp_b))
-
-      2. (Let (vari'')*{vari'' <- vari''*} be $free_varis_path(typedPath))
-
-      3. (Let (vari''')*{vari''' <- vari'''*} be $free_varis_exp(typedExp_f))
-
-      4. Return (vari')*{vari' <- vari'*} ++ (vari'')*{vari'' <- vari''*} ++ (vari''')*{vari''' <- vari'''*}
-
-    23. Case (% has type callExp, let (CALL _id (_targ)*{_targ <- _targ*} (arg)*{arg <- arg*}) = %)
-
-      1. Return $free_varis_args((arg)*{arg <- arg*})
-
-    24. Case (% has type iterExp, let (ITER typedExp (iter (_vari)*{_vari <- _vari*})) = %)
-
-      1. (Let (vari)*{vari <- vari*} be $free_varis_exp(typedExp))
-
-      2. (Let vari_iter be $iterate_vari(vari, [iter]))*{vari <- vari*, vari_iter -> vari_iter*}
-
-      3. Return (vari_iter)*{vari_iter <- vari_iter*}
-
-Arm 2:
-
-  1. Check ((exp = ((OPT ?()) as exp)))
-
-    1. Return []
-
-def $free_varis_exps((typedExp)*{typedExp <- typedExp*})
-
-1. Case analysis on (typedExp)*{typedExp <- typedExp*} (total)
-
-  1. Case (% matches pattern [])
-
-    1. Return []
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let typedExp_h :: (typedExp_t)*{typedExp_t <- typedExp_t*} be (typedExp)*{typedExp <- typedExp*})
-
-    2. (Let (vari)*{vari <- vari*} be $free_varis_exp(typedExp_h))
-
-    3. (Let (vari')*{vari' <- vari'*} be $free_varis_exps((typedExp_t)*{typedExp_t <- typedExp_t*}))
-
-    4. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*}
-
-def $free_varis_path((path '#' _typ))
-
-1. Case analysis on path (total)
-
-  1. Case (% has type rootPath, let rootPath = %)
-
-    1. Return []
-
-  2. Case (% has type idxPath, let (IDX typedPath typedExp_i) = %)
-
-    1. (Let (vari)*{vari <- vari*} be $free_varis_path(typedPath))
-
-    2. (Let (vari')*{vari' <- vari'*} be $free_varis_exp(typedExp_i))
-
-    3. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*}
-
-  3. Case (% has type slicePath, let (SLICE typedPath typedExp_i typedExp_n) = %)
-
-    1. (Let (vari'')*{vari'' <- vari''*} be $free_varis_path(typedPath))
-
-    2. (Let (vari''')*{vari''' <- vari'''*} be $free_varis_exps([typedExp_i, typedExp_n]))
-
-    3. Return (vari'')*{vari'' <- vari''*} ++ (vari''')*{vari''' <- vari'''*}
-
-  4. Case (% has type dotPath, let (DOT typedPath _atom) = %)
-
-    1. Return $free_varis_path(typedPath)
-
-def $free_varis_arg(arg)
-
-1. Case analysis on arg (total)
-
-  1. Case (% has type expArg, let (EXP typedExp) = %)
-
-    1. Return $free_varis_exp(typedExp)
-
-  2. Case (% has type funArg)
-
-    1. Return []
-
-def $free_varis_args((arg)*{arg <- arg*})
-
-1. Case analysis on (arg)*{arg <- arg*} (total)
-
-  1. Case (% matches pattern [])
-
-    1. Return []
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let arg_h :: (arg_t)*{arg_t <- arg_t*} be (arg)*{arg <- arg*})
-
-    2. (Let (vari)*{vari <- vari*} be $free_varis_arg(arg_h))
-
-    3. (Let (vari')*{vari' <- vari'*} be $free_varis_args((arg_t)*{arg_t <- arg_t*}))
-
-    4. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*}
-
-def $free_varis_premIL(premIL')
-
-1. Case analysis on premIL' (total)
-
-  1. Case (% has type relPremIL, let (REL _id ':' (typedExp)*{typedExp <- typedExp*} `( _inputHint `)) = %)
-
-    1. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
-
-  2. Case (% has type ifPrem, let (IF typedExp) = %)
-
-    1. Return $free_varis_exp(typedExp)
-
-  3. Case (% has type ifHoldPrem, let (IFHOLD _id ':' (typedExp)*{typedExp <- typedExp*}) = %)
-
-    1. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
-
-  4. Case (% has type ifNotHoldPrem, let (IFNOTHOLD _id ':' (typedExp)*{typedExp <- typedExp*}) = %)
-
-    1. Return $free_varis_exps((typedExp)*{typedExp <- typedExp*})
-
-  5. Case (% has type iterPremIL, let (ITER premIL (iter (_vari)*{_vari <- _vari*})) = %)
-
-    1. (Let (vari)*{vari <- vari*} be $free_varis_premIL(premIL))
-
-    2. (Let vari_iter be $iterate_vari(vari, [iter]))*{vari <- vari*, vari_iter -> vari_iter*}
-
-    3. Return (vari_iter)*{vari_iter <- vari_iter*}
-
-  6. Case (% has type debugPrem, let (DEBUG typedExp) = %)
-
-    1. Return $free_varis_exp(typedExp)
-
-def $free_varis_premILs((premIL)*{premIL <- premIL*})
-
-1. Case analysis on (premIL)*{premIL <- premIL*} (total)
-
-  1. Case (% matches pattern [])
-
-    1. Return []
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let premIL_h :: (premIL_t)*{premIL_t <- premIL_t*} be (premIL)*{premIL <- premIL*})
-
-    2. (Let (vari)*{vari <- vari*} be $free_varis_premIL(premIL_h))
-
-    3. (Let (vari')*{vari' <- vari'*} be $free_varis_premILs((premIL_t)*{premIL_t <- premIL_t*}))
-
-    4. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*}
-
-def $free_varis_rulIL((_id ':' (typedExp)*{typedExp <- typedExp*} '-' (premIL)*{premIL <- premIL*}))
-
-1. (Let (vari)*{vari <- vari*} be $free_varis_exps((typedExp)*{typedExp <- typedExp*}))
-
-2. (Let (vari')*{vari' <- vari'*} be $free_varis_premILs((premIL)*{premIL <- premIL*}))
-
-3. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*}
-
-def $free_varis_clauseIL(((arg)*{arg <- arg*} '=' typedExp '-' (premIL)*{premIL <- premIL*}))
-
-1. (Let (vari)*{vari <- vari*} be $free_varis_args((arg)*{arg <- arg*}))
-
-2. (Let (vari')*{vari' <- vari'*} be $free_varis_exp(typedExp))
-
-3. (Let (vari'')*{vari'' <- vari''*} be $free_varis_premILs((premIL)*{premIL <- premIL*}))
-
-4. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*} ++ (vari'')*{vari'' <- vari''*}
-
-def $free_varis_tblRowIL(((arg)*{arg <- arg*} '=' typedExp))
-
-1. (Let (vari)*{vari <- vari*} be $free_varis_args((arg)*{arg <- arg*}))
-
-2. (Let (vari')*{vari' <- vari'*} be $free_varis_exp(typedExp))
-
-3. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*}
 
 def $iter_exp(typedExp, vari, (iter)*{iter <- iter*})
 
