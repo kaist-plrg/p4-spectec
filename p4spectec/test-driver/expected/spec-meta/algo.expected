@@ -2202,8 +2202,8 @@ relation Eval_exp: ctx |- typedExp : expRes
     -- Eval_args: C |- arg*{arg <- arg*} : argsRes
     -- if argsRes <: ok<val*>
     -- let OK val_input*{val_input <- val_input*} = argsRes as ok<val*>
-    -- Call_func: C |- id `< typ_input*{typ_input <- typ_input*} `> `( val_input*{val_input <- val_input*} `) : funcRes
-    -- output: % |- % : funcRes as expRes
+    -- Call_func: C |- id `< typ_input*{typ_input <- typ_input*} `> `( val_input*{val_input <- val_input*} `) : callFuncRes
+    -- output: % |- % : callFuncRes as expRes
 
   rulegroup iter
 
@@ -3545,7 +3545,11 @@ relation Eval_prem_each: ctx* |- prem : premIterRes
     -- let OK C_t_res*{C_t_res <- C_t_res*} = premIterRes as ok<ctx*>
     -- output: % |- % : OK C_res :: C_t_res*{C_t_res <- C_t_res*} as premIterRes
 
-relation Call_func: ctx |- id `< targ* `> `( val* `) : funcRes
+syntax callFuncRes =
+   | OK val (from ok<val>)
+   | ERROR (from error)
+
+relation Call_func: ctx |- id `< targ* `> `( val* `) : callFuncRes
 
   rulegroup
 
@@ -3565,7 +3569,9 @@ relation Call_func: ctx |- id `< targ* `> `( val* `) : funcRes
     -- if funcDefn <: externFuncDefn
     -- let EXTFUNC id_func _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ = funcDefn as externFuncDefn
     -- Call_extern_func: |- id_func `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : funcRes
-    -- output: % |- % `< % `> `( % `) : funcRes
+    -- if funcRes <: ok<val>
+    -- let OK val_out = funcRes as ok<val>
+    -- output: % |- % `< % `> `( % `) : OK val_out as callFuncRes
 
     rulepath builtin
     -- let typ*{typ <- typ*} = typ''*{typ'' <- typ''*}
@@ -3576,7 +3582,9 @@ relation Call_func: ctx |- id `< targ* `> `( val* `) : funcRes
     -- if funcDefn <: builtinFuncDefn
     -- let BUILTINFUNC id_func _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ = funcDefn as builtinFuncDefn
     -- Call_builtin_func: |- id_func `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : funcRes
-    -- output: % |- % `< % `> `( % `) : funcRes
+    -- if funcRes <: ok<val>
+    -- let OK val_out = funcRes as ok<val>
+    -- output: % |- % `< % `> `( % `) : OK val_out as callFuncRes
 
     rulepath table
     -- if (typ''*{typ'' <- typ''*} = [])
@@ -3586,8 +3594,8 @@ relation Call_func: ctx |- id `< targ* `> `( val* `) : funcRes
     -- let ?(funcDefn) = funcDefn'?{funcDefn' <- funcDefn'?}
     -- if funcDefn <: tableFuncDefn
     -- let tableFuncDefn = funcDefn as tableFuncDefn
-    -- Call_table_func: C |- tableFuncDefn `( val*{val <- val*} `) : funcRes
-    -- output: % |- % `< % `> `( % `) : funcRes
+    -- Call_table_func: C |- tableFuncDefn `( val*{val <- val*} `) : callFuncRes
+    -- output: % |- % `< % `> `( % `) : callFuncRes
 
     rulepath defined
     -- let typ*{typ <- typ*} = typ''*{typ'' <- typ''*}
@@ -3597,8 +3605,8 @@ relation Call_func: ctx |- id `< targ* `> `( val* `) : funcRes
     -- let ?(funcDefn) = funcDefn'?{funcDefn' <- funcDefn'?}
     -- if funcDefn <: definedFuncDefn
     -- let definedFuncDefn = funcDefn as definedFuncDefn
-    -- Call_defined_func: C |- definedFuncDefn `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : funcRes
-    -- output: % |- % `< % `> `( % `) : funcRes
+    -- Call_defined_func: C |- definedFuncDefn `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : callFuncRes
+    -- output: % |- % `< % `> `( % `) : callFuncRes
 
   elsegroup
 
@@ -3612,7 +3620,7 @@ relation Call_func: ctx |- id `< targ* `> `( val* `) : funcRes
    paths
 
     rulepath error
-    -- output: % |- % `< % `> `( % `) : ERROR as funcRes
+    -- output: % |- % `< % `> `( % `) : ERROR as callFuncRes
 
 relation Call_rel: ctx |- id `( val* `) : relRes
 
@@ -4868,7 +4876,12 @@ relation Assign_args: ctx |- arg* := val* : assignRes
     rulepath error
     -- output: % |- % := % : ERROR as assignRes
 
-relation Eval_clause: ctx |- clause `( val* `) : funcRes
+syntax clauseRes =
+   | OK val (from ok<val>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+relation Eval_clause: ctx |- clause `( val* `) : clauseRes
 
   rulegroup
 
@@ -4887,7 +4900,7 @@ relation Eval_clause: ctx |- clause `( val* `) : funcRes
     -- Eval_prems: C_assign |- prem*{prem <- prem*} : premRes
     -- if premRes <: failure
     -- let failure = premRes as failure
-    -- output: % |- % `( % `) : failure as funcRes
+    -- output: % |- % `( % `) : failure as clauseRes
 
     rulepath succ
     -- let arg*{arg <- arg*} '=' typedExp_out '-' prem*{prem <- prem*} = clause
@@ -4898,9 +4911,9 @@ relation Eval_clause: ctx |- clause `( val* `) : funcRes
     -- if premRes <: ok<ctx>
     -- let OK C_prem = premRes as ok<ctx>
     -- Eval_exp: C_prem |- typedExp_out : expRes
-    -- if expRes <: funcRes
-    -- let funcRes = expRes as funcRes
-    -- output: % |- % `( % `) : funcRes
+    -- if expRes <: clauseRes
+    -- let clauseRes = expRes as clauseRes
+    -- output: % |- % `( % `) : clauseRes
 
   elsegroup
 
@@ -4914,9 +4927,9 @@ relation Eval_clause: ctx |- clause `( val* `) : funcRes
    paths
 
     rulepath error
-    -- output: % |- % `( % `) : ERROR as funcRes
+    -- output: % |- % `( % `) : ERROR as clauseRes
 
-relation Eval_clauses: ctx |- clause* `( val* `) : funcRes
+relation Eval_clauses: ctx |- clause* `( val* `) : clauseRes
 
   rulegroup
 
@@ -4929,29 +4942,29 @@ relation Eval_clauses: ctx |- clause* `( val* `) : funcRes
 
     rulepath nil
     -- if (clause'*{clause' <- clause'*} = [])
-    -- output: % |- % `( % `) : UNMATCH as funcRes
+    -- output: % |- % `( % `) : UNMATCH as clauseRes
 
     rulepath unmatch
     -- let clause''*{clause'' <- clause''*} = clause'*{clause' <- clause'*}
     -- if clause''*{clause'' <- clause''*} matches _ :: _
     -- let clause_h :: clause_t*{clause_t <- clause_t*} = clause''*{clause'' <- clause''*}
-    -- Eval_clause: C |- clause_h `( val*{val <- val*} `) : funcRes'
-    -- if funcRes' <: unmatch
-    -- let unmatch = funcRes' as unmatch
+    -- Eval_clause: C |- clause_h `( val*{val <- val*} `) : clauseRes'
+    -- if clauseRes' <: unmatch
+    -- let unmatch = clauseRes' as unmatch
     -- if unmatch matches UNMATCH
-    -- Eval_clauses: C |- clause_t*{clause_t <- clause_t*} `( val*{val <- val*} `) : funcRes
-    -- output: % |- % `( % `) : funcRes
+    -- Eval_clauses: C |- clause_t*{clause_t <- clause_t*} `( val*{val <- val*} `) : clauseRes
+    -- output: % |- % `( % `) : clauseRes
 
     rulepath succ
     -- let clause''*{clause'' <- clause''*} = clause'*{clause' <- clause'*}
     -- if clause''*{clause'' <- clause''*} matches _ :: _
     -- let clause_h :: clause_t*{clause_t <- clause_t*} = clause''*{clause'' <- clause''*}
-    -- Eval_clause: C |- clause_h `( val*{val <- val*} `) : funcRes'
-    -- if funcRes' <: ok<val>
-    -- let OK val_out = funcRes' as ok<val>
+    -- Eval_clause: C |- clause_h `( val*{val <- val*} `) : clauseRes'
+    -- if clauseRes' <: ok<val>
+    -- let OK val_out = clauseRes' as ok<val>
     -- Eval_clauses_on_ok: C |- clause_t*{clause_t <- clause_t*} `( val*{val <- val*} `) : unitRes
     -- if unitRes matches OK
-    -- output: % |- % `( % `) : OK val_out as funcRes
+    -- output: % |- % `( % `) : OK val_out as clauseRes
 
   elsegroup
 
@@ -4965,7 +4978,7 @@ relation Eval_clauses: ctx |- clause* `( val* `) : funcRes
    paths
 
     rulepath error
-    -- output: % |- % `( % `) : ERROR as funcRes
+    -- output: % |- % `( % `) : ERROR as clauseRes
 
 relation Eval_clauses_on_ok: ctx |- clause* `( val* `) : unitRes
 
@@ -4986,9 +4999,9 @@ relation Eval_clauses_on_ok: ctx |- clause* `( val* `) : unitRes
     -- let clause''*{clause'' <- clause''*} = clause'*{clause' <- clause'*}
     -- if clause''*{clause'' <- clause''*} matches _ :: _
     -- let clause_h :: clause_t*{clause_t <- clause_t*} = clause''*{clause'' <- clause''*}
-    -- Eval_clause: C |- clause_h `( val*{val <- val*} `) : funcRes'
-    -- if funcRes' <: unmatch
-    -- let unmatch = funcRes' as unmatch
+    -- Eval_clause: C |- clause_h `( val*{val <- val*} `) : clauseRes'
+    -- if clauseRes' <: unmatch
+    -- let unmatch = clauseRes' as unmatch
     -- if unmatch matches UNMATCH
     -- Eval_clauses_on_ok: C |- clause_t*{clause_t <- clause_t*} `( val*{val <- val*} `) : unitRes
     -- output: % |- % `( % `) : unitRes
@@ -4997,11 +5010,16 @@ relation Eval_clauses_on_ok: ctx |- clause* `( val* `) : unitRes
     -- let clause''*{clause'' <- clause''*} = clause'*{clause' <- clause'*}
     -- if clause''*{clause'' <- clause''*} matches _ :: _
     -- let clause_h :: clause_t*{clause_t <- clause_t*} = clause''*{clause'' <- clause''*}
-    -- Eval_clause: C |- clause_h `( val*{val <- val*} `) : funcRes
-    -- if (funcRes =/= UNMATCH as funcRes)
+    -- Eval_clause: C |- clause_h `( val*{val <- val*} `) : clauseRes
+    -- if (clauseRes =/= UNMATCH as clauseRes)
     -- output: % |- % `( % `) : ERROR as unitRes
 
-relation Eval_tblrow: ctx |- tblRow `( val* `) : funcRes
+syntax tblRowRes =
+   | OK val (from ok<val>)
+   | ERROR (from error)
+   | UNMATCH (from unmatch)
+
+relation Eval_tblrow: ctx |- tblRow `( val* `) : tblRowRes
 
   rulegroup
 
@@ -5021,7 +5039,7 @@ relation Eval_tblrow: ctx |- tblRow `( val* `) : funcRes
     -- Eval_prems: C_callee_assign |- prem*{prem <- prem*} : premRes
     -- if premRes <: failure
     -- let failure = premRes as failure
-    -- output: % |- % `( % `) : failure as funcRes
+    -- output: % |- % `( % `) : failure as tblRowRes
 
     rulepath succ
     -- let arg*{arg <- arg*} '=' typedExp_out '-' prem*{prem <- prem*} = tblRow
@@ -5033,9 +5051,9 @@ relation Eval_tblrow: ctx |- tblRow `( val* `) : funcRes
     -- if premRes <: ok<ctx>
     -- let OK C_callee_prem = premRes as ok<ctx>
     -- Eval_exp: C_callee_prem |- typedExp_out : expRes
-    -- if expRes <: funcRes
-    -- let funcRes = expRes as funcRes
-    -- output: % |- % `( % `) : funcRes
+    -- if expRes <: tblRowRes
+    -- let tblRowRes = expRes as tblRowRes
+    -- output: % |- % `( % `) : tblRowRes
 
   elsegroup
 
@@ -5049,9 +5067,9 @@ relation Eval_tblrow: ctx |- tblRow `( val* `) : funcRes
    paths
 
     rulepath error
-    -- output: % |- % `( % `) : ERROR as funcRes
+    -- output: % |- % `( % `) : ERROR as tblRowRes
 
-relation Eval_tblrows: ctx |- tblRow* `( val* `) : funcRes
+relation Eval_tblrows: ctx |- tblRow* `( val* `) : tblRowRes
 
   rulegroup
 
@@ -5064,28 +5082,28 @@ relation Eval_tblrows: ctx |- tblRow* `( val* `) : funcRes
 
     rulepath nil
     -- if (tblRow'*{tblRow' <- tblRow'*} = [])
-    -- output: % |- % `( % `) : UNMATCH as funcRes
+    -- output: % |- % `( % `) : UNMATCH as tblRowRes
 
     rulepath unmatch
     -- let tblRow''*{tblRow'' <- tblRow''*} = tblRow'*{tblRow' <- tblRow'*}
     -- if tblRow''*{tblRow'' <- tblRow''*} matches _ :: _
     -- let tblRow_h :: tblRow_t*{tblRow_t <- tblRow_t*} = tblRow''*{tblRow'' <- tblRow''*}
-    -- Eval_tblrow: C |- tblRow_h `( val*{val <- val*} `) : funcRes'
-    -- if funcRes' <: unmatch
-    -- let unmatch = funcRes' as unmatch
+    -- Eval_tblrow: C |- tblRow_h `( val*{val <- val*} `) : tblRowRes'
+    -- if tblRowRes' <: unmatch
+    -- let unmatch = tblRowRes' as unmatch
     -- if unmatch matches UNMATCH
-    -- Eval_tblrows: C |- tblRow_t*{tblRow_t <- tblRow_t*} `( val*{val <- val*} `) : funcRes
-    -- output: % |- % `( % `) : funcRes
+    -- Eval_tblrows: C |- tblRow_t*{tblRow_t <- tblRow_t*} `( val*{val <- val*} `) : tblRowRes
+    -- output: % |- % `( % `) : tblRowRes
 
     rulepath cons-result
     -- let tblRow''*{tblRow'' <- tblRow''*} = tblRow'*{tblRow' <- tblRow'*}
     -- if tblRow''*{tblRow'' <- tblRow''*} matches _ :: _
     -- let tblRow_h :: tblRow_t*{tblRow_t <- tblRow_t*} = tblRow''*{tblRow'' <- tblRow''*}
-    -- Eval_tblrow: C |- tblRow_h `( val*{val <- val*} `) : funcRes
-    -- if (funcRes =/= UNMATCH as funcRes)
-    -- output: % |- % `( % `) : funcRes
+    -- Eval_tblrow: C |- tblRow_h `( val*{val <- val*} `) : tblRowRes
+    -- if (tblRowRes =/= UNMATCH as tblRowRes)
+    -- output: % |- % `( % `) : tblRowRes
 
-relation Call_table_func: ctx |- tableFuncDefn `( val* `) : funcRes
+relation Call_table_func: ctx |- tableFuncDefn `( val* `) : callFuncRes
 
   rulegroup
 
@@ -5098,10 +5116,12 @@ relation Call_table_func: ctx |- tableFuncDefn `( val* `) : funcRes
 
     rulepath
     -- let TABLEFUNC _id _param*{_param <- _param*} ':' _typ '=' tblRow*{tblRow <- tblRow*} = tableFuncDefn
-    -- Eval_tblrows: C |- tblRow*{tblRow <- tblRow*} `( val*{val <- val*} `) : funcRes
-    -- output: % |- % `( % `) : funcRes
+    -- Eval_tblrows: C |- tblRow*{tblRow <- tblRow*} `( val*{val <- val*} `) : tblRowRes
+    -- if tblRowRes <: callFuncRes
+    -- let callFuncRes = tblRowRes as callFuncRes
+    -- output: % |- % `( % `) : callFuncRes
 
-relation Call_defined_func: ctx |- definedFuncDefn `< typ* `> `( val* `) : funcRes
+relation Call_defined_func: ctx |- definedFuncDefn `< typ* `> `( val* `) : callFuncRes
 
   rulegroup
 
@@ -5112,27 +5132,43 @@ relation Call_defined_func: ctx |- definedFuncDefn `< typ* `> `( val* `) : funcR
 
    paths
 
-    rulepath unmatch
+    rulepath unmatch-partial
     -- let FUNC _id tparam*{tparam <- tparam*} _param*{_param <- _param*} ':' _typ '=' clause*{clause <- clause*} elsClause?{elsClause <- elsClause?} = definedFuncDefn
     -- if (|tparam*{tparam <- tparam*}| = |typ*{typ <- typ*}|)
     -- let tdenv = `{ tparam ':' TYP tparam [] '=' ALIAS typ as typDef*{tparam <- tparam*, typ <- typ*} `}
     -- let C_callee = C[LOCAL = $empty_localLayer[TYP = tdenv]]
-    -- Eval_clauses: C_callee |- clause*{clause <- clause*} `( val*{val <- val*} `) : funcRes'
-    -- if funcRes' <: unmatch
-    -- let unmatch = funcRes' as unmatch
+    -- Eval_clauses: C_callee |- clause*{clause <- clause*} `( val*{val <- val*} `) : clauseRes
+    -- if clauseRes <: unmatch
+    -- let unmatch = clauseRes as unmatch
     -- if unmatch matches UNMATCH
-    -- (Eval_clause: C_callee |- elsClause `( val*{val <- val*} `) : funcRes_els)?{elsClause <- elsClause?, funcRes_els -> funcRes_els?}
-    -- let funcRes = $deopt_<funcRes>(funcRes_els?{funcRes_els <- funcRes_els?}, UNMATCH as funcRes)
-    -- output: % |- % `< % `> `( % `) : funcRes
+    -- (Eval_clause: C_callee |- elsClause `( val*{val <- val*} `) : clauseRes_els)?{elsClause <- elsClause?, clauseRes_els -> clauseRes_els?}
+    -- if (UNMATCH as clauseRes = $deopt_<clauseRes>(clauseRes_els?{clauseRes_els <- clauseRes_els?}, UNMATCH as clauseRes))
+    -- output: % |- % `< % `> `( % `) : ERROR as callFuncRes
+
+    rulepath unmatch-result
+    -- let FUNC _id tparam*{tparam <- tparam*} _param*{_param <- _param*} ':' _typ '=' clause*{clause <- clause*} elsClause?{elsClause <- elsClause?} = definedFuncDefn
+    -- if (|tparam*{tparam <- tparam*}| = |typ*{typ <- typ*}|)
+    -- let tdenv = `{ tparam ':' TYP tparam [] '=' ALIAS typ as typDef*{tparam <- tparam*, typ <- typ*} `}
+    -- let C_callee = C[LOCAL = $empty_localLayer[TYP = tdenv]]
+    -- Eval_clauses: C_callee |- clause*{clause <- clause*} `( val*{val <- val*} `) : clauseRes
+    -- if clauseRes <: unmatch
+    -- let unmatch = clauseRes as unmatch
+    -- if unmatch matches UNMATCH
+    -- (Eval_clause: C_callee |- elsClause `( val*{val <- val*} `) : clauseRes_els)?{elsClause <- elsClause?, clauseRes_els -> clauseRes_els?}
+    -- let clauseRes' = $deopt_<clauseRes>(clauseRes_els?{clauseRes_els <- clauseRes_els?}, UNMATCH as clauseRes)
+    -- if clauseRes' <: callFuncRes
+    -- let callFuncRes = clauseRes' as callFuncRes
+    -- output: % |- % `< % `> `( % `) : callFuncRes
 
     rulepath result
     -- let FUNC _id tparam*{tparam <- tparam*} _param*{_param <- _param*} ':' _typ '=' clause*{clause <- clause*} elsClause?{elsClause <- elsClause?} = definedFuncDefn
     -- if (|tparam*{tparam <- tparam*}| = |typ*{typ <- typ*}|)
     -- let tdenv = `{ tparam ':' TYP tparam [] '=' ALIAS typ as typDef*{tparam <- tparam*, typ <- typ*} `}
     -- let C_callee = C[LOCAL = $empty_localLayer[TYP = tdenv]]
-    -- Eval_clauses: C_callee |- clause*{clause <- clause*} `( val*{val <- val*} `) : funcRes
-    -- if (funcRes =/= UNMATCH as funcRes)
-    -- output: % |- % `< % `> `( % `) : funcRes
+    -- Eval_clauses: C_callee |- clause*{clause <- clause*} `( val*{val <- val*} `) : clauseRes
+    -- if clauseRes <: callFuncRes
+    -- let callFuncRes = clauseRes as callFuncRes
+    -- output: % |- % `< % `> `( % `) : callFuncRes
 
   elsegroup
 
@@ -5146,7 +5182,7 @@ relation Call_defined_func: ctx |- definedFuncDefn `< typ* `> `( val* `) : funcR
    paths
 
     rulepath error
-    -- output: % |- % `< % `> `( % `) : ERROR as funcRes
+    -- output: % |- % `< % `> `( % `) : ERROR as callFuncRes
 
 relation Eval_rul: ctx |- rul `( val* `) : relRes
 
@@ -5375,7 +5411,7 @@ relation Eval_func: spec |- id `( val* `) : val
 
     rulepath
     -- let C = $load_ctx($empty_ctx, spec)
-    -- Call_func: C |- id `< [] `> `( val*{val <- val*} `) : funcRes
-    -- if funcRes <: ok<val>
-    -- let OK val' = funcRes as ok<val>
+    -- Call_func: C |- id `< [] `> `( val*{val <- val*} `) : callFuncRes
+    -- if callFuncRes <: ok<val>
+    -- let OK val' = callFuncRes as ok<val>
     -- output: % |- % `( % `) : val'
