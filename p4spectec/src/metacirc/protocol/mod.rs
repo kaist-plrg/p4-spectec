@@ -9,11 +9,15 @@
 //! for level k+1, and `reply` encodes its outcome.
 //! `ProtocolKind` stores the protocols; `meta` is spec-meta's,
 //! `meta_k` is spec-meta-k's, the AL semantics written in K,
+//! `meta_redex` is spec-meta-redex's, the AL semantics written in PLT Redex,
 //! and `kore` is spec-k's, the K semantics written in P4-SpecTec.
+//! `json` and `serve` are the JSON boundary that `meta_k` and `meta_redex` share.
 
+mod json;
 mod kore;
 mod meta;
 mod meta_k;
+mod serve;
 
 pub(super) use kore::KoreProtocol;
 pub(super) use meta::MetaProtocol;
@@ -105,7 +109,7 @@ pub(in crate::metacirc) enum CodecCache {
     /// spec-meta's AL encodings and decodings, boxed as the largest.
     Meta(Box<Cache>),
     /// spec-meta-k's JSON codec state.
-    MetaK(meta_k::Cache),
+    MetaK(json::Cache),
     /// spec-k's KORE codec state.
     Kore(kore::Cache),
 }
