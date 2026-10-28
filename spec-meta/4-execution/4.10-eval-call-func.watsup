@@ -4,8 +4,10 @@
 
 ;;; Clause invocation
 
+syntax clauseRes = ok<val> | failure
+
 relation Eval_clause:
-  ctx |- clause `( val* `) : funcRes
+  ctx |- clause `( val* `) : clauseRes
   hint(input %0 %1 %2)
   hint(prose_in "evaluating clause" %1 "with inputs" %2 "under context" %0)
   hint(prose_out %3)
@@ -19,11 +21,11 @@ rulegroup Eval_clause {
     -- Eval_prems: C_assign |- prem* : failure
 
   rule Eval_clause/succ:
-    C |- clause `( val* `) : funcRes
+    C |- clause `( val* `) : clauseRes
     -- if arg* '=' typedExp_out '-' prem* = clause
     -- Assign_args: C |- arg* := val* : OK C_assign
     -- Eval_prems: C_assign |- prem* : OK C_prem
-    -- Eval_exp : C_prem |- typedExp_out : funcRes
+    -- Eval_exp : C_prem |- typedExp_out : clauseRes
 
 }
 
@@ -32,7 +34,7 @@ rule Eval_clause/error:
   -- otherwise
 
 relation Eval_clauses:
-  ctx |- clause* `( val* `) : funcRes
+  ctx |- clause* `( val* `) : clauseRes
   hint(input %0 %1 %2)
   hint(prose_in "evaluating clauses" %1 "with inputs" %2 "under context" %0
                 "with determinism checks")
@@ -51,9 +53,9 @@ rulegroup Eval_clauses {
     C |- eps `( val* `) : UNMATCH
 
   rule Eval_clauses/unmatch:
-    C |- (clause_h :: clause_t*) `( val* `) : funcRes
+    C |- (clause_h :: clause_t*) `( val* `) : clauseRes
     -- Eval_clause: C |- clause_h `( val* `) : UNMATCH
-    -- Eval_clauses: C |- clause_t* `( val* `) : funcRes
+    -- Eval_clauses: C |- clause_t* `( val* `) : clauseRes
 
   rule Eval_clauses/succ:
     C |- (clause_h :: clause_t*) `( val* `) : OK val_out
@@ -78,8 +80,8 @@ rulegroup Eval_clauses_on_ok {
 
   rule Eval_clauses_on_ok/error:
     C |- (clause_h :: clause_t*) `( val* `) : ERROR
-    -- Eval_clause: C |- clause_h `( val* `) : funcRes
-    -- if funcRes =/= UNMATCH
+    -- Eval_clause: C |- clause_h `( val* `) : clauseRes
+    -- if clauseRes =/= UNMATCH
 
 }
 
@@ -87,8 +89,10 @@ rulegroup Eval_clauses_on_ok {
 
 ;;;; Table row evaluation
 
+syntax tblRowRes = ok<val> | failure
+
 relation Eval_tblrow:
-  ctx |- tblRow `( val* `) : funcRes
+  ctx |- tblRow `( val* `) : tblRowRes
   hint(input %0 %1 %2)
   hint(prose_in "evaluating table row" %1 "with inputs" %2 "under context" %0)
   hint(prose_out %3)
@@ -103,12 +107,12 @@ rulegroup Eval_tblrow {
     -- Eval_prems: C_callee_assign |- prem* : failure
 
   rule Eval_tblrow/succ:
-    C |- tblRow `( val* `) : funcRes
+    C |- tblRow `( val* `) : tblRowRes
     -- if arg* '=' typedExp_out '-' prem* = tblRow
     -- if C_callee = C[ .LOCAL = $empty_localLayer ]
     -- Assign_args: C_callee |- arg* := val* : OK C_callee_assign
     -- Eval_prems: C_callee_assign |- prem* : OK C_callee_prem
-    -- Eval_exp: C_callee_prem |- typedExp_out : funcRes
+    -- Eval_exp: C_callee_prem |- typedExp_out : tblRowRes
 
 }
 
@@ -119,7 +123,7 @@ rule Eval_tblrow/error:
 ;;;; Table row sequence evaluation
 
 relation Eval_tblrows:
-  ctx |- tblRow* `( val* `) : funcRes
+  ctx |- tblRow* `( val* `) : tblRowRes
   hint(input %0 %1 %2)
   hint(prose_in "evaluating table rows" %1 "with inputs" %2 "under context" %0
                 "in order until a row succeeds or errors")
@@ -131,34 +135,34 @@ rulegroup Eval_tblrows {
     C |- eps `( val* `) : UNMATCH
 
   rule Eval_tblrows/unmatch:
-    C |- (tblRow_h :: tblRow_t*) `( val* `) : funcRes
+    C |- (tblRow_h :: tblRow_t*) `( val* `) : tblRowRes
     -- Eval_tblrow: C |- tblRow_h `( val* `) : UNMATCH
-    -- Eval_tblrows: C |- tblRow_t* `( val* `) : funcRes
+    -- Eval_tblrows: C |- tblRow_t* `( val* `) : tblRowRes
 
   rule Eval_tblrows/cons-result:
-    C |- (tblRow_h :: tblRow_t*) `( val* `) : funcRes
-    -- Eval_tblrow: C |- tblRow_h `( val* `) : funcRes
-    -- if funcRes =/= UNMATCH
+    C |- (tblRow_h :: tblRow_t*) `( val* `) : tblRowRes
+    -- Eval_tblrow: C |- tblRow_h `( val* `) : tblRowRes
+    -- if tblRowRes =/= UNMATCH
 
 }
 
 ;;;; Table meta-function evaluation
 
 relation Call_table_func:
-  ctx |- tableFuncDefn `( val* `) : funcRes
+  ctx |- tableFuncDefn `( val* `) : callFuncRes
   hint(input %0 %1 %2)
   hint(prose_in "calling table function" %1 "with inputs" %2 "under context" %0)
   hint(prose_out %3)
 
 rule Call_table_func:
-  C |- tableFuncDefn `( val* `) : funcRes
+  C |- tableFuncDefn `( val* `) : callFuncRes
   -- if TABLEFUNC _ _ ':' _ '=' tblRow* = tableFuncDefn
-  -- Eval_tblrows: C |- tblRow* `( val* `) : funcRes
+  -- Eval_tblrows: C |- tblRow* `( val* `) : callFuncRes
 
 ;;; Defined meta-function invocation
 
 relation Call_defined_func:
-  ctx |- definedFuncDefn `< typ* `> `( val* `) : funcRes
+  ctx |- definedFuncDefn `< typ* `> `( val* `) : callFuncRes
   hint(input %0 %1 %2 %3)
   hint(prose_in "calling defined function" %1 "with types" %2 "and inputs" %3
                 "under context" %0)
@@ -166,22 +170,30 @@ relation Call_defined_func:
 
 rulegroup Call_defined_func {
 
-  rule Call_defined_func/unmatch:
-    C |- definedFuncDefn `< typ* `> `( val* `) : funcRes
+  rule Call_defined_func/unmatch-partial:
+    C |- definedFuncDefn `< typ* `> `( val* `) : ERROR
     -- if FUNC _ tparam* _ ':' _ '=' clause* elsClause? = definedFuncDefn
     -- if tdenv = `{ (tparam ':' (TYP tparam eps '=' (ALIAS typ)))* `}
     -- if C_callee = C[ .LOCAL = $empty_localLayer[ .TYP = tdenv ] ]
     -- Eval_clauses: C_callee |- clause* `( val* `) : UNMATCH
-    -- (Eval_clause: C_callee |- elsClause `( val* `) : funcRes_els)?
-    -- if funcRes = $deopt_<funcRes>(funcRes_els?, UNMATCH)
+    -- (Eval_clause: C_callee |- elsClause `( val* `) : clauseRes_els)?
+    -- if UNMATCH = $deopt_<clauseRes>(clauseRes_els?, UNMATCH)
 
-  rule Call_defined_func/result:
-    C |- definedFuncDefn `< typ* `> `( val* `) : funcRes
+  rule Call_defined_func/unmatch-result:
+    C |- definedFuncDefn `< typ* `> `( val* `) : callFuncRes
     -- if FUNC _ tparam* _ ':' _ '=' clause* elsClause? = definedFuncDefn
     -- if tdenv = `{ (tparam ':' (TYP tparam eps '=' (ALIAS typ)))* `}
     -- if C_callee = C[ .LOCAL = $empty_localLayer[ .TYP = tdenv ] ]
-    -- Eval_clauses: C_callee |- clause* `( val* `) : funcRes
-    -- if funcRes =/= UNMATCH
+    -- Eval_clauses: C_callee |- clause* `( val* `) : UNMATCH
+    -- (Eval_clause: C_callee |- elsClause `( val* `) : clauseRes_els)?
+    -- if callFuncRes = $deopt_<clauseRes>(clauseRes_els?, UNMATCH)
+
+  rule Call_defined_func/result:
+    C |- definedFuncDefn `< typ* `> `( val* `) : callFuncRes
+    -- if FUNC _ tparam* _ ':' _ '=' clause* elsClause? = definedFuncDefn
+    -- if tdenv = `{ (tparam ':' (TYP tparam eps '=' (ALIAS typ)))* `}
+    -- if C_callee = C[ .LOCAL = $empty_localLayer[ .TYP = tdenv ] ]
+    -- Eval_clauses: C_callee |- clause* `( val* `) : callFuncRes
 
 }
 
@@ -196,32 +208,32 @@ rule Call_defined_func/error:
 rulegroup Call_func {
 
   rule Call_func/extern:
-    C |- id `< typ* `> `( val* `) : funcRes
+    C |- id `< typ* `> `( val* `) : OK val_out
     -- if id_global = $resolve_func_param(C, id)
     -- if EXTFUNC id_func _ _ ':' _ = $find_func(C, id_global)
     -- Call_extern_func:
-        |- id_func `< typ* `> `( val* `) : funcRes
+        |- id_func `< typ* `> `( val* `) : OK val_out
 
   rule Call_func/builtin:
-    C |- id `< typ* `> `( val* `) : funcRes
+    C |- id `< typ* `> `( val* `) : OK val_out
     -- if id_global = $resolve_func_param(C, id)
     -- if BUILTINFUNC id_func _ _ ':' _ = $find_func(C, id_global)
     -- Call_builtin_func:
-        |- id_func `< typ* `> `( val* `) : funcRes
+        |- id_func `< typ* `> `( val* `) : OK val_out
 
   rule Call_func/table:
-    C |- id `< eps `> `( val* `) : funcRes
+    C |- id `< eps `> `( val* `) : callFuncRes
     -- if id_global = $resolve_func_param(C, id)
     -- if tableFuncDefn = $find_func(C, id_global)
     -- Call_table_func:
-        C |- tableFuncDefn `( val* `) : funcRes
+        C |- tableFuncDefn `( val* `) : callFuncRes
 
   rule Call_func/defined:
-    C |- id `< typ* `> `( val* `) : funcRes
+    C |- id `< typ* `> `( val* `) : callFuncRes
     -- if id_global = $resolve_func_param(C, id)
     -- if definedFuncDefn = $find_func(C, id_global)
     -- Call_defined_func:
-        C |- definedFuncDefn `< typ* `> `( val* `) : funcRes
+        C |- definedFuncDefn `< typ* `> `( val* `) : callFuncRes
 
 }
 
