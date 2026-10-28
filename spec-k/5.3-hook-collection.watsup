@@ -2,6 +2,9 @@
 ;; Hooks of collections: lists, maps, and sets
 ;;
 
+;;; The result sort of the hooked symbol, sort, is the sort of the collection
+;;; a hook builds.
+
 ;;; LIST
 
 def $hook(D, "LIST.unit", sort, eps) = OK (LIST sort eps)
@@ -19,7 +22,7 @@ def $hook(D, "LIST.get", sort, ([LIST sort_l term*, INT i])) = OK term_e
 def $hook(D, "LIST.in", sort, ([term, LIST sort_l term_e*]))
   = OK (BOOL (term <- term_e*))
 def $hook(D, "LIST.update", sort, ([LIST sort_l term*, INT i, term_v]))
-  = OK (LIST sort_l (term*[0 : n] ++ [ term_v ] ++ term*[n_a : n_r]))
+  = OK (LIST sort (term*[0 : n] ++ [ term_v ] ++ term*[n_a : n_r]))
   -- if n = $nat_of(i)
   -- if $(n < |term*|)
   -- if n_a = $(n + 1)
@@ -34,13 +37,12 @@ def $hook(D, "LIST.range", sort, ([LIST sort_l term*, INT i_f, INT i_b]))
 ;; documents; hook_LIST_updateAll does not check it when n is 0
 def $hook(D, "LIST.updateAll", sort,
   ([LIST sort_l term*, INT i, LIST sort_s term_s*]))
-  = OK (LIST sort_l (term*[0 : n] ++ term_s* ++ term*[n_a : n_r]))
+  = OK (LIST sort (term*[0 : n] ++ term_s* ++ term*[n_a : n_r]))
   -- if n = $nat_of(i)
   -- if n_a = $(n + |term_s*|)
   -- if n_r = $nat_of($(|term*| - n_a))
 
 ;;; MAP
-;;; The result sort of the hooked symbol decides which map sort is built.
 ;;; A map keeps its entries in order, as a set does, so that maps with the same
 ;;; entries are the same value, as K compares them (KEQUAL.eq in 5.2-hook).
 
@@ -62,7 +64,7 @@ def $hook(D, "MAP.lookup", sort, ([MAP sort_m M, term_k])) = OK term_v
 def $hook(D, "MAP.keys", sort, ([MAP sort_m `{ (term_k ':' term_v)* `}]))
   = OK (SET sort `{ term_k* `})
 def $hook(D, "MAP.update", sort, ([MAP sort_m M, term_k, term_v]))
-  = OK (MAP sort_m $sorted_map($update_map<term, term>(M, term_k, term_v)))
+  = OK (MAP sort $sorted_map($update_map<term, term>(M, term_k, term_v)))
 def $hook(D, "MAP.in_keys", sort, ([term_k, MAP sort_m `{ (term_k' ':' term_v')* `}]))
   = OK (BOOL (term_k <- term_k'*))
 def $hook(D, "MAP.lookupOrDefault", sort, ([MAP sort_m M, term_k, term_d]))
@@ -95,9 +97,9 @@ def $hook(D, "SET.concat", sort, ([SET sort_1 S_1, SET sort_2 S_2]))
 def $hook(D, "SET.inclusion", sort, ([SET sort_1 S_1, SET sort_2 S_2]))
   = OK (BOOL ($diff_set<term>(S_1, S_2) = `{ eps `}))
 def $hook(D, "SET.difference", sort, ([SET sort_1 S_1, SET sort_2 S_2]))
-  = OK (SET sort_1 $diff_set<term>(S_1, S_2))
+  = OK (SET sort $diff_set<term>(S_1, S_2))
 def $hook(D, "SET.intersection", sort, ([SET sort_1 S_1, SET sort_2 S_2]))
-  = OK (SET sort_1 $intersect_set<term>(S_1, S_2))
+  = OK (SET sort $intersect_set<term>(S_1, S_2))
 def $hook(D, "SET.choice", sort, ([SET sort_s S])) = OK term
   -- if `{ term :: term_t* `} = $union_set<term>(S, `{ eps `})
 def $hook(D, "SET.in", sort, ([term, SET sort_s `{ term_e* `}]))
