@@ -109,7 +109,7 @@ fn parse_kore(
         mixops,
         runtime,
     });
-    let (value_definition, _) = encode::definition(arena, &loaded, &definition)
+    let value_definition = encode::definition(arena, &loaded, &definition)
         .map_err(|error| load_error(path_definition, error))?;
     let src = read(path_init)?;
     let pattern = parse::parse_pattern(&src).map_err(|error| parse_error(path_init, error))?;

@@ -151,13 +151,12 @@ fn hook_result(
     loaded: &Loaded,
     answer: Option<&Pattern>,
 ) -> Result<Value, String> {
-    match answer {
-        Some(answer) => {
-            let term = encode::term(arena, &loaded.info, &loaded.mixops, answer)?;
-            encode::ok(arena, &loaded.mixops, term)
-        }
+    let result = match answer {
+        Some(answer) => encode::term(arena, &loaded.info, &loaded.mixops, answer)
+            .and_then(|term| encode::ok(arena, &loaded.mixops, term)),
         None => encode::error(arena, &loaded.mixops),
-    }
+    };
+    result.map_err(|error| error.to_string())
 }
 
 /// A Float literal in the runtime's output format: the runtime evaluates it
