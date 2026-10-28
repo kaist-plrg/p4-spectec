@@ -87,3 +87,138 @@ relation Elab_spec:
   hint(input %0 %1)
   hint(prose_in "elaborating specification" %1 "under" %0)
   hint(prose_out %2)
+
+;;
+;;;; Expressions
+;;
+
+relation Infer_exp:
+  elabCtx |- expEL : expElabRes
+  hint(input %0 %1)
+  hint(prose_in "inferring the type of expression" %1 "under" %0)
+  hint(prose_out %2)
+
+;; The first of two readings of a construct, tried before the second
+
+relation Infer_exp_first:
+  elabCtx |- expEL : expElabRes
+  hint(input %0 %1)
+  hint(prose_in "inferring the type of expression" %1
+                "by its first reading under" %0)
+  hint(prose_out %2)
+
+relation Elab_exp:
+  elabCtx |- expEL '<=' typ : expElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "against type" %2 "under" %0)
+  hint(prose_out %3)
+
+relation Elab_exp_singleton:
+  elabCtx |- expEL '<=' typ : expElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "as the only element of type" %2
+                "under" %0)
+  hint(prose_out %3)
+
+relation Elab_exp_normal:
+  elabCtx |- expEL '<=' typ : expElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "against type" %2
+                "by inference or by the type under" %0)
+  hint(prose_out %3)
+
+relation Elab_exp_fallback:
+  elabCtx |- expEL '<=' typ : expElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "by the definition of type" %2
+                "under" %0)
+  hint(prose_out %3)
+
+relation Elab_exp_shape:
+  elabCtx |- expEL '<=' typ : expElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "by the shape of type" %2
+                "under" %0)
+  hint(prose_out %3)
+
+relation Elab_exp_first:
+  elabCtx |- expEL '<=' typ : expElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "against type" %2
+                "by its first reading under" %0)
+  hint(prose_out %3)
+
+;;
+;;;; Notation, struct, and variant expressions
+;;
+
+syntax notArgsElabRes = ok<(typedExp*, typ*)> | fail
+
+relation Elab_notArgs:
+  elabCtx |- expEL '<=' mixop typ* : notArgsElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "matching expression" %1 "with notation" %2
+                "taking argument types from" %3 "under" %0)
+  hint(prose_out %4)
+
+relation Elab_notArgss:
+  elabCtx |- expEL* '<=' mixop* typ* : notArgsElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "matching expressions" %1 "with notations" %2
+                "taking argument types from" %3 "under" %0)
+  hint(prose_out %4)
+
+syntax notExpElabRes = ok<typedExp*> | fail
+
+relation Elab_notExp:
+  elabCtx |- expEL '<=' notTyp : notExpElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "against notation" %2 "under" %0)
+  hint(prose_out %3)
+
+relation Elab_struct:
+  elabCtx |- expEL '<=' typ typField* : expElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "elaborating expression" %1 "against struct type" %2
+                "with fields" %3 "under" %0)
+  hint(prose_out %4)
+
+relation Elab_variant:
+  elabCtx |- expEL '<=' typ typCase* : expElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "elaborating expression" %1 "against variant type" %2
+                "with cases" %3 "under" %0)
+  hint(prose_out %4)
+
+relation Elab_case:
+  elabCtx |- expEL '<=' typ typCase : expElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "elaborating expression" %1 "as case" %3 "of type" %2
+                "under" %0)
+  hint(prose_out %4)
+
+;;
+;;;; Paths
+;;
+
+syntax pathElabRes = ok<typedPath> | fail
+
+relation Elab_path:
+  elabCtx |- pathEL '<=' typ : pathElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating path" %1 "into a value of type" %2 "under" %0)
+  hint(prose_out %3)
+
+;;
+;;;; Call arguments
+;;
+
+syntax argElabRes = ok<arg> | fail
+syntax argsElabRes = ok<arg*> | fail
+
+relation Elab_arg_call:
+  elabCtx |- argEL '<=' param : argElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating call argument" %1 "against parameter" %2
+                "under" %0)
+  hint(prose_out %3)

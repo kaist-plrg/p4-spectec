@@ -1,0 +1,117 @@
+;;
+;; Notation expressions
+;;
+;; syntax expEL
+;;
+
+;; An expression matches a notation tree node by node:
+;; parentheses are transparent, atoms agree literally,
+;; and each argument position is elaborated against the next argument type
+
+rule Elab_notArgs/paren:
+  EC |- (PAREN expEL) '<=' mixop typ* : notArgsElabRes
+  -- Elab_notArgs: EC |- expEL '<=' mixop typ* : notArgsElabRes
+
+rule Elab_notArgs/arg:
+  EC |- expEL '<=' ARG (typ_h :: typ_t*) : OK ([ typedExp ], typ_t*)
+  -- if ~$is_paren(expEL)
+  -- Elab_exp: EC |- expEL '<=' typ_h : OK typedExp
+
+rule Elab_notArgs/atom:
+  EC |- (ATOM atom) '<=' (ATOM atom) typ* : OK (eps, typ*)
+
+;; A sequence matches element-wise, without guessing omitted positions
+
+rule Elab_notArgs/seq:
+  EC |- (SEQ expEL*) '<=' (SEQ mixop*) typ* : notArgsElabRes
+  -- if |expEL*| = |mixop*|
+  -- Elab_notArgss: EC |- expEL* '<=' mixop* typ* : notArgsElabRes
+
+rule Elab_notArgs/infix:
+  EC |- (INFIX expEL_l atom expEL_r) '<=' (INFIX mixop_l atom mixop_r) typ*
+     : OK (typedExp_l* ++ typedExp_r*, typ_r*)
+  -- Elab_notArgs: EC |- expEL_l '<=' mixop_l typ* : OK (typedExp_l*, typ_l*)
+  -- Elab_notArgs: EC |- expEL_r '<=' mixop_r typ_l* : OK (typedExp_r*, typ_r*)
+
+rule Elab_notArgs/brack:
+  EC |- (BRACK atom_l expEL atom_r) '<=' (BRACK atom_l mixop atom_r) typ* : notArgsElabRes
+  -- Elab_notArgs: EC |- expEL '<=' mixop typ* : notArgsElabRes
+
+rule Elab_notArgs/fail:
+  EC |- expEL '<=' mixop typ* : FAIL
+  -- otherwise
+
+rulegroup Elab_notArgss {
+
+  rule Elab_notArgss/nil:
+    EC |- eps '<=' eps typ* : OK (eps, typ*)
+
+  rule Elab_notArgss/cons:
+    EC |- (expEL_h :: expEL_t*) '<=' (mixop_h :: mixop_t*) typ*
+       : OK (typedExp_h* ++ typedExp_t*, typ_t*)
+    -- Elab_notArgs: EC |- expEL_h '<=' mixop_h typ* : OK (typedExp_h*, typ_h*)
+    -- Elab_notArgss: EC |- expEL_t* '<=' mixop_t* typ_h* : OK (typedExp_t*, typ_t*)
+
+}
+
+rule Elab_notArgss/fail:
+  EC |- expEL* '<=' mixop* typ* : FAIL
+  -- otherwise
+
+;; Every argument type is consumed
+
+rule Elab_notExp/ok:
+  EC |- expEL '<=' (mixop typ*) : OK typedExp*
+  -- Elab_notArgs: EC |- expEL '<=' mixop typ* : OK (typedExp*, eps)
+
+rule Elab_notExp/fail:
+  EC |- expEL '<=' notTyp : FAIL
+  -- otherwise
+
+;;
+;; Struct expressions
+;;
+;; syntax expEL
+;;
+
+;; Fields appear in declaration order
+
+rule Elab_struct/ok:
+  EC |- (STR expFieldEL*) '<=' typ typField* : OK ((STR expField*) '#' typ)
+  -- if |expFieldEL*| = |typField*|
+  -- if (atom expEL = expFieldEL)*
+  -- if (atom typ_field = typField)*
+  -- (Elab_exp: EC |- expEL '<=' typ_field : OK typedExp)*
+  -- if expField* = (atom typedExp)*
+
+rule Elab_struct/fail:
+  EC |- expEL '<=' typ typField* : FAIL
+  -- otherwise
+
+;;
+;; Variant expressions
+;;
+;; syntax expEL
+;;
+
+;; Exactly one case may match; a case has the type that introduced it,
+;; cast to the expected variant
+
+rule Elab_variant/ok:
+  EC |- expEL '<=' typ typCase* : OK typedExp
+  -- (Elab_case: EC |- expEL '<=' typ typCase : expElabRes)*
+  -- if [ typedExp ] = $oks_exp(expElabRes*)
+
+rule Elab_variant/fail:
+  EC |- expEL '<=' typ typCase* : FAIL
+  -- otherwise
+
+rule Elab_case/ok:
+  EC |- expEL '<=' typ (mixop typ_arg* FROM (id_origin targ_origin*)) : expElabRes
+  -- Elab_notExp: EC |- expEL '<=' (mixop typ_arg*) : OK typedExp_arg*
+  -- if typedExp_case = (INJ (mixop typedExp_arg*)) '#' (VAR id_origin targ_origin*)
+  -- if expElabRes = $cast(EC.TYP, typedExp_case, typ)
+
+rule Elab_case/fail:
+  EC |- expEL '<=' typ typCase : FAIL
+  -- otherwise

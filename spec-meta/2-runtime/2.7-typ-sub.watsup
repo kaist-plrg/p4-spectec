@@ -1,0 +1,101 @@
+;; Type subtyping
+
+;;; Iterations
+
+;; An option is a list of at most one element
+
+dec $is_sub_iter(iter, iter) : bool
+  hint(prose_in "iteration" %0 "is a subtype of iteration" %1)
+def $is_sub_iter(iter, iter) = true
+def $is_sub_iter(QUEST, STAR) = true
+def $is_sub_iter(iter_l, iter_r) = false
+  -- otherwise
+
+dec $is_iter_sub(typ, iter) : bool
+  hint(prose_in %0 "is an iteration that is a subtype of iteration" %1)
+def $is_iter_sub(ITER _ iter_l, iter_r) = $is_sub_iter(iter_l, iter_r)
+def $is_iter_sub(typ, iter) = false
+  -- otherwise
+
+;;; Variants
+
+;; Every case of the source must have an equivalent case in the target
+
+dec $is_equiv_case(tdenv, typCase, typCase) : bool
+  hint(prose_in "cases" %1 "and" %2 "are equivalent under" %0)
+def $is_equiv_case(tdenv, mixop typ_l* FROM _, mixop typ_r* FROM _) = b
+  -- if equivRes = $equiv_typs(tdenv, typ_l*, typ_r*)
+  -- if b = (equivRes = OK true)
+def $is_equiv_case(tdenv, typCase_l, typCase_r) = false
+  -- otherwise
+
+dec $has_equiv_case(tdenv, typCase, typCase*) : bool
+  hint(prose_in "some case of" %2 "is equivalent to case" %1 "under" %0)
+def $has_equiv_case(tdenv, typCase, typCase_r*) = $exists_(b*)
+  -- if b* = $is_equiv_case(tdenv, typCase, typCase_r)*
+
+dec $inst_cases(tdenv, id, targ*) : typCase*?
+  hint(prose_in "the cases of variant" %1 "instantiated with" %2 "under" %0)
+def $inst_cases(tdenv, id, targ*) = typCase_inst*
+  -- if TYP _ tparam* '=' (VARIANT typCase*) = $find_map<id, typDef>(tdenv, id)
+  -- if |tparam*| = |targ*|
+  -- if theta = `{ (tparam ':' targ)* `}
+  -- if (mixop typ_case* FROM typOrigin = typCase)*
+  -- if (OK typ_case_inst* = $subst_typs(theta, typ_case*))*
+  -- if typCase_inst* = (mixop typ_case_inst* FROM typOrigin)*
+def $inst_cases(tdenv, id, targ*) = eps
+  -- otherwise
+
+;;; Types
+
+dec $sub_typ(tdenv, typ, typ) : equivRes
+  hint(prose_in "the result of checking that" %1 "is a subtype of" %2
+                "under type environment" %0)
+dec $sub_typs(tdenv, typ*, typ*) : equivRes
+  hint(prose_in "the result of checking pairwise subtyping of" %1 "and" %2
+                "under type environment" %0)
+dec $sub_typ'(tdenv, typ, typ) : equivRes
+  hint(prose_in "the result of checking that expanded" %1
+                "is a subtype of" %2 "under type environment" %0)
+dec $sub_typ''(tdenv, typ, typ) : equivRes
+  hint(prose_in "the result of the structural subtyping rules for" %1
+                "and" %2 "under type environment" %0)
+
+def $sub_typ(tdenv, typ_l, typ_r) = $sub_typ'(tdenv, typ_l_expand, typ_r_expand)
+  -- if OK typ_l_expand = $expand_typ(tdenv, typ_l)
+  -- if OK typ_r_expand = $expand_typ(tdenv, typ_r)
+def $sub_typ(tdenv, typ_l, typ_r) = ERROR
+  -- otherwise
+
+def $sub_typs(tdenv, eps, eps) = OK true
+def $sub_typs(tdenv, typ_l :: typ_l_t*, typ_r :: typ_r_t*)
+  = $sub_typs(tdenv, typ_l_t*, typ_r_t*)
+  -- if OK true = $sub_typ(tdenv, typ_l, typ_r)
+def $sub_typs(tdenv, typ_l :: typ_l_t*, typ_r :: typ_r_t*) = equivRes
+  -- if equivRes = $sub_typ(tdenv, typ_l, typ_r)
+  -- if equivRes =/= OK true
+def $sub_typs(tdenv, eps, typ_r :: typ_r_t*) = OK false
+def $sub_typs(tdenv, typ_l :: typ_l_t*, eps) = OK false
+
+;; Equivalent types are subtypes; otherwise the structural rules decide
+
+def $sub_typ'(tdenv, typ_l, typ_r) = OK true
+  -- if OK true = $equiv_typ'(tdenv, typ_l, typ_r)
+def $sub_typ'(tdenv, typ_l, typ_r) = $sub_typ''(tdenv, typ_l, typ_r)
+  -- if OK false = $equiv_typ'(tdenv, typ_l, typ_r)
+def $sub_typ'(tdenv, typ_l, typ_r) = ERROR
+  -- otherwise
+
+def $sub_typ''(tdenv, NAT, INT) = OK true
+def $sub_typ''(tdenv, VAR id_l targ_l*, VAR id_r targ_r*) = OK b
+  -- if typCase_l* = $inst_cases(tdenv, id_l, targ_l*)
+  -- if typCase_r* = $inst_cases(tdenv, id_r, targ_r*)
+  -- if b = $forall_($has_equiv_case(tdenv, typCase_l, typCase_r*)*)
+def $sub_typ''(tdenv, TUP typ_l*, TUP typ_r*) = $sub_typs(tdenv, typ_l*, typ_r*)
+def $sub_typ''(tdenv, ITER typ_l iter_l, ITER typ_r iter_r) = $sub_typ(tdenv, typ_l, typ_r)
+  -- if $is_sub_iter(iter_l, iter_r)
+;; A plain value lifts into an option or a list
+def $sub_typ''(tdenv, typ_l, ITER typ_r iter_r) = $sub_typ(tdenv, typ_l, typ_r)
+  -- if ~$is_iter_sub(typ_l, iter_r)
+def $sub_typ''(tdenv, typ_l, typ_r) = OK false
+  -- otherwise

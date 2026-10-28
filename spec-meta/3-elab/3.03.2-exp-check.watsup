@@ -1,0 +1,159 @@
+;;
+;; Expression elaboration against an expected type
+;;
+;; syntax expEL
+;;
+
+;; Where an iteration is expected, the expression is first read as its only
+;; element; otherwise it is inferred and cast, and only an expression that
+;; cannot be inferred is elaborated by the definition or shape of the type
+
+rule Elab_exp/singleton:
+  EC |- expEL '<=' typ : OK typedExp
+  -- Elab_exp_singleton: EC |- expEL '<=' typ : OK typedExp
+
+rule Elab_exp/normal:
+  EC |- expEL '<=' typ : expElabRes
+  -- Elab_exp_singleton: EC |- expEL '<=' typ : FAIL
+  -- Elab_exp_normal: EC |- expEL '<=' typ : expElabRes
+
+;;; Singletons
+
+rule Elab_exp_singleton/opt:
+  EC |- expEL '<=' typ : OK ((OPT typedExp) '#' typ)
+  -- if $is_singleton(expEL)
+  -- if (typ_elem, QUEST) = $as_iter_typ(EC.TYP, typ)
+  -- Elab_exp: EC |- expEL '<=' typ_elem : OK typedExp
+
+rule Elab_exp_singleton/list:
+  EC |- expEL '<=' typ : OK ((LIST ([ typedExp ])) '#' typ)
+  -- if $is_singleton(expEL)
+  -- if (typ_elem, STAR) = $as_iter_typ(EC.TYP, typ)
+  -- Elab_exp: EC |- expEL '<=' typ_elem : OK typedExp
+
+rule Elab_exp_singleton/fail:
+  EC |- expEL '<=' typ : FAIL
+  -- otherwise
+
+;;; Inference and its fallback
+
+;; An inferred expression must cast to the expected type, with no fallback
+
+rule Elab_exp_normal/infer:
+  EC |- expEL '<=' typ : expElabRes
+  -- Infer_exp: EC |- expEL : OK typedExp
+  -- if expElabRes = $cast(EC.TYP, typedExp, typ)
+
+rule Elab_exp_normal/fallback:
+  EC |- expEL '<=' typ : expElabRes
+  -- Infer_exp: EC |- expEL : FAIL
+  -- Elab_exp_fallback: EC |- expEL '<=' typ : expElabRes
+
+;; A wildcard has the expected type; a named type is unfolded into its body
+
+rule Elab_exp_fallback/wildcard:
+  EC |- (ID "_") '<=' typ : OK ((VAR "_") '#' typ)
+
+rule Elab_exp_fallback/alias:
+  EC |- expEL '<=' (VAR id targ*) : expElabRes
+  -- if ~$is_wildcard(expEL)
+  -- if TYP _ tparam* '=' (ALIAS typ_alias) = $find_map<id, typDef>(EC.TYP, id)
+  -- if |tparam*| = |targ*|
+  -- if theta = `{ (tparam ':' targ)* `}
+  -- if OK typ_inst = $subst_typ(theta, typ_alias)
+  -- Elab_exp_normal: EC |- expEL '<=' typ_inst : expElabRes
+
+rule Elab_exp_fallback/struct:
+  EC |- expEL '<=' (VAR id targ*) : expElabRes
+  -- if ~$is_wildcard(expEL)
+  -- if TYP _ tparam* '=' (STRUCT typField*) = $find_map<id, typDef>(EC.TYP, id)
+  -- if |tparam*| = |targ*|
+  -- if theta = `{ (tparam ':' targ)* `}
+  -- if (atom typ_field = typField)*
+  -- if (OK typ_field_inst = $subst_typ(theta, typ_field))*
+  -- if typField_inst* = (atom typ_field_inst)*
+  -- Elab_struct: EC |- expEL '<=' (VAR id targ*) typField_inst* : expElabRes
+
+rule Elab_exp_fallback/variant:
+  EC |- expEL '<=' (VAR id targ*) : expElabRes
+  -- if ~$is_wildcard(expEL)
+  -- if TYP _ _ '=' (VARIANT _) = $find_map<id, typDef>(EC.TYP, id)
+  -- if typCase_inst* = $inst_cases(EC.TYP, id, targ*)
+  -- Elab_variant: EC |- expEL '<=' (VAR id targ*) typCase_inst* : expElabRes
+
+rule Elab_exp_fallback/shape:
+  EC |- expEL '<=' typ : expElabRes
+  -- if ~$is_wildcard(expEL)
+  -- if ~$is_defined_typ(EC.TYP, typ)
+  -- Elab_exp_shape: EC |- expEL '<=' typ : expElabRes
+
+rule Elab_exp_fallback/fail:
+  EC |- expEL '<=' typ : FAIL
+  -- otherwise
+
+;;; Shapes
+
+;; The empty sequence is the empty option or list the type requires
+
+rule Elab_exp_shape/empty-opt:
+  EC |- (EPS) '<=' typ : OK ((OPT eps) '#' typ)
+  -- if (_, QUEST) = $as_iter_typ(EC.TYP, typ)
+
+rule Elab_exp_shape/empty-list:
+  EC |- (EPS) '<=' typ : OK ((LIST eps) '#' typ)
+  -- if (_, STAR) = $as_iter_typ(EC.TYP, typ)
+
+rule Elab_exp_shape/list:
+  EC |- (LIST expEL*) '<=' typ : OK ((LIST typedExp*) '#' typ)
+  -- if typ_elem = $as_list_typ(EC.TYP, typ)
+  -- (Elab_exp: EC |- expEL '<=' typ_elem : OK typedExp)*
+
+rule Elab_exp_shape/cons:
+  EC |- (CONS expEL_h expEL_t) '<=' typ : OK ((CONS typedExp_h typedExp_t) '#' typ)
+  -- if (typ_elem, iter) = $as_iter_typ(EC.TYP, typ)
+  -- Elab_exp: EC |- expEL_h '<=' typ_elem : OK typedExp_h
+  -- Elab_exp: EC |- expEL_t '<=' (ITER typ_elem iter) : OK typedExp_t
+
+;; Concatenation reads iterations before texts
+
+rule Elab_exp_shape/cat-iter:
+  EC |- (CAT expEL_l expEL_r) '<=' typ : OK typedExp
+  -- Elab_exp_first: EC |- (CAT expEL_l expEL_r) '<=' typ : OK typedExp
+
+rule Elab_exp_shape/cat-string:
+  EC |- (CAT expEL_l expEL_r) '<=' typ : OK ((CAT typedExp_l typedExp_r) '#' typ)
+  -- Elab_exp_first: EC |- (CAT expEL_l expEL_r) '<=' typ : FAIL
+  -- Elab_exp: EC |- expEL_l '<=' TEXT : OK typedExp_l
+  -- Elab_exp: EC |- expEL_r '<=' TEXT : OK typedExp_r
+
+rule Elab_exp_shape/tuple:
+  EC |- (TUP expEL*) '<=' typ : OK ((TUP typedExp*) '#' typ)
+  -- if typ_comp* = $as_tuple_typ(EC.TYP, typ)
+  -- if |typ_comp*| = |expEL*|
+  -- (Elab_exp: EC |- expEL '<=' typ_comp : OK typedExp)*
+
+rule Elab_exp_shape/paren:
+  EC |- (PAREN expEL) '<=' typ : expElabRes
+  -- Elab_exp: EC |- expEL '<=' typ : expElabRes
+
+;; An iterated expression must have the expected iteration
+
+rule Elab_exp_shape/iter:
+  EC |- (ITER expEL iter) '<=' typ : OK ((ITER typedExp (iter eps)) '#' typ)
+  -- if (typ_elem, iter) = $as_iter_typ(EC.TYP, typ)
+  -- Elab_exp: EC |- expEL '<=' typ_elem : OK typedExp
+
+rule Elab_exp_shape/fail:
+  EC |- expEL '<=' typ : FAIL
+  -- otherwise
+
+rule Elab_exp_first/cat:
+  EC |- (CAT expEL_l expEL_r) '<=' typ : OK ((CAT typedExp_l typedExp_r) '#' typ)
+  -- if (typ_elem, iter) = $as_iter_typ(EC.TYP, typ)
+  -- if typ_iter = ITER typ_elem iter
+  -- Elab_exp: EC |- expEL_l '<=' typ_iter : OK typedExp_l
+  -- Elab_exp: EC |- expEL_r '<=' typ_iter : OK typedExp_r
+
+rule Elab_exp_first/fail:
+  EC |- expEL '<=' typ : FAIL
+  -- otherwise

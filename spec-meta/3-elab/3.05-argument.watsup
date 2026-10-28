@@ -1,0 +1,27 @@
+;;
+;; Call arguments
+;;
+;; syntax argEL
+;;
+
+;; An expression argument is elaborated against its parameter type;
+;; a function argument names a function with an equivalent signature
+
+rule Elab_arg_call/exp:
+  EC |- (EXP expEL) '<=' (EXP typ) : OK (EXP typedExp)
+  -- Elab_exp: EC |- expEL '<=' typ : OK typedExp
+
+rule Elab_arg_call/fun:
+  EC |- (FUN id_arg) '<=' (FUN _ ':' tparam* param* '->' typ) : OK (FUN id_arg)
+  -- if _ tparam_arg* param_arg* ':' typ_arg = $find_map<id, funcSig>(EC.FUNC, id_arg)
+  -- if |tparam*| = |tparam_arg*|
+  -- if |param*| = |param_arg*|
+  -- if typ_param* = $typ_of_param(param)*
+  -- if typ_param_arg* = $typ_of_param(param_arg)*
+  -- if typ_func = FUNC tparam* typ_param* typ
+  -- if typ_func_arg = FUNC tparam_arg* typ_param_arg* typ_arg
+  -- if OK true = $equiv_func_typ(EC.TYP, typ_func, typ_func_arg)
+
+rule Elab_arg_call/fail:
+  EC |- argEL '<=' param : FAIL
+  -- otherwise

@@ -1132,6 +1132,97 @@ def $free_varis_tblRowIL(tblRowIL) : vari* =
 
   clause 0 : (arg*{arg <- arg*} '=' typedExp) = $free_varis_args(arg*{arg <- arg*}) ++ $free_varis_exp(typedExp)
 
+def $is_sub_iter(iter, iter) : bool =
+
+  clause 0 : (iter, iter) = true
+
+  clause 1 : (QUEST, STAR) = true
+
+  clause -1 : (iter_l, iter_r) = false
+
+def $is_iter_sub(typ, iter) : bool =
+
+  clause 0 : (ITER _typ iter_l, iter_r) = $is_sub_iter(iter_l, iter_r)
+
+  clause -1 : (typ, iter) = false
+
+def $is_equiv_case(tdenv, typCase, typCase) : bool =
+
+  clause 0 : (tdenv, mixop typ_l*{typ_l <- typ_l*} FROM _typOrigin, mixop typ_r*{typ_r <- typ_r*} FROM _typOrigin') = b
+  -- if (equivRes = $equiv_typs(tdenv, typ_l*{typ_l <- typ_l*}, typ_r*{typ_r <- typ_r*}))
+  -- if (b = (equivRes = OK true as equivRes))
+
+  clause -1 : (tdenv, typCase_l, typCase_r) = false
+
+def $has_equiv_case(tdenv, typCase, typCase*) : bool =
+
+  clause 0 : (tdenv, typCase, typCase_r*{typCase_r <- typCase_r*}) = $exists_(b*{b <- b*})
+  -- if (b*{b <- b*} = $is_equiv_case(tdenv, typCase, typCase_r)*{typCase_r <- typCase_r*})
+
+def $inst_cases(tdenv, id, targ*) : typCase*? =
+
+  clause 0 : (tdenv, id, targ*{targ <- targ*}) = ?(typCase_inst*{typCase_inst <- typCase_inst*})
+  -- if (?(TYP _id tparam*{tparam <- tparam*} '=' VARIANT typCase*{typCase <- typCase*} as typDef) = $find_map<id, typDef>(tdenv, id))
+  -- if (|tparam*{tparam <- tparam*}| = |targ*{targ <- targ*}|)
+  -- if (theta = `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `})
+  -- (if (mixop typ_case*{typ_case <- typ_case*} FROM typOrigin = typCase))*{mixop <- mixop*, typCase <- typCase*, typOrigin <- typOrigin*, typ_case* <- typ_case**}
+  -- (if (OK typ_case_inst*{typ_case_inst <- typ_case_inst*} as typsRes = $subst_typs(theta, typ_case*{typ_case <- typ_case*})))*{typ_case* <- typ_case**, typ_case_inst* <- typ_case_inst**}
+  -- if (typCase_inst*{typCase_inst <- typCase_inst*} = mixop typ_case_inst*{typ_case_inst <- typ_case_inst*} FROM typOrigin*{mixop <- mixop*, typOrigin <- typOrigin*, typ_case_inst* <- typ_case_inst**})
+
+  clause -1 : (tdenv, id, targ*{targ <- targ*}) = ?()
+
+def $sub_typ(tdenv, typ, typ) : equivRes =
+
+  clause 0 : (tdenv, typ_l, typ_r) = $sub_typ'(tdenv, typ_l_expand, typ_r_expand)
+  -- if (OK typ_l_expand as typRes = $expand_typ(tdenv, typ_l))
+  -- if (OK typ_r_expand as typRes = $expand_typ(tdenv, typ_r))
+
+  clause -1 : (tdenv, typ_l, typ_r) = ERROR as equivRes
+
+def $sub_typs(tdenv, typ*, typ*) : equivRes =
+
+  clause 0 : (tdenv, [], []) = OK true as equivRes
+
+  clause 1 : (tdenv, typ_l :: typ_l_t*{typ_l_t <- typ_l_t*}, typ_r :: typ_r_t*{typ_r_t <- typ_r_t*}) = $sub_typs(tdenv, typ_l_t*{typ_l_t <- typ_l_t*}, typ_r_t*{typ_r_t <- typ_r_t*})
+  -- if (OK true as equivRes = $sub_typ(tdenv, typ_l, typ_r))
+
+  clause 2 : (tdenv, typ_l :: typ_l_t*{typ_l_t <- typ_l_t*}, typ_r :: typ_r_t*{typ_r_t <- typ_r_t*}) = equivRes
+  -- if (equivRes = $sub_typ(tdenv, typ_l, typ_r))
+  -- if (equivRes =/= OK true as equivRes)
+
+  clause 3 : (tdenv, [], typ_r :: typ_r_t*{typ_r_t <- typ_r_t*}) = OK false as equivRes
+
+  clause 4 : (tdenv, typ_l :: typ_l_t*{typ_l_t <- typ_l_t*}, []) = OK false as equivRes
+
+def $sub_typ'(tdenv, typ, typ) : equivRes =
+
+  clause 0 : (tdenv, typ_l, typ_r) = OK true as equivRes
+  -- if (OK true as equivRes = $equiv_typ'(tdenv, typ_l, typ_r))
+
+  clause 1 : (tdenv, typ_l, typ_r) = $sub_typ''(tdenv, typ_l, typ_r)
+  -- if (OK false as equivRes = $equiv_typ'(tdenv, typ_l, typ_r))
+
+  clause -1 : (tdenv, typ_l, typ_r) = ERROR as equivRes
+
+def $sub_typ''(tdenv, typ, typ) : equivRes =
+
+  clause 0 : (tdenv, NAT as typ, INT as typ) = OK true as equivRes
+
+  clause 1 : (tdenv, VAR id_l targ_l*{targ_l <- targ_l*}, VAR id_r targ_r*{targ_r <- targ_r*}) = OK b as equivRes
+  -- if (?(typCase_l*{typCase_l <- typCase_l*}) = $inst_cases(tdenv, id_l, targ_l*{targ_l <- targ_l*}))
+  -- if (?(typCase_r*{typCase_r <- typCase_r*}) = $inst_cases(tdenv, id_r, targ_r*{targ_r <- targ_r*}))
+  -- if (b = $forall_($has_equiv_case(tdenv, typCase_l, typCase_r*{typCase_r <- typCase_r*})*{typCase_l <- typCase_l*}))
+
+  clause 2 : (tdenv, TUP typ_l*{typ_l <- typ_l*}, TUP typ_r*{typ_r <- typ_r*}) = $sub_typs(tdenv, typ_l*{typ_l <- typ_l*}, typ_r*{typ_r <- typ_r*})
+
+  clause 3 : (tdenv, ITER typ_l iter_l, ITER typ_r iter_r) = $sub_typ(tdenv, typ_l, typ_r)
+  -- if $is_sub_iter(iter_l, iter_r)
+
+  clause 4 : (tdenv, typ_l, ITER typ_r iter_r) = $sub_typ(tdenv, typ_l, typ_r)
+  -- if ~$is_iter_sub(typ_l, iter_r)
+
+  clause -1 : (tdenv, typ_l, typ_r) = OK false as equivRes
+
 syntax fail =
    | FAIL (from fail)
 
@@ -1263,6 +1354,141 @@ def $is_conditional(inputHint, nat) : bool =
 
   clause 0 : (inputHint, n_arity) = $forall_(n <- inputHint*{n <- n*})
   -- if (n*{n <- n*} = $upto(n_arity))
+
+def $as_iter_typ(tdenv, typ) : (typ, iter)? =
+
+  clause 0 : (tdenv, typ) = ?((typ_elem, iter))
+  -- if (OK ITER typ_elem iter as typRes = $expand_typ(tdenv, typ))
+
+  clause -1 : (tdenv, typ) = ?()
+
+def $as_list_typ(tdenv, typ) : typ? =
+
+  clause 0 : (tdenv, typ) = ?(typ_elem)
+  -- if (OK ITER typ_elem STAR as typRes = $expand_typ(tdenv, typ))
+
+  clause -1 : (tdenv, typ) = ?()
+
+def $is_text_typ(tdenv, typ) : bool =
+
+  clause 0 : (tdenv, typ) = (typRes = OK TEXT as typ as typRes)
+  -- if (typRes = $expand_typ(tdenv, typ))
+
+def $as_tuple_typ(tdenv, typ) : typ*? =
+
+  clause 0 : (tdenv, typ) = ?(typ_comp*{typ_comp <- typ_comp*})
+  -- if (OK TUP typ_comp*{typ_comp <- typ_comp*} as typRes = $expand_typ(tdenv, typ))
+
+  clause -1 : (tdenv, typ) = ?()
+
+def $struct_fields(tdenv, typ) : typField*? =
+
+  clause 0 : (tdenv, typ) = ?(typField*{typField <- typField*})
+  -- if (OK VAR id _targ*{_targ <- _targ*} as typRes = $expand_typ(tdenv, typ))
+  -- if (?(TYP _id _tparam*{_tparam <- _tparam*} '=' STRUCT typField*{typField <- typField*} as typDef) = $find_map<id, typDef>(tdenv, id))
+
+  clause -1 : (tdenv, typ) = ?()
+
+def $field_typ(typField*, atom) : typ? =
+
+  clause 0 : (typField*{typField <- typField*}, atom) = ?(typ_found)
+  -- (if (atom_field typ_field = typField))*{atom_field <- atom_field*, typField <- typField*, typ_field <- typ_field*}
+  -- if (?(typ_found) = $assoc_<atom, typ>(atom, (atom_field, typ_field)*{atom_field <- atom_field*, typ_field <- typ_field*}))
+
+  clause -1 : (typField*{typField <- typField*}, atom) = ?()
+
+def $is_defined_typ(tdenv, typ) : bool =
+
+  clause 0 : (tdenv, VAR id _targ*{_targ <- _targ*}) = true
+  -- if (?(TYP _id _tparam*{_tparam <- _tparam*} '=' _deftyp as typDef) = $find_map<id, typDef>(tdenv, id))
+
+  clause -1 : (tdenv, typ) = false
+
+syntax expElabRes =
+   | OK typedExp (from ok<typedExp>)
+   | FAIL (from fail)
+
+def $cast(tdenv, typedExp, typ) : expElabRes =
+
+  clause 0 : (tdenv, exp '#' typ_exp, typ) = OK exp '#' typ_exp as expElabRes
+  -- if (OK true as equivRes = $equiv_typ(tdenv, typ, typ_exp))
+
+  clause 1 : (tdenv, exp '#' typ_exp, typ) = OK UPCAST typ exp '#' typ_exp as exp '#' typ as expElabRes
+  -- if (OK false as equivRes = $equiv_typ(tdenv, typ, typ_exp))
+  -- if (OK true as equivRes = $sub_typ(tdenv, typ_exp, typ))
+
+  clause -1 : (tdenv, typedExp, typ) = FAIL as expElabRes
+
+syntax expPairElabRes =
+   | OK (typedExp, typedExp) (from ok<(typedExp, typedExp)>)
+   | FAIL (from fail)
+
+def $cast_pair(tdenv, typedExp, typedExp, typ) : expPairElabRes =
+
+  clause 0 : (tdenv, typedExp_l, typedExp_r, typ) = OK (typedExp_l_cast, typedExp_r_cast) as expPairElabRes
+  -- if (OK typedExp_l_cast as expElabRes = $cast(tdenv, typedExp_l, typ))
+  -- if (OK typedExp_r_cast as expElabRes = $cast(tdenv, typedExp_r, typ))
+
+  clause -1 : (tdenv, typedExp_l, typedExp_r, typ) = FAIL as expPairElabRes
+
+def $oks_exp(expElabRes*) : typedExp* =
+
+  clause 0 : ([]) = []
+
+  clause 1 : (OK typedExp as expElabRes :: expElabRes_t*{expElabRes_t <- expElabRes_t*}) = typedExp :: $oks_exp(expElabRes_t*{expElabRes_t <- expElabRes_t*})
+
+  clause 2 : (FAIL as expElabRes :: expElabRes_t*{expElabRes_t <- expElabRes_t*}) = $oks_exp(expElabRes_t*{expElabRes_t <- expElabRes_t*})
+
+def $is_paren(expEL) : bool =
+
+  clause 0 : (PAREN _expEL) = true
+
+  clause -1 : (expEL) = false
+
+def $is_wildcard(expEL) : bool =
+
+  clause 0 : (ID "_") = true
+
+  clause -1 : (expEL) = false
+
+def $is_singleton(expEL) : bool =
+
+  clause 0 : (ID "_") = false
+
+  clause 1 : (EPS) = false
+
+  clause 2 : (LIST []) = false
+
+  clause -1 : (expEL) = true
+
+def $typ_of_param(param) : typ =
+
+  clause 0 : (EXP typ as param) = typ
+
+  clause 1 : (FUN _id ':' tparam*{tparam <- tparam*} param*{param <- param*} '->' typ as param) = FUNC tparam*{tparam <- tparam*} typ_param*{typ_param <- typ_param*} typ
+  -- if (typ_param*{typ_param <- typ_param*} = $typ_of_param(param)*{param <- param*})
+
+syntax paramsRes =
+   | OK param* (from ok<param*>)
+   | ERROR (from error)
+
+def $subst_params(theta, param*) : paramsRes =
+
+  clause 0 : (theta, param*{param <- param*}) = OK param_subst*{param_subst <- param_subst*} as paramsRes
+  -- if (param_subst*{param_subst <- param_subst*} as param?* = $subst_param(theta, param)*{param <- param*})
+
+  clause -1 : (theta, param*{param <- param*}) = ERROR as paramsRes
+
+def $subst_param(theta, param) : param? =
+
+  clause 0 : (theta, EXP typ as param) = ?(EXP typ_subst as param)
+  -- if (OK typ_subst as typRes = $subst_typ(theta, typ))
+
+  clause 1 : (theta, FUN id ':' tparam*{tparam <- tparam*} param*{param <- param*} '->' typ as param) = ?(FUN id ':' tparam*{tparam <- tparam*} param_subst*{param_subst <- param_subst*} '->' typ_subst as param)
+  -- if (OK param_subst*{param_subst <- param_subst*} as paramsRes = $subst_params(theta, param*{param <- param*}))
+  -- if (OK typ_subst as typRes = $subst_typ(theta, typ))
+
+  clause -1 : (theta, param) = ?()
 
 syntax typElabRes =
    | OK typ (from ok<typ>)
@@ -1583,6 +1809,684 @@ relation Elab_spec: elabCtx |- specEL : specElabRes
   rulegroup fail
 
     rule fail: EC |- defnEL*{defnEL <- defnEL*} : FAIL as specElabRes
+
+relation Infer_exp: elabCtx |- expEL : expElabRes
+
+  rulegroup literal
+
+    rule boolean: EC |- BOOL b : OK BOOL b as exp '#' BOOL as typ as expElabRes
+
+    rule natural: EC |- NAT n as expEL : OK NAT n as exp '#' NAT as typ as expElabRes
+
+    rule integer: EC |- INT i as expEL : OK INT i as exp '#' INT as typ as expElabRes
+
+    rule string: EC |- TEXT t : OK TEXT t as exp '#' TEXT as typ as expElabRes
+
+  rulegroup variable
+
+    rule variable: EC |- ID id : OK VAR id as exp '#' typ as expElabRes
+    -- if (id_meta = $metavar_id(id))
+    -- if (?(typ) = $find_map<id, typ>(EC.VAR, id_meta))
+
+  rulegroup unary-boolean
+
+    rule unary-boolean: EC |- UN boolUnOp as unOp expEL : OK UN boolUnOp as unOp typedExp_cast as exp '#' BOOL as typ as expElabRes
+    -- Infer_exp: EC |- expEL : OK typedExp as expElabRes
+    -- if (OK typedExp_cast as expElabRes = $cast(EC.TYP, typedExp, BOOL as typ))
+
+  rulegroup unary-natural
+
+    rule unary-natural: EC |- UN numUnOp as unOp expEL : OK UN numUnOp as unOp typedExp_cast as exp '#' NAT as typ as expElabRes
+    -- Infer_exp: EC |- expEL : OK typedExp as expElabRes
+    -- if (OK typedExp_cast as expElabRes = $cast(EC.TYP, typedExp, NAT as typ))
+
+  rulegroup unary-integer
+
+    rule unary-integer: EC |- UN numUnOp as unOp expEL : OK UN numUnOp as unOp typedExp_cast as exp '#' INT as typ as expElabRes
+    -- Infer_exp: EC |- expEL : OK typedExp as expElabRes
+    -- if (FAIL as expElabRes = $cast(EC.TYP, typedExp, NAT as typ))
+    -- if (OK typedExp_cast as expElabRes = $cast(EC.TYP, typedExp, INT as typ))
+
+  rulegroup binary-boolean
+
+    rule binary-boolean: EC |- BIN expEL_l boolBinOp as binOp expEL_r : OK BIN boolBinOp as binOp typedExp_l_cast typedExp_r_cast as exp '#' BOOL as typ as expElabRes
+    -- Infer_exp: EC |- expEL_l : OK typedExp_l as expElabRes
+    -- Infer_exp: EC |- expEL_r : OK typedExp_r as expElabRes
+    -- if (OK (typedExp_l_cast, typedExp_r_cast) as expPairElabRes = $cast_pair(EC.TYP, typedExp_l, typedExp_r, BOOL as typ))
+
+  rulegroup binary-natural
+
+    rule binary-natural: EC |- BIN expEL_l numBinOp as binOp expEL_r : OK BIN numBinOp as binOp typedExp_l_cast typedExp_r_cast as exp '#' typ as expElabRes
+    -- Infer_exp: EC |- expEL_l : OK typedExp_l as expElabRes
+    -- Infer_exp: EC |- expEL_r : OK typedExp_r as expElabRes
+    -- if (OK (typedExp_l_cast, typedExp_r_cast) as expPairElabRes = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT as typ))
+    -- if (typ = $ite<typ>((numBinOp = SUB), INT as typ, NAT as typ))
+
+  rulegroup binary-integer
+
+    rule binary-integer: EC |- BIN expEL_l numBinOp as binOp expEL_r : OK BIN numBinOp as binOp typedExp_l_cast typedExp_r_cast as exp '#' INT as typ as expElabRes
+    -- Infer_exp: EC |- expEL_l : OK typedExp_l as expElabRes
+    -- Infer_exp: EC |- expEL_r : OK typedExp_r as expElabRes
+    -- if (FAIL as expPairElabRes = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT as typ))
+    -- if (OK (typedExp_l_cast, typedExp_r_cast) as expPairElabRes = $cast_pair(EC.TYP, typedExp_l, typedExp_r, INT as typ))
+
+  rulegroup compare-poly-first
+
+    rule compare-poly-first: EC |- CMP expEL_l polyCmpOp as cmpOp expEL_r : OK typedExp as expElabRes
+    -- Infer_exp_first: EC |- CMP expEL_l polyCmpOp as cmpOp expEL_r : OK typedExp as expElabRes
+
+  rulegroup compare-poly-second
+
+    rule compare-poly-second: EC |- CMP expEL_l polyCmpOp as cmpOp expEL_r : OK CMP polyCmpOp as cmpOp typedExp_l typedExp_r as exp '#' BOOL as typ as expElabRes
+    -- Infer_exp_first: EC |- CMP expEL_l polyCmpOp as cmpOp expEL_r : FAIL as expElabRes
+    -- Infer_exp: EC |- expEL_l : OK typedExp_l as expElabRes
+    -- if (_exp '#' typ_l = typedExp_l)
+    -- Elab_exp: EC |- expEL_r '<=' typ_l : OK typedExp_r as expElabRes
+
+  rulegroup compare-natural
+
+    rule compare-natural: EC |- CMP expEL_l numCmpOp as cmpOp expEL_r : OK CMP numCmpOp as cmpOp typedExp_l_cast typedExp_r_cast as exp '#' BOOL as typ as expElabRes
+    -- Infer_exp: EC |- expEL_l : OK typedExp_l as expElabRes
+    -- Infer_exp: EC |- expEL_r : OK typedExp_r as expElabRes
+    -- if (OK (typedExp_l_cast, typedExp_r_cast) as expPairElabRes = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT as typ))
+
+  rulegroup compare-integer
+
+    rule compare-integer: EC |- CMP expEL_l numCmpOp as cmpOp expEL_r : OK CMP numCmpOp as cmpOp typedExp_l_cast typedExp_r_cast as exp '#' BOOL as typ as expElabRes
+    -- Infer_exp: EC |- expEL_l : OK typedExp_l as expElabRes
+    -- Infer_exp: EC |- expEL_r : OK typedExp_r as expElabRes
+    -- if (FAIL as expPairElabRes = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT as typ))
+    -- if (OK (typedExp_l_cast, typedExp_r_cast) as expPairElabRes = $cast_pair(EC.TYP, typedExp_l, typedExp_r, INT as typ))
+
+  rulegroup arith
+
+    rule arith: EC |- ARITH expEL : expElabRes
+    -- Infer_exp: EC |- expEL : expElabRes
+
+  rulegroup list
+
+    rule list: EC |- LIST expEL_h :: expEL_t*{expEL_t <- expEL_t*} : OK LIST typedExp_h :: typedExp_t*{typedExp_t <- typedExp_t*} as exp '#' ITER typ_h STAR as expElabRes
+    -- Infer_exp: EC |- expEL_h : OK typedExp_h as expElabRes
+    -- if (_exp '#' typ_h = typedExp_h)
+    -- (Infer_exp: EC |- expEL_t : OK typedExp_t as expElabRes)*{expEL_t <- expEL_t*, typedExp_t <- typedExp_t*}
+    -- (if (_exp' '#' typ_t = typedExp_t))*{_exp' <- _exp'*, typ_t <- typ_t*, typedExp_t <- typedExp_t*}
+    -- (if (OK true as equivRes = $equiv_typ(EC.TYP, typ_h, typ_t)))*{typ_t <- typ_t*}
+
+  rulegroup cons
+
+    rule cons: EC |- CONS expEL_h expEL_t : OK CONS typedExp_h typedExp_t as exp '#' typ_list as expElabRes
+    -- Infer_exp: EC |- expEL_h : OK typedExp_h as expElabRes
+    -- if (_exp '#' typ_h = typedExp_h)
+    -- if (typ_list = ITER typ_h STAR)
+    -- Elab_exp: EC |- expEL_t '<=' typ_list : OK typedExp_t as expElabRes
+
+  rulegroup cat-list
+
+    rule cat-list: EC |- CAT expEL_l expEL_r : OK typedExp as expElabRes
+    -- Infer_exp_first: EC |- CAT expEL_l expEL_r : OK typedExp as expElabRes
+
+  rulegroup cat-string
+
+    rule cat-string: EC |- CAT expEL_l expEL_r : OK CAT typedExp_l typedExp_r as exp '#' TEXT as typ as expElabRes
+    -- Infer_exp_first: EC |- CAT expEL_l expEL_r : FAIL as expElabRes
+    -- Elab_exp: EC |- expEL_l '<=' TEXT as typ : OK typedExp_l as expElabRes
+    -- Elab_exp: EC |- expEL_r '<=' TEXT as typ : OK typedExp_r as expElabRes
+
+  rulegroup tuple
+
+    rule tuple: EC |- TUP expEL*{expEL <- expEL*} : OK TUP typedExp*{typedExp <- typedExp*} as exp '#' TUP typ*{typ <- typ*} as expElabRes
+    -- (Infer_exp: EC |- expEL : OK typedExp as expElabRes)*{expEL <- expEL*, typedExp <- typedExp*}
+    -- (if (_exp '#' typ = typedExp))*{_exp <- _exp*, typ <- typ*, typedExp <- typedExp*}
+
+  rulegroup len-list
+
+    rule len-list: EC |- LEN expEL : OK typedExp as expElabRes
+    -- Infer_exp_first: EC |- LEN expEL : OK typedExp as expElabRes
+
+  rulegroup len-string
+
+    rule len-string: EC |- LEN expEL : OK LEN typedExp as exp '#' NAT as typ as expElabRes
+    -- Infer_exp_first: EC |- LEN expEL : FAIL as expElabRes
+    -- Elab_exp: EC |- expEL '<=' TEXT as typ : OK typedExp as expElabRes
+
+  rulegroup mem-elem
+
+    rule mem-elem: EC |- MEM expEL_e expEL_s : OK typedExp as expElabRes
+    -- Infer_exp_first: EC |- MEM expEL_e expEL_s : OK typedExp as expElabRes
+
+  rulegroup mem-list
+
+    rule mem-list: EC |- MEM expEL_e expEL_s : OK MEM typedExp_e typedExp_s as exp '#' BOOL as typ as expElabRes
+    -- Infer_exp_first: EC |- MEM expEL_e expEL_s : FAIL as expElabRes
+    -- Infer_exp: EC |- expEL_s : OK typedExp_s as expElabRes
+    -- if (_exp '#' typ_s = typedExp_s)
+    -- if (?(typ_e) = $as_list_typ(EC.TYP, typ_s))
+    -- Elab_exp: EC |- expEL_e '<=' typ_e : OK typedExp_e as expElabRes
+
+  rulegroup idx-list
+
+    rule idx-list: EC |- IDX expEL_b expEL_i : OK typedExp as expElabRes
+    -- Infer_exp_first: EC |- IDX expEL_b expEL_i : OK typedExp as expElabRes
+
+  rulegroup idx-string
+
+    rule idx-string: EC |- IDX expEL_b expEL_i : OK IDX typedExp_b typedExp_i as exp '#' TEXT as typ as expElabRes
+    -- Infer_exp_first: EC |- IDX expEL_b expEL_i : FAIL as expElabRes
+    -- Elab_exp: EC |- expEL_b '<=' TEXT as typ : OK typedExp_b as expElabRes
+    -- Elab_exp: EC |- expEL_i '<=' NAT as typ : OK typedExp_i as expElabRes
+
+  rulegroup slice-list
+
+    rule slice-list: EC |- SLICE expEL_b expEL_i expEL_n : OK typedExp as expElabRes
+    -- Infer_exp_first: EC |- SLICE expEL_b expEL_i expEL_n : OK typedExp as expElabRes
+
+  rulegroup slice-string
+
+    rule slice-string: EC |- SLICE expEL_b expEL_i expEL_n : OK SLICE typedExp_b typedExp_i typedExp_n as exp '#' TEXT as typ as expElabRes
+    -- Infer_exp_first: EC |- SLICE expEL_b expEL_i expEL_n : FAIL as expElabRes
+    -- Elab_exp: EC |- expEL_b '<=' TEXT as typ : OK typedExp_b as expElabRes
+    -- Elab_exp: EC |- expEL_i '<=' NAT as typ : OK typedExp_i as expElabRes
+    -- Elab_exp: EC |- expEL_n '<=' NAT as typ : OK typedExp_n as expElabRes
+
+  rulegroup dot
+
+    rule dot: EC |- DOT expEL atom : OK DOT typedExp atom as exp '#' typ_field as expElabRes
+    -- Infer_exp: EC |- expEL : OK typedExp as expElabRes
+    -- if (_exp '#' typ = typedExp)
+    -- if (?(typField*{typField <- typField*}) = $struct_fields(EC.TYP, typ))
+    -- if (?(typ_field) = $field_typ(typField*{typField <- typField*}, atom))
+
+  rulegroup upd
+
+    rule upd: EC |- UPD expEL_b pathEL expEL_f : OK UPD typedExp_b typedPath typedExp_f as exp '#' typ_b as expElabRes
+    -- Infer_exp: EC |- expEL_b : OK typedExp_b as expElabRes
+    -- if (_exp '#' typ_b = typedExp_b)
+    -- Elab_path: EC |- pathEL '<=' typ_b : OK typedPath as pathElabRes
+    -- if (_path '#' typ_f = typedPath)
+    -- Elab_exp: EC |- expEL_f '<=' typ_f : OK typedExp_f as expElabRes
+
+  rulegroup paren
+
+    rule paren: EC |- PAREN expEL : expElabRes
+    -- Infer_exp: EC |- expEL : expElabRes
+
+  rulegroup call
+
+    rule call: EC |- CALL id plainTypEL*{plainTypEL <- plainTypEL*} argEL*{argEL <- argEL*} : OK CALL id targ*{targ <- targ*} arg*{arg <- arg*} as exp '#' typ_ret_inst as expElabRes
+    -- if (?(_funcKind tparam*{tparam <- tparam*} param*{param <- param*} ':' typ_ret) = $find_map<id, funcSig>(EC.FUNC, id))
+    -- if (|tparam*{tparam <- tparam*}| = |plainTypEL*{plainTypEL <- plainTypEL*}|)
+    -- (Elab_plainTyp: EC |- plainTypEL : OK targ as typElabRes)*{plainTypEL <- plainTypEL*, targ <- targ*}
+    -- if (theta = `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `})
+    -- if (OK param_inst*{param_inst <- param_inst*} as paramsRes = $subst_params(theta, param*{param <- param*}))
+    -- if (OK typ_ret_inst as typRes = $subst_typ(theta, typ_ret))
+    -- if (|argEL*{argEL <- argEL*}| = |param_inst*{param_inst <- param_inst*}|)
+    -- (Elab_arg_call: EC |- argEL '<=' param_inst : OK arg as argElabRes)*{arg <- arg*, argEL <- argEL*, param_inst <- param_inst*}
+
+  rulegroup iter
+
+    rule iter: EC |- ITER expEL iter : OK ITER typedExp iter [] as exp '#' ITER typ iter as expElabRes
+    -- Infer_exp: EC |- expEL : OK typedExp as expElabRes
+    -- if (_exp '#' typ = typedExp)
+
+  rulegroup sub
+
+    rule sub: EC |- SUB expEL plainTypEL : OK SUB typedExp typ_target as exp '#' BOOL as typ as expElabRes
+    -- Infer_exp: EC |- expEL : OK typedExp as expElabRes
+    -- if (_exp '#' typ_source = typedExp)
+    -- Elab_plainTyp: EC |- plainTypEL : OK typ_target as typElabRes
+    -- if (OK b_source as equivRes = $sub_typ(EC.TYP, typ_source, typ_target))
+    -- if (OK b_target as equivRes = $sub_typ(EC.TYP, typ_target, typ_source))
+    -- if (b_source \/ b_target)
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- expEL : FAIL as expElabRes
+
+relation Infer_exp_first: elabCtx |- expEL : expElabRes
+
+  rulegroup compare-poly
+
+    rule compare-poly: EC |- CMP expEL_l polyCmpOp as cmpOp expEL_r : OK CMP polyCmpOp as cmpOp typedExp_l typedExp_r as exp '#' BOOL as typ as expElabRes
+    -- Infer_exp: EC |- expEL_r : OK typedExp_r as expElabRes
+    -- if (_exp '#' typ_r = typedExp_r)
+    -- Elab_exp: EC |- expEL_l '<=' typ_r : OK typedExp_l as expElabRes
+
+  rulegroup cat
+
+    rule cat: EC |- CAT expEL_l expEL_r : OK CAT typedExp_l typedExp_r as exp '#' typ_list as expElabRes
+    -- Infer_exp: EC |- expEL_l : OK typedExp_l as expElabRes
+    -- if (_exp '#' typ_l = typedExp_l)
+    -- if (?(typ_e) = $as_list_typ(EC.TYP, typ_l))
+    -- if (typ_list = ITER typ_e STAR)
+    -- Elab_exp: EC |- expEL_r '<=' typ_list : OK typedExp_r as expElabRes
+
+  rulegroup len
+
+    rule len: EC |- LEN expEL : OK LEN typedExp as exp '#' NAT as typ as expElabRes
+    -- Infer_exp: EC |- expEL : OK typedExp as expElabRes
+    -- if (_exp '#' typ = typedExp)
+    -- if (_typ?{_typ <- _typ?} = $as_list_typ(EC.TYP, typ))
+
+  rulegroup mem
+
+    rule mem: EC |- MEM expEL_e expEL_s : OK MEM typedExp_e typedExp_s as exp '#' BOOL as typ as expElabRes
+    -- Infer_exp: EC |- expEL_e : OK typedExp_e as expElabRes
+    -- if (_exp '#' typ_e = typedExp_e)
+    -- Elab_exp: EC |- expEL_s '<=' ITER typ_e STAR : OK typedExp_s as expElabRes
+
+  rulegroup idx
+
+    rule idx: EC |- IDX expEL_b expEL_i : OK IDX typedExp_b typedExp_i as exp '#' typ_e as expElabRes
+    -- Infer_exp: EC |- expEL_b : OK typedExp_b as expElabRes
+    -- if (_exp '#' typ_b = typedExp_b)
+    -- if (?(typ_e) = $as_list_typ(EC.TYP, typ_b))
+    -- Elab_exp: EC |- expEL_i '<=' NAT as typ : OK typedExp_i as expElabRes
+
+  rulegroup slice
+
+    rule slice: EC |- SLICE expEL_b expEL_i expEL_n : OK SLICE typedExp_b typedExp_i typedExp_n as exp '#' typ_b as expElabRes
+    -- Infer_exp: EC |- expEL_b : OK typedExp_b as expElabRes
+    -- if (_exp '#' typ_b = typedExp_b)
+    -- if (_typ?{_typ <- _typ?} = $as_list_typ(EC.TYP, typ_b))
+    -- Elab_exp: EC |- expEL_i '<=' NAT as typ : OK typedExp_i as expElabRes
+    -- Elab_exp: EC |- expEL_n '<=' NAT as typ : OK typedExp_n as expElabRes
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- expEL : FAIL as expElabRes
+
+relation Elab_exp: elabCtx |- expEL '<=' typ : expElabRes
+
+  rulegroup singleton
+
+    rule singleton: EC |- expEL '<=' typ : OK typedExp as expElabRes
+    -- Elab_exp_singleton: EC |- expEL '<=' typ : OK typedExp as expElabRes
+
+  rulegroup normal
+
+    rule normal: EC |- expEL '<=' typ : expElabRes
+    -- Elab_exp_singleton: EC |- expEL '<=' typ : FAIL as expElabRes
+    -- Elab_exp_normal: EC |- expEL '<=' typ : expElabRes
+
+relation Elab_exp_singleton: elabCtx |- expEL '<=' typ : expElabRes
+
+  rulegroup opt
+
+    rule opt: EC |- expEL '<=' typ : OK OPT ?(typedExp) as exp '#' typ as expElabRes
+    -- if $is_singleton(expEL)
+    -- if (?((typ_elem, QUEST)) = $as_iter_typ(EC.TYP, typ))
+    -- Elab_exp: EC |- expEL '<=' typ_elem : OK typedExp as expElabRes
+
+  rulegroup list
+
+    rule list: EC |- expEL '<=' typ : OK LIST [typedExp] as exp '#' typ as expElabRes
+    -- if $is_singleton(expEL)
+    -- if (?((typ_elem, STAR)) = $as_iter_typ(EC.TYP, typ))
+    -- Elab_exp: EC |- expEL '<=' typ_elem : OK typedExp as expElabRes
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- expEL '<=' typ : FAIL as expElabRes
+
+relation Elab_exp_normal: elabCtx |- expEL '<=' typ : expElabRes
+
+  rulegroup infer
+
+    rule infer: EC |- expEL '<=' typ : expElabRes
+    -- Infer_exp: EC |- expEL : OK typedExp as expElabRes
+    -- if (expElabRes = $cast(EC.TYP, typedExp, typ))
+
+  rulegroup fallback
+
+    rule fallback: EC |- expEL '<=' typ : expElabRes
+    -- Infer_exp: EC |- expEL : FAIL as expElabRes
+    -- Elab_exp_fallback: EC |- expEL '<=' typ : expElabRes
+
+relation Elab_exp_fallback: elabCtx |- expEL '<=' typ : expElabRes
+
+  rulegroup wildcard
+
+    rule wildcard: EC |- ID "_" '<=' typ : OK VAR "_" as exp '#' typ as expElabRes
+
+  rulegroup alias
+
+    rule alias: EC |- expEL '<=' VAR id targ*{targ <- targ*} : expElabRes
+    -- if ~$is_wildcard(expEL)
+    -- if (?(TYP _id tparam*{tparam <- tparam*} '=' ALIAS typ_alias as typDef) = $find_map<id, typDef>(EC.TYP, id))
+    -- if (|tparam*{tparam <- tparam*}| = |targ*{targ <- targ*}|)
+    -- if (theta = `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `})
+    -- if (OK typ_inst as typRes = $subst_typ(theta, typ_alias))
+    -- Elab_exp_normal: EC |- expEL '<=' typ_inst : expElabRes
+
+  rulegroup struct
+
+    rule struct: EC |- expEL '<=' VAR id targ*{targ <- targ*} : expElabRes
+    -- if ~$is_wildcard(expEL)
+    -- if (?(TYP _id tparam*{tparam <- tparam*} '=' STRUCT typField*{typField <- typField*} as typDef) = $find_map<id, typDef>(EC.TYP, id))
+    -- if (|tparam*{tparam <- tparam*}| = |targ*{targ <- targ*}|)
+    -- if (theta = `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `})
+    -- (if (atom typ_field = typField))*{atom <- atom*, typField <- typField*, typ_field <- typ_field*}
+    -- (if (OK typ_field_inst as typRes = $subst_typ(theta, typ_field)))*{typ_field <- typ_field*, typ_field_inst <- typ_field_inst*}
+    -- if (typField_inst*{typField_inst <- typField_inst*} = atom typ_field_inst*{atom <- atom*, typ_field_inst <- typ_field_inst*})
+    -- Elab_struct: EC |- expEL '<=' VAR id targ*{targ <- targ*} typField_inst*{typField_inst <- typField_inst*} : expElabRes
+
+  rulegroup variant
+
+    rule variant: EC |- expEL '<=' VAR id targ*{targ <- targ*} : expElabRes
+    -- if ~$is_wildcard(expEL)
+    -- if (?(TYP _id _tparam*{_tparam <- _tparam*} '=' VARIANT _typCase*{_typCase <- _typCase*} as typDef) = $find_map<id, typDef>(EC.TYP, id))
+    -- if (?(typCase_inst*{typCase_inst <- typCase_inst*}) = $inst_cases(EC.TYP, id, targ*{targ <- targ*}))
+    -- Elab_variant: EC |- expEL '<=' VAR id targ*{targ <- targ*} typCase_inst*{typCase_inst <- typCase_inst*} : expElabRes
+
+  rulegroup shape
+
+    rule shape: EC |- expEL '<=' typ : expElabRes
+    -- if ~$is_wildcard(expEL)
+    -- if ~$is_defined_typ(EC.TYP, typ)
+    -- Elab_exp_shape: EC |- expEL '<=' typ : expElabRes
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- expEL '<=' typ : FAIL as expElabRes
+
+relation Elab_exp_shape: elabCtx |- expEL '<=' typ : expElabRes
+
+  rulegroup empty-opt
+
+    rule empty-opt: EC |- EPS '<=' typ : OK OPT ?() as exp '#' typ as expElabRes
+    -- if (?((_typ, QUEST)) = $as_iter_typ(EC.TYP, typ))
+
+  rulegroup empty-list
+
+    rule empty-list: EC |- EPS '<=' typ : OK LIST [] as exp '#' typ as expElabRes
+    -- if (?((_typ, STAR)) = $as_iter_typ(EC.TYP, typ))
+
+  rulegroup list
+
+    rule list: EC |- LIST expEL*{expEL <- expEL*} '<=' typ : OK LIST typedExp*{typedExp <- typedExp*} as exp '#' typ as expElabRes
+    -- if (?(typ_elem) = $as_list_typ(EC.TYP, typ))
+    -- (Elab_exp: EC |- expEL '<=' typ_elem : OK typedExp as expElabRes)*{expEL <- expEL*, typedExp <- typedExp*}
+
+  rulegroup cons
+
+    rule cons: EC |- CONS expEL_h expEL_t '<=' typ : OK CONS typedExp_h typedExp_t as exp '#' typ as expElabRes
+    -- if (?((typ_elem, iter)) = $as_iter_typ(EC.TYP, typ))
+    -- Elab_exp: EC |- expEL_h '<=' typ_elem : OK typedExp_h as expElabRes
+    -- Elab_exp: EC |- expEL_t '<=' ITER typ_elem iter : OK typedExp_t as expElabRes
+
+  rulegroup cat-iter
+
+    rule cat-iter: EC |- CAT expEL_l expEL_r '<=' typ : OK typedExp as expElabRes
+    -- Elab_exp_first: EC |- CAT expEL_l expEL_r '<=' typ : OK typedExp as expElabRes
+
+  rulegroup cat-string
+
+    rule cat-string: EC |- CAT expEL_l expEL_r '<=' typ : OK CAT typedExp_l typedExp_r as exp '#' typ as expElabRes
+    -- Elab_exp_first: EC |- CAT expEL_l expEL_r '<=' typ : FAIL as expElabRes
+    -- Elab_exp: EC |- expEL_l '<=' TEXT as typ : OK typedExp_l as expElabRes
+    -- Elab_exp: EC |- expEL_r '<=' TEXT as typ : OK typedExp_r as expElabRes
+
+  rulegroup tuple
+
+    rule tuple: EC |- TUP expEL*{expEL <- expEL*} '<=' typ : OK TUP typedExp*{typedExp <- typedExp*} as exp '#' typ as expElabRes
+    -- if (?(typ_comp*{typ_comp <- typ_comp*}) = $as_tuple_typ(EC.TYP, typ))
+    -- if (|typ_comp*{typ_comp <- typ_comp*}| = |expEL*{expEL <- expEL*}|)
+    -- (Elab_exp: EC |- expEL '<=' typ_comp : OK typedExp as expElabRes)*{expEL <- expEL*, typ_comp <- typ_comp*, typedExp <- typedExp*}
+
+  rulegroup paren
+
+    rule paren: EC |- PAREN expEL '<=' typ : expElabRes
+    -- Elab_exp: EC |- expEL '<=' typ : expElabRes
+
+  rulegroup iter
+
+    rule iter: EC |- ITER expEL iter '<=' typ : OK ITER typedExp iter [] as exp '#' typ as expElabRes
+    -- if (?((typ_elem, iter)) = $as_iter_typ(EC.TYP, typ))
+    -- Elab_exp: EC |- expEL '<=' typ_elem : OK typedExp as expElabRes
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- expEL '<=' typ : FAIL as expElabRes
+
+relation Elab_exp_first: elabCtx |- expEL '<=' typ : expElabRes
+
+  rulegroup cat
+
+    rule cat: EC |- CAT expEL_l expEL_r '<=' typ : OK CAT typedExp_l typedExp_r as exp '#' typ as expElabRes
+    -- if (?((typ_elem, iter)) = $as_iter_typ(EC.TYP, typ))
+    -- if (typ_iter = ITER typ_elem iter)
+    -- Elab_exp: EC |- expEL_l '<=' typ_iter : OK typedExp_l as expElabRes
+    -- Elab_exp: EC |- expEL_r '<=' typ_iter : OK typedExp_r as expElabRes
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- expEL '<=' typ : FAIL as expElabRes
+
+syntax notArgsElabRes =
+   | OK (typedExp*, typ*) (from ok<(typedExp*, typ*)>)
+   | FAIL (from fail)
+
+relation Elab_notArgs: elabCtx |- expEL '<=' mixop typ* : notArgsElabRes
+
+  rulegroup paren
+
+    rule paren: EC |- PAREN expEL '<=' mixop typ*{typ <- typ*} : notArgsElabRes
+    -- Elab_notArgs: EC |- expEL '<=' mixop typ*{typ <- typ*} : notArgsElabRes
+
+  rulegroup arg
+
+    rule arg: EC |- expEL '<=' ARG typ_h :: typ_t*{typ_t <- typ_t*} : OK ([typedExp], typ_t*{typ_t <- typ_t*}) as notArgsElabRes
+    -- if ~$is_paren(expEL)
+    -- Elab_exp: EC |- expEL '<=' typ_h : OK typedExp as expElabRes
+
+  rulegroup atom
+
+    rule atom: EC |- ATOM atom '<=' ATOM atom typ*{typ <- typ*} : OK ([], typ*{typ <- typ*}) as notArgsElabRes
+
+  rulegroup seq
+
+    rule seq: EC |- SEQ expEL*{expEL <- expEL*} '<=' SEQ mixop*{mixop <- mixop*} typ*{typ <- typ*} : notArgsElabRes
+    -- if (|expEL*{expEL <- expEL*}| = |mixop*{mixop <- mixop*}|)
+    -- Elab_notArgss: EC |- expEL*{expEL <- expEL*} '<=' mixop*{mixop <- mixop*} typ*{typ <- typ*} : notArgsElabRes
+
+  rulegroup infix
+
+    rule infix: EC |- INFIX expEL_l atom expEL_r '<=' INFIX mixop_l atom mixop_r typ*{typ <- typ*} : OK (typedExp_l*{typedExp_l <- typedExp_l*} ++ typedExp_r*{typedExp_r <- typedExp_r*}, typ_r*{typ_r <- typ_r*}) as notArgsElabRes
+    -- Elab_notArgs: EC |- expEL_l '<=' mixop_l typ*{typ <- typ*} : OK (typedExp_l*{typedExp_l <- typedExp_l*}, typ_l*{typ_l <- typ_l*}) as notArgsElabRes
+    -- Elab_notArgs: EC |- expEL_r '<=' mixop_r typ_l*{typ_l <- typ_l*} : OK (typedExp_r*{typedExp_r <- typedExp_r*}, typ_r*{typ_r <- typ_r*}) as notArgsElabRes
+
+  rulegroup brack
+
+    rule brack: EC |- BRACK atom_l expEL atom_r '<=' BRACK atom_l mixop atom_r typ*{typ <- typ*} : notArgsElabRes
+    -- Elab_notArgs: EC |- expEL '<=' mixop typ*{typ <- typ*} : notArgsElabRes
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- expEL '<=' mixop typ*{typ <- typ*} : FAIL as notArgsElabRes
+
+relation Elab_notArgss: elabCtx |- expEL* '<=' mixop* typ* : notArgsElabRes
+
+  rulegroup
+
+    rule nil: EC |- [] '<=' [] typ*{typ <- typ*} : OK ([], typ*{typ <- typ*}) as notArgsElabRes
+
+    rule cons: EC |- expEL_h :: expEL_t*{expEL_t <- expEL_t*} '<=' mixop_h :: mixop_t*{mixop_t <- mixop_t*} typ*{typ <- typ*} : OK (typedExp_h*{typedExp_h <- typedExp_h*} ++ typedExp_t*{typedExp_t <- typedExp_t*}, typ_t*{typ_t <- typ_t*}) as notArgsElabRes
+    -- Elab_notArgs: EC |- expEL_h '<=' mixop_h typ*{typ <- typ*} : OK (typedExp_h*{typedExp_h <- typedExp_h*}, typ_h*{typ_h <- typ_h*}) as notArgsElabRes
+    -- Elab_notArgss: EC |- expEL_t*{expEL_t <- expEL_t*} '<=' mixop_t*{mixop_t <- mixop_t*} typ_h*{typ_h <- typ_h*} : OK (typedExp_t*{typedExp_t <- typedExp_t*}, typ_t*{typ_t <- typ_t*}) as notArgsElabRes
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- expEL*{expEL <- expEL*} '<=' mixop*{mixop <- mixop*} typ*{typ <- typ*} : FAIL as notArgsElabRes
+
+syntax notExpElabRes =
+   | OK typedExp* (from ok<typedExp*>)
+   | FAIL (from fail)
+
+relation Elab_notExp: elabCtx |- expEL '<=' notTyp : notExpElabRes
+
+  rulegroup ok
+
+    rule ok: EC |- expEL '<=' mixop typ*{typ <- typ*} : OK typedExp*{typedExp <- typedExp*} as notExpElabRes
+    -- Elab_notArgs: EC |- expEL '<=' mixop typ*{typ <- typ*} : OK (typedExp*{typedExp <- typedExp*}, []) as notArgsElabRes
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- expEL '<=' notTyp : FAIL as notExpElabRes
+
+relation Elab_struct: elabCtx |- expEL '<=' typ typField* : expElabRes
+
+  rulegroup ok
+
+    rule ok: EC |- STR expFieldEL*{expFieldEL <- expFieldEL*} '<=' typ typField*{typField <- typField*} : OK STR expField*{expField <- expField*} as exp '#' typ as expElabRes
+    -- if (|expFieldEL*{expFieldEL <- expFieldEL*}| = |typField*{typField <- typField*}|)
+    -- (if (atom expEL = expFieldEL))*{atom <- atom*, expEL <- expEL*, expFieldEL <- expFieldEL*}
+    -- (if (atom typ_field = typField))*{atom <- atom*, typField <- typField*, typ_field <- typ_field*}
+    -- (Elab_exp: EC |- expEL '<=' typ_field : OK typedExp as expElabRes)*{expEL <- expEL*, typ_field <- typ_field*, typedExp <- typedExp*}
+    -- if (expField*{expField <- expField*} = atom typedExp*{atom <- atom*, typedExp <- typedExp*})
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- expEL '<=' typ typField*{typField <- typField*} : FAIL as expElabRes
+
+relation Elab_variant: elabCtx |- expEL '<=' typ typCase* : expElabRes
+
+  rulegroup ok
+
+    rule ok: EC |- expEL '<=' typ typCase*{typCase <- typCase*} : OK typedExp as expElabRes
+    -- (Elab_case: EC |- expEL '<=' typ typCase : expElabRes)*{expElabRes <- expElabRes*, typCase <- typCase*}
+    -- if ([typedExp] = $oks_exp(expElabRes*{expElabRes <- expElabRes*}))
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- expEL '<=' typ typCase*{typCase <- typCase*} : FAIL as expElabRes
+
+relation Elab_case: elabCtx |- expEL '<=' typ typCase : expElabRes
+
+  rulegroup ok
+
+    rule ok: EC |- expEL '<=' typ mixop typ_arg*{typ_arg <- typ_arg*} FROM id_origin targ_origin*{targ_origin <- targ_origin*} : expElabRes
+    -- Elab_notExp: EC |- expEL '<=' mixop typ_arg*{typ_arg <- typ_arg*} : OK typedExp_arg*{typedExp_arg <- typedExp_arg*} as notExpElabRes
+    -- if (typedExp_case = INJ mixop typedExp_arg*{typedExp_arg <- typedExp_arg*} as exp '#' VAR id_origin targ_origin*{targ_origin <- targ_origin*})
+    -- if (expElabRes = $cast(EC.TYP, typedExp_case, typ))
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- expEL '<=' typ typCase : FAIL as expElabRes
+
+syntax pathElabRes =
+   | OK typedPath (from ok<typedPath>)
+   | FAIL (from fail)
+
+relation Elab_path: elabCtx |- pathEL '<=' typ : pathElabRes
+
+  rulegroup root
+
+    rule root: EC |- ROOT '<=' typ : OK ROOT as path '#' typ as pathElabRes
+
+  rulegroup idx-list
+
+    rule idx-list: EC |- IDX pathEL expEL '<=' typ : OK IDX typedPath typedExp as path '#' typ_elem as pathElabRes
+    -- Elab_path: EC |- pathEL '<=' typ : OK typedPath as pathElabRes
+    -- if (_path '#' typ_path = typedPath)
+    -- Elab_exp: EC |- expEL '<=' NAT as typ : OK typedExp as expElabRes
+    -- if (?(typ_elem) = $as_list_typ(EC.TYP, typ_path))
+
+  rulegroup idx-string
+
+    rule idx-string: EC |- IDX pathEL expEL '<=' typ : OK IDX typedPath typedExp as path '#' typ_path as pathElabRes
+    -- Elab_path: EC |- pathEL '<=' typ : OK typedPath as pathElabRes
+    -- if (_path '#' typ_path = typedPath)
+    -- Elab_exp: EC |- expEL '<=' NAT as typ : OK typedExp as expElabRes
+    -- if $is_text_typ(EC.TYP, typ_path)
+
+  rulegroup slice-list
+
+    rule slice-list: EC |- SLICE pathEL expEL_i expEL_n '<=' typ : OK SLICE typedPath typedExp_i typedExp_n as path '#' typ_path as pathElabRes
+    -- Elab_path: EC |- pathEL '<=' typ : OK typedPath as pathElabRes
+    -- if (_path '#' typ_path = typedPath)
+    -- Elab_exp: EC |- expEL_i '<=' NAT as typ : OK typedExp_i as expElabRes
+    -- Elab_exp: EC |- expEL_n '<=' NAT as typ : OK typedExp_n as expElabRes
+    -- if (_typ?{_typ <- _typ?} = $as_list_typ(EC.TYP, typ_path))
+
+  rulegroup slice-string
+
+    rule slice-string: EC |- SLICE pathEL expEL_i expEL_n '<=' typ : OK SLICE typedPath typedExp_i typedExp_n as path '#' typ_path as pathElabRes
+    -- Elab_path: EC |- pathEL '<=' typ : OK typedPath as pathElabRes
+    -- if (_path '#' typ_path = typedPath)
+    -- Elab_exp: EC |- expEL_i '<=' NAT as typ : OK typedExp_i as expElabRes
+    -- Elab_exp: EC |- expEL_n '<=' NAT as typ : OK typedExp_n as expElabRes
+    -- if $is_text_typ(EC.TYP, typ_path)
+
+  rulegroup dot
+
+    rule dot: EC |- DOT pathEL atom '<=' typ : OK DOT typedPath atom as path '#' typ_field as pathElabRes
+    -- Elab_path: EC |- pathEL '<=' typ : OK typedPath as pathElabRes
+    -- if (_path '#' typ_path = typedPath)
+    -- if (?(typField*{typField <- typField*}) = $struct_fields(EC.TYP, typ_path))
+    -- if (?(typ_field) = $field_typ(typField*{typField <- typField*}, atom))
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- pathEL '<=' typ : FAIL as pathElabRes
+
+syntax argElabRes =
+   | OK arg (from ok<arg>)
+   | FAIL (from fail)
+
+syntax argsElabRes =
+   | OK arg* (from ok<arg*>)
+   | FAIL (from fail)
+
+relation Elab_arg_call: elabCtx |- argEL '<=' param : argElabRes
+
+  rulegroup exp
+
+    rule exp: EC |- EXP expEL '<=' EXP typ as param : OK EXP typedExp as arg as argElabRes
+    -- Elab_exp: EC |- expEL '<=' typ : OK typedExp as expElabRes
+
+  rulegroup fun
+
+    rule fun: EC |- FUN id_arg '<=' FUN _id ':' tparam*{tparam <- tparam*} param*{param <- param*} '->' typ as param : OK FUN id_arg as arg as argElabRes
+    -- if (?(_funcKind tparam_arg*{tparam_arg <- tparam_arg*} param_arg*{param_arg <- param_arg*} ':' typ_arg) = $find_map<id, funcSig>(EC.FUNC, id_arg))
+    -- if (|tparam*{tparam <- tparam*}| = |tparam_arg*{tparam_arg <- tparam_arg*}|)
+    -- if (|param*{param <- param*}| = |param_arg*{param_arg <- param_arg*}|)
+    -- if (typ_param*{typ_param <- typ_param*} = $typ_of_param(param)*{param <- param*})
+    -- if (typ_param_arg*{typ_param_arg <- typ_param_arg*} = $typ_of_param(param_arg)*{param_arg <- param_arg*})
+    -- if (typ_func = FUNC tparam*{tparam <- tparam*} typ_param*{typ_param <- typ_param*} typ)
+    -- if (typ_func_arg = FUNC tparam_arg*{tparam_arg <- tparam_arg*} typ_param_arg*{typ_param_arg <- typ_param_arg*} typ_arg)
+    -- if (OK true as equivRes = $equiv_func_typ(EC.TYP, typ_func, typ_func_arg))
+
+  elsegroup
+
+  rulegroup fail
+
+    rule fail: EC |- argEL '<=' param : FAIL as argElabRes
 
 def $declare_typ(elabCtx, id, tparam*) : elabCtx? =
 
