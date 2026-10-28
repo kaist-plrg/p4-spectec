@@ -33,6 +33,25 @@ pub fn convert(spec_el: el::ast::Spec) -> Result<il::ast::Spec, ElabError> {
     convert_with_warnings(spec_el).0
 }
 
+/// Validates and converts only the type definitions and meta-variables of EL.
+///
+/// Every other definition is dropped before elaboration.
+pub fn convert_typs(spec_el: el::ast::Spec) -> Result<il::ast::Spec, ElabError> {
+    let spec_el = spec_el
+        .into_iter()
+        .filter(|def_el| {
+            matches!(
+                def_el.node,
+                el::ast::DefKind::ExternSyntax(_)
+                    | el::ast::DefKind::Syntax(_)
+                    | el::ast::DefKind::Typ(_)
+                    | el::ast::DefKind::Var(_)
+            )
+        })
+        .collect();
+    convert(spec_el)
+}
+
 /// Converts EL to IL and retains committed warnings even when a later check fails.
 pub fn convert_with_warnings(
     spec_el: el::ast::Spec,

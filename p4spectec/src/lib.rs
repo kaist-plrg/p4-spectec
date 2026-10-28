@@ -35,7 +35,7 @@ pub mod stf;
 
 pub use frontend::parse::parse_files as parse;
 pub use pass::{
-    Error, SpecLang, algo, algo_with_warnings, elab, elab_with_warnings, prosify,
+    Error, SpecLang, algo, algo_with_warnings, elab, elab_typs, elab_with_warnings, prosify,
     prosify_with_warnings, runner_spec_with_warnings, specdoc_spec_with_warnings, structure,
     structure_with_warnings,
 };

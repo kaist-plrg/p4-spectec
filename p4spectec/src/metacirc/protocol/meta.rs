@@ -41,7 +41,7 @@ impl Protocol for MetaProtocol {
         below: &mut dyn Below,
         above: &PreparedLevel,
     ) -> Result<Value, InterpreterError> {
-        // Encode the specification as AL, converting IL through spec-meta below
+        // Encode the specification as AL, converting IL or EL through spec-meta below
         let value_spec_al = match above {
             PreparedLevel::Al { spec_al, .. } => spec_al
                 .encode(below.arena())
@@ -52,6 +52,15 @@ impl Protocol for MetaProtocol {
                     .map_err(|error| InterpreterError::Fatal(error.into_report()))?;
                 let call =
                     Call::Rel { name: "Algo_IL", values: Values::Borrowed(&[value_spec_il]) };
+                let values = below.call(call)?.into_rel();
+                *value::get::one(&values).map_err(ExternError::from)?
+            }
+            PreparedLevel::El { spec_el, .. } => {
+                let value_spec_el = spec_el
+                    .encode(below.arena())
+                    .map_err(|error| InterpreterError::Fatal(error.into_report()))?;
+                let call =
+                    Call::Rel { name: "Algo_EL", values: Values::Borrowed(&[value_spec_el]) };
                 let values = below.call(call)?.into_rel();
                 *value::get::one(&values).map_err(ExternError::from)?
             }

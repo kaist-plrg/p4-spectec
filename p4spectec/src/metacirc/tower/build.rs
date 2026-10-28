@@ -28,6 +28,7 @@
 //! | none (base)         | `Base`          | —                            |
 //! | `al`                | `Al`            | AL                           |
 //! | `il`                | `Il`            | IL                           |
+//! | `el`                | `El`            | EL                           |
 
 use super::super::protocol::{MetaProtocol, ProtocolKind};
 use super::super::{ExecutionMode, Result, TowerConfig, config::Lang, error::config_invalid};
@@ -59,6 +60,8 @@ fn interface_p4(level_top: &PreparedLevel, spec_base_al: &al::Spec) -> P4Interfa
         PreparedLevel::Base { .. } => P4Unparser::from_al_spec(spec_base_al),
         PreparedLevel::Al { spec_al, .. } => P4Unparser::from_al_spec(spec_al),
         PreparedLevel::Il { spec_il, .. } => P4Unparser::from_il_spec(spec_il),
+        // The EL top's types are elaborated natively only for printing
+        PreparedLevel::El { spec_typ_il, .. } => P4Unparser::from_il_spec(spec_typ_il),
     };
     interface::p4_with_unparser(unparser)
 }
@@ -78,7 +81,7 @@ fn build_upper<Ext: Extern>(
 ) -> (Upper<Ext>, Vec<ProtocolKind>) {
     let (top, configs_host) = match config.top_lang() {
         // Above a meta top level is its program; every level above the base is meta
-        Lang::Al | Lang::Il => {
+        Lang::Al | Lang::Il | Lang::El => {
             let top = Top::Program(interface::meta(Lang::Al));
             (top, &config.levels[1..])
         }
@@ -140,9 +143,14 @@ impl<Ext: Extern> Tower<Ext> {
                         config: config_level.clone(),
                         spec_il: crate::elab(paths)?,
                     },
+                    Some(Lang::El) => PreparedLevel::El {
+                        config: config_level.clone(),
+                        spec_el: crate::parse(paths)?,
+                        spec_typ_il: crate::elab_typs(paths)?,
+                    },
                     Some(_) => {
                         return Err(config_invalid(format!(
-                            "invalid language at level {}: expected al or il",
+                            "invalid language at level {}: expected al, il, or el",
                             idx - 1
                         )));
                     }

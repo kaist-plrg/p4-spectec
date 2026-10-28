@@ -18,6 +18,8 @@ use crate::lang::{
 
 use crate::lang::il::ast::Typ;
 
+use crate::lang::common::ids::id::strip_suffix as strip_suffix_id;
+
 use super::{BuiltinError, extract};
 
 // == Conversion between runtime values and text
@@ -152,6 +154,22 @@ pub fn strip_suffix(
         .ok_or_else(|| BuiltinError::argument_invalid("text does not end with suffix"))?;
     let text = text.to_owned();
     let value = value::make::text(arena, text, Span::default())?;
+    Ok(value)
+}
+
+/// `dec $metavar_id(id) : id`,
+/// the meta-variable naming the type of a variable: `n_x` and `n'` give `n`.
+pub fn metavar_id(
+    arena: &mut Arena,
+    targs: &[Typ],
+    values: &[Value],
+) -> Result<Value, BuiltinError> {
+    extract::zero(targs)?;
+    let value_id = extract::one(values)?;
+    let id = text_of_value(arena, value_id)?;
+    // Share the suffix rule of elaboration
+    let id = strip_suffix_id(id).to_owned();
+    let value = value::make::text(arena, id, Span::default())?;
     Ok(value)
 }
 
