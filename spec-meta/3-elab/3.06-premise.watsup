@@ -1,0 +1,104 @@
+;;
+;; Premises
+;;
+;; syntax premEL
+;;
+
+;;; Variable premises
+
+;; A rule-local meta-variable is not a type
+
+rule Elab_prem/variable:
+  EC |- VAR id ':' plainTypEL : OK (EC_meta, DECLARE)
+  -- if $is_tid(id)
+  -- if eps = $find_map<id, typDef>(EC.TYP, id)
+  -- if eps = $find_map<id, typ>(EC.VAR, id)
+  -- Elab_plainTyp: EC |- plainTypEL : OK typ
+  -- if EC_meta = $add_metavar(EC, id, typ)
+
+;;; Relation premises
+
+;; A premise with only inputs checks that the relation holds;
+;; a negated premise must have only inputs
+
+rule Elab_prem/relpr:
+  EC |- REL id ':' expEL : OK (EC, PREM (REL id ':' typedExp* `( inputHint `)))
+  -- if _ (mixop typ*) `( inputHint `) = $find_map<id, relSig>(EC.REL, id)
+  -- Elab_notExp: EC |- expEL '<=' (mixop typ*) : OK typedExp*
+  -- if ~$is_conditional(inputHint, |typedExp*|)
+
+rule Elab_prem/ifholdpr:
+  EC |- REL id ':' expEL : OK (EC, PREM (IFHOLD id ':' typedExp*))
+  -- if _ (mixop typ*) `( inputHint `) = $find_map<id, relSig>(EC.REL, id)
+  -- Elab_notExp: EC |- expEL '<=' (mixop typ*) : OK typedExp*
+  -- if $is_conditional(inputHint, |typedExp*|)
+
+rule Elab_prem/ifnotholdpr:
+  EC |- RELNOT id ':' expEL : OK (EC, PREM (IFNOTHOLD id ':' typedExp*))
+  -- if _ (mixop typ*) `( inputHint `) = $find_map<id, relSig>(EC.REL, id)
+  -- Elab_notExp: EC |- expEL '<=' (mixop typ*) : OK typedExp*
+  -- if $is_conditional(inputHint, |typedExp*|)
+
+;;; Conditions
+
+rule Elab_prem/ifpr:
+  EC |- IF expEL : OK (EC, PREM (IF typedExp))
+  -- Elab_exp: EC |- expEL '<=' BOOL : OK typedExp
+
+rule Elab_prem/fallback:
+  EC |- ELSE : OK (EC, ELSE)
+
+;;; Iterated premises
+
+;; Only premises that produce an IL premise can be iterated;
+;; the iterated variables are left to dimension analysis
+
+rule Elab_prem/iterpr:
+  EC |- ITER premEL iter : OK (EC, PREM (ITER premIL (iter eps)))
+  -- Elab_prem: EC |- premEL : OK (_, PREM premIL)
+
+rule Elab_prem/dbg:
+  EC |- DEBUG expEL : OK (EC, PREM (DEBUG typedExp))
+  -- Infer_exp: EC |- expEL : OK typedExp
+
+rule Elab_prem/fail:
+  EC |- premEL : FAIL
+  -- otherwise
+
+;;
+;; Premise sequences
+;;
+;; syntax premEL*
+;;
+
+;; Variables declared by a premise are visible to the following ones
+
+rulegroup Elab_prems {
+
+  rule Elab_prems/nil:
+    EC |- eps : OK (EC, eps)
+
+  rule Elab_prems/cons:
+    EC |- premEL_h :: premEL_t* : OK (EC_t, premPart_h :: premPart_t*)
+    -- Elab_prem: EC |- premEL_h : OK (EC_h, premPart_h)
+    -- Elab_prems: EC_h |- premEL_t* : OK (EC_t, premPart_t*)
+
+}
+
+rule Elab_prems/fail:
+  EC |- premEL* : FAIL
+  -- otherwise
+
+dec $premILs_of(premPart*) : premIL*
+  hint(prose_in "the IL premises of" %0)
+def $premILs_of(eps) = eps
+def $premILs_of((PREM premIL) :: premPart_t*) = premIL :: $premILs_of(premPart_t*)
+def $premILs_of(DECLARE :: premPart_t*) = $premILs_of(premPart_t*)
+def $premILs_of(ELSE :: premPart_t*) = $premILs_of(premPart_t*)
+
+dec $count_otherwise(premPart*) : nat
+  hint(prose_in "the number of otherwise premises in" %0)
+def $count_otherwise(eps) = 0
+def $count_otherwise(ELSE :: premPart_t*) = $($count_otherwise(premPart_t*) + 1)
+def $count_otherwise(premPart_h :: premPart_t*) = $count_otherwise(premPart_t*)
+  -- if premPart_h =/= ELSE

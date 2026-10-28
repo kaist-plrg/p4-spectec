@@ -1,0 +1,97 @@
+;;
+;; Rules
+;;
+;; syntax rulEL
+;;
+
+;; A rule belongs to its group's relation; its conclusion matches the
+;; relation's notation, and at most one premise marks it as otherwise.
+;; Iterations are then annotated with the variables they iterate
+
+rule Elab_rule/ok:
+  EC id_rel notTyp |- id_rel '/' id ':' expEL '-' premEL* : OK (rulIL, b_else)
+  -- Elab_notExp: EC |- expEL '<=' notTyp : OK typedExp*
+  -- Elab_prems: EC |- premEL* : OK (_, premPart*)
+  -- if premIL* = $premILs_of(premPart*)
+  -- if n_else = $count_otherwise(premPart*)
+  -- if $(n_else <= 1)
+  -- if b_else = (n_else = 1)
+  -- Dim_rul: |- id ':' typedExp* '-' premIL* : OK rulIL
+
+rule Elab_rule/fail:
+  EC id_rel notTyp |- rulEL : FAIL
+  -- otherwise
+
+;;
+;; Rule groups
+;;
+;; syntax rulIL*
+;;
+
+;; A group is either ordinary rules or a single otherwise rule
+
+dec $add_rules(elabCtx, id, id, rulIL*, bool*) : elabCtx?
+  hint(prose_in %0 "with rules" %3 "of group" %2 "attached to relation" %1)
+def $add_rules(EC, id_rel, id_group, rulIL*, b_else*) = EC_group
+  -- if ~$exists_(b_else*)
+  -- if EC_group = $add_rulGroup(EC, id_rel, id_group ':' rulIL*)
+def $add_rules(EC, id_rel, id_group, [ rulIL ], [ true ]) = EC_group
+  -- if EC_group = $add_elsGroup(EC, id_rel, id_group ':' rulIL)
+def $add_rules(EC, id_rel, id_group, rulIL*, b_else*) = eps
+  -- otherwise
+
+;;
+;; Clauses
+;;
+;; syntax defnEL
+;;
+
+;; A clause repeats the declared type parameters, binds its argument
+;; patterns, and returns a value of the declared result type
+
+rule Elab_clause/ok:
+  EC |- DEF id tparam* argEL* '=' expEL '-' premEL* : OK (EC_clause, eps)
+  -- if DEFINED tparam* param* ':' typ = $find_map<id, funcSig>(EC.FUNC, id)
+  -- if |argEL*| = |param*|
+  ---- ;; elaborate under the type parameters, the arguments, and the premises
+  -- if EC_local = $bind_tparams(EC, tparam*)
+  -- Elab_arg_defn: EC_local |- argEL* '<=' param* : OK (EC_arg, arg*)
+  -- Elab_prems: EC_arg |- premEL* : OK (EC_prem, premPart*)
+  -- Elab_exp: EC_prem |- expEL '<=' typ : OK typedExp
+  ---- ;; at most one premise marks an otherwise clause
+  -- if premIL* = $premILs_of(premPart*)
+  -- if n_else = $count_otherwise(premPart*)
+  -- if $(n_else <= 1)
+  -- Dim_clause: |- arg* '=' typedExp '-' premIL* : OK clauseIL
+  ---- ;; attach the clause to its function
+  -- if EC_clause = $ite<elabCtx?>(n_else = 1, $add_elsClause(EC, id, clauseIL), $add_clause(EC, id, clauseIL))
+
+rule Elab_clause/fail:
+  EC |- defnEL : FAIL
+  -- otherwise
+
+;;
+;; Table rows
+;;
+;; syntax tblRowEL
+;;
+
+;; A row pattern is a tuple of arguments or a single argument
+
+dec $args_of_pattern(expEL) : argEL*
+  hint(prose_in "the arguments of row pattern" %0)
+def $args_of_pattern(TUP expEL*) = (EXP expEL)*
+def $args_of_pattern(expEL) = [ EXP expEL ]
+  -- otherwise
+
+rule Elab_tblRow/ok:
+  EC param* typ |- expEL_pattern '=' expEL_body : OK tblRowIL
+  -- if argEL* = $args_of_pattern(expEL_pattern)
+  -- if |argEL*| = |param*|
+  -- Elab_arg_defn: EC |- argEL* '<=' param* : OK (EC_arg, arg*)
+  -- Elab_exp: EC_arg |- expEL_body '<=' typ : OK typedExp
+  -- Dim_tblRow: |- arg* '=' typedExp : OK tblRowIL
+
+rule Elab_tblRow/fail:
+  EC param* typ |- tblRowEL : FAIL
+  -- otherwise

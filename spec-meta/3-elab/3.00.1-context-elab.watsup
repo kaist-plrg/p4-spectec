@@ -36,13 +36,24 @@ syntax menv = map<id, typ>
 syntax rsigenv = map<id, relSig>
 syntax fsigenv = map<id, funcSig>
 
-;; Type definitions, meta-variables, relations, and functions declared so far
+;; The bodies collected for each declared relation and function
+
+syntax body =
+  | RULES rulGroupIL* elsGroupIL?
+  | CLAUSES clauseIL* elsClauseIL?
+  | ROWS tblRowIL*
+
+syntax bodyenv = map<id, body>
+
+;; Type definitions, meta-variables, relations, functions,
+;; and their bodies declared so far
 
 syntax elabCtx =
   { TYP tdenv,
     VAR menv,
     REL rsigenv,
-    FUNC fsigenv }
+    FUNC fsigenv,
+    BODY bodyenv }
 
 var EC : elabCtx
 
@@ -54,7 +65,8 @@ def $empty_elabCtx =
   { TYP $empty_map<id, typDef>,
     VAR menv_prim,
     REL $empty_map<id, relSig>,
-    FUNC $empty_map<id, funcSig> }
+    FUNC $empty_map<id, funcSig>,
+    BODY $empty_map<id, body> }
   -- if id_prim* = [ "bool", "nat", "int", "text" ]
   -- if typ_prim* = [ BOOL, NAT, INT, TEXT ]
   -- if menv_prim = $adds_map<id, typ>($empty_map<id, typ>, id_prim*, typ_prim*)
@@ -118,3 +130,64 @@ dec $add_funcSig(elabCtx, id, funcSig) : elabCtx
   hint(prose_in %0 "with function" %1 "of signature" %2)
 def $add_funcSig(EC, id, funcSig) = EC[ .FUNC = fsigenv ]
   -- if fsigenv = $add_map<id, funcSig>(EC.FUNC, id, funcSig)
+
+;;; Bodies
+
+dec $add_body(elabCtx, id, body) : elabCtx
+  hint(prose_in %0 "with" %1 "having body" %2)
+def $add_body(EC, id, body) = EC[ .BODY = bodyenv ]
+  -- if bodyenv = $add_map<id, body>(EC.BODY, id, body)
+
+;; Group names are unique within a relation,
+;; which has at most one otherwise group, alone in its group
+
+dec $add_rulGroup(elabCtx, id, rulGroupIL) : elabCtx?
+  hint(prose_in %0 "with rule group" %2 "attached to relation" %1)
+def $add_rulGroup(EC, id, id_group ':' rulIL*) = EC_body
+  -- if RULES rulGroupIL* elsGroupIL? = $find_map<id, body>(EC.BODY, id)
+  -- if (id_rul ':' _ = rulGroupIL)*
+  -- if (id_els ':' _ = elsGroupIL)?
+  -- if ~(id_group <- id_rul*)
+  -- if (id_group =/= id_els)?
+  -- if rulGroupIL_add = id_group ':' rulIL*
+  -- if EC_body = $add_body(EC, id, RULES (rulGroupIL* ++ [ rulGroupIL_add ]) elsGroupIL?)
+def $add_rulGroup(EC, id, rulGroupIL) = eps
+  -- otherwise
+
+dec $add_elsGroup(elabCtx, id, elsGroupIL) : elabCtx?
+  hint(prose_in %0 "with otherwise group" %2 "attached to relation" %1)
+def $add_elsGroup(EC, id, id_group ':' rulIL) = EC_body
+  -- if RULES rulGroupIL* eps = $find_map<id, body>(EC.BODY, id)
+  -- if (id_rul ':' _ = rulGroupIL)*
+  -- if ~(id_group <- id_rul*)
+  -- if EC_body = $add_body(EC, id, RULES rulGroupIL* (id_group ':' rulIL))
+def $add_elsGroup(EC, id, elsGroupIL) = eps
+  -- otherwise
+
+;; A function has at most one otherwise clause
+
+dec $add_clause(elabCtx, id, clauseIL) : elabCtx?
+  hint(prose_in %0 "with clause" %2 "attached to function" %1)
+def $add_clause(EC, id, clauseIL) = EC_body
+  -- if CLAUSES clauseIL_d* elsClauseIL? = $find_map<id, body>(EC.BODY, id)
+  -- if EC_body = $add_body(EC, id, CLAUSES (clauseIL_d* ++ [ clauseIL ]) elsClauseIL?)
+def $add_clause(EC, id, clauseIL) = eps
+  -- otherwise
+
+dec $add_elsClause(elabCtx, id, elsClauseIL) : elabCtx?
+  hint(prose_in %0 "with otherwise clause" %2 "attached to function" %1)
+def $add_elsClause(EC, id, elsClauseIL) = EC_body
+  -- if CLAUSES clauseIL* eps = $find_map<id, body>(EC.BODY, id)
+  -- if EC_body = $add_body(EC, id, CLAUSES clauseIL* elsClauseIL)
+def $add_elsClause(EC, id, elsClauseIL) = eps
+  -- otherwise
+
+;; A table's rows are given once
+
+dec $add_rows(elabCtx, id, tblRowIL*) : elabCtx?
+  hint(prose_in %0 "with rows" %2 "attached to table" %1)
+def $add_rows(EC, id, tblRowIL*) = EC_body
+  -- if ROWS eps = $find_map<id, body>(EC.BODY, id)
+  -- if EC_body = $add_body(EC, id, ROWS tblRowIL*)
+def $add_rows(EC, id, tblRowIL*) = eps
+  -- otherwise

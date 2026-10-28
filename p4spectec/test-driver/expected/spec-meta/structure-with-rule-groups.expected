@@ -2000,7 +2000,7 @@ def $inst_cases(tdenv, id, targ*{targ <- targ*})
 
                 1. (Let theta be `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `})
 
-                  1. (Let mixop typ_case*{typ_case <- typ_case*} FROM typOrigin be typCase)*{typCase <- typCase*, mixop -> mixop*, typOrigin -> typOrigin*, typ_case* -> typ_case**}
+                  1. (Let mixop typ_case*{typ_case <- typ_case*} FROM id_origin targ_origin*{targ_origin <- targ_origin*} be typCase)*{typCase <- typCase*, id_origin -> id_origin*, mixop -> mixop*, targ_origin* -> targ_origin**, typ_case* -> typ_case**}
 
                     1. (Let typsRes be $subst_typs(theta, typ_case*{typ_case <- typ_case*}))*{typ_case* <- typ_case**, typsRes -> typsRes*}
 
@@ -2008,9 +2008,15 @@ def $inst_cases(tdenv, id, targ*{targ <- targ*})
 
                         1. (Let OK typ_case_inst*{typ_case_inst <- typ_case_inst*} be typsRes as ok<typ*>)*{typsRes <- typsRes*, typ_case_inst* -> typ_case_inst**}
 
-                          1. (Let typCase_inst*{typCase_inst <- typCase_inst*} be mixop typ_case_inst*{typ_case_inst <- typ_case_inst*} FROM typOrigin*{mixop <- mixop*, typOrigin <- typOrigin*, typ_case_inst* <- typ_case_inst**})
+                          1. (Let typsRes' be $subst_typs(theta, targ_origin*{targ_origin <- targ_origin*}))*{targ_origin* <- targ_origin**, typsRes' -> typsRes'*}
 
-                            1. Return ?(typCase_inst*{typCase_inst <- typCase_inst*})
+                            1. If (typsRes' <: ok<typ*>)*{typsRes' <- typsRes'*}, then
+
+                              1. (Let OK targ_origin_inst*{targ_origin_inst <- targ_origin_inst*} be typsRes' as ok<typ*>)*{typsRes' <- typsRes'*, targ_origin_inst* -> targ_origin_inst**}
+
+                                1. (Let typCase_inst*{typCase_inst <- typCase_inst*} be mixop typ_case_inst*{typ_case_inst <- typ_case_inst*} FROM id_origin targ_origin_inst*{targ_origin_inst <- targ_origin_inst*}*{id_origin <- id_origin*, mixop <- mixop*, targ_origin_inst* <- targ_origin_inst**, typ_case_inst* <- typ_case_inst**})
+
+                                  1. Return ?(typCase_inst*{typCase_inst <- typCase_inst*})
 
 2. Otherwise,
 
@@ -2198,7 +2204,14 @@ syntax rsigenv = map<id, relSig>
 
 syntax fsigenv = map<id, funcSig>
 
-syntax elabCtx = {TYP tdenv, VAR menv, REL rsigenv, FUNC fsigenv}
+syntax body =
+   | RULES rulGroupIL* elsGroupIL? (from body)
+   | CLAUSES clauseIL* elsClauseIL? (from body)
+   | ROWS tblRowIL* (from body)
+
+syntax bodyenv = map<id, body>
+
+syntax elabCtx = {TYP tdenv, VAR menv, REL rsigenv, FUNC fsigenv, BODY bodyenv}
 
 var EC : elabCtx
 
@@ -2210,7 +2223,7 @@ def $empty_elabCtx
 
     1. (Let menv_prim be $adds_map<id, typ>($empty_map<id, typ>, id_prim*{id_prim <- id_prim*}, typ_prim*{typ_prim <- typ_prim*}))
 
-      1. Return {TYP $empty_map<id, typDef>, VAR menv_prim, REL $empty_map<id, relSig>, FUNC $empty_map<id, funcSig>}
+      1. Return {TYP $empty_map<id, typDef>, VAR menv_prim, REL $empty_map<id, relSig>, FUNC $empty_map<id, funcSig>, BODY $empty_map<id, body>}
 
 builtin def $metavar_id(id)
 
@@ -2287,6 +2300,126 @@ def $add_funcSig(EC, id, funcSig)
 1. (Let fsigenv be $add_map<id, funcSig>(EC.FUNC, id, funcSig))
 
   1. Return EC[FUNC = fsigenv]
+
+def $add_body(EC, id, body)
+
+1. (Let bodyenv be $add_map<id, body>(EC.BODY, id, body))
+
+  1. Return EC[BODY = bodyenv]
+
+def $add_rulGroup(EC, id, rulGroupIL')
+
+1. (Let id_group ':' rulIL*{rulIL <- rulIL*} be rulGroupIL')
+
+  1. (Let body'?{body' <- body'?} be $find_map<id, body>(EC.BODY, id))
+
+    1. If (body'?{body' <- body'?} matches (_)), then
+
+      1. (Let ?(body) be body'?{body' <- body'?})
+
+        1. If (body matches RULES % %), then
+
+          1. (Let RULES rulGroupIL*{rulGroupIL <- rulGroupIL*} elsGroupIL?{elsGroupIL <- elsGroupIL?} be body)
+
+            1. (Let id_rul ':' _rulIL*{_rulIL <- _rulIL*} be rulGroupIL)*{rulGroupIL <- rulGroupIL*, _rulIL* -> _rulIL**, id_rul -> id_rul*}
+
+              1. (Let id_els ':' _rulIL' be elsGroupIL)?{elsGroupIL <- elsGroupIL?, _rulIL' -> _rulIL'?, id_els -> id_els?}
+
+                1. If (~id_group <- id_rul*{id_rul <- id_rul*}), then
+
+                  1. If ((id_group =/= id_els))?{id_els <- id_els?}, then
+
+                    1. (Let rulGroupIL_add be id_group ':' rulIL*{rulIL <- rulIL*})
+
+                      1. (Let EC_body be $add_body(EC, id, RULES rulGroupIL*{rulGroupIL <- rulGroupIL*} ++ [rulGroupIL_add] elsGroupIL?{elsGroupIL <- elsGroupIL?}))
+
+                        1. Return ?(EC_body)
+
+2. Otherwise,
+
+  1. Return ?()
+
+def $add_elsGroup(EC, id, elsGroupIL')
+
+1. (Let id_group ':' rulIL be elsGroupIL')
+
+  1. (Let body'?{body' <- body'?} be $find_map<id, body>(EC.BODY, id))
+
+    1. If (body'?{body' <- body'?} matches (_)), then
+
+      1. (Let ?(body) be body'?{body' <- body'?})
+
+        1. If (body matches RULES % %), then
+
+          1. (Let RULES rulGroupIL*{rulGroupIL <- rulGroupIL*} elsGroupIL?{elsGroupIL <- elsGroupIL?} be body)
+
+            1. If (elsGroupIL?{elsGroupIL <- elsGroupIL?} matches ()), then
+
+              1. (Let id_rul ':' _rulIL*{_rulIL <- _rulIL*} be rulGroupIL)*{rulGroupIL <- rulGroupIL*, _rulIL* -> _rulIL**, id_rul -> id_rul*}
+
+                1. If (~id_group <- id_rul*{id_rul <- id_rul*}), then
+
+                  1. (Let EC_body be $add_body(EC, id, RULES rulGroupIL*{rulGroupIL <- rulGroupIL*} ?(id_group ':' rulIL)))
+
+                    1. Return ?(EC_body)
+
+2. Otherwise,
+
+  1. Return ?()
+
+def $add_clause(EC, id, clauseIL)
+
+1. (Let body'?{body' <- body'?} be $find_map<id, body>(EC.BODY, id))
+
+  1. If (body'?{body' <- body'?} matches (_)), then
+
+    1. (Let ?(body) be body'?{body' <- body'?})
+
+      1. If (body matches CLAUSES % %), then
+
+        1. (Let CLAUSES clauseIL_d*{clauseIL_d <- clauseIL_d*} elsClauseIL?{elsClauseIL <- elsClauseIL?} be body)
+
+          1. (Let EC_body be $add_body(EC, id, CLAUSES clauseIL_d*{clauseIL_d <- clauseIL_d*} ++ [clauseIL] elsClauseIL?{elsClauseIL <- elsClauseIL?}))
+
+            1. Return ?(EC_body)
+
+2. Otherwise,
+
+  1. Return ?()
+
+def $add_elsClause(EC, id, elsClauseIL)
+
+1. (Let body'?{body' <- body'?} be $find_map<id, body>(EC.BODY, id))
+
+  1. If (body'?{body' <- body'?} matches (_)), then
+
+    1. (Let ?(body) be body'?{body' <- body'?})
+
+      1. If (body matches CLAUSES % %), then
+
+        1. (Let CLAUSES clauseIL*{clauseIL <- clauseIL*} elsClauseIL'?{elsClauseIL' <- elsClauseIL'?} be body)
+
+          1. If (elsClauseIL'?{elsClauseIL' <- elsClauseIL'?} matches ()), then
+
+            1. (Let EC_body be $add_body(EC, id, CLAUSES clauseIL*{clauseIL <- clauseIL*} ?(elsClauseIL)))
+
+              1. Return ?(EC_body)
+
+2. Otherwise,
+
+  1. Return ?()
+
+def $add_rows(EC, id, tblRowIL*{tblRowIL <- tblRowIL*})
+
+1. If ((?(ROWS []) = $find_map<id, body>(EC.BODY, id))), then
+
+  1. (Let EC_body be $add_body(EC, id, ROWS tblRowIL*{tblRowIL <- tblRowIL*}))
+
+    1. Return ?(EC_body)
+
+2. Otherwise,
+
+  1. Return ?()
 
 syntax inputHintElabRes =
    | OK inputHint (from ok<inputHint>)
@@ -2650,11 +2783,11 @@ syntax paramsRes =
 
 def $subst_params(theta, param*{param <- param*})
 
-1. (Let param'?{param' <- param'?}*{param'? <- param'?*} be $subst_param(theta, param)*{param <- param*})
+1. (Let param'?{param' <- param'?} be $subst_param(theta, param))*{param <- param*, param'? -> param'?*}
 
-  1. If (param'?{param' <- param'?}*{param'? <- param'?*} <: param*), then
+  1. If (param'?{param' <- param'?} matches (_))*{param'? <- param'?*}, then
 
-    1. (Let param_subst*{param_subst <- param_subst*} be param'?{param' <- param'?}*{param'? <- param'?*} as param*)
+    1. (Let ?(param_subst) be param'?{param' <- param'?})*{param'? <- param'?*, param_subst -> param_subst*}
 
       1. Return OK param_subst*{param_subst <- param_subst*} as paramsRes
 
@@ -3125,7 +3258,7 @@ syntax defElabRes =
 
 relation Elab_def: EC |- defnEL : %
 
-1. Case analysis on defnEL
+1. Case analysis on defnEL (total)
 
   1. Case (% matches pattern EXTSYNTAX %)
 
@@ -3261,9 +3394,11 @@ relation Elab_def: EC |- defnEL : %
 
                       1. (Let EC_rel be $add_relSig(EC, id, DEFINED mixop typ*{typ <- typ*} `( inputHint `)))
 
-                        1. (Let definedRelDefnIL be REL id ':' typ*{typ <- typ*} `( inputHint `) '=' [] ?())
+                        1. (Let EC_body be $add_body(EC_rel, id, RULES [] ?()))
 
-                          1. Result in: % |- % : OK (EC_rel, [DECL definedRelDefnIL as defnIL]) as defElabRes
+                          1. (Let definedRelDefnIL be REL id ':' typ*{typ <- typ*} `( inputHint `) '=' [] ?())
+
+                            1. Result in: % |- % : OK (EC_body, [DECL definedRelDefnIL as defnIL]) as defElabRes
 
   7. Case (% matches pattern EXTDEC % % % ':' %)
 
@@ -3331,9 +3466,11 @@ relation Elab_def: EC |- defnEL : %
 
                           1. (Let EC_func be $add_funcSig(EC, id, TABLE [] param*{param <- param*} ':' typ))
 
-                            1. (Let tableFuncDefnIL be TABLEFUNC id param*{param <- param*} ':' typ '=' [])
+                            1. (Let EC_body be $add_body(EC_func, id, ROWS []))
 
-                              1. Result in: % |- % : OK (EC_func, [DECL tableFuncDefnIL as defnIL]) as defElabRes
+                              1. (Let tableFuncDefnIL be TABLEFUNC id param*{param <- param*} ':' typ '=' [])
+
+                                1. Result in: % |- % : OK (EC_body, [DECL tableFuncDefnIL as defnIL]) as defElabRes
 
   10. Case (% matches pattern DEC % % % ':' %)
 
@@ -3351,9 +3488,83 @@ relation Elab_def: EC |- defnEL : %
 
                 1. (Let EC_func be $add_funcSig(EC, id, DEFINED tparam*{tparam <- tparam*} param*{param <- param*} ':' typ))
 
-                  1. (Let definedFuncDefnIL be FUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' [] ?())
+                  1. (Let EC_body be $add_body(EC_func, id, CLAUSES [] ?()))
 
-                    1. Result in: % |- % : OK (EC_func, [DECL definedFuncDefnIL as defnIL]) as defElabRes
+                    1. (Let definedFuncDefnIL be FUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' [] ?())
+
+                      1. Result in: % |- % : OK (EC_body, [DECL definedFuncDefnIL as defnIL]) as defElabRes
+
+  11. Case (% matches pattern RULEGROUP % '/' % ':' %)
+
+    1. (Let RULEGROUP id_rel '/' id_group ':' rulEL*{rulEL <- rulEL*} be defnEL)
+
+      1. Group rules: EC |- RULEGROUP id_rel '/' id_group ':' rulEL*{rulEL <- rulEL*} : %
+
+        1. (Let body'?{body' <- body'?} be $find_map<id, body>(EC.BODY, id_rel))
+
+          1. If (body'?{body' <- body'?} matches (_)), then
+
+            1. (Let ?(body) be body'?{body' <- body'?})
+
+              1. If (body matches RULES % %), then
+
+                1. (Let relSig?{relSig <- relSig?} be $find_map<id, relSig>(EC.REL, id_rel))
+
+                  1. If (relSig?{relSig <- relSig?} matches (_)), then
+
+                    1. (Let ?(_relKind notTyp `( _inputHint `)) be relSig?{relSig <- relSig?})
+
+                      1. (Elab_rule: EC id_rel notTyp |- rulEL : rulElabRes)*{rulEL <- rulEL*, rulElabRes -> rulElabRes*}
+
+                        1. If (rulElabRes <: ok<(rulIL, bool)>)*{rulElabRes <- rulElabRes*}, then
+
+                          1. (Let OK (rulIL, b_else) be rulElabRes as ok<(rulIL, bool)>)*{rulElabRes <- rulElabRes*, b_else -> b_else*, rulIL -> rulIL*}
+
+                            1. (Let EC'?{EC' <- EC'?} be $add_rules(EC, id_rel, id_group, rulIL*{rulIL <- rulIL*}, b_else*{b_else <- b_else*}))
+
+                              1. If (EC'?{EC' <- EC'?} matches (_)), then
+
+                                1. (Let ?(EC_group) be EC'?{EC' <- EC'?})
+
+                                  1. Result in: % |- % : OK (EC_group, []) as defElabRes
+
+  12. Case (% matches pattern DEF % % % '=' % '-' %)
+
+    1. (Let DEF id tparam*{tparam <- tparam*} argEL*{argEL <- argEL*} '=' expEL '-' premEL*{premEL <- premEL*} be defnEL)
+
+      1. Group clause: EC |- DEF id tparam*{tparam <- tparam*} argEL*{argEL <- argEL*} '=' expEL '-' premEL*{premEL <- premEL*} : %
+
+        1. (Elab_clause: EC |- DEF id tparam*{tparam <- tparam*} argEL*{argEL <- argEL*} '=' expEL '-' premEL*{premEL <- premEL*} : defElabRes)
+
+          1. Result in: % |- % : defElabRes
+
+  13. Case (% matches pattern TABLE % %)
+
+    1. (Let TABLE id tblRowEL*{tblRowEL <- tblRowEL*} be defnEL)
+
+      1. Group rows: EC |- TABLE id tblRowEL*{tblRowEL <- tblRowEL*} : %
+
+        1. (Let funcSig?{funcSig <- funcSig?} be $find_map<id, funcSig>(EC.FUNC, id))
+
+          1. If (funcSig?{funcSig <- funcSig?} matches (_)), then
+
+            1. (Let ?(funcKind _tparam*{_tparam <- _tparam*} param*{param <- param*} ':' typ) be funcSig?{funcSig <- funcSig?})
+
+              1. If (funcKind matches TABLE), then
+
+                1. (Elab_tblRow: EC param*{param <- param*} typ |- tblRowEL : tblRowElabRes)*{tblRowEL <- tblRowEL*, tblRowElabRes -> tblRowElabRes*}
+
+                  1. If (tblRowElabRes <: ok<tblRowIL>)*{tblRowElabRes <- tblRowElabRes*}, then
+
+                    1. (Let OK tblRowIL be tblRowElabRes as ok<tblRowIL>)*{tblRowElabRes <- tblRowElabRes*, tblRowIL -> tblRowIL*}
+
+                      1. (Let EC'?{EC' <- EC'?} be $add_rows(EC, id, tblRowIL*{tblRowIL <- tblRowIL*}))
+
+                        1. If (EC'?{EC' <- EC'?} matches (_)), then
+
+                          1. (Let ?(EC_rows) be EC'?{EC' <- EC'?})
+
+                            1. Result in: % |- % : OK (EC_rows, []) as defElabRes
 
 2. Otherwise,
 
@@ -3407,11 +3618,13 @@ relation Elab_spec: EC |- defnEL*{defnEL <- defnEL*} : %
 
     1. If (defElabRes <: ok<(elabCtx, defnPart*)>), then
 
-      1. (Let OK (_EC, defnPart*{defnPart <- defnPart*}) be defElabRes as ok<(elabCtx, defnPart*)>)
+      1. (Let OK (EC_defs, defnPart*{defnPart <- defnPart*}) be defElabRes as ok<(elabCtx, defnPart*)>)
 
         1. (Let DECL defnIL be defnPart)*{defnPart <- defnPart*, defnIL -> defnIL*}
 
-          1. Result in: % |- % : OK defnIL*{defnIL <- defnIL*} as specElabRes
+          1. (Let defnIL_body*{defnIL_body <- defnIL_body*} be $assemble(EC_defs.BODY, defnIL)*{defnIL <- defnIL*})
+
+            1. Result in: % |- % : OK defnIL_body*{defnIL_body <- defnIL_body*} as specElabRes
 
 2. Otherwise,
 
@@ -5167,8 +5380,8 @@ syntax argElabRes =
    | OK arg (from ok<arg>)
    | FAIL (from fail)
 
-syntax argsElabRes =
-   | OK arg* (from ok<arg*>)
+syntax argsDefnElabRes =
+   | OK (elabCtx, arg*) (from ok<(elabCtx, arg*)>)
    | FAIL (from fail)
 
 relation Elab_arg_call: EC |- argEL '<=' param' : %
@@ -5230,6 +5443,1387 @@ relation Elab_arg_call: EC |- argEL '<=' param' : %
   1. Group fail: EC |- argEL '<=' param' : %
 
     1. Result in: % |- % '<=' % : FAIL as argElabRes
+
+relation Elab_arg_defn: EC |- argEL*{argEL <- argEL*} '<=' param'*{param' <- param'*} : %
+
+1. Group : EC |- argEL*{argEL <- argEL*} '<=' param'*{param' <- param'*} : %
+
+  1. Case analysis on argEL*{argEL <- argEL*} (total)
+
+    1. Case (% matches pattern [])
+
+      1. If (param'*{param' <- param'*} matches []), then
+
+        1. Result in: % |- % '<=' % : OK (EC, []) as argsDefnElabRes
+
+    2. Case (% matches pattern _ :: _)
+
+      1. (Let argEL' :: argEL_t*{argEL_t <- argEL_t*} be argEL*{argEL <- argEL*})
+
+        1. Case analysis on argEL' (total)
+
+          1. Case (% matches pattern EXP %)
+
+            1. (Let EXP expEL be argEL')
+
+              1. If (param'*{param' <- param'*} matches _ :: _), then
+
+                1. (Let param :: param_t*{param_t <- param_t*} be param'*{param' <- param'*})
+
+                  1. If (param <: expParam), then
+
+                    1. (Let EXP typ be param as expParam)
+
+                      1. (Elab_exp: EC |- expEL '<=' typ : expElabRes)
+
+                        1. If (expElabRes <: ok<typedExp>), then
+
+                          1. (Let OK typedExp be expElabRes as ok<typedExp>)
+
+                            1. (Elab_arg_defn: EC |- argEL_t*{argEL_t <- argEL_t*} '<=' param_t*{param_t <- param_t*} : argsDefnElabRes)
+
+                              1. If (argsDefnElabRes <: ok<(elabCtx, arg*)>), then
+
+                                1. (Let OK (EC_t, arg_t*{arg_t <- arg_t*}) be argsDefnElabRes as ok<(elabCtx, arg*)>)
+
+                                  1. Result in: % |- % '<=' % : OK (EC_t, EXP typedExp as arg :: arg_t*{arg_t <- arg_t*}) as argsDefnElabRes
+
+          2. Case (% matches pattern FUN %)
+
+            1. (Let FUN id be argEL')
+
+              1. If (param'*{param' <- param'*} matches _ :: _), then
+
+                1. (Let param'' :: param_t*{param_t <- param_t*} be param'*{param' <- param'*})
+
+                  1. If (param'' <: funParam), then
+
+                    1. (Let FUN id' ':' tparam*{tparam <- tparam*} param*{param <- param*} '->' typ be param'' as funParam)
+
+                      1. If ((id' = id)), then
+
+                        1. If ($find_map<id, funcSig>(EC.FUNC, id) matches ()), then
+
+                          1. (Let EC_func be $add_funcSig(EC, id, DEFINED tparam*{tparam <- tparam*} param*{param <- param*} ':' typ))
+
+                            1. (Elab_arg_defn: EC_func |- argEL_t*{argEL_t <- argEL_t*} '<=' param_t*{param_t <- param_t*} : argsDefnElabRes)
+
+                              1. If (argsDefnElabRes <: ok<(elabCtx, arg*)>), then
+
+                                1. (Let OK (EC_t, arg_t*{arg_t <- arg_t*}) be argsDefnElabRes as ok<(elabCtx, arg*)>)
+
+                                  1. Result in: % |- % '<=' % : OK (EC_t, FUN id as arg :: arg_t*{arg_t <- arg_t*}) as argsDefnElabRes
+
+2. Otherwise,
+
+  1. Group fail: EC |- argEL*{argEL <- argEL*} '<=' param'*{param' <- param'*} : %
+
+    1. Result in: % |- % '<=' % : FAIL as argsDefnElabRes
+
+syntax premPart =
+   | PREM premIL (from premPart)
+   | DECLARE (from premPart)
+   | ELSE (from premPart)
+
+syntax premElabRes =
+   | OK (elabCtx, premPart) (from ok<(elabCtx, premPart)>)
+   | FAIL (from fail)
+
+relation Elab_prem: EC |- premEL' : %
+
+1. Case analysis on premEL' (total)
+
+  1. Case (% matches pattern VAR % ':' %)
+
+    1. (Let VAR id ':' plainTypEL be premEL')
+
+      1. Group variable: EC |- VAR id ':' plainTypEL : %
+
+        1. If ($is_tid(id)), then
+
+          1. If ($find_map<id, typDef>(EC.TYP, id) matches ()), then
+
+            1. If ($find_map<id, typ>(EC.VAR, id) matches ()), then
+
+              1. (Elab_plainTyp: EC |- plainTypEL : typElabRes)
+
+                1. If (typElabRes <: ok<typ>), then
+
+                  1. (Let OK typ be typElabRes as ok<typ>)
+
+                    1. (Let EC_meta be $add_metavar(EC, id, typ))
+
+                      1. Result in: % |- % : OK (EC_meta, DECLARE) as premElabRes
+
+  2. Case (% matches pattern REL % ':' %)
+
+    1. (Let REL id ':' expEL be premEL')
+
+      1. Group relpr: EC |- REL id ':' expEL : %
+
+        1. (Let relSig?{relSig <- relSig?} be $find_map<id, relSig>(EC.REL, id))
+
+          1. If (relSig?{relSig <- relSig?} matches (_)), then
+
+            1. (Let ?(_relKind mixop typ*{typ <- typ*} `( inputHint `)) be relSig?{relSig <- relSig?})
+
+              1. (Elab_notExp: EC |- expEL '<=' mixop typ*{typ <- typ*} : notExpElabRes)
+
+                1. If (notExpElabRes <: ok<typedExp*>), then
+
+                  1. (Let OK typedExp*{typedExp <- typedExp*} be notExpElabRes as ok<typedExp*>)
+
+                    1. If (~$is_conditional(inputHint, |typedExp*{typedExp <- typedExp*}|)), then
+
+                      1. Result in: % |- % : OK (EC, PREM REL id ':' typedExp*{typedExp <- typedExp*} `( inputHint `) as premIL) as premElabRes
+
+      2. Group ifholdpr: EC |- REL id ':' expEL : %
+
+        1. (Let relSig?{relSig <- relSig?} be $find_map<id, relSig>(EC.REL, id))
+
+          1. If (relSig?{relSig <- relSig?} matches (_)), then
+
+            1. (Let ?(_relKind mixop typ*{typ <- typ*} `( inputHint `)) be relSig?{relSig <- relSig?})
+
+              1. (Elab_notExp: EC |- expEL '<=' mixop typ*{typ <- typ*} : notExpElabRes)
+
+                1. If (notExpElabRes <: ok<typedExp*>), then
+
+                  1. (Let OK typedExp*{typedExp <- typedExp*} be notExpElabRes as ok<typedExp*>)
+
+                    1. If ($is_conditional(inputHint, |typedExp*{typedExp <- typedExp*}|)), then
+
+                      1. Result in: % |- % : OK (EC, PREM IFHOLD id ':' typedExp*{typedExp <- typedExp*} as premIL) as premElabRes
+
+  3. Case (% matches pattern RELNOT % ':' %)
+
+    1. (Let RELNOT id ':' expEL be premEL')
+
+      1. Group ifnotholdpr: EC |- RELNOT id ':' expEL : %
+
+        1. (Let relSig?{relSig <- relSig?} be $find_map<id, relSig>(EC.REL, id))
+
+          1. If (relSig?{relSig <- relSig?} matches (_)), then
+
+            1. (Let ?(_relKind mixop typ*{typ <- typ*} `( inputHint `)) be relSig?{relSig <- relSig?})
+
+              1. (Elab_notExp: EC |- expEL '<=' mixop typ*{typ <- typ*} : notExpElabRes)
+
+                1. If (notExpElabRes <: ok<typedExp*>), then
+
+                  1. (Let OK typedExp*{typedExp <- typedExp*} be notExpElabRes as ok<typedExp*>)
+
+                    1. If ($is_conditional(inputHint, |typedExp*{typedExp <- typedExp*}|)), then
+
+                      1. Result in: % |- % : OK (EC, PREM IFNOTHOLD id ':' typedExp*{typedExp <- typedExp*} as premIL) as premElabRes
+
+  4. Case (% matches pattern IF %)
+
+    1. (Let IF expEL be premEL')
+
+      1. Group ifpr: EC |- IF expEL : %
+
+        1. (Elab_exp: EC |- expEL '<=' BOOL as typ : expElabRes)
+
+          1. If (expElabRes <: ok<typedExp>), then
+
+            1. (Let OK typedExp be expElabRes as ok<typedExp>)
+
+              1. Result in: % |- % : OK (EC, PREM IF typedExp as premIL) as premElabRes
+
+  5. Case (% matches pattern ELSE)
+
+    1. Group fallback: EC |- ELSE : %
+
+      1. Result in: % |- % : OK (EC, ELSE) as premElabRes
+
+  6. Case (% matches pattern ITER % %)
+
+    1. (Let ITER premEL iter be premEL')
+
+      1. Group iterpr: EC |- ITER premEL iter : %
+
+        1. (Elab_prem: EC |- premEL : premElabRes)
+
+          1. If (premElabRes <: ok<(elabCtx, premPart)>), then
+
+            1. (Let OK (_EC, premPart) be premElabRes as ok<(elabCtx, premPart)>)
+
+              1. If (premPart matches PREM %), then
+
+                1. (Let PREM premIL be premPart)
+
+                  1. Result in: % |- % : OK (EC, PREM ITER premIL iter [] as premIL) as premElabRes
+
+  7. Case (% matches pattern DEBUG %)
+
+    1. (Let DEBUG expEL be premEL')
+
+      1. Group dbg: EC |- DEBUG expEL : %
+
+        1. (Infer_exp: EC |- expEL : expElabRes)
+
+          1. If (expElabRes <: ok<typedExp>), then
+
+            1. (Let OK typedExp be expElabRes as ok<typedExp>)
+
+              1. Result in: % |- % : OK (EC, PREM DEBUG typedExp as premIL) as premElabRes
+
+2. Otherwise,
+
+  1. Group fail: EC |- premEL' : %
+
+    1. Result in: % |- % : FAIL as premElabRes
+
+syntax premsElabRes =
+   | OK (elabCtx, premPart*) (from ok<(elabCtx, premPart*)>)
+   | FAIL (from fail)
+
+relation Elab_prems: EC |- premEL*{premEL <- premEL*} : %
+
+1. Group : EC |- premEL*{premEL <- premEL*} : %
+
+  1. Case analysis on premEL*{premEL <- premEL*} (total)
+
+    1. Case (% matches pattern [])
+
+      1. Result in: % |- % : OK (EC, []) as premsElabRes
+
+    2. Case (% matches pattern _ :: _)
+
+      1. (Let premEL_h :: premEL_t*{premEL_t <- premEL_t*} be premEL*{premEL <- premEL*})
+
+        1. (Elab_prem: EC |- premEL_h : premElabRes)
+
+          1. If (premElabRes <: ok<(elabCtx, premPart)>), then
+
+            1. (Let OK (EC_h, premPart_h) be premElabRes as ok<(elabCtx, premPart)>)
+
+              1. (Elab_prems: EC_h |- premEL_t*{premEL_t <- premEL_t*} : premsElabRes)
+
+                1. If (premsElabRes <: ok<(elabCtx, premPart*)>), then
+
+                  1. (Let OK (EC_t, premPart_t*{premPart_t <- premPart_t*}) be premsElabRes as ok<(elabCtx, premPart*)>)
+
+                    1. Result in: % |- % : OK (EC_t, premPart_h :: premPart_t*{premPart_t <- premPart_t*}) as premsElabRes
+
+2. Otherwise,
+
+  1. Group fail: EC |- premEL*{premEL <- premEL*} : %
+
+    1. Result in: % |- % : FAIL as premsElabRes
+
+syntax rulElabRes =
+   | OK (rulIL, bool) (from ok<(rulIL, bool)>)
+   | FAIL (from fail)
+
+relation Elab_rule: EC id_rel notTyp |- rulEL : %
+
+1. (Let id_rel' '/' id ':' expEL '-' premEL*{premEL <- premEL*} be rulEL)
+
+  1. If ((id_rel = id_rel')), then
+
+    1. Group ok: EC id_rel notTyp |- id_rel '/' id ':' expEL '-' premEL*{premEL <- premEL*} : %
+
+      1. (Elab_notExp: EC |- expEL '<=' notTyp : notExpElabRes)
+
+        1. If (notExpElabRes <: ok<typedExp*>), then
+
+          1. (Let OK typedExp*{typedExp <- typedExp*} be notExpElabRes as ok<typedExp*>)
+
+            1. (Elab_prems: EC |- premEL*{premEL <- premEL*} : premsElabRes)
+
+              1. If (premsElabRes <: ok<(elabCtx, premPart*)>), then
+
+                1. (Let OK (_EC, premPart*{premPart <- premPart*}) be premsElabRes as ok<(elabCtx, premPart*)>)
+
+                  1. (Let premIL*{premIL <- premIL*} be $premILs_of(premPart*{premPart <- premPart*}))
+
+                    1. (Let n_else be $count_otherwise(premPart*{premPart <- premPart*}))
+
+                      1. If ((n_else <= 1)), then
+
+                        1. (Let b_else be (n_else = 1))
+
+                          1. (Dim_rul: |- id ':' typedExp*{typedExp <- typedExp*} '-' premIL*{premIL <- premIL*} : rulDimRes)
+
+                            1. If (rulDimRes <: ok<rulIL>), then
+
+                              1. (Let OK rulIL be rulDimRes as ok<rulIL>)
+
+                                1. Result in: % % % |- % : OK (rulIL, b_else) as rulElabRes
+
+2. Otherwise,
+
+  1. Group fail: EC id_rel notTyp |- rulEL : %
+
+    1. Result in: % % % |- % : FAIL as rulElabRes
+
+syntax tblRowElabRes =
+   | OK tblRowIL (from ok<tblRowIL>)
+   | FAIL (from fail)
+
+relation Elab_tblRow: EC param*{param <- param*} typ |- tblRowEL : %
+
+1. (Let expEL_pattern '=' expEL_body be tblRowEL)
+
+  1. Group ok: EC param*{param <- param*} typ |- expEL_pattern '=' expEL_body : %
+
+    1. (Let argEL*{argEL <- argEL*} be $args_of_pattern(expEL_pattern))
+
+      1. If ((|argEL*{argEL <- argEL*}| = |param*{param <- param*}|)), then
+
+        1. (Elab_arg_defn: EC |- argEL*{argEL <- argEL*} '<=' param*{param <- param*} : argsDefnElabRes)
+
+          1. If (argsDefnElabRes <: ok<(elabCtx, arg*)>), then
+
+            1. (Let OK (EC_arg, arg*{arg <- arg*}) be argsDefnElabRes as ok<(elabCtx, arg*)>)
+
+              1. (Elab_exp: EC_arg |- expEL_body '<=' typ : expElabRes)
+
+                1. If (expElabRes <: ok<typedExp>), then
+
+                  1. (Let OK typedExp be expElabRes as ok<typedExp>)
+
+                    1. (Dim_tblRow: |- arg*{arg <- arg*} '=' typedExp : tblRowDimRes)
+
+                      1. If (tblRowDimRes <: ok<tblRowIL>), then
+
+                        1. (Let OK tblRowIL be tblRowDimRes as ok<tblRowIL>)
+
+                          1. Result in: % % % |- % : OK tblRowIL as tblRowElabRes
+
+2. Otherwise,
+
+  1. Group fail: EC param*{param <- param*} typ |- tblRowEL : %
+
+    1. Result in: % % % |- % : FAIL as tblRowElabRes
+
+syntax dimEnv = map<id, vari>
+
+syntax dimExpRes =
+   | OK (id*, typedExp, vari*) (from ok<(id*, typedExp, vari*)>)
+   | FAIL (from fail)
+
+syntax dimExpsRes =
+   | OK (id*, typedExp*, vari*) (from ok<(id*, typedExp*, vari*)>)
+   | FAIL (from fail)
+
+syntax dimPathRes =
+   | OK (id*, typedPath, vari*) (from ok<(id*, typedPath, vari*)>)
+   | FAIL (from fail)
+
+syntax dimArgsRes =
+   | OK (id*, arg*, vari*) (from ok<(id*, arg*, vari*)>)
+   | FAIL (from fail)
+
+syntax dimPremRes =
+   | OK (id*, premIL, vari*) (from ok<(id*, premIL, vari*)>)
+   | FAIL (from fail)
+
+syntax dimPremsRes =
+   | OK (id*, premIL*, vari*) (from ok<(id*, premIL*, vari*)>)
+   | FAIL (from fail)
+
+relation Dim_exp: dimEnv id*{id <- id*} |- typedExp''' : %
+
+1. (Let exp '#' typ be typedExp''')
+
+  1. Case analysis on exp (total)
+
+    1. Case (% has type literalExp)
+
+      1. (Let literalExp be exp as literalExp)
+
+        1. Group literal: dimEnv id*{id <- id*} |- literalExp as exp '#' typ : %
+
+          1. Result in: % % |- % : OK (id*{id <- id*}, literalExp as exp '#' typ, []) as dimExpRes
+
+    2. Case (% has type varExp)
+
+      1. (Let VAR id_var be exp as varExp)
+
+        1. Group variable: dimEnv id*{id <- id*} |- VAR id_var as exp '#' typ : %
+
+          1. If ((id_var =/= "_")), then
+
+            1. Result in: % % |- % : OK (id*{id <- id*}, VAR id_var as exp '#' typ, [id_var typ []]) as dimExpRes
+
+    3. Case (% has type unOpExp)
+
+      1. (Let UN unOp typedExp be exp as unOpExp)
+
+        1. Group unary: dimEnv id*{id <- id*} |- UN unOp typedExp as exp '#' typ : %
+
+          1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+            1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                1. Result in: % % |- % : OK (id'*{id' <- id'*}, UN unOp typedExp' as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    4. Case (% has type binOpExp)
+
+      1. (Let BIN binOp typedExp_l typedExp_r be exp as binOpExp)
+
+        1. Group binary: dimEnv id*{id <- id*} |- BIN binOp typedExp_l typedExp_r as exp '#' typ : %
+
+          1. (Dim_exps: dimEnv id*{id <- id*} |- [typedExp_l, typedExp_r] : dimExpsRes)
+
+            1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp*{typedExp <- typedExp*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                1. If (typedExp*{typedExp <- typedExp*} matches [ _/2 ]), then
+
+                  1. (Let [typedExp_l', typedExp_r'] be typedExp*{typedExp <- typedExp*})
+
+                    1. Result in: % % |- % : OK (id'*{id' <- id'*}, BIN binOp typedExp_l' typedExp_r' as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    5. Case (% has type cmpOpExp)
+
+      1. (Let CMP cmpOp typedExp_l typedExp_r be exp as cmpOpExp)
+
+        1. Group compare: dimEnv id*{id <- id*} |- CMP cmpOp typedExp_l typedExp_r as exp '#' typ : %
+
+          1. (Dim_exps: dimEnv id*{id <- id*} |- [typedExp_l, typedExp_r] : dimExpsRes)
+
+            1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp*{typedExp <- typedExp*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                1. If (typedExp*{typedExp <- typedExp*} matches [ _/2 ]), then
+
+                  1. (Let [typedExp_l', typedExp_r'] be typedExp*{typedExp <- typedExp*})
+
+                    1. Result in: % % |- % : OK (id'*{id' <- id'*}, CMP cmpOp typedExp_l' typedExp_r' as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    6. Case (% has type upCastExp)
+
+      1. (Let UPCAST typ_cast typedExp be exp as upCastExp)
+
+        1. Group upcast: dimEnv id*{id <- id*} |- UPCAST typ_cast typedExp as exp '#' typ : %
+
+          1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+            1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                1. Result in: % % |- % : OK (id'*{id' <- id'*}, UPCAST typ_cast typedExp' as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    7. Case (% has type downCastExp)
+
+      1. (Let DOWNCAST typ_cast typedExp be exp as downCastExp)
+
+        1. Group downcast: dimEnv id*{id <- id*} |- DOWNCAST typ_cast typedExp as exp '#' typ : %
+
+          1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+            1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                1. Result in: % % |- % : OK (id'*{id' <- id'*}, DOWNCAST typ_cast typedExp' as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    8. Case (% has type subExp)
+
+      1. (Let SUB typedExp typ_sub be exp as subExp)
+
+        1. Group subtype: dimEnv id*{id <- id*} |- SUB typedExp typ_sub as exp '#' typ : %
+
+          1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+            1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                1. Result in: % % |- % : OK (id'*{id' <- id'*}, SUB typedExp' typ_sub as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    9. Case (% has type matchExp)
+
+      1. (Let MATCH typedExp pat be exp as matchExp)
+
+        1. Group match: dimEnv id*{id <- id*} |- MATCH typedExp pat as exp '#' typ : %
+
+          1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+            1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                1. Result in: % % |- % : OK (id'*{id' <- id'*}, MATCH typedExp' pat as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    10. Case (% has type tupExp)
+
+      1. (Let TUP typedExp*{typedExp <- typedExp*} be exp as tupExp)
+
+        1. Group tuple: dimEnv id*{id <- id*} |- TUP typedExp*{typedExp <- typedExp*} as exp '#' typ : %
+
+          1. (Dim_exps: dimEnv id*{id <- id*} |- typedExp*{typedExp <- typedExp*} : dimExpsRes)
+
+            1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp'*{typedExp' <- typedExp'*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                1. Result in: % % |- % : OK (id'*{id' <- id'*}, TUP typedExp'*{typedExp' <- typedExp'*} as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    11. Case (% has type injExp)
+
+      1. (Let INJ mixop typedExp*{typedExp <- typedExp*} be exp as injExp)
+
+        1. Group case: dimEnv id*{id <- id*} |- INJ mixop typedExp*{typedExp <- typedExp*} as exp '#' typ : %
+
+          1. (Dim_exps: dimEnv id*{id <- id*} |- typedExp*{typedExp <- typedExp*} : dimExpsRes)
+
+            1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp'*{typedExp' <- typedExp'*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                1. Result in: % % |- % : OK (id'*{id' <- id'*}, INJ mixop typedExp'*{typedExp' <- typedExp'*} as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    12. Case (% has type strExp)
+
+      1. (Let STR expField*{expField <- expField*} be exp as strExp)
+
+        1. Group struct: dimEnv id*{id <- id*} |- STR expField*{expField <- expField*} as exp '#' typ : %
+
+          1. (Let atom typedExp be expField)*{expField <- expField*, atom -> atom*, typedExp -> typedExp*}
+
+            1. (Dim_exps: dimEnv id*{id <- id*} |- typedExp*{typedExp <- typedExp*} : dimExpsRes)
+
+              1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+                1. (Let OK (id'*{id' <- id'*}, typedExp'*{typedExp' <- typedExp'*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                  1. If ((|atom*{atom <- atom*}| = |typedExp'*{typedExp' <- typedExp'*}|)), then
+
+                    1. (Let expField'*{expField' <- expField'*} be atom typedExp'*{atom <- atom*, typedExp' <- typedExp'*})
+
+                      1. Result in: % % |- % : OK (id'*{id' <- id'*}, STR expField'*{expField' <- expField'*} as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    13. Case (% has type optExp)
+
+      1. (Let OPT typedExp''?{typedExp'' <- typedExp''?} be exp as optExp)
+
+        1. If (typedExp''?{typedExp'' <- typedExp''?} matches (_)), then
+
+          1. (Let ?(typedExp) be typedExp''?{typedExp'' <- typedExp''?})
+
+            1. Group opt-some: dimEnv id*{id <- id*} |- OPT ?(typedExp) as exp '#' typ : %
+
+              1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+                1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+                  1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                    1. Result in: % % |- % : OK (id'*{id' <- id'*}, OPT ?(typedExp') as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    14. Case (% has type listExp)
+
+      1. (Let LIST typedExp*{typedExp <- typedExp*} be exp as listExp)
+
+        1. Group list: dimEnv id*{id <- id*} |- LIST typedExp*{typedExp <- typedExp*} as exp '#' typ : %
+
+          1. (Dim_exps: dimEnv id*{id <- id*} |- typedExp*{typedExp <- typedExp*} : dimExpsRes)
+
+            1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp'*{typedExp' <- typedExp'*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                1. Result in: % % |- % : OK (id'*{id' <- id'*}, LIST typedExp'*{typedExp' <- typedExp'*} as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    15. Case (% has type consExp)
+
+      1. (Let CONS typedExp_h typedExp_t be exp as consExp)
+
+        1. Group cons: dimEnv id*{id <- id*} |- CONS typedExp_h typedExp_t as exp '#' typ : %
+
+          1. (Dim_exps: dimEnv id*{id <- id*} |- [typedExp_h, typedExp_t] : dimExpsRes)
+
+            1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp*{typedExp <- typedExp*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                1. If (typedExp*{typedExp <- typedExp*} matches [ _/2 ]), then
+
+                  1. (Let [typedExp_h', typedExp_t'] be typedExp*{typedExp <- typedExp*})
+
+                    1. Result in: % % |- % : OK (id'*{id' <- id'*}, CONS typedExp_h' typedExp_t' as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    16. Case (% has type catExp)
+
+      1. (Let CAT typedExp_l typedExp_r be exp as catExp)
+
+        1. Group concat: dimEnv id*{id <- id*} |- CAT typedExp_l typedExp_r as exp '#' typ : %
+
+          1. (Dim_exps: dimEnv id*{id <- id*} |- [typedExp_l, typedExp_r] : dimExpsRes)
+
+            1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp*{typedExp <- typedExp*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                1. If (typedExp*{typedExp <- typedExp*} matches [ _/2 ]), then
+
+                  1. (Let [typedExp_l', typedExp_r'] be typedExp*{typedExp <- typedExp*})
+
+                    1. Result in: % % |- % : OK (id'*{id' <- id'*}, CAT typedExp_l' typedExp_r' as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    17. Case (% has type memExp)
+
+      1. (Let MEM typedExp_e typedExp_s be exp as memExp)
+
+        1. Group mem: dimEnv id*{id <- id*} |- MEM typedExp_e typedExp_s as exp '#' typ : %
+
+          1. (Dim_exps: dimEnv id*{id <- id*} |- [typedExp_e, typedExp_s] : dimExpsRes)
+
+            1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp*{typedExp <- typedExp*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                1. If (typedExp*{typedExp <- typedExp*} matches [ _/2 ]), then
+
+                  1. (Let [typedExp_e', typedExp_s'] be typedExp*{typedExp <- typedExp*})
+
+                    1. Result in: % % |- % : OK (id'*{id' <- id'*}, MEM typedExp_e' typedExp_s' as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    18. Case (% has type lenExp)
+
+      1. (Let LEN typedExp be exp as lenExp)
+
+        1. Group len: dimEnv id*{id <- id*} |- LEN typedExp as exp '#' typ : %
+
+          1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+            1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                1. Result in: % % |- % : OK (id'*{id' <- id'*}, LEN typedExp' as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    19. Case (% has type dotAccExp)
+
+      1. (Let DOT typedExp atom be exp as dotAccExp)
+
+        1. Group dot: dimEnv id*{id <- id*} |- DOT typedExp atom as exp '#' typ : %
+
+          1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+            1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                1. Result in: % % |- % : OK (id'*{id' <- id'*}, DOT typedExp' atom as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    20. Case (% has type idxAccExp)
+
+      1. (Let IDX typedExp_b typedExp_i be exp as idxAccExp)
+
+        1. Group idx: dimEnv id*{id <- id*} |- IDX typedExp_b typedExp_i as exp '#' typ : %
+
+          1. (Dim_exps: dimEnv id*{id <- id*} |- [typedExp_b, typedExp_i] : dimExpsRes)
+
+            1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp*{typedExp <- typedExp*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                1. If (typedExp*{typedExp <- typedExp*} matches [ _/2 ]), then
+
+                  1. (Let [typedExp_b', typedExp_i'] be typedExp*{typedExp <- typedExp*})
+
+                    1. Result in: % % |- % : OK (id'*{id' <- id'*}, IDX typedExp_b' typedExp_i' as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    21. Case (% has type sliceAccExp)
+
+      1. (Let SLICE typedExp_b typedExp_i typedExp_n be exp as sliceAccExp)
+
+        1. Group slice: dimEnv id*{id <- id*} |- SLICE typedExp_b typedExp_i typedExp_n as exp '#' typ : %
+
+          1. (Dim_exps: dimEnv id*{id <- id*} |- [typedExp_b, typedExp_i, typedExp_n] : dimExpsRes)
+
+            1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp*{typedExp <- typedExp*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                1. If (typedExp*{typedExp <- typedExp*} matches [ _/3 ]), then
+
+                  1. (Let [typedExp_b', typedExp_i', typedExp_n'] be typedExp*{typedExp <- typedExp*})
+
+                    1. Result in: % % |- % : OK (id'*{id' <- id'*}, SLICE typedExp_b' typedExp_i' typedExp_n' as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    22. Case (% has type updExp)
+
+      1. (Let UPD typedExp_b typedPath typedExp_f be exp as updExp)
+
+        1. Group upd: dimEnv id*{id <- id*} |- UPD typedExp_b typedPath typedExp_f as exp '#' typ : %
+
+          1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp_b : dimExpRes)
+
+            1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+              1. (Let OK (id_b*{id_b <- id_b*}, typedExp_b', vari_b*{vari_b <- vari_b*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                1. (Dim_path: dimEnv id_b*{id_b <- id_b*} |- typedPath : dimPathRes)
+
+                  1. If (dimPathRes <: ok<(id*, typedPath, vari*)>), then
+
+                    1. (Let OK (id_p*{id_p <- id_p*}, typedPath', vari_p*{vari_p <- vari_p*}) be dimPathRes as ok<(id*, typedPath, vari*)>)
+
+                      1. (Dim_exp: dimEnv id_p*{id_p <- id_p*} |- typedExp_f : dimExpRes')
+
+                        1. If (dimExpRes' <: ok<(id*, typedExp, vari*)>), then
+
+                          1. (Let OK (id_f*{id_f <- id_f*}, typedExp_f', vari_f*{vari_f <- vari_f*}) be dimExpRes' as ok<(id*, typedExp, vari*)>)
+
+                            1. Result in: % % |- % : OK (id_f*{id_f <- id_f*}, UPD typedExp_b' typedPath' typedExp_f' as exp '#' typ, vari_b*{vari_b <- vari_b*} ++ vari_p*{vari_p <- vari_p*} ++ vari_f*{vari_f <- vari_f*}) as dimExpRes
+
+    23. Case (% has type callExp)
+
+      1. (Let CALL id_func targ*{targ <- targ*} arg*{arg <- arg*} be exp as callExp)
+
+        1. Group call: dimEnv id*{id <- id*} |- CALL id_func targ*{targ <- targ*} arg*{arg <- arg*} as exp '#' typ : %
+
+          1. (Dim_args: dimEnv id*{id <- id*} |- arg*{arg <- arg*} : dimArgsRes)
+
+            1. If (dimArgsRes <: ok<(id*, arg*, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, arg'*{arg' <- arg'*}, vari*{vari <- vari*}) be dimArgsRes as ok<(id*, arg*, vari*)>)
+
+                1. Result in: % % |- % : OK (id'*{id' <- id'*}, CALL id_func targ*{targ <- targ*} arg'*{arg' <- arg'*} as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+
+    24. Case (% has type iterExp)
+
+      1. (Let ITER typedExp iter _vari*{_vari <- _vari*} be exp as iterExp)
+
+        1. Group iter: dimEnv id*{id <- id*} |- ITER typedExp iter _vari*{_vari <- _vari*} as exp '#' typ : %
+
+          1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+            1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                1. (Let vari_shallow*{vari_shallow <- vari_shallow*} be $shallowest_varis(vari*{vari <- vari*}))
+
+                  1. (Let vari_iter*{vari_iter <- vari_iter*} be $iterated_varis(dimEnv, vari_shallow*{vari_shallow <- vari_shallow*}, iter))
+
+                    1. If (vari_iter*{vari_iter <- vari_iter*} matches _ :: _), then
+
+                      1. (Let vari_out*{vari_out <- vari_out*} be $iterate_occs(vari_shallow*{vari_shallow <- vari_shallow*}, $ids_of_varis(vari_iter*{vari_iter <- vari_iter*}), iter))
+
+                        1. Result in: % % |- % : OK (id'*{id' <- id'*}, ITER typedExp' iter vari_iter*{vari_iter <- vari_iter*} as exp '#' typ, vari_out*{vari_out <- vari_out*}) as dimExpRes
+
+  2. Case analysis on exp
+
+    1. Case (% = VAR "_" as exp)
+
+      1. Group wildcard: dimEnv id*{id <- id*} |- VAR "_" as exp '#' typ : %
+
+        1. (Let id_fresh be $fresh(id*{id <- id*}, "_"))
+
+          1. Result in: % % |- % : OK (id*{id <- id*} ++ [id_fresh], VAR id_fresh as exp '#' typ, [id_fresh typ []]) as dimExpRes
+
+    2. Case (% = OPT ?() as exp)
+
+      1. Group opt-none: dimEnv id*{id <- id*} |- OPT ?() as exp '#' typ : %
+
+        1. Result in: % % |- % : OK (id*{id <- id*}, OPT ?() as exp '#' typ, []) as dimExpRes
+
+2. Otherwise,
+
+  1. Group fail: dimEnv id*{id <- id*} |- typedExp''' : %
+
+    1. Result in: % % |- % : FAIL as dimExpRes
+
+relation Dim_exps: dimEnv id*{id <- id*} |- typedExp*{typedExp <- typedExp*} : %
+
+1. Group : dimEnv id*{id <- id*} |- typedExp*{typedExp <- typedExp*} : %
+
+  1. Case analysis on typedExp*{typedExp <- typedExp*} (total)
+
+    1. Case (% matches pattern [])
+
+      1. Result in: % % |- % : OK (id*{id <- id*}, [], []) as dimExpsRes
+
+    2. Case (% matches pattern _ :: _)
+
+      1. (Let typedExp_h :: typedExp_t*{typedExp_t <- typedExp_t*} be typedExp*{typedExp <- typedExp*})
+
+        1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp_h : dimExpRes)
+
+          1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+            1. (Let OK (id_h*{id_h <- id_h*}, typedExp_h', vari_h*{vari_h <- vari_h*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+              1. (Dim_exps: dimEnv id_h*{id_h <- id_h*} |- typedExp_t*{typedExp_t <- typedExp_t*} : dimExpsRes)
+
+                1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+                  1. (Let OK (id_t*{id_t <- id_t*}, typedExp_t'*{typedExp_t' <- typedExp_t'*}, vari_t*{vari_t <- vari_t*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                    1. Result in: % % |- % : OK (id_t*{id_t <- id_t*}, typedExp_h' :: typedExp_t'*{typedExp_t' <- typedExp_t'*}, vari_h*{vari_h <- vari_h*} ++ vari_t*{vari_t <- vari_t*}) as dimExpsRes
+
+2. Otherwise,
+
+  1. Group fail: dimEnv id*{id <- id*} |- typedExp*{typedExp <- typedExp*} : %
+
+    1. Result in: % % |- % : FAIL as dimExpsRes
+
+relation Dim_path: dimEnv id*{id <- id*} |- typedPath'' : %
+
+1. (Let path '#' typ be typedPath'')
+
+  1. Case analysis on path (total)
+
+    1. Case (% has type rootPath)
+
+      1. (Let rootPath be path as rootPath)
+
+        1. Group root: dimEnv id*{id <- id*} |- ROOT as path '#' typ : %
+
+          1. Result in: % % |- % : OK (id*{id <- id*}, ROOT as path '#' typ, []) as dimPathRes
+
+    2. Case (% has type idxPath)
+
+      1. (Let IDX typedPath typedExp be path as idxPath)
+
+        1. Group idx: dimEnv id*{id <- id*} |- IDX typedPath typedExp as path '#' typ : %
+
+          1. (Dim_path: dimEnv id*{id <- id*} |- typedPath : dimPathRes)
+
+            1. If (dimPathRes <: ok<(id*, typedPath, vari*)>), then
+
+              1. (Let OK (id_p*{id_p <- id_p*}, typedPath', vari_p*{vari_p <- vari_p*}) be dimPathRes as ok<(id*, typedPath, vari*)>)
+
+                1. (Dim_exp: dimEnv id_p*{id_p <- id_p*} |- typedExp : dimExpRes)
+
+                  1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+                    1. (Let OK (id_e*{id_e <- id_e*}, typedExp', vari_e*{vari_e <- vari_e*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                      1. Result in: % % |- % : OK (id_e*{id_e <- id_e*}, IDX typedPath' typedExp' as path '#' typ, vari_p*{vari_p <- vari_p*} ++ vari_e*{vari_e <- vari_e*}) as dimPathRes
+
+    3. Case (% has type slicePath)
+
+      1. (Let SLICE typedPath typedExp_i typedExp_n be path as slicePath)
+
+        1. Group slice: dimEnv id*{id <- id*} |- SLICE typedPath typedExp_i typedExp_n as path '#' typ : %
+
+          1. (Dim_path: dimEnv id*{id <- id*} |- typedPath : dimPathRes)
+
+            1. If (dimPathRes <: ok<(id*, typedPath, vari*)>), then
+
+              1. (Let OK (id_p*{id_p <- id_p*}, typedPath', vari_p*{vari_p <- vari_p*}) be dimPathRes as ok<(id*, typedPath, vari*)>)
+
+                1. (Dim_exps: dimEnv id_p*{id_p <- id_p*} |- [typedExp_i, typedExp_n] : dimExpsRes)
+
+                  1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+                    1. (Let OK (id_e*{id_e <- id_e*}, typedExp*{typedExp <- typedExp*}, vari_e*{vari_e <- vari_e*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                      1. If (typedExp*{typedExp <- typedExp*} matches [ _/2 ]), then
+
+                        1. (Let [typedExp_i', typedExp_n'] be typedExp*{typedExp <- typedExp*})
+
+                          1. Result in: % % |- % : OK (id_e*{id_e <- id_e*}, SLICE typedPath' typedExp_i' typedExp_n' as path '#' typ, vari_p*{vari_p <- vari_p*} ++ vari_e*{vari_e <- vari_e*}) as dimPathRes
+
+    4. Case (% has type dotPath)
+
+      1. (Let DOT typedPath atom be path as dotPath)
+
+        1. Group dot: dimEnv id*{id <- id*} |- DOT typedPath atom as path '#' typ : %
+
+          1. (Dim_path: dimEnv id*{id <- id*} |- typedPath : dimPathRes)
+
+            1. If (dimPathRes <: ok<(id*, typedPath, vari*)>), then
+
+              1. (Let OK (id'*{id' <- id'*}, typedPath', vari*{vari <- vari*}) be dimPathRes as ok<(id*, typedPath, vari*)>)
+
+                1. Result in: % % |- % : OK (id'*{id' <- id'*}, DOT typedPath' atom as path '#' typ, vari*{vari <- vari*}) as dimPathRes
+
+2. Otherwise,
+
+  1. Group fail: dimEnv id*{id <- id*} |- typedPath'' : %
+
+    1. Result in: % % |- % : FAIL as dimPathRes
+
+relation Dim_args: dimEnv id*{id <- id*} |- arg*{arg <- arg*} : %
+
+1. Group : dimEnv id*{id <- id*} |- arg*{arg <- arg*} : %
+
+  1. Case analysis on arg*{arg <- arg*} (total)
+
+    1. Case (% matches pattern [])
+
+      1. Result in: % % |- % : OK (id*{id <- id*}, [], []) as dimArgsRes
+
+    2. Case (% matches pattern _ :: _)
+
+      1. (Let arg' :: arg_t*{arg_t <- arg_t*} be arg*{arg <- arg*})
+
+        1. Case analysis on arg' (total)
+
+          1. Case (% has type expArg)
+
+            1. (Let EXP typedExp be arg' as expArg)
+
+              1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+                1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+                  1. (Let OK (id_h*{id_h <- id_h*}, typedExp', vari_h*{vari_h <- vari_h*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                    1. (Dim_args: dimEnv id_h*{id_h <- id_h*} |- arg_t*{arg_t <- arg_t*} : dimArgsRes)
+
+                      1. If (dimArgsRes <: ok<(id*, arg*, vari*)>), then
+
+                        1. (Let OK (id_t*{id_t <- id_t*}, arg_t'*{arg_t' <- arg_t'*}, vari_t*{vari_t <- vari_t*}) be dimArgsRes as ok<(id*, arg*, vari*)>)
+
+                          1. Result in: % % |- % : OK (id_t*{id_t <- id_t*}, EXP typedExp' as arg :: arg_t'*{arg_t' <- arg_t'*}, vari_h*{vari_h <- vari_h*} ++ vari_t*{vari_t <- vari_t*}) as dimArgsRes
+
+          2. Case (% has type funArg)
+
+            1. (Let FUN id_func be arg' as funArg)
+
+              1. (Dim_args: dimEnv id*{id <- id*} |- arg_t*{arg_t <- arg_t*} : dimArgsRes)
+
+                1. If (dimArgsRes <: ok<(id*, arg*, vari*)>), then
+
+                  1. (Let OK (id_t*{id_t <- id_t*}, arg_t'*{arg_t' <- arg_t'*}, vari_t*{vari_t <- vari_t*}) be dimArgsRes as ok<(id*, arg*, vari*)>)
+
+                    1. Result in: % % |- % : OK (id_t*{id_t <- id_t*}, FUN id_func as arg :: arg_t'*{arg_t' <- arg_t'*}, vari_t*{vari_t <- vari_t*}) as dimArgsRes
+
+2. Otherwise,
+
+  1. Group fail: dimEnv id*{id <- id*} |- arg*{arg <- arg*} : %
+
+    1. Result in: % % |- % : FAIL as dimArgsRes
+
+relation Dim_prem: dimEnv id*{id <- id*} |- premIL'' : %
+
+1. Case analysis on premIL'' (total)
+
+  1. Case (% has type relPremIL)
+
+    1. (Let REL id_rel ':' typedExp*{typedExp <- typedExp*} `( inputHint `) be premIL'' as relPremIL)
+
+      1. Group relpr: dimEnv id*{id <- id*} |- REL id_rel ':' typedExp*{typedExp <- typedExp*} `( inputHint `) as premIL : %
+
+        1. (Dim_exps: dimEnv id*{id <- id*} |- typedExp*{typedExp <- typedExp*} : dimExpsRes)
+
+          1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+            1. (Let OK (id'*{id' <- id'*}, typedExp'*{typedExp' <- typedExp'*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+              1. Result in: % % |- % : OK (id'*{id' <- id'*}, REL id_rel ':' typedExp'*{typedExp' <- typedExp'*} `( inputHint `) as premIL, vari*{vari <- vari*}) as dimPremRes
+
+  2. Case (% has type ifPrem)
+
+    1. (Let IF typedExp be premIL'' as ifPrem)
+
+      1. Group ifpr: dimEnv id*{id <- id*} |- IF typedExp as premIL : %
+
+        1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+          1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+            1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+              1. Result in: % % |- % : OK (id'*{id' <- id'*}, IF typedExp' as premIL, vari*{vari <- vari*}) as dimPremRes
+
+  3. Case (% has type ifHoldPrem)
+
+    1. (Let IFHOLD id_rel ':' typedExp*{typedExp <- typedExp*} be premIL'' as ifHoldPrem)
+
+      1. Group ifhold: dimEnv id*{id <- id*} |- IFHOLD id_rel ':' typedExp*{typedExp <- typedExp*} as premIL : %
+
+        1. (Dim_exps: dimEnv id*{id <- id*} |- typedExp*{typedExp <- typedExp*} : dimExpsRes)
+
+          1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+            1. (Let OK (id'*{id' <- id'*}, typedExp'*{typedExp' <- typedExp'*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+              1. Result in: % % |- % : OK (id'*{id' <- id'*}, IFHOLD id_rel ':' typedExp'*{typedExp' <- typedExp'*} as premIL, vari*{vari <- vari*}) as dimPremRes
+
+  4. Case (% has type ifNotHoldPrem)
+
+    1. (Let IFNOTHOLD id_rel ':' typedExp*{typedExp <- typedExp*} be premIL'' as ifNotHoldPrem)
+
+      1. Group ifnothold: dimEnv id*{id <- id*} |- IFNOTHOLD id_rel ':' typedExp*{typedExp <- typedExp*} as premIL : %
+
+        1. (Dim_exps: dimEnv id*{id <- id*} |- typedExp*{typedExp <- typedExp*} : dimExpsRes)
+
+          1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+            1. (Let OK (id'*{id' <- id'*}, typedExp'*{typedExp' <- typedExp'*}, vari*{vari <- vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+              1. Result in: % % |- % : OK (id'*{id' <- id'*}, IFNOTHOLD id_rel ':' typedExp'*{typedExp' <- typedExp'*} as premIL, vari*{vari <- vari*}) as dimPremRes
+
+  5. Case (% has type iterPremIL)
+
+    1. (Let ITER premIL iter vari'*{vari' <- vari'*} be premIL'' as iterPremIL)
+
+      1. Group iter: dimEnv id*{id <- id*} |- ITER premIL iter vari'*{vari' <- vari'*} as premIL : %
+
+        1. (Dim_prem: dimEnv id*{id <- id*} |- premIL : dimPremRes)
+
+          1. If (dimPremRes <: ok<(id*, premIL, vari*)>), then
+
+            1. (Let OK (id'*{id' <- id'*}, premIL', vari*{vari <- vari*}) be dimPremRes as ok<(id*, premIL, vari*)>)
+
+              1. (Let vari_shallow*{vari_shallow <- vari_shallow*} be $shallowest_varis(vari*{vari <- vari*}))
+
+                1. (Let vari_iter*{vari_iter <- vari_iter*} be $iterated_varis(dimEnv, vari_shallow*{vari_shallow <- vari_shallow*}, iter))
+
+                  1. If (vari_iter*{vari_iter <- vari_iter*} matches _ :: _), then
+
+                    1. (Let vari_out*{vari_out <- vari_out*} be $iterate_occs(vari_shallow*{vari_shallow <- vari_shallow*}, $ids_of_varis(vari_iter*{vari_iter <- vari_iter*}), iter))
+
+                      1. Result in: % % |- % : OK (id'*{id' <- id'*}, ITER premIL' iter vari_iter*{vari_iter <- vari_iter*} as premIL, vari_out*{vari_out <- vari_out*}) as dimPremRes
+
+  6. Case (% has type debugPrem)
+
+    1. (Let DEBUG typedExp be premIL'' as debugPrem)
+
+      1. Group dbg: dimEnv id*{id <- id*} |- DEBUG typedExp as premIL : %
+
+        1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+          1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+            1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+              1. Result in: % % |- % : OK (id'*{id' <- id'*}, DEBUG typedExp' as premIL, vari*{vari <- vari*}) as dimPremRes
+
+2. Otherwise,
+
+  1. Group fail: dimEnv id*{id <- id*} |- premIL'' : %
+
+    1. Result in: % % |- % : FAIL as dimPremRes
+
+relation Dim_prems: dimEnv id*{id <- id*} |- premIL*{premIL <- premIL*} : %
+
+1. Group : dimEnv id*{id <- id*} |- premIL*{premIL <- premIL*} : %
+
+  1. Case analysis on premIL*{premIL <- premIL*} (total)
+
+    1. Case (% matches pattern [])
+
+      1. Result in: % % |- % : OK (id*{id <- id*}, [], []) as dimPremsRes
+
+    2. Case (% matches pattern _ :: _)
+
+      1. (Let premIL_h :: premIL_t*{premIL_t <- premIL_t*} be premIL*{premIL <- premIL*})
+
+        1. (Dim_prem: dimEnv id*{id <- id*} |- premIL_h : dimPremRes)
+
+          1. If (dimPremRes <: ok<(id*, premIL, vari*)>), then
+
+            1. (Let OK (id_h*{id_h <- id_h*}, premIL_h', vari_h*{vari_h <- vari_h*}) be dimPremRes as ok<(id*, premIL, vari*)>)
+
+              1. (Dim_prems: dimEnv id_h*{id_h <- id_h*} |- premIL_t*{premIL_t <- premIL_t*} : dimPremsRes)
+
+                1. If (dimPremsRes <: ok<(id*, premIL*, vari*)>), then
+
+                  1. (Let OK (id_t*{id_t <- id_t*}, premIL_t'*{premIL_t' <- premIL_t'*}, vari_t*{vari_t <- vari_t*}) be dimPremsRes as ok<(id*, premIL*, vari*)>)
+
+                    1. Result in: % % |- % : OK (id_t*{id_t <- id_t*}, premIL_h' :: premIL_t'*{premIL_t' <- premIL_t'*}, vari_h*{vari_h <- vari_h*} ++ vari_t*{vari_t <- vari_t*}) as dimPremsRes
+
+2. Otherwise,
+
+  1. Group fail: dimEnv id*{id <- id*} |- premIL*{premIL <- premIL*} : %
+
+    1. Result in: % % |- % : FAIL as dimPremsRes
+
+syntax rulDimRes =
+   | OK rulIL (from ok<rulIL>)
+   | FAIL (from fail)
+
+relation Dim_rul: |- rulIL : %
+
+1. (Let id ':' typedExp*{typedExp <- typedExp*} '-' premIL*{premIL <- premIL*} be rulIL)
+
+  1. Group ok: |- id ':' typedExp*{typedExp <- typedExp*} '-' premIL*{premIL <- premIL*} : %
+
+    1. (Let vari*{vari <- vari*} be $free_varis_rulIL(id ':' typedExp*{typedExp <- typedExp*} '-' premIL*{premIL <- premIL*}))
+
+      1. (Let dimEnv'?{dimEnv' <- dimEnv'?} be $dim_bounds(vari*{vari <- vari*}))
+
+        1. If (dimEnv'?{dimEnv' <- dimEnv'?} matches (_)), then
+
+          1. (Let ?(dimEnv) be dimEnv'?{dimEnv' <- dimEnv'?})
+
+            1. (Let id_used*{id_used <- id_used*} be $ids_of_varis(vari*{vari <- vari*}))
+
+              1. (Dim_exps: dimEnv id_used*{id_used <- id_used*} |- typedExp*{typedExp <- typedExp*} : dimExpsRes)
+
+                1. If (dimExpsRes <: ok<(id*, typedExp*, vari*)>), then
+
+                  1. (Let OK (id_exp*{id_exp <- id_exp*}, typedExp'*{typedExp' <- typedExp'*}, _vari*{_vari <- _vari*}) be dimExpsRes as ok<(id*, typedExp*, vari*)>)
+
+                    1. (Dim_prems: dimEnv id_exp*{id_exp <- id_exp*} |- premIL*{premIL <- premIL*} : dimPremsRes)
+
+                      1. If (dimPremsRes <: ok<(id*, premIL*, vari*)>), then
+
+                        1. (Let OK (_id*{_id <- _id*}, premIL'*{premIL' <- premIL'*}, _vari'*{_vari' <- _vari'*}) be dimPremsRes as ok<(id*, premIL*, vari*)>)
+
+                          1. Result in: |- % : OK id ':' typedExp'*{typedExp' <- typedExp'*} '-' premIL'*{premIL' <- premIL'*} as rulDimRes
+
+2. Otherwise,
+
+  1. Group fail: |- rulIL : %
+
+    1. Result in: |- % : FAIL as rulDimRes
+
+syntax clauseDimRes =
+   | OK clauseIL (from ok<clauseIL>)
+   | FAIL (from fail)
+
+relation Dim_clause: |- clauseIL : %
+
+1. (Let arg*{arg <- arg*} '=' typedExp '-' premIL*{premIL <- premIL*} be clauseIL)
+
+  1. Group ok: |- arg*{arg <- arg*} '=' typedExp '-' premIL*{premIL <- premIL*} : %
+
+    1. (Let vari*{vari <- vari*} be $free_varis_clauseIL(arg*{arg <- arg*} '=' typedExp '-' premIL*{premIL <- premIL*}))
+
+      1. (Let dimEnv'?{dimEnv' <- dimEnv'?} be $dim_bounds(vari*{vari <- vari*}))
+
+        1. If (dimEnv'?{dimEnv' <- dimEnv'?} matches (_)), then
+
+          1. (Let ?(dimEnv) be dimEnv'?{dimEnv' <- dimEnv'?})
+
+            1. (Let id_used*{id_used <- id_used*} be $ids_of_varis(vari*{vari <- vari*}))
+
+              1. (Dim_args: dimEnv id_used*{id_used <- id_used*} |- arg*{arg <- arg*} : dimArgsRes)
+
+                1. If (dimArgsRes <: ok<(id*, arg*, vari*)>), then
+
+                  1. (Let OK (id_arg*{id_arg <- id_arg*}, arg'*{arg' <- arg'*}, _vari*{_vari <- _vari*}) be dimArgsRes as ok<(id*, arg*, vari*)>)
+
+                    1. (Dim_prems: dimEnv id_arg*{id_arg <- id_arg*} |- premIL*{premIL <- premIL*} : dimPremsRes)
+
+                      1. If (dimPremsRes <: ok<(id*, premIL*, vari*)>), then
+
+                        1. (Let OK (id_prem*{id_prem <- id_prem*}, premIL'*{premIL' <- premIL'*}, _vari'*{_vari' <- _vari'*}) be dimPremsRes as ok<(id*, premIL*, vari*)>)
+
+                          1. (Dim_exp: dimEnv id_prem*{id_prem <- id_prem*} |- typedExp : dimExpRes)
+
+                            1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+                              1. (Let OK (_id*{_id <- _id*}, typedExp', _vari''*{_vari'' <- _vari''*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                                1. Result in: |- % : OK arg'*{arg' <- arg'*} '=' typedExp' '-' premIL'*{premIL' <- premIL'*} as clauseDimRes
+
+2. Otherwise,
+
+  1. Group fail: |- clauseIL : %
+
+    1. Result in: |- % : FAIL as clauseDimRes
+
+syntax tblRowDimRes =
+   | OK tblRowIL (from ok<tblRowIL>)
+   | FAIL (from fail)
+
+relation Dim_tblRow: |- tblRowIL : %
+
+1. (Let arg*{arg <- arg*} '=' typedExp be tblRowIL)
+
+  1. Group ok: |- arg*{arg <- arg*} '=' typedExp : %
+
+    1. (Let vari*{vari <- vari*} be $free_varis_tblRowIL(arg*{arg <- arg*} '=' typedExp))
+
+      1. (Let dimEnv'?{dimEnv' <- dimEnv'?} be $dim_bounds(vari*{vari <- vari*}))
+
+        1. If (dimEnv'?{dimEnv' <- dimEnv'?} matches (_)), then
+
+          1. (Let ?(dimEnv) be dimEnv'?{dimEnv' <- dimEnv'?})
+
+            1. (Let id_used*{id_used <- id_used*} be $ids_of_varis(vari*{vari <- vari*}))
+
+              1. (Dim_args: dimEnv id_used*{id_used <- id_used*} |- arg*{arg <- arg*} : dimArgsRes)
+
+                1. If (dimArgsRes <: ok<(id*, arg*, vari*)>), then
+
+                  1. (Let OK (id_arg*{id_arg <- id_arg*}, arg'*{arg' <- arg'*}, _vari*{_vari <- _vari*}) be dimArgsRes as ok<(id*, arg*, vari*)>)
+
+                    1. (Dim_exp: dimEnv id_arg*{id_arg <- id_arg*} |- typedExp : dimExpRes)
+
+                      1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+                        1. (Let OK (_id*{_id <- _id*}, typedExp', _vari'*{_vari' <- _vari'*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                          1. Result in: |- % : OK arg'*{arg' <- arg'*} '=' typedExp' as tblRowDimRes
+
+2. Otherwise,
+
+  1. Group fail: |- tblRowIL : %
+
+    1. Result in: |- % : FAIL as tblRowDimRes
+
+relation Elab_clause: EC |- defnEL : %
+
+1. If (defnEL matches DEF % % % '=' % '-' %), then
+
+  1. (Let DEF id tparam*{tparam <- tparam*} argEL*{argEL <- argEL*} '=' expEL '-' premEL*{premEL <- premEL*} be defnEL)
+
+    1. Group ok: EC |- DEF id tparam*{tparam <- tparam*} argEL*{argEL <- argEL*} '=' expEL '-' premEL*{premEL <- premEL*} : %
+
+      1. (Let funcSig?{funcSig <- funcSig?} be $find_map<id, funcSig>(EC.FUNC, id))
+
+        1. If (funcSig?{funcSig <- funcSig?} matches (_)), then
+
+          1. (Let ?(funcKind tparam'*{tparam' <- tparam'*} param*{param <- param*} ':' typ) be funcSig?{funcSig <- funcSig?})
+
+            1. If (funcKind matches DEFINED), then
+
+              1. If ((tparam'*{tparam' <- tparam'*} = tparam*{tparam <- tparam*})), then
+
+                1. If ((|argEL*{argEL <- argEL*}| = |param*{param <- param*}|)), then
+
+                  1. (Let EC'?{EC' <- EC'?} be $bind_tparams(EC, tparam*{tparam <- tparam*}))
+
+                    1. If (EC'?{EC' <- EC'?} matches (_)), then
+
+                      1. (Let ?(EC_local) be EC'?{EC' <- EC'?})
+
+                        1. (Elab_arg_defn: EC_local |- argEL*{argEL <- argEL*} '<=' param*{param <- param*} : argsDefnElabRes)
+
+                          1. If (argsDefnElabRes <: ok<(elabCtx, arg*)>), then
+
+                            1. (Let OK (EC_arg, arg*{arg <- arg*}) be argsDefnElabRes as ok<(elabCtx, arg*)>)
+
+                              1. (Elab_prems: EC_arg |- premEL*{premEL <- premEL*} : premsElabRes)
+
+                                1. If (premsElabRes <: ok<(elabCtx, premPart*)>), then
+
+                                  1. (Let OK (EC_prem, premPart*{premPart <- premPart*}) be premsElabRes as ok<(elabCtx, premPart*)>)
+
+                                    1. (Elab_exp: EC_prem |- expEL '<=' typ : expElabRes)
+
+                                      1. If (expElabRes <: ok<typedExp>), then
+
+                                        1. (Let OK typedExp be expElabRes as ok<typedExp>)
+
+                                          1. (Let premIL*{premIL <- premIL*} be $premILs_of(premPart*{premPart <- premPart*}))
+
+                                            1. (Let n_else be $count_otherwise(premPart*{premPart <- premPart*}))
+
+                                              1. If ((n_else <= 1)), then
+
+                                                1. (Dim_clause: |- arg*{arg <- arg*} '=' typedExp '-' premIL*{premIL <- premIL*} : clauseDimRes)
+
+                                                  1. If (clauseDimRes <: ok<clauseIL>), then
+
+                                                    1. (Let OK clauseIL be clauseDimRes as ok<clauseIL>)
+
+                                                      1. (Let EC''?{EC'' <- EC''?} be $ite<elabCtx?>((n_else = 1), $add_elsClause(EC, id, clauseIL), $add_clause(EC, id, clauseIL)))
+
+                                                        1. If (EC''?{EC'' <- EC''?} matches (_)), then
+
+                                                          1. (Let ?(EC_clause) be EC''?{EC'' <- EC''?})
+
+                                                            1. Result in: % |- % : OK (EC_clause, []) as defElabRes
+
+2. Otherwise,
+
+  1. Group fail: EC |- defnEL : %
+
+    1. Result in: % |- % : FAIL as defElabRes
+
+def $premILs_of(premPart'*{premPart' <- premPart'*})
+
+1. Case analysis on premPart'*{premPart' <- premPart'*} (total)
+
+  1. Case (% matches pattern [])
+
+    1. Return []
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let premPart :: premPart_t*{premPart_t <- premPart_t*} be premPart'*{premPart' <- premPart'*})
+
+      1. Case analysis on premPart (total)
+
+        1. Case (% matches pattern PREM %)
+
+          1. (Let PREM premIL be premPart)
+
+            1. Return premIL :: $premILs_of(premPart_t*{premPart_t <- premPart_t*})
+
+        2. Case (% matches pattern DECLARE)
+
+          1. Return $premILs_of(premPart_t*{premPart_t <- premPart_t*})
+
+        3. Case (% matches pattern ELSE)
+
+          1. Return $premILs_of(premPart_t*{premPart_t <- premPart_t*})
+
+def $count_otherwise(premPart'*{premPart' <- premPart'*})
+
+1. Case analysis on premPart'*{premPart' <- premPart'*} (total)
+
+  1. Case (% matches pattern [])
+
+    1. Return 0
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let premPart :: premPart_t*{premPart_t <- premPart_t*} be premPart'*{premPart' <- premPart'*})
+
+      1. Case analysis on premPart matches ELSE (total)
+
+        1. Case true
+
+          1. Return ($count_otherwise(premPart_t*{premPart_t <- premPart_t*}) + 1)
+
+        2. Case false
+
+          1. Return $count_otherwise(premPart_t*{premPart_t <- premPart_t*})
+
+def $add_rules(EC, id_rel, id_group, rulIL'*{rulIL' <- rulIL'*}, b_else*{b_else <- b_else*})
+
+1. If (~$exists_(b_else*{b_else <- b_else*})), then
+
+  1. (Let EC'?{EC' <- EC'?} be $add_rulGroup(EC, id_rel, id_group ':' rulIL'*{rulIL' <- rulIL'*}))
+
+    1. If (EC'?{EC' <- EC'?} matches (_)), then
+
+      1. (Let ?(EC_group) be EC'?{EC' <- EC'?})
+
+        1. Return ?(EC_group)
+
+2. If (rulIL'*{rulIL' <- rulIL'*} matches [ _/1 ]), then
+
+  1. (Let [rulIL] be rulIL'*{rulIL' <- rulIL'*})
+
+    1. If ((b_else*{b_else <- b_else*} = [true])), then
+
+      1. (Let EC'?{EC' <- EC'?} be $add_elsGroup(EC, id_rel, id_group ':' rulIL))
+
+        1. If (EC'?{EC' <- EC'?} matches (_)), then
+
+          1. (Let ?(EC_group) be EC'?{EC' <- EC'?})
+
+            1. Return ?(EC_group)
+
+3. Otherwise,
+
+  1. Return ?()
+
+def $args_of_pattern(expEL')
+
+1. If (expEL' matches TUP %), then
+
+  1. (Let TUP expEL*{expEL <- expEL*} be expEL')
+
+    1. Return EXP expEL*{expEL <- expEL*}
+
+2. Otherwise,
+
+  1. Return [EXP expEL']
 
 def $declare_typ(EC, id, tparam*{tparam <- tparam*})
 
@@ -5314,6 +6908,152 @@ def $declare_typ_body(EC, id, tparam*{tparam <- tparam*})
 3. Otherwise,
 
   1. Return ?()
+
+def $assemble(bodyenv, defnIL)
+
+1. Case analysis on defnIL
+
+  1. Case (% has type definedRelDefnIL)
+
+    1. (Let REL id ':' typ*{typ <- typ*} `( inputHint `) '=' _rulGroupIL*{_rulGroupIL <- _rulGroupIL*} _elsGroupIL?{_elsGroupIL <- _elsGroupIL?} be defnIL as definedRelDefnIL)
+
+      1. (Let body'?{body' <- body'?} be $find_map<id, body>(bodyenv, id))
+
+        1. If (body'?{body' <- body'?} matches (_)), then
+
+          1. (Let ?(body) be body'?{body' <- body'?})
+
+            1. If (body matches RULES % %), then
+
+              1. (Let RULES rulGroupIL*{rulGroupIL <- rulGroupIL*} elsGroupIL?{elsGroupIL <- elsGroupIL?} be body)
+
+                1. Return REL id ':' typ*{typ <- typ*} `( inputHint `) '=' rulGroupIL*{rulGroupIL <- rulGroupIL*} elsGroupIL?{elsGroupIL <- elsGroupIL?} as defnIL
+
+  2. Case (% has type definedFuncDefnIL)
+
+    1. (Let FUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' _clauseIL*{_clauseIL <- _clauseIL*} _elsClauseIL?{_elsClauseIL <- _elsClauseIL?} be defnIL as definedFuncDefnIL)
+
+      1. (Let body'?{body' <- body'?} be $find_map<id, body>(bodyenv, id))
+
+        1. If (body'?{body' <- body'?} matches (_)), then
+
+          1. (Let ?(body) be body'?{body' <- body'?})
+
+            1. If (body matches CLAUSES % %), then
+
+              1. (Let CLAUSES clauseIL*{clauseIL <- clauseIL*} elsClauseIL?{elsClauseIL <- elsClauseIL?} be body)
+
+                1. Return FUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' clauseIL*{clauseIL <- clauseIL*} elsClauseIL?{elsClauseIL <- elsClauseIL?} as defnIL
+
+  3. Case (% has type tableFuncDefnIL)
+
+    1. (Let TABLEFUNC id param*{param <- param*} ':' typ '=' _tblRowIL*{_tblRowIL <- _tblRowIL*} be defnIL as tableFuncDefnIL)
+
+      1. (Let body'?{body' <- body'?} be $find_map<id, body>(bodyenv, id))
+
+        1. If (body'?{body' <- body'?} matches (_)), then
+
+          1. (Let ?(body) be body'?{body' <- body'?})
+
+            1. If (body matches ROWS %), then
+
+              1. (Let ROWS tblRowIL*{tblRowIL <- tblRowIL*} be body)
+
+                1. Return TABLEFUNC id param*{param <- param*} ':' typ '=' tblRowIL*{tblRowIL <- tblRowIL*} as defnIL
+
+2. Otherwise,
+
+  1. Return defnIL
+
+def $dim_bounds(vari*{vari <- vari*})
+
+1. (Let vari_named*{vari_named <- vari_named*} be $drop_varis(vari*{vari <- vari*}, ["_"]))
+
+  1. (Let vari_bound*{vari_bound <- vari_bound*} be $shallowest_varis(vari_named*{vari_named <- vari_named*}))
+
+    1. (Let id_bound _typ _iter*{_iter <- _iter*} be vari_bound)*{vari_bound <- vari_bound*, _iter* -> _iter**, _typ -> _typ*, id_bound -> id_bound*}
+
+      1. (Let dimEnv be `{ id_bound ':' vari_bound*{id_bound <- id_bound*, vari_bound <- vari_bound*} `})
+
+        1. (Let id_named _typ' _iter'*{_iter' <- _iter'*} be vari_named)*{vari_named <- vari_named*, _iter'* -> _iter'**, _typ' -> _typ'*, id_named -> id_named*}
+
+          1. (Let vari'?{vari' <- vari'?} be $find_map<id, vari>(dimEnv, id_named))*{id_named <- id_named*, vari'? -> vari'?*}
+
+            1. If (vari'?{vari' <- vari'?} matches (_))*{vari'? <- vari'?*}, then
+
+              1. (Let ?(vari_min) be vari'?{vari' <- vari'?})*{vari'? <- vari'?*, vari_min -> vari_min*}
+
+                1. If ($forall_($is_prefix_dim(vari_min, vari_named)*{vari_min <- vari_min*, vari_named <- vari_named*})), then
+
+                  1. Return ?(dimEnv)
+
+2. Otherwise,
+
+  1. Return ?()
+
+def $is_iterated(dimEnv, vari, iter)
+
+1. (Let id _typ _iter*{_iter <- _iter*} be vari)
+
+  1. (Let vari'?{vari' <- vari'?} be $find_map<id, vari>(dimEnv, id))
+
+    1. If (vari'?{vari' <- vari'?} matches (_)), then
+
+      1. (Let ?(vari_bound) be vari'?{vari' <- vari'?})
+
+        1. (Let vari_iter be $iterate_vari(vari, [iter]))
+
+          1. Return $is_prefix_dim(vari_iter, vari_bound)
+
+    1. Else Dangling
+
+  2. If ($find_map<id, vari>(dimEnv, id) matches ()), then
+
+    1. Return true
+
+  2. Else Dangling
+
+def $iterated_varis(dimEnv, vari*{vari <- vari*}, iter)
+
+1. Case analysis on vari*{vari <- vari*} (total)
+
+  1. Case (% matches pattern [])
+
+    1. Return []
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let vari_h :: vari_t*{vari_t <- vari_t*} be vari*{vari <- vari*})
+
+      1. Case analysis on $is_iterated(dimEnv, vari_h, iter) (total)
+
+        1. Case true
+
+          1. (Let vari_iter_t*{vari_iter_t <- vari_iter_t*} be $iterated_varis(dimEnv, vari_t*{vari_t <- vari_t*}, iter))
+
+            1. Return vari_h :: vari_iter_t*{vari_iter_t <- vari_iter_t*}
+
+        2. Case false
+
+          1. (Let vari_iter_t*{vari_iter_t <- vari_iter_t*} be $iterated_varis(dimEnv, vari_t*{vari_t <- vari_t*}, iter))
+
+            1. Return vari_iter_t*{vari_iter_t <- vari_iter_t*}
+
+def $iterate_occs(vari*{vari <- vari*}, id*{id <- id*}, iter)
+
+1. Case analysis on vari*{vari <- vari*} (total)
+
+  1. Case (% matches pattern [])
+
+    1. Return []
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let id_h typ_h iter_h*{iter_h <- iter_h*} :: vari_t*{vari_t <- vari_t*} be vari*{vari <- vari*})
+
+      1. (Let vari_h_iter be $ite<vari>(id_h <- id*{id <- id*}, id_h typ_h iter_h*{iter_h <- iter_h*} ++ [iter], id_h typ_h iter_h*{iter_h <- iter_h*}))
+
+        1. Return vari_h_iter :: $iterate_occs(vari_t*{vari_t <- vari_t*}, id*{id <- id*}, iter)
 
 syntax algoCtx = {TYP tdenv, BOUND vari*, USED id*}
 

@@ -1,0 +1,363 @@
+;;
+;; Dimension bounds
+;;
+;; syntax vari*
+;;
+
+;; Each variable of a rule, clause, or row is bound at its shallowest
+;; occurrence, and every other occurrence must extend that dimension.
+;; For example, in `-- if n_x* = [ 1, 1 ]` and `-- if (n_x = n_y)*`,
+;; `n_x` is bound as `n_x*`; with `-- if n_y = 1`, `n_y` is bound as `n_y`.
+;; Wildcards are left out: each is bound at its only occurrence
+
+dec $dim_bounds(vari*) : dimEnv?
+  hint(prose_in "the dimension bounds of occurrences" %0)
+def $dim_bounds(vari*) = dimEnv
+  -- if vari_named* = $drop_varis(vari*, [ "_" ])
+  -- if vari_bound* = $shallowest_varis(vari_named*)
+  -- if (id_bound _ _ = vari_bound)*
+  -- if dimEnv = `{ (id_bound ':' vari_bound)* `}
+  -- if (id_named _ _ = vari_named)*
+  -- if (vari_min = $find_map<id, vari>(dimEnv, id_named))*
+  -- if $forall_($is_prefix_dim(vari_min, vari_named)*)
+def $dim_bounds(vari*) = eps
+  -- otherwise
+
+;; An iteration iterates the variables that, iterated once more,
+;; stay within their bound; a renamed wildcard is always iterated
+
+dec $is_iterated(dimEnv, vari, iter) : bool
+  hint(prose_in %1 "iterated by" %2 "stays within its bound under" %0)
+def $is_iterated(dimEnv, vari, iter) = $is_prefix_dim(vari_iter, vari_bound)
+  -- if id _ _ = vari
+  -- if vari_bound = $find_map<id, vari>(dimEnv, id)
+  -- if vari_iter = $iterate_vari(vari, [ iter ])
+def $is_iterated(dimEnv, vari, iter) = true
+  -- if id _ _ = vari
+  -- if eps = $find_map<id, vari>(dimEnv, id)
+
+dec $iterated_varis(dimEnv, vari*, iter) : vari*
+  hint(prose_in "the variables of" %1 "iterated by" %2 "under" %0)
+def $iterated_varis(dimEnv, eps, iter) = eps
+def $iterated_varis(dimEnv, vari_h :: vari_t*, iter) = vari_h :: vari_iter_t*
+  -- if $is_iterated(dimEnv, vari_h, iter)
+  -- if vari_iter_t* = $iterated_varis(dimEnv, vari_t*, iter)
+def $iterated_varis(dimEnv, vari_h :: vari_t*, iter) = vari_iter_t*
+  -- if ~$is_iterated(dimEnv, vari_h, iter)
+  -- if vari_iter_t* = $iterated_varis(dimEnv, vari_t*, iter)
+
+;; Outside an iteration, its iterated variables gain that dimension
+
+dec $iterate_occs(vari*, id*, iter) : vari*
+  hint(prose_in "occurrences" %0 "with variables" %1 "iterated by" %2)
+def $iterate_occs(eps, id*, iter) = eps
+def $iterate_occs((id_h typ_h iter_h*) :: vari_t*, id*, iter)
+  = vari_h_iter :: $iterate_occs(vari_t*, id*, iter)
+  -- if vari_h_iter = $ite<vari>(id_h <- id*, id_h typ_h (iter_h* ++ [ iter ]), id_h typ_h iter_h*)
+
+;;
+;; Expression annotation
+;;
+;; syntax typedExp
+;;
+
+;; Annotation fills in the iterated variables of each iteration and renames
+;; each wildcard to a fresh identifier, threading the identifiers in use;
+;; it returns the occurrences with their dimensions outside the term
+
+;;; literalExp
+
+rule Dim_exp/literal:
+  dimEnv id* |- literalExp '#' typ : OK (id*, literalExp '#' typ, eps)
+
+;;; varExp
+
+rule Dim_exp/variable:
+  dimEnv id* |- (VAR id_var) '#' typ : OK (id*, (VAR id_var) '#' typ, [ id_var typ eps ])
+  -- if id_var =/= "_"
+
+rule Dim_exp/wildcard:
+  dimEnv id* |- (VAR "_") '#' typ
+    : OK (id* ++ [ id_fresh ], (VAR id_fresh) '#' typ, [ id_fresh typ eps ])
+  -- if id_fresh = $fresh(id*, "_")
+
+;;; Expressions with subexpressions
+
+rule Dim_exp/unary:
+  dimEnv id* |- (UN unOp typedExp) '#' typ : OK (id'*, (UN unOp typedExp') '#' typ, vari*)
+  -- Dim_exp: dimEnv id* |- typedExp : OK (id'*, typedExp', vari*)
+
+rule Dim_exp/binary:
+  dimEnv id* |- (BIN binOp typedExp_l typedExp_r) '#' typ
+    : OK (id'*, (BIN binOp typedExp_l' typedExp_r') '#' typ, vari*)
+  -- Dim_exps: dimEnv id* |- [ typedExp_l, typedExp_r ] : OK (id'*, [ typedExp_l', typedExp_r' ], vari*)
+
+rule Dim_exp/compare:
+  dimEnv id* |- (CMP cmpOp typedExp_l typedExp_r) '#' typ
+    : OK (id'*, (CMP cmpOp typedExp_l' typedExp_r') '#' typ, vari*)
+  -- Dim_exps: dimEnv id* |- [ typedExp_l, typedExp_r ] : OK (id'*, [ typedExp_l', typedExp_r' ], vari*)
+
+rule Dim_exp/upcast:
+  dimEnv id* |- (UPCAST typ_cast typedExp) '#' typ
+    : OK (id'*, (UPCAST typ_cast typedExp') '#' typ, vari*)
+  -- Dim_exp: dimEnv id* |- typedExp : OK (id'*, typedExp', vari*)
+
+rule Dim_exp/downcast:
+  dimEnv id* |- (DOWNCAST typ_cast typedExp) '#' typ
+    : OK (id'*, (DOWNCAST typ_cast typedExp') '#' typ, vari*)
+  -- Dim_exp: dimEnv id* |- typedExp : OK (id'*, typedExp', vari*)
+
+rule Dim_exp/subtype:
+  dimEnv id* |- (SUB typedExp typ_sub) '#' typ : OK (id'*, (SUB typedExp' typ_sub) '#' typ, vari*)
+  -- Dim_exp: dimEnv id* |- typedExp : OK (id'*, typedExp', vari*)
+
+rule Dim_exp/match:
+  dimEnv id* |- (MATCH typedExp pat) '#' typ : OK (id'*, (MATCH typedExp' pat) '#' typ, vari*)
+  -- Dim_exp: dimEnv id* |- typedExp : OK (id'*, typedExp', vari*)
+
+rule Dim_exp/tuple:
+  dimEnv id* |- (TUP typedExp*) '#' typ : OK (id'*, (TUP typedExp'*) '#' typ, vari*)
+  -- Dim_exps: dimEnv id* |- typedExp* : OK (id'*, typedExp'*, vari*)
+
+rule Dim_exp/case:
+  dimEnv id* |- (INJ (mixop typedExp*)) '#' typ : OK (id'*, (INJ (mixop typedExp'*)) '#' typ, vari*)
+  -- Dim_exps: dimEnv id* |- typedExp* : OK (id'*, typedExp'*, vari*)
+
+rule Dim_exp/struct:
+  dimEnv id* |- (STR expField*) '#' typ : OK (id'*, (STR expField'*) '#' typ, vari*)
+  -- if (atom typedExp = expField)*
+  -- Dim_exps: dimEnv id* |- typedExp* : OK (id'*, typedExp'*, vari*)
+  -- if expField'* = (atom typedExp')*
+
+rule Dim_exp/opt-none:
+  dimEnv id* |- (OPT eps) '#' typ : OK (id*, (OPT eps) '#' typ, eps)
+
+rule Dim_exp/opt-some:
+  dimEnv id* |- (OPT typedExp) '#' typ : OK (id'*, (OPT typedExp') '#' typ, vari*)
+  -- Dim_exp: dimEnv id* |- typedExp : OK (id'*, typedExp', vari*)
+
+rule Dim_exp/list:
+  dimEnv id* |- (LIST typedExp*) '#' typ : OK (id'*, (LIST typedExp'*) '#' typ, vari*)
+  -- Dim_exps: dimEnv id* |- typedExp* : OK (id'*, typedExp'*, vari*)
+
+rule Dim_exp/cons:
+  dimEnv id* |- (CONS typedExp_h typedExp_t) '#' typ
+    : OK (id'*, (CONS typedExp_h' typedExp_t') '#' typ, vari*)
+  -- Dim_exps: dimEnv id* |- [ typedExp_h, typedExp_t ] : OK (id'*, [ typedExp_h', typedExp_t' ], vari*)
+
+rule Dim_exp/concat:
+  dimEnv id* |- (CAT typedExp_l typedExp_r) '#' typ
+    : OK (id'*, (CAT typedExp_l' typedExp_r') '#' typ, vari*)
+  -- Dim_exps: dimEnv id* |- [ typedExp_l, typedExp_r ] : OK (id'*, [ typedExp_l', typedExp_r' ], vari*)
+
+rule Dim_exp/mem:
+  dimEnv id* |- (MEM typedExp_e typedExp_s) '#' typ
+    : OK (id'*, (MEM typedExp_e' typedExp_s') '#' typ, vari*)
+  -- Dim_exps: dimEnv id* |- [ typedExp_e, typedExp_s ] : OK (id'*, [ typedExp_e', typedExp_s' ], vari*)
+
+rule Dim_exp/len:
+  dimEnv id* |- (LEN typedExp) '#' typ : OK (id'*, (LEN typedExp') '#' typ, vari*)
+  -- Dim_exp: dimEnv id* |- typedExp : OK (id'*, typedExp', vari*)
+
+rule Dim_exp/dot:
+  dimEnv id* |- (DOT typedExp atom) '#' typ : OK (id'*, (DOT typedExp' atom) '#' typ, vari*)
+  -- Dim_exp: dimEnv id* |- typedExp : OK (id'*, typedExp', vari*)
+
+rule Dim_exp/idx:
+  dimEnv id* |- (IDX typedExp_b typedExp_i) '#' typ
+    : OK (id'*, (IDX typedExp_b' typedExp_i') '#' typ, vari*)
+  -- Dim_exps: dimEnv id* |- [ typedExp_b, typedExp_i ] : OK (id'*, [ typedExp_b', typedExp_i' ], vari*)
+
+rule Dim_exp/slice:
+  dimEnv id* |- (SLICE typedExp_b typedExp_i typedExp_n) '#' typ
+    : OK (id'*, (SLICE typedExp_b' typedExp_i' typedExp_n') '#' typ, vari*)
+  -- Dim_exps: dimEnv id* |- [ typedExp_b, typedExp_i, typedExp_n ]
+      : OK (id'*, [ typedExp_b', typedExp_i', typedExp_n' ], vari*)
+
+rule Dim_exp/upd:
+  dimEnv id* |- (UPD typedExp_b typedPath typedExp_f) '#' typ
+    : OK (id_f*, (UPD typedExp_b' typedPath' typedExp_f') '#' typ, vari_b* ++ vari_p* ++ vari_f*)
+  -- Dim_exp: dimEnv id* |- typedExp_b : OK (id_b*, typedExp_b', vari_b*)
+  -- Dim_path: dimEnv id_b* |- typedPath : OK (id_p*, typedPath', vari_p*)
+  -- Dim_exp: dimEnv id_p* |- typedExp_f : OK (id_f*, typedExp_f', vari_f*)
+
+rule Dim_exp/call:
+  dimEnv id* |- (CALL id_func targ* arg*) '#' typ : OK (id'*, (CALL id_func targ* arg'*) '#' typ, vari*)
+  -- Dim_args: dimEnv id* |- arg* : OK (id'*, arg'*, vari*)
+
+;;; iterExp
+
+;; An iteration needs at least one variable to iterate
+
+rule Dim_exp/iter:
+  dimEnv id* |- (ITER typedExp (iter _)) '#' typ
+    : OK (id'*, (ITER typedExp' (iter vari_iter*)) '#' typ, vari_out*)
+  -- Dim_exp: dimEnv id* |- typedExp : OK (id'*, typedExp', vari*)
+  -- if vari_shallow* = $shallowest_varis(vari*)
+  -- if vari_iter* = $iterated_varis(dimEnv, vari_shallow*, iter)
+  -- if vari_iter* =/= eps
+  -- if vari_out* = $iterate_occs(vari_shallow*, $ids_of_varis(vari_iter*), iter)
+
+rule Dim_exp/fail:
+  dimEnv id* |- typedExp : FAIL
+  -- otherwise
+
+;;
+;; Sequences, paths, and arguments
+;;
+
+rulegroup Dim_exps {
+
+  rule Dim_exps/nil:
+    dimEnv id* |- eps : OK (id*, eps, eps)
+
+  rule Dim_exps/cons:
+    dimEnv id* |- typedExp_h :: typedExp_t*
+      : OK (id_t*, typedExp_h' :: typedExp_t'*, vari_h* ++ vari_t*)
+    -- Dim_exp: dimEnv id* |- typedExp_h : OK (id_h*, typedExp_h', vari_h*)
+    -- Dim_exps: dimEnv id_h* |- typedExp_t* : OK (id_t*, typedExp_t'*, vari_t*)
+
+}
+
+rule Dim_exps/fail:
+  dimEnv id* |- typedExp* : FAIL
+  -- otherwise
+
+rule Dim_path/root:
+  dimEnv id* |- ROOT '#' typ : OK (id*, ROOT '#' typ, eps)
+
+rule Dim_path/idx:
+  dimEnv id* |- (IDX typedPath typedExp) '#' typ
+    : OK (id_e*, (IDX typedPath' typedExp') '#' typ, vari_p* ++ vari_e*)
+  -- Dim_path: dimEnv id* |- typedPath : OK (id_p*, typedPath', vari_p*)
+  -- Dim_exp: dimEnv id_p* |- typedExp : OK (id_e*, typedExp', vari_e*)
+
+rule Dim_path/slice:
+  dimEnv id* |- (SLICE typedPath typedExp_i typedExp_n) '#' typ
+    : OK (id_e*, (SLICE typedPath' typedExp_i' typedExp_n') '#' typ, vari_p* ++ vari_e*)
+  -- Dim_path: dimEnv id* |- typedPath : OK (id_p*, typedPath', vari_p*)
+  -- Dim_exps: dimEnv id_p* |- [ typedExp_i, typedExp_n ] : OK (id_e*, [ typedExp_i', typedExp_n' ], vari_e*)
+
+rule Dim_path/dot:
+  dimEnv id* |- (DOT typedPath atom) '#' typ : OK (id'*, (DOT typedPath' atom) '#' typ, vari*)
+  -- Dim_path: dimEnv id* |- typedPath : OK (id'*, typedPath', vari*)
+
+rule Dim_path/fail:
+  dimEnv id* |- typedPath : FAIL
+  -- otherwise
+
+rulegroup Dim_args {
+
+  rule Dim_args/nil:
+    dimEnv id* |- eps : OK (id*, eps, eps)
+
+  rule Dim_args/exp:
+    dimEnv id* |- (EXP typedExp) :: arg_t* : OK (id_t*, (EXP typedExp') :: arg_t'*, vari_h* ++ vari_t*)
+    -- Dim_exp: dimEnv id* |- typedExp : OK (id_h*, typedExp', vari_h*)
+    -- Dim_args: dimEnv id_h* |- arg_t* : OK (id_t*, arg_t'*, vari_t*)
+
+  rule Dim_args/fun:
+    dimEnv id* |- (FUN id_func) :: arg_t* : OK (id_t*, (FUN id_func) :: arg_t'*, vari_t*)
+    -- Dim_args: dimEnv id* |- arg_t* : OK (id_t*, arg_t'*, vari_t*)
+
+}
+
+rule Dim_args/fail:
+  dimEnv id* |- arg* : FAIL
+  -- otherwise
+
+;;
+;; Premise annotation
+;;
+;; syntax premIL
+;;
+
+rule Dim_prem/relpr:
+  dimEnv id* |- REL id_rel ':' typedExp* `( inputHint `)
+    : OK (id'*, REL id_rel ':' typedExp'* `( inputHint `), vari*)
+  -- Dim_exps: dimEnv id* |- typedExp* : OK (id'*, typedExp'*, vari*)
+
+rule Dim_prem/ifpr:
+  dimEnv id* |- IF typedExp : OK (id'*, IF typedExp', vari*)
+  -- Dim_exp: dimEnv id* |- typedExp : OK (id'*, typedExp', vari*)
+
+rule Dim_prem/ifhold:
+  dimEnv id* |- IFHOLD id_rel ':' typedExp* : OK (id'*, IFHOLD id_rel ':' typedExp'*, vari*)
+  -- Dim_exps: dimEnv id* |- typedExp* : OK (id'*, typedExp'*, vari*)
+
+rule Dim_prem/ifnothold:
+  dimEnv id* |- IFNOTHOLD id_rel ':' typedExp* : OK (id'*, IFNOTHOLD id_rel ':' typedExp'*, vari*)
+  -- Dim_exps: dimEnv id* |- typedExp* : OK (id'*, typedExp'*, vari*)
+
+rule Dim_prem/iter:
+  dimEnv id* |- ITER premIL (iter _) : OK (id'*, ITER premIL' (iter vari_iter*), vari_out*)
+  -- Dim_prem: dimEnv id* |- premIL : OK (id'*, premIL', vari*)
+  -- if vari_shallow* = $shallowest_varis(vari*)
+  -- if vari_iter* = $iterated_varis(dimEnv, vari_shallow*, iter)
+  -- if vari_iter* =/= eps
+  -- if vari_out* = $iterate_occs(vari_shallow*, $ids_of_varis(vari_iter*), iter)
+
+rule Dim_prem/dbg:
+  dimEnv id* |- DEBUG typedExp : OK (id'*, DEBUG typedExp', vari*)
+  -- Dim_exp: dimEnv id* |- typedExp : OK (id'*, typedExp', vari*)
+
+rule Dim_prem/fail:
+  dimEnv id* |- premIL : FAIL
+  -- otherwise
+
+rulegroup Dim_prems {
+
+  rule Dim_prems/nil:
+    dimEnv id* |- eps : OK (id*, eps, eps)
+
+  rule Dim_prems/cons:
+    dimEnv id* |- premIL_h :: premIL_t* : OK (id_t*, premIL_h' :: premIL_t'*, vari_h* ++ vari_t*)
+    -- Dim_prem: dimEnv id* |- premIL_h : OK (id_h*, premIL_h', vari_h*)
+    -- Dim_prems: dimEnv id_h* |- premIL_t* : OK (id_t*, premIL_t'*, vari_t*)
+
+}
+
+rule Dim_prems/fail:
+  dimEnv id* |- premIL* : FAIL
+  -- otherwise
+
+;;
+;; Rules, clauses, and table rows
+;;
+
+rule Dim_rul/ok:
+  |- id ':' typedExp* '-' premIL* : OK (id ':' typedExp'* '-' premIL'*)
+  -- if vari* = $free_varis_rulIL(id ':' typedExp* '-' premIL*)
+  -- if dimEnv = $dim_bounds(vari*)
+  -- if id_used* = $ids_of_varis(vari*)
+  -- Dim_exps: dimEnv id_used* |- typedExp* : OK (id_exp*, typedExp'*, _)
+  -- Dim_prems: dimEnv id_exp* |- premIL* : OK (_, premIL'*, _)
+
+rule Dim_rul/fail:
+  |- rulIL : FAIL
+  -- otherwise
+
+rule Dim_clause/ok:
+  |- arg* '=' typedExp '-' premIL* : OK (arg'* '=' typedExp' '-' premIL'*)
+  -- if vari* = $free_varis_clauseIL(arg* '=' typedExp '-' premIL*)
+  -- if dimEnv = $dim_bounds(vari*)
+  -- if id_used* = $ids_of_varis(vari*)
+  -- Dim_args: dimEnv id_used* |- arg* : OK (id_arg*, arg'*, _)
+  -- Dim_prems: dimEnv id_arg* |- premIL* : OK (id_prem*, premIL'*, _)
+  -- Dim_exp: dimEnv id_prem* |- typedExp : OK (_, typedExp', _)
+
+rule Dim_clause/fail:
+  |- clauseIL : FAIL
+  -- otherwise
+
+rule Dim_tblRow/ok:
+  |- arg* '=' typedExp : OK (arg'* '=' typedExp')
+  -- if vari* = $free_varis_tblRowIL(arg* '=' typedExp)
+  -- if dimEnv = $dim_bounds(vari*)
+  -- if id_used* = $ids_of_varis(vari*)
+  -- Dim_args: dimEnv id_used* |- arg* : OK (id_arg*, arg'*, _)
+  -- Dim_exp: dimEnv id_arg* |- typedExp : OK (_, typedExp', _)
+
+rule Dim_tblRow/fail:
+  |- tblRowIL : FAIL
+  -- otherwise
