@@ -8655,49 +8655,70 @@ relation Algo_IL: |- specIL : specAL
     -- (if Otherwise_pure: |- defnAL_guard holds)*{defnAL_guard <- defnAL_guard*}
     -- output: |- % : defnAL_guard*{defnAL_guard <- defnAL_guard*}
 
-relation Eval_IL: |- specIL id val* : val*
+relation Eval_IL_rel: specIL |- id `( val* `) : val*
 
   rulegroup
 
    match
 
-    (signature) |- specIL id val*{val <- val*} : %
-    |- specIL id val*{val <- val*} : %
+    (signature) specIL |- id `( val*{val <- val*} `) : %
+    specIL |- id `( val*{val <- val*} `) : %
 
    paths
 
     rulepath
     -- Algo_IL: |- specIL : specAL
-    -- Eval_AL: |- specAL id val*{val <- val*} : val'*{val' <- val'*}
-    -- output: |- % % % : val'*{val' <- val'*}
+    -- Eval_AL_rel: specAL |- id `( val*{val <- val*} `) : val'*{val' <- val'*}
+    -- output: % |- % `( % `) : val'*{val' <- val'*}
 
-relation Eval_AL: |- specAL id val* : val*
+relation Eval_IL_func: specIL |- id `( val* `) : val
 
   rulegroup
 
    match
 
-    (signature) |- specAL id val*{val <- val*} : %
-    |- specAL id val*{val <- val*} : %
+    (signature) specIL |- id `( val*{val <- val*} `) : %
+    specIL |- id `( val*{val <- val*} `) : %
 
    paths
 
-    rulepath rel
+    rulepath
+    -- Algo_IL: |- specIL : specAL
+    -- Eval_AL_func: specAL |- id `( val*{val <- val*} `) : val'
+    -- output: % |- % `( % `) : val'
+
+relation Eval_AL_rel: specAL |- id `( val* `) : val*
+
+  rulegroup
+
+   match
+
+    (signature) specAL |- id `( val*{val <- val*} `) : %
+    specAL |- id `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath
     -- let C = $load_ctx($empty_ctx, specAL)
-    -- let relDefnAL'?{relDefnAL' <- relDefnAL'?} = $find_rel(C, id)
-    -- if relDefnAL'?{relDefnAL' <- relDefnAL'?} matches (_)
-    -- let ?(relDefnAL) = relDefnAL'?{relDefnAL' <- relDefnAL'?}
     -- Call_rel: C |- id `( val*{val <- val*} `) : relRes
     -- if relRes <: ok<val*>
     -- let OK val'*{val' <- val'*} = relRes as ok<val*>
-    -- output: |- % % % : val'*{val' <- val'*}
+    -- output: % |- % `( % `) : val'*{val' <- val'*}
 
-    rulepath func
+relation Eval_AL_func: specAL |- id `( val* `) : val
+
+  rulegroup
+
+   match
+
+    (signature) specAL |- id `( val*{val <- val*} `) : %
+    specAL |- id `( val*{val <- val*} `) : %
+
+   paths
+
+    rulepath
     -- let C = $load_ctx($empty_ctx, specAL)
-    -- let funcDefnAL'?{funcDefnAL' <- funcDefnAL'?} = $find_func(C, id)
-    -- if funcDefnAL'?{funcDefnAL' <- funcDefnAL'?} matches (_)
-    -- let ?(funcDefnAL) = funcDefnAL'?{funcDefnAL' <- funcDefnAL'?}
     -- Call_func: C |- id `< [] `> `( val*{val <- val*} `) : funcRes
     -- if funcRes <: ok<val>
     -- let OK val' = funcRes as ok<val>
-    -- output: |- % % % : [val']
+    -- output: % |- % `( % `) : val'

@@ -9351,46 +9351,46 @@ relation Algo_IL: |- defnIL*{defnIL <- defnIL*} : %
 
       1. Else Dangling
 
-relation Eval_IL: |- specIL id val*{val <- val*} : %
+relation Eval_IL_rel: specIL |- id `( val*{val <- val*} `) : %
 
 1. (Algo_IL: |- specIL : specAL)
 
-  1. (Eval_AL: |- specAL id val*{val <- val*} : val'*{val' <- val'*})
+  1. (Eval_AL_rel: specAL |- id `( val*{val <- val*} `) : val'*{val' <- val'*})
 
-    1. Result in: |- % % % : val'*{val' <- val'*}
+    1. Result in: % |- % `( % `) : val'*{val' <- val'*}
 
-relation Eval_AL: |- specAL id val*{val <- val*} : %
+relation Eval_IL_func: specIL |- id `( val*{val <- val*} `) : %
+
+1. (Algo_IL: |- specIL : specAL)
+
+  1. (Eval_AL_func: specAL |- id `( val*{val <- val*} `) : val')
+
+    1. Result in: % |- % `( % `) : val'
+
+relation Eval_AL_rel: specAL |- id `( val*{val <- val*} `) : %
 
 1. (Let C be $load_ctx($empty_ctx, specAL))
 
-  1. (Let relDefnAL?{relDefnAL <- relDefnAL?} be $find_rel(C, id))
+  1. (Call_rel: C |- id `( val*{val <- val*} `) : relRes)
 
-    1. If (relDefnAL?{relDefnAL <- relDefnAL?} matches (_)), then
+    1. If (relRes <: ok<val*>), then
 
-      1. (Call_rel: C |- id `( val*{val <- val*} `) : relRes)
+      1. (Let OK val'*{val' <- val'*} be relRes as ok<val*>)
 
-        1. If (relRes <: ok<val*>), then
-
-          1. (Let OK val'*{val' <- val'*} be relRes as ok<val*>)
-
-            1. Result in: |- % % % : val'*{val' <- val'*}
-
-        1. Else Dangling
+        1. Result in: % |- % `( % `) : val'*{val' <- val'*}
 
     1. Else Dangling
 
-  2. (Let funcDefnAL?{funcDefnAL <- funcDefnAL?} be $find_func(C, id))
+relation Eval_AL_func: specAL |- id `( val*{val <- val*} `) : %
 
-    1. If (funcDefnAL?{funcDefnAL <- funcDefnAL?} matches (_)), then
+1. (Let C be $load_ctx($empty_ctx, specAL))
 
-      1. (Call_func: C |- id `< [] `> `( val*{val <- val*} `) : funcRes)
+  1. (Call_func: C |- id `< [] `> `( val*{val <- val*} `) : funcRes)
 
-        1. If (funcRes <: ok<val>), then
+    1. If (funcRes <: ok<val>), then
 
-          1. (Let OK val' be funcRes as ok<val>)
+      1. (Let OK val' be funcRes as ok<val>)
 
-            1. Result in: |- % % % : [val']
-
-        1. Else Dangling
+        1. Result in: % |- % `( % `) : val'
 
     1. Else Dangling

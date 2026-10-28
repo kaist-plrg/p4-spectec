@@ -8841,50 +8841,50 @@ relation Algo_IL: |- (defnIL)*{defnIL <- defnIL*} : %
 
   4. Else Dangling
 
-relation Eval_IL: |- specIL id (val)*{val <- val*} : %
+relation Eval_IL_rel: specIL |- id `( (val)*{val <- val*} `) : %
 
-1. Group : |- specIL id (val)*{val <- val*} : %
+1. Group : specIL |- id `( (val)*{val <- val*} `) : %
 
   1. (Algo_IL: |- specIL : specAL)
 
-  2. (Eval_AL: |- specAL id (val)*{val <- val*} : (val')*{val' <- val'*})
+  2. (Eval_AL_rel: specAL |- id `( (val)*{val <- val*} `) : (val')*{val' <- val'*})
 
-  3. Result in: |- % % % : (val')*{val' <- val'*}
+  3. Result in: % |- % `( % `) : (val')*{val' <- val'*}
 
-relation Eval_AL: |- specAL id (val)*{val <- val*} : %
+relation Eval_IL_func: specIL |- id `( (val)*{val <- val*} `) : %
 
-1. Group : |- specAL id (val)*{val <- val*} : %
+1. Group : specIL |- id `( (val)*{val <- val*} `) : %
+
+  1. (Algo_IL: |- specIL : specAL)
+
+  2. (Eval_AL_func: specAL |- id `( (val)*{val <- val*} `) : val')
+
+  3. Result in: % |- % `( % `) : val'
+
+relation Eval_AL_rel: specAL |- id `( (val)*{val <- val*} `) : %
+
+1. Group : specAL |- id `( (val)*{val <- val*} `) : %
 
   1. (Let C be $load_ctx($empty_ctx, specAL))
 
-  2. Block (2 arms)
+  2. (Call_rel: C |- id `( (val)*{val <- val*} `) : relRes)
 
-  Arm 1:
+  3. Check ((relRes has type ok<val*>))
 
-    1. (Let (relDefnAL)?{relDefnAL <- relDefnAL?} be $find_rel(C, id))
+    1. (Let (OK (val')*{val' <- val'*}) be (relRes as ok<val*>))
 
-    2. If (((relDefnAL)?{relDefnAL <- relDefnAL?} matches pattern (_))), then
+    2. Result in: % |- % `( % `) : (val')*{val' <- val'*}
 
-      1. (Call_rel: C |- id `( (val)*{val <- val*} `) : relRes)
+relation Eval_AL_func: specAL |- id `( (val)*{val <- val*} `) : %
 
-      2. If let (OK (val')*{val' <- val'*}) of type ok<val*> be relRes, then
+1. Group : specAL |- id `( (val)*{val <- val*} `) : %
 
-        1. Result in: |- % % % : (val')*{val' <- val'*}
+  1. (Let C be $load_ctx($empty_ctx, specAL))
 
-      2. Else Dangling
+  2. (Call_func: C |- id `< [] `> `( (val)*{val <- val*} `) : funcRes)
 
-    2. Else Dangling
+  3. Check ((funcRes has type ok<val>))
 
-  Arm 2:
+    1. (Let (OK val') be (funcRes as ok<val>))
 
-    1. (Let (funcDefnAL)?{funcDefnAL <- funcDefnAL?} be $find_func(C, id))
-
-    2. Check (((funcDefnAL)?{funcDefnAL <- funcDefnAL?} matches pattern (_)))
-
-      1. (Call_func: C |- id `< [] `> `( (val)*{val <- val*} `) : funcRes)
-
-      2. Check ((funcRes has type ok<val>))
-
-        1. (Let (OK val') be (funcRes as ok<val>))
-
-        2. Result in: |- % % % : [val']
+    2. Result in: % |- % `( % `) : val'

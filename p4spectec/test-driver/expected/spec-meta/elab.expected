@@ -4256,24 +4256,34 @@ relation Algo_IL: |- specIL : specAL
     -- (Guard_def: AC |- defnAL : defnAL_guard)*{defnAL <- defnAL*, defnAL_guard <- defnAL_guard*}
     -- (if Otherwise_pure: |- defnAL_guard holds)*{defnAL_guard <- defnAL_guard*}
 
-relation Eval_IL: |- specIL id val* : val*
+relation Eval_IL_rel: specIL |- id `( val* `) : val*
 
   rulegroup
 
-    rule : |- specIL id val*{val <- val*} : val'*{val' <- val'*}
+    rule : specIL |- id `( val*{val <- val*} `) : val'*{val' <- val'*}
     -- Algo_IL: |- specIL : specAL
-    -- Eval_AL: |- specAL id val*{val <- val*} : val'*{val' <- val'*}
+    -- Eval_AL_rel: specAL |- id `( val*{val <- val*} `) : val'*{val' <- val'*}
 
-relation Eval_AL: |- specAL id val* : val*
+relation Eval_IL_func: specIL |- id `( val* `) : val
 
   rulegroup
 
-    rule rel: |- specAL id val*{val <- val*} : val'*{val' <- val'*}
+    rule : specIL |- id `( val*{val <- val*} `) : val'
+    -- Algo_IL: |- specIL : specAL
+    -- Eval_AL_func: specAL |- id `( val*{val <- val*} `) : val'
+
+relation Eval_AL_rel: specAL |- id `( val* `) : val*
+
+  rulegroup
+
+    rule : specAL |- id `( val*{val <- val*} `) : val'*{val' <- val'*}
     -- if (C = $load_ctx($empty_ctx, specAL))
-    -- if (?(relDefnAL) = $find_rel(C, id))
     -- Call_rel: C |- id `( val*{val <- val*} `) : OK val'*{val' <- val'*} as relRes
 
-    rule func: |- specAL id val*{val <- val*} : [val']
+relation Eval_AL_func: specAL |- id `( val* `) : val
+
+  rulegroup
+
+    rule : specAL |- id `( val*{val <- val*} `) : val'
     -- if (C = $load_ctx($empty_ctx, specAL))
-    -- if (?(funcDefnAL) = $find_func(C, id))
     -- Call_func: C |- id `< [] `> `( val*{val <- val*} `) : OK val' as funcRes
