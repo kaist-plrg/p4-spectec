@@ -30,3 +30,133 @@ det = true
 name = "manual"
 towers = { al = "towers/k-in-st.json" }
 root = "testdata/k-in-st/manual"
+
+# The languages of the K tutorial, in the checkout of K given by K_SRC
+# (runtimeverification/k v7.1.337), with the programs of a quick run of the
+# spec-k harness: together they cover what the runs of all their programs cover.
+# Their options are those of the tutorial Makefiles.
+
+[[suites]]
+name = "imp"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/2_imp/lesson_4"
+def = "imp.k"
+kompile = ["--gen-glr-bison-parser"]
+programs = ["tests/primes.imp"]
+expected = "testdata/k-in-st/imp"
+
+[[suites]]
+name = "lambda"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/1_lambda/lesson_8"
+def = "lambda.k"
+kompile = ["--gen-glr-bison-parser"]
+programs = ["tests/factorial-letrec.lambda", "tests/free-variable-capture.lambda"]
+expected = "testdata/k-in-st/lambda"
+
+[[suites]]
+name = "simple"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/1_untyped"
+def = "simple-untyped.md"
+krun = ["--io", "off"]
+programs = ["tests/exceptions/exceptions_14.simple"]
+expected = "testdata/k-in-st/simple"
+
+[[suites]]
+name = "kool"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/1_untyped"
+def = "kool-untyped.md"
+krun = ["--io", "off"]
+programs = ["tests/hello-world.kool"]
+expected = "testdata/k-in-st/kool"
+
+[[suites]]
+name = "lambda++"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/3_lambda++/lesson_5"
+def = "lambda.k"
+kompile = ["--syntax-module", "LAMBDA"]
+programs = ["tests/nondeterministic/arithmetic-div-zero.lambda"]
+expected = "testdata/k-in-st/lambda++"
+
+[[suites]]
+name = "imp++"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/4_imp++/lesson_7"
+def = "imp.k"
+kompile = ["--gen-glr-bison-parser"]
+krun = ["--io", "off"]
+programs = ["tests/io.imp"]
+expected = "testdata/k-in-st/imp++"
+
+[[suites]]
+name = "simple-typed-static"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/2_typed/1_static"
+def = "simple-typed-static.md"
+inputs = "tests"
+programs = ["../programs/exceptions/exceptions_13.simple"]
+expected = "testdata/k-in-st/simple-typed-static"
+
+[[suites]]
+name = "simple-typed-dynamic"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/2_typed/2_dynamic"
+def = "simple-typed-dynamic.md"
+inputs = "tests"
+krun = ["--io", "off"]
+programs = ["../programs/exceptions/exceptions_14.simple"]
+expected = "testdata/k-in-st/simple-typed-dynamic"
+
+[[suites]]
+name = "kool-typed-dynamic"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/2_typed/1_dynamic"
+def = "kool-typed-dynamic.md"
+inputs = "tests"
+krun = ["--io", "off"]
+programs = ["../programs/hello-world.kool"]
+expected = "testdata/k-in-st/kool-typed-dynamic"
+
+[[suites]]
+name = "kool-typed-static"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/2_typed/2_static"
+def = "kool-typed-static.md"
+inputs = "tests"
+krun = ["--io", "off"]
+programs = ["../programs/hello-world.kool"]
+expected = "testdata/k-in-st/kool-typed-static"
+
+[[suites]]
+name = "fun"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/3_fun/1_untyped/1_environment"
+def = "fun-untyped.md"
+inputs = "tests"
+programs = ["../../programs/empty-argument-2.fun", "../../programs/tuple-2.fun"]
+expected = "testdata/k-in-st/fun"
+
+[[suites]]
+# A run stopped after 20 steps, as krun --depth 20
+name = "depth"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/2_imp/lesson_4"
+def = "imp.k"
+depth = 20
+programs = ["tests/sum.imp"]
+expected = "testdata/k-in-st/depth"
