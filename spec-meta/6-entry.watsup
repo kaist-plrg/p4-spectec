@@ -1,4 +1,17 @@
-;; Entry point for specifications in IL and AL
+;; Entry point for specifications in EL, IL, and AL
+
+relation Elab_EL:
+  |- specEL : specElabRes
+  hint(input %0)
+  hint(prose_in "elaborating specification" %0 "into the internal language")
+  hint(prose_out %1)
+
+relation Algo_EL:
+  |- specEL : specAL
+  hint(input %0)
+  hint(prose_in "elaborating specification" %0
+                "and converting it to the algorithmic language")
+  hint(prose_out %1)
 
 relation Algo_IL:
   |- specIL : specAL
@@ -7,6 +20,20 @@ relation Algo_IL:
   hint(prose_out %1)
 
 ;; Each entry calls either a relation or a function, never trying both
+
+relation Eval_EL_rel:
+  specEL |- id `( val* `) : val*
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating specification" %0
+                "and calling relation" %1 "with inputs" %2)
+  hint(prose_out "values" %3)
+
+relation Eval_EL_func:
+  specEL |- id `( val* `) : val
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating specification" %0
+                "and calling function" %1 "with inputs" %2)
+  hint(prose_out "value" %3)
 
 relation Eval_IL_rel:
   specIL |- id `( val* `) : val*
@@ -40,6 +67,26 @@ rule Algo_IL:
   -- (Algo_def: AC |- defnIL : defnAL)*
   -- (Guard_def: AC |- defnAL : defnAL_guard)*
   -- (Otherwise_pure: |- defnAL_guard)*
+
+rule Elab_EL:
+  |- specEL : specElabRes
+  -- if EC = $empty_elabCtx
+  -- Elab_spec: EC |- specEL : specElabRes
+
+rule Algo_EL:
+  |- specEL : specAL
+  -- Elab_EL: |- specEL : OK specIL
+  -- Algo_IL: |- specIL : specAL
+
+rule Eval_EL_rel:
+  specEL |- id `( val* `) : val'*
+  -- Algo_EL: |- specEL : specAL
+  -- Eval_AL_rel: specAL |- id `( val* `) : val'*
+
+rule Eval_EL_func:
+  specEL |- id `( val* `) : val'
+  -- Algo_EL: |- specEL : specAL
+  -- Eval_AL_func: specAL |- id `( val* `) : val'
 
 rule Eval_IL_rel:
   specIL |- id `( val* `) : val'*

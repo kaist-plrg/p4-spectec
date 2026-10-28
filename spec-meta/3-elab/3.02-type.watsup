@@ -1,0 +1,173 @@
+;;
+;; Plain types
+;;
+;; syntax plainTypEL
+;;
+
+;; A named type must be declared and applied to all its parameters;
+;; parentheses leave no trace
+
+rulegroup Elab_plainTyp/prim {
+
+  rule Elab_plainTyp/boolean:
+    EC |- BOOL : OK BOOL
+
+  rule Elab_plainTyp/number:
+    EC |- numtyp : OK numtyp
+
+  rule Elab_plainTyp/string:
+    EC |- TEXT : OK TEXT
+
+}
+
+rule Elab_plainTyp/named:
+  EC |- VAR id plainTypEL* : OK (VAR id typ*)
+  ---- ;; the type is declared with as many parameters as arguments
+  -- if typDef = $find_map<id, typDef>(EC.TYP, id)
+  -- if tparam* = $tparams_of_typDef(typDef)
+  -- if |tparam*| = |plainTypEL*|
+  ---- ;; elaborate the arguments
+  -- (Elab_plainTyp: EC |- plainTypEL : OK typ)*
+
+rule Elab_plainTyp/paren:
+  EC |- PAREN plainTypEL : typElabRes
+  -- Elab_plainTyp: EC |- plainTypEL : typElabRes
+
+rule Elab_plainTyp/tuple:
+  EC |- TUP plainTypEL* : OK (TUP typ*)
+  -- (Elab_plainTyp: EC |- plainTypEL : OK typ)*
+
+rule Elab_plainTyp/iter:
+  EC |- ITER plainTypEL iter : OK (ITER typ iter)
+  -- Elab_plainTyp: EC |- plainTypEL : OK typ
+
+rule Elab_plainTyp/fail:
+  EC |- plainTypEL : FAIL
+  -- otherwise
+
+;;
+;; Notation types
+;;
+;; syntax typEL
+;;
+
+;; The skeleton mirrors the notation; each plain type is an argument position
+
+rule Elab_notTyp/plain:
+  EC |- PLAIN plainTypEL : OK (ARG ([ typ ]))
+  -- Elab_plainTyp: EC |- plainTypEL : OK typ
+
+rule Elab_notTyp/atom:
+  EC |- NOTATION (ATOM atom) : OK ((ATOM atom) eps)
+
+rule Elab_notTyp/seq:
+  EC |- NOTATION (SEQ typEL*) : OK ((SEQ mixop*) typ_arg*)
+  -- (Elab_notTyp: EC |- typEL : OK (mixop typ*))*
+  -- if typ_arg* = $concat_<typ>(typ**)
+
+rule Elab_notTyp/infix:
+  EC |- NOTATION (INFIX typEL_l atom typEL_r)
+     : OK ((INFIX mixop_l atom mixop_r) (typ_l* ++ typ_r*))
+  -- Elab_notTyp: EC |- typEL_l : OK (mixop_l typ_l*)
+  -- Elab_notTyp: EC |- typEL_r : OK (mixop_r typ_r*)
+
+rule Elab_notTyp/brack:
+  EC |- NOTATION (BRACK atom_l typEL atom_r) : OK ((BRACK atom_l mixop atom_r) typ*)
+  -- Elab_notTyp: EC |- typEL : OK (mixop typ*)
+
+rule Elab_notTyp/fail:
+  EC |- typEL : FAIL
+  -- otherwise
+
+;;
+;; Variant cases
+;;
+;; syntax typEL
+;;
+
+;; A notation case is new and comes from the variant being defined;
+;; a plain case names another completed variant and inherits its cases,
+;; with that variant's parameters instantiated
+
+rule Elab_typCase/notation:
+  EC typOrigin |- NOTATION notTypEL : OK ([ mixop typ* FROM typOrigin ])
+  -- Elab_notTyp: EC |- NOTATION notTypEL : OK (mixop typ*)
+
+rule Elab_typCase/plain:
+  EC typOrigin |- PLAIN plainTypEL : OK typCase_inherit*
+  ---- ;; the case names a variant type
+  -- Elab_plainTyp: EC |- plainTypEL : OK typ
+  -- if OK (VAR id targ*) = $expand_typ(EC.TYP, typ)
+  -- if TYP _ tparam* '=' (VARIANT typCase*) = $find_map<id, typDef>(EC.TYP, id)
+  -- if |tparam*| = |targ*|
+  ---- ;; instantiate the inherited cases, keeping their origins
+  -- if theta = `{ (tparam ':' targ)* `}
+  -- if (mixop typ_case* FROM (id_origin targ_origin*) = typCase)*
+  -- if (OK typ_case_inst* = $subst_typs(theta, typ_case*))*
+  -- if (OK targ_origin_inst* = $subst_typs(theta, targ_origin*))*
+  -- if typCase_inherit* = (mixop typ_case_inst* FROM (id_origin targ_origin_inst*))*
+
+rule Elab_typCase/fail:
+  EC typOrigin |- typEL : FAIL
+  -- otherwise
+
+;;
+;; Type definition bodies
+;;
+;; syntax defTypEL
+;;
+
+rule Elab_defTyp/alias:
+  EC |- _ _ '=' (ALIAS plainTypEL) : OK (ALIAS typ)
+  -- Elab_plainTyp: EC |- plainTypEL : OK typ
+
+rule Elab_defTyp/struct:
+  EC |- _ _ '=' (STRUCT typFieldEL*) : OK (STRUCT typField*)
+  -- if (atom plainTypEL = typFieldEL)*
+  -- (Elab_plainTyp: EC |- plainTypEL : OK typ)*
+  -- if typField* = (atom typ)*
+
+;; Cases come from the variant applied to its own parameters;
+;; no two cases may share a skeleton
+
+rule Elab_defTyp/variant:
+  EC |- id tparam* '=' (VARIANT typEL*) : OK (VARIANT typCase_flat*)
+  -- if typOrigin = id (VAR tparam eps)*
+  -- (Elab_typCase: EC typOrigin |- typEL : OK typCase*)*
+  -- if typCase_flat* = $concat_<typCase>(typCase**)
+  -- if (mixop _ FROM _ = typCase_flat)*
+  -- if $distinct_<mixop>(mixop*)
+
+rule Elab_defTyp/fail:
+  EC |- _ _ '=' defTypEL : FAIL
+  -- otherwise
+
+;;
+;; Parameters
+;;
+;; syntax paramEL
+;;
+
+;; A function parameter's type parameters scope over its own signature
+
+rule Elab_param/exp:
+  EC |- EXP plainTypEL : OK (EXP typ)
+  -- Elab_plainTyp: EC |- plainTypEL : OK typ
+
+rule Elab_param/fun:
+  EC |- FUN id ':' tparam* paramEL* '->' plainTypEL : OK (FUN id ':' tparam* param* '->' typ)
+  -- Elab_signature: EC |- tparam* paramEL* ':' plainTypEL : OK (param*, typ)
+
+rule Elab_param/fail:
+  EC |- paramEL : FAIL
+  -- otherwise
+
+rule Elab_signature/ok:
+  EC |- tparam* paramEL* ':' plainTypEL : OK (param*, typ)
+  -- if EC_local = $bind_tparams(EC, tparam*)
+  -- (Elab_param: EC_local |- paramEL : OK param)*
+  -- Elab_plainTyp: EC_local |- plainTypEL : OK typ
+
+rule Elab_signature/fail:
+  EC |- tparam* paramEL* ':' plainTypEL : FAIL
+  -- otherwise

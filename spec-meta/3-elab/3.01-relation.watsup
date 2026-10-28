@@ -1,0 +1,89 @@
+;;
+;;;; Types
+;;
+
+syntax typElabRes = ok<typ> | fail
+
+relation Elab_plainTyp:
+  elabCtx |- plainTypEL : typElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating plain type" %1 "under" %0)
+  hint(prose_out %2)
+
+syntax notTypElabRes = ok<notTyp> | fail
+
+relation Elab_notTyp:
+  elabCtx |- typEL : notTypElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating notation type" %1 "under" %0)
+  hint(prose_out %2)
+
+syntax typCasesElabRes = ok<typCase*> | fail
+
+relation Elab_typCase:
+  elabCtx typOrigin |- typEL : typCasesElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating variant case" %2 "introduced by" %1 "under" %0)
+  hint(prose_out %3)
+
+syntax deftypElabRes = ok<deftyp> | fail
+
+relation Elab_defTyp:
+  elabCtx |- id tparam* '=' defTypEL : deftypElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "elaborating the body" %3 "of type" %1
+                "with parameters" %2 "under" %0)
+  hint(prose_out %4)
+
+;;
+;;;; Parameters
+;;
+
+syntax paramElabRes = ok<param> | fail
+
+relation Elab_param:
+  elabCtx |- paramEL : paramElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating parameter" %1 "under" %0)
+  hint(prose_out %2)
+
+syntax signatureElabRes = ok<(param*, typ)> | fail
+
+relation Elab_signature:
+  elabCtx |- tparam* paramEL* ':' plainTypEL : signatureElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "elaborating parameters" %2 "and result type" %3
+                "with type parameters" %1 "under" %0)
+  hint(prose_out %4)
+
+;;
+;;;; Definitions
+;;
+
+;; A declaration becomes an IL definition;
+;; a body is attached to its declaration once every definition is elaborated
+
+syntax defnPart =
+  | DECL defnIL
+
+syntax defElabRes = ok<(elabCtx, defnPart*)> | fail
+
+relation Elab_def:
+  elabCtx |- defnEL : defElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating definition" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Elab_defs:
+  elabCtx |- defnEL* : defElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating definitions" %1 "in order under" %0)
+  hint(prose_out %2)
+
+syntax specElabRes = ok<specIL> | fail
+
+relation Elab_spec:
+  elabCtx |- specEL : specElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating specification" %1 "under" %0)
+  hint(prose_out %2)

@@ -150,6 +150,22 @@ def $intersect_<X>((X)*{X <- X*}, (X')*{X' <- X'*})
 
         1. Return $intersect_<X>((X_t)*{X_t <- X_t*}, (X')*{X' <- X'*})
 
+def $distinct_<X>((X)*{X <- X*})
+
+1. Case analysis on (X)*{X <- X*} (total)
+
+  1. Case (% matches pattern [])
+
+    1. Return true
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let X_h :: (X_t)*{X_t <- X_t*} be (X)*{X <- X*})
+
+    2. (Let bool be $distinct_<X>((X_t)*{X_t <- X_t*}))
+
+    3. Return (~X_h is in (X_t)*{X_t <- X_t*} /\ bool)
+
 syntax set<K> =
    | `{ K* `} (from set<K>)
 
@@ -261,6 +277,130 @@ syntax cmpOp =
    | GT (from numCmpOp)
    | LE (from numCmpOp)
    | GE (from numCmpOp)
+
+syntax plainTypEL =
+   | BOOL (from plainTypEL)
+   | NAT (from numtyp)
+   | INT (from numtyp)
+   | TEXT (from plainTypEL)
+   | VAR id plainTypEL* (from plainTypEL)
+   | PAREN plainTypEL (from plainTypEL)
+   | TUP plainTypEL* (from plainTypEL)
+   | ITER plainTypEL iter (from plainTypEL)
+
+syntax typEL =
+   | PLAIN plainTypEL (from typEL)
+   | NOTATION notTypEL (from typEL)
+
+syntax notTypEL =
+   | ATOM atom (from notTypEL)
+   | SEQ typEL* (from notTypEL)
+   | INFIX typEL atom typEL (from notTypEL)
+   | BRACK atom typEL atom (from notTypEL)
+
+syntax typFieldEL =
+   | atom plainTypEL (from typFieldEL)
+
+syntax defTypEL =
+   | ALIAS plainTypEL (from defTypEL)
+   | STRUCT typFieldEL* (from defTypEL)
+   | VARIANT typEL* (from defTypEL)
+
+syntax expFieldEL =
+   | atom expEL (from expFieldEL)
+
+syntax holeEL =
+   | NTH nat (from holeEL)
+   | NEXT (from holeEL)
+   | REST (from holeEL)
+   | NONE (from holeEL)
+
+syntax expEL =
+   | BOOL bool (from expEL)
+   | NAT nat (from num)
+   | INT int (from num)
+   | TEXT text (from expEL)
+   | ID id (from expEL)
+   | UN unOp expEL (from expEL)
+   | BIN expEL binOp expEL (from expEL)
+   | CMP expEL cmpOp expEL (from expEL)
+   | ARITH expEL (from expEL)
+   | EPS (from expEL)
+   | LIST expEL* (from expEL)
+   | CONS expEL expEL (from expEL)
+   | CAT expEL expEL (from expEL)
+   | IDX expEL expEL (from expEL)
+   | SLICE expEL expEL expEL (from expEL)
+   | LEN expEL (from expEL)
+   | MEM expEL expEL (from expEL)
+   | STR expFieldEL* (from expEL)
+   | DOT expEL atom (from expEL)
+   | UPD expEL pathEL expEL (from expEL)
+   | PAREN expEL (from expEL)
+   | TUP expEL* (from expEL)
+   | CALL id plainTypEL* argEL* (from expEL)
+   | ITER expEL iter (from expEL)
+   | SUB expEL plainTypEL (from expEL)
+   | ATOM atom (from expEL)
+   | SEQ expEL* (from expEL)
+   | INFIX expEL atom expEL (from expEL)
+   | BRACK atom expEL atom (from expEL)
+   | HOLE holeEL (from expEL)
+   | FUSE expEL expEL (from expEL)
+   | UNPAREN expEL (from expEL)
+   | LATEX text (from expEL)
+
+syntax pathEL =
+   | ROOT (from pathEL)
+   | IDX pathEL expEL (from pathEL)
+   | SLICE pathEL expEL expEL (from pathEL)
+   | DOT pathEL atom (from pathEL)
+
+syntax argEL =
+   | EXP expEL (from argEL)
+   | FUN id (from argEL)
+
+syntax paramEL =
+   | EXP plainTypEL (from paramEL)
+   | FUN id ':' tparam* paramEL* '->' plainTypEL (from paramEL)
+
+syntax premEL =
+   | VAR id ':' plainTypEL (from premEL)
+   | REL id ':' expEL (from premEL)
+   | RELNOT id ':' expEL (from premEL)
+   | IF expEL (from premEL)
+   | ELSE (from premEL)
+   | ITER premEL iter (from premEL)
+   | DEBUG expEL (from premEL)
+
+syntax hintEL =
+   | id expEL (from hintEL)
+
+syntax rulEL =
+   | id '/' id ':' expEL '-' premEL* (from rulEL)
+
+syntax tblRowEL =
+   | expEL '=' expEL (from tblRowEL)
+
+syntax syntaxEntryEL =
+   | id tparam* (from syntaxEntryEL)
+
+syntax defnEL =
+   | EXTSYNTAX id (from defnEL)
+   | SYNTAX syntaxEntryEL* (from defnEL)
+   | TYP id tparam* '=' defTypEL (from defnEL)
+   | VAR id ':' plainTypEL (from defnEL)
+   | EXTREL id ':' notTypEL hintEL* (from defnEL)
+   | REL id ':' notTypEL hintEL* (from defnEL)
+   | RULEGROUP id '/' id ':' rulEL* (from defnEL)
+   | EXTDEC id tparam* paramEL* ':' plainTypEL (from defnEL)
+   | BUILTINDEC id tparam* paramEL* ':' plainTypEL (from defnEL)
+   | TABLEDEC id paramEL* ':' plainTypEL (from defnEL)
+   | DEC id tparam* paramEL* ':' plainTypEL (from defnEL)
+   | TABLE id tblRowEL* (from defnEL)
+   | DEF id tparam* argEL* '=' expEL '-' premEL* (from defnEL)
+
+syntax specEL = defnEL*
 
 syntax mixop =
    | ARG (from mixop)
@@ -825,6 +965,7 @@ syntax typDef =
    | EXTTYP id (from externTypDefn)
    | TYP id tparam* '=' deftyp (from definedTypDefn)
    | PARAM (from typDef)
+   | DEFINING tparam* (from typDef)
 
 syntax tdenv = map<id, typDef>
 
@@ -867,7 +1008,7 @@ Arm 2:
 
     1. (Let (id_h ':' typDef_h) :: ((id_t ':' typDef_t))*{id_t <- id_t*, typDef_t <- typDef_t*} be (pair<id, typDef>)*{pair<id, typDef> <- pair<id, typDef>*})
 
-    2. Case analysis on typDef_h (total)
+    2. Case analysis on typDef_h
 
       1. Case (% has type definedTypDefn, let (TYP _id (tparam)*{tparam <- tparam*} '=' deftyp) = %)
 
@@ -912,6 +1053,8 @@ Arm 2:
       3. Case (% has type externTypDefn)
 
         1. Return $theta_of_tdenv((`{ ((id_t ':' typDef_t))*{id_t <- id_t*, typDef_t <- typDef_t*} `}))
+
+    2. Else Dangling
 
 def $ids_typ(typ')
 
@@ -1191,21 +1334,29 @@ Arm 1:
 
           1. (Let ?(typDef) be (typDef')?{typDef' <- typDef'?})
 
-          2. If let (TYP _id (tparam)*{tparam <- tparam*} '=' deftyp) of type definedTypDefn be typDef, then
+          2. Case analysis on typDef
 
-            1. Case analysis on deftyp
+            1. Case (% matches pattern DEFINING %, let (DEFINING (tparam)*{tparam <- tparam*}) = %)
 
-              1. Case (% matches pattern STRUCT %)
+              1. If ((|(tparam)*{tparam <- tparam*}| = |(targ)*{targ <- targ*}|)), then
 
-                1. If ((|(tparam)*{tparam <- tparam*}| = |(targ)*{targ <- targ*}|)), then
+                1. Return ((OK (VAR id (targ)*{targ <- targ*})) as typRes)
 
-                  1. Return ((OK (VAR id (targ)*{targ <- targ*})) as typRes)
+            2. Case (% has type definedTypDefn, let (TYP _id (tparam)*{tparam <- tparam*} '=' deftyp) = %)
 
-              2. Case (% matches pattern VARIANT %)
+              1. Case analysis on deftyp
 
-                1. If ((|(tparam)*{tparam <- tparam*}| = |(targ)*{targ <- targ*}|)), then
+                1. Case (% matches pattern STRUCT %)
 
-                  1. Return ((OK (VAR id (targ)*{targ <- targ*})) as typRes)
+                  1. If ((|(tparam)*{tparam <- tparam*}| = |(targ)*{targ <- targ*}|)), then
+
+                    1. Return ((OK (VAR id (targ)*{targ <- targ*})) as typRes)
+
+                2. Case (% matches pattern VARIANT %)
+
+                  1. If ((|(tparam)*{tparam <- tparam*}| = |(targ)*{targ <- targ*}|)), then
+
+                    1. Return ((OK (VAR id (targ)*{targ <- targ*})) as typRes)
 
     2. Case (% has type optyp, let optyp = %)
 
@@ -1734,6 +1885,917 @@ def $free_varis_tblRowIL(((arg)*{arg <- arg*} '=' typedExp))
 2. (Let (vari')*{vari' <- vari'*} be $free_varis_exp(typedExp))
 
 3. Return (vari)*{vari <- vari*} ++ (vari')*{vari' <- vari'*}
+
+syntax fail =
+   | FAIL (from fail)
+
+syntax notTyp =
+   | mixop typ* (from notTyp)
+
+syntax relKind =
+   | EXTERN (from relKind)
+   | DEFINED (from relKind)
+
+syntax relSig =
+   | relKind notTyp `( inputHint `) (from relSig)
+
+syntax funcKind =
+   | EXTERN (from funcKind)
+   | BUILTIN (from funcKind)
+   | TABLE (from funcKind)
+   | DEFINED (from funcKind)
+
+syntax funcSig =
+   | funcKind tparam* param* ':' typ (from funcSig)
+
+syntax menv = map<id, typ>
+
+syntax rsigenv = map<id, relSig>
+
+syntax fsigenv = map<id, funcSig>
+
+syntax elabCtx = {TYP tdenv, VAR menv, REL rsigenv, FUNC fsigenv}
+
+var EC : elabCtx
+
+def $empty_elabCtx
+
+1. (Let (id_prim)*{id_prim <- id_prim*} be ["bool", "nat", "int", "text"])
+
+2. (Let (typ_prim)*{typ_prim <- typ_prim*} be [((BOOL) as typ), ((NAT) as typ), ((INT) as typ), ((TEXT) as typ)])
+
+3. (Let menv_prim be $adds_map<id, typ>($empty_map<id, typ>, (id_prim)*{id_prim <- id_prim*}, (typ_prim)*{typ_prim <- typ_prim*}))
+
+4. Return {TYP $empty_map<id, typDef>, VAR menv_prim, REL $empty_map<id, relSig>, FUNC $empty_map<id, funcSig>}
+
+builtin def $metavar_id(id)
+
+def $is_tid(id)
+
+1. (Let id_meta be $metavar_id(id))
+
+2. Return (id = id_meta)
+
+def $tparams_of_typDef(typDef)
+
+1. Case analysis on typDef (total)
+
+  1. Case (% has type externTypDefn)
+
+    1. Return []
+
+  2. Case (% has type definedTypDefn, let (TYP _id (tparam)*{tparam <- tparam*} '=' _deftyp) = %)
+
+    1. Return (tparam)*{tparam <- tparam*}
+
+  3. Case (% matches pattern PARAM)
+
+    1. Return []
+
+  4. Case (% matches pattern DEFINING %, let (DEFINING (tparam)*{tparam <- tparam*}) = %)
+
+    1. Return (tparam)*{tparam <- tparam*}
+
+def $add_typDef(EC, id, typDef)
+
+1. (Let tdenv be $add_map<id, typDef>(EC.TYP, id, typDef))
+
+2. Return EC[TYP = tdenv]
+
+def $add_metavar(EC, id, typ)
+
+1. (Let menv be $add_map<id, typ>(EC.VAR, id, typ))
+
+2. Return EC[VAR = menv]
+
+def $bind_tparams(EC, (tparam)*{tparam <- tparam*})
+
+1. If ($distinct_<id>((tparam)*{tparam <- tparam*})), then
+
+  1. If (($find_map<id, typDef>(EC.TYP, tparam) matches pattern ()))*{tparam <- tparam*}, then
+
+    1. If (($find_map<id, typ>(EC.VAR, tparam) matches pattern ()))*{tparam <- tparam*}, then
+
+      1. (Let (typDef)*{typDef <- typDef*} be $repeat_<typDef>((PARAM), |(tparam)*{tparam <- tparam*}|))
+
+      2. (Let tdenv be $adds_map<id, typDef>(EC.TYP, (tparam)*{tparam <- tparam*}, (typDef)*{typDef <- typDef*}))
+
+      3. (Let menv be $adds_map<id, typ>(EC.VAR, (tparam)*{tparam <- tparam*}, ((VAR tparam []))*{tparam <- tparam*}))
+
+      4. Return ?(EC[TYP = tdenv][VAR = menv])
+
+2. Otherwise,
+
+  1. Return ?()
+
+def $add_relSig(EC, id, relSig)
+
+1. (Let rsigenv be $add_map<id, relSig>(EC.REL, id, relSig))
+
+2. Return EC[REL = rsigenv]
+
+def $add_funcSig(EC, id, funcSig)
+
+1. (Let fsigenv be $add_map<id, funcSig>(EC.FUNC, id, funcSig))
+
+2. Return EC[FUNC = fsigenv]
+
+syntax inputHintElabRes =
+   | OK inputHint (from ok<inputHint>)
+   | FAIL (from fail)
+
+def $upto_from(n_from, n)
+
+1. Block (2 arms)
+
+Arm 1:
+
+  1. If ((n_from >= n)), then
+
+    1. Return []
+
+  1. Else Dangling
+
+Arm 2:
+
+  1. Check ((n_from < n))
+
+    1. (Let (nat)*{nat <- nat*} be $upto_from((n_from + 1), n))
+
+    2. Return n_from :: (nat)*{nat <- nat*}
+
+def $upto(n)
+
+1. Return $upto_from(0, n)
+
+def $input_holes(expEL')
+
+1. Case analysis on expEL'
+
+  1. Case (% matches pattern HOLE %, let (HOLE holeEL) = %)
+
+    1. If let (NTH n) be holeEL matching pattern NTH %, then
+
+      1. Return ((OK [n]) as inputHintElabRes)
+
+  2. Case (% matches pattern SEQ %, let (SEQ (expEL)*{expEL <- expEL*}) = %)
+
+    1. If ((expEL matches pattern HOLE %))*{expEL <- expEL*}, then
+
+      1. (Let (HOLE holeEL) be expEL)*{expEL <- expEL*, holeEL -> holeEL*}
+
+      2. If ((holeEL matches pattern NTH %))*{holeEL <- holeEL*}, then
+
+        1. (Let (NTH n) be holeEL)*{holeEL <- holeEL*, n -> n*}
+
+        2. Return ((OK (n)*{n <- n*}) as inputHintElabRes)
+
+2. Otherwise,
+
+  1. Return ((FAIL) as inputHintElabRes)
+
+def $input_hint((hintEL')*{hintEL' <- hintEL'*}, n_arity)
+
+1. Case analysis on (hintEL')*{hintEL' <- hintEL'*} (total)
+
+  1. Case (% matches pattern [])
+
+    1. (Let (n)*{n <- n*} be $upto(n_arity))
+
+    2. Return ((OK (n)*{n <- n*}) as inputHintElabRes)
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let hintEL :: (_hintEL)*{_hintEL <- _hintEL*} be (hintEL')*{hintEL' <- hintEL'*})
+
+    2. (Let (t expEL) be hintEL)
+
+    3. If ((t = "input")), then
+
+      1. (Let inputHintElabRes be $input_holes(expEL))
+
+      2. If let (OK (n)*{n <- n*}) of type ok<inputHint> be inputHintElabRes, then
+
+        1. If (((n)*{n <- n*} matches pattern _ :: _)), then
+
+          1. If ($distinct_<nat>((n)*{n <- n*})), then
+
+            1. If ((n < n_arity))*{n <- n*}, then
+
+              1. Return ((OK (n)*{n <- n*}) as inputHintElabRes)
+
+2. Otherwise,
+
+  1. Return ((FAIL) as inputHintElabRes)
+
+def $is_conditional(inputHint, n_arity)
+
+1. (Let (n)*{n <- n*} be $upto(n_arity))
+
+2. Return $forall_((n is in inputHint)*{n <- n*})
+
+syntax typElabRes =
+   | OK typ (from ok<typ>)
+   | FAIL (from fail)
+
+relation Elab_plainTyp: EC |- plainTypEL' : %
+
+1. Block (2 arms)
+
+Arm 1:
+
+  1. Group prim: EC |- plainTypEL' : %
+
+    1. Case analysis on plainTypEL'
+
+      1. Case (% matches pattern BOOL)
+
+        1. Result in: % |- % : ((OK ((BOOL) as typ)) as typElabRes)
+
+      2. Case (% has type numtyp, let numtyp = %)
+
+        1. Result in: % |- % : ((OK (numtyp as typ)) as typElabRes)
+
+      3. Case (% matches pattern TEXT)
+
+        1. Result in: % |- % : ((OK ((TEXT) as typ)) as typElabRes)
+
+Arm 2:
+
+  1. Case analysis on plainTypEL'
+
+    1. Case (% matches pattern VAR % %, let (VAR id (plainTypEL)*{plainTypEL <- plainTypEL*}) = %)
+
+      1. Group named: EC |- (VAR id (plainTypEL)*{plainTypEL <- plainTypEL*}) : %
+
+        1. (Let (typDef')?{typDef' <- typDef'?} be $find_map<id, typDef>(EC.TYP, id))
+
+        2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then
+
+          1. (Let ?(typDef) be (typDef')?{typDef' <- typDef'?})
+
+          2. (Let (tparam)*{tparam <- tparam*} be $tparams_of_typDef(typDef))
+
+          3. If ((|(tparam)*{tparam <- tparam*}| = |(plainTypEL)*{plainTypEL <- plainTypEL*}|)), then
+
+            1. (Elab_plainTyp: EC |- plainTypEL : typElabRes)*{plainTypEL <- plainTypEL*, typElabRes -> typElabRes*}
+
+            2. If ((typElabRes has type ok<typ>))*{typElabRes <- typElabRes*}, then
+
+              1. (Let (OK typ) be (typElabRes as ok<typ>))*{typElabRes <- typElabRes*, typ -> typ*}
+
+              2. Result in: % |- % : ((OK (VAR id (typ)*{typ <- typ*})) as typElabRes)
+
+    2. Case (% matches pattern PAREN %, let (PAREN plainTypEL) = %)
+
+      1. Group paren: EC |- (PAREN plainTypEL) : %
+
+        1. (Elab_plainTyp: EC |- plainTypEL : typElabRes)
+
+        2. Result in: % |- % : typElabRes
+
+    3. Case (% matches pattern TUP %, let (TUP (plainTypEL)*{plainTypEL <- plainTypEL*}) = %)
+
+      1. Group tuple: EC |- (TUP (plainTypEL)*{plainTypEL <- plainTypEL*}) : %
+
+        1. (Elab_plainTyp: EC |- plainTypEL : typElabRes)*{plainTypEL <- plainTypEL*, typElabRes -> typElabRes*}
+
+        2. If ((typElabRes has type ok<typ>))*{typElabRes <- typElabRes*}, then
+
+          1. (Let (OK typ) be (typElabRes as ok<typ>))*{typElabRes <- typElabRes*, typ -> typ*}
+
+          2. Result in: % |- % : ((OK (TUP (typ)*{typ <- typ*})) as typElabRes)
+
+    4. Case (% matches pattern ITER % %, let (ITER plainTypEL iter) = %)
+
+      1. Group iter: EC |- (ITER plainTypEL iter) : %
+
+        1. (Elab_plainTyp: EC |- plainTypEL : typElabRes)
+
+        2. If let (OK typ) of type ok<typ> be typElabRes, then
+
+          1. Result in: % |- % : ((OK (ITER typ iter)) as typElabRes)
+
+2. Otherwise,
+
+  1. Group fail: EC |- plainTypEL' : %
+
+    1. Result in: % |- % : ((FAIL) as typElabRes)
+
+syntax notTypElabRes =
+   | OK notTyp (from ok<notTyp>)
+   | FAIL (from fail)
+
+relation Elab_notTyp: EC |- typEL' : %
+
+1. Case analysis on typEL' (total)
+
+  1. Case (% matches pattern PLAIN %, let (PLAIN plainTypEL) = %)
+
+    1. Group plain: EC |- (PLAIN plainTypEL) : %
+
+      1. (Elab_plainTyp: EC |- plainTypEL : typElabRes)
+
+      2. If let (OK typ) of type ok<typ> be typElabRes, then
+
+        1. Result in: % |- % : ((OK ((ARG) [typ])) as notTypElabRes)
+
+  2. Case (% matches pattern NOTATION %, let (NOTATION notTypEL) = %)
+
+    1. Case analysis on notTypEL (total)
+
+      1. Case (% matches pattern ATOM %, let (ATOM atom) = %)
+
+        1. Group atom: EC |- (NOTATION (ATOM atom)) : %
+
+          1. Result in: % |- % : ((OK ((ATOM atom) [])) as notTypElabRes)
+
+      2. Case (% matches pattern SEQ %, let (SEQ (typEL)*{typEL <- typEL*}) = %)
+
+        1. Group seq: EC |- (NOTATION (SEQ (typEL)*{typEL <- typEL*})) : %
+
+          1. (Elab_notTyp: EC |- typEL : notTypElabRes)*{typEL <- typEL*, notTypElabRes -> notTypElabRes*}
+
+          2. If ((notTypElabRes has type ok<notTyp>))*{notTypElabRes <- notTypElabRes*}, then
+
+            1. (Let (OK (mixop (typ)*{typ <- typ*})) be (notTypElabRes as ok<notTyp>))*{notTypElabRes <- notTypElabRes*, mixop -> mixop*, typ* -> typ**}
+
+            2. (Let (typ_arg)*{typ_arg <- typ_arg*} be $concat_<typ>(((typ)*{typ <- typ*})*{typ* <- typ**}))
+
+            3. Result in: % |- % : ((OK ((SEQ (mixop)*{mixop <- mixop*}) (typ_arg)*{typ_arg <- typ_arg*})) as notTypElabRes)
+
+      3. Case (% matches pattern INFIX % % %, let (INFIX typEL_l atom typEL_r) = %)
+
+        1. Group infix: EC |- (NOTATION (INFIX typEL_l atom typEL_r)) : %
+
+          1. (Elab_notTyp: EC |- typEL_l : notTypElabRes)
+
+          2. If let (OK (mixop_l (typ_l)*{typ_l <- typ_l*})) of type ok<notTyp> be notTypElabRes, then
+
+            1. (Elab_notTyp: EC |- typEL_r : notTypElabRes')
+
+            2. If let (OK (mixop_r (typ_r)*{typ_r <- typ_r*})) of type ok<notTyp> be notTypElabRes', then
+
+              1. Result in: % |- % : ((OK ((INFIX mixop_l atom mixop_r) (typ_l)*{typ_l <- typ_l*} ++ (typ_r)*{typ_r <- typ_r*})) as notTypElabRes)
+
+      4. Case (% matches pattern BRACK % % %, let (BRACK atom_l typEL atom_r) = %)
+
+        1. Group brack: EC |- (NOTATION (BRACK atom_l typEL atom_r)) : %
+
+          1. (Elab_notTyp: EC |- typEL : notTypElabRes)
+
+          2. If let (OK (mixop (typ)*{typ <- typ*})) of type ok<notTyp> be notTypElabRes, then
+
+            1. Result in: % |- % : ((OK ((BRACK atom_l mixop atom_r) (typ)*{typ <- typ*})) as notTypElabRes)
+
+2. Otherwise,
+
+  1. Group fail: EC |- typEL' : %
+
+    1. Result in: % |- % : ((FAIL) as notTypElabRes)
+
+syntax typCasesElabRes =
+   | OK typCase* (from ok<typCase*>)
+   | FAIL (from fail)
+
+relation Elab_typCase: EC typOrigin |- typEL : %
+
+1. Case analysis on typEL (total)
+
+  1. Case (% matches pattern NOTATION %, let (NOTATION notTypEL) = %)
+
+    1. Group notation: EC typOrigin |- (NOTATION notTypEL) : %
+
+      1. (Elab_notTyp: EC |- (NOTATION notTypEL) : notTypElabRes)
+
+      2. If let (OK (mixop (typ)*{typ <- typ*})) of type ok<notTyp> be notTypElabRes, then
+
+        1. Result in: % % |- % : ((OK [(mixop (typ)*{typ <- typ*} FROM typOrigin)]) as typCasesElabRes)
+
+  2. Case (% matches pattern PLAIN %, let (PLAIN plainTypEL) = %)
+
+    1. Group plain: EC typOrigin |- (PLAIN plainTypEL) : %
+
+      1. (Elab_plainTyp: EC |- plainTypEL : typElabRes)
+
+      2. If let (OK typ) of type ok<typ> be typElabRes, then
+
+        1. (Let typRes be $expand_typ(EC.TYP, typ))
+
+        2. If let (OK typ') of type ok<typ> be typRes, then
+
+          1. If let (VAR id (targ)*{targ <- targ*}) be typ' matching pattern VAR % %, then
+
+            1. (Let (typDef')?{typDef' <- typDef'?} be $find_map<id, typDef>(EC.TYP, id))
+
+            2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then
+
+              1. (Let ?(typDef) be (typDef')?{typDef' <- typDef'?})
+
+              2. If let (TYP _id (tparam)*{tparam <- tparam*} '=' deftyp) of type definedTypDefn be typDef, then
+
+                1. If let (VARIANT (typCase)*{typCase <- typCase*}) be deftyp matching pattern VARIANT %, then
+
+                  1. If ((|(tparam)*{tparam <- tparam*}| = |(targ)*{targ <- targ*}|)), then
+
+                    1. (Let theta be (`{ ((tparam ':' targ))*{targ <- targ*, tparam <- tparam*} `}))
+
+                    2. (Let (mixop (typ_case)*{typ_case <- typ_case*} FROM (id_origin (targ_origin)*{targ_origin <- targ_origin*})) be typCase)*{typCase <- typCase*, id_origin -> id_origin*, mixop -> mixop*, targ_origin* -> targ_origin**, typ_case* -> typ_case**}
+
+                    3. (Let typsRes be $subst_typs(theta, (typ_case)*{typ_case <- typ_case*}))*{typ_case* <- typ_case**, typsRes -> typsRes*}
+
+                    4. If ((typsRes has type ok<typ*>))*{typsRes <- typsRes*}, then
+
+                      1. (Let (OK (typ_case_inst)*{typ_case_inst <- typ_case_inst*}) be (typsRes as ok<typ*>))*{typsRes <- typsRes*, typ_case_inst* -> typ_case_inst**}
+
+                      2. (Let typsRes' be $subst_typs(theta, (targ_origin)*{targ_origin <- targ_origin*}))*{targ_origin* <- targ_origin**, typsRes' -> typsRes'*}
+
+                      3. If ((typsRes' has type ok<typ*>))*{typsRes' <- typsRes'*}, then
+
+                        1. (Let (OK (targ_origin_inst)*{targ_origin_inst <- targ_origin_inst*}) be (typsRes' as ok<typ*>))*{typsRes' <- typsRes'*, targ_origin_inst* -> targ_origin_inst**}
+
+                        2. (Let (typCase_inherit)*{typCase_inherit <- typCase_inherit*} be ((mixop (typ_case_inst)*{typ_case_inst <- typ_case_inst*} FROM (id_origin (targ_origin_inst)*{targ_origin_inst <- targ_origin_inst*})))*{id_origin <- id_origin*, mixop <- mixop*, targ_origin_inst* <- targ_origin_inst**, typ_case_inst* <- typ_case_inst**})
+
+                        3. Result in: % % |- % : ((OK (typCase_inherit)*{typCase_inherit <- typCase_inherit*}) as typCasesElabRes)
+
+2. Otherwise,
+
+  1. Group fail: EC typOrigin |- typEL : %
+
+    1. Result in: % % |- % : ((FAIL) as typCasesElabRes)
+
+syntax deftypElabRes =
+   | OK deftyp (from ok<deftyp>)
+   | FAIL (from fail)
+
+relation Elab_defTyp: EC |- id (tparam)*{tparam <- tparam*} '=' defTypEL : %
+
+1. Case analysis on defTypEL (total)
+
+  1. Case (% matches pattern ALIAS %, let (ALIAS plainTypEL) = %)
+
+    1. Group alias: EC |- id (tparam)*{tparam <- tparam*} '=' (ALIAS plainTypEL) : %
+
+      1. (Elab_plainTyp: EC |- plainTypEL : typElabRes)
+
+      2. If let (OK typ) of type ok<typ> be typElabRes, then
+
+        1. Result in: % |- % % '=' % : ((OK (ALIAS typ)) as deftypElabRes)
+
+  2. Case (% matches pattern STRUCT %, let (STRUCT (typFieldEL)*{typFieldEL <- typFieldEL*}) = %)
+
+    1. Group struct: EC |- id (tparam)*{tparam <- tparam*} '=' (STRUCT (typFieldEL)*{typFieldEL <- typFieldEL*}) : %
+
+      1. (Let (atom plainTypEL) be typFieldEL)*{typFieldEL <- typFieldEL*, atom -> atom*, plainTypEL -> plainTypEL*}
+
+      2. (Elab_plainTyp: EC |- plainTypEL : typElabRes)*{plainTypEL <- plainTypEL*, typElabRes -> typElabRes*}
+
+      3. If ((typElabRes has type ok<typ>))*{typElabRes <- typElabRes*}, then
+
+        1. (Let (OK typ) be (typElabRes as ok<typ>))*{typElabRes <- typElabRes*, typ -> typ*}
+
+        2. (Let (typField)*{typField <- typField*} be ((atom typ))*{atom <- atom*, typ <- typ*})
+
+        3. Result in: % |- % % '=' % : ((OK (STRUCT (typField)*{typField <- typField*})) as deftypElabRes)
+
+  3. Case (% matches pattern VARIANT %, let (VARIANT (typEL)*{typEL <- typEL*}) = %)
+
+    1. Group variant: EC |- id (tparam)*{tparam <- tparam*} '=' (VARIANT (typEL)*{typEL <- typEL*}) : %
+
+      1. (Let typOrigin be (id ((VAR tparam []))*{tparam <- tparam*}))
+
+      2. (Elab_typCase: EC typOrigin |- typEL : typCasesElabRes)*{typEL <- typEL*, typCasesElabRes -> typCasesElabRes*}
+
+      3. If ((typCasesElabRes has type ok<typCase*>))*{typCasesElabRes <- typCasesElabRes*}, then
+
+        1. (Let (OK (typCase)*{typCase <- typCase*}) be (typCasesElabRes as ok<typCase*>))*{typCasesElabRes <- typCasesElabRes*, typCase* -> typCase**}
+
+        2. (Let (typCase_flat)*{typCase_flat <- typCase_flat*} be $concat_<typCase>(((typCase)*{typCase <- typCase*})*{typCase* <- typCase**}))
+
+        3. (Let (mixop (_typ)*{_typ <- _typ*} FROM _typOrigin) be typCase_flat)*{typCase_flat <- typCase_flat*, _typ* -> _typ**, _typOrigin -> _typOrigin*, mixop -> mixop*}
+
+        4. If ($distinct_<mixop>((mixop)*{mixop <- mixop*})), then
+
+          1. Result in: % |- % % '=' % : ((OK (VARIANT (typCase_flat)*{typCase_flat <- typCase_flat*})) as deftypElabRes)
+
+2. Otherwise,
+
+  1. Group fail: EC |- id (tparam)*{tparam <- tparam*} '=' defTypEL : %
+
+    1. Result in: % |- % % '=' % : ((FAIL) as deftypElabRes)
+
+syntax paramElabRes =
+   | OK param (from ok<param>)
+   | FAIL (from fail)
+
+relation Elab_param: EC |- paramEL' : %
+
+1. Case analysis on paramEL' (total)
+
+  1. Case (% matches pattern EXP %, let (EXP plainTypEL) = %)
+
+    1. Group exp: EC |- (EXP plainTypEL) : %
+
+      1. (Elab_plainTyp: EC |- plainTypEL : typElabRes)
+
+      2. If let (OK typ) of type ok<typ> be typElabRes, then
+
+        1. Result in: % |- % : ((OK ((EXP typ) as param)) as paramElabRes)
+
+  2. Case (% matches pattern FUN % ':' % % '->' %, let (FUN id ':' (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} '->' plainTypEL) = %)
+
+    1. Group fun: EC |- (FUN id ':' (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} '->' plainTypEL) : %
+
+      1. (Elab_signature: EC |- (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} ':' plainTypEL : signatureElabRes)
+
+      2. If let (OK ((param)*{param <- param*}, typ)) of type ok<(param*, typ)> be signatureElabRes, then
+
+        1. Result in: % |- % : ((OK ((FUN id ':' (tparam)*{tparam <- tparam*} (param)*{param <- param*} '->' typ) as param)) as paramElabRes)
+
+2. Otherwise,
+
+  1. Group fail: EC |- paramEL' : %
+
+    1. Result in: % |- % : ((FAIL) as paramElabRes)
+
+syntax signatureElabRes =
+   | OK (param*, typ) (from ok<(param*, typ)>)
+   | FAIL (from fail)
+
+relation Elab_signature: EC |- (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} ':' plainTypEL : %
+
+1. Group ok: EC |- (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} ':' plainTypEL : %
+
+  1. (Let (EC')?{EC' <- EC'?} be $bind_tparams(EC, (tparam)*{tparam <- tparam*}))
+
+  2. If (((EC')?{EC' <- EC'?} matches pattern (_))), then
+
+    1. (Let ?(EC_local) be (EC')?{EC' <- EC'?})
+
+    2. (Elab_param: EC_local |- paramEL : paramElabRes)*{paramEL <- paramEL*, paramElabRes -> paramElabRes*}
+
+    3. If ((paramElabRes has type ok<param>))*{paramElabRes <- paramElabRes*}, then
+
+      1. (Let (OK param) be (paramElabRes as ok<param>))*{paramElabRes <- paramElabRes*, param -> param*}
+
+      2. (Elab_plainTyp: EC_local |- plainTypEL : typElabRes)
+
+      3. If let (OK typ) of type ok<typ> be typElabRes, then
+
+        1. Result in: % |- % % ':' % : ((OK ((param)*{param <- param*}, typ)) as signatureElabRes)
+
+2. Otherwise,
+
+  1. Group fail: EC |- (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} ':' plainTypEL : %
+
+    1. Result in: % |- % % ':' % : ((FAIL) as signatureElabRes)
+
+syntax defnPart =
+   | DECL defnIL (from defnPart)
+
+syntax defElabRes =
+   | OK (elabCtx, defnPart*) (from ok<(elabCtx, defnPart*)>)
+   | FAIL (from fail)
+
+relation Elab_def: EC |- defnEL : %
+
+1. Case analysis on defnEL
+
+  1. Case (% matches pattern EXTSYNTAX %, let (EXTSYNTAX id) = %)
+
+    1. Group typ-extern: EC |- (EXTSYNTAX id) : %
+
+      1. If ($is_tid(id)), then
+
+        1. If (($find_map<id, typDef>(EC.TYP, id) matches pattern ())), then
+
+          1. If (($find_map<id, typ>(EC.VAR, id) matches pattern ())), then
+
+            1. (Let EC_typ be $add_typDef(EC, id, ((EXTTYP id) as typDef)))
+
+            2. (Let EC_meta be $add_metavar(EC_typ, id, (VAR id [])))
+
+            3. Result in: % |- % : ((OK (EC_meta, [(DECL ((EXTTYP id) as defnIL))])) as defElabRes)
+
+  2. Case (% matches pattern SYNTAX %, let (SYNTAX (syntaxEntryEL)*{syntaxEntryEL <- syntaxEntryEL*}) = %)
+
+    1. Group typ-forward: EC |- (SYNTAX (syntaxEntryEL)*{syntaxEntryEL <- syntaxEntryEL*}) : %
+
+      1. (Let (EC')?{EC' <- EC'?} be $declare_syntax(EC, (syntaxEntryEL)*{syntaxEntryEL <- syntaxEntryEL*}))
+
+      2. If (((EC')?{EC' <- EC'?} matches pattern (_))), then
+
+        1. (Let ?(EC_decl) be (EC')?{EC' <- EC'?})
+
+        2. Result in: % |- % : ((OK (EC_decl, [])) as defElabRes)
+
+  3. Case (% matches pattern TYP % % '=' %, let (TYP id (tparam)*{tparam <- tparam*} '=' defTypEL) = %)
+
+    1. Group typ: EC |- (TYP id (tparam)*{tparam <- tparam*} '=' defTypEL) : %
+
+      1. (Let (EC')?{EC' <- EC'?} be $declare_typ_body(EC, id, (tparam)*{tparam <- tparam*}))
+
+      2. If (((EC')?{EC' <- EC'?} matches pattern (_))), then
+
+        1. (Let ?(EC_decl) be (EC')?{EC' <- EC'?})
+
+        2. If ($forall_(($is_tid(tparam))*{tparam <- tparam*})), then
+
+          1. (Let (EC'')?{EC'' <- EC''?} be $bind_tparams(EC_decl, (tparam)*{tparam <- tparam*}))
+
+          2. If (((EC'')?{EC'' <- EC''?} matches pattern (_))), then
+
+            1. (Let ?(EC_local) be (EC'')?{EC'' <- EC''?})
+
+            2. (Elab_defTyp: EC_local |- id (tparam)*{tparam <- tparam*} '=' defTypEL : deftypElabRes)
+
+            3. If let (OK deftyp) of type ok<deftyp> be deftypElabRes, then
+
+              1. (Let definedTypDefn be (TYP id (tparam)*{tparam <- tparam*} '=' deftyp))
+
+              2. (Let EC_def be $add_typDef(EC_decl, id, (definedTypDefn as typDef)))
+
+              3. Result in: % |- % : ((OK (EC_def, [(DECL (definedTypDefn as defnIL))])) as defElabRes)
+
+  4. Case (% matches pattern VAR % ':' %, let (VAR id ':' plainTypEL) = %)
+
+    1. Group metavar: EC |- (VAR id ':' plainTypEL) : %
+
+      1. If ($is_tid(id)), then
+
+        1. If (($find_map<id, typDef>(EC.TYP, id) matches pattern ())), then
+
+          1. If (($find_map<id, typ>(EC.VAR, id) matches pattern ())), then
+
+            1. (Elab_plainTyp: EC |- plainTypEL : typElabRes)
+
+            2. If let (OK typ) of type ok<typ> be typElabRes, then
+
+              1. (Let EC_meta be $add_metavar(EC, id, typ))
+
+              2. Result in: % |- % : ((OK (EC_meta, [])) as defElabRes)
+
+  5. Case (% matches pattern EXTREL % ':' % %, let (EXTREL id ':' notTypEL (hintEL)*{hintEL <- hintEL*}) = %)
+
+    1. Group rel-extern: EC |- (EXTREL id ':' notTypEL (hintEL)*{hintEL <- hintEL*}) : %
+
+      1. If (($find_map<id, relSig>(EC.REL, id) matches pattern ())), then
+
+        1. (Elab_notTyp: EC |- (NOTATION notTypEL) : notTypElabRes)
+
+        2. If let (OK (mixop (typ)*{typ <- typ*})) of type ok<notTyp> be notTypElabRes, then
+
+          1. (Let inputHintElabRes be $input_hint((hintEL)*{hintEL <- hintEL*}, |(typ)*{typ <- typ*}|))
+
+          2. If let (OK inputHint) of type ok<inputHint> be inputHintElabRes, then
+
+            1. (Let EC_rel be $add_relSig(EC, id, ((EXTERN) (mixop (typ)*{typ <- typ*}) `( inputHint `))))
+
+            2. (Let externRelDefnIL be (EXTREL id ':' (typ)*{typ <- typ*} `( inputHint `)))
+
+            3. Result in: % |- % : ((OK (EC_rel, [(DECL (externRelDefnIL as defnIL))])) as defElabRes)
+
+  6. Case (% matches pattern REL % ':' % %, let (REL id ':' notTypEL (hintEL)*{hintEL <- hintEL*}) = %)
+
+    1. Group rel: EC |- (REL id ':' notTypEL (hintEL)*{hintEL <- hintEL*}) : %
+
+      1. If (($find_map<id, relSig>(EC.REL, id) matches pattern ())), then
+
+        1. (Elab_notTyp: EC |- (NOTATION notTypEL) : notTypElabRes)
+
+        2. If let (OK (mixop (typ)*{typ <- typ*})) of type ok<notTyp> be notTypElabRes, then
+
+          1. (Let inputHintElabRes be $input_hint((hintEL)*{hintEL <- hintEL*}, |(typ)*{typ <- typ*}|))
+
+          2. If let (OK inputHint) of type ok<inputHint> be inputHintElabRes, then
+
+            1. (Let EC_rel be $add_relSig(EC, id, ((DEFINED) (mixop (typ)*{typ <- typ*}) `( inputHint `))))
+
+            2. (Let definedRelDefnIL be (REL id ':' (typ)*{typ <- typ*} `( inputHint `) '=' [] ?()))
+
+            3. Result in: % |- % : ((OK (EC_rel, [(DECL (definedRelDefnIL as defnIL))])) as defElabRes)
+
+  7. Case (% matches pattern EXTDEC % % % ':' %, let (EXTDEC id (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} ':' plainTypEL) = %)
+
+    1. Group func-extern: EC |- (EXTDEC id (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} ':' plainTypEL) : %
+
+      1. If (($find_map<id, funcSig>(EC.FUNC, id) matches pattern ())), then
+
+        1. (Elab_signature: EC |- (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} ':' plainTypEL : signatureElabRes)
+
+        2. If let (OK ((param)*{param <- param*}, typ)) of type ok<(param*, typ)> be signatureElabRes, then
+
+          1. (Let EC_func be $add_funcSig(EC, id, ((EXTERN) (tparam)*{tparam <- tparam*} (param)*{param <- param*} ':' typ)))
+
+          2. (Let externFuncDefn be (EXTFUNC id (tparam)*{tparam <- tparam*} (param)*{param <- param*} ':' typ))
+
+          3. Result in: % |- % : ((OK (EC_func, [(DECL (externFuncDefn as defnIL))])) as defElabRes)
+
+  8. Case (% matches pattern BUILTINDEC % % % ':' %, let (BUILTINDEC id (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} ':' plainTypEL) = %)
+
+    1. Group func-builtin: EC |- (BUILTINDEC id (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} ':' plainTypEL) : %
+
+      1. If (($find_map<id, funcSig>(EC.FUNC, id) matches pattern ())), then
+
+        1. (Elab_signature: EC |- (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} ':' plainTypEL : signatureElabRes)
+
+        2. If let (OK ((param)*{param <- param*}, typ)) of type ok<(param*, typ)> be signatureElabRes, then
+
+          1. (Let EC_func be $add_funcSig(EC, id, ((BUILTIN) (tparam)*{tparam <- tparam*} (param)*{param <- param*} ':' typ)))
+
+          2. (Let builtinFuncDefn be (BUILTINFUNC id (tparam)*{tparam <- tparam*} (param)*{param <- param*} ':' typ))
+
+          3. Result in: % |- % : ((OK (EC_func, [(DECL (builtinFuncDefn as defnIL))])) as defElabRes)
+
+  9. Case (% matches pattern TABLEDEC % % ':' %, let (TABLEDEC id (paramEL)*{paramEL <- paramEL*} ':' plainTypEL) = %)
+
+    1. Group func-table: EC |- (TABLEDEC id (paramEL)*{paramEL <- paramEL*} ':' plainTypEL) : %
+
+      1. If (($find_map<id, funcSig>(EC.FUNC, id) matches pattern ())), then
+
+        1. (Elab_param: EC |- paramEL : paramElabRes)*{paramEL <- paramEL*, paramElabRes -> paramElabRes*}
+
+        2. If ((paramElabRes has type ok<param>))*{paramElabRes <- paramElabRes*}, then
+
+          1. (Let (OK param) be (paramElabRes as ok<param>))*{paramElabRes <- paramElabRes*, param -> param*}
+
+          2. If ((param has type expParam))*{param <- param*}, then
+
+            1. (Elab_plainTyp: EC |- plainTypEL : typElabRes)
+
+            2. If let (OK typ) of type ok<typ> be typElabRes, then
+
+              1. If ((((OK true) as equivRes) = $equiv_typ(EC.TYP, typ, ((BOOL) as typ)))), then
+
+                1. (Let EC_func be $add_funcSig(EC, id, ((TABLE) [] (param)*{param <- param*} ':' typ)))
+
+                2. (Let tableFuncDefnIL be (TABLEFUNC id (param)*{param <- param*} ':' typ '=' []))
+
+                3. Result in: % |- % : ((OK (EC_func, [(DECL (tableFuncDefnIL as defnIL))])) as defElabRes)
+
+  10. Case (% matches pattern DEC % % % ':' %, let (DEC id (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} ':' plainTypEL) = %)
+
+    1. Group func: EC |- (DEC id (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} ':' plainTypEL) : %
+
+      1. If (($find_map<id, funcSig>(EC.FUNC, id) matches pattern ())), then
+
+        1. (Elab_signature: EC |- (tparam)*{tparam <- tparam*} (paramEL)*{paramEL <- paramEL*} ':' plainTypEL : signatureElabRes)
+
+        2. If let (OK ((param)*{param <- param*}, typ)) of type ok<(param*, typ)> be signatureElabRes, then
+
+          1. (Let EC_func be $add_funcSig(EC, id, ((DEFINED) (tparam)*{tparam <- tparam*} (param)*{param <- param*} ':' typ)))
+
+          2. (Let definedFuncDefnIL be (FUNC id (tparam)*{tparam <- tparam*} (param)*{param <- param*} ':' typ '=' [] ?()))
+
+          3. Result in: % |- % : ((OK (EC_func, [(DECL (definedFuncDefnIL as defnIL))])) as defElabRes)
+
+2. Otherwise,
+
+  1. Group fail: EC |- defnEL : %
+
+    1. Result in: % |- % : ((FAIL) as defElabRes)
+
+relation Elab_defs: EC |- (defnEL)*{defnEL <- defnEL*} : %
+
+1. Group : EC |- (defnEL)*{defnEL <- defnEL*} : %
+
+  1. Case analysis on (defnEL)*{defnEL <- defnEL*} (total)
+
+    1. Case (% matches pattern [])
+
+      1. Result in: % |- % : ((OK (EC, [])) as defElabRes)
+
+    2. Case (% matches pattern _ :: _)
+
+      1. (Let defnEL_h :: (defnEL_t)*{defnEL_t <- defnEL_t*} be (defnEL)*{defnEL <- defnEL*})
+
+      2. (Elab_def: EC |- defnEL_h : defElabRes)
+
+      3. If let (OK (EC_h, (defnPart_h)*{defnPart_h <- defnPart_h*})) of type ok<(elabCtx, defnPart*)> be defElabRes, then
+
+        1. (Elab_defs: EC_h |- (defnEL_t)*{defnEL_t <- defnEL_t*} : defElabRes')
+
+        2. If let (OK (EC_t, (defnPart_t)*{defnPart_t <- defnPart_t*})) of type ok<(elabCtx, defnPart*)> be defElabRes', then
+
+          1. Result in: % |- % : ((OK (EC_t, (defnPart_h)*{defnPart_h <- defnPart_h*} ++ (defnPart_t)*{defnPart_t <- defnPart_t*})) as defElabRes)
+
+2. Otherwise,
+
+  1. Group fail: EC |- (defnEL)*{defnEL <- defnEL*} : %
+
+    1. Result in: % |- % : ((FAIL) as defElabRes)
+
+syntax specElabRes =
+   | OK specIL (from ok<specIL>)
+   | FAIL (from fail)
+
+relation Elab_spec: EC |- (defnEL)*{defnEL <- defnEL*} : %
+
+1. Group ok: EC |- (defnEL)*{defnEL <- defnEL*} : %
+
+  1. (Elab_defs: EC |- (defnEL)*{defnEL <- defnEL*} : defElabRes)
+
+  2. If let (OK (_EC, (defnPart)*{defnPart <- defnPart*})) of type ok<(elabCtx, defnPart*)> be defElabRes, then
+
+    1. (Let (DECL defnIL) be defnPart)*{defnPart <- defnPart*, defnIL -> defnIL*}
+
+    2. Result in: % |- % : ((OK (defnIL)*{defnIL <- defnIL*}) as specElabRes)
+
+2. Otherwise,
+
+  1. Group fail: EC |- (defnEL)*{defnEL <- defnEL*} : %
+
+    1. Result in: % |- % : ((FAIL) as specElabRes)
+
+def $declare_typ(EC, id, (tparam)*{tparam <- tparam*})
+
+1. Case analysis on (tparam)*{tparam <- tparam*} (total)
+
+  1. Case (% matches pattern [])
+
+    1. If ($is_tid(id)), then
+
+      1. If (($find_map<id, typDef>(EC.TYP, id) matches pattern ())), then
+
+        1. If (($find_map<id, typ>(EC.VAR, id) matches pattern ())), then
+
+          1. (Let EC_typ be $add_typDef(EC, id, (DEFINING [])))
+
+          2. (Let EC_meta be $add_metavar(EC_typ, id, (VAR id [])))
+
+          3. Return ?(EC_meta)
+
+  2. Case (% matches pattern _ :: _)
+
+    1. If ($distinct_<id>((tparam)*{tparam <- tparam*})), then
+
+      1. If ($is_tid(id)), then
+
+        1. If (($find_map<id, typDef>(EC.TYP, id) matches pattern ())), then
+
+          1. (Let EC_typ be $add_typDef(EC, id, (DEFINING (tparam)*{tparam <- tparam*})))
+
+          2. Return ?(EC_typ)
+
+2. Otherwise,
+
+  1. Return ?()
+
+def $declare_syntax(EC, (syntaxEntryEL)*{syntaxEntryEL <- syntaxEntryEL*})
+
+1. Case analysis on (syntaxEntryEL)*{syntaxEntryEL <- syntaxEntryEL*} (total)
+
+  1. Case (% matches pattern [])
+
+    1. Return ?(EC)
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let (id (tparam)*{tparam <- tparam*}) :: (syntaxEntryEL_t)*{syntaxEntryEL_t <- syntaxEntryEL_t*} be (syntaxEntryEL)*{syntaxEntryEL <- syntaxEntryEL*})
+
+    2. (Let (EC')?{EC' <- EC'?} be $declare_typ(EC, id, (tparam)*{tparam <- tparam*}))
+
+    3. If (((EC')?{EC' <- EC'?} matches pattern (_))), then
+
+      1. (Let ?(EC_h) be (EC')?{EC' <- EC'?})
+
+      2. (Let (EC'')?{EC'' <- EC''?} be $declare_syntax(EC_h, (syntaxEntryEL_t)*{syntaxEntryEL_t <- syntaxEntryEL_t*}))
+
+      3. If (((EC'')?{EC'' <- EC''?} matches pattern (_))), then
+
+        1. (Let ?(EC_t) be (EC'')?{EC'' <- EC''?})
+
+        2. Return ?(EC_t)
+
+2. Otherwise,
+
+  1. Return ?()
+
+def $declare_typ_body(EC, id, (tparam)*{tparam <- tparam*})
+
+1. Block (2 arms)
+
+Arm 1:
+
+  1. If ((?((DEFINING (tparam)*{tparam <- tparam*})) = $find_map<id, typDef>(EC.TYP, id))), then
+
+    1. Return ?(EC)
+
+Arm 2:
+
+  1. If (($find_map<id, typDef>(EC.TYP, id) matches pattern ())), then
+
+    1. (Let (EC')?{EC' <- EC'?} be $declare_typ(EC, id, (tparam)*{tparam <- tparam*}))
+
+    2. If (((EC')?{EC' <- EC'?} matches pattern (_))), then
+
+      1. (Let ?(EC_decl) be (EC')?{EC' <- EC'?})
+
+      2. Return ?(EC_decl)
+
+2. Otherwise,
+
+  1. Return ?()
 
 syntax algoCtx = {TYP tdenv, BOUND vari*, USED id*}
 
@@ -8833,6 +9895,30 @@ def $rul_of_elsgroup((id ':' rulAL))
 
 1. Return rulAL
 
+relation Elab_EL: |- specEL : %
+
+1. Group : |- specEL : %
+
+  1. (Let EC be $empty_elabCtx)
+
+  2. (Elab_spec: EC |- specEL : specElabRes)
+
+  3. Result in: |- % : specElabRes
+
+relation Algo_EL: |- specEL : %
+
+1. Group : |- specEL : %
+
+  1. (Elab_EL: |- specEL : specElabRes)
+
+  2. Check ((specElabRes has type ok<specIL>))
+
+    1. (Let (OK specIL) be (specElabRes as ok<specIL>))
+
+    2. (Algo_IL: |- specIL : specAL)
+
+    3. Result in: |- % : specAL
+
 relation Algo_IL: |- (defnIL)*{defnIL <- defnIL*} : %
 
 1. Group : |- (defnIL)*{defnIL <- defnIL*} : %
@@ -8848,6 +9934,26 @@ relation Algo_IL: |- (defnIL)*{defnIL <- defnIL*} : %
     1. Result in: |- % : (defnAL_guard)*{defnAL_guard <- defnAL_guard*}
 
   4. Else Dangling
+
+relation Eval_EL_rel: specEL |- id `( (val)*{val <- val*} `) : %
+
+1. Group : specEL |- id `( (val)*{val <- val*} `) : %
+
+  1. (Algo_EL: |- specEL : specAL)
+
+  2. (Eval_AL_rel: specAL |- id `( (val)*{val <- val*} `) : (val')*{val' <- val'*})
+
+  3. Result in: % |- % `( % `) : (val')*{val' <- val'*}
+
+relation Eval_EL_func: specEL |- id `( (val)*{val <- val*} `) : %
+
+1. Group : specEL |- id `( (val)*{val <- val*} `) : %
+
+  1. (Algo_EL: |- specEL : specAL)
+
+  2. (Eval_AL_func: specAL |- id `( (val)*{val <- val*} `) : val')
+
+  3. Result in: % |- % `( % `) : val'
 
 relation Eval_IL_rel: specIL |- id `( (val)*{val <- val*} `) : %
 

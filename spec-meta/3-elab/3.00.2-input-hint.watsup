@@ -1,0 +1,52 @@
+;;
+;; Input hints
+;;
+;; syntax hintEL*
+;;
+
+;; `hint(input %i*)` lists the input positions of a relation:
+;; at least one, each once, all within its arity;
+;; without the hint every position is an input
+
+syntax inputHintElabRes = ok<inputHint> | fail
+
+dec $upto_from(nat, nat) : nat*
+  hint(prose_in "the positions from" %0 "below" %1)
+def $upto_from(n_from, n) = eps
+  -- if $(n_from >= n)
+def $upto_from(n_from, n) = n_from :: $upto_from($(n_from + 1), n)
+  -- if $(n_from < n)
+
+dec $upto(nat) : nat*
+  hint(prose_in "the positions below" %0)
+def $upto(n) = $upto_from(0, n)
+
+;; A hint lists `%i` holes, one or in sequence
+
+dec $input_holes(expEL) : inputHintElabRes
+  hint(prose_in "the positions of the holes in" %0)
+def $input_holes(HOLE (NTH n)) = OK ([ n ])
+def $input_holes(SEQ expEL*) = OK n*
+  -- if (HOLE (NTH n) = expEL)*
+def $input_holes(expEL) = FAIL
+  -- otherwise
+
+dec $input_hint(hintEL*, nat) : inputHintElabRes
+  hint(prose_in "the input positions given by hints" %0 "for arity" %1)
+def $input_hint(eps, n_arity) = OK n*
+  -- if n* = $upto(n_arity)
+def $input_hint(hintEL :: _, n_arity) = OK n*
+  -- if "input" expEL = hintEL
+  -- if OK n* = $input_holes(expEL)
+  -- if n* =/= eps
+  -- if $distinct_<nat>(n*)
+  -- if ($(n < n_arity))*
+def $input_hint(hintEL*, n_arity) = FAIL
+  -- otherwise
+
+;; A premise without outputs only checks that the relation holds
+
+dec $is_conditional(inputHint, nat) : bool
+  hint(prose_in "every one of" %1 "positions is an input under" %0)
+def $is_conditional(inputHint, n_arity) = $forall_((n <- inputHint)*)
+  -- if n* = $upto(n_arity)
