@@ -12,7 +12,7 @@ use crate::diagnostic::{Diagnostic, Label, Report};
 
 use crate::runner::InterpreterError;
 
-use super::error::Error;
+use super::error::{self, Error};
 
 /// Returns a value, a fatal error, or a mismatch.
 pub type Backtrack<T> = Result<T, InterpreterError>;
@@ -54,6 +54,25 @@ pub fn check(
 pub trait WithFrame<T> {
     /// Wraps failures without formatting messages on the successful path.
     fn with_frame(self, span: Span, message: impl FnOnce() -> String) -> Self;
+}
+
+/// Makes a function call that did not match fatal.
+///
+/// A function call either returns a value or fails;
+/// the mismatches of its clauses or table rows become the causes of the failure.
+pub fn abort_unmatched<T>(
+    result: Backtrack<T>,
+    span: Span,
+    func: impl FnOnce() -> String,
+) -> Backtrack<T> {
+    result.map_err(|failure| match failure {
+        InterpreterError::Mismatch(reports) => {
+            let diagnostic =
+                error::call::function_unmatched(func()).with_label(Label::primary(&span, ""));
+            InterpreterError::Fatal(Box::new(Report::from(diagnostic).with_children(reports)))
+        }
+        InterpreterError::Fatal(report) => InterpreterError::Fatal(report),
+    })
 }
 
 impl<T> WithFrame<T> for Backtrack<T> {
