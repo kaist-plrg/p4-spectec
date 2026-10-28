@@ -4,6 +4,8 @@
 //! Each level names the language it accepts:
 //! the level above it is passed to it as AL or IL.
 //! The native backend is AL or SL.
+//! An AL or IL script above the top level is entered at `entry`,
+//! the function `main` unless the JSON names another function or relation.
 //! Specification paths are resolved relative to the JSON file.
 
 use super::{Result, error::config_invalid};
@@ -21,6 +23,8 @@ pub struct TowerConfig {
     pub(super) mode: ExecutionMode,
     /// Nonempty, ordered from base toward top.
     pub(super) levels: Vec<LevelConfig>,
+    /// The function or relation entering an AL or IL script above the top level.
+    pub(super) entry: String,
 }
 
 /// The native interpreter used for the outermost level.
@@ -58,6 +62,13 @@ impl TowerConfig {
         struct TowerConfigJson {
             mode: ExecutionMode,
             levels: Vec<LevelConfig>,
+            #[serde(default = "entry_default")]
+            entry: String,
+        }
+
+        /// A script is entered at its function `main` unless configured otherwise.
+        fn entry_default() -> String {
+            "main".to_owned()
         }
 
         let text = fs::read_to_string(path)
@@ -72,14 +83,14 @@ impl TowerConfig {
                 level.specdir = path_parent.join(&level.specdir);
             }
         }
-        Self::new(config.mode, levels)
+        Self::new(config.mode, levels, config.entry)
     }
 
     /// Validates ordered levels.
     ///
     /// Specification paths are relative to the current directory.
     /// A single level is both the top level and the base.
-    pub fn new(mode: ExecutionMode, levels: Vec<LevelConfig>) -> Result<Self> {
+    pub fn new(mode: ExecutionMode, levels: Vec<LevelConfig>, entry: String) -> Result<Self> {
         if levels.is_empty() {
             return Err(config_invalid("a tower requires at least one level"));
         }
@@ -97,7 +108,7 @@ impl TowerConfig {
                 )));
             }
         }
-        Ok(Self { mode, levels })
+        Ok(Self { mode, levels, entry })
     }
 
     pub(super) fn top(&self) -> &LevelConfig {

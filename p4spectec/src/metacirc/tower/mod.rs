@@ -44,6 +44,8 @@ pub struct Tower<Ext: Extern = Dummy> {
     pub(super) base: BaseRunner<Ext>,
     /// Options for the interpreters of reentry depths.
     pub(super) options: runner::Config,
+    /// The function or relation entering a script above the top level.
+    pub(super) entry: String,
 }
 
 /// A configured level, prepared in the form the level below loads.
@@ -78,7 +80,7 @@ impl<Ext: Extern> Tower<Ext> {
         arena: &mut Arena,
         values: &[Value],
     ) -> Result<Vec<Value>, InterpreterError> {
-        let Self { levels, protocols, base, options } = self;
+        let Self { levels, protocols, base, options, .. } = self;
         let name = &levels[0].config().rel;
         match base {
             // A P4 base runs the program directly
