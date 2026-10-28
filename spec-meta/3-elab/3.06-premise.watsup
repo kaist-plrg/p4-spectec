@@ -21,17 +21,21 @@ rule Elab_prem/variable:
 ;; A premise with only inputs checks that the relation holds;
 ;; a negated premise must have only inputs
 
-rule Elab_prem/relpr:
-  EC |- REL id ':' expEL : OK (EC, PREM (REL id ':' typedExp* `( inputHint `)))
-  -- if _ (mixop typ*) `( inputHint `) = $find_map<id, relSig>(EC.REL, id)
-  -- Elab_notExp: EC |- expEL '<=' (mixop typ*) : OK typedExp*
-  -- if ~$is_conditional(inputHint, |typedExp*|)
+rulegroup Elab_prem/relpr {
 
-rule Elab_prem/ifholdpr:
-  EC |- REL id ':' expEL : OK (EC, PREM (IFHOLD id ':' typedExp*))
-  -- if _ (mixop typ*) `( inputHint `) = $find_map<id, relSig>(EC.REL, id)
-  -- Elab_notExp: EC |- expEL '<=' (mixop typ*) : OK typedExp*
-  -- if $is_conditional(inputHint, |typedExp*|)
+  rule Elab_prem/outputs:
+    EC |- REL id ':' expEL : OK (EC, PREM (REL id ':' typedExp* `( inputHint `)))
+    -- if _ (mixop typ*) `( inputHint `) = $find_map<id, relSig>(EC.REL, id)
+    -- Elab_notExp: EC |- expEL '<=' (mixop typ*) : OK typedExp*
+    -- if ~$is_conditional(inputHint, |typedExp*|)
+
+  rule Elab_prem/holds:
+    EC |- REL id ':' expEL : OK (EC, PREM (IFHOLD id ':' typedExp*))
+    -- if _ (mixop typ*) `( inputHint `) = $find_map<id, relSig>(EC.REL, id)
+    -- Elab_notExp: EC |- expEL '<=' (mixop typ*) : OK typedExp*
+    -- if $is_conditional(inputHint, |typedExp*|)
+
+}
 
 rule Elab_prem/ifnotholdpr:
   EC |- RELNOT id ':' expEL : OK (EC, PREM (IFNOTHOLD id ':' typedExp*))

@@ -4354,23 +4354,23 @@ relation Infer_exp_first: EC |- expEL' : %
 
 relation Elab_exp: EC |- expEL '<=' typ : %
 
-1. (Elab_exp_singleton: EC |- expEL '<=' typ : expElabRes)
+1. (Elab_exp_singleton: EC |- expEL '<=' typ : expElabRes')
 
-  1. Case analysis on expElabRes (total)
+  1. Case analysis on expElabRes' (total)
 
     1. Case (% has type ok<typedExp>)
 
-      1. (Let OK typedExp be expElabRes as ok<typedExp>)
+      1. (Let OK typedExp be expElabRes' as ok<typedExp>)
 
         1. Result in: % |- % '<=' % : OK typedExp as expElabRes
 
     2. Case (% has type fail)
 
-      1. (Let fail be expElabRes as fail)
+      1. (Let fail be expElabRes' as fail)
 
-        1. (Elab_exp_normal: EC |- expEL '<=' typ : expElabRes')
+        1. (Elab_exp_normal: EC |- expEL '<=' typ : expElabRes)
 
-          1. Result in: % |- % '<=' % : expElabRes'
+          1. Result in: % |- % '<=' % : expElabRes
 
 relation Elab_exp_singleton: EC |- expEL '<=' typ : %
 
@@ -4718,13 +4718,9 @@ relation Elab_notArgs: EC |- expEL' '<=' mixop' typ*{typ <- typ*} : %
 
     1. (Let ATOM atom be expEL')
 
-      1. If (mixop' matches ATOM %), then
+      1. If ((mixop' = ATOM atom)), then
 
-        1. (Let ATOM atom' be mixop')
-
-          1. If ((atom = atom')), then
-
-            1. Result in: % |- % '<=' % % : OK ([], typ*{typ <- typ*}) as notArgsElabRes
+        1. Result in: % |- % '<=' % % : OK ([], typ*{typ <- typ*}) as notArgsElabRes
 
   3. Case (% matches pattern SEQ %)
 
@@ -4748,7 +4744,7 @@ relation Elab_notArgs: EC |- expEL' '<=' mixop' typ*{typ <- typ*} : %
 
         1. (Let INFIX mixop_l atom' mixop_r be mixop')
 
-          1. If ((atom = atom')), then
+          1. If ((atom' = atom)), then
 
             1. (Elab_notArgs: EC |- expEL_l '<=' mixop_l typ*{typ <- typ*} : notArgsElabRes)
 
@@ -4770,11 +4766,11 @@ relation Elab_notArgs: EC |- expEL' '<=' mixop' typ*{typ <- typ*} : %
 
       1. If (mixop' matches BRACK % % %), then
 
-        1. (Let BRACK atom_l' mixop atom_r' be mixop')
+        1. (Let BRACK atom mixop atom' be mixop')
 
-          1. If ((atom_l = atom_l')), then
+          1. If ((atom = atom_l)), then
 
-            1. If ((atom_r = atom_r')), then
+            1. If ((atom' = atom_r)), then
 
               1. (Elab_notArgs: EC |- expEL '<=' mixop typ*{typ <- typ*} : notArgsElabRes)
 
@@ -5439,11 +5435,17 @@ relation Dim_exp: dimEnv id*{id <- id*} |- typedExp''' : %
 
     2. Case (% has type varExp)
 
-      1. (Let VAR id_var be exp as varExp)
+      1. (Let VAR id' be exp as varExp)
 
-        1. If ((id_var =/= "_")), then
+        1. If ((id' =/= "_")), then
 
-          1. Result in: % % |- % : OK (id*{id <- id*}, VAR id_var as exp '#' typ, [id_var typ []]) as dimExpRes
+          1. Result in: % % |- % : OK (id*{id <- id*}, VAR id' as exp '#' typ, [id' typ []]) as dimExpRes
+
+        2. If ((id' = "_")), then
+
+          1. (Let id_fresh be $fresh(id*{id <- id*}, "_"))
+
+            1. Result in: % % |- % : OK (id*{id <- id*} ++ [id_fresh], VAR id_fresh as exp '#' typ, [id_fresh typ []]) as dimExpRes
 
     3. Case (% has type unOpExp)
 
@@ -5583,17 +5585,23 @@ relation Dim_exp: dimEnv id*{id <- id*} |- typedExp''' : %
 
       1. (Let OPT typedExp''?{typedExp'' <- typedExp''?} be exp as optExp)
 
-        1. If (typedExp''?{typedExp'' <- typedExp''?} matches (_)), then
+        1. Case analysis on typedExp''?{typedExp'' <- typedExp''?} (total)
 
-          1. (Let ?(typedExp) be typedExp''?{typedExp'' <- typedExp''?})
+          1. Case (% matches pattern ())
 
-            1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+            1. Result in: % % |- % : OK (id*{id <- id*}, OPT ?() as exp '#' typ, []) as dimExpRes
 
-              1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+          2. Case (% matches pattern (_))
 
-                1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+            1. (Let ?(typedExp) be typedExp''?{typedExp'' <- typedExp''?})
 
-                  1. Result in: % % |- % : OK (id'*{id' <- id'*}, OPT ?(typedExp') as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+              1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+                1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+                  1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                    1. Result in: % % |- % : OK (id'*{id' <- id'*}, OPT ?(typedExp') as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
 
     14. Case (% has type listExp)
 
@@ -5766,18 +5774,6 @@ relation Dim_exp: dimEnv id*{id <- id*} |- typedExp''' : %
                     1. (Let vari_out*{vari_out <- vari_out*} be $iterate_occs(vari_shallow*{vari_shallow <- vari_shallow*}, $ids_of_varis(vari_iter*{vari_iter <- vari_iter*}), iter))
 
                       1. Result in: % % |- % : OK (id'*{id' <- id'*}, ITER typedExp' iter vari_iter*{vari_iter <- vari_iter*} as exp '#' typ, vari_out*{vari_out <- vari_out*}) as dimExpRes
-
-  2. Case analysis on exp
-
-    1. Case (% = VAR "_" as exp)
-
-      1. (Let id_fresh be $fresh(id*{id <- id*}, "_"))
-
-        1. Result in: % % |- % : OK (id*{id <- id*} ++ [id_fresh], VAR id_fresh as exp '#' typ, [id_fresh typ []]) as dimExpRes
-
-    2. Case (% = OPT ?() as exp)
-
-      1. Result in: % % |- % : OK (id*{id <- id*}, OPT ?() as exp '#' typ, []) as dimExpRes
 
 2. Otherwise,
 

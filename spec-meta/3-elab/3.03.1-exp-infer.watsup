@@ -39,70 +39,82 @@ rule Infer_exp/variable:
 
 ;; Each operator tries its natural operand type before the integer one
 
-rule Infer_exp/unary-boolean:
-  EC |- UN boolUnOp expEL : OK ((UN boolUnOp typedExp_cast) '#' BOOL)
-  -- Infer_exp: EC |- expEL : OK typedExp
-  -- if OK typedExp_cast = $cast(EC.TYP, typedExp, BOOL)
+rulegroup Infer_exp/unary {
 
-rule Infer_exp/unary-natural:
-  EC |- UN numUnOp expEL : OK ((UN numUnOp typedExp_cast) '#' NAT)
-  -- Infer_exp: EC |- expEL : OK typedExp
-  -- if OK typedExp_cast = $cast(EC.TYP, typedExp, NAT)
+  rule Infer_exp/boolean:
+    EC |- UN boolUnOp expEL : OK ((UN boolUnOp typedExp_cast) '#' BOOL)
+    -- Infer_exp: EC |- expEL : OK typedExp
+    -- if OK typedExp_cast = $cast(EC.TYP, typedExp, BOOL)
 
-rule Infer_exp/unary-integer:
-  EC |- UN numUnOp expEL : OK ((UN numUnOp typedExp_cast) '#' INT)
-  -- Infer_exp: EC |- expEL : OK typedExp
-  -- if FAIL = $cast(EC.TYP, typedExp, NAT)
-  -- if OK typedExp_cast = $cast(EC.TYP, typedExp, INT)
+  rule Infer_exp/natural:
+    EC |- UN numUnOp expEL : OK ((UN numUnOp typedExp_cast) '#' NAT)
+    -- Infer_exp: EC |- expEL : OK typedExp
+    -- if OK typedExp_cast = $cast(EC.TYP, typedExp, NAT)
 
-rule Infer_exp/binary-boolean:
-  EC |- BIN expEL_l boolBinOp expEL_r : OK ((BIN boolBinOp typedExp_l_cast typedExp_r_cast) '#' BOOL)
-  -- Infer_exp: EC |- expEL_l : OK typedExp_l
-  -- Infer_exp: EC |- expEL_r : OK typedExp_r
-  -- if OK (typedExp_l_cast, typedExp_r_cast) = $cast_pair(EC.TYP, typedExp_l, typedExp_r, BOOL)
+  rule Infer_exp/integer:
+    EC |- UN numUnOp expEL : OK ((UN numUnOp typedExp_cast) '#' INT)
+    -- Infer_exp: EC |- expEL : OK typedExp
+    -- if FAIL = $cast(EC.TYP, typedExp, NAT)
+    -- if OK typedExp_cast = $cast(EC.TYP, typedExp, INT)
 
-;; Subtraction of naturals is an integer
+}
 
-rule Infer_exp/binary-natural:
-  EC |- BIN expEL_l numBinOp expEL_r : OK ((BIN numBinOp typedExp_l_cast typedExp_r_cast) '#' typ)
-  -- Infer_exp: EC |- expEL_l : OK typedExp_l
-  -- Infer_exp: EC |- expEL_r : OK typedExp_r
-  -- if OK (typedExp_l_cast, typedExp_r_cast) = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT)
-  -- if typ = $ite<typ>(numBinOp = SUB, INT, NAT)
+rulegroup Infer_exp/binary {
 
-rule Infer_exp/binary-integer:
-  EC |- BIN expEL_l numBinOp expEL_r : OK ((BIN numBinOp typedExp_l_cast typedExp_r_cast) '#' INT)
-  -- Infer_exp: EC |- expEL_l : OK typedExp_l
-  -- Infer_exp: EC |- expEL_r : OK typedExp_r
-  -- if FAIL = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT)
-  -- if OK (typedExp_l_cast, typedExp_r_cast) = $cast_pair(EC.TYP, typedExp_l, typedExp_r, INT)
+  rule Infer_exp/boolean:
+    EC |- BIN expEL_l boolBinOp expEL_r : OK ((BIN boolBinOp typedExp_l_cast typedExp_r_cast) '#' BOOL)
+    -- Infer_exp: EC |- expEL_l : OK typedExp_l
+    -- Infer_exp: EC |- expEL_r : OK typedExp_r
+    -- if OK (typedExp_l_cast, typedExp_r_cast) = $cast_pair(EC.TYP, typedExp_l, typedExp_r, BOOL)
+
+  ;; Subtraction of naturals is an integer
+
+  rule Infer_exp/natural:
+    EC |- BIN expEL_l numBinOp expEL_r : OK ((BIN numBinOp typedExp_l_cast typedExp_r_cast) '#' typ)
+    -- Infer_exp: EC |- expEL_l : OK typedExp_l
+    -- Infer_exp: EC |- expEL_r : OK typedExp_r
+    -- if OK (typedExp_l_cast, typedExp_r_cast) = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT)
+    -- if typ = $ite<typ>(numBinOp = SUB, INT, NAT)
+
+  rule Infer_exp/integer:
+    EC |- BIN expEL_l numBinOp expEL_r : OK ((BIN numBinOp typedExp_l_cast typedExp_r_cast) '#' INT)
+    -- Infer_exp: EC |- expEL_l : OK typedExp_l
+    -- Infer_exp: EC |- expEL_r : OK typedExp_r
+    -- if FAIL = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT)
+    -- if OK (typedExp_l_cast, typedExp_r_cast) = $cast_pair(EC.TYP, typedExp_l, typedExp_r, INT)
+
+}
 
 ;; Equality infers one side and checks the other against it,
 ;; the right side first
 
-rule Infer_exp/compare-poly-first:
-  EC |- CMP expEL_l polyCmpOp expEL_r : OK typedExp
-  -- Infer_exp_first: EC |- CMP expEL_l polyCmpOp expEL_r : OK typedExp
+rulegroup Infer_exp/compare {
 
-rule Infer_exp/compare-poly-second:
-  EC |- CMP expEL_l polyCmpOp expEL_r : OK ((CMP polyCmpOp typedExp_l typedExp_r) '#' BOOL)
-  -- Infer_exp_first: EC |- CMP expEL_l polyCmpOp expEL_r : FAIL
-  -- Infer_exp: EC |- expEL_l : OK typedExp_l
-  -- if _ '#' typ_l = typedExp_l
-  -- Elab_exp: EC |- expEL_r '<=' typ_l : OK typedExp_r
+  rule Infer_exp/poly-first:
+    EC |- CMP expEL_l polyCmpOp expEL_r : OK typedExp
+    -- Infer_exp_first: EC |- CMP expEL_l polyCmpOp expEL_r : OK typedExp
 
-rule Infer_exp/compare-natural:
-  EC |- CMP expEL_l numCmpOp expEL_r : OK ((CMP numCmpOp typedExp_l_cast typedExp_r_cast) '#' BOOL)
-  -- Infer_exp: EC |- expEL_l : OK typedExp_l
-  -- Infer_exp: EC |- expEL_r : OK typedExp_r
-  -- if OK (typedExp_l_cast, typedExp_r_cast) = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT)
+  rule Infer_exp/poly-second:
+    EC |- CMP expEL_l polyCmpOp expEL_r : OK ((CMP polyCmpOp typedExp_l typedExp_r) '#' BOOL)
+    -- Infer_exp_first: EC |- CMP expEL_l polyCmpOp expEL_r : FAIL
+    -- Infer_exp: EC |- expEL_l : OK typedExp_l
+    -- if _ '#' typ_l = typedExp_l
+    -- Elab_exp: EC |- expEL_r '<=' typ_l : OK typedExp_r
 
-rule Infer_exp/compare-integer:
-  EC |- CMP expEL_l numCmpOp expEL_r : OK ((CMP numCmpOp typedExp_l_cast typedExp_r_cast) '#' BOOL)
-  -- Infer_exp: EC |- expEL_l : OK typedExp_l
-  -- Infer_exp: EC |- expEL_r : OK typedExp_r
-  -- if FAIL = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT)
-  -- if OK (typedExp_l_cast, typedExp_r_cast) = $cast_pair(EC.TYP, typedExp_l, typedExp_r, INT)
+  rule Infer_exp/natural:
+    EC |- CMP expEL_l numCmpOp expEL_r : OK ((CMP numCmpOp typedExp_l_cast typedExp_r_cast) '#' BOOL)
+    -- Infer_exp: EC |- expEL_l : OK typedExp_l
+    -- Infer_exp: EC |- expEL_r : OK typedExp_r
+    -- if OK (typedExp_l_cast, typedExp_r_cast) = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT)
+
+  rule Infer_exp/integer:
+    EC |- CMP expEL_l numCmpOp expEL_r : OK ((CMP numCmpOp typedExp_l_cast typedExp_r_cast) '#' BOOL)
+    -- Infer_exp: EC |- expEL_l : OK typedExp_l
+    -- Infer_exp: EC |- expEL_r : OK typedExp_r
+    -- if FAIL = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT)
+    -- if OK (typedExp_l_cast, typedExp_r_cast) = $cast_pair(EC.TYP, typedExp_l, typedExp_r, INT)
+
+}
 
 rule Infer_exp/arith:
   EC |- ARITH expEL : expElabRes
@@ -130,64 +142,84 @@ rule Infer_exp/cons:
 
 ;; Concatenation, length, indexing, and slicing read lists before texts
 
-rule Infer_exp/cat-list:
-  EC |- CAT expEL_l expEL_r : OK typedExp
-  -- Infer_exp_first: EC |- CAT expEL_l expEL_r : OK typedExp
+rulegroup Infer_exp/cat {
 
-rule Infer_exp/cat-string:
-  EC |- CAT expEL_l expEL_r : OK ((CAT typedExp_l typedExp_r) '#' TEXT)
-  -- Infer_exp_first: EC |- CAT expEL_l expEL_r : FAIL
-  -- Elab_exp: EC |- expEL_l '<=' TEXT : OK typedExp_l
-  -- Elab_exp: EC |- expEL_r '<=' TEXT : OK typedExp_r
+  rule Infer_exp/list:
+    EC |- CAT expEL_l expEL_r : OK typedExp
+    -- Infer_exp_first: EC |- CAT expEL_l expEL_r : OK typedExp
+
+  rule Infer_exp/string:
+    EC |- CAT expEL_l expEL_r : OK ((CAT typedExp_l typedExp_r) '#' TEXT)
+    -- Infer_exp_first: EC |- CAT expEL_l expEL_r : FAIL
+    -- Elab_exp: EC |- expEL_l '<=' TEXT : OK typedExp_l
+    -- Elab_exp: EC |- expEL_r '<=' TEXT : OK typedExp_r
+
+}
 
 rule Infer_exp/tuple:
   EC |- TUP expEL* : OK ((TUP typedExp*) '#' (TUP typ*))
   -- (Infer_exp: EC |- expEL : OK typedExp)*
   -- if (_ '#' typ = typedExp)*
 
-rule Infer_exp/len-list:
-  EC |- LEN expEL : OK typedExp
-  -- Infer_exp_first: EC |- LEN expEL : OK typedExp
+rulegroup Infer_exp/len {
 
-rule Infer_exp/len-string:
-  EC |- LEN expEL : OK ((LEN typedExp) '#' NAT)
-  -- Infer_exp_first: EC |- LEN expEL : FAIL
-  -- Elab_exp: EC |- expEL '<=' TEXT : OK typedExp
+  rule Infer_exp/list:
+    EC |- LEN expEL : OK typedExp
+    -- Infer_exp_first: EC |- LEN expEL : OK typedExp
+
+  rule Infer_exp/string:
+    EC |- LEN expEL : OK ((LEN typedExp) '#' NAT)
+    -- Infer_exp_first: EC |- LEN expEL : FAIL
+    -- Elab_exp: EC |- expEL '<=' TEXT : OK typedExp
+
+}
 
 ;; Membership infers the element first, then the list
 
-rule Infer_exp/mem-elem:
-  EC |- MEM expEL_e expEL_s : OK typedExp
-  -- Infer_exp_first: EC |- MEM expEL_e expEL_s : OK typedExp
+rulegroup Infer_exp/mem {
 
-rule Infer_exp/mem-list:
-  EC |- MEM expEL_e expEL_s : OK ((MEM typedExp_e typedExp_s) '#' BOOL)
-  -- Infer_exp_first: EC |- MEM expEL_e expEL_s : FAIL
-  -- Infer_exp: EC |- expEL_s : OK typedExp_s
-  -- if _ '#' typ_s = typedExp_s
-  -- if typ_e = $as_list_typ(EC.TYP, typ_s)
-  -- Elab_exp: EC |- expEL_e '<=' typ_e : OK typedExp_e
+  rule Infer_exp/elem:
+    EC |- MEM expEL_e expEL_s : OK typedExp
+    -- Infer_exp_first: EC |- MEM expEL_e expEL_s : OK typedExp
 
-rule Infer_exp/idx-list:
-  EC |- IDX expEL_b expEL_i : OK typedExp
-  -- Infer_exp_first: EC |- IDX expEL_b expEL_i : OK typedExp
+  rule Infer_exp/list:
+    EC |- MEM expEL_e expEL_s : OK ((MEM typedExp_e typedExp_s) '#' BOOL)
+    -- Infer_exp_first: EC |- MEM expEL_e expEL_s : FAIL
+    -- Infer_exp: EC |- expEL_s : OK typedExp_s
+    -- if _ '#' typ_s = typedExp_s
+    -- if typ_e = $as_list_typ(EC.TYP, typ_s)
+    -- Elab_exp: EC |- expEL_e '<=' typ_e : OK typedExp_e
 
-rule Infer_exp/idx-string:
-  EC |- IDX expEL_b expEL_i : OK ((IDX typedExp_b typedExp_i) '#' TEXT)
-  -- Infer_exp_first: EC |- IDX expEL_b expEL_i : FAIL
-  -- Elab_exp: EC |- expEL_b '<=' TEXT : OK typedExp_b
-  -- Elab_exp: EC |- expEL_i '<=' NAT : OK typedExp_i
+}
 
-rule Infer_exp/slice-list:
-  EC |- SLICE expEL_b expEL_i expEL_n : OK typedExp
-  -- Infer_exp_first: EC |- SLICE expEL_b expEL_i expEL_n : OK typedExp
+rulegroup Infer_exp/idx {
 
-rule Infer_exp/slice-string:
-  EC |- SLICE expEL_b expEL_i expEL_n : OK ((SLICE typedExp_b typedExp_i typedExp_n) '#' TEXT)
-  -- Infer_exp_first: EC |- SLICE expEL_b expEL_i expEL_n : FAIL
-  -- Elab_exp: EC |- expEL_b '<=' TEXT : OK typedExp_b
-  -- Elab_exp: EC |- expEL_i '<=' NAT : OK typedExp_i
-  -- Elab_exp: EC |- expEL_n '<=' NAT : OK typedExp_n
+  rule Infer_exp/list:
+    EC |- IDX expEL_b expEL_i : OK typedExp
+    -- Infer_exp_first: EC |- IDX expEL_b expEL_i : OK typedExp
+
+  rule Infer_exp/string:
+    EC |- IDX expEL_b expEL_i : OK ((IDX typedExp_b typedExp_i) '#' TEXT)
+    -- Infer_exp_first: EC |- IDX expEL_b expEL_i : FAIL
+    -- Elab_exp: EC |- expEL_b '<=' TEXT : OK typedExp_b
+    -- Elab_exp: EC |- expEL_i '<=' NAT : OK typedExp_i
+
+}
+
+rulegroup Infer_exp/slice {
+
+  rule Infer_exp/list:
+    EC |- SLICE expEL_b expEL_i expEL_n : OK typedExp
+    -- Infer_exp_first: EC |- SLICE expEL_b expEL_i expEL_n : OK typedExp
+
+  rule Infer_exp/string:
+    EC |- SLICE expEL_b expEL_i expEL_n : OK ((SLICE typedExp_b typedExp_i typedExp_n) '#' TEXT)
+    -- Infer_exp_first: EC |- SLICE expEL_b expEL_i expEL_n : FAIL
+    -- Elab_exp: EC |- expEL_b '<=' TEXT : OK typedExp_b
+    -- Elab_exp: EC |- expEL_i '<=' NAT : OK typedExp_i
+    -- Elab_exp: EC |- expEL_n '<=' NAT : OK typedExp_n
+
+}
 
 ;;; Structs
 

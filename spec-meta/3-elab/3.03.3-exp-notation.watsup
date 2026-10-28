@@ -17,25 +17,29 @@ rule Elab_notArgs/arg:
   -- if ~$is_paren(expEL)
   -- Elab_exp: EC |- expEL '<=' typ_h : OK typedExp
 
-rule Elab_notArgs/atom:
-  EC |- (ATOM atom) '<=' (ATOM atom) typ* : OK (eps, typ*)
+rulegroup Elab_notArgs/notation {
 
-;; A sequence matches element-wise, without guessing omitted positions
+  rule Elab_notArgs/atom:
+    EC |- (ATOM atom) '<=' (ATOM atom) typ* : OK (eps, typ*)
 
-rule Elab_notArgs/seq:
-  EC |- (SEQ expEL*) '<=' (SEQ mixop*) typ* : notArgsElabRes
-  -- if |expEL*| = |mixop*|
-  -- Elab_notArgss: EC |- expEL* '<=' mixop* typ* : notArgsElabRes
+  ;; A sequence matches element-wise, without guessing omitted positions
 
-rule Elab_notArgs/infix:
-  EC |- (INFIX expEL_l atom expEL_r) '<=' (INFIX mixop_l atom mixop_r) typ*
-     : OK (typedExp_l* ++ typedExp_r*, typ_r*)
-  -- Elab_notArgs: EC |- expEL_l '<=' mixop_l typ* : OK (typedExp_l*, typ_l*)
-  -- Elab_notArgs: EC |- expEL_r '<=' mixop_r typ_l* : OK (typedExp_r*, typ_r*)
+  rule Elab_notArgs/seq:
+    EC |- (SEQ expEL*) '<=' (SEQ mixop*) typ* : notArgsElabRes
+    -- if |expEL*| = |mixop*|
+    -- Elab_notArgss: EC |- expEL* '<=' mixop* typ* : notArgsElabRes
 
-rule Elab_notArgs/brack:
-  EC |- (BRACK atom_l expEL atom_r) '<=' (BRACK atom_l mixop atom_r) typ* : notArgsElabRes
-  -- Elab_notArgs: EC |- expEL '<=' mixop typ* : notArgsElabRes
+  rule Elab_notArgs/infix:
+    EC |- (INFIX expEL_l atom expEL_r) '<=' (INFIX mixop_l atom mixop_r) typ*
+       : OK (typedExp_l* ++ typedExp_r*, typ_r*)
+    -- Elab_notArgs: EC |- expEL_l '<=' mixop_l typ* : OK (typedExp_l*, typ_l*)
+    -- Elab_notArgs: EC |- expEL_r '<=' mixop_r typ_l* : OK (typedExp_r*, typ_r*)
+
+  rule Elab_notArgs/brack:
+    EC |- (BRACK atom_l expEL atom_r) '<=' (BRACK atom_l mixop atom_r) typ* : notArgsElabRes
+    -- Elab_notArgs: EC |- expEL '<=' mixop typ* : notArgsElabRes
+
+}
 
 rule Elab_notArgs/fail:
   EC |- expEL '<=' mixop typ* : FAIL

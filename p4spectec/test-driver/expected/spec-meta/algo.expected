@@ -2233,56 +2233,37 @@ relation Elab_notTyp: elabCtx |- typEL : notTypElabRes
     -- let OK typ = typElabRes as ok<typ>
     -- output: % |- % : OK ARG [typ] as notTypElabRes
 
-  rulegroup atom
+  rulegroup notation
 
    match
 
-    (signature) EC |- NOTATION ATOM atom : %
-    EC |- typEL : %
-    -- if typEL matches NOTATION %
-    -- let NOTATION notTypEL = typEL
-    -- if notTypEL matches ATOM %
-    -- let ATOM atom = notTypEL
+    (signature) EC |- NOTATION notTypEL : %
+    EC |- typEL' : %
+    -- if typEL' matches NOTATION %
+    -- let NOTATION notTypEL = typEL'
 
    paths
 
     rulepath atom
+    -- let notTypEL' = notTypEL
+    -- if notTypEL' matches ATOM %
+    -- let ATOM atom = notTypEL'
     -- output: % |- % : OK ATOM atom [] as notTypElabRes
 
-  rulegroup seq
-
-   match
-
-    (signature) EC |- NOTATION SEQ typEL*{typEL <- typEL*} : %
-    EC |- typEL' : %
-    -- if typEL' matches NOTATION %
-    -- let NOTATION notTypEL = typEL'
-    -- if notTypEL matches SEQ %
-    -- let SEQ typEL*{typEL <- typEL*} = notTypEL
-
-   paths
-
     rulepath seq
+    -- let notTypEL' = notTypEL
+    -- if notTypEL' matches SEQ %
+    -- let SEQ typEL*{typEL <- typEL*} = notTypEL'
     -- (Elab_notTyp: EC |- typEL : notTypElabRes)*{typEL <- typEL*, notTypElabRes -> notTypElabRes*}
     -- (if notTypElabRes <: ok<notTyp>)*{notTypElabRes <- notTypElabRes*}
     -- (let OK mixop typ*{typ <- typ*} = notTypElabRes as ok<notTyp>)*{notTypElabRes <- notTypElabRes*, mixop -> mixop*, typ* -> typ**}
     -- let typ_arg*{typ_arg <- typ_arg*} = $concat_<typ>(typ*{typ <- typ*}*{typ* <- typ**})
     -- output: % |- % : OK SEQ mixop*{mixop <- mixop*} typ_arg*{typ_arg <- typ_arg*} as notTypElabRes
 
-  rulegroup infix
-
-   match
-
-    (signature) EC |- NOTATION INFIX typEL_l atom typEL_r : %
-    EC |- typEL : %
-    -- if typEL matches NOTATION %
-    -- let NOTATION notTypEL = typEL
-    -- if notTypEL matches INFIX % % %
-    -- let INFIX typEL_l atom typEL_r = notTypEL
-
-   paths
-
     rulepath infix
+    -- let notTypEL' = notTypEL
+    -- if notTypEL' matches INFIX % % %
+    -- let INFIX typEL_l atom typEL_r = notTypEL'
     -- Elab_notTyp: EC |- typEL_l : notTypElabRes
     -- if notTypElabRes <: ok<notTyp>
     -- let OK mixop_l typ_l*{typ_l <- typ_l*} = notTypElabRes as ok<notTyp>
@@ -2291,20 +2272,10 @@ relation Elab_notTyp: elabCtx |- typEL : notTypElabRes
     -- let OK mixop_r typ_r*{typ_r <- typ_r*} = notTypElabRes' as ok<notTyp>
     -- output: % |- % : OK INFIX mixop_l atom mixop_r typ_l*{typ_l <- typ_l*} ++ typ_r*{typ_r <- typ_r*} as notTypElabRes
 
-  rulegroup brack
-
-   match
-
-    (signature) EC |- NOTATION BRACK atom_l typEL atom_r : %
-    EC |- typEL' : %
-    -- if typEL' matches NOTATION %
-    -- let NOTATION notTypEL = typEL'
-    -- if notTypEL matches BRACK % % %
-    -- let BRACK atom_l typEL atom_r = notTypEL
-
-   paths
-
     rulepath brack
+    -- let notTypEL' = notTypEL
+    -- if notTypEL' matches BRACK % % %
+    -- let BRACK atom_l typEL atom_r = notTypEL'
     -- Elab_notTyp: EC |- typEL : notTypElabRes
     -- if notTypElabRes <: ok<notTyp>
     -- let OK mixop typ*{typ <- typ*} = notTypElabRes as ok<notTyp>
@@ -2581,18 +2552,19 @@ syntax defElabRes =
 
 relation Elab_def: elabCtx |- defnEL : defElabRes
 
-  rulegroup typ-extern
+  rulegroup typ
 
    match
 
-    (signature) EC |- EXTSYNTAX id : %
+    (signature) EC |- defnEL : %
     EC |- defnEL : %
-    -- if defnEL matches EXTSYNTAX %
-    -- let EXTSYNTAX id = defnEL
 
    paths
 
-    rulepath typ-extern
+    rulepath extern
+    -- let defnEL' = defnEL
+    -- if defnEL' matches EXTSYNTAX %
+    -- let EXTSYNTAX id = defnEL'
     -- if $is_tid(id)
     -- if (?() = $find_map<id, typDef>(EC.TYP, id))
     -- if (?() = $find_map<id, typ>(EC.VAR, id))
@@ -2600,35 +2572,19 @@ relation Elab_def: elabCtx |- defnEL : defElabRes
     -- let EC_meta = $add_metavar(EC_typ, id, VAR id [])
     -- output: % |- % : OK (EC_meta, [DECL EXTTYP id as defnIL]) as defElabRes
 
-  rulegroup typ-forward
-
-   match
-
-    (signature) EC |- SYNTAX syntaxEntryEL*{syntaxEntryEL <- syntaxEntryEL*} : %
-    EC |- defnEL : %
-    -- if defnEL matches SYNTAX %
-    -- let SYNTAX syntaxEntryEL*{syntaxEntryEL <- syntaxEntryEL*} = defnEL
-
-   paths
-
-    rulepath typ-forward
+    rulepath forward
+    -- let defnEL' = defnEL
+    -- if defnEL' matches SYNTAX %
+    -- let SYNTAX syntaxEntryEL*{syntaxEntryEL <- syntaxEntryEL*} = defnEL'
     -- let EC'?{EC' <- EC'?} = $declare_syntax(EC, syntaxEntryEL*{syntaxEntryEL <- syntaxEntryEL*})
     -- if EC'?{EC' <- EC'?} matches (_)
     -- let ?(EC_decl) = EC'?{EC' <- EC'?}
     -- output: % |- % : OK (EC_decl, []) as defElabRes
 
-  rulegroup typ
-
-   match
-
-    (signature) EC |- TYP id tparam*{tparam <- tparam*} '=' defTypEL : %
-    EC |- defnEL : %
-    -- if defnEL matches TYP % % '=' %
-    -- let TYP id tparam*{tparam <- tparam*} '=' defTypEL = defnEL
-
-   paths
-
-    rulepath typ
+    rulepath defined
+    -- let defnEL' = defnEL
+    -- if defnEL' matches TYP % % '=' %
+    -- let TYP id tparam*{tparam <- tparam*} '=' defTypEL = defnEL'
     -- let EC'?{EC' <- EC'?} = $declare_typ_body(EC, id, tparam*{tparam <- tparam*})
     -- if EC'?{EC' <- EC'?} matches (_)
     -- let ?(EC_decl) = EC'?{EC' <- EC'?}
@@ -2664,18 +2620,19 @@ relation Elab_def: elabCtx |- defnEL : defElabRes
     -- let EC_meta = $add_metavar(EC, id, typ)
     -- output: % |- % : OK (EC_meta, []) as defElabRes
 
-  rulegroup rel-extern
+  rulegroup rel
 
    match
 
-    (signature) EC |- EXTREL id ':' notTypEL hintEL*{hintEL <- hintEL*} : %
+    (signature) EC |- defnEL : %
     EC |- defnEL : %
-    -- if defnEL matches EXTREL % ':' % %
-    -- let EXTREL id ':' notTypEL hintEL*{hintEL <- hintEL*} = defnEL
 
    paths
 
-    rulepath rel-extern
+    rulepath extern
+    -- let defnEL' = defnEL
+    -- if defnEL' matches EXTREL % ':' % %
+    -- let EXTREL id ':' notTypEL hintEL*{hintEL <- hintEL*} = defnEL'
     -- if (?() = $find_map<id, relSig>(EC.REL, id))
     -- Elab_notTyp: EC |- NOTATION notTypEL : notTypElabRes
     -- if notTypElabRes <: ok<notTyp>
@@ -2687,18 +2644,10 @@ relation Elab_def: elabCtx |- defnEL : defElabRes
     -- let externRelDefnIL = EXTREL id ':' typ*{typ <- typ*} `( inputHint `)
     -- output: % |- % : OK (EC_rel, [DECL externRelDefnIL as defnIL]) as defElabRes
 
-  rulegroup rel
-
-   match
-
-    (signature) EC |- REL id ':' notTypEL hintEL*{hintEL <- hintEL*} : %
-    EC |- defnEL : %
-    -- if defnEL matches REL % ':' % %
-    -- let REL id ':' notTypEL hintEL*{hintEL <- hintEL*} = defnEL
-
-   paths
-
-    rulepath rel
+    rulepath defined
+    -- let defnEL' = defnEL
+    -- if defnEL' matches REL % ':' % %
+    -- let REL id ':' notTypEL hintEL*{hintEL <- hintEL*} = defnEL'
     -- if (?() = $find_map<id, relSig>(EC.REL, id))
     -- Elab_notTyp: EC |- NOTATION notTypEL : notTypElabRes
     -- if notTypElabRes <: ok<notTyp>
@@ -2711,18 +2660,19 @@ relation Elab_def: elabCtx |- defnEL : defElabRes
     -- let definedRelDefnIL = REL id ':' typ*{typ <- typ*} `( inputHint `) '=' [] ?()
     -- output: % |- % : OK (EC_body, [DECL definedRelDefnIL as defnIL]) as defElabRes
 
-  rulegroup func-extern
+  rulegroup func
 
    match
 
-    (signature) EC |- EXTDEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL : %
+    (signature) EC |- defnEL : %
     EC |- defnEL : %
-    -- if defnEL matches EXTDEC % % % ':' %
-    -- let EXTDEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL = defnEL
 
    paths
 
-    rulepath func-extern
+    rulepath extern
+    -- let defnEL' = defnEL
+    -- if defnEL' matches EXTDEC % % % ':' %
+    -- let EXTDEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL = defnEL'
     -- if (?() = $find_map<id, funcSig>(EC.FUNC, id))
     -- Elab_signature: EC |- tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL : signatureElabRes
     -- if signatureElabRes <: ok<(param*, typ)>
@@ -2731,18 +2681,10 @@ relation Elab_def: elabCtx |- defnEL : defElabRes
     -- let externFuncDefn = EXTFUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ
     -- output: % |- % : OK (EC_func, [DECL externFuncDefn as defnIL]) as defElabRes
 
-  rulegroup func-builtin
-
-   match
-
-    (signature) EC |- BUILTINDEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL : %
-    EC |- defnEL : %
-    -- if defnEL matches BUILTINDEC % % % ':' %
-    -- let BUILTINDEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL = defnEL
-
-   paths
-
-    rulepath func-builtin
+    rulepath builtin
+    -- let defnEL' = defnEL
+    -- if defnEL' matches BUILTINDEC % % % ':' %
+    -- let BUILTINDEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL = defnEL'
     -- if (?() = $find_map<id, funcSig>(EC.FUNC, id))
     -- Elab_signature: EC |- tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL : signatureElabRes
     -- if signatureElabRes <: ok<(param*, typ)>
@@ -2751,18 +2693,10 @@ relation Elab_def: elabCtx |- defnEL : defElabRes
     -- let builtinFuncDefn = BUILTINFUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ
     -- output: % |- % : OK (EC_func, [DECL builtinFuncDefn as defnIL]) as defElabRes
 
-  rulegroup func-table
-
-   match
-
-    (signature) EC |- TABLEDEC id paramEL*{paramEL <- paramEL*} ':' plainTypEL : %
-    EC |- defnEL : %
-    -- if defnEL matches TABLEDEC % % ':' %
-    -- let TABLEDEC id paramEL*{paramEL <- paramEL*} ':' plainTypEL = defnEL
-
-   paths
-
-    rulepath func-table
+    rulepath tabular
+    -- let defnEL' = defnEL
+    -- if defnEL' matches TABLEDEC % % ':' %
+    -- let TABLEDEC id paramEL*{paramEL <- paramEL*} ':' plainTypEL = defnEL'
     -- if (?() = $find_map<id, funcSig>(EC.FUNC, id))
     -- (Elab_param: EC |- paramEL : paramElabRes)*{paramEL <- paramEL*, paramElabRes -> paramElabRes*}
     -- (if paramElabRes <: ok<param>)*{paramElabRes <- paramElabRes*}
@@ -2779,18 +2713,10 @@ relation Elab_def: elabCtx |- defnEL : defElabRes
     -- let tableFuncDefnIL = TABLEFUNC id param*{param <- param*} ':' typ '=' []
     -- output: % |- % : OK (EC_body, [DECL tableFuncDefnIL as defnIL]) as defElabRes
 
-  rulegroup func
-
-   match
-
-    (signature) EC |- DEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL : %
-    EC |- defnEL : %
-    -- if defnEL matches DEC % % % ':' %
-    -- let DEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL = defnEL
-
-   paths
-
-    rulepath func
+    rulepath defined
+    -- let defnEL' = defnEL
+    -- if defnEL' matches DEC % % % ':' %
+    -- let DEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL = defnEL'
     -- if (?() = $find_map<id, funcSig>(EC.FUNC, id))
     -- Elab_signature: EC |- tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL : signatureElabRes
     -- if signatureElabRes <: ok<(param*, typ)>
@@ -2800,18 +2726,19 @@ relation Elab_def: elabCtx |- defnEL : defElabRes
     -- let definedFuncDefnIL = FUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' [] ?()
     -- output: % |- % : OK (EC_body, [DECL definedFuncDefnIL as defnIL]) as defElabRes
 
-  rulegroup rules
+  rulegroup body
 
    match
 
-    (signature) EC |- RULEGROUP id_rel '/' id_group ':' rulEL*{rulEL <- rulEL*} : %
+    (signature) EC |- defnEL : %
     EC |- defnEL : %
-    -- if defnEL matches RULEGROUP % '/' % ':' %
-    -- let RULEGROUP id_rel '/' id_group ':' rulEL*{rulEL <- rulEL*} = defnEL
 
    paths
 
     rulepath rules
+    -- let defnEL' = defnEL
+    -- if defnEL' matches RULEGROUP % '/' % ':' %
+    -- let RULEGROUP id_rel '/' id_group ':' rulEL*{rulEL <- rulEL*} = defnEL'
     -- let body'?{body' <- body'?} = $find_map<id, body>(EC.BODY, id_rel)
     -- if body'?{body' <- body'?} matches (_)
     -- let ?(body) = body'?{body' <- body'?}
@@ -2828,33 +2755,17 @@ relation Elab_def: elabCtx |- defnEL : defElabRes
     -- let ?(EC_group) = EC'?{EC' <- EC'?}
     -- output: % |- % : OK (EC_group, []) as defElabRes
 
-  rulegroup clause
-
-   match
-
-    (signature) EC |- DEF id tparam*{tparam <- tparam*} argEL*{argEL <- argEL*} '=' expEL '-' premEL*{premEL <- premEL*} : %
-    EC |- defnEL : %
-    -- if defnEL matches DEF % % % '=' % '-' %
-    -- let DEF id tparam*{tparam <- tparam*} argEL*{argEL <- argEL*} '=' expEL '-' premEL*{premEL <- premEL*} = defnEL
-
-   paths
-
     rulepath clause
+    -- let defnEL' = defnEL
+    -- if defnEL' matches DEF % % % '=' % '-' %
+    -- let DEF id tparam*{tparam <- tparam*} argEL*{argEL <- argEL*} '=' expEL '-' premEL*{premEL <- premEL*} = defnEL'
     -- Elab_clause: EC |- DEF id tparam*{tparam <- tparam*} argEL*{argEL <- argEL*} '=' expEL '-' premEL*{premEL <- premEL*} : defElabRes
     -- output: % |- % : defElabRes
 
-  rulegroup rows
-
-   match
-
-    (signature) EC |- TABLE id tblRowEL*{tblRowEL <- tblRowEL*} : %
-    EC |- defnEL : %
-    -- if defnEL matches TABLE % %
-    -- let TABLE id tblRowEL*{tblRowEL <- tblRowEL*} = defnEL
-
-   paths
-
     rulepath rows
+    -- let defnEL' = defnEL
+    -- if defnEL' matches TABLE % %
+    -- let TABLE id tblRowEL*{tblRowEL <- tblRowEL*} = defnEL'
     -- let funcSig?{funcSig <- funcSig?} = $find_map<id, funcSig>(EC.FUNC, id)
     -- if funcSig?{funcSig <- funcSig?} matches (_)
     -- let ?(funcKind _tparam*{_tparam <- _tparam*} param*{param <- param*} ':' typ) = funcSig?{funcSig <- funcSig?}
@@ -3016,20 +2927,21 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- let ?(typ) = typ'?{typ' <- typ'?}
     -- output: % |- % : OK VAR id as exp '#' typ as expElabRes
 
-  rulegroup unary-boolean
+  rulegroup unary
 
    match
 
-    (signature) EC |- UN boolUnOp as unOp expEL : %
+    (signature) EC |- UN unOp expEL : %
     EC |- expEL' : %
     -- if expEL' matches UN % %
     -- let UN unOp expEL = expEL'
-    -- if unOp <: boolUnOp
-    -- let boolUnOp = unOp as boolUnOp
 
    paths
 
-    rulepath unary-boolean
+    rulepath boolean
+    -- let unOp' = unOp
+    -- if unOp' <: boolUnOp
+    -- let boolUnOp = unOp' as boolUnOp
     -- Infer_exp: EC |- expEL : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp = expElabRes as ok<typedExp>
@@ -3038,20 +2950,10 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- let OK typedExp_cast = expElabRes' as ok<typedExp>
     -- output: % |- % : OK UN boolUnOp as unOp typedExp_cast as exp '#' BOOL as typ as expElabRes
 
-  rulegroup unary-natural
-
-   match
-
-    (signature) EC |- UN numUnOp as unOp expEL : %
-    EC |- expEL' : %
-    -- if expEL' matches UN % %
-    -- let UN unOp expEL = expEL'
-    -- if unOp <: numUnOp
-    -- let numUnOp = unOp as numUnOp
-
-   paths
-
-    rulepath unary-natural
+    rulepath natural
+    -- let unOp' = unOp
+    -- if unOp' <: numUnOp
+    -- let numUnOp = unOp' as numUnOp
     -- Infer_exp: EC |- expEL : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp = expElabRes as ok<typedExp>
@@ -3060,20 +2962,10 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- let OK typedExp_cast = expElabRes' as ok<typedExp>
     -- output: % |- % : OK UN numUnOp as unOp typedExp_cast as exp '#' NAT as typ as expElabRes
 
-  rulegroup unary-integer
-
-   match
-
-    (signature) EC |- UN numUnOp as unOp expEL : %
-    EC |- expEL' : %
-    -- if expEL' matches UN % %
-    -- let UN unOp expEL = expEL'
-    -- if unOp <: numUnOp
-    -- let numUnOp = unOp as numUnOp
-
-   paths
-
-    rulepath unary-integer
+    rulepath integer
+    -- let unOp' = unOp
+    -- if unOp' <: numUnOp
+    -- let numUnOp = unOp' as numUnOp
     -- Infer_exp: EC |- expEL : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp = expElabRes as ok<typedExp>
@@ -3083,20 +2975,21 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- let OK typedExp_cast = expElabRes' as ok<typedExp>
     -- output: % |- % : OK UN numUnOp as unOp typedExp_cast as exp '#' INT as typ as expElabRes
 
-  rulegroup binary-boolean
+  rulegroup binary
 
    match
 
-    (signature) EC |- BIN expEL_l boolBinOp as binOp expEL_r : %
+    (signature) EC |- BIN expEL_l binOp expEL_r : %
     EC |- expEL : %
     -- if expEL matches BIN % % %
     -- let BIN expEL_l binOp expEL_r = expEL
-    -- if binOp <: boolBinOp
-    -- let boolBinOp = binOp as boolBinOp
 
    paths
 
-    rulepath binary-boolean
+    rulepath boolean
+    -- let binOp' = binOp
+    -- if binOp' <: boolBinOp
+    -- let boolBinOp = binOp' as boolBinOp
     -- Infer_exp: EC |- expEL_l : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp_l = expElabRes as ok<typedExp>
@@ -3108,20 +3001,10 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- let OK (typedExp_l_cast, typedExp_r_cast) = expPairElabRes as ok<(typedExp, typedExp)>
     -- output: % |- % : OK BIN boolBinOp as binOp typedExp_l_cast typedExp_r_cast as exp '#' BOOL as typ as expElabRes
 
-  rulegroup binary-natural
-
-   match
-
-    (signature) EC |- BIN expEL_l numBinOp as binOp expEL_r : %
-    EC |- expEL : %
-    -- if expEL matches BIN % % %
-    -- let BIN expEL_l binOp expEL_r = expEL
-    -- if binOp <: numBinOp
-    -- let numBinOp = binOp as numBinOp
-
-   paths
-
-    rulepath binary-natural
+    rulepath natural
+    -- let binOp' = binOp
+    -- if binOp' <: numBinOp
+    -- let numBinOp = binOp' as numBinOp
     -- Infer_exp: EC |- expEL_l : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp_l = expElabRes as ok<typedExp>
@@ -3134,20 +3017,10 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- let typ = $ite<typ>((numBinOp = SUB), INT as typ, NAT as typ)
     -- output: % |- % : OK BIN numBinOp as binOp typedExp_l_cast typedExp_r_cast as exp '#' typ as expElabRes
 
-  rulegroup binary-integer
-
-   match
-
-    (signature) EC |- BIN expEL_l numBinOp as binOp expEL_r : %
-    EC |- expEL : %
-    -- if expEL matches BIN % % %
-    -- let BIN expEL_l binOp expEL_r = expEL
-    -- if binOp <: numBinOp
-    -- let numBinOp = binOp as numBinOp
-
-   paths
-
-    rulepath binary-integer
+    rulepath integer
+    -- let binOp' = binOp
+    -- if binOp' <: numBinOp
+    -- let numBinOp = binOp' as numBinOp
     -- Infer_exp: EC |- expEL_l : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp_l = expElabRes as ok<typedExp>
@@ -3160,39 +3033,30 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- let OK (typedExp_l_cast, typedExp_r_cast) = expPairElabRes as ok<(typedExp, typedExp)>
     -- output: % |- % : OK BIN numBinOp as binOp typedExp_l_cast typedExp_r_cast as exp '#' INT as typ as expElabRes
 
-  rulegroup compare-poly-first
+  rulegroup compare
 
    match
 
-    (signature) EC |- CMP expEL_l polyCmpOp as cmpOp expEL_r : %
+    (signature) EC |- CMP expEL_l cmpOp expEL_r : %
     EC |- expEL : %
     -- if expEL matches CMP % % %
     -- let CMP expEL_l cmpOp expEL_r = expEL
-    -- if cmpOp <: polyCmpOp
-    -- let polyCmpOp = cmpOp as polyCmpOp
 
    paths
 
-    rulepath compare-poly-first
+    rulepath poly-first
+    -- let cmpOp' = cmpOp
+    -- if cmpOp' <: polyCmpOp
+    -- let polyCmpOp = cmpOp' as polyCmpOp
     -- Infer_exp_first: EC |- CMP expEL_l polyCmpOp as cmpOp expEL_r : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp = expElabRes as ok<typedExp>
     -- output: % |- % : OK typedExp as expElabRes
 
-  rulegroup compare-poly-second
-
-   match
-
-    (signature) EC |- CMP expEL_l polyCmpOp as cmpOp expEL_r : %
-    EC |- expEL : %
-    -- if expEL matches CMP % % %
-    -- let CMP expEL_l cmpOp expEL_r = expEL
-    -- if cmpOp <: polyCmpOp
-    -- let polyCmpOp = cmpOp as polyCmpOp
-
-   paths
-
-    rulepath compare-poly-second
+    rulepath poly-second
+    -- let cmpOp' = cmpOp
+    -- if cmpOp' <: polyCmpOp
+    -- let polyCmpOp = cmpOp' as polyCmpOp
     -- Infer_exp_first: EC |- CMP expEL_l polyCmpOp as cmpOp expEL_r : expElabRes
     -- if expElabRes <: fail
     -- let fail = expElabRes as fail
@@ -3206,20 +3070,10 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- let OK typedExp_r = expElabRes'' as ok<typedExp>
     -- output: % |- % : OK CMP polyCmpOp as cmpOp typedExp_l typedExp_r as exp '#' BOOL as typ as expElabRes
 
-  rulegroup compare-natural
-
-   match
-
-    (signature) EC |- CMP expEL_l numCmpOp as cmpOp expEL_r : %
-    EC |- expEL : %
-    -- if expEL matches CMP % % %
-    -- let CMP expEL_l cmpOp expEL_r = expEL
-    -- if cmpOp <: numCmpOp
-    -- let numCmpOp = cmpOp as numCmpOp
-
-   paths
-
-    rulepath compare-natural
+    rulepath natural
+    -- let cmpOp' = cmpOp
+    -- if cmpOp' <: numCmpOp
+    -- let numCmpOp = cmpOp' as numCmpOp
     -- Infer_exp: EC |- expEL_l : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp_l = expElabRes as ok<typedExp>
@@ -3231,20 +3085,10 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- let OK (typedExp_l_cast, typedExp_r_cast) = expPairElabRes as ok<(typedExp, typedExp)>
     -- output: % |- % : OK CMP numCmpOp as cmpOp typedExp_l_cast typedExp_r_cast as exp '#' BOOL as typ as expElabRes
 
-  rulegroup compare-integer
-
-   match
-
-    (signature) EC |- CMP expEL_l numCmpOp as cmpOp expEL_r : %
-    EC |- expEL : %
-    -- if expEL matches CMP % % %
-    -- let CMP expEL_l cmpOp expEL_r = expEL
-    -- if cmpOp <: numCmpOp
-    -- let numCmpOp = cmpOp as numCmpOp
-
-   paths
-
-    rulepath compare-integer
+    rulepath integer
+    -- let cmpOp' = cmpOp
+    -- if cmpOp' <: numCmpOp
+    -- let numCmpOp = cmpOp' as numCmpOp
     -- Infer_exp: EC |- expEL_l : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp_l = expElabRes as ok<typedExp>
@@ -3319,7 +3163,7 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- let OK typedExp_t = expElabRes' as ok<typedExp>
     -- output: % |- % : OK CONS typedExp_h typedExp_t as exp '#' typ_list as expElabRes
 
-  rulegroup cat-list
+  rulegroup cat
 
    match
 
@@ -3330,24 +3174,13 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
 
    paths
 
-    rulepath cat-list
+    rulepath list
     -- Infer_exp_first: EC |- CAT expEL_l expEL_r : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp = expElabRes as ok<typedExp>
     -- output: % |- % : OK typedExp as expElabRes
 
-  rulegroup cat-string
-
-   match
-
-    (signature) EC |- CAT expEL_l expEL_r : %
-    EC |- expEL : %
-    -- if expEL matches CAT % %
-    -- let CAT expEL_l expEL_r = expEL
-
-   paths
-
-    rulepath cat-string
+    rulepath string
     -- Infer_exp_first: EC |- CAT expEL_l expEL_r : expElabRes
     -- if expElabRes <: fail
     -- let fail = expElabRes as fail
@@ -3378,7 +3211,7 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- (let _exp '#' typ = typedExp)*{typedExp <- typedExp*, _exp -> _exp*, typ -> typ*}
     -- output: % |- % : OK TUP typedExp*{typedExp <- typedExp*} as exp '#' TUP typ*{typ <- typ*} as expElabRes
 
-  rulegroup len-list
+  rulegroup len
 
    match
 
@@ -3389,24 +3222,13 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
 
    paths
 
-    rulepath len-list
+    rulepath list
     -- Infer_exp_first: EC |- LEN expEL : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp = expElabRes as ok<typedExp>
     -- output: % |- % : OK typedExp as expElabRes
 
-  rulegroup len-string
-
-   match
-
-    (signature) EC |- LEN expEL : %
-    EC |- expEL' : %
-    -- if expEL' matches LEN %
-    -- let LEN expEL = expEL'
-
-   paths
-
-    rulepath len-string
+    rulepath string
     -- Infer_exp_first: EC |- LEN expEL : expElabRes
     -- if expElabRes <: fail
     -- let fail = expElabRes as fail
@@ -3416,7 +3238,7 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- let OK typedExp = expElabRes' as ok<typedExp>
     -- output: % |- % : OK LEN typedExp as exp '#' NAT as typ as expElabRes
 
-  rulegroup mem-elem
+  rulegroup mem
 
    match
 
@@ -3427,24 +3249,13 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
 
    paths
 
-    rulepath mem-elem
+    rulepath elem
     -- Infer_exp_first: EC |- MEM expEL_e expEL_s : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp = expElabRes as ok<typedExp>
     -- output: % |- % : OK typedExp as expElabRes
 
-  rulegroup mem-list
-
-   match
-
-    (signature) EC |- MEM expEL_e expEL_s : %
-    EC |- expEL : %
-    -- if expEL matches MEM % %
-    -- let MEM expEL_e expEL_s = expEL
-
-   paths
-
-    rulepath mem-list
+    rulepath list
     -- Infer_exp_first: EC |- MEM expEL_e expEL_s : expElabRes
     -- if expElabRes <: fail
     -- let fail = expElabRes as fail
@@ -3461,7 +3272,7 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- let OK typedExp_e = expElabRes'' as ok<typedExp>
     -- output: % |- % : OK MEM typedExp_e typedExp_s as exp '#' BOOL as typ as expElabRes
 
-  rulegroup idx-list
+  rulegroup idx
 
    match
 
@@ -3472,24 +3283,13 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
 
    paths
 
-    rulepath idx-list
+    rulepath list
     -- Infer_exp_first: EC |- IDX expEL_b expEL_i : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp = expElabRes as ok<typedExp>
     -- output: % |- % : OK typedExp as expElabRes
 
-  rulegroup idx-string
-
-   match
-
-    (signature) EC |- IDX expEL_b expEL_i : %
-    EC |- expEL : %
-    -- if expEL matches IDX % %
-    -- let IDX expEL_b expEL_i = expEL
-
-   paths
-
-    rulepath idx-string
+    rulepath string
     -- Infer_exp_first: EC |- IDX expEL_b expEL_i : expElabRes
     -- if expElabRes <: fail
     -- let fail = expElabRes as fail
@@ -3502,7 +3302,7 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
     -- let OK typedExp_i = expElabRes'' as ok<typedExp>
     -- output: % |- % : OK IDX typedExp_b typedExp_i as exp '#' TEXT as typ as expElabRes
 
-  rulegroup slice-list
+  rulegroup slice
 
    match
 
@@ -3513,24 +3313,13 @@ relation Infer_exp: elabCtx |- expEL : expElabRes
 
    paths
 
-    rulepath slice-list
+    rulepath list
     -- Infer_exp_first: EC |- SLICE expEL_b expEL_i expEL_n : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp = expElabRes as ok<typedExp>
     -- output: % |- % : OK typedExp as expElabRes
 
-  rulegroup slice-string
-
-   match
-
-    (signature) EC |- SLICE expEL_b expEL_i expEL_n : %
-    EC |- expEL : %
-    -- if expEL matches SLICE % % %
-    -- let SLICE expEL_b expEL_i expEL_n = expEL
-
-   paths
-
-    rulepath slice-string
+    rulepath string
     -- Infer_exp_first: EC |- SLICE expEL_b expEL_i expEL_n : expElabRes
     -- if expElabRes <: fail
     -- let fail = expElabRes as fail
@@ -3857,7 +3646,7 @@ relation Infer_exp_first: elabCtx |- expEL : expElabRes
 
 relation Elab_exp: elabCtx |- expEL '<=' typ : expElabRes
 
-  rulegroup singleton
+  rulegroup
 
    match
 
@@ -3867,19 +3656,10 @@ relation Elab_exp: elabCtx |- expEL '<=' typ : expElabRes
    paths
 
     rulepath singleton
-    -- Elab_exp_singleton: EC |- expEL '<=' typ : expElabRes
-    -- if expElabRes <: ok<typedExp>
-    -- let OK typedExp = expElabRes as ok<typedExp>
+    -- Elab_exp_singleton: EC |- expEL '<=' typ : expElabRes'
+    -- if expElabRes' <: ok<typedExp>
+    -- let OK typedExp = expElabRes' as ok<typedExp>
     -- output: % |- % '<=' % : OK typedExp as expElabRes
-
-  rulegroup normal
-
-   match
-
-    (signature) EC |- expEL '<=' typ : %
-    EC |- expEL '<=' typ : %
-
-   paths
 
     rulepath normal
     -- Elab_exp_singleton: EC |- expEL '<=' typ : expElabRes'
@@ -3891,7 +3671,7 @@ relation Elab_exp: elabCtx |- expEL '<=' typ : expElabRes
 
 relation Elab_exp_singleton: elabCtx |- expEL '<=' typ : expElabRes
 
-  rulegroup opt
+  rulegroup iter
 
    match
 
@@ -3910,15 +3690,6 @@ relation Elab_exp_singleton: elabCtx |- expEL '<=' typ : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp = expElabRes as ok<typedExp>
     -- output: % |- % '<=' % : OK OPT ?(typedExp) as exp '#' typ as expElabRes
-
-  rulegroup list
-
-   match
-
-    (signature) EC |- expEL '<=' typ : %
-    EC |- expEL '<=' typ : %
-
-   paths
 
     rulepath list
     -- if $is_singleton(expEL)
@@ -3947,7 +3718,7 @@ relation Elab_exp_singleton: elabCtx |- expEL '<=' typ : expElabRes
 
 relation Elab_exp_normal: elabCtx |- expEL '<=' typ : expElabRes
 
-  rulegroup infer
+  rulegroup
 
    match
 
@@ -3962,15 +3733,6 @@ relation Elab_exp_normal: elabCtx |- expEL '<=' typ : expElabRes
     -- let OK typedExp = expElabRes' as ok<typedExp>
     -- let expElabRes = $cast(EC.TYP, typedExp, typ)
     -- output: % |- % '<=' % : expElabRes
-
-  rulegroup fallback
-
-   match
-
-    (signature) EC |- expEL '<=' typ : %
-    EC |- expEL '<=' typ : %
-
-   paths
 
     rulepath fallback
     -- Infer_exp: EC |- expEL : expElabRes'
@@ -3995,7 +3757,7 @@ relation Elab_exp_fallback: elabCtx |- expEL '<=' typ : expElabRes
     rulepath wildcard
     -- output: % |- % '<=' % : OK VAR "_" as exp '#' typ as expElabRes
 
-  rulegroup alias
+  rulegroup named
 
    match
 
@@ -4023,17 +3785,6 @@ relation Elab_exp_fallback: elabCtx |- expEL '<=' typ : expElabRes
     -- Elab_exp_normal: EC |- expEL '<=' typ_inst : expElabRes
     -- output: % |- % '<=' % : expElabRes
 
-  rulegroup struct
-
-   match
-
-    (signature) EC |- expEL '<=' VAR id targ*{targ <- targ*} : %
-    EC |- expEL '<=' typ : %
-    -- if typ matches VAR % %
-    -- let VAR id targ*{targ <- targ*} = typ
-
-   paths
-
     rulepath struct
     -- if ~$is_wildcard(expEL)
     -- let typDef'?{typDef' <- typDef'?} = $find_map<id, typDef>(EC.TYP, id)
@@ -4052,17 +3803,6 @@ relation Elab_exp_fallback: elabCtx |- expEL '<=' typ : expElabRes
     -- let typField_inst*{typField_inst <- typField_inst*} = atom typ_field_inst*{atom <- atom*, typ_field_inst <- typ_field_inst*}
     -- Elab_struct: EC |- expEL '<=' VAR id targ*{targ <- targ*} typField_inst*{typField_inst <- typField_inst*} : expElabRes
     -- output: % |- % '<=' % : expElabRes
-
-  rulegroup variant
-
-   match
-
-    (signature) EC |- expEL '<=' VAR id targ*{targ <- targ*} : %
-    EC |- expEL '<=' typ : %
-    -- if typ matches VAR % %
-    -- let VAR id targ*{targ <- targ*} = typ
-
-   paths
 
     rulepath variant
     -- if ~$is_wildcard(expEL)
@@ -4110,7 +3850,7 @@ relation Elab_exp_fallback: elabCtx |- expEL '<=' typ : expElabRes
 
 relation Elab_exp_shape: elabCtx |- expEL '<=' typ : expElabRes
 
-  rulegroup empty-opt
+  rulegroup empty
 
    match
 
@@ -4120,24 +3860,14 @@ relation Elab_exp_shape: elabCtx |- expEL '<=' typ : expElabRes
 
    paths
 
-    rulepath empty-opt
+    rulepath opt
     -- let (typ, iter)?{(typ, iter) <- (typ, iter)?} = $as_iter_typ(EC.TYP, typ)
     -- if (typ, iter)?{(typ, iter) <- (typ, iter)?} matches (_)
     -- let ?((_typ, iter)) = (typ, iter)?{(typ, iter) <- (typ, iter)?}
     -- if iter matches QUEST
     -- output: % |- % '<=' % : OK OPT ?() as exp '#' typ as expElabRes
 
-  rulegroup empty-list
-
-   match
-
-    (signature) EC |- EPS '<=' typ : %
-    EC |- expEL '<=' typ : %
-    -- if expEL matches EPS
-
-   paths
-
-    rulepath empty-list
+    rulepath list
     -- let (typ, iter)?{(typ, iter) <- (typ, iter)?} = $as_iter_typ(EC.TYP, typ)
     -- if (typ, iter)?{(typ, iter) <- (typ, iter)?} matches (_)
     -- let ?((_typ, iter)) = (typ, iter)?{(typ, iter) <- (typ, iter)?}
@@ -4187,7 +3917,7 @@ relation Elab_exp_shape: elabCtx |- expEL '<=' typ : expElabRes
     -- let OK typedExp_t = expElabRes' as ok<typedExp>
     -- output: % |- % '<=' % : OK CONS typedExp_h typedExp_t as exp '#' typ as expElabRes
 
-  rulegroup cat-iter
+  rulegroup cat
 
    match
 
@@ -4198,24 +3928,13 @@ relation Elab_exp_shape: elabCtx |- expEL '<=' typ : expElabRes
 
    paths
 
-    rulepath cat-iter
+    rulepath iter
     -- Elab_exp_first: EC |- CAT expEL_l expEL_r '<=' typ : expElabRes
     -- if expElabRes <: ok<typedExp>
     -- let OK typedExp = expElabRes as ok<typedExp>
     -- output: % |- % '<=' % : OK typedExp as expElabRes
 
-  rulegroup cat-string
-
-   match
-
-    (signature) EC |- CAT expEL_l expEL_r '<=' typ : %
-    EC |- expEL '<=' typ : %
-    -- if expEL matches CAT % %
-    -- let CAT expEL_l expEL_r = expEL
-
-   paths
-
-    rulepath cat-string
+    rulepath string
     -- Elab_exp_first: EC |- CAT expEL_l expEL_r '<=' typ : expElabRes
     -- if expElabRes <: fail
     -- let fail = expElabRes as fail
@@ -4379,80 +4098,58 @@ relation Elab_notArgs: elabCtx |- expEL '<=' mixop typ* : notArgsElabRes
     -- let OK typedExp = expElabRes as ok<typedExp>
     -- output: % |- % '<=' % % : OK ([typedExp], typ_t*{typ_t <- typ_t*}) as notArgsElabRes
 
-  rulegroup atom
+  rulegroup notation
 
    match
 
-    (signature) EC |- ATOM atom '<=' ATOM atom typ*{typ <- typ*} : %
-    EC |- expEL '<=' mixop typ*{typ <- typ*} : %
-    -- if expEL matches ATOM %
-    -- let ATOM atom = expEL
-    -- if mixop matches ATOM %
-    -- let ATOM atom' = mixop
-    -- if (atom = atom')
+    (signature) EC |- expEL' '<=' mixop' typ*{typ <- typ*} : %
+    EC |- expEL' '<=' mixop' typ*{typ <- typ*} : %
 
    paths
 
     rulepath atom
+    -- let expEL'' = expEL'
+    -- if expEL'' matches ATOM %
+    -- let ATOM atom = expEL''
+    -- if (mixop' = ATOM atom)
     -- output: % |- % '<=' % % : OK ([], typ*{typ <- typ*}) as notArgsElabRes
 
-  rulegroup seq
-
-   match
-
-    (signature) EC |- SEQ expEL*{expEL <- expEL*} '<=' SEQ mixop*{mixop <- mixop*} typ*{typ <- typ*} : %
-    EC |- expEL' '<=' mixop' typ*{typ <- typ*} : %
-    -- if expEL' matches SEQ %
-    -- let SEQ expEL*{expEL <- expEL*} = expEL'
-    -- if mixop' matches SEQ %
-    -- let SEQ mixop*{mixop <- mixop*} = mixop'
-
-   paths
-
     rulepath seq
+    -- let expEL'' = expEL'
+    -- if expEL'' matches SEQ %
+    -- let SEQ expEL*{expEL <- expEL*} = expEL''
+    -- let mixop'' = mixop'
+    -- if mixop'' matches SEQ %
+    -- let SEQ mixop*{mixop <- mixop*} = mixop''
     -- if (|expEL*{expEL <- expEL*}| = |mixop*{mixop <- mixop*}|)
     -- Elab_notArgss: EC |- expEL*{expEL <- expEL*} '<=' mixop*{mixop <- mixop*} typ*{typ <- typ*} : notArgsElabRes
     -- output: % |- % '<=' % % : notArgsElabRes
 
-  rulegroup infix
-
-   match
-
-    (signature) EC |- INFIX expEL_l atom expEL_r '<=' INFIX mixop_l atom mixop_r typ*{typ <- typ*} : %
-    EC |- expEL '<=' mixop typ*{typ <- typ*} : %
-    -- if expEL matches INFIX % % %
-    -- let INFIX expEL_l atom expEL_r = expEL
-    -- if mixop matches INFIX % % %
-    -- let INFIX mixop_l atom' mixop_r = mixop
-    -- if (atom = atom')
-
-   paths
-
     rulepath infix
-    -- Elab_notArgs: EC |- expEL_l '<=' mixop_l typ*{typ <- typ*} : notArgsElabRes
-    -- if notArgsElabRes <: ok<(typedExp*, typ*)>
-    -- let OK (typedExp_l*{typedExp_l <- typedExp_l*}, typ_l*{typ_l <- typ_l*}) = notArgsElabRes as ok<(typedExp*, typ*)>
-    -- Elab_notArgs: EC |- expEL_r '<=' mixop_r typ_l*{typ_l <- typ_l*} : notArgsElabRes'
+    -- let expEL'' = expEL'
+    -- if expEL'' matches INFIX % % %
+    -- let INFIX expEL_l atom expEL_r = expEL''
+    -- let mixop'' = mixop'
+    -- if mixop'' matches INFIX % % %
+    -- let INFIX mixop_l atom' mixop_r = mixop''
+    -- if (atom' = atom)
+    -- Elab_notArgs: EC |- expEL_l '<=' mixop_l typ*{typ <- typ*} : notArgsElabRes'
     -- if notArgsElabRes' <: ok<(typedExp*, typ*)>
-    -- let OK (typedExp_r*{typedExp_r <- typedExp_r*}, typ_r*{typ_r <- typ_r*}) = notArgsElabRes' as ok<(typedExp*, typ*)>
+    -- let OK (typedExp_l*{typedExp_l <- typedExp_l*}, typ_l*{typ_l <- typ_l*}) = notArgsElabRes' as ok<(typedExp*, typ*)>
+    -- Elab_notArgs: EC |- expEL_r '<=' mixop_r typ_l*{typ_l <- typ_l*} : notArgsElabRes''
+    -- if notArgsElabRes'' <: ok<(typedExp*, typ*)>
+    -- let OK (typedExp_r*{typedExp_r <- typedExp_r*}, typ_r*{typ_r <- typ_r*}) = notArgsElabRes'' as ok<(typedExp*, typ*)>
     -- output: % |- % '<=' % % : OK (typedExp_l*{typedExp_l <- typedExp_l*} ++ typedExp_r*{typedExp_r <- typedExp_r*}, typ_r*{typ_r <- typ_r*}) as notArgsElabRes
 
-  rulegroup brack
-
-   match
-
-    (signature) EC |- BRACK atom_l expEL atom_r '<=' BRACK atom_l mixop atom_r typ*{typ <- typ*} : %
-    EC |- expEL' '<=' mixop' typ*{typ <- typ*} : %
-    -- if expEL' matches BRACK % % %
-    -- let BRACK atom_l expEL atom_r = expEL'
-    -- if mixop' matches BRACK % % %
-    -- let BRACK atom_l' mixop atom_r' = mixop'
-    -- if (atom_l = atom_l')
-    -- if (atom_r = atom_r')
-
-   paths
-
     rulepath brack
+    -- let expEL'' = expEL'
+    -- if expEL'' matches BRACK % % %
+    -- let BRACK atom_l expEL atom_r = expEL''
+    -- let mixop'' = mixop'
+    -- if mixop'' matches BRACK % % %
+    -- let BRACK atom' mixop atom'' = mixop''
+    -- if (atom' = atom_l)
+    -- if (atom'' = atom_r)
     -- Elab_notArgs: EC |- expEL '<=' mixop typ*{typ <- typ*} : notArgsElabRes
     -- output: % |- % '<=' % % : notArgsElabRes
 
@@ -4673,7 +4370,7 @@ relation Elab_path: elabCtx |- pathEL '<=' typ : pathElabRes
     rulepath root
     -- output: % |- % '<=' % : OK ROOT as path '#' typ as pathElabRes
 
-  rulegroup idx-list
+  rulegroup idx
 
    match
 
@@ -4684,7 +4381,7 @@ relation Elab_path: elabCtx |- pathEL '<=' typ : pathElabRes
 
    paths
 
-    rulepath idx-list
+    rulepath list
     -- Elab_path: EC |- pathEL '<=' typ : pathElabRes
     -- if pathElabRes <: ok<typedPath>
     -- let OK typedPath = pathElabRes as ok<typedPath>
@@ -4697,18 +4394,7 @@ relation Elab_path: elabCtx |- pathEL '<=' typ : pathElabRes
     -- let ?(typ_elem) = typ'?{typ' <- typ'?}
     -- output: % |- % '<=' % : OK IDX typedPath typedExp as path '#' typ_elem as pathElabRes
 
-  rulegroup idx-string
-
-   match
-
-    (signature) EC |- IDX pathEL expEL '<=' typ : %
-    EC |- pathEL' '<=' typ : %
-    -- if pathEL' matches IDX % %
-    -- let IDX pathEL expEL = pathEL'
-
-   paths
-
-    rulepath idx-string
+    rulepath string
     -- Elab_path: EC |- pathEL '<=' typ : pathElabRes
     -- if pathElabRes <: ok<typedPath>
     -- let OK typedPath = pathElabRes as ok<typedPath>
@@ -4719,7 +4405,7 @@ relation Elab_path: elabCtx |- pathEL '<=' typ : pathElabRes
     -- if $is_text_typ(EC.TYP, typ_path)
     -- output: % |- % '<=' % : OK IDX typedPath typedExp as path '#' typ_path as pathElabRes
 
-  rulegroup slice-list
+  rulegroup slice
 
    match
 
@@ -4730,7 +4416,7 @@ relation Elab_path: elabCtx |- pathEL '<=' typ : pathElabRes
 
    paths
 
-    rulepath slice-list
+    rulepath list
     -- Elab_path: EC |- pathEL '<=' typ : pathElabRes
     -- if pathElabRes <: ok<typedPath>
     -- let OK typedPath = pathElabRes as ok<typedPath>
@@ -4744,18 +4430,7 @@ relation Elab_path: elabCtx |- pathEL '<=' typ : pathElabRes
     -- if $is_list_typ(EC.TYP, typ_path)
     -- output: % |- % '<=' % : OK SLICE typedPath typedExp_i typedExp_n as path '#' typ_path as pathElabRes
 
-  rulegroup slice-string
-
-   match
-
-    (signature) EC |- SLICE pathEL expEL_i expEL_n '<=' typ : %
-    EC |- pathEL' '<=' typ : %
-    -- if pathEL' matches SLICE % % %
-    -- let SLICE pathEL expEL_i expEL_n = pathEL'
-
-   paths
-
-    rulepath slice-string
+    rulepath string
     -- Elab_path: EC |- pathEL '<=' typ : pathElabRes
     -- if pathElabRes <: ok<typedPath>
     -- let OK typedPath = pathElabRes as ok<typedPath>
@@ -4987,7 +4662,7 @@ relation Elab_prem: elabCtx |- premEL : premElabRes
 
    paths
 
-    rulepath relpr
+    rulepath outputs
     -- let relSig?{relSig <- relSig?} = $find_map<id, relSig>(EC.REL, id)
     -- if relSig?{relSig <- relSig?} matches (_)
     -- let ?(_relKind mixop typ*{typ <- typ*} `( inputHint `)) = relSig?{relSig <- relSig?}
@@ -4997,18 +4672,7 @@ relation Elab_prem: elabCtx |- premEL : premElabRes
     -- if ~$is_conditional(inputHint, |typedExp*{typedExp <- typedExp*}|)
     -- output: % |- % : OK (EC, PREM REL id ':' typedExp*{typedExp <- typedExp*} `( inputHint `) as premIL) as premElabRes
 
-  rulegroup ifholdpr
-
-   match
-
-    (signature) EC |- REL id ':' expEL : %
-    EC |- premEL : %
-    -- if premEL matches REL % ':' %
-    -- let REL id ':' expEL = premEL
-
-   paths
-
-    rulepath ifholdpr
+    rulepath holds
     -- let relSig?{relSig <- relSig?} = $find_map<id, relSig>(EC.REL, id)
     -- if relSig?{relSig <- relSig?} matches (_)
     -- let ?(_relKind mixop typ*{typ <- typ*} `( inputHint `)) = relSig?{relSig <- relSig?}
@@ -5299,28 +4963,20 @@ relation Dim_exp: dimEnv id* |- typedExp : dimExpRes
 
    match
 
-    (signature) dimEnv id*{id <- id*} |- VAR id_var as exp '#' typ : %
+    (signature) dimEnv id*{id <- id*} |- VAR id' as exp '#' typ : %
     dimEnv id*{id <- id*} |- exp '#' typ : %
     -- if exp <: varExp
-    -- let VAR id_var = exp as varExp
+    -- let VAR id' = exp as varExp
 
    paths
 
-    rulepath variable
+    rulepath named
+    -- let id_var = id'
     -- if (id_var =/= "_")
     -- output: % % |- % : OK (id*{id <- id*}, VAR id_var as exp '#' typ, [id_var typ []]) as dimExpRes
 
-  rulegroup wildcard
-
-   match
-
-    (signature) dimEnv id*{id <- id*} |- VAR "_" as exp '#' typ : %
-    dimEnv id*{id <- id*} |- exp '#' typ : %
-    -- if (exp = VAR "_" as exp)
-
-   paths
-
     rulepath wildcard
+    -- if (id' = "_")
     -- let id_fresh = $fresh(id*{id <- id*}, "_")
     -- output: % % |- % : OK (id*{id <- id*} ++ [id_fresh], VAR id_fresh as exp '#' typ, [id_fresh typ []]) as dimExpRes
 
@@ -5501,33 +5157,25 @@ relation Dim_exp: dimEnv id* |- typedExp : dimExpRes
     -- let expField'*{expField' <- expField'*} = atom typedExp'*{atom <- atom*, typedExp' <- typedExp'*}
     -- output: % % |- % : OK (id'*{id' <- id'*}, STR expField'*{expField' <- expField'*} as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
 
-  rulegroup opt-none
+  rulegroup opt
 
    match
 
-    (signature) dimEnv id*{id <- id*} |- OPT ?() as exp '#' typ : %
-    dimEnv id*{id <- id*} |- exp '#' typ : %
-    -- if (exp = OPT ?() as exp)
-
-   paths
-
-    rulepath opt-none
-    -- output: % % |- % : OK (id*{id <- id*}, OPT ?() as exp '#' typ, []) as dimExpRes
-
-  rulegroup opt-some
-
-   match
-
-    (signature) dimEnv id*{id <- id*} |- OPT ?(typedExp) as exp '#' typ : %
+    (signature) dimEnv id*{id <- id*} |- OPT typedExp''?{typedExp'' <- typedExp''?} as exp '#' typ : %
     dimEnv id*{id <- id*} |- exp '#' typ : %
     -- if exp <: optExp
     -- let OPT typedExp''?{typedExp'' <- typedExp''?} = exp as optExp
-    -- if typedExp''?{typedExp'' <- typedExp''?} matches (_)
-    -- let ?(typedExp) = typedExp''?{typedExp'' <- typedExp''?}
 
    paths
 
-    rulepath opt-some
+    rulepath none
+    -- if (typedExp''?{typedExp'' <- typedExp''?} = ?())
+    -- output: % % |- % : OK (id*{id <- id*}, OPT ?() as exp '#' typ, []) as dimExpRes
+
+    rulepath some
+    -- let typedExp'''?{typedExp''' <- typedExp'''?} = typedExp''?{typedExp'' <- typedExp''?}
+    -- if typedExp'''?{typedExp''' <- typedExp'''?} matches (_)
+    -- let ?(typedExp) = typedExp'''?{typedExp''' <- typedExp'''?}
     -- Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes
     -- if dimExpRes <: ok<(id*, typedExp, vari*)>
     -- let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) = dimExpRes as ok<(id*, typedExp, vari*)>

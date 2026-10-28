@@ -2973,21 +2973,19 @@ relation Elab_notTyp: EC |- typEL' : %
 
     1. (Let NOTATION notTypEL be typEL')
 
-      1. Case analysis on notTypEL (total)
+      1. Group notation: EC |- NOTATION notTypEL : %
 
-        1. Case (% matches pattern ATOM %)
+        1. Case analysis on notTypEL (total)
 
-          1. (Let ATOM atom be notTypEL)
+          1. Case (% matches pattern ATOM %)
 
-            1. Group atom: EC |- NOTATION ATOM atom : %
+            1. (Let ATOM atom be notTypEL)
 
               1. Result in: % |- % : OK ATOM atom [] as notTypElabRes
 
-        2. Case (% matches pattern SEQ %)
+          2. Case (% matches pattern SEQ %)
 
-          1. (Let SEQ typEL*{typEL <- typEL*} be notTypEL)
-
-            1. Group seq: EC |- NOTATION SEQ typEL*{typEL <- typEL*} : %
+            1. (Let SEQ typEL*{typEL <- typEL*} be notTypEL)
 
               1. (Elab_notTyp: EC |- typEL : notTypElabRes)*{typEL <- typEL*, notTypElabRes -> notTypElabRes*}
 
@@ -2999,11 +2997,9 @@ relation Elab_notTyp: EC |- typEL' : %
 
                       1. Result in: % |- % : OK SEQ mixop*{mixop <- mixop*} typ_arg*{typ_arg <- typ_arg*} as notTypElabRes
 
-        3. Case (% matches pattern INFIX % % %)
+          3. Case (% matches pattern INFIX % % %)
 
-          1. (Let INFIX typEL_l atom typEL_r be notTypEL)
-
-            1. Group infix: EC |- NOTATION INFIX typEL_l atom typEL_r : %
+            1. (Let INFIX typEL_l atom typEL_r be notTypEL)
 
               1. (Elab_notTyp: EC |- typEL_l : notTypElabRes)
 
@@ -3019,11 +3015,9 @@ relation Elab_notTyp: EC |- typEL' : %
 
                           1. Result in: % |- % : OK INFIX mixop_l atom mixop_r typ_l*{typ_l <- typ_l*} ++ typ_r*{typ_r <- typ_r*} as notTypElabRes
 
-        4. Case (% matches pattern BRACK % % %)
+          4. Case (% matches pattern BRACK % % %)
 
-          1. (Let BRACK atom_l typEL atom_r be notTypEL)
-
-            1. Group brack: EC |- NOTATION BRACK atom_l typEL atom_r : %
+            1. (Let BRACK atom_l typEL atom_r be notTypEL)
 
               1. (Elab_notTyp: EC |- typEL : notTypElabRes)
 
@@ -3278,13 +3272,13 @@ syntax defElabRes =
 
 relation Elab_def: EC |- defnEL : %
 
-1. Case analysis on defnEL (total)
+1. Group typ: EC |- defnEL : %
 
-  1. Case (% matches pattern EXTSYNTAX %)
+  1. Case analysis on defnEL
 
-    1. (Let EXTSYNTAX id be defnEL)
+    1. Case (% matches pattern EXTSYNTAX %)
 
-      1. Group typ-extern: EC |- EXTSYNTAX id : %
+      1. (Let EXTSYNTAX id be defnEL)
 
         1. If ($is_tid(id)), then
 
@@ -3298,11 +3292,9 @@ relation Elab_def: EC |- defnEL : %
 
                   1. Result in: % |- % : OK (EC_meta, [DECL EXTTYP id as defnIL]) as defElabRes
 
-  2. Case (% matches pattern SYNTAX %)
+    2. Case (% matches pattern SYNTAX %)
 
-    1. (Let SYNTAX syntaxEntryEL*{syntaxEntryEL <- syntaxEntryEL*} be defnEL)
-
-      1. Group typ-forward: EC |- SYNTAX syntaxEntryEL*{syntaxEntryEL <- syntaxEntryEL*} : %
+      1. (Let SYNTAX syntaxEntryEL*{syntaxEntryEL <- syntaxEntryEL*} be defnEL)
 
         1. (Let EC'?{EC' <- EC'?} be $declare_syntax(EC, syntaxEntryEL*{syntaxEntryEL <- syntaxEntryEL*}))
 
@@ -3312,11 +3304,9 @@ relation Elab_def: EC |- defnEL : %
 
               1. Result in: % |- % : OK (EC_decl, []) as defElabRes
 
-  3. Case (% matches pattern TYP % % '=' %)
+    3. Case (% matches pattern TYP % % '=' %)
 
-    1. (Let TYP id tparam*{tparam <- tparam*} '=' defTypEL be defnEL)
-
-      1. Group typ: EC |- TYP id tparam*{tparam <- tparam*} '=' defTypEL : %
+      1. (Let TYP id tparam*{tparam <- tparam*} '=' defTypEL be defnEL)
 
         1. (Let EC'?{EC' <- EC'?} be $declare_typ_body(EC, id, tparam*{tparam <- tparam*}))
 
@@ -3344,33 +3334,35 @@ relation Elab_def: EC |- defnEL : %
 
                                 1. Result in: % |- % : OK (EC_def, [DECL definedTypDefn as defnIL]) as defElabRes
 
-  4. Case (% matches pattern VAR % ':' %)
+2. If (defnEL matches VAR % ':' %), then
 
-    1. (Let VAR id ':' plainTypEL be defnEL)
+  1. (Let VAR id ':' plainTypEL be defnEL)
 
-      1. Group metavar: EC |- VAR id ':' plainTypEL : %
+    1. Group metavar: EC |- VAR id ':' plainTypEL : %
 
-        1. If ($is_tid(id)), then
+      1. If ($is_tid(id)), then
 
-          1. If ($find_map<id, typDef>(EC.TYP, id) matches ()), then
+        1. If ($find_map<id, typDef>(EC.TYP, id) matches ()), then
 
-            1. If ($find_map<id, typ>(EC.VAR, id) matches ()), then
+          1. If ($find_map<id, typ>(EC.VAR, id) matches ()), then
 
-              1. (Elab_plainTyp: EC |- plainTypEL : typElabRes)
+            1. (Elab_plainTyp: EC |- plainTypEL : typElabRes)
 
-                1. If (typElabRes <: ok<typ>), then
+              1. If (typElabRes <: ok<typ>), then
 
-                  1. (Let OK typ be typElabRes as ok<typ>)
+                1. (Let OK typ be typElabRes as ok<typ>)
 
-                    1. (Let EC_meta be $add_metavar(EC, id, typ))
+                  1. (Let EC_meta be $add_metavar(EC, id, typ))
 
-                      1. Result in: % |- % : OK (EC_meta, []) as defElabRes
+                    1. Result in: % |- % : OK (EC_meta, []) as defElabRes
 
-  5. Case (% matches pattern EXTREL % ':' % %)
+3. Group rel: EC |- defnEL : %
 
-    1. (Let EXTREL id ':' notTypEL hintEL*{hintEL <- hintEL*} be defnEL)
+  1. Case analysis on defnEL
 
-      1. Group rel-extern: EC |- EXTREL id ':' notTypEL hintEL*{hintEL <- hintEL*} : %
+    1. Case (% matches pattern EXTREL % ':' % %)
+
+      1. (Let EXTREL id ':' notTypEL hintEL*{hintEL <- hintEL*} be defnEL)
 
         1. If ($find_map<id, relSig>(EC.REL, id) matches ()), then
 
@@ -3392,11 +3384,9 @@ relation Elab_def: EC |- defnEL : %
 
                           1. Result in: % |- % : OK (EC_rel, [DECL externRelDefnIL as defnIL]) as defElabRes
 
-  6. Case (% matches pattern REL % ':' % %)
+    2. Case (% matches pattern REL % ':' % %)
 
-    1. (Let REL id ':' notTypEL hintEL*{hintEL <- hintEL*} be defnEL)
-
-      1. Group rel: EC |- REL id ':' notTypEL hintEL*{hintEL <- hintEL*} : %
+      1. (Let REL id ':' notTypEL hintEL*{hintEL <- hintEL*} be defnEL)
 
         1. If ($find_map<id, relSig>(EC.REL, id) matches ()), then
 
@@ -3420,11 +3410,13 @@ relation Elab_def: EC |- defnEL : %
 
                             1. Result in: % |- % : OK (EC_body, [DECL definedRelDefnIL as defnIL]) as defElabRes
 
-  7. Case (% matches pattern EXTDEC % % % ':' %)
+4. Group func: EC |- defnEL : %
 
-    1. (Let EXTDEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL be defnEL)
+  1. Case analysis on defnEL
 
-      1. Group func-extern: EC |- EXTDEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL : %
+    1. Case (% matches pattern EXTDEC % % % ':' %)
+
+      1. (Let EXTDEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL be defnEL)
 
         1. If ($find_map<id, funcSig>(EC.FUNC, id) matches ()), then
 
@@ -3440,11 +3432,9 @@ relation Elab_def: EC |- defnEL : %
 
                     1. Result in: % |- % : OK (EC_func, [DECL externFuncDefn as defnIL]) as defElabRes
 
-  8. Case (% matches pattern BUILTINDEC % % % ':' %)
+    2. Case (% matches pattern BUILTINDEC % % % ':' %)
 
-    1. (Let BUILTINDEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL be defnEL)
-
-      1. Group func-builtin: EC |- BUILTINDEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL : %
+      1. (Let BUILTINDEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL be defnEL)
 
         1. If ($find_map<id, funcSig>(EC.FUNC, id) matches ()), then
 
@@ -3460,11 +3450,9 @@ relation Elab_def: EC |- defnEL : %
 
                     1. Result in: % |- % : OK (EC_func, [DECL builtinFuncDefn as defnIL]) as defElabRes
 
-  9. Case (% matches pattern TABLEDEC % % ':' %)
+    3. Case (% matches pattern TABLEDEC % % ':' %)
 
-    1. (Let TABLEDEC id paramEL*{paramEL <- paramEL*} ':' plainTypEL be defnEL)
-
-      1. Group func-table: EC |- TABLEDEC id paramEL*{paramEL <- paramEL*} ':' plainTypEL : %
+      1. (Let TABLEDEC id paramEL*{paramEL <- paramEL*} ':' plainTypEL be defnEL)
 
         1. If ($find_map<id, funcSig>(EC.FUNC, id) matches ()), then
 
@@ -3492,11 +3480,9 @@ relation Elab_def: EC |- defnEL : %
 
                                 1. Result in: % |- % : OK (EC_body, [DECL tableFuncDefnIL as defnIL]) as defElabRes
 
-  10. Case (% matches pattern DEC % % % ':' %)
+    4. Case (% matches pattern DEC % % % ':' %)
 
-    1. (Let DEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL be defnEL)
-
-      1. Group func: EC |- DEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL : %
+      1. (Let DEC id tparam*{tparam <- tparam*} paramEL*{paramEL <- paramEL*} ':' plainTypEL be defnEL)
 
         1. If ($find_map<id, funcSig>(EC.FUNC, id) matches ()), then
 
@@ -3514,11 +3500,13 @@ relation Elab_def: EC |- defnEL : %
 
                       1. Result in: % |- % : OK (EC_body, [DECL definedFuncDefnIL as defnIL]) as defElabRes
 
-  11. Case (% matches pattern RULEGROUP % '/' % ':' %)
+5. Group body: EC |- defnEL : %
 
-    1. (Let RULEGROUP id_rel '/' id_group ':' rulEL*{rulEL <- rulEL*} be defnEL)
+  1. Case analysis on defnEL
 
-      1. Group rules: EC |- RULEGROUP id_rel '/' id_group ':' rulEL*{rulEL <- rulEL*} : %
+    1. Case (% matches pattern RULEGROUP % '/' % ':' %)
+
+      1. (Let RULEGROUP id_rel '/' id_group ':' rulEL*{rulEL <- rulEL*} be defnEL)
 
         1. (Let body'?{body' <- body'?} be $find_map<id, body>(EC.BODY, id_rel))
 
@@ -3548,21 +3536,17 @@ relation Elab_def: EC |- defnEL : %
 
                                   1. Result in: % |- % : OK (EC_group, []) as defElabRes
 
-  12. Case (% matches pattern DEF % % % '=' % '-' %)
+    2. Case (% matches pattern DEF % % % '=' % '-' %)
 
-    1. (Let DEF id tparam*{tparam <- tparam*} argEL*{argEL <- argEL*} '=' expEL '-' premEL*{premEL <- premEL*} be defnEL)
-
-      1. Group clause: EC |- DEF id tparam*{tparam <- tparam*} argEL*{argEL <- argEL*} '=' expEL '-' premEL*{premEL <- premEL*} : %
+      1. (Let DEF id tparam*{tparam <- tparam*} argEL*{argEL <- argEL*} '=' expEL '-' premEL*{premEL <- premEL*} be defnEL)
 
         1. (Elab_clause: EC |- DEF id tparam*{tparam <- tparam*} argEL*{argEL <- argEL*} '=' expEL '-' premEL*{premEL <- premEL*} : defElabRes)
 
           1. Result in: % |- % : defElabRes
 
-  13. Case (% matches pattern TABLE % %)
+    3. Case (% matches pattern TABLE % %)
 
-    1. (Let TABLE id tblRowEL*{tblRowEL <- tblRowEL*} be defnEL)
-
-      1. Group rows: EC |- TABLE id tblRowEL*{tblRowEL <- tblRowEL*} : %
+      1. (Let TABLE id tblRowEL*{tblRowEL <- tblRowEL*} be defnEL)
 
         1. (Let funcSig?{funcSig <- funcSig?} be $find_map<id, funcSig>(EC.FUNC, id))
 
@@ -3586,7 +3570,7 @@ relation Elab_def: EC |- defnEL : %
 
                             1. Result in: % |- % : OK (EC_rows, []) as defElabRes
 
-2. Otherwise,
+6. Otherwise,
 
   1. Group fail: EC |- defnEL : %
 
@@ -3710,13 +3694,13 @@ relation Infer_exp: EC |- expEL' : %
 
     1. (Let UN unOp expEL be expEL')
 
-      1. Case analysis on unOp (total)
+      1. Group unary: EC |- UN unOp expEL : %
 
-        1. Case (% has type boolUnOp)
+        1. Case analysis on unOp (total)
 
-          1. (Let boolUnOp be unOp as boolUnOp)
+          1. Case (% has type boolUnOp)
 
-            1. Group unary-boolean: EC |- UN boolUnOp as unOp expEL : %
+            1. (Let boolUnOp be unOp as boolUnOp)
 
               1. (Infer_exp: EC |- expEL : expElabRes)
 
@@ -3732,11 +3716,9 @@ relation Infer_exp: EC |- expEL' : %
 
                           1. Result in: % |- % : OK UN boolUnOp as unOp typedExp_cast as exp '#' BOOL as typ as expElabRes
 
-        2. Case (% has type numUnOp)
+          2. Case (% has type numUnOp)
 
-          1. (Let numUnOp be unOp as numUnOp)
-
-            1. Group unary-natural: EC |- UN numUnOp as unOp expEL : %
+            1. (Let numUnOp be unOp as numUnOp)
 
               1. (Infer_exp: EC |- expEL : expElabRes)
 
@@ -3752,15 +3734,7 @@ relation Infer_exp: EC |- expEL' : %
 
                           1. Result in: % |- % : OK UN numUnOp as unOp typedExp_cast as exp '#' NAT as typ as expElabRes
 
-            2. Group unary-integer: EC |- UN numUnOp as unOp expEL : %
-
-              1. (Infer_exp: EC |- expEL : expElabRes)
-
-                1. If (expElabRes <: ok<typedExp>), then
-
-                  1. (Let OK typedExp be expElabRes as ok<typedExp>)
-
-                    1. If ((FAIL as expElabRes = $cast(EC.TYP, typedExp, NAT as typ))), then
+                    2. If ((FAIL as expElabRes = $cast(EC.TYP, typedExp, NAT as typ))), then
 
                       1. (Let expElabRes' be $cast(EC.TYP, typedExp, INT as typ))
 
@@ -3774,13 +3748,13 @@ relation Infer_exp: EC |- expEL' : %
 
     1. (Let BIN expEL_l binOp expEL_r be expEL')
 
-      1. Case analysis on binOp (total)
+      1. Group binary: EC |- BIN expEL_l binOp expEL_r : %
 
-        1. Case (% has type boolBinOp)
+        1. Case analysis on binOp (total)
 
-          1. (Let boolBinOp be binOp as boolBinOp)
+          1. Case (% has type boolBinOp)
 
-            1. Group binary-boolean: EC |- BIN expEL_l boolBinOp as binOp expEL_r : %
+            1. (Let boolBinOp be binOp as boolBinOp)
 
               1. (Infer_exp: EC |- expEL_l : expElabRes)
 
@@ -3802,11 +3776,9 @@ relation Infer_exp: EC |- expEL' : %
 
                                 1. Result in: % |- % : OK BIN boolBinOp as binOp typedExp_l_cast typedExp_r_cast as exp '#' BOOL as typ as expElabRes
 
-        2. Case (% has type numBinOp)
+          2. Case (% has type numBinOp)
 
-          1. (Let numBinOp be binOp as numBinOp)
-
-            1. Group binary-natural: EC |- BIN expEL_l numBinOp as binOp expEL_r : %
+            1. (Let numBinOp be binOp as numBinOp)
 
               1. (Infer_exp: EC |- expEL_l : expElabRes)
 
@@ -3830,21 +3802,7 @@ relation Infer_exp: EC |- expEL' : %
 
                                   1. Result in: % |- % : OK BIN numBinOp as binOp typedExp_l_cast typedExp_r_cast as exp '#' typ as expElabRes
 
-            2. Group binary-integer: EC |- BIN expEL_l numBinOp as binOp expEL_r : %
-
-              1. (Infer_exp: EC |- expEL_l : expElabRes)
-
-                1. If (expElabRes <: ok<typedExp>), then
-
-                  1. (Let OK typedExp_l be expElabRes as ok<typedExp>)
-
-                    1. (Infer_exp: EC |- expEL_r : expElabRes')
-
-                      1. If (expElabRes' <: ok<typedExp>), then
-
-                        1. (Let OK typedExp_r be expElabRes' as ok<typedExp>)
-
-                          1. If ((FAIL as expPairElabRes = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT as typ))), then
+                          2. If ((FAIL as expPairElabRes = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT as typ))), then
 
                             1. (Let expPairElabRes be $cast_pair(EC.TYP, typedExp_l, typedExp_r, INT as typ))
 
@@ -3858,51 +3816,47 @@ relation Infer_exp: EC |- expEL' : %
 
     1. (Let CMP expEL_l cmpOp expEL_r be expEL')
 
-      1. Case analysis on cmpOp (total)
+      1. Group compare: EC |- CMP expEL_l cmpOp expEL_r : %
 
-        1. Case (% has type polyCmpOp)
+        1. Case analysis on cmpOp (total)
 
-          1. (Let polyCmpOp be cmpOp as polyCmpOp)
+          1. Case (% has type polyCmpOp)
 
-            1. Group compare-poly-first: EC |- CMP expEL_l polyCmpOp as cmpOp expEL_r : %
-
-              1. (Infer_exp_first: EC |- CMP expEL_l polyCmpOp as cmpOp expEL_r : expElabRes)
-
-                1. If (expElabRes <: ok<typedExp>), then
-
-                  1. (Let OK typedExp be expElabRes as ok<typedExp>)
-
-                    1. Result in: % |- % : OK typedExp as expElabRes
-
-            2. Group compare-poly-second: EC |- CMP expEL_l polyCmpOp as cmpOp expEL_r : %
+            1. (Let polyCmpOp be cmpOp as polyCmpOp)
 
               1. (Infer_exp_first: EC |- CMP expEL_l polyCmpOp as cmpOp expEL_r : expElabRes)
 
-                1. If (expElabRes <: fail), then
+                1. Case analysis on expElabRes (total)
 
-                  1. (Let fail be expElabRes as fail)
+                  1. Case (% has type ok<typedExp>)
 
-                    1. (Infer_exp: EC |- expEL_l : expElabRes')
+                    1. (Let OK typedExp be expElabRes as ok<typedExp>)
 
-                      1. If (expElabRes' <: ok<typedExp>), then
+                      1. Result in: % |- % : OK typedExp as expElabRes
 
-                        1. (Let OK typedExp_l be expElabRes' as ok<typedExp>)
+                  2. Case (% has type fail)
 
-                          1. (Let _exp '#' typ_l be typedExp_l)
+                    1. (Let fail be expElabRes as fail)
 
-                            1. (Elab_exp: EC |- expEL_r '<=' typ_l : expElabRes'')
+                      1. (Infer_exp: EC |- expEL_l : expElabRes')
 
-                              1. If (expElabRes'' <: ok<typedExp>), then
+                        1. If (expElabRes' <: ok<typedExp>), then
 
-                                1. (Let OK typedExp_r be expElabRes'' as ok<typedExp>)
+                          1. (Let OK typedExp_l be expElabRes' as ok<typedExp>)
 
-                                  1. Result in: % |- % : OK CMP polyCmpOp as cmpOp typedExp_l typedExp_r as exp '#' BOOL as typ as expElabRes
+                            1. (Let _exp '#' typ_l be typedExp_l)
 
-        2. Case (% has type numCmpOp)
+                              1. (Elab_exp: EC |- expEL_r '<=' typ_l : expElabRes'')
 
-          1. (Let numCmpOp be cmpOp as numCmpOp)
+                                1. If (expElabRes'' <: ok<typedExp>), then
 
-            1. Group compare-natural: EC |- CMP expEL_l numCmpOp as cmpOp expEL_r : %
+                                  1. (Let OK typedExp_r be expElabRes'' as ok<typedExp>)
+
+                                    1. Result in: % |- % : OK CMP polyCmpOp as cmpOp typedExp_l typedExp_r as exp '#' BOOL as typ as expElabRes
+
+          2. Case (% has type numCmpOp)
+
+            1. (Let numCmpOp be cmpOp as numCmpOp)
 
               1. (Infer_exp: EC |- expEL_l : expElabRes)
 
@@ -3924,21 +3878,7 @@ relation Infer_exp: EC |- expEL' : %
 
                                 1. Result in: % |- % : OK CMP numCmpOp as cmpOp typedExp_l_cast typedExp_r_cast as exp '#' BOOL as typ as expElabRes
 
-            2. Group compare-integer: EC |- CMP expEL_l numCmpOp as cmpOp expEL_r : %
-
-              1. (Infer_exp: EC |- expEL_l : expElabRes)
-
-                1. If (expElabRes <: ok<typedExp>), then
-
-                  1. (Let OK typedExp_l be expElabRes as ok<typedExp>)
-
-                    1. (Infer_exp: EC |- expEL_r : expElabRes')
-
-                      1. If (expElabRes' <: ok<typedExp>), then
-
-                        1. (Let OK typedExp_r be expElabRes' as ok<typedExp>)
-
-                          1. If ((FAIL as expPairElabRes = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT as typ))), then
+                          2. If ((FAIL as expPairElabRes = $cast_pair(EC.TYP, typedExp_l, typedExp_r, NAT as typ))), then
 
                             1. (Let expPairElabRes be $cast_pair(EC.TYP, typedExp_l, typedExp_r, INT as typ))
 
@@ -4016,37 +3956,35 @@ relation Infer_exp: EC |- expEL' : %
 
     1. (Let CAT expEL_l expEL_r be expEL')
 
-      1. Group cat-list: EC |- CAT expEL_l expEL_r : %
+      1. Group cat: EC |- CAT expEL_l expEL_r : %
 
         1. (Infer_exp_first: EC |- CAT expEL_l expEL_r : expElabRes)
 
-          1. If (expElabRes <: ok<typedExp>), then
+          1. Case analysis on expElabRes (total)
 
-            1. (Let OK typedExp be expElabRes as ok<typedExp>)
+            1. Case (% has type ok<typedExp>)
 
-              1. Result in: % |- % : OK typedExp as expElabRes
+              1. (Let OK typedExp be expElabRes as ok<typedExp>)
 
-      2. Group cat-string: EC |- CAT expEL_l expEL_r : %
+                1. Result in: % |- % : OK typedExp as expElabRes
 
-        1. (Infer_exp_first: EC |- CAT expEL_l expEL_r : expElabRes)
+            2. Case (% has type fail)
 
-          1. If (expElabRes <: fail), then
+              1. (Let fail be expElabRes as fail)
 
-            1. (Let fail be expElabRes as fail)
+                1. (Elab_exp: EC |- expEL_l '<=' TEXT as typ : expElabRes')
 
-              1. (Elab_exp: EC |- expEL_l '<=' TEXT as typ : expElabRes')
+                  1. If (expElabRes' <: ok<typedExp>), then
 
-                1. If (expElabRes' <: ok<typedExp>), then
+                    1. (Let OK typedExp_l be expElabRes' as ok<typedExp>)
 
-                  1. (Let OK typedExp_l be expElabRes' as ok<typedExp>)
+                      1. (Elab_exp: EC |- expEL_r '<=' TEXT as typ : expElabRes'')
 
-                    1. (Elab_exp: EC |- expEL_r '<=' TEXT as typ : expElabRes'')
+                        1. If (expElabRes'' <: ok<typedExp>), then
 
-                      1. If (expElabRes'' <: ok<typedExp>), then
+                          1. (Let OK typedExp_r be expElabRes'' as ok<typedExp>)
 
-                        1. (Let OK typedExp_r be expElabRes'' as ok<typedExp>)
-
-                          1. Result in: % |- % : OK CAT typedExp_l typedExp_r as exp '#' TEXT as typ as expElabRes
+                            1. Result in: % |- % : OK CAT typedExp_l typedExp_r as exp '#' TEXT as typ as expElabRes
 
   9. Case (% matches pattern TUP %)
 
@@ -4068,153 +4006,145 @@ relation Infer_exp: EC |- expEL' : %
 
     1. (Let LEN expEL be expEL')
 
-      1. Group len-list: EC |- LEN expEL : %
+      1. Group len: EC |- LEN expEL : %
 
         1. (Infer_exp_first: EC |- LEN expEL : expElabRes)
 
-          1. If (expElabRes <: ok<typedExp>), then
+          1. Case analysis on expElabRes (total)
 
-            1. (Let OK typedExp be expElabRes as ok<typedExp>)
+            1. Case (% has type ok<typedExp>)
 
-              1. Result in: % |- % : OK typedExp as expElabRes
+              1. (Let OK typedExp be expElabRes as ok<typedExp>)
 
-      2. Group len-string: EC |- LEN expEL : %
+                1. Result in: % |- % : OK typedExp as expElabRes
 
-        1. (Infer_exp_first: EC |- LEN expEL : expElabRes)
+            2. Case (% has type fail)
 
-          1. If (expElabRes <: fail), then
+              1. (Let fail be expElabRes as fail)
 
-            1. (Let fail be expElabRes as fail)
+                1. (Elab_exp: EC |- expEL '<=' TEXT as typ : expElabRes')
 
-              1. (Elab_exp: EC |- expEL '<=' TEXT as typ : expElabRes')
+                  1. If (expElabRes' <: ok<typedExp>), then
 
-                1. If (expElabRes' <: ok<typedExp>), then
+                    1. (Let OK typedExp be expElabRes' as ok<typedExp>)
 
-                  1. (Let OK typedExp be expElabRes' as ok<typedExp>)
-
-                    1. Result in: % |- % : OK LEN typedExp as exp '#' NAT as typ as expElabRes
+                      1. Result in: % |- % : OK LEN typedExp as exp '#' NAT as typ as expElabRes
 
   11. Case (% matches pattern MEM % %)
 
     1. (Let MEM expEL_e expEL_s be expEL')
 
-      1. Group mem-elem: EC |- MEM expEL_e expEL_s : %
+      1. Group mem: EC |- MEM expEL_e expEL_s : %
 
         1. (Infer_exp_first: EC |- MEM expEL_e expEL_s : expElabRes)
 
-          1. If (expElabRes <: ok<typedExp>), then
+          1. Case analysis on expElabRes (total)
 
-            1. (Let OK typedExp be expElabRes as ok<typedExp>)
+            1. Case (% has type ok<typedExp>)
 
-              1. Result in: % |- % : OK typedExp as expElabRes
+              1. (Let OK typedExp be expElabRes as ok<typedExp>)
 
-      2. Group mem-list: EC |- MEM expEL_e expEL_s : %
+                1. Result in: % |- % : OK typedExp as expElabRes
 
-        1. (Infer_exp_first: EC |- MEM expEL_e expEL_s : expElabRes)
+            2. Case (% has type fail)
 
-          1. If (expElabRes <: fail), then
+              1. (Let fail be expElabRes as fail)
 
-            1. (Let fail be expElabRes as fail)
+                1. (Infer_exp: EC |- expEL_s : expElabRes')
 
-              1. (Infer_exp: EC |- expEL_s : expElabRes')
+                  1. If (expElabRes' <: ok<typedExp>), then
 
-                1. If (expElabRes' <: ok<typedExp>), then
+                    1. (Let OK typedExp_s be expElabRes' as ok<typedExp>)
 
-                  1. (Let OK typedExp_s be expElabRes' as ok<typedExp>)
+                      1. (Let _exp '#' typ_s be typedExp_s)
 
-                    1. (Let _exp '#' typ_s be typedExp_s)
+                        1. (Let typ?{typ <- typ?} be $as_list_typ(EC.TYP, typ_s))
 
-                      1. (Let typ?{typ <- typ?} be $as_list_typ(EC.TYP, typ_s))
+                          1. If (typ?{typ <- typ?} matches (_)), then
 
-                        1. If (typ?{typ <- typ?} matches (_)), then
+                            1. (Let ?(typ_e) be typ?{typ <- typ?})
 
-                          1. (Let ?(typ_e) be typ?{typ <- typ?})
+                              1. (Elab_exp: EC |- expEL_e '<=' typ_e : expElabRes'')
 
-                            1. (Elab_exp: EC |- expEL_e '<=' typ_e : expElabRes'')
+                                1. If (expElabRes'' <: ok<typedExp>), then
 
-                              1. If (expElabRes'' <: ok<typedExp>), then
+                                  1. (Let OK typedExp_e be expElabRes'' as ok<typedExp>)
 
-                                1. (Let OK typedExp_e be expElabRes'' as ok<typedExp>)
-
-                                  1. Result in: % |- % : OK MEM typedExp_e typedExp_s as exp '#' BOOL as typ as expElabRes
+                                    1. Result in: % |- % : OK MEM typedExp_e typedExp_s as exp '#' BOOL as typ as expElabRes
 
   12. Case (% matches pattern IDX % %)
 
     1. (Let IDX expEL_b expEL_i be expEL')
 
-      1. Group idx-list: EC |- IDX expEL_b expEL_i : %
+      1. Group idx: EC |- IDX expEL_b expEL_i : %
 
         1. (Infer_exp_first: EC |- IDX expEL_b expEL_i : expElabRes)
 
-          1. If (expElabRes <: ok<typedExp>), then
+          1. Case analysis on expElabRes (total)
 
-            1. (Let OK typedExp be expElabRes as ok<typedExp>)
+            1. Case (% has type ok<typedExp>)
 
-              1. Result in: % |- % : OK typedExp as expElabRes
+              1. (Let OK typedExp be expElabRes as ok<typedExp>)
 
-      2. Group idx-string: EC |- IDX expEL_b expEL_i : %
+                1. Result in: % |- % : OK typedExp as expElabRes
 
-        1. (Infer_exp_first: EC |- IDX expEL_b expEL_i : expElabRes)
+            2. Case (% has type fail)
 
-          1. If (expElabRes <: fail), then
+              1. (Let fail be expElabRes as fail)
 
-            1. (Let fail be expElabRes as fail)
+                1. (Elab_exp: EC |- expEL_b '<=' TEXT as typ : expElabRes')
 
-              1. (Elab_exp: EC |- expEL_b '<=' TEXT as typ : expElabRes')
+                  1. If (expElabRes' <: ok<typedExp>), then
 
-                1. If (expElabRes' <: ok<typedExp>), then
+                    1. (Let OK typedExp_b be expElabRes' as ok<typedExp>)
 
-                  1. (Let OK typedExp_b be expElabRes' as ok<typedExp>)
+                      1. (Elab_exp: EC |- expEL_i '<=' NAT as typ : expElabRes'')
 
-                    1. (Elab_exp: EC |- expEL_i '<=' NAT as typ : expElabRes'')
+                        1. If (expElabRes'' <: ok<typedExp>), then
 
-                      1. If (expElabRes'' <: ok<typedExp>), then
+                          1. (Let OK typedExp_i be expElabRes'' as ok<typedExp>)
 
-                        1. (Let OK typedExp_i be expElabRes'' as ok<typedExp>)
-
-                          1. Result in: % |- % : OK IDX typedExp_b typedExp_i as exp '#' TEXT as typ as expElabRes
+                            1. Result in: % |- % : OK IDX typedExp_b typedExp_i as exp '#' TEXT as typ as expElabRes
 
   13. Case (% matches pattern SLICE % % %)
 
     1. (Let SLICE expEL_b expEL_i expEL_n be expEL')
 
-      1. Group slice-list: EC |- SLICE expEL_b expEL_i expEL_n : %
+      1. Group slice: EC |- SLICE expEL_b expEL_i expEL_n : %
 
         1. (Infer_exp_first: EC |- SLICE expEL_b expEL_i expEL_n : expElabRes)
 
-          1. If (expElabRes <: ok<typedExp>), then
+          1. Case analysis on expElabRes (total)
 
-            1. (Let OK typedExp be expElabRes as ok<typedExp>)
+            1. Case (% has type ok<typedExp>)
 
-              1. Result in: % |- % : OK typedExp as expElabRes
+              1. (Let OK typedExp be expElabRes as ok<typedExp>)
 
-      2. Group slice-string: EC |- SLICE expEL_b expEL_i expEL_n : %
+                1. Result in: % |- % : OK typedExp as expElabRes
 
-        1. (Infer_exp_first: EC |- SLICE expEL_b expEL_i expEL_n : expElabRes)
+            2. Case (% has type fail)
 
-          1. If (expElabRes <: fail), then
+              1. (Let fail be expElabRes as fail)
 
-            1. (Let fail be expElabRes as fail)
+                1. (Elab_exp: EC |- expEL_b '<=' TEXT as typ : expElabRes')
 
-              1. (Elab_exp: EC |- expEL_b '<=' TEXT as typ : expElabRes')
+                  1. If (expElabRes' <: ok<typedExp>), then
 
-                1. If (expElabRes' <: ok<typedExp>), then
+                    1. (Let OK typedExp_b be expElabRes' as ok<typedExp>)
 
-                  1. (Let OK typedExp_b be expElabRes' as ok<typedExp>)
+                      1. (Elab_exp: EC |- expEL_i '<=' NAT as typ : expElabRes'')
 
-                    1. (Elab_exp: EC |- expEL_i '<=' NAT as typ : expElabRes'')
+                        1. If (expElabRes'' <: ok<typedExp>), then
 
-                      1. If (expElabRes'' <: ok<typedExp>), then
+                          1. (Let OK typedExp_i be expElabRes'' as ok<typedExp>)
 
-                        1. (Let OK typedExp_i be expElabRes'' as ok<typedExp>)
+                            1. (Elab_exp: EC |- expEL_n '<=' NAT as typ : expElabRes''')
 
-                          1. (Elab_exp: EC |- expEL_n '<=' NAT as typ : expElabRes''')
+                              1. If (expElabRes''' <: ok<typedExp>), then
 
-                            1. If (expElabRes''' <: ok<typedExp>), then
+                                1. (Let OK typedExp_n be expElabRes''' as ok<typedExp>)
 
-                              1. (Let OK typedExp_n be expElabRes''' as ok<typedExp>)
-
-                                1. Result in: % |- % : OK SLICE typedExp_b typedExp_i typedExp_n as exp '#' TEXT as typ as expElabRes
+                                  1. Result in: % |- % : OK SLICE typedExp_b typedExp_i typedExp_n as exp '#' TEXT as typ as expElabRes
 
   14. Case (% matches pattern DOT % %)
 
@@ -4552,35 +4482,29 @@ relation Infer_exp_first: EC |- expEL' : %
 
 relation Elab_exp: EC |- expEL '<=' typ : %
 
-1. Group singleton: EC |- expEL '<=' typ : %
-
-  1. (Elab_exp_singleton: EC |- expEL '<=' typ : expElabRes)
-
-    1. If (expElabRes <: ok<typedExp>), then
-
-      1. (Let OK typedExp be expElabRes as ok<typedExp>)
-
-        1. Result in: % |- % '<=' % : OK typedExp as expElabRes
-
-    1. Else Dangling
-
-2. Group normal: EC |- expEL '<=' typ : %
+1. Group : EC |- expEL '<=' typ : %
 
   1. (Elab_exp_singleton: EC |- expEL '<=' typ : expElabRes')
 
-    1. If (expElabRes' <: fail), then
+    1. Case analysis on expElabRes' (total)
 
-      1. (Let fail be expElabRes' as fail)
+      1. Case (% has type ok<typedExp>)
 
-        1. (Elab_exp_normal: EC |- expEL '<=' typ : expElabRes)
+        1. (Let OK typedExp be expElabRes' as ok<typedExp>)
 
-          1. Result in: % |- % '<=' % : expElabRes
+          1. Result in: % |- % '<=' % : OK typedExp as expElabRes
 
-    1. Else Dangling
+      2. Case (% has type fail)
+
+        1. (Let fail be expElabRes' as fail)
+
+          1. (Elab_exp_normal: EC |- expEL '<=' typ : expElabRes)
+
+            1. Result in: % |- % '<=' % : expElabRes
 
 relation Elab_exp_singleton: EC |- expEL '<=' typ : %
 
-1. Group opt: EC |- expEL '<=' typ : %
+1. Group iter: EC |- expEL '<=' typ : %
 
   1. If ($is_singleton(expEL)), then
 
@@ -4590,37 +4514,29 @@ relation Elab_exp_singleton: EC |- expEL '<=' typ : %
 
         1. (Let ?((typ_elem, iter)) be (typ, iter)?{(typ, iter) <- (typ, iter)?})
 
-          1. If (iter matches QUEST), then
+          1. Case analysis on iter (total)
 
-            1. (Elab_exp: EC |- expEL '<=' typ_elem : expElabRes)
+            1. Case (% matches pattern QUEST)
 
-              1. If (expElabRes <: ok<typedExp>), then
+              1. (Elab_exp: EC |- expEL '<=' typ_elem : expElabRes)
 
-                1. (Let OK typedExp be expElabRes as ok<typedExp>)
+                1. If (expElabRes <: ok<typedExp>), then
 
-                  1. Result in: % |- % '<=' % : OK OPT ?(typedExp) as exp '#' typ as expElabRes
+                  1. (Let OK typedExp be expElabRes as ok<typedExp>)
 
-2. Group list: EC |- expEL '<=' typ : %
+                    1. Result in: % |- % '<=' % : OK OPT ?(typedExp) as exp '#' typ as expElabRes
 
-  1. If ($is_singleton(expEL)), then
+            2. Case (% matches pattern STAR)
 
-    1. (Let (typ, iter)?{(typ, iter) <- (typ, iter)?} be $as_iter_typ(EC.TYP, typ))
+              1. (Elab_exp: EC |- expEL '<=' typ_elem : expElabRes)
 
-      1. If ((typ, iter)?{(typ, iter) <- (typ, iter)?} matches (_)), then
+                1. If (expElabRes <: ok<typedExp>), then
 
-        1. (Let ?((typ_elem, iter)) be (typ, iter)?{(typ, iter) <- (typ, iter)?})
+                  1. (Let OK typedExp be expElabRes as ok<typedExp>)
 
-          1. If (iter matches STAR), then
+                    1. Result in: % |- % '<=' % : OK LIST [typedExp] as exp '#' typ as expElabRes
 
-            1. (Elab_exp: EC |- expEL '<=' typ_elem : expElabRes)
-
-              1. If (expElabRes <: ok<typedExp>), then
-
-                1. (Let OK typedExp be expElabRes as ok<typedExp>)
-
-                  1. Result in: % |- % '<=' % : OK LIST [typedExp] as exp '#' typ as expElabRes
-
-3. Otherwise,
+2. Otherwise,
 
   1. Group fail: EC |- expEL '<=' typ : %
 
@@ -4628,33 +4544,27 @@ relation Elab_exp_singleton: EC |- expEL '<=' typ : %
 
 relation Elab_exp_normal: EC |- expEL '<=' typ : %
 
-1. Group infer: EC |- expEL '<=' typ : %
+1. Group : EC |- expEL '<=' typ : %
 
   1. (Infer_exp: EC |- expEL : expElabRes')
 
-    1. If (expElabRes' <: ok<typedExp>), then
+    1. Case analysis on expElabRes' (total)
 
-      1. (Let OK typedExp be expElabRes' as ok<typedExp>)
+      1. Case (% has type ok<typedExp>)
 
-        1. (Let expElabRes be $cast(EC.TYP, typedExp, typ))
+        1. (Let OK typedExp be expElabRes' as ok<typedExp>)
 
-          1. Result in: % |- % '<=' % : expElabRes
+          1. (Let expElabRes be $cast(EC.TYP, typedExp, typ))
 
-    1. Else Dangling
+            1. Result in: % |- % '<=' % : expElabRes
 
-2. Group fallback: EC |- expEL '<=' typ : %
+      2. Case (% has type fail)
 
-  1. (Infer_exp: EC |- expEL : expElabRes')
+        1. (Let fail be expElabRes' as fail)
 
-    1. If (expElabRes' <: fail), then
+          1. (Elab_exp_fallback: EC |- expEL '<=' typ : expElabRes)
 
-      1. (Let fail be expElabRes' as fail)
-
-        1. (Elab_exp_fallback: EC |- expEL '<=' typ : expElabRes)
-
-          1. Result in: % |- % '<=' % : expElabRes
-
-    1. Else Dangling
+            1. Result in: % |- % '<=' % : expElabRes
 
 relation Elab_exp_fallback: EC |- expEL '<=' typ : %
 
@@ -4668,7 +4578,7 @@ relation Elab_exp_fallback: EC |- expEL '<=' typ : %
 
   1. (Let VAR id targ*{targ <- targ*} be typ)
 
-    1. Group alias: EC |- expEL '<=' VAR id targ*{targ <- targ*} : %
+    1. Group named: EC |- expEL '<=' VAR id targ*{targ <- targ*} : %
 
       1. If (~$is_wildcard(expEL)), then
 
@@ -4682,85 +4592,59 @@ relation Elab_exp_fallback: EC |- expEL '<=' typ : %
 
                 1. (Let TYP _id tparam*{tparam <- tparam*} '=' deftyp be typDef as definedTypDefn)
 
-                  1. If (deftyp matches ALIAS %), then
+                  1. Case analysis on deftyp (total)
 
-                    1. (Let ALIAS typ_alias be deftyp)
+                    1. Case (% matches pattern ALIAS %)
 
-                      1. If ((|tparam*{tparam <- tparam*}| = |targ*{targ <- targ*}|)), then
+                      1. (Let ALIAS typ_alias be deftyp)
 
-                        1. (Let theta be `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `})
+                        1. If ((|tparam*{tparam <- tparam*}| = |targ*{targ <- targ*}|)), then
 
-                          1. (Let typRes be $subst_typ(theta, typ_alias))
+                          1. (Let theta be `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `})
 
-                            1. If (typRes <: ok<typ>), then
+                            1. (Let typRes be $subst_typ(theta, typ_alias))
 
-                              1. (Let OK typ_inst be typRes as ok<typ>)
+                              1. If (typRes <: ok<typ>), then
 
-                                1. (Elab_exp_normal: EC |- expEL '<=' typ_inst : expElabRes)
+                                1. (Let OK typ_inst be typRes as ok<typ>)
 
-                                  1. Result in: % |- % '<=' % : expElabRes
+                                  1. (Elab_exp_normal: EC |- expEL '<=' typ_inst : expElabRes)
 
-    2. Group struct: EC |- expEL '<=' VAR id targ*{targ <- targ*} : %
+                                    1. Result in: % |- % '<=' % : expElabRes
 
-      1. If (~$is_wildcard(expEL)), then
+                    2. Case (% matches pattern STRUCT %)
 
-        1. (Let typDef'?{typDef' <- typDef'?} be $find_map<id, typDef>(EC.TYP, id))
+                      1. (Let STRUCT typField*{typField <- typField*} be deftyp)
 
-          1. If (typDef'?{typDef' <- typDef'?} matches (_)), then
+                        1. If ((|tparam*{tparam <- tparam*}| = |targ*{targ <- targ*}|)), then
 
-            1. (Let ?(typDef) be typDef'?{typDef' <- typDef'?})
+                          1. (Let theta be `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `})
 
-              1. If (typDef <: definedTypDefn), then
+                            1. (Let atom typ_field be typField)*{typField <- typField*, atom -> atom*, typ_field -> typ_field*}
 
-                1. (Let TYP _id tparam*{tparam <- tparam*} '=' deftyp be typDef as definedTypDefn)
+                              1. (Let typRes be $subst_typ(theta, typ_field))*{typ_field <- typ_field*, typRes -> typRes*}
 
-                  1. If (deftyp matches STRUCT %), then
+                                1. If (typRes <: ok<typ>)*{typRes <- typRes*}, then
 
-                    1. (Let STRUCT typField*{typField <- typField*} be deftyp)
+                                  1. (Let OK typ_field_inst be typRes as ok<typ>)*{typRes <- typRes*, typ_field_inst -> typ_field_inst*}
 
-                      1. If ((|tparam*{tparam <- tparam*}| = |targ*{targ <- targ*}|)), then
+                                    1. (Let typField_inst*{typField_inst <- typField_inst*} be atom typ_field_inst*{atom <- atom*, typ_field_inst <- typ_field_inst*})
 
-                        1. (Let theta be `{ tparam ':' targ*{targ <- targ*, tparam <- tparam*} `})
+                                      1. (Elab_struct: EC |- expEL '<=' VAR id targ*{targ <- targ*} typField_inst*{typField_inst <- typField_inst*} : expElabRes)
 
-                          1. (Let atom typ_field be typField)*{typField <- typField*, atom -> atom*, typ_field -> typ_field*}
+                                        1. Result in: % |- % '<=' % : expElabRes
 
-                            1. (Let typRes be $subst_typ(theta, typ_field))*{typ_field <- typ_field*, typRes -> typRes*}
+                    3. Case (% matches pattern VARIANT %)
 
-                              1. If (typRes <: ok<typ>)*{typRes <- typRes*}, then
+                      1. (Let typCase*{typCase <- typCase*}?{typCase* <- typCase*?} be $inst_cases(EC.TYP, id, targ*{targ <- targ*}))
 
-                                1. (Let OK typ_field_inst be typRes as ok<typ>)*{typRes <- typRes*, typ_field_inst -> typ_field_inst*}
+                        1. If (typCase*{typCase <- typCase*}?{typCase* <- typCase*?} matches (_)), then
 
-                                  1. (Let typField_inst*{typField_inst <- typField_inst*} be atom typ_field_inst*{atom <- atom*, typ_field_inst <- typ_field_inst*})
+                          1. (Let ?(typCase_inst*{typCase_inst <- typCase_inst*}) be typCase*{typCase <- typCase*}?{typCase* <- typCase*?})
 
-                                    1. (Elab_struct: EC |- expEL '<=' VAR id targ*{targ <- targ*} typField_inst*{typField_inst <- typField_inst*} : expElabRes)
+                            1. (Elab_variant: EC |- expEL '<=' VAR id targ*{targ <- targ*} typCase_inst*{typCase_inst <- typCase_inst*} : expElabRes)
 
-                                      1. Result in: % |- % '<=' % : expElabRes
-
-    3. Group variant: EC |- expEL '<=' VAR id targ*{targ <- targ*} : %
-
-      1. If (~$is_wildcard(expEL)), then
-
-        1. (Let typDef'?{typDef' <- typDef'?} be $find_map<id, typDef>(EC.TYP, id))
-
-          1. If (typDef'?{typDef' <- typDef'?} matches (_)), then
-
-            1. (Let ?(typDef) be typDef'?{typDef' <- typDef'?})
-
-              1. If (typDef <: definedTypDefn), then
-
-                1. (Let TYP _id _tparam*{_tparam <- _tparam*} '=' deftyp be typDef as definedTypDefn)
-
-                  1. If (deftyp matches VARIANT %), then
-
-                    1. (Let typCase*{typCase <- typCase*}?{typCase* <- typCase*?} be $inst_cases(EC.TYP, id, targ*{targ <- targ*}))
-
-                      1. If (typCase*{typCase <- typCase*}?{typCase* <- typCase*?} matches (_)), then
-
-                        1. (Let ?(typCase_inst*{typCase_inst <- typCase_inst*}) be typCase*{typCase <- typCase*}?{typCase* <- typCase*?})
-
-                          1. (Elab_variant: EC |- expEL '<=' VAR id targ*{targ <- targ*} typCase_inst*{typCase_inst <- typCase_inst*} : expElabRes)
-
-                            1. Result in: % |- % '<=' % : expElabRes
+                              1. Result in: % |- % '<=' % : expElabRes
 
 3. Group shape: EC |- expEL '<=' typ : %
 
@@ -4784,7 +4668,7 @@ relation Elab_exp_shape: EC |- expEL' '<=' typ : %
 
   1. Case (% matches pattern EPS)
 
-    1. Group empty-opt: EC |- EPS '<=' typ : %
+    1. Group empty: EC |- EPS '<=' typ : %
 
       1. (Let (typ, iter)?{(typ, iter) <- (typ, iter)?} be $as_iter_typ(EC.TYP, typ))
 
@@ -4792,21 +4676,15 @@ relation Elab_exp_shape: EC |- expEL' '<=' typ : %
 
           1. (Let ?((_typ, iter)) be (typ, iter)?{(typ, iter) <- (typ, iter)?})
 
-            1. If (iter matches QUEST), then
+            1. Case analysis on iter (total)
 
-              1. Result in: % |- % '<=' % : OK OPT ?() as exp '#' typ as expElabRes
+              1. Case (% matches pattern QUEST)
 
-    2. Group empty-list: EC |- EPS '<=' typ : %
+                1. Result in: % |- % '<=' % : OK OPT ?() as exp '#' typ as expElabRes
 
-      1. (Let (typ, iter)?{(typ, iter) <- (typ, iter)?} be $as_iter_typ(EC.TYP, typ))
+              2. Case (% matches pattern STAR)
 
-        1. If ((typ, iter)?{(typ, iter) <- (typ, iter)?} matches (_)), then
-
-          1. (Let ?((_typ, iter)) be (typ, iter)?{(typ, iter) <- (typ, iter)?})
-
-            1. If (iter matches STAR), then
-
-              1. Result in: % |- % '<=' % : OK LIST [] as exp '#' typ as expElabRes
+                1. Result in: % |- % '<=' % : OK LIST [] as exp '#' typ as expElabRes
 
   2. Case (% matches pattern LIST %)
 
@@ -4858,37 +4736,35 @@ relation Elab_exp_shape: EC |- expEL' '<=' typ : %
 
     1. (Let CAT expEL_l expEL_r be expEL')
 
-      1. Group cat-iter: EC |- CAT expEL_l expEL_r '<=' typ : %
+      1. Group cat: EC |- CAT expEL_l expEL_r '<=' typ : %
 
         1. (Elab_exp_first: EC |- CAT expEL_l expEL_r '<=' typ : expElabRes)
 
-          1. If (expElabRes <: ok<typedExp>), then
+          1. Case analysis on expElabRes (total)
 
-            1. (Let OK typedExp be expElabRes as ok<typedExp>)
+            1. Case (% has type ok<typedExp>)
 
-              1. Result in: % |- % '<=' % : OK typedExp as expElabRes
+              1. (Let OK typedExp be expElabRes as ok<typedExp>)
 
-      2. Group cat-string: EC |- CAT expEL_l expEL_r '<=' typ : %
+                1. Result in: % |- % '<=' % : OK typedExp as expElabRes
 
-        1. (Elab_exp_first: EC |- CAT expEL_l expEL_r '<=' typ : expElabRes)
+            2. Case (% has type fail)
 
-          1. If (expElabRes <: fail), then
+              1. (Let fail be expElabRes as fail)
 
-            1. (Let fail be expElabRes as fail)
+                1. (Elab_exp: EC |- expEL_l '<=' TEXT as typ : expElabRes')
 
-              1. (Elab_exp: EC |- expEL_l '<=' TEXT as typ : expElabRes')
+                  1. If (expElabRes' <: ok<typedExp>), then
 
-                1. If (expElabRes' <: ok<typedExp>), then
+                    1. (Let OK typedExp_l be expElabRes' as ok<typedExp>)
 
-                  1. (Let OK typedExp_l be expElabRes' as ok<typedExp>)
+                      1. (Elab_exp: EC |- expEL_r '<=' TEXT as typ : expElabRes'')
 
-                    1. (Elab_exp: EC |- expEL_r '<=' TEXT as typ : expElabRes'')
+                        1. If (expElabRes'' <: ok<typedExp>), then
 
-                      1. If (expElabRes'' <: ok<typedExp>), then
+                          1. (Let OK typedExp_r be expElabRes'' as ok<typedExp>)
 
-                        1. (Let OK typedExp_r be expElabRes'' as ok<typedExp>)
-
-                          1. Result in: % |- % '<=' % : OK CAT typedExp_l typedExp_r as exp '#' typ as expElabRes
+                            1. Result in: % |- % '<=' % : OK CAT typedExp_l typedExp_r as exp '#' typ as expElabRes
 
   5. Case (% matches pattern TUP %)
 
@@ -4992,91 +4868,15 @@ syntax notArgsElabRes =
 
 relation Elab_notArgs: EC |- expEL' '<=' mixop' typ*{typ <- typ*} : %
 
-1. Case analysis on expEL'
+1. If (expEL' matches PAREN %), then
 
-  1. Case (% matches pattern PAREN %)
+  1. (Let PAREN expEL be expEL')
 
-    1. (Let PAREN expEL be expEL')
+    1. Group paren: EC |- PAREN expEL '<=' mixop' typ*{typ <- typ*} : %
 
-      1. Group paren: EC |- PAREN expEL '<=' mixop' typ*{typ <- typ*} : %
+      1. (Elab_notArgs: EC |- expEL '<=' mixop' typ*{typ <- typ*} : notArgsElabRes)
 
-        1. (Elab_notArgs: EC |- expEL '<=' mixop' typ*{typ <- typ*} : notArgsElabRes)
-
-          1. Result in: % |- % '<=' % % : notArgsElabRes
-
-  2. Case (% matches pattern ATOM %)
-
-    1. (Let ATOM atom be expEL')
-
-      1. If (mixop' matches ATOM %), then
-
-        1. (Let ATOM atom' be mixop')
-
-          1. If ((atom = atom')), then
-
-            1. Group atom: EC |- ATOM atom '<=' ATOM atom typ*{typ <- typ*} : %
-
-              1. Result in: % |- % '<=' % % : OK ([], typ*{typ <- typ*}) as notArgsElabRes
-
-  3. Case (% matches pattern SEQ %)
-
-    1. (Let SEQ expEL*{expEL <- expEL*} be expEL')
-
-      1. If (mixop' matches SEQ %), then
-
-        1. (Let SEQ mixop*{mixop <- mixop*} be mixop')
-
-          1. Group seq: EC |- SEQ expEL*{expEL <- expEL*} '<=' SEQ mixop*{mixop <- mixop*} typ*{typ <- typ*} : %
-
-            1. If ((|expEL*{expEL <- expEL*}| = |mixop*{mixop <- mixop*}|)), then
-
-              1. (Elab_notArgss: EC |- expEL*{expEL <- expEL*} '<=' mixop*{mixop <- mixop*} typ*{typ <- typ*} : notArgsElabRes)
-
-                1. Result in: % |- % '<=' % % : notArgsElabRes
-
-  4. Case (% matches pattern INFIX % % %)
-
-    1. (Let INFIX expEL_l atom expEL_r be expEL')
-
-      1. If (mixop' matches INFIX % % %), then
-
-        1. (Let INFIX mixop_l atom' mixop_r be mixop')
-
-          1. If ((atom = atom')), then
-
-            1. Group infix: EC |- INFIX expEL_l atom expEL_r '<=' INFIX mixop_l atom mixop_r typ*{typ <- typ*} : %
-
-              1. (Elab_notArgs: EC |- expEL_l '<=' mixop_l typ*{typ <- typ*} : notArgsElabRes)
-
-                1. If (notArgsElabRes <: ok<(typedExp*, typ*)>), then
-
-                  1. (Let OK (typedExp_l*{typedExp_l <- typedExp_l*}, typ_l*{typ_l <- typ_l*}) be notArgsElabRes as ok<(typedExp*, typ*)>)
-
-                    1. (Elab_notArgs: EC |- expEL_r '<=' mixop_r typ_l*{typ_l <- typ_l*} : notArgsElabRes')
-
-                      1. If (notArgsElabRes' <: ok<(typedExp*, typ*)>), then
-
-                        1. (Let OK (typedExp_r*{typedExp_r <- typedExp_r*}, typ_r*{typ_r <- typ_r*}) be notArgsElabRes' as ok<(typedExp*, typ*)>)
-
-                          1. Result in: % |- % '<=' % % : OK (typedExp_l*{typedExp_l <- typedExp_l*} ++ typedExp_r*{typedExp_r <- typedExp_r*}, typ_r*{typ_r <- typ_r*}) as notArgsElabRes
-
-  5. Case (% matches pattern BRACK % % %)
-
-    1. (Let BRACK atom_l expEL atom_r be expEL')
-
-      1. If (mixop' matches BRACK % % %), then
-
-        1. (Let BRACK atom_l' mixop atom_r' be mixop')
-
-          1. If ((atom_l = atom_l')), then
-
-            1. If ((atom_r = atom_r')), then
-
-              1. Group brack: EC |- BRACK atom_l expEL atom_r '<=' BRACK atom_l mixop atom_r typ*{typ <- typ*} : %
-
-                1. (Elab_notArgs: EC |- expEL '<=' mixop typ*{typ <- typ*} : notArgsElabRes)
-
-                  1. Result in: % |- % '<=' % % : notArgsElabRes
+        1. Result in: % |- % '<=' % % : notArgsElabRes
 
 2. If (mixop' matches ARG), then
 
@@ -5096,7 +4896,73 @@ relation Elab_notArgs: EC |- expEL' '<=' mixop' typ*{typ <- typ*} : %
 
                 1. Result in: % |- % '<=' % % : OK ([typedExp], typ_t*{typ_t <- typ_t*}) as notArgsElabRes
 
-3. Otherwise,
+3. Group notation: EC |- expEL' '<=' mixop' typ*{typ <- typ*} : %
+
+  1. Case analysis on expEL'
+
+    1. Case (% matches pattern ATOM %)
+
+      1. (Let ATOM atom be expEL')
+
+        1. If ((mixop' = ATOM atom)), then
+
+          1. Result in: % |- % '<=' % % : OK ([], typ*{typ <- typ*}) as notArgsElabRes
+
+    2. Case (% matches pattern SEQ %)
+
+      1. (Let SEQ expEL*{expEL <- expEL*} be expEL')
+
+        1. If (mixop' matches SEQ %), then
+
+          1. (Let SEQ mixop*{mixop <- mixop*} be mixop')
+
+            1. If ((|expEL*{expEL <- expEL*}| = |mixop*{mixop <- mixop*}|)), then
+
+              1. (Elab_notArgss: EC |- expEL*{expEL <- expEL*} '<=' mixop*{mixop <- mixop*} typ*{typ <- typ*} : notArgsElabRes)
+
+                1. Result in: % |- % '<=' % % : notArgsElabRes
+
+    3. Case (% matches pattern INFIX % % %)
+
+      1. (Let INFIX expEL_l atom expEL_r be expEL')
+
+        1. If (mixop' matches INFIX % % %), then
+
+          1. (Let INFIX mixop_l atom' mixop_r be mixop')
+
+            1. If ((atom' = atom)), then
+
+              1. (Elab_notArgs: EC |- expEL_l '<=' mixop_l typ*{typ <- typ*} : notArgsElabRes)
+
+                1. If (notArgsElabRes <: ok<(typedExp*, typ*)>), then
+
+                  1. (Let OK (typedExp_l*{typedExp_l <- typedExp_l*}, typ_l*{typ_l <- typ_l*}) be notArgsElabRes as ok<(typedExp*, typ*)>)
+
+                    1. (Elab_notArgs: EC |- expEL_r '<=' mixop_r typ_l*{typ_l <- typ_l*} : notArgsElabRes')
+
+                      1. If (notArgsElabRes' <: ok<(typedExp*, typ*)>), then
+
+                        1. (Let OK (typedExp_r*{typedExp_r <- typedExp_r*}, typ_r*{typ_r <- typ_r*}) be notArgsElabRes' as ok<(typedExp*, typ*)>)
+
+                          1. Result in: % |- % '<=' % % : OK (typedExp_l*{typedExp_l <- typedExp_l*} ++ typedExp_r*{typedExp_r <- typedExp_r*}, typ_r*{typ_r <- typ_r*}) as notArgsElabRes
+
+    4. Case (% matches pattern BRACK % % %)
+
+      1. (Let BRACK atom_l expEL atom_r be expEL')
+
+        1. If (mixop' matches BRACK % % %), then
+
+          1. (Let BRACK atom mixop atom' be mixop')
+
+            1. If ((atom = atom_l)), then
+
+              1. If ((atom' = atom_r)), then
+
+                1. (Elab_notArgs: EC |- expEL '<=' mixop typ*{typ <- typ*} : notArgsElabRes)
+
+                  1. Result in: % |- % '<=' % % : notArgsElabRes
+
+4. Otherwise,
 
   1. Group fail: EC |- expEL' '<=' mixop' typ*{typ <- typ*} : %
 
@@ -5262,7 +5128,7 @@ relation Elab_path: EC |- pathEL' '<=' typ : %
 
     1. (Let IDX pathEL expEL be pathEL')
 
-      1. Group idx-list: EC |- IDX pathEL expEL '<=' typ : %
+      1. Group idx: EC |- IDX pathEL expEL '<=' typ : %
 
         1. (Elab_path: EC |- pathEL '<=' typ : pathElabRes)
 
@@ -5286,23 +5152,7 @@ relation Elab_path: EC |- pathEL' '<=' typ : %
 
                             1. Result in: % |- % '<=' % : OK IDX typedPath typedExp as path '#' typ_elem as pathElabRes
 
-      2. Group idx-string: EC |- IDX pathEL expEL '<=' typ : %
-
-        1. (Elab_path: EC |- pathEL '<=' typ : pathElabRes)
-
-          1. If (pathElabRes <: ok<typedPath>), then
-
-            1. (Let OK typedPath be pathElabRes as ok<typedPath>)
-
-              1. (Let _path '#' typ_path be typedPath)
-
-                1. (Elab_exp: EC |- expEL '<=' NAT as typ : expElabRes)
-
-                  1. If (expElabRes <: ok<typedExp>), then
-
-                    1. (Let OK typedExp be expElabRes as ok<typedExp>)
-
-                      1. If ($is_text_typ(EC.TYP, typ_path)), then
+                      2. If ($is_text_typ(EC.TYP, typ_path)), then
 
                         1. Result in: % |- % '<=' % : OK IDX typedPath typedExp as path '#' typ_path as pathElabRes
 
@@ -5310,7 +5160,7 @@ relation Elab_path: EC |- pathEL' '<=' typ : %
 
     1. (Let SLICE pathEL expEL_i expEL_n be pathEL')
 
-      1. Group slice-list: EC |- SLICE pathEL expEL_i expEL_n '<=' typ : %
+      1. Group slice: EC |- SLICE pathEL expEL_i expEL_n '<=' typ : %
 
         1. (Elab_path: EC |- pathEL '<=' typ : pathElabRes)
 
@@ -5336,29 +5186,7 @@ relation Elab_path: EC |- pathEL' '<=' typ : %
 
                               1. Result in: % |- % '<=' % : OK SLICE typedPath typedExp_i typedExp_n as path '#' typ_path as pathElabRes
 
-      2. Group slice-string: EC |- SLICE pathEL expEL_i expEL_n '<=' typ : %
-
-        1. (Elab_path: EC |- pathEL '<=' typ : pathElabRes)
-
-          1. If (pathElabRes <: ok<typedPath>), then
-
-            1. (Let OK typedPath be pathElabRes as ok<typedPath>)
-
-              1. (Let _path '#' typ_path be typedPath)
-
-                1. (Elab_exp: EC |- expEL_i '<=' NAT as typ : expElabRes)
-
-                  1. If (expElabRes <: ok<typedExp>), then
-
-                    1. (Let OK typedExp_i be expElabRes as ok<typedExp>)
-
-                      1. (Elab_exp: EC |- expEL_n '<=' NAT as typ : expElabRes')
-
-                        1. If (expElabRes' <: ok<typedExp>), then
-
-                          1. (Let OK typedExp_n be expElabRes' as ok<typedExp>)
-
-                            1. If ($is_text_typ(EC.TYP, typ_path)), then
+                            2. If ($is_text_typ(EC.TYP, typ_path)), then
 
                               1. Result in: % |- % '<=' % : OK SLICE typedPath typedExp_i typedExp_n as path '#' typ_path as pathElabRes
 
@@ -5593,27 +5421,15 @@ relation Elab_prem: EC |- premEL' : %
 
                   1. (Let OK typedExp*{typedExp <- typedExp*} be notExpElabRes as ok<typedExp*>)
 
-                    1. If (~$is_conditional(inputHint, |typedExp*{typedExp <- typedExp*}|)), then
+                    1. Case analysis on $is_conditional(inputHint, |typedExp*{typedExp <- typedExp*}|) (total)
 
-                      1. Result in: % |- % : OK (EC, PREM REL id ':' typedExp*{typedExp <- typedExp*} `( inputHint `) as premIL) as premElabRes
+                      1. Case false
 
-      2. Group ifholdpr: EC |- REL id ':' expEL : %
+                        1. Result in: % |- % : OK (EC, PREM REL id ':' typedExp*{typedExp <- typedExp*} `( inputHint `) as premIL) as premElabRes
 
-        1. (Let relSig?{relSig <- relSig?} be $find_map<id, relSig>(EC.REL, id))
+                      2. Case true
 
-          1. If (relSig?{relSig <- relSig?} matches (_)), then
-
-            1. (Let ?(_relKind mixop typ*{typ <- typ*} `( inputHint `)) be relSig?{relSig <- relSig?})
-
-              1. (Elab_notExp: EC |- expEL '<=' mixop typ*{typ <- typ*} : notExpElabRes)
-
-                1. If (notExpElabRes <: ok<typedExp*>), then
-
-                  1. (Let OK typedExp*{typedExp <- typedExp*} be notExpElabRes as ok<typedExp*>)
-
-                    1. If ($is_conditional(inputHint, |typedExp*{typedExp <- typedExp*}|)), then
-
-                      1. Result in: % |- % : OK (EC, PREM IFHOLD id ':' typedExp*{typedExp <- typedExp*} as premIL) as premElabRes
+                        1. Result in: % |- % : OK (EC, PREM IFHOLD id ':' typedExp*{typedExp <- typedExp*} as premIL) as premElabRes
 
   3. Case (% matches pattern RELNOT % ':' %)
 
@@ -5861,13 +5677,19 @@ relation Dim_exp: dimEnv id*{id <- id*} |- typedExp''' : %
 
     2. Case (% has type varExp)
 
-      1. (Let VAR id_var be exp as varExp)
+      1. (Let VAR id' be exp as varExp)
 
-        1. Group variable: dimEnv id*{id <- id*} |- VAR id_var as exp '#' typ : %
+        1. Group variable: dimEnv id*{id <- id*} |- VAR id' as exp '#' typ : %
 
-          1. If ((id_var =/= "_")), then
+          1. If ((id' =/= "_")), then
 
-            1. Result in: % % |- % : OK (id*{id <- id*}, VAR id_var as exp '#' typ, [id_var typ []]) as dimExpRes
+            1. Result in: % % |- % : OK (id*{id <- id*}, VAR id' as exp '#' typ, [id' typ []]) as dimExpRes
+
+          2. If ((id' = "_")), then
+
+            1. (Let id_fresh be $fresh(id*{id <- id*}, "_"))
+
+              1. Result in: % % |- % : OK (id*{id <- id*} ++ [id_fresh], VAR id_fresh as exp '#' typ, [id_fresh typ []]) as dimExpRes
 
     3. Case (% has type unOpExp)
 
@@ -6027,19 +5849,25 @@ relation Dim_exp: dimEnv id*{id <- id*} |- typedExp''' : %
 
       1. (Let OPT typedExp''?{typedExp'' <- typedExp''?} be exp as optExp)
 
-        1. If (typedExp''?{typedExp'' <- typedExp''?} matches (_)), then
+        1. Group opt: dimEnv id*{id <- id*} |- OPT typedExp''?{typedExp'' <- typedExp''?} as exp '#' typ : %
 
-          1. (Let ?(typedExp) be typedExp''?{typedExp'' <- typedExp''?})
+          1. Case analysis on typedExp''?{typedExp'' <- typedExp''?} (total)
 
-            1. Group opt-some: dimEnv id*{id <- id*} |- OPT ?(typedExp) as exp '#' typ : %
+            1. Case (% matches pattern ())
 
-              1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+              1. Result in: % % |- % : OK (id*{id <- id*}, OPT ?() as exp '#' typ, []) as dimExpRes
 
-                1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+            2. Case (% matches pattern (_))
 
-                  1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+              1. (Let ?(typedExp) be typedExp''?{typedExp'' <- typedExp''?})
 
-                    1. Result in: % % |- % : OK (id'*{id' <- id'*}, OPT ?(typedExp') as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
+                1. (Dim_exp: dimEnv id*{id <- id*} |- typedExp : dimExpRes)
+
+                  1. If (dimExpRes <: ok<(id*, typedExp, vari*)>), then
+
+                    1. (Let OK (id'*{id' <- id'*}, typedExp', vari*{vari <- vari*}) be dimExpRes as ok<(id*, typedExp, vari*)>)
+
+                      1. Result in: % % |- % : OK (id'*{id' <- id'*}, OPT ?(typedExp') as exp '#' typ, vari*{vari <- vari*}) as dimExpRes
 
     14. Case (% has type listExp)
 
@@ -6234,22 +6062,6 @@ relation Dim_exp: dimEnv id*{id <- id*} |- typedExp''' : %
                       1. (Let vari_out*{vari_out <- vari_out*} be $iterate_occs(vari_shallow*{vari_shallow <- vari_shallow*}, $ids_of_varis(vari_iter*{vari_iter <- vari_iter*}), iter))
 
                         1. Result in: % % |- % : OK (id'*{id' <- id'*}, ITER typedExp' iter vari_iter*{vari_iter <- vari_iter*} as exp '#' typ, vari_out*{vari_out <- vari_out*}) as dimExpRes
-
-  2. Case analysis on exp
-
-    1. Case (% = VAR "_" as exp)
-
-      1. Group wildcard: dimEnv id*{id <- id*} |- VAR "_" as exp '#' typ : %
-
-        1. (Let id_fresh be $fresh(id*{id <- id*}, "_"))
-
-          1. Result in: % % |- % : OK (id*{id <- id*} ++ [id_fresh], VAR id_fresh as exp '#' typ, [id_fresh typ []]) as dimExpRes
-
-    2. Case (% = OPT ?() as exp)
-
-      1. Group opt-none: dimEnv id*{id <- id*} |- OPT ?() as exp '#' typ : %
-
-        1. Result in: % % |- % : OK (id*{id <- id*}, OPT ?() as exp '#' typ, []) as dimExpRes
 
 2. Otherwise,
 

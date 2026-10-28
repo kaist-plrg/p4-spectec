@@ -10,37 +10,45 @@
 rule Elab_path/root:
   EC |- ROOT '<=' typ : OK (ROOT '#' typ)
 
-rule Elab_path/idx-list:
-  EC |- (IDX pathEL expEL) '<=' typ : OK ((IDX typedPath typedExp) '#' typ_elem)
-  -- Elab_path: EC |- pathEL '<=' typ : OK typedPath
-  -- if _ '#' typ_path = typedPath
-  -- Elab_exp: EC |- expEL '<=' NAT : OK typedExp
-  -- if typ_elem = $as_list_typ(EC.TYP, typ_path)
+rulegroup Elab_path/idx {
 
-rule Elab_path/idx-string:
-  EC |- (IDX pathEL expEL) '<=' typ : OK ((IDX typedPath typedExp) '#' typ_path)
-  -- Elab_path: EC |- pathEL '<=' typ : OK typedPath
-  -- if _ '#' typ_path = typedPath
-  -- Elab_exp: EC |- expEL '<=' NAT : OK typedExp
-  -- if $is_text_typ(EC.TYP, typ_path)
+  rule Elab_path/list:
+    EC |- (IDX pathEL expEL) '<=' typ : OK ((IDX typedPath typedExp) '#' typ_elem)
+    -- Elab_path: EC |- pathEL '<=' typ : OK typedPath
+    -- if _ '#' typ_path = typedPath
+    -- Elab_exp: EC |- expEL '<=' NAT : OK typedExp
+    -- if typ_elem = $as_list_typ(EC.TYP, typ_path)
 
-rule Elab_path/slice-list:
-  EC |- (SLICE pathEL expEL_i expEL_n) '<=' typ
-     : OK ((SLICE typedPath typedExp_i typedExp_n) '#' typ_path)
-  -- Elab_path: EC |- pathEL '<=' typ : OK typedPath
-  -- if _ '#' typ_path = typedPath
-  -- Elab_exp: EC |- expEL_i '<=' NAT : OK typedExp_i
-  -- Elab_exp: EC |- expEL_n '<=' NAT : OK typedExp_n
-  -- if $is_list_typ(EC.TYP, typ_path)
+  rule Elab_path/string:
+    EC |- (IDX pathEL expEL) '<=' typ : OK ((IDX typedPath typedExp) '#' typ_path)
+    -- Elab_path: EC |- pathEL '<=' typ : OK typedPath
+    -- if _ '#' typ_path = typedPath
+    -- Elab_exp: EC |- expEL '<=' NAT : OK typedExp
+    -- if $is_text_typ(EC.TYP, typ_path)
 
-rule Elab_path/slice-string:
-  EC |- (SLICE pathEL expEL_i expEL_n) '<=' typ
-     : OK ((SLICE typedPath typedExp_i typedExp_n) '#' typ_path)
-  -- Elab_path: EC |- pathEL '<=' typ : OK typedPath
-  -- if _ '#' typ_path = typedPath
-  -- Elab_exp: EC |- expEL_i '<=' NAT : OK typedExp_i
-  -- Elab_exp: EC |- expEL_n '<=' NAT : OK typedExp_n
-  -- if $is_text_typ(EC.TYP, typ_path)
+}
+
+rulegroup Elab_path/slice {
+
+  rule Elab_path/list:
+    EC |- (SLICE pathEL expEL_i expEL_n) '<=' typ
+       : OK ((SLICE typedPath typedExp_i typedExp_n) '#' typ_path)
+    -- Elab_path: EC |- pathEL '<=' typ : OK typedPath
+    -- if _ '#' typ_path = typedPath
+    -- Elab_exp: EC |- expEL_i '<=' NAT : OK typedExp_i
+    -- Elab_exp: EC |- expEL_n '<=' NAT : OK typedExp_n
+    -- if $is_list_typ(EC.TYP, typ_path)
+
+  rule Elab_path/string:
+    EC |- (SLICE pathEL expEL_i expEL_n) '<=' typ
+       : OK ((SLICE typedPath typedExp_i typedExp_n) '#' typ_path)
+    -- Elab_path: EC |- pathEL '<=' typ : OK typedPath
+    -- if _ '#' typ_path = typedPath
+    -- Elab_exp: EC |- expEL_i '<=' NAT : OK typedExp_i
+    -- Elab_exp: EC |- expEL_n '<=' NAT : OK typedExp_n
+    -- if $is_text_typ(EC.TYP, typ_path)
+
+}
 
 rule Elab_path/dot:
   EC |- (DOT pathEL atom) '<=' typ : OK ((DOT typedPath atom) '#' typ_field)

@@ -72,14 +72,18 @@ rule Dim_exp/literal:
 
 ;;; varExp
 
-rule Dim_exp/variable:
-  dimEnv id* |- (VAR id_var) '#' typ : OK (id*, (VAR id_var) '#' typ, [ id_var typ eps ])
-  -- if id_var =/= "_"
+rulegroup Dim_exp/variable {
 
-rule Dim_exp/wildcard:
-  dimEnv id* |- (VAR "_") '#' typ
-    : OK (id* ++ [ id_fresh ], (VAR id_fresh) '#' typ, [ id_fresh typ eps ])
-  -- if id_fresh = $fresh(id*, "_")
+  rule Dim_exp/named:
+    dimEnv id* |- (VAR id_var) '#' typ : OK (id*, (VAR id_var) '#' typ, [ id_var typ eps ])
+    -- if id_var =/= "_"
+
+  rule Dim_exp/wildcard:
+    dimEnv id* |- (VAR "_") '#' typ
+      : OK (id* ++ [ id_fresh ], (VAR id_fresh) '#' typ, [ id_fresh typ eps ])
+    -- if id_fresh = $fresh(id*, "_")
+
+}
 
 ;;; Expressions with subexpressions
 
@@ -129,12 +133,16 @@ rule Dim_exp/struct:
   -- Dim_exps: dimEnv id* |- typedExp* : OK (id'*, typedExp'*, vari*)
   -- if expField'* = (atom typedExp')*
 
-rule Dim_exp/opt-none:
-  dimEnv id* |- (OPT eps) '#' typ : OK (id*, (OPT eps) '#' typ, eps)
+rulegroup Dim_exp/opt {
 
-rule Dim_exp/opt-some:
-  dimEnv id* |- (OPT typedExp) '#' typ : OK (id'*, (OPT typedExp') '#' typ, vari*)
-  -- Dim_exp: dimEnv id* |- typedExp : OK (id'*, typedExp', vari*)
+  rule Dim_exp/none:
+    dimEnv id* |- (OPT eps) '#' typ : OK (id*, (OPT eps) '#' typ, eps)
+
+  rule Dim_exp/some:
+    dimEnv id* |- (OPT typedExp) '#' typ : OK (id'*, (OPT typedExp') '#' typ, vari*)
+    -- Dim_exp: dimEnv id* |- typedExp : OK (id'*, typedExp', vari*)
+
+}
 
 rule Dim_exp/list:
   dimEnv id* |- (LIST typedExp*) '#' typ : OK (id'*, (LIST typedExp'*) '#' typ, vari*)

@@ -57,23 +57,27 @@ rule Elab_notTyp/plain:
   EC |- PLAIN plainTypEL : OK (ARG ([ typ ]))
   -- Elab_plainTyp: EC |- plainTypEL : OK typ
 
-rule Elab_notTyp/atom:
-  EC |- NOTATION (ATOM atom) : OK ((ATOM atom) eps)
+rulegroup Elab_notTyp/notation {
 
-rule Elab_notTyp/seq:
-  EC |- NOTATION (SEQ typEL*) : OK ((SEQ mixop*) typ_arg*)
-  -- (Elab_notTyp: EC |- typEL : OK (mixop typ*))*
-  -- if typ_arg* = $concat_<typ>(typ**)
+  rule Elab_notTyp/atom:
+    EC |- NOTATION (ATOM atom) : OK ((ATOM atom) eps)
 
-rule Elab_notTyp/infix:
-  EC |- NOTATION (INFIX typEL_l atom typEL_r)
-     : OK ((INFIX mixop_l atom mixop_r) (typ_l* ++ typ_r*))
-  -- Elab_notTyp: EC |- typEL_l : OK (mixop_l typ_l*)
-  -- Elab_notTyp: EC |- typEL_r : OK (mixop_r typ_r*)
+  rule Elab_notTyp/seq:
+    EC |- NOTATION (SEQ typEL*) : OK ((SEQ mixop*) typ_arg*)
+    -- (Elab_notTyp: EC |- typEL : OK (mixop typ*))*
+    -- if typ_arg* = $concat_<typ>(typ**)
 
-rule Elab_notTyp/brack:
-  EC |- NOTATION (BRACK atom_l typEL atom_r) : OK ((BRACK atom_l mixop atom_r) typ*)
-  -- Elab_notTyp: EC |- typEL : OK (mixop typ*)
+  rule Elab_notTyp/infix:
+    EC |- NOTATION (INFIX typEL_l atom typEL_r)
+       : OK ((INFIX mixop_l atom mixop_r) (typ_l* ++ typ_r*))
+    -- Elab_notTyp: EC |- typEL_l : OK (mixop_l typ_l*)
+    -- Elab_notTyp: EC |- typEL_r : OK (mixop_r typ_r*)
+
+  rule Elab_notTyp/brack:
+    EC |- NOTATION (BRACK atom_l typEL atom_r) : OK ((BRACK atom_l mixop atom_r) typ*)
+    -- Elab_notTyp: EC |- typEL : OK (mixop typ*)
+
+}
 
 rule Elab_notTyp/fail:
   EC |- typEL : FAIL

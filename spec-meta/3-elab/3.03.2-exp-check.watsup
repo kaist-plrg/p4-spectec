@@ -8,28 +8,36 @@
 ;; element; otherwise it is inferred and cast, and only an expression that
 ;; cannot be inferred is elaborated by the definition or shape of the type
 
-rule Elab_exp/singleton:
-  EC |- expEL '<=' typ : OK typedExp
-  -- Elab_exp_singleton: EC |- expEL '<=' typ : OK typedExp
+rulegroup Elab_exp {
 
-rule Elab_exp/normal:
-  EC |- expEL '<=' typ : expElabRes
-  -- Elab_exp_singleton: EC |- expEL '<=' typ : FAIL
-  -- Elab_exp_normal: EC |- expEL '<=' typ : expElabRes
+  rule Elab_exp/singleton:
+    EC |- expEL '<=' typ : OK typedExp
+    -- Elab_exp_singleton: EC |- expEL '<=' typ : OK typedExp
+
+  rule Elab_exp/normal:
+    EC |- expEL '<=' typ : expElabRes
+    -- Elab_exp_singleton: EC |- expEL '<=' typ : FAIL
+    -- Elab_exp_normal: EC |- expEL '<=' typ : expElabRes
+
+}
 
 ;;; Singletons
 
-rule Elab_exp_singleton/opt:
-  EC |- expEL '<=' typ : OK ((OPT typedExp) '#' typ)
-  -- if $is_singleton(expEL)
-  -- if (typ_elem, QUEST) = $as_iter_typ(EC.TYP, typ)
-  -- Elab_exp: EC |- expEL '<=' typ_elem : OK typedExp
+rulegroup Elab_exp_singleton/iter {
 
-rule Elab_exp_singleton/list:
-  EC |- expEL '<=' typ : OK ((LIST ([ typedExp ])) '#' typ)
-  -- if $is_singleton(expEL)
-  -- if (typ_elem, STAR) = $as_iter_typ(EC.TYP, typ)
-  -- Elab_exp: EC |- expEL '<=' typ_elem : OK typedExp
+  rule Elab_exp_singleton/opt:
+    EC |- expEL '<=' typ : OK ((OPT typedExp) '#' typ)
+    -- if $is_singleton(expEL)
+    -- if (typ_elem, QUEST) = $as_iter_typ(EC.TYP, typ)
+    -- Elab_exp: EC |- expEL '<=' typ_elem : OK typedExp
+
+  rule Elab_exp_singleton/list:
+    EC |- expEL '<=' typ : OK ((LIST ([ typedExp ])) '#' typ)
+    -- if $is_singleton(expEL)
+    -- if (typ_elem, STAR) = $as_iter_typ(EC.TYP, typ)
+    -- Elab_exp: EC |- expEL '<=' typ_elem : OK typedExp
+
+}
 
 rule Elab_exp_singleton/fail:
   EC |- expEL '<=' typ : FAIL
@@ -39,47 +47,55 @@ rule Elab_exp_singleton/fail:
 
 ;; An inferred expression must cast to the expected type, with no fallback
 
-rule Elab_exp_normal/infer:
-  EC |- expEL '<=' typ : expElabRes
-  -- Infer_exp: EC |- expEL : OK typedExp
-  -- if expElabRes = $cast(EC.TYP, typedExp, typ)
+rulegroup Elab_exp_normal {
 
-rule Elab_exp_normal/fallback:
-  EC |- expEL '<=' typ : expElabRes
-  -- Infer_exp: EC |- expEL : FAIL
-  -- Elab_exp_fallback: EC |- expEL '<=' typ : expElabRes
+  rule Elab_exp_normal/infer:
+    EC |- expEL '<=' typ : expElabRes
+    -- Infer_exp: EC |- expEL : OK typedExp
+    -- if expElabRes = $cast(EC.TYP, typedExp, typ)
+
+  rule Elab_exp_normal/fallback:
+    EC |- expEL '<=' typ : expElabRes
+    -- Infer_exp: EC |- expEL : FAIL
+    -- Elab_exp_fallback: EC |- expEL '<=' typ : expElabRes
+
+}
 
 ;; A wildcard has the expected type; a named type is unfolded into its body
 
 rule Elab_exp_fallback/wildcard:
   EC |- (ID "_") '<=' typ : OK ((VAR "_") '#' typ)
 
-rule Elab_exp_fallback/alias:
-  EC |- expEL '<=' (VAR id targ*) : expElabRes
-  -- if ~$is_wildcard(expEL)
-  -- if TYP _ tparam* '=' (ALIAS typ_alias) = $find_map<id, typDef>(EC.TYP, id)
-  -- if |tparam*| = |targ*|
-  -- if theta = `{ (tparam ':' targ)* `}
-  -- if OK typ_inst = $subst_typ(theta, typ_alias)
-  -- Elab_exp_normal: EC |- expEL '<=' typ_inst : expElabRes
+rulegroup Elab_exp_fallback/named {
 
-rule Elab_exp_fallback/struct:
-  EC |- expEL '<=' (VAR id targ*) : expElabRes
-  -- if ~$is_wildcard(expEL)
-  -- if TYP _ tparam* '=' (STRUCT typField*) = $find_map<id, typDef>(EC.TYP, id)
-  -- if |tparam*| = |targ*|
-  -- if theta = `{ (tparam ':' targ)* `}
-  -- if (atom typ_field = typField)*
-  -- if (OK typ_field_inst = $subst_typ(theta, typ_field))*
-  -- if typField_inst* = (atom typ_field_inst)*
-  -- Elab_struct: EC |- expEL '<=' (VAR id targ*) typField_inst* : expElabRes
+  rule Elab_exp_fallback/alias:
+    EC |- expEL '<=' (VAR id targ*) : expElabRes
+    -- if ~$is_wildcard(expEL)
+    -- if TYP _ tparam* '=' (ALIAS typ_alias) = $find_map<id, typDef>(EC.TYP, id)
+    -- if |tparam*| = |targ*|
+    -- if theta = `{ (tparam ':' targ)* `}
+    -- if OK typ_inst = $subst_typ(theta, typ_alias)
+    -- Elab_exp_normal: EC |- expEL '<=' typ_inst : expElabRes
 
-rule Elab_exp_fallback/variant:
-  EC |- expEL '<=' (VAR id targ*) : expElabRes
-  -- if ~$is_wildcard(expEL)
-  -- if TYP _ _ '=' (VARIANT _) = $find_map<id, typDef>(EC.TYP, id)
-  -- if typCase_inst* = $inst_cases(EC.TYP, id, targ*)
-  -- Elab_variant: EC |- expEL '<=' (VAR id targ*) typCase_inst* : expElabRes
+  rule Elab_exp_fallback/struct:
+    EC |- expEL '<=' (VAR id targ*) : expElabRes
+    -- if ~$is_wildcard(expEL)
+    -- if TYP _ tparam* '=' (STRUCT typField*) = $find_map<id, typDef>(EC.TYP, id)
+    -- if |tparam*| = |targ*|
+    -- if theta = `{ (tparam ':' targ)* `}
+    -- if (atom typ_field = typField)*
+    -- if (OK typ_field_inst = $subst_typ(theta, typ_field))*
+    -- if typField_inst* = (atom typ_field_inst)*
+    -- Elab_struct: EC |- expEL '<=' (VAR id targ*) typField_inst* : expElabRes
+
+  rule Elab_exp_fallback/variant:
+    EC |- expEL '<=' (VAR id targ*) : expElabRes
+    -- if ~$is_wildcard(expEL)
+    -- if TYP _ _ '=' (VARIANT _) = $find_map<id, typDef>(EC.TYP, id)
+    -- if typCase_inst* = $inst_cases(EC.TYP, id, targ*)
+    -- Elab_variant: EC |- expEL '<=' (VAR id targ*) typCase_inst* : expElabRes
+
+}
 
 rule Elab_exp_fallback/shape:
   EC |- expEL '<=' typ : expElabRes
@@ -95,13 +111,17 @@ rule Elab_exp_fallback/fail:
 
 ;; The empty sequence is the empty option or list the type requires
 
-rule Elab_exp_shape/empty-opt:
-  EC |- (EPS) '<=' typ : OK ((OPT eps) '#' typ)
-  -- if (_, QUEST) = $as_iter_typ(EC.TYP, typ)
+rulegroup Elab_exp_shape/empty {
 
-rule Elab_exp_shape/empty-list:
-  EC |- (EPS) '<=' typ : OK ((LIST eps) '#' typ)
-  -- if (_, STAR) = $as_iter_typ(EC.TYP, typ)
+  rule Elab_exp_shape/opt:
+    EC |- (EPS) '<=' typ : OK ((OPT eps) '#' typ)
+    -- if (_, QUEST) = $as_iter_typ(EC.TYP, typ)
+
+  rule Elab_exp_shape/list:
+    EC |- (EPS) '<=' typ : OK ((LIST eps) '#' typ)
+    -- if (_, STAR) = $as_iter_typ(EC.TYP, typ)
+
+}
 
 rule Elab_exp_shape/list:
   EC |- (LIST expEL*) '<=' typ : OK ((LIST typedExp*) '#' typ)
@@ -116,15 +136,19 @@ rule Elab_exp_shape/cons:
 
 ;; Concatenation reads iterations before texts
 
-rule Elab_exp_shape/cat-iter:
-  EC |- (CAT expEL_l expEL_r) '<=' typ : OK typedExp
-  -- Elab_exp_first: EC |- (CAT expEL_l expEL_r) '<=' typ : OK typedExp
+rulegroup Elab_exp_shape/cat {
 
-rule Elab_exp_shape/cat-string:
-  EC |- (CAT expEL_l expEL_r) '<=' typ : OK ((CAT typedExp_l typedExp_r) '#' typ)
-  -- Elab_exp_first: EC |- (CAT expEL_l expEL_r) '<=' typ : FAIL
-  -- Elab_exp: EC |- expEL_l '<=' TEXT : OK typedExp_l
-  -- Elab_exp: EC |- expEL_r '<=' TEXT : OK typedExp_r
+  rule Elab_exp_shape/iter:
+    EC |- (CAT expEL_l expEL_r) '<=' typ : OK typedExp
+    -- Elab_exp_first: EC |- (CAT expEL_l expEL_r) '<=' typ : OK typedExp
+
+  rule Elab_exp_shape/string:
+    EC |- (CAT expEL_l expEL_r) '<=' typ : OK ((CAT typedExp_l typedExp_r) '#' typ)
+    -- Elab_exp_first: EC |- (CAT expEL_l expEL_r) '<=' typ : FAIL
+    -- Elab_exp: EC |- expEL_l '<=' TEXT : OK typedExp_l
+    -- Elab_exp: EC |- expEL_r '<=' TEXT : OK typedExp_r
+
+}
 
 rule Elab_exp_shape/tuple:
   EC |- (TUP expEL*) '<=' typ : OK ((TUP typedExp*) '#' typ)
