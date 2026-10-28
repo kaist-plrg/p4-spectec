@@ -372,6 +372,31 @@ fn check_analyzed_prems_in_else(
     Ok(())
 }
 
+/// Finds a relation premise, looking through iterations.
+fn find_relation_prem(prem: &al::ast::Prem) -> Option<&al::ast::Prem> {
+    match &prem.node {
+        // Relation premises may fail by mismatch
+        al::ast::PremKind::Rule(_)
+        | al::ast::PremKind::IfHold(_)
+        | al::ast::PremKind::IfNotHold(_) => Some(prem),
+        // Iteration runs its inner premise
+        al::ast::PremKind::Iter(prem_iter) => find_relation_prem(&prem_iter.prem),
+        // Other premises call no relation
+        al::ast::PremKind::If(_) | al::ast::PremKind::Let(_) | al::ast::PremKind::Debug(_) => None,
+    }
+}
+
+/// Rejects relation premises in the normalized premises of a function clause.
+fn check_analyzed_prems_in_clause(prems: &[AnalyzedPrem]) -> Result<(), AlgoError> {
+    match prems
+        .iter()
+        .find_map(|prem_analyzed| find_relation_prem(prem_analyzed.as_prem()))
+    {
+        Some(prem) => Err(error::clause::clause_relation_call_invalid(&prem.span)),
+        None => Ok(()),
+    }
+}
+
 // - Premise dispatch
 
 /// Analyzes one premise: bound variables, the AL premise, and side conditions.
@@ -842,6 +867,8 @@ fn lower_clause(
         otherwise::check_exp(&exp_il, otherwise)?;
         check_analyzed_prems_in_else(&ctx, &prems_all_analyzed, otherwise)?;
     }
+    // Function clauses cannot call relations
+    check_analyzed_prems_in_clause(&prems_all_analyzed)?;
     let prems_all_al = prems_all_analyzed
         .into_iter()
         .map(AnalyzedPrem::into_prem)

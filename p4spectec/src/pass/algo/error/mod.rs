@@ -7,6 +7,7 @@
 use crate::diagnostic::{Diagnostic, Label, Report, Severity};
 
 pub(super) mod binding;
+pub(super) mod clause;
 pub(super) mod otherwise;
 pub(super) mod rule;
 pub(super) mod table;
