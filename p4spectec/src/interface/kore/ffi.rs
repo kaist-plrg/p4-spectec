@@ -9,6 +9,10 @@
 //! (`runtime/strings/strings.cpp`, `runtime/strings/bytes.cpp`, ...).
 //! A library keeps global state, so it is opened once in a process and never
 //! closed: `Runtime::open` gives the same runtime for the same path.
+//! Each library reserves address space for its arenas, 2 TB for each of three
+//! (`HYPERBLOCK_SIZE` of `runtime/arena.h`), so a process runs one definition at
+//! a time: opening another releases the arenas of the one before
+//! (`kllvm_reset_munmap_all_arenas`), which then cannot be used again.
 //! Besides `engine/k/ffi.rs`, this is the only module where the crate allows `unsafe`.
 
 #![allow(unsafe_code)]
@@ -37,6 +41,7 @@ type Opaque = c_void;
 /// The functions of `kllvm-c.h` used here.
 struct Api {
     kllvm_init: unsafe extern "C" fn(),
+    kllvm_reset_munmap_all_arenas: unsafe extern "C" fn(),
     kore_error_new: unsafe extern "C" fn() -> *mut Opaque,
     kore_error_is_success: unsafe extern "C" fn(*const Opaque) -> bool,
     kore_error_message: unsafe extern "C" fn(*const Opaque) -> *const c_char,
@@ -73,9 +78,17 @@ pub struct Runtime {
     api: Api,
 }
 
-/// The runtimes opened in this process, by the path of their library.
-fn opened() -> &'static Mutex<HashMap<PathBuf, &'static Runtime>> {
-    static OPENED: OnceLock<Mutex<HashMap<PathBuf, &'static Runtime>>> = OnceLock::new();
+/// The runtimes opened in this process, by the path of their library, and the
+/// path of the one in use; the others have released their arenas.
+#[derive(Default)]
+struct Opened {
+    runtimes: HashMap<PathBuf, &'static Runtime>,
+    current: Option<PathBuf>,
+}
+
+/// The runtimes opened in this process.
+fn opened() -> &'static Mutex<Opened> {
+    static OPENED: OnceLock<Mutex<Opened>> = OnceLock::new();
     OPENED.get_or_init(Mutex::default)
 }
 
@@ -87,8 +100,20 @@ impl Runtime {
             .canonicalize()
             .map_err(|error| format!("{}: {error}", path.display()))?;
         let mut opened = opened().lock().map_err(|error| error.to_string())?;
-        if let Some(runtime) = opened.get(&path) {
-            return Ok(runtime);
+        if opened.current.as_ref() == Some(&path) {
+            return Ok(opened.runtimes[&path]);
+        }
+        if opened.runtimes.contains_key(&path) {
+            return Err(format!(
+                "{}: its arenas were released for another definition",
+                path.display()
+            ));
+        }
+        // Release the arenas of the definition run before
+        if let Some(previous) = opened.current.take() {
+            let runtime = opened.runtimes[&previous];
+            // SAFETY: no term of that runtime is used after another definition is opened
+            unsafe { (runtime.api.kllvm_reset_munmap_all_arenas)() };
         }
         // SAFETY: loading runs the library's initializers, those of the
         // LLVM backend's runtime, which only set up its own state
@@ -96,6 +121,7 @@ impl Runtime {
             .map_err(|error| format!("{}: {error}", path.display()))?;
         let api = Api {
             kllvm_init: lookup!(library, kllvm_init),
+            kllvm_reset_munmap_all_arenas: lookup!(library, kllvm_reset_munmap_all_arenas),
             kore_error_new: lookup!(library, kore_error_new),
             kore_error_is_success: lookup!(library, kore_error_is_success),
             kore_error_message: lookup!(library, kore_error_message),
@@ -112,7 +138,8 @@ impl Runtime {
         // SAFETY: called once, before any other call into the runtime
         unsafe { (api.kllvm_init)() };
         let runtime: &'static Self = Box::leak(Box::new(Self { api }));
-        opened.insert(path, runtime);
+        opened.runtimes.insert(path.clone(), runtime);
+        opened.current = Some(path);
         Ok(runtime)
     }
 
