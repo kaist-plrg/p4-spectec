@@ -35,6 +35,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 SPEC = [os.path.join(ROOT, "spec-meta/0-aux/0.0-stdlib.watsup")] + sorted(
     glob.glob(os.path.join(ROOT, "spec-k/[0-9]*.watsup")))
 BIN = os.path.join(ROOT, "bin/p4spectec")
+# A worktree whose bin/metacirc runs spec-k as the base of a K-in-ST tower
+# (--tower); None runs the spec of this branch with bin/p4spectec krun
+TOWER = None
 
 SpecRun = collections.namedtuple("SpecRun", "status steps ok secs msg")
 
@@ -207,8 +210,38 @@ def capped(cmd, memory_max):
             "-p", "MemorySwapMax=0"] + cmd
 
 
+def run_tower(definition, init, out, compare, extra, timeout, memory_max):
+    """Run spec-k on the K-in-ST tower of TOWER (metacirc run-meta), which
+    prints the steps and the final configuration, "error after N steps" and
+    the configuration, or "error on the initial term"; compare the
+    configuration with krun's in normal form (p4spectec kore-compare). The
+    tower has no steps check yet."""
+    if compare[0] == "--check-steps":
+        return SpecRun("nocheck", None, False, 0.0, "steps check is not on the tower")
+    cmd = [os.path.join(TOWER, "bin/metacirc"), "run-meta", os.path.join(TOWER, "towers/k-in-st.json"),
+           "-p", definition, "-p", init] + extra
+    rc, stdout, stderr, secs = run(capped(cmd, memory_max), timeout)
+    if rc is None:
+        return SpecRun("timeout", None, False, secs, "")
+    head, _, config = stdout.partition("\n")
+    m = re.match(r"(\d+)$|error after (\d+) steps$", head)
+    if rc != 0 or not (m or head == "error on the initial term"):
+        lines = (stdout + stderr).strip().splitlines()
+        return SpecRun("crash", None, False, secs, "exit %s: %s" % (rc, oneline(lines[-1]) if lines else "no output"))
+    if not m:
+        return SpecRun("initfail", 0, False, secs, "")
+    with open(out, "w") as fh:
+        fh.write(config)
+    expected = compare[1]
+    ok = expected != os.devnull and "matches " in run([BIN, "kore-compare", "--def", definition, out, expected],
+                                                       timeout)[1]
+    return SpecRun("final" if m.group(1) else "error", int(m.group(1) or m.group(2)), ok, secs, "")
+
+
 def run_spec(definition, library, init, out, compare, extra, timeout, memory_max):
     """Run the K spec, comparing as compare says (--expect FILE or --check-steps DIR)."""
+    if TOWER:
+        return run_tower(definition, init, out, compare, extra, timeout, memory_max)
     cmd = [BIN, "krun"] + SPEC + ["--def", definition, "--lib", library, "--init", init, "--output", out] \
         + compare + extra
     rc, stdout, stderr, secs = run(capped(cmd, memory_max), timeout)
@@ -359,6 +392,8 @@ def main():
     ap.add_argument("--memory-max-for", action="append", default=[], metavar="NAME:MEM",
                     help="the memory cap for this program instead (a long run; the executor's memory grows "
                          "with every step)")
+    ap.add_argument("--tower", default=None, metavar="DIR",
+                    help="run spec-k on the K-in-ST tower of this worktree (bin/metacirc, towers/k-in-st.json)")
     ap.add_argument("--no-det", action="store_true",
                     help="run the spec without the check of determinism (p4spectec krun --no-det); by default "
                          "a run fails when two rules or clauses of the spec both apply")
@@ -389,6 +424,8 @@ def main():
             programs.append(p)
     programs = [p for p in programs
                 if not any(fnmatch.fnmatchcase(os.path.basename(p), e) for e in args.exclude)]
+    global TOWER
+    TOWER = os.path.abspath(args.tower) if args.tower else None
     definition = os.path.join(args.kompiled, "definition.kore")
     if not os.path.exists(definition):
         sys.exit("no definition.kore in %s" % args.kompiled)

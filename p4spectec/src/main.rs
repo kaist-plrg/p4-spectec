@@ -324,6 +324,49 @@ struct KrunArgs {
     guard: bool,
 }
 
+/// Arguments for comparing two configurations of a K definition.
+#[derive(Args)]
+struct KoreCompareArgs {
+    /// The kompiled definition, `definition.kore`.
+    #[arg(long = "def", value_name = "KORE")]
+    definition: PathBuf,
+    /// A configuration in KORE, possibly after a line with the step count.
+    left: PathBuf,
+    /// Another configuration, as krun's interpreter writes it.
+    right: PathBuf,
+}
+
+/// Compares two configurations of a definition in normal form, as `krun --expect` does:
+/// prints `matches` or `DIFFERS`.
+fn kore_compare_command(args: KoreCompareArgs) -> Result<(), ()> {
+    use p4spectec::interface::kore::{info::Info, normal, parse};
+    let read = |path: &PathBuf| {
+        std::fs::read(path).map_err(|error| eprintln!("{}: {error}", path.display()))
+    };
+    let definition = parse::parse_definition(&read(&args.definition)?)
+        .map_err(|error| eprintln!("{}: {}", args.definition.display(), error.message))?;
+    let info = Info::new(&definition);
+    let normal = |path: &PathBuf| -> Result<String, ()> {
+        let src = read(path)?;
+        // A leading line of digits is the step count
+        let src = match src.iter().position(|&byte| byte == b'\n') {
+            Some(end) if end > 0 && src[..end].iter().all(u8::is_ascii_digit) => {
+                src[end + 1..].to_vec()
+            }
+            _ => src,
+        };
+        let pattern = parse::parse_pattern(&src)
+            .map_err(|error| eprintln!("{}:{}: {}", path.display(), error.line, error.message))?;
+        Ok(normal::normal_text(&info, &pattern))
+    };
+    if normal(&args.left)? == normal(&args.right)? {
+        println!("matches {}", args.right.display());
+    } else {
+        println!("DIFFERS from {}", args.right.display());
+    }
+    Ok(())
+}
+
 /// Runs a kompiled K definition with the K specification from an initial term.
 fn krun_command(args: KrunArgs) -> Result<(), ()> {
     let mut renderer = Renderer::new(RenderConfig::default());
@@ -504,6 +547,8 @@ enum Command {
     Sim(SimArgs),
     /// Run a kompiled K definition with the K specification.
     Krun(KrunArgs),
+    /// Compare two configurations of a K definition in normal form.
+    KoreCompare(KoreCompareArgs),
 }
 
 /// Dispatches the parsed command.
@@ -517,6 +562,7 @@ fn run(cli: Cli) -> Result<(), ()> {
         Command::Run(args) => run_command(args),
         Command::Sim(args) => sim_command(args),
         Command::Krun(args) => krun_command(args),
+        Command::KoreCompare(args) => kore_compare_command(args),
     }
 }
 

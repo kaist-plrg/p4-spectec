@@ -90,6 +90,8 @@ def run_difftest(name, t, args, jobs=None):
     cmd += ["--runtime-flag=" + a.replace("{src}", t.get("src_dir", "")) for a in t.get("runtime", [])]
     if args.no_det:
         cmd += ["--no-det"]
+    if args.tower:
+        cmd += ["--tower", args.tower]
     print("diff test %s" % name, flush=True)
     # each row is shown as its program is done, with the suite's name
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
@@ -101,7 +103,7 @@ def run_difftest(name, t, args, jobs=None):
     p.wait()
     # a run without the check of determinism does not replace the table
     if not only and not args.no_det:
-        with open(os.path.join(work, name + ".md"), "w") as out:
+        with open(os.path.join(work, name + (".tower.md" if args.tower else ".md")), "w") as out:
             out.write("".join(output))
     lines = "".join(output).strip().splitlines()
     return p.returncode == 0, lines[-1] if lines else "no output"
@@ -388,7 +390,7 @@ def run_group(group, tests, names, args):
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:
         results = list(pool.map(one, names or list(tests)))
     if not names and not args.only and not args.quick:
-        with open(os.path.join(args.work, group + ".md"), "w") as out:
+        with open(os.path.join(args.work, group + (".tower.md" if args.tower else ".md")), "w") as out:
             out.write("| test | result |\n|---|---|\n" + "\n".join(row for _, row in results) + "\n")
     return all(passed for passed, _ in results)
 
@@ -418,6 +420,8 @@ def main():
     ap.add_argument("--timeout", type=float, default=None, help="seconds per run of the spec (default 7200)")
     ap.add_argument("--full", action="store_true",
                     help="run all programs (default: the quick lists, or all programs of the suites named)")
+    ap.add_argument("--tower", default=None, metavar="DIR",
+                    help="run spec-k on the K-in-ST tower of this worktree; tables go to <suite>.tower.md")
     ap.add_argument("--no-det", action="store_true",
                     help="run the spec without the check of determinism, which by default fails a run when two "
                          "rules or clauses of the spec both apply (the tables in <work> are not written)")
