@@ -262,7 +262,12 @@ syntax cmpOp =
    | LE (from numCmpOp)
    | GE (from numCmpOp)
 
-syntax mixop = atom**
+syntax mixop =
+   | ARG (from mixop)
+   | ATOM atom (from mixop)
+   | BRACK atom mixop atom (from mixop)
+   | INFIX mixop atom mixop (from mixop)
+   | SEQ mixop* (from mixop)
 
 syntax optyp =
    | BOOL (from optyp)

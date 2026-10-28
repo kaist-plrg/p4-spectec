@@ -11,6 +11,14 @@ pub(in crate::interface::meta) const ITER_QUEST: &str = "QUEST";
 pub(in crate::interface::meta) const ITER_STAR: &str = "STAR";
 pub(in crate::interface::meta) const VARI: &str = "id typ iter*";
 
+// == Notation
+
+pub(in crate::interface::meta) const MIXOP_ARG: &str = "ARG";
+pub(in crate::interface::meta) const MIXOP_ATOM: &str = "ATOM atom";
+pub(in crate::interface::meta) const MIXOP_BRACK: &str = "BRACK atom mixop atom";
+pub(in crate::interface::meta) const MIXOP_INFIX: &str = "INFIX mixop atom mixop";
+pub(in crate::interface::meta) const MIXOP_SEQ: &str = "SEQ mixop*";
+
 // == Types
 
 pub(in crate::interface::meta) const TYP_BOOL: &str = "BOOL";

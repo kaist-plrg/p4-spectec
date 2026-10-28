@@ -1,6 +1,14 @@
 ;; Notation
 
-syntax mixop = atom**
+;; A notation skeleton with an argument hole at each position,
+;; e.g. `C |- e : t` is `INFIX (INFIX ARG |- ARG) : ARG`
+
+syntax mixop =
+  | ARG
+  | ATOM atom
+  | BRACK atom mixop atom
+  | INFIX mixop atom mixop
+  | SEQ mixop*
 
 ;; Types
 

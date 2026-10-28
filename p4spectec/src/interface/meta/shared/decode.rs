@@ -17,17 +17,16 @@ use crate::{
         data::{
             arena::Arena,
             notation::{
-                flat::{
-                    Mixop as FlatMixop,
-                    parse::{MatrixMixopError, ToMixop},
-                },
+                flat::Mixop as FlatMixop,
                 tree::{Mixfix as TreeMixfix, Mixop},
             },
-            value::flat::{Value, get},
+            value::{
+                ValueError,
+                flat::{Value, get},
+            },
         },
         el::ast as el,
         il::ast as il,
-        traits::print::Print,
     },
     note_phrase, phrase,
 };
@@ -135,48 +134,48 @@ impl Decode for il::Atom {
 
 // - Mixops
 
-/// Reconstructs notation from atoms between argument positions.
+/// Decodes a notation tree constructor by constructor.
+impl Decode for Mixop {
+    fn decode_cached(
+        arena: &mut Arena,
+        cache: &mut Cache,
+        value_meta: Value,
+    ) -> Result<Self, Error> {
+        get::matches_string! { arena, &value_meta,
+            m::MIXOP_ARG => |[]| Ok(Mixop::Arg),
+            m::MIXOP_ATOM => |[value_atom]| {
+                Ok(Mixop::Atom(il::Atom::decode_cached(arena, cache, *value_atom)?))
+            },
+            m::MIXOP_BRACK => |[value_atom_l, value_mixop_inner, value_atom_r]| {
+                Ok(Mixop::Brack(
+                    il::Atom::decode_cached(arena, cache, *value_atom_l)?,
+                    Box::new(Mixop::decode_cached(arena, cache, *value_mixop_inner)?),
+                    il::Atom::decode_cached(arena, cache, *value_atom_r)?,
+                ))
+            },
+            m::MIXOP_INFIX => |[value_mixop_l, value_atom, value_mixop_r]| {
+                Ok(Mixop::Infix(
+                    Box::new(Mixop::decode_cached(arena, cache, *value_mixop_l)?),
+                    il::Atom::decode_cached(arena, cache, *value_atom)?,
+                    Box::new(Mixop::decode_cached(arena, cache, *value_mixop_r)?),
+                ))
+            },
+            m::MIXOP_SEQ => |[values_mixop]| {
+                Ok(Mixop::Seq(Vec::<Mixop>::decode_cached(arena, cache, *values_mixop)?))
+            },
+            _ => Err(Error::unexpected(arena, value_meta, "ARG, ATOM, BRACK, INFIX, or SEQ")),
+        }
+    }
+}
+
+/// Decodes a shared notation tree.
 impl Decode for Rc<Mixop> {
     fn decode_cached(
         arena: &mut Arena,
         cache: &mut Cache,
         value_meta: Value,
     ) -> Result<Self, Error> {
-        let atoms_matrix_al = Vec::<Vec<il::Atom>>::decode_cached(arena, cache, value_meta)?;
-        let span = *arena.value.span(value_meta.span);
-        // A matrix with n holes has n + 1 rows, including empty boundary rows
-        if atoms_matrix_al.is_empty() {
-            return Err(Error::unexpected(arena, value_meta, "a nonempty atom matrix"));
-        }
-        // Preserve empty notation as the single empty boundary row
-        if atoms_matrix_al.len() == 1 && atoms_matrix_al[0].is_empty() {
-            return Ok(Rc::new(Mixop::Seq(vec![])));
-        }
-        // Insert one parser argument between each pair of boundary rows
-        let text_mixop = atoms_matrix_al
-            .iter()
-            .map(|atoms_al| {
-                atoms_al
-                    .iter()
-                    .map(Print::to_string)
-                    .collect::<Vec<_>>()
-                    .join(" ")
-            })
-            .collect::<Vec<_>>()
-            .join(" nat ");
-        let mixop_al = text_mixop
-            .to_mixop(&mut arena.mixop)
-            .map_err(|error| Error::from(error).at(span))?
-            .into_tree(&arena.mixop);
-        // Atom text must not inject additional argument positions
-        if mixop_al.arity() + 1 != atoms_matrix_al.len() {
-            return Err(Error::unexpected(
-                arena,
-                value_meta,
-                "an atom matrix with one row per argument boundary",
-            ));
-        }
-        Ok(Rc::new(mixop_al))
+        Ok(Rc::new(Mixop::decode_cached(arena, cache, value_meta)?))
     }
 }
 
@@ -187,29 +186,15 @@ impl Decode for FlatMixop {
         cache: &mut Cache,
         value_meta: Value,
     ) -> Result<Self, Error> {
-        // Skip matrix decoding and notation reconstruction on a hit
+        // Skip tree decoding and interning on a hit
         let id_value = arena.value.canon_id(value_meta.node);
         if let Some(mixop) = cache.mixops_decode.get(&id_value) {
             return Ok(*mixop);
         }
-        let atoms_matrix = Vec::<Vec<il::Atom>>::decode_cached(arena, cache, value_meta)?;
         let span = *arena.value.span(value_meta.span);
-        // Retain the encoded value's location and shape in conversion diagnostics
-        let mixop =
-            atoms_matrix
-                .as_slice()
-                .to_mixop(&mut arena.mixop)
-                .map_err(|error| match error {
-                    MatrixMixopError::EmptyMatrix => {
-                        Error::unexpected(arena, value_meta, "a nonempty atom matrix")
-                    }
-                    MatrixMixopError::ArityMismatch => Error::unexpected(
-                        arena,
-                        value_meta,
-                        "an atom matrix with one row per argument boundary",
-                    ),
-                    MatrixMixopError::Parse(error) => Error::from(error).at(span),
-                })?;
+        let mixop = Mixop::decode_cached(arena, cache, value_meta)?
+            .into_flat(&mut arena.mixop)
+            .map_err(|error| Error::from(ValueError::from(error)).at(span))?;
         cache.mixops_decode.insert(id_value, mixop);
         Ok(mixop)
     }
