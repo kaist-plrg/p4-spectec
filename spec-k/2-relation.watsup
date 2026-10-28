@@ -138,18 +138,3 @@ relation Krun:
   hint(input %0 %1 %2)
   hint(prose_in "running" %1 "under" %0)
   hint(prose_out %3)
-
-;; The K runtime of the definition, the LLVM backend's, as the extern of the
-;; specification: it computes the hooks of K's modules of domain values (INT,
-;; BOOL, STRING, BYTES, FLOAT, JSON, KRYPTO; RUNTIME symbols, 3-load), as
-;; P4-SpecTec² leaves builtins to the next level (Call_builtin_func in
-;; spec-meta). Terms go to it and come back as terms; the implementation
-;; writes them in KORE between, as the codec of P4-SpecTec² does values. ERROR
-;; if the runtime fails, as on a division by zero. Hooks on K terms are
-;; specified (5.2-hook, 5.3-hook-collection).
-
-extern relation Call_hook:
-  |- symid sort* sort term* : res<term>
-  hint(input %0 %1 %2 %3)
-  hint(prose_in "the K runtime applying" %0 "to" %3)
-  hint(prose_out %4)

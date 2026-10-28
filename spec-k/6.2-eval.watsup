@@ -123,14 +123,20 @@ rule Apply/hooked:
   -- if HOOKED hookid = $kind_of_symbol(D, symid)
   -- if sort_r = $result_instance(D, symid, sort*)
 
-;;; A hook of a domain module is computed by the K runtime (2-relation), which
-;;; answers a term, or ERROR if it fails
+;;; A hook of a domain module (INT, BOOL, STRING, BYTES, FLOAT, JSON, KRYPTO;
+;;; RUNTIME symbols, 3-load) is computed by the K runtime of the definition,
+;;; the LLVM backend's, as P4-SpecTec leaves basic operations to builtins.
+;;; Terms go to it and come back as terms, or ERROR if it fails, as on a
+;;; division by zero. Hooks on K terms are specified (5.2-hook,
+;;; 5.3-hook-collection).
+
+builtin dec $call_hook(symid, sort*, sort, term*) : res<term>
+  hint(prose_in "the K runtime applying" %0 "to" %3)
 
 rule Apply/runtime:
-  D |- symid sort* term* : result
+  D |- symid sort* term* : $call_hook(symid, sort*, sort_r, term*)
   -- if RUNTIME hookid = $kind_of_symbol(D, symid)
   -- if sort_r = $result_instance(D, symid, sort*)
-  -- Call_hook: |- symid sort* sort_r term* : result
 
 ;;; A function or anywhere symbol is rewritten by its first equation that
 ;;; applies, as a step rewrites the configuration by its first rule (7-step).
