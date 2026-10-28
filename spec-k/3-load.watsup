@@ -260,103 +260,92 @@ def $conditions(KML "in" sort* ([KVAR varid sort_x, kore_p]))
 def $conditions(KML "and" sort* kore*)
   = $concat_<condition>($conditions(kore)*)
 
-dec $requires_of(condition) : kore*
-def $requires_of(REQUIRES kore) = [ kore ]
-def $requires_of(ARGUMENT varid kore) = eps
-
 dec $requires(condition*) : pattern?
   hint(prose_in "the requires clause of" %0)
-def $requires(condition*) = eps
-  -- if eps = $concat_<kore>($requires_of(condition)*)
-def $requires(condition*) = $pattern(kore)
-  -- if [ kore ] = $concat_<kore>($requires_of(condition)*)
+def $requires(eps) = eps
+def $requires(REQUIRES kore :: condition_t*) = $pattern(kore)
+def $requires(ARGUMENT varid kore :: condition_t*) = $requires(condition_t*)
 
-dec $argument_pattern(condition, kore) : kore*
-def $argument_pattern(ARGUMENT varid_c kore_p, KVAR varid sort) = [ kore_p ]
-  -- if varid_c = varid
-def $argument_pattern(condition, kore) = eps
+;; The patterns the conditions give to arguments, by variable
+
+var AM : map<varid, kore>
+
+dec $argument_patterns(condition*) : map<varid, kore>
+def $argument_patterns(eps) = $empty_map<varid, kore>
+def $argument_patterns(REQUIRES kore :: condition_t*)
+  = $argument_patterns(condition_t*)
+def $argument_patterns(ARGUMENT varid kore :: condition_t*)
+  = $add_map<varid, kore>($argument_patterns(condition_t*), varid, kore)
+
+;; A left-hand side: the pattern given to an argument, or the argument itself
+
+dec $argument(map<varid, kore>, kore) : kore
+def $argument(AM, KVAR varid sort) = kore_p
+  -- if kore_p = $find_map<varid, kore>(AM, varid)
+def $argument(AM, kore) = kore
   -- otherwise
 
-dec $argument(condition*, kore) : kore
-def $argument(condition*, kore) = kore
-  -- if eps = $concat_<kore>($argument_pattern(condition, kore)*)
-def $argument(condition*, kore) = kore_p
-  -- if kore_p :: kore_t* = $concat_<kore>($argument_pattern(condition, kore)*)
+;; A side of a rule, \and(pattern, predicate) in either order, or a pattern
+;; alone, whose predicate is \top: on the left, the predicate holds the
+;; requires clause; on the right, the ensures clause.
 
-dec $arguments(condition*, kore*) : pattern*
-def $arguments(condition*, eps) = eps
-def $arguments(condition*, kore_h :: kore_t*)
-  = $pattern($argument(condition*, kore_h))
-    :: $arguments(condition*, kore_t*)
-
-;; A side of a rule, \and(pattern, predicate) in either order: on the left,
-;; the predicate holds the requires clause; on the right, the ensures clause.
-
-dec $split_side(kore) : (kore, kore*)
-def $split_side(KML "and" sort* ([kore_1, kore_2])) = (kore_1, [ kore_2 ])
+dec $split_side(kore) : (kore, kore)
+def $split_side(KML "and" sort* ([kore_1, kore_2])) = (kore_1, kore_2)
   -- if ~$is_predicate(kore_1) /\ $is_predicate(kore_2)
-def $split_side(KML "and" sort* ([kore_1, kore_2])) = (kore_2, [ kore_1 ])
+def $split_side(KML "and" sort* ([kore_1, kore_2])) = (kore_2, kore_1)
   -- if $is_predicate(kore_1) /\ ~$is_predicate(kore_2)
-def $split_side(kore) = (kore, eps)
+def $split_side(kore) = (kore, KML "top" eps eps)
   -- otherwise
-
-dec $side_conditions(kore*) : condition*
-def $side_conditions(kore*) = $concat_<condition>($conditions(kore)*)
 
 ;; The ensures clause is not used, as in the LLVM backend
 
 dec $without_ensures(kore) : kore
 def $without_ensures(kore) = kore_p
-  -- if (kore_p, kore_e*) = $split_side(kore)
+  -- if (kore_p, kore_e) = $split_side(kore)
 
-;; A rewrite rule: \rewrites(\and(lhs, requires), \and(rhs, ensures)), a
-;; clause with the one left-hand side
+;; A clause from its left-hand sides, its conditions, and its right-hand
+;; side, for a rule and an equation alike
 
-dec $rule(kore, kore) : clause
-def $rule(kore_l, kore_r)
-  = CLAUSE ([ $pattern(kore_p) ]) '=>' $pattern($without_ensures(kore_r))
-      'requires' $requires($side_conditions(kore_c*))
-  -- if (kore_p, kore_c*) = $split_side(kore_l)
-
-;; An equation f(args) = rhs under conditions, a clause with a left-hand side
-;; per argument. Those of a hooked symbol are kept too, and not used: the hook
-;; computes it (6.2-eval).
-
-dec $equation(kore*, kore, kore) : clause
-def $equation(kore_a*, kore_c, kore_r)
-  = CLAUSE $arguments(condition*, kore_a*)
+dec $clause(kore*, kore, kore) : clause
+def $clause(kore_a*, kore_c, kore_r)
+  = CLAUSE $pattern($argument(AM, kore_a))*
       '=>' $pattern($without_ensures(kore_r))
       'requires' $requires(condition*)
   -- if condition* = $conditions(kore_c)
+  -- if AM = $argument_patterns(condition*)
 
 ;; What an axiom gives to each part of the definition, by its form and its
 ;; attributes. Other axioms are properties, which are not used to run; so are
 ;; the clauses that are not run. Clauses come with their priority.
 
-;;; a rewrite rule
+;;; a rewrite rule \rewrites(\and(lhs, requires), \and(rhs, ensures)), a
+;;; clause with one left-hand side, the configuration
 
 dec $rule_of(kaxiom) : (nat, clause)*
 def $rule_of(AXIOM (KML "rewrites" sort* ([kore_l, kore_r])) kattr*)
-  = [ ($priority(kattr*), $rule(kore_l, kore_r)) ]
+  = [ ($priority(kattr*), $clause([ kore_p ], kore_c, kore_r)) ]
   -- if $runs(kattr*)
+  -- if (kore_p, kore_c) = $split_side(kore_l)
 def $rule_of(kaxiom) = eps
   -- otherwise
 
 ;;; an equation \implies(conditions, \equals(f(args), rhs)) or
-;;; \equals(f(args), rhs), with the symbol f it defines; an overload axiom is
-;;; one of the more general symbol
+;;; \equals(f(args), rhs), with the symbol f it defines: a clause with a
+;;; left-hand side per argument. An overload axiom is one of the more general
+;;; symbol. Those of a hooked symbol are kept too, and not used: the hook
+;;; computes it (6.2-eval).
 
 dec $equation_of(kaxiom) : (symid, (nat, clause))*
 def $equation_of(
     AXIOM (KML "implies" sort*
       ([kore_c, KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r])]))
     kattr*)
-  = [ (symid, ($priority(kattr*), $equation(kore_a*, kore_c, kore_r))) ]
+  = [ (symid, ($priority(kattr*), $clause(kore_a*, kore_c, kore_r))) ]
   -- if $runs(kattr*)
 def $equation_of(
     AXIOM (KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r])) kattr*)
   = [ (symid, ($priority(kattr*),
-               $equation(kore_a*, KML "top" eps eps, kore_r))) ]
+               $clause(kore_a*, KML "top" eps eps, kore_r))) ]
   -- if $runs(kattr*)
 def $equation_of(kaxiom) = eps
   -- otherwise
