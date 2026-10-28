@@ -56,10 +56,11 @@ $(METACIRC_SNAPSHOTS):
 test-metacirc-metaparse:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) metaparse
 
-# Rerun elab/algo/prose and update their snapshots; structure is never promoted
+# Rerun elab/algo/structure/prose and update their snapshots
 test-metacirc-promote:
 	cd $(RUST_DIR) && UPDATE_EXPECT=1 $(METACIRC_TEST) elab
 	cd $(RUST_DIR) && UPDATE_EXPECT=1 $(METACIRC_TEST) algo
+	cd $(RUST_DIR) && UPDATE_EXPECT=1 $(METACIRC_TEST) structure
 	cd $(RUST_DIR) && UPDATE_EXPECT=1 $(METACIRC_TEST) prose
 
 clean:

@@ -249,8 +249,8 @@ make test-metacirc-promote
 
 Compare the elaborated, algorithmic, structured (with and without rule
 groups), and prose forms of `spec-meta` with `expected/spec-meta/`,
-as registered in `suites/metacirc/snapshot.toml`. `test-metacirc-promote` updates the
-elab, algo, and prose snapshots; structure snapshots are never promoted.
+as registered in `suites/metacirc/snapshot.toml`. `test-metacirc-promote` updates all
+four snapshot stages.
 
 ```sh
 make test-metacirc-metaparse
