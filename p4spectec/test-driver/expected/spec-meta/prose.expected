@@ -8867,17 +8867,13 @@ relation Eval_AL_rel: specAL |- id `( (val)*{val <- val*} `) : %
 
   1. (Let C be $load_ctx($empty_ctx, specAL))
 
-  2. (Let (relDefnAL)?{relDefnAL <- relDefnAL?} be $find_rel(C, id))
+  2. (Call_rel: C |- id `( (val)*{val <- val*} `) : relRes)
 
-  3. Check (((relDefnAL)?{relDefnAL <- relDefnAL?} matches pattern (_)))
+  3. Check ((relRes has type ok<val*>))
 
-    1. (Call_rel: C |- id `( (val)*{val <- val*} `) : relRes)
+    1. (Let (OK (val')*{val' <- val'*}) be (relRes as ok<val*>))
 
-    2. Check ((relRes has type ok<val*>))
-
-      1. (Let (OK (val')*{val' <- val'*}) be (relRes as ok<val*>))
-
-      2. Result in: % |- % `( % `) : (val')*{val' <- val'*}
+    2. Result in: % |- % `( % `) : (val')*{val' <- val'*}
 
 relation Eval_AL_func: specAL |- id `( (val)*{val <- val*} `) : %
 
@@ -8885,14 +8881,10 @@ relation Eval_AL_func: specAL |- id `( (val)*{val <- val*} `) : %
 
   1. (Let C be $load_ctx($empty_ctx, specAL))
 
-  2. (Let (funcDefnAL)?{funcDefnAL <- funcDefnAL?} be $find_func(C, id))
+  2. (Call_func: C |- id `< [] `> `( (val)*{val <- val*} `) : funcRes)
 
-  3. Check (((funcDefnAL)?{funcDefnAL <- funcDefnAL?} matches pattern (_)))
+  3. Check ((funcRes has type ok<val>))
 
-    1. (Call_func: C |- id `< [] `> `( (val)*{val <- val*} `) : funcRes)
+    1. (Let (OK val') be (funcRes as ok<val>))
 
-    2. Check ((funcRes has type ok<val>))
-
-      1. (Let (OK val') be (funcRes as ok<val>))
-
-      2. Result in: % |- % `( % `) : val'
+    2. Result in: % |- % `( % `) : val'
