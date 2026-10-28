@@ -2627,15 +2627,21 @@ relation Algo_clause: AC |- clauseIL : %
 
       1. (Bind_args: AC_clause |- arg*{arg <- arg*} : AC_arg arg_part*{arg_part <- arg_part*} premAL_arg*{premAL_arg <- premAL_arg*})
 
-        1. (Algo_prems: AC_arg |- premIL*{premIL <- premIL*} : AC_body premAL*{premAL <- premAL*})
+        1. (Algo_prems: AC_arg |- premIL*{premIL <- premIL*} : AC_body premAL_body*{premAL_body <- premAL_body*})
 
-          1. (Let vari_body*{vari_body <- vari_body*} be $free_varis_exp(typedExp))
+          1. (Let premAL*{premAL <- premAL*} be premAL_arg*{premAL_arg <- premAL_arg*} ++ premAL_body*{premAL_body <- premAL_body*})
 
-            1. If ($is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})), then
+            1. If ($forall_(~$is_partial_prem(premAL)*{premAL <- premAL*})), then
 
-              1. (Let clauseAL be arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL_arg*{premAL_arg <- premAL_arg*} ++ premAL*{premAL <- premAL*})
+              1. (Let vari_body*{vari_body <- vari_body*} be $free_varis_exp(typedExp))
 
-                1. Result in: % |- % : clauseAL
+                1. If ($is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})), then
+
+                  1. (Let clauseAL be arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL*{premAL <- premAL*})
+
+                    1. Result in: % |- % : clauseAL
+
+                1. Else Dangling
 
             1. Else Dangling
 
@@ -4590,6 +4596,32 @@ def $is_covered_combination(mixop_row*{mixop_row <- mixop_row*}*{mixop_row* <- m
     1. Return $exists_(b_cover*{b_cover <- b_cover*})
 
 1. Else Dangling
+
+def $is_partial_prem(premAL')
+
+1. Case analysis on premAL'
+
+  1. Case (% has type relPremAL)
+
+    1. Return true
+
+  2. Case (% has type ifHoldPrem)
+
+    1. Return true
+
+  3. Case (% has type ifNotHoldPrem)
+
+    1. Return true
+
+  4. Case (% has type iterPremAL)
+
+    1. (Let ITER premAL _premIterAL be premAL' as iterPremAL)
+
+      1. Return $is_partial_prem(premAL)
+
+2. Otherwise,
+
+  1. Return false
 
 def $exp_len(typedExp)
 

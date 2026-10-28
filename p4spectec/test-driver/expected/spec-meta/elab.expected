@@ -1485,10 +1485,12 @@ relation Algo_clause: algoCtx |- clauseIL : clauseAL
     -- if (id_used*{id_used <- id_used*} = $ids_of_varis($free_varis_clauseIL(clauseIL)))
     -- if (AC_clause = $add_used(AC, id_used*{id_used <- id_used*}))
     -- Bind_args: AC_clause |- arg*{arg <- arg*} : AC_arg arg_part*{arg_part <- arg_part*} premAL_arg*{premAL_arg <- premAL_arg*}
-    -- Algo_prems: AC_arg |- premIL*{premIL <- premIL*} : AC_body premAL*{premAL <- premAL*}
+    -- Algo_prems: AC_arg |- premIL*{premIL <- premIL*} : AC_body premAL_body*{premAL_body <- premAL_body*}
+    -- if (premAL*{premAL <- premAL*} = premAL_arg*{premAL_arg <- premAL_arg*} ++ premAL_body*{premAL_body <- premAL_body*})
+    -- if $forall_(~$is_partial_prem(premAL)*{premAL <- premAL*})
     -- if (vari_body*{vari_body <- vari_body*} = $free_varis_exp(typedExp))
     -- if $is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})
-    -- if (clauseAL = arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL_arg*{premAL_arg <- premAL_arg*} ++ premAL*{premAL <- premAL*})
+    -- if (clauseAL = arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL*{premAL <- premAL*})
 
 relation Algo_def: algoCtx |- defnIL : defnAL
 
@@ -2408,6 +2410,18 @@ def $is_covered_combination(rowCases*, combination) : bool =
 
   clause 0 : (mixop_row*{mixop_row <- mixop_row*}*{mixop_row* <- mixop_row**}*{mixop_row** <- mixop_row***}, mixop*{mixop <- mixop*}) = $exists_(b_cover*{b_cover <- b_cover*})
   -- (if (b_cover = $forall_(mixop <- mixop_row*{mixop_row <- mixop_row*}*{mixop <- mixop*, mixop_row* <- mixop_row**})))*{b_cover <- b_cover*, mixop_row** <- mixop_row***}
+
+def $is_partial_prem(premAL) : bool =
+
+  clause 0 : (relPremAL as premAL) = true
+
+  clause 1 : (ifHoldPrem as premAL) = true
+
+  clause 2 : (ifNotHoldPrem as premAL) = true
+
+  clause 3 : (ITER premAL _premIterAL as premAL) = $is_partial_prem(premAL)
+
+  clause -1 : (_premAL) = false
 
 def $exp_len(typedExp) : typedExp =
 

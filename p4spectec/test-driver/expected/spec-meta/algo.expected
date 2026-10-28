@@ -2314,10 +2314,12 @@ relation Algo_clause: algoCtx |- clauseIL : clauseAL
     -- let id_used*{id_used <- id_used*} = $ids_of_varis($free_varis_clauseIL(clauseIL))
     -- let AC_clause = $add_used(AC, id_used*{id_used <- id_used*})
     -- Bind_args: AC_clause |- arg*{arg <- arg*} : AC_arg arg_part*{arg_part <- arg_part*} premAL_arg*{premAL_arg <- premAL_arg*}
-    -- Algo_prems: AC_arg |- premIL*{premIL <- premIL*} : AC_body premAL*{premAL <- premAL*}
+    -- Algo_prems: AC_arg |- premIL*{premIL <- premIL*} : AC_body premAL_body*{premAL_body <- premAL_body*}
+    -- let premAL*{premAL <- premAL*} = premAL_arg*{premAL_arg <- premAL_arg*} ++ premAL_body*{premAL_body <- premAL_body*}
+    -- if $forall_(~$is_partial_prem(premAL)*{premAL <- premAL*})
     -- let vari_body*{vari_body <- vari_body*} = $free_varis_exp(typedExp)
     -- if $is_bound_varis(AC_body, [], vari_body*{vari_body <- vari_body*})
-    -- let clauseAL = arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL_arg*{premAL_arg <- premAL_arg*} ++ premAL*{premAL <- premAL*}
+    -- let clauseAL = arg_part*{arg_part <- arg_part*} '=' typedExp '-' premAL*{premAL <- premAL*}
     -- output: % |- % : clauseAL
 
 relation Algo_def: algoCtx |- defnIL : defnAL
@@ -4286,6 +4288,26 @@ def $is_covered_combination(rowCases*, combination) : bool =
   clause 0 : (mixop_row*{mixop_row <- mixop_row*}*{mixop_row* <- mixop_row**}*{mixop_row** <- mixop_row***}, mixop*{mixop <- mixop*}) = $exists_(b_cover*{b_cover <- b_cover*})
   -- (if (|mixop*{mixop <- mixop*}| = |mixop_row*{mixop_row <- mixop_row*}*{mixop_row* <- mixop_row**}|))*{mixop_row** <- mixop_row***}
   -- (let b_cover = $forall_(mixop <- mixop_row*{mixop_row <- mixop_row*}*{mixop <- mixop*, mixop_row* <- mixop_row**}))*{mixop_row** <- mixop_row***, b_cover -> b_cover*}
+
+def $is_partial_prem(premAL) : bool =
+
+  clause 0 : (premAL) = true
+  -- if premAL <: relPremAL
+  -- let relPremAL = premAL as relPremAL
+
+  clause 1 : (premAL) = true
+  -- if premAL <: ifHoldPrem
+  -- let ifHoldPrem = premAL as ifHoldPrem
+
+  clause 2 : (premAL) = true
+  -- if premAL <: ifNotHoldPrem
+  -- let ifNotHoldPrem = premAL as ifNotHoldPrem
+
+  clause 3 : (premAL') = $is_partial_prem(premAL)
+  -- if premAL' <: iterPremAL
+  -- let ITER premAL _premIterAL = premAL' as iterPremAL
+
+  clause -1 : (_premAL) = false
 
 def $exp_len(typedExp) : typedExp =
 
