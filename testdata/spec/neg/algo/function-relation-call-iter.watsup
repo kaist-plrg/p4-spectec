@@ -1,0 +1,12 @@
+;; A function clause may not call a relation in an iterated premise
+
+var n : nat
+
+relation Inc: nat |- nat
+  hint(input %0)
+
+rule Inc: n |- $(n + 1)
+
+dec $incs(nat*) : nat*
+def $incs(n*) = n_inc*
+  -- (Inc: n |- n_inc)*
