@@ -120,8 +120,6 @@ syntax id = text
 
 syntax atom = text
 
-syntax mixop = atom**
-
 syntax num =
    | NAT nat (from num)
    | INT int (from num)
@@ -130,39 +128,11 @@ syntax numtyp =
    | NAT (from numtyp)
    | INT (from numtyp)
 
-syntax optyp =
-   | BOOL (from optyp)
-   | NAT (from numtyp)
-   | INT (from numtyp)
-   | TEXT (from optyp)
-
-syntax typ =
-   | BOOL (from optyp)
-   | NAT (from numtyp)
-   | INT (from numtyp)
-   | TEXT (from optyp)
-   | VAR id targ* (from typ)
-   | TUP typ* (from typ)
-   | ITER typ iter (from typ)
-   | FUNC tparam* typ* typ (from typ)
-
-syntax deftyp =
-   | ALIAS typ (from deftyp)
-   | STRUCT typField* (from deftyp)
-   | VARIANT typCase* (from deftyp)
-
-syntax typField =
-   | atom typ (from typField)
-
-syntax typCase =
-   | mixop typ* (from typCase)
-
 syntax iter =
    | QUEST (from iter)
    | STAR (from iter)
 
-syntax vari =
-   | id typ iter* (from vari)
+syntax tparam = id
 
 syntax boolUnOp =
    | NOT (from boolUnOp)
@@ -219,6 +189,38 @@ syntax cmpOp =
    | GT (from numCmpOp)
    | LE (from numCmpOp)
    | GE (from numCmpOp)
+
+syntax mixop = atom**
+
+syntax optyp =
+   | BOOL (from optyp)
+   | NAT (from numtyp)
+   | INT (from numtyp)
+   | TEXT (from optyp)
+
+syntax typ =
+   | BOOL (from optyp)
+   | NAT (from numtyp)
+   | INT (from numtyp)
+   | TEXT (from optyp)
+   | VAR id targ* (from typ)
+   | TUP typ* (from typ)
+   | ITER typ iter (from typ)
+   | FUNC tparam* typ* typ (from typ)
+
+syntax deftyp =
+   | ALIAS typ (from deftyp)
+   | STRUCT typField* (from deftyp)
+   | VARIANT typCase* (from deftyp)
+
+syntax typField =
+   | atom typ (from typField)
+
+syntax typCase =
+   | mixop typ* (from typCase)
+
+syntax vari =
+   | id typ iter* (from vari)
 
 syntax listPat =
    | CONS (from listPat)
@@ -399,8 +401,6 @@ syntax funArg =
 syntax arg =
    | EXP typedExp (from expArg)
    | FUN id (from funArg)
-
-syntax tparam = id
 
 syntax expParam =
    | EXP typ (from expParam)
