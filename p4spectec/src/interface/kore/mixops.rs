@@ -1,4 +1,4 @@
-//! Constructor notation shared by the KORE encoder and decoder
+//! Constructor notation of the KORE encoder and decoder
 //!
 //! These shapes follow `spec-k/0.1-aux.watsup`, `spec-k/1-syntax.watsup`,
 //! and `runres` of `spec-k/2-relation.watsup`,
@@ -16,6 +16,17 @@ type Result<T> = std::result::Result<T, String>;
 
 /// The notation of the cases read and written here, interned once.
 pub struct Mixops {
+    // KORE as kompile writes it, `kore` and the declarations
+    pub(super) kvar: Mixop,
+    pub(super) ksetvar: Mixop,
+    pub(super) kapp: Mixop,
+    pub(super) kml: Mixop,
+    pub(super) kstr: Mixop,
+    pub(super) kdv: Mixop,
+    pub(super) kattr: Mixop,
+    pub(super) kaxiom: Mixop,
+    pub(super) ksymbol: Mixop,
+    // Terms, `term` and `pattern`
     pub(super) app: Mixop,
     pub(super) dv: Mixop,
     pub(super) int: Mixop,
@@ -26,10 +37,13 @@ pub struct Mixops {
     pub(super) map: Mixop,
     pub(super) set: Mixop,
     pub(super) list: Mixop,
+    // Sorts
     pub(super) sort: Mixop,
     pub(super) sortvar: Mixop,
+    // Maps and sets
     pub(super) pair: Mixop,
     pub(super) braces: Mixop,
+    // Results
     pub(super) ok: Mixop,
     pub(super) error: Mixop,
     pub(super) run_final: Mixop,
@@ -49,6 +63,15 @@ fn mixop(arena: &mut Arena, shape: &str) -> Result<Mixop> {
 impl Mixops {
     pub fn new(arena: &mut Arena) -> Result<Self> {
         Ok(Self {
+            kvar: mixop(arena, "KVAR varid sort")?,
+            ksetvar: mixop(arena, "KSETVAR varid sort")?,
+            kapp: mixop(arena, "KAPP symid sort* kore*")?,
+            kml: mixop(arena, "KML text sort* kore*")?,
+            kstr: mixop(arena, "KSTR text")?,
+            kdv: mixop(arena, "KDV pattern")?,
+            kattr: mixop(arena, "KATTR text sort* kore*")?,
+            kaxiom: mixop(arena, "AXIOM kore kattr*")?,
+            ksymbol: mixop(arena, "KSYMBOL sortid* sort* '->' sort kattr*")?,
             app: mixop(arena, "APP symid sort* term*")?,
             dv: mixop(arena, "DV sort text")?,
             int: mixop(arena, "INT int")?,
