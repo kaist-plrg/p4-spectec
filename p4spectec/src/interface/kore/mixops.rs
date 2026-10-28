@@ -1,6 +1,7 @@
 //! Constructor notation shared by the KORE encoder and decoder
 //!
-//! These shapes follow `spec-k/0.1-aux.watsup` and `spec-k/1-syntax.watsup`,
+//! These shapes follow `spec-k/0.1-aux.watsup`, `spec-k/1-syntax.watsup`,
+//! and `runres` of `spec-k/2-relation.watsup`,
 //! and are interned once for the definition.
 
 use crate::lang::data::{
@@ -31,6 +32,9 @@ pub struct Mixops {
     pub(super) braces: Mixop,
     pub(super) ok: Mixop,
     pub(super) error: Mixop,
+    pub(super) run_final: Mixop,
+    pub(super) run_error: Mixop,
+    pub(super) run_initfail: Mixop,
 }
 
 fn mixop(arena: &mut Arena, shape: &str) -> Result<Mixop> {
@@ -61,6 +65,9 @@ impl Mixops {
             braces: mixop(arena, "`{ k `}")?,
             ok: mixop(arena, "OK x")?,
             error: mixop(arena, "ERROR")?,
+            run_final: mixop(arena, "FINAL nat term")?,
+            run_error: mixop(arena, "ERROR nat term")?,
+            run_initfail: mixop(arena, "INITFAIL")?,
         })
     }
 }

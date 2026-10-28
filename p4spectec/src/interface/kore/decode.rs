@@ -3,7 +3,7 @@
 //! As the AL decoder of P4-SpecTec² (`interface/al/decode.rs`), `term` takes
 //! a term of the specification (`term` in `spec-k/1-syntax.watsup`) to the
 //! host's data, a KORE pattern: the arguments of a hook the K runtime
-//! computes (`offload`), and the configuration of a run.
+//! computes (`offload`), and the configuration of a run (`runres`).
 //! Domain values are written with the sort hooked to their kind:
 //! `INT 5` is `\dv{SortInt{}}("5")`; collections with the constructors of
 //! their sort, from its `element`, `concat`, and `unit` attributes.
@@ -202,4 +202,30 @@ pub fn term(arena: &Arena, info: &Info, mixops: &Mixops, value: &Value) -> Resul
             _ => Err("not a term".to_owned()),
         }
     })
+}
+
+// == Runs
+
+/// How a run of `Krun` ends, its `runres`.
+pub enum Runres {
+    /// The steps taken and the final configuration, at the end or the step limit.
+    Final(BigInt, Pattern),
+    /// The steps taken and the configuration where a step failed.
+    Error(BigInt, Pattern),
+    /// The initial term cannot be evaluated.
+    InitFail,
+}
+
+/// A `runres` of the specification, its configuration as a KORE pattern.
+pub fn runres(arena: &Arena, info: &Info, mixops: &Mixops, value: &Value) -> Result<Runres> {
+    match case(arena, value)? {
+        (mixop, [steps, term]) if is(arena, mixop, mixops.run_final) => {
+            Ok(Runres::Final(int(arena, steps)?, self::term(arena, info, mixops, term)?))
+        }
+        (mixop, [steps, term]) if is(arena, mixop, mixops.run_error) => {
+            Ok(Runres::Error(int(arena, steps)?, self::term(arena, info, mixops, term)?))
+        }
+        (mixop, []) if is(arena, mixop, mixops.run_initfail) => Ok(Runres::InitFail),
+        _ => Err("not a runres".to_owned()),
+    }
 }

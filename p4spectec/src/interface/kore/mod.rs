@@ -11,7 +11,9 @@
 //! values, which spec-k delegates with one builtin (`builtin dec $call_hook`)
 //! and which are offloaded to the K framework's own implementation in that library,
 //! and spec-k's text builtins. Hooks on K terms are specified.
-//! `KoreInterface::print_runres` prints the `runres` that `Krun` returns.
+//! `KoreInterface::print_runres` prints the `runres` that `Krun` returns
+//! as the LLVM backend's interpreter prints a run; `normal` gives the normal form
+//! in which a run is compared with `krun`'s.
 
 pub mod ast;
 pub mod binary;
@@ -21,11 +23,12 @@ mod ffi;
 mod hooks;
 pub mod info;
 mod mixops;
+pub mod normal;
 mod offload;
 pub mod parse;
 mod texts;
 
-use self::{ffi::Runtime, info::Info, mixops::Mixops, offload::Offload};
+use self::{decode::Runres, ffi::Runtime, info::Info, mixops::Mixops, offload::Offload};
 use crate::{
     diagnostic::{Diagnostic, Report, Severity},
     interface::builtin::call::Builtins,
@@ -146,9 +149,28 @@ impl KoreInterface {
         Self { builtins, offload, loaded: None, fresh: 0 }
     }
 
-    /// Prints `runres`, the result of spec-k's `Krun`, as `krun` prints a run.
-    pub fn print_runres(&self, _arena: &Arena, _runres: Value) -> Result<String, InterfaceError> {
-        Err(InterfaceError(unimplemented("KoreInterface::print_runres")))
+    /// Prints `runres`, the result of spec-k's `Krun`, as the LLVM backend's
+    /// interpreter prints a run with `--statistics`, which `krun` runs.
+    ///
+    /// `FINAL n term` prints `n`, the steps taken, on its first line, and
+    /// then `term`, the final configuration, as KORE text, so that it compares
+    /// with `krun`'s output. `ERROR n term` prints `error after n steps`
+    /// and the configuration where a step failed, and `INITFAIL`
+    /// `error on the initial term`: `krun` only reports such a failure.
+    pub fn print_runres(&self, arena: &Arena, runres: Value) -> Result<String, InterfaceError> {
+        let loaded = self.loaded.as_deref().ok_or_else(|| {
+            InterfaceError(diagnostic(
+                "kore/print",
+                "a run is printed after its definition is read",
+            ))
+        })?;
+        let runres = decode::runres(arena, &loaded.info, &loaded.mixops, &runres)
+            .map_err(|message| InterfaceError(diagnostic("kore/print", message)))?;
+        Ok(match runres {
+            Runres::Final(steps, term) => format!("{steps}\n{term}"),
+            Runres::Error(steps, term) => format!("error after {steps} steps\n{term}"),
+            Runres::InitFail => "error on the initial term".to_owned(),
+        })
     }
 
     /// `$fresh_nat() : nat`: 0, 1, 2, ... within a program.
