@@ -8,9 +8,9 @@
 //! `KoreInterface::print_runres` prints the `runres` of `Krun`.
 
 pub mod ast;
-pub mod binary;
-pub mod decode;
-pub mod encode;
+mod binary;
+mod decode;
+mod encode;
 mod ffi;
 mod hooks;
 pub mod info;
