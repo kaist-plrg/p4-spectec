@@ -78,6 +78,7 @@ test-micro:
 	env -u UPDATE_EXPECT $(DRIVER) micro al
 	env -u UPDATE_EXPECT $(DRIVER) micro sl
 	env -u UPDATE_EXPECT $(DRIVER) micro pl
+	env -u UPDATE_EXPECT $(DRIVER) micro specdoc
 
 test-expected: test-elab test-algo test-structure test-prose test-adoc test-p4parse test-run-al test-run-sl test-run-pl test-micro test-diagnostics
 
