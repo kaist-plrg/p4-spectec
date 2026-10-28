@@ -1,18 +1,11 @@
 //! K hooks answered by the K framework's own implementation
 //!
-//! spec-k delegates the hooks of K's modules of domain values (INT, BOOL,
-//! STRING, BYTES, FLOAT, JSON, KRYPTO) to the host with one builtin,
-//! `$call_hook(symid, sort*, sort, term*) : res<term>` (`spec-k/6.2-eval.watsup`),
-//! and the host hands them to the K LLVM backend's runtime:
-//! the library `llvm-kompile` made of the K definition being run,
-//! `runtime.so` in the kompiled directory next to its `definition.kore`.
-//! `Offload::load` opens that library before `parse_program` reads the definition,
-//! since reading a Float literal asks the runtime for its normal form (`float_literal`).
-//! `Offload::call` writes the arguments as a KORE application (`decode`),
-//! the runtime evaluates it, and its answer, binary KORE (`binary`),
-//! is read back as a spec-k term (`encode`): `OK` the term, or `ERROR` if the
-//! runtime fails, as on a division by zero.
-//! Calls into the library go through `ffi`.
+//! spec-k delegates the hooks of K's modules of domain values with one builtin,
+//! `$call_hook(symid, sort*, sort, term*) : res<term>` (`spec-k/6.2-eval.watsup`).
+//! `Offload::call` writes the application as KORE (`decode`), the K library of the
+//! definition (`runtime.so` in its kompiled directory, through `ffi`) evaluates it,
+//! and the answer is read back as a term (`binary`, `encode`): `OK` the term, or
+//! `ERROR` if the runtime fails.
 
 use super::{
     Loaded,

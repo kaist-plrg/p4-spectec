@@ -1,18 +1,10 @@
 //! The C ABI of the K library that `Offload` calls, an `unsafe` module
 //!
-//! The library is the one `llvm-kompile definition.kore dt c` makes of the
-//! K definition being run, with its functions and hooks, and with the API of
-//! `kllvm-c/kllvm-c.h` (llvm-backend `docs/embedding.md`).
-//! `Runtime::open` loads it with `libloading`, and `Runtime::simplify`
-//! evaluates the functions of a term, e.g. `_+Int_(2, 3)` to `5`, without
-//! rewriting; the hooks computed are the K LLVM backend's runtime
-//! (`runtime/strings/strings.cpp`, `runtime/strings/bytes.cpp`, ...).
-//! A library keeps global state, so it is opened once in a process and never
-//! closed: `Runtime::open` gives the same runtime for the same path.
-//! Each library reserves address space for its arenas, 2 TB for each of three
-//! (`HYPERBLOCK_SIZE` of `runtime/arena.h`), so a process runs one definition at
-//! a time: opening another releases the arenas of the one before
-//! (`kllvm_reset_munmap_all_arenas`), which then cannot be used again.
+//! The library is what `llvm-kompile definition.kore dt c` makes of a definition,
+//! with the API of `kllvm-c/kllvm-c.h`; `Runtime::simplify` evaluates the functions
+//! of a term, e.g. `_+Int_(2, 3)` to `5`. A library keeps global state and reserves
+//! 2 TB of address space for each of its three arenas, so a process opens each once,
+//! never closes it, and releases the arenas of one before opening another.
 //! Besides `engine/k/ffi.rs`, this is the only module where the crate allows `unsafe`.
 
 #![allow(unsafe_code)]

@@ -1,19 +1,11 @@
 //! The interface of spec-k, the K semantics written in P4-SpecTec
 //!
-//! K-in-ST runs spec-k as the base of a single-level tower over KORE.
-//! `KoreInterface::parse_program` reads a K definition (`definition.kore`
-//! in a kompiled directory) and an initial term as spec-k's `kdefinition`
-//! and `kore` values, the inputs of its entry relation `Krun`,
-//! and loads the K library of that directory for `offload`.
-//! `parse` reads KORE text into `ast`, and `encode` turns it into values
-//! of spec-k as it is, its domain values read; `decode` writes them back as KORE.
-//! Builtins are the standard ones plus those of `hooks`: the K hooks of domain
-//! values, which spec-k delegates with one builtin (`builtin dec $call_hook`)
-//! and which are offloaded to the K framework's own implementation in that library,
-//! and spec-k's text builtins. Hooks on K terms are specified.
-//! `KoreInterface::print_runres` prints the `runres` that `Krun` returns
-//! as the LLVM backend's interpreter prints a run; `normal` gives the normal form
-//! in which a run is compared with `krun`'s.
+//! `KoreInterface::parse_program` reads a K definition (`definition.kore` of a
+//! kompiled directory) and an initial term as the inputs of spec-k's `Krun`:
+//! `parse` reads KORE into `ast`, and `encode` turns it into spec-k's values;
+//! `decode` writes them back. Builtins are the standard ones and those of `hooks`,
+//! whose K hooks run in the definition's K library (`offload`).
+//! `KoreInterface::print_runres` prints the `runres` of `Krun`.
 
 pub mod ast;
 pub mod binary;
@@ -149,14 +141,9 @@ impl KoreInterface {
         Self { builtins, offload, loaded: None, fresh: 0 }
     }
 
-    /// Prints `runres`, the result of spec-k's `Krun`, as the LLVM backend's
-    /// interpreter prints a run with `--statistics`, which `krun` runs.
-    ///
-    /// `FINAL n term` prints `n`, the steps taken, on its first line, and
-    /// then `term`, the final configuration, as KORE text, so that it compares
-    /// with `krun`'s output. `ERROR n term` prints `error after n steps`
-    /// and the configuration where a step failed, and `INITFAIL`
-    /// `error on the initial term`: `krun` only reports such a failure.
+    /// Prints `runres` as the interpreter krun runs prints a run with `--statistics`:
+    /// for `FINAL n term`, `n` and then `term` as KORE; for `ERROR n term`,
+    /// `error after n steps` and `term`; for `INITFAIL`, `error on the initial term`.
     pub fn print_runres(&self, arena: &Arena, runres: Value) -> Result<String, InterfaceError> {
         let loaded = self.loaded.as_deref().ok_or_else(|| {
             InterfaceError(diagnostic(
@@ -189,13 +176,8 @@ impl Default for KoreInterface {
 }
 
 impl Interface for KoreInterface {
-    /// Reads `paths`, a K definition then an initial term, as `parse_kore` does,
-    /// after loading the K library kompiled with the definition for its hooks:
-    /// reading a Float literal asks the library for its normal form.
-    ///
-    /// The definition is `definition.kore` in a kompiled directory,
-    /// as `krun -d` reads it; the library is in that directory.
-    /// `includes` is unused, since KORE is not preprocessed.
+    /// Reads `paths`, `definition.kore` of a kompiled directory and an initial term,
+    /// after loading the K library of that directory, which reads Float literals.
     fn parse_program(
         &mut self,
         arena: &mut Arena,

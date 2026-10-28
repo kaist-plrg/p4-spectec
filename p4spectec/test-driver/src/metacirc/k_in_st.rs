@@ -1,58 +1,17 @@
 //! K definitions run through a K-in-ST tower and compared with `krun`,
 //! registered in `suites/metacirc/k-in-st.toml`
 //!
-//! A suite names a tower whose single level is spec-k over KORE, and its
-//! definitions and programs, in one of two ways:
-//!
-//! * `root`, a directory of cases written for spec-k. A case is a directory under
-//!   `root` with a definition, its programs, and what krun gives for them.
-//! * `src`, `dir`, and `def`, a definition in a checkout of another repository,
-//!   such as a language of the K tutorial: `src` names the environment variable
-//!   that gives the checkout (`K_SRC`), and a suite whose variable is not set is
-//!   skipped. Its `programs` are paths under `dir`, and what krun gives for them
-//!   is in the directory `expected`.
-//!
-//! ```text
-//! <name>.k               the definition of a case, one file of K, kompiled with its main module
-//! <program>.<ext>        a program of a case, as krun takes it (`ext`, `prog` by default)
-//! <program>.out          what krun's run gives, as `KoreInterface::print_runres` prints
-//! <program>.depth        the step bound, if the run has one (or `depth` of the suite)
-//! <program>.search       the final configurations K allows, for a program where spec-k
-//!                        ends elsewhere than krun
-//! ```
-//!
-//! A program reads `<program>.in` beside it, or in `inputs` of the suite, as its standard input.
-//! A suite with `prepare` passes each program through that command first (its standard
-//! output is what krun takes), as KWasm preprocesses its tests. A suite with `kore`
-//! has a definition already in KORE and programs that are initial terms, as the tests
-//! of the LLVM backend: it is built with `llvm-kompile` alone, and krun is not run.
-//! A suite with `init` makes the initial term of each program with that command instead
-//! of krun, as KEVM and KMIR make theirs with their own tools: in it, `{program}` is the
-//! program, `{name}` its name, `{kompiled}` the kompiled directory, and `{output}` the
-//! file to write. A program `<path>#<name>` is named `<name>` rather than by its file,
-//! as one file of KEVM tests holds several.
-//! In `kompile`, `krun`, `runtime`, `prepare`, `init`, and `programs`, `{src}` is the checkout.
-//! Running a suite needs K: `run` kompiles the definition with the LLVM backend
-//! (`kompile --enable-search`, and `kompile` of the suite), builds its K library
-//! (`llvm-kompile … c`, `runtime.so`, with `runtime` of the suite as clang flags),
-//! and makes the initial term of each program (`krun --dry-run`, and `krun` of the
-//! suite), into `$CARGO_TARGET_DIR/k-in-st/`, again only when a source is newer.
-//! It runs each program with `p4spectec::metacirc::krun` and compares its output
-//! with `<program>.out`: the steps taken and how the run ends must be the same,
-//! and the configurations the same in normal form (`interface::kore::normal`),
-//! which covers how krun writes a configuration, not what K computes.
-//! K leaves the choice among some rules open, as rules of the same priority that
-//! both apply, or the alternatives of an or-pattern, and krun's run takes the
-//! LLVM backend's choice. So a run that ends elsewhere still passes "by search"
-//! if `<program>.search` is there and its final configuration is one of those.
-//!
-//! With `UPDATE_EXPECT=1`, `run` writes `<program>.out` from krun's own run
-//! instead (the interpreter krun runs, with `--statistics`): the steps and the
-//! final configuration, or for a run that fails, `error after n steps` and the
-//! configuration before the failing step, or `error on the initial term`.
-//! It writes `<program>.search` (the kompiled `search` binary from the initial
-//! term) for a program whose run through spec-k still differs, and removes it otherwise.
-//! The interpreter runs with `FASTTHROW` preloaded, so that a failing hook ends it at once.
+//! A suite takes its definitions from `root`, cases written for spec-k
+//! (a `<name>.k` and its programs), or from `def` in a checkout named by an
+//! environment variable, with `programs` and their expectations in `expected`.
+//! `run` kompiles each definition, builds its K library, and makes each initial term
+//! with krun, into `$CARGO_TARGET_DIR/k-in-st/`; it runs the program with
+//! `metacirc::krun` and compares with `<program>.out`: the same first line (steps,
+//! how the run ended) and configurations equal in normal form (`interface::kore::normal`).
+//! A run that ends elsewhere passes by search if its final configuration is one
+//! of `<program>.search`, the finals K allows, as where rules of the same priority both apply.
+//! `UPDATE_EXPECT=1` writes `<program>.out` from krun's own run, and `<program>.search`
+//! where the run still differs.
 
 use std::{
     fs,
@@ -165,10 +124,8 @@ fn ext_default() -> String {
 /// and an uncaught exception, which aborts.
 const EXIT_FAILED: [i32; 2] = [113, 134];
 
-/// A library preloaded into the interpreter: a hook given an invalid argument
-/// throws a C++ exception that nothing catches, and unwinding the interpreter's
-/// stack to find that out takes up to a minute before it aborts. Exiting with
-/// the status of abort at the throw gives the same outcome at once.
+/// A library preloaded into the interpreter: it exits at once at an uncaught
+/// C++ exception of a hook, where unwinding takes up to a minute before the abort.
 const FASTTHROW: &str = r#"#include <stdlib.h>
 #include <unistd.h>
 
@@ -331,8 +288,7 @@ struct Program {
 
 impl Program {
     /// A program, with its input beside it or in `dir_inputs`, and its expectations
-    /// in `dir_expected`.
-    /// `path` may end in `#<name>`, which names the program.
+    /// in `dir_expected`; `path` may end in `#<name>`, which names it.
     fn new(path: PathBuf, dir_inputs: Option<&Path>, dir_expected: &Path) -> Self {
         let text = path.to_string_lossy().into_owned();
         let (path, name) = match text.rsplit_once('#') {
@@ -740,10 +696,8 @@ fn build_kore(source: &Path, kompiled: &Path) -> Result<()> {
 /// Builds the K library of a kompiled definition, `runtime.so`, from the
 /// definition and its decision trees (`llvm-kompile definition.kore dt c`).
 ///
-/// A rule label with `@` in it gives a symbol whose name the linker reads as a
-/// version ("undefined version"). Such symbols are defined and used only in the
-/// object of the definition, so they are renamed there, `@` to `_AT_`, and the
-/// library is linked again with the command `llvm-kompile -v` printed.
+/// A rule label with `@` gives a symbol the linker reads as a version; it is
+/// renamed in the definition's object, `@` to `_AT_`, and the library linked again.
 fn build_library(kompiled: &Path, flags: &[String]) -> Result<()> {
     let path_library = kompiled.join("runtime.so");
     let dir_temp = tempfile::tempdir()?;

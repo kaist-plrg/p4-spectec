@@ -1,14 +1,8 @@
 //! The builtins spec-k declares beyond the standard ones
 //!
-//! spec-k delegates the K hooks of domain values with one builtin,
-//! `builtin dec $call_hook(symid, sort*, sort, term*) : res<term>`
-//! (`spec-k/6.2-eval.watsup`). It is offloaded: `OFFLOADED` names it,
-//! and it forwards to `Offload::call`, which runs the K framework's own implementation.
-//! The other entries are spec-k's text builtins for reading hook names (`texts`),
-//! which are not K hooks. `$fresh_nat`, the one with a state,
-//! is answered by `KoreInterface::call_builtin` itself.
-//! An entry overrides a standard builtin of the same name;
-//! a builtin without one fails with `runtime/builtin-implementation-missing`.
+//! `$call_hook`, through which spec-k delegates the K hooks of domain values,
+//! is offloaded to the K library (`Offload::call`); the text builtins of `texts`
+//! are answered here. `$fresh_nat` is answered by `KoreInterface::call_builtin`.
 
 use super::{offload::Offload, texts};
 use crate::interface::builtin::call::BuiltinImpl;
