@@ -332,21 +332,22 @@ struct KoreCompareArgs {
     definition: PathBuf,
     /// A configuration in KORE, possibly after a line with the step count.
     left: PathBuf,
-    /// Another configuration, as krun's interpreter writes it.
+    /// Another configuration, as krun's interpreter writes it,
+    /// or the final configurations the search binary writes, under `\\or`.
     right: PathBuf,
 }
 
 /// Compares two configurations of a definition in normal form, as `krun --expect` does:
 /// prints `matches` or `DIFFERS`.
 fn kore_compare_command(args: KoreCompareArgs) -> Result<(), ()> {
-    use p4spectec::interface::kore::{info::Info, normal, parse};
+    use p4spectec::interface::kore::{ast::Pattern, info::Info, normal, parse};
     let read = |path: &PathBuf| {
         std::fs::read(path).map_err(|error| eprintln!("{}: {error}", path.display()))
     };
     let definition = parse::parse_definition(&read(&args.definition)?)
         .map_err(|error| eprintln!("{}: {}", args.definition.display(), error.message))?;
     let info = Info::new(&definition);
-    let normal = |path: &PathBuf| -> Result<String, ()> {
+    let pattern = |path: &PathBuf| -> Result<Pattern, ()> {
         let src = read(path)?;
         // A leading line of digits is the step count
         let src = match src.iter().position(|&byte| byte == b'\n') {
@@ -355,11 +356,19 @@ fn kore_compare_command(args: KoreCompareArgs) -> Result<(), ()> {
             }
             _ => src,
         };
-        let pattern = parse::parse_pattern(&src)
-            .map_err(|error| eprintln!("{}:{}: {}", path.display(), error.line, error.message))?;
-        Ok(normal::normal_text(&info, &pattern))
+        parse::parse_pattern(&src)
+            .map_err(|error| eprintln!("{}:{}: {}", path.display(), error.line, error.message))
     };
-    if normal(&args.left)? == normal(&args.right)? {
+    let left = normal::normal_text(&info, &pattern(&args.left)?);
+    // The search binary writes several final configurations under \or
+    let rights = match pattern(&args.right)? {
+        Pattern::App(name, _, args) if name == "\\or" => args,
+        right => vec![right],
+    };
+    if rights
+        .iter()
+        .any(|right| normal::normal_text(&info, right) == left)
+    {
         println!("matches {}", args.right.display());
     } else {
         println!("DIFFERS from {}", args.right.display());

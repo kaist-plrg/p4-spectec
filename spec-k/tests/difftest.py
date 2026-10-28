@@ -351,6 +351,19 @@ def test_program(prog, root, definition, library, args):
     # a run that ends elsewhere or in other steps than krun's may still take
     # only steps K allows
     if verdict in ("FAIL: configuration differs", "FAIL: steps differ") \
+            and os.path.exists(os.path.join(args.kompiled, "search")) and TOWER:
+        # on the tower, the run passes if it ends in a final configuration
+        # K allows: one the search binary finds from the initial term
+        differs = verdict[len("FAIL: "):]
+        finals = os.path.join(work, "search.kore")
+        if os.path.exists(finals):
+            os.remove(finals)  # the search binary appends to its output file
+        run([os.path.join(args.kompiled, "search"), init, str(limit or -1), finals], args.timeout)
+        reached = os.path.exists(finals) and "matches " in run(
+            [BIN, "kore-compare", "--def", definition, os.path.join(work, "spec.kore"), finals], args.timeout)[1]
+        verdict = "pass by search (%s; a final configuration K allows)" % differs if reached else \
+            "FAIL: %s, and none of the final configurations K allows" % differs
+    elif verdict in ("FAIL: configuration differs", "FAIL: steps differ") \
             and os.path.exists(os.path.join(args.kompiled, "search")):
         differs = verdict[len("FAIL: "):]
         compare = ["--check-steps", os.path.abspath(args.kompiled)]
