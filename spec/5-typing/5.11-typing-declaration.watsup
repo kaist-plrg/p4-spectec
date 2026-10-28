@@ -34,8 +34,8 @@ rulegroup VarDecl_ok {
                 : typedExpressionIR_init
     ---- ;; check that the expression matches the type
     ---- ;; while inserting implicit casts if necessary
-    -- if typedExpressionIR_init_cast
-        = $cast_unary(typedExpressionIR_init, typeIR)
+    -- Cast_unary:
+        `( typeIR `) typedExpressionIR_init : typedExpressionIR_init_cast
     ---- ;; update the context
     -- if nameIR = $name(name)
     -- if TC_1 = $add_var_t(p, TC_0, nameIR, INOUT typeIR DYN eps)
@@ -64,8 +64,8 @@ rule ConstDecl_ok:
   -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_value)
   ---- ;; check that the expression matches the type
   ---- ;; while inserting implicit casts if necessary
-  -- if typedExpressionIR_value_cast
-      = $cast_unary(typedExpressionIR_value, typeIR)
+  -- Cast_unary:
+      `( typeIR `) typedExpressionIR_value : typedExpressionIR_value_cast
   ---- ;; evaluate the expression
   -- Expr_eval_lctk: p TC_0 |- typedExpressionIR_value_cast ~> value
   ---- ;; update the context
@@ -255,42 +255,48 @@ rule ObjectDeclList_ok:
       |- objectDeclaration*
        : typeFrame externMethodTypeDefEnv objectDeclarationListIR
 
-dec $subst_externMethodTypeDefEnv(
-    externMethodTypeDefEnv, externMethodTypeDefEnv)
-  : externMethodTypeDefEnv
+relation Subst_externMethodTypeDefEnv:
+  externMethodTypeDefEnv |- externMethodTypeDefEnv : externMethodTypeDefEnv
+  hint(input %0 %1)
   hint(prose_in "substitution of abstract methods in" %0 "by implementations in" %1)
 
-def $subst_externMethodTypeDefEnv(
-    externMethodTypeDefEnv_extern, `{ eps `})
-  = externMethodTypeDefEnv_extern
+rulegroup Subst_externMethodTypeDefEnv {
 
-def $subst_externMethodTypeDefEnv(
-    externMethodTypeDefEnv_extern,
-    `{ (callableId_init_h ':' externMethodTypeDefIR_init_h)
-       :: (callableId_init_t ':' externMethodTypeDefIR_init_t)* `})
-  = $subst_externMethodTypeDefEnv(
-      externMethodTypeDefEnv_extern_subst,
-      `{ (callableId_init_t ':' externMethodTypeDefIR_init_t)* `})
-  ---- ;; find abstract extern method by name
-  -- if nameIR_init_h `( _ `) = callableId_init_h
-  -- if (callableId, externMethodTypeDefIR_abstract)
-      = $find_non_overloaded<externMethodTypeDefIR>(
-          externMethodTypeDefEnv_extern, nameIR_init_h)
-  -- if EXTERN_METHOD ABSTRACT nameIR `< typeId_expl* ',' typeId_impl* `>
-          `( parameterIR* `) ':' typeIR_ret
-      = externMethodTypeDefIR_abstract
-  ---- ;; concretize abstract extern method
-  -- if externMethodTypeDefIR_concrete
-      = EXTERN_METHOD nameIR `< typeId_expl* ',' typeId_impl* `>
-          `( parameterIR* `) ':' typeIR_ret
-  ---- ;; concretized extern method should be the same as the one initialized
-  -- ExternMethodTypeDef_alpha:
-      externMethodTypeDefIR_concrete ~~ externMethodTypeDefIR_init_h
-  ---- ;; update the map
-  -- if externMethodTypeDefEnv_extern_subst
-      = $update_map<callableId, externMethodTypeDefIR>(
-          externMethodTypeDefEnv_extern,
-          callableId, externMethodTypeDefIR_concrete)
+  rule Subst_externMethodTypeDefEnv/nil:
+    externMethodTypeDefEnv_extern |- `{ eps `} : externMethodTypeDefEnv_extern
+
+  rule Subst_externMethodTypeDefEnv/cons:
+    externMethodTypeDefEnv_extern
+    |- `{ (callableId_init_h ':' externMethodTypeDefIR_init_h)
+          :: (callableId_init_t ':' externMethodTypeDefIR_init_t)* `}
+     : externMethodTypeDefEnv_extern_subst_t
+    ---- ;; find abstract extern method by name
+    -- if nameIR_init_h `( _ `) = callableId_init_h
+    -- if (callableId, externMethodTypeDefIR_abstract)
+        = $find_non_overloaded<externMethodTypeDefIR>(
+            externMethodTypeDefEnv_extern, nameIR_init_h)
+    -- if EXTERN_METHOD ABSTRACT nameIR `< typeId_expl* ',' typeId_impl* `>
+            `( parameterIR* `) ':' typeIR_ret
+        = externMethodTypeDefIR_abstract
+    ---- ;; concretize abstract extern method
+    -- if externMethodTypeDefIR_concrete
+        = EXTERN_METHOD nameIR `< typeId_expl* ',' typeId_impl* `>
+            `( parameterIR* `) ':' typeIR_ret
+    ---- ;; concretized extern method should be the same as the one initialized
+    -- ExternMethodTypeDef_alpha:
+        externMethodTypeDefIR_concrete ~~ externMethodTypeDefIR_init_h
+    ---- ;; update the map
+    -- if externMethodTypeDefEnv_extern_subst
+        = $update_map<callableId, externMethodTypeDefIR>(
+            externMethodTypeDefEnv_extern,
+            callableId, externMethodTypeDefIR_concrete)
+    ---- ;; continue with the rest of the list
+    -- Subst_externMethodTypeDefEnv:
+        externMethodTypeDefEnv_extern_subst
+        |- `{ (callableId_init_t ':' externMethodTypeDefIR_init_t)* `}
+         : externMethodTypeDefEnv_extern_subst_t
+    
+}
 
 relation InstDecl_objectInitializer_ok:
   cursor typingContext |- annotationList prefixedTypeName `< typeArgumentList `>
@@ -337,9 +343,10 @@ rule InstDecl_objectInitializer_ok:
       p TC_1 |- objectDeclarationList
               : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
   ---- ;; create updated extern type
-  -- if externMethodTypeDefEnv_init_subst
-      = $subst_externMethodTypeDefEnv(
-          externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init)
+  -- Subst_externMethodTypeDefEnv:
+      externMethodTypeDefEnv_extern
+      |- externMethodTypeDefEnv_init
+       : externMethodTypeDefEnv_init_subst
   -- if typeIR_object_init
       = EXTERN typeId_extern `< typeIR_arg* `> externMethodTypeDefEnv_init_subst
   ---- ;; constructed object may not contain an abstract method
@@ -806,7 +813,8 @@ rule Enum_serializable_field_ok:
   ---- ;; check expression
   -- Expr_ok: BLOCK TC_0 |- expression : typedExpressionIR
   ---- ;; cast expression to type
-  -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR)
+  -- Cast_unary:
+      `( typeIR `) typedExpressionIR : typedExpressionIR_cast
   ---- ;; perform compile-time evaluation
   -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_cast)
   -- Expr_eval_lctk: BLOCK TC_0 |- typedExpressionIR_cast ~> value

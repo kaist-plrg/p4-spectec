@@ -28,7 +28,8 @@ rulegroup Stmt_ok/assignmentStatement {
     -- if typeIR_r = $type_of_typedExpressionIR(typedExpressionIR)
     ---- ;; check type compatibility
     ---- ;; while inserting implicit casts if necessary
-    -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_l)
+    -- Cast_unary:
+        `( typeIR_l `) typedExpressionIR : typedExpressionIR_cast
 
   rule Stmt_ok/compound:
     p TC |- lvalue assignop expression ';'
@@ -46,8 +47,9 @@ rulegroup Stmt_ok/assignmentStatement {
     ---- ;; fetch annotations
     -- if _ '#' `( typeIR_lvalue `) = typedLvalueIR
     ---- ;; check type compatibility
-    -- if (_ binop typedExpressionIR_cast) '#' _
-        = $cast_unary(typedExpressionIR_binary, typeIR_lvalue)
+    -- Cast_unary:
+        `( typeIR_lvalue `) typedExpressionIR_binary
+        : ((_ binop typedExpressionIR_cast) '#' _)
 
 }
 
@@ -198,7 +200,8 @@ rulegroup Stmt_ok/returnStatement {
     -- if typeIR_ret = $find_local_return_type_t(TC_0)
     ---- ;; check type compatibility
     ---- ;; while inserting implicit casts if necessary
-    -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_ret)
+    -- Cast_unary:
+        `( typeIR_ret `) typedExpressionIR : typedExpressionIR_cast
     ---- ;; update context
     -- if TC_1 = $set_control_t(TC_0, RET)
 
@@ -360,8 +363,8 @@ rulegroup ForInitStmt_ok {
     -- Expr_ok: LOCAL TC_0 |- expression_init : typedExpressionIR_init
     ---- ;; check that the expression matches the type
     ---- ;; while inserting implicit casts if necessary
-    -- if typedExpressionIR_init_cast
-        = $cast_unary(typedExpressionIR_init, typeIR)
+    -- Cast_unary:
+        `( typeIR `) typedExpressionIR_init : typedExpressionIR_init_cast
     ---- ;; update the context
     -- if nameIR = $name(name)
     -- if TC_1 = $add_var_t(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
@@ -508,8 +511,10 @@ rulegroup ForCollectionExpr_ok/range {
     -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
     ---- ;; cast the expressions to the variable type
-    -- if typedExpressionIR_l_casted = $cast_unary(typedExpressionIR_l, typeIR_var)
-    -- if typedExpressionIR_r_casted = $cast_unary(typedExpressionIR_r, typeIR_var)
+    -- Cast_unary:
+        `( typeIR_var `) typedExpressionIR_l : typedExpressionIR_l_casted
+    -- Cast_unary:
+        `( typeIR_var `) typedExpressionIR_r : typedExpressionIR_r_casted
     ---- ;; fetch the types of both sides
     -- if typeIR_l = $type_of_typedExpressionIR(typedExpressionIR_l_casted)
     -- if typeIR_r = $type_of_typedExpressionIR(typedExpressionIR_r_casted)
@@ -743,8 +748,8 @@ rulegroup SwitchLabel_general_ok {
         = $expressionNonBrace_as_expression(expressionNonBrace_label)
     -- Expr_ok:
         LOCAL TC |- expression_label : typedExpressionIR_label
-    -- if typedExpressionIR_label_cast
-        = $cast_unary(typedExpressionIR_label, typeIR_switch)
+    -- Cast_unary:
+        `( typeIR_switch `) typedExpressionIR_label : typedExpressionIR_label_cast
     ---- ;; switch label must be compile-time known
     -- if _ '#' `( _ LCTK `) = typedExpressionIR_label_cast
 
