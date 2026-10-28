@@ -9,8 +9,11 @@ relation Inc: nat |- nat
 rule Inc:
   x |- $(x + 1)
 
-dec $incs(nat*) : nat*
-def $incs(x*) = y*
+relation Incs: nat* |- nat*
+  hint(input %0)
+
+rule Incs:
+  x* |- y*
   -- (Inc: x |- y)*
 
 dec $doubles(nat*) : nat*
@@ -20,6 +23,6 @@ def $doubles(x*) = y*
 relation Main: OK
 
 rule Main: OK
-  -- if $incs([ 1, 2 ]) = [ 2, 3 ]
-  -- if $incs(eps) = eps
+  -- Incs: [ 1, 2 ] |- [ 2, 3 ]
+  -- Incs: eps |- eps
   -- if $doubles([ 1, 2 ]) = [ 2, 4 ]
