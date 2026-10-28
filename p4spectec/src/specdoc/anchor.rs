@@ -3,13 +3,14 @@
 //! Callers supply function and relation lookups after collecting document titles
 //! Group and otherwise destinations are derived from definition IDs
 //! One context tracks emitted destinations across all fragments in the batch
+//! and numbers alternative blocks so their arm anchors stay distinct
 
 use std::collections::BTreeSet;
 
 // == Definitions
 
 /// Identifies a function or relation destination.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum DefKind {
     /// Identifies a function.
     Func,
@@ -45,6 +46,7 @@ pub struct AnchorContext<'a> {
     func: &'a dyn Fn(Presentation, &str) -> Option<String>,
     rel: &'a dyn Fn(Presentation, &str) -> Option<String>,
     emitted: BTreeSet<String>,
+    num_blocks: usize,
 }
 
 impl Default for AnchorContext<'_> {
@@ -60,7 +62,7 @@ impl<'a> AnchorContext<'a> {
         func: &'a dyn Fn(Presentation, &str) -> Option<String>,
         rel: &'a dyn Fn(Presentation, &str) -> Option<String>,
     ) -> Self {
-        Self { func, rel, emitted: BTreeSet::new() }
+        Self { func, rel, emitted: BTreeSet::new(), num_blocks: 0 }
     }
 
     /// Resolves a function title without a leading hash.
@@ -87,6 +89,12 @@ impl<'a> AnchorContext<'a> {
             DefKind::Rel => "rel",
         };
         format!("{prefix}:{id_def}-else")
+    }
+
+    /// Allocates the anchor prefix of an alternative block, distinct within the batch.
+    pub fn fresh_block(&mut self) -> String {
+        self.num_blocks += 1;
+        format!("bk-{}", self.num_blocks)
     }
 
     /// Registers a destination and reports whether this is its first declaration.

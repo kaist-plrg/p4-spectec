@@ -7,11 +7,11 @@
 //! Link(Direct("t"), Text("a[b]"))
 //! -> <<t,a[b]>>
 //!
-//! Item { 0, Ordered, Text("Done"), Empty }
-//! -> . Done
+//! Item { 0, Ordered(Some("arm")), Text("Done"), Empty }
+//! -> . +++<span class="bk-arm-anchor" id="arm"></span>+++Done
 //! ```
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::lang::common::source::Span;
 
@@ -22,7 +22,7 @@ use crate::specdoc::{
     anchor::{AnchorContext, Presentation},
 };
 
-use super::doc::{Block, Code, Item, ItemKind, Link, Prose, Subject, Table};
+use super::doc::{Block, Code, FallthroughLabel, Item, ItemKind, Link, Prose, Subject, Table};
 
 // == Markup
 
@@ -66,6 +66,120 @@ pub(in crate::specdoc::adoc::pl) fn adoc_unordered_bullet(level: usize) -> Strin
     let indent = " ".repeat(level);
     let marker = "*".repeat(level + 1);
     format!("{indent}{marker} ")
+}
+
+// == Ordered-list markers
+
+// - Ordered-list styles
+//
+//   level 0, idx 1    -> 2
+//   level 1, idx 0    -> a
+//   level 1, idx 26   -> arm27
+//   level 2, idx 3    -> iv
+//   level 3, idx 1    -> B
+//   level 4, idx 0    -> I
+//   level 5, idx 0    -> 1
+
+/// AsciiDoc's five-level ordered-list style cycle.
+#[derive(Clone, Copy)]
+enum OrderedStyle {
+    Arabic,
+    LowerAlpha,
+    LowerRoman,
+    UpperAlpha,
+    UpperRoman,
+}
+
+impl OrderedStyle {
+    // - Roman numerals
+    //
+    //   4    -> iv
+    //   14   -> xiv
+    //   90   -> xc
+
+    fn roman_of_num(num: usize) -> String {
+        // Labels follow the source renderer's two-digit conversion
+        let units = ["", "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix"];
+        let tens = ["", "x", "xx", "xxx", "xl", "l", "lx", "lxx", "lxxx", "xc"];
+        format!("{}{}", tens[num / 10 % 10], units[num % 10])
+    }
+
+    fn of_level(level: usize) -> OrderedStyle {
+        match level % 5 {
+            0 => OrderedStyle::Arabic,
+            1 => OrderedStyle::LowerAlpha,
+            2 => OrderedStyle::LowerRoman,
+            3 => OrderedStyle::UpperAlpha,
+            _ => OrderedStyle::UpperRoman,
+        }
+    }
+
+    fn marker(self, idx: usize) -> String {
+        let num = idx + 1;
+        match self {
+            OrderedStyle::Arabic => num.to_string(),
+            OrderedStyle::LowerAlpha if idx < 26 => char::from(b'a' + idx as u8).to_string(),
+            OrderedStyle::UpperAlpha if idx < 26 => char::from(b'A' + idx as u8).to_string(),
+            // Alphabetic lists use an explicit fallback beyond the alphabet
+            OrderedStyle::LowerAlpha | OrderedStyle::UpperAlpha => format!("arm{num}"),
+            OrderedStyle::LowerRoman => OrderedStyle::roman_of_num(num),
+            OrderedStyle::UpperRoman => OrderedStyle::roman_of_num(num).to_ascii_uppercase(),
+        }
+    }
+}
+
+impl Block {
+    // - Arm markers
+    //
+    //   Item { 0, Ordered(None), Text("Choose"), Seq([
+    //       Item { 1, Ordered(Some("one")), Fallthrough("two", Derived), Empty },
+    //       Item { 1, Ordered(Some("two")), Text("Done"), Empty },
+    //   ]) }
+    //   -> {"one": "a", "two": "b"}
+
+    /// Maps each ordered arm anchor to the marker displayed for its item.
+    fn anchor_markers(&self) -> BTreeMap<String, String> {
+        let mut markers = BTreeMap::new();
+        self.collect_anchor_markers(&mut markers, &mut BTreeMap::new());
+        markers
+    }
+
+    /// Records arm labels in document order, resetting lists at shallower entries.
+    fn collect_anchor_markers(
+        &self,
+        markers: &mut BTreeMap<String, String>,
+        ordinals: &mut BTreeMap<usize, usize>,
+    ) {
+        match self {
+            Block::Item(Item { level, kind, block_body, .. }) => {
+                // A shallower entry starts new nested lists
+                ordinals.retain(|level_inner, _| level_inner <= level);
+                match kind {
+                    ItemKind::Unordered => {
+                        // End the ordered list at this level
+                        ordinals.remove(level);
+                    }
+                    ItemKind::Ordered(anchor_opt) => {
+                        // Anchored and unanchored entries both advance the ordinal
+                        let ordinal = ordinals.entry(*level).or_default();
+                        if let Some(anchor) = anchor_opt {
+                            let style = OrderedStyle::of_level(*level);
+                            markers.insert(anchor.clone(), style.marker(*ordinal));
+                        }
+                        *ordinal += 1;
+                    }
+                }
+                block_body.collect_anchor_markers(markers, ordinals);
+            }
+            Block::Concat(blocks) | Block::Seq(blocks) => {
+                // Concatenation preserves the enclosing list's position
+                for block in blocks {
+                    block.collect_anchor_markers(markers, ordinals);
+                }
+            }
+            Block::Empty | Block::Raw(_) | Block::Inline(_) | Block::Table(_) => {}
+        }
+    }
 }
 
 // == Anchor resolution
@@ -113,16 +227,21 @@ impl CodeStyle {
     }
 }
 
-/// Per-serialization link resolution and warnings.
+/// Per-serialization anchor labels and warnings.
 struct Serializer<'ctx, 'a> {
     anchor_ctx: &'ctx AnchorContext<'a>,
     warnings: &'ctx mut Vec<Report>,
+    markers: BTreeMap<String, String>,
     warned: BTreeSet<String>,
 }
 
 impl<'ctx, 'a> Serializer<'ctx, 'a> {
-    fn new(anchor_ctx: &'ctx AnchorContext<'a>, warnings: &'ctx mut Vec<Report>) -> Self {
-        Serializer { anchor_ctx, warnings, warned: BTreeSet::new() }
+    fn new(
+        anchor_ctx: &'ctx AnchorContext<'a>,
+        warnings: &'ctx mut Vec<Report>,
+        markers: BTreeMap<String, String>,
+    ) -> Self {
+        Serializer { anchor_ctx, warnings, markers, warned: BTreeSet::new() }
     }
 
     // - Cross-references
@@ -298,6 +417,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
             Prose::Link(link, prose_inner) => {
                 self.ser_link_prose(link_ctx, lint, link, prose_inner)
             }
+            Prose::Fallthrough(target, label) => self.ser_fallthrough_prose(target, label),
             Prose::Seq(proses) => self.ser_seq_prose(link_ctx, lint, proses),
             Prose::Empty => Serializer::ser_empty_prose(),
         }
@@ -341,6 +461,26 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
             self.warn(error::link_body_empty(link));
         }
         self.adoc_link(link, &target, &text)
+    }
+
+    // - Fallthrough prose
+    //
+    //   Fallthrough("t", Explicit("else"))
+    //   -> +++<sub class="bk-mark">[<a href="#t">→ else</a>]</sub>+++
+    //
+    //   Fallthrough("t", Derived), where the arm t has marker b
+    //   -> +++<sub class="bk-mark">[<a href="#t">→ b</a>]</sub>+++
+
+    fn ser_fallthrough_prose(&self, target: &str, label: &FallthroughLabel) -> String {
+        // Derived labels refer to the target arm's displayed ordinal
+        let text = match label {
+            FallthroughLabel::Derived => self
+                .markers
+                .get(target)
+                .unwrap_or_else(|| panic!("no ordered-list marker for arm anchor {target:?}")),
+            FallthroughLabel::Explicit(text) => text,
+        };
+        format!("+++<sub class=\"bk-mark\">[<a href=\"#{target}\">→ {text}</a>]</sub>+++")
     }
 
     // - Prose sequences
@@ -417,15 +557,15 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
 
     // - List items
     //
-    //   Item { 0, Ordered, Text("A"), Empty }
+    //   Item { 0, Ordered(None), Text("A"), Empty }
     //   -> . A
     //
     //   Item { 1, Unordered, Text("B"), Empty }
     //   ->  ** B
     //
-    //   Item { 1, Ordered, Text("If x"),
-    //          Item { 2, Ordered, Text("Return y."), Empty } }
-    //   ->  .. If x
+    //   Item { 1, Ordered(Some("arm")), Text("If x"),
+    //          Item { 2, Ordered(None), Text("Return y."), Empty } }
+    //   ->  .. +++<span class="bk-arm-anchor" id="arm"></span>+++If x
     //        ... Return y.
 
     fn ser_item_block(&mut self, item: &Item) -> String {
@@ -433,10 +573,17 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         let level = *level;
         let text_bullet = match kind {
             ItemKind::Unordered => adoc_unordered_bullet(level),
-            ItemKind::Ordered => adoc_ordered_bullet(level),
+            ItemKind::Ordered(_) => adoc_ordered_bullet(level),
+        };
+        // Only ordered arms emit anchors
+        let text_anchor = match kind {
+            ItemKind::Ordered(Some(anchor)) => {
+                format!("+++<span class=\"bk-arm-anchor\" id=\"{anchor}\"></span>+++")
+            }
+            ItemKind::Ordered(None) | ItemKind::Unordered => String::new(),
         };
         let text_head = self.ser_prose(None, true, prose_head);
-        let mut text = format!("{text_bullet}{text_head}");
+        let mut text = format!("{text_bullet}{text_anchor}{text_head}");
         // Empty bodies leave no trailing newline
         let text_body = self.ser_block(block_body);
         if !text_body.is_empty() {
@@ -499,7 +646,7 @@ pub fn ser_prose(
     warnings: &mut Vec<Report>,
     prose: &Prose,
 ) -> String {
-    let mut serializer = Serializer::new(anchor_ctx, warnings);
+    let mut serializer = Serializer::new(anchor_ctx, warnings, BTreeMap::new());
     serializer.ser_prose(None, true, prose)
 }
 
@@ -507,7 +654,7 @@ pub fn ser_prose(
 pub fn ser_prose_in_link(prose: &Prose) -> String {
     // The empty outer target suppresses direct links as well as subjects
     let anchor_ctx = AnchorContext::default();
-    Serializer::new(&anchor_ctx, &mut Vec::new()).ser_prose(
+    Serializer::new(&anchor_ctx, &mut Vec::new(), BTreeMap::new()).ser_prose(
         Some(&Link::Direct(crate::phrase! { node: "".into(), span: Span::default() })),
         false,
         prose,
@@ -516,16 +663,20 @@ pub fn ser_prose_in_link(prose: &Prose) -> String {
 
 /// Serializes code without monospace markup and collects delimiter warnings.
 pub fn ser_code(anchor_ctx: &AnchorContext<'_>, warnings: &mut Vec<Report>, code: &Code) -> String {
-    let mut serializer = Serializer::new(anchor_ctx, warnings);
+    let mut serializer = Serializer::new(anchor_ctx, warnings, BTreeMap::new());
     serializer.ser_code(None, false, CodeStyle::Plain, code)
 }
 
-/// Serializes a fragment and collects markup warnings.
+/// Resolves arm labels and collects warnings while serializing a fragment.
+///
+/// Derived fallthrough labels must name an ordered arm within this block,
+/// as produced by the PL renderer's arm and next-target construction.
 pub fn ser_block(
     anchor_ctx: &AnchorContext<'_>,
     warnings: &mut Vec<Report>,
     block: &Block,
 ) -> String {
-    let mut serializer = Serializer::new(anchor_ctx, warnings);
+    let markers = block.anchor_markers();
+    let mut serializer = Serializer::new(anchor_ctx, warnings, markers);
     serializer.ser_block(block)
 }
