@@ -185,7 +185,7 @@ builtins, sharing C and the codec caches.
 
 ## Algo through the IL-to-AL specification
 
-`spec-meta/3-algo` specifies the IL-to-AL pass as the relation `Algo_IL`.
+`spec-meta/4-algo` specifies the IL-to-AL pass as the relation `Algo_IL`.
 `Eval_IL_rel` and `Eval_IL_func` convert their IL input with `Algo_IL` and
 evaluate the result with `Eval_AL_rel` and `Eval_AL_func`, so a spec-meta level that accepts IL runs the specification
 above it on AL produced by the specification:
