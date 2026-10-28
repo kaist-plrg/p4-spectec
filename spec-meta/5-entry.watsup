@@ -6,18 +6,33 @@ relation Algo_IL:
   hint(prose_in "converting specification" %0 "to the algorithmic language")
   hint(prose_out %1)
 
-relation Eval_IL:
-  |- specIL id val* : val*
+;; Each entry calls either a relation or a function, never trying both
+
+relation Eval_IL_rel:
+  specIL |- id `( val* `) : val*
   hint(input %0 %1 %2)
   hint(prose_in "converting specification" %0
-                "to AL and calling" %1 "with inputs" %2)
+                "to AL and calling relation" %1 "with inputs" %2)
   hint(prose_out "values" %3)
 
-relation Eval_AL:
-  |- specAL id val* : val*
+relation Eval_IL_func:
+  specIL |- id `( val* `) : val
   hint(input %0 %1 %2)
-  hint(prose_in "calling" %1 "with inputs" %2 "in specification" %0)
+  hint(prose_in "converting specification" %0
+                "to AL and calling function" %1 "with inputs" %2)
+  hint(prose_out "value" %3)
+
+relation Eval_AL_rel:
+  specAL |- id `( val* `) : val*
+  hint(input %0 %1 %2)
+  hint(prose_in "calling relation" %1 "with inputs" %2 "in specification" %0)
   hint(prose_out "values" %3)
+
+relation Eval_AL_func:
+  specAL |- id `( val* `) : val
+  hint(input %0 %1 %2)
+  hint(prose_in "calling function" %1 "with inputs" %2 "in specification" %0)
+  hint(prose_out "value" %3)
 
 rule Algo_IL:
   |- defnIL* : defnAL_guard*
@@ -26,25 +41,24 @@ rule Algo_IL:
   -- (Guard_def: AC |- defnAL : defnAL_guard)*
   -- (Otherwise_pure: |- defnAL_guard)*
 
-rule Eval_IL:
-  |- specIL id val* : val'*
+rule Eval_IL_rel:
+  specIL |- id `( val* `) : val'*
   -- Algo_IL: |- specIL : specAL
-  -- Eval_AL: |- specAL id val* : val'*
+  -- Eval_AL_rel: specAL |- id `( val* `) : val'*
 
-;; The entry is a relation, or a function whose output is the only value
+rule Eval_IL_func:
+  specIL |- id `( val* `) : val'
+  -- Algo_IL: |- specIL : specAL
+  -- Eval_AL_func: specAL |- id `( val* `) : val'
 
-rulegroup Eval_AL {
+rule Eval_AL_rel:
+  specAL |- id `( val* `) : val'*
+  -- if C = $load_ctx($empty_ctx, specAL)
+  -- if relDefnAL = $find_rel(C, id)
+  -- Call_rel: C |- id `( val* `) : OK val'*
 
-  rule Eval_AL/rel:
-    |- specAL id val* : val'*
-    -- if C = $load_ctx($empty_ctx, specAL)
-    -- if relDefnAL = $find_rel(C, id)
-    -- Call_rel: C |- id `( val* `) : OK val'*
-
-  rule Eval_AL/func:
-    |- specAL id val* : val'
-    -- if C = $load_ctx($empty_ctx, specAL)
-    -- if funcDefnAL = $find_func(C, id)
-    -- Call_func: C |- id `< eps `> `( val* `) : OK val'
-
-}
+rule Eval_AL_func:
+  specAL |- id `( val* `) : val'
+  -- if C = $load_ctx($empty_ctx, specAL)
+  -- if funcDefnAL = $find_func(C, id)
+  -- Call_func: C |- id `< eps `> `( val* `) : OK val'

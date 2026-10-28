@@ -1,12 +1,13 @@
 //! Inputs of the native base's entry relation, encoded from the top level down
 //!
-//! The meta specification's `Eval_AL` and `Eval_IL` take a script,
+//! The meta specification's entry relations, such as `Eval_AL_rel`, take a script,
 //! the name of the script's entry, and the entry's inputs as meta values.
 //! For `towers/al-p4.json`, the base calls
-//! `Eval_AL: |- <P4 spec as AL> "Program_inst" <program as val> : val*`.
+//! ``Eval_AL_rel: <P4 spec as AL> |- "Program_inst" `( <program as val> `) : val*``.
 //! Each level above the base wraps the inputs of the level above it this way,
 //! with the level encoded in the language of the level consuming it.
-//! An AL or IL script at the top is entered at its function `main`, with no inputs.
+//! An AL or IL script at the top is entered at its function `main`, with no inputs,
+//! so the level below it uses `Eval_AL_func` or `Eval_IL_func`.
 
 use super::super::{Result, config::Lang};
 use super::{PreparedLevel, Tower};
@@ -29,7 +30,7 @@ const ENTRY_SCRIPT: &str = "main";
 
 // == Helpers
 
-/// Encodes the inputs of `Eval_AL` or `Eval_IL` entering `name` of a script.
+/// Encodes the inputs of an entry relation entering `name` of a script.
 ///
 /// `values` are inputs of `name`, encoded as meta values one level down.
 fn entry_inputs(

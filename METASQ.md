@@ -39,13 +39,13 @@ Run it with the supplied AL tower:
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" }
+    { "specdir": "../spec-meta", "rel": "Eval_AL_func", "lang": "al" }
   ]
 }
 ```
 
-The single level is both top level and native base. Its `Eval_AL` interprets the
-AL script, calling its `main` with no inputs. Builtin calls of the script are answered by the native builtins;
+The single level is both top level and native base. Its `Eval_AL_func` interprets the
+AL script, calling its function `main` with no inputs. Builtin calls of the script are answered by the native builtins;
 other host operations are unsupported.
 Repeat `-p` for ordered specification source paths.
 
@@ -63,7 +63,7 @@ Use the supplied AL/P4 tower:
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" },
+    { "specdir": "../spec-meta", "rel": "Eval_AL_rel", "lang": "al" },
     { "specdir": "../spec", "rel": "Program_inst", "lang": "p4" }
   ]
 }
@@ -71,9 +71,9 @@ Use the supplied AL/P4 tower:
 
 The path is Rust SL interpreter → AL specification → P4 specification →
 P4 program. `Program_inst` type-checks the program and instantiates its
-declarations. The base runs `Eval_AL: |- specAL id val* : val*` natively on
+declarations. The base runs ``Eval_AL_rel: specAL |- id `( val* `) : val*`` natively on
 the P4 specification as AL, the name `"Program_inst"`, and the program
-encoded as a spec-meta `val`; `Eval_AL` calls `Program_inst` through
+encoded as a spec-meta `val`; `Eval_AL_rel` calls `Program_inst` through
 `Call_rel` and outputs its results. A P4 top level takes exactly one `-p` path.
 `towers/al-p4-ok.json` is the same tower entered through `Program_ok`,
 which only type-checks the program.
@@ -122,16 +122,20 @@ interpreted by the level below, so natively it only answers the builtin and
 host calls relayed from below, without consulting its own definitions.
 
 `rel` names the relation entering a level. A level above an `al` or `il` level
-is encoded as the inputs of `Eval_AL` or `Eval_IL` at the level below: the
-specification, its `rel`, and the inputs of that `rel` as `val`s. An `id` naming
-a function, such as the `main` of a script, is called through `Call_func`.
+is encoded as the inputs of an entry relation at the level below: the
+specification, its `rel`, and the inputs of that `rel` as `val`s.
+`Eval_AL_rel` and `Eval_IL_rel` call a relation through `Call_rel`;
+`Eval_AL_func` and `Eval_IL_func` call a function, such as the `main` of a
+script, through `Call_func` and output its value. A level entered through a
+relation of the level above, including every P4 tower, uses the `_rel` entry;
+only the level below a script uses the `_func` entry.
 
 Each `specdir` accepts a specification file or directory and is resolved
 relative to the configuration file. CLI program and include paths are
 resolved relative to the current working directory.
 
 To add an AL interpretation layer, insert another
-`{ "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" }`
+`{ "specdir": "../spec-meta", "rel": "Eval_AL_rel", "lang": "al" }`
 below the top level, as the supplied three-level `al-al-p4.json` does;
 `al-il-p4.json` instead makes the middle level accept IL. A name such as
 `al-al.json` describes another configuration of this kind.
@@ -182,15 +186,15 @@ builtins, sharing C and the codec caches.
 ## Algo through the IL-to-AL specification
 
 `spec-meta/3-algo` specifies the IL-to-AL pass as the relation `Algo_IL`.
-`Eval_IL` converts its IL input with `Algo_IL` and evaluates the result
-with `Eval_AL`, so a spec-meta level that accepts IL runs the specification
+`Eval_IL_rel` and `Eval_IL_func` convert their IL input with `Algo_IL` and
+evaluate the result with `Eval_AL_rel` and `Eval_AL_func`, so a spec-meta level that accepts IL runs the specification
 above it on AL produced by the specification:
 
 ```json
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Eval_IL", "lang": "il" },
+    { "specdir": "../spec-meta", "rel": "Eval_IL_rel", "lang": "il" },
     { "specdir": "../spec", "rel": "Program_inst", "lang": "p4" }
   ]
 }
@@ -201,7 +205,7 @@ Only the base, here the IL-to-AL specification itself, is converted by the
 native `algo` pass; the specification above it reaches native code only
 through its builtin and host calls.
 `towers/il.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
-are the supplied towers entered through `Eval_IL`.
+are the supplied towers entered through `Eval_IL_func` and `Eval_IL_rel`.
 
 ## Execution corpus
 
@@ -226,7 +230,7 @@ names, against the native simulation expectations; it requires the p4c submodule
 The driver's `run` and `sim` subcommands take a configuration name,
 `al` or `il`, which selects the language the towers' base level takes.
 Each suite registers a tower per base; the `-il` targets run the same suites
-through towers entered by `Eval_IL`, so the input is converted by `Algo_IL`
+through towers entered by `Eval_IL_func` or `Eval_IL_rel`, so the input is converted by `Algo_IL`
 instead of the native `algo` pass. They share the expectations of the `al` runs;
 sources whose outcome differs are listed in the `il` exclusions.
 `run` selects suites with `--input al` or `--input p4`,
