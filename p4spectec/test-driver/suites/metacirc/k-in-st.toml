@@ -276,7 +276,10 @@ dir = "k-distribution/tests/regression-new/bytes-memset"
 def = "test.k"
 kompile = ["--syntax-module", "TEST", "--no-exc-wrap", "--type-inference-mode", "checked"]
 krun = ["--no-exc-wrap"]
-programs = ["1.test"]
+programs = [
+  "1.test",
+  "2.test",
+]
 expected = "testdata/k-in-st/regression/bytes-memset"
 
 [[suites]]
@@ -309,7 +312,10 @@ dir = "k-distribution/tests/regression-new/int-llvm"
 def = "llvm-int.k"
 kompile = ["--syntax-module", "LLVM-INT", "--no-exc-wrap", "--type-inference-mode", "checked"]
 krun = ["--no-exc-wrap"]
-programs = ["test2.llvmint"]
+programs = [
+  "test2.llvmint",
+  "test1.llvmint",
+]
 expected = "testdata/k-in-st/regression/int-llvm"
 
 [[suites]]
@@ -320,7 +326,18 @@ dir = "k-distribution/tests/regression-new/int2bytes-no-len"
 def = "test.k"
 kompile = ["--syntax-module", "TEST", "--no-exc-wrap", "--type-inference-mode", "checked"]
 krun = ["--no-exc-wrap"]
-programs = ["14.test"]
+programs = [
+  "14.test",
+  "0.test",
+  "1.test",
+  "2.test",
+  "3.test",
+  "4.test",
+  "10.test",
+  "11.test",
+  "12.test",
+  "13.test",
+]
 expected = "testdata/k-in-st/regression/int2bytes-no-len"
 
 [[suites]]
@@ -342,7 +359,12 @@ dir = "k-distribution/tests/regression-new/list-in-bug"
 def = "list-in.k"
 kompile = ["--no-exc-wrap", "--type-inference-mode", "checked"]
 krun = ["--no-exc-wrap"]
-programs = ["test2.listin"]
+programs = [
+  "test2.listin",
+  "test1.listin",
+  "test3.listin",
+  "test4.listin",
+]
 expected = "testdata/k-in-st/regression/list-in-bug"
 
 [[suites]]
@@ -353,7 +375,19 @@ dir = "k-distribution/tests/regression-new/or-llvm"
 def = "test.k"
 kompile = ["--syntax-module", "TEST", "--no-exc-wrap", "--type-inference-mode", "checked"]
 krun = ["--no-exc-wrap"]
-programs = ["3.test"]
+programs = [
+  "3.test",
+  "1.test",
+  "2.test",
+  "4.test",
+  "5.test",
+  "6.test",
+  "7.test",
+  "8.test",
+  "9.test",
+  "10.test",
+  "11.test",
+]
 expected = "testdata/k-in-st/regression/or-llvm"
 
 [[suites]]
@@ -395,7 +429,12 @@ src = "LLVM_SRC"
 dir = "test"
 def = "defn/test-list-get.kore"
 kore = true
-programs = ["input/test-list-get/11.in"]
+programs = [
+  "input/test-list-get/11.in",
+  "input/test-list-get/00.in",
+  "input/test-list-get/01.in",
+  "input/test-list-get/22.in",
+]
 expected = "testdata/k-in-st/llvm/test-list-get"
 
 [[suites]]
@@ -437,7 +476,26 @@ dir = "pykwasm/src/pykwasm/kdist/wasm-semantics"
 def = "test.md"
 kompile = ["--main-module", "WASM-TEST", "--syntax-module", "WASM-TEST-SYNTAX", "--md-selector", "k", "--gen-glr-bison-parser", "-O3"]
 prepare = ["python3", "-I", "{src}/pykwasm/src/pykwasm/scripts/preprocessor.py"]
-programs = ["{src}/tests/wasm-tests/test/core/local_set.wast", "{src}/tests/wasm-tests/test/core/table.wast", "{src}/tests/simple/bitwise.wast", "{src}/tests/simple/constants.wast", "{src}/tests/simple/f64-cs.wast", "{src}/tests/simple/f64_bitwise-cs.wast", "{src}/tests/simple/f64_cmp-cs.wast", "{src}/tests/simple/modules.wast"]
+programs = [
+  "{src}/tests/wasm-tests/test/core/local_set.wast",
+  "{src}/tests/wasm-tests/test/core/table.wast",
+  "{src}/tests/simple/bitwise.wast",
+  "{src}/tests/simple/constants.wast",
+  "{src}/tests/simple/f64-cs.wast",
+  "{src}/tests/simple/f64_bitwise-cs.wast",
+  "{src}/tests/simple/f64_cmp-cs.wast",
+  "{src}/tests/simple/modules.wast",
+  "{src}/tests/simple/comments.wast",
+  "{src}/tests/simple/identifiers.wast",
+  "{src}/tests/simple/branching.wast",
+  "{src}/tests/simple/variables.wast",
+  "{src}/tests/simple/polymorphic.wast",
+  "{src}/tests/simple/start.wast",
+  "{src}/tests/simple/imports.wast",
+  "{src}/tests/wasm-tests/test/core/type.wast",
+  "{src}/tests/wasm-tests/test/core/ref_null.wast",
+  "{src}/tests/wasm-tests/test/core/binary-leb128.wast",
+]
 expected = "testdata/k-in-st/kwasm"
 
 # evm-semantics 866e563, with ethereum-tests c30599fb; the KRYPTO plugin is built
@@ -454,6 +512,10 @@ init = ["uv", "run", "--project", "{src}/kevm-pyk", "python", "testdata/k-in-st/
 programs = [
   "{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/arith.json#arith_d0g0v0_Cancun",
   "{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/vmBitwiseLogicOperation/byte.json#byte_d0g0v0_Cancun",
+  "{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/vmIOandFlowOperations/pop.json#pop_d1g0v0_Cancun",
+  "{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/vmIOandFlowOperations/mload.json#mload_d1g0v0_Cancun",
+  "{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/vmIOandFlowOperations/gas.json#gas_d1g0v0_Cancun",
+  "{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/vmIOandFlowOperations/pc.json#pc_d0g0v0_Cancun",
 ]
 expected = "testdata/k-in-st/kevm"
 
@@ -466,5 +528,11 @@ dir = "kmir/src/kmir/kdist/mir-semantics"
 def = "kmir.md"
 kompile = ["-I", "{src}/kmir/src/kmir/kdist", "--syntax-module", "KMIR-AST", "--md-selector", "k & ! symbolic", "-O2", "-w2e", "--emit-json"]
 init = ["uv", "run", "--project", "{src}/kmir", "python", "testdata/k-in-st/kmir/init.py", "{kompiled}", "{program}", "{output}"]
-programs = ["{src}/kmir/src/tests/integration/data/exec-smir/pointers/offset_write.smir.json#offset_write"]
+programs = [
+  "{src}/kmir/src/tests/integration/data/exec-smir/pointers/offset_write.smir.json#offset_write",
+  "{src}/kmir/src/tests/integration/data/exec-smir/references/static_reference.smir.json#static_reference",
+  "{src}/kmir/src/tests/integration/data/exec-smir/references/simple.smir.json#simple",
+  "{src}/kmir/src/tests/integration/data/exec-smir/main-a-b-c/main-a-b-c.smir.json#main-a-b-c",
+  "{src}/kmir/src/tests/integration/data/exec-smir/call-with-args/main-a-b-with-int.smir.json#main-a-b-with-int",
+]
 expected = "testdata/k-in-st/kmir"
