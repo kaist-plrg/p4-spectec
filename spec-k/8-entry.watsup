@@ -28,21 +28,16 @@ rule Run/step:
   -- Step: D |- term : OK term'
   -- Run: D |- term' $(n + 1) n_max? ~>* runres
 
-;; Starting from a definition: the initial term is evaluated (a call of
-;; initGeneratedTopCell), then rewritten.
+;; krun: the definition is loaded from KORE (3-load), the initial term is
+;; evaluated (a call of initGeneratedTopCell), then rewritten
 
-rule Start/run:
-  D |- pattern n_max? : runres
-  -- Eval: D $empty_map<varid, term> |- pattern : OK term
+rule Krun/run:
+  KD |- kore n_max? : runres
+  -- if D = $load(KD)
+  -- Eval: D $empty_map<varid, term> |- $pattern(kore) : OK term
   -- Run: D |- term 0 n_max? ~>* runres
 
-rule Start/initfail:
-  D |- pattern n_max? : INITFAIL
-  -- Eval: D $empty_map<varid, term> |- pattern : ERROR
-
-;; krun: the definition is loaded from KORE (3-load), then run from the
-;; initial term
-
-rule Krun:
-  KD |- kore n_max? : runres
-  -- Start: $load(KD) |- $pattern(kore) n_max? : runres
+rule Krun/initfail:
+  KD |- kore n_max? : INITFAIL
+  -- if D = $load(KD)
+  -- Eval: D $empty_map<varid, term> |- $pattern(kore) : ERROR
