@@ -9,24 +9,24 @@
 ;; Rewriting from a configuration after n steps, up to n_max steps: a step,
 ;; then on from the next configuration
 
-rule Run/limit:
+rule Rewrite/limit:
   D |- term n (n) ~>* FINAL n term
 
-rule Run/final:
+rule Rewrite/final:
   D |- term n n_max? ~>* FINAL n term
   -- if n_max? =/= (n)
   -- Step: D |- term : UNMATCH
 
-rule Run/error:
+rule Rewrite/error:
   D |- term n n_max? ~>* ERROR n term
   -- if n_max? =/= (n)
   -- Step: D |- term : ERROR
 
-rule Run/step:
+rule Rewrite/step:
   D |- term n n_max? ~>* runres
   -- if n_max? =/= (n)
   -- Step: D |- term : OK term'
-  -- Run: D |- term' $(n + 1) n_max? ~>* runres
+  -- Rewrite: D |- term' $(n + 1) n_max? ~>* runres
 
 ;; krun: the definition is loaded from KORE (3-load), the initial term is
 ;; evaluated (a call of initGeneratedTopCell), then rewritten
@@ -35,7 +35,7 @@ rule Krun/run:
   KD |- kore n_max? : runres
   -- if D = $load(KD)
   -- Eval: D $empty_map<varid, term> |- $pattern(kore) : OK term
-  -- Run: D |- term 0 n_max? ~>* runres
+  -- Rewrite: D |- term 0 n_max? ~>* runres
 
 rule Krun/initfail:
   KD |- kore n_max? : INITFAIL
