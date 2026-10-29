@@ -1,0 +1,43 @@
+;;
+;; Running a program: krun
+;;
+;;
+
+;;; As the interpreter krun calls: evaluate the initial term, a call of
+;;; initGeneratedTopCell, then rewrite until no rule applies or --depth
+
+;; Rewriting from a configuration after n steps, up to n_max steps: a step,
+;; then on from the next configuration
+
+rule Steps/limit:
+  D |- term n (n) ~>* FINAL n term
+
+rule Steps/final:
+  D |- term n n_max? ~>* FINAL n term
+  -- if n_max? =/= (n)
+  -- Step: D |- term : UNMATCH
+
+rule Steps/error:
+  D |- term n n_max? ~>* ERROR n term
+  -- if n_max? =/= (n)
+  -- Step: D |- term : ERROR
+
+rule Steps/step:
+  D |- term n n_max? ~>* runres
+  -- if n_max? =/= (n)
+  -- Step: D |- term : OK term'
+  -- Steps: D |- term' $(n + 1) n_max? ~>* runres
+
+;; krun: the definition is loaded from KORE (3-load), the initial term is
+;; evaluated (a call of initGeneratedTopCell), then rewritten
+
+rule Krun/run:
+  KD |- kore n_max? : runres
+  -- if D = $load(KD)
+  -- Eval: D $empty_map<varid, term> |- $pattern(kore) : OK term
+  -- Steps: D |- term 0 n_max? ~>* runres
+
+rule Krun/initfail:
+  KD |- kore n_max? : INITFAIL
+  -- if D = $load(KD)
+  -- Eval: D $empty_map<varid, term> |- $pattern(kore) : ERROR

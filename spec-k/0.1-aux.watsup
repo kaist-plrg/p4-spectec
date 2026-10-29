@@ -1,0 +1,70 @@
+;;
+;; Auxiliary definitions on top of 0.0-stdlib, a copy of spec-meta's
+;; standard library (spec-meta/0-aux/0.0-stdlib.watsup)
+;;
+
+;; Results, in the words of P4-SpecTec² (spec-meta/2-runtime/2.3-result):
+;; a value, no match, or an error. An error is a function that is stuck, which
+;; ends the run (abort_when_stuck of the LLVM backend)
+
+syntax ok<X> = OK X
+syntax error = ERROR
+syntax unmatch = UNMATCH
+syntax failure = error | unmatch
+
+;; What evaluation gives: a value or an error
+
+syntax res<X> = ok<X> | error
+
+;; Whether a clause applies: its left-hand sides match and its requires clause
+;; holds, they do not, or the requires clause cannot be evaluated
+
+syntax applies<X> = ok<X> | failure
+
+;; Set and map builtins, implemented in p4spectec/src/interface/builtin
+;; (declared the same way in spec/0-aux)
+
+builtin dec $diff_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in %0 "without the elements of" %1)
+
+builtin dec $update_map<K, V>(map<K, V>, K, V) : map<K, V>
+  hint(prose_in %0 "where" %1 "is updated to" %2)
+
+builtin dec $union_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in "the union of" %0 "and" %1)
+
+builtin dec $intersect_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in "the intersection of" %0 "and" %1)
+
+;; A set in order: its elements sorted, each once, as the set builtins give
+;; their results. A set written out, `{ X* `}, has its elements as written,
+;; and $update_map adds a new entry at the end of a map.
+
+dec $sorted_set<X>(set<X>) : set<X>
+  hint(prose_in %0 "in order")
+def $sorted_set<X>(`{ X* `}) = $union_set<X>(`{ X* `}, `{ eps `})
+
+;; A number not given before: 0, 1, 2, ... The one builtin with a state, as
+;; $fresh_typeId of the P4 spec; the interpreter does not cache a call that
+;; takes one.
+
+builtin dec $fresh_nat() : nat
+  hint(prose_in "a new number")
+
+;; Text builtins, for reading hook names and priorities (3-load): a KORE
+;; string has one byte per character
+
+builtin dec $has_prefix(text, text) : bool
+  hint(prose_true %0 "begins with" %1)
+builtin dec $string_to_int(text) : int?
+  hint(prose_in "the integer written in decimal as" %0)
+
+;; An integer as a natural number, when it is not negative (hooks fail on a
+;; negative length, index, or shift amount)
+
+dec $nat_of(int) : nat?
+def $nat_of(i) = n
+  -- if i <: nat
+  -- if n = i
+def $nat_of(i) = eps
+  -- otherwise

@@ -1,12 +1,13 @@
 # K definitions run through spec-k and compared with krun: `k-in-st <config>`
 # (make test-metacirc-k-in-st).
 #
-# A configuration selects the `base` of the tower (spec-k is converted by the
-# native `algo` pass, so `al`), memoization (`cache`), and determinism checking (`det`).
-# Each suite names the K-in-ST tower per base and `root`, its directory of cases:
-# a K definition compiled to KORE, initial terms krun made for programs,
-# and the final configurations krun printed for them.
-# A configuration with `pending` is skipped without failing until its implementation lands.
+# A configuration selects the `base` of the tower, memoization (`cache`),
+# and determinism checking (`det`).
+# A suite names its definitions: `root`, a directory of cases written for spec-k,
+# or `def` in `dir` of the checkout that the environment variable `src` names
+# (a suite whose variable is not set is skipped). The layout of a case and the
+# other options are in test-driver/src/metacirc/k_in_st/suite.rs.
+# Running needs K; KRUN_EXPECT=1 writes what krun gives.
 # Paths are relative to the repository root.
 
 [[configs]]
@@ -14,9 +15,515 @@ name = "sl"
 base = "al"
 cache = true
 det = true
-pending = "K-in-ST: spec-k over KORE, see docs/metacirc/k-in-st.md"
 
+# Left out, as known differences from krun: behavior/choice,
+# behavior/fresh-in-function, behavior/updatelist-index0
 [[suites]]
 name = "manual"
 towers = { al = "towers/k-in-st.json" }
 root = "testdata/k-in-st/manual"
+
+# The K tutorial, K v7.1.337
+[[suites]]
+name = "imp"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/2_imp/lesson_4"
+def = "imp.k"
+kompile = ["--gen-glr-bison-parser"]
+programs = ["tests/primes.imp", "tests/sum.imp", "tests/collatz.imp"]
+expected = "testdata/k-in-st/imp"
+
+[[suites]]
+name = "lambda"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/1_lambda/lesson_8"
+def = "lambda.k"
+kompile = ["--gen-glr-bison-parser"]
+programs = [
+  "tests/factorial-letrec.lambda",
+  "tests/free-variable-capture.lambda",
+  "tests/identity.lambda",
+  "tests/closed-variable-capture.lambda",
+  "tests/if.lambda",
+  "tests/arithmetic.lambda",
+  "tests/lets.lambda",
+  "tests/factorial-let.lambda",
+  "tests/factorial-let-fix.lambda",
+  "tests/fibbo.lambda",
+]
+expected = "testdata/k-in-st/lambda"
+
+[[suites]]
+name = "simple"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/1_untyped"
+def = "simple-untyped.md"
+krun = ["--io", "off"]
+programs = [
+  "tests/exceptions/exceptions_14.simple",
+  "tests/exceptions/exceptions_15.simple",
+  "tests/exceptions/exceptions_13.simple",
+  "tests/threads/threads_02.simple",
+  "tests/threads/threads_01.simple",
+  "tests/exceptions/exceptions_10.simple",
+  "tests/diverse/div-nondet.simple",
+  "tests/threads/threads_04.simple",
+  "tests/threads/threads_09.simple",
+  "tests/exceptions/exceptions_02.simple",
+  "tests/exceptions/exceptions_07.simple",
+  "tests/threads/threads_10.simple",
+  "tests/exceptions/exceptions_03.simple",
+  "tests/exceptions/exceptions_04.simple",
+  "tests/exceptions/exceptions_01.simple",
+  "tests/exceptions/exceptions_09.simple",
+  "tests/threads/threads_11.simple",
+  "tests/threads/threads_06.simple",
+  "tests/threads/threads_07.simple",
+  "tests/exceptions/exceptions_12.simple",
+  "tests/exceptions/exceptions_08.simple",
+  "tests/exceptions/exceptions_11.simple",
+  "tests/diverse/factorial.simple",
+  "tests/exceptions/exceptions_06.simple",
+  "tests/exceptions/exceptions_05.simple",
+  "tests/threads/threads_12.simple",
+]
+expected = "testdata/k-in-st/simple"
+
+[[suites]]
+name = "kool"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/1_untyped"
+def = "kool-untyped.md"
+krun = ["--io", "off"]
+programs = [
+  "tests/hello-world.kool",
+  "tests/field.kool",
+  "tests/exceptions-1.kool",
+  "tests/this-explicit.kool",
+  "tests/this-implicit.kool",
+  "tests/new.kool",
+  "tests/super-1.kool",
+  "tests/return-object.kool",
+  "tests/field-shadowing-2.kool",
+  "tests/dynamic-dispatch-1.kool",
+  "tests/cast-1.kool",
+  "tests/new-in-field.kool",
+  "tests/dynamic-dispatch-2.kool",
+  "tests/exceptions-2.kool",
+  "tests/field-shadowing-1.kool",
+  "tests/super-3.kool",
+  "tests/constructor.kool",
+  "tests/instanceOf.kool",
+  "tests/method-sharing.kool",
+  "tests/tree-sum.kool",
+  "tests/cast-2.kool",
+  "tests/dynamic-dispatch-3.kool",
+  "tests/point.kool",
+  "tests/odd-even.kool",
+]
+expected = "testdata/k-in-st/kool"
+
+[[suites]]
+name = "lambda++"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/3_lambda++/lesson_5"
+def = "lambda.k"
+kompile = ["--syntax-module", "LAMBDA"]
+programs = [
+  "tests/nondeterministic/arithmetic-div-zero.lambda",
+  "tests/nondeterministic/free-variable-capture.lambda",
+  "tests/nondeterministic/identity.lambda",
+  "tests/nondeterministic/if.lambda",
+  "tests/nondeterministic/arithmetic.lambda",
+  "tests/nondeterministic/closed-variable-capture.lambda",
+  "tests/nondeterministic/callcc-env1.lambda",
+  "tests/nondeterministic/callcc-with-let.lambda",
+  "tests/nondeterministic/callcc-env2.lambda",
+  "tests/nondeterministic/lets.lambda",
+  "tests/deterministic/factorial-letrec.lambda",
+  "tests/deterministic/factorial-let.lambda",
+  "tests/deterministic/factorial-let-fix.lambda",
+  "tests/deterministic/fibbo.lambda",
+]
+expected = "testdata/k-in-st/lambda++"
+
+[[suites]]
+name = "imp++"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/4_imp++/lesson_7"
+def = "imp.k"
+kompile = ["--gen-glr-bison-parser"]
+krun = ["--io", "off"]
+programs = [
+  "tests/io.imp",
+  "tests/div.imp",
+  "tests/spawn.imp",
+  "tests/locals.imp",
+  "tests/sum-io.imp",
+  "tests/sum.imp",
+]
+expected = "testdata/k-in-st/imp++"
+
+[[suites]]
+name = "simple-typed-static"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/2_typed/1_static"
+def = "simple-typed-static.md"
+inputs = "tests"
+programs = [
+  "../programs/exceptions/exceptions_13.simple",
+  "../programs/exceptions/exceptions_14.simple",
+  "../programs/diverse/div-nondet.simple",
+  "../programs/threads/threads_01.simple",
+  "../programs/threads/threads_02.simple",
+  "../programs/exceptions/exceptions_10.simple",
+  "../programs/exceptions/exceptions_15.simple",
+  "../programs/exceptions/exceptions_07.simple",
+]
+expected = "testdata/k-in-st/simple-typed-static"
+
+[[suites]]
+name = "simple-typed-dynamic"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/2_typed/2_dynamic"
+def = "simple-typed-dynamic.md"
+inputs = "tests"
+krun = ["--io", "off"]
+programs = [
+  "../programs/exceptions/exceptions_14.simple",
+  "../programs/exceptions/exceptions_15.simple",
+  "../programs/exceptions/exceptions_13.simple",
+  "../programs/threads/threads_01.simple",
+  "../programs/threads/threads_02.simple",
+  "../programs/diverse/div-nondet.simple",
+  "../programs/exceptions/exceptions_10.simple",
+  "../programs/threads/threads_09.simple",
+  "../programs/exceptions/exceptions_07.simple",
+  "../programs/exceptions/exceptions_02.simple",
+  "../programs/threads/threads_10.simple",
+  "../programs/exceptions/exceptions_16.simple",
+  "../programs/exceptions/exceptions_03.simple",
+  "../programs/exceptions/exceptions_04.simple",
+  "../programs/exceptions/exceptions_01.simple",
+  "../programs/exceptions/exceptions_09.simple",
+  "../programs/threads/threads_11.simple",
+  "../programs/threads/threads_06.simple",
+  "../programs/threads/threads_07.simple",
+  "../programs/exceptions/exceptions_12.simple",
+  "../programs/exceptions/exceptions_08.simple",
+  "../programs/exceptions/exceptions_11.simple",
+  "../programs/diverse/factorial.simple",
+  "../programs/exceptions/exceptions_06.simple",
+  "../programs/exceptions/exceptions_05.simple",
+]
+expected = "testdata/k-in-st/simple-typed-dynamic"
+
+[[suites]]
+name = "kool-typed-dynamic"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/2_typed/1_dynamic"
+def = "kool-typed-dynamic.md"
+inputs = "tests"
+krun = ["--io", "off"]
+programs = ["../programs/hello-world.kool"]
+expected = "testdata/k-in-st/kool-typed-dynamic"
+
+[[suites]]
+name = "kool-typed-static"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/2_typed/2_static"
+def = "kool-typed-static.md"
+inputs = "tests"
+krun = ["--io", "off"]
+programs = ["../programs/hello-world.kool"]
+expected = "testdata/k-in-st/kool-typed-static"
+
+[[suites]]
+name = "fun"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/3_fun/1_untyped/1_environment"
+def = "fun-untyped.md"
+inputs = "tests"
+programs = ["../../programs/empty-argument-2.fun", "../../programs/tuple-2.fun"]
+expected = "testdata/k-in-st/fun"
+
+# Regression tests of K, k-distribution/tests/regression-new
+[[suites]]
+name = "regression/bytes-memset"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/bytes-memset"
+def = "test.k"
+kompile = ["--syntax-module", "TEST", "--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = [
+  "1.test",
+  "2.test",
+]
+expected = "testdata/k-in-st/regression/bytes-memset"
+
+[[suites]]
+name = "regression/f32-mul"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/f32-mul"
+def = "float-mul.k"
+kompile = ["--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = ["1.mul"]
+expected = "testdata/k-in-st/regression/f32-mul"
+
+[[suites]]
+name = "regression/group"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/group"
+def = "test.k"
+kompile = ["--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = ["1.test"]
+expected = "testdata/k-in-st/regression/group"
+
+[[suites]]
+name = "regression/int-llvm"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/int-llvm"
+def = "llvm-int.k"
+kompile = ["--syntax-module", "LLVM-INT", "--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = [
+  "test2.llvmint",
+  "test1.llvmint",
+]
+expected = "testdata/k-in-st/regression/int-llvm"
+
+[[suites]]
+name = "regression/int2bytes-no-len"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/int2bytes-no-len"
+def = "test.k"
+kompile = ["--syntax-module", "TEST", "--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = [
+  "14.test",
+  "0.test",
+  "1.test",
+  "2.test",
+  "3.test",
+  "4.test",
+  "10.test",
+  "11.test",
+  "12.test",
+  "13.test",
+]
+expected = "testdata/k-in-st/regression/int2bytes-no-len"
+
+[[suites]]
+name = "regression/issue-1186"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/issue-1186"
+def = "test.k"
+kompile = ["--syntax-module", "TEST", "--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = ["1.test"]
+expected = "testdata/k-in-st/regression/issue-1186"
+
+[[suites]]
+name = "regression/list-in-bug"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/list-in-bug"
+def = "list-in.k"
+kompile = ["--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = [
+  "test2.listin",
+  "test1.listin",
+  "test3.listin",
+  "test4.listin",
+]
+expected = "testdata/k-in-st/regression/list-in-bug"
+
+[[suites]]
+name = "regression/or-llvm"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/or-llvm"
+def = "test.k"
+kompile = ["--syntax-module", "TEST", "--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = [
+  "3.test",
+  "1.test",
+  "2.test",
+  "4.test",
+  "5.test",
+  "6.test",
+  "7.test",
+  "8.test",
+  "9.test",
+  "10.test",
+  "11.test",
+]
+expected = "testdata/k-in-st/regression/or-llvm"
+
+[[suites]]
+name = "regression/string_escape"
+towers = { al = "towers/k-in-st.json" }
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/string_escape"
+def = "a.k"
+kompile = ["--syntax-module", "A", "--no-exc-wrap", "--type-inference-mode", "checked"]
+krun = ["--no-exc-wrap"]
+programs = ["1.a"]
+expected = "testdata/k-in-st/regression/string_escape"
+
+# Tests of the LLVM backend, llvm-backend f02284f
+[[suites]]
+name = "llvm/lambda-anywhere"
+towers = { al = "towers/k-in-st.json" }
+src = "LLVM_SRC"
+dir = "test"
+def = "defn/lambda-anywhere.kore"
+kore = true
+programs = ["input/lambda-anywhere/closed-variable-capture.in"]
+expected = "testdata/k-in-st/llvm/lambda-anywhere"
+
+[[suites]]
+name = "llvm/non-exec"
+towers = { al = "towers/k-in-st.json" }
+src = "LLVM_SRC"
+dir = "test"
+def = "defn/non-exec.kore"
+kore = true
+programs = ["input/non-exec.in"]
+expected = "testdata/k-in-st/llvm/non-exec"
+
+[[suites]]
+name = "llvm/test-list-get"
+towers = { al = "towers/k-in-st.json" }
+src = "LLVM_SRC"
+dir = "test"
+def = "defn/test-list-get.kore"
+kore = true
+programs = [
+  "input/test-list-get/11.in",
+  "input/test-list-get/00.in",
+  "input/test-list-get/01.in",
+  "input/test-list-get/22.in",
+]
+expected = "testdata/k-in-st/llvm/test-list-get"
+
+[[suites]]
+name = "llvm/test4"
+towers = { al = "towers/k-in-st.json" }
+src = "LLVM_SRC"
+dir = "test"
+def = "defn/test4.kore"
+kore = true
+programs = ["input/test4.in"]
+expected = "testdata/k-in-st/llvm/test4"
+
+[[suites]]
+name = "llvm/test6"
+towers = { al = "towers/k-in-st.json" }
+src = "LLVM_SRC"
+dir = "test"
+def = "defn/test6.kore"
+kore = true
+programs = ["input/test6.in"]
+expected = "testdata/k-in-st/llvm/test6"
+
+[[suites]]
+name = "llvm/wasm-maps"
+towers = { al = "towers/k-in-st.json" }
+src = "LLVM_SRC"
+dir = "test"
+def = "defn/wasm-maps.kore"
+kore = true
+programs = ["input/wasm-maps.in"]
+expected = "testdata/k-in-st/llvm/wasm-maps"
+
+# wasm-semantics 212271b
+[[suites]]
+name = "kwasm"
+towers = { al = "towers/k-in-st.json" }
+src = "KWASM_SRC"
+dir = "pykwasm/src/pykwasm/kdist/wasm-semantics"
+def = "test.md"
+kompile = ["--main-module", "WASM-TEST", "--syntax-module", "WASM-TEST-SYNTAX", "--md-selector", "k", "--gen-glr-bison-parser", "-O3"]
+prepare = ["python3", "-I", "{src}/pykwasm/src/pykwasm/scripts/preprocessor.py"]
+programs = [
+  "{src}/tests/wasm-tests/test/core/local_set.wast",
+  "{src}/tests/wasm-tests/test/core/table.wast",
+  "{src}/tests/simple/bitwise.wast",
+  "{src}/tests/simple/constants.wast",
+  "{src}/tests/simple/f64-cs.wast",
+  "{src}/tests/simple/f64_bitwise-cs.wast",
+  "{src}/tests/simple/f64_cmp-cs.wast",
+  "{src}/tests/simple/modules.wast",
+  "{src}/tests/simple/comments.wast",
+  "{src}/tests/simple/identifiers.wast",
+  "{src}/tests/simple/branching.wast",
+  "{src}/tests/simple/variables.wast",
+  "{src}/tests/simple/polymorphic.wast",
+  "{src}/tests/simple/start.wast",
+  "{src}/tests/simple/imports.wast",
+  "{src}/tests/wasm-tests/test/core/type.wast",
+  "{src}/tests/wasm-tests/test/core/ref_null.wast",
+  "{src}/tests/wasm-tests/test/core/binary-leb128.wast",
+]
+expected = "testdata/k-in-st/kwasm"
+
+# evm-semantics 866e563, with ethereum-tests c30599fb; the KRYPTO plugin is built
+# once in the checkout
+[[suites]]
+name = "kevm"
+towers = { al = "towers/k-in-st.json" }
+src = "KEVM_SRC"
+dir = "kevm-pyk/src/kevm_pyk/kproj/evm-semantics"
+def = "driver.md"
+kompile = ["--main-module", "ETHEREUM-SIMULATION", "--syntax-module", "ETHEREUM-SIMULATION", "-I", "{src}/kevm-pyk/src/kevm_pyk/kproj/evm-semantics", "-I", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin", "--md-selector", "k & ! symbolic", "--hook-namespaces", "JSON KRYPTO", "--emit-json", "-O3", "--type-inference-mode", "simplesub", "-ccopt", "-std=c++20", "-ccopt", "-lssl", "-ccopt", "-lcrypto", "-ccopt", "-lsecp256k1", "-ccopt", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a"]
+runtime = ["-std=c++20", "-lssl", "-lcrypto", "-lsecp256k1", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a"]
+init = ["uv", "run", "--project", "{src}/kevm-pyk", "python", "testdata/k-in-st/kevm/init.py", "{program}", "{name}", "{output}"]
+programs = [
+  "{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/vmArithmeticTest/arith.json#arith_d0g0v0_Cancun",
+  "{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/vmBitwiseLogicOperation/byte.json#byte_d0g0v0_Cancun",
+  "{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/vmIOandFlowOperations/pop.json#pop_d1g0v0_Cancun",
+  "{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/vmIOandFlowOperations/mload.json#mload_d1g0v0_Cancun",
+  "{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/vmIOandFlowOperations/gas.json#gas_d1g0v0_Cancun",
+  "{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/vmIOandFlowOperations/pc.json#pc_d0g0v0_Cancun",
+]
+expected = "testdata/k-in-st/kevm"
+
+# mir-semantics 4d79325
+[[suites]]
+name = "kmir"
+towers = { al = "towers/k-in-st.json" }
+src = "KMIR_SRC"
+dir = "kmir/src/kmir/kdist/mir-semantics"
+def = "kmir.md"
+kompile = ["-I", "{src}/kmir/src/kmir/kdist", "--syntax-module", "KMIR-AST", "--md-selector", "k & ! symbolic", "-O2", "-w2e", "--emit-json"]
+init = ["uv", "run", "--project", "{src}/kmir", "python", "testdata/k-in-st/kmir/init.py", "{kompiled}", "{program}", "{output}"]
+programs = [
+  "{src}/kmir/src/tests/integration/data/exec-smir/pointers/offset_write.smir.json#offset_write",
+  "{src}/kmir/src/tests/integration/data/exec-smir/references/static_reference.smir.json#static_reference",
+  "{src}/kmir/src/tests/integration/data/exec-smir/references/simple.smir.json#simple",
+  "{src}/kmir/src/tests/integration/data/exec-smir/main-a-b-c/main-a-b-c.smir.json#main-a-b-c",
+  "{src}/kmir/src/tests/integration/data/exec-smir/call-with-args/main-a-b-with-int.smir.json#main-a-b-with-int",
+]
+expected = "testdata/k-in-st/kmir"
