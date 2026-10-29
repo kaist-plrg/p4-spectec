@@ -68,13 +68,11 @@ struct Cli {
 /// Runs the selected command from the repository root.
 fn execute(cli: Cli) -> Result<()> {
     // Refuse baseline promotion before discovering or executing any inputs
-    if !matches!(
-        cli.command,
-        Command::Elab | Command::Algo | Command::Prose | Command::KInSt { .. }
-    ) && std::env::var_os("UPDATE_EXPECT").is_some()
+    if !matches!(cli.command, Command::Elab | Command::Algo | Command::Prose)
+        && std::env::var_os("UPDATE_EXPECT").is_some()
     {
         return Err(Error::from(
-            "UPDATE_EXPECT is supported only for metacirc elab, algo, prose, and k-in-st",
+            "UPDATE_EXPECT is supported only for metacirc elab, algo, and prose",
         ));
     }
     // Resolve the log directory before changing to the specification repository

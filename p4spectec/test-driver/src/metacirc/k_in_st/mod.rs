@@ -8,7 +8,7 @@
 //! line (steps, how the run ended) and configurations equal in normal form.
 //! A run that ends elsewhere passes by search if its final configuration is one
 //! of `<program>.search`, the finals K allows, as where rules of the same priority both apply.
-//! `UPDATE_EXPECT=1` writes `<program>.out` from krun's own run, and `<program>.search`
+//! `KRUN_EXPECT=1` writes `<program>.out` from krun's own run, and `<program>.search`
 //! where the run still differs (`krun`).
 //!
 //! Three pieces only work around K's tools, apart from the semantics: `krun`
@@ -63,7 +63,7 @@ pub fn run(name_config: &str, name_suite: Option<&str>) -> Result<()> {
     {
         return Err(Error::from(format!("unknown K-in-ST suite {name}")));
     }
-    let update = std::env::var_os("UPDATE_EXPECT").is_some();
+    let update = std::env::var_os("KRUN_EXPECT").is_some();
     let text_mode = format!("metacirc k-in-st {}", config.describe());
     let start = Instant::now();
     let mut executed = 0;
@@ -136,7 +136,7 @@ fn check(
         fs::write(&path_expected, output + "\n")?;
     }
     let expected = fs::read_to_string(&path_expected).map_err(|error| {
-        Error::from(format!("{}: {error} (UPDATE_EXPECT=1 writes it)", path_expected.display()))
+        Error::from(format!("{}: {error} (KRUN_EXPECT=1 writes it)", path_expected.display()))
     })?;
     let paths_program = [case.path_definition(), path_init.clone()];
     let output = metacirc::krun(tower, &paths_program, options, depth)

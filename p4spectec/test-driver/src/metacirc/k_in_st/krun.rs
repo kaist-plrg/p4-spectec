@@ -1,4 +1,4 @@
-//! What krun gives for a program, for `UPDATE_EXPECT=1`
+//! What krun gives for a program, for `KRUN_EXPECT=1`
 //!
 //! `Case::krun` runs the kompiled interpreter as krun does, with `--statistics`,
 //! and writes the run as `print_runres` prints one; `Case::search` writes the
