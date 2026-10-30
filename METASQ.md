@@ -236,6 +236,9 @@ sources whose outcome differs are listed in the `il` exclusions.
 `run` selects suites with `--input al` or `--input p4`,
 and both select one registered suite with `--suite <NAME>`,
 for example `run al --suite neg-run` or `sim il --suite v1model-regression`.
+With `--timeout <SECONDS>`, a worker process runs each source and is restarted
+after a source that does not finish in time, which is recorded as `timeout`;
+`p4spectec-test run` and `sim` take the same option.
 
 ## Specification snapshots
 
