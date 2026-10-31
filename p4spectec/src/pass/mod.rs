@@ -53,6 +53,15 @@ pub fn elab_with_warnings(paths: &[PathBuf]) -> (Result<il::ast::Spec, Error>, V
     elaborate::convert_with_warnings(spec_el)
 }
 
+/// Parses specification paths and elaborates only their type definitions.
+///
+/// Relations, functions, and their bodies are left out,
+/// for consumers that need only the types, such as the P4 `print_` unparser.
+pub fn elab_typs(paths: &[PathBuf]) -> Result<il::ast::Spec, Error> {
+    let spec_el = parse_files(paths)?;
+    elaborate::convert_typs(spec_el)
+}
+
 /// Parses, elaborates, and converts specification paths into AL.
 pub fn algo(paths: &[PathBuf]) -> Result<al::ast::Spec, Error> {
     algo_with_warnings(paths).0

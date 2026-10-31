@@ -54,6 +54,8 @@ fn spec_encoded(arena: &mut Arena, level: &PreparedLevel) -> Result<Value> {
         PreparedLevel::Al { spec_al, .. } => spec_al.encode(arena),
         // An IL consumer converts the IL itself
         PreparedLevel::Il { spec_il, .. } => spec_il.encode(arena),
+        // An EL consumer elaborates and converts the EL itself
+        PreparedLevel::El { spec_el, .. } => spec_el.encode(arena),
         PreparedLevel::Base { .. } => unreachable!("the base is never passed to another level"),
     };
     encoded.map_err(Error::into_report)
@@ -70,7 +72,7 @@ impl<Ext: Extern> Tower<Ext> {
         // A P4 program is the top level's input; a script is a level above the top
         let mut values = match level_top.config().lang {
             Lang::P4 => vec![program],
-            Lang::Al | Lang::Il => entry_inputs(arena, program, ENTRY_SCRIPT, &[])?,
+            Lang::Al | Lang::Il | Lang::El => entry_inputs(arena, program, ENTRY_SCRIPT, &[])?,
         };
         // Each level above the base is entered through its configured relation
         for level in self.levels[1..].iter().rev() {

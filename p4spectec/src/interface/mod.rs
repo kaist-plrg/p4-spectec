@@ -32,6 +32,8 @@ pub enum Lang {
     Al,
     /// An IL script, converted to AL by the accepting specification.
     Il,
+    /// An EL script, elaborated and converted to AL by the accepting specification.
+    El,
     /// A P4 program, which only the P4 specification accepts.
     P4,
 }
@@ -40,7 +42,7 @@ impl Lang {
     /// Returns whether the language is a script the level above can be passed as,
     /// so that a level accepting it may sit below another level.
     pub fn is_script(self) -> bool {
-        matches!(self, Self::Al | Self::Il)
+        matches!(self, Self::Al | Self::Il | Self::El)
     }
 }
 

@@ -3,8 +3,9 @@
 //! `shared` encodes and decodes the syntax IL and AL have in common,
 //! together with the conversion cache and errors;
 //! `il` adds the elaborated IL given to the IL-to-AL specification,
+//! `el` adds the parsed EL given to the elaboration specification,
 //! and `al` adds AL and runtime values.
-//! `MetaInterface::parse_program` encodes specification paths as an AL or IL script,
+//! `MetaInterface::parse_program` encodes specification paths as an AL, IL, or EL script,
 //! as the interpreting meta specification accepts;
 //! include search paths are unused because scripts are not preprocessed.
 
@@ -22,6 +23,7 @@ use crate::{
 use self::shared::encode::Encode;
 
 pub mod al;
+pub mod el;
 pub mod il;
 pub mod shared;
 
@@ -52,6 +54,9 @@ impl Interface for MetaInterface {
                 .map_err(InterfaceError::from)?
                 .encode(arena),
             Lang::Il => crate::elab(paths)
+                .map_err(InterfaceError::from)?
+                .encode(arena),
+            Lang::El => crate::parse(paths)
                 .map_err(InterfaceError::from)?
                 .encode(arena),
             // A meta specification never interprets P4 directly

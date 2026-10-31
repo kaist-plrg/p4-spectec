@@ -1,0 +1,188 @@
+;; Notation
+
+;; A notation skeleton with an argument hole at each position,
+;; e.g. `C |- e : t` is `INFIX (INFIX ARG |- ARG) : ARG`
+
+syntax mixop =
+  | ARG
+  | ATOM atom
+  | BRACK atom mixop atom
+  | INFIX mixop atom mixop
+  | SEQ mixop*
+
+;; Types
+
+syntax targ, typField, typCase, typOrigin
+
+syntax optyp =
+  | BOOL
+  | numtyp
+  | TEXT
+
+syntax typ =
+  | optyp
+  | VAR id targ*
+  | TUP typ*
+  | ITER typ iter
+  | FUNC tparam* typ* typ
+
+syntax deftyp =
+  | ALIAS typ
+  | STRUCT typField*
+  | VARIANT typCase*
+
+syntax typField = atom typ
+;; A case records the type that introduced it,
+;; which differs from the variant when the case is inherited
+
+syntax typCase = mixop typ* FROM typOrigin
+syntax typOrigin = id targ*
+
+;; Variables
+
+syntax vari = id typ iter*
+
+;; Patterns
+
+syntax listPat =
+  | CONS
+  | FIXED nat
+  | NIL
+
+syntax optPat =
+  | SOME
+  | NONE
+
+syntax pat =
+  | INJ mixop
+  | listPat
+  | optPat
+
+;; Expressions
+
+syntax exp, expField, expCase, typedPath, path, arg, expIter
+
+syntax typedExp = exp '#' typ
+
+syntax literalExp =
+  | BOOL bool | num | TEXT text
+
+syntax varExp = VAR id
+
+syntax unOpExp = UN unOp typedExp
+syntax binOpExp = BIN binOp typedExp typedExp
+syntax cmpOpExp = CMP cmpOp typedExp typedExp
+syntax opExp =
+  | unOpExp | binOpExp | cmpOpExp
+
+syntax upCastExp = UPCAST typ typedExp
+syntax downCastExp = DOWNCAST typ typedExp
+syntax castExp =
+  | upCastExp | downCastExp
+
+syntax subExp = SUB typedExp typ
+
+syntax matchExp = MATCH typedExp pat
+
+syntax tupExp = TUP typedExp*
+
+syntax injExp = INJ expCase
+
+syntax strExp = STR expField*
+
+syntax optExp = OPT typedExp?
+
+syntax listExp = LIST typedExp*
+
+syntax consExp = CONS typedExp typedExp
+
+syntax catExp = CAT typedExp typedExp
+
+syntax memExp = MEM typedExp typedExp
+
+syntax lenExp = LEN typedExp
+
+syntax dotAccExp = DOT typedExp atom
+syntax idxAccExp = IDX typedExp typedExp
+syntax sliceAccExp = SLICE typedExp typedExp typedExp
+syntax accExp =
+  | dotAccExp | idxAccExp | sliceAccExp
+
+syntax updExp = UPD typedExp typedPath typedExp
+
+syntax callExp = CALL id targ* arg*
+
+syntax iterExp = ITER typedExp expIter
+
+syntax exp =
+  | literalExp | varExp
+  | opExp | castExp | subExp | matchExp
+  | tupExp | injExp | strExp | optExp | listExp
+  | consExp | catExp | memExp | lenExp
+  | accExp | updExp
+  | callExp
+  | iterExp
+
+syntax expCase = mixop typedExp*
+syntax expField = atom typedExp
+
+syntax expIter = iter vari*
+
+;; Paths
+
+syntax typedPath = path '#' typ
+
+syntax rootPath = ROOT
+syntax idxPath = IDX typedPath typedExp
+syntax slicePath = SLICE typedPath typedExp typedExp
+syntax dotPath = DOT typedPath atom
+syntax path =
+  | rootPath | idxPath | slicePath | dotPath
+
+;; Arguments
+
+syntax targ = typ
+
+syntax expArg = EXP typedExp
+syntax funArg = FUN id
+syntax arg =
+  | expArg | funArg
+
+;; Parameters
+
+syntax param
+
+syntax expParam = EXP typ
+syntax funParam = FUN id ':' tparam* param* '->' typ
+syntax param =
+  | expParam | funParam
+
+;; Premises
+
+syntax ifPrem = IF typedExp
+
+syntax ifHoldPrem = IFHOLD id ':' typedExp*
+
+syntax ifNotHoldPrem = IFNOTHOLD id ':' typedExp*
+
+syntax debugPrem = DEBUG typedExp
+
+;; Type definitions
+
+syntax externTypDefn =
+  EXTTYP id
+
+syntax definedTypDefn =
+  TYP id tparam* '=' deftyp
+
+syntax typDefn =
+  | externTypDefn
+  | definedTypDefn
+
+;; Meta-functions without clauses
+
+syntax externFuncDefn =
+  EXTFUNC id tparam* param* ':' typ
+
+syntax builtinFuncDefn =
+  BUILTINFUNC id tparam* param* ':' typ

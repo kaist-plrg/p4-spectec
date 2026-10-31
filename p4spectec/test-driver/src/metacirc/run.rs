@@ -127,7 +127,7 @@ pub fn run(
             .map_err(|error| Error::from(format!("{}: {error}", suite.name)))?;
         let (input_suite, suites_input) = match config_tower.top_lang() {
             Lang::P4 => (Input::P4, &mut suites_p4),
-            Lang::Al | Lang::Il => (Input::Al, &mut suites_al),
+            Lang::Al | Lang::Il | Lang::El => (Input::Al, &mut suites_al),
         };
         if input.is_none_or(|input| input == input_suite) {
             suites_input.push(SelectedSuite { suite, path_tower });

@@ -1,0 +1,59 @@
+;;
+;; Call arguments
+;;
+;; syntax argEL
+;;
+
+;; An expression argument is elaborated against its parameter type;
+;; a function argument names a function with an equivalent signature
+
+rule Elab_arg_call/exp:
+  EC |- (EXP expEL) '<=' (EXP typ) : OK (EXP typedExp)
+  -- Elab_exp: EC |- expEL '<=' typ : OK typedExp
+
+rule Elab_arg_call/fun:
+  EC |- (FUN id_arg) '<=' (FUN _ ':' tparam* param* '->' typ) : OK (FUN id_arg)
+  -- if _ tparam_arg* param_arg* ':' typ_arg = $find_map<id, funcSig>(EC.FUNC, id_arg)
+  -- if |tparam*| = |tparam_arg*|
+  -- if |param*| = |param_arg*|
+  -- if typ_param* = $typ_of_param(param)*
+  -- if typ_param_arg* = $typ_of_param(param_arg)*
+  -- if typ_func = FUNC tparam* typ_param* typ
+  -- if typ_func_arg = FUNC tparam_arg* typ_param_arg* typ_arg
+  -- if OK true = $equiv_func_typ(EC.TYP, typ_func, typ_func_arg)
+
+rule Elab_arg_call/fail:
+  EC |- argEL '<=' param : FAIL
+  -- otherwise
+
+;;
+;; Arguments of definitions
+;;
+;; syntax argEL*
+;;
+
+;; In a clause or a table row, a function argument declares the parameter
+;; as a local function under its own name
+
+rulegroup Elab_arg_defn {
+
+  rule Elab_arg_defn/nil:
+    EC |- eps '<=' eps : OK (EC, eps)
+
+  rule Elab_arg_defn/exp:
+    EC |- ((EXP expEL) :: argEL_t*) '<=' ((EXP typ) :: param_t*) : OK (EC_t, (EXP typedExp) :: arg_t*)
+    -- Elab_exp: EC |- expEL '<=' typ : OK typedExp
+    -- Elab_arg_defn: EC |- argEL_t* '<=' param_t* : OK (EC_t, arg_t*)
+
+  rule Elab_arg_defn/fun:
+    EC |- ((FUN id) :: argEL_t*) '<=' ((FUN id ':' tparam* param* '->' typ) :: param_t*)
+       : OK (EC_t, (FUN id) :: arg_t*)
+    -- if eps = $find_map<id, funcSig>(EC.FUNC, id)
+    -- if EC_func = $add_funcSig(EC, id, DEFINED tparam* param* ':' typ)
+    -- Elab_arg_defn: EC_func |- argEL_t* '<=' param_t* : OK (EC_t, arg_t*)
+
+}
+
+rule Elab_arg_defn/fail:
+  EC |- argEL* '<=' param* : FAIL
+  -- otherwise
