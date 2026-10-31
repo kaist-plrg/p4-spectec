@@ -23,6 +23,7 @@ pub enum Outcome {
     ReparseFail,
     RoundtripFail,
     Exclude,
+    Timeout,
 }
 
 impl Outcome {
@@ -35,7 +36,24 @@ impl Outcome {
             Self::ReparseFail => "reparse-fail",
             Self::RoundtripFail => "roundtrip-fail",
             Self::Exclude => "exclude",
+            Self::Timeout => "timeout",
         }
+    }
+
+    /// Reads an outcome spelled as in expected files.
+    pub fn from_name(name: &str) -> Result<Self> {
+        [
+            Self::Pass,
+            Self::Fail,
+            Self::ParseFail,
+            Self::ReparseFail,
+            Self::RoundtripFail,
+            Self::Exclude,
+            Self::Timeout,
+        ]
+        .into_iter()
+        .find(|outcome| outcome.name() == name)
+        .ok_or_else(|| Error::from(format!("unknown outcome {name}")))
     }
 }
 
