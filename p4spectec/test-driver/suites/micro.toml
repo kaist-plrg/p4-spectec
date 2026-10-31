@@ -4,6 +4,9 @@
 # outcome "success" passes every stage up to `stage`,
 # outcome "failure" passes every earlier stage and fails at `stage`.
 #
+# The run stage enters a source at `entry`: "function" (the default) evaluates
+# `$main()`, "relation" evaluates `Main`, whose notation takes no arguments.
+#
 # A configuration runs its `stages` in order and skips suites whose `stage`
 # is not among them; the last conversion stage picks the interpreter language.
 # `excludes` lists directories of .exclude files naming sources to skip.
@@ -80,6 +83,13 @@ outcome = "failure"
 stage = "run"
 
 [[suites]]
+name = "neg-run-rel"
+root = "testdata/spec/neg/run-rel"
+outcome = "failure"
+stage = "run"
+entry = "relation"
+
+[[suites]]
 name = "pos-elab"
 root = "testdata/spec/pos/elab"
 outcome = "success"
@@ -90,3 +100,10 @@ name = "pos-run"
 root = "testdata/spec/pos/run"
 outcome = "success"
 stage = "run"
+
+[[suites]]
+name = "pos-run-rel"
+root = "testdata/spec/pos/run-rel"
+outcome = "success"
+stage = "run"
+entry = "relation"

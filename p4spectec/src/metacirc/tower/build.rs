@@ -171,6 +171,6 @@ impl<Ext: Extern> Tower<Ext> {
                 (BaseRunner::Meta(runner), protocols)
             }
         };
-        Ok(Self { levels, protocols, base, options })
+        Ok(Self { levels, protocols, base, options, entry: config.entry.clone() })
     }
 }

@@ -4500,38 +4500,40 @@ xref:typedLvalueIR_as_typedExpressionIR[The expression form of ``lvalueIR`` with
   ... Let ``typedExpressionIR~base~`` be ``typedExpressionIR^?^``.
   ... Return <<typedExpressionIR,``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``{apos}{plus}:{apos}`` ``typedExpressionIR~lo~`` ``+`]+`` annotated with a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``>>.
 
-xref:typedExpressionIR_as_typedLvalueIR[The l-value form of ``expressionIR`` annotated with a pair of type ``typeIR`` and compile-time known-ness ``++_++``]
+xref:typedExpressionIR_as_typedLvalueIR[The l-value form of ``typedExpressionIR'``]
 
+. Let ``expressionIR`` and xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``++_++``] be the expression and the note of ``typedExpressionIR'``.
 . If let ``referenceExpressionIR`` of type ``referenceExpressionIR`` be ``expressionIR``:
  .. Return xref:typedLvalueIR[``referenceExpressionIR`` with note ``+`(+`` ``typeIR`` ``+`)+``].
 . Else if let ``memberAccessBaseIR`` ``+'.'+`` ``nameIR`` of type ``memberAccessExpressionIR`` be ``expressionIR``:
- .. Check that ``memberAccessBaseIR`` has type ``typedExpressionIR``.
- .. Let ``typedExpressionIR`` be ``memberAccessBaseIR``.
- .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
- .. Check that ``typedLvalueIR'^?^`` is defined.
- .. Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
- .. Return xref:typedLvalueIR[``typedLvalueIR`` ``+'.'+`` ``nameIR`` with note ``+`(+`` ``typeIR`` ``+`)+``].
+ .. If let ``typedExpressionIR`` of type ``typedExpressionIR`` be ``memberAccessBaseIR``:
+  ... Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
+  ... If ``typedLvalueIR'^?^`` is defined:
+   .... Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
+   .... Return xref:typedLvalueIR[``typedLvalueIR`` ``+'.'+`` ``nameIR`` with note ``+`(+`` ``typeIR`` ``+`)+``].
 . Else if let ``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~index~`` ``+`]+`` of type ``indexAccessExpressionIR`` be ``expressionIR``:
  .. Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].
- .. Check that ``typedLvalueIR^?^`` is defined.
- .. Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
- .. Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~index~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
+ .. If ``typedLvalueIR^?^`` is defined:
+  ... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
+  ... Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~index~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
 . Else if let ``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``sliceop`` ``typedExpressionIR~lo~`` ``+`]+`` of type ``sliceAccessExpressionIR`` be ``expressionIR``:
  .. If ``sliceop`` matches pattern ``+':'+``:
   ... Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].
-  ... Check that ``typedLvalueIR^?^`` is defined.
-  ... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
-  ... Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``+':'+`` ``typedExpressionIR~lo~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
+  ... If ``typedLvalueIR^?^`` is defined:
+   .... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
+   .... Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``+':'+`` ``typedExpressionIR~lo~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
  .. Else:
   ... Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].
-  ... Check that ``typedLvalueIR^?^`` is defined.
-  ... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
-  ... Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``{apos}{plus}:{apos}`` ``typedExpressionIR~lo~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
+  ... If ``typedLvalueIR^?^`` is defined:
+   .... Let ``typedLvalueIR~base~`` be ``typedLvalueIR^?^``.
+   .... Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``{apos}{plus}:{apos}`` ``typedExpressionIR~lo~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
 . Else if let ``+`(+`` ``typedExpressionIR`` ``+`)+`` of type ``parenthesizedExpressionIR`` be ``expressionIR``:
  .. Let ``typedLvalueIR'^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
- .. Check that ``typedLvalueIR'^?^`` is defined.
- .. Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
- .. Return xref:typedLvalueIR[``+`(+`` ``typedLvalueIR`` ``+`)+`` with note ``+`(+`` ``typeIR`` ``+`)+``].
+ .. If ``typedLvalueIR'^?^`` is defined:
+  ... Let ``typedLvalueIR`` be ``typedLvalueIR'^?^``.
+  ... Return xref:typedLvalueIR[``+`(+`` ``typedLvalueIR`` ``+`)+`` with note ``+`(+`` ``typeIR`` ``+`)+``].
+
+. +++<span id="func:typedExpressionIR_as_typedLvalueIR-else"></span>+++Otherwise: return ``·``.
 
 xref:switchLabelIR_of_switchCaseIR[The label of ``switchCaseIR``]
 
@@ -11248,65 +11250,71 @@ xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context
 . If ``binop`` is in ``+[+`` ``{apos}{plus}{apos},`` ``+'-'+,`` ``+'*'+`` ``+]+``:
  .. Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``p``].
  .. Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``p``].
- .. Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].
- .. If ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined:
-  ... Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
-  ... Let ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_plusminusmult`` is satisfied].
-  ... If ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` is defined:
-   .... Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)'^?^``.
-   .... Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
-   .... Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
-   .... Let ``ctk~r_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_reduced~``].
-   .... Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
-   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``].
-   .... The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
+ .. Let xref:Cast_binary[``typedExpressionIR~l~`` ``+','+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR^?^`` ``+','+`` ``typedExpressionIR'^?^``].
+ .. If ``typedExpressionIR^?^`` is defined:
+  ... Let ``typedExpressionIR~l_cast~`` be ``typedExpressionIR^?^``.
+  ... If ``typedExpressionIR'^?^`` is defined:
+   .... Let ``typedExpressionIR~r_cast~`` be ``typedExpressionIR'^?^``.
+   .... Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_plusminusmult`` is satisfied].
+   .... If ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined:
+    ..... Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
+    ..... Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
+    ..... Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
+    ..... Let ``ctk~r_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_reduced~``].
+    ..... Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
+    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``].
+    ..... The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
 
 xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context ``TC`` at ``p``]:
 
 . If ``binop`` is in ``+[+`` ``{apos}|{plus}|{apos},`` ``+'|-|'+`` ``+]+``:
  .. Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``p``].
  .. Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``p``].
- .. Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].
- .. If ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined:
-  ... Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
-  ... Let ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_satplusminus`` is satisfied].
-  ... If ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` is defined:
-   .... Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)'^?^``.
-   .... Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
-   .... Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
-   .... Let ``ctk~r_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_reduced~``].
-   .... Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
-   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``].
-   .... The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
+ .. Let xref:Cast_binary[``typedExpressionIR~l~`` ``+','+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR^?^`` ``+','+`` ``typedExpressionIR'^?^``].
+ .. If ``typedExpressionIR^?^`` is defined:
+  ... Let ``typedExpressionIR~l_cast~`` be ``typedExpressionIR^?^``.
+  ... If ``typedExpressionIR'^?^`` is defined:
+   .... Let ``typedExpressionIR~r_cast~`` be ``typedExpressionIR'^?^``.
+   .... Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_satplusminus`` is satisfied].
+   .... If ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined:
+    ..... Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
+    ..... Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
+    ..... Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
+    ..... Let ``ctk~r_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_reduced~``].
+    ..... Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
+    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``].
+    ..... The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
 
 xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context ``TC`` at ``p``]:
 
 . If ``binop`` is in ``+[+`` ``+'/'+,`` ``+'%'+`` ``+]+``:
  .. Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``p``].
  .. Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``p``].
- .. Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].
- .. If ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined:
-  ... Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
-  ... Let ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_divmod`` is satisfied].
-  ... If ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` is defined:
-   .... Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)'^?^``.
-   .... Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
-   .... Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
-   .... Let ``ctk~r_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_reduced~``].
-   .... If ``ctk~r_reduced~`` is ``+LCTK+``:
-    ..... Let ``value`` be the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~r_reduced~``, under context ``TC`` at ``p``].
-    ..... If let ``integerValue~r~`` of type ``integerValue`` be ``value``:
-     ...... Let ``nat^?^`` be xref:nat_of_integerValue[the natural number representation of  ``integerValue~r~``].
-     ...... If ``nat^?^`` is defined:
-      ....... Let ``n~r~`` be ``nat^?^``.
-      ....... If ``n~r~`` is greater than ``0``:
-       ........ Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
-       ........ Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``].
-       ........ The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
-   .... Else:
-    ..... Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
-    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``].
-    ..... The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
+ .. Let xref:Cast_binary[``typedExpressionIR~l~`` ``+','+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR^?^`` ``+','+`` ``typedExpressionIR'^?^``].
+ .. If ``typedExpressionIR^?^`` is defined:
+  ... Let ``typedExpressionIR~l_cast~`` be ``typedExpressionIR^?^``.
+  ... If ``typedExpressionIR'^?^`` is defined:
+   .... Let ``typedExpressionIR~r_cast~`` be ``typedExpressionIR'^?^``.
+   .... Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_divmod`` is satisfied].
+   .... If ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined:
+    ..... Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
+    ..... Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
+    ..... Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
+    ..... Let ``ctk~r_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_reduced~``].
+    ..... If ``ctk~r_reduced~`` is ``+LCTK+``:
+     ...... Let ``value`` be the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~r_reduced~``, under context ``TC`` at ``p``].
+     ...... If let ``integerValue~r~`` of type ``integerValue`` be ``value``:
+      ....... Let ``nat^?^`` be xref:nat_of_integerValue[the natural number representation of  ``integerValue~r~``].
+      ....... If ``nat^?^`` is defined:
+       ........ Let ``n~r~`` be ``nat^?^``.
+       ........ If ``n~r~`` is greater than ``0``:
+        ......... Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
+        ......... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``].
+        ......... The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
+    ..... Else:
+     ...... Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
+     ...... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``].
+     ...... The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
 
 xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context ``TC`` at ``p``]:
 
@@ -11343,52 +11351,58 @@ xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context
 . If ``binop`` is in ``+[+`` ``+'=='+,`` ``+'!='+`` ``+]+``:
  .. Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``p``].
  .. Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``p``].
- .. Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].
- .. If ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined:
-  ... Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
-  ... Let ``typeIR~cast~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_cast~``].
-  ... Let ``ctk~l_cast~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_cast~``].
-  ... Let ``ctk~r_cast~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_cast~``].
-  ... If xref:is_equalable_typeIR[``typeIR~cast~`` supports equality comparison]:
-   .... Let ``ctk~cast~`` be xref:join_ctk[the join of ``ctk~l_cast~`` and ``ctk~r_cast~``].
-   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+BOOL+`` and compile-time known-ness ``ctk~cast~``].
-   .... The result is xref:typedExpressionIR[``typedExpressionIR~l_cast~`` ``binop`` ``typedExpressionIR~r_cast~`` annotated with ``expressionNoteIR``].
+ .. Let xref:Cast_binary[``typedExpressionIR~l~`` ``+','+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR^?^`` ``+','+`` ``typedExpressionIR'^?^``].
+ .. If ``typedExpressionIR^?^`` is defined:
+  ... Let ``typedExpressionIR~l_cast~`` be ``typedExpressionIR^?^``.
+  ... If ``typedExpressionIR'^?^`` is defined:
+   .... Let ``typedExpressionIR~r_cast~`` be ``typedExpressionIR'^?^``.
+   .... Let ``typeIR~cast~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_cast~``].
+   .... Let ``ctk~l_cast~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_cast~``].
+   .... Let ``ctk~r_cast~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_cast~``].
+   .... If xref:is_equalable_typeIR[``typeIR~cast~`` supports equality comparison]:
+    ..... Let ``ctk~cast~`` be xref:join_ctk[the join of ``ctk~l_cast~`` and ``ctk~r_cast~``].
+    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+BOOL+`` and compile-time known-ness ``ctk~cast~``].
+    ..... The result is xref:typedExpressionIR[``typedExpressionIR~l_cast~`` ``binop`` ``typedExpressionIR~r_cast~`` annotated with ``expressionNoteIR``].
 
 xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context ``TC`` at ``p``]:
 
 . If ``binop`` is in ``+[+`` ``+'<='+,`` ``+'>='+,`` ``+'<'+,`` ``+'>'+`` ``+]+``:
  .. Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``p``].
  .. Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``p``].
- .. Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].
- .. If ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined:
-  ... Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
-  ... Let ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_compare`` is satisfied].
-  ... If ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` is defined:
-   .... Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)'^?^``.
-   .... Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
-   .... Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
-   .... Let ``ctk~r_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_reduced~``].
-   .... Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
-   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+BOOL+`` and compile-time known-ness ``ctk~reduced~``].
-   .... The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
+ .. Let xref:Cast_binary[``typedExpressionIR~l~`` ``+','+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR^?^`` ``+','+`` ``typedExpressionIR'^?^``].
+ .. If ``typedExpressionIR^?^`` is defined:
+  ... Let ``typedExpressionIR~l_cast~`` be ``typedExpressionIR^?^``.
+  ... If ``typedExpressionIR'^?^`` is defined:
+   .... Let ``typedExpressionIR~r_cast~`` be ``typedExpressionIR'^?^``.
+   .... Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_compare`` is satisfied].
+   .... If ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined:
+    ..... Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
+    ..... Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
+    ..... Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
+    ..... Let ``ctk~r_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_reduced~``].
+    ..... Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
+    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+BOOL+`` and compile-time known-ness ``ctk~reduced~``].
+    ..... The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
 
 xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context ``TC`` at ``p``]:
 
 . If ``binop`` is in ``+[+`` ``+'&'+,`` ``+'^'+,`` ``+'|'+`` ``+]+``:
  .. Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``p``].
  .. Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``p``].
- .. Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].
- .. If ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined:
-  ... Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
-  ... Let ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_bitwise`` is satisfied].
-  ... If ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` is defined:
-   .... Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)'^?^``.
-   .... Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
-   .... Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
-   .... Let ``ctk~r_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_reduced~``].
-   .... Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
-   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``].
-   .... The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
+ .. Let xref:Cast_binary[``typedExpressionIR~l~`` ``+','+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR^?^`` ``+','+`` ``typedExpressionIR'^?^``].
+ .. If ``typedExpressionIR^?^`` is defined:
+  ... Let ``typedExpressionIR~l_cast~`` be ``typedExpressionIR^?^``.
+  ... If ``typedExpressionIR'^?^`` is defined:
+   .... Let ``typedExpressionIR~r_cast~`` be ``typedExpressionIR'^?^``.
+   .... Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_bitwise`` is satisfied].
+   .... If ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined:
+    ..... Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
+    ..... Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
+    ..... Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
+    ..... Let ``ctk~r_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_reduced~``].
+    ..... Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
+    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``].
+    ..... The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
 
 xref:Expr_ok[Typing ``expression~l~`` ``{apos}{plus}{plus}{apos}`` ``expression~r~``, under context ``TC`` at ``p``]:
 
@@ -11412,12 +11426,14 @@ xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context
 . Check that ``binop`` is in ``+[+`` ``+'&&'+,`` ``+'||'+`` ``+]+``.
 . Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``p``].
 . Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``p``].
-. Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].
+. Let xref:Cast_binary[``typedExpressionIR~l~`` ``+','+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR^?^`` ``+','+`` ``typedExpressionIR'^?^``].
+. Check that ``typedExpressionIR^?^`` is defined.
+. Let ``typedExpressionIR~l_cast~`` be ``typedExpressionIR^?^``.
+. Check that ``typedExpressionIR'^?^`` is defined.
+. Let ``typedExpressionIR~r_cast~`` be ``typedExpressionIR'^?^``.
+. Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_logical`` is satisfied].
 . Check that ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
-. Let ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_logical`` is satisfied].
-. Check that ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` is defined.
-. Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)'^?^``.
+. Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
 . Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
 . Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
 . Let ``ctk~r_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_reduced~``].
@@ -11433,9 +11449,11 @@ xref:Expr_ok[Typing ``expression~cond~`` ``+'?'+`` ``expression~true~`` ``+':'+`
 . Check that ``+BOOL+`` is equal to xref:unroll_typeIR[``typeIR~cond~`` with typedefs unrolled].
 . Let ``typedExpressionIR~true~`` be the result of xref:Expr_ok[typing ``expression~true~``, under context ``TC`` at ``p``].
 . Let ``typedExpressionIR~false~`` be the result of xref:Expr_ok[typing ``expression~false~``, under context ``TC`` at ``p``].
-. Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:cast_binary[``typedExpressionIR~true~`` and ``typedExpressionIR~false~`` implicitly cast to equal types].
-. Check that ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined.
-. Let ``(`` ``typedExpressionIR~true_cast~,`` ``typedExpressionIR~false_cast~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
+. Let xref:Cast_binary[``typedExpressionIR~true~`` ``+','+`` ``typedExpressionIR~false~`` ``+:+`` ``typedExpressionIR^?^`` ``+','+`` ``typedExpressionIR'^?^``].
+. Check that ``typedExpressionIR^?^`` is defined.
+. Let ``typedExpressionIR~true_cast~`` be ``typedExpressionIR^?^``.
+. Check that ``typedExpressionIR'^?^`` is defined.
+. Let ``typedExpressionIR~false_cast~`` be ``typedExpressionIR'^?^``.
 . Let ``typeIR~cast~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~true_cast~``].
 . Let ``ctk~true_cast~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~true_cast~``].
 . Let ``ctk~false_cast~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~false_cast~``].
@@ -12227,7 +12245,7 @@ xref:Stmt_ok[Typing ``lvalue`` ``assignop`` ``expression`` ``+';'+``, under cont
  .. Let ``typedExpressionIR`` be the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``p``].
  .. Let ``typeIR~l~`` be xref:type_of_typedLvalueIR[the type of lvalue ``typedLvalueIR``].
  .. Let ``typeIR~r~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
- .. Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~l~``].
+ .. Let xref:Cast_unary[``+`(+`` ``typeIR~l~`` ``+`)+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR'^?^``].
  .. If ``typedExpressionIR'^?^`` is defined:
   ... Let ``typedExpressionIR~cast~`` be ``typedExpressionIR'^?^``.
   ... The result is context ``TC`` and ``typedLvalueIR`` ``+'='+`` ``typedExpressionIR~cast~`` ``+';'+``.
@@ -12240,7 +12258,7 @@ xref:Stmt_ok[Typing ``lvalue`` ``assignop`` ``expression`` ``+';'+``, under cont
   ... Let ``expression~binary~`` be ``expression~lvalue~`` ``binop`` ``expression``.
   ... Let ``typedExpressionIR~binary~`` be the result of xref:Expr_ok[typing ``expression~binary~``, under context ``TC`` at ``p``].
   ... Let ``+`(+`` ``typeIR~lvalue~`` ``+`)+`` be the note of ``typedLvalueIR``.
-  ... Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~binary~`` implicitly cast to ``typeIR~lvalue~``].
+  ... Let xref:Cast_unary[``+`(+`` ``typeIR~lvalue~`` ``+`)+`` ``typedExpressionIR~binary~`` ``+:+`` ``typedExpressionIR^?^``].
   ... If ``typedExpressionIR^?^`` is defined:
    .... Let ``expressionIR`` ``+'#'+`` ``++_++`` be ``typedExpressionIR^?^``.
    .... If let ``++_++`` ``binop''`` ``typedExpressionIR~cast~`` of type ``binaryExpressionIR`` be ``expressionIR``:
@@ -12339,7 +12357,7 @@ xref:Stmt_ok[Typing ``returnStatement``, under context ``TC`` at ``+LOCAL+``]:
  .. Let ``typeIR'^?^`` be xref:find_local_return_type_t[the expected return type in ``TC``].
  .. Check that ``typeIR'^?^`` is defined.
  .. Let ``typeIR~ret~`` be ``typeIR'^?^``.
- .. Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~ret~``].
+ .. Let xref:Cast_unary[``+`(+`` ``typeIR~ret~`` ``+`)+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR'^?^``].
  .. Check that ``typedExpressionIR'^?^`` is defined.
  .. Let ``typedExpressionIR~cast~`` be ``typedExpressionIR'^?^``.
  .. Let ``TC~1~`` be xref:set_control_t[``TC`` with control flow set to ``+RET+``].
@@ -12533,7 +12551,7 @@ xref:Parameter_ok[Typing ``annotationList`` ``direction`` ``type`` ``name`` ``in
   ... Let ``typedExpressionIR~init~`` be the result of xref:Expr_ok[typing ``expression~init~``, under context ``TC`` at ``p``].
   ... Let ``typeIR~init~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~init~``].
   ... If xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~init~``] matches pattern ``+CTK+``:
-   .... Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~init~`` implicitly cast to ``typeIR``].
+   .... Let xref:Cast_unary[``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~init~`` ``+:+`` ``typedExpressionIR^?^``].
    .... Check that ``typedExpressionIR^?^`` is defined.
    .... Let ``typedExpressionIR~init_cast~`` be ``typedExpressionIR^?^``.
    .... Let ``nameIR`` be xref:name[the name of ``name``].
@@ -12541,7 +12559,7 @@ xref:Parameter_ok[Typing ``annotationList`` ``direction`` ``type`` ``name`` ``in
    .... Let ``parameterIR`` be ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerIR``.
    .... The result is parameter ``parameterIR``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
   ... Else if xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~init~``] matches pattern ``+LCTK+``:
-   .... Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~init~`` implicitly cast to ``typeIR``].
+   .... Let xref:Cast_unary[``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~init~`` ``+:+`` ``typedExpressionIR^?^``].
    .... Check that ``typedExpressionIR^?^`` is defined.
    .... Let ``typedExpressionIR~init_cast~`` be ``typedExpressionIR^?^``.
    .... Let ``nameIR`` be xref:name[the name of ``name``].
@@ -13629,7 +13647,7 @@ xref:VarDecl_ok[Typing ``annotationList`` ``type`` ``name`` ``initializerOpt`` `
  .. If xref:Type_wf[``typeIR`` is a well-formed type, with bound type variables ``bound'``]:
   ... Check that xref:is_assignable_typeIR[``typeIR`` supports assignment].
   ... Let ``typedExpressionIR~init~`` be the result of xref:Expr_ok[typing ``expression~init~``, under context ``TC~0~`` at ``p``].
-  ... Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~init~`` implicitly cast to ``typeIR``].
+  ... Let xref:Cast_unary[``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~init~`` ``+:+`` ``typedExpressionIR^?^``].
   ... Check that ``typedExpressionIR^?^`` is defined.
   ... Let ``typedExpressionIR~init_cast~`` be ``typedExpressionIR^?^``.
   ... Let ``nameIR`` be xref:name[the name of ``name``].
@@ -13653,7 +13671,7 @@ xref:ConstDecl_ok[Typing ``annotationList`` ``+CONST+`` ``type`` ``name`` ``+'='
 . If xref:Type_wf[``typeIR`` is a well-formed type, with bound type variables ``bound``]:
  .. Let ``typedExpressionIR~value~`` be the result of xref:Expr_ok[typing ``expression~value~``, under context ``TC~0~`` at ``p``].
  .. Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~value~``] is ``+LCTK+``.
- .. Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~value~`` implicitly cast to ``typeIR``].
+ .. Let xref:Cast_unary[``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~value~`` ``+:+`` ``typedExpressionIR^?^``].
  .. Check that ``typedExpressionIR^?^`` is defined.
  .. Let ``typedExpressionIR~value_cast~`` be ``typedExpressionIR^?^``.
  .. Let ``value`` be the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~value_cast~``, under context ``TC~0~`` at ``p``].
@@ -14294,7 +14312,7 @@ xref:Call_convention_expr_ok[Call_convention_expr_ok]:
 
 xref:Call_convention_expr_ok[Checking calling convention of ``typedExpressionIR~arg~`` applied to ``annotationList`` ``+IN+`` ``typeIR~param~`` ``id`` ``parameterInitializerOptIR``, under context ``TC`` and action context ``actctxt`` at ``p``]:
 
-. Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``].
+. Let xref:Cast_unary[``+`(+`` ``typeIR~param~`` ``+`)+`` ``typedExpressionIR~arg~`` ``+:+`` ``typedExpressionIR^?^``].
 . If ``typedExpressionIR^?^`` is defined:
  .. Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
  .. The result is casted ``typedExpressionIR~arg_cast~``.
@@ -14316,12 +14334,12 @@ xref:Call_convention_expr_ok[Checking calling convention of ``typedExpressionIR~
 xref:Call_convention_expr_ok[Checking calling convention of ``typedExpressionIR~arg~`` applied to ``annotationList`` ``{nbsp}~EMPTY~`` ``typeIR~param~`` ``id`` ``parameterInitializerOptIR``, under context ``TC`` and action context ``actctxt`` at ``p``]:
 
 . If ``actctxt`` matches pattern ``+ACTION+``:
- .. Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``].
+ .. Let xref:Cast_unary[``+`(+`` ``typeIR~param~`` ``+`)+`` ``typedExpressionIR~arg~`` ``+:+`` ``typedExpressionIR^?^``].
  .. Check that ``typedExpressionIR^?^`` is defined.
  .. Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
  .. The result is casted ``typedExpressionIR~arg_cast~``.
 . Else:
- .. Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``].
+ .. Let xref:Cast_unary[``+`(+`` ``typeIR~param~`` ``+`)+`` ``typedExpressionIR~arg~`` ``+:+`` ``typedExpressionIR^?^``].
  .. Check that ``typedExpressionIR^?^`` is defined.
  .. Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
  .. Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~arg~``] does not match pattern ``+DYN+``.
@@ -14678,7 +14696,7 @@ xref:Call_ok[Typing invocation ``definedFunctionTypeIR`` ``+`<+`` ``typeArgument
 
 . Let ``+FUNCTION+`` ``nameIR`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~ret~`` be ``definedFunctionTypeIR``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``parameterIR~optional~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
-. Let ``inference`` be xref:infer[``$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``parameterIR~optional~^{asterisk}^,`` ``argumentIR^{asterisk}^)``].
+. Let xref:Infer[``typeId^{asterisk}^`` ``+|-+`` ``parameterIR~aligned~^{asterisk}^`` ``+','+`` ``parameterIR~optional~^{asterisk}^`` ``+'@'+`` ``argumentIR^{asterisk}^`` ``+:+`` ``inference``].
 . For each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``:
 +
 --
@@ -14705,7 +14723,7 @@ xref:Call_ok[Typing invocation ``externFunctionTypeIR`` ``+`<+`` ``typeArgumentI
 
 . Let ``+EXTERN_FUNCTION+`` ``nameIR`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~ret~`` be ``externFunctionTypeIR``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``parameterIR~optional~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
-. Let ``inference`` be xref:infer[``$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``parameterIR~optional~^{asterisk}^,`` ``argumentIR^{asterisk}^)``].
+. Let xref:Infer[``typeId^{asterisk}^`` ``+|-+`` ``parameterIR~aligned~^{asterisk}^`` ``+','+`` ``parameterIR~optional~^{asterisk}^`` ``+'@'+`` ``argumentIR^{asterisk}^`` ``+:+`` ``inference``].
 . For each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``:
 +
 --
@@ -14739,7 +14757,7 @@ xref:Call_ok[Typing invocation ``externMethodTypeIR`` ``+`<+`` ``typeArgumentIR^
 
 . If let ``+EXTERN_METHOD+`` ``nameIR`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~ret~`` be ``externMethodTypeIR``:
  .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``parameterIR~optional~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
- .. Let ``inference`` be xref:infer[``$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``parameterIR~optional~^{asterisk}^,`` ``argumentIR^{asterisk}^)``].
+ .. Let xref:Infer[``typeId^{asterisk}^`` ``+|-+`` ``parameterIR~aligned~^{asterisk}^`` ``+','+`` ``parameterIR~optional~^{asterisk}^`` ``+'@'+`` ``argumentIR^{asterisk}^`` ``+:+`` ``inference``].
  .. For each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``:
 +
 --
@@ -14764,7 +14782,7 @@ Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the resulting list.
 . Else:
  .. Let ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~ret~`` be ``externMethodTypeIR``.
  .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``parameterIR~optional~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
- .. Let ``inference`` be xref:infer[``$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``parameterIR~optional~^{asterisk}^,`` ``argumentIR^{asterisk}^)``].
+ .. Let xref:Infer[``typeId^{asterisk}^`` ``+|-+`` ``parameterIR~aligned~^{asterisk}^`` ``+','+`` ``parameterIR~optional~^{asterisk}^`` ``+'@'+`` ``argumentIR^{asterisk}^`` ``+:+`` ``inference``].
  .. For each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``:
 +
 --
@@ -14888,7 +14906,7 @@ xref:Inst_ok[Typing instantiation ``constructorTypeIR`` ``+`<+`` ``typeArgumentI
 
 . Let ``+CONSTRUCTOR+`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~object~`` be ``constructorTypeIR``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``parameterIR~optional~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
-. Let ``inference`` be xref:infer[``$infer(typeId~infer~^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``parameterIR~optional~^{asterisk}^,`` ``argumentIR^{asterisk}^)``].
+. Let xref:Infer[``typeId~infer~^{asterisk}^`` ``+|-+`` ``parameterIR~aligned~^{asterisk}^`` ``+','+`` ``parameterIR~optional~^{asterisk}^`` ``+'@'+`` ``argumentIR^{asterisk}^`` ``+:+`` ``inference``].
 . For each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``:
 +
 --
@@ -15045,41 +15063,89 @@ xref:apply_cast[``typedExpressionIR`` cast through ``typeIR^{asterisk}^``]
  .. Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~h~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~h~`` and compile-time known-ness ``ctk``].
  .. Return xref:apply_cast[``typedExpressionIR~cast~`` cast through ``typeIR~t~^{asterisk}^``].
 
-xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``]
+xref:Cast_unary[Cast_unary]:
 
-. Let xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR``.
-. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR`` can be implicitly cast to ``typeIR~to~``].
+* ``typedExpressionIR`` implicitly cast to ``typeIR``.
+
+xref:Cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``]:
+
+. Let xref:expressionNoteIR[a pair of type ``typeIR~from~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR``.
+. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~from~`` can be implicitly cast to ``typeIR~to~``].
 . If let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``:
  .. Let ``typedExpressionIR~cast~`` be xref:apply_cast[``typedExpressionIR`` cast through ``typeIR~cast~^{asterisk}^``].
- .. Return ``typedExpressionIR~cast~``.
+ .. The result is ``typedExpressionIR~cast~``.
 
-. +++<span id="func:cast_unary-else"></span>+++Otherwise: return ``·``.
+. +++<span id="rel:Cast_unary-else"></span>+++Otherwise:
+ .. xref:Cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``]: the result is ``·``.
 
-xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types]
+Cast_unary dispatch:
+ Goto xref:Cast_unary-ok[ok]
+
+xref:Cast_binary[Cast_binary]:
+
+* ``typedExpressionIR`` and ``typedExpressionIR'`` implicitly cast to equal types.
+
+xref:Cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types]:
 
 . Let xref:expressionNoteIR[a pair of type ``typeIR~l~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR~l~``.
 . Let xref:expressionNoteIR[a pair of type ``typeIR~r~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR~r~``.
 . Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~l~`` can be implicitly cast to ``typeIR~r~``].
 . If let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``:
  .. Let ``typedExpressionIR~l_cast~`` be xref:apply_cast[``typedExpressionIR~l~`` cast through ``typeIR~cast~^{asterisk}^``].
- .. Return ( ``typedExpressionIR~l_cast~``, ``typedExpressionIR~r~`` ).
-. Else:
+ .. The result is ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r~``.
+
+xref:Cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types]:
+
+. Let xref:expressionNoteIR[a pair of type ``typeIR~l~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR~l~``.
+. Let xref:expressionNoteIR[a pair of type ``typeIR~r~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR~r~``.
+. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~l~`` can be implicitly cast to ``typeIR~r~``].
+. If ``castResult`` is ``+FAIL+``:
  .. Let casts ``castResult'`` be the result of xref:Cast_impl[checking if ``typeIR~r~`` can be implicitly cast to ``typeIR~l~``].
  .. If let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult'``:
   ... Let ``typedExpressionIR~r_cast~`` be xref:apply_cast[``typedExpressionIR~r~`` cast through ``typeIR~cast~^{asterisk}^``].
-  ... Return ( ``typedExpressionIR~l~``, ``typedExpressionIR~r_cast~`` ).
- .. Else:
-  ... Let ``typedExpressionIR~l_cast~`` be xref:reduce_serenum[``typedExpressionIR~l~`` with surrounding serializable enums reduced].
-  ... Try:
-   .... If ``typedExpressionIR~l~`` is not equal to ``typedExpressionIR~l_cast~``:
-    ..... Return xref:cast_binary[``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].
-  ... Then, try:
-   .... If ``typedExpressionIR~l~`` is equal to ``typedExpressionIR~l_cast~``:
-    ..... Let ``typedExpressionIR~r_cast~`` be xref:reduce_serenum[``typedExpressionIR~r~`` with surrounding serializable enums reduced].
-    ..... If ``typedExpressionIR~r~`` is not equal to ``typedExpressionIR~r_cast~``:
-     ...... Return xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r_cast~`` implicitly cast to equal types].
+  ... The result is ``typedExpressionIR~l~`` and ``typedExpressionIR~r_cast~``.
 
-. +++<span id="func:cast_binary-else"></span>+++Otherwise: return ``·``.
+xref:Cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types]:
+
+. Let xref:expressionNoteIR[a pair of type ``typeIR~l~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR~l~``.
+. Let xref:expressionNoteIR[a pair of type ``typeIR~r~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR~r~``.
+. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~l~`` can be implicitly cast to ``typeIR~r~``].
+. If ``castResult`` is ``+FAIL+``:
+ .. Let casts ``castResult'`` be the result of xref:Cast_impl[checking if ``typeIR~r~`` can be implicitly cast to ``typeIR~l~``].
+ .. If ``castResult'`` is ``+FAIL+``:
+  ... Let ``typedExpressionIR~l_reduced~`` be xref:reduce_serenum[``typedExpressionIR~l~`` with surrounding serializable enums reduced].
+  ... If ``typedExpressionIR~l~`` is not equal to ``typedExpressionIR~l_reduced~``:
+   .... Let xref:Cast_binary[``typedExpressionIR~l_reduced~`` ``+','+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR~l_cast~^?^`` ``+','+`` ``typedExpressionIR~r_cast~^?^``].
+   .... The result is ``typedExpressionIR~l_cast~^?^`` and ``typedExpressionIR~r_cast~^?^``.
+
+xref:Cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types]:
+
+. Let xref:expressionNoteIR[a pair of type ``typeIR~l~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR~l~``.
+. Let xref:expressionNoteIR[a pair of type ``typeIR~r~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR~r~``.
+. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~l~`` can be implicitly cast to ``typeIR~r~``].
+. If ``castResult`` is ``+FAIL+``:
+ .. Let casts ``castResult'`` be the result of xref:Cast_impl[checking if ``typeIR~r~`` can be implicitly cast to ``typeIR~l~``].
+ .. If ``castResult'`` is ``+FAIL+``:
+  ... Let ``typedExpressionIR~l_reduced~`` be xref:reduce_serenum[``typedExpressionIR~l~`` with surrounding serializable enums reduced].
+  ... If ``typedExpressionIR~l~`` is equal to ``typedExpressionIR~l_reduced~``:
+   .... Let ``typedExpressionIR~r_reduced~`` be xref:reduce_serenum[``typedExpressionIR~r~`` with surrounding serializable enums reduced].
+   .... If ``typedExpressionIR~r~`` is not equal to ``typedExpressionIR~r_reduced~``:
+    ..... Let xref:Cast_binary[``typedExpressionIR~l~`` ``+','+`` ``typedExpressionIR~r_reduced~`` ``+:+`` ``typedExpressionIR~l_cast~^?^`` ``+','+`` ``typedExpressionIR~r_cast~^?^``].
+    ..... The result is ``typedExpressionIR~l_cast~^?^`` and ``typedExpressionIR~r_cast~^?^``.
+
+. +++<span id="rel:Cast_binary-else"></span>+++Otherwise:
+ .. xref:Cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types]: the result is ``·`` and ``·``.
+
+Cast_binary dispatch:
+
+. Try:
+ .. Goto xref:Cast_binary-left-to-right[left-to-right]
+. Then, try:
+ .. Goto xref:Cast_binary-right-to-left[right-to-left]
+. Then, try:
+ .. Goto xref:Cast_binary-retry-left[retry-left]
+. Then, try:
+ .. Goto xref:Cast_binary-retry-right[retry-right]
 
 xref:compat_lnot[$compat_lnot(typeIR'')]:
 [cols="2", options="header"]
@@ -15477,7 +15543,7 @@ xref:ForInitStmt_ok[Typing ``forInitStatement`` under context ``TC``]:
   ... If xref:Type_wf[``typeIR`` is a well-formed type, with bound type variables ``bound'``]:
    .... Check that xref:is_assignable_typeIR[``typeIR`` supports assignment].
    .... Let ``typedExpressionIR~init~`` be the result of xref:Expr_ok[typing ``expression~init~``, under context ``TC`` at ``+LOCAL+``].
-   .... Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~init~`` implicitly cast to ``typeIR``].
+   .... Let xref:Cast_unary[``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~init~`` ``+:+`` ``typedExpressionIR^?^``].
    .... Check that ``typedExpressionIR^?^`` is defined.
    .... Let ``typedExpressionIR~init_cast~`` be ``typedExpressionIR^?^``.
    .... Let ``nameIR`` be xref:name[the name of ``name``].
@@ -15557,10 +15623,10 @@ xref:ForCollectionExpr_ok[Typing ``expression~l~`` ``+'..'+`` ``expression~r~`` 
 
 . Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``+LOCAL+``].
 . Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``+LOCAL+``].
-. Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~l~`` implicitly cast to ``typeIR~var~``].
+. Let xref:Cast_unary[``+`(+`` ``typeIR~var~`` ``+`)+`` ``typedExpressionIR~l~`` ``+:+`` ``typedExpressionIR^?^``].
 . Check that ``typedExpressionIR^?^`` is defined.
 . Let ``typedExpressionIR~l_casted~`` be ``typedExpressionIR^?^``.
-. Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR~r~`` implicitly cast to ``typeIR~var~``].
+. Let xref:Cast_unary[``+`(+`` ``typeIR~var~`` ``+`)+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR'^?^``].
 . Check that ``typedExpressionIR'^?^`` is defined.
 . Let ``typedExpressionIR~r_casted~`` be ``typedExpressionIR'^?^``.
 . Let ``typeIR~l~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_casted~``].
@@ -15709,7 +15775,7 @@ xref:SwitchLabel_general_ok[Typing ``switchLabel`` under context ``TC`` with swi
  .. Let ``expressionNonBrace~label~`` be ``switchLabel``.
  .. Let ``expression~label~`` be xref:expressionNonBrace_as_expression[the expression corresponding to ``expressionNonBrace~label~``].
  .. Let ``typedExpressionIR~label~`` be the result of xref:Expr_ok[typing ``expression~label~``, under context ``TC`` at ``+LOCAL+``].
- .. Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~label~`` implicitly cast to ``typeIR``].
+ .. Let xref:Cast_unary[``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~label~`` ``+:+`` ``typedExpressionIR^?^``].
  .. Check that ``typedExpressionIR^?^`` is defined.
  .. Let ``typedExpressionIR~label_cast~`` be ``typedExpressionIR^?^``.
  .. Let xref:expressionNoteIR[a pair of type ``++_++`` and compile-time known-ness ``ctk``] be the note of ``typedExpressionIR~label_cast~``.
@@ -15917,13 +15983,15 @@ xref:ObjectDeclList_ok[Typing ``objectDeclarationList`` under context ``TC`` at 
 ObjectDeclList_ok dispatch:
  Goto xref:ObjectDeclList_ok-[]
 
-xref:subst_externMethodTypeDefEnv[Substitution of abstract methods in ``externMethodTypeDefEnv~extern~`` by implementations in ``set<pair<callableId,`` ``externMethodTypeDefIR>>``]
+xref:Subst_externMethodTypeDefEnv[Subst_externMethodTypeDefEnv]:
 
-. Try:
- .. If ``set<pair<callableId,`` ``externMethodTypeDefIR>>`` is equal to ``+`{+`` ``·`` ``+`}+``: return ``externMethodTypeDefEnv~extern~``.
-. Then, try:
- .. Let ``+`{+`` ``pair<callableId,`` ``externMethodTypeDefIR>^{asterisk}^`` ``+`}+`` be ``set<pair<callableId,`` ``externMethodTypeDefIR>>``.
- .. Check that ``pair<callableId,`` ``externMethodTypeDefIR>^{asterisk}^`` is a non-empty list.
+* Substitution of abstract methods in ``externMethodTypeDefEnv`` by implementations in ``externMethodTypeDefEnv'``.
+
+xref:Subst_externMethodTypeDefEnv[Substitution of abstract methods in ``externMethodTypeDefEnv~extern~`` by implementations in ``+`{+`` ``pair<callableId,`` ``externMethodTypeDefIR>^{asterisk}^`` ``+`}+``]:
+
+. If ``pair<callableId,`` ``externMethodTypeDefIR>^{asterisk}^`` matches pattern ``[]``:
+ .. The result is ``externMethodTypeDefEnv~extern~``.
+. Else:
  .. Let ``callableId~init_h~`` ``+':'+`` ``externMethodTypeDefIR~init_h~`` ``{two-colons}`` ``(`` ``callableId~init_t~`` ``+':'+`` ``externMethodTypeDefIR~init_t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``externMethodTypeDefIR>^{asterisk}^``.
  .. Let ``nameIR~init_h~`` ``+`(+`` ``++_++^{asterisk}^`` ``+`)+`` be ``callableId~init_h~``.
  .. Let ``(callableId,`` ``externMethodTypeDefIR)^?^`` be xref:find_non_overloaded[``$find_non_overloaded<externMethodTypeDefIR>(externMethodTypeDefEnv~extern~,`` ``nameIR~init_h~)``].
@@ -15934,7 +16002,11 @@ xref:subst_externMethodTypeDefEnv[Substitution of abstract methods in ``externMe
  .. Let ``externMethodTypeDefIR~concrete~`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+`<+`` ``typeId~expl~^{asterisk}^`` ``+','+`` ``typeId~impl~^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~ret~``.
  .. If xref:ExternMethodTypeDef_alpha[``externMethodTypeDefIR~concrete~`` and ``externMethodTypeDefIR~init_h~`` are the same type]:
   ... Let ``externMethodTypeDefEnv~extern_subst~`` be xref:update_map[the map ``externMethodTypeDefEnv~extern~`` with the value for ``callableId`` is updated to ``externMethodTypeDefIR~concrete~``].
-  ... Return xref:subst_externMethodTypeDefEnv[substitution of abstract methods in ``externMethodTypeDefEnv~extern_subst~`` by implementations in ``+`{+`` ``(`` ``callableId~init_t~`` ``+':'+`` ``externMethodTypeDefIR~init_t~`` ``)^{asterisk}^`` ``+`}+``].
+  ... Let xref:Subst_externMethodTypeDefEnv[``externMethodTypeDefEnv~extern_subst~`` ``+|-+`` ``+`{+`` ``(`` ``callableId~init_t~`` ``+':'+`` ``externMethodTypeDefIR~init_t~`` ``)^{asterisk}^`` ``+`}+`` ``+:+`` ``externMethodTypeDefEnv~extern_subst_t~``].
+  ... The result is ``externMethodTypeDefEnv~extern_subst_t~``.
+
+Subst_externMethodTypeDefEnv dispatch:
+ Goto xref:Subst_externMethodTypeDefEnv-[]
 
 xref:InstDecl_objectInitializer_ok[InstDecl_objectInitializer_ok]:
 
@@ -15957,7 +16029,7 @@ xref:InstDecl_objectInitializer_ok[Typing ``annotationList`` ``prefixedTypeName`
 . Let ``+EXTERN+`` ``typeId~extern~`` ``+`<+`` ``typeIR~arg~^{asterisk}^`` ``+`>+`` ``externMethodTypeDefEnv~extern~`` be ``typeIR``.
 . Let ``TC~1~`` be xref:add_var_t[``TC~0~`` where ``"this"`` to ``{nbsp}~EMPTY~`` ``typeIR~object~`` ``+CTK+`` ``·`` is added to the ``+LOCAL+`` layer].
 . Let ``typeFrame~init~`` and ``externMethodTypeDefEnv~init~`` of the object declaration block and ``objectDeclarationIR^{asterisk}^`` be the result of xref:ObjectDeclList_ok[typing ``objectDeclarationList`` under context ``TC~1~`` at ``p``].
-. Let ``externMethodTypeDefEnv~init_subst~`` be xref:subst_externMethodTypeDefEnv[substitution of abstract methods in ``externMethodTypeDefEnv~extern~`` by implementations in ``externMethodTypeDefEnv~init~``].
+. Let xref:Subst_externMethodTypeDefEnv[``externMethodTypeDefEnv~extern~`` ``+|-+`` ``externMethodTypeDefEnv~init~`` ``+:+`` ``externMethodTypeDefEnv~init_subst~``].
 . Let ``typeIR~object_init~`` be ``+EXTERN+`` ``typeId~extern~`` ``+`<+`` ``typeIR~arg~^{asterisk}^`` ``+`>+`` ``externMethodTypeDefEnv~init_subst~``.
 . Check that xref:is_concrete_extern_object[``typeIR~object_init~`` is an extern object type without abstract methods].
 . Let ``nameIR`` be xref:name[the name of ``name``].
@@ -16007,7 +16079,7 @@ xref:Enum_serializable_field_ok[Enum_serializable_field_ok]:
 xref:Enum_serializable_field_ok[Typing ``name`` ``+'='+`` ``expression`` under typing context ``TC~0~`` with enum name ``nameIR~enum~`` and underlying ``typeIR``]:
 
 . Let ``typedExpressionIR`` be the result of xref:Expr_ok[typing ``expression``, under context ``TC~0~`` at ``+BLOCK+``].
-. Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR``].
+. Let xref:Cast_unary[``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR'^?^``].
 . Check that ``typedExpressionIR'^?^`` is defined.
 . Let ``typedExpressionIR~cast~`` be ``typedExpressionIR'^?^``.
 . Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~cast~``] is ``+LCTK+``.
@@ -16080,39 +16152,43 @@ xref:SelectCase_keyset_simple_ok[Typing ``expression~l~`` ``+'&&&'+`` ``expressi
 
 . Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``+LOCAL+``].
 . Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``+LOCAL+``].
-. Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].
-. Check that ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
-. Let ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_mask`` is satisfied].
-. Check that ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` is defined.
-. Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)'^?^``.
-. Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
-. Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~l_reduced~`` implicitly cast to ``typeIR~key~``].
+. Let xref:Cast_binary[``typedExpressionIR~l~`` ``+','+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR^?^`` ``+','+`` ``typedExpressionIR'^?^``].
 . Check that ``typedExpressionIR^?^`` is defined.
-. Let ``typedExpressionIR~l_casted~`` be ``typedExpressionIR^?^``.
-. Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR~r_reduced~`` implicitly cast to ``typeIR~key~``].
+. Let ``typedExpressionIR~l_cast~`` be ``typedExpressionIR^?^``.
 . Check that ``typedExpressionIR'^?^`` is defined.
-. Let ``typedExpressionIR~r_casted~`` be ``typedExpressionIR'^?^``.
+. Let ``typedExpressionIR~r_cast~`` be ``typedExpressionIR'^?^``.
+. Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_mask`` is satisfied].
+. Check that ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined.
+. Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
+. Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
+. Let xref:Cast_unary[``+`(+`` ``typeIR~key~`` ``+`)+`` ``typedExpressionIR~l_reduced~`` ``+:+`` ``typedExpressionIR''^?^``].
+. Check that ``typedExpressionIR''^?^`` is defined.
+. Let ``typedExpressionIR~l_casted~`` be ``typedExpressionIR''^?^``.
+. Let xref:Cast_unary[``+`(+`` ``typeIR~key~`` ``+`)+`` ``typedExpressionIR~r_reduced~`` ``+:+`` ``typedExpressionIR'''^?^``].
+. Check that ``typedExpressionIR'''^?^`` is defined.
+. Let ``typedExpressionIR~r_casted~`` be ``typedExpressionIR'''^?^``.
 . The result is ``typedExpressionIR~l_casted~`` ``+'&&&'+`` ``typedExpressionIR~r_casted~``.
 
 xref:SelectCase_keyset_simple_ok[Typing ``expression~l~`` ``+'..'+`` ``expression~r~`` under context ``TC`` with key type ``typeIR~key~``]:
 
 . Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``+LOCAL+``].
 . Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``+LOCAL+``].
-. Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].
+. Let xref:Cast_binary[``typedExpressionIR~l~`` ``+','+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR^?^`` ``+','+`` ``typedExpressionIR'^?^``].
+. Check that ``typedExpressionIR^?^`` is defined.
+. Let ``typedExpressionIR~l_cast~`` be ``typedExpressionIR^?^``.
+. Check that ``typedExpressionIR'^?^`` is defined.
+. Let ``typedExpressionIR~r_cast~`` be ``typedExpressionIR'^?^``.
+. Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_range`` is satisfied].
 . Check that ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` is defined.
-. Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
-. Let ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_range`` is satisfied].
-. Check that ``(typedExpressionIR,`` ``typedExpressionIR)'^?^`` is defined.
-. Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)'^?^``.
+. Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be ``(typedExpressionIR,`` ``typedExpressionIR)^?^``.
 . Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
 . Check that ``typeIR~reduced~`` is equal to xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~r_reduced~``].
-. Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~l_reduced~`` implicitly cast to ``typeIR~key~``].
-. Check that ``typedExpressionIR^?^`` is defined.
-. Let ``typedExpressionIR~l_casted~`` be ``typedExpressionIR^?^``.
-. Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR~r_reduced~`` implicitly cast to ``typeIR~key~``].
-. Check that ``typedExpressionIR'^?^`` is defined.
-. Let ``typedExpressionIR~r_casted~`` be ``typedExpressionIR'^?^``.
+. Let xref:Cast_unary[``+`(+`` ``typeIR~key~`` ``+`)+`` ``typedExpressionIR~l_reduced~`` ``+:+`` ``typedExpressionIR''^?^``].
+. Check that ``typedExpressionIR''^?^`` is defined.
+. Let ``typedExpressionIR~l_casted~`` be ``typedExpressionIR''^?^``.
+. Let xref:Cast_unary[``+`(+`` ``typeIR~key~`` ``+`)+`` ``typedExpressionIR~r_reduced~`` ``+:+`` ``typedExpressionIR'''^?^``].
+. Check that ``typedExpressionIR'''^?^`` is defined.
+. Let ``typedExpressionIR~r_casted~`` be ``typedExpressionIR'''^?^``.
 . The result is ``typedExpressionIR~l_casted~`` ``+'..'+`` ``typedExpressionIR~r_casted~``.
 
 xref:SelectCase_keyset_simple_ok[Typing ``+DEFAULT+`` under context ``TC`` with key type ``typeIR~key~``]:
@@ -16403,10 +16479,10 @@ xref:TableEntry_keyset_simple_ok[Typing ``typeIR~key~`` ``+':'+`` ``t`` against 
  .. If let ``+LPM+`` ``n`` be ``matchMode``:
   ... Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``+LOCAL+``].
   ... Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``+LOCAL+``].
-  ... Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``].
+  ... Let xref:Cast_unary[``+`(+`` ``typeIR~key~`` ``+`)+`` ``typedExpressionIR~l~`` ``+:+`` ``typedExpressionIR^?^``].
   ... If ``typedExpressionIR^?^`` is defined:
    .... Let ``typedExpressionIR~l_cast~`` be ``typedExpressionIR^?^``.
-   .... Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``].
+   .... Let xref:Cast_unary[``+`(+`` ``typeIR~key~`` ``+`)+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR'^?^``].
    .... If ``typedExpressionIR'^?^`` is defined:
     ..... Let ``typedExpressionIR~r_cast~`` be ``typedExpressionIR'^?^``.
     ..... Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_mask`` is satisfied].
@@ -16425,10 +16501,10 @@ xref:TableEntry_keyset_simple_ok[Typing ``typeIR~key~`` ``+':'+`` ``t`` against 
 . Else if ``t`` is equal to ``"ternary"``:
  .. Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``+LOCAL+``].
  .. Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``+LOCAL+``].
- .. Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``].
+ .. Let xref:Cast_unary[``+`(+`` ``typeIR~key~`` ``+`)+`` ``typedExpressionIR~l~`` ``+:+`` ``typedExpressionIR^?^``].
  .. If ``typedExpressionIR^?^`` is defined:
   ... Let ``typedExpressionIR~l_cast~`` be ``typedExpressionIR^?^``.
-  ... Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``].
+  ... Let xref:Cast_unary[``+`(+`` ``typeIR~key~`` ``+`)+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR'^?^``].
   ... If ``typedExpressionIR'^?^`` is defined:
    .... Let ``typedExpressionIR~r_cast~`` be ``typedExpressionIR'^?^``.
    .... Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_mask`` is satisfied].
@@ -16460,10 +16536,10 @@ xref:TableEntry_keyset_simple_ok[Typing ``typeIR~key~`` ``+':'+`` ``"range"`` ag
 
 . Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``+LOCAL+``].
 . Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``+LOCAL+``].
-. Let ``typedExpressionIR^?^`` be xref:cast_unary[``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``].
+. Let xref:Cast_unary[``+`(+`` ``typeIR~key~`` ``+`)+`` ``typedExpressionIR~l~`` ``+:+`` ``typedExpressionIR^?^``].
 . Check that ``typedExpressionIR^?^`` is defined.
 . Let ``typedExpressionIR~l_cast~`` be ``typedExpressionIR^?^``.
-. Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``].
+. Let xref:Cast_unary[``+`(+`` ``typeIR~key~`` ``+`)+`` ``typedExpressionIR~r~`` ``+:+`` ``typedExpressionIR'^?^``].
 . Check that ``typedExpressionIR'^?^`` is defined.
 . Let ``typedExpressionIR~r_cast~`` be ``typedExpressionIR'^?^``.
 . Let ``(typedExpressionIR,`` ``typedExpressionIR)^?^`` be xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_range`` is satisfied].
@@ -16592,42 +16668,337 @@ xref:empty_constraint[$empty_constraint(typeId^{asterisk}^)]
 
 . Return ``+`{+`` ``(`` ``typeId`` ``+':'+`` ``+UNKNOWN+`` ``)^{asterisk}^`` ``+`}+``.
 
-xref:infer[$infer(typeId^{asterisk}^, parameterIR^{asterisk}^, parameterIR~optional~^{asterisk}^, argumentIR^{asterisk}^)]
+xref:Infer[Infer: ``typeId^{asterisk}^`` ``+|-+`` ``parameterIR^{asterisk}^`` ``+','+`` ``parameterIR'^{asterisk}^`` ``+'@'+`` ``argumentIR^{asterisk}^`` ``+:+`` ``%``]
 
-. If ``typeId^{asterisk}^`` matches pattern ``[]``: return xref:empty_map[an empty map].
-. Else:
- .. Let ``strictness~init~`` be xref:empty_strictness[``$empty_strictness(typeId^{asterisk}^)``].
- .. Let ``B`` be xref:free_parameterIRs[free type identifiers in ``parameterIR^{asterisk}^``].
- .. Let ``B~optional~`` be xref:free_parameterIRs[free type identifiers in ``parameterIR~optional~^{asterisk}^``].
- .. Let ``+`{+`` ``typeId~free~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``B~optional~`` and ``B``].
- .. Let ``strict^{asterisk}^`` be xref:repeat_[a list of the length of ``typeId~free~^{asterisk}^`` copies of ``+LAX+``].
- .. Let ``strictness`` be xref:adds_map[``strictness~init~`` where each of ``typeId~free~^{asterisk}^`` to ``strict^{asterisk}^`` are added].
- .. Let ``constraint~init~`` be xref:empty_constraint[``$empty_constraint(typeId^{asterisk}^)``].
- .. Check that the length of ``argumentIR^{asterisk}^`` is equal to the length of ``parameterIR^{asterisk}^``.
- .. For each ``argumentIR`` in ``argumentIR^{asterisk}^`` and ``parameterIR`` in ``parameterIR^{asterisk}^``:
+xref:Infer[``·`` ``+|-+`` ``parameterIR^{asterisk}^`` ``+','+`` ``parameterIR'^{asterisk}^`` ``+'@'+`` ``argumentIR^{asterisk}^`` ``+:+`` ``%``]:
+ the result is ``+`{+`` ``·`` ``+`}+``.
+
+xref:Infer[``typeId^{asterisk}^`` ``+|-+`` ``parameterIR^{asterisk}^`` ``+','+`` ``parameterIR'^{asterisk}^`` ``+'@'+`` ``argumentIR^{asterisk}^`` ``+:+`` ``%``]:
+
+. Check that ``typeId^{asterisk}^`` is a non-empty list.
+. Let ``strictness~init~`` be xref:empty_strictness[``$empty_strictness(typeId^{asterisk}^)``].
+. Let ``B`` be xref:free_parameterIRs[free type identifiers in ``parameterIR^{asterisk}^``].
+. Let ``B~optional~`` be xref:free_parameterIRs[free type identifiers in ``parameterIR'^{asterisk}^``].
+. Let ``+`{+`` ``typeId~free~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``B~optional~`` and ``B``].
+. Let ``strict^{asterisk}^`` be xref:repeat_[a list of the length of ``typeId~free~^{asterisk}^`` copies of ``+LAX+``].
+. Let ``strictness`` be xref:adds_map[``strictness~init~`` where each of ``typeId~free~^{asterisk}^`` to ``strict^{asterisk}^`` are added].
+. Let ``constraint~init~`` be xref:empty_constraint[``$empty_constraint(typeId^{asterisk}^)``].
+. Check that the length of ``argumentIR^{asterisk}^`` is equal to the length of ``parameterIR^{asterisk}^``.
+. For each ``argumentIR`` in ``argumentIR^{asterisk}^`` and ``parameterIR`` in ``parameterIR^{asterisk}^``:
 +
 --
-  *** Let ``constraint~pair~`` be xref:infer_pair[``$infer_pair(constraint~init~,`` ``parameterIR,`` ``argumentIR)``].
+ ** Let xref:Infer_pair[``constraint~init~`` ``+|-+`` ``parameterIR`` ``+'@'+`` ``argumentIR`` ``+:+`` ``constraint~pair~``].
 --
 +
 Let ``constraint~pair~^{asterisk}^`` be the resulting list.
- .. Let ``constraint~inferred~`` be xref:merge_constraints[``$merge_constraints(constraint~init~,`` ``constraint~pair~^{asterisk}^)``].
- .. Let ``inference`` be xref:resolve_constraint[``$resolve_constraint(strictness,`` ``constraint~inferred~)``].
- .. Let ``inference~resolved~`` be xref:resolve_inference[``$resolve_inference(inference)``].
- .. Return ``inference~resolved~``.
+. Let xref:Merge_constraints[ ``+|-+`` ``constraint~init~`` ``+','+`` ``constraint~pair~^{asterisk}^`` ``+:+`` ``constraint~inferred~``].
+. Let ``inference`` be xref:resolve_constraint[``$resolve_constraint(strictness,`` ``constraint~inferred~)``].
+. Let ``inference~resolved~`` be xref:resolve_inference[``$resolve_inference(inference)``].
+. The result is ``inference~resolved~``.
 
-xref:infer_pair[$infer_pair(constraint, parameterIR, argumentIR)]
+Infer dispatch:
 
-. If let ``typedExpressionIR`` of type ``typedExpressionIR`` be ``argumentIR``:
- .. Let ``typeIR~param~`` be the type of ``parameterIR``.
- .. Let ``typeIR~arg~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
- .. Return xref:gen_constraint_pair[``$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)``].
-. Else if let ``nameIR`` ``+'='+`` ``typedExpressionIR`` be ``argumentIR``:
- .. Let ``typeIR~param~`` be the type of ``parameterIR``.
- .. Let ``typeIR~arg~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
- .. Return xref:gen_constraint_pair[``$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)``].
-. Else if ``argumentIR`` matches pattern ``%`` ``+'='+`` ``+'_'+``: return ``constraint``.
-. Else: return ``constraint``.
+. Try:
+ .. If ``typeId^{asterisk}^`` is an empty list: goto xref:Infer-empty[empty]
+. Then, try:
+ .. Goto xref:Infer-nonempty[nonempty]
+
+xref:Infer_pair[Infer_pair: ``constraint`` ``+|-+`` ``parameterIR`` ``+'@'+`` ``argumentIR`` ``+:+`` ``%``]
+
+xref:Infer_pair[``constraint`` ``+|-+`` ``parameterIR`` ``+'@'+`` ``typedExpressionIR`` ``+:+`` ``%``]:
+
+. Let ``typeIR~param~`` be the type of ``parameterIR``.
+. Let ``typeIR~arg~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
+. Let xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``typeIR~param~`` ``+'@'+`` ``typeIR~arg~`` ``+:+`` ``constraint~updated~``].
+. The result is ``constraint~updated~``.
+
+xref:Infer_pair[``constraint`` ``+|-+`` ``parameterIR`` ``+'@'+`` ``nameIR`` ``+'='+`` ``typedExpressionIR`` ``+:+`` ``%``]:
+
+. Let ``typeIR~param~`` be the type of ``parameterIR``.
+. Let ``typeIR~arg~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
+. Let xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``typeIR~param~`` ``+'@'+`` ``typeIR~arg~`` ``+:+`` ``constraint~updated~``].
+. The result is ``constraint~updated~``.
+
+xref:Infer_pair[``constraint`` ``+|-+`` ``parameterIR`` ``+'@'+`` ``nameIR`` ``+'='+`` ``+'_'+`` ``+:+`` ``%``]:
+ the result is ``constraint``.
+
+xref:Infer_pair[``constraint`` ``+|-+`` ``parameterIR`` ``+'@'+`` ``+'_'+`` ``+:+`` ``%``]:
+ the result is ``constraint``.
+
+Infer_pair dispatch:
+
+. If let ``typedExpressionIR`` of type ``typedExpressionIR`` be ``argumentIR``: goto xref:Infer_pair-expression[expression]
+. Else if let ``nameIR`` ``+'='+`` ``typedExpressionIR`` be ``argumentIR``: goto xref:Infer_pair-named-expression[named-expression]
+. Else if let ``nameIR`` ``+'='+`` ``+'_'+`` be ``argumentIR``: goto xref:Infer_pair-named-missing[named-missing]
+. Else: goto xref:Infer_pair-missing[missing]
+
+xref:Gen_constraint[Gen_constraint: ``constraint`` ``+|-+`` ``typeIR~param~^{asterisk}^`` ``+'@'+`` ``typeIR~arg~^{asterisk}^`` ``+:+`` ``%``]
+
+xref:Gen_constraint[``constraint`` ``+|-+`` ``typeIR~param~^{asterisk}^`` ``+'@'+`` ``typeIR~arg~^{asterisk}^`` ``+:+`` ``%``]:
+
+. Check that the length of ``typeIR~arg~^{asterisk}^`` is equal to the length of ``typeIR~param~^{asterisk}^``.
+. For each ``typeIR~arg~`` in ``typeIR~arg~^{asterisk}^`` and ``typeIR~param~`` in ``typeIR~param~^{asterisk}^``:
++
+--
+ ** Let xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``typeIR~param~`` ``+'@'+`` ``typeIR~arg~`` ``+:+`` ``constraint~pair~``].
+--
++
+Let ``constraint~pair~^{asterisk}^`` be the resulting list.
+. Let xref:Merge_constraints[ ``+|-+`` ``constraint`` ``+','+`` ``constraint~pair~^{asterisk}^`` ``+:+`` ``constraint~merged~``].
+. The result is ``constraint~merged~``.
+
+Gen_constraint dispatch:
+ Goto xref:Gen_constraint-[]
+
+xref:Gen_constraint_pair[Gen_constraint_pair: ``constraint`` ``+|-+`` ``typeIR`` ``+'@'+`` ``typeIR~arg'~`` ``+:+`` ``%``]
+
+xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``{nbsp}~NAME~`` ``typeId~param~`` ``+'@'+`` ``typeIR~arg'~`` ``+:+`` ``%``]:
+
+. If xref:in_set[``typeId~param~`` is an element of the set the domain of the map ``constraint``]:
+ .. Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~param~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~arg'~``].
+ .. The result is ``constraint~updated~``.
+
+xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``+TYPEDEF+`` ``typeId`` ``typeIR~param~`` ``+'@'+`` ``typeIR~arg'~`` ``+:+`` ``%``]:
+
+. Let xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``typeIR~param~`` ``+'@'+`` ``typeIR~arg'~`` ``+:+`` ``constraint~updated~``].
+. The result is ``constraint~updated~``.
+
+xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``+TYPE+`` ``typeId`` ``typeIR~param~`` ``+'@'+`` ``+TYPE+`` ``typeId`` ``typeIR~arg~`` ``+:+`` ``%``]:
+
+. Let xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``typeIR~param~`` ``+'@'+`` ``typeIR~arg~`` ``+:+`` ``constraint~updated~``].
+. The result is ``constraint~updated~``.
+
+xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``+LIST+`` ``+`<+`` ``typeIR~param~`` ``+`>+`` ``+'@'+`` ``+LIST+`` ``+`<+`` ``typeIR~arg~`` ``+`>+`` ``+:+`` ``%``]:
+
+. Let xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``typeIR~param~`` ``+'@'+`` ``typeIR~arg~`` ``+:+`` ``constraint~updated~``].
+. The result is ``constraint~updated~``.
+
+xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``+TUPLE+`` ``+`<+`` ``typeIR~param~^{asterisk}^`` ``+`>+`` ``+'@'+`` ``+TUPLE+`` ``+`<+`` ``typeIR~arg~^{asterisk}^`` ``+`>+`` ``+:+`` ``%``]:
+
+. Let xref:Gen_constraint[``constraint`` ``+|-+`` ``typeIR~param~^{asterisk}^`` ``+'@'+`` ``typeIR~arg~^{asterisk}^`` ``+:+`` ``constraint~updated~``].
+. The result is ``constraint~updated~``.
+
+<<Gen_constraint_pair,``constraint`` ``+|-+`` ``+ARRAY+`` ``typeIR~param~`` ``+`[+`` ``n~size~`` ``+`]+`` ``+'@'+`` ``+ARRAY+`` ``typeIR~arg~`` ``+`[+`` ``n~size~`` ``+`]+`` ``+:+`` ``%``>>:
+
+. Let xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``typeIR~param~`` ``+'@'+`` ``typeIR~arg~`` ``+:+`` ``constraint~updated~``].
+. The result is ``constraint~updated~``.
+
+<<Gen_constraint_pair,``constraint`` ``+|-+`` ``+HEADER_STACK+`` ``typeIR~param~`` ``+`[+`` ``n~size~`` ``+`]+`` ``+'@'+`` ``+HEADER_STACK+`` ``typeIR~arg~`` ``+`[+`` ``n~size~`` ``+`]+`` ``+:+`` ``%``>>:
+
+. Let xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``typeIR~param~`` ``+'@'+`` ``typeIR~arg~`` ``+:+`` ``constraint~updated~``].
+. The result is ``constraint~updated~``.
+
+xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``+STRUCT+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``fieldTypeIR^{asterisk}^`` ``+`}+`` ``+'@'+`` ``+STRUCT+`` ``typeId`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` ``+:+`` ``%``]:
+
+. Let xref:Gen_constraint[``constraint`` ``+|-+`` ``typeIR~arg_a~^{asterisk}^`` ``+'@'+`` ``typeIR~arg_b~^{asterisk}^`` ``+:+`` ``constraint~updated~``].
+. The result is ``constraint~updated~``.
+
+xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``+HEADER+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``fieldTypeIR^{asterisk}^`` ``+`}+`` ``+'@'+`` ``+HEADER+`` ``typeId`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` ``+:+`` ``%``]:
+
+. Let xref:Gen_constraint[``constraint`` ``+|-+`` ``typeIR~arg_a~^{asterisk}^`` ``+'@'+`` ``typeIR~arg_b~^{asterisk}^`` ``+:+`` ``constraint~updated~``].
+. The result is ``constraint~updated~``.
+
+xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``+HEADER_UNION+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``fieldTypeIR^{asterisk}^`` ``+`}+`` ``+'@'+`` ``+HEADER_UNION+`` ``typeId`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` ``+:+`` ``%``]:
+
+. Let xref:Gen_constraint[``constraint`` ``+|-+`` ``typeIR~arg_a~^{asterisk}^`` ``+'@'+`` ``typeIR~arg_b~^{asterisk}^`` ``+:+`` ``constraint~updated~``].
+. The result is ``constraint~updated~``.
+
+xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``+EXTERN+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``pair<callableId,`` ``externMethodTypeDefIR>^{asterisk}^`` ``+`}+`` ``+'@'+`` ``+EXTERN+`` ``typeId`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` ``+:+`` ``%``]:
+
+. Let xref:Gen_constraint[``constraint`` ``+|-+`` ``typeIR~arg_a~^{asterisk}^`` ``+'@'+`` ``typeIR~arg_b~^{asterisk}^`` ``+:+`` ``constraint~updated~``].
+. The result is ``constraint~updated~``.
+
+xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``+PARSER+`` ``typeId`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~param~^{asterisk}^`` ``+`)+`` ``+'@'+`` ``+PARSER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~arg~^{asterisk}^`` ``+`)+`` ``+:+`` ``%``]:
+
+. For each ``parameterIR~param~`` in ``parameterIR~param~^{asterisk}^``:
++
+--
+ ** Let ``++_++`` ``direction`` ``typeIR~param~`` ``++_++`` ``++_++`` be ``parameterIR~param~``.
+--
++
+Let ``direction^{asterisk}^`` and ``typeIR~param~^{asterisk}^`` be the resulting lists.
+. For each ``parameterIR~arg~`` in ``parameterIR~arg~^{asterisk}^``:
++
+--
+ ** Let ``++_++`` ``direction'`` ``typeIR~arg~`` ``++_++`` ``++_++`` be ``parameterIR~arg~``.
+--
++
+Let ``direction'^{asterisk}^`` and ``typeIR~arg~^{asterisk}^`` be the resulting lists.
+. If the length of ``direction^{asterisk}^`` is equal to the length of ``direction'^{asterisk}^``:
+ .. If ``direction'`` is equal to ``direction``, for all ``direction`` in ``direction^{asterisk}^`` and ``direction'`` in ``direction'^{asterisk}^``:
+  ... Let xref:Gen_constraint[``constraint`` ``+|-+`` ``typeIR~param~^{asterisk}^`` ``+'@'+`` ``typeIR~arg~^{asterisk}^`` ``+:+`` ``constraint~updated~``].
+  ... The result is ``constraint~updated~``.
+
+xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``+CONTROL+`` ``typeId`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~param~^{asterisk}^`` ``+`)+`` ``+'@'+`` ``+CONTROL+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~arg~^{asterisk}^`` ``+`)+`` ``+:+`` ``%``]:
+
+. For each ``parameterIR~param~`` in ``parameterIR~param~^{asterisk}^``:
++
+--
+ ** Let ``++_++`` ``direction`` ``typeIR~param~`` ``++_++`` ``++_++`` be ``parameterIR~param~``.
+--
++
+Let ``direction^{asterisk}^`` and ``typeIR~param~^{asterisk}^`` be the resulting lists.
+. For each ``parameterIR~arg~`` in ``parameterIR~arg~^{asterisk}^``:
++
+--
+ ** Let ``++_++`` ``direction'`` ``typeIR~arg~`` ``++_++`` ``++_++`` be ``parameterIR~arg~``.
+--
++
+Let ``direction'^{asterisk}^`` and ``typeIR~arg~^{asterisk}^`` be the resulting lists.
+. If the length of ``direction^{asterisk}^`` is equal to the length of ``direction'^{asterisk}^``:
+ .. If ``direction'`` is equal to ``direction``, for all ``direction`` in ``direction^{asterisk}^`` and ``direction'`` in ``direction'^{asterisk}^``:
+  ... Let xref:Gen_constraint[``constraint`` ``+|-+`` ``typeIR~param~^{asterisk}^`` ``+'@'+`` ``typeIR~arg~^{asterisk}^`` ``+:+`` ``constraint~updated~``].
+  ... The result is ``constraint~updated~``.
+
+xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``+PACKAGE+`` ``typeId`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`{+`` ``typeIR~param~^{asterisk}^`` ``+`}+`` ``+'@'+`` ``+PACKAGE+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``typeIR~arg~^{asterisk}^`` ``+`}+`` ``+:+`` ``%``]:
+
+. Let xref:Gen_constraint[``constraint`` ``+|-+`` ``typeIR~param~^{asterisk}^`` ``+'@'+`` ``typeIR~arg~^{asterisk}^`` ``+:+`` ``constraint~updated~``].
+. The result is ``constraint~updated~``.
+
+xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``typeIR`` ``+'@'+`` ``+TYPEDEF+`` ``typeId`` ``typeIR~arg~`` ``+:+`` ``%``]:
+
+. If ``typeIR`` does not have type ``nameTypeIR``:
+ .. If ``typeIR`` does not have type ``typedefTypeIR``:
+  ... Let xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``typeIR`` ``+'@'+`` ``typeIR~arg~`` ``+:+`` ``constraint~updated~``].
+  ... The result is ``constraint~updated~``.
+
+. +++<span id="rel:Gen_constraint_pair-else"></span>+++Otherwise:
+ .. xref:Gen_constraint_pair[``constraint`` ``+|-+`` ``typeIR`` ``+'@'+`` ``typeIR~arg'~`` ``+:+`` ``%``]: the result is ``constraint``.
+
+Gen_constraint_pair dispatch:
+
+. Try:
+ .. If let ``{nbsp}~NAME~`` ``typeId~param~`` of type ``nameTypeIR`` be ``typeIR``: goto xref:Gen_constraint_pair-name[name]
+ .. Else if let ``+TYPEDEF+`` ``typeId`` ``typeIR~param~`` of type ``typedefTypeIR`` be ``typeIR``: goto xref:Gen_constraint_pair-typedef-param[typedef-param]
+ .. Else if let ``+TYPE+`` ``typeId`` ``typeIR~param~`` of type ``newTypeIR`` be ``typeIR``:
+  ... If let ``+TYPE+`` ``typeId'`` ``typeIR~arg~`` of type ``newTypeIR`` be ``typeIR~arg'~``:
+   .... If ``typeId`` is equal to ``typeId'``: goto xref:Gen_constraint_pair-newtype[newtype]
+ .. Else if let ``+LIST+`` ``+`<+`` ``typeIR~param~`` ``+`>+`` of type ``listTypeIR`` be ``typeIR``:
+  ... If let ``+LIST+`` ``+`<+`` ``typeIR~arg~`` ``+`>+`` of type ``listTypeIR`` be ``typeIR~arg'~``: goto xref:Gen_constraint_pair-list[list]
+ .. Else if let ``+TUPLE+`` ``+`<+`` ``typeIR~param~^{asterisk}^`` ``+`>+`` of type ``tupleTypeIR`` be ``typeIR``:
+  ... If let ``+TUPLE+`` ``+`<+`` ``typeIR~arg~^{asterisk}^`` ``+`>+`` of type ``tupleTypeIR`` be ``typeIR~arg'~``: goto xref:Gen_constraint_pair-tuple[tuple]
+ .. Else if let ``+ARRAY+`` ``typeIR~param~`` ``+`[+`` ``n~size~`` ``+`]+`` of type ``arrayTypeIR`` be ``typeIR``:
+  ... If let ``+ARRAY+`` ``typeIR~arg~`` ``+`[+`` ``n~size'~`` ``+`]+`` of type ``arrayTypeIR`` be ``typeIR~arg'~``:
+   .... If ``n~size~`` is equal to ``n~size'~``: goto xref:Gen_constraint_pair-array[array]
+ .. Else if let ``+HEADER_STACK+`` ``typeIR~param~`` ``+`[+`` ``n~size~`` ``+`]+`` of type ``headerStackTypeIR`` be ``typeIR``:
+  ... If let ``+HEADER_STACK+`` ``typeIR~arg~`` ``+`[+`` ``n~size'~`` ``+`]+`` of type ``headerStackTypeIR`` be ``typeIR~arg'~``:
+   .... If ``n~size~`` is equal to ``n~size'~``: goto xref:Gen_constraint_pair-header-stack[header-stack]
+ .. Else if let ``+STRUCT+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``fieldTypeIR^{asterisk}^`` ``+`}+`` of type ``structTypeIR`` be ``typeIR``:
+  ... If let ``+STRUCT+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``structTypeIR`` be ``typeIR~arg'~``:
+   .... If ``typeId`` is equal to ``typeId'``: goto xref:Gen_constraint_pair-struct[struct]
+ .. Else if let ``+HEADER+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``fieldTypeIR^{asterisk}^`` ``+`}+`` of type ``headerTypeIR`` be ``typeIR``:
+  ... If let ``+HEADER+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``headerTypeIR`` be ``typeIR~arg'~``:
+   .... If ``typeId`` is equal to ``typeId'``: goto xref:Gen_constraint_pair-header[header]
+ .. Else if let ``+HEADER_UNION+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``fieldTypeIR^{asterisk}^`` ``+`}+`` of type ``headerUnionTypeIR`` be ``typeIR``:
+  ... If let ``+HEADER_UNION+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``headerUnionTypeIR`` be ``typeIR~arg'~``:
+   .... If ``typeId`` is equal to ``typeId'``: goto xref:Gen_constraint_pair-header-union[header-union]
+ .. Else if let ``+EXTERN+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``pair<callableId,`` ``externMethodTypeDefIR>^{asterisk}^`` ``+`}+`` of type ``externObjectTypeIR`` be ``typeIR``:
+  ... If let ``+EXTERN+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``externObjectTypeIR`` be ``typeIR~arg'~``:
+   .... If ``typeId`` is equal to ``typeId'``: goto xref:Gen_constraint_pair-extern[extern]
+ .. Else if let ``+PARSER+`` ``typeId`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~param~^{asterisk}^`` ``+`)+`` of type ``parserObjectTypeIR`` be ``typeIR``:
+  ... If let ``+PARSER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~arg~^{asterisk}^`` ``+`)+`` of type ``parserObjectTypeIR`` be ``typeIR~arg'~``: goto xref:Gen_constraint_pair-parser[parser]
+ .. Else if let ``+CONTROL+`` ``typeId`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~param~^{asterisk}^`` ``+`)+`` of type ``controlObjectTypeIR`` be ``typeIR``:
+  ... If let ``+CONTROL+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~arg~^{asterisk}^`` ``+`)+`` of type ``controlObjectTypeIR`` be ``typeIR~arg'~``: goto xref:Gen_constraint_pair-control[control]
+ .. Else if let ``+PACKAGE+`` ``typeId`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`{+`` ``typeIR~param~^{asterisk}^`` ``+`}+`` of type ``packageObjectTypeIR`` be ``typeIR``:
+  ... If let ``+PACKAGE+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``typeIR~arg~^{asterisk}^`` ``+`}+`` of type ``packageObjectTypeIR`` be ``typeIR~arg'~``: goto xref:Gen_constraint_pair-package[package]
+. Then, try:
+ .. If let ``+TYPEDEF+`` ``typeId`` ``typeIR~arg~`` of type ``typedefTypeIR`` be ``typeIR~arg'~``: goto xref:Gen_constraint_pair-typedef-arg[typedef-arg]
+
+xref:Merge_constraint[Merge_constraint:  ``+|-+`` ``constraint~pre~`` ``+','+`` ``constraint~post~`` ``+:+`` ``%``]
+
+xref:Merge_constraint[ ``+|-+`` ``constraint~pre~`` ``+','+`` ``constraint~post~`` ``+:+`` ``%``]:
+
+. Let ``+`{+`` ``(`` ``typeId`` ``+':'+`` ``infer~pre~`` ``)^{asterisk}^`` ``+`}+`` be ``constraint~pre~``.
+. Let ``+`{+`` ``typeId~post~^{asterisk}^`` ``+`}+`` be xref:dom_map[the domain of the map ``constraint~post~``].
+. Check that xref:eq_set[``+`{+`` ``typeId^{asterisk}^`` ``+`}+`` is equal to ``+`{+`` ``typeId~post~^{asterisk}^`` ``+`}+``].
+. For each ``typeId`` in ``typeId^{asterisk}^``:
++
+--
+ ** Let ``infer'^?^`` be xref:find_map[the value of ``typeId`` in map ``constraint~post~``].
+--
++
+Let ``infer'^?^^{asterisk}^`` be the resulting list.
+. Check that ``infer'^?^`` is defined, for all ``infer'^?^`` in ``infer'^?^^{asterisk}^``.
+. For each ``infer'^?^`` in ``infer'^?^^{asterisk}^``:
++
+--
+ ** Let ``infer~post~`` be ``infer'^?^``.
+--
++
+Let ``infer~post~^{asterisk}^`` be the resulting list.
+. For each ``infer~post~`` in ``infer~post~^{asterisk}^`` and ``infer~pre~`` in ``infer~pre~^{asterisk}^``:
++
+--
+ ** Let xref:Merge_infer[ ``+|-+`` ``infer~pre~`` ``+','+`` ``infer~post~`` ``+:+`` ``infer``].
+--
++
+Let ``infer^{asterisk}^`` be the resulting list.
+. The result is ``+`{+`` ``(`` ``typeId`` ``+':'+`` ``infer`` ``)^{asterisk}^`` ``+`}+``.
+
+Merge_constraint dispatch:
+ Goto xref:Merge_constraint-[]
+
+xref:Merge_constraints[Merge_constraints:  ``+|-+`` ``constraint~pre~`` ``+','+`` ``constraint^{asterisk}^`` ``+:+`` ``%``]
+
+xref:Merge_constraints[ ``+|-+`` ``constraint~pre~`` ``+','+`` ``·`` ``+:+`` ``%``]:
+ the result is ``constraint~pre~``.
+
+xref:Merge_constraints[ ``+|-+`` ``constraint~pre~`` ``+','+`` ``constraint~post_h~`` ``{two-colons}`` ``constraint~post_t~^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let xref:Merge_constraint[ ``+|-+`` ``constraint~pre~`` ``+','+`` ``constraint~post_h~`` ``+:+`` ``constraint~pre_1~``].
+. Let xref:Merge_constraints[ ``+|-+`` ``constraint~pre_1~`` ``+','+`` ``constraint~post_t~^{asterisk}^`` ``+:+`` ``constraint~pre_2~``].
+. The result is ``constraint~pre_2~``.
+
+Merge_constraints dispatch:
+
+. If ``constraint^{asterisk}^`` matches pattern ``[]``: goto xref:Merge_constraints-nil[nil]
+. Else:
+ .. Let ``constraint~post_h~`` ``{two-colons}`` ``constraint~post_t~^{asterisk}^`` be ``constraint^{asterisk}^``.
+ .. Goto xref:Merge_constraints-cons[cons]
+
+xref:Merge_infer[Merge_infer:  ``+|-+`` ``infer`` ``+','+`` ``infer'`` ``+:+`` ``%``]
+
+xref:Merge_infer[ ``+|-+`` ``+UNKNOWN+`` ``+','+`` ``+UNKNOWN+`` ``+:+`` ``%``]:
+ the result is ``+UNKNOWN+``.
+
+xref:Merge_infer[ ``+|-+`` ``+UNKNOWN+`` ``+','+`` ``+KNOWN+`` ``+AS+`` ``typeIR~post~`` ``+:+`` ``%``]:
+
+. The result is ``+KNOWN+`` ``+AS+`` ``typeIR~post~``.
+
+xref:Merge_infer[ ``+|-+`` ``+KNOWN+`` ``+AS+`` ``typeIR~pre~`` ``+','+`` ``+UNKNOWN+`` ``+:+`` ``%``]:
+
+. The result is ``+KNOWN+`` ``+AS+`` ``typeIR~pre~``.
+
+xref:Merge_infer[ ``+|-+`` ``+KNOWN+`` ``+AS+`` ``typeIR~pre~`` ``+','+`` ``+KNOWN+`` ``+AS+`` ``typeIR~post~`` ``+:+`` ``%``]:
+
+. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~pre~`` can be implicitly cast to ``typeIR~post~``].
+. If ``castResult`` matches pattern ``+OK+`` ``%``:
+ .. The result is ``+KNOWN+`` ``+AS+`` ``typeIR~post~``.
+
+xref:Merge_infer[ ``+|-+`` ``+KNOWN+`` ``+AS+`` ``typeIR~pre~`` ``+','+`` ``+KNOWN+`` ``+AS+`` ``typeIR~post~`` ``+:+`` ``%``]:
+
+. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~pre~`` can be implicitly cast to ``typeIR~post~``].
+. Check that ``castResult`` is ``+FAIL+``.
+. Let casts ``castResult'`` be the result of xref:Cast_impl[checking if ``typeIR~post~`` can be implicitly cast to ``typeIR~pre~``].
+. Check that ``castResult'`` matches pattern ``+OK+`` ``%``.
+. The result is ``+KNOWN+`` ``+AS+`` ``typeIR~pre~``.
+
+Merge_infer dispatch:
+
+. If ``infer`` matches pattern ``+UNKNOWN+``:
+ .. If ``infer'`` matches pattern ``+UNKNOWN+``: goto xref:Merge_infer-unknown[unknown]
+ .. Else:
+  ... Let ``+KNOWN+`` ``+AS+`` ``typeIR~post~`` be ``infer'``.
+  ... Goto xref:Merge_infer-known-post[known-post]
+. Else:
+ .. Let ``+KNOWN+`` ``+AS+`` ``typeIR~pre~`` be ``infer``.
+ .. If ``infer'`` matches pattern ``+UNKNOWN+``: goto xref:Merge_infer-known-pre[known-pre]
+ .. Else:
+  ... Let ``+KNOWN+`` ``+AS+`` ``typeIR~post~`` be ``infer'``.
+  ... Try:
+   .... Goto xref:Merge_infer-cast-pre[cast-pre]
+  ... Then, try:
+   .... Goto xref:Merge_infer-cast-post[cast-post]
 
 xref:resolve_inference[$resolve_inference(+`{+ ( typeId +':'+ typeIR )^{asterisk}^ +`}+)]
 
@@ -16649,169 +17020,6 @@ xref:resolve_inference'[$resolve_inference'(typeIR)]
   ... Return ``typeIR~resolved~``.
 
 . +++<span id="func:resolve_inference'-else"></span>+++Otherwise: return ``typeIR``.
-
-xref:gen_constraint[$gen_constraint(constraint, typeIR~param~^{asterisk}^, typeIR~arg~^{asterisk}^)]
-
-. Check that the length of ``typeIR~arg~^{asterisk}^`` is equal to the length of ``typeIR~param~^{asterisk}^``.
-. For each ``typeIR~arg~`` in ``typeIR~arg~^{asterisk}^`` and ``typeIR~param~`` in ``typeIR~param~^{asterisk}^``:
-+
---
- ** Let ``constraint~pair~`` be xref:gen_constraint_pair[``$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)``].
---
-+
-Let ``constraint~pair~^{asterisk}^`` be the resulting list.
-. Return xref:merge_constraints[``$merge_constraints(constraint,`` ``constraint~pair~^{asterisk}^)``].
-
-xref:gen_constraint_pair[$gen_constraint_pair(constraint, typeIR, typeIR~arg'~)]
-
-. Try:
- .. If let ``{nbsp}~NAME~`` ``typeId~param~`` of type ``nameTypeIR`` be ``typeIR``:
-  ... If xref:in_set[``typeId~param~`` is an element of the set the domain of the map ``constraint``]:
-   .... Return xref:update_map[the map ``constraint`` with the value for ``typeId~param~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~arg'~``].
- .. Else if let ``+TYPEDEF+`` ``++_++`` ``typeIR~param~`` of type ``typedefTypeIR`` be ``typeIR``:
-  ... Return xref:gen_constraint_pair[``$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg'~)``].
- .. Else if let ``+TYPE+`` ``typeId`` ``typeIR~param~`` of type ``newTypeIR`` be ``typeIR``:
-  ... If let ``+TYPE+`` ``typeId'`` ``typeIR~arg~`` of type ``newTypeIR`` be ``typeIR~arg'~``:
-   .... If ``typeId`` is equal to ``typeId'``:
-    ..... Return xref:gen_constraint_pair[``$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)``].
- .. Else if let ``+LIST+`` ``+`<+`` ``typeIR~param~`` ``+`>+`` of type ``listTypeIR`` be ``typeIR``:
-  ... If let ``+LIST+`` ``+`<+`` ``typeIR~arg~`` ``+`>+`` of type ``listTypeIR`` be ``typeIR~arg'~``:
-   .... Return xref:gen_constraint_pair[``$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)``].
- .. Else if let ``+TUPLE+`` ``+`<+`` ``typeIR~param~^{asterisk}^`` ``+`>+`` of type ``tupleTypeIR`` be ``typeIR``:
-  ... If let ``+TUPLE+`` ``+`<+`` ``typeIR~arg~^{asterisk}^`` ``+`>+`` of type ``tupleTypeIR`` be ``typeIR~arg'~``:
-   .... Return xref:gen_constraint[``$gen_constraint(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg~^{asterisk}^)``].
- .. Else if let ``+ARRAY+`` ``typeIR~param~`` ``+`[+`` ``n~size~`` ``+`]+`` of type ``arrayTypeIR`` be ``typeIR``:
-  ... If let ``+ARRAY+`` ``typeIR~arg~`` ``+`[+`` ``n~size'~`` ``+`]+`` of type ``arrayTypeIR`` be ``typeIR~arg'~``:
-   .... If ``n~size~`` is equal to ``n~size'~``:
-    ..... Return xref:gen_constraint_pair[``$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)``].
- .. Else if let ``+HEADER_STACK+`` ``typeIR~param~`` ``+`[+`` ``n~size~`` ``+`]+`` of type ``headerStackTypeIR`` be ``typeIR``:
-  ... If let ``+HEADER_STACK+`` ``typeIR~arg~`` ``+`[+`` ``n~size'~`` ``+`]+`` of type ``headerStackTypeIR`` be ``typeIR~arg'~``:
-   .... If ``n~size~`` is equal to ``n~size'~``:
-    ..... Return xref:gen_constraint_pair[``$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)``].
- .. Else if let ``+STRUCT+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``structTypeIR`` be ``typeIR``:
-  ... If let ``+STRUCT+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``structTypeIR`` be ``typeIR~arg'~``:
-   .... If ``typeId`` is equal to ``typeId'``:
-    ..... Return xref:gen_constraint[``$gen_constraint(constraint,`` ``typeIR~arg_a~^{asterisk}^,`` ``typeIR~arg_b~^{asterisk}^)``].
- .. Else if let ``+HEADER+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``headerTypeIR`` be ``typeIR``:
-  ... If let ``+HEADER+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``headerTypeIR`` be ``typeIR~arg'~``:
-   .... If ``typeId`` is equal to ``typeId'``:
-    ..... Return xref:gen_constraint[``$gen_constraint(constraint,`` ``typeIR~arg_a~^{asterisk}^,`` ``typeIR~arg_b~^{asterisk}^)``].
- .. Else if let ``+HEADER_UNION+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``headerUnionTypeIR`` be ``typeIR``:
-  ... If let ``+HEADER_UNION+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``headerUnionTypeIR`` be ``typeIR~arg'~``:
-   .... If ``typeId`` is equal to ``typeId'``:
-    ..... Return xref:gen_constraint[``$gen_constraint(constraint,`` ``typeIR~arg_a~^{asterisk}^,`` ``typeIR~arg_b~^{asterisk}^)``].
- .. Else if let ``+EXTERN+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``externObjectTypeIR`` be ``typeIR``:
-  ... If let ``+EXTERN+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``externObjectTypeIR`` be ``typeIR~arg'~``:
-   .... If ``typeId`` is equal to ``typeId'``:
-    ..... Return xref:gen_constraint[``$gen_constraint(constraint,`` ``typeIR~arg_a~^{asterisk}^,`` ``typeIR~arg_b~^{asterisk}^)``].
- .. Else if let ``+PARSER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~param~^{asterisk}^`` ``+`)+`` of type ``parserObjectTypeIR`` be ``typeIR``:
-  ... If let ``+PARSER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~arg~^{asterisk}^`` ``+`)+`` of type ``parserObjectTypeIR`` be ``typeIR~arg'~``:
-   .... For each ``parameterIR~param~`` in ``parameterIR~param~^{asterisk}^``:
-+
---
-    ***** Let ``++_++`` ``direction`` ``typeIR~param~`` ``++_++`` ``++_++`` be ``parameterIR~param~``.
---
-+
-Let ``direction^{asterisk}^`` and ``typeIR~param~^{asterisk}^`` be the resulting lists.
-   .... For each ``parameterIR~arg~`` in ``parameterIR~arg~^{asterisk}^``:
-+
---
-    ***** Let ``++_++`` ``direction'`` ``typeIR~arg~`` ``++_++`` ``++_++`` be ``parameterIR~arg~``.
---
-+
-Let ``direction'^{asterisk}^`` and ``typeIR~arg~^{asterisk}^`` be the resulting lists.
-   .... If the length of ``direction^{asterisk}^`` is equal to the length of ``direction'^{asterisk}^``:
-    ..... If ``direction'`` is equal to ``direction``, for all ``direction`` in ``direction^{asterisk}^`` and ``direction'`` in ``direction'^{asterisk}^``:
-     ...... Return xref:gen_constraint[``$gen_constraint(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg~^{asterisk}^)``].
- .. Else if let ``+CONTROL+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~param~^{asterisk}^`` ``+`)+`` of type ``controlObjectTypeIR`` be ``typeIR``:
-  ... If let ``+CONTROL+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~arg~^{asterisk}^`` ``+`)+`` of type ``controlObjectTypeIR`` be ``typeIR~arg'~``:
-   .... For each ``parameterIR~param~`` in ``parameterIR~param~^{asterisk}^``:
-+
---
-    ***** Let ``++_++`` ``direction`` ``typeIR~param~`` ``++_++`` ``++_++`` be ``parameterIR~param~``.
---
-+
-Let ``direction^{asterisk}^`` and ``typeIR~param~^{asterisk}^`` be the resulting lists.
-   .... For each ``parameterIR~arg~`` in ``parameterIR~arg~^{asterisk}^``:
-+
---
-    ***** Let ``++_++`` ``direction'`` ``typeIR~arg~`` ``++_++`` ``++_++`` be ``parameterIR~arg~``.
---
-+
-Let ``direction'^{asterisk}^`` and ``typeIR~arg~^{asterisk}^`` be the resulting lists.
-   .... If the length of ``direction^{asterisk}^`` is equal to the length of ``direction'^{asterisk}^``:
-    ..... If ``direction'`` is equal to ``direction``, for all ``direction`` in ``direction^{asterisk}^`` and ``direction'`` in ``direction'^{asterisk}^``:
-     ...... Return xref:gen_constraint[``$gen_constraint(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg~^{asterisk}^)``].
- .. Else if let ``+PACKAGE+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``typeIR~param~^{asterisk}^`` ``+`}+`` of type ``packageObjectTypeIR`` be ``typeIR``:
-  ... If let ``+PACKAGE+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``typeIR~arg~^{asterisk}^`` ``+`}+`` of type ``packageObjectTypeIR`` be ``typeIR~arg'~``:
-   .... Return xref:gen_constraint[``$gen_constraint(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg~^{asterisk}^)``].
-. Then, try:
- .. If let ``+TYPEDEF+`` ``++_++`` ``typeIR~arg~`` of type ``typedefTypeIR`` be ``typeIR~arg'~``:
-  ... If ``typeIR`` does not have type ``nameTypeIR``:
-   .... If ``typeIR`` does not have type ``typedefTypeIR``:
-    ..... Return xref:gen_constraint_pair[``$gen_constraint_pair(constraint,`` ``typeIR,`` ``typeIR~arg~)``].
-
-. +++<span id="func:gen_constraint_pair-else"></span>+++Otherwise: return ``constraint``.
-
-xref:merge_constraint[$merge_constraint(constraint~pre~, constraint~post~)]
-
-. Let ``+`{+`` ``typeId~pre~^{asterisk}^`` ``+`}+`` be xref:dom_map[the domain of the map ``constraint~pre~``].
-. Let ``+`{+`` ``typeId~post~^{asterisk}^`` ``+`}+`` be xref:dom_map[the domain of the map ``constraint~post~``].
-. Check that xref:eq_set[``+`{+`` ``typeId~pre~^{asterisk}^`` ``+`}+`` is equal to ``+`{+`` ``typeId~post~^{asterisk}^`` ``+`}+``].
-. Return xref:merge_constraint'[``$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~pre~^{asterisk}^,`` ``+`{+`` ``·`` ``+`}+)``].
-
-xref:merge_constraint'[$merge_constraint'(constraint~pre~, constraint~post~, typeId^{asterisk}^, constraint)]
-
-. If ``typeId^{asterisk}^`` matches pattern ``[]``: return ``constraint``.
-. Else:
- .. Let ``typeId~h~`` ``{two-colons}`` ``typeId~t~^{asterisk}^`` be ``typeId^{asterisk}^``.
- .. Try:
-  ... If ``+UNKNOWN+`` is equal to xref:find_map[the value of ``typeId~h~`` in map ``constraint~pre~``]:
-   .... Try:
-    ..... If ``+UNKNOWN+`` is equal to xref:find_map[the value of ``typeId~h~`` in map ``constraint~post~``]:
-     ...... Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+UNKNOWN+``].
-     ...... Return xref:merge_constraint'[``$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)``].
-   .... Then, try:
-    ..... Let ``infer'^?^`` be xref:find_map[the value of ``typeId~h~`` in map ``constraint~post~``].
-    ..... If ``infer'^?^`` is defined:
-     ...... Let ``infer`` be ``infer'^?^``.
-     ...... If let ``+KNOWN+`` ``+AS+`` ``typeIR~post~`` be ``infer``:
-      ....... Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~post~``].
-      ....... Return xref:merge_constraint'[``$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)``].
- .. Then, try:
-  ... Let ``infer'^?^`` be xref:find_map[the value of ``typeId~h~`` in map ``constraint~pre~``].
-  ... Check that ``infer'^?^`` is defined.
-  ... Let ``infer`` be ``infer'^?^``.
-  ... Check that ``infer`` matches pattern ``+KNOWN+`` ``+AS+`` ``%``.
-  ... Let ``+KNOWN+`` ``+AS+`` ``typeIR~pre~`` be ``infer``.
-  ... Try:
-   .... If ``+UNKNOWN+`` is equal to xref:find_map[the value of ``typeId~h~`` in map ``constraint~post~``]:
-    ..... Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~pre~``].
-    ..... Return xref:merge_constraint'[``$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)``].
-  ... Then, try:
-   .... Let ``infer'''^?^`` be xref:find_map[the value of ``typeId~h~`` in map ``constraint~post~``].
-   .... Check that ``infer'''^?^`` is defined.
-   .... Let ``infer''`` be ``infer'''^?^``.
-   .... Check that ``infer''`` matches pattern ``+KNOWN+`` ``+AS+`` ``%``.
-   .... Let ``+KNOWN+`` ``+AS+`` ``typeIR~post~`` be ``infer''``.
-   .... Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~pre~`` can be implicitly cast to ``typeIR~post~``].
-   .... If ``castResult`` matches pattern ``+OK+`` ``%``:
-    ..... Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~post~``].
-    ..... Return xref:merge_constraint'[``$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)``].
-   .... Else:
-    ..... Let casts ``castResult'`` be the result of xref:Cast_impl[checking if ``typeIR~post~`` can be implicitly cast to ``typeIR~pre~``].
-    ..... Check that ``castResult'`` matches pattern ``+OK+`` ``%``.
-    ..... Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~pre~``].
-    ..... Return xref:merge_constraint'[``$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)``].
-
-xref:merge_constraints[$merge_constraints(constraint~pre~, constraint^{asterisk}^)]
-
-. If ``constraint^{asterisk}^`` matches pattern ``[]``: return ``constraint~pre~``.
-. Else:
- .. Let ``constraint~post_h~`` ``{two-colons}`` ``constraint~post_t~^{asterisk}^`` be ``constraint^{asterisk}^``.
- .. Let ``constraint~pre_1~`` be xref:merge_constraint[``$merge_constraint(constraint~pre~,`` ``constraint~post_h~)``].
- .. Let ``constraint~pre_2~`` be xref:merge_constraints[``$merge_constraints(constraint~pre_1~,`` ``constraint~post_t~^{asterisk}^)``].
- .. Return ``constraint~pre_2~``.
 
 xref:resolve_constraint[$resolve_constraint(strictness, set<pair<typeId, infer>>)]
 
@@ -22693,59 +22901,98 @@ xref:Program_init[Initializing the evaluation context and store for ``p4program`
 Program_init dispatch:
  Goto xref:Program_init-[]
 
-xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~to~`` in ``EC``]
+xref:Cast_control_plane[Cast_control_plane]:
+
+* ``typedExpressionIR`` from control plane cast to ``typeIR`` in ``EC``.
+
+xref:Cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~to~`` in ``EC``]:
+
+. Let xref:Cast_unary[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR'^?^``].
+. If ``typedExpressionIR'^?^`` is defined:
+ .. Let ``typedExpressionIR~cast~`` be ``typedExpressionIR'^?^``.
+ .. The result is ``typedExpressionIR~cast~``.
+
+xref:Cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~to~`` in ``EC``]:
+
+. Let xref:Cast_unary[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR'^?^``].
+. If ``typedExpressionIR'^?^`` is none:
+ .. If ``+BOOL+`` is equal to ``typeIR~to~``:
+  ... If ``+INT+`` is equal to xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``]:
+   .... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].
+   .... Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~to~`` and compile-time known-ness ``ctk``].
+   .... The result is ``typedExpressionIR~cast~``.
+
+xref:Cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~to~`` in ``EC``]:
+
+. Let xref:Cast_unary[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR'^?^``].
+. If ``typedExpressionIR'^?^`` is none:
+ .. If ``+ERROR+`` is equal to ``typeIR~to~``:
+  ... Let ``expressionIR`` and xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk``] be the expression and the note of ``typedExpressionIR``.
+  ... If let ``integerLiteral`` of type ``integerLiteral`` be ``expressionIR``:
+   .... If let ``+D+`` ``i`` be ``integerLiteral``:
+    ..... If let ``n`` of type ``nat`` be ``i``:
+     ...... If let ``intTypeIR`` of type ``intTypeIR`` be ``typeIR``:
+      ....... Let ``+`{+`` ``value~frame~^{asterisk}^`` ``+`}+`` be xref:codom_map[the codomain of the map ``EC.+GLOBAL+.+FRAME+``].
+      ....... Let ``value~error~^{asterisk}^`` be xref:filter_[``value~frame~^{asterisk}^`` filtered by ``(`` ``value~frame~`` ``has`` ``type`` ``errorValue`` ``)^{asterisk}^``].
+      ....... If ``n`` is less than the length of ``value~error~^{asterisk}^``:
+       ........ Let ``value`` be ``value~error~^{asterisk}^[n]``.
+       ........ If let ``+ERROR+`` ``+'.'+`` ``nameIR~error~`` of type ``errorValue`` be ``value``:
+        ......... Let ``typedExpressionIR~error~`` be xref:typedExpressionIR[``+ERROR+`` ``+'.'+`` ``nameIR~error~`` annotated with a pair of type ``typeIR~to~`` and compile-time known-ness ``ctk``].
+        ......... The result is ``typedExpressionIR~error~``.
+
+xref:Cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~to~`` in ``EC``]:
+
+. Let xref:Cast_unary[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR'^?^``].
+. If ``typedExpressionIR'^?^`` is none:
+ .. If let ``+TYPEDEF+`` ``++_++`` ``typeIR~base~`` of type ``typedefTypeIR`` be ``typeIR~to~``:
+  ... Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR~base~`` ``+`)+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR''^?^``].
+  ... If ``typedExpressionIR''^?^`` is defined:
+   .... Let ``typedExpressionIR~typedef~`` be ``typedExpressionIR''^?^``.
+   .... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~typedef~``].
+   .... Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR~typedef~`` annotated with a pair of type ``typeIR~to~`` and compile-time known-ness ``ctk``].
+   .... The result is ``typedExpressionIR~cast~``.
+
+xref:Cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~to~`` in ``EC``]:
+
+. Let xref:Cast_unary[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR'^?^``].
+. If ``typedExpressionIR'^?^`` is none:
+ .. If let ``+TYPE+`` ``++_++`` ``typeIR~base~`` of type ``newTypeIR`` be ``typeIR~to~``:
+  ... Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR~base~`` ``+`)+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR''^?^``].
+  ... If ``typedExpressionIR''^?^`` is defined:
+   .... Let ``typedExpressionIR~newtype~`` be ``typedExpressionIR''^?^``.
+   .... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~newtype~``].
+   .... Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR~newtype~`` annotated with a pair of type ``typeIR~to~`` and compile-time known-ness ``ctk``].
+   .... The result is ``typedExpressionIR~cast~``.
+
+xref:Cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~to~`` in ``EC``]:
+
+. Let xref:Cast_unary[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR'^?^``].
+. If ``typedExpressionIR'^?^`` is none:
+ .. If let ``+ENUM+`` ``++_++`` ``+`<+`` ``typeIR~base~`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``serializableEnumTypeIR`` be ``typeIR~to~``:
+  ... Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR~base~`` ``+`)+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR''^?^``].
+  ... If ``typedExpressionIR''^?^`` is defined:
+   .... Let ``typedExpressionIR~enum~`` be ``typedExpressionIR''^?^``.
+   .... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~enum~``].
+   .... Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR~enum~`` annotated with a pair of type ``typeIR~to~`` and compile-time known-ness ``ctk``].
+   .... The result is ``typedExpressionIR~cast~``.
+
+. +++<span id="rel:Cast_control_plane-else"></span>+++Otherwise:
+ .. xref:Cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~to~`` in ``EC``]: the result is ``·``.
+
+Cast_control_plane dispatch:
 
 . Try:
- .. Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``].
- .. If ``typedExpressionIR'^?^`` is defined:
-  ... Let ``typedExpressionIR~cast~`` be ``typedExpressionIR'^?^``.
-  ... Return ``typedExpressionIR~cast~``.
+ .. Goto xref:Cast_control_plane-ok[ok]
 . Then, try:
- .. If xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``] is none:
-  ... Try:
-   .... If ``+BOOL+`` is equal to ``typeIR~to~``:
-    ..... If ``+INT+`` is equal to xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``]:
-     ...... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].
-     ...... Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~to~`` and compile-time known-ness ``ctk``].
-     ...... Return ``typedExpressionIR~cast~``.
-  ... Then, try:
-   .... If ``+ERROR+`` is equal to ``typeIR~to~``:
-    ..... Let ``expressionIR`` and xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk``] be the expression and the note of ``typedExpressionIR``.
-    ..... If let ``integerLiteral`` of type ``integerLiteral`` be ``expressionIR``:
-     ...... If let ``+D+`` ``i`` be ``integerLiteral``:
-      ....... If let ``n`` of type ``nat`` be ``i``:
-       ........ If let ``intTypeIR`` of type ``intTypeIR`` be ``typeIR``:
-        ......... Let ``+`{+`` ``value~frame~^{asterisk}^`` ``+`}+`` be xref:codom_map[the codomain of the map ``EC.+GLOBAL+.+FRAME+``].
-        ......... Let ``value~error~^{asterisk}^`` be xref:filter_[``value~frame~^{asterisk}^`` filtered by ``(`` ``value~frame~`` ``has`` ``type`` ``errorValue`` ``)^{asterisk}^``].
-        ......... If ``n`` is less than the length of ``value~error~^{asterisk}^``:
-         .......... Let ``value`` be ``value~error~^{asterisk}^[n]``.
-         .......... If let ``+ERROR+`` ``+'.'+`` ``nameIR~error~`` of type ``errorValue`` be ``value``:
-          ........... Let ``typedExpressionIR~error~`` be xref:typedExpressionIR[``+ERROR+`` ``+'.'+`` ``nameIR~error~`` annotated with a pair of type ``typeIR~to~`` and compile-time known-ness ``ctk``].
-          ........... Return ``typedExpressionIR~error~``.
-  ... Then, try:
-   .... If let ``+TYPEDEF+`` ``++_++`` ``typeIR~base~`` of type ``typedefTypeIR`` be ``typeIR~to~``:
-    ..... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~base~`` in ``EC``].
-    ..... If ``typedExpressionIR'^?^`` is defined:
-     ...... Let ``typedExpressionIR~typedef~`` be ``typedExpressionIR'^?^``.
-     ...... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~typedef~``].
-     ...... Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR~typedef~`` annotated with a pair of type ``typeIR~to~`` and compile-time known-ness ``ctk``].
-     ...... Return ``typedExpressionIR~cast~``.
-   .... Else if let ``+TYPE+`` ``++_++`` ``typeIR~base~`` of type ``newTypeIR`` be ``typeIR~to~``:
-    ..... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~base~`` in ``EC``].
-    ..... If ``typedExpressionIR'^?^`` is defined:
-     ...... Let ``typedExpressionIR~newtype~`` be ``typedExpressionIR'^?^``.
-     ...... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~newtype~``].
-     ...... Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR~newtype~`` annotated with a pair of type ``typeIR~to~`` and compile-time known-ness ``ctk``].
-     ...... Return ``typedExpressionIR~cast~``.
-   .... Else if let ``+ENUM+`` ``++_++`` ``+`<+`` ``typeIR~base~`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` of type ``serializableEnumTypeIR`` be ``typeIR~to~``:
-    ..... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~base~`` in ``EC``].
-    ..... If ``typedExpressionIR'^?^`` is defined:
-     ...... Let ``typedExpressionIR~enum~`` be ``typedExpressionIR'^?^``.
-     ...... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~enum~``].
-     ...... Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR~enum~`` annotated with a pair of type ``typeIR~to~`` and compile-time known-ness ``ctk``].
-     ...... Return ``typedExpressionIR~cast~``.
-
-. +++<span id="func:cast_control_plane-else"></span>+++Otherwise: return ``·``.
+ .. Goto xref:Cast_control_plane-boolean-to-integer[boolean-to-integer]
+. Then, try:
+ .. Goto xref:Cast_control_plane-integer-to-error[integer-to-error]
+. Then, try:
+ .. Goto xref:Cast_control_plane-typedef[typedef]
+. Then, try:
+ .. Goto xref:Cast_control_plane-newtype[newtype]
+. Then, try:
+ .. Goto xref:Cast_control_plane-ser-enum[ser-enum]
 
 xref:reverse_bytes_of_hex[$reverse_bytes_of_hex(t)]
 
@@ -22806,156 +23053,212 @@ xref:needs_priority_tableKeysPropertyIR[$needs_priority_tableKeysPropertyIR(+KEY
 Let ``nameIR~matchKind~^{asterisk}^`` be the resulting list.
 . Return xref:exists_[some of ``(`` ``nameIR~matchKind~`` ``=`` ``"ternary"`` ``)^{asterisk}^`` is true].
 
-xref:tableObject_create_entry_key[$tableObject_create_entry_key(EC, ( nameIR~key~, t, typeIR ), tableKeyInterface^{asterisk}^)]
+xref:TableObject_create_entry_key[TableObject_create_entry_key: ``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``t,`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]
 
-. If ``t`` is equal to ``"exact"``:
- .. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
- .. Check that ``tableKeyValueInterface'^?^`` is defined.
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"exact",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. Check that ``tableKeyValueInterface'^?^`` is defined.
+. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
+. Let ``t'^?^`` be xref:text_of_number_tableKeyValueInterface[``$text_of_number_tableKeyValueInterface(tableKeyValueInterface)``].
+. Check that ``t'^?^`` is defined.
+. Let ``text~key_value~`` be ``t'^?^``.
+. Let ``i~key_value~`` be xref:text_to_int[``$text_to_int(text~key_value~)``].
+. Let ``typedExpressionIR`` be xref:typedExpressionIR[``+D+`` ``i~key_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+. Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR'^?^``].
+. Check that ``typedExpressionIR'^?^`` is defined.
+. Let ``typedExpressionIR~cast~`` be ``typedExpressionIR'^?^``.
+. Let ``typeIR~set~`` be ``+SET+`` ``+`<+`` ``typeIR`` ``+`>+``.
+. Let ``simpleKeysetExpressionIR`` be ``+`(+`` ``typeIR~set~`` ``+`)+`` ``typedExpressionIR~cast~`` ``+'#'+`` ``+`(+`` ``typeIR~set~`` ``+DYN+`` ``+`)+``.
+. The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"ternary",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. If ``tableKeyValueInterface'^?^`` is defined:
  .. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
- .. Let ``t'^?^`` be xref:text_of_number_tableKeyValueInterface[``$text_of_number_tableKeyValueInterface(tableKeyValueInterface)``].
- .. Check that ``t'^?^`` is defined.
- .. Let ``text~key_value~`` be ``t'^?^``.
- .. Let ``i~key_value~`` be xref:text_to_int[``$text_to_int(text~key_value~)``].
- .. Let ``typedExpressionIR`` be xref:typedExpressionIR[``+D+`` ``i~key_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
- .. Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR`` in ``EC``].
- .. Check that ``typedExpressionIR'^?^`` is defined.
- .. Let ``typedExpressionIR~cast~`` be ``typedExpressionIR'^?^``.
- .. Let ``typeIR~set~`` be ``+SET+`` ``+`<+`` ``typeIR`` ``+`>+``.
- .. Let ``simpleKeysetExpressionIR`` be ``+`(+`` ``typeIR~set~`` ``+`)+`` ``typedExpressionIR~cast~`` ``+'#'+`` ``+`(+`` ``typeIR~set~`` ``+DYN+`` ``+`)+``.
- .. Return ``simpleKeysetExpressionIR``.
+ .. If let ``{nbsp}~HEX~`` ``text~key_value~`` be ``tableKeyValueInterface``:
+  ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+  ... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)``].
+  ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+  ... Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~base~`` ``+:+`` ``typedExpressionIR^?^``].
+  ... If ``typedExpressionIR^?^`` is defined:
+   .... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
+   .... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``].
+   .... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+   .... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)``].
+   .... Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~base~`` ``+:+`` ``typedExpressionIR'^?^``].
+   .... If ``typedExpressionIR'^?^`` is defined:
+    ..... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
+    ..... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
+    ..... The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"ternary",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. Check that ``tableKeyValueInterface'^?^`` is defined.
+. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
+. Check that ``tableKeyValueInterface`` matches pattern ``{nbsp}~BIN~`` ``%``.
+. Let ``{nbsp}~BIN~`` ``text~key_value~`` be ``tableKeyValueInterface``.
+. Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+. Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)``].
+. Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+. Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~base~`` ``+:+`` ``typedExpressionIR^?^``].
+. Check that ``typedExpressionIR^?^`` is defined.
+. Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
+. Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
+. Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+. Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)``].
+. Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~base~`` ``+:+`` ``typedExpressionIR'^?^``].
+. Check that ``typedExpressionIR'^?^`` is defined.
+. Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
+. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
+. The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"lpm",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. If ``tableKeyValueInterface'^?^`` is defined:
+ .. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
+ .. If let ``{nbsp}~HEX~`` ``text~key_value~`` be ``tableKeyValueInterface``:
+  ... Let ``text~key_value_prefix~`` be xref:strip_suffix_rec[the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible].
+  ... If ``~``xref:contains[``$contains(text~key_value_prefix~,`` ``"*")``]:
+   .... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+   .... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)``].
+   .... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+   .... Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~base~`` ``+:+`` ``typedExpressionIR^?^``].
+   .... If ``typedExpressionIR^?^`` is defined:
+    ..... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
+    ..... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``].
+    ..... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+    ..... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)``].
+    ..... Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~base~`` ``+:+`` ``typedExpressionIR'^?^``].
+    ..... If ``typedExpressionIR'^?^`` is defined:
+     ...... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
+     ...... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
+     ...... The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"lpm",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. If ``tableKeyValueInterface'^?^`` is defined:
+ .. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
+ .. If let ``{nbsp}~BIN~`` ``text~key_value~`` be ``tableKeyValueInterface``:
+  ... Let ``text~key_value_prefix~`` be xref:strip_suffix_rec[the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible].
+  ... If ``~``xref:contains[``$contains(text~key_value_prefix~,`` ``"*")``]:
+   .... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+   .... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)``].
+   .... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+   .... Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~base~`` ``+:+`` ``typedExpressionIR^?^``].
+   .... If ``typedExpressionIR^?^`` is defined:
+    ..... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
+    ..... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
+    ..... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+    ..... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)``].
+    ..... Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~base~`` ``+:+`` ``typedExpressionIR'^?^``].
+    ..... If ``typedExpressionIR'^?^`` is defined:
+     ...... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
+     ...... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
+     ...... The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"lpm",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. Check that ``tableKeyValueInterface'^?^`` is defined.
+. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
+. Check that ``tableKeyValueInterface`` matches pattern ``%`` ``{nbsp}~SLASH~`` ``%``.
+. Let ``text~key_prefix_value~`` ``{nbsp}~SLASH~`` ``n~key_prefix_width~`` be ``tableKeyValueInterface``.
+. Let ``text~key_prefix_value_rev~`` be xref:reverse_bytes_of_hex[``$reverse_bytes_of_hex(text~key_prefix_value~)``].
+. Let ``i~key_prefix_value~`` be xref:text_to_int[``$text_to_int(text~key_prefix_value_rev~)``].
+. Let ``n~key_type_width~`` be xref:sizeof_maxSizeInBits'[``$sizeof_maxSizeInBits'(typeIR)``].
+. Check that ``n~key_prefix_width~`` is less than or equal to ``n~key_type_width~``.
+. Let ``i`` be ``n~key_type_width~`` ``-`` ``n~key_prefix_width~``.
+. Check that ``i`` has type ``nat``.
+. Let ``n~key_remaining_width~`` be ``i``.
+. Let ``i~key_base_value~`` be xref:shl[the left shift of ``i~key_prefix_value~`` by ``n~key_remaining_width~``].
+. Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+. Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~base~`` ``+:+`` ``typedExpressionIR^?^``].
+. Check that ``typedExpressionIR^?^`` is defined.
+. Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
+. Let ``int`` be xref:pow2[2 to the power of ``n~key_type_width~``].
+. Let ``int'`` be xref:pow2[2 to the power of ``n~key_remaining_width~``].
+. Let ``i~key_mask_value~`` be ``int`` ``-`` ``int'``.
+. Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~base~`` ``+:+`` ``typedExpressionIR'^?^``].
+. Check that ``typedExpressionIR'^?^`` is defined.
+. Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
+. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
+. The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"optional",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
+. Check that ``tableKeyValueInterface'^?^`` is defined.
+. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
+. Check that ``tableKeyValueInterface`` matches pattern ``{nbsp}~BIN~`` ``%``.
+. Let ``{nbsp}~BIN~`` ``text~key_value~`` be ``tableKeyValueInterface``.
+. Check that ``~``xref:contains[``$contains(text~key_value~,`` ``"*")``] or xref:strip_suffix_rec[the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible] is equal to ``""``.
+. Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+. Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)``].
+. Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+. Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~base~`` ``+:+`` ``typedExpressionIR^?^``].
+. Check that ``typedExpressionIR^?^`` is defined.
+. Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
+. Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
+. Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
+. Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)``].
+. Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~base~`` ``+:+`` ``typedExpressionIR'^?^``].
+. Check that ``typedExpressionIR'^?^`` is defined.
+. Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
+. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
+. The result is ``simpleKeysetExpressionIR``.
+
+xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``"selector",`` ``typeIR`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let ``typedExpressionIR~zero~`` be xref:typedExpressionIR[``+D+`` ``0`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+. Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR`` ``+`)+`` ``typedExpressionIR~zero~`` ``+:+`` ``typedExpressionIR^?^``].
+. Check that ``typedExpressionIR^?^`` is defined.
+. Let ``typedExpressionIR~cast~`` be ``typedExpressionIR^?^``.
+. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~cast~`` ``+'&&&'+`` ``typedExpressionIR~cast~``.
+. The result is ``simpleKeysetExpressionIR``.
+
+TableObject_create_entry_key dispatch:
+
+. If ``t`` is equal to ``"exact"``: goto xref:TableObject_create_entry_key-exact[exact]
 . Else if ``t`` is equal to ``"ternary"``:
- .. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
- .. Check that ``tableKeyValueInterface'^?^`` is defined.
- .. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
- .. If let ``{nbsp}~HEX~`` ``text~key_value~`` be ``tableKeyValueInterface``:
-  ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)``].
-  ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR^?^`` is defined.
-  ... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
-  ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``].
-  ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)``].
-  ... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR'^?^`` is defined.
-  ... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
-  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
-  ... Return ``simpleKeysetExpressionIR``.
- .. Else if let ``{nbsp}~BIN~`` ``text~key_value~`` be ``tableKeyValueInterface``:
-  ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)``].
-  ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR^?^`` is defined.
-  ... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
-  ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
-  ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)``].
-  ... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR'^?^`` is defined.
-  ... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
-  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
-  ... Return ``simpleKeysetExpressionIR``.
+ .. Try:
+  ... Goto xref:TableObject_create_entry_key-ternary-hex[ternary-hex]
+ .. Then, try:
+  ... Goto xref:TableObject_create_entry_key-ternary-bin[ternary-bin]
 . Else if ``t`` is equal to ``"lpm"``:
- .. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
- .. Check that ``tableKeyValueInterface'^?^`` is defined.
- .. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
- .. If let ``{nbsp}~HEX~`` ``text~key_value~`` be ``tableKeyValueInterface``:
-  ... Let ``text~key_value_prefix~`` be xref:strip_suffix_rec[the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible].
-  ... Check that ``~``xref:contains[``$contains(text~key_value_prefix~,`` ``"*")``].
-  ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_base_value~)``].
-  ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR^?^`` is defined.
-  ... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
-  ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"F"``].
-  ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0x"`` ``{pp}`` ``text~key_mask_value'~)``].
-  ... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR'^?^`` is defined.
-  ... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
-  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
-  ... Return ``simpleKeysetExpressionIR``.
- .. Else if let ``{nbsp}~BIN~`` ``text~key_value~`` be ``tableKeyValueInterface``:
-  ... Let ``text~key_value_prefix~`` be xref:strip_suffix_rec[the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible].
-  ... Check that ``~``xref:contains[``$contains(text~key_value_prefix~,`` ``"*")``].
-  ... Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)``].
-  ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR^?^`` is defined.
-  ... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
-  ... Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
-  ... Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
-  ... Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)``].
-  ... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR'^?^`` is defined.
-  ... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
-  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
-  ... Return ``simpleKeysetExpressionIR``.
- .. Else if let ``text~key_prefix_value~`` ``{nbsp}~SLASH~`` ``n~key_prefix_width~`` be ``tableKeyValueInterface``:
-  ... Let ``text~key_prefix_value_rev~`` be xref:reverse_bytes_of_hex[``$reverse_bytes_of_hex(text~key_prefix_value~)``].
-  ... Let ``i~key_prefix_value~`` be xref:text_to_int[``$text_to_int(text~key_prefix_value_rev~)``].
-  ... Let ``n~key_type_width~`` be xref:sizeof_maxSizeInBits'[``$sizeof_maxSizeInBits'(typeIR)``].
-  ... Check that ``n~key_prefix_width~`` is less than or equal to ``n~key_type_width~``.
-  ... Let ``i`` be ``n~key_type_width~`` ``-`` ``n~key_prefix_width~``.
-  ... Check that ``i`` has type ``nat``.
-  ... Let ``n~key_remaining_width~`` be ``i``.
-  ... Let ``i~key_base_value~`` be xref:shl[the left shift of ``i~key_prefix_value~`` by ``n~key_remaining_width~``].
-  ... Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
-  ... Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR^?^`` is defined.
-  ... Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
-  ... Let ``int`` be xref:pow2[2 to the power of ``n~key_type_width~``].
-  ... Let ``int'`` be xref:pow2[2 to the power of ``n~key_remaining_width~``].
-  ... Let ``i~key_mask_value~`` be ``int`` ``-`` ``int'``.
-  ... Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
-  ... Check that ``typedExpressionIR'^?^`` is defined.
-  ... Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
-  ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
-  ... Return ``simpleKeysetExpressionIR``.
-. Else if ``t`` is equal to ``"optional"``:
- .. Let ``tableKeyValueInterface'^?^`` be xref:assoc_[the value associated to ``nameIR~key~`` in ``tableKeyInterface^{asterisk}^``].
- .. Check that ``tableKeyValueInterface'^?^`` is defined.
- .. Let ``tableKeyValueInterface`` be ``tableKeyValueInterface'^?^``.
- .. Check that ``tableKeyValueInterface`` matches pattern ``{nbsp}~BIN~`` ``%``.
- .. Let ``{nbsp}~BIN~`` ``text~key_value~`` be ``tableKeyValueInterface``.
- .. Check that ``~``xref:contains[``$contains(text~key_value~,`` ``"*")``] or xref:strip_suffix_rec[the text ``text~key_value~`` with the suffix ``"*"`` removed many times as possible] is equal to ``""``.
- .. Let ``text~key_base_value~`` be xref:replace_text[the text ``text~key_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
- .. Let ``i~key_base_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_base_value~)``].
- .. Let ``typedExpressionIR~base~`` be xref:typedExpressionIR[``+D+`` ``i~key_base_value~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
- .. Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
- .. Check that ``typedExpressionIR^?^`` is defined.
- .. Let ``typedExpressionIR~base_cast~`` be ``typedExpressionIR^?^``.
- .. Let ``text~key_mask_value~`` be xref:replace_text_except[the text ``text~key_value~`` with all occurrences of ``"*"`` not replaced by ``"1"``].
- .. Let ``text~key_mask_value'~`` be xref:replace_text[the text ``text~key_mask_value~`` with all occurrences of ``"*"`` replaced by ``"0"``].
- .. Let ``i~key_mask_value~`` be xref:text_to_int[``$text_to_int("0b"`` ``{pp}`` ``text~key_mask_value'~)``].
- .. Let ``typedExpressionIR'^?^`` be xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
- .. Check that ``typedExpressionIR'^?^`` is defined.
- .. Let ``typedExpressionIR~mask_cast~`` be ``typedExpressionIR'^?^``.
- .. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+'&&&'+`` ``typedExpressionIR~mask_cast~``.
- .. Return ``simpleKeysetExpressionIR``.
-. Else if ``t`` is equal to ``"selector"``:
- .. Let ``typedExpressionIR~zero~`` be xref:typedExpressionIR[``+D+`` ``0`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
- .. Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~zero~`` from control plane cast to ``typeIR`` in ``EC``].
- .. Check that ``typedExpressionIR^?^`` is defined.
- .. Let ``typedExpressionIR~cast~`` be ``typedExpressionIR^?^``.
- .. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~cast~`` ``+'&&&'+`` ``typedExpressionIR~cast~``.
- .. Return ``simpleKeysetExpressionIR``.
+ .. Try:
+  ... Goto xref:TableObject_create_entry_key-lpm-hex[lpm-hex]
+ .. Then, try:
+  ... Goto xref:TableObject_create_entry_key-lpm-bin[lpm-bin]
+ .. Then, try:
+  ... Goto xref:TableObject_create_entry_key-lpm-prefix[lpm-prefix]
+. Else if ``t`` is equal to ``"optional"``: goto xref:TableObject_create_entry_key-optional[optional]
+. Else if ``t`` is equal to ``"selector"``: goto xref:TableObject_create_entry_key-selector[selector]
 
-xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC, (nameIR, nameIR, typeIR)^{asterisk}^, tableKeysetInterface)]
+xref:TableObject_create_entry_keys[TableObject_create_entry_keys: ``EC`` ``+|-+`` ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^`` ``+'@'+`` ``tableKeysetInterface`` ``+:+`` ``%``]
+
+xref:TableObject_create_entry_keys[``EC`` ``+|-+`` ``·`` ``+'@'+`` ``tableKeysetInterface`` ``+:+`` ``%``]:
+ the result is ``·``.
+
+xref:TableObject_create_entry_keys[``EC`` ``+|-+`` ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``)`` ``{two-colons}`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
+
+. Let xref:TableObject_create_entry_key[``EC`` ``+|-+`` ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``)`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``simpleKeysetExpressionIR~h~``].
+. Let xref:TableObject_create_entry_keys[``EC`` ``+|-+`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``simpleKeysetExpressionIR~t~^{asterisk}^``].
+. The result is ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR~t~^{asterisk}^``.
+
+TableObject_create_entry_keys dispatch:
 
 . Try:
- .. If ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^`` is an empty list: return ``·``.
+ .. If ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^`` is an empty list: goto xref:TableObject_create_entry_keys-nil[nil]
 . Then, try:
  .. Let ``tableKeyInterface^{asterisk}^`` be ``tableKeysetInterface``.
  .. Check that ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^`` is a non-empty list.
  .. Let ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``)`` ``{two-colons}`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^`` be ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^``.
- .. Let ``simpleKeysetExpressionIR~h~`` be xref:tableObject_create_entry_key[``$tableObject_create_entry_key(EC,`` ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``),`` ``tableKeyInterface^{asterisk}^)``].
- .. Let ``simpleKeysetExpressionIR^{asterisk}^`` be xref:tableObject_create_entry_keys[``$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)``].
- .. Return ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR^{asterisk}^``.
+ .. Goto xref:TableObject_create_entry_keys-cons[cons]
 
 xref:interface_of_tableKeyIR[$interface_of_tableKeyIR(typedExpressionIR +'#'+ nameIR~key~ +':'+ nameIR~matchKind~ annotationList +';'+)]
 
@@ -22974,7 +23277,9 @@ xref:key_interface_of_tableObject[$key_interface_of_tableObject(+TABLE+ typeId +
 Let ``nameIR~key~^{asterisk}^``, ``nameIR~matchKind~^{asterisk}^``, and ``typeIR^{asterisk}^`` be the resulting lists.
 . Return ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^``.
 
-xref:tableObject_create_entry_keyset[$tableObject_create_entry_keyset(EC, +KEY+ +'='+ +`{+ tableKeyIR^{asterisk}^ +`}+, tableKeyInterface^{asterisk}^)]
+xref:TableObject_create_entry_keyset[TableObject_create_entry_keyset: ``EC`` ``+|-+`` ``+KEY+`` ``+'='+`` ``+`{+`` ``tableKeyIR^{asterisk}^`` ``+`}+`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]
+
+xref:TableObject_create_entry_keyset[``EC`` ``+|-+`` ``+KEY+`` ``+'='+`` ``+`{+`` ``tableKeyIR^{asterisk}^`` ``+`}+`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``%``]:
 
 . For each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``:
 +
@@ -22992,8 +23297,11 @@ Let ``nameIR~key~^{asterisk}^``, ``nameIR~matchKind~^{asterisk}^``, and ``typeIR
 Let ``nameIR~key_update~^{asterisk}^`` and ``tableKeyValueInterface~update~^{asterisk}^`` be the resulting lists.
 . Let ``nameIR~key_non_selector~^{asterisk}^`` be xref:filter_[``nameIR~key~^{asterisk}^`` filtered by ``(`` ``nameIR~matchKind~`` ``=/=`` ``"selector"`` ``)^{asterisk}^``].
 . Check that xref:eq_set[``+`{+`` ``nameIR~key_non_selector~^{asterisk}^`` ``+`}+`` is equal to ``+`{+`` ``nameIR~key_update~^{asterisk}^`` ``+`}+``].
-. Let ``simpleKeysetExpressionIR^{asterisk}^`` be xref:tableObject_create_entry_keys[``$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)``].
-. Return ``+`(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+`)+``.
+. Let xref:TableObject_create_entry_keys[``EC`` ``+|-+`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^`` ``+'@'+`` ``tableKeyInterface^{asterisk}^`` ``+:+`` ``simpleKeysetExpressionIR^{asterisk}^``].
+. The result is ``+`(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+`)+``.
+
+TableObject_create_entry_keyset dispatch:
+ Goto xref:TableObject_create_entry_keyset-[]
 
 xref:alias_to_original_lookup_map[$alias_to_original_lookup_map(parameterIR^{asterisk}^)]
 
@@ -23142,50 +23450,12 @@ xref:find_tableActionIR_unqualified'[$find_tableActionIR_unqualified'(tableActio
   ... Let ``nameIR~action~`` be xref:flatten_prefixedNameIR[the string form of  ``prefixedNameIR``].
   ... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
 
-xref:tableObject_create_entry_action[$tableObject_create_entry_action(EC, +ACTIONS+ +'='+ +`{+ tableActionIR^{asterisk}^ +`}+, ( nameIR~action_update~, tableActionArgumentInterface~update~^{asterisk}^ ))]
+xref:TableObject_create_entry_action[TableObject_create_entry_action: ``EC`` ``+|-+`` ``+ACTIONS+`` ``+'='+`` ``+`{+`` ``tableActionIR^{asterisk}^`` ``+`}+`` ``+'@'+`` ``(`` ``nameIR~action_update~,`` ``tableActionArgumentInterface~update~^{asterisk}^`` ``)`` ``+:+`` ``%``]
 
-. Try:
- .. Let ``(nameIR,`` ``tableActionIR)^?^`` be xref:find_tableActionIR_qualified[``$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)``].
- .. If ``(nameIR,`` ``tableActionIR)^?^`` is defined:
-  ... Let ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be ``(nameIR,`` ``tableActionIR)^?^``.
-  ... Let ``annotationList`` ``prefixedNameIR`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR~data~^{asterisk}^`` ``+`)+`` ``+'#'+`` ``+`(+`` ``++_++`` ``+','+`` ``parameterIR~control~^{asterisk}^`` ``+`)+`` ``+';'+`` be ``tableActionIR~found~``.
-  ... Let ``i~arg_aligned~^{asterisk}^`` be xref:align_tableActionArgumentInterfaces[``$align_tableActionArgumentInterfaces(parameterIR~control~^{asterisk}^,`` ``tableActionArgumentInterface~update~^{asterisk}^)``].
-  ... For each ``parameterIR~control~`` in ``parameterIR~control~^{asterisk}^``:
-+
---
-   **** Let ``++_++`` ``++_++`` ``typeIR~param~`` ``++_++`` ``++_++`` be ``parameterIR~control~``.
---
-+
-Let ``typeIR~param~^{asterisk}^`` be the resulting list.
-  ... For each ``i~arg_aligned~`` in ``i~arg_aligned~^{asterisk}^``:
-+
---
-   **** Let ``typedExpressionIR~arg~`` be xref:typedExpressionIR[``+D+`` ``i~arg_aligned~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
---
-+
-Let ``typedExpressionIR~arg~^{asterisk}^`` be the resulting list.
-  ... If the length of ``typeIR~param~^{asterisk}^`` is equal to the length of ``typedExpressionIR~arg~^{asterisk}^``:
-   .... For each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``:
-+
---
-    ***** Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~arg~`` from control plane cast to ``typeIR~param~`` in ``EC``].
---
-+
-Let ``typedExpressionIR^?^^{asterisk}^`` be the resulting list.
-   .... If ``typedExpressionIR^?^`` is defined, for all ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``:
-    ..... For each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``:
-+
---
-     ****** Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
---
-+
-Let ``typedExpressionIR~arg_cast~^{asterisk}^`` be the resulting list.
-    ..... Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
-    ..... Return ``{nbsp}~BARE~`` ``nameIR~found~`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``.
-. Then, try:
- .. Check that xref:find_tableActionIR_qualified[``$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)``] is none.
- .. Let ``(nameIR,`` ``tableActionIR)^?^`` be xref:find_tableActionIR_unqualified[``$find_tableActionIR_unqualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)``].
- .. Check that ``(nameIR,`` ``tableActionIR)^?^`` is defined.
+xref:TableObject_create_entry_action[``EC`` ``+|-+`` ``+ACTIONS+`` ``+'='+`` ``+`{+`` ``tableActionIR^{asterisk}^`` ``+`}+`` ``+'@'+`` ``(`` ``nameIR~action_update~,`` ``tableActionArgumentInterface~update~^{asterisk}^`` ``)`` ``+:+`` ``%``]:
+
+. Let ``(nameIR,`` ``tableActionIR)^?^`` be xref:find_tableActionIR_qualified[``$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)``].
+. If ``(nameIR,`` ``tableActionIR)^?^`` is defined:
  .. Let ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be ``(nameIR,`` ``tableActionIR)^?^``.
  .. Let ``annotationList`` ``prefixedNameIR`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR~data~^{asterisk}^`` ``+`)+`` ``+'#'+`` ``+`(+`` ``++_++`` ``+','+`` ``parameterIR~control~^{asterisk}^`` ``+`)+`` ``+';'+`` be ``tableActionIR~found~``.
  .. Let ``i~arg_aligned~^{asterisk}^`` be xref:align_tableActionArgumentInterfaces[``$align_tableActionArgumentInterfaces(parameterIR~control~^{asterisk}^,`` ``tableActionArgumentInterface~update~^{asterisk}^)``].
@@ -23203,48 +23473,108 @@ Let ``typeIR~param~^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typedExpressionIR~arg~^{asterisk}^`` be the resulting list.
- .. Check that the length of ``typeIR~param~^{asterisk}^`` is equal to the length of ``typedExpressionIR~arg~^{asterisk}^``.
- .. For each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``:
+ .. If the length of ``typeIR~param~^{asterisk}^`` is equal to the length of ``typedExpressionIR~arg~^{asterisk}^``:
+  ... For each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``:
 +
 --
-  *** Let ``typedExpressionIR^?^`` be xref:cast_control_plane[``typedExpressionIR~arg~`` from control plane cast to ``typeIR~param~`` in ``EC``].
+   **** Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR~param~`` ``+`)+`` ``typedExpressionIR~arg~`` ``+:+`` ``typedExpressionIR^?^``].
 --
 +
 Let ``typedExpressionIR^?^^{asterisk}^`` be the resulting list.
- .. Check that ``typedExpressionIR^?^`` is defined, for all ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``.
- .. For each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``:
+  ... If ``typedExpressionIR^?^`` is defined, for all ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``:
+   .... For each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``:
 +
 --
-  *** Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
+    ***** Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
 --
 +
 Let ``typedExpressionIR~arg_cast~^{asterisk}^`` be the resulting list.
- .. Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
- .. Return ``{nbsp}~BARE~`` ``nameIR~found~`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``.
+   .... Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
+   .... The result is ``{nbsp}~BARE~`` ``nameIR~found~`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``.
 
-xref:tableObject_add_entry[$tableObject_add_entry(EC, tableObject, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)]
+xref:TableObject_create_entry_action[``EC`` ``+|-+`` ``+ACTIONS+`` ``+'='+`` ``+`{+`` ``tableActionIR^{asterisk}^`` ``+`}+`` ``+'@'+`` ``(`` ``nameIR~action_update~,`` ``tableActionArgumentInterface~update~^{asterisk}^`` ``)`` ``+:+`` ``%``]:
 
-. Let ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL`` ``+`}+`` be ``tableObject``.
+. Check that xref:find_tableActionIR_qualified[``$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)``] is none.
+. Let ``(nameIR,`` ``tableActionIR)^?^`` be xref:find_tableActionIR_unqualified[``$find_tableActionIR_unqualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)``].
+. Check that ``(nameIR,`` ``tableActionIR)^?^`` is defined.
+. Let ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be ``(nameIR,`` ``tableActionIR)^?^``.
+. Let ``annotationList`` ``prefixedNameIR`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR~data~^{asterisk}^`` ``+`)+`` ``+'#'+`` ``+`(+`` ``++_++`` ``+','+`` ``parameterIR~control~^{asterisk}^`` ``+`)+`` ``+';'+`` be ``tableActionIR~found~``.
+. Let ``i~arg_aligned~^{asterisk}^`` be xref:align_tableActionArgumentInterfaces[``$align_tableActionArgumentInterfaces(parameterIR~control~^{asterisk}^,`` ``tableActionArgumentInterface~update~^{asterisk}^)``].
+. For each ``parameterIR~control~`` in ``parameterIR~control~^{asterisk}^``:
++
+--
+ ** Let ``++_++`` ``++_++`` ``typeIR~param~`` ``++_++`` ``++_++`` be ``parameterIR~control~``.
+--
++
+Let ``typeIR~param~^{asterisk}^`` be the resulting list.
+. For each ``i~arg_aligned~`` in ``i~arg_aligned~^{asterisk}^``:
++
+--
+ ** Let ``typedExpressionIR~arg~`` be xref:typedExpressionIR[``+D+`` ``i~arg_aligned~`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+--
++
+Let ``typedExpressionIR~arg~^{asterisk}^`` be the resulting list.
+. Check that the length of ``typeIR~param~^{asterisk}^`` is equal to the length of ``typedExpressionIR~arg~^{asterisk}^``.
+. For each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressionIR~arg~`` in ``typedExpressionIR~arg~^{asterisk}^``:
++
+--
+ ** Let xref:Cast_control_plane[``EC`` ``+|-+`` ``+`(+`` ``typeIR~param~`` ``+`)+`` ``typedExpressionIR~arg~`` ``+:+`` ``typedExpressionIR^?^``].
+--
++
+Let ``typedExpressionIR^?^^{asterisk}^`` be the resulting list.
+. Check that ``typedExpressionIR^?^`` is defined, for all ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``.
+. For each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``:
++
+--
+ ** Let ``typedExpressionIR~arg_cast~`` be ``typedExpressionIR^?^``.
+--
++
+Let ``typedExpressionIR~arg_cast~^{asterisk}^`` be the resulting list.
+. Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
+. The result is ``{nbsp}~BARE~`` ``nameIR~found~`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``.
+
+TableObject_create_entry_action dispatch:
+
+. Try:
+ .. Goto xref:TableObject_create_entry_action-qualified[qualified]
+. Then, try:
+ .. Goto xref:TableObject_create_entry_action-unqualified[unqualified]
+
+xref:TableObject_add_entry[TableObject_add_entry: ``EC`` ``+|-+`` ``tableObject`` ``+'@'+`` ``tableEntryPriorityInterface`` ``+','+`` ``tableKeysetInterface`` ``+','+`` ``tableActionInterface`` ``+:+`` ``%``]
+
+xref:TableObject_add_entry[``EC`` ``+|-+`` ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL`` ``+`}+`` ``+'@'+`` ``tableEntryPriorityInterface`` ``+','+`` ``tableKeysetInterface`` ``+','+`` ``tableActionInterface`` ``+:+`` ``%``]:
+
 . Let ``tableEntryPriorityOptIR`` be xref:tableObject_create_entry_priority[``$tableObject_create_entry_priority(tableEntryPriorityInterface)``].
 . If if xref:needs_priority_tableKeysPropertyIR[``$needs_priority_tableKeysPropertyIR(TBL.+KEYS+)``], then xref:is_some_[``$is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR)``]:
- .. Let ``keysetExpressionIR`` be xref:tableObject_create_entry_keyset[``$tableObject_create_entry_keyset(EC,`` ``TBL.+KEYS+,`` ``tableKeysetInterface)``].
- .. Let ``tableActionReferenceIR`` be xref:tableObject_create_entry_action[``$tableObject_create_entry_action(EC,`` ``TBL.+ACTIONS+,`` ``tableActionInterface)``].
+ .. Let xref:TableObject_create_entry_keyset[``EC`` ``+|-+`` ``TBL.+KEYS+`` ``+'@'+`` ``tableKeysetInterface`` ``+:+`` ``keysetExpressionIR``].
+ .. Let xref:TableObject_create_entry_action[``EC`` ``+|-+`` ``TBL.+ACTIONS+`` ``+'@'+`` ``tableActionInterface`` ``+:+`` ``tableActionReferenceIR``].
  .. Let ``tableEntryIR~update~`` be ``·`` ``tableEntryPriorityOptIR`` ``keysetExpressionIR`` ``+':'+`` ``tableActionReferenceIR`` ``{nbsp}~EMPTY~`` ``+';'+``.
  .. Let ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+'='+`` ``+`{+`` ``tableEntryIR^{asterisk}^`` ``+`}+`` be ``TBL.+ENTRIES+``.
  .. Let ``tableEntriesPropertyIR~updated~`` be ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+'='+`` ``+`{+`` ``tableEntryIR^{asterisk}^`` ``{pp}`` ``tableEntryIR~update~`` ``+`}+``.
  .. Let ``TBL~updated~`` be ``TBL`` with ``+ENTRIES+`` set to ``tableEntriesPropertyIR~updated~``.
- .. Return ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL~updated~`` ``+`}+``.
+ .. The result is ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL~updated~`` ``+`}+``.
 
-. +++<span id="func:tableObject_add_entry-else"></span>+++Otherwise: return ``·``.
+. +++<span id="rel:TableObject_add_entry-else"></span>+++Otherwise:
+ .. xref:TableObject_add_entry[``EC`` ``+|-+`` ``tableObject`` ``+'@'+`` ``tableEntryPriorityInterface`` ``+','+`` ``tableKeysetInterface`` ``+','+`` ``tableActionInterface`` ``+:+`` ``%``]: the result is ``·``.
 
-xref:tableObject_add_default_action[$tableObject_add_default_action(EC, +TABLE+ typeId +`{+ frame TBL +`}+, tableActionInterface)]
+TableObject_add_entry dispatch:
+
+. Let ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL`` ``+`}+`` be ``tableObject``.
+. Goto xref:TableObject_add_entry-ok[ok]
+
+xref:TableObject_add_default_action[TableObject_add_default_action: ``EC`` ``+|-+`` ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL`` ``+`}+`` ``+'@'+`` ``tableActionInterface`` ``+:+`` ``%``]
+
+xref:TableObject_add_default_action[``EC`` ``+|-+`` ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL`` ``+`}+`` ``+'@'+`` ``tableActionInterface`` ``+:+`` ``%``]:
 
 . Let ``++_++`` ``constIR^?^`` ``+DEFAULT_ACTION+`` ``+'='+`` ``++_++`` ``+';'+`` be ``TBL.+DEFAULT_ACTION+``.
 . Check that ``constIR^?^`` is none.
-. Let ``tableActionReferenceIR`` be xref:tableObject_create_entry_action[``$tableObject_create_entry_action(EC,`` ``TBL.+ACTIONS+,`` ``tableActionInterface)``].
+. Let xref:TableObject_create_entry_action[``EC`` ``+|-+`` ``TBL.+ACTIONS+`` ``+'@'+`` ``tableActionInterface`` ``+:+`` ``tableActionReferenceIR``].
 . Let ``tableDefaultActionPropertyIR`` be ``{nbsp}~EMPTY~`` ``·`` ``+DEFAULT_ACTION+`` ``+'='+`` ``tableActionReferenceIR`` ``+';'+``.
 . Let ``TBL~updated~`` be ``TBL`` with ``+DEFAULT_ACTION+`` set to ``tableDefaultActionPropertyIR``.
-. Return ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL~updated~`` ``+`}+``.
+. The result is ``+TABLE+`` ``typeId`` ``+`{+`` ``frame`` ``TBL~updated~`` ``+`}+``.
+
+TableObject_add_default_action dispatch:
+ Goto xref:TableObject_add_default_action-[]
 
 xref:V1Model_init[V1Model_init]:
 

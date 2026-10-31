@@ -63,3 +63,10 @@ pub fn function_nondeterministic(func: String, clause_a: usize, clause_b: usize)
         Vec::new(),
     )
 }
+
+const FUNCTION_UNMATCHED: &str = "runtime/function-unmatched";
+
+/// Reports a function call that no clause or table row matched.
+pub fn function_unmatched(func: String) -> Diagnostic {
+    diagnostic(FUNCTION_UNMATCHED, format!("function {func} did not match its inputs"), Vec::new())
+}

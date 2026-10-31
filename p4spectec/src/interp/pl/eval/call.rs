@@ -352,6 +352,8 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
             }
         }
     });
+    // A function call that did not match is an error
+    let result = backtrack::abort_unmatched(result, id.span, || id.node.to_string());
     let pure = runner_ctx.effect_since(checkpoint) == SideEffect::Pure;
     // Nest failures under the invocation trace
     let result = result.with_frame(id.span, || error::trace::message_func_invocation(id, targs));
@@ -422,7 +424,7 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
             }
             ok!(value)
         }
-        // Builtin failures allow another candidate; other errors are fatal
+        // Builtin failures are fatal
         Err(failure) => Err(failure.with_span(&id.span)),
     }
 }

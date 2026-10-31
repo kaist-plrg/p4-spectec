@@ -5,7 +5,8 @@
 //! A success source must pass every stage up to that stage;
 //! a failure source must pass every earlier stage and fail at it.
 //! The specdoc stage fails when AsciiDoc rendering of PL warns;
-//! the run stage builds a runner and evaluates `$main()`.
+//! the run stage builds a runner and evaluates the suite's entry,
+//! `$main()` or the relation `Main`.
 //! Each configuration runs its `stages` in order,
 //! and skips suites whose stage is outside them.
 
@@ -69,6 +70,17 @@ pub struct MicroConfiguration {
     pub excludes: Vec<PathBuf>,
 }
 
+/// Names how the run stage enters a source.
+#[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum Entry {
+    /// The function `$main()`.
+    #[default]
+    Function,
+    /// The relation `Main`, whose notation takes no arguments.
+    Relation,
+}
+
 /// Registers a directory of spec-language sources with one verdict.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -77,6 +89,8 @@ pub struct Suite {
     pub root: PathBuf,
     pub outcome: Outcome,
     pub stage: Stage,
+    #[serde(default)]
+    pub entry: Entry,
 }
 
 /// Supplies micro configurations and suites.
@@ -159,7 +173,7 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
                 continue;
             }
             log.begin(path)?;
-            let stage_fail = first_failure(path, stages_run, config_runner)?;
+            let stage_fail = first_failure(path, stages_run, suite.entry, config_runner)?;
             // Name the expected outcome on lines that differ from their suite
             if stage_fail == stage_expect {
                 log.end(&describe(stage_fail))?;
@@ -208,7 +222,12 @@ fn describe(stage_fail: Option<Stage>) -> String {
 ///
 /// Structuring keeps rule groups only when the prose stage follows,
 /// which needs them; SL execution needs them removed.
-fn first_failure(path: &Path, stages: &[Stage], config: Config) -> Result<Option<Stage>> {
+fn first_failure(
+    path: &Path,
+    stages: &[Stage],
+    entry: Entry,
+    config: Config,
+) -> Result<Option<Stage>> {
     let without_rule_groups = !stages.contains(&Stage::Prose);
     let mut output = Output::Source(path.to_owned());
     for &stage in stages {
@@ -228,9 +247,9 @@ fn first_failure(path: &Path, stages: &[Stage], config: Config) -> Result<Option
                 adoc::pl::render_spec(&mut warnings, &spec_pl);
                 warnings.is_empty().then_some(Output::Pl(spec_pl))
             }
-            (Stage::Run, Output::Al(spec_al)) => eval_main(Spec::Al(spec_al), config),
-            (Stage::Run, Output::Sl(spec_sl)) => eval_main(Spec::Sl(spec_sl), config),
-            (Stage::Run, Output::Pl(spec_pl)) => eval_main(Spec::Pl(spec_pl), config),
+            (Stage::Run, Output::Al(spec_al)) => eval_entry(Spec::Al(spec_al), entry, config),
+            (Stage::Run, Output::Sl(spec_sl)) => eval_entry(Spec::Sl(spec_sl), entry, config),
+            (Stage::Run, Output::Pl(spec_pl)) => eval_entry(Spec::Pl(spec_pl), entry, config),
             // Registered stages must chain from one language to the next
             (stage, _) => {
                 return Err(Error::from(format!(
@@ -248,13 +267,16 @@ fn first_failure(path: &Path, stages: &[Stage], config: Config) -> Result<Option
     Ok(None)
 }
 
-/// Builds a runner and evaluates `$main()`, returning `None` on failure.
-fn eval_main(spec: Spec, config: Config) -> Option<Output> {
+/// Builds a runner and evaluates the entry, returning `None` on failure.
+fn eval_entry(spec: Spec, entry: Entry, config: Config) -> Option<Output> {
     let mut arena = Arena::new();
     let mut runner = interpreter::build(&mut arena, spec, config, NullExtern).ok()?;
-    runner
-        .eval_func(&mut arena, "main", &[], &[])
-        .result
-        .ok()
-        .map(|_| Output::Value)
+    let accepted = match entry {
+        Entry::Function => runner
+            .eval_func(&mut arena, "main", &[], &[])
+            .result
+            .is_ok(),
+        Entry::Relation => runner.eval_rel(&mut arena, "Main", &[]).result.is_ok(),
+    };
+    accepted.then_some(Output::Value)
 }

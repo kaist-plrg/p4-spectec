@@ -71,7 +71,7 @@ impl<Arch: Architecture> SimTower<Arch> {
         arena: &mut Arena,
         body: impl FnOnce(&mut RunnerContext<'_, TowerInterp<'_>, P4Interface, Arch>) -> T,
     ) -> T {
-        let Tower { levels, protocols, base, options } = &mut self.tower;
+        let Tower { levels, protocols, base, options, .. } = &mut self.tower;
         // Reach depth 0 and the P4 host in the base runner
         let BaseRunner::Meta(runner) = base else {
             unreachable!("a simulated tower has a meta base");
