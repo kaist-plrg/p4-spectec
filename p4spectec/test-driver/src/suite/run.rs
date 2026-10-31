@@ -3,12 +3,16 @@ use std::{
     path::{Path, PathBuf},
     sync::mpsc,
     thread,
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 use p4spectec::lang::data::arena::Arena;
 
-use p4spectec::interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess};
+use p4spectec::interface::p4::{
+    P4Interface, error::P4Error, parse::parse_string, preprocessor::preprocess,
+};
+
+use p4spectec::runner::Runner;
 
 use p4spectec::sim_plugin::dummy::Dummy;
 
@@ -19,6 +23,7 @@ use crate::harness::{
     corpus::{self, Outcome, Results},
     interpreter::{self, Configuration},
     log::TestLog,
+    worker::{self, Channel, Reply, Worker},
 };
 
 /// Supplies the specification, includes, exclusions, configurations, and suites.
@@ -51,7 +56,10 @@ struct CollectedSuite {
 }
 
 /// Runs registered execution suites under the named configuration.
-pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
+///
+/// With a `timeout`, a worker runs each program,
+/// and a program still running after the timeout is recorded as a timeout.
+pub fn run(name_config: &str, timeout: Option<Duration>, path_log: Option<&Path>) -> Result<()> {
     let registration: Registration = harness::load("run")?;
     let config = Configuration::find(&registration.configs, name_config)?;
     let text_mode = format!("run {}", config.describe());
@@ -88,14 +96,20 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
     );
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
-    let mut arena = Arena::new();
-    let spec = config.language.spec(&registration.spec)?;
-    let mut runner = interpreter::build(&mut arena, spec, config.runner(), Dummy)?;
-    log.note(&format!("specification prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
+    // A worker prepares its own specification; otherwise prepare it here
+    let mut worker = timeout.map(|timeout| {
+        Worker::new(vec!["worker".into(), "run".into(), config.name.clone()], timeout)
+    });
+    let mut local = None;
+    if worker.is_none() {
+        local = Some(prepare(&registration, config)?);
+        log.note(&format!("specification prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
+    }
     let includes = &registration.includes;
     // Preprocess upcoming files while the runner parses and evaluates in order
     let paths_preprocess: Vec<_> = suites
         .iter()
+        .filter(|_| local.is_some())
         .flat_map(|suite| {
             suite
                 .paths
@@ -107,6 +121,7 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
     let progress = corpus::progress_bar(collected)?;
     let mut executed = 0;
     let mut passed = 0;
+    let mut timed_out = 0;
     let guard_stdout = harness::output::SilenceStdout::new()?;
     thread::scope(|scope| -> Result<()> {
         let (sender, receiver) = mpsc::sync_channel(2);
@@ -129,46 +144,37 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
                     Outcome::Exclude
                 } else {
                     log.begin(path)?;
-                    // Reset before parsing: no value may cross this program boundary
-                    runner.reset();
-                    arena.reset_values();
-                    let source = receiver
-                        .recv()
-                        .map_err(|error| {
-                            Error::from(format!("preprocessor worker stopped: {error}"))
-                        })?
-                        .map_err(|error| {
-                            Error::from(format!(
-                                "{}: test execution error: {error}",
-                                path.display()
-                            ))
-                        })?;
-                    let outcome = match parse_string(&mut arena, path, &source) {
-                        Ok(program) => {
-                            match runner
-                                .eval_program(&mut arena, &suite.id_relation, program)
-                                .result
-                            {
-                                Ok(_) => Outcome::Pass,
-                                Err(_) => Outcome::Fail,
+                    let outcome = match (&mut worker, &mut local) {
+                        (Some(worker), _) => {
+                            let request =
+                                format!("{}\t{}", suite.id_relation, worker::path_text(path)?);
+                            match worker.request(&request)? {
+                                Reply::Done { status, .. } => Outcome::from_name(&status)?,
+                                Reply::Timeout => Outcome::Timeout,
                             }
                         }
-                        Err(P4Error {
-                            kind: p4spectec::interface::p4::error::P4ErrorKind::Syntax(_),
-                            ..
-                        }) => Outcome::Fail,
-                        Err(error) => {
-                            return Err(Error::from(format!(
-                                "{}: test execution error: {}",
-                                path.display(),
-                                error.into_report()
-                            )));
+                        (None, Some((arena, runner))) => {
+                            let source = receiver
+                                .recv()
+                                .map_err(|error| {
+                                    Error::from(format!("preprocessor worker stopped: {error}"))
+                                })?
+                                .map_err(|error| {
+                                    Error::from(format!(
+                                        "{}: test execution error: {error}",
+                                        path.display()
+                                    ))
+                                })?;
+                            execute(arena, runner, &suite.id_relation, path, &source)?
                         }
+                        (None, None) => unreachable!("specification prepared without a worker"),
                     };
                     log.end(outcome.name())?;
                     executed += 1;
-                    if outcome == Outcome::Pass {
-                        passed += 1;
+                    match outcome {
+                        Outcome::Pass => passed += 1,
+                        Outcome::Timeout => timed_out += 1,
+                        _ => {}
                     }
                     outcome
                 };
@@ -181,8 +187,8 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
     guard_stdout.finish()?;
     progress.finish_with_message("complete");
     let text_summary = format!(
-        "{text_mode}: collected={collected} excluded={excluded} executed={executed} pass={passed} fail={} elapsed={:.3}s",
-        executed - passed,
+        "{text_mode}: collected={collected} excluded={excluded} executed={executed} pass={passed} fail={} timeout={timed_out} elapsed={:.3}s",
+        executed - passed - timed_out,
         start.elapsed().as_secs_f64()
     );
     eprintln!("{text_summary}");
@@ -192,4 +198,65 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
     }
     eprintln!("{text_mode}: all {collected} file results matched expected");
     Ok(())
+}
+
+/// Builds the runner of the configuration's specification.
+fn prepare(
+    registration: &Registration,
+    config: &Configuration,
+) -> Result<(Arena, Runner<P4Interface, Dummy>)> {
+    let mut arena = Arena::new();
+    let spec = config.language.spec(&registration.spec)?;
+    let runner = interpreter::build(&mut arena, spec, config.runner(), Dummy)?;
+    Ok((arena, runner))
+}
+
+/// Evaluates one preprocessed program through `relation`.
+fn execute(
+    arena: &mut Arena,
+    runner: &mut Runner<P4Interface, Dummy>,
+    relation: &str,
+    path: &Path,
+    source: &str,
+) -> Result<Outcome> {
+    // Reset before parsing: no value may cross this program boundary
+    runner.reset();
+    arena.reset_values();
+    match parse_string(arena, path, source) {
+        Ok(program) => match runner.eval_program(arena, relation, program).result {
+            Ok(_) => Ok(Outcome::Pass),
+            Err(_) => Ok(Outcome::Fail),
+        },
+        Err(P4Error { kind: p4spectec::interface::p4::error::P4ErrorKind::Syntax(_), .. }) => {
+            Ok(Outcome::Fail)
+        }
+        Err(error) => Err(Error::from(format!(
+            "{}: test execution error: {}",
+            path.display(),
+            error.into_report()
+        ))),
+    }
+}
+
+/// Serves `worker run <config>`: each request `<relation>\t<path>` runs one program.
+pub fn serve(name_config: &str) -> Result<()> {
+    let channel = Channel::open()?;
+    let registration: Registration = harness::load("run")?;
+    let config = Configuration::find(&registration.configs, name_config)?;
+    let (mut arena, mut runner) = prepare(&registration, config)?;
+    channel.serve(|request| {
+        let (relation, path) = request
+            .split_once('\t')
+            .ok_or_else(|| Error::from(format!("invalid worker request: {request}")))?;
+        let path = Path::new(path);
+        let source = preprocess(&registration.includes, path).map_err(|error| {
+            Error::from(format!(
+                "{}: test execution error: {}",
+                path.display(),
+                error.into_report()
+            ))
+        })?;
+        let outcome = execute(&mut arena, &mut runner, relation, path, &source)?;
+        Ok((outcome.name().to_owned(), String::new()))
+    })
 }
