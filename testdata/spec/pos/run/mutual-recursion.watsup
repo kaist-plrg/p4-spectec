@@ -1,0 +1,89 @@
+;; Deep and mutual recursion, and call-frame discipline.
+;;
+;; The other examples call at most one or two frames deep.  This one nests
+;; calls heavily — mutual recursion between three functions, an accumulator
+;; passed down a long chain, and a function whose argument is itself a call —
+;; so the interpreter's call stack has to unwind correctly every time.  A leak
+;; in the local environment or the save stack shows up here as a wrong answer
+;; rather than as a crash.
+
+var b : bool
+var i : int
+var n : nat
+
+;; --- mutual recursion between three functions ---------------------------
+;; A three-way cycle: each defers to the next until the counter runs out.
+dec $modA(nat) : nat
+dec $modB(nat) : nat
+dec $modC(nat) : nat
+
+def $modA(0) = 0
+def $modA(n) = $($modB(n') + 1)
+  -- if n =/= 0
+  -- if n' = $(n - 1)
+
+def $modB(0) = 0
+def $modB(n) = $($modC(n') + 10)
+  -- if n =/= 0
+  -- if n' = $(n - 1)
+
+def $modC(0) = 0
+def $modC(n) = $($modA(n') + 100)
+  -- if n =/= 0
+  -- if n' = $(n - 1)
+
+;; --- an accumulator threaded down a long chain --------------------------
+;; Tail-recursive, so the accumulator is the only thing carried forward.
+dec $sumTo(nat, nat) : nat
+def $sumTo(0, n_acc) = n_acc
+def $sumTo(n, n_acc) = $sumTo(n', n_acc')
+  -- if n =/= 0
+  -- if n' = $(n - 1)
+  -- if n_acc' = $(n_acc + n)
+
+;; --- even/odd, the classic mutual pair ----------------------------------
+dec $isEven(nat) : bool
+dec $isOdd(nat) : bool
+
+def $isEven(0) = true
+def $isEven(n) = $isOdd(n')
+  -- if n =/= 0
+  -- if n' = $(n - 1)
+
+def $isOdd(0) = false
+def $isOdd(n) = $isEven(n')
+  -- if n =/= 0
+  -- if n' = $(n - 1)
+
+;; --- Ackermann, small arguments: nested calls in argument position ------
+;; The inner $ack call is an argument to the outer one, so a frame is pushed
+;; while another is still being evaluated.
+dec $ack(nat, nat) : nat
+def $ack(0, n) = $(n + 1)
+def $ack(n_m, 0) = $ack(n_m', 1)
+  -- if n_m =/= 0
+  -- if n_m' = $(n_m - 1)
+def $ack(n_m, n) = $ack(n_m', $ack(n_m, n'))
+  -- if n_m =/= 0
+  -- if n =/= 0
+  -- if n_m' = $(n_m - 1)
+  -- if n' = $(n - 1)
+
+dec $ite<X>(bool, X, X) : X
+def $ite<X>(true, X_t, X_f) = X_t
+def $ite<X>(false, X_t, X_f) = X_f
+
+dec $main() : int
+def $main() = i
+  ;; 6 steps around the A->B->C cycle: two full turns, so 2*(1+10+100) = 222
+  -- if n_mod = $modA(6)
+  ;; 1 + 2 + ... + 10 = 55
+  -- if n_sum = $sumTo(10, 0)
+  ;; 10 is even, 7 is odd -- 20 levels of mutual calls between them
+  -- if b_even = $isEven(10)
+  -- if b_odd = $isOdd(7)
+  -- if n_parity = $ite<nat>(b_even, 1, 0)
+  -- if n_parity' = $ite<nat>(b_odd, 2, 0)
+  ;; $ack(2, 3) = 9, reached through deeply nested argument-position calls
+  -- if n_ack = $ack(2, 3)
+  -- if i = $(n_mod + n_sum + n_parity + n_parity' + n_ack)

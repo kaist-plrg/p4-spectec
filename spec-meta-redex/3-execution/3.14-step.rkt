@@ -1,0 +1,83 @@
+#lang racket/base
+;; The machine: the IN, seq, and failure rules, the notion of reduction
+;; (->term and ->term+ctx), and its closure ->al.
+
+(require redex/reduction-semantics
+         "3.03-machine.rkt"
+         "3.07-eval-assign.rkt"
+         "3.08-eval-exp.rkt"
+         "3.09-eval-path.rkt"
+         "3.10-eval-arg.rkt"
+         "3.11-eval-prem.rkt"
+         "3.12-eval-call-func.rkt"
+         "3.13-eval-call-rel.rkt")
+(provide ->term
+         ->term+ctx
+         ->al)
+
+;;
+;; The IN, seq, and failure rules
+;;
+
+(define ->term/eval
+  (reduction-relation
+   al
+   ;; Leaving a local context
+   (--> (IN L val) val
+        "in/val")
+   (--> (IN L (OK (val ...))) (OK (val ...))
+        "in/vals")
+   (--> (IN L failure) failure
+        "in/failure")
+   ;; A statement sequence: once every statement before the last holds, the
+   ;; last one's result
+   (--> (seq (OK ...)) OK
+        "seq/unit")
+   (--> (seq (OK ... val)) val
+        "seq/val")
+   (--> (seq (OK ... (OK (val ...)))) (OK (val ...))
+        "seq/vals")
+   ;; A failure passes up through every frame that does not catch it
+   (--> (in-hole Fr-pass failure) failure
+        "frame/failure")))
+
+;;
+;; The notion of reduction
+;;
+
+;; The rules on a term r, which neither read nor write the context
+(define ->term
+  (union-reduction-relations ->term/eval
+                             ->term/eval-assign
+                             ->term/eval-exp
+                             ->term/eval-path
+                             ->term/eval-arg
+                             ->term/eval-prem
+                             ->term/eval-call-func
+                             ->term/eval-call-rel))
+
+;; The rules on a term and its context (r G L), which read G or L, or write L
+(define ->term+ctx
+  (union-reduction-relations ->term+ctx/eval-assign
+                             ->term+ctx/eval-exp
+                             ->term+ctx/eval-arg
+                             ->term+ctx/eval-prem
+                             ->term+ctx/eval-call-func
+                             ->term+ctx/eval-call-rel))
+
+;;
+;; The closure, on configurations
+;;
+
+;; A step of ->term at a redex, or of ->term+ctx at a redex under the layer L
+;; of its innermost IN, with the name of the rule applied
+(define ->al
+  (union-reduction-relations
+   (context-closure ->term al (G (in-hole E (IN L F))))
+   (reduction-relation
+    al
+    (--> (G (in-hole E (IN L (in-hole F e_r))))
+         (G (in-hole E (IN L_1 (in-hole F e_1))))
+         (where (_ ... (any_name (e_1 G L_1)) _ ...)
+                ,(apply-reduction-relation/tag-with-names ->term+ctx (term (e_r G L))))
+         (computed-name (term any_name))))))
