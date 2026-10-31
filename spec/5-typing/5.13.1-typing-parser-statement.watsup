@@ -78,8 +78,9 @@ rule SelectCase_keyset_simple_ok/mask:
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
-  -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+  -- Cast_binary:
+      typedExpressionIR_l ',' typedExpressionIR_r
+      : typedExpressionIR_l_cast ',' typedExpressionIR_r_cast
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -89,10 +90,10 @@ rule SelectCase_keyset_simple_ok/mask:
   -- if typeIR_reduced
       = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
   ---- ;; cast the expressions to the key type
-  -- if typedExpressionIR_l_casted
-      = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
-  -- if typedExpressionIR_r_casted
-      = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
+  -- Cast_unary:
+      `( typeIR_key `) typedExpressionIR_l_reduced : typedExpressionIR_l_casted
+  -- Cast_unary:
+      `( typeIR_key `) typedExpressionIR_r_reduced : typedExpressionIR_r_casted
 
 ;;;;;; expression `.. expression
 
@@ -104,8 +105,9 @@ rule SelectCase_keyset_simple_ok/range:
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
   ---- ;; check that the types are compatible
   ---- ;; while inserting implicit casts if necessary
-  -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+  -- Cast_binary:
+      typedExpressionIR_l ',' typedExpressionIR_r
+      : typedExpressionIR_l_cast ',' typedExpressionIR_r_cast
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -117,10 +119,10 @@ rule SelectCase_keyset_simple_ok/range:
   -- if typeIR_reduced
       = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
   ---- ;; cast the expressions to the key type
-  -- if typedExpressionIR_l_casted
-      = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
-  -- if typedExpressionIR_r_casted
-      = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
+  -- Cast_unary:
+      `( typeIR_key `) typedExpressionIR_l_reduced : typedExpressionIR_l_casted
+  -- Cast_unary:
+      `( typeIR_key `) typedExpressionIR_r_reduced : typedExpressionIR_r_casted
 
 ;;;;;; DEFAULT
 
