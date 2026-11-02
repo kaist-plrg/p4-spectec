@@ -36,7 +36,6 @@ use crate::{
     runner::{Eval, ExternError, Interface, InterfaceError, SideEffect},
 };
 use std::{
-    collections::HashSet,
     path::{Path, PathBuf},
     rc::Rc,
 };
@@ -81,9 +80,7 @@ pub struct Loaded {
     /// The K runtime of the definition's library, which `Call_hook` calls
     /// and which reads Float literals.
     pub runtime: &'static Runtime,
-    /// The symbols and aliases of the definition.
-    pub known: HashSet<String>,
-    /// The sorts, collections, and binders of the definition.
+    /// The symbols, sorts, collections, and binders of the definition.
     pub info: Info,
     /// The notation of spec-k's values.
     pub mixops: Mixops,
@@ -104,12 +101,7 @@ fn parse_kore(
     let definition =
         parse::parse_definition(&src).map_err(|error| parse_error(path_definition, error))?;
     let mixops = Mixops::new(arena).map_err(|message| load_error(path_definition, message))?;
-    let loaded = Rc::new(Loaded {
-        runtime,
-        known: encode::known_symbols(&definition),
-        info: Info::new(&definition),
-        mixops,
-    });
+    let loaded = Rc::new(Loaded { runtime, info: Info::new(&definition), mixops });
     let value_definition = encode::definition(arena, &loaded, &definition)
         .map_err(|error| load_error(path_definition, error))?;
     let src = read(path_init)?;

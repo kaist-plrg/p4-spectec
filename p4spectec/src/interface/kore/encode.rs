@@ -13,7 +13,7 @@
 //! Which axioms are executed and how they are read is for the
 //! specification to decide (`spec-k/3-load.watsup`).
 
-use std::{collections::HashSet, rc::Rc};
+use std::rc::Rc;
 
 use num_bigint::BigInt;
 
@@ -168,170 +168,136 @@ fn make_map(
     make_case(arena, mixops.braces, vec![list], typ_map(typ_key, typ_value))
 }
 
-/// A builder of the patterns of one definition, in one arena.
-pub struct Builder<'a> {
-    arena: &'a mut Arena,
-    /// The definition: applications must be of its declared symbols, and
-    /// domain values read by the hooks of their sorts; its K runtime writes
-    /// Float literals in its output format.
-    loaded: &'a Loaded,
-    /// Declared aliases, which may not be applied.
-    aliases: &'a HashSet<String>,
+// == Patterns
+
+/// A pattern as a `kore` value; with `check`, an application must be of a
+/// declared symbol.
+fn kore_checked(
+    arena: &mut Arena,
+    loaded: &Loaded,
+    pattern: &Pattern,
+    check: bool,
+) -> Result<Value> {
+    let Loaded { info, mixops, .. } = loaded;
+    // Terms nest deeply, e.g. long K sequences and maps
+    stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match pattern {
+        Pattern::Var(name, sort) => {
+            let value_name = make_text(arena, name)?;
+            let value_sort = make_sort(arena, mixops, sort)?;
+            make_case(arena, mixops.kvar, vec![value_name, value_sort], typ("kore"))
+        }
+        Pattern::SetVar(name, sort) => {
+            let value_name = make_text(arena, name)?;
+            let value_sort = make_sort(arena, mixops, sort)?;
+            make_case(arena, mixops.ksetvar, vec![value_name, value_sort], typ("kore"))
+        }
+        Pattern::Str(text) => {
+            let value_text = make_text(arena, text)?;
+            make_case(arena, mixops.kstr, vec![value_text], typ("kore"))
+        }
+        Pattern::App(name, sorts, args) if name == "\\dv" => {
+            let ([sort], [Pattern::Str(text)]) = (sorts.as_slice(), args.as_slice()) else {
+                return Err(EncodeError::Malformed(format!("domain value {pattern}")));
+            };
+            let float = |text: &str| offload::float_literal(loaded, text);
+            let value = domain_value(arena, info, mixops, "pattern", sort, text, float)?;
+            make_case(arena, mixops.kdv, vec![value], typ("kore"))
+        }
+        Pattern::App(name, sorts, args) => {
+            let connective = name.strip_prefix('\\');
+            if connective.is_none() && check && !info.is_symbol(name) {
+                return Err(if info.is_alias(name) {
+                    EncodeError::AliasApplied(name.clone())
+                } else {
+                    EncodeError::SymbolUndeclared(name.clone())
+                });
+            }
+            let value_name = make_text(arena, connective.unwrap_or(name))?;
+            let value_sorts = make_sorts(arena, mixops, sorts)?;
+            let value_args = args
+                .iter()
+                .map(|arg| kore_checked(arena, loaded, arg, check))
+                .collect::<Result<Vec<_>>>()?;
+            let value_args = make_list(arena, typ("kore"), value_args)?;
+            let mixop = if connective.is_some() { mixops.kml } else { mixops.kapp };
+            make_case(arena, mixop, vec![value_name, value_sorts, value_args], typ("kore"))
+        }
+    })
 }
 
-impl<'a> Builder<'a> {
-    /// A builder into an arena, for the definition `loaded`.
-    pub fn new(arena: &'a mut Arena, loaded: &'a Loaded, aliases: &'a HashSet<String>) -> Self {
-        Self { arena, loaded, aliases }
-    }
+/// A pattern, such as krun's initial term, as a `kore` value, whose
+/// applications are of declared symbols.
+pub fn kore(arena: &mut Arena, loaded: &Loaded, pattern: &Pattern) -> Result<Value> {
+    kore_checked(arena, loaded, pattern, true)
+}
 
-    /// A pattern; with `check`, an application must be of a known symbol.
-    fn kore_checked(&mut self, pattern: &Pattern, check: bool) -> Result<Value> {
-        let Loaded { info, mixops, .. } = self.loaded;
-        // Terms nest deeply, e.g. long K sequences and maps
-        stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match pattern {
-            Pattern::Var(name, sort) => {
-                let value_name = make_text(self.arena, name)?;
-                let value_sort = make_sort(self.arena, mixops, sort)?;
-                make_case(self.arena, mixops.kvar, vec![value_name, value_sort], typ("kore"))
-            }
-            Pattern::SetVar(name, sort) => {
-                let value_name = make_text(self.arena, name)?;
-                let value_sort = make_sort(self.arena, mixops, sort)?;
-                make_case(self.arena, mixops.ksetvar, vec![value_name, value_sort], typ("kore"))
-            }
-            Pattern::Str(text) => {
-                let value_text = make_text(self.arena, text)?;
-                make_case(self.arena, mixops.kstr, vec![value_text], typ("kore"))
-            }
-            Pattern::App(name, sorts, args) if name == "\\dv" => {
-                let ([sort], [Pattern::Str(text)]) = (sorts.as_slice(), args.as_slice()) else {
-                    return Err(EncodeError::Malformed(format!("domain value {pattern}")));
-                };
-                let float = |text: &str| offload::float_literal(self.loaded, text);
-                let value = domain_value(self.arena, info, mixops, "pattern", sort, text, float)?;
-                make_case(self.arena, mixops.kdv, vec![value], typ("kore"))
-            }
-            Pattern::App(name, sorts, args) => {
-                let connective = name.strip_prefix('\\');
-                if connective.is_none() && check && !self.loaded.known.contains(name) {
-                    return Err(if self.aliases.contains(name) {
-                        EncodeError::AliasApplied(name.clone())
-                    } else {
-                        EncodeError::SymbolUndeclared(name.clone())
-                    });
-                }
-                let value_name = make_text(self.arena, connective.unwrap_or(name))?;
-                let value_sorts = make_sorts(self.arena, mixops, sorts)?;
-                let value_args = args
-                    .iter()
-                    .map(|arg| self.kore_checked(arg, check))
-                    .collect::<Result<Vec<_>>>()?;
-                let value_args = make_list(self.arena, typ("kore"), value_args)?;
-                let mixop = if connective.is_some() { mixops.kml } else { mixops.kapp };
-                make_case(self.arena, mixop, vec![value_name, value_sorts, value_args], typ("kore"))
-            }
-        })
-    }
+// == Attributes
 
-    /// A pattern whose applications are of known symbols.
-    pub fn kore(&mut self, pattern: &Pattern) -> Result<Value> {
-        self.kore_checked(pattern, true)
-    }
+/// An attribute; its arguments may name symbols that are not declared.
+fn kattr(arena: &mut Arena, loaded: &Loaded, attr: &Attr) -> Result<Value> {
+    let Pattern::App(name, sorts, args) = attr else {
+        return Err(EncodeError::Malformed(format!("attribute {attr:?}")));
+    };
+    let mixops = &loaded.mixops;
+    let value_name = make_text(arena, name)?;
+    let value_sorts = make_sorts(arena, mixops, sorts)?;
+    let value_args = args
+        .iter()
+        .map(|arg| kore_checked(arena, loaded, arg, false))
+        .collect::<Result<Vec<_>>>()?;
+    let value_args = make_list(arena, typ("kore"), value_args)?;
+    make_case(arena, mixops.kattr, vec![value_name, value_sorts, value_args], typ("kattr"))
+}
 
-    // - Attributes
-
-    /// An attribute; its arguments may name symbols that are not declared.
-    fn kattr(&mut self, attr: &Attr) -> Result<Value> {
-        let Pattern::App(name, sorts, args) = attr else {
-            return Err(EncodeError::Malformed(format!("attribute {attr:?}")));
-        };
-        let mixops = &self.loaded.mixops;
-        let value_name = make_text(self.arena, name)?;
-        let value_sorts = make_sorts(self.arena, mixops, sorts)?;
-        let value_args = args
-            .iter()
-            .map(|arg| self.kore_checked(arg, false))
-            .collect::<Result<Vec<_>>>()?;
-        let value_args = make_list(self.arena, typ("kore"), value_args)?;
-        make_case(self.arena, mixops.kattr, vec![value_name, value_sorts, value_args], typ("kattr"))
-    }
-
-    /// Attributes as a `kattr*` value.
-    fn kattrs(&mut self, attrs: &[Attr]) -> Result<Value> {
-        let values = attrs
-            .iter()
-            .map(|attr| self.kattr(attr))
-            .collect::<Result<Vec<_>>>()?;
-        make_list(self.arena, typ("kattr"), values)
-    }
+/// Attributes as a `kattr*` value.
+fn kattrs(arena: &mut Arena, loaded: &Loaded, attrs: &[Attr]) -> Result<Value> {
+    let values = attrs
+        .iter()
+        .map(|attr| kattr(arena, loaded, attr))
+        .collect::<Result<Vec<_>>>()?;
+    make_list(arena, typ("kattr"), values)
 }
 
 // == Definitions
 
-/// The names an application may use: the declared symbols.
-pub fn known_symbols(definition: &Definition) -> HashSet<String> {
-    definition
-        .sentences()
-        .filter_map(|sentence| match sentence {
-            Sentence::SymbolDecl { name, .. } => Some(name.clone()),
-            _ => None,
-        })
-        .collect()
-}
-
-/// The declared aliases, which an application may not use.
-fn alias_names(definition: &Definition) -> HashSet<String> {
-    definition
-        .sentences()
-        .filter_map(|sentence| match sentence {
-            Sentence::AliasDecl { name } => Some(name.clone()),
-            _ => None,
-        })
-        .collect()
-}
-
 /// A definition as a `kdefinition` value.
 pub fn definition(arena: &mut Arena, loaded: &Loaded, definition: &Definition) -> Result<Value> {
     // Each sentence goes to its part, in file order
-    let aliases = alias_names(definition);
     let mixops = &loaded.mixops;
-    let mut builder = Builder::new(arena, loaded, &aliases);
     let mut sorts = Vec::new();
     let mut symbols = Vec::new();
     let mut axioms = Vec::new();
     for sentence in definition.sentences() {
         match sentence {
             Sentence::SortDecl { name, attrs, .. } => {
-                let value_name = make_text(builder.arena, name)?;
-                let value_attrs = builder.kattrs(attrs)?;
+                let value_name = make_text(arena, name)?;
+                let value_attrs = kattrs(arena, loaded, attrs)?;
                 sorts.push((value_name, value_attrs));
             }
             Sentence::SymbolDecl { name, params, args, result, attrs } => {
-                let value_name = make_text(builder.arena, name)?;
+                let value_name = make_text(arena, name)?;
                 let value_params = params
                     .iter()
-                    .map(|param| make_text(builder.arena, param))
+                    .map(|param| make_text(arena, param))
                     .collect::<Result<Vec<_>>>()?;
-                let value_params = make_list(builder.arena, typ("sortid"), value_params)?;
-                let value_args = make_sorts(builder.arena, mixops, args)?;
-                let value_result = make_sort(builder.arena, mixops, result)?;
-                let value_attrs = builder.kattrs(attrs)?;
+                let value_params = make_list(arena, typ("sortid"), value_params)?;
+                let value_args = make_sorts(arena, mixops, args)?;
+                let value_result = make_sort(arena, mixops, result)?;
+                let value_attrs = kattrs(arena, loaded, attrs)?;
                 let values = vec![value_params, value_args, value_result, value_attrs];
-                let value_decl = make_case(builder.arena, mixops.ksymbol, values, typ("ksymdecl"))?;
+                let value_decl = make_case(arena, mixops.ksymbol, values, typ("ksymdecl"))?;
                 symbols.push((value_name, value_decl));
             }
             Sentence::Axiom { pattern, attrs } => {
-                let value_pattern = builder.kore(pattern)?;
-                let value_attrs = builder.kattrs(attrs)?;
+                let value_pattern = kore(arena, loaded, pattern)?;
+                let value_attrs = kattrs(arena, loaded, attrs)?;
                 let values = vec![value_pattern, value_attrs];
-                axioms.push(make_case(builder.arena, mixops.kaxiom, values, typ("kaxiom"))?);
+                axioms.push(make_case(arena, mixops.kaxiom, values, typ("kaxiom"))?);
             }
             Sentence::Import(_) | Sentence::Claim { .. } | Sentence::AliasDecl { .. } => {}
         }
     }
     // The parts, as the fields of a kdefinition
-    let arena = builder.arena;
     let value_sorts = make_map(arena, mixops, typ("sortid"), typ::make::list(typ("kattr")), sorts)?;
     let value_symbols = make_map(arena, mixops, typ("symid"), typ("ksymdecl"), symbols)?;
     let value_axioms = make_list(arena, typ("kaxiom"), axioms)?;
@@ -345,11 +311,6 @@ pub fn definition(arena: &mut Arena, loaded: &Loaded, definition: &Definition) -
         field("AXIOMS", value_axioms),
     ];
     Ok(value::make::structure(arena, rc(typ("kdefinition")), fields, Span::default())?)
-}
-
-/// A pattern, such as krun's initial term, as a `kore` value.
-pub fn kore(arena: &mut Arena, loaded: &Loaded, pattern: &Pattern) -> Result<Value> {
-    Builder::new(arena, loaded, &HashSet::new()).kore(pattern)
 }
 
 /// The input of `Krun`, a definition and an initial term, as one tuple.
