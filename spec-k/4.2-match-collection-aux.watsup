@@ -6,13 +6,6 @@
 ;; pattern, usually a variable, for the remaining elements
 
 dec $collection_of_hook(hookid) : text?
-dec $collection_of(definition, pattern) : text?
-  hint(prose_in "the collection that" %1 "is built with")
-def $collection_of(D, APP symid sort* pattern*) = $collection_of_hook(hookid)
-  -- if hookid = $hook_of(D, symid)
-def $collection_of(D, pattern) = eps
-  -- otherwise
-
 def $collection_of_hook("MAP.concat") = "MAP"
 def $collection_of_hook("MAP.element") = "MAP"
 def $collection_of_hook("MAP.unit") = "MAP"
@@ -23,6 +16,13 @@ def $collection_of_hook("LIST.concat") = "LIST"
 def $collection_of_hook("LIST.element") = "LIST"
 def $collection_of_hook("LIST.unit") = "LIST"
 def $collection_of_hook(hookid) = eps
+  -- otherwise
+
+dec $collection_of(definition, pattern) : text?
+  hint(prose_in "the collection that" %1 "is built with")
+def $collection_of(D, APP symid sort* pattern*) = $collection_of_hook(hookid)
+  -- if hookid = $hook_of(D, symid)
+def $collection_of(D, pattern) = eps
   -- otherwise
 
 dec $parts(definition, text, pattern) : pattern*
