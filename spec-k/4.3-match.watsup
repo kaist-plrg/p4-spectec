@@ -1,7 +1,6 @@
 ;;
 ;; Matching a pattern against a term
 ;;
-;;
 
 ;;; As the LLVM backend's decision trees. A pattern that picks an element out
 ;;; of a collection may match in several ways; Match gives them all, in order.
@@ -88,12 +87,12 @@ rule Match/bytes:
   D (OK subst) |- BYTES n* ~~ BYTES n'* : [ OK subst ]
   -- if n* = n'*
 
-
 ;;; Injections into the same sort from a smaller sort:
 ;;; inj{A,C}(p) matches inj{B,C}(t) with B < A by matching p against inj{B,A}(t)
 
 rule Match/injection:
-  D (OK subst) |- APP "inj" ([sort_a, sort_c]) ([pattern]) ~~ APP "inj" ([sort_b, sort_c']) ([term]) : way*
+  D (OK subst) |- APP "inj" ([sort_a, sort_c]) ([pattern])
+    ~~ APP "inj" ([sort_b, sort_c']) ([term]) : way*
   -- if sort_c = sort_c' /\ sort_a =/= sort_b
   -- if $is_subsort(D, sort_b, sort_a)
   -- Match: D (OK subst) |- pattern ~~ APP "inj" ([sort_b, sort_a]) ([term]) : way*
@@ -109,7 +108,8 @@ rule Match/application:
 ;;; more specific overload of f, injecting each ti as needed (isValidOverload)
 
 rule Match/overload:
-  D (OK subst) |- APP symid_f sort_p* pattern* ~~ APP "inj" ([sort_b, sort_s]) ([APP symid_g sort_t* term*]) : way*
+  D (OK subst) |- APP symid_f sort_p* pattern*
+    ~~ APP "inj" ([sort_b, sort_s]) ([APP symid_g sort_t* term*]) : way*
   -- if (symid_f '>' symid_g) <- D.OVERLOADS
   -- if (SYMBOL sortid_f* sort_f* '->' sort_rf kind_f) = $find_symdecl(D, symid_f)
   -- if (SYMBOL sortid_g* sort_g* '->' sort_rg kind_g) = $find_symdecl(D, symid_g)
@@ -122,13 +122,15 @@ rule Match/map:
   D (OK subst) |- pattern ~~ MAP sort M : way*
   -- if "MAP" = $collection_of(D, pattern)
   -- if pattern_p* = $parts(D, "MAP", pattern)
-  -- Match_map: D (OK subst) |- $elements(D, "MAP", pattern_p*) $others(D, "MAP", pattern_p*) ~~ sort M : way*
+  -- Match_map: D (OK subst) |- $elements(D, "MAP", pattern_p*) $others(D, "MAP", pattern_p*)
+       ~~ sort M : way*
 
 rule Match/set:
   D (OK subst) |- pattern ~~ SET sort S : way*
   -- if "SET" = $collection_of(D, pattern)
   -- if pattern_p* = $parts(D, "SET", pattern)
-  -- Match_set: D (OK subst) |- $elements(D, "SET", pattern_p*) $others(D, "SET", pattern_p*) ~~ sort S : way*
+  -- Match_set: D (OK subst) |- $elements(D, "SET", pattern_p*) $others(D, "SET", pattern_p*)
+       ~~ sort S : way*
 
 rule Match/list:
   D (OK subst) |- pattern ~~ LIST sort term* : way*
@@ -141,7 +143,8 @@ rule Match/list:
 ;;; match is stuck if I cannot be evaluated.
 
 rule Match/list-update:
-  D (OK subst) |- APP symid sort_p* ([pattern_f, pattern_k, pattern_v]) ~~ LIST sort term* : $concat_<way>(way_f**)
+  D (OK subst) |- APP symid sort_p* ([pattern_f, pattern_k, pattern_v]) ~~ LIST sort term*
+    : $concat_<way>(way_f**)
   -- if $hook_of(D, symid) = "LIST.update"
   -- if $bound(subst, pattern_k)
   -- Eval: D subst |- pattern_k : OK (INT i)
@@ -150,7 +153,8 @@ rule Match/list-update:
   -- (Match: D way_v |- pattern_f ~~ LIST sort term* : way_f*)*
 
 rule Match/list-update-stuck:
-  D (OK subst) |- APP symid sort_p* ([pattern_f, pattern_k, pattern_v]) ~~ LIST sort term* : [ ERROR ]
+  D (OK subst) |- APP symid sort_p* ([pattern_f, pattern_k, pattern_v]) ~~ LIST sort term*
+    : [ ERROR ]
   -- if $hook_of(D, symid) = "LIST.update"
   -- if $bound(subst, pattern_k)
   -- Eval: D subst |- pattern_k : ERROR
@@ -167,7 +171,8 @@ rule Match_list/nil:
   D (OK subst) |- eps ~~ eps : [ OK subst ]
 
 rule Match_list/cons:
-  D (OK subst) |- (pattern_h :: pattern_t*) ~~ (term_h :: term_t*) : $concat_<way>(way_t**)
+  D (OK subst) |- (pattern_h :: pattern_t*) ~~ (term_h :: term_t*)
+    : $concat_<way>(way_t**)
   -- Match: D (OK subst) |- pattern_h ~~ term_h : way_h*
   -- (Match_list: D way_h |- pattern_t* ~~ term_t* : way_t*)*
 
