@@ -27,7 +27,11 @@ use crate::{
         },
         il::ast::Typ,
     },
-    metacirc::{Result, protocol::MetaKProtocol, tower::UpperMut},
+    metacirc::{
+        Result,
+        protocol::MetaKProtocol,
+        tower::{HostLevel, UpperMut},
+    },
     runner::{Eval, Extern, InterpreterError, SideEffect},
 };
 use ffi::{Message, Worker};
@@ -271,24 +275,35 @@ impl KEngine<'_> {
     }
 }
 
-/// Answers a request of a K thread through the levels above, recording its effect.
+/// Answers a request of a K thread through the levels above, recording its effect;
+/// the boundary caches the responses of pure calls that succeeded.
 fn host_call<Ext: Extern>(
     arena: &mut Arena,
     upper: &mut UpperMut<'_, Ext>,
     effects: &mut u64,
     request: String,
 ) -> std::result::Result<String, Box<Report>> {
-    let value_request = make_text(arena, request).map_err(InterpreterError::into_report)?;
+    // The same request to a pure call that succeeded gets its cached response
+    if let Some(response) = upper.cache(HostLevel::FIRST).host_response(&request) {
+        return Ok(response);
+    }
+    let value_request = make_text(arena, request.clone()).map_err(InterpreterError::into_report)?;
     let eval = upper.host_call(arena, MetaKProtocol::HOST_EVAL, &[value_request]);
     if eval.effect == SideEffect::Impure {
         *effects = effects.saturating_add(1);
     }
-    match &eval.result.map_err(|error| error.into_report())?[..] {
-        [value_response] => Ok(text(arena, value_response)
+    let response = match &eval.result.map_err(|error| error.into_report())?[..] {
+        [value_response] => text(arena, value_response)
             .map_err(InterpreterError::into_report)?
-            .to_owned()),
-        _ => Err(failed("a host call answers with one response")),
+            .to_owned(),
+        _ => return Err(failed("a host call answers with one response")),
+    };
+    if eval.effect == SideEffect::Pure {
+        upper
+            .cache(HostLevel::FIRST)
+            .cache_host_response(request, &response);
     }
+    Ok(response)
 }
 
 /// Reads a JSON text value.

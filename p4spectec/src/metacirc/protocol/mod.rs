@@ -129,6 +129,28 @@ impl CodecCache {
             Self::Kore(cache) => cache.clear(),
         }
     }
+
+    /// The response a pure host call of spec-meta-k or spec-meta-redex
+    /// gave to `request` before.
+    pub(in crate::metacirc) fn host_response(&self, request: &str) -> Option<String> {
+        match self {
+            Self::MetaK(cache) | Self::MetaRedex(cache) => {
+                cache.response(request).map(str::to_owned)
+            }
+            Self::Meta(_) | Self::Kore(_) => None,
+        }
+    }
+
+    /// Caches the response of a pure host call of spec-meta-k or spec-meta-redex,
+    /// if it succeeded.
+    pub(in crate::metacirc) fn cache_host_response(&mut self, request: String, response: &str) {
+        match self {
+            Self::MetaK(cache) | Self::MetaRedex(cache) if serve::is_ok(response) => {
+                cache.cache_response(request, response);
+            }
+            _ => {}
+        }
+    }
 }
 
 impl Protocol for ProtocolKind {
