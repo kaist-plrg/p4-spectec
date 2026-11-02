@@ -2,8 +2,9 @@
 //!
 //! spec-k, the K semantics written in P4-SpecTec, interprets KORE.
 //! A single-level K-in-ST tower enters spec-k through `Krun` directly
-//! (`Tower::eval_krun`), and spec-k makes no host calls,
-//! so this boundary carries nothing yet.
+//! (`Tower::eval_krun`), so this boundary carries only spec-k's host call,
+//! its extern relation `Call_hook`, up to the K definition above it,
+//! whose K library answers it (`Top::Kore`).
 //! Stacking a level over a K definition, such as ST-in-K-in-ST, would use it:
 //! `load` prepares the definition once (`Prepare`, a split of spec-k's `Start`),
 //! `lower` runs one request as a K term to the end (`Run`),
@@ -13,9 +14,12 @@
 
 use super::{Below, Call, HostCall, Output, Protocol, Script};
 use crate::{
-    lang::data::{arena::Arena, value::flat::Value},
+    lang::{
+        common::source::Span,
+        data::{arena::Arena, value::flat::Value},
+    },
     metacirc::{Result as MetacircResult, error, tower::PreparedLevel},
-    runner::{Eval, ExternError, InterpreterError, SideEffect},
+    runner::{Eval, ExternError, InterpreterError},
 };
 
 /// What a level stacked over spec-k needs, which is not implemented.
@@ -77,26 +81,33 @@ impl Protocol for KoreProtocol {
         Err(InterpreterError::Fatal(error::unimplemented(STACKING)))
     }
 
-    /// Rejects a host call: spec-k declares no extern relations or functions.
+    /// Passes spec-k's extern relation `Call_hook` up as it is,
+    /// since the K definition above reads spec-k's values; rejects any other.
     fn host(
         &self,
         _arena: &mut Arena,
         _cache: &mut Cache,
         name: &str,
-        _values: &[Value],
+        values: &[Value],
     ) -> Result<HostCall, ExternError> {
-        Err(error::extern_unsupported(name).into())
+        match name {
+            "Call_hook" => Ok(HostCall::ExternRel {
+                id: crate::phrase!(node: name.into(), span: Span::default()),
+                values: values.to_vec(),
+            }),
+            _ => Err(error::extern_unsupported(name).into()),
+        }
     }
 
-    /// Never runs, since `host` accepts no call.
+    /// Gives the outputs of the extern relation as they are.
     fn reply(
         &self,
         _arena: &mut Arena,
         _cache: &mut Cache,
         _call: &HostCall,
-        _eval: Eval<Output>,
+        eval: Eval<Output>,
     ) -> Eval<Vec<Value>, ExternError> {
-        let error = error::extern_unsupported("a reply above spec-k").into();
-        Eval::new(Err(error), SideEffect::Pure)
+        let Eval { result, effect } = eval;
+        Eval::new(result.map(Output::into_rel).map_err(Into::into), effect)
     }
 }

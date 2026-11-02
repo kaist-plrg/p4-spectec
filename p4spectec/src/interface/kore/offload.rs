@@ -1,7 +1,8 @@
 //! K hooks answered by the K framework's own implementation
 //!
-//! spec-k delegates the hooks of K's modules of domain values with one builtin,
-//! `$call_hook(symid, sort*, sort, term*) : res<term>` (`spec-k/6.2-eval.watsup`).
+//! spec-k delegates the hooks of K's modules of domain values with one extern
+//! relation, `Call_hook: |- symid sort* sort term* : res<term>`
+//! (`spec-k/2-relation.watsup`), which the K definition above spec-k answers.
 //! `Offload::call` writes the application as KORE (`decode`), the K library of the
 //! definition (`runtime.so` in its kompiled directory, through `ffi`) evaluates it,
 //! and the answer is read back as a term (`binary`, `encode`): `OK` the term, or
@@ -16,15 +17,11 @@ use super::{
     unimplemented,
 };
 use crate::{
-    interface::builtin::error::BuiltinError,
-    lang::{
-        data::{
-            arena::Arena,
-            value::flat::{self as value, Value},
-        },
-        il::ast::Typ,
+    lang::data::{
+        arena::Arena,
+        value::flat::{self as value, Value},
     },
-    runner::InterfaceError,
+    runner::{ExternError, InterfaceError},
 };
 use std::{
     cell::{Cell, RefCell},
@@ -40,7 +37,7 @@ pub(super) const LIBRARY: &str = "runtime.so";
 /// It is loaded per definition, in two steps before `Krun` calls a hook:
 /// `KoreInterface::parse_program` loads the library first, since reading the
 /// definition needs its runtime for Float literals, and attaches the
-/// definition read after. The hooks registered in `hooks` hold an `Rc` of it.
+/// definition read after. The top of the tower, `KLibrary`, holds an `Rc` of it.
 pub(super) struct Offload {
     /// The runtime of the library, once loaded.
     runtime: Cell<Option<&'static Runtime>>,
@@ -80,35 +77,33 @@ impl Offload {
         self.loaded.borrow().clone()
     }
 
-    /// Calls K hook `name` of the loaded library on `values`.
+    /// Evaluates extern relation `name` of spec-k on `values` with the loaded library.
     ///
-    /// `name` is the hook as spec-k declares it (`$name` without `$`);
-    /// `call_hook` is the only one, and the hooked symbol, its first argument,
+    /// `Call_hook` is the only one, and the hooked symbol, its first input,
     /// chooses what the library computes.
     pub(super) fn call(
         &self,
         arena: &mut Arena,
         name: &str,
-        _targs: &[Typ],
         values: &[Value],
-    ) -> Result<Value, BuiltinError> {
+    ) -> Result<Vec<Value>, ExternError> {
         let result = match name {
-            "call_hook" => self.call_hook(arena, values),
-            _ => return Err(BuiltinError(unimplemented(&format!("offloading K hook {name}")))),
+            "Call_hook" => self.call_hook(arena, values),
+            _ => return Err(ExternError(unimplemented(&format!("extern relation {name}")))),
         };
-        result.map_err(|message| BuiltinError(diagnostic("kore/runtime", message)))
+        result
+            .map(|value| vec![value])
+            .map_err(|message| ExternError(diagnostic("kore/runtime", message)))
     }
 
-    /// `$call_hook(symid, sort*, sort, term*) : res<term>`: the hooked symbol
+    /// `Call_hook: |- symid sort* sort term* : res<term>`: the hooked symbol
     /// applied to the terms, by the K runtime; `ERROR` if the runtime fails.
     fn call_hook(&self, arena: &mut Arena, values: &[Value]) -> Result<Value, String> {
-        let loaded = self
-            .loaded()
-            .ok_or("$call_hook needs a loaded definition")?;
+        let loaded = self.loaded().ok_or("Call_hook needs a loaded definition")?;
         let runtime = self
             .runtime
             .get()
-            .ok_or("$call_hook needs the K library of the definition")?;
+            .ok_or("Call_hook needs the K library of the definition")?;
         let (pattern, sort) = hook_args(arena, &loaded, values)?;
         // The runtime's answer as a term; a failure there is ERROR
         let answer = match runtime.simplify(&pattern.to_string(), &sort) {
@@ -119,12 +114,12 @@ impl Offload {
     }
 }
 
-/// The arguments of `$call_hook`, the hooked symbol, its sort parameters, its
+/// The inputs of `Call_hook`, the hooked symbol, its sort parameters, its
 /// result sort, and the terms it applies to, as the application to evaluate
 /// and its sort.
 fn hook_args(arena: &Arena, loaded: &Loaded, values: &[Value]) -> Result<(Pattern, Sort), String> {
     let [symbol, sorts, sort, terms] = values else {
-        return Err(format!("$call_hook takes 4 arguments, not {}", values.len()));
+        return Err(format!("Call_hook takes 4 inputs, not {}", values.len()));
     };
     let list = |value| value::get::list(arena, value).map_err(|e| e.to_string());
     let symbol = value::get::text(arena, symbol)
@@ -142,7 +137,7 @@ fn hook_args(arena: &Arena, loaded: &Loaded, values: &[Value]) -> Result<(Patter
     Ok((Pattern::App(symbol, sorts, terms), sort))
 }
 
-/// The result of `$call_hook`, of `res<term>`: `OK` the runtime's answer as a
+/// The output of `Call_hook`, of `res<term>`: `OK` the runtime's answer as a
 /// term, or `ERROR` if it failed.
 fn hook_result(
     arena: &mut Arena,

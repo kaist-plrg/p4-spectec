@@ -3,8 +3,10 @@
 //! `KoreInterface::parse_program` reads a K definition (`definition.kore` of a
 //! kompiled directory) and an initial term as the inputs of spec-k's `Krun`:
 //! `parse` reads KORE into `ast`, and `encode` turns it into spec-k's values;
-//! `decode` writes them back. Builtins are the standard ones and those of `hooks`,
-//! whose K hooks run in the definition's K library (`offload`).
+//! `decode` writes them back. Builtins are the standard ones, the text builtins
+//! of `texts`, and `$fresh_nat`. spec-k's extern relation `Call_hook` runs in the
+//! definition's K library (`offload`), which `KLibrary` lends to the top of the
+//! tower, the K definition above spec-k.
 //! `KoreInterface::print_runres` prints the `runres` of `Krun`.
 
 pub mod ast;
@@ -12,7 +14,6 @@ mod binary;
 mod decode;
 mod encode;
 mod ffi;
-mod hooks;
 pub mod info;
 mod mixops;
 pub mod normal;
@@ -32,7 +33,7 @@ use crate::{
         },
         il::ast::{Id, Typ},
     },
-    runner::{Eval, Interface, InterfaceError, SideEffect},
+    runner::{Eval, ExternError, Interface, InterfaceError, SideEffect},
 };
 use std::{
     collections::HashSet,
@@ -121,9 +122,9 @@ fn parse_kore(
 
 /// The parser and builtins of spec-k.
 pub struct KoreInterface {
-    /// The standard builtins and spec-k's of `hooks::hooks`.
+    /// The standard builtins and the text builtins of `texts`.
     builtins: Builtins,
-    /// The definition being run and its K library, which offloaded hooks call
+    /// The definition being run and its K library, which `Call_hook` calls
     /// and printing a configuration reads.
     offload: Rc<Offload>,
     /// The next `$fresh_nat`.
@@ -134,8 +135,14 @@ impl KoreInterface {
     /// Builds the interface with spec-k's builtins over the standard builtins.
     pub fn new() -> Self {
         let offload = Rc::new(Offload::new());
-        let builtins = Builtins::with_extensions(hooks::hooks(&offload));
+        let builtins = Builtins::with_extensions(texts::entries());
         Self { builtins, offload, fresh: 0 }
+    }
+
+    /// Returns the K library of the definition this interface reads,
+    /// which answers spec-k's extern relations once a definition is read.
+    pub fn library(&self) -> KLibrary {
+        KLibrary(Rc::clone(&self.offload))
     }
 
     /// Prints `runres` as the interpreter krun runs prints a run with `--statistics`:
@@ -163,6 +170,22 @@ impl KoreInterface {
         self.fresh += 1;
         value::make::nat(arena, n, Span::default())
             .map_err(|error| InterfaceError(diagnostic("kore/runtime", error.to_string())))
+    }
+}
+
+/// The K library of the definition being run: the top of a K-in-ST tower,
+/// the K definition above spec-k, answering spec-k's extern relation `Call_hook`.
+pub struct KLibrary(Rc<Offload>);
+
+impl KLibrary {
+    /// Evaluates extern relation `name` of spec-k on `values`.
+    pub fn eval_rel(
+        &self,
+        arena: &mut Arena,
+        name: &str,
+        values: &[Value],
+    ) -> Result<Vec<Value>, ExternError> {
+        self.0.call(arena, name, values)
     }
 }
 

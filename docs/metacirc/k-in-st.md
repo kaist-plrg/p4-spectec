@@ -21,11 +21,13 @@ will not use yours.
      v
    (kdefinition, kore) values
      |
+   top: the K definition (Top::Kore) -- KLibrary --> Offload --> K library's own hook
+     ^                                                          (K framework, not Rust)
+     |  extern relation Call_hook, passed up by KoreProtocol
 +-----------------------------------+
 | spec-k (P4-SpecTec)               |  the only level, the base  -- YOU: spec-k/
 |   Krun: kdefinition |- kore nat?  |
-|   hooks: builtin dec $...  -------+--> hooks.rs --> Offload --> K library's own hook
-+-----------------------------------+                             (K framework, not Rust)
++-----------------------------------+
 | SpecTecEngine (AL/SL interpreter) |                            -- unchanged
 +-----------------------------------+
      |
@@ -44,7 +46,8 @@ bin/metacirc run-meta towers/k-in-st.json -p imp-kompiled/definition.kore -p ini
 * `KoreInterface::parse_program` reads the two files and loads that library.
 * `Tower::eval_krun` calls spec-k's `Krun` with them and the step bound.
 * `KoreInterface::print_runres` prints the result.
-* **Most K hooks are offloaded:** spec-k delegates them (`builtin dec $…`),
+* **Most K hooks are offloaded:** spec-k leaves them to the level above it,
+  the K definition, with one extern relation (`Call_hook`),
   and they run in the K framework's own implementation in that library,
   not in SpecTec and not in new Rust code.
 * All of that wiring exists; the `KoreInterface` pieces, the offload, and
@@ -57,7 +60,7 @@ Add code only in these places; add new files inside the directories freely.
 | place | what you fill |
 |---|---|
 | `spec-k/` | spec-k from #395, on the frontend of this branch |
-| `p4spectec/src/interface/kore/` | `parse_kore` and `print_runres` (`mod.rs`), the offload (`offload.rs`, `ffi.rs`), the hook list (`hooks.rs`), and any new files they need (a KORE parser, ...) |
+| `p4spectec/src/interface/kore/` | `parse_kore` and `print_runres` (`mod.rs`), the offload (`offload.rs`, `ffi.rs`), and any new files they need (a KORE parser, ...) |
 | `p4spectec/test-driver/src/metacirc/k_in_st.rs` | the comparison with `krun` |
 | `p4spectec/test-driver/suites/metacirc/k-in-st.toml`, `testdata/k-in-st/` | the test cases, and deleting the `pending` line at the end |
 | `towers/k-in-st.json` | the specification path, if yours differs |
@@ -75,7 +78,7 @@ allowed. Keep every `unsafe` block there.
 | `interface/kore/ast.ml`, `parse.ml` | KORE text to a syntax tree | `interface/kore/` (for example `parse.rs`) |
 | `interface/kore/load.ml` | the tree to spec-k's `kdefinition` and `kore` values | `interface/kore/`, called by `parse_kore` |
 | `interface/kore/unparse.ml` | spec-k values back to KORE text | `interface/kore/`, called by `print_runres` |
-| `interface/kore/builtins.ml`, `floats.ml`, `secp256k1_stubs.c` | the hooks spec-k delegates, in OCaml | mostly replaced by offload (`offload.rs`); port to `hooks.rs` only a hook the K library cannot answer |
+| `interface/kore/builtins.ml`, `floats.ml`, `secp256k1_stubs.c` | the hooks spec-k delegates, in OCaml | mostly replaced by offload (`offload.rs`); port to a builtin only a hook the K library cannot answer |
 | `spec-k/*.watsup` | the K semantics | `spec-k/` |
 | `interface/kore/k.ml`, `krun.ml`, `bin/boot.ml` | the interface setup and the `krun` command | already done: `metacirc run-meta ... --depth` |
 | `spec-k/tests/` (`difftest.py`, `ktest.py`, `manual/`) | comparing with `krun` | `test-driver/src/metacirc/k_in_st.rs`, `k-in-st.toml`, `testdata/k-in-st/` |
@@ -124,25 +127,13 @@ directory of `definition.kore`.
 * `Offload::load(dir_kompiled)`: open the K library in the kompiled directory
   with `libloading` (in `ffi.rs`), and look up the hook symbols you need.
   Kompile the test definitions so that the directory holds such a library.
-* `Offload::call(arena, name, targs, values)`: convert `values` to K terms,
-  call hook `name` of the library, and convert the result back to a spec-k
-  value. The K LLVM backend's runtime (`runtime/strings/strings.cpp`, ...)
-  defines the hooks; `ffi.rs` is where the calls happen.
-
-### `interface/kore/hooks.rs`: `OFFLOADED`
-
-* List every `builtin dec $name(...)` of `spec-k/3.1-hook-builtin.watsup`
-  that the K library answers, by name without `$`; each then goes to
-  `Offload::call`.
-
-```rust
-const OFFLOADED: [&str; 2] = ["string_length", "string_substr"];
-```
-
-* Only a hook the K library cannot answer gets a Rust entry of its own, ported
-  from #395's `builtins.ml`, next to the offloaded ones in `hooks`.
-* A hook in neither fails with `runtime/builtin-implementation-missing`, which
-  tells you what is left.
+* `Offload::call(arena, name, values)`: answer spec-k's extern relation
+  `name` (`Call_hook`): convert `values` to K terms, call the hooked symbol in
+  the library, and convert the result back to a spec-k value. The K LLVM
+  backend's runtime (`runtime/strings/strings.cpp`, ...) defines the hooks;
+  `ffi.rs` is where the calls happen.
+* `KoreInterface::library` lends it to the top of the tower, `Top::Kore`,
+  which answers the extern relations that `KoreProtocol::host` passes up.
 
 ### `test-driver/src/metacirc/k_in_st.rs`: `run`
 
@@ -164,9 +155,9 @@ Before each commit, run `make fmt` and `make lint`.
 2. **Read KORE.** Fill `parse_kore`.
    *Check:* `bin/metacirc run-meta towers/k-in-st.json -p imp-kompiled/definition.kore -p init.kore --depth 1`
    gets past parsing and stops at `Offload::load is not implemented yet`.
-3. **Offload.** Fill `Offload::load` and `Offload::call`, and list hooks in
-   `OFFLOADED` until no `builtin-implementation-missing` remains for your
-   test definitions. Port a hook to Rust only if the library cannot answer it.
+3. **Offload.** Fill `Offload::load` and `Offload::call` until no hook of
+   your test definitions is left unanswered. Port a hook to Rust only if the
+   library cannot answer it.
    *Check:* the command of step 2 reaches `KoreInterface::print_runres is not implemented yet`.
 4. **Print.** Fill `print_runres`.
    *Check:* the command of step 2 without `--depth` prints the same final

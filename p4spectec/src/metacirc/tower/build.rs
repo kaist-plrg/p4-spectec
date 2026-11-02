@@ -22,6 +22,8 @@
 //! An AL or IL top ends the tower at its program, `Top::Program`,
 //! which answers only the program's builtins
 //! across one more boundary above the highest meta level.
+//! A KORE top ends it at the K definition above spec-k, `Top::Kore`,
+//! whose K library answers spec-k's extern relations.
 //!
 //! | level below accepts | `PreparedLevel` | patched into the level below |
 //! |---------------------|-----------------|------------------------------|
@@ -36,6 +38,7 @@ use super::{BaseRunner, KBase, PreparedLevel, Top, Tower, Upper};
 use crate::{
     interface::{
         self,
+        kore::KLibrary,
         p4::{P4Interface, unparse::P4Unparser},
     },
     lang::{al::ast as al, data::arena::Arena},
@@ -73,19 +76,26 @@ fn interface_p4(level_top: &PreparedLevel, spec_base_al: Option<&al::Spec>) -> P
 /// Prepares the levels above a meta base, up to the P4 top or the program,
 /// and the protocol of each boundary below them.
 ///
-/// Only a P4 top level uses `external_p4`.
+/// Only a P4 top level uses `external_p4`, and only a KORE top level,
+/// spec-k as the single level, uses `library`, its K definition's library.
 fn build_upper<Ext: Extern>(
     config: &TowerConfig,
     level_top: &PreparedLevel,
     spec_base_al: Option<&al::Spec>,
     options: runner::Config,
     external_p4: Ext,
+    library: Option<KLibrary>,
 ) -> (Upper<Ext>, Vec<ProtocolKind>) {
     let (top, configs_host) = match config.top_lang() {
-        // Above a meta or KORE top level is its program; every level above the base is meta
-        Lang::Al | Lang::Il | Lang::Kore => {
+        // Above a meta top level is its program; every level above the base is meta
+        Lang::Al | Lang::Il => {
             let top = Top::Program(interface::meta(Lang::Al));
             (top, &config.levels[1..])
+        }
+        // Above spec-k is the K definition it runs
+        Lang::Kore => {
+            let library = library.expect("a KORE top level is spec-k as the base");
+            (Top::Kore(library), &config.levels[1..])
         }
         // A P4 top level is the highest level, above the meta levels below it
         Lang::P4 => {
@@ -172,7 +182,8 @@ impl<Ext: Extern> Tower<Ext> {
             let kompiled = config_base.kompiled.as_ref().expect("validated k base");
             let runtime = KRuntime::load(kompiled)?;
             let state = KEngineState::new(&runtime)?;
-            let (upper, protocols) = build_upper(config, level_top, None, options, external_p4);
+            let (upper, protocols) =
+                build_upper(config, level_top, None, options, external_p4, None);
             let base = BaseRunner::K(KBase { runtime, state, upper, effects: 0 });
             return Ok(Self { levels, protocols, base, options });
         }
@@ -187,12 +198,23 @@ impl<Ext: Extern> Tower<Ext> {
             }
             // A meta base or spec-k hosts the levels above it as its extern
             lang_base => {
-                let (upper, protocols) =
-                    build_upper(config, level_top, Some(&spec_base_al), options, external_p4);
-                let interface = match lang_base {
-                    Lang::Kore => InterfaceKind::Kore(interface::kore()),
-                    _ => InterfaceKind::Meta(interface::meta(lang_base)),
+                // spec-k's interface reads the K definition whose library is the top
+                let (interface, library) = match lang_base {
+                    Lang::Kore => {
+                        let interface = interface::kore();
+                        let library = interface.library();
+                        (InterfaceKind::Kore(interface), Some(library))
+                    }
+                    _ => (InterfaceKind::Meta(interface::meta(lang_base)), None),
                 };
+                let (upper, protocols) = build_upper(
+                    config,
+                    level_top,
+                    Some(&spec_base_al),
+                    options,
+                    external_p4,
+                    library,
+                );
                 let spec_base = into_runner_spec(config.mode, spec_base_al)?;
                 let runner = Runner::new(arena, spec_base, options, interface, upper)?;
                 (BaseRunner::Meta(runner), protocols)
