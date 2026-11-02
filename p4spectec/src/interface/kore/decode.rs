@@ -1,6 +1,6 @@
 //! Values of the K specification as KORE
 //!
-//! As the AL decoder of P4-SpecTec² (`interface/al/decode.rs`), `term` takes
+//! As the AL decoder of P4-SpecTec² (`interface/meta/al/decode.rs`), `term` takes
 //! a term of the specification (`term` in `spec-k/1-syntax.watsup`) to the
 //! host's data, a KORE pattern: the arguments of a hook the K runtime
 //! computes (`offload`), and the configuration of a run (`runres`).

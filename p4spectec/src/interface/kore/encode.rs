@@ -1,6 +1,6 @@
 //! KORE as values of the K specification
 //!
-//! As the AL encoder of P4-SpecTec² (`interface/al/encode.rs`) encodes a
+//! As the AL encoder of P4-SpecTec² (`interface/meta/al/encode.rs`) encodes a
 //! specification, `definition` and `kore` encode the parsed KORE as it is (`kore` and `kdefinition`
 //! in `spec-k/1-syntax.watsup`): every axiom with its attributes,
 //! and the declarations of sorts and symbols. Alias declarations are not
