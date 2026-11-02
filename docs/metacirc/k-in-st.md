@@ -61,7 +61,7 @@ Add code only in these places; add new files inside the directories freely.
 |---|---|
 | `spec-k/` | spec-k from #395, on the frontend of this branch |
 | `p4spectec/src/interface/kore/` | `parse_kore` and `print_runres` (`mod.rs`), the offload (`offload.rs`, `ffi.rs`), and any new files they need (a KORE parser, ...) |
-| `p4spectec/test-driver/src/metacirc/k_in_st.rs` | the comparison with `krun` |
+| `p4spectec/test-driver/src/metacirc/k_in_st/` | the comparison with `krun` |
 | `p4spectec/test-driver/suites/metacirc/k-in-st.toml`, `testdata/k-in-st/` | the test cases, and deleting the `pending` line at the end |
 | `towers/k-in-st.json` | the specification path, if yours differs |
 
@@ -81,7 +81,7 @@ allowed. Keep every `unsafe` block there.
 | `interface/kore/builtins.ml`, `floats.ml`, `secp256k1_stubs.c` | the hooks spec-k delegates, in OCaml | mostly replaced by offload (`offload.rs`); port to a builtin only a hook the K library cannot answer |
 | `spec-k/*.watsup` | the K semantics | `spec-k/` |
 | `interface/kore/k.ml`, `krun.ml`, `bin/boot.ml` | the interface setup and the `krun` command | already done: `metacirc run-meta ... --depth` |
-| `spec-k/tests/` (`difftest.py`, `ktest.py`, `manual/`) | comparing with `krun` | `test-driver/src/metacirc/k_in_st.rs`, `k-in-st.toml`, `testdata/k-in-st/` |
+| `spec-k/tests/` (`difftest.py`, `ktest.py`, `manual/`) | comparing with `krun` | `test-driver/src/metacirc/k_in_st/`, `k-in-st.toml`, `testdata/k-in-st/` |
 | `interface/kore/step_check.ml` | step-by-step check against K | later, on the same K library |
 
 ## 4. The functions to fill
@@ -135,13 +135,13 @@ directory of `definition.kore`.
 * `KoreInterface::library` lends it to the top of the tower, `Top::Kore`,
   which answers the extern relations that `KoreProtocol::host` passes up.
 
-### `test-driver/src/metacirc/k_in_st.rs`: `run`
+### `test-driver/src/metacirc/k_in_st/`: `run`
 
 * For each case under a suite's `root`, call
   `p4spectec::metacirc::krun(&tower, &[definition, init], config.runner(), depth)`
   and compare its output with `krun`'s saved output.
 * You choose the layout of a case under `testdata/k-in-st/`; write it in the
-  `//!` comment of `k_in_st.rs`.
+  `//!` comment of `k_in_st/mod.rs`.
 
 ## 5. Steps
 
@@ -162,7 +162,7 @@ Before each commit, run `make fmt` and `make lint`.
 4. **Print.** Fill `print_runres`.
    *Check:* the command of step 2 without `--depth` prints the same final
    configuration as `krun` on the same files.
-5. **Test.** Add cases under `testdata/k-in-st/`, fill `k_in_st.rs`, and delete
+5. **Test.** Add cases under `testdata/k-in-st/`, fill `k_in_st/`, and delete
    the `pending` line in `k-in-st.toml`.
    *Check:* `make test-metacirc-k-in-st`.
 
