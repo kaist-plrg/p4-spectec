@@ -203,11 +203,6 @@ pub fn text_of_bytes(bytes: &[u8]) -> String {
     bytes.iter().map(|&byte| char::from(byte)).collect()
 }
 
-/// The bytes of a text with one character per byte, if it is one.
-pub fn bytes_of_text(text: &str) -> Option<Vec<u8>> {
-    text.chars().map(|c| u8::try_from(c).ok()).collect()
-}
-
 // == Parser
 
 /// A parser with one token of lookahead.
