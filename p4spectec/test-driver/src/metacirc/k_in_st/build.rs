@@ -200,72 +200,17 @@ fn build_kore(source: &Path, kompiled: &Path) -> Result<()> {
 /// Builds the K library of a kompiled definition, `runtime.so`, from the
 /// definition and its decision trees (`llvm-kompile definition.kore dt c`).
 fn build_library(kompiled: &Path, flags: &[String]) -> Result<()> {
-    let dir_temp = tempfile::tempdir()?;
-    let llvm_kompile = |extra: &[&str]| {
+    run(
         Command::new("llvm-kompile")
             .arg(kompiled.join("definition.kore"))
             .arg(kompiled.join("dt"))
             .arg("c")
-            .args(extra)
             .arg("--")
             .args(flags)
             .arg("-o")
-            .arg(kompiled.join("runtime.so"))
-            .current_dir(dir_temp.path())
-            .stdin(Stdio::null())
-            .output()
-    };
-    let output = llvm_kompile(&[])?;
-    if output.status.success() {
-        return Ok(());
-    }
-    if !String::from_utf8_lossy(&output.stderr).contains("undefined version") {
-        return Err(failed(&format!("llvm-kompile {}", kompiled.display()), &output));
-    }
-    let output = llvm_kompile(&["--save-temps", "-v"])?;
-    relink(&text(&output), dir_temp.path())
-}
-
-/// Links the K library again, as `llvm-kompile -v` printed its link command,
-/// with `@` renamed to `_AT_` in the symbols of the definition's object.
-///
-/// A rule label with `@`, as FUN's `@` operator gives, names a symbol
-/// (`str_lit_…@…`) that the linker reads as `name@version`, and the library
-/// does not link: `symbol … has undefined version …`.
-fn relink(text_verbose: &str, dir_temp: &Path) -> Result<()> {
-    let link = text_verbose
-        .lines()
-        .rfind(|line| line.contains("clang++-") && line.contains(" -shared"))
-        .map(|line| {
-            line.trim_start()
-                .trim_start_matches(['|', '+', ' '])
-                .to_owned()
-        })
-        .ok_or_else(|| Error::from("llvm-kompile -v printed no link command"))?;
-    let object = link
-        .split_whitespace()
-        .find(|word| word.contains("tmp.") && word.ends_with(".o"))
-        .ok_or_else(|| Error::from("the link command has no object of the definition"))?;
-    let symbols =
-        run(Command::new("llvm-nm-17").arg(object).current_dir(dir_temp), None, "llvm-nm-17")?;
-    let renames: String = String::from_utf8_lossy(&symbols.stdout)
-        .lines()
-        .filter_map(|line| line.split_whitespace().last())
-        .filter(|name| name.contains('@'))
-        .map(|name| format!("{name} {}\n", name.replace('@', "_AT_")))
-        .collect();
-    fs::write(dir_temp.join("rename.txt"), renames)?;
-    run(
-        Command::new("llvm-objcopy-17")
-            .args(["--redefine-syms=rename.txt", object])
-            .current_dir(dir_temp),
+            .arg(kompiled.join("runtime.so")),
         None,
-        "llvm-objcopy-17",
-    )?;
-    run(
-        Command::new("sh").args(["-c", &link]).current_dir(dir_temp),
-        None,
-        "relinking the K library",
+        &format!("llvm-kompile {}", kompiled.display()),
     )?;
     Ok(())
 }

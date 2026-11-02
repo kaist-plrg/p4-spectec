@@ -11,11 +11,10 @@
 //! `KRUN_EXPECT=1` writes `<program>.out` from krun's own run, and `<program>.search`
 //! where the run still differs (`krun`).
 //!
-//! Three pieces only work around K's tools, apart from the semantics: `krun`
+//! Two pieces only work around K's tools, apart from the semantics: `krun`
 //! finds the configuration before a failing step, which the interpreter does not
-//! print, by running again with fewer steps; `fastthrow.c` makes the interpreter
-//! abort at once at an uncaught exception; `build` renames `@` in the symbols of
-//! a K library so that it links.
+//! print, by running again with fewer steps, and `fastthrow.c` makes the
+//! interpreter abort at once at an uncaught exception.
 
 mod build;
 mod compare;
