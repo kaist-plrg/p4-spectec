@@ -13,7 +13,6 @@ use super::{
     ast::{Pattern, Sort},
     binary, decode, diagnostic, encode,
     ffi::Runtime,
-    info::Info,
     unimplemented,
 };
 use crate::{
@@ -23,56 +22,45 @@ use crate::{
     },
     runner::{ExternError, InterfaceError},
 };
-use std::{
-    cell::{Cell, RefCell},
-    path::Path,
-    rc::Rc,
-};
+use std::{cell::RefCell, path::Path, rc::Rc};
 
 /// The file name of the K library in a kompiled directory.
 pub(super) const LIBRARY: &str = "runtime.so";
 
-/// The K library of the definition being run, shared by every offloaded hook.
+/// Opens the K library in `dir_kompiled`, the directory of `definition.kore`,
+/// and gives its runtime.
+pub(super) fn open(dir_kompiled: &Path) -> Result<&'static Runtime, InterfaceError> {
+    let path = dir_kompiled.join(LIBRARY);
+    let error = |message| InterfaceError(diagnostic("kore/library", message));
+    if !path.is_file() {
+        return Err(error(format!(
+            "no K library at {} (llvm-kompile definition.kore dt c -- -o {LIBRARY})",
+            path.display()
+        )));
+    }
+    Runtime::open(&path).map_err(error)
+}
+
+/// The definition being run, with its K library, shared by every offloaded hook.
 ///
-/// It is loaded per definition, in two steps before `Krun` calls a hook:
-/// `KoreInterface::parse_program` loads the library first, since reading the
-/// definition needs its runtime for Float literals, and attaches the
-/// definition read after. The top of the tower, `KLibrary`, holds an `Rc` of it.
+/// `KoreInterface::parse_program` sets it before `Krun` calls a hook;
+/// the top of the tower, `KLibrary`, holds an `Rc` of it.
 pub(super) struct Offload {
-    /// The runtime of the library, once loaded.
-    runtime: Cell<Option<&'static Runtime>>,
-    /// The definition read, whose sorts and notation the hooks' terms use.
     loaded: RefCell<Option<Rc<Loaded>>>,
 }
 
 impl Offload {
-    /// Makes an offload with no library loaded.
+    /// Makes an offload with no definition yet.
     pub(super) fn new() -> Self {
-        Self { runtime: Cell::new(None), loaded: RefCell::new(None) }
+        Self { loaded: RefCell::new(None) }
     }
 
-    /// Opens the K library in `dir_kompiled`, the directory of `definition.kore`,
-    /// and gives its runtime.
-    pub(super) fn load(&self, dir_kompiled: &Path) -> Result<&'static Runtime, InterfaceError> {
-        let path = dir_kompiled.join(LIBRARY);
-        let error = |message| InterfaceError(diagnostic("kore/library", message));
-        if !path.is_file() {
-            return Err(error(format!(
-                "no K library at {} (llvm-kompile definition.kore dt c -- -o {LIBRARY})",
-                path.display()
-            )));
-        }
-        let runtime = Runtime::open(&path).map_err(error)?;
-        self.runtime.set(Some(runtime));
-        Ok(runtime)
-    }
-
-    /// Keeps the definition read, for the terms of the hooks.
-    pub(super) fn attach(&self, loaded: Rc<Loaded>) {
+    /// Keeps the definition read, with its library, for the hooks.
+    pub(super) fn set(&self, loaded: Rc<Loaded>) {
         *self.loaded.borrow_mut() = Some(loaded);
     }
 
-    /// The definition attached, if any.
+    /// The definition set, if any.
     pub(super) fn loaded(&self) -> Option<Rc<Loaded>> {
         self.loaded.borrow().clone()
     }
@@ -100,13 +88,9 @@ impl Offload {
     /// applied to the terms, by the K runtime; `ERROR` if the runtime fails.
     fn call_hook(&self, arena: &mut Arena, values: &[Value]) -> Result<Value, String> {
         let loaded = self.loaded().ok_or("Call_hook needs a loaded definition")?;
-        let runtime = self
-            .runtime
-            .get()
-            .ok_or("Call_hook needs the K library of the definition")?;
         let (pattern, sort) = hook_args(arena, &loaded, values)?;
         // The runtime's answer as a term; a failure there is ERROR
-        let answer = match runtime.simplify(&pattern.to_string(), &sort) {
+        let answer = match loaded.runtime.simplify(&pattern.to_string(), &sort) {
             Ok(result) => Some(unwrap_result(binary::decode(&result)?)),
             Err(_) => None,
         };
@@ -155,12 +139,13 @@ fn hook_result(
 /// A Float literal in the runtime's output format: the runtime evaluates it
 /// as a domain value, e.g. `0.5` as
 /// `0.500000000000000000000000000000000000000e0`.
-pub(super) fn float_literal(runtime: &Runtime, info: &Info, text: &str) -> Result<String, String> {
-    let sort = Sort::Sort(info.sort_of_hook("FLOAT.Float")?.to_owned(), vec![]);
+pub(super) fn float_literal(loaded: &Loaded, text: &str) -> Result<String, String> {
+    let sort = Sort::Sort(loaded.info.sort_of_hook("FLOAT.Float")?.to_owned(), vec![]);
     let literal =
         Pattern::App("\\dv".to_owned(), vec![sort.clone()], vec![Pattern::Str(text.into())]);
     let bad = || format!("bad Float literal {text:?}");
-    let result = runtime
+    let result = loaded
+        .runtime
         .simplify(&literal.to_string(), &sort)
         .map_err(|_| bad())?;
     match unwrap_result(binary::decode(&result)?) {

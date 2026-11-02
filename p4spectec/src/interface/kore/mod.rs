@@ -76,8 +76,11 @@ fn load_error(path: &Path, error: impl std::fmt::Display) -> InterfaceError {
 
 // == Reading KORE
 
-/// What reading and writing KORE needs of the definition read.
+/// The definition read, as reading and writing its KORE needs it.
 pub struct Loaded {
+    /// The K runtime of the definition's library, which `Call_hook` calls
+    /// and which reads Float literals.
+    pub runtime: &'static Runtime,
     /// The symbols and aliases of the definition.
     pub known: HashSet<String>,
     /// The sorts, collections, and binders of the definition.
@@ -88,13 +91,12 @@ pub struct Loaded {
 
 /// Reads `path_definition` and `path_init`, both KORE text,
 /// as a tuple of spec-k's `kdefinition` and `kore` values,
-/// with what writing terms of the definition back needs; `runtime`, the
-/// definition's K runtime, writes Float literals in its output format.
+/// and the definition read, with `runtime`, its K runtime.
 ///
 /// The values are those spec-k's `Krun` takes (`spec-k/8-entry.watsup`).
 fn parse_kore(
     arena: &mut Arena,
-    runtime: &Runtime,
+    runtime: &'static Runtime,
     path_definition: &Path,
     path_init: &Path,
 ) -> Result<(Value, Rc<Loaded>), InterfaceError> {
@@ -103,16 +105,17 @@ fn parse_kore(
         parse::parse_definition(&src).map_err(|error| parse_error(path_definition, error))?;
     let mixops = Mixops::new(arena).map_err(|message| load_error(path_definition, message))?;
     let loaded = Rc::new(Loaded {
+        runtime,
         known: encode::known_symbols(&definition),
         info: Info::new(&definition),
         mixops,
     });
-    let value_definition = encode::definition(arena, &loaded, runtime, &definition)
+    let value_definition = encode::definition(arena, &loaded, &definition)
         .map_err(|error| load_error(path_definition, error))?;
     let src = read(path_init)?;
     let pattern = parse::parse_pattern(&src).map_err(|error| parse_error(path_init, error))?;
-    let value_init = encode::kore(arena, &loaded, runtime, &pattern)
-        .map_err(|error| load_error(path_init, error))?;
+    let value_init =
+        encode::kore(arena, &loaded, &pattern).map_err(|error| load_error(path_init, error))?;
     let value_program = encode::program(arena, value_definition, value_init)
         .map_err(|error| load_error(path_definition, error))?;
     Ok((value_program, loaded))
@@ -124,7 +127,7 @@ fn parse_kore(
 pub struct KoreInterface {
     /// The standard builtins and the text builtins of `texts`.
     builtins: Builtins,
-    /// The definition being run and its K library, which `Call_hook` calls
+    /// The definition being run, with its K library, which `Call_hook` calls
     /// and printing a configuration reads.
     offload: Rc<Offload>,
     /// The next `$fresh_nat`.
@@ -212,9 +215,9 @@ impl Interface for KoreInterface {
         };
         // The definition's hooks run in the library kompiled next to it
         let dir_kompiled = path_definition.parent().unwrap_or(Path::new("."));
-        let runtime = self.offload.load(dir_kompiled)?;
+        let runtime = offload::open(dir_kompiled)?;
         let (value_program, loaded) = parse_kore(arena, runtime, path_definition, path_init)?;
-        self.offload.attach(loaded);
+        self.offload.set(loaded);
         Ok(value_program)
     }
 
