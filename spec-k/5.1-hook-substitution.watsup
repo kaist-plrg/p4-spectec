@@ -20,38 +20,30 @@ def $remove_text(t_h :: t_t*, t) = t_h :: $remove_text(t_t*, t)
 ;; The variables of sort sort_x free in a term: a binder hides its own
 
 dec $free_vars(definition, sort, term) : text*
-dec $free_vars_list(definition, sort, term*) : text*
 def $free_vars(D, sort_x, DV sort t) = [ t ]
   -- if sort = sort_x
 def $free_vars(D, sort_x, APP symid sort* (DV sort_y t_y :: term*))
-  = $remove_text($free_vars_list(D, sort_x, term*), t_y)
+  = $remove_text($concat_<text>($free_vars(D, sort_x, term)*), t_y)
   -- if $is_binder(D, symid)
 def $free_vars(D, sort_x, APP symid sort* term*)
-  = $free_vars_list(D, sort_x, term*)
+  = $concat_<text>($free_vars(D, sort_x, term)*)
   -- if ~$is_binder(D, symid)
 def $free_vars(D, sort_x, term) = eps
   -- otherwise
-def $free_vars_list(D, sort_x, eps) = eps
-def $free_vars_list(D, sort_x, term_h :: term_t*)
-  = $free_vars(D, sort_x, term_h) ++ $free_vars_list(D, sort_x, term_t*)
 
 ;; The variables of sort sort_x in a term, free or bound: a binder adds its own
 
 dec $all_vars(definition, sort, term) : text*
-dec $all_vars_list(definition, sort, term*) : text*
 def $all_vars(D, sort_x, DV sort t) = [ t ]
   -- if sort = sort_x
 def $all_vars(D, sort_x, APP symid sort* (DV sort_y t_y :: term*))
-  = t_y :: $all_vars_list(D, sort_x, term*)
+  = t_y :: $concat_<text>($all_vars(D, sort_x, term)*)
   -- if $is_binder(D, symid)
 def $all_vars(D, sort_x, APP symid sort* term*)
-  = $all_vars_list(D, sort_x, term*)
+  = $concat_<text>($all_vars(D, sort_x, term)*)
   -- if ~$is_binder(D, symid)
 def $all_vars(D, sort_x, term) = eps
   -- otherwise
-def $all_vars_list(D, sort_x, eps) = eps
-def $all_vars_list(D, sort_x, term_h :: term_t*)
-  = $all_vars(D, sort_x, term_h) ++ $all_vars_list(D, sort_x, term_t*)
 
 ;; A variable name not among the given ones, made by adding primes
 
@@ -64,7 +56,6 @@ def $fresh_var(t, t_a*) = $fresh_var(t ++ "'", t_a*)
 ;; Renaming the free occurrences of a variable
 
 dec $rename(definition, sort, text, text, term) : term
-dec $rename_list(definition, sort, text, text, term*) : term*
 def $rename(D, sort_x, t, t', DV sort t_o) = DV sort t'
   -- if sort = sort_x /\ t_o = t
 def $rename(D, sort_x, t, t', DV sort t_o) = DV sort t_o
@@ -73,16 +64,13 @@ def $rename(D, sort_x, t, t', APP symid sort* (DV sort_y t_y :: term*))
   = APP symid sort* (DV sort_y t_y :: term*)
   -- if $is_binder(D, symid) /\ t_y = t
 def $rename(D, sort_x, t, t', APP symid sort* (DV sort_y t_y :: term*))
-  = APP symid sort* (DV sort_y t_y :: $rename_list(D, sort_x, t, t', term*))
+  = APP symid sort* (DV sort_y t_y :: $rename(D, sort_x, t, t', term)*)
   -- if $is_binder(D, symid) /\ t_y =/= t
 def $rename(D, sort_x, t, t', APP symid sort* term*)
-  = APP symid sort* $rename_list(D, sort_x, t, t', term*)
+  = APP symid sort* $rename(D, sort_x, t, t', term)*
   -- if ~$is_binder(D, symid)
 def $rename(D, sort_x, t, t', term) = term
   -- otherwise
-def $rename_list(D, sort_x, t, t', eps) = eps
-def $rename_list(D, sort_x, t, t', term_h :: term_t*)
-  = $rename(D, sort_x, t, t', term_h) :: $rename_list(D, sort_x, t, t', term_t*)
 
 ;; Putting V of sort sort_v where sort_s is expected: always with its
 ;; injection, even inj{S, S}(V), as hook_SUBSTITUTION_substOne does
@@ -131,9 +119,9 @@ def $subst(D, sort_x, t_x, sort_v, term_v,
   -- if $is_binder(D, symid) /\ t_y =/= t_x
   -- if t_y <- $free_vars(D, sort_x, term_v)
   -- if t_y' = $fresh_var(t_y, $free_vars(D, sort_x, term_v)
-                               ++ $all_vars_list(D, sort_x, term*))
+                               ++ $concat_<text>($all_vars(D, sort_x, term)*))
   -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v,
-                                $rename_list(D, sort_x, t_y, t_y', term*))
+                                $rename(D, sort_x, t_y, t_y', term)*)
 ;;; other symbol applications, built again as evaluation builds them: the
 ;;; LLVM backend's substitution evaluates each function and anywhere symbol it
 ;;; rebuilds (runtime/meta/substitution.cpp), so a redex the substitution
