@@ -1,10 +1,10 @@
 // Meta-function invocation: clauses, table rows, defined functions, and
 // Call_func.
 //
-// Mirrors spec-meta/4-execution/4.10-eval-call-func.watsup. The clauses of
-// a defined function run in order: after the first success every later
-// clause must mismatch, so a later error or second success is an error,
-// even with equal results. Table rows are first-match.
+// Mirrors spec-meta/4-execution/4.10-eval-call-func.watsup, except that the
+// clauses of a defined function run in order and the first that does not
+// mismatch gives the result, without spec-meta's determinism check on the
+// later clauses. Table rows are first-match too.
 
 requires "3.11-eval-prem.k"
 
@@ -23,11 +23,9 @@ module CALL-FUNC
 
   // ==========================================================================
   // Eval_clauses: ctx |- clause* `( val* `) : funcRes
-  // Eval_clauses_on_ok: ctx |- clause* `( val* `) : unitRes
   //
-  // Each clause is one try, and its outcome selects the next step. The
-  // outcome of `evalClauses` is a `Res`, which its caller puts back in
-  // flight; `evalClausesOnOk` ends in `.K` (`OK`) or `ERROR`.
+  // Each clause is one try, in order; the first that does not mismatch
+  // gives the outcome, a `Res` its caller puts back in flight.
   // ==========================================================================
 
   //   rule Eval_clauses/nil
@@ -41,33 +39,10 @@ module CALL-FUNC
 
   //   rule Eval_clauses/unmatch
   rule <k> UNMATCH ~> afterClause(Cls:ClauseList, Vs:ValList) => evalClauses(Cls, Vs) ... </k>
-  //   rule Eval_clauses/succ: the remaining clauses must all mismatch
-  rule <k> ok(R:KItem) ~> afterClause(Cls:ClauseList, Vs:ValList)
-        => evalClausesOnOk(Cls, Vs) ~> onOk(ok(R))
-       ...
-       </k>
+  //   rule Eval_clauses/succ: the first success, the later clauses untried
+  rule <k> ok(R:KItem) ~> afterClause(_:ClauseList, _:ValList) => ok(R) ... </k>
   //   rule Eval_clauses/error
   rule <k> ERROR ~> afterClause(_:ClauseList, _:ValList) => ERROR ... </k>
-
-  // The outcome once the remaining alternatives are all unmatched.
-  syntax KItem ::= onOk(Res)
-  rule <k> onOk(R:Res) => R ... </k>
-  rule <k> ERROR ~> onOk(_:Res) => ERROR ... </k>
-
-  //   rule Eval_clauses_on_ok/nil
-  rule <k> evalClausesOnOk(.ClauseList, _:ValList) => .K ... </k>
-  rule <k> evalClausesOnOk((Cl:Clause, Cls:ClauseList), Vs:ValList)
-        => try(evalClause(Cl, Vs)) ~> afterClauseOnOk(Cls, Vs)
-       ...
-       </k>
-
-  syntax KItem ::= afterClauseOnOk(ClauseList, ValList)
-
-  //   rule Eval_clauses_on_ok/unmatch
-  rule <k> UNMATCH ~> afterClauseOnOk(Cls:ClauseList, Vs:ValList) => evalClausesOnOk(Cls, Vs) ... </k>
-  //   rule Eval_clauses_on_ok/error: a second success or an error
-  rule <k> ok(_) ~> afterClauseOnOk(_:ClauseList, _:ValList) => ERROR ... </k>
-  rule <k> ERROR ~> afterClauseOnOk(_:ClauseList, _:ValList) => ERROR ... </k>
 
   // ==========================================================================
   // Eval_tblrow: ctx |- tblRow `( val* `) : funcRes

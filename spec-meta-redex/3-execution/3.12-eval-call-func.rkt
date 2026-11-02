@@ -3,9 +3,9 @@
 ;;
 ;; A callee runs in (IN L_callee ...), and each clause in a copy of it, so a
 ;; clause leaves no bindings to the next. The clauses are evaluated in order
-;; until one succeeds or errors (Eval_clauses), and the clauses after a
-;; success must all be unmatched (Eval_clauses_on_ok): a second success is an
-;; error. The `otherwise` clause runs only when every clause is unmatched.
+;; until one succeeds or errors (Eval_clauses), which gives the result; unlike
+;; spec-meta, the later clauses are not checked to be unmatched. The
+;; `otherwise` clause runs only when every clause is unmatched.
 ;; Table rows are tried in order, and the first row that is not unmatched
 ;; gives the result. The `/error` rules become complement rules, and
 ;; "frame/failure" where a clause's or a row's statement fails.
@@ -35,18 +35,10 @@
    ;; unmatched clause is passed over by the frame (Eval_clauses/unmatch).
    (--> (eval-clauses (UNMATCH ...)) UNMATCH
         "eval-clauses/nil")
-   (--> (eval-clauses (UNMATCH ... val_out (IN L (eval-clause clause (val ...))) ...))
-        (eval-clauses-on-ok val_out ((IN L (eval-clause clause (val ...))) ...))
+   (--> (eval-clauses (UNMATCH ... val_out (IN L (eval-clause clause (val ...))) ...)) val_out
         "eval-clauses/succ")
    (--> (eval-clauses (UNMATCH ... ERROR (IN L (eval-clause clause (val ...))) ...)) ERROR
         "eval-clauses/error")
-
-   ;; rulegroup Eval_clauses_on_ok, once the clause at hand is evaluated
-   (--> (eval-clauses-on-ok val_out (UNMATCH ...)) val_out
-        "eval-clauses-on-ok/nil")
-   (--> (eval-clauses-on-ok val_out (UNMATCH ... valres (IN L (eval-clause clause (val ...))) ...)) ERROR
-        (side-condition (not (equal? (term valres) 'UNMATCH)))
-        "eval-clauses-on-ok/error")
 
    ;;; Table meta-function invocation
 
