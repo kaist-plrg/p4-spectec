@@ -33,7 +33,6 @@ syntax term =
 
 syntax pattern =
   | VAR varid sort
-  | FRESH sort                      ;; a fresh variable !X of a function equation
   | AND sort pattern pattern        ;; \and, used as an as-pattern on the left
   | OR sort pattern pattern         ;; \or on the left: either side matches
   | APP symid sort* pattern*
@@ -73,9 +72,8 @@ syntax definition =
     SUBSORTS subsort*,                  ;; closed under transitivity
     OVERLOADS overload*,
     RULES clause*,                      ;; in the order they are tried
-    EQUATIONS (map<symid, clause*>),    ;; by the symbol defined, each in the
+    EQUATIONS (map<symid, clause*>) }   ;; by the symbol defined, each in the
                                         ;; order they are tried
-    FRESH (map<sort, symid>) }          ;; the freshGenerator of a sort, e.g. freshInt
 
 ;; KORE as kompile 7.1.337 writes it by default, every axiom with its
 ;; attributes; loading picks the definition above from it (3-load). Alias

@@ -3,8 +3,8 @@
 //! `KoreInterface::parse_program` reads a K definition (`definition.kore` of a
 //! kompiled directory) and an initial term as the inputs of spec-k's `Krun`:
 //! `parse` reads KORE into `ast`, and `encode` turns it into spec-k's values;
-//! `decode` writes them back. Builtins are the standard ones, the text builtins
-//! of `texts`, and `$fresh_nat`. spec-k's extern relation `Call_hook` runs in the
+//! `decode` writes them back. Builtins are the standard ones and the text
+//! builtins of `texts`. spec-k's extern relation `Call_hook` runs in the
 //! definition's K library (`offload`), which `KLibrary` lends to the top of the
 //! tower, the K definition above spec-k.
 //! `KoreInterface::print_runres` prints the `runres` of `Krun`.
@@ -26,14 +26,10 @@ use crate::{
     diagnostic::{Diagnostic, Report, Severity},
     interface::builtin::call::Builtins,
     lang::{
-        common::{prim::num::Natural, source::Span},
-        data::{
-            arena::Arena,
-            value::flat::{self as value, Value},
-        },
+        data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
     },
-    runner::{Eval, ExternError, Interface, InterfaceError, SideEffect},
+    runner::{Eval, ExternError, Interface, InterfaceError},
 };
 use std::{
     path::{Path, PathBuf},
@@ -122,8 +118,6 @@ pub struct KoreInterface {
     /// The definition being run, with its K library, which `Call_hook` calls
     /// and printing a configuration reads.
     offload: Rc<Offload>,
-    /// The next `$fresh_nat`.
-    fresh: u64,
 }
 
 impl KoreInterface {
@@ -131,7 +125,7 @@ impl KoreInterface {
     pub fn new() -> Self {
         let offload = Rc::new(Offload::new());
         let builtins = Builtins::with_extensions(texts::entries());
-        Self { builtins, offload, fresh: 0 }
+        Self { builtins, offload }
     }
 
     /// Returns the K library of the definition this interface reads,
@@ -157,14 +151,6 @@ impl KoreInterface {
             Runres::Error(steps, term) => format!("error after {steps} steps\n{term}"),
             Runres::InitFail => "error on the initial term".to_owned(),
         })
-    }
-
-    /// `$fresh_nat() : nat`: 0, 1, 2, ... within a program.
-    fn fresh_nat(&mut self, arena: &mut Arena) -> Result<Value, InterfaceError> {
-        let n = Natural::from(self.fresh);
-        self.fresh += 1;
-        value::make::nat(arena, n, Span::default())
-            .map_err(|error| InterfaceError(diagnostic("kore/runtime", error.to_string())))
     }
 }
 
@@ -220,10 +206,6 @@ impl Interface for KoreInterface {
         targs: &[Typ],
         values: &[Value],
     ) -> Eval<Value, InterfaceError> {
-        // The one builtin with a state, never memoized
-        if id.node.as_ref() == "fresh_nat" {
-            return Eval::new(self.fresh_nat(arena), SideEffect::Impure);
-        }
         self.builtins
             .invoke(arena, id, targs, values)
             .map_err(InterfaceError::from)
@@ -232,6 +214,5 @@ impl Interface for KoreInterface {
     /// Resets builtin state; the definition and its library stay.
     fn clear(&mut self) {
         self.builtins.init();
-        self.fresh = 0;
     }
 }
