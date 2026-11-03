@@ -123,7 +123,7 @@ pub fn run(path_log: Option<&Path>) -> Result<()> {
                 if outcome == Outcome::Pass {
                     passed += 1;
                 }
-                results.record(&[path], outcome.name(), "")?;
+                results.record(&[path], outcome)?;
                 progress.inc(1);
             }
         }

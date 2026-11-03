@@ -293,7 +293,7 @@ fn run_programs(
                     }
                     outcome
                 };
-                suite.results.record(&[path], outcome.name(), "")?;
+                suite.results.record(&[path], outcome)?;
                 progress.inc(1);
             }
         }

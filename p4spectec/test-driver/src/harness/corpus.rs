@@ -2,15 +2,14 @@
 //!
 //! `collect` discovers sources under a root,
 //! and `collect_excludes` reads exclusion lists.
-//! `Results` compares per-file outcomes with one expected file per suite.
+//! `Results` compares per-test outcomes with one CSV expected file per suite.
 
 use std::{
-    collections::{BTreeMap, BTreeSet, HashMap},
-    fs, io,
+    collections::{BTreeMap, BTreeSet},
+    fs,
     path::{Path, PathBuf},
 };
 
-use dissimilar::Chunk;
 use indicatif::{ProgressBar, ProgressStyle};
 
 use super::{Error, Result};
@@ -89,113 +88,105 @@ pub fn collect_excludes(dir: &Path) -> Result<BTreeSet<String>> {
     Ok(excludes)
 }
 
-/// Collects per-test records of one suite for comparison with its expected file.
+/// Collects per-test outcomes of one suite for comparison with its expected file.
 ///
-/// Each record is a status line, `<status>\t<path>...`,
-/// followed by optional detail lines;
-/// records are sorted by their paths.
+/// The expected file is CSV without a header or quoting,
+/// one line `<outcome>,<path>...` per test.
 pub struct Results {
     path_expected: PathBuf,
-    records: BTreeMap<Vec<PathBuf>, String>,
+    outcomes: BTreeMap<Vec<PathBuf>, Outcome>,
 }
 
 impl Results {
     pub fn new(path_expected: &Path) -> Self {
-        Self { path_expected: path_expected.to_path_buf(), records: BTreeMap::new() }
+        Self { path_expected: path_expected.to_path_buf(), outcomes: BTreeMap::new() }
     }
 
-    /// Records one test under its paths, which must be unique and line-safe.
-    pub fn record(&mut self, paths: &[&Path], status: &str, details: &str) -> Result<()> {
-        let mut text = status.to_owned();
+    /// Records one test under its paths, which must be unique and CSV-safe.
+    pub fn record(&mut self, paths: &[&Path], outcome: Outcome) -> Result<()> {
         for path in paths {
-            let Some(text_path) = path
+            if !path
                 .to_str()
-                .filter(|path| !path.contains(['\t', '\r', '\n']))
-            else {
+                .is_some_and(|path| !path.contains([',', '"', '\r', '\n']))
+            {
                 return Err(Error::from(format!("invalid result path: {}", path.display())));
-            };
-            text.push('\t');
-            text.push_str(text_path);
+            }
         }
-        text.push('\n');
-        text.push_str(details);
         let key = paths.iter().map(|path| path.to_path_buf()).collect();
-        if self.records.insert(key, text).is_some() {
+        if self.outcomes.insert(key, outcome).is_some() {
             return Err(Error::from(format!("duplicate result: {}", paths[0].display())));
         }
         Ok(())
     }
 
-    /// Compares the records with the expected file, printing differing lines to stderr.
+    /// Compares each test's outcome with the expected file, printing mismatches to stderr.
     ///
-    /// Returns whether they matched; a missing expected file reads as empty.
+    /// A timeout matches any expected outcome with a warning.
+    /// Returns whether every test matched.
     pub fn check(self) -> Result<bool> {
-        let expected = match fs::read_to_string(&self.path_expected) {
-            Ok(text) => text.replace("\r\n", "\n"),
-            Err(error) if error.kind() == io::ErrorKind::NotFound => String::new(),
-            Err(error) => {
-                return Err(Error::from(format!("{}: {error}", self.path_expected.display())));
+        let display = self.path_expected.display();
+        let text = fs::read_to_string(&self.path_expected)
+            .map_err(|error| Error::from(format!("{display}: {error}")))?;
+        let mut expected = BTreeMap::new();
+        for (index, line) in text.lines().enumerate() {
+            let number = index + 1;
+            let mut fields = line.split(',');
+            let outcome = Outcome::from_name(fields.next().unwrap_or_default())
+                .map_err(|error| Error::from(format!("{display}:{number}: {error}")))?;
+            let paths = fields.map(PathBuf::from).collect::<Vec<_>>();
+            if paths.is_empty() {
+                return Err(Error::from(format!("{display}:{number}: no test paths")));
             }
-        };
-        let actual = self.records.into_values().collect::<String>();
-        if actual == expected {
-            return Ok(true);
+            if expected.insert(paths, (number, outcome)).is_some() {
+                return Err(Error::from(format!("{display}:{number}: duplicate test")));
+            }
         }
-        eprintln!("{}: results differ from expected", self.path_expected.display());
-        let mut line = 1;
-        let mut in_hunk = false;
-        for (sign, lines) in diff_lines(&expected, &actual) {
-            if sign != ' ' && !in_hunk {
-                eprintln!("{}:{line}:", self.path_expected.display());
-            }
-            in_hunk = sign != ' ';
-            if sign != '+' {
-                line += lines.len();
-            }
-            if sign != ' ' {
-                for text in lines {
-                    eprintln!("{sign}{}", text.strip_suffix('\n').unwrap_or(text));
+        let mut matched = true;
+        for (paths, outcome) in self.outcomes {
+            let text_paths = text_paths(&paths);
+            match expected.remove(&paths) {
+                None => {
+                    matched = false;
+                    eprintln!("{display}: {text_paths}: got {}, not expected", outcome.name());
                 }
+                Some((number, outcome_expected)) if outcome == Outcome::Timeout => {
+                    eprintln!(
+                        "warning: {display}:{number}: {text_paths}: timeout, expected {}",
+                        outcome_expected.name()
+                    );
+                }
+                Some((number, outcome_expected)) if outcome != outcome_expected => {
+                    matched = false;
+                    eprintln!(
+                        "{display}:{number}: {text_paths}: expected {}, got {}",
+                        outcome_expected.name(),
+                        outcome.name()
+                    );
+                }
+                Some(_) => {}
             }
         }
-        Ok(false)
+        let mut unrun = expected.into_iter().collect::<Vec<_>>();
+        unrun.sort_by_key(|(_, (number, _))| *number);
+        for (paths, (number, outcome_expected)) in unrun {
+            matched = false;
+            eprintln!(
+                "{display}:{number}: {}: expected {}, not run",
+                text_paths(&paths),
+                outcome_expected.name()
+            );
+        }
+        Ok(matched)
     }
 }
 
-/// Diffs two texts by lines into chunks signed ' ' (equal), '-' (expected only), or '+' (actual only).
-fn diff_lines<'a>(expected: &'a str, actual: &'a str) -> Vec<(char, Vec<&'a str>)> {
-    // Encode each distinct line as one char so that the char diff is a line diff
-    let mut codes = HashMap::new();
-    let mut lines = Vec::new();
-    let mut encode = |text: &'a str| -> String {
-        text.split_inclusive('\n')
-            .map(|text_line| {
-                *codes.entry(text_line).or_insert_with(|| {
-                    lines.push(text_line);
-                    // Skip surrogates, which are not chars
-                    let index = lines.len() as u32 - 1;
-                    char::from_u32(if index < 0xD800 { index } else { index + 0x800 }).unwrap()
-                })
-            })
-            .collect()
-    };
-    let (code_expected, code_actual) = (encode(expected), encode(actual));
-    let decode = |code: &str| {
-        code.chars()
-            .map(|c| {
-                let index = c as u32;
-                lines[(if index < 0xD800 { index } else { index - 0x800 }) as usize]
-            })
-            .collect::<Vec<_>>()
-    };
-    dissimilar::diff(&code_expected, &code_actual)
-        .into_iter()
-        .map(|chunk| match chunk {
-            Chunk::Equal(code) => (' ', decode(code)),
-            Chunk::Delete(code) => ('-', decode(code)),
-            Chunk::Insert(code) => ('+', decode(code)),
-        })
-        .collect()
+/// Joins test paths as in expected files.
+fn text_paths(paths: &[PathBuf]) -> String {
+    paths
+        .iter()
+        .map(|path| path.display().to_string())
+        .collect::<Vec<_>>()
+        .join(",")
 }
 
 /// Creates a progress bar over `len` tests.

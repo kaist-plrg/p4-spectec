@@ -178,7 +178,7 @@ pub fn run(name_config: &str, timeout: Option<Duration>, path_log: Option<&Path>
                     }
                     outcome
                 };
-                suite.results.record(&[path], outcome.name(), "")?;
+                suite.results.record(&[path], outcome)?;
                 progress.inc(1);
             }
         }

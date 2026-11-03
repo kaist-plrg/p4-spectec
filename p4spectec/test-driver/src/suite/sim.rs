@@ -7,13 +7,13 @@ use std::{
 
 use p4spectec::lang::data::encoding::Encoding;
 
-use p4spectec::sim_plugin::{self, SimError, Simulator};
+use p4spectec::sim_plugin::{self, Simulator};
 
 use serde::Deserialize;
 
 use crate::harness::{
     self, Error, Result,
-    corpus::{self, Results},
+    corpus::{self, Outcome, Results},
     interpreter::Configuration,
     log::TestLog,
     worker::{self, Channel, Reply, Worker},
@@ -189,7 +189,7 @@ where
     log.note(&text_collect)?;
     let includes = &registration.includes;
     let progress = corpus::progress_bar(collected)?;
-    let mut matched = 0;
+    let mut passed = 0;
     let mut timed_out = 0;
     let mut all_matched = true;
     // Build one simulator per registered architecture in first-suite order
@@ -231,8 +231,8 @@ where
                 let paths = [pair.path_p4.as_path(), pair.path_stf.as_path()];
                 // Record excluded pairs without running them
                 if pair.excluded {
-                    results.record(&paths, "exclude", "")?;
-                    log.skip(&pair.path_stf, "exclude")?;
+                    results.record(&paths, Outcome::Exclude)?;
+                    log.skip(&pair.path_stf, Outcome::Exclude.name())?;
                     progress.inc(1);
                     continue;
                 }
@@ -247,9 +247,9 @@ where
                         worker.request(&request)
                     }
                     (None, Some(simulator)) => {
-                        execute(simulator, includes, &pair.path_p4, &pair.path_stf)
-                            .map(|details| Reply::Done { status: "pass".to_owned(), details })
-                            .map_err(|error| Error::from(error.to_string()))
+                        let (status, details) =
+                            answer(simulator, includes, &pair.path_p4, &pair.path_stf);
+                        Ok(Reply::Done { status, details })
                     }
                     (None, None) => unreachable!("simulator built without a worker"),
                 }
@@ -261,18 +261,31 @@ where
                         pair.path_stf.display()
                     ))
                 })?;
-                let (status, details) = match reply {
+                let outcome = match reply {
                     Reply::Done { status, details } => {
-                        matched += details.lines().count();
-                        (status, details)
+                        let outcome = Outcome::from_name(&status)?;
+                        // A failing test reports its simulation error as its details
+                        if outcome == Outcome::Fail {
+                            progress.suspend(|| {
+                                eprintln!(
+                                    "{}:{}:{}: {details}",
+                                    suite.name,
+                                    pair.path_p4.display(),
+                                    pair.path_stf.display()
+                                )
+                            });
+                        }
+                        outcome
                     }
-                    Reply::Timeout => {
-                        timed_out += 1;
-                        ("timeout".to_owned(), String::new())
-                    }
+                    Reply::Timeout => Outcome::Timeout,
                 };
-                results.record(&paths, &status, &details)?;
-                log.end(&status)?;
+                match outcome {
+                    Outcome::Pass => passed += 1,
+                    Outcome::Timeout => timed_out += 1,
+                    _ => {}
+                }
+                results.record(&paths, outcome)?;
+                log.end(outcome.name())?;
                 progress.inc(1);
             }
             guard_stdout.finish()?;
@@ -285,8 +298,9 @@ where
     }
     progress.finish_with_message("complete");
     let text_summary = format!(
-        "{text_mode}: collected={collected} excluded={excluded} executed={} patched={patched} matches={matched} timeout={timed_out} elapsed={:.3}s{}",
+        "{text_mode}: collected={collected} excluded={excluded} executed={} patched={patched} pass={passed} fail={} timeout={timed_out} elapsed={:.3}s{}",
         collected - excluded,
+        collected - excluded - passed - timed_out,
         start.elapsed().as_secs_f64(),
         if all_matched { "; all expected records matched" } else { "" }
     );
@@ -298,18 +312,17 @@ where
     Ok(())
 }
 
-/// Runs one STF test, returning a line per transmitted packet.
-fn execute(
+/// Runs one STF test, answering pass, or fail with its simulation error.
+fn answer(
     simulator: &mut Simulator,
     includes: &[PathBuf],
     path_p4: &Path,
     path_stf: &Path,
-) -> std::result::Result<String, SimError> {
-    let mut text_txs = String::new();
-    simulator.run_stf_test(includes, path_p4, path_stf, |tx| {
-        text_txs.push_str(&format!("tx\t{}\t{}\n", tx.port, tx.packet));
-    })?;
-    Ok(text_txs)
+) -> (String, String) {
+    match simulator.run_stf_test(includes, path_p4, path_stf, |_| {}) {
+        Ok(()) => (Outcome::Pass.name().to_owned(), String::new()),
+        Err(error) => (Outcome::Fail.name().to_owned(), error.to_string()),
+    }
 }
 
 /// Serves `worker sim <config> <arch>` on the native simulator of the architecture.
@@ -321,7 +334,7 @@ pub fn serve(name_config: &str, arch: &str) -> Result<()> {
     serve_simulator(channel, &registration.includes, simulator)
 }
 
-/// Answers each request `<p4>\t<stf>` with the packets its test transmits.
+/// Answers each request `<p4>\t<stf>` with the outcome of its test.
 pub fn serve_simulator(
     channel: Channel,
     includes: &[PathBuf],
@@ -331,8 +344,6 @@ pub fn serve_simulator(
         let (path_p4, path_stf) = request
             .split_once('\t')
             .ok_or_else(|| Error::from(format!("invalid worker request: {request}")))?;
-        let details = execute(&mut simulator, includes, Path::new(path_p4), Path::new(path_stf))
-            .map_err(|error| Error::from(error.to_string()))?;
-        Ok(("pass".to_owned(), details))
+        Ok(answer(&mut simulator, includes, Path::new(path_p4), Path::new(path_stf)))
     })
 }
