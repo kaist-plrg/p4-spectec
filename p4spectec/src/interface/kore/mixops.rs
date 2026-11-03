@@ -18,7 +18,6 @@ type Result<T> = std::result::Result<T, String>;
 pub struct Mixops {
     // KORE as kompile writes it, `kore` and the declarations
     pub(super) kvar: Mixop,
-    pub(super) ksetvar: Mixop,
     pub(super) kapp: Mixop,
     pub(super) kml: Mixop,
     pub(super) kstr: Mixop,
@@ -59,7 +58,6 @@ impl Mixops {
     pub fn new(arena: &mut Arena) -> Result<Self> {
         Ok(Self {
             kvar: mixop(arena, "KVAR varid sort")?,
-            ksetvar: mixop(arena, "KSETVAR varid sort")?,
             kapp: mixop(arena, "KAPP symid sort* kore*")?,
             kml: mixop(arena, "KML text sort* kore*")?,
             kstr: mixop(arena, "KSTR text")?,

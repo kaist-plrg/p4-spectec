@@ -187,11 +187,6 @@ fn kore_checked(
             let value_sort = make_sort(arena, mixops, sort)?;
             make_case(arena, mixops.kvar, vec![value_name, value_sort], typ("kore"))
         }
-        Pattern::SetVar(name, sort) => {
-            let value_name = make_text(arena, name)?;
-            let value_sort = make_sort(arena, mixops, sort)?;
-            make_case(arena, mixops.ksetvar, vec![value_name, value_sort], typ("kore"))
-        }
         Pattern::Str(text) => {
             let value_text = make_text(arena, text)?;
             make_case(arena, mixops.kstr, vec![value_text], typ("kore"))
@@ -295,7 +290,7 @@ pub fn definition(arena: &mut Arena, loaded: &Loaded, definition: &Definition) -
                 let values = vec![value_pattern, value_attrs];
                 axioms.push(make_case(arena, mixops.kaxiom, values, typ("kaxiom"))?);
             }
-            Sentence::Import(_) | Sentence::Claim { .. } | Sentence::AliasDecl { .. } => {}
+            Sentence::Import(_) | Sentence::AliasDecl { .. } => {}
         }
     }
     // The parts, as the fields of a kdefinition

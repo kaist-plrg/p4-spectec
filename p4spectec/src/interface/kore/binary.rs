@@ -191,12 +191,7 @@ pub fn decode(src: &[u8]) -> Result<Pattern> {
                 let Some(Item::Sort(sort)) = stack.pop() else {
                     return Err("expected the sort of a variable in binary KORE".to_owned());
                 };
-                let pattern = if name.starts_with('@') {
-                    Pattern::SetVar(name, sort)
-                } else {
-                    Pattern::Var(name, sort)
-                };
-                stack.push(Item::Pattern(pattern));
+                stack.push(Item::Pattern(Pattern::Var(name, sort)));
             }
             byte => return Err(format!("unexpected byte {byte:#04x} in binary KORE")),
         }

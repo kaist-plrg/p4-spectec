@@ -22,10 +22,9 @@ pub enum Sort {
 /// A pattern.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Pattern {
-    /// An element variable: `VarX:SortInt{}`.
+    /// A variable: `VarX:SortInt{}`, or a set variable `@X:SortInt{}`,
+    /// which only an alias declaration has.
     Var(String, Sort),
-    /// A set variable: `@X:SortInt{}`.
-    SetVar(String, Sort),
     /// A symbol, alias, or `\connective` applied to sorts and arguments.
     App(String, Vec<Sort>, Vec<Pattern>),
     /// A string literal, unescaped.
@@ -59,10 +58,6 @@ pub enum Sentence {
         name: String,
     },
     Axiom {
-        pattern: Pattern,
-        attrs: Vec<Attr>,
-    },
-    Claim {
         pattern: Pattern,
         attrs: Vec<Attr>,
     },
@@ -118,7 +113,7 @@ fn write_list<T: Display>(f: &mut fmt::Formatter<'_>, items: &[T]) -> fmt::Resul
 impl Display for Pattern {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         deep(|| match self {
-            Pattern::Var(name, sort) | Pattern::SetVar(name, sort) => write!(f, "{name}:{sort}"),
+            Pattern::Var(name, sort) => write!(f, "{name}:{sort}"),
             Pattern::App(name, sorts, args) => {
                 write!(f, "{name}{{")?;
                 write_list(f, sorts)?;

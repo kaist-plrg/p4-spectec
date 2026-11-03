@@ -89,7 +89,7 @@ impl Info {
                         info.collections.insert(name.clone(), constructors);
                     }
                 }
-                Sentence::Import(_) | Sentence::Axiom { .. } | Sentence::Claim { .. } => {}
+                Sentence::Import(_) | Sentence::Axiom { .. } => {}
             }
         }
         info

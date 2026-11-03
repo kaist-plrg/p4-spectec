@@ -308,11 +308,7 @@ impl<'a> Parser<'a> {
                 if self.token == Token::Colon && !name.starts_with('\\') {
                     self.advance()?;
                     let sort = self.sort()?;
-                    if name.starts_with('@') {
-                        Ok(Pattern::SetVar(name, sort))
-                    } else {
-                        Ok(Pattern::Var(name, sort))
-                    }
+                    Ok(Pattern::Var(name, sort))
                 } else {
                     let sorts = self.sorts(Token::LBrace, Token::RBrace)?;
                     let args = self.seq(Token::LParen, Token::RParen, Self::pattern)?;
@@ -331,20 +327,21 @@ impl<'a> Parser<'a> {
         self.seq(Token::LBrace, Token::RBrace, Self::ident)
     }
 
-    fn sentence(&mut self) -> Result<Sentence> {
+    /// A sentence; none for a claim, which is not read.
+    fn sentence(&mut self) -> Result<Option<Sentence>> {
         // A sentence starts with its keyword
         let keyword = self.ident()?;
-        match keyword.as_str() {
+        let sentence = match keyword.as_str() {
             "import" => {
                 let name = self.ident()?;
                 self.attrs()?;
-                Ok(Sentence::Import(name))
+                Sentence::Import(name)
             }
             "sort" | "hooked-sort" => {
                 let name = self.ident()?;
                 let params = self.sort_params()?;
                 let attrs = self.attrs()?;
-                Ok(Sentence::SortDecl { name, params, attrs })
+                Sentence::SortDecl { name, params, attrs }
             }
             "symbol" | "hooked-symbol" => {
                 let name = self.ident()?;
@@ -353,7 +350,7 @@ impl<'a> Parser<'a> {
                 self.expect(Token::Colon, "':'")?;
                 let result = self.sort()?;
                 let attrs = self.attrs()?;
-                Ok(Sentence::SymbolDecl { name, params, args, result, attrs })
+                Sentence::SymbolDecl { name, params, args, result, attrs }
             }
             "alias" => {
                 let name = self.ident()?;
@@ -366,22 +363,23 @@ impl<'a> Parser<'a> {
                 self.expect(Token::ColonEq, "':='")?;
                 self.pattern()?;
                 self.attrs()?;
-                Ok(Sentence::AliasDecl { name })
+                Sentence::AliasDecl { name }
             }
             "axiom" => {
                 self.sort_params()?;
                 let pattern = self.pattern()?;
                 let attrs = self.attrs()?;
-                Ok(Sentence::Axiom { pattern, attrs })
+                Sentence::Axiom { pattern, attrs }
             }
             "claim" => {
                 self.sort_params()?;
-                let pattern = self.pattern()?;
-                let attrs = self.attrs()?;
-                Ok(Sentence::Claim { pattern, attrs })
+                self.pattern()?;
+                self.attrs()?;
+                return Ok(None);
             }
-            _ => self.error(format!("unknown sentence {keyword}")),
-        }
+            _ => return self.error(format!("unknown sentence {keyword}")),
+        };
+        Ok(Some(sentence))
     }
 
     fn module(&mut self) -> Result<Module> {
@@ -389,7 +387,7 @@ impl<'a> Parser<'a> {
         let name = self.ident()?;
         let mut sentences = Vec::new();
         while self.token != Token::Id("endmodule".to_owned()) {
-            sentences.push(self.sentence()?);
+            sentences.extend(self.sentence()?);
         }
         self.advance()?;
         self.attrs()?;
