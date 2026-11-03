@@ -183,10 +183,8 @@ pub fn term(arena: &Arena, info: &Info, mixops: &Mixops, value: &Value) -> Resul
 pub enum Runres {
     /// The steps taken and the final configuration, at the end or the step limit.
     Final(BigInt, Pattern),
-    /// The steps taken and the configuration where a step failed.
-    Error(BigInt, Pattern),
-    /// The initial term cannot be evaluated.
-    InitFail,
+    /// A step failed (`ERROR n term`), or the initial term cannot be evaluated (`INITFAIL`).
+    Error,
 }
 
 /// A `runres` of the specification, its configuration as a KORE pattern.
@@ -195,10 +193,8 @@ pub fn runres(arena: &Arena, info: &Info, mixops: &Mixops, value: &Value) -> Res
         (mixop, [steps, term]) if is(arena, mixop, mixops.run_final) => {
             Ok(Runres::Final(int(arena, steps)?, self::term(arena, info, mixops, term)?))
         }
-        (mixop, [steps, term]) if is(arena, mixop, mixops.run_error) => {
-            Ok(Runres::Error(int(arena, steps)?, self::term(arena, info, mixops, term)?))
-        }
-        (mixop, []) if is(arena, mixop, mixops.run_initfail) => Ok(Runres::InitFail),
+        (mixop, [_, _]) if is(arena, mixop, mixops.run_error) => Ok(Runres::Error),
+        (mixop, []) if is(arena, mixop, mixops.run_initfail) => Ok(Runres::Error),
         _ => Err("not a runres".to_owned()),
     }
 }

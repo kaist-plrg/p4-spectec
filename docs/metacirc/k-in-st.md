@@ -119,8 +119,8 @@ directory of `definition.kore`.
 * Input: the `runres` that `Krun` returned: `FINAL n term`, `ERROR n term`,
   or `INITFAIL`.
 * Output: the text `krun` would print. For `FINAL`, the final configuration
-  `term` as KORE text. Read values with `get::case`, `get::list`, `get::text`,
-  and so on.
+  `term` as KORE text; for the others, `error`, since the interpreter only
+  aborts. Read values with `get::case`, `get::list`, `get::text`, and so on.
 
 ### `interface/kore/offload.rs` and `ffi.rs`: `Offload`
 

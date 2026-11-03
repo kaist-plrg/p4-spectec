@@ -141,8 +141,8 @@ impl KoreInterface {
     }
 
     /// Prints `runres` as the interpreter krun runs prints a run with `--statistics`:
-    /// for `FINAL n term`, `n` and then `term` as KORE; for `ERROR n term`,
-    /// `error after n steps` and `term`; for `INITFAIL`, `error on the initial term`.
+    /// for `FINAL n term`, `n` and then `term` as KORE; `error` for a run that
+    /// failed (`ERROR n term` or `INITFAIL`), where the interpreter only aborts.
     pub fn print_runres(&self, arena: &Arena, runres: Value) -> Result<String, InterfaceError> {
         let loaded = self.offload.loaded().ok_or_else(|| {
             InterfaceError(diagnostic(
@@ -154,8 +154,7 @@ impl KoreInterface {
             .map_err(|message| InterfaceError(diagnostic("kore/print", message)))?;
         Ok(match runres {
             Runres::Final(steps, term) => format!("{steps}\n{term}"),
-            Runres::Error(steps, term) => format!("error after {steps} steps\n{term}"),
-            Runres::InitFail => "error on the initial term".to_owned(),
+            Runres::Error => "error".to_owned(),
         })
     }
 }
