@@ -29,7 +29,7 @@ type Result<T> = std::result::Result<T, ParseError>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Token {
-    /// An identifier, `\connective`, or `@setvar`.
+    /// An identifier, `\connective`, or `@setvar` (in an alias declaration).
     Id(String),
     Str(String),
     LBrace,
@@ -327,7 +327,8 @@ impl<'a> Parser<'a> {
         self.seq(Token::LBrace, Token::RBrace, Self::ident)
     }
 
-    /// A sentence; none for a claim, which is not read.
+    /// A sentence; none for an alias declaration or a claim, which are not
+    /// read: kompile applies no alias by default (`spec-k/1-syntax.watsup`).
     fn sentence(&mut self) -> Result<Option<Sentence>> {
         // A sentence starts with its keyword
         let keyword = self.ident()?;
@@ -353,7 +354,7 @@ impl<'a> Parser<'a> {
                 Sentence::SymbolDecl { name, params, args, result, attrs }
             }
             "alias" => {
-                let name = self.ident()?;
+                self.ident()?;
                 self.sort_params()?;
                 self.sorts(Token::LParen, Token::RParen)?;
                 self.expect(Token::Colon, "':'")?;
@@ -363,7 +364,7 @@ impl<'a> Parser<'a> {
                 self.expect(Token::ColonEq, "':='")?;
                 self.pattern()?;
                 self.attrs()?;
-                Sentence::AliasDecl { name }
+                return Ok(None);
             }
             "axiom" => {
                 self.sort_params()?;

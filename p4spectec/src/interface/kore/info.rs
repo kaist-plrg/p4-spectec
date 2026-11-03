@@ -1,7 +1,7 @@
 //! What reading and writing KORE needs to know of a definition
 //!
-//! The declared symbols and aliases, sorts by their hook (`INT.Int` is
-//! `SortInt`), the constructors of collection sorts from their `element`,
+//! Sorts by their hook (`INT.Int` is `SortInt`),
+//! the constructors of collection sorts from their `element`,
 //! `concat`, and `unit` attributes, and the symbols that bind a variable.
 //! For example, `SortMap` has the element `_|->_`,
 //! the concatenation `_Map_`, and the unit `.Map`.
@@ -21,10 +21,6 @@ pub struct Constructors {
 /// Facts about a definition for reading and writing KORE.
 #[derive(Debug, Default)]
 pub struct Info {
-    /// The declared symbols, which an application may use.
-    symbols: HashSet<String>,
-    /// The declared aliases, which an application may not use.
-    aliases: HashSet<String>,
     /// The hook of each hooked sort.
     sort_hooks: HashMap<String, String>,
     /// The constructors of each collection sort.
@@ -62,15 +58,11 @@ impl Info {
         for sentence in definition.sentences() {
             match sentence {
                 Sentence::SymbolDecl { name, attrs, .. } => {
-                    info.symbols.insert(name.clone());
                     if attrs.iter().any(
                         |attr| matches!(attr, Pattern::App(attr_name, _, _) if attr_name == "binder"),
                     ) {
                         info.binders.insert(name.clone());
                     }
-                }
-                Sentence::AliasDecl { name } => {
-                    info.aliases.insert(name.clone());
                 }
                 Sentence::SortDecl { name, attrs, .. } => {
                     if let Some(hook) = string_attr("hook", attrs) {
@@ -93,16 +85,6 @@ impl Info {
             }
         }
         info
-    }
-
-    /// Whether a symbol is declared.
-    pub fn is_symbol(&self, name: &str) -> bool {
-        self.symbols.contains(name)
-    }
-
-    /// Whether an alias is declared.
-    pub fn is_alias(&self, name: &str) -> bool {
-        self.aliases.contains(name)
     }
 
     /// The hook of a sort.

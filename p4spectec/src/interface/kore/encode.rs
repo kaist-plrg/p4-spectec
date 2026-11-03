@@ -3,9 +3,8 @@
 //! As the AL encoder of P4-SpecTec² (`interface/meta/al/encode.rs`) encodes a
 //! specification, `definition` and `kore` encode the parsed KORE as it is (`kore` and `kdefinition`
 //! in `spec-k/1-syntax.watsup`): every axiom with its attributes,
-//! and the declarations of sorts and symbols. Alias declarations are not
-//! read, and an axiom that applies one is an error: kompile 7.1.337 applies
-//! none by default. Connectives are named without their backslash.
+//! and the declarations of sorts and symbols; alias declarations are not
+//! read (`parse`). Connectives are named without their backslash.
 //! A domain value keeps the text of its literal, `\dv{SortInt{}}("1")` as
 //! `KDV SortInt "1"`; only a Float is written in the K runtime's output
 //! format (`literal`), so that equal values have equal text, as the
@@ -47,10 +46,6 @@ use super::{
 /// A failure while turning KORE into values.
 #[derive(Debug)]
 pub enum EncodeError {
-    /// A symbol that is not declared.
-    SymbolUndeclared(String),
-    /// An alias applied in an axiom, as an older kompile wrote rules.
-    AliasApplied(String),
     /// A declaration or attribute of an unexpected form.
     Malformed(String),
     /// A Float literal the K runtime does not read, or an answer of the K
@@ -68,11 +63,6 @@ impl From<ValueError> for EncodeError {
 impl std::fmt::Display for EncodeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::SymbolUndeclared(name) => write!(f, "undeclared symbol {name}"),
-            Self::AliasApplied(name) => write!(
-                f,
-                "alias {name} is applied: aliases are not read (kompile writes rules so only with --enable-kore-antileft)"
-            ),
             Self::Malformed(what) => write!(f, "malformed {what}"),
             Self::Literal(message) => write!(f, "{message}"),
             Self::Value(error) => error.fmt(f),
@@ -172,15 +162,9 @@ fn make_map(
 
 // == Patterns
 
-/// A pattern as a `kore` value; with `check`, an application must be of a
-/// declared symbol.
-fn kore_checked(
-    arena: &mut Arena,
-    loaded: &Loaded,
-    pattern: &Pattern,
-    check: bool,
-) -> Result<Value> {
-    let Loaded { info, mixops, .. } = loaded;
+/// A pattern, such as krun's initial term, as a `kore` value.
+pub fn kore(arena: &mut Arena, loaded: &Loaded, pattern: &Pattern) -> Result<Value> {
+    let mixops = &loaded.mixops;
     deep(|| match pattern {
         Pattern::Var(name, sort) => {
             let value_name = make_text(arena, name)?;
@@ -201,18 +185,11 @@ fn kore_checked(
         }
         Pattern::App(name, sorts, args) => {
             let connective = name.strip_prefix('\\');
-            if connective.is_none() && check && !info.is_symbol(name) {
-                return Err(if info.is_alias(name) {
-                    EncodeError::AliasApplied(name.clone())
-                } else {
-                    EncodeError::SymbolUndeclared(name.clone())
-                });
-            }
             let value_name = make_text(arena, connective.unwrap_or(name))?;
             let value_sorts = make_sorts(arena, mixops, sorts)?;
             let value_args = args
                 .iter()
-                .map(|arg| kore_checked(arena, loaded, arg, check))
+                .map(|arg| kore(arena, loaded, arg))
                 .collect::<Result<Vec<_>>>()?;
             let value_args = make_list(arena, typ("kore"), value_args)?;
             let mixop = if connective.is_some() { mixops.kml } else { mixops.kapp };
@@ -221,15 +198,9 @@ fn kore_checked(
     })
 }
 
-/// A pattern, such as krun's initial term, as a `kore` value, whose
-/// applications are of declared symbols.
-pub fn kore(arena: &mut Arena, loaded: &Loaded, pattern: &Pattern) -> Result<Value> {
-    kore_checked(arena, loaded, pattern, true)
-}
-
 // == Attributes
 
-/// An attribute; its arguments may name symbols that are not declared.
+/// An attribute, e.g. `priority{}("50")`.
 fn kattr(arena: &mut Arena, loaded: &Loaded, attr: &Attr) -> Result<Value> {
     let Pattern::App(name, sorts, args) = attr else {
         return Err(EncodeError::Malformed(format!("attribute {attr:?}")));
@@ -239,7 +210,7 @@ fn kattr(arena: &mut Arena, loaded: &Loaded, attr: &Attr) -> Result<Value> {
     let value_sorts = make_sorts(arena, mixops, sorts)?;
     let value_args = args
         .iter()
-        .map(|arg| kore_checked(arena, loaded, arg, false))
+        .map(|arg| kore(arena, loaded, arg))
         .collect::<Result<Vec<_>>>()?;
     let value_args = make_list(arena, typ("kore"), value_args)?;
     make_case(arena, mixops.kattr, vec![value_name, value_sorts, value_args], typ("kattr"))
@@ -290,7 +261,7 @@ pub fn definition(arena: &mut Arena, loaded: &Loaded, definition: &Definition) -
                 let values = vec![value_pattern, value_attrs];
                 axioms.push(make_case(arena, mixops.kaxiom, values, typ("kaxiom"))?);
             }
-            Sentence::Import(_) | Sentence::AliasDecl { .. } => {}
+            Sentence::Import(_) => {}
         }
     }
     // The parts, as the fields of a kdefinition

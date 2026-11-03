@@ -22,8 +22,7 @@ pub enum Sort {
 /// A pattern.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Pattern {
-    /// A variable: `VarX:SortInt{}`, or a set variable `@X:SortInt{}`,
-    /// which only an alias declaration has.
+    /// A variable: `VarX:SortInt{}`.
     Var(String, Sort),
     /// A symbol, alias, or `\connective` applied to sorts and arguments.
     App(String, Vec<Sort>, Vec<Pattern>),
@@ -51,11 +50,6 @@ pub enum Sentence {
         args: Vec<Sort>,
         result: Sort,
         attrs: Vec<Attr>,
-    },
-    /// An alias declaration, which is not read: kompile applies none by
-    /// default (`spec-k/1-syntax.watsup`).
-    AliasDecl {
-        name: String,
     },
     Axiom {
         pattern: Pattern,
