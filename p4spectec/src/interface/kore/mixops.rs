@@ -42,7 +42,6 @@ pub struct Mixops {
     pub(super) error: Mixop,
     pub(super) run_final: Mixop,
     pub(super) run_error: Mixop,
-    pub(super) run_initfail: Mixop,
 }
 
 fn mixop(arena: &mut Arena, shape: &str) -> Result<Mixop> {
@@ -77,8 +76,7 @@ impl Mixops {
             ok: mixop(arena, "OK x")?,
             error: mixop(arena, "ERROR")?,
             run_final: mixop(arena, "FINAL nat term")?,
-            run_error: mixop(arena, "ERROR nat term")?,
-            run_initfail: mixop(arena, "INITFAIL")?,
+            run_error: mixop(arena, "ERROR nat")?,
         })
     }
 }

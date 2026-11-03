@@ -183,7 +183,7 @@ pub fn term(arena: &Arena, info: &Info, mixops: &Mixops, value: &Value) -> Resul
 pub enum Runres {
     /// The steps taken and the final configuration, at the end or the step limit.
     Final(BigInt, Pattern),
-    /// A step failed (`ERROR n term`), or the initial term cannot be evaluated (`INITFAIL`).
+    /// A step failed, or the initial term cannot be evaluated (`ERROR n`).
     Error,
 }
 
@@ -193,8 +193,7 @@ pub fn runres(arena: &Arena, info: &Info, mixops: &Mixops, value: &Value) -> Res
         (mixop, [steps, term]) if is(arena, mixop, mixops.run_final) => {
             Ok(Runres::Final(int(arena, steps)?, self::term(arena, info, mixops, term)?))
         }
-        (mixop, [_, _]) if is(arena, mixop, mixops.run_error) => Ok(Runres::Error),
-        (mixop, []) if is(arena, mixop, mixops.run_initfail) => Ok(Runres::Error),
+        (mixop, [_]) if is(arena, mixop, mixops.run_error) => Ok(Runres::Error),
         _ => Err("not a runres".to_owned()),
     }
 }
