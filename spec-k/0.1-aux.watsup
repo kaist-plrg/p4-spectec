@@ -51,13 +51,23 @@ def $sorted_set<X>(`{ X* `}) = $union_set<X>(`{ X* `}, `{ eps `})
 builtin dec $fresh_nat() : nat
   hint(prose_in "a new number")
 
-;; Text builtins, for reading hook names and priorities (3-load): a KORE
-;; string has one byte per character
+;; Text builtins: $has_prefix reads hook names (3-load); $text_to_int, of
+;; spec-meta's standard library, reads the text of an Int domain value, and
+;; $int_text writes one as K does, in decimal with a sign only for a negative
+;; number. A KORE string has one byte per character.
 
 builtin dec $has_prefix(text, text) : bool
   hint(prose_true %0 "begins with" %1)
-builtin dec $string_to_int(text) : int?
-  hint(prose_in "the integer written in decimal as" %0)
+builtin dec $text_to_int(text) : int
+  hint(prose_in "the integer written as" %0)
+builtin dec $int_text(int) : text
+  hint(prose_in %0 "written as K writes an Int")
+
+;; The text of a Bool domain value
+
+dec $bool_text(bool) : text
+def $bool_text(true) = "true"
+def $bool_text(false) = "false"
 
 ;; An integer as a natural number, when it is not negative (hooks fail on a
 ;; negative length, index, or shift amount)

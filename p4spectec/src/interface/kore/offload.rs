@@ -129,7 +129,7 @@ fn hook_result(
     answer: Option<&Pattern>,
 ) -> Result<Value, String> {
     let result = match answer {
-        Some(answer) => encode::term(arena, &loaded.info, &loaded.mixops, answer)
+        Some(answer) => encode::term(arena, &loaded.mixops, answer)
             .and_then(|term| encode::ok(arena, &loaded.mixops, term)),
         None => encode::error(arena, &loaded.mixops),
     };

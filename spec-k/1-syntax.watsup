@@ -15,16 +15,16 @@ syntax sort =
   | SORT sortid sort*
   | SORTVAR sortid
 
-;; Terms: ground terms; collections arise only by evaluation
+;; Terms: ground terms; collections arise only by evaluation. A domain value
+;; is the text of its KORE literal with its sort: an Int in decimal, a Bool
+;; "true" or "false", a String, a Float in the backend's output format, a
+;; Bytes with one character per byte, or a token of an unhooked sort such as
+;; an Id. The same K value has the same text, so equality of terms is
+;; equality of values.
 
 syntax term =
   | APP symid sort* term*     ;; symbol application, including inj and kseq
-  | DV sort text              ;; domain value of an unhooked sort, e.g. an Id
-  | INT int
-  | BOOL bool
-  | STRING text
-  | FLOAT text                ;; FLOAT.Float, in the backend's output format
-  | BYTES nat*                ;; BYTES.Bytes, one nat per byte
+  | DV sort text              ;; domain value
   | MAP sort (map<term, term>)
   | SET sort (set<term>)
   | LIST sort term*
@@ -38,11 +38,6 @@ syntax pattern =
   | OR sort pattern pattern         ;; \or on the left: either side matches
   | APP symid sort* pattern*
   | DV sort text
-  | INT int
-  | BOOL bool
-  | STRING text
-  | FLOAT text
-  | BYTES nat*
 
 ;; Symbols
 
@@ -94,7 +89,7 @@ syntax kore =
   | KAPP symid sort* kore*  ;; application of a symbol
   | KML text sort* kore*    ;; a connective, e.g. "rewrites" for \rewrites
   | KSTR text               ;; a string, e.g. of an attribute priority{}("50")
-  | KDV pattern             ;; \dv{S}("1"), read by the hook of S when parsed
+  | KDV sort text           ;; \dv{S}("1"); a Float is in the backend's output format
 
 syntax kattr = KATTR text sort* kore*  ;; e.g. owise{}(), priority{}("50")
 

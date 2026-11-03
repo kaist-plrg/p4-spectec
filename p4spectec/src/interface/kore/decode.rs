@@ -4,9 +4,9 @@
 //! a term of the specification (`term` in `spec-k/1-syntax.watsup`) to the
 //! host's data, a KORE pattern: the arguments of a hook the K runtime
 //! computes (`offload`), and the configuration of a run (`runres`).
-//! Domain values are written with the sort hooked to their kind:
-//! `INT 5` is `\dv{SortInt{}}("5")`; collections with the constructors of
-//! their sort, from its `element`, `concat`, and `unit` attributes.
+//! A domain value is written with its sort and text, `DV SortInt "5"` as
+//! `\dv{SortInt{}}("5")`; a collection with the constructors of its sort,
+//! from its `element`, `concat`, and `unit` attributes.
 
 use num_bigint::BigInt;
 
@@ -83,10 +83,6 @@ pub fn sort(arena: &Arena, mixops: &Mixops, value: &Value) -> Result<Sort> {
     }
 }
 
-fn sort_named(name: &str) -> Sort {
-    Sort::Sort(name.to_owned(), vec![])
-}
-
 fn dv(sort: Sort, text: String) -> Pattern {
     Pattern::App("\\dv".to_owned(), vec![sort], vec![Pattern::Str(text)])
 }
@@ -127,7 +123,6 @@ pub fn term(arena: &Arena, info: &Info, mixops: &Mixops, value: &Value) -> Resul
         // By the case of the term
         let (mixop, args) = case(arena, value)?;
         let to = |value: &Value| self::term(arena, info, mixops, value);
-        let hooked = |hook: &str| info.sort_of_hook(hook).map(sort_named);
         match args {
             [symbol, sorts, terms] if is(arena, mixop, mixops.app) => {
                 let symbol = text(arena, symbol)?;
@@ -143,29 +138,6 @@ pub fn term(arena: &Arena, info: &Info, mixops: &Mixops, value: &Value) -> Resul
                 let sort = self::sort(arena, mixops, sort)?;
                 let t = text(arena, t)?;
                 Ok(dv(sort, t))
-            }
-            [i] if is(arena, mixop, mixops.int) => {
-                Ok(dv(hooked("INT.Int")?, int(arena, i)?.to_string()))
-            }
-            [b] if is(arena, mixop, mixops.bool) => {
-                let b = value::get::bool(arena, b).map_err(value_error)?;
-                Ok(dv(hooked("BOOL.Bool")?, b.to_string()))
-            }
-            [t] if is(arena, mixop, mixops.string) => {
-                Ok(dv(hooked("STRING.String")?, text(arena, t)?))
-            }
-            [t] if is(arena, mixop, mixops.float) => {
-                Ok(dv(hooked("FLOAT.Float")?, text(arena, t)?))
-            }
-            [bytes] if is(arena, mixop, mixops.bytes) => {
-                let text = list(arena, bytes)?
-                    .iter()
-                    .map(|byte| {
-                        let byte = u8::try_from(int(arena, byte)?).map_err(value_error)?;
-                        Ok(char::from(byte))
-                    })
-                    .collect::<Result<String>>()?;
-                Ok(dv(hooked("BYTES.Bytes")?, text))
             }
             [sort, map] if is(arena, mixop, mixops.map) => {
                 let sort = self::sort(arena, mixops, sort)?;

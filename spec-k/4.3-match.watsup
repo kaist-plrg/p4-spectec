@@ -61,31 +61,11 @@ rule Match/or:
   -- Match: D (OK subst) |- pattern_1 ~~ term : way_1*
   -- Match: D (OK subst) |- pattern_2 ~~ term : way_2*
 
-;;; Domain values
+;;; Domain values, by their text (1-syntax)
 
-rule Match/token:
+rule Match/domain-value:
   D (OK subst) |- DV sort t ~~ DV sort' t' : [ OK subst ]
   -- if sort = sort' /\ t = t'
-
-rule Match/integer:
-  D (OK subst) |- INT i ~~ INT i' : [ OK subst ]
-  -- if i = i'
-
-rule Match/boolean:
-  D (OK subst) |- BOOL b ~~ BOOL b' : [ OK subst ]
-  -- if b = b'
-
-rule Match/string:
-  D (OK subst) |- STRING t ~~ STRING t' : [ OK subst ]
-  -- if t = t'
-
-rule Match/float:
-  D (OK subst) |- FLOAT t ~~ FLOAT t' : [ OK subst ]
-  -- if t = t'
-
-rule Match/bytes:
-  D (OK subst) |- BYTES n* ~~ BYTES n'* : [ OK subst ]
-  -- if n* = n'*
 
 ;;; Injections into the same sort from a smaller sort:
 ;;; inj{A,C}(p) matches inj{B,C}(t) with B < A by matching p against inj{B,A}(t)
@@ -147,8 +127,8 @@ rule Match/list-update:
     : $concat_<way>(way_f**)
   -- if $hook_of(D, symid) = "LIST.update"
   -- if $bound(subst, pattern_k)
-  -- Eval: D subst |- pattern_k : OK (INT i)
-  -- if term_e = $list_at(term*, i)
+  -- Eval: D subst |- pattern_k : OK (DV sort_i t_i)
+  -- if term_e = $list_at(term*, $text_to_int(t_i))
   -- Match: D (OK subst) |- pattern_v ~~ term_e : way_v*
   -- (Match: D way_v |- pattern_f ~~ LIST sort term* : way_f*)*
 

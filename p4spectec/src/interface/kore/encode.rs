@@ -6,10 +6,12 @@
 //! and the declarations of sorts and symbols. Alias declarations are not
 //! read, and an axiom that applies one is an error: kompile 7.1.337 applies
 //! none by default. Connectives are named without their backslash.
-//! Domain values are read by the hook of their sort, as a parser reads
-//! literals (`domain_value`): `\dv{SortInt{}}("1")` becomes `KDV (INT 1)`.
-//! `term` encodes the K runtime's answer, a domain value or a constructor
-//! applied to such answers, as a term (`offload`).
+//! A domain value keeps the text of its literal, `\dv{SortInt{}}("1")` as
+//! `KDV SortInt "1"`; only a Float is written in the K runtime's output
+//! format (`literal`), so that equal values have equal text, as the
+//! specification compares them. `term` encodes the K runtime's answer, a
+//! domain value or a constructor applied to such answers, as a term
+//! (`offload`).
 //! Which axioms are executed and how they are read is for the
 //! specification to decide (`spec-k/3-load.watsup`).
 
@@ -18,7 +20,7 @@ use std::rc::Rc;
 use num_bigint::BigInt;
 
 use crate::lang::{
-    common::{Id, notation::atom::Atom, prim::num::Natural, source::Span},
+    common::{Id, notation::atom::Atom, source::Span},
     data::{
         arena::Arena,
         notation::flat::{Mixfix, Mixop},
@@ -35,7 +37,6 @@ use crate::phrase;
 use super::{
     Loaded,
     ast::{Attr, Definition, Pattern, Sentence, Sort},
-    info::Info,
     mixops::Mixops,
     offload,
 };
@@ -51,8 +52,8 @@ pub enum EncodeError {
     AliasApplied(String),
     /// A declaration or attribute of an unexpected form.
     Malformed(String),
-    /// A domain value that does not read by the hook of its sort, or an
-    /// answer of the K runtime that is not a term.
+    /// A Float literal the K runtime does not read, or an answer of the K
+    /// runtime that is not a term.
     Literal(String),
     Value(ValueError),
 }
@@ -199,9 +200,9 @@ fn kore_checked(
             let ([sort], [Pattern::Str(text)]) = (sorts.as_slice(), args.as_slice()) else {
                 return Err(EncodeError::Malformed(format!("domain value {pattern}")));
             };
-            let float = |text: &str| offload::float_literal(loaded, text);
-            let value = domain_value(arena, info, mixops, "pattern", sort, text, float)?;
-            make_case(arena, mixops.kdv, vec![value], typ("kore"))
+            let value_sort = make_sort(arena, mixops, sort)?;
+            let value_text = make_text(arena, &literal(loaded, sort, text)?)?;
+            make_case(arena, mixops.kdv, vec![value_sort, value_text], typ("kore"))
         }
         Pattern::App(name, sorts, args) => {
             let connective = name.strip_prefix('\\');
@@ -322,77 +323,38 @@ pub fn program(arena: &mut Arena, value_definition: Value, value_init: Value) ->
 
 // == Domain values and the K runtime's answers
 
-/// A domain value `\dv{S}("text")` by the hook of `S`, as a case of
-/// `typ_name`, `term` or `pattern`, which share these cases. `float` writes a
-/// Float in the runtime's output format; a KVar, and a value of a sort
-/// without a hook, stay text.
-pub fn domain_value(
-    arena: &mut Arena,
-    info: &Info,
-    mixops: &Mixops,
-    typ_name: &str,
-    sort: &Sort,
-    t: &str,
-    float: impl FnOnce(&str) -> std::result::Result<String, String>,
-) -> Result<Value> {
-    let bad = || EncodeError::Literal(format!("bad domain value {t:?} of {sort}"));
+/// The text of a domain value `\dv{S}("text")` of a definition or an initial
+/// term, as the K runtime writes the value: an Int in decimal without a sign
+/// but `-` (`+3` is `3`), a Float in the runtime's output format, and any
+/// other as written. The specification compares domain values by their text.
+fn literal(loaded: &Loaded, sort: &Sort, text: &str) -> Result<String> {
     let hook = match sort {
-        Sort::Sort(name, _) => info.sort_hook(name),
-        Sort::Var(_) => return Err(bad()),
+        Sort::Sort(name, _) => loaded.info.sort_hook(name),
+        Sort::Var(_) => None,
     };
-    // The hook of the sort says how its text reads
-    let (mixop, arg) = match hook {
+    match hook {
         Some("INT.Int") => {
-            let i = super::texts::parse_base(t, 10).ok_or_else(bad)?;
-            let i = value::make::int(arena, i, Span::default())?;
-            (mixops.int, i)
+            let digits = text.strip_prefix('+').unwrap_or(text);
+            let int = BigInt::parse_bytes(digits.as_bytes(), 10)
+                .ok_or_else(|| EncodeError::Literal(format!("bad Int literal {text:?}")))?;
+            Ok(int.to_string())
         }
-        Some("BOOL.Bool") => {
-            let b = match t {
-                "true" => true,
-                "false" => false,
-                _ => return Err(bad()),
-            };
-            let b = value::make::bool(arena, b, Span::default())?;
-            (mixops.bool, b)
-        }
-        Some("STRING.String") => (mixops.string, make_text(arena, t)?),
-        Some("FLOAT.Float") => {
-            let normal = float(t).map_err(EncodeError::Literal)?;
-            (mixops.float, make_text(arena, &normal)?)
-        }
-        Some("BYTES.Bytes") => {
-            let bytes = t
-                .chars()
-                .map(|c| {
-                    let n = Natural::try_from(BigInt::from(u32::from(c)))
-                        .map_err(|error| EncodeError::Literal(error.to_string()))?;
-                    Ok(value::make::nat(arena, n, Span::default())?)
-                })
-                .collect::<Result<_>>()?;
-            (mixops.bytes, make_list(arena, typ::make::nat(), bytes)?)
-        }
-        Some("KVAR.KVar") | None => {
-            let sort = make_sort(arena, mixops, sort)?;
-            let t = make_text(arena, t)?;
-            return make_case(arena, mixops.dv, vec![sort, t], typ(typ_name));
-        }
-        Some(hook) => {
-            return Err(EncodeError::Literal(format!("domain value of {sort}, hooked {hook}")));
-        }
-    };
-    make_case(arena, mixop, vec![arg], typ(typ_name))
+        Some("FLOAT.Float") => offload::float_literal(loaded, text).map_err(EncodeError::Literal),
+        _ => Ok(text.to_owned()),
+    }
 }
 
 /// A domain value, or a constructor applied to such terms, as
 /// `G1Point(x, y)` of KRYPTO. The runtime writes a Float in its output
 /// format already.
-pub fn term(arena: &mut Arena, info: &Info, mixops: &Mixops, pattern: &Pattern) -> Result<Value> {
+pub fn term(arena: &mut Arena, mixops: &Mixops, pattern: &Pattern) -> Result<Value> {
     match pattern {
         Pattern::App(symbol, sorts, args) if symbol == "\\dv" => {
             match (sorts.as_slice(), args.as_slice()) {
                 ([sort], [Pattern::Str(t)]) => {
-                    domain_value(arena, info, mixops, "term", sort, t, |t| Ok(t.to_owned()))
+                    let value_sort = make_sort(arena, mixops, sort)?;
+                    let value_text = make_text(arena, t)?;
+                    make_case(arena, mixops.dv, vec![value_sort, value_text], typ("term"))
                 }
                 _ => Err(EncodeError::Literal(format!("bad domain value {pattern}"))),
             }
@@ -402,7 +364,7 @@ pub fn term(arena: &mut Arena, info: &Info, mixops: &Mixops, pattern: &Pattern) 
             let sorts = make_sorts(arena, mixops, sorts)?;
             let args = args
                 .iter()
-                .map(|arg| term(arena, info, mixops, arg))
+                .map(|arg| term(arena, mixops, arg))
                 .collect::<Result<_>>()?;
             let args = make_list(arena, typ("term"), args)?;
             make_case(arena, mixops.app, vec![symbol, sorts, args], typ("term"))

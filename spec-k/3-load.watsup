@@ -49,8 +49,7 @@ def $priority(kattr*) = 200
 def $priority(kattr*) = n
   -- if ~$has_attr("owise", kattr*)
   -- if (KATTR "priority" sort* ([KSTR text])) = $attr_named("priority", kattr*)
-  -- if i = $string_to_int(text)
-  -- if n = $nat_of(i)
+  -- if n = $nat_of($text_to_int(text))
 def $priority(kattr*) = 50
   -- otherwise
 
@@ -200,9 +199,8 @@ def $right_assoc(symid, sort*, kore_h :: kore_t*)
   = KAPP symid sort* ([kore_h, $right_assoc(symid, sort*, kore_t*)])
   -- if $(|kore_t*| > 0)
 
-;; Patterns of rules, equations, and the initial term; domain values are read
-;; already (1-syntax). A variable named Var'Bang... is a fresh variable !X of
-;; a function equation.
+;; Patterns of rules, equations, and the initial term. A variable named
+;; Var'Bang... is a fresh variable !X of a function equation.
 
 dec $pattern(kore) : pattern
   hint(prose_in "the pattern" %0 "stands for")
@@ -210,7 +208,7 @@ def $pattern(KVAR varid sort) = FRESH sort
   -- if $has_prefix(varid, "Var'Bang")
 def $pattern(KVAR varid sort) = VAR varid sort
   -- if ~$has_prefix(varid, "Var'Bang")
-def $pattern(KDV pattern) = pattern
+def $pattern(KDV sort t) = DV sort t
 def $pattern(KAPP symid sort* kore*) = APP symid sort* $pattern(kore)*
 def $pattern(KML "and" ([sort]) ([kore_1, kore_2]))
   = AND sort $pattern(kore_1) $pattern(kore_2)
@@ -234,7 +232,7 @@ syntax condition =
 dec $conditions(kore) : condition*
 def $conditions(KML "top" sort* eps) = eps
 def $conditions(KML "not" sort* kore*) = eps
-def $conditions(KML "equals" sort* ([kore_c, KDV (BOOL true)]))
+def $conditions(KML "equals" sort* ([kore_c, KDV sort_b "true"]))
   = [ REQUIRES kore_c ]
 def $conditions(KML "in" sort* ([KVAR varid sort_x, kore_p]))
   = [ ARGUMENT varid kore_p ]
