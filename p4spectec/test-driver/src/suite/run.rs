@@ -193,8 +193,12 @@ pub fn run(name_config: &str, timeout: Option<Duration>, path_log: Option<&Path>
     );
     eprintln!("{text_summary}");
     log.finish(&text_summary)?;
+    let mut all_matched = true;
     for suite in suites {
-        suite.results.check();
+        all_matched &= suite.results.check()?;
+    }
+    if !all_matched {
+        return Err(Error::from(format!("{text_mode}: file results differ from expected")));
     }
     eprintln!("{text_mode}: all {collected} file results matched expected");
     Ok(())

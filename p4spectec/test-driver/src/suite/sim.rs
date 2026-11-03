@@ -191,6 +191,7 @@ where
     let progress = corpus::progress_bar(collected)?;
     let mut matched = 0;
     let mut timed_out = 0;
+    let mut all_matched = true;
     // Build one simulator per registered architecture in first-suite order
     let mut archs = Vec::new();
     for (suite, _) in &suites {
@@ -275,7 +276,7 @@ where
                 progress.inc(1);
             }
             guard_stdout.finish()?;
-            results.check();
+            all_matched &= results.check()?;
         }
         eprintln!(
             "{text_mode} {arch}: collected={collected_arch} excluded={excluded_arch} executed={} patched={patched_arch}",
@@ -284,12 +285,16 @@ where
     }
     progress.finish_with_message("complete");
     let text_summary = format!(
-        "{text_mode}: collected={collected} excluded={excluded} executed={} patched={patched} matches={matched} timeout={timed_out} elapsed={:.3}s; all expected records matched",
+        "{text_mode}: collected={collected} excluded={excluded} executed={} patched={patched} matches={matched} timeout={timed_out} elapsed={:.3}s{}",
         collected - excluded,
-        start.elapsed().as_secs_f64()
+        start.elapsed().as_secs_f64(),
+        if all_matched { "; all expected records matched" } else { "" }
     );
     eprintln!("{text_summary}");
     log.finish(&text_summary)?;
+    if !all_matched {
+        return Err(Error::from(format!("{text_mode}: records differ from expected")));
+    }
     Ok(())
 }
 

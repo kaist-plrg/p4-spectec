@@ -5,12 +5,12 @@
 //! `Results` compares per-file outcomes with one expected file per suite.
 
 use std::{
-    collections::{BTreeMap, BTreeSet},
-    fs,
+    collections::{BTreeMap, BTreeSet, HashMap},
+    fs, io,
     path::{Path, PathBuf},
 };
 
-use expect_test::{ExpectFile, expect_file};
+use dissimilar::Chunk;
 use indicatif::{ProgressBar, ProgressStyle};
 
 use super::{Error, Result};
@@ -95,13 +95,13 @@ pub fn collect_excludes(dir: &Path) -> Result<BTreeSet<String>> {
 /// followed by optional detail lines;
 /// records are sorted by their paths.
 pub struct Results {
-    expected: ExpectFile,
+    path_expected: PathBuf,
     records: BTreeMap<Vec<PathBuf>, String>,
 }
 
 impl Results {
     pub fn new(path_expected: &Path) -> Self {
-        Self { expected: expect_file![path_expected], records: BTreeMap::new() }
+        Self { path_expected: path_expected.to_path_buf(), records: BTreeMap::new() }
     }
 
     /// Records one test under its paths, which must be unique and line-safe.
@@ -126,10 +126,76 @@ impl Results {
         Ok(())
     }
 
-    pub fn check(self) {
-        self.expected
-            .assert_eq(&self.records.into_values().collect::<String>());
+    /// Compares the records with the expected file, printing differing lines to stderr.
+    ///
+    /// Returns whether they matched; a missing expected file reads as empty.
+    pub fn check(self) -> Result<bool> {
+        let expected = match fs::read_to_string(&self.path_expected) {
+            Ok(text) => text.replace("\r\n", "\n"),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => String::new(),
+            Err(error) => {
+                return Err(Error::from(format!("{}: {error}", self.path_expected.display())));
+            }
+        };
+        let actual = self.records.into_values().collect::<String>();
+        if actual == expected {
+            return Ok(true);
+        }
+        eprintln!("{}: results differ from expected", self.path_expected.display());
+        let mut line = 1;
+        let mut in_hunk = false;
+        for (sign, lines) in diff_lines(&expected, &actual) {
+            if sign != ' ' && !in_hunk {
+                eprintln!("{}:{line}:", self.path_expected.display());
+            }
+            in_hunk = sign != ' ';
+            if sign != '+' {
+                line += lines.len();
+            }
+            if sign != ' ' {
+                for text in lines {
+                    eprintln!("{sign}{}", text.strip_suffix('\n').unwrap_or(text));
+                }
+            }
+        }
+        Ok(false)
     }
+}
+
+/// Diffs two texts by lines into chunks signed ' ' (equal), '-' (expected only), or '+' (actual only).
+fn diff_lines<'a>(expected: &'a str, actual: &'a str) -> Vec<(char, Vec<&'a str>)> {
+    // Encode each distinct line as one char so that the char diff is a line diff
+    let mut codes = HashMap::new();
+    let mut lines = Vec::new();
+    let mut encode = |text: &'a str| -> String {
+        text.split_inclusive('\n')
+            .map(|text_line| {
+                *codes.entry(text_line).or_insert_with(|| {
+                    lines.push(text_line);
+                    // Skip surrogates, which are not chars
+                    let index = lines.len() as u32 - 1;
+                    char::from_u32(if index < 0xD800 { index } else { index + 0x800 }).unwrap()
+                })
+            })
+            .collect()
+    };
+    let (code_expected, code_actual) = (encode(expected), encode(actual));
+    let decode = |code: &str| {
+        code.chars()
+            .map(|c| {
+                let index = c as u32;
+                lines[(if index < 0xD800 { index } else { index - 0x800 }) as usize]
+            })
+            .collect::<Vec<_>>()
+    };
+    dissimilar::diff(&code_expected, &code_actual)
+        .into_iter()
+        .map(|chunk| match chunk {
+            Chunk::Equal(code) => (' ', decode(code)),
+            Chunk::Delete(code) => ('-', decode(code)),
+            Chunk::Insert(code) => ('+', decode(code)),
+        })
+        .collect()
 }
 
 /// Creates a progress bar over `len` tests.

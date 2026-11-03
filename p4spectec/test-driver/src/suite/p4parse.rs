@@ -136,8 +136,12 @@ pub fn run(path_log: Option<&Path>) -> Result<()> {
     );
     eprintln!("{text_summary}");
     log.finish(&text_summary)?;
+    let mut all_matched = true;
     for (_, _, results) in suites {
-        results.check();
+        all_matched &= results.check()?;
+    }
+    if !all_matched {
+        return Err(Error::from("P4 parser: file results differ from expected"));
     }
     eprintln!("P4 parser: all {collected} file results matched expected");
     Ok(())
