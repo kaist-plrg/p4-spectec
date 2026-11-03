@@ -20,6 +20,7 @@ use std::collections::{HashMap, HashSet};
 
 use super::{
     ast::{Pattern, Sort},
+    deep,
     info::Info,
 };
 
@@ -28,7 +29,7 @@ use super::{
 /// `\left-assoc{}(f(a, b, c))` as `f(f(a, b), c)`, and
 /// `\right-assoc{}(f(a, b, c))` as `f(a, f(b, c))`.
 fn desugar_assoc(pattern: &Pattern) -> Pattern {
-    stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match pattern {
+    deep(|| match pattern {
         Pattern::App(assoc, _, args)
             if (assoc == "\\left-assoc" || assoc == "\\right-assoc")
                 && matches!(args.as_slice(), [Pattern::App(..)]) =>
@@ -120,7 +121,7 @@ impl Printer<'_> {
 
     /// A pattern with its variables renamed; `env` maps bound names.
     fn walk(&mut self, env: &[(String, String)], pattern: &Pattern) -> Pattern {
-        stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || {
+        deep(|| {
             if let Some((sort, x)) = kvar(self.info, pattern) {
                 if let Some((_, y)) = env.iter().rev().find(|(x_e, _)| x_e == x) {
                     return dv(sort, y.clone());
@@ -157,7 +158,7 @@ impl Printer<'_> {
 
 /// Bound variables named by binder depth, `#bound0`, `#bound1`, ...
 fn alpha(info: &Info, env: &[(String, String)], depth: usize, pattern: &Pattern) -> Pattern {
-    stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || {
+    deep(|| {
         if let Some((sort, x)) = kvar(info, pattern) {
             return match env.iter().rev().find(|(x_e, _)| x_e == x) {
                 Some((_, y)) => dv(sort, y.clone()),
@@ -194,7 +195,7 @@ fn norm(
     unordered: &HashMap<&str, &str>,
     pattern: &Pattern,
 ) -> (String, Option<(String, Vec<String>)>) {
-    stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match pattern {
+    deep(|| match pattern {
         Pattern::App(f, sorts, args) => {
             if let Some(unit) = unordered.get(f.as_str()) {
                 let mut elems = Vec::new();

@@ -21,6 +21,7 @@ use crate::lang::{
 
 use super::{
     ast::{Pattern, Sort},
+    deep,
     info::Info,
     mixops::Mixops,
 };
@@ -119,7 +120,7 @@ fn element_symbol<'a>(info: &'a Info, sort: &Sort) -> Result<&'a str> {
 
 /// A term of the specification as a KORE pattern.
 pub fn term(arena: &Arena, info: &Info, mixops: &Mixops, value: &Value) -> Result<Pattern> {
-    stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || {
+    deep(|| {
         // By the case of the term
         let (mixop, args) = case(arena, value)?;
         let to = |value: &Value| self::term(arena, info, mixops, value);

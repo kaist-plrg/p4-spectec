@@ -69,6 +69,12 @@ fn load_error(path: &Path, error: impl std::fmt::Display) -> InterfaceError {
     InterfaceError(diagnostic("kore/load", format!("{}: {error}", path.display())))
 }
 
+/// Runs `f` with stack to spare: terms nest deeply, e.g. long K sequences
+/// and maps, and every walk of one recurses through here.
+fn deep<T>(f: impl FnOnce() -> T) -> T {
+    stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, f)
+}
+
 // == Reading KORE
 
 /// The definition read, as reading and writing its KORE needs it.

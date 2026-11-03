@@ -9,7 +9,10 @@
 //! A string is kept as the text with one character per byte,
 //! the character whose code is that byte, so `"\u00e9"` has two characters.
 
-use super::ast::{Attr, Definition, Module, Pattern, Sentence, Sort};
+use super::{
+    ast::{Attr, Definition, Module, Pattern, Sentence, Sort},
+    deep,
+};
 
 // == Errors
 
@@ -295,8 +298,7 @@ impl<'a> Parser<'a> {
     }
 
     fn pattern(&mut self) -> Result<Pattern> {
-        // Terms nest deeply, e.g. long K sequences and maps
-        stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match &self.token {
+        deep(|| match &self.token {
             Token::Str(_) => match self.advance()? {
                 Token::Str(text) => Ok(Pattern::Str(text)),
                 _ => unreachable!("the current token is a string"),

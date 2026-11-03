@@ -8,6 +8,8 @@
 
 use std::fmt::{self, Display, Write};
 
+use super::deep;
+
 // == Sorts and patterns
 
 /// A sort: `SortInt{}`, `SortMap{}`, or a sort variable `S`.
@@ -115,8 +117,7 @@ fn write_list<T: Display>(f: &mut fmt::Formatter<'_>, items: &[T]) -> fmt::Resul
 
 impl Display for Pattern {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // Terms nest deeply, e.g. long K sequences and maps
-        stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match self {
+        deep(|| match self {
             Pattern::Var(name, sort) | Pattern::SetVar(name, sort) => write!(f, "{name}:{sort}"),
             Pattern::App(name, sorts, args) => {
                 write!(f, "{name}{{")?;

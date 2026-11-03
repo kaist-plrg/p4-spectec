@@ -37,6 +37,7 @@ use crate::phrase;
 use super::{
     Loaded,
     ast::{Attr, Definition, Pattern, Sentence, Sort},
+    deep,
     mixops::Mixops,
     offload,
 };
@@ -180,8 +181,7 @@ fn kore_checked(
     check: bool,
 ) -> Result<Value> {
     let Loaded { info, mixops, .. } = loaded;
-    // Terms nest deeply, e.g. long K sequences and maps
-    stacker::maybe_grow(64 * 1024, 16 * 1024 * 1024, || match pattern {
+    deep(|| match pattern {
         Pattern::Var(name, sort) => {
             let value_name = make_text(arena, name)?;
             let value_sort = make_sort(arena, mixops, sort)?;
