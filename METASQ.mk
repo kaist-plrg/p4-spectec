@@ -38,7 +38,7 @@ kompile: metacirc $(KLIBRARY)
 
 $(KLIBRARY): $(wildcard $(KSPECDIR)/*/*.k)
 	kompile $(KSPECDIR)/3-execution/3.14-entry.k --main-module AL --syntax-module SYNTAX \
-	  -o $(dir $(KLIBRARY)) --llvm-kompile-type c --llvm-kompile-output $(notdir $(KLIBRARY))
+	  -o $(dir $(KLIBRARY)) --llvm-kompile-type c --llvm-kompile-output $(notdir $(KLIBRARY)) -O2
 
 # The entry module a redex tower runs, compiled from spec-meta-redex (`module` in towers/redex*.json),
 # with the metacirc binary that runs it; raco make recompiles only what changed
