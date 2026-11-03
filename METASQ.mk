@@ -2,6 +2,8 @@
 # TEST_LOG=DIR writes per-test timing logs of the metacirc run, micro, and sim targets
 # TIMEOUT=SECONDS records a source of those targets still running after it as a timeout
 # SUITE=NAME runs only that registered suite in those targets
+# SUITE=NAME and GROUP=NAME select the registered suite and group of the sim-group targets,
+# which require both
 
 CARGO := cargo
 RUST_DIR = p4spectec
@@ -17,7 +19,7 @@ METACIRC_TEST = $(CARGO) run --locked --release --manifest-path test-driver/Carg
 CORPUS_ARGS = $(if $(TIMEOUT),--timeout $(TIMEOUT)) $(if $(SUITE),--suite $(SUITE))
 METACIRC_SNAPSHOTS := test-metacirc-elab test-metacirc-algo test-metacirc-structure test-metacirc-prose
 
-.PHONY: metacirc metacirc-cli kompile redex test-metacirc-run-al test-metacirc-run-il test-metacirc-run-k test-metacirc-run-redex test-metacirc-micro-al test-metacirc-micro-il test-metacirc-micro-k test-metacirc-micro-redex test-metacirc-sim-al test-metacirc-sim-il test-metacirc-sim-k test-metacirc-sim-redex test-metacirc-k-in-st $(METACIRC_SNAPSHOTS) test-metacirc-metaparse test-metacirc-promote clean
+.PHONY: metacirc metacirc-cli kompile redex test-metacirc-run-al test-metacirc-run-il test-metacirc-run-k test-metacirc-run-redex test-metacirc-micro-al test-metacirc-micro-il test-metacirc-micro-k test-metacirc-micro-redex test-metacirc-sim-al test-metacirc-sim-il test-metacirc-sim-k test-metacirc-sim-redex test-metacirc-sim-group-al test-metacirc-sim-group-il test-metacirc-sim-group-k test-metacirc-sim-group-redex metacirc-sim-group-split test-metacirc-k-in-st $(METACIRC_SNAPSHOTS) test-metacirc-metaparse test-metacirc-promote clean
 
 metacirc-cli:
 	cd $(RUST_DIR) && $(CARGO) build --locked --release --bin metacirc --target-dir "$(CARGO_TARGET_DIR)"
@@ -93,6 +95,19 @@ test-metacirc-sim-k:
 # Registered simulation suites through the Redex/P4 tower (ST-in-Redex), against native expectations
 test-metacirc-sim-redex:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) sim redex $(CORPUS_ARGS)
+
+# One group of a simulation suite of suites/metacirc/sim-group.toml through the AL/P4, IL/P4,
+# K/P4, or Redex/P4 tower, against the group's expected file for the suite
+SIM_GROUP_ARGS = --suite $(SUITE) --group $(GROUP) $(if $(TIMEOUT),--timeout $(TIMEOUT))
+SIM_GROUP_TARGETS := test-metacirc-sim-group-al test-metacirc-sim-group-il test-metacirc-sim-group-k test-metacirc-sim-group-redex
+
+$(SIM_GROUP_TARGETS):
+	$(if $(and $(SUITE),$(GROUP)),,$(error SUITE and GROUP are required, e.g. make $@ SUITE=v1model-p4c GROUP=1))
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) sim-group $(@:test-metacirc-sim-group-%=%) $(SIM_GROUP_ARGS)
+
+# Rewrite the group folders of suites/metacirc/sim-group.toml from its suites' corpora
+metacirc-sim-group-split:
+	cd $(RUST_DIR) && $(METACIRC_TEST) sim-group-split
 
 # K definitions run through spec-k over KORE (K-in-ST), against krun's output
 test-metacirc-k-in-st:
