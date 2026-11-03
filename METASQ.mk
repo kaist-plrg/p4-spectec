@@ -114,3 +114,5 @@ test-metacirc-promote:
 
 clean:
 	rm -f ./$(METACIRC)
+	rm -rf ./$(dir $(KLIBRARY))
+	find $(REDEXSPECDIR) -name compiled -type d -prune -exec rm -rf {} +
