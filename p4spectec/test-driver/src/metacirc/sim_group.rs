@@ -113,7 +113,8 @@ pub fn run(
     let config_tower = TowerConfig::from_file(path_tower)?;
     let text_mode =
         format!("metacirc sim-group {} {} group {}", config.describe(), suite.name, group.name);
-    let name_log = format!("metacirc-sim-group-{}-{}-{}", config.name, suite.name, group.name);
+    let name_log =
+        format!("metacirc-sim-group-{}-{}-group{}", config.name, suite.name, group.name);
     let start = Instant::now();
     let excludes = collect_excludes(&group.excludes)?;
     let pairs = collect_pairs(suite, &excludes)?;
