@@ -147,10 +147,12 @@ pub fn run(
     }
     let excludes = collect_excludes(&registration, config.base)?;
     if !suites_al.is_empty() {
-        run_scripts(config, &excludes, &suites_al, timeout, path_log)?;
+        let name_log = name_log("metacirc-script", config, name_suite);
+        run_scripts(config, &excludes, &suites_al, &name_log, timeout, path_log)?;
     }
     if !suites_p4.is_empty() {
-        run_programs(&registration, config, &excludes, &suites_p4, timeout, path_log)?;
+        let name_log = name_log("metacirc-p4", config, name_suite);
+        run_programs(&registration, config, &excludes, &suites_p4, &name_log, timeout, path_log)?;
     }
     Ok(())
 }
@@ -161,6 +163,7 @@ fn run_programs(
     config: &Configuration,
     excludes: &BTreeSet<String>,
     suites: &[SelectedSuite<'_>],
+    name_log: &str,
     timeout: Option<Duration>,
     path_log: Option<&Path>,
 ) -> Result<()> {
@@ -189,7 +192,7 @@ fn run_programs(
         .flat_map(|suite| &suite.paths)
         .filter(|path| path.to_str().is_some_and(|path| excludes.contains(path)))
         .count();
-    let mut log = TestLog::create(path_log, &format!("metacirc-p4-{}", config.name), collected)?;
+    let mut log = TestLog::create(path_log, name_log, collected)?;
     let text_collect = format!(
         "{text_mode}: collected={collected} excluded={excluded} to execute={}; preparing specification",
         collected - excluded
@@ -371,6 +374,14 @@ pub fn serve_programs(name_config: &str, path_tower: &Path) -> Result<()> {
     })
 }
 
+/// Returns the log name `<prefix>-<config>`, ending in `-<suite>` for a selected suite.
+fn name_log(prefix: &str, config: &Configuration, name_suite: Option<&str>) -> String {
+    match name_suite {
+        Some(name) => format!("{prefix}-{}-{name}", config.name),
+        None => format!("{prefix}-{}", config.name),
+    }
+}
+
 /// Returns the worker command `worker <kind> <config> <tower>`.
 fn worker_args(kind: &str, config: &Configuration, path_tower: &Path) -> Result<Vec<String>> {
     Ok(vec![
@@ -395,6 +406,7 @@ fn run_scripts(
     config: &Configuration,
     excludes: &BTreeSet<String>,
     suites: &[SelectedSuite<'_>],
+    name_log: &str,
     timeout: Option<Duration>,
     path_log: Option<&Path>,
 ) -> Result<()> {
@@ -420,8 +432,7 @@ fn run_scripts(
         })
         .collect::<Result<Vec<_>>>()?;
     let collected = suites.iter().map(|(_, _, _, paths, _)| paths.len()).sum();
-    let mut log =
-        TestLog::create(path_log, &format!("metacirc-script-{}", config.name), collected)?;
+    let mut log = TestLog::create(path_log, name_log, collected)?;
     // Specification debug premises print to stdout
     let guard_stdout = harness::output::SilenceStdout::new()?;
     let mut executed = 0;

@@ -64,7 +64,10 @@ pub fn run(
     }
     let config_tower = TowerConfig::from_file(path_tower)?;
     let text_mode = format!("metacirc sim {}", config.describe());
-    let name_log = format!("metacirc-sim-{}", config.name);
+    let name_log = match name_suite {
+        Some(name) => format!("metacirc-sim-{}-{name}", config.name),
+        None => format!("metacirc-sim-{}", config.name),
+    };
     let timeout =
         timeout.map(|timeout| (timeout, vec!["worker".into(), "sim".into(), config.name.clone()]));
     sim::run_suites(&registration_sim, &suites, &text_mode, &name_log, timeout, path_log, |arch| {
