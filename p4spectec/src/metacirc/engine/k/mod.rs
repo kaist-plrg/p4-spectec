@@ -23,7 +23,7 @@ use crate::{
         il::ast::Typ,
     },
     metacirc::{Result, error, tower::UpperMut},
-    runner::{Eval, Extern, InterpreterError, SideEffect},
+    runner::{Extern, InterpreterError},
 };
 
 // == Engine
@@ -46,20 +46,6 @@ impl<'s> KEngine<'s> {
 /// Every call sends JSON text to the depth's K thread and returns JSON text:
 /// `MetaKProtocol` makes the requests and reads the responses.
 impl Engine for KEngine<'_> {
-    /// Runs spec-meta-k's entry `name` on `program`,
-    /// the JSON text that `MetaKProtocol::encode_script` made.
-    fn call_program<Ext: Extern>(
-        &mut self,
-        _arena: &mut Arena,
-        _upper: &mut UpperMut<'_, Ext>,
-        _effects: &mut u64,
-        _name: &str,
-        _program: Value,
-    ) -> Eval<Vec<Value>, InterpreterError> {
-        let error = InterpreterError::Fatal(error::unimplemented("KEngine::call_program"));
-        Eval::new(Err(error), SideEffect::Pure)
-    }
-
     /// Sends relation `name` with JSON text `values` to `serve()`,
     /// answering each `#ffiCall` of the K thread with
     /// `upper.host_call(arena, "host_eval", &[request])` until the response arrives.

@@ -313,46 +313,6 @@ where
         .collect()
 }
 
-/// Adds an entry to a table object; `None` when the entry was rejected.
-pub fn table_object_add_entry<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    value_table: Value,
-    value_priority: Value,
-    value_keys: Value,
-    value_action: Value,
-) -> Result<Option<Value>, InterpreterError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
-    let value_opt = ctx
-        .call_func(
-            "tableObject_add_entry",
-            &[],
-            &[value_ctx, value_table, value_priority, value_keys, value_action],
-        )
-        .result?;
-    Ok(value::get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
-}
-
-/// Sets a table object's default action.
-pub fn table_object_add_default_action<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    value_table: Value,
-    value_action: Value,
-) -> Result<Value, InterpreterError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
-    ctx.call_func("tableObject_add_default_action", &[], &[value_ctx, value_table, value_action])
-        .result
-}
-
 // == Objects
 
 // - Lookup

@@ -102,14 +102,15 @@ let json: &str = get::text(arena, &value)?;                    // Value -> &str
 * `KEngineState::new(runtime) -> Result<KEngineState>`: start a thread that
   initializes K for itself (`kllvm_init`) and runs spec-meta-k's `serve()`
   loop. Keep a channel to it.
-* `KEngine::call_program(arena, upper, effects, name, program)`: `name` is
-  `Eval_AL` (from `rel` in the tower configuration), and `program` is the JSON
-  text that `MetaKProtocol::encode_script` made. Send the request, then loop:
+* `KEngine::call_rel(arena, upper, effects, name, values)`: for the tower's
+  entry, `name` is `rel` of the base in the tower configuration, and `values`
+  are the inputs that `Tower::encode_input` made; otherwise it is a call that
+  `MetaKProtocol::lower` made. Send the request, then loop:
   * the thread sends a host request: call
     `upper.host_call(arena, "host_eval", &[request])`, take the one JSON text
     value it returns, and send that back to the thread;
   * the thread sends the response: return its outputs.
-* `KEngine::call_rel` and `call_func`: the same loop, for the calls that
+* `KEngine::call_func`: the same loop, for the calls that
   `MetaKProtocol::lower` made.
 * `clear` and `reset`: drop whatever the thread memoizes for one program.
 
@@ -125,7 +126,7 @@ let json: &str = get::text(arena, &value)?;                    // Value -> &str
 | function | input | output |
 |---|---|---|
 | `load(below, above)` | `above` is `PreparedLevel::Al { spec_al, .. }`, an AL specification | C: call `below.call(..)` with the JSON of `spec_al` (like `kast.rs`) and return what spec-meta-k answers |
-| `encode_script(arena, script)` | `Script::Al(spec)`, the specification with a `main` added | the JSON text that `KEngine::call_program` sends to `Eval_AL` |
+| `encode_entry(arena, above, values)` | `above` is `PreparedLevel::Al`, entered through its `rel` on `values` | the JSON text inputs of the base's entry, which `KEngine::call_rel` sends to spec-meta-k |
 | `lower(arena, cache, C, call)` | `Call::Rel { name, values }` or `Call::Func { .. }` of the P4 level | a `Call` on spec-meta-k whose values are JSON text, for example `Call::Rel { name: "serve", values: [request] }` |
 | `raise(arena, cache, output, call)` | the JSON response | `{"ok": [..]}` gives `Output::Rel(values)` or `Output::Func(value)`; `{"fail": null}` gives `InterpreterError::Mismatch(vec![])`; `{"error": msg}` gives `InterpreterError::Fatal(..)` |
 | `host(arena, cache, "host_eval", [request])` | a JSON request of `#ffiCall` | `{"builtin": id, "targs", "args"}` gives `HostCall::Builtin`; `"extern-func"` gives `HostCall::ExternFunc`; `"extern-rel"` gives `HostCall::ExternRel` |
@@ -144,13 +145,13 @@ Before each commit, run `make fmt` and `make lint`.
    *Check:* `make kompile` creates the library that `towers/k.json` names.
 2. **Load it.** Fill `KRuntime::load` and `KEngineState::new`.
    *Check:* `bin/metacirc run-meta towers/k.json -p testdata/spec/pos/run/<any>.watsup`
-   now fails at `KEngine::call_program is not implemented yet`.
-3. **Run AL scripts.** Fill `MetaKProtocol::encode_script`,
-   `KEngine::call_program`, `host_eval`, `MetaKProtocol::host`, and `reply`.
+   now fails at `KEngine::call_rel is not implemented yet`.
+3. **Run AL scripts.** Fill `KEngine::call_rel`, `host_eval`,
+   `MetaKProtocol::host`, and `reply`.
    Delete the `pending` line of configuration `k` in `run.toml`.
    *Check:* `make test-metacirc-micro-k`.
-4. **Run P4 programs.** Fill `MetaKProtocol::load`, `lower`, and `raise`,
-   and `KEngine::call_rel` and `call_func`.
+4. **Run P4 programs.** Fill `MetaKProtocol::load`, `encode_entry`, `lower`,
+   and `raise`, and `KEngine::call_func`.
    *Check:* `bin/metacirc run-meta towers/k-p4.json -i p4c/p4include -p p4c/testdata/p4_16_samples/issue3531.p4`
    prints `passed`. This program also reenters, so it tests a second K thread.
    Then run `make test-metacirc-run-k`.
