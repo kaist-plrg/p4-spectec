@@ -83,6 +83,8 @@ impl Engine for KEngine<'_> {
     ///
     /// `load(request)` loads a specification and returns C, its key in the runtime;
     /// `serve(C, request)` sends a request under C and returns the answer.
+    /// The entries `Eval_AL_rel(spec, id, args)` and `Eval_AL_func(spec, id, args)`
+    /// load `spec` and call `id` on `args`, returning the outputs of the call.
     fn call_rel<Ext: Extern>(
         &mut self,
         arena: &mut Arena,
@@ -99,6 +101,9 @@ impl Engine for KEngine<'_> {
             }
             (MetaKProtocol::SERVE, [value_ctx, value_request]) => {
                 Ok(vec![self.serve(arena, upper, effects, *value_ctx, *value_request)?])
+            }
+            (MetaKProtocol::ENTRY_REL | MetaKProtocol::ENTRY_FUNC, _) => {
+                self.enter(arena, upper, effects, name, values)
             }
             _ => Err(unsupported(name)),
         }
@@ -136,6 +141,23 @@ impl Engine for KEngine<'_> {
 }
 
 impl KEngine<'_> {
+    /// Runs spec-meta-k's entry `name`: loads its specification, then calls it.
+    fn enter<Ext: Extern>(
+        &mut self,
+        arena: &mut Arena,
+        upper: &mut UpperMut<'_, Ext>,
+        effects: &mut u64,
+        name: &str,
+        values: &[Value],
+    ) -> std::result::Result<Vec<Value>, InterpreterError> {
+        let [request_load, request_call] = MetaKProtocol::entry_requests(arena, name, values)?;
+        let key = self.runtime.register(&request_load);
+        self.ensure_loaded(arena, upper, effects, key)?;
+        let answer = self.exchange(arena, upper, effects, request_call)?;
+        let value_answer = make_text(arena, answer)?;
+        MetaKProtocol::entry_outputs(arena, name, value_answer)
+    }
+
     /// Sends a request under C, loading C's specification into the thread first if needed.
     fn serve<Ext: Extern>(
         &mut self,
@@ -262,7 +284,9 @@ fn make_text(arena: &mut Arena, text: String) -> std::result::Result<Value, Inte
 /// Rejects a call that is not one of spec-meta-k's engine calls.
 fn unsupported(name: &str) -> InterpreterError {
     let message = format!(
-        "spec-meta-k's engine serves {} and {}, not {name}",
+        "spec-meta-k's engine serves {}, {}, {}, and {}, not {name}",
+        MetaKProtocol::ENTRY_REL,
+        MetaKProtocol::ENTRY_FUNC,
         MetaKProtocol::LOAD,
         MetaKProtocol::SERVE
     );

@@ -49,6 +49,10 @@ impl MetaKProtocol {
     pub(in crate::metacirc) const SERVE: &str = "serve";
     /// The host call of every `#ffiCall` request.
     pub(in crate::metacirc) const HOST_EVAL: &str = "host_eval";
+    /// The entry calling a relation, `Eval_AL_rel(spec, id, args)`.
+    pub(in crate::metacirc) const ENTRY_REL: &str = "Eval_AL_rel";
+    /// The entry calling a function, `Eval_AL_func(spec, id, args)`.
+    pub(in crate::metacirc) const ENTRY_FUNC: &str = "Eval_AL_func";
 }
 
 /// The codec state of a boundary above spec-meta-k.
@@ -112,15 +116,35 @@ impl Protocol for MetaKProtocol {
 
     /// Encodes the inputs of the base's entry as JSON text.
     ///
-    /// `above` is `PreparedLevel::Al`, entered through its configured relation
-    /// on `values`, as `KEngine::call_rel` passes them to spec-meta-k's entry.
+    /// `Eval_AL_rel` and `Eval_AL_func` take the AL specification of `above`,
+    /// the name of its configured relation, and `values`, its inputs:
+    /// `[def...]`, `"id"`, and `[val...]`, which `KEngine::call_rel` passes on.
     fn encode_entry(
         &self,
-        _arena: &mut Arena,
-        _above: &PreparedLevel,
-        _values: &[Value],
+        arena: &mut Arena,
+        above: &PreparedLevel,
+        values: &[Value],
     ) -> MetacircResult<Vec<Value>> {
-        Err(error::unimplemented("MetaKProtocol::encode_entry"))
+        let PreparedLevel::Al { spec_al, .. } = above else {
+            let message = "spec-meta-k enters only a level passed to it as AL";
+            return Err(error::config_invalid(message));
+        };
+        let mut writer = Writer::new();
+        spec::spec(&mut writer, spec_al);
+        let text_spec = writer.finish();
+        let mut writer = Writer::new();
+        writer.text(&above.config().rel);
+        let text_id = writer.finish();
+        let mut writer = Writer::new();
+        wire::values(&mut writer, arena, &mut Cache::new(false), values);
+        let text_args = writer.finish();
+        [text_spec, text_id, text_args]
+            .into_iter()
+            .map(|text| {
+                make::text(arena, text, Span::default())
+                    .map_err(|error| error::input_invalid(error.to_string()))
+            })
+            .collect()
     }
 
     /// Wraps `call` of the AL level above as `serve(C, request)` on spec-meta-k.
@@ -218,6 +242,65 @@ impl Protocol for MetaKProtocol {
 // == The engine's side
 
 impl MetaKProtocol {
+    /// The requests that run spec-meta-k's entry `name` on `values`,
+    /// the JSON texts `spec`, `id`, and `args` that `encode_entry` made.
+    ///
+    /// Both entries load first, `{"load": spec}`; `Eval_AL_rel` then calls
+    /// `{"args": args, "call-rel": id}`, and `Eval_AL_func`
+    /// `{"args": args, "call-func": id, "targs": []}`.
+    pub(in crate::metacirc) fn entry_requests(
+        arena: &Arena,
+        name: &str,
+        values: &[Value],
+    ) -> Result<[String; 2], InterpreterError> {
+        let [value_spec, value_id, value_args] = values else {
+            let message = format!("{name} of spec-meta-k takes a spec, an id, and inputs");
+            return Err(ExternError::diagnostic_message(message).into());
+        };
+        let text_spec = get::text(arena, value_spec).map_err(ExternError::from)?;
+        let text_id = get::text(arena, value_id).map_err(ExternError::from)?;
+        let text_args = get::text(arena, value_args).map_err(ExternError::from)?;
+        // Load the specification, as $load_ctx($empty_ctx, spec) does
+        let mut writer = Writer::new();
+        writer.object(|writer| {
+            writer.key(request::LOAD);
+            writer.json(text_spec);
+        });
+        let request_load = writer.finish();
+        // Call the entry's relation or function on the loaded specification
+        let mut writer = Writer::new();
+        writer.object(|writer| {
+            writer.key("args");
+            writer.json(text_args);
+            if name == Self::ENTRY_FUNC {
+                writer.key("call-func");
+                writer.json(text_id);
+                writer.key("targs");
+                writer.json("[]");
+            } else {
+                writer.key("call-rel");
+                writer.json(text_id);
+            }
+        });
+        Ok([request_load, writer.finish()])
+    }
+
+    /// The outputs of spec-meta-k's entry `name` from the answer to its call:
+    /// the relation's values for `Eval_AL_rel`, the function's value for `Eval_AL_func`.
+    pub(in crate::metacirc) fn entry_outputs(
+        arena: &mut Arena,
+        name: &str,
+        value_answer: Value,
+    ) -> Result<Vec<Value>, InterpreterError> {
+        let payload = answer::ok(arena, value_answer, name)?;
+        let mut cache = Cache::new(false);
+        if name == Self::ENTRY_FUNC {
+            Ok(vec![wire::read_value(arena, &mut cache, &payload)?])
+        } else {
+            Ok(wire::read_values(arena, &mut cache, &payload)?)
+        }
+    }
+
     /// Checks the answer to a load request, `{"ok": []}`.
     pub(in crate::metacirc) fn load_answer(
         arena: &mut Arena,
