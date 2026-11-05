@@ -9,8 +9,7 @@
 //! `lower` and `raise` wrap a call of the level above as a request
 //! to spec-meta-k's `serve()` loop and unwrap its response;
 //! `host` and `reply` decode a `#ffiCall` request and encode its outcome.
-//! Each function is a slot that the ST-in-K implementation fills;
-//! `docs/metacirc/st-in-k.md` says how.
+//! Each function is a slot that the ST-in-K implementation fills.
 
 use super::{Below, Call, HostCall, Output, Protocol};
 use crate::{

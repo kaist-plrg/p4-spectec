@@ -8,8 +8,7 @@
 //! a `#ffiCall` the thread makes while serving comes back to the calling thread,
 //! which answers it through `UpperMut::host_call` and sends the reply back.
 //! Arena values never cross threads, only JSON text does.
-//! Each function is a slot that the ST-in-K implementation fills;
-//! `docs/metacirc/st-in-k.md` says how.
+//! Each function is a slot that the ST-in-K implementation fills.
 
 mod ffi;
 mod runtime;

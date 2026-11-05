@@ -8,8 +8,7 @@
 //! `boundary`, and a P4 extern that reenters runs on the next depth.
 //! `tower` builds the levels, `sim` drives them with an STF test,
 //! and `krun` runs a K definition on spec-k (K-in-ST).
-//! The K parts are slots; `docs/metacirc/st-in-k.md` and `k-in-st.md`
-//! say what each implementation fills.
+//! The K parts are slots that each implementation fills.
 //!
 //! ```text
 //! Tower

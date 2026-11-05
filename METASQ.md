@@ -190,10 +190,10 @@ Two towers cross into the K framework. Their Rust parts are slots that
 report `metacirc/unimplemented` until implemented, and their test
 registrations are `pending`, so they are skipped without failing.
 
-| tower | base | top | configuration | guide |
-|---|---|---|---|---|
-| ST-in-K | spec-meta-k, the AL semantics in K, run from its compiled library | AL or P4 | `"mode": "k"`, `kompiled` at the base (`towers/k*.json`) | [`docs/metacirc/st-in-k.md`](docs/metacirc/st-in-k.md) |
-| K-in-ST | spec-k, the K semantics in P4-SpecTec | a K definition and initial term in KORE | a single level with `"lang": "kore"` (`towers/k-in-st.json`) | [`docs/metacirc/k-in-st.md`](docs/metacirc/k-in-st.md) |
+| tower | base | top | configuration |
+|---|---|---|---|
+| ST-in-K | spec-meta-k, the AL semantics in K, run from its compiled library | AL or P4 | `"mode": "k"`, `kompiled` at the base (`towers/k*.json`) |
+| K-in-ST | spec-k, the K semantics in P4-SpecTec | a K definition and initial term in KORE | a single level with `"lang": "kore"` (`towers/k-in-st.json`) |
 
 ST-in-K adds `KEngine` (`engine/k/`) and `MetaKProtocol` (`protocol/meta_k/`);
 `make kompile` builds the library, and `make test-metacirc-run-k`,

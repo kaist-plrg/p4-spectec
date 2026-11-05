@@ -8,8 +8,7 @@
 //! `run` would run each case with `p4spectec::metacirc::krun`
 //! and compare its output with `krun`'s, as #395's `spec-k/tests/difftest.py` does.
 //! The comparison is a slot that the K-in-ST implementation fills,
-//! together with the case layout under `root`;
-//! `docs/metacirc/k-in-st.md` says how.
+//! together with the case layout under `root`.
 
 use std::path::PathBuf;
 
