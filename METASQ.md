@@ -111,11 +111,11 @@ architecture reenters the P4 specification, the call runs one depth below
 
 Levels are ordered from native base through intermediates to top level.
 A single level supplies both top level and base. `lang` names the language a
-level accepts: every level below the top level uses `al` or `il`, and the
-top level may also use `p4`. The level above an `al` level is passed to it as
-AL converted by the native `algo` pass; the level above an `il` level is
-passed as elaborated IL. `mode` selects the base's native backend
-(`sl` or `al`).
+level accepts: every level below the top level uses `al`, `il`, or `el`, and
+the top level may also use `p4`. The level above an `al` level is passed to it
+as AL converted by the native `algo` pass; the level above an `il` level is
+passed as elaborated IL, and the level above an `el` level as parsed EL.
+`mode` selects the base's native backend (`sl` or `al`).
 
 Only the base runs on a native interpreter. Every level above it is
 interpreted by the level below, so natively it only answers the builtin and
@@ -185,7 +185,7 @@ builtins, sharing C and the codec caches.
 
 ## Algo through the IL-to-AL specification
 
-`spec-meta/3-algo` specifies the IL-to-AL pass as the relation `Algo_IL`.
+`spec-meta/4-algo` specifies the IL-to-AL pass as the relation `Algo_IL`.
 `Eval_IL_rel` and `Eval_IL_func` convert their IL input with `Algo_IL` and
 evaluate the result with `Eval_AL_rel` and `Eval_AL_func`, so a spec-meta level that accepts IL runs the specification
 above it on AL produced by the specification:
@@ -206,6 +206,18 @@ native `algo` pass; the specification above it reaches native code only
 through its builtin and host calls.
 `towers/il-func.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
 are the supplied towers entered through `Eval_IL_func` and `Eval_IL_rel`.
+
+## Elaboration through the EL-to-IL specification
+
+`spec-meta/3-elab` specifies elaboration as the relation `Elab_EL`, which
+returns `OK` with the IL or `FAIL` when the specification is rejected.
+`Algo_EL` elaborates and then converts with `Algo_IL`, and `Eval_EL_rel` and
+`Eval_EL_func` evaluate the result, so a spec-meta level that accepts EL runs
+the specification above it from its parsed form; only parsing is native.
+A P4 top level above an `el` level still elaborates the type definitions of
+its specification natively, for the printing builtin `print_` of the host.
+`towers/el-func.json`, `towers/el-p4.json`, and `towers/el-p4-ok.json`
+are the supplied towers entered through `Eval_EL_func` and `Eval_EL_rel`.
 
 ## Execution corpus
 

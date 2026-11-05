@@ -1,6 +1,7 @@
 //! Constructor notation for syntax shared by IL and AL
 //!
-//! These shapes follow `spec-meta/1-syntax/1.0-common.watsup`.
+//! These shapes follow `spec-meta/1-syntax/1.0-common.watsup`
+//! and `spec-meta/1-syntax/1.2-typed.watsup`.
 //! A case of a variant syntax is named `<SYNTAX>_<ATOM>`, as `EXP_BIN`;
 //! a syntax with a single shape takes its own name, as `TYP_FIELD`.
 
@@ -9,6 +10,14 @@
 pub(in crate::interface::meta) const ITER_QUEST: &str = "QUEST";
 pub(in crate::interface::meta) const ITER_STAR: &str = "STAR";
 pub(in crate::interface::meta) const VARI: &str = "id typ iter*";
+
+// == Notation
+
+pub(in crate::interface::meta) const MIXOP_ARG: &str = "ARG";
+pub(in crate::interface::meta) const MIXOP_ATOM: &str = "ATOM atom";
+pub(in crate::interface::meta) const MIXOP_BRACK: &str = "BRACK atom mixop atom";
+pub(in crate::interface::meta) const MIXOP_INFIX: &str = "INFIX mixop atom mixop";
+pub(in crate::interface::meta) const MIXOP_SEQ: &str = "SEQ mixop*";
 
 // == Types
 
@@ -27,7 +36,8 @@ pub(in crate::interface::meta) const DEFTYP_ALIAS: &str = "ALIAS typ";
 pub(in crate::interface::meta) const DEFTYP_STRUCT: &str = "STRUCT typField*";
 pub(in crate::interface::meta) const DEFTYP_VARIANT: &str = "VARIANT typCase*";
 pub(in crate::interface::meta) const TYP_FIELD: &str = "atom typ";
-pub(in crate::interface::meta) const TYP_CASE: &str = "mixop typ*";
+pub(in crate::interface::meta) const TYP_CASE: &str = "mixop typ* FROM typOrigin";
+pub(in crate::interface::meta) const TYP_ORIGIN: &str = "id targ*";
 
 // == Operators
 

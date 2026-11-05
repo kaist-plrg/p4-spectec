@@ -1,0 +1,366 @@
+;;
+;;;; Types
+;;
+
+syntax typElabRes = ok<typ> | fail
+
+relation Elab_plainTyp:
+  elabCtx |- plainTypEL : typElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating plain type" %1 "under" %0)
+  hint(prose_out %2)
+
+syntax notTypElabRes = ok<notTyp> | fail
+
+relation Elab_notTyp:
+  elabCtx |- typEL : notTypElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating notation type" %1 "under" %0)
+  hint(prose_out %2)
+
+syntax typCasesElabRes = ok<typCase*> | fail
+
+relation Elab_typCase:
+  elabCtx typOrigin |- typEL : typCasesElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating variant case" %2 "introduced by" %1 "under" %0)
+  hint(prose_out %3)
+
+syntax deftypElabRes = ok<deftyp> | fail
+
+relation Elab_defTyp:
+  elabCtx |- id tparam* '=' defTypEL : deftypElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "elaborating the body" %3 "of type" %1
+                "with parameters" %2 "under" %0)
+  hint(prose_out %4)
+
+;;
+;;;; Parameters
+;;
+
+syntax paramElabRes = ok<param> | fail
+
+relation Elab_param:
+  elabCtx |- paramEL : paramElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating parameter" %1 "under" %0)
+  hint(prose_out %2)
+
+syntax signatureElabRes = ok<(param*, typ)> | fail
+
+relation Elab_signature:
+  elabCtx |- tparam* paramEL* ':' plainTypEL : signatureElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "elaborating parameters" %2 "and result type" %3
+                "with type parameters" %1 "under" %0)
+  hint(prose_out %4)
+
+;;
+;;;; Definitions
+;;
+
+;; A declaration becomes an IL definition;
+;; a body is attached to its declaration once every definition is elaborated
+
+syntax defnPart =
+  | DECL defnIL
+
+syntax defElabRes = ok<(elabCtx, defnPart*)> | fail
+
+relation Elab_def:
+  elabCtx |- defnEL : defElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating definition" %1 "under" %0)
+  hint(prose_out %2)
+
+relation Elab_defs:
+  elabCtx |- defnEL* : defElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating definitions" %1 "in order under" %0)
+  hint(prose_out %2)
+
+syntax specElabRes = ok<specIL> | fail
+
+relation Elab_spec:
+  elabCtx |- specEL : specElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating specification" %1 "under" %0)
+  hint(prose_out %2)
+
+;;
+;;;; Expressions
+;;
+
+relation Infer_exp:
+  elabCtx |- expEL : expElabRes
+  hint(input %0 %1)
+  hint(prose_in "inferring the type of expression" %1 "under" %0)
+  hint(prose_out %2)
+
+;; The first of two readings of a construct, tried before the second
+
+relation Infer_exp_first:
+  elabCtx |- expEL : expElabRes
+  hint(input %0 %1)
+  hint(prose_in "inferring the type of expression" %1
+                "by its first reading under" %0)
+  hint(prose_out %2)
+
+relation Elab_exp:
+  elabCtx |- expEL '<=' typ : expElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "against type" %2 "under" %0)
+  hint(prose_out %3)
+
+relation Elab_exp_singleton:
+  elabCtx |- expEL '<=' typ : expElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "as the only element of type" %2
+                "under" %0)
+  hint(prose_out %3)
+
+relation Elab_exp_normal:
+  elabCtx |- expEL '<=' typ : expElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "against type" %2
+                "by inference or by the type under" %0)
+  hint(prose_out %3)
+
+relation Elab_exp_fallback:
+  elabCtx |- expEL '<=' typ : expElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "by the definition of type" %2
+                "under" %0)
+  hint(prose_out %3)
+
+relation Elab_exp_shape:
+  elabCtx |- expEL '<=' typ : expElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "by the shape of type" %2
+                "under" %0)
+  hint(prose_out %3)
+
+relation Elab_exp_first:
+  elabCtx |- expEL '<=' typ : expElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "against type" %2
+                "by its first reading under" %0)
+  hint(prose_out %3)
+
+;;
+;;;; Notation, struct, and variant expressions
+;;
+
+syntax notArgsElabRes = ok<(typedExp*, typ*)> | fail
+
+relation Elab_notArgs:
+  elabCtx |- expEL '<=' mixop typ* : notArgsElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "matching expression" %1 "with notation" %2
+                "taking argument types from" %3 "under" %0)
+  hint(prose_out %4)
+
+relation Elab_notArgss:
+  elabCtx |- expEL* '<=' mixop* typ* : notArgsElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "matching expressions" %1 "with notations" %2
+                "taking argument types from" %3 "under" %0)
+  hint(prose_out %4)
+
+syntax notExpElabRes = ok<typedExp*> | fail
+
+relation Elab_notExp:
+  elabCtx |- expEL '<=' notTyp : notExpElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating expression" %1 "against notation" %2 "under" %0)
+  hint(prose_out %3)
+
+relation Elab_struct:
+  elabCtx |- expEL '<=' typ typField* : expElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "elaborating expression" %1 "against struct type" %2
+                "with fields" %3 "under" %0)
+  hint(prose_out %4)
+
+relation Elab_variant:
+  elabCtx |- expEL '<=' typ typCase* : expElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "elaborating expression" %1 "against variant type" %2
+                "with cases" %3 "under" %0)
+  hint(prose_out %4)
+
+relation Elab_case:
+  elabCtx |- expEL '<=' typ typCase : expElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "elaborating expression" %1 "as case" %3 "of type" %2
+                "under" %0)
+  hint(prose_out %4)
+
+;;
+;;;; Paths
+;;
+
+syntax pathElabRes = ok<typedPath> | fail
+
+relation Elab_path:
+  elabCtx |- pathEL '<=' typ : pathElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating path" %1 "into a value of type" %2 "under" %0)
+  hint(prose_out %3)
+
+;;
+;;;; Call arguments
+;;
+
+syntax argElabRes = ok<arg> | fail
+syntax argsDefnElabRes = ok<(elabCtx, arg*)> | fail
+
+relation Elab_arg_call:
+  elabCtx |- argEL '<=' param : argElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating call argument" %1 "against parameter" %2
+                "under" %0)
+  hint(prose_out %3)
+
+relation Elab_arg_defn:
+  elabCtx |- argEL* '<=' param* : argsDefnElabRes
+  hint(input %0 %1 %2)
+  hint(prose_in "elaborating the argument patterns" %1 "of a definition"
+                "against parameters" %2 "under" %0)
+  hint(prose_out %3)
+
+;;
+;;;; Premises
+;;
+
+;; A variable premise only declares a meta-variable,
+;; and an otherwise premise only marks its rule or clause
+
+syntax premPart =
+  | PREM premIL
+  | DECLARE
+  | ELSE
+
+syntax premElabRes = ok<(elabCtx, premPart)> | fail
+
+relation Elab_prem:
+  elabCtx |- premEL : premElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating premise" %1 "under" %0)
+  hint(prose_out %2)
+
+syntax premsElabRes = ok<(elabCtx, premPart*)> | fail
+
+relation Elab_prems:
+  elabCtx |- premEL* : premsElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating premises" %1 "in order under" %0)
+  hint(prose_out %2)
+
+;;
+;;;; Rules, clauses, and table rows
+;;
+
+syntax rulElabRes = ok<(rulIL, bool)> | fail
+
+relation Elab_rule:
+  elabCtx id notTyp |- rulEL : rulElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "elaborating rule" %3 "of relation" %1 "with notation" %2
+                "under" %0)
+  hint(prose_out %4)
+
+syntax tblRowElabRes = ok<tblRowIL> | fail
+
+relation Elab_tblRow:
+  elabCtx param* typ |- tblRowEL : tblRowElabRes
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "elaborating table row" %3 "with parameters" %1
+                "and result type" %2 "under" %0)
+  hint(prose_out %4)
+
+;;
+;;;; Dimensions
+;;
+
+syntax dimEnv = map<id, vari>
+
+syntax dimExpRes = ok<(id*, typedExp, vari*)> | fail
+syntax dimExpsRes = ok<(id*, typedExp*, vari*)> | fail
+syntax dimPathRes = ok<(id*, typedPath, vari*)> | fail
+syntax dimArgsRes = ok<(id*, arg*, vari*)> | fail
+syntax dimPremRes = ok<(id*, premIL, vari*)> | fail
+syntax dimPremsRes = ok<(id*, premIL*, vari*)> | fail
+
+relation Dim_exp:
+  dimEnv id* |- typedExp : dimExpRes
+  hint(input %0 %1 %2)
+  hint(prose_in "annotating the iterations of" %2 "with bounds" %0
+                "and identifiers" %1 "in use")
+  hint(prose_out %3)
+
+relation Dim_exps:
+  dimEnv id* |- typedExp* : dimExpsRes
+  hint(input %0 %1 %2)
+  hint(prose_in "annotating the iterations of" %2 "with bounds" %0
+                "and identifiers" %1 "in use")
+  hint(prose_out %3)
+
+relation Dim_path:
+  dimEnv id* |- typedPath : dimPathRes
+  hint(input %0 %1 %2)
+  hint(prose_in "annotating the iterations of" %2 "with bounds" %0
+                "and identifiers" %1 "in use")
+  hint(prose_out %3)
+
+relation Dim_args:
+  dimEnv id* |- arg* : dimArgsRes
+  hint(input %0 %1 %2)
+  hint(prose_in "annotating the iterations of" %2 "with bounds" %0
+                "and identifiers" %1 "in use")
+  hint(prose_out %3)
+
+relation Dim_prem:
+  dimEnv id* |- premIL : dimPremRes
+  hint(input %0 %1 %2)
+  hint(prose_in "annotating the iterations of" %2 "with bounds" %0
+                "and identifiers" %1 "in use")
+  hint(prose_out %3)
+
+relation Dim_prems:
+  dimEnv id* |- premIL* : dimPremsRes
+  hint(input %0 %1 %2)
+  hint(prose_in "annotating the iterations of" %2 "with bounds" %0
+                "and identifiers" %1 "in use")
+  hint(prose_out %3)
+
+syntax rulDimRes = ok<rulIL> | fail
+
+relation Dim_rul:
+  |- rulIL : rulDimRes
+  hint(input %0)
+  hint(prose_in "annotating the iterations of rule" %0)
+  hint(prose_out %1)
+
+syntax clauseDimRes = ok<clauseIL> | fail
+
+relation Dim_clause:
+  |- clauseIL : clauseDimRes
+  hint(input %0)
+  hint(prose_in "annotating the iterations of clause" %0)
+  hint(prose_out %1)
+
+syntax tblRowDimRes = ok<tblRowIL> | fail
+
+relation Dim_tblRow:
+  |- tblRowIL : tblRowDimRes
+  hint(input %0)
+  hint(prose_in "annotating the iterations of table row" %0)
+  hint(prose_out %1)
+
+relation Elab_clause:
+  elabCtx |- defnEL : defElabRes
+  hint(input %0 %1)
+  hint(prose_in "elaborating clause" %1 "under" %0)
+  hint(prose_out %2)

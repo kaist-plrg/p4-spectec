@@ -74,6 +74,11 @@ def $intersect_<X>(X_h :: X_t*, X_in*) = X_h :: $intersect_<X>(X_t*, X_in*)
 def $intersect_<X>(X_h :: X_t*, X_in*) = $intersect_<X>(X_t*, X_in*)
   -- if ~(X_h <- X_in*)
 
+dec $distinct_<X>(X*) : bool
+  hint(prose_in "no element of" %0 "occurs twice")
+def $distinct_<X>(eps) = true
+def $distinct_<X>(X_h :: X_t*) = ~(X_h <- X_t*) /\ $distinct_<X>(X_t*)
+
 ;;
 ;; General set functions
 ;;

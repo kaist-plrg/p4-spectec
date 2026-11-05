@@ -17,7 +17,6 @@ use crate::{
             arena::Arena,
             notation::{
                 flat::{Mixfix as FlatMixfix, Mixop as FlatMixop, parse::ToMixop},
-                items::Item,
                 tree::Mixop,
             },
             typ::make as make_typ,
@@ -155,44 +154,40 @@ impl Encode for il::Atom {
 
 // - Mixops
 
-/// Separates notation atoms at each argument position.
-fn atoms_matrix(mixop_al: &Mixop) -> Vec<Vec<&il::Atom>> {
-    let mut atoms_matrix_al = vec![vec![]];
-    mixop_al.visit(|item| match item {
-        Item::Arg(_) => atoms_matrix_al.push(vec![]),
-        Item::Atom(atom_al) => atoms_matrix_al.last_mut().unwrap().push(atom_al),
-    });
-    atoms_matrix_al
-}
-
-/// Encodes each atom row before allocating the surrounding matrix.
-fn encode_atoms_matrix<T: Encode<Output = Value>>(
-    arena: &mut Arena,
-    cache: &mut Cache,
-    atoms_matrix: &[Vec<T>],
-) -> Result<Value, Error> {
-    let mut values_meta = Vec::with_capacity(atoms_matrix.len());
-    for atoms in atoms_matrix {
-        values_meta.push(list(arena, cache, "atom", atoms)?);
-    }
-    // Empty boundary rows still occupy their original matrix positions
-    let typ_matrix = make_typ::list(make_typ::list(make_typ::text()));
-    Ok(make::list(arena, typ_matrix.node.into(), values_meta, Span::default())?)
-}
-
-/// Encodes atoms between argument positions as a nonempty matrix.
+/// Encodes a notation tree constructor by constructor.
 impl Encode for Mixop {
     type Output = Value;
 
     fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
-        // Split atoms at argument holes, including empty boundary rows
-        let atoms_matrix_al = atoms_matrix(self);
-
-        encode_atoms_matrix(arena, cache, &atoms_matrix_al)
+        match self {
+            Mixop::Arg => case(arena, m::MIXOP_ARG, "mixop", vec![], Span::default()),
+            Mixop::Atom(atom) => {
+                let value_atom = atom.encode_cached(arena, cache)?;
+                case(arena, m::MIXOP_ATOM, "mixop", vec![value_atom], Span::default())
+            }
+            Mixop::Brack(atom_l, mixop_inner, atom_r) => {
+                let value_atom_l = atom_l.encode_cached(arena, cache)?;
+                let value_mixop_inner = mixop_inner.as_ref().encode_cached(arena, cache)?;
+                let value_atom_r = atom_r.encode_cached(arena, cache)?;
+                let values_meta = vec![value_atom_l, value_mixop_inner, value_atom_r];
+                case(arena, m::MIXOP_BRACK, "mixop", values_meta, Span::default())
+            }
+            Mixop::Infix(mixop_l, atom, mixop_r) => {
+                let value_mixop_l = mixop_l.as_ref().encode_cached(arena, cache)?;
+                let value_atom = atom.encode_cached(arena, cache)?;
+                let value_mixop_r = mixop_r.as_ref().encode_cached(arena, cache)?;
+                let values_meta = vec![value_mixop_l, value_atom, value_mixop_r];
+                case(arena, m::MIXOP_INFIX, "mixop", values_meta, Span::default())
+            }
+            Mixop::Seq(mixops) => {
+                let value_mixops = list(arena, cache, "mixop", mixops)?;
+                case(arena, m::MIXOP_SEQ, "mixop", vec![value_mixops], Span::default())
+            }
+        }
     }
 }
 
-/// Encodes a flat notation without reconstructing an owned notation tree.
+/// Encodes a flat notation through its tree, reusing earlier encodings.
 impl Encode for FlatMixop {
     type Output = Value;
 
@@ -202,13 +197,9 @@ impl Encode for FlatMixop {
         if let Some(value_meta) = cache.mixops_encode.get(&id_mixop) {
             return Ok(*value_meta);
         }
-        // Copy atoms before allocating encoded rows in the same arena
-        let mut atoms_matrix = vec![vec![]];
-        self.visit(&arena.mixop, |item| match item {
-            Item::Arg(_) => atoms_matrix.push(vec![]),
-            Item::Atom(atom) => atoms_matrix.last_mut().unwrap().push(atom.clone()),
-        });
-        let value_meta = encode_atoms_matrix(arena, cache, &atoms_matrix)?;
+        // Copy the notation out of its arena before allocating the encoding
+        let mixop = self.into_tree(&arena.mixop);
+        let value_meta = mixop.encode_cached(arena, cache)?;
         cache.mixops_encode.insert(id_mixop, value_meta);
         Ok(value_meta)
     }
@@ -319,7 +310,7 @@ impl Encode for il::TypField {
     }
 }
 
-/// Encodes one variant case without its origin or hints.
+/// Encodes one variant case with its origin, without hints.
 impl Encode for il::TypCase {
     type Output = Value;
 
@@ -327,8 +318,22 @@ impl Encode for il::TypCase {
         let values_meta = vec![
             self.not_typ.node.mixop().encode_cached(arena, cache)?,
             list(arena, cache, "typ", self.not_typ.node.args())?,
+            self.typ_origin.encode_cached(arena, cache)?,
         ];
         case(arena, m::TYP_CASE, "typCase", values_meta, self.not_typ.span)
+    }
+}
+
+/// Encodes the type that introduced a variant case.
+impl Encode for il::TypOrigin {
+    type Output = Value;
+
+    fn encode_cached(&self, arena: &mut Arena, cache: &mut Cache) -> Result<Self::Output, Error> {
+        let values_meta = vec![
+            self.node.id.encode_cached(arena, cache)?,
+            list(arena, cache, "targ", &self.node.targs)?,
+        ];
+        case(arena, m::TYP_ORIGIN, "typOrigin", values_meta, self.span)
     }
 }
 

@@ -1,0 +1,142 @@
+;; Elaboration language: specifications as parsed, before typing
+;;
+;; Parentheses, notation, and hint expressions are kept as written;
+;; only `input` hints are kept
+
+syntax plainTypEL, typEL, notTypEL, expEL, pathEL, argEL, paramEL, premEL
+
+;; Plain types
+
+syntax plainTypEL =
+  | BOOL
+  | numtyp
+  | TEXT
+  | VAR id plainTypEL*
+  | PAREN plainTypEL
+  | TUP plainTypEL*
+  | ITER plainTypEL iter
+
+;; Notation types
+
+syntax typEL =
+  | PLAIN plainTypEL
+  | NOTATION notTypEL
+
+syntax notTypEL =
+  | ATOM atom
+  | SEQ typEL*
+  | INFIX typEL atom typEL
+  | BRACK atom typEL atom
+
+;; Type definition bodies
+
+syntax typFieldEL = atom plainTypEL
+
+syntax defTypEL =
+  | ALIAS plainTypEL
+  | STRUCT typFieldEL*
+  | VARIANT typEL*
+
+;; Expressions
+
+syntax expFieldEL = atom expEL
+
+syntax holeEL =
+  | NTH nat
+  | NEXT
+  | REST
+  | NONE
+
+syntax expEL =
+  | BOOL bool | num | TEXT text
+  | ID id
+  | UN unOp expEL
+  | BIN expEL binOp expEL
+  | CMP expEL cmpOp expEL
+  | ARITH expEL
+  | EPS
+  | LIST expEL*
+  | CONS expEL expEL
+  | CAT expEL expEL
+  | IDX expEL expEL
+  | SLICE expEL expEL expEL
+  | LEN expEL
+  | MEM expEL expEL
+  | STR expFieldEL*
+  | DOT expEL atom
+  | UPD expEL pathEL expEL
+  | PAREN expEL
+  | TUP expEL*
+  | CALL id plainTypEL* argEL*
+  | ITER expEL iter
+  | SUB expEL plainTypEL
+  | ATOM atom
+  | SEQ expEL*
+  | INFIX expEL atom expEL
+  | BRACK atom expEL atom
+  | HOLE holeEL
+  | FUSE expEL expEL
+  | UNPAREN expEL
+  | LATEX text
+
+;; Paths
+
+syntax pathEL =
+  | ROOT
+  | IDX pathEL expEL
+  | SLICE pathEL expEL expEL
+  | DOT pathEL atom
+
+;; Arguments and parameters
+
+syntax argEL =
+  | EXP expEL
+  | FUN id
+
+syntax paramEL =
+  | EXP plainTypEL
+  | FUN id ':' tparam* paramEL* '->' plainTypEL
+
+;; Premises
+
+syntax premEL =
+  | VAR id ':' plainTypEL
+  | REL id ':' expEL
+  | RELNOT id ':' expEL
+  | IF expEL
+  | ELSE
+  | ITER premEL iter
+  | DEBUG expEL
+
+;; Hints
+
+syntax hintEL = id expEL
+
+;; Rules and table rows
+
+syntax rulEL = id '/' id ':' expEL '-' premEL*
+
+syntax tblRowEL = expEL '=' expEL
+
+;; Definitions
+
+syntax syntaxEntryEL = id tparam*
+
+syntax defnEL =
+  | EXTSYNTAX id
+  | SYNTAX syntaxEntryEL*
+  | TYP id tparam* '=' defTypEL
+  | VAR id ':' plainTypEL
+  | EXTREL id ':' notTypEL hintEL*
+  | REL id ':' notTypEL hintEL*
+  | RULEGROUP id '/' id ':' rulEL*
+  | EXTDEC id tparam* paramEL* ':' plainTypEL
+  | BUILTINDEC id tparam* paramEL* ':' plainTypEL
+  | TABLEDEC id paramEL* ':' plainTypEL
+  | DEC id tparam* paramEL* ':' plainTypEL
+  | TABLE id tblRowEL*
+  | DEF id tparam* argEL* '=' expEL '-' premEL*
+
+;; Specifications
+
+syntax specEL = defnEL*

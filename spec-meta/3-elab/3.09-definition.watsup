@@ -1,0 +1,250 @@
+;;
+;; Type declarations
+;;
+;; syntax id tparam*
+;;
+
+;; A declared type is `DEFINING` until its body is checked;
+;; a type without parameters also names a meta-variable of that type
+
+dec $declare_typ(elabCtx, id, tparam*) : elabCtx?
+  hint(prose_in %0 "with type" %1 "declared with parameters" %2)
+def $declare_typ(EC, id, eps) = EC_meta
+  -- if $is_tid(id)
+  -- if eps = $find_map<id, typDef>(EC.TYP, id)
+  -- if eps = $find_map<id, typ>(EC.VAR, id)
+  -- if EC_typ = $add_typDef(EC, id, DEFINING eps)
+  -- if EC_meta = $add_metavar(EC_typ, id, VAR id eps)
+def $declare_typ(EC, id, tparam*) = EC_typ
+  -- if tparam* =/= eps
+  -- if $distinct_<id>(tparam*)
+  -- if $is_tid(id)
+  -- if eps = $find_map<id, typDef>(EC.TYP, id)
+  -- if EC_typ = $add_typDef(EC, id, DEFINING tparam*)
+def $declare_typ(EC, id, tparam*) = eps
+  -- otherwise
+
+dec $declare_syntax(elabCtx, syntaxEntryEL*) : elabCtx?
+  hint(prose_in %0 "with the types of" %1 "declared")
+def $declare_syntax(EC, eps) = EC
+def $declare_syntax(EC, (id tparam*) :: syntaxEntryEL_t*) = EC_t
+  -- if EC_h = $declare_typ(EC, id, tparam*)
+  -- if EC_t = $declare_syntax(EC_h, syntaxEntryEL_t*)
+def $declare_syntax(EC, syntaxEntryEL*) = eps
+  -- otherwise
+
+;; A type body completes a forward declaration with the same parameters,
+;; or declares the type on the spot
+
+dec $declare_typ_body(elabCtx, id, tparam*) : elabCtx?
+  hint(prose_in %0 "with type" %1 "ready for a body with parameters" %2)
+def $declare_typ_body(EC, id, tparam*) = EC
+  -- if DEFINING tparam* = $find_map<id, typDef>(EC.TYP, id)
+def $declare_typ_body(EC, id, tparam*) = EC_decl
+  -- if eps = $find_map<id, typDef>(EC.TYP, id)
+  -- if EC_decl = $declare_typ(EC, id, tparam*)
+def $declare_typ_body(EC, id, tparam*) = eps
+  -- otherwise
+
+;;
+;; Definitions
+;;
+;; syntax defnEL
+;;
+
+;; Definitions are checked in source order:
+;; every name is declared once, and before it is used
+
+;;; Types
+
+rulegroup Elab_def/typ {
+
+  rule Elab_def/extern:
+    EC |- EXTSYNTAX id : OK (EC_meta, [ DECL (EXTTYP id) ])
+    -- if $is_tid(id)
+    -- if eps = $find_map<id, typDef>(EC.TYP, id)
+    -- if eps = $find_map<id, typ>(EC.VAR, id)
+    -- if EC_typ = $add_typDef(EC, id, EXTTYP id)
+    -- if EC_meta = $add_metavar(EC_typ, id, VAR id eps)
+
+  rule Elab_def/forward:
+    EC |- SYNTAX syntaxEntryEL* : OK (EC_decl, eps)
+    -- if EC_decl = $declare_syntax(EC, syntaxEntryEL*)
+
+  rule Elab_def/defined:
+    EC |- TYP id tparam* '=' defTypEL : OK (EC_def, [ DECL definedTypDefn ])
+    ---- ;; complete a forward declaration or declare the type
+    -- if EC_decl = $declare_typ_body(EC, id, tparam*)
+    -- if $forall_($is_tid(tparam)*)
+    ---- ;; check the body with the type parameters in scope
+    -- if EC_local = $bind_tparams(EC_decl, tparam*)
+    -- Elab_defTyp: EC_local |- id tparam* '=' defTypEL : OK deftyp
+    -- if definedTypDefn = TYP id tparam* '=' deftyp
+    -- if EC_def = $add_typDef(EC_decl, id, definedTypDefn)
+
+}
+
+;;; Meta-variables
+
+;; A meta-variable is not a type, and is not declared in IL
+
+rule Elab_def/metavar:
+  EC |- VAR id ':' plainTypEL : OK (EC_meta, eps)
+  -- if $is_tid(id)
+  -- if eps = $find_map<id, typDef>(EC.TYP, id)
+  -- if eps = $find_map<id, typ>(EC.VAR, id)
+  -- Elab_plainTyp: EC |- plainTypEL : OK typ
+  -- if EC_meta = $add_metavar(EC, id, typ)
+
+;;; Relations
+
+rulegroup Elab_def/rel {
+
+  rule Elab_def/extern:
+    EC |- EXTREL id ':' notTypEL hintEL* : OK (EC_rel, [ DECL externRelDefnIL ])
+    -- if eps = $find_map<id, relSig>(EC.REL, id)
+    -- Elab_notTyp: EC |- NOTATION notTypEL : OK (mixop typ*)
+    -- if OK inputHint = $input_hint(hintEL*, |typ*|)
+    -- if EC_rel = $add_relSig(EC, id, EXTERN (mixop typ*) `( inputHint `))
+    -- if externRelDefnIL = EXTREL id ':' typ* `( inputHint `)
+
+  ;; Rule groups are attached as they are elaborated
+
+  rule Elab_def/defined:
+    EC |- REL id ':' notTypEL hintEL* : OK (EC_body, [ DECL definedRelDefnIL ])
+    -- if eps = $find_map<id, relSig>(EC.REL, id)
+    -- Elab_notTyp: EC |- NOTATION notTypEL : OK (mixop typ*)
+    -- if OK inputHint = $input_hint(hintEL*, |typ*|)
+    -- if EC_rel = $add_relSig(EC, id, DEFINED (mixop typ*) `( inputHint `))
+    -- if EC_body = $add_body(EC_rel, id, RULES eps eps)
+    -- if definedRelDefnIL = REL id ':' typ* `( inputHint `) '=' eps eps
+
+}
+
+;;; Functions
+
+rulegroup Elab_def/func {
+
+  rule Elab_def/extern:
+    EC |- EXTDEC id tparam* paramEL* ':' plainTypEL : OK (EC_func, [ DECL externFuncDefn ])
+    -- if eps = $find_map<id, funcSig>(EC.FUNC, id)
+    -- Elab_signature: EC |- tparam* paramEL* ':' plainTypEL : OK (param*, typ)
+    -- if EC_func = $add_funcSig(EC, id, EXTERN tparam* param* ':' typ)
+    -- if externFuncDefn = EXTFUNC id tparam* param* ':' typ
+
+  rule Elab_def/builtin:
+    EC |- BUILTINDEC id tparam* paramEL* ':' plainTypEL : OK (EC_func, [ DECL builtinFuncDefn ])
+    -- if eps = $find_map<id, funcSig>(EC.FUNC, id)
+    -- Elab_signature: EC |- tparam* paramEL* ':' plainTypEL : OK (param*, typ)
+    -- if EC_func = $add_funcSig(EC, id, BUILTIN tparam* param* ':' typ)
+    -- if builtinFuncDefn = BUILTINFUNC id tparam* param* ':' typ
+
+  ;; A table takes value parameters and decides a boolean
+
+  rule Elab_def/tabular:
+    EC |- TABLEDEC id paramEL* ':' plainTypEL : OK (EC_body, [ DECL tableFuncDefnIL ])
+    -- if eps = $find_map<id, funcSig>(EC.FUNC, id)
+    -- (Elab_param: EC |- paramEL : OK param)*
+    -- if (EXP _ = param)*
+    -- Elab_plainTyp: EC |- plainTypEL : OK typ
+    -- if OK true = $equiv_typ(EC.TYP, typ, BOOL)
+    -- if EC_func = $add_funcSig(EC, id, TABLE eps param* ':' typ)
+    -- if EC_body = $add_body(EC_func, id, ROWS eps)
+    -- if tableFuncDefnIL = TABLEFUNC id param* ':' typ '=' eps
+
+  ;; Clauses are attached as they are elaborated
+
+  rule Elab_def/defined:
+    EC |- DEC id tparam* paramEL* ':' plainTypEL : OK (EC_body, [ DECL definedFuncDefnIL ])
+    -- if eps = $find_map<id, funcSig>(EC.FUNC, id)
+    -- Elab_signature: EC |- tparam* paramEL* ':' plainTypEL : OK (param*, typ)
+    -- if EC_func = $add_funcSig(EC, id, DEFINED tparam* param* ':' typ)
+    -- if EC_body = $add_body(EC_func, id, CLAUSES eps eps)
+    -- if definedFuncDefnIL = FUNC id tparam* param* ':' typ '=' eps eps
+
+}
+
+;;; Bodies
+
+;; Rules attach only to a defined relation
+
+rulegroup Elab_def/body {
+
+  rule Elab_def/rules:
+    EC |- RULEGROUP id_rel '/' id_group ':' rulEL* : OK (EC_group, eps)
+    -- if RULES _ _ = $find_map<id, body>(EC.BODY, id_rel)
+    -- if _ notTyp `( _ `) = $find_map<id, relSig>(EC.REL, id_rel)
+    -- (Elab_rule: EC id_rel notTyp |- rulEL : OK (rulIL, b_else))*
+    -- if EC_group = $add_rules(EC, id_rel, id_group, rulIL*, b_else*)
+
+  rule Elab_def/clause:
+    EC |- DEF id tparam* argEL* '=' expEL '-' premEL* : defElabRes
+    -- Elab_clause: EC |- DEF id tparam* argEL* '=' expEL '-' premEL* : defElabRes
+
+  rule Elab_def/rows:
+    EC |- TABLE id tblRowEL* : OK (EC_rows, eps)
+    -- if TABLE _ param* ':' typ = $find_map<id, funcSig>(EC.FUNC, id)
+    -- (Elab_tblRow: EC param* typ |- tblRowEL : OK tblRowIL)*
+    -- if EC_rows = $add_rows(EC, id, tblRowIL*)
+
+}
+
+rule Elab_def/fail:
+  EC |- defnEL : FAIL
+  -- otherwise
+
+;;
+;; Definition sequences
+;;
+;; syntax defnEL*
+;;
+
+;; Each definition sees the declarations before it
+
+rulegroup Elab_defs {
+
+  rule Elab_defs/nil:
+    EC |- eps : OK (EC, eps)
+
+  rule Elab_defs/cons:
+    EC |- defnEL_h :: defnEL_t* : OK (EC_t, defnPart_h* ++ defnPart_t*)
+    -- Elab_def: EC |- defnEL_h : OK (EC_h, defnPart_h*)
+    -- Elab_defs: EC_h |- defnEL_t* : OK (EC_t, defnPart_t*)
+
+}
+
+rule Elab_defs/fail:
+  EC |- defnEL* : FAIL
+  -- otherwise
+
+;;
+;; Specifications
+;;
+;; syntax specEL
+;;
+
+;; Each declaration of a relation or a function takes its collected body
+
+dec $assemble(bodyenv, defnIL) : defnIL
+  hint(prose_in %1 "with its body from" %0)
+def $assemble(bodyenv, REL id ':' typ* `( inputHint `) '=' _ _)
+  = REL id ':' typ* `( inputHint `) '=' rulGroupIL* elsGroupIL?
+  -- if RULES rulGroupIL* elsGroupIL? = $find_map<id, body>(bodyenv, id)
+def $assemble(bodyenv, FUNC id tparam* param* ':' typ '=' _ _)
+  = FUNC id tparam* param* ':' typ '=' clauseIL* elsClauseIL?
+  -- if CLAUSES clauseIL* elsClauseIL? = $find_map<id, body>(bodyenv, id)
+def $assemble(bodyenv, TABLEFUNC id param* ':' typ '=' _)
+  = TABLEFUNC id param* ':' typ '=' tblRowIL*
+  -- if ROWS tblRowIL* = $find_map<id, body>(bodyenv, id)
+def $assemble(bodyenv, defnIL) = defnIL
+  -- otherwise
+
+rule Elab_spec/ok:
+  EC |- defnEL* : OK defnIL_body*
+  -- Elab_defs: EC |- defnEL* : OK (EC_defs, defnPart*)
+  -- if (DECL defnIL = defnPart)*
+  -- if defnIL_body* = $assemble(EC_defs.BODY, defnIL)*
+
+rule Elab_spec/fail:
+  EC |- defnEL* : FAIL
+  -- otherwise

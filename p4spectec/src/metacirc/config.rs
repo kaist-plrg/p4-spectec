@@ -88,7 +88,7 @@ impl TowerConfig {
         for (idx, level) in levels.iter().enumerate() {
             if idx != idx_top && !level.lang.is_script() {
                 return Err(config_invalid(format!(
-                    "invalid language at level {idx}: expected al or il"
+                    "invalid language at level {idx}: expected al, il, or el"
                 )));
             }
             if level.rel.is_empty() || level.specdir.as_os_str().is_empty() {

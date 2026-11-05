@@ -25,6 +25,7 @@ use crate::{
     lang::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},
+        el::ast as el,
         il::ast as il,
     },
     runner::{self, Extern, InterpreterError, Runner},
@@ -54,6 +55,9 @@ pub(super) enum PreparedLevel {
     Al { config: LevelConfig, spec_al: al::Spec },
     /// A level passed to the level below as IL.
     Il { config: LevelConfig, spec_il: il::Spec },
+    /// A level passed to the level below as EL,
+    /// with its type definitions elaborated natively for the P4 host.
+    El { config: LevelConfig, spec_el: el::Spec, spec_typ_il: il::Spec },
 }
 
 /// The native runner of the base, selected by the language it interprets.
@@ -98,7 +102,10 @@ impl<Ext: Extern> Tower<Ext> {
 impl PreparedLevel {
     pub(super) fn config(&self) -> &LevelConfig {
         match self {
-            Self::Base { config, .. } | Self::Al { config, .. } | Self::Il { config, .. } => config,
+            Self::Base { config, .. }
+            | Self::Al { config, .. }
+            | Self::Il { config, .. }
+            | Self::El { config, .. } => config,
         }
     }
 }

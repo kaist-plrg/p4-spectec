@@ -1,4 +1,4 @@
-//! IL constructor notation from `spec-meta/1-syntax/1.1-il.watsup`
+//! IL constructor notation from `spec-meta/1-syntax/1.3-il.watsup`
 //!
 //! Forms shared with AL come from `meta::shared::mixops`,
 //! named the same way.

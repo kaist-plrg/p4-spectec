@@ -1,0 +1,165 @@
+;;
+;; Expected types
+;;
+;; syntax typ
+;;
+
+;; Shapes are read after expanding aliases
+
+dec $as_iter_typ(tdenv, typ) : (typ, iter)?
+  hint(prose_in "the element type and iteration of" %1 "under" %0)
+def $as_iter_typ(tdenv, typ) = (typ_elem, iter)
+  -- if OK (ITER typ_elem iter) = $expand_typ(tdenv, typ)
+def $as_iter_typ(tdenv, typ) = eps
+  -- otherwise
+
+dec $as_list_typ(tdenv, typ) : typ?
+  hint(prose_in "the element type of list type" %1 "under" %0)
+def $as_list_typ(tdenv, typ) = typ_elem
+  -- if OK (ITER typ_elem STAR) = $expand_typ(tdenv, typ)
+def $as_list_typ(tdenv, typ) = eps
+  -- otherwise
+
+dec $is_list_typ(tdenv, typ) : bool
+  hint(prose_in %1 "is a list type under" %0)
+def $is_list_typ(tdenv, typ) = true
+  -- if OK (ITER _ STAR) = $expand_typ(tdenv, typ)
+def $is_list_typ(tdenv, typ) = false
+  -- otherwise
+
+dec $is_text_typ(tdenv, typ) : bool
+  hint(prose_in %1 "is text under" %0)
+def $is_text_typ(tdenv, typ) = (typRes = OK TEXT)
+  -- if typRes = $expand_typ(tdenv, typ)
+
+dec $as_tuple_typ(tdenv, typ) : (typ*)?
+  hint(prose_in "the component types of tuple type" %1 "under" %0)
+def $as_tuple_typ(tdenv, typ) = typ_comp*
+  -- if OK (TUP typ_comp*) = $expand_typ(tdenv, typ)
+def $as_tuple_typ(tdenv, typ) = eps
+  -- otherwise
+
+;; Field types are read from the declaration as written
+
+dec $struct_fields(tdenv, typ) : (typField*)?
+  hint(prose_in "the fields of struct type" %1 "under" %0)
+def $struct_fields(tdenv, typ) = typField*
+  -- if OK (VAR id _) = $expand_typ(tdenv, typ)
+  -- if TYP _ _ '=' (STRUCT typField*) = $find_map<id, typDef>(tdenv, id)
+def $struct_fields(tdenv, typ) = eps
+  -- otherwise
+
+dec $field_typ(typField*, atom) : typ?
+  hint(prose_in "the type of field" %1 "in" %0)
+def $field_typ(typField*, atom) = typ_found
+  -- if (atom_field typ_field = typField)*
+  -- if typ_found = $assoc_<atom, typ>(atom, (atom_field, typ_field)*)
+def $field_typ(typField*, atom) = eps
+  -- otherwise
+
+dec $is_defined_typ(tdenv, typ) : bool
+  hint(prose_in %1 "names a type with a body under" %0)
+def $is_defined_typ(tdenv, VAR id _) = true
+  -- if TYP _ _ '=' _ = $find_map<id, typDef>(tdenv, id)
+def $is_defined_typ(tdenv, typ) = false
+  -- otherwise
+
+;;
+;; Casts
+;;
+;; syntax typedExp
+;;
+
+;; An expression of an equivalent type is kept;
+;; one of a subtype is upcast to the expected type
+
+syntax expElabRes = ok<typedExp> | fail
+
+dec $cast(tdenv, typedExp, typ) : expElabRes
+  hint(prose_in "the result of casting" %1 "to" %2 "under" %0)
+def $cast(tdenv, exp '#' typ_exp, typ) = OK (exp '#' typ_exp)
+  -- if OK true = $equiv_typ(tdenv, typ, typ_exp)
+def $cast(tdenv, exp '#' typ_exp, typ) = OK ((UPCAST typ (exp '#' typ_exp)) '#' typ)
+  -- if OK false = $equiv_typ(tdenv, typ, typ_exp)
+  -- if OK true = $sub_typ(tdenv, typ_exp, typ)
+def $cast(tdenv, typedExp, typ) = FAIL
+  -- otherwise
+
+syntax expPairElabRes = ok<(typedExp, typedExp)> | fail
+
+dec $cast_pair(tdenv, typedExp, typedExp, typ) : expPairElabRes
+  hint(prose_in "the result of casting" %1 "and" %2 "to" %3 "under" %0)
+def $cast_pair(tdenv, typedExp_l, typedExp_r, typ) = OK (typedExp_l_cast, typedExp_r_cast)
+  -- if OK typedExp_l_cast = $cast(tdenv, typedExp_l, typ)
+  -- if OK typedExp_r_cast = $cast(tdenv, typedExp_r, typ)
+def $cast_pair(tdenv, typedExp_l, typedExp_r, typ) = FAIL
+  -- otherwise
+
+dec $oks_exp(expElabRes*) : typedExp*
+  hint(prose_in "the successful expressions of" %0)
+def $oks_exp(eps) = eps
+def $oks_exp((OK typedExp) :: expElabRes_t*) = typedExp :: $oks_exp(expElabRes_t*)
+def $oks_exp(FAIL :: expElabRes_t*) = $oks_exp(expElabRes_t*)
+
+;;
+;; Expression forms
+;;
+;; syntax expEL
+;;
+
+dec $is_paren(expEL) : bool
+  hint(prose_in %0 "is parenthesized")
+def $is_paren(PAREN _) = true
+def $is_paren(expEL) = false
+  -- otherwise
+
+dec $is_wildcard(expEL) : bool
+  hint(prose_in %0 "is a wildcard")
+def $is_wildcard(ID "_") = true
+def $is_wildcard(expEL) = false
+  -- otherwise
+
+;; Wildcards and empty sequences never read as one element
+
+dec $is_singleton(expEL) : bool
+  hint(prose_in %0 "may read as a sequence of one element")
+def $is_singleton(ID "_") = false
+def $is_singleton(EPS) = false
+def $is_singleton(LIST eps) = false
+def $is_singleton(expEL) = true
+  -- otherwise
+
+;;
+;; Parameters
+;;
+;; syntax param
+;;
+
+dec $typ_of_param(param) : typ
+  hint(prose_in "the type bound by parameter" %0)
+def $typ_of_param(EXP typ) = typ
+def $typ_of_param(FUN _ ':' tparam* param* '->' typ) = FUNC tparam* typ_param* typ
+  -- if typ_param* = $typ_of_param(param)*
+
+;; A function parameter's own type parameters are not substituted
+
+syntax paramsRes = ok<param*> | error
+
+dec $subst_params(theta, param*) : paramsRes
+  hint(prose_in "the result of substituting" %0 "in parameters" %1)
+dec $subst_param(theta, param) : param?
+  hint(prose_in "the result of substituting" %0 "in parameter" %1)
+
+def $subst_params(theta, param*) = OK param_subst*
+  -- if (param_subst = $subst_param(theta, param))*
+def $subst_params(theta, param*) = ERROR
+  -- otherwise
+
+def $subst_param(theta, EXP typ) = EXP typ_subst
+  -- if OK typ_subst = $subst_typ(theta, typ)
+def $subst_param(theta, FUN id ':' tparam* param* '->' typ)
+  = FUN id ':' tparam* param_subst* '->' typ_subst
+  -- if OK param_subst* = $subst_params(theta, param*)
+  -- if OK typ_subst = $subst_typ(theta, typ)
+def $subst_param(theta, param) = eps
+  -- otherwise

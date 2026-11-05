@@ -84,6 +84,7 @@ impl Builtins {
             ("split_text".to_owned(), BuiltinEntry::Pure(Box::new(texts::split_text))),
             ("strip_prefix".to_owned(), BuiltinEntry::Pure(Box::new(texts::strip_prefix))),
             ("strip_suffix".to_owned(), BuiltinEntry::Pure(Box::new(texts::strip_suffix))),
+            ("metavar_id".to_owned(), BuiltinEntry::Pure(Box::new(texts::metavar_id))),
             (
                 "strip_all_whitespace".to_owned(),
                 BuiltinEntry::Pure(Box::new(texts::strip_all_whitespace)),
