@@ -9,8 +9,6 @@
 //! `run_scripts` prepares a fresh tower per script,
 //! because each script supplies the builtin definitions for the top level.
 //! Both skip the sources listed by the configuration's exclusions.
-//! With a timeout, a worker per tower runs each source instead,
-//! and a source still running after the timeout is recorded as a timeout.
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -18,7 +16,7 @@ use std::{
     path::{Path, PathBuf},
     sync::mpsc,
     thread,
-    time::{Duration, Instant},
+    time::Instant,
 };
 
 use clap::ValueEnum;
@@ -37,7 +35,6 @@ use crate::{
         self, Error, Result,
         corpus::{self, Outcome, Results},
         log::TestLog,
-        worker::{self, Channel, Reply, Worker},
     },
     suite::diagnostic,
 };
@@ -95,14 +92,12 @@ struct CollectedSuite<'a> {
 ///
 /// `name_suite` restricts the run to the registered suite of that name,
 /// and `input` to the suites whose tower takes that input.
-/// With a `timeout`, workers run the sources.
 /// `path_log` names the directory of the timing logs,
 /// one for the scripts and one for the programs.
 pub fn run(
     name_config: &str,
     name_suite: Option<&str>,
     input: Option<Input>,
-    timeout: Option<Duration>,
     path_log: Option<&Path>,
 ) -> Result<()> {
     let registration: Registration = harness::load("metacirc/run")?;
@@ -138,10 +133,10 @@ pub fn run(
     }
     let excludes = collect_excludes(&registration, config.base)?;
     if !suites_al.is_empty() {
-        run_scripts(config, &excludes, &suites_al, timeout, path_log)?;
+        run_scripts(config, &excludes, &suites_al, path_log)?;
     }
     if !suites_p4.is_empty() {
-        run_programs(&registration, config, &excludes, &suites_p4, timeout, path_log)?;
+        run_programs(&registration, config, &excludes, &suites_p4, path_log)?;
     }
     Ok(())
 }
@@ -152,7 +147,6 @@ fn run_programs(
     config: &Configuration,
     excludes: &BTreeSet<String>,
     suites: &[SelectedSuite<'_>],
-    timeout: Option<Duration>,
     path_log: Option<&Path>,
 ) -> Result<()> {
     let text_mode = format!("metacirc P4 {}", config.describe());
@@ -188,17 +182,9 @@ fn run_programs(
     eprintln!("{text_collect}");
     log.note(&text_collect)?;
     let mut arena = Arena::new();
-    // Suites sharing a tower file share its prepared runners or its worker
+    // Suites sharing a tower file share its prepared runners
     let mut towers = BTreeMap::new();
-    let mut workers = BTreeMap::new();
     for suite in &suites {
-        if let Some(timeout) = timeout {
-            let args = worker_args("program", config, suite.path_tower)?;
-            workers
-                .entry(suite.path_tower)
-                .or_insert_with(|| Worker::new(args, timeout));
-            continue;
-        }
         if towers.contains_key(suite.path_tower) {
             continue;
         }
@@ -206,9 +192,7 @@ fn run_programs(
         let tower = Tower::build(&mut arena, &config_tower, config.runner(), Dummy)?;
         towers.insert(suite.path_tower, tower);
     }
-    if timeout.is_none() {
-        log.note(&format!("towers prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
-    }
+    log.note(&format!("towers prepared in {:.1}s", start.elapsed().as_secs_f64()))?;
     let includes = &registration.includes;
     for path in includes {
         fs::read_dir(path)?;
@@ -216,7 +200,6 @@ fn run_programs(
     // Preprocess upcoming files while the tower parses and evaluates in order
     let paths_preprocess: Vec<_> = suites
         .iter()
-        .filter(|_| timeout.is_none())
         .flat_map(|suite| {
             suite
                 .paths
@@ -228,7 +211,6 @@ fn run_programs(
     let progress = corpus::progress_bar(collected)?;
     let mut executed = 0;
     let mut passed = 0;
-    let mut timed_out = 0;
     let guard_stdout = harness::output::SilenceStdout::new()?;
     thread::scope(|scope| -> Result<()> {
         let (sender, receiver) = mpsc::sync_channel(2);
@@ -242,8 +224,9 @@ fn run_programs(
             }
         });
         for suite in &mut suites {
-            let mut tower = towers.get_mut(suite.path_tower);
-            let mut worker = workers.get_mut(suite.path_tower);
+            let tower = towers
+                .get_mut(suite.path_tower)
+                .expect("tower prepared per suite");
             log.suite(suite.name, suite.root)?;
             for path in &suite.paths {
                 progress.set_message(path.display().to_string());
@@ -253,34 +236,50 @@ fn run_programs(
                     Outcome::Exclude
                 } else {
                     log.begin(path)?;
-                    let outcome = match (&mut worker, &mut tower) {
-                        (Some(worker), _) => match worker.request(worker::path_text(path)?)? {
-                            Reply::Done { status, .. } => Outcome::from_name(&status)?,
-                            Reply::Timeout => Outcome::Timeout,
-                        },
-                        (None, Some(tower)) => {
-                            fs::File::open(path)?;
-                            let source = receiver
-                                .recv()
-                                .map_err(|error| {
-                                    Error::from(format!("preprocessor worker stopped: {error}"))
-                                })?
-                                .map_err(|error| {
+                    // Reset before parsing: no value may cross this program boundary
+                    tower.reset();
+                    arena.reset_values();
+                    fs::File::open(path)?;
+                    let source = receiver
+                        .recv()
+                        .map_err(|error| {
+                            Error::from(format!("preprocessor worker stopped: {error}"))
+                        })?
+                        .map_err(|error| {
+                            Error::from(format!(
+                                "{}: test execution error: {error}",
+                                path.display()
+                            ))
+                        })?;
+                    let outcome = match parse_string(&mut arena, path, &source) {
+                        Ok(program) => {
+                            // Encoding failures abort; evaluation rejection is an outcome
+                            let values =
+                                tower.encode_input(&mut arena, program).map_err(|error| {
                                     Error::from(format!(
                                         "{}: test execution error: {error}",
                                         path.display()
                                     ))
                                 })?;
-                            execute_program(&mut arena, tower, path, &source)?
+                            let accepted = tower.eval_input(&mut arena, &values).is_ok();
+                            if accepted { Outcome::Pass } else { Outcome::Fail }
                         }
-                        (None, None) => unreachable!("tower prepared per suite"),
+                        Err(P4Error {
+                            kind: p4spectec::interface::p4::error::P4ErrorKind::Syntax(_),
+                            ..
+                        }) => Outcome::Fail,
+                        Err(error) => {
+                            return Err(Error::from(format!(
+                                "{}: test execution error: {}",
+                                path.display(),
+                                error.into_report()
+                            )));
+                        }
                     };
                     log.end(outcome.name())?;
                     executed += 1;
-                    match outcome {
-                        Outcome::Pass => passed += 1,
-                        Outcome::Timeout => timed_out += 1,
-                        _ => {}
+                    if outcome == Outcome::Pass {
+                        passed += 1;
                     }
                     outcome
                 };
@@ -293,8 +292,8 @@ fn run_programs(
     guard_stdout.finish()?;
     progress.finish_with_message("complete");
     let text_summary = format!(
-        "{text_mode}: collected={collected} excluded={excluded} executed={executed} pass={passed} fail={} timeout={timed_out} elapsed={:.3}s",
-        executed - passed - timed_out,
+        "{text_mode}: collected={collected} excluded={excluded} executed={executed} pass={passed} fail={} elapsed={:.3}s",
+        executed - passed,
         start.elapsed().as_secs_f64()
     );
     eprintln!("{text_summary}");
@@ -304,68 +303,6 @@ fn run_programs(
     }
     eprintln!("{text_mode}: all {collected} file results matched expected");
     Ok(())
-}
-
-/// Evaluates one preprocessed program through the tower.
-fn execute_program(
-    arena: &mut Arena,
-    tower: &mut Tower,
-    path: &Path,
-    source: &str,
-) -> Result<Outcome> {
-    // Reset before parsing: no value may cross this program boundary
-    tower.reset();
-    arena.reset_values();
-    match parse_string(arena, path, source) {
-        Ok(program) => {
-            // Encoding failures abort; evaluation rejection is an outcome
-            let values = tower.encode_input(arena, program).map_err(|error| {
-                Error::from(format!("{}: test execution error: {error}", path.display()))
-            })?;
-            let accepted = tower.eval_input(arena, &values).is_ok();
-            Ok(if accepted { Outcome::Pass } else { Outcome::Fail })
-        }
-        Err(P4Error { kind: p4spectec::interface::p4::error::P4ErrorKind::Syntax(_), .. }) => {
-            Ok(Outcome::Fail)
-        }
-        Err(error) => Err(Error::from(format!(
-            "{}: test execution error: {}",
-            path.display(),
-            error.into_report()
-        ))),
-    }
-}
-
-/// Serves `worker program <config> <tower>`: each request names one P4 program.
-pub fn serve_programs(name_config: &str, path_tower: &Path) -> Result<()> {
-    let channel = Channel::open()?;
-    let registration: Registration = harness::load("metacirc/run")?;
-    let config = Configuration::find(&registration.configs, name_config)?;
-    let mut arena = Arena::new();
-    let config_tower = TowerConfig::from_file(path_tower)?;
-    let mut tower = Tower::build(&mut arena, &config_tower, config.runner(), Dummy)?;
-    channel.serve(|request| {
-        let path = Path::new(request);
-        let source = preprocess(&registration.includes, path).map_err(|error| {
-            Error::from(format!(
-                "{}: test execution error: {}",
-                path.display(),
-                error.into_report()
-            ))
-        })?;
-        let outcome = execute_program(&mut arena, &mut tower, path, &source)?;
-        Ok((outcome.name().to_owned(), String::new()))
-    })
-}
-
-/// Returns the worker command `worker <kind> <config> <tower>`.
-fn worker_args(kind: &str, config: &Configuration, path_tower: &Path) -> Result<Vec<String>> {
-    Ok(vec![
-        "worker".to_owned(),
-        kind.to_owned(),
-        config.name.clone(),
-        worker::path_text(path_tower)?.to_owned(),
-    ])
 }
 
 /// Gathers the excluded corpus paths of `base`.
@@ -382,13 +319,12 @@ fn run_scripts(
     config: &Configuration,
     excludes: &BTreeSet<String>,
     suites: &[SelectedSuite<'_>],
-    timeout: Option<Duration>,
     path_log: Option<&Path>,
 ) -> Result<()> {
     let text_mode = format!("metacirc script {}", config.describe());
     let start = Instant::now();
     // Collect every suite's scripts first so the log knows the total
-    let mut suites = suites
+    let suites = suites
         .iter()
         .map(|SelectedSuite { suite, path_tower }| {
             let outcome_expect = suite.outcome.ok_or_else(|| {
@@ -397,16 +333,10 @@ fn run_scripts(
             let config_tower = TowerConfig::from_file(path_tower)
                 .map_err(|error| Error::from(format!("{}: {error}", suite.name)))?;
             let paths = corpus::collect(&suite.root, ".watsup")?;
-            let worker = match timeout {
-                Some(timeout) => {
-                    Some(Worker::new(worker_args("script", config, path_tower)?, timeout))
-                }
-                None => None,
-            };
-            Ok((*suite, config_tower, outcome_expect, paths, worker))
+            Ok((*suite, config_tower, outcome_expect, paths))
         })
         .collect::<Result<Vec<_>>>()?;
-    let collected = suites.iter().map(|(_, _, _, paths, _)| paths.len()).sum();
+    let collected = suites.iter().map(|(_, _, _, paths)| paths.len()).sum();
     let mut log =
         TestLog::create(path_log, &format!("metacirc-script-{}", config.name), collected)?;
     // Specification debug premises print to stdout
@@ -414,7 +344,7 @@ fn run_scripts(
     let mut executed = 0;
     let mut excluded = 0;
     let mut mismatches = Vec::new();
-    for (suite, config_tower, outcome_expect, paths, worker) in &mut suites {
+    for (suite, config_tower, outcome_expect, paths) in &suites {
         log.suite(&suite.name, &suite.root)?;
         for path in paths {
             if path.to_str().is_some_and(|path| excludes.contains(path)) {
@@ -423,23 +353,17 @@ fn run_scripts(
                 continue;
             }
             log.begin(path)?;
-            executed += 1;
-            let outcome = match worker {
-                Some(worker) => match worker.request(worker::path_text(path)?)? {
-                    Reply::Done { status, .. } => script_outcome_from_name(&status)?,
-                    Reply::Timeout => {
-                        // A timed-out script matches neither outcome
-                        log.end(&format!("timeout, expected {outcome_expect:?}"))?;
-                        mismatches.push(format!(
-                            "{} ({}): expected {outcome_expect:?}, timed out",
-                            path.display(),
-                            suite.name
-                        ));
-                        continue;
-                    }
-                },
-                None => execute_script(config_tower, config, path)?,
+            let paths_program = std::slice::from_ref(path);
+            // Invalid scripts are test errors, not rejected executions;
+            // an IL top level converts the script itself, so it need only elaborate
+            let valid = match config_tower.top_lang() {
+                Lang::Il => p4spectec::elab(paths_program).map(|_| ()),
+                _ => p4spectec::algo(paths_program).map(|_| ()),
             };
+            valid.map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
+            let accepted = metacirc::run(config_tower, &[], paths_program, config.runner()).is_ok();
+            let outcome =
+                if accepted { diagnostic::Outcome::Success } else { diagnostic::Outcome::Failure };
             if outcome == *outcome_expect {
                 log.end(&format!("{outcome:?}"))?;
             } else {
@@ -450,6 +374,7 @@ fn run_scripts(
                     suite.name
                 ));
             }
+            executed += 1;
         }
     }
     guard_stdout.finish()?;
@@ -469,51 +394,4 @@ fn run_scripts(
     }
     eprintln!("{text_mode}: all {executed} script outcomes matched their suite");
     Ok(())
-}
-
-/// Runs one script through a fresh tower.
-fn execute_script(
-    config_tower: &TowerConfig,
-    config: &Configuration,
-    path: &PathBuf,
-) -> Result<diagnostic::Outcome> {
-    let paths_program = std::slice::from_ref(path);
-    // Invalid scripts are test errors, not rejected executions;
-    // an IL top level converts the script itself, so it need only elaborate
-    let valid = match config_tower.top_lang() {
-        Lang::Il => p4spectec::elab(paths_program).map(|_| ()),
-        _ => p4spectec::algo(paths_program).map(|_| ()),
-    };
-    valid.map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
-    let accepted = metacirc::run(config_tower, &[], paths_program, config.runner()).is_ok();
-    Ok(if accepted { diagnostic::Outcome::Success } else { diagnostic::Outcome::Failure })
-}
-
-/// Serves `worker script <config> <tower>`: each request names one script.
-pub fn serve_scripts(name_config: &str, path_tower: &Path) -> Result<()> {
-    let channel = Channel::open()?;
-    let registration: Registration = harness::load("metacirc/run")?;
-    let config = Configuration::find(&registration.configs, name_config)?;
-    let config_tower = TowerConfig::from_file(path_tower)?;
-    channel.serve(|request| {
-        let outcome = execute_script(&config_tower, config, &PathBuf::from(request))?;
-        Ok((script_outcome_name(outcome).to_owned(), String::new()))
-    })
-}
-
-/// Spells a script outcome in a worker answer.
-fn script_outcome_name(outcome: diagnostic::Outcome) -> &'static str {
-    match outcome {
-        diagnostic::Outcome::Success => "success",
-        diagnostic::Outcome::Failure => "failure",
-    }
-}
-
-/// Reads a script outcome from a worker answer.
-fn script_outcome_from_name(name: &str) -> Result<diagnostic::Outcome> {
-    match name {
-        "success" => Ok(diagnostic::Outcome::Success),
-        "failure" => Ok(diagnostic::Outcome::Failure),
-        _ => Err(Error::from(format!("unknown script outcome {name}"))),
-    }
 }

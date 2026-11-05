@@ -3,15 +3,13 @@
 //! `load` reads a suite's registration from `suites/<name>.toml`.
 //! `corpus` discovers sources and compares per-file results,
 //! `interpreter` builds runners, `log` writes timing logs,
-//! `output` silences interpreter stdout,
-//! and `worker` runs tests in a process killed after a timeout.
+//! and `output` silences interpreter stdout.
 //! Nothing here depends on a particular suite.
 
 pub mod corpus;
 pub mod interpreter;
 pub mod log;
 pub mod output;
-pub mod worker;
 
 use std::{fs, path::Path};
 
