@@ -1,0 +1,21 @@
+;; A function call matching no clause is an error, not a mismatch:
+;; another rule path is not tried
+
+var n : nat
+var m : nat
+
+dec $p(nat) : nat
+def $p(n) = 1
+  -- if n = 0
+
+relation S: nat |- nat
+  hint(input %0)
+
+rule S/a: n |- $p(n)
+rule S/b: n |- 7
+  -- if n =/= 0
+
+relation Main: OK
+
+rule Main: OK
+  -- S: 3 |- m

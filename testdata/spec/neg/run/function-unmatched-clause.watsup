@@ -1,0 +1,16 @@
+;; A nested function call matching no clause is an error:
+;; the caller does not try its next clause
+
+var n : nat
+
+dec $p(nat) : nat
+def $p(n) = 1
+  -- if n = 0
+
+dec $q(nat) : nat
+def $q(n) = $p(n)
+def $q(n) = 7
+  -- if n =/= 0
+
+dec $main() : nat
+def $main() = $q(3)

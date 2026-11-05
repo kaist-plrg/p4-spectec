@@ -6,8 +6,9 @@
 //! ``Eval_AL_rel: <P4 spec as AL> |- "Program_inst" `( <program as val> `) : val*``.
 //! Each level above the base wraps the inputs of the level above it this way,
 //! with the level encoded in the language of the level consuming it.
-//! An AL or IL script at the top is entered at its function `main`, with no inputs,
-//! so the level below it uses `Eval_AL_func` or `Eval_IL_func`.
+//! An AL or IL script at the top is entered at the configured entry, with no inputs:
+//! its function `main` through `Eval_AL_func` or `Eval_IL_func`,
+//! or a relation through `Eval_AL_rel` or `Eval_IL_rel`.
 
 use super::super::{Result, config::Lang};
 use super::{PreparedLevel, Tower};
@@ -24,9 +25,6 @@ use crate::{
     phrase,
     runner::Extern,
 };
-
-/// The entry of an AL or IL script at the top of a tower.
-const ENTRY_SCRIPT: &str = "main";
 
 // == Helpers
 
@@ -70,7 +68,7 @@ impl<Ext: Extern> Tower<Ext> {
         // A P4 program is the top level's input; a script is a level above the top
         let mut values = match level_top.config().lang {
             Lang::P4 => vec![program],
-            Lang::Al | Lang::Il => entry_inputs(arena, program, ENTRY_SCRIPT, &[])?,
+            Lang::Al | Lang::Il => entry_inputs(arena, program, &self.entry, &[])?,
         };
         // Each level above the base is entered through its configured relation
         for level in self.levels[1..].iter().rev() {

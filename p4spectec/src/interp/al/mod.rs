@@ -3,7 +3,8 @@
 //! `AlInterp` runs AL definitions:
 //! a relation call tries its rule paths in order, or all of them under `det`,
 //! a function call tries its clauses;
-//! `Unmatch` from one candidate moves on to the next, `Err` aborts.
+//! `Unmatch` from one candidate moves on to the next, `Err` aborts,
+//! and a function call that no clause matches fails with `Err`.
 //! `Config` toggles memoization, determinism checks, and call-boundary guards.
 
 pub mod backtrack;

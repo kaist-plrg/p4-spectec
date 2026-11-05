@@ -204,8 +204,10 @@ The conversion runs for every input, in the level that accepts the IL.
 Only the base, here the IL-to-AL specification itself, is converted by the
 native `algo` pass; the specification above it reaches native code only
 through its builtin and host calls.
-`towers/il-func.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
+`towers/il-func.json`, `towers/il-rel.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
 are the supplied towers entered through `Eval_IL_func` and `Eval_IL_rel`.
+A script tower enters the script at its `entry`, the function `main` by default;
+`towers/al-rel.json` and `towers/il-rel.json` enter the relation `Main`.
 
 ## Execution corpus
 
@@ -220,6 +222,8 @@ make test-metacirc-sim-il
 
 `test-metacirc-micro-al` runs the spec-language sources under
 `testdata/spec/pos/run` and `testdata/spec/neg/run` through the AL tower,
+and those under `testdata/spec/pos/run-rel` and `testdata/spec/neg/run-rel`
+through the AL tower entering `Main`,
 each expected to succeed or fail as its suite in `suites/metacirc/run.toml`
 registers. `test-metacirc-run-al` runs the `test-run-sl` corpus through the AL/P4
 tower and requires the p4c submodule. Both check determinism.

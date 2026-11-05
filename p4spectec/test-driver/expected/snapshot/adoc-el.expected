@@ -6105,6 +6105,9 @@ def $typedExpressionIR_as_typedLvalueIR(
   = (`( typedLvalueIR `)) '#' `( typeIR `)
   -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
 
+def $typedExpressionIR_as_typedLvalueIR(typedExpressionIR) = eps
+  -- otherwise
+
 
 
 
@@ -13271,33 +13274,39 @@ def $apply_cast(typedExpressionIR, typeIR_h :: typeIR_t*)
 
 
 
-dec $cast_unary(typedExpressionIR, typeIR) : typedExpressionIR?
+relation Cast_unary:
+  `( typeIR `) typedExpressionIR : typedExpressionIR?
 
-def $cast_unary(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
-  -- if _ '#' `( typeIR _ `) = typedExpressionIR
-  -- Cast_impl: typeIR -> typeIR_to : OK typeIR_cast*
+rule Cast_unary/ok:
+  `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
+  -- if _ '#' `( typeIR_from _ `) = typedExpressionIR
+  -- Cast_impl: typeIR_from -> typeIR_to : OK typeIR_cast*
   -- if typedExpressionIR_cast = $apply_cast(typedExpressionIR, typeIR_cast*)
 
-def $cast_unary(typedExpressionIR, typeIR_to) = eps
+rule Cast_unary/fail:
+  `( typeIR_to `) typedExpressionIR : eps
   -- otherwise
 
 
 
 
 
-dec $cast_binary(typedExpressionIR, typedExpressionIR)
-  : (typedExpressionIR, typedExpressionIR)?
+relation Cast_binary:
+  typedExpressionIR ',' typedExpressionIR
+      : typedExpressionIR? ',' typedExpressionIR?
 
-def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
-  = (typedExpressionIR_l_cast, typedExpressionIR_r)
+rule Cast_binary/left-to-right:
+  typedExpressionIR_l ',' typedExpressionIR_r
+      : typedExpressionIR_l_cast ',' typedExpressionIR_r
   -- if _ '#' `( typeIR_l _ `) = typedExpressionIR_l
   -- if _ '#' `( typeIR_r _ `) = typedExpressionIR_r
   -- Cast_impl: typeIR_l -> typeIR_r : OK typeIR_cast*
   -- if typedExpressionIR_l_cast
       = $apply_cast(typedExpressionIR_l, typeIR_cast*)
 
-def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
-  = (typedExpressionIR_l, typedExpressionIR_r_cast)
+rule Cast_binary/right-to-left:
+  typedExpressionIR_l ',' typedExpressionIR_r
+      : typedExpressionIR_l ',' typedExpressionIR_r_cast
   -- if _ '#' `( typeIR_l _ `) = typedExpressionIR_l
   -- if _ '#' `( typeIR_r _ `) = typedExpressionIR_r
   -- Cast_impl: typeIR_l -> typeIR_r : FAIL
@@ -13305,27 +13314,36 @@ def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if typedExpressionIR_r_cast
       = $apply_cast(typedExpressionIR_r, typeIR_cast*)
 
-def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
-  = $cast_binary(typedExpressionIR_l_cast, typedExpressionIR_r)
+rule Cast_binary/retry-left:
+  typedExpressionIR_l ',' typedExpressionIR_r
+      : typedExpressionIR_l_cast? ',' typedExpressionIR_r_cast?
   -- if _ '#' `( typeIR_l _ `) = typedExpressionIR_l
   -- if _ '#' `( typeIR_r _ `) = typedExpressionIR_r
   -- Cast_impl: typeIR_l -> typeIR_r : FAIL
   -- Cast_impl: typeIR_r -> typeIR_l : FAIL
-  -- if typedExpressionIR_l_cast = $reduce_serenum(typedExpressionIR_l)
-  -- if typedExpressionIR_l =/= typedExpressionIR_l_cast
+  -- if typedExpressionIR_l_reduced = $reduce_serenum(typedExpressionIR_l)
+  -- if typedExpressionIR_l =/= typedExpressionIR_l_reduced
+  -- Cast_binary:
+      typedExpressionIR_l_reduced ',' typedExpressionIR_r
+          : typedExpressionIR_l_cast? ',' typedExpressionIR_r_cast?
 
-def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
-  = $cast_binary(typedExpressionIR_l, typedExpressionIR_r_cast)
+rule Cast_binary/retry-right:
+  typedExpressionIR_l ',' typedExpressionIR_r
+      : typedExpressionIR_l_cast? ',' typedExpressionIR_r_cast?
   -- if _ '#' `( typeIR_l _ `) = typedExpressionIR_l
   -- if _ '#' `( typeIR_r _ `) = typedExpressionIR_r
   -- Cast_impl: typeIR_l -> typeIR_r : FAIL
   -- Cast_impl: typeIR_r -> typeIR_l : FAIL
-  -- if typedExpressionIR_l_cast = $reduce_serenum(typedExpressionIR_l)
-  -- if typedExpressionIR_l = typedExpressionIR_l_cast
-  -- if typedExpressionIR_r_cast = $reduce_serenum(typedExpressionIR_r)
-  -- if typedExpressionIR_r =/= typedExpressionIR_r_cast
+  -- if typedExpressionIR_l_reduced = $reduce_serenum(typedExpressionIR_l)
+  -- if typedExpressionIR_l = typedExpressionIR_l_reduced
+  -- if typedExpressionIR_r_reduced = $reduce_serenum(typedExpressionIR_r)
+  -- if typedExpressionIR_r =/= typedExpressionIR_r_reduced
+  -- Cast_binary:
+      typedExpressionIR_l ',' typedExpressionIR_r_reduced
+          : typedExpressionIR_l_cast? ',' typedExpressionIR_r_cast?
 
-def $cast_binary(typedExpressionIR_l, typedExpressionIR_r) = eps
+rule Cast_binary/fail:
+  typedExpressionIR_l ',' typedExpressionIR_r : eps ',' eps
   -- otherwise
 
 
@@ -13538,8 +13556,9 @@ rule Expr_ok/binaryExpression-plusminusmult:
   -- if binop <- ['+', '-', '*']
   -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-  -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-      = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+  -- Cast_binary:
+      typedExpressionIR_l ',' typedExpressionIR_r
+          : typedExpressionIR_l_cast ',' typedExpressionIR_r_cast
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
       = $reduce_serenum_binary(
           typedExpressionIR_l_cast,
@@ -13579,8 +13598,9 @@ rule Expr_ok/binaryExpression-satplusminus:
   -- if binop <- ['|+|', '|-|']
   -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-  -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-      = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+  -- Cast_binary:
+      typedExpressionIR_l ',' typedExpressionIR_r
+          : typedExpressionIR_l_cast ',' typedExpressionIR_r_cast
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
       = $reduce_serenum_binary(
           typedExpressionIR_l_cast,
@@ -13622,8 +13642,9 @@ rulegroup Expr_ok/binaryExpression-divmod {
     -- if binop <- ['/', '%']
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- Cast_binary:
+        typedExpressionIR_l ',' typedExpressionIR_r
+            : typedExpressionIR_l_cast ',' typedExpressionIR_r_cast
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -13648,8 +13669,9 @@ rulegroup Expr_ok/binaryExpression-divmod {
     -- if binop <- ['/', '%']
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-    -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-        = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+    -- Cast_binary:
+        typedExpressionIR_l ',' typedExpressionIR_r
+            : typedExpressionIR_l_cast ',' typedExpressionIR_r_cast
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -13766,8 +13788,9 @@ rule Expr_ok/binaryExpression-equality:
   -- if binop <- ['==', '!=']
   -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-  -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-      = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+  -- Cast_binary:
+      typedExpressionIR_l ',' typedExpressionIR_r
+          : typedExpressionIR_l_cast ',' typedExpressionIR_r_cast
   -- if typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_l_cast)
   -- if ctk_l_cast = $ctk_of_typedExpressionIR(typedExpressionIR_l_cast)
   -- if ctk_r_cast = $ctk_of_typedExpressionIR(typedExpressionIR_r_cast)
@@ -13805,8 +13828,9 @@ rule Expr_ok/binaryExpression-comparison:
   -- if binop <- ['<=', '>=', '<', '>']
   -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-  -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-      = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+  -- Cast_binary:
+      typedExpressionIR_l ',' typedExpressionIR_r
+          : typedExpressionIR_l_cast ',' typedExpressionIR_r_cast
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
       = $reduce_serenum_binary(
           typedExpressionIR_l_cast,
@@ -13846,8 +13870,9 @@ rule Expr_ok/binaryExpression-bitwise:
   -- if binop <- ['&', '^', '|']
   -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-  -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-      = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+  -- Cast_binary:
+      typedExpressionIR_l ',' typedExpressionIR_r
+          : typedExpressionIR_l_cast ',' typedExpressionIR_r_cast
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
       = $reduce_serenum_binary(
           typedExpressionIR_l_cast,
@@ -13954,8 +13979,9 @@ rule Expr_ok/binaryExpression-logical:
   -- if binop <- ['&&', '||']
   -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: p TC |- expression_r : typedExpressionIR_r
-  -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-      = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+  -- Cast_binary:
+      typedExpressionIR_l ',' typedExpressionIR_r
+          : typedExpressionIR_l_cast ',' typedExpressionIR_r_cast
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
       = $reduce_serenum_binary(
           typedExpressionIR_l_cast,
@@ -13983,8 +14009,9 @@ rule Expr_ok/ternaryExpression:
   -- if BOOL = $unroll_typeIR(typeIR_cond)
   -- Expr_ok: p TC |- expression_true : typedExpressionIR_true
   -- Expr_ok: p TC |- expression_false : typedExpressionIR_false
-  -- if (typedExpressionIR_true_cast, typedExpressionIR_false_cast)
-      = $cast_binary(typedExpressionIR_true, typedExpressionIR_false)
+  -- Cast_binary:
+      typedExpressionIR_true ',' typedExpressionIR_false
+          : typedExpressionIR_true_cast ',' typedExpressionIR_false_cast
   -- if typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_true_cast)
   -- if ctk_true_cast = $ctk_of_typedExpressionIR(typedExpressionIR_true_cast)
   -- if ctk_false_cast = $ctk_of_typedExpressionIR(typedExpressionIR_false_cast)
@@ -15496,8 +15523,8 @@ rulegroup Parameter_ok {
     -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
     -- if typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init)
     -- if CTK = $ctk_of_typedExpressionIR(typedExpressionIR_init)
-    -- if typedExpressionIR_init_cast
-        = $cast_unary(typedExpressionIR_init, typeIR)
+    -- Cast_unary:
+        `( typeIR `) typedExpressionIR_init : typedExpressionIR_init_cast
     -- if nameIR = $name(name)
     -- if parameterInitializerIR = '=' typedExpressionIR_init_cast
     -- if parameterIR
@@ -15513,8 +15540,8 @@ rulegroup Parameter_ok {
     -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
     -- if typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init)
     -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_init)
-    -- if typedExpressionIR_init_cast
-        = $cast_unary(typedExpressionIR_init, typeIR)
+    -- Cast_unary:
+        `( typeIR `) typedExpressionIR_init : typedExpressionIR_init_cast
     -- if nameIR = $name(name)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_init_cast ~> value_init
     -- if parameterInitializerIR = '=' _VALUE value_init
@@ -15586,7 +15613,7 @@ rulegroup Stmt_ok/assignmentStatement {
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- if typeIR_l = $type_of_typedLvalueIR(typedLvalueIR)
     -- if typeIR_r = $type_of_typedExpressionIR(typedExpressionIR)
-    -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_l)
+    -- Cast_unary: `( typeIR_l `) typedExpressionIR : typedExpressionIR_cast
 
   rule Stmt_ok/compound:
     p TC
@@ -15599,8 +15626,9 @@ rulegroup Stmt_ok/assignmentStatement {
     -- if expression_binary = expression_lvalue binop expression
     -- Expr_ok: p TC |- expression_binary : typedExpressionIR_binary
     -- if _ '#' `( typeIR_lvalue `) = typedLvalueIR
-    -- if (_ binop typedExpressionIR_cast) '#' _
-        = $cast_unary(typedExpressionIR_binary, typeIR_lvalue)
+    -- Cast_unary:
+        `( typeIR_lvalue `) typedExpressionIR_binary
+            : ((_ binop typedExpressionIR_cast) '#' _)
 
 }
 
@@ -15728,7 +15756,7 @@ rulegroup Stmt_ok/returnStatement {
     -- Expr_ok: LOCAL TC_0 |- expression : typedExpressionIR
     -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if typeIR_ret = $find_local_return_type_t(TC_0)
-    -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_ret)
+    -- Cast_unary: `( typeIR_ret `) typedExpressionIR : typedExpressionIR_cast
     -- if TC_1 = $set_control_t(TC_0, RET)
 
 }
@@ -15871,8 +15899,8 @@ rulegroup ForInitStmt_ok {
     -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
     -- if $is_assignable_typeIR(typeIR)
     -- Expr_ok: LOCAL TC_0 |- expression_init : typedExpressionIR_init
-    -- if typedExpressionIR_init_cast
-        = $cast_unary(typedExpressionIR_init, typeIR)
+    -- Cast_unary:
+        `( typeIR `) typedExpressionIR_init : typedExpressionIR_init_cast
     -- if nameIR = $name(name)
     -- if TC_1 = $add_var_t(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
 
@@ -15993,10 +16021,10 @@ rule ForCollectionExpr_ok:
           : typedExpressionIR_l_casted '..' typedExpressionIR_r_casted
   -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-  -- if typedExpressionIR_l_casted
-      = $cast_unary(typedExpressionIR_l, typeIR_var)
-  -- if typedExpressionIR_r_casted
-      = $cast_unary(typedExpressionIR_r, typeIR_var)
+  -- Cast_unary:
+      `( typeIR_var `) typedExpressionIR_l : typedExpressionIR_l_casted
+  -- Cast_unary:
+      `( typeIR_var `) typedExpressionIR_r : typedExpressionIR_r_casted
   -- if typeIR_l = $type_of_typedExpressionIR(typedExpressionIR_l_casted)
   -- if typeIR_r = $type_of_typedExpressionIR(typedExpressionIR_r_casted)
   -- if $compat_range(typeIR_l, typeIR_r)
@@ -16191,8 +16219,9 @@ rulegroup SwitchLabel_general_ok {
     -- if expression_label
         = $expressionNonBrace_as_expression(expressionNonBrace_label)
     -- Expr_ok: LOCAL TC |- expression_label : typedExpressionIR_label
-    -- if typedExpressionIR_label_cast
-        = $cast_unary(typedExpressionIR_label, typeIR_switch)
+    -- Cast_unary:
+        `( typeIR_switch `) typedExpressionIR_label
+            : typedExpressionIR_label_cast
     -- if _ '#' `( _ LCTK `) = typedExpressionIR_label_cast
 
 }
@@ -16405,8 +16434,8 @@ rulegroup VarDecl_ok {
     -- Type_wf: $bound(p, TC_0) |- typeIR
     -- if $is_assignable_typeIR(typeIR)
     -- Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init
-    -- if typedExpressionIR_init_cast
-        = $cast_unary(typedExpressionIR_init, typeIR)
+    -- Cast_unary:
+        `( typeIR `) typedExpressionIR_init : typedExpressionIR_init_cast
     -- if nameIR = $name(name)
     -- if TC_1 = $add_var_t(p, TC_0, nameIR, INOUT typeIR DYN eps)
     -- if variableDeclarationIR
@@ -16426,8 +16455,8 @@ rule ConstDecl_ok:
   -- Type_wf: $bound(p, TC_0) |- typeIR
   -- Expr_ok: p TC_0 |- expression_value : typedExpressionIR_value
   -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_value)
-  -- if typedExpressionIR_value_cast
-      = $cast_unary(typedExpressionIR_value, typeIR)
+  -- Cast_unary:
+      `( typeIR `) typedExpressionIR_value : typedExpressionIR_value_cast
   -- Expr_eval_lctk: p TC_0 |- typedExpressionIR_value_cast ~> value
   -- if nameIR = $name(name)
   -- if TC_1 = $add_var_t(p, TC_0, nameIR, _EMPTY typeIR LCTK value)
@@ -16586,41 +16615,45 @@ rule ObjectDeclList_ok:
           |- objectDeclaration*
               : typeFrame externMethodTypeDefEnv objectDeclarationListIR
 
-dec $subst_externMethodTypeDefEnv(
-    externMethodTypeDefEnv,
-    externMethodTypeDefEnv)
-  : externMethodTypeDefEnv
+relation Subst_externMethodTypeDefEnv:
+  externMethodTypeDefEnv |- externMethodTypeDefEnv : externMethodTypeDefEnv
 
-def $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, `{ eps `})
-  = externMethodTypeDefEnv_extern
+rulegroup Subst_externMethodTypeDefEnv {
 
-def $subst_externMethodTypeDefEnv(
-    externMethodTypeDefEnv_extern,
-    `{
-      (callableId_init_h ':' externMethodTypeDefIR_init_h)
-          :: (callableId_init_t ':' externMethodTypeDefIR_init_t)*
-    `})
-  = $subst_externMethodTypeDefEnv(
-      externMethodTypeDefEnv_extern_subst,
-      `{ (callableId_init_t ':' externMethodTypeDefIR_init_t)* `})
-  -- if nameIR_init_h `( _ `) = callableId_init_h
-  -- if (callableId, externMethodTypeDefIR_abstract)
-      = $find_non_overloaded<externMethodTypeDefIR>(
-          externMethodTypeDefEnv_extern,
-          nameIR_init_h)
-  -- if EXTERN_METHOD ABSTRACT nameIR `< typeId_expl* ',' typeId_impl* `>
-  `( parameterIR* `) ':' typeIR_ret
-      = externMethodTypeDefIR_abstract
-  -- if externMethodTypeDefIR_concrete
-      = EXTERN_METHOD nameIR `< typeId_expl* ',' typeId_impl* `>
-      `( parameterIR* `) ':' typeIR_ret
-  -- ExternMethodTypeDef_alpha:
-      externMethodTypeDefIR_concrete ~~ externMethodTypeDefIR_init_h
-  -- if externMethodTypeDefEnv_extern_subst
-      = $update_map<callableId, externMethodTypeDefIR>(
-          externMethodTypeDefEnv_extern,
-          callableId,
-          externMethodTypeDefIR_concrete)
+  rule Subst_externMethodTypeDefEnv/nil:
+    externMethodTypeDefEnv_extern |- `{ eps `} : externMethodTypeDefEnv_extern
+
+  rule Subst_externMethodTypeDefEnv/cons:
+    externMethodTypeDefEnv_extern
+        |- `{
+          (callableId_init_h ':' externMethodTypeDefIR_init_h)
+              :: (callableId_init_t ':' externMethodTypeDefIR_init_t)*
+        `}
+            : externMethodTypeDefEnv_extern_subst_t
+    -- if nameIR_init_h `( _ `) = callableId_init_h
+    -- if (callableId, externMethodTypeDefIR_abstract)
+        = $find_non_overloaded<externMethodTypeDefIR>(
+            externMethodTypeDefEnv_extern,
+            nameIR_init_h)
+    -- if EXTERN_METHOD ABSTRACT nameIR `< typeId_expl* ',' typeId_impl* `>
+    `( parameterIR* `) ':' typeIR_ret
+        = externMethodTypeDefIR_abstract
+    -- if externMethodTypeDefIR_concrete
+        = EXTERN_METHOD nameIR `< typeId_expl* ',' typeId_impl* `>
+        `( parameterIR* `) ':' typeIR_ret
+    -- ExternMethodTypeDef_alpha:
+        externMethodTypeDefIR_concrete ~~ externMethodTypeDefIR_init_h
+    -- if externMethodTypeDefEnv_extern_subst
+        = $update_map<callableId, externMethodTypeDefIR>(
+            externMethodTypeDefEnv_extern,
+            callableId,
+            externMethodTypeDefIR_concrete)
+    -- Subst_externMethodTypeDefEnv:
+        externMethodTypeDefEnv_extern_subst
+            |- `{ (callableId_init_t ':' externMethodTypeDefIR_init_t)* `}
+                : externMethodTypeDefEnv_extern_subst_t
+
+}
 
 relation InstDecl_objectInitializer_ok:
   cursor typingContext
@@ -16659,10 +16692,9 @@ rule InstDecl_objectInitializer_ok:
       p TC_1
           |- objectDeclarationList
               : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*
-  -- if externMethodTypeDefEnv_init_subst
-      = $subst_externMethodTypeDefEnv(
-          externMethodTypeDefEnv_extern,
-          externMethodTypeDefEnv_init)
+  -- Subst_externMethodTypeDefEnv:
+      externMethodTypeDefEnv_extern
+          |- externMethodTypeDefEnv_init : externMethodTypeDefEnv_init_subst
   -- if typeIR_object_init
       = EXTERN typeId_extern `< typeIR_arg* `> externMethodTypeDefEnv_init_subst
   -- if $is_concrete_extern_object(typeIR_object_init)
@@ -17042,7 +17074,7 @@ relation Enum_serializable_field_ok:
 rule Enum_serializable_field_ok:
   TC_0 nameIR_enum typeIR |- name '=' expression : TC_1 (nameIR '=' value)
   -- Expr_ok: BLOCK TC_0 |- expression : typedExpressionIR
-  -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR)
+  -- Cast_unary: `( typeIR `) typedExpressionIR : typedExpressionIR_cast
   -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_cast)
   -- Expr_eval_lctk: BLOCK TC_0 |- typedExpressionIR_cast ~> value
   -- if nameIR = $name(name)
@@ -17510,18 +17542,19 @@ rule SelectCase_keyset_simple_ok/mask:
           : typedExpressionIR_l_casted '&&&' typedExpressionIR_r_casted
   -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-  -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-      = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+  -- Cast_binary:
+      typedExpressionIR_l ',' typedExpressionIR_r
+          : typedExpressionIR_l_cast ',' typedExpressionIR_r_cast
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
       = $reduce_serenum_binary(
           typedExpressionIR_l_cast,
           typedExpressionIR_r_cast,
           def $compat_mask)
   -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
-  -- if typedExpressionIR_l_casted
-      = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
-  -- if typedExpressionIR_r_casted
-      = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
+  -- Cast_unary:
+      `( typeIR_key `) typedExpressionIR_l_reduced : typedExpressionIR_l_casted
+  -- Cast_unary:
+      `( typeIR_key `) typedExpressionIR_r_reduced : typedExpressionIR_r_casted
 
 
 
@@ -17533,8 +17566,9 @@ rule SelectCase_keyset_simple_ok/range:
           : typedExpressionIR_l_casted '..' typedExpressionIR_r_casted
   -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-  -- if (typedExpressionIR_l_cast, typedExpressionIR_r_cast)
-      = $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
+  -- Cast_binary:
+      typedExpressionIR_l ',' typedExpressionIR_r
+          : typedExpressionIR_l_cast ',' typedExpressionIR_r_cast
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
       = $reduce_serenum_binary(
           typedExpressionIR_l_cast,
@@ -17542,10 +17576,10 @@ rule SelectCase_keyset_simple_ok/range:
           def $compat_range)
   -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
   -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
-  -- if typedExpressionIR_l_casted
-      = $cast_unary(typedExpressionIR_l_reduced, typeIR_key)
-  -- if typedExpressionIR_r_casted
-      = $cast_unary(typedExpressionIR_r_reduced, typeIR_key)
+  -- Cast_unary:
+      `( typeIR_key `) typedExpressionIR_l_reduced : typedExpressionIR_l_casted
+  -- Cast_unary:
+      `( typeIR_key `) typedExpressionIR_r_reduced : typedExpressionIR_r_casted
 
 
 
@@ -18317,10 +18351,10 @@ rulegroup TableEntry_keyset_simple_ok/mask {
     -- if TBLC.MODE = LPM n
     -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-    -- if typedExpressionIR_l_cast
-        = $cast_unary(typedExpressionIR_l, typeIR_key)
-    -- if typedExpressionIR_r_cast
-        = $cast_unary(typedExpressionIR_r, typeIR_key)
+    -- Cast_unary:
+        `( typeIR_key `) typedExpressionIR_l : typedExpressionIR_l_cast
+    -- Cast_unary:
+        `( typeIR_key `) typedExpressionIR_r : typedExpressionIR_r_cast
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -18339,10 +18373,10 @@ rulegroup TableEntry_keyset_simple_ok/mask {
             (typedExpressionIR_l_reduced '&&&' typedExpressionIR_r_reduced)
     -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-    -- if typedExpressionIR_l_cast
-        = $cast_unary(typedExpressionIR_l, typeIR_key)
-    -- if typedExpressionIR_r_cast
-        = $cast_unary(typedExpressionIR_r, typeIR_key)
+    -- Cast_unary:
+        `( typeIR_key `) typedExpressionIR_l : typedExpressionIR_l_cast
+    -- Cast_unary:
+        `( typeIR_key `) typedExpressionIR_r : typedExpressionIR_r_cast
     -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
         = $reduce_serenum_binary(
             typedExpressionIR_l_cast,
@@ -18362,8 +18396,8 @@ rule TableEntry_keyset_simple_ok/range:
           (typedExpressionIR_l_reduced '..' typedExpressionIR_r_reduced)
   -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
   -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-  -- if typedExpressionIR_l_cast = $cast_unary(typedExpressionIR_l, typeIR_key)
-  -- if typedExpressionIR_r_cast = $cast_unary(typedExpressionIR_r, typeIR_key)
+  -- Cast_unary: `( typeIR_key `) typedExpressionIR_l : typedExpressionIR_l_cast
+  -- Cast_unary: `( typeIR_key `) typedExpressionIR_r : typedExpressionIR_r_cast
   -- if (typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)
       = $reduce_serenum_binary(
           typedExpressionIR_l_cast,
@@ -19045,8 +19079,8 @@ rule Call_convention_expr_ok/in:
   p TC actctxt
       |- (_ IN typeIR_param _ _) '@' typedExpressionIR_arg
           : typedExpressionIR_arg_cast
-  -- if typedExpressionIR_arg_cast
-      = $cast_unary(typedExpressionIR_arg, typeIR_param)
+  -- Cast_unary:
+      `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR_arg_cast
 
 
 
@@ -19074,15 +19108,15 @@ rulegroup Call_convention_expr_ok/directionless {
     p TC ACTION
         |- (_ _EMPTY typeIR_param _ _) '@' typedExpressionIR_arg
             : typedExpressionIR_arg_cast
-    -- if typedExpressionIR_arg_cast
-        = $cast_unary(typedExpressionIR_arg, typeIR_param)
+    -- Cast_unary:
+        `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR_arg_cast
 
   rule Call_convention_expr_ok/non-action:
     p TC NOACTION
         |- (_ _EMPTY typeIR_param _ _) '@' typedExpressionIR_arg
             : typedExpressionIR_arg_cast
-    -- if typedExpressionIR_arg_cast
-        = $cast_unary(typedExpressionIR_arg, typeIR_param)
+    -- Cast_unary:
+        `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR_arg_cast
     -- if DYN =/= $ctk_of_typedExpressionIR(typedExpressionIR_arg)
 
 }
@@ -19163,68 +19197,34 @@ inference = map<typeId, typeIR>
 
 
 
-dec $infer(typeId*, parameterIR*, parameterIR*, argumentIR*) : inference
+relation Infer:
+  typeId* |- parameterIR* ',' parameterIR* '@' argumentIR* : inference
 
-dec $infer_pair(constraint, parameterIR, argumentIR) : constraint
+relation Infer_pair:
+  constraint |- parameterIR '@' argumentIR : constraint
+
+relation Gen_constraint:
+  constraint |- typeIR* '@' typeIR* : constraint
+
+relation Gen_constraint_pair:
+  constraint |- typeIR '@' typeIR : constraint
+
+relation Merge_constraint:
+   |- constraint ',' constraint : constraint
+
+relation Merge_constraints:
+   |- constraint ',' constraint* : constraint
+
+relation Merge_infer:
+   |- infer ',' infer : infer
+
+
+
+
 
 dec $resolve_inference(inference) : inference
 
 dec $resolve_inference'(typeIR) : typeIR
-
-dec $gen_constraint(constraint, typeIR*, typeIR*) : constraint
-
-dec $gen_constraint_pair(constraint, typeIR, typeIR) : constraint
-
-dec $merge_constraint(constraint, constraint) : constraint
-
-dec $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
-
-dec $merge_constraints(constraint, constraint*) : constraint
-
-dec $resolve_constraint(strictness, constraint) : inference
-
-
-
-
-
-def $infer(eps, parameterIR*, parameterIR_optional*, argumentIR*)
-  = $empty_map<typeId, typeIR>()
-
-def $infer(typeId_infer*, parameterIR*, parameterIR_optional*, argumentIR*)
-  = inference_resolved
-  -- if typeId_infer* =/= eps
-  -- if strictness_init = $empty_strictness(typeId_infer*)
-  -- if B = $free_parameterIRs(parameterIR*)
-  -- if B_optional = $free_parameterIRs(parameterIR_optional*)
-  -- if `{ typeId_free* `} = $diff_set<typeId>(B_optional, B)
-  -- if strict* = $repeat_<strict>(LAX, |typeId_free*|)
-  -- if strictness
-      = $adds_map<typeId, strict>(strictness_init, typeId_free*, strict*)
-  -- if constraint_init = $empty_constraint(typeId_infer*)
-  -- (if (
-    constraint_pair = $infer_pair(constraint_init, parameterIR, argumentIR)))*
-  -- if constraint_inferred
-      = $merge_constraints(constraint_init, constraint_pair*)
-  -- if inference = $resolve_constraint(strictness, constraint_inferred)
-  -- if inference_resolved = $resolve_inference(inference)
-
-def $infer_pair(constraint, parameterIR, typedExpressionIR)
-  = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-  -- if _ _ typeIR_param _ _ = parameterIR
-  -- if typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR)
-
-def $infer_pair(constraint, parameterIR, nameIR '=' typedExpressionIR)
-  = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-  -- if _ _ typeIR_param _ _ = parameterIR
-  -- if typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR)
-
-def $infer_pair(constraint, parameterIR, nameIR '=' '_') = constraint
-
-def $infer_pair(constraint, parameterIR, '_') = constraint
-
-
-
-
 
 def $resolve_inference(`{ (typeId ':' typeIR)* `})
   = `{ (typeId ':' typeIR_resolved)* `}
@@ -19241,227 +19241,7 @@ def $resolve_inference'(typeIR) = typeIR
 
 
 
-def $gen_constraint_pair(constraint, _NAME typeId_param, typeIR_arg)
-  = $update_map<typeId, infer>(constraint, typeId_param, KNOWN AS typeIR_arg)
-  -- if $in_set<typeId>(typeId_param, $dom_map<typeId, infer>(constraint))
-
-
-
-
-
-def $gen_constraint_pair(constraint, TYPEDEF _ typeIR_param, typeIR_arg)
-  = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-
-def $gen_constraint_pair(constraint, typeIR_param, TYPEDEF _ typeIR_arg)
-  = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-  -- if ~(typeIR_param <: nameTypeIR)
-  -- if ~(typeIR_param <: typedefTypeIR)
-
-def $gen_constraint_pair(
-    constraint,
-    TYPE typeId typeIR_param,
-    TYPE typeId typeIR_arg)
-  = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-
-
-
-
-
-def $gen_constraint_pair(
-    constraint,
-    LIST `< typeIR_param `>,
-    LIST `< typeIR_arg `>)
-  = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-
-def $gen_constraint_pair(
-    constraint,
-    TUPLE `< typeIR_param* `>,
-    TUPLE `< typeIR_arg* `>)
-  = $gen_constraint(constraint, typeIR_param*, typeIR_arg*)
-
-def $gen_constraint_pair(
-    constraint,
-    ARRAY typeIR_param `[ n_size `],
-    ARRAY typeIR_arg `[ n_size `])
-  = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-
-def $gen_constraint_pair(
-    constraint,
-    HEADER_STACK typeIR_param `[ n_size `],
-    HEADER_STACK typeIR_arg `[ n_size `])
-  = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
-
-def $gen_constraint_pair(
-    constraint,
-    STRUCT typeId `< typeIR_arg_a* `> `{ _ `},
-    STRUCT typeId `< typeIR_arg_b* `> `{ _ `})
-  = $gen_constraint(constraint, typeIR_arg_a*, typeIR_arg_b*)
-
-def $gen_constraint_pair(
-    constraint,
-    HEADER typeId `< typeIR_arg_a* `> `{ _ `},
-    HEADER typeId `< typeIR_arg_b* `> `{ _ `})
-  = $gen_constraint(constraint, typeIR_arg_a*, typeIR_arg_b*)
-
-def $gen_constraint_pair(
-    constraint,
-    HEADER_UNION typeId `< typeIR_arg_a* `> `{ _ `},
-    HEADER_UNION typeId `< typeIR_arg_b* `> `{ _ `})
-  = $gen_constraint(constraint, typeIR_arg_a*, typeIR_arg_b*)
-
-
-
-
-
-def $gen_constraint_pair(
-    constraint,
-    EXTERN typeId `< typeIR_arg_a* `> `{ _ `},
-    EXTERN typeId `< typeIR_arg_b* `> `{ _ `})
-  = $gen_constraint(constraint, typeIR_arg_a*, typeIR_arg_b*)
-
-def $gen_constraint_pair(
-    constraint,
-    PARSER _ `< _ `> `( parameterIR_param* `),
-    PARSER _ `< _ `> `( parameterIR_arg* `))
-  = $gen_constraint(constraint, typeIR_param*, typeIR_arg*)
-  -- (if (_ direction typeIR_param _ _ = parameterIR_param))*
-  -- (if (_ direction typeIR_arg _ _ = parameterIR_arg))*
-
-def $gen_constraint_pair(
-    constraint,
-    CONTROL _ `< _ `> `( parameterIR_param* `),
-    CONTROL _ `< _ `> `( parameterIR_arg* `))
-  = $gen_constraint(constraint, typeIR_param*, typeIR_arg*)
-  -- (if (_ direction typeIR_param _ _ = parameterIR_param))*
-  -- (if (_ direction typeIR_arg _ _ = parameterIR_arg))*
-
-def $gen_constraint_pair(
-    constraint,
-    PACKAGE _ `< _ `> `{ typeIR_param* `},
-    PACKAGE _ `< _ `> `{ typeIR_arg* `})
-  = $gen_constraint(constraint, typeIR_param*, typeIR_arg*)
-
-def $gen_constraint_pair(constraint, typeIR_param, typeIR_arg) = constraint
-  -- otherwise
-
-
-
-
-
-def $gen_constraint(constraint, typeIR_param*, typeIR_arg*)
-  = $merge_constraints(constraint, constraint_pair*)
-  -- (if (
-    constraint_pair
-        = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)))*
-
-
-
-
-
-def $merge_constraint(constraint_pre, constraint_post)
-  = $merge_constraint'(constraint_pre, constraint_post, typeId_pre*, `{ eps `})
-  -- if `{ typeId_pre* `} = $dom_map<typeId, infer>(constraint_pre)
-  -- if `{ typeId_post* `} = $dom_map<typeId, infer>(constraint_post)
-  -- if $eq_set<typeId>(`{ typeId_pre* `}, `{ typeId_post* `})
-
-def $merge_constraint'(constraint_pre, constraint_post, eps, constraint)
-  = constraint
-
-def $merge_constraint'(
-    constraint_pre,
-    constraint_post,
-    typeId_h :: typeId_t*,
-    constraint)
-  = $merge_constraint'(
-      constraint_pre,
-      constraint_post,
-      typeId_t*,
-      constraint_updated)
-  -- if UNKNOWN = $find_map<typeId, infer>(constraint_pre, typeId_h)
-  -- if UNKNOWN = $find_map<typeId, infer>(constraint_post, typeId_h)
-  -- if constraint_updated
-      = $update_map<typeId, infer>(constraint, typeId_h, UNKNOWN)
-
-def $merge_constraint'(
-    constraint_pre,
-    constraint_post,
-    typeId_h :: typeId_t*,
-    constraint)
-  = $merge_constraint'(
-      constraint_pre,
-      constraint_post,
-      typeId_t*,
-      constraint_updated)
-  -- if UNKNOWN = $find_map<typeId, infer>(constraint_pre, typeId_h)
-  -- if KNOWN AS typeIR_post
-      = $find_map<typeId, infer>(constraint_post, typeId_h)
-  -- if constraint_updated
-      = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_post)
-
-def $merge_constraint'(
-    constraint_pre,
-    constraint_post,
-    typeId_h :: typeId_t*,
-    constraint)
-  = $merge_constraint'(
-      constraint_pre,
-      constraint_post,
-      typeId_t*,
-      constraint_updated)
-  -- if KNOWN AS typeIR_pre = $find_map<typeId, infer>(constraint_pre, typeId_h)
-  -- if UNKNOWN = $find_map<typeId, infer>(constraint_post, typeId_h)
-  -- if constraint_updated
-      = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_pre)
-
-def $merge_constraint'(
-    constraint_pre,
-    constraint_post,
-    typeId_h :: typeId_t*,
-    constraint)
-  = $merge_constraint'(
-      constraint_pre,
-      constraint_post,
-      typeId_t*,
-      constraint_updated)
-  -- if KNOWN AS typeIR_pre = $find_map<typeId, infer>(constraint_pre, typeId_h)
-  -- if KNOWN AS typeIR_post
-      = $find_map<typeId, infer>(constraint_post, typeId_h)
-  -- Cast_impl: typeIR_pre -> typeIR_post : OK _
-  -- if constraint_updated
-      = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_post)
-
-def $merge_constraint'(
-    constraint_pre,
-    constraint_post,
-    typeId_h :: typeId_t*,
-    constraint)
-  = $merge_constraint'(
-      constraint_pre,
-      constraint_post,
-      typeId_t*,
-      constraint_updated)
-  -- if KNOWN AS typeIR_pre = $find_map<typeId, infer>(constraint_pre, typeId_h)
-  -- if KNOWN AS typeIR_post
-      = $find_map<typeId, infer>(constraint_post, typeId_h)
-  -- Cast_impl: typeIR_pre -> typeIR_post : FAIL
-  -- Cast_impl: typeIR_post -> typeIR_pre : OK _
-  -- if constraint_updated
-      = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_pre)
-
-def $merge_constraints(constraint_pre, eps) = constraint_pre
-
-def $merge_constraints(
-    constraint_pre_0,
-    constraint_post_h :: constraint_post_t*)
-  = constraint_pre_2
-  -- if constraint_pre_1
-      = $merge_constraint(constraint_pre_0, constraint_post_h)
-  -- if constraint_pre_2
-      = $merge_constraints(constraint_pre_1, constraint_post_t*)
-
-
-
-
+dec $resolve_constraint(strictness, constraint) : inference
 
 def $resolve_constraint(strictness, `{ eps `}) = `{ eps `}
 
@@ -19481,6 +19261,243 @@ def $resolve_constraint(
   -- if $find_map<typeId, strict>(strictness, typeId_h) = LAX
   -- if `{ (typeId_t ':' typeIR_t)* `}
       = $resolve_constraint(strictness, `{ (typeId_t ':' infer_t)* `})
+
+
+
+
+
+rule Infer/empty:
+  eps |- _ ',' _ '@' _ : `{ eps `}
+
+rule Infer/nonempty:
+  typeId_infer*
+      |- parameterIR* ',' parameterIR_optional* '@' argumentIR*
+          : inference_resolved
+  -- if typeId_infer* =/= eps
+  -- if strictness_init = $empty_strictness(typeId_infer*)
+  -- if B = $free_parameterIRs(parameterIR*)
+  -- if B_optional = $free_parameterIRs(parameterIR_optional*)
+  -- if `{ typeId_free* `} = $diff_set<typeId>(B_optional, B)
+  -- if strict* = $repeat_<strict>(LAX, |typeId_free*|)
+  -- if strictness
+      = $adds_map<typeId, strict>(strictness_init, typeId_free*, strict*)
+  -- if constraint_init = $empty_constraint(typeId_infer*)
+  -- (Infer_pair:
+      constraint_init |- parameterIR '@' argumentIR : constraint_pair)*
+  -- Merge_constraints:
+       |- constraint_init ',' constraint_pair* : constraint_inferred
+  -- if inference = $resolve_constraint(strictness, constraint_inferred)
+  -- if inference_resolved = $resolve_inference(inference)
+
+rule Infer_pair/expression:
+  constraint |- parameterIR '@' typedExpressionIR : constraint_updated
+  -- if _ _ typeIR_param _ _ = parameterIR
+  -- if typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR)
+  -- Gen_constraint_pair:
+      constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+
+rule Infer_pair/named-expression:
+  constraint
+      |- parameterIR '@' (nameIR '=' typedExpressionIR) : constraint_updated
+  -- if _ _ typeIR_param _ _ = parameterIR
+  -- if typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR)
+  -- Gen_constraint_pair:
+      constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+
+rule Infer_pair/named-missing:
+  constraint |- _ '@' (_ '=' '_') : constraint
+
+rule Infer_pair/missing:
+  constraint |- _ '@' '_' : constraint
+
+
+
+
+
+rule Gen_constraint_pair/name:
+  constraint |- (_NAME typeId_param) '@' typeIR_arg : constraint_updated
+  -- if $in_set<typeId>(typeId_param, $dom_map<typeId, infer>(constraint))
+  -- if constraint_updated
+      = $update_map<typeId, infer>(
+          constraint,
+          typeId_param,
+          KNOWN AS typeIR_arg)
+
+
+
+
+
+rule Gen_constraint_pair/typedef-param:
+  constraint |- (TYPEDEF _ typeIR_param) '@' typeIR_arg : constraint_updated
+  -- Gen_constraint_pair:
+      constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+
+rule Gen_constraint_pair/typedef-arg:
+  constraint |- typeIR_param '@' (TYPEDEF _ typeIR_arg) : constraint_updated
+  -- if ~(typeIR_param <: nameTypeIR)
+  -- if ~(typeIR_param <: typedefTypeIR)
+  -- Gen_constraint_pair:
+      constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+
+rule Gen_constraint_pair/newtype:
+  constraint
+      |- (TYPE typeId typeIR_param) '@' (TYPE typeId typeIR_arg)
+          : constraint_updated
+  -- Gen_constraint_pair:
+      constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+
+
+
+
+
+rule Gen_constraint_pair/list:
+  constraint
+      |- (LIST `< typeIR_param `>) '@' (LIST `< typeIR_arg `>)
+          : constraint_updated
+  -- Gen_constraint_pair:
+      constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+
+rule Gen_constraint_pair/tuple:
+  constraint
+      |- (TUPLE `< typeIR_param* `>) '@' (TUPLE `< typeIR_arg* `>)
+          : constraint_updated
+  -- Gen_constraint:
+      constraint |- typeIR_param* '@' typeIR_arg* : constraint_updated
+
+rule Gen_constraint_pair/array:
+  constraint
+      |- (ARRAY typeIR_param `[ n_size `]) '@' (ARRAY typeIR_arg `[ n_size `])
+          : constraint_updated
+  -- Gen_constraint_pair:
+      constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+
+rule Gen_constraint_pair/header-stack:
+  constraint
+      |- (HEADER_STACK typeIR_param `[ n_size `]) '@'
+      (HEADER_STACK typeIR_arg `[ n_size `])
+          : constraint_updated
+  -- Gen_constraint_pair:
+      constraint |- typeIR_param '@' typeIR_arg : constraint_updated
+
+rule Gen_constraint_pair/struct:
+  constraint
+      |- (STRUCT typeId `< typeIR_arg_a* `> `{ _ `}) '@'
+      (STRUCT typeId `< typeIR_arg_b* `> `{ _ `})
+          : constraint_updated
+  -- Gen_constraint:
+      constraint |- typeIR_arg_a* '@' typeIR_arg_b* : constraint_updated
+
+rule Gen_constraint_pair/header:
+  constraint
+      |- (HEADER typeId `< typeIR_arg_a* `> `{ _ `}) '@'
+      (HEADER typeId `< typeIR_arg_b* `> `{ _ `})
+          : constraint_updated
+  -- Gen_constraint:
+      constraint |- typeIR_arg_a* '@' typeIR_arg_b* : constraint_updated
+
+rule Gen_constraint_pair/header-union:
+  constraint
+      |- (HEADER_UNION typeId `< typeIR_arg_a* `> `{ _ `}) '@'
+      (HEADER_UNION typeId `< typeIR_arg_b* `> `{ _ `})
+          : constraint_updated
+  -- Gen_constraint:
+      constraint |- typeIR_arg_a* '@' typeIR_arg_b* : constraint_updated
+
+
+
+
+
+rule Gen_constraint_pair/extern:
+  constraint
+      |- (EXTERN typeId `< typeIR_arg_a* `> `{ _ `}) '@'
+      (EXTERN typeId `< typeIR_arg_b* `> `{ _ `})
+          : constraint_updated
+  -- Gen_constraint:
+      constraint |- typeIR_arg_a* '@' typeIR_arg_b* : constraint_updated
+
+rule Gen_constraint_pair/parser:
+  constraint
+      |- (PARSER _ `< _ `> `( parameterIR_param* `)) '@'
+      (PARSER _ `< _ `> `( parameterIR_arg* `))
+          : constraint_updated
+  -- (if (_ direction typeIR_param _ _ = parameterIR_param))*
+  -- (if (_ direction typeIR_arg _ _ = parameterIR_arg))*
+  -- Gen_constraint:
+      constraint |- typeIR_param* '@' typeIR_arg* : constraint_updated
+
+rule Gen_constraint_pair/control:
+  constraint
+      |- (CONTROL _ `< _ `> `( parameterIR_param* `)) '@'
+      (CONTROL _ `< _ `> `( parameterIR_arg* `))
+          : constraint_updated
+  -- (if (_ direction typeIR_param _ _ = parameterIR_param))*
+  -- (if (_ direction typeIR_arg _ _ = parameterIR_arg))*
+  -- Gen_constraint:
+      constraint |- typeIR_param* '@' typeIR_arg* : constraint_updated
+
+rule Gen_constraint_pair/package:
+  constraint
+      |- (PACKAGE _ `< _ `> `{ typeIR_param* `}) '@'
+      (PACKAGE _ `< _ `> `{ typeIR_arg* `})
+          : constraint_updated
+  -- Gen_constraint:
+      constraint |- typeIR_param* '@' typeIR_arg* : constraint_updated
+
+rule Gen_constraint_pair/default:
+  constraint |- _ '@' _ : constraint
+  -- otherwise
+
+
+
+
+
+rule Gen_constraint:
+  constraint |- typeIR_param* '@' typeIR_arg* : constraint_merged
+  -- (Gen_constraint_pair:
+      constraint |- typeIR_param '@' typeIR_arg : constraint_pair)*
+  -- Merge_constraints:  |- constraint ',' constraint_pair* : constraint_merged
+
+
+
+
+
+rule Merge_constraint:
+   |- constraint_pre ',' constraint_post : `{ (typeId ':' infer)* `}
+  -- if `{ (typeId ':' infer_pre)* `} = constraint_pre
+  -- if `{ typeId_post* `} = $dom_map<typeId, infer>(constraint_post)
+  -- if $eq_set<typeId>(`{ typeId* `}, `{ typeId_post* `})
+  -- (if infer_post = $find_map<typeId, infer>(constraint_post, typeId))*
+  -- (Merge_infer:  |- infer_pre ',' infer_post : infer)*
+
+rule Merge_infer/unknown:
+   |- UNKNOWN ',' UNKNOWN : UNKNOWN
+
+rule Merge_infer/known-post:
+   |- UNKNOWN ',' (KNOWN AS typeIR_post) : KNOWN AS typeIR_post
+
+rule Merge_infer/known-pre:
+   |- (KNOWN AS typeIR_pre) ',' UNKNOWN : KNOWN AS typeIR_pre
+
+rule Merge_infer/cast-pre:
+   |- (KNOWN AS typeIR_pre) ',' (KNOWN AS typeIR_post) : KNOWN AS typeIR_post
+  -- Cast_impl: typeIR_pre -> typeIR_post : OK _
+
+rule Merge_infer/cast-post:
+   |- (KNOWN AS typeIR_pre) ',' (KNOWN AS typeIR_post) : KNOWN AS typeIR_pre
+  -- Cast_impl: typeIR_pre -> typeIR_post : FAIL
+  -- Cast_impl: typeIR_post -> typeIR_pre : OK _
+
+rule Merge_constraints/nil:
+   |- constraint_pre ',' eps : constraint_pre
+
+rule Merge_constraints/cons:
+
+      |- constraint_pre_0 ',' (constraint_post_h :: constraint_post_t*)
+          : constraint_pre_2
+  -- Merge_constraint:
+       |- constraint_pre_0 ',' constraint_post_h : constraint_pre_1
+  -- Merge_constraints:
+       |- constraint_pre_1 ',' constraint_post_t* : constraint_pre_2
 
 dec $resolve_type_alias(typeIR) : (nameIR, typeIR*)
 
@@ -19634,12 +19651,10 @@ rulegroup Inst_ok {
             argumentIR*,
             id_default*,
             id_optional*)
-    -- if inference
-        = $infer(
-            typeId_infer*,
-            parameterIR_aligned*,
-            parameterIR_optional*,
-            argumentIR*)
+    -- Infer:
+        typeId_infer*
+            |- parameterIR_aligned* ',' parameterIR_optional* '@' argumentIR*
+                : inference
     -- (if (
       typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR)))*
     -- (if (
@@ -19671,12 +19686,10 @@ rulegroup Inst_ok {
             argumentIR*,
             id_default*,
             id_optional*)
-    -- if inference
-        = $infer(
-            typeId_infer*,
-            parameterIR_aligned*,
-            parameterIR_optional*,
-            argumentIR*)
+    -- Infer:
+        typeId_infer*
+            |- parameterIR_aligned* ',' parameterIR_optional* '@' argumentIR*
+                : inference
     -- (if (
       typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR)))*
     -- (if (
@@ -19980,12 +19993,10 @@ rule Call_ok/definedFunctionTypeIR:
           argumentIR*,
           id_default*,
           id_optional*)
-  -- if inference
-      = $infer(
-          typeId_infer*,
-          parameterIR_aligned*,
-          parameterIR_optional*,
-          argumentIR*)
+  -- Infer:
+      typeId_infer*
+          |- parameterIR_aligned* ',' parameterIR_optional* '@' argumentIR*
+              : inference
   -- (if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR)))*
   -- (if (
     parameterIR_aligned_inferred
@@ -20043,12 +20054,10 @@ rule Call_ok/externFunctionTypeIR:
           argumentIR*,
           id_default*,
           id_optional*)
-  -- if inference
-      = $infer(
-          typeId_infer*,
-          parameterIR_aligned*,
-          parameterIR_optional*,
-          argumentIR*)
+  -- Infer:
+      typeId_infer*
+          |- parameterIR_aligned* ',' parameterIR_optional* '@' argumentIR*
+              : inference
   -- (if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR)))*
   -- (if (
     parameterIR_aligned_inferred
@@ -20114,12 +20123,10 @@ rulegroup Call_ok/externMethodTypeIR {
             argumentIR*,
             id_default*,
             id_optional*)
-    -- if inference
-        = $infer(
-            typeId_infer*,
-            parameterIR_aligned*,
-            parameterIR_optional*,
-            argumentIR*)
+    -- Infer:
+        typeId_infer*
+            |- parameterIR_aligned* ',' parameterIR_optional* '@' argumentIR*
+                : inference
     -- (if (
       typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR)))*
     -- (if (
@@ -20150,12 +20157,10 @@ rulegroup Call_ok/externMethodTypeIR {
             argumentIR*,
             id_default*,
             id_optional*)
-    -- if inference
-        = $infer(
-            typeId_infer*,
-            parameterIR_aligned*,
-            parameterIR_optional*,
-            argumentIR*)
+    -- Infer:
+        typeId_infer*
+            |- parameterIR_aligned* ',' parameterIR_optional* '@' argumentIR*
+                : inference
     -- (if (
       typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR)))*
     -- (if (
@@ -28908,25 +28913,25 @@ rule Program_init:
   -- if EC
       = {GLOBAL globalEvalLayer, BLOCK blockEvalLayer, LOCAL localEvalLayer}
 
-dec $cast_control_plane(evalContext, typedExpressionIR, typeIR)
-  : typedExpressionIR?
+relation Cast_control_plane:
+  evalContext |- `( typeIR `) typedExpressionIR : typedExpressionIR?
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to)
-  = typedExpressionIR_cast
-  -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_to)
+rule Cast_control_plane/ok:
+  EC |- `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
+  -- Cast_unary: `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to)
-  = typedExpressionIR_cast
-  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+rule Cast_control_plane/boolean-to-integer:
+  EC |- `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
+  -- Cast_unary: `( typeIR_to `) typedExpressionIR : eps
   -- if BOOL = typeIR_to
   -- if INT = $type_of_typedExpressionIR(typedExpressionIR)
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
   -- if typedExpressionIR_cast
       = (`( typeIR_to `) typedExpressionIR) '#' `( typeIR_to ctk `)
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to)
-  = typedExpressionIR_error
-  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+rule Cast_control_plane/integer-to-error:
+  EC |- `( typeIR_to `) typedExpressionIR : typedExpressionIR_error
+  -- Cast_unary: `( typeIR_to `) typedExpressionIR : eps
   -- if ERROR = typeIR_to
   -- if (D n) '#' `( INT ctk `) = typedExpressionIR
   -- if `{ value_frame* `} = $codom_map<id, value>(EC.GLOBAL.FRAME)
@@ -28936,37 +28941,38 @@ def $cast_control_plane(EC, typedExpressionIR, typeIR_to)
   -- if typedExpressionIR_error
       = (ERROR '.' nameIR_error) '#' `( typeIR_to ctk `)
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to)
-  = typedExpressionIR_cast
-  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+rule Cast_control_plane/typedef:
+  EC |- `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
+  -- Cast_unary: `( typeIR_to `) typedExpressionIR : eps
   -- if TYPEDEF _ typeIR_base = typeIR_to
-  -- if typedExpressionIR_typedef
-      = $cast_control_plane(EC, typedExpressionIR, typeIR_base)
+  -- Cast_control_plane:
+      EC |- `( typeIR_base `) typedExpressionIR : typedExpressionIR_typedef
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR_typedef)
   -- if typedExpressionIR_cast
       = (`( typeIR_to `) typedExpressionIR_typedef) '#' `( typeIR_to ctk `)
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to)
-  = typedExpressionIR_cast
-  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+rule Cast_control_plane/newtype:
+  EC |- `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
+  -- Cast_unary: `( typeIR_to `) typedExpressionIR : eps
   -- if TYPE _ typeIR_base = typeIR_to
-  -- if typedExpressionIR_newtype
-      = $cast_control_plane(EC, typedExpressionIR, typeIR_base)
+  -- Cast_control_plane:
+      EC |- `( typeIR_base `) typedExpressionIR : typedExpressionIR_newtype
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR_newtype)
   -- if typedExpressionIR_cast
       = (`( typeIR_to `) typedExpressionIR_newtype) '#' `( typeIR_to ctk `)
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to)
-  = typedExpressionIR_cast
-  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+rule Cast_control_plane/ser-enum:
+  EC |- `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
+  -- Cast_unary: `( typeIR_to `) typedExpressionIR : eps
   -- if ENUM _ `< typeIR_base `> `{ _ `} = typeIR_to
-  -- if typedExpressionIR_enum
-      = $cast_control_plane(EC, typedExpressionIR, typeIR_base)
+  -- Cast_control_plane:
+      EC |- `( typeIR_base `) typedExpressionIR : typedExpressionIR_enum
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR_enum)
   -- if typedExpressionIR_cast
       = (`( typeIR_to `) typedExpressionIR_enum) '#' `( typeIR_to ctk `)
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = eps
+rule Cast_control_plane/fail:
+  _ |- `( _ `) _ : eps
   -- otherwise
 
 
@@ -29048,76 +29054,71 @@ def $needs_priority_tableKeysPropertyIR(KEY '=' `{ tableKeyIR* `})
 
 
 
-dec $tableObject_create_entry_key(
-    evalContext,
-    (nameIR, nameIR, typeIR),
-    tableKeysetInterface)
-  : simpleKeysetExpressionIR
+relation TableObject_create_entry_key:
+  evalContext
+      |- (nameIR, nameIR, typeIR) '@' tableKeysetInterface
+          : simpleKeysetExpressionIR
 
-def $tableObject_create_entry_key(
-    EC,
-    (nameIR_key, "exact", typeIR),
-    tableKeyInterface*)
-  = simpleKeysetExpressionIR
+rule TableObject_create_entry_key/exact:
+  EC
+      |- (nameIR_key, "exact", typeIR) '@' tableKeyInterface*
+          : simpleKeysetExpressionIR
   -- if tableKeyValueInterface
       = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   -- if text_key_value
       = $text_of_number_tableKeyValueInterface(tableKeyValueInterface)
   -- if i_key_value = $text_to_int(text_key_value)
   -- if typedExpressionIR = (D i_key_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_cast
-      = $cast_control_plane(EC, typedExpressionIR, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR : typedExpressionIR_cast
   -- if typeIR_set = SET `< typeIR `>
   -- if simpleKeysetExpressionIR
       = (`( typeIR_set `) typedExpressionIR_cast) '#' `( typeIR_set DYN `)
 
-def $tableObject_create_entry_key(
-    EC,
-    (nameIR_key, "ternary", typeIR),
-    tableKeyInterface*)
-  = simpleKeysetExpressionIR
+rule TableObject_create_entry_key/ternary-hex:
+  EC
+      |- (nameIR_key, "ternary", typeIR) '@' tableKeyInterface*
+          : simpleKeysetExpressionIR
   -- if _HEX text_key_value
       = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_base_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_base_cast
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_mask_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_mask_cast
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
 
-def $tableObject_create_entry_key(
-    EC,
-    (nameIR_key, "ternary", typeIR),
-    tableKeyInterface*)
-  = simpleKeysetExpressionIR
+rule TableObject_create_entry_key/ternary-bin:
+  EC
+      |- (nameIR_key, "ternary", typeIR) '@' tableKeyInterface*
+          : simpleKeysetExpressionIR
   -- if _BIN text_key_value
       = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_base_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_base_cast
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_mask_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_mask_cast
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
 
-def $tableObject_create_entry_key(
-    EC,
-    (nameIR_key, "lpm", typeIR),
-    tableKeyInterface*)
-  = simpleKeysetExpressionIR
+rule TableObject_create_entry_key/lpm-hex:
+  EC
+      |- (nameIR_key, "lpm", typeIR) '@' tableKeyInterface*
+          : simpleKeysetExpressionIR
   -- if _HEX text_key_value
       = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   -- if text_key_value_prefix = $strip_suffix_rec(text_key_value, "*")
@@ -29125,22 +29126,21 @@ def $tableObject_create_entry_key(
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_base_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_base_cast
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_mask_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_mask_cast
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
 
-def $tableObject_create_entry_key(
-    EC,
-    (nameIR_key, "lpm", typeIR),
-    tableKeyInterface*)
-  = simpleKeysetExpressionIR
+rule TableObject_create_entry_key/lpm-bin:
+  EC
+      |- (nameIR_key, "lpm", typeIR) '@' tableKeyInterface*
+          : simpleKeysetExpressionIR
   -- if _BIN text_key_value
       = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   -- if text_key_value_prefix = $strip_suffix_rec(text_key_value, "*")
@@ -29148,22 +29148,21 @@ def $tableObject_create_entry_key(
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_base_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_base_cast
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_mask_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_mask_cast
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
 
-def $tableObject_create_entry_key(
-    EC,
-    (nameIR_key, "lpm", typeIR),
-    tableKeyInterface*)
-  = simpleKeysetExpressionIR
+rule TableObject_create_entry_key/lpm-prefix:
+  EC
+      |- (nameIR_key, "lpm", typeIR) '@' tableKeyInterface*
+          : simpleKeysetExpressionIR
   -- if text_key_prefix_value _SLASH n_key_prefix_width
       = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   -- if text_key_prefix_value_rev = $reverse_bytes_of_hex(text_key_prefix_value)
@@ -29173,21 +29172,20 @@ def $tableObject_create_entry_key(
   -- if n_key_remaining_width = $(n_key_type_width - n_key_prefix_width)
   -- if i_key_base_value = $shl(i_key_prefix_value, n_key_remaining_width)
   -- if typedExpressionIR_base = (D i_key_base_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_base_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_base_cast
   -- if i_key_mask_value
       = $($pow2(n_key_type_width) - $pow2(n_key_remaining_width))
   -- if typedExpressionIR_mask = (D i_key_mask_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_mask_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_mask_cast
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
 
-def $tableObject_create_entry_key(
-    EC,
-    (nameIR_key, "optional", typeIR),
-    tableKeyInterface*)
-  = simpleKeysetExpressionIR
+rule TableObject_create_entry_key/optional:
+  EC
+      |- (nameIR_key, "optional", typeIR) '@' tableKeyInterface*
+          : simpleKeysetExpressionIR
   -- if _BIN text_key_value
       = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   -- if ~$contains(text_key_value, "*")
@@ -29195,51 +29193,51 @@ def $tableObject_create_entry_key(
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_base_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_base_cast
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_mask_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_mask_cast
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
 
-def $tableObject_create_entry_key(
-    EC,
-    (nameIR_key, "selector", typeIR),
-    tableKeyInterface*)
-  = simpleKeysetExpressionIR
+rule TableObject_create_entry_key/selector:
+  EC
+      |- (nameIR_key, "selector", typeIR) '@' tableKeyInterface*
+          : simpleKeysetExpressionIR
   -- if typedExpressionIR_zero = (D 0) '#' `( INT DYN `)
-  -- if typedExpressionIR_cast
-      = $cast_control_plane(EC, typedExpressionIR_zero, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_zero : typedExpressionIR_cast
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_cast '&&&' typedExpressionIR_cast
 
-dec $tableObject_create_entry_keys(
-    evalContext,
-    (nameIR, nameIR, typeIR)*,
-    tableKeysetInterface)
-  : simpleKeysetExpressionIR*
+relation TableObject_create_entry_keys:
+  evalContext
+      |- (nameIR, nameIR, typeIR)* '@' tableKeysetInterface
+          : simpleKeysetExpressionIR*
 
-def $tableObject_create_entry_keys(_, eps, _) = eps
+rule TableObject_create_entry_keys/nil:
+  _ |- eps '@' _ : eps
 
-def $tableObject_create_entry_keys(
-    EC,
-    (nameIR_key_h, nameIR_matchKind_h, typeIR_h)
-        :: (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*,
-    tableKeyInterface*)
-  = simpleKeysetExpressionIR_h
-      :: $tableObject_create_entry_keys(
-          EC,
-          (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*,
-          tableKeyInterface*)
-  -- if simpleKeysetExpressionIR_h
-      = $tableObject_create_entry_key(
-          EC,
-          (nameIR_key_h, nameIR_matchKind_h, typeIR_h),
-          tableKeyInterface*)
+rule TableObject_create_entry_keys/cons:
+  EC
+      |- (
+        (nameIR_key_h, nameIR_matchKind_h, typeIR_h)
+            :: (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*) '@'
+      tableKeyInterface*
+          : simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*
+  -- TableObject_create_entry_key:
+      EC
+          |- (nameIR_key_h, nameIR_matchKind_h, typeIR_h) '@' tableKeyInterface*
+              : simpleKeysetExpressionIR_h
+  -- TableObject_create_entry_keys:
+      EC
+          |- (nameIR_key_t, nameIR_matchKind_t, typeIR_t)* '@'
+          tableKeyInterface*
+              : simpleKeysetExpressionIR_t*
 
 
 
@@ -29261,17 +29259,14 @@ def $key_interface_of_tableObject(TABLE typeId `{ frame TBL `})
     (nameIR_key, nameIR_matchKind, typeIR)
         = $interface_of_tableKeyIR(tableKeyIR)))*
 
-dec $tableObject_create_entry_keyset(
-    evalContext,
-    tableKeysPropertyIR,
-    tableKeysetInterface)
-  : keysetExpressionIR
+relation TableObject_create_entry_keyset:
+  evalContext
+      |- tableKeysPropertyIR '@' tableKeysetInterface : keysetExpressionIR
 
-def $tableObject_create_entry_keyset(
-    EC,
-    KEY '=' `{ tableKeyIR* `},
-    tableKeyInterface*)
-  = `( simpleKeysetExpressionIR* `)
+rule TableObject_create_entry_keyset:
+  EC
+      |- (KEY '=' `{ tableKeyIR* `}) '@' tableKeyInterface*
+          : `( simpleKeysetExpressionIR* `)
   -- (if (
     (nameIR_key, nameIR_matchKind, typeIR)
         = $interface_of_tableKeyIR(tableKeyIR)))*
@@ -29282,11 +29277,10 @@ def $tableObject_create_entry_keyset(
   -- if $eq_set<nameIR>(
       `{ nameIR_key_non_selector* `},
       `{ nameIR_key_update* `})
-  -- if simpleKeysetExpressionIR*
-      = $tableObject_create_entry_keys(
-          EC,
-          (nameIR_key, nameIR_matchKind, typeIR)*,
-          tableKeyInterface*)
+  -- TableObject_create_entry_keys:
+      EC
+          |- (nameIR_key, nameIR_matchKind, typeIR)* '@' tableKeyInterface*
+              : simpleKeysetExpressionIR*
 
 dec $alias_to_original_lookup_map(parameterIR*) : map<nameIR, nameIR>
 
@@ -29420,17 +29414,16 @@ def $find_tableActionIR_unqualified'(
 
 
 
-dec $tableObject_create_entry_action(
-    evalContext,
-    tableActionsPropertyIR,
-    tableActionInterface)
-  : tableActionReferenceIR
+relation TableObject_create_entry_action:
+  evalContext
+      |- tableActionsPropertyIR '@' tableActionInterface
+          : tableActionReferenceIR
 
-def $tableObject_create_entry_action(
-    EC,
-    ACTIONS '=' `{ tableActionIR* `},
-    (nameIR_action_update, tableActionArgumentInterface_update*))
-  = (_BARE nameIR_found) controlPlaneNameIR `( argumentIR* `)
+rule TableObject_create_entry_action/qualified:
+  EC
+      |- (ACTIONS '=' `{ tableActionIR* `}) '@'
+      (nameIR_action_update, tableActionArgumentInterface_update*)
+          : (_BARE nameIR_found) controlPlaneNameIR `( argumentIR* `)
   -- if (nameIR_found, tableActionIR_found)
       = $find_tableActionIR_qualified(tableActionIR*, nameIR_action_update)
   -- if annotationList
@@ -29443,16 +29436,17 @@ def $tableObject_create_entry_action(
           tableActionArgumentInterface_update*)
   -- (if (_ _ typeIR_param _ _ = parameterIR_control))*
   -- (if (typedExpressionIR_arg = (D i_arg_aligned) '#' `( INT DYN `)))*
-  -- (if (
-    typedExpressionIR_arg_cast
-        = $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param)))*
+  -- (Cast_control_plane:
+      EC
+          |- `( typeIR_param `) typedExpressionIR_arg
+              : typedExpressionIR_arg_cast)*
   -- if argumentIR* = argumentIR_data* ++ typedExpressionIR_arg_cast*
 
-def $tableObject_create_entry_action(
-    EC,
-    ACTIONS '=' `{ tableActionIR* `},
-    (nameIR_action_update, tableActionArgumentInterface_update*))
-  = (_BARE nameIR_found) controlPlaneNameIR `( argumentIR* `)
+rule TableObject_create_entry_action/unqualified:
+  EC
+      |- (ACTIONS '=' `{ tableActionIR* `}) '@'
+      (nameIR_action_update, tableActionArgumentInterface_update*)
+          : (_BARE nameIR_found) controlPlaneNameIR `( argumentIR* `)
   -- if eps
       = $find_tableActionIR_qualified(tableActionIR*, nameIR_action_update)
   -- if (nameIR_found, tableActionIR_found)
@@ -29467,38 +29461,35 @@ def $tableObject_create_entry_action(
           tableActionArgumentInterface_update*)
   -- (if (_ _ typeIR_param _ _ = parameterIR_control))*
   -- (if (typedExpressionIR_arg = (D i_arg_aligned) '#' `( INT DYN `)))*
-  -- (if (
-    typedExpressionIR_arg_cast
-        = $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param)))*
+  -- (Cast_control_plane:
+      EC
+          |- `( typeIR_param `) typedExpressionIR_arg
+              : typedExpressionIR_arg_cast)*
   -- if argumentIR* = argumentIR_data* ++ typedExpressionIR_arg_cast*
 
 
 
 
 
-dec $tableObject_add_entry(
-    evalContext,
-    tableObject,
-    tableEntryPriorityInterface,
-    tableKeysetInterface,
-    tableActionInterface)
-  : tableObject?
+relation TableObject_add_entry:
+  evalContext
+      |- tableObject '@' tableEntryPriorityInterface ',' tableKeysetInterface
+      ',' tableActionInterface
+          : tableObject?
 
-def $tableObject_add_entry(
-    EC,
-    TABLE typeId `{ frame TBL `},
-    tableEntryPriorityInterface,
-    tableKeysetInterface,
-    tableActionInterface)
-  = TABLE typeId `{ frame TBL_updated `}
+rule TableObject_add_entry/ok:
+  EC
+      |- (TABLE typeId `{ frame TBL `}) '@' tableEntryPriorityInterface ','
+      tableKeysetInterface ',' tableActionInterface
+          : TABLE typeId `{ frame TBL_updated `}
   -- if tableEntryPriorityOptIR
       = $tableObject_create_entry_priority(tableEntryPriorityInterface)
   -- if $needs_priority_tableKeysPropertyIR(TBL.KEYS)
       => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR)
-  -- if keysetExpressionIR
-      = $tableObject_create_entry_keyset(EC, TBL.KEYS, tableKeysetInterface)
-  -- if tableActionReferenceIR
-      = $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface)
+  -- TableObject_create_entry_keyset:
+      EC |- TBL.KEYS '@' tableKeysetInterface : keysetExpressionIR
+  -- TableObject_create_entry_action:
+      EC |- TBL.ACTIONS '@' tableActionInterface : tableActionReferenceIR
   -- if tableEntryIR_update
       = eps tableEntryPriorityOptIR keysetExpressionIR ':'
       tableActionReferenceIR _EMPTY ';'
@@ -29508,33 +29499,24 @@ def $tableObject_add_entry(
       `{ tableEntryIR* ++ [tableEntryIR_update] `}
   -- if TBL_updated = TBL[ENTRIES = tableEntriesPropertyIR_updated]
 
-def $tableObject_add_entry(
-    EC,
-    _,
-    tableEntryPriorityInterface,
-    tableKeysetInterface,
-    tableActionInterface)
-  = eps
+rule TableObject_add_entry/fail:
+  _ |- _ '@' _ ',' _ ',' _ : eps
   -- otherwise
 
 
 
 
 
-dec $tableObject_add_default_action(
-    evalContext,
-    tableObject,
-    tableActionInterface)
-  : tableObject
+relation TableObject_add_default_action:
+  evalContext |- tableObject '@' tableActionInterface : tableObject
 
-def $tableObject_add_default_action(
-    EC,
-    TABLE typeId `{ frame TBL `},
-    tableActionInterface)
-  = TABLE typeId `{ frame TBL_updated `}
+rule TableObject_add_default_action:
+  EC
+      |- (TABLE typeId `{ frame TBL `}) '@' tableActionInterface
+          : TABLE typeId `{ frame TBL_updated `}
   -- if TBL.DEFAULT_ACTION = _ eps DEFAULT_ACTION '=' _ ';'
-  -- if tableActionReferenceIR
-      = $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface)
+  -- TableObject_create_entry_action:
+      EC |- TBL.ACTIONS '@' tableActionInterface : tableActionReferenceIR
   -- if tableDefaultActionPropertyIR
       = _EMPTY eps DEFAULT_ACTION '=' tableActionReferenceIR ';'
   -- if TBL_updated = TBL[DEFAULT_ACTION = tableDefaultActionPropertyIR]

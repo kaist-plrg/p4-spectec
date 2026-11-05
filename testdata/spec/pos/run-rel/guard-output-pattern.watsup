@@ -1,0 +1,20 @@
+;; Guards read only the inputs of a relation premise:
+;; the outputs are patterns whose variables the premise binds
+
+syntax pair = (nat, nat)
+
+var x : nat
+var y : nat
+var n : nat
+
+relation Pairs: nat |- pair*
+  hint(input %0)
+
+rule Pairs:
+  n |- [ (n, n) ]
+
+relation Main: OK
+
+rule Main: OK
+  -- Pairs: 1 |- (x, y)*
+  -- if x* = [ 1 ]
