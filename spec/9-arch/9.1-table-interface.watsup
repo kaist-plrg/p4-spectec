@@ -1,23 +1,33 @@
 ;;
 ;; Cast control plane-given values, which may need multiple casts inserted
 ;;
+;; These are relaxation of core P4's cast rules
+;;
 
-dec $cast_control_plane(evalContext, typedExpressionIR, typeIR) : typedExpressionIR?
-  hint(prose_in %1 "from control plane cast to" %2 "in" %0)
+relation Cast_control_plane:
+  evalContext |- `( typeIR `) typedExpressionIR : typedExpressionIR?
+  hint(input %0 %1 %2)
+  hint(prose_in %2 "from control plane cast to" %1 "in" %0)
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_cast
-  -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_to)
+rule Cast_control_plane/ok:
+  EC |- `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
+  -- Cast_unary:
+      `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_cast
-  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+rule Cast_control_plane/boolean-to-integer:
+  EC |- `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
+  -- Cast_unary:
+      `( typeIR_to `) typedExpressionIR : eps
   -- if BOOL = typeIR_to
   -- if INT = $type_of_typedExpressionIR(typedExpressionIR)
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
   -- if typedExpressionIR_cast
       = (`(typeIR_to`) typedExpressionIR) '#' `( typeIR_to ctk `)
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_error
-  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+rule Cast_control_plane/integer-to-error:
+  EC |- `( typeIR_to `) typedExpressionIR : typedExpressionIR_error
+  -- Cast_unary:
+      `( typeIR_to `) typedExpressionIR : eps
   -- if ERROR = typeIR_to
   -- if (D n) '#' `( INT ctk `) = typedExpressionIR
   -- if `{ value_frame* `} = $codom_map<id, value>(EC.GLOBAL.FRAME)
@@ -26,31 +36,41 @@ def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_er
   -- if typedExpressionIR_error
       = (ERROR '.' nameIR_error) '#' `( typeIR_to ctk `)
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_cast
-  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+rule Cast_control_plane/typedef:
+  EC |- `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
+  -- Cast_unary:
+      `( typeIR_to `) typedExpressionIR : eps
   -- if TYPEDEF _ typeIR_base = typeIR_to
-  -- if typedExpressionIR_typedef = $cast_control_plane(EC, typedExpressionIR, typeIR_base)
+  -- Cast_control_plane:
+      EC |- `( typeIR_base `) typedExpressionIR : typedExpressionIR_typedef
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR_typedef)
   -- if typedExpressionIR_cast
       = (`(typeIR_to`) typedExpressionIR_typedef) '#' `( typeIR_to ctk `)
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_cast
-  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+rule Cast_control_plane/newtype:
+  EC |- `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
+  -- Cast_unary:
+      `( typeIR_to `) typedExpressionIR : eps
   -- if TYPE _ typeIR_base = typeIR_to
-  -- if typedExpressionIR_newtype = $cast_control_plane(EC, typedExpressionIR, typeIR_base)
+  -- Cast_control_plane:
+      EC |- `( typeIR_base `) typedExpressionIR : typedExpressionIR_newtype
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR_newtype)
   -- if typedExpressionIR_cast
       = (`(typeIR_to`) typedExpressionIR_newtype) '#' `( typeIR_to ctk `)
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_cast
-  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+rule Cast_control_plane/ser-enum:
+  EC |- `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
+  -- Cast_unary:
+      `( typeIR_to `) typedExpressionIR : eps
   -- if ENUM _ `< typeIR_base `> `{ _ `} = typeIR_to
-  -- if typedExpressionIR_enum = $cast_control_plane(EC, typedExpressionIR, typeIR_base)
+  -- Cast_control_plane:
+      EC |- `( typeIR_base `) typedExpressionIR : typedExpressionIR_enum
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR_enum)
   -- if typedExpressionIR_cast
       = (`(typeIR_to`) typedExpressionIR_enum) '#' `( typeIR_to ctk `)
 
-def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = eps
+rule Cast_control_plane/fail:
+  _ |- `( _ `) _ : eps
   -- otherwise
 
 ;;
@@ -134,7 +154,8 @@ rule TableObject_create_entry_key/exact:
   ---- ;; create exact match expression
   -- if i_key_value = $text_to_int(text_key_value)
   -- if typedExpressionIR = (D i_key_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_cast = $cast_control_plane(EC, typedExpressionIR, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR : typedExpressionIR_cast
   -- if typeIR_set = SET `< typeIR `>
   -- if simpleKeysetExpressionIR
       = (`( typeIR_set `) typedExpressionIR_cast ) '#' `( typeIR_set DYN `)
@@ -149,15 +170,15 @@ rule TableObject_create_entry_key/ternary-hex:
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_base_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_base_cast
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_mask_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_mask_cast
   ---- ;; create ternary match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
@@ -172,15 +193,15 @@ rule TableObject_create_entry_key/ternary-bin:
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_base_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_base_cast
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_mask_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_mask_cast
   ---- ;; create ternary match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
@@ -198,15 +219,15 @@ rule TableObject_create_entry_key/lpm-hex:
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_base_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_base_cast
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_mask_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_mask_cast
   ---- ;; create ternary match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
@@ -224,15 +245,15 @@ rule TableObject_create_entry_key/lpm-bin:
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_base_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_base_cast
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_mask_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_mask_cast
   ---- ;; create ternary match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
@@ -250,13 +271,13 @@ rule TableObject_create_entry_key/lpm-prefix:
   -- if n_key_remaining_width = $(n_key_type_width - n_key_prefix_width)
   -- if i_key_base_value = $shl(i_key_prefix_value, n_key_remaining_width)
   -- if typedExpressionIR_base = (D i_key_base_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_base_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_base_cast
   ---- ;; create mask expression
   -- if i_key_mask_value = $($pow2(n_key_type_width) - $pow2(n_key_remaining_width))
   -- if typedExpressionIR_mask = (D i_key_mask_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_mask_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_mask_cast
   ---- ;; create lpm expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
@@ -273,15 +294,15 @@ rule TableObject_create_entry_key/optional:
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_base_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_base_cast
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) '#' `( INT DYN `)
-  -- if typedExpressionIR_mask_cast
-      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_base : typedExpressionIR_mask_cast
   ---- ;; create optional match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast '&&&' typedExpressionIR_mask_cast
@@ -291,8 +312,8 @@ rule TableObject_create_entry_key/selector:
   : simpleKeysetExpressionIR
   ---- ;; create wildcard expression
   -- if typedExpressionIR_zero = (D 0) '#' `( INT DYN `)
-  -- if typedExpressionIR_cast
-      = $cast_control_plane(EC, typedExpressionIR_zero, typeIR)
+  -- Cast_control_plane:
+      EC |- `( typeIR `) typedExpressionIR_zero : typedExpressionIR_cast
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_cast '&&&' typedExpressionIR_cast
 
@@ -377,7 +398,8 @@ def $align_tableActionArgumentInterfaces(
     parameterIR*, (nameIR_arg, i_arg)*)
   = i_aligned*
   -- if `{ (nameIR_alias ':' nameIR_original)* `} = $alias_to_original_lookup_map(parameterIR*)
-  -- if (nameIR_arg_resolved = $find_map<nameIR, nameIR>(`{ (nameIR_alias ':' nameIR_original)* `}, nameIR_arg))*
+  -- if (nameIR_arg_resolved
+      = $find_map<nameIR, nameIR>(`{ (nameIR_alias ':' nameIR_original)* `}, nameIR_arg))*
   -- if (_ _ _ nameIR_param _ = parameterIR)*
   -- if $sub_set<nameIR>(`{ nameIR_arg_resolved* `}, `{ nameIR_param* `})
   -- (if i_aligned
@@ -482,8 +504,8 @@ rule TableObject_create_entry_action/qualified:
   ---- ;; cast arguments to parameter types
   -- if (_ _ typeIR_param _ _ = parameterIR_control)*
   -- if (typedExpressionIR_arg = (D i_arg_aligned) '#' `( INT DYN `))*
-  -- if (typedExpressionIR_arg_cast
-      = $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param))*
+  -- (Cast_control_plane:
+      EC |- `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR_arg_cast)*
   -- if argumentIR* = argumentIR_data* ++ typedExpressionIR_arg_cast*
 
 rule TableObject_create_entry_action/unqualified:
@@ -505,8 +527,8 @@ rule TableObject_create_entry_action/unqualified:
   ---- ;; cast arguments to parameter types
   -- if (_ _ typeIR_param _ _ = parameterIR_control)*
   -- if (typedExpressionIR_arg = (D i_arg_aligned) '#' `( INT DYN `))*
-  -- if (typedExpressionIR_arg_cast
-      = $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param))*
+  -- (Cast_control_plane:
+      EC |- `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR_arg_cast)*
   -- if argumentIR* = argumentIR_data* ++ typedExpressionIR_arg_cast*
 
 ;;; Table entry creation
