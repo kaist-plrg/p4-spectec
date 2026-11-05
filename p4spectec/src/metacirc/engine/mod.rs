@@ -30,16 +30,6 @@ use std::path::PathBuf;
 
 /// A native executor of the base specification at one depth.
 pub(in crate::metacirc) trait Engine {
-    /// Runs the program entry `name`, sending host calls to `levels`.
-    fn call_program<Ext: Extern>(
-        &mut self,
-        arena: &mut Arena,
-        upper: &mut UpperMut<'_, Ext>,
-        effects: &mut u64,
-        name: &str,
-        program: Value,
-    ) -> Eval<Vec<Value>, InterpreterError>;
-
     /// Calls relation `name`, sending host calls to `levels`.
     fn call_rel<Ext: Extern>(
         &mut self,
@@ -114,20 +104,6 @@ impl EngineStateKind {
 }
 
 impl Engine for EngineKind<'_> {
-    fn call_program<Ext: Extern>(
-        &mut self,
-        arena: &mut Arena,
-        upper: &mut UpperMut<'_, Ext>,
-        effects: &mut u64,
-        name: &str,
-        program: Value,
-    ) -> Eval<Vec<Value>, InterpreterError> {
-        match self {
-            Self::SpecTec(engine) => engine.call_program(arena, upper, effects, name, program),
-            Self::K(engine) => engine.call_program(arena, upper, effects, name, program),
-        }
-    }
-
     fn call_rel<Ext: Extern>(
         &mut self,
         arena: &mut Arena,

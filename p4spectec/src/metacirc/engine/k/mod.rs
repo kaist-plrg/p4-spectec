@@ -28,16 +28,13 @@ use crate::{
         il::ast::Typ,
     },
     metacirc::{Result, protocol::MetaKProtocol, tower::UpperMut},
-    runner::{Eval, Extern, InterpreterError, SideEffect},
+    runner::{Extern, InterpreterError, SideEffect},
 };
 use ffi::{Message, Worker};
 use std::{
     sync::mpsc::{Receiver, RecvError, TryRecvError},
     time::{Duration, Instant},
 };
-
-/// The entry relation of spec-meta-k, which runs a program's `$main()`.
-const ENTRY: &str = "Eval_AL";
 
 /// Reports a K thread that cannot serve a call.
 fn failed(message: impl Into<String>) -> Box<Report> {
@@ -80,26 +77,6 @@ impl<'s> KEngine<'s> {
 /// Every call sends JSON text to the depth's K thread and returns JSON text:
 /// `MetaKProtocol` makes the requests and reads the responses.
 impl Engine for KEngine<'_> {
-    /// Runs spec-meta-k's entry `name` on `program`,
-    /// the JSON text that `MetaKProtocol::encode_script` made.
-    fn call_program<Ext: Extern>(
-        &mut self,
-        arena: &mut Arena,
-        upper: &mut UpperMut<'_, Ext>,
-        effects: &mut u64,
-        name: &str,
-        program: Value,
-    ) -> Eval<Vec<Value>, InterpreterError> {
-        let checkpoint = *effects;
-        let result = self.run_program(arena, upper, effects, name, program);
-        let effect = if *effects == checkpoint && *effects != u64::MAX {
-            SideEffect::Pure
-        } else {
-            SideEffect::Impure
-        };
-        Eval::new(result, effect)
-    }
-
     /// Sends relation `name` with JSON text `values` to `serve()`,
     /// answering each `#ffiCall` of the K thread with
     /// `upper.host_call(arena, "host_eval", &[request])` until the response arrives.
@@ -159,26 +136,6 @@ impl Engine for KEngine<'_> {
 }
 
 impl KEngine<'_> {
-    /// Runs `Eval_AL` on a program: its spec loaded in place of C's, then `$main()`.
-    fn run_program<Ext: Extern>(
-        &mut self,
-        arena: &mut Arena,
-        upper: &mut UpperMut<'_, Ext>,
-        effects: &mut u64,
-        name: &str,
-        program: Value,
-    ) -> std::result::Result<Vec<Value>, InterpreterError> {
-        if name != ENTRY {
-            let message = format!("spec-meta-k's entry is {ENTRY}, not {name}");
-            return Err(InterpreterError::Fatal(failed(message)));
-        }
-        let request = MetaKProtocol::program_request(arena, program)?;
-        self.state.loaded = None;
-        let answer = self.exchange(arena, upper, effects, request)?;
-        let value_answer = make_text(arena, answer)?;
-        MetaKProtocol::program_outputs(arena, value_answer, name)
-    }
-
     /// Sends a request under C, loading C's specification into the thread first if needed.
     fn serve<Ext: Extern>(
         &mut self,

@@ -11,7 +11,7 @@
 //! `KoreInterface::print_runres` prints the `runres` that `Krun` returns
 //! as `krun` reports the final configuration.
 //! The parser, the printer, the offload, and the hooks are slots
-//! that the K-in-ST implementation fills; `docs/metacirc/k-in-st.md` says how.
+//! that the K-in-ST implementation fills.
 
 mod ffi;
 mod hooks;

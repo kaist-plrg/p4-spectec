@@ -5,12 +5,12 @@
 //! since the level below interprets it, and `Upper` stores them all
 //! in its extern slot, lent per call as `UpperMut` (see `upper`).
 //! A single-level tower executes its top level directly as its base.
-//! `build` assembles the levels; `patch` adds the entry the base calls;
-//! `Tower::eval_program` runs it on the base's `Engine`.
+//! `build` assembles the levels; `input` encodes the inputs of the base's entry;
+//! `Tower::eval_input` runs the entry on the base's `Engine`.
 //! A KORE input enters spec-k through `Tower::eval_krun` instead.
 
 mod build;
-mod patch;
+mod input;
 mod upper;
 
 pub(in crate::metacirc) use upper::{Top, TopMut, Upper, UpperMut};
@@ -37,7 +37,7 @@ use crate::{
         },
         il::ast as il,
     },
-    runner::{self, Eval, Extern, InterpreterError, Runner},
+    runner::{self, Extern, InterpreterError, Runner},
     sim_plugin::dummy::Dummy,
 };
 use std::num::NonZeroUsize;
@@ -104,20 +104,24 @@ impl<Ext: Extern> Tower<Ext> {
         self.base.reset();
     }
 
-    /// Executes a patched input at the native base's entry relation.
-    pub fn eval_program(&mut self, arena: &mut Arena, program: Value) -> Eval<Vec<Value>> {
+    /// Executes the native base's entry relation on encoded inputs.
+    pub fn eval_input(
+        &mut self,
+        arena: &mut Arena,
+        values: &[Value],
+    ) -> std::result::Result<Vec<Value>, InterpreterError> {
         let Self { levels, protocols, base, options } = self;
         let name = &levels[0].config().rel;
         // A P4 base runs the program directly
         if let BaseRunner::P4(runner) = base {
-            return runner.eval_program(arena, name, program);
+            return runner.eval_rel(arena, name, values).result;
         }
         // Any other base lends the levels above it with its definitions
         let LentBase { mut engine, spec_base, upper, effects } =
             base.lend().expect("a base other than P4 hosts levels");
         let env = TowerEnv { spec_base, levels, protocols, options: *options };
         let mut upper = upper.lend(&env);
-        engine.call_program(arena, &mut upper, effects, name, program)
+        engine.call_rel(arena, &mut upper, effects, name, values)
     }
 }
 
