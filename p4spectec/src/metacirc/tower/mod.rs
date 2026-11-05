@@ -23,7 +23,7 @@ use super::{
     },
     error,
     interp::TowerEnv,
-    protocol::ProtocolKind,
+    protocol::{Entered, ProtocolKind},
 };
 use crate::{
     interface::{kore::KoreInterface, p4::P4Interface},
@@ -54,6 +54,28 @@ pub struct Tower<Ext: Extern = Dummy> {
     pub(super) base: BaseRunner<Ext>,
     /// Options for the interpreters of reentry depths.
     pub(super) options: runner::Config,
+}
+
+/// The input of a tower: a P4 program for a P4 top level,
+/// or a script above an AL or IL top level, prepared in the form the top accepts.
+pub enum Input {
+    P4(Value),
+    Script(Script),
+}
+
+/// A script above the top level, entered at its function `main`.
+pub enum Script {
+    Al(al::Spec),
+    Il(il::Spec),
+}
+
+impl Script {
+    fn entered(&self) -> Entered<'_> {
+        match self {
+            Self::Al(spec_al) => Entered::Al(spec_al),
+            Self::Il(spec_il) => Entered::Il(spec_il),
+        }
+    }
 }
 
 /// A configured level, prepared in the form the level below loads.
@@ -182,6 +204,15 @@ impl PreparedLevel {
     pub(super) fn config(&self) -> &LevelConfig {
         match self {
             Self::Base { config, .. } | Self::Al { config, .. } | Self::Il { config, .. } => config,
+        }
+    }
+
+    /// Returns the specification the level below enters.
+    fn entered(&self) -> Entered<'_> {
+        match self {
+            Self::Al { spec_al, .. } => Entered::Al(spec_al),
+            Self::Il { spec_il, .. } => Entered::Il(spec_il),
+            Self::Base { .. } => unreachable!("the base is never entered from another level"),
         }
     }
 }

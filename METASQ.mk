@@ -24,10 +24,16 @@ metacirc: metacirc-cli
 	rm -f ./$(METACIRC)
 	cp "$(CARGO_TARGET_DIR)/release/metacirc" ./$(METACIRC)
 
-# The library a k tower loads, compiled from spec-meta-k (`kompiled` in towers/k-*.json)
-kompile:
-	@echo "kompile: compiling spec-meta-k is not implemented yet" >&2
-	@exit 1
+# The library a k tower loads, compiled from spec-meta-k (`kompiled` in towers/k-*.json),
+# with the metacirc binary that loads it
+KSPECDIR = spec-meta-k
+KLIBRARY = $(KSPECDIR)/kompiled/libspec-meta-k.so
+
+kompile: metacirc $(KLIBRARY)
+
+$(KLIBRARY): $(wildcard $(KSPECDIR)/*/*.k)
+	kompile $(KSPECDIR)/3-execution/3.14-entry.k --main-module AL --syntax-module SYNTAX \
+	  -o $(dir $(KLIBRARY)) --llvm-kompile-type c --llvm-kompile-output $(notdir $(KLIBRARY))
 
 # P4 corpus through the AL/P4 towers
 test-metacirc-run-al:

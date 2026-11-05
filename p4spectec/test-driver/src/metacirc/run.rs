@@ -263,8 +263,9 @@ fn run_programs(
                     let outcome = match parse_string(&mut arena, path, &source) {
                         Ok(program) => {
                             // Encoding failures abort; evaluation rejection is an outcome
-                            let values =
-                                tower.encode_input(&mut arena, program).map_err(|error| {
+                            let values = tower
+                                .encode_input(&mut arena, &metacirc::Input::P4(program))
+                                .map_err(|error| {
                                     Error::from(format!(
                                         "{}: test execution error: {error}",
                                         path.display()
