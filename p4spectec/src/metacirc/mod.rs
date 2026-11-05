@@ -8,8 +8,6 @@
 //! `boundary`, and a P4 extern that reenters runs on the next depth.
 //! `tower` builds the levels, `sim` drives them with an STF test,
 //! and `krun` runs a K definition on spec-k (K-in-ST).
-//! The K parts are slots; `docs/metacirc/st-in-k.md` and `k-in-st.md`
-//! say what each implementation fills.
 //!
 //! ```text
 //! Tower
@@ -32,7 +30,7 @@ mod sim;
 mod tower;
 
 use crate::{
-    interface::{self, p4::parse::parse_file},
+    interface::p4::parse::parse_file,
     lang::data::{arena::Arena, value::flat as value},
     runner::{self, Interface},
     sim_plugin::dummy::Dummy,
@@ -44,7 +42,7 @@ use std::path::PathBuf;
 pub use error::Result;
 
 pub use sim::build_simulator;
-pub use tower::Tower;
+pub use tower::{Input, Script, Tower};
 
 /// Runs a K definition from an initial term through a K-in-ST tower, as `krun` does.
 ///
@@ -106,22 +104,22 @@ pub fn run(
     let mut arena = Arena::new();
     let mut tower = Tower::build(&mut arena, config, options, Dummy)?;
     // Parse the input in the language the top level accepts
-    let value_program = match lang_top {
-        Lang::Al | Lang::Il => interface::meta(lang_top)
-            .parse_program(&mut arena, includes, paths_program)
-            .map_err(|error| error.into_report())?,
-        Lang::P4 => parse_file(&mut arena, includes, &paths_program[0])
-            .map_err(|error| error.into_report())?,
+    let input = match lang_top {
+        Lang::Al => Input::Script(Script::Al(crate::algo(paths_program)?)),
+        Lang::Il => Input::Script(Script::Il(crate::elab(paths_program)?)),
+        Lang::P4 => Input::P4(
+            parse_file(&mut arena, includes, &paths_program[0])
+                .map_err(|error| error.into_report())?,
+        ),
         // A KORE input enters spec-k through Krun, with a step bound
         Lang::Kore => {
             return Err(error::input_invalid("a KORE top level runs through krun"));
         }
     };
     // Encoding errors propagate before entering the native base
-    let value = tower.patch(&mut arena, value_program)?;
+    let values = tower.encode_input(&mut arena, &input)?;
     tower
-        .eval_program(&mut arena, value)
-        .result
+        .eval_input(&mut arena, &values)
         .map_err(|error| error.into_report())?;
     Ok(())
 }

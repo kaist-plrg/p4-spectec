@@ -25,7 +25,7 @@
 //! A KORE top ends it at the K definition above spec-k, `Top::Kore`,
 //! whose K library answers spec-k's extern relations.
 //!
-//! | level below accepts | `PreparedLevel` | patched into the level below |
+//! | level below accepts | `PreparedLevel` | encoded for the level below  |
 //! |---------------------|-----------------|------------------------------|
 //! | none (base)         | `Base`          | —                            |
 //! | `al`                | `Al`            | AL                           |

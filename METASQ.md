@@ -30,22 +30,22 @@ def $main() = 42
 Run it with the supplied AL tower:
 
 ```sh
-./bin/metacirc run-meta towers/al.json -p /path/to/script.watsup
+./bin/metacirc run-meta towers/al-func.json -p /path/to/script.watsup
 ```
 
-`towers/al.json` contains:
+`towers/al-func.json` contains:
 
 ```json
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" }
+    { "specdir": "../spec-meta", "rel": "Eval_AL_func", "lang": "al" }
   ]
 }
 ```
 
-The single level is both top level and native base. Its `Eval_AL` interprets the
-AL script. Builtin calls of the script are answered by the native builtins;
+The single level is both top level and native base. Its `Eval_AL_func` interprets the
+AL script, calling its function `main` with no inputs. Builtin calls of the script are answered by the native builtins;
 other host operations are unsupported.
 Repeat `-p` for ordered specification source paths.
 
@@ -63,7 +63,7 @@ Use the supplied AL/P4 tower:
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" },
+    { "specdir": "../spec-meta", "rel": "Eval_AL_rel", "lang": "al" },
     { "specdir": "../spec", "rel": "Program_inst", "lang": "p4" }
   ]
 }
@@ -71,7 +71,10 @@ Use the supplied AL/P4 tower:
 
 The path is Rust SL interpreter → AL specification → P4 specification →
 P4 program. `Program_inst` type-checks the program and instantiates its
-declarations. A P4 top level takes exactly one `-p` path.
+declarations. The base runs ``Eval_AL_rel: specAL |- id `( val* `) : val*`` natively on
+the P4 specification as AL, the name `"Program_inst"`, and the program
+encoded as a spec-meta `val`; `Eval_AL_rel` calls `Program_inst` through
+`Call_rel` and outputs its results. A P4 top level takes exactly one `-p` path.
 `towers/al-p4-ok.json` is the same tower entered through `Program_ok`,
 which only type-checks the program.
 
@@ -118,18 +121,24 @@ Only the base runs on a native interpreter. Every level above it is
 interpreted by the level below, so natively it only answers the builtin and
 host calls relayed from below, without consulting its own definitions.
 
+`rel` names the relation entering a level. A level above an `al` or `il` level
+is encoded as the inputs of an entry relation at the level below: the
+specification, its `rel`, and the inputs of that `rel` as `val`s.
+`Eval_AL_rel` and `Eval_IL_rel` call a relation through `Call_rel`;
+`Eval_AL_func` and `Eval_IL_func` call a function, such as the `main` of a
+script, through `Call_func` and output its value. A level entered through a
+relation of the level above, including every P4 tower, uses the `_rel` entry;
+only the level below a script uses the `_func` entry.
+
 Each `specdir` accepts a specification file or directory and is resolved
 relative to the configuration file. CLI program and include paths are
 resolved relative to the current working directory.
 
 To add an AL interpretation layer, insert another
-`{ "specdir": "../spec-meta", "rel": "Eval_AL", "lang": "al" }`
+`{ "specdir": "../spec-meta", "rel": "Eval_AL_rel", "lang": "al" }`
 below the top level, as the supplied three-level `al-al-p4.json` does;
 `al-il-p4.json` instead makes the middle level accept IL. A name such as
 `al-al.json` describes another configuration of this kind.
-
-In a multi-level tower, top-level and intermediate specifications must not
-define `main`.
 
 `run-meta` accepts `--no-cache`, `--no-det`, and `--guard`. `--no-det` disables
 determinism checks only in the native base interpreter. Interpreter call
@@ -157,12 +166,12 @@ Above a meta top level is its AL or IL program, one more boundary whose
 builtins `Top::Program` answers.
 
 Three traits divide the work, their implementations stored as enums
-(`EngineKind`, `ProtocolKind`); the K implementations are slots (see K towers):
+(`EngineKind`, `ProtocolKind`); K towers describes the K implementations:
 
 | trait | implementation | role |
 |---|---|---|
 | `Engine` (`engine/`) | `SpecTecEngine`, `KEngine` | runs the base natively, on AL or SL, or from a K library |
-| `Protocol` (`protocol/`) | `MetaProtocol`, `MetaKProtocol`, `KoreProtocol` | how spec-meta interprets the level above: load C, encode a patched script, lower a call to `Call_rel`/`Call_func`, raise its result, decode and encode host calls; likewise for spec-meta-k and spec-k |
+| `Protocol` (`protocol/`) | `MetaProtocol`, `MetaKProtocol`, `KoreProtocol` | how spec-meta interprets the level above: load C, encode the entry's inputs, lower a call to `Call_rel`/`Call_func`, raise its result, decode and encode host calls; likewise for spec-meta-k and spec-k |
 | `HostCalls` (`boundary.rs`) | `Boundary` | answers a decoded host call at the level above a boundary |
 
 A call goes down from the P4 top through each level's protocol to the engine
@@ -177,16 +186,16 @@ builtins, sharing C and the codec caches.
 
 ## K towers
 
-Two towers cross into the K framework. Their Rust parts are slots that
-report `metacirc/unimplemented` until implemented, and their test
-registrations are `pending`, so they are skipped without failing.
+Two towers cross into the K framework.
 
-| tower | base | top | configuration | guide |
-|---|---|---|---|---|
-| ST-in-K | spec-meta-k, the AL semantics in K, run from its compiled library | AL or P4 | `"mode": "k"`, `kompiled` at the base (`towers/k*.json`) | [`docs/metacirc/st-in-k.md`](docs/metacirc/st-in-k.md) |
-| K-in-ST | spec-k, the K semantics in P4-SpecTec | a K definition and initial term in KORE | a single level with `"lang": "kore"` (`towers/k-in-st.json`) | [`docs/metacirc/k-in-st.md`](docs/metacirc/k-in-st.md) |
+| tower | base | top | configuration |
+|---|---|---|---|
+| ST-in-K | spec-meta-k, the AL semantics in K, run from its compiled library | AL or P4 | `"mode": "k"`, `kompiled` at the base (`towers/k*.json`) |
+| K-in-ST | spec-k, the K semantics in P4-SpecTec | a K definition and initial term in KORE | a single level with `"lang": "kore"` (`towers/k-in-st.json`) |
 
 ST-in-K adds `KEngine` (`engine/k/`) and `MetaKProtocol` (`protocol/meta_k/`);
+the base's entry `Eval_AL_rel` or `Eval_AL_func` loads the specification and
+calls its relation or function, as `spec-meta-k/3-execution/3.14-entry.k` serves them.
 `make kompile` builds the library, and `make test-metacirc-run-k`,
 `test-metacirc-micro-k`, and `test-metacirc-sim-k` reuse the native expected
 files. K-in-ST adds `KoreInterface` (`p4spectec/src/interface/kore/`); the K library
@@ -200,15 +209,15 @@ would stack over a K definition, which is not implemented.
 ## Algo through the IL-to-AL specification
 
 `spec-meta/3-algo` specifies the IL-to-AL pass as the relation `Algo_IL`.
-`Eval_IL` converts its IL input with `Algo_IL` and evaluates the result
-with `Eval_AL`, so a spec-meta level that accepts IL runs the specification
+`Eval_IL_rel` and `Eval_IL_func` convert their IL input with `Algo_IL` and
+evaluate the result with `Eval_AL_rel` and `Eval_AL_func`, so a spec-meta level that accepts IL runs the specification
 above it on AL produced by the specification:
 
 ```json
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Eval_IL", "lang": "il" },
+    { "specdir": "../spec-meta", "rel": "Eval_IL_rel", "lang": "il" },
     { "specdir": "../spec", "rel": "Program_inst", "lang": "p4" }
   ]
 }
@@ -218,8 +227,8 @@ The conversion runs for every input, in the level that accepts the IL.
 Only the base, here the IL-to-AL specification itself, is converted by the
 native `algo` pass; the specification above it reaches native code only
 through its builtin and host calls.
-`towers/il.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
-are the supplied towers entered through `Eval_IL`.
+`towers/il-func.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
+are the supplied towers entered through `Eval_IL_func` and `Eval_IL_rel`.
 
 ## Execution corpus
 
@@ -244,7 +253,7 @@ names, against the native simulation expectations; it requires the p4c submodule
 The driver's `run` and `sim` subcommands take a configuration name,
 `al` or `il`, which selects the language the towers' base level takes.
 Each suite registers a tower per base; the `-il` targets run the same suites
-through towers entered by `Eval_IL`, so the input is converted by `Algo_IL`
+through towers entered by `Eval_IL_func` or `Eval_IL_rel`, so the input is converted by `Algo_IL`
 instead of the native `algo` pass. They share the expectations of the `al` runs;
 sources whose outcome differs are listed in the `il` exclusions.
 `run` selects suites with `--input al` or `--input p4`,
@@ -263,8 +272,8 @@ make test-metacirc-promote
 
 Compare the elaborated, algorithmic, structured (with and without rule
 groups), and prose forms of `spec-meta` with `expected/spec-meta/`,
-as registered in `suites/metacirc/snapshot.toml`. `test-metacirc-promote` updates the
-elab, algo, and prose snapshots; structure snapshots are never promoted.
+as registered in `suites/metacirc/snapshot.toml`. `test-metacirc-promote` updates all
+four snapshot stages.
 
 ```sh
 make test-metacirc-metaparse

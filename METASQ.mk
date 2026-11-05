@@ -24,10 +24,16 @@ metacirc: metacirc-cli
 	rm -f ./$(METACIRC)
 	cp "$(CARGO_TARGET_DIR)/release/metacirc" ./$(METACIRC)
 
-# The library a k tower loads, compiled from spec-meta-k (`kompiled` in towers/k-*.json)
-kompile:
-	@echo "kompile: compiling spec-meta-k is not implemented yet" >&2
-	@exit 1
+# The library a k tower loads, compiled from spec-meta-k (`kompiled` in towers/k-*.json),
+# with the metacirc binary that loads it
+KSPECDIR = spec-meta-k
+KLIBRARY = $(KSPECDIR)/kompiled/libspec-meta-k.so
+
+kompile: metacirc $(KLIBRARY)
+
+$(KLIBRARY): $(wildcard $(KSPECDIR)/*/*.k)
+	kompile $(KSPECDIR)/3-execution/3.14-entry.k --main-module AL --syntax-module SYNTAX \
+	  -o $(dir $(KLIBRARY)) --llvm-kompile-type c --llvm-kompile-output $(notdir $(KLIBRARY))
 
 # P4 corpus through the AL/P4 towers
 test-metacirc-run-al:
@@ -77,10 +83,11 @@ $(METACIRC_SNAPSHOTS):
 test-metacirc-metaparse:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) metaparse
 
-# Rerun elab/algo/prose and update their snapshots; structure is never promoted
+# Rerun elab/algo/structure/prose and update their snapshots
 test-metacirc-promote:
 	cd $(RUST_DIR) && UPDATE_EXPECT=1 $(METACIRC_TEST) elab
 	cd $(RUST_DIR) && UPDATE_EXPECT=1 $(METACIRC_TEST) algo
+	cd $(RUST_DIR) && UPDATE_EXPECT=1 $(METACIRC_TEST) structure
 	cd $(RUST_DIR) && UPDATE_EXPECT=1 $(METACIRC_TEST) prose
 
 clean:
