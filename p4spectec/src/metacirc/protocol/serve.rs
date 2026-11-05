@@ -4,6 +4,9 @@
 //! (`spec-meta-redex/3-execution/3.16-entry.rkt`) serve the same JSON text,
 //! held in `text` values (`make::text`, `get::text`): calls and answers
 //! for the level above, and the requests and responses of their host calls.
+//! The entries of spec-meta/5-entry.watsup are two calls in a row:
+//! `Eval_AL_rel` is `load` then `call-rel`, and `Eval_AL_func` is `load`
+//! then `call-func` with no type arguments.
 //! `json`, imported as `wire`, prints and reads the values and types inside.
 
 use super::{
@@ -20,7 +23,7 @@ use crate::{
         },
         il::ast::Typ,
     },
-    metacirc::error,
+    metacirc::{Result as MetacircResult, error},
     runner::{Eval, ExternError, InterpreterError},
     util::json::json,
 };
@@ -33,8 +36,36 @@ pub(in crate::metacirc::protocol) const LOAD: &str = "load";
 pub(in crate::metacirc::protocol) const SERVE: &str = "serve";
 /// The host call of every request of the base.
 pub(in crate::metacirc::protocol) const HOST_EVAL: &str = "host_eval";
+/// The entry calling a relation, `Eval_AL_rel(spec, id, args)`.
+pub(in crate::metacirc::protocol) const ENTRY_REL: &str = "Eval_AL_rel";
+/// The entry calling a function, `Eval_AL_func(spec, id, args)`.
+pub(in crate::metacirc::protocol) const ENTRY_FUNC: &str = "Eval_AL_func";
 
 // == The level above's side
+
+/// Encodes the inputs of the base's entry `name` as JSON text:
+/// `text_spec`, the specification above as the base loads it,
+/// `"name"`, and `[val...]`, which the engine's `call_rel` passes on.
+pub(in crate::metacirc::protocol) fn entry_inputs(
+    arena: &mut Arena,
+    text_spec: String,
+    name: &str,
+    values: &[Value],
+) -> MetacircResult<Vec<Value>> {
+    let mut writer = Writer::new();
+    writer.text(name);
+    let text_id = writer.finish();
+    let mut writer = Writer::new();
+    wire::values(&mut writer, arena, &mut Cache::new(false), values);
+    let text_args = writer.finish();
+    [text_spec, text_id, text_args]
+        .into_iter()
+        .map(|text| {
+            make::text(arena, text, Span::default())
+                .map_err(|error| error::input_invalid(error.to_string()))
+        })
+        .collect()
+}
 
 /// Wraps `call` of the AL level above as `serve(C, request)` on the base.
 pub(in crate::metacirc::protocol) fn lower(
@@ -119,14 +150,63 @@ pub(in crate::metacirc::protocol) fn reply(
 
 // == The engine's side
 
-/// The outputs of `Eval_AL` from its answer: the value of `$main()`.
-pub(in crate::metacirc::protocol) fn program_outputs(
-    arena: &mut Arena,
-    value_answer: Value,
+/// The requests that run the base's entry `name` on `values`,
+/// the JSON texts `spec`, `id`, and `args` that `entry_inputs` made.
+///
+/// Both entries load first, `{"load": spec}`; `Eval_AL_rel` then calls
+/// `{"args": args, "call-rel": id}`, and `Eval_AL_func`
+/// `{"args": args, "call-func": id, "targs": []}`.
+pub(in crate::metacirc::protocol) fn entry_requests(
+    arena: &Arena,
     name: &str,
+    values: &[Value],
+) -> Result<[String; 2], InterpreterError> {
+    let [value_spec, value_id, value_args] = values else {
+        let message = format!("{name} of the base takes a spec, an id, and inputs");
+        return Err(ExternError::diagnostic_message(message).into());
+    };
+    let text_spec = get::text(arena, value_spec).map_err(ExternError::from)?;
+    let text_id = get::text(arena, value_id).map_err(ExternError::from)?;
+    let text_args = get::text(arena, value_args).map_err(ExternError::from)?;
+    // Load the specification, as $load_ctx($empty_ctx, spec) does
+    let mut writer = Writer::new();
+    writer.object(|writer| {
+        writer.key(request::LOAD);
+        writer.json(text_spec);
+    });
+    let request_load = writer.finish();
+    // Call the entry's relation or function on the loaded specification
+    let mut writer = Writer::new();
+    writer.object(|writer| {
+        writer.key("args");
+        writer.json(text_args);
+        if name == ENTRY_FUNC {
+            writer.key("call-func");
+            writer.json(text_id);
+            writer.key("targs");
+            writer.json("[]");
+        } else {
+            writer.key("call-rel");
+            writer.json(text_id);
+        }
+    });
+    Ok([request_load, writer.finish()])
+}
+
+/// The outputs of the base's entry `name` from the answer to its call:
+/// the relation's values for `Eval_AL_rel`, the function's value for `Eval_AL_func`.
+pub(in crate::metacirc::protocol) fn entry_outputs(
+    arena: &mut Arena,
+    name: &str,
+    value_answer: Value,
 ) -> Result<Vec<Value>, InterpreterError> {
     let payload = answer::ok(arena, value_answer, name)?;
-    Ok(vec![wire::read_value(arena, &mut Cache::new(false), &payload)?])
+    let mut cache = Cache::new(false);
+    if name == ENTRY_FUNC {
+        Ok(vec![wire::read_value(arena, &mut cache, &payload)?])
+    } else {
+        Ok(wire::read_values(arena, &mut cache, &payload)?)
+    }
 }
 
 /// Checks the answer to a load request, `{"ok": []}`.
@@ -162,7 +242,6 @@ pub(in crate::metacirc::protocol) mod request {
     use super::*;
 
     pub(in crate::metacirc::protocol) const LOAD: &str = "load";
-    pub(in crate::metacirc::protocol) const EVAL_AL: &str = "eval-al";
 
     /// `{"args": [val...], "call-rel": id}`.
     pub(super) fn call_rel(

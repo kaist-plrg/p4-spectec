@@ -2,14 +2,15 @@
 //!
 //! `load` encodes the level above as AL (IL through `Algo_IL` below first)
 //! and makes C = `$load_ctx($empty_ctx, spec)` on the level below;
-//! `encode_script` encodes a patched script as AL or IL for `Eval_AL` or `Eval_IL`.
+//! `encode_entry` encodes the level above as AL or IL, with the name and inputs
+//! of its entry, for `Eval_AL_rel` or `Eval_IL_rel`.
 //! `lower` turns `name(values)` into `Call_rel(C, name, values)`
 //! or `Call_func(C, name, targs, values)`; `raise` maps OK, UNMATCH, or ERROR
 //! to outputs, a mismatch, or a fatal failure.
 //! `host` decodes `Call_builtin_func`, `Call_extern_func`, and `Call_extern_rel`;
 //! `reply` encodes a native outcome as OK or UNMATCH, keeping its effects.
 
-use super::{Below, Call, HostCall, Output, Protocol, Script, Values};
+use super::{Below, Call, Entered, HostCall, Output, Protocol, Values};
 use crate::{
     interface::meta::shared::{
         self as meta, Cache,
@@ -79,12 +80,20 @@ impl Protocol for MetaProtocol {
         Ok(below.call(call)?.into_func())
     }
 
-    fn encode_script(&self, arena: &mut Arena, script: Script) -> MetacircResult<Value> {
-        let encoded = match script {
-            Script::Al(spec_al) => spec_al.encode(arena),
-            Script::Il(spec_il) => spec_il.encode(arena),
-        };
-        encoded.map_err(|error| error.into_report())
+    fn encode_entry(
+        &self,
+        arena: &mut Arena,
+        above: Entered<'_>,
+        name: &str,
+        values: &[Value],
+    ) -> MetacircResult<Vec<Value>> {
+        // An IL consumer converts the IL itself
+        let value_spec = match above {
+            Entered::Al(spec_al) => spec_al.encode(arena),
+            Entered::Il(spec_il) => spec_il.encode(arena),
+        }
+        .map_err(meta::Error::into_report)?;
+        entry_inputs(arena, value_spec, name, values)
     }
 
     fn lower(
@@ -194,6 +203,24 @@ mod m {
     pub(super) const OK: &str = "OK val";
     pub(super) const UNMATCH: &str = "UNMATCH";
     pub(super) const ERROR: &str = "ERROR";
+}
+
+/// Encodes the inputs of an entry relation, such as `Eval_AL_rel`,
+/// entering `name` of the script `value_spec` on `values`,
+/// the inputs of `name` encoded as meta values one level down.
+fn entry_inputs(
+    arena: &mut Arena,
+    value_spec: Value,
+    name: &str,
+    values: &[Value],
+) -> MetacircResult<Vec<Value>> {
+    let id: Id = phrase!(node: name.into(), span: Span::default());
+    let mut cache = Cache::new(false);
+    let value_id = id
+        .encode_cached(arena, &mut cache)
+        .map_err(meta::Error::into_report)?;
+    let value_args = list(arena, &mut cache, "val", values).map_err(meta::Error::into_report)?;
+    Ok(vec![value_spec, value_id, value_args])
 }
 
 /// Decoding of host-call arguments and meta call results.

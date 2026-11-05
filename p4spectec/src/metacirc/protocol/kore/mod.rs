@@ -11,7 +11,7 @@
 //! That needs `PreparedLevel::Kore` and per-depth K state in `TowerInterpState`;
 //! neither exists until stacking is implemented.
 
-use super::{Below, Call, HostCall, Output, Protocol, Script};
+use super::{Below, Call, Entered, HostCall, Output, Protocol};
 use crate::{
     lang::data::{arena::Arena, value::flat::Value},
     metacirc::{Result as MetacircResult, error, tower::PreparedLevel},
@@ -50,8 +50,14 @@ impl Protocol for KoreProtocol {
         Err(InterpreterError::Fatal(error::unimplemented(STACKING)))
     }
 
-    /// Encodes a patched script of the level above; a K definition takes no script.
-    fn encode_script(&self, _arena: &mut Arena, _script: Script) -> MetacircResult<Value> {
+    /// Encodes the inputs of spec-k's entry into the K definition above.
+    fn encode_entry(
+        &self,
+        _arena: &mut Arena,
+        _above: Entered<'_>,
+        _name: &str,
+        _values: &[Value],
+    ) -> MetacircResult<Vec<Value>> {
         Err(error::unimplemented(STACKING))
     }
 

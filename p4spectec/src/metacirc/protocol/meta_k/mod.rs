@@ -7,7 +7,7 @@
 //! `spec` prints an AL specification, and `serve` the rest.
 //! `load` passes the AL specification above to the base as `{"load": spec}`,
 //! and the base returns C, its handle of the loaded specification;
-//! `encode_script` encodes a patched AL script as `{"eval-al": spec}`.
+//! `encode_entry` encodes the inputs of the base's entry.
 //! `lower` wraps a call of the level above as a `call-rel` or `call-func` request
 //! to spec-meta-k's `serve()` loop, the engine's `serve` with C,
 //! and `raise` unwraps its answer;
@@ -16,19 +16,18 @@
 mod spec;
 
 use super::{
-    Below, Call, HostCall, Output, Protocol, Script, Values,
+    Below, Call, Entered, HostCall, Output, Protocol, Values,
     json::{Cache, Writer},
     serve::{self, request},
 };
 use crate::{
     diagnostic::Report,
-    interface::meta::shared::decode::Decode,
     lang::{
         al::ast as al,
         common::source::Span,
         data::{
             arena::Arena,
-            value::flat::{self as value, Value, get, make},
+            value::flat::{self as value, Value, make},
         },
     },
     metacirc::{Result as MetacircResult, error, tower::PreparedLevel},
@@ -47,6 +46,10 @@ impl MetaKProtocol {
     pub(in crate::metacirc) const SERVE: &str = serve::SERVE;
     /// The host call of every `#ffiCall` request.
     pub(in crate::metacirc) const HOST_EVAL: &str = serve::HOST_EVAL;
+    /// The entry calling a relation, `Eval_AL_rel(spec, id, args)`.
+    pub(in crate::metacirc) const ENTRY_REL: &str = serve::ENTRY_REL;
+    /// The entry calling a function, `Eval_AL_func(spec, id, args)`.
+    pub(in crate::metacirc) const ENTRY_FUNC: &str = serve::ENTRY_FUNC;
 }
 
 impl Protocol for MetaKProtocol {
@@ -76,15 +79,25 @@ impl Protocol for MetaKProtocol {
         Ok(*value::get::one(&values).map_err(ExternError::from)?)
     }
 
-    /// Encodes a patched AL script as `{"eval-al": spec}`,
-    /// which `KEngine::call_program` sends to spec-meta-k's `Eval_AL`.
-    fn encode_script(&self, arena: &mut Arena, script: Script) -> MetacircResult<Value> {
-        let Script::Al(spec_al) = script else {
-            return Err(error::entry_invalid("spec-meta-k runs only an AL script"));
+    /// Encodes the inputs of the base's entry as JSON text.
+    ///
+    /// `Eval_AL_rel` and `Eval_AL_func` take the AL specification `above`,
+    /// the name of its entry, and `values`, the entry's inputs:
+    /// `[def...]`, `"name"`, and `[val...]`, which `KEngine::call_rel` passes on.
+    fn encode_entry(
+        &self,
+        arena: &mut Arena,
+        above: Entered<'_>,
+        name: &str,
+        values: &[Value],
+    ) -> MetacircResult<Vec<Value>> {
+        let Entered::Al(spec_al) = above else {
+            let message = "spec-meta-k enters only a level passed to it as AL";
+            return Err(error::config_invalid(message));
         };
-        let request = spec_request(request::EVAL_AL, &spec_al);
-        make::text(arena, request, Span::default())
-            .map_err(|cause| error::entry_invalid(cause.to_string()))
+        let mut writer = Writer::new();
+        spec::spec(&mut writer, spec_al);
+        serve::entry_inputs(arena, writer.finish(), name, values)
     }
 
     /// Wraps `call` of the AL level above as `serve(C, request)` on spec-meta-k.
@@ -135,29 +148,24 @@ impl Protocol for MetaKProtocol {
 // == The engine's side
 
 impl MetaKProtocol {
-    /// The request `KEngine::call_program` sends for `program`.
-    ///
-    /// `program` is the text `encode_script` made, or, in a single-level tower,
-    /// which patches nothing, the script as `interface::meta` encoded it.
-    pub(in crate::metacirc) fn program_request(
-        arena: &mut Arena,
-        program: Value,
-    ) -> Result<String, InterpreterError> {
-        if let Ok(request) = get::text(arena, &program) {
-            return Ok(request.to_owned());
-        }
-        let spec_al = al::Spec::decode(arena, program)
-            .map_err(|error| InterpreterError::Fatal(error.into_report()))?;
-        Ok(spec_request(request::EVAL_AL, &spec_al))
+    /// The requests that run spec-meta-k's entry `name` on `values`,
+    /// the JSON texts `spec`, `id`, and `args` that `encode_entry` made.
+    pub(in crate::metacirc) fn entry_requests(
+        arena: &Arena,
+        name: &str,
+        values: &[Value],
+    ) -> Result<[String; 2], InterpreterError> {
+        serve::entry_requests(arena, name, values)
     }
 
-    /// The outputs of `Eval_AL` from its answer: the value of `$main()`.
-    pub(in crate::metacirc) fn program_outputs(
+    /// The outputs of spec-meta-k's entry `name` from the answer to its call:
+    /// the relation's values for `Eval_AL_rel`, the function's value for `Eval_AL_func`.
+    pub(in crate::metacirc) fn entry_outputs(
         arena: &mut Arena,
-        value_answer: Value,
         name: &str,
+        value_answer: Value,
     ) -> Result<Vec<Value>, InterpreterError> {
-        serve::program_outputs(arena, value_answer, name)
+        serve::entry_outputs(arena, name, value_answer)
     }
 
     /// Checks the answer to a load request, `{"ok": []}`.

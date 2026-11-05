@@ -2,7 +2,7 @@
 //!
 //! STF names a table qualified, `MyIngress.t`, or bare, `t`;
 //! `find_table` tries the qualified object first.
-//! Adding an entry goes through the specification's `tableObject_add_entry`,
+//! Adding an entry goes through the specification's `TableObject_add_entry`,
 //! retrying with the table's own key names when the STF key names do not match.
 
 use crate::lang::{
@@ -21,7 +21,7 @@ use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
 
 use crate::sim_plugin::error;
 
-use super::spec::func;
+use super::spec::{func, rel};
 
 // == Table names
 
@@ -121,7 +121,7 @@ where
     // Lookup table object
     let value_table = find_table(ctx, value_arch, value_name)?;
     // Add entry to table object
-    let value_table = match func::table_object_add_entry(
+    let value_table = match rel::table_object_add_entry(
         ctx,
         value_ctx,
         value_table,
@@ -178,7 +178,7 @@ where
                 Span::default(),
             )?;
             // A second rejection is final
-            func::table_object_add_entry(
+            rel::table_object_add_entry(
                 ctx,
                 value_ctx,
                 value_table,
@@ -209,7 +209,7 @@ where
     // Lookup table object
     let value_table = find_table(ctx, value_arch, value_name)?;
     let value_table =
-        func::table_object_add_default_action(ctx, value_ctx, value_table, value_action)?;
+        rel::table_object_add_default_action(ctx, value_ctx, value_table, value_action)?;
     // Update arch with modified table object
     update_table(ctx, value_arch, value_name, value_table)
 }

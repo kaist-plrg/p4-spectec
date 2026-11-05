@@ -28,12 +28,9 @@ use crate::{
         il::ast::Typ,
     },
     metacirc::{Result, protocol::MetaRedexProtocol, tower::UpperMut},
-    runner::{Eval, Extern, InterpreterError, SideEffect},
+    runner::{Extern, InterpreterError, SideEffect},
 };
 use runtime::Line;
-
-/// The entry relation of spec-meta-redex, which runs a program's `$main()`.
-const ENTRY: &str = "Eval_AL";
 
 /// Reports a process that cannot serve a call.
 fn failed(message: impl Into<String>) -> Box<Report> {
@@ -61,32 +58,14 @@ impl<'s> RedexEngine<'s> {
 /// Every call sends JSON text to the process and returns JSON text:
 /// `MetaRedexProtocol` makes the requests and reads the responses.
 impl Engine for RedexEngine<'_> {
-    /// Runs spec-meta-redex's entry `name` on `program`,
-    /// the JSON text that `MetaRedexProtocol::encode_script` made.
-    fn call_program<Ext: Extern>(
-        &mut self,
-        arena: &mut Arena,
-        upper: &mut UpperMut<'_, Ext>,
-        effects: &mut u64,
-        name: &str,
-        program: Value,
-    ) -> Eval<Vec<Value>, InterpreterError> {
-        let checkpoint = *effects;
-        let result = self.run_program(arena, upper, effects, name, program);
-        let effect = if *effects == checkpoint && *effects != u64::MAX {
-            SideEffect::Pure
-        } else {
-            SideEffect::Impure
-        };
-        Eval::new(result, effect)
-    }
-
     /// Sends relation `name` with JSON text `values` to the serve loop,
     /// answering each host request of the process with
     /// `upper.host_call(arena, "host_eval", &[request])` until the answer arrives.
     ///
     /// `load(request)` loads a specification and returns C, its key in the runtime;
     /// `serve(C, request)` sends a request under C and returns the answer.
+    /// The entries `Eval_AL_rel(spec, id, args)` and `Eval_AL_func(spec, id, args)`
+    /// load `spec` and call `id` on `args`, returning the outputs of the call.
     fn call_rel<Ext: Extern>(
         &mut self,
         arena: &mut Arena,
@@ -103,6 +82,9 @@ impl Engine for RedexEngine<'_> {
             }
             (MetaRedexProtocol::SERVE, [value_ctx, value_request]) => {
                 Ok(vec![self.serve(arena, upper, effects, *value_ctx, *value_request)?])
+            }
+            (MetaRedexProtocol::ENTRY_REL | MetaRedexProtocol::ENTRY_FUNC, _) => {
+                self.enter(arena, upper, effects, name, values)
             }
             _ => Err(unsupported(name)),
         }
@@ -140,23 +122,21 @@ impl Engine for RedexEngine<'_> {
 }
 
 impl RedexEngine<'_> {
-    /// Runs `Eval_AL` on a program: its spec loaded, then `$main()`.
-    fn run_program<Ext: Extern>(
+    /// Runs spec-meta-redex's entry `name`: loads its specification, then calls it.
+    fn enter<Ext: Extern>(
         &mut self,
         arena: &mut Arena,
         upper: &mut UpperMut<'_, Ext>,
         effects: &mut u64,
         name: &str,
-        program: Value,
+        values: &[Value],
     ) -> std::result::Result<Vec<Value>, InterpreterError> {
-        if name != ENTRY {
-            let message = format!("spec-meta-redex's entry is {ENTRY}, not {name}");
-            return Err(InterpreterError::Fatal(failed(message)));
-        }
-        let request = MetaRedexProtocol::program_request(arena, program)?;
-        let answer = self.exchange(arena, upper, effects, &request)?;
+        let [request_load, request_call] = MetaRedexProtocol::entry_requests(arena, name, values)?;
+        let key = self.runtime.register(&request_load);
+        self.ensure_loaded(arena, upper, effects, key)?;
+        let answer = self.exchange(arena, upper, effects, &request_call)?;
         let value_answer = make_text(arena, answer)?;
-        MetaRedexProtocol::program_outputs(arena, value_answer, name)
+        MetaRedexProtocol::entry_outputs(arena, name, value_answer)
     }
 
     /// Sends a request under C, loading C's specification into the process first if needed.
@@ -276,7 +256,9 @@ fn make_text(arena: &mut Arena, text: String) -> std::result::Result<Value, Inte
 /// Rejects a call that is not one of spec-meta-redex's engine calls.
 fn unsupported(name: &str) -> InterpreterError {
     let message = format!(
-        "spec-meta-redex's engine serves {} and {}, not {name}",
+        "spec-meta-redex's engine serves {}, {}, {}, and {}, not {name}",
+        MetaRedexProtocol::ENTRY_REL,
+        MetaRedexProtocol::ENTRY_FUNC,
         MetaRedexProtocol::LOAD,
         MetaRedexProtocol::SERVE
     );

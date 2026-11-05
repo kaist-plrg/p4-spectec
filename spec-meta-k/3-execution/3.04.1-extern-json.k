@@ -27,17 +27,18 @@
 //              | {"error": text}     // a fatal error of the host
 //
 // Calls from the host and their answers (3.14-entry.k). A spec is the JSON
-// of 3.04.3-spec-json.k; call fields come sorted.
+// of 3.04.3-spec-json.k; call fields come sorted. Eval_AL_rel is `load`
+// then `call-rel`, and Eval_AL_func is `load` then `call-func` with
+// `"targs": []`.
 //
 //   call     ::= {"load": spec}      // $load_ctx($empty_ctx, spec)
-//              | {"eval-al": spec}   // Eval_AL
 //              | {"args": [val, ...], "call-rel": <id>}
 //              | {"args": [val, ...], "call-func": <id>, "targs": [typ, ...]}
 //              | {"exit": null}
 //
 //   answer   ::= {"ready": null}     // before the first call
 //              | {"ok": [val, ...]}  // load and call-rel
-//              | {"ok": val}         // eval-al and call-func
+//              | {"ok": val}         // call-func
 //              | {"fail": null}      // UNMATCH
 //              | {"error": text}     // ERROR
 
