@@ -31,11 +31,13 @@ xref:concat_text[The concatenation of ``t^{asterisk}^``]
 
 xref:join_text[The result of joining ``t'^{asterisk}^`` with separator ``t~sep~``]
 
-. If ``t'^{asterisk}^`` matches pattern ``[]``: return ``""``.
-. Else if ``t'^{asterisk}^`` matches pattern ``[`` ``_/1`` ``]``:
- .. Let ``t~h~`` be ``t'^{asterisk}^``.
- .. Return ``t~h~``.
-. Else if ``t'^{asterisk}^`` matches pattern ``_`` ``::`` ``_``:
+. Try:
+ .. If ``t'^{asterisk}^`` matches pattern ``[]``: return ``""``.
+ .. Else if ``t'^{asterisk}^`` matches pattern ``[`` ``_/1`` ``]``:
+  ... Let ``t~h~`` be ``t'^{asterisk}^``.
+  ... Return ``t~h~``.
+. Then, try:
+ .. Check that ``t'^{asterisk}^`` is a non-empty list.
  .. Let ``t~h1~`` ``{two-colons}`` ``t^{asterisk}^`` be ``t'^{asterisk}^``.
  .. Check that ``t^{asterisk}^`` is a non-empty list.
  .. Let ``t~h2~`` ``{two-colons}`` ``t~t~^{asterisk}^`` be ``t^{asterisk}^``.
@@ -2541,16 +2543,20 @@ xref:join_ctk[The join of ``ctk`` and ``ctk'``]
 
 xref:joins_ctk[The join of ``ctk'^{asterisk}^``]
 
-. If ``ctk'^{asterisk}^`` matches pattern ``[]``: return ``+LCTK+``.
-. Else if ``ctk'^{asterisk}^`` matches pattern ``[`` ``_/1`` ``]``:
- .. Let ``ctk`` be ``ctk'^{asterisk}^``.
- .. Return ``ctk``.
-. Else if ``ctk'^{asterisk}^`` matches pattern ``_`` ``::`` ``_``:
+. Try:
+ .. If ``ctk'^{asterisk}^`` matches pattern ``[]``: return ``+LCTK+``.
+ .. Else if ``ctk'^{asterisk}^`` matches pattern ``[`` ``_/1`` ``]``:
+  ... Let ``ctk`` be ``ctk'^{asterisk}^``.
+  ... Return ``ctk``.
+. Then, try:
+ .. Check that ``ctk'^{asterisk}^`` is a non-empty list.
  .. Let ``ctk~a~`` ``{two-colons}`` ``ctk^{asterisk}^`` be ``ctk'^{asterisk}^``.
- .. If ``ctk^{asterisk}^`` matches pattern ``[`` ``_/1`` ``]``:
-  ... Let ``ctk~b~`` be ``ctk^{asterisk}^``.
-  ... Return xref:join_ctk[the join of ``ctk~a~`` and ``ctk~b~``].
- .. Else if ``ctk^{asterisk}^`` matches pattern ``_`` ``::`` ``_``:
+ .. Try:
+  ... If ``ctk^{asterisk}^`` is a list of length 1:
+   .... Let ``ctk~b~`` be ``ctk^{asterisk}^``.
+   .... Return xref:join_ctk[the join of ``ctk~a~`` and ``ctk~b~``].
+ .. Then, try:
+  ... Check that ``ctk^{asterisk}^`` is a non-empty list.
   ... Let ``ctk~b~`` ``{two-colons}`` ``ctk~c~^{asterisk}^`` be ``ctk^{asterisk}^``.
   ... Check that ``ctk~c~^{asterisk}^`` is a non-empty list.
   ... Let ``ctk~d~`` be xref:join_ctk[the join of ``ctk~a~`` and ``ctk~b~``].
@@ -5619,11 +5625,13 @@ xref:lift_castExpressionIR[$lift_castExpressionIR(+`(+ typeIR +`)+ typedExpressi
 
 xref:unflatten_recordElementExpression[$unflatten_recordElementExpression(namedExpression^{asterisk}^)]
 
-. If ``namedExpression^{asterisk}^`` matches pattern ``[`` ``_/1`` ``]``:
- .. Let ``namedExpression~h~`` be ``namedExpression^{asterisk}^``.
- .. Let ``name~h~`` ``+'='+`` ``expression~h~`` be ``namedExpression~h~``.
- .. Return ``name~h~`` ``+'='+`` ``expression~h~``.
-. Else if ``namedExpression^{asterisk}^`` matches pattern ``_`` ``::`` ``_``:
+. Try:
+ .. If ``namedExpression^{asterisk}^`` is a list of length 1:
+  ... Let ``namedExpression~h~`` be ``namedExpression^{asterisk}^``.
+  ... Let ``name~h~`` ``+'='+`` ``expression~h~`` be ``namedExpression~h~``.
+  ... Return ``name~h~`` ``+'='+`` ``expression~h~``.
+. Then, try:
+ .. Check that ``namedExpression^{asterisk}^`` is a non-empty list.
  .. Let ``namedExpression~h~`` ``{two-colons}`` ``namedExpression~t~^{asterisk}^`` be ``namedExpression^{asterisk}^``.
  .. Check that ``namedExpression~t~^{asterisk}^`` is a non-empty list.
  .. Let ``name~h~`` ``+'='+`` ``expression~h~`` be ``namedExpression~h~``.
@@ -5632,11 +5640,13 @@ xref:unflatten_recordElementExpression[$unflatten_recordElementExpression(namedE
 
 xref:unflatten_recordElementExpression_with_default[$unflatten_recordElementExpression_with_default(namedExpression^{asterisk}^)]
 
-. If ``namedExpression^{asterisk}^`` matches pattern ``[`` ``_/1`` ``]``:
- .. Let ``namedExpression~h~`` be ``namedExpression^{asterisk}^``.
- .. Let ``name~h~`` ``+'='+`` ``expression~h~`` be ``namedExpression~h~``.
- .. Return ``name~h~`` ``+'='+`` ``expression~h~`` ``+','+`` ``+'...'+``.
-. Else if ``namedExpression^{asterisk}^`` matches pattern ``_`` ``::`` ``_``:
+. Try:
+ .. If ``namedExpression^{asterisk}^`` is a list of length 1:
+  ... Let ``namedExpression~h~`` be ``namedExpression^{asterisk}^``.
+  ... Let ``name~h~`` ``+'='+`` ``expression~h~`` be ``namedExpression~h~``.
+  ... Return ``name~h~`` ``+'='+`` ``expression~h~`` ``+','+`` ``+'...'+``.
+. Then, try:
+ .. Check that ``namedExpression^{asterisk}^`` is a non-empty list.
  .. Let ``namedExpression~h~`` ``{two-colons}`` ``namedExpression~t~^{asterisk}^`` be ``namedExpression^{asterisk}^``.
  .. Check that ``namedExpression~t~^{asterisk}^`` is a non-empty list.
  .. Let ``name~h~`` ``+'='+`` ``expression~h~`` be ``namedExpression~h~``.
@@ -21788,18 +21798,18 @@ xref:match_keysets[``value^{asterisk}^`` matches ``setValue'^{asterisk}^``]
    .... Let ``value~key~`` be ``value^{asterisk}^``.
    .... If ``setValue`` does not match pattern ``+SET+`` ``+`{+`` ``+'...'+`` ``+`}+``:
     ..... Return xref:match_keyset[``$match_keyset(setValue,`` ``value~key~)``].
- .. Else if ``setValue'^{asterisk}^`` matches pattern ``_`` ``::`` ``_``:
-  ... Let ``setValue~h~`` ``{two-colons}`` ``setValue~t~^{asterisk}^`` be ``setValue'^{asterisk}^``.
-  ... If ``value^{asterisk}^`` is a non-empty list:
-   .... Let ``value~key_h~`` ``{two-colons}`` ``value~key_t~^{asterisk}^`` be ``value^{asterisk}^``.
-   .... If ``setValue~t~^{asterisk}^`` is a non-empty list:
-    ..... If ``value~key_t~^{asterisk}^`` is a non-empty list:
-     ...... If xref:match_keyset[``$match_keyset(setValue~h~,`` ``value~key_h~)``]:
-      ....... Return xref:match_keysets[``value~key_t~^{asterisk}^`` matches ``setValue~t~^{asterisk}^``].
-     ...... Else: return ``false``.
 . Then, try:
- .. Check that ``setValue'^{asterisk}^`` is equal to ``+SET+`` ``+`{+`` ``+'...'+`` ``+`}+``.
- .. Return ``true``.
+ .. If ``setValue'^{asterisk}^`` is equal to ``+SET+`` ``+`{+`` ``+'...'+`` ``+`}+``: return ``true``.
+. Then, try:
+ .. Check that ``setValue'^{asterisk}^`` is a non-empty list.
+ .. Let ``setValue~h~`` ``{two-colons}`` ``setValue~t~^{asterisk}^`` be ``setValue'^{asterisk}^``.
+ .. Check that ``value^{asterisk}^`` is a non-empty list.
+ .. Let ``value~key_h~`` ``{two-colons}`` ``value~key_t~^{asterisk}^`` be ``value^{asterisk}^``.
+ .. Check that ``setValue~t~^{asterisk}^`` is a non-empty list.
+ .. Check that ``value~key_t~^{asterisk}^`` is a non-empty list.
+ .. If xref:match_keyset[``$match_keyset(setValue~h~,`` ``value~key_h~)``]:
+  ... Return xref:match_keysets[``value~key_t~^{asterisk}^`` matches ``setValue~t~^{asterisk}^``].
+ .. Else: return ``false``.
 
 xref:match_keyset[$match_keyset(setValue, value~key~)]
 

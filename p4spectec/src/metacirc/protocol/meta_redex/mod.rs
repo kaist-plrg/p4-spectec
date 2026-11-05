@@ -7,25 +7,24 @@
 //! is the s-expression text of a `spec` term in a JSON string (`sexp`).
 //! `load` passes the AL specification above to the base as `{"load": sexp}`,
 //! and the base returns C, its handle of the loaded specification;
-//! `encode_script` encodes a patched AL script as `{"eval-al": sexp}`;
+//! `encode_entry` encodes the inputs of the base's entry;
 //! `lower`, `raise`, `host`, and `reply` are `serve`'s.
 
 mod sexp;
 
 use super::{
-    Below, Call, HostCall, Output, Protocol, Script, Values,
+    Below, Call, Entered, HostCall, Output, Protocol, Values,
     json::{Cache, Writer},
     serve::{self, request},
 };
 use crate::{
     diagnostic::Report,
-    interface::meta::shared::decode::Decode,
     lang::{
         al::ast as al,
         common::source::Span,
         data::{
             arena::Arena,
-            value::flat::{self as value, Value, get, make},
+            value::flat::{self as value, Value, make},
         },
     },
     metacirc::{Result as MetacircResult, error, tower::PreparedLevel},
@@ -44,6 +43,10 @@ impl MetaRedexProtocol {
     pub(in crate::metacirc) const SERVE: &str = serve::SERVE;
     /// The host call of every request of the process.
     pub(in crate::metacirc) const HOST_EVAL: &str = serve::HOST_EVAL;
+    /// The entry calling a relation, `Eval_AL_rel(spec, id, args)`.
+    pub(in crate::metacirc) const ENTRY_REL: &str = serve::ENTRY_REL;
+    /// The entry calling a function, `Eval_AL_func(spec, id, args)`.
+    pub(in crate::metacirc) const ENTRY_FUNC: &str = serve::ENTRY_FUNC;
 }
 
 impl Protocol for MetaRedexProtocol {
@@ -73,15 +76,26 @@ impl Protocol for MetaRedexProtocol {
         Ok(*value::get::one(&values).map_err(ExternError::from)?)
     }
 
-    /// Encodes a patched AL script as `{"eval-al": sexp}`,
-    /// which `RedexEngine::call_program` sends to spec-meta-redex's `Eval_AL`.
-    fn encode_script(&self, arena: &mut Arena, script: Script) -> MetacircResult<Value> {
-        let Script::Al(spec_al) = script else {
-            return Err(error::entry_invalid("spec-meta-redex runs only an AL script"));
+    /// Encodes the inputs of the base's entry as JSON text.
+    ///
+    /// `Eval_AL_rel` and `Eval_AL_func` take the AL specification `above`
+    /// as the s-expression text of a `spec` term, the name of its entry,
+    /// and `values`, the entry's inputs: `"sexp"`, `"name"`, and `[val...]`,
+    /// which `RedexEngine::call_rel` passes on.
+    fn encode_entry(
+        &self,
+        arena: &mut Arena,
+        above: Entered<'_>,
+        name: &str,
+        values: &[Value],
+    ) -> MetacircResult<Vec<Value>> {
+        let Entered::Al(spec_al) = above else {
+            let message = "spec-meta-redex enters only a level passed to it as AL";
+            return Err(error::config_invalid(message));
         };
-        let request = spec_request(request::EVAL_AL, &spec_al);
-        make::text(arena, request, Span::default())
-            .map_err(|cause| error::entry_invalid(cause.to_string()))
+        let mut writer = Writer::new();
+        writer.text(&sexp::script(spec_al));
+        serve::entry_inputs(arena, writer.finish(), name, values)
     }
 
     /// Wraps `call` of the AL level above as `serve(C, request)` on spec-meta-redex.
@@ -132,29 +146,24 @@ impl Protocol for MetaRedexProtocol {
 // == The engine's side
 
 impl MetaRedexProtocol {
-    /// The request `RedexEngine::call_program` sends for `program`.
-    ///
-    /// `program` is the text `encode_script` made, or, in a single-level tower,
-    /// which patches nothing, the script as `interface::meta` encoded it.
-    pub(in crate::metacirc) fn program_request(
-        arena: &mut Arena,
-        program: Value,
-    ) -> Result<String, InterpreterError> {
-        if let Ok(request) = get::text(arena, &program) {
-            return Ok(request.to_owned());
-        }
-        let spec_al = al::Spec::decode(arena, program)
-            .map_err(|error| InterpreterError::Fatal(error.into_report()))?;
-        Ok(spec_request(request::EVAL_AL, &spec_al))
+    /// The requests that run spec-meta-redex's entry `name` on `values`,
+    /// the JSON texts `sexp`, `id`, and `args` that `encode_entry` made.
+    pub(in crate::metacirc) fn entry_requests(
+        arena: &Arena,
+        name: &str,
+        values: &[Value],
+    ) -> Result<[String; 2], InterpreterError> {
+        serve::entry_requests(arena, name, values)
     }
 
-    /// The outputs of `Eval_AL` from its answer: the value of `$main()`.
-    pub(in crate::metacirc) fn program_outputs(
+    /// The outputs of spec-meta-redex's entry `name` from the answer to its call:
+    /// the relation's values for `Eval_AL_rel`, the function's value for `Eval_AL_func`.
+    pub(in crate::metacirc) fn entry_outputs(
         arena: &mut Arena,
-        value_answer: Value,
         name: &str,
+        value_answer: Value,
     ) -> Result<Vec<Value>, InterpreterError> {
-        serve::program_outputs(arena, value_answer, name)
+        serve::entry_outputs(arena, name, value_answer)
     }
 
     /// Checks the answer to a load request, `{"ok": []}`.

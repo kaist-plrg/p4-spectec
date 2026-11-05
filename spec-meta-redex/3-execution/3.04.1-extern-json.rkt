@@ -143,10 +143,11 @@
     [(hash-table ('error (? string?))) #:when (= (hash-count js) 1) 'ERROR]
     [_ (malformed "a response" js)]))
 
-;; Calls from the host and their answers (3.16-entry.rkt):
+;; Calls from the host and their answers (3.16-entry.rkt). Eval_AL_rel is
+;; `load` then `call-rel`, and Eval_AL_func is `load` then `call-func` with
+;; `"targs": []`.
 ;;
 ;; call   ::= {"load": sexp}                      $load_ctx($empty_ctx, spec)
-;;          | {"eval-al": sexp}                   Eval_AL
 ;;          | {"call-rel": <id>, "args": [val, ...]}
 ;;          | {"call-func": <id>, "targs": [typ, ...], "args": [val, ...]}
 ;;          | {"exit": null}
@@ -154,7 +155,7 @@
 ;; answer ::= {"ready": null}     before the first call
 ;;          | {"ok": []}          load
 ;;          | {"ok": [val, ...]}  call-rel
-;;          | {"ok": val}         eval-al and call-func
+;;          | {"ok": val}         call-func
 ;;          | {"fail": null}      UNMATCH
 ;;          | {"error": <text>}   ERROR
 ;;

@@ -334,11 +334,13 @@ fn execute_program(
     arena.reset_values();
     match parse_string(arena, path, source) {
         Ok(program) => {
-            // Patch failures abort; evaluation rejection is an outcome
-            let value = tower.patch(arena, program).map_err(|error| {
-                Error::from(format!("{}: test execution error: {error}", path.display()))
-            })?;
-            let accepted = tower.eval_program(arena, value).result.is_ok();
+            // Encoding failures abort; evaluation rejection is an outcome
+            let values = tower
+                .encode_input(arena, &metacirc::Input::P4(program))
+                .map_err(|error| {
+                    Error::from(format!("{}: test execution error: {error}", path.display()))
+                })?;
+            let accepted = tower.eval_input(arena, &values).is_ok();
             Ok(if accepted { Outcome::Pass } else { Outcome::Fail })
         }
         Err(P4Error { kind: p4spectec::interface::p4::error::P4ErrorKind::Syntax(_), .. }) => {

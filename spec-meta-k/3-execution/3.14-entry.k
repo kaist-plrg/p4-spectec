@@ -1,11 +1,13 @@
 // Entry point: serves the host's calls.
 //
-// Mirrors spec-meta/5-entry.watsup for Eval_AL, and serves the calls the
-// host makes on a loaded spec as well ($load_ctx, Call_rel, Call_func), in
-// the JSON of 3.04.1-extern-json.k. `serve(J)` sends J, the answer to the
-// last call, and dispatches the next call. Each call runs as one `try`,
-// answered with its values for `OK`, `fail` for `UNMATCH`, `error` for
-// `ERROR`. `exit` empties `<k>`, which ends the run.
+// Serves the calls the host makes on a loaded spec ($load_ctx, Call_rel,
+// Call_func), in the JSON of 3.04.1-extern-json.k. The entries of
+// spec-meta/5-entry.watsup are two of them in a row: Eval_AL_rel is `load`
+// then `call-rel`, and Eval_AL_func is `load` then `call-func` with no type
+// arguments. `serve(J)` sends J, the answer to the last call, and dispatches
+// the next call. Each call runs as one `try`, answered with its values for
+// `OK`, `fail` for `UNMATCH`, `error` for `ERROR`. `exit` empties `<k>`,
+// which ends the run.
 
 requires "3.04.3-spec-json.k"
 requires "3.13-eval-call-rel.k"
@@ -38,27 +40,6 @@ module AL
         => loadSpec(specOfJsons(Js)) ~> serve({ "ok" : [ .JSONs ], .JSONs })
        ...
        </k>
-
-  // ==========================================================================
-  // Eval_AL: |- specAL : val
-  //
-  // The spec loaded, then $main(), which it is assumed to define.
-  // ==========================================================================
-
-  syntax KItem ::= "answerMain" "(" ")"
-
-  rule <k> dispatch({ "eval-al" : [ Js:JSONs ], .JSONs })
-        => logDebug(textV("entry-al"))
-           ~> loadSpec(specOfJsons(Js))
-           ~> logDebug(textV("load complete"))
-           ~> logDebug(textV("into call"))
-           ~> try(callFunc("main", .TArgList, .ValList))
-           ~> answerMain()
-       ...
-       </k>
-
-  rule <k> ok(V:Val) ~> answerMain() => logDebug(V) ~> serve({ "ok" : jsonOfVal(V), .JSONs }) ... </k>
-  rule <k> F:Failure ~> answerMain() => serve(failAnswer(F)) ... </k>
 
   // ==========================================================================
   // Call_rel and Call_func on the loaded spec

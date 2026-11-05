@@ -4,7 +4,8 @@
 //! Going down, `lower` turns a call of a level-(k+1) relation or function
 //! into a call on level k, and `raise` turns its result back;
 //! `load` makes C, level k+1's specification loaded into level k,
-//! and `encode_script` encodes level k+1 patched with a program entry.
+//! and `encode_entry` encodes the inputs of level k's entry into level k+1,
+//! a configured level or the script above the top (`Entered`).
 //! Going up, `host` decodes a host call that level k's specification made
 //! for level k+1, and `reply` encodes its outcome.
 //! `ProtocolKind` stores the protocols; `meta` is spec-meta's,
@@ -55,9 +56,16 @@ pub(in crate::metacirc) trait Protocol {
     fn load(&self, below: &mut dyn Below, above: &PreparedLevel)
     -> Result<Value, InterpreterError>;
 
-    /// Encodes `script`, the level above patched with a program entry,
-    /// as the input of this level's entry relation.
-    fn encode_script(&self, arena: &mut Arena, script: Script) -> MetacircResult<Value>;
+    /// Encodes the inputs of this level's entry relation,
+    /// which enters `name` of `above` on `values`,
+    /// the inputs of `name` encoded one level down.
+    fn encode_entry(
+        &self,
+        arena: &mut Arena,
+        above: Entered<'_>,
+        name: &str,
+        values: &[Value],
+    ) -> MetacircResult<Vec<Value>>;
 
     /// Turns `call` of the level above into a call on this level, given C.
     fn lower(
@@ -178,12 +186,18 @@ impl Protocol for ProtocolKind {
         }
     }
 
-    fn encode_script(&self, arena: &mut Arena, script: Script) -> MetacircResult<Value> {
+    fn encode_entry(
+        &self,
+        arena: &mut Arena,
+        above: Entered<'_>,
+        name: &str,
+        values: &[Value],
+    ) -> MetacircResult<Vec<Value>> {
         match self {
-            Self::Meta(protocol) => protocol.encode_script(arena, script),
-            Self::MetaK(protocol) => protocol.encode_script(arena, script),
-            Self::MetaRedex(protocol) => protocol.encode_script(arena, script),
-            Self::Kore(protocol) => protocol.encode_script(arena, script),
+            Self::Meta(protocol) => protocol.encode_entry(arena, above, name, values),
+            Self::MetaK(protocol) => protocol.encode_entry(arena, above, name, values),
+            Self::MetaRedex(protocol) => protocol.encode_entry(arena, above, name, values),
+            Self::Kore(protocol) => protocol.encode_entry(arena, above, name, values),
         }
     }
 
@@ -284,10 +298,12 @@ impl Protocol for ProtocolKind {
     }
 }
 
-/// A level's specification patched with a program entry, in the form it was prepared in.
-pub(in crate::metacirc) enum Script {
-    Al(al::Spec),
-    Il(il::Spec),
+/// A specification entered from the level below, in the form that level accepts:
+/// a configured level above the base, or the script above the top.
+#[derive(Clone, Copy)]
+pub(in crate::metacirc) enum Entered<'a> {
+    Al(&'a al::Spec),
+    Il(&'a il::Spec),
 }
 
 /// Calls on the level below a boundary, which `Protocol::load` runs.
