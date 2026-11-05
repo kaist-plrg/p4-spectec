@@ -16,7 +16,7 @@
 mod spec;
 mod wire;
 
-use super::{Below, Call, HostCall, Output, Protocol, Values};
+use super::{Below, Call, Entered, HostCall, Output, Protocol, Values};
 use crate::{
     diagnostic::Report,
     lang::{
@@ -116,16 +116,17 @@ impl Protocol for MetaKProtocol {
 
     /// Encodes the inputs of the base's entry as JSON text.
     ///
-    /// `Eval_AL_rel` and `Eval_AL_func` take the AL specification of `above`,
-    /// the name of its configured relation, and `values`, its inputs:
-    /// `[def...]`, `"id"`, and `[val...]`, which `KEngine::call_rel` passes on.
+    /// `Eval_AL_rel` and `Eval_AL_func` take the AL specification `above`,
+    /// the name of its entry, and `values`, the entry's inputs:
+    /// `[def...]`, `"name"`, and `[val...]`, which `KEngine::call_rel` passes on.
     fn encode_entry(
         &self,
         arena: &mut Arena,
-        above: &PreparedLevel,
+        above: Entered<'_>,
+        name: &str,
         values: &[Value],
     ) -> MetacircResult<Vec<Value>> {
-        let PreparedLevel::Al { spec_al, .. } = above else {
+        let Entered::Al(spec_al) = above else {
             let message = "spec-meta-k enters only a level passed to it as AL";
             return Err(error::config_invalid(message));
         };
@@ -133,7 +134,7 @@ impl Protocol for MetaKProtocol {
         spec::spec(&mut writer, spec_al);
         let text_spec = writer.finish();
         let mut writer = Writer::new();
-        writer.text(&above.config().rel);
+        writer.text(name);
         let text_id = writer.finish();
         let mut writer = Writer::new();
         wire::values(&mut writer, arena, &mut Cache::new(false), values);

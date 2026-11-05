@@ -10,7 +10,7 @@
 //! `host` decodes `Call_builtin_func`, `Call_extern_func`, and `Call_extern_rel`;
 //! `reply` encodes a native outcome as OK or UNMATCH, keeping its effects.
 
-use super::{Below, Call, HostCall, Output, Protocol, Values};
+use super::{Below, Call, Entered, HostCall, Output, Protocol, Values};
 use crate::{
     interface::meta::shared::{
         self as meta, Cache,
@@ -83,17 +83,17 @@ impl Protocol for MetaProtocol {
     fn encode_entry(
         &self,
         arena: &mut Arena,
-        above: &PreparedLevel,
+        above: Entered<'_>,
+        name: &str,
         values: &[Value],
     ) -> MetacircResult<Vec<Value>> {
         // An IL consumer converts the IL itself
         let value_spec = match above {
-            PreparedLevel::Al { spec_al, .. } => spec_al.encode(arena),
-            PreparedLevel::Il { spec_il, .. } => spec_il.encode(arena),
-            PreparedLevel::Base { .. } => unreachable!("the base is never passed to another level"),
+            Entered::Al(spec_al) => spec_al.encode(arena),
+            Entered::Il(spec_il) => spec_il.encode(arena),
         }
         .map_err(meta::Error::into_report)?;
-        entry_inputs(arena, value_spec, &above.config().rel, values)
+        entry_inputs(arena, value_spec, name, values)
     }
 
     fn lower(
@@ -208,7 +208,7 @@ mod m {
 /// Encodes the inputs of an entry relation, such as `Eval_AL_rel`,
 /// entering `name` of the script `value_spec` on `values`,
 /// the inputs of `name` encoded as meta values one level down.
-pub(in crate::metacirc) fn entry_inputs(
+fn entry_inputs(
     arena: &mut Arena,
     value_spec: Value,
     name: &str,
