@@ -1,6 +1,8 @@
 #lang racket/base
-;; Mirrors spec-meta/5-entry.watsup for Eval_AL, and serves the calls the host
-;; makes on a loaded spec as well ($load_ctx, Call_rel, Call_func).
+;; Serves the calls the host makes on a loaded spec ($load_ctx, Call_rel,
+;; Call_func). The entries of spec-meta/5-entry.watsup are two of them in a
+;; row: Eval_AL_rel is `load` then `call-rel`, and Eval_AL_func is `load` then
+;; `call-func` with no type arguments.
 ;;
 ;; As a program, it says it is ready, then answers each call of the host
 ;; (3.04.1-extern-json.rkt) by running it through the driver: OK with its
@@ -68,24 +70,6 @@
     [(hash-table ('load (? string? sexp)))
      (set! loaded (load-script (read-spec sexp)))
      (hasheq 'ok '())]
-    ;; rule Entry:
-    ;;   |- spec : val
-    ;;   -- debug "entry-al"
-    ;;   -- if C = $load_ctx($empty_ctx, spec)
-    ;;   -- debug "load complete"
-    ;;   -- debug "into call"
-    ;;   -- Eval_exp: C |- CALL "main" eps eps : OK val
-    ;;   -- debug val
-    [(hash-table ('eval-al (? string? sexp)))
-     (debug (term (TEXT "entry-al")))
-     (define loaded_main (load-script (read-spec sexp)))
-     (debug (term (TEXT "load complete")))
-     (debug (term (TEXT "into call")))
-     (match (run-loaded loaded_main (term (CALL "main" () ())))
-       [(and failure (or 'UNMATCH 'ERROR)) (failure->answer failure)]
-       [val
-        (debug val)
-        (hasheq 'ok (val->jsexpr val))])]
     [(hash-table ('call-rel (? string? id)) ('args (? list? args)))
      (match (run-loaded (loaded-ctx) (term (call-rel ,id ,(map jsexpr->val args))))
        [(list 'OK vals) (hasheq 'ok (map val->jsexpr vals))]

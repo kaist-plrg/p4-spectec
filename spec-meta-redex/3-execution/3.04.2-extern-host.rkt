@@ -43,7 +43,7 @@
 
 (define (call? js)
   (and (hash? js)
-       (for/or ([key (in-list '(load eval-al call-rel call-func))])
+       (for/or ([key (in-list '(load call-rel call-func))])
          (hash-has-key? js key))))
 
 ;; Sends a request to the host, and gives its response as a jsexpr.
