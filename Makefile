@@ -43,6 +43,11 @@ METACIRC_TARGETS := metacirc test-metacirc-run-al test-metacirc-run-il test-meta
 $(METACIRC_TARGETS):
 	$(MAKE) -f METASQ.mk CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $(if $(TEST_LOG),TEST_LOG="$(abspath $(TEST_LOG))") $@
 
+# K and PLT Redex cross-checking
+.PHONY: metacross k test-k redex test-redex
+metacross k test-k redex test-redex:
+	$(MAKE) -f CROSS.mk CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
+
 promote: test-promote
 
 # Specification documents
@@ -60,4 +65,5 @@ p4spec-release-html:
 clean:
 	rm -f ./$(SPEC)
 	$(MAKE) -f METASQ.mk clean
+	$(MAKE) -f CROSS.mk clean
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" clean
