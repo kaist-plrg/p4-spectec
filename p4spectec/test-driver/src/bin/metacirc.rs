@@ -6,7 +6,7 @@ use clap::{Parser, Subcommand};
 
 use p4spectec_test::{
     harness::{self, Error, Result},
-    metacirc::{metaparse, run, sim},
+    metacirc::{k_in_st, metaparse, run, sim},
     suite::{snapshot, snapshot::Stage},
 };
 
@@ -30,6 +30,14 @@ enum Command {
         /// Configuration name in `suites/metacirc/sim.toml`
         config: String,
         /// Run only the registered simulation suite with this name.
+        #[arg(long = "suite", value_name = "NAME")]
+        name_suite: Option<String>,
+    },
+    /// Compare K definitions run through spec-k with krun
+    KInSt {
+        /// Configuration name in `suites/metacirc/k-in-st.toml`
+        config: String,
+        /// Run only the registered suite with this name.
         #[arg(long = "suite", value_name = "NAME")]
         name_suite: Option<String>,
     },
@@ -84,6 +92,7 @@ fn execute(cli: Cli) -> Result<()> {
         Command::Sim { config, name_suite } => {
             sim::run(&config, name_suite.as_deref(), path_log.as_deref())
         }
+        Command::KInSt { config, name_suite } => k_in_st::run(&config, name_suite.as_deref()),
         // Snapshot and codec checks compile the meta specification without executing it
         Command::Elab => snapshot::run("metacirc/snapshot", &[Stage::Elab], None),
         Command::Algo => snapshot::run("metacirc/snapshot", &[Stage::Algo], None),
@@ -99,6 +108,7 @@ fn list() -> Result<()> {
     println!("snapshot: {:#?}", harness::load::<snapshot::Registration>("metacirc/snapshot")?);
     println!("run: {:#?}", harness::load::<run::Registration>("metacirc/run")?);
     println!("sim: {:#?}", harness::load::<sim::Registration>("metacirc/sim")?);
+    println!("k-in-st: {:#?}", harness::load::<k_in_st::Registration>("metacirc/k-in-st")?);
     println!("metaparse: {:#?}", harness::load::<metaparse::Registration>("metacirc/metaparse")?);
     Ok(())
 }

@@ -17,6 +17,11 @@ pub(super) fn config_invalid(message: impl Into<String>) -> Box<Report> {
     diagnostic("metacirc/config-invalid", message)
 }
 
+/// Reports a part of a tower that is a template slot without an implementation yet.
+pub(super) fn unimplemented(what: &str) -> Box<Report> {
+    diagnostic("metacirc/unimplemented", format!("{what} is not implemented yet"))
+}
+
 /// Reports invalid program input for a tower.
 pub(super) fn input_invalid(message: impl Into<String>) -> Box<Report> {
     diagnostic("metacirc/input-invalid", message)

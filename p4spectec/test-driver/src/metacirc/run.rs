@@ -102,6 +102,9 @@ pub fn run(
 ) -> Result<()> {
     let registration: Registration = harness::load("metacirc/run")?;
     let config = Configuration::find(&registration.configs, name_config)?;
+    if config.skip_pending("run") {
+        return Ok(());
+    }
     if let Some(name) = name_suite
         && !registration.suites.iter().any(|suite| suite.name == name)
     {
@@ -123,6 +126,12 @@ pub fn run(
         let (input_suite, suites_input) = match config_tower.top_lang() {
             Lang::P4 => (Input::P4, &mut suites_p4),
             Lang::Al | Lang::Il => (Input::Al, &mut suites_al),
+            Lang::Kore => {
+                return Err(Error::from(format!(
+                    "{}: a KORE tower is not a run suite",
+                    suite.name
+                )));
+            }
         };
         if input.is_none_or(|input| input == input_suite) {
             suites_input.push(SelectedSuite { suite, path_tower });

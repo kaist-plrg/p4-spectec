@@ -5,13 +5,13 @@
 //! with the definitions a reentry runs on.
 //! `Top` and `TopMut` are the highest level, stored and lent.
 
-use super::super::interp::{TowerEnv, TowerInterpState};
+use super::super::{
+    interp::{TowerEnv, TowerInterpState},
+    protocol::CodecCache,
+};
 use super::HostLevel;
 use crate::{
-    interface::{
-        meta::{MetaInterface, shared::Cache},
-        p4::P4Interface,
-    },
+    interface::{meta::MetaInterface, p4::P4Interface},
     lang::data::value::flat::Value,
     runner::{Extern, Host, Interface},
 };
@@ -29,7 +29,7 @@ use crate::{
 /// depth 0 uses `hosts`, and each deeper depth its own.
 pub(in crate::metacirc) struct Upper<Ext: Extern> {
     /// The codec cache of the boundary below each level, through the top.
-    pub caches: Vec<Cache>,
+    pub caches: Vec<CodecCache>,
     /// C of each level for the current program, loaded on first use.
     pub ctxs: Vec<Option<Value>>,
     /// The meta builtins of each level between the base and the top, at depth 0.
@@ -50,7 +50,7 @@ pub(in crate::metacirc) enum Top<Ext: Extern> {
 impl<Ext: Extern> Upper<Ext> {
     /// Clears every level's state between programs.
     pub(in crate::metacirc) fn clear(&mut self) {
-        self.caches.iter_mut().for_each(Cache::clear);
+        self.caches.iter_mut().for_each(CodecCache::clear);
         self.ctxs.fill(None);
         self.hosts.iter_mut().for_each(Interface::clear);
         match &mut self.top {
@@ -87,7 +87,7 @@ pub(in crate::metacirc) struct UpperMut<'l, Ext: Extern> {
     /// Definitions shared by every depth, which a reentry runs on.
     pub env: &'l TowerEnv<'l>,
     /// The codec cache of the boundary below each level, shared by every depth.
-    pub caches: &'l mut [Cache],
+    pub caches: &'l mut [CodecCache],
     /// C of each level for the current program, shared by every depth.
     pub ctxs: &'l mut [Option<Value>],
     /// The meta builtins of each level between the base and the top, at this depth.
@@ -107,7 +107,7 @@ pub(in crate::metacirc) enum TopMut<'l, Ext: Extern> {
 
 impl<'l, Ext: Extern> UpperMut<'l, Ext> {
     /// Returns the codec cache of the boundary below `level`.
-    pub(in crate::metacirc) fn cache(&mut self, level: HostLevel) -> &mut Cache {
+    pub(in crate::metacirc) fn cache(&mut self, level: HostLevel) -> &mut CodecCache {
         &mut self.caches[level.index()]
     }
 

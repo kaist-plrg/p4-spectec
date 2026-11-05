@@ -9,16 +9,13 @@
 //! the base's definitions, C, and the codec caches with this one.
 
 use super::{
-    engine::{Engine, EngineKind, SpecTecEngine, SpecTecEngineState, SpecTecSpec},
-    protocol::{Below, Call, Output, Protocol, ProtocolKind, Values},
+    Result as MetacircResult,
+    engine::{BaseSpec, Engine, EngineKind, EngineStateKind},
+    protocol::{Below, Call, CodecCache, Output, Protocol, ProtocolKind, Values},
     tower::{HostLevel, LevelAt, PreparedLevel, TopMut, UpperMut},
 };
 use crate::{
-    interface::{
-        self, Lang,
-        meta::{MetaInterface, shared::Cache},
-        p4::P4Interface,
-    },
+    interface::{self, Lang, meta::MetaInterface, p4::P4Interface},
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::Typ,
@@ -39,7 +36,7 @@ pub(in crate::metacirc) struct TowerInterp<'s> {
     /// The depths beneath this one, which answer reentry.
     pub depth_next: &'s mut Option<Box<TowerInterpState>>,
     /// The codec cache of each level boundary, shared by every depth.
-    pub caches: &'s mut [Cache],
+    pub caches: &'s mut [CodecCache],
     /// C of each level above the base, shared by every depth.
     pub ctxs: &'s mut [Option<Value>],
 }
@@ -50,7 +47,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for TowerInterp<'s> {
     fn clear(&mut self) {
         self.engine.clear();
         *self.depth_next = None;
-        self.caches.iter_mut().for_each(Cache::clear);
+        self.caches.iter_mut().for_each(CodecCache::clear);
     }
 
     fn reset(&mut self) {
@@ -58,7 +55,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for TowerInterp<'s> {
         self.hosts.iter_mut().for_each(Interface::clear);
         *self.depth_next = None;
         self.ctxs.fill(None);
-        self.caches.iter_mut().for_each(Cache::clear);
+        self.caches.iter_mut().for_each(CodecCache::clear);
     }
 
     fn eval_program(
@@ -127,7 +124,7 @@ impl<'s> TowerInterp<'s> {
 /// Definitions shared by every depth.
 pub(in crate::metacirc) struct TowerEnv<'s> {
     /// The base specification, executed natively.
-    pub spec_base: SpecTecSpec<'s>,
+    pub spec_base: BaseSpec<'s>,
     /// Every level of the tower, from the base to the top.
     pub levels: &'s [PreparedLevel],
     /// The protocol of the boundary below each level above the base.
@@ -240,7 +237,7 @@ impl<Ext: Extern> Below for LevelBelow<'_, '_, '_, Ext> {
 
 /// The state of one reentry depth beneath the base.
 pub(in crate::metacirc) struct TowerInterpState {
-    engine: SpecTecEngineState,
+    engine: EngineStateKind,
     /// The meta builtins of each level between the base and the top.
     hosts: Vec<MetaInterface>,
     next: Option<Box<TowerInterpState>>,
@@ -251,25 +248,25 @@ impl TowerInterpState {
     /// between base and top.
     pub(in crate::metacirc) fn new(
         options: runner::Config,
-        spec_base: SpecTecSpec<'_>,
+        spec_base: BaseSpec<'_>,
         count: usize,
-    ) -> Self {
-        Self {
-            engine: SpecTecEngineState::new(options, spec_base),
+    ) -> MetacircResult<Self> {
+        Ok(Self {
+            engine: EngineStateKind::new(options, spec_base)?,
             hosts: (0..count).map(|_| interface::meta(Lang::Al)).collect(),
             next: None,
-        }
+        })
     }
 
     /// Lends this depth, executing `spec_base`, as the P4 level's interpreter.
     pub(in crate::metacirc) fn lend<'d>(
         &'d mut self,
-        spec_base: SpecTecSpec<'d>,
-        caches: &'d mut [Cache],
+        spec_base: BaseSpec<'d>,
+        caches: &'d mut [CodecCache],
         ctxs: &'d mut [Option<Value>],
     ) -> TowerInterp<'d> {
         TowerInterp {
-            engine: EngineKind::SpecTec(SpecTecEngine::lend_depth(&mut self.engine, spec_base)),
+            engine: self.engine.lend(spec_base),
             hosts: &mut self.hosts,
             depth_next: &mut self.next,
             caches,

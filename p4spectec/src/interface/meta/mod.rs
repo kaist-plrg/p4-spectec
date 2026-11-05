@@ -54,8 +54,8 @@ impl Interface for MetaInterface {
             Lang::Il => crate::elab(paths)
                 .map_err(InterfaceError::from)?
                 .encode(arena),
-            // A meta specification never interprets P4 directly
-            Lang::P4 => return Err(InterfaceError::diagnostic_unconfigured()),
+            // A meta specification never interprets P4 or KORE directly
+            Lang::P4 | Lang::Kore => return Err(InterfaceError::diagnostic_unconfigured()),
         };
         encoded.map_err(|error| InterfaceError::from(error.into_report()))
     }
