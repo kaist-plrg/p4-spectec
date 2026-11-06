@@ -5,12 +5,12 @@
 ;; `call-func` with no type arguments.
 ;;
 ;; As a program, it says it is ready, then answers each call of the host by
-;; running it through the driver. Calls and answers are s-expressions that
-;; `read` reads and `write` prints (3.04-extern-host.rkt), so the answer is
-;; the result itself: OK with its values, UNMATCH, or ERROR. A call that
-;; raises a Racket error is answered with `raise` and its message. `exit`, or
-;; the end of stdin, ends it. Debug values go to the host, and other output
-;; to stderr.
+;; reducing it with ->al. Calls and answers are s-expressions that `read`
+;; reads and `write` prints (3.04-extern-host.rkt), so the answer is the
+;; result itself: OK with its values, UNMATCH, or ERROR. A call that gets
+;; stuck, or raises a Racket error, is answered with `raise` and its message.
+;; `exit`, or the end of stdin, ends it. Debug values go to the host, and
+;; other output to stderr.
 ;;
 ;; call   ::= (load spec)                   $load_ctx($empty_ctx, spec)
 ;;          | (call-rel id (val ...))
@@ -22,7 +22,7 @@
 ;;          | valsres                       call-rel
 ;;          | valres                        call-func
 ;;
-;;   racket spec-meta-redex/3-execution/3.16-entry.rkt
+;;   racket spec-meta-redex/3-execution/3.15-entry.rkt
 ;;
 ;; p4spectec::metacirc::redex starts it, once per tower.
 
@@ -31,22 +31,34 @@
          "../0-aux/0.0-stdlib.rkt"
          "3.04-extern-host.rkt"
          "3.02-context.rkt"
-         "3.15-driver.rkt")
+         "3.03-machine.rkt"
+         "3.14-step.rkt")
 (provide load-script
          run-loaded
          serve)
 
-;; The context that spec loads into, as (G L): the handle of its global
-;; layer, now registered, and its local layer
+;; The context that spec loads into, as (G L): its global layer and its
+;; local layer
 (define (load-script spec)
-  (match-define (list 'GLOBAL layer_global 'LOCAL L) (term (load (empty-ctx) ,spec)))
-  (list (register-global! layer_global) L))
+  (match-define (list 'GLOBAL G 'LOCAL L) (term (load (empty-ctx) ,spec)))
+  (list G L))
+
+;; The configuration that conf reduces to by ->al: final, or stuck. The
+;; rules are deterministic, so a configuration has at most one successor.
+(define (run conf)
+  (match (apply-reduction-relation ->al conf)
+    ['() conf]
+    [(list conf_1) (run conf_1)]
+    [confs (error 'run "~a successors of ~e" (length confs) (car conf))]))
 
 ;; The result of e under the loaded context (G L)
 (define (run-loaded loaded e)
   (match-define (list G L) loaded)
-  (match (run (list G (list 'IN L e)))
-    [(list _ (list 'IN _ res)) res]))
+  (match (run (term (,e ,G ,L ())))
+    [(list (? res? res) _ _ '()) res]
+    [(list e_stuck _ _ _) (error 'run "stuck: no rule applies to ~e" e_stuck)]))
+
+(define res? (redex-match? al res))
 
 ;; The context of the spec loaded last, which calls run under
 (define loaded #f)

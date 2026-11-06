@@ -85,7 +85,8 @@
         (where valsres ,(host-call-extern-rel (term id) (term (val ...))))
         "call-extern-rel")))
 
-;; The rules on a term and its context (r G L)
+;; The rules on a term and its context, (r G L K), which read G or L, or
+;; write L
 (define ->term+ctx/eval-call-rel
   (reduction-relation
    al
@@ -93,13 +94,13 @@
    ;;; Relation call
 
    ;; rulegroup Call_rel
-   (--> ((call-rel id (val ...)) G L) ((call-extern-rel id_rel (val ...)) G L)
+   (--> ((call-rel id (val ...)) G L K) ((call-extern-rel id_rel (val ...)) G L K)
         (where ((EXTREL id_rel (typ_input ...) (typ_output ...))) (find-rel G id))
         "call-rel/extern")
-   (--> ((call-rel id (val ...)) G L) ((call-defined-rel definedRelDefn (val ...)) G L)
+   (--> ((call-rel id (val ...)) G L K) ((call-defined-rel definedRelDefn (val ...)) G L K)
         (where (definedRelDefn) (find-rel G id))
         "call-rel/defined")
-   (--> ((call-rel id (val ...)) G L) (ERROR G L)
+   (--> ((call-rel id (val ...)) G L K) (ERROR G L K)
         ;; otherwise: no such relation
         (where () (find-rel G id))
         "call-rel/error")))

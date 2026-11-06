@@ -1,6 +1,7 @@
 #lang racket/base
 ;; The machine: the IN, seq, and failure rules, the notion of reduction
-;; (->term and ->term+ctx), and its closure ->al.
+;; (->term and ->term+ctx), the rules that move the focus, and the step ->al
+;; on configurations.
 
 (require redex/reduction-semantics
          "3.03-machine.rkt"
@@ -56,7 +57,8 @@
                              ->term/eval-call-func
                              ->term/eval-call-rel))
 
-;; The rules on a term and its context (r G L), which read G or L, or write L
+;; The rules on a term and its context, (r G L K), which read G or L, or write
+;; L
 (define ->term+ctx
   (union-reduction-relations ->term+ctx/eval-assign
                              ->term+ctx/eval-exp
@@ -66,18 +68,35 @@
                              ->term+ctx/eval-call-rel))
 
 ;;
-;; The closure, on configurations
+;; Refocusing
 ;;
 
-;; A step of ->term at a redex, or of ->term+ctx at a redex under the layer L
-;; of its innermost IN, with the name of the rule applied
+;; The rules that move the focus to the next redex, after the evaluation
+;; positions that Fr gives. The focus goes down into a position whose term
+;; is not done, and back up once it is. A term in focus with no position to
+;; go down into is a redex, or final.
+(define ->focus
+  (reduction-relation
+   al
+   ;; Into the pending position of a frame
+   (--> ((in-hole Fr any_sub) G L K) (any_sub G L (Fr K))
+        (side-condition (not (done? (term any_sub))))
+        "focus/down")
+   ;; Back into the frame, once the position is done
+   (--> (done G L (Fr K)) ((in-hole Fr done) G L K)
+        "focus/up")
+   ;; Into an IN, whose layer is the context until the focus leaves it
+   (--> ((IN L_in any_body) G L K) (any_body G L_in ((RET L) K))
+        (side-condition (not (done? (term any_body))))
+        "focus/in")
+   ;; Out of the IN, once its body is done
+   (--> (done G L_in ((RET L) K)) ((IN L_in done) G L K)
+        "focus/out")))
+
+(define done? (redex-match? al done))
+
+;; A step: a rule on the term in focus, or a move of the focus
 (define ->al
-  (union-reduction-relations
-   (context-closure ->term al (G (in-hole E (IN L F))))
-   (reduction-relation
-    al
-    (--> (G (in-hole E (IN L (in-hole F e_r))))
-         (G (in-hole E (IN L_1 (in-hole F e_1))))
-         (where (_ ... (any_name (e_1 G L_1)) _ ...)
-                ,(apply-reduction-relation/tag-with-names ->term+ctx (term (e_r G L))))
-         (computed-name (term any_name))))))
+  (union-reduction-relations (context-closure ->term al (hole _ _ _))
+                             ->term+ctx
+                             ->focus))

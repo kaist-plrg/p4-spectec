@@ -23,7 +23,8 @@
    (--> (EXP val) val
         "eval-arg/exp")))
 
-;; The rules on a term and its context (r G L)
+;; The rules on a term and its context, (r G L K), which read G or L, or
+;; write L
 (define ->term+ctx/eval-arg
   (reduction-relation
    al
@@ -31,7 +32,7 @@
    ;;; Argument evaluation rules
 
    ;; rule Eval_arg/fun: the global function name the parameter stands for
-   (--> ((FUN id) G L) ((FUNC (resolve-func-param L id)) G L)
+   (--> ((FUN id) G L K) ((FUNC (resolve-func-param L id)) G L K)
         "eval-arg/fun")
 
    ;;; Type argument evaluation rules
@@ -39,11 +40,11 @@
    ;; rule Eval_targs, for Eval_exp/call: the type arguments are substituted
    ;; through the local tdenv. It passes typ_input*, where spec-meta passes
    ;; targ*.
-   (--> ((CALL id (targ ...) (val_input ...)) G (name L {TYP tdenv FUNC fnenv VAL venv}))
-        ((call-func id (typ_input ...) (val_input ...)) G L)
+   (--> ((CALL id (targ ...) (val_input ...)) G (name L {TYP tdenv FUNC fnenv VAL venv}) K)
+        ((call-func id (typ_input ...) (val_input ...)) G L K)
         (where (OK (typ_input ...)) (subst-typs (theta-of-tdenv tdenv) (targ ...)))
         "eval-targs")
-   (--> ((CALL id (targ ...) (val_input ...)) G (name L {TYP tdenv FUNC fnenv VAL venv}))
-        (ERROR G L)
+   (--> ((CALL id (targ ...) (val_input ...)) G (name L {TYP tdenv FUNC fnenv VAL venv}) K)
+        (ERROR G L K)
         (where ERROR (subst-typs (theta-of-tdenv tdenv) (targ ...)))
         "eval-targs/error")))

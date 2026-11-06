@@ -3,7 +3,7 @@
 ;;
 ;; The functions take G and the local tdenv where spec-meta takes their
 ;; extension $adds_map(C.GLOBAL.TYP, ...): find-typdef finds in G and tdenv
-;; what $find_map finds in the extension, and global-ids gives the names the
+;; what $find_map finds in the extension, and G's TYP map gives the names the
 ;; extension holds besides tdenv's.
 
 (require redex/reduction-semantics
@@ -89,7 +89,8 @@
                    (FUNC (tparam_r ..._n) (typ_r ..._m) typ_ret_r))
    (equiv-typs G tdenv_fresh (typ_l_subst ... typ_ret_l_subst) (typ_r_subst ... typ_ret_r_subst))
    (where ((id typDef) ...) tdenv)
-   (where (id_used ...) ,(append (global-ids (term G) 'TYP)
+   (where ((id_global any_typDef) ...) (global-map G TYP))
+   (where (id_used ...) ,(append (term (id_global ...))
                                  (term (id ...))
                                  (term (ids-typ (FUNC (tparam_l ...) (typ_l ...) typ_ret_l)))
                                  (term (ids-typ (FUNC (tparam_r ...) (typ_r ...) typ_ret_r)))))

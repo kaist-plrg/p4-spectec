@@ -120,7 +120,8 @@
         (side-condition (not (= (length (term (arg ...))) (length (term (val ...))))))
         "assign-args/error")))
 
-;; The rules on a term and its context (r G L)
+;; The rules on a term and its context, (r G L K), which read G or L, or
+;; write L
 (define ->term+ctx/eval-assign
   (reduction-relation
    al
@@ -128,28 +129,28 @@
    ;;; Assigning to an expression
 
    ;; rule Assign_exp/variable
-   (--> ((assign-exp (VAR id) val) G L) (OK G (add-varr L (id ()) val))
+   (--> ((assign-exp (VAR id) val) G L K) (OK G (add-varr L (id ()) val) K)
         "assign-exp/variable")
 
    ;; rulegroup Assign_exp/iter
 
-   (--> ((assign-exp (ITER exp iterExp) val) G L) (OK G (add-varr L varr val))
+   (--> ((assign-exp (ITER exp iterExp) val) G L K) (OK G (add-varr L varr val) K)
         (where (varr) (is-iter-on-var (ITER exp iterExp)))
         "assign-exp/iter/simple")
 
-   (--> ((assign-exp (ITER exp (QUEST (vari ...))) (OPT ())) G L)
+   (--> ((assign-exp (ITER exp (QUEST (vari ...))) (OPT ())) G L K)
         (OK G (add-varis L ((iter-vari vari QUEST) ...)
-                         (repeat- (OPT ()) ,(length (term (vari ...))))))
+                         (repeat- (OPT ()) ,(length (term (vari ...))))) K)
         (where () (is-iter-on-var (ITER exp (QUEST (vari ...)))))
         "assign-exp/iter/opt-none")
 
    ;; Assign_exp/iter/opt-some, once the inner assignment has updated L.
    ;; It adds (OPT val_sub)*, where spec-meta adds each OPT val_sub on its own.
-   (--> ((assign-exp/iter/opt-some OK (vari ...)) G L)
-        (OK G (add-varis L ((iter-vari vari QUEST) ...) ((OPT (val_sub)) ...)))
+   (--> ((assign-exp/iter/opt-some OK (vari ...)) G L K)
+        (OK G (add-varis L ((iter-vari vari QUEST) ...) ((OPT (val_sub)) ...)) K)
         (where ((val_sub ...)) (find-varis L (vari ...)))
         "assign-exp/iter/opt-some/bind")
-   (--> ((assign-exp/iter/opt-some OK (vari ...)) G L) (ERROR G L)
+   (--> ((assign-exp/iter/opt-some OK (vari ...)) G L K) (ERROR G L K)
         ;; otherwise: some variable is unbound
         (where () (find-varis L (vari ...)))
         "assign-exp/iter/opt-some/error")
@@ -158,18 +159,18 @@
    ;; no values
    (--> ((assign-exp (ITER exp (STAR (vari ...))) (LIST (val ...)))
          G
-         (name L {TYP tdenv FUNC fnenv VAL venv}))
+         (name L {TYP tdenv FUNC fnenv VAL venv}) K)
         ((assign-exp/iter/list
           ((IN {TYP tdenv FUNC fnenv VAL (empty-map)} (assign-exp exp val)) ...)
           (vari ...))
-         G L)
+         G L K)
         (where () (is-iter-on-var (ITER exp (STAR (vari ...)))))
         "assign-exp/iter/list")
-   (--> ((assign-exp/iter/list ((IN L_sub OK) ...) (vari ...)) G L)
-        (OK G (add-varis L ((iter-vari vari STAR) ...) ((LIST (val_sub ...)) ...)))
+   (--> ((assign-exp/iter/list ((IN L_sub OK) ...) (vari ...)) G L K)
+        (OK G (add-varis L ((iter-vari vari STAR) ...) ((LIST (val_sub ...)) ...)) K)
         (where (((val_sub ...)) ...) ((finds-vari (L_sub ...) vari) ...))
         "assign-exp/iter/list/bind")
-   (--> ((assign-exp/iter/list ((IN L_sub OK) ...) (vari ...)) G L) (ERROR G L)
+   (--> ((assign-exp/iter/list ((IN L_sub OK) ...) (vari ...)) G L K) (ERROR G L K)
         ;; otherwise: some variable is unbound in some element's layer
         (side-condition
          (not (redex-match? al (((val ...)) ...)
@@ -179,6 +180,6 @@
    ;;; Assigning to an argument
 
    ;; rule Assign_arg/fun: the parameter is bound to the global function name
-   (--> ((assign-arg (FUN id) (FUNC id_global)) G L)
-        (OK G (add-func L id id_global))
+   (--> ((assign-arg (FUN id) (FUNC id_global)) G L K)
+        (OK G (add-func L id id_global) K)
         "assign-arg/fun")))

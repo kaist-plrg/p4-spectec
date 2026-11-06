@@ -139,7 +139,8 @@
    (--> (eval-exps (val ...)) (OK (val ...))
         "eval-exps")))
 
-;; The rules on a term and its context (r G L)
+;; The rules on a term and its context, (r G L K), which read G or L, or
+;; write L
 (define ->term+ctx/eval-exp
   (reduction-relation
    al
@@ -147,10 +148,10 @@
    ;;; Variable evaluation rules
 
    ;; rule Eval_exp/variable
-   (--> ((VAR id) G L) (val G L)
+   (--> ((VAR id) G L K) (val G L K)
         (where (val) (find-varr L (id ())))
         "eval-exp/variable")
-   (--> ((VAR id) G L) (ERROR G L)
+   (--> ((VAR id) G L K) (ERROR G L K)
         ;; otherwise: the variable is unbound
         (where () (find-varr L (id ())))
         "eval-exp/variable/error")
@@ -158,27 +159,27 @@
    ;;; Upcasting, downcasting, and subtyping evaluation rules
 
    ;; rulegroup Eval_exp/upcast
-   (--> ((UPCAST typ val) G L) (val_cast G L)
+   (--> ((UPCAST typ val) G L K) (val_cast G L K)
         (where (OK val_cast) (upcast G L typ val))
         "eval-exp/upcast/succ")
-   (--> ((UPCAST typ val) G L) (ERROR G L)
+   (--> ((UPCAST typ val) G L K) (ERROR G L K)
         (where ERROR (upcast G L typ val))
         "eval-exp/upcast/error")
 
    ;; rulegroup Eval_exp/downcast
-   (--> ((DOWNCAST typ val) G L) (val_cast G L)
+   (--> ((DOWNCAST typ val) G L K) (val_cast G L K)
         (where (OK val_cast) (downcast G L typ val))
         "eval-exp/downcast/succ")
-   (--> ((DOWNCAST typ val) G L) (ERROR G L)
+   (--> ((DOWNCAST typ val) G L K) (ERROR G L K)
         (where ERROR (downcast G L typ val))
         "eval-exp/downcast/error")
 
    ;; rulegroup Eval_exp/subtype. $subtyp takes G and the local tdenv, in
    ;; place of their extension (see subtyp).
-   (--> ((SUB val typ) G (name L {TYP tdenv FUNC fnenv VAL venv})) ((BOOL b) G L)
+   (--> ((SUB val typ) G (name L {TYP tdenv FUNC fnenv VAL venv}) K) ((BOOL b) G L K)
         (where (OK b) (subtyp G tdenv typ val))
         "eval-exp/subtype/succ")
-   (--> ((SUB val typ) G (name L {TYP tdenv FUNC fnenv VAL venv})) (ERROR G L)
+   (--> ((SUB val typ) G (name L {TYP tdenv FUNC fnenv VAL venv}) K) (ERROR G L K)
         (where ERROR (subtyp G tdenv typ val))
         "eval-exp/subtype/error")
 
@@ -186,28 +187,28 @@
 
    ;; rulegroup Eval_exp/iter. An iteration over sub-contexts is the option
    ;; or list of exp under each of them, which evaluates as one.
-   (--> ((ITER exp iterExp) G L) (val G L)
+   (--> ((ITER exp iterExp) G L K) (val G L K)
         (where (varr) (is-iter-on-var (ITER exp iterExp)))
         (where (val) (find-varr L varr))
         "eval-exp/iter/simple")
-   (--> ((ITER exp iterExp) G L) (ERROR G L)
+   (--> ((ITER exp iterExp) G L K) (ERROR G L K)
         ;; otherwise: the variable is unbound
         (where (varr) (is-iter-on-var (ITER exp iterExp)))
         (where () (find-varr L varr))
         "eval-exp/iter/simple/error")
-   (--> ((ITER exp (QUEST (vari ...))) G L) ((OPT ((IN L_sub exp) ...)) G L)
+   (--> ((ITER exp (QUEST (vari ...))) G L K) ((OPT ((IN L_sub exp) ...)) G L K)
         (where () (is-iter-on-var (ITER exp (QUEST (vari ...)))))
         (where (OK (L_sub ...)) (sub-opt L (vari ...)))
         "eval-exp/iter/opt-succ")
-   (--> ((ITER exp (QUEST (vari ...))) G L) (ERROR G L)
+   (--> ((ITER exp (QUEST (vari ...))) G L K) (ERROR G L K)
         (where () (is-iter-on-var (ITER exp (QUEST (vari ...)))))
         (where ERROR (sub-opt L (vari ...)))
         "eval-exp/iter/opt/error")
-   (--> ((ITER exp (STAR (vari ...))) G L) ((LIST ((IN L_sub exp) ...)) G L)
+   (--> ((ITER exp (STAR (vari ...))) G L K) ((LIST ((IN L_sub exp) ...)) G L K)
         (where () (is-iter-on-var (ITER exp (STAR (vari ...)))))
         (where (OK (L_sub ...)) (sub-list L (vari ...)))
         "eval-exp/iter/list-succ")
-   (--> ((ITER exp (STAR (vari ...))) G L) (ERROR G L)
+   (--> ((ITER exp (STAR (vari ...))) G L K) (ERROR G L K)
         (where () (is-iter-on-var (ITER exp (STAR (vari ...)))))
         (where ERROR (sub-list L (vari ...)))
         "eval-exp/iter/list/error")))

@@ -1,14 +1,12 @@
 #lang racket/base
 ;; Mirrors spec-meta/4-execution/4.01-context.watsup.
 ;;
-;; A dec over ctx takes G L if it reads C.GLOBAL, and L alone otherwise. L is
-;; the local layer. The global layer never changes after $load, so it stays in
-;; a registry, and G is its handle. A ctx result is the new L. $load and
-;; $empty_ctx keep ctx. A record update C[ .LOCAL.VAL = x ] is a pattern that
-;; rebuilds the layer.
+;; A dec over ctx takes G L if it reads C.GLOBAL, and L alone otherwise. G is
+;; the global layer, and L the local layer. A ctx result is the new L. $load
+;; and $empty_ctx keep ctx. A record update C[ .LOCAL.VAL = x ] is a pattern
+;; that rebuilds the layer.
 
-(require racket/match
-         redex/reduction-semantics
+(require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
          "../2-runtime/2.1-variable.rkt"
          "3.01-env.rkt")
@@ -16,8 +14,7 @@
          empty-localLayer
          empty-ctx
          load
-         register-global!
-         global-ids
+         global-map
          add-varr
          add-varis
          add-func
@@ -40,8 +37,10 @@
   (localLayer L ::= {TYP tdenv FUNC fnenv VAL venv})
   (ctx C ::= {GLOBAL globalLayer LOCAL localLayer})
 
-  ;; The handle of a registered global layer
-  (G ::= (GLOBAL natural))
+  ;; The global layer, as a dec over ctx takes it. It never changes after
+  ;; $load, whose result is a ctx, so it is checked once there and is any
+  ;; elsewhere: as globalLayer, every match would check the whole layer again.
+  (G ::= any)
 
   ;; Sub-contexts for iteration, as their local layers
   (subOptRes ::= (OK ()) (OK (L)) ERROR)
@@ -97,39 +96,16 @@
           ((load-defn defn) ...))])
 
 ;;
-;; The global layer, by handle
+;; The global layer
 ;;
 
-;; The registered global layers, by number. An entry never changes once
-;; added, so a handle denotes the same layer for good, and a metafunction that
-;; reads the layer through its handle stays a function of its arguments.
-(define global-layers (make-hasheqv))
-
-;; The handle of a global layer, which is checked and added to the registry.
-;; Only 3.16-entry.rkt calls this, after $load.
-(define (register-global! layer_global)
-  (unless (redex-match? context globalLayer layer_global)
-    (error 'register-global! "not a global layer: ~e" layer_global))
-  (define n (hash-count global-layers))
-  (hash-set! global-layers n layer_global)
-  (term (GLOBAL ,n)))
-
-;; The map of the global layer G under the label field (TYP, REL, or FUNC).
-;; The layer is taken apart in Racket, so neither a term nor a pattern holds
-;; it.
-(define (global-map G field)
-  (match-define (list 'GLOBAL n) G)
-  (match-define (list 'TYP tdenv 'REL renv 'FUNC fenv)
-    (hash-ref global-layers n (λ () (error 'global-map "no global layer ~a" n))))
-  (case field [(TYP) tdenv] [(REL) renv] [(FUNC) fenv]))
-
-;; The value of id in that map, as () or (v)
-(define (find-global G field id)
-  (map-ref (global-map G field) id))
-
-;; The keys of that map
-(define (global-ids G field)
-  (map car (global-map G field)))
+;; The map of G under the label field (TYP, REL, or FUNC), taken apart with
+;; any so that the layer is not checked
+(define-metafunction context
+  global-map : G any -> map
+  [(global-map {TYP any_typ REL any_rel FUNC any_func} TYP) any_typ]
+  [(global-map {TYP any_typ REL any_rel FUNC any_func} REL) any_rel]
+  [(global-map {TYP any_typ REL any_rel FUNC any_func} FUNC) any_func])
 
 ;;
 ;; Adders
@@ -191,7 +167,7 @@
   [(find-typdef G tdenv id) (typDef)
    (where (typDef) (find-map tdenv id))]
   ;; otherwise
-  [(find-typdef G tdenv id) ,(find-global (term G) 'TYP (term id))])
+  [(find-typdef G tdenv id) (find-map (global-map G TYP) id)])
 
 (define-metafunction context
   find-typ : G L id -> () ∨ (typDef)
@@ -212,13 +188,13 @@
 
 (define-metafunction context
   find-func : G id -> () ∨ (funcDefn)
-  [(find-func G id) ,(find-global (term G) 'FUNC (term id))])
+  [(find-func G id) (find-map (global-map G FUNC) id)])
 
 ;;; Relation finders
 
 (define-metafunction context
   find-rel : G id -> () ∨ (relDefn)
-  [(find-rel G id) ,(find-global (term G) 'REL (term id))])
+  [(find-rel G id) (find-map (global-map G REL) id)])
 
 ;;
 ;; Sub-context construction for iteration

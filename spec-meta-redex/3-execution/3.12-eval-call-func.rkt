@@ -107,7 +107,8 @@
         (where valres ,(host-call-builtin-func (term id) (term (typ ...)) (term (val ...))))
         "call-builtin-func")))
 
-;; The rules on a term and its context (r G L)
+;; The rules on a term and its context, (r G L K), which read G or L, or
+;; write L
 (define ->term+ctx/eval-call-func
   (reduction-relation
    al
@@ -116,23 +117,23 @@
 
    ;; rulegroup Call_func: the name is resolved through the local function
    ;; environment, and its definition found in the global layer
-   (--> ((call-func id (typ ...) (val ...)) G L) ((call-extern-func id_func (typ ...) (val ...)) G L)
+   (--> ((call-func id (typ ...) (val ...)) G L K) ((call-extern-func id_func (typ ...) (val ...)) G L K)
         (where ((EXTFUNC id_func (tparam ...) (param ...) typ_ret)) (find-func G (resolve-func-param L id)))
         "call-func/extern")
-   (--> ((call-func id (typ ...) (val ...)) G L) ((call-builtin-func id_func (typ ...) (val ...)) G L)
+   (--> ((call-func id (typ ...) (val ...)) G L K) ((call-builtin-func id_func (typ ...) (val ...)) G L K)
         (where ((BUILTINFUNC id_func (tparam ...) (param ...) typ_ret)) (find-func G (resolve-func-param L id)))
         "call-func/builtin")
-   (--> ((call-func id () (val ...)) G L) ((call-table-func tableFuncDefn (val ...)) G L)
+   (--> ((call-func id () (val ...)) G L K) ((call-table-func tableFuncDefn (val ...)) G L K)
         (where (tableFuncDefn) (find-func G (resolve-func-param L id)))
         "call-func/table")
-   (--> ((call-func id (typ ...) (val ...)) G L) ((call-defined-func definedFuncDefn (typ ...) (val ...)) G L)
+   (--> ((call-func id (typ ...) (val ...)) G L K) ((call-defined-func definedFuncDefn (typ ...) (val ...)) G L K)
         (where (definedFuncDefn) (find-func G (resolve-func-param L id)))
         "call-func/defined")
-   (--> ((call-func id (typ ...) (val ...)) G L) (ERROR G L)
+   (--> ((call-func id (typ ...) (val ...)) G L K) (ERROR G L K)
         ;; otherwise: no such function
         (where () (find-func G (resolve-func-param L id)))
         "call-func/error")
-   (--> ((call-func id (typ_h typ_t ...) (val ...)) G L) (ERROR G L)
+   (--> ((call-func id (typ_h typ_t ...) (val ...)) G L K) (ERROR G L K)
         ;; otherwise: a table function takes no types
         (where (tableFuncDefn) (find-func G (resolve-func-param L id)))
         "call-func/table/error")))

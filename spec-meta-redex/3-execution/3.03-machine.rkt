@@ -13,6 +13,12 @@
 ;; ERROR) passes through the frames of Fr-pass, and a rule looks at it in
 ;; those of Fr-catch.
 ;;
+;; The machine runs on configurations (e G L K), after the CEK machine: e is
+;; the term in focus, G L the context it evaluates under (watsup's C =
+;; {GLOBAL G, LOCAL L}), and K the stack of frames around it. The machine
+;; rules of 3.14-step.rkt move the focus to the next redex, so that a rule
+;; matches the term in focus and not the whole term (refocusing).
+;;
 ;; An intermediate form is named after the rule, or the group, that builds
 ;; it; seq and eval-exps, which several rules build, after what they do.
 
@@ -21,9 +27,6 @@
 (provide al)
 
 (define-extended-language al context
-  ;; Configurations
-  (conf ::= (G e))
-
   ;; Results. Redex has no parametric nonterminals, so each ok<X> is written
   ;; out, and a result of val is the val itself.
   (valres ::= val failure)
@@ -154,6 +157,9 @@
             (call-defined-rel/ruls hole (elsGroup ...) (val ...)))
   (Fr ::= Fr-pass Fr-catch)
 
-  ;; Frames within one local context, and across local contexts
-  (F ::= hole (in-hole Fr F))
-  (E ::= F (in-hole F (IN L E))))
+  ;; The stack of frames around the term in focus, in a configuration
+  ;; (e G L K). K is () or (frame K), where a frame is one of Fr, or (RET L)
+  ;; for an IN that the focus has entered, with the layer to restore on
+  ;; leaving it. K is matched as any, as G is: as a nonterminal, every match
+  ;; would check the whole stack.
+  (K ::= any))

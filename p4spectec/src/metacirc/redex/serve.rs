@@ -1,6 +1,6 @@
 //! The calls and answers of spec-meta-redex's serve loop
 //!
-//! spec-meta-redex (`spec-meta-redex/3-execution/3.16-entry.rkt`) serves s-expression text,
+//! spec-meta-redex (`spec-meta-redex/3-execution/3.15-entry.rkt`) serves s-expression text,
 //! held in `text` values (`make::text`, `get::text`):
 //! calls and answers for the level above, and the requests and responses of their host calls.
 //! Each is one line, which Racket reads with `read` and prints with `write`,
