@@ -11,8 +11,8 @@
 //! and one that ends in krun's configuration after other steps passes without a search.
 //! `KRUN_EXPECT=1` writes `<program>.out` from krun's own run, and `<program>.search`
 //! where the run still differs (`krun`).
-//! With a timeout, a worker runs spec-k on each program,
-//! and a run still going after the timeout is recorded as a timeout.
+//! With a timeout, a worker runs spec-k on each program, and a run or K's search
+//! still going after the timeout is recorded as a timeout.
 
 mod build;
 mod compare;
@@ -171,7 +171,7 @@ pub fn run(name_config: &str, name_suite: Option<&str>, timeout: Option<Duration
             for program in programs {
                 let start_program = Instant::now();
                 let name = program.expected.display().to_string();
-                let verdict = check(&mut spec, &case, &program, update)?;
+                let verdict = check(&mut spec, &case, &program, update, timeout)?;
                 let secs = start_program.elapsed().as_secs_f64();
                 match &verdict {
                     Verdict::Pass(pass) => eprintln!("{name}: {pass} ({secs:.1}s)"),
@@ -207,8 +207,14 @@ pub fn run(name_config: &str, name_suite: Option<&str>, timeout: Option<Duration
 }
 
 /// Runs a program through the tower and compares the run with krun's, after
-/// writing krun's under `update`.
-fn check(spec: &mut Spec, case: &Case, program: &Program, update: bool) -> Result<Verdict> {
+/// writing krun's under `update`; `timeout` bounds K's search too.
+fn check(
+    spec: &mut Spec,
+    case: &Case,
+    program: &Program,
+    update: bool,
+    timeout: Option<Duration>,
+) -> Result<Verdict> {
     let path_init = case.init(program)?;
     let depth = program.depth()?;
     let input = program.input.as_deref();
@@ -233,19 +239,13 @@ fn check(spec: &mut Spec, case: &Case, program: &Program, update: bool) -> Resul
         Err(difference) => ("pass by search", Some(difference)),
     };
     if update {
-        // Only a run that ends elsewhere needs the finals K allows; without them it fails
+        // Only a run that ends elsewhere needs the finals K allows
         match &difference {
             None if path_search.exists() => fs::remove_file(&path_search)?,
-            None => {}
-            Some(difference) => {
-                if let Err(error) = case.search(&path_init, depth, input, &path_search) {
-                    let reason = error.to_string();
-                    let reason = reason.lines().next().unwrap_or_default();
-                    return Ok(Verdict::Fail(format!(
-                        "{difference}, and K's search gave no finals: {reason}"
-                    )));
-                }
+            Some(_) if !case.search(&path_init, depth, input, &path_search, timeout)? => {
+                return Ok(Verdict::Timeout);
             }
+            _ => {}
         }
     }
     let Some(difference) = difference else {
