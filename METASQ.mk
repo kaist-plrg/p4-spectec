@@ -1,8 +1,8 @@
 # Independent metacircular build and P4 execution corpus
 # TEST_LOG=DIR writes per-test timing logs of the metacirc run, micro, and sim targets
-# TIMEOUT=SECONDS records a source of those targets, or a run of test-metacirc-k-in-st,
-# still running after it as a timeout
-# SUITE=NAME runs only that registered suite in those targets and test-metacirc-k-in-st
+# TIMEOUT=SECONDS records a source of those targets still running after it as a timeout
+# SUITE=NAME runs only that registered suite in those targets
+# TIMEOUT and SUITE apply to test-metacirc-k-in-st as well
 # SUITE=NAME and GROUP=NAME select the registered suite and group of the sim-group targets,
 # which require both
 

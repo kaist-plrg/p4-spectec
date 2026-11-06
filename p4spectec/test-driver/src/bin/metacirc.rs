@@ -62,7 +62,7 @@ enum Command {
         /// Run only the registered suite with this name.
         #[arg(long = "suite", value_name = "NAME")]
         name_suite: Option<String>,
-        /// Record a run of spec-k still going after this many seconds as a timeout.
+        /// Record a program still running after this many seconds as a timeout.
         #[arg(long, value_name = "SECONDS")]
         timeout: Option<u64>,
     },

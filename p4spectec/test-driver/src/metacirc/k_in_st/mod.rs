@@ -7,13 +7,12 @@
 //! `metacirc::run` and compares with `<program>.out` (`compare`): the same first
 //! line (steps, how the run ended) and configurations equal in normal form.
 //! A run that ends elsewhere passes by search if its final configuration is one
-//! of `<program>.search`, the finals K allows, as where rules of the same priority both apply;
-//! one that ends in krun's configuration after another number of steps passes in
-//! another order, without a search. `KRUN_EXPECT=1` writes `<program>.out` from krun's own run, and
-//! `<program>.search` where the run still differs (`krun`), unless K's search does not
-//! end within ten minutes, which fails the run. With a timeout, each run of
-//! spec-k goes to a worker process (`serve`), and a run still going after the
-//! timeout is recorded as a timeout, which is not a mismatch.
+//! of `<program>.search`, the finals K allows, as where rules of the same priority both apply,
+//! and one that ends in krun's configuration after other steps passes without a search.
+//! `KRUN_EXPECT=1` writes `<program>.out` from krun's own run, and `<program>.search`
+//! where the run still differs (`krun`).
+//! With a timeout, a worker runs spec-k on each program,
+//! and a run still going after the timeout is recorded as a timeout.
 
 mod build;
 mod compare;
@@ -43,24 +42,21 @@ use crate::harness::{
     worker::{self, Channel, Reply, Worker},
 };
 
-/// How a program's run ended against krun's.
+/// How a program's run compares with krun's.
 enum Verdict {
-    /// The run agrees with krun's, in the way named.
     Pass(&'static str),
-    /// The run differs from krun's, or could not be checked, as described.
     Fail(String),
-    /// The run did not end within the timeout.
     Timeout,
 }
 
-/// Where spec-k runs: in this process, or in a worker that a timeout bounds.
+/// Where spec-k runs: in this process, or in a worker.
 enum Spec<'a> {
     InProcess(&'a TowerConfig, runner::Config),
     Worker(Worker),
 }
 
 impl Spec<'_> {
-    /// Runs a definition on an initial term: its output, or none after the timeout.
+    /// Runs a definition on an initial term; none after the timeout.
     fn run(&mut self, paths: &[PathBuf; 2], depth: Option<u64>) -> Result<Option<String>> {
         match self {
             Self::InProcess(tower, options) => Ok(Some(run_spec(tower, *options, paths, depth))),
@@ -80,8 +76,7 @@ impl Spec<'_> {
     }
 }
 
-/// spec-k's run of a definition on an initial term, as `print_runres` prints it,
-/// or how the tower failed.
+/// spec-k's run of a definition on an initial term, or how the tower failed.
 fn run_spec(
     tower: &TowerConfig,
     options: runner::Config,
@@ -128,8 +123,8 @@ fn dir_build() -> PathBuf {
 
 /// Runs the suites under the named configuration, comparing each case with `krun`.
 ///
-/// `name_suite` restricts the run to the registered suite of that name, and
-/// `timeout` bounds each run of spec-k.
+/// `name_suite` restricts the run to the registered suite of that name.
+/// With a `timeout`, a worker runs spec-k.
 pub fn run(name_config: &str, name_suite: Option<&str>, timeout: Option<Duration>) -> Result<()> {
     let registration: Registration = harness::load("metacirc/k-in-st")?;
     let config = Configuration::find(&registration.configs, name_config)?;
@@ -176,7 +171,7 @@ pub fn run(name_config: &str, name_suite: Option<&str>, timeout: Option<Duration
             for program in programs {
                 let start_program = Instant::now();
                 let name = program.expected.display().to_string();
-                // A program that cannot be checked fails, and the others still run
+                // A program that cannot be checked fails; the others still run
                 let verdict = check(&mut spec, &case, &program, update)
                     .unwrap_or_else(|error| Verdict::Fail(format!("not checked: {error}")));
                 let secs = start_program.elapsed().as_secs_f64();
@@ -234,7 +229,7 @@ fn check(spec: &mut Spec, case: &Case, program: &Program, update: bool) -> Resul
         return Ok(Verdict::Timeout);
     };
     let differs = compare(&case.info, &output, &expected);
-    // krun's final configuration is one that K's search finds
+    // krun's final configuration is one that search finds
     if differs.is_err() && same_final(&case.info, &output, &expected) {
         if update && path_search.exists() {
             fs::remove_file(&path_search)?;
@@ -242,8 +237,7 @@ fn check(spec: &mut Spec, case: &Case, program: &Program, update: bool) -> Resul
         return Ok(Verdict::Pass("pass in another order"));
     }
     if update {
-        // Only a run that ends elsewhere than krun's needs the finals K allows;
-        // without them, as when K's search does not end, the run fails
+        // Only a run that ends elsewhere needs the finals K allows; without them it fails
         if let Err(difference) = &differs {
             if let Err(error) = case.search(&path_init, depth, input, &path_search) {
                 let reason = error.to_string();
