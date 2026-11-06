@@ -178,7 +178,7 @@ pub fn run(name_config: &str, timeout: Option<Duration>, path_log: Option<&Path>
                     }
                     outcome
                 };
-                suite.results.record(&[path], outcome.name(), "")?;
+                suite.results.record(&[path], outcome)?;
                 progress.inc(1);
             }
         }
@@ -193,8 +193,12 @@ pub fn run(name_config: &str, timeout: Option<Duration>, path_log: Option<&Path>
     );
     eprintln!("{text_summary}");
     log.finish(&text_summary)?;
+    let mut matched = true;
     for suite in suites {
-        suite.results.check();
+        matched &= suite.results.check()?;
+    }
+    if !matched {
+        return Err(Error::from(format!("{text_mode}: file results differ from expected")));
     }
     eprintln!("{text_mode}: all {collected} file results matched expected");
     Ok(())

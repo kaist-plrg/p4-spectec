@@ -45,7 +45,7 @@ enum Command {
         #[arg(long, value_name = "SECONDS")]
         timeout: Option<u64>,
     },
-    /// Compare simulation outcomes and matched packets
+    /// Compare simulation outcomes
     Sim {
         /// Configuration name in `suites/sim.toml`
         config: String,

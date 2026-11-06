@@ -123,7 +123,7 @@ pub fn run(path_log: Option<&Path>) -> Result<()> {
                 if outcome == Outcome::Pass {
                     passed += 1;
                 }
-                results.record(&[path], outcome.name(), "")?;
+                results.record(&[path], outcome)?;
                 progress.inc(1);
             }
         }
@@ -136,8 +136,12 @@ pub fn run(path_log: Option<&Path>) -> Result<()> {
     );
     eprintln!("{text_summary}");
     log.finish(&text_summary)?;
+    let mut matched = true;
     for (_, _, results) in suites {
-        results.check();
+        matched &= results.check()?;
+    }
+    if !matched {
+        return Err(Error::from("P4 parser: file results differ from expected"));
     }
     eprintln!("P4 parser: all {collected} file results matched expected");
     Ok(())
