@@ -2,13 +2,14 @@
 //!
 //! Each runner is prepared in the arena used by all of its calls.
 //! Only the base runs natively, on an `engine` executing AL or SL,
-//! or a K library compiled from the base (ST-in-K);
+//! a K library compiled from the base (ST-in-K),
+//! or a `racket` process running a PLT Redex base (ST-in-Redex);
 //! each level above is interpreted by the level below through its `protocol`.
 //! Calls go down the levels (`interp`), host calls come up across each
 //! `boundary`, and a P4 extern that reenters runs on the next depth.
 //! `tower` builds the levels, `sim` drives them with an STF test,
 //! and `krun` runs a K definition on spec-k (K-in-ST).
-//! The K parts are slots that each implementation fills.
+//! The K and Redex parts are slots that each implementation fills.
 //!
 //! ```text
 //! Tower
