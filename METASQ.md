@@ -216,6 +216,9 @@ tower shared by every reentry depth, and `MetaRedexProtocol`
 `spec-meta-redex/3-execution/3.16-entry.rkt` serves them. `make redex` compiles the entry
 module, and `make test-metacirc-run-redex`, `test-metacirc-micro-redex`, and
 `test-metacirc-sim-redex` reuse the native expected files.
+spec-meta-k and spec-meta-redex take the first successful clause or rule path
+without checking the later ones, so both micro targets skip the scripts in
+`excludes/metacirc-first-match` that only that check fails.
 
 ## Algo through the IL-to-AL specification
 
