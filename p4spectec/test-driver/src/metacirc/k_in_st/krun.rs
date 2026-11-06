@@ -17,8 +17,7 @@ use crate::harness::Result;
 /// and an uncaught exception, which aborts.
 const EXIT_FAILED: [i32; 2] = [113, 134];
 
-/// How long the search binary may take, in seconds: where many orders of the
-/// same rules reach many configurations, as threads do, it may not end.
+/// How long the search binary may take, in seconds.
 const SEARCH_SECONDS: u32 = 600;
 
 /// A step bound as the interpreter and the search binary take it: -1 for none.
@@ -55,8 +54,7 @@ impl Case<'_> {
     }
 
     /// Writes the final configurations K allows from an initial term to `path_search`,
-    /// as the kompiled `search` binary finds them within `SEARCH_SECONDS`; a search
-    /// that does not end then fails, and writes nothing.
+    /// as the kompiled `search` binary finds them within `SEARCH_SECONDS`.
     pub fn search(
         &self,
         path_init: &Path,

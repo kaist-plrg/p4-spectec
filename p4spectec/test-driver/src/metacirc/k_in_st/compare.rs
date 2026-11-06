@@ -27,9 +27,7 @@ pub fn compare(info: &Info, output: &str, expected: &str) -> Result<(), String> 
     }
 }
 
-/// Whether a run ended, after another number of steps, in krun's final
-/// configuration: as where rules of the same priority apply in another order,
-/// that configuration is one K allows, so no search is needed.
+/// Whether a run ended in krun's final configuration after other steps.
 pub fn same_final(info: &Info, output: &str, expected: &str) -> bool {
     let steps = |head: &str| head.bytes().all(|byte| byte.is_ascii_digit());
     match (split(output), split(expected)) {
