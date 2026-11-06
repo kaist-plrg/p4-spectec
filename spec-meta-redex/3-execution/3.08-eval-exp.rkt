@@ -97,8 +97,8 @@
    (--> (eval-exps (val ...)) (OK (val ...))
         "eval-exps")))
 
-;; The rules on a term under its innermost IN, (IN G L (in-hole F r)), which
-;; read G or L, or write L
+;; The rules on a term and its context, (r G L K), which read G or L, or
+;; write L
 (define ->term+ctx/eval-exp
   (reduction-relation
    al
@@ -106,26 +106,25 @@
    ;;; Variable evaluation rules
 
    ;; rule Eval_exp/variable
-   (--> (IN G L (in-hole F (VAR id))) (IN G L (in-hole F val))
+   (--> ((VAR id) G L K) (val G L K)
         (where (val) (find-varr L (id ())))
         "eval-exp/variable")
 
    ;;; Upcasting, downcasting, and subtyping evaluation rules
 
    ;; rulegroup Eval_exp/upcast
-   (--> (IN G L (in-hole F (UPCAST typ val))) (IN G L (in-hole F val_cast))
+   (--> ((UPCAST typ val) G L K) (val_cast G L K)
         (where (OK val_cast) (upcast G L typ val))
         "eval-exp/upcast/succ")
 
    ;; rulegroup Eval_exp/downcast
-   (--> (IN G L (in-hole F (DOWNCAST typ val))) (IN G L (in-hole F val_cast))
+   (--> ((DOWNCAST typ val) G L K) (val_cast G L K)
         (where (OK val_cast) (downcast G L typ val))
         "eval-exp/downcast/succ")
 
    ;; rulegroup Eval_exp/subtype. $subtyp takes G and the local tdenv, in
    ;; place of their extension (see subtyp).
-   (--> (IN G (name L {TYP tdenv FUNC fnenv VAL venv}) (in-hole F (SUB val typ)))
-        (IN G L (in-hole F (BOOL b)))
+   (--> ((SUB val typ) G (name L {TYP tdenv FUNC fnenv VAL venv}) K) ((BOOL b) G L K)
         (where (OK b) (subtyp G tdenv typ val))
         "eval-exp/subtype/succ")
 
@@ -133,17 +132,15 @@
 
    ;; rulegroup Eval_exp/iter. An iteration over sub-contexts is the option
    ;; or list of exp under each of them, which evaluates as one.
-   (--> (IN G L (in-hole F (ITER exp iterExp))) (IN G L (in-hole F val))
+   (--> ((ITER exp iterExp) G L K) (val G L K)
         (where (varr) (is-iter-on-var (ITER exp iterExp)))
         (where (val) (find-varr L varr))
         "eval-exp/iter/simple")
-   (--> (IN G L (in-hole F (ITER exp (QUEST (vari ...)))))
-        (IN G L (in-hole F (OPT ((IN G L_sub exp) ...))))
+   (--> ((ITER exp (QUEST (vari ...))) G L K) ((OPT ((IN L_sub exp) ...)) G L K)
         (where () (is-iter-on-var (ITER exp (QUEST (vari ...)))))
         (where (OK (L_sub ...)) (sub-opt L (vari ...)))
         "eval-exp/iter/opt-succ")
-   (--> (IN G L (in-hole F (ITER exp (STAR (vari ...)))))
-        (IN G L (in-hole F (LIST ((IN G L_sub exp) ...))))
+   (--> ((ITER exp (STAR (vari ...))) G L K) ((LIST ((IN L_sub exp) ...)) G L K)
         (where () (is-iter-on-var (ITER exp (STAR (vari ...)))))
         (where (OK (L_sub ...)) (sub-list L (vari ...)))
         "eval-exp/iter/list-succ")))

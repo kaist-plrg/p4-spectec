@@ -1,6 +1,7 @@
 #lang racket/base
 ;; The machine: the IN, seq, and unmatch rules, the notion of reduction
-;; (->term and ->term+ctx), and its closure ->al.
+;; (->term and ->term+ctx), the rules that move the focus, and the step ->al
+;; on configurations.
 
 (require redex/reduction-semantics
          "3.03-machine.rkt"
@@ -23,11 +24,11 @@
   (reduction-relation
    al
    ;; Leaving a local context
-   (--> (IN G L val) val
+   (--> (IN L val) val
         "in/val")
-   (--> (IN G L (OK (val ...))) (OK (val ...))
+   (--> (IN L (OK (val ...))) (OK (val ...))
         "in/vals")
-   (--> (IN G L UNMATCH) UNMATCH
+   (--> (IN L UNMATCH) UNMATCH
         "in/unmatch")
    ;; A statement sequence: once every statement before the last holds, the
    ;; last one's result
@@ -56,8 +57,8 @@
                              ->term/eval-call-func
                              ->term/eval-call-rel))
 
-;; The rules on a term under its innermost IN, (IN G L (in-hole F r)), which
-;; read G or L, or write L. F never crosses an IN, so the IN is the innermost.
+;; The rules on a term and its context, (r G L K), which read G or L, or write
+;; L
 (define ->term+ctx
   (union-reduction-relations ->term+ctx/eval-assign
                              ->term+ctx/eval-exp
@@ -67,9 +68,35 @@
                              ->term+ctx/eval-call-rel))
 
 ;;
-;; The closure
+;; Refocusing
 ;;
 
-;; A step of either at its place in the term
+;; The rules that move the focus to the next redex, after the evaluation
+;; positions that Fr gives. The focus goes down into a position whose term
+;; is not done, and back up once it is. A term in focus with no position to
+;; go down into is a redex, or final.
+(define ->focus
+  (reduction-relation
+   al
+   ;; Into the pending position of a frame
+   (--> ((in-hole Fr any_sub) G L K) (any_sub G L (Fr K))
+        (side-condition (not (done? (term any_sub))))
+        "focus/down")
+   ;; Back into the frame, once the position is done
+   (--> (done G L (Fr K)) ((in-hole Fr done) G L K)
+        "focus/up")
+   ;; Into an IN, whose layer is the context until the focus leaves it
+   (--> ((IN L_in any_body) G L K) (any_body G L_in ((RET L) K))
+        (side-condition (not (done? (term any_body))))
+        "focus/in")
+   ;; Out of the IN, once its body is done
+   (--> (done G L_in ((RET L) K)) ((IN L_in done) G L K)
+        "focus/out")))
+
+(define done? (redex-match? al done))
+
+;; A step: a rule on the term in focus, or a move of the focus
 (define ->al
-  (context-closure (union-reduction-relations ->term ->term+ctx) al E))
+  (union-reduction-relations (context-closure ->term al (hole _ _ _))
+                             ->term+ctx
+                             ->focus))

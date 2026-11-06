@@ -23,8 +23,8 @@
    (--> (EXP val) val
         "eval-arg/exp")))
 
-;; The rules on a term under its innermost IN, (IN G L (in-hole F r)), which
-;; read G or L, or write L
+;; The rules on a term and its context, (r G L K), which read G or L, or
+;; write L
 (define ->term+ctx/eval-arg
   (reduction-relation
    al
@@ -32,7 +32,7 @@
    ;;; Argument evaluation rules
 
    ;; rule Eval_arg/fun: the global function name the parameter stands for
-   (--> (IN G L (in-hole F (FUN id))) (IN G L (in-hole F (FUNC (resolve-func-param L id))))
+   (--> ((FUN id) G L K) ((FUNC (resolve-func-param L id)) G L K)
         "eval-arg/fun")
 
    ;;; Type argument evaluation rules
@@ -40,7 +40,7 @@
    ;; rule Eval_targs, for Eval_exp/call: the type arguments are substituted
    ;; through the local tdenv. It passes typ_input*, where spec-meta passes
    ;; targ*.
-   (--> (IN G (name L {TYP tdenv FUNC fnenv VAL venv}) (in-hole F (CALL id (targ ...) (val_input ...))))
-        (IN G L (in-hole F (call-func id (typ_input ...) (val_input ...))))
+   (--> ((CALL id (targ ...) (val_input ...)) G (name L {TYP tdenv FUNC fnenv VAL venv}) K)
+        ((call-func id (typ_input ...) (val_input ...)) G L K)
         (where (OK (typ_input ...)) (subst-typs (theta-of-tdenv tdenv) (targ ...)))
         "eval-targs")))

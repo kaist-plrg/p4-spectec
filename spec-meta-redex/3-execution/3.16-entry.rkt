@@ -43,19 +43,22 @@
   (match-define (list 'GLOBAL G 'LOCAL L) (term (load (empty-ctx) ,spec)))
   (list G L))
 
-;; The term that e reduces to by ->al: final, or stuck. The rules are
-;; deterministic, so a term has at most one successor.
-(define (run e)
-  (match (apply-reduction-relation ->al e)
-    ['() e]
-    [(list e_1) (run e_1)]
-    [es (error 'run "~a successors of ~e" (length es) e)]))
+;; The configuration that conf reduces to by ->al: final, or stuck. The
+;; rules are deterministic, so a configuration has at most one successor.
+(define (run conf)
+  (match (apply-reduction-relation ->al conf)
+    ['() conf]
+    [(list conf_1) (run conf_1)]
+    [confs (error 'run "~a successors of ~e" (length confs) (car conf))]))
 
 ;; The result of e under the loaded context (G L), or ERROR if it gets stuck
 (define (run-loaded loaded e)
   (match-define (list G L) loaded)
-  (define e_final (run (term (IN ,G ,L ,e))))
-  (if (redex-match? al res e_final) e_final 'ERROR))
+  (match (run (term (,e ,G ,L ())))
+    [(list (? res? res) _ _ '()) res]
+    [_ 'ERROR]))
+
+(define res? (redex-match? al res))
 
 ;; The context of the spec loaded last, which calls run under
 (define loaded #f)

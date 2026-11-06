@@ -67,8 +67,8 @@
         (where _ ,(debug (term val)))
         "eval-prem/dbg")))
 
-;; The rules on a term under its innermost IN, (IN G L (in-hole F r)), which
-;; read G or L, or write L
+;; The rules on a term and its context, (r G L K), which read G or L, or
+;; write L
 (define ->term+ctx/eval-prem
   (reduction-relation
    al
@@ -76,39 +76,39 @@
    ;;; Iteration premises - optional
 
    ;; rulegroup Eval_prem/iterpr-opt
-   (--> (IN G L (in-hole F (ITER prem (QUEST (vari_bound ...) (vari_bind ...)))))
-        (IN G (add-varis L ((iter-vari vari_bind QUEST) ...)
-                         (repeat- (OPT ()) ,(length (term (vari_bind ...))))) (in-hole F OK))
+   (--> ((ITER prem (QUEST (vari_bound ...) (vari_bind ...))) G L K)
+        (OK G (add-varis L ((iter-vari vari_bind QUEST) ...)
+                         (repeat- (OPT ()) ,(length (term (vari_bind ...))))) K)
         (where (OK ()) (sub-opt L (vari_bound ...)))
         "eval-prem/iterpr-opt/succ-none")
-   (--> (IN G L (in-hole F (ITER prem (QUEST (vari_bound ...) (vari_bind ...)))))
-        (IN G L (in-hole F (eval-prem/iterpr-opt/some (IN G L_sub prem) (vari_bind ...))))
+   (--> ((ITER prem (QUEST (vari_bound ...) (vari_bind ...))) G L K)
+        ((eval-prem/iterpr-opt/some (IN L_sub prem) (vari_bind ...)) G L K)
         (where (OK (L_sub)) (sub-opt L (vari_bound ...)))
         "eval-prem/iterpr-opt/some")
 
    ;; Eval_prem/succ-some, once prem has updated C_sub to C_sub_res
-   (--> (IN G L (in-hole F (eval-prem/iterpr-opt/some (IN G L_sub_res OK) (vari_bind ...))))
-        (IN G (add-varis L ((iter-vari vari_bind QUEST) ...) ((OPT (val_bind)) ...)) (in-hole F OK))
+   (--> ((eval-prem/iterpr-opt/some (IN L_sub_res OK) (vari_bind ...)) G L K)
+        (OK G (add-varis L ((iter-vari vari_bind QUEST) ...) ((OPT (val_bind)) ...)) K)
         (where ((val_bind ...)) (find-varis L_sub_res (vari_bind ...)))
         "eval-prem/iterpr-opt/succ-some")
 
    ;;; Iteration premises - list
 
    ;; rulegroup Eval_prem/iterpr-list
-   (--> (IN G L (in-hole F (ITER prem (STAR (vari_bound ...) (vari_bind ...)))))
-        (IN G (add-varis L ((iter-vari vari_bind STAR) ...)
-                         (repeat- (LIST ()) ,(length (term (vari_bind ...))))) (in-hole F OK))
+   (--> ((ITER prem (STAR (vari_bound ...) (vari_bind ...))) G L K)
+        (OK G (add-varis L ((iter-vari vari_bind STAR) ...)
+                         (repeat- (LIST ()) ,(length (term (vari_bind ...))))) K)
         (where (OK ()) (sub-list L (vari_bound ...)))
         "eval-prem/iterpr-list/succ-empty")
-   (--> (IN G L (in-hole F (ITER prem (STAR (vari_bound ...) (vari_bind ...)))))
-        (IN G L (in-hole F (eval-prem/iterpr-list/list ((IN G L_sub prem) ...) (vari_bind ...))))
+   (--> ((ITER prem (STAR (vari_bound ...) (vari_bind ...))) G L K)
+        ((eval-prem/iterpr-list/list ((IN L_sub prem) ...) (vari_bind ...)) G L K)
         (where (OK (L_sub_h L_sub_t ...)) (sub-list L (vari_bound ...)))
         (where (L_sub ...) (L_sub_h L_sub_t ...))
         "eval-prem/iterpr-list/list")
 
    ;; Eval_prem/succ-list, once prem has updated each C_sub to C_sub_res
-   (--> (IN G L (in-hole F (eval-prem/iterpr-list/list ((IN G_sub L_sub_res OK) ...) (vari_bind ...))))
-        (IN G (add-varis L ((iter-vari vari_bind STAR) ...) ((LIST (val_bind ...)) ...)) (in-hole F OK))
+   (--> ((eval-prem/iterpr-list/list ((IN L_sub_res OK) ...) (vari_bind ...)) G L K)
+        (OK G (add-varis L ((iter-vari vari_bind STAR) ...) ((LIST (val_bind ...)) ...)) K)
         (where (((val_sub_bind ...)) ...) ((find-varis L_sub_res (vari_bind ...)) ...))
         (where ((val_bind ...) ...) (transpose- ((val_sub_bind ...) ...)))
         "eval-prem/iterpr-list/succ-list")))
