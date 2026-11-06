@@ -1,4 +1,4 @@
-use std::{path::PathBuf, process::ExitCode};
+use std::{path::PathBuf, process::ExitCode, time::Duration};
 
 use clap::{Parser, Subcommand};
 
@@ -41,11 +41,17 @@ enum Command {
     Run {
         /// Configuration name in `suites/run.toml`
         config: String,
+        /// Record a program still running after this many seconds as a timeout.
+        #[arg(long, value_name = "SECONDS")]
+        timeout: Option<u64>,
     },
     /// Compare simulation outcomes and matched packets
     Sim {
         /// Configuration name in `suites/sim.toml`
         config: String,
+        /// Record a test still running after this many seconds as a timeout.
+        #[arg(long, value_name = "SECONDS")]
+        timeout: Option<u64>,
     },
     /// Run micro tests: standalone spec-language sources by pipeline stage
     Micro {
@@ -60,6 +66,18 @@ enum Command {
         #[arg(long = "cli", value_name = "PATH")]
         path_cli: Option<PathBuf>,
     },
+    /// Run tests one at a time for a driver given `--timeout`
+    #[command(hide = true, subcommand)]
+    Worker(Worker),
+}
+
+/// Prepares a configuration once and answers requests on stdin.
+#[derive(Subcommand)]
+enum Worker {
+    /// Run P4 programs of `suites/run.toml`
+    Run { config: String },
+    /// Run STF tests of `suites/sim.toml` on one architecture
+    Sim { config: String, arch: String },
 }
 
 fn execute(mut cli: Cli) -> Result<()> {
@@ -103,10 +121,16 @@ fn execute(mut cli: Cli) -> Result<()> {
             snapshot::run("snapshot", &[Stage::AdocEl, Stage::AdocPl], path_output.as_deref())
         }
         Command::P4parse => p4parse::run(path_log.as_deref()),
-        Command::Run { config } => run::run(config, path_log.as_deref()),
-        Command::Sim { config } => sim::run(config, path_log.as_deref()),
+        Command::Run { config, timeout } => {
+            run::run(config, timeout.map(Duration::from_secs), path_log.as_deref())
+        }
+        Command::Sim { config, timeout } => {
+            sim::run(config, timeout.map(Duration::from_secs), path_log.as_deref())
+        }
         Command::Micro { config } => micro::run(config, path_log.as_deref()),
         Command::Diagnostics { suite, path_cli } => diagnostic::run(*suite, path_cli.as_deref()),
+        Command::Worker(Worker::Run { config }) => run::serve(config),
+        Command::Worker(Worker::Sim { config, arch }) => sim::serve(config, arch),
     }
 }
 
