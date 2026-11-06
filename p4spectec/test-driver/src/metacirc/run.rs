@@ -266,7 +266,7 @@ fn run_programs(
                 } else {
                     log.begin(path)?;
                     let outcome = match (&mut worker, &mut tower) {
-                        (Some(worker), _) => match worker.request(worker::path_text(path)?)? {
+                        (Some(worker), _) => match worker.request(worker::text_path(path)?)? {
                             Reply::Done { status, .. } => Outcome::from_name(&status)?,
                             Reply::Timeout => Outcome::Timeout,
                         },
@@ -311,11 +311,11 @@ fn run_programs(
     );
     eprintln!("{text_summary}");
     log.finish(&text_summary)?;
-    let mut all_matched = true;
+    let mut matched = true;
     for suite in suites {
-        all_matched &= suite.results.check()?;
+        matched &= suite.results.check()?;
     }
-    if !all_matched {
+    if !matched {
         return Err(Error::from(format!("{text_mode}: file results differ from expected")));
     }
     eprintln!("{text_mode}: all {collected} file results matched expected");
@@ -390,7 +390,7 @@ fn worker_args(kind: &str, config: &Configuration, path_tower: &Path) -> Result<
         "worker".to_owned(),
         kind.to_owned(),
         config.name.clone(),
-        worker::path_text(path_tower)?.to_owned(),
+        worker::text_path(path_tower)?.to_owned(),
     ])
 }
 
@@ -451,7 +451,7 @@ fn run_scripts(
             log.begin(path)?;
             executed += 1;
             let outcome = match worker {
-                Some(worker) => match worker.request(worker::path_text(path)?)? {
+                Some(worker) => match worker.request(worker::text_path(path)?)? {
                     Reply::Done { status, .. } => script_outcome_from_name(&status)?,
                     Reply::Timeout => {
                         // A timed-out script matches neither outcome

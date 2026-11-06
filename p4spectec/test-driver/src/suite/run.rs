@@ -147,7 +147,7 @@ pub fn run(name_config: &str, timeout: Option<Duration>, path_log: Option<&Path>
                     let outcome = match (&mut worker, &mut local) {
                         (Some(worker), _) => {
                             let request =
-                                format!("{}\t{}", suite.id_relation, worker::path_text(path)?);
+                                format!("{}\t{}", suite.id_relation, worker::text_path(path)?);
                             match worker.request(&request)? {
                                 Reply::Done { status, .. } => Outcome::from_name(&status)?,
                                 Reply::Timeout => Outcome::Timeout,
@@ -193,11 +193,11 @@ pub fn run(name_config: &str, timeout: Option<Duration>, path_log: Option<&Path>
     );
     eprintln!("{text_summary}");
     log.finish(&text_summary)?;
-    let mut all_matched = true;
+    let mut matched = true;
     for suite in suites {
-        all_matched &= suite.results.check()?;
+        matched &= suite.results.check()?;
     }
-    if !all_matched {
+    if !matched {
         return Err(Error::from(format!("{text_mode}: file results differ from expected")));
     }
     eprintln!("{text_mode}: all {collected} file results matched expected");

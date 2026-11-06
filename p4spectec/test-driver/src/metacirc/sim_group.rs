@@ -169,8 +169,8 @@ pub fn run(
             (Some(worker), _) => {
                 let request = format!(
                     "{}\t{}",
-                    worker::path_text(&pair.path_p4)?,
-                    worker::path_text(&pair.path_stf)?
+                    worker::text_path(&pair.path_p4)?,
+                    worker::text_path(&pair.path_stf)?
                 );
                 worker.request(&request)
             }
@@ -250,7 +250,7 @@ pub fn split() -> Result<()> {
         let pairs = collect_pairs(suite, &excludes)?;
         for (index, pair) in pairs.iter().filter(|pair| !pair.excluded).enumerate() {
             // A group file names a pair by its STF, which must name only that pair
-            let path_stf = worker::path_text(&pair.path_stf)?.to_owned();
+            let path_stf = worker::text_path(&pair.path_stf)?.to_owned();
             if !paths_stf.insert(path_stf.clone()) {
                 return Err(Error::from(format!("{path_stf} is the STF of two pairs")));
             }

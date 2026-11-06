@@ -38,7 +38,7 @@ pub enum Reply {
 }
 
 /// Spells a path for a request, which is one line of tab-separated fields.
-pub fn path_text(path: &Path) -> Result<&str> {
+pub fn text_path(path: &Path) -> Result<&str> {
     path.to_str()
         .filter(|text| !text.contains(['\t', '\r', '\n']))
         .ok_or_else(|| Error::from(format!("invalid request path: {}", path.display())))
