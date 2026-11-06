@@ -169,6 +169,17 @@ def $kind_by_attrs(kattr*) = $kind_of_hook(hookid)
 def $kind_by_attrs(kattr*) = $kind_of_unhooked(kattr*)
   -- if ~$has_attr("hook", kattr*)
 
+dec $fresh_generator(symid, ksymdecl) : pair<sort, symid>*
+def $fresh_generator(symid, KSYMBOL sortid_p* sort_a* '->' sort kattr*)
+  = [ sort ':' symid ]
+  -- if $has_attr("freshGenerator", kattr*)
+def $fresh_generator(symid, ksymdecl) = eps
+  -- otherwise
+
+dec $fresh_generators(map<symid, ksymdecl>) : map<sort, symid>
+def $fresh_generators(`{ (symid ':' ksymdecl)* `})
+  = `{ $concat_<pair<sort, symid>>($fresh_generator(symid, ksymdecl)*) `}
+
 dec $symdecls(map<symid, ksymdecl>) : map<symid, symdecl>
 def $symdecls(`{ (symid ':' (KSYMBOL sortid_p* sort_a* '->' sort kattr*))* `})
   = `{ (symid ':' (SYMBOL sortid_p* sort_a* '->' sort $kind_by_attrs(kattr*)))* `}
@@ -188,11 +199,15 @@ def $right_assoc(symid, sort*, kore_h :: kore_t*)
   = KAPP symid sort* ([kore_h, $right_assoc(symid, sort*, kore_t*)])
   -- if $(|kore_t*| > 0)
 
-;; Patterns of rules, equations, and the initial term.
+;; Patterns of rules, equations, and the initial term. A variable named
+;; Var'Bang... is a fresh variable !X of a function equation.
 
 dec $pattern(kore) : pattern
   hint(prose_in "the pattern" %0 "stands for")
+def $pattern(KVAR varid sort) = FRESH sort
+  -- if $has_prefix(varid, "Var'Bang")
 def $pattern(KVAR varid sort) = VAR varid sort
+  -- if ~$has_prefix(varid, "Var'Bang")
 def $pattern(KDV sort t) = DV sort t
 def $pattern(KAPP symid sort* kore*) = APP symid sort* $pattern(kore)*
 def $pattern(KML "and" ([sort]) ([kore_1, kore_2]))
@@ -356,5 +371,6 @@ def $load(KD) = { SYMBOLS $symdecls(KD.KSYMBOLS),
                   $concat_<(nat, clause)>($rule_of(kaxiom)*)),
           EQUATIONS $sorted_groups($group_equations(
                       $empty_map<symid, (nat, clause)*>,
-                      $concat_<(symid, (nat, clause))>($equation_of(kaxiom)*))) }
+                      $concat_<(symid, (nat, clause))>($equation_of(kaxiom)*))),
+          FRESH $fresh_generators(KD.KSYMBOLS) }
   -- if kaxiom* = KD.AXIOMS
