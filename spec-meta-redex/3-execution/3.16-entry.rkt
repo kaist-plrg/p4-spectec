@@ -7,8 +7,8 @@
 ;; As a program, it says it is ready, then answers each call of the host by
 ;; reducing it with ->al. Calls and answers are s-expressions that `read`
 ;; reads and `write` prints (3.04-extern-host.rkt), so the answer is the
-;; result itself: OK with its values, UNMATCH, or ERROR for a stuck term. A
-;; call that raises a Racket error is answered with `raise` and its message.
+;; result itself: OK with its values, UNMATCH, or ERROR. A call that gets
+;; stuck, or raises a Racket error, is answered with `raise` and its message.
 ;; `exit`, or the end of stdin, ends it. Debug values go to the host, and
 ;; other output to stderr.
 ;;
@@ -51,12 +51,12 @@
     [(list conf_1) (run conf_1)]
     [confs (error 'run "~a successors of ~e" (length confs) (car conf))]))
 
-;; The result of e under the loaded context (G L), or ERROR if it gets stuck
+;; The result of e under the loaded context (G L)
 (define (run-loaded loaded e)
   (match-define (list G L) loaded)
   (match (run (term (,e ,G ,L ())))
     [(list (? res? res) _ _ '()) res]
-    [_ 'ERROR]))
+    [(list e_stuck _ _ _) (error 'run "stuck: no rule applies to ~e" e_stuck)]))
 
 (define res? (redex-match? al res))
 

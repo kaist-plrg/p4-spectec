@@ -1,5 +1,5 @@
 #lang racket/base
-;; The machine: the IN, seq, and unmatch rules, the notion of reduction
+;; The machine: the IN, seq, and failure rules, the notion of reduction
 ;; (->term and ->term+ctx), the rules that move the focus, and the step ->al
 ;; on configurations.
 
@@ -17,7 +17,7 @@
          ->al)
 
 ;;
-;; The IN, seq, and unmatch rules
+;; The IN, seq, and failure rules
 ;;
 
 (define ->term/eval
@@ -28,8 +28,8 @@
         "in/val")
    (--> (IN L (OK (val ...))) (OK (val ...))
         "in/vals")
-   (--> (IN L UNMATCH) UNMATCH
-        "in/unmatch")
+   (--> (IN L failure) failure
+        "in/failure")
    ;; A statement sequence: once every statement before the last holds, the
    ;; last one's result
    (--> (seq (OK ...)) OK
@@ -38,9 +38,9 @@
         "seq/val")
    (--> (seq (OK ... (OK (val ...)))) (OK (val ...))
         "seq/vals")
-   ;; UNMATCH passes up through every frame that does not catch it
-   (--> (in-hole Fr-pass UNMATCH) UNMATCH
-        "frame/unmatch")))
+   ;; A failure passes up through every frame that does not catch it
+   (--> (in-hole Fr-pass failure) failure
+        "frame/failure")))
 
 ;;
 ;; The notion of reduction
