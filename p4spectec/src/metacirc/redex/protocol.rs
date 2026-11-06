@@ -1,22 +1,21 @@
 //! spec-meta-redex's protocol: an AL level above a base written in PLT Redex
 //!
 //! ST-in-Redex runs spec-meta-redex, the AL semantics written in PLT Redex,
-//! as the base, on a `RedexEngine`. Every payload crossing this boundary is
+//! as the base, on a `EngineRedex`. Every payload crossing this boundary is
 //! JSON text held in a `text` value (`make::text`, `get::text`), in the format
-//! that `json` and `serve` share with spec-meta-k, except that a specification
+//! of `json` and `serve`, the same as spec-meta-k's, except that a specification
 //! is the s-expression text of a `spec` term in a JSON string (`sexp`).
 //! `load` passes the AL specification above to the base as `{"load": sexp}`,
 //! and the base returns C, its handle of the loaded specification;
 //! `encode_entry` encodes the inputs of the base's entry;
 //! `lower`, `raise`, `host`, and `reply` are `serve`'s.
 
-mod sexp;
-
 use super::{
-    Below, Call, Entered, HostCall, Output, Protocol, Values,
     json::{Cache, Writer},
     serve::{self, request},
+    sexp,
 };
+use crate::metacirc::protocol::{Below, Call, Entered, HostCall, Output, Protocol, Values};
 use crate::{
     diagnostic::Report,
     lang::{
@@ -34,9 +33,9 @@ use crate::{
 // == Protocol
 
 /// The protocol of spec-meta-redex toward the AL specification above it.
-pub(in crate::metacirc) struct MetaRedexProtocol;
+pub(in crate::metacirc) struct ProtocolStRedex;
 
-impl MetaRedexProtocol {
+impl ProtocolStRedex {
     /// The engine's call that loads a specification, `load(request)`, returning C.
     pub(in crate::metacirc) const LOAD: &str = serve::LOAD;
     /// The engine's call that serves a request under C, `serve(C, request)`.
@@ -49,7 +48,7 @@ impl MetaRedexProtocol {
     pub(in crate::metacirc) const ENTRY_FUNC: &str = serve::ENTRY_FUNC;
 }
 
-impl Protocol for MetaRedexProtocol {
+impl Protocol for ProtocolStRedex {
     type Cache = Cache;
 
     fn new_cache(&self, enabled: bool) -> Cache {
@@ -81,7 +80,7 @@ impl Protocol for MetaRedexProtocol {
     /// `Eval_AL_rel` and `Eval_AL_func` take the AL specification `above`
     /// as the s-expression text of a `spec` term, the name of its entry,
     /// and `values`, the entry's inputs: `"sexp"`, `"name"`, and `[val...]`,
-    /// which `RedexEngine::call_rel` passes on.
+    /// which `EngineRedex::call_rel` passes on.
     fn encode_entry(
         &self,
         arena: &mut Arena,
@@ -145,7 +144,7 @@ impl Protocol for MetaRedexProtocol {
 
 // == The engine's side
 
-impl MetaRedexProtocol {
+impl ProtocolStRedex {
     /// The requests that run spec-meta-redex's entry `name` on `values`,
     /// the JSON texts `sexp`, `id`, and `args` that `encode_entry` made.
     pub(in crate::metacirc) fn entry_requests(

@@ -15,12 +15,12 @@
 //!
 //! The messages are those of spec-meta-k's JSON codec; a received one lives
 //! until the next exchange. The host functions run on the K thread:
-//! they hand each message to the thread waiting in `KEngine` and block for the reply.
+//! they hand each message to the thread waiting in `EngineK` and block for the reply.
 //! Panics are contained, since unwinding out of `extern "C"` aborts.
 
 #![allow(unsafe_code)]
 
-use super::receive;
+use super::engine::receive;
 use std::{
     cell::RefCell,
     ffi::{CStr, CString, c_char, c_void},
@@ -34,10 +34,10 @@ use std::{
 /// K threads recurse deeply; only touched pages are committed.
 const STACK: usize = 1 << 30;
 
-/// The response of `host_eval` once `KEngine` is gone.
+/// The response of `host_eval` once `EngineK` is gone.
 const RESPONSE_GONE: &CStr = c"{\"error\":\"the engine is gone\"}";
 
-/// The call of `host_serve` once `KEngine` is gone, which ends the configuration.
+/// The call of `host_serve` once `EngineK` is gone, which ends the configuration.
 const CALL_EXIT: &CStr = c"{\"exit\":null}";
 
 // == The library
@@ -128,7 +128,7 @@ unsafe fn symbol<T: Copy>(
 
 // == K threads
 
-/// A message of a K thread to the `KEngine` waiting for it.
+/// A message of a K thread to the `EngineK` waiting for it.
 pub(super) enum Message {
     /// A request of `host_eval`, followed by its response.
     Request(String),

@@ -10,7 +10,7 @@
 //! `host` decodes `Call_builtin_func`, `Call_extern_func`, and `Call_extern_rel`;
 //! `reply` encodes a native outcome as OK or UNMATCH, keeping its effects.
 
-use super::{Below, Call, Entered, HostCall, Output, Protocol, Values};
+use crate::metacirc::protocol::{Below, Call, Entered, HostCall, Output, Protocol, Values};
 use crate::{
     interface::meta::shared::{
         self as meta, Cache,
@@ -35,9 +35,9 @@ use std::borrow::Cow;
 // == Protocol
 
 /// The protocol of spec-meta toward the AL or IL specification above it.
-pub(in crate::metacirc) struct MetaProtocol;
+pub(in crate::metacirc) struct ProtocolStSt;
 
-impl Protocol for MetaProtocol {
+impl Protocol for ProtocolStSt {
     type Cache = Cache;
 
     fn new_cache(&self, enabled: bool) -> Cache {

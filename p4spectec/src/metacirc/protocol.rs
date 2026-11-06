@@ -8,25 +8,20 @@
 //! a configured level or the script above the top (`Entered`).
 //! Going up, `host` decodes a host call that level k's specification made
 //! for level k+1, and `reply` encodes its outcome.
-//! `ProtocolKind` stores the protocols; `meta` is spec-meta's,
-//! `meta_k` is spec-meta-k's, the AL semantics written in K,
-//! `meta_redex` is spec-meta-redex's, the AL semantics written in PLT Redex,
-//! and `kore` is spec-k's, the K semantics written in P4-SpecTec.
-//! `json` and `serve` are the JSON boundary that `meta_k` and `meta_redex` share.
+//! `ProtocolKind` stores the protocols, each in the module of the backend
+//! whose specification interprets the level above:
+//! `ProtocolStSt` is spec-meta's (`st`),
+//! `ProtocolStK` is spec-meta-k's, the AL semantics written in K (`k`),
+//! `ProtocolStRedex` is spec-meta-redex's, the AL semantics written in PLT Redex (`redex`),
+//! and `ProtocolKSt` is spec-k's, the K semantics written in P4-SpecTec (`st`).
 
-mod json;
-mod kore;
-mod meta;
-mod meta_k;
-mod meta_redex;
-mod serve;
+pub(super) use super::k::ProtocolStK;
+pub(super) use super::redex::ProtocolStRedex;
+pub(super) use super::st::{ProtocolKSt, ProtocolStSt};
 
-pub(super) use kore::KoreProtocol;
-pub(super) use meta::MetaProtocol;
-pub(super) use meta_k::MetaKProtocol;
-pub(super) use meta_redex::MetaRedexProtocol;
-
-use super::{Result as MetacircResult, tower::PreparedLevel};
+use super::{
+    Result as MetacircResult, k::CacheStK, redex::CacheStRedex, st::CacheKSt, tower::PreparedLevel,
+};
 use crate::{
     interface::meta::shared::Cache,
     lang::{
@@ -107,34 +102,35 @@ pub(in crate::metacirc) trait Protocol {
 /// A stored protocol.
 pub(in crate::metacirc) enum ProtocolKind {
     /// spec-meta interprets the level above as AL.
-    Meta(MetaProtocol),
-    /// spec-meta-k, run by a `KEngine`, interprets the level above as AL.
-    MetaK(MetaKProtocol),
-    /// spec-meta-redex, run by a `RedexEngine`, interprets the level above as AL.
-    MetaRedex(MetaRedexProtocol),
+    StSt(ProtocolStSt),
+    /// spec-meta-k, run by a `EngineK`, interprets the level above as AL.
+    StK(ProtocolStK),
+    /// spec-meta-redex, run by a `EngineRedex`, interprets the level above as AL.
+    StRedex(ProtocolStRedex),
     /// spec-k interprets the level above as KORE.
-    Kore(KoreProtocol),
+    KSt(ProtocolKSt),
 }
 
 /// The codec state of a boundary, of the kind its `ProtocolKind` keeps.
 pub(in crate::metacirc) enum CodecCache {
     /// spec-meta's AL encodings and decodings, boxed as the largest.
-    Meta(Box<Cache>),
+    StSt(Box<Cache>),
     /// spec-meta-k's JSON codec state.
-    MetaK(json::Cache),
+    StK(CacheStK),
     /// spec-meta-redex's JSON codec state.
-    MetaRedex(json::Cache),
+    StRedex(CacheStRedex),
     /// spec-k's KORE codec state.
-    Kore(kore::Cache),
+    KSt(CacheKSt),
 }
 
 impl CodecCache {
     /// Clears the conversions, keeping their capacity.
     pub(in crate::metacirc) fn clear(&mut self) {
         match self {
-            Self::Meta(cache) => cache.clear(),
-            Self::MetaK(cache) | Self::MetaRedex(cache) => cache.clear(),
-            Self::Kore(cache) => cache.clear(),
+            Self::StSt(cache) => cache.clear(),
+            Self::StK(cache) => cache.clear(),
+            Self::StRedex(cache) => cache.clear(),
+            Self::KSt(cache) => cache.clear(),
         }
     }
 
@@ -142,10 +138,9 @@ impl CodecCache {
     /// gave to `request` before.
     pub(in crate::metacirc) fn host_response(&self, request: &str) -> Option<String> {
         match self {
-            Self::MetaK(cache) | Self::MetaRedex(cache) => {
-                cache.response(request).map(str::to_owned)
-            }
-            Self::Meta(_) | Self::Kore(_) => None,
+            Self::StK(cache) => cache.response(request).map(str::to_owned),
+            Self::StRedex(cache) => cache.response(request).map(str::to_owned),
+            Self::StSt(_) | Self::KSt(_) => None,
         }
     }
 
@@ -153,7 +148,10 @@ impl CodecCache {
     /// if it succeeded.
     pub(in crate::metacirc) fn cache_host_response(&mut self, request: String, response: &str) {
         match self {
-            Self::MetaK(cache) | Self::MetaRedex(cache) if serve::is_ok(response) => {
+            Self::StK(cache) if super::k::is_ok(response) => {
+                cache.cache_response(request, response);
+            }
+            Self::StRedex(cache) if super::redex::is_ok(response) => {
                 cache.cache_response(request, response);
             }
             _ => {}
@@ -166,10 +164,10 @@ impl Protocol for ProtocolKind {
 
     fn new_cache(&self, enabled: bool) -> CodecCache {
         match self {
-            Self::Meta(protocol) => CodecCache::Meta(Box::new(protocol.new_cache(enabled))),
-            Self::MetaK(protocol) => CodecCache::MetaK(protocol.new_cache(enabled)),
-            Self::MetaRedex(protocol) => CodecCache::MetaRedex(protocol.new_cache(enabled)),
-            Self::Kore(protocol) => CodecCache::Kore(protocol.new_cache(enabled)),
+            Self::StSt(protocol) => CodecCache::StSt(Box::new(protocol.new_cache(enabled))),
+            Self::StK(protocol) => CodecCache::StK(protocol.new_cache(enabled)),
+            Self::StRedex(protocol) => CodecCache::StRedex(protocol.new_cache(enabled)),
+            Self::KSt(protocol) => CodecCache::KSt(protocol.new_cache(enabled)),
         }
     }
 
@@ -179,10 +177,10 @@ impl Protocol for ProtocolKind {
         above: &PreparedLevel,
     ) -> Result<Value, InterpreterError> {
         match self {
-            Self::Meta(protocol) => protocol.load(below, above),
-            Self::MetaK(protocol) => protocol.load(below, above),
-            Self::MetaRedex(protocol) => protocol.load(below, above),
-            Self::Kore(protocol) => protocol.load(below, above),
+            Self::StSt(protocol) => protocol.load(below, above),
+            Self::StK(protocol) => protocol.load(below, above),
+            Self::StRedex(protocol) => protocol.load(below, above),
+            Self::KSt(protocol) => protocol.load(below, above),
         }
     }
 
@@ -194,10 +192,10 @@ impl Protocol for ProtocolKind {
         values: &[Value],
     ) -> MetacircResult<Vec<Value>> {
         match self {
-            Self::Meta(protocol) => protocol.encode_entry(arena, above, name, values),
-            Self::MetaK(protocol) => protocol.encode_entry(arena, above, name, values),
-            Self::MetaRedex(protocol) => protocol.encode_entry(arena, above, name, values),
-            Self::Kore(protocol) => protocol.encode_entry(arena, above, name, values),
+            Self::StSt(protocol) => protocol.encode_entry(arena, above, name, values),
+            Self::StK(protocol) => protocol.encode_entry(arena, above, name, values),
+            Self::StRedex(protocol) => protocol.encode_entry(arena, above, name, values),
+            Self::KSt(protocol) => protocol.encode_entry(arena, above, name, values),
         }
     }
 
@@ -209,16 +207,16 @@ impl Protocol for ProtocolKind {
         call: &Call<'_>,
     ) -> Result<Call<'static>, InterpreterError> {
         match (self, cache) {
-            (Self::Meta(protocol), CodecCache::Meta(cache)) => {
+            (Self::StSt(protocol), CodecCache::StSt(cache)) => {
                 protocol.lower(arena, cache, value_ctx, call)
             }
-            (Self::MetaK(protocol), CodecCache::MetaK(cache)) => {
+            (Self::StK(protocol), CodecCache::StK(cache)) => {
                 protocol.lower(arena, cache, value_ctx, call)
             }
-            (Self::MetaRedex(protocol), CodecCache::MetaRedex(cache)) => {
+            (Self::StRedex(protocol), CodecCache::StRedex(cache)) => {
                 protocol.lower(arena, cache, value_ctx, call)
             }
-            (Self::Kore(protocol), CodecCache::Kore(cache)) => {
+            (Self::KSt(protocol), CodecCache::KSt(cache)) => {
                 protocol.lower(arena, cache, value_ctx, call)
             }
             _ => unreachable!("a boundary keeps the cache its protocol made"),
@@ -233,16 +231,16 @@ impl Protocol for ProtocolKind {
         call: &Call<'_>,
     ) -> Result<Output, InterpreterError> {
         match (self, cache) {
-            (Self::Meta(protocol), CodecCache::Meta(cache)) => {
+            (Self::StSt(protocol), CodecCache::StSt(cache)) => {
                 protocol.raise(arena, cache, output, call)
             }
-            (Self::MetaK(protocol), CodecCache::MetaK(cache)) => {
+            (Self::StK(protocol), CodecCache::StK(cache)) => {
                 protocol.raise(arena, cache, output, call)
             }
-            (Self::MetaRedex(protocol), CodecCache::MetaRedex(cache)) => {
+            (Self::StRedex(protocol), CodecCache::StRedex(cache)) => {
                 protocol.raise(arena, cache, output, call)
             }
-            (Self::Kore(protocol), CodecCache::Kore(cache)) => {
+            (Self::KSt(protocol), CodecCache::KSt(cache)) => {
                 protocol.raise(arena, cache, output, call)
             }
             _ => unreachable!("a boundary keeps the cache its protocol made"),
@@ -257,16 +255,16 @@ impl Protocol for ProtocolKind {
         values: &[Value],
     ) -> Result<HostCall, ExternError> {
         match (self, cache) {
-            (Self::Meta(protocol), CodecCache::Meta(cache)) => {
+            (Self::StSt(protocol), CodecCache::StSt(cache)) => {
                 protocol.host(arena, cache, name, values)
             }
-            (Self::MetaK(protocol), CodecCache::MetaK(cache)) => {
+            (Self::StK(protocol), CodecCache::StK(cache)) => {
                 protocol.host(arena, cache, name, values)
             }
-            (Self::MetaRedex(protocol), CodecCache::MetaRedex(cache)) => {
+            (Self::StRedex(protocol), CodecCache::StRedex(cache)) => {
                 protocol.host(arena, cache, name, values)
             }
-            (Self::Kore(protocol), CodecCache::Kore(cache)) => {
+            (Self::KSt(protocol), CodecCache::KSt(cache)) => {
                 protocol.host(arena, cache, name, values)
             }
             _ => unreachable!("a boundary keeps the cache its protocol made"),
@@ -281,16 +279,16 @@ impl Protocol for ProtocolKind {
         eval: Eval<Output>,
     ) -> Eval<Vec<Value>, ExternError> {
         match (self, cache) {
-            (Self::Meta(protocol), CodecCache::Meta(cache)) => {
+            (Self::StSt(protocol), CodecCache::StSt(cache)) => {
                 protocol.reply(arena, cache, call, eval)
             }
-            (Self::MetaK(protocol), CodecCache::MetaK(cache)) => {
+            (Self::StK(protocol), CodecCache::StK(cache)) => {
                 protocol.reply(arena, cache, call, eval)
             }
-            (Self::MetaRedex(protocol), CodecCache::MetaRedex(cache)) => {
+            (Self::StRedex(protocol), CodecCache::StRedex(cache)) => {
                 protocol.reply(arena, cache, call, eval)
             }
-            (Self::Kore(protocol), CodecCache::Kore(cache)) => {
+            (Self::KSt(protocol), CodecCache::KSt(cache)) => {
                 protocol.reply(arena, cache, call, eval)
             }
             _ => unreachable!("a boundary keeps the cache its protocol made"),

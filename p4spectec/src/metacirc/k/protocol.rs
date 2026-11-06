@@ -1,7 +1,7 @@
 //! spec-meta-k's protocol: an AL level above a base written in K
 //!
 //! ST-in-K runs spec-meta-k, the AL semantics written in K, as the base,
-//! on a `KEngine`. Every payload crossing this boundary is JSON text
+//! on a `EngineK`. Every payload crossing this boundary is JSON text
 //! held in a `text` value (`make::text`, `get::text`),
 //! in the format of `spec-meta-k/3-execution/3.04.1-extern-json.k`;
 //! `spec` prints an AL specification, and `serve` the rest.
@@ -13,13 +13,12 @@
 //! and `raise` unwraps its answer;
 //! `host` and `reply` decode a `#ffiCall` request and encode its outcome.
 
-mod spec;
-
 use super::{
-    Below, Call, Entered, HostCall, Output, Protocol, Values,
     json::{Cache, Writer},
     serve::{self, request},
+    spec_json,
 };
+use crate::metacirc::protocol::{Below, Call, Entered, HostCall, Output, Protocol, Values};
 use crate::{
     diagnostic::Report,
     lang::{
@@ -37,9 +36,9 @@ use crate::{
 // == Protocol
 
 /// The protocol of spec-meta-k toward the AL specification above it.
-pub(in crate::metacirc) struct MetaKProtocol;
+pub(in crate::metacirc) struct ProtocolStK;
 
-impl MetaKProtocol {
+impl ProtocolStK {
     /// The engine's call that loads a specification, `load(request)`, returning C.
     pub(in crate::metacirc) const LOAD: &str = serve::LOAD;
     /// The engine's call that serves a request under C, `serve(C, request)`.
@@ -52,7 +51,7 @@ impl MetaKProtocol {
     pub(in crate::metacirc) const ENTRY_FUNC: &str = serve::ENTRY_FUNC;
 }
 
-impl Protocol for MetaKProtocol {
+impl Protocol for ProtocolStK {
     type Cache = Cache;
 
     fn new_cache(&self, enabled: bool) -> Cache {
@@ -83,7 +82,7 @@ impl Protocol for MetaKProtocol {
     ///
     /// `Eval_AL_rel` and `Eval_AL_func` take the AL specification `above`,
     /// the name of its entry, and `values`, the entry's inputs:
-    /// `[def...]`, `"name"`, and `[val...]`, which `KEngine::call_rel` passes on.
+    /// `[def...]`, `"name"`, and `[val...]`, which `EngineK::call_rel` passes on.
     fn encode_entry(
         &self,
         arena: &mut Arena,
@@ -96,7 +95,7 @@ impl Protocol for MetaKProtocol {
             return Err(error::config_invalid(message));
         };
         let mut writer = Writer::new();
-        spec::spec(&mut writer, spec_al);
+        spec_json::spec(&mut writer, spec_al);
         serve::entry_inputs(arena, writer.finish(), name, values)
     }
 
@@ -147,7 +146,7 @@ impl Protocol for MetaKProtocol {
 
 // == The engine's side
 
-impl MetaKProtocol {
+impl ProtocolStK {
     /// The requests that run spec-meta-k's entry `name` on `values`,
     /// the JSON texts `spec`, `id`, and `args` that `encode_entry` made.
     pub(in crate::metacirc) fn entry_requests(
@@ -192,7 +191,7 @@ fn spec_request(key: &str, spec_al: &al::Spec) -> String {
     let mut writer = Writer::new();
     writer.object(|writer| {
         writer.key(key);
-        spec::spec(writer, spec_al);
+        spec_json::spec(writer, spec_al);
     });
     writer.finish()
 }

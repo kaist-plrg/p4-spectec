@@ -1,9 +1,9 @@
 //! The library `kompile` made of a K base specification
 //!
 //! A `k` tower names it in its base's `kompiled` field.
-//! `KRuntime::load` opens it once per tower (`libloading`)
+//! `RuntimeK::load` opens it once per tower (`libloading`)
 //! and resolves the K runtime's entry points;
-//! every depth's `KEngineState` runs on the same library.
+//! every depth's `StateK` runs on the same library.
 //! Calls into the library go through `ffi`, ST-in-K's only module allowed `unsafe`.
 //!
 //! A specification loaded into spec-meta-k lives in one K thread's configuration,
@@ -20,7 +20,7 @@ use std::{
 };
 
 /// A K library loaded for a tower, shared by every depth.
-pub(in crate::metacirc) struct KRuntime {
+pub(in crate::metacirc) struct RuntimeK {
     /// The library file, as the configuration resolved it.
     path: PathBuf,
     pub(super) library: &'static Library,
@@ -28,7 +28,7 @@ pub(in crate::metacirc) struct KRuntime {
     loads: RefCell<Vec<Rc<str>>>,
 }
 
-impl KRuntime {
+impl RuntimeK {
     /// Loads the library at `path`, compiled from the base by `make kompile`.
     pub(in crate::metacirc) fn load(path: &Path) -> Result<Self> {
         if !path.is_file() {

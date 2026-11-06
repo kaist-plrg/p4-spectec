@@ -9,12 +9,15 @@
 //! `boundary`, and a P4 extern that reenters runs on the next depth.
 //! `tower` builds the levels, `sim` drives them with an STF test,
 //! and `krun` runs a K definition on spec-k (K-in-ST).
+//! Each backend is its own module, sharing nothing with the others:
+//! `st` runs P4-SpecTec specifications (spec-meta, spec-k),
+//! `k` spec-meta-k from its K library, and `redex` spec-meta-redex in `racket`.
 //!
 //! ```text
 //! Tower
 //! ├─ levels: [PreparedLevel]
 //! ├─ protocols: [ProtocolKind]                          : Protocol
-//! └─ BaseRunner
+//! └─ Base
 //!    └─ Upper                    ─lend→ UpperMut        : Extern
 //!       ├─ Top                   ─lend→ TopMut
 //!       └─ TowerInterpState      ─lend→ TowerInterp     : Interpreter
@@ -26,8 +29,11 @@ pub mod config;
 mod engine;
 mod error;
 mod interp;
+mod k;
 mod protocol;
+mod redex;
 mod sim;
+mod st;
 mod tower;
 
 use crate::{

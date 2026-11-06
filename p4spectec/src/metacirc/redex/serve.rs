@@ -1,7 +1,6 @@
 //! The calls and answers of a base's `serve()` loop
 //!
-//! spec-meta-k (`spec-meta-k/3-execution/3.14-entry.k`) and spec-meta-redex
-//! (`spec-meta-redex/3-execution/3.16-entry.rkt`) serve the same JSON text,
+//! spec-meta-redex (`spec-meta-redex/3-execution/3.16-entry.rkt`) serves JSON text,
 //! held in `text` values (`make::text`, `get::text`): calls and answers
 //! for the level above, and the requests and responses of their host calls.
 //! The entries of spec-meta/5-entry.watsup are two calls in a row:
@@ -9,10 +8,8 @@
 //! then `call-func` with no type arguments.
 //! `json`, imported as `wire`, prints and reads the values and types inside.
 
-use super::{
-    Call, HostCall, Output, Values,
-    json::{self as wire, Cache, Writer},
-};
+use super::json::{self as wire, Cache, Writer};
+use crate::metacirc::protocol::{Call, HostCall, Output, Values};
 use crate::{
     diagnostic::Report,
     lang::{
@@ -31,22 +28,22 @@ use smallvec::smallvec;
 use std::borrow::Cow;
 
 /// The engine's call that loads a specification, `load(request)`, returning C.
-pub(in crate::metacirc::protocol) const LOAD: &str = "load";
+pub(in crate::metacirc::redex) const LOAD: &str = "load";
 /// The engine's call that serves a request under C, `serve(C, request)`.
-pub(in crate::metacirc::protocol) const SERVE: &str = "serve";
+pub(in crate::metacirc::redex) const SERVE: &str = "serve";
 /// The host call of every request of the base.
-pub(in crate::metacirc::protocol) const HOST_EVAL: &str = "host_eval";
+pub(in crate::metacirc::redex) const HOST_EVAL: &str = "host_eval";
 /// The entry calling a relation, `Eval_AL_rel(spec, id, args)`.
-pub(in crate::metacirc::protocol) const ENTRY_REL: &str = "Eval_AL_rel";
+pub(in crate::metacirc::redex) const ENTRY_REL: &str = "Eval_AL_rel";
 /// The entry calling a function, `Eval_AL_func(spec, id, args)`.
-pub(in crate::metacirc::protocol) const ENTRY_FUNC: &str = "Eval_AL_func";
+pub(in crate::metacirc::redex) const ENTRY_FUNC: &str = "Eval_AL_func";
 
 // == The level above's side
 
 /// Encodes the inputs of the base's entry `name` as JSON text:
 /// `text_spec`, the specification above as the base loads it,
 /// `"name"`, and `[val...]`, which the engine's `call_rel` passes on.
-pub(in crate::metacirc::protocol) fn entry_inputs(
+pub(in crate::metacirc::redex) fn entry_inputs(
     arena: &mut Arena,
     text_spec: String,
     name: &str,
@@ -68,7 +65,7 @@ pub(in crate::metacirc::protocol) fn entry_inputs(
 }
 
 /// Wraps `call` of the AL level above as `serve(C, request)` on the base.
-pub(in crate::metacirc::protocol) fn lower(
+pub(in crate::metacirc::redex) fn lower(
     arena: &mut Arena,
     cache: &mut Cache,
     value_ctx: Value,
@@ -89,8 +86,8 @@ pub(in crate::metacirc::protocol) fn lower(
 /// Unwraps the JSON answer of the base into the output of `call`.
 ///
 /// An OK answer gives the outputs; UNMATCH is `InterpreterError::Mismatch`,
-/// and ERROR is `InterpreterError::Fatal`, as `MetaProtocol::raise` does.
-pub(in crate::metacirc::protocol) fn raise(
+/// and ERROR is `InterpreterError::Fatal`, as `ProtocolStSt::raise` does.
+pub(in crate::metacirc::redex) fn raise(
     arena: &mut Arena,
     cache: &mut Cache,
     output: Output,
@@ -112,7 +109,7 @@ pub(in crate::metacirc::protocol) fn raise(
 /// The engine passes each request it receives as
 /// `upper.host_call(arena, "host_eval", &[request])`,
 /// so `name` is `host_eval` and `values` is the one JSON text request.
-pub(in crate::metacirc::protocol) fn host(
+pub(in crate::metacirc::redex) fn host(
     arena: &mut Arena,
     cache: &mut Cache,
     name: &str,
@@ -130,7 +127,7 @@ pub(in crate::metacirc::protocol) fn host(
 ///
 /// A mismatch is `{"fail": null}`; a fatal failure stays outside the
 /// specification's backtracking, for the engine to report.
-pub(in crate::metacirc::protocol) fn reply(
+pub(in crate::metacirc::redex) fn reply(
     arena: &mut Arena,
     cache: &mut Cache,
     eval: Eval<Output>,
@@ -156,7 +153,7 @@ pub(in crate::metacirc::protocol) fn reply(
 /// Both entries load first, `{"load": spec}`; `Eval_AL_rel` then calls
 /// `{"args": args, "call-rel": id}`, and `Eval_AL_func`
 /// `{"args": args, "call-func": id, "targs": []}`.
-pub(in crate::metacirc::protocol) fn entry_requests(
+pub(in crate::metacirc::redex) fn entry_requests(
     arena: &Arena,
     name: &str,
     values: &[Value],
@@ -195,7 +192,7 @@ pub(in crate::metacirc::protocol) fn entry_requests(
 
 /// The outputs of the base's entry `name` from the answer to its call:
 /// the relation's values for `Eval_AL_rel`, the function's value for `Eval_AL_func`.
-pub(in crate::metacirc::protocol) fn entry_outputs(
+pub(in crate::metacirc::redex) fn entry_outputs(
     arena: &mut Arena,
     name: &str,
     value_answer: Value,
@@ -210,7 +207,7 @@ pub(in crate::metacirc::protocol) fn entry_outputs(
 }
 
 /// Checks the answer to a load request, `{"ok": []}`.
-pub(in crate::metacirc::protocol) fn load_answer(
+pub(in crate::metacirc::redex) fn load_answer(
     arena: &mut Arena,
     value_answer: Value,
 ) -> Result<(), InterpreterError> {
@@ -221,7 +218,7 @@ pub(in crate::metacirc::protocol) fn load_answer(
 }
 
 /// The response telling the base that a host call failed with `report`.
-pub(in crate::metacirc::protocol) fn error_response(report: &Report) -> String {
+pub(in crate::metacirc::redex) fn error_response(report: &Report) -> String {
     let mut writer = Writer::new();
     writer.object(|writer| {
         writer.key("error");
@@ -231,17 +228,17 @@ pub(in crate::metacirc::protocol) fn error_response(report: &Report) -> String {
 }
 
 /// The request that ends the base's `serve()` loop.
-pub(in crate::metacirc::protocol) fn exit_request() -> String {
+pub(in crate::metacirc::redex) fn exit_request() -> String {
     r#"{"exit":null}"#.to_owned()
 }
 
 // == Requests
 
 /// The calls of the `serve()` loop, with fields in sorted order, which K matches literally.
-pub(in crate::metacirc::protocol) mod request {
+pub(in crate::metacirc::redex) mod request {
     use super::*;
 
-    pub(in crate::metacirc::protocol) const LOAD: &str = "load";
+    pub(in crate::metacirc::redex) const LOAD: &str = "load";
 
     /// `{"args": [val...], "call-rel": id}`.
     pub(super) fn call_rel(
@@ -317,7 +314,7 @@ pub(in crate::metacirc::protocol) mod request {
 // == Responses and answers
 
 /// Whether `response`, a reply to a host request, carries outputs.
-pub(in crate::metacirc::protocol) fn is_ok(response: &str) -> bool {
+pub(in crate::metacirc) fn is_ok(response: &str) -> bool {
     response != response::FAIL
 }
 

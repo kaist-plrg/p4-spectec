@@ -8,7 +8,7 @@
 //! `var` definitions, signatures, hints and operand types are omitted, as
 //! the Redex syntax expects.
 
-use super::super::json::rows_tree;
+use super::json::rows_tree;
 use crate::lang::{
     al::ast as al,
     common::{

@@ -19,8 +19,8 @@ use super::{
     Result,
     config::LevelConfig,
     engine::{
-        BaseSpec, Engine, EngineKind, InterfaceKind, KEngine, KEngineState, KRuntime, RedexEngine,
-        RedexEngineState, RedexRuntime, SpecTecEngine,
+        BaseSpec, Engine, EngineK, EngineKind, EngineRedex, EngineSt, InterfaceSt, RuntimeK,
+        RuntimeRedex, StateK, StateRedex,
     },
     error,
     interp::TowerEnv,
@@ -52,7 +52,7 @@ pub struct Tower<Ext: Extern = Dummy> {
     pub(super) levels: Vec<PreparedLevel>,
     /// The protocol of the boundary below each level above the base.
     pub(super) protocols: Vec<ProtocolKind>,
-    pub(super) base: BaseRunner<Ext>,
+    pub(super) base: Base<Ext>,
     /// Options for the interpreters of reentry depths.
     pub(super) options: runner::Config,
 }
@@ -90,31 +90,32 @@ pub(super) enum PreparedLevel {
 }
 
 /// The native runner of the base, selected by the language it interprets.
-pub(super) enum BaseRunner<Ext: Extern> {
+pub(super) enum Base<Ext: Extern> {
     /// A P4 specification, interpreting a parsed P4 program.
     P4(Runner<P4Interface, Ext>),
-    /// A meta specification interpreting an AL or IL script, hosting the levels above it.
-    Meta(Runner<InterfaceKind, Upper<Ext>>),
+    /// A P4-SpecTec specification run natively on AL or SL, hosting the levels above it:
+    /// spec-meta interpreting an AL or IL script, or spec-k a K definition.
+    St(Runner<InterfaceSt, Upper<Ext>>),
     /// A K specification, compiled to a library, interpreting an AL script
     /// and hosting the levels above it.
-    K(KBase<Ext>),
+    K(BaseK<Ext>),
     /// A PLT Redex specification, run by a `racket` process,
     /// interpreting an AL script and hosting the levels above it.
-    Redex(RedexBase<Ext>),
+    Redex(BaseRedex<Ext>),
 }
 
 /// A base written in K: its library, depth 0's K thread, and the levels above it.
-pub(super) struct KBase<Ext: Extern> {
-    pub(super) runtime: KRuntime,
-    pub(super) state: KEngineState,
+pub(super) struct BaseK<Ext: Extern> {
+    pub(super) runtime: RuntimeK,
+    pub(super) state: StateK,
     pub(super) upper: Upper<Ext>,
     pub(super) effects: u64,
 }
 
 /// A base written in PLT Redex: its process, depth 0's state, and the levels above it.
-pub(super) struct RedexBase<Ext: Extern> {
-    pub(super) runtime: RedexRuntime,
-    pub(super) state: RedexEngineState,
+pub(super) struct BaseRedex<Ext: Extern> {
+    pub(super) runtime: RuntimeRedex,
+    pub(super) state: StateRedex,
     pub(super) upper: Upper<Ext>,
     pub(super) effects: u64,
 }
@@ -147,7 +148,7 @@ impl<Ext: Extern> Tower<Ext> {
         let Self { levels, protocols, base, options } = self;
         let name = &levels[0].config().rel;
         // A P4 base runs the program directly
-        if let BaseRunner::P4(runner) = base {
+        if let Base::P4(runner) = base {
             return runner.eval_rel(arena, name, values).result;
         }
         // Any other base lends the levels above it with its definitions
@@ -204,9 +205,7 @@ impl<Ext: Extern> Tower<Ext> {
     /// which parses a KORE input, answers spec-k's hooks, and prints its run.
     pub(super) fn kore_interface(&mut self) -> Option<&mut KoreInterface> {
         match &mut self.base {
-            BaseRunner::Meta(Runner { interface: InterfaceKind::Kore(interface), .. }) => {
-                Some(interface)
-            }
+            Base::St(Runner { interface: InterfaceSt::KSt(interface), .. }) => Some(interface),
             _ => None,
         }
     }
@@ -229,20 +228,20 @@ impl PreparedLevel {
     }
 }
 
-impl<Ext: Extern> BaseRunner<Ext> {
+impl<Ext: Extern> Base<Ext> {
     /// Resets the runner and the levels its extern stores.
     fn reset(&mut self) {
         match self {
             Self::P4(runner) => runner.reset(),
-            Self::Meta(runner) => runner.reset(),
+            Self::St(runner) => runner.reset(),
             Self::K(base) => {
                 base.effects = 0;
-                KEngine::lend(&base.runtime, &mut base.state).reset();
+                EngineK::lend(&base.runtime, &mut base.state).reset();
                 base.upper.clear();
             }
             Self::Redex(base) => {
                 base.effects = 0;
-                RedexEngine::lend(&base.runtime, &mut base.state).reset();
+                EngineRedex::lend(&base.runtime, &mut base.state).reset();
                 base.upper.clear();
             }
         }
@@ -253,20 +252,20 @@ impl<Ext: Extern> BaseRunner<Ext> {
     pub(super) fn lend(&mut self) -> Option<LentBase<'_, Ext>> {
         match self {
             Self::P4(_) => None,
-            Self::Meta(runner) => {
+            Self::St(runner) => {
                 let Runner { backend, interface, external: upper, effects } = runner;
-                let (engine, spec_base) = SpecTecEngine::lend_base(backend, interface);
-                let engine = EngineKind::SpecTec(engine);
-                let spec_base = BaseSpec::SpecTec(spec_base);
+                let (engine, spec_base) = EngineSt::lend_base(backend, interface);
+                let engine = EngineKind::St(engine);
+                let spec_base = BaseSpec::St(spec_base);
                 Some(LentBase { engine, spec_base, upper, effects })
             }
-            Self::K(KBase { runtime, state, upper, effects }) => {
-                let engine = EngineKind::K(KEngine::lend(runtime, state));
+            Self::K(BaseK { runtime, state, upper, effects }) => {
+                let engine = EngineKind::K(EngineK::lend(runtime, state));
                 let spec_base = BaseSpec::K(runtime);
                 Some(LentBase { engine, spec_base, upper, effects })
             }
-            Self::Redex(RedexBase { runtime, state, upper, effects }) => {
-                let engine = EngineKind::Redex(RedexEngine::lend(runtime, state));
+            Self::Redex(BaseRedex { runtime, state, upper, effects }) => {
+                let engine = EngineKind::Redex(EngineRedex::lend(runtime, state));
                 let spec_base = BaseSpec::Redex(runtime);
                 Some(LentBase { engine, spec_base, upper, effects })
             }

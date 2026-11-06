@@ -4,7 +4,7 @@
 //! A single-level K-in-ST tower enters spec-k through `Krun` directly
 //! (`Tower::eval_krun`), so this boundary carries only spec-k's host call,
 //! its extern relation `Call_hook`, up to the K definition above it,
-//! whose K library answers it (`Top::Kore`).
+//! whose K library answers it (`Top::K`).
 //! Stacking a level over a K definition, such as ST-in-K-in-ST, would use it:
 //! `load` prepares the definition once (`Prepare`, a split of spec-k's `Start`),
 //! `lower` runs one request as a K term to the end (`Run`),
@@ -12,7 +12,7 @@
 //! That needs `PreparedLevel::Kore` and per-depth K state in `TowerInterpState`;
 //! neither exists until stacking is implemented.
 
-use super::{Below, Call, Entered, HostCall, Output, Protocol};
+use crate::metacirc::protocol::{Below, Call, Entered, HostCall, Output, Protocol};
 use crate::{
     lang::{
         common::source::Span,
@@ -28,7 +28,7 @@ const STACKING: &str = "stacking a level over a K definition";
 // == Protocol
 
 /// The protocol of spec-k toward the K definition above it.
-pub(in crate::metacirc) struct KoreProtocol;
+pub(in crate::metacirc) struct ProtocolKSt;
 
 /// The codec state of a boundary above spec-k.
 pub(in crate::metacirc) struct Cache;
@@ -38,7 +38,7 @@ impl Cache {
     pub(in crate::metacirc) fn clear(&mut self) {}
 }
 
-impl Protocol for KoreProtocol {
+impl Protocol for ProtocolKSt {
     type Cache = Cache;
 
     fn new_cache(&self, _enabled: bool) -> Cache {

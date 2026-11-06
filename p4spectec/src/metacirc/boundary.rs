@@ -188,9 +188,9 @@ impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
         let eval = if self.is_top() {
             match &mut self.upper.top {
                 TopMut::P4 { interface, .. } => interface.call_builtin(arena, id, targs, values),
-                TopMut::Program(interface) => interface.call_builtin(arena, id, targs, values),
+                TopMut::St(interface) => interface.call_builtin(arena, id, targs, values),
                 // spec-k declares no builtins for the level above
-                TopMut::Kore(_) => return unsupported(&id.node).map_err(Into::into),
+                TopMut::K(_) => return unsupported(&id.node).map_err(Into::into),
             }
         } else {
             self.upper.hosts[self.level.index()].call_builtin(arena, id, targs, values)
@@ -210,9 +210,9 @@ impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
                 .upper
                 .with_next(arena, |ctx| ctx.call_extern_rel(name, values)),
             // The program declares no host relations
-            TopMut::Program(_) => unsupported(name).map_err(Into::into),
+            TopMut::St(_) => unsupported(name).map_err(Into::into),
             // The K library computes a hook without effects
-            TopMut::Kore(library) => Eval::new(
+            TopMut::K(library) => Eval::new(
                 library.eval_rel(arena, name, values).map_err(Into::into),
                 SideEffect::Pure,
             ),
@@ -236,7 +236,7 @@ impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
                 .upper
                 .with_next(arena, |ctx| ctx.call_extern_func(name, targs, values)),
             // The program and the K definition declare no host functions
-            TopMut::Program(_) | TopMut::Kore(_) => unsupported(name).map_err(Into::into),
+            TopMut::St(_) | TopMut::K(_) => unsupported(name).map_err(Into::into),
         }
     }
 }
@@ -250,7 +250,7 @@ impl<Ext: Extern> UpperMut<'_, Ext> {
     /// Sends host call `name` of the base's specification up the first boundary.
     ///
     /// The extern of a base run by a `RunnerContext` calls this;
-    /// an engine that runs without one, as `KEngine` does, calls it directly.
+    /// an engine that runs without one, as `EngineK` does, calls it directly.
     pub(in crate::metacirc) fn host_call(
         &mut self,
         arena: &mut Arena,

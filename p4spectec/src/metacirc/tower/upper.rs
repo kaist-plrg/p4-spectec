@@ -45,9 +45,9 @@ pub(in crate::metacirc) enum Top<Ext: Extern> {
     /// A P4 specification, answering the builtins and externs of its program.
     P4(Host<P4Interface, Ext>),
     /// The AL or IL program of the highest meta level, answering only its builtins.
-    Program(MetaInterface),
+    St(MetaInterface),
     /// The K definition above spec-k, whose K library answers spec-k's extern relations.
-    Kore(KLibrary),
+    K(KLibrary),
 }
 
 impl<Ext: Extern> Upper<Ext> {
@@ -58,9 +58,9 @@ impl<Ext: Extern> Upper<Ext> {
         self.hosts.iter_mut().for_each(Interface::clear);
         match &mut self.top {
             Top::P4(host) => host.reset(),
-            Top::Program(interface) => interface.clear(),
+            Top::St(interface) => interface.clear(),
             // The library stays with the definition, as in `KoreInterface::clear`
-            Top::Kore(_) => {}
+            Top::K(_) => {}
         }
         self.depth_next = None;
     }
@@ -72,8 +72,8 @@ impl<Ext: Extern> Upper<Ext> {
                 let (interface, external) = host.parts_mut();
                 TopMut::P4 { interface, external }
             }
-            Top::Program(interface) => TopMut::Program(interface),
-            Top::Kore(library) => TopMut::Kore(library),
+            Top::St(interface) => TopMut::St(interface),
+            Top::K(library) => TopMut::K(library),
         };
         UpperMut {
             env,
@@ -108,9 +108,9 @@ pub(in crate::metacirc) enum TopMut<'l, Ext: Extern> {
     /// A P4 specification, answering the builtins and externs of its program.
     P4 { interface: &'l mut P4Interface, external: &'l mut Ext },
     /// The AL or IL program of the highest meta level, answering only its builtins.
-    Program(&'l mut MetaInterface),
+    St(&'l mut MetaInterface),
     /// The K definition above spec-k, whose K library answers spec-k's extern relations.
-    Kore(&'l KLibrary),
+    K(&'l KLibrary),
 }
 
 impl<'l, Ext: Extern> UpperMut<'l, Ext> {
