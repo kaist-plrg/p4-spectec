@@ -8,17 +8,15 @@ use std::{
     fs,
     path::Path,
     process::{Command, Stdio},
+    time::Duration,
 };
 
-use super::build::{Case, run, stdin};
+use super::build::{Case, failed, stdin};
 use crate::harness::Result;
 
 /// Exit codes of the interpreter for a run that fails: a stuck configuration,
 /// and an uncaught exception, which aborts.
 const EXIT_FAILED: [i32; 2] = [113, 134];
-
-/// How long the search binary may take, in seconds.
-const SEARCH_SECONDS: u32 = 600;
 
 /// A step bound as the interpreter and the search binary take it: -1 for none.
 fn arg_depth(depth: Option<u64>) -> String {
@@ -54,31 +52,44 @@ impl Case<'_> {
     }
 
     /// Writes the final configurations K allows from an initial term to `path_search`,
-    /// as the kompiled `search` binary finds them within `SEARCH_SECONDS`.
+    /// as the kompiled `search` binary finds them, within `timeout` if any: whether it ended.
     pub fn search(
         &self,
         path_init: &Path,
         depth: Option<u64>,
         input: Option<&Path>,
         path_search: &Path,
-    ) -> Result<()> {
+        timeout: Option<Duration>,
+    ) -> Result<bool> {
         if path_search.exists() {
             // The search binary appends to its output file
             fs::remove_file(path_search)?;
         }
-        let searched = run(
-            Command::new("timeout")
-                .arg(SEARCH_SECONDS.to_string())
-                .arg(self.kompiled().join("search"))
-                .arg(path_init)
-                .arg(arg_depth(depth))
-                .arg(path_search),
-            input,
-            &format!("search {}", path_init.display()),
-        );
-        if searched.is_err() && path_search.exists() {
+        let search = self.kompiled().join("search");
+        let mut command = match timeout {
+            Some(timeout) => {
+                let mut command = Command::new("timeout");
+                command.arg(timeout.as_secs().to_string()).arg(search);
+                command
+            }
+            None => Command::new(search),
+        };
+        let output = command
+            .arg(path_init)
+            .arg(arg_depth(depth))
+            .arg(path_search)
+            .stdin(stdin(input)?)
+            .output()?;
+        if output.status.success() {
+            return Ok(true);
+        }
+        if path_search.exists() {
             fs::remove_file(path_search)?;
         }
-        searched.map(|_| ())
+        // `timeout` exits with 124 when the time is up
+        if timeout.is_some() && output.status.code() == Some(124) {
+            return Ok(false);
+        }
+        Err(failed(&format!("search {}", path_init.display()), &output))
     }
 }

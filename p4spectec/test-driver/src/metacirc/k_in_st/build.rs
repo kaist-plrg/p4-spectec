@@ -225,7 +225,7 @@ pub fn run(command: &mut Command, input: Option<&Path>, what: &str) -> Result<Ou
 }
 
 /// The failure of a command, `what`, with the end of its output.
-fn failed(what: &str, output: &Output) -> Error {
+pub(super) fn failed(what: &str, output: &Output) -> Error {
     let text = String::from_utf8_lossy(&output.stderr).into_owned()
         + &String::from_utf8_lossy(&output.stdout);
     let tail = &text[text.floor_char_boundary(text.len().saturating_sub(2000))..];
