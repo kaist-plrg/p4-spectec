@@ -150,28 +150,38 @@ exit code.
 ## Tower structure
 
 `Tower` (`p4spectec/src/metacirc/tower/`) keeps every level's specification
-(`PreparedLevel`), one `Protocol` per boundary, and the base runner. A P4 base is a
-plain runner. A meta base's runner stores the levels above it in `Upper`:
+(`PreparedLevel`) and the `Base`. A P4 base is a plain runner. Any other base
+stores the levels above it in `Upper`, with one `Protocol` per boundary:
 
 ```
-Upper { caches, ctxs, hosts, top, depth_next }
-  caches[k-1]  codec cache of the boundary below level k
-  ctxs[k-1]    C of level k for the current program, loaded on first use
-  hosts[k-1]   meta builtins of level k, between the base and the top
-  top          Top::P4(P4 interface + architecture) | Top::Program(builtins)
-  depth_next   reentry depths 1 and deeper
+Upper { protocols, ctxs, hosts, top, depth_next }
+  protocols[k-1]  protocol of the boundary below level k, with its codec state
+  ctxs[k-1]       C of level k for the current program, loaded on first use
+  hosts[k-1]      meta builtins of level k, between the base and the top
+  top             Top::P4(P4 interface + architecture) | Top::St(builtins) | Top::K(K library)
+  depth_next      reentry depths 1 and deeper
 ```
 
 Above a meta top level is its AL or IL program, one more boundary whose
-builtins `Top::Program` answers.
+builtins `Top::St` answers.
+
+`TowerConfig` reads `mode` and the base's `kompiled` or `module` into
+`BaseConfig { St { repr }, K { kompiled }, Redex { module } }`, the meta-language
+of the base's specification and its native implementation, so a library or
+module exists exactly where its mode needs it.
 
 Three traits divide the work, their implementations stored as enums
-(`EngineKind`, `ProtocolKind`); K and Redex towers describes the K and Redex implementations:
+(`EngineKind`, `ProtocolKind`). A protocol is named by the language it
+interprets and then the meta-language its specification is written in
+(`ProtocolStK` is spec-meta-k, St written in K), and an engine or base by the
+meta-language it runs (`EngineK`, `Base::K`); St stands for P4-SpecTec.
+Each backend is a module of its own, sharing nothing with the others:
+`st/`, `k/`, and `redex/`. K and Redex towers describes the K and Redex backends:
 
 | trait | implementation | role |
 |---|---|---|
-| `Engine` (`engine/`) | `SpecTecEngine`, `KEngine`, `RedexEngine` | runs the base natively, on AL or SL, from a K library, or in a `racket` process |
-| `Protocol` (`protocol/`) | `MetaProtocol`, `MetaKProtocol`, `MetaRedexProtocol`, `KoreProtocol` | how spec-meta interprets the level above: load C, encode the entry's inputs, lower a call to `Call_rel`/`Call_func`, raise its result, decode and encode host calls; likewise for spec-meta-k, spec-meta-redex, and spec-k |
+| `Engine` (`engine.rs`) | `EngineSt`, `EngineK`, `EngineRedex` | runs the base natively, on AL or SL, from a K library, or in a `racket` process |
+| `Protocol` (`protocol.rs`) | `ProtocolStSt`, `ProtocolStK`, `ProtocolStRedex`, `ProtocolKSt` | how spec-meta interprets the level above: load C, encode the entry's inputs, lower a call to `Call_rel`/`Call_func`, raise its result, decode and encode host calls; likewise for spec-meta-k, spec-meta-redex, and spec-k |
 | `HostCalls` (`boundary.rs`) | `Boundary` | answers a decoded host call at the level above a boundary |
 
 A call goes down from the P4 top through each level's protocol to the engine
@@ -182,7 +192,7 @@ the P4 relations the architecture calls; both lend the same levels. When a P4
 extern reenters the specification, as `static_assert` does to read its
 arguments and the architectures do through `find_var_e`, the call runs on the
 next depth: a fresh interpreter of the base's representation and fresh meta
-builtins, sharing C and the codec caches.
+builtins, sharing C and the protocols with their codec state.
 
 ## K and Redex towers
 
@@ -194,23 +204,28 @@ Two towers cross into the K framework, and one into PLT Redex.
 | K-in-ST | spec-k, the K semantics in P4-SpecTec | a K definition and initial term in KORE | a single level with `"lang": "kore"` (`towers/k-in-st.json`) |
 | ST-in-Redex | spec-meta-redex, the AL semantics in PLT Redex, run by `racket` | AL or P4 | `"mode": "redex"`, `module` at the base (`towers/redex*.json`) |
 
-ST-in-K adds `KEngine` (`engine/k/`) and `MetaKProtocol` (`protocol/meta_k/`);
+ST-in-K adds the `k/` backend, `EngineK` and `ProtocolStK`;
 the base's entry `Eval_AL_rel` or `Eval_AL_func` loads the specification and
 calls its relation or function, as `spec-meta-k/3-execution/3.14-entry.k` serves them.
 `make kompile` builds the library, and `make test-metacirc-run-k`,
 `test-metacirc-micro-k`, and `test-metacirc-sim-k` reuse the native expected
 files. K-in-ST adds `KoreInterface` (`p4spectec/src/interface/kore/`); the K library
-kompiled with the definition is the top of the tower (`Top::Kore`) and answers
-spec-k's extern relation `Call_hook`, to which spec-k leaves most K hooks, and
+kompiled with the definition is the top of the tower (`Top::K`). As a script is
+the program above spec-meta, the K definition is the program above spec-k, and
+runs through the same path: the top reads it with its initial term
+(`Tower::parse_input`, `Input::Kore`), `ProtocolKSt::encode_entry` gives them to
+`Krun` with the step bound, and the top prints the run (`Tower::print_output`).
+The K library answers spec-k's extern relation `Call_hook`, to which spec-k leaves
+most K hooks, and
 `metacirc run-meta towers/k-in-st.json -p imp-kompiled/definition.kore -p init.kore --depth N`
 prints the run as `krun` does; `make test-metacirc-k-in-st` compares it with
-`krun`. `protocol/kore/` passes `Call_hook` up and describes how a level
-would stack over a K definition, which is not implemented.
+`krun`. `ProtocolKSt` (`st/protocol_k.rs`) also describes how a level would stack
+over a K definition, which is not implemented.
 
-ST-in-Redex adds `RedexEngine` (`engine/redex/`), one `racket` process per
-tower shared by every reentry depth, and `MetaRedexProtocol`
-(`protocol/meta_redex/`), which shares the JSON of `protocol/json.rs` and
-`protocol/serve.rs` with `MetaKProtocol`; its entry `Eval_AL_rel` or
+ST-in-Redex adds the `redex/` backend: `EngineRedex`, one `racket` process per
+tower shared by every reentry depth, and `ProtocolStRedex`, whose JSON
+(`redex/json.rs`, `redex/serve.rs`) is the same as the K backend's but kept
+as its own copy; its entry `Eval_AL_rel` or
 `Eval_AL_func` loads the specification and calls its relation or function, as
 `spec-meta-redex/3-execution/3.16-entry.rkt` serves them. `make redex` compiles the entry
 module, and `make test-metacirc-run-redex`, `test-metacirc-micro-redex`, and

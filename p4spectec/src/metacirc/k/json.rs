@@ -1,7 +1,7 @@
-//! The JSON of values and types across a boundary above spec-meta-k or spec-meta-redex
+//! The JSON of values and types across the boundary above spec-meta-k
 //!
-//! Shared with `spec-meta-k/3-execution/3.04.1-extern-json.k` and
-//! `spec-meta-redex/3-execution/3.04.1-extern-json.rkt`:
+//! The Rust side of `spec-meta-k/3-execution/3.04.1-extern-json.k`;
+//! the Redex backend keeps its own copy (`redex/json.rs`):
 //!
 //! ```text
 //! val      ::= ["boolV", bool] | ["natN", "<decimal>"] | ["intN", "<decimal>"]
@@ -71,7 +71,7 @@ pub(in crate::metacirc) struct Cache {
 }
 
 impl Cache {
-    pub(in crate::metacirc::protocol) fn new(enabled: bool) -> Self {
+    pub(in crate::metacirc::k) fn new(enabled: bool) -> Self {
         Self {
             enabled,
             mixops_out: HashMap::new(),
@@ -90,16 +90,12 @@ impl Cache {
     }
 
     /// The response cached for host request `request`.
-    pub(in crate::metacirc::protocol) fn response(&self, request: &str) -> Option<&str> {
+    pub(in crate::metacirc::k) fn response(&self, request: &str) -> Option<&str> {
         self.responses.get(request).map(String::as_str)
     }
 
     /// Caches `response` to host request `request`, if enabled.
-    pub(in crate::metacirc::protocol) fn cache_response(
-        &mut self,
-        request: String,
-        response: &str,
-    ) {
+    pub(in crate::metacirc::k) fn cache_response(&mut self, request: String, response: &str) {
         if self.enabled {
             self.responses.insert(request, response.to_owned());
         }
@@ -109,17 +105,17 @@ impl Cache {
 // == Printing
 
 /// JSON text, printed in order; commas go between the items of an array or object.
-pub(in crate::metacirc::protocol) struct Writer {
+pub(in crate::metacirc::k) struct Writer {
     text: String,
     first: bool,
 }
 
 impl Writer {
-    pub(in crate::metacirc::protocol) fn new() -> Self {
+    pub(in crate::metacirc::k) fn new() -> Self {
         Self { text: String::new(), first: true }
     }
 
-    pub(in crate::metacirc::protocol) fn finish(self) -> String {
+    pub(in crate::metacirc::k) fn finish(self) -> String {
         self.text
     }
 
@@ -131,33 +127,33 @@ impl Writer {
         self.first = false;
     }
 
-    pub(in crate::metacirc::protocol) fn null(&mut self) {
+    pub(in crate::metacirc::k) fn null(&mut self) {
         self.item();
         self.text.push_str("null");
     }
 
-    pub(in crate::metacirc::protocol) fn bool(&mut self, value: bool) {
+    pub(in crate::metacirc::k) fn bool(&mut self, value: bool) {
         self.item();
         self.text.push_str(if value { "true" } else { "false" });
     }
 
-    pub(in crate::metacirc::protocol) fn number(&mut self, number: impl std::fmt::Display) {
+    pub(in crate::metacirc::k) fn number(&mut self, number: impl std::fmt::Display) {
         self.item();
         write!(self.text, "{number}").expect("writing to a string succeeds");
     }
 
-    pub(in crate::metacirc::protocol) fn text(&mut self, text: &str) {
+    pub(in crate::metacirc::k) fn text(&mut self, text: &str) {
         self.item();
         escape(&mut self.text, text);
     }
 
     /// An item that is already JSON text.
-    pub(in crate::metacirc::protocol) fn json(&mut self, text: &str) {
+    pub(in crate::metacirc::k) fn json(&mut self, text: &str) {
         self.item();
         self.text.push_str(text);
     }
 
-    pub(in crate::metacirc::protocol) fn array(&mut self, body: impl FnOnce(&mut Self)) {
+    pub(in crate::metacirc::k) fn array(&mut self, body: impl FnOnce(&mut Self)) {
         self.item();
         self.text.push('[');
         self.first = true;
@@ -167,7 +163,7 @@ impl Writer {
     }
 
     /// `[tag, ...]`, the rest printed by `body`.
-    pub(in crate::metacirc::protocol) fn tag(&mut self, tag: &str, body: impl FnOnce(&mut Self)) {
+    pub(in crate::metacirc::k) fn tag(&mut self, tag: &str, body: impl FnOnce(&mut Self)) {
         self.array(|writer| {
             writer.text(tag);
             body(writer);
@@ -175,7 +171,7 @@ impl Writer {
     }
 
     /// An array of `items`, each printed by `each`.
-    pub(in crate::metacirc::protocol) fn list<T>(
+    pub(in crate::metacirc::k) fn list<T>(
         &mut self,
         items: impl IntoIterator<Item = T>,
         mut each: impl FnMut(&mut Self, T),
@@ -184,7 +180,7 @@ impl Writer {
     }
 
     /// An object; `body` prints each field with `key` before its value.
-    pub(in crate::metacirc::protocol) fn object(&mut self, body: impl FnOnce(&mut Self)) {
+    pub(in crate::metacirc::k) fn object(&mut self, body: impl FnOnce(&mut Self)) {
         self.item();
         self.text.push('{');
         self.first = true;
@@ -193,7 +189,7 @@ impl Writer {
         self.first = false;
     }
 
-    pub(in crate::metacirc::protocol) fn key(&mut self, key: &str) {
+    pub(in crate::metacirc::k) fn key(&mut self, key: &str) {
         self.item();
         escape(&mut self.text, key);
         self.text.push(':');
@@ -235,15 +231,15 @@ fn rows<'a>(visit: impl FnOnce(&mut dyn FnMut(Item<'a, usize>))) -> Vec<Vec<&'a 
 }
 
 /// The atom rows of tree notation, as the specification writes it.
-pub(in crate::metacirc::protocol) fn rows_tree(mixop: &tree::Mixop) -> Vec<Vec<&AtomPhrase>> {
+pub(in crate::metacirc::k) fn rows_tree(mixop: &tree::Mixop) -> Vec<Vec<&AtomPhrase>> {
     rows(|visit_item| mixop.visit(visit_item))
 }
 
-pub(in crate::metacirc::protocol) fn atom(writer: &mut Writer, atom: &AtomPhrase) {
+pub(in crate::metacirc::k) fn atom(writer: &mut Writer, atom: &AtomPhrase) {
     writer.text(&Print::to_string(&atom.node));
 }
 
-pub(in crate::metacirc::protocol) fn mixop_rows(writer: &mut Writer, rows: Vec<Vec<&AtomPhrase>>) {
+pub(in crate::metacirc::k) fn mixop_rows(writer: &mut Writer, rows: Vec<Vec<&AtomPhrase>>) {
     writer.list(rows, |writer, row| writer.list(row, atom));
 }
 
@@ -264,18 +260,18 @@ fn mixop(writer: &mut Writer, arena: &Arena, cache: &mut Cache, mixop: Mixop) {
 
 // - Types and values
 
-pub(in crate::metacirc::protocol) fn id(writer: &mut Writer, id: &Id) {
+pub(in crate::metacirc::k) fn id(writer: &mut Writer, id: &Id) {
     writer.text(&id.node);
 }
 
-pub(in crate::metacirc::protocol) fn iter(writer: &mut Writer, iter: &Iter) {
+pub(in crate::metacirc::k) fn iter(writer: &mut Writer, iter: &Iter) {
     writer.text(match iter {
         Iter::Opt => "?",
         Iter::List => "*",
     });
 }
 
-pub(in crate::metacirc::protocol) fn typ(writer: &mut Writer, typ: &Typ) {
+pub(in crate::metacirc::k) fn typ(writer: &mut Writer, typ: &Typ) {
     match &typ.node {
         TypKind::Bool => writer.tag("boolT", |_| {}),
         TypKind::Num(num::Typ::Nat) => writer.tag("natT", |_| {}),
@@ -298,14 +294,14 @@ pub(in crate::metacirc::protocol) fn typ(writer: &mut Writer, typ: &Typ) {
     }
 }
 
-pub(in crate::metacirc::protocol) fn number(writer: &mut Writer, number: &Number) {
+pub(in crate::metacirc::k) fn number(writer: &mut Writer, number: &Number) {
     match number {
         Number::Nat(nat) => writer.tag("natN", |writer| writer.text(&nat.to_string())),
         Number::Int(int) => writer.tag("intN", |writer| writer.text(&int.to_string())),
     }
 }
 
-pub(in crate::metacirc::protocol) fn value(
+pub(in crate::metacirc::k) fn value(
     writer: &mut Writer,
     arena: &Arena,
     cache: &mut Cache,
@@ -338,7 +334,7 @@ pub(in crate::metacirc::protocol) fn value(
     }
 }
 
-pub(in crate::metacirc::protocol) fn values(
+pub(in crate::metacirc::k) fn values(
     writer: &mut Writer,
     arena: &Arena,
     cache: &mut Cache,
@@ -350,7 +346,7 @@ pub(in crate::metacirc::protocol) fn values(
 // == Reading
 
 /// Parses JSON text of any depth.
-pub(in crate::metacirc::protocol) fn parse(text: &str) -> Result<json, ExternError> {
+pub(in crate::metacirc::k) fn parse(text: &str) -> Result<json, ExternError> {
     let mut deserializer = serde_json::Deserializer::from_str(text);
     deserializer.disable_recursion_limit();
     let json = json::deserialize(&mut deserializer)?;
@@ -359,7 +355,7 @@ pub(in crate::metacirc::protocol) fn parse(text: &str) -> Result<json, ExternErr
 }
 
 /// Reports JSON of another shape than the wire grammar gives.
-pub(in crate::metacirc::protocol) fn unexpected(expected: &str, found: &json) -> ExternError {
+pub(in crate::metacirc::k) fn unexpected(expected: &str, found: &json) -> ExternError {
     let mut found = found.to_string();
     if found.len() > 200 {
         let end = (0..=200)
@@ -385,7 +381,7 @@ fn untag<'a>(expected: &str, json: &'a json) -> Result<(&'a str, &'a [json]), Ex
 }
 
 /// The items of an array.
-pub(in crate::metacirc::protocol) fn items<'a>(
+pub(in crate::metacirc::k) fn items<'a>(
     expected: &str,
     json: &'a json,
 ) -> Result<&'a [json], ExternError> {
@@ -399,7 +395,7 @@ fn id_of(name: &str) -> Id {
     phrase!(node: name.into(), span: Span::default())
 }
 
-pub(in crate::metacirc::protocol) fn read_id(json: &json) -> Result<Id, ExternError> {
+pub(in crate::metacirc::k) fn read_id(json: &json) -> Result<Id, ExternError> {
     match json {
         json::String(name) => Ok(id_of(name)),
         _ => Err(unexpected("an identifier", json)),
@@ -481,7 +477,7 @@ fn decimal(json: &json) -> Result<BigInt, ExternError> {
     }
 }
 
-pub(in crate::metacirc::protocol) fn read_value(
+pub(in crate::metacirc::k) fn read_value(
     arena: &mut Arena,
     cache: &mut Cache,
     json: &json,
@@ -548,7 +544,7 @@ pub(in crate::metacirc::protocol) fn read_value(
     Ok(value)
 }
 
-pub(in crate::metacirc::protocol) fn read_values(
+pub(in crate::metacirc::k) fn read_values(
     arena: &mut Arena,
     cache: &mut Cache,
     json: &json,
@@ -591,7 +587,7 @@ fn read_atom(cache: &mut Cache, text: &str) -> Result<AtomPhrase, ExternError> {
 
 // - Types
 
-pub(in crate::metacirc::protocol) fn read_typ(json: &json) -> Result<Typ, ExternError> {
+pub(in crate::metacirc::k) fn read_typ(json: &json) -> Result<Typ, ExternError> {
     Ok(match untag("a type", json)? {
         ("boolT", []) => typ::make::bool(),
         ("natT", []) => typ::make::nat(),
@@ -618,7 +614,7 @@ pub(in crate::metacirc::protocol) fn read_typ(json: &json) -> Result<Typ, Extern
     })
 }
 
-pub(in crate::metacirc::protocol) fn read_typs(json: &json) -> Result<Vec<Typ>, ExternError> {
+pub(in crate::metacirc::k) fn read_typs(json: &json) -> Result<Vec<Typ>, ExternError> {
     items("a list of types", json)?
         .iter()
         .map(read_typ)

@@ -1,6 +1,6 @@
 // Transport for the external interface: K <-> the host, over K's FFI.
 //
-//   K rules  --#ffiCall-->  host_eval, host_serve  (p4spectec::metacirc::engine::k::ffi)
+//   K rules  --#ffiCall-->  host_eval, host_serve  (p4spectec::metacirc::k::ffi)
 //
 // The host runs this configuration on a thread of its own process and passes
 // the addresses of its host functions as configuration variables

@@ -8,13 +8,16 @@
 //! Calls go down the levels (`interp`), host calls come up across each
 //! `boundary`, and a P4 extern that reenters runs on the next depth.
 //! `tower` builds the levels, `sim` drives them with an STF test,
-//! and `krun` runs a K definition on spec-k (K-in-ST).
+//! and `run` runs a program through a tower, a K definition on spec-k included (K-in-ST).
+//! Each backend is its own module, sharing nothing with the others:
+//! `st` runs P4-SpecTec specifications (spec-meta, spec-k),
+//! `k` spec-meta-k from its K library, and `redex` spec-meta-redex in `racket`.
 //!
 //! ```text
 //! Tower
 //! ├─ levels: [PreparedLevel]
 //! ├─ protocols: [ProtocolKind]                          : Protocol
-//! └─ BaseRunner
+//! └─ Base
 //!    └─ Upper                    ─lend→ UpperMut        : Extern
 //!       ├─ Top                   ─lend→ TopMut
 //!       └─ TowerInterpState      ─lend→ TowerInterp     : Interpreter
@@ -26,101 +29,45 @@ pub mod config;
 mod engine;
 mod error;
 mod interp;
+mod k;
 mod protocol;
+mod redex;
 mod sim;
+mod st;
 mod tower;
 
-use crate::{
-    interface::p4::parse::parse_file,
-    lang::data::{arena::Arena, value::flat as value},
-    runner::{self, Interface},
-    sim_plugin::dummy::Dummy,
-};
-use config::Lang;
-pub use config::{ExecutionMode, TowerConfig};
+use crate::{lang::data::arena::Arena, runner, sim_plugin::dummy::Dummy};
+pub use config::{BaseConfig, Repr, TowerConfig};
 use std::path::PathBuf;
 
 pub use error::Result;
 
 pub use sim::build_simulator;
-pub use tower::{Input, Script, Tower};
-
-/// Runs a K definition from an initial term through a K-in-ST tower, as `krun` does.
-///
-/// `paths_program` are the definition (`definition.kore`)
-/// and the initial term, both KORE text;
-/// `depth` bounds the rewriting steps as `krun --depth` does.
-/// Returns the run as `KoreInterface::print_runres` prints it.
-pub fn krun(
-    config: &TowerConfig,
-    paths_program: &[PathBuf],
-    options: runner::Config,
-    depth: Option<u64>,
-) -> Result<String> {
-    if config.top_lang() != Lang::Kore {
-        return Err(error::input_invalid("krun requires a tower whose top level accepts kore"));
-    }
-    if paths_program.len() != 2 {
-        return Err(error::input_invalid(
-            "a KORE top level requires a definition and an initial term",
-        ));
-    }
-    let mut arena = Arena::new();
-    let mut tower = Tower::build(&mut arena, config, options, Dummy)?;
-    // Read the definition and the initial term with the base's own interface,
-    // which loads the definition's K library for the hooks it answers
-    let interface = tower
-        .kore_interface()
-        .ok_or_else(|| error::input_invalid("a KORE input requires spec-k as the base"))?;
-    let value_program = interface
-        .parse_program(&mut arena, &[], paths_program)
-        .map_err(|error| error.into_report())?;
-    let (definition, init) = value::get::tuple(&arena, &value_program)
-        .and_then(value::get::two)
-        .map(|(definition, init)| (*definition, *init))
-        .map_err(|error| error::input_invalid(error.to_string()))?;
-    // Run Krun on the base and print its runres
-    let runres = tower.eval_krun(&mut arena, definition, init, depth)?;
-    let interface = tower.kore_interface().expect("spec-k is the base");
-    interface
-        .print_runres(&arena, runres)
-        .map_err(|error| error.into_report())
-}
+pub use tower::{Input, Kore, Script, Tower};
 
 /// Executes a program through the configured interpreter tower.
+///
+/// `paths_program` are the program in the language the top level accepts:
+/// one P4 program, the sources of an AL or IL script, or for spec-k a K definition
+/// (`definition.kore`) and an initial term, both KORE text.
+/// `depth` bounds the rewriting steps of a K definition, as `krun --depth` does.
+/// Returns what the top prints of the run, the run of a K definition as krun
+/// prints it, or nothing for any other top.
 pub fn run(
     config: &TowerConfig,
     includes: &[PathBuf],
     paths_program: &[PathBuf],
     options: runner::Config,
-) -> Result<()> {
-    if paths_program.is_empty() {
-        return Err(error::input_invalid("a tower requires at least one program path"));
-    }
-    let lang_top = config.top_lang();
-    // P4 inputs contain exactly one translation unit
-    if lang_top == Lang::P4 && paths_program.len() != 1 {
-        return Err(error::input_invalid("a P4 top level requires exactly one program path"));
-    }
+    depth: Option<u64>,
+) -> Result<Option<String>> {
     let mut arena = Arena::new();
     let mut tower = Tower::build(&mut arena, config, options, Dummy)?;
-    // Parse the input in the language the top level accepts
-    let input = match lang_top {
-        Lang::Al => Input::Script(Script::Al(crate::algo(paths_program)?)),
-        Lang::Il => Input::Script(Script::Il(crate::elab(paths_program)?)),
-        Lang::P4 => Input::P4(
-            parse_file(&mut arena, includes, &paths_program[0])
-                .map_err(|error| error.into_report())?,
-        ),
-        // A KORE input enters spec-k through Krun, with a step bound
-        Lang::Kore => {
-            return Err(error::input_invalid("a KORE top level runs through krun"));
-        }
-    };
-    // Encoding errors propagate before entering the native base
+    // Read the input in the language the top level accepts;
+    // encoding errors propagate before entering the native base
+    let input = tower.parse_input(&mut arena, includes, paths_program, depth)?;
     let values = tower.encode_input(&mut arena, &input)?;
-    tower
+    let outputs = tower
         .eval_input(&mut arena, &values)
         .map_err(|error| error.into_report())?;
-    Ok(())
+    tower.print_output(&arena, &outputs)
 }

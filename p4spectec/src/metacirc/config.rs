@@ -3,9 +3,18 @@
 //! Levels run from the native base toward a top level consuming AL, IL, P4, or KORE.
 //! Each level names the language it accepts:
 //! the level above it is passed to it as AL or IL.
-//! The native backend is AL or SL, a K library compiled from the base (`k`),
-//! or a Racket module of the base run by `racket` (`redex`).
+//! The base runs natively, as `BaseConfig` says: a P4-SpecTec specification on
+//! the AL or SL interpreter (`St`), a K library compiled from the base (`K`),
+//! or a Racket module of the base run by `racket` (`Redex`).
 //! Specification, library, and module paths are resolved relative to the JSON file.
+//!
+//! The JSON names the base by `mode` and gives the K library (`kompiled`)
+//! or the Racket module (`module`) on the base's level:
+//!
+//! ```json
+//! { "mode": "k",
+//!   "levels": [ { "specdir": "../spec-meta-k", "kompiled": "...", "rel": "Eval_AL_func", "lang": "al" } ] }
+//! ```
 
 use super::{Result, error::config_invalid};
 pub use crate::interface::Lang;
@@ -15,33 +24,38 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// Validated tower roles and native execution mode.
+/// Validated tower roles and the native base.
 #[derive(Clone, Debug)]
 pub struct TowerConfig {
-    /// The interpreter executing the base specification.
-    pub(super) mode: ExecutionMode,
+    /// What runs the base specification natively.
+    pub(super) base: BaseConfig,
     /// Nonempty, ordered from base toward top.
     pub(super) levels: Vec<LevelConfig>,
 }
 
-/// The native interpreter used for the outermost level.
-#[derive(Clone, Copy, Debug, Deserialize, clap::ValueEnum, Default)]
-#[serde(rename_all = "lowercase")]
-pub enum ExecutionMode {
-    /// Execute the algorithmic representation.
+/// What runs the base specification natively: the meta-language the base
+/// is written in, and its native implementation.
+#[derive(Clone, Debug)]
+pub enum BaseConfig {
+    /// A P4-SpecTec specification, run by the AL or SL interpreter.
+    St { repr: Repr },
+    /// A K specification, run from the library `kompile` made of it.
+    K { kompiled: PathBuf },
+    /// A PLT Redex specification, run by `racket` on its entry module.
+    Redex { module: PathBuf },
+}
+
+/// The representation the St interpreter executes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Repr {
+    /// The algorithmic representation.
     Al,
-    /// Execute the structured representation.
-    #[default]
+    /// The structured representation.
     Sl,
-    /// Execute a K base specification through the library `kompile` made of it.
-    K,
-    /// Execute a PLT Redex base specification by running its entry module in `racket`.
-    Redex,
 }
 
 /// One specification and the relation used to enter it.
-#[derive(Clone, Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug)]
 pub struct LevelConfig {
     /// A specification file or directory.
     pub specdir: PathBuf,
@@ -49,12 +63,39 @@ pub struct LevelConfig {
     pub rel: String,
     /// The language accepted by this level.
     pub lang: Lang,
-    /// The library compiled from a K base specification, for a `k` tower's base only.
+}
+
+// == JSON
+
+/// The base named in the JSON.
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum ModeJson {
+    Al,
+    Sl,
+    K,
+    Redex,
+}
+
+/// A level at the JSON boundary, with the base's library or module.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LevelJson {
+    specdir: PathBuf,
+    rel: String,
+    lang: Lang,
     #[serde(default)]
-    pub kompiled: Option<PathBuf>,
-    /// The entry module of a PLT Redex base specification, for a `redex` tower's base only.
+    kompiled: Option<PathBuf>,
     #[serde(default)]
-    pub module: Option<PathBuf>,
+    module: Option<PathBuf>,
+}
+
+/// Ordered levels at the JSON boundary.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct TowerJson {
+    mode: ModeJson,
+    levels: Vec<LevelJson>,
 }
 
 impl TowerConfig {
@@ -63,47 +104,66 @@ impl TowerConfig {
     /// Inputs are supplied only after the tower is built,
     /// so a corpus can build a tower once and run many inputs through it.
     pub fn from_file(path: &Path) -> Result<Self> {
-        /// Ordered levels at the JSON boundary.
-        #[derive(Deserialize)]
-        #[serde(deny_unknown_fields)]
-        struct TowerConfigJson {
-            mode: ExecutionMode,
-            levels: Vec<LevelConfig>,
-        }
-
         let text = fs::read_to_string(path)
             .map_err(|cause| config_invalid(format!("{}: {cause}", path.display())))?;
-        let config: TowerConfigJson = serde_json::from_str(&text)
+        let config: TowerJson = serde_json::from_str(&text)
             .map_err(|cause| config_invalid(format!("{}: {cause}", path.display())))?;
-        let mut levels = config.levels;
+        // Resolve source, library, and module paths relative to the JSON file
         let path_parent = path.parent().unwrap_or(Path::new("."));
-        // Resolve source, library, and module paths before validating the level ordering
-        for level in &mut levels {
-            if !level.specdir.as_os_str().is_empty() && level.specdir.is_relative() {
-                level.specdir = path_parent.join(&level.specdir);
+        let resolve = |path: PathBuf| {
+            if !path.as_os_str().is_empty() && path.is_relative() {
+                path_parent.join(path)
+            } else {
+                path
             }
-            if let Some(kompiled) = &mut level.kompiled
-                && kompiled.is_relative()
-            {
-                *kompiled = path_parent.join(&*kompiled);
+        };
+        // Only the base names a library or module, as its mode requires
+        let mut kompiled = None;
+        let mut module = None;
+        let mut levels = Vec::with_capacity(config.levels.len());
+        for (idx, level) in config.levels.into_iter().enumerate() {
+            if level.kompiled.is_some() && (idx != 0 || !matches!(config.mode, ModeJson::K)) {
+                return Err(config_invalid(format!(
+                    "kompiled at level {idx}: only the base of a k tower takes a library"
+                )));
             }
-            if let Some(module) = &mut level.module
-                && module.is_relative()
-            {
-                *module = path_parent.join(&*module);
+            if level.module.is_some() && (idx != 0 || !matches!(config.mode, ModeJson::Redex)) {
+                return Err(config_invalid(format!(
+                    "module at level {idx}: only the base of a redex tower takes a Racket module"
+                )));
             }
+            kompiled = kompiled.or(level.kompiled.map(resolve));
+            module = module.or(level.module.map(resolve));
+            levels.push(LevelConfig {
+                specdir: resolve(level.specdir),
+                rel: level.rel,
+                lang: level.lang,
+            });
         }
-        Self::new(config.mode, levels)
+        let base = match config.mode {
+            ModeJson::Al => BaseConfig::St { repr: Repr::Al },
+            ModeJson::Sl => BaseConfig::St { repr: Repr::Sl },
+            ModeJson::K => BaseConfig::K {
+                kompiled: kompiled.ok_or_else(|| {
+                    config_invalid("a k tower's base requires kompiled, its compiled library")
+                })?,
+            },
+            ModeJson::Redex => BaseConfig::Redex {
+                module: module.ok_or_else(|| {
+                    config_invalid("a redex tower's base requires module, its Racket entry module")
+                })?,
+            },
+        };
+        Self::new(base, levels)
     }
 
     /// Validates ordered levels.
     ///
     /// Specification paths are relative to the current directory.
     /// A single level is both the top level and the base.
-    /// A `k` tower's base accepts AL and names its compiled library,
-    /// and a `redex` tower's base accepts AL and names its Racket entry module;
+    /// A K or Redex base accepts AL;
     /// KORE is accepted only by a single level, since no level stacks over K yet.
-    pub fn new(mode: ExecutionMode, levels: Vec<LevelConfig>) -> Result<Self> {
+    pub fn new(base: BaseConfig, levels: Vec<LevelConfig>) -> Result<Self> {
         if levels.is_empty() {
             return Err(config_invalid("a tower requires at least one level"));
         }
@@ -120,32 +180,17 @@ impl TowerConfig {
                     "level {idx} requires a specification path and entry relation"
                 )));
             }
-            // Only the base of a k tower runs from a compiled library
-            if level.kompiled.is_some() && (idx != 0 || !matches!(mode, ExecutionMode::K)) {
-                return Err(config_invalid(format!(
-                    "kompiled at level {idx}: only the base of a k tower takes a library"
-                )));
-            }
-            // Only the base of a redex tower runs from a Racket module
-            if level.module.is_some() && (idx != 0 || !matches!(mode, ExecutionMode::Redex)) {
-                return Err(config_invalid(format!(
-                    "module at level {idx}: only the base of a redex tower takes a Racket module"
-                )));
-            }
         }
-        // A K base interprets AL, from the library compiled from it
-        let base = &levels[0];
-        if matches!(mode, ExecutionMode::K) && (base.lang != Lang::Al || base.kompiled.is_none()) {
-            return Err(config_invalid(
-                "a k tower's base accepts al and requires kompiled, its compiled library",
-            ));
-        }
-        // A Redex base interprets AL, in a racket process running its entry module
-        if matches!(mode, ExecutionMode::Redex) && (base.lang != Lang::Al || base.module.is_none())
-        {
-            return Err(config_invalid(
-                "a redex tower's base accepts al and requires module, its Racket entry module",
-            ));
+        // A K or Redex base interprets AL
+        let lang_base = levels[0].lang;
+        match base {
+            BaseConfig::K { .. } if lang_base != Lang::Al => {
+                return Err(config_invalid("a k tower's base accepts al"));
+            }
+            BaseConfig::Redex { .. } if lang_base != Lang::Al => {
+                return Err(config_invalid("a redex tower's base accepts al"));
+            }
+            _ => {}
         }
         // Stacking a level over a K definition is not implemented
         if levels[idx_top].lang == Lang::Kore && idx_top != 0 {
@@ -153,7 +198,7 @@ impl TowerConfig {
                 "kore is accepted only by a single-level tower; stacking over K is not implemented",
             ));
         }
-        Ok(Self { mode, levels })
+        Ok(Self { base, levels })
     }
 
     pub(super) fn top(&self) -> &LevelConfig {

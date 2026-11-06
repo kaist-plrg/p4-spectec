@@ -1,7 +1,7 @@
 #lang racket/base
 ;; The JSON of the host's boundary, as jsexprs: the values and types of
-;; p4spectec/src/metacirc/protocol/json.rs, and the messages of
-;; p4spectec/src/metacirc/protocol/serve.rs.
+;; p4spectec/src/metacirc/redex/json.rs, and the messages of
+;; p4spectec/src/metacirc/redex/serve.rs.
 
 (require json
          racket/match)

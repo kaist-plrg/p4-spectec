@@ -12,7 +12,7 @@
 use super::{
     error,
     interp::{TowerInterp, TowerInterpState},
-    protocol::{HostCall, Output, Protocol},
+    protocol::{HostCall, Output},
     tower::{HostLevel, TopMut, Upper, UpperMut},
 };
 use crate::{
@@ -121,10 +121,8 @@ impl<Ext: Extern> Boundary<'_, '_, Ext> {
         name: &str,
         values: &[Value],
     ) -> Eval<Vec<Value>, ExternError> {
-        let env = self.upper.env;
-        let protocol = env.protocol(self.level);
         // Decode with the protocol of the level below
-        let call = match protocol.host(arena, self.upper.cache(self.level), name, values) {
+        let call = match self.upper.protocol(self.level).host(arena, name, values) {
             Ok(call) => call,
             Err(error) => return Eval::new(Err(error), SideEffect::Pure),
         };
@@ -143,7 +141,7 @@ impl<Ext: Extern> Boundary<'_, '_, Ext> {
             }
         };
         // Encode the outcome for the level below
-        protocol.reply(arena, self.upper.cache(self.level), &call, eval)
+        self.upper.protocol(self.level).reply(arena, &call, eval)
     }
 }
 
@@ -188,9 +186,9 @@ impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
         let eval = if self.is_top() {
             match &mut self.upper.top {
                 TopMut::P4 { interface, .. } => interface.call_builtin(arena, id, targs, values),
-                TopMut::Program(interface) => interface.call_builtin(arena, id, targs, values),
+                TopMut::St(interface) => interface.call_builtin(arena, id, targs, values),
                 // spec-k declares no builtins for the level above
-                TopMut::Kore(_) => return unsupported(&id.node).map_err(Into::into),
+                TopMut::K(_) => return unsupported(&id.node).map_err(Into::into),
             }
         } else {
             self.upper.hosts[self.level.index()].call_builtin(arena, id, targs, values)
@@ -210,9 +208,9 @@ impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
                 .upper
                 .with_next(arena, |ctx| ctx.call_extern_rel(name, values)),
             // The program declares no host relations
-            TopMut::Program(_) => unsupported(name).map_err(Into::into),
+            TopMut::St(_) => unsupported(name).map_err(Into::into),
             // The K library computes a hook without effects
-            TopMut::Kore(library) => Eval::new(
+            TopMut::K(library) => Eval::new(
                 library.eval_rel(arena, name, values).map_err(Into::into),
                 SideEffect::Pure,
             ),
@@ -236,7 +234,7 @@ impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
                 .upper
                 .with_next(arena, |ctx| ctx.call_extern_func(name, targs, values)),
             // The program and the K definition declare no host functions
-            TopMut::Program(_) | TopMut::Kore(_) => unsupported(name).map_err(Into::into),
+            TopMut::St(_) | TopMut::K(_) => unsupported(name).map_err(Into::into),
         }
     }
 }
@@ -250,7 +248,7 @@ impl<Ext: Extern> UpperMut<'_, Ext> {
     /// Sends host call `name` of the base's specification up the first boundary.
     ///
     /// The extern of a base run by a `RunnerContext` calls this;
-    /// an engine that runs without one, as `KEngine` does, calls it directly.
+    /// an engine that runs without one, as `EngineK` does, calls it directly.
     pub(in crate::metacirc) fn host_call(
         &mut self,
         arena: &mut Arena,
@@ -274,7 +272,7 @@ impl<'l, Ext: Extern> UpperMut<'l, Ext> {
         ) -> Result<T, InterpreterError>,
     ) -> Eval<T> {
         // Only the P4 top's interface and extern join the next depth's context
-        let Self { env, caches, ctxs, hosts, top, depth_next } = self;
+        let Self { env, protocols, ctxs, hosts, top, depth_next } = self;
         let env = *env;
         let TopMut::P4 { interface, external } = top else {
             unreachable!("only a P4 top reenters");
@@ -289,7 +287,7 @@ impl<'l, Ext: Extern> UpperMut<'l, Ext> {
             }
         }
         let depth = depth_next.as_mut().expect("the next depth was just made");
-        let mut interp = depth.lend(env.spec_base, caches, ctxs);
+        let mut interp = depth.lend(env.spec_base, protocols, ctxs);
         // Count the call's effects apart from the calling depth's
         let mut effects = 0;
         let mut ctx = RunnerContext::new(

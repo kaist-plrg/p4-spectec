@@ -1,8 +1,8 @@
 //! The `racket` process running a PLT Redex base specification
 //!
 //! A `redex` tower names the base's entry module in its `module` field.
-//! `RedexRuntime::load` starts `racket` on it once per tower, with piped
-//! stdin and stdout, and every depth's `RedexEngineState` shares the process:
+//! `RuntimeRedex::load` starts `racket` on it once per tower, with piped
+//! stdin and stdout, and every depth's `StateRedex` shares the process:
 //! a nested call from a deeper depth goes to the same pipe while the outer call
 //! waits for a host response, and Racket answers it in place.
 //! The runtime keeps each load request under a key, which C names,
@@ -11,9 +11,9 @@
 //! Each line from the process starts with a word saying what it is
 //! (`Line`); each line to it is one JSON call or response.
 
-use super::failed;
+use super::engine::failed;
 use crate::{
-    metacirc::{Result, error, protocol::MetaRedexProtocol},
+    metacirc::{Result, error, protocol::ProtocolStRedex},
     runner::InterpreterError,
 };
 use std::{
@@ -25,7 +25,7 @@ use std::{
 };
 
 /// A `racket` process running the base's entry module, shared by every depth.
-pub(in crate::metacirc) struct RedexRuntime {
+pub(in crate::metacirc) struct RuntimeRedex {
     /// The entry module, as the configuration resolved it.
     path: PathBuf,
     /// The process, until it is found stopped.
@@ -54,7 +54,7 @@ pub(super) enum Line {
     Raise(String),
 }
 
-impl RedexRuntime {
+impl RuntimeRedex {
     /// Starts `racket` on the entry module at `path`, compiled by `make redex`,
     /// and waits until it serves.
     pub(in crate::metacirc) fn load(path: &Path) -> Result<Self> {
@@ -190,11 +190,11 @@ fn stopped() -> InterpreterError {
     InterpreterError::Fatal(failed("the racket process stopped"))
 }
 
-impl Drop for RedexRuntime {
+impl Drop for RuntimeRedex {
     /// Tells the process to exit and waits for it.
     fn drop(&mut self) {
         if let Some(Process { mut child, mut to_racket, from_racket }) = self.process.take() {
-            let exit = MetaRedexProtocol::exit_request();
+            let exit = ProtocolStRedex::exit_request();
             let _ = writeln!(to_racket, "{exit}").and_then(|()| to_racket.flush());
             drop(to_racket);
             drop(from_racket);

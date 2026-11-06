@@ -12,7 +12,7 @@
 ;;
 ;;   racket spec-meta-redex/3-execution/3.16-entry.rkt
 ;;
-;; p4spectec::metacirc::engine::redex starts it, once per tower.
+;; p4spectec::metacirc::redex starts it, once per tower.
 
 (require json
          racket/match

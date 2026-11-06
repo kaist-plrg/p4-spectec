@@ -4,13 +4,13 @@
 //!   +-----------------+-----------------+
 //!   | Builtin P4      | Extern P4       |   top     Top::P4, Ext
 //!   +-----------------+-----------------+
-//!                     ^ caches[1]
+//!                     ^ protocols[1]
 //!   +-----------------+-----------------+
 //!   | Builtin SpecTec | Extern SpecTec  |   interm  hosts[0], Boundary
 //!   +-----------------+-----------------+
-//!                     ^ caches[0]
+//!                     ^ protocols[0]
 //!   +-----------------+-----------------+
-//!   | Builtin SpecTec | Extern SpecTec  |   base    BaseRunner::Meta, Upper
+//!   | Builtin SpecTec | Extern SpecTec  |   base    Base::St, Upper
 //!   +-----------------+-----------------+
 //!   |      Interp(base AL): entry       |
 //!   +-----------------------------------+
@@ -19,10 +19,10 @@
 //! Only the base runs natively, as a runner with an interpreter.
 //! A level above it is interpreted by the level below,
 //! so `Upper` stores it per level, answering relayed builtin and host calls.
-//! An AL or IL top ends the tower at its program, `Top::Program`,
+//! An AL or IL top ends the tower at its program, `Top::St`,
 //! which answers only the program's builtins
 //! across one more boundary above the highest meta level.
-//! A KORE top ends it at the K definition above spec-k, `Top::Kore`,
+//! A KORE top ends it at the K definition above spec-k, `Top::K`,
 //! whose K library answers spec-k's extern relations.
 //!
 //! | level below accepts | `PreparedLevel` | encoded for the level below  |
@@ -31,12 +31,12 @@
 //! | `al`                | `Al`            | AL                           |
 //! | `il`                | `Il`            | IL                           |
 
-use super::super::engine::{InterfaceKind, KEngineState, KRuntime, RedexEngineState, RedexRuntime};
+use super::super::engine::{InterfaceSt, RuntimeK, RuntimeRedex, StateK, StateRedex};
 use super::super::protocol::{
-    KoreProtocol, MetaKProtocol, MetaProtocol, MetaRedexProtocol, Protocol, ProtocolKind,
+    Protocol, ProtocolKSt, ProtocolKind, ProtocolStK, ProtocolStRedex, ProtocolStSt,
 };
-use super::super::{ExecutionMode, Result, TowerConfig, config::Lang, error::config_invalid};
-use super::{BaseRunner, KBase, PreparedLevel, RedexBase, Top, Tower, Upper};
+use super::super::{BaseConfig, Repr, Result, TowerConfig, config::Lang, error::config_invalid};
+use super::{Base, BaseK, BaseRedex, PreparedLevel, Top, Tower, Upper};
 use crate::{
     interface::{
         self,
@@ -51,13 +51,10 @@ use crate::{
 // == Helpers
 
 /// Converts the AL of a specification into the representation selected for the runner.
-fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
-    match mode {
-        ExecutionMode::Al => Ok(Spec::Al(spec_al)),
-        ExecutionMode::Sl => structure::convert(spec_al, true).map(Spec::Sl),
-        ExecutionMode::K | ExecutionMode::Redex => {
-            unreachable!("a K or Redex base has no AL or SL runner")
-        }
+fn into_runner_spec(repr: Repr, spec_al: al::Spec) -> Result<Spec> {
+    match repr {
+        Repr::Al => Ok(Spec::Al(spec_al)),
+        Repr::Sl => structure::convert(spec_al, true).map(Spec::Sl),
     }
 }
 
@@ -89,17 +86,17 @@ fn build_upper<Ext: Extern>(
     options: runner::Config,
     external_p4: Ext,
     library: Option<KLibrary>,
-) -> (Upper<Ext>, Vec<ProtocolKind>) {
+) -> Upper<Ext> {
     let (top, configs_host) = match config.top_lang() {
         // Above a meta top level is its program; every level above the base is meta
         Lang::Al | Lang::Il => {
-            let top = Top::Program(interface::meta(Lang::Al));
+            let top = Top::St(interface::meta(Lang::Al));
             (top, &config.levels[1..])
         }
         // Above spec-k is the K definition it runs
         Lang::Kore => {
             let library = library.expect("a KORE top level is spec-k as the base");
-            (Top::Kore(library), &config.levels[1..])
+            (Top::K(library), &config.levels[1..])
         }
         // A P4 top level is the highest level, above the meta levels below it
         Lang::P4 => {
@@ -115,24 +112,19 @@ fn build_upper<Ext: Extern>(
     // The level below each boundary interprets the level above it:
     // a K base runs spec-meta-k, a Redex base runs spec-meta-redex,
     // a level accepting KORE is spec-k, and every other level is spec-meta
+    // Each level through the top has C and the protocol of the boundary below it,
+    // which keeps that boundary's codec state
     let count = hosts.len() + 1;
+    let cache = options.cache;
     let protocols = (0..count)
-        .map(|idx_below| match (config.mode, config.levels[idx_below].lang) {
-            (ExecutionMode::K, _) if idx_below == 0 => ProtocolKind::MetaK(MetaKProtocol),
-            (ExecutionMode::Redex, _) if idx_below == 0 => {
-                ProtocolKind::MetaRedex(MetaRedexProtocol)
-            }
-            (_, Lang::Kore) => ProtocolKind::Kore(KoreProtocol),
-            _ => ProtocolKind::Meta(MetaProtocol),
+        .map(|idx_below| match (idx_below, &config.base, config.levels[idx_below].lang) {
+            (0, BaseConfig::K { .. }, _) => ProtocolKind::StK(ProtocolStK::new(cache)),
+            (0, BaseConfig::Redex { .. }, _) => ProtocolKind::StRedex(ProtocolStRedex::new(cache)),
+            (_, _, Lang::Kore) => ProtocolKind::KSt(ProtocolKSt::new(cache)),
+            _ => ProtocolKind::StSt(Box::new(ProtocolStSt::new(cache))),
         })
-        .collect::<Vec<_>>();
-    // Each level through the top has C and the codec cache of the boundary below it
-    let caches = protocols
-        .iter()
-        .map(|protocol| protocol.new_cache(options.cache))
         .collect();
-    let upper = Upper { caches, ctxs: vec![None; count], hosts, top, depth_next: None };
-    (upper, protocols)
+    Upper { protocols, ctxs: vec![None; count], hosts, top, depth_next: None }
 }
 
 // == Tower assembly
@@ -184,35 +176,31 @@ impl<Ext: Extern> Tower<Ext> {
         // Only the base runs natively
         let level_top = levels.last().expect("validated nonempty tower");
         let config_base = &config.levels[0];
-        let (base, protocols) = match config.mode {
+        let base = match &config.base {
             // A K base runs from its compiled library and hosts the levels above it
-            ExecutionMode::K => {
-                let kompiled = config_base.kompiled.as_ref().expect("validated k base");
-                let runtime = KRuntime::load(kompiled)?;
-                let state = KEngineState::new(&runtime)?;
-                let (upper, protocols) =
-                    build_upper(config, level_top, None, options, external_p4, None);
-                (BaseRunner::K(KBase { runtime, state, upper, effects: 0 }), protocols)
+            BaseConfig::K { kompiled } => {
+                let runtime = RuntimeK::load(kompiled)?;
+                let state = StateK::new(&runtime)?;
+                let upper = build_upper(config, level_top, None, options, external_p4, None);
+                Base::K(BaseK { runtime, state, upper, effects: 0 })
             }
             // A Redex base runs in a racket process and hosts the levels above it
-            ExecutionMode::Redex => {
-                let module = config_base.module.as_ref().expect("validated redex base");
-                let runtime = RedexRuntime::load(module)?;
-                let state = RedexEngineState::new(&runtime)?;
-                let (upper, protocols) =
-                    build_upper(config, level_top, None, options, external_p4, None);
-                (BaseRunner::Redex(RedexBase { runtime, state, upper, effects: 0 }), protocols)
+            BaseConfig::Redex { module } => {
+                let runtime = RuntimeRedex::load(module)?;
+                let state = StateRedex::new(&runtime)?;
+                let upper = build_upper(config, level_top, None, options, external_p4, None);
+                Base::Redex(BaseRedex { runtime, state, upper, effects: 0 })
             }
-            ExecutionMode::Al | ExecutionMode::Sl => {
+            BaseConfig::St { repr } => {
                 let spec_base_al = crate::algo(std::slice::from_ref(&config_base.specdir))?;
                 match config_base.lang {
                     // A P4 base is the whole tower
                     Lang::P4 => {
                         let interface = interface_p4(level_top, Some(&spec_base_al));
-                        let spec_base = into_runner_spec(config.mode, spec_base_al)?;
+                        let spec_base = into_runner_spec(*repr, spec_base_al)?;
                         let runner =
                             Runner::new(arena, spec_base, options, interface, external_p4)?;
-                        (BaseRunner::P4(runner), Vec::new())
+                        Base::P4(runner)
                     }
                     // A meta base or spec-k hosts the levels above it as its extern
                     lang_base => {
@@ -221,11 +209,11 @@ impl<Ext: Extern> Tower<Ext> {
                             Lang::Kore => {
                                 let interface = interface::kore();
                                 let library = interface.library();
-                                (InterfaceKind::Kore(interface), Some(library))
+                                (InterfaceSt::KSt(interface), Some(library))
                             }
-                            _ => (InterfaceKind::Meta(interface::meta(lang_base)), None),
+                            _ => (InterfaceSt::StSt(interface::meta(lang_base)), None),
                         };
-                        let (upper, protocols) = build_upper(
+                        let upper = build_upper(
                             config,
                             level_top,
                             Some(&spec_base_al),
@@ -233,13 +221,13 @@ impl<Ext: Extern> Tower<Ext> {
                             external_p4,
                             library,
                         );
-                        let spec_base = into_runner_spec(config.mode, spec_base_al)?;
+                        let spec_base = into_runner_spec(*repr, spec_base_al)?;
                         let runner = Runner::new(arena, spec_base, options, interface, upper)?;
-                        (BaseRunner::Meta(runner), protocols)
+                        Base::St(runner)
                     }
                 }
             }
         };
-        Ok(Self { levels, protocols, base, options })
+        Ok(Self { levels, base, options })
     }
 }

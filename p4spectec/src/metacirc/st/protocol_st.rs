@@ -10,7 +10,7 @@
 //! `host` decodes `Call_builtin_func`, `Call_extern_func`, and `Call_extern_rel`;
 //! `reply` encodes a native outcome as OK or UNMATCH, keeping its effects.
 
-use super::{Below, Call, Entered, HostCall, Output, Protocol, Values};
+use crate::metacirc::protocol::{Below, Call, Entered, HostCall, Output, Protocol, Values};
 use crate::{
     interface::meta::shared::{
         self as meta, Cache,
@@ -35,20 +35,17 @@ use std::borrow::Cow;
 // == Protocol
 
 /// The protocol of spec-meta toward the AL or IL specification above it.
-pub(in crate::metacirc) struct MetaProtocol;
+pub(in crate::metacirc) struct ProtocolStSt {
+    /// The codec state of this boundary, shared by every reentry depth.
+    cache: Cache,
+}
 
-impl Protocol for MetaProtocol {
-    type Cache = Cache;
-
-    fn new_cache(&self, enabled: bool) -> Cache {
-        Cache::new(enabled)
+impl Protocol for ProtocolStSt {
+    fn new(cache: bool) -> Self {
+        Self { cache: Cache::new(cache) }
     }
 
-    fn load(
-        &self,
-        below: &mut dyn Below,
-        above: &PreparedLevel,
-    ) -> Result<Value, InterpreterError> {
+    fn load(below: &mut dyn Below, above: &PreparedLevel) -> Result<Value, InterpreterError> {
         // Encode the specification as AL, converting IL through spec-meta below
         let value_spec_al = match above {
             PreparedLevel::Al { spec_al, .. } => spec_al
@@ -81,7 +78,6 @@ impl Protocol for MetaProtocol {
     }
 
     fn encode_entry(
-        &self,
         arena: &mut Arena,
         above: Entered<'_>,
         name: &str,
@@ -91,15 +87,17 @@ impl Protocol for MetaProtocol {
         let value_spec = match above {
             Entered::Al(spec_al) => spec_al.encode(arena),
             Entered::Il(spec_il) => spec_il.encode(arena),
+            Entered::Kore(_) => {
+                return Err(error::config_invalid("spec-meta enters only AL or IL"));
+            }
         }
         .map_err(meta::Error::into_report)?;
         entry_inputs(arena, value_spec, name, values)
     }
 
     fn lower(
-        &self,
+        &mut self,
         arena: &mut Arena,
-        cache: &mut Cache,
         value_ctx: Value,
         call: &Call<'_>,
     ) -> Result<Call<'static>, InterpreterError> {
@@ -107,7 +105,7 @@ impl Protocol for MetaProtocol {
         let values = match call {
             // Call_rel(C, name, values) : relRes
             Call::Rel { values, .. } => {
-                let [value_id, value_args] = encode::rel_args(arena, cache, &id, values)?;
+                let [value_id, value_args] = encode::rel_args(arena, &mut self.cache, &id, values)?;
                 Call::Rel {
                     name: "Call_rel",
                     values: Values::Lowered(smallvec![value_ctx, value_id, value_args]),
@@ -116,7 +114,7 @@ impl Protocol for MetaProtocol {
             // Call_func(C, name, targs, values) : funcRes
             Call::Func { targs, values, .. } => {
                 let [value_id, value_targs, value_args] =
-                    encode::func_args(arena, cache, &id, targs, values)?;
+                    encode::func_args(arena, &mut self.cache, &id, targs, values)?;
                 let values = smallvec![value_ctx, value_id, value_targs, value_args];
                 Call::Rel { name: "Call_func", values: Values::Lowered(values) }
             }
@@ -125,9 +123,8 @@ impl Protocol for MetaProtocol {
     }
 
     fn raise(
-        &self,
+        &mut self,
         arena: &mut Arena,
-        cache: &mut Cache,
         output: Output,
         call: &Call<'_>,
     ) -> Result<Output, InterpreterError> {
@@ -136,36 +133,35 @@ impl Protocol for MetaProtocol {
         match call {
             // OK outputs, UNMATCH a mismatch, ERROR a fatal failure
             Call::Rel { name, .. } => {
-                decode::rel_result(arena, cache, value_res, name).map(Output::Rel)
+                decode::rel_result(arena, &mut self.cache, value_res, name).map(Output::Rel)
             }
             // OK the result, UNMATCH a mismatch, ERROR a fatal failure
             Call::Func { name, .. } => {
-                decode::func_result(arena, cache, value_res, name).map(Output::Func)
+                decode::func_result(arena, &mut self.cache, value_res, name).map(Output::Func)
             }
         }
     }
 
     fn host(
-        &self,
+        &mut self,
         arena: &mut Arena,
-        cache: &mut Cache,
         name: &str,
         values: &[Value],
     ) -> Result<HostCall, ExternError> {
         match name {
             // Builtins are answered by the interface of the level above
             "Call_builtin_func" => {
-                let (id, targs, values) = decode::func_args(arena, cache, values)?;
+                let (id, targs, values) = decode::func_args(arena, &mut self.cache, values)?;
                 Ok(HostCall::Builtin { id, targs, values })
             }
             // Host functions are answered by the extern of the level above
             "Call_extern_func" => {
-                let (id, targs, values) = decode::func_args(arena, cache, values)?;
+                let (id, targs, values) = decode::func_args(arena, &mut self.cache, values)?;
                 Ok(HostCall::ExternFunc { id, targs, values })
             }
             // Host relations return an ordered list of outputs
             "Call_extern_rel" => {
-                let (id, values) = decode::rel_args(arena, cache, values)?;
+                let (id, values) = decode::rel_args(arena, &mut self.cache, values)?;
                 Ok(HostCall::ExternRel { id, values })
             }
             // Host calls are reached through the three declared meta relations
@@ -174,9 +170,8 @@ impl Protocol for MetaProtocol {
     }
 
     fn reply(
-        &self,
+        &mut self,
         arena: &mut Arena,
-        cache: &mut Cache,
         call: &HostCall,
         eval: Eval<Output>,
     ) -> Eval<Vec<Value>, ExternError> {
@@ -185,14 +180,18 @@ impl Protocol for MetaProtocol {
             // A function outcome is funcRes
             HostCall::Builtin { .. } | HostCall::ExternFunc { .. } => {
                 let eval = Eval::new(result.map(Output::into_func), effect);
-                encode::func_result(arena, cache, eval)
+                encode::func_result(arena, &mut self.cache, eval)
             }
             // A relation outcome is relRes
             HostCall::ExternRel { .. } => {
                 let eval = Eval::new(result.map(Output::into_rel), effect);
-                encode::rel_result(arena, cache, eval)
+                encode::rel_result(arena, &mut self.cache, eval)
             }
         }
+    }
+
+    fn clear(&mut self) {
+        self.cache.clear();
     }
 }
 

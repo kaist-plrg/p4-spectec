@@ -5,7 +5,7 @@
 //! of a term, e.g. `_+Int_(2, 3)` to `5`. A library keeps global state and reserves
 //! 2 TB of address space for each of its three arenas, so a process opens each once,
 //! never closes it, and releases the arenas of one before opening another.
-//! Besides `engine/k/ffi.rs`, this is the only module where the crate allows `unsafe`.
+//! Besides `metacirc/k/ffi.rs`, this is the only module where the crate allows `unsafe`.
 
 #![allow(unsafe_code)]
 

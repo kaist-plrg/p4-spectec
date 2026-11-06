@@ -140,11 +140,45 @@ impl KoreInterface {
         KLibrary(Rc::clone(&self.offload))
     }
 
+    /// Prints `runres` as krun does (`KLibrary::print_runres`).
+    pub fn print_runres(&self, arena: &Arena, runres: Value) -> Result<String, InterfaceError> {
+        self.library().print_runres(arena, runres)
+    }
+}
+
+/// The K library of the definition being run: the top of a K-in-ST tower,
+/// the K definition above spec-k, answering spec-k's extern relation `Call_hook`.
+pub struct KLibrary(Rc<Offload>);
+
+impl KLibrary {
+    /// Reads `paths`, `definition.kore` of a kompiled directory and an initial term,
+    /// as a tuple of spec-k's `kdefinition` and `kore` values,
+    /// after loading the K library of that directory, which reads Float literals
+    /// and answers `Call_hook` from then on.
+    pub fn parse_program(
+        &self,
+        arena: &mut Arena,
+        paths: &[PathBuf],
+    ) -> Result<Value, InterfaceError> {
+        let [path_definition, path_init] = paths else {
+            return Err(InterfaceError(diagnostic(
+                "kore/input-invalid",
+                "a KORE input is a definition and an initial term".to_owned(),
+            )));
+        };
+        // The definition's hooks run in the library kompiled next to it
+        let dir_kompiled = path_definition.parent().unwrap_or(Path::new("."));
+        let runtime = offload::open(dir_kompiled)?;
+        let (value_program, loaded) = parse_kore(arena, runtime, path_definition, path_init)?;
+        self.0.set(loaded);
+        Ok(value_program)
+    }
+
     /// Prints `runres` as the interpreter krun runs prints a run with `--statistics`:
     /// for `FINAL n term`, `n` and then `term` as KORE; `error` for `ERROR n`,
     /// where the interpreter only aborts.
     pub fn print_runres(&self, arena: &Arena, runres: Value) -> Result<String, InterfaceError> {
-        let loaded = self.offload.loaded().ok_or_else(|| {
+        let loaded = self.0.loaded().ok_or_else(|| {
             InterfaceError(diagnostic(
                 "kore/print",
                 "a run is printed after its definition is read",
@@ -157,13 +191,7 @@ impl KoreInterface {
             Runres::Error => "error".to_owned(),
         })
     }
-}
 
-/// The K library of the definition being run: the top of a K-in-ST tower,
-/// the K definition above spec-k, answering spec-k's extern relation `Call_hook`.
-pub struct KLibrary(Rc<Offload>);
-
-impl KLibrary {
     /// Evaluates extern relation `name` of spec-k on `values`.
     pub fn eval_rel(
         &self,
@@ -182,26 +210,14 @@ impl Default for KoreInterface {
 }
 
 impl Interface for KoreInterface {
-    /// Reads `paths`, `definition.kore` of a kompiled directory and an initial term,
-    /// after loading the K library of that directory, which reads Float literals.
+    /// Reads a K definition and an initial term (`KLibrary::parse_program`).
     fn parse_program(
         &mut self,
         arena: &mut Arena,
         _includes: &[PathBuf],
         paths: &[PathBuf],
     ) -> Result<Value, InterfaceError> {
-        let [path_definition, path_init] = paths else {
-            return Err(InterfaceError(diagnostic(
-                "kore/input-invalid",
-                "a KORE input is a definition and an initial term".to_owned(),
-            )));
-        };
-        // The definition's hooks run in the library kompiled next to it
-        let dir_kompiled = path_definition.parent().unwrap_or(Path::new("."));
-        let runtime = offload::open(dir_kompiled)?;
-        let (value_program, loaded) = parse_kore(arena, runtime, path_definition, path_init)?;
-        self.offload.set(loaded);
-        Ok(value_program)
+        self.library().parse_program(arena, paths)
     }
 
     fn call_builtin(

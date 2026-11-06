@@ -1,22 +1,19 @@
 //! A `racket` process running spec-meta-redex, executing a Redex base
 //!
 //! ST-in-Redex runs spec-meta-redex, the AL semantics written in PLT Redex,
-//! as the base. `RedexRuntime` runs its entry module in one `racket` process
-//! per tower, serving every reentry depth; a depth's `RedexEngineState`
-//! is lent as a `RedexEngine`.
+//! as the base. `RuntimeRedex` runs its entry module in one `racket` process
+//! per tower, serving every reentry depth; a depth's `StateRedex`
+//! is lent as a `EngineRedex`.
 //! A call writes a request to the process as one line of JSON text and reads
 //! lines until its answer; a host request the process makes while serving
 //! is answered through `UpperMut::host_call`, and the response written back.
 //! Arena values never leave this process, only JSON text does.
-//! `MetaRedexProtocol` makes the requests and reads the answers;
+//! `ProtocolStRedex` makes the requests and reads the answers;
 //! the engine only carries them, and loads C into the process when it holds
 //! another specification.
 
-mod runtime;
-
-pub(in crate::metacirc) use runtime::RedexRuntime;
-
-use super::Engine;
+use super::runtime::{Line, RuntimeRedex};
+use crate::metacirc::engine::Engine;
 use crate::{
     diagnostic::{Diagnostic, Report, Severity},
     lang::{
@@ -29,15 +26,14 @@ use crate::{
     },
     metacirc::{
         Result,
-        protocol::MetaRedexProtocol,
+        protocol::ProtocolStRedex,
         tower::{HostLevel, UpperMut},
     },
     runner::{Extern, InterpreterError, SideEffect},
 };
-use runtime::Line;
 
 /// Reports a process that cannot serve a call.
-fn failed(message: impl Into<String>) -> Box<Report> {
+pub(super) fn failed(message: impl Into<String>) -> Box<Report> {
     let code = Some("metacirc/redex-engine-failed".into());
     Box::new(Diagnostic::new("metacirc", Severity::Error, code, message, vec![], vec![]).into())
 }
@@ -45,23 +41,20 @@ fn failed(message: impl Into<String>) -> Box<Report> {
 // == Engine
 
 /// spec-meta-redex at one depth, on the tower's process.
-pub(in crate::metacirc) struct RedexEngine<'s> {
-    runtime: &'s RedexRuntime,
+pub(in crate::metacirc) struct EngineRedex<'s> {
+    runtime: &'s RuntimeRedex,
 }
 
-impl<'s> RedexEngine<'s> {
+impl<'s> EngineRedex<'s> {
     /// Lends a depth's state, running on the process of `runtime`.
-    pub(in crate::metacirc) fn lend(
-        runtime: &'s RedexRuntime,
-        _state: &'s mut RedexEngineState,
-    ) -> Self {
+    pub(in crate::metacirc) fn lend(runtime: &'s RuntimeRedex, _state: &'s mut StateRedex) -> Self {
         Self { runtime }
     }
 }
 
 /// Every call sends JSON text to the process and returns JSON text:
-/// `MetaRedexProtocol` makes the requests and reads the responses.
-impl Engine for RedexEngine<'_> {
+/// `ProtocolStRedex` makes the requests and reads the responses.
+impl Engine for EngineRedex<'_> {
     /// Sends relation `name` with JSON text `values` to the serve loop,
     /// answering each host request of the process with
     /// `upper.host_call(arena, "host_eval", &[request])` until the answer arrives.
@@ -79,15 +72,15 @@ impl Engine for RedexEngine<'_> {
         values: &[Value],
     ) -> std::result::Result<Vec<Value>, InterpreterError> {
         match (name, values) {
-            (MetaRedexProtocol::LOAD, [value_request]) => {
+            (ProtocolStRedex::LOAD, [value_request]) => {
                 let key = self.runtime.register(text(arena, value_request)?);
                 self.ensure_loaded(arena, upper, effects, key)?;
                 Ok(vec![make_text(arena, key.to_string())?])
             }
-            (MetaRedexProtocol::SERVE, [value_ctx, value_request]) => {
+            (ProtocolStRedex::SERVE, [value_ctx, value_request]) => {
                 Ok(vec![self.serve(arena, upper, effects, *value_ctx, *value_request)?])
             }
-            (MetaRedexProtocol::ENTRY_REL | MetaRedexProtocol::ENTRY_FUNC, _) => {
+            (ProtocolStRedex::ENTRY_REL | ProtocolStRedex::ENTRY_FUNC, _) => {
                 self.enter(arena, upper, effects, name, values)
             }
             _ => Err(unsupported(name)),
@@ -105,7 +98,7 @@ impl Engine for RedexEngine<'_> {
         values: &[Value],
     ) -> std::result::Result<Value, InterpreterError> {
         match (name, targs, values) {
-            (MetaRedexProtocol::SERVE, [], [value_ctx, value_request]) => {
+            (ProtocolStRedex::SERVE, [], [value_ctx, value_request]) => {
                 self.serve(arena, upper, effects, *value_ctx, *value_request)
             }
             _ => Err(unsupported(name)),
@@ -125,7 +118,7 @@ impl Engine for RedexEngine<'_> {
     }
 }
 
-impl RedexEngine<'_> {
+impl EngineRedex<'_> {
     /// Runs spec-meta-redex's entry `name`: loads its specification, then calls it.
     fn enter<Ext: Extern>(
         &mut self,
@@ -135,12 +128,12 @@ impl RedexEngine<'_> {
         name: &str,
         values: &[Value],
     ) -> std::result::Result<Vec<Value>, InterpreterError> {
-        let [request_load, request_call] = MetaRedexProtocol::entry_requests(arena, name, values)?;
+        let [request_load, request_call] = ProtocolStRedex::entry_requests(arena, name, values)?;
         let key = self.runtime.register(&request_load);
         self.ensure_loaded(arena, upper, effects, key)?;
         let answer = self.exchange(arena, upper, effects, &request_call)?;
         let value_answer = make_text(arena, answer)?;
-        MetaRedexProtocol::entry_outputs(arena, name, value_answer)
+        ProtocolStRedex::entry_outputs(arena, name, value_answer)
     }
 
     /// Sends a request under C, loading C's specification into the process first if needed.
@@ -179,7 +172,7 @@ impl RedexEngine<'_> {
         self.runtime.set_loaded(None);
         let answer = self.exchange(arena, upper, effects, &request)?;
         let value_answer = make_text(arena, answer)?;
-        MetaRedexProtocol::load_answer(arena, value_answer)?;
+        ProtocolStRedex::load_answer(arena, value_answer)?;
         self.runtime.set_loaded(Some(key));
         Ok(())
     }
@@ -210,7 +203,7 @@ impl RedexEngine<'_> {
                 Line::Eval(request) => {
                     let response =
                         host_call(arena, upper, effects, request).unwrap_or_else(|report| {
-                            let response = MetaRedexProtocol::error_response(&report);
+                            let response = ProtocolStRedex::error_response(&report);
                             report_fatal.get_or_insert(report);
                             response
                         });
@@ -235,11 +228,11 @@ fn host_call<Ext: Extern>(
     request: String,
 ) -> std::result::Result<String, Box<Report>> {
     // The same request to a pure call that succeeded gets its cached response
-    if let Some(response) = upper.cache(HostLevel::FIRST).host_response(&request) {
+    if let Some(response) = upper.protocol(HostLevel::FIRST).host_response(&request) {
         return Ok(response);
     }
     let value_request = make_text(arena, request.clone()).map_err(InterpreterError::into_report)?;
-    let eval = upper.host_call(arena, MetaRedexProtocol::HOST_EVAL, &[value_request]);
+    let eval = upper.host_call(arena, ProtocolStRedex::HOST_EVAL, &[value_request]);
     if eval.effect == SideEffect::Impure {
         *effects = effects.saturating_add(1);
     }
@@ -251,7 +244,7 @@ fn host_call<Ext: Extern>(
     };
     if eval.effect == SideEffect::Pure {
         upper
-            .cache(HostLevel::FIRST)
+            .protocol(HostLevel::FIRST)
             .cache_host_response(request, &response);
     }
     Ok(response)
@@ -272,10 +265,10 @@ fn make_text(arena: &mut Arena, text: String) -> std::result::Result<Value, Inte
 fn unsupported(name: &str) -> InterpreterError {
     let message = format!(
         "spec-meta-redex's engine serves {}, {}, {}, and {}, not {name}",
-        MetaRedexProtocol::ENTRY_REL,
-        MetaRedexProtocol::ENTRY_FUNC,
-        MetaRedexProtocol::LOAD,
-        MetaRedexProtocol::SERVE
+        ProtocolStRedex::ENTRY_REL,
+        ProtocolStRedex::ENTRY_FUNC,
+        ProtocolStRedex::LOAD,
+        ProtocolStRedex::SERVE
     );
     InterpreterError::Fatal(failed(message))
 }
@@ -283,11 +276,11 @@ fn unsupported(name: &str) -> InterpreterError {
 // == Depth state
 
 /// The state of one depth; the process belongs to the runtime, shared by every depth.
-pub(in crate::metacirc) struct RedexEngineState;
+pub(in crate::metacirc) struct StateRedex;
 
-impl RedexEngineState {
+impl StateRedex {
     /// Makes a depth's state on the process of `runtime`.
-    pub(in crate::metacirc) fn new(_runtime: &RedexRuntime) -> Result<Self> {
+    pub(in crate::metacirc) fn new(_runtime: &RuntimeRedex) -> Result<Self> {
         Ok(Self)
     }
 }

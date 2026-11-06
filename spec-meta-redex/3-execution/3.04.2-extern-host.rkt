@@ -3,7 +3,7 @@
 ;; process's stdin and stdout, and the host procedures of the three extern
 ;; relations.
 ;;
-;;   racket 3.16-entry.rkt  <--pipe-->  p4spectec::metacirc::engine::redex
+;;   racket 3.16-entry.rkt  <--pipe-->  p4spectec::metacirc::redex
 ;;
 ;; Rust starts this process and calls into it (3.16-entry.rkt). Each line to
 ;; Rust starts with a word saying what it is: `serve <answer>`,

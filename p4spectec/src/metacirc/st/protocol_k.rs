@@ -1,18 +1,19 @@
 //! spec-k's protocol: a level written in K above spec-k
 //!
 //! spec-k, the K semantics written in P4-SpecTec, interprets KORE.
-//! A single-level K-in-ST tower enters spec-k through `Krun` directly
-//! (`Tower::eval_krun`), so this boundary carries only spec-k's host call,
-//! its extern relation `Call_hook`, up to the K definition above it,
-//! whose K library answers it (`Top::Kore`).
-//! Stacking a level over a K definition, such as ST-in-K-in-ST, would use it:
+//! A K-in-ST tower is a single level: the K definition is the program above
+//! the top, as a script is above spec-meta. `encode_entry` gives `Krun` the
+//! definition, the initial term, and the step bound, and `host` carries
+//! spec-k's host call, its extern relation `Call_hook`, up to the definition,
+//! whose K library answers it (`Top::K`).
+//! Stacking a level over a K definition, such as ST-in-K-in-ST, would use the rest:
 //! `load` prepares the definition once (`Prepare`, a split of spec-k's `Start`),
 //! `lower` runs one request as a K term to the end (`Run`),
 //! and each depth keeps the configuration of the K level it runs.
 //! That needs `PreparedLevel::Kore` and per-depth K state in `TowerInterpState`;
 //! neither exists until stacking is implemented.
 
-use super::{Below, Call, Entered, HostCall, Output, Protocol};
+use crate::metacirc::protocol::{Below, Call, Entered, HostCall, Output, Protocol};
 use crate::{
     lang::{
         common::source::Span,
@@ -28,48 +29,41 @@ const STACKING: &str = "stacking a level over a K definition";
 // == Protocol
 
 /// The protocol of spec-k toward the K definition above it.
-pub(in crate::metacirc) struct KoreProtocol;
+pub(in crate::metacirc) struct ProtocolKSt;
 
-/// The codec state of a boundary above spec-k.
-pub(in crate::metacirc) struct Cache;
-
-impl Cache {
-    /// Clears the memoized conversions between programs.
-    pub(in crate::metacirc) fn clear(&mut self) {}
-}
-
-impl Protocol for KoreProtocol {
-    type Cache = Cache;
-
-    fn new_cache(&self, _enabled: bool) -> Cache {
-        Cache
+impl Protocol for ProtocolKSt {
+    fn new(_cache: bool) -> Self {
+        Self
     }
 
     /// Prepares the K definition above once, as C (`Prepare`).
-    fn load(
-        &self,
-        _below: &mut dyn Below,
-        _above: &PreparedLevel,
-    ) -> Result<Value, InterpreterError> {
+    fn load(_below: &mut dyn Below, _above: &PreparedLevel) -> Result<Value, InterpreterError> {
         Err(InterpreterError::Fatal(error::unimplemented(STACKING)))
     }
 
-    /// Encodes the inputs of spec-k's entry into the K definition above.
+    /// Encodes the inputs of `Krun`, spec-k's entry, into the K definition above:
+    /// the definition, then `values`, the initial term and the step bound.
+    ///
+    /// A K definition has no named entry, so `name` is unused;
+    /// spec-k rewrites the initial term.
     fn encode_entry(
-        &self,
         _arena: &mut Arena,
-        _above: Entered<'_>,
+        above: Entered<'_>,
         _name: &str,
-        _values: &[Value],
+        values: &[Value],
     ) -> MetacircResult<Vec<Value>> {
-        Err(error::unimplemented(STACKING))
+        let Entered::Kore(definition) = above else {
+            return Err(error::config_invalid("spec-k enters only a K definition"));
+        };
+        Ok(std::iter::once(definition)
+            .chain(values.iter().copied())
+            .collect())
     }
 
     /// Runs `call`, a request of the K level above, as a K term under C (`Run`).
     fn lower(
-        &self,
+        &mut self,
         _arena: &mut Arena,
-        _cache: &mut Cache,
         _value_ctx: Value,
         _call: &Call<'_>,
     ) -> Result<Call<'static>, InterpreterError> {
@@ -78,9 +72,8 @@ impl Protocol for KoreProtocol {
 
     /// Reads the final configuration of a `Run` as the output of `call`.
     fn raise(
-        &self,
+        &mut self,
         _arena: &mut Arena,
-        _cache: &mut Cache,
         _output: Output,
         _call: &Call<'_>,
     ) -> Result<Output, InterpreterError> {
@@ -90,9 +83,8 @@ impl Protocol for KoreProtocol {
     /// Passes spec-k's extern relation `Call_hook` up as it is,
     /// since the K definition above reads spec-k's values; rejects any other.
     fn host(
-        &self,
+        &mut self,
         _arena: &mut Arena,
-        _cache: &mut Cache,
         name: &str,
         values: &[Value],
     ) -> Result<HostCall, ExternError> {
@@ -107,13 +99,14 @@ impl Protocol for KoreProtocol {
 
     /// Gives the outputs of the extern relation as they are.
     fn reply(
-        &self,
+        &mut self,
         _arena: &mut Arena,
-        _cache: &mut Cache,
         _call: &HostCall,
         eval: Eval<Output>,
     ) -> Eval<Vec<Value>, ExternError> {
         let Eval { result, effect } = eval;
         Eval::new(result.map(Output::into_rel).map_err(Into::into), effect)
     }
+
+    fn clear(&mut self) {}
 }

@@ -5,9 +5,9 @@
 //! since the level below interprets it, and `Upper` stores them all
 //! in its extern slot, lent per call as `UpperMut` (see `upper`).
 //! A single-level tower executes its top level directly as its base.
-//! `build` assembles the levels; `input` encodes the inputs of the base's entry;
+//! `build` assembles the levels; `input` reads the program the top accepts
+//! and encodes the inputs of the base's entry;
 //! `Tower::eval_input` runs the entry on the base's `Engine`.
-//! A KORE input enters spec-k through `Tower::eval_krun` instead.
 
 mod build;
 mod input;
@@ -16,26 +16,19 @@ mod upper;
 pub(in crate::metacirc) use upper::{Top, TopMut, Upper, UpperMut};
 
 use super::{
-    Result,
     config::LevelConfig,
     engine::{
-        BaseSpec, Engine, EngineKind, InterfaceKind, KEngine, KEngineState, KRuntime, RedexEngine,
-        RedexEngineState, RedexRuntime, SpecTecEngine,
+        BaseSpec, Engine, EngineK, EngineKind, EngineRedex, EngineSt, InterfaceSt, RuntimeK,
+        RuntimeRedex, StateK, StateRedex,
     },
-    error,
     interp::TowerEnv,
-    protocol::{Entered, ProtocolKind},
+    protocol::Entered,
 };
 use crate::{
-    interface::{kore::KoreInterface, p4::P4Interface},
+    interface::p4::P4Interface,
     lang::{
         al::ast as al,
-        common::{prim::num::Natural, source::Span},
-        data::{
-            arena::Arena,
-            typ,
-            value::flat::{self as value, Value},
-        },
+        data::{arena::Arena, value::flat::Value},
         il::ast as il,
     },
     runner::{self, Extern, InterpreterError, Runner},
@@ -50,18 +43,28 @@ use std::num::NonZeroUsize;
 pub struct Tower<Ext: Extern = Dummy> {
     // Nonempty, ordered from base through intermediates to the top level
     pub(super) levels: Vec<PreparedLevel>,
-    /// The protocol of the boundary below each level above the base.
-    pub(super) protocols: Vec<ProtocolKind>,
-    pub(super) base: BaseRunner<Ext>,
+    pub(super) base: Base<Ext>,
     /// Options for the interpreters of reentry depths.
     pub(super) options: runner::Config,
 }
 
-/// The input of a tower: a P4 program for a P4 top level,
-/// or a script above an AL or IL top level, prepared in the form the top accepts.
+/// The input of a tower, prepared in the form the top accepts:
+/// a P4 program for a P4 top level, a script above an AL or IL top level,
+/// or a K definition above spec-k with its initial term.
 pub enum Input {
     P4(Value),
     Script(Script),
+    Kore(Kore),
+}
+
+/// A K definition and an initial term above spec-k, as `Krun` takes them.
+pub struct Kore {
+    /// The definition, as spec-k's `kdefinition` value.
+    pub definition: Value,
+    /// The initial term, as spec-k's `kore` value.
+    pub init: Value,
+    /// At most this many rewriting steps, as `krun --depth` does.
+    pub depth: Option<u64>,
 }
 
 /// A script above the top level, entered at its function `main`.
@@ -90,31 +93,32 @@ pub(super) enum PreparedLevel {
 }
 
 /// The native runner of the base, selected by the language it interprets.
-pub(super) enum BaseRunner<Ext: Extern> {
+pub(super) enum Base<Ext: Extern> {
     /// A P4 specification, interpreting a parsed P4 program.
     P4(Runner<P4Interface, Ext>),
-    /// A meta specification interpreting an AL or IL script, hosting the levels above it.
-    Meta(Runner<InterfaceKind, Upper<Ext>>),
+    /// A P4-SpecTec specification run natively on AL or SL, hosting the levels above it:
+    /// spec-meta interpreting an AL or IL script, or spec-k a K definition.
+    St(Runner<InterfaceSt, Upper<Ext>>),
     /// A K specification, compiled to a library, interpreting an AL script
     /// and hosting the levels above it.
-    K(KBase<Ext>),
+    K(BaseK<Ext>),
     /// A PLT Redex specification, run by a `racket` process,
     /// interpreting an AL script and hosting the levels above it.
-    Redex(RedexBase<Ext>),
+    Redex(BaseRedex<Ext>),
 }
 
 /// A base written in K: its library, depth 0's K thread, and the levels above it.
-pub(super) struct KBase<Ext: Extern> {
-    pub(super) runtime: KRuntime,
-    pub(super) state: KEngineState,
+pub(super) struct BaseK<Ext: Extern> {
+    pub(super) runtime: RuntimeK,
+    pub(super) state: StateK,
     pub(super) upper: Upper<Ext>,
     pub(super) effects: u64,
 }
 
 /// A base written in PLT Redex: its process, depth 0's state, and the levels above it.
-pub(super) struct RedexBase<Ext: Extern> {
-    pub(super) runtime: RedexRuntime,
-    pub(super) state: RedexEngineState,
+pub(super) struct BaseRedex<Ext: Extern> {
+    pub(super) runtime: RuntimeRedex,
+    pub(super) state: StateRedex,
     pub(super) upper: Upper<Ext>,
     pub(super) effects: u64,
 }
@@ -144,71 +148,18 @@ impl<Ext: Extern> Tower<Ext> {
         arena: &mut Arena,
         values: &[Value],
     ) -> std::result::Result<Vec<Value>, InterpreterError> {
-        let Self { levels, protocols, base, options } = self;
+        let Self { levels, base, options } = self;
         let name = &levels[0].config().rel;
         // A P4 base runs the program directly
-        if let BaseRunner::P4(runner) = base {
+        if let Base::P4(runner) = base {
             return runner.eval_rel(arena, name, values).result;
         }
         // Any other base lends the levels above it with its definitions
         let LentBase { mut engine, spec_base, upper, effects } =
             base.lend().expect("a base other than P4 hosts levels");
-        let env = TowerEnv { spec_base, levels, protocols, options: *options };
+        let env = TowerEnv { spec_base, levels, options: *options };
         let mut upper = upper.lend(&env);
         engine.call_rel(arena, &mut upper, effects, name, values)
-    }
-}
-
-impl<Ext: Extern> Tower<Ext> {
-    /// Runs spec-k's entry relation `Krun` on a K definition and an initial term,
-    /// rewriting at most `depth` steps if given, as `krun --depth` does.
-    ///
-    /// `definition` and `init` are what `KoreInterface::parse_program` read;
-    /// the result is the `runres` that `KoreInterface::print_runres` prints.
-    pub fn eval_krun(
-        &mut self,
-        arena: &mut Arena,
-        definition: Value,
-        init: Value,
-        depth: Option<u64>,
-    ) -> Result<Value> {
-        let Self { levels, protocols, base, options } = self;
-        let name = &levels[0].config().rel;
-        // The step bound is spec-k's nat?
-        let value_depth = depth
-            .map(|depth| value::make::nat(arena, Natural::from(depth), Span::default()))
-            .transpose()
-            .map_err(|error| error::input_invalid(error.to_string()))?;
-        let typ_depth = typ::make::opt(typ::make::nat());
-        let value_depth =
-            value::make::opt(arena, typ_depth.node.into(), value_depth, Span::default())
-                .map_err(|error| error::input_invalid(error.to_string()))?;
-        // spec-k is the base, which hosts the program's empty level above it
-        let Some(LentBase { mut engine, spec_base, upper, effects }) = base.lend() else {
-            return Err(error::input_invalid("a KORE input requires spec-k as the base"));
-        };
-        let env = TowerEnv { spec_base, levels, protocols, options: *options };
-        let mut upper = upper.lend(&env);
-        let values = [definition, init, value_depth];
-        let outputs = engine
-            .call_rel(arena, &mut upper, effects, name, &values)
-            .map_err(InterpreterError::into_report)?;
-        value::get::one(&outputs)
-            .copied()
-            .map_err(|error| error::input_invalid(error.to_string()))
-    }
-}
-
-impl<Ext: Extern> Tower<Ext> {
-    /// Returns the base's interface if the base is spec-k,
-    /// which parses a KORE input, answers spec-k's hooks, and prints its run.
-    pub(super) fn kore_interface(&mut self) -> Option<&mut KoreInterface> {
-        match &mut self.base {
-            BaseRunner::Meta(Runner { interface: InterfaceKind::Kore(interface), .. }) => {
-                Some(interface)
-            }
-            _ => None,
-        }
     }
 }
 
@@ -229,22 +180,31 @@ impl PreparedLevel {
     }
 }
 
-impl<Ext: Extern> BaseRunner<Ext> {
+impl<Ext: Extern> Base<Ext> {
     /// Resets the runner and the levels its extern stores.
     fn reset(&mut self) {
         match self {
             Self::P4(runner) => runner.reset(),
-            Self::Meta(runner) => runner.reset(),
+            Self::St(runner) => runner.reset(),
             Self::K(base) => {
                 base.effects = 0;
-                KEngine::lend(&base.runtime, &mut base.state).reset();
+                EngineK::lend(&base.runtime, &mut base.state).reset();
                 base.upper.clear();
             }
             Self::Redex(base) => {
                 base.effects = 0;
-                RedexEngine::lend(&base.runtime, &mut base.state).reset();
+                EngineRedex::lend(&base.runtime, &mut base.state).reset();
                 base.upper.clear();
             }
+        }
+    }
+
+    /// Returns the levels above the base, or nothing for a P4 base, which hosts no levels.
+    fn upper(&self) -> Option<&Upper<Ext>> {
+        match self {
+            Self::P4(_) => None,
+            Self::St(runner) => Some(&runner.external),
+            Self::K(BaseK { upper, .. }) | Self::Redex(BaseRedex { upper, .. }) => Some(upper),
         }
     }
 
@@ -253,20 +213,20 @@ impl<Ext: Extern> BaseRunner<Ext> {
     pub(super) fn lend(&mut self) -> Option<LentBase<'_, Ext>> {
         match self {
             Self::P4(_) => None,
-            Self::Meta(runner) => {
+            Self::St(runner) => {
                 let Runner { backend, interface, external: upper, effects } = runner;
-                let (engine, spec_base) = SpecTecEngine::lend_base(backend, interface);
-                let engine = EngineKind::SpecTec(engine);
-                let spec_base = BaseSpec::SpecTec(spec_base);
+                let (engine, spec_base) = EngineSt::lend_base(backend, interface);
+                let engine = EngineKind::St(engine);
+                let spec_base = BaseSpec::St(spec_base);
                 Some(LentBase { engine, spec_base, upper, effects })
             }
-            Self::K(KBase { runtime, state, upper, effects }) => {
-                let engine = EngineKind::K(KEngine::lend(runtime, state));
+            Self::K(BaseK { runtime, state, upper, effects }) => {
+                let engine = EngineKind::K(EngineK::lend(runtime, state));
                 let spec_base = BaseSpec::K(runtime);
                 Some(LentBase { engine, spec_base, upper, effects })
             }
-            Self::Redex(RedexBase { runtime, state, upper, effects }) => {
-                let engine = EngineKind::Redex(RedexEngine::lend(runtime, state));
+            Self::Redex(BaseRedex { runtime, state, upper, effects }) => {
+                let engine = EngineKind::Redex(EngineRedex::lend(runtime, state));
                 let spec_base = BaseSpec::Redex(runtime);
                 Some(LentBase { engine, spec_base, upper, effects })
             }
@@ -288,7 +248,7 @@ pub(in crate::metacirc) enum LevelAt {
 /// A level above the base, which the level below it interprets.
 ///
 /// Level k pairs with the boundary below it:
-/// per-level storage keeps its C, that boundary's codec cache,
+/// per-level storage keeps its C, that boundary's protocol,
 /// and its meta builtins at `index`, in order from level 1.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(in crate::metacirc) struct HostLevel(NonZeroUsize);
