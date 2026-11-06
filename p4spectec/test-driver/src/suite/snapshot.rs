@@ -51,11 +51,11 @@ pub struct Registration {
     pub snapshots: Vec<Snapshot>,
 }
 
-/// Checks the registered snapshots of the given stages.
+/// Checks the snapshots of the given stages in the registration `name`.
 ///
 /// With `path_output`, AsciiDoc snapshots also save `el.adoc` and `pl.adoc` there.
-pub fn run(stages: &[Stage], path_output: Option<&Path>) -> Result<()> {
-    let registration: Registration = harness::load("snapshot")?;
+pub fn run(name: &str, stages: &[Stage], path_output: Option<&Path>) -> Result<()> {
+    let registration: Registration = harness::load(name)?;
     for snapshot in &registration.snapshots {
         if !stages.contains(&snapshot.stage) {
             continue;

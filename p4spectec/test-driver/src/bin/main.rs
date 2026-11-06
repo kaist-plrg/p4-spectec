@@ -1,12 +1,11 @@
-mod harness;
-mod suite;
-
 use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Parser, Subcommand};
 
-use harness::{Error, Result};
-use suite::{diagnostic, micro, p4parse, run, sim, snapshot, snapshot::Stage};
+use p4spectec_test::{
+    harness::{self, Error, Result},
+    suite::{diagnostic, micro, p4parse, run, sim, snapshot, snapshot::Stage},
+};
 
 /// Source and expected-file acceptance for the Rust implementation
 #[derive(Parser)]
@@ -96,12 +95,12 @@ fn execute(mut cli: Cli) -> Result<()> {
     std::env::set_current_dir(&root)?;
     match command {
         Command::List => list(),
-        Command::Elab => snapshot::run(&[Stage::Elab], None),
-        Command::Algo => snapshot::run(&[Stage::Algo], None),
-        Command::Structure => snapshot::run(&[Stage::Structure], None),
-        Command::Prose => snapshot::run(&[Stage::Prose], None),
+        Command::Elab => snapshot::run("snapshot", &[Stage::Elab], None),
+        Command::Algo => snapshot::run("snapshot", &[Stage::Algo], None),
+        Command::Structure => snapshot::run("snapshot", &[Stage::Structure], None),
+        Command::Prose => snapshot::run("snapshot", &[Stage::Prose], None),
         Command::Adoc { path_output } => {
-            snapshot::run(&[Stage::AdocEl, Stage::AdocPl], path_output.as_deref())
+            snapshot::run("snapshot", &[Stage::AdocEl, Stage::AdocPl], path_output.as_deref())
         }
         Command::P4parse => p4parse::run(path_log.as_deref()),
         Command::Run { config } => run::run(config, path_log.as_deref()),

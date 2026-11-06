@@ -7,7 +7,7 @@ use std::{
 
 use p4spectec::lang::data::encoding::Encoding;
 
-use p4spectec::sim_plugin::{self};
+use p4spectec::sim_plugin::{self, Simulator};
 
 use serde::Deserialize;
 
@@ -130,22 +130,44 @@ impl SimSuite {
 pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
     let registration: Registration = harness::load("sim")?;
     let config = Configuration::find(&registration.configs, name_config)?;
+    let suites = registration.suites.iter().collect::<Vec<_>>();
     let text_mode = format!("sim {}", config.describe());
+    let name_log = format!("sim-{}", config.name);
+    run_suites(&registration, &suites, &text_mode, &name_log, path_log, |arch| {
+        let spec = config.language.spec(&registration.spec)?;
+        Ok(sim_plugin::build(spec, arch, config.runner(), Encoding::default())?)
+    })
+}
+
+/// Runs the given suites of `registration` on one simulator per architecture.
+///
+/// `build_simulator` builds the simulator of an architecture,
+/// and every suite compares its outcomes with its own expected file.
+pub fn run_suites<BuildSimulator>(
+    registration: &Registration,
+    suites: &[&SimSuite],
+    text_mode: &str,
+    name_log: &str,
+    path_log: Option<&Path>,
+    build_simulator: BuildSimulator,
+) -> Result<()>
+where
+    BuildSimulator: Fn(&str) -> Result<Simulator>,
+{
     let start = Instant::now();
     let mut excludes = BTreeSet::new();
     for path in &registration.excludes {
         excludes.extend(corpus::collect_excludes(path)?);
     }
-    let suites = registration
-        .suites
+    let suites = suites
         .iter()
-        .map(|suite| Ok((suite, suite.collect(&excludes)?)))
+        .map(|suite| Ok((*suite, suite.collect(&excludes)?)))
         .collect::<Result<Vec<_>>>()?;
     let pairs = suites.iter().flat_map(|(_, pairs)| pairs);
     let collected = pairs.clone().count();
     let excluded = pairs.clone().filter(|pair| pair.excluded).count();
     let patched = pairs.filter(|pair| pair.patched).count();
-    let mut log = TestLog::create(path_log, &format!("sim-{}", config.name), collected)?;
+    let mut log = TestLog::create(path_log, name_log, collected)?;
     let text_collect =
         format!("{text_mode}: collected={collected} excluded={excluded}; preparing specification");
     eprintln!("{text_collect}");
@@ -170,9 +192,7 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
         let excluded_arch = pairs_arch.clone().filter(|pair| pair.excluded).count();
         let patched_arch = pairs_arch.filter(|pair| pair.patched).count();
         let start_arch = Instant::now();
-        let spec = config.language.spec(&registration.spec)?;
-        let config_runner = config.runner();
-        let mut simulator = sim_plugin::build(spec, arch, config_runner, Encoding::default())?;
+        let mut simulator = build_simulator(arch)?;
         log.note(&format!(
             "{arch} specification prepared in {:.1}s",
             start_arch.elapsed().as_secs_f64()
