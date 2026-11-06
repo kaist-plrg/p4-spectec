@@ -35,7 +35,7 @@ use super::super::engine::{InterfaceSt, RuntimeK, RuntimeRedex, StateK, StateRed
 use super::super::protocol::{
     Protocol, ProtocolKSt, ProtocolKind, ProtocolStK, ProtocolStRedex, ProtocolStSt,
 };
-use super::super::{ExecutionMode, Result, TowerConfig, config::Lang, error::config_invalid};
+use super::super::{BaseConfig, Repr, Result, TowerConfig, config::Lang, error::config_invalid};
 use super::{Base, BaseK, BaseRedex, PreparedLevel, Top, Tower, Upper};
 use crate::{
     interface::{
@@ -51,13 +51,10 @@ use crate::{
 // == Helpers
 
 /// Converts the AL of a specification into the representation selected for the runner.
-fn into_runner_spec(mode: ExecutionMode, spec_al: al::Spec) -> Result<Spec> {
-    match mode {
-        ExecutionMode::Al => Ok(Spec::Al(spec_al)),
-        ExecutionMode::Sl => structure::convert(spec_al, true).map(Spec::Sl),
-        ExecutionMode::K | ExecutionMode::Redex => {
-            unreachable!("a K or Redex base has no AL or SL runner")
-        }
+fn into_runner_spec(repr: Repr, spec_al: al::Spec) -> Result<Spec> {
+    match repr {
+        Repr::Al => Ok(Spec::Al(spec_al)),
+        Repr::Sl => structure::convert(spec_al, true).map(Spec::Sl),
     }
 }
 
@@ -120,12 +117,10 @@ fn build_upper<Ext: Extern>(
     let count = hosts.len() + 1;
     let cache = options.cache;
     let protocols = (0..count)
-        .map(|idx_below| match (config.mode, config.levels[idx_below].lang) {
-            (ExecutionMode::K, _) if idx_below == 0 => ProtocolKind::StK(ProtocolStK::new(cache)),
-            (ExecutionMode::Redex, _) if idx_below == 0 => {
-                ProtocolKind::StRedex(ProtocolStRedex::new(cache))
-            }
-            (_, Lang::Kore) => ProtocolKind::KSt(ProtocolKSt::new(cache)),
+        .map(|idx_below| match (idx_below, &config.base, config.levels[idx_below].lang) {
+            (0, BaseConfig::K { .. }, _) => ProtocolKind::StK(ProtocolStK::new(cache)),
+            (0, BaseConfig::Redex { .. }, _) => ProtocolKind::StRedex(ProtocolStRedex::new(cache)),
+            (_, _, Lang::Kore) => ProtocolKind::KSt(ProtocolKSt::new(cache)),
             _ => ProtocolKind::StSt(Box::new(ProtocolStSt::new(cache))),
         })
         .collect();
@@ -181,30 +176,28 @@ impl<Ext: Extern> Tower<Ext> {
         // Only the base runs natively
         let level_top = levels.last().expect("validated nonempty tower");
         let config_base = &config.levels[0];
-        let base = match config.mode {
+        let base = match &config.base {
             // A K base runs from its compiled library and hosts the levels above it
-            ExecutionMode::K => {
-                let kompiled = config_base.kompiled.as_ref().expect("validated k base");
+            BaseConfig::K { kompiled } => {
                 let runtime = RuntimeK::load(kompiled)?;
                 let state = StateK::new(&runtime)?;
                 let upper = build_upper(config, level_top, None, options, external_p4, None);
                 Base::K(BaseK { runtime, state, upper, effects: 0 })
             }
             // A Redex base runs in a racket process and hosts the levels above it
-            ExecutionMode::Redex => {
-                let module = config_base.module.as_ref().expect("validated redex base");
+            BaseConfig::Redex { module } => {
                 let runtime = RuntimeRedex::load(module)?;
                 let state = StateRedex::new(&runtime)?;
                 let upper = build_upper(config, level_top, None, options, external_p4, None);
                 Base::Redex(BaseRedex { runtime, state, upper, effects: 0 })
             }
-            ExecutionMode::Al | ExecutionMode::Sl => {
+            BaseConfig::St { repr } => {
                 let spec_base_al = crate::algo(std::slice::from_ref(&config_base.specdir))?;
                 match config_base.lang {
                     // A P4 base is the whole tower
                     Lang::P4 => {
                         let interface = interface_p4(level_top, Some(&spec_base_al));
-                        let spec_base = into_runner_spec(config.mode, spec_base_al)?;
+                        let spec_base = into_runner_spec(*repr, spec_base_al)?;
                         let runner =
                             Runner::new(arena, spec_base, options, interface, external_p4)?;
                         Base::P4(runner)
@@ -228,7 +221,7 @@ impl<Ext: Extern> Tower<Ext> {
                             external_p4,
                             library,
                         );
-                        let spec_base = into_runner_spec(config.mode, spec_base_al)?;
+                        let spec_base = into_runner_spec(*repr, spec_base_al)?;
                         let runner = Runner::new(arena, spec_base, options, interface, upper)?;
                         Base::St(runner)
                     }

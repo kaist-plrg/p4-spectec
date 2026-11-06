@@ -12,7 +12,7 @@
 //! `build_simulator` selects the architecture and boxes the tower as a `Simulator`.
 
 use super::{
-    ExecutionMode, Result, TowerConfig,
+    BaseConfig, Repr, Result, TowerConfig,
     config::Lang,
     error::{config_invalid, input_invalid},
     interp::{TowerEnv, TowerInterp},
@@ -57,7 +57,7 @@ impl<Arch: Architecture> SimTower<Arch> {
         // and the top level is P4
         if config.levels.len() < 2
             || config.top_lang() != Lang::P4
-            || !matches!(config.mode, ExecutionMode::Sl | ExecutionMode::K | ExecutionMode::Redex)
+            || matches!(config.base, BaseConfig::St { repr: Repr::Al })
         {
             return Err(config_invalid(
                 "simulation requires an sl, k, or redex tower of two or more levels with a P4 top level",

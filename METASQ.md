@@ -165,6 +165,11 @@ Upper { protocols, ctxs, hosts, top, depth_next }
 Above a meta top level is its AL or IL program, one more boundary whose
 builtins `Top::St` answers.
 
+`TowerConfig` reads `mode` and the base's `kompiled` or `module` into
+`BaseConfig { St { repr }, K { kompiled }, Redex { module } }`, the meta-language
+of the base's specification and its native implementation, so a library or
+module exists exactly where its mode needs it.
+
 Three traits divide the work, their implementations stored as enums
 (`EngineKind`, `ProtocolKind`). A protocol is named by the language it
 interprets and then the meta-language its specification is written in

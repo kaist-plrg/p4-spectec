@@ -43,7 +43,7 @@ use crate::{
     sim_plugin::dummy::Dummy,
 };
 use config::Lang;
-pub use config::{ExecutionMode, TowerConfig};
+pub use config::{BaseConfig, Repr, TowerConfig};
 use std::path::PathBuf;
 
 pub use error::Result;
