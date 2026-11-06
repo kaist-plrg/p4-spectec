@@ -101,6 +101,7 @@ impl<'a> Case<'a> {
             let kompiled = self.kompiled();
             let args = args.iter().map(|arg| {
                 arg.replace("{program}", &program.path.to_string_lossy())
+                    .replace("{test}", program.test.as_deref().unwrap_or_default())
                     .replace("{name}", &program.name)
                     .replace("{kompiled}", &kompiled.to_string_lossy())
                     .replace("{output}", &path_init.to_string_lossy())
@@ -118,7 +119,7 @@ impl<'a> Case<'a> {
     fn dry_run(&self, program: &Program, path_init: &Path) -> Result<()> {
         let path_program = match self.words(&self.suite.prepare).split_first() {
             Some((command, args)) => {
-                // Named after the program, as two programs may share a file name
+                // Two programs may share a file name
                 let mut path_prepared = self.dir_build.join(&program.name);
                 if let Some(ext) = program.path.extension() {
                     path_prepared.set_extension(ext);

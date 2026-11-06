@@ -3,13 +3,19 @@
 //! A suite takes its definitions from `root`, a directory of cases written for
 //! spec-k (a directory with one `<name>.k` and its programs, `<program>.<ext>`),
 //! or `def` in `dir` of the checkout named by the environment variable `src`,
-//! with `programs` and their expectations in `expected`. A program's standard
+//! with its programs and their expectations in `expected`. A program's standard
 //! input is `<program>.in`, and its expectations `<name>.out`, `<name>.search`,
 //! and `<name>.depth`.
+//!
+//! The programs of a checkout are the files `programs` matches, but those `skip`
+//! matches and those `skip_lists` name; with `tests = "json-keys"`, each test of a
+//! JSON file is one. A program is named by its path below the patterns' common
+//! directory, without extensions, and a test by its file's name and its own.
 
 use std::{
+    collections::BTreeSet,
     fs,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
 };
 
 use serde::Deserialize;
@@ -46,9 +52,17 @@ pub struct KInStSuite {
     pub dir: Option<PathBuf>,
     /// The definition, in `dir`.
     pub def: Option<PathBuf>,
-    /// The programs, in `dir` (or in the checkout, from `{src}`).
+    /// Patterns of the programs, in `dir` (or in the checkout, from `{src}`).
     #[serde(default)]
-    pub programs: Vec<PathBuf>,
+    pub programs: Vec<String>,
+    /// Patterns of programs left out, as `programs`.
+    #[serde(default)]
+    pub skip: Vec<String>,
+    /// The checkout's lists of programs it does not run.
+    #[serde(default)]
+    pub skip_lists: Vec<SkipList>,
+    /// What a program is: a file, or each test of a JSON file.
+    pub tests: Option<Tests>,
     /// The directory of the programs' `<program>.in`, in `dir`, if not beside them.
     pub inputs: Option<PathBuf>,
     /// The directory of what krun gives for the programs.
@@ -75,10 +89,29 @@ fn ext_default() -> String {
     "prog".to_owned()
 }
 
+/// A list of programs not run: per line a path in `dir`, with `,<test>` for a test
+/// of a JSON file (`*` for any).
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SkipList {
+    pub list: String,
+    pub dir: String,
+}
+
+/// What a program of a suite is, besides a file.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Tests {
+    /// Each key of a JSON object is a test.
+    JsonKeys,
+}
+
 /// A program of a definition.
 pub struct Program {
     /// The program, as krun takes it.
     pub path: PathBuf,
+    /// The test in it, for a file of several.
+    pub test: Option<String>,
     /// Its name, which names its initial term and its expectations.
     pub name: String,
     /// Its standard input, if any.
@@ -88,22 +121,15 @@ pub struct Program {
 }
 
 impl Program {
-    /// A program, with its input beside it or in `dir_inputs`, and its expectations
-    /// in `dir_expected`; `path` may end in `#<name>`, which names it, and a name
-    /// may hold a directory (`core/table`), as where two programs share a file name.
-    fn new(path: PathBuf, dir_inputs: Option<&Path>, dir_expected: &Path) -> Self {
-        let text = path.to_string_lossy().into_owned();
-        let (path, name) = match text.rsplit_once('#') {
-            Some((path, name)) => (PathBuf::from(path), name.to_owned()),
-            None => {
-                let stem = path
-                    .file_stem()
-                    .unwrap_or_default()
-                    .to_string_lossy()
-                    .into_owned();
-                (path, stem)
-            }
-        };
+    /// A program named `name`, with its input beside it or in `dir_inputs`, and
+    /// its expectations in `dir_expected`; a name may hold a directory.
+    fn new(
+        path: PathBuf,
+        test: Option<String>,
+        name: String,
+        dir_inputs: Option<&Path>,
+        dir_expected: &Path,
+    ) -> Self {
         let file = path
             .file_name()
             .unwrap_or_default()
@@ -114,7 +140,7 @@ impl Program {
             .join(format!("{file}.in"));
         let input = input.is_file().then_some(input);
         let expected = dir_expected.join(&name);
-        Self { path, name, input, expected }
+        Self { path, test, name, input, expected }
     }
 
     /// The expectation of the program with extension `ext`.
@@ -165,17 +191,163 @@ pub fn groups(suite: &KInStSuite) -> Result<Option<Vec<Group<'_>>>> {
         .as_deref()
         .ok_or_else(|| missing("expected"))?;
     let dir_inputs = suite.inputs.as_ref().map(|inputs| dir.join(inputs));
-    let programs = suite
-        .programs
-        .iter()
-        .map(|path| {
-            // A path may start at the checkout, `{src}`, rather than in `dir`
-            let path = PathBuf::from(path.to_string_lossy().replace("{src}", &checkout));
-            Program::new(dir.join(path), dir_inputs.as_deref(), dir_expected)
-        })
-        .collect();
+    // A pattern may start at the checkout, `{src}`, rather than in `dir`
+    let resolve = |pattern: &String| dir.join(pattern.replace("{src}", &checkout));
+    let patterns: Vec<PathBuf> = suite.programs.iter().map(resolve).collect();
+    let mut skipped = BTreeSet::new();
+    for pattern in suite.skip.iter().map(resolve) {
+        skipped.extend(glob(&pattern)?);
+    }
+    let mut listed = Vec::new();
+    for skip_list in &suite.skip_lists {
+        let dir_list = resolve(&skip_list.dir);
+        for (path, test) in self::skip_list(&resolve(&skip_list.list))? {
+            listed.push((dir_list.join(path), test));
+        }
+    }
+    let base = common_dir(patterns.iter().map(|pattern| fixed_dir(pattern)));
+    let mut programs = Vec::new();
+    let mut names = BTreeSet::new();
+    for pattern in &patterns {
+        for path in glob(pattern)? {
+            if skipped.contains(&path) {
+                continue;
+            }
+            let name = name_of(path.strip_prefix(&base).unwrap_or(&path));
+            let tests = match suite.tests {
+                None => vec![None],
+                Some(Tests::JsonKeys) => json_keys(&path)?.into_iter().map(Some).collect(),
+            };
+            for test in tests {
+                let left_out = listed.iter().any(|(path_listed, test_listed)| {
+                    *path_listed == path
+                        && match (test_listed, &test) {
+                            (None, _) => true,
+                            (Some(listed), Some(test)) => wildcard(listed, test),
+                            (Some(_), None) => false,
+                        }
+                });
+                if left_out {
+                    continue;
+                }
+                let name = match &test {
+                    Some(test) => format!("{name}/{test}"),
+                    None => name.clone(),
+                };
+                if !names.insert(name.clone()) {
+                    return Err(Error::from(format!("{}: two programs named {name}", suite.name)));
+                }
+                let program =
+                    Program::new(path.clone(), test, name, dir_inputs.as_deref(), dir_expected);
+                programs.push(program);
+            }
+        }
+    }
     let case = Case::build(&source, suite, &checkout, dir_build().join(&suite.name))?;
     Ok(Some(vec![(case, programs)]))
+}
+
+/// Whether `text` matches `pattern`, where `*` stands for any text.
+fn wildcard(pattern: &str, text: &str) -> bool {
+    match pattern.split_once('*') {
+        None => pattern == text,
+        Some((head, rest)) => {
+            let Some(text) = text.strip_prefix(head) else {
+                return false;
+            };
+            (0..=text.len())
+                .filter(|&i| text.is_char_boundary(i))
+                .any(|i| wildcard(rest, &text[i..]))
+        }
+    }
+}
+
+/// The files a pattern matches, in order; `*` matches within a component.
+fn glob(pattern: &Path) -> Result<Vec<PathBuf>> {
+    let mut paths = vec![PathBuf::new()];
+    for component in pattern.components() {
+        let Component::Normal(part) = component else {
+            paths.iter_mut().for_each(|path| path.push(component));
+            continue;
+        };
+        let part = part.to_string_lossy();
+        if !part.contains('*') {
+            paths.iter_mut().for_each(|path| path.push(&*part));
+            continue;
+        }
+        let mut next = Vec::new();
+        for path in paths.iter().filter(|path| path.is_dir()) {
+            for entry in files(path)? {
+                let name = entry
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .into_owned();
+                if wildcard(&part, &name) {
+                    next.push(entry);
+                }
+            }
+        }
+        paths = next;
+    }
+    let mut paths: Vec<PathBuf> = paths.into_iter().filter(|path| path.is_file()).collect();
+    paths.sort();
+    Ok(paths)
+}
+
+/// The directory of a pattern before its first `*`.
+fn fixed_dir(pattern: &Path) -> PathBuf {
+    let fixed: PathBuf = pattern
+        .components()
+        .take_while(|component| !component.as_os_str().to_string_lossy().contains('*'))
+        .collect();
+    if fixed == pattern { fixed.parent().map(Path::to_path_buf).unwrap_or_default() } else { fixed }
+}
+
+/// The longest directory all of `dirs` are in.
+fn common_dir(dirs: impl Iterator<Item = PathBuf>) -> PathBuf {
+    dirs.reduce(|common, dir| {
+        common
+            .components()
+            .zip(dir.components())
+            .take_while(|(a, b)| a == b)
+            .map(|(a, _)| a)
+            .collect()
+    })
+    .unwrap_or_default()
+}
+
+/// A program's name: its path without the extensions of its file.
+fn name_of(path: &Path) -> String {
+    let file = path.file_name().unwrap_or_default().to_string_lossy();
+    let stem = file.split_once('.').map_or(&*file, |(stem, _)| stem);
+    path.with_file_name(stem).to_string_lossy().into_owned()
+}
+
+/// The entries of a skip list, without blank lines and `#` comments.
+fn skip_list(path: &Path) -> Result<Vec<(PathBuf, Option<String>)>> {
+    let text = fs::read_to_string(path)
+        .map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
+    Ok(text
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .map(|line| match line.split_once(',') {
+            Some((path, test)) => (PathBuf::from(path), Some(test.to_owned())),
+            None => (PathBuf::from(line), None),
+        })
+        .collect())
+}
+
+/// The keys of the JSON object in a file, its tests.
+fn json_keys(path: &Path) -> Result<Vec<String>> {
+    let text = fs::read_to_string(path)?;
+    let value: serde_json::Value = serde_json::from_str(&text)
+        .map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
+    let object = value
+        .as_object()
+        .ok_or_else(|| Error::from(format!("{}: not a JSON object", path.display())))?;
+    Ok(object.keys().cloned().collect())
 }
 
 /// The case in `dir_case`, its one `.k` file built, with its programs in order.
@@ -189,7 +361,14 @@ fn group_case<'a>(suite: &'a KInStSuite, dir_case: &Path) -> Result<Group<'a>> {
     let mut programs: Vec<_> = entries
         .iter()
         .filter(|path| has_extension(path, &suite.ext))
-        .map(|path| Program::new(path.clone(), None, dir_case))
+        .map(|path| {
+            let stem = path
+                .file_stem()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .into_owned();
+            Program::new(path.clone(), None, stem, None, dir_case)
+        })
         .collect();
     programs.sort_by(|a, b| a.path.cmp(&b.path));
     Ok((case, programs))

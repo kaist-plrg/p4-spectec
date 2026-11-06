@@ -4,9 +4,6 @@ default schedule). Runs in the Python environment of kevm-pyk
 (uv run --project <evm-semantics>/kevm-pyk).
 
 usage: init.py <file.json> <test> <out.kore>
-
-The test may be named with its directory, as <group>/<test>: two files of the
-VMTests hold tests of the same name.
 """
 import json
 import sys
@@ -16,7 +13,6 @@ from kevm_pyk.interpreter import iterate_gst
 
 def main():
     path, test, out = sys.argv[1:]
-    test = test.rsplit("/", 1)[-1]
     for name, kore in iterate_gst(json.load(open(path)), "VMTESTS", 1, True, schedule="DEFAULT"):
         if name == test:
             with open(out, "w") as fh:
