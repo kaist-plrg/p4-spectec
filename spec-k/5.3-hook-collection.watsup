@@ -1,5 +1,5 @@
 ;;
-;; Hooks of collections: lists, maps, and sets
+;; Hooks of collections: lists, maps, sets, and range maps
 ;;
 
 ;;; The result sort of the hooked symbol, sort, is the sort of the collection
@@ -173,6 +173,202 @@ def $hook(D, "SET.set2list", sort, ([SET sort_s `{ term* `}]))
 
 def $hook(D, "SET.list2set", sort, ([LIST sort_l term*]))
   = OK (SET sort $sorted_set<term>(`{ term* `}))
+
+;;; RANGEMAP: maps from ranges of Int keys, as domains.md and the LLVM backend
+;;; have them (only Int keys, "due to limitations of the underlying ordering
+;;; function"). Inserting cuts the ranges it overlaps and merges those it
+;;; touches with the same value.
+
+dec $imin(int, int) : int
+def $imin(i_1, i_2) = i_1
+  -- if $(i_1 <= i_2)
+def $imin(i_1, i_2) = i_2
+  -- if $(i_1 > i_2)
+
+dec $imax(int, int) : int
+def $imax(i_1, i_2) = i_1
+  -- if $(i_1 >= i_2)
+def $imax(i_1, i_2) = i_2
+  -- if $(i_1 < i_2)
+
+;; Whether a range overlaps [i_s, i_e)
+
+dec $overlaps(int, int, rangeitem) : bool
+def $overlaps(i_s, i_e, RANGE i_rs i_re term) = $(i_re > i_s) /\ $(i_e > i_rs)
+
+;; The parts of [i_rs, i_re) outside [i_a, i_b), with value term
+
+dec $left_part(int, int, term) : rangeitem*
+def $left_part(i_rs, i_a, term) = [ RANGE i_rs i_a term ]
+  -- if $(i_rs < i_a)
+def $left_part(i_rs, i_a, term) = eps
+  -- if $(i_rs >= i_a)
+
+dec $right_part(int, int, term) : rangeitem*
+def $right_part(i_b, i_re, term) = [ RANGE i_b i_re term ]
+  -- if $(i_re > i_b)
+def $right_part(i_b, i_re, term) = eps
+  -- if $(i_re <= i_b)
+
+dec $outside(int, int, int, int, term) : rangeitem*
+def $outside(i_rs, i_re, i_a, i_b, term)
+  = $left_part(i_rs, i_a, term) ++ $right_part(i_b, i_re, term)
+
+;; Removing [i_s, i_e): the ranges it overlaps are cut outside it
+
+dec $rm_remove(rangeitem*, int, int) : rangeitem*
+def $rm_remove(eps, i_s, i_e) = eps
+def $rm_remove((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e)
+  = $outside(i_rs, i_re, i_s, i_e, term_r) ++ $rm_remove(rangeitem_t*, i_s, i_e)
+  -- if $overlaps(i_s, i_e, RANGE i_rs i_re term_r)
+def $rm_remove((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e)
+  = (RANGE i_rs i_re term_r) :: $rm_remove(rangeitem_t*, i_s, i_e)
+  -- if ~$overlaps(i_s, i_e, RANGE i_rs i_re term_r)
+
+dec $rm_remove_all(rangeitem*, (int, int)*) : rangeitem*
+def $rm_remove_all(rangeitem*, eps) = rangeitem*
+def $rm_remove_all(rangeitem*, (i_s, i_e) :: (i_ts, i_te)*)
+  = $rm_remove_all($rm_remove(rangeitem*, i_s, i_e), (i_ts, i_te)*)
+
+;; Inserting [i_s, i_e) |-> term: the range removed, the new one placed by its
+;; start, and the ranges it touches with the same value merged with it
+
+dec $place(rangeitem*, rangeitem) : rangeitem*
+def $place(eps, rangeitem) = [ rangeitem ]
+def $place((RANGE i_rs i_re term_r) :: rangeitem_t*, RANGE i_s i_e term)
+  = (RANGE i_s i_e term) :: (RANGE i_rs i_re term_r) :: rangeitem_t*
+  -- if $(i_s < i_rs)
+def $place((RANGE i_rs i_re term_r) :: rangeitem_t*, RANGE i_s i_e term)
+  = (RANGE i_rs i_re term_r) :: $place(rangeitem_t*, RANGE i_s i_e term)
+  -- if $(i_s >= i_rs)
+
+dec $rm_insert(rangeitem*, int, int, term) : rangeitem*
+  hint(prose_in %0 "with" %1 "to" %2 "mapped to" %3)
+def $rm_insert(rangeitem*, i_s, i_e, term)
+  = $merge_ranges($place($rm_remove(rangeitem*, i_s, i_e), RANGE i_s i_e term))
+
+dec $rm_insert_all(rangeitem*, rangeitem*) : rangeitem*
+def $rm_insert_all(rangeitem*, eps) = rangeitem*
+def $rm_insert_all(rangeitem*, (RANGE i_s i_e term) :: rangeitem_t*)
+  = $rm_insert_all($rm_insert(rangeitem*, i_s, i_e, term), rangeitem_t*)
+
+dec $rm_lookup(rangeitem*, int) : rangeitem?
+def $rm_lookup(eps, i) = eps
+def $rm_lookup((RANGE i_s i_e term) :: rangeitem_t*, i) = RANGE i_s i_e term
+  -- if $(i_s <= i) /\ $(i < i_e)
+def $rm_lookup((RANGE i_s i_e term) :: rangeitem_t*, i) = $rm_lookup(rangeitem_t*, i)
+  -- if ~($(i_s <= i) /\ $(i < i_e))
+
+;; Concatenation requires that no ranges overlap
+
+dec $overlaps_any(rangeitem*, int, int) : bool
+def $overlaps_any(eps, i_s, i_e) = false
+def $overlaps_any(rangeitem_h :: rangeitem_t*, i_s, i_e)
+  = $overlaps(i_s, i_e, rangeitem_h) \/ $overlaps_any(rangeitem_t*, i_s, i_e)
+
+dec $disjoint(rangeitem*, rangeitem*) : bool
+def $disjoint(rangeitem*, eps) = true
+def $disjoint(rangeitem*, (RANGE i_s i_e term) :: rangeitem_t*)
+  = ~$overlaps_any(rangeitem*, i_s, i_e) /\ $disjoint(rangeitem*, rangeitem_t*)
+
+;; Where two range maps agree: the overlaps of their ranges with equal values
+;; (get_intersection_ranges of the LLVM backend)
+
+dec $agree_one(rangeitem, rangeitem*) : (int, int)*
+def $agree_one(rangeitem, eps) = eps
+def $agree_one(RANGE i_s i_e term, (RANGE i_s' i_e' term') :: rangeitem_t*)
+  = ($imax(i_s, i_s'), $imin(i_e, i_e')) :: $agree_one(RANGE i_s i_e term, rangeitem_t*)
+  -- if $overlaps(i_s, i_e, RANGE i_s' i_e' term') /\ term = term'
+def $agree_one(RANGE i_s i_e term, (RANGE i_s' i_e' term') :: rangeitem_t*)
+  = $agree_one(RANGE i_s i_e term, rangeitem_t*)
+  -- if ~($overlaps(i_s, i_e, RANGE i_s' i_e' term') /\ term = term')
+
+dec $agree(rangeitem*, rangeitem*) : (int, int)*
+def $agree(eps, rangeitem'*) = eps
+def $agree(rangeitem_h :: rangeitem_t*, rangeitem'*)
+  = $agree_one(rangeitem_h, rangeitem'*) ++ $agree(rangeitem_t*, rangeitem'*)
+
+dec $range_pairs(rangeitem*) : (int, int)*
+def $range_pairs((RANGE i_s i_e term)*) = (i_s, i_e)*
+
+;; The ranges of a set of range keys; another element fails
+
+dec $set_ranges(term*) : res<(int, int)*>
+def $set_ranges(eps) = OK eps
+def $set_ranges(term_h :: term_t*) = OK ((i_s, i_e) :: (i_ts, i_te)*)
+  -- if (i_s, i_e) = $range_bounds(term_h)
+  -- if OK (i_ts, i_te)* = $set_ranges(term_t*)
+def $set_ranges(term*) = ERROR
+  -- otherwise
+
+;; An empty range [i_s, i_e), i_s >= i_e, given to insert or remove fails, as in
+;; the LLVM backend; the ranges of a range map are never empty
+
+def $hook(D, "RANGEMAP.unit", sort, eps) = OK (RANGEMAP sort eps)
+def $hook(D, "RANGEMAP.elementRng", sort, ([term_r, term_v]))
+  = OK (RANGEMAP sort $rm_insert(eps, i_s, i_e, term_v))
+  -- if (i_s, i_e) = $range_bounds(term_r)
+  -- if $(i_s < i_e)
+def $hook(D, "RANGEMAP.concat", sort,
+          ([RANGEMAP sort_1 rangeitem_1*, RANGEMAP sort_2 rangeitem_2*]))
+  = OK (RANGEMAP sort $rm_insert_all(rangeitem_1*, rangeitem_2*))
+  -- if $disjoint(rangeitem_1*, rangeitem_2*)
+def $hook(D, "RANGEMAP.updateRng", sort, ([RANGEMAP sort_m rangeitem_m*, term_r, term_v]))
+  = OK (RANGEMAP sort_m $rm_insert(rangeitem_m*, i_s, i_e, term_v))
+  -- if (i_s, i_e) = $range_bounds(term_r)
+  -- if $(i_s < i_e)
+def $hook(D, "RANGEMAP.updateAll", sort,
+          ([RANGEMAP sort_1 rangeitem_1*, RANGEMAP sort_2 rangeitem_2*]))
+  = OK (RANGEMAP sort_1 $rm_insert_all(rangeitem_1*, rangeitem_2*))
+def $hook(D, "RANGEMAP.removeRng", sort, ([RANGEMAP sort_m rangeitem_m*, term_r]))
+  = OK (RANGEMAP sort_m $rm_remove(rangeitem_m*, i_s, i_e))
+  -- if (i_s, i_e) = $range_bounds(term_r)
+  -- if $(i_s < i_e)
+def $hook(D, "RANGEMAP.removeAll", sort,
+          ([RANGEMAP sort_m rangeitem_m*, SET sort_s `{ term* `}]))
+  = OK (RANGEMAP sort_m $rm_remove_all(rangeitem_m*, (i_s, i_e)*))
+  -- if OK (i_s, i_e)* = $set_ranges(term*)
+  -- if $forall_($(i_s < i_e)*)
+def $hook(D, "RANGEMAP.difference", sort,
+          ([RANGEMAP sort_1 rangeitem_1*, RANGEMAP sort_2 rangeitem_2*]))
+  = OK (RANGEMAP sort_1 $rm_remove_all(rangeitem_1*, $agree(rangeitem_1*, rangeitem_2*)))
+def $hook(D, "RANGEMAP.inclusion", sort,
+          ([RANGEMAP sort_1 rangeitem_1*, RANGEMAP sort_2 rangeitem_2*]))
+  = OK (DV sort $bool_text($range_pairs(rangeitem_1*) = $agree(rangeitem_1*, rangeitem_2*)))
+def $hook(D, "RANGEMAP.lookup", sort, ([RANGEMAP sort_m rangeitem*, term_k])) = OK term_v
+  -- if i = $key_int(term_k)
+  -- if (RANGE i_s i_e term_v) = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.lookupOrDefault", sort, ([RANGEMAP sort_m rangeitem*, term_k, term_d]))
+  = OK term_v
+  -- if i = $key_int(term_k)
+  -- if (RANGE i_s i_e term_v) = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.lookupOrDefault", sort, ([RANGEMAP sort_m rangeitem*, term_k, term_d]))
+  = OK term_d
+  -- if i = $key_int(term_k)
+  -- if eps = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.find_range", sort, ([RANGEMAP sort_m rangeitem*, term_k]))
+  = OK $range_term(i_s, i_e)
+  -- if i = $key_int(term_k)
+  -- if (RANGE i_s i_e term_v) = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.in_keys", sort, ([term_k, RANGEMAP sort_m rangeitem*]))
+  = OK (DV sort "true")
+  -- if i = $key_int(term_k)
+  -- if (RANGE i_s i_e term_v) = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.in_keys", sort, ([term_k, RANGEMAP sort_m rangeitem*]))
+  = OK (DV sort "false")
+  -- if i = $key_int(term_k)
+  -- if eps = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.keys", sort, ([RANGEMAP sort_m (RANGE i_s i_e term)*]))
+  = OK (SET sort $sorted_set<term>(`{ $range_key(i_s, i_e)* `}))
+def $hook(D, "RANGEMAP.keys_list", sort, ([RANGEMAP sort_m (RANGE i_s i_e term)*]))
+  = OK (LIST sort $range_key(i_s, i_e)*)
+def $hook(D, "RANGEMAP.values", sort, ([RANGEMAP sort_m (RANGE i_s i_e term)*]))
+  = OK (LIST sort term*)
+def $hook(D, "RANGEMAP.size", sort, ([RANGEMAP sort_m rangeitem*]))
+  = OK (DV sort $int_text($(|rangeitem*|)))
+;; choice: the start of the first range, as hook_RANGEMAP_choice gives a key
+def $hook(D, "RANGEMAP.choice", sort, ([RANGEMAP sort_m ((RANGE i_s i_e term) :: rangeitem_t*)]))
+  = OK $int_key(i_s)
 
 ;;; Any other hook on K terms is not supported (yet)
 

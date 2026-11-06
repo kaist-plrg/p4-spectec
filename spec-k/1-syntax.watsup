@@ -22,12 +22,21 @@ syntax sort =
 ;; token of an unhooked sort such as an Id. The same K value has the same
 ;; text, so equality of terms is equality of values.
 
+syntax rangeitem
+
 syntax term =
   | APP symid sort* term*     ;; symbol application, including inj and kseq
   | DV sort text              ;; domain value
   | MAP sort (map<term, term>)
   | SET sort (set<term>)
   | LIST sort term*
+  | RANGEMAP sort rangeitem*  ;; RANGEMAP.RangeMap, its ranges by start
+
+;; A range [start, end) of Int keys and its value. The ranges of a range map
+;; do not overlap, and adjacent ones have different values, so a range map
+;; has one form, as the LLVM backend's rangemap.h keeps it.
+
+syntax rangeitem = RANGE int int term
 
 ;; Patterns
 
