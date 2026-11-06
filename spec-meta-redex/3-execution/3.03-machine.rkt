@@ -5,7 +5,7 @@
 ;;
 ;; An AL phrase evaluates in place, and every other relation has a machine
 ;; form; the three extern relations are reduction rules on theirs, which call
-;; the host procedures of 3.04.2-extern-host.rkt. Frames give the evaluation
+;; the host procedures of 3.04-extern-host.rkt. Frames give the evaluation
 ;; positions. An evaluated expression is its value, and a constructor whose
 ;; parts are all values is a value, so a frame writes val for an evaluated
 ;; subterm and exp for one still to evaluate. watsup's ok<ctx> is (IN L OK):

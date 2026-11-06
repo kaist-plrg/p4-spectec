@@ -2,24 +2,18 @@
 //!
 //! ST-in-Redex runs spec-meta-redex, the AL semantics written in PLT Redex,
 //! as the base, on a `EngineRedex`. Every payload crossing this boundary is
-//! JSON text held in a `text` value (`make::text`, `get::text`), in the format
-//! of `json` and `serve`, the same as spec-meta-k's, except that a specification
-//! is the s-expression text of a `spec` term in a JSON string (`sexp`).
-//! `load` passes the AL specification above to the base as `{"load": sexp}`,
+//! s-expression text held in a `text` value (`make::text`, `get::text`),
+//! in the format of `serve`: the Redex terms themselves, which Racket reads
+//! with `read`, printed by `sexp` and read back by `read`.
+//! `load` passes the AL specification above to the base as `(load spec)`,
 //! and the base returns C, its handle of the loaded specification;
 //! `encode_entry` encodes the inputs of the base's entry;
 //! `lower`, `raise`, `host`, and `reply` are `serve`'s.
 
-use super::{
-    json::{Cache, Writer},
-    serve::{self, request},
-    sexp,
-};
+use super::{cache::Cache, serve, sexp};
 use crate::metacirc::protocol::{Below, Call, Entered, HostCall, Output, Protocol, Values};
 use crate::{
-    diagnostic::Report,
     lang::{
-        al::ast as al,
         common::source::Span,
         data::{
             arena::Arena,
@@ -58,13 +52,13 @@ impl Protocol for ProtocolStRedex {
 
     /// Loads the AL specification of `above` into spec-meta-redex, returning C.
     ///
-    /// C is the value the base returns for `{"load": sexp}`, kept for the whole program.
+    /// C is the value the base returns for `(load spec)`, kept for the whole program.
     fn load(below: &mut dyn Below, above: &PreparedLevel) -> Result<Value, InterpreterError> {
         let PreparedLevel::Al { spec_al, .. } = above else {
             let message = "spec-meta-redex loads only a level passed to it as AL";
             return Err(ExternError::diagnostic_message(message).into());
         };
-        let request = spec_request(request::LOAD, spec_al);
+        let request = serve::load_request(&sexp::script(spec_al));
         let value_request =
             make::text(below.arena(), request, Span::default()).map_err(ExternError::from)?;
         let call = Call::Rel { name: Self::LOAD, values: Values::Borrowed(&[value_request]) };
@@ -72,11 +66,11 @@ impl Protocol for ProtocolStRedex {
         Ok(*value::get::one(&values).map_err(ExternError::from)?)
     }
 
-    /// Encodes the inputs of the base's entry as JSON text.
+    /// Encodes the inputs of the base's entry as s-expression text.
     ///
     /// `Eval_AL_rel` and `Eval_AL_func` take the AL specification `above`
     /// as the s-expression text of a `spec` term, the name of its entry,
-    /// and `values`, the entry's inputs: `"sexp"`, `"name"`, and `[val...]`,
+    /// and `values`, the entry's inputs: `spec`, `"name"`, and `(val ...)`,
     /// which `EngineRedex::call_rel` passes on.
     fn encode_entry(
         arena: &mut Arena,
@@ -88,9 +82,7 @@ impl Protocol for ProtocolStRedex {
             let message = "spec-meta-redex enters only a level passed to it as AL";
             return Err(error::config_invalid(message));
         };
-        let mut writer = Writer::new();
-        writer.text(&sexp::script(spec_al));
-        serve::entry_inputs(arena, writer.finish(), name, values)
+        serve::entry_inputs(arena, sexp::script(spec_al), name, values)
     }
 
     /// Wraps `call` of the AL level above as `serve(C, request)` on spec-meta-redex.
@@ -103,7 +95,7 @@ impl Protocol for ProtocolStRedex {
         serve::lower(arena, &mut self.cache, value_ctx, call)
     }
 
-    /// Unwraps the JSON answer of spec-meta-redex into the output of `call`.
+    /// Unwraps the answer of spec-meta-redex into the output of `call`.
     fn raise(
         &mut self,
         arena: &mut Arena,
@@ -123,7 +115,7 @@ impl Protocol for ProtocolStRedex {
         serve::host(arena, &mut self.cache, name, values)
     }
 
-    /// Encodes the outcome of a host call as the JSON text answering the request.
+    /// Encodes the outcome of a host call as the text answering the request.
     fn reply(
         &mut self,
         arena: &mut Arena,
@@ -157,8 +149,8 @@ impl ProtocolStRedex {
 // == The engine's side
 
 impl ProtocolStRedex {
-    /// The requests that run spec-meta-redex's entry `name` on `values`,
-    /// the JSON texts `sexp`, `id`, and `args` that `encode_entry` made.
+    /// The calls that run spec-meta-redex's entry `name` on `values`,
+    /// the texts `spec`, `"id"`, and `(val ...)` that `encode_entry` made.
     pub(in crate::metacirc) fn entry_requests(
         arena: &Arena,
         name: &str,
@@ -172,36 +164,26 @@ impl ProtocolStRedex {
     pub(in crate::metacirc) fn entry_outputs(
         arena: &mut Arena,
         name: &str,
-        value_answer: Value,
+        answer: &str,
     ) -> Result<Vec<Value>, InterpreterError> {
-        serve::entry_outputs(arena, name, value_answer)
+        serve::entry_outputs(arena, name, answer)
     }
 
-    /// Checks the answer to a load request, `{"ok": []}`.
+    /// Checks the answer to a load, `(OK ())`.
     pub(in crate::metacirc) fn load_answer(
         arena: &mut Arena,
-        value_answer: Value,
+        answer: &str,
     ) -> Result<(), InterpreterError> {
-        serve::load_answer(arena, value_answer)
+        serve::load_answer(arena, answer)
     }
 
-    /// The response telling spec-meta-redex that a host call failed with `report`.
-    pub(in crate::metacirc) fn error_response(report: &Report) -> String {
-        serve::error_response(report)
-    }
+    /// The response telling spec-meta-redex that a host call failed;
+    /// the engine reports why.
+    pub(in crate::metacirc) const ERROR_RESPONSE: &str = serve::ERROR;
 
-    /// The request that ends spec-meta-redex's serve loop.
-    pub(in crate::metacirc) fn exit_request() -> String {
-        serve::exit_request()
-    }
-}
+    /// The answer of spec-meta-redex before its first call.
+    pub(in crate::metacirc) const READY: &str = serve::READY;
 
-/// `{key: sexp}`, a call of the serve loop carrying a specification.
-fn spec_request(key: &str, spec_al: &al::Spec) -> String {
-    let mut writer = Writer::new();
-    writer.object(|writer| {
-        writer.key(key);
-        writer.text(&sexp::script(spec_al));
-    });
-    writer.finish()
+    /// The call that ends spec-meta-redex's serve loop.
+    pub(in crate::metacirc) const EXIT: &str = serve::EXIT;
 }

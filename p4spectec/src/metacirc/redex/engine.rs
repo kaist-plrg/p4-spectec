@@ -4,10 +4,10 @@
 //! as the base. `RuntimeRedex` runs its entry module in one `racket` process
 //! per tower, serving every reentry depth; a depth's `StateRedex`
 //! is lent as a `EngineRedex`.
-//! A call writes a request to the process as one line of JSON text and reads
-//! lines until its answer; a host request the process makes while serving
+//! A call writes a request to the process as one line of s-expression text and
+//! reads lines until its answer; a host request the process makes while serving
 //! is answered through `UpperMut::host_call`, and the response written back.
-//! Arena values never leave this process, only JSON text does.
+//! Arena values never leave this process, only s-expression text does.
 //! `ProtocolStRedex` makes the requests and reads the answers;
 //! the engine only carries them, and loads C into the process when it holds
 //! another specification.
@@ -52,10 +52,10 @@ impl<'s> EngineRedex<'s> {
     }
 }
 
-/// Every call sends JSON text to the process and returns JSON text:
+/// Every call sends s-expression text to the process and returns s-expression text:
 /// `ProtocolStRedex` makes the requests and reads the responses.
 impl Engine for EngineRedex<'_> {
-    /// Sends relation `name` with JSON text `values` to the serve loop,
+    /// Sends relation `name` with s-expression text `values` to the serve loop,
     /// answering each host request of the process with
     /// `upper.host_call(arena, "host_eval", &[request])` until the answer arrives.
     ///
@@ -132,8 +132,7 @@ impl EngineRedex<'_> {
         let key = self.runtime.register(&request_load);
         self.ensure_loaded(arena, upper, effects, key)?;
         let answer = self.exchange(arena, upper, effects, &request_call)?;
-        let value_answer = make_text(arena, answer)?;
-        ProtocolStRedex::entry_outputs(arena, name, value_answer)
+        ProtocolStRedex::entry_outputs(arena, name, &answer)
     }
 
     /// Sends a request under C, loading C's specification into the process first if needed.
@@ -171,15 +170,14 @@ impl EngineRedex<'_> {
             .ok_or_else(|| InterpreterError::Fatal(failed(format!("no load request {key}"))))?;
         self.runtime.set_loaded(None);
         let answer = self.exchange(arena, upper, effects, &request)?;
-        let value_answer = make_text(arena, answer)?;
-        ProtocolStRedex::load_answer(arena, value_answer)?;
+        ProtocolStRedex::load_answer(arena, &answer)?;
         self.runtime.set_loaded(Some(key));
         Ok(())
     }
 
     /// Sends `request` and serves the process's host requests until its answer.
     ///
-    /// A host call that fails fatally is answered with an error,
+    /// A host call that fails fatally is answered with ERROR,
     /// which spec-meta-redex turns into ERROR; the call then fails with its report.
     /// The pipe is not borrowed across `upper.host_call`, which may nest an exchange.
     fn exchange<Ext: Extern>(
@@ -203,9 +201,8 @@ impl EngineRedex<'_> {
                 Line::Eval(request) => {
                     let response =
                         host_call(arena, upper, effects, request).unwrap_or_else(|report| {
-                            let response = ProtocolStRedex::error_response(&report);
                             report_fatal.get_or_insert(report);
-                            response
+                            ProtocolStRedex::ERROR_RESPONSE.to_owned()
                         });
                     self.runtime.send(&response)?;
                 }
@@ -250,12 +247,12 @@ fn host_call<Ext: Extern>(
     Ok(response)
 }
 
-/// Reads a JSON text value.
+/// Reads a text value.
 fn text<'a>(arena: &'a Arena, value: &Value) -> std::result::Result<&'a str, InterpreterError> {
     get::text(arena, value).map_err(|error| InterpreterError::Fatal(failed(error.to_string())))
 }
 
-/// Makes a JSON text value.
+/// Makes a text value.
 fn make_text(arena: &mut Arena, text: String) -> std::result::Result<Value, InterpreterError> {
     make::text(arena, text, Span::default())
         .map_err(|error| InterpreterError::Fatal(failed(error.to_string())))

@@ -223,9 +223,14 @@ prints the run as `krun` does; `make test-metacirc-k-in-st` compares it with
 over a K definition, which is not implemented.
 
 ST-in-Redex adds the `redex/` backend: `EngineRedex`, one `racket` process per
-tower shared by every reentry depth, and `ProtocolStRedex`, whose JSON
-(`redex/json.rs`, `redex/serve.rs`) is the same as the K backend's but kept
-as its own copy; its entry `Eval_AL_rel` or
+tower shared by every reentry depth, and `ProtocolStRedex`. Every call, answer, host
+request, and response across this boundary is one line holding an s-expression
+that Racket reads with `read` and prints with `write` (`redex/serve.rs`):
+values and types are spec-meta-redex's `val` and `typ` terms, and answers and
+responses its results, so Racket converts nothing. `redex/sexp.rs` prints the
+specification, values, and types, and `redex/read.rs` reads back what `write`
+prints; an extern value carries its JSON text as a string, which Racket holds
+without reading. Its entry `Eval_AL_rel` or
 `Eval_AL_func` loads the specification and calls its relation or function, as
 `spec-meta-redex/3-execution/3.16-entry.rkt` serves them. `make redex` compiles the entry
 module, and `make test-metacirc-run-redex`, `test-metacirc-micro-redex`, and

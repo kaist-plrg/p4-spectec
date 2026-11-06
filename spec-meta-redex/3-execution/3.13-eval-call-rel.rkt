@@ -12,7 +12,7 @@
 (require redex/reduction-semantics
          "3.02-context.rkt"
          "3.03-machine.rkt"
-         "3.04.2-extern-host.rkt")
+         "3.04-extern-host.rkt")
 (provide ->term/eval-call-rel
          ->term+ctx/eval-call-rel)
 

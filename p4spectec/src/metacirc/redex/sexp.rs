@@ -1,14 +1,33 @@
-//! AL specifications as Racket-readable s-expressions, for spec-meta-redex
+//! The s-expressions that spec-meta-redex reads, as Racket's `read` reads them
 //!
-//! `ToSexp` gives each node of the AL syntax its s-expression, as `read` in
-//! `spec-meta-redex/3-execution/3.16-entry.rkt` reads a `spec` term. A keyword
-//! case prints as `(KEYWORD arg ...)`, or `KEYWORD` alone without arguments;
-//! a record without a keyword (`vari`, `typcase`, `rulpath`, …) prints as
-//! the list of its fields. Options are lists of length zero or one, and
-//! `var` definitions, signatures, hints and operand types are omitted, as
-//! the Redex syntax expects.
+//! Every call and response to spec-meta-redex (`serve`) is one line holding one s-expression,
+//! which `read` in `spec-meta-redex/3-execution/3.04-extern-host.rkt` takes as a Redex term.
+//!
+//! `ToSexp` gives each node of the AL syntax its s-expression, as a `spec` term (`script`).
+//! A keyword case prints as `(KEYWORD arg ...)`, or `KEYWORD` alone without arguments;
+//! a record without a keyword (`vari`, `typcase`, `rulpath`, …) prints as the list of its fields.
+//! Options are lists of length zero or one,
+//! and `var` definitions, signatures, hints and operand types are omitted,
+//! as the Redex syntax expects.
+//!
+//! `write_value` and `write_typ` print values and types as the `val` and `typ` terms
+//! of spec-meta-redex (`2-runtime/2.0-value.rkt`, `1-syntax/1.0-syntax.rkt`):
+//!
+//! ```text
+//! val   ::= (BOOL #t) | (BOOL #f) | (NAT n) | (INT i) | (TEXT "text")
+//!         | (STR (("atom" val) ...)) | (INJ (mixop (val ...)))
+//!         | (TUP (val ...)) | (OPT ()) | (OPT (val)) | (LIST (val ...))
+//!         | (FUNC "id") | (EXT "json")
+//! mixop ::= (("atom" ...) ...)        atoms between argument positions
+//! typ   ::= BOOL | NAT | INT | TEXT | (VAR "id" (typ ...)) | (TUP (typ ...))
+//!         | (ITER typ QUEST) | (ITER typ STAR) | (FUNC ("id" ...) (typ ...) typ)
+//! ```
+//!
+//! Atoms travel in their printed spelling.
+//! An extern value's payload is its JSON text in a string,
+//! which spec-meta-redex holds without reading it.
 
-use super::json::rows_tree;
+use super::cache::Cache;
 use crate::lang::{
     al::ast as al,
     common::{
@@ -19,8 +38,10 @@ use crate::lang::{
         },
     },
     data::{
-        notation::AtomPhrase,
+        arena::Arena,
+        notation::{AtomPhrase, flat::Mixop, items::Item, tree},
         typ::{Typ, TypKind},
+        value::flat::{Value, ValueKind},
     },
     hints::input::{self, InputHint},
     il::ast as il,
@@ -35,9 +56,9 @@ fn split_inputs<'a, T>(hint: &InputHint, items: &'a [T]) -> (Vec<&'a T>, Vec<&'a
     input::split(hint, items.iter().collect()).expect("input hint must fit relation")
 }
 
-/// The `script` of `spec`: its definitions, one per line.
+/// The `script` of `spec`: the list of its definitions.
 pub(super) fn script(spec: &al::Spec) -> String {
-    Script(spec.iter().filter_map(def).collect()).to_string()
+    Sexp::List(spec.iter().filter_map(def).collect()).to_string()
 }
 
 // == Terms
@@ -91,20 +112,6 @@ impl fmt::Display for Sexp {
                 fmt.write_char(')')
             }
         }
-    }
-}
-
-/// A `script`: its definitions, one per line.
-struct Script(Vec<Sexp>);
-
-impl fmt::Display for Script {
-    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt.write_char('(')?;
-        for defn in &self.0 {
-            writeln!(fmt)?;
-            defn.fmt(fmt)?;
-        }
-        fmt.write_str("\n)")
     }
 }
 
@@ -508,4 +515,132 @@ fn def(def: &al::Def) -> Option<Sexp> {
             )
         }
     })
+}
+
+// == Notation
+
+/// The atom rows between argument positions, from a visit of the notation.
+///
+/// A mixop with n holes gives n + 1 rows, including empty boundary rows.
+fn rows<'a>(visit: impl FnOnce(&mut dyn FnMut(Item<'a, usize>))) -> Vec<Vec<&'a AtomPhrase>> {
+    let mut rows = vec![vec![]];
+    visit(&mut |item| match item {
+        Item::Arg(_) => rows.push(vec![]),
+        Item::Atom(atom) => rows.last_mut().expect("rows start nonempty").push(atom),
+    });
+    rows
+}
+
+/// The atom rows of tree notation, as the specification writes it.
+fn rows_tree(mixop: &tree::Mixop) -> Vec<Vec<&AtomPhrase>> {
+    rows(|visit_item| mixop.visit(visit_item))
+}
+
+// == Values and types
+
+/// Appends `text` as a string literal that `read` reads back as `text`.
+pub(super) fn write_string(out: &mut String, text: &str) {
+    write!(out, "{}", RacketString(text)).expect("writing to a string succeeds");
+}
+
+/// Appends a list of `items`, each printed by `write_item`.
+fn write_list<T>(
+    out: &mut String,
+    items: impl IntoIterator<Item = T>,
+    mut write_item: impl FnMut(&mut String, T),
+) {
+    out.push('(');
+    for (idx, item) in items.into_iter().enumerate() {
+        if idx > 0 {
+            out.push(' ');
+        }
+        write_item(out, item);
+    }
+    out.push(')');
+}
+
+fn write_typ(out: &mut String, typ: &Typ) {
+    write!(out, "{}", typ.sexp()).expect("writing to a string succeeds");
+}
+
+/// Appends `(typ ...)`.
+pub(super) fn write_typs(out: &mut String, typs: &[Typ]) {
+    write_list(out, typs, write_typ);
+}
+
+/// Appends the atom rows of a value's notation, printed once per notation.
+fn write_mixop(out: &mut String, arena: &Arena, cache: &mut Cache, mixop: Mixop) {
+    if let Some(text) = cache.mixops_out.get(&mixop) {
+        out.push_str(text);
+        return;
+    }
+    let text = rows(|visit_item| mixop.visit(&arena.mixop, visit_item))
+        .sexp()
+        .to_string();
+    out.push_str(&text);
+    if cache.enabled {
+        cache.mixops_out.insert(mixop, text);
+    }
+}
+
+/// Appends `value` as a `val` term.
+pub(super) fn write_value(out: &mut String, arena: &Arena, cache: &mut Cache, value: Value) {
+    match arena.value.kind(value.node) {
+        ValueKind::Bool(value) => out.push_str(if *value { "(BOOL #t)" } else { "(BOOL #f)" }),
+        ValueKind::Num(Number::Nat(nat)) => write!(out, "(NAT {nat})").expect("writing succeeds"),
+        ValueKind::Num(Number::Int(int)) => write!(out, "(INT {int})").expect("writing succeeds"),
+        ValueKind::Text(text) => {
+            out.push_str("(TEXT ");
+            write_string(out, text);
+            out.push(')');
+        }
+        ValueKind::Struct(fields) => {
+            out.push_str("(STR ");
+            write_list(out, fields, |out, field| {
+                out.push('(');
+                write_string(out, &Print::to_string(&field.atom.node));
+                out.push(' ');
+                write_value(out, arena, cache, field.value);
+                out.push(')');
+            });
+            out.push(')');
+        }
+        ValueKind::Case(case) => {
+            out.push_str("(INJ (");
+            write_mixop(out, arena, cache, *case.mixop());
+            out.push(' ');
+            write_values(out, arena, cache, case.args());
+            out.push_str("))");
+        }
+        ValueKind::Tuple(values) => {
+            out.push_str("(TUP ");
+            write_values(out, arena, cache, values);
+            out.push(')');
+        }
+        ValueKind::Opt(value_opt) => {
+            out.push_str("(OPT ");
+            write_list(out, value_opt, |out, value| write_value(out, arena, cache, *value));
+            out.push(')');
+        }
+        ValueKind::List(values) => {
+            out.push_str("(LIST ");
+            write_values(out, arena, cache, values);
+            out.push(')');
+        }
+        ValueKind::Func(id) => {
+            out.push_str("(FUNC ");
+            write_string(out, &id.node);
+            out.push(')');
+        }
+        ValueKind::Extern(json) => {
+            out.push_str("(EXT ");
+            write_string(out, &json.to_string());
+            out.push(')');
+        }
+    }
+}
+
+/// Appends `(val ...)`.
+pub(super) fn write_values(out: &mut String, arena: &Arena, cache: &mut Cache, values: &[Value]) {
+    write_list(out, values, |out, value| write_value(out, arena, cache, *value));
 }
