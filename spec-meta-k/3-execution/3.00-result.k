@@ -67,13 +67,13 @@ module RESULT
   rule <k> ERROR ~> (K:KItem => .K) ... </k>
     requires notBool (isScopeOrFrame(K) orBool isAnswer(K))
 
-  // `unres`: an outcome on `<k>`; `unresBool`: a `bool` outcome as its value.
+  // `unres`: a function's outcome on `<k>`, `X` for `ok(X)` and a failure in
+  // flight; `unresBool`: a `bool` outcome as its value.
   syntax KItem ::= unres(Res)
                  | unresBool(Res)
   rule <k> unres(ok(R:KItem)) => R ... </k>
-  rule <k> unres(UNMATCH) => UNMATCH ... </k>
-  rule <k> unres(ERROR) => ERROR ... </k>
+  rule <k> unres(F:Failure) => F ... </k>
   rule <k> unresBool(ok(B:Bool)) => boolV(B) ... </k>
-  rule <k> unresBool(F:Failure) => unres(F) ... </k>
+  rule <k> unresBool(F:Failure) => F ... </k>
 
 endmodule
