@@ -222,11 +222,14 @@ impl ProtocolKind {
 }
 
 /// A specification entered from the level below, in the form that level accepts:
-/// a configured level above the base, or the script above the top.
+/// a configured level above the base, or the program above the top,
+/// an AL or IL script or a K definition.
 #[derive(Clone, Copy)]
 pub(in crate::metacirc) enum Entered<'a> {
     Al(&'a al::Spec),
     Il(&'a il::Spec),
+    /// A K definition, as spec-k's `kdefinition` value.
+    Kore(Value),
 }
 
 /// Calls on the level below a boundary, which `Protocol::load` runs.

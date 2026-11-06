@@ -132,19 +132,15 @@ fn run(cli: Cli) -> metacirc::Result<()> {
         Command::RunMeta(args) => {
             let config = TowerConfig::from_file(&args.config)?;
             let options = args.options.config();
-            match (config.top_lang(), args.depth) {
-                // A KORE input prints its run, as krun does
-                (Lang::Kore, depth) => {
-                    println!("{}", metacirc::krun(&config, &args.program, options, depth)?);
-                }
-                (_, Some(_)) => Cli::command()
+            if args.depth.is_some() && config.top_lang() != Lang::Kore {
+                Cli::command()
                     .error(ErrorKind::ArgumentConflict, "--depth applies only to a KORE input")
-                    .exit(),
-                (_, None) => {
-                    metacirc::run(&config, &args.includes, &args.program, options)?;
-                    println!("passed");
-                }
+                    .exit();
             }
+            // A KORE input prints its run, as krun does; any other passes
+            let output =
+                metacirc::run(&config, &args.includes, &args.program, options, args.depth)?;
+            println!("{}", output.as_deref().unwrap_or("passed"));
             Ok(())
         }
         Command::Sim(args) => sim(args),

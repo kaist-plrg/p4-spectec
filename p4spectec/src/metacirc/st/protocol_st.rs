@@ -87,6 +87,9 @@ impl Protocol for ProtocolStSt {
         let value_spec = match above {
             Entered::Al(spec_al) => spec_al.encode(arena),
             Entered::Il(spec_il) => spec_il.encode(arena),
+            Entered::Kore(_) => {
+                return Err(error::config_invalid("spec-meta enters only AL or IL"));
+            }
         }
         .map_err(meta::Error::into_report)?;
         entry_inputs(arena, value_spec, name, values)

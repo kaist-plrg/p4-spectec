@@ -511,7 +511,7 @@ fn execute_script(
         _ => p4spectec::algo(paths_program).map(|_| ()),
     };
     valid.map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
-    let accepted = metacirc::run(config_tower, &[], paths_program, config.runner()).is_ok();
+    let accepted = metacirc::run(config_tower, &[], paths_program, config.runner(), None).is_ok();
     Ok(if accepted { diagnostic::Outcome::Success } else { diagnostic::Outcome::Failure })
 }
 

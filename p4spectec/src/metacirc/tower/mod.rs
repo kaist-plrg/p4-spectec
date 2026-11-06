@@ -5,9 +5,9 @@
 //! since the level below interprets it, and `Upper` stores them all
 //! in its extern slot, lent per call as `UpperMut` (see `upper`).
 //! A single-level tower executes its top level directly as its base.
-//! `build` assembles the levels; `input` encodes the inputs of the base's entry;
+//! `build` assembles the levels; `input` reads the program the top accepts
+//! and encodes the inputs of the base's entry;
 //! `Tower::eval_input` runs the entry on the base's `Engine`.
-//! A KORE input enters spec-k through `Tower::eval_krun` instead.
 
 mod build;
 mod input;
@@ -16,26 +16,19 @@ mod upper;
 pub(in crate::metacirc) use upper::{Top, TopMut, Upper, UpperMut};
 
 use super::{
-    Result,
     config::LevelConfig,
     engine::{
         BaseSpec, Engine, EngineK, EngineKind, EngineRedex, EngineSt, InterfaceSt, RuntimeK,
         RuntimeRedex, StateK, StateRedex,
     },
-    error,
     interp::TowerEnv,
     protocol::Entered,
 };
 use crate::{
-    interface::{kore::KoreInterface, p4::P4Interface},
+    interface::p4::P4Interface,
     lang::{
         al::ast as al,
-        common::{prim::num::Natural, source::Span},
-        data::{
-            arena::Arena,
-            typ,
-            value::flat::{self as value, Value},
-        },
+        data::{arena::Arena, value::flat::Value},
         il::ast as il,
     },
     runner::{self, Extern, InterpreterError, Runner},
@@ -55,11 +48,23 @@ pub struct Tower<Ext: Extern = Dummy> {
     pub(super) options: runner::Config,
 }
 
-/// The input of a tower: a P4 program for a P4 top level,
-/// or a script above an AL or IL top level, prepared in the form the top accepts.
+/// The input of a tower, prepared in the form the top accepts:
+/// a P4 program for a P4 top level, a script above an AL or IL top level,
+/// or a K definition above spec-k with its initial term.
 pub enum Input {
     P4(Value),
     Script(Script),
+    Kore(Kore),
+}
+
+/// A K definition and an initial term above spec-k, as `Krun` takes them.
+pub struct Kore {
+    /// The definition, as spec-k's `kdefinition` value.
+    pub definition: Value,
+    /// The initial term, as spec-k's `kore` value.
+    pub init: Value,
+    /// At most this many rewriting steps, as `krun --depth` does.
+    pub depth: Option<u64>,
 }
 
 /// A script above the top level, entered at its function `main`.
@@ -155,57 +160,6 @@ impl<Ext: Extern> Tower<Ext> {
         let env = TowerEnv { spec_base, levels, options: *options };
         let mut upper = upper.lend(&env);
         engine.call_rel(arena, &mut upper, effects, name, values)
-    }
-}
-
-impl<Ext: Extern> Tower<Ext> {
-    /// Runs spec-k's entry relation `Krun` on a K definition and an initial term,
-    /// rewriting at most `depth` steps if given, as `krun --depth` does.
-    ///
-    /// `definition` and `init` are what `KoreInterface::parse_program` read;
-    /// the result is the `runres` that `KoreInterface::print_runres` prints.
-    pub fn eval_krun(
-        &mut self,
-        arena: &mut Arena,
-        definition: Value,
-        init: Value,
-        depth: Option<u64>,
-    ) -> Result<Value> {
-        let Self { levels, base, options } = self;
-        let name = &levels[0].config().rel;
-        // The step bound is spec-k's nat?
-        let value_depth = depth
-            .map(|depth| value::make::nat(arena, Natural::from(depth), Span::default()))
-            .transpose()
-            .map_err(|error| error::input_invalid(error.to_string()))?;
-        let typ_depth = typ::make::opt(typ::make::nat());
-        let value_depth =
-            value::make::opt(arena, typ_depth.node.into(), value_depth, Span::default())
-                .map_err(|error| error::input_invalid(error.to_string()))?;
-        // spec-k is the base, which hosts the program's empty level above it
-        let Some(LentBase { mut engine, spec_base, upper, effects }) = base.lend() else {
-            return Err(error::input_invalid("a KORE input requires spec-k as the base"));
-        };
-        let env = TowerEnv { spec_base, levels, options: *options };
-        let mut upper = upper.lend(&env);
-        let values = [definition, init, value_depth];
-        let outputs = engine
-            .call_rel(arena, &mut upper, effects, name, &values)
-            .map_err(InterpreterError::into_report)?;
-        value::get::one(&outputs)
-            .copied()
-            .map_err(|error| error::input_invalid(error.to_string()))
-    }
-}
-
-impl<Ext: Extern> Tower<Ext> {
-    /// Returns the base's interface if the base is spec-k,
-    /// which parses a KORE input, answers spec-k's hooks, and prints its run.
-    pub(super) fn kore_interface(&mut self) -> Option<&mut KoreInterface> {
-        match &mut self.base {
-            Base::St(Runner { interface: InterfaceSt::KSt(interface), .. }) => Some(interface),
-            _ => None,
-        }
     }
 }
 

@@ -4,7 +4,7 @@
 //! `suite` reads the registration into definitions and their programs; `build`
 //! kompiles each definition, builds its K library, and makes each initial term
 //! with krun, into `$CARGO_TARGET_DIR/k-in-st/`. `run` runs each program with
-//! `metacirc::krun` and compares with `<program>.out` (`compare`): the same first
+//! `metacirc::run` and compares with `<program>.out` (`compare`): the same first
 //! line (steps, how the run ended) and configurations equal in normal form.
 //! A run that ends elsewhere passes by search if its final configuration is one
 //! of `<program>.search`, the finals K allows, as where rules of the same priority both apply.
@@ -133,8 +133,10 @@ fn check(
         Error::from(format!("{}: {error} (KRUN_EXPECT=1 writes it)", path_expected.display()))
     })?;
     let paths_program = [case.path_definition(), path_init.clone()];
-    let output = metacirc::krun(tower, &paths_program, options, depth)
-        .unwrap_or_else(|error| format!("failed: {error}"));
+    let output = match metacirc::run(tower, &[], &paths_program, options, depth) {
+        Ok(output) => output.unwrap_or_default(),
+        Err(error) => format!("failed: {error}"),
+    };
     let differs = compare(&case.info, &output, &expected);
     if update {
         // Only a run that ends elsewhere than krun's needs the finals K allows

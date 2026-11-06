@@ -1,11 +1,12 @@
 //! spec-k's protocol: a level written in K above spec-k
 //!
 //! spec-k, the K semantics written in P4-SpecTec, interprets KORE.
-//! A single-level K-in-ST tower enters spec-k through `Krun` directly
-//! (`Tower::eval_krun`), so this boundary carries only spec-k's host call,
-//! its extern relation `Call_hook`, up to the K definition above it,
+//! A K-in-ST tower is a single level: the K definition is the program above
+//! the top, as a script is above spec-meta. `encode_entry` gives `Krun` the
+//! definition, the initial term, and the step bound, and `host` carries
+//! spec-k's host call, its extern relation `Call_hook`, up to the definition,
 //! whose K library answers it (`Top::K`).
-//! Stacking a level over a K definition, such as ST-in-K-in-ST, would use it:
+//! Stacking a level over a K definition, such as ST-in-K-in-ST, would use the rest:
 //! `load` prepares the definition once (`Prepare`, a split of spec-k's `Start`),
 //! `lower` runs one request as a K term to the end (`Run`),
 //! and each depth keeps the configuration of the K level it runs.
@@ -40,14 +41,23 @@ impl Protocol for ProtocolKSt {
         Err(InterpreterError::Fatal(error::unimplemented(STACKING)))
     }
 
-    /// Encodes the inputs of spec-k's entry into the K definition above.
+    /// Encodes the inputs of `Krun`, spec-k's entry, into the K definition above:
+    /// the definition, then `values`, the initial term and the step bound.
+    ///
+    /// A K definition has no named entry, so `name` is unused;
+    /// spec-k rewrites the initial term.
     fn encode_entry(
         _arena: &mut Arena,
-        _above: Entered<'_>,
+        above: Entered<'_>,
         _name: &str,
-        _values: &[Value],
+        values: &[Value],
     ) -> MetacircResult<Vec<Value>> {
-        Err(error::unimplemented(STACKING))
+        let Entered::Kore(definition) = above else {
+            return Err(error::config_invalid("spec-k enters only a K definition"));
+        };
+        Ok(std::iter::once(definition)
+            .chain(values.iter().copied())
+            .collect())
     }
 
     /// Runs `call`, a request of the K level above, as a K term under C (`Run`).
