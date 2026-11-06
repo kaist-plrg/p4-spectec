@@ -232,7 +232,7 @@ specification, values, and types, and `redex/read.rs` reads back what `write`
 prints; an extern value carries its JSON text as a string, which Racket holds
 without reading. Its entry `Eval_AL_rel` or
 `Eval_AL_func` loads the specification and calls its relation or function, as
-`spec-meta-redex/3-execution/3.16-entry.rkt` serves them. `make redex` compiles the entry
+`spec-meta-redex/3-execution/3.15-entry.rkt` serves them. `make redex` compiles the entry
 module, and `make test-metacirc-run-redex`, `test-metacirc-micro-redex`, and
 `test-metacirc-sim-redex` reuse the native expected files.
 spec-meta-k and spec-meta-redex take the first successful clause or rule path

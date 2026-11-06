@@ -43,7 +43,7 @@ $(KLIBRARY): $(wildcard $(KSPECDIR)/*/*.k)
 # The entry module a redex tower runs, compiled from spec-meta-redex (`module` in towers/redex*.json),
 # with the metacirc binary that runs it; raco make recompiles only what changed
 REDEXSPECDIR = spec-meta-redex
-REDEXMODULE = $(REDEXSPECDIR)/3-execution/3.16-entry.rkt
+REDEXMODULE = $(REDEXSPECDIR)/3-execution/3.15-entry.rkt
 
 redex: metacirc
 	raco make -v $(REDEXMODULE)

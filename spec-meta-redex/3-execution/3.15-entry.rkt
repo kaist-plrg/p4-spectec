@@ -22,7 +22,7 @@
 ;;          | valsres                       call-rel
 ;;          | valres                        call-func
 ;;
-;;   racket spec-meta-redex/3-execution/3.16-entry.rkt
+;;   racket spec-meta-redex/3-execution/3.15-entry.rkt
 ;;
 ;; p4spectec::metacirc::redex starts it, once per tower.
 
