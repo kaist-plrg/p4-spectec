@@ -90,12 +90,12 @@ impl Cache {
     }
 
     /// The response cached for host request `request`.
-    pub(in crate::metacirc) fn response(&self, request: &str) -> Option<&str> {
+    pub(in crate::metacirc::redex) fn response(&self, request: &str) -> Option<&str> {
         self.responses.get(request).map(String::as_str)
     }
 
     /// Caches `response` to host request `request`, if enabled.
-    pub(in crate::metacirc) fn cache_response(&mut self, request: String, response: &str) {
+    pub(in crate::metacirc::redex) fn cache_response(&mut self, request: String, response: &str) {
         if self.enabled {
             self.responses.insert(request, response.to_owned());
         }

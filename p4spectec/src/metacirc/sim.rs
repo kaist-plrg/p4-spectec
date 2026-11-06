@@ -73,19 +73,19 @@ impl<Arch: Architecture> SimTower<Arch> {
         arena: &mut Arena,
         body: impl FnOnce(&mut RunnerContext<'_, TowerInterp<'_>, P4Interface, Arch>) -> T,
     ) -> T {
-        let Tower { levels, protocols, base, options } = &mut self.tower;
+        let Tower { levels, base, options } = &mut self.tower;
         // Reach depth 0 and the P4 host in the base
         let Some(LentBase { engine, spec_base, upper, .. }) = base.lend() else {
             unreachable!("a simulated tower has a base below its P4 top");
         };
         // Lend the levels' storage at depth 0 and reach the P4 top
-        let Upper { caches, ctxs, hosts, top, depth_next } = upper;
+        let Upper { protocols, ctxs, hosts, top, depth_next } = upper;
         let Top::P4(host) = top else {
             unreachable!("a simulated tower has a P4 top level");
         };
         // Share the definitions, and lend depth 0 to the host
-        let env = TowerEnv { spec_base, levels, protocols, options: *options };
-        let mut interp = TowerInterp { engine, hosts, depth_next, caches, ctxs };
+        let env = TowerEnv { spec_base, levels, options: *options };
+        let mut interp = TowerInterp { engine, hosts, depth_next, protocols, ctxs };
         host.with_context(arena, &env, &mut interp, body)
     }
 

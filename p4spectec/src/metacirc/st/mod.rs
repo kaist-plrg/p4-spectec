@@ -9,5 +9,5 @@ mod protocol_k;
 mod protocol_st;
 
 pub(super) use engine::{EngineSt, SpecSt, StateSt};
-pub(super) use protocol_k::{Cache as CacheKSt, ProtocolKSt};
+pub(super) use protocol_k::ProtocolKSt;
 pub(super) use protocol_st::ProtocolStSt;

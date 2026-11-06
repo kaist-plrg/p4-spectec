@@ -7,7 +7,7 @@
 
 use super::super::{
     interp::{TowerEnv, TowerInterpState},
-    protocol::CodecCache,
+    protocol::ProtocolKind,
 };
 use super::HostLevel;
 use crate::{
@@ -21,16 +21,16 @@ use crate::{
 /// The levels above a meta base, which the base's specification interprets.
 ///
 /// Storage is per `HostLevel`, at its `index`:
-/// the codec cache of the boundary below each level, C of each level,
+/// the protocol of the boundary below each level, C of each level,
 /// and the meta builtins of each level below the top.
 /// The top is the P4 specification,
 /// the AL or IL program that the highest meta level interprets,
 /// or the K definition that spec-k interprets.
-/// Caches and C are shared by every reentry depth;
+/// Protocols and C are shared by every reentry depth;
 /// depth 0 uses `hosts`, and each deeper depth its own.
 pub(in crate::metacirc) struct Upper<Ext: Extern> {
-    /// The codec cache of the boundary below each level, through the top.
-    pub caches: Vec<CodecCache>,
+    /// The protocol of the boundary below each level, through the top, with its codec state.
+    pub protocols: Vec<ProtocolKind>,
     /// C of each level for the current program, loaded on first use.
     pub ctxs: Vec<Option<Value>>,
     /// The meta builtins of each level between the base and the top, at depth 0.
@@ -53,7 +53,7 @@ pub(in crate::metacirc) enum Top<Ext: Extern> {
 impl<Ext: Extern> Upper<Ext> {
     /// Clears every level's state between programs.
     pub(in crate::metacirc) fn clear(&mut self) {
-        self.caches.iter_mut().for_each(CodecCache::clear);
+        self.protocols.iter_mut().for_each(ProtocolKind::clear);
         self.ctxs.fill(None);
         self.hosts.iter_mut().for_each(Interface::clear);
         match &mut self.top {
@@ -77,7 +77,7 @@ impl<Ext: Extern> Upper<Ext> {
         };
         UpperMut {
             env,
-            caches: &mut self.caches,
+            protocols: &mut self.protocols,
             ctxs: &mut self.ctxs,
             hosts: &mut self.hosts,
             top,
@@ -92,8 +92,8 @@ impl<Ext: Extern> Upper<Ext> {
 pub(in crate::metacirc) struct UpperMut<'l, Ext: Extern> {
     /// Definitions shared by every depth, which a reentry runs on.
     pub env: &'l TowerEnv<'l>,
-    /// The codec cache of the boundary below each level, shared by every depth.
-    pub caches: &'l mut [CodecCache],
+    /// The protocol of the boundary below each level, shared by every depth.
+    pub protocols: &'l mut [ProtocolKind],
     /// C of each level for the current program, shared by every depth.
     pub ctxs: &'l mut [Option<Value>],
     /// The meta builtins of each level between the base and the top, at this depth.
@@ -114,9 +114,9 @@ pub(in crate::metacirc) enum TopMut<'l, Ext: Extern> {
 }
 
 impl<'l, Ext: Extern> UpperMut<'l, Ext> {
-    /// Returns the codec cache of the boundary below `level`.
-    pub(in crate::metacirc) fn cache(&mut self, level: HostLevel) -> &mut CodecCache {
-        &mut self.caches[level.index()]
+    /// Returns the protocol of the boundary below `level`.
+    pub(in crate::metacirc) fn protocol(&mut self, level: HostLevel) -> &mut ProtocolKind {
+        &mut self.protocols[level.index()]
     }
 
     /// Returns C of `level`, if loaded for the current program.
@@ -134,6 +134,6 @@ impl<'l, Ext: Extern> UpperMut<'l, Ext> {
     /// A program top is one level above the last `PreparedLevel`:
     /// it has a boundary but no specification, and it never reenters.
     pub(in crate::metacirc) fn level_top(&self) -> HostLevel {
-        HostLevel::new(self.caches.len())
+        HostLevel::new(self.protocols.len())
     }
 }

@@ -228,7 +228,7 @@ fn host_call<Ext: Extern>(
     request: String,
 ) -> std::result::Result<String, Box<Report>> {
     // The same request to a pure call that succeeded gets its cached response
-    if let Some(response) = upper.cache(HostLevel::FIRST).host_response(&request) {
+    if let Some(response) = upper.protocol(HostLevel::FIRST).host_response(&request) {
         return Ok(response);
     }
     let value_request = make_text(arena, request.clone()).map_err(InterpreterError::into_report)?;
@@ -244,7 +244,7 @@ fn host_call<Ext: Extern>(
     };
     if eval.effect == SideEffect::Pure {
         upper
-            .cache(HostLevel::FIRST)
+            .protocol(HostLevel::FIRST)
             .cache_host_response(request, &response);
     }
     Ok(response)

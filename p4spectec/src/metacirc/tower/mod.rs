@@ -24,7 +24,7 @@ use super::{
     },
     error,
     interp::TowerEnv,
-    protocol::{Entered, ProtocolKind},
+    protocol::Entered,
 };
 use crate::{
     interface::{kore::KoreInterface, p4::P4Interface},
@@ -50,8 +50,6 @@ use std::num::NonZeroUsize;
 pub struct Tower<Ext: Extern = Dummy> {
     // Nonempty, ordered from base through intermediates to the top level
     pub(super) levels: Vec<PreparedLevel>,
-    /// The protocol of the boundary below each level above the base.
-    pub(super) protocols: Vec<ProtocolKind>,
     pub(super) base: Base<Ext>,
     /// Options for the interpreters of reentry depths.
     pub(super) options: runner::Config,
@@ -145,7 +143,7 @@ impl<Ext: Extern> Tower<Ext> {
         arena: &mut Arena,
         values: &[Value],
     ) -> std::result::Result<Vec<Value>, InterpreterError> {
-        let Self { levels, protocols, base, options } = self;
+        let Self { levels, base, options } = self;
         let name = &levels[0].config().rel;
         // A P4 base runs the program directly
         if let Base::P4(runner) = base {
@@ -154,7 +152,7 @@ impl<Ext: Extern> Tower<Ext> {
         // Any other base lends the levels above it with its definitions
         let LentBase { mut engine, spec_base, upper, effects } =
             base.lend().expect("a base other than P4 hosts levels");
-        let env = TowerEnv { spec_base, levels, protocols, options: *options };
+        let env = TowerEnv { spec_base, levels, options: *options };
         let mut upper = upper.lend(&env);
         engine.call_rel(arena, &mut upper, effects, name, values)
     }
@@ -173,7 +171,7 @@ impl<Ext: Extern> Tower<Ext> {
         init: Value,
         depth: Option<u64>,
     ) -> Result<Value> {
-        let Self { levels, protocols, base, options } = self;
+        let Self { levels, base, options } = self;
         let name = &levels[0].config().rel;
         // The step bound is spec-k's nat?
         let value_depth = depth
@@ -188,7 +186,7 @@ impl<Ext: Extern> Tower<Ext> {
         let Some(LentBase { mut engine, spec_base, upper, effects }) = base.lend() else {
             return Err(error::input_invalid("a KORE input requires spec-k as the base"));
         };
-        let env = TowerEnv { spec_base, levels, protocols, options: *options };
+        let env = TowerEnv { spec_base, levels, options: *options };
         let mut upper = upper.lend(&env);
         let values = [definition, init, value_depth];
         let outputs = engine
@@ -247,6 +245,15 @@ impl<Ext: Extern> Base<Ext> {
         }
     }
 
+    /// Returns the levels above the base, or nothing for a P4 base, which hosts no levels.
+    fn upper(&self) -> Option<&Upper<Ext>> {
+        match self {
+            Self::P4(_) => None,
+            Self::St(runner) => Some(&runner.external),
+            Self::K(BaseK { upper, .. }) | Self::Redex(BaseRedex { upper, .. }) => Some(upper),
+        }
+    }
+
     /// Lends depth 0's engine and the levels above the base,
     /// or nothing for a P4 base, which hosts no levels.
     pub(super) fn lend(&mut self) -> Option<LentBase<'_, Ext>> {
@@ -287,7 +294,7 @@ pub(in crate::metacirc) enum LevelAt {
 /// A level above the base, which the level below it interprets.
 ///
 /// Level k pairs with the boundary below it:
-/// per-level storage keeps its C, that boundary's codec cache,
+/// per-level storage keeps its C, that boundary's protocol,
 /// and its meta builtins at `index`, in order from level 1.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(in crate::metacirc) struct HostLevel(NonZeroUsize);

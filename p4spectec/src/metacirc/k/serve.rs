@@ -314,7 +314,7 @@ pub(in crate::metacirc::k) mod request {
 // == Responses and answers
 
 /// Whether `response`, a reply to a host request, carries outputs.
-pub(in crate::metacirc) fn is_ok(response: &str) -> bool {
+pub(in crate::metacirc::k) fn is_ok(response: &str) -> bool {
     response != response::FAIL
 }
 

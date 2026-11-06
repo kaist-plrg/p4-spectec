@@ -10,7 +10,7 @@
 //! An AL or IL script is one more level, above the top, entered at its function `main`
 //! with no inputs, so the level below it uses `Eval_AL_func` or `Eval_IL_func`.
 
-use super::super::{Result, config::Lang, error, protocol::Protocol};
+use super::super::{Result, config::Lang, error};
 use super::{Input, Script, Tower};
 use crate::{
     lang::data::{arena::Arena, value::flat::Value},
@@ -56,7 +56,8 @@ impl<Ext: Extern> Tower<Ext> {
             .map(|level| (level.entered(), level.config().rel.as_str()))
             .chain(script)
             .collect::<Vec<_>>();
-        for ((above, name), protocol) in entries.into_iter().zip(&self.protocols).rev() {
+        let protocols = self.base.upper().map_or(&[][..], |upper| &upper.protocols);
+        for ((above, name), protocol) in entries.into_iter().zip(protocols).rev() {
             values = protocol.encode_entry(arena, above, name, &values)?;
         }
         Ok(values)

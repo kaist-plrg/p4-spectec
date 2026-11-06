@@ -14,7 +14,5 @@ mod serve;
 mod spec_json;
 
 pub(super) use engine::{EngineK, StateK};
-pub(super) use json::Cache as CacheStK;
 pub(super) use protocol::ProtocolStK;
 pub(super) use runtime::RuntimeK;
-pub(super) use serve::is_ok;

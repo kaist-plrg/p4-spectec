@@ -33,7 +33,10 @@ use crate::{
 // == Protocol
 
 /// The protocol of spec-meta-redex toward the AL specification above it.
-pub(in crate::metacirc) struct ProtocolStRedex;
+pub(in crate::metacirc) struct ProtocolStRedex {
+    /// The codec state of this boundary, shared by every reentry depth.
+    cache: Cache,
+}
 
 impl ProtocolStRedex {
     /// The engine's call that loads a specification, `load(request)`, returning C.
@@ -49,20 +52,14 @@ impl ProtocolStRedex {
 }
 
 impl Protocol for ProtocolStRedex {
-    type Cache = Cache;
-
-    fn new_cache(&self, enabled: bool) -> Cache {
-        Cache::new(enabled)
+    fn new(cache: bool) -> Self {
+        Self { cache: Cache::new(cache) }
     }
 
     /// Loads the AL specification of `above` into spec-meta-redex, returning C.
     ///
     /// C is the value the base returns for `{"load": sexp}`, kept for the whole program.
-    fn load(
-        &self,
-        below: &mut dyn Below,
-        above: &PreparedLevel,
-    ) -> Result<Value, InterpreterError> {
+    fn load(below: &mut dyn Below, above: &PreparedLevel) -> Result<Value, InterpreterError> {
         let PreparedLevel::Al { spec_al, .. } = above else {
             let message = "spec-meta-redex loads only a level passed to it as AL";
             return Err(ExternError::diagnostic_message(message).into());
@@ -82,7 +79,6 @@ impl Protocol for ProtocolStRedex {
     /// and `values`, the entry's inputs: `"sexp"`, `"name"`, and `[val...]`,
     /// which `EngineRedex::call_rel` passes on.
     fn encode_entry(
-        &self,
         arena: &mut Arena,
         above: Entered<'_>,
         name: &str,
@@ -99,46 +95,62 @@ impl Protocol for ProtocolStRedex {
 
     /// Wraps `call` of the AL level above as `serve(C, request)` on spec-meta-redex.
     fn lower(
-        &self,
+        &mut self,
         arena: &mut Arena,
-        cache: &mut Cache,
         value_ctx: Value,
         call: &Call<'_>,
     ) -> Result<Call<'static>, InterpreterError> {
-        serve::lower(arena, cache, value_ctx, call)
+        serve::lower(arena, &mut self.cache, value_ctx, call)
     }
 
     /// Unwraps the JSON answer of spec-meta-redex into the output of `call`.
     fn raise(
-        &self,
+        &mut self,
         arena: &mut Arena,
-        cache: &mut Cache,
         output: Output,
         call: &Call<'_>,
     ) -> Result<Output, InterpreterError> {
-        serve::raise(arena, cache, output, call)
+        serve::raise(arena, &mut self.cache, output, call)
     }
 
     /// Decodes a host request of spec-meta-redex for the level above.
     fn host(
-        &self,
+        &mut self,
         arena: &mut Arena,
-        cache: &mut Cache,
         name: &str,
         values: &[Value],
     ) -> Result<HostCall, ExternError> {
-        serve::host(arena, cache, name, values)
+        serve::host(arena, &mut self.cache, name, values)
     }
 
     /// Encodes the outcome of a host call as the JSON text answering the request.
     fn reply(
-        &self,
+        &mut self,
         arena: &mut Arena,
-        cache: &mut Cache,
         _call: &HostCall,
         eval: Eval<Output>,
     ) -> Eval<Vec<Value>, ExternError> {
-        serve::reply(arena, cache, eval)
+        serve::reply(arena, &mut self.cache, eval)
+    }
+
+    fn clear(&mut self) {
+        self.cache.clear();
+    }
+}
+
+// == Memoized host responses
+
+impl ProtocolStRedex {
+    /// The response a pure host call gave to `request` before.
+    pub(in crate::metacirc) fn host_response(&self, request: &str) -> Option<String> {
+        self.cache.response(request).map(str::to_owned)
+    }
+
+    /// Caches the response of a pure host call, if it succeeded.
+    pub(in crate::metacirc) fn cache_host_response(&mut self, request: String, response: &str) {
+        if serve::is_ok(response) {
+            self.cache.cache_response(request, response);
+        }
     }
 }
 

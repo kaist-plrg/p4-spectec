@@ -19,11 +19,8 @@ pub(super) use super::k::ProtocolStK;
 pub(super) use super::redex::ProtocolStRedex;
 pub(super) use super::st::{ProtocolKSt, ProtocolStSt};
 
-use super::{
-    Result as MetacircResult, k::CacheStK, redex::CacheStRedex, st::CacheKSt, tower::PreparedLevel,
-};
+use super::{Result as MetacircResult, tower::PreparedLevel};
 use crate::{
-    interface::meta::shared::Cache,
     lang::{
         al::ast as al,
         data::{arena::Arena, value::flat::Value},
@@ -38,24 +35,21 @@ use std::{borrow::Cow, ops::Deref};
 
 /// The protocol of a level's specification toward the level above it.
 ///
-/// A protocol keeps no state of its own; `cache` is its boundary's,
-/// of the kind `new_cache` makes.
+/// A protocol owns the codec state of its boundary, shared by every reentry
+/// depth. Loading C and encoding the entry need no state, so they are
+/// associated functions: loading runs on the level below, while the tower
+/// that stores this protocol is borrowed for that call.
 pub(in crate::metacirc) trait Protocol {
-    /// The codec state of one boundary, shared by every reentry depth.
-    type Cache;
-
-    /// Makes the empty codec state of a boundary, memoizing if `enabled`.
-    fn new_cache(&self, enabled: bool) -> Self::Cache;
+    /// Makes the protocol of a boundary, memoizing its conversions if `cache`.
+    fn new(cache: bool) -> Self;
 
     /// Loads the specification of `above` into the level below, returning C.
-    fn load(&self, below: &mut dyn Below, above: &PreparedLevel)
-    -> Result<Value, InterpreterError>;
+    fn load(below: &mut dyn Below, above: &PreparedLevel) -> Result<Value, InterpreterError>;
 
     /// Encodes the inputs of this level's entry relation,
     /// which enters `name` of `above` on `values`,
     /// the inputs of `name` encoded one level down.
     fn encode_entry(
-        &self,
         arena: &mut Arena,
         above: Entered<'_>,
         name: &str,
@@ -64,73 +58,145 @@ pub(in crate::metacirc) trait Protocol {
 
     /// Turns `call` of the level above into a call on this level, given C.
     fn lower(
-        &self,
+        &mut self,
         arena: &mut Arena,
-        cache: &mut Self::Cache,
         value_ctx: Value,
         call: &Call<'_>,
     ) -> Result<Call<'static>, InterpreterError>;
 
     /// Turns the output of a lowered call back into the output of `call`.
     fn raise(
-        &self,
+        &mut self,
         arena: &mut Arena,
-        cache: &mut Self::Cache,
         output: Output,
         call: &Call<'_>,
     ) -> Result<Output, InterpreterError>;
 
     /// Decodes host call `name` of this level's specification for the level above.
     fn host(
-        &self,
+        &mut self,
         arena: &mut Arena,
-        cache: &mut Self::Cache,
         name: &str,
         values: &[Value],
     ) -> Result<HostCall, ExternError>;
 
     /// Encodes the outcome of `call` as the host call's outputs on this level.
     fn reply(
-        &self,
+        &mut self,
         arena: &mut Arena,
-        cache: &mut Self::Cache,
         call: &HostCall,
         eval: Eval<Output>,
     ) -> Eval<Vec<Value>, ExternError>;
+
+    /// Clears the codec state between programs, keeping its capacity.
+    fn clear(&mut self);
 }
 
-/// A stored protocol.
+/// `Protocol::load` of a stored protocol, taken out before the tower is lent to it.
+pub(in crate::metacirc) type Load =
+    fn(&mut dyn Below, &PreparedLevel) -> Result<Value, InterpreterError>;
+
+/// The protocol of one boundary, with its codec state.
 pub(in crate::metacirc) enum ProtocolKind {
-    /// spec-meta interprets the level above as AL.
-    StSt(ProtocolStSt),
-    /// spec-meta-k, run by a `EngineK`, interprets the level above as AL.
+    /// spec-meta interprets the level above as AL or IL; boxed as the largest.
+    StSt(Box<ProtocolStSt>),
+    /// spec-meta-k, run by an `EngineK`, interprets the level above as AL.
     StK(ProtocolStK),
-    /// spec-meta-redex, run by a `EngineRedex`, interprets the level above as AL.
+    /// spec-meta-redex, run by an `EngineRedex`, interprets the level above as AL.
     StRedex(ProtocolStRedex),
     /// spec-k interprets the level above as KORE.
     KSt(ProtocolKSt),
 }
 
-/// The codec state of a boundary, of the kind its `ProtocolKind` keeps.
-pub(in crate::metacirc) enum CodecCache {
-    /// spec-meta's AL encodings and decodings, boxed as the largest.
-    StSt(Box<Cache>),
-    /// spec-meta-k's JSON codec state.
-    StK(CacheStK),
-    /// spec-meta-redex's JSON codec state.
-    StRedex(CacheStRedex),
-    /// spec-k's KORE codec state.
-    KSt(CacheKSt),
-}
+impl ProtocolKind {
+    /// Returns how this boundary loads C, without borrowing it.
+    pub(in crate::metacirc) fn load(&self) -> Load {
+        match self {
+            Self::StSt(_) => ProtocolStSt::load,
+            Self::StK(_) => ProtocolStK::load,
+            Self::StRedex(_) => ProtocolStRedex::load,
+            Self::KSt(_) => ProtocolKSt::load,
+        }
+    }
 
-impl CodecCache {
-    /// Clears the conversions, keeping their capacity.
+    /// Encodes the inputs of the entry below this boundary (`Protocol::encode_entry`).
+    pub(in crate::metacirc) fn encode_entry(
+        &self,
+        arena: &mut Arena,
+        above: Entered<'_>,
+        name: &str,
+        values: &[Value],
+    ) -> MetacircResult<Vec<Value>> {
+        match self {
+            Self::StSt(_) => ProtocolStSt::encode_entry(arena, above, name, values),
+            Self::StK(_) => ProtocolStK::encode_entry(arena, above, name, values),
+            Self::StRedex(_) => ProtocolStRedex::encode_entry(arena, above, name, values),
+            Self::KSt(_) => ProtocolKSt::encode_entry(arena, above, name, values),
+        }
+    }
+
+    pub(in crate::metacirc) fn lower(
+        &mut self,
+        arena: &mut Arena,
+        value_ctx: Value,
+        call: &Call<'_>,
+    ) -> Result<Call<'static>, InterpreterError> {
+        match self {
+            Self::StSt(protocol) => protocol.lower(arena, value_ctx, call),
+            Self::StK(protocol) => protocol.lower(arena, value_ctx, call),
+            Self::StRedex(protocol) => protocol.lower(arena, value_ctx, call),
+            Self::KSt(protocol) => protocol.lower(arena, value_ctx, call),
+        }
+    }
+
+    pub(in crate::metacirc) fn raise(
+        &mut self,
+        arena: &mut Arena,
+        output: Output,
+        call: &Call<'_>,
+    ) -> Result<Output, InterpreterError> {
+        match self {
+            Self::StSt(protocol) => protocol.raise(arena, output, call),
+            Self::StK(protocol) => protocol.raise(arena, output, call),
+            Self::StRedex(protocol) => protocol.raise(arena, output, call),
+            Self::KSt(protocol) => protocol.raise(arena, output, call),
+        }
+    }
+
+    pub(in crate::metacirc) fn host(
+        &mut self,
+        arena: &mut Arena,
+        name: &str,
+        values: &[Value],
+    ) -> Result<HostCall, ExternError> {
+        match self {
+            Self::StSt(protocol) => protocol.host(arena, name, values),
+            Self::StK(protocol) => protocol.host(arena, name, values),
+            Self::StRedex(protocol) => protocol.host(arena, name, values),
+            Self::KSt(protocol) => protocol.host(arena, name, values),
+        }
+    }
+
+    pub(in crate::metacirc) fn reply(
+        &mut self,
+        arena: &mut Arena,
+        call: &HostCall,
+        eval: Eval<Output>,
+    ) -> Eval<Vec<Value>, ExternError> {
+        match self {
+            Self::StSt(protocol) => protocol.reply(arena, call, eval),
+            Self::StK(protocol) => protocol.reply(arena, call, eval),
+            Self::StRedex(protocol) => protocol.reply(arena, call, eval),
+            Self::KSt(protocol) => protocol.reply(arena, call, eval),
+        }
+    }
+
     pub(in crate::metacirc) fn clear(&mut self) {
         match self {
-            Self::StSt(cache) => cache.clear(),
-            Self::StK(cache) => cache.clear(),
-            Self::StRedex(cache) => cache.clear(),
-            Self::KSt(cache) => cache.clear(),
+            Self::StSt(protocol) => protocol.clear(),
+            Self::StK(protocol) => protocol.clear(),
+            Self::StRedex(protocol) => protocol.clear(),
+            Self::KSt(protocol) => protocol.clear(),
         }
     }
 
@@ -138,8 +204,8 @@ impl CodecCache {
     /// gave to `request` before.
     pub(in crate::metacirc) fn host_response(&self, request: &str) -> Option<String> {
         match self {
-            Self::StK(cache) => cache.response(request).map(str::to_owned),
-            Self::StRedex(cache) => cache.response(request).map(str::to_owned),
+            Self::StK(protocol) => protocol.host_response(request),
+            Self::StRedex(protocol) => protocol.host_response(request),
             Self::StSt(_) | Self::KSt(_) => None,
         }
     }
@@ -148,150 +214,9 @@ impl CodecCache {
     /// if it succeeded.
     pub(in crate::metacirc) fn cache_host_response(&mut self, request: String, response: &str) {
         match self {
-            Self::StK(cache) if super::k::is_ok(response) => {
-                cache.cache_response(request, response);
-            }
-            Self::StRedex(cache) if super::redex::is_ok(response) => {
-                cache.cache_response(request, response);
-            }
-            _ => {}
-        }
-    }
-}
-
-impl Protocol for ProtocolKind {
-    type Cache = CodecCache;
-
-    fn new_cache(&self, enabled: bool) -> CodecCache {
-        match self {
-            Self::StSt(protocol) => CodecCache::StSt(Box::new(protocol.new_cache(enabled))),
-            Self::StK(protocol) => CodecCache::StK(protocol.new_cache(enabled)),
-            Self::StRedex(protocol) => CodecCache::StRedex(protocol.new_cache(enabled)),
-            Self::KSt(protocol) => CodecCache::KSt(protocol.new_cache(enabled)),
-        }
-    }
-
-    fn load(
-        &self,
-        below: &mut dyn Below,
-        above: &PreparedLevel,
-    ) -> Result<Value, InterpreterError> {
-        match self {
-            Self::StSt(protocol) => protocol.load(below, above),
-            Self::StK(protocol) => protocol.load(below, above),
-            Self::StRedex(protocol) => protocol.load(below, above),
-            Self::KSt(protocol) => protocol.load(below, above),
-        }
-    }
-
-    fn encode_entry(
-        &self,
-        arena: &mut Arena,
-        above: Entered<'_>,
-        name: &str,
-        values: &[Value],
-    ) -> MetacircResult<Vec<Value>> {
-        match self {
-            Self::StSt(protocol) => protocol.encode_entry(arena, above, name, values),
-            Self::StK(protocol) => protocol.encode_entry(arena, above, name, values),
-            Self::StRedex(protocol) => protocol.encode_entry(arena, above, name, values),
-            Self::KSt(protocol) => protocol.encode_entry(arena, above, name, values),
-        }
-    }
-
-    fn lower(
-        &self,
-        arena: &mut Arena,
-        cache: &mut CodecCache,
-        value_ctx: Value,
-        call: &Call<'_>,
-    ) -> Result<Call<'static>, InterpreterError> {
-        match (self, cache) {
-            (Self::StSt(protocol), CodecCache::StSt(cache)) => {
-                protocol.lower(arena, cache, value_ctx, call)
-            }
-            (Self::StK(protocol), CodecCache::StK(cache)) => {
-                protocol.lower(arena, cache, value_ctx, call)
-            }
-            (Self::StRedex(protocol), CodecCache::StRedex(cache)) => {
-                protocol.lower(arena, cache, value_ctx, call)
-            }
-            (Self::KSt(protocol), CodecCache::KSt(cache)) => {
-                protocol.lower(arena, cache, value_ctx, call)
-            }
-            _ => unreachable!("a boundary keeps the cache its protocol made"),
-        }
-    }
-
-    fn raise(
-        &self,
-        arena: &mut Arena,
-        cache: &mut CodecCache,
-        output: Output,
-        call: &Call<'_>,
-    ) -> Result<Output, InterpreterError> {
-        match (self, cache) {
-            (Self::StSt(protocol), CodecCache::StSt(cache)) => {
-                protocol.raise(arena, cache, output, call)
-            }
-            (Self::StK(protocol), CodecCache::StK(cache)) => {
-                protocol.raise(arena, cache, output, call)
-            }
-            (Self::StRedex(protocol), CodecCache::StRedex(cache)) => {
-                protocol.raise(arena, cache, output, call)
-            }
-            (Self::KSt(protocol), CodecCache::KSt(cache)) => {
-                protocol.raise(arena, cache, output, call)
-            }
-            _ => unreachable!("a boundary keeps the cache its protocol made"),
-        }
-    }
-
-    fn host(
-        &self,
-        arena: &mut Arena,
-        cache: &mut CodecCache,
-        name: &str,
-        values: &[Value],
-    ) -> Result<HostCall, ExternError> {
-        match (self, cache) {
-            (Self::StSt(protocol), CodecCache::StSt(cache)) => {
-                protocol.host(arena, cache, name, values)
-            }
-            (Self::StK(protocol), CodecCache::StK(cache)) => {
-                protocol.host(arena, cache, name, values)
-            }
-            (Self::StRedex(protocol), CodecCache::StRedex(cache)) => {
-                protocol.host(arena, cache, name, values)
-            }
-            (Self::KSt(protocol), CodecCache::KSt(cache)) => {
-                protocol.host(arena, cache, name, values)
-            }
-            _ => unreachable!("a boundary keeps the cache its protocol made"),
-        }
-    }
-
-    fn reply(
-        &self,
-        arena: &mut Arena,
-        cache: &mut CodecCache,
-        call: &HostCall,
-        eval: Eval<Output>,
-    ) -> Eval<Vec<Value>, ExternError> {
-        match (self, cache) {
-            (Self::StSt(protocol), CodecCache::StSt(cache)) => {
-                protocol.reply(arena, cache, call, eval)
-            }
-            (Self::StK(protocol), CodecCache::StK(cache)) => {
-                protocol.reply(arena, cache, call, eval)
-            }
-            (Self::StRedex(protocol), CodecCache::StRedex(cache)) => {
-                protocol.reply(arena, cache, call, eval)
-            }
-            (Self::KSt(protocol), CodecCache::KSt(cache)) => {
-                protocol.reply(arena, cache, call, eval)
-            }
-            _ => unreachable!("a boundary keeps the cache its protocol made"),
+            Self::StK(protocol) => protocol.cache_host_response(request, response),
+            Self::StRedex(protocol) => protocol.cache_host_response(request, response),
+            Self::StSt(_) | Self::KSt(_) => {}
         }
     }
 }

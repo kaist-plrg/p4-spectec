@@ -30,33 +30,18 @@ const STACKING: &str = "stacking a level over a K definition";
 /// The protocol of spec-k toward the K definition above it.
 pub(in crate::metacirc) struct ProtocolKSt;
 
-/// The codec state of a boundary above spec-k.
-pub(in crate::metacirc) struct Cache;
-
-impl Cache {
-    /// Clears the memoized conversions between programs.
-    pub(in crate::metacirc) fn clear(&mut self) {}
-}
-
 impl Protocol for ProtocolKSt {
-    type Cache = Cache;
-
-    fn new_cache(&self, _enabled: bool) -> Cache {
-        Cache
+    fn new(_cache: bool) -> Self {
+        Self
     }
 
     /// Prepares the K definition above once, as C (`Prepare`).
-    fn load(
-        &self,
-        _below: &mut dyn Below,
-        _above: &PreparedLevel,
-    ) -> Result<Value, InterpreterError> {
+    fn load(_below: &mut dyn Below, _above: &PreparedLevel) -> Result<Value, InterpreterError> {
         Err(InterpreterError::Fatal(error::unimplemented(STACKING)))
     }
 
     /// Encodes the inputs of spec-k's entry into the K definition above.
     fn encode_entry(
-        &self,
         _arena: &mut Arena,
         _above: Entered<'_>,
         _name: &str,
@@ -67,9 +52,8 @@ impl Protocol for ProtocolKSt {
 
     /// Runs `call`, a request of the K level above, as a K term under C (`Run`).
     fn lower(
-        &self,
+        &mut self,
         _arena: &mut Arena,
-        _cache: &mut Cache,
         _value_ctx: Value,
         _call: &Call<'_>,
     ) -> Result<Call<'static>, InterpreterError> {
@@ -78,9 +62,8 @@ impl Protocol for ProtocolKSt {
 
     /// Reads the final configuration of a `Run` as the output of `call`.
     fn raise(
-        &self,
+        &mut self,
         _arena: &mut Arena,
-        _cache: &mut Cache,
         _output: Output,
         _call: &Call<'_>,
     ) -> Result<Output, InterpreterError> {
@@ -90,9 +73,8 @@ impl Protocol for ProtocolKSt {
     /// Passes spec-k's extern relation `Call_hook` up as it is,
     /// since the K definition above reads spec-k's values; rejects any other.
     fn host(
-        &self,
+        &mut self,
         _arena: &mut Arena,
-        _cache: &mut Cache,
         name: &str,
         values: &[Value],
     ) -> Result<HostCall, ExternError> {
@@ -107,13 +89,14 @@ impl Protocol for ProtocolKSt {
 
     /// Gives the outputs of the extern relation as they are.
     fn reply(
-        &self,
+        &mut self,
         _arena: &mut Arena,
-        _cache: &mut Cache,
         _call: &HostCall,
         eval: Eval<Output>,
     ) -> Eval<Vec<Value>, ExternError> {
         let Eval { result, effect } = eval;
         Eval::new(result.map(Output::into_rel).map_err(Into::into), effect)
     }
+
+    fn clear(&mut self) {}
 }

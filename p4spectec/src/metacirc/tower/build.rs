@@ -4,11 +4,11 @@
 //!   +-----------------+-----------------+
 //!   | Builtin P4      | Extern P4       |   top     Top::P4, Ext
 //!   +-----------------+-----------------+
-//!                     ^ caches[1]
+//!                     ^ protocols[1]
 //!   +-----------------+-----------------+
 //!   | Builtin SpecTec | Extern SpecTec  |   interm  hosts[0], Boundary
 //!   +-----------------+-----------------+
-//!                     ^ caches[0]
+//!                     ^ protocols[0]
 //!   +-----------------+-----------------+
 //!   | Builtin SpecTec | Extern SpecTec  |   base    Base::St, Upper
 //!   +-----------------+-----------------+
@@ -89,7 +89,7 @@ fn build_upper<Ext: Extern>(
     options: runner::Config,
     external_p4: Ext,
     library: Option<KLibrary>,
-) -> (Upper<Ext>, Vec<ProtocolKind>) {
+) -> Upper<Ext> {
     let (top, configs_host) = match config.top_lang() {
         // Above a meta top level is its program; every level above the base is meta
         Lang::Al | Lang::Il => {
@@ -115,22 +115,21 @@ fn build_upper<Ext: Extern>(
     // The level below each boundary interprets the level above it:
     // a K base runs spec-meta-k, a Redex base runs spec-meta-redex,
     // a level accepting KORE is spec-k, and every other level is spec-meta
+    // Each level through the top has C and the protocol of the boundary below it,
+    // which keeps that boundary's codec state
     let count = hosts.len() + 1;
+    let cache = options.cache;
     let protocols = (0..count)
         .map(|idx_below| match (config.mode, config.levels[idx_below].lang) {
-            (ExecutionMode::K, _) if idx_below == 0 => ProtocolKind::StK(ProtocolStK),
-            (ExecutionMode::Redex, _) if idx_below == 0 => ProtocolKind::StRedex(ProtocolStRedex),
-            (_, Lang::Kore) => ProtocolKind::KSt(ProtocolKSt),
-            _ => ProtocolKind::StSt(ProtocolStSt),
+            (ExecutionMode::K, _) if idx_below == 0 => ProtocolKind::StK(ProtocolStK::new(cache)),
+            (ExecutionMode::Redex, _) if idx_below == 0 => {
+                ProtocolKind::StRedex(ProtocolStRedex::new(cache))
+            }
+            (_, Lang::Kore) => ProtocolKind::KSt(ProtocolKSt::new(cache)),
+            _ => ProtocolKind::StSt(Box::new(ProtocolStSt::new(cache))),
         })
-        .collect::<Vec<_>>();
-    // Each level through the top has C and the codec cache of the boundary below it
-    let caches = protocols
-        .iter()
-        .map(|protocol| protocol.new_cache(options.cache))
         .collect();
-    let upper = Upper { caches, ctxs: vec![None; count], hosts, top, depth_next: None };
-    (upper, protocols)
+    Upper { protocols, ctxs: vec![None; count], hosts, top, depth_next: None }
 }
 
 // == Tower assembly
@@ -182,24 +181,22 @@ impl<Ext: Extern> Tower<Ext> {
         // Only the base runs natively
         let level_top = levels.last().expect("validated nonempty tower");
         let config_base = &config.levels[0];
-        let (base, protocols) = match config.mode {
+        let base = match config.mode {
             // A K base runs from its compiled library and hosts the levels above it
             ExecutionMode::K => {
                 let kompiled = config_base.kompiled.as_ref().expect("validated k base");
                 let runtime = RuntimeK::load(kompiled)?;
                 let state = StateK::new(&runtime)?;
-                let (upper, protocols) =
-                    build_upper(config, level_top, None, options, external_p4, None);
-                (Base::K(BaseK { runtime, state, upper, effects: 0 }), protocols)
+                let upper = build_upper(config, level_top, None, options, external_p4, None);
+                Base::K(BaseK { runtime, state, upper, effects: 0 })
             }
             // A Redex base runs in a racket process and hosts the levels above it
             ExecutionMode::Redex => {
                 let module = config_base.module.as_ref().expect("validated redex base");
                 let runtime = RuntimeRedex::load(module)?;
                 let state = StateRedex::new(&runtime)?;
-                let (upper, protocols) =
-                    build_upper(config, level_top, None, options, external_p4, None);
-                (Base::Redex(BaseRedex { runtime, state, upper, effects: 0 }), protocols)
+                let upper = build_upper(config, level_top, None, options, external_p4, None);
+                Base::Redex(BaseRedex { runtime, state, upper, effects: 0 })
             }
             ExecutionMode::Al | ExecutionMode::Sl => {
                 let spec_base_al = crate::algo(std::slice::from_ref(&config_base.specdir))?;
@@ -210,7 +207,7 @@ impl<Ext: Extern> Tower<Ext> {
                         let spec_base = into_runner_spec(config.mode, spec_base_al)?;
                         let runner =
                             Runner::new(arena, spec_base, options, interface, external_p4)?;
-                        (Base::P4(runner), Vec::new())
+                        Base::P4(runner)
                     }
                     // A meta base or spec-k hosts the levels above it as its extern
                     lang_base => {
@@ -223,7 +220,7 @@ impl<Ext: Extern> Tower<Ext> {
                             }
                             _ => (InterfaceSt::StSt(interface::meta(lang_base)), None),
                         };
-                        let (upper, protocols) = build_upper(
+                        let upper = build_upper(
                             config,
                             level_top,
                             Some(&spec_base_al),
@@ -233,11 +230,11 @@ impl<Ext: Extern> Tower<Ext> {
                         );
                         let spec_base = into_runner_spec(config.mode, spec_base_al)?;
                         let runner = Runner::new(arena, spec_base, options, interface, upper)?;
-                        (Base::St(runner), protocols)
+                        Base::St(runner)
                     }
                 }
             }
         };
-        Ok(Self { levels, protocols, base, options })
+        Ok(Self { levels, base, options })
     }
 }

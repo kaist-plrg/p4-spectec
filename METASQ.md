@@ -150,16 +150,16 @@ exit code.
 ## Tower structure
 
 `Tower` (`p4spectec/src/metacirc/tower/`) keeps every level's specification
-(`PreparedLevel`), one `Protocol` per boundary, and the `Base`. A P4 base is a
-plain runner. Any other base stores the levels above it in `Upper`:
+(`PreparedLevel`) and the `Base`. A P4 base is a plain runner. Any other base
+stores the levels above it in `Upper`, with one `Protocol` per boundary:
 
 ```
-Upper { caches, ctxs, hosts, top, depth_next }
-  caches[k-1]  codec cache of the boundary below level k
-  ctxs[k-1]    C of level k for the current program, loaded on first use
-  hosts[k-1]   meta builtins of level k, between the base and the top
-  top          Top::P4(P4 interface + architecture) | Top::St(builtins) | Top::K(K library)
-  depth_next   reentry depths 1 and deeper
+Upper { protocols, ctxs, hosts, top, depth_next }
+  protocols[k-1]  protocol of the boundary below level k, with its codec state
+  ctxs[k-1]       C of level k for the current program, loaded on first use
+  hosts[k-1]      meta builtins of level k, between the base and the top
+  top             Top::P4(P4 interface + architecture) | Top::St(builtins) | Top::K(K library)
+  depth_next      reentry depths 1 and deeper
 ```
 
 Above a meta top level is its AL or IL program, one more boundary whose
@@ -187,7 +187,7 @@ the P4 relations the architecture calls; both lend the same levels. When a P4
 extern reenters the specification, as `static_assert` does to read its
 arguments and the architectures do through `find_var_e`, the call runs on the
 next depth: a fresh interpreter of the base's representation and fresh meta
-builtins, sharing C and the codec caches.
+builtins, sharing C and the protocols with their codec state.
 
 ## K and Redex towers
 

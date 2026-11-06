@@ -12,7 +12,7 @@
 use super::{
     error,
     interp::{TowerInterp, TowerInterpState},
-    protocol::{HostCall, Output, Protocol},
+    protocol::{HostCall, Output},
     tower::{HostLevel, TopMut, Upper, UpperMut},
 };
 use crate::{
@@ -121,10 +121,8 @@ impl<Ext: Extern> Boundary<'_, '_, Ext> {
         name: &str,
         values: &[Value],
     ) -> Eval<Vec<Value>, ExternError> {
-        let env = self.upper.env;
-        let protocol = env.protocol(self.level);
         // Decode with the protocol of the level below
-        let call = match protocol.host(arena, self.upper.cache(self.level), name, values) {
+        let call = match self.upper.protocol(self.level).host(arena, name, values) {
             Ok(call) => call,
             Err(error) => return Eval::new(Err(error), SideEffect::Pure),
         };
@@ -143,7 +141,7 @@ impl<Ext: Extern> Boundary<'_, '_, Ext> {
             }
         };
         // Encode the outcome for the level below
-        protocol.reply(arena, self.upper.cache(self.level), &call, eval)
+        self.upper.protocol(self.level).reply(arena, &call, eval)
     }
 }
 
@@ -274,7 +272,7 @@ impl<'l, Ext: Extern> UpperMut<'l, Ext> {
         ) -> Result<T, InterpreterError>,
     ) -> Eval<T> {
         // Only the P4 top's interface and extern join the next depth's context
-        let Self { env, caches, ctxs, hosts, top, depth_next } = self;
+        let Self { env, protocols, ctxs, hosts, top, depth_next } = self;
         let env = *env;
         let TopMut::P4 { interface, external } = top else {
             unreachable!("only a P4 top reenters");
@@ -289,7 +287,7 @@ impl<'l, Ext: Extern> UpperMut<'l, Ext> {
             }
         }
         let depth = depth_next.as_mut().expect("the next depth was just made");
-        let mut interp = depth.lend(env.spec_base, caches, ctxs);
+        let mut interp = depth.lend(env.spec_base, protocols, ctxs);
         // Count the call's effects apart from the calling depth's
         let mut effects = 0;
         let mut ctx = RunnerContext::new(

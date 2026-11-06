@@ -13,7 +13,5 @@ mod serve;
 mod sexp;
 
 pub(super) use engine::{EngineRedex, StateRedex};
-pub(super) use json::Cache as CacheStRedex;
 pub(super) use protocol::ProtocolStRedex;
 pub(super) use runtime::RuntimeRedex;
-pub(super) use serve::is_ok;

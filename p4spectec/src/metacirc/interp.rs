@@ -6,12 +6,12 @@
 //! on the level below, down to the depth's `Engine` at `LevelAt::Base`;
 //! C, a level loaded into the level below, is made once per program.
 //! A reentry from the P4 host runs on the next depth's `TowerInterpState`, which shares
-//! the base's definitions, C, and the codec caches with this one.
+//! the base's definitions, C, and the protocols with their codec state with this one.
 
 use super::{
     Result as MetacircResult,
     engine::{BaseSpec, Engine, EngineKind, EngineStateKind},
-    protocol::{Below, Call, CodecCache, Output, Protocol, ProtocolKind, Values},
+    protocol::{Below, Call, Output, ProtocolKind, Values},
     tower::{HostLevel, LevelAt, PreparedLevel, TopMut, UpperMut},
 };
 use crate::{
@@ -35,8 +35,8 @@ pub(in crate::metacirc) struct TowerInterp<'s> {
     pub hosts: &'s mut [MetaInterface],
     /// The depths beneath this one, which answer reentry.
     pub depth_next: &'s mut Option<Box<TowerInterpState>>,
-    /// The codec cache of each level boundary, shared by every depth.
-    pub caches: &'s mut [CodecCache],
+    /// The protocol of each level boundary, shared by every depth.
+    pub protocols: &'s mut [ProtocolKind],
     /// C of each level above the base, shared by every depth.
     pub ctxs: &'s mut [Option<Value>],
 }
@@ -47,7 +47,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for TowerInterp<'s> {
     fn clear(&mut self) {
         self.engine.clear();
         *self.depth_next = None;
-        self.caches.iter_mut().for_each(CodecCache::clear);
+        self.protocols.iter_mut().for_each(ProtocolKind::clear);
     }
 
     fn reset(&mut self) {
@@ -55,7 +55,7 @@ impl<'s, Ext: Extern> Interpreter<P4Interface, Ext> for TowerInterp<'s> {
         self.hosts.iter_mut().for_each(Interface::clear);
         *self.depth_next = None;
         self.ctxs.fill(None);
-        self.caches.iter_mut().for_each(CodecCache::clear);
+        self.protocols.iter_mut().for_each(ProtocolKind::clear);
     }
 
     fn eval_program(
@@ -107,10 +107,10 @@ impl<'s> TowerInterp<'s> {
         // Split the P4 context: the host goes to the lent levels, the depth runs the base
         let RunnerContextParts { arena, spec_env: env, interp, interface, external, effects } =
             ctx.parts_mut();
-        let TowerInterp { engine, hosts, depth_next, caches, ctxs } = interp;
+        let TowerInterp { engine, hosts, depth_next, protocols, ctxs } = interp;
         let upper = UpperMut {
             env,
-            caches,
+            protocols,
             ctxs,
             hosts,
             top: TopMut::P4 { interface, external },
@@ -127,8 +127,6 @@ pub(in crate::metacirc) struct TowerEnv<'s> {
     pub spec_base: BaseSpec<'s>,
     /// Every level of the tower, from the base to the top.
     pub levels: &'s [PreparedLevel],
-    /// The protocol of the boundary below each level above the base.
-    pub protocols: &'s [ProtocolKind],
     /// Options for the engines of deeper depths.
     pub options: runner::Config,
 }
@@ -137,11 +135,6 @@ impl TowerEnv<'_> {
     /// Returns the specification of `level`, in the form the level below loads.
     fn prepared(&self, level: HostLevel) -> &PreparedLevel {
         &self.levels[level.number()]
-    }
-
-    /// Returns the protocol of the boundary below `level`.
-    pub(in crate::metacirc) fn protocol(&self, level: HostLevel) -> &ProtocolKind {
-        &self.protocols[level.index()]
     }
 }
 
@@ -195,11 +188,12 @@ impl<Ext: Extern> TowerCall<'_, '_, Ext> {
     /// and raises the result.
     fn call_host(&mut self, level: HostLevel, call: Call<'_>) -> Result<Output, InterpreterError> {
         let value_ctx = self.load_ctx(level)?;
-        let env = self.upper.env;
-        let protocol = env.protocol(level);
-        let call_below = protocol.lower(self.arena, self.upper.cache(level), value_ctx, &call)?;
+        let call_below = self
+            .upper
+            .protocol(level)
+            .lower(self.arena, value_ctx, &call)?;
         let output = self.call(level.below(), call_below)?;
-        protocol.raise(self.arena, self.upper.cache(level), output, &call)
+        self.upper.protocol(level).raise(self.arena, output, &call)
     }
 
     /// Returns C of `level`, loading it into the level below on first use.
@@ -210,8 +204,9 @@ impl<Ext: Extern> TowerCall<'_, '_, Ext> {
         }
         // Load the specification through the protocol, on the level below
         let env = self.upper.env;
+        let load = self.upper.protocol(level).load();
         let mut below = LevelBelow { tower: self, level_at: level.below() };
-        let value_ctx = env.protocol(level).load(&mut below, env.prepared(level))?;
+        let value_ctx = load(&mut below, env.prepared(level))?;
         self.upper.set_ctx(level, value_ctx);
         Ok(value_ctx)
     }
@@ -262,14 +257,14 @@ impl TowerInterpState {
     pub(in crate::metacirc) fn lend<'d>(
         &'d mut self,
         spec_base: BaseSpec<'d>,
-        caches: &'d mut [CodecCache],
+        protocols: &'d mut [ProtocolKind],
         ctxs: &'d mut [Option<Value>],
     ) -> TowerInterp<'d> {
         TowerInterp {
             engine: self.engine.lend(spec_base),
             hosts: &mut self.hosts,
             depth_next: &mut self.next,
-            caches,
+            protocols,
             ctxs,
         }
     }
