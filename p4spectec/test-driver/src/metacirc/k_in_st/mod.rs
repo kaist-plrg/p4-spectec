@@ -141,7 +141,7 @@ pub fn run(name_config: &str, name_suite: Option<&str>, timeout: Option<Duration
     let start = Instant::now();
     let mut executed = 0;
     let mut mismatches = Vec::new();
-    let mut timeouts = Vec::new();
+    let mut timed_out = 0;
     for suite in &registration.suites {
         // Skip suites of other names and suites without a tower for the base
         if name_suite.is_some_and(|name| suite.name != name) {
@@ -171,9 +171,7 @@ pub fn run(name_config: &str, name_suite: Option<&str>, timeout: Option<Duration
             for program in programs {
                 let start_program = Instant::now();
                 let name = program.expected.display().to_string();
-                // A program that cannot be checked fails; the others still run
-                let verdict = check(&mut spec, &case, &program, update)
-                    .unwrap_or_else(|error| Verdict::Fail(format!("not checked: {error}")));
+                let verdict = check(&mut spec, &case, &program, update)?;
                 let secs = start_program.elapsed().as_secs_f64();
                 match &verdict {
                     Verdict::Pass(pass) => eprintln!("{name}: {pass} ({secs:.1}s)"),
@@ -183,7 +181,7 @@ pub fn run(name_config: &str, name_suite: Option<&str>, timeout: Option<Duration
                     }
                     Verdict::Timeout => {
                         eprintln!("{name}: TIMEOUT ({secs:.1}s)");
-                        timeouts.push(name);
+                        timed_out += 1;
                     }
                 }
                 executed += 1;
@@ -193,7 +191,7 @@ pub fn run(name_config: &str, name_suite: Option<&str>, timeout: Option<Duration
     let text_summary = format!(
         "{text_mode}: executed={executed} mismatched={} timeout={} elapsed={:.3}s",
         mismatches.len(),
-        timeouts.len(),
+        timed_out,
         start.elapsed().as_secs_f64()
     );
     eprintln!("{text_summary}");
@@ -204,7 +202,7 @@ pub fn run(name_config: &str, name_suite: Option<&str>, timeout: Option<Duration
             mismatches.join("\n")
         )));
     }
-    eprintln!("{text_mode}: all {} runs that ended matched krun's", executed - timeouts.len());
+    eprintln!("{text_mode}: all {} runs that ended matched krun's", executed - timed_out);
     Ok(())
 }
 
@@ -228,37 +226,37 @@ fn check(spec: &mut Spec, case: &Case, program: &Program, update: bool) -> Resul
     let Some(output) = spec.run(&paths_program, depth)? else {
         return Ok(Verdict::Timeout);
     };
-    let differs = compare(&case.info, &output, &expected);
-    // krun's final configuration is one that search finds
-    if differs.is_err() && same_final(&case.info, &output, &expected) {
-        if update && path_search.exists() {
-            fs::remove_file(&path_search)?;
-        }
-        return Ok(Verdict::Pass("pass in another order"));
-    }
+    let (pass, difference) = match compare(&case.info, &output, &expected) {
+        Ok(()) => ("pass", None),
+        // krun's final configuration is one that search finds
+        Err(_) if same_final(&case.info, &output, &expected) => ("pass in another order", None),
+        Err(difference) => ("pass by search", Some(difference)),
+    };
     if update {
         // Only a run that ends elsewhere needs the finals K allows; without them it fails
-        if let Err(difference) = &differs {
-            if let Err(error) = case.search(&path_init, depth, input, &path_search) {
-                let reason = error.to_string();
-                let reason = reason.lines().next().unwrap_or_default();
-                return Ok(Verdict::Fail(format!(
-                    "{difference}, and K's search gave no finals: {reason}"
-                )));
+        match &difference {
+            None if path_search.exists() => fs::remove_file(&path_search)?,
+            None => {}
+            Some(difference) => {
+                if let Err(error) = case.search(&path_init, depth, input, &path_search) {
+                    let reason = error.to_string();
+                    let reason = reason.lines().next().unwrap_or_default();
+                    return Ok(Verdict::Fail(format!(
+                        "{difference}, and K's search gave no finals: {reason}"
+                    )));
+                }
             }
-        } else if path_search.exists() {
-            fs::remove_file(&path_search)?;
         }
     }
-    let Err(difference) = differs else {
-        return Ok(Verdict::Pass("pass"));
+    let Some(difference) = difference else {
+        return Ok(Verdict::Pass(pass));
     };
     if !path_search.exists() {
         return Ok(Verdict::Fail(difference));
     }
     let finals = fs::read(&path_search)?;
     Ok(match reached(&case.info, &output, &finals) {
-        Ok(()) => Verdict::Pass("pass by search"),
+        Ok(()) => Verdict::Pass(pass),
         Err(error) => Verdict::Fail(format!("{difference}, and {error}")),
     })
 }
