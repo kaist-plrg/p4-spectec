@@ -11,8 +11,8 @@
 # Paths are relative to the repository root.
 #
 # The programs of a definition from a checkout are those its project runs on
-# the LLVM backend: its test files, but those its own lists leave out
-# (`skip_lists`) or, for the K tutorial, its Makefiles do not run (`skip`).
+# the LLVM backend: its test files, but those it leaves out (`skip`), by its own
+# lists or, for the K tutorial, in its Makefiles.
 
 [[configs]]
 name = "sl"
@@ -162,7 +162,7 @@ programs = [
   "{src}/tests/simple/*.wast",
   "{src}/tests/wasm-tests/test/core/*.wast",
 ]
-skip_lists = [
+skip = [
   { list = "{src}/tests/failing.simple", dir = "{src}" },
   { list = "{src}/tests/conformance/unparseable.txt", dir = "{src}/tests/wasm-tests/test/core" },
   { list = "{src}/tests/conformance/unsupported-llvm.txt", dir = "{src}/tests/wasm-tests/test/core" },
@@ -182,7 +182,7 @@ runtime = ["-std=c++20", "-lssl", "-lcrypto", "-lsecp256k1", "{src}/kevm-pyk/src
 init = ["uv", "run", "--project", "{src}/kevm-pyk", "python", "testdata/k-in-st/kevm/init.py", "{program}", "{test}", "{output}"]
 programs = ["{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/*/*.json"]
 json_tests = true
-skip_lists = [
+skip = [
   { list = "{src}/tests/slow.llvm", dir = "{src}/tests/ethereum-tests" },
   { list = "{src}/tests/failing.llvm", dir = "{src}/tests/ethereum-tests" },
 ]
