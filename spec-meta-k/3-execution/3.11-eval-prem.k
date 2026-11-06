@@ -39,7 +39,7 @@ module PREM
   //   rulegroup Eval_prem/ifnotholdpr: IFNOTHOLD needs the relation to
   //   mismatch; its `ERROR` passes the catch frame. The call leaves the
   //   local layer as it found it, so the catch frame holds none
-  syntax Catch ::= "notHolds" "(" ")"
+  syntax UnmatchBoundary ::= "notHolds" "(" ")"
 
   rule <k> ifNotHoldPr(X:Id, Vs:ValList) => callRel(X, Vs) ~> notHolds() ... </k>
   rule <k> UNMATCH ~> notHolds() => .K ... </k>

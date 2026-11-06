@@ -38,7 +38,7 @@ module CALL-FUNC
        <lfenv> F:Map </lfenv>
        <lvenv> V:Map </lvenv>
 
-  syntax Catch ::= afterClause(ClauseList, ValList, Map, Map)
+  syntax UnmatchBoundary ::= afterClause(ClauseList, ValList, Map, Map)
                                             // lfenv, lvenv
 
   //   rule Eval_clauses/unmatch
@@ -71,7 +71,7 @@ module CALL-FUNC
        ...
        </k>
 
-  syntax Catch ::= afterTblRow(TblRowList, ValList)
+  syntax UnmatchBoundary ::= afterTblRow(TblRowList, ValList)
   rule <k> UNMATCH ~> afterTblRow(Rs:TblRowList, Vs:ValList) => evalTblRows(Rs, Vs) ... </k>
   rule <k> V:Val ~> afterTblRow(_:TblRowList, _:ValList) => V ... </k>
 
@@ -114,7 +114,7 @@ module CALL-FUNC
     => (X |-> typD(X, .TParamList, aliasDT(T))) calleeTdenv(Xs, Ts)
 
   // The otherwise clause, under the context the clauses started from
-  syntax Catch ::= afterClauses(Clause, ValList)
+  syntax UnmatchBoundary ::= afterClauses(Clause, ValList)
 
   //   rule Call_defined_func/result: `ERROR` passes the catch frame
   rule <k> R:Val ~> afterClauses(_:Clause, _:ValList) => R ... </k>

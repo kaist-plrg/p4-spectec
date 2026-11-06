@@ -45,27 +45,27 @@ module RESULT
   //
   // A rule with no applicable case rewrites to its failure at the head of
   // `<k>`: `UNMATCH` for a recoverable mismatch, `ERROR` for an execution
-  // error. A failure discards the pending work up to the boundary that
-  // handles it. `UNMATCH` stops at a catch frame, which goes on with the
-  // next alternative; `ERROR` passes every catch frame up to the answer to
-  // the host. A scope or frame boundary (3.02-context.k) restores its state
-  // and lets either go on.
+  // error. A failure discards the pending work up to a boundary for it.
+  //
+  // An `UnmatchBoundary` stops `UNMATCH`, and an `ErrorBoundary`, one of
+  // them, stops `ERROR` too. The other `UnmatchBoundary`s are catch frames,
+  // which go on with the next alternative. An `ErrorBoundary` is a scope or
+  // frame boundary (3.02-context.k), which restores its state and lets the
+  // failure go on, or the answer to the host (3.14-entry.k).
   //
   // A catch frame between alternatives (`afterRul`, `afterClause`) holds the
   // `<lfenv>` and `<lvenv>` from before its alternative and restores them
   // both when it catches `UNMATCH` and when it takes the value.
   // ==========================================================================
 
-  syntax Catch                              // catches `UNMATCH`
-  syntax Answer                             // catches both, at the entry
-  syntax ScopeOrFrame ::= endScope(Map)     // lvenv
-                        | "endFrame"
-  syntax Boundary ::= Catch | Answer | ScopeOrFrame
+  syntax UnmatchBoundary ::= ErrorBoundary
+  syntax ErrorBoundary ::= endScope(Map)    // lvenv
+                         | "endFrame"
 
   rule <k> UNMATCH ~> (K:KItem => .K) ... </k>
-    requires notBool isBoundary(K)
+    requires notBool isUnmatchBoundary(K)
   rule <k> ERROR ~> (K:KItem => .K) ... </k>
-    requires notBool (isScopeOrFrame(K) orBool isAnswer(K))
+    requires notBool isErrorBoundary(K)
 
   // `unres`: a function's outcome on `<k>`, `X` for `ok(X)` and a failure in
   // flight; `unresBool`: a `bool` outcome as its value.

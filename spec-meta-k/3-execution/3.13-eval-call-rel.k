@@ -38,7 +38,7 @@ module CALL-REL
        <lfenv> F:Map </lfenv>
        <lvenv> V:Map </lvenv>
 
-  syntax Catch ::= afterRul(RulList, ValList, Map, Map)
+  syntax UnmatchBoundary ::= afterRul(RulList, ValList, Map, Map)
                                             // lfenv, lvenv
 
   //   rule Eval_ruls/unmatch
@@ -96,7 +96,7 @@ module CALL-REL
        </k>
 
   // The otherwise group, under the context the paths started from
-  syntax Catch ::= afterRuls(Rul, ValList)
+  syntax UnmatchBoundary ::= afterRuls(Rul, ValList)
 
   //   rule Call_defined_rel/result: `ERROR` passes the catch frame
   rule <k> Ws:ValList ~> afterRuls(_:Rul, _:ValList) => Ws ... </k>
