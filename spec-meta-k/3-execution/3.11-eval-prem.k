@@ -37,12 +37,13 @@ module PREM
   rule <k> holds((_:Val, _:ValList)) => ERROR ... </k>
 
   //   rulegroup Eval_prem/ifnotholdpr: IFNOTHOLD needs the relation to
-  //   mismatch; its `ERROR` passes the catch frame
+  //   mismatch; its `ERROR` passes the catch frame. The call leaves the
+  //   local layer as it found it, so the catch frame holds none
   syntax Catch ::= "notHolds" "(" ")"
 
-  rule <k> ifNotHoldPr(X:Id, Vs:ValList) => try(callRel(X, Vs)) ~> notHolds() ... </k>
+  rule <k> ifNotHoldPr(X:Id, Vs:ValList) => callRel(X, Vs) ~> notHolds() ... </k>
   rule <k> UNMATCH ~> notHolds() => .K ... </k>
-  rule <k> ok(_:ValList) ~> notHolds() => UNMATCH ... </k>
+  rule <k> _:ValList ~> notHolds() => UNMATCH ... </k>
 
   //   rule Eval_prem/letpr
   rule <k> letPr(El:Exp, V:Val) => assignExp(El, V) ... </k>

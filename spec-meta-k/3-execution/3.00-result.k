@@ -16,9 +16,9 @@ module RESULT
   // ==========================================================================
   // Outcomes
   //
-  // The outcome of one alternative (a clause, a rule path, a table row) or of
-  // a total function (`$subtyp`, `$upcast`, `$sub_list`, ...): `ok(X)` for
-  // `OK X`, or a failure. The unit result `OK` of `unitRes` is `.K`.
+  // The outcome of a total function (`$subtyp`, `$upcast`, `$sub_list`, ...):
+  // `ok(X)` for `OK X`, or a failure. On `<k>`, `OK X` is `X` itself and the
+  // unit result `OK` of `unitRes` is `.K`.
   // ==========================================================================
 
   syntax Error ::= "ERROR"                  [symbol(ERROR)]
@@ -50,6 +50,10 @@ module RESULT
   // next alternative; `ERROR` passes every catch frame up to the answer to
   // the host. A scope or frame boundary (3.02-context.k) restores its state
   // and lets either go on.
+  //
+  // A catch frame between alternatives (`afterRul`, `afterClause`) holds the
+  // `<lfenv>` and `<lvenv>` from before its alternative and restores them
+  // both when it catches `UNMATCH` and when it takes the value.
   // ==========================================================================
 
   syntax Catch                              // catches `UNMATCH`
@@ -62,28 +66,6 @@ module RESULT
     requires notBool isBoundary(K)
   rule <k> ERROR ~> (K:KItem => .K) ... </k>
     requires notBool (isScopeOrFrame(K) orBool isAnswer(K))
-
-  // ==========================================================================
-  // Tries
-  //
-  // `try(K)` runs `K` as one alternative: its bindings are undone afterwards,
-  // and its success is recorded as `ok(R)`. Its checkpoint restores its state
-  // like a scope, so a failure goes on to the catch frame after it.
-  // ==========================================================================
-
-  syntax KItem ::= try(K)
-  syntax ScopeOrFrame ::= checkpoint(Map, Map)
-                                            // lfenv, lvenv
-
-  rule <k> try(K:K) => K ~> checkpoint(F, V) ... </k>
-       <lfenv> F:Map </lfenv>
-       <lvenv> V:Map </lvenv>
-  rule <k> R:KResult ~> checkpoint(F:Map, V:Map) => ok(R) ... </k>
-       <lfenv> _ => F </lfenv>
-       <lvenv> _ => V </lvenv>
-  rule <k> E:Failure ~> checkpoint(F:Map, V:Map) => E ... </k>
-       <lfenv> _ => F </lfenv>
-       <lvenv> _ => V </lvenv>
 
   // `unres`: an outcome on `<k>`; `unresBool`: a `bool` outcome as its value.
   syntax KItem ::= unres(Res)
