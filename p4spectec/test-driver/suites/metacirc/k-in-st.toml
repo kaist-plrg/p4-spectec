@@ -5,8 +5,9 @@
 # and determinism checking (`det`).
 # A suite names its definitions: `root`, a directory of cases written for spec-k,
 # or `def` in `dir` of the checkout that the environment variable `src` names
-# (a suite whose variable is not set is skipped). The layout of a case and the
-# other options are in test-driver/src/metacirc/k_in_st/suite.rs.
+# (a suite whose variable is not set is skipped), with its expectations in
+# testdata/k-in-st/<name>. The layout of a case and the other options are in
+# test-driver/src/metacirc/k_in_st/suite.rs.
 # Running needs K; KRUN_EXPECT=1 writes what krun gives.
 # Paths are relative to the repository root.
 #
@@ -22,23 +23,19 @@ det = true
 
 [[suites]]
 name = "manual"
-towers = { al = "towers/k-in-st.json" }
 root = "testdata/k-in-st/manual"
 
 # The K tutorial, K v7.1.337
 [[suites]]
 name = "imp"
-towers = { al = "towers/k-in-st.json" }
 src = "K_SRC"
 dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/2_imp/lesson_4"
 def = "imp.k"
 kompile = ["--gen-glr-bison-parser"]
 programs = ["tests/*.imp"]
-expected = "testdata/k-in-st/imp"
 
 [[suites]]
 name = "lambda"
-towers = { al = "towers/k-in-st.json" }
 src = "K_SRC"
 dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/1_lambda/lesson_8"
 def = "lambda.k"
@@ -47,21 +44,17 @@ programs = ["tests/*.lambda"]
 skip = [
   "tests/arithmetic-div-zero.lambda",  # the tutorial Makefile does not run it
 ]
-expected = "testdata/k-in-st/lambda"
 
 [[suites]]
 name = "simple"
-towers = { al = "towers/k-in-st.json" }
 src = "K_SRC"
 dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/1_untyped"
 def = "simple-untyped.md"
 krun = ["--io", "off"]
 programs = ["tests/*/*.simple"]
-expected = "testdata/k-in-st/simple"
 
 [[suites]]
 name = "kool"
-towers = { al = "towers/k-in-st.json" }
 src = "K_SRC"
 dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/1_untyped"
 def = "kool-untyped.md"
@@ -70,42 +63,34 @@ programs = ["tests/*.kool"]
 skip = [
   "tests/threads.kool",  # the tutorial Makefile does not run it
 ]
-expected = "testdata/k-in-st/kool"
 
 [[suites]]
 name = "lambda++"
-towers = { al = "towers/k-in-st.json" }
 src = "K_SRC"
 dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/3_lambda++/lesson_5"
 def = "lambda.k"
 kompile = ["--syntax-module", "LAMBDA"]
 programs = ["tests/*/*.lambda"]
-expected = "testdata/k-in-st/lambda++"
 
 [[suites]]
 name = "imp++"
-towers = { al = "towers/k-in-st.json" }
 src = "K_SRC"
 dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/4_imp++/lesson_7"
 def = "imp.k"
 kompile = ["--gen-glr-bison-parser"]
 krun = ["--io", "off"]
 programs = ["tests/*.imp"]
-expected = "testdata/k-in-st/imp++"
 
 [[suites]]
 name = "simple-typed-static"
-towers = { al = "towers/k-in-st.json" }
 src = "K_SRC"
 dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/2_typed/1_static"
 def = "simple-typed-static.md"
 inputs = "tests"
 programs = ["../programs/*/*.simple"]
-expected = "testdata/k-in-st/simple-typed-static"
 
 [[suites]]
 name = "simple-typed-dynamic"
-towers = { al = "towers/k-in-st.json" }
 src = "K_SRC"
 dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/2_typed/2_dynamic"
 def = "simple-typed-dynamic.md"
@@ -118,11 +103,9 @@ skip = [
   "../programs/threads/threads_08.simple",
   "../programs/threads/threads_05.simple",  # the tutorial Makefile only searches it
 ]
-expected = "testdata/k-in-st/simple-typed-dynamic"
 
 [[suites]]
 name = "kool-typed-dynamic"
-towers = { al = "towers/k-in-st.json" }
 src = "K_SRC"
 dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/2_typed/1_dynamic"
 def = "kool-typed-dynamic.md"
@@ -133,11 +116,9 @@ skip = [
   "../programs/cycle.kool",  # the tutorial Makefile does not run them
   "../programs/threads.kool",
 ]
-expected = "testdata/k-in-st/kool-typed-dynamic"
 
 [[suites]]
 name = "kool-typed-static"
-towers = { al = "towers/k-in-st.json" }
 src = "K_SRC"
 dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/2_typed/2_static"
 def = "kool-typed-static.md"
@@ -147,16 +128,17 @@ programs = ["../programs/*.kool"]
 skip = [
   "../programs/return-object.kool",  # the tutorial Makefile does not run it
 ]
-expected = "testdata/k-in-st/kool-typed-static"
 
 # wasm-semantics 212271b
 [[suites]]
 name = "kwasm"
-towers = { al = "towers/k-in-st.json" }
 src = "KWASM_SRC"
 dir = "pykwasm/src/pykwasm/kdist/wasm-semantics"
 def = "test.md"
-kompile = ["--main-module", "WASM-TEST", "--syntax-module", "WASM-TEST-SYNTAX", "--md-selector", "k", "--gen-glr-bison-parser", "-O3"]
+kompile = [
+  "--main-module", "WASM-TEST", "--syntax-module", "WASM-TEST-SYNTAX", "--md-selector", "k",
+  "--gen-glr-bison-parser", "-O3",
+]
 prepare = ["python3", "-I", "{src}/pykwasm/src/pykwasm/scripts/preprocessor.py"]
 programs = [
   "{src}/tests/simple/*.wast",
@@ -167,39 +149,53 @@ skip = [
   { list = "{src}/tests/conformance/unparseable.txt", dir = "{src}/tests/wasm-tests/test/core" },
   { list = "{src}/tests/conformance/unsupported-llvm.txt", dir = "{src}/tests/wasm-tests/test/core" },
 ]
-expected = "testdata/k-in-st/kwasm"
 
 # evm-semantics 866e563, with ethereum-tests c30599fb; the KRYPTO plugin is built
 # once in the checkout
 [[suites]]
 name = "kevm"
-towers = { al = "towers/k-in-st.json" }
 src = "KEVM_SRC"
 dir = "kevm-pyk/src/kevm_pyk/kproj/evm-semantics"
 def = "driver.md"
-kompile = ["--main-module", "ETHEREUM-SIMULATION", "--syntax-module", "ETHEREUM-SIMULATION", "-I", "{src}/kevm-pyk/src/kevm_pyk/kproj/evm-semantics", "-I", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin", "--md-selector", "k & ! symbolic", "--hook-namespaces", "JSON KRYPTO", "--emit-json", "-O3", "--type-inference-mode", "simplesub", "-ccopt", "-std=c++20", "-ccopt", "-lssl", "-ccopt", "-lcrypto", "-ccopt", "-lsecp256k1", "-ccopt", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a"]
-runtime = ["-std=c++20", "-lssl", "-lcrypto", "-lsecp256k1", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a"]
-init = ["uv", "run", "--project", "{src}/kevm-pyk", "python", "testdata/k-in-st/kevm/init.py", "{program}", "{test}", "{output}"]
+kompile = [
+  "--main-module", "ETHEREUM-SIMULATION", "--syntax-module", "ETHEREUM-SIMULATION",
+  "-I", "{src}/kevm-pyk/src/kevm_pyk/kproj/evm-semantics",
+  "-I", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin", "--md-selector", "k & ! symbolic",
+  "--hook-namespaces", "JSON KRYPTO", "--emit-json", "-O3", "--type-inference-mode", "simplesub",
+  "-ccopt", "-std=c++20", "-ccopt", "-lssl", "-ccopt", "-lcrypto", "-ccopt", "-lsecp256k1",
+  "-ccopt", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a",
+]
+runtime = [
+  "-std=c++20", "-lssl", "-lcrypto",
+  "-lsecp256k1", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a",
+]
+init = [
+  "uv", "run", "--project", "{src}/kevm-pyk", "python", "testdata/k-in-st/kevm/init.py",
+  "{program}", "{test}", "{output}",
+]
 programs = ["{src}/tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests/*/*.json"]
 json_tests = true
 skip = [
   { list = "{src}/tests/slow.llvm", dir = "{src}/tests/ethereum-tests" },
   { list = "{src}/tests/failing.llvm", dir = "{src}/tests/ethereum-tests" },
 ]
-expected = "testdata/k-in-st/kevm"
 
 # mir-semantics 4d79325
 [[suites]]
 name = "kmir"
-towers = { al = "towers/k-in-st.json" }
 src = "KMIR_SRC"
 dir = "kmir/src/kmir/kdist/mir-semantics"
 def = "kmir.md"
-kompile = ["-I", "{src}/kmir/src/kmir/kdist", "--syntax-module", "KMIR-AST", "--md-selector", "k & ! symbolic", "-O2", "-w2e", "--emit-json"]
-init = ["uv", "run", "--project", "{src}/kmir", "python", "testdata/k-in-st/kmir/init.py", "{kompiled}", "{program}", "{output}"]
+kompile = [
+  "-I", "{src}/kmir/src/kmir/kdist", "--syntax-module", "KMIR-AST",
+  "--md-selector", "k & ! symbolic", "-O2", "-w2e", "--emit-json",
+]
+init = [
+  "uv", "run", "--project", "{src}/kmir", "python", "testdata/k-in-st/kmir/init.py", "{kompiled}",
+  "{program}", "{output}",
+]
 programs = [
   "{src}/kmir/src/tests/integration/data/exec-smir/*/*.smir.json",
   "{src}/kmir/src/tests/integration/data/run-rs/*/*.rs",
   "{src}/kmir/src/tests/integration/data/ub/*.rs",
 ]
-expected = "testdata/k-in-st/kmir"

@@ -3,7 +3,7 @@
 //! A suite takes its definitions from `root`, a directory of cases written for
 //! spec-k (a directory with one `<name>.k` and its programs, `<program>.<ext>`),
 //! or `def` in `dir` of the checkout named by the environment variable `src`,
-//! with its programs and their expectations in `expected`. A program's standard
+//! with its programs and their expectations in `testdata/k-in-st/<name>`. A program's standard
 //! input is `<program>.in`, and its expectations `<name>.out`, `<name>.search`,
 //! and `<name>.depth`.
 //!
@@ -40,6 +40,7 @@ pub struct Registration {
 #[serde(deny_unknown_fields)]
 pub struct KInStSuite {
     pub name: String,
+    #[serde(default = "towers_default")]
     pub towers: ByBase<PathBuf>,
     /// The directory of cases written for spec-k.
     pub root: Option<PathBuf>,
@@ -63,8 +64,6 @@ pub struct KInStSuite {
     pub json_tests: bool,
     /// The directory of the programs' `<program>.in`, in `dir`, if not beside them.
     pub inputs: Option<PathBuf>,
-    /// The directory of what krun gives for the programs.
-    pub expected: Option<PathBuf>,
     /// Extra options of kompile.
     #[serde(default)]
     pub kompile: Vec<String>,
@@ -80,6 +79,11 @@ pub struct KInStSuite {
     /// A command that makes the initial term of a program, in place of krun.
     #[serde(default)]
     pub init: Vec<String>,
+}
+
+/// The tower of every suite unless it names its own.
+fn towers_default() -> ByBase<PathBuf> {
+    ByBase { al: Some(PathBuf::from("towers/k-in-st.json")), il: None, k: None, redex: None }
 }
 
 /// The extension of programs when a suite names none.
@@ -176,10 +180,7 @@ pub fn groups(suite: &KInStSuite) -> Result<Option<Vec<Group<'_>>>> {
     let checkout = checkout.to_string_lossy();
     let dir = PathBuf::from(&*checkout).join(suite.dir.as_deref().ok_or_else(|| missing("dir"))?);
     let source = dir.join(suite.def.as_deref().ok_or_else(|| missing("def"))?);
-    let dir_expected = suite
-        .expected
-        .as_deref()
-        .ok_or_else(|| missing("expected"))?;
+    let dir_expected = Path::new("testdata/k-in-st").join(&suite.name);
     let dir_inputs = suite.inputs.as_ref().map(|inputs| dir.join(inputs));
     // A pattern may start at the checkout, `{src}`, rather than in `dir`
     let resolve = |pattern: &String| dir.join(pattern.replace("{src}", &checkout));
@@ -231,7 +232,7 @@ pub fn groups(suite: &KInStSuite) -> Result<Option<Vec<Group<'_>>>> {
                     return Err(Error::from(format!("{}: two programs named {name}", suite.name)));
                 }
                 let program =
-                    Program::new(path.clone(), test, name, dir_inputs.as_deref(), dir_expected);
+                    Program::new(path.clone(), test, name, dir_inputs.as_deref(), &dir_expected);
                 programs.push(program);
             }
         }
