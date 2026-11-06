@@ -62,8 +62,6 @@ pub struct KInStSuite {
     /// Extra clang flags of the K library, as for a plugin.
     #[serde(default)]
     pub runtime: Vec<String>,
-    /// The step bound of every run.
-    pub depth: Option<u64>,
     /// A command the programs pass through before krun takes them.
     #[serde(default)]
     pub prepare: Vec<String>,
@@ -91,7 +89,8 @@ pub struct Program {
 
 impl Program {
     /// A program, with its input beside it or in `dir_inputs`, and its expectations
-    /// in `dir_expected`; `path` may end in `#<name>`, which names it.
+    /// in `dir_expected`; `path` may end in `#<name>`, which names it, and a name
+    /// may hold a directory (`core/table`), as where two programs share a file name.
     fn new(path: PathBuf, dir_inputs: Option<&Path>, dir_expected: &Path) -> Self {
         let text = path.to_string_lossy().into_owned();
         let (path, name) = match text.rsplit_once('#') {
@@ -123,11 +122,11 @@ impl Program {
         PathBuf::from(format!("{}.{ext}", self.expected.display()))
     }
 
-    /// The step bound of the program's runs: the suite's, or `<name>.depth`.
-    pub fn depth(&self, suite: &KInStSuite) -> Result<Option<u64>> {
+    /// The step bound of the program's runs, `<name>.depth`, if any.
+    pub fn depth(&self) -> Result<Option<u64>> {
         let path = self.expected("depth");
-        if suite.depth.is_some() || !path.exists() {
-            return Ok(suite.depth);
+        if !path.exists() {
+            return Ok(None);
         }
         let text = fs::read_to_string(&path)?;
         let depth = text

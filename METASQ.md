@@ -214,13 +214,15 @@ kompiled with the definition is the top of the tower (`Top::K`). As a script is
 the program above spec-meta, the K definition is the program above spec-k, and
 runs through the same path: the top reads it with its initial term
 (`Tower::parse_input`, `Input::Kore`), `ProtocolKSt::encode_entry` gives them to
-`Krun` with the step bound, and the top prints the run (`Tower::print_output`).
+`Krun` with the step bound if one is given, and the top prints the run
+(`Tower::print_output`).
 The K library answers spec-k's extern relation `Call_hook`, to which spec-k leaves
 most K hooks, and
 `metacirc run-meta towers/k-in-st.json -p imp-kompiled/definition.kore -p init.kore --depth N`
 prints the run as `krun` does; `make test-metacirc-k-in-st` compares it with
-`krun`. `ProtocolKSt` (`st/protocol_k.rs`) also describes how a level would stack
-over a K definition, which is not implemented.
+`krun`, recording a run still going after `TIMEOUT` seconds as a timeout.
+`ProtocolKSt` (`st/protocol_k.rs`) also describes how a level would stack over
+a K definition, which is not implemented.
 
 ST-in-Redex adds the `redex/` backend: `EngineRedex`, one `racket` process per
 tower shared by every reentry depth, and `ProtocolStRedex`. Every call, answer, host

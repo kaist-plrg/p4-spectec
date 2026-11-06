@@ -17,6 +17,10 @@ use crate::harness::Result;
 /// and an uncaught exception, which aborts.
 const EXIT_FAILED: [i32; 2] = [113, 134];
 
+/// How long the search binary may take, in seconds: where many orders of the
+/// same rules reach many configurations, as threads do, it may not end.
+const SEARCH_SECONDS: u32 = 600;
+
 /// A step bound as the interpreter and the search binary take it: -1 for none.
 fn arg_depth(depth: Option<u64>) -> String {
     depth.map_or_else(|| "-1".to_owned(), |depth| depth.to_string())
@@ -51,7 +55,8 @@ impl Case<'_> {
     }
 
     /// Writes the final configurations K allows from an initial term to `path_search`,
-    /// as the kompiled `search` binary finds them.
+    /// as the kompiled `search` binary finds them within `SEARCH_SECONDS`; a search
+    /// that does not end then fails, and writes nothing.
     pub fn search(
         &self,
         path_init: &Path,
@@ -63,14 +68,19 @@ impl Case<'_> {
             // The search binary appends to its output file
             fs::remove_file(path_search)?;
         }
-        run(
-            Command::new(self.kompiled().join("search"))
+        let searched = run(
+            Command::new("timeout")
+                .arg(SEARCH_SECONDS.to_string())
+                .arg(self.kompiled().join("search"))
                 .arg(path_init)
                 .arg(arg_depth(depth))
                 .arg(path_search),
             input,
             &format!("search {}", path_init.display()),
-        )?;
-        Ok(())
+        );
+        if searched.is_err() && path_search.exists() {
+            fs::remove_file(path_search)?;
+        }
+        searched.map(|_| ())
     }
 }
