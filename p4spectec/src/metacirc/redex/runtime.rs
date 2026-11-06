@@ -9,9 +9,10 @@
 //! and the key the process loaded last.
 //!
 //! Each line from the process starts with a word saying what it is
-//! (`Line`); each line to it is one JSON call or response.
+//! (`Line`); each line to it is one call or response, as an s-expression
+//! that Racket's `read` reads (`serve`).
 
-use super::engine::failed;
+use super::{engine::failed, read};
 use crate::{
     metacirc::{Result, error, protocol::ProtocolStRedex},
     runner::InterpreterError,
@@ -98,7 +99,7 @@ impl RuntimeRedex {
         *self.process.borrow_mut() = Some(Process { child, to_racket, from_racket });
         self.loaded.set(None);
         match self.receive()? {
-            Line::Serve(answer) if answer == r#"{"ready":null}"# => Ok(()),
+            Line::Serve(answer) if answer == ProtocolStRedex::READY => Ok(()),
             _ => {
                 self.stop();
                 let message = format!("racket {path} did not start serving");
@@ -140,7 +141,7 @@ impl RuntimeRedex {
             Some(("eval", request)) => Line::Eval(request.to_owned()),
             Some(("debug", value)) => Line::Debug(value.to_owned()),
             Some(("raise", message)) => {
-                Line::Raise(serde_json::from_str(message).unwrap_or_else(|_| message.to_owned()))
+                Line::Raise(read::read_message(message).unwrap_or_else(|| message.to_owned()))
             }
             _ => {
                 self.stop();
@@ -194,7 +195,7 @@ impl Drop for RuntimeRedex {
     /// Tells the process to exit and waits for it.
     fn drop(&mut self) {
         if let Some(Process { mut child, mut to_racket, from_racket }) = self.process.take() {
-            let exit = ProtocolStRedex::exit_request();
+            let exit = ProtocolStRedex::EXIT;
             let _ = writeln!(to_racket, "{exit}").and_then(|()| to_racket.flush());
             drop(to_racket);
             drop(from_racket);

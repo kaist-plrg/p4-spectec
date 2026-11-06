@@ -4,21 +4,31 @@
 ;; row: Eval_AL_rel is `load` then `call-rel`, and Eval_AL_func is `load` then
 ;; `call-func` with no type arguments.
 ;;
-;; As a program, it says it is ready, then answers each call of the host
-;; (3.04.1-extern-json.rkt) by running it through the driver: OK with its
-;; values, UNMATCH as a fail, ERROR as an error. A call that raises a Racket
-;; error is answered with `raise` and its message. `exit`, or the end of
-;; stdin, ends it. Debug values go to the host, and other output to stderr.
+;; As a program, it says it is ready, then answers each call of the host by
+;; running it through the driver. Calls and answers are s-expressions that
+;; `read` reads and `write` prints (3.04.2-extern-host.rkt), so the answer is
+;; the result itself: OK with its values, UNMATCH, or ERROR. A call that
+;; raises a Racket error is answered with `raise` and its message. `exit`, or
+;; the end of stdin, ends it. Debug values go to the host, and other output
+;; to stderr.
+;;
+;; call   ::= (load spec)                   $load_ctx($empty_ctx, spec)
+;;          | (call-rel id (val ...))
+;;          | (call-func id (typ ...) (val ...))
+;;          | (exit)
+;;
+;; answer ::= READY                         before the first call
+;;          | (OK ())                       load
+;;          | valsres                       call-rel
+;;          | valres                        call-func
 ;;
 ;;   racket spec-meta-redex/3-execution/3.16-entry.rkt
 ;;
 ;; p4spectec::metacirc::redex starts it, once per tower.
 
-(require json
-         racket/match
+(require racket/match
          redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
-         "3.04.1-extern-json.rkt"
          "3.04.2-extern-host.rkt"
          "3.02-context.rkt"
          "3.15-driver.rkt")
@@ -38,14 +48,6 @@
   (match (run (list G (list 'IN L e)))
     [(list _ (list 'IN _ res)) res]))
 
-;; The spec that the s-expression text sexp holds
-(define (read-spec sexp)
-  (define in (open-input-string sexp))
-  (define spec (read in))
-  (unless (and (not (eof-object? spec)) (eof-object? (read in)))
-    (error 'serve "a spec is not one s-expression"))
-  spec)
-
 ;; The context of the spec loaded last, which calls run under
 (define loaded #f)
 
@@ -55,7 +57,7 @@
     (let loop ()
       (match (receive)
         [(? eof-object?) (void)]
-        [(hash-table ('exit _)) (void)]
+        [(list 'exit) (void)]
         [call
          (answer! call)
          (loop)]))))
@@ -67,30 +69,20 @@
 
 (define (answer call)
   (match call
-    [(hash-table ('load (? string? sexp)))
-     (set! loaded (load-script (read-spec sexp)))
-     (hasheq 'ok '())]
-    [(hash-table ('call-rel (? string? id)) ('args (? list? args)))
-     (match (run-loaded (loaded-ctx) (term (call-rel ,id ,(map jsexpr->val args))))
-       [(list 'OK vals) (hasheq 'ok (map val->jsexpr vals))]
-       [failure (failure->answer failure)])]
-    [(hash-table ('call-func (? string? id)) ('targs (? list? targs)) ('args (? list? args)))
-     (match (run-loaded (loaded-ctx)
-                        (term (call-func ,id ,(map jsexpr->typ targs) ,(map jsexpr->val args))))
-       [(and failure (or 'UNMATCH 'ERROR)) (failure->answer failure)]
-       [val (hasheq 'ok (val->jsexpr val))])]
-    [_ (error 'serve "not a call: ~a" (jsexpr->string call))]))
+    [(list 'load spec)
+     (set! loaded (load-script spec))
+     '(OK ())]
+    [(list 'call-rel id vals)
+     (run-loaded (loaded-ctx) (term (call-rel ,id ,vals)))]
+    [(list 'call-func id typs vals)
+     (run-loaded (loaded-ctx) (term (call-func ,id ,typs ,vals)))]
+    [_ (error 'serve "not a call: ~s" call)]))
 
 (define (loaded-ctx)
   (or loaded (error 'serve "no spec is loaded")))
 
-(define (failure->answer failure)
-  (match failure
-    ['UNMATCH (hasheq 'fail (json-null))]
-    ['ERROR (hasheq 'error "the specification evaluated to ERROR")]))
-
 (module+ main
   (parameterize ([current-output-port (current-error-port)]
-                 [current-debug (λ (val) (emit! "debug" (val->jsexpr val)))])
-    (emit! "serve" (hasheq 'ready (json-null)))
+                 [current-debug (λ (val) (emit! "debug" val))])
+    (emit! "serve" 'READY)
     (serve)))
