@@ -67,9 +67,6 @@ pub struct KInStSuite {
     /// A command the programs pass through before krun takes them.
     #[serde(default)]
     pub prepare: Vec<String>,
-    /// Whether the definition is KORE already, and the programs initial terms.
-    #[serde(default)]
-    pub kore: bool,
     /// A command that makes the initial term of a program, in place of krun.
     #[serde(default)]
     pub init: Vec<String>,
