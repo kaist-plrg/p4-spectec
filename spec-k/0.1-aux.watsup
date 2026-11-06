@@ -47,8 +47,10 @@ def $sorted_set<X>(`{ X* `}) = $union_set<X>(`{ X* `}, `{ eps `})
 ;; Text builtins: $has_prefix reads hook names (3-load); $text_to_int, of
 ;; spec-meta's standard library, reads the text of an Int domain value, and
 ;; $int_text writes one as K does, in decimal with a sign only for a negative
-;; number; $kore_string escapes a string for #unparseKORE (5.2-hook). A KORE
-;; string has one byte per character.
+;; number; $kore_string escapes a string for #unparseKORE (5.2-hook);
+;; $text_before and $drop_prefix read the value of an MInt literal NpW and the
+;; width W of its sort SortW (5.3-hook-collection). A KORE string has one byte
+;; per character.
 
 builtin dec $has_prefix(text, text) : bool
   hint(prose_true %0 "begins with" %1)
@@ -58,6 +60,10 @@ builtin dec $int_text(int) : text
   hint(prose_in %0 "written as K writes an Int")
 builtin dec $kore_string(text) : text
   hint(prose_in %0 "escaped as in a KORE string")
+builtin dec $text_before(text, text) : text
+  hint(prose_in %0 "up to" %1)
+builtin dec $drop_prefix(text, text) : text
+  hint(prose_in %0 "without" %1 "at its start")
 
 ;; The text of a Bool domain value
 

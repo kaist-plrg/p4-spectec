@@ -115,7 +115,7 @@ def $close_subsorts(subsort*) = $concat_<subsort>($subsorts_from(SM, sort_a)*)
 ;; Symbols
 
 ;; The hooks of K's modules of domain values (INT, BOOL, STRING, BYTES, FLOAT,
-;; JSON, and the KRYPTO plugin) are computed by the K runtime (RUNTIME), but
+;; JSON, MINT, and the KRYPTO plugin) are computed by the K runtime (RUNTIME), but
 ;; for the lazy ones and the conversions between strings and tokens of any
 ;; sort; the hooks on K terms are specified (HOOKED). JSON's two hooks convert
 ;; between a JSON term, a constructor term, and its text.
@@ -134,7 +134,7 @@ dec $is_runtime(hookid) : bool
 def $is_runtime(hookid)
   = $exists_($in_module(hookid, t_m)*)
     /\ ~(hookid <- [ "STRING.token2string", "STRING.string2token" ])
-  -- if t_m* = [ "INT", "BOOL", "STRING", "BYTES", "FLOAT", "JSON", "KRYPTO" ]
+  -- if t_m* = [ "INT", "BOOL", "STRING", "BYTES", "FLOAT", "JSON", "KRYPTO", "MINT" ]
 
 ;; The kind of a symbol with a hook, by the hook: lazy, computed by the K
 ;; runtime, or specified

@@ -68,11 +68,38 @@ fn kore_string(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Val
     Ok(value::make::text(arena, escaped, Span::default())?)
 }
 
+/// `dec $text_before(text, text) : text`, the first text up to the first
+/// occurrence of the second, or all of it: the value `5` of the MInt literal
+/// `5p64`.
+fn text_before(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value> {
+    extract::zero(targs)?;
+    let (t, separator) = extract::two(values)?;
+    let t = text(arena, t)?;
+    let separator = text(arena, separator)?;
+    let before = t
+        .split_once(separator.as_str())
+        .map_or(t.as_str(), |(before, _)| before);
+    Ok(value::make::text(arena, before.to_owned(), Span::default())?)
+}
+
+/// `dec $drop_prefix(text, text) : text`, the first text without the second
+/// at its start, if it is there: the width `64` of the sort `Sort64`.
+fn drop_prefix(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value> {
+    extract::zero(targs)?;
+    let (t, prefix) = extract::two(values)?;
+    let t = text(arena, t)?;
+    let prefix = text(arena, prefix)?;
+    let rest = t.strip_prefix(prefix.as_str()).unwrap_or(t.as_str());
+    Ok(value::make::text(arena, rest.to_owned(), Span::default())?)
+}
+
 /// The builtins above, by name.
-pub(super) fn entries() -> [(&'static str, BuiltinImpl); 3] {
+pub(super) fn entries() -> [(&'static str, BuiltinImpl); 5] {
     [
         ("has_prefix", Box::new(has_prefix)),
         ("int_text", Box::new(int_text)),
         ("kore_string", Box::new(kore_string)),
+        ("text_before", Box::new(text_before)),
+        ("drop_prefix", Box::new(drop_prefix)),
     ]
 }

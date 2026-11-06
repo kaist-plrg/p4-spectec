@@ -53,6 +53,18 @@ def $hook(D, "LIST.fill", sort,
   -- if n_a = $(n + n_l)
   -- if n_r = $nat_of($(|term*| - n_a))
 
+;; Machine-integer indices and sizes, of an MInt literal NpW of sort
+;; MInt{SortW}: the index is the integer N, as the LLVM backend reads a 64-bit
+;; one (a 256-bit one it cuts to 64 bits, which no list reaches)
+def $hook(D, "LIST.getMInt", sort, ([LIST sort_l term*, DV sort_i t_i]))
+  = $hook(D, "LIST.get", sort, ([LIST sort_l term*, DV sort_i $text_before(t_i, "p")]))
+def $hook(D, "LIST.updateMInt", sort, ([LIST sort_l term*, DV sort_i t_i, term_v]))
+  = $hook(D, "LIST.update", sort,
+          ([LIST sort_l term*, DV sort_i $text_before(t_i, "p"), term_v]))
+def $hook(D, "LIST.sizeMInt", sort, ([LIST sort_l term*]))
+  = OK (DV sort ($int_text($(|term*|)) ++ "p" ++ $drop_prefix(sortid_w, "Sort")))
+  -- if SORT sortid_m ([SORT sortid_w eps]) = sort
+
 ;;; MAP
 ;;; A map keeps its entries in order, as a set does, so that maps with the same
 ;;; entries are the same value, as K compares them (KEQUAL.eq in 5.2-hook).
