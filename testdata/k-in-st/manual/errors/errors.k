@@ -127,6 +127,10 @@ module ERRORS
   syntax Pgm ::= listupdate(Int)
   rule <k> listupdate(I) => ListItem(1) [ I <- 2 ] </k>
 
+  // A fill that runs past the end of the list.
+  syntax Pgm ::= listfill(Int)
+  rule <k> listfill(I) => fillList(ListItem(0) ListItem(0), I, 2, 9) </k>
+
   // A list of negative length.
   syntax Pgm ::= listmake(Int)
   rule <k> listmake(I) => makeList(I, 0) </k>

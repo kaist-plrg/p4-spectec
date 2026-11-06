@@ -43,6 +43,15 @@ def $hook(D, "LIST.updateAll", sort,
   -- if n = $nat_of($text_to_int(t_i))
   -- if n_a = $(n + |term_s*|)
   -- if n_r = $nat_of($(|term*| - n_a))
+;; n_l elements from n on replaced by term_v; out of range fails, as for
+;; updateAll (hook_LIST_fill does not check it when n or n_l is 0)
+def $hook(D, "LIST.fill", sort,
+  ([LIST sort_l term*, DV sort_i t_i, DV sort_n t_n, term_v]))
+  = OK (LIST sort (term*[0 : n] ++ $repeat_<term>(term_v, n_l) ++ term*[n_a : n_r]))
+  -- if n = $nat_of($text_to_int(t_i))
+  -- if n_l = $nat_of($text_to_int(t_n))
+  -- if n_a = $(n + n_l)
+  -- if n_r = $nat_of($(|term*| - n_a))
 
 ;;; MAP
 ;;; A map keeps its entries in order, as a set does, so that maps with the same
@@ -88,6 +97,39 @@ def $hook(D, "MAP.choice", sort, ([MAP sort_m `{ (term_k ':' term_v)* `}]))
   = OK term
   -- if `{ term :: term_t* `} = $sorted_set<term>(`{ term_k* `})
 
+;;; Removing keys: M[K <- undef], removeAll(M, S); a key not in the map is
+;;; left alone
+
+dec $remove_keys(map<term, term>, term*) : map<term, term>
+def $remove_keys(M, eps) = M
+def $remove_keys(M, (term_k :: term*))
+  = $remove_keys($diff_set<pair<term, term>>(M, `{ term_k ':' term_v `}), term*)
+  -- if term_v = $find_map<term, term>(M, term_k)
+def $remove_keys(M, (term_k :: term*)) = $remove_keys(M, term*)
+  -- if eps = $find_map<term, term>(M, term_k)
+
+def $hook(D, "MAP.remove", sort, ([MAP sort_m M, term_k]))
+  = OK (MAP sort $remove_keys(M, ([ term_k ])))
+def $hook(D, "MAP.removeAll", sort, ([MAP sort_m M, SET sort_s `{ term_s* `}]))
+  = OK (MAP sort $remove_keys(M, term_s*))
+
+;;; M1 -Map M2 takes off the entries of M1 that are in M2, key and value;
+;;; updateMap(M1, M2) gives M2's value to a key in both
+
+def $hook(D, "MAP.difference", sort, ([MAP sort_1 M_1, MAP sort_2 M_2]))
+  = OK (MAP sort $diff_set<pair<term, term>>(M_1, M_2))
+def $hook(D, "MAP.updateAll", sort, ([MAP sort_1 M_1, MAP sort_2 M_2]))
+  = OK (MAP sort $union_set<pair<term, term>>($remove_keys(M_1, term_k*), M_2))
+  -- if `{ (term_k ':' term_v)* `} = M_2
+
+;;; keys_list, values: the keys and the values in the order of the map here,
+;;; the order of its hash trie in the LLVM backend, as for Set2List
+
+def $hook(D, "MAP.keys_list", sort, ([MAP sort_m `{ (term_k ':' term_v)* `}]))
+  = OK (LIST sort term_k*)
+def $hook(D, "MAP.values", sort, ([MAP sort_m `{ (term_k ':' term_v)* `}]))
+  = OK (LIST sort term_v*)
+
 ;;; SET
 
 def $hook(D, "SET.unit", sort, eps) = OK (SET sort `{ eps `})
@@ -114,6 +156,11 @@ def $hook(D, "SET.size", sort, ([SET sort_s `{ term* `}]))
 
 def $hook(D, "SET.set2list", sort, ([SET sort_s `{ term* `}]))
   = OK (LIST sort term*)
+
+;;; List2Set: the elements of the list, once each
+
+def $hook(D, "SET.list2set", sort, ([LIST sort_l term*]))
+  = OK (SET sort $sorted_set<term>(`{ term* `}))
 
 ;;; Any other hook on K terms is not supported (yet)
 
