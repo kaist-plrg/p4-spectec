@@ -80,7 +80,8 @@
    (--> (assign-args (arg ..._n) (val ..._n)) (seq ((assign-arg arg val) ...))
         "assign-args")))
 
-;; The rules on a term and its context (r G L)
+;; The rules on a term under its innermost IN, (IN G L (in-hole F r)), which
+;; read G or L, or write L
 (define ->term+ctx/eval-assign
   (reduction-relation
    al
@@ -88,47 +89,46 @@
    ;;; Assigning to an expression
 
    ;; rule Assign_exp/variable
-   (--> ((assign-exp (VAR id) val) G L) (OK G (add-varr L (id ()) val))
+   (--> (IN G L (in-hole F (assign-exp (VAR id) val)))
+        (IN G (add-varr L (id ()) val) (in-hole F OK))
         "assign-exp/variable")
 
    ;; rulegroup Assign_exp/iter
 
-   (--> ((assign-exp (ITER exp iterExp) val) G L) (OK G (add-varr L varr val))
+   (--> (IN G L (in-hole F (assign-exp (ITER exp iterExp) val)))
+        (IN G (add-varr L varr val) (in-hole F OK))
         (where (varr) (is-iter-on-var (ITER exp iterExp)))
         "assign-exp/iter/simple")
 
-   (--> ((assign-exp (ITER exp (QUEST (vari ...))) (OPT ())) G L)
-        (OK G (add-varis L ((iter-vari vari QUEST) ...)
-                         (repeat- (OPT ()) ,(length (term (vari ...))))))
+   (--> (IN G L (in-hole F (assign-exp (ITER exp (QUEST (vari ...))) (OPT ()))))
+        (IN G (add-varis L ((iter-vari vari QUEST) ...)
+                         (repeat- (OPT ()) ,(length (term (vari ...))))) (in-hole F OK))
         (where () (is-iter-on-var (ITER exp (QUEST (vari ...)))))
         "assign-exp/iter/opt-none")
 
    ;; Assign_exp/iter/opt-some, once the inner assignment has updated L.
    ;; It adds (OPT val_sub)*, where spec-meta adds each OPT val_sub on its own.
-   (--> ((assign-exp/iter/opt-some OK (vari ...)) G L)
-        (OK G (add-varis L ((iter-vari vari QUEST) ...) ((OPT (val_sub)) ...)))
+   (--> (IN G L (in-hole F (assign-exp/iter/opt-some OK (vari ...))))
+        (IN G (add-varis L ((iter-vari vari QUEST) ...) ((OPT (val_sub)) ...)) (in-hole F OK))
         (where ((val_sub ...)) (find-varis L (vari ...)))
         "assign-exp/iter/opt-some/bind")
 
    ;; Assign_exp/iter/list: each element is assigned under C_local, which has
    ;; no values
-   (--> ((assign-exp (ITER exp (STAR (vari ...))) (LIST (val ...)))
-         G
-         (name L {TYP tdenv FUNC fnenv VAL venv}))
-        ((assign-exp/iter/list
-          ((IN {TYP tdenv FUNC fnenv VAL (empty-map)} (assign-exp exp val)) ...)
-          (vari ...))
-         G L)
+   (--> (IN G (name L {TYP tdenv FUNC fnenv VAL venv}) (in-hole F (assign-exp (ITER exp (STAR (vari ...))) (LIST (val ...)))))
+        (IN G L (in-hole F (assign-exp/iter/list
+          ((IN G {TYP tdenv FUNC fnenv VAL (empty-map)} (assign-exp exp val)) ...)
+          (vari ...))))
         (where () (is-iter-on-var (ITER exp (STAR (vari ...)))))
         "assign-exp/iter/list")
-   (--> ((assign-exp/iter/list ((IN L_sub OK) ...) (vari ...)) G L)
-        (OK G (add-varis L ((iter-vari vari STAR) ...) ((LIST (val_sub ...)) ...)))
+   (--> (IN G L (in-hole F (assign-exp/iter/list ((IN G_sub L_sub OK) ...) (vari ...))))
+        (IN G (add-varis L ((iter-vari vari STAR) ...) ((LIST (val_sub ...)) ...)) (in-hole F OK))
         (where (((val_sub ...)) ...) ((finds-vari (L_sub ...) vari) ...))
         "assign-exp/iter/list/bind")
 
    ;;; Assigning to an argument
 
    ;; rule Assign_arg/fun: the parameter is bound to the global function name
-   (--> ((assign-arg (FUN id) (FUNC id_global)) G L)
-        (OK G (add-func L id id_global))
+   (--> (IN G L (in-hole F (assign-arg (FUN id) (FUNC id_global))))
+        (IN G (add-func L id id_global) (in-hole F OK))
         "assign-arg/fun")))

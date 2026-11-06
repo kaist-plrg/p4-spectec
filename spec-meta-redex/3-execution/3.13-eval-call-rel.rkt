@@ -1,7 +1,7 @@
 #lang racket/base
 ;; Mirrors spec-meta/4-execution/4.11-eval-call-rel.watsup.
 ;;
-;; A relation runs in (IN L_local ...), and each rule path in a copy of it, so
+;; A relation runs in (IN G L_local ...), and each rule path in a copy of it, so
 ;; a path leaves no bindings to the next. The paths of every group, in order,
 ;; are evaluated until one succeeds (Eval_ruls), which gives the result;
 ;; unlike spec-meta, the later paths are not checked to be unmatched. The
@@ -50,22 +50,15 @@
    ;; path is passed over by the frame (Eval_ruls/unmatch).
    (--> (eval-ruls (UNMATCH ...)) UNMATCH
         "eval-ruls/nil")
-   (--> (eval-ruls (UNMATCH ... (OK (val_out ...)) (IN L (eval-rul rul (val ...))) ...)) (OK (val_out ...))
+   (--> (eval-ruls (UNMATCH ... (OK (val_out ...)) (IN G L (eval-rul rul (val ...))) ...))
+        (OK (val_out ...))
         "eval-ruls/succ")
 
    ;;; Defined relations
 
-   ;; rulegroup Call_defined_rel: every path runs in a copy of the relation's
-   ;; layer
-   (--> (call-defined-rel (REL id (typ_input ...) (typ_output ...) (rulGroup ...) (elsGroup ...)) (val ...))
-        (IN L_local
-            (call-defined-rel/ruls (eval-ruls ((IN L_local (eval-rul rul (val ...))) ...))
-                                   (elsGroup ...) (val ...)))
-        (where (rul ...) (ruls-of-rulgroups (rulGroup ...)))
-        (where L_local (empty-localLayer))
-        "call-defined-rel")
-   ;; once the paths are evaluated: the result, or the else group in the
-   ;; relation's layer when all are unmatched
+   ;; rulegroup Call_defined_rel, once the paths are evaluated (a rule under
+   ;; the IN starts it): the result, or the else group in the relation's
+   ;; layer when all are unmatched
    (--> (call-defined-rel/ruls (OK (val_out ...)) (elsGroup ...) (val ...)) (OK (val_out ...))
         "call-defined-rel/result")
    (--> (call-defined-rel/ruls UNMATCH (elsGroup) (val ...))
@@ -82,17 +75,33 @@
         (where valsres ,(host-call-extern-rel (term id) (term (val ...))))
         "call-extern-rel")))
 
-;; The rules on a term and its context (r G L)
+;; The rules on a term under its innermost IN, (IN G L (in-hole F r)), which
+;; read G or L, or write L
 (define ->term+ctx/eval-call-rel
   (reduction-relation
    al
 
+   ;;; Defined relations
+
+   ;; rulegroup Call_defined_rel: every path runs in a copy of the relation's
+   ;; local layer
+   (--> (IN G L (in-hole F (call-defined-rel (REL id (typ_input ...) (typ_output ...) (rulGroup ...) (elsGroup ...))
+                                             (val ...))))
+        (IN G L (in-hole F (IN G L_local
+                               (call-defined-rel/ruls (eval-ruls ((IN G L_local (eval-rul rul (val ...))) ...))
+                                                      (elsGroup ...) (val ...)))))
+        (where (rul ...) (ruls-of-rulgroups (rulGroup ...)))
+        (where L_local (empty-localLayer))
+        "call-defined-rel")
+
    ;;; Relation call
 
    ;; rulegroup Call_rel
-   (--> ((call-rel id (val ...)) G L) ((call-extern-rel id_rel (val ...)) G L)
+   (--> (IN G L (in-hole F (call-rel id (val ...))))
+        (IN G L (in-hole F (call-extern-rel id_rel (val ...))))
         (where ((EXTREL id_rel (typ_input ...) (typ_output ...))) (find-rel G id))
         "call-rel/extern")
-   (--> ((call-rel id (val ...)) G L) ((call-defined-rel definedRelDefn (val ...)) G L)
+   (--> (IN G L (in-hole F (call-rel id (val ...))))
+        (IN G L (in-hole F (call-defined-rel definedRelDefn (val ...))))
         (where (definedRelDefn) (find-rel G id))
         "call-rel/defined")))

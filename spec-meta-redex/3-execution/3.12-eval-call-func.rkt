@@ -1,7 +1,7 @@
 #lang racket/base
 ;; Mirrors spec-meta/4-execution/4.10-eval-call-func.watsup.
 ;;
-;; A callee runs in (IN L_callee ...), and each clause in a copy of it, so a
+;; A callee runs in (IN G L_callee ...), and each clause in a copy of it, so a
 ;; clause leaves no bindings to the next. The clauses are evaluated in order
 ;; until one succeeds (Eval_clauses), which gives the result; unlike
 ;; spec-meta, the later clauses are not checked to be unmatched. The
@@ -35,16 +35,10 @@
    ;; unmatched clause is passed over by the frame (Eval_clauses/unmatch).
    (--> (eval-clauses (UNMATCH ...)) UNMATCH
         "eval-clauses/nil")
-   (--> (eval-clauses (UNMATCH ... val_out (IN L (eval-clause clause (val ...))) ...)) val_out
+   (--> (eval-clauses (UNMATCH ... val_out (IN G L (eval-clause clause (val ...))) ...)) val_out
         "eval-clauses/succ")
 
    ;;; Table meta-function invocation
-
-   ;; rule Eval_tblrow/succ: the row runs in a layer of its own, as a
-   ;; statement sequence
-   (--> (eval-tblrow ((arg ...) exp_out (prem ...)) (val ...))
-        (IN (empty-localLayer) (seq ((assign-args (arg ...) (val ...)) prem ... exp_out)))
-        "eval-tblrow")
 
    ;; rulegroup Eval_tblrows
    (--> (eval-tblrows () (val ...)) UNMATCH
@@ -64,17 +58,9 @@
 
    ;;; Defined meta-function invocation
 
-   ;; rulegroup Call_defined_func: the callee's layer binds the type
-   ;; parameters, and every clause runs in a copy of it
-   (--> (call-defined-func (FUNC id (tparam ..._n) (param ...) typ_ret (clause ...) (elsClause ...))
-                           (typ ..._n) (val ...))
-        (IN L_callee
-            (call-defined-func/clauses (eval-clauses ((IN L_callee (eval-clause clause (val ...))) ...))
-                                       (elsClause ...) (val ...)))
-        (where L_callee {TYP ((tparam (TYP tparam () (ALIAS typ))) ...) FUNC (empty-map) VAL (empty-map)})
-        "call-defined-func")
-   ;; once the clauses are evaluated: the result, or the `otherwise` clause
-   ;; in the callee's layer when all are unmatched
+   ;; rulegroup Call_defined_func, once the clauses are evaluated (a rule
+   ;; under the IN starts it): the result, or the `otherwise` clause in the
+   ;; callee's layer when all are unmatched
    (--> (call-defined-func/clauses val_out (elsClause ...) (val ...)) val_out
         "call-defined-func/result")
    (--> (call-defined-func/clauses UNMATCH (elsClause) (val ...))
@@ -98,24 +84,49 @@
         (where valres ,(host-call-builtin-func (term id) (term (typ ...)) (term (val ...))))
         "call-builtin-func")))
 
-;; The rules on a term and its context (r G L)
+;; The rules on a term under its innermost IN, (IN G L (in-hole F r)), which
+;; read G or L, or write L
 (define ->term+ctx/eval-call-func
   (reduction-relation
    al
+
+   ;;; Table meta-function invocation
+
+   ;; rule Eval_tblrow/succ: the row runs in a local layer of its own, as a
+   ;; statement sequence
+   (--> (IN G L (in-hole F (eval-tblrow ((arg ...) exp_out (prem ...)) (val ...))))
+        (IN G L (in-hole F (IN G (empty-localLayer) (seq ((assign-args (arg ...) (val ...)) prem ... exp_out)))))
+        "eval-tblrow")
+
+   ;;; Defined meta-function invocation
+
+   ;; rulegroup Call_defined_func: the callee's local layer binds the type
+   ;; parameters, and every clause runs in a copy of it
+   (--> (IN G L (in-hole F (call-defined-func (FUNC id (tparam ..._n) (param ...) typ_ret (clause ...) (elsClause ...))
+                                              (typ ..._n) (val ...))))
+        (IN G L (in-hole F (IN G L_callee
+                               (call-defined-func/clauses (eval-clauses ((IN G L_callee (eval-clause clause (val ...))) ...))
+                                                          (elsClause ...) (val ...)))))
+        (where L_callee {TYP ((tparam (TYP tparam () (ALIAS typ))) ...) FUNC (empty-map) VAL (empty-map)})
+        "call-defined-func")
 
    ;;; Meta-function call
 
    ;; rulegroup Call_func: the name is resolved through the local function
    ;; environment, and its definition found in the global layer
-   (--> ((call-func id (typ ...) (val ...)) G L) ((call-extern-func id_func (typ ...) (val ...)) G L)
+   (--> (IN G L (in-hole F (call-func id (typ ...) (val ...))))
+        (IN G L (in-hole F (call-extern-func id_func (typ ...) (val ...))))
         (where ((EXTFUNC id_func (tparam ...) (param ...) typ_ret)) (find-func G (resolve-func-param L id)))
         "call-func/extern")
-   (--> ((call-func id (typ ...) (val ...)) G L) ((call-builtin-func id_func (typ ...) (val ...)) G L)
+   (--> (IN G L (in-hole F (call-func id (typ ...) (val ...))))
+        (IN G L (in-hole F (call-builtin-func id_func (typ ...) (val ...))))
         (where ((BUILTINFUNC id_func (tparam ...) (param ...) typ_ret)) (find-func G (resolve-func-param L id)))
         "call-func/builtin")
-   (--> ((call-func id () (val ...)) G L) ((call-table-func tableFuncDefn (val ...)) G L)
+   (--> (IN G L (in-hole F (call-func id () (val ...))))
+        (IN G L (in-hole F (call-table-func tableFuncDefn (val ...))))
         (where (tableFuncDefn) (find-func G (resolve-func-param L id)))
         "call-func/table")
-   (--> ((call-func id (typ ...) (val ...)) G L) ((call-defined-func definedFuncDefn (typ ...) (val ...)) G L)
+   (--> (IN G L (in-hole F (call-func id (typ ...) (val ...))))
+        (IN G L (in-hole F (call-defined-func definedFuncDefn (typ ...) (val ...))))
         (where (definedFuncDefn) (find-func G (resolve-func-param L id)))
         "call-func/defined")))

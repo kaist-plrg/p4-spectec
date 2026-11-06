@@ -8,13 +8,15 @@
 ;; the host procedures of 3.04-extern-host.rkt. Frames give the evaluation
 ;; positions. An evaluated expression is its value, and a constructor whose
 ;; parts are all values is a value, so a frame writes val for an evaluated
-;; subterm and exp for one still to evaluate. watsup's ok<ctx> is (IN L OK):
-;; premises update the innermost IN's layer in place. UNMATCH passes through
+;; subterm and exp for one still to evaluate. A term evaluates under the
+;; context of its innermost IN: (IN G L e) holds watsup's C = {GLOBAL G,
+;; LOCAL L}, and watsup's ok<ctx> is (IN G L OK). Premises update the
+;; innermost IN's local layer in place. UNMATCH passes through
 ;; the frames of Fr-pass, and a rule looks at it in those of Fr-catch.
 ;;
 ;; ERROR is not a term of the machine. Nothing catches an ERROR, so the rules
 ;; that give it, or pass it up, are left out: a term to which no rule applies
-;; is stuck, and the driver takes a stuck configuration for ERROR. A missing
+;; is stuck, and the entry takes a stuck term for ERROR. A missing
 ;; rule is then ERROR as well.
 ;;
 ;; An intermediate form is named after the rule, or the group, that builds
@@ -25,9 +27,6 @@
 (provide al)
 
 (define-extended-language al context
-  ;; Configurations
-  (conf ::= (G e))
-
   ;; Results, without ERROR. Redex has no parametric nonterminals, so each
   ;; ok<X> is written out, and a result of val is the val itself.
   (valres ::= val UNMATCH)
@@ -52,14 +51,14 @@
   ;; machine term
   (e ::=
      res
-     (IN L e)
+     (IN G L e)
      exp arg prem
      (assign-exp exp val) (assign-exps (exp ...) (val ...))
      (assign-arg arg val) (assign-args (arg ...) (val ...))
      (seq (e ...)) (eval-exps (exp ...))
      (eval-path-acc val path) (eval-path-upd val path val)
      (eval-clause clause (val ...))
-     (eval-clauses ((IN L (eval-clause clause (val ...))) ...))
+     (eval-clauses ((IN G L (eval-clause clause (val ...))) ...))
      (eval-tblrow tblRow (val ...)) (eval-tblrows (tblRow ...) (val ...))
      (call-table-func tableFuncDefn (val ...))
      (call-defined-func definedFuncDefn (typ ...) (val ...))
@@ -67,7 +66,7 @@
      (call-extern-func id (typ ...) (val ...))
      (call-builtin-func id (typ ...) (val ...))
      (eval-rul rul (val ...))
-     (eval-ruls ((IN L (eval-rul rul (val ...))) ...))
+     (eval-ruls ((IN G L (eval-rul rul (val ...))) ...))
      (call-defined-rel definedRelDefn (val ...))
      (call-rel id (val ...))
      (call-extern-rel id (val ...))
@@ -76,18 +75,18 @@
      (in-hole Fr e))
 
   ;; Finished subterms
-  (done ::= res (IN L OK))
+  (done ::= res (IN G L OK))
 
   ;; An element of a list expression: under an iteration, each element
   ;; evaluates in a sub-context of its own
-  (elem ::= exp (IN L exp))
+  (elem ::= exp (IN G L exp))
 
   ;; Frames, one level each: those through which UNMATCH passes, and those
   ;; where a rule looks at it
   (Fr-pass ::=
            ;; Assign_exp(s), Assign_arg(s)
            (assign-exp/iter/opt-some hole (vari ...))
-           (assign-exp/iter/list ((IN L OK) ... hole (IN L (assign-exp exp val)) ...) (vari ...))
+           (assign-exp/iter/list ((IN G L OK) ... hole (IN G L (assign-exp exp val)) ...) (vari ...))
            ;; a statement sequence: assignments, premises, and an expression
            (seq (OK ... hole e ...))
            ;; Eval_exp
@@ -140,7 +139,7 @@
            (IFNOTHOLD id (val ... hole exp ...))
            (LET exp hole)
            (eval-prem/iterpr-opt/some hole (vari ...))
-           (eval-prem/iterpr-list/list ((IN L OK) ... hole (IN L prem) ...) (vari ...))
+           (eval-prem/iterpr-list/list ((IN G L OK) ... hole (IN G L prem) ...) (vari ...))
            (DEBUG hole)
            ;; Eval_rul
            (eval-exps (val ... hole exp ...)))
@@ -149,15 +148,15 @@
             (eval-prem/ifnotholdpr hole)
             ;; the clauses of a call, in order: an unmatched one is passed
             ;; over
-            (eval-clauses (UNMATCH ... hole (IN L (eval-clause clause (val ...))) ...))
+            (eval-clauses (UNMATCH ... hole (IN G L (eval-clause clause (val ...))) ...))
             (call-defined-func/clauses hole (elsClause ...) (val ...))
             ;; Eval_tblrows/unmatch, which tries the next row
             (eval-tblrows/cons hole (tblRow ...) (val ...))
             ;; the rule paths of a call, as the clauses
-            (eval-ruls (UNMATCH ... hole (IN L (eval-rul rul (val ...))) ...))
+            (eval-ruls (UNMATCH ... hole (IN G L (eval-rul rul (val ...))) ...))
             (call-defined-rel/ruls hole (elsGroup ...) (val ...)))
   (Fr ::= Fr-pass Fr-catch)
 
-  ;; Frames within one local context, and across local contexts
+  ;; Frames within one context, which never cross an IN, and across contexts
   (F ::= hole (in-hole Fr F))
-  (E ::= F (in-hole F (IN L E))))
+  (E ::= F (in-hole F (IN G L E))))

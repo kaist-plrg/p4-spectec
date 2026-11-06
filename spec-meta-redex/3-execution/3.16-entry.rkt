@@ -5,12 +5,12 @@
 ;; `call-func` with no type arguments.
 ;;
 ;; As a program, it says it is ready, then answers each call of the host by
-;; running it through the driver. Calls and answers are s-expressions that
-;; `read` reads and `write` prints (3.04-extern-host.rkt), so the answer is
-;; the result itself: OK with its values, UNMATCH, or ERROR for a stuck term.
-;; A call that raises a Racket error is answered with `raise` and its
-;; message. `exit`, or the end of stdin, ends it. Debug values go to the
-;; host, and other output to stderr.
+;; reducing it with ->al. Calls and answers are s-expressions that `read`
+;; reads and `write` prints (3.04-extern-host.rkt), so the answer is the
+;; result itself: OK with its values, UNMATCH, or ERROR for a stuck term. A
+;; call that raises a Racket error is answered with `raise` and its message.
+;; `exit`, or the end of stdin, ends it. Debug values go to the host, and
+;; other output to stderr.
 ;;
 ;; call   ::= (load spec)                   $load_ctx($empty_ctx, spec)
 ;;          | (call-rel id (val ...))
@@ -32,25 +32,30 @@
          "3.04-extern-host.rkt"
          "3.02-context.rkt"
          "3.03-machine.rkt"
-         "3.15-driver.rkt")
+         "3.14-step.rkt")
 (provide load-script
          run-loaded
          serve)
 
-;; The context that spec loads into, as (G L): the handle of its global
-;; layer, now registered, and its local layer
+;; The context that spec loads into, as (G L): its global layer and its
+;; local layer
 (define (load-script spec)
-  (match-define (list 'GLOBAL layer_global 'LOCAL L) (term (load (empty-ctx) ,spec)))
-  (list (register-global! layer_global) L))
+  (match-define (list 'GLOBAL G 'LOCAL L) (term (load (empty-ctx) ,spec)))
+  (list G L))
+
+;; The term that e reduces to by ->al: final, or stuck. The rules are
+;; deterministic, so a term has at most one successor.
+(define (run e)
+  (match (apply-reduction-relation ->al e)
+    ['() e]
+    [(list e_1) (run e_1)]
+    [es (error 'run "~a successors of ~e" (length es) e)]))
 
 ;; The result of e under the loaded context (G L), or ERROR if it gets stuck
 (define (run-loaded loaded e)
   (match-define (list G L) loaded)
-  (match (run (list G (list 'IN L e)))
-    [(list _ (list 'IN _ (? res? res))) res]
-    [_ 'ERROR]))
-
-(define res? (redex-match? al res))
+  (define e_final (run (term (IN ,G ,L ,e))))
+  (if (redex-match? al res e_final) e_final 'ERROR))
 
 ;; The context of the spec loaded last, which calls run under
 (define loaded #f)

@@ -23,11 +23,11 @@
   (reduction-relation
    al
    ;; Leaving a local context
-   (--> (IN L val) val
+   (--> (IN G L val) val
         "in/val")
-   (--> (IN L (OK (val ...))) (OK (val ...))
+   (--> (IN G L (OK (val ...))) (OK (val ...))
         "in/vals")
-   (--> (IN L UNMATCH) UNMATCH
+   (--> (IN G L UNMATCH) UNMATCH
         "in/unmatch")
    ;; A statement sequence: once every statement before the last holds, the
    ;; last one's result
@@ -56,7 +56,8 @@
                              ->term/eval-call-func
                              ->term/eval-call-rel))
 
-;; The rules on a term and its context (r G L), which read G or L, or write L
+;; The rules on a term under its innermost IN, (IN G L (in-hole F r)), which
+;; read G or L, or write L. F never crosses an IN, so the IN is the innermost.
 (define ->term+ctx
   (union-reduction-relations ->term+ctx/eval-assign
                              ->term+ctx/eval-exp
@@ -66,18 +67,9 @@
                              ->term+ctx/eval-call-rel))
 
 ;;
-;; The closure, on configurations
+;; The closure
 ;;
 
-;; A step of ->term at a redex, or of ->term+ctx at a redex under the layer L
-;; of its innermost IN, with the name of the rule applied
+;; A step of either at its place in the term
 (define ->al
-  (union-reduction-relations
-   (context-closure ->term al (G (in-hole E (IN L F))))
-   (reduction-relation
-    al
-    (--> (G (in-hole E (IN L (in-hole F e_r))))
-         (G (in-hole E (IN L_1 (in-hole F e_1))))
-         (where (_ ... (any_name (e_1 G L_1)) _ ...)
-                ,(apply-reduction-relation/tag-with-names ->term+ctx (term (e_r G L))))
-         (computed-name (term any_name))))))
+  (context-closure (union-reduction-relations ->term ->term+ctx) al E))
