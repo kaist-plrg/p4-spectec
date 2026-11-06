@@ -1,0 +1,100 @@
+;;
+;; K in P4-SpecTec: KORE, and the fragment of it that is executed
+;;
+
+;; Names, kept verbatim from KORE
+
+syntax sortid = text  ;; e.g. "SortInt"
+syntax symid = text   ;; e.g. "Lbl'UndsPlus'Int'Unds'"
+syntax varid = text   ;; e.g. "VarX"
+syntax hookid = text  ;; e.g. "INT.add"
+
+;; Sorts
+
+syntax sort =
+  | SORT sortid sort*
+  | SORTVAR sortid
+
+;; Terms: ground terms; collections arise only by evaluation. A domain value
+;; is the text of its KORE literal with its sort: an Int in decimal, a Bool
+;; "true" or "false", a String, a Float in the backend's output format, a
+;; Bytes with one character per byte, or a token of an unhooked sort such as
+;; an Id. The same K value has the same text, so equality of terms is
+;; equality of values.
+
+syntax term =
+  | APP symid sort* term*     ;; symbol application, including inj and kseq
+  | DV sort text              ;; domain value
+  | MAP sort (map<term, term>)
+  | SET sort (set<term>)
+  | LIST sort term*
+
+;; Patterns
+
+syntax pattern =
+  | VAR varid sort
+  | AND sort pattern pattern        ;; \and, used as an as-pattern on the left
+  | OR sort pattern pattern         ;; \or on the left: either side matches
+  | APP symid sort* pattern*
+  | DV sort text
+
+;; Symbols
+
+syntax symkind =
+  | CONSTRUCTOR
+  | BINDER         ;; a constructor binding its first argument (binder)
+  | FUNCTION       ;; defined by equations
+  | ANYWHERE       ;; a constructor rewritten by its equations (anywhere)
+  | HOOKED hookid  ;; a hook on K terms, specified (5.2, 5.3); equations ignored
+  | RUNTIME hookid ;; a hook of a domain module, by the K runtime (6.2-eval)
+  | LAZY hookid    ;; a hook whose arguments are evaluated lazily (6.2-eval)
+
+syntax symdecl = SYMBOL sortid* sort* '->' sort symkind  ;; with sort parameters
+
+;; Subsorts
+
+syntax subsort = sort '<' sort
+
+;; Overloads: the second symbol is a more specific version of the first
+
+syntax overload = symid '>' symid
+
+;; Clauses: a rewrite rule is a clause with one left-hand side, the
+;; configuration; an equation of a function f is a clause with one left-hand
+;; side per argument of f
+
+syntax clause = CLAUSE pattern* '=>' pattern 'requires' pattern?
+
+;; Definitions
+
+syntax definition =
+  { SYMBOLS (map<symid, symdecl>),
+    SUBSORTS subsort*,                  ;; closed under transitivity
+    OVERLOADS overload*,
+    RULES clause*,                      ;; in the order they are tried
+    EQUATIONS (map<symid, clause*>) }   ;; by the symbol defined, each in the
+                                        ;; order they are tried
+
+;; KORE as kompile 7.1.337 writes it by default, every axiom with its
+;; attributes; loading picks the definition above from it (3-load). Alias
+;; declarations are not read: kompile declares three for proofs and applies
+;; none, and writes rule left-hand sides as aliases only under its hidden
+;; legacy option --enable-kore-antileft.
+
+syntax kore =
+  | KVAR varid sort
+  | KAPP symid sort* kore*  ;; application of a symbol
+  | KML text sort* kore*    ;; a connective, e.g. "rewrites" for \rewrites
+  | KSTR text               ;; a string, e.g. of an attribute priority{}("50")
+  | KDV sort text           ;; \dv{S}("1"); a Float is in the backend's output format
+
+syntax kattr = KATTR text sort* kore*  ;; e.g. owise{}(), priority{}("50")
+
+syntax kaxiom = AXIOM kore kattr*
+
+syntax ksymdecl = KSYMBOL sortid* sort* '->' sort kattr*  ;; with parameters
+
+syntax kdefinition =
+  { KSORTS (map<sortid, kattr*>),
+    KSYMBOLS (map<symid, ksymdecl>),
+    AXIOMS kaxiom* }               ;; in file order

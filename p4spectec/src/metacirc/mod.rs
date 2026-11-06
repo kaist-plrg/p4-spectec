@@ -9,7 +9,6 @@
 //! `boundary`, and a P4 extern that reenters runs on the next depth.
 //! `tower` builds the levels, `sim` drives them with an STF test,
 //! and `krun` runs a K definition on spec-k (K-in-ST).
-//! The K and Redex parts are slots that each implementation fills.
 //!
 //! ```text
 //! Tower

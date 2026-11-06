@@ -1,0 +1,61 @@
+;;
+;; Definition lookups, subsorts, and construction of terms
+;;
+
+var D : definition
+var kind : symkind
+var M : map<term, term>
+var S : set<term>
+
+;; Whether the variables of a pattern are bound
+
+dec $bound(subst, pattern) : bool
+  hint(prose_in "the variables of" %1 "are bound in" %0)
+def $bound(subst, VAR varid sort) = true
+  -- if term = $find_map<varid, term>(subst, varid)
+def $bound(subst, VAR varid sort) = false
+  -- if eps = $find_map<varid, term>(subst, varid)
+def $bound(subst, APP symid sort* pattern*) = $forall_($bound(subst, pattern)*)
+def $bound(subst, AND sort pattern_1 pattern_2)
+  = $bound(subst, pattern_1) /\ $bound(subst, pattern_2)
+def $bound(subst, OR sort pattern_1 pattern_2)
+  = $bound(subst, pattern_1) /\ $bound(subst, pattern_2)
+def $bound(subst, pattern) = true
+  -- otherwise
+
+;; Definition lookups
+
+dec $find_symdecl(definition, symid) : symdecl?
+  hint(prose_in "the declaration of symbol" %1)
+def $find_symdecl(D, symid) = $find_map<symid, symdecl>(D.SYMBOLS, symid)
+
+dec $kind_of(symdecl?) : symkind?
+def $kind_of(eps) = eps
+def $kind_of(SYMBOL sortid_p* sort_a* '->' sort kind) = kind
+
+dec $hook_of_kind(symkind?) : hookid?
+def $hook_of_kind(HOOKED hookid) = hookid
+def $hook_of_kind(kind?) = eps
+  -- otherwise
+
+dec $hook_of(definition, symid) : hookid?
+  hint(prose_in "the hook of symbol" %1)
+def $hook_of(D, symid) = $hook_of_kind($kind_of($find_symdecl(D, symid)))
+
+;; Subsorting: D.SUBSORTS, closed transitively when the definition is loaded
+;; (kompile does not always, as in LAMBDA)
+
+dec $is_subsort(definition, sort, sort) : bool
+  hint(prose_true %1 "is a subsort of" %2)
+def $is_subsort(D, sort_1, sort_2) = (sort_1 '<' sort_2) <- D.SUBSORTS
+
+;; Building constructor terms: nested injections are composed,
+;; inj{B,C}(inj{A,B}(t)) = inj{A,C}(t)
+
+dec $construct(symid, sort*, term*) : term
+def $construct("inj", ([sort_b, sort_c]),
+               ([APP "inj" ([sort_a, sort_b']) ([term])]))
+  = APP "inj" ([sort_a, sort_c]) ([term])
+  -- if sort_b = sort_b'
+def $construct(symid, sort*, term*) = APP symid sort* term*
+  -- otherwise

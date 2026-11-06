@@ -186,9 +186,7 @@ builtins, sharing C and the codec caches.
 
 ## K and Redex towers
 
-Two towers cross into the K framework, and one into PLT Redex. K-in-ST's
-Rust parts are slots that report `metacirc/unimplemented` until implemented,
-and its test registration is `pending`, so it is skipped without failing.
+Two towers cross into the K framework, and one into PLT Redex.
 
 | tower | base | top | configuration |
 |---|---|---|---|
@@ -201,12 +199,13 @@ the base's entry `Eval_AL_rel` or `Eval_AL_func` loads the specification and
 calls its relation or function, as `spec-meta-k/3-execution/3.14-entry.k` serves them.
 `make kompile` builds the library, and `make test-metacirc-run-k`,
 `test-metacirc-micro-k`, and `test-metacirc-sim-k` reuse the native expected
-files. K-in-ST adds `KoreInterface` (`p4spectec/src/interface/kore/`), which offloads
-most K hooks to the K library kompiled with the definition, and
+files. K-in-ST adds `KoreInterface` (`p4spectec/src/interface/kore/`); the K library
+kompiled with the definition is the top of the tower (`Top::Kore`) and answers
+spec-k's extern relation `Call_hook`, to which spec-k leaves most K hooks, and
 `metacirc run-meta towers/k-in-st.json -p imp-kompiled/definition.kore -p init.kore --depth N`
 prints the run as `krun` does; `make test-metacirc-k-in-st` compares it with
-`krun`. `protocol/kore/` describes how a level would stack over a K
-definition, which is not implemented.
+`krun`. `protocol/kore/` passes `Call_hook` up and describes how a level
+would stack over a K definition, which is not implemented.
 
 ST-in-Redex adds `RedexEngine` (`engine/redex/`), one `racket` process per
 tower shared by every reentry depth, and `MetaRedexProtocol`

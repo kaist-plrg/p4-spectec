@@ -1,0 +1,53 @@
+;;
+;; Symbol lookups
+;;
+
+;; The equations of a symbol, in the order they are tried (3-load)
+
+dec $equations_of(definition, symid) : clause*
+  hint(prose_in "the equations of" %1)
+def $equations_of(D, symid) = clause*
+  -- if (clause*) = $find_map<symid, clause*>(D.EQUATIONS, symid)
+def $equations_of(D, symid) = eps
+  -- otherwise
+
+;; Symbol lookups
+
+dec $kind_of_symbol(definition, symid) : symkind?
+def $kind_of_symbol(D, symid) = $kind_of($find_symdecl(D, symid))
+
+;; The result sort of an application of a parametric symbol, with its sort
+;; parameters replaced by the sort arguments
+
+dec $lookup_param(sortid*, sort*, sortid) : sort?
+def $lookup_param(sortid_h :: sortid_t*, sort_h :: sort_t*, sortid) = sort_h
+  -- if sortid_h = sortid
+def $lookup_param(sortid_h :: sortid_t*, sort_h :: sort_t*, sortid)
+  = $lookup_param(sortid_t*, sort_t*, sortid)
+  -- if sortid_h =/= sortid
+def $lookup_param(sortid_p*, sort_a*, sortid) = eps
+  -- otherwise
+
+dec $sort_instance(sortid*, sort*, sort) : sort
+def $sort_instance(sortid_p*, sort_a*, SORTVAR sortid) = sort
+  -- if sort = $lookup_param(sortid_p*, sort_a*, sortid)
+def $sort_instance(sortid_p*, sort_a*, SORT sortid sort_s*)
+  = SORT sortid $sort_instance(sortid_p*, sort_a*, sort_s)*
+def $sort_instance(sortid_p*, sort_a*, sort) = sort
+  -- otherwise
+
+dec $result_instance(definition, symid, sort*) : sort?
+  hint(prose_in "the result sort of" %1 "applied with sorts" %2)
+def $result_instance(D, symid, sort_a*)
+  = $sort_instance(sortid_p*, sort_a*, sort_r)
+  -- if (SYMBOL sortid_p* sort_p* '->' sort_r kind) = $find_symdecl(D, symid)
+def $result_instance(D, symid, sort_a*) = eps
+  -- if eps = $find_symdecl(D, symid)
+
+;; The hook of a symbol whose arguments are evaluated lazily (LAZY, 3-load)
+
+dec $lazy_hook(definition, symid) : hookid?
+def $lazy_hook(D, symid) = hookid
+  -- if LAZY hookid = $kind_of_symbol(D, symid)
+def $lazy_hook(D, symid) = eps
+  -- otherwise
