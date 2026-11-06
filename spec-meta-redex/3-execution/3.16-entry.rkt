@@ -6,7 +6,7 @@
 ;;
 ;; As a program, it says it is ready, then answers each call of the host by
 ;; running it through the driver. Calls and answers are s-expressions that
-;; `read` reads and `write` prints (3.04.2-extern-host.rkt), so the answer is
+;; `read` reads and `write` prints (3.04-extern-host.rkt), so the answer is
 ;; the result itself: OK with its values, UNMATCH, or ERROR. A call that
 ;; raises a Racket error is answered with `raise` and its message. `exit`, or
 ;; the end of stdin, ends it. Debug values go to the host, and other output
@@ -29,7 +29,7 @@
 (require racket/match
          redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
-         "3.04.2-extern-host.rkt"
+         "3.04-extern-host.rkt"
          "3.02-context.rkt"
          "3.15-driver.rkt")
 (provide load-script

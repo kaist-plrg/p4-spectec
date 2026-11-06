@@ -1,7 +1,7 @@
 //! Reading the s-expressions that spec-meta-redex writes
 //!
 //! spec-meta-redex prints its answers and requests with Racket's `write`
-//! (`3-execution/3.04.2-extern-host.rkt`),
+//! (`3-execution/3.04-extern-host.rkt`),
 //! so a value or type arrives as the `val` or `typ` term it is, in the grammar of `sexp`.
 //! `Reader` reads that text in one pass into the arena, without building a tree first;
 //! `read_value`, `read_values`, `read_typs`, and `read_id` read the terms.

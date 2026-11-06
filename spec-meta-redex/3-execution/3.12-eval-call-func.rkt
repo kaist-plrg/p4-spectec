@@ -14,7 +14,7 @@
          "../0-aux/0.0-stdlib.rkt"
          "3.02-context.rkt"
          "3.03-machine.rkt"
-         "3.04.2-extern-host.rkt")
+         "3.04-extern-host.rkt")
 (provide ->term/eval-call-func
          ->term+ctx/eval-call-func)
 

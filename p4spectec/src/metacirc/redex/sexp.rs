@@ -1,7 +1,7 @@
 //! The s-expressions that spec-meta-redex reads, as Racket's `read` reads them
 //!
 //! Every call and response to spec-meta-redex (`serve`) is one line holding one s-expression,
-//! which `read` in `spec-meta-redex/3-execution/3.04.2-extern-host.rkt` takes as a Redex term.
+//! which `read` in `spec-meta-redex/3-execution/3.04-extern-host.rkt` takes as a Redex term.
 //!
 //! `ToSexp` gives each node of the AL syntax its s-expression, as a `spec` term (`script`).
 //! A keyword case prints as `(KEYWORD arg ...)`, or `KEYWORD` alone without arguments;
