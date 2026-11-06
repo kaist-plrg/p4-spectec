@@ -1,7 +1,7 @@
 //! Per-test timing logs for corpus runs
 //!
-//! `--log DIR` makes each run create `DIR/<name>-<UTC time>.log`,
-//! refusing to overwrite an existing file.
+//! `--log DIR` makes each run create `DIR/<name>.log`,
+//! or `DIR/<name>-<n>.log` with the least `n` not taken.
 //! `TestLog::begin` writes `[  n/len] path ... ` before a test starts
 //! and `TestLog::end` appends its outcome, duration, and running total,
 //! so `tail -f` shows progress and a stalled test leaves its line open.
@@ -10,9 +10,9 @@
 
 use std::{
     fs::{self, File},
-    io::Write,
+    io::{ErrorKind, Write},
     path::{Path, PathBuf},
-    time::{Instant, SystemTime},
+    time::Instant,
 };
 
 use super::{Error, Result};
@@ -33,7 +33,8 @@ pub(crate) struct TestLog {
 }
 
 impl TestLog {
-    /// Creates `<dir>/<name>-<UTC time>.log` for a run of `len` tests.
+    /// Creates `<dir>/<name>.log`, or the first free `<dir>/<name>-<n>.log`,
+    /// for a run of `len` tests.
     ///
     /// Without a directory the log only counts tests.
     pub(crate) fn create(dir: Option<&Path>, name: &str, len: usize) -> Result<Self> {
@@ -51,25 +52,20 @@ impl TestLog {
         let Some(dir) = dir else {
             return Ok(log);
         };
-        let secs = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)?
-            .as_secs();
-        let (year, month, day, hour, minute, second) = utc(secs);
-        // Each run owns a new file; a name taken within the same second fails
         fs::create_dir_all(dir)?;
-        let path = fs::canonicalize(dir)?.join(format!(
-            "{name}-{year:04}{month:02}{day:02}T{hour:02}{minute:02}{second:02}Z.log"
-        ));
-        let mut file = File::options()
-            .write(true)
-            .create_new(true)
-            .open(&path)
-            .map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
+        let dir = fs::canonicalize(dir)?;
+        // Number the name when a file of that name exists
+        let mut n = 0;
+        let (path, mut file) = loop {
+            let stem = if n == 0 { name.to_owned() } else { format!("{name}-{n}") };
+            let path = dir.join(format!("{stem}.log"));
+            match File::options().write(true).create_new(true).open(&path) {
+                Ok(file) => break (path, file),
+                Err(error) if error.kind() == ErrorKind::AlreadyExists => n += 1,
+                Err(error) => return Err(Error::from(format!("{}: {error}", path.display()))),
+            }
+        };
         writeln!(file, "p4spectec-test {name}")?;
-        writeln!(
-            file,
-            "started {year:04}-{month:02}-{day:02} {hour:02}:{minute:02}:{second:02} UTC"
-        )?;
         eprintln!("log: {}", path.display());
         log.file = Some(file);
         Ok(log)
@@ -142,24 +138,4 @@ impl TestLog {
         }
         Ok(())
     }
-}
-
-/// Splits Unix seconds into UTC year, month, day, hour, minute, and second.
-///
-/// Days follow Hinnant's `civil_from_days` over 400-year eras
-/// that start on March 1, so each leap day ends its year.
-fn utc(secs: u64) -> (u64, u64, u64, u64, u64, u64) {
-    let (days, secs_day) = (secs / 86_400, secs % 86_400);
-    // Count days from 0000-03-01 instead of 1970-01-01
-    let days = days + 719_468;
-    let era = days / 146_097;
-    let days_era = days % 146_097;
-    let years_era = (days_era - days_era / 1_460 + days_era / 36_524 - days_era / 146_096) / 365;
-    let days_year = days_era - (365 * years_era + years_era / 4 - years_era / 100);
-    // Months count from March; January and February belong to the next year
-    let month_march = (5 * days_year + 2) / 153;
-    let day = days_year - (153 * month_march + 2) / 5 + 1;
-    let month = if month_march < 10 { month_march + 3 } else { month_march - 9 };
-    let year = era * 400 + years_era + u64::from(month <= 2);
-    (year, month, day, secs_day / 3_600, secs_day % 3_600 / 60, secs_day % 60)
 }
