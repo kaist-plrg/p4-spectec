@@ -8,7 +8,7 @@
 //! and `<name>.depth`.
 //!
 //! The programs of a checkout are the files `programs` matches, but those `skip`
-//! matches and those `skip_lists` name; with `json_tests`, each test of a
+//! leaves out; with `json_tests`, each test of a
 //! JSON file is one. A program is named by its path below the patterns' common
 //! directory, without extensions, and a test by its file's name and its own.
 
@@ -55,12 +55,9 @@ pub struct KInStSuite {
     /// Patterns of the programs, in `dir` (or in the checkout, from `{src}`).
     #[serde(default)]
     pub programs: Vec<String>,
-    /// Patterns of programs left out, as `programs`.
+    /// Programs left out: patterns, as `programs`, and the checkout's own lists.
     #[serde(default)]
-    pub skip: Vec<String>,
-    /// The checkout's lists of programs it does not run.
-    #[serde(default)]
-    pub skip_lists: Vec<SkipList>,
+    pub skip: Vec<Skip>,
     /// Whether each test of a JSON file is a program, rather than the file.
     #[serde(default)]
     pub json_tests: bool,
@@ -90,13 +87,13 @@ fn ext_default() -> String {
     "prog".to_owned()
 }
 
-/// A list of programs not run: per line a path in `dir`, with `,<test>` for a test
-/// of a JSON file (`*` for any).
+/// Programs left out: a pattern, or a list of programs not run, per line a path in
+/// `dir`, with `,<test>` for a test of a JSON file (`*` for any).
 #[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct SkipList {
-    pub list: String,
-    pub dir: String,
+#[serde(untagged, deny_unknown_fields)]
+pub enum Skip {
+    Pattern(String),
+    List { list: String, dir: String },
 }
 
 /// A program of a definition.
@@ -189,13 +186,20 @@ pub fn groups(suite: &KInStSuite) -> Result<Option<Vec<Group<'_>>>> {
     let patterns: Vec<PathBuf> = suite.programs.iter().map(resolve).collect();
     // What is left out: a path, and for a test of a JSON file its name
     let mut listed = Vec::new();
-    for pattern in suite.skip.iter().map(resolve) {
-        listed.extend(glob(&pattern)?.into_iter().map(|path| (path, None)));
-    }
-    for skip_list in &suite.skip_lists {
-        let dir_list = resolve(&skip_list.dir);
-        for (path, test) in self::skip_list(&resolve(&skip_list.list))? {
-            listed.push((dir_list.join(path), test));
+    for skip in &suite.skip {
+        match skip {
+            Skip::Pattern(pattern) => {
+                listed.extend(
+                    glob(&resolve(pattern))?
+                        .into_iter()
+                        .map(|path| (path, None)),
+                );
+            }
+            Skip::List { list, dir } => {
+                for (path, test) in skip_list(&resolve(list))? {
+                    listed.push((resolve(dir).join(path), test));
+                }
+            }
         }
     }
     let base = common_dir(patterns.iter().map(|pattern| fixed_dir(pattern)));
