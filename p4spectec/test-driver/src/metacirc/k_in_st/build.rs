@@ -120,10 +120,7 @@ impl<'a> Case<'a> {
         let path_program = match self.words(&self.suite.prepare).split_first() {
             Some((command, args)) => {
                 // Two programs may share a file name
-                let mut path_prepared = self.dir_build.join(&program.name);
-                if let Some(ext) = program.path.extension() {
-                    path_prepared.set_extension(ext);
-                }
+                let path_prepared = self.dir_build.join(&program.name);
                 let what = format!("{command} {}", program.path.display());
                 let output = run(Command::new(command).args(args).arg(&program.path), None, &what)?;
                 fs::write(&path_prepared, output.stdout)?;

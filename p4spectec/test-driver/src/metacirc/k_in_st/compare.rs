@@ -29,18 +29,13 @@ pub fn compare(info: &Info, output: &str, expected: &str) -> Result<(), String> 
 
 /// Whether a run ended in krun's final configuration after other steps.
 pub fn same_final(info: &Info, output: &str, expected: &str) -> bool {
-    let steps = |head: &str| head.bytes().all(|byte| byte.is_ascii_digit());
-    match (split(output), split(expected)) {
-        ((head_output, Some(config_output)), (head_expected, Some(config_expected)))
-            if steps(head_output) && steps(head_expected) =>
-        {
-            matches!(
-                (normal_text(info, config_output), normal_text(info, config_expected)),
-                (Ok(a), Ok(b)) if a == b
-            )
-        }
-        _ => false,
-    }
+    let (Some(config_output), Some(config_expected)) = (split(output).1, split(expected).1) else {
+        return false;
+    };
+    matches!(
+        (normal_text(info, config_output), normal_text(info, config_expected)),
+        (Ok(a), Ok(b)) if a == b
+    )
 }
 
 /// Whether a run ended in one of the final configurations K allows, `finals`,

@@ -8,7 +8,7 @@
 //! and `<name>.depth`.
 //!
 //! The programs of a checkout are the files `programs` matches, but those `skip`
-//! matches and those `skip_lists` name; with `tests = "json-keys"`, each test of a
+//! matches and those `skip_lists` name; with `json_tests`, each test of a
 //! JSON file is one. A program is named by its path below the patterns' common
 //! directory, without extensions, and a test by its file's name and its own.
 
@@ -61,8 +61,9 @@ pub struct KInStSuite {
     /// The checkout's lists of programs it does not run.
     #[serde(default)]
     pub skip_lists: Vec<SkipList>,
-    /// What a program is: a file, or each test of a JSON file.
-    pub tests: Option<Tests>,
+    /// Whether each test of a JSON file is a program, rather than the file.
+    #[serde(default)]
+    pub json_tests: bool,
     /// The directory of the programs' `<program>.in`, in `dir`, if not beside them.
     pub inputs: Option<PathBuf>,
     /// The directory of what krun gives for the programs.
@@ -96,14 +97,6 @@ fn ext_default() -> String {
 pub struct SkipList {
     pub list: String,
     pub dir: String,
-}
-
-/// What a program of a suite is, besides a file.
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum Tests {
-    /// Each key of a JSON object is a test.
-    JsonKeys,
 }
 
 /// A program of a definition.
@@ -194,11 +187,11 @@ pub fn groups(suite: &KInStSuite) -> Result<Option<Vec<Group<'_>>>> {
     // A pattern may start at the checkout, `{src}`, rather than in `dir`
     let resolve = |pattern: &String| dir.join(pattern.replace("{src}", &checkout));
     let patterns: Vec<PathBuf> = suite.programs.iter().map(resolve).collect();
-    let mut skipped = BTreeSet::new();
-    for pattern in suite.skip.iter().map(resolve) {
-        skipped.extend(glob(&pattern)?);
-    }
+    // What is left out: a path, and for a test of a JSON file its name
     let mut listed = Vec::new();
+    for pattern in suite.skip.iter().map(resolve) {
+        listed.extend(glob(&pattern)?.into_iter().map(|path| (path, None)));
+    }
     for skip_list in &suite.skip_lists {
         let dir_list = resolve(&skip_list.dir);
         for (path, test) in self::skip_list(&resolve(&skip_list.list))? {
@@ -210,22 +203,18 @@ pub fn groups(suite: &KInStSuite) -> Result<Option<Vec<Group<'_>>>> {
     let mut names = BTreeSet::new();
     for pattern in &patterns {
         for path in glob(pattern)? {
-            if skipped.contains(&path) {
-                continue;
-            }
             let name = name_of(path.strip_prefix(&base).unwrap_or(&path));
-            let tests = match suite.tests {
-                None => vec![None],
-                Some(Tests::JsonKeys) => json_keys(&path)?.into_iter().map(Some).collect(),
+            let tests = if suite.json_tests {
+                json_keys(&path)?.into_iter().map(Some).collect()
+            } else {
+                vec![None]
             };
             for test in tests {
                 let left_out = listed.iter().any(|(path_listed, test_listed)| {
                     *path_listed == path
-                        && match (test_listed, &test) {
-                            (None, _) => true,
-                            (Some(listed), Some(test)) => wildcard(listed, test),
-                            (Some(_), None) => false,
-                        }
+                        && test_listed.as_ref().is_none_or(|listed| {
+                            test.as_ref().is_some_and(|test| wildcard(listed, test))
+                        })
                 });
                 if left_out {
                     continue;
