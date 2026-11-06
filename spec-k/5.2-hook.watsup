@@ -77,24 +77,31 @@ def $hooked_symbol(D, hookid, sort) = $symbol_text(symid_h, eps)
   -- if symid_h :: symid_t* = $concat_<symid>($symbol_if(hookid, sort, symid, symdecl)*)
 
 ;; A collection: its unit, or its elements, each under the element symbol, in
-;; the concatenation
-dec $collection_text(definition, text, sort, text*) : text
-def $collection_text(D, t_c, sort, eps) = $hooked_symbol(D, t_c ++ ".unit", sort) ++ "()"
-def $collection_text(D, t_c, sort, (t_h :: t_t*))
-  = "\\left-assoc{}(" ++ $hooked_symbol(D, t_c ++ ".concat", sort) ++ "("
+;; the concatenation; the hooks of unit, element, and concatenation name them
+dec $collection_text(definition, hookid, hookid, hookid, sort, text*) : text
+def $collection_text(D, hookid_u, hookid_e, hookid_c, sort, eps)
+  = $hooked_symbol(D, hookid_u, sort) ++ "()"
+def $collection_text(D, hookid_u, hookid_e, hookid_c, sort, (t_h :: t_t*))
+  = "\\left-assoc{}(" ++ $hooked_symbol(D, hookid_c, sort) ++ "("
     ++ $join_text(",", (t_e ++ "(" ++ t ++ ")")*) ++ "))"
-  -- if t_e = $hooked_symbol(D, t_c ++ ".element", sort)
+  -- if t_e = $hooked_symbol(D, hookid_e, sort)
   -- if t* = t_h :: t_t*
 
 dec $kore_text(definition, term) : text
 def $kore_text(D, APP symid sort* term*)
   = $symbol_text(symid, sort*) ++ "(" ++ $join_text(",", $kore_text(D, term)*) ++ ")"
 def $kore_text(D, DV sort t) = "\\dv{" ++ $sort_text(sort) ++ "}(\"" ++ $kore_string(t) ++ "\")"
-def $kore_text(D, LIST sort term*) = $collection_text(D, "LIST", sort, $kore_text(D, term)*)
+def $kore_text(D, LIST sort term*)
+  = $collection_text(D, "LIST.unit", "LIST.element", "LIST.concat", sort, $kore_text(D, term)*)
 def $kore_text(D, SET sort `{ term* `})
-  = $collection_text(D, "SET", sort, $kore_text(D, term)*)
+  = $collection_text(D, "SET.unit", "SET.element", "SET.concat", sort, $kore_text(D, term)*)
 def $kore_text(D, MAP sort `{ (term_k ':' term_v)* `})
-  = $collection_text(D, "MAP", sort, ($kore_text(D, term_k) ++ "," ++ $kore_text(D, term_v))*)
+  = $collection_text(D, "MAP.unit", "MAP.element", "MAP.concat", sort,
+                     ($kore_text(D, term_k) ++ "," ++ $kore_text(D, term_v))*)
+;; a range map by its ranges, each RangeMap:Range(start, end) and its value
+def $kore_text(D, RANGEMAP sort (RANGE i_s i_e term)*)
+  = $collection_text(D, "RANGEMAP.unit", "RANGEMAP.elementRng", "RANGEMAP.concat", sort,
+                     ($kore_text(D, $range_term(i_s, i_e)) ++ "," ++ $kore_text(D, term))*)
 
 def $hook(D, "KREFLECTION.printKORE", sort, ([term])) = OK (DV sort $kore_text(D, term))
 

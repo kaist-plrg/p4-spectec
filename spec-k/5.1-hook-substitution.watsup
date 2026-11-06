@@ -34,6 +34,8 @@ def $free_vars(D, sort_x, SET sort `{ term* `})
   = $concat_<text>($free_vars(D, sort_x, term)*)
 def $free_vars(D, sort_x, MAP sort `{ (term_k ':' term_v)* `})
   = $concat_<text>($free_vars(D, sort_x, term_v)*)
+def $free_vars(D, sort_x, RANGEMAP sort (RANGE i_s i_e term)*)
+  = $concat_<text>($free_vars(D, sort_x, term)*)
 def $free_vars(D, sort_x, term) = eps
   -- otherwise
 
@@ -54,6 +56,8 @@ def $all_vars(D, sort_x, SET sort `{ term* `})
   = $concat_<text>($all_vars(D, sort_x, term)*)
 def $all_vars(D, sort_x, MAP sort `{ (term_k ':' term_v)* `})
   = $concat_<text>($all_vars(D, sort_x, term_v)*)
+def $all_vars(D, sort_x, RANGEMAP sort (RANGE i_s i_e term)*)
+  = $concat_<text>($all_vars(D, sort_x, term)*)
 def $all_vars(D, sort_x, term) = eps
   -- otherwise
 
@@ -87,6 +91,8 @@ def $rename(D, sort_x, t, t', SET sort `{ term* `})
   = SET sort $sorted_set<term>(`{ $rename(D, sort_x, t, t', term)* `})
 def $rename(D, sort_x, t, t', MAP sort `{ (term_k ':' term_v)* `})
   = MAP sort `{ (term_k ':' $rename(D, sort_x, t, t', term_v))* `}
+def $rename(D, sort_x, t, t', RANGEMAP sort (RANGE i_s i_e term)*)
+  = RANGEMAP sort $merge_ranges((RANGE i_s i_e $rename(D, sort_x, t, t', term))*)
 def $rename(D, sort_x, t, t', term) = term
   -- otherwise
 
@@ -154,8 +160,8 @@ def $subst(D, sort_x, t_x, sort_v, term_v, APP symid sort* term*)
 def $subst(D, sort_x, t_x, sort_v, term_v, DV sort t) = OK (DV sort t)
 ;;; collections, as the LLVM backend's substitution goes into them
 ;;; (runtime/meta/substitution.cpp): each element of a list or a set, elements
-;;; that become equal one element of the set, and each value of a map, but not
-;;; its keys
+;;; that become equal one element of the set, and each value of a map or a
+;;; range map, but not its keys; adjacent ranges whose values become equal merge
 def $subst(D, sort_x, t_x, sort_v, term_v, LIST sort term*) = OK (LIST sort term'*)
   -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v, term*)
 def $subst(D, sort_x, t_x, sort_v, term_v, SET sort `{ term* `})
@@ -164,6 +170,9 @@ def $subst(D, sort_x, t_x, sort_v, term_v, SET sort `{ term* `})
 def $subst(D, sort_x, t_x, sort_v, term_v, MAP sort `{ (term_k ':' term_v')* `})
   = OK (MAP sort `{ (term_k ':' term_v'')* `})
   -- if OK term_v''* = $subst_list(D, sort_x, t_x, sort_v, term_v, term_v'*)
+def $subst(D, sort_x, t_x, sort_v, term_v, RANGEMAP sort (RANGE i_s i_e term)*)
+  = OK (RANGEMAP sort $merge_ranges((RANGE i_s i_e term')*))
+  -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v, term*)
 def $subst(D, sort_x, t_x, sort_v, term_v, term) = ERROR
   -- otherwise
 
