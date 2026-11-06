@@ -3,11 +3,10 @@
 ;;
 ;; A relation runs in (IN L_local ...), and each rule path in a copy of it, so
 ;; a path leaves no bindings to the next. The paths of every group, in order,
-;; are evaluated until one succeeds or errors (Eval_ruls), which gives the
-;; result; unlike spec-meta, the later paths are not checked to be unmatched.
-;; The else group runs only when every path is unmatched. The `/error`
-;; rules become complement rules, and "frame/failure" where a path's
-;; statement fails.
+;; are evaluated until one succeeds (Eval_ruls), which gives the result;
+;; unlike spec-meta, the later paths are not checked to be unmatched. The
+;; else group runs only when every path is unmatched. The `/error` rules have
+;; no rules here: a call that errs is stuck, which is ERROR.
 
 (require redex/reduction-semantics
          "3.02-context.rkt"
@@ -53,8 +52,6 @@
         "eval-ruls/nil")
    (--> (eval-ruls (UNMATCH ... (OK (val_out ...)) (IN L (eval-rul rul (val ...))) ...)) (OK (val_out ...))
         "eval-ruls/succ")
-   (--> (eval-ruls (UNMATCH ... ERROR (IN L (eval-rul rul (val ...))) ...)) ERROR
-        "eval-ruls/error")
 
    ;;; Defined relations
 
@@ -69,8 +66,7 @@
         "call-defined-rel")
    ;; once the paths are evaluated: the result, or the else group in the
    ;; relation's layer when all are unmatched
-   (--> (call-defined-rel/ruls valsres (elsGroup ...) (val ...)) valsres
-        (side-condition (not (equal? (term valsres) 'UNMATCH)))
+   (--> (call-defined-rel/ruls (OK (val_out ...)) (elsGroup ...) (val ...)) (OK (val_out ...))
         "call-defined-rel/result")
    (--> (call-defined-rel/ruls UNMATCH (elsGroup) (val ...))
         (eval-rul (rul-of-elsgroup elsGroup) (val ...))
@@ -80,7 +76,8 @@
 
    ;;; Extern relations, which reach the host
 
-   ;; extern relation Call_extern_rel
+   ;; extern relation Call_extern_rel. An error reply is not a valsres, so
+   ;; the call is stuck.
    (--> (call-extern-rel id (val ...)) valsres
         (where valsres ,(host-call-extern-rel (term id) (term (val ...))))
         "call-extern-rel")))
@@ -98,8 +95,4 @@
         "call-rel/extern")
    (--> ((call-rel id (val ...)) G L) ((call-defined-rel definedRelDefn (val ...)) G L)
         (where (definedRelDefn) (find-rel G id))
-        "call-rel/defined")
-   (--> ((call-rel id (val ...)) G L) (ERROR G L)
-        ;; otherwise: no such relation
-        (where () (find-rel G id))
-        "call-rel/error")))
+        "call-rel/defined")))

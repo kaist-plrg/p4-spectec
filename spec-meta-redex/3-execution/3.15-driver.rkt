@@ -7,8 +7,8 @@
 ;; cursor. To reach the redex, the cursor climbs past the nodes whose subterm
 ;; is done, and then descends through the one pending evaluation position of
 ;; each node. So a step matches only the nodes it enters, not the whole path
-;; from the root. It fails on a node with two pending positions, and on a
-;; redex to which no rule applies.
+;; from the root. It stops at a redex to which no rule applies, and fails on a
+;; node with two pending positions.
 
 (require racket/match
          redex/reduction-semantics
@@ -81,21 +81,24 @@
              #:unless (done? (cdr position)))
     position))
 
-;; The contractum of redex r under G and L, and the new layer. The rules are
-;; disjoint, so the first successor found is the only one.
+;; The contractum of redex r under G and L, and the new layer, or #f if no
+;; rule applies. The rules are disjoint, so the first successor found is the
+;; only one.
 (define (reduce-redex r G L)
   (match (apply-reduction-relation ->term r)
     [(cons r_1 _) (values r_1 L)]
     ['()
      (match (apply-reduction-relation ->term+ctx (list r G L))
        [(cons (list r_1 _ L_1) _) (values r_1 L_1)]
-       ['() (error 'run "stuck: no rule applies to ~e" r)])]))
+       ['() (values #f L)])]))
 
-;; The final configuration that conf reduces to
+;; The configuration that conf reduces to: final, or stuck
 (define (run conf)
   (let loop ([c (conf->cursor conf)])
     (match (next-redex c)
       [#f (cursor->conf c)]
-      [(cursor G path r L)
+      [(and c_r (cursor G path r L))
        (define-values (r_1 L_1) (reduce-redex r G L))
-       (loop (cursor G path r_1 L_1))])))
+       (if r_1
+           (loop (cursor G path r_1 L_1))
+           (cursor->conf c_r))])))

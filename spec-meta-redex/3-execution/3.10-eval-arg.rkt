@@ -1,9 +1,9 @@
 #lang racket/base
 ;; Mirrors spec-meta/4-execution/4.08-eval-arg.watsup.
 ;;
-;; An arg evaluates in place, as an exp does. Eval_arg/error is
-;; "frame/failure" on (EXP hole): no other input fails. Eval_targs runs on a
-;; call once its arguments are evaluated, so the call is Call_func's.
+;; An arg evaluates in place, as an exp does. Eval_arg/error has no rule: an
+;; argument whose expression errs is stuck, which is ERROR. Eval_targs runs on
+;; a call once its arguments are evaluated, so the call is Call_func's.
 
 (require redex/reduction-semantics
          "3.02-context.rkt"
@@ -42,8 +42,4 @@
    (--> ((CALL id (targ ...) (val_input ...)) G (name L {TYP tdenv FUNC fnenv VAL venv}))
         ((call-func id (typ_input ...) (val_input ...)) G L)
         (where (OK (typ_input ...)) (subst-typs (theta-of-tdenv tdenv) (targ ...)))
-        "eval-targs")
-   (--> ((CALL id (targ ...) (val_input ...)) G (name L {TYP tdenv FUNC fnenv VAL venv}))
-        (ERROR G L)
-        (where ERROR (subst-typs (theta-of-tdenv tdenv) (targ ...)))
-        "eval-targs/error")))
+        "eval-targs")))

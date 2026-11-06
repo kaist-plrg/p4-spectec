@@ -9,9 +9,13 @@
 ;; positions. An evaluated expression is its value, and a constructor whose
 ;; parts are all values is a value, so a frame writes val for an evaluated
 ;; subterm and exp for one still to evaluate. watsup's ok<ctx> is (IN L OK):
-;; premises update the innermost IN's layer in place. A failure (UNMATCH or
-;; ERROR) passes through the frames of Fr-pass, and a rule looks at it in
-;; those of Fr-catch.
+;; premises update the innermost IN's layer in place. UNMATCH passes through
+;; the frames of Fr-pass, and a rule looks at it in those of Fr-catch.
+;;
+;; ERROR is not a term of the machine. Nothing catches an ERROR, so the rules
+;; that give it, or pass it up, are left out: a term to which no rule applies
+;; is stuck, and the driver takes a stuck configuration for ERROR. A missing
+;; rule is then ERROR as well.
 ;;
 ;; An intermediate form is named after the rule, or the group, that builds
 ;; it; seq and eval-exps, which several rules build, after what they do.
@@ -24,11 +28,11 @@
   ;; Configurations
   (conf ::= (G e))
 
-  ;; Results. Redex has no parametric nonterminals, so each ok<X> is written
-  ;; out, and a result of val is the val itself.
-  (valres ::= val failure)
-  (valsres ::= (OK (val ...)) failure)
-  (res ::= unitRes valres valsres)
+  ;; Results, without ERROR. Redex has no parametric nonterminals, so each
+  ;; ok<X> is written out, and a result of val is the val itself.
+  (valres ::= val UNMATCH)
+  (valsres ::= (OK (val ...)) UNMATCH)
+  (res ::= OK valres valsres)
 
   ;; The results, and the substitution environment, of 4.03-eval-ops, 2.4,
   ;; 2.5, and 4.04.x
@@ -78,7 +82,7 @@
   ;; evaluates in a sub-context of its own
   (elem ::= exp (IN L exp))
 
-  ;; Frames, one level each: those through which a failure passes, and those
+  ;; Frames, one level each: those through which UNMATCH passes, and those
   ;; where a rule looks at it
   (Fr-pass ::=
            ;; Assign_exp(s), Assign_arg(s)

@@ -3,12 +3,12 @@
 ;;
 ;; A callee runs in (IN L_callee ...), and each clause in a copy of it, so a
 ;; clause leaves no bindings to the next. The clauses are evaluated in order
-;; until one succeeds or errors (Eval_clauses), which gives the result; unlike
+;; until one succeeds (Eval_clauses), which gives the result; unlike
 ;; spec-meta, the later clauses are not checked to be unmatched. The
 ;; `otherwise` clause runs only when every clause is unmatched.
-;; Table rows are tried in order, and the first row that is not unmatched
-;; gives the result. The `/error` rules become complement rules, and
-;; "frame/failure" where a clause's or a row's statement fails.
+;; Table rows are tried in order, and the first row that succeeds gives the
+;; result. The `/error` rules have no rules here: a call that errs is stuck,
+;; which is ERROR.
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
@@ -37,8 +37,6 @@
         "eval-clauses/nil")
    (--> (eval-clauses (UNMATCH ... val_out (IN L (eval-clause clause (val ...))) ...)) val_out
         "eval-clauses/succ")
-   (--> (eval-clauses (UNMATCH ... ERROR (IN L (eval-clause clause (val ...))) ...)) ERROR
-        "eval-clauses/error")
 
    ;;; Table meta-function invocation
 
@@ -56,9 +54,8 @@
         "eval-tblrows/cons")
    (--> (eval-tblrows/cons UNMATCH (tblRow_t ...) (val ...)) (eval-tblrows (tblRow_t ...) (val ...))
         "eval-tblrows/unmatch")
-   (--> (eval-tblrows/cons valres (tblRow_t ...) (val ...)) valres
-        (side-condition (not (equal? (term valres) 'UNMATCH)))
-        "eval-tblrows/cons-result")
+   (--> (eval-tblrows/cons val_out (tblRow_t ...) (val ...)) val_out
+        "eval-tblrows/succ")
 
    ;; rule Call_table_func
    (--> (call-table-func (TABLEFUNC id (param ...) typ (tblRow ...)) (val ...))
@@ -76,16 +73,9 @@
                                        (elsClause ...) (val ...)))
         (where L_callee {TYP ((tparam (TYP tparam () (ALIAS typ))) ...) FUNC (empty-map) VAL (empty-map)})
         "call-defined-func")
-   (--> (call-defined-func (FUNC id (tparam ...) (param ...) typ_ret (clause ...) (elsClause ...))
-                           (typ ...) (val ...))
-        ERROR
-        ;; otherwise: as many types as type parameters
-        (side-condition (not (= (length (term (tparam ...))) (length (term (typ ...))))))
-        "call-defined-func/error")
    ;; once the clauses are evaluated: the result, or the `otherwise` clause
    ;; in the callee's layer when all are unmatched
-   (--> (call-defined-func/clauses valres (elsClause ...) (val ...)) valres
-        (side-condition (not (equal? (term valres) 'UNMATCH)))
+   (--> (call-defined-func/clauses val_out (elsClause ...) (val ...)) val_out
         "call-defined-func/result")
    (--> (call-defined-func/clauses UNMATCH (elsClause) (val ...))
         (eval-clause elsClause (val ...))
@@ -95,14 +85,15 @@
 
    ;;; Extern meta-function invocation, which reaches the host
 
-   ;; extern relation Call_extern_func
+   ;; extern relation Call_extern_func. An error reply is not a valres, so
+   ;; the call is stuck.
    (--> (call-extern-func id (typ ...) (val ...)) valres
         (where valres ,(host-call-extern-func (term id) (term (typ ...)) (term (val ...))))
         "call-extern-func")
 
    ;;; Builtin meta-function invocation, which reaches the host
 
-   ;; extern relation Call_builtin_func
+   ;; extern relation Call_builtin_func, likewise
    (--> (call-builtin-func id (typ ...) (val ...)) valres
         (where valres ,(host-call-builtin-func (term id) (term (typ ...)) (term (val ...))))
         "call-builtin-func")))
@@ -127,12 +118,4 @@
         "call-func/table")
    (--> ((call-func id (typ ...) (val ...)) G L) ((call-defined-func definedFuncDefn (typ ...) (val ...)) G L)
         (where (definedFuncDefn) (find-func G (resolve-func-param L id)))
-        "call-func/defined")
-   (--> ((call-func id (typ ...) (val ...)) G L) (ERROR G L)
-        ;; otherwise: no such function
-        (where () (find-func G (resolve-func-param L id)))
-        "call-func/error")
-   (--> ((call-func id (typ_h typ_t ...) (val ...)) G L) (ERROR G L)
-        ;; otherwise: a table function takes no types
-        (where (tableFuncDefn) (find-func G (resolve-func-param L id)))
-        "call-func/table/error")))
+        "call-func/defined")))
