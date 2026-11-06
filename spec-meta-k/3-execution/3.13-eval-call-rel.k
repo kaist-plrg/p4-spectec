@@ -1,7 +1,8 @@
 // Relation invocation: rule paths, defined relations, and Call_rel.
 //
 // Mirrors spec-meta/4-execution/4.11-eval-call-rel.watsup. The rule paths
-// of all groups of a relation run in order, like the clauses of a function.
+// of all groups of a relation run in order, like the clauses of a function:
+// the first that does not mismatch gives the result.
 
 requires "3.12-eval-call-func.k"
 
@@ -23,9 +24,8 @@ module CALL-REL
 
   // ==========================================================================
   // Eval_ruls: ctx |- rul* `( val* `) : relRes
-  // Eval_ruls_on_ok: ctx |- rul* `( val* `) : unitRes
   //
-  // As Eval_clauses / Eval_clauses_on_ok (3.12-eval-call-func.k).
+  // As Eval_clauses (3.12-eval-call-func.k).
   // ==========================================================================
 
   //   rule Eval_ruls/nil
@@ -39,28 +39,10 @@ module CALL-REL
 
   //   rule Eval_ruls/unmatch
   rule <k> UNMATCH ~> afterRul(Rs:RulList, Vs:ValList) => evalRuls(Rs, Vs) ... </k>
-  //   rule Eval_ruls/succ: the remaining rule paths must all mismatch
-  rule <k> ok(Ws:KItem) ~> afterRul(Rs:RulList, Vs:ValList)
-        => evalRulsOnOk(Rs, Vs) ~> onOk(ok(Ws))
-       ...
-       </k>
+  //   rule Eval_ruls/succ: the first success, the later paths untried
+  rule <k> ok(Ws:KItem) ~> afterRul(_:RulList, _:ValList) => ok(Ws) ... </k>
   //   rule Eval_ruls/error
   rule <k> ERROR ~> afterRul(_:RulList, _:ValList) => ERROR ... </k>
-
-  //   rule Eval_ruls_on_ok/nil
-  rule <k> evalRulsOnOk(.RulList, _:ValList) => .K ... </k>
-  rule <k> evalRulsOnOk((R:Rul, Rs:RulList), Vs:ValList)
-        => try(evalRul(R, Vs)) ~> afterRulOnOk(Rs, Vs)
-       ...
-       </k>
-
-  syntax KItem ::= afterRulOnOk(RulList, ValList)
-
-  //   rule Eval_ruls_on_ok/unmatch
-  rule <k> UNMATCH ~> afterRulOnOk(Rs:RulList, Vs:ValList) => evalRulsOnOk(Rs, Vs) ... </k>
-  //   rule Eval_ruls_on_ok/error: a second success or an error
-  rule <k> ok(_) ~> afterRulOnOk(_:RulList, _:ValList) => ERROR ... </k>
-  rule <k> ERROR ~> afterRulOnOk(_:RulList, _:ValList) => ERROR ... </k>
 
   // ==========================================================================
   // Call_defined_rel: ctx |- definedRelDefn `( val* `) : relRes

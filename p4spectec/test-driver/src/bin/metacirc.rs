@@ -1,12 +1,12 @@
 //! Execution entry point for the AL metacircular specification
 
-use std::{path::PathBuf, process::ExitCode};
+use std::{path::PathBuf, process::ExitCode, time::Duration};
 
 use clap::{Parser, Subcommand};
 
 use p4spectec_test::{
     harness::{self, Error, Result},
-    metacirc::{k_in_st, metaparse, run, sim},
+    metacirc::{k_in_st, metaparse, run, sim, sim_group},
     suite::{snapshot, snapshot::Stage},
 };
 
@@ -24,6 +24,9 @@ enum Command {
         /// Run only the suites whose tower takes this input.
         #[arg(long, value_enum)]
         input: Option<run::Input>,
+        /// Record a source still running after this many seconds as a timeout.
+        #[arg(long, value_name = "SECONDS")]
+        timeout: Option<u64>,
     },
     /// Compare registered simulation suites through a tower with native expectations
     Sim {
@@ -32,7 +35,26 @@ enum Command {
         /// Run only the registered simulation suite with this name.
         #[arg(long = "suite", value_name = "NAME")]
         name_suite: Option<String>,
+        /// Record a test still running after this many seconds as a timeout.
+        #[arg(long, value_name = "SECONDS")]
+        timeout: Option<u64>,
     },
+    /// Compare one group of a simulation suite through a tower with the group's expectations
+    SimGroup {
+        /// Configuration name in `suites/metacirc/sim-group.toml`
+        config: String,
+        /// Name of the registered suite to run.
+        #[arg(long = "suite", value_name = "NAME")]
+        name_suite: String,
+        /// Name of the registered group to run.
+        #[arg(long, value_name = "NAME")]
+        group: String,
+        /// Record a test still running after this many seconds as a timeout.
+        #[arg(long, value_name = "SECONDS")]
+        timeout: Option<u64>,
+    },
+    /// Write the group folders of `suites/metacirc/sim-group.toml`
+    SimGroupSplit,
     /// Compare K definitions run through spec-k with krun
     KInSt {
         /// Configuration name in `suites/metacirc/k-in-st.toml`
@@ -53,6 +75,22 @@ enum Command {
     Metaparse,
     /// List every metacirc registration
     List,
+    /// Run sources one at a time for a driver given `--timeout`
+    #[command(hide = true, subcommand)]
+    Worker(Worker),
+}
+
+/// Prepares a configuration once and answers requests on stdin.
+#[derive(Clone, Subcommand)]
+enum Worker {
+    /// Run P4 programs of `suites/metacirc/run.toml` through a tower
+    Program { config: String, tower: PathBuf },
+    /// Run scripts of `suites/metacirc/run.toml` through a tower
+    Script { config: String, tower: PathBuf },
+    /// Run STF tests of `suites/metacirc/sim.toml` on one architecture
+    Sim { config: String, arch: String },
+    /// Run STF tests of `suites/metacirc/sim-group.toml` on one architecture
+    SimGroup { config: String, arch: String },
 }
 
 /// Compares P4 corpus and AL script outcomes through metacircular towers.
@@ -86,12 +124,27 @@ fn execute(cli: Cli) -> Result<()> {
         .canonicalize()?;
     std::env::set_current_dir(&root)?;
     match cli.command {
-        Command::Run { config, name_suite, input } => {
-            run::run(&config, name_suite.as_deref(), input, path_log.as_deref())
-        }
-        Command::Sim { config, name_suite } => {
-            sim::run(&config, name_suite.as_deref(), path_log.as_deref())
-        }
+        Command::Run { config, name_suite, input, timeout } => run::run(
+            &config,
+            name_suite.as_deref(),
+            input,
+            timeout.map(Duration::from_secs),
+            path_log.as_deref(),
+        ),
+        Command::Sim { config, name_suite, timeout } => sim::run(
+            &config,
+            name_suite.as_deref(),
+            timeout.map(Duration::from_secs),
+            path_log.as_deref(),
+        ),
+        Command::SimGroup { config, name_suite, group, timeout } => sim_group::run(
+            &config,
+            &name_suite,
+            &group,
+            timeout.map(Duration::from_secs),
+            path_log.as_deref(),
+        ),
+        Command::SimGroupSplit => sim_group::split(),
         Command::KInSt { config, name_suite } => k_in_st::run(&config, name_suite.as_deref()),
         // Snapshot and codec checks compile the meta specification without executing it
         Command::Elab => snapshot::run("metacirc/snapshot", &[Stage::Elab], None),
@@ -100,6 +153,10 @@ fn execute(cli: Cli) -> Result<()> {
         Command::Prose => snapshot::run("metacirc/snapshot", &[Stage::Prose], None),
         Command::Metaparse => metaparse::run(),
         Command::List => list(),
+        Command::Worker(Worker::Program { config, tower }) => run::serve_programs(&config, &tower),
+        Command::Worker(Worker::Script { config, tower }) => run::serve_scripts(&config, &tower),
+        Command::Worker(Worker::Sim { config, arch }) => sim::serve(&config, &arch),
+        Command::Worker(Worker::SimGroup { config, arch }) => sim_group::serve(&config, &arch),
     }
 }
 
@@ -108,6 +165,7 @@ fn list() -> Result<()> {
     println!("snapshot: {:#?}", harness::load::<snapshot::Registration>("metacirc/snapshot")?);
     println!("run: {:#?}", harness::load::<run::Registration>("metacirc/run")?);
     println!("sim: {:#?}", harness::load::<sim::Registration>("metacirc/sim")?);
+    println!("sim-group: {:#?}", harness::load::<sim_group::Registration>("metacirc/sim-group")?);
     println!("k-in-st: {:#?}", harness::load::<k_in_st::Registration>("metacirc/k-in-st")?);
     println!("metaparse: {:#?}", harness::load::<metaparse::Registration>("metacirc/metaparse")?);
     Ok(())

@@ -316,6 +316,11 @@ pub(in crate::metacirc::protocol) mod request {
 
 // == Responses and answers
 
+/// Whether `response`, a reply to a host request, carries outputs.
+pub(in crate::metacirc::protocol) fn is_ok(response: &str) -> bool {
+    response != response::FAIL
+}
+
 /// The responses to the base's requests.
 mod response {
     use super::*;

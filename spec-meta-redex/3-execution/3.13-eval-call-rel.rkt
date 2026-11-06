@@ -3,9 +3,9 @@
 ;;
 ;; A relation runs in (IN L_local ...), and each rule path in a copy of it, so
 ;; a path leaves no bindings to the next. The paths of every group, in order,
-;; are evaluated until one succeeds or errors (Eval_ruls), and the paths after
-;; a success must all be unmatched (Eval_ruls_on_ok): a second success is an
-;; error. The else group runs only when every path is unmatched. The `/error`
+;; are evaluated until one succeeds or errors (Eval_ruls), which gives the
+;; result; unlike spec-meta, the later paths are not checked to be unmatched.
+;; The else group runs only when every path is unmatched. The `/error`
 ;; rules become complement rules, and "frame/failure" where a path's
 ;; statement fails.
 
@@ -51,18 +51,10 @@
    ;; path is passed over by the frame (Eval_ruls/unmatch).
    (--> (eval-ruls (UNMATCH ...)) UNMATCH
         "eval-ruls/nil")
-   (--> (eval-ruls (UNMATCH ... (OK (val_out ...)) (IN L (eval-rul rul (val ...))) ...))
-        (eval-ruls-on-ok (OK (val_out ...)) ((IN L (eval-rul rul (val ...))) ...))
+   (--> (eval-ruls (UNMATCH ... (OK (val_out ...)) (IN L (eval-rul rul (val ...))) ...)) (OK (val_out ...))
         "eval-ruls/succ")
    (--> (eval-ruls (UNMATCH ... ERROR (IN L (eval-rul rul (val ...))) ...)) ERROR
         "eval-ruls/error")
-
-   ;; rulegroup Eval_ruls_on_ok, once the path at hand is evaluated
-   (--> (eval-ruls-on-ok (OK (val_out ...)) (UNMATCH ...)) (OK (val_out ...))
-        "eval-ruls-on-ok/nil")
-   (--> (eval-ruls-on-ok (OK (val_out ...)) (UNMATCH ... valsres (IN L (eval-rul rul (val ...))) ...)) ERROR
-        (side-condition (not (equal? (term valsres) 'UNMATCH)))
-        "eval-ruls-on-ok/error")
 
    ;;; Defined relations
 

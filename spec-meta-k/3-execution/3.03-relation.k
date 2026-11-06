@@ -73,7 +73,6 @@ module RELATION
   //
   //   relation Eval_clause:        ctx |- clause `( val* `) : funcRes
   //   relation Eval_clauses:       ctx |- clause* `( val* `) : funcRes
-  //   relation Eval_clauses_on_ok: ctx |- clause* `( val* `) : unitRes
   //   relation Eval_tblrow:        ctx |- tblRow `( val* `) : funcRes
   //   relation Eval_tblrows:       ctx |- tblRow* `( val* `) : funcRes
   //   relation Call_table_func:    ctx |- tableFuncDefn `( val* `) : funcRes
@@ -83,14 +82,12 @@ module RELATION
   //   syntax rul = rulMatch -> rulPath
   //   relation Eval_rul:          ctx |- rul `( val* `) : relRes
   //   relation Eval_ruls:         ctx |- rul* `( val* `) : relRes
-  //   relation Eval_ruls_on_ok:   ctx |- rul* `( val* `) : unitRes
   //   relation Call_defined_rel:  ctx |- definedRelDefn `( val* `) : relRes
   //   relation Call_rel:          ctx |- id `( val* `) : relRes
   // ==========================================================================
 
   syntax KItem ::= evalClause(Clause, ValList)
                  | evalClauses(ClauseList, ValList)
-                 | evalClausesOnOk(ClauseList, ValList)
                  | evalTblRow(TblRow, ValList)
                  | evalTblRows(TblRowList, ValList)
                  | callTableFunc(TableFuncDefn, ValList)
@@ -102,7 +99,6 @@ module RELATION
 
   syntax KItem ::= evalRul(Rul, ValList)
                  | evalRuls(RulList, ValList)
-                 | evalRulsOnOk(RulList, ValList)
                  | callDefinedRel(DefinedRelDefn, ValList)
                  | callRel(Id, ValList)
 

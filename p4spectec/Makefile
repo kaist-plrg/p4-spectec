@@ -40,9 +40,11 @@ test: test-expected test-sim-al test-sim-sl test-sim-pl
 
 # Standalone acceptance driver; registrations live in test-driver/suites/
 # TEST_LOG=DIR writes per-test timing logs of p4parse, run, sim, and micro
+# TIMEOUT=SECONDS records a run or sim test still running after it as a timeout
 .PHONY: test-expected test-promote test-elab test-algo test-structure test-prose test-p4parse test-run-al test-run-sl test-run-pl test-micro
 .PHONY: test-diagnostics test-diagnostics-promote diagnostic-cli
 DRIVER = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" -- $(if $(TEST_LOG),--log "$(abspath $(TEST_LOG))")
+CORPUS_ARGS = $(if $(TIMEOUT),--timeout $(TIMEOUT))
 DIAGNOSTIC_CLI = $(TARGET_DIR)/release/p4spectec
 
 test-elab:
@@ -65,13 +67,13 @@ test-p4parse:
 	env -u UPDATE_EXPECT $(DRIVER) p4parse
 
 test-run-al:
-	env -u UPDATE_EXPECT $(DRIVER) run al
+	env -u UPDATE_EXPECT $(DRIVER) run al $(CORPUS_ARGS)
 
 test-run-sl:
-	env -u UPDATE_EXPECT $(DRIVER) run sl
+	env -u UPDATE_EXPECT $(DRIVER) run sl $(CORPUS_ARGS)
 
 test-run-pl:
-	env -u UPDATE_EXPECT $(DRIVER) run pl
+	env -u UPDATE_EXPECT $(DRIVER) run pl $(CORPUS_ARGS)
 
 # Micro tests: standalone spec-language sources checked by pipeline stage
 test-micro:
@@ -94,13 +96,13 @@ test-promote:
 .PHONY: test-sim-al test-sim-sl test-sim-pl
 
 test-sim-al:
-	env -u UPDATE_EXPECT $(DRIVER) sim al
+	env -u UPDATE_EXPECT $(DRIVER) sim al $(CORPUS_ARGS)
 
 test-sim-sl:
-	env -u UPDATE_EXPECT $(DRIVER) sim sl
+	env -u UPDATE_EXPECT $(DRIVER) sim sl $(CORPUS_ARGS)
 
 test-sim-pl:
-	env -u UPDATE_EXPECT $(DRIVER) sim pl
+	env -u UPDATE_EXPECT $(DRIVER) sim pl $(CORPUS_ARGS)
 
 diagnostic-cli: release
 

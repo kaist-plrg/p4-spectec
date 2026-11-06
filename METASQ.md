@@ -216,6 +216,9 @@ tower shared by every reentry depth, and `MetaRedexProtocol`
 `spec-meta-redex/3-execution/3.16-entry.rkt` serves them. `make redex` compiles the entry
 module, and `make test-metacirc-run-redex`, `test-metacirc-micro-redex`, and
 `test-metacirc-sim-redex` reuse the native expected files.
+spec-meta-k and spec-meta-redex take the first successful clause or rule path
+without checking the later ones, so both micro targets skip the scripts in
+`excludes/metacirc-first-match` that only that check fails.
 
 ## Algo through the IL-to-AL specification
 
@@ -270,6 +273,26 @@ sources whose outcome differs are listed in the `il` exclusions.
 `run` selects suites with `--input al` or `--input p4`,
 and both select one registered suite with `--suite <NAME>`,
 for example `run al --suite neg-run` or `sim il --suite v1model-regression`.
+With `--timeout <SECONDS>`, a worker process runs each source and is restarted
+after a source that does not finish in time, which is recorded as `timeout`;
+`p4spectec-test run` and `sim` take the same option.
+
+```sh
+make metacirc-sim-group-split
+make test-metacirc-sim-group-k SUITE=v1model-p4c GROUP=2
+```
+
+`test-metacirc-sim-group-<base>` runs one group of one of the two large
+simulation suites registered in `suites/metacirc/sim-group.toml`,
+`v1model-p4c` or `v1model-p4testgen`, so that a full sweep of a suite can be
+split over four commands. Each group excludes `excludes/static`,
+`excludes/dynamic`, and the folders of the other groups under
+`excludes/metacirc-groups/`, and compares the suite's pairs with its own
+expected file `expected/sim-group/<suite>-<group>.expected`.
+`metacirc-sim-group-split` rewrites `<suite>.exclude` in those folders from each
+suite's corpus, dealing the pairs that static and dynamic exclusions leave over
+the groups in turn; after it runs, the group expected files must be regenerated
+to match.
 
 ## Specification snapshots
 

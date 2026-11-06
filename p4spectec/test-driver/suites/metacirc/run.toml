@@ -12,14 +12,15 @@
 # A configuration with `pending` is skipped without failing until its implementation lands.
 # Each suite names one tower per base; a suite without a tower for the base is skipped.
 # The tower's top level decides the entry relation and the inputs:
-# a P4 suite records pass, fail, or exclude per .p4 file under `root` in `expected`,
-# which every configuration shares;
+# a P4 suite compares the outcome of each .p4 file under `root`
+# with its line `<outcome>,<p4>` in the CSV `expected`, which every configuration shares,
+# where a timeout matches any expected outcome with a warning;
 # a script suite expects every .watsup script under `root` to end with `outcome`.
 # `excludes` lists, per base, directories of .exclude files naming skipped sources.
 # Paths are relative to the repository root.
 
 includes = ["p4c/p4include"]
-excludes = { al = ["excludes/static"], il = ["excludes/static", "excludes/metacirc-meta"], k = ["excludes/static"], redex = ["excludes/static"] }
+excludes = { al = ["excludes/static"], il = ["excludes/static", "excludes/metacirc-meta"], k = ["excludes/static", "excludes/metacirc-first-match"], redex = ["excludes/static", "excludes/metacirc-first-match"] }
 
 [[configs]]
 name = "al"
@@ -47,7 +48,7 @@ det = true
 
 [[suites]]
 name = "run-positive"
-towers = { al = "towers/al-p4.json", il = "towers/il-p4.json", k = "towers/k-p4.json", redex = "towers/redex-p4.json" }
+towers = { al = "towers/al-p4-ok.json", il = "towers/il-p4-ok.json", k = "towers/k-p4-ok.json", redex = "towers/redex-p4-ok.json" }
 root = "p4c/testdata/p4_16_samples"
 expected = "p4spectec/test-driver/expected/run/pos.expected"
 
@@ -59,7 +60,7 @@ expected = "p4spectec/test-driver/expected/run/neg.expected"
 
 [[suites]]
 name = "regression-positive"
-towers = { al = "towers/al-p4.json", il = "towers/il-p4.json", k = "towers/k-p4.json", redex = "towers/redex-p4.json" }
+towers = { al = "towers/al-p4-ok.json", il = "towers/il-p4-ok.json", k = "towers/k-p4-ok.json", redex = "towers/redex-p4-ok.json" }
 root = "testdata/regression/pos"
 expected = "p4spectec/test-driver/expected/run/regression-pos.expected"
 
