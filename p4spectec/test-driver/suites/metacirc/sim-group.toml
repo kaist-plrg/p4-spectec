@@ -1,0 +1,127 @@
+# Simulation groups through a metacircular P4 tower:
+# `sim-group <config> --suite <name> --group <name>`
+# (make test-metacirc-sim-group-al, test-metacirc-sim-group-il, test-metacirc-sim-group-k,
+# test-metacirc-sim-group-redex, each with SUITE=<name> and GROUP=<name>).
+#
+# Each suite pairs every .p4 file under `p4` that includes the `arch` model
+# with each .stf test under `stf` at the same relative directory and stem,
+# or in a directory named after the P4 file's stem;
+# files under `patches` replace those with the same stem.
+# A group runs one suite with its own `excludes`, directories of .exclude files
+# naming skipped P4 or STF files, and compares the outcome of every pair,
+# pass, fail, exclude, or timeout, with its line `<outcome>,<p4>,<stf>`
+# in the CSV that `expected` names for the suite;
+# a timeout matches any expected outcome with a warning.
+# A configuration selects the `base` language of the tower in `towers`
+# (see `run.toml`), memoization (`cache`), and determinism checking (`det`).
+# `sim-group-split` (make metacirc-sim-group-split) numbers each suite's pairs
+# not excluded by `split.excludes` in pair order, and lists the STF of pair i (from 1)
+# in `<suite>.exclude` of the folder `split.groups[(i - 1) mod n]`;
+# each group excludes the other groups' folders.
+# Paths are relative to the repository root.
+
+includes = ["p4c/p4include"]
+towers = { al = "towers/al-p4.json", il = "towers/il-p4.json", k = "towers/k-p4.json", redex = "towers/redex-p4.json" }
+
+[split]
+excludes = ["excludes/static", "excludes/dynamic"]
+groups = [
+  "excludes/metacirc-groups/1",
+  "excludes/metacirc-groups/2",
+  "excludes/metacirc-groups/3",
+  "excludes/metacirc-groups/4",
+]
+
+[[configs]]
+name = "al"
+base = "al"
+cache = true
+det = true
+
+[[configs]]
+name = "il"
+base = "il"
+cache = true
+det = true
+
+[[configs]]
+name = "k"
+base = "k"
+cache = true
+det = true
+
+[[configs]]
+name = "redex"
+base = "redex"
+cache = true
+det = true
+
+[[suites]]
+name = "v1model-p4c"
+arch = "v1model"
+p4 = "p4c/testdata/p4_16_samples"
+stf = "p4c/testdata/p4_16_samples"
+patches = "patches/v1model"
+
+[[suites]]
+name = "v1model-p4testgen"
+arch = "v1model"
+p4 = "p4c/testdata/p4_16_samples"
+stf = "testdata/p4testgen"
+patches = "patches/v1model"
+
+[[groups]]
+name = "1"
+excludes = [
+  "excludes/static",
+  "excludes/dynamic",
+  "excludes/metacirc-groups/2",
+  "excludes/metacirc-groups/3",
+  "excludes/metacirc-groups/4",
+]
+
+[groups.expected]
+v1model-p4c = "p4spectec/test-driver/expected/sim-group/v1model-p4c-1.expected"
+v1model-p4testgen = "p4spectec/test-driver/expected/sim-group/v1model-p4testgen-1.expected"
+
+[[groups]]
+name = "2"
+excludes = [
+  "excludes/static",
+  "excludes/dynamic",
+  "excludes/metacirc-groups/1",
+  "excludes/metacirc-groups/3",
+  "excludes/metacirc-groups/4",
+]
+
+[groups.expected]
+v1model-p4c = "p4spectec/test-driver/expected/sim-group/v1model-p4c-2.expected"
+v1model-p4testgen = "p4spectec/test-driver/expected/sim-group/v1model-p4testgen-2.expected"
+
+[[groups]]
+name = "3"
+excludes = [
+  "excludes/static",
+  "excludes/dynamic",
+  "excludes/metacirc-groups/1",
+  "excludes/metacirc-groups/2",
+  "excludes/metacirc-groups/4",
+]
+
+[groups.expected]
+v1model-p4c = "p4spectec/test-driver/expected/sim-group/v1model-p4c-3.expected"
+v1model-p4testgen = "p4spectec/test-driver/expected/sim-group/v1model-p4testgen-3.expected"
+
+[[groups]]
+name = "4"
+excludes = [
+  "excludes/static",
+  "excludes/dynamic",
+  "excludes/metacirc-groups/1",
+  "excludes/metacirc-groups/2",
+  "excludes/metacirc-groups/3",
+]
+
+[groups.expected]
+v1model-p4c = "p4spectec/test-driver/expected/sim-group/v1model-p4c-4.expected"
+v1model-p4testgen = "p4spectec/test-driver/expected/sim-group/v1model-p4testgen-4.expected"

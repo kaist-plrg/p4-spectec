@@ -5,7 +5,7 @@
 //! and `CALL` are types, and `var` definitions, signatures, hints, and operand
 //! types are omitted.
 
-use super::wire::{Writer, atom, id, iter, mixop_rows, number, rows_tree, typ};
+use super::super::json::{Writer, atom, id, iter, mixop_rows, number, rows_tree, typ};
 use crate::lang::{
     al::ast as al,
     data::typ::Typ,

@@ -1,7 +1,8 @@
-//! STF simulation of a P4 program executed by spec-meta or spec-meta-k
+//! STF simulation of a P4 program executed by spec-meta, spec-meta-k, or spec-meta-redex
 //!
 //! `SimTower` keeps a tower of two or more levels: spec-meta runs natively
-//! at its base, or spec-meta-k from its K library in a `k` tower,
+//! at its base, spec-meta-k from its K library in a `k` tower,
+//! or spec-meta-redex in a `racket` process in a `redex` tower,
 //! each level above interprets the next through spec-meta,
 //! and the P4 host with the architecture is the top of the tower's `Upper`.
 //! For each STF operation, `with_context` reaches that host
@@ -45,20 +46,21 @@ pub(super) struct SimTower<Arch: Architecture> {
 }
 
 impl<Arch: Architecture> SimTower<Arch> {
-    /// Builds a tower of an SL-executed or K meta specification over a P4 top level.
+    /// Builds a tower of an SL-executed, K, or Redex meta specification over a P4 top level.
     fn build(
         arena: &mut Arena,
         config: &TowerConfig,
         options: runner::Config,
         arch: Arch,
     ) -> Result<Self> {
-        // Depth 0 is the base's SL interpreter or K library, and the top level is P4
+        // Depth 0 is the base's SL interpreter, K library, or racket process,
+        // and the top level is P4
         if config.levels.len() < 2
             || config.top_lang() != Lang::P4
-            || !matches!(config.mode, ExecutionMode::Sl | ExecutionMode::K)
+            || !matches!(config.mode, ExecutionMode::Sl | ExecutionMode::K | ExecutionMode::Redex)
         {
             return Err(config_invalid(
-                "simulation requires an sl or k tower of two or more levels with a P4 top level",
+                "simulation requires an sl, k, or redex tower of two or more levels with a P4 top level",
             ));
         }
         let tower = Tower::build(arena, config, options, arch)?;
@@ -136,7 +138,7 @@ impl<Arch: Architecture + 'static> SimulatorRunner for SimTower<Arch> {
 
 // == Construction
 
-/// Builds a simulator for the named architecture on an SL or K tower over P4.
+/// Builds a simulator for the named architecture on an SL, K, or Redex tower over P4.
 pub fn build_simulator(
     config: &TowerConfig,
     arch: &str,

@@ -3,8 +3,9 @@
 //! Levels run from the native base toward a top level consuming AL, IL, P4, or KORE.
 //! Each level names the language it accepts:
 //! the level above it is passed to it as AL or IL.
-//! The native backend is AL or SL, or a K library compiled from the base (`k`).
-//! Specification and library paths are resolved relative to the JSON file.
+//! The native backend is AL or SL, a K library compiled from the base (`k`),
+//! or a Racket module of the base run by `racket` (`redex`).
+//! Specification, library, and module paths are resolved relative to the JSON file.
 
 use super::{Result, error::config_invalid};
 pub use crate::interface::Lang;
@@ -34,6 +35,8 @@ pub enum ExecutionMode {
     Sl,
     /// Execute a K base specification through the library `kompile` made of it.
     K,
+    /// Execute a PLT Redex base specification by running its entry module in `racket`.
+    Redex,
 }
 
 /// One specification and the relation used to enter it.
@@ -49,6 +52,9 @@ pub struct LevelConfig {
     /// The library compiled from a K base specification, for a `k` tower's base only.
     #[serde(default)]
     pub kompiled: Option<PathBuf>,
+    /// The entry module of a PLT Redex base specification, for a `redex` tower's base only.
+    #[serde(default)]
+    pub module: Option<PathBuf>,
 }
 
 impl TowerConfig {
@@ -71,7 +77,7 @@ impl TowerConfig {
             .map_err(|cause| config_invalid(format!("{}: {cause}", path.display())))?;
         let mut levels = config.levels;
         let path_parent = path.parent().unwrap_or(Path::new("."));
-        // Resolve source and library paths before validating the level ordering
+        // Resolve source, library, and module paths before validating the level ordering
         for level in &mut levels {
             if !level.specdir.as_os_str().is_empty() && level.specdir.is_relative() {
                 level.specdir = path_parent.join(&level.specdir);
@@ -81,6 +87,11 @@ impl TowerConfig {
             {
                 *kompiled = path_parent.join(&*kompiled);
             }
+            if let Some(module) = &mut level.module
+                && module.is_relative()
+            {
+                *module = path_parent.join(&*module);
+            }
         }
         Self::new(config.mode, levels)
     }
@@ -89,7 +100,8 @@ impl TowerConfig {
     ///
     /// Specification paths are relative to the current directory.
     /// A single level is both the top level and the base.
-    /// A `k` tower's base accepts AL and names its compiled library;
+    /// A `k` tower's base accepts AL and names its compiled library,
+    /// and a `redex` tower's base accepts AL and names its Racket entry module;
     /// KORE is accepted only by a single level, since no level stacks over K yet.
     pub fn new(mode: ExecutionMode, levels: Vec<LevelConfig>) -> Result<Self> {
         if levels.is_empty() {
@@ -114,12 +126,25 @@ impl TowerConfig {
                     "kompiled at level {idx}: only the base of a k tower takes a library"
                 )));
             }
+            // Only the base of a redex tower runs from a Racket module
+            if level.module.is_some() && (idx != 0 || !matches!(mode, ExecutionMode::Redex)) {
+                return Err(config_invalid(format!(
+                    "module at level {idx}: only the base of a redex tower takes a Racket module"
+                )));
+            }
         }
         // A K base interprets AL, from the library compiled from it
         let base = &levels[0];
         if matches!(mode, ExecutionMode::K) && (base.lang != Lang::Al || base.kompiled.is_none()) {
             return Err(config_invalid(
                 "a k tower's base accepts al and requires kompiled, its compiled library",
+            ));
+        }
+        // A Redex base interprets AL, in a racket process running its entry module
+        if matches!(mode, ExecutionMode::Redex) && (base.lang != Lang::Al || base.module.is_none())
+        {
+            return Err(config_invalid(
+                "a redex tower's base accepts al and requires module, its Racket entry module",
             ));
         }
         // Stacking a level over a K definition is not implemented

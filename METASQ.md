@@ -166,12 +166,12 @@ Above a meta top level is its AL or IL program, one more boundary whose
 builtins `Top::Program` answers.
 
 Three traits divide the work, their implementations stored as enums
-(`EngineKind`, `ProtocolKind`); K towers describes the K implementations:
+(`EngineKind`, `ProtocolKind`); K and Redex towers describes the K and Redex implementations:
 
 | trait | implementation | role |
 |---|---|---|
-| `Engine` (`engine/`) | `SpecTecEngine`, `KEngine` | runs the base natively, on AL or SL, or from a K library |
-| `Protocol` (`protocol/`) | `MetaProtocol`, `MetaKProtocol`, `KoreProtocol` | how spec-meta interprets the level above: load C, encode the entry's inputs, lower a call to `Call_rel`/`Call_func`, raise its result, decode and encode host calls; likewise for spec-meta-k and spec-k |
+| `Engine` (`engine/`) | `SpecTecEngine`, `KEngine`, `RedexEngine` | runs the base natively, on AL or SL, from a K library, or in a `racket` process |
+| `Protocol` (`protocol/`) | `MetaProtocol`, `MetaKProtocol`, `MetaRedexProtocol`, `KoreProtocol` | how spec-meta interprets the level above: load C, encode the entry's inputs, lower a call to `Call_rel`/`Call_func`, raise its result, decode and encode host calls; likewise for spec-meta-k, spec-meta-redex, and spec-k |
 | `HostCalls` (`boundary.rs`) | `Boundary` | answers a decoded host call at the level above a boundary |
 
 A call goes down from the P4 top through each level's protocol to the engine
@@ -184,14 +184,15 @@ arguments and the architectures do through `find_var_e`, the call runs on the
 next depth: a fresh interpreter of the base's representation and fresh meta
 builtins, sharing C and the codec caches.
 
-## K towers
+## K and Redex towers
 
-Two towers cross into the K framework.
+Two towers cross into the K framework, and one into PLT Redex.
 
 | tower | base | top | configuration |
 |---|---|---|---|
 | ST-in-K | spec-meta-k, the AL semantics in K, run from its compiled library | AL or P4 | `"mode": "k"`, `kompiled` at the base (`towers/k*.json`) |
 | K-in-ST | spec-k, the K semantics in P4-SpecTec | a K definition and initial term in KORE | a single level with `"lang": "kore"` (`towers/k-in-st.json`) |
+| ST-in-Redex | spec-meta-redex, the AL semantics in PLT Redex, run by `racket` | AL or P4 | `"mode": "redex"`, `module` at the base (`towers/redex*.json`) |
 
 ST-in-K adds `KEngine` (`engine/k/`) and `MetaKProtocol` (`protocol/meta_k/`);
 the base's entry `Eval_AL_rel` or `Eval_AL_func` loads the specification and
@@ -205,6 +206,18 @@ spec-k's extern relation `Call_hook`, to which spec-k leaves most K hooks, and
 prints the run as `krun` does; `make test-metacirc-k-in-st` compares it with
 `krun`. `protocol/kore/` passes `Call_hook` up and describes how a level
 would stack over a K definition, which is not implemented.
+
+ST-in-Redex adds `RedexEngine` (`engine/redex/`), one `racket` process per
+tower shared by every reentry depth, and `MetaRedexProtocol`
+(`protocol/meta_redex/`), which shares the JSON of `protocol/json.rs` and
+`protocol/serve.rs` with `MetaKProtocol`; its entry `Eval_AL_rel` or
+`Eval_AL_func` loads the specification and calls its relation or function, as
+`spec-meta-redex/3-execution/3.16-entry.rkt` serves them. `make redex` compiles the entry
+module, and `make test-metacirc-run-redex`, `test-metacirc-micro-redex`, and
+`test-metacirc-sim-redex` reuse the native expected files.
+spec-meta-k and spec-meta-redex take the first successful clause or rule path
+without checking the later ones, so both micro targets skip the scripts in
+`excludes/metacirc-first-match` that only that check fails.
 
 ## Algo through the IL-to-AL specification
 
@@ -259,6 +272,26 @@ sources whose outcome differs are listed in the `il` exclusions.
 `run` selects suites with `--input al` or `--input p4`,
 and both select one registered suite with `--suite <NAME>`,
 for example `run al --suite neg-run` or `sim il --suite v1model-regression`.
+With `--timeout <SECONDS>`, a worker process runs each source and is restarted
+after a source that does not finish in time, which is recorded as `timeout`;
+`p4spectec-test run` and `sim` take the same option.
+
+```sh
+make metacirc-sim-group-split
+make test-metacirc-sim-group-k SUITE=v1model-p4c GROUP=2
+```
+
+`test-metacirc-sim-group-<base>` runs one group of one of the two large
+simulation suites registered in `suites/metacirc/sim-group.toml`,
+`v1model-p4c` or `v1model-p4testgen`, so that a full sweep of a suite can be
+split over four commands. Each group excludes `excludes/static`,
+`excludes/dynamic`, and the folders of the other groups under
+`excludes/metacirc-groups/`, and compares the suite's pairs with its own
+expected file `expected/sim-group/<suite>-<group>.expected`.
+`metacirc-sim-group-split` rewrites `<suite>.exclude` in those folders from each
+suite's corpus, dealing the pairs that static and dynamic exclusions leave over
+the groups in turn; after it runs, the group expected files must be regenerated
+to match.
 
 ## Specification snapshots
 
