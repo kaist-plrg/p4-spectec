@@ -87,6 +87,10 @@ impl<'a> Case<'a> {
     /// that `krun --dry-run` gives the interpreter.
     pub fn init(&self, program: &Program) -> Result<PathBuf> {
         let path_init = self.dir_build.join(format!("{}.init.kore", program.name));
+        // A name may hold a directory
+        if let Some(dir_init) = path_init.parent() {
+            fs::create_dir_all(dir_init)?;
+        }
         let stamp = self.kompiled().join("timestamp");
         let mut sources = vec![program.path.as_path(), stamp.as_path()];
         sources.extend(program.input.as_deref());
@@ -114,9 +118,11 @@ impl<'a> Case<'a> {
     fn dry_run(&self, program: &Program, path_init: &Path) -> Result<()> {
         let path_program = match self.words(&self.suite.prepare).split_first() {
             Some((command, args)) => {
-                let path_prepared = self
-                    .dir_build
-                    .join(program.path.file_name().unwrap_or_default());
+                // Named after the program, as two programs may share a file name
+                let mut path_prepared = self.dir_build.join(&program.name);
+                if let Some(ext) = program.path.extension() {
+                    path_prepared.set_extension(ext);
+                }
                 let what = format!("{command} {}", program.path.display());
                 let output = run(Command::new(command).args(args).arg(&program.path), None, &what)?;
                 fs::write(&path_prepared, output.stdout)?;
