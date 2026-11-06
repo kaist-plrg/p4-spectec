@@ -44,6 +44,13 @@ dec $sorted_set<X>(set<X>) : set<X>
   hint(prose_in %0 "in order")
 def $sorted_set<X>(`{ X* `}) = $union_set<X>(`{ X* `}, `{ eps `})
 
+;; A number not given before: 0, 1, 2, ... The one builtin with a state, as
+;; $fresh_typeId of the P4 spec; the interpreter does not cache a call that
+;; takes one.
+
+builtin dec $fresh_nat() : nat
+  hint(prose_in "a new number")
+
 ;; Text builtins: $has_prefix reads hook names (3-load); $text_to_int, of
 ;; spec-meta's standard library, reads the text of an Int domain value, and
 ;; $int_text writes one as K does, in decimal with a sign only for a negative

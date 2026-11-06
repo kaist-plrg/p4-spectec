@@ -12,12 +12,23 @@ var matched : applies<subst>
 
 ;;; Variables and domain values
 
-;;; A fresh variable !X of a function equation, which kompile leaves unbound,
-;;; is out of scope: no rule evaluates a variable the substitution lacks.
-
 rule Eval/variable:
   D subst |- VAR varid sort : OK term
   -- if term = $find_map<varid, term>(subst, varid)
+
+;;; A fresh variable of a function equation (!X, 3-load), which kompile leaves
+;;; unbound: the freshGenerator of its sort applied to a number below zero.
+;;; The fresh values of rules come from the generatedCounter cell (0, 1, 2,
+;;; ...), so the two never meet, as kast.md requires of all !X. The LLVM
+;;; backend reads the counter of the configuration the calling rule matched,
+;;; and may give a value of that rule again.
+
+rule Eval/fresh:
+  D subst |- FRESH sort : result
+  -- if symid = $find_map<sort, symid>(D.FRESH, sort)
+  -- if (SYMBOL sortid_p* ([sort_i]) '->' sort_r kind) = $find_symdecl(D, symid)
+  -- if n = $fresh_nat()
+  -- Apply: D |- symid eps ([DV sort_i $int_text($(0 - (n + 1)))]) : result
 
 rule Eval/domain-value:
   D subst |- DV sort t : OK (DV sort t)
