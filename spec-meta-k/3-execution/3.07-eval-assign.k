@@ -2,7 +2,7 @@
 //
 // Mirrors spec-meta/4-execution/4.05-eval-assign.watsup. An assignment is a
 // statement: it rewrites to `.K` with its bindings added to `<local>`, or
-// to `error`.
+// to `ERROR`.
 //
 //   Assign_exp:  ctx |- exp := val : assignRes    --> assignExp(Exp, Val)
 //   Assign_exps: ctx |- exp* := val* : assignRes  --> assignExps(ExpList, ValList)
@@ -58,7 +58,7 @@ module ASSIGN
        ...
        </k>
 
-  rule <k> assignExp(_:Exp, _:Val) => error ... </k> [owise]
+  rule <k> assignExp(_:Exp, _:Val) => ERROR ... </k> [owise]
 
   // ==========================================================================
   // Assigning to an iterated expression
@@ -116,7 +116,7 @@ module ASSIGN
         => assignExp(E, V) ~> assignExps(Es, Vs)
        ...
        </k>
-  rule <k> assignExps(_:ExpList, _:ValList) => error ... </k> [owise]
+  rule <k> assignExps(_:ExpList, _:ValList) => ERROR ... </k> [owise]
 
   // Struct fields, matched positionally with their atoms compared.
   syntax KItem ::= assignFields(ExpFieldList, ValFieldList)
@@ -127,7 +127,7 @@ module ASSIGN
         => assignExp(E, V) ~> assignFields(Fs, Gs)
        ...
        </k>
-  rule <k> assignFields(_:ExpFieldList, _:ValFieldList) => error ... </k> [owise]
+  rule <k> assignFields(_:ExpFieldList, _:ValFieldList) => ERROR ... </k> [owise]
 
   // ==========================================================================
   // Assign_arg / Assign_args: ctx |- arg(*) := val(*) : assignRes
@@ -140,7 +140,7 @@ module ASSIGN
   rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => .K ... </k>
        <lfenv> M:Map => M[X <- Y] </lfenv>
 
-  rule <k> assignArg(_:Arg, _:Val) => error ... </k> [owise]
+  rule <k> assignArg(_:Arg, _:Val) => ERROR ... </k> [owise]
 
   //   rulegroup Assign_args
   rule <k> assignArgs(.ArgList, .ValList) => .K ... </k>
@@ -148,7 +148,7 @@ module ASSIGN
         => assignArg(A, V) ~> assignArgs(As, Vs)
        ...
        </k>
-  rule <k> assignArgs(_:ArgList, _:ValList) => error ... </k> [owise]
+  rule <k> assignArgs(_:ArgList, _:ValList) => ERROR ... </k> [owise]
 
   // ==========================================================================
   // Value-level helpers
@@ -158,7 +158,7 @@ module ASSIGN
   rule lengthVaris(.VariList) => 0
   rule lengthVaris(_:Vari, Vs:VariList) => 1 +Int lengthVaris(Vs)
 
-  // `$find_varis` on the current value environment: the values, or `error`.
+  // `$find_varis` on the current value environment: the values, or `ERROR`.
   syntax KItem ::= readVaris(VariList)
   rule <k> readVaris(Vs:VariList) => unres(finds(varrsOfVaris(Vs), M)) ... </k>
        <lvenv> M:Map </lvenv>

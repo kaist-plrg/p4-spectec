@@ -230,20 +230,20 @@ module EXTERN-JSON
                  | externRelResult(JSON)      [symbol(externRelResult)]
 
   rule <k> builtinResult({ "ok" : J:JSON, .JSONs }) => valOfJson(J) ... </k>
-  rule <k> builtinResult({ "fail" : null, .JSONs }) => unmatch ... </k>
+  rule <k> builtinResult({ "fail" : null, .JSONs }) => UNMATCH ... </k>
   rule <k> builtinResult({ "error" : S:String, .JSONs }) => hostError(S) ... </k>
 
   rule <k> externFuncResult({ "ok" : J:JSON, .JSONs }) => valOfJson(J) ... </k>
-  rule <k> externFuncResult({ "fail" : null, .JSONs }) => unmatch ... </k>
+  rule <k> externFuncResult({ "fail" : null, .JSONs }) => UNMATCH ... </k>
   rule <k> externFuncResult({ "error" : S:String, .JSONs }) => hostError(S) ... </k>
 
   rule <k> externRelResult({ "ok" : [ Js:JSONs ], .JSONs }) => valsOfJsons(Js) ... </k>
-  rule <k> externRelResult({ "fail" : null, .JSONs }) => unmatch ... </k>
+  rule <k> externRelResult({ "fail" : null, .JSONs }) => UNMATCH ... </k>
   rule <k> externRelResult({ "error" : S:String, .JSONs }) => hostError(S) ... </k>
 
   // A host error is an execution error; the host keeps its report.
   syntax KItem ::= hostError(String)
-  rule <k> hostError(_:String) => error ... </k>
+  rule <k> hostError(_:String) => ERROR ... </k>
 
   // ==========================================================================
   // The debug log

@@ -27,8 +27,10 @@ module RESULT
   syntax Res ::= ok(KItem)                  [symbol(ok)]
                | Failure
 
+  // A failure is not a result, so that no strict context takes it into its
+  // hole.
   syntax KResult ::= Val | ValList | ValField | ValFieldList | ValCase
-                   | ValListList | Res
+                   | ValListList
 
   // `OK X_h :: X_t*` from `OK X_h` and `OK X_t*`, or the first failure.
   syntax Res ::= consRes(Res, Res)          [function, symbol(consRes)]
@@ -41,30 +43,37 @@ module RESULT
   // ==========================================================================
   // Failure in flight
   //
-  // A rule with no applicable case rewrites to a signal: `unmatch` for a
-  // recoverable mismatch, `error` for an execution error. A signal discards
-  // the pending work of the current alternative up to the boundary that
-  // started it. A checkpoint turns it into the outcome `UNMATCH` or `ERROR`;
-  // a scope or frame boundary (3.02-context.k) restores its state and lets
-  // it go on.
+  // A rule with no applicable case rewrites to its failure at the head of
+  // `<k>`: `UNMATCH` for a recoverable mismatch, `ERROR` for an execution
+  // error. A failure discards the pending work up to the boundary that
+  // handles it. `UNMATCH` stops at a catch frame, which goes on with the
+  // next alternative; `ERROR` passes every catch frame up to the answer to
+  // the host. A scope or frame boundary (3.02-context.k) restores its state
+  // and lets either go on.
   // ==========================================================================
 
-  syntax Signal ::= "unmatch" | "error"
+  syntax Catch                              // catches `UNMATCH`
+  syntax Answer                             // catches both, at the entry
+  syntax ScopeOrFrame ::= endScope(Map)     // lvenv
+                        | "endFrame"
+  syntax Boundary ::= Catch | Answer | ScopeOrFrame
 
-  syntax Boundary ::= checkpoint(Map, Map)  // lfenv, lvenv
-                    | endScope(Map)         // lvenv
-                    | "endFrame"
-
-  rule <k> _:Signal ~> (K:KItem => .K) ... </k> requires notBool isBoundary(K)
+  rule <k> UNMATCH ~> (K:KItem => .K) ... </k>
+    requires notBool isBoundary(K)
+  rule <k> ERROR ~> (K:KItem => .K) ... </k>
+    requires notBool (isScopeOrFrame(K) orBool isAnswer(K))
 
   // ==========================================================================
   // Tries
   //
-  // `try(K)` runs `K` as one alternative: its failure is caught, its bindings
-  // are undone afterwards, and its outcome is recorded.
+  // `try(K)` runs `K` as one alternative: its bindings are undone afterwards,
+  // and its success is recorded as `ok(R)`. Its checkpoint restores its state
+  // like a scope, so a failure goes on to the catch frame after it.
   // ==========================================================================
 
   syntax KItem ::= try(K)
+  syntax ScopeOrFrame ::= checkpoint(Map, Map)
+                                            // lfenv, lvenv
 
   rule <k> try(K:K) => K ~> checkpoint(F, V) ... </k>
        <lfenv> F:Map </lfenv>
@@ -72,20 +81,16 @@ module RESULT
   rule <k> R:KResult ~> checkpoint(F:Map, V:Map) => ok(R) ... </k>
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>
-  rule <k> unmatch ~> checkpoint(F:Map, V:Map) => UNMATCH ... </k>
-       <lfenv> _ => F </lfenv>
-       <lvenv> _ => V </lvenv>
-  rule <k> error ~> checkpoint(F:Map, V:Map) => ERROR ... </k>
+  rule <k> E:Failure ~> checkpoint(F:Map, V:Map) => E ... </k>
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>
 
-  // `unres`: an outcome back in flight; `unresBool`: a `bool` outcome as
-  // its value.
+  // `unres`: an outcome on `<k>`; `unresBool`: a `bool` outcome as its value.
   syntax KItem ::= unres(Res)
                  | unresBool(Res)
   rule <k> unres(ok(R:KItem)) => R ... </k>
-  rule <k> unres(UNMATCH) => unmatch ... </k>
-  rule <k> unres(ERROR) => error ... </k>
+  rule <k> unres(UNMATCH) => UNMATCH ... </k>
+  rule <k> unres(ERROR) => ERROR ... </k>
   rule <k> unresBool(ok(B:Bool)) => boolV(B) ... </k>
   rule <k> unresBool(F:Failure) => unres(F) ... </k>
 

@@ -35,6 +35,6 @@ module EVAL-ARG
 
   syntax KItem ::= callTargs(Id, Res, ValList)
   rule <k> callTargs(X:Id, ok(Ts:TArgList), Vs:ValList) => callFunc(X, Ts, Vs) ... </k>
-  rule <k> callTargs(_:Id, ERROR, _:ValList) => error ... </k>
+  rule <k> callTargs(_:Id, ERROR, _:ValList) => ERROR ... </k>
 
 endmodule

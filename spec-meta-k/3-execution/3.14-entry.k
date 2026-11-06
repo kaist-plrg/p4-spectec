@@ -45,8 +45,8 @@ module AL
   // Call_rel and Call_func on the loaded spec
   // ==========================================================================
 
-  syntax KItem ::= "answerRel" "(" ")"
-                 | "answerFunc" "(" ")"
+  syntax Answer ::= "answerRel" "(" ")"
+                  | "answerFunc" "(" ")"
 
   rule <k> dispatch({ "args" : [ Js:JSONs ], "call-rel" : X:String, .JSONs })
         => try(callRel(X, valsOfJsons(Js))) ~> answerRel()

@@ -59,7 +59,7 @@ module RELATION
   //   relation Assign_arg:  ctx |- arg := val : assignRes
   //   relation Assign_args: ctx |- arg* := val* : assignRes
   //
-  // A statement: `.K` with the bindings added to `<local>`, or `error`. The
+  // A statement: `.K` with the bindings added to `<local>`, or `ERROR`. The
   // values of `assignExps` may still be a computation (a relation's outputs).
   // ==========================================================================
 

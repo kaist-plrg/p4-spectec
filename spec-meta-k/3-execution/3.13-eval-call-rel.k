@@ -25,7 +25,8 @@ module CALL-REL
   // ==========================================================================
   // Eval_ruls: ctx |- rul* `( val* `) : relRes
   //
-  // As Eval_clauses (3.12-eval-call-func.k).
+  // As Eval_clauses (3.12-eval-call-func.k): `ERROR` passes the catch frames
+  // (Eval_ruls/error).
   // ==========================================================================
 
   //   rule Eval_ruls/nil
@@ -35,14 +36,12 @@ module CALL-REL
        ...
        </k>
 
-  syntax KItem ::= afterRul(RulList, ValList)
+  syntax Catch ::= afterRul(RulList, ValList)
 
   //   rule Eval_ruls/unmatch
   rule <k> UNMATCH ~> afterRul(Rs:RulList, Vs:ValList) => evalRuls(Rs, Vs) ... </k>
   //   rule Eval_ruls/succ: the first success, the later paths untried
   rule <k> ok(Ws:KItem) ~> afterRul(_:RulList, _:ValList) => ok(Ws) ... </k>
-  //   rule Eval_ruls/error
-  rule <k> ERROR ~> afterRul(_:RulList, _:ValList) => ERROR ... </k>
 
   // ==========================================================================
   // Call_defined_rel: ctx |- definedRelDefn `( val* `) : relRes
@@ -80,13 +79,12 @@ module CALL-REL
        ...
        </k>
 
-  syntax KItem ::= afterRuls(ElsGroupOpt, ValList)
+  syntax Catch ::= afterRuls(ElsGroupOpt, ValList)
 
-  //   rule Call_defined_rel/result
+  //   rule Call_defined_rel/result: `ERROR` passes the catch frame
   rule <k> ok(Ws:KItem) ~> afterRuls(_:ElsGroupOpt, _:ValList) => Ws ... </k>
-  rule <k> ERROR ~> afterRuls(_:ElsGroupOpt, _:ValList) => error ... </k>
   //   rule Call_defined_rel/unmatch
-  rule <k> UNMATCH ~> afterRuls(noElsGroup(), _:ValList) => unmatch ... </k>
+  rule <k> UNMATCH ~> afterRuls(noElsGroup(), _:ValList) => UNMATCH ... </k>
   rule <k> UNMATCH ~> afterRuls(someElsGroup(EG:ElsGroup), Vs:ValList)
         => evalRul(rulOfElsGroup(EG), Vs)
        ...
@@ -99,7 +97,7 @@ module CALL-REL
   rule <k> callRel(X:Id, Vs:ValList) => callRelDefn(D, Vs) ... </k>
        <grenv> ... X |-> D:RelDefn ... </grenv>
   //   rule Call_rel/error: no such relation
-  rule <k> callRel(_:Id, _:ValList) => error ... </k> [owise]
+  rule <k> callRel(_:Id, _:ValList) => ERROR ... </k> [owise]
 
   syntax KItem ::= callRelDefn(RelDefn, ValList)
 
