@@ -138,7 +138,7 @@ impl Encode for al::Prem {
                     input::split(&prem_rule_al.input_hint, prem_rule_al.not_exp.args().to_vec())?;
                 (
                     m::PREM_REL,
-                    "relPremAL",
+                    "relPrem",
                     vec![
                         prem_rule_al.id.encode_cached(arena, cache)?,
                         list(arena, cache, "typedExp", &exps_input_al)?,
@@ -167,7 +167,7 @@ impl Encode for al::Prem {
             ),
             al::PremKind::Let(prem_inner_al) => (
                 m::PREM_LET,
-                "letPremAL",
+                "letPrem",
                 vec![
                     prem_inner_al.exp_l.encode_cached(arena, cache)?,
                     prem_inner_al.exp_r.encode_cached(arena, cache)?,
@@ -175,7 +175,7 @@ impl Encode for al::Prem {
             ),
             al::PremKind::Iter(prem_inner_al) => (
                 m::PREM_ITER,
-                "iterPremAL",
+                "iterPrem",
                 vec![
                     prem_inner_al.prem.encode_cached(arena, cache)?,
                     PremIterAl(&prem_inner_al.prem_iter).encode_cached(arena, cache)?,
@@ -189,7 +189,7 @@ impl Encode for al::Prem {
     }
 }
 
-/// An iteration premise as the meta `premIterAL`; IL encodes the same type as `premIterIL`.
+/// An iteration premise as the meta `premIter`; IL encodes the same type as `premIterIL`.
 struct PremIterAl<'a>(&'a al::PremIter);
 
 /// Encodes bound and bound-by-iteration variable lists in order.
@@ -203,7 +203,7 @@ impl Encode for PremIterAl<'_> {
             list(arena, cache, "vari", &prem_iter_al.vars_bound)?,
             list(arena, cache, "vari", &prem_iter_al.vars_bind)?,
         ];
-        case(arena, m::ITER_PREM, "premIterAL", values_meta, Span::default())
+        case(arena, m::ITER_PREM, "premIter", values_meta, Span::default())
     }
 }
 
@@ -220,13 +220,13 @@ impl Encode for (&al::RuleMatch, &al::RulePath) {
             rule_path.id.encode_cached(arena, cache)?,
             list(arena, cache, "typedExp", &rule_match.exps_input)?,
             list(arena, cache, "typedExp", &rule_path.exps_output)?,
-            list(arena, cache, "premAL", &prems)?,
+            list(arena, cache, "prem", &prems)?,
         ];
-        case(arena, m::RUL, "rulAL", values_meta, rule_path.id.span)
+        case(arena, m::RUL, "rul", values_meta, rule_path.id.span)
     }
 }
 
-/// The native rule groups of one meta `rulGroupAL`: consecutive groups with one identifier.
+/// The native rule groups of one meta `rulGroup`: consecutive groups with one identifier.
 struct RulGroupAl<'a>(&'a [al::RuleGroup]);
 
 /// Encodes consecutive rule groups with one identifier as one meta group,
@@ -253,9 +253,9 @@ impl Encode for RulGroupAl<'_> {
         let rule_group_first = &rule_groups[0];
         let values_meta = vec![
             rule_group_first.node.id.encode_cached(arena, cache)?,
-            list(arena, cache, "rulAL", &rules)?,
+            list(arena, cache, "rul", &rules)?,
         ];
-        case(arena, m::RUL_GROUP, "rulGroupAL", values_meta, rule_group_first.span)
+        case(arena, m::RUL_GROUP, "rulGroup", values_meta, rule_group_first.span)
     }
 }
 
@@ -267,7 +267,7 @@ impl Encode for al::ElseGroup {
         let rule = (&self.node.rule_match, &self.node.rule_path);
         let values_meta =
             vec![self.node.id.encode_cached(arena, cache)?, rule.encode_cached(arena, cache)?];
-        case(arena, m::ELS_GROUP, "elsGroupAL", values_meta, self.span)
+        case(arena, m::ELS_GROUP, "elsGroup", values_meta, self.span)
     }
 }
 
@@ -281,9 +281,9 @@ impl Encode for al::Clause {
         let values_meta = vec![
             list(arena, cache, "arg", &self.node.args)?,
             self.node.exp.encode_cached(arena, cache)?,
-            list(arena, cache, "premAL", &self.node.prems)?,
+            list(arena, cache, "prem", &self.node.prems)?,
         ];
-        case(arena, m::CLAUSE, "clauseAL", values_meta, self.span)
+        case(arena, m::CLAUSE, "clause", values_meta, self.span)
     }
 }
 
@@ -295,9 +295,9 @@ impl Encode for al::ElseClause {
         let values_meta = vec![
             list(arena, cache, "arg", &self.node.clause.args)?,
             self.node.clause.exp.encode_cached(arena, cache)?,
-            list(arena, cache, "premAL", &self.node.clause.prems)?,
+            list(arena, cache, "prem", &self.node.clause.prems)?,
         ];
-        case(arena, m::CLAUSE, "clauseAL", values_meta, self.span)
+        case(arena, m::CLAUSE, "clause", values_meta, self.span)
     }
 }
 
@@ -311,9 +311,9 @@ impl Encode for al::TableRow {
         let values_meta = vec![
             list(arena, cache, "arg", &self.node.args)?,
             self.node.exp.encode_cached(arena, cache)?,
-            list(arena, cache, "premAL", &self.node.prems)?,
+            list(arena, cache, "prem", &self.node.prems)?,
         ];
-        case(arena, m::TBL_ROW, "tblRowAL", values_meta, self.span)
+        case(arena, m::TBL_ROW, "tblRow", values_meta, self.span)
     }
 }
 
@@ -344,7 +344,7 @@ impl Encode for al::Def {
                     input::split(&rel_al.input_hint, rel_al.not_typ.node.args().to_vec())?;
                 (
                     m::DEF_EXTREL,
-                    "externRelDefnAL",
+                    "externRelDefn",
                     vec![
                         rel_al.id.encode_cached(arena, cache)?,
                         list(arena, cache, "typ", &typs_input_al)?,
@@ -365,13 +365,13 @@ impl Encode for al::Def {
                     .collect();
                 (
                     m::DEF_REL,
-                    "definedRelDefnAL",
+                    "definedRelDefn",
                     vec![
                         rel_al.id.encode_cached(arena, cache)?,
                         list(arena, cache, "typ", &typs_input_al)?,
                         list(arena, cache, "typ", &typs_output_al)?,
-                        list(arena, cache, "rulGroupAL", &rul_groups_al)?,
-                        opt(arena, cache, "elsGroupAL", rel_al.else_group.as_ref())?,
+                        list(arena, cache, "rulGroup", &rul_groups_al)?,
+                        opt(arena, cache, "elsGroup", rel_al.else_group.as_ref())?,
                     ],
                 )
             }
@@ -397,24 +397,24 @@ impl Encode for al::Def {
             ),
             al::DefKind::MetaFunc(al::MetaFuncDef::Table(func_al)) => (
                 m::DEF_TABLEFUNC,
-                "tableFuncDefnAL",
+                "tableFuncDefn",
                 vec![
                     func_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "param", &func_al.params)?,
                     func_al.typ.encode_cached(arena, cache)?,
-                    list(arena, cache, "tblRowAL", &func_al.table_rows)?,
+                    list(arena, cache, "tblRow", &func_al.table_rows)?,
                 ],
             ),
             al::DefKind::MetaFunc(al::MetaFuncDef::Defined(func_al)) => (
                 m::DEF_FUNC,
-                "definedFuncDefnAL",
+                "definedFuncDefn",
                 vec![
                     func_al.id.encode_cached(arena, cache)?,
                     list(arena, cache, "id", &func_al.tparams)?,
                     list(arena, cache, "param", &func_al.params)?,
                     func_al.typ.encode_cached(arena, cache)?,
-                    list(arena, cache, "clauseAL", &func_al.clauses)?,
-                    opt(arena, cache, "elsClauseAL", func_al.else_clause.as_ref())?,
+                    list(arena, cache, "clause", &func_al.clauses)?,
+                    opt(arena, cache, "elsClause", func_al.else_clause.as_ref())?,
                 ],
             ),
         };
@@ -439,7 +439,7 @@ impl Encode for al::Spec {
         }
         Ok(make::list(
             arena,
-            make_typ::var(phrase!(node: "specAL".into(), span: Span::default()), vec![])
+            make_typ::var(phrase!(node: "spec".into(), span: Span::default()), vec![])
                 .node
                 .into(),
             values_meta,

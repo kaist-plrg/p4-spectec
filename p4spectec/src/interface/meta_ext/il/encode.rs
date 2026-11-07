@@ -1,13 +1,13 @@
 //! Encodes elaborated IL specifications as meta data
 //!
 //! Expressions, types, paths, arguments, and parameters use the encoders of
-//! `meta::shared::encode`, since IL and AL share those forms in the meta syntax.
+//! `meta_ext::shared::encode`, since IL and AL share those forms in the meta syntax.
 //! Relation arguments stay in notation order next to their input positions.
 //! Variable declarations and general hints are omitted.
 
 use super::mixops as m;
 use crate::{
-    interface::meta::shared::{
+    interface::meta_ext::shared::{
         Cache, Error,
         encode::{Encode, case, list, opt},
     },

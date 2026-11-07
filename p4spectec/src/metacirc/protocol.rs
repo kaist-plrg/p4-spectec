@@ -10,14 +10,14 @@
 //! for level k+1, and `reply` encodes its outcome.
 //! `ProtocolKind` stores the protocols, each in the module of the backend
 //! whose specification interprets the level above:
-//! `ProtocolStSt` is spec-meta's (`st`),
+//! `ProtocolStSt` is spec-meta's and `ProtocolStStExt` spec-meta-ext's (`st`),
 //! `ProtocolStK` is spec-meta-k's, the AL semantics written in K (`k`),
 //! `ProtocolStRedex` is spec-meta-redex's, the AL semantics written in PLT Redex (`redex`),
 //! and `ProtocolKSt` is spec-k's, the K semantics written in P4-SpecTec (`st`).
 
 pub(super) use super::k::ProtocolStK;
 pub(super) use super::redex::ProtocolStRedex;
-pub(super) use super::st::{ProtocolKSt, ProtocolStSt};
+pub(super) use super::st::{ProtocolKSt, ProtocolStSt, ProtocolStStExt};
 
 use super::{Result as MetacircResult, tower::PreparedLevel};
 use crate::{
@@ -98,8 +98,10 @@ pub(in crate::metacirc) type Load =
 
 /// The protocol of one boundary, with its codec state.
 pub(in crate::metacirc) enum ProtocolKind {
-    /// spec-meta interprets the level above as AL or IL; boxed as the largest.
+    /// spec-meta interprets the level above as AL; boxed as the largest.
     StSt(Box<ProtocolStSt>),
+    /// spec-meta-ext interprets the level above as AL or IL; boxed as the largest.
+    StStExt(Box<ProtocolStStExt>),
     /// spec-meta-k, run by an `EngineK`, interprets the level above as AL.
     StK(ProtocolStK),
     /// spec-meta-redex, run by an `EngineRedex`, interprets the level above as AL.
@@ -113,6 +115,7 @@ impl ProtocolKind {
     pub(in crate::metacirc) fn load(&self) -> Load {
         match self {
             Self::StSt(_) => ProtocolStSt::load,
+            Self::StStExt(_) => ProtocolStStExt::load,
             Self::StK(_) => ProtocolStK::load,
             Self::StRedex(_) => ProtocolStRedex::load,
             Self::KSt(_) => ProtocolKSt::load,
@@ -129,6 +132,7 @@ impl ProtocolKind {
     ) -> MetacircResult<Vec<Value>> {
         match self {
             Self::StSt(_) => ProtocolStSt::encode_entry(arena, above, name, values),
+            Self::StStExt(_) => ProtocolStStExt::encode_entry(arena, above, name, values),
             Self::StK(_) => ProtocolStK::encode_entry(arena, above, name, values),
             Self::StRedex(_) => ProtocolStRedex::encode_entry(arena, above, name, values),
             Self::KSt(_) => ProtocolKSt::encode_entry(arena, above, name, values),
@@ -143,6 +147,7 @@ impl ProtocolKind {
     ) -> Result<Call<'static>, InterpreterError> {
         match self {
             Self::StSt(protocol) => protocol.lower(arena, value_ctx, call),
+            Self::StStExt(protocol) => protocol.lower(arena, value_ctx, call),
             Self::StK(protocol) => protocol.lower(arena, value_ctx, call),
             Self::StRedex(protocol) => protocol.lower(arena, value_ctx, call),
             Self::KSt(protocol) => protocol.lower(arena, value_ctx, call),
@@ -157,6 +162,7 @@ impl ProtocolKind {
     ) -> Result<Output, InterpreterError> {
         match self {
             Self::StSt(protocol) => protocol.raise(arena, output, call),
+            Self::StStExt(protocol) => protocol.raise(arena, output, call),
             Self::StK(protocol) => protocol.raise(arena, output, call),
             Self::StRedex(protocol) => protocol.raise(arena, output, call),
             Self::KSt(protocol) => protocol.raise(arena, output, call),
@@ -171,6 +177,7 @@ impl ProtocolKind {
     ) -> Result<HostCall, ExternError> {
         match self {
             Self::StSt(protocol) => protocol.host(arena, name, values),
+            Self::StStExt(protocol) => protocol.host(arena, name, values),
             Self::StK(protocol) => protocol.host(arena, name, values),
             Self::StRedex(protocol) => protocol.host(arena, name, values),
             Self::KSt(protocol) => protocol.host(arena, name, values),
@@ -185,6 +192,7 @@ impl ProtocolKind {
     ) -> Eval<Vec<Value>, ExternError> {
         match self {
             Self::StSt(protocol) => protocol.reply(arena, call, eval),
+            Self::StStExt(protocol) => protocol.reply(arena, call, eval),
             Self::StK(protocol) => protocol.reply(arena, call, eval),
             Self::StRedex(protocol) => protocol.reply(arena, call, eval),
             Self::KSt(protocol) => protocol.reply(arena, call, eval),
@@ -194,6 +202,7 @@ impl ProtocolKind {
     pub(in crate::metacirc) fn clear(&mut self) {
         match self {
             Self::StSt(protocol) => protocol.clear(),
+            Self::StStExt(protocol) => protocol.clear(),
             Self::StK(protocol) => protocol.clear(),
             Self::StRedex(protocol) => protocol.clear(),
             Self::KSt(protocol) => protocol.clear(),
@@ -206,7 +215,7 @@ impl ProtocolKind {
         match self {
             Self::StK(protocol) => protocol.host_response(request),
             Self::StRedex(protocol) => protocol.host_response(request),
-            Self::StSt(_) | Self::KSt(_) => None,
+            Self::StSt(_) | Self::StStExt(_) | Self::KSt(_) => None,
         }
     }
 
@@ -216,7 +225,7 @@ impl ProtocolKind {
         match self {
             Self::StK(protocol) => protocol.cache_host_response(request, response),
             Self::StRedex(protocol) => protocol.cache_host_response(request, response),
-            Self::StSt(_) | Self::KSt(_) => {}
+            Self::StSt(_) | Self::StStExt(_) | Self::KSt(_) => {}
         }
     }
 }

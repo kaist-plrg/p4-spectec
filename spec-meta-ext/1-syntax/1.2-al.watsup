@@ -1,0 +1,71 @@
+;; Iteration premises
+
+syntax premIterAL = iter '<-' vari* '->' vari*
+
+;; Premises
+
+syntax premAL
+
+syntax relPremAL =
+  REL id ':' typedExp* '->' typedExp*
+
+syntax letPremAL =
+  LET typedExp '=' typedExp
+
+syntax iterPremAL =
+  ITER premAL premIterAL
+
+syntax premAL =
+  | relPremAL
+  | ifPrem
+  | ifHoldPrem
+  | ifNotHoldPrem
+  | letPremAL
+  | iterPremAL
+  | debugPrem
+
+;; Relation definitions
+
+syntax externRelDefnAL =
+  EXTREL id ':' typ* '->' typ*
+
+syntax rulAL = id ':' typedExp* '->' typedExp* '-' premAL*
+syntax rulGroupAL = id ':' rulAL*
+syntax elsGroupAL = id ':' rulAL
+
+syntax definedRelDefnAL =
+  REL id ':' typ* '->' typ* '=' rulGroupAL* elsGroupAL?
+
+syntax relDefnAL =
+  | externRelDefnAL
+  | definedRelDefnAL
+
+;; Meta-functions
+
+syntax tblRowAL = arg* '=' typedExp '-' premAL*
+
+syntax tableFuncDefnAL =
+  TABLEFUNC id param* ':' typ '=' tblRowAL*
+
+syntax clauseAL = arg* '=' typedExp '-' premAL*
+syntax elsClauseAL = clauseAL
+
+syntax definedFuncDefnAL =
+  FUNC id tparam* param* ':' typ '=' clauseAL* elsClauseAL?
+
+syntax funcDefnAL =
+  | externFuncDefn
+  | builtinFuncDefn
+  | tableFuncDefnAL
+  | definedFuncDefnAL
+
+;; Definitions
+
+syntax defnAL =
+  | typDefn
+  | relDefnAL
+  | funcDefnAL
+
+;; Specifications
+
+syntax specAL = defnAL*

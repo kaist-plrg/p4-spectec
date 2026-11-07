@@ -1,7 +1,7 @@
 //! Decodes IL meta data into elaborated IL syntax
 //!
 //! Expressions, types, paths, arguments, and parameters use the decoders of
-//! `meta::shared::decode`.
+//! `meta_ext::shared::decode`.
 //! Relation notation, otherwise markers, and general hints are omitted
 //! from the meta syntax and reconstructed canonically by `stub`.
 
@@ -9,7 +9,7 @@ use num_traits::ToPrimitive;
 
 use super::{mixops as m, stub};
 use crate::{
-    interface::meta::shared::{Cache, Error, decode::Decode},
+    interface::meta_ext::shared::{Cache, Error, decode::Decode},
     lang::{
         common::{Id, Iter, prim::num::Number},
         data::{

@@ -204,7 +204,7 @@ impl Decode for al::Prem {
     }
 }
 
-/// An iteration premise as the meta `premIterAL`; IL encodes the same type as `premIterIL`.
+/// An iteration premise as the meta `premIter`; IL encodes the same type as `premIterIL`.
 struct PremIterAl(al::PremIter);
 
 /// Decodes bound and bound-by-iteration variable lists in order.
@@ -251,12 +251,12 @@ impl Decode for (al::RuleMatch, al::RulePath) {
                 };
                 Ok((rule_match, rule_path))
             },
-            _ => Err(Error::unexpected(arena, value_meta, "id ':' exp* '->' exp* '-' premAL*")),
+            _ => Err(Error::unexpected(arena, value_meta, "id ':' exp* '->' exp* '-' prem*")),
         }
     }
 }
 
-/// The native rule groups of one meta `rulGroupAL`, one per rule.
+/// The native rule groups of one meta `rulGroup`, one per rule.
 struct RulGroupAl(Vec<al::RuleGroup>);
 
 /// Decodes a rule group, giving each rule a native group of its own.
@@ -275,7 +275,7 @@ impl Decode for RulGroupAl {
                 Id::decode_cached(arena, cache, *value_id)?,
                 Vec::<(al::RuleMatch, al::RulePath)>::decode_cached(arena, cache, *value_rules)?,
             ),
-            _ => return Err(Error::unexpected(arena, value_meta, "id ':' rulAL*")),
+            _ => return Err(Error::unexpected(arena, value_meta, "id ':' rul*")),
         };
         let rule_groups = rules
             .into_iter()
@@ -310,7 +310,7 @@ impl Decode for al::ElseGroup {
                     rule_path,
                 }, span: span))
             },
-            _ => Err(Error::unexpected(arena, value_meta, "id ':' rulAL")),
+            _ => Err(Error::unexpected(arena, value_meta, "id ':' rul")),
         }
     }
 }
@@ -333,7 +333,7 @@ impl Decode for al::Clause {
                     prems: Vec::<al::Prem>::decode_cached(arena, cache, *value_prems)?,
                 }, span: span))
             },
-            _ => Err(Error::unexpected(arena, value_meta, "arg* '=' exp '-' premAL*")),
+            _ => Err(Error::unexpected(arena, value_meta, "arg* '=' exp '-' prem*")),
         }
     }
 }

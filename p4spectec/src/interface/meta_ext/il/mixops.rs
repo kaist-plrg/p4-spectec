@@ -1,9 +1,9 @@
-//! IL constructor notation from `spec-meta/1-syntax/1.1-il.watsup`
+//! IL constructor notation from `spec-meta-ext/1-syntax/1.1-il.watsup`
 //!
-//! Forms shared with AL come from `meta::shared::mixops`,
+//! Forms shared with AL come from `meta_ext::shared::mixops`,
 //! named the same way.
 
-pub(super) use crate::interface::meta::shared::mixops::{
+pub(super) use crate::interface::meta_ext::shared::mixops::{
     DEF_BUILTINFUNC, DEF_EXTFUNC, DEF_EXTTYP, DEF_TYP, PREM_DEBUG, PREM_IF, PREM_IFHOLD,
     PREM_IFNOTHOLD,
 };

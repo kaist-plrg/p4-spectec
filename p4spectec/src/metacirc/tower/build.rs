@@ -28,12 +28,14 @@
 //! | level below accepts | `PreparedLevel` | encoded for the level below  |
 //! |---------------------|-----------------|------------------------------|
 //! | none (base)         | `Base`          | —                            |
-//! | `al`                | `Al`            | AL                           |
-//! | `il`                | `Il`            | IL                           |
+//! | `al`                | `Al`            | spec-meta's AL               |
+//! | `al-ext`            | `Al`            | spec-meta-ext's AL           |
+//! | `il-ext`            | `Il`            | spec-meta-ext's IL           |
 
 use super::super::engine::{InterfaceSt, RuntimeK, RuntimeRedex, StateK, StateRedex};
 use super::super::protocol::{
     Protocol, ProtocolKSt, ProtocolKind, ProtocolStK, ProtocolStRedex, ProtocolStSt,
+    ProtocolStStExt,
 };
 use super::super::{BaseConfig, Repr, Result, TowerConfig, config::Lang, error::config_invalid};
 use super::{Base, BaseK, BaseRedex, PreparedLevel, Top, Tower, Upper};
@@ -89,8 +91,8 @@ fn build_upper<Ext: Extern>(
 ) -> Upper<Ext> {
     let (top, configs_host) = match config.top_lang() {
         // Above a meta top level is its program; every level above the base is meta
-        Lang::Al | Lang::Il => {
-            let top = Top::St(interface::meta(Lang::Al));
+        Lang::Al | Lang::AlExt | Lang::IlExt => {
+            let top = Top::St(interface::meta());
             (top, &config.levels[1..])
         }
         // Above spec-k is the K definition it runs
@@ -104,14 +106,16 @@ fn build_upper<Ext: Extern>(
             (Top::P4(host), &config.levels[1..config.levels.len() - 1])
         }
     };
-    // Each meta level between the base and the top answers its builtins
+    // Each meta level between the base and the top answers its builtins,
+    // which spec-meta and spec-meta-ext share
     let hosts = configs_host
         .iter()
-        .map(|config_level| interface::meta(config_level.lang))
+        .map(|_| interface::meta())
         .collect::<Vec<_>>();
     // The level below each boundary interprets the level above it:
     // a K base runs spec-meta-k, a Redex base runs spec-meta-redex,
-    // a level accepting KORE is spec-k, and every other level is spec-meta
+    // a level accepting KORE is spec-k, a level accepting AL or IL for
+    // spec-meta-ext is spec-meta-ext, and every other level is spec-meta
     // Each level through the top has C and the protocol of the boundary below it,
     // which keeps that boundary's codec state
     let count = hosts.len() + 1;
@@ -121,6 +125,9 @@ fn build_upper<Ext: Extern>(
             (0, BaseConfig::K { .. }, _) => ProtocolKind::StK(ProtocolStK::new(cache)),
             (0, BaseConfig::Redex { .. }, _) => ProtocolKind::StRedex(ProtocolStRedex::new(cache)),
             (_, _, Lang::Kore) => ProtocolKind::KSt(ProtocolKSt::new(cache)),
+            (_, _, Lang::AlExt | Lang::IlExt) => {
+                ProtocolKind::StStExt(Box::new(ProtocolStStExt::new(cache)))
+            }
             _ => ProtocolKind::StSt(Box::new(ProtocolStSt::new(cache))),
         })
         .collect();
@@ -155,17 +162,17 @@ impl<Ext: Extern> Tower<Ext> {
                     .map(|idx_below| config.levels[idx_below].lang);
                 Ok(match lang_below {
                     None => PreparedLevel::Base { config: config_level.clone() },
-                    Some(Lang::Al) => PreparedLevel::Al {
+                    Some(Lang::Al | Lang::AlExt) => PreparedLevel::Al {
                         config: config_level.clone(),
                         spec_al: crate::algo(paths)?,
                     },
-                    Some(Lang::Il) => PreparedLevel::Il {
+                    Some(Lang::IlExt) => PreparedLevel::Il {
                         config: config_level.clone(),
                         spec_il: crate::elab(paths)?,
                     },
                     Some(_) => {
                         return Err(config_invalid(format!(
-                            "invalid language at level {}: expected al or il",
+                            "invalid language at level {}: expected al, al-ext, or il-ext",
                             idx - 1
                         )));
                     }
@@ -211,7 +218,10 @@ impl<Ext: Extern> Tower<Ext> {
                                 let library = interface.library();
                                 (InterfaceSt::KSt(interface), Some(library))
                             }
-                            _ => (InterfaceSt::StSt(interface::meta(lang_base)), None),
+                            Lang::AlExt | Lang::IlExt => {
+                                (InterfaceSt::StStExt(interface::meta_ext(lang_base)), None)
+                            }
+                            _ => (InterfaceSt::StSt(interface::meta()), None),
                         };
                         let upper = build_upper(
                             config,
@@ -228,6 +238,6 @@ impl<Ext: Extern> Tower<Ext> {
                 }
             }
         };
-        Ok(Self { levels, base, options })
+        Ok(Self { levels, base, options, entry: config.entry.clone() })
     }
 }

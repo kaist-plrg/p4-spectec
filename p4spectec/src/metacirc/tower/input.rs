@@ -4,16 +4,17 @@
 //! a P4 program, an AL or IL script, or a K definition with its initial term,
 //! which the K library at the top reads (`Top::K`).
 //!
-//! The meta specification's entry relations, such as `Eval_AL_rel`, take a script,
+//! The meta specification's entry relations, such as spec-meta's `Eval_rel`, take a script,
 //! the name of the script's entry, and the entry's inputs as meta values.
 //! For `towers/al-p4.json`, the base calls
-//! ``Eval_AL_rel: <P4 spec as AL> |- "Program_inst" `( <program as val> `) : val*``.
+//! ``Eval_rel: <P4 spec as AL> |- "Program_inst" `( <program as val> `) : val*``.
 //! Each level above the base wraps the inputs of the level above it this way,
 //! through the protocol of the boundary below it (`Protocol::encode_entry`),
 //! with the level encoded in the language of the level consuming it.
 //! A program above the top is one more level: an AL or IL script is entered
-//! at its function `main` with no inputs, so the level below it uses
-//! `Eval_AL_func` or `Eval_IL_func`; a K definition is entered with its initial
+//! at the configured entry with no inputs, its function `main` through
+//! `Eval_func`, `Eval_AL_func`, or `Eval_IL_func`, or a relation through
+//! `Eval_rel`, `Eval_AL_rel`, or `Eval_IL_rel`; a K definition is entered with its initial
 //! term and step bound, which spec-k's `Krun` rewrites.
 //!
 //! `Tower::print_output` prints what the base's entry gave, where the top
@@ -34,9 +35,6 @@ use crate::{
     runner::Extern,
 };
 use std::path::PathBuf;
-
-/// The entry of an AL or IL script above the top of a tower.
-const ENTRY_SCRIPT: &str = "main";
 
 /// The entry of a K definition above spec-k, which has none by name:
 /// spec-k rewrites the initial term.
@@ -64,8 +62,8 @@ impl<Ext: Extern> Tower<Ext> {
             return Err(error::input_invalid("a step bound applies only to a KORE input"));
         }
         match lang_top {
-            Lang::Al => Ok(Input::Script(Script::Al(crate::algo(paths)?))),
-            Lang::Il => Ok(Input::Script(Script::Il(crate::elab(paths)?))),
+            Lang::Al | Lang::AlExt => Ok(Input::Script(Script::Al(crate::algo(paths)?))),
+            Lang::IlExt => Ok(Input::Script(Script::Il(crate::elab(paths)?))),
             // P4 inputs contain exactly one translation unit
             Lang::P4 => {
                 let [path] = paths else {
@@ -102,9 +100,9 @@ impl<Ext: Extern> Tower<Ext> {
         // a program above the top
         let (mut values, program) = match (input, lang_top) {
             (Input::P4(program), Lang::P4) => (vec![*program], None),
-            (Input::Script(script @ Script::Al(_)), Lang::Al)
-            | (Input::Script(script @ Script::Il(_)), Lang::Il) => {
-                (vec![], Some((script.entered(), ENTRY_SCRIPT)))
+            (Input::Script(script @ Script::Al(_)), Lang::Al | Lang::AlExt)
+            | (Input::Script(script @ Script::Il(_)), Lang::IlExt) => {
+                (vec![], Some((script.entered(), self.entry.as_str())))
             }
             (Input::Kore(Kore { definition, init, depth }), Lang::Kore) => {
                 let value_depth = depth_value(arena, *depth)?;

@@ -76,7 +76,7 @@ impl<Arch: Architecture> SimTower<Arch> {
         arena: &mut Arena,
         body: impl FnOnce(&mut RunnerContext<'_, TowerInterp<'_>, P4Interface, Arch>) -> T,
     ) -> T {
-        let Tower { levels, base, options } = &mut self.tower;
+        let Tower { levels, base, options, .. } = &mut self.tower;
         // Reach depth 0 and the P4 host in the base
         let Some(LentBase { engine, spec_base, upper, .. }) = base.lend() else {
             unreachable!("a simulated tower has a base below its P4 top");

@@ -1,9 +1,9 @@
 //! spec-meta's protocol: the level above is AL, and calls go through Call_rel
 //!
-//! `load` encodes the level above as AL (IL through `Algo_IL` below first)
+//! `load` encodes the level above as AL
 //! and makes C = `$load_ctx($empty_ctx, spec)` on the level below;
-//! `encode_entry` encodes the level above as AL or IL, with the name and inputs
-//! of its entry, for `Eval_AL_rel` or `Eval_IL_rel`.
+//! `encode_entry` encodes the level above as AL, with the name and inputs
+//! of its entry, for `Eval_rel`.
 //! `lower` turns `name(values)` into `Call_rel(C, name, values)`
 //! or `Call_func(C, name, targs, values)`; `raise` maps OK, UNMATCH, or ERROR
 //! to outputs, a mismatch, or a fatal failure.
@@ -34,7 +34,7 @@ use std::borrow::Cow;
 
 // == Protocol
 
-/// The protocol of spec-meta toward the AL or IL specification above it.
+/// The protocol of spec-meta toward the AL specification above it.
 pub(in crate::metacirc) struct ProtocolStSt {
     /// The codec state of this boundary, shared by every reentry depth.
     cache: Cache,
@@ -46,22 +46,14 @@ impl Protocol for ProtocolStSt {
     }
 
     fn load(below: &mut dyn Below, above: &PreparedLevel) -> Result<Value, InterpreterError> {
-        // Encode the specification as AL, converting IL through spec-meta below
-        let value_spec_al = match above {
-            PreparedLevel::Al { spec_al, .. } => spec_al
-                .encode(below.arena())
-                .map_err(|error| InterpreterError::Fatal(error.into_report()))?,
-            PreparedLevel::Il { spec_il, .. } => {
-                let value_spec_il = spec_il
-                    .encode(below.arena())
-                    .map_err(|error| InterpreterError::Fatal(error.into_report()))?;
-                let call =
-                    Call::Rel { name: "Algo_IL", values: Values::Borrowed(&[value_spec_il]) };
-                let values = below.call(call)?.into_rel();
-                *value::get::one(&values).map_err(ExternError::from)?
-            }
-            PreparedLevel::Base { .. } => unreachable!("the base is never loaded by a level below"),
+        // Encode the specification as AL
+        let PreparedLevel::Al { spec_al, .. } = above else {
+            let message = "spec-meta loads only a level passed to it as AL";
+            return Err(ExternError::diagnostic_message(message).into());
         };
+        let value_spec_al = spec_al
+            .encode(below.arena())
+            .map_err(|error| InterpreterError::Fatal(error.into_report()))?;
         // C = $load_ctx($empty_ctx, spec), on the level below
         let call = Call::Func {
             name: "empty_ctx",
@@ -83,15 +75,11 @@ impl Protocol for ProtocolStSt {
         name: &str,
         values: &[Value],
     ) -> MetacircResult<Vec<Value>> {
-        // An IL consumer converts the IL itself
-        let value_spec = match above {
-            Entered::Al(spec_al) => spec_al.encode(arena),
-            Entered::Il(spec_il) => spec_il.encode(arena),
-            Entered::Kore(_) => {
-                return Err(error::config_invalid("spec-meta enters only AL or IL"));
-            }
-        }
-        .map_err(meta::Error::into_report)?;
+        let Entered::Al(spec_al) = above else {
+            let message = "spec-meta enters only a level passed to it as AL";
+            return Err(error::config_invalid(message));
+        };
+        let value_spec = spec_al.encode(arena).map_err(meta::Error::into_report)?;
         entry_inputs(arena, value_spec, name, values)
     }
 
@@ -204,7 +192,7 @@ mod m {
     pub(super) const ERROR: &str = "ERROR";
 }
 
-/// Encodes the inputs of an entry relation, such as `Eval_AL_rel`,
+/// Encodes the inputs of an entry relation, such as `Eval_rel`,
 /// entering `name` of the script `value_spec` on `values`,
 /// the inputs of `name` encoded as meta values one level down.
 fn entry_inputs(

@@ -11,7 +11,7 @@ use crate::metacirc::{
     tower::UpperMut,
 };
 use crate::{
-    interface::{self, Lang},
+    interface,
     interp::{
         al::{AlInterp, Config as AlConfig, context::SpecEnv as AlSpecEnv},
         sl::{Config as SlConfig, SlInterp, context::SpecEnv as SlSpecEnv},
@@ -193,6 +193,6 @@ impl StateSt {
         };
         // Only the builtins are used; the base never parses at a depth.
         // A depth beneath the base exists only under a P4 top, over spec-meta
-        Self { interp, interface: InterfaceSt::StSt(interface::meta(Lang::Al)) }
+        Self { interp, interface: InterfaceSt::StSt(interface::meta()) }
     }
 }

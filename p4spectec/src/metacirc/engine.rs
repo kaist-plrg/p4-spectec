@@ -19,7 +19,7 @@ use super::st::{SpecSt, StateSt};
 
 use super::{Result as MetacircResult, tower::UpperMut};
 use crate::{
-    interface::{kore::KoreInterface, meta::MetaInterface},
+    interface::{kore::KoreInterface, meta::MetaInterface, meta_ext::MetaExtInterface},
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
@@ -165,8 +165,10 @@ impl Engine for EngineKind<'_> {
 /// The builtins of a base specification that `EngineSt` executes,
 /// by the language the base interprets.
 pub(in crate::metacirc) enum InterfaceSt {
-    /// spec-meta, interpreting AL or IL.
+    /// spec-meta, interpreting AL.
     StSt(MetaInterface),
+    /// spec-meta-ext, interpreting AL or IL.
+    StStExt(MetaExtInterface),
     /// spec-k, interpreting KORE.
     KSt(KoreInterface),
 }
@@ -180,6 +182,7 @@ impl Interface for InterfaceSt {
     ) -> Result<Value, InterfaceError> {
         match self {
             Self::StSt(interface) => interface.parse_program(arena, includes, paths),
+            Self::StStExt(interface) => interface.parse_program(arena, includes, paths),
             Self::KSt(interface) => interface.parse_program(arena, includes, paths),
         }
     }
@@ -193,6 +196,7 @@ impl Interface for InterfaceSt {
     ) -> Eval<Value, InterfaceError> {
         match self {
             Self::StSt(interface) => interface.call_builtin(arena, id, targs, values),
+            Self::StStExt(interface) => interface.call_builtin(arena, id, targs, values),
             Self::KSt(interface) => interface.call_builtin(arena, id, targs, values),
         }
     }
@@ -200,6 +204,7 @@ impl Interface for InterfaceSt {
     fn clear(&mut self) {
         match self {
             Self::StSt(interface) => interface.clear(),
+            Self::StStExt(interface) => interface.clear(),
             Self::KSt(interface) => interface.clear(),
         }
     }

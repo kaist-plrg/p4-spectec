@@ -16,8 +16,8 @@ dec $empty_globalLayer : globalLayer
   hint(prose_in "empty global layer")
 def $empty_globalLayer =
   { TYP $empty_map<id, typDef>,
-    REL $empty_map<id, relDefnAL>,
-    FUNC $empty_map<id, funcDefnAL> }
+    REL $empty_map<id, relDefn>,
+    FUNC $empty_map<id, funcDefn> }
 
 dec $empty_localLayer : localLayer
   hint(prose_in "empty local layer")
@@ -38,55 +38,55 @@ var C : ctx
 ;; Loading context from a spec
 ;;
 
-dec $load_ctx(ctx, specAL) : ctx
+dec $load_ctx(ctx, spec) : ctx
   hint(prose_in %0 "with spec" %1 "loaded")
 
-def $load_ctx(C, externTypDefn :: defnAL_t*)
-  = $load_ctx(C_load, defnAL_t*)
+def $load_ctx(C, externTypDefn :: defn_t*)
+  = $load_ctx(C_load, defn_t*)
   -- if EXTTYP id = externTypDefn
   -- if tdenv_update = $add_map<id, typDef>(C.GLOBAL.TYP, id, externTypDefn)
   -- if C_load = C[ .GLOBAL.TYP = tdenv_update ]
 
-def $load_ctx(C, definedTypDefn :: defnAL_t*)
-  = $load_ctx(C_load, defnAL_t*)
+def $load_ctx(C, definedTypDefn :: defn_t*)
+  = $load_ctx(C_load, defn_t*)
   -- if TYP id _ '=' _ = definedTypDefn
   -- if tdenv_update = $add_map<id, typDef>(C.GLOBAL.TYP, id, definedTypDefn)
   -- if C_load = C[ .GLOBAL.TYP = tdenv_update ]
 
-def $load_ctx(C, externRelDefnAL :: defnAL_t*)
-  = $load_ctx(C_load, defnAL_t*)
-  -- if EXTREL id ':' _ '->' _ = externRelDefnAL
-  -- if renv_update = $add_map<id, relDefnAL>(C.GLOBAL.REL, id, externRelDefnAL)
+def $load_ctx(C, externRelDefn :: defn_t*)
+  = $load_ctx(C_load, defn_t*)
+  -- if EXTREL id ':' _ '->' _ = externRelDefn
+  -- if renv_update = $add_map<id, relDefn>(C.GLOBAL.REL, id, externRelDefn)
   -- if C_load = C[ .GLOBAL.REL = renv_update ]
 
-def $load_ctx(C, definedRelDefnAL :: defnAL_t*)
-  = $load_ctx(C_load, defnAL_t*)
-  -- if REL id ':' _ '->' _ '=' _ _ = definedRelDefnAL
-  -- if renv_update = $add_map<id, relDefnAL>(C.GLOBAL.REL, id, definedRelDefnAL)
+def $load_ctx(C, definedRelDefn :: defn_t*)
+  = $load_ctx(C_load, defn_t*)
+  -- if REL id ':' _ '->' _ '=' _ _ = definedRelDefn
+  -- if renv_update = $add_map<id, relDefn>(C.GLOBAL.REL, id, definedRelDefn)
   -- if C_load = C[ .GLOBAL.REL = renv_update ]
 
-def $load_ctx(C, externFuncDefn :: defnAL_t*)
-  = $load_ctx(C_load, defnAL_t*)
+def $load_ctx(C, externFuncDefn :: defn_t*)
+  = $load_ctx(C_load, defn_t*)
   -- if EXTFUNC id _ _ ':' _ = externFuncDefn
-  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, externFuncDefn)
+  -- if fenv_update = $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, externFuncDefn)
   -- if C_load = C[ .GLOBAL.FUNC = fenv_update ]
 
-def $load_ctx(C, builtinFuncDefn :: defnAL_t*)
-  = $load_ctx(C_load, defnAL_t*)
+def $load_ctx(C, builtinFuncDefn :: defn_t*)
+  = $load_ctx(C_load, defn_t*)
   -- if BUILTINFUNC id _ _ ':' _ = builtinFuncDefn
-  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, builtinFuncDefn)
+  -- if fenv_update = $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, builtinFuncDefn)
   -- if C_load = C[ .GLOBAL.FUNC = fenv_update ]
 
-def $load_ctx(C, tableFuncDefnAL :: defnAL_t*)
-  = $load_ctx(C_load, defnAL_t*)
-  -- if TABLEFUNC id _ ':' _ '=' _ = tableFuncDefnAL
-  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, tableFuncDefnAL)
+def $load_ctx(C, tableFuncDefn :: defn_t*)
+  = $load_ctx(C_load, defn_t*)
+  -- if TABLEFUNC id _ ':' _ '=' _ = tableFuncDefn
+  -- if fenv_update = $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, tableFuncDefn)
   -- if C_load = C[ .GLOBAL.FUNC = fenv_update ]
 
-def $load_ctx(C, definedFuncDefnAL :: defnAL_t*)
-  = $load_ctx(C_load, defnAL_t*)
-  -- if FUNC id _ _ ':' _ '=' _ _ = definedFuncDefnAL
-  -- if fenv_update = $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, definedFuncDefnAL)
+def $load_ctx(C, definedFuncDefn :: defn_t*)
+  = $load_ctx(C_load, defn_t*)
+  -- if FUNC id _ _ ':' _ '=' _ _ = definedFuncDefn
+  -- if fenv_update = $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, definedFuncDefn)
   -- if C_load = C[ .GLOBAL.FUNC = fenv_update ]
 
 def $load_ctx(C, eps) = C
@@ -193,16 +193,16 @@ dec $resolve_func_param(ctx, id) : id
 def $resolve_func_param(C, id)
   = $deopt_<id>($find_func_param(C, id), id)
 
-dec $find_func(ctx, id) : funcDefnAL?
+dec $find_func(ctx, id) : funcDefn?
   hint(prose_in "the definition of global function" %1 "in context" %0 "if present")
-def $find_func(C, id) = $find_map<id, funcDefnAL>(C.GLOBAL.FUNC, id)
+def $find_func(C, id) = $find_map<id, funcDefn>(C.GLOBAL.FUNC, id)
 
 ;;; Relation finders
 
-dec $find_rel(ctx, id) : relDefnAL?
+dec $find_rel(ctx, id) : relDefn?
   hint(prose_in "the definition of relation" %1 "in context" %0 "if present")
 
-def $find_rel(C, id) = $find_map<id, relDefnAL>(C.GLOBAL.REL, id)
+def $find_rel(C, id) = $find_map<id, relDefn>(C.GLOBAL.REL, id)
 
 ;;
 ;; Sub-context construction for iteration
