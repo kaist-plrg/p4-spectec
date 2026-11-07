@@ -174,7 +174,7 @@ where
             );
             Arch::init_pipe(&mut ctx, program)
         }
-        Backend::Sl { spec_env, interp } => {
+        Backend::Sl { spec_env, interp, .. } => {
             let mut ctx = RunnerContext::new(
                 arena,
                 spec_env,
@@ -232,7 +232,7 @@ where
             );
             run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
         }
-        Backend::Sl { spec_env, interp } => {
+        Backend::Sl { spec_env, interp, .. } => {
             let mut ctx = RunnerContext::new(
                 arena,
                 spec_env,

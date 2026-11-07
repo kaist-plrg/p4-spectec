@@ -40,17 +40,19 @@ impl SpecEnv {
     /// Loads a specification and prepares its callables for slot execution,
     /// interning their notations and lowering calls for the selected `det` mode.
     ///
+    /// Returns the number of instruction ids assigned during preparation.
+    ///
     /// The loaded definitions must execute with the same `det` mode.
     /// Panics if a global definition is repeated.
     pub fn load(
         arena_mixop: &mut MixopArena,
         det: bool,
         spec: source::Spec,
-    ) -> Result<Self, Error> {
+    ) -> Result<(Self, u32), Error> {
         let mut loaded = Self::new();
         let tdenv = loaded.load_typdefs(arena_mixop, &spec);
-        loaded.load_callables(arena_mixop, &tdenv, det, spec);
-        Ok(loaded)
+        let instr_count = loaded.load_callables(arena_mixop, &tdenv, det, spec);
+        Ok((loaded, instr_count))
     }
 
     /// Inserts prepared type definitions and returns their source forms.
@@ -89,9 +91,10 @@ impl SpecEnv {
         tdenv: &TDEnv,
         det: bool,
         spec: source::Spec,
-    ) {
+    ) -> u32 {
         let mut layout = FrameLayout::default();
-        let mut ctx = PrepareContext::new(arena_mixop, tdenv, &mut layout, det);
+        let mut instr_next = 0;
+        let mut ctx = PrepareContext::new(arena_mixop, tdenv, &mut layout, &mut instr_next, det);
         for def in spec {
             match def.node {
                 source::DefKind::Rel(rel) => {
@@ -118,6 +121,7 @@ impl SpecEnv {
                 source::DefKind::Typ(_) | source::DefKind::Var(_) => {}
             }
         }
+        instr_next
     }
 }
 
