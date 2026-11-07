@@ -114,7 +114,9 @@ A single level supplies both top level and base. `lang` names the language a
 level accepts: every level below the top level uses `al` or `il`, and the
 top level may also use `p4`. The level above an `al` level is passed to it as
 AL converted by the native `algo` pass; the level above an `il` level is
-passed as elaborated IL. `mode` selects the base's native backend
+passed as elaborated IL. `spec-meta` specifies AL only and enters `al`;
+an `il` level runs `spec-meta-extended`, its copy extended with the IL-to-AL
+specification. `mode` selects the base's native backend
 (`sl` or `al`).
 
 Only the base runs on a native interpreter. Every level above it is
@@ -124,7 +126,7 @@ host calls relayed from below, without consulting its own definitions.
 `rel` names the relation entering a level. A level above an `al` or `il` level
 is encoded as the inputs of an entry relation at the level below: the
 specification, its `rel`, and the inputs of that `rel` as `val`s.
-`Eval_AL_rel` and `Eval_IL_rel` call a relation through `Call_rel`;
+`Eval_AL_rel` and `Eval_IL_rel` (of `spec-meta-extended`) call a relation through `Call_rel`;
 `Eval_AL_func` and `Eval_IL_func` call a function, such as the `main` of a
 script, through `Call_func` and output its value. A level entered through a
 relation of the level above, including every P4 tower, uses the `_rel` entry;
@@ -137,7 +139,8 @@ resolved relative to the current working directory.
 To add an AL interpretation layer, insert another
 `{ "specdir": "../spec-meta", "rel": "Eval_AL_rel", "lang": "al" }`
 below the top level, as the supplied three-level `al-al-p4.json` does;
-`al-il-p4.json` instead makes the middle level accept IL. A name such as
+`al-il-p4.json` instead makes the middle level accept IL,
+running `spec-meta-extended` there. A name such as
 `al-al.json` describes another configuration of this kind.
 
 `run-meta` accepts `--no-cache`, `--no-det`, and `--guard`. `--no-det` disables
@@ -241,16 +244,17 @@ without checking the later ones, so both micro targets skip the scripts in
 
 ## Algo through the IL-to-AL specification
 
-`spec-meta/3-algo` specifies the IL-to-AL pass as the relation `Algo_IL`.
+`spec-meta-extended` is `spec-meta` with the IL syntax (`1-syntax/1.1-il`),
+the IL-to-AL pass as the relation `Algo_IL` (`3-algo`), and the IL entries.
 `Eval_IL_rel` and `Eval_IL_func` convert their IL input with `Algo_IL` and
-evaluate the result with `Eval_AL_rel` and `Eval_AL_func`, so a spec-meta level that accepts IL runs the specification
+evaluate the result with `Eval_AL_rel` and `Eval_AL_func`, so a spec-meta-extended level that accepts IL runs the specification
 above it on AL produced by the specification:
 
 ```json
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Eval_IL_rel", "lang": "il" },
+    { "specdir": "../spec-meta-extended", "rel": "Eval_IL_rel", "lang": "il" },
     { "specdir": "../spec", "rel": "Program_inst", "lang": "p4" }
   ]
 }
@@ -260,8 +264,10 @@ The conversion runs for every input, in the level that accepts the IL.
 Only the base, here the IL-to-AL specification itself, is converted by the
 native `algo` pass; the specification above it reaches native code only
 through its builtin and host calls.
-`towers/il-func.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
+`towers/il-func.json`, `towers/il-rel.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
 are the supplied towers entered through `Eval_IL_func` and `Eval_IL_rel`.
+A script tower enters the script at its `entry`, the function `main` by default;
+`towers/al-rel.json` and `towers/il-rel.json` enter the relation `Main`.
 
 ## Execution corpus
 
@@ -276,6 +282,8 @@ make test-metacirc-sim-il
 
 `test-metacirc-micro-al` runs the spec-language sources under
 `testdata/spec/pos/run` and `testdata/spec/neg/run` through the AL tower,
+and those under `testdata/spec/pos/run-rel` and `testdata/spec/neg/run-rel`
+through the AL tower entering `Main`,
 each expected to succeed or fail as its suite in `suites/metacirc/run.toml`
 registers. `test-metacirc-run-al` runs the `test-run-sl` corpus through the AL/P4
 tower and requires the p4c submodule. Both check determinism.
