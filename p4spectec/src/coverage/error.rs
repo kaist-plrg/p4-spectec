@@ -1,4 +1,4 @@
-//! Diagnostics for coverage input collection
+//! Diagnostics for coverage input collection and report output
 
 use std::{io, path::Path};
 
@@ -33,4 +33,11 @@ const ARCHITECTURE_UNSUPPORTED: &str = "coverage/architecture-unsupported";
 /// Reports an architecture without a known model include.
 pub(super) fn architecture_unsupported(arch: &str) -> CoverError {
     report(ARCHITECTURE_UNSUPPORTED, format!("architecture {arch} is not supported"))
+}
+
+const OUTPUT_WRITE_FAILED: &str = "coverage/output-write-failed";
+
+/// Reports a coverage report file that cannot be written.
+pub(super) fn output_write_failed(path: &Path, error_io: &io::Error) -> CoverError {
+    report(OUTPUT_WRITE_FAILED, format!("cannot write {}: {error_io}", path.display()))
 }

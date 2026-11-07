@@ -7,11 +7,7 @@
 
 mod error;
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-    process::ExitCode,
-};
+use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Args, Parser, Subcommand};
 use indicatif::{ProgressBar, ProgressStyle};
@@ -22,7 +18,7 @@ use p4spectec::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
 
 use p4spectec::runner::{self, RunError};
 
-use p4spectec::coverage::{self, Coverage, Outcome, Progress};
+use p4spectec::coverage::{self, Outcome, Progress};
 
 // = Helpers
 
@@ -405,51 +401,6 @@ fn print_progress(bar: &ProgressBar, progress: Progress, labels: &[String]) {
     }
 }
 
-/// Summarizes outcomes as `N (pass P, fail F, crash C), excluded E`.
-fn describe_outcomes(outcomes: &[Outcome], excluded: usize) -> String {
-    let count = |outcome| outcomes.iter().filter(|o| **o == outcome).count();
-    format!(
-        "{} (pass {}, fail {}, crash {}), excluded {excluded}",
-        outcomes.len(),
-        count(Outcome::Pass),
-        count(Outcome::Fail),
-        count(Outcome::Crash)
-    )
-}
-
-/// Writes the coverage report to `path_cov`, or to stdout without it.
-fn write_cover_report(
-    renderer: &mut Renderer,
-    spec_sl: &p4spectec::lang::sl::ast::Spec,
-    coverage: &Coverage,
-    comments: &[String],
-    path_cov: Option<&Path>,
-) -> Result<(), ()> {
-    let mut text = String::new();
-    coverage::log::write_report(&mut text, spec_sl, &coverage.cover, comments)
-        .expect("writing to a String cannot fail");
-    match path_cov {
-        Some(path) => fs::write(path, text).map_err(|error_io| {
-            render_report(renderer, &error::cover_output_failed(path, &error_io))
-        }),
-        None => {
-            print!("{text}");
-            Ok(())
-        }
-    }
-}
-
-/// Prints the overall ratio after the per-input lines.
-fn print_cover_summary(command: &str, summary: &str, coverage: &Coverage) {
-    let measure = coverage.cover.measure();
-    eprintln!(
-        "{command}: {summary}; instruction coverage {}/{} ({:.2}%)",
-        measure.hit,
-        measure.total,
-        measure.percent()
-    );
-}
-
 #[derive(Args)]
 /// Arguments of the `cover-run` command.
 struct CoverRunArgs {
@@ -504,11 +455,12 @@ fn cover_run_command(args: CoverRunArgs) -> Result<(), ()> {
     bar.finish_and_clear();
     let coverage = coverage.map_err(|report| render_report(&mut renderer, &report))?;
 
-    let summary = format!("programs {}", describe_outcomes(&coverage.outcomes, programs.excluded));
+    let summary = format!("programs {}", coverage.describe_outcomes(programs.excluded));
     let comments =
         [format!("relation: {}", args.relation), args.config.describe(), summary.clone()];
-    write_cover_report(&mut renderer, &spec_sl, &coverage, &comments, args.path_cov.as_deref())?;
-    print_cover_summary("cover-run", &summary, &coverage);
+    coverage::log::write_report_to(args.path_cov.as_deref(), &spec_sl, &coverage.cover, &comments)
+        .map_err(|report| render_report(&mut renderer, &report))?;
+    eprintln!("{}", coverage::log::summary_line("cover-run", &summary, &coverage.cover));
     Ok(())
 }
 
@@ -587,10 +539,11 @@ fn cover_sim_command(args: CoverSimArgs) -> Result<(), ()> {
     bar.finish_and_clear();
     let coverage = coverage.map_err(|report| render_report(&mut renderer, &report))?;
 
-    let summary = format!("tests {}", describe_outcomes(&coverage.outcomes, pairs.excluded));
+    let summary = format!("tests {}", coverage.describe_outcomes(pairs.excluded));
     let comments = [format!("arch: {}", args.arch), args.config.describe(), summary.clone()];
-    write_cover_report(&mut renderer, &spec_sl, &coverage, &comments, args.path_cov.as_deref())?;
-    print_cover_summary("cover-sim", &summary, &coverage);
+    coverage::log::write_report_to(args.path_cov.as_deref(), &spec_sl, &coverage.cover, &comments)
+        .map_err(|report| render_report(&mut renderer, &report))?;
+    eprintln!("{}", coverage::log::summary_line("cover-sim", &summary, &coverage.cover));
     Ok(())
 }
 

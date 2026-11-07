@@ -3,7 +3,7 @@
 //! Command-owned checks construct reports before reading specification files.
 //! The CLI renders reports and selects exit codes at its output boundary.
 
-use std::{io, path::Path};
+use std::path::Path;
 
 use p4spectec::diagnostic::{Diagnostic, Report, Severity};
 
@@ -56,13 +56,6 @@ pub(crate) fn splice_file_count_mismatch(num_input: usize, num_output: usize) ->
 }
 
 // == Coverage reporting
-
-const COVER_OUTPUT_FAILED: &str = "command/cover-output-failed";
-
-/// Reports a coverage report that cannot be written.
-pub(crate) fn cover_output_failed(path: &Path, error_io: &io::Error) -> Box<Report> {
-    command(COVER_OUTPUT_FAILED, format!("cannot write {}: {error_io}", path.display()))
-}
 
 const COVER_INPUT_FILTERED: &str = "command/cover-input-filtered";
 

@@ -4,8 +4,15 @@
 //! then lists each definition with instructions as a numbered outline.
 //! Each instruction line starts with `+ ` when hit, `- ` when missed,
 //! or two spaces when its definition is ignored; hit lines end with `[hits: N]`.
+//!
+//! `write_report_to` sends the report to a file or stdout,
+//! and `summary_line` formats the one-line result a command prints last.
 
-use std::fmt::{self, Write};
+use std::{
+    fmt::{self, Write},
+    fs,
+    path::Path,
+};
 
 use crate::lang::{
     common::source::Span,
@@ -18,7 +25,43 @@ use crate::lang::{
     traits::print::{Print, Printer},
 };
 
-use super::instr::Cover;
+use super::{
+    error::{self, CoverError},
+    instr::Cover,
+};
+
+/// Writes the coverage report to `path_cov`, or to stdout without it.
+pub fn write_report_to(
+    path_cov: Option<&Path>,
+    spec: &Spec,
+    cover: &Cover,
+    comments: &[String],
+) -> Result<(), CoverError> {
+    let mut text = String::new();
+    write_report(&mut text, spec, cover, comments).expect("writing to a String cannot fail");
+    match path_cov {
+        // Replace the report file
+        Some(path) => {
+            fs::write(path, text).map_err(|error_io| error::output_write_failed(path, &error_io))
+        }
+        // Print the report as the command output
+        None => {
+            print!("{text}");
+            Ok(())
+        }
+    }
+}
+
+/// Formats `command: summary; instruction coverage H/T (P%)`.
+pub fn summary_line(command: &str, summary: &str, cover: &Cover) -> String {
+    let measure = cover.measure();
+    format!(
+        "{command}: {summary}; instruction coverage {}/{} ({:.2}%)",
+        measure.hit,
+        measure.total,
+        measure.percent()
+    )
+}
 
 /// Writes the coverage report of `spec`, with `comments` after the ratio line.
 pub fn write_report(

@@ -59,6 +59,20 @@ pub struct Coverage {
     pub outcomes: Vec<Outcome>,
 }
 
+impl Coverage {
+    /// Summarizes the outcomes as `N (pass P, fail F, crash C), excluded E`.
+    pub fn describe_outcomes(&self, excluded: usize) -> String {
+        let count = |outcome| self.outcomes.iter().filter(|o| **o == outcome).count();
+        format!(
+            "{} (pass {}, fail {}, crash {}), excluded {excluded}",
+            self.outcomes.len(),
+            count(Outcome::Pass),
+            count(Outcome::Fail),
+            count(Outcome::Crash)
+        )
+    }
+}
+
 /// Runs `body` and classifies its result, catching a panic as a crash.
 fn run_catching<T, E>(body: impl FnOnce() -> Result<T, E>) -> Outcome {
     match panic::catch_unwind(AssertUnwindSafe(body)) {
