@@ -1,7 +1,7 @@
 //! Building a definition with K, as `krun -d` and K-in-ST read it
 //!
-//! `Case::build` kompiles a definition (`kompile --backend llvm --enable-search`,
-//! or `llvm-kompile` for KORE) and builds its K library, `runtime.so`, which
+//! `Case::build` kompiles a definition (`kompile --backend llvm --enable-search`)
+//! and builds its K library, `runtime.so`, which
 //! `interface::kore::offload` opens; `Case::init` makes the initial term of a
 //! program. Each is made again only when what it is made from is newer.
 
@@ -44,19 +44,15 @@ impl<'a> Case<'a> {
         if stale(&kompiled.join("timestamp"), &[source]) {
             eprintln!("{}: kompiling", source.display());
             fs::create_dir_all(&dir_build)?;
-            if suite.kore {
-                build_kore(source, &kompiled)?;
-            } else {
-                run(
-                    Command::new("kompile")
-                        .args(["--backend", "llvm", "--enable-search", "--output-definition"])
-                        .arg(&kompiled)
-                        .args(words(&suite.kompile))
-                        .arg(source),
-                    None,
-                    &format!("kompile {}", source.display()),
-                )?;
-            }
+            run(
+                Command::new("kompile")
+                    .args(["--backend", "llvm", "--enable-search", "--output-definition"])
+                    .arg(&kompiled)
+                    .args(words(&suite.kompile))
+                    .arg(source),
+                None,
+                &format!("kompile {}", source.display()),
+            )?;
         }
         let path_definition = kompiled.join("definition.kore");
         // The library Offload opens, next to definition.kore
@@ -87,13 +83,14 @@ impl<'a> Case<'a> {
     }
 
     /// The initial term krun makes of a program, made again when the program
-    /// or the definition is newer: the program itself for KORE, what the suite's
-    /// `init` writes, or the input that `krun --dry-run` gives the interpreter.
+    /// or the definition is newer: what the suite's `init` writes, or the input
+    /// that `krun --dry-run` gives the interpreter.
     pub fn init(&self, program: &Program) -> Result<PathBuf> {
-        if self.suite.kore {
-            return Ok(program.path.clone());
-        }
         let path_init = self.dir_build.join(format!("{}.init.kore", program.name));
+        // A name may hold a directory
+        if let Some(dir_init) = path_init.parent() {
+            fs::create_dir_all(dir_init)?;
+        }
         let stamp = self.kompiled().join("timestamp");
         let mut sources = vec![program.path.as_path(), stamp.as_path()];
         sources.extend(program.input.as_deref());
@@ -104,6 +101,7 @@ impl<'a> Case<'a> {
             let kompiled = self.kompiled();
             let args = args.iter().map(|arg| {
                 arg.replace("{program}", &program.path.to_string_lossy())
+                    .replace("{test}", program.test.as_deref().unwrap_or_default())
                     .replace("{name}", &program.name)
                     .replace("{kompiled}", &kompiled.to_string_lossy())
                     .replace("{output}", &path_init.to_string_lossy())
@@ -121,9 +119,8 @@ impl<'a> Case<'a> {
     fn dry_run(&self, program: &Program, path_init: &Path) -> Result<()> {
         let path_program = match self.words(&self.suite.prepare).split_first() {
             Some((command, args)) => {
-                let path_prepared = self
-                    .dir_build
-                    .join(program.path.file_name().unwrap_or_default());
+                // Two programs may share a file name
+                let path_prepared = self.dir_build.join(&program.name);
                 let what = format!("{command} {}", program.path.display());
                 let output = run(Command::new(command).args(args).arg(&program.path), None, &what)?;
                 fs::write(&path_prepared, output.stdout)?;
@@ -171,30 +168,6 @@ fn resolve(words: &[String], checkout: &str) -> Vec<String> {
         .iter()
         .map(|word| word.replace("{src}", checkout))
         .collect()
-}
-
-/// A kompiled directory for a definition in KORE already, as `kompile --enable-search`
-/// makes one: the definition, its decision trees, the interpreter, and the search binary.
-fn build_kore(source: &Path, kompiled: &Path) -> Result<()> {
-    fs::create_dir_all(kompiled.join("dt"))?;
-    fs::copy(source, kompiled.join("definition.kore"))?;
-    let commands: [&[&str]; 3] = [
-        &["llvm-kompile-matching", "definition.kore", "qbaL", "dt", "0"],
-        &["llvm-kompile", "definition.kore", "dt", "main", "-o", "interpreter"],
-        &["llvm-kompile", "definition.kore", "dt", "search", "-o", "search"],
-    ];
-    for words in commands {
-        let what = format!("{} {}", words[0], source.display());
-        run(
-            Command::new(words[0])
-                .args(&words[1..])
-                .current_dir(kompiled),
-            None,
-            &what,
-        )?;
-    }
-    fs::write(kompiled.join("timestamp"), "")?;
-    Ok(())
 }
 
 /// Builds the K library of a kompiled definition, `runtime.so`, from the
@@ -252,7 +225,7 @@ pub fn run(command: &mut Command, input: Option<&Path>, what: &str) -> Result<Ou
 }
 
 /// The failure of a command, `what`, with the end of its output.
-fn failed(what: &str, output: &Output) -> Error {
+pub(super) fn failed(what: &str, output: &Output) -> Error {
     let text = String::from_utf8_lossy(&output.stderr).into_owned()
         + &String::from_utf8_lossy(&output.stdout);
     let tail = &text[text.floor_char_boundary(text.len().saturating_sub(2000))..];
