@@ -3,6 +3,8 @@
 //! Command-owned checks construct reports before reading specification files.
 //! The CLI renders reports and selects exit codes at its output boundary.
 
+use std::{io, path::Path};
+
 use p4spectec::diagnostic::{Diagnostic, Report, Severity};
 
 /// Constructs a command diagnostic without a specification source location.
@@ -50,5 +52,31 @@ pub(crate) fn splice_file_count_mismatch(num_input: usize, num_output: usize) ->
             "splice expects equal numbers of input and output files, but got \
              {num_input} input {text_input} and {num_output} output {text_output}"
         ),
+    )
+}
+
+// == Coverage reporting
+
+const COVER_OUTPUT_FAILED: &str = "command/cover-output-failed";
+
+/// Reports a coverage report that cannot be written.
+pub(crate) fn cover_output_failed(path: &Path, error_io: &io::Error) -> Box<Report> {
+    command(COVER_OUTPUT_FAILED, format!("cannot write {}: {error_io}", path.display()))
+}
+
+const COVER_INPUT_FILTERED: &str = "command/cover-input-filtered";
+
+/// Warns that an explicitly given program is skipped for another architecture.
+pub(crate) fn cover_input_filtered(path: &Path, arch: &str) -> Box<Report> {
+    Box::new(
+        Diagnostic::new(
+            "command",
+            Severity::Warning,
+            Some(COVER_INPUT_FILTERED.to_owned()),
+            format!("{} does not include the {arch} model and is skipped", path.display()),
+            Vec::new(),
+            Vec::new(),
+        )
+        .into(),
     )
 }

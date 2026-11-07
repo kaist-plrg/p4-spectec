@@ -4,3 +4,5 @@
 //! Prepared expressions reuse IL rendering.
 
 mod source;
+
+pub(crate) use source::{write_instr_heading, write_relinput};
