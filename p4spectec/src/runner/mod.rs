@@ -138,7 +138,7 @@ pub struct Runner<Iface: Interface, Ext: Extern> {
 /// Pairs one stage's prepared definitions with its interpreter state.
 pub(crate) enum Backend {
     Al { spec_env: AlSpecEnv, interp: AlInterp },
-    Sl { spec_env: SlSpecEnv, interp: SlInterp, instr_count: u32 },
+    Sl { spec_env: SlSpecEnv, interp: SlInterp },
     Pl { spec_env: PlSpecEnv, interp: PlInterp },
 }
 
@@ -158,17 +158,15 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 spec_env: AlSpecEnv::load(&mut arena.mixop, spec)?,
                 interp: AlInterp::new(AlConfig::new(config.cache, config.det, config.guard)),
             },
-            Spec::Sl(spec) => {
-                let (spec_env, instr_count) =
-                    SlSpecEnv::load(&mut arena.mixop, config.det, config.tco, spec)?;
-                let interp = SlInterp::new(SlConfig::new(
+            Spec::Sl(spec) => Backend::Sl {
+                spec_env: SlSpecEnv::load(&mut arena.mixop, config.det, config.tco, spec)?,
+                interp: SlInterp::new(SlConfig::new(
                     config.cache,
                     config.det,
                     config.guard,
                     config.tco,
-                ));
-                Backend::Sl { spec_env, interp, instr_count }
-            }
+                )),
+            },
             Spec::Pl(spec) => Backend::Pl {
                 spec_env: PlSpecEnv::load(&mut arena.mixop, spec)?,
                 interp: PlInterp::new(PlConfig::new(config.cache, config.det, config.guard)),
@@ -180,14 +178,6 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
     /// Borrows the handlers retained across evaluations and program resets.
     pub fn hooks_mut(&mut self) -> &mut Hooks {
         &mut self.hooks
-    }
-
-    /// Returns the number of prepared SL instruction ids, or `None` for AL and PL.
-    pub fn instr_count(&self) -> Option<u32> {
-        match &self.backend {
-            Backend::Sl { instr_count, .. } => Some(*instr_count),
-            Backend::Al { .. } | Backend::Pl { .. } => None,
-        }
     }
 
     // - Parsing

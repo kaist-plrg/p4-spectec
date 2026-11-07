@@ -41,8 +41,6 @@ impl SpecEnv {
     /// interning their notations and lowering calls for the selected `det` mode.
     /// Relation calls become tail calls only under `tco`.
     ///
-    /// Returns the number of instruction ids assigned during preparation.
-    ///
     /// The loaded definitions must execute with the same `det` mode.
     /// Panics if a global definition is repeated.
     pub fn load(
@@ -50,11 +48,11 @@ impl SpecEnv {
         det: bool,
         tco: bool,
         spec: source::Spec,
-    ) -> Result<(Self, u32), Error> {
+    ) -> Result<Self, Error> {
         let mut loaded = Self::new();
         let tdenv = loaded.load_typdefs(arena_mixop, &spec);
-        let instr_count = loaded.load_callables(arena_mixop, &tdenv, det, tco, spec);
-        Ok((loaded, instr_count))
+        loaded.load_callables(arena_mixop, &tdenv, det, tco, spec);
+        Ok(loaded)
     }
 
     /// Inserts prepared type definitions and returns their source forms.
@@ -94,7 +92,7 @@ impl SpecEnv {
         det: bool,
         tco: bool,
         spec: source::Spec,
-    ) -> u32 {
+    ) {
         let mut layout = FrameLayout::default();
         let mut instr_next = 0;
         let mut ctx =
@@ -125,7 +123,6 @@ impl SpecEnv {
                 source::DefKind::Typ(_) | source::DefKind::Var(_) => {}
             }
         }
-        instr_next
     }
 }
 

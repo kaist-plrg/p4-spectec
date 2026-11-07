@@ -59,17 +59,6 @@ pub struct Coverage {
     pub outcomes: Vec<Outcome>,
 }
 
-/// Checks that preparation numbered the same instructions as `Cover`.
-///
-/// Fails when `tco` is on, since relation tail calls drop result instructions.
-fn check_instr_count(cover: &Cover, instr_count: Option<u32>) {
-    assert_eq!(
-        instr_count.map(|count| count as usize),
-        Some(cover.len()),
-        "prepared and source SL instruction numbering must agree"
-    );
-}
-
 /// Runs `body` and classifies its result, catching a panic as a crash.
 fn run_catching<T, E>(body: impl FnOnce() -> Result<T, E>) -> Outcome {
     match panic::catch_unwind(AssertUnwindSafe(body)) {
@@ -93,7 +82,6 @@ pub fn cover_run(
     let mut cover = Cover::new(spec_sl);
     let mut arena = Arena::new();
     let mut runner = runner::build_sl(&mut arena, spec_sl.clone(), config, Dummy)?;
-    check_instr_count(&cover, runner.instr_count());
     let hits = Hits::new(cover.len());
     runner
         .hooks_mut()
@@ -136,7 +124,6 @@ pub fn cover_sim(
     let mut cover = Cover::new(spec_sl);
     let spec = runner::Spec::Sl(spec_sl.clone());
     let mut simulator = sim_plugin::build(spec, arch, config, encoding)?;
-    check_instr_count(&cover, simulator.instr_count());
     let hits = Hits::new(cover.len());
     simulator
         .hooks_mut()

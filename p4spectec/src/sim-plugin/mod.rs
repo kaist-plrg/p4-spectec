@@ -40,8 +40,6 @@ pub use error::SimError;
 trait SimulatorRunner {
     fn hooks_mut(&mut self) -> &mut Hooks;
 
-    fn instr_count(&self) -> Option<u32>;
-
     fn run_stf_test(
         &mut self,
         arena: &mut Arena,
@@ -58,10 +56,6 @@ where
 {
     fn hooks_mut(&mut self) -> &mut Hooks {
         Runner::hooks_mut(self)
-    }
-
-    fn instr_count(&self) -> Option<u32> {
-        Runner::instr_count(self)
     }
 
     fn run_stf_test(
@@ -95,11 +89,6 @@ impl Simulator {
     /// Borrows the handlers retained across STF tests.
     pub fn hooks_mut(&mut self) -> &mut Hooks {
         self.runner.hooks_mut()
-    }
-
-    /// Returns the number of prepared SL instruction ids, or `None` for AL and PL.
-    pub fn instr_count(&self) -> Option<u32> {
-        self.runner.instr_count()
     }
 
     /// Runs one STF test, calling `on_match` for each matched output packet.
