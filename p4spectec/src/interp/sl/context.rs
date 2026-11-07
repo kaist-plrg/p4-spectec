@@ -94,9 +94,9 @@ impl SpecEnv {
         spec: source::Spec,
     ) {
         let mut layout = FrameLayout::default();
-        let mut instr_next = 0;
+        let mut counter_instr = 0;
         let mut ctx =
-            PrepareContext::new(arena_mixop, tdenv, &mut layout, &mut instr_next, det, tco);
+            PrepareContext::new(arena_mixop, tdenv, &mut layout, &mut counter_instr, det, tco);
         for def in spec {
             match def.node {
                 source::DefKind::Rel(rel) => {

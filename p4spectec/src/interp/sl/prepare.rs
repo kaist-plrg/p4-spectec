@@ -40,7 +40,7 @@ pub struct PrepareContext<'a> {
     /// Lower tail-position relation calls into tail calls.
     pub tco: bool,
     /// The next instruction id, shared across definitions.
-    pub instr_next: &'a mut u32,
+    pub counter_instr: &'a mut u32,
     pos: Position,
 }
 
@@ -50,16 +50,16 @@ impl<'a> PrepareContext<'a> {
         arena_mixop: &'a mut MixopArena,
         tdenv: &'a TDEnv,
         layout: &'a mut FrameLayout,
-        instr_next: &'a mut u32,
+        counter_instr: &'a mut u32,
         det: bool,
         tco: bool,
     ) -> Self {
-        Self { arena_mixop, tdenv, layout, det, tco, instr_next, pos: Position::Tail }
+        Self { arena_mixop, tdenv, layout, det, tco, counter_instr, pos: Position::Tail }
     }
 
     fn next_instr_id(&mut self) -> ast::InstrId {
-        let id = ast::InstrId(*self.instr_next);
-        *self.instr_next += 1;
+        let id = ast::InstrId(*self.counter_instr);
+        *self.counter_instr += 1;
         id
     }
 
@@ -88,7 +88,7 @@ impl PrepareContext<'_> {
             layout: &mut *self.layout,
             det: self.det,
             tco: self.tco,
-            instr_next: &mut *self.instr_next,
+            counter_instr: &mut *self.counter_instr,
             pos,
         }
     }
@@ -509,7 +509,7 @@ impl Prepare<PrepareContext<'_>> for source::DefinedFunc {
             layout: &mut *ctx.layout,
             det: ctx.det,
             tco: ctx.tco,
-            instr_next: &mut *ctx.instr_next,
+            counter_instr: &mut *ctx.counter_instr,
             pos: ctx.pos,
         };
         // The otherwise block must still catch a failing main body
