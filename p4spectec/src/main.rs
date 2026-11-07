@@ -14,6 +14,7 @@ use std::{
 };
 
 use clap::{Args, Parser, Subcommand};
+use indicatif::{ProgressBar, ProgressStyle};
 
 use p4spectec::lang::{data::encoding::Encoding, traits::print::Print};
 
@@ -375,10 +376,32 @@ impl CoverConfigArgs {
     }
 }
 
-/// Prints one finished input as `[k/N] outcome path`.
-fn print_progress(progress: Progress, labels: &[String]) {
-    if let Progress::Finish(index, outcome) = progress {
-        eprintln!("[{}/{}] {} {}", index + 1, labels.len(), outcome.name(), labels[index]);
+/// Creates a progress bar over the inputs, drawn on stderr only for a terminal.
+fn progress_bar(labels: &[String]) -> ProgressBar {
+    let style = ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
+        .expect("progress template must parse");
+    ProgressBar::new(labels.len() as u64).with_style(style)
+}
+
+/// Advances the bar and keeps a `[k/N] outcome path` line for each input that did not pass.
+fn print_progress(bar: &ProgressBar, progress: Progress, labels: &[String]) {
+    match progress {
+        // Name the input being evaluated
+        Progress::Start(index) => bar.set_message(labels[index].clone()),
+        // Print failures above the bar, then count the input
+        Progress::Finish(index, outcome) => {
+            if outcome != Outcome::Pass {
+                let line = format!(
+                    "[{}/{}] {} {}",
+                    index + 1,
+                    labels.len(),
+                    outcome.name(),
+                    labels[index]
+                );
+                bar.suspend(|| eprintln!("{line}"));
+            }
+            bar.inc(1);
+        }
     }
 }
 
@@ -469,15 +492,17 @@ fn cover_run_command(args: CoverRunArgs) -> Result<(), ()> {
         .iter()
         .map(|path| path.display().to_string())
         .collect();
+    let bar = progress_bar(&labels);
     let coverage = coverage::cover_run(
         &spec_sl,
         args.config.config(),
         &args.relation,
         &args.includes,
         &programs.items,
-        |progress| print_progress(progress, &labels),
-    )
-    .map_err(|report| render_report(&mut renderer, &report))?;
+        |progress| print_progress(&bar, progress, &labels),
+    );
+    bar.finish_and_clear();
+    let coverage = coverage.map_err(|report| render_report(&mut renderer, &report))?;
 
     let summary = format!("programs {}", describe_outcomes(&coverage.outcomes, programs.excluded));
     let comments =
@@ -549,6 +574,7 @@ fn cover_sim_command(args: CoverSimArgs) -> Result<(), ()> {
         .iter()
         .map(|(path_p4, path_stf)| format!("{} {}", path_p4.display(), path_stf.display()))
         .collect();
+    let bar = progress_bar(&labels);
     let coverage = coverage::cover_sim(
         &spec_sl,
         &args.arch,
@@ -556,9 +582,10 @@ fn cover_sim_command(args: CoverSimArgs) -> Result<(), ()> {
         args.plugin_encoding,
         &args.includes,
         &pairs.items,
-        |progress| print_progress(progress, &labels),
-    )
-    .map_err(|report| render_report(&mut renderer, &report))?;
+        |progress| print_progress(&bar, progress, &labels),
+    );
+    bar.finish_and_clear();
+    let coverage = coverage.map_err(|report| render_report(&mut renderer, &report))?;
 
     let summary = format!("tests {}", describe_outcomes(&coverage.outcomes, pairs.excluded));
     let comments = [format!("arch: {}", args.arch), args.config.describe(), summary.clone()];
