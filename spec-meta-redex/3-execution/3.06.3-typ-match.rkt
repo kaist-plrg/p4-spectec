@@ -1,9 +1,5 @@
 #lang racket/base
 ;; Mirrors spec-meta/4-execution/4.04.1-typ-match.watsup.
-;;
-;; $subtyp takes G and the local tdenv where spec-meta takes fenv and the
-;; extension $adds_map(C.GLOBAL.TYP, ...): find-typdef finds in G and tdenv
-;; what $find_map finds in the extension, and fenv is read through G.
 
 (require redex/reduction-semantics
          "3.02-context.rkt"

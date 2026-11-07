@@ -1,10 +1,7 @@
-// Meta-function invocation: clauses, table rows, defined functions, and
-// Call_func.
+// Meta-function invocation.
 //
-// Mirrors spec-meta/4-execution/4.10-eval-call-func.watsup, except that the
-// clauses of a defined function run in order and the first that does not
-// mismatch gives the result, without spec-meta's determinism check on the
-// later clauses. Table rows are first-match too.
+// Mirrors spec-meta/4-execution/4.10-eval-call-func.watsup, except that
+// clauses and table rows are first-match, without the determinism check.
 
 requires "3.11-eval-prem.k"
 
@@ -15,7 +12,7 @@ module CALL-FUNC
   // Eval_clause: ctx |- clause `( val* `) : funcRes
   // ==========================================================================
 
-  //   rule Eval_clause/succ: the arguments assigned, the premises, the result
+  //   rule Eval_clause/succ
   rule <k> evalClause(clause(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
         => assignArgs(As, Vs) ~> Ps ~> Eout
        ...
@@ -23,10 +20,6 @@ module CALL-FUNC
 
   // ==========================================================================
   // Eval_clauses: ctx |- clause* `( val* `) : funcRes
-  //
-  // The clauses in order, each under the context from before it; the first
-  // that does not mismatch gives the outcome. `ERROR` passes the catch
-  // frames (Eval_clauses/error).
   // ==========================================================================
 
   //   rule Eval_clauses/nil
@@ -45,13 +38,12 @@ module CALL-FUNC
   rule <k> UNMATCH ~> afterClause(Cls:ClauseList, Vs:ValList, F:Map, V:Map) => evalClauses(Cls, Vs) ... </k>
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>
-  //   rule Eval_clauses/succ: the first success, the later clauses untried
+  //   rule Eval_clauses/succ
   rule <k> R:Val ~> afterClause(_:ClauseList, _:ValList, F:Map, V:Map) => R ... </k>
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>
 
   // Determinism check (Eval_clauses_on_ok): replaces the rule above.
-  // A later success or `ERROR` is `ERROR`, which passes the catch frames.
   //
   //   rule Eval_clauses/succ: the remaining clauses must all mismatch
   // rule <k> R:Val ~> afterClause(Cls:ClauseList, Vs:ValList, F:Map, V:Map)
@@ -88,15 +80,13 @@ module CALL-FUNC
   // Call_table_func: ctx |- tableFuncDefn `( val* `) : funcRes
   // ==========================================================================
 
-  //   rule Eval_tblrow/succ: like a clause, in a frame of its own
+  //   rule Eval_tblrow/succ
   rule <k> evalTblRow(tblRow(As:ArgList, Eout:Exp, Ps:PremList), Vs:ValList)
         => enterFrame(.Map) ~> assignArgs(As, Vs) ~> Ps ~> Eout ~> endFrame
        ...
        </k>
 
-  //   rulegroup Eval_tblrows: in order; the first row that does not mismatch
-  //   gives the result, and `ERROR` passes the catch frames. Each row's
-  //   frame restores the local layer, so the catch frame holds none
+  //   rulegroup Eval_tblrows
   rule <k> evalTblRows(.TblRowList, _:ValList) => UNMATCH ... </k>
   rule <k> evalTblRows((R:TblRow, Rs:TblRowList), Vs:ValList)
         => evalTblRow(R, Vs) ~> afterTblRow(Rs, Vs)
@@ -112,10 +102,6 @@ module CALL-FUNC
 
   // ==========================================================================
   // Call_defined_func: ctx |- definedFuncDefn `< typ* `> `( val* `) : funcRes
-  //
-  // The clauses run in a frame whose tdenv binds the type parameters; the
-  // otherwise clause runs there too, only when every clause mismatched.
-  // Only a function with an otherwise clause catches the clauses' `UNMATCH`.
   // ==========================================================================
 
   //   rule Call_defined_func/result, /unmatch: without an otherwise clause
@@ -135,7 +121,7 @@ module CALL-FUNC
        ...
        </k>
     requires sameArity(Ps, Ts)
-  //   rule Call_defined_func/error: a wrong number of type arguments
+  //   rule Call_defined_func/error
   rule <k> callDefinedFunc(_:DefinedFuncDefn, _:TArgList, _:ValList) => ERROR ... </k> [owise]
 
   // `{ (tparam ':' (TYP tparam eps '=' (ALIAS typ)))* }`
@@ -145,20 +131,16 @@ module CALL-FUNC
   rule calleeTdenv((X:Id, Xs:TParamList), (T:Typ, Ts:TArgList))
     => (X |-> typD(X, .TParamList, aliasDT(T))) calleeTdenv(Xs, Ts)
 
-  // The otherwise clause, under the context the clauses started from
+  // The otherwise clause
   syntax UnmatchBoundary ::= afterClauses(Clause, ValList)
 
-  //   rule Call_defined_func/result: `ERROR` passes the catch frame
+  //   rule Call_defined_func/result
   rule <k> R:Val ~> afterClauses(_:Clause, _:ValList) => R ... </k>
   //   rule Call_defined_func/unmatch
   rule <k> UNMATCH ~> afterClauses(Cl:Clause, Vs:ValList) => evalClause(Cl, Vs) ... </k>
 
   // ==========================================================================
   // Call_func: ctx |- id `< targ* `> `( val* `) : funcRes
-  //
-  // The name is resolved through the local function parameters, its
-  // definition found in the global environment, and the call made by the
-  // kind of the definition.
   // ==========================================================================
 
   rule <k> callFunc(X:Id, Ts:TArgList, Vs:ValList)
@@ -170,7 +152,7 @@ module CALL-FUNC
   syntax KItem ::= callGlobalFunc(Id, TArgList, ValList)
   rule <k> callGlobalFunc(X:Id, Ts:TArgList, Vs:ValList) => callFuncDefn(D, Ts, Vs) ... </k>
        <gfenv> ... X |-> D:FuncDefn ... </gfenv>
-  //   rule Call_func/error: no such function
+  //   rule Call_func/error
   rule <k> callGlobalFunc(_:Id, _:TArgList, _:ValList) => ERROR ... </k> [owise]
 
   syntax KItem ::= callFuncDefn(FuncDefn, TArgList, ValList)
@@ -185,7 +167,7 @@ module CALL-FUNC
         => callBuiltinFunc(X, typsOfTargs(Ts), Vs)
        ...
        </k>
-  //   rule Call_func/table: without type arguments
+  //   rule Call_func/table
   rule <k> callFuncDefn(tableFuncD(_, _, _, _) #as D:TableFuncDefn, .TArgList, Vs:ValList)
         => callTableFunc(D, Vs)
        ...
@@ -195,7 +177,7 @@ module CALL-FUNC
         => callDefinedFunc(D, Ts, Vs)
        ...
        </k>
-  //   rule Call_func/error: a table function with type arguments
+  //   rule Call_func/error
   rule <k> callFuncDefn(_:FuncDefn, _:TArgList, _:ValList) => ERROR ... </k> [owise]
 
 endmodule

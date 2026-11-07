@@ -1,7 +1,6 @@
 // Type casts.
 //
-// Mirrors spec-meta/4-execution/4.04.2-typ-cast.watsup. The context `C` is
-// the three maps a cast reads: `<gtdenv>`, `<ltdenv>`, and `<gfenv>`.
+// Mirrors spec-meta/4-execution/4.04.2-typ-cast.watsup.
 //
 //   syntax castRes = ok<val> | error
 //   syntax castsRes = ok<val*> | error
@@ -16,8 +15,6 @@ module TYP-CAST
   //
   //   dec $upcast(ctx, typ, val) : castRes
   //   dec $upcasts(ctx, typ*, val*) : castsRes
-  //
-  // A value that does not fit the type is an error.
   // ==========================================================================
 
   syntax Res ::= upcast(Map, Map, Map, Typ, Val)
@@ -43,9 +40,6 @@ module TYP-CAST
     requires subtyp(FE, updateMap(G, L), funcT(Ps, Ts, T), funcV(X)) ==K ok(true)
   rule upcast(_:Map, _:Map, _:Map, _:Typ, _:Val) => ERROR [owise]
 
-  // `VAR id targ*` by its definition (`$find_typ`): through an alias, as is
-  // when a variant or struct type holds the value, as is for an extern value
-  // of an extern type.
   syntax Res ::= upcastVar(Map, Map, Map, TypDefOpt, Typ, Val)
                                             [function, total, symbol(upcastVar)]
   rule upcastVar(G:Map, L:Map, FE:Map, someTypDef(typD(_, Ps:TParamList, aliasDT(T:Typ))), varT(_, Ts:TArgList), V:Val)

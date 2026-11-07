@@ -1,10 +1,5 @@
 #lang racket/base
 ;; Mirrors spec-meta/2-runtime/2.5-typ-equiv.watsup.
-;;
-;; The functions take G and the local tdenv where spec-meta takes their
-;; extension $adds_map(C.GLOBAL.TYP, ...): find-typdef finds in G and tdenv
-;; what $find_map finds in the extension, and G's TYP map gives the names the
-;; extension holds besides tdenv's.
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
@@ -63,8 +58,7 @@
   [(equiv-typs G tdenv () (typ_r typ_r_t ...)) (OK #f)]
   [(equiv-typs G tdenv (typ_l typ_l_t ...) ()) (OK #f)])
 
-;; $equiv_typ': native structural equivalence excludes nested function types;
-;; only function-value membership invokes signature alpha-equivalence
+;; $equiv_typ'
 (define-metafunction al
   equiv-expanded-typ : G tdenv typ typ -> equivRes
   [(equiv-expanded-typ G tdenv BOOL BOOL) (OK #t)]

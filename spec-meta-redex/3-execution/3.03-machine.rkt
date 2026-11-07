@@ -1,40 +1,18 @@
 #lang racket/base
-;; Mirrors spec-meta/4-execution/4.02-relation.watsup, as the terms of the
-;; machine, with the result syntaxes of spec-meta's 4.03-eval-ops, 2.4 and 2.5,
-;; and 4.04.x, whose metafunctions are over al.
+;; Mirrors spec-meta/4-execution/4.02-relation.watsup.
 ;;
-;; An AL phrase evaluates in place, and every other relation has a machine
-;; form; the three extern relations are reduction rules on theirs, which call
-;; the host procedures of 3.04-extern-host.rkt. Frames give the evaluation
-;; positions. An evaluated expression is its value, and a constructor whose
-;; parts are all values is a value, so a frame writes val for an evaluated
-;; subterm and exp for one still to evaluate. watsup's ok<ctx> is (IN L OK):
-;; premises update the innermost IN's layer in place. A failure (UNMATCH or
-;; ERROR) passes through the frames of Fr-pass, and a rule looks at it in
-;; those of Fr-catch.
-;;
-;; The machine runs on configurations (e G L K), after the CEK machine: e is
-;; the term in focus, G L the context it evaluates under (watsup's C =
-;; {GLOBAL G, LOCAL L}), and K the stack of frames around it. The machine
-;; rules of 3.14-step.rkt move the focus to the next redex, so that a rule
-;; matches the term in focus and not the whole term (refocusing).
-;;
-;; An intermediate form is named after the rule, or the group, that builds
-;; it; seq and eval-exps, which several rules build, after what they do.
+;; The machine runs on configurations (e G L K).
 
 (require redex/reduction-semantics
          "3.02-context.rkt")
 (provide al)
 
 (define-extended-language al context
-  ;; Results. Redex has no parametric nonterminals, so each ok<X> is written
-  ;; out, and a result of val is the val itself.
+  ;; Results
   (valres ::= val failure)
   (valsres ::= (OK (val ...)) failure)
   (res ::= unitRes valres valsres)
 
-  ;; The results, and the substitution environment, of 4.03-eval-ops, 2.4,
-  ;; 2.5, and 4.04.x
   (numBinopRes ::= (OK val) ERROR)
   (numCmpRes ::= (OK bool) ERROR)
   (theta ::= ((id typ) ...))
@@ -44,7 +22,6 @@
   (subtypRes ::= (OK bool) ERROR)
   (castRes ::= (OK val) ERROR)
 
-  ;; A rule path with its group's match (3.12)
   (rul ::= (rulMatch rulPath))
 
   ;; Machine terms: the forms that rules start from, and the frames around a
@@ -74,19 +51,17 @@
      (call-defined-rel definedRelDefn (val ...))
      (call-rel id (val ...))
      (call-extern-rel id (val ...))
-     ;; an iteration over nothing, which has no evaluation position
+     ;; an iteration over nothing
      (assign-exp/iter/list () (vari ...))
      (in-hole Fr e))
 
   ;; Finished subterms
   (done ::= res (IN L OK))
 
-  ;; An element of a list expression: under an iteration, each element
-  ;; evaluates in a sub-context of its own
+  ;; An element of a list expression
   (elem ::= exp (IN L exp))
 
-  ;; Frames, one level each: those through which a failure passes, and those
-  ;; where a rule looks at it
+  ;; Frames: failures are passed in `Fr-pass`, caught by `Fr-catch`
   (Fr-pass ::=
            ;; Assign_exp(s), Assign_arg(s)
            (assign-exp/iter/opt-some hole (vari ...))
@@ -150,24 +125,20 @@
   (Fr-catch ::=
             ;; Eval_prem/ifnotholdpr
             (eval-prem/ifnotholdpr hole)
-            ;; the clauses of a call, in order: an unmatched one is passed
-            ;; over
+            ;; Eval_clauses/unmatch
             (eval-clauses (UNMATCH ... hole (IN L (eval-clause clause (val ...))) ...))
             ;; Determinism check: the clauses after a success
             ;; (eval-clauses-on-ok val (UNMATCH ... hole (IN L (eval-clause clause (val ...))) ...))
             (call-defined-func/clauses hole (elsClause ...) (val ...))
-            ;; Eval_tblrows/unmatch, which tries the next row
+            ;; Eval_tblrows/unmatch
             (eval-tblrows/cons hole (tblRow ...) (val ...))
-            ;; the rule paths of a call, as the clauses
+            ;; Eval_ruls/unmatch
             (eval-ruls (UNMATCH ... hole (IN L (eval-rul rul (val ...))) ...))
             ;; Determinism check: the rule paths after a success
             ;; (eval-ruls-on-ok (OK (val ...)) (UNMATCH ... hole (IN L (eval-rul rul (val ...))) ...))
             (call-defined-rel/ruls hole (elsGroup ...) (val ...)))
   (Fr ::= Fr-pass Fr-catch)
 
-  ;; The stack of frames around the term in focus, in a configuration
-  ;; (e G L K). K is () or (frame K), where a frame is one of Fr, or (RET L)
-  ;; for an IN that the focus has entered, with the layer to restore on
-  ;; leaving it. K is matched as any, as G is: as a nonterminal, every match
-  ;; would check the whole stack.
+  ;; (K ::= () (frame K))
+  ;; (frame ::= Fr (RET L))
   (K ::= any))

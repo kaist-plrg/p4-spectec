@@ -1,14 +1,7 @@
 // Entry point: serves the host's calls.
 //
-// Serves the calls the host makes on a loaded spec ($load_ctx, Call_rel,
-// Call_func), in the JSON of 3.04.1-extern-json.k. The entries of
-// spec-meta/5-entry.watsup are two of them in a row: Eval_AL_rel is `load`
-// then `call-rel`, and Eval_AL_func is `load` then `call-func` with no type
-// arguments. `serve(J)` sends J, the answer to the last call, and dispatches
-// the next call. Each call's outcome reaches its answer frame, which sends
-// its values for `OK`, `fail` for `UNMATCH`, `error` for `ERROR`; the call
-// leaves the local layer as it found it. `exit` empties `<k>`, which ends
-// the run.
+// `serve`: sends the answer to the last call and dispatches the next.
+// `exit` : ends the run.
 
 requires "3.04.3-spec-json.k"
 requires "3.13-eval-call-rel.k"
@@ -26,8 +19,6 @@ module AL
 
   // ==========================================================================
   // Loading: $load_ctx($empty_ctx, spec)
-  //
-  // The global layer holds the definitions of the last spec loaded.
   // ==========================================================================
 
   syntax KItem ::= loadSpec(Spec)

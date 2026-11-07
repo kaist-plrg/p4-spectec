@@ -1,8 +1,6 @@
 // Relation invocation: rule paths, defined relations, and Call_rel.
 //
-// Mirrors spec-meta/4-execution/4.11-eval-call-rel.watsup. The rule paths
-// of all groups of a relation run in order, like the clauses of a function:
-// the first that does not mismatch gives the result.
+// Mirrors spec-meta/4-execution/4.11-eval-call-rel.watsup.
 
 requires "3.12-eval-call-func.k"
 
@@ -13,8 +11,7 @@ module CALL-REL
   // Eval_rul: ctx |- rul `( val* `) : relRes
   // ==========================================================================
 
-  //   rule Eval_rul/succ: the inputs assigned, the premises of the match
-  //   and of the path, the outputs
+  //   rule Eval_rul/succ
   rule <k> evalRul(rul(rulMatch(Es:ExpList, PsMatch:PremList),
                        rulPath(_:Id, Eouts:ExpList, PsPath:PremList)),
                    Vs:ValList)
@@ -25,8 +22,7 @@ module CALL-REL
   // ==========================================================================
   // Eval_ruls: ctx |- rul* `( val* `) : relRes
   //
-  // As Eval_clauses (3.12-eval-call-func.k): `ERROR` passes the catch frames
-  // (Eval_ruls/error).
+  // `ERROR` passes the catch frames (Eval_ruls/error).
   // ==========================================================================
 
   //   rule Eval_ruls/nil
@@ -45,13 +41,12 @@ module CALL-REL
   rule <k> UNMATCH ~> afterRul(Rs:RulList, Vs:ValList, F:Map, V:Map) => evalRuls(Rs, Vs) ... </k>
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>
-  //   rule Eval_ruls/succ: the first success, the later paths untried
+  //   rule Eval_ruls/succ
   rule <k> Ws:ValList ~> afterRul(_:RulList, _:ValList, F:Map, V:Map) => Ws ... </k>
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>
 
-  // Determinism check (Eval_ruls_on_ok): replaces the rule above, as in
-  // 3.12-eval-call-func.k.
+  // Determinism check (Eval_ruls_on_ok): replaces the rule above.
   //
   //   rule Eval_ruls/succ: the remaining paths must all mismatch
   // rule <k> Ws:ValList ~> afterRul(Rs:RulList, Vs:ValList, F:Map, V:Map)
@@ -88,10 +83,6 @@ module CALL-REL
   //   dec $ruls_of_rulgroup(rulGroup) : rul*
   //   dec $ruls_of_rulgroups(rulGroup*) : rul*
   //   dec $rul_of_elsgroup(elsGroup) : rul
-  //
-  // The rule paths run in a frame of their own; the otherwise group runs
-  // there too, only when every path mismatched. Only a relation with an
-  // otherwise group catches the paths' `UNMATCH`.
   // ==========================================================================
 
   syntax RulList ::= rulsOfRulGroups(RulGroupList)
@@ -111,14 +102,14 @@ module CALL-REL
   syntax Rul ::= rulOfElsGroup(ElsGroup)    [function, total, symbol(rulOfElsGroup)]
   rule rulOfElsGroup(elsGroup(_:Id, M:RulMatch, P:RulPath)) => rul(M, P)
 
-  //   rule Call_defined_rel/result, /unmatch: without an otherwise group
+  //   rule Call_defined_rel/result, /unmatch
   rule <k> callDefinedRel(relD(_, _, _, Gs:RulGroupList, noElsGroup()), Vs:ValList)
         => enterFrame(.Map)
            ~> evalRuls(rulsOfRulGroups(Gs), Vs)
            ~> endFrame
        ...
        </k>
-  //   rule Call_defined_rel/result, /unmatch: with an otherwise group
+  //   rule Call_defined_rel/result, /unmatch
   rule <k> callDefinedRel(relD(_, _, _, Gs:RulGroupList, someElsGroup(EG:ElsGroup)), Vs:ValList)
         => enterFrame(.Map)
            ~> evalRuls(rulsOfRulGroups(Gs), Vs)
@@ -127,10 +118,10 @@ module CALL-REL
        ...
        </k>
 
-  // The otherwise group, under the context the paths started from
+  // The otherwise group
   syntax UnmatchBoundary ::= afterRuls(Rul, ValList)
 
-  //   rule Call_defined_rel/result: `ERROR` passes the catch frame
+  //   rule Call_defined_rel/result
   rule <k> Ws:ValList ~> afterRuls(_:Rul, _:ValList) => Ws ... </k>
   //   rule Call_defined_rel/unmatch
   rule <k> UNMATCH ~> afterRuls(R:Rul, Vs:ValList) => evalRul(R, Vs) ... </k>

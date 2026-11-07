@@ -12,9 +12,6 @@ module CONFIG
   syntax KItem ::= logDebug(Val)
                  | serve(JSON)
 
-  // `<k>` serves the host's calls from the start (3.14-entry.k). `<host>`
-  // holds the addresses of the host functions (3.04.2-extern-host.k), which
-  // the host passes as configuration variables.
   configuration
     <al>
       <k> serve({ "ready" : null, .JSONs }) </k>

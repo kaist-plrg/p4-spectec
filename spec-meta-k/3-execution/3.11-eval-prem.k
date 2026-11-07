@@ -1,9 +1,6 @@
 // Premise evaluation.
 //
-// Mirrors spec-meta/4-execution/4.09-eval-prem.watsup: Eval_prem, Eval_prems.
-// A premise is a statement: one that holds rewrites to `.K`, one that does
-// not to `UNMATCH`, one that cannot be evaluated to `ERROR`. Its expressions
-// evaluate in place (1.0-syntax.k).
+// Mirrors spec-meta/4-execution/4.09-eval-prem.watsup.
 
 requires "3.10-eval-arg.k"
 
@@ -29,16 +26,14 @@ module PREM
   rule <k> ifPr(boolV(false)) => UNMATCH ... </k>
   rule <k> ifPr(_:Val) => ERROR ... </k> [owise]
 
-  //   rulegroup Eval_prem/ifholdpr: IFHOLD needs an empty output
+  //   rulegroup Eval_prem/ifholdpr
   syntax KItem ::= holds(KItem)             [strict]
 
   rule <k> ifHoldPr(X:Id, Vs:ValList) => holds(callRel(X, Vs)) ... </k>
   rule <k> holds(.ValList) => .K ... </k>
   rule <k> holds((_:Val, _:ValList)) => ERROR ... </k>
 
-  //   rulegroup Eval_prem/ifnotholdpr: IFNOTHOLD needs the relation to
-  //   mismatch; its `ERROR` passes the catch frame. The call leaves the
-  //   local layer as it found it, so the catch frame holds none
+  //   rulegroup Eval_prem/ifnotholdpr
   syntax UnmatchBoundary ::= "notHolds" "(" ")"
 
   rule <k> ifNotHoldPr(X:Id, Vs:ValList) => callRel(X, Vs) ~> notHolds() ... </k>
@@ -57,13 +52,12 @@ module PREM
 
   syntax KItem ::= iterPrOpt(VariList, VariList, Prem, Res)
 
-  //   rule Eval_prem/succ-none: every bound variable is `OPT eps`
+  //   rule Eval_prem/succ-none
   rule <k> iterPrOpt(_:VariList, Bind:VariList, _:Prem, ok(noSub())) => .K ... </k>
        <lvenv> M:Map => addsMap(M, iterVaris(Bind, quest()),
                                 repeatVal(optV(noVal()), lengthVaris(Bind))) </lvenv>
 
-  //   rule Eval_prem/succ-some: the premise under the sub-context, then its
-  //   bindings as `OPT val`
+  //   rule Eval_prem/succ-some
   rule <k> iterPrOpt(Bound:VariList, Bind:VariList, P:Prem, ok(someSub(Vs:ValList)))
         => bindOpts(Bind, inScope(bindRow(Bound, Vs) ~> P ~> readVaris(Bind)))
        ...
@@ -73,8 +67,7 @@ module PREM
 
   //   rulegroup Eval_prem/iterpr-list
   //
-  //   rule Eval_prem/succ-empty, /succ-list: the premise under each
-  //   sub-context in turn, then the rows of bindings as lists
+  //   rule Eval_prem/succ-empty, /succ-list
   rule <k> iterPr(P:Prem, iterPrem(star(), Bound:VariList, Bind:VariList))
         => iterPrList(Bound, Bind, P, subList(Bound, M))
        ...

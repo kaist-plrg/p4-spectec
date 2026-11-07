@@ -1,8 +1,7 @@
 // Syntax of AL, the algorithmic layer of the P4-SpecTec meta-language.
 //
-// Mirrors spec-meta/1-syntax/1.0-common.watsup and 1.2-al.watsup, with the values of
-// spec-meta/2-runtime/2.0-value.watsup: a value is an expression here
-// (`Exp ::= Val`), so values are declared beside the expressions.
+// Mirrors spec-meta/1-syntax/1.0-common.watsup, 1.2-al.watsup, and
+// spec-meta/2-runtime/2.0-value.watsup.
 
 requires "json.md"
 
@@ -195,11 +194,6 @@ module SYNTAX
   //   syntax expCase = mixop exp*
   //   syntax expField = atom exp
   //   syntax iterExp = iter vari*
-  //
-  // A value is an expression, so that an evaluated subexpression can take
-  // its place; the strictness attributes give the evaluation order. An
-  // expression constructor, list, field or case whose parts are all values
-  // is the value constructor, list, field or case (`overload`).
   // ==========================================================================
 
   syntax Exp ::= Val
@@ -408,7 +402,7 @@ module SYNTAX
                                             [symbol(clause)]
   syntax ClauseList ::= List{Clause, ","}   [symbol(clauseList), terminator-symbol(.clauseList)]
 
-  // `elsClause?`; `elsClause` is an alias of `clause`, so it is inlined.
+  // `elsClause?`
   syntax ElsClauseOpt ::= noElsClause()     [symbol(noElsClause)]
                         | someElsClause(Clause)
                                             [symbol(someElsClause)]

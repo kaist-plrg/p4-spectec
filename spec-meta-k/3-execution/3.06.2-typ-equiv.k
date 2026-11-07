@@ -1,8 +1,6 @@
 // Type equivalence.
 //
-// Mirrors spec-meta/2-runtime/2.5-typ-equiv.watsup. The `tdenv` is the
-// merged type definition environment (`$adds_map(C.GLOBAL.TYP, ..local..)`,
-// `updateMap(gtdenv, ltdenv)` here).
+// Mirrors spec-meta/2-runtime/2.5-typ-equiv.watsup.
 
 requires "3.06.1-typ-subst.k"
 
@@ -13,9 +11,6 @@ module TYP-EQUIV
   // Outer alias expansion
   //
   //   dec $expand_typ(tdenv, typ) : typRes
-  //
-  // An unknown name, a parameterized use of a type parameter or an extern
-  // type, and a wrong number of arguments are errors.
   // ==========================================================================
 
   syntax Res ::= expandTyp(Typ, Map)        [function, total, symbol(expandTyp)]
@@ -51,10 +46,7 @@ module TYP-EQUIV
   //   syntax equivRes = ok<bool> | error
   //   dec $equiv_typ(tdenv, typ, typ) : equivRes
   //   dec $equiv_typs(tdenv, typ*, typ*) : equivRes
-  //   dec $equiv_typ'(tdenv, typ, typ) : equivRes     -- equivExpandedTyp
-  //
-  // Nested function types are not structurally equivalent to anything: only
-  // function-value membership invokes signature alpha-equivalence.
+  //   dec $equiv_typ'(tdenv, typ, typ) : equivRes
   // ==========================================================================
 
   syntax Res ::= equivTyp(Map, Typ, Typ)    [function, total, symbol(equivTyp)]
@@ -93,9 +85,6 @@ module TYP-EQUIV
   // Function signature alpha-equivalence
   //
   //   dec $equiv_func_typ(tdenv, typ, typ) : equivRes
-  //
-  // Both signatures' type parameters are renamed to the same fresh names,
-  // bound as `PARAM`, and the parameter and result types compared pairwise.
   // ==========================================================================
 
   syntax Res ::= equivFuncTyp(Map, Typ, Typ)

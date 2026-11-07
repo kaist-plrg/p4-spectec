@@ -1,30 +1,17 @@
 #lang racket/base
-;; Serves the calls the host makes on a loaded spec ($load_ctx, Call_rel,
-;; Call_func). The entries of spec-meta/5-entry.watsup are two of them in a
-;; row: Eval_AL_rel is `load` then `call-rel`, and Eval_AL_func is `load` then
-;; `call-func` with no type arguments.
+;; Serves the host's calls, reducing each with ->al.
 ;;
-;; As a program, it says it is ready, then answers each call of the host by
-;; reducing it with ->al. Calls and answers are s-expressions that `read`
-;; reads and `write` prints (3.04-extern-host.rkt), so the answer is the
-;; result itself: OK with its values, UNMATCH, or ERROR. A call that gets
-;; stuck, or raises a Racket error, is answered with `raise` and its message.
-;; `exit`, or the end of stdin, ends it. Debug values go to the host, and
-;; other output to stderr.
+;;   racket spec-meta-redex/3-execution/3.15-entry.rkt
 ;;
-;; call   ::= (load spec)                   $load_ctx($empty_ctx, spec)
+;; call   ::= (load spec)
 ;;          | (call-rel id (val ...))
 ;;          | (call-func id (typ ...) (val ...))
 ;;          | (exit)
 ;;
-;; answer ::= READY                         before the first call
-;;          | (OK ())                       load
-;;          | valsres                       call-rel
-;;          | valres                        call-func
-;;
-;;   racket spec-meta-redex/3-execution/3.15-entry.rkt
-;;
-;; p4spectec::metacirc::redex starts it, once per tower.
+;; answer ::= READY       before the first call
+;;          | (OK ())     load
+;;          | valsres     call-rel
+;;          | valres      call-func
 
 (require racket/match
          redex/reduction-semantics
@@ -37,21 +24,19 @@
          run-loaded
          serve)
 
-;; The context that spec loads into, as (G L): its global layer and its
-;; local layer
+;; The context that spec loads into
 (define (load-script spec)
   (match-define (list 'GLOBAL G 'LOCAL L) (term (load (empty-ctx) ,spec)))
   (list G L))
 
-;; The configuration that conf reduces to by ->al: final, or stuck. The
-;; rules are deterministic, so a configuration has at most one successor.
+;; The configuration that conf reduces to by ->al
 (define (run conf)
   (match (apply-reduction-relation ->al conf)
     ['() conf]
     [(list conf_1) (run conf_1)]
     [confs (error 'run "~a successors of ~e" (length confs) (car conf))]))
 
-;; The result of e under the loaded context (G L)
+;; The result of e under (G L)
 (define (run-loaded loaded e)
   (match-define (list G L) loaded)
   (match (run (term (,e ,G ,L ())))
@@ -59,8 +44,6 @@
     [(list e_stuck _ _ _) (error 'run "stuck: no rule applies to ~e" e_stuck)]))
 
 (define res? (redex-match? al res))
-
-;; The context of the spec loaded last, which calls run under
 (define loaded #f)
 
 ;; Answers the host's calls until it says exit.

@@ -1,9 +1,5 @@
 #lang racket/base
 ;; Mirrors spec-meta/4-execution/4.05-eval-assign.watsup.
-;;
-;; A successful assignment updates the innermost IN's layer and reduces to OK.
-;; The relations' `otherwise` rules give ERROR: here an input that no rule
-;; matches reduces to ERROR directly.
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
@@ -48,7 +44,7 @@
         (assign-exps (exp ...) (val ...))
         "assign-exp/list")
 
-   ;; rule Assign_exp/cons: the head, then the tail
+   ;; rule Assign_exp/cons
    (--> (assign-exp (CONS exp_h exp_t) (LIST (val_h val_t ...)))
         (assign-exps (exp_h exp_t) (val_h (LIST (val_t ...))))
         "assign-exp/cons")
@@ -88,8 +84,7 @@
 
    ;;; Assigning to a sequence of expressions
 
-   ;; rulegroup Assign_exps: each exp is assigned its val in place, left to
-   ;; right
+   ;; rulegroup Assign_exps
    (--> (assign-exps (exp ..._n) (val ..._n)) (seq ((assign-exp exp val) ...))
         "assign-exps")
    ;; rule Assign_exps/error: the lengths differ
@@ -111,8 +106,7 @@
 
    ;;; Assigning to a sequence of arguments
 
-   ;; rulegroup Assign_args: each arg is assigned its val in place, left to
-   ;; right
+   ;; rulegroup Assign_args
    (--> (assign-args (arg ..._n) (val ..._n)) (seq ((assign-arg arg val) ...))
         "assign-args")
    ;; rule Assign_args/error: the lengths differ
@@ -120,8 +114,7 @@
         (side-condition (not (= (length (term (arg ...))) (length (term (val ...))))))
         "assign-args/error")))
 
-;; The rules on a term and its context, (r G L K), which read G or L, or
-;; write L
+;; The rules on a term and its context, (r G L K)
 (define ->term+ctx/eval-assign
   (reduction-relation
    al
@@ -144,19 +137,17 @@
         (where () (is-iter-on-var (ITER exp (QUEST (vari ...)))))
         "assign-exp/iter/opt-none")
 
-   ;; Assign_exp/iter/opt-some, once the inner assignment has updated L.
-   ;; It adds (OPT val_sub)*, where spec-meta adds each OPT val_sub on its own.
+   ;; Assign_exp/iter/opt-some
    (--> ((assign-exp/iter/opt-some OK (vari ...)) G L K)
         (OK G (add-varis L ((iter-vari vari QUEST) ...) ((OPT (val_sub)) ...)) K)
         (where ((val_sub ...)) (find-varis L (vari ...)))
         "assign-exp/iter/opt-some/bind")
    (--> ((assign-exp/iter/opt-some OK (vari ...)) G L K) (ERROR G L K)
-        ;; otherwise: some variable is unbound
+        ;; otherwise
         (where () (find-varis L (vari ...)))
         "assign-exp/iter/opt-some/error")
 
-   ;; Assign_exp/iter/list: each element is assigned under C_local, which has
-   ;; no values
+   ;; Assign_exp/iter/list
    (--> ((assign-exp (ITER exp (STAR (vari ...))) (LIST (val ...)))
          G
          (name L {TYP tdenv FUNC fnenv VAL venv}) K)
@@ -171,7 +162,7 @@
         (where (((val_sub ...)) ...) ((finds-vari (L_sub ...) vari) ...))
         "assign-exp/iter/list/bind")
    (--> ((assign-exp/iter/list ((IN L_sub OK) ...) (vari ...)) G L K) (ERROR G L K)
-        ;; otherwise: some variable is unbound in some element's layer
+        ;; otherwise
         (side-condition
          (not (redex-match? al (((val ...)) ...)
                             (term ((finds-vari (L_sub ...) vari) ...)))))
@@ -179,7 +170,7 @@
 
    ;;; Assigning to an argument
 
-   ;; rule Assign_arg/fun: the parameter is bound to the global function name
+   ;; rule Assign_arg/fun
    (--> ((assign-arg (FUN id) (FUNC id_global)) G L K)
         (OK G (add-func L id id_global) K)
         "assign-arg/fun")))

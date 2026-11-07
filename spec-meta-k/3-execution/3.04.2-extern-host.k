@@ -2,18 +2,12 @@
 //
 //   K rules  --#ffiCall-->  host_eval, host_serve  (p4spectec::metacirc::k::ffi)
 //
-// The host runs this configuration on a thread of its own process and passes
-// the addresses of its host functions as configuration variables
-// (0.1-config.k):
+// The host passes the addresses of its functions as configuration variables:
 //
 //   char*       host_buffer(int64_t len);    // the send buffer, resized to len bytes
 //   const char* host_eval(const char* req);  // a request; blocks for its response
 //   const char* host_serve(const char* ans); // an answer; blocks for the next call
 //   int64_t     host_strlen(const char* s);  // the length of a received message
-//
-// Both buffers belong to the host. A message is copied into the send buffer
-// with #nativeWrite, NUL-terminated, and the received one is copied back with
-// #nativeRead; it lives until the next exchange.
 
 requires "3.04.1-extern-json.k"
 requires "ffi.md"
@@ -28,8 +22,6 @@ module EXTERN-HOST
 
   // ==========================================================================
   // Exchanges
-  //
-  // A function argument is evaluated before its body, which orders the calls.
   // ==========================================================================
 
   // Sends `Msg` through the host function at `F`; the message received back.

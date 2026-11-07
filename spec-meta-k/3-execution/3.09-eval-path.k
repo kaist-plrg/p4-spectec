@@ -1,9 +1,6 @@
 // Path evaluation.
 //
-// Mirrors spec-meta/4-execution/4.07-eval-path.watsup. A path access is the
-// expression steps from the root; an update rebuilds the value step by step.
-// A step with no applicable case, an index out of bounds, or a text update
-// of the wrong length gives `ERROR`.
+// Mirrors spec-meta/4-execution/4.07-eval-path.watsup.
 
 requires "3.08-eval-exp.k"
 
@@ -12,8 +9,6 @@ module EVAL-PATH
 
   // ==========================================================================
   // Eval_path_acc: ctx |- val path : pathRes
-  //
-  // A path is the chain of the `dotE`/`idxE`/`sliceE` steps from its root.
   // ==========================================================================
 
   rule <k> path(V:Val, rootPath()) => V ... </k>
@@ -23,9 +18,6 @@ module EVAL-PATH
 
   // ==========================================================================
   // Eval_path_upd: ctx |- val path := val : pathRes
-  //
-  // The innermost step rebuilds the value at its prefix, then the prefix is
-  // updated with the result.
   // ==========================================================================
 
   syntax Exp ::= updIdx(Exp, Exp, Val)      [seqstrict(1, 2)]
@@ -42,7 +34,6 @@ module EVAL-PATH
        ...
        </k>
 
-  // Text index update replaces one character (`-- if |t_n| = 1`).
   rule <k> updIdx(textV(S:String), natN(N:Int), textV(Sn:String))
         => textV(replaceText(S, N, N +Int 1, Sn))
        ...
@@ -59,7 +50,6 @@ module EVAL-PATH
     => V, updateNthVal(Vs, N -Int 1, Vn)
     requires N >Int 0
 
-  // Characters `I` up to `J` replaced.
   syntax String ::= replaceText(String, Int, Int, String)
                                             [function, symbol(replaceText)]
   rule replaceText(S:String, I:Int, J:Int, Sn:String)
@@ -99,7 +89,6 @@ module EVAL-PATH
   rule <k> updDot(strV(Fs:ValFieldList), A:Atom, Vn:Val) => strV(updateField(Fs, A, Vn)) ... </k>
   rule <k> updDot(_:Val, _:Atom, _:Val) => ERROR ... </k> [owise]
 
-  // Update every field selected by its atom.
   syntax ValFieldList ::= updateField(ValFieldList, Atom, Val)
                                             [function, total, symbol(updateField)]
   rule updateField(.ValFieldList, _:Atom, _:Val) => .ValFieldList

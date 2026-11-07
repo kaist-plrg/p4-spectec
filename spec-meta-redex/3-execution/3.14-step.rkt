@@ -1,7 +1,5 @@
 #lang racket/base
-;; The machine: the IN, seq, and failure rules, the notion of reduction
-;; (->term and ->term+ctx), the rules that move the focus, and the step ->al
-;; on configurations.
+;; The machine step ->al on configurations.
 
 (require redex/reduction-semantics
          "3.03-machine.rkt"
@@ -30,8 +28,7 @@
         "in/vals")
    (--> (IN L failure) failure
         "in/failure")
-   ;; A statement sequence: once every statement before the last holds, the
-   ;; last one's result
+   ;; A statement sequence
    (--> (seq (OK ...)) OK
         "seq/unit")
    (--> (seq (OK ... val)) val
@@ -46,7 +43,7 @@
 ;; The notion of reduction
 ;;
 
-;; The rules on a term r, which neither read nor write the context
+;; The rules on a term r
 (define ->term
   (union-reduction-relations ->term/eval
                              ->term/eval-assign
@@ -57,8 +54,7 @@
                              ->term/eval-call-func
                              ->term/eval-call-rel))
 
-;; The rules on a term and its context, (r G L K), which read G or L, or write
-;; L
+;; The rules on a term and its context, (r G L K)
 (define ->term+ctx
   (union-reduction-relations ->term+ctx/eval-assign
                              ->term+ctx/eval-exp
@@ -71,10 +67,6 @@
 ;; Refocusing
 ;;
 
-;; The rules that move the focus to the next redex, after the evaluation
-;; positions that Fr gives. The focus goes down into a position whose term
-;; is not done, and back up once it is. A term in focus with no position to
-;; go down into is a redex, or final.
 (define ->focus
   (reduction-relation
    al

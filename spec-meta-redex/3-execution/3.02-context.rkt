@@ -1,10 +1,5 @@
 #lang racket/base
 ;; Mirrors spec-meta/4-execution/4.01-context.watsup.
-;;
-;; A dec over ctx takes G L if it reads C.GLOBAL, and L alone otherwise. G is
-;; the global layer, and L the local layer. A ctx result is the new L. $load
-;; and $empty_ctx keep ctx. A record update C[ .LOCAL.VAL = x ] is a pattern
-;; that rebuilds the layer.
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
@@ -37,9 +32,7 @@
   (localLayer L ::= {TYP tdenv FUNC fnenv VAL venv})
   (ctx C ::= {GLOBAL globalLayer LOCAL localLayer})
 
-  ;; The global layer, as a dec over ctx takes it. It never changes after
-  ;; $load, whose result is a ctx, so it is checked once there and is any
-  ;; elsewhere: as globalLayer, every match would check the whole layer again.
+  ;; The global layer
   (G ::= any)
 
   ;; Sub-contexts for iteration, as their local layers
@@ -62,8 +55,6 @@
 ;; Loading context from a spec
 ;;
 
-;; The entry that a definition adds to GLOBAL's TYP, REL, or FUNC: the
-;; definition as written, one clause per $load clause
 (define-metafunction context
   load-defn : defn -> (tdenv renv fenv)
   [(load-defn externTypDefn) (((id externTypDefn)) () ())
@@ -83,8 +74,7 @@
   [(load-defn definedFuncDefn) (() () ((id definedFuncDefn)))
    (where (FUNC id (tparam ...) (param ...) typ (clause ...) (elsClause ...)) definedFuncDefn)])
 
-;; $load: GLOBAL with the entry of every definition added, in spec order.
-;; $adds_map adds its keys in order, as $load's recursion does.
+;; $load: GLOBAL with the entry of every definition added, in spec order
 (define-metafunction context
   load : ctx spec -> ctx
   [(load {GLOBAL {TYP tdenv REL renv FUNC fenv} LOCAL L} (defn ...))
@@ -99,8 +89,6 @@
 ;; The global layer
 ;;
 
-;; The map of G under the label field (TYP, REL, or FUNC), taken apart with
-;; any so that the layer is not checked
 (define-metafunction context
   global-map : G any -> map
   [(global-map {TYP any_typ REL any_rel FUNC any_func} TYP) any_typ]
@@ -160,8 +148,7 @@
 
 ;;; Typedef finders
 
-;; $find_typ with the local tdenv on its own, for the callers that hold it
-;; apart from L: the definition of id in tdenv, or else in the global layer G
+;; $find_typ
 (define-metafunction context
   find-typdef : G tdenv id -> () ∨ (typDef)
   [(find-typdef G tdenv id) (typDef)

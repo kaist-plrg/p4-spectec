@@ -79,8 +79,6 @@
    (where (OK (typ_subst ...)) (subst-typs theta (typ ...)))]
   [(subst-typ theta (ITER typ iter)) (OK (ITER typ_subst iter))
    (where (OK typ_subst) (subst-typ theta typ))]
-  ;; The binders are renamed apart from every name in play before the
-  ;; substitution goes under them.
   [(subst-typ theta (FUNC (tparam ...) (typ ...) typ_ret))
    (OK (FUNC (tparam_fresh ...) (typ_subst ...) typ_ret_subst))
    (where ((id typ_arg) ...) theta)
@@ -93,8 +91,7 @@
    (where (OK (typ_subst ...)) (subst-typs theta (typ_fresh ...)))
    (where (OK typ_ret_fresh) (subst-typ theta_fresh typ_ret))
    (where (OK typ_ret_subst) (subst-typ theta typ_ret_fresh))]
-  ;; otherwise: a parameterized use of a type parameter, or a failed
-  ;; substitution
+  ;; otherwise
   [(subst-typ theta typ) ERROR])
 
 (define-metafunction al

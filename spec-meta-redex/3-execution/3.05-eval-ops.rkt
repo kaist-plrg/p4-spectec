@@ -1,9 +1,5 @@
 #lang racket/base
 ;; Mirrors spec-meta/4-execution/4.03-eval-ops.watsup.
-;;
-;; Arithmetic follows p4spectec/src/lang/common/prim/num.rs: DIV and MOD
-;; truncate. An undefined result (division by zero) raises an error, as
-;; num.rs's NumericError does.
 
 (require redex/reduction-semantics
          "3.03-machine.rkt")

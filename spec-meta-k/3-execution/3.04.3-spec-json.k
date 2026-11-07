@@ -1,8 +1,4 @@
-// JSON codec of AL specifications, as the host sends them (3.14-entry.k).
-//
-// Each node is tagged with the symbol of its constructor in 1.0-syntax.k;
-// lists are arrays, and an absent option is null. Mixops and types are those
-// of 3.04.1-extern-json.k, and a number is a value there.
+// JSON codec of AL specifications, as the host sends them.
 //
 //   spec     ::= [defn, ...]
 //   defn     ::= ["extTypD", <id>] | ["typD", <id>, [<id>, ...], deftyp]
@@ -41,7 +37,7 @@
 //   elsGroup ::= [<id>, rulMatch, rulPath]
 //   rulMatch ::= [[exp, ...], [prem, ...]]
 //   rulPath  ::= [<id>, [exp, ...], [prem, ...]]
-//   clause   ::= [[arg, ...], exp, [prem, ...]]       // and a table row
+//   clause   ::= [[arg, ...], exp, [prem, ...]]
 
 requires "3.04.1-extern-json.k"
 

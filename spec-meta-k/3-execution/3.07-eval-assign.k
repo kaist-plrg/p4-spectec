@@ -1,13 +1,6 @@
 // Assignment (pattern matching a value against an expression).
 //
-// Mirrors spec-meta/4-execution/4.05-eval-assign.watsup. An assignment is a
-// statement: it rewrites to `.K` with its bindings added to `<local>`, or
-// to `ERROR`.
-//
-//   Assign_exp:  ctx |- exp := val : assignRes    --> assignExp(Exp, Val)
-//   Assign_exps: ctx |- exp* := val* : assignRes  --> assignExps(ExpList, ValList)
-//   Assign_arg:  ctx |- arg := val : assignRes    --> assignArg(Arg, Val)
-//   Assign_args: ctx |- arg* := val* : assignRes  --> assignArgs(ArgList, ValList)
+// Mirrors spec-meta/4-execution/4.05-eval-assign.watsup.
 
 requires "3.03-relation.k"
 
@@ -95,8 +88,6 @@ module ASSIGN
        ...
        </k>
 
-  // Each element is assigned under an empty value environment, and the
-  // bindings it makes are read back as one row.
   syntax KItem ::= assignRows(Exp, ValList, VariList)
   rule <k> assignRows(_:Exp, .ValList, _:VariList) => .ValListList ... </k>
   rule <k> assignRows(E:Exp, (V:Val, Rest:ValList), Vs:VariList)
@@ -107,8 +98,6 @@ module ASSIGN
 
   // ==========================================================================
   // Assign_exps: ctx |- exp* := val* : assignRes
-  //
-  // The values may still be a computation (a relation call's outputs).
   // ==========================================================================
 
   rule <k> assignExps(.ExpList, .ValList) => .K ... </k>
@@ -118,7 +107,6 @@ module ASSIGN
        </k>
   rule <k> assignExps(_:ExpList, _:ValList) => ERROR ... </k> [owise]
 
-  // Struct fields, matched positionally with their atoms compared.
   syntax KItem ::= assignFields(ExpFieldList, ValFieldList)
 
   rule <k> assignFields(.ExpFieldList, .ValFieldList) => .K ... </k>
@@ -136,7 +124,7 @@ module ASSIGN
   //   rule Assign_arg/exp
   rule <k> assignArg(expA(E:Exp), V:Val) => assignExp(E, V) ... </k>
 
-  //   rule Assign_arg/fun: the parameter is bound to the global function name
+  //   rule Assign_arg/fun
   rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => .K ... </k>
        <lfenv> M:Map => M[X <- Y] </lfenv>
 
@@ -158,19 +146,18 @@ module ASSIGN
   rule lengthVaris(.VariList) => 0
   rule lengthVaris(_:Vari, Vs:VariList) => 1 +Int lengthVaris(Vs)
 
-  // `$find_varis` on the current value environment: the values, or `ERROR`.
+  // `$find_varis` on the current value environment.
   syntax KItem ::= readVaris(VariList)
   rule <k> readVaris(Vs:VariList) => fromRes(finds(varrsOfVaris(Vs), M)) ... </k>
        <lvenv> M:Map </lvenv>
 
-  // `$add_varis` of the bindings of one sub-context, each as `OPT val`.
+  // `$add_varis` of the bindings of one sub-context.
   syntax KItem ::= bindOpts(VariList, KItem)
                                             [strict(2)]
   rule <k> bindOpts(Vs:VariList, Ws:ValList) => .K ... </k>
        <lvenv> M:Map => addsMap(M, iterVaris(Vs, quest()), someVals(Ws)) </lvenv>
 
-  // `$add_varis` of rows of bindings (one computation per row), one list
-  // per variable.
+  // `$add_varis` of rows of bindings, one list per variable.
   syntax KItem ::= bindLists(VariList, KItem)
                                             [strict(2)]
   rule <k> bindLists(Vs:VariList, Rows:ValListList) => .K ... </k>

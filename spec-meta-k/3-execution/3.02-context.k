@@ -1,8 +1,7 @@
 // Context: loading, function parameters, scopes, call frames, and
 // sub-contexts for iteration.
 //
-// Mirrors spec-meta/4-execution/4.01-context.watsup. The context `ctx` is
-// the `<global>` and `<local>` cells of the configuration.
+// Mirrors spec-meta/4-execution/4.01-context.watsup.
 
 requires "3.01-env.k"
 
@@ -39,8 +38,6 @@ module CONTEXT
   // Type definitions
   //
   //   dec $find_typ(ctx, id) : typDef?
-  //
-  // The local type definitions, then the global ones.
   // ==========================================================================
 
   syntax TypDefOpt ::= findTyp(Id, Map, Map)
@@ -68,7 +65,7 @@ module CONTEXT
   //   $sub_opt / $sub_list bodies, Assign_exp/list
   // ==========================================================================
 
-  syntax Exp ::= inScope(K)                // an `Exp`, so that it fits a strict hole
+  syntax Exp ::= inScope(K)
 
   rule <k> inScope(K:K) => K ~> endScope(M) ... </k>
        <lvenv> M:Map </lvenv>
@@ -113,12 +110,10 @@ module CONTEXT
   // ==========================================================================
   // Sub-contexts for iteration
   //
-  //   dec $sub_opt(ctx, vari*) : subOptRes       syntax subOptRes = ok<ctx?> | error
-  //   dec $sub_list(ctx, vari*) : subListRes     syntax subListRes = ok<ctx*> | error
-  //
-  // A sub-context is the current context with `vari*` bound: here the values
-  // to bind to them (`SubOpt`), or one row of values per sub-context
-  // (`ValListList`). The consumer runs each under `inScope(bindRow(..) ~> ..)`.
+  //   syntax subOptRes = ok<ctx?> | error
+  //   syntax subListRes = ok<ctx*> | error
+  //   dec $sub_opt(ctx, vari*) : subOptRes
+  //   dec $sub_list(ctx, vari*) : subListRes
   // ==========================================================================
 
   syntax SubOpt ::= noSub()                 [symbol(noSub)]
@@ -149,8 +144,7 @@ module CONTEXT
   rule unwrapSomeOpts(.ValList) => .ValList
   rule unwrapSomeOpts(optV(someVal(V:Val)), Vs:ValList) => V, unwrapSomeOpts(Vs)
 
-  // The rows of `$sub_list`: the bound lists transposed, one row per element,
-  // so an empty list gives no rows. Lists of different lengths are an error.
+  // The bound lists transposed.
   syntax Res ::= subList(VariList, Map)     [function, total, symbol(subList)]
   rule subList(Xs:VariList, M:Map) => subListOf(finds(iterVaris(Xs, star()), M))
 
@@ -163,7 +157,6 @@ module CONTEXT
   rule lists(.ValList) => .ValListList
   rule lists(listV(Vs:ValList), Ws:ValList) => Vs ; lists(Ws)
 
-  // All `LIST`s of one length.
   syntax Bool ::= sameLengthLists(ValList)  [function, total, symbol(sameLengthLists)]
                 | sameLengthLists(Int, ValList)
                                             [function, total, symbol(sameLengthListsAs)]

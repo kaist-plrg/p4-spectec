@@ -1,8 +1,6 @@
 // Runtime variables and the iteration helpers.
 //
-// Mirrors spec-meta/2-runtime/2.1-variable.watsup, with `varr` of
-// spec-meta/4-execution/4.00-env.watsup and `$is_iter_on_var` of
-// spec-meta/4-execution/4.01-context.watsup.
+// Mirrors spec-meta/2-runtime/2.1-variable.watsup.
 
 requires "../1-syntax/1.0-syntax.k"
 
@@ -63,7 +61,6 @@ module VARIABLE
   rule varrsOfVaris(.VariList) => .VarrList
   rule varrsOfVaris(V:Vari, Vs:VariList) => varrOfVari(V), varrsOfVaris(Vs)
 
-  // `vari*` at one more `iter`.
   syntax VarrList ::= iterVaris(VariList, Iter)
                                             [function, total, symbol(iterVaris)]
   rule iterVaris(.VariList, _:Iter) => .VarrList

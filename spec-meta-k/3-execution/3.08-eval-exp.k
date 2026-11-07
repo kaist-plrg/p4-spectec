@@ -1,9 +1,6 @@
 // Expression evaluation.
 //
-// Mirrors spec-meta/4-execution/4.06-eval-exp.watsup. An expression at the
-// head of `<k>` evaluates its operands by the strictness attributes of
-// 1.0-syntax.k; the rules here compute on values, and one with no applicable
-// case gives `ERROR` (`Eval_exp/error`).
+// Mirrors spec-meta/4-execution/4.06-eval-exp.watsup.
 
 requires "3.05-eval-ops.k"
 requires "3.06.4-typ-cast.k"
@@ -81,11 +78,9 @@ module EVAL-EXP
   rule <k> lenE(_:Val) => ERROR ... </k> [owise]
 
   //   rule Eval_exp/dot, /idx, /slice, and Eval_path_acc/dot, /idx, /slice
-  //   (a one-step path from the root, 3.09-eval-path.k)
   rule <k> dotE(strV(Fs:ValFieldList), A:Atom) => unopt(assocVal(A, Fs)) ... </k>
   rule <k> dotE(_:Val, _:Atom) => ERROR ... </k> [owise]
 
-  // The field found, back in flight.
   syntax KItem ::= unopt(ValOpt)
   rule <k> unopt(someVal(V:Val)) => V ... </k>
   rule <k> unopt(noVal()) => ERROR ... </k>
@@ -131,7 +126,7 @@ module EVAL-EXP
        <lvenv> ... R |-> V:Val ... </lvenv>
   rule <k> evalIter(someVarr(_:Varr), _:Exp, _:IterExp) => ERROR ... </k> [owise]
 
-  //   rule Eval_exp/opt-succ: the body under the sub-context, if there is one
+  //   rule Eval_exp/opt-succ
   rule <k> evalIter(noVarr(), E:Exp, iterExp(quest(), Xs:VariList))
         => optSub(Xs, E, subOpt(Xs, M))
        ...
@@ -146,7 +141,7 @@ module EVAL-EXP
        </k>
   rule <k> optSub(_:VariList, _:Exp, ERROR) => ERROR ... </k>
 
-  //   rule Eval_exp/list-succ: the body under each sub-context in turn
+  //   rule Eval_exp/list-succ
   rule <k> evalIter(noVarr(), E:Exp, iterExp(star(), Xs:VariList))
         => listSub(Xs, E, subList(Xs, M))
        ...

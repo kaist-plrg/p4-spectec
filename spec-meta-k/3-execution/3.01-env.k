@@ -1,7 +1,6 @@
 // Environments: values, type definitions, relations, and functions.
 //
-// Mirrors spec-meta/4-execution/4.00-env.watsup. Each environment is a K
-// `Map` held by the cell of its layer (0.1-config.k):
+// Mirrors spec-meta/4-execution/4.00-env.watsup.
 //
 //   venv  = map<varr, val>       <lvenv>              Varr |-> Val
 //   tdenv = map<id, typDef>      <gtdenv>, <ltdenv>   Id |-> TypDef
@@ -26,8 +25,6 @@ module ENV
   //   dec $adds_map<varr, val>
   // ==========================================================================
 
-  // The values of the variables, or `ERROR` when one is unbound (`eps` of
-  // `$find_varis`, which every caller turns into an error).
   syntax Res ::= finds(VarrList, Map)       [function, total, symbol(finds)]
   rule finds(.VarrList, _:Map) => ok(.ValList)
   rule finds((R:Varr, Rs:VarrList), ((R |-> V:Val) _:Map) #as M:Map)

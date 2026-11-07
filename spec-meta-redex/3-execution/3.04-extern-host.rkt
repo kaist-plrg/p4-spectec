@@ -1,29 +1,22 @@
 #lang racket/base
-;; Transport for the host's boundary: Racket <-> Rust, as lines over this
-;; process's stdin and stdout, and the host procedures of the three extern
-;; relations.
+;; Transport to the host over stdin/stdout, one s-expression per line.
 ;;
 ;;   racket 3.15-entry.rkt  <--pipe-->  p4spectec::metacirc::redex
 ;;
-;; Rust starts this process and calls into it (3.15-entry.rkt). Each line to
-;; Rust starts with a word saying what it is: `serve <answer>`,
-;; `eval <request>`, `debug <val>`, or `raise <text>`; each line from Rust is
-;; one call or response. Both are s-expressions, which `write` prints and
-;; `read` reads: values and types are the val and typ terms themselves, and
-;; answers and responses are results (p4spectec/src/metacirc/redex/serve.rs).
-;; A request waits for its response; a call that arrives first is nested in
-;; the request, and is answered in place. The host procedures are impure, so
-;; only a reduction rule may call them, never a metafunction.
+;; To the host:
+;;   serve <answer>    the answer to a call
+;;   eval <request>    a request
+;;   debug <val>       a debug value
+;;   raise <text>      a Racket error raised by a call
+;;
+;; From the host: a call, or a response.
 ;;
 ;; request  ::= (builtin id (typ ...) (val ...))
 ;;            | (extern-func id (typ ...) (val ...))
 ;;            | (extern-rel id (val ...))
 ;;
-;; response ::= valres          builtin and extern-func: val, UNMATCH, or ERROR
-;;            | valsres         extern-rel: (OK (val ...)), UNMATCH, or ERROR
-;;
-;; ERROR says the host could not answer, and the host reports why. An extern
-;; value (EXT json) holds its JSON text as a string, which only Rust reads.
+;; response ::= valres          builtin and extern-func
+;;            | valsres         extern-rel
 
 (provide receive
          emit!
@@ -32,8 +25,7 @@
          host-call-builtin-func
          host-call-extern-rel)
 
-;; Rust's ends: stdin and stdout as they are when this module is
-;; instantiated, so the entry can send other output elsewhere
+;; Rust's ends: stdin and stdout at instantiation
 (define from-host (current-input-port))
 (define to-host (current-output-port))
 
@@ -41,7 +33,7 @@
 (define (receive)
   (read from-host))
 
-;; Sends datum as one line after word; it is printed whole before any of it goes.
+;; Sends datum as one line after word
 (define (emit! word datum)
   (define out (open-output-string))
   (write-string word out)

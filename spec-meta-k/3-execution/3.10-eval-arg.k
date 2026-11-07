@@ -1,8 +1,6 @@
 // Argument and type argument evaluation, and the call expression.
 //
-// Mirrors spec-meta/4-execution/4.08-eval-arg.watsup. An `Arg` at the head
-// of `<k>` evaluates to a value (1.0-syntax.k); `callE` then evaluates its
-// type arguments and calls the function.
+// Mirrors spec-meta/4-execution/4.08-eval-arg.watsup.
 
 requires "3.09-eval-path.k"
 
@@ -16,15 +14,14 @@ module EVAL-ARG
   //   rule Eval_arg/exp
   rule <k> expA(V:Val) => V ... </k>
 
-  //   rule Eval_arg/fun: the global function name of the parameter
+  //   rule Eval_arg/fun
   rule <k> funA(X:Id) => funcV(resolveFuncParam(X, LF)) ... </k>
        <lfenv> LF:Map </lfenv>
 
   // ==========================================================================
   // Eval_targs: ctx |- targ* : typsRes
   //
-  //   rule Eval_exp/call: the type arguments under the local tdenv's aliases,
-  //   then Call_func
+  //   rule Eval_exp/call
   // ==========================================================================
 
   rule <k> callE(X:Id, Ts:TArgList, Vs:ValList)

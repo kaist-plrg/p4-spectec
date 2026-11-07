@@ -47,8 +47,6 @@ module TYP-SUBST
   //   dec $ids_typs(typ*) : id*
   //   dec $fresh_id(id, id*) : id
   //   dec $fresh_ids(id*, id*) : id*
-  //
-  // The names used are a `Set`; fresh names are made in order.
   // ==========================================================================
 
   syntax Set ::= idsTyp(Typ)                [function, total, symbol(idsTyp)]
@@ -72,7 +70,6 @@ module TYP-SUBST
   rule idsTParams(.TParamList) => .Set
   rule idsTParams(P:Id, Ps:TParamList) => SetItem(P) |Set idsTParams(Ps)
 
-  // The names of a substitution: `id* ++ $ids_typs(typ_arg*)`.
   syntax Set ::= idsTheta(Map)              [function, total, symbol(idsTheta)]
                | idsTypItems(List)          [function, total, symbol(idsTypItems)]
   rule idsTheta(Th:Map) => keys(Th) |Set idsTypItems(values(Th))
@@ -124,9 +121,6 @@ module TYP-SUBST
   rule substTargs(_:Map, .TArgList) => ok(.TArgList)
   rule substTargs(Th:Map, (T:Typ, Ts:TArgList)) => consRes(substTyp(Th, T), substTargs(Th, Ts))
 
-  // A function type: its type parameters renamed apart from the names of
-  // the substitution and of the type, then its parameter and result types
-  // substituted.
   syntax Res ::= substFuncTyp(Map, TParamList, TParamList, TypList, Typ)
                                             [function, total, symbol(substFuncTyp)]
   rule substFuncTyp(Th:Map, PsF:TParamList, Ps:TParamList, Ts:TypList, T:Typ)
@@ -141,7 +135,6 @@ module TYP-SUBST
   rule thetaFresh((P:Id, Ps:TParamList), (Q:Id, Qs:TParamList))
     => (P |-> varT(Q, .TArgList)) thetaFresh(Ps, Qs)
 
-  // Substitution into an `OK` type or types.
   syntax Res ::= substTypRes(Map, Res)      [function, symbol(substTypRes)]
                | substTypsRes(Map, Res)     [function, symbol(substTypsRes)]
   rule substTypRes(Th:Map, ok(T:Typ)) => substTyp(Th, T)

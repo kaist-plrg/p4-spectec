@@ -1,8 +1,5 @@
 #lang racket/base
-;; Mirrors the parts of spec-meta/0-aux/0.0-stdlib.watsup that the port uses,
-;; with the Racket helpers that rules use for texts, lists, and debug output.
-;;
-;; Type parameters are dropped: `any` stands for them in contracts.
+;; Mirrors spec-meta/0-aux/0.0-stdlib.watsup.
 
 (require racket/list
          redex/reduction-semantics)
@@ -28,13 +25,11 @@
          debug)
 
 (define-language stdlib
-  ;; Metavariables for int, nat, bool, and text
   (bool b ::= boolean)
   (int i ::= integer)
   (nat n ::= natural)
   (text t ::= string)
 
-  ;; Maps, as association lists
   (pair ::= (any any))
   (map ::= (pair ...)))
 
@@ -76,19 +71,14 @@
    ,(updates (term map) (term (any_k ...)) (term (any_v ...)))])
 
 ;;
-;; Builtins, as in p4spectec/src/interface/builtin/{lists,maps}.rs
+;; Builtins
 ;;
 
-;; The value of the first pair with key k, as a list of length 0 or 1. Racket
-;; code that must not pass a map to a metafunction calls this.
 (define (map-ref pairs k)
   (cond
     [(assoc k pairs) => (λ (pair) (list (cadr pair)))]
     [else '()]))
 
-;; Replaces the first pair with key k where it stands, or adds one in front.
-;; New keys go in front because equal-hash-code, which Redex's caches use,
-;; looks only at the start of a long list.
 (define (update pairs k v)
   (if (assoc k pairs)
       (let loop ([pairs pairs])
@@ -114,10 +104,8 @@
      (apply map list rows)]))
 
 ;;
-;; Texts and lists, as in p4spectec/src/interp/shared/eval/ops.rs
+;; Texts and lists
 ;;
-;; Texts are indexed by characters, as spec-meta's are. An index or a slice
-;; out of bounds raises an error. A slice is a start and a length.
 
 (define (text-len t)
   (string-length t))
@@ -179,8 +167,7 @@
 ;; Debugging
 ;;
 
-;; Reports the value of `-- debug e`; it is written to stderr unless the
-;; entry relays it to the host.
+;; Reports the value of `-- debug e` to stderr
 (define current-debug
   (make-parameter (λ (t) (writeln t (current-error-port)))))
 

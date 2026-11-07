@@ -1,10 +1,5 @@
 #lang racket/base
 ;; Mirrors spec-meta/4-execution/4.09-eval-prem.watsup.
-;;
-;; A premise evaluates in place, updates the innermost IN's layer, and reduces
-;; to OK; a premise sequence is a statement sequence (seq). Eval_prem/error
-;; becomes complement rules, and "frame/failure" where a premise's
-;; sub-relation fails.
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
@@ -21,7 +16,7 @@
 
    ;;; Relation premises
 
-   ;; rulegroup Eval_prem/relpr, once the inputs are evaluated
+   ;; rulegroup Eval_prem/relpr
    (--> (REL id (val ...) (exp_out ...))
         (eval-prem/relpr (call-rel id (val ...)) (exp_out ...))
         "eval-prem/relpr")
@@ -43,17 +38,17 @@
 
    ;;; If-hold and if-not-hold premises
 
-   ;; rulegroup Eval_prem/ifholdpr, once the inputs are evaluated
+   ;; rulegroup Eval_prem/ifholdpr
    (--> (IFHOLD id (val_input ...))
         (eval-prem/ifholdpr (call-rel id (val_input ...)))
         "eval-prem/ifholdpr")
    (--> (eval-prem/ifholdpr (OK ())) OK
         "eval-prem/ifholdpr/succ")
    (--> (eval-prem/ifholdpr (OK (val_h val_t ...))) ERROR
-        ;; otherwise: the relation has outputs
+        ;; otherwise
         "eval-prem/ifholdpr/error")
 
-   ;; rulegroup Eval_prem/ifnotholdpr, once the inputs are evaluated
+   ;; rulegroup Eval_prem/ifnotholdpr
    (--> (IFNOTHOLD id (val_input ...))
         (eval-prem/ifnotholdpr (call-rel id (val_input ...)))
         "eval-prem/ifnotholdpr")
@@ -77,8 +72,7 @@
         (where _ ,(debug (term val)))
         "eval-prem/dbg")))
 
-;; The rules on a term and its context, (r G L K), which read G or L, or
-;; write L
+;; The rules on a term and its context, (r G L K)
 (define ->term+ctx/eval-prem
   (reduction-relation
    al
@@ -99,13 +93,13 @@
         (where ERROR (sub-opt L (vari_bound ...)))
         "eval-prem/iterpr-opt/error")
 
-   ;; Eval_prem/succ-some, once prem has updated C_sub to C_sub_res
+   ;; Eval_prem/succ-some
    (--> ((eval-prem/iterpr-opt/some (IN L_sub_res OK) (vari_bind ...)) G L K)
         (OK G (add-varis L ((iter-vari vari_bind QUEST) ...) ((OPT (val_bind)) ...)) K)
         (where ((val_bind ...)) (find-varis L_sub_res (vari_bind ...)))
         "eval-prem/iterpr-opt/succ-some")
    (--> ((eval-prem/iterpr-opt/some (IN L_sub_res OK) (vari_bind ...)) G L K) (ERROR G L K)
-        ;; otherwise: some variable is unbound
+        ;; otherwise
         (where () (find-varis L_sub_res (vari_bind ...)))
         "eval-prem/iterpr-opt/succ-some/error")
 
@@ -126,14 +120,14 @@
         (where ERROR (sub-list L (vari_bound ...)))
         "eval-prem/iterpr-list/error")
 
-   ;; Eval_prem/succ-list, once prem has updated each C_sub to C_sub_res
+   ;; Eval_prem/succ-list
    (--> ((eval-prem/iterpr-list/list ((IN L_sub_res OK) ...) (vari_bind ...)) G L K)
         (OK G (add-varis L ((iter-vari vari_bind STAR) ...) ((LIST (val_bind ...)) ...)) K)
         (where (((val_sub_bind ...)) ...) ((find-varis L_sub_res (vari_bind ...)) ...))
         (where ((val_bind ...) ...) (transpose- ((val_sub_bind ...) ...)))
         "eval-prem/iterpr-list/succ-list")
    (--> ((eval-prem/iterpr-list/list ((IN L_sub_res OK) ...) (vari_bind ...)) G L K) (ERROR G L K)
-        ;; otherwise: some variable is unbound in some sub-context
+        ;; otherwise
         (side-condition
          (not (redex-match? al (((val ...)) ...)
                             (term ((find-varis L_sub_res (vari_bind ...)) ...)))))

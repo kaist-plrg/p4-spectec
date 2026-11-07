@@ -1,7 +1,5 @@
 #lang racket/base
 ;; Mirrors spec-meta/4-execution/4.04.2-typ-cast.watsup.
-;;
-;; A cast takes G and L for ctx, and passes L's tdenv to subtyp.
 
 (require redex/reduction-semantics
          "3.02-context.rkt"

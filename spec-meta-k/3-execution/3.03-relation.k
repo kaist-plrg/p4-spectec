@@ -1,10 +1,7 @@
 // Relations: their declarations and the extern relations.
 //
-// Mirrors spec-meta/4-execution/4.02-relation.watsup. A relation of the
-// spec is a `<k>` computation here; this module declares the computations
-// and the modules that follow give their rules. The context `ctx` is the
-// configuration, and a `failure` outcome is a signal in flight
-// (3.00-result.k).
+// Mirrors spec-meta/4-execution/4.02-relation.watsup.
+// Declares the relations as `<k>` computations.
 
 requires "3.04.2-extern-host.k"
 
@@ -31,10 +28,6 @@ module RELATION
   //   relation Eval_exp_maybe: ctx? |- exp : expOptRes
   //   relation Eval_exp_each:  ctx* |- exp : expsRes
   //
-  // An `Exp` or `ExpList` at the head of `<k>` evaluates in place by the
-  // strictness of 1.0-syntax.k (3.08-eval-exp.k); the optional and list
-  // contexts are `optSub`/`listSub` there.
-  //
   //   relation Eval_path_acc: ctx |- val path : pathRes
   //   relation Eval_path_upd: ctx |- val path := val : pathRes
   // ==========================================================================
@@ -58,9 +51,6 @@ module RELATION
   //   relation Assign_exps: ctx |- exp* := val* : assignRes
   //   relation Assign_arg:  ctx |- arg := val : assignRes
   //   relation Assign_args: ctx |- arg* := val* : assignRes
-  //
-  // A statement: `.K` with the bindings added to `<local>`, or `ERROR`. The
-  // values of `assignExps` may still be a computation (a relation's outputs).
   // ==========================================================================
 
   syntax KItem ::= assignExp(Exp, Val)

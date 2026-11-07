@@ -1,14 +1,5 @@
 #lang racket/base
 ;; Mirrors spec-meta/4-execution/4.10-eval-call-func.watsup.
-;;
-;; A callee runs in (IN L_callee ...), and each clause in a copy of it, so a
-;; clause leaves no bindings to the next. The clauses are evaluated in order
-;; until one succeeds or errors (Eval_clauses), which gives the result; unlike
-;; spec-meta, the later clauses are not checked to be unmatched. The
-;; `otherwise` clause runs only when every clause is unmatched.
-;; Table rows are tried in order, and the first row that is not unmatched
-;; gives the result. The `/error` rules become complement rules, and
-;; "frame/failure" where a clause's or a row's statement fails.
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
@@ -25,14 +16,12 @@
 
    ;;; Clause invocation
 
-   ;; rule Eval_clause/succ: the arguments are assigned, the premises hold,
-   ;; and the output is evaluated, as a statement sequence
+   ;; rule Eval_clause/succ
    (--> (eval-clause ((arg ...) exp_out (prem ...)) (val ...))
         (seq ((assign-args (arg ...) (val ...)) prem ... exp_out))
         "eval-clause")
 
-   ;; rulegroup Eval_clauses, once the clause at hand is evaluated. An
-   ;; unmatched clause is passed over by the frame (Eval_clauses/unmatch).
+   ;; rulegroup Eval_clauses, once the clause at hand is evaluated
    (--> (eval-clauses (UNMATCH ...)) UNMATCH
         "eval-clauses/nil")
    (--> (eval-clauses (UNMATCH ... val_out (IN L (eval-clause clause (val ...))) ...)) val_out
@@ -40,9 +29,7 @@
    (--> (eval-clauses (UNMATCH ... ERROR (IN L (eval-clause clause (val ...))) ...)) ERROR
         "eval-clauses/error")
 
-   ;; Determinism check (Eval_clauses_on_ok): replaces "eval-clauses/succ"
-   ;; above; also uncomment eval-clauses-on-ok in 3.03-machine.rkt.
-   ;; A later success or error is an error.
+   ;; Determinism check (Eval_clauses_on_ok): replaces "eval-clauses/succ".
    ;;
    ;; (--> (eval-clauses (UNMATCH ... val_out (IN L (eval-clause clause (val ...))) ...))
    ;;      (eval-clauses-on-ok val_out ((IN L (eval-clause clause (val ...))) ...))
@@ -57,8 +44,7 @@
 
    ;;; Table meta-function invocation
 
-   ;; rule Eval_tblrow/succ: the row runs in a layer of its own, as a
-   ;; statement sequence
+   ;; rule Eval_tblrow/succ
    (--> (eval-tblrow ((arg ...) exp_out (prem ...)) (val ...))
         (IN (empty-localLayer) (seq ((assign-args (arg ...) (val ...)) prem ... exp_out)))
         "eval-tblrow")
@@ -82,8 +68,7 @@
 
    ;;; Defined meta-function invocation
 
-   ;; rulegroup Call_defined_func: the callee's layer binds the type
-   ;; parameters, and every clause runs in a copy of it
+   ;; rulegroup Call_defined_func
    (--> (call-defined-func (FUNC id (tparam ..._n) (param ...) typ_ret (clause ...) (elsClause ...))
                            (typ ..._n) (val ...))
         (IN L_callee
@@ -94,11 +79,9 @@
    (--> (call-defined-func (FUNC id (tparam ...) (param ...) typ_ret (clause ...) (elsClause ...))
                            (typ ...) (val ...))
         ERROR
-        ;; otherwise: as many types as type parameters
+        ;; otherwise
         (side-condition (not (= (length (term (tparam ...))) (length (term (typ ...))))))
         "call-defined-func/error")
-   ;; once the clauses are evaluated: the result, or the `otherwise` clause
-   ;; in the callee's layer when all are unmatched
    (--> (call-defined-func/clauses valres (elsClause ...) (val ...)) valres
         (side-condition (not (equal? (term valres) 'UNMATCH)))
         "call-defined-func/result")
@@ -108,30 +91,28 @@
    (--> (call-defined-func/clauses UNMATCH () (val ...)) UNMATCH
         "call-defined-func/unmatch/none")
 
-   ;;; Extern meta-function invocation, which reaches the host
+   ;;; Extern meta-function invocation
 
    ;; extern relation Call_extern_func
    (--> (call-extern-func id (typ ...) (val ...)) valres
         (where valres ,(host-call-extern-func (term id) (term (typ ...)) (term (val ...))))
         "call-extern-func")
 
-   ;;; Builtin meta-function invocation, which reaches the host
+   ;;; Builtin meta-function invocation
 
    ;; extern relation Call_builtin_func
    (--> (call-builtin-func id (typ ...) (val ...)) valres
         (where valres ,(host-call-builtin-func (term id) (term (typ ...)) (term (val ...))))
         "call-builtin-func")))
 
-;; The rules on a term and its context, (r G L K), which read G or L, or
-;; write L
+;; The rules on a term and its context, (r G L K)
 (define ->term+ctx/eval-call-func
   (reduction-relation
    al
 
    ;;; Meta-function call
 
-   ;; rulegroup Call_func: the name is resolved through the local function
-   ;; environment, and its definition found in the global layer
+   ;; rulegroup Call_func
    (--> ((call-func id (typ ...) (val ...)) G L K) ((call-extern-func id_func (typ ...) (val ...)) G L K)
         (where ((EXTFUNC id_func (tparam ...) (param ...) typ_ret)) (find-func G (resolve-func-param L id)))
         "call-func/extern")
@@ -145,10 +126,8 @@
         (where (definedFuncDefn) (find-func G (resolve-func-param L id)))
         "call-func/defined")
    (--> ((call-func id (typ ...) (val ...)) G L K) (ERROR G L K)
-        ;; otherwise: no such function
         (where () (find-func G (resolve-func-param L id)))
         "call-func/error")
    (--> ((call-func id (typ_h typ_t ...) (val ...)) G L K) (ERROR G L K)
-        ;; otherwise: a table function takes no types
         (where (tableFuncDefn) (find-func G (resolve-func-param L id)))
         "call-func/table/error")))

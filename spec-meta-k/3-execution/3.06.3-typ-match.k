@@ -1,8 +1,6 @@
 // Value-type matching.
 //
-// Mirrors spec-meta/4-execution/4.04.1-typ-match.watsup. `fenv` is the
-// global function environment and `tdenv` the merged type definition
-// environment (`updateMap(gtdenv, ltdenv)`).
+// Mirrors spec-meta/4-execution/4.04.1-typ-match.watsup.
 //
 //   syntax subtypRes = ok<bool> | error
 
@@ -38,9 +36,6 @@ module TYP-MATCH
   //
   //   dec $subtyp_var(fenv, tdenv, id, typ*, val) : subtypRes
   //   dec $subtyp_def(fenv, tdenv, typDef, typ*, val) : subtypRes
-  //
-  // An unknown name, a wrong number of arguments, an extern type with
-  // arguments, and a type parameter are errors.
   // ==========================================================================
 
   syntax Res ::= subtypVar(Id, Map, Map, TArgList, Val)
@@ -63,7 +58,6 @@ module TYP-MATCH
     requires sameArity(Ps, Ts)
   rule subtypDef(_:Map, _:Map, _:TypDef, _:TArgList, _:Val) => ERROR [owise]
 
-  // `$subtyp` against a substituted type.
   syntax Res ::= subtypRes(Map, Map, Res, Val)
                                             [function, symbol(subtypRes)]
   rule subtypRes(FE:Map, TD:Map, ok(T:Typ), V:Val) => subtyp(FE, TD, T, V)

@@ -39,9 +39,6 @@ module EVAL-OPS
   //
   //   syntax numBinopRes = ok<val> | error
   //   dec $numBinop(numBinop, num, num) : numBinopRes
-  //
-  // A nat/int mix, a division by zero, and `POW` (no clause in the spec) are
-  // errors.
   // ==========================================================================
 
   syntax Res ::= numBinop(NumBinOp, Num, Num)

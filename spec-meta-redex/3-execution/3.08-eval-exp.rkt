@@ -1,12 +1,5 @@
 #lang racket/base
 ;; Mirrors spec-meta/4-execution/4.06-eval-exp.watsup.
-;;
-;; An exp evaluates in place: each evaluated subterm is replaced by its value,
-;; and a constructor whose parts are all values is a value already. The rules
-;; of Eval_path_acc on an evaluated DOT, IDX, or SLICE are in 3.09-eval-path.rkt.
-;; Eval_exp/error becomes complement rules next to the rules they cover:
-;; "<group>/error" where the evaluated subterms fit no rule, and
-;; "<group>/<rule>/error" where a rule's own premise fails.
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"
@@ -121,7 +114,7 @@
         (where n ,(length (term (val ...))))
         "eval-exp/len/list")
    (--> (LEN val) ERROR
-        ;; otherwise: neither a text nor a list
+        ;; otherwise
         (side-condition (not (redex-match? al (TEXT t) (term val))))
         (side-condition (not (redex-match? al (LIST (val ...)) (term val))))
         "eval-exp/len/error")
@@ -134,13 +127,11 @@
 
    ;;; Expression sequences
 
-   ;; Eval_exps on a sequence of expressions, for Eval_rul's outputs. Not a
-   ;; watsup relation of its own here: the expressions evaluate in place.
+   ;; Eval_exps, for Eval_rul's outputs
    (--> (eval-exps (val ...)) (OK (val ...))
         "eval-exps")))
 
-;; The rules on a term and its context, (r G L K), which read G or L, or
-;; write L
+;; The rules on a term and its context, (r G L K)
 (define ->term+ctx/eval-exp
   (reduction-relation
    al
@@ -174,8 +165,7 @@
         (where ERROR (downcast G L typ val))
         "eval-exp/downcast/error")
 
-   ;; rulegroup Eval_exp/subtype. $subtyp takes G and the local tdenv, in
-   ;; place of their extension (see subtyp).
+   ;; rulegroup Eval_exp/subtype
    (--> ((SUB val typ) G (name L {TYP tdenv FUNC fnenv VAL venv}) K) ((BOOL b) G L K)
         (where (OK b) (subtyp G tdenv typ val))
         "eval-exp/subtype/succ")
@@ -185,14 +175,13 @@
 
    ;;; Iterated expression evaluation rules
 
-   ;; rulegroup Eval_exp/iter. An iteration over sub-contexts is the option
-   ;; or list of exp under each of them, which evaluates as one.
+   ;; rulegroup Eval_exp/iter
    (--> ((ITER exp iterExp) G L K) (val G L K)
         (where (varr) (is-iter-on-var (ITER exp iterExp)))
         (where (val) (find-varr L varr))
         "eval-exp/iter/simple")
    (--> ((ITER exp iterExp) G L K) (ERROR G L K)
-        ;; otherwise: the variable is unbound
+        ;; otherwise
         (where (varr) (is-iter-on-var (ITER exp iterExp)))
         (where () (find-varr L varr))
         "eval-exp/iter/simple/error")

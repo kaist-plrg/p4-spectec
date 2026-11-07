@@ -11,7 +11,7 @@
 //           | ["funcV", <id>]
 //           | ["extV", <json>]
 //
-//   mixop ::= [[<atom>, ...], ...]     // an atoms matrix, exactly K's MixOp
+//   mixop ::= [[<atom>, ...], ...]
 //
 //   typ   ::= ["natT"] | ["intT"] | ["boolT"] | ["textT"]
 //           | ["varT", <id>, [typ, ...]] | ["tupT", [typ, ...]]
@@ -22,14 +22,11 @@
 //              | {"extern-rel":  <id>, "args": [val, ...]}
 //
 //   response ::= {"ok": val}         // builtin and extern-func
-//              | {"ok": [val, ...]}  // extern-rel: a relation yields val*
-//              | {"fail": null}      // recoverable mismatch
+//              | {"ok": [val, ...]}  // extern-rel
+//              | {"fail": null}      // mismatch
 //              | {"error": text}     // a fatal error of the host
 //
-// Calls from the host and their answers (3.14-entry.k). A spec is the JSON
-// of 3.04.3-spec-json.k; call fields come sorted. Eval_AL_rel is `load`
-// then `call-rel`, and Eval_AL_func is `load` then `call-func` with
-// `"targs": []`.
+// Calls from the host and their answers.
 //
 //   call     ::= {"load": spec}      // $load_ctx($empty_ctx, spec)
 //              | {"args": [val, ...], "call-rel": <id>}
@@ -241,7 +238,6 @@ module EXTERN-JSON
   rule <k> externRelResult({ "fail" : null, .JSONs }) => UNMATCH ... </k>
   rule <k> externRelResult({ "error" : S:String, .JSONs }) => hostError(S) ... </k>
 
-  // A host error is an execution error; the host keeps its report.
   syntax KItem ::= hostError(String)
   rule <k> hostError(_:String) => ERROR ... </k>
 

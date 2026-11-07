@@ -75,9 +75,6 @@ module STDLIB
 
   // ==========================================================================
   // Text by characters
-  //
-  // A K string holds the UTF-8 bytes of a text, but a text counts its
-  // characters: the bytes that do not continue one (`10xxxxxx`).
   // ==========================================================================
 
   syntax Int ::= lengthText(String)         [function, total, symbol(lengthText)]
