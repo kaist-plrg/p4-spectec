@@ -44,24 +44,27 @@ struct Continuation {
 }
 
 impl Continuation {
+    // - Positions
+
     /// Starts a definition body that falls through to its otherwise clause or fails.
-    fn of_body(has_else: bool) -> Self {
+    fn for_body(has_else: bool) -> Self {
         let fallthrough = if has_else { pl::Fallthrough::Else } else { pl::Fallthrough::Fail };
         Continuation { follows: false, fallthrough, id_group_next: None }
     }
 
-    /// Reports whether any instruction or alternative recovers from a failure.
-    fn has_continuation(&self) -> bool {
-        self.follows || self.fallthrough != pl::Fallthrough::Fail
-    }
-
-    /// Continues a block after one of its instructions.
-    fn followed(&self) -> Self {
+    /// Continues the instruction before this one in the same block.
+    fn for_preceding_instr(&self) -> Self {
         Continuation { follows: true, ..self.clone() }
     }
 
+    /// Continues the alternative before one that tries `id_group_first` first.
+    fn for_preceding_alt(&self, id_group_first: Option<pl::Id>) -> Self {
+        let id_group_next = id_group_first.or_else(|| self.id_group_next.clone());
+        Continuation { follows: false, fallthrough: pl::Fallthrough::Next, id_group_next }
+    }
+
     /// Enters a rule-group body, naming the group that a next route arm tries first.
-    fn enter_rule_group(&self) -> Self {
+    fn for_rule_group(&self) -> Self {
         let fallthrough = match (&self.fallthrough, &self.id_group_next) {
             (pl::Fallthrough::Next, Some(id_group)) => pl::Fallthrough::Group(id_group.clone()),
             (pl::Fallthrough::Next, None) => unreachable!("route arms name their next group"),
@@ -72,13 +75,18 @@ impl Continuation {
 
     // - Failure destinations
 
+    /// Reports whether any instruction or alternative recovers from a failure.
+    fn recovers(&self) -> bool {
+        self.follows || self.fallthrough != pl::Fallthrough::Fail
+    }
+
     /// Stamps a destination when evaluating `syntax` may mismatch.
-    fn on_mismatch<T: HasCall + ?Sized>(&self, syntax: &T) -> Option<pl::Fallthrough> {
+    fn fallthrough_mismatch<T: HasCall + ?Sized>(&self, syntax: &T) -> Option<pl::Fallthrough> {
         may_mismatch(syntax).then(|| self.fallthrough.clone())
     }
 
     /// Stamps a destination when a failed condition leaves its alternative.
-    fn on_condition(&self) -> Option<pl::Fallthrough> {
+    fn fallthrough_condition(&self) -> Option<pl::Fallthrough> {
         (!self.follows).then(|| self.fallthrough.clone())
     }
 }
@@ -174,12 +182,14 @@ fn classify_if_instr<Tier>(
 ) -> Classified<Tier> {
     instr_if.block = classify_block(cont, classify_tier, instr_if.block);
     // A failed condition continues when anything recovers
-    if cont.has_continuation() {
-        let fallthrough = cont.on_mismatch(&instr_if.exp).or(cont.on_condition());
+    if cont.recovers() {
+        let fallthrough = cont
+            .fallthrough_mismatch(&instr_if.exp)
+            .or(cont.fallthrough_condition());
         return (pl::InstrKind::If(instr_if), fallthrough);
     }
     // Otherwise the condition is required and fails the definition
-    let fallthrough = cont.on_mismatch(&instr_if.exp);
+    let fallthrough = cont.fallthrough_mismatch(&instr_if.exp);
     let instr_check =
         pl::CheckInstr { exp: instr_if.exp, iter_exps: instr_if.iter_exps, block: instr_if.block };
     (pl::InstrKind::Check(instr_check), fallthrough)
@@ -193,7 +203,7 @@ fn classify_check_instr<Tier>(
     mut instr_check: pl::CheckInstr<Tier>,
 ) -> Classified<Tier> {
     instr_check.block = classify_block(cont, classify_tier, instr_check.block);
-    let fallthrough = cont.on_mismatch(&instr_check.exp);
+    let fallthrough = cont.fallthrough_mismatch(&instr_check.exp);
     (pl::InstrKind::Check(instr_check), fallthrough)
 }
 
@@ -209,10 +219,10 @@ fn classify_hold_instr<Tier>(
     // Only a missing branch lets the relation's outcome fall through
     let fallthrough_condition = match &instr_hold.hold_case {
         pl::HoldCase::Both(..) => None,
-        pl::HoldCase::Hold(..) | pl::HoldCase::NotHold(..) => cont.on_condition(),
+        pl::HoldCase::Hold(..) | pl::HoldCase::NotHold(..) => cont.fallthrough_condition(),
     };
     let fallthrough = cont
-        .on_mismatch(instr_hold.not_exp.args())
+        .fallthrough_mismatch(instr_hold.not_exp.args())
         .or(fallthrough_condition);
     (pl::InstrKind::Hold(instr_hold), fallthrough)
 }
@@ -249,14 +259,14 @@ fn classify_case_instr<Tier>(
         .enumerate()
         .map(|(idx, case)| classify_case(cont, classify_tier, partial && idx == idx_last, case))
         .collect();
-    let fallthrough = cont.on_mismatch(&instr_case.exp);
+    let fallthrough = cont.fallthrough_mismatch(&instr_case.exp);
     (pl::InstrKind::Case(instr_case), fallthrough)
 }
 
 // - Let instruction
 
 fn classify_let_instr<Tier>(cont: &Continuation, instr_let: pl::LetInstr) -> Classified<Tier> {
-    let fallthrough = cont.on_mismatch(&instr_let.exp_r);
+    let fallthrough = cont.fallthrough_mismatch(&instr_let.exp_r);
     (pl::InstrKind::Let(instr_let), fallthrough)
 }
 
@@ -266,7 +276,7 @@ fn classify_debug_instr<Tier>(
     cont: &Continuation,
     instr_debug: pl::DebugInstr,
 ) -> Classified<Tier> {
-    let fallthrough = cont.on_mismatch(&instr_debug.exp);
+    let fallthrough = cont.fallthrough_mismatch(&instr_debug.exp);
     (pl::InstrKind::Debug(instr_debug), fallthrough)
 }
 
@@ -276,7 +286,7 @@ fn classify_destruct_instr<Tier>(
     cont: &Continuation,
     instr_destruct: pl::DestructInstr,
 ) -> Classified<Tier> {
-    let fallthrough = cont.on_mismatch(&instr_destruct.exp);
+    let fallthrough = cont.fallthrough_mismatch(&instr_destruct.exp);
     (pl::InstrKind::Destruct(instr_destruct), fallthrough)
 }
 
@@ -322,8 +332,10 @@ fn classify_case<Tier>(
     mut case: pl::Case<Tier>,
 ) -> pl::Case<Tier> {
     case.block = classify_block(cont, classify_tier, case.block);
-    let fallthrough_condition = if is_last_partial { cont.on_condition() } else { None };
-    case.fallthrough = cont.on_mismatch(&case.guard).or(fallthrough_condition);
+    let fallthrough_condition = if is_last_partial { cont.fallthrough_condition() } else { None };
+    case.fallthrough = cont
+        .fallthrough_mismatch(&case.guard)
+        .or(fallthrough_condition);
     case
 }
 
@@ -341,11 +353,11 @@ fn classify_group_tier(
             (pl::GroupInstr::Rule(instr), fallthrough)
         }
         pl::GroupInstr::Result(instr) => {
-            let fallthrough = cont.on_mismatch(instr.exps_output.as_slice());
+            let fallthrough = cont.fallthrough_mismatch(instr.exps_output.as_slice());
             (pl::GroupInstr::Result(instr), fallthrough)
         }
         pl::GroupInstr::Return(instr) => {
-            let fallthrough = cont.on_mismatch(&instr.exp);
+            let fallthrough = cont.fallthrough_mismatch(&instr.exp);
             (pl::GroupInstr::Return(instr), fallthrough)
         }
     }
@@ -379,7 +391,7 @@ fn classify_rule_group_instr(
     cont: &Continuation,
     mut instr_group: pl::RuleGroupInstr,
 ) -> pl::DispatchInstr {
-    let cont_group = cont.enter_rule_group();
+    let cont_group = cont.for_rule_group();
     instr_group.block = classify_group_block(&cont_group, instr_group.block);
     pl::DispatchInstr::Group(instr_group)
 }
@@ -404,7 +416,7 @@ fn classify_block<Tier>(
     let mut instrs = Vec::with_capacity(block.instrs.len());
     for instr in block.instrs.into_iter().rev() {
         instrs.push(classify_instr(&cont, classify_tier, instr));
-        cont = cont.followed();
+        cont = cont.for_preceding_instr();
     }
     // Restore source order after propagating continuations backwards
     instrs.reverse();
@@ -427,11 +439,7 @@ fn classify_blocks<Tier: AltTier>(
     let mut blocks_classified: Vec<pl::Block<Tier>> = Vec::with_capacity(blocks.len());
     for block in blocks.into_iter().rev() {
         let block_classified = classify_block(&cont, classify_tier, block);
-        cont = Continuation {
-            follows: false,
-            fallthrough: pl::Fallthrough::Next,
-            id_group_next: Tier::id_group_first(&block_classified).or(cont.id_group_next),
-        };
+        cont = cont.for_preceding_alt(Tier::id_group_first(&block_classified));
         blocks_classified.push(block_classified);
     }
     // Preserve alternative selection order
@@ -477,11 +485,11 @@ fn classify_rel_def(def_rel: pl::RelDef) -> pl::RelDef {
 }
 
 fn classify_defined_rel_def(mut def_rel: pl::DefinedRel) -> pl::DefinedRel {
-    let cont = Continuation::of_body(def_rel.block_else_opt.is_some());
+    let cont = Continuation::for_body(def_rel.block_else_opt.is_some());
     def_rel.block = classify_dispatch_block(&cont, def_rel.block);
     def_rel.block_else_opt = def_rel
         .block_else_opt
-        .map(|block| classify_dispatch_block(&Continuation::of_body(false), block));
+        .map(|block| classify_dispatch_block(&Continuation::for_body(false), block));
     def_rel
 }
 
@@ -499,11 +507,11 @@ fn classify_func_def(def_func: pl::MetaFuncDef) -> pl::MetaFuncDef {
 }
 
 fn classify_defined_func_def(mut def_func: pl::DefinedFunc) -> pl::DefinedFunc {
-    let cont = Continuation::of_body(def_func.block_else_opt.is_some());
+    let cont = Continuation::for_body(def_func.block_else_opt.is_some());
     def_func.block = classify_group_block(&cont, def_func.block);
     def_func.block_else_opt = def_func
         .block_else_opt
-        .map(|block| classify_group_block(&Continuation::of_body(false), block));
+        .map(|block| classify_group_block(&Continuation::for_body(false), block));
     def_func
 }
 
