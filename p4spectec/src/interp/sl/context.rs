@@ -39,6 +39,7 @@ pub type Context<'global> = shared::Context<'global, ast::RelDef, ast::MetaFuncD
 impl SpecEnv {
     /// Loads a specification and prepares its callables for slot execution,
     /// interning their notations and lowering calls for the selected `det` mode.
+    /// Relation calls become tail calls only under `tco`.
     ///
     /// Returns the number of instruction ids assigned during preparation.
     ///
@@ -47,11 +48,12 @@ impl SpecEnv {
     pub fn load(
         arena_mixop: &mut MixopArena,
         det: bool,
+        tco: bool,
         spec: source::Spec,
     ) -> Result<(Self, u32), Error> {
         let mut loaded = Self::new();
         let tdenv = loaded.load_typdefs(arena_mixop, &spec);
-        let instr_count = loaded.load_callables(arena_mixop, &tdenv, det, spec);
+        let instr_count = loaded.load_callables(arena_mixop, &tdenv, det, tco, spec);
         Ok((loaded, instr_count))
     }
 
@@ -90,11 +92,13 @@ impl SpecEnv {
         arena_mixop: &mut MixopArena,
         tdenv: &TDEnv,
         det: bool,
+        tco: bool,
         spec: source::Spec,
     ) -> u32 {
         let mut layout = FrameLayout::default();
         let mut instr_next = 0;
-        let mut ctx = PrepareContext::new(arena_mixop, tdenv, &mut layout, &mut instr_next, det);
+        let mut ctx =
+            PrepareContext::new(arena_mixop, tdenv, &mut layout, &mut instr_next, det, tco);
         for def in spec {
             match def.node {
                 source::DefKind::Rel(rel) => {

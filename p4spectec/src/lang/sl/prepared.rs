@@ -83,6 +83,4 @@ pub enum RuleInstr {
 pub struct RuleTailInstr {
     pub id: Id,
     pub exps_input: Vec<Exp>,
-    /// The elided result instruction's id.
-    pub instr_result: InstrId,
 }

@@ -60,6 +60,8 @@ pub struct Coverage {
 }
 
 /// Checks that preparation numbered the same instructions as `Cover`.
+///
+/// Fails when `tco` is on, since relation tail calls drop result instructions.
 fn check_instr_count(cover: &Cover, instr_count: Option<u32>) {
     assert_eq!(
         instr_count.map(|count| count as usize),
@@ -78,6 +80,8 @@ fn run_catching<T, E>(body: impl FnOnce() -> Result<T, E>) -> Outcome {
 }
 
 /// Evaluates each program through `relation` and records SL instruction coverage.
+///
+/// `config` must disable `tco`.
 pub fn cover_run(
     spec_sl: &sl::ast::Spec,
     config: Config,
@@ -118,6 +122,8 @@ pub fn cover_run(
 }
 
 /// Runs each P4/STF pair on the architecture and records SL instruction coverage.
+///
+/// `config` must disable `tco`.
 pub fn cover_sim(
     spec_sl: &sl::ast::Spec,
     arch: &str,

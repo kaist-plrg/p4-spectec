@@ -63,11 +63,13 @@ pub struct Config {
     det: bool,
     /// Type-check arguments and results at call boundaries.
     guard: bool,
+    /// Turn SL relation and function calls in tail position into tail calls.
+    tco: bool,
 }
 
 impl Config {
-    pub fn new(cache: bool, det: bool, guard: bool) -> Self {
-        Self { cache, det, guard }
+    pub fn new(cache: bool, det: bool, guard: bool, tco: bool) -> Self {
+        Self { cache, det, guard, tco }
     }
 }
 
@@ -157,8 +159,14 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 interp: AlInterp::new(AlConfig::new(config.cache, config.det, config.guard)),
             },
             Spec::Sl(spec) => {
-                let (spec_env, instr_count) = SlSpecEnv::load(&mut arena.mixop, config.det, spec)?;
-                let interp = SlInterp::new(SlConfig::new(config.cache, config.det, config.guard));
+                let (spec_env, instr_count) =
+                    SlSpecEnv::load(&mut arena.mixop, config.det, config.tco, spec)?;
+                let interp = SlInterp::new(SlConfig::new(
+                    config.cache,
+                    config.det,
+                    config.guard,
+                    config.tco,
+                ));
                 Backend::Sl { spec_env, interp, instr_count }
             }
             Spec::Pl(spec) => Backend::Pl {

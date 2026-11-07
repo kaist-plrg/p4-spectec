@@ -263,7 +263,7 @@ fn run_command(args: RunArgs) -> Result<(), ()> {
     .map_err(|report| render_report(&mut renderer, &report))?;
 
     // Execute with the requested interpreter controls
-    let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard);
+    let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard, true);
     p4spectec::run(spec, config, &args.relation, &args.includes, &args.program).map_err(
         |error| match error {
             RunError::Build(report) => {
@@ -333,7 +333,7 @@ fn sim_command(args: SimArgs) -> Result<(), ()> {
     .map_err(|report| render_report(&mut renderer, &report))?;
 
     // Build the requested native architecture
-    let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard);
+    let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard, true);
     let mut simulator = p4spectec::build_simulator(spec, &args.arch, config, args.plugin_encoding)
         .map_err(|report| render_report(&mut renderer, &report))?;
 
@@ -366,7 +366,8 @@ struct CoverConfigArgs {
 
 impl CoverConfigArgs {
     fn config(&self) -> runner::Config {
-        runner::Config::new(!self.no_cache, !self.no_det, self.guard)
+        // Tail calls would drop the result instructions coverage must see
+        runner::Config::new(!self.no_cache, !self.no_det, self.guard, false)
     }
 
     fn describe(&self) -> String {

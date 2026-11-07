@@ -197,12 +197,6 @@ impl InstrHandler {
 
 impl Handler for InstrHandler {
     fn on_instr(&mut self, _arena: &Arena, instr_sl: &sl::prepared::Instr) {
-        let mut flags = self.hits.flags.borrow_mut();
-        flags[instr_sl.note.index()] = true;
-        // A tail call elides its result instruction; count it as reached with the call
-        if let sl::prepared::InstrKind::Rule(sl::prepared::RuleInstr::Tail(instr)) = &instr_sl.node
-        {
-            flags[instr.instr_result.index()] = true;
-        }
+        self.hits.flags.borrow_mut()[instr_sl.note.index()] = true;
     }
 }

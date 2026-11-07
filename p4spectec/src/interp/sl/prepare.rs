@@ -3,8 +3,10 @@
 //! Source rules become ordinary or tail calls in the prepared stage.
 //! Tail position follows the interpreter's selection mode and otherwise blocks;
 //! table rows form one sequential block even in deterministic mode.
-//! Only a tail-position call that immediately returns its outputs is lowered.
-//! Instructions are numbered in pre-order, counting the elided tail results.
+//! Only a tail-position call that immediately returns its outputs is lowered,
+//! and only under `tco`.
+//! Instructions are numbered in pre-order;
+//! without `tco` the numbering matches the source pre-order.
 //! Top-level relations and functions return callables with their own layouts.
 
 use std::{mem, rc::Rc};
@@ -35,6 +37,8 @@ pub struct PrepareContext<'a> {
     pub layout: &'a mut FrameLayout,
     /// The runner's instruction-selection mode.
     pub det: bool,
+    /// Lower tail-position relation calls into tail calls.
+    pub tco: bool,
     /// The next instruction id, shared across definitions.
     pub instr_next: &'a mut u32,
     pos: Position,
@@ -48,8 +52,9 @@ impl<'a> PrepareContext<'a> {
         layout: &'a mut FrameLayout,
         instr_next: &'a mut u32,
         det: bool,
+        tco: bool,
     ) -> Self {
-        Self { arena_mixop, tdenv, layout, det, instr_next, pos: Position::Tail }
+        Self { arena_mixop, tdenv, layout, det, tco, instr_next, pos: Position::Tail }
     }
 
     fn next_instr_id(&mut self) -> ast::InstrId {
@@ -82,6 +87,7 @@ impl PrepareContext<'_> {
             tdenv: self.tdenv,
             layout: &mut *self.layout,
             det: self.det,
+            tco: self.tco,
             instr_next: &mut *self.instr_next,
             pos,
         }
@@ -228,13 +234,12 @@ impl Prepare<PrepareContext<'_>> for source::RuleInstr {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         // Compare source expressions before their mixops become arena handles
-        if self.is_tail_call(ctx.pos) {
+        if ctx.tco && self.is_tail_call(ctx.pos) {
             let (exps_input, _) = input::split(&self.input_hint, self.not_exp.into_args())
                 .expect("input hint must fit relation");
             return ast::RuleInstr::Tail(ast::RuleTailInstr {
                 id: self.id,
                 exps_input: exps_input.prepare(&mut ctx.il()),
-                instr_result: ctx.next_instr_id(),
             });
         }
         // Ordinary calls retain output binding, iterations, and the continuation
@@ -503,6 +508,7 @@ impl Prepare<PrepareContext<'_>> for source::DefinedFunc {
             tdenv: &tdenv,
             layout: &mut *ctx.layout,
             det: ctx.det,
+            tco: ctx.tco,
             instr_next: &mut *ctx.instr_next,
             pos: ctx.pos,
         };
