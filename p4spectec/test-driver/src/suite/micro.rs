@@ -5,7 +5,7 @@
 //! A success source must pass every stage up to that stage;
 //! a failure source must pass every earlier stage and fail at it.
 //! The specdoc stage fails when AsciiDoc rendering of PL warns;
-//! the run stage builds a runner and evaluates `$main()`.
+//! the run stage builds a runner and evaluates the relation `Main`.
 //! Each configuration runs its `stages` in order,
 //! and skips suites whose stage is outside them.
 
@@ -248,12 +248,14 @@ fn first_failure(path: &Path, stages: &[Stage], config: Config) -> Result<Option
     Ok(None)
 }
 
-/// Builds a runner and evaluates `$main()`, returning `None` on failure.
+/// Builds a runner and evaluates the relation `Main`, returning `None` on failure.
+///
+/// `Main` takes no inputs and gives no outputs; its notation is the atom `OK`.
 fn eval_main(spec: Spec, config: Config) -> Option<Output> {
     let mut arena = Arena::new();
     let mut runner = interpreter::build(&mut arena, spec, config, NullExtern).ok()?;
     runner
-        .eval_func(&mut arena, "main", &[], &[])
+        .eval_rel(&mut arena, "Main", &[])
         .result
         .ok()
         .map(|_| Output::Value)
