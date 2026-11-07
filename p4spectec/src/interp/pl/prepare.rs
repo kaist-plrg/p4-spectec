@@ -337,6 +337,7 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
             .map(|case| ast::Case {
                 guard: ast::Guard::prepare(ctx, case.guard, &typ_scrut),
                 block: case.block.prepare(ctx),
+                fallthrough: case.fallthrough,
             })
             .collect();
         ast::CaseInstr { exp, cases, totality: self.totality, dangle: self.dangle }
