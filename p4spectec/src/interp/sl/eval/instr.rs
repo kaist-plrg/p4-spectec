@@ -7,6 +7,7 @@
 //! The `tail` flag marks the last instruction of a callee body,
 //! so a function return there can become a tail call.
 //! Relation tail calls are selected when the specification is prepared.
+//! Both kinds are made only under the `tco` option.
 
 use std::borrow::Cow;
 
@@ -410,7 +411,10 @@ fn eval_return_instr<Iface: Interface, Ext: Extern>(
     tail: bool,
 ) -> Backtrack<Flow> {
     // Only a call in tail position can become a tail call
-    if tail && let ast::ExpKind::Call(id, targs, args) = &instr.exp.node {
+    if tail
+        && runner_ctx.interp().config.tco
+        && let ast::ExpKind::Call(id, targs, args) = &instr.exp.node
+    {
         // Resolve type arguments and evaluate arguments before deciding
         let targs = unwrap_from_result!(expr::resolve_targs(ctx.as_ref(), targs), &id.span);
         let values = unwrap!(expr::eval_args(runner_ctx, ctx.as_ref(), args));

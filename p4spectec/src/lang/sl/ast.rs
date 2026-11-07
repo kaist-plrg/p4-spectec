@@ -5,13 +5,16 @@
 //! The stage parameter `P` (`stage::Stage`) lets the interpreter
 //! instantiate names with slots and select the rule-call representation.
 
-use crate::lang::{common::source::Phrase, hints::input::InputHint};
+use crate::lang::{
+    common::source::{NotePhrase, Phrase},
+    hints::input::InputHint,
+};
 
 use crate::lang::el;
 
 use crate::lang::il;
 
-pub use super::stage::{Source, Stage};
+pub use super::stage::{InstrId, Source, Stage};
 
 // Numbers
 
@@ -167,8 +170,8 @@ pub enum Guard<P: Stage = Source> {
 
 // Instructions
 
-/// An instruction with its span.
-pub type Instr<P = Source> = Phrase<InstrKind<P>>;
+/// An instruction with its stage's note and its span.
+pub type Instr<P = Source> = NotePhrase<InstrKind<P>, <P as Stage>::InstrNote>;
 
 /// The forms of an instruction.
 #[derive(Clone, Debug, PartialEq)]

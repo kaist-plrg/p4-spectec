@@ -65,6 +65,11 @@ impl Print for Instr {
     }
 }
 
+/// Prints one instruction's heading without its step number or blocks.
+pub(crate) fn write_instr_heading(output: &mut Printer<'_>, instr: &Instr) -> fmt::Result {
+    write_instr_with(output, instr, true, 0, 0)
+}
+
 /// Prints one instruction as a numbered step, then its blocks unless `short`.
 fn write_instr_with(
     output: &mut Printer<'_>,
@@ -410,7 +415,7 @@ impl Print for DefinedRel {
 }
 
 /// Fills the input expressions into the notation at the hint's positions.
-fn write_relinput(
+pub(crate) fn write_relinput(
     output: &mut Printer<'_>,
     rel_signature: &RelSignature,
     exps_input: &[Exp],

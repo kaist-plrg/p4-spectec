@@ -106,7 +106,7 @@ pub fn run(name_config: &str, path_log: Option<&Path>) -> Result<()> {
         .iter()
         .find(|config| config.name == name_config)
         .ok_or_else(|| Error::from(format!("no configuration named {name_config}")))?;
-    let config_runner = Config::new(config.cache, config.det, false);
+    let config_runner = Config::new(config.cache, config.det, false, true);
     let text_mode = format!("micro {} cache={} det={}", config.name, config.cache, config.det);
     let start = Instant::now();
     let stages = config.stages.as_slice();

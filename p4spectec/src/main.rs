@@ -2,6 +2,7 @@
 //!
 //! Commands render accumulated warnings before their result or error.
 //! `run` and `sim` choose how their execution failures are rendered.
+//! `cover-run` and `cover-sim` report SL instruction coverage over many inputs.
 //! [`main`] turns the command result into a process exit code.
 
 mod error;
@@ -9,12 +10,15 @@ mod error;
 use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Args, Parser, Subcommand};
+use indicatif::{ProgressBar, ProgressStyle};
 
 use p4spectec::lang::{data::encoding::Encoding, traits::print::Print};
 
 use p4spectec::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
 
 use p4spectec::runner::{self, RunError};
+
+use p4spectec::coverage::{self, Outcome, Progress};
 
 // = Helpers
 
@@ -256,7 +260,7 @@ fn run_command(args: RunArgs) -> Result<(), ()> {
     .map_err(|report| render_report(&mut renderer, &report))?;
 
     // Execute with the requested interpreter controls
-    let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard);
+    let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard, true);
     p4spectec::run(spec, config, &args.relation, &args.includes, &args.program).map_err(
         |error| match error {
             RunError::Build(report) => {
@@ -326,7 +330,7 @@ fn sim_command(args: SimArgs) -> Result<(), ()> {
     .map_err(|report| render_report(&mut renderer, &report))?;
 
     // Build the requested native architecture
-    let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard);
+    let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard, true);
     let mut simulator = p4spectec::build_simulator(spec, &args.arch, config, args.plugin_encoding)
         .map_err(|report| render_report(&mut renderer, &report))?;
 
@@ -338,6 +342,208 @@ fn sim_command(args: SimArgs) -> Result<(), ()> {
         .map_err(|report| render_exec_report(&report))?;
 
     println!("passed");
+    Ok(())
+}
+
+// = Coverage commands
+
+/// Interpreter controls of the coverage commands.
+#[derive(Args)]
+struct CoverConfigArgs {
+    /// Disable interpreter call caching.
+    #[arg(long)]
+    no_cache: bool,
+    /// Disable deterministic execution checks.
+    #[arg(long)]
+    no_det: bool,
+    /// Check interpreter guards.
+    #[arg(long)]
+    guard: bool,
+}
+
+impl CoverConfigArgs {
+    fn config(&self) -> runner::Config {
+        // Tail calls would drop the result instructions coverage must see
+        runner::Config::new(!self.no_cache, !self.no_det, self.guard, false)
+    }
+
+    fn describe(&self) -> String {
+        format!("config: cache={} det={} guard={}", !self.no_cache, !self.no_det, self.guard)
+    }
+}
+
+/// Creates a progress bar over the inputs, drawn on stderr only for a terminal.
+fn progress_bar(labels: &[String]) -> ProgressBar {
+    let style = ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
+        .expect("progress template must parse");
+    ProgressBar::new(labels.len() as u64).with_style(style)
+}
+
+/// Advances the bar and keeps a `[k/N] outcome path` line for each input that did not pass.
+fn print_progress(bar: &ProgressBar, progress: Progress, labels: &[String]) {
+    match progress {
+        // Name the input being evaluated
+        Progress::Start(index) => bar.set_message(labels[index].clone()),
+        // Print failures above the bar, then count the input
+        Progress::Finish(index, outcome) => {
+            if outcome != Outcome::Pass {
+                let line = format!(
+                    "[{}/{}] {} {}",
+                    index + 1,
+                    labels.len(),
+                    outcome.name(),
+                    labels[index]
+                );
+                bar.suspend(|| eprintln!("{line}"));
+            }
+            bar.inc(1);
+        }
+    }
+}
+
+#[derive(Args)]
+/// Arguments of the `cover-run` command.
+struct CoverRunArgs {
+    #[command(flatten)]
+    config: CoverConfigArgs,
+    /// Specification files or directories in processing order.
+    #[arg(required = true, value_name = "PATH")]
+    paths: Vec<PathBuf>,
+    /// Entry relation to evaluate.
+    #[arg(long = "rel", value_name = "RELATION")]
+    relation: String,
+    /// P4 programs, or directories searched recursively for them.
+    #[arg(long = "p4", required = true, value_name = "PATH")]
+    paths_p4: Vec<PathBuf>,
+    /// Include directories for the P4 programs.
+    #[arg(short = 'i', value_name = "DIR")]
+    includes: Vec<PathBuf>,
+    /// Directories of .exclude files naming skipped programs.
+    #[arg(short = 'e', long = "exclude", value_name = "DIR")]
+    excludes: Vec<PathBuf>,
+    /// Report file; the report goes to stdout without it.
+    #[arg(long = "cov", value_name = "PATH")]
+    path_cov: Option<PathBuf>,
+}
+
+/// Evaluates programs on the SL interpreter and reports instruction coverage.
+fn cover_run_command(args: CoverRunArgs) -> Result<(), ()> {
+    let mut renderer = Renderer::new(RenderConfig::default());
+    // Collect inputs before the slower specification loading
+    let programs = coverage::corpus::collect_excludes(&args.excludes)
+        .and_then(|excludes| coverage::corpus::collect_programs(&args.paths_p4, &excludes))
+        .map_err(|report| render_report(&mut renderer, &report))?;
+    let spec_sl =
+        report_warnings(&mut renderer, p4spectec::structure_with_warnings(&args.paths, true))
+            .map_err(|report| render_report(&mut renderer, &report))?;
+
+    // Evaluate every program on one runner
+    let labels: Vec<_> = programs
+        .items
+        .iter()
+        .map(|path| path.display().to_string())
+        .collect();
+    let bar = progress_bar(&labels);
+    let coverage = coverage::cover_run(
+        &spec_sl,
+        args.config.config(),
+        &args.relation,
+        &args.includes,
+        &programs.items,
+        |progress| print_progress(&bar, progress, &labels),
+    );
+    bar.finish_and_clear();
+    let coverage = coverage.map_err(|report| render_report(&mut renderer, &report))?;
+
+    let summary = format!("programs {}", coverage.describe_outcomes(programs.excluded));
+    let comments =
+        [format!("relation: {}", args.relation), args.config.describe(), summary.clone()];
+    coverage::log::write_report_to(args.path_cov.as_deref(), &spec_sl, &coverage.cover, &comments)
+        .map_err(|report| render_report(&mut renderer, &report))?;
+    eprintln!("{}", coverage::log::summary_line("cover-run", &summary, &coverage.cover));
+    Ok(())
+}
+
+#[derive(Args)]
+/// Arguments of the `cover-sim` command.
+struct CoverSimArgs {
+    #[command(flatten)]
+    config: CoverConfigArgs,
+    /// Specification files or directories in processing order.
+    #[arg(required = true, value_name = "PATH")]
+    paths: Vec<PathBuf>,
+    /// Target architecture: ebpf, psa, or v1model.
+    #[arg(long, value_name = "ARCH")]
+    arch: String,
+    /// Native plugin state encoding: arena-relative or arena-independent.
+    #[arg(long, default_value_t = Encoding::default(), value_name = "ENCODING")]
+    plugin_encoding: Encoding,
+    /// P4 programs, or directories searched recursively for them.
+    #[arg(long = "p4", required = true, value_name = "PATH")]
+    paths_p4: Vec<PathBuf>,
+    /// STF tests, or directories searched recursively for them.
+    #[arg(long = "stf", required = true, value_name = "PATH")]
+    paths_stf: Vec<PathBuf>,
+    /// Directories of P4 and STF files replacing inputs with the same stem.
+    #[arg(long = "patch", value_name = "DIR")]
+    dirs_patch: Vec<PathBuf>,
+    /// Include directories for the P4 programs.
+    #[arg(short = 'i', value_name = "DIR")]
+    includes: Vec<PathBuf>,
+    /// Directories of .exclude files naming skipped P4 or STF files.
+    #[arg(short = 'e', long = "exclude", value_name = "DIR")]
+    excludes: Vec<PathBuf>,
+    /// Report file; the report goes to stdout without it.
+    #[arg(long = "cov", value_name = "PATH")]
+    path_cov: Option<PathBuf>,
+}
+
+/// Runs STF tests on the SL interpreter and reports instruction coverage.
+fn cover_sim_command(args: CoverSimArgs) -> Result<(), ()> {
+    let mut renderer = Renderer::new(RenderConfig::default());
+    // Collect inputs before the slower specification loading
+    let pairs = coverage::corpus::collect_excludes(&args.excludes)
+        .and_then(|excludes| {
+            coverage::corpus::collect_pairs(
+                &args.arch,
+                &args.paths_p4,
+                &args.paths_stf,
+                &args.dirs_patch,
+                &excludes,
+            )
+        })
+        .map_err(|report| render_report(&mut renderer, &report))?;
+    for path in &pairs.filtered {
+        render_report(&mut renderer, &error::cover_input_filtered(path, &args.arch));
+    }
+    let spec_sl =
+        report_warnings(&mut renderer, p4spectec::structure_with_warnings(&args.paths, true))
+            .map_err(|report| render_report(&mut renderer, &report))?;
+
+    // Run every pair on one simulator
+    let labels: Vec<_> = pairs
+        .items
+        .iter()
+        .map(|(path_p4, path_stf)| format!("{} {}", path_p4.display(), path_stf.display()))
+        .collect();
+    let bar = progress_bar(&labels);
+    let coverage = coverage::cover_sim(
+        &spec_sl,
+        &args.arch,
+        args.config.config(),
+        args.plugin_encoding,
+        &args.includes,
+        &pairs.items,
+        |progress| print_progress(&bar, progress, &labels),
+    );
+    bar.finish_and_clear();
+    let coverage = coverage.map_err(|report| render_report(&mut renderer, &report))?;
+
+    let summary = format!("tests {}", coverage.describe_outcomes(pairs.excluded));
+    let comments = [format!("arch: {}", args.arch), args.config.describe(), summary.clone()];
+    coverage::log::write_report_to(args.path_cov.as_deref(), &spec_sl, &coverage.cover, &comments)
+        .map_err(|report| render_report(&mut renderer, &report))?;
+    eprintln!("{}", coverage::log::summary_line("cover-sim", &summary, &coverage.cover));
     Ok(())
 }
 
@@ -369,6 +575,10 @@ enum Command {
     Run(RunArgs),
     /// Simulate a P4 program and STF test on a target architecture.
     Sim(SimArgs),
+    /// Measure SL instruction coverage of running P4 programs.
+    CoverRun(CoverRunArgs),
+    /// Measure SL instruction coverage of simulating STF tests.
+    CoverSim(CoverSimArgs),
 }
 
 /// Dispatches the parsed command.
@@ -381,6 +591,8 @@ fn run(cli: Cli) -> Result<(), ()> {
         Command::Splice(args) => splice_command(args),
         Command::Run(args) => run_command(args),
         Command::Sim(args) => sim_command(args),
+        Command::CoverRun(args) => cover_run_command(args),
+        Command::CoverSim(args) => cover_sim_command(args),
     }
 }
 

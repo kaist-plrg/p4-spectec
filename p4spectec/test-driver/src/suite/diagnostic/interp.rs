@@ -92,7 +92,7 @@ pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     else {
         return Err(failure(name, "interpreter requires languages, relation, kind, and code"));
     };
-    let config = Config::new(true, case.det, false);
+    let config = Config::new(true, case.det, false, true);
     let paths = std::slice::from_ref(&case.input);
 
     // Keep parse, elaboration, lowering, and loading failures out of snapshots
