@@ -6,8 +6,6 @@
 //! The base runs natively, as `BaseConfig` says: a P4-SpecTec specification on
 //! the AL or SL interpreter (`St`), a K library compiled from the base (`K`),
 //! or a Racket module of the base run by `racket` (`Redex`).
-//! An AL or IL script above the top level is entered at `entry`,
-//! the function `main` unless the JSON names another function or relation.
 //! Specification, library, and module paths are resolved relative to the JSON file.
 //!
 //! The JSON names the base by `mode` and gives the K library (`kompiled`)
@@ -33,8 +31,6 @@ pub struct TowerConfig {
     pub(super) base: BaseConfig,
     /// Nonempty, ordered from base toward top.
     pub(super) levels: Vec<LevelConfig>,
-    /// The function or relation entering an AL or IL script above the top level.
-    pub(super) entry: String,
 }
 
 /// What runs the base specification natively: the meta-language the base
@@ -100,13 +96,6 @@ struct LevelJson {
 struct TowerJson {
     mode: ModeJson,
     levels: Vec<LevelJson>,
-    #[serde(default = "entry_default")]
-    entry: String,
-}
-
-/// A script is entered at its function `main` unless configured otherwise.
-fn entry_default() -> String {
-    "main".to_owned()
 }
 
 impl TowerConfig {
@@ -165,7 +154,7 @@ impl TowerConfig {
                 })?,
             },
         };
-        Self::new(base, levels, config.entry)
+        Self::new(base, levels)
     }
 
     /// Validates ordered levels.
@@ -174,7 +163,7 @@ impl TowerConfig {
     /// A single level is both the top level and the base.
     /// A K or Redex base accepts AL;
     /// KORE is accepted only by a single level, since no level stacks over K yet.
-    pub fn new(base: BaseConfig, levels: Vec<LevelConfig>, entry: String) -> Result<Self> {
+    pub fn new(base: BaseConfig, levels: Vec<LevelConfig>) -> Result<Self> {
         if levels.is_empty() {
             return Err(config_invalid("a tower requires at least one level"));
         }
@@ -209,7 +198,7 @@ impl TowerConfig {
                 "kore is accepted only by a single-level tower; stacking over K is not implemented",
             ));
         }
-        Ok(Self { base, levels, entry })
+        Ok(Self { base, levels })
     }
 
     pub(super) fn top(&self) -> &LevelConfig {

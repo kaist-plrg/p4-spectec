@@ -12,9 +12,8 @@
 //! through the protocol of the boundary below it (`Protocol::encode_entry`),
 //! with the level encoded in the language of the level consuming it.
 //! A program above the top is one more level: an AL or IL script is entered
-//! at the configured entry with no inputs, its function `main` through
-//! `Eval_AL_func` or `Eval_IL_func` or a relation through `Eval_AL_rel` or
-//! `Eval_IL_rel`; a K definition is entered with its initial
+//! at its function `main` with no inputs, so the level below it uses
+//! `Eval_AL_func` or `Eval_IL_func`; a K definition is entered with its initial
 //! term and step bound, which spec-k's `Krun` rewrites.
 //!
 //! `Tower::print_output` prints what the base's entry gave, where the top
@@ -35,6 +34,9 @@ use crate::{
     runner::Extern,
 };
 use std::path::PathBuf;
+
+/// The entry of an AL or IL script above the top of a tower.
+const ENTRY_SCRIPT: &str = "main";
 
 /// The entry of a K definition above spec-k, which has none by name:
 /// spec-k rewrites the initial term.
@@ -102,7 +104,7 @@ impl<Ext: Extern> Tower<Ext> {
             (Input::P4(program), Lang::P4) => (vec![*program], None),
             (Input::Script(script @ Script::Al(_)), Lang::Al)
             | (Input::Script(script @ Script::Il(_)), Lang::Il) => {
-                (vec![], Some((script.entered(), self.entry.as_str())))
+                (vec![], Some((script.entered(), ENTRY_SCRIPT)))
             }
             (Input::Kore(Kore { definition, init, depth }), Lang::Kore) => {
                 let value_depth = depth_value(arena, *depth)?;

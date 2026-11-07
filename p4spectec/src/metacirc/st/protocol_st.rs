@@ -46,7 +46,7 @@ impl Protocol for ProtocolStSt {
     }
 
     fn load(below: &mut dyn Below, above: &PreparedLevel) -> Result<Value, InterpreterError> {
-        // Encode the specification as AL, converting IL with Algo_IL below
+        // Encode the specification as AL, converting IL through spec-meta below
         let value_spec_al = match above {
             PreparedLevel::Al { spec_al, .. } => spec_al
                 .encode(below.arena())

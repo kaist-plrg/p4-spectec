@@ -1,0 +1,24 @@
+;; An iterated premise reads its sources and binds its binders
+
+var x : nat
+var y : nat
+
+relation Inc: nat |- nat
+  hint(input %0)
+
+rule Inc:
+  x |- $(x + 1)
+
+dec $incs(nat*) : nat*
+def $incs(x*) = y*
+  -- (Inc: x |- y)*
+
+dec $doubles(nat*) : nat*
+def $doubles(x*) = y*
+  -- (if y = $(x + x))*
+
+dec $main() : bool
+def $main() = true
+  -- if $incs([ 1, 2 ]) = [ 2, 3 ]
+  -- if $incs(eps) = eps
+  -- if $doubles([ 1, 2 ]) = [ 2, 4 ]
