@@ -7,9 +7,11 @@
 
 use crate::lang::data::{arena::Arena, value::flat::Value};
 
+use crate::lang::{al, sl};
+
 use crate::lang::il::ast::{Id, Typ};
 
-use crate::runner::{Eval, Extern, Interface, Interpreter, InterpreterError, SideEffect};
+use crate::runner::{Eval, Extern, Hooks, Interface, Interpreter, InterpreterError, SideEffect};
 
 /// A snapshot of one runner's effect count, valid until that runner resets.
 #[derive(Clone, Copy)]
@@ -36,6 +38,8 @@ where
     external: &'runner mut Ext,
     /// Runner effect count shared across nested calls.
     effects: &'runner mut u64,
+    /// Observers shared across nested calls and host reentry.
+    hooks: &'runner mut Hooks,
 }
 
 impl<'runner, Interp, Iface, Ext> RunnerContext<'runner, Interp, Iface, Ext>
@@ -51,8 +55,9 @@ where
         interface: &'runner mut Iface,
         external: &'runner mut Ext,
         effects: &'runner mut u64,
+        hooks: &'runner mut Hooks,
     ) -> Self {
-        Self { arena, spec_env, interp, interface, external, effects }
+        Self { arena, spec_env, interp, interface, external, effects, hooks }
     }
 
     // - Semantic components
@@ -93,6 +98,18 @@ where
     /// Borrows the arena and interface state for builtin dispatch.
     pub fn arena_and_interface_mut(&mut self) -> (&mut Arena, &mut Iface) {
         (self.arena, self.interface)
+    }
+
+    // - Interpreter events
+
+    /// Dispatches an AL premise with the arena used to prepare it.
+    pub(crate) fn on_prem(&mut self, prem_al: &al::prepared::Prem) {
+        self.hooks.on_prem(self.arena, prem_al);
+    }
+
+    /// Dispatches an SL instruction with the arena used to prepare it.
+    pub(crate) fn on_instr(&mut self, instr_sl: &sl::prepared::Instr) {
+        self.hooks.on_instr(self.arena, instr_sl);
     }
 
     // - Evaluation effects

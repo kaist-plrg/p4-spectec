@@ -170,6 +170,7 @@ where
                 &mut runner.interface,
                 &mut runner.external,
                 &mut runner.effects,
+                &mut runner.hooks,
             );
             Arch::init_pipe(&mut ctx, program)
         }
@@ -181,6 +182,7 @@ where
                 &mut runner.interface,
                 &mut runner.external,
                 &mut runner.effects,
+                &mut runner.hooks,
             );
             Arch::init_pipe(&mut ctx, program)
         }
@@ -192,6 +194,7 @@ where
                 &mut runner.interface,
                 &mut runner.external,
                 &mut runner.effects,
+                &mut runner.hooks,
             );
             Arch::init_pipe(&mut ctx, program)
         }
@@ -225,6 +228,7 @@ where
                 &mut runner.interface,
                 &mut runner.external,
                 &mut runner.effects,
+                &mut runner.hooks,
             );
             run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
         }
@@ -236,6 +240,7 @@ where
                 &mut runner.interface,
                 &mut runner.external,
                 &mut runner.effects,
+                &mut runner.hooks,
             );
             run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
         }
@@ -247,6 +252,7 @@ where
                 &mut runner.interface,
                 &mut runner.external,
                 &mut runner.effects,
+                &mut runner.hooks,
             );
             run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
         }
