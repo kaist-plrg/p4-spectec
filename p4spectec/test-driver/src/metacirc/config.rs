@@ -95,7 +95,7 @@ impl Configuration {
 
     /// Returns the runner options of this configuration.
     pub fn runner(&self) -> Config {
-        Config::new(self.cache, self.det, false)
+        Config::new(self.cache, self.det, false, true)
     }
 
     /// Describes the configuration in progress and summary lines.

@@ -24,7 +24,7 @@ use crate::{
         common::source::Phrase,
         data::{arena::Arena, encoding::Encoding},
     },
-    runner::{self, RunnerContext},
+    runner::{self, Hooks, RunnerContext},
     sim_plugin::{
         SimError, Simulator, SimulatorRunner,
         arch::Architecture,
@@ -43,6 +43,9 @@ use std::path::{Path, PathBuf};
 /// A tower simulating its P4 top level through the spec-meta levels below it.
 pub(super) struct SimTower<Arch: Architecture> {
     tower: Tower<Arch>,
+    /// Observers registered through the simulator;
+    /// no level of the tower dispatches to them.
+    hooks: Hooks,
 }
 
 impl<Arch: Architecture> SimTower<Arch> {
@@ -64,7 +67,7 @@ impl<Arch: Architecture> SimTower<Arch> {
             ));
         }
         let tower = Tower::build(arena, config, options, arch)?;
-        Ok(Self { tower })
+        Ok(Self { tower, hooks: Hooks::default() })
     }
 
     /// Runs `body` in the P4 context of depth 0, over the stored P4 host.
@@ -116,6 +119,10 @@ impl<Arch: Architecture> SimTower<Arch> {
 }
 
 impl<Arch: Architecture + 'static> SimulatorRunner for SimTower<Arch> {
+    fn hooks_mut(&mut self) -> &mut Hooks {
+        &mut self.hooks
+    }
+
     fn run_stf_test(
         &mut self,
         arena: &mut Arena,

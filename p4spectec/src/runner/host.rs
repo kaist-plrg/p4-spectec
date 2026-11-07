@@ -13,7 +13,7 @@ use crate::lang::data::{arena::Arena, value::flat::Value};
 
 use crate::lang::il::ast::{Id, Typ};
 
-use crate::runner::{Eval, Extern, Interface, InterfaceError, Interpreter, RunnerContext};
+use crate::runner::{Eval, Extern, Hooks, Interface, InterfaceError, Interpreter, RunnerContext};
 
 /// Interface and extern state of a level without an interpreter.
 pub struct Host<Iface: Interface, Ext: Extern> {
@@ -66,6 +66,7 @@ impl<Iface: Interface, Ext: Extern> Host<Iface, Ext> {
         Interp: Interpreter<Iface, Ext>,
     {
         let mut effects = 0;
+        let mut hooks = Hooks::default();
         let mut ctx = RunnerContext::new(
             arena,
             spec_env,
@@ -73,6 +74,7 @@ impl<Iface: Interface, Ext: Extern> Host<Iface, Ext> {
             &mut self.interface,
             &mut self.external,
             &mut effects,
+            &mut hooks,
         );
         body(&mut ctx)
     }
@@ -90,6 +92,7 @@ impl<Iface: Interface, Ext: Extern> Host<Iface, Ext> {
         Interp: Interpreter<Iface, Ext>,
     {
         let mut effects = 0;
+        let mut hooks = Hooks::default();
         let mut ctx = RunnerContext::new(
             arena,
             spec_env,
@@ -97,6 +100,7 @@ impl<Iface: Interface, Ext: Extern> Host<Iface, Ext> {
             &mut self.interface,
             &mut self.external,
             &mut effects,
+            &mut hooks,
         );
         let checkpoint = ctx.effect_checkpoint();
         let result = ctx.call_extern_rel(name, values);
@@ -117,6 +121,7 @@ impl<Iface: Interface, Ext: Extern> Host<Iface, Ext> {
         Interp: Interpreter<Iface, Ext>,
     {
         let mut effects = 0;
+        let mut hooks = Hooks::default();
         let mut ctx = RunnerContext::new(
             arena,
             spec_env,
@@ -124,6 +129,7 @@ impl<Iface: Interface, Ext: Extern> Host<Iface, Ext> {
             &mut self.interface,
             &mut self.external,
             &mut effects,
+            &mut hooks,
         );
         let checkpoint = ctx.effect_checkpoint();
         let result = ctx.call_extern_func(name, targs, values);

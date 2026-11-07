@@ -214,7 +214,7 @@ impl<Ext: Extern> Base<Ext> {
         match self {
             Self::P4(_) => None,
             Self::St(runner) => {
-                let Runner { backend, interface, external: upper, effects } = runner;
+                let Runner { backend, interface, external: upper, effects, hooks: _ } = runner;
                 let (engine, spec_base) = EngineSt::lend_base(backend, interface);
                 let engine = EngineKind::St(engine);
                 let spec_base = BaseSpec::St(spec_base);

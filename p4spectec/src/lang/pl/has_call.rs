@@ -1,6 +1,7 @@
 //! Calls contained in prose-language syntax
 //!
-//! Expressions, paths, and case guards collect located calls in preorder,
+//! Expressions, expression sequences, paths, and case guards
+//! collect located calls in preorder,
 //! including calls nested in arguments and update paths.
 
 use crate::lang::traits::has_call::HasCall;
@@ -62,6 +63,16 @@ impl HasCall for Exp {
                 }))
                 .collect(),
         }
+    }
+}
+
+// - Expression sequences
+
+impl HasCall for [Exp] {
+    type Exp = Exp;
+
+    fn nested_call(&self) -> Vec<&Self::Exp> {
+        self.iter().flat_map(HasCall::nested_call).collect()
     }
 }
 

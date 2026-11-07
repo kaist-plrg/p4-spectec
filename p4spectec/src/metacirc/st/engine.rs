@@ -21,7 +21,8 @@ use crate::{
         il::ast::Typ,
     },
     runner::{
-        self, Backend, Extern, Interface, Interpreter, InterpreterError, NullExtern, RunnerContext,
+        self, Backend, Extern, Hooks, Interface, Interpreter, InterpreterError, NullExtern,
+        RunnerContext,
     },
 };
 
@@ -72,6 +73,7 @@ impl<'s> EngineSt<'s> {
 macro_rules! with_backend {
     ($engine:expr, $arena:expr, $upper:expr, $effects:expr, |$ctx:ident| $body:expr) => {{
         let engine = &mut *$engine;
+        let mut hooks = Hooks::default();
         match &mut engine.backend {
             BackendSt::Al { spec_env, interp } => {
                 let mut $ctx = RunnerContext::new(
@@ -81,6 +83,7 @@ macro_rules! with_backend {
                     &mut *engine.interface,
                     $upper,
                     $effects,
+                    &mut hooks,
                 );
                 $body
             }
@@ -92,6 +95,7 @@ macro_rules! with_backend {
                     &mut *engine.interface,
                     $upper,
                     $effects,
+                    &mut hooks,
                 );
                 $body
             }
@@ -184,6 +188,7 @@ impl StateSt {
                 options.cache,
                 options.det,
                 options.guard,
+                options.tco,
             ))),
         };
         // Only the builtins are used; the base never parses at a depth.

@@ -22,7 +22,7 @@ use crate::{
         il::ast::{Id, Typ},
     },
     runner::{
-        Eval, Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext,
+        Eval, Extern, ExternError, Hooks, Interface, Interpreter, InterpreterError, RunnerContext,
         SideEffect,
     },
 };
@@ -290,6 +290,7 @@ impl<'l, Ext: Extern> UpperMut<'l, Ext> {
         let mut interp = depth.lend(env.spec_base, protocols, ctxs);
         // Count the call's effects apart from the calling depth's
         let mut effects = 0;
+        let mut hooks = Hooks::default();
         let mut ctx = RunnerContext::new(
             arena,
             env,
@@ -297,6 +298,7 @@ impl<'l, Ext: Extern> UpperMut<'l, Ext> {
             &mut **interface,
             &mut **external,
             &mut effects,
+            &mut hooks,
         );
         eval_in(&mut ctx, call)
     }

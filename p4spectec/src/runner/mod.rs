@@ -10,6 +10,7 @@
 
 mod context;
 mod externs;
+mod hook;
 mod host;
 mod interface;
 mod interpreter;
@@ -40,6 +41,7 @@ use crate::sim_plugin::dummy::Dummy;
 
 pub use context::{Checkpoint, RunnerContext, RunnerContextParts};
 pub use externs::{Extern, ExternError, NullExtern};
+pub use hook::{Handler, Hooks};
 pub use host::Host;
 pub use interface::{Interface, InterfaceError, NullInterface};
 pub use interpreter::{Eval, Interpreter, InterpreterError, SideEffect};
@@ -65,11 +67,13 @@ pub struct Config {
     pub(crate) det: bool,
     /// Type-check arguments and results at call boundaries.
     pub(crate) guard: bool,
+    /// Turn SL relation and function calls in tail position into tail calls.
+    pub(crate) tco: bool,
 }
 
 impl Config {
-    pub fn new(cache: bool, det: bool, guard: bool) -> Self {
-        Self { cache, det, guard }
+    pub fn new(cache: bool, det: bool, guard: bool, tco: bool) -> Self {
+        Self { cache, det, guard, tco }
     }
 }
 
@@ -132,6 +136,7 @@ pub struct Runner<Iface: Interface, Ext: Extern> {
     pub(crate) interface: Iface,
     pub(crate) external: Ext,
     pub(crate) effects: u64,
+    pub(crate) hooks: Hooks,
 }
 
 /// Pairs one stage's prepared definitions with its interpreter state.
@@ -158,6 +163,7 @@ macro_rules! with_context {
                     &mut runner.interface,
                     &mut runner.external,
                     &mut runner.effects,
+                    &mut runner.hooks,
                 );
                 $body
             }
@@ -169,6 +175,7 @@ macro_rules! with_context {
                     &mut runner.interface,
                     &mut runner.external,
                     &mut runner.effects,
+                    &mut runner.hooks,
                 );
                 $body
             }
@@ -180,6 +187,7 @@ macro_rules! with_context {
                     &mut runner.interface,
                     &mut runner.external,
                     &mut runner.effects,
+                    &mut runner.hooks,
                 );
                 $body
             }
@@ -205,15 +213,25 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
                 interp: AlInterp::new(AlConfig::new(config.cache, config.det, config.guard)),
             },
             Spec::Sl(spec) => Backend::Sl {
-                spec_env: SlSpecEnv::load(&mut arena.mixop, config.det, spec)?,
-                interp: SlInterp::new(SlConfig::new(config.cache, config.det, config.guard)),
+                spec_env: SlSpecEnv::load(&mut arena.mixop, config.det, config.tco, spec)?,
+                interp: SlInterp::new(SlConfig::new(
+                    config.cache,
+                    config.det,
+                    config.guard,
+                    config.tco,
+                )),
             },
             Spec::Pl(spec) => Backend::Pl {
                 spec_env: PlSpecEnv::load(&mut arena.mixop, spec)?,
                 interp: PlInterp::new(PlConfig::new(config.cache, config.det, config.guard)),
             },
         };
-        Ok(Self { backend, interface, external, effects: 0 })
+        Ok(Self { backend, interface, external, effects: 0, hooks: Hooks::default() })
+    }
+
+    /// Borrows the handlers retained across evaluations and program resets.
+    pub fn hooks_mut(&mut self) -> &mut Hooks {
+        &mut self.hooks
     }
 
     // - Parsing
@@ -274,6 +292,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
     /// Starts an independent program, keeping definitions and configuration.
     ///
     /// Clears this runner's caches, host state, and effects.
+    /// Preserves registered handlers and their observation state.
     /// Reset every runner sharing an arena before calling `Arena::reset_values`.
     pub fn reset(&mut self) {
         self.effects = 0;

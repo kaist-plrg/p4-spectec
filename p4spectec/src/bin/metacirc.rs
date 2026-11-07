@@ -61,7 +61,7 @@ struct Options {
 
 impl Options {
     fn config(&self) -> runner::Config {
-        runner::Config::new(!self.no_cache, !self.no_det, self.guard)
+        runner::Config::new(!self.no_cache, !self.no_det, self.guard, true)
     }
 }
 

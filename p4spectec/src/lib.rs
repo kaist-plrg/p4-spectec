@@ -6,6 +6,7 @@
 //! `runner_spec_with_warnings` prepares AL, SL, or PL for execution;
 //! `run` evaluates a P4 program,
 //! and `build_simulator` prepares native STF execution.
+//! `coverage` measures SL instruction coverage over programs and STF tests.
 //! Callers render returned diagnostics and accumulated warnings.
 
 // == Shared foundations
@@ -23,6 +24,7 @@ pub mod specdoc;
 
 // == Execution
 
+pub mod coverage;
 pub mod interface;
 pub mod interp;
 pub mod metacirc;

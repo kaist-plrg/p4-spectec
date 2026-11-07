@@ -31,11 +31,13 @@ pub struct Config {
     det: bool,
     /// Check argument and result types at call boundaries.
     guard: bool,
+    /// Turn function calls in tail position into tail calls.
+    tco: bool,
 }
 
 impl Config {
-    pub fn new(cache: bool, det: bool, guard: bool) -> Self {
-        Self { cache, det, guard }
+    pub fn new(cache: bool, det: bool, guard: bool, tco: bool) -> Self {
+        Self { cache, det, guard, tco }
     }
 }
 

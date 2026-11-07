@@ -8,7 +8,7 @@ pub use crate::lang::il::prepared::*;
 
 use super::ast as source;
 
-pub use super::ast::{DefinedTyp, ExternTyp, RelSignature, TypDef, VarDef};
+pub use super::ast::{DefinedTyp, ExternTyp, InstrId, RelSignature, TypDef, VarDef};
 
 // == Prepared syntax
 

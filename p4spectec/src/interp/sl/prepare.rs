@@ -3,7 +3,10 @@
 //! Source rules become ordinary or tail calls in the prepared stage.
 //! Tail position follows the interpreter's selection mode and otherwise blocks;
 //! table rows form one sequential block even in deterministic mode.
-//! Only a tail-position call that immediately returns its outputs is lowered.
+//! Only a tail-position call that immediately returns its outputs is lowered,
+//! and only under `tco`.
+//! Instructions are numbered in pre-order;
+//! without `tco` the numbering matches the source pre-order.
 //! Top-level relations and functions return callables with their own layouts.
 
 use std::{mem, rc::Rc};
@@ -34,6 +37,10 @@ pub struct PrepareContext<'a> {
     pub layout: &'a mut FrameLayout,
     /// The runner's instruction-selection mode.
     pub det: bool,
+    /// Lower tail-position relation calls into tail calls.
+    pub tco: bool,
+    /// The next instruction id, shared across definitions.
+    pub counter_instr: &'a mut u32,
     pos: Position,
 }
 
@@ -43,9 +50,17 @@ impl<'a> PrepareContext<'a> {
         arena_mixop: &'a mut MixopArena,
         tdenv: &'a TDEnv,
         layout: &'a mut FrameLayout,
+        counter_instr: &'a mut u32,
         det: bool,
+        tco: bool,
     ) -> Self {
-        Self { arena_mixop, tdenv, layout, det, pos: Position::Tail }
+        Self { arena_mixop, tdenv, layout, det, tco, counter_instr, pos: Position::Tail }
+    }
+
+    fn next_instr_id(&mut self) -> ast::InstrId {
+        let id = ast::InstrId(*self.counter_instr);
+        *self.counter_instr += 1;
+        id
     }
 
     fn il(&mut self) -> il::PrepareContext<'_> {
@@ -72,6 +87,8 @@ impl PrepareContext<'_> {
             tdenv: self.tdenv,
             layout: &mut *self.layout,
             det: self.det,
+            tco: self.tco,
+            counter_instr: &mut *self.counter_instr,
             pos,
         }
     }
@@ -93,7 +110,7 @@ impl Prepare<PrepareContext<'_>> for source::Block {
             .map(|(idx, instr)| {
                 let pos =
                     if ctx.det || idx + 1 == instrs_len { ctx.pos } else { Position::NonTail };
-                instr.prepare(&mut ctx.at(pos))
+                prepare_instr(instr, &mut ctx.at(pos))
             })
             .collect();
         ast::Block { instrs }
@@ -101,6 +118,15 @@ impl Prepare<PrepareContext<'_>> for source::Block {
 }
 
 // = Instructions
+
+/// Numbers the instruction before its nested instructions.
+fn prepare_instr(instr: source::Instr, ctx: &mut PrepareContext<'_>) -> ast::Instr {
+    // Grow the stack for deep syntax trees
+    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
+        let note = ctx.next_instr_id();
+        ast::Instr { node: instr.node.prepare(ctx), note, span: instr.span }
+    })
+}
 
 impl Prepare<PrepareContext<'_>> for source::InstrKind {
     type Output = ast::InstrKind;
@@ -208,7 +234,7 @@ impl Prepare<PrepareContext<'_>> for source::RuleInstr {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         // Compare source expressions before their mixops become arena handles
-        if self.is_tail_call(ctx.pos) {
+        if ctx.tco && self.is_tail_call(ctx.pos) {
             let (exps_input, _) = input::split(&self.input_hint, self.not_exp.into_args())
                 .expect("input hint must fit relation");
             return ast::RuleInstr::Tail(ast::RuleTailInstr {
@@ -276,7 +302,10 @@ impl Prepare<PrepareContext<'_>> for source::DebugInstr {
     type Output = ast::DebugInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::DebugInstr { exp: self.exp.prepare(&mut ctx.il()), instr: self.instr.prepare(ctx) }
+        ast::DebugInstr {
+            exp: self.exp.prepare(&mut ctx.il()),
+            instr: Box::new(prepare_instr(*self.instr, ctx)),
+        }
     }
 }
 
@@ -452,7 +481,7 @@ impl Prepare<PrepareContext<'_>> for source::TableFunc {
                     .map(|instr| {
                         instrs_len -= 1;
                         let pos = if instrs_len == 0 { Position::Tail } else { Position::NonTail };
-                        instr.prepare(&mut ctx.at(pos))
+                        prepare_instr(instr, &mut ctx.at(pos))
                     })
                     .collect();
                 let block = ast::Block { instrs };
@@ -479,6 +508,8 @@ impl Prepare<PrepareContext<'_>> for source::DefinedFunc {
             tdenv: &tdenv,
             layout: &mut *ctx.layout,
             det: ctx.det,
+            tco: ctx.tco,
+            counter_instr: &mut *ctx.counter_instr,
             pos: ctx.pos,
         };
         // The otherwise block must still catch a failing main body
