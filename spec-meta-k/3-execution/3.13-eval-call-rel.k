@@ -25,24 +25,30 @@ module CALL-REL
   // ==========================================================================
   // Eval_ruls: ctx |- rul* `( val* `) : relRes
   //
-  // As Eval_clauses (3.12-eval-call-func.k).
+  // As Eval_clauses (3.12-eval-call-func.k): `ERROR` passes the catch frames
+  // (Eval_ruls/error).
   // ==========================================================================
 
   //   rule Eval_ruls/nil
   rule <k> evalRuls(.RulList, _:ValList) => UNMATCH ... </k>
   rule <k> evalRuls((R:Rul, Rs:RulList), Vs:ValList)
-        => try(evalRul(R, Vs)) ~> afterRul(Rs, Vs)
+        => evalRul(R, Vs) ~> afterRul(Rs, Vs, F, V)
        ...
        </k>
+       <lfenv> F:Map </lfenv>
+       <lvenv> V:Map </lvenv>
 
-  syntax KItem ::= afterRul(RulList, ValList)
+  syntax UnmatchBoundary ::= afterRul(RulList, ValList, Map, Map)
+                                            // lfenv, lvenv
 
   //   rule Eval_ruls/unmatch
-  rule <k> UNMATCH ~> afterRul(Rs:RulList, Vs:ValList) => evalRuls(Rs, Vs) ... </k>
+  rule <k> UNMATCH ~> afterRul(Rs:RulList, Vs:ValList, F:Map, V:Map) => evalRuls(Rs, Vs) ... </k>
+       <lfenv> _ => F </lfenv>
+       <lvenv> _ => V </lvenv>
   //   rule Eval_ruls/succ: the first success, the later paths untried
-  rule <k> ok(Ws:KItem) ~> afterRul(_:RulList, _:ValList) => ok(Ws) ... </k>
-  //   rule Eval_ruls/error
-  rule <k> ERROR ~> afterRul(_:RulList, _:ValList) => ERROR ... </k>
+  rule <k> Ws:ValList ~> afterRul(_:RulList, _:ValList, F:Map, V:Map) => Ws ... </k>
+       <lfenv> _ => F </lfenv>
+       <lvenv> _ => V </lvenv>
 
   // ==========================================================================
   // Call_defined_rel: ctx |- definedRelDefn `( val* `) : relRes
@@ -52,7 +58,8 @@ module CALL-REL
   //   dec $rul_of_elsgroup(elsGroup) : rul
   //
   // The rule paths run in a frame of their own; the otherwise group runs
-  // there too, only when every path mismatched.
+  // there too, only when every path mismatched. Only a relation with an
+  // otherwise group catches the paths' `UNMATCH`.
   // ==========================================================================
 
   syntax RulList ::= rulsOfRulGroups(RulGroupList)
@@ -72,25 +79,29 @@ module CALL-REL
   syntax Rul ::= rulOfElsGroup(ElsGroup)    [function, total, symbol(rulOfElsGroup)]
   rule rulOfElsGroup(elsGroup(_:Id, M:RulMatch, P:RulPath)) => rul(M, P)
 
-  rule <k> callDefinedRel(relD(_, _, _, Gs:RulGroupList, EG:ElsGroupOpt), Vs:ValList)
+  //   rule Call_defined_rel/result, /unmatch: without an otherwise group
+  rule <k> callDefinedRel(relD(_, _, _, Gs:RulGroupList, noElsGroup()), Vs:ValList)
         => enterFrame(.Map)
            ~> evalRuls(rulsOfRulGroups(Gs), Vs)
-           ~> afterRuls(EG, Vs)
+           ~> endFrame
+       ...
+       </k>
+  //   rule Call_defined_rel/result, /unmatch: with an otherwise group
+  rule <k> callDefinedRel(relD(_, _, _, Gs:RulGroupList, someElsGroup(EG:ElsGroup)), Vs:ValList)
+        => enterFrame(.Map)
+           ~> evalRuls(rulsOfRulGroups(Gs), Vs)
+           ~> afterRuls(rulOfElsGroup(EG), Vs)
            ~> endFrame
        ...
        </k>
 
-  syntax KItem ::= afterRuls(ElsGroupOpt, ValList)
+  // The otherwise group, under the context the paths started from
+  syntax UnmatchBoundary ::= afterRuls(Rul, ValList)
 
-  //   rule Call_defined_rel/result
-  rule <k> ok(Ws:KItem) ~> afterRuls(_:ElsGroupOpt, _:ValList) => Ws ... </k>
-  rule <k> ERROR ~> afterRuls(_:ElsGroupOpt, _:ValList) => error ... </k>
+  //   rule Call_defined_rel/result: `ERROR` passes the catch frame
+  rule <k> Ws:ValList ~> afterRuls(_:Rul, _:ValList) => Ws ... </k>
   //   rule Call_defined_rel/unmatch
-  rule <k> UNMATCH ~> afterRuls(noElsGroup(), _:ValList) => unmatch ... </k>
-  rule <k> UNMATCH ~> afterRuls(someElsGroup(EG:ElsGroup), Vs:ValList)
-        => evalRul(rulOfElsGroup(EG), Vs)
-       ...
-       </k>
+  rule <k> UNMATCH ~> afterRuls(R:Rul, Vs:ValList) => evalRul(R, Vs) ... </k>
 
   // ==========================================================================
   // Call_rel: ctx |- id `( val* `) : relRes
@@ -99,7 +110,7 @@ module CALL-REL
   rule <k> callRel(X:Id, Vs:ValList) => callRelDefn(D, Vs) ... </k>
        <grenv> ... X |-> D:RelDefn ... </grenv>
   //   rule Call_rel/error: no such relation
-  rule <k> callRel(_:Id, _:ValList) => error ... </k> [owise]
+  rule <k> callRel(_:Id, _:ValList) => ERROR ... </k> [owise]
 
   syntax KItem ::= callRelDefn(RelDefn, ValList)
 

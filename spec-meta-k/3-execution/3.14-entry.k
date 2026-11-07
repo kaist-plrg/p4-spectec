@@ -5,9 +5,10 @@
 // spec-meta/5-entry.watsup are two of them in a row: Eval_AL_rel is `load`
 // then `call-rel`, and Eval_AL_func is `load` then `call-func` with no type
 // arguments. `serve(J)` sends J, the answer to the last call, and dispatches
-// the next call. Each call runs as one `try`, answered with its values for
-// `OK`, `fail` for `UNMATCH`, `error` for `ERROR`. `exit` empties `<k>`,
-// which ends the run.
+// the next call. Each call's outcome reaches its answer frame, which sends
+// its values for `OK`, `fail` for `UNMATCH`, `error` for `ERROR`; the call
+// leaves the local layer as it found it. `exit` empties `<k>`, which ends
+// the run.
 
 requires "3.04.3-spec-json.k"
 requires "3.13-eval-call-rel.k"
@@ -45,21 +46,21 @@ module AL
   // Call_rel and Call_func on the loaded spec
   // ==========================================================================
 
-  syntax KItem ::= "answerRel" "(" ")"
-                 | "answerFunc" "(" ")"
+  syntax ErrorBoundary ::= "answerRel" "(" ")"
+                         | "answerFunc" "(" ")"
 
   rule <k> dispatch({ "args" : [ Js:JSONs ], "call-rel" : X:String, .JSONs })
-        => try(callRel(X, valsOfJsons(Js))) ~> answerRel()
+        => callRel(X, valsOfJsons(Js)) ~> answerRel()
        ...
        </k>
   rule <k> dispatch({ "args" : [ Jv:JSONs ], "call-func" : X:String,
                       "targs" : [ Jt:JSONs ], .JSONs })
-        => try(callFunc(X, targsOfJsons(Jt), valsOfJsons(Jv))) ~> answerFunc()
+        => callFunc(X, targsOfJsons(Jt), valsOfJsons(Jv)) ~> answerFunc()
        ...
        </k>
 
-  rule <k> ok(Vs:ValList) ~> answerRel() => serve({ "ok" : jsonList(jsonOfVals(Vs)), .JSONs }) ... </k>
-  rule <k> ok(V:Val) ~> answerFunc() => serve({ "ok" : jsonOfVal(V), .JSONs }) ... </k>
+  rule <k> Vs:ValList ~> answerRel() => serve({ "ok" : jsonList(jsonOfVals(Vs)), .JSONs }) ... </k>
+  rule <k> V:Val ~> answerFunc() => serve({ "ok" : jsonOfVal(V), .JSONs }) ... </k>
   rule <k> F:Failure ~> answerRel() => serve(failAnswer(F)) ... </k>
   rule <k> F:Failure ~> answerFunc() => serve(failAnswer(F)) ... </k>
 

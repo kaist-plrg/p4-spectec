@@ -2,7 +2,7 @@
 //
 // Mirrors spec-meta/4-execution/4.09-eval-prem.watsup: Eval_prem, Eval_prems.
 // A premise is a statement: one that holds rewrites to `.K`, one that does
-// not to `unmatch`, one that cannot be evaluated to `error`. Its expressions
+// not to `UNMATCH`, one that cannot be evaluated to `ERROR`. Its expressions
 // evaluate in place (1.0-syntax.k).
 
 requires "3.10-eval-arg.k"
@@ -26,24 +26,24 @@ module PREM
 
   //   rulegroup Eval_prem/ifpr
   rule <k> ifPr(boolV(true)) => .K ... </k>
-  rule <k> ifPr(boolV(false)) => unmatch ... </k>
-  rule <k> ifPr(_:Val) => error ... </k> [owise]
+  rule <k> ifPr(boolV(false)) => UNMATCH ... </k>
+  rule <k> ifPr(_:Val) => ERROR ... </k> [owise]
 
   //   rulegroup Eval_prem/ifholdpr: IFHOLD needs an empty output
   syntax KItem ::= holds(KItem)             [strict]
 
   rule <k> ifHoldPr(X:Id, Vs:ValList) => holds(callRel(X, Vs)) ... </k>
   rule <k> holds(.ValList) => .K ... </k>
-  rule <k> holds((_:Val, _:ValList)) => error ... </k>
+  rule <k> holds((_:Val, _:ValList)) => ERROR ... </k>
 
   //   rulegroup Eval_prem/ifnotholdpr: IFNOTHOLD needs the relation to
-  //   mismatch; its error propagates
-  syntax KItem ::= "notHolds" "(" ")"
+  //   mismatch; its `ERROR` passes the catch frame. The call leaves the
+  //   local layer as it found it, so the catch frame holds none
+  syntax UnmatchBoundary ::= "notHolds" "(" ")"
 
-  rule <k> ifNotHoldPr(X:Id, Vs:ValList) => try(callRel(X, Vs)) ~> notHolds() ... </k>
+  rule <k> ifNotHoldPr(X:Id, Vs:ValList) => callRel(X, Vs) ~> notHolds() ... </k>
   rule <k> UNMATCH ~> notHolds() => .K ... </k>
-  rule <k> ok(_:ValList) ~> notHolds() => unmatch ... </k>
-  rule <k> ERROR ~> notHolds() => error ... </k>
+  rule <k> _:ValList ~> notHolds() => UNMATCH ... </k>
 
   //   rule Eval_prem/letpr
   rule <k> letPr(El:Exp, V:Val) => assignExp(El, V) ... </k>
@@ -69,7 +69,7 @@ module PREM
        ...
        </k>
 
-  rule <k> iterPrOpt(_:VariList, _:VariList, _:Prem, ERROR) => error ... </k>
+  rule <k> iterPrOpt(_:VariList, _:VariList, _:Prem, ERROR) => ERROR ... </k>
 
   //   rulegroup Eval_prem/iterpr-list
   //
@@ -86,7 +86,7 @@ module PREM
         => bindLists(Bind, premRows(Bound, Bind, P, Rows))
        ...
        </k>
-  rule <k> iterPrList(_:VariList, _:VariList, _:Prem, ERROR) => error ... </k>
+  rule <k> iterPrList(_:VariList, _:VariList, _:Prem, ERROR) => ERROR ... </k>
 
   syntax KItem ::= premRows(VariList, VariList, Prem, ValListList)
   rule <k> premRows(_:VariList, _:VariList, _:Prem, .ValListList) => .ValListList ... </k>

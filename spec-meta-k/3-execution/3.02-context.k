@@ -74,7 +74,7 @@ module CONTEXT
        <lvenv> M:Map </lvenv>
   rule <k> R:KResult ~> endScope(M:Map) => R ... </k>
        <lvenv> _ => M </lvenv>
-  rule <k> S:Signal ~> endScope(M:Map) => S ... </k>
+  rule <k> F:Failure ~> endScope(M:Map) => F ... </k>
        <lvenv> _ => M </lvenv>
 
   syntax KItem ::= "clearLocalVenv" "(" ")"
@@ -104,7 +104,7 @@ module CONTEXT
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>
        <callstack> ListItem(frame(T:Map, F:Map, V:Map)) => .List ... </callstack>
-  rule <k> S:Signal ~> endFrame => S ... </k>
+  rule <k> E:Failure ~> endFrame => E ... </k>
        <ltdenv> _ => T </ltdenv>
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>

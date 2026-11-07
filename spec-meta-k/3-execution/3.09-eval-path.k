@@ -3,7 +3,7 @@
 // Mirrors spec-meta/4-execution/4.07-eval-path.watsup. A path access is the
 // expression steps from the root; an update rebuilds the value step by step.
 // A step with no applicable case, an index out of bounds, or a text update
-// of the wrong length gives `error`.
+// of the wrong length gives `ERROR`.
 
 requires "3.08-eval-exp.k"
 
@@ -50,7 +50,7 @@ module EVAL-PATH
     requires lengthText(Sn) ==Int 1 andBool N >=Int 0 andBool N <Int lengthText(S)
   rule <k> updIdx(listV(Vs:ValList), natN(N:Int), Vn:Val) => listV(updateNthVal(Vs, N, Vn)) ... </k>
     requires N >=Int 0 andBool N <Int lengthVals(Vs)
-  rule <k> updIdx(_:Val, _:Val, _:Val) => error ... </k> [owise]
+  rule <k> updIdx(_:Val, _:Val, _:Val) => ERROR ... </k> [owise]
 
   syntax ValList ::= updateNthVal(ValList, Int, Val)
                                             [function, symbol(updateNthVal)]
@@ -82,7 +82,7 @@ module EVAL-PATH
        ...
        </k>
     requires I >=Int 0 andBool N >=Int 0 andBool I +Int N <=Int lengthVals(Vs)
-  rule <k> updSlice(_:Val, _:Val, _:Val, _:Val) => error ... </k> [owise]
+  rule <k> updSlice(_:Val, _:Val, _:Val, _:Val) => ERROR ... </k> [owise]
 
   syntax ValList ::= replaceSliceVal(ValList, Int, Int, ValList)
                                             [function, symbol(replaceSliceVal)]
@@ -97,7 +97,7 @@ module EVAL-PATH
        </k>
 
   rule <k> updDot(strV(Fs:ValFieldList), A:Atom, Vn:Val) => strV(updateField(Fs, A, Vn)) ... </k>
-  rule <k> updDot(_:Val, _:Atom, _:Val) => error ... </k> [owise]
+  rule <k> updDot(_:Val, _:Atom, _:Val) => ERROR ... </k> [owise]
 
   // Update every field selected by its atom.
   syntax ValFieldList ::= updateField(ValFieldList, Atom, Val)

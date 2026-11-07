@@ -24,25 +24,31 @@ module CALL-FUNC
   // ==========================================================================
   // Eval_clauses: ctx |- clause* `( val* `) : funcRes
   //
-  // Each clause is one try, in order; the first that does not mismatch
-  // gives the outcome, a `Res` its caller puts back in flight.
+  // The clauses in order, each under the context from before it; the first
+  // that does not mismatch gives the outcome. `ERROR` passes the catch
+  // frames (Eval_clauses/error).
   // ==========================================================================
 
   //   rule Eval_clauses/nil
   rule <k> evalClauses(.ClauseList, _:ValList) => UNMATCH ... </k>
   rule <k> evalClauses((Cl:Clause, Cls:ClauseList), Vs:ValList)
-        => try(evalClause(Cl, Vs)) ~> afterClause(Cls, Vs)
+        => evalClause(Cl, Vs) ~> afterClause(Cls, Vs, F, V)
        ...
        </k>
+       <lfenv> F:Map </lfenv>
+       <lvenv> V:Map </lvenv>
 
-  syntax KItem ::= afterClause(ClauseList, ValList)
+  syntax UnmatchBoundary ::= afterClause(ClauseList, ValList, Map, Map)
+                                            // lfenv, lvenv
 
   //   rule Eval_clauses/unmatch
-  rule <k> UNMATCH ~> afterClause(Cls:ClauseList, Vs:ValList) => evalClauses(Cls, Vs) ... </k>
+  rule <k> UNMATCH ~> afterClause(Cls:ClauseList, Vs:ValList, F:Map, V:Map) => evalClauses(Cls, Vs) ... </k>
+       <lfenv> _ => F </lfenv>
+       <lvenv> _ => V </lvenv>
   //   rule Eval_clauses/succ: the first success, the later clauses untried
-  rule <k> ok(R:KItem) ~> afterClause(_:ClauseList, _:ValList) => ok(R) ... </k>
-  //   rule Eval_clauses/error
-  rule <k> ERROR ~> afterClause(_:ClauseList, _:ValList) => ERROR ... </k>
+  rule <k> R:Val ~> afterClause(_:ClauseList, _:ValList, F:Map, V:Map) => R ... </k>
+       <lfenv> _ => F </lfenv>
+       <lvenv> _ => V </lvenv>
 
   // ==========================================================================
   // Eval_tblrow: ctx |- tblRow `( val* `) : funcRes
@@ -57,17 +63,17 @@ module CALL-FUNC
        </k>
 
   //   rulegroup Eval_tblrows: in order; the first row that does not mismatch
-  //   gives the result
-  rule <k> evalTblRows(.TblRowList, _:ValList) => unmatch ... </k>
+  //   gives the result, and `ERROR` passes the catch frames. Each row's
+  //   frame restores the local layer, so the catch frame holds none
+  rule <k> evalTblRows(.TblRowList, _:ValList) => UNMATCH ... </k>
   rule <k> evalTblRows((R:TblRow, Rs:TblRowList), Vs:ValList)
-        => try(evalTblRow(R, Vs)) ~> afterTblRow(Rs, Vs)
+        => evalTblRow(R, Vs) ~> afterTblRow(Rs, Vs)
        ...
        </k>
 
-  syntax KItem ::= afterTblRow(TblRowList, ValList)
+  syntax UnmatchBoundary ::= afterTblRow(TblRowList, ValList)
   rule <k> UNMATCH ~> afterTblRow(Rs:TblRowList, Vs:ValList) => evalTblRows(Rs, Vs) ... </k>
-  rule <k> ok(V:KItem) ~> afterTblRow(_:TblRowList, _:ValList) => V ... </k>
-  rule <k> ERROR ~> afterTblRow(_:TblRowList, _:ValList) => error ... </k>
+  rule <k> V:Val ~> afterTblRow(_:TblRowList, _:ValList) => V ... </k>
 
   //   rule Call_table_func
   rule <k> callTableFunc(tableFuncD(_, _, _, Rs:TblRowList), Vs:ValList) => evalTblRows(Rs, Vs) ... </k>
@@ -77,18 +83,28 @@ module CALL-FUNC
   //
   // The clauses run in a frame whose tdenv binds the type parameters; the
   // otherwise clause runs there too, only when every clause mismatched.
+  // Only a function with an otherwise clause catches the clauses' `UNMATCH`.
   // ==========================================================================
 
-  rule <k> callDefinedFunc(funcD(_, Ps:TParamList, _, _, Cls:ClauseList, EC:ElsClauseOpt), Ts:TArgList, Vs:ValList)
+  //   rule Call_defined_func/result, /unmatch: without an otherwise clause
+  rule <k> callDefinedFunc(funcD(_, Ps:TParamList, _, _, Cls:ClauseList, noElsClause()), Ts:TArgList, Vs:ValList)
         => enterFrame(calleeTdenv(Ps, Ts))
            ~> evalClauses(Cls, Vs)
-           ~> afterClauses(EC, Vs)
+           ~> endFrame
+       ...
+       </k>
+    requires sameArity(Ps, Ts)
+  //   rule Call_defined_func/result, /unmatch: with an otherwise clause
+  rule <k> callDefinedFunc(funcD(_, Ps:TParamList, _, _, Cls:ClauseList, someElsClause(Cl:Clause)), Ts:TArgList, Vs:ValList)
+        => enterFrame(calleeTdenv(Ps, Ts))
+           ~> evalClauses(Cls, Vs)
+           ~> afterClauses(Cl, Vs)
            ~> endFrame
        ...
        </k>
     requires sameArity(Ps, Ts)
   //   rule Call_defined_func/error: a wrong number of type arguments
-  rule <k> callDefinedFunc(_:DefinedFuncDefn, _:TArgList, _:ValList) => error ... </k> [owise]
+  rule <k> callDefinedFunc(_:DefinedFuncDefn, _:TArgList, _:ValList) => ERROR ... </k> [owise]
 
   // `{ (tparam ':' (TYP tparam eps '=' (ALIAS typ)))* }`
   syntax Map ::= calleeTdenv(TParamList, TArgList)
@@ -97,14 +113,13 @@ module CALL-FUNC
   rule calleeTdenv((X:Id, Xs:TParamList), (T:Typ, Ts:TArgList))
     => (X |-> typD(X, .TParamList, aliasDT(T))) calleeTdenv(Xs, Ts)
 
-  syntax KItem ::= afterClauses(ElsClauseOpt, ValList)
+  // The otherwise clause, under the context the clauses started from
+  syntax UnmatchBoundary ::= afterClauses(Clause, ValList)
 
-  //   rule Call_defined_func/result
-  rule <k> ok(R:KItem) ~> afterClauses(_:ElsClauseOpt, _:ValList) => R ... </k>
-  rule <k> ERROR ~> afterClauses(_:ElsClauseOpt, _:ValList) => error ... </k>
+  //   rule Call_defined_func/result: `ERROR` passes the catch frame
+  rule <k> R:Val ~> afterClauses(_:Clause, _:ValList) => R ... </k>
   //   rule Call_defined_func/unmatch
-  rule <k> UNMATCH ~> afterClauses(noElsClause(), _:ValList) => unmatch ... </k>
-  rule <k> UNMATCH ~> afterClauses(someElsClause(Cl:Clause), Vs:ValList) => evalClause(Cl, Vs) ... </k>
+  rule <k> UNMATCH ~> afterClauses(Cl:Clause, Vs:ValList) => evalClause(Cl, Vs) ... </k>
 
   // ==========================================================================
   // Call_func: ctx |- id `< targ* `> `( val* `) : funcRes
@@ -124,7 +139,7 @@ module CALL-FUNC
   rule <k> callGlobalFunc(X:Id, Ts:TArgList, Vs:ValList) => callFuncDefn(D, Ts, Vs) ... </k>
        <gfenv> ... X |-> D:FuncDefn ... </gfenv>
   //   rule Call_func/error: no such function
-  rule <k> callGlobalFunc(_:Id, _:TArgList, _:ValList) => error ... </k> [owise]
+  rule <k> callGlobalFunc(_:Id, _:TArgList, _:ValList) => ERROR ... </k> [owise]
 
   syntax KItem ::= callFuncDefn(FuncDefn, TArgList, ValList)
 
@@ -149,6 +164,6 @@ module CALL-FUNC
        ...
        </k>
   //   rule Call_func/error: a table function with type arguments
-  rule <k> callFuncDefn(_:FuncDefn, _:TArgList, _:ValList) => error ... </k> [owise]
+  rule <k> callFuncDefn(_:FuncDefn, _:TArgList, _:ValList) => ERROR ... </k> [owise]
 
 endmodule
