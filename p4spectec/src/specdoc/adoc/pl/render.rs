@@ -2622,7 +2622,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         render_arm: &dyn Fn(&mut Renderer<'ctx, 'a>, &Context, &Arm) -> Block,
     ) -> Block {
         // Allocate one shared anchor prefix for every arm target
-        let anchor_block = self.anchor_ctx.fresh_block();
+        let anchor_block = self.anchor_ctx.block_fresh();
         let num_arms = arms.len();
         let mut blocks_arm = Vec::with_capacity(num_arms);
         // Keep the alternative order and nest each body under its heading

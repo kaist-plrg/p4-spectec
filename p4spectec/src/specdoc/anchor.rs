@@ -45,8 +45,8 @@ impl Presentation {
 pub struct AnchorContext<'a> {
     func: &'a dyn Fn(Presentation, &str) -> Option<String>,
     rel: &'a dyn Fn(Presentation, &str) -> Option<String>,
+    counter_blocks: usize,
     emitted: BTreeSet<String>,
-    num_blocks: usize,
 }
 
 impl Default for AnchorContext<'_> {
@@ -62,7 +62,7 @@ impl<'a> AnchorContext<'a> {
         func: &'a dyn Fn(Presentation, &str) -> Option<String>,
         rel: &'a dyn Fn(Presentation, &str) -> Option<String>,
     ) -> Self {
-        Self { func, rel, emitted: BTreeSet::new(), num_blocks: 0 }
+        Self { func, rel, counter_blocks: 0, emitted: BTreeSet::new() }
     }
 
     /// Resolves a function title without a leading hash.
@@ -92,9 +92,9 @@ impl<'a> AnchorContext<'a> {
     }
 
     /// Allocates the anchor prefix of an alternative block, distinct within the batch.
-    pub fn fresh_block(&mut self) -> String {
-        self.num_blocks += 1;
-        format!("bk-{}", self.num_blocks)
+    pub fn block_fresh(&mut self) -> String {
+        self.counter_blocks += 1;
+        format!("bk-{}", self.counter_blocks)
     }
 
     /// Registers a destination and reports whether this is its first declaration.
