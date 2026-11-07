@@ -164,6 +164,21 @@ pub enum ArgKind<P: Stage = Source> {
 
 pub type Dangle = sl::ast::Dangle;
 
+// Falling through
+
+#[derive(Clone, Debug, PartialEq)]
+/// Where control goes when an instruction fails and no following instruction recovers.
+pub enum Fallthrough {
+    /// To the named rule group.
+    Group(Id),
+    /// To the next alternative.
+    Next,
+    /// To the otherwise block.
+    Else,
+    /// Nowhere: evaluation fails.
+    Fail,
+}
+
 // Holding conditions
 
 #[derive(Clone, Debug, PartialEq)]
@@ -210,19 +225,6 @@ pub enum Guard<P: Stage = Source> {
 }
 
 // Instructions
-
-#[derive(Clone, Debug, PartialEq)]
-/// Where control goes when an instruction fails and no following instruction recovers.
-pub enum Fallthrough {
-    /// To the named rule group.
-    Group(Id),
-    /// To the next alternative.
-    Next,
-    /// To the otherwise block.
-    Else,
-    /// Nowhere: evaluation fails.
-    Fail,
-}
 
 /// An instruction with its fall-through note, before annotation.
 pub type InstrNode<Tier, P = Source> = NotePhrase<InstrKind<Tier, P>, Option<Fallthrough>>;

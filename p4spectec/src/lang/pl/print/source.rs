@@ -279,9 +279,7 @@ impl Print for [Arg] {
     }
 }
 
-// - Instructions
-
-// Fall-through notes
+// - Fall-through notes
 //
 //   Next          -> [→ next]
 //   Group(nil)    -> [→ group nil]
@@ -304,16 +302,17 @@ impl Print for Fallthrough {
 }
 
 /// Appends a step's fall-through note after a space, if present.
-fn write_fallthrough_opt(
-    output: &mut Printer<'_>,
-    fallthrough_opt: &Option<Fallthrough>,
-) -> fmt::Result {
-    let Some(fallthrough) = fallthrough_opt else {
-        return Ok(());
-    };
-    output.write_char(' ')?;
-    fallthrough.print(output)
+impl Print for Option<Fallthrough> {
+    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
+        if let Some(fallthrough) = self {
+            printer.write_char(' ')?;
+            fallthrough.print(printer)?;
+        }
+        Ok(())
+    }
 }
+
+// - Instructions
 
 // Shared control flow parameterized by the tier
 
@@ -344,7 +343,7 @@ fn write_instr_with<Tier>(
             output.write_char(')')?;
             iter_exps.as_slice().print(output)?;
             output.write_str(", then")?;
-            write_fallthrough_opt(output, &instr.node.note)?;
+            instr.node.note.print(output)?;
             if !short {
                 output.write_str("\n\n")?;
                 write_block_with(output, block, tier_printer, level + 1, 0)?;
@@ -363,7 +362,7 @@ fn write_instr_with<Tier>(
             output.write_str(" be ")?;
             exp_r.print(output)?;
             output.write_str(", then")?;
-            write_fallthrough_opt(output, &instr.node.note)?;
+            instr.node.note.print(output)?;
             if !short {
                 output.write_str("\n\n")?;
                 write_block_with(output, block, tier_printer, level + 1, 0)?;
@@ -382,7 +381,7 @@ fn write_instr_with<Tier>(
             output.write_str(" matching pattern ")?;
             pattern.print(output)?;
             output.write_str(", then")?;
-            write_fallthrough_opt(output, &instr.node.note)?;
+            instr.node.note.print(output)?;
             if !short {
                 output.write_str("\n\n")?;
                 write_block_with(output, block, tier_printer, level + 1, 0)?;
@@ -398,7 +397,7 @@ fn write_instr_with<Tier>(
             exp.print(output)?;
             output.write_char(')')?;
             iter_exps.as_slice().print(output)?;
-            write_fallthrough_opt(output, &instr.node.note)?;
+            instr.node.note.print(output)?;
             if !short {
                 output.write_str("\n\n")?;
                 write_block_with(output, block, tier_printer, level + 1, 0)?;
@@ -418,7 +417,7 @@ fn write_instr_with<Tier>(
                 output.write_char(' ')?;
                 output.write_str(if negative { "does not hold" } else { "holds" })?;
                 output.write_str(", then")?;
-                write_fallthrough_opt(output, &instr.node.note)
+                instr.node.note.print(output)
             };
             match hold_case {
                 // Both branches: then-block, `Else,`, else-block
@@ -456,7 +455,7 @@ fn write_instr_with<Tier>(
             if *totality == Totality::Total {
                 output.write_str(" (total)")?;
             }
-            write_fallthrough_opt(output, &instr.node.note)?;
+            instr.node.note.print(output)?;
             if !short {
                 output.write_str("\n\n")?;
                 write_cases_with(output, cases, tier_printer, level + 1)?;
@@ -475,14 +474,14 @@ fn write_instr_with<Tier>(
             exp_r.print(output)?;
             output.write_char(')')?;
             iter_instrs.as_slice().print(output)?;
-            write_fallthrough_opt(output, &instr.node.note)
+            instr.node.note.print(output)
         }
         // `Debug:` and the expression
         InstrKind::Debug(DebugInstr { exp }) => {
             write_order(output)?;
             output.write_str("Debug: ")?;
             exp.print(output)?;
-            write_fallthrough_opt(output, &instr.node.note)
+            instr.node.note.print(output)
         }
         // `(Destruct (fields) = e)`
         InstrKind::Destruct(DestructInstr { bindings: fields, exp: exp_r }) => {
@@ -497,12 +496,12 @@ fn write_instr_with<Tier>(
             output.write_str(") = ")?;
             exp_r.print(output)?;
             output.write_char(')')?;
-            write_fallthrough_opt(output, &instr.node.note)
+            instr.node.note.print(output)
         }
         // The tier's own step; only steps without blocks carry a note
         InstrKind::Tier(TierInstr { tier }) => {
             tier_printer(output, tier, short, level, index)?;
-            write_fallthrough_opt(output, &instr.node.note)
+            instr.node.note.print(output)
         }
     }
 }
@@ -730,7 +729,7 @@ fn write_case_with<Tier>(
 ) -> fmt::Result {
     write!(output, "{}{index}. Case ", "  ".repeat(level))?;
     case.guard.print(output)?;
-    write_fallthrough_opt(output, &case.fallthrough)?;
+    case.fallthrough.print(output)?;
     output.write_str("\n\n")?;
     write_block_with(output, &case.block, tier_printer, level + 1, 0)
 }
