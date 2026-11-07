@@ -1,7 +1,7 @@
 //! What krun gives for a program, for `KRUN_EXPECT=1`
 //!
 //! `Case::krun` runs the kompiled interpreter as krun does, with `--statistics`,
-//! and writes the run as `print_runres` prints one; `Case::search` writes the
+//! and writes the run as `print_runres` prints one; `Case::search` gives the
 //! final configurations K allows, as the kompiled `search` binary finds them.
 
 use std::{
@@ -51,20 +51,18 @@ impl Case<'_> {
         Ok(fs::read_to_string(path_out)?.trim_end().to_owned())
     }
 
-    /// Writes the final configurations K allows from an initial term to `path_search`,
-    /// as the kompiled `search` binary finds them, within `timeout` if any: whether it ended.
+    /// What K's search from an initial term finds within `timeout`, if it ends:
+    /// as the kompiled `search` binary writes it with `--statistics`, the states
+    /// it took a step from, and the final configurations it reaches under `\or`.
     pub fn search(
         &self,
         path_init: &Path,
         depth: Option<u64>,
         input: Option<&Path>,
-        path_search: &Path,
         timeout: Option<Duration>,
-    ) -> Result<bool> {
-        if path_search.exists() {
-            // The search binary appends to its output file
-            fs::remove_file(path_search)?;
-        }
+    ) -> Result<Option<String>> {
+        let dir_temp = tempfile::tempdir()?;
+        let path_out = dir_temp.path().join("search.kore");
         let search = self.kompiled().join("search");
         let mut command = match timeout {
             Some(timeout) => {
@@ -77,18 +75,16 @@ impl Case<'_> {
         let output = command
             .arg(path_init)
             .arg(arg_depth(depth))
-            .arg(path_search)
+            .arg(&path_out)
+            .arg("--statistics")
             .stdin(stdin(input)?)
             .output()?;
         if output.status.success() {
-            return Ok(true);
-        }
-        if path_search.exists() {
-            fs::remove_file(path_search)?;
+            return Ok(Some(fs::read_to_string(path_out)?));
         }
         // `timeout` exits with 124 when the time is up
         if timeout.is_some() && output.status.code() == Some(124) {
-            return Ok(false);
+            return Ok(None);
         }
         Err(failed(&format!("search {}", path_init.display()), &output))
     }

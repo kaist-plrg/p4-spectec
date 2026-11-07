@@ -27,15 +27,28 @@ pub fn compare(info: &Info, output: &str, expected: &str) -> Result<(), String> 
     }
 }
 
-/// Whether a run ended in krun's final configuration after other steps.
-pub fn same_final(info: &Info, output: &str, expected: &str) -> bool {
-    let (Some(config_output), Some(config_expected)) = (split(output).1, split(expected).1) else {
+/// Whether K's search, as the `search` binary writes it with `--statistics`,
+/// found krun's run only: steps from as many states as krun took, and krun's
+/// final configuration alone. More states mean that K allows other runs.
+pub fn one_run(info: &Info, expected: &str, searched: &str) -> bool {
+    let (steps_expected, Some(config_expected)) = split(expected) else {
         return false;
     };
-    matches!(
-        (normal_text(info, config_output), normal_text(info, config_expected)),
-        (Ok(a), Ok(b)) if a == b
-    )
+    let (steps_searched, Some(finals)) = split(searched) else {
+        return false;
+    };
+    if steps_searched != steps_expected {
+        return false;
+    }
+    let finals = match parse::parse_pattern(finals.as_bytes()) {
+        Ok(Pattern::App(name, _, args)) if name == "\\or" => args,
+        Ok(pattern) => vec![pattern],
+        Err(_) => return false,
+    };
+    match (finals.as_slice(), normal_text(info, config_expected)) {
+        ([only], Ok(normal)) => normal::normal_text(info, only) == normal,
+        _ => false,
+    }
 }
 
 /// Whether a run ended in one of the final configurations K allows, `finals`,
