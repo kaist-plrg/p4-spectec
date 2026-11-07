@@ -18,7 +18,7 @@ use crate::harness::{Error, Result};
 pub enum Base {
     /// The native `algo` pass converts the base specification and AL inputs.
     Al,
-    /// The base level converts its IL input with the meta specification's `Algo_IL`.
+    /// The base level converts its IL input with `Algo_IL` of spec-meta-extended.
     Il,
     /// The base runs from the library compiled from spec-meta-k, which takes AL (ST-in-K).
     K,

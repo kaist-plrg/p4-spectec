@@ -52,7 +52,7 @@ redex: metacirc
 test-metacirc-run-al:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run al --input p4 $(CORPUS_ARGS)
 
-# P4 corpus through the IL/P4 towers, converted by Algo_IL
+# P4 corpus through the IL/P4 towers, converted by Algo_IL of spec-meta-extended
 test-metacirc-run-il:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run il --input p4 $(CORPUS_ARGS)
 
@@ -68,7 +68,7 @@ test-metacirc-run-redex:
 test-metacirc-micro-al:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run al --input al $(CORPUS_ARGS)
 
-# Spec-language micro test sources through the IL tower, converted by Algo_IL
+# Spec-language micro test sources through the IL tower, converted by Algo_IL of spec-meta-extended
 test-metacirc-micro-il:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) run il --input al $(CORPUS_ARGS)
 
@@ -84,7 +84,7 @@ test-metacirc-micro-redex:
 test-metacirc-sim-al:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) sim al $(CORPUS_ARGS)
 
-# Registered simulation suites through the IL/P4 tower, converted by Algo_IL
+# Registered simulation suites through the IL/P4 tower, converted by Algo_IL of spec-meta-extended
 test-metacirc-sim-il:
 	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) sim il $(CORPUS_ARGS)
 
