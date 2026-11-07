@@ -20,32 +20,36 @@ are resolved from the repository root.
 
 ## SpecTec programs
 
-Create a specification source file with a zero-argument `main`:
+Create a specification source file with a relation `Main` whose notation is `OK`:
 
 ```text
-dec $main() : nat
-def $main() = 42
+relation Main: OK
+
+rule Main: OK
+  -- if 42 = $(40 + 2)
 ```
 
 Run it with the supplied AL tower:
 
 ```sh
-./bin/metacirc run-meta towers/al-func.json -p /path/to/script.watsup
+./bin/metacirc run-meta towers/al-rel.json -p /path/to/script.watsup
 ```
 
-`towers/al-func.json` contains:
+`towers/al-rel.json` contains:
 
 ```json
 {
   "mode": "sl",
+  "entry": "Main",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Eval_AL_func", "lang": "al" }
+    { "specdir": "../spec-meta", "rel": "Eval_AL_rel", "lang": "al" }
   ]
 }
 ```
 
-The single level is both top level and native base. Its `Eval_AL_func` interprets the
-AL script, calling its function `main` with no inputs. Builtin calls of the script are answered by the native builtins;
+The single level is both top level and native base. Its `Eval_AL_rel` interprets the
+AL script, calling its relation `Main` with no inputs; `entry` names it, and a
+tower without `entry` calls the function `main` through `Eval_AL_func`. Builtin calls of the script are answered by the native builtins;
 other host operations are unsupported.
 Repeat `-p` for ordered specification source paths.
 
@@ -125,10 +129,11 @@ host calls relayed from below, without consulting its own definitions.
 is encoded as the inputs of an entry relation at the level below: the
 specification, its `rel`, and the inputs of that `rel` as `val`s.
 `Eval_AL_rel` and `Eval_IL_rel` call a relation through `Call_rel`;
-`Eval_AL_func` and `Eval_IL_func` call a function, such as the `main` of a
-script, through `Call_func` and output its value. A level entered through a
-relation of the level above, including every P4 tower, uses the `_rel` entry;
-only the level below a script uses the `_func` entry.
+`Eval_AL_func` and `Eval_IL_func` call a function through `Call_func` and
+output its value. A level entered through a relation of the level above,
+including every P4 tower and the supplied script towers entering `Main`, uses
+the `_rel` entry; only the level below a script entered at a function uses the
+`_func` entry.
 
 Each `specdir` accepts a specification file or directory and is resolved
 relative to the configuration file. CLI program and include paths are
@@ -260,8 +265,8 @@ The conversion runs for every input, in the level that accepts the IL.
 Only the base, here the IL-to-AL specification itself, is converted by the
 native `algo` pass; the specification above it reaches native code only
 through its builtin and host calls.
-`towers/il-func.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
-are the supplied towers entered through `Eval_IL_func` and `Eval_IL_rel`.
+`towers/il-rel.json`, `towers/il-p4.json`, and `towers/il-p4-ok.json`
+are the supplied towers entered through `Eval_IL_rel`.
 
 ## Execution corpus
 
@@ -286,7 +291,7 @@ names, against the native simulation expectations; it requires the p4c submodule
 The driver's `run` and `sim` subcommands take a configuration name,
 `al` or `il`, which selects the language the towers' base level takes.
 Each suite registers a tower per base; the `-il` targets run the same suites
-through towers entered by `Eval_IL_func` or `Eval_IL_rel`, so the input is converted by `Algo_IL`
+through towers entered by `Eval_IL_rel`, so the input is converted by `Algo_IL`
 instead of the native `algo` pass. They share the expectations of the `al` runs;
 sources whose outcome differs are listed in the `il` exclusions.
 `run` selects suites with `--input al` or `--input p4`,
