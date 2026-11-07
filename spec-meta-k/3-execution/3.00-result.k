@@ -67,13 +67,14 @@ module RESULT
   rule <k> ERROR ~> (K:KItem => .K) ... </k>
     requires notBool isErrorBoundary(K)
 
-  // `unres`: a function's outcome on `<k>`, `X` for `ok(X)` and a failure in
-  // flight; `unresBool`: a `bool` outcome as its value.
-  syntax KItem ::= unres(Res)
-                 | unresBool(Res)
-  rule <k> unres(ok(R:KItem)) => R ... </k>
-  rule <k> unres(F:Failure) => F ... </k>
-  rule <k> unresBool(ok(B:Bool)) => boolV(B) ... </k>
-  rule <k> unresBool(F:Failure) => F ... </k>
+  // `fromRes`: the computation on `<k>` from a function's outcome, `X` for
+  // `ok(X)` and a failure in flight; `fromResBool`: a `bool` outcome as its
+  // value.
+  syntax KItem ::= fromRes(Res)
+                 | fromResBool(Res)
+  rule <k> fromRes(ok(R:KItem)) => R ... </k>
+  rule <k> fromRes(F:Failure) => F ... </k>
+  rule <k> fromResBool(ok(B:Bool)) => boolV(B) ... </k>
+  rule <k> fromResBool(F:Failure) => F ... </k>
 
 endmodule

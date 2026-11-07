@@ -34,23 +34,23 @@ module EVAL-EXP
 
   //   rulegroup Eval_exp/binary and /compare
   rule <k> binE(O:BoolBinOp, boolV(Bl:Bool), boolV(Br:Bool)) => boolV(boolBinop(O, Bl, Br)) ... </k>
-  rule <k> binE(O:NumBinOp, Nl:Num, Nr:Num) => unres(numBinop(O, Nl, Nr)) ... </k>
+  rule <k> binE(O:NumBinOp, Nl:Num, Nr:Num) => fromRes(numBinop(O, Nl, Nr)) ... </k>
   rule <k> binE(_:BinOp, _:Val, _:Val) => ERROR ... </k> [owise]
 
   rule <k> cmpE(O:PolyCmpOp, Vl:Val, Vr:Val) => boolV(polyCmpop(O, Vl, Vr)) ... </k>
-  rule <k> cmpE(O:NumCmpOp, Nl:Num, Nr:Num) => unresBool(numCmpop(O, Nl, Nr)) ... </k>
+  rule <k> cmpE(O:NumCmpOp, Nl:Num, Nr:Num) => fromResBool(numCmpop(O, Nl, Nr)) ... </k>
   rule <k> cmpE(_:CmpOp, _:Val, _:Val) => ERROR ... </k> [owise]
 
   //   rule Eval_exp/upcast, /downcast, /subtype
-  rule <k> upCastE(T:Typ, V:Val) => unres(upcast(G, L, FE, T, V)) ... </k>
+  rule <k> upCastE(T:Typ, V:Val) => fromRes(upcast(G, L, FE, T, V)) ... </k>
        <gtdenv> G:Map </gtdenv>
        <ltdenv> L:Map </ltdenv>
        <gfenv> FE:Map </gfenv>
-  rule <k> downCastE(T:Typ, V:Val) => unres(downcast(G, L, FE, T, V)) ... </k>
+  rule <k> downCastE(T:Typ, V:Val) => fromRes(downcast(G, L, FE, T, V)) ... </k>
        <gtdenv> G:Map </gtdenv>
        <ltdenv> L:Map </ltdenv>
        <gfenv> FE:Map </gfenv>
-  rule <k> subE(V:Val, T:Typ) => unresBool(subtyp(FE, updateMap(G, L), T, V)) ... </k>
+  rule <k> subE(V:Val, T:Typ) => fromResBool(subtyp(FE, updateMap(G, L), T, V)) ... </k>
        <gtdenv> G:Map </gtdenv>
        <ltdenv> L:Map </ltdenv>
        <gfenv> FE:Map </gfenv>

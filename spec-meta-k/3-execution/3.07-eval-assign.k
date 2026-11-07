@@ -160,7 +160,7 @@ module ASSIGN
 
   // `$find_varis` on the current value environment: the values, or `ERROR`.
   syntax KItem ::= readVaris(VariList)
-  rule <k> readVaris(Vs:VariList) => unres(finds(varrsOfVaris(Vs), M)) ... </k>
+  rule <k> readVaris(Vs:VariList) => fromRes(finds(varrsOfVaris(Vs), M)) ... </k>
        <lvenv> M:Map </lvenv>
 
   // `$add_varis` of the bindings of one sub-context, each as `OPT val`.
