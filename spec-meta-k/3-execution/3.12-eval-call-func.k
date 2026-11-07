@@ -50,6 +50,38 @@ module CALL-FUNC
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>
 
+  // Determinism check (Eval_clauses_on_ok): replaces the rule above.
+  // A later success or `ERROR` is `ERROR`, which passes the catch frames.
+  //
+  //   rule Eval_clauses/succ: the remaining clauses must all mismatch
+  // rule <k> R:Val ~> afterClause(Cls:ClauseList, Vs:ValList, F:Map, V:Map)
+  //       => evalClausesOnOk(Cls, Vs) ~> R
+  //      ...
+  //      </k>
+  //      <lfenv> _ => F </lfenv>
+  //      <lvenv> _ => V </lvenv>
+  //
+  // syntax KItem ::= evalClausesOnOk(ClauseList, ValList)
+  //
+  //   rule Eval_clauses_on_ok/nil
+  // rule <k> evalClausesOnOk(.ClauseList, _:ValList) => .K ... </k>
+  // rule <k> evalClausesOnOk((Cl:Clause, Cls:ClauseList), Vs:ValList)
+  //       => evalClause(Cl, Vs) ~> afterClauseOnOk(Cls, Vs, F, V)
+  //      ...
+  //      </k>
+  //      <lfenv> F:Map </lfenv>
+  //      <lvenv> V:Map </lvenv>
+  //
+  // syntax UnmatchBoundary ::= afterClauseOnOk(ClauseList, ValList, Map, Map)
+  //                                           // lfenv, lvenv
+  //
+  //   rule Eval_clauses_on_ok/unmatch
+  // rule <k> UNMATCH ~> afterClauseOnOk(Cls:ClauseList, Vs:ValList, F:Map, V:Map) => evalClausesOnOk(Cls, Vs) ... </k>
+  //      <lfenv> _ => F </lfenv>
+  //      <lvenv> _ => V </lvenv>
+  //   rule Eval_clauses_on_ok/error: a second success
+  // rule <k> _:Val ~> afterClauseOnOk(_:ClauseList, _:ValList, _:Map, _:Map) => ERROR ... </k>
+
   // ==========================================================================
   // Eval_tblrow: ctx |- tblRow `( val* `) : funcRes
   // Eval_tblrows: ctx |- tblRow* `( val* `) : funcRes

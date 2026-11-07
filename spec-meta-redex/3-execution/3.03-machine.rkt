@@ -59,6 +59,8 @@
      (eval-path-acc val path) (eval-path-upd val path val)
      (eval-clause clause (val ...))
      (eval-clauses ((IN L (eval-clause clause (val ...))) ...))
+     ;; Determinism check (3.12-eval-call-func.rkt):
+     ;; (eval-clauses-on-ok val ((IN L (eval-clause clause (val ...))) ...))
      (eval-tblrow tblRow (val ...)) (eval-tblrows (tblRow ...) (val ...))
      (call-table-func tableFuncDefn (val ...))
      (call-defined-func definedFuncDefn (typ ...) (val ...))
@@ -67,6 +69,8 @@
      (call-builtin-func id (typ ...) (val ...))
      (eval-rul rul (val ...))
      (eval-ruls ((IN L (eval-rul rul (val ...))) ...))
+     ;; Determinism check (3.13-eval-call-rel.rkt):
+     ;; (eval-ruls-on-ok (OK (val ...)) ((IN L (eval-rul rul (val ...))) ...))
      (call-defined-rel definedRelDefn (val ...))
      (call-rel id (val ...))
      (call-extern-rel id (val ...))
@@ -149,11 +153,15 @@
             ;; the clauses of a call, in order: an unmatched one is passed
             ;; over
             (eval-clauses (UNMATCH ... hole (IN L (eval-clause clause (val ...))) ...))
+            ;; Determinism check: the clauses after a success
+            ;; (eval-clauses-on-ok val (UNMATCH ... hole (IN L (eval-clause clause (val ...))) ...))
             (call-defined-func/clauses hole (elsClause ...) (val ...))
             ;; Eval_tblrows/unmatch, which tries the next row
             (eval-tblrows/cons hole (tblRow ...) (val ...))
             ;; the rule paths of a call, as the clauses
             (eval-ruls (UNMATCH ... hole (IN L (eval-rul rul (val ...))) ...))
+            ;; Determinism check: the rule paths after a success
+            ;; (eval-ruls-on-ok (OK (val ...)) (UNMATCH ... hole (IN L (eval-rul rul (val ...))) ...))
             (call-defined-rel/ruls hole (elsGroup ...) (val ...)))
   (Fr ::= Fr-pass Fr-catch)
 

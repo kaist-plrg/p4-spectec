@@ -40,6 +40,21 @@
    (--> (eval-clauses (UNMATCH ... ERROR (IN L (eval-clause clause (val ...))) ...)) ERROR
         "eval-clauses/error")
 
+   ;; Determinism check (Eval_clauses_on_ok): replaces "eval-clauses/succ"
+   ;; above; also uncomment eval-clauses-on-ok in 3.03-machine.rkt.
+   ;; A later success or error is an error.
+   ;;
+   ;; (--> (eval-clauses (UNMATCH ... val_out (IN L (eval-clause clause (val ...))) ...))
+   ;;      (eval-clauses-on-ok val_out ((IN L (eval-clause clause (val ...))) ...))
+   ;;      "eval-clauses/succ")
+   ;;
+   ;; ;; rulegroup Eval_clauses_on_ok, once the clause at hand is evaluated
+   ;; (--> (eval-clauses-on-ok val_out (UNMATCH ...)) val_out
+   ;;      "eval-clauses-on-ok/nil")
+   ;; (--> (eval-clauses-on-ok val_out (UNMATCH ... valres (IN L (eval-clause clause (val ...))) ...)) ERROR
+   ;;      (side-condition (not (equal? (term valres) 'UNMATCH)))
+   ;;      "eval-clauses-on-ok/error")
+
    ;;; Table meta-function invocation
 
    ;; rule Eval_tblrow/succ: the row runs in a layer of its own, as a

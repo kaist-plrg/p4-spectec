@@ -50,6 +50,38 @@ module CALL-REL
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>
 
+  // Determinism check (Eval_ruls_on_ok): replaces the rule above, as in
+  // 3.12-eval-call-func.k.
+  //
+  //   rule Eval_ruls/succ: the remaining paths must all mismatch
+  // rule <k> Ws:ValList ~> afterRul(Rs:RulList, Vs:ValList, F:Map, V:Map)
+  //       => evalRulsOnOk(Rs, Vs) ~> Ws
+  //      ...
+  //      </k>
+  //      <lfenv> _ => F </lfenv>
+  //      <lvenv> _ => V </lvenv>
+  //
+  // syntax KItem ::= evalRulsOnOk(RulList, ValList)
+  //
+  //   rule Eval_ruls_on_ok/nil
+  // rule <k> evalRulsOnOk(.RulList, _:ValList) => .K ... </k>
+  // rule <k> evalRulsOnOk((R:Rul, Rs:RulList), Vs:ValList)
+  //       => evalRul(R, Vs) ~> afterRulOnOk(Rs, Vs, F, V)
+  //      ...
+  //      </k>
+  //      <lfenv> F:Map </lfenv>
+  //      <lvenv> V:Map </lvenv>
+  //
+  // syntax UnmatchBoundary ::= afterRulOnOk(RulList, ValList, Map, Map)
+  //                                           // lfenv, lvenv
+  //
+  //   rule Eval_ruls_on_ok/unmatch
+  // rule <k> UNMATCH ~> afterRulOnOk(Rs:RulList, Vs:ValList, F:Map, V:Map) => evalRulsOnOk(Rs, Vs) ... </k>
+  //      <lfenv> _ => F </lfenv>
+  //      <lvenv> _ => V </lvenv>
+  //   rule Eval_ruls_on_ok/error: a second success
+  // rule <k> _:ValList ~> afterRulOnOk(_:RulList, _:ValList, _:Map, _:Map) => ERROR ... </k>
+
   // ==========================================================================
   // Call_defined_rel: ctx |- definedRelDefn `( val* `) : relRes
   //

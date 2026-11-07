@@ -56,6 +56,20 @@
    (--> (eval-ruls (UNMATCH ... ERROR (IN L (eval-rul rul (val ...))) ...)) ERROR
         "eval-ruls/error")
 
+   ;; Determinism check (Eval_ruls_on_ok): replaces "eval-ruls/succ" above;
+   ;; also uncomment eval-ruls-on-ok in 3.03-machine.rkt.
+   ;;
+   ;; (--> (eval-ruls (UNMATCH ... (OK (val_out ...)) (IN L (eval-rul rul (val ...))) ...))
+   ;;      (eval-ruls-on-ok (OK (val_out ...)) ((IN L (eval-rul rul (val ...))) ...))
+   ;;      "eval-ruls/succ")
+   ;;
+   ;; ;; rulegroup Eval_ruls_on_ok, once the path at hand is evaluated
+   ;; (--> (eval-ruls-on-ok (OK (val_out ...)) (UNMATCH ...)) (OK (val_out ...))
+   ;;      "eval-ruls-on-ok/nil")
+   ;; (--> (eval-ruls-on-ok (OK (val_out ...)) (UNMATCH ... valsres (IN L (eval-rul rul (val ...))) ...)) ERROR
+   ;;      (side-condition (not (equal? (term valsres) 'UNMATCH)))
+   ;;      "eval-ruls-on-ok/error")
+
    ;;; Defined relations
 
    ;; rulegroup Call_defined_rel: every path runs in a copy of the relation's
