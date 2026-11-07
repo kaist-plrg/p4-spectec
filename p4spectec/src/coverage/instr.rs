@@ -1,9 +1,9 @@
 //! SL instruction coverage
 //!
-//! `Cover` numbers source instructions in the pre-order used by SL preparation,
+//! `Cover` numbers the source instructions in the pre-order of SL preparation,
 //! so a prepared instruction's `InstrId` indexes its source node.
-//! `InstrHandler` marks the instructions one program enters in shared `Hits`,
-//! and `Cover::extend` folds them into per-instruction program counts.
+//! `InstrHandler` marks each instruction an input enters in the shared `Hits`,
+//! and `Cover::add_hits` adds them to the per-instruction input counts.
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -11,23 +11,18 @@ use crate::lang::{data::arena::Arena, sl};
 
 use crate::runner::Handler;
 
-use sl::ast::{
-    Block, DefKind, Hint, HoldCase, Id, Instr, InstrKind, MetaFuncDef, RelDef, Spec, TableRow,
-};
+use sl::ast::{Block, Def, DefKind, Hint, HoldCase, Instr, InstrKind, MetaFuncDef, RelDef, Spec};
 
-/// The hint excluding a definition's instructions from coverage.
-const HINT_IGNORE: &str = "cover_instr_ignore";
+use sl::prepared::InstrId;
 
 // == Coverage map
 
-/// One numbered instruction.
+/// One numbered source instruction.
 #[derive(Clone, Debug)]
 pub struct Node {
-    /// The enclosing relation or function.
-    pub origin: Id,
     /// Whether the enclosing definition is excluded from coverage.
     pub ignored: bool,
-    /// The number of programs that entered the instruction.
+    /// The number of inputs that entered the instruction.
     pub hits: u32,
 }
 
@@ -37,31 +32,12 @@ pub struct Cover {
     nodes: Vec<Node>,
 }
 
-/// Hit and total counts over instructions that are not ignored.
-#[derive(Clone, Copy, Debug)]
-pub struct Measure {
-    pub hit: usize,
-    pub total: usize,
-}
-
-impl Measure {
-    /// The hit ratio as a percentage, zero when nothing is counted.
-    pub fn percent(&self) -> f64 {
-        if self.total == 0 { 0.0 } else { self.hit as f64 / self.total as f64 * 100.0 }
-    }
-}
-
 impl Cover {
     /// Numbers the specification's instructions, all unhit.
     pub fn new(spec: &Spec) -> Self {
         let mut nodes = Vec::new();
         for def in spec {
-            for_each_callable(def, |id, hints, blocks| {
-                let ignored = is_ignored(hints);
-                for block in blocks {
-                    number_block(&mut nodes, id, ignored, block);
-                }
-            });
+            number_def(&mut nodes, def);
         }
         Self { nodes }
     }
@@ -81,8 +57,8 @@ impl Cover {
         &self.nodes[index]
     }
 
-    /// Counts one program's hits and clears them for the next program.
-    pub fn extend(&mut self, hits: &Hits) {
+    /// Counts one input's hits and clears them for the next input.
+    pub fn add_hits(&mut self, hits: &Hits) {
         let mut flags = hits.flags.borrow_mut();
         for (node, flag) in self.nodes.iter_mut().zip(flags.iter_mut()) {
             if *flag {
@@ -101,32 +77,54 @@ impl Cover {
     }
 }
 
-/// Whether the definition opts out of coverage.
-pub(super) fn is_ignored(hints: &[Hint]) -> bool {
-    hints
-        .iter()
-        .any(|hint| hint.id.node.as_ref() == HINT_IGNORE)
+/// Hit and total counts over instructions that are not ignored.
+#[derive(Clone, Copy, Debug)]
+pub struct Measure {
+    pub hit: usize,
+    pub total: usize,
 }
 
-/// Calls `f` with each definition that has instructions, in preparation order:
-/// a relation's or function's block then its otherwise block, or a table's row blocks.
-pub(super) fn for_each_callable<'a>(
-    def: &'a sl::ast::Def,
-    mut f: impl FnMut(&'a Id, &'a [Hint], Vec<&'a Block>),
-) {
+impl Measure {
+    /// The hit ratio as a percentage, zero when nothing is counted.
+    pub fn percent(&self) -> f64 {
+        if self.total == 0 { 0.0 } else { self.hit as f64 / self.total as f64 * 100.0 }
+    }
+}
+
+// == Numbering
+
+/// The hint excluding a definition's instructions from coverage.
+const HINT_IGNORE: &str = "cover_instr_ignore";
+
+// - Definitions
+
+/// Numbers a definition's instructions in the order SL preparation visits them.
+fn number_def(nodes: &mut Vec<Node>, def: &Def) {
     match &def.node {
+        // The body comes before the otherwise block
         DefKind::Rel(RelDef::Defined(rel)) => {
-            let blocks = std::iter::once(&rel.block).chain(&rel.block_else);
-            f(&rel.id, &rel.hints, blocks.collect());
+            let ignored = has_ignore_hint(&rel.hints);
+            number_block(nodes, ignored, &rel.block);
+            if let Some(block_else) = &rel.block_else {
+                number_block(nodes, ignored, block_else);
+            }
         }
+        // The body comes before the otherwise block
         DefKind::MetaFunc(MetaFuncDef::Defined(func)) => {
-            let blocks = std::iter::once(&func.block).chain(&func.block_else);
-            f(&func.id, &func.hints, blocks.collect());
+            let ignored = has_ignore_hint(&func.hints);
+            number_block(nodes, ignored, &func.block);
+            if let Some(block_else) = &func.block_else {
+                number_block(nodes, ignored, block_else);
+            }
         }
+        // Table rows come in order
         DefKind::MetaFunc(MetaFuncDef::Table(func)) => {
-            let blocks = func.table_rows.iter().map(|row: &TableRow| &row.block);
-            f(&func.id, &func.hints, blocks.collect());
+            let ignored = has_ignore_hint(&func.hints);
+            for row in &func.table_rows {
+                number_block(nodes, ignored, &row.block);
+            }
         }
+        // Externs, builtins, types, and variables have no instructions
         DefKind::Rel(RelDef::Extern(_))
         | DefKind::MetaFunc(MetaFuncDef::Extern(_) | MetaFuncDef::Builtin(_))
         | DefKind::Typ(_)
@@ -134,43 +132,52 @@ pub(super) fn for_each_callable<'a>(
     }
 }
 
+/// Checks whether a definition opts out of coverage.
+fn has_ignore_hint(hints: &[Hint]) -> bool {
+    hints
+        .iter()
+        .any(|hint| hint.id.node.as_ref() == HINT_IGNORE)
+}
+
+// - Instructions
+
 /// Numbers a block's instructions in order.
-fn number_block(nodes: &mut Vec<Node>, origin: &Id, ignored: bool, block: &Block) {
+fn number_block(nodes: &mut Vec<Node>, ignored: bool, block: &Block) {
     for instr in &block.instrs {
-        number_instr(nodes, origin, ignored, instr);
+        number_instr(nodes, ignored, instr);
     }
 }
 
 /// Numbers an instruction before its nested instructions, as preparation does.
-fn number_instr(nodes: &mut Vec<Node>, origin: &Id, ignored: bool, instr: &Instr) {
-    nodes.push(Node { origin: origin.clone(), ignored, hits: 0 });
-    for block in nested_blocks(instr) {
-        number_block(nodes, origin, ignored, block);
-    }
-    if let InstrKind::Debug(instr) = &instr.node {
-        number_instr(nodes, origin, ignored, &instr.instr);
-    }
-}
-
-/// The blocks nested in an instruction, in preparation order.
-fn nested_blocks(instr: &Instr) -> Vec<&Block> {
+fn number_instr(nodes: &mut Vec<Node>, ignored: bool, instr: &Instr) {
+    nodes.push(Node { ignored, hits: 0 });
     match &instr.node {
-        InstrKind::If(instr) => vec![&instr.block],
+        InstrKind::If(instr) => number_block(nodes, ignored, &instr.block),
         InstrKind::Hold(instr) => match &instr.hold_case {
-            HoldCase::Both(block_hold, block_not_hold) => vec![block_hold, block_not_hold],
-            HoldCase::Hold(block, _) | HoldCase::NotHold(block, _) => vec![block],
+            HoldCase::Both(block_hold, block_not_hold) => {
+                number_block(nodes, ignored, block_hold);
+                number_block(nodes, ignored, block_not_hold);
+            }
+            HoldCase::Hold(block, _) | HoldCase::NotHold(block, _) => {
+                number_block(nodes, ignored, block)
+            }
         },
-        InstrKind::Case(instr) => instr.cases.iter().map(|case| &case.block).collect(),
-        InstrKind::Group(instr) => vec![&instr.block],
-        InstrKind::Let(instr) => vec![&instr.block],
-        InstrKind::Rule(instr) => vec![&instr.block],
-        InstrKind::Result(_) | InstrKind::Return(_) | InstrKind::Debug(_) => vec![],
+        InstrKind::Case(instr) => {
+            for case in &instr.cases {
+                number_block(nodes, ignored, &case.block);
+            }
+        }
+        InstrKind::Group(instr) => number_block(nodes, ignored, &instr.block),
+        InstrKind::Let(instr) => number_block(nodes, ignored, &instr.block),
+        InstrKind::Rule(instr) => number_block(nodes, ignored, &instr.block),
+        InstrKind::Debug(instr) => number_instr(nodes, ignored, &instr.instr),
+        InstrKind::Result(_) | InstrKind::Return(_) => {}
     }
 }
 
 // == Hit recording
 
-/// Instructions entered by the current program, shared with `InstrHandler`.
+/// Instructions entered by the current input, shared with `InstrHandler`.
 #[derive(Clone)]
 pub struct Hits {
     flags: Rc<RefCell<Vec<bool>>>,
@@ -180,6 +187,11 @@ impl Hits {
     /// No hits over `len` instructions.
     pub fn new(len: usize) -> Self {
         Self { flags: Rc::new(RefCell::new(vec![false; len])) }
+    }
+
+    /// Marks the instruction as entered.
+    fn mark(&self, id: InstrId) {
+        self.flags.borrow_mut()[id.index()] = true;
     }
 }
 
@@ -197,6 +209,6 @@ impl InstrHandler {
 
 impl Handler for InstrHandler {
     fn on_instr(&mut self, _arena: &Arena, instr_sl: &sl::prepared::Instr) {
-        self.hits.flags.borrow_mut()[instr_sl.note.index()] = true;
+        self.hits.mark(instr_sl.note);
     }
 }

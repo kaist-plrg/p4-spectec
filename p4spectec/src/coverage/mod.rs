@@ -114,7 +114,7 @@ pub fn cover_run(
                 .map_err(drop)
         });
         // Count hits up to the end or the panic, then start the next program afresh
-        cover.extend(&hits);
+        cover.add_hits(&hits);
         runner.reset();
         arena.reset_values();
         outcomes.push(outcome);
@@ -149,7 +149,7 @@ pub fn cover_sim(
         // Each STF test resets the runner and arena before it starts
         let outcome =
             run_catching(|| simulator.run_stf_test(includes, path_p4, Path::new(path_stf), |_| {}));
-        cover.extend(&hits);
+        cover.add_hits(&hits);
         outcomes.push(outcome);
         on_progress(Progress::Finish(index, outcome));
     }
