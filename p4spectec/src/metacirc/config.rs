@@ -2,7 +2,8 @@
 //!
 //! Levels run from the native base toward a top level consuming AL, IL, P4, or KORE.
 //! Each level names the language it accepts:
-//! the level above it is passed to it as AL or IL.
+//! the level above it is passed to it as AL or IL, in the meta syntax of
+//! spec-meta (`al`) or spec-meta-ext (`al-ext`, `il-ext`).
 //! The base runs natively, as `BaseConfig` says: a P4-SpecTec specification on
 //! the AL or SL interpreter (`St`), a K library compiled from the base (`K`),
 //! or a Racket module of the base run by `racket` (`Redex`).
@@ -183,7 +184,7 @@ impl TowerConfig {
         for (idx, level) in levels.iter().enumerate() {
             if idx != idx_top && !level.lang.is_script() {
                 return Err(config_invalid(format!(
-                    "invalid language at level {idx}: expected al or il"
+                    "invalid language at level {idx}: expected al, al-ext, or il-ext"
                 )));
             }
             if level.rel.is_empty() || level.specdir.as_os_str().is_empty() {

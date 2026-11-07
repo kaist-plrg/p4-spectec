@@ -1,14 +1,15 @@
 //! Meta codec round trips registered in `suites/metacirc/metaparse.toml`
 //!
 //! For each registered specification, the elaborated IL and the converted AL
-//! are encoded, decoded, and encoded again.
+//! are encoded, decoded, and encoded again:
+//! IL in spec-meta-ext's meta syntax, AL in spec-meta's and in spec-meta-ext's.
 //! Decoding reconstructs omitted metadata canonically,
 //! so the check compares the two encodings rather than the source syntax.
 
 use std::{path::PathBuf, time::Instant};
 
 use p4spectec::{
-    interface::meta::shared,
+    interface::{meta, meta_ext},
     lang::{
         data::{arena::Arena, value::flat::Value},
         traits::print::Print,
@@ -62,27 +63,37 @@ pub fn run() -> Result<()> {
         let invalid = |error: &dyn std::fmt::Display| {
             Error::from(format!("metaparse {}: {error}", suite.name))
         };
-        // IL: elaborated specification
+        // IL: elaborated specification, in spec-meta-ext's meta syntax
         let spec_il = p4spectec::elab(&suite.spec).map_err(|error| invalid(&error))?;
-        let value_il = shared::encode::Encode::encode(&spec_il, &mut arena)
+        let value_il = meta_ext::shared::encode::Encode::encode(&spec_il, &mut arena)
             .map_err(|error| invalid(&error))?;
         let spec_il_decoded: p4spectec::lang::il::ast::Spec =
-            shared::decode::Decode::decode(&mut arena, value_il)
+            meta_ext::shared::decode::Decode::decode(&mut arena, value_il)
                 .map_err(|error| invalid(&error))?;
-        let value_il_again = shared::encode::Encode::encode(&spec_il_decoded, &mut arena)
+        let value_il_again = meta_ext::shared::encode::Encode::encode(&spec_il_decoded, &mut arena)
             .map_err(|error| invalid(&error))?;
         check_fixpoint(&suite.name, "IL", &arena, value_il, value_il_again)?;
-        // AL: natively converted specification
+        // AL: natively converted specification, in spec-meta's meta syntax
         let spec_al = p4spectec::algo(&suite.spec).map_err(|error| invalid(&error))?;
-        let value_al = shared::encode::Encode::encode(&spec_al, &mut arena)
+        let value_al = meta::shared::encode::Encode::encode(&spec_al, &mut arena)
             .map_err(|error| invalid(&error))?;
         let spec_al_decoded: p4spectec::lang::al::ast::Spec =
-            shared::decode::Decode::decode(&mut arena, value_al)
+            meta::shared::decode::Decode::decode(&mut arena, value_al)
                 .map_err(|error| invalid(&error))?;
-        let value_al_again = shared::encode::Encode::encode(&spec_al_decoded, &mut arena)
+        let value_al_again = meta::shared::encode::Encode::encode(&spec_al_decoded, &mut arena)
             .map_err(|error| invalid(&error))?;
         check_fixpoint(&suite.name, "AL", &arena, value_al, value_al_again)?;
-        eprintln!("metaparse: {} round-trips in IL and AL", suite.name);
+        // AL again, in spec-meta-ext's meta syntax
+        let value_al_ext = meta_ext::shared::encode::Encode::encode(&spec_al, &mut arena)
+            .map_err(|error| invalid(&error))?;
+        let spec_al_ext_decoded: p4spectec::lang::al::ast::Spec =
+            meta_ext::shared::decode::Decode::decode(&mut arena, value_al_ext)
+                .map_err(|error| invalid(&error))?;
+        let value_al_ext_again =
+            meta_ext::shared::encode::Encode::encode(&spec_al_ext_decoded, &mut arena)
+                .map_err(|error| invalid(&error))?;
+        check_fixpoint(&suite.name, "AL-ext", &arena, value_al_ext, value_al_ext_again)?;
+        eprintln!("metaparse: {} round-trips in IL, AL, and AL-ext", suite.name);
     }
     eprintln!("metaparse: checked, elapsed={:.3}s", start.elapsed().as_secs_f64());
     Ok(())

@@ -130,7 +130,7 @@ pub fn run(
             .map_err(|error| Error::from(format!("{}: {error}", suite.name)))?;
         let (input_suite, suites_input) = match config_tower.top_lang() {
             Lang::P4 => (Input::P4, &mut suites_p4),
-            Lang::Al | Lang::Il => (Input::Al, &mut suites_al),
+            Lang::Al | Lang::AlExt | Lang::IlExt => (Input::Al, &mut suites_al),
             Lang::Kore => {
                 return Err(Error::from(format!(
                     "{}: a KORE tower is not a run suite",
@@ -507,7 +507,7 @@ fn execute_script(
     // Invalid scripts are test errors, not rejected executions;
     // an IL top level converts the script itself, so it need only elaborate
     let valid = match config_tower.top_lang() {
-        Lang::Il => p4spectec::elab(paths_program).map(|_| ()),
+        Lang::IlExt => p4spectec::elab(paths_program).map(|_| ()),
         _ => p4spectec::algo(paths_program).map(|_| ()),
     };
     valid.map_err(|error| Error::from(format!("{}: {error}", path.display())))?;

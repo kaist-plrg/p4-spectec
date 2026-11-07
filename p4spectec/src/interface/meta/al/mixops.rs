@@ -2,7 +2,7 @@
 //!
 //! These shapes follow `spec-meta/1-syntax/1.2-al.watsup`
 //! and `spec-meta/2-runtime/2.0-value.watsup`;
-//! shapes shared with IL come from `meta::shared::mixops`, named the same way.
+//! common shapes come from `meta::shared::mixops`, named the same way.
 
 pub(super) use crate::interface::meta::shared::mixops::*;
 

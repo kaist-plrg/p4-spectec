@@ -15,7 +15,7 @@ use super::{
     tower::{HostLevel, LevelAt, PreparedLevel, TopMut, UpperMut},
 };
 use crate::{
-    interface::{self, Lang, meta::MetaInterface, p4::P4Interface},
+    interface::{self, meta::MetaInterface, p4::P4Interface},
     lang::{
         data::{arena::Arena, value::flat::Value},
         il::ast::Typ,
@@ -248,7 +248,7 @@ impl TowerInterpState {
     ) -> MetacircResult<Self> {
         Ok(Self {
             engine: EngineStateKind::new(options, spec_base)?,
-            hosts: (0..count).map(|_| interface::meta(Lang::Al)).collect(),
+            hosts: (0..count).map(|_| interface::meta()).collect(),
             next: None,
         })
     }

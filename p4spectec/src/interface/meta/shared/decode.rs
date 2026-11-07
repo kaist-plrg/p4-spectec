@@ -1,4 +1,4 @@
-//! Decodes syntax shared by IL and AL from meta data
+//! Decodes the common syntax of spec-meta from meta data
 //!
 //! `Decode` implementations check constructor handles in the supplied arena.
 //! Syntax is reconstructed canonically for editing and re-encoding;

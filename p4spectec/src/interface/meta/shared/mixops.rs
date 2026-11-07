@@ -1,4 +1,4 @@
-//! Constructor notation for syntax shared by IL and AL
+//! Constructor notation for the common syntax of spec-meta
 //!
 //! These shapes follow `spec-meta/1-syntax/1.0-common.watsup`.
 //! A case of a variant syntax is named `<SYNTAX>_<ATOM>`, as `EXP_BIN`;

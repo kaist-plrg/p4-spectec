@@ -1,8 +1,8 @@
-//! Encodes syntax shared by IL and AL as meta data
+//! Encodes the common syntax of spec-meta as meta data
 //!
 //! `Encode` implementations borrow the caller's arena without resetting it.
 //! Types, expressions, paths, arguments, parameters, and iteration premises
-//! are encoded here for both the IL and the AL codecs.
+//! are encoded here for the AL codec.
 
 use super::{Cache, Error, mixops as m};
 use crate::lang::common::prim::num::Number;

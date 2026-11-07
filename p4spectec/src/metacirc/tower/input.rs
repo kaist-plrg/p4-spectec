@@ -62,8 +62,8 @@ impl<Ext: Extern> Tower<Ext> {
             return Err(error::input_invalid("a step bound applies only to a KORE input"));
         }
         match lang_top {
-            Lang::Al => Ok(Input::Script(Script::Al(crate::algo(paths)?))),
-            Lang::Il => Ok(Input::Script(Script::Il(crate::elab(paths)?))),
+            Lang::Al | Lang::AlExt => Ok(Input::Script(Script::Al(crate::algo(paths)?))),
+            Lang::IlExt => Ok(Input::Script(Script::Il(crate::elab(paths)?))),
             // P4 inputs contain exactly one translation unit
             Lang::P4 => {
                 let [path] = paths else {
@@ -100,8 +100,8 @@ impl<Ext: Extern> Tower<Ext> {
         // a program above the top
         let (mut values, program) = match (input, lang_top) {
             (Input::P4(program), Lang::P4) => (vec![*program], None),
-            (Input::Script(script @ Script::Al(_)), Lang::Al)
-            | (Input::Script(script @ Script::Il(_)), Lang::Il) => {
+            (Input::Script(script @ Script::Al(_)), Lang::Al | Lang::AlExt)
+            | (Input::Script(script @ Script::Il(_)), Lang::IlExt) => {
                 (vec![], Some((script.entered(), self.entry.as_str())))
             }
             (Input::Kore(Kore { definition, init, depth }), Lang::Kore) => {

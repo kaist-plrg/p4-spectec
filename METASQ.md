@@ -115,19 +115,21 @@ architecture reenters the P4 specification, the call runs one depth below
 
 Levels are ordered from native base through intermediates to top level.
 A single level supplies both top level and base. `lang` names the language a
-level accepts: every level below the top level uses `al` or `il`, and the
-top level may also use `p4`. The level above an `al` level is passed to it as
-AL converted by the native `algo` pass; the level above an `il` level is
-passed as elaborated IL. `spec-meta` specifies AL only and enters `al`;
-an `il` level runs `spec-meta-ext`, its copy extended with the IL-to-AL
-specification. `mode` selects the base's native backend
+level accepts, in the meta syntax of the specification accepting it: every
+level below the top level uses `al`, `al-ext`, or `il-ext`, and the top level
+may also use `p4`. An `al` level runs `spec-meta`, which specifies AL only;
+`al-ext` and `il-ext` levels run `spec-meta-ext`, its copy extended with the
+IL-to-AL specification, whose AL syntax is named apart from spec-meta's.
+The level above an `al` or `al-ext` level is passed to it as AL converted by
+the native `algo` pass; the level above an `il-ext` level is passed as
+elaborated IL. `mode` selects the base's native backend
 (`sl` or `al`).
 
 Only the base runs on a native interpreter. Every level above it is
 interpreted by the level below, so natively it only answers the builtin and
 host calls relayed from below, without consulting its own definitions.
 
-`rel` names the relation entering a level. A level above an `al` or `il` level
+`rel` names the relation entering a level. A level above an `al`, `al-ext`, or `il-ext` level
 is encoded as the inputs of an entry relation at the level below: the
 specification, its `rel`, and the inputs of that `rel` as `val`s.
 `Eval_AL_rel` and `Eval_IL_rel` (of `spec-meta-ext`) call a relation through `Call_rel`;
@@ -259,7 +261,7 @@ above it on AL produced by the specification:
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta-ext", "rel": "Eval_IL_rel", "lang": "il" },
+    { "specdir": "../spec-meta-ext", "rel": "Eval_IL_rel", "lang": "il-ext" },
     { "specdir": "../spec", "rel": "Program_inst", "lang": "p4" }
   ]
 }

@@ -1,7 +1,7 @@
-//! Syntax shared by IL and AL at the meta-language boundary
+//! Common syntax of spec-meta at the meta-language boundary
 //!
-//! Types, expressions, paths, arguments, and parameters
-//! have one meta form for both stages.
+//! Types, expressions, paths, arguments, and parameters,
+//! which `al` builds AL syntax from.
 
 mod cache;
 pub mod decode;
