@@ -97,6 +97,12 @@ impl<'a> AnchorContext<'a> {
         format!("bk-{}", self.counter_blocks)
     }
 
+    /// Returns the anchor of an ordered arm within an alternative block.
+    pub fn arm(&self, anchor_block: &str, idx: usize) -> String {
+        let num = idx + 1;
+        format!("{anchor_block}-arm-{num}")
+    }
+
     /// Registers a destination and reports whether this is its first declaration.
     pub fn claim_anchor(&mut self, anchor: &str) -> bool {
         self.emitted.insert(anchor.to_owned())

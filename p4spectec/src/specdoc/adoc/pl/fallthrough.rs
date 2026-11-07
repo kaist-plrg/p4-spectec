@@ -47,16 +47,6 @@ impl Context {
     }
 }
 
-// == Anchors
-//
-//   anchor_of_arm("bk-3", 0)   -> bk-3-arm-1
-
-/// Returns the anchor of an ordered arm.
-pub fn anchor_of_arm(anchor_block: &str, idx: usize) -> String {
-    let num = idx + 1;
-    format!("{anchor_block}-arm-{num}")
-}
-
 // == Rendering
 
 impl Prose {

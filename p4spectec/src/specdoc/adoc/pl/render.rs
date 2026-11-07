@@ -2630,13 +2630,13 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             let text_head = if idx == 0 { "Try:" } else { "Then, try:" };
             // Point each arm at its successor or the enclosing destination
             let anchor_next_opt = if idx + 1 < num_arms {
-                Some(fallthrough::anchor_of_arm(&anchor_block, idx + 1))
+                Some(self.anchor_ctx.arm(&anchor_block, idx + 1))
             } else {
                 ctx.next.clone()
             };
             let ctx_arm = ctx.with_next(anchor_next_opt);
             let block_body = render_arm(self, &ctx_arm, arm);
-            let anchor_arm = fallthrough::anchor_of_arm(&anchor_block, idx);
+            let anchor_arm = self.anchor_ctx.arm(&anchor_block, idx);
             blocks_arm.push(Block::item(
                 level,
                 ItemKind::Ordered(Some(anchor_arm)),
