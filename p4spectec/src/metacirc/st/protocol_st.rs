@@ -3,7 +3,7 @@
 //! `load` encodes the level above as AL
 //! and makes C = `$load_ctx($empty_ctx, spec)` on the level below;
 //! `encode_entry` encodes the level above as AL, with the name and inputs
-//! of its entry, for `Eval_AL_rel`.
+//! of its entry, for `Eval_rel`.
 //! `lower` turns `name(values)` into `Call_rel(C, name, values)`
 //! or `Call_func(C, name, targs, values)`; `raise` maps OK, UNMATCH, or ERROR
 //! to outputs, a mismatch, or a fatal failure.
@@ -192,7 +192,7 @@ mod m {
     pub(super) const ERROR: &str = "ERROR";
 }
 
-/// Encodes the inputs of an entry relation, such as `Eval_AL_rel`,
+/// Encodes the inputs of an entry relation, such as `Eval_rel`,
 /// entering `name` of the script `value_spec` on `values`,
 /// the inputs of `name` encoded as meta values one level down.
 fn entry_inputs(

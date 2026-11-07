@@ -5,7 +5,7 @@
 ;;; Rule evaluation
 
 relation Eval_rul:
-  ctx |- rulAL `( val* `) : relRes
+  ctx |- rul `( val* `) : relRes
   hint(input %0 %1 %2)
   hint(prose_in "evaluating rule" %1 "with inputs" %2 "under context" %0)
   hint(prose_out %3)
@@ -13,33 +13,33 @@ relation Eval_rul:
 rulegroup Eval_rul {
 
   rule Eval_rul/premises-failure:
-    C |- (_ ':' typedExp* '->' _ '-' premAL*) `( val* `) : failure
+    C |- (_ ':' typedExp* '->' _ '-' prem*) `( val* `) : failure
     -- Assign_exps: C |- typedExp* := val* : OK C_assign
-    -- Eval_prems: C_assign |- premAL* : failure
+    -- Eval_prems: C_assign |- prem* : failure
 
   rule Eval_rul/succ:
-    C |- (_ ':' typedExp* '->' typedExp_out* '-' premAL*) `( val* `) : relRes
+    C |- (_ ':' typedExp* '->' typedExp_out* '-' prem*) `( val* `) : relRes
     -- Assign_exps: C |- typedExp* := val* : OK C_assign
-    -- Eval_prems: C_assign |- premAL* : OK C_prem
+    -- Eval_prems: C_assign |- prem* : OK C_prem
     -- Eval_exps: C_prem |- typedExp_out* : relRes
 
 }
 
 rule Eval_rul/error:
-  C |- rulAL `( val* `) : ERROR
+  C |- rul `( val* `) : ERROR
   -- otherwise
 
 ;;; Rule sequence evaluation
 
 relation Eval_ruls:
-  ctx |- rulAL* `( val* `) : relRes
+  ctx |- rul* `( val* `) : relRes
   hint(input %0 %1 %2)
   hint(prose_in "evaluating rules" %1 "with inputs" %2 "under context" %0
                 "with determinism checks")
   hint(prose_out %3)
 
 relation Eval_ruls_on_ok:
-  ctx |- rulAL* `( val* `) : unitRes
+  ctx |- rul* `( val* `) : unitRes
   hint(input %0 %1 %2)
   hint(prose_in "checking that all remaining rules" %1
                 "are unmatched with inputs" %2 "under context" %0)
@@ -51,19 +51,19 @@ rulegroup Eval_ruls {
     C |- eps `( val* `) : UNMATCH
 
   rule Eval_ruls/unmatch:
-    C |- (rulAL_h :: rulAL_t*) `( val* `) : relRes
-    -- Eval_rul: C |- rulAL_h `( val* `) : UNMATCH
-    -- Eval_ruls: C |- rulAL_t* `( val* `) : relRes
+    C |- (rul_h :: rul_t*) `( val* `) : relRes
+    -- Eval_rul: C |- rul_h `( val* `) : UNMATCH
+    -- Eval_ruls: C |- rul_t* `( val* `) : relRes
 
   rule Eval_ruls/succ:
-    C |- (rulAL_h :: rulAL_t*) `( val* `) : OK val_out*
-    -- Eval_rul: C |- rulAL_h `( val* `) : OK val_out*
-    -- Eval_ruls_on_ok: C |- rulAL_t* `( val* `) : OK
+    C |- (rul_h :: rul_t*) `( val* `) : OK val_out*
+    -- Eval_rul: C |- rul_h `( val* `) : OK val_out*
+    -- Eval_ruls_on_ok: C |- rul_t* `( val* `) : OK
 
 }
 
 rule Eval_ruls/error:
-  C |- rulAL* `( val* `) : ERROR
+  C |- rul* `( val* `) : ERROR
   -- otherwise
 
 rulegroup Eval_ruls_on_ok {
@@ -72,13 +72,13 @@ rulegroup Eval_ruls_on_ok {
     C |- eps `( val* `) : OK
 
   rule Eval_ruls_on_ok/unmatch:
-    C |- (rulAL_h :: rulAL_t*) `( val* `) : unitRes
-    -- Eval_rul: C |- rulAL_h `( val* `) : UNMATCH
-    -- Eval_ruls_on_ok: C |- rulAL_t* `( val* `) : unitRes
+    C |- (rul_h :: rul_t*) `( val* `) : unitRes
+    -- Eval_rul: C |- rul_h `( val* `) : UNMATCH
+    -- Eval_ruls_on_ok: C |- rul_t* `( val* `) : unitRes
 
   rule Eval_ruls_on_ok/error:
-    C |- (rulAL_h :: rulAL_t*) `( val* `) : ERROR
-    -- Eval_rul: C |- rulAL_h `( val* `) : relRes
+    C |- (rul_h :: rul_t*) `( val* `) : ERROR
+    -- Eval_rul: C |- rul_h `( val* `) : relRes
     -- if relRes =/= UNMATCH
 
 }
@@ -86,52 +86,52 @@ rulegroup Eval_ruls_on_ok {
 ;;; Defined relations
 
 relation Call_defined_rel:
-  ctx |- definedRelDefnAL `( val* `) : relRes
+  ctx |- definedRelDefn `( val* `) : relRes
   hint(input %0 %1 %2)
   hint(prose_in "calling defined relation" %1 "with inputs" %2 "under context" %0)
   hint(prose_out %3)
 
-dec $ruls_of_rulgroup(rulGroupAL) : rulAL*
+dec $ruls_of_rulgroup(rulGroup) : rul*
   hint(prose_in "the rules of rule group" %0)
-def $ruls_of_rulgroup(id ':' rulAL*) = rulAL*
+def $ruls_of_rulgroup(id ':' rul*) = rul*
 
-dec $ruls_of_rulgroups(rulGroupAL*) : rulAL*
+dec $ruls_of_rulgroups(rulGroup*) : rul*
   hint(prose_in "the rules of rule groups" %0 "in order")
 def $ruls_of_rulgroups(eps) = eps
-def $ruls_of_rulgroups(rulGroupAL_h :: rulGroupAL_t*)
-  = $ruls_of_rulgroup(rulGroupAL_h) ++ $ruls_of_rulgroups(rulGroupAL_t*)
+def $ruls_of_rulgroups(rulGroup_h :: rulGroup_t*)
+  = $ruls_of_rulgroup(rulGroup_h) ++ $ruls_of_rulgroups(rulGroup_t*)
 
-dec $rul_of_elsgroup(elsGroupAL) : rulAL
+dec $rul_of_elsgroup(elsGroup) : rul
   hint(prose_in "the rule of otherwise group" %0)
-def $rul_of_elsgroup(id ':' rulAL) = rulAL
+def $rul_of_elsgroup(id ':' rul) = rul
 
 rulegroup Call_defined_rel {
 
   rule Call_defined_rel/unmatch:
-    C |- definedRelDefnAL `( val* `) : relRes
-    -- if REL _ ':' _ '->' _ '=' rulGroupAL* elsGroupAL? = definedRelDefnAL
+    C |- definedRelDefn `( val* `) : relRes
+    -- if REL _ ':' _ '->' _ '=' rulGroup* elsGroup? = definedRelDefn
     -- if C_local = C[ .LOCAL = $empty_localLayer ]
-    -- if rulAL* = $ruls_of_rulgroups(rulGroupAL*)
+    -- if rul* = $ruls_of_rulgroups(rulGroup*)
     -- Eval_ruls:
-        C_local |- rulAL* `( val* `) : UNMATCH
-    -- if (rulAL_els = $rul_of_elsgroup(elsGroupAL))?
+        C_local |- rul* `( val* `) : UNMATCH
+    -- if (rul_els = $rul_of_elsgroup(elsGroup))?
     -- (Eval_rul:
-        C_local |- rulAL_els `( val* `) : relRes_els)?
+        C_local |- rul_els `( val* `) : relRes_els)?
     -- if relRes = $deopt_<relRes>(relRes_els?, UNMATCH)
 
   rule Call_defined_rel/result:
-    C |- definedRelDefnAL `( val* `) : relRes
-    -- if REL _ ':' _ '->' _ '=' rulGroupAL* elsGroupAL? = definedRelDefnAL
+    C |- definedRelDefn `( val* `) : relRes
+    -- if REL _ ':' _ '->' _ '=' rulGroup* elsGroup? = definedRelDefn
     -- if C_local = C[ .LOCAL = $empty_localLayer ]
-    -- if rulAL* = $ruls_of_rulgroups(rulGroupAL*)
+    -- if rul* = $ruls_of_rulgroups(rulGroup*)
     -- Eval_ruls:
-        C_local |- rulAL* `( val* `) : relRes
+        C_local |- rul* `( val* `) : relRes
     -- if relRes =/= UNMATCH
 
 }
 
 rule Call_defined_rel/error:
-  C |- definedRelDefnAL `( val* `) : ERROR
+  C |- definedRelDefn `( val* `) : ERROR
   -- otherwise
 
 ;;
@@ -148,9 +148,9 @@ rulegroup Call_rel {
 
   rule Call_rel/defined:
     C |- id `( val* `) : relRes
-    -- if definedRelDefnAL = $find_rel(C, id)
+    -- if definedRelDefn = $find_rel(C, id)
     -- Call_defined_rel:
-        C |- definedRelDefnAL `( val* `) : relRes
+        C |- definedRelDefn `( val* `) : relRes
 
 }
 

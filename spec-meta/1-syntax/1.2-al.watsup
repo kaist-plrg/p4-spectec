@@ -1,71 +1,71 @@
 ;; Iteration premises
 
-syntax premIterAL = iter '<-' vari* '->' vari*
+syntax premIter = iter '<-' vari* '->' vari*
 
 ;; Premises
 
-syntax premAL
+syntax prem
 
-syntax relPremAL =
+syntax relPrem =
   REL id ':' typedExp* '->' typedExp*
 
-syntax letPremAL =
+syntax letPrem =
   LET typedExp '=' typedExp
 
-syntax iterPremAL =
-  ITER premAL premIterAL
+syntax iterPrem =
+  ITER prem premIter
 
-syntax premAL =
-  | relPremAL
+syntax prem =
+  | relPrem
   | ifPrem
   | ifHoldPrem
   | ifNotHoldPrem
-  | letPremAL
-  | iterPremAL
+  | letPrem
+  | iterPrem
   | debugPrem
 
 ;; Relation definitions
 
-syntax externRelDefnAL =
+syntax externRelDefn =
   EXTREL id ':' typ* '->' typ*
 
-syntax rulAL = id ':' typedExp* '->' typedExp* '-' premAL*
-syntax rulGroupAL = id ':' rulAL*
-syntax elsGroupAL = id ':' rulAL
+syntax rul = id ':' typedExp* '->' typedExp* '-' prem*
+syntax rulGroup = id ':' rul*
+syntax elsGroup = id ':' rul
 
-syntax definedRelDefnAL =
-  REL id ':' typ* '->' typ* '=' rulGroupAL* elsGroupAL?
+syntax definedRelDefn =
+  REL id ':' typ* '->' typ* '=' rulGroup* elsGroup?
 
-syntax relDefnAL =
-  | externRelDefnAL
-  | definedRelDefnAL
+syntax relDefn =
+  | externRelDefn
+  | definedRelDefn
 
 ;; Meta-functions
 
-syntax tblRowAL = arg* '=' typedExp '-' premAL*
+syntax tblRow = arg* '=' typedExp '-' prem*
 
-syntax tableFuncDefnAL =
-  TABLEFUNC id param* ':' typ '=' tblRowAL*
+syntax tableFuncDefn =
+  TABLEFUNC id param* ':' typ '=' tblRow*
 
-syntax clauseAL = arg* '=' typedExp '-' premAL*
-syntax elsClauseAL = clauseAL
+syntax clause = arg* '=' typedExp '-' prem*
+syntax elsClause = clause
 
-syntax definedFuncDefnAL =
-  FUNC id tparam* param* ':' typ '=' clauseAL* elsClauseAL?
+syntax definedFuncDefn =
+  FUNC id tparam* param* ':' typ '=' clause* elsClause?
 
-syntax funcDefnAL =
+syntax funcDefn =
   | externFuncDefn
   | builtinFuncDefn
-  | tableFuncDefnAL
-  | definedFuncDefnAL
+  | tableFuncDefn
+  | definedFuncDefn
 
 ;; Definitions
 
-syntax defnAL =
+syntax defn =
   | typDefn
-  | relDefnAL
-  | funcDefnAL
+  | relDefn
+  | funcDefn
 
 ;; Specifications
 
-syntax specAL = defnAL*
+syntax spec = defn*

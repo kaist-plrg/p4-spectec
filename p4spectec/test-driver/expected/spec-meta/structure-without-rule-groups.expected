@@ -506,77 +506,77 @@ syntax externFuncDefn =
 syntax builtinFuncDefn =
    | BUILTINFUNC id tparam* param* ':' typ (from builtinFuncDefn)
 
-syntax premIterAL =
-   | iter '<-' vari* '->' vari* (from premIterAL)
+syntax premIter =
+   | iter '<-' vari* '->' vari* (from premIter)
 
-syntax relPremAL =
-   | REL id ':' typedExp* '->' typedExp* (from relPremAL)
+syntax relPrem =
+   | REL id ':' typedExp* '->' typedExp* (from relPrem)
 
-syntax letPremAL =
-   | LET typedExp '=' typedExp (from letPremAL)
+syntax letPrem =
+   | LET typedExp '=' typedExp (from letPrem)
 
-syntax iterPremAL =
-   | ITER premAL premIterAL (from iterPremAL)
+syntax iterPrem =
+   | ITER prem premIter (from iterPrem)
 
-syntax premAL =
-   | REL id ':' typedExp* '->' typedExp* (from relPremAL)
+syntax prem =
+   | REL id ':' typedExp* '->' typedExp* (from relPrem)
    | IF typedExp (from ifPrem)
    | IFHOLD id ':' typedExp* (from ifHoldPrem)
    | IFNOTHOLD id ':' typedExp* (from ifNotHoldPrem)
-   | LET typedExp '=' typedExp (from letPremAL)
-   | ITER premAL premIterAL (from iterPremAL)
+   | LET typedExp '=' typedExp (from letPrem)
+   | ITER prem premIter (from iterPrem)
    | DEBUG typedExp (from debugPrem)
 
-syntax externRelDefnAL =
-   | EXTREL id ':' typ* '->' typ* (from externRelDefnAL)
+syntax externRelDefn =
+   | EXTREL id ':' typ* '->' typ* (from externRelDefn)
 
-syntax rulAL =
-   | id ':' typedExp* '->' typedExp* '-' premAL* (from rulAL)
+syntax rul =
+   | id ':' typedExp* '->' typedExp* '-' prem* (from rul)
 
-syntax rulGroupAL =
-   | id ':' rulAL* (from rulGroupAL)
+syntax rulGroup =
+   | id ':' rul* (from rulGroup)
 
-syntax elsGroupAL =
-   | id ':' rulAL (from elsGroupAL)
+syntax elsGroup =
+   | id ':' rul (from elsGroup)
 
-syntax definedRelDefnAL =
-   | REL id ':' typ* '->' typ* '=' rulGroupAL* elsGroupAL? (from definedRelDefnAL)
+syntax definedRelDefn =
+   | REL id ':' typ* '->' typ* '=' rulGroup* elsGroup? (from definedRelDefn)
 
-syntax relDefnAL =
-   | EXTREL id ':' typ* '->' typ* (from externRelDefnAL)
-   | REL id ':' typ* '->' typ* '=' rulGroupAL* elsGroupAL? (from definedRelDefnAL)
+syntax relDefn =
+   | EXTREL id ':' typ* '->' typ* (from externRelDefn)
+   | REL id ':' typ* '->' typ* '=' rulGroup* elsGroup? (from definedRelDefn)
 
-syntax tblRowAL =
-   | arg* '=' typedExp '-' premAL* (from tblRowAL)
+syntax tblRow =
+   | arg* '=' typedExp '-' prem* (from tblRow)
 
-syntax tableFuncDefnAL =
-   | TABLEFUNC id param* ':' typ '=' tblRowAL* (from tableFuncDefnAL)
+syntax tableFuncDefn =
+   | TABLEFUNC id param* ':' typ '=' tblRow* (from tableFuncDefn)
 
-syntax clauseAL =
-   | arg* '=' typedExp '-' premAL* (from clauseAL)
+syntax clause =
+   | arg* '=' typedExp '-' prem* (from clause)
 
-syntax elsClauseAL = clauseAL
+syntax elsClause = clause
 
-syntax definedFuncDefnAL =
-   | FUNC id tparam* param* ':' typ '=' clauseAL* elsClauseAL? (from definedFuncDefnAL)
+syntax definedFuncDefn =
+   | FUNC id tparam* param* ':' typ '=' clause* elsClause? (from definedFuncDefn)
 
-syntax funcDefnAL =
+syntax funcDefn =
    | EXTFUNC id tparam* param* ':' typ (from externFuncDefn)
    | BUILTINFUNC id tparam* param* ':' typ (from builtinFuncDefn)
-   | TABLEFUNC id param* ':' typ '=' tblRowAL* (from tableFuncDefnAL)
-   | FUNC id tparam* param* ':' typ '=' clauseAL* elsClauseAL? (from definedFuncDefnAL)
+   | TABLEFUNC id param* ':' typ '=' tblRow* (from tableFuncDefn)
+   | FUNC id tparam* param* ':' typ '=' clause* elsClause? (from definedFuncDefn)
 
-syntax defnAL =
+syntax defn =
    | EXTTYP id (from externTypDefn)
    | TYP id tparam* '=' deftyp (from definedTypDefn)
-   | EXTREL id ':' typ* '->' typ* (from externRelDefnAL)
-   | REL id ':' typ* '->' typ* '=' rulGroupAL* elsGroupAL? (from definedRelDefnAL)
+   | EXTREL id ':' typ* '->' typ* (from externRelDefn)
+   | REL id ':' typ* '->' typ* '=' rulGroup* elsGroup? (from definedRelDefn)
    | EXTFUNC id tparam* param* ':' typ (from externFuncDefn)
    | BUILTINFUNC id tparam* param* ':' typ (from builtinFuncDefn)
-   | TABLEFUNC id param* ':' typ '=' tblRowAL* (from tableFuncDefnAL)
-   | FUNC id tparam* param* ':' typ '=' clauseAL* elsClauseAL? (from definedFuncDefnAL)
+   | TABLEFUNC id param* ':' typ '=' tblRow* (from tableFuncDefn)
+   | FUNC id tparam* param* ':' typ '=' clause* elsClause? (from definedFuncDefn)
 
-syntax specAL = defnAL*
+syntax spec = defn*
 
 extern syntax json
 
@@ -1400,9 +1400,9 @@ syntax varr =
 
 syntax venv = map<varr, val>
 
-syntax renv = map<id, relDefnAL>
+syntax renv = map<id, relDefn>
 
-syntax fenv = map<id, funcDefnAL>
+syntax fenv = map<id, funcDefn>
 
 syntax fnenv = map<id, id>
 
@@ -1412,7 +1412,7 @@ syntax localLayer = {TYP tdenv, FUNC fnenv, VAL venv}
 
 def $empty_globalLayer
 
-1. Return {TYP $empty_map<id, typDef>, REL $empty_map<id, relDefnAL>, FUNC $empty_map<id, funcDefnAL>}
+1. Return {TYP $empty_map<id, typDef>, REL $empty_map<id, relDefn>, FUNC $empty_map<id, funcDefn>}
 
 def $empty_localLayer
 
@@ -1426,19 +1426,19 @@ def $empty_ctx
 
 var C : ctx
 
-def $load_ctx(C, defnAL'*{defnAL' <- defnAL'*})
+def $load_ctx(C, defn'*{defn' <- defn'*})
 
-1. Case analysis on defnAL'*{defnAL' <- defnAL'*} (total)
+1. Case analysis on defn'*{defn' <- defn'*} (total)
 
   1. Case (% matches pattern _ :: _)
 
-    1. (Let defnAL :: defnAL_t*{defnAL_t <- defnAL_t*} be defnAL'*{defnAL' <- defnAL'*})
+    1. (Let defn :: defn_t*{defn_t <- defn_t*} be defn'*{defn' <- defn'*})
 
-      1. Case analysis on defnAL (total)
+      1. Case analysis on defn (total)
 
         1. Case (% has type externTypDefn)
 
-          1. (Let externTypDefn be defnAL as externTypDefn)
+          1. (Let externTypDefn be defn as externTypDefn)
 
             1. (Let EXTTYP id be externTypDefn)
 
@@ -1446,11 +1446,11 @@ def $load_ctx(C, defnAL'*{defnAL' <- defnAL'*})
 
                 1. (Let C_load be C[GLOBAL.TYP = tdenv_update])
 
-                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defn_t*{defn_t <- defn_t*})
 
         2. Case (% has type definedTypDefn)
 
-          1. (Let definedTypDefn be defnAL as definedTypDefn)
+          1. (Let definedTypDefn be defn as definedTypDefn)
 
             1. (Let TYP id _tparam*{_tparam <- _tparam*} '=' _deftyp be definedTypDefn)
 
@@ -1458,79 +1458,79 @@ def $load_ctx(C, defnAL'*{defnAL' <- defnAL'*})
 
                 1. (Let C_load be C[GLOBAL.TYP = tdenv_update])
 
-                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defn_t*{defn_t <- defn_t*})
 
-        3. Case (% has type externRelDefnAL)
+        3. Case (% has type externRelDefn)
 
-          1. (Let externRelDefnAL be defnAL as externRelDefnAL)
+          1. (Let externRelDefn be defn as externRelDefn)
 
-            1. (Let EXTREL id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} be externRelDefnAL)
+            1. (Let EXTREL id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} be externRelDefn)
 
-              1. (Let renv_update be $add_map<id, relDefnAL>(C.GLOBAL.REL, id, externRelDefnAL as relDefnAL))
-
-                1. (Let C_load be C[GLOBAL.REL = renv_update])
-
-                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
-
-        4. Case (% has type definedRelDefnAL)
-
-          1. (Let definedRelDefnAL be defnAL as definedRelDefnAL)
-
-            1. (Let REL id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} '=' _rulGroupAL*{_rulGroupAL <- _rulGroupAL*} _elsGroupAL?{_elsGroupAL <- _elsGroupAL?} be definedRelDefnAL)
-
-              1. (Let renv_update be $add_map<id, relDefnAL>(C.GLOBAL.REL, id, definedRelDefnAL as relDefnAL))
+              1. (Let renv_update be $add_map<id, relDefn>(C.GLOBAL.REL, id, externRelDefn as relDefn))
 
                 1. (Let C_load be C[GLOBAL.REL = renv_update])
 
-                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defn_t*{defn_t <- defn_t*})
+
+        4. Case (% has type definedRelDefn)
+
+          1. (Let definedRelDefn be defn as definedRelDefn)
+
+            1. (Let REL id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} '=' _rulGroup*{_rulGroup <- _rulGroup*} _elsGroup?{_elsGroup <- _elsGroup?} be definedRelDefn)
+
+              1. (Let renv_update be $add_map<id, relDefn>(C.GLOBAL.REL, id, definedRelDefn as relDefn))
+
+                1. (Let C_load be C[GLOBAL.REL = renv_update])
+
+                  1. Return $load_ctx(C_load, defn_t*{defn_t <- defn_t*})
 
         5. Case (% has type externFuncDefn)
 
-          1. (Let externFuncDefn be defnAL as externFuncDefn)
+          1. (Let externFuncDefn be defn as externFuncDefn)
 
             1. (Let EXTFUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ be externFuncDefn)
 
-              1. (Let fenv_update be $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, externFuncDefn as funcDefnAL))
+              1. (Let fenv_update be $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, externFuncDefn as funcDefn))
 
                 1. (Let C_load be C[GLOBAL.FUNC = fenv_update])
 
-                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defn_t*{defn_t <- defn_t*})
 
         6. Case (% has type builtinFuncDefn)
 
-          1. (Let builtinFuncDefn be defnAL as builtinFuncDefn)
+          1. (Let builtinFuncDefn be defn as builtinFuncDefn)
 
             1. (Let BUILTINFUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ be builtinFuncDefn)
 
-              1. (Let fenv_update be $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, builtinFuncDefn as funcDefnAL))
+              1. (Let fenv_update be $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, builtinFuncDefn as funcDefn))
 
                 1. (Let C_load be C[GLOBAL.FUNC = fenv_update])
 
-                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defn_t*{defn_t <- defn_t*})
 
-        7. Case (% has type tableFuncDefnAL)
+        7. Case (% has type tableFuncDefn)
 
-          1. (Let tableFuncDefnAL be defnAL as tableFuncDefnAL)
+          1. (Let tableFuncDefn be defn as tableFuncDefn)
 
-            1. (Let TABLEFUNC id _param*{_param <- _param*} ':' _typ '=' _tblRowAL*{_tblRowAL <- _tblRowAL*} be tableFuncDefnAL)
+            1. (Let TABLEFUNC id _param*{_param <- _param*} ':' _typ '=' _tblRow*{_tblRow <- _tblRow*} be tableFuncDefn)
 
-              1. (Let fenv_update be $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, tableFuncDefnAL as funcDefnAL))
-
-                1. (Let C_load be C[GLOBAL.FUNC = fenv_update])
-
-                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
-
-        8. Case (% has type definedFuncDefnAL)
-
-          1. (Let definedFuncDefnAL be defnAL as definedFuncDefnAL)
-
-            1. (Let FUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ '=' _clauseAL*{_clauseAL <- _clauseAL*} _elsClauseAL?{_elsClauseAL <- _elsClauseAL?} be definedFuncDefnAL)
-
-              1. (Let fenv_update be $add_map<id, funcDefnAL>(C.GLOBAL.FUNC, id, definedFuncDefnAL as funcDefnAL))
+              1. (Let fenv_update be $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, tableFuncDefn as funcDefn))
 
                 1. (Let C_load be C[GLOBAL.FUNC = fenv_update])
 
-                  1. Return $load_ctx(C_load, defnAL_t*{defnAL_t <- defnAL_t*})
+                  1. Return $load_ctx(C_load, defn_t*{defn_t <- defn_t*})
+
+        8. Case (% has type definedFuncDefn)
+
+          1. (Let definedFuncDefn be defn as definedFuncDefn)
+
+            1. (Let FUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ '=' _clause*{_clause <- _clause*} _elsClause?{_elsClause <- _elsClause?} be definedFuncDefn)
+
+              1. (Let fenv_update be $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, definedFuncDefn as funcDefn))
+
+                1. (Let C_load be C[GLOBAL.FUNC = fenv_update])
+
+                  1. Return $load_ctx(C_load, defn_t*{defn_t <- defn_t*})
 
   2. Case (% matches pattern [])
 
@@ -1672,11 +1672,11 @@ def $resolve_func_param(C, id)
 
 def $find_func(C, id)
 
-1. Return $find_map<id, funcDefnAL>(C.GLOBAL.FUNC, id)
+1. Return $find_map<id, funcDefn>(C.GLOBAL.FUNC, id)
 
 def $find_rel(C, id)
 
-1. Return $find_map<id, relDefnAL>(C.GLOBAL.REL, id)
+1. Return $find_map<id, relDefn>(C.GLOBAL.REL, id)
 
 syntax subOptRes =
    | OK ctx? (from ok<ctx?>)
@@ -3491,13 +3491,13 @@ syntax premRes =
    | ERROR (from error)
    | UNMATCH (from unmatch)
 
-relation Eval_prem: C |- premAL' : %
+relation Eval_prem: C |- prem' : %
 
-1. Case analysis on premAL' (total)
+1. Case analysis on prem' (total)
 
-  1. Case (% has type relPremAL)
+  1. Case (% has type relPrem)
 
-    1. (Let REL id ':' typedExp*{typedExp <- typedExp*} '->' typedExp_out*{typedExp_out <- typedExp_out*} be premAL' as relPremAL)
+    1. (Let REL id ':' typedExp*{typedExp <- typedExp*} '->' typedExp_out*{typedExp_out <- typedExp_out*} be prem' as relPrem)
 
       1. (Eval_exps: C |- typedExp*{typedExp <- typedExp*} : expsRes)
 
@@ -3537,7 +3537,7 @@ relation Eval_prem: C |- premAL' : %
 
   2. Case (% has type ifPrem)
 
-    1. (Let IF typedExp be premAL' as ifPrem)
+    1. (Let IF typedExp be prem' as ifPrem)
 
       1. (Eval_exp: C |- typedExp : expRes)
 
@@ -3559,7 +3559,7 @@ relation Eval_prem: C |- premAL' : %
 
   3. Case (% has type ifHoldPrem)
 
-    1. (Let IFHOLD id ':' typedExp*{typedExp <- typedExp*} be premAL' as ifHoldPrem)
+    1. (Let IFHOLD id ':' typedExp*{typedExp <- typedExp*} be prem' as ifHoldPrem)
 
       1. (Eval_exps: C |- typedExp*{typedExp <- typedExp*} : expsRes)
 
@@ -3589,7 +3589,7 @@ relation Eval_prem: C |- premAL' : %
 
   4. Case (% has type ifNotHoldPrem)
 
-    1. (Let IFNOTHOLD id ':' typedExp*{typedExp <- typedExp*} be premAL' as ifNotHoldPrem)
+    1. (Let IFNOTHOLD id ':' typedExp*{typedExp <- typedExp*} be prem' as ifNotHoldPrem)
 
       1. (Eval_exps: C |- typedExp*{typedExp <- typedExp*} : expsRes)
 
@@ -3625,9 +3625,9 @@ relation Eval_prem: C |- premAL' : %
 
                       1. Result in: % |- % : OK C as premRes
 
-  5. Case (% has type letPremAL)
+  5. Case (% has type letPrem)
 
-    1. (Let LET typedExp_l '=' typedExp_r be premAL' as letPremAL)
+    1. (Let LET typedExp_l '=' typedExp_r be prem' as letPrem)
 
       1. (Eval_exp: C |- typedExp_r : expRes)
 
@@ -3651,9 +3651,9 @@ relation Eval_prem: C |- premAL' : %
 
                     1. Result in: % |- % : OK C_assign as premRes
 
-  6. Case (% has type iterPremAL)
+  6. Case (% has type iterPrem)
 
-    1. (Let ITER premAL iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari*{vari <- vari*} be premAL' as iterPremAL)
+    1. (Let ITER prem iter '<-' vari_bound*{vari_bound <- vari_bound*} '->' vari*{vari <- vari*} be prem' as iterPrem)
 
       1. Case analysis on iter (total)
 
@@ -3665,7 +3665,7 @@ relation Eval_prem: C |- premAL' : %
 
               1. (Let OK C_sub?{C_sub <- C_sub?} be subOptRes as ok<ctx?>)
 
-                1. (Eval_prem_maybe: C_sub?{C_sub <- C_sub?} |- premAL : premOptRes)
+                1. (Eval_prem_maybe: C_sub?{C_sub <- C_sub?} |- prem : premOptRes)
 
                   1. Case analysis on premOptRes (total)
 
@@ -3725,7 +3725,7 @@ relation Eval_prem: C |- premAL' : %
 
                 1. If (C_sub*{C_sub <- C_sub*} matches _ :: _), then
 
-                  1. (Eval_prem_each: C_sub*{C_sub <- C_sub*} |- premAL : premIterRes)
+                  1. (Eval_prem_each: C_sub*{C_sub <- C_sub*} |- prem : premIterRes)
 
                     1. Case analysis on premIterRes (total)
 
@@ -3757,7 +3757,7 @@ relation Eval_prem: C |- premAL' : %
 
   7. Case (% has type debugPrem)
 
-    1. (Let DEBUG typedExp be premAL' as debugPrem)
+    1. (Let DEBUG typedExp be prem' as debugPrem)
 
       1. (Eval_exp: C |- typedExp : expRes)
 
@@ -3781,9 +3781,9 @@ relation Eval_prem: C |- premAL' : %
 
   1. Result in: % |- % : ERROR as premRes
 
-relation Eval_prems: C |- premAL*{premAL <- premAL*} : %
+relation Eval_prems: C |- prem*{prem <- prem*} : %
 
-1. Case analysis on premAL*{premAL <- premAL*} (total)
+1. Case analysis on prem*{prem <- prem*} (total)
 
   1. Case (% matches pattern [])
 
@@ -3791,9 +3791,9 @@ relation Eval_prems: C |- premAL*{premAL <- premAL*} : %
 
   2. Case (% matches pattern _ :: _)
 
-    1. (Let premAL_h :: premAL_t*{premAL_t <- premAL_t*} be premAL*{premAL <- premAL*})
+    1. (Let prem_h :: prem_t*{prem_t <- prem_t*} be prem*{prem <- prem*})
 
-      1. (Eval_prem: C |- premAL_h : premRes')
+      1. (Eval_prem: C |- prem_h : premRes')
 
         1. Case analysis on premRes' (total)
 
@@ -3807,7 +3807,7 @@ relation Eval_prems: C |- premAL*{premAL <- premAL*} : %
 
             1. (Let OK C_h be premRes' as ok<ctx>)
 
-              1. (Eval_prems: C_h |- premAL_t*{premAL_t <- premAL_t*} : premRes)
+              1. (Eval_prems: C_h |- prem_t*{prem_t <- prem_t*} : premRes)
 
                 1. Result in: % |- % : premRes
 
@@ -3816,7 +3816,7 @@ syntax premOptRes =
    | ERROR (from error)
    | UNMATCH (from unmatch)
 
-relation Eval_prem_maybe: C'?{C' <- C'?} |- premAL : %
+relation Eval_prem_maybe: C'?{C' <- C'?} |- prem : %
 
 1. Case analysis on C'?{C' <- C'?} (total)
 
@@ -3828,7 +3828,7 @@ relation Eval_prem_maybe: C'?{C' <- C'?} |- premAL : %
 
     1. (Let ?(C) be C'?{C' <- C'?})
 
-      1. (Eval_prem: C |- premAL : premRes)
+      1. (Eval_prem: C |- prem : premRes)
 
         1. Case analysis on premRes (total)
 
@@ -3849,7 +3849,7 @@ syntax premIterRes =
    | ERROR (from error)
    | UNMATCH (from unmatch)
 
-relation Eval_prem_each: C*{C <- C*} |- premAL : %
+relation Eval_prem_each: C*{C <- C*} |- prem : %
 
 1. Case analysis on C*{C <- C*} (total)
 
@@ -3861,7 +3861,7 @@ relation Eval_prem_each: C*{C <- C*} |- premAL : %
 
     1. (Let C_h :: C_t*{C_t <- C_t*} be C*{C <- C*})
 
-      1. (Eval_prem: C_h |- premAL : premRes)
+      1. (Eval_prem: C_h |- prem : premRes)
 
         1. Case analysis on premRes (total)
 
@@ -3875,7 +3875,7 @@ relation Eval_prem_each: C*{C <- C*} |- premAL : %
 
             1. (Let OK C_res be premRes as ok<ctx>)
 
-              1. (Eval_prem_each: C_t*{C_t <- C_t*} |- premAL : premIterRes)
+              1. (Eval_prem_each: C_t*{C_t <- C_t*} |- prem : premIterRes)
 
                 1. Case analysis on premIterRes (total)
 
@@ -3895,17 +3895,17 @@ relation Call_func: C |- id `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
 
 1. (Let id_global be $resolve_func_param(C, id))
 
-  1. (Let funcDefnAL'?{funcDefnAL' <- funcDefnAL'?} be $find_func(C, id_global))
+  1. (Let funcDefn'?{funcDefn' <- funcDefn'?} be $find_func(C, id_global))
 
-    1. If (funcDefnAL'?{funcDefnAL' <- funcDefnAL'?} matches (_)), then
+    1. If (funcDefn'?{funcDefn' <- funcDefn'?} matches (_)), then
 
-      1. (Let ?(funcDefnAL) be funcDefnAL'?{funcDefnAL' <- funcDefnAL'?})
+      1. (Let ?(funcDefn) be funcDefn'?{funcDefn' <- funcDefn'?})
 
-        1. Case analysis on funcDefnAL
+        1. Case analysis on funcDefn
 
           1. Case (% has type externFuncDefn)
 
-            1. (Let EXTFUNC id_func _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ be funcDefnAL as externFuncDefn)
+            1. (Let EXTFUNC id_func _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ be funcDefn as externFuncDefn)
 
               1. (Call_extern_func: |- id_func `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : funcRes)
 
@@ -3913,7 +3913,7 @@ relation Call_func: C |- id `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
 
           2. Case (% has type builtinFuncDefn)
 
-            1. (Let BUILTINFUNC id_func _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ be funcDefnAL as builtinFuncDefn)
+            1. (Let BUILTINFUNC id_func _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ be funcDefn as builtinFuncDefn)
 
               1. (Call_builtin_func: |- id_func `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : funcRes)
 
@@ -3923,33 +3923,33 @@ relation Call_func: C |- id `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
 
   1. (Let id_global be $resolve_func_param(C, id))
 
-    1. (Let funcDefnAL'?{funcDefnAL' <- funcDefnAL'?} be $find_func(C, id_global))
+    1. (Let funcDefn'?{funcDefn' <- funcDefn'?} be $find_func(C, id_global))
 
-      1. If (funcDefnAL'?{funcDefnAL' <- funcDefnAL'?} matches (_)), then
+      1. If (funcDefn'?{funcDefn' <- funcDefn'?} matches (_)), then
 
-        1. (Let ?(funcDefnAL) be funcDefnAL'?{funcDefnAL' <- funcDefnAL'?})
+        1. (Let ?(funcDefn) be funcDefn'?{funcDefn' <- funcDefn'?})
 
-          1. If (funcDefnAL <: tableFuncDefnAL), then
+          1. If (funcDefn <: tableFuncDefn), then
 
-            1. (Let tableFuncDefnAL be funcDefnAL as tableFuncDefnAL)
+            1. (Let tableFuncDefn be funcDefn as tableFuncDefn)
 
-              1. (Call_table_func: C |- tableFuncDefnAL `( val*{val <- val*} `) : funcRes)
+              1. (Call_table_func: C |- tableFuncDefn `( val*{val <- val*} `) : funcRes)
 
                 1. Result in: % |- % `< % `> `( % `) : funcRes
 
 3. (Let id_global be $resolve_func_param(C, id))
 
-  1. (Let funcDefnAL'?{funcDefnAL' <- funcDefnAL'?} be $find_func(C, id_global))
+  1. (Let funcDefn'?{funcDefn' <- funcDefn'?} be $find_func(C, id_global))
 
-    1. If (funcDefnAL'?{funcDefnAL' <- funcDefnAL'?} matches (_)), then
+    1. If (funcDefn'?{funcDefn' <- funcDefn'?} matches (_)), then
 
-      1. (Let ?(funcDefnAL) be funcDefnAL'?{funcDefnAL' <- funcDefnAL'?})
+      1. (Let ?(funcDefn) be funcDefn'?{funcDefn' <- funcDefn'?})
 
-        1. If (funcDefnAL <: definedFuncDefnAL), then
+        1. If (funcDefn <: definedFuncDefn), then
 
-          1. (Let definedFuncDefnAL be funcDefnAL as definedFuncDefnAL)
+          1. (Let definedFuncDefn be funcDefn as definedFuncDefn)
 
-            1. (Call_defined_func: C |- definedFuncDefnAL `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : funcRes)
+            1. (Call_defined_func: C |- definedFuncDefn `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : funcRes)
 
               1. Result in: % |- % `< % `> `( % `) : funcRes
 
@@ -3959,27 +3959,27 @@ relation Call_func: C |- id `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
 
 relation Call_rel: C |- id `( val*{val <- val*} `) : %
 
-1. (Let relDefnAL'?{relDefnAL' <- relDefnAL'?} be $find_rel(C, id))
+1. (Let relDefn'?{relDefn' <- relDefn'?} be $find_rel(C, id))
 
-  1. If (relDefnAL'?{relDefnAL' <- relDefnAL'?} matches (_)), then
+  1. If (relDefn'?{relDefn' <- relDefn'?} matches (_)), then
 
-    1. (Let ?(relDefnAL) be relDefnAL'?{relDefnAL' <- relDefnAL'?})
+    1. (Let ?(relDefn) be relDefn'?{relDefn' <- relDefn'?})
 
-      1. Case analysis on relDefnAL (total)
+      1. Case analysis on relDefn (total)
 
-        1. Case (% has type externRelDefnAL)
+        1. Case (% has type externRelDefn)
 
-          1. (Let EXTREL id_rel ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} be relDefnAL as externRelDefnAL)
+          1. (Let EXTREL id_rel ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} be relDefn as externRelDefn)
 
             1. (Call_extern_rel: |- id_rel `( val*{val <- val*} `) : relRes)
 
               1. Result in: % |- % `( % `) : relRes
 
-        2. Case (% has type definedRelDefnAL)
+        2. Case (% has type definedRelDefn)
 
-          1. (Let definedRelDefnAL be relDefnAL as definedRelDefnAL)
+          1. (Let definedRelDefn be relDefn as definedRelDefn)
 
-            1. (Call_defined_rel: C |- definedRelDefnAL `( val*{val <- val*} `) : relRes)
+            1. (Call_defined_rel: C |- definedRelDefn `( val*{val <- val*} `) : relRes)
 
               1. Result in: % |- % `( % `) : relRes
 
@@ -4685,13 +4685,13 @@ def $subtyp_list(fenv, tdenv, typ, val*{val <- val*})
 
 def $subtyp_func(fenv, tdenv, typ, id)
 
-1. (Let funcDefnAL'?{funcDefnAL' <- funcDefnAL'?} be $find_map<id, funcDefnAL>(fenv, id))
+1. (Let funcDefn'?{funcDefn' <- funcDefn'?} be $find_map<id, funcDefn>(fenv, id))
 
-  1. If (funcDefnAL'?{funcDefnAL' <- funcDefnAL'?} matches (_)), then
+  1. If (funcDefn'?{funcDefn' <- funcDefn'?} matches (_)), then
 
-    1. (Let ?(funcDefnAL) be funcDefnAL'?{funcDefnAL' <- funcDefnAL'?})
+    1. (Let ?(funcDefn) be funcDefn'?{funcDefn' <- funcDefn'?})
 
-      1. Return $equiv_func_typ(tdenv, typ, $func_typ(funcDefnAL)) as subtypRes
+      1. Return $equiv_func_typ(tdenv, typ, $func_typ(funcDefn)) as subtypRes
 
 2. Otherwise,
 
@@ -4713,31 +4713,31 @@ def $param_typ(param')
 
       1. Return FUNC tparam*{tparam <- tparam*} $param_typ(param)*{param <- param*} typ
 
-def $func_typ(funcDefnAL)
+def $func_typ(funcDefn)
 
-1. Case analysis on funcDefnAL (total)
+1. Case analysis on funcDefn (total)
 
   1. Case (% has type externFuncDefn)
 
-    1. (Let EXTFUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ be funcDefnAL as externFuncDefn)
+    1. (Let EXTFUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ be funcDefn as externFuncDefn)
 
       1. Return FUNC tparam*{tparam <- tparam*} $param_typ(param)*{param <- param*} typ
 
   2. Case (% has type builtinFuncDefn)
 
-    1. (Let BUILTINFUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ be funcDefnAL as builtinFuncDefn)
+    1. (Let BUILTINFUNC id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ be funcDefn as builtinFuncDefn)
 
       1. Return FUNC tparam*{tparam <- tparam*} $param_typ(param)*{param <- param*} typ
 
-  3. Case (% has type tableFuncDefnAL)
+  3. Case (% has type tableFuncDefn)
 
-    1. (Let TABLEFUNC _id param*{param <- param*} ':' typ '=' tblRowAL*{tblRowAL <- tblRowAL*} be funcDefnAL as tableFuncDefnAL)
+    1. (Let TABLEFUNC _id param*{param <- param*} ':' typ '=' tblRow*{tblRow <- tblRow*} be funcDefn as tableFuncDefn)
 
       1. Return FUNC [] $param_typ(param)*{param <- param*} typ
 
-  4. Case (% has type definedFuncDefnAL)
+  4. Case (% has type definedFuncDefn)
 
-    1. (Let FUNC _id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' clauseAL*{clauseAL <- clauseAL*} elsClauseAL?{elsClauseAL <- elsClauseAL?} be funcDefnAL as definedFuncDefnAL)
+    1. (Let FUNC _id tparam*{tparam <- tparam*} param*{param <- param*} ':' typ '=' clause*{clause <- clause*} elsClause?{elsClause <- elsClause?} be funcDefn as definedFuncDefn)
 
       1. Return FUNC tparam*{tparam <- tparam*} $param_typ(param)*{param <- param*} typ
 
@@ -5595,9 +5595,9 @@ relation Assign_args: C |- arg*{arg <- arg*} := val*{val <- val*} : %
 
   1. Result in: % |- % := % : ERROR as assignRes
 
-relation Eval_clause: C |- clauseAL `( val*{val <- val*} `) : %
+relation Eval_clause: C |- clause `( val*{val <- val*} `) : %
 
-1. (Let arg*{arg <- arg*} '=' typedExp_out '-' premAL*{premAL <- premAL*} be clauseAL)
+1. (Let arg*{arg <- arg*} '=' typedExp_out '-' prem*{prem <- prem*} be clause)
 
   1. (Assign_args: C |- arg*{arg <- arg*} := val*{val <- val*} : assignRes)
 
@@ -5605,7 +5605,7 @@ relation Eval_clause: C |- clauseAL `( val*{val <- val*} `) : %
 
       1. (Let OK C_assign be assignRes as ok<ctx>)
 
-        1. (Eval_prems: C_assign |- premAL*{premAL <- premAL*} : premRes)
+        1. (Eval_prems: C_assign |- prem*{prem <- prem*} : premRes)
 
           1. Case analysis on premRes (total)
 
@@ -5631,9 +5631,9 @@ relation Eval_clause: C |- clauseAL `( val*{val <- val*} `) : %
 
   1. Result in: % |- % `( % `) : ERROR as funcRes
 
-relation Eval_clauses: C |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <- val*} `) : %
+relation Eval_clauses: C |- clause*{clause <- clause*} `( val*{val <- val*} `) : %
 
-1. Case analysis on clauseAL*{clauseAL <- clauseAL*} (total)
+1. Case analysis on clause*{clause <- clause*} (total)
 
   1. Case (% matches pattern [])
 
@@ -5641,9 +5641,9 @@ relation Eval_clauses: C |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <- val*
 
   2. Case (% matches pattern _ :: _)
 
-    1. (Let clauseAL_h :: clauseAL_t*{clauseAL_t <- clauseAL_t*} be clauseAL*{clauseAL <- clauseAL*})
+    1. (Let clause_h :: clause_t*{clause_t <- clause_t*} be clause*{clause <- clause*})
 
-      1. (Eval_clause: C |- clauseAL_h `( val*{val <- val*} `) : funcRes')
+      1. (Eval_clause: C |- clause_h `( val*{val <- val*} `) : funcRes')
 
         1. Case analysis on funcRes'
 
@@ -5651,7 +5651,7 @@ relation Eval_clauses: C |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <- val*
 
             1. (Let unmatch be funcRes' as unmatch)
 
-              1. (Eval_clauses: C |- clauseAL_t*{clauseAL_t <- clauseAL_t*} `( val*{val <- val*} `) : funcRes)
+              1. (Eval_clauses: C |- clause_t*{clause_t <- clause_t*} `( val*{val <- val*} `) : funcRes)
 
                 1. Result in: % |- % `( % `) : funcRes
 
@@ -5659,7 +5659,7 @@ relation Eval_clauses: C |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <- val*
 
             1. (Let OK val_out be funcRes' as ok<val>)
 
-              1. (Eval_clauses_on_ok: C |- clauseAL_t*{clauseAL_t <- clauseAL_t*} `( val*{val <- val*} `) : unitRes)
+              1. (Eval_clauses_on_ok: C |- clause_t*{clause_t <- clause_t*} `( val*{val <- val*} `) : unitRes)
 
                 1. If (unitRes matches OK), then
 
@@ -5669,9 +5669,9 @@ relation Eval_clauses: C |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <- val*
 
   1. Result in: % |- % `( % `) : ERROR as funcRes
 
-relation Eval_clauses_on_ok: C |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <- val*} `) : %
+relation Eval_clauses_on_ok: C |- clause*{clause <- clause*} `( val*{val <- val*} `) : %
 
-1. Case analysis on clauseAL*{clauseAL <- clauseAL*} (total)
+1. Case analysis on clause*{clause <- clause*} (total)
 
   1. Case (% matches pattern [])
 
@@ -5679,15 +5679,15 @@ relation Eval_clauses_on_ok: C |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <
 
   2. Case (% matches pattern _ :: _)
 
-    1. (Let clauseAL_h :: clauseAL_t*{clauseAL_t <- clauseAL_t*} be clauseAL*{clauseAL <- clauseAL*})
+    1. (Let clause_h :: clause_t*{clause_t <- clause_t*} be clause*{clause <- clause*})
 
-      1. (Eval_clause: C |- clauseAL_h `( val*{val <- val*} `) : funcRes)
+      1. (Eval_clause: C |- clause_h `( val*{val <- val*} `) : funcRes)
 
         1. If (funcRes <: unmatch), then
 
           1. (Let unmatch be funcRes as unmatch)
 
-            1. (Eval_clauses_on_ok: C |- clauseAL_t*{clauseAL_t <- clauseAL_t*} `( val*{val <- val*} `) : unitRes)
+            1. (Eval_clauses_on_ok: C |- clause_t*{clause_t <- clause_t*} `( val*{val <- val*} `) : unitRes)
 
               1. Result in: % |- % `( % `) : unitRes
 
@@ -5699,9 +5699,9 @@ relation Eval_clauses_on_ok: C |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <
 
         2. Else Dangling
 
-relation Eval_tblrow: C |- tblRowAL `( val*{val <- val*} `) : %
+relation Eval_tblrow: C |- tblRow `( val*{val <- val*} `) : %
 
-1. (Let arg*{arg <- arg*} '=' typedExp_out '-' premAL*{premAL <- premAL*} be tblRowAL)
+1. (Let arg*{arg <- arg*} '=' typedExp_out '-' prem*{prem <- prem*} be tblRow)
 
   1. (Let C_callee be C[LOCAL = $empty_localLayer])
 
@@ -5711,7 +5711,7 @@ relation Eval_tblrow: C |- tblRowAL `( val*{val <- val*} `) : %
 
         1. (Let OK C_callee_assign be assignRes as ok<ctx>)
 
-          1. (Eval_prems: C_callee_assign |- premAL*{premAL <- premAL*} : premRes)
+          1. (Eval_prems: C_callee_assign |- prem*{prem <- prem*} : premRes)
 
             1. Case analysis on premRes (total)
 
@@ -5737,9 +5737,9 @@ relation Eval_tblrow: C |- tblRowAL `( val*{val <- val*} `) : %
 
   1. Result in: % |- % `( % `) : ERROR as funcRes
 
-relation Eval_tblrows: C |- tblRowAL*{tblRowAL <- tblRowAL*} `( val*{val <- val*} `) : %
+relation Eval_tblrows: C |- tblRow*{tblRow <- tblRow*} `( val*{val <- val*} `) : %
 
-1. Case analysis on tblRowAL*{tblRowAL <- tblRowAL*} (total)
+1. Case analysis on tblRow*{tblRow <- tblRow*} (total)
 
   1. Case (% matches pattern [])
 
@@ -5747,15 +5747,15 @@ relation Eval_tblrows: C |- tblRowAL*{tblRowAL <- tblRowAL*} `( val*{val <- val*
 
   2. Case (% matches pattern _ :: _)
 
-    1. (Let tblRowAL_h :: tblRowAL_t*{tblRowAL_t <- tblRowAL_t*} be tblRowAL*{tblRowAL <- tblRowAL*})
+    1. (Let tblRow_h :: tblRow_t*{tblRow_t <- tblRow_t*} be tblRow*{tblRow <- tblRow*})
 
-      1. (Eval_tblrow: C |- tblRowAL_h `( val*{val <- val*} `) : funcRes')
+      1. (Eval_tblrow: C |- tblRow_h `( val*{val <- val*} `) : funcRes')
 
         1. If (funcRes' <: unmatch), then
 
           1. (Let unmatch be funcRes' as unmatch)
 
-            1. (Eval_tblrows: C |- tblRowAL_t*{tblRowAL_t <- tblRowAL_t*} `( val*{val <- val*} `) : funcRes)
+            1. (Eval_tblrows: C |- tblRow_t*{tblRow_t <- tblRow_t*} `( val*{val <- val*} `) : funcRes)
 
               1. Result in: % |- % `( % `) : funcRes
 
@@ -5767,17 +5767,17 @@ relation Eval_tblrows: C |- tblRowAL*{tblRowAL <- tblRowAL*} `( val*{val <- val*
 
         2. Else Dangling
 
-relation Call_table_func: C |- tableFuncDefnAL `( val*{val <- val*} `) : %
+relation Call_table_func: C |- tableFuncDefn `( val*{val <- val*} `) : %
 
-1. (Let TABLEFUNC _id _param*{_param <- _param*} ':' _typ '=' tblRowAL*{tblRowAL <- tblRowAL*} be tableFuncDefnAL)
+1. (Let TABLEFUNC _id _param*{_param <- _param*} ':' _typ '=' tblRow*{tblRow <- tblRow*} be tableFuncDefn)
 
-  1. (Eval_tblrows: C |- tblRowAL*{tblRowAL <- tblRowAL*} `( val*{val <- val*} `) : funcRes)
+  1. (Eval_tblrows: C |- tblRow*{tblRow <- tblRow*} `( val*{val <- val*} `) : funcRes)
 
     1. Result in: % |- % `( % `) : funcRes
 
-relation Call_defined_func: C |- definedFuncDefnAL `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
+relation Call_defined_func: C |- definedFuncDefn `< typ*{typ <- typ*} `> `( val*{val <- val*} `) : %
 
-1. (Let FUNC _id tparam*{tparam <- tparam*} _param*{_param <- _param*} ':' _typ '=' clauseAL*{clauseAL <- clauseAL*} elsClauseAL?{elsClauseAL <- elsClauseAL?} be definedFuncDefnAL)
+1. (Let FUNC _id tparam*{tparam <- tparam*} _param*{_param <- _param*} ':' _typ '=' clause*{clause <- clause*} elsClause?{elsClause <- elsClause?} be definedFuncDefn)
 
   1. If ((|tparam*{tparam <- tparam*}| = |typ*{typ <- typ*}|)), then
 
@@ -5785,13 +5785,13 @@ relation Call_defined_func: C |- definedFuncDefnAL `< typ*{typ <- typ*} `> `( va
 
       1. (Let C_callee be C[LOCAL = $empty_localLayer[TYP = tdenv]])
 
-        1. (Eval_clauses: C_callee |- clauseAL*{clauseAL <- clauseAL*} `( val*{val <- val*} `) : funcRes')
+        1. (Eval_clauses: C_callee |- clause*{clause <- clause*} `( val*{val <- val*} `) : funcRes')
 
           1. If (funcRes' <: unmatch), then
 
             1. (Let unmatch be funcRes' as unmatch)
 
-              1. (Eval_clause: C_callee |- elsClauseAL `( val*{val <- val*} `) : funcRes_els)?{elsClauseAL <- elsClauseAL?, funcRes_els -> funcRes_els?}
+              1. (Eval_clause: C_callee |- elsClause `( val*{val <- val*} `) : funcRes_els)?{elsClause <- elsClause?, funcRes_els -> funcRes_els?}
 
                 1. (Let funcRes be $deopt_<funcRes>(funcRes_els?{funcRes_els <- funcRes_els?}, UNMATCH as funcRes))
 
@@ -5805,9 +5805,9 @@ relation Call_defined_func: C |- definedFuncDefnAL `< typ*{typ <- typ*} `> `( va
 
   1. Result in: % |- % `< % `> `( % `) : ERROR as funcRes
 
-relation Eval_rul: C |- rulAL `( val*{val <- val*} `) : %
+relation Eval_rul: C |- rul `( val*{val <- val*} `) : %
 
-1. (Let _id ':' typedExp*{typedExp <- typedExp*} '->' typedExp'*{typedExp' <- typedExp'*} '-' premAL*{premAL <- premAL*} be rulAL)
+1. (Let _id ':' typedExp*{typedExp <- typedExp*} '->' typedExp'*{typedExp' <- typedExp'*} '-' prem*{prem <- prem*} be rul)
 
   1. (Assign_exps: C |- typedExp*{typedExp <- typedExp*} := val*{val <- val*} : assignRes)
 
@@ -5815,7 +5815,7 @@ relation Eval_rul: C |- rulAL `( val*{val <- val*} `) : %
 
       1. (Let OK C_assign be assignRes as ok<ctx>)
 
-        1. (Eval_prems: C_assign |- premAL*{premAL <- premAL*} : premRes)
+        1. (Eval_prems: C_assign |- prem*{prem <- prem*} : premRes)
 
           1. Case analysis on premRes (total)
 
@@ -5841,9 +5841,9 @@ relation Eval_rul: C |- rulAL `( val*{val <- val*} `) : %
 
   1. Result in: % |- % `( % `) : ERROR as relRes
 
-relation Eval_ruls: C |- rulAL*{rulAL <- rulAL*} `( val*{val <- val*} `) : %
+relation Eval_ruls: C |- rul*{rul <- rul*} `( val*{val <- val*} `) : %
 
-1. Case analysis on rulAL*{rulAL <- rulAL*} (total)
+1. Case analysis on rul*{rul <- rul*} (total)
 
   1. Case (% matches pattern [])
 
@@ -5851,9 +5851,9 @@ relation Eval_ruls: C |- rulAL*{rulAL <- rulAL*} `( val*{val <- val*} `) : %
 
   2. Case (% matches pattern _ :: _)
 
-    1. (Let rulAL_h :: rulAL_t*{rulAL_t <- rulAL_t*} be rulAL*{rulAL <- rulAL*})
+    1. (Let rul_h :: rul_t*{rul_t <- rul_t*} be rul*{rul <- rul*})
 
-      1. (Eval_rul: C |- rulAL_h `( val*{val <- val*} `) : relRes')
+      1. (Eval_rul: C |- rul_h `( val*{val <- val*} `) : relRes')
 
         1. Case analysis on relRes'
 
@@ -5861,7 +5861,7 @@ relation Eval_ruls: C |- rulAL*{rulAL <- rulAL*} `( val*{val <- val*} `) : %
 
             1. (Let unmatch be relRes' as unmatch)
 
-              1. (Eval_ruls: C |- rulAL_t*{rulAL_t <- rulAL_t*} `( val*{val <- val*} `) : relRes)
+              1. (Eval_ruls: C |- rul_t*{rul_t <- rul_t*} `( val*{val <- val*} `) : relRes)
 
                 1. Result in: % |- % `( % `) : relRes
 
@@ -5869,7 +5869,7 @@ relation Eval_ruls: C |- rulAL*{rulAL <- rulAL*} `( val*{val <- val*} `) : %
 
             1. (Let OK val_out*{val_out <- val_out*} be relRes' as ok<val*>)
 
-              1. (Eval_ruls_on_ok: C |- rulAL_t*{rulAL_t <- rulAL_t*} `( val*{val <- val*} `) : unitRes)
+              1. (Eval_ruls_on_ok: C |- rul_t*{rul_t <- rul_t*} `( val*{val <- val*} `) : unitRes)
 
                 1. If (unitRes matches OK), then
 
@@ -5879,9 +5879,9 @@ relation Eval_ruls: C |- rulAL*{rulAL <- rulAL*} `( val*{val <- val*} `) : %
 
   1. Result in: % |- % `( % `) : ERROR as relRes
 
-relation Eval_ruls_on_ok: C |- rulAL*{rulAL <- rulAL*} `( val*{val <- val*} `) : %
+relation Eval_ruls_on_ok: C |- rul*{rul <- rul*} `( val*{val <- val*} `) : %
 
-1. Case analysis on rulAL*{rulAL <- rulAL*} (total)
+1. Case analysis on rul*{rul <- rul*} (total)
 
   1. Case (% matches pattern [])
 
@@ -5889,15 +5889,15 @@ relation Eval_ruls_on_ok: C |- rulAL*{rulAL <- rulAL*} `( val*{val <- val*} `) :
 
   2. Case (% matches pattern _ :: _)
 
-    1. (Let rulAL_h :: rulAL_t*{rulAL_t <- rulAL_t*} be rulAL*{rulAL <- rulAL*})
+    1. (Let rul_h :: rul_t*{rul_t <- rul_t*} be rul*{rul <- rul*})
 
-      1. (Eval_rul: C |- rulAL_h `( val*{val <- val*} `) : relRes)
+      1. (Eval_rul: C |- rul_h `( val*{val <- val*} `) : relRes)
 
         1. If (relRes <: unmatch), then
 
           1. (Let unmatch be relRes as unmatch)
 
-            1. (Eval_ruls_on_ok: C |- rulAL_t*{rulAL_t <- rulAL_t*} `( val*{val <- val*} `) : unitRes)
+            1. (Eval_ruls_on_ok: C |- rul_t*{rul_t <- rul_t*} `( val*{val <- val*} `) : unitRes)
 
               1. Result in: % |- % `( % `) : unitRes
 
@@ -5909,23 +5909,23 @@ relation Eval_ruls_on_ok: C |- rulAL*{rulAL <- rulAL*} `( val*{val <- val*} `) :
 
         2. Else Dangling
 
-relation Call_defined_rel: C |- definedRelDefnAL `( val*{val <- val*} `) : %
+relation Call_defined_rel: C |- definedRelDefn `( val*{val <- val*} `) : %
 
-1. (Let REL _id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} '=' rulGroupAL*{rulGroupAL <- rulGroupAL*} elsGroupAL?{elsGroupAL <- elsGroupAL?} be definedRelDefnAL)
+1. (Let REL _id ':' _typ*{_typ <- _typ*} '->' _typ'*{_typ' <- _typ'*} '=' rulGroup*{rulGroup <- rulGroup*} elsGroup?{elsGroup <- elsGroup?} be definedRelDefn)
 
   1. (Let C_local be C[LOCAL = $empty_localLayer])
 
-    1. (Let rulAL*{rulAL <- rulAL*} be $ruls_of_rulgroups(rulGroupAL*{rulGroupAL <- rulGroupAL*}))
+    1. (Let rul*{rul <- rul*} be $ruls_of_rulgroups(rulGroup*{rulGroup <- rulGroup*}))
 
-      1. (Eval_ruls: C_local |- rulAL*{rulAL <- rulAL*} `( val*{val <- val*} `) : relRes')
+      1. (Eval_ruls: C_local |- rul*{rul <- rul*} `( val*{val <- val*} `) : relRes')
 
         1. If (relRes' <: unmatch), then
 
           1. (Let unmatch be relRes' as unmatch)
 
-            1. (Let rulAL_els be $rul_of_elsgroup(elsGroupAL))?{elsGroupAL <- elsGroupAL?, rulAL_els -> rulAL_els?}
+            1. (Let rul_els be $rul_of_elsgroup(elsGroup))?{elsGroup <- elsGroup?, rul_els -> rul_els?}
 
-              1. (Eval_rul: C_local |- rulAL_els `( val*{val <- val*} `) : relRes_els)?{rulAL_els <- rulAL_els?, relRes_els -> relRes_els?}
+              1. (Eval_rul: C_local |- rul_els `( val*{val <- val*} `) : relRes_els)?{rul_els <- rul_els?, relRes_els -> relRes_els?}
 
                 1. (Let relRes be $deopt_<relRes>(relRes_els?{relRes_els <- relRes_els?}, UNMATCH as relRes))
 
@@ -5939,13 +5939,13 @@ relation Call_defined_rel: C |- definedRelDefnAL `( val*{val <- val*} `) : %
 
   1. Result in: % |- % `( % `) : ERROR as relRes
 
-def $ruls_of_rulgroup(id ':' rulAL*{rulAL <- rulAL*})
+def $ruls_of_rulgroup(id ':' rul*{rul <- rul*})
 
-1. Return rulAL*{rulAL <- rulAL*}
+1. Return rul*{rul <- rul*}
 
-def $ruls_of_rulgroups(rulGroupAL*{rulGroupAL <- rulGroupAL*})
+def $ruls_of_rulgroups(rulGroup*{rulGroup <- rulGroup*})
 
-1. Case analysis on rulGroupAL*{rulGroupAL <- rulGroupAL*} (total)
+1. Case analysis on rulGroup*{rulGroup <- rulGroup*} (total)
 
   1. Case (% matches pattern [])
 
@@ -5953,17 +5953,17 @@ def $ruls_of_rulgroups(rulGroupAL*{rulGroupAL <- rulGroupAL*})
 
   2. Case (% matches pattern _ :: _)
 
-    1. (Let rulGroupAL_h :: rulGroupAL_t*{rulGroupAL_t <- rulGroupAL_t*} be rulGroupAL*{rulGroupAL <- rulGroupAL*})
+    1. (Let rulGroup_h :: rulGroup_t*{rulGroup_t <- rulGroup_t*} be rulGroup*{rulGroup <- rulGroup*})
 
-      1. Return $ruls_of_rulgroup(rulGroupAL_h) ++ $ruls_of_rulgroups(rulGroupAL_t*{rulGroupAL_t <- rulGroupAL_t*})
+      1. Return $ruls_of_rulgroup(rulGroup_h) ++ $ruls_of_rulgroups(rulGroup_t*{rulGroup_t <- rulGroup_t*})
 
-def $rul_of_elsgroup(id ':' rulAL)
+def $rul_of_elsgroup(id ':' rul)
 
-1. Return rulAL
+1. Return rul
 
-relation Eval_AL_rel: specAL |- id `( val*{val <- val*} `) : %
+relation Eval_rel: spec |- id `( val*{val <- val*} `) : %
 
-1. (Let C be $load_ctx($empty_ctx, specAL))
+1. (Let C be $load_ctx($empty_ctx, spec))
 
   1. (Call_rel: C |- id `( val*{val <- val*} `) : relRes)
 
@@ -5975,9 +5975,9 @@ relation Eval_AL_rel: specAL |- id `( val*{val <- val*} `) : %
 
     1. Else Dangling
 
-relation Eval_AL_func: specAL |- id `( val*{val <- val*} `) : %
+relation Eval_func: spec |- id `( val*{val <- val*} `) : %
 
-1. (Let C be $load_ctx($empty_ctx, specAL))
+1. (Let C be $load_ctx($empty_ctx, spec))
 
   1. (Call_func: C |- id `< [] `> `( val*{val <- val*} `) : funcRes)
 

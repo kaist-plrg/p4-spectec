@@ -4,17 +4,17 @@
 //! a P4 program, an AL or IL script, or a K definition with its initial term,
 //! which the K library at the top reads (`Top::K`).
 //!
-//! The meta specification's entry relations, such as `Eval_AL_rel`, take a script,
+//! The meta specification's entry relations, such as spec-meta's `Eval_rel`, take a script,
 //! the name of the script's entry, and the entry's inputs as meta values.
 //! For `towers/al-p4.json`, the base calls
-//! ``Eval_AL_rel: <P4 spec as AL> |- "Program_inst" `( <program as val> `) : val*``.
+//! ``Eval_rel: <P4 spec as AL> |- "Program_inst" `( <program as val> `) : val*``.
 //! Each level above the base wraps the inputs of the level above it this way,
 //! through the protocol of the boundary below it (`Protocol::encode_entry`),
 //! with the level encoded in the language of the level consuming it.
 //! A program above the top is one more level: an AL or IL script is entered
 //! at the configured entry with no inputs, its function `main` through
-//! `Eval_AL_func` or `Eval_IL_func` or a relation through `Eval_AL_rel` or
-//! `Eval_IL_rel`; a K definition is entered with its initial
+//! `Eval_func`, `Eval_AL_func`, or `Eval_IL_func`, or a relation through
+//! `Eval_rel`, `Eval_AL_rel`, or `Eval_IL_rel`; a K definition is entered with its initial
 //! term and step bound, which spec-k's `Krun` rewrites.
 //!
 //! `Tower::print_output` prints what the base's entry gave, where the top

@@ -27,19 +27,19 @@ pub(super) const VAL_CASE: &str = "mixop val*";
 pub(super) const ITER_PREM: &str = "iter '<-' vari* '->' vari*";
 pub(super) const PREM_REL: &str = "REL id ':' typedExp* '->' typedExp*";
 pub(super) const PREM_LET: &str = "LET typedExp '=' typedExp";
-pub(super) const PREM_ITER: &str = "ITER premAL premIterAL";
+pub(super) const PREM_ITER: &str = "ITER prem premIter";
 
 // == Rules and clauses
 
-pub(super) const RUL: &str = "id ':' typedExp* '->' typedExp* '-' premAL*";
-pub(super) const RUL_GROUP: &str = "id ':' rulAL*";
-pub(super) const ELS_GROUP: &str = "id ':' rulAL";
-pub(super) const TBL_ROW: &str = "arg* '=' typedExp '-' premAL*";
-pub(super) const CLAUSE: &str = "arg* '=' typedExp '-' premAL*";
+pub(super) const RUL: &str = "id ':' typedExp* '->' typedExp* '-' prem*";
+pub(super) const RUL_GROUP: &str = "id ':' rul*";
+pub(super) const ELS_GROUP: &str = "id ':' rul";
+pub(super) const TBL_ROW: &str = "arg* '=' typedExp '-' prem*";
+pub(super) const CLAUSE: &str = "arg* '=' typedExp '-' prem*";
 
 // == Definitions
 
 pub(super) const DEF_EXTREL: &str = "EXTREL id ':' typ* '->' typ*";
-pub(super) const DEF_REL: &str = "REL id ':' typ* '->' typ* '=' rulGroupAL* elsGroupAL?";
-pub(super) const DEF_TABLEFUNC: &str = "TABLEFUNC id param* ':' typ '=' tblRowAL*";
-pub(super) const DEF_FUNC: &str = "FUNC id tparam* param* ':' typ '=' clauseAL* elsClauseAL?";
+pub(super) const DEF_REL: &str = "REL id ':' typ* '->' typ* '=' rulGroup* elsGroup?";
+pub(super) const DEF_TABLEFUNC: &str = "TABLEFUNC id param* ':' typ '=' tblRow*";
+pub(super) const DEF_FUNC: &str = "FUNC id tparam* param* ':' typ '=' clause* elsClause?";

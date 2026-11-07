@@ -42,14 +42,14 @@ Run it with the supplied AL tower:
   "mode": "sl",
   "entry": "Main",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Eval_AL_rel", "lang": "al" }
+    { "specdir": "../spec-meta", "rel": "Eval_rel", "lang": "al" }
   ]
 }
 ```
 
-The single level is both top level and native base. Its `Eval_AL_rel` interprets the
+The single level is both top level and native base. Its `Eval_rel` interprets the
 AL script, calling its relation `Main` with no inputs; `entry` names it, and a
-tower without `entry` calls the function `main` through `Eval_AL_func`. Builtin calls of the script are answered by the native builtins;
+tower without `entry` calls the function `main` through `Eval_func`. Builtin calls of the script are answered by the native builtins;
 other host operations are unsupported.
 Repeat `-p` for ordered specification source paths.
 
@@ -67,7 +67,7 @@ Use the supplied AL/P4 tower:
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "../spec-meta", "rel": "Eval_AL_rel", "lang": "al" },
+    { "specdir": "../spec-meta", "rel": "Eval_rel", "lang": "al" },
     { "specdir": "../spec", "rel": "Program_inst", "lang": "p4" }
   ]
 }
@@ -75,9 +75,9 @@ Use the supplied AL/P4 tower:
 
 The path is Rust SL interpreter → AL specification → P4 specification →
 P4 program. `Program_inst` type-checks the program and instantiates its
-declarations. The base runs ``Eval_AL_rel: specAL |- id `( val* `) : val*`` natively on
+declarations. The base runs ``Eval_rel: spec |- id `( val* `) : val*`` natively on
 the P4 specification as AL, the name `"Program_inst"`, and the program
-encoded as a spec-meta `val`; `Eval_AL_rel` calls `Program_inst` through
+encoded as a spec-meta `val`; `Eval_rel` calls `Program_inst` through
 `Call_rel` and outputs its results. A P4 top level takes exactly one `-p` path.
 `towers/al-p4-ok.json` is the same tower entered through `Program_ok`,
 which only type-checks the program.
@@ -132,19 +132,19 @@ host calls relayed from below, without consulting its own definitions.
 `rel` names the relation entering a level. A level above an `al`, `al-ext`, or `il-ext` level
 is encoded as the inputs of an entry relation at the level below: the
 specification, its `rel`, and the inputs of that `rel` as `val`s.
-`Eval_AL_rel` and `Eval_IL_rel` (of `spec-meta-ext`) call a relation through `Call_rel`;
-`Eval_AL_func` and `Eval_IL_func` call a function through `Call_func` and
-output its value. A level entered through a relation of the level above,
-including every P4 tower and the supplied script towers entering `Main`, uses
-the `_rel` entry; only the level below a script entered at a function uses the
-`_func` entry.
+spec-meta's `Eval_rel`, and spec-meta-ext's `Eval_AL_rel` and `Eval_IL_rel`,
+call a relation through `Call_rel`; `Eval_func`, `Eval_AL_func`, and
+`Eval_IL_func` call a function through `Call_func` and output its value. A
+level entered through a relation of the level above, including every P4 tower
+and the supplied script towers entering `Main`, uses the `_rel` entry; only the
+level below a script entered at a function uses the `_func` entry.
 
 Each `specdir` accepts a specification file or directory and is resolved
 relative to the configuration file. CLI program and include paths are
 resolved relative to the current working directory.
 
 To add an AL interpretation layer, insert another
-`{ "specdir": "../spec-meta", "rel": "Eval_AL_rel", "lang": "al" }`
+`{ "specdir": "../spec-meta", "rel": "Eval_rel", "lang": "al" }`
 below the top level, as the supplied three-level `al-al-p4.json` does;
 `al-il-p4.json` instead makes the middle level accept IL,
 running `spec-meta-ext` there. A name such as
