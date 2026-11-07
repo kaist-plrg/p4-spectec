@@ -34,6 +34,15 @@ rule Algo_rul:
 
 ;; A clause binds its arguments, runs its premises, and returns its result
 
+dec $is_partial_prem(premAL) : bool
+def $is_partial_prem(relPremAL) = true
+def $is_partial_prem(ifHoldPrem) = true
+def $is_partial_prem(ifNotHoldPrem) = true
+def $is_partial_prem(ITER premAL _)
+  = $is_partial_prem(premAL)
+def $is_partial_prem(_) = false
+  -- otherwise
+
 rule Algo_clause:
   AC |- clauseIL : clauseAL
   -- if arg* '=' typedExp '-' premIL* = clauseIL
@@ -43,12 +52,14 @@ rule Algo_clause:
   ---- ;; the arguments bind, decomposing partially bound patterns
   -- Bind_args: AC_clause |- arg* : AC_arg arg_part* premAL_arg*
   ---- ;; the premises run in order after the arguments
-  -- Algo_prems: AC_arg |- premIL* : AC_body premAL*
+  -- Algo_prems: AC_arg |- premIL* : AC_body premAL_body*
+  ---- ;; relation premises cannot be used in clauses
+  -- if premAL* = premAL_arg* ++ premAL_body*
+  -- if $forall_((~$is_partial_prem(premAL))*)
   ---- ;; the result reads only bound variables
   -- if vari_body* = $free_varis_exp(typedExp)
   -- if $is_bound_varis(AC_body, eps, vari_body*)
-  -- if clauseAL
-      = arg_part* '=' typedExp '-' (premAL_arg* ++ premAL*)
+  -- if clauseAL = arg_part* '=' typedExp '-' premAL*
 
 ;;
 ;; Definitions

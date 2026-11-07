@@ -10,8 +10,8 @@ rule Call_convention_expr_ok/in:
   p TC actctxt |- (_ IN typeIR_param _ _) '@' typedExpressionIR_arg
                 : typedExpressionIR_arg_cast
   ---- ;; may insert implicit casts for direction in
-  -- if typedExpressionIR_arg_cast
-      = $cast_unary(typedExpressionIR_arg, typeIR_param)
+  -- Cast_unary:
+      `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR_arg_cast
 
 ;;; OUT | INOUT
 
@@ -35,15 +35,15 @@ rulegroup Call_convention_expr_ok/directionless {
     p TC ACTION |- (_ _EMPTY typeIR_param _ _) '@' typedExpressionIR_arg
                  : typedExpressionIR_arg_cast
     ---- ;; may insert implicit casts for directionless action argument
-    -- if typedExpressionIR_arg_cast
-        = $cast_unary(typedExpressionIR_arg, typeIR_param) 
+    -- Cast_unary:
+        `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR_arg_cast
     
   rule Call_convention_expr_ok/non-action:
     p TC NOACTION |- (_ _EMPTY typeIR_param _ _) '@' typedExpressionIR_arg
                    : typedExpressionIR_arg_cast
     ---- ;; may insert implicit casts for directionless non-action argument
-    -- if typedExpressionIR_arg_cast
-        = $cast_unary(typedExpressionIR_arg, typeIR_param) 
+    -- Cast_unary:
+        `( typeIR_param `) typedExpressionIR_arg : typedExpressionIR_arg_cast
     ---- ;; the argument must be compile-time known
     -- if DYN =/= $ctk_of_typedExpressionIR(typedExpressionIR_arg)
 
