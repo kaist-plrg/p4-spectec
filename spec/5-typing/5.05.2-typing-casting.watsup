@@ -701,34 +701,41 @@ def $apply_cast(typedExpressionIR, typeIR_h :: typeIR_t*)
 
 ;;; Unary
 
-dec $cast_unary(typedExpressionIR, typeIR) : typedExpressionIR?
-  hint(prose_in %0 "implicitly cast to" %1)
+relation Cast_unary:
+  `( typeIR `) typedExpressionIR : typedExpressionIR?
+  hint(input %0 %1)
+  hint(prose_in %1 "implicitly cast to" %0)
 
-def $cast_unary(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
-  -- if _ '#' `( typeIR _ `) = typedExpressionIR
-  -- Cast_impl: typeIR -> typeIR_to : OK typeIR_cast*
+rule Cast_unary/ok:
+  `( typeIR_to `) typedExpressionIR : typedExpressionIR_cast
+  -- if _ '#' `( typeIR_from _ `) = typedExpressionIR
+  -- Cast_impl: typeIR_from -> typeIR_to : OK typeIR_cast*
   -- if typedExpressionIR_cast
       = $apply_cast(typedExpressionIR, typeIR_cast*)
 
-def $cast_unary(typedExpressionIR, typeIR_to) = eps
+rule Cast_unary/fail:
+  `( typeIR_to `) typedExpressionIR : eps
   -- otherwise
 
 ;;; Binary
 
-dec $cast_binary(typedExpressionIR, typedExpressionIR)
-  : (typedExpressionIR, typedExpressionIR)?
+relation Cast_binary:
+  typedExpressionIR ',' typedExpressionIR : typedExpressionIR? ',' typedExpressionIR?
+  hint(input %0 %1)
   hint(prose_in %0 "and" %1 "implicitly cast to equal types")
 
-def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
-  = (typedExpressionIR_l_cast, typedExpressionIR_r)
+rule Cast_binary/left-to-right:
+  typedExpressionIR_l ',' typedExpressionIR_r
+  : typedExpressionIR_l_cast ',' typedExpressionIR_r
   -- if _ '#' `( typeIR_l _ `) = typedExpressionIR_l
   -- if _ '#' `( typeIR_r _ `) = typedExpressionIR_r
   -- Cast_impl: typeIR_l -> typeIR_r : OK typeIR_cast*
   -- if typedExpressionIR_l_cast
       = $apply_cast(typedExpressionIR_l, typeIR_cast*)
 
-def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
-  = (typedExpressionIR_l, typedExpressionIR_r_cast)
+rule Cast_binary/right-to-left:
+  typedExpressionIR_l ',' typedExpressionIR_r
+  : typedExpressionIR_l ',' typedExpressionIR_r_cast
   -- if _ '#' `( typeIR_l _ `) = typedExpressionIR_l
   -- if _ '#' `( typeIR_r _ `) = typedExpressionIR_r
   -- Cast_impl: typeIR_l -> typeIR_r : FAIL
@@ -736,25 +743,34 @@ def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if typedExpressionIR_r_cast
       = $apply_cast(typedExpressionIR_r, typeIR_cast*)
 
-def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
-  = $cast_binary(typedExpressionIR_l_cast, typedExpressionIR_r)
+rule Cast_binary/retry-left:
+  typedExpressionIR_l ',' typedExpressionIR_r
+  : typedExpressionIR_l_cast? ',' typedExpressionIR_r_cast?
   -- if _ '#' `( typeIR_l _ `) = typedExpressionIR_l
   -- if _ '#' `( typeIR_r _ `) = typedExpressionIR_r
   -- Cast_impl: typeIR_l -> typeIR_r : FAIL
   -- Cast_impl: typeIR_r -> typeIR_l : FAIL
-  -- if typedExpressionIR_l_cast = $reduce_serenum(typedExpressionIR_l)
-  -- if typedExpressionIR_l =/= typedExpressionIR_l_cast
+  -- if typedExpressionIR_l_reduced = $reduce_serenum(typedExpressionIR_l)
+  -- if typedExpressionIR_l =/= typedExpressionIR_l_reduced
+  -- Cast_binary:
+      typedExpressionIR_l_reduced ',' typedExpressionIR_r
+      : typedExpressionIR_l_cast? ',' typedExpressionIR_r_cast?
 
-def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
-  = $cast_binary(typedExpressionIR_l, typedExpressionIR_r_cast)
+rule Cast_binary/retry-right:
+  typedExpressionIR_l ',' typedExpressionIR_r
+  : typedExpressionIR_l_cast? ',' typedExpressionIR_r_cast?
   -- if _ '#' `( typeIR_l _ `) = typedExpressionIR_l
   -- if _ '#' `( typeIR_r _ `) = typedExpressionIR_r
   -- Cast_impl: typeIR_l -> typeIR_r : FAIL
   -- Cast_impl: typeIR_r -> typeIR_l : FAIL
-  -- if typedExpressionIR_l_cast = $reduce_serenum(typedExpressionIR_l)
-  -- if typedExpressionIR_l = typedExpressionIR_l_cast
-  -- if typedExpressionIR_r_cast = $reduce_serenum(typedExpressionIR_r)
-  -- if typedExpressionIR_r =/= typedExpressionIR_r_cast
+  -- if typedExpressionIR_l_reduced = $reduce_serenum(typedExpressionIR_l)
+  -- if typedExpressionIR_l = typedExpressionIR_l_reduced
+  -- if typedExpressionIR_r_reduced = $reduce_serenum(typedExpressionIR_r)
+  -- if typedExpressionIR_r =/= typedExpressionIR_r_reduced
+  -- Cast_binary:
+      typedExpressionIR_l ',' typedExpressionIR_r_reduced
+      : typedExpressionIR_l_cast? ',' typedExpressionIR_r_cast?
 
-def $cast_binary(typedExpressionIR_l, typedExpressionIR_r) = eps
+rule Cast_binary/fail:
+  typedExpressionIR_l ',' typedExpressionIR_r : eps ',' eps
   -- otherwise
