@@ -5,7 +5,9 @@
 //! host's data, a KORE pattern: the arguments of a hook the K runtime
 //! computes (`offload`), and the configuration of a run (`runres`).
 //! A domain value is written with its sort and text, `DV SortInt "5"` as
-//! `\dv{SortInt{}}("5")`; a collection with the constructors of its sort,
+//! `\dv{SortInt{}}("5")`, an MInt with its width from its sort, `DV
+//! (SortMInt Sort64) "5"` as `\dv{SortMInt{Sort64{}}}("5p64")`; a collection
+//! with the constructors of its sort,
 //! from its `element`, `concat`, and `unit` attributes, a range map's element
 //! of a range `RangeMap:Range(start, end)` of two Int keys as KItems.
 
@@ -85,6 +87,17 @@ pub fn sort(arena: &Arena, mixops: &Mixops, value: &Value) -> Result<Sort> {
     }
 }
 
+/// The literal `5p64` of an MInt of value `5` and sort `MInt{Sort64}`
+fn mint_literal(value: String, widths: &[Sort]) -> Result<String> {
+    match widths {
+        [Sort::Sort(width, _)] => {
+            let width = width.strip_prefix("Sort").unwrap_or(width);
+            Ok(format!("{value}p{width}"))
+        }
+        _ => Err("an MInt sort without its width".to_owned()),
+    }
+}
+
 fn dv(sort: Sort, text: String) -> Pattern {
     Pattern::App("\\dv".to_owned(), vec![sort], vec![Pattern::Str(text)])
 }
@@ -139,6 +152,12 @@ pub fn term(arena: &Arena, info: &Info, mixops: &Mixops, value: &Value) -> Resul
             [sort, t] if is(arena, mixop, mixops.dv) => {
                 let sort = self::sort(arena, mixops, sort)?;
                 let t = text(arena, t)?;
+                let t = match &sort {
+                    Sort::Sort(name, widths) if info.sort_hook(name) == Some("MINT.MInt") => {
+                        mint_literal(t, widths)?
+                    }
+                    _ => t,
+                };
                 Ok(dv(sort, t))
             }
             [sort, map] if is(arena, mixop, mixops.map) => {

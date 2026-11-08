@@ -27,8 +27,6 @@ pub struct Info {
     pub collections: HashMap<String, Constructors>,
     /// The symbols with the `binder` attribute, e.g. lambda.
     binders: HashSet<String>,
-    /// The symbol with the hook `MINT.integer`, `Int2MInt`, if declared.
-    pub int2mint: Option<String>,
 }
 
 /// The string an attribute holds, as in `hook{}("INT.Int")`.
@@ -64,9 +62,6 @@ impl Info {
                         |attr| matches!(attr, Pattern::App(attr_name, _, _) if attr_name == "binder"),
                     ) {
                         info.binders.insert(name.clone());
-                    }
-                    if string_attr("hook", attrs) == Some("MINT.integer") {
-                        info.int2mint = Some(name.clone());
                     }
                 }
                 Sentence::SortDecl { name, attrs, .. } => {

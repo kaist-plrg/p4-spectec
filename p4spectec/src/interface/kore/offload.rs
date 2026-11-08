@@ -6,18 +6,13 @@
 //! `Offload::call` writes the application as KORE (`decode`), the K library of the
 //! definition (`runtime.so` in its kompiled directory, through `ffi`) evaluates it,
 //! and the answer is read back as a term (`binary`, `encode`): `OK` the term, or
-//! `ERROR` if the runtime fails. An MInt literal goes to the runtime as
-//! `Int2MInt` of its value (`runtime_form`): the runtime reads a literal wider
-//! than 64 bits with its 64-bit words in the wrong order (`5p256` as
-//! `5 * 2^192`, `get_mint_token` in `runtime/util/ConfigurationParser.cpp`),
-//! and computes `Int2MInt` right.
+//! `ERROR` if the runtime fails.
 
 use super::{
     Loaded,
     ast::{Pattern, Sort},
-    binary, decode, deep, diagnostic, encode,
+    binary, decode, diagnostic, encode,
     ffi::Runtime,
-    info::Info,
     unimplemented,
 };
 use crate::{
@@ -94,7 +89,6 @@ impl Offload {
     fn call_hook(&self, arena: &mut Arena, values: &[Value]) -> Result<Value, String> {
         let loaded = self.loaded().ok_or("Call_hook needs a loaded definition")?;
         let (pattern, sort) = hook_args(arena, &loaded, values)?;
-        let pattern = runtime_form(&loaded.info, pattern);
         // The runtime's answer as a term; a failure there is ERROR
         let answer = match loaded.runtime.simplify(&pattern.to_string(), &sort) {
             Ok(result) => Some(unwrap_result(binary::decode(&result)?)),
@@ -127,37 +121,6 @@ fn hook_args(arena: &Arena, loaded: &Loaded, values: &[Value]) -> Result<(Patter
     Ok((Pattern::App(symbol, sorts, terms), sort))
 }
 
-/// A pattern as the runtime is given it: each MInt literal `vpw` of sort
-/// `MInt{W}` as `Int2MInt{W}(v)`.
-fn runtime_form(info: &Info, pattern: Pattern) -> Pattern {
-    deep(|| match pattern {
-        Pattern::App(symbol, sorts, args) if symbol == "\\dv" => {
-            if let (Some(int2mint), [Sort::Sort(name, widths)], [Pattern::Str(text)]) =
-                (&info.int2mint, sorts.as_slice(), args.as_slice())
-                && info.sort_hook(name) == Some("MINT.MInt")
-                && let Some((value, _)) = text.split_once('p')
-                && let Ok(sort_int) = info.sort_of_hook("INT.Int")
-            {
-                let value = Pattern::App(
-                    "\\dv".to_owned(),
-                    vec![Sort::Sort(sort_int.to_owned(), vec![])],
-                    vec![Pattern::Str(value.to_owned())],
-                );
-                return Pattern::App(int2mint.clone(), widths.clone(), vec![value]);
-            }
-            Pattern::App(symbol, sorts, args)
-        }
-        Pattern::App(symbol, sorts, args) => Pattern::App(
-            symbol,
-            sorts,
-            args.into_iter()
-                .map(|arg| runtime_form(info, arg))
-                .collect(),
-        ),
-        pattern => pattern,
-    })
-}
-
 /// The output of `Call_hook`, of `res<term>`: `OK` the runtime's answer as a
 /// term, or `ERROR` if it failed.
 fn hook_result(
@@ -166,7 +129,7 @@ fn hook_result(
     answer: Option<&Pattern>,
 ) -> Result<Value, String> {
     let result = match answer {
-        Some(answer) => encode::term(arena, &loaded.mixops, answer)
+        Some(answer) => encode::term(arena, &loaded, answer)
             .and_then(|term| encode::ok(arena, &loaded.mixops, term)),
         None => encode::error(arena, &loaded.mixops),
     };
