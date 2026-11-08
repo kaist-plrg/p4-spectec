@@ -5,7 +5,8 @@
 //! as K does. A KORE string has one character per byte (`parse`).
 //! For example, `$has_prefix("INT.add", "INT.")` is true, and `$int_text(2)`
 //! is `2`, where spec-meta's `$int_to_text` gives `+2`. `$kore_string`
-//! escapes a string as the LLVM backend's printer does, for `#unparseKORE`
+//! escapes a string as the LLVM backend's printer does, and `$drop_prefix`
+//! gives the width of an MInt sort, for `#unparseKORE`
 //! (`spec-k/5.2-hook.watsup`).
 
 use crate::lang::{
@@ -68,11 +69,23 @@ fn kore_string(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Val
     Ok(value::make::text(arena, escaped, Span::default())?)
 }
 
+/// `dec $drop_prefix(text, text) : text`, the first text without the second
+/// at its start, if it is there: the width `64` of the sort `Sort64`.
+fn drop_prefix(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value> {
+    extract::zero(targs)?;
+    let (t, prefix) = extract::two(values)?;
+    let t = text(arena, t)?;
+    let prefix = text(arena, prefix)?;
+    let rest = t.strip_prefix(prefix.as_str()).unwrap_or(t.as_str());
+    Ok(value::make::text(arena, rest.to_owned(), Span::default())?)
+}
+
 /// The builtins above, by name.
-pub(super) fn entries() -> [(&'static str, BuiltinImpl); 3] {
+pub(super) fn entries() -> [(&'static str, BuiltinImpl); 4] {
     [
         ("has_prefix", Box::new(has_prefix)),
         ("int_text", Box::new(int_text)),
         ("kore_string", Box::new(kore_string)),
+        ("drop_prefix", Box::new(drop_prefix)),
     ]
 }

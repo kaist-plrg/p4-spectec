@@ -12,11 +12,17 @@ module UNPARSE
   imports MAP
   imports SET
   imports K-REFLECTION
+  imports MINT
 
   configuration <k> $PGM:Pgm </k> <out> .List </out>
 
+  // the widths the rules cast to, which K parses only once declared
+  syntax MInt{8}
+  syntax MInt{64}
+  syntax MInt{256}
+
   syntax Exp ::= Int | String | pr(Exp, Exp) | "nil"
-  syntax Pgm ::= ints(Int) | strings(String) | terms(Int) | collections(Int)
+  syntax Pgm ::= ints(Int) | strings(String) | terms(Int) | collections(Int) | mints(Int)
 
   syntax String ::= u(K) [function]
   rule u(T) => #unparseKORE(T)
@@ -38,4 +44,11 @@ module UNPARSE
                   ListItem(u(SetItem(I)))
                   ListItem(u(.List))
                   ListItem(u(.Map)) </out>
+
+  // an MInt with the width of its sort, and a negative Int wrapped at it
+  rule <k> mints(I) => .K </k>
+       <out> _ => ListItem(u(Int2MInt(I)::MInt{8}))
+                  ListItem(u(Int2MInt(I)::MInt{64}))
+                  ListItem(u(Int2MInt(I)::MInt{256}))
+                  ListItem(u(Int2MInt(0 -Int I)::MInt{8})) </out>
 endmodule

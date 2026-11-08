@@ -44,8 +44,7 @@ def $hook(D, "BUFFER.toString", sort, ([DV sort_1 t])) = OK (DV sort t)
 ;;; sort, and a collection as its unit, or its concatenation of elements under
 ;;; \left-assoc, with the symbols the definition hooks for its sort. Map and
 ;;; Set elements come in their order here, the order of the hash trie there
-;;; (as for Set2List); a string buffer is escaped here, written raw there; an
-;;; MInt is written as its value, without the width the printer adds (5p64).
+;;; (as for Set2List); a string buffer is escaped here, written raw there.
 
 dec $cat_text(text*) : text
 def $cat_text(eps) = ""
@@ -88,10 +87,23 @@ def $collection_text(D, hookid_u, hookid_e, hookid_c, sort, (t_h :: t_t*))
   -- if t_e = $hooked_symbol(D, hookid_e, sort)
   -- if t* = t_h :: t_t*
 
+;; The width of an MInt sort
+dec $mint_width(sort) : text?
+def $mint_width(SORT "SortMInt" ([SORT sortid_w eps])) = $drop_prefix(sortid_w, "Sort")
+def $mint_width(sort) = eps
+  -- otherwise
+
+;; The text of a domain value's literal: an MInt with the width of its sort
+dec $literal_text(sort, text) : text
+def $literal_text(sort, t) = t ++ "p" ++ t_w
+  -- if t_w = $mint_width(sort)
+def $literal_text(sort, t) = $kore_string(t)
+  -- if eps = $mint_width(sort)
+
 dec $kore_text(definition, term) : text
 def $kore_text(D, APP symid sort* term*)
   = $symbol_text(symid, sort*) ++ "(" ++ $join_text(",", $kore_text(D, term)*) ++ ")"
-def $kore_text(D, DV sort t) = "\\dv{" ++ $sort_text(sort) ++ "}(\"" ++ $kore_string(t) ++ "\")"
+def $kore_text(D, DV sort t) = "\\dv{" ++ $sort_text(sort) ++ "}(\"" ++ $literal_text(sort, t) ++ "\")"
 def $kore_text(D, LIST sort term*)
   = $collection_text(D, "LIST.unit", "LIST.element", "LIST.concat", sort, $kore_text(D, term)*)
 def $kore_text(D, SET sort `{ term* `})
