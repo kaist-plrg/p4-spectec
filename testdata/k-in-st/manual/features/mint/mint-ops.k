@@ -9,6 +9,7 @@ module MINT-OPS
   imports BOOL
   imports LIST
   imports MINT
+  imports K-EQUAL
 
   configuration <k> $PGM:Pgm </k> <out> .List </out>
 
@@ -17,7 +18,7 @@ module MINT-OPS
   syntax MInt{64}
   syntax MInt{256}
 
-  syntax Pgm ::= arith(Int) | lists(Int)
+  syntax Pgm ::= arith(Int) | lists(Int) | literals(Int)
 
   // wrapping at 8 bits, signed and unsigned readings, a comparison
   rule <k> arith(I) => .K </k>
@@ -32,4 +33,14 @@ module MINT-OPS
                   ListItem((ListItem(I) ListItem(I +Int 1)) [ Int2MInt(1)::MInt{64} <- 9 ])
                   ListItem(MInt2Unsigned(size(ListItem(I) ListItem(I))::MInt{64}))
                   ListItem(size(ListItem(I))::MInt{256}) </out>
+
+  // literals written with a sign, a capital P, or a value past the width are
+  // the value the runtime computes: matched, compared, and given to a hook
+  syntax KItem ::= chk(MInt{8}, Int)
+  rule <k> literals(I) => chk(Int2MInt(I)::MInt{8}, I) </k>
+  rule <k> chk(-1p8, I) => .K </k>
+       <out> _ => ListItem(Int2MInt(I -Int 250)::MInt{8} ==K 5P8)
+                  ListItem(Int2MInt(I -Int 250)::MInt{8} ==K +5p8)
+                  ListItem(Int2MInt(I -Int 211)::MInt{8} ==K 300p8)
+                  ListItem(MInt2Unsigned(-1p8)) </out>
 endmodule

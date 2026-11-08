@@ -292,8 +292,9 @@ pub fn program(arena: &mut Arena, value_definition: Value, value_init: Value) ->
 /// The text of a domain value `\dv{S}("text")` of a definition or an initial
 /// term, as the K runtime writes the value: an Int in decimal without a sign
 /// but `-` (`+3` is `3`), a Float in the runtime's output format, an MInt
-/// `5p64` as `5` (`decode` puts the width back from the sort), and any other
-/// as written. The specification compares domain values by their text.
+/// `5p64` as `5` and `-1p8` as `255` (`decode` puts the width back from the
+/// sort), and any other as written. The specification compares domain values
+/// by their text.
 fn literal(loaded: &Loaded, sort: &Sort, text: &str) -> Result<String> {
     let hook = match sort {
         Sort::Sort(name, _) => loaded.info.sort_hook(name),
@@ -307,14 +308,21 @@ fn literal(loaded: &Loaded, sort: &Sort, text: &str) -> Result<String> {
             Ok(int.to_string())
         }
         Some("FLOAT.Float") => offload::float_literal(loaded, text).map_err(EncodeError::Literal),
-        Some("MINT.MInt") => Ok(mint_value(text).to_owned()),
+        Some("MINT.MInt") => mint_value(text),
         _ => Ok(text.to_owned()),
     }
 }
 
-/// The value `5` of an MInt literal `5p64`.
-fn mint_value(text: &str) -> &str {
-    text.split_once('p').map_or(text, |(value, _)| value)
+/// The value of an MInt literal `<value>p<width>` as the K runtime writes it,
+/// in decimal and below `2^width`: `5p64` and `+5P64` are `5`, `-1p8` is `255`.
+fn mint_value(text: &str) -> Result<String> {
+    let bad = || EncodeError::Literal(format!("bad MInt literal {text:?}"));
+    let (value, width) = text.split_once(['p', 'P']).ok_or_else(bad)?;
+    let digits = value.strip_prefix('+').unwrap_or(value);
+    let value = BigInt::parse_bytes(digits.as_bytes(), 10).ok_or_else(bad)?;
+    let width: u64 = width.parse().map_err(|_| bad())?;
+    let modulus = BigInt::from(1) << width;
+    Ok(((value % &modulus + &modulus) % &modulus).to_string())
 }
 
 /// A domain value, or a constructor applied to such terms, as
@@ -329,11 +337,11 @@ pub fn term(arena: &mut Arena, loaded: &Loaded, pattern: &Pattern) -> Result<Val
                     let value_sort = make_sort(arena, mixops, sort)?;
                     let t = match sort {
                         Sort::Sort(name, _) if loaded.info.sort_hook(name) == Some("MINT.MInt") => {
-                            mint_value(t)
+                            mint_value(t)?
                         }
-                        _ => t,
+                        _ => t.to_owned(),
                     };
-                    let value_text = make_text(arena, t)?;
+                    let value_text = make_text(arena, &t)?;
                     make_case(arena, mixops.dv, vec![value_sort, value_text], typ("term"))
                 }
                 _ => Err(EncodeError::Literal(format!("bad domain value {pattern}"))),
