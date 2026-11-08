@@ -1,9 +1,10 @@
 //! Building a definition with K, as `krun -d` and K-in-ST read it
 //!
-//! `Case::build` kompiles a definition (`kompile --backend llvm --enable-search`)
-//! and builds its K library, `runtime.so`, which
-//! `interface::kore::offload` opens; `Case::init` makes the initial term of a
-//! program. Each is made again only when what it is made from is newer.
+//! `Case::build` kompiles a definition (`kompile --backend llvm --enable-search`),
+//! a copy with the suite's `patch` applied if it has one, and builds its K
+//! library, `runtime.so`, which `interface::kore::offload` opens; `Case::init`
+//! makes the initial term of a program. Each is made again only when what it
+//! is made from is newer.
 
 use std::{
     fs,
@@ -41,9 +42,15 @@ impl<'a> Case<'a> {
     ) -> Result<Self> {
         let words = |words: &[String]| resolve(words, checkout);
         let kompiled = dir_build.join("kompiled");
-        if stale(&kompiled.join("timestamp"), &[source]) {
+        let mut sources = vec![source];
+        sources.extend(suite.patch.as_deref());
+        if stale(&kompiled.join("timestamp"), &sources) {
             eprintln!("{}: kompiling", source.display());
             fs::create_dir_all(&dir_build)?;
+            let source = match &suite.patch {
+                Some(patch) => &patched(source, patch, &dir_build.join("src"))?,
+                None => source,
+            };
             run(
                 Command::new("kompile")
                     .args(["--backend", "llvm", "--enable-search", "--output-definition"])
@@ -168,6 +175,24 @@ fn resolve(words: &[String], checkout: &str) -> Vec<String> {
         .iter()
         .map(|word| word.replace("{src}", checkout))
         .collect()
+}
+
+/// A copy of the definition `source` in `dir`, with `patch` applied.
+fn patched(source: &Path, patch: &Path, dir: &Path) -> Result<PathBuf> {
+    let name = source.file_name().ok_or_else(|| Error::from("a definition without a name"))?;
+    fs::create_dir_all(dir)?;
+    let copy = dir.join(name);
+    fs::copy(source, &copy)?;
+    run(
+        Command::new("patch")
+            .args(["-p1", "--no-backup-if-mismatch", "-d"])
+            .arg(dir)
+            .arg("-i")
+            .arg(fs::canonicalize(patch)?),
+        None,
+        &format!("patch {} with {}", copy.display(), patch.display()),
+    )?;
+    Ok(copy)
 }
 
 /// Builds the K library of a kompiled definition, `runtime.so`, from the

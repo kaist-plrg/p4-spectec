@@ -53,6 +53,9 @@ pub struct KInStSuite {
     pub dir: Option<PathBuf>,
     /// The definition, in `dir`.
     pub def: Option<PathBuf>,
+    /// A patch (a unified diff, `-p1`) applied to a copy of the definition
+    /// before it is kompiled; the definition must then be one file.
+    pub patch: Option<PathBuf>,
     /// Patterns of the programs, in `dir` (or in the checkout, from `{src}`).
     #[serde(default)]
     pub programs: Vec<String>,

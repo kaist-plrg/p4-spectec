@@ -6,7 +6,8 @@
 # A suite names its definitions: `root`, a directory of cases written for spec-k,
 # or `def` in `dir` of the checkout that the environment variable `src` names
 # (a suite whose variable is not set is skipped), with its expectations in
-# testdata/k-in-st/<name>. The layout of a case and the other options are in
+# testdata/k-in-st/<name>; `patch` is applied to a copy of the definition
+# first. The layout of a case and the other options are in
 # test-driver/src/metacirc/k_in_st/suite.rs.
 # Running needs K; KRUN_EXPECT=1 writes what krun gives.
 # Paths are relative to the repository root.
@@ -80,6 +81,17 @@ def = "imp.k"
 kompile = ["--gen-glr-bison-parser"]
 krun = ["--io", "off"]
 programs = ["tests/*.imp"]
+
+# The tutorial Makefile runs FUN's programs with `--pattern "<k> V:K </k>"`,
+# and references-5 with `--search`; the patch keeps the `@` of `@ Exp` out of
+# rule labels, which the linker reads as a version mark in a shared library.
+[[suites]]
+name = "fun"
+src = "K_SRC"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/3_fun"
+def = "1_untyped/1_environment/fun-untyped.md"
+patch = "p4spectec/test-driver/suites/metacirc/k-in-st/fun-untyped.patch"
+programs = ["programs/*.fun"]
 
 [[suites]]
 name = "simple-typed-static"
