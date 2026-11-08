@@ -2,7 +2,7 @@
 //!
 //! `Case::krun` runs the kompiled interpreter as krun does, with `--statistics`,
 //! and writes the run as `print_runres` prints one; `Case::search` gives the
-//! final configurations K allows, as the kompiled `search` binary finds them.
+//! final configurations K allows, as the kompiled `search` binary writes them.
 
 use std::{
     fs,
@@ -51,9 +51,9 @@ impl Case<'_> {
         Ok(fs::read_to_string(path_out)?.trim_end().to_owned())
     }
 
-    /// What K's search from an initial term finds within `timeout`, if it ends:
-    /// as the kompiled `search` binary writes it with `--statistics`, the states
-    /// it took a step from, and the final configurations it reaches under `\or`.
+    /// The final configurations K's search from an initial term reaches within
+    /// `timeout`, if it ends, as the kompiled `search` binary writes them: one, or
+    /// several under `\or`.
     pub fn search(
         &self,
         path_init: &Path,
@@ -76,7 +76,6 @@ impl Case<'_> {
             .arg(path_init)
             .arg(arg_depth(depth))
             .arg(&path_out)
-            .arg("--statistics")
             .stdin(stdin(input)?)
             .output()?;
         if output.status.success() {

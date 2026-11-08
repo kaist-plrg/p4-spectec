@@ -9,9 +9,9 @@
 //! A run that differs passes by search if its final configuration is one of
 //! `<program>.search`, the finals K allows, as where rules of the same priority both apply.
 //! `KRUN_EXPECT=1` writes `<program>.out` from krun's own run and, from K's search
-//! alone, `<program>.search` where K allows runs other than krun's, or
-//! `<program>.search-timeout` where the search does not end (`krun`); where K
-//! allows krun's run only, a run must take krun's steps.
+//! alone, `<program>.search` where the search finds more than one final
+//! configuration, or `<program>.search-timeout` where it does not end (`krun`);
+//! where it finds one, a run must take krun's steps.
 //! With a timeout, a worker runs spec-k on each program, and a run still going
 //! after it, or one whose search did not end, is recorded as a timeout.
 
@@ -34,7 +34,7 @@ use p4spectec::{
 pub use self::suite::Registration;
 use self::{
     build::Case,
-    compare::{compare, one_run, reached},
+    compare::{compare, reached, several},
     suite::Program,
 };
 use super::config::Configuration;
@@ -253,9 +253,9 @@ fn check(
 }
 
 /// Writes what K's search from a program's initial term finds, after krun's run:
-/// `<program>.search`, its final configurations, unless it finds krun's run only,
-/// as many steps to krun's final configuration alone; `<program>.search-timeout`
-/// if it does not end within `timeout`. A run of krun that fails has neither.
+/// `<program>.search`, its final configurations, if there are several;
+/// `<program>.search-timeout` if it does not end within `timeout`. A run of krun
+/// that fails has neither.
 fn expect_search(
     case: &Case,
     program: &Program,
@@ -277,11 +277,8 @@ fn expect_search(
     }
     match case.search(path_init, depth, program.input.as_deref(), timeout)? {
         None => fs::write(&path_search_timeout, "")?,
-        Some(searched) if one_run(&case.info, &expected, &searched) => {}
-        Some(searched) => {
-            let finals = searched.split_once('\n').map_or("", |(_, finals)| finals);
-            fs::write(&path_search, finals)?;
-        }
+        Some(finals) if several(&finals) => fs::write(&path_search, finals)?,
+        Some(_) => {}
     }
     Ok(())
 }
