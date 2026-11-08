@@ -38,21 +38,6 @@ var C : ctx
 ;; Loading context from a spec
 ;;
 
-;; A premise is partial if it may be unmatched by a relation
-
-dec $is_partial_prem(prem) : bool
-def $is_partial_prem(relPrem) = true
-def $is_partial_prem(ifHoldPrem) = true
-def $is_partial_prem(ifNotHoldPrem) = true
-def $is_partial_prem(ITER prem _)
-  = $is_partial_prem(prem)
-def $is_partial_prem(_) = false
-  -- otherwise
-
-dec $is_partial_clause(clause) : bool
-def $is_partial_clause(_ '=' _ '-' prem*)
-  = $exists_($is_partial_prem(prem)*)
-
 dec $load_ctx(ctx, spec) : ctx
   hint(prose_in %0 "with spec" %1 "loaded")
 
@@ -100,10 +85,7 @@ def $load_ctx(C, tableFuncDefn :: defn_t*)
 
 def $load_ctx(C, definedFuncDefn :: defn_t*)
   = $load_ctx(C_load, defn_t*)
-  -- if FUNC id _ _ ':' _ '=' clause* elsClause? = definedFuncDefn
-  ---- ;; relation premises cannot be used in clauses
-  -- if $forall_((~$is_partial_clause(clause))*)
-  -- (if ~$is_partial_clause(elsClause))?
+  -- if FUNC id _ _ ':' _ '=' _ _ = definedFuncDefn
   -- if fenv_update = $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, definedFuncDefn)
   -- if C_load = C[ .GLOBAL.FUNC = fenv_update ]
 

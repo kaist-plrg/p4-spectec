@@ -1426,36 +1426,6 @@ def $empty_ctx
 
 var C : ctx
 
-def $is_partial_prem(prem')
-
-1. Case analysis on prem'
-
-  1. Case (% has type relPrem)
-
-    1. Return true
-
-  2. Case (% has type ifHoldPrem)
-
-    1. Return true
-
-  3. Case (% has type ifNotHoldPrem)
-
-    1. Return true
-
-  4. Case (% has type iterPrem)
-
-    1. (Let ITER prem _premIter be prem' as iterPrem)
-
-      1. Return $is_partial_prem(prem)
-
-2. Otherwise,
-
-  1. Return false
-
-def $is_partial_clause(_arg*{_arg <- _arg*} '=' _typedExp '-' prem*{prem <- prem*})
-
-1. Return $exists_($is_partial_prem(prem)*{prem <- prem*})
-
 def $load_ctx(C, defn'*{defn' <- defn'*})
 
 1. Case analysis on defn'*{defn' <- defn'*} (total)
@@ -1554,21 +1524,13 @@ def $load_ctx(C, defn'*{defn' <- defn'*})
 
           1. (Let definedFuncDefn be defn as definedFuncDefn)
 
-            1. (Let FUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ '=' clause*{clause <- clause*} elsClause?{elsClause <- elsClause?} be definedFuncDefn)
+            1. (Let FUNC id _tparam*{_tparam <- _tparam*} _param*{_param <- _param*} ':' _typ '=' _clause*{_clause <- _clause*} _elsClause?{_elsClause <- _elsClause?} be definedFuncDefn)
 
-              1. If ($forall_(~$is_partial_clause(clause)*{clause <- clause*})), then
+              1. (Let fenv_update be $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, definedFuncDefn as funcDefn))
 
-                1. If (~$is_partial_clause(elsClause))?{elsClause <- elsClause?}, then
+                1. (Let C_load be C[GLOBAL.FUNC = fenv_update])
 
-                  1. (Let fenv_update be $add_map<id, funcDefn>(C.GLOBAL.FUNC, id, definedFuncDefn as funcDefn))
-
-                    1. (Let C_load be C[GLOBAL.FUNC = fenv_update])
-
-                      1. Return $load_ctx(C_load, defn_t*{defn_t <- defn_t*})
-
-                1. Else Dangling
-
-              1. Else Dangling
+                  1. Return $load_ctx(C_load, defn_t*{defn_t <- defn_t*})
 
   2. Case (% matches pattern [])
 
