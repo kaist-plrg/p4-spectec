@@ -326,6 +326,34 @@ suite's corpus, dealing the pairs that static and dynamic exclusions leave over
 the groups in turn; after it runs, the group expected files must be regenerated
 to match.
 
+```sh
+make test-metacirc-k-in-st
+K_SRC=... KWASM_SRC=... KEVM_SRC=... KMIR_SRC=... make test-metacirc-k-in-st TIMEOUT=300
+```
+
+`test-metacirc-k-in-st` runs the K definitions of `suites/metacirc/k-in-st.toml`
+through spec-k and compares each run with `krun`; it requires K 7.1.337. `SUITE`
+and `TIMEOUT` work as above. The `manual` suite needs nothing else. The others
+take their definitions and programs from a checkout named by an environment
+variable, and a suite whose variable is not set is skipped with one line on
+stderr while the target still succeeds.
+
+| suites | variable | checkout |
+|---|---|---|
+| the K tutorial | `K_SRC` | `runtimeverification/k` at `v7.1.337` |
+| `kwasm` | `KWASM_SRC` | `runtimeverification/wasm-semantics` at `212271b`, with `tests/wasm-tests` |
+| `kevm` | `KEVM_SRC` | `runtimeverification/evm-semantics` at `866e563`, with the plugin and `tests/ethereum-tests` (`c30599fb`) |
+| `kmir` | `KMIR_SRC` | `runtimeverification/mir-semantics` at `4d79325`, with `deps/stable-mir-json` |
+
+`kevm` and `kmir` make their initial terms with `uv`. `kevm` requires
+`libsecp256k1-dev` and the KRYPTO plugin built once with the clang K uses (`make
+CXX=/usr/lib/llvm-17/bin/clang++ CC=/usr/lib/llvm-17/bin/clang` in
+`kevm-pyk/src/kevm_pyk/kproj/plugin`). `kmir` requires `cargo`, the toolchain
+`nightly-2024-11-29`, and `make stable-mir-json` in its checkout.
+`KRUN_EXPECT=1` writes `<program>.out` again from `krun`. Build outputs under
+`$CARGO_TARGET_DIR/k-in-st/` hold absolute paths, so moving a checkout means
+kompiling again.
+
 ## Specification snapshots
 
 ```sh
