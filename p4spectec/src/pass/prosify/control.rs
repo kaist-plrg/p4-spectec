@@ -14,7 +14,7 @@
 //!
 //! ```text
 //! If p { Return a }
-//! Check q { Return $f(b) [FAIL] }
+//! Check q { Return $f(b) }
 //! ```
 //!
 //! The first condition can fail into the next instruction
@@ -23,12 +23,13 @@
 //! Other arms of a selected `Case` do not
 //!
 //! A `Fallthrough` note marks where control goes on a mismatch:
-//! a mismatch from a relation premise or function call skips every following instruction
+//! a mismatch from a relation premise skips every following instruction
 //! A failed condition, hold, or case guard falls through by the block structure alone,
-//! so it is not stamped
+//! so it is not stamped, and a function call never mismatches:
+//! it returns a value or fails the evaluation
 //! Table matching blocks are left unchanged
 
-use crate::lang::{common::prim, pl::ast as pl, pl::rule_group, traits::has_call::HasCall};
+use crate::lang::{common::prim, pl::ast as pl, pl::rule_group};
 
 // == Continuations
 
@@ -79,19 +80,6 @@ impl Continuation {
     fn recovers(&self) -> bool {
         self.follows || self.fallthrough != pl::Fallthrough::Fail
     }
-
-    /// Stamps a destination when evaluating `syntax` may mismatch.
-    fn fallthrough_mismatch<T: HasCall + ?Sized>(&self, syntax: &T) -> Option<pl::Fallthrough> {
-        may_mismatch(syntax).then(|| self.fallthrough.clone())
-    }
-}
-
-/// Reports whether evaluating syntax may mismatch through a function call.
-///
-/// Every call counts as partial: a function whose clauses all fail mismatches,
-/// and the mismatch abandons the caller's alternative.
-fn may_mismatch<T: HasCall + ?Sized>(syntax: &T) -> bool {
-    syntax.has_call()
 }
 
 // == Guards
@@ -157,9 +145,9 @@ fn classify_instr_kind<Tier>(
         pl::InstrKind::Check(instr) => classify_check_instr(cont, classify_tier, instr),
         pl::InstrKind::Hold(instr) => classify_hold_instr(cont, classify_tier, instr),
         pl::InstrKind::Case(instr) => classify_case_instr(cont, classify_tier, instr),
-        pl::InstrKind::Let(instr) => classify_let_instr(cont, instr),
-        pl::InstrKind::Debug(instr) => classify_debug_instr(cont, instr),
-        pl::InstrKind::Destruct(instr) => classify_destruct_instr(cont, instr),
+        pl::InstrKind::Let(instr) => classify_let_instr(instr),
+        pl::InstrKind::Debug(instr) => classify_debug_instr(instr),
+        pl::InstrKind::Destruct(instr) => classify_destruct_instr(instr),
         pl::InstrKind::Tier(instr) => classify_tier_instr(cont, classify_tier, instr),
     }
 }
@@ -168,8 +156,7 @@ fn classify_instr_kind<Tier>(
 
 /// Classifies the body and requires the condition when no continuation remains.
 ///
-/// Only a mismatch in the condition is stamped:
-/// a failed `If` falls through by the block structure,
+/// Neither stamps the condition: a failed `If` falls through by the block structure,
 /// and a required condition fails the definition, as its keyword says.
 fn classify_if_instr<Tier>(
     cont: &Continuation,
@@ -177,15 +164,14 @@ fn classify_if_instr<Tier>(
     mut instr_if: pl::IfInstr<Tier>,
 ) -> Classified<Tier> {
     instr_if.block = classify_block(cont, classify_tier, instr_if.block);
-    let fallthrough = cont.fallthrough_mismatch(&instr_if.exp);
     // A failed condition continues when anything recovers
     if cont.recovers() {
-        return (pl::InstrKind::If(instr_if), fallthrough);
+        return (pl::InstrKind::If(instr_if), None);
     }
     // Otherwise the condition is required and fails the definition
     let instr_check =
         pl::CheckInstr { exp: instr_if.exp, iter_exps: instr_if.iter_exps, block: instr_if.block };
-    (pl::InstrKind::Check(instr_check), fallthrough)
+    (pl::InstrKind::Check(instr_check), None)
 }
 
 // - Check instruction
@@ -196,8 +182,7 @@ fn classify_check_instr<Tier>(
     mut instr_check: pl::CheckInstr<Tier>,
 ) -> Classified<Tier> {
     instr_check.block = classify_block(cont, classify_tier, instr_check.block);
-    let fallthrough = cont.fallthrough_mismatch(&instr_check.exp);
-    (pl::InstrKind::Check(instr_check), fallthrough)
+    (pl::InstrKind::Check(instr_check), None)
 }
 
 // - Hold instruction
@@ -209,18 +194,12 @@ fn classify_hold_instr<Tier>(
     mut instr_hold: pl::HoldInstr<Tier>,
 ) -> Classified<Tier> {
     instr_hold.hold_case = classify_hold_case(cont, classify_tier, instr_hold.hold_case);
-    // The relation's outcome selects a branch, so only its arguments may mismatch
-    let fallthrough = cont.fallthrough_mismatch(instr_hold.not_exp.args());
-    (pl::InstrKind::Hold(instr_hold), fallthrough)
+    (pl::InstrKind::Hold(instr_hold), None)
 }
 
 // - Case instruction
 
 /// Normalizes singleton guards and classifies each selected case body.
-///
-/// The instruction's note covers its scrutinee;
-/// each arm's note covers its guard.
-/// A partial case whose guards all fail falls through by the block structure.
 fn classify_case_instr<Tier>(
     cont: &Continuation,
     classify_tier: ClassifyTier<Tier>,
@@ -243,35 +222,25 @@ fn classify_case_instr<Tier>(
         .into_iter()
         .map(|case| classify_case(cont, classify_tier, case))
         .collect();
-    let fallthrough = cont.fallthrough_mismatch(&instr_case.exp);
-    (pl::InstrKind::Case(instr_case), fallthrough)
+    (pl::InstrKind::Case(instr_case), None)
 }
 
 // - Let instruction
 
-fn classify_let_instr<Tier>(cont: &Continuation, instr_let: pl::LetInstr) -> Classified<Tier> {
-    let fallthrough = cont.fallthrough_mismatch(&instr_let.exp_r);
-    (pl::InstrKind::Let(instr_let), fallthrough)
+fn classify_let_instr<Tier>(instr_let: pl::LetInstr) -> Classified<Tier> {
+    (pl::InstrKind::Let(instr_let), None)
 }
 
 // - Debug instruction
 
-fn classify_debug_instr<Tier>(
-    cont: &Continuation,
-    instr_debug: pl::DebugInstr,
-) -> Classified<Tier> {
-    let fallthrough = cont.fallthrough_mismatch(&instr_debug.exp);
-    (pl::InstrKind::Debug(instr_debug), fallthrough)
+fn classify_debug_instr<Tier>(instr_debug: pl::DebugInstr) -> Classified<Tier> {
+    (pl::InstrKind::Debug(instr_debug), None)
 }
 
 // - Destruct instruction
 
-fn classify_destruct_instr<Tier>(
-    cont: &Continuation,
-    instr_destruct: pl::DestructInstr,
-) -> Classified<Tier> {
-    let fallthrough = cont.fallthrough_mismatch(&instr_destruct.exp);
-    (pl::InstrKind::Destruct(instr_destruct), fallthrough)
+fn classify_destruct_instr<Tier>(instr_destruct: pl::DestructInstr) -> Classified<Tier> {
+    (pl::InstrKind::Destruct(instr_destruct), None)
 }
 
 // - Tier instruction
@@ -308,14 +277,13 @@ fn classify_hold_case<Tier>(
 
 // == Cases
 
-/// Classifies an arm body and stamps a mismatch in its guard.
+/// Classifies an arm body; a failed guard falls through by the block structure.
 fn classify_case<Tier>(
     cont: &Continuation,
     classify_tier: ClassifyTier<Tier>,
     mut case: pl::Case<Tier>,
 ) -> pl::Case<Tier> {
     case.block = classify_block(cont, classify_tier, case.block);
-    case.fallthrough = cont.fallthrough_mismatch(&case.guard);
     case
 }
 
@@ -332,14 +300,8 @@ fn classify_group_tier(
             let fallthrough = Some(cont.fallthrough.clone());
             (pl::GroupInstr::Rule(instr), fallthrough)
         }
-        pl::GroupInstr::Result(instr) => {
-            let fallthrough = cont.fallthrough_mismatch(instr.exps_output.as_slice());
-            (pl::GroupInstr::Result(instr), fallthrough)
-        }
-        pl::GroupInstr::Return(instr) => {
-            let fallthrough = cont.fallthrough_mismatch(&instr.exp);
-            (pl::GroupInstr::Return(instr), fallthrough)
-        }
+        pl::GroupInstr::Result(instr) => (pl::GroupInstr::Result(instr), None),
+        pl::GroupInstr::Return(instr) => (pl::GroupInstr::Return(instr), None),
     }
 }
 
