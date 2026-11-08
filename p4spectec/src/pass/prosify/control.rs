@@ -22,10 +22,10 @@
 //! Later alternative arms and otherwise clauses also provide continuations
 //! Other arms of a selected `Case` do not
 //!
-//! A `Fallthrough` note marks where control goes
-//! when an instruction fails and no following instruction recovers:
-//! a mismatch from a relation premise or function call skips every following instruction,
-//! and a condition fails past the end of its alternative when nothing follows it
+//! A `Fallthrough` note marks where control goes on a mismatch:
+//! a mismatch from a relation premise or function call skips every following instruction
+//! A failed condition, hold, or case guard falls through by the block structure alone,
+//! so it is not stamped
 //! Table matching blocks are left unchanged
 
 use crate::lang::{common::prim, pl::ast as pl, pl::rule_group, traits::has_call::HasCall};
@@ -37,7 +37,7 @@ use crate::lang::{common::prim, pl::ast as pl, pl::rule_group, traits::has_call:
 struct Continuation {
     /// A following instruction recovers from a failed condition.
     follows: bool,
-    /// Where a mismatch goes, and a failed condition when nothing follows.
+    /// Where a mismatch goes.
     fallthrough: pl::Fallthrough,
     /// The first rule group of the next route arm, for rule-group bodies.
     id_group_next: Option<pl::Id>,
@@ -83,11 +83,6 @@ impl Continuation {
     /// Stamps a destination when evaluating `syntax` may mismatch.
     fn fallthrough_mismatch<T: HasCall + ?Sized>(&self, syntax: &T) -> Option<pl::Fallthrough> {
         may_mismatch(syntax).then(|| self.fallthrough.clone())
-    }
-
-    /// Stamps a destination when a failed condition leaves its alternative.
-    fn fallthrough_condition(&self) -> Option<pl::Fallthrough> {
-        (!self.follows).then(|| self.fallthrough.clone())
     }
 }
 
@@ -173,23 +168,21 @@ fn classify_instr_kind<Tier>(
 
 /// Classifies the body and requires the condition when no continuation remains.
 ///
-/// A required condition fails the definition, as its keyword says,
-/// so only a mismatch in it is stamped.
+/// Only a mismatch in the condition is stamped:
+/// a failed `If` falls through by the block structure,
+/// and a required condition fails the definition, as its keyword says.
 fn classify_if_instr<Tier>(
     cont: &Continuation,
     classify_tier: ClassifyTier<Tier>,
     mut instr_if: pl::IfInstr<Tier>,
 ) -> Classified<Tier> {
     instr_if.block = classify_block(cont, classify_tier, instr_if.block);
+    let fallthrough = cont.fallthrough_mismatch(&instr_if.exp);
     // A failed condition continues when anything recovers
     if cont.recovers() {
-        let fallthrough = cont
-            .fallthrough_mismatch(&instr_if.exp)
-            .or(cont.fallthrough_condition());
         return (pl::InstrKind::If(instr_if), fallthrough);
     }
     // Otherwise the condition is required and fails the definition
-    let fallthrough = cont.fallthrough_mismatch(&instr_if.exp);
     let instr_check =
         pl::CheckInstr { exp: instr_if.exp, iter_exps: instr_if.iter_exps, block: instr_if.block };
     (pl::InstrKind::Check(instr_check), fallthrough)
@@ -209,21 +202,15 @@ fn classify_check_instr<Tier>(
 
 // - Hold instruction
 
-/// Classifies the branches; a one-sided hold fails like a condition.
+/// Classifies the branches; a one-sided hold falls through like a condition.
 fn classify_hold_instr<Tier>(
     cont: &Continuation,
     classify_tier: ClassifyTier<Tier>,
     mut instr_hold: pl::HoldInstr<Tier>,
 ) -> Classified<Tier> {
     instr_hold.hold_case = classify_hold_case(cont, classify_tier, instr_hold.hold_case);
-    // Only a missing branch lets the relation's outcome fall through
-    let fallthrough_condition = match &instr_hold.hold_case {
-        pl::HoldCase::Both(..) => None,
-        pl::HoldCase::Hold(..) | pl::HoldCase::NotHold(..) => cont.fallthrough_condition(),
-    };
-    let fallthrough = cont
-        .fallthrough_mismatch(instr_hold.not_exp.args())
-        .or(fallthrough_condition);
+    // The relation's outcome selects a branch, so only its arguments may mismatch
+    let fallthrough = cont.fallthrough_mismatch(instr_hold.not_exp.args());
     (pl::InstrKind::Hold(instr_hold), fallthrough)
 }
 
@@ -232,8 +219,8 @@ fn classify_hold_instr<Tier>(
 /// Normalizes singleton guards and classifies each selected case body.
 ///
 /// The instruction's note covers its scrutinee;
-/// each arm's note covers its guard, and the last arm of a partial case
-/// also covers the failure of every guard.
+/// each arm's note covers its guard.
+/// A partial case whose guards all fail falls through by the block structure.
 fn classify_case_instr<Tier>(
     cont: &Continuation,
     classify_tier: ClassifyTier<Tier>,
@@ -251,13 +238,10 @@ fn classify_case_instr<Tier>(
         return classify_if_instr(cont, classify_tier, instr_if);
     }
     // Case selection commits to its first matching guard
-    let idx_last = instr_case.cases.len() - 1;
-    let partial = instr_case.totality == pl::Totality::Partial;
     instr_case.cases = instr_case
         .cases
         .into_iter()
-        .enumerate()
-        .map(|(idx, case)| classify_case(cont, classify_tier, partial && idx == idx_last, case))
+        .map(|case| classify_case(cont, classify_tier, case))
         .collect();
     let fallthrough = cont.fallthrough_mismatch(&instr_case.exp);
     (pl::InstrKind::Case(instr_case), fallthrough)
@@ -324,18 +308,14 @@ fn classify_hold_case<Tier>(
 
 // == Cases
 
-/// Classifies an arm body and stamps a failing guard, or every guard failing.
+/// Classifies an arm body and stamps a mismatch in its guard.
 fn classify_case<Tier>(
     cont: &Continuation,
     classify_tier: ClassifyTier<Tier>,
-    is_last_partial: bool,
     mut case: pl::Case<Tier>,
 ) -> pl::Case<Tier> {
     case.block = classify_block(cont, classify_tier, case.block);
-    let fallthrough_condition = if is_last_partial { cont.fallthrough_condition() } else { None };
-    case.fallthrough = cont
-        .fallthrough_mismatch(&case.guard)
-        .or(fallthrough_condition);
+    case.fallthrough = cont.fallthrough_mismatch(&case.guard);
     case
 }
 

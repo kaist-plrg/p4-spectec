@@ -104,7 +104,7 @@ Arm 1:
 
       1. (Let (X)*{X <- X*} :: ((X_t)*{X_t <- X_t*})*{X_t* <- X_t**} be ((X')*{X' <- X'*})*{X'* <- X'**})
 
-      2. If (((X)*{X <- X*} matches pattern [])), then [→ next]
+      2. If (((X)*{X <- X*} matches pattern [])), then
 
         1. If ($forall_((((X_t)*{X_t <- X_t*} = []))*{X_t* <- X_t**})), then [→ next]
 
@@ -683,13 +683,13 @@ def $is_prefix_dim(vari, vari')
 
 2. (Let (_id' typ_b (iter_b)*{iter_b <- iter_b*}) be vari')
 
-3. If ((typ_a = typ_b)), then [→ otherwise]
+3. If ((typ_a = typ_b)), then
 
-  1. If ((|(iter_a)*{iter_a <- iter_a*}| <= |(iter_b)*{iter_b <- iter_b*}|)), then [→ otherwise]
+  1. If ((|(iter_a)*{iter_a <- iter_a*}| <= |(iter_b)*{iter_b <- iter_b*}|)), then
 
-    1. If (((0 + |(iter_a)*{iter_a <- iter_a*}|) <= |(iter_b)*{iter_b <- iter_b*}|)), then [→ otherwise]
+    1. If (((0 + |(iter_a)*{iter_a <- iter_a*}|) <= |(iter_b)*{iter_b <- iter_b*}|)), then
 
-      1. If (((iter_a)*{iter_a <- iter_a*} = (iter_b)*{iter_b <- iter_b*}[0 : |(iter_a)*{iter_a <- iter_a*}|])), then [→ otherwise]
+      1. If (((iter_a)*{iter_a <- iter_a*} = (iter_b)*{iter_b <- iter_b*}[0 : |(iter_a)*{iter_a <- iter_a*}|])), then
 
         1. Return true
 
@@ -775,7 +775,7 @@ def $theta_of_tdenv(set<pair<id, typDef>>)
 
 Arm 1:
 
-  1. If ((set<pair<id, typDef>> = (`{ [] `}))), then [→ next]
+  1. If ((set<pair<id, typDef>> = (`{ [] `}))), then
 
     1. Return $empty_map<id, typ> [→ next]
 
@@ -797,9 +797,9 @@ Arm 2:
 
         Arm 1:
 
-          1. If (((tparam)*{tparam <- tparam*} matches pattern [])), then [→ next]
+          1. If (((tparam)*{tparam <- tparam*} matches pattern [])), then
 
-            1. If let (ALIAS typ_h) be deftyp matching pattern ALIAS %, then [→ next]
+            1. If let (ALIAS typ_h) be deftyp matching pattern ALIAS %, then
 
               1. (Let theta_t be $theta_of_tdenv((`{ ((id_t ':' typDef_t))*{id_t <- id_t*, typDef_t <- typDef_t*} `}))) [→ next]
 
@@ -853,7 +853,7 @@ def $ids_typ(typ')
 
     1. Return $ids_typ(typ) [→ otherwise]
 
-  4. Case (% matches pattern FUNC % % %, let (FUNC (tparam)*{tparam <- tparam*} (typ)*{typ <- typ*} typ_ret) = %) [→ otherwise]
+  4. Case (% matches pattern FUNC % % %, let (FUNC (tparam)*{tparam <- tparam*} (typ)*{typ <- typ*} typ_ret) = %)
 
     1. (Let (id'')*{id'' <- id''*} be $ids_typs((typ)*{typ <- typ*})) [→ otherwise]
 
@@ -935,11 +935,11 @@ Arm 1:
 
       Arm 1:
 
-        1. If (((targ)*{targ <- targ*} matches pattern [])), then [→ next]
+        1. If (((targ)*{targ <- targ*} matches pattern [])), then
 
           1. (Let (typ'')?{typ'' <- typ''?} be $find_map<id, typ>(theta, id)) [→ next]
 
-          2. If (((typ'')?{typ'' <- typ''?} matches pattern (_))), then [→ next]
+          2. If (((typ'')?{typ'' <- typ''?} matches pattern (_))), then
 
             1. (Let ?(typ) be (typ'')?{typ'' <- typ''?})
 
@@ -951,7 +951,7 @@ Arm 1:
 
           1. (Let typsRes be $subst_typs(theta, (targ)*{targ <- targ*})) [→ next]
 
-          2. If let (OK (targ_subst)*{targ_subst <- targ_subst*}) of type ok<typ*> be typsRes, then [→ next]
+          2. If let (OK (targ_subst)*{targ_subst <- targ_subst*}) of type ok<typ*> be typsRes, then
 
             1. Return ((OK (VAR id (targ_subst)*{targ_subst <- targ_subst*})) as typRes)
 
@@ -959,7 +959,7 @@ Arm 1:
 
       1. (Let typsRes be $subst_typs(theta, (typ)*{typ <- typ*})) [→ next]
 
-      2. If let (OK (typ_subst)*{typ_subst <- typ_subst*}) of type ok<typ*> be typsRes, then [→ next]
+      2. If let (OK (typ_subst)*{typ_subst <- typ_subst*}) of type ok<typ*> be typsRes, then
 
         1. Return ((OK (TUP (typ_subst)*{typ_subst <- typ_subst*})) as typRes)
 
@@ -967,11 +967,11 @@ Arm 1:
 
       1. (Let typRes be $subst_typ(theta, typ)) [→ next]
 
-      2. If let (OK typ_subst) of type ok<typ> be typRes, then [→ next]
+      2. If let (OK typ_subst) of type ok<typ> be typRes, then
 
         1. Return ((OK (ITER typ_subst iter)) as typRes)
 
-    5. Case (% matches pattern FUNC % % %, let (FUNC (tparam)*{tparam <- tparam*} (typ)*{typ <- typ*} typ_ret) = %) [→ next]
+    5. Case (% matches pattern FUNC % % %, let (FUNC (tparam)*{tparam <- tparam*} (typ)*{typ <- typ*} typ_ret) = %)
 
       1. (Let (`{ ((id ':' typ_arg))*{id <- id*, typ_arg <- typ_arg*} `}) be theta)
 
@@ -983,31 +983,31 @@ Arm 1:
 
       5. (Let (tparam_fresh)*{tparam_fresh <- tparam_fresh*} be $fresh_ids((id_used)*{id_used <- id_used*}, (tparam)*{tparam <- tparam*})) [→ next]
 
-      6. If ((|(tparam)*{tparam <- tparam*}| = |(tparam_fresh)*{tparam_fresh <- tparam_fresh*}|)), then [→ next]
+      6. If ((|(tparam)*{tparam <- tparam*}| = |(tparam_fresh)*{tparam_fresh <- tparam_fresh*}|)), then
 
         1. (Let theta_fresh be (`{ ((tparam ':' (VAR tparam_fresh [])))*{tparam <- tparam*, tparam_fresh <- tparam_fresh*} `}))
 
         2. (Let typsRes be $subst_typs(theta_fresh, (typ)*{typ <- typ*})) [→ next]
 
-        3. If let (OK (typ_fresh)*{typ_fresh <- typ_fresh*}) of type ok<typ*> be typsRes, then [→ next]
+        3. If let (OK (typ_fresh)*{typ_fresh <- typ_fresh*}) of type ok<typ*> be typsRes, then
 
           1. (Let typsRes' be $subst_typs(theta, (typ_fresh)*{typ_fresh <- typ_fresh*})) [→ next]
 
-          2. If let (OK (typ_subst)*{typ_subst <- typ_subst*}) of type ok<typ*> be typsRes', then [→ next]
+          2. If let (OK (typ_subst)*{typ_subst <- typ_subst*}) of type ok<typ*> be typsRes', then
 
             1. (Let typRes be $subst_typ(theta_fresh, typ_ret)) [→ next]
 
-            2. If let (OK typ_ret_fresh) of type ok<typ> be typRes, then [→ next]
+            2. If let (OK typ_ret_fresh) of type ok<typ> be typRes, then
 
               1. (Let typRes' be $subst_typ(theta, typ_ret_fresh)) [→ next]
 
-              2. If let (OK typ_ret_subst) of type ok<typ> be typRes', then [→ next]
+              2. If let (OK typ_ret_subst) of type ok<typ> be typRes', then
 
                 1. Return ((OK (FUNC (tparam_fresh)*{tparam_fresh <- tparam_fresh*} (typ_subst)*{typ_subst <- typ_subst*} typ_ret_subst)) as typRes)
 
 Arm 2:
 
-  1. If let optyp of type optyp be typ', then [→ otherwise]
+  1. If let optyp of type optyp be typ', then
 
     1. Case analysis on optyp
 
@@ -1015,7 +1015,7 @@ Arm 2:
 
         1. Return ((OK ((TEXT) as typ)) as typRes)
 
-      2. Case (% matches pattern BOOL) [→ otherwise]
+      2. Case (% matches pattern BOOL)
 
         1. Return ((OK ((BOOL) as typ)) as typRes)
 
@@ -1037,11 +1037,11 @@ def $subst_typs(theta, (typ)*{typ <- typ*})
 
     2. (Let typRes be $subst_typ(theta, typ_h)) [→ otherwise]
 
-    3. If let (OK typ_subst) of type ok<typ> be typRes, then [→ otherwise]
+    3. If let (OK typ_subst) of type ok<typ> be typRes, then
 
       1. (Let typsRes be $subst_typs(theta, (typ_t)*{typ_t <- typ_t*})) [→ otherwise]
 
-      2. If let (OK (typ_t_subst)*{typ_t_subst <- typ_t_subst*}) of type ok<typ*> be typsRes, then [→ otherwise]
+      2. If let (OK (typ_t_subst)*{typ_t_subst <- typ_t_subst*}) of type ok<typ*> be typsRes, then
 
         1. Return ((OK typ_subst :: (typ_t_subst)*{typ_t_subst <- typ_t_subst*}) as typsRes)
 
@@ -1065,7 +1065,7 @@ Arm 1:
 
         1. (Let (typDef')?{typDef' <- typDef'?} be $find_map<id, typDef>(tdenv, id)) [→ next]
 
-        2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then [→ next]
+        2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then
 
           1. (Let ?(typDef) be (typDef')?{typDef' <- typDef'?})
 
@@ -1073,35 +1073,35 @@ Arm 1:
 
             1. Case (% has type definedTypDefn, let (TYP _id (tparam)*{tparam <- tparam*} '=' deftyp) = %)
 
-              1. If let (ALIAS typ) be deftyp matching pattern ALIAS %, then [→ next]
+              1. If let (ALIAS typ) be deftyp matching pattern ALIAS %, then
 
-                1. If ((|(targ)*{targ <- targ*}| = |(tparam)*{tparam <- tparam*}|)), then [→ next]
+                1. If ((|(targ)*{targ <- targ*}| = |(tparam)*{tparam <- tparam*}|)), then
 
                   1. (Let theta be (`{ ((tparam ':' targ))*{targ <- targ*, tparam <- tparam*} `}))
 
                   2. (Let typRes be $subst_typ(theta, typ)) [→ next]
 
-                  3. If let (OK typ_subst) of type ok<typ> be typRes, then [→ next]
+                  3. If let (OK typ_subst) of type ok<typ> be typRes, then
 
                     1. Return $expand_typ(tdenv, typ_subst) [→ next]
 
-            2. Case (% matches pattern PARAM) [→ next]
+            2. Case (% matches pattern PARAM)
 
-              1. If (((targ)*{targ <- targ*} matches pattern [])), then [→ next]
+              1. If (((targ)*{targ <- targ*} matches pattern [])), then
 
                 1. Return ((OK (VAR id (targ)*{targ <- targ*})) as typRes)
 
       Arm 2:
 
-        1. If (((targ)*{targ <- targ*} matches pattern [])), then [→ next]
+        1. If (((targ)*{targ <- targ*} matches pattern [])), then
 
           1. (Let (typDef')?{typDef' <- typDef'?} be $find_map<id, typDef>(tdenv, id)) [→ next]
 
-          2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then [→ next]
+          2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then
 
             1. (Let ?(typDef) be (typDef')?{typDef' <- typDef'?})
 
-            2. If ((typDef has type externTypDefn)), then [→ next]
+            2. If ((typDef has type externTypDefn)), then
 
               1. Return ((OK (VAR id [])) as typRes)
 
@@ -1109,23 +1109,23 @@ Arm 1:
 
         1. (Let (typDef')?{typDef' <- typDef'?} be $find_map<id, typDef>(tdenv, id)) [→ next]
 
-        2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then [→ next]
+        2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then
 
           1. (Let ?(typDef) be (typDef')?{typDef' <- typDef'?})
 
-          2. If let (TYP _id (tparam)*{tparam <- tparam*} '=' deftyp) of type definedTypDefn be typDef, then [→ next]
+          2. If let (TYP _id (tparam)*{tparam <- tparam*} '=' deftyp) of type definedTypDefn be typDef, then
 
             1. Case analysis on deftyp
 
               1. Case (% matches pattern STRUCT %)
 
-                1. If ((|(tparam)*{tparam <- tparam*}| = |(targ)*{targ <- targ*}|)), then [→ next]
+                1. If ((|(tparam)*{tparam <- tparam*}| = |(targ)*{targ <- targ*}|)), then
 
                   1. Return ((OK (VAR id (targ)*{targ <- targ*})) as typRes)
 
-              2. Case (% matches pattern VARIANT %) [→ next]
+              2. Case (% matches pattern VARIANT %)
 
-                1. If ((|(tparam)*{tparam <- tparam*}| = |(targ)*{targ <- targ*}|)), then [→ next]
+                1. If ((|(tparam)*{tparam <- tparam*}| = |(targ)*{targ <- targ*}|)), then
 
                   1. Return ((OK (VAR id (targ)*{targ <- targ*})) as typRes)
 
@@ -1137,7 +1137,7 @@ Arm 1:
 
           1. Return ((OK ((BOOL) as typ)) as typRes)
 
-        2. Case (% matches pattern TEXT) [→ next]
+        2. Case (% matches pattern TEXT)
 
           1. Return ((OK ((TEXT) as typ)) as typRes)
 
@@ -1155,7 +1155,7 @@ Arm 1:
 
 Arm 2:
 
-  1. If let numtyp of type numtyp be typ', then [→ otherwise]
+  1. If let numtyp of type numtyp be typ', then
 
     1. Case analysis on numtyp (total)
 
@@ -1179,11 +1179,11 @@ def $equiv_typ(tdenv, typ_l, typ_r)
 
 1. (Let typRes be $expand_typ(tdenv, typ_l)) [→ otherwise]
 
-2. If let (OK typ_l_expand) of type ok<typ> be typRes, then [→ otherwise]
+2. If let (OK typ_l_expand) of type ok<typ> be typRes, then
 
   1. (Let typRes' be $expand_typ(tdenv, typ_r)) [→ otherwise]
 
-  2. If let (OK typ_r_expand) of type ok<typ> be typRes', then [→ otherwise]
+  2. If let (OK typ_r_expand) of type ok<typ> be typRes', then
 
     1. Return $equiv_typ'(tdenv, typ_l_expand, typ_r_expand) [→ otherwise]
 
@@ -1253,61 +1253,61 @@ Arm 1:
 
         1. Case (% matches pattern BOOL)
 
-          1. If let optyp' of type optyp be typ', then [→ next]
+          1. If let optyp' of type optyp be typ', then
 
-            1. If ((optyp' matches pattern BOOL)), then [→ next]
+            1. If ((optyp' matches pattern BOOL)), then
 
               1. Return ((OK true) as equivRes)
 
-        2. Case (% matches pattern TEXT) [→ next]
+        2. Case (% matches pattern TEXT)
 
-          1. If let optyp' of type optyp be typ', then [→ next]
+          1. If let optyp' of type optyp be typ', then
 
-            1. If ((optyp' matches pattern TEXT)), then [→ next]
+            1. If ((optyp' matches pattern TEXT)), then
 
               1. Return ((OK true) as equivRes)
 
     2. Case (% matches pattern VAR % %, let (VAR id_l (targ_l)*{targ_l <- targ_l*}) = %)
 
-      1. If let (VAR id_r (targ_r)*{targ_r <- targ_r*}) be typ' matching pattern VAR % %, then [→ next]
+      1. If let (VAR id_r (targ_r)*{targ_r <- targ_r*}) be typ' matching pattern VAR % %, then
 
-        1. If ((id_l = id_r)), then [→ next]
+        1. If ((id_l = id_r)), then
 
           1. Return $equiv_typs(tdenv, (targ_l)*{targ_l <- targ_l*}, (targ_r)*{targ_r <- targ_r*}) [→ next]
 
     3. Case (% matches pattern TUP %, let (TUP (typ_l)*{typ_l <- typ_l*}) = %)
 
-      1. If let (TUP (typ_r)*{typ_r <- typ_r*}) be typ' matching pattern TUP %, then [→ next]
+      1. If let (TUP (typ_r)*{typ_r <- typ_r*}) be typ' matching pattern TUP %, then
 
         1. Return $equiv_typs(tdenv, (typ_l)*{typ_l <- typ_l*}, (typ_r)*{typ_r <- typ_r*}) [→ next]
 
-    4. Case (% matches pattern ITER % %, let (ITER typ_l iter_l) = %) [→ next]
+    4. Case (% matches pattern ITER % %, let (ITER typ_l iter_l) = %)
 
-      1. If let (ITER typ_r iter_r) be typ' matching pattern ITER % %, then [→ next]
+      1. If let (ITER typ_r iter_r) be typ' matching pattern ITER % %, then
 
-        1. If ((iter_l = iter_r)), then [→ next]
+        1. If ((iter_l = iter_r)), then
 
           1. Return $equiv_typ(tdenv, typ_l, typ_r) [→ next]
 
 Arm 2:
 
-  1. If let numtyp of type numtyp be typ, then [→ otherwise]
+  1. If let numtyp of type numtyp be typ, then
 
     1. Case analysis on numtyp (total)
 
       1. Case (% matches pattern NAT)
 
-        1. If let numtyp' of type numtyp be typ', then [→ otherwise]
+        1. If let numtyp' of type numtyp be typ', then
 
-          1. If ((numtyp' matches pattern NAT)), then [→ otherwise]
+          1. If ((numtyp' matches pattern NAT)), then
 
             1. Return ((OK true) as equivRes)
 
       2. Case (% matches pattern INT)
 
-        1. If let numtyp' of type numtyp be typ', then [→ otherwise]
+        1. If let numtyp' of type numtyp be typ', then
 
-          1. If ((numtyp' matches pattern INT)), then [→ otherwise]
+          1. If ((numtyp' matches pattern INT)), then
 
             1. Return ((OK true) as equivRes)
 
@@ -1317,17 +1317,17 @@ Arm 2:
 
 def $equiv_func_typ(tdenv, typ, typ')
 
-1. If let (FUNC (tparam_l)*{tparam_l <- tparam_l*} (typ_l)*{typ_l <- typ_l*} typ_ret_l) be typ matching pattern FUNC % % %, then [→ otherwise]
+1. If let (FUNC (tparam_l)*{tparam_l <- tparam_l*} (typ_l)*{typ_l <- typ_l*} typ_ret_l) be typ matching pattern FUNC % % %, then
 
-  1. If let (FUNC (tparam_r)*{tparam_r <- tparam_r*} (typ_r)*{typ_r <- typ_r*} typ_ret_r) be typ' matching pattern FUNC % % %, then [→ otherwise]
+  1. If let (FUNC (tparam_r)*{tparam_r <- tparam_r*} (typ_r)*{typ_r <- typ_r*} typ_ret_r) be typ' matching pattern FUNC % % %, then
 
     1. Block (2 arms)
 
     Arm 1:
 
-      1. If ((|(tparam_l)*{tparam_l <- tparam_l*}| = |(tparam_r)*{tparam_r <- tparam_r*}|)), then [→ next]
+      1. If ((|(tparam_l)*{tparam_l <- tparam_l*}| = |(tparam_r)*{tparam_r <- tparam_r*}|)), then
 
-        1. If ((|(typ_l)*{typ_l <- typ_l*}| = |(typ_r)*{typ_r <- typ_r*}|)), then [→ next]
+        1. If ((|(typ_l)*{typ_l <- typ_l*}| = |(typ_r)*{typ_r <- typ_r*}|)), then
 
           1. (Let (`{ ((id ':' typDef))*{id <- id*, typDef <- typDef*} `}) be tdenv)
 
@@ -1339,7 +1339,7 @@ def $equiv_func_typ(tdenv, typ, typ')
 
           5. (Let (tparam_fresh)*{tparam_fresh <- tparam_fresh*} be $fresh_ids((id_used)*{id_used <- id_used*}, (tparam_l)*{tparam_l <- tparam_l*})) [→ next]
 
-          6. If ((|(tparam_fresh)*{tparam_fresh <- tparam_fresh*}| = |(tparam_l)*{tparam_l <- tparam_l*}|)), then [→ next]
+          6. If ((|(tparam_fresh)*{tparam_fresh <- tparam_fresh*}| = |(tparam_l)*{tparam_l <- tparam_l*}|)), then
 
             1. (Let theta_l be (`{ ((tparam_l ':' (VAR tparam_fresh [])))*{tparam_fresh <- tparam_fresh*, tparam_l <- tparam_l*} `}))
 
@@ -1347,19 +1347,19 @@ def $equiv_func_typ(tdenv, typ, typ')
 
             3. (Let typsRes be $subst_typs(theta_l, (typ_l)*{typ_l <- typ_l*})) [→ next]
 
-            4. If let (OK (typ_l_subst)*{typ_l_subst <- typ_l_subst*}) of type ok<typ*> be typsRes, then [→ next]
+            4. If let (OK (typ_l_subst)*{typ_l_subst <- typ_l_subst*}) of type ok<typ*> be typsRes, then
 
               1. (Let typsRes' be $subst_typs(theta_r, (typ_r)*{typ_r <- typ_r*})) [→ next]
 
-              2. If let (OK (typ_r_subst)*{typ_r_subst <- typ_r_subst*}) of type ok<typ*> be typsRes', then [→ next]
+              2. If let (OK (typ_r_subst)*{typ_r_subst <- typ_r_subst*}) of type ok<typ*> be typsRes', then
 
                 1. (Let typRes be $subst_typ(theta_l, typ_ret_l)) [→ next]
 
-                2. If let (OK typ_ret_l_subst) of type ok<typ> be typRes, then [→ next]
+                2. If let (OK typ_ret_l_subst) of type ok<typ> be typRes, then
 
                   1. (Let typRes' be $subst_typ(theta_r, typ_ret_r)) [→ next]
 
-                  2. If let (OK typ_ret_r_subst) of type ok<typ> be typRes', then [→ next]
+                  2. If let (OK typ_ret_r_subst) of type ok<typ> be typRes', then
 
                     1. (Let (typDef')*{typDef' <- typDef'*} be $repeat_<typDef>((PARAM), |(tparam_fresh)*{tparam_fresh <- tparam_fresh*}|)) [→ next]
 
@@ -1369,7 +1369,7 @@ def $equiv_func_typ(tdenv, typ, typ')
 
     Arm 2:
 
-      1. If (((|(tparam_l)*{tparam_l <- tparam_l*}| =/= |(tparam_r)*{tparam_r <- tparam_r*}|) \/ (|(typ_l)*{typ_l <- typ_l*}| =/= |(typ_r)*{typ_r <- typ_r*}|))), then [→ otherwise]
+      1. If (((|(tparam_l)*{tparam_l <- tparam_l*}| =/= |(tparam_r)*{tparam_r <- tparam_r*}|) \/ (|(typ_l)*{typ_l <- typ_l*}| =/= |(typ_r)*{typ_r <- typ_r*}|))), then
 
         1. Return ((OK false) as equivRes)
 
@@ -1528,7 +1528,7 @@ def $find_vari(C, vari)
 
 2. (Let (val')?{val' <- val'?} be $find_map<varr, val>(C.LOCAL.VAL, (id (iter)*{iter <- iter*}))) [→ otherwise]
 
-3. If (((val')?{val' <- val'?} matches pattern (_))), then [→ otherwise]
+3. If (((val')?{val' <- val'?} matches pattern (_))), then
 
   1. (Let ?(val) be (val')?{val' <- val'?})
 
@@ -1546,7 +1546,7 @@ def $find_varis(C, (vari)*{vari <- vari*})
 
 1. (Let (val')?{val' <- val'?} be $find_vari(C, vari))*{vari <- vari*, val'? -> val'?*} [→ otherwise]
 
-2. If (((val')?{val' <- val'?} matches pattern (_)))*{val'? <- val'?*}, then [→ otherwise]
+2. If (((val')?{val' <- val'?} matches pattern (_)))*{val'? <- val'?*}, then
 
   1. (Let ?(val) be (val')?{val' <- val'?})*{val'? <- val'?*, val -> val*}
 
@@ -1562,7 +1562,7 @@ def $finds_vari((C)*{C <- C*}, vari)
 
 2. (Let (val')?{val' <- val'?} be $find_map<varr, val>(C.LOCAL.VAL, (id (iter)*{iter <- iter*})))*{C <- C*, val'? -> val'?*} [→ otherwise]
 
-3. If (((val')?{val' <- val'?} matches pattern (_)))*{val'? <- val'?*}, then [→ otherwise]
+3. If (((val')?{val' <- val'?} matches pattern (_)))*{val'? <- val'?*}, then
 
   1. (Let ?(val) be (val')?{val' <- val'?})*{val'? <- val'?*, val -> val*}
 
@@ -1582,23 +1582,23 @@ def $is_iter_on_var(typedExp')
 
     1. Return ?((id []))
 
-  2. Case (% has type iterExp, let (ITER typedExp expIter) = %) [→ otherwise]
+  2. Case (% has type iterExp, let (ITER typedExp expIter) = %)
 
     1. (Let (varr)?{varr <- varr?} be $is_iter_on_var(typedExp)) [→ otherwise]
 
-    2. If (((varr)?{varr <- varr?} matches pattern (_))), then [→ otherwise]
+    2. If (((varr)?{varr <- varr?} matches pattern (_))), then
 
       1. (Let ?((id (iter)*{iter <- iter*})) be (varr)?{varr <- varr?})
 
       2. (Let (iter_outer (vari)*{vari <- vari*}) be expIter)
 
-      3. If (((vari)*{vari <- vari*} matches pattern [ _/1 ])), then [→ otherwise]
+      3. If (((vari)*{vari <- vari*} matches pattern [ _/1 ])), then
 
         1. (Let [(id' _typ' (iter')*{iter' <- iter'*})] be (vari)*{vari <- vari*})
 
-        2. If ((id' = id)), then [→ otherwise]
+        2. If ((id' = id)), then
 
-          1. If (((iter')*{iter' <- iter'*} = (iter)*{iter <- iter*})), then [→ otherwise]
+          1. If (((iter')*{iter' <- iter'*} = (iter)*{iter <- iter*})), then
 
             1. Return ?((id (iter)*{iter <- iter*} ++ [iter_outer]))
 
@@ -1614,7 +1614,7 @@ Arm 1:
 
   1. (Let (typDef')?{typDef' <- typDef'?} be $find_map<id, typDef>(C.LOCAL.TYP, id)) [→ next]
 
-  2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then [→ next]
+  2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then
 
     1. (Let ?(typDef) be (typDef')?{typDef' <- typDef'?})
 
@@ -1668,15 +1668,15 @@ def $sub_opt(C, (vari)*{vari <- vari*})
 
       1. (Let (val''')?{val''' <- val'''?} be $find_vari(C, vari_iter))*{vari_iter <- vari_iter*, val'''? -> val'''?*} [→ next]
 
-      2. If (((val''')?{val''' <- val'''?} matches pattern (_)))*{val'''? <- val'''?*}, then [→ next]
+      2. If (((val''')?{val''' <- val'''?} matches pattern (_)))*{val'''? <- val'''?*}, then
 
         1. (Let ?(val'') be (val''')?{val''' <- val'''?})*{val'''? <- val'''?*, val'' -> val''*}
 
-        2. If ((val'' matches pattern OPT %))*{val'' <- val''*}, then [→ next]
+        2. If ((val'' matches pattern OPT %))*{val'' <- val''*}, then
 
           1. (Let (OPT (val')?{val' <- val'?}) be val'')*{val'' <- val''*, val'? -> val'?*}
 
-          2. If (((val')?{val' <- val'?} matches pattern (_)))*{val'? <- val'?*}, then [→ next]
+          2. If (((val')?{val' <- val'?} matches pattern (_)))*{val'? <- val'?*}, then
 
             1. (Let ?(val) be (val')?{val' <- val'?})*{val'? <- val'?*, val -> val*}
 
@@ -1704,15 +1704,15 @@ def $sub_list(C, (vari)*{vari <- vari*})
 
 2. (Let (val'')?{val'' <- val''?} be $find_vari(C, vari_iter))*{vari_iter <- vari_iter*, val''? -> val''?*} [→ otherwise]
 
-3. If (((val'')?{val'' <- val''?} matches pattern (_)))*{val''? <- val''?*}, then [→ otherwise]
+3. If (((val'')?{val'' <- val''?} matches pattern (_)))*{val''? <- val''?*}, then
 
   1. (Let ?(val') be (val'')?{val'' <- val''?})*{val''? <- val''?*, val' -> val'*}
 
-  2. If ((val' matches pattern LIST %))*{val' <- val'*}, then [→ otherwise]
+  2. If ((val' matches pattern LIST %))*{val' <- val'*}, then
 
     1. (Let (LIST (val)*{val <- val*}) be val')*{val' <- val'*, val* -> val**}
 
-    2. If ((0 < |((val)*{val <- val*})*{val* <- val**}|))*{val* <- val**}, then [→ otherwise]
+    2. If ((0 < |((val)*{val <- val*})*{val* <- val**}|))*{val* <- val**}, then
 
       1. If ($forall_(((|(val)*{val <- val*}| = |((val)*{val <- val*})*{val* <- val**}[0]|))*{val* <- val**})), then [→ otherwise]
 
@@ -1761,7 +1761,7 @@ Arm 1:
 
     Arm 1:
 
-      1. If let literalExp of type literalExp be exp, then [→ next]
+      1. If let literalExp of type literalExp be exp, then
 
         1. Case analysis on literalExp
 
@@ -1769,13 +1769,13 @@ Arm 1:
 
             1. Result in: % |- % : ((OK (BOOL b)) as expRes)
 
-          2. Case (% matches pattern TEXT %, let (TEXT t) = %) [→ next]
+          2. Case (% matches pattern TEXT %, let (TEXT t) = %)
 
             1. Result in: % |- % : ((OK (TEXT t)) as expRes)
 
     Arm 2:
 
-      1. If let num of type num be exp, then [→ group variable]
+      1. If let num of type num be exp, then
 
         1. Result in: % |- % : ((OK (num as val)) as expRes)
 
@@ -1789,7 +1789,7 @@ Arm 2:
 
         1. (Let (val')?{val' <- val'?} be $find_varr(C, (id []))) [→ otherwise]
 
-        2. If (((val')?{val' <- val'?} matches pattern (_))), then [→ otherwise]
+        2. If (((val')?{val' <- val'?} matches pattern (_))), then
 
           1. (Let ?(val) be (val')?{val' <- val'?})
 
@@ -1803,7 +1803,7 @@ Arm 2:
 
         Arm 1:
 
-          1. If ((unOp = ((NOT) as unOp))), then [→ next]
+          1. If ((unOp = ((NOT) as unOp))), then
 
             1. (Eval_exp: C |- typedExp : expRes) [→ next]
 
@@ -1815,7 +1815,7 @@ Arm 2:
 
               2. Case (% has type ok<val>, let (OK val) = %)
 
-                1. If let (BOOL b) be val matching pattern BOOL %, then [→ next]
+                1. If let (BOOL b) be val matching pattern BOOL %, then
 
                   1. (Let b_res be ~b)
 
@@ -1823,7 +1823,7 @@ Arm 2:
 
         Arm 2:
 
-          1. If let numUnOp of type numUnOp be unOp, then [→ otherwise]
+          1. If let numUnOp of type numUnOp be unOp, then
 
             1. (Eval_exp: C |- typedExp : expRes) [→ otherwise]
 
@@ -1835,7 +1835,7 @@ Arm 2:
 
               2. Case (% has type ok<val>, let (OK val) = %)
 
-                1. If let num of type num be val, then [→ otherwise]
+                1. If let num of type num be val, then
 
                   1. (Let val_res be $numUnOp(numUnOp, num)) [→ otherwise]
 
@@ -1859,7 +1859,7 @@ Arm 2:
 
               2. Case (% has type ok<val>, let (OK val) = %)
 
-                1. If let (BOOL b_l) be val matching pattern BOOL %, then [→ otherwise]
+                1. If let (BOOL b_l) be val matching pattern BOOL %, then
 
                   1. (Eval_exp: C |- typedExp_r : expRes') [→ otherwise]
 
@@ -1871,7 +1871,7 @@ Arm 2:
 
                     2. Case (% has type ok<val>, let (OK val') = %)
 
-                      1. If let (BOOL b_r) be val' matching pattern BOOL %, then [→ otherwise]
+                      1. If let (BOOL b_r) be val' matching pattern BOOL %, then
 
                         1. (Let b_res be $boolBinOp(boolBinOp, b_l, b_r)) [→ otherwise]
 
@@ -1889,7 +1889,7 @@ Arm 2:
 
               2. Case (% has type ok<val>, let (OK val) = %)
 
-                1. If let num_l of type num be val, then [→ otherwise]
+                1. If let num_l of type num be val, then
 
                   1. (Eval_exp: C |- typedExp_r : expRes') [→ otherwise]
 
@@ -1901,7 +1901,7 @@ Arm 2:
 
                     2. Case (% has type ok<val>, let (OK val') = %)
 
-                      1. If let num_r of type num be val', then [→ otherwise]
+                      1. If let num_r of type num be val', then
 
                         1. (Let numBinOpRes be $numBinOp(numBinOp, num_l, num_r)) [→ otherwise]
 
@@ -1951,7 +1951,7 @@ Arm 2:
 
               2. Case (% has type ok<val>, let (OK val) = %)
 
-                1. If let num_l of type num be val, then [→ otherwise]
+                1. If let num_l of type num be val, then
 
                   1. (Eval_exp: C |- typedExp_r : expRes') [→ otherwise]
 
@@ -1963,11 +1963,11 @@ Arm 2:
 
                     2. Case (% has type ok<val>, let (OK val') = %)
 
-                      1. If let num_r of type num be val', then [→ otherwise]
+                      1. If let num_r of type num be val', then
 
                         1. (Let numCmpRes be $numCmpOp(numCmpOp, num_l, num_r)) [→ otherwise]
 
-                        2. If let (OK b_res) of type ok<bool> be numCmpRes, then [→ otherwise]
+                        2. If let (OK b_res) of type ok<bool> be numCmpRes, then
 
                           1. Result in: % |- % : ((OK (BOOL b_res)) as expRes)
 
@@ -2027,7 +2027,7 @@ Arm 2:
 
             3. (Let subtypRes be $subtyp(C.GLOBAL.FUNC, tdenv, typ, val)) [→ otherwise]
 
-            4. If let (OK b) of type ok<bool> be subtypRes, then [→ otherwise]
+            4. If let (OK b) of type ok<bool> be subtypRes, then
 
               1. Result in: % |- % : ((OK (BOOL b)) as expRes)
 
@@ -2097,7 +2097,7 @@ Arm 2:
 
           2. Case (% has type ok<val*>, let (OK (val)*{val <- val*}) = %)
 
-            1. If ((|(atom)*{atom <- atom*}| = |(val)*{val <- val*}|)), then [→ otherwise]
+            1. If ((|(atom)*{atom <- atom*}| = |(val)*{val <- val*}|)), then
 
               1. (Let valField be (atom val))*{atom <- atom*, val <- val*, valField -> valField*}
 
@@ -2169,7 +2169,7 @@ Arm 2:
 
               2. Case (% has type ok<val>, let (OK val) = %)
 
-                1. If let (LIST (val_t)*{val_t <- val_t*}) be val matching pattern LIST %, then [→ otherwise]
+                1. If let (LIST (val_t)*{val_t <- val_t*}) be val matching pattern LIST %, then
 
                   1. Result in: % |- % : ((OK (LIST val_h :: (val_t)*{val_t <- val_t*})) as expRes)
 
@@ -2201,13 +2201,13 @@ Arm 2:
 
                   2. Case (% has type ok<val>, let (OK val') = %)
 
-                    1. If let (LIST (val_r)*{val_r <- val_r*}) be val' matching pattern LIST %, then [→ otherwise]
+                    1. If let (LIST (val_r)*{val_r <- val_r*}) be val' matching pattern LIST %, then
 
                       1. (Let (val_res)*{val_res <- val_res*} be (val_l)*{val_l <- val_l*} ++ (val_r)*{val_r <- val_r*})
 
                       2. Result in: % |- % : ((OK (LIST (val_res)*{val_res <- val_res*})) as expRes)
 
-              2. Case (% matches pattern TEXT %, let (TEXT text_l) = %) [→ otherwise]
+              2. Case (% matches pattern TEXT %, let (TEXT text_l) = %)
 
                 1. (Eval_exp: C |- typedExp_r : expRes') [→ otherwise]
 
@@ -2219,7 +2219,7 @@ Arm 2:
 
                   2. Case (% has type ok<val>, let (OK val') = %)
 
-                    1. If let (TEXT t_r) be val' matching pattern TEXT %, then [→ otherwise]
+                    1. If let (TEXT t_r) be val' matching pattern TEXT %, then
 
                       1. (Let t_res be text_l ++ t_r)
 
@@ -2249,7 +2249,7 @@ Arm 2:
 
               2. Case (% has type ok<val>, let (OK val') = %)
 
-                1. If let (LIST (val)*{val <- val*}) be val' matching pattern LIST %, then [→ otherwise]
+                1. If let (LIST (val)*{val <- val*}) be val' matching pattern LIST %, then
 
                   1. (Let b_mem be $exists_(((val_e = val))*{val <- val*})) [→ otherwise]
 
@@ -2277,7 +2277,7 @@ Arm 2:
 
                 2. Result in: % |- % : ((OK ((NAT n) as val)) as expRes)
 
-              2. Case (% matches pattern LIST %, let (LIST (val)*{val <- val*}) = %) [→ otherwise]
+              2. Case (% matches pattern LIST %, let (LIST (val)*{val <- val*}) = %)
 
                 1. (Let n be |(val)*{val <- val*}|)
 
@@ -2383,7 +2383,7 @@ Arm 2:
 
         1. (Eval_targs: C |- (targ)*{targ <- targ*} : typsRes) [→ otherwise]
 
-        2. If let (OK (typ_input)*{typ_input <- typ_input*}) of type ok<typ*> be typsRes, then [→ otherwise]
+        2. If let (OK (typ_input)*{typ_input <- typ_input*}) of type ok<typ*> be typsRes, then
 
           1. (Eval_args: C |- (arg)*{arg <- arg*} : argsRes) [→ otherwise]
 
@@ -2399,7 +2399,7 @@ Arm 2:
 
               2. Result in: % |- % : (funcRes as expRes)
 
-    23. Case (% has type iterExp, let iterExp = %) [→ otherwise]
+    23. Case (% has type iterExp, let iterExp = %)
 
       1. Group iter: C |- ((iterExp as exp) '#' typ') : %
 
@@ -2409,13 +2409,13 @@ Arm 2:
 
           1. (Let (varr')?{varr' <- varr'?} be $is_iter_on_var(((iterExp as exp) '#' typ'))) [→ next]
 
-          2. If (((varr')?{varr' <- varr'?} matches pattern (_))), then [→ next]
+          2. If (((varr')?{varr' <- varr'?} matches pattern (_))), then
 
             1. (Let ?(varr) be (varr')?{varr' <- varr'?})
 
             2. (Let (val')?{val' <- val'?} be $find_varr(C, varr)) [→ next]
 
-            3. If (((val')?{val' <- val'?} matches pattern (_))), then [→ next]
+            3. If (((val')?{val' <- val'?} matches pattern (_))), then
 
               1. (Let ?(val) be (val')?{val' <- val'?})
 
@@ -2433,7 +2433,7 @@ Arm 2:
 
                 1. (Let subOptRes be $sub_opt(C, (vari)*{vari <- vari*})) [→ otherwise]
 
-                2. If let (OK (C_sub)?{C_sub <- C_sub?}) of type ok<ctx?> be subOptRes, then [→ otherwise]
+                2. If let (OK (C_sub)?{C_sub <- C_sub?}) of type ok<ctx?> be subOptRes, then
 
                   1. (Eval_exp_maybe: (C_sub)?{C_sub <- C_sub?} |- typedExp : expOptRes) [→ otherwise]
 
@@ -2451,7 +2451,7 @@ Arm 2:
 
                 1. (Let subListRes be $sub_list(C, (vari)*{vari <- vari*})) [→ otherwise]
 
-                2. If let (OK (C_sub)*{C_sub <- C_sub*}) of type ok<ctx*> be subListRes, then [→ otherwise]
+                2. If let (OK (C_sub)*{C_sub <- C_sub*}) of type ok<ctx*> be subListRes, then
 
                   1. (Eval_exp_each: (C_sub)*{C_sub <- C_sub*} |- typedExp : expsRes) [→ otherwise]
 
@@ -2624,17 +2624,17 @@ relation Eval_path_acc: C |- val_b typedPath' : %
 
                 2. Case (% has type ok<val>, let (OK val'') = %)
 
-                  1. If let num of type num be val'', then [→ otherwise]
+                  1. If let num of type num be val'', then
 
-                    1. If let (NAT n) be num matching pattern NAT %, then [→ otherwise]
+                    1. If let (NAT n) be num matching pattern NAT %, then
 
-                      1. If ((n < |(val)*{val <- val*}|)), then [→ otherwise]
+                      1. If ((n < |(val)*{val <- val*}|)), then
 
                         1. (Let val_idx be (val)*{val <- val*}[n])
 
                         2. Result in: % |- % % : ((OK val_idx) as pathRes)
 
-            2. Case (% matches pattern TEXT %, let (TEXT t) = %) [→ otherwise]
+            2. Case (% matches pattern TEXT %, let (TEXT t) = %)
 
               1. (Eval_exp: C |- typedExp_i : expRes) [→ otherwise]
 
@@ -2646,11 +2646,11 @@ relation Eval_path_acc: C |- val_b typedPath' : %
 
                 2. Case (% has type ok<val>, let (OK val) = %)
 
-                  1. If let num of type num be val, then [→ otherwise]
+                  1. If let num of type num be val, then
 
-                    1. If let (NAT n) be num matching pattern NAT %, then [→ otherwise]
+                    1. If let (NAT n) be num matching pattern NAT %, then
 
-                      1. If ((n < |t|)), then [→ otherwise]
+                      1. If ((n < |t|)), then
 
                         1. (Let t_idx be t[n])
 
@@ -2684,9 +2684,9 @@ relation Eval_path_acc: C |- val_b typedPath' : %
 
                 2. Case (% has type ok<val>, let (OK val) = %)
 
-                  1. If let num of type num be val, then [→ otherwise]
+                  1. If let num of type num be val, then
 
-                    1. If let (NAT n_i) be num matching pattern NAT %, then [→ otherwise]
+                    1. If let (NAT n_i) be num matching pattern NAT %, then
 
                       1. (Eval_exp: C |- typedExp_n : expRes') [→ otherwise]
 
@@ -2698,17 +2698,17 @@ relation Eval_path_acc: C |- val_b typedPath' : %
 
                         2. Case (% has type ok<val>, let (OK val'') = %)
 
-                          1. If let num' of type num be val'', then [→ otherwise]
+                          1. If let num' of type num be val'', then
 
-                            1. If let (NAT n_n) be num' matching pattern NAT %, then [→ otherwise]
+                            1. If let (NAT n_n) be num' matching pattern NAT %, then
 
-                              1. If (((n_i + n_n) <= |t|)), then [→ otherwise]
+                              1. If (((n_i + n_n) <= |t|)), then
 
                                 1. (Let val_slice be (TEXT t[n_i : n_n]))
 
                                 2. Result in: % |- % % : ((OK val_slice) as pathRes)
 
-            2. Case (% matches pattern LIST %, let (LIST (val)*{val <- val*}) = %) [→ otherwise]
+            2. Case (% matches pattern LIST %, let (LIST (val)*{val <- val*}) = %)
 
               1. (Eval_exp: C |- typedExp_i : expRes) [→ otherwise]
 
@@ -2720,9 +2720,9 @@ relation Eval_path_acc: C |- val_b typedPath' : %
 
                 2. Case (% has type ok<val>, let (OK val'') = %)
 
-                  1. If let num of type num be val'', then [→ otherwise]
+                  1. If let num of type num be val'', then
 
-                    1. If let (NAT n_i) be num matching pattern NAT %, then [→ otherwise]
+                    1. If let (NAT n_i) be num matching pattern NAT %, then
 
                       1. (Eval_exp: C |- typedExp_n : expRes') [→ otherwise]
 
@@ -2734,11 +2734,11 @@ relation Eval_path_acc: C |- val_b typedPath' : %
 
                         2. Case (% has type ok<val>, let (OK val''') = %)
 
-                          1. If let num' of type num be val''', then [→ otherwise]
+                          1. If let num' of type num be val''', then
 
-                            1. If let (NAT n_n) be num' matching pattern NAT %, then [→ otherwise]
+                            1. If let (NAT n_n) be num' matching pattern NAT %, then
 
-                              1. If (((n_i + n_n) <= |(val)*{val <- val*}|)), then [→ otherwise]
+                              1. If (((n_i + n_n) <= |(val)*{val <- val*}|)), then
 
                                 1. (Let val_slice be (LIST (val)*{val <- val*}[n_i : n_n]))
 
@@ -2758,13 +2758,13 @@ relation Eval_path_acc: C |- val_b typedPath' : %
 
         2. Case (% has type ok<val>, let (OK val') = %)
 
-          1. If let (STR (valField)*{valField <- valField*}) be val' matching pattern STR %, then [→ otherwise]
+          1. If let (STR (valField)*{valField <- valField*}) be val' matching pattern STR %, then
 
             1. (Let (atom_field val_field) be valField)*{valField <- valField*, atom_field -> atom_field*, val_field -> val_field*}
 
             2. (Let (val'')?{val'' <- val''?} be $assoc_<atom, val>(atom, ((atom_field, val_field))*{atom_field <- atom_field*, val_field <- val_field*})) [→ otherwise]
 
-            3. If (((val'')?{val'' <- val''?} matches pattern (_))), then [→ otherwise]
+            3. If (((val'')?{val'' <- val''?} matches pattern (_))), then
 
               1. (Let ?(val) be (val'')?{val'' <- val''?})
 
@@ -2820,11 +2820,11 @@ relation Eval_path_upd: C |- val_b typedPath' := val_n' : %
 
                   2. Case (% has type ok<val>, let (OK val'') = %)
 
-                    1. If let num of type num be val'', then [→ next]
+                    1. If let num of type num be val'', then
 
-                      1. If let (NAT n_target) be num matching pattern NAT %, then [→ next]
+                      1. If let (NAT n_target) be num matching pattern NAT %, then
 
-                        1. If ((n_target < |(val)*{val <- val*}|)), then [→ next]
+                        1. If ((n_target < |(val)*{val <- val*}|)), then
 
                           1. (Let val_upd be (LIST (val)*{val <- val*}[[n_target] = val_n']))
 
@@ -2832,35 +2832,35 @@ relation Eval_path_upd: C |- val_b typedPath' := val_n' : %
 
                           3. Result in: % |- % % := % : pathRes
 
-              2. Case (% matches pattern TEXT %) [→ next]
+              2. Case (% matches pattern TEXT %)
 
                 1. (Eval_exp: C |- typedExp_i : expRes) [→ next]
 
-                2. If let failure of type failure be expRes, then [→ next]
+                2. If let failure of type failure be expRes, then
 
                   1. Result in: % |- % % := % : (failure as pathRes)
 
       Arm 2:
 
-        1. If let (TEXT t_n) be val_n' matching pattern TEXT %, then [→ otherwise]
+        1. If let (TEXT t_n) be val_n' matching pattern TEXT %, then
 
           1. (Eval_path_acc: C |- val_b typedPath : pathRes') [→ otherwise]
 
-          2. If let (OK val) of type ok<val> be pathRes', then [→ otherwise]
+          2. If let (OK val) of type ok<val> be pathRes', then
 
-            1. If let (TEXT t) be val matching pattern TEXT %, then [→ otherwise]
+            1. If let (TEXT t) be val matching pattern TEXT %, then
 
               1. (Eval_exp: C |- typedExp_i : expRes) [→ otherwise]
 
-              2. If let (OK val') of type ok<val> be expRes, then [→ otherwise]
+              2. If let (OK val') of type ok<val> be expRes, then
 
-                1. If let num of type num be val', then [→ otherwise]
+                1. If let num of type num be val', then
 
-                  1. If let (NAT n_target) be num matching pattern NAT %, then [→ otherwise]
+                  1. If let (NAT n_target) be num matching pattern NAT %, then
 
-                    1. If ((n_target < |t|)), then [→ otherwise]
+                    1. If ((n_target < |t|)), then
 
-                      1. If ((|t_n| = 1)), then [→ otherwise]
+                      1. If ((|t_n| = 1)), then
 
                         1. (Let val_upd be (TEXT t[[n_target] = t_n]))
 
@@ -2886,7 +2886,7 @@ relation Eval_path_upd: C |- val_b typedPath' := val_n' : %
 
           2. Case (% has type ok<val>, let (OK val) = %)
 
-            1. If ((val matches pattern TEXT %)), then [→ next]
+            1. If ((val matches pattern TEXT %)), then
 
               1. (Eval_exp: C |- typedExp_i : expRes) [→ next]
 
@@ -2898,45 +2898,45 @@ relation Eval_path_upd: C |- val_b typedPath' := val_n' : %
 
                 2. Case (% has type ok<val>, let (OK val') = %)
 
-                  1. If let num of type num be val', then [→ next]
+                  1. If let num of type num be val', then
 
-                    1. If ((num matches pattern NAT %)), then [→ next]
+                    1. If ((num matches pattern NAT %)), then
 
                       1. (Eval_exp: C |- typedExp_n : expRes') [→ next]
 
-                      2. If let failure of type failure be expRes', then [→ next]
+                      2. If let failure of type failure be expRes', then
 
                         1. Result in: % |- % % := % : (failure as pathRes)
 
       Arm 2:
 
-        1. If let (TEXT t_n) be val_n' matching pattern TEXT %, then [→ next]
+        1. If let (TEXT t_n) be val_n' matching pattern TEXT %, then
 
           1. (Eval_path_acc: C |- val_b typedPath : pathRes') [→ next]
 
-          2. If let (OK val) of type ok<val> be pathRes', then [→ next]
+          2. If let (OK val) of type ok<val> be pathRes', then
 
-            1. If let (TEXT t) be val matching pattern TEXT %, then [→ next]
+            1. If let (TEXT t) be val matching pattern TEXT %, then
 
               1. (Eval_exp: C |- typedExp_i : expRes) [→ next]
 
-              2. If let (OK val') of type ok<val> be expRes, then [→ next]
+              2. If let (OK val') of type ok<val> be expRes, then
 
-                1. If let num of type num be val', then [→ next]
+                1. If let num of type num be val', then
 
-                  1. If let (NAT n_i) be num matching pattern NAT %, then [→ next]
+                  1. If let (NAT n_i) be num matching pattern NAT %, then
 
                     1. (Eval_exp: C |- typedExp_n : expRes') [→ next]
 
-                    2. If let (OK val'') of type ok<val> be expRes', then [→ next]
+                    2. If let (OK val'') of type ok<val> be expRes', then
 
-                      1. If let num' of type num be val'', then [→ next]
+                      1. If let num' of type num be val'', then
 
-                        1. If let (NAT n_n) be num' matching pattern NAT %, then [→ next]
+                        1. If let (NAT n_n) be num' matching pattern NAT %, then
 
-                          1. If (((n_i + n_n) <= |t|)), then [→ next]
+                          1. If (((n_i + n_n) <= |t|)), then
 
-                            1. If ((|t_n| = n_n)), then [→ next]
+                            1. If ((|t_n| = n_n)), then
 
                               1. (Let val_upd be (TEXT t[[n_i : n_n] = t_n]))
 
@@ -2948,9 +2948,9 @@ relation Eval_path_upd: C |- val_b typedPath' := val_n' : %
 
         1. (Eval_path_acc: C |- val_b typedPath : pathRes) [→ next]
 
-        2. If let (OK val) of type ok<val> be pathRes, then [→ next]
+        2. If let (OK val) of type ok<val> be pathRes, then
 
-          1. If ((val matches pattern LIST %)), then [→ next]
+          1. If ((val matches pattern LIST %)), then
 
             1. (Eval_exp: C |- typedExp_i : expRes) [→ next]
 
@@ -2962,45 +2962,45 @@ relation Eval_path_upd: C |- val_b typedPath' := val_n' : %
 
               2. Case (% has type ok<val>, let (OK val') = %)
 
-                1. If let num of type num be val', then [→ next]
+                1. If let num of type num be val', then
 
-                  1. If ((num matches pattern NAT %)), then [→ next]
+                  1. If ((num matches pattern NAT %)), then
 
                     1. (Eval_exp: C |- typedExp_n : expRes') [→ next]
 
-                    2. If let failure of type failure be expRes', then [→ next]
+                    2. If let failure of type failure be expRes', then
 
                       1. Result in: % |- % % := % : (failure as pathRes)
 
       Arm 4:
 
-        1. If let (LIST (val_n)*{val_n <- val_n*}) be val_n' matching pattern LIST %, then [→ otherwise]
+        1. If let (LIST (val_n)*{val_n <- val_n*}) be val_n' matching pattern LIST %, then
 
           1. (Eval_path_acc: C |- val_b typedPath : pathRes') [→ otherwise]
 
-          2. If let (OK val') of type ok<val> be pathRes', then [→ otherwise]
+          2. If let (OK val') of type ok<val> be pathRes', then
 
-            1. If let (LIST (val)*{val <- val*}) be val' matching pattern LIST %, then [→ otherwise]
+            1. If let (LIST (val)*{val <- val*}) be val' matching pattern LIST %, then
 
               1. (Eval_exp: C |- typedExp_i : expRes) [→ otherwise]
 
-              2. If let (OK val'') of type ok<val> be expRes, then [→ otherwise]
+              2. If let (OK val'') of type ok<val> be expRes, then
 
-                1. If let num of type num be val'', then [→ otherwise]
+                1. If let num of type num be val'', then
 
-                  1. If let (NAT n_i) be num matching pattern NAT %, then [→ otherwise]
+                  1. If let (NAT n_i) be num matching pattern NAT %, then
 
                     1. (Eval_exp: C |- typedExp_n : expRes') [→ otherwise]
 
-                    2. If let (OK val''') of type ok<val> be expRes', then [→ otherwise]
+                    2. If let (OK val''') of type ok<val> be expRes', then
 
-                      1. If let num' of type num be val''', then [→ otherwise]
+                      1. If let num' of type num be val''', then
 
-                        1. If let (NAT n_n) be num' matching pattern NAT %, then [→ otherwise]
+                        1. If let (NAT n_n) be num' matching pattern NAT %, then
 
-                          1. If (((n_i + n_n) <= |(val)*{val <- val*}|)), then [→ otherwise]
+                          1. If (((n_i + n_n) <= |(val)*{val <- val*}|)), then
 
-                            1. If ((|(val_n)*{val_n <- val_n*}| = n_n)), then [→ otherwise]
+                            1. If ((|(val_n)*{val_n <- val_n*}| = n_n)), then
 
                               1. (Let val_upd be (LIST (val)*{val <- val*}[[n_i : n_n] = (val_n)*{val_n <- val_n*}]))
 
@@ -3022,7 +3022,7 @@ relation Eval_path_upd: C |- val_b typedPath' := val_n' : %
 
         2. Case (% has type ok<val>, let (OK val) = %)
 
-          1. If let (STR (valField)*{valField <- valField*}) be val matching pattern STR %, then [→ otherwise]
+          1. If let (STR (valField)*{valField <- valField*}) be val matching pattern STR %, then
 
             1. (Let (atom_field val_field) be valField)*{valField <- valField*, atom_field -> atom_field*, val_field -> val_field*}
 
@@ -3073,7 +3073,7 @@ relation Eval_arg: C |- arg : %
 
       1. (Eval_exp: C |- typedExp : expRes) [→ otherwise]
 
-      2. If let argRes of type argRes be expRes, then [→ otherwise]
+      2. If let argRes of type argRes be expRes, then
 
         1. Result in: % |- % : argRes
 
@@ -3167,7 +3167,7 @@ relation Eval_prem: C |- prem' : %
 
               1. (Assign_exps: C |- (typedExp_out)*{typedExp_out <- typedExp_out*} := (val_out)*{val_out <- val_out*} : assignRes) [→ otherwise]
 
-              2. If let (OK C_assign) of type ok<ctx> be assignRes, then [→ otherwise]
+              2. If let (OK C_assign) of type ok<ctx> be assignRes, then
 
                 1. Result in: % |- % : ((OK C_assign) as premRes)
 
@@ -3181,7 +3181,7 @@ relation Eval_prem: C |- prem' : %
 
       Arm 1:
 
-        1. If let failure of type failure be expRes, then [→ next]
+        1. If let failure of type failure be expRes, then
 
           1. Result in: % |- % : (failure as premRes)
 
@@ -3193,7 +3193,7 @@ relation Eval_prem: C |- prem' : %
 
             1. Result in: % |- % : ((UNMATCH) as premRes)
 
-          2. Case (% = ((OK (BOOL true)) as expRes)) [→ otherwise]
+          2. Case (% = ((OK (BOOL true)) as expRes))
 
             1. Result in: % |- % : ((OK C) as premRes)
 
@@ -3217,13 +3217,13 @@ relation Eval_prem: C |- prem' : %
 
           Arm 1:
 
-            1. If let failure of type failure be relRes, then [→ next]
+            1. If let failure of type failure be relRes, then
 
               1. Result in: % |- % : (failure as premRes)
 
           Arm 2:
 
-            1. If ((relRes = ((OK []) as relRes))), then [→ otherwise]
+            1. If ((relRes = ((OK []) as relRes))), then
 
               1. Result in: % |- % : ((OK C) as premRes)
 
@@ -3273,7 +3273,7 @@ relation Eval_prem: C |- prem' : %
 
           1. (Assign_exp: C |- typedExp_l := val_r : assignRes) [→ otherwise]
 
-          2. If let (OK C_assign) of type ok<ctx> be assignRes, then [→ otherwise]
+          2. If let (OK C_assign) of type ok<ctx> be assignRes, then
 
             1. Result in: % |- % : ((OK C_assign) as premRes)
 
@@ -3287,7 +3287,7 @@ relation Eval_prem: C |- prem' : %
 
           1. (Let subOptRes be $sub_opt(C, (vari_bound)*{vari_bound <- vari_bound*})) [→ otherwise]
 
-          2. If let (OK (C_sub)?{C_sub <- C_sub?}) of type ok<ctx?> be subOptRes, then [→ otherwise]
+          2. If let (OK (C_sub)?{C_sub <- C_sub?}) of type ok<ctx?> be subOptRes, then
 
             1. (Eval_prem_maybe: (C_sub)?{C_sub <- C_sub?} |- prem : premOptRes) [→ otherwise]
 
@@ -3303,13 +3303,13 @@ relation Eval_prem: C |- prem' : %
 
                 2. Case (% has type ok<ctx?>, let (OK (C')?{C' <- C'?}) = %)
 
-                  1. If (((C')?{C' <- C'?} matches pattern (_))), then [→ next]
+                  1. If (((C')?{C' <- C'?} matches pattern (_))), then
 
                     1. (Let ?(C_sub_res) be (C')?{C' <- C'?})
 
                     2. (Let (val)?{val <- val?} be $find_vari(C_sub_res, vari))*{vari <- vari*, val? -> val?*} [→ next]
 
-                    3. If (((val)?{val <- val?} matches pattern (_)))*{val? <- val?*}, then [→ next]
+                    3. If (((val)?{val <- val?} matches pattern (_)))*{val? <- val?*}, then
 
                       1. (Let ?(val_bind) be (val)?{val <- val?})*{val? <- val?*, val_bind -> val_bind*}
 
@@ -3321,7 +3321,7 @@ relation Eval_prem: C |- prem' : %
 
             Arm 2:
 
-              1. If ((premOptRes = ((OK ?()) as premOptRes))), then [→ otherwise]
+              1. If ((premOptRes = ((OK ?()) as premOptRes))), then
 
                 1. (Let vari_bind_iter be $iterate_vari(vari, [(QUEST)]))*{vari <- vari*, vari_bind_iter -> vari_bind_iter*} [→ otherwise]
 
@@ -3353,9 +3353,9 @@ relation Eval_prem: C |- prem' : %
 
             1. (Let subListRes be $sub_list(C, (vari_bound)*{vari_bound <- vari_bound*})) [→ otherwise]
 
-            2. If let (OK (C_sub)*{C_sub <- C_sub*}) of type ok<ctx*> be subListRes, then [→ otherwise]
+            2. If let (OK (C_sub)*{C_sub <- C_sub*}) of type ok<ctx*> be subListRes, then
 
-              1. If (((C_sub)*{C_sub <- C_sub*} matches pattern _ :: _)), then [→ otherwise]
+              1. If (((C_sub)*{C_sub <- C_sub*} matches pattern _ :: _)), then
 
                 1. (Eval_prem_each: (C_sub)*{C_sub <- C_sub*} |- prem : premIterRes) [→ otherwise]
 
@@ -3369,7 +3369,7 @@ relation Eval_prem: C |- prem' : %
 
                     1. (Let ((val)*{val <- val*})?{val* <- val*?} be $find_varis(C_sub_res, (vari)*{vari <- vari*}))*{C_sub_res <- C_sub_res*, val*? -> val*?*} [→ otherwise]
 
-                    2. If ((((val)*{val <- val*})?{val* <- val*?} matches pattern (_)))*{val*? <- val*?*}, then [→ otherwise]
+                    2. If ((((val)*{val <- val*})?{val* <- val*?} matches pattern (_)))*{val*? <- val*?*}, then
 
                       1. (Let ?((val_sub_bind)*{val_sub_bind <- val_sub_bind*}) be ((val)*{val <- val*})?{val* <- val*?})*{val*? <- val*?*, val_sub_bind* -> val_sub_bind**}
 
@@ -3519,7 +3519,7 @@ relation Call_func: C |- id `< (typ)*{typ <- typ*} `> `( (val)*{val <- val*} `) 
 
     2. (Let (funcDefn')?{funcDefn' <- funcDefn'?} be $find_func(C, id_global)) [→ next]
 
-    3. If (((funcDefn')?{funcDefn' <- funcDefn'?} matches pattern (_))), then [→ next]
+    3. If (((funcDefn')?{funcDefn' <- funcDefn'?} matches pattern (_))), then
 
       1. (Let ?(funcDefn) be (funcDefn')?{funcDefn' <- funcDefn'?})
 
@@ -3531,7 +3531,7 @@ relation Call_func: C |- id `< (typ)*{typ <- typ*} `> `( (val)*{val <- val*} `) 
 
           2. Result in: % |- % `< % `> `( % `) : funcRes
 
-        2. Case (% has type builtinFuncDefn, let (BUILTINFUNC id_func (_tparam)*{_tparam <- _tparam*} (_param)*{_param <- _param*} ':' _typ) = %) [→ next]
+        2. Case (% has type builtinFuncDefn, let (BUILTINFUNC id_func (_tparam)*{_tparam <- _tparam*} (_param)*{_param <- _param*} ':' _typ) = %)
 
           1. (Call_builtin_func: |- id_func `< (typ)*{typ <- typ*} `> `( (val)*{val <- val*} `) : funcRes) [→ next]
 
@@ -3539,17 +3539,17 @@ relation Call_func: C |- id `< (typ)*{typ <- typ*} `> `( (val)*{val <- val*} `) 
 
   Arm 2:
 
-    1. If (((typ)*{typ <- typ*} matches pattern [])), then [→ next]
+    1. If (((typ)*{typ <- typ*} matches pattern [])), then
 
       1. (Let id_global be $resolve_func_param(C, id)) [→ next]
 
       2. (Let (funcDefn')?{funcDefn' <- funcDefn'?} be $find_func(C, id_global)) [→ next]
 
-      3. If (((funcDefn')?{funcDefn' <- funcDefn'?} matches pattern (_))), then [→ next]
+      3. If (((funcDefn')?{funcDefn' <- funcDefn'?} matches pattern (_))), then
 
         1. (Let ?(funcDefn) be (funcDefn')?{funcDefn' <- funcDefn'?})
 
-        2. If let tableFuncDefn of type tableFuncDefn be funcDefn, then [→ next]
+        2. If let tableFuncDefn of type tableFuncDefn be funcDefn, then
 
           1. (Call_table_func: C |- tableFuncDefn `( (val)*{val <- val*} `) : funcRes) [→ next]
 
@@ -3561,11 +3561,11 @@ relation Call_func: C |- id `< (typ)*{typ <- typ*} `> `( (val)*{val <- val*} `) 
 
     2. (Let (funcDefn')?{funcDefn' <- funcDefn'?} be $find_func(C, id_global)) [→ otherwise]
 
-    3. If (((funcDefn')?{funcDefn' <- funcDefn'?} matches pattern (_))), then [→ otherwise]
+    3. If (((funcDefn')?{funcDefn' <- funcDefn'?} matches pattern (_))), then
 
       1. (Let ?(funcDefn) be (funcDefn')?{funcDefn' <- funcDefn'?})
 
-      2. If let definedFuncDefn of type definedFuncDefn be funcDefn, then [→ otherwise]
+      2. If let definedFuncDefn of type definedFuncDefn be funcDefn, then
 
         1. (Call_defined_func: C |- definedFuncDefn `< (typ)*{typ <- typ*} `> `( (val)*{val <- val*} `) : funcRes) [→ otherwise]
 
@@ -3583,7 +3583,7 @@ relation Call_rel: C |- id `( (val)*{val <- val*} `) : %
 
   1. (Let (relDefn')?{relDefn' <- relDefn'?} be $find_rel(C, id)) [→ otherwise]
 
-  2. If (((relDefn')?{relDefn' <- relDefn'?} matches pattern (_))), then [→ otherwise]
+  2. If (((relDefn')?{relDefn' <- relDefn'?} matches pattern (_))), then
 
     1. (Let ?(relDefn) be (relDefn')?{relDefn' <- relDefn'?})
 
@@ -3669,13 +3669,13 @@ def $numBinOp(numBinOp, num, num')
 
       1. Case (% matches pattern NAT %, let (NAT n_l) = %)
 
-        1. If let (NAT n_r) be num' matching pattern NAT %, then [→ otherwise]
+        1. If let (NAT n_r) be num' matching pattern NAT %, then
 
           1. Return ((OK ((NAT (n_l + n_r)) as val)) as numBinOpRes)
 
       2. Case (% matches pattern INT %, let (INT i_l) = %)
 
-        1. If let (INT i_r) be num' matching pattern INT %, then [→ otherwise]
+        1. If let (INT i_r) be num' matching pattern INT %, then
 
           1. Return ((OK ((INT (i_l + i_r)) as val)) as numBinOpRes)
 
@@ -3685,13 +3685,13 @@ def $numBinOp(numBinOp, num, num')
 
       1. Case (% matches pattern NAT %, let (NAT n_l) = %)
 
-        1. If let (NAT n_r) be num' matching pattern NAT %, then [→ otherwise]
+        1. If let (NAT n_r) be num' matching pattern NAT %, then
 
           1. Return ((OK ((INT (n_l - n_r)) as val)) as numBinOpRes)
 
       2. Case (% matches pattern INT %, let (INT i_l) = %)
 
-        1. If let (INT i_r) be num' matching pattern INT %, then [→ otherwise]
+        1. If let (INT i_r) be num' matching pattern INT %, then
 
           1. Return ((OK ((INT (i_l - i_r)) as val)) as numBinOpRes)
 
@@ -3701,13 +3701,13 @@ def $numBinOp(numBinOp, num, num')
 
       1. Case (% matches pattern NAT %, let (NAT n_l) = %)
 
-        1. If let (NAT n_r) be num' matching pattern NAT %, then [→ otherwise]
+        1. If let (NAT n_r) be num' matching pattern NAT %, then
 
           1. Return ((OK ((NAT (n_l * n_r)) as val)) as numBinOpRes)
 
       2. Case (% matches pattern INT %, let (INT i_l) = %)
 
-        1. If let (INT i_r) be num' matching pattern INT %, then [→ otherwise]
+        1. If let (INT i_r) be num' matching pattern INT %, then
 
           1. Return ((OK ((INT (i_l * i_r)) as val)) as numBinOpRes)
 
@@ -3717,37 +3717,37 @@ def $numBinOp(numBinOp, num, num')
 
       1. Case (% matches pattern NAT %, let (NAT n_l) = %)
 
-        1. If let (NAT n_r) be num' matching pattern NAT %, then [→ otherwise]
+        1. If let (NAT n_r) be num' matching pattern NAT %, then
 
-          1. If ((n_r =/= 0)), then [→ otherwise]
+          1. If ((n_r =/= 0)), then
 
             1. Return ((OK ((NAT (n_l / n_r)) as val)) as numBinOpRes)
 
       2. Case (% matches pattern INT %, let (INT i_l) = %)
 
-        1. If let (INT i_r) be num' matching pattern INT %, then [→ otherwise]
+        1. If let (INT i_r) be num' matching pattern INT %, then
 
-          1. If ((i_r =/= +0)), then [→ otherwise]
+          1. If ((i_r =/= +0)), then
 
             1. Return ((OK ((INT (i_l / i_r)) as val)) as numBinOpRes)
 
-  5. Case (% matches pattern MOD) [→ otherwise]
+  5. Case (% matches pattern MOD)
 
     1. Case analysis on num (total)
 
       1. Case (% matches pattern NAT %, let (NAT n_l) = %)
 
-        1. If let (NAT n_r) be num' matching pattern NAT %, then [→ otherwise]
+        1. If let (NAT n_r) be num' matching pattern NAT %, then
 
-          1. If ((n_r =/= 0)), then [→ otherwise]
+          1. If ((n_r =/= 0)), then
 
             1. Return ((OK ((NAT (n_l \ n_r)) as val)) as numBinOpRes)
 
       2. Case (% matches pattern INT %, let (INT i_l) = %)
 
-        1. If let (INT i_r) be num' matching pattern INT %, then [→ otherwise]
+        1. If let (INT i_r) be num' matching pattern INT %, then
 
-          1. If ((i_r =/= +0)), then [→ otherwise]
+          1. If ((i_r =/= +0)), then
 
             1. Return ((OK ((INT (i_l \ i_r)) as val)) as numBinOpRes)
 
@@ -3781,13 +3781,13 @@ def $numCmpOp(numCmpOp, num, num')
 
       1. Case (% matches pattern NAT %, let (NAT n_l) = %)
 
-        1. If let (NAT n_r) be num' matching pattern NAT %, then [→ otherwise]
+        1. If let (NAT n_r) be num' matching pattern NAT %, then
 
           1. Return ((OK (n_l < n_r)) as numCmpRes)
 
       2. Case (% matches pattern INT %, let (INT i_l) = %)
 
-        1. If let (INT i_r) be num' matching pattern INT %, then [→ otherwise]
+        1. If let (INT i_r) be num' matching pattern INT %, then
 
           1. Return ((OK (i_l < i_r)) as numCmpRes)
 
@@ -3797,13 +3797,13 @@ def $numCmpOp(numCmpOp, num, num')
 
       1. Case (% matches pattern NAT %, let (NAT n_l) = %)
 
-        1. If let (NAT n_r) be num' matching pattern NAT %, then [→ otherwise]
+        1. If let (NAT n_r) be num' matching pattern NAT %, then
 
           1. Return ((OK (n_l > n_r)) as numCmpRes)
 
       2. Case (% matches pattern INT %, let (INT i_l) = %)
 
-        1. If let (INT i_r) be num' matching pattern INT %, then [→ otherwise]
+        1. If let (INT i_r) be num' matching pattern INT %, then
 
           1. Return ((OK (i_l > i_r)) as numCmpRes)
 
@@ -3813,13 +3813,13 @@ def $numCmpOp(numCmpOp, num, num')
 
       1. Case (% matches pattern NAT %, let (NAT n_l) = %)
 
-        1. If let (NAT n_r) be num' matching pattern NAT %, then [→ otherwise]
+        1. If let (NAT n_r) be num' matching pattern NAT %, then
 
           1. Return ((OK (n_l <= n_r)) as numCmpRes)
 
       2. Case (% matches pattern INT %, let (INT i_l) = %)
 
-        1. If let (INT i_r) be num' matching pattern INT %, then [→ otherwise]
+        1. If let (INT i_r) be num' matching pattern INT %, then
 
           1. Return ((OK (i_l <= i_r)) as numCmpRes)
 
@@ -3829,13 +3829,13 @@ def $numCmpOp(numCmpOp, num, num')
 
       1. Case (% matches pattern NAT %, let (NAT n_l) = %)
 
-        1. If let (NAT n_r) be num' matching pattern NAT %, then [→ otherwise]
+        1. If let (NAT n_r) be num' matching pattern NAT %, then
 
           1. Return ((OK (n_l >= n_r)) as numCmpRes)
 
       2. Case (% matches pattern INT %, let (INT i_l) = %)
 
-        1. If let (INT i_r) be num' matching pattern INT %, then [→ otherwise]
+        1. If let (INT i_r) be num' matching pattern INT %, then
 
           1. Return ((OK (i_l >= i_r)) as numCmpRes)
 
@@ -3849,13 +3849,13 @@ def $matches(val', pat)
 
   1. Case (% matches pattern INJ %, let (INJ (mixop_v (val)*{val <- val*})) = %)
 
-    1. If let (INJ mixop_p) be pat matching pattern INJ %, then [→ otherwise]
+    1. If let (INJ mixop_p) be pat matching pattern INJ %, then
 
       1. Return (mixop_v = mixop_p)
 
   2. Case (% matches pattern LIST %, let (LIST (val)*{val <- val*}) = %)
 
-    1. If let listPat of type listPat be pat, then [→ otherwise]
+    1. If let listPat of type listPat be pat, then
 
       1. Case analysis on listPat (total)
 
@@ -3871,9 +3871,9 @@ def $matches(val', pat)
 
           1. Return (|(val)*{val <- val*}| = 0)
 
-  3. Case (% matches pattern OPT %, let (OPT (val)?{val <- val?}) = %) [→ otherwise]
+  3. Case (% matches pattern OPT %, let (OPT (val)?{val <- val?}) = %)
 
-    1. If let optPat of type optPat be pat, then [→ otherwise]
+    1. If let optPat of type optPat be pat, then
 
       1. Case analysis on optPat (total)
 
@@ -3907,13 +3907,13 @@ Arm 1:
 
         1. Case (% matches pattern BOOL)
 
-          1. If ((val'' matches pattern BOOL %)), then [→ next]
+          1. If ((val'' matches pattern BOOL %)), then
 
             1. Return ((OK true) as subtypRes)
 
-        2. Case (% matches pattern TEXT) [→ next]
+        2. Case (% matches pattern TEXT)
 
-          1. If ((val'' matches pattern TEXT %)), then [→ next]
+          1. If ((val'' matches pattern TEXT %)), then
 
             1. Return ((OK true) as subtypRes)
 
@@ -3923,7 +3923,7 @@ Arm 1:
 
     3. Case (% matches pattern TUP %, let (TUP (typ)*{typ <- typ*}) = %)
 
-      1. If let (TUP (val)*{val <- val*}) be val'' matching pattern TUP %, then [→ next]
+      1. If let (TUP (val)*{val <- val*}) be val'' matching pattern TUP %, then
 
         1. Return $subtyps(fenv, tdenv, (typ)*{typ <- typ*}, (val)*{val <- val*}) [→ next]
 
@@ -3937,9 +3937,9 @@ Arm 1:
 
           Arm 1:
 
-            1. If let (OPT (val')?{val' <- val'?}) be val'' matching pattern OPT %, then [→ next]
+            1. If let (OPT (val')?{val' <- val'?}) be val'' matching pattern OPT %, then
 
-              1. If (((val')?{val' <- val'?} matches pattern (_))), then [→ next]
+              1. If (((val')?{val' <- val'?} matches pattern (_))), then
 
                 1. (Let ?(val) be (val')?{val' <- val'?})
 
@@ -3947,31 +3947,31 @@ Arm 1:
 
           Arm 2:
 
-            1. If ((val'' = (OPT ?()))), then [→ next]
+            1. If ((val'' = (OPT ?()))), then
 
               1. Return ((OK true) as subtypRes)
 
         2. Case (% matches pattern STAR)
 
-          1. If let (LIST (val)*{val <- val*}) be val'' matching pattern LIST %, then [→ next]
+          1. If let (LIST (val)*{val <- val*}) be val'' matching pattern LIST %, then
 
             1. Return $subtyp_list(fenv, tdenv, typ, (val)*{val <- val*}) [→ next]
 
     5. Case (% matches pattern FUNC % % %, let (FUNC (tparam)*{tparam <- tparam*} (typ)*{typ <- typ*} typ_ret) = %)
 
-      1. If let (FUNC id) be val'' matching pattern FUNC %, then [→ next]
+      1. If let (FUNC id) be val'' matching pattern FUNC %, then
 
         1. Return $subtyp_func(fenv, tdenv, (FUNC (tparam)*{tparam <- tparam*} (typ)*{typ <- typ*} typ_ret), id) [→ next]
 
 Arm 2:
 
-  1. If let numtyp of type numtyp be typ', then [→ otherwise]
+  1. If let numtyp of type numtyp be typ', then
 
     1. Case analysis on numtyp (total)
 
       1. Case (% matches pattern NAT)
 
-        1. If let num of type num be val'', then [→ otherwise]
+        1. If let num of type num be val'', then
 
           1. Case analysis on num (total)
 
@@ -3985,7 +3985,7 @@ Arm 2:
 
       2. Case (% matches pattern INT)
 
-        1. If ((val'' has type num)), then [→ otherwise]
+        1. If ((val'' has type num)), then
 
           1. Return ((OK true) as subtypRes)
 
@@ -3997,7 +3997,7 @@ def $subtyp_var(fenv, tdenv, id, (targ)*{targ <- targ*}, val)
 
 1. (Let (typDef')?{typDef' <- typDef'?} be $find_map<id, typDef>(tdenv, id)) [→ otherwise]
 
-2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then [→ otherwise]
+2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then
 
   1. (Let ?(typDef) be (typDef')?{typDef' <- typDef'?})
 
@@ -4013,29 +4013,29 @@ def $subtyp_def(fenv, tdenv, typDef, (typ')*{typ' <- typ'*}, val)
 
   1. Case (% has type externTypDefn)
 
-    1. If (((typ')*{typ' <- typ'*} matches pattern [])), then [→ otherwise]
+    1. If (((typ')*{typ' <- typ'*} matches pattern [])), then
 
       1. Return $subtyp_extern(val) [→ otherwise]
 
-  2. Case (% has type definedTypDefn, let (TYP _id (tparam)*{tparam <- tparam*} '=' deftyp) = %) [→ otherwise]
+  2. Case (% has type definedTypDefn, let (TYP _id (tparam)*{tparam <- tparam*} '=' deftyp) = %)
 
     1. Case analysis on deftyp (total)
 
       1. Case (% matches pattern ALIAS %, let (ALIAS typ) = %)
 
-        1. If ((|(typ')*{typ' <- typ'*}| = |(tparam)*{tparam <- tparam*}|)), then [→ otherwise]
+        1. If ((|(typ')*{typ' <- typ'*}| = |(tparam)*{tparam <- tparam*}|)), then
 
           1. (Let theta be (`{ ((tparam ':' typ'))*{typ' <- typ'*, tparam <- tparam*} `}))
 
           2. (Let typRes be $subst_typ(theta, typ)) [→ otherwise]
 
-          3. If let (OK typ_subst) of type ok<typ> be typRes, then [→ otherwise]
+          3. If let (OK typ_subst) of type ok<typ> be typRes, then
 
             1. Return $subtyp(fenv, tdenv, typ_subst, val) [→ otherwise]
 
       2. Case (% matches pattern VARIANT %, let (VARIANT (typCase)*{typCase <- typCase*}) = %)
 
-        1. If ((|(typ')*{typ' <- typ'*}| = |(tparam)*{tparam <- tparam*}|)), then [→ otherwise]
+        1. If ((|(typ')*{typ' <- typ'*}| = |(tparam)*{tparam <- tparam*}|)), then
 
           1. (Let theta be (`{ ((tparam ':' typ'))*{typ' <- typ'*, tparam <- tparam*} `}))
 
@@ -4043,7 +4043,7 @@ def $subtyp_def(fenv, tdenv, typDef, (typ')*{typ' <- typ'*}, val)
 
       3. Case (% matches pattern STRUCT %, let (STRUCT (typField)*{typField <- typField*}) = %)
 
-        1. If ((|(typ')*{typ' <- typ'*}| = |(tparam)*{tparam <- tparam*}|)), then [→ otherwise]
+        1. If ((|(typ')*{typ' <- typ'*}| = |(tparam)*{tparam <- tparam*}|)), then
 
           1. (Let theta be (`{ ((tparam ':' typ'))*{typ' <- typ'*, tparam <- tparam*} `}))
 
@@ -4055,7 +4055,7 @@ def $subtyp_def(fenv, tdenv, typDef, (typ')*{typ' <- typ'*}, val)
 
 def $subtyp_extern(val)
 
-1. If ((val matches pattern EXT %)), then [→ otherwise]
+1. If ((val matches pattern EXT %)), then
 
   1. Return ((OK true) as subtypRes)
 
@@ -4065,13 +4065,13 @@ def $subtyp_extern(val)
 
 def $subtyp_variant(fenv, tdenv, theta, (typCase)*{typCase <- typCase*}, val')
 
-1. If let (INJ (mixop (val)*{val <- val*})) be val' matching pattern INJ %, then [→ otherwise]
+1. If let (INJ (mixop (val)*{val <- val*})) be val' matching pattern INJ %, then
 
   1. (Let (mixop_case (typ_case)*{typ_case <- typ_case*}) be typCase)*{typCase <- typCase*, mixop_case -> mixop_case*, typ_case* -> typ_case**}
 
   2. (Let ((typ)*{typ <- typ*})?{typ* <- typ*?} be $assoc_<mixop, typ*>(mixop, ((mixop_case, (typ_case)*{typ_case <- typ_case*}))*{mixop_case <- mixop_case*, typ_case* <- typ_case**})) [→ otherwise]
 
-  3. If ((((typ)*{typ <- typ*})?{typ* <- typ*?} matches pattern (_))), then [→ otherwise]
+  3. If ((((typ)*{typ <- typ*})?{typ* <- typ*?} matches pattern (_))), then
 
     1. (Let ?((typ_case_found)*{typ_case_found <- typ_case_found*}) be ((typ)*{typ <- typ*})?{typ* <- typ*?})
 
@@ -4083,15 +4083,15 @@ def $subtyp_variant(fenv, tdenv, theta, (typCase)*{typCase <- typCase*}, val')
 
 def $subtyp_struct(fenv, tdenv, theta, (typField)*{typField <- typField*}, val)
 
-1. If let (STR (valField)*{valField <- valField*}) be val matching pattern STR %, then [→ otherwise]
+1. If let (STR (valField)*{valField <- valField*}) be val matching pattern STR %, then
 
   1. (Let (atom typ_field) be typField)*{typField <- typField*, atom -> atom*, typ_field -> typ_field*}
 
   2. (Let (atom' val_field) be valField)*{valField <- valField*, atom' -> atom'*, val_field -> val_field*}
 
-  3. If ((|(atom)*{atom <- atom*}| = |(atom')*{atom' <- atom'*}|)), then [→ otherwise]
+  3. If ((|(atom)*{atom <- atom*}| = |(atom')*{atom' <- atom'*}|)), then
 
-    1. If ((atom' = atom))*{atom <- atom*, atom' <- atom'*}, then [→ otherwise]
+    1. If ((atom' = atom))*{atom <- atom*, atom' <- atom'*}, then
 
       1. Return $subtyp_case(fenv, tdenv, theta, (typ_field)*{typ_field <- typ_field*}, (val_field)*{val_field <- val_field*}) [→ otherwise]
 
@@ -4103,7 +4103,7 @@ def $subtyp_case(fenv, tdenv, theta, (typ)*{typ <- typ*}, (val)*{val <- val*})
 
 1. (Let typsRes be $subst_typs(theta, (typ)*{typ <- typ*})) [→ otherwise]
 
-2. If let (OK (typ_subst)*{typ_subst <- typ_subst*}) of type ok<typ*> be typsRes, then [→ otherwise]
+2. If let (OK (typ_subst)*{typ_subst <- typ_subst*}) of type ok<typ*> be typsRes, then
 
   1. Return $subtyps(fenv, tdenv, (typ_subst)*{typ_subst <- typ_subst*}, (val)*{val <- val*}) [→ otherwise]
 
@@ -4193,7 +4193,7 @@ def $subtyp_func(fenv, tdenv, typ, id)
 
 1. (Let (funcDefn')?{funcDefn' <- funcDefn'?} be $find_map<id, funcDefn>(fenv, id)) [→ otherwise]
 
-2. If (((funcDefn')?{funcDefn' <- funcDefn'?} matches pattern (_))), then [→ otherwise]
+2. If (((funcDefn')?{funcDefn' <- funcDefn'?} matches pattern (_))), then
 
   1. (Let ?(funcDefn) be (funcDefn')?{funcDefn' <- funcDefn'?})
 
@@ -4271,7 +4271,7 @@ Arm 1:
 
         1. Case (% matches pattern INT)
 
-          1. If let num of type num be val'', then [→ next]
+          1. If let num of type num be val'', then
 
             1. Case analysis on num (total)
 
@@ -4285,9 +4285,9 @@ Arm 1:
 
         2. Case (% matches pattern NAT)
 
-          1. If let num of type num be val'', then [→ next]
+          1. If let num of type num be val'', then
 
-            1. If let (NAT n) be num matching pattern NAT %, then [→ next]
+            1. If let (NAT n) be num matching pattern NAT %, then
 
               1. Return ((OK ((NAT n) as val)) as castRes)
 
@@ -4299,23 +4299,23 @@ Arm 1:
 
         1. (Let (typDef')?{typDef' <- typDef'?} be $find_typ(C, id)) [→ next]
 
-        2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then [→ next]
+        2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then
 
           1. (Let ?(typDef) be (typDef')?{typDef' <- typDef'?})
 
-          2. If let (TYP _id (tparam)*{tparam <- tparam*} '=' deftyp) of type definedTypDefn be typDef, then [→ next]
+          2. If let (TYP _id (tparam)*{tparam <- tparam*} '=' deftyp) of type definedTypDefn be typDef, then
 
             1. Case analysis on deftyp (total)
 
               1. Case (% matches pattern ALIAS %, let (ALIAS typ) = %)
 
-                1. If ((|(targ)*{targ <- targ*}| = |(tparam)*{tparam <- tparam*}|)), then [→ next]
+                1. If ((|(targ)*{targ <- targ*}| = |(tparam)*{tparam <- tparam*}|)), then
 
                   1. (Let theta be (`{ ((tparam ':' targ))*{targ <- targ*, tparam <- tparam*} `}))
 
                   2. (Let typRes be $subst_typ(theta, typ)) [→ next]
 
-                  3. If let (OK typ_subst) of type ok<typ> be typRes, then [→ next]
+                  3. If let (OK typ_subst) of type ok<typ> be typRes, then
 
                     1. Return $upcast(C, typ_subst, val'') [→ next]
 
@@ -4341,27 +4341,27 @@ Arm 1:
 
       Arm 2:
 
-        1. If (((targ)*{targ <- targ*} matches pattern [])), then [→ next]
+        1. If (((targ)*{targ <- targ*} matches pattern [])), then
 
-          1. If let (EXT json) be val'' matching pattern EXT %, then [→ next]
+          1. If let (EXT json) be val'' matching pattern EXT %, then
 
             1. (Let (typDef')?{typDef' <- typDef'?} be $find_typ(C, id)) [→ next]
 
-            2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then [→ next]
+            2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then
 
               1. (Let ?(typDef) be (typDef')?{typDef' <- typDef'?})
 
-              2. If ((typDef has type externTypDefn)), then [→ next]
+              2. If ((typDef has type externTypDefn)), then
 
                 1. Return ((OK (EXT json)) as castRes)
 
     3. Case (% matches pattern TUP %, let (TUP (typ)*{typ <- typ*}) = %)
 
-      1. If let (TUP (val)*{val <- val*}) be val'' matching pattern TUP %, then [→ next]
+      1. If let (TUP (val)*{val <- val*}) be val'' matching pattern TUP %, then
 
         1. (Let castsRes be $upcasts(C, (typ)*{typ <- typ*}, (val)*{val <- val*})) [→ next]
 
-        2. If let (OK (val_cast)*{val_cast <- val_cast*}) of type ok<val*> be castsRes, then [→ next]
+        2. If let (OK (val_cast)*{val_cast <- val_cast*}) of type ok<val*> be castsRes, then
 
           1. Return ((OK (TUP (val_cast)*{val_cast <- val_cast*})) as castRes)
 
@@ -4375,39 +4375,39 @@ Arm 1:
 
           Arm 1:
 
-            1. If ((val'' = (OPT ?()))), then [→ next]
+            1. If ((val'' = (OPT ?()))), then
 
               1. Return ((OK (OPT ?())) as castRes)
 
           Arm 2:
 
-            1. If let (OPT (val')?{val' <- val'?}) be val'' matching pattern OPT %, then [→ next]
+            1. If let (OPT (val')?{val' <- val'?}) be val'' matching pattern OPT %, then
 
-              1. If (((val')?{val' <- val'?} matches pattern (_))), then [→ next]
+              1. If (((val')?{val' <- val'?} matches pattern (_))), then
 
                 1. (Let ?(val) be (val')?{val' <- val'?})
 
                 2. (Let castRes be $upcast(C, typ, val)) [→ next]
 
-                3. If let (OK val_cast) of type ok<val> be castRes, then [→ next]
+                3. If let (OK val_cast) of type ok<val> be castRes, then
 
                   1. Return ((OK (OPT ?(val_cast))) as castRes)
 
         2. Case (% matches pattern STAR)
 
-          1. If let (LIST (val)*{val <- val*}) be val'' matching pattern LIST %, then [→ next]
+          1. If let (LIST (val)*{val <- val*}) be val'' matching pattern LIST %, then
 
             1. (Let (typ'')*{typ'' <- typ''*} be $repeat_<typ>(typ, |(val)*{val <- val*}|)) [→ next]
 
             2. (Let castsRes be $upcasts(C, (typ'')*{typ'' <- typ''*}, (val)*{val <- val*})) [→ next]
 
-            3. If let (OK (val_cast)*{val_cast <- val_cast*}) of type ok<val*> be castsRes, then [→ next]
+            3. If let (OK (val_cast)*{val_cast <- val_cast*}) of type ok<val*> be castsRes, then
 
               1. Return ((OK (LIST (val_cast)*{val_cast <- val_cast*})) as castRes)
 
-    5. Case (% matches pattern FUNC % % %, let (FUNC (tparam)*{tparam <- tparam*} (typ)*{typ <- typ*} typ_ret) = %) [→ next]
+    5. Case (% matches pattern FUNC % % %, let (FUNC (tparam)*{tparam <- tparam*} (typ)*{typ <- typ*} typ_ret) = %)
 
-      1. If let (FUNC id) be val'' matching pattern FUNC %, then [→ next]
+      1. If let (FUNC id) be val'' matching pattern FUNC %, then
 
         1. (Let (`{ ((id_local ':' typDef_local))*{id_local <- id_local*, typDef_local <- typDef_local*} `}) be C.LOCAL.TYP)
 
@@ -4419,19 +4419,19 @@ Arm 1:
 
 Arm 2:
 
-  1. If let optyp of type optyp be typ', then [→ otherwise]
+  1. If let optyp of type optyp be typ', then
 
     1. Case analysis on optyp
 
       1. Case (% matches pattern BOOL)
 
-        1. If let (BOOL b) be val'' matching pattern BOOL %, then [→ otherwise]
+        1. If let (BOOL b) be val'' matching pattern BOOL %, then
 
           1. Return ((OK (BOOL b)) as castRes)
 
-      2. Case (% matches pattern TEXT) [→ otherwise]
+      2. Case (% matches pattern TEXT)
 
-        1. If let (TEXT t) be val'' matching pattern TEXT %, then [→ otherwise]
+        1. If let (TEXT t) be val'' matching pattern TEXT %, then
 
           1. Return ((OK (TEXT t)) as castRes)
 
@@ -4445,7 +4445,7 @@ def $upcasts(C, (typ)*{typ <- typ*}, (val)*{val <- val*})
 
   1. Case (% matches pattern [])
 
-    1. If (((val)*{val <- val*} matches pattern [])), then [→ otherwise]
+    1. If (((val)*{val <- val*} matches pattern [])), then
 
       1. Return ((OK []) as castsRes)
 
@@ -4453,17 +4453,17 @@ def $upcasts(C, (typ)*{typ <- typ*}, (val)*{val <- val*})
 
     1. (Let typ_h :: (typ_t)*{typ_t <- typ_t*} be (typ)*{typ <- typ*})
 
-    2. If (((val)*{val <- val*} matches pattern _ :: _)), then [→ otherwise]
+    2. If (((val)*{val <- val*} matches pattern _ :: _)), then
 
       1. (Let val_h :: (val_t)*{val_t <- val_t*} be (val)*{val <- val*})
 
       2. (Let castRes be $upcast(C, typ_h, val_h)) [→ otherwise]
 
-      3. If let (OK val_cast) of type ok<val> be castRes, then [→ otherwise]
+      3. If let (OK val_cast) of type ok<val> be castRes, then
 
         1. (Let castsRes be $upcasts(C, (typ_t)*{typ_t <- typ_t*}, (val_t)*{val_t <- val_t*})) [→ otherwise]
 
-        2. If let (OK (val_t_cast)*{val_t_cast <- val_t_cast*}) of type ok<val*> be castsRes, then [→ otherwise]
+        2. If let (OK (val_t_cast)*{val_t_cast <- val_t_cast*}) of type ok<val*> be castsRes, then
 
           1. Return ((OK val_cast :: (val_t_cast)*{val_t_cast <- val_t_cast*}) as castsRes)
 
@@ -4485,7 +4485,7 @@ Arm 1:
 
         1. Case (% matches pattern NAT)
 
-          1. If let num of type num be val'', then [→ next]
+          1. If let num of type num be val'', then
 
             1. Case analysis on num (total)
 
@@ -4495,13 +4495,13 @@ Arm 1:
 
               2. Case (% matches pattern INT %, let (INT i) = %)
 
-                1. If let n of type nat be i, then [→ next]
+                1. If let n of type nat be i, then
 
                   1. Return ((OK ((NAT n) as val)) as castRes)
 
         2. Case (% matches pattern INT)
 
-          1. If let num of type num be val'', then [→ next]
+          1. If let num of type num be val'', then
 
             1. Return ((OK (num as val)) as castRes)
 
@@ -4513,23 +4513,23 @@ Arm 1:
 
         1. (Let (typDef')?{typDef' <- typDef'?} be $find_typ(C, id)) [→ next]
 
-        2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then [→ next]
+        2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then
 
           1. (Let ?(typDef) be (typDef')?{typDef' <- typDef'?})
 
-          2. If let (TYP _id (tparam)*{tparam <- tparam*} '=' deftyp) of type definedTypDefn be typDef, then [→ next]
+          2. If let (TYP _id (tparam)*{tparam <- tparam*} '=' deftyp) of type definedTypDefn be typDef, then
 
             1. Case analysis on deftyp (total)
 
               1. Case (% matches pattern ALIAS %, let (ALIAS typ) = %)
 
-                1. If ((|(targ)*{targ <- targ*}| = |(tparam)*{tparam <- tparam*}|)), then [→ next]
+                1. If ((|(targ)*{targ <- targ*}| = |(tparam)*{tparam <- tparam*}|)), then
 
                   1. (Let theta be (`{ ((tparam ':' targ))*{targ <- targ*, tparam <- tparam*} `}))
 
                   2. (Let typRes be $subst_typ(theta, typ)) [→ next]
 
-                  3. If let (OK typ_subst) of type ok<typ> be typRes, then [→ next]
+                  3. If let (OK typ_subst) of type ok<typ> be typRes, then
 
                     1. Return $downcast(C, typ_subst, val'') [→ next]
 
@@ -4555,27 +4555,27 @@ Arm 1:
 
       Arm 2:
 
-        1. If (((targ)*{targ <- targ*} matches pattern [])), then [→ next]
+        1. If (((targ)*{targ <- targ*} matches pattern [])), then
 
-          1. If let (EXT json) be val'' matching pattern EXT %, then [→ next]
+          1. If let (EXT json) be val'' matching pattern EXT %, then
 
             1. (Let (typDef')?{typDef' <- typDef'?} be $find_typ(C, id)) [→ next]
 
-            2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then [→ next]
+            2. If (((typDef')?{typDef' <- typDef'?} matches pattern (_))), then
 
               1. (Let ?(typDef) be (typDef')?{typDef' <- typDef'?})
 
-              2. If ((typDef has type externTypDefn)), then [→ next]
+              2. If ((typDef has type externTypDefn)), then
 
                 1. Return ((OK (EXT json)) as castRes)
 
     3. Case (% matches pattern TUP %, let (TUP (typ)*{typ <- typ*}) = %)
 
-      1. If let (TUP (val)*{val <- val*}) be val'' matching pattern TUP %, then [→ next]
+      1. If let (TUP (val)*{val <- val*}) be val'' matching pattern TUP %, then
 
         1. (Let castsRes be $downcasts(C, (typ)*{typ <- typ*}, (val)*{val <- val*})) [→ next]
 
-        2. If let (OK (val_cast)*{val_cast <- val_cast*}) of type ok<val*> be castsRes, then [→ next]
+        2. If let (OK (val_cast)*{val_cast <- val_cast*}) of type ok<val*> be castsRes, then
 
           1. Return ((OK (TUP (val_cast)*{val_cast <- val_cast*})) as castRes)
 
@@ -4589,39 +4589,39 @@ Arm 1:
 
           Arm 1:
 
-            1. If ((val'' = (OPT ?()))), then [→ next]
+            1. If ((val'' = (OPT ?()))), then
 
               1. Return ((OK (OPT ?())) as castRes)
 
           Arm 2:
 
-            1. If let (OPT (val')?{val' <- val'?}) be val'' matching pattern OPT %, then [→ next]
+            1. If let (OPT (val')?{val' <- val'?}) be val'' matching pattern OPT %, then
 
-              1. If (((val')?{val' <- val'?} matches pattern (_))), then [→ next]
+              1. If (((val')?{val' <- val'?} matches pattern (_))), then
 
                 1. (Let ?(val) be (val')?{val' <- val'?})
 
                 2. (Let castRes be $downcast(C, typ, val)) [→ next]
 
-                3. If let (OK val_cast) of type ok<val> be castRes, then [→ next]
+                3. If let (OK val_cast) of type ok<val> be castRes, then
 
                   1. Return ((OK (OPT ?(val_cast))) as castRes)
 
         2. Case (% matches pattern STAR)
 
-          1. If let (LIST (val)*{val <- val*}) be val'' matching pattern LIST %, then [→ next]
+          1. If let (LIST (val)*{val <- val*}) be val'' matching pattern LIST %, then
 
             1. (Let (typ'')*{typ'' <- typ''*} be $repeat_<typ>(typ, |(val)*{val <- val*}|)) [→ next]
 
             2. (Let castsRes be $downcasts(C, (typ'')*{typ'' <- typ''*}, (val)*{val <- val*})) [→ next]
 
-            3. If let (OK (val_cast)*{val_cast <- val_cast*}) of type ok<val*> be castsRes, then [→ next]
+            3. If let (OK (val_cast)*{val_cast <- val_cast*}) of type ok<val*> be castsRes, then
 
               1. Return ((OK (LIST (val_cast)*{val_cast <- val_cast*})) as castRes)
 
-    5. Case (% matches pattern FUNC % % %, let (FUNC (tparam)*{tparam <- tparam*} (typ)*{typ <- typ*} typ_ret) = %) [→ next]
+    5. Case (% matches pattern FUNC % % %, let (FUNC (tparam)*{tparam <- tparam*} (typ)*{typ <- typ*} typ_ret) = %)
 
-      1. If let (FUNC id) be val'' matching pattern FUNC %, then [→ next]
+      1. If let (FUNC id) be val'' matching pattern FUNC %, then
 
         1. (Let (`{ ((id_local ':' typDef_local))*{id_local <- id_local*, typDef_local <- typDef_local*} `}) be C.LOCAL.TYP)
 
@@ -4633,19 +4633,19 @@ Arm 1:
 
 Arm 2:
 
-  1. If let optyp of type optyp be typ', then [→ otherwise]
+  1. If let optyp of type optyp be typ', then
 
     1. Case analysis on optyp
 
       1. Case (% matches pattern BOOL)
 
-        1. If let (BOOL b) be val'' matching pattern BOOL %, then [→ otherwise]
+        1. If let (BOOL b) be val'' matching pattern BOOL %, then
 
           1. Return ((OK (BOOL b)) as castRes)
 
-      2. Case (% matches pattern TEXT) [→ otherwise]
+      2. Case (% matches pattern TEXT)
 
-        1. If let (TEXT t) be val'' matching pattern TEXT %, then [→ otherwise]
+        1. If let (TEXT t) be val'' matching pattern TEXT %, then
 
           1. Return ((OK (TEXT t)) as castRes)
 
@@ -4659,7 +4659,7 @@ def $downcasts(C, (typ)*{typ <- typ*}, (val)*{val <- val*})
 
   1. Case (% matches pattern [])
 
-    1. If (((val)*{val <- val*} matches pattern [])), then [→ otherwise]
+    1. If (((val)*{val <- val*} matches pattern [])), then
 
       1. Return ((OK []) as castsRes)
 
@@ -4667,17 +4667,17 @@ def $downcasts(C, (typ)*{typ <- typ*}, (val)*{val <- val*})
 
     1. (Let typ_h :: (typ_t)*{typ_t <- typ_t*} be (typ)*{typ <- typ*})
 
-    2. If (((val)*{val <- val*} matches pattern _ :: _)), then [→ otherwise]
+    2. If (((val)*{val <- val*} matches pattern _ :: _)), then
 
       1. (Let val_h :: (val_t)*{val_t <- val_t*} be (val)*{val <- val*})
 
       2. (Let castRes be $downcast(C, typ_h, val_h)) [→ otherwise]
 
-      3. If let (OK val_cast) of type ok<val> be castRes, then [→ otherwise]
+      3. If let (OK val_cast) of type ok<val> be castRes, then
 
         1. (Let castsRes be $downcasts(C, (typ_t)*{typ_t <- typ_t*}, (val_t)*{val_t <- val_t*})) [→ otherwise]
 
-        2. If let (OK (val_t_cast)*{val_t_cast <- val_t_cast*}) of type ok<val*> be castsRes, then [→ otherwise]
+        2. If let (OK (val_t_cast)*{val_t_cast <- val_t_cast*}) of type ok<val*> be castsRes, then
 
           1. Return ((OK val_cast :: (val_t_cast)*{val_t_cast <- val_t_cast*}) as castsRes)
 
@@ -4705,33 +4705,33 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
   2. Case (% has type tupExp, let (TUP (typedExp)*{typedExp <- typedExp*}) = %)
 
-    1. If let (TUP (val)*{val <- val*}) be val''' matching pattern TUP %, then [→ otherwise]
+    1. If let (TUP (val)*{val <- val*}) be val''' matching pattern TUP %, then
 
       1. Group tup: C |- (((TUP (typedExp)*{typedExp <- typedExp*}) as exp) '#' typ) := (TUP (val)*{val <- val*}) : %
 
         1. (Assign_exps: C |- (typedExp)*{typedExp <- typedExp*} := (val)*{val <- val*} : assignRes) [→ otherwise]
 
-        2. If let (OK C_assign) of type ok<ctx> be assignRes, then [→ otherwise]
+        2. If let (OK C_assign) of type ok<ctx> be assignRes, then
 
           1. Result in: % |- % := % : ((OK C_assign) as assignRes)
 
   3. Case (% has type injExp, let (INJ (mixop (typedExp)*{typedExp <- typedExp*})) = %)
 
-    1. If let (INJ (mixop' (val)*{val <- val*})) be val''' matching pattern INJ %, then [→ otherwise]
+    1. If let (INJ (mixop' (val)*{val <- val*})) be val''' matching pattern INJ %, then
 
-      1. If ((mixop = mixop')), then [→ otherwise]
+      1. If ((mixop = mixop')), then
 
         1. Group inj: C |- (((INJ (mixop (typedExp)*{typedExp <- typedExp*})) as exp) '#' typ) := (INJ (mixop (val)*{val <- val*})) : %
 
           1. (Assign_exps: C |- (typedExp)*{typedExp <- typedExp*} := (val)*{val <- val*} : assignRes) [→ otherwise]
 
-          2. If let (OK C_assign) of type ok<ctx> be assignRes, then [→ otherwise]
+          2. If let (OK C_assign) of type ok<ctx> be assignRes, then
 
             1. Result in: % |- % := % : ((OK C_assign) as assignRes)
 
   4. Case (% has type strExp, let (STR (expField)*{expField <- expField*}) = %)
 
-    1. If let (STR (valField)*{valField <- valField*}) be val''' matching pattern STR %, then [→ otherwise]
+    1. If let (STR (valField)*{valField <- valField*}) be val''' matching pattern STR %, then
 
       1. Group str: C |- (((STR (expField)*{expField <- expField*}) as exp) '#' typ) := (STR (valField)*{valField <- valField*}) : %
 
@@ -4739,19 +4739,19 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
         2. (Let (atom' typedExp) be expField)*{expField <- expField*, atom' -> atom'*, typedExp -> typedExp*}
 
-        3. If ((|(atom)*{atom <- atom*}| = |(atom')*{atom' <- atom'*}|)), then [→ otherwise]
+        3. If ((|(atom)*{atom <- atom*}| = |(atom')*{atom' <- atom'*}|)), then
 
-          1. If ((atom' = atom))*{atom <- atom*, atom' <- atom'*}, then [→ otherwise]
+          1. If ((atom' = atom))*{atom <- atom*, atom' <- atom'*}, then
 
             1. (Assign_exps: C |- (typedExp)*{typedExp <- typedExp*} := (val)*{val <- val*} : assignRes) [→ otherwise]
 
-            2. If let (OK C_assign) of type ok<ctx> be assignRes, then [→ otherwise]
+            2. If let (OK C_assign) of type ok<ctx> be assignRes, then
 
               1. Result in: % |- % := % : ((OK C_assign) as assignRes)
 
   5. Case (% has type optExp, let (OPT (typedExp')?{typedExp' <- typedExp'?}) = %)
 
-    1. If let (OPT (val')?{val' <- val'?}) be val''' matching pattern OPT %, then [→ otherwise]
+    1. If let (OPT (val')?{val' <- val'?}) be val''' matching pattern OPT %, then
 
       1. Group opt: C |- (((OPT (typedExp')?{typedExp' <- typedExp'?}) as exp) '#' typ) := (OPT (val')?{val' <- val'?}) : %
 
@@ -4761,39 +4761,39 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
             1. (Let ?(typedExp) be (typedExp')?{typedExp' <- typedExp'?})
 
-            2. If (((val')?{val' <- val'?} matches pattern (_))), then [→ otherwise]
+            2. If (((val')?{val' <- val'?} matches pattern (_))), then
 
               1. (Let ?(val) be (val')?{val' <- val'?})
 
               2. (Assign_exp: C |- typedExp := val : assignRes) [→ otherwise]
 
-              3. If let (OK C_assign) of type ok<ctx> be assignRes, then [→ otherwise]
+              3. If let (OK C_assign) of type ok<ctx> be assignRes, then
 
                 1. Result in: % |- % := % : ((OK C_assign) as assignRes)
 
           2. Case (% matches pattern ())
 
-            1. If (((val')?{val' <- val'?} matches pattern ())), then [→ otherwise]
+            1. If (((val')?{val' <- val'?} matches pattern ())), then
 
               1. Result in: % |- % := % : ((OK C) as assignRes)
 
   6. Case (% has type listExp, let (LIST (typedExp)*{typedExp <- typedExp*}) = %)
 
-    1. If let (LIST (val)*{val <- val*}) be val''' matching pattern LIST %, then [→ otherwise]
+    1. If let (LIST (val)*{val <- val*}) be val''' matching pattern LIST %, then
 
       1. Group list: C |- (((LIST (typedExp)*{typedExp <- typedExp*}) as exp) '#' typ) := (LIST (val)*{val <- val*}) : %
 
         1. (Assign_exps: C |- (typedExp)*{typedExp <- typedExp*} := (val)*{val <- val*} : assignRes) [→ otherwise]
 
-        2. If let (OK C_assign) of type ok<ctx> be assignRes, then [→ otherwise]
+        2. If let (OK C_assign) of type ok<ctx> be assignRes, then
 
           1. Result in: % |- % := % : ((OK C_assign) as assignRes)
 
   7. Case (% has type consExp, let (CONS typedExp_h typedExp_t) = %)
 
-    1. If let (LIST (val)*{val <- val*}) be val''' matching pattern LIST %, then [→ otherwise]
+    1. If let (LIST (val)*{val <- val*}) be val''' matching pattern LIST %, then
 
-      1. If (((val)*{val <- val*} matches pattern _ :: _)), then [→ otherwise]
+      1. If (((val)*{val <- val*} matches pattern _ :: _)), then
 
         1. (Let val_h :: (val_t)*{val_t <- val_t*} be (val)*{val <- val*})
 
@@ -4801,15 +4801,15 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
           1. (Assign_exp: C |- typedExp_h := val_h : assignRes) [→ otherwise]
 
-          2. If let (OK C_h) of type ok<ctx> be assignRes, then [→ otherwise]
+          2. If let (OK C_h) of type ok<ctx> be assignRes, then
 
             1. (Assign_exp: C_h |- typedExp_t := (LIST (val_t)*{val_t <- val_t*}) : assignRes') [→ otherwise]
 
-            2. If let (OK C_t) of type ok<ctx> be assignRes', then [→ otherwise]
+            2. If let (OK C_t) of type ok<ctx> be assignRes', then
 
               1. Result in: % |- % := % : ((OK C_t) as assignRes)
 
-  8. Case (% has type iterExp, let iterExp = %) [→ otherwise]
+  8. Case (% has type iterExp, let iterExp = %)
 
     1. Group iter: C |- ((iterExp as exp) '#' typ) := val''' : %
 
@@ -4819,7 +4819,7 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
         1. (Let (varr')?{varr' <- varr'?} be $is_iter_on_var(((iterExp as exp) '#' typ))) [→ next]
 
-        2. If (((varr')?{varr' <- varr'?} matches pattern (_))), then [→ next]
+        2. If (((varr')?{varr' <- varr'?} matches pattern (_))), then
 
           1. (Let ?(varr) be (varr')?{varr' <- varr'?})
 
@@ -4829,13 +4829,13 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
       Arm 2:
 
-        1. If ((val''' = (OPT ?()))), then [→ next]
+        1. If ((val''' = (OPT ?()))), then
 
           1. If (($is_iter_on_var(((iterExp as exp) '#' typ)) matches pattern ())), then [→ next]
 
             1. (Let (ITER typedExp (iter (vari)*{vari <- vari*})) be iterExp)
 
-            2. If ((iter matches pattern QUEST)), then [→ next]
+            2. If ((iter matches pattern QUEST)), then
 
               1. (Let vari_iter be $iterate_vari(vari, [(QUEST)]))*{vari <- vari*, vari_iter -> vari_iter*} [→ next]
 
@@ -4851,7 +4851,7 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
           1. Case (% matches pattern OPT %, let (OPT (val')?{val' <- val'?}) = %)
 
-            1. If (((val')?{val' <- val'?} matches pattern (_))), then [→ otherwise]
+            1. If (((val')?{val' <- val'?} matches pattern (_))), then
 
               1. (Let ?(val) be (val')?{val' <- val'?})
 
@@ -4859,17 +4859,17 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                 1. (Let (ITER typedExp (iter (vari)*{vari <- vari*})) be iterExp)
 
-                2. If ((iter matches pattern QUEST)), then [→ otherwise]
+                2. If ((iter matches pattern QUEST)), then
 
                   1. (Assign_exp: C |- typedExp := val : assignRes) [→ otherwise]
 
-                  2. If let (OK C_body) of type ok<ctx> be assignRes, then [→ otherwise]
+                  2. If let (OK C_body) of type ok<ctx> be assignRes, then
 
                     1. (Let vari_iter be $iterate_vari(vari, [(QUEST)]))*{vari <- vari*, vari_iter -> vari_iter*} [→ otherwise]
 
                     2. (Let (val'')?{val'' <- val''?} be $find_vari(C_body, vari))*{vari <- vari*, val''? -> val''?*} [→ otherwise]
 
-                    3. If (((val'')?{val'' <- val''?} matches pattern (_)))*{val''? <- val''?*}, then [→ otherwise]
+                    3. If (((val'')?{val'' <- val''?} matches pattern (_)))*{val''? <- val''?*}, then
 
                       1. (Let ?(val_sub) be (val'')?{val'' <- val''?})*{val''? <- val''?*, val_sub -> val_sub*}
 
@@ -4877,19 +4877,19 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                       3. Result in: % |- % := % : ((OK C_assign) as assignRes)
 
-          2. Case (% matches pattern LIST %, let (LIST (val)*{val <- val*}) = %) [→ otherwise]
+          2. Case (% matches pattern LIST %, let (LIST (val)*{val <- val*}) = %)
 
             1. If (($is_iter_on_var(((iterExp as exp) '#' typ)) matches pattern ())), then [→ otherwise]
 
               1. (Let (ITER typedExp (iter (vari)*{vari <- vari*})) be iterExp)
 
-              2. If ((iter matches pattern STAR)), then [→ otherwise]
+              2. If ((iter matches pattern STAR)), then
 
                 1. (Let C_local be C[LOCAL.VAL = $empty_map<varr, val>]) [→ otherwise]
 
                 2. (Assign_exp: C_local |- typedExp := val : assignRes)*{val <- val*, assignRes -> assignRes*} [→ otherwise]
 
-                3. If ((assignRes has type ok<ctx>))*{assignRes <- assignRes*}, then [→ otherwise]
+                3. If ((assignRes has type ok<ctx>))*{assignRes <- assignRes*}, then
 
                   1. (Let (OK C_sub) be (assignRes as ok<ctx>))*{assignRes <- assignRes*, C_sub -> C_sub*}
 
@@ -4897,7 +4897,7 @@ relation Assign_exp: C |- typedExp'' := val''' : %
 
                   3. (Let ((val')*{val' <- val'*})?{val'* <- val'*?} be $finds_vari((C_sub)*{C_sub <- C_sub*}, vari))*{vari <- vari*, val'*? -> val'*?*} [→ otherwise]
 
-                  4. If ((((val')*{val' <- val'*})?{val'* <- val'*?} matches pattern (_)))*{val'*? <- val'*?*}, then [→ otherwise]
+                  4. If ((((val')*{val' <- val'*})?{val'* <- val'*?} matches pattern (_)))*{val'*? <- val'*?*}, then
 
                     1. (Let ?((val_sub)*{val_sub <- val_sub*}) be ((val')*{val' <- val'*})?{val'* <- val'*?})*{val'*? <- val'*?*, val_sub* -> val_sub**}
 
@@ -4921,7 +4921,7 @@ relation Assign_exps: C |- (typedExp)*{typedExp <- typedExp*} := (val)*{val <- v
 
     1. Case (% matches pattern [])
 
-      1. If (((val)*{val <- val*} matches pattern [])), then [→ otherwise]
+      1. If (((val)*{val <- val*} matches pattern [])), then
 
         1. Result in: % |- % := % : ((OK C) as assignRes)
 
@@ -4929,17 +4929,17 @@ relation Assign_exps: C |- (typedExp)*{typedExp <- typedExp*} := (val)*{val <- v
 
       1. (Let typedExp_h :: (typedExp_t)*{typedExp_t <- typedExp_t*} be (typedExp)*{typedExp <- typedExp*})
 
-      2. If (((val)*{val <- val*} matches pattern _ :: _)), then [→ otherwise]
+      2. If (((val)*{val <- val*} matches pattern _ :: _)), then
 
         1. (Let val_h :: (val_t)*{val_t <- val_t*} be (val)*{val <- val*})
 
         2. (Assign_exp: C |- typedExp_h := val_h : assignRes) [→ otherwise]
 
-        3. If let (OK C_h) of type ok<ctx> be assignRes, then [→ otherwise]
+        3. If let (OK C_h) of type ok<ctx> be assignRes, then
 
           1. (Assign_exps: C_h |- (typedExp_t)*{typedExp_t <- typedExp_t*} := (val_t)*{val_t <- val_t*} : assignRes') [→ otherwise]
 
-          2. If let (OK C_t) of type ok<ctx> be assignRes', then [→ otherwise]
+          2. If let (OK C_t) of type ok<ctx> be assignRes', then
 
             1. Result in: % |- % := % : ((OK C_t) as assignRes)
 
@@ -4959,13 +4959,13 @@ relation Assign_arg: C |- arg := val : %
 
       1. (Assign_exp: C |- typedExp := val : assignRes) [→ otherwise]
 
-      2. If let (OK C_assign) of type ok<ctx> be assignRes, then [→ otherwise]
+      2. If let (OK C_assign) of type ok<ctx> be assignRes, then
 
         1. Result in: % |- % := % : ((OK C_assign) as assignRes)
 
   2. Case (% has type funArg, let (FUN id) = %)
 
-    1. If let (FUNC id_global) be val matching pattern FUNC %, then [→ otherwise]
+    1. If let (FUNC id_global) be val matching pattern FUNC %, then
 
       1. Group fun: C |- ((FUN id) as arg) := (FUNC id_global) : %
 
@@ -4987,7 +4987,7 @@ relation Assign_args: C |- (arg)*{arg <- arg*} := (val)*{val <- val*} : %
 
     1. Case (% matches pattern [])
 
-      1. If (((val)*{val <- val*} matches pattern [])), then [→ otherwise]
+      1. If (((val)*{val <- val*} matches pattern [])), then
 
         1. Result in: % |- % := % : ((OK C) as assignRes)
 
@@ -4995,17 +4995,17 @@ relation Assign_args: C |- (arg)*{arg <- arg*} := (val)*{val <- val*} : %
 
       1. (Let arg_h :: (arg_t)*{arg_t <- arg_t*} be (arg)*{arg <- arg*})
 
-      2. If (((val)*{val <- val*} matches pattern _ :: _)), then [→ otherwise]
+      2. If (((val)*{val <- val*} matches pattern _ :: _)), then
 
         1. (Let val_h :: (val_t)*{val_t <- val_t*} be (val)*{val <- val*})
 
         2. (Assign_arg: C |- arg_h := val_h : assignRes) [→ otherwise]
 
-        3. If let (OK C_h) of type ok<ctx> be assignRes, then [→ otherwise]
+        3. If let (OK C_h) of type ok<ctx> be assignRes, then
 
           1. (Assign_args: C_h |- (arg_t)*{arg_t <- arg_t*} := (val_t)*{val_t <- val_t*} : assignRes') [→ otherwise]
 
-          2. If let (OK C_t) of type ok<ctx> be assignRes', then [→ otherwise]
+          2. If let (OK C_t) of type ok<ctx> be assignRes', then
 
             1. Result in: % |- % := % : ((OK C_t) as assignRes)
 
@@ -5023,7 +5023,7 @@ relation Eval_clause: C |- clause `( (val)*{val <- val*} `) : %
 
   2. (Assign_args: C |- (arg)*{arg <- arg*} := (val)*{val <- val*} : assignRes) [→ otherwise]
 
-  3. If let (OK C_assign) of type ok<ctx> be assignRes, then [→ otherwise]
+  3. If let (OK C_assign) of type ok<ctx> be assignRes, then
 
     1. (Eval_prems: C_assign |- (prem)*{prem <- prem*} : premRes) [→ otherwise]
 
@@ -5037,7 +5037,7 @@ relation Eval_clause: C |- clause `( (val)*{val <- val*} `) : %
 
         1. (Eval_exp: C_prem |- typedExp_out : expRes) [→ otherwise]
 
-        2. If let funcRes of type funcRes be expRes, then [→ otherwise]
+        2. If let funcRes of type funcRes be expRes, then
 
           1. Result in: % |- % `( % `) : funcRes
 
@@ -5071,11 +5071,11 @@ relation Eval_clauses: C |- (clause)*{clause <- clause*} `( (val)*{val <- val*} 
 
           2. Result in: % |- % `( % `) : funcRes
 
-        2. Case (% has type ok<val>, let (OK val_out) = %) [→ otherwise]
+        2. Case (% has type ok<val>, let (OK val_out) = %)
 
           1. (Eval_clauses_on_ok: C |- (clause_t)*{clause_t <- clause_t*} `( (val)*{val <- val*} `) : unitRes) [→ otherwise]
 
-          2. If ((unitRes matches pattern OK)), then [→ otherwise]
+          2. If ((unitRes matches pattern OK)), then
 
             1. Result in: % |- % `( % `) : ((OK val_out) as funcRes)
 
@@ -5105,7 +5105,7 @@ relation Eval_clauses_on_ok: C |- (clause)*{clause <- clause*} `( (val)*{val <- 
 
       Arm 1:
 
-        1. If let unmatch of type unmatch be funcRes, then [→ next]
+        1. If let unmatch of type unmatch be funcRes, then
 
           1. (Eval_clauses_on_ok: C |- (clause_t)*{clause_t <- clause_t*} `( (val)*{val <- val*} `) : unitRes) [→ next]
 
@@ -5129,7 +5129,7 @@ relation Eval_tblrow: C |- tblRow `( (val)*{val <- val*} `) : %
 
   3. (Assign_args: C_callee |- (arg)*{arg <- arg*} := (val)*{val <- val*} : assignRes) [→ otherwise]
 
-  4. If let (OK C_callee_assign) of type ok<ctx> be assignRes, then [→ otherwise]
+  4. If let (OK C_callee_assign) of type ok<ctx> be assignRes, then
 
     1. (Eval_prems: C_callee_assign |- (prem)*{prem <- prem*} : premRes) [→ otherwise]
 
@@ -5143,7 +5143,7 @@ relation Eval_tblrow: C |- tblRow `( (val)*{val <- val*} `) : %
 
         1. (Eval_exp: C_callee_prem |- typedExp_out : expRes) [→ otherwise]
 
-        2. If let funcRes of type funcRes be expRes, then [→ otherwise]
+        2. If let funcRes of type funcRes be expRes, then
 
           1. Result in: % |- % `( % `) : funcRes
 
@@ -5173,7 +5173,7 @@ relation Eval_tblrows: C |- (tblRow)*{tblRow <- tblRow*} `( (val)*{val <- val*} 
 
       Arm 1:
 
-        1. If let unmatch of type unmatch be funcRes', then [→ next]
+        1. If let unmatch of type unmatch be funcRes', then
 
           1. (Eval_tblrows: C |- (tblRow_t)*{tblRow_t <- tblRow_t*} `( (val)*{val <- val*} `) : funcRes) [→ next]
 
@@ -5203,7 +5203,7 @@ relation Call_defined_func: C |- definedFuncDefn `< (typ)*{typ <- typ*} `> `( (v
 
   1. (Let (FUNC _id (tparam)*{tparam <- tparam*} (_param)*{_param <- _param*} ':' _typ '=' (clause)*{clause <- clause*} (elsClause)?{elsClause <- elsClause?}) be definedFuncDefn)
 
-  2. If ((|(tparam)*{tparam <- tparam*}| = |(typ)*{typ <- typ*}|)), then [→ otherwise]
+  2. If ((|(tparam)*{tparam <- tparam*}| = |(typ)*{typ <- typ*}|)), then
 
     1. (Let tdenv be (`{ ((tparam ':' ((TYP tparam [] '=' (ALIAS typ)) as typDef)))*{tparam <- tparam*, typ <- typ*} `}))
 
@@ -5215,7 +5215,7 @@ relation Call_defined_func: C |- definedFuncDefn `< (typ)*{typ <- typ*} `> `( (v
 
     Arm 1:
 
-      1. If let unmatch of type unmatch be funcRes', then [→ next]
+      1. If let unmatch of type unmatch be funcRes', then
 
         1. (Eval_clause: C_callee |- elsClause `( (val)*{val <- val*} `) : funcRes_els)?{elsClause <- elsClause?, funcRes_els -> funcRes_els?} [→ next]
 
@@ -5225,7 +5225,7 @@ relation Call_defined_func: C |- definedFuncDefn `< (typ)*{typ <- typ*} `> `( (v
 
     Arm 2:
 
-      1. If ((funcRes' =/= ((UNMATCH) as funcRes))), then [→ otherwise]
+      1. If ((funcRes' =/= ((UNMATCH) as funcRes))), then
 
         1. Result in: % |- % `< % `> `( % `) : funcRes'
 
@@ -5243,7 +5243,7 @@ relation Eval_rul: C |- rul `( (val)*{val <- val*} `) : %
 
   1. (Assign_exps: C |- (typedExp)*{typedExp <- typedExp*} := (val)*{val <- val*} : assignRes) [→ otherwise]
 
-  2. If let (OK C_assign) of type ok<ctx> be assignRes, then [→ otherwise]
+  2. If let (OK C_assign) of type ok<ctx> be assignRes, then
 
     1. (Eval_prems: C_assign |- (prem)*{prem <- prem*} : premRes) [→ otherwise]
 
@@ -5257,7 +5257,7 @@ relation Eval_rul: C |- rul `( (val)*{val <- val*} `) : %
 
         1. (Eval_exps: C_prem |- (typedExp')*{typedExp' <- typedExp'*} : expsRes) [→ otherwise]
 
-        2. If let relRes of type relRes be expsRes, then [→ otherwise]
+        2. If let relRes of type relRes be expsRes, then
 
           1. Result in: % |- % `( % `) : relRes
 
@@ -5291,11 +5291,11 @@ relation Eval_ruls: C |- (rul)*{rul <- rul*} `( (val)*{val <- val*} `) : %
 
           2. Result in: % |- % `( % `) : relRes
 
-        2. Case (% has type ok<val*>, let (OK (val_out)*{val_out <- val_out*}) = %) [→ otherwise]
+        2. Case (% has type ok<val*>, let (OK (val_out)*{val_out <- val_out*}) = %)
 
           1. (Eval_ruls_on_ok: C |- (rul_t)*{rul_t <- rul_t*} `( (val)*{val <- val*} `) : unitRes) [→ otherwise]
 
-          2. If ((unitRes matches pattern OK)), then [→ otherwise]
+          2. If ((unitRes matches pattern OK)), then
 
             1. Result in: % |- % `( % `) : ((OK (val_out)*{val_out <- val_out*}) as relRes)
 
@@ -5325,7 +5325,7 @@ relation Eval_ruls_on_ok: C |- (rul)*{rul <- rul*} `( (val)*{val <- val*} `) : %
 
       Arm 1:
 
-        1. If let unmatch of type unmatch be relRes, then [→ next]
+        1. If let unmatch of type unmatch be relRes, then
 
           1. (Eval_ruls_on_ok: C |- (rul_t)*{rul_t <- rul_t*} `( (val)*{val <- val*} `) : unitRes) [→ next]
 
@@ -5355,7 +5355,7 @@ relation Call_defined_rel: C |- definedRelDefn `( (val)*{val <- val*} `) : %
 
   Arm 1:
 
-    1. If let unmatch of type unmatch be relRes', then [→ next]
+    1. If let unmatch of type unmatch be relRes', then
 
       1. (Let rul_els be $rul_of_elsgroup(elsGroup))?{elsGroup <- elsGroup?, rul_els -> rul_els?} [→ next]
 
@@ -5367,7 +5367,7 @@ relation Call_defined_rel: C |- definedRelDefn `( (val)*{val <- val*} `) : %
 
   Arm 2:
 
-    1. If ((relRes' =/= ((UNMATCH) as relRes))), then [→ otherwise]
+    1. If ((relRes' =/= ((UNMATCH) as relRes))), then
 
       1. Result in: % |- % `( % `) : relRes'
 
