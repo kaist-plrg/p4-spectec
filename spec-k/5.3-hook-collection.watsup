@@ -43,8 +43,7 @@ def $hook(D, "LIST.updateAll", sort,
   -- if n = $nat_of($text_to_int(t_i))
   -- if n_a = $(n + |term_s*|)
   -- if n_r = $nat_of($(|term*| - n_a))
-;; n_l elements from n on replaced by term_v; out of range fails, as for
-;; updateAll (hook_LIST_fill does not check it when n or n_l is 0)
+;; n_l elements from n on replaced by term_v; out of range fails (LLVM: unchecked when n is 0)
 def $hook(D, "LIST.fill", sort,
   ([LIST sort_l term*, DV sort_i t_i, DV sort_n t_n, term_v]))
   = OK (LIST sort (term*[0 : n] ++ $repeat_<term>(term_v, n_l) ++ term*[n_a : n_r]))
@@ -52,16 +51,13 @@ def $hook(D, "LIST.fill", sort,
   -- if n_l = $nat_of($text_to_int(t_n))
   -- if n_a = $(n + n_l)
   -- if n_r = $nat_of($(|term*| - n_a))
-;; Nothing to fill from past the end: the list as it is, as hook_LIST_fill
-;; checks the range only when n and n_l are both non-zero
+;; Nothing to fill from past the end: the list as it is
 def $hook(D, "LIST.fill", sort, ([LIST sort_l term*, DV sort_i t_i, DV sort_n "0", term_v]))
   = OK (LIST sort term*)
   -- if n = $nat_of($text_to_int(t_i))
   -- if $(n > |term*|)
 
-;; Machine-integer indices and sizes: an MInt is its value, as an Int is, so
-;; these are get, update, and size (the LLVM backend reads a 64-bit index, and
-;; cuts a 256-bit one to 64 bits, which no list reaches)
+;; Machine-integer indices and sizes: an MInt is its value, so these are get, update, and size
 def $hook(D, "LIST.getMInt", sort, term*) = $hook(D, "LIST.get", sort, term*)
 def $hook(D, "LIST.updateMInt", sort, term*) = $hook(D, "LIST.update", sort, term*)
 def $hook(D, "LIST.sizeMInt", sort, term*) = $hook(D, "LIST.size", sort, term*)
@@ -135,8 +131,7 @@ def $hook(D, "MAP.updateAll", sort, ([MAP sort_1 M_1, MAP sort_2 M_2]))
   = OK (MAP sort $union_set<pair<term, term>>($remove_keys(M_1, term_k*), M_2))
   -- if `{ (term_k ':' term_v)* `} = M_2
 
-;;; keys_list, values: the keys and the values in the order of the map here,
-;;; the order of its hash trie in the LLVM backend, as for Set2List
+;;; keys_list, values: in the order of the map (LLVM: its hash trie)
 
 def $hook(D, "MAP.keys_list", sort, ([MAP sort_m `{ (term_k ':' term_v)* `}]))
   = OK (LIST sort term_k*)
@@ -175,10 +170,8 @@ def $hook(D, "SET.set2list", sort, ([SET sort_s `{ term* `}]))
 def $hook(D, "SET.list2set", sort, ([LIST sort_l term*]))
   = OK (SET sort $sorted_set<term>(`{ term* `}))
 
-;;; RANGEMAP: maps from ranges of Int keys, as domains.md and the LLVM backend
-;;; have them (only Int keys, "due to limitations of the underlying ordering
-;;; function"). Inserting cuts the ranges it overlaps and merges those it
-;;; touches with the same value.
+;;; RANGEMAP: maps from ranges of Int keys
+;;; Inserting cuts the ranges it overlaps and merges those it touches with the same value
 
 dec $imin(int, int) : int
 def $imin(i_1, i_2) = i_1

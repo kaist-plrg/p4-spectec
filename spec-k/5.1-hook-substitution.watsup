@@ -158,10 +158,7 @@ def $subst(D, sort_x, t_x, sort_v, term_v, APP symid sort* term*)
   -- Apply: D |- symid sort* term'* : result
 ;;; domain values
 def $subst(D, sort_x, t_x, sort_v, term_v, DV sort t) = OK (DV sort t)
-;;; collections, as the LLVM backend's substitution goes into them
-;;; (runtime/meta/substitution.cpp): each element of a list or a set, elements
-;;; that become equal one element of the set, and each value of a map or a
-;;; range map, but not its keys; adjacent ranges whose values become equal merge
+;;; collections: each element of a list or a set, and each value of a map or a range map
 def $subst(D, sort_x, t_x, sort_v, term_v, LIST sort term*) = OK (LIST sort term'*)
   -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v, term*)
 def $subst(D, sort_x, t_x, sort_v, term_v, SET sort `{ term* `})

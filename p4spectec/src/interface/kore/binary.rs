@@ -124,7 +124,6 @@ fn pop_sorts(stack: &mut Vec<Item>, n: usize) -> Result<Vec<Sort>> {
         .collect()
 }
 
-/// Decodes one binary KORE pattern.
 /// A sort by its name and arguments; a name cut from a sort's text is read
 /// as that sort.
 fn sort_named(name: String, sorts: Vec<Sort>) -> Result<Sort> {
@@ -136,6 +135,7 @@ fn sort_named(name: String, sorts: Vec<Sort>) -> Result<Sort> {
     Ok(Sort::Sort(name, sorts))
 }
 
+/// Decodes one binary KORE pattern.
 pub fn decode(src: &[u8]) -> Result<Pattern> {
     if !src.starts_with(MAGIC) || src.len() < 11 {
         return Err("not binary KORE".to_owned());
