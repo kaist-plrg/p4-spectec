@@ -52,6 +52,12 @@ def $hook(D, "LIST.fill", sort,
   -- if n_l = $nat_of($text_to_int(t_n))
   -- if n_a = $(n + n_l)
   -- if n_r = $nat_of($(|term*| - n_a))
+;; Nothing to fill from past the end: the list as it is, as hook_LIST_fill
+;; checks the range only when n and n_l are both non-zero
+def $hook(D, "LIST.fill", sort, ([LIST sort_l term*, DV sort_i t_i, DV sort_n "0", term_v]))
+  = OK (LIST sort term*)
+  -- if n = $nat_of($text_to_int(t_i))
+  -- if $(n > |term*|)
 
 ;; Machine-integer indices and sizes: an MInt is its value, as an Int is, so
 ;; these are get, update, and size (the LLVM backend reads a 64-bit index, and

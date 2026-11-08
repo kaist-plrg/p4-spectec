@@ -45,10 +45,12 @@ module COLLECTION-HOOKS
        <out> _ => ListItem(values(I |-> 1))
                   ListItem(sum(values(I |-> 1 (I +Int 1) |-> 2 (I +Int 2) |-> 3))) </out>
 
-  // fillList(L, index, length, value): inside the list, and of length 0
+  // fillList(L, index, length, value): inside the list, of length 0, and of
+  // length 0 past the end
   rule <k> fill(I) => .K </k>
        <out> _ => ListItem(fillList(ListItem(0) ListItem(0) ListItem(0) ListItem(0), I, 2, 9))
-                  ListItem(fillList(ListItem(0), I -Int 1, 0, 9)) </out>
+                  ListItem(fillList(ListItem(0), I -Int 1, 0, 9))
+                  ListItem(fillList(ListItem(0), I +Int 4, 0, 9)) </out>
 
   // List2Set: duplicates go
   rule <k> list2set(I) => .K </k>
