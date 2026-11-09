@@ -6,13 +6,16 @@ ifeq ($(filter /%,$(TARGET_DIR)),)
 TARGET_DIR := $(CURDIR)/$(TARGET_DIR)
 endif
 
-.PHONY: build release debug fmt fmt-check lint rustdoc clean
+.PHONY: build release debug stat fmt fmt-check lint rustdoc clean
 
 debug:
 	$(CARGO) build --locked --bin p4spectec --target-dir "$(TARGET_DIR)"
 
 build release:
 	$(CARGO) build --locked --release --bin p4spectec --target-dir "$(TARGET_DIR)"
+
+stat:
+	$(CARGO) build --locked --release --bin stat --target-dir "$(TARGET_DIR)"
 
 fmt:
 	$(CARGO) fmt
