@@ -4,7 +4,8 @@
 //! on a simulator built from the configuration's P4 tower,
 //! and compares every pair's outcome with the group's expected file for that suite.
 //! `split` writes the group folders that those exclusions name,
-//! dealing each suite's pairs not excluded by `split.excludes` over the groups in turn.
+//! dealing each suite's pairs not excluded by `split.excludes` over the groups in turn,
+//! and checks that the registered groups run each of those pairs exactly once.
 //! Collection and execution are copies of the main driver's `sim`,
 //! whose worker side `sim::serve_simulator` answers the requests.
 //! With a timeout, a worker runs each test instead.
@@ -237,6 +238,7 @@ pub fn run(
 ///
 /// Each suite's pairs not excluded by `split.excludes`, numbered per suite in pair order,
 /// go to the groups in turn, so a suite's groups differ in size by at most one.
+/// Then checks the registered groups with `check_groups`.
 pub fn split() -> Result<()> {
     let registration: Registration = harness::load("metacirc/sim-group")?;
     let split = &registration.split;
@@ -266,7 +268,58 @@ pub fn split() -> Result<()> {
             eprintln!("{}: {} tests", path.display(), group.len());
         }
     }
-    Ok(())
+    check_groups(&registration)
+}
+
+/// Checks that the registered groups together run every pair
+/// not excluded by `split.excludes`, each in exactly one group, and no other pair.
+fn check_groups(registration: &Registration) -> Result<()> {
+    let excludes_split = collect_excludes(&registration.split.excludes)?;
+    let excludes_groups = registration
+        .groups
+        .iter()
+        .map(|group| Ok((group.name.as_str(), collect_excludes(&group.excludes)?)))
+        .collect::<Result<Vec<_>>>()?;
+    let mut problems = Vec::new();
+    for suite in &registration.suites {
+        let pairs = collect_pairs(suite, &BTreeSet::new())?;
+        for pair in &pairs {
+            let names = excludes_groups
+                .iter()
+                .filter(|(_, excludes)| !excludes_pair(excludes, &pair.path_p4, &pair.path_stf))
+                .map(|(name, _)| *name)
+                .collect::<Vec<_>>();
+            let kept = !excludes_pair(&excludes_split, &pair.path_p4, &pair.path_stf);
+            let problem = match (kept, names.as_slice()) {
+                (true, [_]) | (false, []) => continue,
+                (true, []) => "run by no group".to_owned(),
+                (true, _) => format!("run by groups {}", names.join(", ")),
+                (false, _) => format!("excluded by the split but run by groups {}", names.join(", ")),
+            };
+            problems.push(format!(
+                "{}: {} {}: {problem}",
+                suite.name,
+                pair.path_p4.display(),
+                pair.path_stf.display()
+            ));
+        }
+    }
+    if problems.is_empty() {
+        eprintln!("groups cover every pair once over {} suites", registration.suites.len());
+        return Ok(());
+    }
+    Err(Error::from(format!(
+        "{} pairs not run by exactly one group:\n{}",
+        problems.len(),
+        problems.join("\n")
+    )))
+}
+
+/// Tells whether the exclusions list either file of a pair.
+fn excludes_pair(excludes: &BTreeSet<String>, path_p4: &Path, path_stf: &Path) -> bool {
+    [path_p4, path_stf]
+        .iter()
+        .any(|path| excludes.contains(&*path.to_string_lossy()))
 }
 
 /// Collects the entries of the .exclude files under each directory.
@@ -353,10 +406,7 @@ fn collect_pairs(suite: &GroupSuite, excludes: &BTreeSet<String>) -> Result<Vec<
             {
                 let path_p4 = input_p4.dir.join(&input_p4.path);
                 let path_stf = input_stf.dir.join(&input_stf.path);
-                // Exclude the pair when either file is listed
-                let excluded = [&path_p4, &path_stf]
-                    .iter()
-                    .any(|path| excludes.contains(&*path.to_string_lossy()));
+                let excluded = excludes_pair(excludes, &path_p4, &path_stf);
                 let patched = input_p4.patched || input_stf.patched;
                 pairs.push(Pair { path_p4, path_stf, patched, excluded });
             }
