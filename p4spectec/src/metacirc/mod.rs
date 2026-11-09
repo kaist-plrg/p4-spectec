@@ -9,6 +9,7 @@
 //! `boundary`, and a P4 extern that reenters runs on the next depth.
 //! `tower` builds the levels, `sim` drives them with an STF test,
 //! and `run` runs a program through a tower, a K definition on spec-k included (K-in-ST).
+//! `cover` measures the SL instruction coverage of an SL base over many P4 inputs.
 //! Each backend is its own module, sharing nothing with the others:
 //! `st` runs P4-SpecTec specifications (spec-meta, spec-k),
 //! `k` spec-meta-k from its K library, and `redex` spec-meta-redex in `racket`.
@@ -26,6 +27,7 @@
 
 mod boundary;
 pub mod config;
+pub mod cover;
 mod engine;
 mod error;
 mod interp;

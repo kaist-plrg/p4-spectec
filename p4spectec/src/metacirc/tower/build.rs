@@ -238,6 +238,6 @@ impl<Ext: Extern> Tower<Ext> {
                 }
             }
         };
-        Ok(Self { levels, base, options, entry: config.entry.clone() })
+        Ok(Self { levels, base, options, entry: config.entry.clone(), observers: Vec::new() })
     }
 }

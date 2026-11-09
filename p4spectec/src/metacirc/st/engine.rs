@@ -2,9 +2,9 @@
 //!
 //! `EngineSt` pairs the base's definitions, in the representation it executes,
 //! with one depth's interpreter of them and that depth's base builtins.
-//! Depth 0 borrows the base runner's (`EngineSt::lend_base`);
-//! a deeper depth owns a `StateSt` interpreting the same representation
-//! and lends it with `EngineSt::lend_depth`.
+//! Depth 0 borrows the base runner's, hooks included (`EngineSt::lend_base`);
+//! a deeper depth owns a `StateSt` interpreting the same representation,
+//! with hooks of its own, and lends it with `EngineSt::lend_depth`.
 
 use crate::metacirc::{
     engine::{Engine, InterfaceSt},
@@ -32,6 +32,7 @@ use crate::{
 pub(in crate::metacirc) struct EngineSt<'s> {
     backend: BackendSt<'s>,
     interface: &'s mut InterfaceSt,
+    hooks: &'s mut Hooks,
 }
 
 /// The base's definitions and a depth's interpreter of them.
@@ -41,10 +42,11 @@ enum BackendSt<'s> {
 }
 
 impl<'s> EngineSt<'s> {
-    /// Lends the base runner's backend and interface as depth 0.
+    /// Lends the base runner's backend, interface, and hooks as depth 0.
     pub(in crate::metacirc) fn lend_base(
         backend: &'s mut Backend,
         interface: &'s mut InterfaceSt,
+        hooks: &'s mut Hooks,
     ) -> (Self, SpecSt<'s>) {
         let (backend, spec) = match backend {
             Backend::Al { spec_env, interp } => {
@@ -55,7 +57,7 @@ impl<'s> EngineSt<'s> {
             }
             Backend::Pl { .. } => unreachable!("a tower executes AL or SL natively"),
         };
-        (Self { backend, interface }, spec)
+        (Self { backend, interface, hooks }, spec)
     }
 
     /// Lends a deeper depth's state, interpreting the base's `spec`.
@@ -65,7 +67,7 @@ impl<'s> EngineSt<'s> {
             (SpecSt::Sl(spec_env), InterpSt::Sl(interp)) => BackendSt::Sl { spec_env, interp },
             _ => unreachable!("a depth interprets the representation it was made for"),
         };
-        Self { backend, interface: &mut state.interface }
+        Self { backend, interface: &mut state.interface, hooks: &mut state.hooks }
     }
 }
 
@@ -73,7 +75,6 @@ impl<'s> EngineSt<'s> {
 macro_rules! with_backend {
     ($engine:expr, $arena:expr, $upper:expr, $effects:expr, |$ctx:ident| $body:expr) => {{
         let engine = &mut *$engine;
-        let mut hooks = Hooks::default();
         match &mut engine.backend {
             BackendSt::Al { spec_env, interp } => {
                 let mut $ctx = RunnerContext::new(
@@ -83,7 +84,7 @@ macro_rules! with_backend {
                     &mut *engine.interface,
                     $upper,
                     $effects,
-                    &mut hooks,
+                    &mut *engine.hooks,
                 );
                 $body
             }
@@ -95,7 +96,7 @@ macro_rules! with_backend {
                     &mut *engine.interface,
                     $upper,
                     $effects,
-                    &mut hooks,
+                    &mut *engine.hooks,
                 );
                 $body
             }
@@ -167,6 +168,7 @@ pub(in crate::metacirc) enum SpecSt<'s> {
 pub(in crate::metacirc) struct StateSt {
     interp: InterpSt,
     interface: InterfaceSt,
+    hooks: Hooks,
 }
 
 /// An interpreter of the base's definitions, owned by a depth beneath the base.
@@ -176,8 +178,12 @@ enum InterpSt {
 }
 
 impl StateSt {
-    /// Makes the state of a depth interpreting `spec`.
-    pub(in crate::metacirc) fn new(options: runner::Config, spec: SpecSt<'_>) -> Self {
+    /// Makes the state of a depth interpreting `spec`, dispatching to `hooks`.
+    pub(in crate::metacirc) fn new(
+        options: runner::Config,
+        spec: SpecSt<'_>,
+        hooks: Hooks,
+    ) -> Self {
         let interp = match spec {
             SpecSt::Al(_) => InterpSt::Al(AlInterp::new(AlConfig::new(
                 options.cache,
@@ -193,6 +199,6 @@ impl StateSt {
         };
         // Only the builtins are used; the base never parses at a depth.
         // A depth beneath the base exists only under a P4 top, over spec-meta
-        Self { interp, interface: InterfaceSt::StSt(interface::meta()) }
+        Self { interp, interface: InterfaceSt::StSt(interface::meta()), hooks }
     }
 }

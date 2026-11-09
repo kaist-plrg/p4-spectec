@@ -9,14 +9,15 @@
 //! and lends it the base's native interpreter as depth 0 (`TowerInterp`),
 //! so the architecture drives the levels' execution of the P4 specification;
 //! deeper depths are made when the architecture reenters.
-//! `build_simulator` selects the architecture and boxes the tower as a `Simulator`.
+//! `build_simulator` selects the architecture and boxes the tower as a `Simulator`;
+//! `build_observed_simulator` also registers observers on the base.
 
 use super::{
     BaseConfig, Repr, Result, TowerConfig,
     config::Lang,
     error::{config_invalid, input_invalid},
     interp::{TowerEnv, TowerInterp},
-    tower::{LentBase, Top, Tower, Upper},
+    tower::{LentBase, Observer, Top, Tower, Upper},
 };
 use crate::{
     interface::p4::P4Interface,
@@ -76,7 +77,7 @@ impl<Arch: Architecture> SimTower<Arch> {
         arena: &mut Arena,
         body: impl FnOnce(&mut RunnerContext<'_, TowerInterp<'_>, P4Interface, Arch>) -> T,
     ) -> T {
-        let Tower { levels, base, options, .. } = &mut self.tower;
+        let Tower { levels, base, options, observers, .. } = &mut self.tower;
         // Reach depth 0 and the P4 host in the base
         let Some(LentBase { engine, spec_base, upper, .. }) = base.lend() else {
             unreachable!("a simulated tower has a base below its P4 top");
@@ -87,7 +88,7 @@ impl<Arch: Architecture> SimTower<Arch> {
             unreachable!("a simulated tower has a P4 top level");
         };
         // Share the definitions, and lend depth 0 to the host
-        let env = TowerEnv { spec_base, levels, options: *options };
+        let env = TowerEnv { spec_base, levels, options: *options, observers };
         let mut interp = TowerInterp { engine, hosts, depth_next, protocols, ctxs };
         host.with_context(arena, &env, &mut interp, body)
     }
@@ -152,11 +153,22 @@ pub fn build_simulator(
     options: runner::Config,
     encoding: Encoding,
 ) -> Result<Simulator> {
+    build_observed_simulator(config, arch, options, encoding, Vec::new())
+}
+
+/// Builds a simulator as `build_simulator` does, with `observers` on the base.
+pub(super) fn build_observed_simulator(
+    config: &TowerConfig,
+    arch: &str,
+    options: runner::Config,
+    encoding: Encoding,
+    observers: Vec<Observer>,
+) -> Result<Simulator> {
     // Each architecture is its own extern implementation
     match arch {
-        "ebpf" => build_for_arch(config, options, Ebpf::new(encoding)),
-        "psa" => build_for_arch(config, options, Psa::new(encoding)),
-        "v1model" => build_for_arch(config, options, V1Model::new(encoding)),
+        "ebpf" => build_for_arch(config, options, Ebpf::new(encoding), observers),
+        "psa" => build_for_arch(config, options, Psa::new(encoding), observers),
+        "v1model" => build_for_arch(config, options, V1Model::new(encoding), observers),
         _ => Err(input_invalid(format!("architecture {arch} is not supported"))),
     }
 }
@@ -166,8 +178,12 @@ fn build_for_arch<Arch: Architecture + 'static>(
     config: &TowerConfig,
     options: runner::Config,
     arch: Arch,
+    observers: Vec<Observer>,
 ) -> Result<Simulator> {
     let mut arena = Arena::new();
-    let tower = SimTower::build(&mut arena, config, options, arch)?;
+    let mut tower = SimTower::build(&mut arena, config, options, arch)?;
+    for observer in observers {
+        tower.tower.observe_base(observer)?;
+    }
     Ok(Simulator::new(arena, tower))
 }

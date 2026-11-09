@@ -5,18 +5,25 @@
 //! a KORE input prints its run as `krun` does, bounded by `--depth`.
 //! `sim` runs an STF test on an SL, K, or Redex tower of two or more levels over P4,
 //! printing each matched packet as `p4spectec sim` does.
+//! `cover-run` and `cover-sim` report the SL instruction coverage of the base
+//! of an SL tower over P4, over many inputs, as `p4spectec` does on a P4 specification.
 //! Structured diagnostics are rendered at the CLI boundary.
 //! Success is printed only after the configured outer entry finishes.
 
 use clap::{Args, CommandFactory, Parser, Subcommand, error::ErrorKind};
+use indicatif::{ProgressBar, ProgressStyle};
 use p4spectec::{
-    diagnostic::{DisplayStyle, RenderConfig, Renderer, Report},
+    coverage::{self, Outcome, Progress},
+    diagnostic::{Diagnostic, DisplayStyle, RenderConfig, Renderer, Report, Severity},
     interface::Lang,
     lang::{data::encoding::Encoding, traits::print::Print},
     metacirc::{self, TowerConfig},
     runner,
 };
-use std::{path::PathBuf, process::ExitCode};
+use std::{
+    path::{Path, PathBuf},
+    process::ExitCode,
+};
 
 #[derive(Parser)]
 #[command(version, about = "Transform specifications and execute AL interpreter towers")]
@@ -37,6 +44,10 @@ enum Command {
     RunMeta(RunMetaArgs),
     /// Simulate a P4 program and STF test through an SL, K, or Redex tower over P4.
     Sim(SimArgs),
+    /// Measure the base's SL instruction coverage of running P4 programs through a tower.
+    CoverRun(CoverRunArgs),
+    /// Measure the base's SL instruction coverage of simulating STF tests through a tower.
+    CoverSim(CoverSimArgs),
 }
 
 #[derive(Args)]
@@ -62,6 +73,15 @@ struct Options {
 impl Options {
     fn config(&self) -> runner::Config {
         runner::Config::new(!self.no_cache, !self.no_det, self.guard, true)
+    }
+
+    fn cover_config(&self) -> runner::Config {
+        // Tail calls would drop the result instructions coverage must see
+        runner::Config::new(!self.no_cache, !self.no_det, self.guard, false)
+    }
+
+    fn describe(&self) -> String {
+        format!("config: cache={} det={} guard={}", !self.no_cache, !self.no_det, self.guard)
     }
 }
 
@@ -98,6 +118,58 @@ struct SimArgs {
     /// Include search directories for the P4 program.
     #[arg(short = 'i', value_name = "DIR")]
     includes: Vec<PathBuf>,
+    #[command(flatten)]
+    options: Options,
+}
+
+#[derive(Args)]
+struct CoverRunArgs {
+    /// Tower configuration: an SL tower over a P4 top level.
+    config: PathBuf,
+    /// P4 programs, or directories searched recursively for them.
+    #[arg(long = "p4", required = true, value_name = "PATH")]
+    paths_p4: Vec<PathBuf>,
+    /// Include search directories for the P4 programs.
+    #[arg(short = 'i', value_name = "DIR")]
+    includes: Vec<PathBuf>,
+    /// Directories of .exclude files naming skipped programs.
+    #[arg(short = 'e', long = "exclude", value_name = "DIR")]
+    excludes: Vec<PathBuf>,
+    /// Report file; the report goes to stdout without it.
+    #[arg(long = "cov", value_name = "PATH")]
+    path_cov: Option<PathBuf>,
+    #[command(flatten)]
+    options: Options,
+}
+
+#[derive(Args)]
+struct CoverSimArgs {
+    /// Tower configuration: an SL tower of two or more levels over a P4 top level.
+    config: PathBuf,
+    /// Target architecture: ebpf, psa, or v1model.
+    #[arg(long, value_name = "ARCH")]
+    arch: String,
+    /// Native plugin state encoding: arena-relative or arena-independent.
+    #[arg(long, default_value_t = Encoding::default(), value_name = "ENCODING")]
+    plugin_encoding: Encoding,
+    /// P4 programs, or directories searched recursively for them.
+    #[arg(long = "p4", required = true, value_name = "PATH")]
+    paths_p4: Vec<PathBuf>,
+    /// STF tests, or directories searched recursively for them.
+    #[arg(long = "stf", required = true, value_name = "PATH")]
+    paths_stf: Vec<PathBuf>,
+    /// Directories of P4 and STF files replacing inputs with the same stem.
+    #[arg(long = "patch", value_name = "DIR")]
+    dirs_patch: Vec<PathBuf>,
+    /// Include search directories for the P4 programs.
+    #[arg(short = 'i', value_name = "DIR")]
+    includes: Vec<PathBuf>,
+    /// Directories of .exclude files naming skipped P4 or STF files.
+    #[arg(short = 'e', long = "exclude", value_name = "DIR")]
+    excludes: Vec<PathBuf>,
+    /// Report file; the report goes to stdout without it.
+    #[arg(long = "cov", value_name = "PATH")]
+    path_cov: Option<PathBuf>,
     #[command(flatten)]
     options: Options,
 }
@@ -144,6 +216,8 @@ fn run(cli: Cli) -> metacirc::Result<()> {
             Ok(())
         }
         Command::Sim(args) => sim(args),
+        Command::CoverRun(args) => cover_run(args),
+        Command::CoverSim(args) => cover_sim(args),
     }
 }
 
@@ -156,6 +230,143 @@ fn sim(args: SimArgs) -> metacirc::Result<()> {
         println!("[PASS] Transmitted {tx}");
     })?;
     println!("passed");
+    Ok(())
+}
+
+// = Coverage
+
+/// Structures the base specification of a coverable tower, rendering its warnings.
+fn cover_spec(config: &TowerConfig) -> metacirc::Result<p4spectec::lang::sl::ast::Spec> {
+    let specdir = metacirc::cover::base_specdir(config)?.to_path_buf();
+    let (result, warnings) = p4spectec::structure_with_warnings(&[specdir], true);
+    let mut renderer = Renderer::new(RenderConfig::default());
+    for report in warnings {
+        render_report(&mut renderer, &report);
+    }
+    Ok(result?)
+}
+
+/// Creates a progress bar over the inputs, drawn on stderr only for a terminal.
+fn progress_bar(labels: &[String]) -> ProgressBar {
+    let style = ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
+        .expect("progress template must parse");
+    ProgressBar::new(labels.len() as u64).with_style(style)
+}
+
+/// Advances the bar and keeps a `[k/N] outcome path` line for each input that did not pass.
+fn print_progress(bar: &ProgressBar, progress: Progress, labels: &[String]) {
+    match progress {
+        Progress::Start(index) => bar.set_message(labels[index].clone()),
+        Progress::Finish(index, outcome) => {
+            if outcome != Outcome::Pass {
+                let line = format!(
+                    "[{}/{}] {} {}",
+                    index + 1,
+                    labels.len(),
+                    outcome.name(),
+                    labels[index]
+                );
+                bar.suspend(|| eprintln!("{line}"));
+            }
+            bar.inc(1);
+        }
+    }
+}
+
+/// Warns that an explicitly given program is skipped for another architecture.
+fn cover_input_filtered(path: &Path, arch: &str) -> Report {
+    Diagnostic::new(
+        "command",
+        Severity::Warning,
+        Some("command/cover-input-filtered".to_owned()),
+        format!("{} does not include the {arch} model and is skipped", path.display()),
+        Vec::new(),
+        Vec::new(),
+    )
+    .into()
+}
+
+/// Evaluates programs through the tower and reports the base's instruction coverage.
+fn cover_run(args: CoverRunArgs) -> metacirc::Result<()> {
+    let config = TowerConfig::from_file(&args.config)?;
+    // Collect inputs before the slower specification loading
+    let excludes = coverage::corpus::collect_excludes(&args.excludes)?;
+    let programs = coverage::corpus::collect_programs(&args.paths_p4, &excludes)?;
+    let spec_sl = cover_spec(&config)?;
+
+    // Evaluate every program on one tower
+    let labels: Vec<_> = programs
+        .items
+        .iter()
+        .map(|path| path.display().to_string())
+        .collect();
+    let bar = progress_bar(&labels);
+    let coverage = metacirc::cover::cover_run(
+        &config,
+        &spec_sl,
+        args.options.cover_config(),
+        &args.includes,
+        &programs.items,
+        |progress| print_progress(&bar, progress, &labels),
+    );
+    bar.finish_and_clear();
+    let coverage = coverage?;
+
+    let summary = format!("programs {}", coverage.describe_outcomes(programs.excluded));
+    let comments =
+        [format!("tower: {}", args.config.display()), args.options.describe(), summary.clone()];
+    coverage::log::write_report_to(args.path_cov.as_deref(), &spec_sl, &coverage.cover, &comments)?;
+    eprintln!("{}", coverage::log::summary_line("cover-run", &summary, &coverage.cover));
+    Ok(())
+}
+
+/// Runs STF tests through the tower and reports the base's instruction coverage.
+fn cover_sim(args: CoverSimArgs) -> metacirc::Result<()> {
+    let config = TowerConfig::from_file(&args.config)?;
+    // Collect inputs before the slower specification loading
+    let excludes = coverage::corpus::collect_excludes(&args.excludes)?;
+    let pairs = coverage::corpus::collect_pairs(
+        &args.arch,
+        &args.paths_p4,
+        &args.paths_stf,
+        &args.dirs_patch,
+        &excludes,
+    )?;
+    let mut renderer = Renderer::new(RenderConfig::default());
+    for path in &pairs.filtered {
+        render_report(&mut renderer, &cover_input_filtered(path, &args.arch));
+    }
+    let spec_sl = cover_spec(&config)?;
+
+    // Run every pair on one simulator
+    let labels: Vec<_> = pairs
+        .items
+        .iter()
+        .map(|(path_p4, path_stf)| format!("{} {}", path_p4.display(), path_stf.display()))
+        .collect();
+    let bar = progress_bar(&labels);
+    let coverage = metacirc::cover::cover_sim(
+        &config,
+        &spec_sl,
+        &args.arch,
+        args.options.cover_config(),
+        args.plugin_encoding,
+        &args.includes,
+        &pairs.items,
+        |progress| print_progress(&bar, progress, &labels),
+    );
+    bar.finish_and_clear();
+    let coverage = coverage?;
+
+    let summary = format!("tests {}", coverage.describe_outcomes(pairs.excluded));
+    let comments = [
+        format!("tower: {}", args.config.display()),
+        format!("arch: {}", args.arch),
+        args.options.describe(),
+        summary.clone(),
+    ];
+    coverage::log::write_report_to(args.path_cov.as_deref(), &spec_sl, &coverage.cover, &comments)?;
+    eprintln!("{}", coverage::log::summary_line("cover-sim", &summary, &coverage.cover));
     Ok(())
 }
 

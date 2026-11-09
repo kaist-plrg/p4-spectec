@@ -8,6 +8,7 @@
 //! `build` assembles the levels; `input` reads the program the top accepts
 //! and encodes the inputs of the base's entry;
 //! `Tower::eval_input` runs the entry on the base's `Engine`.
+//! `Tower::observe_base` registers handlers on an AL or SL base at every depth.
 
 mod build;
 mod input;
@@ -16,11 +17,13 @@ mod upper;
 pub(in crate::metacirc) use upper::{Top, TopMut, Upper, UpperMut};
 
 use super::{
+    Result,
     config::LevelConfig,
     engine::{
         BaseSpec, Engine, EngineK, EngineKind, EngineRedex, EngineSt, InterfaceSt, RuntimeK,
         RuntimeRedex, StateK, StateRedex,
     },
+    error::config_invalid,
     interp::TowerEnv,
     protocol::Entered,
 };
@@ -31,12 +34,15 @@ use crate::{
         data::{arena::Arena, value::flat::Value},
         il::ast as il,
     },
-    runner::{self, Extern, InterpreterError, Runner},
+    runner::{self, Extern, Handler, InterpreterError, Runner},
     sim_plugin::dummy::Dummy,
 };
 use std::num::NonZeroUsize;
 
 // == Tower
+
+/// Makes a handler of the base's execution, once per depth.
+pub type Observer = Box<dyn Fn() -> Box<dyn Handler>>;
 
 /// Prepared specifications and host layers of an interpreter tower,
 /// with `Ext` the extern of its P4 level.
@@ -48,6 +54,8 @@ pub struct Tower<Ext: Extern = Dummy> {
     pub(super) options: runner::Config,
     /// The function or relation entering a script above the top level.
     pub(super) entry: String,
+    /// Observers of the base, at depth 0 and each deeper depth.
+    pub(super) observers: Vec<Observer>,
 }
 
 /// The input of a tower, prepared in the form the top accepts:
@@ -144,13 +152,30 @@ impl<Ext: Extern> Tower<Ext> {
         self.base.reset();
     }
 
+    /// Registers a handler, made by `observer`, on the base's AL or SL interpreter
+    /// at depth 0 and at each deeper depth a program reenters.
+    ///
+    /// Handlers stay across `reset`; a K or Redex base cannot be observed.
+    pub fn observe_base(&mut self, observer: Observer) -> Result<()> {
+        let hooks = match &mut self.base {
+            Base::P4(runner) => runner.hooks_mut(),
+            Base::St(runner) => runner.hooks_mut(),
+            Base::K(_) | Base::Redex(_) => {
+                return Err(config_invalid("only an al or sl base can be observed"));
+            }
+        };
+        hooks.register(observer());
+        self.observers.push(observer);
+        Ok(())
+    }
+
     /// Executes the native base's entry relation on encoded inputs.
     pub fn eval_input(
         &mut self,
         arena: &mut Arena,
         values: &[Value],
     ) -> std::result::Result<Vec<Value>, InterpreterError> {
-        let Self { levels, base, options, .. } = self;
+        let Self { levels, base, options, observers, .. } = self;
         let name = &levels[0].config().rel;
         // A P4 base runs the program directly
         if let Base::P4(runner) = base {
@@ -159,7 +184,7 @@ impl<Ext: Extern> Tower<Ext> {
         // Any other base lends the levels above it with its definitions
         let LentBase { mut engine, spec_base, upper, effects } =
             base.lend().expect("a base other than P4 hosts levels");
-        let env = TowerEnv { spec_base, levels, options: *options };
+        let env = TowerEnv { spec_base, levels, options: *options, observers };
         let mut upper = upper.lend(&env);
         engine.call_rel(arena, &mut upper, effects, name, values)
     }
@@ -216,8 +241,8 @@ impl<Ext: Extern> Base<Ext> {
         match self {
             Self::P4(_) => None,
             Self::St(runner) => {
-                let Runner { backend, interface, external: upper, effects, hooks: _ } = runner;
-                let (engine, spec_base) = EngineSt::lend_base(backend, interface);
+                let Runner { backend, interface, external: upper, effects, hooks } = runner;
+                let (engine, spec_base) = EngineSt::lend_base(backend, interface, hooks);
                 let engine = EngineKind::St(engine);
                 let spec_base = BaseSpec::St(spec_base);
                 Some(LentBase { engine, spec_base, upper, effects })
