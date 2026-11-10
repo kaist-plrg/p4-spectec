@@ -6,7 +6,9 @@
 //! `sim` runs an STF test on an SL, K, or Redex tower of two or more levels over P4,
 //! printing each matched packet as `p4spectec sim` does.
 //! `cover-run` and `cover-sim` report the SL instruction coverage of the base
-//! of an SL tower over P4, over many inputs, as `p4spectec` does on a P4 specification.
+//! of an SL tower over many inputs, as `p4spectec` does on a P4 specification:
+//! `cover-run` evaluates P4 programs or scripts, by the tower's top level,
+//! and `cover-sim` runs STF tests on a tower over P4.
 //! Structured diagnostics are rendered at the CLI boundary.
 //! Success is printed only after the configured outer entry finishes.
 
@@ -44,7 +46,7 @@ enum Command {
     RunMeta(RunMetaArgs),
     /// Simulate a P4 program and STF test through an SL, K, or Redex tower over P4.
     Sim(SimArgs),
-    /// Measure the base's SL instruction coverage of running P4 programs through a tower.
+    /// Measure the base's SL instruction coverage of running programs through a tower.
     CoverRun(CoverRunArgs),
     /// Measure the base's SL instruction coverage of simulating STF tests through a tower.
     CoverSim(CoverSimArgs),
@@ -124,12 +126,12 @@ struct SimArgs {
 
 #[derive(Args)]
 struct CoverRunArgs {
-    /// Tower configuration: an SL tower over a P4 top level.
+    /// Tower configuration: an SL tower over a P4 or script top level.
     config: PathBuf,
-    /// P4 programs, or directories searched recursively for them.
-    #[arg(long = "p4", required = true, value_name = "PATH")]
-    paths_p4: Vec<PathBuf>,
-    /// Include search directories for the P4 programs.
+    /// Programs in the top level's language, or directories searched recursively for them.
+    #[arg(short = 'p', long = "program", required = true, value_name = "PATH")]
+    paths_program: Vec<PathBuf>,
+    /// Include search directories for P4 programs.
     #[arg(short = 'i', value_name = "DIR")]
     includes: Vec<PathBuf>,
     /// Directories of .exclude files naming skipped programs.
@@ -290,8 +292,9 @@ fn cover_input_filtered(path: &Path, arch: &str) -> Report {
 fn cover_run(args: CoverRunArgs) -> metacirc::Result<()> {
     let config = TowerConfig::from_file(&args.config)?;
     // Collect inputs before the slower specification loading
+    let suffix = metacirc::cover::program_suffix(&config)?;
     let excludes = coverage::corpus::collect_excludes(&args.excludes)?;
-    let programs = coverage::corpus::collect_programs(&args.paths_p4, &excludes)?;
+    let programs = coverage::corpus::collect_programs(&args.paths_program, suffix, &excludes)?;
     let spec_sl = cover_spec(&config)?;
 
     // Evaluate every program on one tower

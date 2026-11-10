@@ -1,4 +1,4 @@
-//! Collection of P4 programs and STF tests for coverage runs
+//! Collection of programs and STF tests for coverage runs
 //!
 //! Each input path is a file, taken as given, or a directory searched recursively
 //! in name order, skipping `include` directories.
@@ -118,14 +118,15 @@ fn is_excluded(excludes: &BTreeSet<String>, path: &Path) -> bool {
 
 // == Programs
 
-/// Collects P4 programs, leaving out excluded ones.
+/// Collects programs with the file name suffix, leaving out excluded ones.
 pub fn collect_programs(
     paths: &[PathBuf],
+    suffix: &str,
     excludes: &BTreeSet<String>,
 ) -> Result<Collected<PathBuf>, CoverError> {
     let mut items = Vec::new();
     let mut excluded = 0;
-    for input in collect_inputs(paths, ".p4")? {
+    for input in collect_inputs(paths, suffix)? {
         let path = input.full();
         if is_excluded(excludes, &path) {
             excluded += 1;
