@@ -1,6 +1,6 @@
 // Expression evaluation.
 //
-// Mirrors spec-meta/4-execution/4.06-eval-exp.watsup.
+// Mirrors spec-meta/3-execution/3.06-eval-exp.watsup.
 
 requires "3.05-eval-ops.k"
 requires "3.06.4-typ-cast.k"

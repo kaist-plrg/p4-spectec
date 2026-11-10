@@ -1,6 +1,6 @@
 // Meta-function invocation.
 //
-// Mirrors spec-meta/4-execution/4.10-eval-call-func.watsup, except that
+// Mirrors spec-meta/3-execution/3.10-eval-call-func.watsup, except that
 // clauses and table rows are first-match, without the determinism check.
 
 requires "3.11-eval-prem.k"

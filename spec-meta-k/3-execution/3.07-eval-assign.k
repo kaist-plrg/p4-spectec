@@ -1,6 +1,6 @@
 // Assignment (pattern matching a value against an expression).
 //
-// Mirrors spec-meta/4-execution/4.05-eval-assign.watsup.
+// Mirrors spec-meta/3-execution/3.05-eval-assign.watsup.
 
 requires "3.03-relation.k"
 

@@ -1,6 +1,6 @@
 // Environments: values, type definitions, relations, and functions.
 //
-// Mirrors spec-meta/4-execution/4.00-env.watsup.
+// Mirrors spec-meta/3-execution/3.00-env.watsup.
 //
 //   venv  = map<varr, val>       <lvenv>              Varr |-> Val
 //   tdenv = map<id, typDef>      <gtdenv>, <ltdenv>   Id |-> TypDef

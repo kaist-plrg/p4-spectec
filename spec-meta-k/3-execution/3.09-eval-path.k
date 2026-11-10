@@ -1,6 +1,6 @@
 // Path evaluation.
 //
-// Mirrors spec-meta/4-execution/4.07-eval-path.watsup.
+// Mirrors spec-meta/3-execution/3.07-eval-path.watsup.
 
 requires "3.08-eval-exp.k"
 

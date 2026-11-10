@@ -1,5 +1,5 @@
 #lang racket/base
-;; Mirrors spec-meta/4-execution/4.04.1-typ-match.watsup.
+;; Mirrors spec-meta/3-execution/3.04.1-typ-match.watsup.
 
 (require redex/reduction-semantics
          "3.02-context.rkt"

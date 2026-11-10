@@ -1,6 +1,6 @@
 // Operator semantics of the P4-SpecTec meta-language.
 //
-// Mirrors spec-meta/4-execution/4.03-eval-ops.watsup.
+// Mirrors spec-meta/3-execution/3.03-eval-ops.watsup.
 
 requires "3.03-relation.k"
 

@@ -1,5 +1,5 @@
 #lang racket/base
-;; Mirrors spec-meta/4-execution/4.07-eval-path.watsup.
+;; Mirrors spec-meta/3-execution/3.07-eval-path.watsup.
 
 (require redex/reduction-semantics
          "../0-aux/0.0-stdlib.rkt"

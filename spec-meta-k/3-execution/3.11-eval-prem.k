@@ -1,6 +1,6 @@
 // Premise evaluation.
 //
-// Mirrors spec-meta/4-execution/4.09-eval-prem.watsup.
+// Mirrors spec-meta/3-execution/3.09-eval-prem.watsup.
 
 requires "3.10-eval-arg.k"
 

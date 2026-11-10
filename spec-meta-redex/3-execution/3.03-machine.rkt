@@ -1,5 +1,5 @@
 #lang racket/base
-;; Mirrors spec-meta/4-execution/4.02-relation.watsup.
+;; Mirrors spec-meta/3-execution/3.02-relation.watsup.
 ;;
 ;; The machine runs on configurations (e G L K).
 
