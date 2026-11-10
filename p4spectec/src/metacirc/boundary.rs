@@ -279,7 +279,7 @@ impl<'l, Ext: Extern> UpperMut<'l, Ext> {
         };
         // The next depth lives until the program is reset
         if depth_next.is_none() {
-            match TowerInterpState::new(env.options, env.spec_base, hosts.len()) {
+            match TowerInterpState::new(env.options, env.spec_base, env.hooks(), hosts.len()) {
                 Ok(depth) => **depth_next = Some(Box::new(depth)),
                 Err(report) => {
                     return Eval::new(Err(InterpreterError::Fatal(report)), SideEffect::Pure);

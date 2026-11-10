@@ -24,7 +24,7 @@ use crate::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
     },
-    runner::{self, Eval, Extern, Interface, InterfaceError, InterpreterError},
+    runner::{self, Eval, Extern, Hooks, Interface, InterfaceError, InterpreterError},
 };
 use std::path::PathBuf;
 
@@ -84,13 +84,15 @@ pub(in crate::metacirc) enum BaseSpec<'s> {
 }
 
 impl EngineStateKind {
-    /// Makes the state of a depth executing `spec`.
+    /// Makes the state of a depth executing `spec`;
+    /// only an AL or SL engine dispatches to `hooks`.
     pub(in crate::metacirc) fn new(
         options: runner::Config,
         spec: BaseSpec<'_>,
+        hooks: Hooks,
     ) -> MetacircResult<Self> {
         match spec {
-            BaseSpec::St(spec) => Ok(Self::St(StateSt::new(options, spec))),
+            BaseSpec::St(spec) => Ok(Self::St(StateSt::new(options, spec, hooks))),
             BaseSpec::K(runtime) => StateK::new(runtime).map(Self::K),
             BaseSpec::Redex(runtime) => StateRedex::new(runtime).map(Self::Redex),
         }

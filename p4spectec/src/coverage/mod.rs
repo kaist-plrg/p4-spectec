@@ -74,7 +74,7 @@ impl Coverage {
 }
 
 /// Runs `body` and classifies its result, catching a panic as a crash.
-fn run_catching<T, E>(body: impl FnOnce() -> Result<T, E>) -> Outcome {
+pub(crate) fn run_catching<T, E>(body: impl FnOnce() -> Result<T, E>) -> Outcome {
     match panic::catch_unwind(AssertUnwindSafe(body)) {
         Ok(Ok(_)) => Outcome::Pass,
         Ok(Err(_)) => Outcome::Fail,

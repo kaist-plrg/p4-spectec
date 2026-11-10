@@ -12,7 +12,7 @@ use super::{
     Result as MetacircResult,
     engine::{BaseSpec, Engine, EngineKind, EngineStateKind},
     protocol::{Below, Call, Output, ProtocolKind, Values},
-    tower::{HostLevel, LevelAt, PreparedLevel, TopMut, UpperMut},
+    tower::{HostLevel, LevelAt, Observer, PreparedLevel, TopMut, UpperMut},
 };
 use crate::{
     interface::{self, meta::MetaInterface, p4::P4Interface},
@@ -21,7 +21,8 @@ use crate::{
         il::ast::Typ,
     },
     runner::{
-        self, Extern, Interface, Interpreter, InterpreterError, RunnerContext, RunnerContextParts,
+        self, Extern, Hooks, Interface, Interpreter, InterpreterError, RunnerContext,
+        RunnerContextParts,
     },
 };
 use std::borrow::Cow;
@@ -129,9 +130,20 @@ pub(in crate::metacirc) struct TowerEnv<'s> {
     pub levels: &'s [PreparedLevel],
     /// Options for the engines of deeper depths.
     pub options: runner::Config,
+    /// Observers of the base, registered on each deeper depth's engine.
+    pub observers: &'s [Observer],
 }
 
 impl TowerEnv<'_> {
+    /// Makes the hooks of a deeper depth's engine.
+    pub(in crate::metacirc) fn hooks(&self) -> Hooks {
+        let mut hooks = Hooks::default();
+        for observer in self.observers {
+            hooks.register(observer());
+        }
+        hooks
+    }
+
     /// Returns the specification of `level`, in the form the level below loads.
     fn prepared(&self, level: HostLevel) -> &PreparedLevel {
         &self.levels[level.number()]
@@ -239,15 +251,16 @@ pub(in crate::metacirc) struct TowerInterpState {
 }
 
 impl TowerInterpState {
-    /// Makes a depth executing `spec_base`, with builtins for `count` levels
-    /// between base and top.
+    /// Makes a depth executing `spec_base` and dispatching to `hooks`,
+    /// with builtins for `count` levels between base and top.
     pub(in crate::metacirc) fn new(
         options: runner::Config,
         spec_base: BaseSpec<'_>,
+        hooks: Hooks,
         count: usize,
     ) -> MetacircResult<Self> {
         Ok(Self {
-            engine: EngineStateKind::new(options, spec_base)?,
+            engine: EngineStateKind::new(options, spec_base, hooks)?,
             hosts: (0..count).map(|_| interface::meta()).collect(),
             next: None,
         })
