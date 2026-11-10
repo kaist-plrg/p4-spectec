@@ -1,0 +1,61 @@
+;; An unmatch in an operand of a sequence operator unmatches the clause
+
+var n : nat
+
+dec $pos(nat) : nat
+def $pos(n) = n
+  -- if $(n > 0)
+
+dec $word(nat) : text
+def $word(n) = "w"
+  -- if $(n > 0)
+
+dec $nats(nat) : nat*
+def $nats(n) = [ n ]
+  -- if $(n > 0)
+
+dec $cons(nat) : nat*
+def $cons(n) = $pos(n) :: [ 1 ]
+def $cons(n) = eps
+  -- otherwise
+
+dec $cons_tail(nat) : nat*
+def $cons_tail(n) = 1 :: $nats(n)
+def $cons_tail(n) = eps
+  -- otherwise
+
+dec $cat(nat) : nat*
+def $cat(n) = $nats(n) ++ [ 1 ]
+def $cat(n) = eps
+  -- otherwise
+
+dec $cat_right(nat) : nat*
+def $cat_right(n) = [ 1 ] ++ $nats(n)
+def $cat_right(n) = eps
+  -- otherwise
+
+dec $cat_text(nat) : text
+def $cat_text(n) = "a" ++ $word(n)
+def $cat_text(n) = ""
+  -- otherwise
+
+dec $len(nat) : nat
+def $len(n) = |$nats(n)|
+def $len(n) = 0
+  -- otherwise
+
+dec $upd_value(nat) : nat*
+def $upd_value(n) = $nats(1)[[0] = $pos(n)]
+def $upd_value(n) = eps
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $cons(0) = eps
+  -- if $cons_tail(0) = eps
+  -- if $cat(0) = eps
+  -- if $cat_right(0) = eps
+  -- if $cat_text(0) = ""
+  -- if $len(0) = 0
+  -- if $upd_value(0) = eps

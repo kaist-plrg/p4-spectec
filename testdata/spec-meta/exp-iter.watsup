@@ -1,0 +1,32 @@
+;; Iterations over expressions other than a single variable, and unmatches in their bodies
+
+var n : nat
+var m : nat
+
+dec $pos(nat) : nat
+def $pos(n) = n
+  -- if $(n > 0)
+
+dec $succ_opt(nat?) : nat?
+def $succ_opt(n?) = $(n + 1)?
+
+dec $add_opt(nat?, nat?) : nat?
+def $add_opt(n?, m?) = $(n + m)?
+
+dec $pos_opt(nat?) : nat?
+def $pos_opt(n?) = $pos(n)?
+def $pos_opt(n?) = eps
+  -- otherwise
+
+dec $pos_list(nat*) : nat*
+def $pos_list(n*) = $pos(n)*
+def $pos_list(n*) = eps
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $succ_opt(1) = 2 /\ $succ_opt(eps) = eps
+  -- if $add_opt(1, 2) = 3 /\ $add_opt(eps, eps) = eps
+  -- if $pos_opt(1) = 1 /\ $pos_opt(0) = eps /\ $pos_opt(eps) = eps
+  -- if $pos_list([ 1, 2 ]) = [ 1, 2 ] /\ $pos_list([ 0, 1 ]) = eps /\ $pos_list([ 1, 0 ]) = eps

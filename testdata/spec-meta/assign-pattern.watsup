@@ -1,0 +1,22 @@
+;; Structures, options, and optional tuples on the left of a binding destructure the value
+
+syntax rec = { A nat, B nat }
+
+var n : nat
+var m : nat
+
+dec $sum(rec) : nat
+def $sum({ A n, B m }) = $(n + m)
+
+dec $fst_opt((nat, nat)?) : nat?
+def $fst_opt((n, m)?) = n?
+
+dec $none((nat, nat?)) : nat
+def $none((n, eps)) = n
+
+relation Main: OK
+
+rule Main: OK
+  -- if $sum({ A 1, B 2 }) = 3
+  -- if $fst_opt((1, 2)) = 1 /\ $fst_opt(eps) = eps
+  -- if $none((1, eps)) = 1

@@ -1,0 +1,53 @@
+;; An unmatch in an operand of an arithmetic or ordering operator, a cast, or a call unmatches the clause
+
+var n : nat
+
+dec $pos(nat) : nat
+def $pos(n) = n
+  -- if $(n > 0)
+
+dec $neg(nat) : int
+def $neg(n) = $(-$pos(n))
+def $neg(n) = 0
+  -- otherwise
+
+dec $add(nat) : nat
+def $add(n) = $($pos(n) + 1)
+def $add(n) = 0
+  -- otherwise
+
+dec $add_right(nat) : nat
+def $add_right(n) = $(1 + $pos(n))
+def $add_right(n) = 0
+  -- otherwise
+
+dec $lt(nat) : bool
+def $lt(n) = $($pos(n) < 1)
+def $lt(n) = false
+  -- otherwise
+
+dec $lt_right(nat) : bool
+def $lt_right(n) = $(1 < $pos(n))
+def $lt_right(n) = false
+  -- otherwise
+
+dec $upcast(nat) : int
+def $upcast(n) = $pos(n)
+def $upcast(n) = 0
+  -- otherwise
+
+dec $call(nat) : nat
+def $call(n) = $pos($pos(n))
+def $call(n) = 0
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $neg(0) = 0
+  -- if $add(0) = 0
+  -- if $add_right(0) = 0
+  -- if $lt(0) = false
+  -- if $lt_right(0) = false
+  -- if $upcast(0) = 0
+  -- if $call(0) = 0

@@ -1,0 +1,35 @@
+;; An optional premise runs its body once or not at all, and binds optional results
+
+var n : nat
+var m : nat
+
+dec $pos(nat) : nat
+def $pos(n) = n
+  -- if $(n > 0)
+
+relation Copy: nat |- nat
+  hint(input %0)
+
+rule Copy:
+  n |- n
+
+dec $copy_opt(nat?) : nat?
+def $copy_opt(n?) = m?
+  -- (Copy: n |- m)?
+
+dec $succ_opt(nat?) : nat?
+def $succ_opt(n?) = m?
+  -- (if m = $(n + 1))?
+
+dec $pos_opt(nat?) : nat?
+def $pos_opt(n?) = m?
+  -- (if m = $pos(n))?
+def $pos_opt(n?) = eps
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $copy_opt(1) = 1 /\ $copy_opt(eps) = eps
+  -- if $succ_opt(1) = 2 /\ $succ_opt(eps) = eps
+  -- if $pos_opt(1) = 1 /\ $pos_opt(0) = eps /\ $pos_opt(eps) = eps

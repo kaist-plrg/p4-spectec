@@ -1,0 +1,29 @@
+;; Patterns of subtypes downcast tuples and options component by component
+
+var n : nat
+var m : nat
+var i : int
+var b : bool
+var t : text
+
+dec $tuple((int, nat, int, bool, text)) : nat
+def $tuple((n, m, i, b, t)) = $(n + m)
+def $tuple(_) = 0
+  -- otherwise
+
+dec $opt(int?) : nat?
+def $opt(m?) = m?
+def $opt(_) = 0
+  -- otherwise
+
+dec $list(int*) : nat
+def $list(m*) = |m*|
+def $list(_) = 0
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $tuple((1, 2, -1, true, "t")) = 3 /\ $tuple((-1, 2, 1, true, "t")) = 0
+  -- if $opt(1) = 1 /\ $opt(eps) = eps /\ $opt(-1) = 0
+  -- if $list([ 1, 2 ]) = 2 /\ $list([ 1, -2 ]) = 0

@@ -1,0 +1,67 @@
+;; An unmatch in an operand of a logical, equality, subtype, or membership test unmatches the clause
+
+var n : nat
+
+dec $pos(nat) : nat
+def $pos(n) = n
+  -- if $(n > 0)
+
+dec $truth(nat) : bool
+def $truth(n) = true
+  -- if $(n > 0)
+
+dec $nats(nat) : nat*
+def $nats(n) = [ n ]
+  -- if $(n > 0)
+
+dec $not(nat) : bool
+def $not(n) = ~$truth(n)
+def $not(n) = false
+  -- otherwise
+
+dec $and(nat) : bool
+def $and(n) = $truth(n) /\ true
+def $and(n) = false
+  -- otherwise
+
+dec $and_right(nat) : bool
+def $and_right(n) = true /\ $truth(n)
+def $and_right(n) = false
+  -- otherwise
+
+dec $eq(nat) : bool
+def $eq(n) = $pos(n) = 1
+def $eq(n) = false
+  -- otherwise
+
+dec $eq_right(nat) : bool
+def $eq_right(n) = 1 = $pos(n)
+def $eq_right(n) = false
+  -- otherwise
+
+dec $sub(nat) : bool
+def $sub(n) = $pos(n) <: nat
+def $sub(n) = false
+  -- otherwise
+
+dec $mem(nat) : bool
+def $mem(n) = $pos(n) <- [ 1 ]
+def $mem(n) = false
+  -- otherwise
+
+dec $mem_right(nat) : bool
+def $mem_right(n) = 1 <- $nats(n)
+def $mem_right(n) = false
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $not(0) = false
+  -- if $and(0) = false
+  -- if $and_right(0) = false
+  -- if $eq(0) = false
+  -- if $eq_right(0) = false
+  -- if $sub(0) = false
+  -- if $mem(0) = false
+  -- if $mem_right(0) = false

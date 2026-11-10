@@ -1,0 +1,62 @@
+;; An unmatch in a premise's operands unmatches the clause, so the next clause runs
+
+var n : nat
+var m : nat
+
+dec $pos(nat) : nat
+def $pos(n) = n
+  -- if $(n > 0)
+
+relation Copy: nat |- nat
+  hint(input %0)
+
+rule Copy:
+  n |- n
+
+relation Small: |- nat
+  hint(input %0)
+
+rule Small:
+  |- n
+  -- if $(n < 5)
+
+dec $rel(nat) : nat
+def $rel(n) = m
+  -- Copy: $pos(n) |- m
+def $rel(n) = 0
+  -- otherwise
+
+dec $hold(nat) : bool
+def $hold(n) = true
+  -- Small: |- $pos(n)
+def $hold(n) = false
+  -- otherwise
+
+dec $not_hold(nat) : bool
+def $not_hold(n) = true
+  -- Small:/ |- $pos(n)
+def $not_hold(n) = false
+  -- otherwise
+
+dec $debug(nat) : bool
+def $debug(n) = true
+  -- debug $pos(n)
+def $debug(n) = false
+  -- otherwise
+
+dec $add(nat, nat) : nat
+def $add(n, m) = $(n + m)
+
+dec $args(nat) : nat
+def $args(n) = $add(1, $pos(n))
+def $args(n) = 0
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $rel(0) = 0 /\ $rel(1) = 1
+  -- if ~$hold(0) /\ $hold(1)
+  -- if ~$not_hold(0) /\ $not_hold(7)
+  -- if ~$debug(0) /\ $debug(1)
+  -- if $args(0) = 0 /\ $args(1) = 2
