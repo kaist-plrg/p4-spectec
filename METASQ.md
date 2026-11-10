@@ -224,13 +224,15 @@ kompiled with the definition is the top of the tower (`Top::K`). As a script is
 the program above spec-meta, the K definition is the program above spec-k, and
 runs through the same path: the top reads it with its initial term
 (`Tower::parse_input`, `Input::Kore`), `ProtocolKSt::encode_entry` gives them to
-`Krun` with the step bound, and the top prints the run (`Tower::print_output`).
+`Krun` with the step bound if one is given, and the top prints the run
+(`Tower::print_output`).
 The K library answers spec-k's extern relation `Call_hook`, to which spec-k leaves
 most K hooks, and
 `metacirc run-meta towers/k-in-st.json -p imp-kompiled/definition.kore -p init.kore --depth N`
 prints the run as `krun` does; `make test-metacirc-k-in-st` compares it with
-`krun`. `ProtocolKSt` (`st/protocol_k.rs`) also describes how a level would stack
-over a K definition, which is not implemented.
+`krun`, recording a run still going after `TIMEOUT` seconds as a timeout.
+`ProtocolKSt` (`st/protocol_k.rs`) also describes how a level would stack over
+a K definition, which is not implemented.
 
 ST-in-Redex adds the `redex/` backend: `EngineRedex`, one `racket` process per
 tower shared by every reentry depth, and `ProtocolStRedex`. Every call, answer, host
@@ -323,6 +325,34 @@ expected file `expected/sim-group/<suite>-<group>.expected`.
 suite's corpus, dealing the pairs that static and dynamic exclusions leave over
 the groups in turn; after it runs, the group expected files must be regenerated
 to match.
+
+```sh
+make test-metacirc-k-in-st
+K_SRC=... KWASM_SRC=... KEVM_SRC=... KMIR_SRC=... make test-metacirc-k-in-st TIMEOUT=300
+```
+
+`test-metacirc-k-in-st` runs the K definitions of `suites/metacirc/k-in-st.toml`
+through spec-k and compares each run with `krun`; it requires K 7.1.337. `SUITE`
+and `TIMEOUT` work as above. The `manual` suite needs nothing else. The others
+take their definitions and programs from a checkout named by an environment
+variable, and a suite whose variable is not set is skipped with one line on
+stderr while the target still succeeds.
+
+| suites | variable | checkout |
+|---|---|---|
+| the K tutorial | `K_SRC` | `runtimeverification/k` at `v7.1.337` |
+| `kwasm` | `KWASM_SRC` | `runtimeverification/wasm-semantics` at `212271b`, with `tests/wasm-tests` |
+| `kevm` | `KEVM_SRC` | `runtimeverification/evm-semantics` at `866e563`, with the plugin and `tests/ethereum-tests` (`c30599fb`) |
+| `kmir` | `KMIR_SRC` | `runtimeverification/mir-semantics` at `4d79325`, with `deps/stable-mir-json` |
+
+`kevm` and `kmir` make their initial terms with `uv`. `kevm` requires
+`libsecp256k1-dev` and the KRYPTO plugin built once with the clang K uses (`make
+CXX=/usr/lib/llvm-17/bin/clang++ CC=/usr/lib/llvm-17/bin/clang` in
+`kevm-pyk/src/kevm_pyk/kproj/plugin`). `kmir` requires `cargo`, the toolchain
+`nightly-2024-11-29`, and `make stable-mir-json` in its checkout.
+`KRUN_EXPECT=1` writes `<program>.out` again from `krun`. Build outputs under
+`$CARGO_TARGET_DIR/k-in-st/` hold absolute paths, so moving a checkout means
+kompiling again.
 
 ## Specification snapshots
 

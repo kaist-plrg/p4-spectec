@@ -62,6 +62,9 @@ enum Command {
         /// Run only the registered suite with this name.
         #[arg(long = "suite", value_name = "NAME")]
         name_suite: Option<String>,
+        /// Record a program still running after this many seconds as a timeout.
+        #[arg(long, value_name = "SECONDS")]
+        timeout: Option<u64>,
     },
     /// Compare the elaborated meta specification with expected output
     Elab,
@@ -91,6 +94,8 @@ enum Worker {
     Sim { config: String, arch: String },
     /// Run STF tests of `suites/metacirc/sim-group.toml` on one architecture
     SimGroup { config: String, arch: String },
+    /// Run K definitions of `suites/metacirc/k-in-st.toml` through a tower
+    KInSt { config: String, tower: PathBuf },
 }
 
 /// Compares P4 corpus and AL script outcomes through metacircular towers.
@@ -145,7 +150,9 @@ fn execute(cli: Cli) -> Result<()> {
             path_log.as_deref(),
         ),
         Command::SimGroupSplit => sim_group::split(),
-        Command::KInSt { config, name_suite } => k_in_st::run(&config, name_suite.as_deref()),
+        Command::KInSt { config, name_suite, timeout } => {
+            k_in_st::run(&config, name_suite.as_deref(), timeout.map(Duration::from_secs))
+        }
         // Snapshot and codec checks compile the meta specification without executing it
         Command::Elab => snapshot::run("metacirc/snapshot", &[Stage::Elab], None),
         Command::Algo => snapshot::run("metacirc/snapshot", &[Stage::Algo], None),
@@ -157,6 +164,7 @@ fn execute(cli: Cli) -> Result<()> {
         Command::Worker(Worker::Script { config, tower }) => run::serve_scripts(&config, &tower),
         Command::Worker(Worker::Sim { config, arch }) => sim::serve(&config, &arch),
         Command::Worker(Worker::SimGroup { config, arch }) => sim_group::serve(&config, &arch),
+        Command::Worker(Worker::KInSt { config, tower }) => k_in_st::serve(&config, &tower),
     }
 }
 

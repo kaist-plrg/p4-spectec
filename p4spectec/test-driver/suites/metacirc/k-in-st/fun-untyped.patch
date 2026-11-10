@@ -1,0 +1,29 @@
+The dereference construct `@ Exp` of FUN has no symbol name of its own, so
+kompile names its symbol and the rule labels of its heating and cooling rules
+after the syntax, `@__FUN-UNTYPED-COMMON`. The LLVM backend puts a rule label
+as it is in the name of a string constant, and a linker reads the `@` in a
+symbol name as a version mark (`name@VERSION`), so the shared library the tower
+needs (`llvm-kompile ... c`) does not link: `symbol str_lit_FUN-UNTYPED-COMMON.@...
+has undefined version`. Naming the symbol `deref` keeps the `@` out of every
+label; nothing else changes.
+
+--- a/fun-untyped.md
++++ b/fun-untyped.md
+@@ -291,7 +291,7 @@
+ ```k
+   syntax Exp ::= "ref"                             [macro]
+                | "&" Name
+-               | "@" Exp                                     [strict]
++               | "@" Exp                                     [strict, symbol(deref)]
+                | Exp ":=" Exp                                [strict]
+                | Exp ";" Exp                       [strict(1), right]
+ 
+@@ -363,7 +363,7 @@
+ ## Additional Priorities
+ 
+ ```k
+-  syntax priority @__FUN-UNTYPED-COMMON
++  syntax priority deref
+                 > apply
+                 > arith
+                 > _:=__FUN-UNTYPED-COMMON

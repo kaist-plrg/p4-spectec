@@ -2,6 +2,7 @@
 # TEST_LOG=DIR writes per-test timing logs of the metacirc run, micro, and sim targets
 # TIMEOUT=SECONDS records a source of those targets still running after it as a timeout
 # SUITE=NAME runs only that registered suite in those targets
+# TIMEOUT and SUITE apply to test-metacirc-k-in-st as well
 # SUITE=NAME and GROUP=NAME select the registered suite and group of the sim-group targets,
 # which require both
 
@@ -111,7 +112,7 @@ metacirc-sim-group-split:
 
 # K definitions run through spec-k over KORE (K-in-ST), against krun's output
 test-metacirc-k-in-st:
-	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) k-in-st sl
+	cd $(RUST_DIR) && env -u UPDATE_EXPECT $(METACIRC_TEST) k-in-st sl $(CORPUS_ARGS)
 
 # Snapshots of the meta specification in spec-meta
 $(METACIRC_SNAPSHOTS):

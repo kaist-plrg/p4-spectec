@@ -27,6 +27,13 @@ pub fn compare(info: &Info, output: &str, expected: &str) -> Result<(), String> 
     }
 }
 
+/// Whether K's search found more than one final configuration, as the `search`
+/// binary writes them: several under `\\or`. Then K allows runs other than krun's.
+pub fn several(finals: &str) -> bool {
+    matches!(parse::parse_pattern(finals.as_bytes()),
+             Ok(Pattern::App(name, _, args)) if name == "\\or" && args.len() > 1)
+}
+
 /// Whether a run ended in one of the final configurations K allows, `finals`,
 /// as the `search` binary writes them: one configuration, or several under `\or`.
 pub fn reached(info: &Info, output: &str, finals: &[u8]) -> Result<(), String> {

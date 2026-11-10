@@ -1,16 +1,17 @@
 //! What krun gives for a program, for `KRUN_EXPECT=1`
 //!
 //! `Case::krun` runs the kompiled interpreter as krun does, with `--statistics`,
-//! and writes the run as `print_runres` prints one; `Case::search` writes the
-//! final configurations K allows, as the kompiled `search` binary finds them.
+//! and writes the run as `print_runres` prints one; `Case::search` gives the
+//! final configurations K allows, as the kompiled `search` binary writes them.
 
 use std::{
     fs,
     path::Path,
     process::{Command, Stdio},
+    time::Duration,
 };
 
-use super::build::{Case, run, stdin};
+use super::build::{Case, failed, stdin};
 use crate::harness::Result;
 
 /// Exit codes of the interpreter for a run that fails: a stuck configuration,
@@ -50,27 +51,40 @@ impl Case<'_> {
         Ok(fs::read_to_string(path_out)?.trim_end().to_owned())
     }
 
-    /// Writes the final configurations K allows from an initial term to `path_search`,
-    /// as the kompiled `search` binary finds them.
+    /// The final configurations K's search from an initial term reaches within
+    /// `timeout`, if it ends, as the kompiled `search` binary writes them: one, or
+    /// several under `\or`.
     pub fn search(
         &self,
         path_init: &Path,
         depth: Option<u64>,
         input: Option<&Path>,
-        path_search: &Path,
-    ) -> Result<()> {
-        if path_search.exists() {
-            // The search binary appends to its output file
-            fs::remove_file(path_search)?;
+        timeout: Option<Duration>,
+    ) -> Result<Option<String>> {
+        let dir_temp = tempfile::tempdir()?;
+        let path_out = dir_temp.path().join("search.kore");
+        let search = self.kompiled().join("search");
+        let mut command = match timeout {
+            Some(timeout) => {
+                let mut command = Command::new("timeout");
+                command.arg(timeout.as_secs().to_string()).arg(search);
+                command
+            }
+            None => Command::new(search),
+        };
+        let output = command
+            .arg(path_init)
+            .arg(arg_depth(depth))
+            .arg(&path_out)
+            .stdin(stdin(input)?)
+            .output()?;
+        if output.status.success() {
+            return Ok(Some(fs::read_to_string(path_out)?));
         }
-        run(
-            Command::new(self.kompiled().join("search"))
-                .arg(path_init)
-                .arg(arg_depth(depth))
-                .arg(path_search),
-            input,
-            &format!("search {}", path_init.display()),
-        )?;
-        Ok(())
+        // `timeout` exits with 124 when the time is up
+        if timeout.is_some() && output.status.code() == Some(124) {
+            return Ok(None);
+        }
+        Err(failed(&format!("search {}", path_init.display()), &output))
     }
 }
