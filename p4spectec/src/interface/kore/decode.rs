@@ -5,8 +5,11 @@
 //! host's data, a KORE pattern: the arguments of a hook the K runtime
 //! computes (`offload`), and the configuration of a run (`runres`).
 //! A domain value is written with its sort and text, `DV SortInt "5"` as
-//! `\dv{SortInt{}}("5")`; a collection with the constructors of its sort,
-//! from its `element`, `concat`, and `unit` attributes.
+//! `\dv{SortInt{}}("5")`, an MInt with its width from its sort, `DV
+//! (SortMInt Sort64) "5"` as `\dv{SortMInt{Sort64{}}}("5p64")`; a collection
+//! with the constructors of its sort,
+//! from its `element`, `concat`, and `unit` attributes, a range map's element
+//! of a range `RangeMap:Range(start, end)` of two Int keys as KItems.
 
 use num_bigint::BigInt;
 
@@ -84,6 +87,17 @@ pub fn sort(arena: &Arena, mixops: &Mixops, value: &Value) -> Result<Sort> {
     }
 }
 
+/// The literal `5p64` of an MInt of value `5` and sort `MInt{Sort64}`
+fn mint_literal(value: String, widths: &[Sort]) -> Result<String> {
+    match widths {
+        [Sort::Sort(width, _)] => {
+            let width = width.strip_prefix("Sort").unwrap_or(width);
+            Ok(format!("{value}p{width}"))
+        }
+        _ => Err("an MInt sort without its width".to_owned()),
+    }
+}
+
 fn dv(sort: Sort, text: String) -> Pattern {
     Pattern::App("\\dv".to_owned(), vec![sort], vec![Pattern::Str(text)])
 }
@@ -138,6 +152,12 @@ pub fn term(arena: &Arena, info: &Info, mixops: &Mixops, value: &Value) -> Resul
             [sort, t] if is(arena, mixop, mixops.dv) => {
                 let sort = self::sort(arena, mixops, sort)?;
                 let t = text(arena, t)?;
+                let t = match &sort {
+                    Sort::Sort(name, widths) if info.sort_hook(name) == Some("MINT.MInt") => {
+                        mint_literal(t, widths)?
+                    }
+                    _ => t,
+                };
                 Ok(dv(sort, t))
             }
             [sort, map] if is(arena, mixop, mixops.map) => {
@@ -169,6 +189,33 @@ pub fn term(arena: &Arena, info: &Info, mixops: &Mixops, value: &Value) -> Resul
                 let elems = list(arena, terms)?
                     .iter()
                     .map(|elem| Ok(app(element, vec![to(elem)?])))
+                    .collect::<Result<_>>()?;
+                collection(info, &sort, elems)
+            }
+            // Each range [a, b) |-> v as RangeMap:Range(a, b) r|-> v
+            [sort, items] if is(arena, mixop, mixops.rangemap) => {
+                let sort = self::sort(arena, mixops, sort)?;
+                let element = element_symbol(info, &sort)?;
+                let sort_int = Sort::Sort(info.sort_of_hook("INT.Int")?.to_owned(), vec![]);
+                let key = |i: BigInt| {
+                    Pattern::App(
+                        "inj".to_owned(),
+                        vec![sort_int.clone(), Sort::Sort("SortKItem".to_owned(), vec![])],
+                        vec![dv(sort_int.clone(), i.to_string())],
+                    )
+                };
+                let elems = list(arena, items)?
+                    .iter()
+                    .map(|item| match case(arena, item)? {
+                        (mixop, [a, b, v]) if is(arena, mixop, mixops.range) => {
+                            let range = app(
+                                "LblRangeMap'Coln'Range",
+                                vec![key(int(arena, a)?), key(int(arena, b)?)],
+                            );
+                            Ok(app(element, vec![range, to(v)?]))
+                        }
+                        _ => Err("not a range of a range map".to_owned()),
+                    })
                     .collect::<Result<_>>()?;
                 collection(info, &sort, elems)
             }

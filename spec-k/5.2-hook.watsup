@@ -38,6 +38,81 @@ def $hook(D, "BUFFER.concat", sort, ([DV sort_1 t_1, DV sort_2 t_2]))
   = OK (DV sort_1 (t_1 ++ t_2))
 def $hook(D, "BUFFER.toString", sort, ([DV sort_1 t])) = OK (DV sort t)
 
+;;; KREFLECTION.printKORE (#unparseKORE): a term as KORE text
+;;; Map and Set elements in their order, a string buffer escaped (LLVM: hash trie order, raw)
+
+dec $cat_text(text*) : text
+def $cat_text(eps) = ""
+def $cat_text((t_h :: t_t*)) = t_h ++ $cat_text(t_t*)
+
+;; Texts with a separator between them
+dec $join_text(text, text*) : text
+def $join_text(t_s, eps) = ""
+def $join_text(t_s, (t_h :: t_t*)) = t_h ++ $cat_text((t_s ++ t_t)*)
+
+dec $sort_text(sort) : text
+def $sort_text(SORT sortid sort*) = sortid ++ "{" ++ $join_text(", ", $sort_text(sort)*) ++ "}"
+def $sort_text(SORTVAR sortid) = sortid
+
+dec $symbol_text(symid, sort*) : text
+def $symbol_text(symid, sort*) = symid ++ "{" ++ $join_text(", ", $sort_text(sort)*) ++ "}"
+
+;; The symbol with hook hookid and result sort sort: the unit, element, or
+;; concatenation of a collection sort
+dec $symbol_if(hookid, sort, symid, symdecl) : symid*
+def $symbol_if(hookid, sort, symid, SYMBOL sortid_p* sort_a* '->' sort_r symkind)
+  = [ symid ]
+  -- if sort_r = sort /\ symkind = HOOKED hookid
+def $symbol_if(hookid, sort, symid, SYMBOL sortid_p* sort_a* '->' sort_r symkind) = eps
+  -- if ~(sort_r = sort /\ symkind = HOOKED hookid)
+
+dec $hooked_symbol(definition, hookid, sort) : text
+def $hooked_symbol(D, hookid, sort) = $symbol_text(symid_h, eps)
+  -- if `{ (symid ':' symdecl)* `} = D.SYMBOLS
+  -- if symid_h :: symid_t* = $concat_<symid>($symbol_if(hookid, sort, symid, symdecl)*)
+
+;; A collection: its unit, or its elements, each under the element symbol, in
+;; the concatenation; the hooks of unit, element, and concatenation name them
+dec $collection_text(definition, hookid, hookid, hookid, sort, text*) : text
+def $collection_text(D, hookid_u, hookid_e, hookid_c, sort, eps)
+  = $hooked_symbol(D, hookid_u, sort) ++ "()"
+def $collection_text(D, hookid_u, hookid_e, hookid_c, sort, (t_h :: t_t*))
+  = "\\left-assoc{}(" ++ $hooked_symbol(D, hookid_c, sort) ++ "("
+    ++ $join_text(",", (t_e ++ "(" ++ t ++ ")")*) ++ "))"
+  -- if t_e = $hooked_symbol(D, hookid_e, sort)
+  -- if t* = t_h :: t_t*
+
+;; The width of an MInt sort
+dec $mint_width(sort) : text?
+def $mint_width(SORT "SortMInt" ([SORT sortid_w eps])) = $drop_prefix(sortid_w, "Sort")
+def $mint_width(sort) = eps
+  -- otherwise
+
+;; The text of a domain value's literal: an MInt with the width of its sort
+dec $literal_text(sort, text) : text
+def $literal_text(sort, t) = t ++ "p" ++ t_w
+  -- if t_w = $mint_width(sort)
+def $literal_text(sort, t) = $kore_string(t)
+  -- if eps = $mint_width(sort)
+
+dec $kore_text(definition, term) : text
+def $kore_text(D, APP symid sort* term*)
+  = $symbol_text(symid, sort*) ++ "(" ++ $join_text(",", $kore_text(D, term)*) ++ ")"
+def $kore_text(D, DV sort t) = "\\dv{" ++ $sort_text(sort) ++ "}(\"" ++ $literal_text(sort, t) ++ "\")"
+def $kore_text(D, LIST sort term*)
+  = $collection_text(D, "LIST.unit", "LIST.element", "LIST.concat", sort, $kore_text(D, term)*)
+def $kore_text(D, SET sort `{ term* `})
+  = $collection_text(D, "SET.unit", "SET.element", "SET.concat", sort, $kore_text(D, term)*)
+def $kore_text(D, MAP sort `{ (term_k ':' term_v)* `})
+  = $collection_text(D, "MAP.unit", "MAP.element", "MAP.concat", sort,
+                     ($kore_text(D, term_k) ++ "," ++ $kore_text(D, term_v))*)
+;; a range map by its ranges, each RangeMap:Range(start, end) and its value
+def $kore_text(D, RANGEMAP sort (RANGE i_s i_e term)*)
+  = $collection_text(D, "RANGEMAP.unit", "RANGEMAP.elementRng", "RANGEMAP.concat", sort,
+                     ($kore_text(D, $range_term(i_s, i_e)) ++ "," ++ $kore_text(D, term))*)
+
+def $hook(D, "KREFLECTION.printKORE", sort, ([term])) = OK (DV sort $kore_text(D, term))
+
 ;;; SUBSTITUTION
 ;;; E[V / X], renaming binders so that V is not captured; bound names agree
 ;;; with the LLVM backend's only up to renaming

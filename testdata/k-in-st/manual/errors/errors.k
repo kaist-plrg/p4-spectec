@@ -10,6 +10,7 @@ module ERRORS
   imports LIST
   imports MAP
   imports SET
+  imports RANGEMAP
 
   configuration <k> $PGM:Pgm </k>
 
@@ -126,6 +127,20 @@ module ERRORS
   // A list update out of range.
   syntax Pgm ::= listupdate(Int)
   rule <k> listupdate(I) => ListItem(1) [ I <- 2 ] </k>
+
+  // A fill that runs past the end of the list.
+  syntax Pgm ::= listfill(Int)
+  rule <k> listfill(I) => fillList(ListItem(0) ListItem(0), I, 2, 9) </k>
+
+  // RANGEMAP
+
+  // Range maps with overlapping ranges joined.
+  syntax Pgm ::= rangeconcat(Int)
+  rule <k> rangeconcat(I) => ([ I, I +Int 2 ) r|-> 1) ([ I +Int 1, I +Int 3 ) r|-> 2) </k>
+
+  // An empty range.
+  syntax Pgm ::= rangeempty(Int)
+  rule <k> rangeempty(I) => [ I, I ) r|-> 1 </k>
 
   // A list of negative length.
   syntax Pgm ::= listmake(Int)

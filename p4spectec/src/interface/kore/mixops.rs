@@ -31,6 +31,8 @@ pub struct Mixops {
     pub(super) map: Mixop,
     pub(super) set: Mixop,
     pub(super) list: Mixop,
+    pub(super) rangemap: Mixop,
+    pub(super) range: Mixop,
     // Sorts
     pub(super) sort: Mixop,
     pub(super) sortvar: Mixop,
@@ -69,6 +71,8 @@ impl Mixops {
             map: mixop(arena, "MAP sort m")?,
             set: mixop(arena, "SET sort s")?,
             list: mixop(arena, "LIST sort term*")?,
+            rangemap: mixop(arena, "RANGEMAP sort rangeitem*")?,
+            range: mixop(arena, "RANGE int int term")?,
             sort: mixop(arena, "SORT sortid sort*")?,
             sortvar: mixop(arena, "SORTVAR sortid")?,
             pair: mixop(arena, "k ':' v")?,

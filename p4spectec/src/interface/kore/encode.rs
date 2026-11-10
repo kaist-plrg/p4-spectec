@@ -6,11 +6,11 @@
 //! and the declarations of sorts and symbols; alias declarations are not
 //! read (`parse`). Connectives are named without their backslash.
 //! A domain value keeps the text of its literal, `\dv{SortInt{}}("1")` as
-//! `KDV SortInt "1"`; only a Float is written in the K runtime's output
-//! format (`literal`), so that equal values have equal text, as the
-//! specification compares them. `term` encodes the K runtime's answer, a
-//! domain value or a constructor applied to such answers, as a term
-//! (`offload`).
+//! `KDV SortInt "1"`; a Float is written in the K runtime's output format and
+//! an MInt `5p64` as its value `5`, its width being in its sort (`literal`), so
+//! that equal values have equal text, as the specification compares them.
+//! `term` encodes the K runtime's answer, a domain value or a constructor
+//! applied to such answers, as a term (`offload`).
 //! Which axioms are executed and how they are read is for the
 //! specification to decide (`spec-k/3-load.watsup`).
 
@@ -291,8 +291,10 @@ pub fn program(arena: &mut Arena, value_definition: Value, value_init: Value) ->
 
 /// The text of a domain value `\dv{S}("text")` of a definition or an initial
 /// term, as the K runtime writes the value: an Int in decimal without a sign
-/// but `-` (`+3` is `3`), a Float in the runtime's output format, and any
-/// other as written. The specification compares domain values by their text.
+/// but `-` (`+3` is `3`), a Float in the runtime's output format, an MInt
+/// `5p64` as `5` and `-1p8` as `255` (`decode` puts the width back from the
+/// sort), and any other as written. The specification compares domain values
+/// by their text.
 fn literal(loaded: &Loaded, sort: &Sort, text: &str) -> Result<String> {
     let hook = match sort {
         Sort::Sort(name, _) => loaded.info.sort_hook(name),
@@ -306,20 +308,40 @@ fn literal(loaded: &Loaded, sort: &Sort, text: &str) -> Result<String> {
             Ok(int.to_string())
         }
         Some("FLOAT.Float") => offload::float_literal(loaded, text).map_err(EncodeError::Literal),
+        Some("MINT.MInt") => mint_value(text),
         _ => Ok(text.to_owned()),
     }
 }
 
+/// The value of an MInt literal `<value>p<width>` as the K runtime writes it,
+/// in decimal and below `2^width`: `5p64` and `+5P64` are `5`, `-1p8` is `255`.
+fn mint_value(text: &str) -> Result<String> {
+    let bad = || EncodeError::Literal(format!("bad MInt literal {text:?}"));
+    let (value, width) = text.split_once(['p', 'P']).ok_or_else(bad)?;
+    let digits = value.strip_prefix('+').unwrap_or(value);
+    let value = BigInt::parse_bytes(digits.as_bytes(), 10).ok_or_else(bad)?;
+    let width: u64 = width.parse().map_err(|_| bad())?;
+    let modulus = BigInt::from(1) << width;
+    Ok(((value % &modulus + &modulus) % &modulus).to_string())
+}
+
 /// A domain value, or a constructor applied to such terms, as
 /// `G1Point(x, y)` of KRYPTO. The runtime writes a Float in its output
-/// format already.
-pub fn term(arena: &mut Arena, mixops: &Mixops, pattern: &Pattern) -> Result<Value> {
+/// format already; an MInt it writes as `5p64`.
+pub fn term(arena: &mut Arena, loaded: &Loaded, pattern: &Pattern) -> Result<Value> {
+    let mixops = &loaded.mixops;
     match pattern {
         Pattern::App(symbol, sorts, args) if symbol == "\\dv" => {
             match (sorts.as_slice(), args.as_slice()) {
                 ([sort], [Pattern::Str(t)]) => {
                     let value_sort = make_sort(arena, mixops, sort)?;
-                    let value_text = make_text(arena, t)?;
+                    let t = match sort {
+                        Sort::Sort(name, _) if loaded.info.sort_hook(name) == Some("MINT.MInt") => {
+                            mint_value(t)?
+                        }
+                        _ => t.to_owned(),
+                    };
+                    let value_text = make_text(arena, &t)?;
                     make_case(arena, mixops.dv, vec![value_sort, value_text], typ("term"))
                 }
                 _ => Err(EncodeError::Literal(format!("bad domain value {pattern}"))),
@@ -330,7 +352,7 @@ pub fn term(arena: &mut Arena, mixops: &Mixops, pattern: &Pattern) -> Result<Val
             let sorts = make_sorts(arena, mixops, sorts)?;
             let args = args
                 .iter()
-                .map(|arg| term(arena, mixops, arg))
+                .map(|arg| term(arena, loaded, arg))
                 .collect::<Result<_>>()?;
             let args = make_list(arena, typ("term"), args)?;
             make_case(arena, mixops.app, vec![symbol, sorts, args], typ("term"))

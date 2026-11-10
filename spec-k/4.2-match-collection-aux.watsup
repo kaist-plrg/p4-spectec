@@ -80,3 +80,44 @@ def $list_at(term*, i) = term*[n]
   -- if n = $nat_of($(|term*| + i))
 def $list_at(term*, i) = eps
   -- otherwise
+
+;;; Range maps (RANGEMAP, 5.3-hook-collection): keys and ranges as terms
+
+;; A key is an Int injected into KItem; a range is RangeMap:Range(start, end) of two keys
+
+dec $key_int(term) : int?
+def $key_int(APP "inj" ([sort_a, sort_k]) ([DV sort_i t])) = $text_to_int(t)
+def $key_int(term) = eps
+  -- otherwise
+
+dec $int_key(int) : term
+def $int_key(i)
+  = APP "inj" ([SORT "SortInt" eps, SORT "SortKItem" eps]) ([DV (SORT "SortInt" eps) $int_text(i)])
+
+dec $range_term(int, int) : term
+def $range_term(i_s, i_e) = APP "LblRangeMap'Coln'Range" eps ([$int_key(i_s), $int_key(i_e)])
+
+dec $range_key(int, int) : term
+def $range_key(i_s, i_e)
+  = APP "inj" ([SORT "SortRange" eps, SORT "SortKItem" eps]) ([$range_term(i_s, i_e)])
+
+dec $range_bounds(term) : (int, int)?
+def $range_bounds(APP "LblRangeMap'Coln'Range" eps ([term_s, term_e])) = (i_s, i_e)
+  -- if i_s = $key_int(term_s)
+  -- if i_e = $key_int(term_e)
+def $range_bounds(APP "inj" ([sort_r, sort_k]) ([term])) = $range_bounds(term)
+def $range_bounds(term) = eps
+  -- otherwise
+
+;; The ranges of a range map with each run of adjacent ranges of one value
+;; merged, as the LLVM backend's rangemap.h keeps them
+
+dec $merge_ranges(rangeitem*) : rangeitem*
+def $merge_ranges(eps) = eps
+def $merge_ranges([ rangeitem ]) = [ rangeitem ]
+def $merge_ranges((RANGE i_1 i_2 term_1) :: (RANGE i_3 i_4 term_2) :: rangeitem_t*)
+  = $merge_ranges((RANGE i_1 i_4 term_1) :: rangeitem_t*)
+  -- if i_2 = i_3 /\ term_1 = term_2
+def $merge_ranges((RANGE i_1 i_2 term_1) :: (RANGE i_3 i_4 term_2) :: rangeitem_t*)
+  = (RANGE i_1 i_2 term_1) :: $merge_ranges((RANGE i_3 i_4 term_2) :: rangeitem_t*)
+  -- if ~(i_2 = i_3 /\ term_1 = term_2)
