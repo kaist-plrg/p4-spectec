@@ -120,28 +120,6 @@ def $transpose_<X>(X'*{X' <- X'*}*{X'* <- X'**})
 
 2. Else Dangling
 
-def $intersect_<X>(X*{X <- X*}, X'*{X' <- X'*})
-
-1. Case analysis on X*{X <- X*} (total)
-
-  1. Case (% matches pattern [])
-
-    1. Return []
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let X_h :: X_t*{X_t <- X_t*} be X*{X <- X*})
-
-      1. Case analysis on X_h <- X'*{X' <- X'*} (total)
-
-        1. Case true
-
-          1. Return X_h :: $intersect_<X>(X_t*{X_t <- X_t*}, X'*{X' <- X'*})
-
-        2. Case false
-
-          1. Return $intersect_<X>(X_t*{X_t <- X_t*}, X'*{X' <- X'*})
-
 syntax set<K> =
    | `{ K* `} (from set<K>)
 
@@ -611,125 +589,9 @@ def $fresh(id_used*{id_used <- id_used*}, id)
 
     1. Return $fresh(id_used*{id_used <- id_used*}, id ++ "'")
 
-def $ids_of_varis(id _typ _iter*{_iter <- _iter*}*{_iter* <- _iter**, _typ <- _typ*, id <- id*})
-
-1. Return id*{id <- id*}
-
-def $select_varis(vari*{vari <- vari*}, id*{id <- id*})
-
-1. Case analysis on vari*{vari <- vari*} (total)
-
-  1. Case (% matches pattern [])
-
-    1. Return []
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let vari_h :: vari_t*{vari_t <- vari_t*} be vari*{vari <- vari*})
-
-      1. (Let id_h _typ _iter*{_iter <- _iter*} be vari_h)
-
-        1. Case analysis on id_h <- id*{id <- id*} (total)
-
-          1. Case true
-
-            1. Return vari_h :: $select_varis(vari_t*{vari_t <- vari_t*}, id*{id <- id*})
-
-          2. Case false
-
-            1. Return $select_varis(vari_t*{vari_t <- vari_t*}, id*{id <- id*})
-
-def $drop_varis(vari*{vari <- vari*}, id*{id <- id*})
-
-1. Case analysis on vari*{vari <- vari*} (total)
-
-  1. Case (% matches pattern [])
-
-    1. Return []
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let vari_h :: vari_t*{vari_t <- vari_t*} be vari*{vari <- vari*})
-
-      1. (Let id_h _typ _iter*{_iter <- _iter*} be vari_h)
-
-        1. Case analysis on id_h <- id*{id <- id*} (total)
-
-          1. Case true
-
-            1. Return $drop_varis(vari_t*{vari_t <- vari_t*}, id*{id <- id*})
-
-          2. Case false
-
-            1. Return vari_h :: $drop_varis(vari_t*{vari_t <- vari_t*}, id*{id <- id*})
-
 def $iterate_vari(id typ iter*{iter <- iter*}, iter_add*{iter_add <- iter_add*})
 
 1. Return id typ iter*{iter <- iter*} ++ iter_add*{iter_add <- iter_add*}
-
-def $is_prefix_dim(vari, vari')
-
-1. (Let _id typ_a iter_a*{iter_a <- iter_a*} be vari)
-
-  1. (Let _id' typ_b iter_b*{iter_b <- iter_b*} be vari')
-
-    1. If ((typ_a = typ_b)), then
-
-      1. If ((|iter_a*{iter_a <- iter_a*}| <= |iter_b*{iter_b <- iter_b*}|)), then
-
-        1. If (((0 + |iter_a*{iter_a <- iter_a*}|) <= |iter_b*{iter_b <- iter_b*}|)), then
-
-          1. If ((iter_a*{iter_a <- iter_a*} = iter_b*{iter_b <- iter_b*}[0 : |iter_a*{iter_a <- iter_a*}|])), then
-
-            1. Return true
-
-2. Otherwise,
-
-  1. Return false
-
-def $shallowest_vari(vari, vari'*{vari' <- vari'*})
-
-1. Case analysis on vari'*{vari' <- vari'*} (total)
-
-  1. Case (% matches pattern [])
-
-    1. Return vari
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let vari_h :: vari_t*{vari_t <- vari_t*} be vari'*{vari' <- vari'*})
-
-      1. Case analysis on $is_prefix_dim(vari_h, vari) (total)
-
-        1. Case true
-
-          1. Return $shallowest_vari(vari_h, vari_t*{vari_t <- vari_t*})
-
-        2. Case false
-
-          1. Return $shallowest_vari(vari, vari_t*{vari_t <- vari_t*})
-
-def $shallowest_varis(vari*{vari <- vari*})
-
-1. Case analysis on vari*{vari <- vari*} (total)
-
-  1. Case (% matches pattern [])
-
-    1. Return []
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let vari_h :: vari_t*{vari_t <- vari_t*} be vari*{vari <- vari*})
-
-      1. (Let id_h _typ _iter*{_iter <- _iter*} be vari_h)
-
-        1. (Let vari_same*{vari_same <- vari_same*} be $select_varis(vari_t*{vari_t <- vari_t*}, [id_h]))
-
-          1. (Let vari_rest*{vari_rest <- vari_rest*} be $drop_varis(vari_t*{vari_t <- vari_t*}, [id_h]))
-
-            1. (Let vari_min be $shallowest_vari(vari_h, vari_same*{vari_same <- vari_same*}))
-
-              1. Return vari_min :: $shallowest_varis(vari_rest*{vari_rest <- vari_rest*})
 
 syntax typDef =
    | EXTTYP id (from externTypDefn)
