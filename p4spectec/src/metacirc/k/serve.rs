@@ -3,7 +3,7 @@
 //! spec-meta-k (`spec-meta-k/3-execution/3.14-entry.k`) serves JSON text,
 //! held in `text` values (`make::text`, `get::text`): calls and answers
 //! for the level above, and the requests and responses of their host calls.
-//! The entries of spec-meta/5-entry.watsup are two calls in a row:
+//! The entries of spec-meta/4-entry.watsup are two calls in a row:
 //! `Eval_AL_rel` is `load` then `call-rel`, and `Eval_AL_func` is `load`
 //! then `call-func` with no type arguments.
 //! `json`, imported as `wire`, prints and reads the values and types inside.

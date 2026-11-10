@@ -1,6 +1,6 @@
 // Type casts.
 //
-// Mirrors spec-meta/4-execution/4.04.2-typ-cast.watsup.
+// Mirrors spec-meta/3-execution/3.04.2-typ-cast.watsup.
 //
 //   syntax castRes = ok<val> | error
 //   syntax castsRes = ok<val*> | error

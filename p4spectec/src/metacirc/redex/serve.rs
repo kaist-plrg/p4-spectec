@@ -24,7 +24,7 @@
 //! ```
 //!
 //! ERROR in a response says the host could not answer; the engine reports why.
-//! The entries of spec-meta/5-entry.watsup are two calls in a row:
+//! The entries of spec-meta/4-entry.watsup are two calls in a row:
 //! `Eval_AL_rel` is `load` then `call-rel`,
 //! and `Eval_AL_func` is `load` then `call-func` with no type arguments.
 

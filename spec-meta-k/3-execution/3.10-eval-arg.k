@@ -1,6 +1,6 @@
 // Argument and type argument evaluation, and the call expression.
 //
-// Mirrors spec-meta/4-execution/4.08-eval-arg.watsup.
+// Mirrors spec-meta/3-execution/3.08-eval-arg.watsup.
 
 requires "3.09-eval-path.k"
 

@@ -1,6 +1,6 @@
 // Relation invocation: rule paths, defined relations, and Call_rel.
 //
-// Mirrors spec-meta/4-execution/4.11-eval-call-rel.watsup.
+// Mirrors spec-meta/3-execution/3.11-eval-call-rel.watsup.
 
 requires "3.12-eval-call-func.k"
 

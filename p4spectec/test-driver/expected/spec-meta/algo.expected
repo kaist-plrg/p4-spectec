@@ -73,21 +73,6 @@ def $transpose_<X>(X**) : X** =
   -- if (X_h*{X_h <- X_h*} =/= [])
   -- let X_trans*{X_trans <- X_trans*}*{X_trans* <- X_trans**} = $transpose_<X>(X_t*{X_t <- X_t*}*{X_t* <- X_t**})
 
-def $intersect_<X>(X*, X*) : X* =
-
-  clause 0 : (X*{X <- X*}, _X*{_X <- _X*}) = []
-  -- if X*{X <- X*} matches []
-
-  clause 1 : (X*{X <- X*}, X_in*{X_in <- X_in*}) = X_h :: $intersect_<X>(X_t*{X_t <- X_t*}, X_in*{X_in <- X_in*})
-  -- if X*{X <- X*} matches _ :: _
-  -- let X_h :: X_t*{X_t <- X_t*} = X*{X <- X*}
-  -- if X_h <- X_in*{X_in <- X_in*}
-
-  clause 2 : (X*{X <- X*}, X_in*{X_in <- X_in*}) = $intersect_<X>(X_t*{X_t <- X_t*}, X_in*{X_in <- X_in*})
-  -- if X*{X <- X*} matches _ :: _
-  -- let X_h :: X_t*{X_t <- X_t*} = X*{X <- X*}
-  -- if ~X_h <- X_in*{X_in <- X_in*}
-
 syntax set<K> =
    | `{ K* `} (from set<K>)
 
@@ -541,85 +526,9 @@ def $fresh(id*, id) : id =
   clause 1 : (id_used*{id_used <- id_used*}, id) = $fresh(id_used*{id_used <- id_used*}, id ++ "'")
   -- if id <- id_used*{id_used <- id_used*}
 
-def $ids_of_varis(vari*) : id* =
-
-  clause 0 : (id _typ _iter*{_iter <- _iter*}*{_iter* <- _iter**, _typ <- _typ*, id <- id*}) = id*{id <- id*}
-
-def $select_varis(vari*, id*) : vari* =
-
-  clause 0 : (vari*{vari <- vari*}, _id*{_id <- _id*}) = []
-  -- if vari*{vari <- vari*} matches []
-
-  clause 1 : (vari*{vari <- vari*}, id*{id <- id*}) = vari_h :: $select_varis(vari_t*{vari_t <- vari_t*}, id*{id <- id*})
-  -- if vari*{vari <- vari*} matches _ :: _
-  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari*{vari <- vari*}
-  -- let id_h _typ _iter*{_iter <- _iter*} = vari_h
-  -- if id_h <- id*{id <- id*}
-
-  clause 2 : (vari*{vari <- vari*}, id*{id <- id*}) = $select_varis(vari_t*{vari_t <- vari_t*}, id*{id <- id*})
-  -- if vari*{vari <- vari*} matches _ :: _
-  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari*{vari <- vari*}
-  -- let id_h _typ _iter*{_iter <- _iter*} = vari_h
-  -- if ~id_h <- id*{id <- id*}
-
-def $drop_varis(vari*, id*) : vari* =
-
-  clause 0 : (vari*{vari <- vari*}, _id*{_id <- _id*}) = []
-  -- if vari*{vari <- vari*} matches []
-
-  clause 1 : (vari*{vari <- vari*}, id*{id <- id*}) = $drop_varis(vari_t*{vari_t <- vari_t*}, id*{id <- id*})
-  -- if vari*{vari <- vari*} matches _ :: _
-  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari*{vari <- vari*}
-  -- let id_h _typ _iter*{_iter <- _iter*} = vari_h
-  -- if id_h <- id*{id <- id*}
-
-  clause 2 : (vari*{vari <- vari*}, id*{id <- id*}) = vari_h :: $drop_varis(vari_t*{vari_t <- vari_t*}, id*{id <- id*})
-  -- if vari*{vari <- vari*} matches _ :: _
-  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari*{vari <- vari*}
-  -- let id_h _typ _iter*{_iter <- _iter*} = vari_h
-  -- if ~id_h <- id*{id <- id*}
-
 def $iterate_vari(vari, iter*) : vari =
 
   clause 0 : (id typ iter*{iter <- iter*}, iter_add*{iter_add <- iter_add*}) = id typ iter*{iter <- iter*} ++ iter_add*{iter_add <- iter_add*}
-
-def $is_prefix_dim(vari, vari) : bool =
-
-  clause 0 : (_id typ_a iter_a*{iter_a <- iter_a*}, _id' typ_b iter_b*{iter_b <- iter_b*}) = true
-  -- if (typ_a = typ_b)
-  -- if (|iter_a*{iter_a <- iter_a*}| <= |iter_b*{iter_b <- iter_b*}|)
-  -- if ((0 + |iter_a*{iter_a <- iter_a*}|) <= |iter_b*{iter_b <- iter_b*}|)
-  -- if (iter_a*{iter_a <- iter_a*} = iter_b*{iter_b <- iter_b*}[0 : |iter_a*{iter_a <- iter_a*}|])
-
-  clause -1 : (_vari, _vari') = false
-
-def $shallowest_vari(vari, vari*) : vari =
-
-  clause 0 : (vari, vari'*{vari' <- vari'*}) = vari
-  -- if vari'*{vari' <- vari'*} matches []
-
-  clause 1 : (vari, vari'*{vari' <- vari'*}) = $shallowest_vari(vari_h, vari_t*{vari_t <- vari_t*})
-  -- if vari'*{vari' <- vari'*} matches _ :: _
-  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari'*{vari' <- vari'*}
-  -- if $is_prefix_dim(vari_h, vari)
-
-  clause 2 : (vari, vari'*{vari' <- vari'*}) = $shallowest_vari(vari, vari_t*{vari_t <- vari_t*})
-  -- if vari'*{vari' <- vari'*} matches _ :: _
-  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari'*{vari' <- vari'*}
-  -- if ~$is_prefix_dim(vari_h, vari)
-
-def $shallowest_varis(vari*) : vari* =
-
-  clause 0 : (vari*{vari <- vari*}) = []
-  -- if vari*{vari <- vari*} matches []
-
-  clause 1 : (vari*{vari <- vari*}) = vari_min :: $shallowest_varis(vari_rest*{vari_rest <- vari_rest*})
-  -- if vari*{vari <- vari*} matches _ :: _
-  -- let vari_h :: vari_t*{vari_t <- vari_t*} = vari*{vari <- vari*}
-  -- let id_h _typ _iter*{_iter <- _iter*} = vari_h
-  -- let vari_same*{vari_same <- vari_same*} = $select_varis(vari_t*{vari_t <- vari_t*}, [id_h])
-  -- let vari_rest*{vari_rest <- vari_rest*} = $drop_varis(vari_t*{vari_t <- vari_t*}, [id_h])
-  -- let vari_min = $shallowest_vari(vari_h, vari_same*{vari_same <- vari_same*})
 
 syntax typDef =
    | EXTTYP id (from externTypDefn)

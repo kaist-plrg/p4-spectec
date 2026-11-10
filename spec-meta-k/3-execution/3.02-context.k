@@ -1,7 +1,7 @@
 // Context: loading, function parameters, scopes, call frames, and
 // sub-contexts for iteration.
 //
-// Mirrors spec-meta/4-execution/4.01-context.watsup.
+// Mirrors spec-meta/3-execution/3.01-context.watsup.
 
 requires "3.01-env.k"
 

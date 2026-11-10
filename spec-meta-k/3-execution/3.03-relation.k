@@ -1,6 +1,6 @@
 // Relations: their declarations and the extern relations.
 //
-// Mirrors spec-meta/4-execution/4.02-relation.watsup.
+// Mirrors spec-meta/3-execution/3.02-relation.watsup.
 // Declares the relations as `<k>` computations.
 
 requires "3.04.2-extern-host.k"

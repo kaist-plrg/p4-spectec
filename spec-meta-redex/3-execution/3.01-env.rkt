@@ -1,5 +1,5 @@
 #lang racket/base
-;; Mirrors spec-meta/4-execution/4.00-env.watsup.
+;; Mirrors spec-meta/3-execution/3.00-env.watsup.
 
 (require redex/reduction-semantics
          "3.00-result.rkt")
