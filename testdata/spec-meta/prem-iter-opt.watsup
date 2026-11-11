@@ -13,8 +13,11 @@ relation Copy: nat |- nat
 rule Copy:
   n |- n
 
-dec $copy_opt(nat?) : nat?
-def $copy_opt(n?) = m?
+relation Copy_opt: nat? |- nat?
+  hint(input %0)
+
+rule Copy_opt:
+  n? |- m?
   -- (Copy: n |- m)?
 
 dec $succ_opt(nat?) : nat?
@@ -30,6 +33,7 @@ def $pos_opt(n?) = eps
 relation Main: OK
 
 rule Main: OK
-  -- if $copy_opt(1) = 1 /\ $copy_opt(eps) = eps
+  -- Copy_opt: 1 |- 1
+  -- Copy_opt: eps |- eps
   -- if $succ_opt(1) = 2 /\ $succ_opt(eps) = eps
   -- if $pos_opt(1) = 1 /\ $pos_opt(0) = eps /\ $pos_opt(eps) = eps

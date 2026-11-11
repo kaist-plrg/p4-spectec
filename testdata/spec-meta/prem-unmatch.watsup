@@ -1,4 +1,4 @@
-;; An unmatch in a premise's operands unmatches the clause, so the next clause runs
+;; An unmatch in a premise's operands unmatches the clause or rule, so the next one runs
 
 var n : nat
 var m : nat
@@ -20,23 +20,31 @@ rule Small:
   |- n
   -- if $(n < 5)
 
-dec $rel(nat) : nat
-def $rel(n) = m
+relation Rel: nat |- nat
+  hint(input %0)
+
+rule Rel/pos:
+  n |- m
   -- Copy: $pos(n) |- m
-def $rel(n) = 0
-  -- otherwise
 
-dec $hold(nat) : bool
-def $hold(n) = true
+rule Rel/zero:
+  n |- 0
+  -- if n = 0
+
+relation Hold: nat |- bool
+  hint(input %0)
+
+rule Hold/true:
+  n |- true
   -- Small: |- $pos(n)
-def $hold(n) = false
-  -- otherwise
 
-dec $not_hold(nat) : bool
-def $not_hold(n) = true
+rule Hold/false:
+  n |- false
   -- Small:/ |- $pos(n)
-def $not_hold(n) = false
-  -- otherwise
+
+rule Hold/zero:
+  n |- false
+  -- if n = 0
 
 dec $debug(nat) : bool
 def $debug(n) = true
@@ -55,8 +63,10 @@ def $args(n) = 0
 relation Main: OK
 
 rule Main: OK
-  -- if $rel(0) = 0 /\ $rel(1) = 1
-  -- if ~$hold(0) /\ $hold(1)
-  -- if ~$not_hold(0) /\ $not_hold(7)
+  -- Rel: 0 |- 0
+  -- Rel: 1 |- 1
+  -- Hold: 0 |- false
+  -- Hold: 1 |- true
+  -- Hold: 7 |- false
   -- if ~$debug(0) /\ $debug(1)
   -- if $args(0) = 0 /\ $args(1) = 2
