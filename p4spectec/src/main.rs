@@ -431,7 +431,7 @@ fn cover_run_command(args: CoverRunArgs) -> Result<(), ()> {
     let mut renderer = Renderer::new(RenderConfig::default());
     // Collect inputs before the slower specification loading
     let programs = coverage::corpus::collect_excludes(&args.excludes)
-        .and_then(|excludes| coverage::corpus::collect_programs(&args.paths_p4, &excludes))
+        .and_then(|excludes| coverage::corpus::collect_programs(&args.paths_p4, ".p4", &excludes))
         .map_err(|report| render_report(&mut renderer, &report))?;
     let spec_sl =
         report_warnings(&mut renderer, p4spectec::structure_with_warnings(&args.paths, true))

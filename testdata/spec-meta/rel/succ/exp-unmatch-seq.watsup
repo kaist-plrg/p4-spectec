@@ -1,0 +1,71 @@
+;; An unmatch in an operand of a sequence operator
+
+var n : nat
+
+;; Unmatches on zero
+dec $pos(nat) : nat
+def $pos(n) = n
+  -- if $(n > 0)
+
+;; Unmatches on zero
+dec $word(nat) : text
+def $word(n) = "w"
+  -- if $(n > 0)
+
+;; Unmatches on zero
+dec $nats(nat) : nat*
+def $nats(n) = [ n ]
+  -- if $(n > 0)
+
+;; In the head of ::
+dec $cons(nat) : nat*
+def $cons(n) = $pos(n) :: [ 1 ]
+def $cons(n) = eps
+  -- otherwise
+
+;; In the tail of ::
+dec $cons_tail(nat) : nat*
+def $cons_tail(n) = 1 :: $nats(n)
+def $cons_tail(n) = eps
+  -- otherwise
+
+;; In the left operand of ++
+dec $cat(nat) : nat*
+def $cat(n) = $nats(n) ++ [ 1 ]
+def $cat(n) = eps
+  -- otherwise
+
+;; In the right operand of ++
+dec $cat_right(nat) : nat*
+def $cat_right(n) = [ 1 ] ++ $nats(n)
+def $cat_right(n) = eps
+  -- otherwise
+
+;; In a text operand of ++
+dec $cat_text(nat) : text
+def $cat_text(n) = "a" ++ $word(n)
+def $cat_text(n) = ""
+  -- otherwise
+
+;; Under length
+dec $len(nat) : nat
+def $len(n) = |$nats(n)|
+def $len(n) = 0
+  -- otherwise
+
+;; In the new value of an update
+dec $upd_value(nat) : nat*
+def $upd_value(n) = $nats(1)[[0] = $pos(n)]
+def $upd_value(n) = eps
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $cons(0) = eps
+  -- if $cons_tail(0) = eps
+  -- if $cat(0) = eps
+  -- if $cat_right(0) = eps
+  -- if $cat_text(0) = ""
+  -- if $len(0) = 0
+  -- if $upd_value(0) = eps

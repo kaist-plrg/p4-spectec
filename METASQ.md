@@ -250,6 +250,10 @@ module, and `make test-metacirc-run-redex`, `test-metacirc-micro-redex`, and
 spec-meta-k and spec-meta-redex take the first successful clause or rule path
 without checking the later ones, so both micro targets skip the scripts in
 `excludes/metacirc-first-match` that only that check fails.
+spec-meta-k-detcheck and spec-meta-redex-detcheck enable that check
+(`towers/k-detcheck*.json`, `towers/redex-detcheck*.json`),
+and the `testdata/spec-meta` suites run on the k and redex bases only through them;
+`make kompile` and `make redex` build both.
 
 ## Algo through the IL-to-AL specification
 

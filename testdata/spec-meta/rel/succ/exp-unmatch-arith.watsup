@@ -1,0 +1,47 @@
+;; An unmatch in an operand of an arithmetic or ordering operator
+
+var n : nat
+
+;; Unmatches on zero
+dec $pos(nat) : nat
+def $pos(n) = n
+  -- if $(n > 0)
+
+;; Under unary minus
+dec $neg(nat) : int
+def $neg(n) = $(-$pos(n))
+def $neg(n) = 0
+  -- otherwise
+
+;; In the left operand of +
+dec $add(nat) : nat
+def $add(n) = $($pos(n) + 1)
+def $add(n) = 0
+  -- otherwise
+
+;; In the right operand of +
+dec $add_right(nat) : nat
+def $add_right(n) = $(1 + $pos(n))
+def $add_right(n) = 0
+  -- otherwise
+
+;; In the left operand of <
+dec $lt(nat) : bool
+def $lt(n) = $($pos(n) < 1)
+def $lt(n) = false
+  -- otherwise
+
+;; In the right operand of <
+dec $lt_right(nat) : bool
+def $lt_right(n) = $(1 < $pos(n))
+def $lt_right(n) = false
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $neg(0) = 0
+  -- if $add(0) = 0
+  -- if $add_right(0) = 0
+  -- if $lt(0) = false
+  -- if $lt_right(0) = false

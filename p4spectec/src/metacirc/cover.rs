@@ -1,7 +1,8 @@
 //! SL instruction coverage of a tower's base
 //!
-//! `cover_run` evaluates P4 programs and `cover_sim` runs STF tests through
-//! a tower with an SL base below a P4 top level, as `coverage` does on one runner.
+//! `cover_run` evaluates P4 programs or scripts through a tower with an SL base,
+//! and `cover_sim` runs STF tests through one below a P4 top level,
+//! as `coverage` does on one runner.
 //! Only the base is measured, at depth 0 and every reentry depth;
 //! the levels it interprets are not.
 
@@ -24,12 +25,22 @@ use crate::{
 use std::path::{Path, PathBuf};
 
 /// Returns the base specification a tower's coverage measures,
-/// checking that the base runs on SL below a P4 top level.
+/// checking that the base runs on SL.
 pub fn base_specdir(config: &TowerConfig) -> Result<&Path> {
-    if !matches!(config.base, BaseConfig::St { repr: Repr::Sl }) || config.top_lang() != Lang::P4 {
-        return Err(config_invalid("coverage requires an sl tower with a P4 top level"));
+    if !matches!(config.base, BaseConfig::St { repr: Repr::Sl }) {
+        return Err(config_invalid("coverage requires an sl tower"));
     }
     Ok(&config.levels[0].specdir)
+}
+
+/// Returns the file name suffix of the programs `cover_run` evaluates through a tower,
+/// checking that its top level reads P4 programs or scripts.
+pub fn program_suffix(config: &TowerConfig) -> Result<&'static str> {
+    match config.top_lang() {
+        Lang::P4 => Ok(".p4"),
+        Lang::Al | Lang::AlExt | Lang::IlExt => Ok(".watsup"),
+        Lang::Kore => Err(config_invalid("cover-run requires a P4 or script top level")),
+    }
 }
 
 /// Makes handlers recording into `hits`.
@@ -47,18 +58,19 @@ pub fn cover_run(
     spec_sl: &sl::ast::Spec,
     options: runner::Config,
     includes: &[PathBuf],
-    paths_p4: &[PathBuf],
+    paths_program: &[PathBuf],
     mut on_progress: impl FnMut(Progress),
 ) -> Result<Coverage> {
     base_specdir(config)?;
+    program_suffix(config)?;
     let mut cover = Cover::new(spec_sl);
     let mut arena = Arena::new();
     let mut tower = Tower::build(&mut arena, config, options, Dummy)?;
     let hits = Hits::new(cover.len());
     tower.observe_base(observer(&hits))?;
 
-    let mut outcomes = Vec::with_capacity(paths_p4.len());
-    for (index, path) in paths_p4.iter().enumerate() {
+    let mut outcomes = Vec::with_capacity(paths_program.len());
+    for (index, path) in paths_program.iter().enumerate() {
         on_progress(Progress::Start(index));
         let outcome = run_catching(|| {
             let paths = std::slice::from_ref(path);

@@ -1,0 +1,32 @@
+;; Iterations over compound expressions, and unmatches in their bodies
+
+var n : nat
+var m : nat
+
+;; Unmatches on zero
+dec $pos(nat) : nat
+def $pos(n) = n
+  -- if $(n > 0)
+
+;; Iterates over two options at once
+dec $add_opt(nat?, nat?) : nat?
+def $add_opt(n?, m?) = $(n + m)?
+
+;; Unmatches in an optional body
+dec $pos_opt(nat?) : nat?
+def $pos_opt(n?) = $pos(n)?
+def $pos_opt(n?) = eps
+  -- otherwise
+
+;; Unmatches in a list body
+dec $pos_list(nat*) : nat*
+def $pos_list(n*) = $pos(n)*
+def $pos_list(n*) = eps
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $add_opt(1, 2) = 3 /\ $add_opt(eps, eps) = eps
+  -- if $pos_opt(1) = 1 /\ $pos_opt(0) = eps /\ $pos_opt(eps) = eps
+  -- if $pos_list([ 1, 2 ]) = [ 1, 2 ] /\ $pos_list([ 0, 1 ]) = eps /\ $pos_list([ 1, 0 ]) = eps

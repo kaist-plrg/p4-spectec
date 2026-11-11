@@ -1,0 +1,20 @@
+;; Patterns on the left of a binding destructure the value
+
+syntax rec = { A nat, B nat }
+
+var n : nat
+var m : nat
+
+;; Destructures a structure
+dec $sum(rec) : nat
+def $sum({ A n, B m }) = $(n + m)
+
+;; Destructures an optional tuple
+dec $fst_opt((nat, nat)?) : nat?
+def $fst_opt((n, m)?) = n?
+
+relation Main: OK
+
+rule Main: OK
+  -- if $sum({ A 1, B 2 }) = 3
+  -- if $fst_opt((1, 2)) = 1 /\ $fst_opt(eps) = eps

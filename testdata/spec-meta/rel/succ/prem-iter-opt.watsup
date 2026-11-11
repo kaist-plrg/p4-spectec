@@ -1,0 +1,44 @@
+;; An optional premise runs at most once and binds optional results
+
+var n : nat
+var m : nat
+
+;; Unmatches on zero
+dec $pos(nat) : nat
+def $pos(n) = n
+  -- if $(n > 0)
+
+;; Returns its input
+relation Copy: nat |- nat
+  hint(input %0)
+
+rule Copy:
+  n |- n
+
+;; An optional relation premise
+relation Copy_opt: nat? |- nat?
+  hint(input %0)
+
+rule Copy_opt:
+  n? |- m?
+  -- (Copy: n |- m)?
+
+;; An optional binding premise
+dec $succ_opt(nat?) : nat?
+def $succ_opt(n?) = m?
+  -- (if m = $(n + 1))?
+
+;; Unmatches in an optional premise
+dec $pos_opt(nat?) : nat?
+def $pos_opt(n?) = m?
+  -- (if m = $pos(n))?
+def $pos_opt(n?) = eps
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- Copy_opt: 1 |- 1
+  -- Copy_opt: eps |- eps
+  -- if $succ_opt(1) = 2 /\ $succ_opt(eps) = eps
+  -- if $pos_opt(1) = 1 /\ $pos_opt(0) = eps /\ $pos_opt(eps) = eps

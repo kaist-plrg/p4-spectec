@@ -1,0 +1,42 @@
+;; Patterns of subtypes downcast tuples, options, and lists
+
+syntax rec = { A nat }
+
+var n : nat
+var m : nat
+var i : int
+var b : bool
+var t : text
+var r : rec
+
+;; Downcasts each tuple component
+dec $tuple((int, nat, int, bool, text)) : nat
+def $tuple((n, m, i, b, t)) = $(n + m)
+def $tuple(_) = 0
+  -- otherwise
+
+;; Downcasts a tuple with a structure component
+dec $with_rec((int, rec)) : nat
+def $with_rec((n, r)) = n
+def $with_rec(_) = 0
+  -- otherwise
+
+;; Downcasts the value inside an option
+dec $opt(int?) : nat?
+def $opt(m?) = m?
+def $opt(_) = 0
+  -- otherwise
+
+;; Downcasts every list element
+dec $list(int*) : nat
+def $list(m*) = |m*|
+def $list(_) = 0
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $tuple((1, 2, -1, true, "t")) = 3 /\ $tuple((-1, 2, 1, true, "t")) = 0
+  -- if $with_rec((1, { A 0 })) = 1 /\ $with_rec((-1, { A 0 })) = 0
+  -- if $opt(1) = 1 /\ $opt(eps) = eps /\ $opt(-1) = 0
+  -- if $list([ 1, 2 ]) = 2 /\ $list([ 1, -2 ]) = 0

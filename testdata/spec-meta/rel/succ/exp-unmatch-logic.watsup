@@ -1,0 +1,71 @@
+;; An unmatch in a logical, equality, subtype, or membership test
+
+var n : nat
+
+;; Unmatches on zero
+dec $pos(nat) : nat
+def $pos(n) = n
+  -- if $(n > 0)
+
+;; Unmatches on zero
+dec $truth(nat) : bool
+def $truth(n) = true
+  -- if $(n > 0)
+
+;; Unmatches on zero
+dec $nats(nat) : nat*
+def $nats(n) = [ n ]
+  -- if $(n > 0)
+
+;; Under negation
+dec $not(nat) : bool
+def $not(n) = ~$truth(n)
+def $not(n) = false
+  -- otherwise
+
+;; In the left operand of /\
+dec $and(nat) : bool
+def $and(n) = $truth(n) /\ true
+def $and(n) = false
+  -- otherwise
+
+;; In the right operand of /\
+dec $and_right(nat) : bool
+def $and_right(n) = true /\ $truth(n)
+def $and_right(n) = false
+  -- otherwise
+
+;; In the left operand of =
+dec $eq(nat) : bool
+def $eq(n) = $pos(n) = 1
+def $eq(n) = false
+  -- otherwise
+
+;; In a subtype test
+dec $sub(nat) : bool
+def $sub(n) = $pos(n) <: nat
+def $sub(n) = false
+  -- otherwise
+
+;; In the element of <-
+dec $mem(nat) : bool
+def $mem(n) = $pos(n) <- [ 1 ]
+def $mem(n) = false
+  -- otherwise
+
+;; In the list of <-
+dec $mem_right(nat) : bool
+def $mem_right(n) = 1 <- $nats(n)
+def $mem_right(n) = false
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $not(0) = false
+  -- if $and(0) = false
+  -- if $and_right(0) = false
+  -- if $eq(0) = false
+  -- if $sub(0) = false
+  -- if $mem(0) = false
+  -- if $mem_right(0) = false

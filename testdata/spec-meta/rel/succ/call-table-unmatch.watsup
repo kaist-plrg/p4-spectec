@@ -1,0 +1,30 @@
+;; A table whose matching rows all unmatch unmatches the calling clause
+
+syntax color = RED | GREEN | BLUE
+
+var c : color
+var n : nat
+
+;; Unmatches on zero
+dec $truth(nat) : bool
+def $truth(n) = true
+  -- if $(n > 0)
+
+;; Unmatches on BLUE
+tbl dec $is_warm(color) : bool
+tbl def $is_warm =
+  | RED => true
+  | GREEN => false
+  | BLUE => $truth(0)
+
+;; Falls through when the table call unmatches
+dec $warmth(color) : nat
+def $warmth(c) = 1
+  -- if $is_warm(c)
+def $warmth(c) = 0
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $warmth(RED) = 1 /\ $warmth(GREEN) = 0 /\ $warmth(BLUE) = 0

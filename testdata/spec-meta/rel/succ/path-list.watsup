@@ -1,0 +1,17 @@
+;; A list is updated by a slice of the same length
+
+var i : nat
+var n : nat
+
+;; Replaces a slice of a list
+dec $splice(nat*, nat, nat, nat*) : nat*
+def $splice(nat_base*, i, n, nat_new*) = nat_base*[[i : n] = nat_new*]
+def $splice(nat_base*, i, n, nat_new*) = eps
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $splice([ 1, 2, 3 ], 1, 2, [ 8, 9 ]) = [ 1, 8, 9 ]
+  -- if $splice([ 1, 2, 3 ], 2, 2, [ 8, 9 ]) = eps
+  -- if $splice([ 1, 2, 3 ], 0, 2, [ 8 ]) = eps

@@ -1,0 +1,69 @@
+;; An unmatch in a constructed value, a field access, or a field update
+
+syntax pair = PAIR nat nat
+syntax rec = { A nat, B nat }
+
+var n : nat
+
+;; Unmatches on zero
+dec $pos(nat) : nat
+def $pos(n) = n
+  -- if $(n > 0)
+
+;; Unmatches on zero
+dec $record(nat) : rec
+def $record(n) = { A n, B n }
+  -- if $(n > 0)
+
+;; In a tuple component
+dec $tuple(nat) : (nat, nat)
+def $tuple(n) = (1, $pos(n))
+def $tuple(n) = (0, 0)
+  -- otherwise
+
+;; In a case argument
+dec $case(nat) : pair
+def $case(n) = PAIR 1 $pos(n)
+def $case(n) = PAIR 0 0
+  -- otherwise
+
+;; In a structure field
+dec $struct(nat) : rec
+def $struct(n) = { A 1, B $pos(n) }
+def $struct(n) = { A 0, B 0 }
+  -- otherwise
+
+;; In the base of a field access
+dec $dot(nat) : nat
+def $dot(n) = $record(n).A
+def $dot(n) = 0
+  -- otherwise
+
+;; In the base of a field update
+dec $upd_field(nat) : rec
+def $upd_field(n) = $record(n)[ .A = 1 ]
+def $upd_field(n) = { A 0, B 0 }
+  -- otherwise
+
+;; In an option value
+dec $opt(nat) : nat?
+def $opt(n) = $pos(n)
+def $opt(n) = eps
+  -- otherwise
+
+;; In a list element
+dec $list(nat) : nat*
+def $list(n) = [ 1, $pos(n) ]
+def $list(n) = eps
+  -- otherwise
+
+relation Main: OK
+
+rule Main: OK
+  -- if $tuple(0) = (0, 0)
+  -- if $case(0) = PAIR 0 0
+  -- if $struct(0) = { A 0, B 0 }
+  -- if $dot(0) = 0
+  -- if $upd_field(0) = { A 0, B 0 }
+  -- if $opt(0) = eps
+  -- if $list(0) = eps
