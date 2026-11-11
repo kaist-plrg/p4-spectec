@@ -30,24 +30,33 @@ metacirc: metacirc-cli
 	rm -f ./$(METACIRC)
 	cp "$(CARGO_TARGET_DIR)/release/metacirc" ./$(METACIRC)
 
-# The library a k tower loads, compiled from spec-meta-k (`kompiled` in towers/k-*.json),
-# with the metacirc binary that loads it
+# The libraries k towers load (`kompiled` in towers/k*.json), compiled from spec-meta-k
+# and its determinism-checking copy spec-meta-k-detcheck, with the metacirc binary that loads them
 KSPECDIR = spec-meta-k
 KLIBRARY = $(KSPECDIR)/kompiled/libspec-meta-k.so
+KSPECDIR_DETCHECK = spec-meta-k-detcheck
+KLIBRARY_DETCHECK = $(KSPECDIR_DETCHECK)/kompiled/libspec-meta-k.so
 
-kompile: metacirc $(KLIBRARY)
+kompile: metacirc $(KLIBRARY) $(KLIBRARY_DETCHECK)
 
 $(KLIBRARY): $(wildcard $(KSPECDIR)/*/*.k)
 	kompile $(KSPECDIR)/3-execution/3.14-entry.k --main-module AL --syntax-module SYNTAX \
 	  -o $(dir $(KLIBRARY)) --llvm-kompile-type c --llvm-kompile-output $(notdir $(KLIBRARY)) -O2
 
-# The entry module a redex tower runs, compiled from spec-meta-redex (`module` in towers/redex*.json),
-# with the metacirc binary that runs it; raco make recompiles only what changed
+$(KLIBRARY_DETCHECK): $(wildcard $(KSPECDIR_DETCHECK)/*/*.k)
+	kompile $(KSPECDIR_DETCHECK)/3-execution/3.14-entry.k --main-module AL --syntax-module SYNTAX \
+	  -o $(dir $(KLIBRARY_DETCHECK)) --llvm-kompile-type c --llvm-kompile-output $(notdir $(KLIBRARY_DETCHECK)) -O2
+
+# The entry modules redex towers run (`module` in towers/redex*.json), compiled from
+# spec-meta-redex and its determinism-checking copy spec-meta-redex-detcheck,
+# with the metacirc binary that runs them; raco make recompiles only what changed
 REDEXSPECDIR = spec-meta-redex
 REDEXMODULE = $(REDEXSPECDIR)/3-execution/3.15-entry.rkt
+REDEXSPECDIR_DETCHECK = spec-meta-redex-detcheck
+REDEXMODULE_DETCHECK = $(REDEXSPECDIR_DETCHECK)/3-execution/3.15-entry.rkt
 
 redex: metacirc
-	raco make -v $(REDEXMODULE)
+	raco make -v $(REDEXMODULE) $(REDEXMODULE_DETCHECK)
 
 # P4 corpus through the AL/P4 towers
 test-metacirc-run-al:
