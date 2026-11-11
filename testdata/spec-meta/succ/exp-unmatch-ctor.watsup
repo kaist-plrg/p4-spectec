@@ -1,4 +1,4 @@
-;; An unmatch in a constructed value or a field access
+;; An unmatch in a constructed value, a field access, or a field update
 
 syntax pair = PAIR nat nat
 syntax rec = { A nat, B nat }
@@ -39,6 +39,12 @@ def $dot(n) = $record(n).A
 def $dot(n) = 0
   -- otherwise
 
+;; In the base of a field update
+dec $upd_field(nat) : rec
+def $upd_field(n) = $record(n)[ .A = 1 ]
+def $upd_field(n) = { A 0, B 0 }
+  -- otherwise
+
 ;; In an option value
 dec $opt(nat) : nat?
 def $opt(n) = $pos(n)
@@ -58,5 +64,6 @@ rule Main: OK
   -- if $case(0) = PAIR 0 0
   -- if $struct(0) = { A 0, B 0 }
   -- if $dot(0) = 0
+  -- if $upd_field(0) = { A 0, B 0 }
   -- if $opt(0) = eps
   -- if $list(0) = eps
