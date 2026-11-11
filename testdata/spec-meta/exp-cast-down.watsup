@@ -1,4 +1,4 @@
-;; Patterns of subtypes downcast tuples and options component by component
+;; Patterns of subtypes downcast tuples, options, and lists
 
 var n : nat
 var m : nat
@@ -6,16 +6,19 @@ var i : int
 var b : bool
 var t : text
 
+;; Downcasts each tuple component
 dec $tuple((int, nat, int, bool, text)) : nat
 def $tuple((n, m, i, b, t)) = $(n + m)
 def $tuple(_) = 0
   -- otherwise
 
+;; Downcasts the value inside an option
 dec $opt(int?) : nat?
 def $opt(m?) = m?
 def $opt(_) = 0
   -- otherwise
 
+;; Downcasts every list element
 dec $list(int*) : nat
 def $list(m*) = |m*|
 def $list(_) = 0

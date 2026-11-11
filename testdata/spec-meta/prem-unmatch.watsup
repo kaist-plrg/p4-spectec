@@ -1,18 +1,21 @@
-;; An unmatch in a premise's operands unmatches the clause or rule, so the next one runs
+;; An unmatch in a premise falls through to the next clause or rule
 
 var n : nat
 var m : nat
 
+;; Unmatches on zero
 dec $pos(nat) : nat
 def $pos(n) = n
   -- if $(n > 0)
 
+;; Returns its input
 relation Copy: nat |- nat
   hint(input %0)
 
 rule Copy:
   n |- n
 
+;; Holds below five
 relation Small: |- nat
   hint(input %0)
 
@@ -20,6 +23,7 @@ rule Small:
   |- n
   -- if $(n < 5)
 
+;; In the input of a relation premise
 relation Rel: nat |- nat
   hint(input %0)
 
@@ -31,6 +35,7 @@ rule Rel/zero:
   n |- 0
   -- if n = 0
 
+;; In a positive or negated relation premise
 relation Hold: nat |- bool
   hint(input %0)
 
@@ -46,15 +51,18 @@ rule Hold/zero:
   n |- false
   -- if n = 0
 
+;; In a debug premise
 dec $debug(nat) : bool
 def $debug(n) = true
   -- debug $pos(n)
 def $debug(n) = false
   -- otherwise
 
+;; Adds two naturals
 dec $add(nat, nat) : nat
 def $add(n, m) = $(n + m)
 
+;; In a call argument
 dec $args(nat) : nat
 def $args(n) = $add(1, $pos(n))
 def $args(n) = 0

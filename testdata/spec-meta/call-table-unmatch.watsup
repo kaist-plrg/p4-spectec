@@ -5,16 +5,19 @@ syntax color = RED | GREEN | BLUE
 var c : color
 var n : nat
 
+;; Unmatches on zero
 dec $truth(nat) : bool
 def $truth(n) = true
   -- if $(n > 0)
 
+;; Unmatches on BLUE
 tbl dec $is_warm(color) : bool
 tbl def $is_warm =
   | RED => true
   | GREEN => false
   | BLUE => $truth(0)
 
+;; Falls through when the table call unmatches
 dec $warmth(color) : nat
 def $warmth(c) = 1
   -- if $is_warm(c)

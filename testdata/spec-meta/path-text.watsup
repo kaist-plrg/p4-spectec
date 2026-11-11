@@ -7,19 +7,23 @@ var i : nat
 var n : nat
 var r : rec
 
+;; Replaces a slice of a text
 dec $splice(text, nat, nat, text) : text
 def $splice(t, i, n, t') = t[[i : n] = t']
 def $splice(t, i, n, t') = ""
   -- otherwise
 
+;; Replaces a slice of a text field
 dec $splice_field(rec, nat, nat, text) : rec
 def $splice_field(r, i, n, t) = r[ .T[i : n] = t ]
 def $splice_field(r, i, n, t) = { T "" }
   -- otherwise
 
+;; Indexes a text
 dec $char(text, nat) : text
 def $char(t, i) = t[i]
 
+;; Slices a text
 dec $slice(text, nat, nat) : text
 def $slice(t, i, n) = t[i : n]
 

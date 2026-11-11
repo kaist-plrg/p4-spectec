@@ -1,23 +1,28 @@
-;; Iterations over expressions other than a single variable, and unmatches in their bodies
+;; Iterations over compound expressions, and unmatches in their bodies
 
 var n : nat
 var m : nat
 
+;; Unmatches on zero
 dec $pos(nat) : nat
 def $pos(n) = n
   -- if $(n > 0)
 
+;; Iterates over an arithmetic expression
 dec $succ_opt(nat?) : nat?
 def $succ_opt(n?) = $(n + 1)?
 
+;; Iterates over two options at once
 dec $add_opt(nat?, nat?) : nat?
 def $add_opt(n?, m?) = $(n + m)?
 
+;; Unmatches in an optional body
 dec $pos_opt(nat?) : nat?
 def $pos_opt(n?) = $pos(n)?
 def $pos_opt(n?) = eps
   -- otherwise
 
+;; Unmatches in a list body
 dec $pos_list(nat*) : nat*
 def $pos_list(n*) = $pos(n)*
 def $pos_list(n*) = eps
