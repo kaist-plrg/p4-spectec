@@ -1,4 +1,4 @@
-;; Upcasts of options cast the value inside
+;; Upcasts cast the value inside an option and each tuple component
 
 var n : nat
 
@@ -6,7 +6,16 @@ var n : nat
 dec $opt(nat?) : int?
 def $opt(n?) = n?
 
+;; Builds a tuple with a type parameter component
+dec $pair<X>(nat, X) : (nat, X)
+def $pair<X>(n, X) = (n, X)
+
+;; Upcasts a tuple whose component has a type parameter type
+dec $widen<X>(nat, X) : (int, X)
+def $widen<X>(n, X) = $pair<X>(n, X)
+
 relation Main: OK
 
 rule Main: OK
   -- if $opt(1) = 1 /\ $opt(eps) = eps
+  -- if $widen<bool>(1, true) = (1, true)
