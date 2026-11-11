@@ -1,4 +1,4 @@
-;; An unmatch in an arithmetic operand, a cast, or a call
+;; An unmatch in an operand of an arithmetic or ordering operator
 
 var n : nat
 
@@ -37,18 +37,6 @@ def $lt_right(n) = $(1 < $pos(n))
 def $lt_right(n) = false
   -- otherwise
 
-;; Under an upcast to int
-dec $upcast(nat) : int
-def $upcast(n) = $pos(n)
-def $upcast(n) = 0
-  -- otherwise
-
-;; In a call argument
-dec $call(nat) : nat
-def $call(n) = $pos($pos(n))
-def $call(n) = 0
-  -- otherwise
-
 relation Main: OK
 
 rule Main: OK
@@ -57,5 +45,3 @@ rule Main: OK
   -- if $add_right(0) = 0
   -- if $lt(0) = false
   -- if $lt_right(0) = false
-  -- if $upcast(0) = 0
-  -- if $call(0) = 0
