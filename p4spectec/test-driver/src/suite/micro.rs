@@ -22,7 +22,7 @@ use p4spectec::pass::{algo, elaborate, prosify, structure};
 
 use p4spectec::specdoc::adoc;
 
-use p4spectec::runner::{Config, NullExtern, Spec};
+use p4spectec::runner::{Config, ScriptExtern, Spec};
 
 use serde::Deserialize;
 
@@ -273,7 +273,7 @@ fn first_failure(
 /// `$main` takes no arguments, and any value it returns is a success.
 fn eval_main(spec: Spec, entry: Entry, config: Config) -> Option<Output> {
     let mut arena = Arena::new();
-    let mut runner = interpreter::build(&mut arena, spec, config, NullExtern).ok()?;
+    let mut runner = interpreter::build(&mut arena, spec, config, ScriptExtern).ok()?;
     let succeeded = match entry {
         Entry::Rel => runner.eval_rel(&mut arena, "Main", &[]).result.is_ok(),
         Entry::Func => runner

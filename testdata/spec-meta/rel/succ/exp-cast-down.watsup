@@ -2,12 +2,18 @@
 
 syntax rec = { A nat }
 
+extern syntax opaque
+
 var n : nat
 var m : nat
 var i : int
 var b : bool
 var t : text
 var r : rec
+var o : opaque
+
+;; Wraps a natural as an extern value
+extern dec $opaque(nat) : opaque
 
 ;; Downcasts each tuple component
 dec $tuple((int, nat, int, bool, text)) : nat
@@ -19,6 +25,12 @@ def $tuple(_) = 0
 dec $with_rec((int, rec)) : nat
 def $with_rec((n, r)) = n
 def $with_rec(_) = 0
+  -- otherwise
+
+;; Downcasts a tuple with an extern component
+dec $with_opaque((int, opaque)) : nat
+def $with_opaque((n, o)) = n
+def $with_opaque(_) = 0
   -- otherwise
 
 ;; Downcasts the value inside an option
@@ -38,5 +50,6 @@ relation Main: OK
 rule Main: OK
   -- if $tuple((1, 2, -1, true, "t")) = 3 /\ $tuple((-1, 2, 1, true, "t")) = 0
   -- if $with_rec((1, { A 0 })) = 1 /\ $with_rec((-1, { A 0 })) = 0
+  -- if $with_opaque((1, $opaque(1))) = 1 /\ $with_opaque((-1, $opaque(1))) = 0
   -- if $opt(1) = 1 /\ $opt(eps) = eps /\ $opt(-1) = 0
   -- if $list([ 1, 2 ]) = 2 /\ $list([ 1, -2 ]) = 0

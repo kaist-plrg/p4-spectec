@@ -2,7 +2,12 @@
 
 syntax rec = { A nat }
 
+extern syntax opaque
+
 var n : nat
+
+;; Wraps a natural as an extern value
+extern dec $opaque(nat) : opaque
 
 ;; Upcasts the value inside an option
 dec $opt(nat?) : int?
@@ -22,3 +27,4 @@ rule Main: OK
   -- if $opt(1) = 1 /\ $opt(eps) = eps
   -- if $widen<bool>(1, true) = (1, true)
   -- if $widen<rec>(1, { A 2 }) = (1, { A 2 })
+  -- if $widen<opaque>(1, $opaque(1)) = (1, $opaque(1))

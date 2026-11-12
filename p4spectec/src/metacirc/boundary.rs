@@ -4,7 +4,8 @@
 //! and enter `Boundary { level: HostLevel::FIRST }`,
 //! which decodes them with the protocol of the level below it.
 //! A meta level answers its builtins and sends its own host calls up;
-//! the top answers P4 builtins and externs, or the program's builtins,
+//! the top answers P4 builtins and externs,
+//! the program's builtins and extern functions,
 //! or, as the K definition above spec-k, spec-k's extern relations.
 //! A P4 extern that reenters, as static_assert does to read its arguments,
 //! runs on the next depth, made on its first use and kept for the program.
@@ -23,7 +24,7 @@ use crate::{
     },
     runner::{
         Eval, Extern, ExternError, Hooks, Interface, Interpreter, InterpreterError, RunnerContext,
-        SideEffect,
+        ScriptExtern, SideEffect,
     },
 };
 
@@ -233,8 +234,13 @@ impl<Ext: Extern> HostCalls for Boundary<'_, '_, Ext> {
             TopMut::P4 { .. } => self
                 .upper
                 .with_next(arena, |ctx| ctx.call_extern_func(name, targs, values)),
-            // The program and the K definition declare no host functions
-            TopMut::St(_) | TopMut::K(_) => unsupported(name).map_err(Into::into),
+            // The program's extern functions answer as in a native run
+            TopMut::St(_) => Eval::new(
+                ScriptExtern::call_func(arena, name, values).map_err(Into::into),
+                SideEffect::Pure,
+            ),
+            // The K definition declares no host functions
+            TopMut::K(_) => unsupported(name).map_err(Into::into),
         }
     }
 }
