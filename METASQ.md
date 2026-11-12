@@ -323,7 +323,7 @@ simulation suites registered in `suites/metacirc/sim-group.toml`,
 `v1model-p4c` or `v1model-p4testgen`, so that a full sweep of a suite can be
 split over four commands. Each group excludes `excludes/static`,
 `excludes/dynamic`, and the folders of the other groups under
-`excludes/metacirc-groups/`, and compares the suite's pairs with its own
+`excludes/metacirc-groups/sim/`, and compares the suite's pairs with its own
 expected file `expected/sim-group/<suite>-<group>.expected`.
 `metacirc-sim-group-split` rewrites `<suite>.exclude` in those folders from each
 suite's corpus, dealing the pairs that static and dynamic exclusions leave over
