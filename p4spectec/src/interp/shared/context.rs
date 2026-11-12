@@ -63,8 +63,8 @@ pub trait ReadContext {
     fn find_typdef_opt(&self, id: &ast::Id) -> Option<&TypeDef>;
     /// Finds a type bound by the current call, excluding global definitions.
     fn find_typdef_local_opt(&self, id: &ast::Id) -> Option<&TypeDef>;
-    /// Finds the parameters and body of a defined type or reports an error.
-    fn find_defined_typdef(&self, id: &ast::Id) -> Result<(&[ast::TParam], &ast::DefTyp), Error>;
+    /// Finds a type in either scope or reports the lookup location.
+    fn find_typdef(&self, id: &ast::Id) -> Result<&TypeDef, Error>;
 
     // == Functions
 
@@ -282,18 +282,6 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
 
     // == Finders
 
-    // - Types
-
-    /// Finds a type in either scope or reports the lookup location.
-    pub fn find_typdef<'a>(&'a self, id: &ast::Id) -> Result<&'a TypeDef, Error> {
-        self.find_typdef_opt(id).ok_or_else(|| {
-            let diagnostic =
-                error::context::binding_undefined(EntityKind::Type, id.node.to_string())
-                    .with_label(Label::primary(&id.span, ""));
-            Box::new(Report::from(diagnostic))
-        })
-    }
-
     // - Relations
 
     /// Finds a relation in the global definitions.
@@ -385,19 +373,13 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
             .or_else(|| self.global.tdenv.get(id))
     }
 
-    fn find_defined_typdef<'a>(
-        &'a self,
-        id: &ast::Id,
-    ) -> Result<(&'a [ast::TParam], &'a ast::DefTyp), Error> {
-        match self.find_typdef(id)? {
-            TypeDef::Defined(tparams, def_typ) => Ok((tparams, def_typ)),
-            _ => {
-                let diagnostic =
-                    error::context::binding_undefined(EntityKind::DefinedType, id.node.to_string())
-                        .with_label(Label::primary(&id.span, ""));
-                Err(Box::new(Report::from(diagnostic)))
-            }
-        }
+    fn find_typdef<'a>(&'a self, id: &ast::Id) -> Result<&'a TypeDef, Error> {
+        self.find_typdef_opt(id).ok_or_else(|| {
+            let diagnostic =
+                error::context::binding_undefined(EntityKind::Type, id.node.to_string())
+                    .with_label(Label::primary(&id.span, ""));
+            Box::new(Report::from(diagnostic))
+        })
     }
 
     // - Functions
