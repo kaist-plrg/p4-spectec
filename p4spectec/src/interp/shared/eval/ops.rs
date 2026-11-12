@@ -26,9 +26,12 @@ use crate::lang::il::{
     prepared::{Prepared, Subcheck},
 };
 
-use crate::runtime::ops::{
-    self,
-    typ::{Theta, subst_typ},
+use crate::runtime::{
+    envs::interp::shared::TypeDef,
+    ops::{
+        self,
+        typ::{Theta, subst_typ},
+    },
 };
 
 use crate::interp::shared::{
@@ -213,18 +216,30 @@ pub(crate) fn cast_up(
                 num::Number::Int(_) => value,
             }
         }
-        // Named type: unfold a plain alias; variants and structs stay as is
-        ast::TypKind::Var(id, targs) => {
-            let (tparams, def_typ) = unwrap_from_result!(ctx.find_defined_typdef(id), span);
-            let theta = unwrap_from_result!(Theta::from_lists(tparams, targs), span);
-            match &def_typ.node {
-                ast::DefTypKind::Plain(typ) => {
-                    let typ = unwrap_from_result!(subst_typ(&|id| theta.get(id), typ), span);
-                    return cast_up(arena, ctx, &typ, value);
+        // Named type: unfold a plain alias; other named types stay as is
+        ast::TypKind::Var(id, targs) => match unwrap_from_result!(ctx.find_typdef(id), span) {
+            // A plain alias casts as its body; variants and structs stay as is
+            TypeDef::Defined(tparams, def_typ) => {
+                let theta = unwrap_from_result!(Theta::from_lists(tparams, targs), span);
+                match &def_typ.node {
+                    ast::DefTypKind::Plain(typ) => {
+                        let typ = unwrap_from_result!(subst_typ(&|id| theta.get(id), typ), span);
+                        return cast_up(arena, ctx, &typ, value);
+                    }
+                    _ => value,
                 }
-                _ => value,
             }
-        }
+            // An extern type has no structure to cast
+            TypeDef::Extern => value,
+            // A type parameter or a type being defined has no body to cast to
+            TypeDef::Parameter | TypeDef::Defining(_) => {
+                let name = id.node.to_string();
+                return fatal!(
+                    id.span,
+                    error::context::binding_undefined(error::EntityKind::DefinedType, name)
+                );
+            }
+        },
         // Tuple: componentwise
         ast::TypKind::Tuple(typs) => {
             let values = value::get::tuple(arena, &value)
@@ -311,18 +326,30 @@ pub(crate) fn cast_down(
                 }
             }
         }
-        // Named type: unfold a plain alias; variants and structs stay as is
-        ast::TypKind::Var(id, targs) => {
-            let (tparams, def_typ) = unwrap_from_result!(ctx.find_defined_typdef(id), span);
-            let theta = unwrap_from_result!(Theta::from_lists(tparams, targs), span);
-            match &def_typ.node {
-                ast::DefTypKind::Plain(typ) => {
-                    let typ = unwrap_from_result!(subst_typ(&|id| theta.get(id), typ), span);
-                    return cast_down(arena, ctx, &typ, value);
+        // Named type: unfold a plain alias; other named types stay as is
+        ast::TypKind::Var(id, targs) => match unwrap_from_result!(ctx.find_typdef(id), span) {
+            // A plain alias casts as its body; variants and structs stay as is
+            TypeDef::Defined(tparams, def_typ) => {
+                let theta = unwrap_from_result!(Theta::from_lists(tparams, targs), span);
+                match &def_typ.node {
+                    ast::DefTypKind::Plain(typ) => {
+                        let typ = unwrap_from_result!(subst_typ(&|id| theta.get(id), typ), span);
+                        return cast_down(arena, ctx, &typ, value);
+                    }
+                    _ => value,
                 }
-                _ => value,
             }
-        }
+            // An extern type has no structure to cast
+            TypeDef::Extern => value,
+            // A type parameter or a type being defined has no body to cast to
+            TypeDef::Parameter | TypeDef::Defining(_) => {
+                let name = id.node.to_string();
+                return fatal!(
+                    id.span,
+                    error::context::binding_undefined(error::EntityKind::DefinedType, name)
+                );
+            }
+        },
         // Tuple: componentwise
         ast::TypKind::Tuple(typs) => {
             let values = value::get::tuple(arena, &value)
