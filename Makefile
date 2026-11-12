@@ -43,7 +43,9 @@ $(TEST_TARGETS):
 
 METACIRC_TARGETS := metacirc kompile redex test-metacirc-run-al test-metacirc-run-il \
   test-metacirc-run-k test-metacirc-run-redex test-metacirc-micro-al test-metacirc-micro-il \
-  test-metacirc-micro-k test-metacirc-micro-redex test-metacirc-sim-al test-metacirc-sim-il \
+  test-metacirc-micro-k test-metacirc-micro-redex test-metacirc-run-group-al \
+  test-metacirc-run-group-il test-metacirc-run-group-k test-metacirc-run-group-redex \
+  metacirc-run-group-split test-metacirc-sim-al test-metacirc-sim-il \
   test-metacirc-sim-k test-metacirc-sim-redex test-metacirc-sim-group-al \
   test-metacirc-sim-group-il test-metacirc-sim-group-k test-metacirc-sim-group-redex \
   metacirc-sim-group-split test-metacirc-k-in-st test-metacirc-elab \

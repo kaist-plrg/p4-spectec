@@ -331,6 +331,22 @@ the groups in turn; after it runs, the group expected files must be regenerated
 to match.
 
 ```sh
+make metacirc-run-group-split
+make test-metacirc-run-group-k SUITE=run-positive GROUP=2
+```
+
+`test-metacirc-run-group-<base>` runs one group of the `run-positive` corpus
+registered in `suites/metacirc/run-group.toml` in the same way, over three
+commands. Each group excludes `excludes/static` and the folders of the other
+groups under `excludes/metacirc-groups/run/`, and compares the suite's programs
+with `expected/run-group/<suite>-<group>.expected`.
+`metacirc-run-group-split` rewrites `<suite>.exclude` in those folders,
+cutting the programs that static exclusions leave, in path order, into groups
+of the sizes `RUN_GROUP_SIZES` in `METASQ.mk` gives; the sizes must sum to the
+number of those programs. After it runs, the group expected files must be
+regenerated to match.
+
+```sh
 make test-metacirc-k-in-st
 K_SRC=... KWASM_SRC=... KEVM_SRC=... KMIR_SRC=... make test-metacirc-k-in-st TIMEOUT=300
 ```

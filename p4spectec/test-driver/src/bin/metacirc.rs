@@ -6,7 +6,7 @@ use clap::{Parser, Subcommand};
 
 use p4spectec_test::{
     harness::{self, Error, Result},
-    metacirc::{k_in_st, metaparse, run, sim, sim_group},
+    metacirc::{k_in_st, metaparse, run, run_group, sim, sim_group},
     suite::{snapshot, snapshot::Stage},
 };
 
@@ -27,6 +27,26 @@ enum Command {
         /// Record a source still running after this many seconds as a timeout.
         #[arg(long, value_name = "SECONDS")]
         timeout: Option<u64>,
+    },
+    /// Compare one group of a P4 corpus suite through a tower with the group's expectations
+    RunGroup {
+        /// Configuration name in `suites/metacirc/run-group.toml`
+        config: String,
+        /// Name of the registered suite to run.
+        #[arg(long = "suite", value_name = "NAME")]
+        name_suite: String,
+        /// Name of the registered group to run.
+        #[arg(long, value_name = "NAME")]
+        group: String,
+        /// Record a program still running after this many seconds as a timeout.
+        #[arg(long, value_name = "SECONDS")]
+        timeout: Option<u64>,
+    },
+    /// Write the group folders of `suites/metacirc/run-group.toml`
+    RunGroupSplit {
+        /// Number of programs in each group folder, in folder order
+        #[arg(required = true, value_name = "SIZE")]
+        sizes: Vec<usize>,
     },
     /// Compare registered simulation suites through a tower with native expectations
     Sim {
@@ -90,6 +110,8 @@ enum Worker {
     Program { config: String, tower: PathBuf },
     /// Run scripts of `suites/metacirc/run.toml` through a tower
     Script { config: String, tower: PathBuf },
+    /// Run P4 programs of `suites/metacirc/run-group.toml` through a tower
+    RunGroup { config: String, tower: PathBuf },
     /// Run STF tests of `suites/metacirc/sim.toml` on one architecture
     Sim { config: String, arch: String },
     /// Run STF tests of `suites/metacirc/sim-group.toml` on one architecture
@@ -136,6 +158,14 @@ fn execute(cli: Cli) -> Result<()> {
             timeout.map(Duration::from_secs),
             path_log.as_deref(),
         ),
+        Command::RunGroup { config, name_suite, group, timeout } => run_group::run(
+            &config,
+            &name_suite,
+            &group,
+            timeout.map(Duration::from_secs),
+            path_log.as_deref(),
+        ),
+        Command::RunGroupSplit { sizes } => run_group::split(&sizes),
         Command::Sim { config, name_suite, timeout } => sim::run(
             &config,
             name_suite.as_deref(),
@@ -162,6 +192,7 @@ fn execute(cli: Cli) -> Result<()> {
         Command::List => list(),
         Command::Worker(Worker::Program { config, tower }) => run::serve_programs(&config, &tower),
         Command::Worker(Worker::Script { config, tower }) => run::serve_scripts(&config, &tower),
+        Command::Worker(Worker::RunGroup { config, tower }) => run_group::serve(&config, &tower),
         Command::Worker(Worker::Sim { config, arch }) => sim::serve(&config, &arch),
         Command::Worker(Worker::SimGroup { config, arch }) => sim_group::serve(&config, &arch),
         Command::Worker(Worker::KInSt { config, tower }) => k_in_st::serve(&config, &tower),
@@ -172,6 +203,7 @@ fn execute(cli: Cli) -> Result<()> {
 fn list() -> Result<()> {
     println!("snapshot: {:#?}", harness::load::<snapshot::Registration>("metacirc/snapshot")?);
     println!("run: {:#?}", harness::load::<run::Registration>("metacirc/run")?);
+    println!("run-group: {:#?}", harness::load::<run_group::Registration>("metacirc/run-group")?);
     println!("sim: {:#?}", harness::load::<sim::Registration>("metacirc/sim")?);
     println!("sim-group: {:#?}", harness::load::<sim_group::Registration>("metacirc/sim-group")?);
     println!("k-in-st: {:#?}", harness::load::<k_in_st::Registration>("metacirc/k-in-st")?);

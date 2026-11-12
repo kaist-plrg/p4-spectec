@@ -1,0 +1,94 @@
+# P4 corpus groups through a metacircular P4 tower:
+# `run-group <config> --suite <name> --group <name>`
+# (make test-metacirc-run-group-al, test-metacirc-run-group-il, test-metacirc-run-group-k,
+# test-metacirc-run-group-redex, each with SUITE=<name> and GROUP=<name>).
+#
+# Each suite runs every .p4 file under `root` through its tower for the configuration's base,
+# whose top level must take P4.
+# A group runs one suite with its own `excludes`, directories of .exclude files
+# naming skipped P4 files, and compares the outcome of every program,
+# pass, fail, exclude, or timeout, with its line `<outcome>,<p4>`
+# in the CSV that `expected` names for the suite;
+# a timeout matches any expected outcome with a warning.
+# A configuration selects the `base` language of the tower (see `run.toml`),
+# memoization (`cache`), and determinism checking (`det`).
+# `run-group-split <size>...` (make metacirc-run-group-split) takes the only registered suite,
+# and lists its programs not excluded by `split.excludes`, in path order,
+# in `<suite>.exclude` of the folders `split.groups`, as many in each as its size;
+# the sizes must sum to the number of those programs.
+# Each group excludes the other groups' folders.
+# It then checks that the registered groups run each such program exactly once
+# and no program excluded by `split.excludes`.
+# Paths are relative to the repository root.
+
+includes = ["p4c/p4include"]
+
+[split]
+excludes = ["excludes/static"]
+groups = [
+  "excludes/metacirc-groups/run/1",
+  "excludes/metacirc-groups/run/2",
+  "excludes/metacirc-groups/run/3",
+]
+
+[[configs]]
+name = "al"
+base = "al"
+cache = true
+det = true
+
+[[configs]]
+name = "il"
+base = "il"
+cache = true
+det = true
+
+[[configs]]
+name = "k"
+base = "k"
+cache = true
+det = true
+
+[[configs]]
+name = "redex"
+base = "redex"
+cache = true
+det = true
+
+[[suites]]
+name = "run-positive"
+towers = { al = "towers/al-p4-ok.json", il = "towers/il-p4-ok.json", k = "towers/k-p4-ok.json", redex = "towers/redex-p4-ok.json" }
+root = "p4c/testdata/p4_16_samples"
+
+[[groups]]
+name = "1"
+excludes = [
+  "excludes/static",
+  "excludes/metacirc-groups/run/2",
+  "excludes/metacirc-groups/run/3",
+]
+
+[groups.expected]
+run-positive = "p4spectec/test-driver/expected/run-group/run-positive-1.expected"
+
+[[groups]]
+name = "2"
+excludes = [
+  "excludes/static",
+  "excludes/metacirc-groups/run/1",
+  "excludes/metacirc-groups/run/3",
+]
+
+[groups.expected]
+run-positive = "p4spectec/test-driver/expected/run-group/run-positive-2.expected"
+
+[[groups]]
+name = "3"
+excludes = [
+  "excludes/static",
+  "excludes/metacirc-groups/run/1",
+  "excludes/metacirc-groups/run/2",
+]
+
+[groups.expected]
+run-positive = "p4spectec/test-driver/expected/run-group/run-positive-3.expected"
