@@ -12,9 +12,21 @@ use crate::runner::{Eval, SideEffect};
 use thiserror::Error;
 
 use crate::lang::{
-    common::prim::num::NumericError,
-    data::value::{ValueError, flat::Value},
+    common::{
+        prim::num::{self, NumericError},
+        source::Span,
+    },
+    data::{
+        arena::Arena,
+        typ,
+        value::{
+            ValueError,
+            flat::{self as value, Value},
+        },
+    },
 };
+
+use crate::{phrase, util::json::json};
 
 use crate::lang::il::ast::Typ;
 
@@ -170,6 +182,74 @@ impl Extern for NullExtern {
         Interp: Interpreter<Iface, Self>,
     {
         Eval::new(Err(ExternError::diagnostic_unconfigured()), SideEffect::Impure)
+    }
+
+    fn clear(&mut self) {}
+}
+
+// == Script implementation
+
+/// An extern answering the extern functions a script may declare.
+///
+/// For `extern syntax opaque` and `extern dec $opaque(nat) : opaque`,
+/// `$opaque(1)` is the extern value `EXT "1"` of type `opaque`.
+/// A tower whose top is a script answers its extern functions with `call_func`,
+/// so a script evaluates them alike natively and through the tower.
+pub struct ScriptExtern;
+
+impl ScriptExtern {
+    /// Calls extern function `name` of a script on `values`.
+    pub fn call_func(
+        arena: &mut Arena,
+        name: &str,
+        values: &[Value],
+    ) -> Result<Value, ExternError> {
+        match name {
+            // Wrap a natural as an extern value of type `opaque`
+            "opaque" => {
+                let value_nat = value::get::one(values)?;
+                let text = num::to_int(value::get::num(arena, value_nat)?).to_string();
+                let typ =
+                    typ::make::var(phrase!(node: "opaque".into(), span: Span::default()), vec![]);
+                Ok(value::make::external(
+                    arena,
+                    typ.node.into(),
+                    json::String(text).into(),
+                    Span::default(),
+                )?)
+            }
+            // Every other extern function stays unconfigured
+            _ => Err(ExternError::diagnostic_unconfigured()),
+        }
+    }
+}
+
+impl Extern for ScriptExtern {
+    // A script declares no extern relations
+    fn eval_rel<Interp, Iface>(
+        _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
+        _name: &str,
+        _values: &[Value],
+    ) -> Eval<Vec<Value>, ExternError>
+    where
+        Iface: Interface,
+        Interp: Interpreter<Iface, Self>,
+    {
+        Eval::new(Err(ExternError::diagnostic_unconfigured()), SideEffect::Impure)
+    }
+
+    fn eval_func<Interp, Iface>(
+        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
+        name: &str,
+        _targs: &[Typ],
+        values: &[Value],
+    ) -> Eval<Value, ExternError>
+    where
+        Iface: Interface,
+        Interp: Interpreter<Iface, Self>,
+    {
+        let (arena, _) = ctx.arena_and_external_mut();
+        Eval::new(Self::call_func(arena, name, values), SideEffect::Pure)
     }
 
     fn clear(&mut self) {}
