@@ -3,13 +3,11 @@
 //! Typed getters report a kind mismatch; case matching copies argument handles.
 //! Fixed-arity getters project argument slices without allocating.
 
-use std::rc::Rc;
-
-use crate::util::json::json;
+use std::{fmt, hash::Hash};
 
 use crate::lang::{common::prim::num::Number, data::arena::Arena};
 
-use super::super::{ValueError, ValueTag};
+use super::super::{ValueError, ValueTag, host::HostTypDef};
 use super::{Value, ValueCase, ValueField, ValueKind};
 
 // - Errors
@@ -177,10 +175,14 @@ pub fn list<'a>(arena: &'a Arena, value: &Value) -> Result<&'a [Value], ValueErr
 
 // - Externals
 
-/// The JSON of a host-owned value.
-pub fn external<'a>(arena: &'a Arena, value: &Value) -> Result<&'a Rc<json>, ValueError> {
+/// The data of an extern value made by `typdef`.
+pub fn external<'a, T: Ord + Hash + fmt::Debug + 'static>(
+    arena: &'a Arena,
+    typdef: HostTypDef<T>,
+    value: &Value,
+) -> Result<&'a T, ValueError> {
     match arena.value.kind(value.node) {
-        ValueKind::Extern(json) => Ok(json),
+        ValueKind::Extern(payload) => typdef.data(payload),
         kind => Err(kind_mismatch(kind, ValueTag::Extern)),
     }
 }

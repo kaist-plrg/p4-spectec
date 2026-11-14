@@ -55,7 +55,7 @@ impl ValueKind {
                     .collect::<Result<_, _>>()?,
             ),
             Self::Func(id) => flat::ValueKind::Func(id),
-            Self::Extern(json) => flat::ValueKind::Extern(json),
+            Self::Extern(payload) => flat::ValueKind::Extern(payload),
         })
     }
 }

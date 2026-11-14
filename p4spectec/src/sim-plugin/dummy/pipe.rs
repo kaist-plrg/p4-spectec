@@ -4,9 +4,9 @@
 
 use crate::lang::{
     common::source::Span,
-    data::{
-        typ,
-        value::flat::{self as value, Value, external::encode},
+    data::value::{
+        flat::{self as value, Value},
+        host::HostTypDef,
     },
 };
 
@@ -16,12 +16,27 @@ use crate::sim_plugin::error;
 
 // == Configuration
 
-/// The dummy architecture, holding no state.
-pub struct Dummy;
+/// The dummy architecture, with its definitions of the extern types.
+pub struct Dummy {
+    /// The definition of `archState`, which the dummy architecture leaves empty.
+    pub(super) arch_state: HostTypDef<()>,
+    /// The definition of `objectState`, which every dummy object leaves empty.
+    pub(super) object_state: HostTypDef<()>,
+}
+
+// Every instance makes definitions of its own
+impl Default for Dummy {
+    fn default() -> Self {
+        Self {
+            arch_state: HostTypDef::new("archState"),
+            object_state: HostTypDef::new("objectState"),
+        }
+    }
+}
 
 // == Architectural state
 
-/// The initial architecture state: an encoded unit value.
+/// The initial architecture state: the unit payload.
 pub(super) fn init_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Dummy>,
 ) -> Result<Value, ExternError>
@@ -29,17 +44,15 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,
 {
-    let payload = encode(ctx.arena(), &())?;
-    let typ =
-        typ::make::var(crate::phrase!(node: "archState".into(), span: Span::default()), Vec::new());
-    Ok(value::make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?)
+    let payload = ctx.external().arch_state.payload(());
+    Ok(value::make::external(ctx.arena_mut(), payload, Span::default())?)
 }
 
 // == Extern calls
 
 // - Initialization
 
-/// Every object starts as an encoded unit value.
+/// Every object starts as the unit payload.
 pub(super) fn eval_extern_init<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Dummy>,
     _values: &[Value],
@@ -48,12 +61,8 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,
 {
-    let payload = encode(ctx.arena(), &())?;
-    let typ = typ::make::var(
-        crate::phrase!(node: "objectState".into(), span: Span::default()),
-        Vec::new(),
-    );
-    Ok(value::make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?)
+    let payload = ctx.external().object_state.payload(());
+    Ok(value::make::external(ctx.arena_mut(), payload, Span::default())?)
 }
 
 // - Function calls

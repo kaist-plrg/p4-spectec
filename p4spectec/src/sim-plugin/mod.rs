@@ -9,7 +9,7 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::lang::data::{arena::Arena, encoding::Encoding};
+use crate::lang::data::arena::Arena;
 
 use crate::interface::p4::P4Interface;
 
@@ -111,13 +111,12 @@ pub fn build(
     spec: runner::Spec,
     arch: &str,
     config: runner::Config,
-    encoding: Encoding,
 ) -> Result<Simulator, SimError> {
     // Each architecture is its own extern implementation
     match arch {
-        "ebpf" => build_for_arch(spec, config, Ebpf::new(encoding)),
-        "psa" => build_for_arch(spec, config, Psa::new(encoding)),
-        "v1model" => build_for_arch(spec, config, V1Model::new(encoding)),
+        "ebpf" => build_for_arch(spec, config, Ebpf::default()),
+        "psa" => build_for_arch(spec, config, Psa::default()),
+        "v1model" => build_for_arch(spec, config, V1Model::default()),
         _ => Err(error::architecture_unsupported(arch)),
     }
 }

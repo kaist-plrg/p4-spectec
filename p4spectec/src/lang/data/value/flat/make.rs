@@ -5,8 +5,6 @@
 
 use std::rc::Rc;
 
-use crate::util::json::json;
-
 use crate::lang::{
     common::{
         Id, TId,
@@ -20,7 +18,7 @@ use crate::lang::{
     },
 };
 
-use super::super::ValueError;
+use super::super::{ValueError, host::HostPayload};
 use super::{Value, ValueField, ValueKind};
 
 // - General
@@ -197,12 +195,13 @@ pub fn func(
 
 // - Externals
 
-/// A host-owned value carried as JSON.
+/// A host payload, typed by the extern syntax type its definition names.
 pub fn external(
     arena: &mut Arena,
-    typ: Rc<TypKind>,
-    json: Rc<json>,
+    payload: Rc<HostPayload>,
     span: Span,
 ) -> Result<Value, ValueError> {
-    Value::new(arena, ValueKind::Extern(json), typ, span)
+    let id = crate::phrase!(node: payload.typdef().name().into(), span: Span::default());
+    let typ = typ::make::var(id, Vec::new());
+    Value::new(arena, ValueKind::Extern(payload), typ.node.into(), span)
 }

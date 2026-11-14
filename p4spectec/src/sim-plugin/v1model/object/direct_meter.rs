@@ -4,7 +4,6 @@
 
 use num_bigint::BigInt;
 use num_traits::Zero;
-use serde::{Deserialize, Serialize};
 
 use crate::lang::{
     common::source::Span,
@@ -23,7 +22,7 @@ use crate::sim_plugin::{
     spec::{args, func, pack, rel, unpack},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Direct meter by `MeterType`; the state is never updated.
 pub enum DirectMeter {
     /// Meters packets regardless of size.

@@ -366,9 +366,9 @@ pub fn run(
 ) -> Result<(), RunError> {
     let mut arena = Arena::new();
     let runner = match spec {
-        Spec::Al(spec_al) => build_al(&mut arena, spec_al, config, Dummy),
-        Spec::Sl(spec_sl) => build_sl(&mut arena, spec_sl, config, Dummy),
-        Spec::Pl(spec_pl) => build_pl(&mut arena, spec_pl, config, Dummy),
+        Spec::Al(spec_al) => build_al(&mut arena, spec_al, config, Dummy::default()),
+        Spec::Sl(spec_sl) => build_sl(&mut arena, spec_sl, config, Dummy::default()),
+        Spec::Pl(spec_pl) => build_pl(&mut arena, spec_pl, config, Dummy::default()),
     }
     .map_err(RunError::Build)?;
     run_program(&mut arena, runner, relation, includes, path_p4)

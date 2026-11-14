@@ -5,7 +5,6 @@
 
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
-use serde::{Deserialize, Serialize};
 
 use crate::lang::{
     common::source::Span,
@@ -24,7 +23,7 @@ use crate::sim_plugin::{
     spec::{args, func, unpack},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Counter array by `CounterType`.
 pub enum Counter {
     /// Packet counts.

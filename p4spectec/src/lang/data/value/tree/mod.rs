@@ -8,12 +8,12 @@ use std::rc::Rc;
 
 use serde::{Deserialize, Serialize};
 
-use crate::util::json::json;
-
 use crate::lang::{
     common::{Id, prim::num::Number, source::NotePhrase},
     data::{notation::AtomPhrase, typ::TypKind},
 };
+
+use super::host::HostPayload;
 
 mod convert;
 mod external;
@@ -55,5 +55,5 @@ pub enum ValueKind {
     Opt(Option<Box<Value>>),
     List(Vec<Value>),
     Func(Id),
-    Extern(Rc<json>),
+    Extern(Rc<HostPayload>),
 }

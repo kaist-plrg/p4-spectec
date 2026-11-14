@@ -2,6 +2,7 @@
 //!
 //! Kind and count mismatches identify invalid projections.
 //! Interning failures distinguish value handles from case mixop handles.
+//! Host payload mismatches name both Rust types.
 
 use std::num::TryFromIntError;
 
@@ -29,6 +30,9 @@ pub enum ValueError {
     /// A fixed-arity projection met another count.
     #[error("expected exactly {expected} values, got {actual}")]
     CountMismatch { expected: usize, actual: usize },
+    /// An extern value read through another host type definition.
+    #[error("expected a host payload of {expected}, got one of {actual}")]
+    HostPayloadMismatch { expected: &'static str, actual: &'static str },
 }
 
 // - Index overflow

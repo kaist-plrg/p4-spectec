@@ -2,16 +2,7 @@
 //!
 //! For example, an I2E clone records a mirror session and a field-list index
 
-use serde::{Deserialize, Serialize};
-use serde_derive_state::{DeserializeState, SerializeState};
-
-use crate::lang::data::{
-    arena::Arena,
-    value::flat::{
-        Value,
-        external::{DecodeContext, EncodeContext},
-    },
-};
+use crate::lang::data::{arena::Arena, value::flat::Value};
 
 use crate::runner::ExternError;
 
@@ -21,7 +12,7 @@ use super::super::{core::object::PacketIn, spec::unpack};
 
 // == Packet clones
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Where a clone is taken: after ingress (I2E) or after egress (E2E).
 pub enum CloneType {
     /// Ingress-to-egress clone: parsed again before egress.
@@ -31,7 +22,7 @@ pub enum CloneType {
 }
 
 /// Packet clone direction, mirror session and preserved field-list index.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CloneInfo(pub CloneType, pub usize, pub usize);
 
 impl CloneInfo {
@@ -63,7 +54,7 @@ impl CloneInfo {
 // == Actions on a packet
 
 /// Actions requested by extern calls for the current packet.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Action {
     /// Clone requested by the last `clone_preserving_field_list` call.
     pub clone_opt: Option<CloneInfo>,
@@ -75,7 +66,7 @@ pub struct Action {
 
 // == Processing context per packet
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Block a queued packet resumes at.
 pub enum Entrypoint {
     /// Ingress control; parser and verify have already run.
@@ -85,12 +76,9 @@ pub enum Entrypoint {
 }
 
 /// Processing context per packet.
-#[derive(Clone, Debug, PartialEq, Eq, SerializeState, DeserializeState)]
-#[serde(deny_unknown_fields, serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
-#[serde(deserialize_state = "DecodeContext<'de>")]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Packet {
     /// Evaluation context.
-    #[serde(state)]
     pub value_ctx: Value,
     /// Packet input.
     pub packet_in: PacketIn,

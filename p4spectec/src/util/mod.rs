@@ -1,6 +1,6 @@
 //! Shared utilities
 //!
-//! Integer and bit arithmetic, JSON ordering, and text escaping.
+//! Integer and bit arithmetic, the JSON value type, and text escaping.
 
 pub mod bigint;
 pub mod json;

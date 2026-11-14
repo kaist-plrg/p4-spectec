@@ -4,16 +4,11 @@
 //! an out-of-range read yields that default,
 //! an out-of-range write is ignored.
 
-use serde_derive_state::{DeserializeState, SerializeState};
-
 use crate::lang::{
     common::source::Span,
     data::{
         typ,
-        value::flat::{
-            self as value, Value,
-            external::{DecodeContext, EncodeContext},
-        },
+        value::flat::{self as value, Value},
     },
 };
 
@@ -24,15 +19,11 @@ use crate::sim_plugin::{
     spec::{args, func, unpack},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, SerializeState, DeserializeState)]
-#[serde(deny_unknown_fields, serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
-#[serde(deserialize_state = "DecodeContext<'de>")]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Register array with its element type.
 pub struct Register {
-    #[serde(state)]
     /// Element type `T`.
     pub value_typ: Value,
-    #[serde(state)]
     /// The `size` elements.
     pub values: Vec<Value>,
 }

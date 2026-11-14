@@ -5,8 +5,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use p4spectec::lang::data::encoding::Encoding;
-
 use p4spectec::sim_plugin::{self, Simulator};
 
 use serde::Deserialize;
@@ -147,7 +145,7 @@ pub fn run(name_config: &str, timeout: Option<Duration>, path_log: Option<&Path>
 /// Builds the native simulator of an architecture.
 fn build(registration: &Registration, config: &Configuration, arch: &str) -> Result<Simulator> {
     let spec = config.language.spec(&registration.spec)?;
-    Ok(sim_plugin::build(spec, arch, config.runner(), Encoding::default())?)
+    Ok(sim_plugin::build(spec, arch, config.runner())?)
 }
 
 /// Runs the given suites of `registration` on one simulator per architecture.

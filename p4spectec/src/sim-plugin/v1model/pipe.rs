@@ -14,20 +14,16 @@
 //! deparsed packet to the parser
 
 use num_bigint::BigInt;
-use serde_derive_state::{DeserializeState, SerializeState};
 
 use crate::lang::{
     common::source::Span,
     data::{
         arena::Arena,
-        encoding::Encoding,
         typ,
         value::{
             ValueError,
-            flat::{
-                self as value, Value,
-                external::{DecodeContext, EncodeContext, decode_with, encode_with},
-            },
+            flat::{self as value, Value},
+            host::HostTypDef,
         },
     },
 };
@@ -57,31 +53,28 @@ use super::{
 
 // == Configuration
 
-/// The v1model architecture, parameterized by its state encoding.
+/// The v1model architecture, with its definitions of the extern types.
 pub struct V1Model {
-    /// Encoding of architecture and object states as external values.
-    encoding: Encoding,
+    /// The definition of `archState` as the architectural state.
+    pub(super) arch_state: HostTypDef<Arch>,
+    /// The definition of `objectState`; a stateless object carries `None`.
+    pub(super) object_state: HostTypDef<Option<ObjectState>>,
 }
 
+// Every instance makes definitions of its own
 impl Default for V1Model {
     fn default() -> Self {
-        Self::new(Encoding::default())
-    }
-}
-
-impl V1Model {
-    /// Creates the architecture with the given state encoding.
-    pub fn new(encoding: Encoding) -> Self {
-        Self { encoding }
+        Self {
+            arch_state: HostTypDef::new("archState"),
+            object_state: HostTypDef::new("objectState"),
+        }
     }
 }
 
 // == Extern objects
 
 /// Core and v1model-specific extern objects.
-#[derive(Clone, Debug, PartialEq, Eq, SerializeState, DeserializeState)]
-#[serde(serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
-#[serde(deserialize_state = "DecodeContext<'de>")]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ObjectState {
     /// The `packet_in` of the current packet.
     PacketIn(PacketIn),
@@ -90,7 +83,7 @@ pub enum ObjectState {
     /// A `counter` array.
     Counter(Counter),
     /// A `register` array.
-    Register(#[serde(state)] Register),
+    Register(Register),
     /// A `direct_counter`.
     DirectCounter(DirectCounter),
     /// A `direct_meter`.
@@ -98,28 +91,39 @@ pub enum ObjectState {
 }
 
 impl ObjectState {
-    // - Encoding
+    // - Wrapping
 
-    /// Encodes the object as the specification's `objectState` external value.
-    pub fn to_value(&self, arena: &mut Arena, encoding: Encoding) -> Result<Value, ExternError> {
-        let payload = encode_with(arena, encoding, self)?;
-        let typ = typ::make::var(
-            crate::phrase!(node: "objectState".into(), span: Span::default()),
-            Vec::new(),
-        );
-        Ok(value::make::external(arena, typ.node.into(), payload.into(), Span::default())?)
+    /// Wraps the object as an `objectState` value of `typdef`.
+    pub fn to_value(
+        self,
+        arena: &mut Arena,
+        typdef: HostTypDef<Option<Self>>,
+    ) -> Result<Value, ExternError> {
+        Self::wrap(Some(self), arena, typdef)
     }
 
-    // - Decoding
-
-    /// Decodes an object from an `objectState` external value.
-    pub fn from_value(
+    /// Wraps an object's state, or its absence, as an `objectState` value of `typdef`.
+    fn wrap(
+        object: Option<Self>,
         arena: &mut Arena,
-        encoding: Encoding,
+        typdef: HostTypDef<Option<Self>>,
+    ) -> Result<Value, ExternError> {
+        Ok(value::make::external(arena, typdef.payload(object), Span::default())?)
+    }
+
+    // - Reading
+
+    /// Reads an object from an `objectState` value of `typdef`; a stateless object fails.
+    pub fn from_value(
+        arena: &Arena,
         value: &Value,
+        typdef: HostTypDef<Option<Self>>,
     ) -> Result<Self, ExternError> {
-        let json = value::get::external(arena, value)?.clone();
-        decode_with(arena, encoding, json.as_ref()).map_err(ExternError::from)
+        value::get::external(arena, typdef, value)?
+            .clone()
+            .ok_or_else(|| {
+                error::extern_object_undefined("extern object has no state".to_owned()).into()
+            })
     }
 }
 
@@ -168,11 +172,11 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
-    Arch::default().to_value(ctx.arena_mut(), encoding)
+    let typdef = ctx.external().arch_state;
+    Arch::default().to_value(ctx.arena_mut(), typdef)
 }
 
-/// Decodes the architecture state stored in `value_arch`.
+/// Reads the architecture state stored in `value_arch`.
 pub fn find_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_arch: Value,
@@ -181,12 +185,11 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
     let value_state = func::find_arch_state_e(ctx, value_arch)?;
-    Arch::from_value(ctx.arena_mut(), encoding, &value_state)
+    Arch::from_value(ctx.arena(), &value_state, ctx.external().arch_state)
 }
 
-/// Encodes `arch` back into `value_arch`.
+/// Stores `arch` back into `value_arch`.
 pub fn update_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_arch: Value,
@@ -196,14 +199,14 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
-    let value_state = arch.to_value(ctx.arena_mut(), encoding)?;
+    let typdef = ctx.external().arch_state;
+    let value_state = arch.to_value(ctx.arena_mut(), typdef)?;
     func::update_arch_state_e(ctx, value_arch, value_state).map_err(ExternError::from)
 }
 
 // == Object state
 
-/// Decodes the object named `value_id` from `value_arch`.
+/// Reads the object named `value_id` from `value_arch`.
 pub fn find_object_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_arch: Value,
@@ -213,9 +216,8 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
     let value_object = func::find_object_state_e(ctx, value_arch, value_id)?;
-    ObjectState::from_value(ctx.arena_mut(), encoding, &value_object)
+    ObjectState::from_value(ctx.arena(), &value_object, ctx.external().object_state)
 }
 
 /// The `packet_in` object of the current packet.
@@ -282,7 +284,6 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
     let (value_name, value_targs, value_ids, value_args) = value::get::four(values)?;
     let name = value::get::text(ctx.arena(), value_name)?.to_owned();
     let object = match name.as_str() {
@@ -310,23 +311,8 @@ where
         // Other externs carry no state of their own
         _ => None,
     };
-    Ok(match object {
-        Some(object) => object.to_value(ctx.arena_mut(), encoding)?,
-        // No state: encode the unit value
-        None => {
-            let payload = encode_with(ctx.arena(), encoding, &())?;
-            let typ = typ::make::var(
-                crate::phrase!(node: "objectState".into(), span: Span::default()),
-                Vec::new(),
-            );
-            value::make::external(
-                ctx.arena_mut(),
-                typ.node.into(),
-                payload.into(),
-                Span::default(),
-            )?
-        }
-    })
+    let typdef = ctx.external().object_state;
+    ObjectState::wrap(object, ctx.arena_mut(), typdef)
 }
 
 // - Function calls
@@ -413,7 +399,6 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
     // Context, state, object id, method name, parameter names
     let [value_ctx, value_arch, value_id, value_name, value_names] = values else {
         return Err(error::extern_argument_arity_mismatch(
@@ -509,7 +494,8 @@ where
             }
         };
     // Write the updated object back
-    let value_object = object.to_value(ctx.arena_mut(), encoding)?;
+    let typdef = ctx.external().object_state;
+    let value_object = object.to_value(ctx.arena_mut(), typdef)?;
     let value_arch = func::update_object_state_e(ctx, value_arch, *value_id, value_object)?;
     Ok(vec![value_ctx, value_arch, value_call_result])
 }
@@ -679,9 +665,9 @@ where
         ));
         let value_id =
             value::make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
-        let encoding = ctx.external().encoding;
+        let typdef = ctx.external().object_state;
         let value_object =
-            ObjectState::PacketIn(packet.packet_in).to_value(ctx.arena_mut(), encoding)?;
+            ObjectState::PacketIn(packet.packet_in).to_value(ctx.arena_mut(), typdef)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
     }?;
     state.value_ctx = packet.value_ctx;
@@ -710,8 +696,8 @@ where
         ));
         let value_id =
             value::make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
-        let encoding = ctx.external().encoding;
-        let value_object = ObjectState::PacketIn(pkt).to_value(ctx.arena_mut(), encoding)?;
+        let typdef = ctx.external().object_state;
+        let value_object = ObjectState::PacketIn(pkt).to_value(ctx.arena_mut(), typdef)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
     }?;
     Ok(())
@@ -737,9 +723,9 @@ where
         ));
         let value_id =
             value::make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
-        let encoding = ctx.external().encoding;
+        let typdef = ctx.external().object_state;
         let value_object =
-            ObjectState::PacketOut(PacketOut::default()).to_value(ctx.arena_mut(), encoding)?;
+            ObjectState::PacketOut(PacketOut::default()).to_value(ctx.arena_mut(), typdef)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
     }?;
     Ok(())
@@ -816,15 +802,15 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    let encoding = ctx.external().encoding;
     // Setup packet input, output and global variables in source order
+    let typdef = ctx.external().object_state;
     let value_packet =
-        ObjectState::PacketIn(PacketIn::init(&rx.packet)?).to_value(ctx.arena_mut(), encoding)?;
+        ObjectState::PacketIn(PacketIn::init(&rx.packet)?).to_value(ctx.arena_mut(), typdef)?;
     let (value_ctx, value_arch) =
         rel::v1model_init_packet_in(ctx, state.value_ctx, state.value_arch, value_packet)?;
     (state.value_ctx, state.value_arch) = (value_ctx, value_arch);
     let value_packet =
-        ObjectState::PacketOut(PacketOut::default()).to_value(ctx.arena_mut(), encoding)?;
+        ObjectState::PacketOut(PacketOut::default()).to_value(ctx.arena_mut(), typdef)?;
     let (value_ctx, value_arch) =
         rel::v1model_init_packet_out(ctx, state.value_ctx, state.value_arch, value_packet)?;
     (state.value_ctx, state.value_arch) = (value_ctx, value_arch);
@@ -1240,8 +1226,8 @@ where
         ));
         let value_id =
             value::make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
-        let encoding = ctx.external().encoding;
-        let value_object = pkt.to_value(ctx.arena_mut(), encoding)?;
+        let typdef = ctx.external().object_state;
+        let value_object = pkt.to_value(ctx.arena_mut(), typdef)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
     }?;
     // Parser and verify run before the ingress packet enters the queue

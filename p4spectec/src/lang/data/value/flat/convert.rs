@@ -52,7 +52,7 @@ impl ValueKind {
                 tree::ValueKind::List(values.iter().map(|value| value.into_tree(arena)).collect())
             }
             Self::Func(id) => tree::ValueKind::Func(id.clone()),
-            Self::Extern(json) => tree::ValueKind::Extern(Rc::clone(json)),
+            Self::Extern(payload) => tree::ValueKind::Extern(Rc::clone(payload)),
         }
     }
 }

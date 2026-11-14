@@ -9,7 +9,6 @@
 
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
-use serde::{Deserialize, Serialize};
 
 use crate::lang::{
     common::{prim::num, source::Span},
@@ -29,8 +28,7 @@ use crate::sim_plugin::{
 use super::bits::{bits_to_int_unsigned, string_to_bits};
 
 /// Input packet data and its extraction cursor.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PacketIn {
     /// The whole packet.
     pub bits: Vec<bool>,

@@ -7,9 +7,11 @@
 //! `tree::ValueCase` owns its filled notation.
 //! `flat::make` allocates values of each kind with their type,
 //! `flat::get` projects a kind back out or fails with `ValueError`.
+//! Extern values carry a host's Rust data, described in `host`.
 
 mod error;
 pub mod flat;
+pub mod host;
 pub mod tree;
 
 pub use error::ValueError;
