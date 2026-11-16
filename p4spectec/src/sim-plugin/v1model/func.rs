@@ -1,7 +1,7 @@
 //! v1model extern functions
 //!
 //! Doc comments summarize the extern's description in `v1model.p4`.
-//! random, clone, truncate, assert, and assume are not implemented;
+//! clone, truncate, assert, and assume are not implemented;
 //! the pipeline's dispatch rejects them as unsupported calls.
 
 use std::io::Write;
@@ -121,6 +121,46 @@ where
         "mcast_grp",
         value_mcast_grp,
     )?;
+    // Return without a value
+    let typ = typ::make::opt(typ::make::var(
+        crate::phrase!(node: "value".into(), span: Span::default()),
+        Vec::new(),
+    ));
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_string! {
+        arena: ctx.arena_mut(),
+        shape: "RETURN value?",
+        args: vec![value_opt],
+        typ: "returnResult",
+        span: Span::default(),
+    }?;
+    Ok((value_ctx, value_arch, value_call_result))
+}
+
+/// Generate a random number in the range lo..hi, inclusive, and write
+/// it to the result parameter.  The value written to result is not
+/// specified if lo > hi.
+///
+/// This model is deterministic and always writes `lo`.
+/// P4Testgen likewise leaves a random result unconstrained,
+/// so its STF tests expect any value for the bits that depend on it.
+///
+/// @param T          Must be a type `bit<W>`
+///
+/// `extern void random<T>(out T result, in T lo, in T hi);`
+pub fn random<Interp, Iface, Ext>(
+    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
+    value_ctx: Value,
+    value_arch: Value,
+) -> Result<(Value, Value, Value), ExternError>
+where
+    Iface: Interface,
+    Ext: Extern,
+    Interp: Interpreter<Iface, Ext>,
+{
+    // Write the lower bound to the result
+    let value_lo = func::find_var_e_local(ctx, value_ctx, "lo")?;
+    let value_ctx = rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "result", value_lo)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
         crate::phrase!(node: "value".into(), span: Span::default()),
