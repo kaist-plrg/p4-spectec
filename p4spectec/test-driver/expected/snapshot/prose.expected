@@ -32715,25 +32715,57 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
         2. (Let object_table be ((TABLE nameIR `{ frame TBL `}) as object))
 
-        3. (Let nameIR_object be $name_annotation_default(annotationList, nameIR)) [FAIL]
-
-        4. (Let objectId be IC_0.PATH ++ [nameIR_object])
-
-        5. (Let STO_2 be $add_store(STO_1, objectId, object_table)) [FAIL]
-
-        6. Block (2 arms)
+        3. Block (2 arms)
 
         Arm 1:
 
-          1. If (($name_annotation(annotationList) matches pattern [])), then [→ next]
+          1. (Let nameIR_object be $name_annotation_default(annotationList, nameIR)) [→ next]
 
-            1. (Let IC_1 be $add_var_i((BLOCK), IC_0, nameIR, ((REF objectId) as value))) [→ next]
+          2. Block (2 arms)
 
-            2. (Let constantDeclarationIR be ((_EMPTY) CONST typeIR nameIR ('=' _VALUE ((REF objectId) as value)) ';'))
+          Arm 1:
 
-            3. Result in: % % |- % : IC_1 STO_2 ?((constantDeclarationIR as controlLocalDeclarationIR))
+            1. (Let objectId be IC_0.PATH ++ [nameIR_object])
 
-          1. Else Dangling
+            2. (Let STO_2 be $add_store(STO_1, objectId, object_table)) [→ next]
+
+            3. If (($name_annotation(annotationList) matches pattern [])), then [→ next]
+
+              1. (Let IC_1 be $add_var_i((BLOCK), IC_0, nameIR, ((REF objectId) as value))) [→ next]
+
+              2. (Let constantDeclarationIR be ((_EMPTY) CONST typeIR nameIR ('=' _VALUE ((REF objectId) as value)) ';'))
+
+              3. Result in: % % |- % : IC_1 STO_2 ?((constantDeclarationIR as controlLocalDeclarationIR))
+
+            3. Else Dangling
+
+          Arm 2:
+
+            1. If (~$starts_with(nameIR_object, ".")), then [→ next]
+
+              1. (Let objectId be IC_0.PATH ++ [nameIR_object])
+
+              2. (Let STO_2 be $add_store(STO_1, objectId, object_table)) [→ next]
+
+              3. (Let (nameIR')*{nameIR' <- nameIR'*} be $name_annotation(annotationList)) [→ next]
+
+              4. If (((nameIR')*{nameIR' <- nameIR'*} matches pattern [ _/1 ])), then
+
+                1. (Let [nameIR_annotation] be (nameIR')*{nameIR' <- nameIR'*})
+
+                2. (Let objectId_annotation be IC_0.PATH ++ [nameIR_annotation])
+
+                3. (Let STO_3 be $add_store(STO_2, objectId_annotation, object_table)) [→ next]
+
+                4. (Let IC_1 be $add_var_i((BLOCK), IC_0, nameIR, ((REF objectId) as value))) [→ next]
+
+                5. (Let constantDeclarationIR be ((_EMPTY) CONST typeIR nameIR ('=' _VALUE ((REF objectId) as value)) ';'))
+
+                6. Result in: % % |- % : IC_1 STO_3 ?((constantDeclarationIR as controlLocalDeclarationIR))
+
+              4. Else Dangling
+
+            1. Else Dangling
 
         Arm 2:
 
@@ -32741,17 +32773,21 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
           2. Check (((nameIR')*{nameIR' <- nameIR'*} matches pattern [ _/1 ]))
 
-            1. (Let [nameIR_annotation] be (nameIR')*{nameIR' <- nameIR'*})
+            1. (Let [nameIR_anno] be (nameIR')*{nameIR' <- nameIR'*})
 
-            2. (Let objectId_annotation be IC_0.PATH ++ [nameIR_annotation])
+            2. Check ($starts_with(nameIR_anno, ".")) [FAIL]
 
-            3. (Let STO_3 be $add_store(STO_2, objectId_annotation, object_table)) [FAIL]
+              1. (Let text be $strip_prefix(nameIR_anno, ".")) [FAIL]
 
-            4. (Let IC_1 be $add_var_i((BLOCK), IC_0, nameIR, ((REF objectId) as value))) [FAIL]
+              2. (Let objectId be $split_text(text, ".")) [FAIL]
 
-            5. (Let constantDeclarationIR be ((_EMPTY) CONST typeIR nameIR ('=' _VALUE ((REF objectId) as value)) ';'))
+              3. (Let STO_2 be $add_store(STO_1, objectId, object_table)) [FAIL]
 
-            6. Result in: % % |- % : IC_1 STO_3 ?((constantDeclarationIR as controlLocalDeclarationIR))
+              4. (Let IC_1 be $add_var_i((BLOCK), IC_0, nameIR, ((REF objectId) as value))) [FAIL]
+
+              5. (Let constantDeclarationIR be ((_EMPTY) CONST typeIR nameIR ('=' _VALUE ((REF objectId) as value)) ';'))
+
+              6. Result in: % % |- % : IC_1 STO_2 ?((constantDeclarationIR as controlLocalDeclarationIR))
 
 relation ControlLocalDecls_inst: IC STO |- (controlLocalDeclarationIR)*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} : % % %
 

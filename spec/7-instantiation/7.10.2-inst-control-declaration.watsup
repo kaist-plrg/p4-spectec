@@ -87,6 +87,7 @@ rulegroup ControlLocalDecl_inst/tableDeclarationIR {
     ---- ;; use name annotation if exists
     -- if nameIR_object
         = $name_annotation_default(annotationList, nameIR)
+    -- if ~$starts_with(nameIR_object, ".")
     ---- ;; bind object to store
     -- if objectId = IC_0.PATH ++ nameIR_object
     -- if STO_2 = $add_store(STO_1, objectId, object_table)
@@ -99,6 +100,33 @@ rulegroup ControlLocalDecl_inst/tableDeclarationIR {
     -- if constantDeclarationIR
         = _EMPTY CONST typeIR nameIR ('=' _VALUE (REF objectId)) ';'
 
+
+  rule ControlLocalDecl_inst/tableDeclarationIR-name-annotation-dot-prefix:
+    IC_0 STO_0 |- annotationList TABLE typeIR nameIR `{ tablePropertyListIR `}
+                : IC_1 STO_2 constantDeclarationIR
+    ---- ;; initialize callee context
+    -- if IC_callee_0 = $inherit_i(BLOCK, IC_0)
+    ---- ;; create table frame
+    -- if IC_frame = $enter_i(IC_callee_0)
+    ---- ;; insantiate table properties
+    -- TableProperties_inst:
+        IC_frame STO_0 |- tablePropertyListIR
+                        : STO_1 tablePropertyListIR_inst
+    -- if TBL = $init_table(tablePropertyListIR_inst)
+    ---- ;; create table object with table frame
+    -- if frame :: _ = IC_frame.LOCAL.FRAMES
+    -- if object_table = TABLE nameIR `{ frame TBL `}
+    ---- ;; a name annotation with a dot prefix is a standalone name
+    -- if nameIR_anno = $name_annotation(annotationList)
+    -- if $starts_with(nameIR_anno, ".")
+    -- if objectId = $split_text($strip_prefix(nameIR_anno, "."), ".")
+    ---- ;; bind object to store
+    -- if STO_2 = $add_store(STO_1, objectId, object_table)
+    ---- ;; add reference to object in value environment
+    -- if IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId)
+    ---- ;; replace declaration with constant declaration holding the reference
+    -- if constantDeclarationIR
+        = _EMPTY CONST typeIR nameIR ('=' _VALUE (REF objectId)) ';'
 }
 
 ;;

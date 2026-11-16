@@ -36369,23 +36369,53 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
                               1. Else Dangling
 
-                              2. (Let nameIR'*{nameIR' <- nameIR'*} be $name_annotation(annotationList))
+                          2. If (~$starts_with(nameIR_object, ".")), then
 
-                                1. If (nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]), then
+                            1. (Let objectId be IC_0.PATH ++ [nameIR_object])
 
-                                  1. (Let [nameIR_annotation] be nameIR'*{nameIR' <- nameIR'*})
+                              1. (Let STO_2 be $add_store(STO_1, objectId, object_table))
 
-                                    1. (Let objectId_annotation be IC_0.PATH ++ [nameIR_annotation])
+                                1. (Let nameIR'*{nameIR' <- nameIR'*} be $name_annotation(annotationList))
 
-                                      1. (Let STO_3 be $add_store(STO_2, objectId_annotation, object_table))
+                                  1. If (nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]), then
 
-                                        1. (Let IC_1 be $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value))
+                                    1. (Let [nameIR_annotation] be nameIR'*{nameIR' <- nameIR'*})
 
-                                          1. (Let constantDeclarationIR be _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';')
+                                      1. (Let objectId_annotation be IC_0.PATH ++ [nameIR_annotation])
 
-                                            1. Result in: % % |- % : IC_1 STO_3 ?(constantDeclarationIR as controlLocalDeclarationIR)
+                                        1. (Let STO_3 be $add_store(STO_2, objectId_annotation, object_table))
 
-                                1. Else Dangling
+                                          1. (Let IC_1 be $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value))
+
+                                            1. (Let constantDeclarationIR be _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';')
+
+                                              1. Result in: % % |- % : IC_1 STO_3 ?(constantDeclarationIR as controlLocalDeclarationIR)
+
+                                  1. Else Dangling
+
+                          2. Else Dangling
+
+                        2. (Let nameIR'*{nameIR' <- nameIR'*} be $name_annotation(annotationList))
+
+                          1. If (nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]), then
+
+                            1. (Let [nameIR_anno] be nameIR'*{nameIR' <- nameIR'*})
+
+                              1. If ($starts_with(nameIR_anno, ".")), then
+
+                                1. (Let objectId be $split_text($strip_prefix(nameIR_anno, "."), "."))
+
+                                  1. (Let STO_2 be $add_store(STO_1, objectId, object_table))
+
+                                    1. (Let IC_1 be $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value))
+
+                                      1. (Let constantDeclarationIR be _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';')
+
+                                        1. Result in: % % |- % : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
+
+                              1. Else Dangling
+
+                          1. Else Dangling
 
                   1. Else Dangling
 

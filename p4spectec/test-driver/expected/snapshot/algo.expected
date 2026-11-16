@@ -26476,6 +26476,7 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- let frame :: _frame*{_frame <- _frame*} = frame'*{frame' <- frame'*}
     -- let object_table = TABLE nameIR `{ frame TBL `} as object
     -- let nameIR_object = $name_annotation_default(annotationList, nameIR)
+    -- if ~$starts_with(nameIR_object, ".")
     -- let objectId = IC_0.PATH ++ [nameIR_object]
     -- let STO_2 = $add_store(STO_1, objectId, object_table)
     -- let nameIR'*{nameIR' <- nameIR'*} = $name_annotation(annotationList)
@@ -26486,6 +26487,25 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- let IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value)
     -- let constantDeclarationIR = _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';'
     -- output: % % |- % : IC_1 STO_3 ?(constantDeclarationIR as controlLocalDeclarationIR)
+
+    rulepath tableDeclarationIR-name-annotation-dot-prefix
+    -- let IC_callee_0 = $inherit_i(BLOCK, IC_0)
+    -- let IC_frame = $enter_i(IC_callee_0)
+    -- TableProperties_inst: IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
+    -- let TBL = $init_table(tablePropertyListIR_inst)
+    -- let frame'*{frame' <- frame'*} = IC_frame.LOCAL.FRAMES
+    -- if frame'*{frame' <- frame'*} matches _ :: _
+    -- let frame :: _frame*{_frame <- _frame*} = frame'*{frame' <- frame'*}
+    -- let object_table = TABLE nameIR `{ frame TBL `} as object
+    -- let nameIR'*{nameIR' <- nameIR'*} = $name_annotation(annotationList)
+    -- if nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]
+    -- let [nameIR_anno] = nameIR'*{nameIR' <- nameIR'*}
+    -- if $starts_with(nameIR_anno, ".")
+    -- let objectId = $split_text($strip_prefix(nameIR_anno, "."), ".")
+    -- let STO_2 = $add_store(STO_1, objectId, object_table)
+    -- let IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value)
+    -- let constantDeclarationIR = _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';'
+    -- output: % % |- % : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
 
 relation ControlLocalDecls_inst: instContext store |- controlLocalDeclarationIR* : instContext store controlLocalDeclarationIR*
 
