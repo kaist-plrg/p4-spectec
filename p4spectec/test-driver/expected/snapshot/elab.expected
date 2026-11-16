@@ -15639,11 +15639,26 @@ def $find_object_qualified_e(arch, objectId) : object? =
 
   clause 0 : (ARCH, objectId) = $find_object_e(ARCH, objectId)
 
-def $find_object_unqualified_e(arch, id) : object? =
+def $is_table_named(objectId, object, id) : bool =
+
+  clause 0 : (objectId, object, id) = $objectId_ends_with(objectId, id)
+  -- if object <: tableObject
+
+  clause -1 : (objectId, object, id) = false
+
+def $find_table_qualified_e(arch, objectId) : object? =
+
+  clause 0 : (ARCH, objectId) = ?(object)
+  -- if (?(object) = $find_object_e(ARCH, objectId))
+  -- if object <: tableObject
+
+  clause -1 : (ARCH, objectId) = ?()
+
+def $find_table_unqualified_e(arch, id) : object? =
 
   clause 0 : (ARCH, id) = ?(object_id_found)
   -- if (`{ objectId ':' object*{object <- object*, objectId <- objectId*} `} = ARCH.STORE)
-  -- (if (object_id?{object_id <- object_id?} = $ite<object?>($objectId_ends_with(objectId, id), ?(object), ?())))*{object <- object*, objectId <- objectId*, object_id? <- object_id?*}
+  -- (if (object_id?{object_id <- object_id?} = $ite<object?>($is_table_named(objectId, object, id), ?(object), ?())))*{object <- object*, objectId <- objectId*, object_id? <- object_id?*}
   -- if ([?(object_id_found)] = $filter_<object?>(object_id?{object_id <- object_id?}*{object_id? <- object_id?*}, (object_id?{object_id <- object_id?} =/= ?())*{object_id? <- object_id?*}))
 
   clause -1 : (ARCH, id) = ?()
@@ -15666,11 +15681,11 @@ def $update_object_qualified_e(arch, objectId, object) : arch =
   -- if (?() =/= $find_object_qualified_e(ARCH_0, objectId))
   -- if (ARCH_1 = $add_object_e(ARCH_0, objectId, object))
 
-def $update_object_unqualified_e(arch, id, object) : arch =
+def $update_table_unqualified_e(arch, id, object) : arch =
 
   clause 0 : (ARCH_0, id, object) = ARCH_1
-  -- if (`{ objectId ':' _object*{_object <- _object*, objectId <- objectId*} `} = ARCH_0.STORE)
-  -- (if (objectId_id?{objectId_id <- objectId_id?} = $ite<objectId?>($objectId_ends_with(objectId, id), ?(objectId), ?())))*{objectId <- objectId*, objectId_id? <- objectId_id?*}
+  -- if (`{ objectId ':' object_stored*{objectId <- objectId*, object_stored <- object_stored*} `} = ARCH_0.STORE)
+  -- (if (objectId_id?{objectId_id <- objectId_id?} = $ite<objectId?>($is_table_named(objectId, object_stored, id), ?(objectId), ?())))*{objectId <- objectId*, objectId_id? <- objectId_id?*, object_stored <- object_stored*}
   -- if ([?(objectId_found)] = $filter_<objectId?>(objectId_id?{objectId_id <- objectId_id?}*{objectId_id? <- objectId_id?*}, (objectId_id?{objectId_id <- objectId_id?} =/= ?())*{objectId_id? <- objectId_id?*}))
   -- if (ARCH_1 = $add_object_e(ARCH_0, objectId_found, object))
 

@@ -34345,11 +34345,37 @@ def $find_object_qualified_e(ARCH, objectId)
 
 1. Return $find_object_e(ARCH, objectId) [FAIL]
 
-def $find_object_unqualified_e(ARCH, id)
+def $is_table_named(objectId, object, id)
+
+1. If ((object has type tableObject)), then
+
+  1. Return $objectId_ends_with(objectId, id) [→ otherwise]
+
+2. Otherwise,
+
+  1. Return false
+
+def $find_table_qualified_e(ARCH, objectId)
+
+1. (Let (object')?{object' <- object'?} be $find_object_e(ARCH, objectId)) [→ otherwise]
+
+2. If (((object')?{object' <- object'?} matches pattern (_))), then
+
+  1. (Let ?(object) be (object')?{object' <- object'?})
+
+  2. If ((object has type tableObject)), then
+
+    1. Return ?(object)
+
+3. Otherwise,
+
+  1. Return ?()
+
+def $find_table_unqualified_e(ARCH, id)
 
 1. (Let (`{ ((objectId ':' object))*{object <- object*, objectId <- objectId*} `}) be ARCH.STORE)
 
-2. (Let bool be $objectId_ends_with(objectId, id))*{objectId <- objectId*, bool -> bool*} [→ otherwise]
+2. (Let bool be $is_table_named(objectId, object, id))*{object <- object*, objectId <- objectId*, bool -> bool*} [→ otherwise]
 
 3. (Let (object_id)?{object_id <- object_id?} be $ite<object?>(bool, ?(object), ?()))*{bool <- bool*, object <- object*, object_id? -> object_id?*} [→ otherwise]
 
@@ -34399,11 +34425,11 @@ def $update_object_qualified_e(ARCH_0, objectId, object)
 
   2. Return ARCH_1
 
-def $update_object_unqualified_e(ARCH_0, id, object)
+def $update_table_unqualified_e(ARCH_0, id, object)
 
-1. (Let (`{ ((objectId ':' _object))*{_object <- _object*, objectId <- objectId*} `}) be ARCH_0.STORE)
+1. (Let (`{ ((objectId ':' object_stored))*{objectId <- objectId*, object_stored <- object_stored*} `}) be ARCH_0.STORE)
 
-2. (Let bool be $objectId_ends_with(objectId, id))*{objectId <- objectId*, bool -> bool*} [FAIL]
+2. (Let bool be $is_table_named(objectId, object_stored, id))*{objectId <- objectId*, object_stored <- object_stored*, bool -> bool*} [FAIL]
 
 3. (Let (objectId_id)?{objectId_id <- objectId_id?} be $ite<objectId?>(bool, ?(objectId), ?()))*{bool <- bool*, objectId <- objectId*, objectId_id? -> objectId_id?*} [FAIL]
 

@@ -317,8 +317,8 @@ where
 
 // - Lookup
 
-/// Finds an object by qualified name.
-pub fn find_object_qualified_e<Interp, Iface, Ext>(
+/// Finds a table object by qualified name.
+pub fn find_table_qualified_e<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_arch: Value,
     value_id: Value,
@@ -329,13 +329,13 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     let value_opt = ctx
-        .call_func("find_object_qualified_e", &[], &[value_arch, value_id])
+        .call_func("find_table_qualified_e", &[], &[value_arch, value_id])
         .result?;
     Ok(value::get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
 }
 
-/// Finds an object by bare name.
-pub fn find_object_unqualified_e<Interp, Iface, Ext>(
+/// Finds a table object by bare name.
+pub fn find_table_unqualified_e<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_arch: Value,
     value_id: Value,
@@ -346,7 +346,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     let value_opt = ctx
-        .call_func("find_object_unqualified_e", &[], &[value_arch, value_id])
+        .call_func("find_table_unqualified_e", &[], &[value_arch, value_id])
         .result?;
     Ok(value::get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
 }
@@ -369,8 +369,8 @@ where
         .result
 }
 
-/// Replaces an object found by bare name.
-pub fn update_object_unqualified_e<Interp, Iface, Ext>(
+/// Replaces a table object found by bare name.
+pub fn update_table_unqualified_e<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_arch: Value,
     value_id: Value,
@@ -381,7 +381,7 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    ctx.call_func("update_object_unqualified_e", &[], &[value_arch, value_id, value_object])
+    ctx.call_func("update_table_unqualified_e", &[], &[value_arch, value_id, value_object])
         .result
 }
 

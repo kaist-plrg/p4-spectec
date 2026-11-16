@@ -19369,31 +19369,47 @@ xref:find_object_qualified_e[$find_object_qualified_e(ARCH, objectId)]
 
 . Return xref:find_object_e[the object ``objectId`` in ``ARCH``].+++<sub class="bk-mark">[FAIL]</sub>+++
 
-xref:find_object_unqualified_e[$find_object_unqualified_e(ARCH, id)]
+xref:is_table_named[``object`` is a table whose name ``objectId`` ends with ``id``]
+
+. If ``object`` has type ``tableObject``:
+ .. Return xref:objectId_ends_with[``objectId`` is an object name that ends with ``id``].+++<sub class="bk-mark">[<a href="#func:is_table_named-else">→ ⋅</a>]</sub>+++
+
+. +++<span id="func:is_table_named-else"></span>+++Otherwise: return ``false``.
+
+xref:find_table_qualified_e[$find_table_qualified_e(ARCH, objectId)]
+
+. Let ``object'^?^`` be xref:find_object_e[the object ``objectId`` in ``ARCH``].+++<sub class="bk-mark">[<a href="#func:find_table_qualified_e-else">→ ⋅</a>]</sub>+++
+. If ``object'^?^`` is defined:
+ .. Let ``object`` be ``object'^?^``.
+ .. If ``object`` has type ``tableObject``: return ``object``.
+
+. +++<span id="func:find_table_qualified_e-else"></span>+++Otherwise: return ``·``.
+
+xref:find_table_unqualified_e[$find_table_unqualified_e(ARCH, id)]
 
 . Let ``+`{+`` ``(`` ``objectId`` ``+':'+`` ``object`` ``)^{asterisk}^`` ``+`}+`` be ``ARCH.+STORE+``.
-. For each ``objectId`` in ``objectId^{asterisk}^``:+++<sub class="bk-mark">[<a href="#func:find_object_unqualified_e-else">→ ⋅</a>]</sub>+++
+. For each ``object`` in ``object^{asterisk}^`` and ``objectId`` in ``objectId^{asterisk}^``:+++<sub class="bk-mark">[<a href="#func:find_table_unqualified_e-else">→ ⋅</a>]</sub>+++
 +
 --
- ** Let ``bool`` be xref:objectId_ends_with[``objectId`` is an object name that ends with ``id``].
+ ** Let ``bool`` be xref:is_table_named[``object`` is a table whose name ``objectId`` ends with ``id``].
 --
 +
 Let ``bool^{asterisk}^`` be the resulting list.
-. For each ``bool`` in ``bool^{asterisk}^`` and ``object`` in ``object^{asterisk}^``:+++<sub class="bk-mark">[<a href="#func:find_object_unqualified_e-else">→ ⋅</a>]</sub>+++
+. For each ``bool`` in ``bool^{asterisk}^`` and ``object`` in ``object^{asterisk}^``:+++<sub class="bk-mark">[<a href="#func:find_table_unqualified_e-else">→ ⋅</a>]</sub>+++
 +
 --
  ** Let ``object~id~^?^`` be xref:ite[``object`` if ``bool`` otherwise ``·``].
 --
 +
 Let ``object~id~^?^^{asterisk}^`` be the resulting list.
-. Let ``object''^?^^{asterisk}^`` be xref:filter_[``object~id~^?^^{asterisk}^`` filtered by ``(`` ``object~id~^?^`` ``=/=`` ``·`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#func:find_object_unqualified_e-else">→ ⋅</a>]</sub>+++
+. Let ``object''^?^^{asterisk}^`` be xref:filter_[``object~id~^?^^{asterisk}^`` filtered by ``(`` ``object~id~^?^`` ``=/=`` ``·`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#func:find_table_unqualified_e-else">→ ⋅</a>]</sub>+++
 . If ``object''^?^^{asterisk}^`` is a list of length 1:
  .. Let ``object'^?^`` be ``object''^?^^{asterisk}^``.
  .. If ``object'^?^`` is defined:
   ... Let ``object~id_found~`` be ``object'^?^``.
   ... Return ``object~id_found~``.
 
-. +++<span id="func:find_object_unqualified_e-else"></span>+++Otherwise: return ``·``.
+. +++<span id="func:find_table_unqualified_e-else"></span>+++Otherwise: return ``·``.
 
 xref:find_objectState_e[$find_objectState_e(ARCH, objectId)]
 
@@ -19416,13 +19432,13 @@ xref:update_object_qualified_e[$update_object_qualified_e(ARCH~0~, objectId, obj
 . Let ``ARCH~1~`` be xref:add_object_e[``$add_object_e(ARCH~0~,`` ``objectId,`` ``object)``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Return ``ARCH~1~``.
 
-xref:update_object_unqualified_e[$update_object_unqualified_e(ARCH~0~, id, object)]
+xref:update_table_unqualified_e[$update_table_unqualified_e(ARCH~0~, id, object)]
 
-. Let ``+`{+`` ``(`` ``objectId`` ``+':'+`` ``++_++`` ``)^{asterisk}^`` ``+`}+`` be ``ARCH~0~.+STORE+``.
-. For each ``objectId`` in ``objectId^{asterisk}^``:+++<sub class="bk-mark">[FAIL]</sub>+++
+. Let ``+`{+`` ``(`` ``objectId`` ``+':'+`` ``object~stored~`` ``)^{asterisk}^`` ``+`}+`` be ``ARCH~0~.+STORE+``.
+. For each ``objectId`` in ``objectId^{asterisk}^`` and ``object~stored~`` in ``object~stored~^{asterisk}^``:+++<sub class="bk-mark">[FAIL]</sub>+++
 +
 --
- ** Let ``bool`` be xref:objectId_ends_with[``objectId`` is an object name that ends with ``id``].
+ ** Let ``bool`` be xref:is_table_named[``object~stored~`` is a table whose name ``objectId`` ends with ``id``].
 --
 +
 Let ``bool^{asterisk}^`` be the resulting list.
