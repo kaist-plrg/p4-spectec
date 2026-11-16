@@ -1,5 +1,5 @@
 # p4testgen seed: none
-# Date generated: 2026-02-19-08:34:28.830
+# Date generated: 2026-11-16-23:41:54.702
 # Current node coverage: 0
 # Traces
 # [P4Testgen MethodCall]: *.copy_in("parserImpl");
@@ -7,13 +7,13 @@
 # [State] start
 # [State] parse_cpu_hdr
 # [MethodCall]: packet.extract<packet_out_t>(hdr.cpu);
-# [ExtractSuccess] hdr.cpu@0 | Condition: |*packetLen_bits(bit<32>)| >= 65; | Extract Size: 65 -> hdr.cpu.egress_port = 0x000 | hdr.cpu.queue_id = 0x00 | hdr.cpu.not_actually_useful = 0x0000_0000_0000
+# [ExtractSuccess] hdr.cpu@0 | Condition: |*packetLen_bits(bit<32>)| >= 64; | Extract Size: 64 -> hdr.cpu.egress_port = 0x000 | hdr.cpu.queue_id = 0x00 | hdr.cpu.not_actually_useful = 0x0000_0000_0000
 # [State] parse_ethernet
 # [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
-# [ExtractSuccess] hdr.ethernet@65 | Condition: |*packetLen_bits(bit<32>)| >= 177; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0800
+# [ExtractSuccess] hdr.ethernet@64 | Condition: |*packetLen_bits(bit<32>)| >= 176; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0800
 # [State] parse_ipv4
 # [MethodCall]: packet.extract<ipv4_t>(hdr.ipv4);
-# [ExtractFailure] hdr.ipv4@177 | Condition: !(|*packetLen_bits(bit<32>)| >= 337); | Extract Size: 160
+# [ExtractFailure] hdr.ipv4@176 | Condition: !(|*packetLen_bits(bit<32>)| >= 336); | Extract Size: 160
 # [P4Testgen AssignmentStatement]: stdmeta.parser_error = 1;
 # [P4Testgen MethodCall]: *.copy_out("parserImpl");
 # [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
@@ -44,6 +44,6 @@
 # [P4Testgen MethodCall]: *.invoke_traffic_manager();
 
 
-packet 111 0000000000000000000000000000000000000000040000
-expect 0 *00000000000000000000000040000$
+packet 111 00000000000000000000000000000000000000000800
+expect 0 0000000000000000000000000800$
 

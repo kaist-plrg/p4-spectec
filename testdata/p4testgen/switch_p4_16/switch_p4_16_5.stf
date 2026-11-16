@@ -1,0 +1,417 @@
+# p4testgen seed: none
+# Date generated: 2026-11-16-23:42:00.146
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserImpl");
+# [Parser] ParserImpl
+# [State] start
+# [State] parse_ethernet
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0xFFFF_FFFF_FFFF | hdr.ethernet.srcAddr = 0xFFFF_FFFF_FFFF | hdr.ethernet.etherType = 0x0000
+# [State] parse_llc_header
+# [MethodCall]: packet.extract<llc_header_t>(hdr.llc_header);
+# [ExtractSuccess] hdr.llc_header@112 | Condition: |*packetLen_bits(bit<32>)| >= 136; | Extract Size: 24 -> hdr.llc_header.dsap = 0xAA | hdr.llc_header.ssap = 0xAA | hdr.llc_header.control_ = 0x00
+# [State] parse_snap_header
+# [MethodCall]: packet.extract<snap_header_t>(hdr.snap_header);
+# [ExtractSuccess] hdr.snap_header@136 | Condition: |*packetLen_bits(bit<32>)| >= 176; | Extract Size: 40 -> hdr.snap_header.oui = 0x0000_0000 | hdr.snap_header.type_ = 0x8100
+# [State] parse_vlan
+# [MethodCall]: packet.extract<vlan_tag_t>(hdr.vlan_tag_[0]);
+# [ExtractSuccess] hdr.vlan_tag_[0]@176 | Condition: |*packetLen_bits(bit<32>)| >= 208; | Extract Size: 32 -> hdr.vlan_tag_[0].pcp = 0x0 | hdr.vlan_tag_[0].cfi = 0x0 | hdr.vlan_tag_[0].vid = 0x000 | hdr.vlan_tag_[0].etherType = 0x8847
+# [State] parse_mpls
+# [MethodCall]: packet.extract<mpls_t>(hdr.mpls[0]);
+# [ExtractSuccess] hdr.mpls[32w0]@208 | Condition: |*packetLen_bits(bit<32>)| >= 240; | Extract Size: 32 -> hdr.mpls[32w0].label = 0x0000_0000 | hdr.mpls[32w0].exp = 0x0 | hdr.mpls[32w0].bos = 0x0 | hdr.mpls[32w0].ttl = 0x00
+# [State] parse_mpls1
+# [MethodCall]: packet.extract<mpls_t>(hdr.mpls[1]);
+# [ExtractSuccess] hdr.mpls[32w1]@240 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 32 -> hdr.mpls[32w1].label = 0x0000_0000 | hdr.mpls[32w1].exp = 0x0 | hdr.mpls[32w1].bos = 0x0 | hdr.mpls[32w1].ttl = 0x00
+# [State] parse_mpls2
+# [MethodCall]: packet.extract<mpls_t>(hdr.mpls[2]);
+# [ExtractSuccess] hdr.mpls[32w2]@272 | Condition: |*packetLen_bits(bit<32>)| >= 304; | Extract Size: 32 -> hdr.mpls[32w2].label = 0x0000_0000 | hdr.mpls[32w2].exp = 0x0 | hdr.mpls[32w2].bos = 0x0 | hdr.mpls[32w2].ttl = 0x00
+# [State] parse_mpls3
+# [State] stateOutOfBound
+# [P4Testgen MethodCall]: verify(false, 3);
+# [P4Testgen MethodCall]: *.copy_out("ParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [MethodCall]: verify_checksum<tuple_5, bit<16>>(hdr.inner_ipv4.ihl == 5, {  f0:hdr.inner_ipv4.version;  f1:hdr.inner_ipv4.ihl;  f2:hdr.inner_ipv4.diffserv;  f3:hdr.inner_ipv4.totalLen;  f4:hdr.inner_ipv4.identification;  f5:hdr.inner_ipv4.flags;  f6:hdr.inner_ipv4.fragOffset;  f7:hdr.inner_ipv4.ttl;  f8:hdr.inner_ipv4.protocol;  f9:hdr.inner_ipv4.srcAddr;  f10:hdr.inner_ipv4.dstAddr; }, hdr.inner_ipv4.hdrChecksum, 6);
+# [MethodCall]: verify_checksum<tuple_5, bit<16>>(hdr.ipv4.ihl == 5, {  f0:hdr.ipv4.version;  f1:hdr.ipv4.ihl;  f2:hdr.ipv4.diffserv;  f3:hdr.ipv4.totalLen;  f4:hdr.ipv4.identification;  f5:hdr.ipv4.flags;  f6:hdr.ipv4.fragOffset;  f7:hdr.ipv4.ttl;  f8:hdr.ipv4.protocol;  f9:hdr.ipv4.srcAddr;  f10:hdr.ipv4.dstAddr; }, hdr.ipv4.hdrChecksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: _ingress_port_mapping/ingress_port_mapping.apply();
+# [Table Branch: ingress_port_mapping | Key(s): |bmv2_ingress_port(bit<9>)|| Chosen action: process_ingress_port_mapping.set_ifindex]
+# [MethodCall]: _process_ingress_port_mapping_set_ifindex_0/set_ifindex(|ingress_port_mapping_process_ingress_port_mapping.set_ifindex_arg_ifindex_14(bit<16>)|, |ingress_port_mapping_process_ingress_port_mapping.set_ifindex_arg_port_type_1(bit<2>)|);
+# [AssignmentStatement]: meta.ingress_metadata.ifindex = ifindex;| Computed: meta.ingress_metadata.ifindex = 65535;
+# [AssignmentStatement]: meta.ingress_metadata.port_type = port_type;| Computed: meta.ingress_metadata.port_type = 1;
+# [MethodCall]: _ingress_port_properties/ingress_port_properties.apply();
+# [Table Branch: ingress_port_properties | Key(s): |bmv2_ingress_port(bit<9>)|| Chosen action: process_ingress_port_mapping.set_ingress_port_properties]
+# [MethodCall]: _process_ingress_port_mapping_set_ingress_port_properties_0/set_ingress_port_properties(|ingress_port_properties_process_ingress_port_mapping.set_ingress_port_properties_arg_if_label_1(bit<16>)|);
+# [AssignmentStatement]: meta.acl_metadata.if_label = if_label;| Computed: meta.acl_metadata.if_label = 0;
+# [MethodCall]: _validate_outer_ethernet/validate_outer_ethernet.apply();
+# [Table Branch: validate_outer_ethernet | Key(s): |pktvar_1(bit<48>)|, |pktvar_0(bit<48>)|, (bit<1>)true;, (bit<1>)false;| Chosen action: process_validate_outer_header.malformed_outer_ethernet_packet]
+# [MethodCall]: _process_validate_outer_header_malformed_outer_ethernet_packet_0/malformed_outer_ethernet_packet(|validate_outer_ethernet_process_validate_outer_header.malformed_outer_ethernet_packet_arg_drop_reason_5(bit<8>)|);
+# [AssignmentStatement]: meta.ingress_metadata.drop_flag = 1w1;| Computed: meta.ingress_metadata.drop_flag = 1;
+# [AssignmentStatement]: meta.ingress_metadata.drop_reason = drop_reason;| Computed: meta.ingress_metadata.drop_reason = 0;
+# [SwitchCase]: malformed_outer_ethernet_packet
+# [MethodCall]: _switch_config_params/switch_config_params.apply();
+# [Table Branch: switch_config_params| Overriding default action: process_global_params.set_config_parameters]
+# [MethodCall]: _process_global_params_set_config_parameters_0/set_config_parameters(|switch_config_params_process_global_params.set_config_parameters_arg_enable_dod_0(bit<8>)|);
+# [AssignmentStatement]: meta.i2e_metadata.ingress_tstamp = (bit<32>)standard_metadata.ingress_global_timestamp;| Computed: meta.i2e_metadata.ingress_tstamp = 0;
+# [AssignmentStatement]: meta.ingress_metadata.ingress_port = (bit<9>)standard_metadata.ingress_port;| Computed: meta.ingress_metadata.ingress_port = 0;
+# [AssignmentStatement]: meta.l2_metadata.same_if_check = (bit<16>)meta.ingress_metadata.ifindex;| Computed: meta.l2_metadata.same_if_check = 65535;
+# [AssignmentStatement]: standard_metadata.egress_spec = 9w511;| Computed: standard_metadata.egress_spec = 511;
+# [MethodCall]: random<bit<32>>(meta.ingress_metadata.sflow_take_sample, 0, 2147483647);
+# [MethodCall]: _port_vlan_mapping/port_vlan_mapping.apply();
+# [Table Branch: port_vlan_mapping Choosing default action: NoAction_45/NoAction;]
+# [P4Testgen MethodCall]: NoAction_45/NoAction();
+# [If Statement]: meta.ingress_metadata.port_type == 2w0 && meta.l2_metadata.stp_group != 10w0 Condition: |ingress_port_mapping_process_ingress_port_mapping.set_ifindex_arg_port_type_1(bit<2>)| == 0 && 0 != 0; Result: false
+# [If Statement]: meta.ingress_metadata.port_type == 2w0 && meta.security_metadata.ipsg_enabled == 1w1 Condition: |ingress_port_mapping_process_ingress_port_mapping.set_ifindex_arg_port_type_1(bit<2>)| == 0 && 0 == 1; Result: false
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: _int_source/int_source.apply();
+# [Table Branch: int_source | Key(s): (bit<1>)false;, (bit<1>)false;, 0, 0, (bit<1>)false;, TaintedExpression(bit<32>), TaintedExpression(bit<32>)| Chosen action: process_int_endpoint.int_set_src]
+# [MethodCall]: _process_int_endpoint_int_set_src_0/int_set_src();
+# [AssignmentStatement]: meta.int_metadata_i2e.source = 1w1;| Computed: meta.int_metadata_i2e.source = 1;
+# [If Statement]: meta.ingress_metadata.port_type != 2w0 Condition: |ingress_port_mapping_process_ingress_port_mapping.set_ifindex_arg_port_type_1(bit<2>)| != 0; Result: true
+# [MethodCall]: _fabric_ingress_dst_lkp_0/fabric_ingress_dst_lkp.apply();
+# [Table Branch: fabric_ingress_dst_lkp Choosing default action: NoAction_56/NoAction;]
+# [P4Testgen MethodCall]: NoAction_56/NoAction();
+# [If Statement]: meta.ingress_metadata.port_type == 2w1 Condition: |ingress_port_mapping_process_ingress_port_mapping.set_ifindex_arg_port_type_1(bit<2>)| == 1; Result: true
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [If Statement]: meta.tunnel_metadata.tunnel_terminate == 1w0 Condition: 0 == 0; Result: true
+# [MethodCall]: _native_packet_over_fabric_0/native_packet_over_fabric.apply();
+# [Table Branch: native_packet_over_fabric | Key(s): (bit<1>)false;, (bit<1>)false;| Chosen action: process_ingress_fabric.non_ip_over_fabric]
+# [MethodCall]: _process_ingress_fabric_non_ip_over_fabric/non_ip_over_fabric();
+# [AssignmentStatement]: meta.l2_metadata.lkp_mac_sa = (bit<48>)hdr.ethernet.srcAddr;| Computed: meta.l2_metadata.lkp_mac_sa = 281474976710655;
+# [AssignmentStatement]: meta.l2_metadata.lkp_mac_da = (bit<48>)hdr.ethernet.dstAddr;| Computed: meta.l2_metadata.lkp_mac_da = 281474976710655;
+# [AssignmentStatement]: meta.l2_metadata.lkp_mac_type = (bit<16>)hdr.ethernet.etherType;| Computed: meta.l2_metadata.lkp_mac_type = 0;
+# [If Statement]: meta.tunnel_metadata.ingress_tunnel_type != 5w0 Condition: 0 != 0; Result: false
+# [If Statement]: meta.tunnel_metadata.tunnel_terminate == 1w1 || meta.multicast_metadata.outer_mcast_route_hit == 1w1 && (meta.multicast_metadata.outer_mcast_mode == 2w1 && meta.multicast_metadata.mcast_rpf_group == 16w0 || meta.multicast_metadata.outer_mcast_mode == 2w2 && meta.multicast_metadata.mcast_rpf_group != 16w0) Condition: 0 == 1 || 0 == 1 && (0 == 1 && 0 == 0 || 0 == 2 && 0 != 0); Result: false
+# [MethodCall]: _tunnel_miss/tunnel_miss.apply();
+# [Table Branch: tunnel_miss | Key(s): (bit<1>)false;, (bit<1>)false;| Chosen action: process_tunnel.non_ip_tunnel_lookup_miss]
+# [MethodCall]: _process_tunnel_non_ip_tunnel_lookup_miss_1/non_ip_tunnel_lookup_miss();
+# [AssignmentStatement]: meta.l2_metadata.lkp_mac_sa = (bit<48>)hdr.ethernet.srcAddr;| Computed: meta.l2_metadata.lkp_mac_sa = 281474976710655;
+# [AssignmentStatement]: meta.l2_metadata.lkp_mac_da = (bit<48>)hdr.ethernet.dstAddr;| Computed: meta.l2_metadata.lkp_mac_da = 281474976710655;
+# [AssignmentStatement]: standard_metadata.mcast_grp = 16w0;| Computed: standard_metadata.mcast_grp = 0;
+# [MethodCall]: _sflow_ingress/sflow_ingress.apply();
+# [Table Branch: sflow_ingress | Key(s): |ingress_port_mapping_process_ingress_port_mapping.set_ifindex_arg_ifindex_14(bit<16>)|, 0, 0, (bit<1>)false;| Chosen action: process_ingress_sflow.nop]
+# [MethodCall]: _process_ingress_sflow_nop_1/nop();
+# [MethodCall]: _sflow_ing_take_sample/sflow_ing_take_sample.apply();
+# [Table Branch: sflow_ing_take_sample | Key(s): TaintedExpression(bit<32>), 0| Chosen action: process_ingress_sflow.nop_1]
+# [MethodCall]: _process_ingress_sflow_nop_2/nop_1();
+# [MethodCall]: _sflow_ingress_session_pkt_counter/sflow_ingress_session_pkt_counter.count();
+# [If Statement]: meta.ingress_metadata.port_type == 2w0 Condition: |ingress_port_mapping_process_ingress_port_mapping.set_ifindex_arg_port_type_1(bit<2>)| == 0; Result: false
+# [If Statement]: meta.ingress_metadata.port_type != 2w1 Condition: |ingress_port_mapping_process_ingress_port_mapping.set_ifindex_arg_port_type_1(bit<2>)| != 1; Result: false
+# [If Statement]: meta.ingress_metadata.bypass_lookups & 16w0x10 == 16w0 Condition: 0 & 16 == 0; Result: true
+# [MethodCall]: _meter_index_0/meter_index_0.apply();
+# [Table Branch: meter_index | Key(s): 0| Chosen action: process_meter_index.nop_2]
+# [MethodCall]: _process_meter_index_nop_0/nop_2();
+# [MethodCall]: _meter_index/meter_index.read(meta.meter_metadata.meter_color);
+# [If Statement]: meta.tunnel_metadata.tunnel_terminate == 1w0 && hdr.ipv4.isValid() || meta.tunnel_metadata.tunnel_terminate == 1w1 && hdr.inner_ipv4.isValid() Condition: 0 == 0 && false || 0 == 1 && false; Result: false
+# [If Statement]: meta.tunnel_metadata.tunnel_terminate == 1w0 && hdr.ipv6.isValid() || meta.tunnel_metadata.tunnel_terminate == 1w1 && hdr.inner_ipv6.isValid() Condition: 0 == 0 && false || 0 == 1 && false; Result: false
+# [MethodCall]: _compute_non_ip_hashes/compute_non_ip_hashes.apply();
+# [Table Branch: compute_non_ip_hashes | Key(s): 1| Chosen action: process_hashes.compute_lkp_non_ip_hash]
+# [MethodCall]: _process_hashes_compute_lkp_non_ip_hash_0/compute_lkp_non_ip_hash();
+# [MethodCall]: hash<bit<16>, bit<16>, tuple_4, bit<32>>(meta.hash_metadata.hash2, 2, 0, {  f0:meta.ingress_metadata.ifindex;  f1:meta.l2_metadata.lkp_mac_sa;  f2:meta.l2_metadata.lkp_mac_da;  f3:meta.l2_metadata.lkp_mac_type; }, 65536);
+# [MethodCall]: _compute_other_hashes/compute_other_hashes.apply();
+# [Table Branch: compute_other_hashes | Key(s): 0| Chosen action: process_hashes.computed_two_hashes]
+# [MethodCall]: _process_hashes_computed_two_hashes_0/computed_two_hashes();
+# [AssignmentStatement]: meta.hash_metadata.entropy_hash = (bit<16>)meta.hash_metadata.hash2;| Computed: meta.hash_metadata.entropy_hash = 0;
+# [If Statement]: meta.ingress_metadata.bypass_lookups & 16w0x10 == 16w0 Condition: 0 & 16 == 0; Result: true
+# [MethodCall]: _meter_action/meter_action.apply();
+# [Table Branch: meter_action | Key(s): 0, 0| Chosen action: process_meter_action.meter_permit_0]
+# [MethodCall]: _process_meter_action_meter_permit_0/meter_permit_0();
+# [MethodCall]: _meter_stats/meter_stats.count();
+# [If Statement]: meta.ingress_metadata.port_type != 2w1 Condition: |ingress_port_mapping_process_ingress_port_mapping.set_ifindex_arg_port_type_1(bit<2>)| != 1; Result: false
+# [MethodCall]: _fabric_lag/fabric_lag.apply();
+# [Table Branch: fabric_lag Choosing default action: NoAction_112/NoAction;]
+# [P4Testgen MethodCall]: NoAction_112/NoAction();
+# [If Statement]: meta.ingress_metadata.port_type != 2w1 Condition: |ingress_port_mapping_process_ingress_port_mapping.set_ifindex_arg_port_type_1(bit<2>)| != 1; Result: false
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [If Statement]: meta.egress_metadata.bypass == 1w0 Condition: 0 == 0; Result: true
+# [If Statement]: standard_metadata.instance_type != 32w0 && standard_metadata.instance_type != 32w5 Condition: 0 != 0 && 0 != 5; Result: false
+# [If Statement]: standard_metadata.egress_rid != 16w0 Condition: 0 != 0; Result: false
+# [MethodCall]: egress_port_mapping_0/egress_port_mapping.apply();
+# [Table Branch: egress_port_mapping | Key(s): 511| Chosen action: egress.egress_port_type_normal]
+# [MethodCall]: egress_port_type_normal(|egress_port_mapping_egress.egress_port_type_normal_arg_ifindex_11(bit<16>)|);
+# [AssignmentStatement]: meta.egress_metadata.port_type = 2w0;| Computed: meta.egress_metadata.port_type = 0;
+# [AssignmentStatement]: meta.egress_metadata.ifindex = ifindex;| Computed: meta.egress_metadata.ifindex = 0;
+# [SwitchCase]: egress_port_type_normal
+# [If Statement]: standard_metadata.instance_type == 32w0 || standard_metadata.instance_type == 32w5 Condition: 0 == 0 || 0 == 5; Result: true
+# [MethodCall]: _vlan_decap/vlan_decap.apply();
+# [Table Branch: vlan_decap | Key(s): (bit<1>)true;, (bit<1>)false;| Chosen action: process_vlan_decap.nop]
+# [MethodCall]: _process_vlan_decap_nop_0/nop();
+# [If Statement]: meta.tunnel_metadata.tunnel_terminate == 1w1 Condition: 0 == 1; Result: false
+# [If Statement]: meta.egress_metadata.routed == 1w0 || meta.l3_metadata.nexthop_index != 16w0 Condition: 0 == 0 || 0 != 0; Result: true
+# [MethodCall]: _rewrite/rewrite.apply();
+# [Table Branch: rewrite | Key(s): 0| Chosen action: process_rewrite.nop]
+# [MethodCall]: _process_rewrite_nop_0/nop();
+# [MethodCall]: _egress_bd_map/egress_bd_map.apply();
+# [Table Branch: egress_bd_map | Key(s): 0| Chosen action: process_egress_bd.nop]
+# [MethodCall]: _process_egress_bd_nop_0/nop();
+# [If Statement]: meta.egress_metadata.routed == 1w1 Condition: 0 == 1; Result: false
+# [MethodCall]: _mtu/mtu.apply();
+# [Table Branch: mtu | Key(s): 0, (bit<1>)false;, (bit<1>)false;| Chosen action: process_mtu.mtu_miss]
+# [MethodCall]: _process_mtu_mtu_miss_0/mtu_miss();
+# [AssignmentStatement]: meta.l3_metadata.l3_mtu_check = 16w0xffff;| Computed: meta.l3_metadata.l3_mtu_check = 65535;
+# [MethodCall]: _int_insert/int_insert.apply();
+# [Table Branch: int_insert | Key(s): 1, 0, (bit<1>)false;| Chosen action: process_int_insertion.int_transit]
+# [MethodCall]: _process_int_insertion_int_transit_0/int_transit(|int_insert_process_int_insertion.int_transit_arg_switch_id_2(bit<32>)|);
+# [AssignmentStatement]: meta.int_metadata.insert_cnt = (bit<8>)hdr.int_header.max_hop_cnt - (bit<8>)hdr.int_header.total_hop_cnt;| Computed: meta.int_metadata.insert_cnt = "Taint";
+# [AssignmentStatement]: meta.int_metadata.switch_id = switch_id;| Computed: meta.int_metadata.switch_id = 0;
+# [AssignmentStatement]: meta.int_metadata.insert_byte_cnt = (bit<16>)(meta.int_metadata.instruction_cnt << 2);| Computed: meta.int_metadata.insert_byte_cnt = 0;
+# [AssignmentStatement]: meta.int_metadata.gpe_int_hdr_len8 = (bit<8>)hdr.int_header.ins_cnt;| Computed: meta.int_metadata.gpe_int_hdr_len8 = "Taint";
+# [SwitchCase]: int_transit
+# [If Statement]: meta.int_metadata.insert_cnt != 8w0 Condition: 0 != 0; Result: false
+# [MethodCall]: _int_meta_header_update/int_meta_header_update.apply();
+# [Table Branch: int_meta_header_update | Key(s): 0| Chosen action: process_int_insertion.int_set_e_bit]
+# [MethodCall]: _process_int_insertion_int_set_e_bit_0/int_set_e_bit();
+# [AssignmentStatement]: hdr.int_header.e = 1w1;| Computed: hdr.int_header.e = 1;
+# [MethodCall]: _egress_bd_stats_0/egress_bd_stats_0.apply();
+# [Table Branch: egress_bd_stats | Key(s): 0, 0| Chosen action: process_egress_bd_stats.nop_0]
+# [MethodCall]: _process_egress_bd_stats_nop_0/nop_0();
+# [MethodCall]: _egress_bd_stats/egress_bd_stats.count();
+# [If Statement]: meta.fabric_metadata.fabric_header_present == 1w0 && meta.tunnel_metadata.egress_tunnel_type != 5w0 Condition: 0 == 0 && 0 != 0; Result: false
+# [If Statement]: meta.int_metadata.insert_cnt != 8w0 Condition: 0 != 0; Result: false
+# [If Statement]: meta.egress_metadata.port_type == 2w0 Condition: 0 == 0; Result: true
+# [MethodCall]: _egress_vlan_xlate/egress_vlan_xlate.apply();
+# [Table Branch: egress_vlan_xlate | Key(s): |egress_port_mapping_egress.egress_port_type_normal_arg_ifindex_11(bit<16>)|, 0| Chosen action: process_vlan_xlate.set_egress_packet_vlan_untagged]
+# [MethodCall]: _process_vlan_xlate_set_egress_packet_vlan_untagged_0/set_egress_packet_vlan_untagged();
+# [MethodCall]: _egress_filter/egress_filter.apply();
+# [Table Branch: egress_filter| Overriding default action: process_egress_filter.egress_filter_check]
+# [MethodCall]: _process_egress_filter_egress_filter_check_0/egress_filter_check();
+# [AssignmentStatement]: meta.egress_filter_metadata.ifindex_check = (bit<16>)meta.ingress_metadata.ifindex ^ (bit<16>)meta.egress_metadata.ifindex;| Computed: meta.egress_filter_metadata.ifindex_check = 65535;
+# [AssignmentStatement]: meta.egress_filter_metadata.bd = (bit<16>)meta.ingress_metadata.outer_bd ^ (bit<16>)meta.egress_metadata.outer_bd;| Computed: meta.egress_filter_metadata.bd = 0;
+# [AssignmentStatement]: meta.egress_filter_metadata.inner_bd = (bit<16>)meta.ingress_metadata.bd ^ (bit<16>)meta.egress_metadata.bd;| Computed: meta.egress_filter_metadata.inner_bd = 0;
+# [If Statement]: meta.multicast_metadata.inner_replica == 1w1 Condition: 0 == 1; Result: false
+# [If Statement]: meta.egress_metadata.bypass == 1w0 Condition: 0 == 0; Result: true
+# [MethodCall]: _egress_acl/egress_acl.apply();
+# [Table Branch: egress_acl Choosing default action: NoAction_36/NoAction;]
+# [P4Testgen MethodCall]: NoAction_36/NoAction();
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [MethodCall]: update_checksum<tuple_5, bit<16>>(hdr.inner_ipv4.ihl == 5, {  f0:hdr.inner_ipv4.version;  f1:hdr.inner_ipv4.ihl;  f2:hdr.inner_ipv4.diffserv;  f3:hdr.inner_ipv4.totalLen;  f4:hdr.inner_ipv4.identification;  f5:hdr.inner_ipv4.flags;  f6:hdr.inner_ipv4.fragOffset;  f7:hdr.inner_ipv4.ttl;  f8:hdr.inner_ipv4.protocol;  f9:hdr.inner_ipv4.srcAddr;  f10:hdr.inner_ipv4.dstAddr; }, hdr.inner_ipv4.hdrChecksum, 6);
+# [MethodCall]: update_checksum<tuple_5, bit<16>>(hdr.ipv4.ihl == 5, {  f0:hdr.ipv4.version;  f1:hdr.ipv4.ihl;  f2:hdr.ipv4.diffserv;  f3:hdr.ipv4.totalLen;  f4:hdr.ipv4.identification;  f5:hdr.ipv4.flags;  f6:hdr.ipv4.fragOffset;  f7:hdr.ipv4.ttl;  f8:hdr.ipv4.protocol;  f9:hdr.ipv4.srcAddr;  f10:hdr.ipv4.dstAddr; }, hdr.ipv4.hdrChecksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:281474976710655;  srcAddr:281474976710655;  etherType:0;  }
+# [MethodCall]: packet.emit<fabric_header_t>(hdr.fabric_header);
+# [Invalid emit: { packetType = TaintedExpression(bit<3>), headerVersion = TaintedExpression(bit<2>), packetVersion = TaintedExpression(bit<2>), pad1 = TaintedExpression(bit<1>), fabricColor = TaintedExpression(bit<3>), fabricQos = TaintedExpression(bit<5>), dstDevice = TaintedExpression(bit<8>), dstPortOrGroup = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<fabric_header_cpu_t>(hdr.fabric_header_cpu);
+# [Invalid emit: { egressQueue = TaintedExpression(bit<5>), txBypass = TaintedExpression(bit<1>), reserved = TaintedExpression(bit<2>), ingressPort = TaintedExpression(bit<16>), ingressIfindex = TaintedExpression(bit<16>), ingressBd = TaintedExpression(bit<16>), reasonCode = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<fabric_header_sflow_t>(hdr.fabric_header_sflow);
+# [Invalid emit: { sflow_session_id = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<fabric_header_mirror_t>(hdr.fabric_header_mirror);
+# [Invalid emit: { rewriteIndex = TaintedExpression(bit<16>), egressPort = TaintedExpression(bit<10>), egressQueue = TaintedExpression(bit<5>), pad = TaintedExpression(bit<1>) }]
+# [MethodCall]: packet.emit<fabric_header_multicast_t>(hdr.fabric_header_multicast);
+# [Invalid emit: { routed = TaintedExpression(bit<1>), outerRouted = TaintedExpression(bit<1>), tunnelTerminate = TaintedExpression(bit<1>), ingressTunnelType = TaintedExpression(bit<5>), ingressIfindex = TaintedExpression(bit<16>), ingressBd = TaintedExpression(bit<16>), mcastGrp = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<fabric_header_unicast_t>(hdr.fabric_header_unicast);
+# [Invalid emit: { routed = TaintedExpression(bit<1>), outerRouted = TaintedExpression(bit<1>), tunnelTerminate = TaintedExpression(bit<1>), ingressTunnelType = TaintedExpression(bit<5>), nexthopIndex = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<fabric_payload_header_t>(hdr.fabric_payload_header);
+# [Invalid emit: { etherType = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<llc_header_t>(hdr.llc_header);
+# [Emit]: {$headerValid:true;;    dsap:170;  ssap:170;  control_:0;  }
+# [MethodCall]: packet.emit<snap_header_t>(hdr.snap_header);
+# [Emit]: {$headerValid:true;;    oui:0;  type_:33024;  }
+# [MethodCall]: packet.emit<vlan_tag_t>(hdr.vlan_tag_[0]);
+# [Emit]: {$headerValid:true;;    pcp:0;  cfi:0;  vid:0;  etherType:34887;  }
+# [MethodCall]: packet.emit<vlan_tag_t>(hdr.vlan_tag_[1]);
+# [Invalid emit: { pcp = TaintedExpression(bit<3>), cfi = TaintedExpression(bit<1>), vid = TaintedExpression(bit<12>), etherType = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<arp_rarp_t>(hdr.arp_rarp);
+# [Invalid emit: { hwType = TaintedExpression(bit<16>), protoType = TaintedExpression(bit<16>), hwAddrLen = TaintedExpression(bit<8>), protoAddrLen = TaintedExpression(bit<8>), opcode = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<arp_rarp_ipv4_t>(hdr.arp_rarp_ipv4);
+# [Invalid emit: { srcHwAddr = TaintedExpression(bit<48>), srcProtoAddr = TaintedExpression(bit<32>), dstHwAddr = TaintedExpression(bit<48>), dstProtoAddr = TaintedExpression(bit<32>) }]
+# [MethodCall]: packet.emit<ipv6_t>(hdr.ipv6);
+# [Invalid emit: { version = TaintedExpression(bit<4>), trafficClass = TaintedExpression(bit<8>), flowLabel = TaintedExpression(bit<20>), payloadLen = TaintedExpression(bit<16>), nextHdr = TaintedExpression(bit<8>), hopLimit = TaintedExpression(bit<8>), srcAddr = TaintedExpression(bit<128>), dstAddr = TaintedExpression(bit<128>) }]
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4);
+# [Invalid emit: { version = TaintedExpression(bit<4>), ihl = TaintedExpression(bit<4>), diffserv = TaintedExpression(bit<8>), totalLen = TaintedExpression(bit<16>), identification = TaintedExpression(bit<16>), flags = TaintedExpression(bit<3>), fragOffset = TaintedExpression(bit<13>), ttl = TaintedExpression(bit<8>), protocol = TaintedExpression(bit<8>), hdrChecksum = TaintedExpression(bit<16>), srcAddr = TaintedExpression(bit<32>), dstAddr = TaintedExpression(bit<32>) }]
+# [MethodCall]: packet.emit<gre_t>(hdr.gre);
+# [Invalid emit: { C = TaintedExpression(bit<1>), R = TaintedExpression(bit<1>), K = TaintedExpression(bit<1>), S = TaintedExpression(bit<1>), s = TaintedExpression(bit<1>), recurse = TaintedExpression(bit<3>), flags = TaintedExpression(bit<5>), ver = TaintedExpression(bit<3>), proto = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<erspan_header_t3_t_0>(hdr.erspan_t3_header);
+# [Invalid emit: { version = TaintedExpression(bit<4>), vlan = TaintedExpression(bit<12>), priority = TaintedExpression(bit<6>), span_id = TaintedExpression(bit<10>), timestamp = TaintedExpression(bit<32>), sgt_other = TaintedExpression(bit<32>) }]
+# [MethodCall]: packet.emit<nvgre_t>(hdr.nvgre);
+# [Invalid emit: { tni = TaintedExpression(bit<24>), flow_id = TaintedExpression(bit<8>) }]
+# [MethodCall]: packet.emit<udp_t>(hdr.udp);
+# [Invalid emit: { srcPort = TaintedExpression(bit<16>), dstPort = TaintedExpression(bit<16>), length_ = TaintedExpression(bit<16>), checksum = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<sflow_hdr_t>(hdr.sflow);
+# [Invalid emit: { version = TaintedExpression(bit<32>), addrType = TaintedExpression(bit<32>), ipAddress = TaintedExpression(bit<32>), subAgentId = TaintedExpression(bit<32>), seqNumber = TaintedExpression(bit<32>), uptime = TaintedExpression(bit<32>), numSamples = TaintedExpression(bit<32>) }]
+# [MethodCall]: packet.emit<vxlan_gpe_t>(hdr.vxlan_gpe);
+# [Invalid emit: { flags = TaintedExpression(bit<8>), reserved = TaintedExpression(bit<16>), next_proto = TaintedExpression(bit<8>), vni = TaintedExpression(bit<24>), reserved2 = TaintedExpression(bit<8>) }]
+# [MethodCall]: packet.emit<vxlan_gpe_int_header_t>(hdr.vxlan_gpe_int_header);
+# [Invalid emit: { int_type = TaintedExpression(bit<8>), rsvd = TaintedExpression(bit<8>), len = TaintedExpression(bit<8>), next_proto = TaintedExpression(bit<8>) }]
+# [MethodCall]: packet.emit<int_header_t>(hdr.int_header);
+# [Invalid emit: { ver = TaintedExpression(bit<2>), rep = TaintedExpression(bit<2>), c = TaintedExpression(bit<1>), e = TaintedExpression(bit<1>), rsvd1 = TaintedExpression(bit<5>), ins_cnt = TaintedExpression(bit<5>), max_hop_cnt = TaintedExpression(bit<8>), total_hop_cnt = TaintedExpression(bit<8>), instruction_mask_0003 = TaintedExpression(bit<4>), instruction_mask_0407 = TaintedExpression(bit<4>), instruction_mask_0811 = TaintedExpression(bit<4>), instruction_mask_1215 = TaintedExpression(bit<4>), rsvd2 = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<int_switch_id_header_t>(hdr.int_switch_id_header);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), switch_id = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_ingress_port_id_header_t>(hdr.int_ingress_port_id_header);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), ingress_port_id_1 = TaintedExpression(bit<15>), ingress_port_id_0 = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<int_hop_latency_header_t>(hdr.int_hop_latency_header);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), hop_latency = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_q_occupancy_header_t>(hdr.int_q_occupancy_header);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), q_occupancy1 = TaintedExpression(bit<7>), q_occupancy0 = TaintedExpression(bit<24>) }]
+# [MethodCall]: packet.emit<int_ingress_tstamp_header_t>(hdr.int_ingress_tstamp_header);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), ingress_tstamp = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_egress_port_id_header_t>(hdr.int_egress_port_id_header);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), egress_port_id = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_q_congestion_header_t>(hdr.int_q_congestion_header);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), q_congestion = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_egress_port_tx_utilization_header_t>(hdr.int_egress_port_tx_utilization_header);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), egress_port_tx_utilization = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[0]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[1]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[2]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[3]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[4]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[5]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[6]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[7]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[8]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[9]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[10]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[11]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[12]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[13]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[14]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[15]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[16]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[17]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[18]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[19]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[20]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[21]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[22]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<int_value_t>(hdr.int_val[23]);
+# [Invalid emit: { bos = TaintedExpression(bit<1>), val = TaintedExpression(bit<31>) }]
+# [MethodCall]: packet.emit<genv_t>(hdr.genv);
+# [Invalid emit: { ver = TaintedExpression(bit<2>), optLen = TaintedExpression(bit<6>), oam = TaintedExpression(bit<1>), critical = TaintedExpression(bit<1>), reserved = TaintedExpression(bit<6>), protoType = TaintedExpression(bit<16>), vni = TaintedExpression(bit<24>), reserved2 = TaintedExpression(bit<8>) }]
+# [MethodCall]: packet.emit<vxlan_t>(hdr.vxlan);
+# [Invalid emit: { flags = TaintedExpression(bit<8>), reserved = TaintedExpression(bit<24>), vni = TaintedExpression(bit<24>), reserved2 = TaintedExpression(bit<8>) }]
+# [MethodCall]: packet.emit<tcp_t>(hdr.tcp);
+# [Invalid emit: { srcPort = TaintedExpression(bit<16>), dstPort = TaintedExpression(bit<16>), seqNo = TaintedExpression(bit<32>), ackNo = TaintedExpression(bit<32>), dataOffset = TaintedExpression(bit<4>), res = TaintedExpression(bit<4>), flags = TaintedExpression(bit<8>), window = TaintedExpression(bit<16>), checksum = TaintedExpression(bit<16>), urgentPtr = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<icmp_t>(hdr.icmp);
+# [Invalid emit: { typeCode = TaintedExpression(bit<16>), hdrChecksum = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<mpls_t>(hdr.mpls[0]);
+# [Emit]: {$headerValid:true;;    label:0;  exp:0;  bos:0;  ttl:0;  }
+# [MethodCall]: packet.emit<mpls_t>(hdr.mpls[1]);
+# [Emit]: {$headerValid:true;;    label:0;  exp:0;  bos:0;  ttl:0;  }
+# [MethodCall]: packet.emit<mpls_t>(hdr.mpls[2]);
+# [Emit]: {$headerValid:true;;    label:0;  exp:0;  bos:0;  ttl:0;  }
+# [MethodCall]: packet.emit<ethernet_t>(hdr.inner_ethernet);
+# [Invalid emit: { dstAddr = TaintedExpression(bit<48>), srcAddr = TaintedExpression(bit<48>), etherType = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<ipv6_t>(hdr.inner_ipv6);
+# [Invalid emit: { version = TaintedExpression(bit<4>), trafficClass = TaintedExpression(bit<8>), flowLabel = TaintedExpression(bit<20>), payloadLen = TaintedExpression(bit<16>), nextHdr = TaintedExpression(bit<8>), hopLimit = TaintedExpression(bit<8>), srcAddr = TaintedExpression(bit<128>), dstAddr = TaintedExpression(bit<128>) }]
+# [MethodCall]: packet.emit<ipv4_t>(hdr.inner_ipv4);
+# [Invalid emit: { version = TaintedExpression(bit<4>), ihl = TaintedExpression(bit<4>), diffserv = TaintedExpression(bit<8>), totalLen = TaintedExpression(bit<16>), identification = TaintedExpression(bit<16>), flags = TaintedExpression(bit<3>), fragOffset = TaintedExpression(bit<13>), ttl = TaintedExpression(bit<8>), protocol = TaintedExpression(bit<8>), hdrChecksum = TaintedExpression(bit<16>), srcAddr = TaintedExpression(bit<32>), dstAddr = TaintedExpression(bit<32>) }]
+# [MethodCall]: packet.emit<udp_t>(hdr.inner_udp);
+# [Invalid emit: { srcPort = TaintedExpression(bit<16>), dstPort = TaintedExpression(bit<16>), length_ = TaintedExpression(bit<16>), checksum = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<tcp_t>(hdr.inner_tcp);
+# [Invalid emit: { srcPort = TaintedExpression(bit<16>), dstPort = TaintedExpression(bit<16>), seqNo = TaintedExpression(bit<32>), ackNo = TaintedExpression(bit<32>), dataOffset = TaintedExpression(bit<4>), res = TaintedExpression(bit<4>), flags = TaintedExpression(bit<8>), window = TaintedExpression(bit<16>), checksum = TaintedExpression(bit<16>), urgentPtr = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<icmp_t>(hdr.inner_icmp);
+# [Invalid emit: { typeCode = TaintedExpression(bit<16>), hdrChecksum = TaintedExpression(bit<16>) }]
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 511; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table ingress_port_mapping
+add "ingress_port_mapping" "standard_metadata.ingress_port":0x000 "process_ingress_port_mapping.set_ifindex"("ifindex":0xFFFF,"port_type":0x1)
+
+# Table ingress_port_properties
+add "ingress_port_properties" "standard_metadata.ingress_port":0x000 "process_ingress_port_mapping.set_ingress_port_properties"("if_label":0x0000)
+
+# Table validate_outer_ethernet
+add "validate_outer_ethernet" 1 "ethernet.srcAddr":0b************************************************ "ethernet.dstAddr":0b************************************************ "vlan_tag_[0].$valid$":0x1 "vlan_tag_[1].$valid$":0x0 "process_validate_outer_header.malformed_outer_ethernet_packet"("drop_reason":0x00)
+
+# Table switch_config_params
+setdefault "switch_config_params" "process_global_params.set_config_parameters"("enable_dod":0x00)
+
+# Table int_source
+add "int_source" 1 "int_header.$valid$":0x0 "ipv4.$valid$":0x0 "ipv4_metadata.lkp_ipv4_da":0b******************************** "ipv4_metadata.lkp_ipv4_sa":0b******************************** "inner_ipv4.$valid$":0x0 "inner_ipv4.dstAddr":0b******************************** "inner_ipv4.srcAddr":0b******************************** "process_int_endpoint.int_set_src"()
+
+# Table native_packet_over_fabric
+add "native_packet_over_fabric" "ipv4.$valid$":0x0 "ipv6.$valid$":0x0 "process_ingress_fabric.non_ip_over_fabric"()
+
+# Table tunnel_miss
+add "tunnel_miss" "ipv4.$valid$":0x0 "ipv6.$valid$":0x0 "process_tunnel.non_ip_tunnel_lookup_miss"()
+
+# Table sflow_ingress
+add "sflow_ingress" 1 "ingress_metadata.ifindex":0b**************** "ipv4_metadata.lkp_ipv4_sa":0b******************************** "ipv4_metadata.lkp_ipv4_da":0b******************************** "sflow.$valid$":0x0 "process_ingress_sflow.nop"()
+
+# Table sflow_ing_take_sample
+add "sflow_ing_take_sample" 1 "ingress_metadata.sflow_take_sample":0b******************************** "sflow_metadata.sflow_session_id":0x0000 "process_ingress_sflow.nop_1"()
+
+# Table meter_index
+add "meter_index" "meter_metadata.meter_index":0x0000 "process_meter_index.nop_2"()
+
+# Table compute_non_ip_hashes
+add "compute_non_ip_hashes" "ingress_metadata.drop_flag":0x1 "process_hashes.compute_lkp_non_ip_hash"()
+
+# Table compute_other_hashes
+add "compute_other_hashes" "hash_metadata.hash1":0x0000 "process_hashes.computed_two_hashes"()
+
+# Table meter_action
+add "meter_action" "meter_metadata.meter_color":0x0 "meter_metadata.meter_index":0x0000 "process_meter_action.meter_permit_0"()
+
+# Table egress_port_mapping
+add "egress_port_mapping" "standard_metadata.egress_port":0x1FF "egress.egress_port_type_normal"("ifindex":0x0000)
+
+# Table vlan_decap
+add "vlan_decap" "vlan_tag_[0].$valid$":0x1 "vlan_tag_[1].$valid$":0x0 "process_vlan_decap.nop"()
+
+# Table rewrite
+add "rewrite" "l3_metadata.nexthop_index":0x0000 "process_rewrite.nop"()
+
+# Table egress_bd_map
+add "egress_bd_map" "egress_metadata.bd":0x0000 "process_egress_bd.nop"()
+
+# Table mtu
+add "mtu" "l3_metadata.mtu_index":0x00 "ipv4.$valid$":0x0 "ipv6.$valid$":0x0 "process_mtu.mtu_miss"()
+
+# Table int_insert
+add "int_insert" 1 "int_metadata_i2e.source":0b* "int_metadata_i2e.sink":0b* "int_header.$valid$":0x0 "process_int_insertion.int_transit"("switch_id":0x00000000)
+
+# Table int_meta_header_update
+add "int_meta_header_update" 1 "int_metadata.insert_cnt":0b******** "process_int_insertion.int_set_e_bit"()
+
+# Table egress_bd_stats
+add "egress_bd_stats" "egress_metadata.bd":0x0000 "l2_metadata.lkp_pkt_type":0x0 "process_egress_bd_stats.nop_0"()
+
+# Table egress_vlan_xlate
+add "egress_vlan_xlate" "egress_metadata.ifindex":0x0000 "egress_metadata.bd":0x0000 "process_vlan_xlate.set_egress_packet_vlan_untagged"()
+
+# Table egress_filter
+setdefault "egress_filter" "process_egress_filter.egress_filter_check"()
+
+
+packet 0 FFFFFFFFFFFFFFFFFFFFFFFF0000AAAA0000000081000000884700000000000000000000000000
+
