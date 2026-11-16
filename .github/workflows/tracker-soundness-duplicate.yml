@@ -1,0 +1,42 @@
+# Soundness board — mirror the `duplicate` label onto the `Duplicate` field.
+#
+# The label is authoritative: an issue labelled `duplicate` gets
+# `Duplicate = O`, every other item gets the field cleared. Runs when the
+# label is added or removed, plus daily to catch items that joined the board
+# after being labelled.
+#
+# It WRITES to the board, so it uses the write-scoped TRACKER_WRITE_PAT
+# (Projects read+write on kaist-plrg). No-ops until it and the project
+# number are set.
+name: "Bug/test tracker: Soundness — sync Duplicate from labels"
+
+on:
+  issues:
+    types: [labeled, unlabeled]
+  schedule:
+    - cron: "47 6 * * *"   # daily, 06:47 UTC (after the Mismatches board sync)
+  workflow_dispatch:
+
+concurrency:
+  group: tracker-soundness-duplicate
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.event_name != 'issues' || github.event.label.name == 'duplicate'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.TRACKER_WRITE_PAT }}
+      PROJECT_NUMBER: ${{ vars.TRACKER_SOUNDNESS_PROJECT_NUMBER }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Mirror the duplicate label onto the Soundness board
+        run: |
+          if [ -z "$GH_TOKEN" ] || [ -z "$PROJECT_NUMBER" ]; then
+            echo "Soundness project not configured; skipping"
+            exit 0
+          fi
+          python3 scripts/tracker/sync_duplicate.py --project "$PROJECT_NUMBER" --owner kaist-plrg

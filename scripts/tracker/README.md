@@ -16,6 +16,7 @@ correct afterward.)
 | `tracker_check.py` | The Mismatches drift check: compares `excludes/` against a dumped board **both** directions (an `.exclude` missing from the board; an orphaned board item; a disagreeing `Category`/`State`/`Repo issue`/`Upstream issue`/counts). |
 | `label_check.py` | The Soundness check: verifies every `label:soundness` issue is an item on the project. |
 | `sync_board.py` | Push `excludes/` onto the Mismatches board — set each item's derivable fields (`Name`/`Category`/`State`/`Repo issue`/`Upstream issue`/`#Pos`/`#Neg`) from the `.exclude`, rename a renamed one, add a new one. The writer side of the drift check; hand-authored columns untouched. |
+| `sync_duplicate.py` | Mirror the `duplicate` label onto the Soundness `Duplicate` field (`O` when labelled, cleared otherwise). |
 | `sync_upstream_state.py` | Fill the Mismatches `Upstream state` field from each item's `Upstream issue` URL — the open/closed/merged state of the related p4lang/p4c or p4lang/p4-spec issue/PR. |
 
 `test_*.py` and the `testdata/` fixtures exercise all of the above offline in the `unit` CI job.
@@ -42,9 +43,14 @@ entries with no tracking issue), annotated with:
 | `Discussed` | month it was discussed, e.g. `2026-04` |
 | `Notes` | free text |
 
-**Soundness** — native GitHub Project, so **no custom fields**: the metadata
-is the issue itself — its title, its `soundness` (and any other) labels, and
-its native open/closed status.
+**Soundness** — native GitHub Project; the metadata is mostly the issue
+itself — its title, its `soundness` (and any other) labels, and its native
+open/closed status — plus:
+
+| field | meaning |
+|---|---|
+| `Status` | `Todo` / `In Progress` / `Done`, or `Reverted` (set by hand) when a fix was undone |
+| `Duplicate` | `O` iff the issue has the `duplicate` label (synced from the label) |
 
 **Negative-testgen** — each item is a real p4lang/p4c issue (native title +
 open/closed), annotated with:
@@ -77,7 +83,10 @@ sync that didn't run or a hand-tampered board is caught. The only manual case
 
 **Soundness** — file the issue and add the `soundness` label. The project's
 native auto-add pulls it in, and the `soundness-check` CI job verifies every
-`label:soundness` issue is on the board. No board mutation script to run.
+`label:soundness` issue is on the board. To mark a duplicate, add the
+`duplicate` label; `sync_duplicate.py` (the `sync Duplicate from labels`
+workflow) sets the `Duplicate` field when the label is added or removed, and
+daily.
 
 **Negative-testgen** — nothing to maintain. It's a frozen, curated set of
 external p4lang/p4c bugs (references to the real issues, whose open/closed
@@ -100,6 +109,10 @@ python3 scripts/tracker/tracker_check.py --board board.json
 
 # Soundness: check every label:soundness issue is on project <N>:
 python3 scripts/tracker/label_check.py --label soundness --project <N>
+
+# Mirror the duplicate label onto the Soundness board (needs a Projects
+# read+write token; --dry-run previews without writing):
+python3 scripts/tracker/sync_duplicate.py --project <N> --owner kaist-plrg
 
 # Refresh the Mismatches "Upstream state" (needs a Projects read+write token;
 # --dry-run previews without writing):
