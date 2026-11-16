@@ -17620,6 +17620,9 @@ rulegroup SelectCase_keyset_ok/simpleKeysetExpression {
     -- SelectCase_keyset_simple_ok:
         TC (SEQ `< typeIR_key* `>) |- DEFAULT : simpleKeysetExpressionIR
 
+  rule SelectCase_keyset_ok/dontcare-zero-to-one:
+    TC eps |- '_' : '_'
+
   rule SelectCase_keyset_ok/dontcare-one-to-one:
     TC typeIR_key |- '_' : simpleKeysetExpressionIR
     -- SelectCase_keyset_simple_ok:
@@ -17654,6 +17657,9 @@ rulegroup SelectCase_keyset_ok/tupleKeysetExpression {
         TC typeIR_key
             |- expression_l '..' expression_r : simpleKeysetExpressionIR
 
+  rule SelectCase_keyset_ok/default-zero-to-one:
+    TC eps |- `( DEFAULT `) : `( DEFAULT `)
+
   rule SelectCase_keyset_ok/default-one-to-one:
     TC typeIR_key |- `( DEFAULT `) : `( simpleKeysetExpressionIR `)
     -- SelectCase_keyset_simple_ok:
@@ -17664,6 +17670,9 @@ rulegroup SelectCase_keyset_ok/tupleKeysetExpression {
     -- if $(|typeIR_key*| > 1)
     -- SelectCase_keyset_simple_ok:
         TC (SEQ `< typeIR_key* `>) |- DEFAULT : simpleKeysetExpressionIR
+
+  rule SelectCase_keyset_ok/dontcare-zero-to-one:
+    TC eps |- `( '_' `) : `( '_' `)
 
   rule SelectCase_keyset_ok/dontcare-one-to-one:
     TC typeIR_key |- `( '_' `) : `( simpleKeysetExpressionIR `)

@@ -13176,6 +13176,8 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| > 1)
     -- SelectCase_keyset_simple_ok: TC SEQ `< typeIR_key*{typeIR_key <- typeIR_key*} `> as typeIR |- DEFAULT : simpleKeysetExpressionIR
 
+    rule dontcare-zero-to-one: TC [] |- '_' as keysetExpression : '_' as keysetExpressionIR
+
     rule dontcare-one-to-one: TC [typeIR_key] |- '_' as keysetExpression : simpleKeysetExpressionIR as keysetExpressionIR
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- '_' : simpleKeysetExpressionIR
 
@@ -13191,12 +13193,16 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     rule range: TC [typeIR_key] |- `( expression_l '..' expression_r `) as keysetExpression : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l '..' expression_r : simpleKeysetExpressionIR
 
+    rule default-zero-to-one: TC [] |- `( DEFAULT `) as keysetExpression : `( [DEFAULT] `) as keysetExpressionIR
+
     rule default-one-to-one: TC [typeIR_key] |- `( DEFAULT `) as keysetExpression : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR
 
     rule default-many-to-one: TC typeIR_key*{typeIR_key <- typeIR_key*} |- `( DEFAULT `) as keysetExpression : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| > 1)
     -- SelectCase_keyset_simple_ok: TC SEQ `< typeIR_key*{typeIR_key <- typeIR_key*} `> as typeIR |- DEFAULT : simpleKeysetExpressionIR
+
+    rule dontcare-zero-to-one: TC [] |- `( '_' `) as keysetExpression : `( ['_'] `) as keysetExpressionIR
 
     rule dontcare-one-to-one: TC [typeIR_key] |- `( '_' `) as keysetExpression : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- '_' : simpleKeysetExpressionIR

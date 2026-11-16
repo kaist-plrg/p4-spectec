@@ -23097,15 +23097,15 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
 
    match
 
-    (signature) TC typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} |- keysetExpression : %
-    TC typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} |- keysetExpression : %
+    (signature) TC typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} |- keysetExpression : %
+    TC typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} |- keysetExpression : %
 
    paths
 
     rulepath expression
-    -- let typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
-    -- if typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
+    -- let typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*} = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
+    -- if typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*}
     -- let keysetExpression' = keysetExpression
     -- if keysetExpression' <: expression
     -- let expression = keysetExpression' as expression
@@ -23113,7 +23113,7 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
     rulepath expression-list
-    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
     -- let keysetExpression' = keysetExpression
     -- if keysetExpression' <: expression
     -- let expression = keysetExpression' as expression
@@ -23123,9 +23123,9 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
     rulepath mask
-    -- let typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
-    -- if typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
+    -- let typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*} = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
+    -- if typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*}
     -- let keysetExpression' = keysetExpression
     -- if keysetExpression' <: simpleKeysetExpression
     -- let simpleKeysetExpression = keysetExpression' as simpleKeysetExpression
@@ -23135,9 +23135,9 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
     rulepath range
-    -- let typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
-    -- if typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
+    -- let typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*} = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
+    -- if typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*}
     -- let keysetExpression' = keysetExpression
     -- if keysetExpression' <: simpleKeysetExpression
     -- let simpleKeysetExpression = keysetExpression' as simpleKeysetExpression
@@ -23147,35 +23147,40 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
     rulepath default-zero-to-one
-    -- if (typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} = [])
+    -- if (typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} = [])
     -- if (keysetExpression = DEFAULT as keysetExpression)
     -- output: % % |- % : DEFAULT as keysetExpressionIR
 
     rulepath default-one-to-one
-    -- let typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
-    -- if typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
+    -- let typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*} = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
+    -- if typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*}
     -- if (keysetExpression = DEFAULT as keysetExpression)
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
     rulepath default-many-to-one
-    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
     -- if (keysetExpression = DEFAULT as keysetExpression)
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| > 1)
     -- SelectCase_keyset_simple_ok: TC SEQ `< typeIR_key*{typeIR_key <- typeIR_key*} `> as typeIR |- DEFAULT : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
+    rulepath dontcare-zero-to-one
+    -- if (typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} = [])
+    -- if (keysetExpression = '_' as keysetExpression)
+    -- output: % % |- % : '_' as keysetExpressionIR
+
     rulepath dontcare-one-to-one
-    -- let typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
-    -- if typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
+    -- let typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*} = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
+    -- if typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''''''*{typeIR''''''''' <- typeIR'''''''''*}
     -- if (keysetExpression = '_' as keysetExpression)
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- '_' : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
     rulepath dontcare-many-to-one
-    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
     -- if (keysetExpression = '_' as keysetExpression)
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| > 1)
     -- SelectCase_keyset_simple_ok: TC SEQ `< typeIR_key*{typeIR_key <- typeIR_key*} `> as typeIR |- '_' : simpleKeysetExpressionIR
@@ -23185,17 +23190,17 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
 
    match
 
-    (signature) TC typeIR'''*{typeIR''' <- typeIR'''*} |- tupleKeysetExpression as keysetExpression : %
-    TC typeIR'''*{typeIR''' <- typeIR'''*} |- keysetExpression : %
+    (signature) TC typeIR''''''*{typeIR'''''' <- typeIR''''''*} |- tupleKeysetExpression as keysetExpression : %
+    TC typeIR''''''*{typeIR'''''' <- typeIR''''''*} |- keysetExpression : %
     -- if keysetExpression <: tupleKeysetExpression
     -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
 
    paths
 
     rulepath mask
-    -- let typeIR''''*{typeIR'''' <- typeIR''''*} = typeIR'''*{typeIR''' <- typeIR'''*}
-    -- if typeIR''''*{typeIR'''' <- typeIR''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- let typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} = typeIR''''''*{typeIR'''''' <- typeIR''''''*}
+    -- if typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
     -- let tupleKeysetExpression' = tupleKeysetExpression
     -- if tupleKeysetExpression' matches `( % '&&&' % `)
     -- let `( expression_l '&&&' expression_r `) = tupleKeysetExpression'
@@ -23203,47 +23208,57 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- output: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
 
     rulepath range
-    -- let typeIR''''*{typeIR'''' <- typeIR''''*} = typeIR'''*{typeIR''' <- typeIR'''*}
-    -- if typeIR''''*{typeIR'''' <- typeIR''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- let typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} = typeIR''''''*{typeIR'''''' <- typeIR''''''*}
+    -- if typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
     -- let tupleKeysetExpression' = tupleKeysetExpression
     -- if tupleKeysetExpression' matches `( % '..' % `)
     -- let `( expression_l '..' expression_r `) = tupleKeysetExpression'
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l '..' expression_r : simpleKeysetExpressionIR
     -- output: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
 
+    rulepath default-zero-to-one
+    -- if (typeIR''''''*{typeIR'''''' <- typeIR''''''*} = [])
+    -- if (tupleKeysetExpression = `( DEFAULT `))
+    -- output: % % |- % : `( [DEFAULT] `) as keysetExpressionIR
+
     rulepath default-one-to-one
-    -- let typeIR''''*{typeIR'''' <- typeIR''''*} = typeIR'''*{typeIR''' <- typeIR'''*}
-    -- if typeIR''''*{typeIR'''' <- typeIR''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- let typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} = typeIR''''''*{typeIR'''''' <- typeIR''''''*}
+    -- if typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
     -- if (tupleKeysetExpression = `( DEFAULT `))
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR
     -- output: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
 
     rulepath default-many-to-one
-    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR'''*{typeIR''' <- typeIR'''*}
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR''''''*{typeIR'''''' <- typeIR''''''*}
     -- if (tupleKeysetExpression = `( DEFAULT `))
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| > 1)
     -- SelectCase_keyset_simple_ok: TC SEQ `< typeIR_key*{typeIR_key <- typeIR_key*} `> as typeIR |- DEFAULT : simpleKeysetExpressionIR
     -- output: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
 
+    rulepath dontcare-zero-to-one
+    -- if (typeIR''''''*{typeIR'''''' <- typeIR''''''*} = [])
+    -- if (tupleKeysetExpression = `( '_' `))
+    -- output: % % |- % : `( ['_'] `) as keysetExpressionIR
+
     rulepath dontcare-one-to-one
-    -- let typeIR''''*{typeIR'''' <- typeIR''''*} = typeIR'''*{typeIR''' <- typeIR'''*}
-    -- if typeIR''''*{typeIR'''' <- typeIR''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- let typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} = typeIR''''''*{typeIR'''''' <- typeIR''''''*}
+    -- if typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
     -- if (tupleKeysetExpression = `( '_' `))
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- '_' : simpleKeysetExpressionIR
     -- output: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
 
     rulepath dontcare-many-to-one
-    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR'''*{typeIR''' <- typeIR'''*}
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR''''''*{typeIR'''''' <- typeIR''''''*}
     -- if (tupleKeysetExpression = `( '_' `))
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| > 1)
     -- SelectCase_keyset_simple_ok: TC SEQ `< typeIR_key*{typeIR_key <- typeIR_key*} `> as typeIR |- '_' : simpleKeysetExpressionIR
     -- output: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
 
     rulepath list
-    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR'''*{typeIR''' <- typeIR'''*}
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR''''''*{typeIR'''''' <- typeIR''''''*}
     -- let tupleKeysetExpression' = tupleKeysetExpression
     -- if tupleKeysetExpression' matches `( % ',' % `)
     -- let `( simpleKeysetExpression_h ',' simpleKeysetExpressionList_t `) = tupleKeysetExpression'

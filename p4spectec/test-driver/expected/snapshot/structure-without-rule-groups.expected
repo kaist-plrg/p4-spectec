@@ -31605,9 +31605,15 @@ relation SelectCase_keyset_ok: TC typeIR*{typeIR <- typeIR*} |- keysetExpression
 
   2. Case (% matches pattern [])
 
-    1. If ((keysetExpression = DEFAULT as keysetExpression)), then
+    1. Case analysis on keysetExpression
 
-      1. Result in: % % |- % : DEFAULT as keysetExpressionIR
+      1. Case (% = DEFAULT as keysetExpression)
+
+        1. Result in: % % |- % : DEFAULT as keysetExpressionIR
+
+      2. Case (% = '_' as keysetExpression)
+
+        1. Result in: % % |- % : '_' as keysetExpressionIR
 
     1. Else Dangling
 
@@ -31633,39 +31639,55 @@ relation SelectCase_keyset_ok: TC typeIR*{typeIR <- typeIR*} |- keysetExpression
 
     1. (Let tupleKeysetExpression be keysetExpression as tupleKeysetExpression)
 
-      1. If (typeIR*{typeIR <- typeIR*} matches [ _/1 ]), then
+      1. Case analysis on typeIR*{typeIR <- typeIR*}
 
-        1. (Let [typeIR_key] be typeIR*{typeIR <- typeIR*})
+        1. Case (% matches pattern [ _/1 ])
+
+          1. (Let [typeIR_key] be typeIR*{typeIR <- typeIR*})
+
+            1. Case analysis on tupleKeysetExpression
+
+              1. Case (% matches pattern `( % '&&&' % `))
+
+                1. (Let `( expression_l '&&&' expression_r `) be tupleKeysetExpression)
+
+                  1. (SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l '&&&' expression_r : simpleKeysetExpressionIR)
+
+                    1. Result in: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
+
+              2. Case (% matches pattern `( % '..' % `))
+
+                1. (Let `( expression_l '..' expression_r `) be tupleKeysetExpression)
+
+                  1. (SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l '..' expression_r : simpleKeysetExpressionIR)
+
+                    1. Result in: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
+
+              3. Case (% matches pattern `( DEFAULT `))
+
+                1. (SelectCase_keyset_simple_ok: TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR)
+
+                  1. Result in: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
+
+              4. Case (% matches pattern `( '_' `))
+
+                1. (SelectCase_keyset_simple_ok: TC typeIR_key |- '_' : simpleKeysetExpressionIR)
+
+                  1. Result in: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
+
+            1. Else Dangling
+
+        2. Case (% matches pattern [])
 
           1. Case analysis on tupleKeysetExpression
 
-            1. Case (% matches pattern `( % '&&&' % `))
+            1. Case (% matches pattern `( DEFAULT `))
 
-              1. (Let `( expression_l '&&&' expression_r `) be tupleKeysetExpression)
+              1. Result in: % % |- % : `( [DEFAULT] `) as keysetExpressionIR
 
-                1. (SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l '&&&' expression_r : simpleKeysetExpressionIR)
+            2. Case (% matches pattern `( '_' `))
 
-                  1. Result in: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
-
-            2. Case (% matches pattern `( % '..' % `))
-
-              1. (Let `( expression_l '..' expression_r `) be tupleKeysetExpression)
-
-                1. (SelectCase_keyset_simple_ok: TC typeIR_key |- expression_l '..' expression_r : simpleKeysetExpressionIR)
-
-                  1. Result in: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
-
-            3. Case (% matches pattern `( DEFAULT `))
-
-              1. (SelectCase_keyset_simple_ok: TC typeIR_key |- DEFAULT : simpleKeysetExpressionIR)
-
-                1. Result in: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
-
-            4. Case (% matches pattern `( '_' `))
-
-              1. (SelectCase_keyset_simple_ok: TC typeIR_key |- '_' : simpleKeysetExpressionIR)
-
-                1. Result in: % % |- % : `( [simpleKeysetExpressionIR] `) as keysetExpressionIR
+              1. Result in: % % |- % : `( ['_'] `) as keysetExpressionIR
 
           1. Else Dangling
 

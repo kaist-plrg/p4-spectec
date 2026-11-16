@@ -16173,6 +16173,7 @@ xref:SelectCase_keyset_ok[Typing ``keysetExpression`` under context ``TC`` with 
     ..... The result is ``simpleKeysetExpressionIR``.
  .. Else if ``typeIR^{asterisk}^`` matches pattern ``[]``:
   ... If ``keysetExpression`` is equal to ``+DEFAULT+``: the result is ``+DEFAULT+``.
+  ... Else if ``keysetExpression`` is equal to ``+'_'+``: the result is ``+'_'+``.
 . +++<span class="bk-arm-anchor" id="bk-149-arm-2"></span>+++Then, try:
  .. If let ``expression`` of type ``expression`` be ``keysetExpression``:
   ... If the length of ``typeIR^{asterisk}^`` is greater than ``1``:
@@ -16192,7 +16193,7 @@ xref:SelectCase_keyset_ok[Typing ``keysetExpression`` under context ``TC`` with 
 xref:SelectCase_keyset_ok[Typing ``tupleKeysetExpression`` under context ``TC`` with key types ``typeIR^{asterisk}^``]:
 
 . +++<span class="bk-arm-anchor" id="bk-151-arm-1"></span>+++Try:
- .. If ``typeIR^{asterisk}^`` is a list of length 1:
+ .. If ``typeIR^{asterisk}^`` matches pattern ``[`` ``_/1`` ``]``:
   ... Let ``typeIR~key~`` be ``typeIR^{asterisk}^``.
   ... If let ``+`(+`` ``expression~l~`` ``+'&&&'+`` ``expression~r~`` ``+`)+`` be ``tupleKeysetExpression``:
    .... Let ``simpleKeysetExpressionIR`` be the result of xref:SelectCase_keyset_simple_ok[typing ``expression~l~`` ``+'&&&'+`` ``expression~r~`` under context ``TC`` with key type ``typeIR~key~``].+++<sub class="bk-mark">[<a href="#bk-151-arm-2">→ 2</a>]</sub>+++
@@ -16206,6 +16207,10 @@ xref:SelectCase_keyset_ok[Typing ``tupleKeysetExpression`` under context ``TC`` 
   ... Else if ``tupleKeysetExpression`` matches pattern ``+`(+`` ``+'_'+`` ``+`)+``:
    .... Let ``simpleKeysetExpressionIR`` be the result of xref:SelectCase_keyset_simple_ok[typing ``+'_'+`` under context ``TC`` with key type ``typeIR~key~``].+++<sub class="bk-mark">[<a href="#bk-151-arm-2">→ 2</a>]</sub>+++
    .... The result is ``+`(+`` ``simpleKeysetExpressionIR`` ``+`)+``.
+ .. Else if ``typeIR^{asterisk}^`` matches pattern ``[]``:
+  ... If ``tupleKeysetExpression`` matches pattern ``+`(+`` ``+DEFAULT+`` ``+`)+``:
+   .... The result is ``+`(+`` ``+DEFAULT+`` ``+`)+``.
+  ... Else if ``tupleKeysetExpression`` matches pattern ``+`(+`` ``+'_'+`` ``+`)+``: the result is ``+`(+`` ``+'_'+`` ``+`)+``.
 . +++<span class="bk-arm-anchor" id="bk-151-arm-2"></span>+++Then, try:
  .. If ``tupleKeysetExpression`` matches pattern ``+`(+`` ``+DEFAULT+`` ``+`)+``:
   ... Check that the length of ``typeIR^{asterisk}^`` is greater than ``1``.
