@@ -129,8 +129,13 @@ impl ObjectState {
 ///
 /// `ingress`/`preqos` become `main.ig`, `egress`/`postqos`/`c3` become
 /// `main.eg`, and `$valid$` in an `add` match becomes `isValid()`.
+/// A bare name, such as the global name of `@name(".t")`, is kept.
 pub fn transform_stf_stmt(mut stmt: Statement) -> Statement {
     fn transform_name(name: crate::stf::ast::Name) -> crate::stf::ast::Name {
+        // Keep a bare name; only a qualified name has a block prefix
+        if !name.to_string().contains('.') {
+            return name;
+        }
         name.rewrite_substring(&["ingress", "preqos"], "main.ig")
             .rewrite_substring(&["egress", "postqos", "c3"], "main.eg")
     }
