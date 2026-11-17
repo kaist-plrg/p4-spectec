@@ -1,7 +1,9 @@
-//! Reuse of exact structural projections from immutable list rows
+//! Unzipping lists into columns and zipping columns into lists
 //!
-//! A projection depends only on its source body, child paths and output types.
-//! Cached columns retain every child's value, type and source-location handle.
+//! `ValueArena::unzip` takes the child at a fixed path out of every element;
+//! `ValueArena::zip` builds each element from the columns' entries.
+//! Both read only immutable bodies, so their results are cached,
+//! and zipping columns unzipped from a list returns that list's elements.
 
 use super::super::ValueError;
 use super::{Value, ValueArena, ValueKind};
@@ -21,19 +23,19 @@ pub(crate) enum Step {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
-struct Key {
+struct UnzipKey {
     source: Interned<ValueKind>,
     paths: Vec<Vec<Step>>,
 }
 
 #[derive(Hash)]
-struct Query<'a> {
+struct UnzipQuery<'a> {
     source: Interned<ValueKind>,
     paths: &'a [&'a [Step]],
 }
 
-impl Equivalent<Key> for Query<'_> {
-    fn equivalent(&self, key: &Key) -> bool {
+impl Equivalent<UnzipKey> for UnzipQuery<'_> {
+    fn equivalent(&self, key: &UnzipKey) -> bool {
         self.source == key.source
             && self.paths.len() == key.paths.len()
             && self
@@ -44,12 +46,12 @@ impl Equivalent<Key> for Query<'_> {
     }
 }
 
-/// Columns derived from bodies in the owning value arena.
+/// Unzipped columns and zipped lists of the owning value arena.
 #[derive(Debug, Default)]
-pub(super) struct Columns {
-    entries: HashMap<Key, Vec<Interned<ValueKind>>, RandomState>,
+pub(super) struct ZipCache {
+    unzips: HashMap<UnzipKey, Vec<Interned<ValueKind>>, RandomState>,
     origins: HashMap<Vec<Interned<ValueKind>>, Interned<ValueKind>, RandomState>,
-    maps: HashMap<MapKey, Value, RandomState>,
+    zips: HashMap<ZipKey, Value, RandomState>,
 }
 
 impl ValueArena {
@@ -69,7 +71,7 @@ impl ValueArena {
     }
 
     /// Collects exact child columns once for each immutable source and pattern.
-    pub(crate) fn project_rows(
+    pub(crate) fn unzip(
         &mut self,
         arena_mixop: &MixopArena,
         source: Interned<ValueKind>,
@@ -79,7 +81,7 @@ impl ValueArena {
         let types: Vec<_> = typs
             .map(|typ| self.intern_typ(typ))
             .collect::<Result<_, _>>()?;
-        if let Some(values) = self.columns.entries.get(&Query { source, paths }) {
+        if let Some(values) = self.zipper.unzips.get(&UnzipQuery { source, paths }) {
             return Ok(values
                 .iter()
                 .zip(&types)
@@ -105,16 +107,17 @@ impl ValueArena {
         }
         let nodes: Vec<_> = values.iter().map(|value| value.node).collect();
         if !paths.is_empty() && paths.iter().enumerate().all(|(idx, path)| matches!(*path, [Step::Tuple(pos) | Step::Case(pos) | Step::List(pos)] if *pos == idx)) {
-            self.columns.origins.insert(nodes.clone(), source);
+            self.zipper.origins.insert(nodes.clone(), source);
         }
-        self.columns
-            .entries
-            .insert(Key { source, paths: paths.iter().map(|path| path.to_vec()).collect() }, nodes);
+        self.zipper.unzips.insert(
+            UnzipKey { source, paths: paths.iter().map(|path| path.to_vec()).collect() },
+            nodes,
+        );
         Ok(values)
     }
 }
 
-/// A fixed row constructor whose arguments are selected input columns.
+/// The constructor of every element built by zipping.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) enum Shape {
     Tuple,
@@ -123,44 +126,44 @@ pub(crate) enum Shape {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
-struct MapKey {
+struct ZipKey {
     shape: Shape,
-    note_row: Interned<Rc<TypKind>>,
+    note_elem: Interned<Rc<TypKind>>,
     note_list: Interned<Rc<TypKind>>,
     columns: Vec<Interned<ValueKind>>,
 }
 
 #[derive(Hash)]
-struct MapQuery<'a> {
+struct ZipQuery<'a> {
     shape: Shape,
-    note_row: Interned<Rc<TypKind>>,
+    note_elem: Interned<Rc<TypKind>>,
     note_list: Interned<Rc<TypKind>>,
     columns: &'a [Interned<ValueKind>],
 }
 
-impl Equivalent<MapKey> for MapQuery<'_> {
-    fn equivalent(&self, key: &MapKey) -> bool {
+impl Equivalent<ZipKey> for ZipQuery<'_> {
+    fn equivalent(&self, key: &ZipKey) -> bool {
         self.shape == key.shape
-            && self.note_row == key.note_row
+            && self.note_elem == key.note_elem
             && self.note_list == key.note_list
             && self.columns == key.columns
     }
 }
 
 impl ValueArena {
-    /// Rebuilds rows from exact columns without per-row interpreter contexts.
-    pub(crate) fn map_columns(
+    /// Builds a list whose elements take their arguments from the columns.
+    pub(crate) fn zip(
         &mut self,
         arena_mixop: &MixopArena,
         shape: Shape,
-        typ_row: Rc<TypKind>,
+        typ_elem: Rc<TypKind>,
         typ_list: Rc<TypKind>,
         columns: &[Interned<ValueKind>],
     ) -> Result<Value, ValueError> {
-        let note_row = self.intern_typ(typ_row)?;
+        let note_elem = self.intern_typ(typ_elem)?;
         let note_list = self.intern_typ(typ_list)?;
-        let query = MapQuery { shape, note_row, note_list, columns };
-        if let Some(value) = self.columns.maps.get(&query) {
+        let query = ZipQuery { shape, note_elem, note_list, columns };
+        if let Some(value) = self.zipper.zips.get(&query) {
             return Ok(*value);
         }
         let len = columns.first().map_or(0, |column| {
@@ -168,43 +171,45 @@ impl ValueArena {
             values.len()
         });
         let span = Self::span_default();
-        // An inverse projection can reuse each original row body exactly
-        let origin = self.columns.origins.get(columns).copied();
+        // Columns unzipped from a list zip back to that list's elements
+        let origin = self.zipper.origins.get(columns).copied();
         if let Some(source) = origin {
-            let ValueKind::List(rows) = self.kind(source) else {
+            let ValueKind::List(elems) = self.kind(source) else {
                 unreachable!("projection source")
             };
-            let matches = rows.len() == len
-                && rows.iter().all(|row| match (shape, self.kind(row.node)) {
-                    (Shape::Tuple, ValueKind::Tuple(values))
-                    | (Shape::List, ValueKind::List(values)) => values.len() == columns.len(),
-                    (Shape::Case(mixop), ValueKind::Case(value_case)) => {
-                        *value_case.mixop() == mixop && value_case.args().len() == columns.len()
-                    }
-                    _ => false,
-                });
-            if matches {
-                let node = if rows
+            let matches = elems.len() == len
+                && elems
                     .iter()
-                    .all(|row| row.note == note_row && row.span == span)
+                    .all(|elem| match (shape, self.kind(elem.node)) {
+                        (Shape::Tuple, ValueKind::Tuple(values))
+                        | (Shape::List, ValueKind::List(values)) => values.len() == columns.len(),
+                        (Shape::Case(mixop), ValueKind::Case(value_case)) => {
+                            *value_case.mixop() == mixop && value_case.args().len() == columns.len()
+                        }
+                        _ => false,
+                    });
+            if matches {
+                let node = if elems
+                    .iter()
+                    .all(|elem| elem.note == note_elem && elem.span == span)
                 {
                     source
                 } else {
-                    let rows = rows
+                    let elems = elems
                         .iter()
-                        .map(|row| Value { node: row.node, note: note_row, span })
+                        .map(|elem| Value { node: elem.node, note: note_elem, span })
                         .collect();
-                    self.intern_kind(arena_mixop, ValueKind::List(rows))?
+                    self.intern_kind(arena_mixop, ValueKind::List(elems))?
                 };
                 let value = Value { node, note: note_list, span };
-                self.columns.maps.insert(
-                    MapKey { shape, note_row, note_list, columns: columns.to_vec() },
+                self.zipper.zips.insert(
+                    ZipKey { shape, note_elem, note_list, columns: columns.to_vec() },
                     value,
                 );
                 return Ok(value);
             }
         }
-        let mut rows = Vec::with_capacity(len);
+        let mut elems = Vec::with_capacity(len);
         for idx in 0..len {
             let values: Vec<_> = columns
                 .iter()
@@ -224,11 +229,11 @@ impl ValueArena {
                 ),
             };
             let node = self.intern_kind(arena_mixop, kind)?;
-            rows.push(Value { node, note: note_row, span });
+            elems.push(Value { node, note: note_elem, span });
         }
-        let node = self.intern_kind(arena_mixop, ValueKind::List(rows))?;
+        let node = self.intern_kind(arena_mixop, ValueKind::List(elems))?;
         let value = Value { node, note: note_list, span };
-        // Decomposing these freshly constructed rows yields the input columns
+        // Unzipping the new list yields the input columns
         let paths = (0..columns.len())
             .map(|idx| {
                 vec![match shape {
@@ -238,12 +243,12 @@ impl ValueArena {
                 }]
             })
             .collect();
-        self.columns
-            .entries
-            .insert(Key { source: node, paths }, columns.to_vec());
-        self.columns
-            .maps
-            .insert(MapKey { shape, note_row, note_list, columns: columns.to_vec() }, value);
+        self.zipper
+            .unzips
+            .insert(UnzipKey { source: node, paths }, columns.to_vec());
+        self.zipper
+            .zips
+            .insert(ZipKey { shape, note_elem, note_list, columns: columns.to_vec() }, value);
         Ok(value)
     }
 }

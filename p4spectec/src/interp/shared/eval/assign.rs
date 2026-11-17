@@ -1,11 +1,11 @@
-//! Destructuring assignments preserve iteration paths and isolate list rows
+//! Destructuring assignments preserve iteration paths and isolate list elements
 //!
 //! `assign_exp` matches a value against a binder pattern
 //! and binds its variables:
 //! `(x, y) <- (1, 2)` binds `x` and `y`;
 //! `x* <- [1, 2]` binds `x*` as a whole,
-//! while `(x, y)* <- [...]` assigns each row in a fresh sub-context
-//! and gathers the rows into `x*` and `y*`.
+//! while `(x, y)* <- [...]` assigns each element in a fresh sub-context
+//! and gathers the elements into `x*` and `y*`.
 
 use std::{borrow::Borrow, rc::Rc};
 
@@ -105,7 +105,7 @@ pub fn assign_exp<Ctx: WriteContext>(
             let typ = arena.value.typ(value.note).clone();
             assign_cons_exp(arena, ctx, exp_head, exp_tail, typ, &values)
         }
-        // Iteration: as a whole or row by row
+        // Iteration: as a whole or element by element
         (ast::ExpKind::Iter(exp_inner, exp_iter), _) => {
             assign_iter_exp(arena, ctx, exp, exp_inner, exp_iter, value)
         }
@@ -253,7 +253,7 @@ fn assign_iter_exp<Ctx: WriteContext>(
     match exp_iter.iter {
         // Option: the payload once, or none for every variable
         ast::Iter::Opt => assign_iter_opt_exp(arena, ctx, exp, exp_inner, exp_iter, value),
-        // List: one row per element
+        // List: one assignment per element
         ast::Iter::List => assign_iter_list_exp(arena, ctx, exp, exp_inner, exp_iter, value),
     }
 }
@@ -295,7 +295,7 @@ fn assign_iter_opt_exp<Ctx: WriteContext>(
     ok!(())
 }
 
-/// Assigns each list element as one row and gathers the rows per variable.
+/// Assigns each list element and gathers the results per variable.
 fn assign_iter_list_exp<Ctx: WriteContext>(
     arena: &mut Arena,
     ctx: &mut Ctx,
@@ -306,8 +306,8 @@ fn assign_iter_list_exp<Ctx: WriteContext>(
 ) -> Backtrack<()> {
     let span = &exp.span;
     let vars_outer = iterate_vars(&exp_iter.vars);
-    // Fixed patterns project the rows into columns directly
-    if let Some(values) = super::rows::collect(arena, exp_inner, &exp_iter.vars, &vars_outer, value)
+    // Fixed patterns unzip the list into columns directly
+    if let Some(values) = super::zipper::unzip(arena, exp_inner, &exp_iter.vars, &vars_outer, value)
     {
         let values = unwrap_from_result!(values, span);
         for (var_outer, value) in vars_outer.iter().zip(values) {
@@ -315,9 +315,9 @@ fn assign_iter_list_exp<Ctx: WriteContext>(
         }
         return ok!(());
     }
-    // Nested iterations and constructed tails keep isolated row scopes
-    let values_by_var = unwrap!(assign_rows(arena, ctx, exp_inner, &exp_iter.vars, value));
-    // Each variable collects its per-row values into a list
+    // Nested iterations and constructed tails keep isolated element scopes
+    let values_by_var = unwrap!(assign_elems(arena, ctx, exp_inner, &exp_iter.vars, value));
+    // Each variable collects its per-element values into a list
     for (var_outer, values) in vars_outer.iter().zip(values_by_var) {
         let typ = Rc::clone(&var_outer.typ);
         let value_sub =
@@ -328,8 +328,8 @@ fn assign_iter_list_exp<Ctx: WriteContext>(
 }
 
 /// Assigns each list element in a cleared copy of the context,
-/// returning every variable's values in row order.
-fn assign_rows<Ctx: WriteContext>(
+/// returning every variable's values in element order.
+fn assign_elems<Ctx: WriteContext>(
     arena: &mut Arena,
     ctx: &Ctx,
     exp_inner: &ast::Exp,
@@ -344,7 +344,7 @@ fn assign_rows<Ctx: WriteContext>(
         .map(|_| Vec::with_capacity(values.len()))
         .collect();
     for value in values {
-        // Each row starts without the previous row's bindings
+        // Each element starts without the previous element's bindings
         ctx_sub.clear_value_bindings();
         unwrap!(assign_exp(arena, &mut ctx_sub, exp_inner, value));
         for (var, values) in vars.iter().zip(&mut values_by_var) {

@@ -618,8 +618,9 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     if let Some(slot) = find_slot_of_exp(exp) {
         return ok!(*ctx.find_value_at_slot(slot).expect("value must be bound"));
     }
-    // Fixed patterns project the rows into columns directly
-    if let Some(result) = super::rows::map(runner_ctx.arena_mut(), ctx, exp, exp_inner, exp_iter) {
+    // Fixed constructors zip the input columns directly
+    if let Some(result) = super::zipper::zip(runner_ctx.arena_mut(), ctx, exp, exp_inner, exp_iter)
+    {
         return result;
     }
     // Otherwise map the body over the iterated variables

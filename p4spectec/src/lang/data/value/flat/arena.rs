@@ -26,8 +26,8 @@ use super::{Value, ValueKind};
 pub struct ValueArena {
     /// Bodies, with canonical identities; a case reads its mixop's.
     values: CanonInterner<ValueKind>,
-    /// Exact structural columns, invalidated with their source bodies.
-    pub(super) columns: super::projection::Columns,
+    /// Unzipped columns and zipped lists, keyed by immutable bodies.
+    pub(super) zipper: super::zipper::ZipCache,
     /// Types, shared by exact contents including nested source spans.
     types: Interner<Rc<TypKind>>,
     /// Spans, shared by equality.
@@ -43,7 +43,7 @@ impl Default for ValueArena {
         debug_assert_eq!(span_default, Self::span_default());
         Self {
             values: CanonInterner::new(),
-            columns: Default::default(),
+            zipper: Default::default(),
             types: Interner::new(),
             spans,
         }

@@ -1,16 +1,18 @@
-//! Projection of destructured list rows into binding columns
+//! Unzipping and zipping of iterations over fixed positions
 //!
-//! Fixed tuple, case, struct, option, and list patterns only select children.
-//! Resolve each output slot's final selection once, then collect without
-//! constructing a context for every row. Patterns that construct tails or
-//! nested iterations retain the general assignment path.
+//! `unzip` assigns `(a, b)* <- xs` by taking each variable's column out of `xs`;
+//! `zip` evaluates `(a, b)*` by building the elements from the columns `a*` and `b*`.
+//! Both apply only when every variable sits at a fixed position in the element,
+//! so no context is built per element.
+//! Patterns and expressions that compute values or nest iterations
+//! take the general path in `assign` and `iter`.
 
 use crate::interp::shared::util::find_slot_of_exp;
 use crate::lang::data::{
     arena::Arena,
     value::{
         ValueError,
-        flat::{Value, projection::Step},
+        flat::{Value, zipper::Step},
     },
 };
 use crate::lang::il::prepared as ast;
@@ -68,8 +70,9 @@ fn find_paths(
     }
 }
 
-/// Collects fixed-pattern bindings, or requests general row assignment.
-pub(super) fn collect(
+/// Unzips a list into one column per variable of a fixed pattern,
+/// or returns `None` for the general path.
+pub(super) fn unzip(
     arena: &mut Arena,
     exp: &ast::Exp,
     vars: &[ast::Var],
@@ -100,7 +103,7 @@ pub(super) fn collect(
             if simple && assigned[..vars.len()].iter().all(|assigned| *assigned) {
                 let paths: [&[Step]; 4] =
                     std::array::from_fn(|index| std::slice::from_ref(&steps[index]));
-                return Some(arena.value.project_rows(
+                return Some(arena.value.unzip(
                     &arena.mixop,
                     value.node,
                     &paths[..vars.len()],
@@ -113,7 +116,7 @@ pub(super) fn collect(
     find_paths(exp, vars, &mut Vec::new(), &mut paths_out)?;
     let paths_out: Vec<_> = paths_out.into_iter().collect::<Option<_>>()?;
     let paths: Vec<_> = paths_out.iter().map(Vec::as_slice).collect();
-    Some(arena.value.project_rows(
+    Some(arena.value.unzip(
         &arena.mixop,
         value.node,
         &paths,
@@ -121,8 +124,9 @@ pub(super) fn collect(
     ))
 }
 
-/// Maps a fixed constructor over columns; computed row expressions fall back.
-pub(super) fn map(
+/// Zips the columns of a fixed constructor's arguments into a list,
+/// or returns `None` for the general path.
+pub(super) fn zip(
     arena: &mut Arena,
     ctx: &impl crate::interp::shared::context::IterContext,
     exp: &ast::Exp,
@@ -131,7 +135,7 @@ pub(super) fn map(
 ) -> Option<crate::interp::shared::backtrack::Backtrack<Value>> {
     use crate::interp::shared::backtrack::{ok, unwrap_from_result};
     use crate::interp::shared::util::iterate_vars;
-    use crate::lang::data::value::flat::projection::Shape;
+    use crate::lang::data::value::flat::zipper::Shape;
     if exp_iter.iter != ast::Iter::List {
         return None;
     }
@@ -141,7 +145,7 @@ pub(super) fn map(
         ast::ExpKind::Case(not_exp) => (Shape::Case(*not_exp.mixop()), not_exp.args()),
         _ => return None,
     };
-    // Each row argument must be one iterated input
+    // Each argument must be one iterated input
     let indices: Vec<usize> = exps
         .iter()
         .map(|exp| {
@@ -165,7 +169,7 @@ pub(super) fn map(
                     .node
             })
             .collect();
-        let value = arena.value.map_columns(
+        let value = arena.value.zip(
             &arena.mixop,
             shape,
             exp_inner.note.clone(),

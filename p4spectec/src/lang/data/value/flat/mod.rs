@@ -35,8 +35,8 @@ pub mod get;
 mod hash;
 pub mod make;
 mod print;
-pub(crate) mod projection;
 mod view;
+pub(crate) mod zipper;
 
 pub use arena::ValueArena;
 pub use view::ValueRef;
