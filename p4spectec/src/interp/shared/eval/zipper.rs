@@ -1,7 +1,8 @@
-//! Unzipping and zipping of iterations over fixed positions
+//! Decomposition, unzipping, and zipping of iterations over fixed positions
 //!
-//! `unzip` assigns `(a, b)* <- xs` by taking each variable's column out of `xs`;
-//! `zip` evaluates `(a, b)*` by building the elements from the columns `a*` and `b*`.
+//! `decompose` finds the steps from an element of `(a, b)*` to `a` and `b`,
+//! so that `(a, b)* <- xs` can unzip `xs` into the columns `a*` and `b*`;
+//! `zip` evaluates `(a, b)*` by building the elements from those columns.
 //! Both apply only when every variable sits at a fixed position in the element,
 //! so no context is built per element.
 //! Patterns and expressions that compute values or nest iterations
@@ -10,33 +11,41 @@
 use crate::interp::shared::util::find_slot_of_exp;
 use crate::lang::data::{
     arena::Arena,
-    value::{
-        ValueError,
-        flat::{Value, zipper::Step},
+    value::flat::{
+        Value,
+        zipper::{Decomp, Step},
     },
 };
 use crate::lang::il::prepared as ast;
 
-/// Records the position of each variable in a fixed pattern,
-/// failing on any part that computes a value.
-fn find_paths(
+/// Decomposes a fixed pattern into steps to each variable, in `vars` order,
+/// or returns `None` when any part of it computes a value.
+pub(super) fn decompose(exp: &ast::Exp, vars: &[ast::Var]) -> Option<Decomp> {
+    let mut steps_by_var = vec![None; vars.len()];
+    decompose_inner(exp, vars, &mut Vec::new(), &mut steps_by_var)?;
+    // Every variable must occur in the pattern
+    steps_by_var.into_iter().collect()
+}
+
+/// Records the steps to each variable, failing on a computed part.
+fn decompose_inner(
     exp: &ast::Exp,
     vars: &[ast::Var],
-    path: &mut Vec<Step>,
-    paths: &mut [Option<Vec<Step>>],
+    steps: &mut Vec<Step>,
+    steps_by_var: &mut [Option<Vec<Step>>],
 ) -> Option<()> {
-    // A variable or an identity iteration ends its path
+    // A variable or an identity iteration ends its steps
     if let Some(slot) = find_slot_of_exp(exp) {
         if let Some(idx) = vars.iter().position(|var| var.slot == slot) {
-            paths[idx] = Some(path.clone());
+            steps_by_var[idx] = Some(steps.clone());
         }
         return Some(());
     }
-    // Every child extends the path by its position
+    // Every child extends the steps by its position
     let mut find_child = |step: Step, exp_child: &ast::Exp| {
-        path.push(step);
-        let found = find_paths(exp_child, vars, path, paths);
-        path.pop();
+        steps.push(step);
+        let found = decompose_inner(exp_child, vars, steps, steps_by_var);
+        steps.pop();
         found
     };
     match &exp.node {
@@ -68,60 +77,6 @@ fn find_paths(
         // Anything else computes a value
         _ => None,
     }
-}
-
-/// Unzips a list into one column per variable of a fixed pattern,
-/// or returns `None` for the general path.
-pub(super) fn unzip(
-    arena: &mut Arena,
-    exp: &ast::Exp,
-    vars: &[ast::Var],
-    vars_outer: &[ast::Var],
-    value: Value,
-) -> Option<Result<Vec<Value>, ValueError>> {
-    // Short flat patterns need no owned path vectors on a cache hit.
-    if vars.len() <= 4 {
-        let flat = match &exp.node {
-            ast::ExpKind::Tuple(exps) => Some((Step::Tuple as fn(usize) -> Step, exps.as_slice())),
-            ast::ExpKind::List(exps) => Some((Step::List as fn(usize) -> Step, exps.as_slice())),
-            ast::ExpKind::Case(not_exp) => Some((Step::Case as fn(usize) -> Step, not_exp.args())),
-            _ => None,
-        };
-        if let Some((step, exps)) = flat {
-            let mut steps = [Step::Opt; 4];
-            let mut assigned = [false; 4];
-            let simple = exps.iter().enumerate().all(|(index, exp)| {
-                let Some(slot) = find_slot_of_exp(exp) else {
-                    return false;
-                };
-                if let Some(index_var) = vars.iter().position(|var| var.slot == slot) {
-                    steps[index_var] = step(index);
-                    assigned[index_var] = true;
-                }
-                true
-            });
-            if simple && assigned[..vars.len()].iter().all(|assigned| *assigned) {
-                let paths: [&[Step]; 4] =
-                    std::array::from_fn(|index| std::slice::from_ref(&steps[index]));
-                return Some(arena.value.unzip(
-                    &arena.mixop,
-                    value.node,
-                    &paths[..vars.len()],
-                    vars_outer.iter().map(|var| var.typ.clone()),
-                ));
-            }
-        }
-    }
-    let mut paths_out = vec![None; vars.len()];
-    find_paths(exp, vars, &mut Vec::new(), &mut paths_out)?;
-    let paths_out: Vec<_> = paths_out.into_iter().collect::<Option<_>>()?;
-    let paths: Vec<_> = paths_out.iter().map(Vec::as_slice).collect();
-    Some(arena.value.unzip(
-        &arena.mixop,
-        value.node,
-        &paths,
-        vars_outer.iter().map(|var| var.typ.clone()),
-    ))
 }
 
 /// Zips the columns of a fixed constructor's arguments into a list,

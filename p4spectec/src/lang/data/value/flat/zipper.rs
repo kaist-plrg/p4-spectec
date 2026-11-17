@@ -1,6 +1,6 @@
 //! Unzipping lists into columns and zipping columns into lists
 //!
-//! `ValueArena::unzip` takes the child at a fixed path out of every element;
+//! `ValueArena::unzip` follows a decomposition into every element;
 //! `ValueArena::zip` builds each element from the columns' entries.
 //! Both read only immutable bodies, so their results are cached,
 //! and zipping columns unzipped from a list returns that list's elements.
@@ -22,27 +22,24 @@ pub(crate) enum Step {
     Opt,
 }
 
+/// Per variable, in order, the steps from an element to that variable.
+pub(crate) type Decomp = Vec<Vec<Step>>;
+
 #[derive(Debug, PartialEq, Eq, Hash)]
 struct UnzipKey {
     source: Interned<ValueKind>,
-    paths: Vec<Vec<Step>>,
+    decomp: Decomp,
 }
 
 #[derive(Hash)]
 struct UnzipQuery<'a> {
     source: Interned<ValueKind>,
-    paths: &'a [&'a [Step]],
+    decomp: &'a [Vec<Step>],
 }
 
 impl Equivalent<UnzipKey> for UnzipQuery<'_> {
     fn equivalent(&self, key: &UnzipKey) -> bool {
-        self.source == key.source
-            && self.paths.len() == key.paths.len()
-            && self
-                .paths
-                .iter()
-                .zip(&key.paths)
-                .all(|(path, stored)| *path == stored.as_slice())
+        self.source == key.source && self.decomp == key.decomp.as_slice()
     }
 }
 
@@ -56,8 +53,8 @@ pub(super) struct ZipCache {
 
 impl ValueArena {
     /// Selects a child through a validated assignment pattern.
-    fn project(&self, mut value: Value, path: &[Step]) -> Value {
-        for step in path {
+    fn project(&self, mut value: Value, steps: &[Step]) -> Value {
+        for step in steps {
             value = match (step, self.kind(value.node)) {
                 (Step::Tuple(idx), ValueKind::Tuple(values))
                 | (Step::List(idx), ValueKind::List(values)) => values[*idx],
@@ -70,18 +67,18 @@ impl ValueArena {
         value
     }
 
-    /// Collects exact child columns once for each immutable source and pattern.
+    /// Unzips a list into one column per variable of the decomposition.
     pub(crate) fn unzip(
         &mut self,
         arena_mixop: &MixopArena,
         source: Interned<ValueKind>,
-        paths: &[&[Step]],
+        decomp: &Decomp,
         typs: impl Iterator<Item = Rc<TypKind>>,
     ) -> Result<Vec<Value>, ValueError> {
         let types: Vec<_> = typs
             .map(|typ| self.intern_typ(typ))
             .collect::<Result<_, _>>()?;
-        if let Some(values) = self.zipper.unzips.get(&UnzipQuery { source, paths }) {
+        if let Some(values) = self.zipper.unzips.get(&UnzipQuery { source, decomp }) {
             return Ok(values
                 .iter()
                 .zip(&types)
@@ -91,12 +88,12 @@ impl ValueArena {
         let ValueKind::List(values) = self.kind(source) else {
             unreachable!("iteration assignment value must be a list");
         };
-        let columns: Vec<Vec<Value>> = paths
+        let columns: Vec<Vec<Value>> = decomp
             .iter()
-            .map(|path| {
+            .map(|steps| {
                 values
                     .iter()
-                    .map(|value| self.project(*value, path))
+                    .map(|value| self.project(*value, steps))
                     .collect()
             })
             .collect();
@@ -106,13 +103,19 @@ impl ValueArena {
             values.push(Value { node, note: *note, span: Self::span_default() });
         }
         let nodes: Vec<_> = values.iter().map(|value| value.node).collect();
-        if !paths.is_empty() && paths.iter().enumerate().all(|(idx, path)| matches!(*path, [Step::Tuple(pos) | Step::Case(pos) | Step::List(pos)] if *pos == idx)) {
+        // Columns of each argument in order can later zip back to the source
+        let in_order = decomp.iter().enumerate().all(|(idx, steps)| {
+            matches!(
+                steps.as_slice(),
+                [Step::Tuple(pos) | Step::Case(pos) | Step::List(pos)] if *pos == idx
+            )
+        });
+        if !decomp.is_empty() && in_order {
             self.zipper.origins.insert(nodes.clone(), source);
         }
-        self.zipper.unzips.insert(
-            UnzipKey { source, paths: paths.iter().map(|path| path.to_vec()).collect() },
-            nodes,
-        );
+        self.zipper
+            .unzips
+            .insert(UnzipKey { source, decomp: decomp.clone() }, nodes);
         Ok(values)
     }
 }
@@ -234,7 +237,7 @@ impl ValueArena {
         let node = self.intern_kind(arena_mixop, ValueKind::List(elems))?;
         let value = Value { node, note: note_list, span };
         // Unzipping the new list yields the input columns
-        let paths = (0..columns.len())
+        let decomp = (0..columns.len())
             .map(|idx| {
                 vec![match shape {
                     Shape::Tuple => Step::Tuple(idx),
@@ -245,7 +248,7 @@ impl ValueArena {
             .collect();
         self.zipper
             .unzips
-            .insert(UnzipKey { source: node, paths }, columns.to_vec());
+            .insert(UnzipKey { source: node, decomp }, columns.to_vec());
         self.zipper
             .zips
             .insert(ZipKey { shape, note_elem, note_list, columns: columns.to_vec() }, value);

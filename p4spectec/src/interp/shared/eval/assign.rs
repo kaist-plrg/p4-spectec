@@ -15,7 +15,7 @@ use crate::lang::{
     common::source::Span,
     data::{
         arena::Arena,
-        value::flat::{self as value, Value, ValueKind},
+        value::flat::{self as value, Value, ValueKind, zipper::Decomp},
         var::IdSlot,
     },
     traits::at::At,
@@ -304,38 +304,42 @@ fn assign_iter_list_exp<Ctx: WriteContext>(
     exp_iter: &ast::ExpIter,
     value: Value,
 ) -> Backtrack<()> {
-    let span = &exp.span;
-    let vars_outer = iterate_vars(&exp_iter.vars);
-    // Fixed patterns unzip the list into columns directly
-    if let Some(values) = super::zipper::unzip(arena, exp_inner, &exp_iter.vars, &vars_outer, value)
-    {
-        let values = unwrap_from_result!(values, span);
-        for (var_outer, value) in vars_outer.iter().zip(values) {
-            ctx.add_value_at_slot(var_outer.slot, value);
-        }
-        return ok!(());
+    // A fixed pattern unzips the list; any other assigns element by element
+    match super::zipper::decompose(exp_inner, &exp_iter.vars) {
+        Some(decomp) => assign_iter_list_exp_with_decomp(arena, ctx, exp, exp_iter, &decomp, value),
+        None => assign_iter_list_exp_without_decomp(arena, ctx, exp, exp_inner, exp_iter, value),
     }
-    // Nested iterations and constructed tails keep isolated element scopes
-    let values_by_var = unwrap!(assign_elems(arena, ctx, exp_inner, &exp_iter.vars, value));
-    // Each variable collects its per-element values into a list
-    for (var_outer, values) in vars_outer.iter().zip(values_by_var) {
-        let typ = Rc::clone(&var_outer.typ);
-        let value_sub =
-            unwrap_from_result!(value::make::list(arena, typ, values, Span::default()), span);
-        ctx.add_value_at_slot(var_outer.slot, value_sub);
+}
+
+/// Binds each variable outward to its column unzipped from the list.
+fn assign_iter_list_exp_with_decomp<Ctx: WriteContext>(
+    arena: &mut Arena,
+    ctx: &mut Ctx,
+    exp: &ast::Exp,
+    exp_iter: &ast::ExpIter,
+    decomp: &Decomp,
+    value: Value,
+) -> Backtrack<()> {
+    let typs = exp_iter.vars.iter().map(|var| Rc::clone(&var.outer().typ));
+    let values =
+        unwrap_from_result!(arena.value.unzip(&arena.mixop, value.node, decomp, typs), &exp.span);
+    for (var, value) in exp_iter.vars.iter().zip(values) {
+        ctx.add_value_at_slot(var.outer().slot, value);
     }
     ok!(())
 }
 
 /// Assigns each list element in a cleared copy of the context,
-/// returning every variable's values in element order.
-fn assign_elems<Ctx: WriteContext>(
+/// then binds every variable's values as a list one iteration outward.
+fn assign_iter_list_exp_without_decomp<Ctx: WriteContext>(
     arena: &mut Arena,
-    ctx: &Ctx,
+    ctx: &mut Ctx,
+    exp: &ast::Exp,
     exp_inner: &ast::Exp,
-    vars: &[ast::Var],
+    exp_iter: &ast::ExpIter,
     value: Value,
-) -> Backtrack<Vec<Vec<Value>>> {
+) -> Backtrack<()> {
+    let vars = &exp_iter.vars;
     let values = value::get::list(arena, &value)
         .expect("iteration assignment value must be a list")
         .to_vec();
@@ -355,7 +359,14 @@ fn assign_elems<Ctx: WriteContext>(
             );
         }
     }
-    ok!(values_by_var)
+    // Each variable collects its per-element values into a list
+    for (var, values) in vars.iter().zip(values_by_var) {
+        let typ = Rc::clone(&var.outer().typ);
+        let value =
+            unwrap_from_result!(value::make::list(arena, typ, values, Span::default()), &exp.span);
+        ctx.add_value_at_slot(var.outer().slot, value);
+    }
+    ok!(())
 }
 
 // = Argument assignment
