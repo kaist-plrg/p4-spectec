@@ -85,12 +85,12 @@ impl Hash for ValueKind {
 }
 
 /// Hashes all three exact handles in two machine-word writes.
-pub(crate) fn exact_value<H: Hasher>(value: &Value, hasher: &mut H) {
+fn exact_value<H: Hasher>(value: &Value, hasher: &mut H) {
     hasher.write_u64(u64::from(value.node.index()) | (u64::from(value.note.index()) << 32));
     value.span.hash(hasher);
 }
 
-pub(crate) fn exact_values<H: Hasher>(values: &[Value], hasher: &mut H) {
+fn exact_values<H: Hasher>(values: &[Value], hasher: &mut H) {
     values.len().hash(hasher);
     for value in values {
         exact_value(value, hasher);

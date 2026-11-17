@@ -17,7 +17,7 @@ use crate::lang::{
 };
 
 use super::super::ValueError;
-use super::{Value, ValueKind, projection::Shape};
+use super::{Value, ValueKind};
 
 // = Arena storage
 
@@ -70,29 +70,6 @@ impl ValueArena {
         let note = self.intern_typ(typ)?;
         let span = self.intern_span(span)?;
         Ok(Value { node, note, span })
-    }
-
-    /// Constructs a composite, allocating children only for a new exact body.
-    pub(crate) fn composite(
-        &mut self,
-        arena_mixop: &MixopArena,
-        shape: Shape,
-        typ: Rc<TypKind>,
-        values: &[Value],
-    ) -> Result<Value, ValueError> {
-        let query = super::composite::Composite { shape, values };
-        let node = self
-            .values
-            .intern_with(arena_mixop, &query, || match shape {
-                Shape::Tuple => ValueKind::Tuple(values.to_vec()),
-                Shape::List => ValueKind::List(values.to_vec()),
-                Shape::Case(mixop) => ValueKind::Case(
-                    super::ValueCase::new(arena_mixop, mixop, values.to_vec())
-                        .expect("prepared constructor arity"),
-                ),
-            })?;
-        let note = self.intern_typ(typ)?;
-        Ok(Value { node, note, span: Self::span_default() })
     }
 
     /// Interns a body using the canonical identities of its mixops.

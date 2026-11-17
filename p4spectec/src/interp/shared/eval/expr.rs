@@ -13,7 +13,7 @@ use std::{
 use crate::lang::{
     common::source::Span,
     data::{
-        value::flat::{self as value, Value, ValueKind, projection::Shape},
+        value::flat::{self as value, Value, ValueKind},
         var::IdSlot,
     },
     traits::print::Print,
@@ -29,7 +29,7 @@ use crate::runtime::{
 use crate::runner::{Extern, Interface, RunnerContext};
 
 use crate::interp::shared::{
-    backtrack::{Backtrack, WithFrame, ok, unwrap, unwrap_from_result},
+    backtrack::{Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
     util::find_slot_of_exp,
 };
 
@@ -253,7 +253,12 @@ fn eval_tuple_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: E
     typ: &Rc<ast::TypKind>,
     exps: &[ast::Exp],
 ) -> Backtrack<Value> {
-    eval_composite(runner_ctx, ctx, span, typ, Shape::Tuple, exps)
+    let values = unwrap!(eval_exps(runner_ctx, ctx, exps));
+    let value = unwrap_from_result!(
+        value::make::tuple(runner_ctx.arena_mut(), typ.clone(), values, Span::default()),
+        span
+    );
+    ok!(value)
 }
 
 // - Case expression
@@ -266,7 +271,23 @@ fn eval_case_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     typ: &Rc<ast::TypKind>,
     not_exp: &ast::NotExp,
 ) -> Backtrack<Value> {
-    eval_composite(runner_ctx, ctx, span, typ, Shape::Case(*not_exp.mixop()), not_exp.args())
+    // Evaluate and rebuild in one traversal, preserving early failure and order
+    let eval_exp_arg = |exp: &ast::Exp| match eval_exp(runner_ctx, ctx, exp) {
+        ok!(value) => Ok(value),
+        fatal!(errors) => Err(fatal!(errors)),
+        unmatch!(errors) => Err(unmatch!(errors)),
+    };
+    let case = match not_exp.try_map(eval_exp_arg) {
+        Ok(case) => case,
+        Err(result) => return result,
+    };
+    // The prepared shape already belongs to the arena
+    let kind = ValueKind::Case(case);
+    let value = unwrap_from_result!(
+        Value::new(runner_ctx.arena_mut(), kind, typ.clone(), Span::default()),
+        span
+    );
+    ok!(value)
 }
 
 // - Struct expression
@@ -321,24 +342,9 @@ fn eval_list_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     typ: &Rc<ast::TypKind>,
     exps: &[ast::Exp],
 ) -> Backtrack<Value> {
-    eval_composite(runner_ctx, ctx, span, typ, Shape::List, exps)
-}
-
-/// Evaluates a constructor's children before querying exact storage.
-fn eval_composite<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
-    runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    ctx: &Interp::Context<'global>,
-    span: &Span,
-    typ: &Rc<ast::TypKind>,
-    shape: Shape,
-    exps: &[ast::Exp],
-) -> Backtrack<Value> {
     let values = unwrap!(eval_exps(runner_ctx, ctx, exps));
-    let arena = runner_ctx.arena_mut();
     let value = unwrap_from_result!(
-        arena
-            .value
-            .composite(&arena.mixop, shape, typ.clone(), &values),
+        value::make::list(runner_ctx.arena_mut(), typ.clone(), values, Span::default()),
         span
     );
     ok!(value)

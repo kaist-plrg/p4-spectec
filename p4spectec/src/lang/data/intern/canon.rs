@@ -15,7 +15,7 @@ use std::{
 };
 
 use foldhash::fast::RandomState;
-use hashbrown::{Equivalent, HashTable};
+use hashbrown::HashTable;
 
 use super::{idx::Interned, simple::Interner};
 
@@ -153,37 +153,10 @@ impl<T: Eq + Hash> CanonInterner<T> {
     where
         T: CanonEq<Deps> + CanonHash<Deps>,
     {
-        let id = self.storage.intern(item)?;
-        self.assign_canon(deps, id);
-        Ok(id)
-    }
-
-    /// Interns an item equal to `query`, building it with `make` only when it is new,
-    /// then assigns the canonical identity.
-    ///
-    /// The same requirements as `intern` apply.
-    pub(crate) fn intern_with<Deps: ?Sized, Q: Hash + Equivalent<T>>(
-        &mut self,
-        deps: &Deps,
-        query: &Q,
-        make: impl FnOnce() -> T,
-    ) -> Result<Interned<T>, TryFromIntError>
-    where
-        T: CanonEq<Deps> + CanonHash<Deps>,
-    {
-        let id = self.storage.intern_with(query, make)?;
-        self.assign_canon(deps, id);
-        Ok(id)
-    }
-
-    /// Assigns the canonical identity of a newly stored item.
-    fn assign_canon<Deps: ?Sized>(&mut self, deps: &Deps, id: Interned<T>)
-    where
-        T: CanonEq<Deps> + CanonHash<Deps>,
-    {
         // An exact duplicate already has its canonical id
+        let id = self.storage.intern(item)?;
         if (id.index() as usize) < self.canon.len() {
-            return;
+            return Ok(id);
         }
         // Look for an existing class with the same meaning
         let item = self.storage.get(id);
@@ -205,5 +178,6 @@ impl<T: Eq + Hash> CanonInterner<T> {
                 |entry| entry.hash,
             );
         }
+        Ok(id)
     }
 }

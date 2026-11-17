@@ -29,11 +29,10 @@ use self::external::{DecodeContext, EncodeContext};
 
 mod arena;
 mod cmp;
-mod composite;
 mod convert;
 pub mod external;
 pub mod get;
-pub(crate) mod hash;
+mod hash;
 pub mod make;
 mod print;
 pub(crate) mod projection;
