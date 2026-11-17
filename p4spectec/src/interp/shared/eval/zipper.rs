@@ -1,21 +1,16 @@
-//! Decomposition, unzipping, and zipping of iterations over fixed positions
+//! Decomposition and composition of iterations over fixed positions
 //!
 //! `decompose` finds the steps from an element of `(a, b)*` to `a` and `b`,
 //! so that `(a, b)* <- xs` can unzip `xs` into the columns `a*` and `b*`;
-//! `zip` evaluates `(a, b)*` by building the elements from those columns.
+//! `compose` finds the constructor and argument variables of `(a, b)*`,
+//! so that evaluating it can zip the columns `a*` and `b*` into elements.
 //! Both apply only when every variable sits at a fixed position in the element,
 //! so no context is built per element.
 //! Patterns and expressions that compute values or nest iterations
 //! take the general path in `assign` and `iter`.
 
 use crate::interp::shared::util::find_slot_of_exp;
-use crate::lang::data::{
-    arena::Arena,
-    value::flat::{
-        Value,
-        zipper::{Decomp, Step},
-    },
-};
+use crate::lang::data::value::flat::zipper::{Decomp, Shape, Step};
 use crate::lang::il::prepared as ast;
 
 /// Decomposes a fixed pattern into steps to each variable, in `vars` order,
@@ -79,58 +74,39 @@ fn decompose_inner(
     }
 }
 
-/// Zips the columns of a fixed constructor's arguments into a list,
-/// or returns `None` for the general path.
-pub(super) fn zip(
-    arena: &mut Arena,
-    ctx: &impl crate::interp::shared::context::IterContext,
-    exp: &ast::Exp,
-    exp_inner: &ast::Exp,
-    exp_iter: &ast::ExpIter,
-) -> Option<crate::interp::shared::backtrack::Backtrack<Value>> {
-    use crate::interp::shared::backtrack::{ok, unwrap_from_result};
-    use crate::interp::shared::util::iterate_vars;
-    use crate::lang::data::value::flat::zipper::Shape;
+/// The constructor of every zipped element and the variable of each argument.
+pub(super) struct Comp {
+    /// The constructor.
+    pub(super) shape: Shape,
+    /// Per argument, in order, the index of its variable in the iteration.
+    pub(super) idxs: Vec<usize>,
+}
+
+/// Composes a list iteration whose body constructs from all its variables,
+/// or returns `None` when the body computes anything else.
+pub(super) fn compose(exp_inner: &ast::Exp, exp_iter: &ast::ExpIter) -> Option<Comp> {
+    // Only a list iteration zips its columns
     if exp_iter.iter != ast::Iter::List {
         return None;
     }
+    // The body must be a tuple, list, or case constructor
     let (shape, exps) = match &exp_inner.node {
         ast::ExpKind::Tuple(exps) => (Shape::Tuple, exps.as_slice()),
         ast::ExpKind::List(exps) => (Shape::List, exps.as_slice()),
         ast::ExpKind::Case(not_exp) => (Shape::Case(*not_exp.mixop()), not_exp.args()),
         _ => return None,
     };
-    // Each argument must be one iterated input
-    let indices: Vec<usize> = exps
+    // Each argument must be one iterated variable
+    let idxs: Vec<usize> = exps
         .iter()
         .map(|exp| {
             let slot = find_slot_of_exp(exp)?;
             exp_iter.vars.iter().position(|var| var.slot == slot)
         })
         .collect::<Option<_>>()?;
-    // Every iteration input must be accounted for, including length checks
-    if (0..exp_iter.vars.len()).any(|idx| !indices.contains(&idx)) {
+    // Every variable must be an argument, so that zipping checks every length
+    if (0..exp_iter.vars.len()).any(|idx| !idxs.contains(&idx)) {
         return None;
     }
-    Some((|| {
-        // Inputs must be lists of one length
-        let vars_outer = iterate_vars(&exp_iter.vars);
-        unwrap_from_result!(ctx.find_list_values_by_var(arena, &vars_outer), &exp.span);
-        let columns: Vec<_> = indices
-            .iter()
-            .map(|idx| {
-                ctx.find_value_at_slot(vars_outer[*idx].slot)
-                    .expect("value must be bound")
-                    .node
-            })
-            .collect();
-        let value = arena.value.zip(
-            &arena.mixop,
-            shape,
-            exp_inner.note.clone(),
-            exp.note.clone(),
-            &columns,
-        );
-        ok!(unwrap_from_result!(value, &exp.span))
-    })())
+    Some(Comp { shape, idxs })
 }

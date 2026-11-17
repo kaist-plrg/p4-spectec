@@ -30,12 +30,12 @@ use crate::runner::{Extern, Interface, RunnerContext};
 
 use crate::interp::shared::{
     backtrack::{Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
-    util::find_slot_of_exp,
+    util::{find_slot_of_exp, iterate_vars},
 };
 
-use super::super::context::ReadContext;
+use super::super::context::{IterContext, ReadContext};
 
-use super::{Invoker, arg::eval_args, iter, ops, path::eval_update_path};
+use super::{Invoker, arg::eval_args, iter, ops, path::eval_update_path, zipper::Comp};
 
 // = Expression evaluation
 
@@ -612,19 +612,67 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     exp_inner: &ast::Exp,
     exp_iter: &ast::ExpIter,
 ) -> Backtrack<Value> {
-    let span = &exp.span;
-    let typ = &exp.note;
     // `x*` as an expression is just the bound value
     if let Some(slot) = find_slot_of_exp(exp) {
         return ok!(*ctx.find_value_at_slot(slot).expect("value must be bound"));
     }
-    // Fixed constructors zip the input columns directly
-    if let Some(result) = super::zipper::zip(runner_ctx.arena_mut(), ctx, exp, exp_inner, exp_iter)
-    {
-        return result;
+    // A constructor over all the variables zips them; any other body is mapped
+    match super::zipper::compose(exp_inner, exp_iter) {
+        Some(comp) => eval_iter_exp_with_comp(runner_ctx, ctx, exp, exp_inner, exp_iter, &comp),
+        None => eval_iter_exp_without_comp(runner_ctx, ctx, exp, exp_inner, exp_iter),
     }
-    // Otherwise map the body over the iterated variables
-    iter::map(runner_ctx, ctx, span, typ, exp_iter, |runner_ctx, ctx_sub| {
+}
+
+/// Zips the variables' columns into the list of constructed elements.
+fn eval_iter_exp_with_comp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
+    runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
+    ctx: &Interp::Context<'global>,
+    exp: &ast::Exp,
+    exp_inner: &ast::Exp,
+    exp_iter: &ast::ExpIter,
+    comp: &Comp,
+) -> Backtrack<Value> {
+    let arena = runner_ctx.arena_mut();
+    // The variables must be lists of one length
+    let vars_outer = iterate_vars(&exp_iter.vars);
+    unwrap_from_result!(ctx.find_list_values_by_var(arena, &vars_outer), &exp.span);
+    // Each argument takes its variable's column
+    let columns: Vec<_> = comp
+        .idxs
+        .iter()
+        .map(|idx| {
+            ctx.find_value_at_slot(vars_outer[*idx].slot)
+                .expect("value must be bound")
+                .node
+        })
+        .collect();
+    let value = unwrap_from_result!(
+        arena.value.zip(
+            &arena.mixop,
+            comp.shape,
+            exp_inner.note.clone(),
+            exp.note.clone(),
+            &columns
+        ),
+        &exp.span
+    );
+    ok!(value)
+}
+
+/// Evaluates the body once per element of the iterated variables.
+fn eval_iter_exp_without_comp<
+    'global,
+    Interp: Invoker<Iface, Ext>,
+    Iface: Interface,
+    Ext: Extern,
+>(
+    runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
+    ctx: &Interp::Context<'global>,
+    exp: &ast::Exp,
+    exp_inner: &ast::Exp,
+    exp_iter: &ast::ExpIter,
+) -> Backtrack<Value> {
+    iter::map(runner_ctx, ctx, &exp.span, &exp.note, exp_iter, |runner_ctx, ctx_sub| {
         eval_exp(runner_ctx, ctx_sub, exp_inner)
     })
 }
