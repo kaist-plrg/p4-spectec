@@ -7,13 +7,12 @@
 //! while `(x, y)* <- [...]` assigns each row in a fresh sub-context
 //! and gathers the rows into `x*` and `y*`.
 
-use std::borrow::Borrow;
+use std::{borrow::Borrow, rc::Rc};
 
 use crate::lang::{
     common::source::Span,
     data::{
         arena::Arena,
-        typ,
         value::flat::{self as value, Value, ValueKind},
         var::IdSlot,
     },
@@ -240,13 +239,13 @@ fn assign_iter_exp<Ctx: WriteContext>(
     value: Value,
 ) -> Backtrack<Ctx> {
     // A bare iterated variable binds as a whole
-    if let Some(slot) = find_slot_of_exp(&ctx, exp) {
+    if let Some(slot) = find_slot_of_exp(exp) {
         ctx.add_value_at_slot(slot, value);
         return ok!(ctx);
     }
     // Otherwise assign each element in a sub-context and gather per variable
     let span = &exp.span;
-    let vars_outer = iterate_vars(&ctx, &exp_iter.vars, exp_iter.iter);
+    let vars_outer = iterate_vars(&exp_iter.vars);
     match exp_iter.iter {
         // Option: assign the payload once, or bind every variable to none
         ast::Iter::Opt => {
@@ -257,14 +256,14 @@ fn assign_iter_exp<Ctx: WriteContext>(
                 None => None,
             };
             for (var, var_outer) in exp_iter.vars.iter().zip(&vars_outer) {
-                let typ = typ::make::iterate(var_outer.var.typ.clone(), &var_outer.var.iters);
+                let typ = Rc::clone(&var_outer.typ);
                 let value_opt = ctx_sub.as_ref().map(|ctx_sub| {
                     *ctx_sub
                         .find_value_at_slot(var.slot)
                         .expect("value must be bound")
                 });
                 let value = unwrap_from_result!(
-                    value::make::opt(arena, typ.node.into(), value_opt, Span::default()),
+                    value::make::opt(arena, typ, value_opt, Span::default()),
                     span
                 );
                 ctx.add_value_at_slot(var_outer.slot, value);
@@ -284,7 +283,7 @@ fn assign_iter_exp<Ctx: WriteContext>(
             }
             // Each variable collects its per-row values into a list
             for (var, var_outer) in exp_iter.vars.iter().zip(&vars_outer) {
-                let typ = typ::make::iterate(var_outer.var.typ.clone(), &var_outer.var.iters);
+                let typ = Rc::clone(&var_outer.typ);
                 let mut values = Vec::with_capacity(ctxs.len());
                 for ctx_sub in &ctxs {
                     let value = ctx_sub
@@ -293,7 +292,7 @@ fn assign_iter_exp<Ctx: WriteContext>(
                     values.push(*value);
                 }
                 let value_sub = unwrap_from_result!(
-                    value::make::list(arena, typ.node.into(), values, Span::default()),
+                    value::make::list(arena, typ, values, Span::default()),
                     span
                 );
                 ctx.add_value_at_slot(var_outer.slot, value_sub);

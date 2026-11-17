@@ -3,10 +3,11 @@
 //! Preparation resolves every name of a callable to a `SlotIdx` in its frame;
 //! the slot is execution detail, so equality and syntax comparison ignore it.
 
-use std::fmt;
+use std::{fmt, rc::Rc};
 
 use crate::lang::{
     common::Id,
+    data::typ::{self, TypKind},
     traits::{
         eq::SyntaxEq,
         print::{Print, Printer},
@@ -52,7 +53,31 @@ pub struct VarSlot {
     /// Its frame slot.
     pub slot: SlotIdx,
     /// The variable as written.
-    pub var: Var,
+    pub var: Rc<Var>,
+    /// Its type with the complete iteration path applied once.
+    pub typ: Rc<TypKind>,
+    /// The variable one iteration outward, prepared where this variable is iterated.
+    outer: Option<Rc<VarSlot>>,
+}
+
+impl VarSlot {
+    /// Prepares a variable's type under its iteration path.
+    pub fn new(slot: SlotIdx, var: Var) -> Self {
+        let typ = typ::make::iterate(var.typ.clone(), &var.iters).node.into();
+        Self { slot, var: Rc::new(var), typ, outer: None }
+    }
+
+    /// The variable one iteration outward, prepared with its iteration.
+    pub fn outer(&self) -> &VarSlot {
+        self.outer
+            .as_deref()
+            .expect("iterated variable is prepared with its outer variable")
+    }
+
+    /// Records the variable one iteration outward.
+    pub(crate) fn set_outer(&mut self, var_outer: VarSlot) {
+        self.outer = Some(Rc::new(var_outer));
+    }
 }
 
 impl PartialEq for VarSlot {

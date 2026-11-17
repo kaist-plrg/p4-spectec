@@ -3,11 +3,20 @@
 //! `PhraseMap` is a persistent ordered map over `ByKey`;
 //! cloning shares structure, so environments can be forked cheaply.
 //! `IdMap` keys by identifier and looks up by bare name.
+//! `FrozenPhraseMap` is a hash map written until frozen and read after.
+//! `MicroPhraseMap` is a shared slice for one or two bindings.
 
+use std::{mem, rc::Rc};
+
+use foldhash::fast::RandomState;
+use hashbrown::HashMap;
 use imbl::{GenericOrdMap, shared_ptr::RcK};
 use thiserror::Error;
 
-use crate::lang::{common::Id, traits::cmp::SyntaxCmp};
+use crate::lang::{
+    common::Id,
+    traits::{cmp::SyntaxCmp, eq::SyntaxEq},
+};
 
 use super::{collections::ByKey, set::PhraseSet};
 
@@ -163,3 +172,112 @@ impl<K: SyntaxCmp + Clone, V: Clone> FromIterator<(K, V)> for PhraseMap<K, V> {
 
 /// Map keyed by source-annotated identifiers.
 pub type IdMap<V> = PhraseMap<Id, V>;
+
+/// A hash map that compares keys through `SyntaxCmp`, written until frozen and read after.
+#[derive(Clone, Debug)]
+pub struct FrozenPhraseMap<K: SyntaxCmp, V> {
+    /// Bindings hashed by key syntax.
+    entries: HashMap<ByKey<K>, V, RandomState>,
+    /// Whether insertion has ended.
+    frozen: bool,
+}
+
+impl<K: SyntaxCmp, V> FrozenPhraseMap<K, V> {
+    /// Constructs an empty map open to insertion.
+    pub fn new() -> Self {
+        Self { entries: HashMap::default(), frozen: false }
+    }
+
+    /// Ends insertion.
+    pub fn freeze(&mut self) {
+        self.frozen = true;
+    }
+}
+
+impl<V> FrozenPhraseMap<Id, V> {
+    /// Returns the value for an equivalent key, panicking until frozen.
+    pub fn get(&self, key: &Id) -> Option<&V> {
+        assert!(self.frozen, "unfrozen map cannot look up {}", key.node);
+        self.entries.get(key.node.as_ref())
+    }
+
+    /// Returns whether an equivalent key is present, panicking until frozen.
+    pub fn contains_key(&self, key: &Id) -> bool {
+        assert!(self.frozen, "unfrozen map cannot look up {}", key.node);
+        self.entries.contains_key(key.node.as_ref())
+    }
+
+    /// Inserts a binding and returns the previous value, panicking once frozen.
+    pub fn insert(&mut self, key: Id, value: V) -> Option<V> {
+        assert!(!self.frozen, "frozen map cannot bind {}", key.node);
+        self.entries.insert(ByKey(key), value)
+    }
+}
+
+impl<K: SyntaxCmp, V> Default for FrozenPhraseMap<K, V> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Hash map keyed by source-annotated identifiers.
+pub type FrozenIdMap<V> = FrozenPhraseMap<Id, V>;
+
+/// A map of a few bindings that compares keys through `SyntaxEq`, shared when cloned.
+///
+/// Lookup scans the bindings and insertion copies them, so it suits one or two bindings.
+#[derive(Clone, Debug)]
+pub struct MicroPhraseMap<K: SyntaxEq, V> {
+    /// Bindings in insertion order, absent until the first insertion.
+    entries: Option<Rc<[(K, V)]>>,
+}
+
+impl<K: SyntaxEq, V> MicroPhraseMap<K, V> {
+    /// Constructs an empty map.
+    pub fn new() -> Self {
+        Self { entries: None }
+    }
+
+    /// Returns the value for an equivalent key.
+    pub fn get(&self, key: &K) -> Option<&V> {
+        self.entries
+            .as_ref()?
+            .iter()
+            .find_map(|(key_entry, value)| key_entry.syntax_eq(key).then_some(value))
+    }
+
+    /// Returns whether an equivalent key is present.
+    pub fn contains_key(&self, key: &K) -> bool {
+        self.get(key).is_some()
+    }
+
+    /// Inserts a binding and returns the previous value.
+    pub fn insert(&mut self, key: K, value: V) -> Option<V>
+    where
+        K: Clone,
+        V: Clone,
+    {
+        let mut entries = self.entries.as_deref().unwrap_or_default().to_vec();
+        let value_prev = match entries
+            .iter_mut()
+            .find(|(key_entry, _)| key_entry.syntax_eq(&key))
+        {
+            Some((_, value_entry)) => Some(mem::replace(value_entry, value)),
+            None => {
+                entries.push((key, value));
+                None
+            }
+        };
+        self.entries = Some(entries.into());
+        value_prev
+    }
+}
+
+impl<K: SyntaxEq, V> Default for MicroPhraseMap<K, V> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Map of a few bindings keyed by source-annotated identifiers.
+pub type MicroIdMap<V> = MicroPhraseMap<Id, V>;

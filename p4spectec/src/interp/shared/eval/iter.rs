@@ -43,7 +43,7 @@ where
 {
     // Slots of the variables one iteration outward
     let vars = &exp_iter.vars;
-    let vars_outer = iterate_vars(ctx, vars, exp_iter.iter);
+    let vars_outer = iterate_vars(vars);
     let value = match exp_iter.iter {
         // Option: evaluate once with the payloads, or produce none
         ast::Iter::Opt => {
@@ -103,8 +103,8 @@ where
 {
     let vars_bound = &prem_iter.vars_bound;
     let vars_bind = &prem_iter.vars_bind;
-    let vars_bound_outer = iterate_vars(&ctx, vars_bound, prem_iter.iter);
-    let vars_bind_outer = iterate_vars(&ctx, vars_bind, prem_iter.iter);
+    let vars_bound_outer = iterate_vars(vars_bound);
+    let vars_bind_outer = iterate_vars(vars_bind);
     let mut values_bind_by_var = vec![Vec::new(); vars_bind.len()];
     match prem_iter.iter {
         // Option: run once when inputs are present; outputs become options

@@ -575,7 +575,7 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     let span = &exp.span;
     let typ = &exp.note;
     // `x*` as an expression is just the bound value
-    if let Some(slot) = find_slot_of_exp(ctx, exp) {
+    if let Some(slot) = find_slot_of_exp(exp) {
         return ok!(*ctx.find_value_at_slot(slot).expect("value must be bound"));
     }
     // Otherwise map the body over the iterated variables

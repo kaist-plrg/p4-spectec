@@ -48,6 +48,7 @@ impl SpecEnv {
         let mut loaded = Self::new();
         let tdenv = loaded.load_typdefs(arena_mixop, &spec);
         loaded.load_callables(arena_mixop, &tdenv, det, tco, spec);
+        loaded.freeze();
         Ok(loaded)
     }
 
