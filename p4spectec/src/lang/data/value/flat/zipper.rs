@@ -150,10 +150,11 @@ impl ValueArena {
         typs: impl Iterator<Item = Rc<TypKind>>,
     ) -> Result<Vec<Value>, ValueError> {
         let span = Self::span_default();
+        // Type the outer values of the variables: nat*, nat*
         let notes: Vec<_> = typs
             .map(|typ| self.intern_typ(typ))
             .collect::<Result<_, _>>()?;
-        // A cached unzip returns its outer values
+        // A cached unzip returns its outer values, typed for this call
         if let Some(nodes_outer) = self.zipper.unzips.get(&UnzipQuery { source, decomp }) {
             return Ok(nodes_outer
                 .iter()
@@ -161,7 +162,7 @@ impl ValueArena {
                 .map(|(node, note)| Value { node: *node, note: *note, span })
                 .collect());
         }
-        // Each variable follows its steps into every element
+        // Follow each variable's steps into every element: 1, 3 and 2, 4
         let ValueKind::List(elems) = self.kind(source) else {
             unreachable!("unzipped source must be a list");
         };
@@ -174,13 +175,16 @@ impl ValueArena {
                     .collect()
             })
             .collect();
+        // Store each variable's values as one list: [1, 3] and [2, 4]
         let mut nodes_outer = Vec::with_capacity(values_by_var.len());
         for values in values_by_var {
             nodes_outer.push(self.intern_kind(arena_mixop, ValueKind::List(values))?);
         }
+        // Remember the lists without their types
         self.zipper
             .unzips
             .insert(UnzipKey { source, decomp: decomp.clone() }, nodes_outer.clone());
+        // Type each list for this call: [1, 3] : nat*, [2, 4] : nat*
         Ok(nodes_outer
             .into_iter()
             .zip(notes)
@@ -231,26 +235,29 @@ impl ValueArena {
         values_outer: &[Value],
     ) -> Result<Value, ValueError> {
         let shape = comp.shape;
+        // Type the elements and the list: (nat, nat) and (nat, nat)*
         let note_elem = self.intern_typ(typ_elem)?;
         let note_list = self.intern_typ(typ_list)?;
-        // Each argument takes its variable's outer value
+        // Each argument takes its variable's outer value: [2, 4], [1, 3]
         let nodes_arg: Vec<_> = comp
             .idxs
             .iter()
             .map(|idx| values_outer[*idx].node)
             .collect();
-        // A cached zip reuses its list, or the elements are built
+        // Reuse a cached list or build its elements: [(2, 1), (4, 3)]
         let query = ZipQuery { shape, note_elem, nodes_arg: &nodes_arg };
         let node = match self.zipper.zips.get(&query) {
             Some(node) => *node,
             None => {
                 let node = self.zip_elems(arena_mixop, shape, note_elem, &nodes_arg)?;
+                // Remember the list without its type
                 self.zipper
                     .zips
                     .insert(ZipKey { shape, note_elem, nodes_arg }, node);
                 node
             }
         };
+        // Type the list for this call: [(2, 1), (4, 3)] : (nat, nat)*
         Ok(Value { node, note: note_list, span: Self::span_default() })
     }
 
@@ -269,10 +276,11 @@ impl ValueArena {
         nodes_arg: &[Interned<ValueKind>],
     ) -> Result<Interned<ValueKind>, ValueError> {
         let span = Self::span_default();
+        // Every outer value has the same length: 2
         let len = self.len_outer(nodes_arg);
         let mut elems = Vec::with_capacity(len);
         for idx in 0..len {
-            // The entries at this index become the arguments
+            // The entries at this index become the arguments: 2 and 1 at 0
             let values: Vec<_> = nodes_arg
                 .iter()
                 .map(|node_arg| {
@@ -282,6 +290,7 @@ impl ValueArena {
                     values[idx]
                 })
                 .collect();
+            // Build the element by the constructor: (2, 1) by Tuple
             let kind = match shape {
                 Shape::Tuple => ValueKind::Tuple(values),
                 Shape::List => ValueKind::List(values),
@@ -292,6 +301,7 @@ impl ValueArena {
             let node = self.intern_kind(arena_mixop, kind)?;
             elems.push(Value { node, note: note_elem, span });
         }
+        // Store the elements as one list: [(2, 1), (4, 3)]
         let node = self.intern_kind(arena_mixop, ValueKind::List(elems))?;
         Ok(node)
     }
