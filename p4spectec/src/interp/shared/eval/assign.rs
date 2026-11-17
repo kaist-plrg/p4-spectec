@@ -248,14 +248,14 @@ fn assign_iter_exp<Ctx: WriteContext>(
     // Otherwise assign each element and gather per variable
     match exp_iter.iter {
         // Option: the payload once, or none for every variable
-        ast::Iter::Opt => assign_opt_iter_exp(arena, ctx, exp, exp_inner, exp_iter, value),
+        ast::Iter::Opt => assign_iter_opt_exp(arena, ctx, exp, exp_inner, exp_iter, value),
         // List: one row per element
-        ast::Iter::List => assign_list_iter_exp(arena, ctx, exp, exp_inner, exp_iter, value),
+        ast::Iter::List => assign_iter_list_exp(arena, ctx, exp, exp_inner, exp_iter, value),
     }
 }
 
 /// Assigns an optional payload in a sub-context, or binds every variable to none.
-fn assign_opt_iter_exp<Ctx: WriteContext>(
+fn assign_iter_opt_exp<Ctx: WriteContext>(
     arena: &mut Arena,
     ctx: &mut Ctx,
     exp: &ast::Exp,
@@ -292,7 +292,7 @@ fn assign_opt_iter_exp<Ctx: WriteContext>(
 }
 
 /// Assigns each list element as one row and gathers the rows per variable.
-fn assign_list_iter_exp<Ctx: WriteContext>(
+fn assign_iter_list_exp<Ctx: WriteContext>(
     arena: &mut Arena,
     ctx: &mut Ctx,
     exp: &ast::Exp,
