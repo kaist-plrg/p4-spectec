@@ -2,6 +2,8 @@
 //!
 //! STF names a table qualified, `MyIngress.t`, or bare, `t`;
 //! `find_table` tries the qualified object first.
+//! Lookups consider only table objects,
+//! since a table may share its control-plane name with an extern.
 //! Adding an entry goes through the specification's `TableObject_add_entry`,
 //! retrying with the table's own key names when the STF key names do not match.
 
@@ -70,11 +72,11 @@ where
 {
     let (value_unqualified, value_qualified) = table_name(ctx.arena_mut(), value_name)?;
     if let Some(value_id) = value_qualified
-        && let Some(value_table) = func::find_object_qualified_e(ctx, value_arch, value_id)?
+        && let Some(value_table) = func::find_table_qualified_e(ctx, value_arch, value_id)?
     {
         return Ok(value_table);
     }
-    func::find_object_unqualified_e(ctx, value_arch, value_unqualified)?
+    func::find_table_unqualified_e(ctx, value_arch, value_unqualified)?
         .ok_or_else(|| error::table_undefined("table not found".to_owned()).into())
 }
 
@@ -92,12 +94,12 @@ where
 {
     let (value_unqualified, value_qualified) = table_name(ctx.arena_mut(), value_name)?;
     if let Some(value_id) = value_qualified
-        && func::find_object_qualified_e(ctx, value_arch, value_id)?.is_some()
+        && func::find_table_qualified_e(ctx, value_arch, value_id)?.is_some()
     {
         return func::update_object_qualified_e(ctx, value_arch, value_id, value_table)
             .map_err(ExternError::from);
     }
-    func::update_object_unqualified_e(ctx, value_arch, value_unqualified, value_table)
+    func::update_table_unqualified_e(ctx, value_arch, value_unqualified, value_table)
         .map_err(ExternError::from)
 }
 

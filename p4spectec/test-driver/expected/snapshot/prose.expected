@@ -11133,6 +11133,18 @@ Arm 2:
 
     1. Return nameIR
 
+def $qualify_objectId(objectId, nameIR)
+
+1. If ($starts_with(nameIR, ".")), then [→ otherwise]
+
+  1. (Let text be $strip_prefix(nameIR, ".")) [→ otherwise]
+
+  2. Return $split_text(text, ".") [→ otherwise]
+
+2. Otherwise,
+
+  1. Return objectId ++ [nameIR]
+
 def $has_at_most_one_name_annotation(annotationList)
 
 1. (Let (nameIR)*{nameIR <- nameIR*} be $name_annotation(annotationList)) [FAIL]
@@ -32717,15 +32729,15 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
         3. (Let nameIR_object be $name_annotation_default(annotationList, nameIR)) [FAIL]
 
-        4. (Let objectId be IC_0.PATH ++ [nameIR_object])
-
-        5. (Let STO_2 be $add_store(STO_1, objectId, object_table)) [FAIL]
-
-        6. Block (2 arms)
+        4. Block (2 arms)
 
         Arm 1:
 
-          1. If (($name_annotation(annotationList) matches pattern [])), then [→ next]
+          1. (Let objectId be IC_0.PATH ++ [nameIR_object])
+
+          2. (Let STO_2 be $add_store(STO_1, objectId, object_table)) [→ next]
+
+          3. If (($name_annotation(annotationList) matches pattern [])), then [→ next]
 
             1. (Let IC_1 be $add_var_i((BLOCK), IC_0, nameIR, ((REF objectId) as value))) [→ next]
 
@@ -32733,17 +32745,21 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
             3. Result in: % % |- % : IC_1 STO_2 ?((constantDeclarationIR as controlLocalDeclarationIR))
 
-          1. Else Dangling
+          3. Else Dangling
 
         Arm 2:
 
-          1. (Let (nameIR')*{nameIR' <- nameIR'*} be $name_annotation(annotationList)) [FAIL]
+          1. (Let objectId be $qualify_objectId(IC_0.PATH, nameIR_object)) [FAIL]
 
-          2. Check (((nameIR')*{nameIR' <- nameIR'*} matches pattern [ _/1 ]))
+          2. (Let STO_2 be $add_store(STO_1, objectId, object_table)) [FAIL]
+
+          3. (Let (nameIR')*{nameIR' <- nameIR'*} be $name_annotation(annotationList)) [FAIL]
+
+          4. Check (((nameIR')*{nameIR' <- nameIR'*} matches pattern [ _/1 ]))
 
             1. (Let [nameIR_annotation] be (nameIR')*{nameIR' <- nameIR'*})
 
-            2. (Let objectId_annotation be IC_0.PATH ++ [nameIR_annotation])
+            2. (Let objectId_annotation be $qualify_objectId(IC_0.PATH, nameIR_annotation)) [FAIL]
 
             3. (Let STO_3 be $add_store(STO_2, objectId_annotation, object_table)) [FAIL]
 
@@ -34309,11 +34325,37 @@ def $find_object_qualified_e(ARCH, objectId)
 
 1. Return $find_object_e(ARCH, objectId) [FAIL]
 
-def $find_object_unqualified_e(ARCH, id)
+def $is_table_named(objectId, object, id)
+
+1. If ((object has type tableObject)), then
+
+  1. Return $objectId_ends_with(objectId, id) [→ otherwise]
+
+2. Otherwise,
+
+  1. Return false
+
+def $find_table_qualified_e(ARCH, objectId)
+
+1. (Let (object')?{object' <- object'?} be $find_object_e(ARCH, objectId)) [→ otherwise]
+
+2. If (((object')?{object' <- object'?} matches pattern (_))), then
+
+  1. (Let ?(object) be (object')?{object' <- object'?})
+
+  2. If ((object has type tableObject)), then
+
+    1. Return ?(object)
+
+3. Otherwise,
+
+  1. Return ?()
+
+def $find_table_unqualified_e(ARCH, id)
 
 1. (Let (`{ ((objectId ':' object))*{object <- object*, objectId <- objectId*} `}) be ARCH.STORE)
 
-2. (Let bool be $objectId_ends_with(objectId, id))*{objectId <- objectId*, bool -> bool*} [→ otherwise]
+2. (Let bool be $is_table_named(objectId, object, id))*{object <- object*, objectId <- objectId*, bool -> bool*} [→ otherwise]
 
 3. (Let (object_id)?{object_id <- object_id?} be $ite<object?>(bool, ?(object), ?()))*{bool <- bool*, object <- object*, object_id? -> object_id?*} [→ otherwise]
 
@@ -34363,11 +34405,11 @@ def $update_object_qualified_e(ARCH_0, objectId, object)
 
   2. Return ARCH_1
 
-def $update_object_unqualified_e(ARCH_0, id, object)
+def $update_table_unqualified_e(ARCH_0, id, object)
 
-1. (Let (`{ ((objectId ':' _object))*{_object <- _object*, objectId <- objectId*} `}) be ARCH_0.STORE)
+1. (Let (`{ ((objectId ':' object_stored))*{objectId <- objectId*, object_stored <- object_stored*} `}) be ARCH_0.STORE)
 
-2. (Let bool be $objectId_ends_with(objectId, id))*{objectId <- objectId*, bool -> bool*} [FAIL]
+2. (Let bool be $is_table_named(objectId, object_stored, id))*{objectId <- objectId*, object_stored <- object_stored*, bool -> bool*} [FAIL]
 
 3. (Let (objectId_id)?{objectId_id <- objectId_id?} be $ite<objectId?>(bool, ?(objectId), ?()))*{bool <- bool*, objectId <- objectId*, objectId_id? -> objectId_id?*} [FAIL]
 

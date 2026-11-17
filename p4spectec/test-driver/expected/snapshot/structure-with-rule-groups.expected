@@ -12363,6 +12363,16 @@ def $name_annotation_default(annotationList, nameIR)
 
 2. Else Dangling
 
+def $qualify_objectId(objectId, nameIR)
+
+1. If ($starts_with(nameIR, ".")), then
+
+  1. Return $split_text($strip_prefix(nameIR, "."), ".")
+
+2. Otherwise,
+
+  1. Return objectId ++ [nameIR]
+
 def $has_at_most_one_name_annotation(annotationList)
 
 1. Return (|$name_annotation(annotationList)| <= 1)
@@ -36369,13 +36379,17 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
                               1. Else Dangling
 
-                              2. (Let nameIR'*{nameIR' <- nameIR'*} be $name_annotation(annotationList))
+                          2. (Let objectId be $qualify_objectId(IC_0.PATH, nameIR_object))
+
+                            1. (Let STO_2 be $add_store(STO_1, objectId, object_table))
+
+                              1. (Let nameIR'*{nameIR' <- nameIR'*} be $name_annotation(annotationList))
 
                                 1. If (nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]), then
 
                                   1. (Let [nameIR_annotation] be nameIR'*{nameIR' <- nameIR'*})
 
-                                    1. (Let objectId_annotation be IC_0.PATH ++ [nameIR_annotation])
+                                    1. (Let objectId_annotation be $qualify_objectId(IC_0.PATH, nameIR_annotation))
 
                                       1. (Let STO_3 be $add_store(STO_2, objectId_annotation, object_table))
 
@@ -38063,11 +38077,37 @@ def $find_object_qualified_e(ARCH, objectId)
 
 1. Return $find_object_e(ARCH, objectId)
 
-def $find_object_unqualified_e(ARCH, id)
+def $is_table_named(objectId, object, id)
+
+1. If (object <: tableObject), then
+
+  1. Return $objectId_ends_with(objectId, id)
+
+2. Otherwise,
+
+  1. Return false
+
+def $find_table_qualified_e(ARCH, objectId)
+
+1. (Let object'?{object' <- object'?} be $find_object_e(ARCH, objectId))
+
+  1. If (object'?{object' <- object'?} matches (_)), then
+
+    1. (Let ?(object) be object'?{object' <- object'?})
+
+      1. If (object <: tableObject), then
+
+        1. Return ?(object)
+
+2. Otherwise,
+
+  1. Return ?()
+
+def $find_table_unqualified_e(ARCH, id)
 
 1. (Let `{ objectId ':' object*{object <- object*, objectId <- objectId*} `} be ARCH.STORE)
 
-  1. (Let object_id?{object_id <- object_id?} be $ite<object?>($objectId_ends_with(objectId, id), ?(object), ?()))*{object <- object*, objectId <- objectId*, object_id? -> object_id?*}
+  1. (Let object_id?{object_id <- object_id?} be $ite<object?>($is_table_named(objectId, object, id), ?(object), ?()))*{object <- object*, objectId <- objectId*, object_id? -> object_id?*}
 
     1. (Let object''?{object'' <- object''?}*{object''? <- object''?*} be $filter_<object?>(object_id?{object_id <- object_id?}*{object_id? <- object_id?*}, (object_id?{object_id <- object_id?} =/= ?())*{object_id? <- object_id?*}))
 
@@ -38119,11 +38159,11 @@ def $update_object_qualified_e(ARCH_0, objectId, object)
 
 1. Else Dangling
 
-def $update_object_unqualified_e(ARCH_0, id, object)
+def $update_table_unqualified_e(ARCH_0, id, object)
 
-1. (Let `{ objectId ':' _object*{_object <- _object*, objectId <- objectId*} `} be ARCH_0.STORE)
+1. (Let `{ objectId ':' object_stored*{objectId <- objectId*, object_stored <- object_stored*} `} be ARCH_0.STORE)
 
-  1. (Let objectId_id?{objectId_id <- objectId_id?} be $ite<objectId?>($objectId_ends_with(objectId, id), ?(objectId), ?()))*{objectId <- objectId*, objectId_id? -> objectId_id?*}
+  1. (Let objectId_id?{objectId_id <- objectId_id?} be $ite<objectId?>($is_table_named(objectId, object_stored, id), ?(objectId), ?()))*{objectId <- objectId*, object_stored <- object_stored*, objectId_id? -> objectId_id?*}
 
     1. (Let objectId''?{objectId'' <- objectId''?}*{objectId''? <- objectId''?*} be $filter_<objectId?>(objectId_id?{objectId_id <- objectId_id?}*{objectId_id? <- objectId_id?*}, (objectId_id?{objectId_id <- objectId_id?} =/= ?())*{objectId_id? <- objectId_id?*}))
 

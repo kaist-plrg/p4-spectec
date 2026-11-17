@@ -28,6 +28,15 @@ def $name_annotation_default(annotationList, nameIR) = nameIR_found
 def $name_annotation_default(annotationList, nameIR) = nameIR
   -- if eps = $name_annotation(annotationList)
 
+;;; Qualifying a control-plane name
+
+dec $qualify_objectId(objectId, nameIR) : objectId
+
+def $qualify_objectId(objectId, nameIR) = $split_text($strip_prefix(nameIR, "."), ".")
+  -- if $starts_with(nameIR, ".")
+def $qualify_objectId(objectId, nameIR) = objectId ++ nameIR
+  -- otherwise
+
 ;;; Checking name annotation multiplicity
 
 dec $has_at_most_one_name_annotation(annotationList) : bool

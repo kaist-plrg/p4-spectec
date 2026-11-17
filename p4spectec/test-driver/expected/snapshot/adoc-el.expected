@@ -7237,6 +7237,19 @@ def $name_annotation_default(annotationList, nameIR) = nameIR
 
 
 
+dec $qualify_objectId(objectId, nameIR) : objectId
+
+def $qualify_objectId(objectId, nameIR)
+  = $split_text($strip_prefix(nameIR, "."), ".")
+  -- if $starts_with(nameIR, ".")
+
+def $qualify_objectId(objectId, nameIR) = objectId ++ nameIR
+  -- otherwise
+
+
+
+
+
 dec $has_at_most_one_name_annotation(annotationList) : bool
 
 def $has_at_most_one_name_annotation(annotationList)
@@ -23139,10 +23152,10 @@ rulegroup ControlLocalDecl_inst/tableDeclarationIR {
     -- if frame :: _ = IC_frame.LOCAL.FRAMES
     -- if object_table = TABLE nameIR `{ frame TBL `}
     -- if nameIR_object = $name_annotation_default(annotationList, nameIR)
-    -- if objectId = IC_0.PATH ++ nameIR_object
+    -- if objectId = $qualify_objectId(IC_0.PATH, nameIR_object)
     -- if STO_2 = $add_store(STO_1, objectId, object_table)
     -- if nameIR_annotation = $name_annotation(annotationList)
-    -- if objectId_annotation = IC_0.PATH ++ nameIR_annotation
+    -- if objectId_annotation = $qualify_objectId(IC_0.PATH, nameIR_annotation)
     -- if STO_3 = $add_store(STO_2, objectId_annotation, object_table)
     -- if IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId)
     -- if constantDeclarationIR
@@ -23810,16 +23823,33 @@ dec $find_object_qualified_e(arch, objectId) : object?
 
 def $find_object_qualified_e(ARCH, objectId) = $find_object_e(ARCH, objectId)
 
-dec $find_object_unqualified_e(arch, id) : object?
+dec $is_table_named(objectId, object, id) : bool
 
-def $find_object_unqualified_e(ARCH, id) = object_id_found
+def $is_table_named(objectId, object, id) = $objectId_ends_with(objectId, id)
+  -- if object <: tableObject
+
+def $is_table_named(objectId, object, id) = false
+  -- otherwise
+
+dec $find_table_qualified_e(arch, objectId) : object?
+
+def $find_table_qualified_e(ARCH, objectId) = object
+  -- if object = $find_object_e(ARCH, objectId)
+  -- if object <: tableObject
+
+def $find_table_qualified_e(ARCH, objectId) = eps
+  -- otherwise
+
+dec $find_table_unqualified_e(arch, id) : object?
+
+def $find_table_unqualified_e(ARCH, id) = object_id_found
   -- if `{ (objectId ':' object)* `} = ARCH.STORE
   -- (if (
     object_id?
-        = $ite<object?>($objectId_ends_with(objectId, id), object, eps)))*
+        = $ite<object?>($is_table_named(objectId, object, id), object, eps)))*
   -- if object_id_found = $filter_<object?>(object_id?*, (object_id? =/= eps)*)
 
-def $find_object_unqualified_e(ARCH, id) = eps
+def $find_table_unqualified_e(ARCH, id) = eps
   -- otherwise
 
 dec $find_objectState_e(arch, objectId) : objectState?
@@ -23845,13 +23875,16 @@ def $update_object_qualified_e(ARCH_0, objectId, object) = ARCH_1
   -- if eps =/= $find_object_qualified_e(ARCH_0, objectId)
   -- if ARCH_1 = $add_object_e(ARCH_0, objectId, object)
 
-dec $update_object_unqualified_e(arch, id, object) : arch
+dec $update_table_unqualified_e(arch, id, object) : arch
 
-def $update_object_unqualified_e(ARCH_0, id, object) = ARCH_1
-  -- if `{ (objectId ':' _)* `} = ARCH_0.STORE
+def $update_table_unqualified_e(ARCH_0, id, object) = ARCH_1
+  -- if `{ (objectId ':' object_stored)* `} = ARCH_0.STORE
   -- (if (
     objectId_id?
-        = $ite<objectId?>($objectId_ends_with(objectId, id), objectId, eps)))*
+        = $ite<objectId?>(
+            $is_table_named(objectId, object_stored, id),
+            objectId,
+            eps)))*
   -- if objectId_found
       = $filter_<objectId?>(objectId_id?*, (objectId_id? =/= eps)*)
   -- if ARCH_1 = $add_object_e(ARCH_0, objectId_found, object)

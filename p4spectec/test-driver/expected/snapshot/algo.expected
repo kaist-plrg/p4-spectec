@@ -8798,6 +8798,13 @@ def $name_annotation_default(annotationList, nameIR) : nameIR =
   clause 1 : (annotationList, nameIR) = nameIR
   -- if ([] = $name_annotation(annotationList))
 
+def $qualify_objectId(objectId, nameIR) : objectId =
+
+  clause 0 : (objectId, nameIR) = $split_text($strip_prefix(nameIR, "."), ".")
+  -- if $starts_with(nameIR, ".")
+
+  clause -1 : (objectId, nameIR) = objectId ++ [nameIR]
+
 def $has_at_most_one_name_annotation(annotationList) : bool =
 
   clause 0 : (annotationList) = (|$name_annotation(annotationList)| <= 1)
@@ -26476,12 +26483,12 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- let frame :: _frame*{_frame <- _frame*} = frame'*{frame' <- frame'*}
     -- let object_table = TABLE nameIR `{ frame TBL `} as object
     -- let nameIR_object = $name_annotation_default(annotationList, nameIR)
-    -- let objectId = IC_0.PATH ++ [nameIR_object]
+    -- let objectId = $qualify_objectId(IC_0.PATH, nameIR_object)
     -- let STO_2 = $add_store(STO_1, objectId, object_table)
     -- let nameIR'*{nameIR' <- nameIR'*} = $name_annotation(annotationList)
     -- if nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]
     -- let [nameIR_annotation] = nameIR'*{nameIR' <- nameIR'*}
-    -- let objectId_annotation = IC_0.PATH ++ [nameIR_annotation]
+    -- let objectId_annotation = $qualify_objectId(IC_0.PATH, nameIR_annotation)
     -- let STO_3 = $add_store(STO_2, objectId_annotation, object_table)
     -- let IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value)
     -- let constantDeclarationIR = _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';'
@@ -27878,11 +27885,28 @@ def $find_object_qualified_e(arch, objectId) : object? =
 
   clause 0 : (ARCH, objectId) = $find_object_e(ARCH, objectId)
 
-def $find_object_unqualified_e(arch, id) : object? =
+def $is_table_named(objectId, object, id) : bool =
+
+  clause 0 : (objectId, object, id) = $objectId_ends_with(objectId, id)
+  -- if object <: tableObject
+
+  clause -1 : (objectId, object, id) = false
+
+def $find_table_qualified_e(arch, objectId) : object? =
+
+  clause 0 : (ARCH, objectId) = ?(object)
+  -- let object'?{object' <- object'?} = $find_object_e(ARCH, objectId)
+  -- if object'?{object' <- object'?} matches (_)
+  -- let ?(object) = object'?{object' <- object'?}
+  -- if object <: tableObject
+
+  clause -1 : (ARCH, objectId) = ?()
+
+def $find_table_unqualified_e(arch, id) : object? =
 
   clause 0 : (ARCH, id) = ?(object_id_found)
   -- let `{ objectId ':' object*{object <- object*, objectId <- objectId*} `} = ARCH.STORE
-  -- (let object_id?{object_id <- object_id?} = $ite<object?>($objectId_ends_with(objectId, id), ?(object), ?()))*{object <- object*, objectId <- objectId*, object_id? -> object_id?*}
+  -- (let object_id?{object_id <- object_id?} = $ite<object?>($is_table_named(objectId, object, id), ?(object), ?()))*{object <- object*, objectId <- objectId*, object_id? -> object_id?*}
   -- let object''?{object'' <- object''?}*{object''? <- object''?*} = $filter_<object?>(object_id?{object_id <- object_id?}*{object_id? <- object_id?*}, (object_id?{object_id <- object_id?} =/= ?())*{object_id? <- object_id?*})
   -- if object''?{object'' <- object''?}*{object''? <- object''?*} matches [ _/1 ]
   -- let [object'?{object' <- object'?}] = object''?{object'' <- object''?}*{object''? <- object''?*}
@@ -27913,11 +27937,11 @@ def $update_object_qualified_e(arch, objectId, object) : arch =
   -- if (?() =/= $find_object_qualified_e(ARCH_0, objectId))
   -- let ARCH_1 = $add_object_e(ARCH_0, objectId, object)
 
-def $update_object_unqualified_e(arch, id, object) : arch =
+def $update_table_unqualified_e(arch, id, object) : arch =
 
   clause 0 : (ARCH_0, id, object) = ARCH_1
-  -- let `{ objectId ':' _object*{_object <- _object*, objectId <- objectId*} `} = ARCH_0.STORE
-  -- (let objectId_id?{objectId_id <- objectId_id?} = $ite<objectId?>($objectId_ends_with(objectId, id), ?(objectId), ?()))*{objectId <- objectId*, objectId_id? -> objectId_id?*}
+  -- let `{ objectId ':' object_stored*{objectId <- objectId*, object_stored <- object_stored*} `} = ARCH_0.STORE
+  -- (let objectId_id?{objectId_id <- objectId_id?} = $ite<objectId?>($is_table_named(objectId, object_stored, id), ?(objectId), ?()))*{objectId <- objectId*, object_stored <- object_stored*, objectId_id? -> objectId_id?*}
   -- let objectId''?{objectId'' <- objectId''?}*{objectId''? <- objectId''?*} = $filter_<objectId?>(objectId_id?{objectId_id <- objectId_id?}*{objectId_id? <- objectId_id?*}, (objectId_id?{objectId_id <- objectId_id?} =/= ?())*{objectId_id? <- objectId_id?*})
   -- if objectId''?{objectId'' <- objectId''?}*{objectId''? <- objectId''?*} matches [ _/1 ]
   -- let [objectId'?{objectId' <- objectId'?}] = objectId''?{objectId'' <- objectId''?}*{objectId''? <- objectId''?*}

@@ -129,8 +129,13 @@ impl ObjectState {
 ///
 /// `ingress`/`preqos` become `main.ig`, `egress`/`postqos`/`c3` become
 /// `main.eg`, and `$valid$` in an `add` match becomes `isValid()`.
+/// A bare name, such as the global name of `@name(".t")`, is kept.
 pub fn transform_stf_stmt(mut stmt: Statement) -> Statement {
     fn transform_name(name: crate::stf::ast::Name) -> crate::stf::ast::Name {
+        // Keep a bare name; only a qualified name has a block prefix
+        if !name.to_string().contains('.') {
+            return name;
+        }
         name.rewrite_substring(&["ingress", "preqos"], "main.ig")
             .rewrite_substring(&["egress", "postqos", "c3"], "main.eg")
     }
@@ -366,6 +371,7 @@ where
         ("recirculate_preserving_field_list", ["index"]) => {
             v1model_func::recirculate_preserving_field_list(ctx, *value_ctx, *value_arch)?
         }
+        ("random", ["result", "lo", "hi"]) => v1model_func::random(ctx, *value_ctx, *value_arch)?,
         ("hash", ["result", "algo", "base", "data", "max"]) => {
             v1model_func::hash(ctx, *value_ctx, *value_arch)?
         }
@@ -380,7 +386,7 @@ where
             let pkt = find_packet_in(ctx, *value_arch)?;
             v1model_func::update_checksum_with_payload(ctx, *value_ctx, *value_arch, &pkt)?
         }
-        // Anything else, such as random or truncate, is unsupported
+        // Anything else, such as truncate, is unsupported
         _ => {
             return Err(error::extern_function_unsupported(format!(
                 "unsupported extern function call: {name}({})",

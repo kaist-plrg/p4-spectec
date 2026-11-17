@@ -97,6 +97,9 @@ def check(excludes_rows, board_items):
         status = item.get("State")
         if _s(status) in exempt_statuses:
             continue
+        # A Done item is kept as a record after its .exclude is removed
+        if _s(item.get("Status")) == "Done":
+            continue
         violations.append(
             f"board item '{name}' has no matching .exclude (status={status!r})"
         )

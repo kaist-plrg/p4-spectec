@@ -1,110 +1,71 @@
 # Tracker board maintenance
 
-The kaist-plrg tracker spans **three** GitHub Projects — Mismatches,
-Soundness, and Negative-testgen. This directory holds the ongoing
-drift-check machinery that keeps two of them honest on every PR, plus the
-upstream-state sync. (Creating and seeding the boards is a separate one-time
-operator step, kept off-repo; this runbook is only about keeping them
-correct afterward.)
+Scripts that keep the kaist-plrg tracker boards in sync with this repo.
+
+- Three GitHub Projects: **Mismatches**, **Soundness**, **Negative-testgen**.
+- CI checks Mismatches and Soundness on PRs; Negative-testgen is frozen.
+- Creating and seeding the boards is a one-time step, not covered here.
 
 ## Scripts
 
-| script | what it does |
-|---|---|
-| `tracker_lib.py` | Parse each `.exclude` filename + its directory into `{name, repo, upstream, layer, category, status, #Pos, #Neg}` — the excludes-side data the drift check compares against the board. |
-| `dump_board.py` | Dump a GitHub Projects board via GraphQL into flat `{field: value}` items — the input to both checks (`--from-file` reads a saved response for offline runs). |
-| `tracker_check.py` | The Mismatches drift check: compares `excludes/` against a dumped board **both** directions (an `.exclude` missing from the board; an orphaned board item; a disagreeing `Category`/`State`/`Repo issue`/`Upstream issue`/counts). |
-| `label_check.py` | The Soundness check: verifies every `label:soundness` issue is an item on the project. |
-| `sync_board.py` | Push `excludes/` onto the Mismatches board — set each item's derivable fields (`Name`/`Category`/`State`/`Repo issue`/`Upstream issue`/`#Pos`/`#Neg`) from the `.exclude`, rename a renamed one, add a new one. The writer side of the drift check; hand-authored columns untouched. |
-| `sync_upstream_state.py` | Fill the Mismatches `Upstream state` field from each item's `Upstream issue` URL — the open/closed/merged state of the related p4lang/p4c or p4lang/p4-spec issue/PR. |
+- `tracker_lib.py`: parses an `.exclude` path into `name`, `repo`, `upstream`, `layer`, `category`, `status`, `#Pos`, `#Neg`.
+- `dump_board.py`: dumps a board via GraphQL into flat `{field: value}` items. `--from-file` reads a saved response.
+- `tracker_check.py`: Mismatches drift check between `excludes/` and the board.
+- `label_check.py`: checks that every `label:soundness` issue is on the Soundness board.
+- `sync_board.py`: writes the fields derived from `excludes/` onto the Mismatches board.
+- `sync_upstream_state.py`: fills `Upstream state` from each item's `Upstream issue`.
+- `test_*.py`, `testdata/`: offline tests, run by the `unit` CI job.
 
-`test_*.py` and the `testdata/` fixtures exercise all of the above offline in the `unit` CI job.
+## Mismatches
 
-## Board fields
+Each item is a kaist-plrg issue, or a draft if there is no issue.
 
-**Mismatches** — each item is a kaist-plrg P4-SpecTec issue (or a draft, for
-entries with no tracking issue), annotated with:
+Fields:
+- `Name`: `.exclude` filename tail; the key CI matches on.
+- `Layer`: `static` or `dynamic`.
+- `Category`: `p4c`, `p4-spec`, `p4c-specific`, `target-specific`, `p4testgen`.
+- `State`: `reported` → `confirmed` → `discussed` → `pending` → `patched`, or `future`, `out-of-scope`, `implicit`.
+- `Repo issue`, `Upstream issue`, `Upstream state` (`open`/`closed`/`merged`), `Patch PR`.
+- `#Pos`, `#Neg`: test counts from `excludes/`.
+- `Arch` (dynamic only), `Owner`, `Discussed` (e.g. `2026-04`), `Notes`.
 
-| field | meaning |
-|---|---|
-| `Name` | the `.exclude` filename tail — the key CI joins on |
-| `Layer` | `static` (type-checking) or `dynamic` (simulation) |
-| `Category` | `p4c` / `p4-spec` / `p4c-specific` / `target-specific` / `p4testgen` |
-| `State` | triage status: `reported` → `confirmed` → `discussed` → `pending` → `patched`, plus `future` / `out-of-scope` / `implicit` |
-| `Report` | reported upstream? `No` / `Yes-Us` / `Yes-Others` |
-| `Repo issue` | the kaist-plrg issue number (also the item's linked content) |
-| `Upstream issue` | link to the related p4lang/p4c or p4lang/p4-spec issue/PR |
-| `Upstream state` | that upstream's `open` / `closed` / `merged` (synced daily) |
-| `Patch PR` | link to the fix, once one exists |
-| `#Pos` / `#Neg` | positive / negative test counts, recomputed from `excludes/` |
-| `Arch` | `v1model` / `ebpf` / `psa` (dynamic-layer entries) |
-| `Owner` | assignee (GitHub login) |
-| `Discussed` | month it was discussed, e.g. `2026-04` |
-| `Notes` | free text |
+Maintenance:
+- Edit `.exclude` files only; don't edit derived fields on the board.
+- Filename: `i<repo>-[c|s]<n>-<name>.exclude` (see `tracker_lib.parse_name`). The directory sets `Category` and `State`.
+- On push to `main` and daily, `sync_board.py` updates `Name`, `Category`, `State`, `Repo issue`, `Upstream issue`, `#Pos`, `#Neg`, renames renamed items, and adds new ones. Hand-written fields are left alone.
+- On PRs touching `excludes/` or `scripts/tracker/`, the `drift` job fails when:
+  - an `.exclude` has no board item;
+  - a board item has no `.exclude`, unless its `State` is `patched`, `future`, or `out-of-scope`, or its `Status` is `Done`;
+  - a derived field disagrees.
+- Deleting an `.exclude` leaves its item on the board. Set its `Status` to `Done` to keep it as a record, or delete the item.
+- `Upstream state` is refreshed daily by `tracker-upstream-sync.yml`.
 
-**Soundness** — native GitHub Project, so **no custom fields**: the metadata
-is the issue itself — its title, its `soundness` (and any other) labels, and
-its native open/closed status.
+## Soundness
 
-**Negative-testgen** — each item is a real p4lang/p4c issue (native title +
-open/closed), annotated with:
+- No custom fields; the issue's title, labels, and open/closed state are the data.
+- File the issue with the `soundness` label; the project auto-adds it.
+- The `membership` CI job checks every `label:soundness` issue is on the board.
 
-| field | meaning |
-|---|---|
-| `Kind` | `compiler` (a crash) or `soundness` (fails to reject an ill-typed program) |
-| `Case ID` | the entry's identifier (`CB1`…`CB14`, `SB1`…`SB15`) |
-| `Campaign` | which fuzzing campaign(s) surfaced it (`C1`–`C6`) |
-| `P4C issue` | link to the p4lang/p4c issue (redundant with the item; kept for reference) |
+## Negative-testgen
 
-## Maintaining each board
+- Frozen set of p4lang/p4c issues; nothing to maintain.
+- Fields: `Kind` (`compiler` or `soundness`), `Case ID` (`CB1`–`CB14`, `SB1`–`SB15`), `Campaign` (`C1`–`C6`), `P4C issue`.
 
-**Mismatches** — just edit the `.exclude` files; the board follows. When you
-add, rename, move, or remove a `.exclude`, its filename must encode
-`i<repo>-[c|s]<n>-name` (repo issue number, upstream c/s issue number, then a
-descriptive name — see `tracker_lib.parse_name`) and its directory sets
-Category/State. **You do not touch the board by hand**: once the change lands
-on `main`, `sync_board.py` (the `sync board from excludes/` workflow) pushes
-the derivable fields onto the board — sets `Name`/`Category`/`State`/`Repo
-issue`/`Upstream issue`/`#Pos`/`#Neg`, renames a renamed item, adds a new one
-— leaving hand-authored columns alone.
+## Running locally
 
-The `drift` job is then the safety net: on every PR it diffs the board
-against `excludes/` (both directions — a missing item, or an orphaned board
-item, exempting patched/future/out-of-scope) and fails if they disagree, so a
-sync that didn't run or a hand-tampered board is caught. The only manual case
-`sync_board.py` won't auto-resolve is a **true orphan** (a board item whose
-`.exclude` was deleted) — it reports it for you to remove.
-
-**Soundness** — file the issue and add the `soundness` label. The project's
-native auto-add pulls it in, and the `soundness-check` CI job verifies every
-`label:soundness` issue is on the board. No board mutation script to run.
-
-**Negative-testgen** — nothing to maintain. It's a frozen, curated set of
-external p4lang/p4c bugs (references to the real issues, whose open/closed
-state updates natively); seeded once, never re-run.
-
-**Upstream state** (Mismatches) — each item's `Upstream state` field
-(open/closed/merged) is refreshed from its `Upstream issue` URL by
-`sync_upstream_state.py`, run daily by `sync-upstream-state.yml` or on
-demand. It's a periodic sync, not live; the kaist P4-SpecTec issue stays the
-authoritative item content.
-
-## Running the checks locally
-
-Needs [`gh`](https://cli.github.com/) (authenticated) and `python3` (3.9+).
+Needs an authenticated `gh` and `python3` (3.9+).
 
 ```bash
-# Dump the live Mismatches board, then run the drift check against it:
-python3 scripts/tracker/dump_board.py <project_number> --owner kaist-plrg --out board.json
+# Mismatches drift check
+python3 scripts/tracker/dump_board.py <project> --owner kaist-plrg --out board.json
 python3 scripts/tracker/tracker_check.py --board board.json
 
-# Soundness: check every label:soundness issue is on project <N>:
-python3 scripts/tracker/label_check.py --label soundness --project <N>
+# Soundness membership
+python3 scripts/tracker/label_check.py --label soundness --project <project> --owner kaist-plrg
 
-# Refresh the Mismatches "Upstream state" (needs a Projects read+write token;
-# --dry-run previews without writing):
-python3 scripts/tracker/sync_upstream_state.py --project <N> --owner kaist-plrg
+# Refresh Upstream state (needs a Projects read/write token; --dry-run to preview)
+python3 scripts/tracker/sync_upstream_state.py --project <project> --owner kaist-plrg
 
-# The scripts' own tests (offline, no secrets):
+# Offline tests
 python3 -m pytest scripts/tracker/ -q
 ```

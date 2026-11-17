@@ -1,9 +1,10 @@
 //! v1model extern functions
 //!
 //! Doc comments summarize the extern's description in `v1model.p4`.
-//! random, clone, truncate, assert, and assume are not implemented;
+//! clone, truncate, assert, and assume are not implemented;
 //! the pipeline's dispatch rejects them as unsupported calls.
 
+use std::hash::{BuildHasher, Hasher, RandomState};
 use std::io::Write;
 
 use num_bigint::BigInt;
@@ -121,6 +122,77 @@ where
         "mcast_grp",
         value_mcast_grp,
     )?;
+    // Return without a value
+    let typ = typ::make::opt(typ::make::var(
+        crate::phrase!(node: "value".into(), span: Span::default()),
+        Vec::new(),
+    ));
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_string! {
+        arena: ctx.arena_mut(),
+        shape: "RETURN value?",
+        args: vec![value_opt],
+        typ: "returnResult",
+        span: Span::default(),
+    }?;
+    Ok((value_ctx, value_arch, value_call_result))
+}
+
+/// Generate a random number in the range lo..hi, inclusive, and write
+/// it to the result parameter.  The value written to result is not
+/// specified if lo > hi.
+///
+/// This model draws uniformly from the range and writes `lo` if lo > hi.
+/// A draw is an effect, so no cached call result replays it.
+///
+/// @param T          Must be a type `bit<W>`
+///
+/// `extern void random<T>(out T result, in T lo, in T hi);`
+pub fn random<Interp, Iface, Ext>(
+    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
+    value_ctx: Value,
+    value_arch: Value,
+) -> Result<(Value, Value, Value), ExternError>
+where
+    Iface: Interface,
+    Ext: Extern,
+    Interp: Interpreter<Iface, Ext>,
+{
+    /// Draws a uniform integer in `[0, bound)` for a positive `bound`.
+    ///
+    /// Each `RandomState` carries fresh SipHash keys, so hashing nothing yields 64 random bits.
+    fn draw_below(bound: &BigInt) -> BigInt {
+        let bits = bound.bits();
+        let int_mask = (BigInt::from(1) << bits) - 1;
+        loop {
+            // Fill the bound's width in 64-bit chunks, then drop the excess bits
+            let mut int = BigInt::zero();
+            for _ in 0..bits.div_ceil(64) {
+                int = (int << 64) | BigInt::from(RandomState::new().build_hasher().finish());
+            }
+            int &= &int_mask;
+            // Reject a draw at or above the bound to keep the draw uniform
+            if &int < bound {
+                return int;
+            }
+        }
+    }
+    let value_lo = func::find_var_e_local(ctx, value_ctx, "lo")?;
+    let (int_width, int_lo) = unpack::p4_fixed_bit(ctx.arena_mut(), &value_lo)?;
+    let value_hi = func::find_var_e_local(ctx, value_ctx, "hi")?;
+    let int_hi = unpack::p4_fixed_bit(ctx.arena_mut(), &value_hi)?.1;
+    // Draw from the inclusive range, or keep the lower bound if it is empty
+    let int = if int_lo <= int_hi {
+        let int_bound = &int_hi - &int_lo + 1;
+        int_lo + draw_below(&int_bound)
+    } else {
+        int_lo
+    };
+    // Mark the draw as an effect so that enclosing calls are not cached
+    ctx.record_effect(crate::runner::SideEffect::Impure);
+    let value_result = pack::p4_fixed_bit(ctx.arena_mut(), int_width, int)?;
+    let value_ctx =
+        rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "result", value_result)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
         crate::phrase!(node: "value".into(), span: Span::default()),
