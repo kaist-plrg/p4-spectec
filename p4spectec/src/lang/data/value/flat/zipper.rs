@@ -269,19 +269,6 @@ impl ValueArena {
             elems.push(Value { node, note: note_elem, span });
         }
         let node = self.intern_kind(arena_mixop, ValueKind::List(elems))?;
-        // Unzipping the new list by argument position yields the columns again
-        let decomp = (0..columns.len())
-            .map(|idx| {
-                vec![match shape {
-                    Shape::Tuple => Step::Tuple(idx),
-                    Shape::List => Step::List(idx),
-                    Shape::Case(_) => Step::Case(idx),
-                }]
-            })
-            .collect();
-        self.zipper
-            .unzips
-            .insert(UnzipKey { source: node, decomp }, columns.to_vec());
         Ok(node)
     }
 
