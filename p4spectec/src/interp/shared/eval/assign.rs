@@ -35,8 +35,6 @@ use crate::phrase;
 
 use super::super::context::WriteContext;
 
-use super::zipper;
-
 /// Child handles copied out of the arena, which recursive assignment may grow.
 type Values = SmallVec<[Value; 8]>;
 
@@ -252,12 +250,18 @@ fn assign_iter_exp<Ctx: WriteContext>(
         ctx.add_value_at_slot(slot, value);
         return ok!(());
     }
-    // Otherwise assign each element and gather per variable
-    match exp_iter.iter() {
-        // Option: the payload once, or none for every variable
-        ast::Iter::Opt => assign_iter_opt_exp(arena, ctx, exp, exp_inner, exp_iter, value),
-        // List: one assignment per element
-        ast::Iter::List => assign_iter_list_exp(arena, ctx, exp, exp_inner, exp_iter, value),
+    match exp_iter {
+        // A list pattern that only selects children unzips the list
+        ast::ExpIter::Unzip { decomp, vars } => {
+            assign_iter_exp_unzip(arena, ctx, exp, decomp, vars, value)
+        }
+        // Any other pattern assigns each element and gathers per variable
+        ast::ExpIter::Elems { .. } | ast::ExpIter::Zip { .. } => match exp_iter.iter() {
+            // Option: the payload once, or none for every variable
+            ast::Iter::Opt => assign_iter_opt_exp(arena, ctx, exp, exp_inner, exp_iter, value),
+            // List: one assignment per element
+            ast::Iter::List => assign_iter_list_exp(arena, ctx, exp, exp_inner, exp_iter, value),
+        },
     }
 }
 
@@ -298,46 +302,22 @@ fn assign_iter_opt_exp<Ctx: WriteContext>(
     ok!(())
 }
 
-/// Assigns each list element and gathers the results per variable.
-///
-/// ```text
-/// (a, b)* <- [(1, 2), (3, 4)]          decomposes: unzips the list
-/// (a, y :: ys)* <- [(1, [2, 3]), ...]  does not: assigns element by element
-/// ```
-fn assign_iter_list_exp<Ctx: WriteContext>(
-    arena: &mut Arena,
-    ctx: &mut Ctx,
-    exp: &ast::Exp,
-    exp_inner: &ast::Exp,
-    exp_iter: &ast::ExpIter,
-    value: Value,
-) -> Backtrack<()> {
-    // A fixed pattern unzips the list; any other assigns element by element
-    match zipper::decompose(exp_inner, exp_iter.vars()) {
-        Some(decomp) => assign_iter_list_exp_with_decomp(arena, ctx, exp, exp_iter, &decomp, value),
-        None => assign_iter_list_exp_without_decomp(arena, ctx, exp, exp_inner, exp_iter, value),
-    }
-}
-
 /// Binds each variable's outer value unzipped from the list.
 ///
 /// For `(a, b)* <- [(1, 2), (3, 4)]`,
 /// `a*` binds `[1, 3]` and `b*` binds `[2, 4]`.
-fn assign_iter_list_exp_with_decomp<Ctx: WriteContext>(
+fn assign_iter_exp_unzip<Ctx: WriteContext>(
     arena: &mut Arena,
     ctx: &mut Ctx,
     exp: &ast::Exp,
-    exp_iter: &ast::ExpIter,
     decomp: &Decomp,
+    vars: &[ast::Var],
     value: Value,
 ) -> Backtrack<()> {
-    let typs = exp_iter
-        .vars()
-        .iter()
-        .map(|var| Rc::clone(&var.outer().typ));
+    let typs = vars.iter().map(|var| Rc::clone(&var.outer().typ));
     let values_outer =
         unwrap_from_result!(arena.value.unzip(&arena.mixop, value.node, decomp, typs), &exp.span);
-    for (var, value_outer) in exp_iter.vars().iter().zip(values_outer) {
+    for (var, value_outer) in vars.iter().zip(values_outer) {
         ctx.add_value_at_slot(var.outer().slot, value_outer);
     }
     ok!(())
@@ -352,7 +332,7 @@ fn assign_iter_list_exp_with_decomp<Ctx: WriteContext>(
 /// element 1   a = 4, y = 5, ys = []
 /// binds       a* = [1, 4], y* = [2, 5], ys* = [[3], []]
 /// ```
-fn assign_iter_list_exp_without_decomp<Ctx: WriteContext>(
+fn assign_iter_list_exp<Ctx: WriteContext>(
     arena: &mut Arena,
     ctx: &mut Ctx,
     exp: &ast::Exp,

@@ -22,7 +22,7 @@ use crate::lang::sl::{ast as source, prepared as ast};
 
 use crate::runtime::{envs::elab::TDEnv, typdef::TypeDef};
 
-use crate::interp::shared::prepare::{Prepare, il};
+use crate::interp::shared::prepare::{Prepare, il, zipper};
 
 // - Preparation context
 
@@ -217,8 +217,11 @@ impl Prepare<PrepareContext<'_>> for source::LetInstr {
     type Output = ast::LetInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        // The left side is a pattern the value binds
+        let mut exp_l = self.exp_l.prepare(&mut ctx.il());
+        zipper::plan_pattern(&mut exp_l);
         ast::LetInstr {
-            exp_l: self.exp_l.prepare(&mut ctx.il()),
+            exp_l,
             exp_r: self.exp_r.prepare(&mut ctx.il()),
             iter_instrs: self.iter_instrs.prepare(&mut ctx.il()),
             block: self.block.prepare(ctx),
@@ -243,8 +246,10 @@ impl Prepare<PrepareContext<'_>> for source::RuleInstr {
         }
         // Ordinary calls retain output binding, iterations, and the continuation
         let not_exp = self.not_exp.prepare(&mut ctx.il());
-        let (exps_input, exps_output) = input::split(&self.input_hint, not_exp.into_args())
+        let (exps_input, mut exps_output) = input::split(&self.input_hint, not_exp.into_args())
             .expect("input hint must fit relation");
+        // The outputs are patterns the call binds
+        zipper::plan_patterns(&mut exps_output);
         ast::RuleInstr::Call(ast::RuleCallInstr {
             id: self.id,
             exps_input,
@@ -378,10 +383,13 @@ impl Prepare<PrepareContext<'_>> for source::DefinedRel {
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         // The otherwise block must still catch a failing main body
         let pos = if self.block_else.is_some() { Position::NonTail } else { Position::Tail };
+        // The inputs are patterns the call's arguments bind
+        let mut exps_input = self.exps_input.prepare(&mut ctx.il());
+        zipper::plan_patterns(&mut exps_input);
         ast::DefinedRel {
             id: self.id,
             rel_signature: self.rel_signature,
-            exps_input: self.exps_input.prepare(&mut ctx.il()),
+            exps_input,
             block: self.block.prepare(&mut ctx.at(pos)),
             block_else: self
                 .block_else
@@ -539,7 +547,10 @@ impl Prepare<PrepareContext<'_>> for source::ParamKind {
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         match self {
             source::ParamKind::Exp(typ, exp) => {
-                ast::ParamKind::Exp(typ, exp.prepare(&mut ctx.il()))
+                // The parameter is a pattern the argument binds
+                let mut exp = exp.prepare(&mut ctx.il());
+                zipper::plan_pattern(&mut exp);
+                ast::ParamKind::Exp(typ, exp)
             }
             source::ParamKind::Def(id, tparams, params, typ) => {
                 // The parameter holds its function value in a slot

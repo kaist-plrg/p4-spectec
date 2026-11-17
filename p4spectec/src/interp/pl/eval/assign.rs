@@ -13,6 +13,7 @@ use crate::lang::pl::prepared as ast;
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap},
     eval::assign as shared,
+    prepare::zipper,
 };
 
 use crate::interp::pl::context::Context;
@@ -24,13 +25,16 @@ use shared::assign_def_arg;
 // = Expression assignment
 
 /// Assigns a value to a PL pattern after removing its prose hints.
+///
+/// The stripped pattern is then planned, as preparation plans AL and SL ones.
 pub(super) fn assign_exp(
     arena: &mut Arena,
     ctx: &mut Context<'_>,
     exp: &ast::Exp,
     value: Value,
 ) -> Backtrack<()> {
-    let exp_shared = strip_exp(exp);
+    let mut exp_shared = strip_exp(exp);
+    zipper::plan_pattern(&mut exp_shared);
     shared::assign_exp(arena, ctx, &exp_shared, value)
 }
 
@@ -41,10 +45,11 @@ pub(super) fn assign_exps<T: Borrow<ast::Exp>>(
     exps: &[T],
     values: &[Value],
 ) -> Backtrack<()> {
-    let exps_shared = exps
+    let mut exps_shared = exps
         .iter()
         .map(|exp| strip_exp(exp.borrow()))
         .collect::<Vec<_>>();
+    zipper::plan_patterns(&mut exps_shared);
     shared::assign_exps(arena, ctx, &exps_shared, values)
 }
 

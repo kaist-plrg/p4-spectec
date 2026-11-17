@@ -629,7 +629,7 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
             eval_iter_exp_zip(runner_ctx, ctx, exp, exp_inner, comp, vars)
         }
         // Any other body is evaluated element by element
-        ast::ExpIter::Elems { .. } => {
+        ast::ExpIter::Elems { .. } | ast::ExpIter::Unzip { .. } => {
             eval_iter_exp_elems(runner_ctx, ctx, exp, exp_inner, exp_iter)
         }
     }
