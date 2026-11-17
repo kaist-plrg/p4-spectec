@@ -162,7 +162,7 @@ pub struct DebugPrem<P: Stage = Source> {
 #[allow(clippy::large_enum_variant)]
 pub enum PremKind<P: Stage = Source> {
     /// `id : notexp`
-    Rule(RulePrem<P>),
+    Rule(P::RulePrem),
     /// `if exp`
     If(IfPrem<P>),
     /// `if id : notexp holds`

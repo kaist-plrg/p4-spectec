@@ -8,7 +8,10 @@
 
 use std::{mem, rc::Rc};
 
-use crate::lang::data::{callable::Callable, frame::FrameLayout, notation::MixopArena};
+use crate::lang::{
+    data::{callable::Callable, frame::FrameLayout, notation::MixopArena},
+    hints::input,
+};
 
 use crate::lang::al::{ast as source, prepared::*};
 
@@ -71,11 +74,11 @@ impl Prepare<PrepareContext<'_>> for source::RulePrem {
     type Output = RulePrem;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        RulePrem {
-            id: self.id,
-            not_exp: self.not_exp.prepare(&mut ctx.il()),
-            input_hint: self.input_hint,
-        }
+        // The input hint separates the arguments once, before any call
+        let not_exp = self.not_exp.prepare(&mut ctx.il());
+        let (exps_input, exps_output) = input::split(&self.input_hint, not_exp.into_args())
+            .expect("input hint must fit relation");
+        RulePrem { id: self.id, exps_input, exps_output }
     }
 }
 
