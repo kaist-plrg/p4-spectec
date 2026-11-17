@@ -14,11 +14,10 @@ use std::borrow::Cow;
 use crate::lang::{
     common::source::Span,
     data::value::flat::{self as value, Value, ValueKind},
-    hints::input,
     traits::print::Print,
 };
 
-use crate::lang::sl::{ast as source, prepared as ast};
+use crate::lang::sl::prepared as ast;
 
 use crate::diagnostic::Report;
 
@@ -183,10 +182,9 @@ fn eval_if_instr<Iface: Interface, Ext: Extern>(
     if cond {
         eval_block(runner_ctx, ctx, &instr.block, tail)
     } else {
-        ok!(Flow::cont(
-            instr.exp.span,
-            error::prem::condition_unmet(instr.exp.view(&runner_ctx.arena().mixop).to_string()),
-        ))
+        ok!(Flow::cont(instr.exp.span, || error::prem::condition_unmet(
+            instr.exp.view(&runner_ctx.arena().mixop).to_string()
+        ),))
     }
 }
 
@@ -238,10 +236,11 @@ fn eval_hold_instr<Iface: Interface, Ext: Extern>(
             ok!(Flow::Cont(vec![report]))
         }
         // Likewise, recording the failed not-hold condition
-        ast::HoldCase::NotHold(..) => ok!(Flow::cont(
-            instr.id.span,
-            error::prem::not_hold_condition_unmet(instr.id.node.to_string()),
-        )),
+        ast::HoldCase::NotHold(..) => {
+            ok!(Flow::cont(instr.id.span, || error::prem::not_hold_condition_unmet(
+                instr.id.node.to_string()
+            ),))
+        }
     }
 }
 
@@ -263,13 +262,10 @@ fn eval_case_instr<Iface: Interface, Ext: Extern>(
         }
     }
     // No guard accepted: fall through
-    ok!(Flow::cont(
-        instr.exp.span,
-        error::prem::condition_unmet(format!(
-            "case {}",
-            instr.exp.view(&runner_ctx.arena().mixop).to_string()
-        )),
-    ))
+    ok!(Flow::cont(instr.exp.span, || error::prem::condition_unmet(format!(
+        "case {}",
+        instr.exp.view(&runner_ctx.arena().mixop).to_string()
+    )),))
 }
 
 /// Tests a guard against the scrutinee value.
@@ -327,22 +323,30 @@ fn eval_group_instr<Iface: Interface, Ext: Extern>(
 /// Assigns under the binding iterators, then runs the block.
 fn eval_let_instr<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
-    ctx: Cow<'_, Context<'_>>,
+    mut ctx: Cow<'_, Context<'_>>,
     instr: &ast::LetInstr,
     tail: bool,
 ) -> Backtrack<Flow> {
-    // Evaluate the right side and bind the left pattern, per element
-    let ctx = unwrap!(eval_instr_iter(
-        runner_ctx,
-        ctx.into_owned(),
-        &instr.iter_instrs,
-        &mut |runner_ctx, ctx| {
-            let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
-            assign::assign_exp(runner_ctx.arena_mut(), ctx, &instr.exp_l, value)
-        }
-    ));
+    // Without iterations, bind straight into the context
+    if instr.iter_instrs.is_empty() {
+        let value = unwrap!(eval_exp(runner_ctx, ctx.as_ref(), &instr.exp_r));
+        unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.to_mut(), &instr.exp_l, value));
+    // Otherwise bind per element and gather the iterated bindings
+    } else {
+        let ctx_post = eval_instr_iter(
+            runner_ctx,
+            ctx.into_owned(),
+            &instr.iter_instrs,
+            &mut |runner_ctx, mut ctx| {
+                let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
+                unwrap!(assign::assign_exp(runner_ctx.arena_mut(), &mut ctx, &instr.exp_l, value));
+                ok!(ctx)
+            },
+        );
+        ctx = Cow::Owned(unwrap!(ctx_post));
+    }
     // The block sees the new bindings
-    eval_block(runner_ctx, Cow::Owned(ctx), &instr.block, tail)
+    eval_block(runner_ctx, ctx, &instr.block, tail)
 }
 
 // - Rule instruction
@@ -351,26 +355,28 @@ fn eval_let_instr<Iface: Interface, Ext: Extern>(
 fn eval_rule_instr<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Cow<'_, Context<'_>>,
-    instr: &source::RuleInstr<ast::Prepared>,
+    instr: &ast::RuleCallInstr,
     tail: bool,
 ) -> Backtrack<Flow> {
-    // Split the notation arguments by the input hint
-    let (exps_input, exps_output) =
-        input::split(&instr.input_hint, instr.not_exp.args().iter().collect())
-            .expect("input hint must fit relation");
     // Call and bind the outputs under the iterators
-    let ctx = unwrap!(eval_instr_iter(
+    let ctx_post = eval_instr_iter(
         runner_ctx,
         ctx.into_owned(),
         &instr.iter_instrs,
-        &mut |runner_ctx, ctx| {
-            let values = unwrap!(eval_exps(runner_ctx, &ctx, &exps_input));
-            let values = unwrap!(SlInterp::invoke_rel(runner_ctx, &ctx, &instr.id, &values));
-            assign::assign_exps(runner_ctx.arena_mut(), ctx, &exps_output, &values)
-        }
-    ));
+        &mut |runner_ctx, mut ctx| {
+            let values_input = unwrap!(eval_exps(runner_ctx, &ctx, &instr.exps_input));
+            let values = unwrap!(SlInterp::invoke_rel(runner_ctx, &ctx, &instr.id, &values_input));
+            unwrap!(assign::assign_exps(
+                runner_ctx.arena_mut(),
+                &mut ctx,
+                &instr.exps_output,
+                &values
+            ));
+            ok!(ctx)
+        },
+    );
     // The block sees the bound outputs
-    eval_block(runner_ctx, Cow::Owned(ctx), &instr.block, tail)
+    eval_block(runner_ctx, Cow::Owned(unwrap!(ctx_post)), &instr.block, tail)
 }
 
 /// Evaluates a prepared tail call's inputs for the invocation loop.
@@ -429,7 +435,9 @@ fn eval_return_instr<Iface: Interface, Ext: Extern>(
             ok!(Flow::Return(phrase!(node: value, span: *span)))
         // Global calls become tail calls for the invoker loop
         } else {
-            ok!(Flow::TailFunc(phrase!(node: (id.clone(), targs, values), span: *span)))
+            ok!(Flow::TailFunc(
+                phrase!(node: (id.clone(), targs.into_owned(), values), span: *span)
+            ))
         }
     // Any other expression is evaluated and returned
     } else {
@@ -466,6 +474,19 @@ fn eval_debug_instr<Iface: Interface, Ext: Extern>(
 
 /// Evaluates a condition under nested iterations; every element must hold.
 fn eval_cond_iter<Iface: Interface, Ext: Extern>(
+    runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
+    ctx: &Context<'_>,
+    iters: &[ast::ExpIter],
+    eval: &mut impl FnMut(&mut RunnerContext<'_, SlInterp, Iface, Ext>, &Context<'_>) -> Backtrack<bool>,
+) -> Backtrack<bool> {
+    if iters.is_empty() {
+        return eval(runner_ctx, ctx);
+    }
+    eval_cond_iter_inner(runner_ctx, ctx, iters, eval)
+}
+
+/// Evaluates the nonempty nested iteration.
+fn eval_cond_iter_inner<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     iters: &[ast::ExpIter],
@@ -523,6 +544,22 @@ fn eval_cond_iter<Iface: Interface, Ext: Extern>(
 
 /// Runs a binding action under nested iterations, gathering its bindings.
 fn eval_instr_iter<'global, Iface: Interface, Ext: Extern>(
+    runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
+    ctx: Context<'global>,
+    iters: &[ast::InstrIter],
+    eval: &mut impl FnMut(
+        &mut RunnerContext<'_, SlInterp, Iface, Ext>,
+        Context<'global>,
+    ) -> Backtrack<Context<'global>>,
+) -> Backtrack<Context<'global>> {
+    if iters.is_empty() {
+        return eval(runner_ctx, ctx);
+    }
+    eval_instr_iter_inner(runner_ctx, ctx, iters, eval)
+}
+
+/// Evaluates the nonempty nested iteration.
+fn eval_instr_iter_inner<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Context<'global>,
     iters: &[ast::InstrIter],

@@ -264,12 +264,8 @@ fn eval_rule_path<Iface: Interface, Ext: Extern>(
     // Input count must match the rule's input patterns
     assert_eq!(rule_match.exps_input.len(), values.len(), "validated rule input arity");
     // Inputs bind into a fresh frame for the rule
-    let ctx = unwrap!(assign::assign_exps(
-        runner_ctx.arena_mut(),
-        ctx.localize_with_layout(layout),
-        &rule_match.exps_input,
-        values
-    ));
+    let mut ctx = ctx.localize_with_layout(layout);
+    unwrap!(assign::assign_exps(runner_ctx.arena_mut(), &mut ctx, &rule_match.exps_input, values));
     // Shared premises of the group, then the path's own
     let ctx = unwrap!(eval_prems(runner_ctx, ctx, &rule_match.prems));
     let ctx = unwrap!(eval_prems(runner_ctx, ctx, &path.prems));
@@ -470,12 +466,8 @@ fn eval_table_row<Iface: Interface, Ext: Extern>(
     // Argument count must match the row
     assert_eq!(table_row.node.args.len(), values.len(), "validated table row argument arity");
     // Arguments bind into a fresh frame for the row
-    let ctx = unwrap!(assign::assign_args(
-        runner_ctx.arena_mut(),
-        ctx.localize_with_layout(layout),
-        &table_row.node.args,
-        values
-    ));
+    let mut ctx = ctx.localize_with_layout(layout);
+    unwrap!(assign::assign_args(runner_ctx.arena_mut(), &mut ctx, &table_row.node.args, values));
     // Premises, then the row body
     let ctx = unwrap!(eval_prems(runner_ctx, ctx, &table_row.node.prems));
     expr::eval_exp(runner_ctx, &ctx, &table_row.node.exp)
@@ -507,12 +499,8 @@ fn eval_clause<Iface: Interface, Ext: Extern>(
     // Argument count must match the clause
     assert_eq!(clause_kind.args.len(), values.len(), "validated clause argument arity");
     // Arguments bind into the clause's own frame
-    let ctx = unwrap!(assign::assign_args(
-        runner_ctx.arena_mut(),
-        ctx_tparams.localize_frame(layout),
-        &clause_kind.args,
-        values
-    ));
+    let mut ctx = ctx_tparams.localize_frame(layout);
+    unwrap!(assign::assign_args(runner_ctx.arena_mut(), &mut ctx, &clause_kind.args, values));
     // Premises, then the clause body
     let ctx = unwrap!(eval_prems(runner_ctx, ctx, &clause_kind.prems));
     expr::eval_exp(runner_ctx, &ctx, &clause_kind.exp)

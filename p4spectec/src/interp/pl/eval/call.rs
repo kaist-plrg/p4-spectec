@@ -273,12 +273,8 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Vec<Value>> {
     // Inputs bind into a fresh frame
-    let ctx_local = unwrap!(assign_exps(
-        runner_ctx.arena_mut(),
-        ctx.localize_with_layout(layout),
-        &rel.exps_input,
-        values
-    ));
+    let mut ctx_local = ctx.localize_with_layout(layout);
+    unwrap!(assign_exps(runner_ctx.arena_mut(), &mut ctx_local, &rel.exps_input, values));
     // Run the body, retaining recoverable mismatches as continuations
     let mut flow = match eval_dispatch_block(runner_ctx, ctx_local.clone(), &rel.block) {
         // A completed block reports its own conclusion or continuation
@@ -434,12 +430,8 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Value> {
     // Parameters bind into a fresh frame
-    let ctx_local = unwrap!(assign_params(
-        runner_ctx.arena_mut(),
-        ctx.localize_with_layout(layout),
-        &func.params,
-        values
-    ));
+    let mut ctx_local = ctx.localize_with_layout(layout);
+    unwrap!(assign_params(runner_ctx.arena_mut(), &mut ctx_local, &func.params, values));
     // Table rows stay sequential and borrow their instructions
     let instrs = func.rows.iter().flat_map(|row| &row.block.instrs);
     let (_, flow) = unwrap!(eval_block(runner_ctx, ctx_local, eval_group_instr, instrs));
@@ -466,10 +458,10 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Value> {
     // Bind type arguments in the callee frame
-    let ctx_local =
+    let mut ctx_local =
         unwrap!(assign_tparams(ctx.localize_with_layout(layout), &func.tparams, targs, &id.span));
     // Bind parameters after their type arguments are in scope
-    let ctx_local = unwrap!(assign_params(runner_ctx.arena_mut(), ctx_local, &func.params, values));
+    unwrap!(assign_params(runner_ctx.arena_mut(), &mut ctx_local, &func.params, values));
     // Run the body, retaining recoverable mismatches as continuations
     let mut flow = match eval_group_block(runner_ctx, ctx_local.clone(), &func.block) {
         // A completed block reports its own conclusion or continuation

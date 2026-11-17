@@ -255,8 +255,8 @@ fn eval_if_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, typ, value))
     };
     // Restore the enclosing bindings when the selected body finishes
-    let ctx_local =
-        unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), &instr.exp_l, value));
+    let mut ctx_local = ctx.clone();
+    unwrap!(assign::assign_exp(runner_ctx.arena_mut(), &mut ctx_local, &instr.exp_l, value));
     let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_local, &instr.block));
     ok!((ctx, flow))
 }
@@ -285,8 +285,8 @@ fn eval_if_let_match_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         return ok!((ctx, Flow::cont(instr.exp_r.node.span, error::prem::condition_unmet(text))));
     }
     // Binding and body failures propagate after the condition succeeds
-    let ctx_local =
-        unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), &instr.exp_l, value));
+    let mut ctx_local = ctx.clone();
+    unwrap!(assign::assign_exp(runner_ctx.arena_mut(), &mut ctx_local, &instr.exp_l, value));
     let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_local, &instr.block));
     ok!((ctx, flow))
 }
@@ -418,20 +418,31 @@ fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     for case in &instr.cases {
         if unwrap!(eval_guard(runner_ctx, &ctx, value, &case.guard)) {
             // Commit to the accepted guard before assigning its local binding
-            let ctx_local = match &case.guard {
+            let mut ctx_local = ctx.clone();
+            match &case.guard {
                 ast::Guard::LetSub(ast::SubBind { typ, .. }, exp_l) => {
                     let value = if instr.exp.node.note.as_ref().syntax_eq(&typ.node) {
                         value
                     } else {
                         unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, typ, value))
                     };
-                    unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), exp_l, value))
+                    unwrap!(assign::assign_exp(
+                        runner_ctx.arena_mut(),
+                        &mut ctx_local,
+                        exp_l,
+                        value
+                    ));
                 }
                 ast::Guard::LetMatch(_, exp_l) => {
-                    unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), exp_l, value))
+                    unwrap!(assign::assign_exp(
+                        runner_ctx.arena_mut(),
+                        &mut ctx_local,
+                        exp_l,
+                        value
+                    ));
                 }
-                _ => ctx.clone(),
-            };
+                _ => {}
+            }
             // Keep body bindings inside the selected case
             let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_local, &case.block));
             return ok!((ctx, flow));
@@ -489,11 +500,16 @@ fn eval_let_instr<'global, Iface: Interface, Ext: Extern>(
     instr: &ast::LetInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Extend the current block with bindings from each iteration
-    let ctx =
-        unwrap!(eval_instr_iter(runner_ctx, ctx, &instr.iter_instrs, &mut |runner_ctx, ctx| {
+    let ctx = unwrap!(eval_instr_iter(
+        runner_ctx,
+        ctx,
+        &instr.iter_instrs,
+        &mut |runner_ctx, mut ctx| {
             let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
-            assign::assign_exp(runner_ctx.arena_mut(), ctx, &instr.exp_l, value)
-        }));
+            unwrap!(assign::assign_exp(runner_ctx.arena_mut(), &mut ctx, &instr.exp_l, value));
+            ok!(ctx)
+        }
+    ));
     ok!((ctx, Flow::Cont(vec![])))
 }
 
@@ -510,13 +526,18 @@ fn eval_rule_instr<'global, Iface: Interface, Ext: Extern>(
         input::split(&instr.input_hint, instr.not_exp.args().iter().collect())
             .expect("input hint must fit relation");
     // Invoke the relation at each enclosing iteration
-    let ctx =
-        unwrap!(eval_instr_iter(runner_ctx, ctx, &instr.iter_instrs, &mut |runner_ctx, ctx| {
+    let ctx = unwrap!(eval_instr_iter(
+        runner_ctx,
+        ctx,
+        &instr.iter_instrs,
+        &mut |runner_ctx, mut ctx| {
             let values = unwrap!(eval_exps(runner_ctx, &ctx, &exps_input));
             let values = unwrap!(PlInterp::invoke_rel(runner_ctx, &ctx, &instr.id, &values));
             // Extend the local bindings with relation outputs
-            assign::assign_exps(runner_ctx.arena_mut(), ctx, &exps_output, &values)
-        }));
+            unwrap!(assign::assign_exps(runner_ctx.arena_mut(), &mut ctx, &exps_output, &values));
+            ok!(ctx)
+        }
+    ));
     ok!((ctx, Flow::Cont(vec![])))
 }
 
@@ -566,7 +587,7 @@ fn eval_debug_instr<'global, Iface: Interface, Ext: Extern>(
 /// Binds the fields of a case value and continues with the new bindings.
 fn eval_destruct_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    mut ctx: Context<'global>,
     instr: &ast::DestructInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Extract fields before mutating the arena during assignment
@@ -580,7 +601,7 @@ fn eval_destruct_instr<'global, Iface: Interface, Ext: Extern>(
         .map(|(_, exp)| exp)
         .collect::<Vec<_>>();
     // Bind each extracted field to its pattern
-    let ctx = unwrap!(assign::assign_exps(runner_ctx.arena_mut(), ctx, &exps, &values));
+    unwrap!(assign::assign_exps(runner_ctx.arena_mut(), &mut ctx, &exps, &values));
     ok!((ctx, Flow::Cont(vec![])))
 }
 

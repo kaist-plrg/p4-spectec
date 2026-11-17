@@ -6,7 +6,6 @@
 
 use std::{
     hash::{BuildHasher, Hash},
-    marker::PhantomData,
     num::TryFromIntError,
 };
 
@@ -60,7 +59,7 @@ impl<T> Interner<T> {
 
     /// Borrows an item using a handle issued by this interner.
     pub fn get(&self, id: Interned<T>) -> &T {
-        &self.items[id.index as usize]
+        &self.items[id.index() as usize]
     }
 }
 
@@ -103,15 +102,16 @@ impl<T: Eq + Hash> Interner<T> {
     fn find(&self, item: &T, hash: u64) -> Option<Interned<T>> {
         self.table
             .find(hash, |entry| entry.hash == hash && &self.items[entry.index as usize] == item)
-            .map(|entry| Interned { index: entry.index, marker: PhantomData })
+            .map(|entry| Interned::from_index(entry.index))
     }
 
     /// Stores a new item at the next index.
     fn insert(&mut self, item: T, hash: u64) -> Result<Interned<T>, TryFromIntError> {
-        let index = u32::try_from(self.items.len())?;
+        let id = Interned::from_len(self.items.len())?;
+        let index = id.index();
         self.items.push(item);
         self.table
             .insert_unique(hash, Entry { hash, index }, |entry| entry.hash);
-        Ok(Interned { index, marker: PhantomData })
+        Ok(id)
     }
 }

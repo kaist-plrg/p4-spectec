@@ -16,6 +16,9 @@ use crate::interp::shared::{
 
 /// Keeps the most deeply nested failure set, preferring the later one on ties.
 fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
+    if errors.is_empty() && errors_post.is_empty() {
+        return;
+    }
     if errors_post.iter().map(Report::depth_max).max().unwrap_or(0)
         >= errors.iter().map(Report::depth_max).max().unwrap_or(0)
     {

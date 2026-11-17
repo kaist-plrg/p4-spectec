@@ -319,12 +319,8 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<RelResult> {
     // Inputs bind into a fresh frame
-    let ctx = unwrap!(assign::assign_exps(
-        runner_ctx.arena_mut(),
-        ctx.localize_with_layout(layout),
-        &rel.exps_input,
-        values
-    ));
+    let mut ctx = ctx.localize_with_layout(layout);
+    unwrap!(assign::assign_exps(runner_ctx.arena_mut(), &mut ctx, &rel.exps_input, values));
     // Run the body, falling back to the otherwise block
     let flow =
         unwrap!(instr::eval_block_with_else(runner_ctx, ctx, &rel.block, rel.block_else.as_ref()));
@@ -519,12 +515,8 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<FuncResult> {
     // Parameters bind into a fresh frame
-    let ctx_local = unwrap!(assign::assign_params(
-        runner_ctx.arena_mut(),
-        ctx.localize_with_layout(layout),
-        &func.params,
-        values
-    ));
+    let mut ctx_local = ctx.localize_with_layout(layout);
+    unwrap!(assign::assign_params(runner_ctx.arena_mut(), &mut ctx_local, &func.params, values));
     // Rows are concatenated and run in tail position
     let instrs = func
         .table_rows
@@ -560,11 +552,10 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<FuncResult> {
     // Bind type arguments in the callee frame
-    let ctx_local =
+    let mut ctx_local =
         unwrap!(assign_tparams(ctx.localize_with_layout(layout), &func.tparams, targs, &id.span));
     // Parameters bind after the type parameters, so their types resolve
-    let ctx_local =
-        unwrap!(assign::assign_params(runner_ctx.arena_mut(), ctx_local, &func.params, values));
+    unwrap!(assign::assign_params(runner_ctx.arena_mut(), &mut ctx_local, &func.params, values));
     // Run the body, falling back to the otherwise block
     let flow = unwrap!(instr::eval_block_with_else(
         runner_ctx,

@@ -5,12 +5,15 @@
 //! Operators delegate to `ops`, calls to the stage's `Invoker`,
 //! iterations to `iter::map`.
 
-use std::{borrow::Borrow, rc::Rc};
+use std::{
+    borrow::{Borrow, Cow},
+    rc::Rc,
+};
 
 use crate::lang::{
     common::source::Span,
     data::{
-        value::flat::{self as value, Value, ValueKind},
+        value::flat::{self as value, Value, ValueKind, zipper::Comp},
         var::IdSlot,
     },
     traits::print::Print,
@@ -27,12 +30,12 @@ use crate::runner::{Extern, Interface, RunnerContext};
 
 use crate::interp::shared::{
     backtrack::{Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
-    util::find_slot_of_exp,
+    util::{find_slot_of_exp, iterate_vars},
 };
 
-use super::super::context::ReadContext;
+use super::super::context::{IterContext, ReadContext};
 
-use super::{Invoker, arg::eval_args, iter, ops, path::eval_update_path};
+use super::{Invoker, arg::eval_args, iter, ops, path::eval_update_path, zipper};
 
 // = Expression evaluation
 
@@ -531,10 +534,10 @@ fn eval_upd_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
 // - Call expression
 
 /// Substitutes local plain type aliases into type arguments before a call.
-pub(crate) fn resolve_targs(
+pub(crate) fn resolve_targs<'a>(
     ctx: &impl ReadContext,
-    targs: &[ast::Typ],
-) -> Result<Vec<ast::Typ>, TypeError> {
+    targs: &'a [ast::Typ],
+) -> Result<Cow<'a, [ast::Typ]>, TypeError> {
     // Only unparameterized plain aliases in local scope are substituted
     let find_subst = |id: &ast::Id| match ctx.find_typdef_local_opt(id)? {
         TypeDef::Defined(tparams, def_typ) if tparams.is_empty() => match &def_typ.node {
@@ -543,10 +546,47 @@ pub(crate) fn resolve_targs(
         },
         _ => None,
     };
+    // Reuse the arguments when substitution changes none of them
+    if targs
+        .iter()
+        .all(|targ| unchanged_by_subst(targ, &find_subst))
+    {
+        return Ok(Cow::Borrowed(targs));
+    }
+    // Otherwise substitute every argument
     targs
         .iter()
         .map(|targ| subst_typ(&find_subst, targ))
-        .collect()
+        .collect::<Result<Vec<_>, _>>()
+        .map(Cow::Owned)
+}
+
+/// Checks whether substitution leaves a type as it is.
+///
+/// A function type always changes, since substitution freshens its binders.
+fn unchanged_by_subst<'a>(
+    typ: &ast::Typ,
+    find_subst: &impl Fn(&ast::Id) -> Option<&'a ast::Typ>,
+) -> bool {
+    match &typ.node {
+        // Primitive types contain no type variable
+        ast::TypKind::Bool | ast::TypKind::Num(_) | ast::TypKind::Text => true,
+        // A variable stays when neither it nor its arguments are substituted
+        ast::TypKind::Var(id, targs) => {
+            find_subst(id).is_none()
+                && targs
+                    .iter()
+                    .all(|targ| unchanged_by_subst(targ, find_subst))
+        }
+        // A tuple stays when all of its components do
+        ast::TypKind::Tuple(typs) => typs
+            .iter()
+            .all(|typ_elem| unchanged_by_subst(typ_elem, find_subst)),
+        // An iteration stays when its element type does
+        ast::TypKind::Iter(typ_inner, _) => unchanged_by_subst(typ_inner, find_subst),
+        // A function type has binders to freshen
+        ast::TypKind::Func(_) => false,
+    }
 }
 
 /// Resolves type arguments, evaluates arguments, and invokes the function.
@@ -565,6 +605,13 @@ fn eval_call_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
 // - Iteration expression
 
 /// Evaluates an iterated expression; a bare iterated variable reads its slot.
+///
+/// ```text
+/// with a* = [1, 3] and b* = [2, 4]
+/// a*        [1, 3]             reads the slot
+/// (b, a)*   [(2, 1), (4, 3)]   composes: zips the outer values
+/// (a + b)*  [3, 7]             does not: evaluates per element
+/// ```
 fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     ctx: &Interp::Context<'global>,
@@ -572,14 +619,72 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     exp_inner: &ast::Exp,
     exp_iter: &ast::ExpIter,
 ) -> Backtrack<Value> {
-    let span = &exp.span;
-    let typ = &exp.note;
     // `x*` as an expression is just the bound value
     if let Some(slot) = find_slot_of_exp(exp) {
         return ok!(*ctx.find_value_at_slot(slot).expect("value must be bound"));
     }
-    // Otherwise map the body over the iterated variables
-    iter::map(runner_ctx, ctx, span, typ, exp_iter, |runner_ctx, ctx_sub| {
+    // A constructor over all the variables zips them; any other body is mapped
+    match zipper::compose(exp_inner, exp_iter) {
+        Some(comp) => eval_iter_exp_with_comp(runner_ctx, ctx, exp, exp_inner, exp_iter, &comp),
+        None => eval_iter_exp_without_comp(runner_ctx, ctx, exp, exp_inner, exp_iter),
+    }
+}
+
+/// Zips the variables' outer values into the list of constructed elements.
+///
+/// For `(b, a)*` with `a* = [1, 3]` and `b* = [2, 4]`,
+/// builds `[(2, 1), (4, 3)]`;
+/// with `b* = [2]` instead,
+/// fails on the unequal lengths as the general path does.
+fn eval_iter_exp_with_comp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
+    runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
+    ctx: &Interp::Context<'global>,
+    exp: &ast::Exp,
+    exp_inner: &ast::Exp,
+    exp_iter: &ast::ExpIter,
+    comp: &Comp,
+) -> Backtrack<Value> {
+    let arena = runner_ctx.arena_mut();
+    // The variables must be lists of one length
+    let vars_outer = iterate_vars(&exp_iter.vars);
+    unwrap_from_result!(ctx.find_list_values_by_var(arena, &vars_outer), &exp.span);
+    let values_outer: Vec<_> = vars_outer
+        .iter()
+        .map(|var_outer| {
+            *ctx.find_value_at_slot(var_outer.slot)
+                .expect("value must be bound")
+        })
+        .collect();
+    let value = unwrap_from_result!(
+        arena.value.zip(
+            &arena.mixop,
+            comp,
+            exp_inner.note.clone(),
+            exp.note.clone(),
+            &values_outer
+        ),
+        &exp.span
+    );
+    ok!(value)
+}
+
+/// Evaluates the body once per element of the iterated variables.
+///
+/// For `(a + b)*` with `a* = [1, 3]` and `b* = [2, 4]`,
+/// evaluates `1 + 2` and `3 + 4`.
+fn eval_iter_exp_without_comp<
+    'global,
+    Interp: Invoker<Iface, Ext>,
+    Iface: Interface,
+    Ext: Extern,
+>(
+    runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
+    ctx: &Interp::Context<'global>,
+    exp: &ast::Exp,
+    exp_inner: &ast::Exp,
+    exp_iter: &ast::ExpIter,
+) -> Backtrack<Value> {
+    iter::map(runner_ctx, ctx, &exp.span, &exp.note, exp_iter, |runner_ctx, ctx_sub| {
         eval_exp(runner_ctx, ctx_sub, exp_inner)
     })
 }

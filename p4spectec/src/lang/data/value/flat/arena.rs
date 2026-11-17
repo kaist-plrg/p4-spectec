@@ -17,7 +17,7 @@ use crate::lang::{
 };
 
 use super::super::ValueError;
-use super::{Value, ValueKind};
+use super::{Value, ValueKind, zipper::ZipCache};
 
 // = Arena storage
 
@@ -30,19 +30,32 @@ pub struct ValueArena {
     types: Interner<Rc<TypKind>>,
     /// Spans, shared by equality.
     spans: Interner<Span>,
+    /// Unzipped outer values and zipped lists, without their types.
+    pub(super) zipper: ZipCache,
 }
 
 impl Default for ValueArena {
     fn default() -> Self {
         let mut spans = Interner::new();
-        spans
+        let span_default = spans
             .intern_default()
             .expect("the first span fits in an interner index");
-        Self { values: CanonInterner::new(), types: Interner::new(), spans }
+        debug_assert_eq!(span_default, Self::span_default());
+        Self {
+            values: CanonInterner::new(),
+            types: Interner::new(),
+            spans,
+            zipper: ZipCache::default(),
+        }
     }
 }
 
 impl ValueArena {
+    /// The handle of the default location, which `Default` interns first.
+    pub(super) fn span_default() -> Interned<Span> {
+        Interned::from_index(0)
+    }
+
     // - Interning
 
     /// Interns a value body and its annotations in allocation order.

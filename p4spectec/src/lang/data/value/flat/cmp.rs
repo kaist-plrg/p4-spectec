@@ -83,8 +83,9 @@ impl SyntaxEq for ValueRef<'_> {
             std::ptr::eq(self.arena, value_other.arena),
             "values must belong to the same arena"
         );
-        self.arena.value.canon_id(self.value.node)
-            == self.arena.value.canon_id(value_other.value.node)
+        self.value.node == value_other.value.node
+            || self.arena.value.canon_id(self.value.node)
+                == self.arena.value.canon_id(value_other.value.node)
     }
 }
 
@@ -94,6 +95,9 @@ impl SyntaxCmp for ValueRef<'_> {
             std::ptr::eq(self.arena, value_other.arena),
             "values must belong to the same arena"
         );
+        if self.value.node == value_other.value.node {
+            return Ordering::Equal;
+        }
         // Compare child contents in the same arena
         let compare_value = |value_l: &Value, value_r: &Value| {
             value_l
