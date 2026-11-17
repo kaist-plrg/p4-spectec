@@ -605,6 +605,13 @@ fn eval_call_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
 // - Iteration expression
 
 /// Evaluates an iterated expression; a bare iterated variable reads its slot.
+///
+/// ```text
+/// with a* = [1, 3] and b* = [2, 4]
+/// a*        [1, 3]             reads the slot
+/// (b, a)*   [(2, 1), (4, 3)]   composes: zips the outer values
+/// (a + b)*  [3, 7]             does not: evaluates per element
+/// ```
 fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     ctx: &Interp::Context<'global>,
@@ -623,7 +630,12 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     }
 }
 
-/// Zips the variables' columns into the list of constructed elements.
+/// Zips the variables' outer values into the list of constructed elements.
+///
+/// For `(b, a)*` with `a* = [1, 3]` and `b* = [2, 4]`,
+/// builds `[(2, 1), (4, 3)]`;
+/// with `b* = [2]` instead,
+/// fails on the unequal lengths as the general path does.
 fn eval_iter_exp_with_comp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     ctx: &Interp::Context<'global>,
@@ -636,24 +648,30 @@ fn eval_iter_exp_with_comp<'global, Interp: Invoker<Iface, Ext>, Iface: Interfac
     // The variables must be lists of one length
     let vars_outer = iterate_vars(&exp_iter.vars);
     unwrap_from_result!(ctx.find_list_values_by_var(arena, &vars_outer), &exp.span);
-    let columns: Vec<_> = vars_outer
+    let values_outer: Vec<_> = vars_outer
         .iter()
         .map(|var_outer| {
-            ctx.find_value_at_slot(var_outer.slot)
+            *ctx.find_value_at_slot(var_outer.slot)
                 .expect("value must be bound")
-                .node
         })
         .collect();
     let value = unwrap_from_result!(
-        arena
-            .value
-            .zip(&arena.mixop, comp, exp_inner.note.clone(), exp.note.clone(), &columns),
+        arena.value.zip(
+            &arena.mixop,
+            comp,
+            exp_inner.note.clone(),
+            exp.note.clone(),
+            &values_outer
+        ),
         &exp.span
     );
     ok!(value)
 }
 
 /// Evaluates the body once per element of the iterated variables.
+///
+/// For `(a + b)*` with `a* = [1, 3]` and `b* = [2, 4]`,
+/// evaluates `1 + 2` and `3 + 4`.
 fn eval_iter_exp_without_comp<
     'global,
     Interp: Invoker<Iface, Ext>,

@@ -30,7 +30,7 @@ pub struct ValueArena {
     types: Interner<Rc<TypKind>>,
     /// Spans, shared by equality.
     spans: Interner<Span>,
-    /// Unzipped columns and zipped lists, keyed by immutable bodies.
+    /// Unzipped outer values and zipped lists, without their types.
     pub(super) zipper: ZipCache,
 }
 

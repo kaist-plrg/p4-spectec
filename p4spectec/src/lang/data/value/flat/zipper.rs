@@ -1,11 +1,12 @@
-//! Unzipping lists into columns and zipping columns into lists
+//! Unzipping lists into the outer values of their variables, and back
 //!
-//! `ValueArena::unzip` takes `[(1, 2), (3, 4)]` apart
-//! into the columns `[1, 3]` and `[2, 4]`
-//! by following a `Decomp` into every element;
-//! `ValueArena::zip` builds `[(1, 2), (3, 4)]` back from those columns
-//! by applying a `Comp` to the entries at each index.
-//! Both read only immutable bodies, so their results are cached.
+//! ```text
+//! (a, b)* <- [(1, 2), (3, 4)]   unzip   a* = [1, 3], b* = [2, 4]
+//! (b, a)*                       zip     [(2, 1), (4, 3)]
+//! ```
+//!
+//! `ValueArena::unzip` follows a `Decomp` into every element;
+//! `ValueArena::zip` builds every element by a `Comp`.
 
 use std::rc::Rc;
 
@@ -32,15 +33,15 @@ pub(crate) type Decomp = Vec<Vec<Step>>;
 /// One step from a value to its child at a fixed position.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) enum Step {
-    /// The component at an index of a tuple.
+    /// A tuple component by index: `Tuple(1)` takes `(1, 2)` to `2`.
     Tuple(usize),
-    /// The argument at an index of a case.
+    /// A case argument by index: `Case(1)` takes `x ':' 2` to `2`.
     Case(usize),
-    /// The field at an index of a struct.
+    /// A struct field by index: `Struct(0)` takes `{F 1, G 2}` to `1`.
     Struct(usize),
-    /// The element at an index of a list literal.
+    /// A list literal element by index: `List(0)` takes `[1, 2]` to `1`.
     List(usize),
-    /// The payload of a present option.
+    /// A present option's payload: `Opt` takes `?(1)` to `1`.
     Opt,
 }
 
@@ -56,6 +57,9 @@ pub(crate) struct Comp {
 }
 
 /// The constructor of every element built by zipping.
+///
+/// `(a, b)*` builds tuples, `[a, b]*` list literals,
+/// and `(a ':' b)*` cases of `:`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) enum Shape {
     /// A tuple of the arguments.
@@ -68,12 +72,16 @@ pub(crate) enum Shape {
 
 // = Cache
 
-/// Cached unzips and zips, keyed by immutable bodies of the owning arena.
+/// Cached unzips and zips of the owning arena.
+///
+/// They remember values without their types,
+/// since the same unzip or zip gives the same contents to every caller;
+/// each call attaches its own types to what it reads back.
 #[derive(Debug, Default)]
 pub(super) struct ZipCache {
-    /// Columns, by source list and decomposition.
+    /// Outer values, by source list and decomposition.
     unzips: HashMap<UnzipKey, Vec<Interned<ValueKind>>, RandomState>,
-    /// Lists, by constructor, element type, and columns in argument order.
+    /// Lists, by constructor, element type, and outer values in argument order.
     zips: HashMap<ZipKey, Interned<ValueKind>, RandomState>,
 }
 
@@ -104,31 +112,36 @@ impl Equivalent<UnzipKey> for UnzipQuery<'_> {
 struct ZipKey {
     shape: Shape,
     note_elem: Interned<Rc<TypKind>>,
-    columns: Vec<Interned<ValueKind>>,
+    nodes_arg: Vec<Interned<ValueKind>>,
 }
 
-/// A `ZipKey` borrowing its columns, for lookups.
+/// A `ZipKey` borrowing its outer values, for lookups.
 #[derive(Hash)]
 struct ZipQuery<'a> {
     shape: Shape,
     note_elem: Interned<Rc<TypKind>>,
-    columns: &'a [Interned<ValueKind>],
+    nodes_arg: &'a [Interned<ValueKind>],
 }
 
 impl Equivalent<ZipKey> for ZipQuery<'_> {
     fn equivalent(&self, key: &ZipKey) -> bool {
-        self.shape == key.shape && self.note_elem == key.note_elem && self.columns == key.columns
+        self.shape == key.shape
+            && self.note_elem == key.note_elem
+            && self.nodes_arg == key.nodes_arg
     }
 }
 
 // = Unzipping
 
 impl ValueArena {
-    /// Unzips a list into one column per variable of the decomposition.
+    /// Unzips a list into the outer value of each decomposed variable.
     ///
-    /// The list `[(1, 2), (3, 4)]`
-    /// with the decomposition `[[Tuple(0)], [Tuple(1)]]`
-    /// unzips into the columns `[1, 3]` and `[2, 4]`, typed by `typs` in order.
+    /// ```text
+    /// source  [(1, 2), (3, 4)]
+    /// decomp  [[Tuple(0)], [Tuple(1)]]
+    /// typs    nat*, nat*
+    /// result  [1, 3] : nat*, [2, 4] : nat*
+    /// ```
     pub(crate) fn unzip(
         &mut self,
         arena_mixop: &MixopArena,
@@ -140,19 +153,19 @@ impl ValueArena {
         let notes: Vec<_> = typs
             .map(|typ| self.intern_typ(typ))
             .collect::<Result<_, _>>()?;
-        // A cached unzip returns its columns
-        if let Some(nodes) = self.zipper.unzips.get(&UnzipQuery { source, decomp }) {
-            return Ok(nodes
+        // A cached unzip returns its outer values
+        if let Some(nodes_outer) = self.zipper.unzips.get(&UnzipQuery { source, decomp }) {
+            return Ok(nodes_outer
                 .iter()
                 .zip(&notes)
                 .map(|(node, note)| Value { node: *node, note: *note, span })
                 .collect());
         }
-        // Each column follows its variable's steps into every element
+        // Each variable follows its steps into every element
         let ValueKind::List(elems) = self.kind(source) else {
             unreachable!("unzipped source must be a list");
         };
-        let columns: Vec<Vec<Value>> = decomp
+        let values_by_var: Vec<Vec<Value>> = decomp
             .iter()
             .map(|steps| {
                 elems
@@ -161,14 +174,14 @@ impl ValueArena {
                     .collect()
             })
             .collect();
-        let mut nodes = Vec::with_capacity(columns.len());
-        for column in columns {
-            nodes.push(self.intern_kind(arena_mixop, ValueKind::List(column))?);
+        let mut nodes_outer = Vec::with_capacity(values_by_var.len());
+        for values in values_by_var {
+            nodes_outer.push(self.intern_kind(arena_mixop, ValueKind::List(values))?);
         }
         self.zipper
             .unzips
-            .insert(UnzipKey { source, decomp: decomp.clone() }, nodes.clone());
-        Ok(nodes
+            .insert(UnzipKey { source, decomp: decomp.clone() }, nodes_outer.clone());
+        Ok(nodes_outer
             .into_iter()
             .zip(notes)
             .map(|(node, note)| Value { node, note, span })
@@ -201,59 +214,70 @@ impl ValueArena {
 // = Zipping
 
 impl ValueArena {
-    /// Zips one column per variable into a list of the composed elements.
+    /// Zips the outer values of the variables into a list of composed elements.
     ///
-    /// The columns `[1, 3]` for `a` and `[2, 4]` for `b`
-    /// with the composition of `(b, a)*` zip into `[(2, 1), (4, 3)]`,
-    /// typed by `typ_elem` per element and `typ_list` as a whole.
+    /// ```text
+    /// values_outer  a* = [1, 3], b* = [2, 4]   in variable order
+    /// comp          Tuple with idxs [1, 0]
+    /// values_arg    b* = [2, 4], a* = [1, 3]   in argument order
+    /// result        [(2, 1), (4, 3)] : (nat, nat)*
+    /// ```
     pub(crate) fn zip(
         &mut self,
         arena_mixop: &MixopArena,
         comp: &Comp,
         typ_elem: Rc<TypKind>,
         typ_list: Rc<TypKind>,
-        columns_by_var: &[Interned<ValueKind>],
+        values_outer: &[Value],
     ) -> Result<Value, ValueError> {
         let shape = comp.shape;
         let note_elem = self.intern_typ(typ_elem)?;
         let note_list = self.intern_typ(typ_list)?;
-        // Each argument takes its variable's column
-        let columns: Vec<_> = comp.idxs.iter().map(|idx| columns_by_var[*idx]).collect();
+        // Each argument takes its variable's outer value
+        let nodes_arg: Vec<_> = comp
+            .idxs
+            .iter()
+            .map(|idx| values_outer[*idx].node)
+            .collect();
         // A cached zip reuses its list, or the elements are built
-        let query = ZipQuery { shape, note_elem, columns: &columns };
+        let query = ZipQuery { shape, note_elem, nodes_arg: &nodes_arg };
         let node = match self.zipper.zips.get(&query) {
             Some(node) => *node,
             None => {
-                let node = self.zip_elems(arena_mixop, shape, note_elem, &columns)?;
+                let node = self.zip_elems(arena_mixop, shape, note_elem, &nodes_arg)?;
                 self.zipper
                     .zips
-                    .insert(ZipKey { shape, note_elem, columns }, node);
+                    .insert(ZipKey { shape, note_elem, nodes_arg }, node);
                 node
             }
         };
         Ok(Value { node, note: note_list, span: Self::span_default() })
     }
 
-    /// Builds each element from the columns' entries at its index.
+    /// Builds each element from the outer values' entries at its index.
     ///
-    /// The columns `[2, 4]` and `[1, 3]` by `Tuple` build `[(2, 1), (4, 3)]`.
+    /// ```text
+    /// nodes_arg  [2, 4], [1, 3]   by Tuple
+    /// index 0    (2, 1)
+    /// index 1    (4, 3)
+    /// ```
     fn zip_elems(
         &mut self,
         arena_mixop: &MixopArena,
         shape: Shape,
         note_elem: Interned<Rc<TypKind>>,
-        columns: &[Interned<ValueKind>],
+        nodes_arg: &[Interned<ValueKind>],
     ) -> Result<Interned<ValueKind>, ValueError> {
         let span = Self::span_default();
-        let len = self.len_column(columns);
+        let len = self.len_outer(nodes_arg);
         let mut elems = Vec::with_capacity(len);
         for idx in 0..len {
             // The entries at this index become the arguments
-            let values: Vec<_> = columns
+            let values: Vec<_> = nodes_arg
                 .iter()
-                .map(|column| {
-                    let ValueKind::List(values) = self.kind(*column) else {
-                        unreachable!("zipped column must be a list");
+                .map(|node_arg| {
+                    let ValueKind::List(values) = self.kind(*node_arg) else {
+                        unreachable!("outer value must be a list");
                     };
                     values[idx]
                 })
@@ -272,11 +296,11 @@ impl ValueArena {
         Ok(node)
     }
 
-    /// The length shared by the zipped columns, zero without any column.
-    fn len_column(&self, columns: &[Interned<ValueKind>]) -> usize {
-        columns.first().map_or(0, |column| {
-            let ValueKind::List(values) = self.kind(*column) else {
-                unreachable!("zipped column must be a list");
+    /// The length shared by the outer values, zero without any.
+    fn len_outer(&self, nodes: &[Interned<ValueKind>]) -> usize {
+        nodes.first().map_or(0, |node| {
+            let ValueKind::List(values) = self.kind(*node) else {
+                unreachable!("outer value must be a list");
             };
             values.len()
         })

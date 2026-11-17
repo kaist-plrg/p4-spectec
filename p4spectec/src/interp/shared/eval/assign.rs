@@ -3,9 +3,10 @@
 //! `assign_exp` matches a value against a binder pattern
 //! and binds its variables:
 //! `(x, y) <- (1, 2)` binds `x` and `y`;
-//! `x* <- [1, 2]` binds `x*` as a whole,
-//! while `(x, y)* <- [...]` assigns each element in a fresh sub-context
-//! and gathers the elements into `x*` and `y*`.
+//! `x* <- [1, 2]` binds `x*` as a whole;
+//! `(x, y)* <- [(1, 2), (3, 4)]` unzips into `x* = [1, 3]` and `y* = [2, 4]`,
+//! while `(x, y :: ys)* <- [...]` assigns each element in a fresh sub-context
+//! and gathers the elements into `x*`, `y*`, and `ys*`.
 
 use std::{borrow::Borrow, rc::Rc};
 
@@ -298,6 +299,11 @@ fn assign_iter_opt_exp<Ctx: WriteContext>(
 }
 
 /// Assigns each list element and gathers the results per variable.
+///
+/// ```text
+/// (a, b)* <- [(1, 2), (3, 4)]          decomposes: unzips the list
+/// (a, y :: ys)* <- [(1, [2, 3]), ...]  does not: assigns element by element
+/// ```
 fn assign_iter_list_exp<Ctx: WriteContext>(
     arena: &mut Arena,
     ctx: &mut Ctx,
@@ -313,7 +319,10 @@ fn assign_iter_list_exp<Ctx: WriteContext>(
     }
 }
 
-/// Binds each variable outward to its column unzipped from the list.
+/// Binds each variable's outer value unzipped from the list.
+///
+/// For `(a, b)* <- [(1, 2), (3, 4)]`,
+/// `a*` binds `[1, 3]` and `b*` binds `[2, 4]`.
 fn assign_iter_list_exp_with_decomp<Ctx: WriteContext>(
     arena: &mut Arena,
     ctx: &mut Ctx,
@@ -323,16 +332,23 @@ fn assign_iter_list_exp_with_decomp<Ctx: WriteContext>(
     value: Value,
 ) -> Backtrack<()> {
     let typs = exp_iter.vars.iter().map(|var| Rc::clone(&var.outer().typ));
-    let values =
+    let values_outer =
         unwrap_from_result!(arena.value.unzip(&arena.mixop, value.node, decomp, typs), &exp.span);
-    for (var, value) in exp_iter.vars.iter().zip(values) {
-        ctx.add_value_at_slot(var.outer().slot, value);
+    for (var, value_outer) in exp_iter.vars.iter().zip(values_outer) {
+        ctx.add_value_at_slot(var.outer().slot, value_outer);
     }
     ok!(())
 }
 
 /// Assigns each list element in a cleared copy of the context,
 /// then binds every variable's values as a list one iteration outward.
+///
+/// ```text
+/// (a, y :: ys)* <- [(1, [2, 3]), (4, [5])]
+/// element 0   a = 1, y = 2, ys = [3]
+/// element 1   a = 4, y = 5, ys = []
+/// binds       a* = [1, 4], y* = [2, 5], ys* = [[3], []]
+/// ```
 fn assign_iter_list_exp_without_decomp<Ctx: WriteContext>(
     arena: &mut Arena,
     ctx: &mut Ctx,

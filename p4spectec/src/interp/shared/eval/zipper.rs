@@ -1,13 +1,14 @@
-//! Decomposition and composition of iterations over fixed positions
+//! Fixed iteration patterns and constructors, analyzed to unzip and zip
 //!
-//! `decompose` finds the steps from an element of `(a, b)*` to `a` and `b`,
-//! so that `(a, b)* <- xs` can unzip `xs` into the columns `a*` and `b*`;
-//! `compose` finds the constructor and argument variables of `(a, b)*`,
-//! so that evaluating it can zip the columns `a*` and `b*` into elements.
-//! Both apply only when every variable sits at a fixed position in the element,
-//! so no context is built per element.
-//! Patterns and expressions that compute values or nest iterations
-//! take the general path in `assign` and `iter`.
+//! ```text
+//! (a, b)* <- [(1, 2), (3, 4)]   decompose  a at [Tuple(0)], b at [Tuple(1)]
+//!                               unzip      a* = [1, 3], b* = [2, 4]
+//! (b, a)*                       compose    Tuple with idxs [1, 0]
+//!                               zip        [(2, 1), (4, 3)]
+//! ```
+//!
+//! Both read only syntax; `None` sends the caller
+//! to the per-element path in `assign` and `iter`.
 
 use crate::interp::shared::util::find_slot_of_exp;
 use crate::lang::data::value::flat::zipper::{Comp, Decomp, Shape, Step};
@@ -16,10 +17,14 @@ use crate::lang::il::prepared as ast;
 /// Decomposes a fixed pattern into steps to each variable, in `vars` order,
 /// or returns `None` when any part of it computes a value.
 ///
-/// For `(a, (b, c))* <- xs` over `a`, `b`, and `c`, the pattern `(a, (b, c))`
-/// decomposes into `[[Tuple(0)], [Tuple(1), Tuple(0)], [Tuple(1), Tuple(1)]]`;
-/// for `(a, y :: ys)* <- xs`, the cons `y :: ys` computes a tail,
-/// so there is no decomposition.
+/// ```text
+/// pattern  (a, (b, c))   vars [a, b, c]
+/// decomp   [[Tuple(0)], [Tuple(1), Tuple(0)], [Tuple(1), Tuple(1)]]
+///
+/// (a, y :: ys)   None: the cons builds a tail per element
+/// (a, 1)         None: the constant is not a variable
+/// a              None for vars [a, b]: b does not occur
+/// ```
 pub(super) fn decompose(exp: &ast::Exp, vars: &[ast::Var]) -> Option<Decomp> {
     let mut steps_by_var = vec![None; vars.len()];
     decompose_inner(exp, vars, &mut Vec::new(), &mut steps_by_var)?;
@@ -29,8 +34,13 @@ pub(super) fn decompose(exp: &ast::Exp, vars: &[ast::Var]) -> Option<Decomp> {
 
 /// Records the steps to each variable, failing on a computed part.
 ///
-/// Inside `(a, (b, c))`, reaching `b` with `steps` = `[Tuple(1)]`
-/// records `[Tuple(1), Tuple(0)]` for `b`.
+/// ```text
+/// visit (a, (b, c))   steps []
+/// visit a             steps [Tuple(0)]             records a
+/// visit (b, c)        steps [Tuple(1)]
+/// visit b             steps [Tuple(1), Tuple(0)]   records b
+/// visit c             steps [Tuple(1), Tuple(1)]   records c
+/// ```
 fn decompose_inner(
     exp: &ast::Exp,
     vars: &[ast::Var],
@@ -85,12 +95,16 @@ fn decompose_inner(
 /// Composes a list iteration whose body constructs from all its variables,
 /// or returns `None` when the body computes anything else.
 ///
-/// For `(b, a)*` over `a` and `b`,
-/// the tuple composes with the variable indices `[1, 0]`;
-/// `(a, b + 1)*` computes an argument and `(a, a)*` omits `b`,
-/// so neither composes.
+/// ```text
+/// expression  (b, a)*   vars [a, b]
+/// comp        Tuple with idxs [1, 0]: argument 0 is b, argument 1 is a
+///
+/// (a, b)?       None: not a list iteration
+/// (a, b + 1)*   None: an argument computes
+/// (a, a)*       None: b is no argument, so its length would go unchecked
+/// ```
 pub(super) fn compose(exp_inner: &ast::Exp, exp_iter: &ast::ExpIter) -> Option<Comp> {
-    // Only a list iteration zips its columns
+    // Only a list iteration zips its outer values
     if exp_iter.iter != ast::Iter::List {
         return None;
     }
