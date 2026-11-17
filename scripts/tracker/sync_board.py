@@ -5,8 +5,8 @@ the board mirror them so the drift check stays green. For every `.exclude`
 it sets the board item's `Name`, `Category`, `State`, `Repo issue`,
 `Upstream issue`, `#Pos`, `#Neg` from the file/dir/filename, renames an item
 whose `.exclude` was renamed (matched by upstream or repo issue), and adds
-an item for a new `.exclude`. Hand-authored columns (`Owner`, `Report`,
-`Discussed`, `Notes`, `Patch PR`, `Upstream state`) are never touched.
+an item for a new `.exclude`. Hand-authored columns (`Owner`, `Discussed`,
+`Notes`, `Patch PR`, `Upstream state`) are never touched.
 
 `plan_sync()` is the pure, unit-tested core; the `__main__` block resolves
 field ids and issues the GraphQL mutations, so it needs a Projects
