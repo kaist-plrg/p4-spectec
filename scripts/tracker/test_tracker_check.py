@@ -87,6 +87,19 @@ def test_orphan_exempt_status_ok():
     assert check([], board) == []
 
 
+def test_orphan_done_ok():
+    # a resolved item whose exclude was removed is kept as a record -> not flagged
+    board = [_item(Name="fixed-x", State="confirmed", Status="Done")]
+    assert check([], board) == []
+
+
+def test_orphan_not_done_flagged():
+    # only Done exempts an orphan; an open item still needs its exclude
+    board = [_item(Name="ghost", State="confirmed", Status="Todo")]
+    msgs = check([], board)
+    assert any("ghost" in m and "no matching .exclude" in m for m in msgs)
+
+
 def test_orphan_draft_no_name_ok():
     # a draft item (no Name) is not an orphan
     board = [_item(Name="", State="confirmed")]

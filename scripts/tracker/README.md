@@ -73,7 +73,9 @@ against `excludes/` (both directions — a missing item, or an orphaned board
 item, exempting patched/future/out-of-scope) and fails if they disagree, so a
 sync that didn't run or a hand-tampered board is caught. The only manual case
 `sync_board.py` won't auto-resolve is a **true orphan** (a board item whose
-`.exclude` was deleted) — it reports it for you to remove.
+`.exclude` was deleted) — it reports it for you to resolve. To keep the item
+as a record, set its `Status` to `Done`; the drift check skips a `Done` item
+without an `.exclude`. Otherwise, remove it from the board.
 
 **Soundness** — file the issue and add the `soundness` label. The project's
 native auto-add pulls it in, and the `soundness-check` CI job verifies every
