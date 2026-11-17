@@ -6,6 +6,8 @@
 
 use crate::lang::il::prepared as shared_ast;
 
+use crate::interp::shared::prepare::zipper;
+
 use crate::lang::pl::prepared as ast;
 
 // = Expressions
@@ -69,10 +71,16 @@ pub(super) fn strip_exp(exp: &ast::Exp) -> shared_ast::Exp {
             P::Call(id, targs, args) => {
                 E::Call(id.clone(), targs.clone(), args.iter().map(strip_arg).collect())
             }
-            P::Iter(exp, exp_iter) => E::Iter(
-                Box::new(strip_exp(exp)),
-                shared_ast::ExpIter::Elems { iter: exp_iter.iter, vars: exp_iter.vars.clone() },
-            ),
+            P::Iter(exp, exp_iter) => {
+                let exp_inner = strip_exp(exp);
+                let (iter, vars) = (exp_iter.iter, exp_iter.vars.clone());
+                // A body that only constructs from its variables zips them
+                let exp_iter = match zipper::compose(&exp_inner, iter, &vars) {
+                    Some(comp) => shared_ast::ExpIter::Zip { comp, vars },
+                    None => shared_ast::ExpIter::Elems { iter, vars },
+                };
+                E::Iter(Box::new(exp_inner), exp_iter)
+            }
         };
         crate::note_phrase! {
             node: node,

@@ -20,7 +20,7 @@ use crate::lang::il::{ast as source, prepared::*};
 
 use crate::runtime::{envs::elab::TDEnv, ops::typ::optimize_sub_typ};
 
-use super::{Prepare, mixop};
+use super::{Prepare, mixop, zipper};
 
 // - Preparation context
 
@@ -191,7 +191,12 @@ impl Prepare<PrepareContext<'_>> for source::ExpKind {
             source::ExpKind::Iter(exp_inner, exp_iter_inner) => {
                 let exp_inner = exp_inner.prepare(ctx);
                 let ExpIterVars { iter, vars } = exp_iter_inner.prepare(ctx);
-                ExpKind::Iter(exp_inner, ExpIter::Elems { iter, vars })
+                // A body that only constructs from its variables zips them
+                let exp_iter = match zipper::compose(&exp_inner, iter, &vars) {
+                    Some(comp) => ExpIter::Zip { comp, vars },
+                    None => ExpIter::Elems { iter, vars },
+                };
+                ExpKind::Iter(exp_inner, exp_iter)
             }
         }
     }

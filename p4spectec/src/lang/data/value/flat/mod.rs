@@ -36,7 +36,7 @@ mod hash;
 pub mod make;
 mod print;
 mod view;
-pub(crate) mod zipper;
+pub mod zipper;
 
 pub use arena::ValueArena;
 pub use view::ValueRef;
