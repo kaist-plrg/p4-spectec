@@ -5894,6 +5894,13 @@ def $name_annotation_default(annotationList, nameIR) : nameIR =
   clause 1 : (annotationList, nameIR) = nameIR
   -- if ([] = $name_annotation(annotationList))
 
+def $qualify_objectId(objectId, nameIR) : objectId =
+
+  clause 0 : (objectId, nameIR) = $split_text($strip_prefix(nameIR, "."), ".")
+  -- if $starts_with(nameIR, ".")
+
+  clause -1 : (objectId, nameIR) = objectId ++ [nameIR]
+
 def $has_at_most_one_name_annotation(annotationList) : bool =
 
   clause 0 : (annotationList) = (|$name_annotation(annotationList)| <= 1)
@@ -14904,26 +14911,11 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
     -- if (frame :: _frame*{_frame <- _frame*} = IC_frame.LOCAL.FRAMES)
     -- if (object_table = TABLE nameIR `{ frame TBL `} as object)
     -- if (nameIR_object = $name_annotation_default(annotationList, nameIR))
-    -- if ~$starts_with(nameIR_object, ".")
-    -- if (objectId = IC_0.PATH ++ [nameIR_object])
+    -- if (objectId = $qualify_objectId(IC_0.PATH, nameIR_object))
     -- if (STO_2 = $add_store(STO_1, objectId, object_table))
     -- if ([nameIR_annotation] = $name_annotation(annotationList))
-    -- if (objectId_annotation = IC_0.PATH ++ [nameIR_annotation])
+    -- if (objectId_annotation = $qualify_objectId(IC_0.PATH, nameIR_annotation))
     -- if (STO_3 = $add_store(STO_2, objectId_annotation, object_table))
-    -- if (IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value))
-    -- if (constantDeclarationIR = _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';')
-
-    rule tableDeclarationIR-name-annotation-dot-prefix: IC_0 STO_0 |- annotationList TABLE typeIR nameIR `{ tablePropertyListIR `} as controlLocalDeclarationIR : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
-    -- if (IC_callee_0 = $inherit_i(BLOCK, IC_0))
-    -- if (IC_frame = $enter_i(IC_callee_0))
-    -- TableProperties_inst: IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
-    -- if (TBL = $init_table(tablePropertyListIR_inst))
-    -- if (frame :: _frame*{_frame <- _frame*} = IC_frame.LOCAL.FRAMES)
-    -- if (object_table = TABLE nameIR `{ frame TBL `} as object)
-    -- if ([nameIR_anno] = $name_annotation(annotationList))
-    -- if $starts_with(nameIR_anno, ".")
-    -- if (objectId = $split_text($strip_prefix(nameIR_anno, "."), "."))
-    -- if (STO_2 = $add_store(STO_1, objectId, object_table))
     -- if (IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value))
     -- if (constantDeclarationIR = _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';')
 
