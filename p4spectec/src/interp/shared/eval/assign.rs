@@ -4,7 +4,7 @@
 //! and binds its variables:
 //! `(x, y) <- (1, 2)` binds `x` and `y`;
 //! `x* <- [1, 2]` binds `x*` as a whole;
-//! `(x, y)* <- [(1, 2), (3, 4)]` unzips into `x* = [1, 3]` and `y* = [2, 4]`,
+//! `(x, y)* <- [(1, 2), (3, 4)]` splits into `x* = [1, 3]` and `y* = [2, 4]`,
 //! while `(x, y :: ys)* <- [...]` assigns each element in a fresh sub-context
 //! and gathers the elements into `x*`, `y*`, and `ys*`.
 
@@ -28,7 +28,7 @@ use crate::runtime::envs::interp::shared::TypeDef;
 
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap, unwrap_from_result},
-    util::{find_slot_of_exp, iterate_vars},
+    util::iterate_vars,
 };
 
 use crate::phrase;
@@ -245,18 +245,18 @@ fn assign_iter_exp<Ctx: WriteContext>(
     exp_iter: &ast::ExpIter,
     value: Value,
 ) -> Backtrack<()> {
-    // A bare iterated variable binds as a whole
-    if let Some(slot) = find_slot_of_exp(exp) {
-        ctx.add_value_at_slot(slot, value);
-        return ok!(());
-    }
     match exp_iter {
-        // A list pattern that only selects children unzips the list
-        ast::ExpIter::Unzip { decomp, vars } => {
-            assign_iter_exp_unzip(arena, ctx, exp, decomp, vars, value)
+        // An iterated variable binds as a whole
+        ast::ExpIter::Whole { var, .. } => {
+            ctx.add_value_at_slot(var.outer().slot, value);
+            ok!(())
+        }
+        // A list pattern that only selects children splits each element
+        ast::ExpIter::Split { decomp, vars } => {
+            assign_iter_exp_split(arena, ctx, exp, decomp, vars, value)
         }
         // Any other pattern assigns each element and gathers per variable
-        ast::ExpIter::Elems { .. } | ast::ExpIter::Zip { .. } => match exp_iter.iter() {
+        ast::ExpIter::Each { .. } | ast::ExpIter::Join { .. } => match exp_iter.iter() {
             // Option: the payload once, or none for every variable
             ast::Iter::Opt => assign_iter_opt_exp(arena, ctx, exp, exp_inner, exp_iter, value),
             // List: one assignment per element
@@ -302,11 +302,11 @@ fn assign_iter_opt_exp<Ctx: WriteContext>(
     ok!(())
 }
 
-/// Binds each variable's outer value unzipped from the list.
+/// Binds each variable's outer value split from the list's elements.
 ///
 /// For `(a, b)* <- [(1, 2), (3, 4)]`,
 /// `a*` binds `[1, 3]` and `b*` binds `[2, 4]`.
-fn assign_iter_exp_unzip<Ctx: WriteContext>(
+fn assign_iter_exp_split<Ctx: WriteContext>(
     arena: &mut Arena,
     ctx: &mut Ctx,
     exp: &ast::Exp,

@@ -191,11 +191,7 @@ impl Prepare<PrepareContext<'_>> for source::ExpKind {
             source::ExpKind::Iter(exp_inner, exp_iter_inner) => {
                 let exp_inner = exp_inner.prepare(ctx);
                 let ExpIterVars { iter, vars } = exp_iter_inner.prepare(ctx);
-                // A body that only constructs from its variables zips them
-                let exp_iter = match zipper::compose(&exp_inner, iter, &vars) {
-                    Some(comp) => ExpIter::Zip { comp, vars },
-                    None => ExpIter::Elems { iter, vars },
-                };
+                let exp_iter = zipper::plan_exp(&exp_inner, iter, vars);
                 ExpKind::Iter(exp_inner, exp_iter)
             }
         }

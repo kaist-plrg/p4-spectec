@@ -5,6 +5,8 @@
 //! AL, SL, and PL reuse these expressions and supporting syntax;
 //! preparation operations live under `interp/shared/prepare`.
 
+use std::slice;
+
 use crate::lang::data::value::flat::zipper::{Comp, Decomp};
 
 use super::{ast as source, stage::Stage};
@@ -44,29 +46,30 @@ pub type ExpIterVars = source::ExpIter<Var>;
 /// An expression's iteration, and how the interpreter runs it.
 #[derive(Clone, Debug, PartialEq)]
 pub enum ExpIter {
-    /// Assigned or evaluated element by element.
-    Elems { iter: Iter, vars: Vec<Var> },
-    /// A list pattern that only selects children:
-    /// `(a, b)* <- xs` unzips `xs`.
-    Unzip { decomp: Decomp, vars: Vec<Var> },
-    /// A list body that only constructs from its variables:
-    /// `(b, a)*` zips `a*` and `b*`.
-    Zip { comp: Comp, vars: Vec<Var> },
+    /// Evaluates the body or assigns the pattern per element.
+    Each { iter: Iter, vars: Vec<Var> },
+    /// Reads or binds an iterated variable whole: `x*`, `x**`.
+    Whole { iter: Iter, var: Var },
+    /// Splits each element of a list into its variables: `(a, b)* <- xs`.
+    Split { decomp: Decomp, vars: Vec<Var> },
+    /// Joins the variables into each element of a list: `(b, a)*`.
+    Join { comp: Comp, vars: Vec<Var> },
 }
 
 impl ExpIter {
     /// `?` or `*`.
     pub fn iter(&self) -> Iter {
         match self {
-            Self::Elems { iter, .. } => *iter,
-            Self::Unzip { .. } | Self::Zip { .. } => Iter::List,
+            Self::Each { iter, .. } | Self::Whole { iter, .. } => *iter,
+            Self::Split { .. } | Self::Join { .. } => Iter::List,
         }
     }
 
     /// The variables whose bound dimension this iteration consumes.
     pub fn vars(&self) -> &[Var] {
         match self {
-            Self::Elems { vars, .. } | Self::Unzip { vars, .. } | Self::Zip { vars, .. } => vars,
+            Self::Whole { var, .. } => slice::from_ref(var),
+            Self::Each { vars, .. } | Self::Split { vars, .. } | Self::Join { vars, .. } => vars,
         }
     }
 }

@@ -73,12 +73,7 @@ pub(super) fn strip_exp(exp: &ast::Exp) -> shared_ast::Exp {
             }
             P::Iter(exp, exp_iter) => {
                 let exp_inner = strip_exp(exp);
-                let (iter, vars) = (exp_iter.iter, exp_iter.vars.clone());
-                // A body that only constructs from its variables zips them
-                let exp_iter = match zipper::compose(&exp_inner, iter, &vars) {
-                    Some(comp) => shared_ast::ExpIter::Zip { comp, vars },
-                    None => shared_ast::ExpIter::Elems { iter, vars },
-                };
+                let exp_iter = zipper::plan_exp(&exp_inner, exp_iter.iter, exp_iter.vars.clone());
                 E::Iter(Box::new(exp_inner), exp_iter)
             }
         };

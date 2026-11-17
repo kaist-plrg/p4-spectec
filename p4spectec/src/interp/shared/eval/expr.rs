@@ -30,7 +30,7 @@ use crate::runner::{Extern, Interface, RunnerContext};
 
 use crate::interp::shared::{
     backtrack::{Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
-    util::{find_slot_of_exp, iterate_vars},
+    util::iterate_vars,
 };
 
 use super::super::context::{IterContext, ReadContext};
@@ -604,13 +604,13 @@ fn eval_call_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
 
 // - Iteration expression
 
-/// Evaluates an iterated expression; a bare iterated variable reads its slot.
+/// Evaluates an iterated expression as preparation planned it.
 ///
 /// ```text
 /// with a* = [1, 3] and b* = [2, 4]
-/// a*        [1, 3]             reads the slot
-/// (b, a)*   [(2, 1), (4, 3)]   prepared to zip the outer values
-/// (a + b)*  [3, 7]             evaluated per element
+/// a*        [1, 3]             whole: reads the slot
+/// (b, a)*   [(2, 1), (4, 3)]   join: zips the outer values
+/// (a + b)*  [3, 7]             each: evaluates per element
 /// ```
 fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
@@ -619,18 +619,20 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     exp_inner: &ast::Exp,
     exp_iter: &ast::ExpIter,
 ) -> Backtrack<Value> {
-    // `x*` as an expression is just the bound value
-    if let Some(slot) = find_slot_of_exp(exp) {
-        return ok!(*ctx.find_value_at_slot(slot).expect("value must be bound"));
-    }
     match exp_iter {
-        // A constructor over all the variables zips them
-        ast::ExpIter::Zip { comp, vars } => {
-            eval_iter_exp_zip(runner_ctx, ctx, exp, exp_inner, comp, vars)
+        // An iterated variable is just its bound value
+        ast::ExpIter::Whole { var, .. } => {
+            ok!(*ctx
+                .find_value_at_slot(var.outer().slot)
+                .expect("value must be bound"))
         }
-        // Any other body is evaluated element by element
-        ast::ExpIter::Elems { .. } | ast::ExpIter::Unzip { .. } => {
-            eval_iter_exp_elems(runner_ctx, ctx, exp, exp_inner, exp_iter)
+        // A constructor over all the variables joins them
+        ast::ExpIter::Join { comp, vars } => {
+            eval_iter_exp_join(runner_ctx, ctx, exp, exp_inner, comp, vars)
+        }
+        // Any other body is evaluated per element
+        ast::ExpIter::Each { .. } | ast::ExpIter::Split { .. } => {
+            eval_iter_exp_each(runner_ctx, ctx, exp, exp_inner, exp_iter)
         }
     }
 }
@@ -641,7 +643,7 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
 /// builds `[(2, 1), (4, 3)]`;
 /// with `b* = [2]` instead,
 /// fails on the unequal lengths as the general path does.
-fn eval_iter_exp_zip<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
+fn eval_iter_exp_join<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     ctx: &Interp::Context<'global>,
     exp: &ast::Exp,
@@ -677,7 +679,7 @@ fn eval_iter_exp_zip<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext
 ///
 /// For `(a + b)*` with `a* = [1, 3]` and `b* = [2, 4]`,
 /// evaluates `1 + 2` and `3 + 4`.
-fn eval_iter_exp_elems<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
+fn eval_iter_exp_each<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     ctx: &Interp::Context<'global>,
     exp: &ast::Exp,

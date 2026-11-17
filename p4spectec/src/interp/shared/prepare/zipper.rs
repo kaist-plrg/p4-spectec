@@ -7,25 +7,51 @@
 //!                               zip        [(2, 1), (4, 3)]
 //! ```
 //!
-//! An expression's iteration zips when `compose` succeeds;
-//! `plan_pattern` lets a pattern's iteration unzip when `decompose` succeeds.
+//! `plan_exp` lets an expression's iteration join when `compose` succeeds,
+//! and `plan_pattern` lets a pattern's iteration split
+//! when `decompose` succeeds.
 //! Either records the result in the iteration,
 //! so the interpreter dispatches on it without reading the syntax again.
 
-use crate::interp::shared::util::find_slot_of_exp;
-use crate::lang::data::value::flat::zipper::{Comp, Decomp, Shape, Step};
+use crate::lang::data::{
+    value::flat::zipper::{Comp, Decomp, Shape, Step},
+    var::SlotIdx,
+};
 use crate::lang::il::prepared as ast;
+
+/// Plans an expression's iteration from its prepared body.
+///
+/// ```text
+/// x*, x**    whole: the body is the iterated variable itself
+/// (b, a)*    join by Tuple with idxs [1, 0]
+/// (a + b)*   each: the body computes per element
+/// ```
+pub(crate) fn plan_exp(exp_inner: &ast::Exp, iter: ast::Iter, vars: Vec<ast::Var>) -> ast::ExpIter {
+    // The body is the one iterated variable
+    if let [var] = vars.as_slice()
+        && slot_of(exp_inner) == Some(var.slot)
+    {
+        let var = var.clone();
+        return ast::ExpIter::Whole { iter, var };
+    }
+    // A body that only constructs from its variables joins them
+    match compose(exp_inner, iter, &vars) {
+        Some(comp) => ast::ExpIter::Join { comp, vars },
+        None => ast::ExpIter::Each { iter, vars },
+    }
+}
 
 /// Plans every pattern of a list, as `plan_pattern` plans one.
 pub(crate) fn plan_patterns(exps: &mut [ast::Exp]) {
     exps.iter_mut().for_each(plan_pattern);
 }
 
-/// Plans every iteration in a pattern to unzip where its pattern decomposes.
+/// Plans every iteration in a pattern to split where its pattern decomposes.
 ///
 /// ```text
-/// (x, (a, b)*)   the inner (a, b)* unzips by [[Tuple(0)], [Tuple(1)]]
-/// (y :: ys)*     stays element by element: the cons builds a tail per element
+/// (x, (a, b)*)   the inner (a, b)* splits by [[Tuple(0)], [Tuple(1)]]
+/// (y :: ys)*     each: the cons builds a tail per element
+/// x*             stays whole
 /// ```
 pub(crate) fn plan_pattern(exp: &mut ast::Exp) {
     match &mut exp.node {
@@ -50,14 +76,18 @@ pub(crate) fn plan_pattern(exp: &mut ast::Exp) {
         }
         // Iteration: the element pattern, then this iteration itself
         ast::ExpKind::Iter(exp_inner, exp_iter) => {
+            // The variable itself binds whole, as in an expression
+            if matches!(exp_iter, ast::ExpIter::Whole { .. }) {
+                return;
+            }
             plan_pattern(exp_inner);
             let (iter, vars) = (exp_iter.iter(), exp_iter.vars().to_vec());
             let decomp = (iter == ast::Iter::List)
                 .then(|| decompose(exp_inner, &vars))
                 .flatten();
             *exp_iter = match decomp {
-                Some(decomp) => ast::ExpIter::Unzip { decomp, vars },
-                None => ast::ExpIter::Elems { iter, vars },
+                Some(decomp) => ast::ExpIter::Split { decomp, vars },
+                None => ast::ExpIter::Each { iter, vars },
             };
         }
         // Anything else holds no iteration to plan
@@ -99,7 +129,7 @@ fn decompose_inner(
     steps_by_var: &mut [Option<Vec<Step>>],
 ) -> Option<()> {
     // A variable or an identity iteration ends its steps
-    if let Some(slot) = find_slot_of_exp(exp) {
+    if let Some(slot) = slot_of(exp) {
         if let Some(idx) = vars.iter().position(|var| var.slot == slot) {
             steps_by_var[idx] = Some(steps.clone());
         }
@@ -155,7 +185,7 @@ fn decompose_inner(
 /// (a, a)*       None: b is no argument, so its length would go unchecked
 /// ```
 pub(crate) fn compose(exp_inner: &ast::Exp, iter: ast::Iter, vars: &[ast::Var]) -> Option<Comp> {
-    // Only a list iteration zips its outer values
+    // Only a list iteration joins its outer values
     if iter != ast::Iter::List {
         return None;
     }
@@ -170,7 +200,7 @@ pub(crate) fn compose(exp_inner: &ast::Exp, iter: ast::Iter, vars: &[ast::Var]) 
     let idxs: Vec<usize> = exps
         .iter()
         .map(|exp| {
-            let slot = find_slot_of_exp(exp)?;
+            let slot = slot_of(exp)?;
             vars.iter().position(|var| var.slot == slot)
         })
         .collect::<Option<_>>()?;
@@ -179,4 +209,20 @@ pub(crate) fn compose(exp_inner: &ast::Exp, iter: ast::Iter, vars: &[ast::Var]) 
         return None;
     }
     Some(Comp { shape, idxs })
+}
+
+/// The slot of a variable, or of an iterated variable read whole.
+///
+/// ```text
+/// x      x's slot
+/// x*     x*'s slot, when planned whole
+/// x**    x**'s slot, when planned whole
+/// x + 1  None
+/// ```
+fn slot_of(exp: &ast::Exp) -> Option<SlotIdx> {
+    match &exp.node {
+        ast::ExpKind::Id(id) => Some(id.slot),
+        ast::ExpKind::Iter(_, ast::ExpIter::Whole { var, .. }) => Some(var.outer().slot),
+        _ => None,
+    }
 }
