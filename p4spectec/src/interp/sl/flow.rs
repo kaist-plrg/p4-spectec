@@ -68,7 +68,7 @@ impl Flow {
 // = Sequential choice
 
 /// Keeps the failure set that got furthest, so the report is the most specific.
-pub(super) fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
+fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
     if errors.is_empty() && errors_post.is_empty() {
         return;
     }
