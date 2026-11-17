@@ -27,8 +27,8 @@ pub(in crate::interp::sl) fn assign_params(
     // Bind pairwise, threading the context
     for (param, value) in params.iter().zip(values) {
         match &param.node {
-            ast::ParamKind::Exp(_, exp) => assign_in_place(arena, ctx, exp, *value)?,
-            ast::ParamKind::Def(id, ..) => assign_def_arg_in_place(ctx, id, *value),
+            ast::ParamKind::Exp(_, exp) => assign_exp(arena, ctx, exp, *value)?,
+            ast::ParamKind::Def(id, ..) => assign_def_arg(ctx, id, *value)?,
         }
     }
     ok!(())

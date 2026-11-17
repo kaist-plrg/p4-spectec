@@ -380,16 +380,17 @@ fn eval_let_instr<'instr, 'ctx, 'global, Iface: Interface, Ext: Extern>(
     // Without iterations, bind straight into the context
     if instr.iter_instrs.is_empty() {
         let value = unwrap!(eval_exp(runner_ctx, ctx.as_ref(), &instr.exp_r));
-        unwrap!(assign::assign_in_place(runner_ctx.arena_mut(), ctx.to_mut(), &instr.exp_l, value));
+        unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.to_mut(), &instr.exp_l, value));
     // Otherwise bind per element and gather the iterated bindings
     } else {
         let ctx_post = eval_instr_iter(
             runner_ctx,
             ctx.into_owned(),
             &instr.iter_instrs,
-            &mut |runner_ctx, ctx| {
+            &mut |runner_ctx, mut ctx| {
                 let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
-                assign::assign_exp(runner_ctx.arena_mut(), ctx, &instr.exp_l, value)
+                unwrap!(assign::assign_exp(runner_ctx.arena_mut(), &mut ctx, &instr.exp_l, value));
+                ok!(ctx)
             },
         );
         ctx = Cow::Owned(unwrap!(ctx_post));
@@ -410,10 +411,16 @@ fn eval_rule_instr<'instr, 'ctx, 'global, Iface: Interface, Ext: Extern>(
         runner_ctx,
         ctx.into_owned(),
         &instr.iter_instrs,
-        &mut |runner_ctx, ctx| {
+        &mut |runner_ctx, mut ctx| {
             let values_input = unwrap!(eval_exps(runner_ctx, &ctx, &instr.exps_input));
             let values = unwrap!(SlInterp::invoke_rel(runner_ctx, &ctx, &instr.id, &values_input));
-            assign::assign_exps(runner_ctx.arena_mut(), ctx, &instr.exps_output, &values)
+            unwrap!(assign::assign_exps(
+                runner_ctx.arena_mut(),
+                &mut ctx,
+                &instr.exps_output,
+                &values
+            ));
+            ok!(ctx)
         },
     );
     ok!(Next::Block(Cow::Owned(unwrap!(ctx_post)), &instr.block))

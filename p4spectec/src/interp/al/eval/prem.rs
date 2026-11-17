@@ -61,7 +61,7 @@ pub fn eval_prems<'global, Iface: Interface, Ext: Extern>(
 /// Calls the relation on the input positions and binds the outputs.
 fn eval_rule_prem<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, AlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    mut ctx: Context<'global>,
     prem: &ast::RulePrem,
 ) -> Backtrack<Context<'global>> {
     // Split by the input hint, evaluate inputs, bind outputs
@@ -70,7 +70,8 @@ fn eval_rule_prem<'global, Iface: Interface, Ext: Extern>(
         input::split(&prem.input_hint, exps).expect("input hint must fit relation");
     let values_input = unwrap!(expr::eval_exps(runner_ctx, &ctx, &exps_input));
     let values_output = unwrap!(AlInterp::invoke_rel(runner_ctx, &ctx, &prem.id, &values_input));
-    assign::assign_exps(runner_ctx.arena_mut(), ctx, &exps_output, &values_output)
+    unwrap!(assign::assign_exps(runner_ctx.arena_mut(), &mut ctx, &exps_output, &values_output));
+    ok!(ctx)
 }
 
 // - If premise
@@ -144,11 +145,12 @@ fn eval_if_not_hold_prem<'global, Iface: Interface, Ext: Extern>(
 /// Evaluates the right side and assigns it to the pattern.
 fn eval_let_prem<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, AlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    mut ctx: Context<'global>,
     prem: &ast::LetPrem,
 ) -> Backtrack<Context<'global>> {
     let value = unwrap!(expr::eval_exp(runner_ctx, &ctx, &prem.exp_r));
-    assign::assign_exp(runner_ctx.arena_mut(), ctx, &prem.exp_l, value)
+    unwrap!(assign::assign_exp(runner_ctx.arena_mut(), &mut ctx, &prem.exp_l, value));
+    ok!(ctx)
 }
 
 // - Iteration premise

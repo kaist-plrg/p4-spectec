@@ -9,11 +9,14 @@
 
 use std::{borrow::Borrow, rc::Rc};
 
+use smallvec::SmallVec;
+
 use crate::lang::{
     common::source::Span,
     data::{
         arena::Arena,
         value::flat::{self as value, Value, ValueKind},
+        var::IdSlot,
     },
     traits::at::At,
 };
@@ -30,6 +33,9 @@ use crate::interp::shared::{
 use crate::phrase;
 
 use super::super::context::WriteContext;
+
+/// Child handles copied out of the arena, which recursive assignment may grow.
+type Values = SmallVec<[Value; 8]>;
 
 // = Type parameter assignment
 
@@ -58,53 +64,46 @@ pub fn assign_tparams<Ctx: WriteContext>(
 /// Matches `value` against the pattern `exp`, binding its variables.
 pub fn assign_exp<Ctx: WriteContext>(
     arena: &mut Arena,
-    mut ctx: Ctx,
-    exp: &ast::Exp,
-    value: Value,
-) -> Backtrack<Ctx> {
-    unwrap!(assign_in_place(arena, &mut ctx, exp, value));
-    ok!(ctx)
-}
-
-/// Destructuring updates one owned frame without moving the context per child.
-pub(crate) fn assign_in_place<Ctx: WriteContext>(
-    arena: &mut Arena,
-    ctx: &mut Ctx,
-    exp: &ast::Exp,
-    value: Value,
-) -> Backtrack<()> {
-    if let Some(slot) = find_slot_of_exp(exp) {
-        ctx.add_value_at_slot(slot, value);
-        return ok!(());
-    }
-    assign_composite(arena, ctx, exp, value)
-}
-
-/// Destructures a composite pattern, borrowing one child handle at a time.
-fn assign_composite<Ctx: WriteContext>(
-    arena: &mut Arena,
     ctx: &mut Ctx,
     exp: &ast::Exp,
     value: Value,
 ) -> Backtrack<()> {
     match (&exp.node, arena.value.kind(value.node)) {
-        (ast::ExpKind::Tuple(exps), ValueKind::Tuple(_))
-        | (ast::ExpKind::List(exps), ValueKind::List(_)) => {
-            assign_children(arena, ctx, exps.iter(), value)
+        // A variable binds directly
+        (ast::ExpKind::Id(id), _) => assign_id_exp(arena, ctx, id, value),
+        // Tuple: componentwise
+        (ast::ExpKind::Tuple(exps), ValueKind::Tuple(values)) => {
+            let values = Values::from_slice(values);
+            assign_tuple_exp(arena, ctx, exps, &values)
         }
-        (ast::ExpKind::Case(not_exp), ValueKind::Case(_)) => {
-            assign_children(arena, ctx, not_exp.args().iter(), value)
+        // Case: the arguments
+        (ast::ExpKind::Case(not_exp), ValueKind::Case(value_case)) => {
+            let values = Values::from_slice(value_case.args());
+            assign_case_exp(arena, ctx, not_exp, &values)
         }
-        (ast::ExpKind::Str(exp_fields), ValueKind::Struct(_)) => {
-            assign_children(arena, ctx, exp_fields.iter().map(|field| &field.exp), value)
+        // Struct: the fields in order
+        (ast::ExpKind::Str(exp_fields), ValueKind::Struct(value_fields)) => {
+            let values = value_fields
+                .iter()
+                .map(|value_field| value_field.value)
+                .collect::<Values>();
+            assign_str_exp(arena, ctx, exp_fields, &values)
         }
+        // Option: both present or both absent
         (ast::ExpKind::Opt(exp_opt), ValueKind::Opt(value_opt)) => {
             let value_opt = *value_opt;
             assign_opt_exp(arena, ctx, exp_opt, &value_opt)
         }
+        // List literal: elementwise
+        (ast::ExpKind::List(exps), ValueKind::List(values)) => {
+            let values = Values::from_slice(values);
+            assign_list_exp(arena, ctx, exps, &values)
+        }
+        // Cons: the first element, then the rest
         (ast::ExpKind::Cons(exp_head, exp_tail), ValueKind::List(_)) => {
             assign_cons_exp(arena, ctx, exp_head, exp_tail, value)
         }
+        // Iteration: as a whole or row by row
         (ast::ExpKind::Iter(exp_inner, exp_iter), _) => {
             assign_iter_exp(arena, ctx, exp, exp_inner, exp_iter, value)
         }
@@ -113,46 +112,70 @@ fn assign_composite<Ctx: WriteContext>(
     }
 }
 
-/// Assigns fixed children without allocating a temporary copy of their handles.
-fn assign_children<'exp, Ctx: WriteContext>(
+/// Assigns values to patterns pairwise, requiring equal counts.
+pub fn assign_exps<Ctx: WriteContext, T: Borrow<ast::Exp> + At>(
     arena: &mut Arena,
     ctx: &mut Ctx,
-    exps: impl ExactSizeIterator<Item = &'exp ast::Exp>,
-    value: Value,
+    exps: &[T],
+    values: &[Value],
 ) -> Backtrack<()> {
-    let len = match arena.value.kind(value.node) {
-        ValueKind::Tuple(values) | ValueKind::List(values) => values.len(),
-        ValueKind::Case(value_case) => value_case.args().len(),
-        ValueKind::Struct(value_fields) => value_fields.len(),
-        _ => unreachable!("fixed assignment children"),
-    };
-    assert_eq!(exps.len(), len, "assignment arity mismatch");
-    for (idx, exp) in exps.enumerate() {
-        // Recursive assignment may grow the arena, so reacquire each child
-        let value_inner = match arena.value.kind(value.node) {
-            ValueKind::Tuple(values) | ValueKind::List(values) => values[idx],
-            ValueKind::Case(value_case) => value_case.args()[idx],
-            ValueKind::Struct(value_fields) => value_fields[idx].value,
-            _ => unreachable!("fixed assignment children"),
-        };
-        unwrap!(assign_in_place(arena, ctx, exp, value_inner));
+    // Counts must match
+    assert_eq!(exps.len(), values.len(), "assignment arity mismatch");
+    for (exp, value) in exps.iter().zip(values) {
+        unwrap!(assign_exp(arena, ctx, exp.borrow(), *value));
     }
     ok!(())
 }
 
-/// Assigns values to patterns pairwise, requiring equal counts.
-pub fn assign_exps<Ctx: WriteContext, T: Borrow<ast::Exp> + At>(
+// - Identifier expression
+
+fn assign_id_exp<Ctx: WriteContext>(
+    _arena: &mut Arena,
+    ctx: &mut Ctx,
+    id: &IdSlot,
+    value: Value,
+) -> Backtrack<()> {
+    ctx.add_value_at_slot(id.slot, value);
+    ok!(())
+}
+
+// - Tuple expression
+
+fn assign_tuple_exp<Ctx: WriteContext>(
     arena: &mut Arena,
-    mut ctx: Ctx,
-    exps: &[T],
+    ctx: &mut Ctx,
+    exps: &[ast::Exp],
     values: &[Value],
-) -> Backtrack<Ctx> {
+) -> Backtrack<()> {
+    assign_exps(arena, ctx, exps, values)
+}
+
+// - Case expression
+
+fn assign_case_exp<Ctx: WriteContext>(
+    arena: &mut Arena,
+    ctx: &mut Ctx,
+    not_exp: &ast::NotExp,
+    values: &[Value],
+) -> Backtrack<()> {
+    assign_exps(arena, ctx, not_exp.args(), values)
+}
+
+// - Struct expression
+
+/// Assigns the field values to the field patterns in order.
+fn assign_str_exp<Ctx: WriteContext>(
+    arena: &mut Arena,
+    ctx: &mut Ctx,
+    exp_fields: &[ast::ExpField],
+    values: &[Value],
+) -> Backtrack<()> {
     // Counts must match
-    assert_eq!(exps.len(), values.len(), "assignment arity mismatch");
-    for (exp, value) in exps.iter().zip(values) {
-        unwrap!(assign_in_place(arena, &mut ctx, exp.borrow(), *value));
+    assert_eq!(exp_fields.len(), values.len(), "assignment arity mismatch");
+    for (exp_field, value) in exp_fields.iter().zip(values) {
+        unwrap!(assign_exp(arena, ctx, &exp_field.exp, *value));
     }
-    ok!(ctx)
+    ok!(())
 }
 
 // - Optional expression
@@ -166,12 +189,23 @@ fn assign_opt_exp<Ctx: WriteContext>(
 ) -> Backtrack<()> {
     match (exp_opt, value_opt) {
         // Both present: assign the payload
-        (Some(exp), Some(value)) => assign_in_place(arena, ctx, exp, *value),
+        (Some(exp), Some(value)) => assign_exp(arena, ctx, exp, *value),
         // Both absent: nothing to bind
         (None, None) => ok!(()),
         // Lowering checks optionality before destructuring
         _ => unreachable!("option pattern must match the value"),
     }
+}
+
+// - List expression
+
+fn assign_list_exp<Ctx: WriteContext>(
+    arena: &mut Arena,
+    ctx: &mut Ctx,
+    exps: &[ast::Exp],
+    values: &[Value],
+) -> Backtrack<()> {
+    assign_exps(arena, ctx, exps, values)
 }
 
 // - Cons expression
@@ -185,13 +219,14 @@ fn assign_cons_exp<Ctx: WriteContext>(
     value: Value,
 ) -> Backtrack<()> {
     let value_head = *value::get::list(arena, &value)
-        .expect("list tail")
+        .expect("cons pattern must match a list")
         .first()
         .expect("cons pattern must match a non-empty list");
+    // Reuse the tail body the arena derived from this list
     let value_tail =
         unwrap_from_result!(arena.value.list_tail(&arena.mixop, value), &Span::default());
-    unwrap!(assign_in_place(arena, ctx, exp_head, value_head));
-    assign_in_place(arena, ctx, exp_tail, value_tail)
+    unwrap!(assign_exp(arena, ctx, exp_head, value_head));
+    assign_exp(arena, ctx, exp_tail, value_tail)
 }
 
 // - Iteration expression
@@ -210,75 +245,114 @@ fn assign_iter_exp<Ctx: WriteContext>(
         ctx.add_value_at_slot(slot, value);
         return ok!(());
     }
-    // Otherwise assign each element in a sub-context and gather per variable
+    // Otherwise assign each element and gather per variable
+    match exp_iter.iter {
+        // Option: the payload once, or none for every variable
+        ast::Iter::Opt => assign_opt_iter_exp(arena, ctx, exp, exp_inner, exp_iter, value),
+        // List: one row per element
+        ast::Iter::List => assign_list_iter_exp(arena, ctx, exp, exp_inner, exp_iter, value),
+    }
+}
+
+/// Assigns an optional payload in a sub-context, or binds every variable to none.
+fn assign_opt_iter_exp<Ctx: WriteContext>(
+    arena: &mut Arena,
+    ctx: &mut Ctx,
+    exp: &ast::Exp,
+    exp_inner: &ast::Exp,
+    exp_iter: &ast::ExpIter,
+    value: Value,
+) -> Backtrack<()> {
     let span = &exp.span;
     let vars_outer = iterate_vars(&exp_iter.vars);
-    match exp_iter.iter {
-        // Option: assign the payload once, or bind every variable to none
-        ast::Iter::Opt => {
-            let value_opt = value::get::opt(arena, &value)
-                .expect("iteration assignment value must be an option");
-            let ctx_sub = match value_opt {
-                Some(value) => Some(unwrap!(assign_exp(arena, ctx.clone(), exp_inner, value))),
-                None => None,
-            };
-            for (var, var_outer) in exp_iter.vars.iter().zip(&vars_outer) {
-                let typ = Rc::clone(&var_outer.typ);
-                let value_opt = ctx_sub.as_ref().map(|ctx_sub| {
-                    *ctx_sub
-                        .find_value_at_slot(var.slot)
-                        .expect("value must be bound")
-                });
-                let value = unwrap_from_result!(
-                    value::make::opt(arena, typ, value_opt, Span::default()),
-                    span
-                );
-                ctx.add_value_at_slot(var_outer.slot, value);
-            }
-            ok!(())
-        }
-        // List: one fresh sub-context per element
-        ast::Iter::List => {
-            if let Some(values) =
-                super::rows::collect(arena, ctx, exp_inner, &exp_iter.vars, &vars_outer, value)
-            {
-                let values = unwrap_from_result!(values, span);
-                for (var, value) in vars_outer.iter().zip(values) {
-                    ctx.add_value_at_slot(var.slot, value);
-                }
-                return ok!(());
-            }
-            // Nested iterations and constructed tails keep isolated row scopes
-            let values = value::get::list(arena, &value)
-                .expect("iteration assignment value must be a list")
-                .to_vec();
+    // Assign the payload, if any, in a copy of the context
+    let value_opt =
+        value::get::opt(arena, &value).expect("iteration assignment value must be an option");
+    let ctx_sub = match value_opt {
+        Some(value) => {
             let mut ctx_sub = ctx.clone();
-            let mut values_by_var: Vec<_> = (0..exp_iter.vars.len())
-                .map(|_| Vec::with_capacity(values.len()))
-                .collect();
-            for value in values {
-                ctx_sub.clear_value_bindings();
-                ctx_sub = unwrap!(assign_exp(arena, ctx_sub, exp_inner, value));
-                for (var, values) in exp_iter.vars.iter().zip(&mut values_by_var) {
-                    values.push(
-                        *ctx_sub
-                            .find_value_at_slot(var.slot)
-                            .expect("value must be bound"),
-                    );
-                }
-            }
-            // Each variable collects its per-row values into a list
-            for (var_outer, values) in vars_outer.iter().zip(values_by_var) {
-                let typ = Rc::clone(&var_outer.typ);
-                let value_sub = unwrap_from_result!(
-                    value::make::list(arena, typ, values, Span::default()),
-                    span
-                );
-                ctx.add_value_at_slot(var_outer.slot, value_sub);
-            }
-            ok!(())
+            unwrap!(assign_exp(arena, &mut ctx_sub, exp_inner, value));
+            Some(ctx_sub)
+        }
+        None => None,
+    };
+    // Each variable becomes an option of its payload binding
+    for (var, var_outer) in exp_iter.vars.iter().zip(&vars_outer) {
+        let typ = Rc::clone(&var_outer.typ);
+        let value_opt = ctx_sub.as_ref().map(|ctx_sub| {
+            *ctx_sub
+                .find_value_at_slot(var.slot)
+                .expect("value must be bound")
+        });
+        let value =
+            unwrap_from_result!(value::make::opt(arena, typ, value_opt, Span::default()), span);
+        ctx.add_value_at_slot(var_outer.slot, value);
+    }
+    ok!(())
+}
+
+/// Assigns each list element as one row and gathers the rows per variable.
+fn assign_list_iter_exp<Ctx: WriteContext>(
+    arena: &mut Arena,
+    ctx: &mut Ctx,
+    exp: &ast::Exp,
+    exp_inner: &ast::Exp,
+    exp_iter: &ast::ExpIter,
+    value: Value,
+) -> Backtrack<()> {
+    let span = &exp.span;
+    let vars_outer = iterate_vars(&exp_iter.vars);
+    // Fixed patterns project the rows into columns directly
+    if let Some(values) =
+        super::rows::collect(arena, ctx, exp_inner, &exp_iter.vars, &vars_outer, value)
+    {
+        let values = unwrap_from_result!(values, span);
+        for (var_outer, value) in vars_outer.iter().zip(values) {
+            ctx.add_value_at_slot(var_outer.slot, value);
+        }
+        return ok!(());
+    }
+    // Nested iterations and constructed tails keep isolated row scopes
+    let values_by_var = unwrap!(assign_rows(arena, ctx, exp_inner, &exp_iter.vars, value));
+    // Each variable collects its per-row values into a list
+    for (var_outer, values) in vars_outer.iter().zip(values_by_var) {
+        let typ = Rc::clone(&var_outer.typ);
+        let value_sub =
+            unwrap_from_result!(value::make::list(arena, typ, values, Span::default()), span);
+        ctx.add_value_at_slot(var_outer.slot, value_sub);
+    }
+    ok!(())
+}
+
+/// Assigns each list element in a cleared copy of the context,
+/// returning every variable's values in row order.
+fn assign_rows<Ctx: WriteContext>(
+    arena: &mut Arena,
+    ctx: &Ctx,
+    exp_inner: &ast::Exp,
+    vars: &[ast::Var],
+    value: Value,
+) -> Backtrack<Vec<Vec<Value>>> {
+    let values = value::get::list(arena, &value)
+        .expect("iteration assignment value must be a list")
+        .to_vec();
+    let mut ctx_sub = ctx.clone();
+    let mut values_by_var: Vec<_> = (0..vars.len())
+        .map(|_| Vec::with_capacity(values.len()))
+        .collect();
+    for value in values {
+        // Each row starts without the previous row's bindings
+        ctx_sub.clear_value_bindings();
+        unwrap!(assign_exp(arena, &mut ctx_sub, exp_inner, value));
+        for (var, values) in vars.iter().zip(&mut values_by_var) {
+            values.push(
+                *ctx_sub
+                    .find_value_at_slot(var.slot)
+                    .expect("value must be bound"),
+            );
         }
     }
+    ok!(values_by_var)
 }
 
 // = Argument assignment
@@ -286,10 +360,10 @@ fn assign_iter_exp<Ctx: WriteContext>(
 /// Assigns an argument value: to a pattern, or to a function parameter's slot.
 pub fn assign_arg<Ctx: WriteContext>(
     arena: &mut Arena,
-    ctx: Ctx,
+    ctx: &mut Ctx,
     arg: &ast::Arg,
     value: Value,
-) -> Backtrack<Ctx> {
+) -> Backtrack<()> {
     match &arg.node {
         ast::ArgKind::Exp(exp) => assign_exp_arg(arena, ctx, exp, value),
         ast::ArgKind::Def(id) => assign_def_arg(ctx, id, value),
@@ -299,27 +373,26 @@ pub fn assign_arg<Ctx: WriteContext>(
 /// Assigns values to arguments pairwise, requiring equal counts.
 pub fn assign_args<Ctx: WriteContext>(
     arena: &mut Arena,
-    ctx: Ctx,
+    ctx: &mut Ctx,
     args: &[ast::Arg],
     values: &[Value],
-) -> Backtrack<Ctx> {
+) -> Backtrack<()> {
     // Counts must match
     assert_eq!(args.len(), values.len(), "validated argument assignment arity");
-    let mut ctx = ctx;
-    for (arg, value) in args.iter().zip(values.iter()) {
-        ctx = unwrap!(assign_arg(arena, ctx, arg, *value));
+    for (arg, value) in args.iter().zip(values) {
+        unwrap!(assign_arg(arena, ctx, arg, *value));
     }
-    ok!(ctx)
+    ok!(())
 }
 
 // - Expression argument
 
 fn assign_exp_arg<Ctx: WriteContext>(
     arena: &mut Arena,
-    ctx: Ctx,
+    ctx: &mut Ctx,
     exp: &ast::Exp,
     value: Value,
-) -> Backtrack<Ctx> {
+) -> Backtrack<()> {
     assign_exp(arena, ctx, exp, value)
 }
 
@@ -327,19 +400,10 @@ fn assign_exp_arg<Ctx: WriteContext>(
 
 /// Binds a function argument, a value naming a global definition, to its parameter.
 pub fn assign_def_arg<Ctx: WriteContext>(
-    mut ctx: Ctx,
-    id: &ast::Id,
-    value: Value,
-) -> Backtrack<Ctx> {
-    assign_def_arg_in_place(&mut ctx, id, value);
-    ok!(ctx)
-}
-
-/// Binds a function argument without moving the callee's frame.
-pub(crate) fn assign_def_arg_in_place<Ctx: WriteContext>(
     ctx: &mut Ctx,
     id: &ast::Id,
     value: Value,
-) {
+) -> Backtrack<()> {
     ctx.add_func_param(id, value);
+    ok!(())
 }

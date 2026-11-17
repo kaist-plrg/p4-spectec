@@ -319,12 +319,8 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<RelResult> {
     // Inputs bind into a fresh frame
-    let ctx = unwrap!(assign::assign_exps(
-        runner_ctx.arena_mut(),
-        ctx.localize_with_layout(layout),
-        &rel.exps_input,
-        values
-    ));
+    let mut ctx = ctx.localize_with_layout(layout);
+    unwrap!(assign::assign_exps(runner_ctx.arena_mut(), &mut ctx, &rel.exps_input, values));
     // Run the body, falling back to the otherwise block
     let flow =
         unwrap!(instr::eval_block_with_else(runner_ctx, ctx, &rel.block, rel.block_else.as_ref()));
