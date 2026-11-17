@@ -544,10 +544,10 @@ fn eval_cond_iter_inner<Iface: Interface, Ext: Extern>(
         return eval(runner_ctx, ctx);
     };
     let ast::ExpIter { iter, vars } = exp_iter;
+    let vars_outer = iterate_vars(vars);
     match iter {
         // An option iterates zero or one time
         ast::Iter::Opt => {
-            let vars_outer = iterate_vars(vars);
             let values = unwrap_from_result!(
                 ctx.find_opt_values_by_var(runner_ctx.arena(), &vars_outer),
                 &Span::default()
@@ -565,13 +565,18 @@ fn eval_cond_iter_inner<Iface: Interface, Ext: Extern>(
         }
         // A list iterates over its elements in lockstep
         ast::Iter::List => {
-            let inputs = unwrap_from_result!(
-                iter::ListInputs::new(runner_ctx.arena(), ctx, vars),
+            let values_by_var = unwrap_from_result!(
+                ctx.find_list_values_by_var(runner_ctx.arena(), &vars_outer),
                 &Span::default()
             );
+            // Copy handles before the callback can allocate in the arena
+            let values_by_var: Vec<_> = values_by_var.into_iter().map(<[Value]>::to_vec).collect();
+            let len = values_by_var.first().map_or(0, Vec::len);
             let mut ctx_sub = ctx.clone();
-            for idx in 0..inputs.len() {
-                inputs.bind(runner_ctx.arena(), &mut ctx_sub, vars, idx);
+            for idx in 0..len {
+                for (var, values) in vars.iter().zip(&values_by_var) {
+                    ctx_sub.add_value_at_slot(var.slot, values[idx]);
+                }
                 // Every element must satisfy the condition
                 if !unwrap!(eval_cond_iter(runner_ctx, &ctx_sub, iters_tail, eval)) {
                     return ok!(false);

@@ -138,8 +138,8 @@ pub(super) fn map(
     exp_inner: &ast::Exp,
     exp_iter: &ast::ExpIter,
 ) -> Option<crate::interp::shared::backtrack::Backtrack<Value>> {
-    use super::iter::ListInputs;
     use crate::interp::shared::backtrack::{ok, unwrap_from_result};
+    use crate::interp::shared::util::iterate_vars;
     use crate::lang::data::value::flat::projection::Shape;
     if exp_iter.iter != ast::Iter::List {
         return None;
@@ -163,8 +163,17 @@ pub(super) fn map(
         return None;
     }
     Some((|| {
-        let inputs = unwrap_from_result!(ListInputs::new(arena, ctx, &exp_iter.vars), &exp.span);
-        let columns: Vec<_> = indices.iter().map(|index| inputs.body(*index)).collect();
+        // Inputs must be lists of one length
+        let vars_outer = iterate_vars(&exp_iter.vars);
+        unwrap_from_result!(ctx.find_list_values_by_var(arena, &vars_outer), &exp.span);
+        let columns: Vec<_> = indices
+            .iter()
+            .map(|idx| {
+                ctx.find_value_at_slot(vars_outer[*idx].slot)
+                    .expect("value must be bound")
+                    .node
+            })
+            .collect();
         let value = arena.value.map_columns(
             &arena.mixop,
             shape,
