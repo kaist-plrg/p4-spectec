@@ -13,7 +13,7 @@ use std::{
 use crate::lang::{
     common::source::Span,
     data::{
-        value::flat::{self as value, Value, ValueKind},
+        value::flat::{self as value, Value, ValueKind, zipper::Comp},
         var::IdSlot,
     },
     traits::print::Print,
@@ -35,7 +35,7 @@ use crate::interp::shared::{
 
 use super::super::context::{IterContext, ReadContext};
 
-use super::{Invoker, arg::eval_args, iter, ops, path::eval_update_path, zipper::Comp};
+use super::{Invoker, arg::eval_args, iter, ops, path::eval_update_path, zipper};
 
 // = Expression evaluation
 
@@ -617,7 +617,7 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
         return ok!(*ctx.find_value_at_slot(slot).expect("value must be bound"));
     }
     // A constructor over all the variables zips them; any other body is mapped
-    match super::zipper::compose(exp_inner, exp_iter) {
+    match zipper::compose(exp_inner, exp_iter) {
         Some(comp) => eval_iter_exp_with_comp(runner_ctx, ctx, exp, exp_inner, exp_iter, &comp),
         None => eval_iter_exp_without_comp(runner_ctx, ctx, exp, exp_inner, exp_iter),
     }
@@ -636,24 +636,18 @@ fn eval_iter_exp_with_comp<'global, Interp: Invoker<Iface, Ext>, Iface: Interfac
     // The variables must be lists of one length
     let vars_outer = iterate_vars(&exp_iter.vars);
     unwrap_from_result!(ctx.find_list_values_by_var(arena, &vars_outer), &exp.span);
-    // Each argument takes its variable's column
-    let columns: Vec<_> = comp
-        .idxs
+    let columns: Vec<_> = vars_outer
         .iter()
-        .map(|idx| {
-            ctx.find_value_at_slot(vars_outer[*idx].slot)
+        .map(|var_outer| {
+            ctx.find_value_at_slot(var_outer.slot)
                 .expect("value must be bound")
                 .node
         })
         .collect();
     let value = unwrap_from_result!(
-        arena.value.zip(
-            &arena.mixop,
-            comp.shape,
-            exp_inner.note.clone(),
-            exp.note.clone(),
-            &columns
-        ),
+        arena
+            .value
+            .zip(&arena.mixop, comp, exp_inner.note.clone(), exp.note.clone(), &columns),
         &exp.span
     );
     ok!(value)

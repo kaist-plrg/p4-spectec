@@ -34,6 +34,8 @@ use crate::phrase;
 
 use super::super::context::WriteContext;
 
+use super::zipper;
+
 /// Child handles copied out of the arena, which recursive assignment may grow.
 type Values = SmallVec<[Value; 8]>;
 
@@ -305,7 +307,7 @@ fn assign_iter_list_exp<Ctx: WriteContext>(
     value: Value,
 ) -> Backtrack<()> {
     // A fixed pattern unzips the list; any other assigns element by element
-    match super::zipper::decompose(exp_inner, &exp_iter.vars) {
+    match zipper::decompose(exp_inner, &exp_iter.vars) {
         Some(decomp) => assign_iter_list_exp_with_decomp(arena, ctx, exp, exp_iter, &decomp, value),
         None => assign_iter_list_exp_without_decomp(arena, ctx, exp, exp_inner, exp_iter, value),
     }

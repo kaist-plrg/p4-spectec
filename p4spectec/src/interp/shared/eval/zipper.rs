@@ -10,11 +10,16 @@
 //! take the general path in `assign` and `iter`.
 
 use crate::interp::shared::util::find_slot_of_exp;
-use crate::lang::data::value::flat::zipper::{Decomp, Shape, Step};
+use crate::lang::data::value::flat::zipper::{Comp, Decomp, Shape, Step};
 use crate::lang::il::prepared as ast;
 
 /// Decomposes a fixed pattern into steps to each variable, in `vars` order,
 /// or returns `None` when any part of it computes a value.
+///
+/// For `(a, (b, c))* <- xs` over `a`, `b`, and `c`, the pattern `(a, (b, c))`
+/// decomposes into `[[Tuple(0)], [Tuple(1), Tuple(0)], [Tuple(1), Tuple(1)]]`;
+/// for `(a, y :: ys)* <- xs`, the cons `y :: ys` computes a tail,
+/// so there is no decomposition.
 pub(super) fn decompose(exp: &ast::Exp, vars: &[ast::Var]) -> Option<Decomp> {
     let mut steps_by_var = vec![None; vars.len()];
     decompose_inner(exp, vars, &mut Vec::new(), &mut steps_by_var)?;
@@ -23,6 +28,9 @@ pub(super) fn decompose(exp: &ast::Exp, vars: &[ast::Var]) -> Option<Decomp> {
 }
 
 /// Records the steps to each variable, failing on a computed part.
+///
+/// Inside `(a, (b, c))`, reaching `b` with `steps` = `[Tuple(1)]`
+/// records `[Tuple(1), Tuple(0)]` for `b`.
 fn decompose_inner(
     exp: &ast::Exp,
     vars: &[ast::Var],
@@ -74,16 +82,13 @@ fn decompose_inner(
     }
 }
 
-/// The constructor of every zipped element and the variable of each argument.
-pub(super) struct Comp {
-    /// The constructor.
-    pub(super) shape: Shape,
-    /// Per argument, in order, the index of its variable in the iteration.
-    pub(super) idxs: Vec<usize>,
-}
-
 /// Composes a list iteration whose body constructs from all its variables,
 /// or returns `None` when the body computes anything else.
+///
+/// For `(b, a)*` over `a` and `b`,
+/// the tuple composes with the variable indices `[1, 0]`;
+/// `(a, b + 1)*` computes an argument and `(a, a)*` omits `b`,
+/// so neither composes.
 pub(super) fn compose(exp_inner: &ast::Exp, exp_iter: &ast::ExpIter) -> Option<Comp> {
     // Only a list iteration zips its columns
     if exp_iter.iter != ast::Iter::List {

@@ -17,7 +17,7 @@ use crate::lang::{
 };
 
 use super::super::ValueError;
-use super::{Value, ValueKind};
+use super::{Value, ValueKind, zipper::ZipCache};
 
 // = Arena storage
 
@@ -26,12 +26,12 @@ use super::{Value, ValueKind};
 pub struct ValueArena {
     /// Bodies, with canonical identities; a case reads its mixop's.
     values: CanonInterner<ValueKind>,
-    /// Unzipped columns and zipped lists, keyed by immutable bodies.
-    pub(super) zipper: super::zipper::ZipCache,
     /// Types, shared by exact contents including nested source spans.
     types: Interner<Rc<TypKind>>,
     /// Spans, shared by equality.
     spans: Interner<Span>,
+    /// Unzipped columns and zipped lists, keyed by immutable bodies.
+    pub(super) zipper: ZipCache,
 }
 
 impl Default for ValueArena {
@@ -43,9 +43,9 @@ impl Default for ValueArena {
         debug_assert_eq!(span_default, Self::span_default());
         Self {
             values: CanonInterner::new(),
-            zipper: Default::default(),
             types: Interner::new(),
             spans,
+            zipper: ZipCache::default(),
         }
     }
 }
