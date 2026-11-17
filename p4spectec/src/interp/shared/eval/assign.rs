@@ -100,8 +100,10 @@ pub fn assign_exp<Ctx: WriteContext>(
             assign_list_exp(arena, ctx, exps, &values)
         }
         // Cons: the first element, then the rest
-        (ast::ExpKind::Cons(exp_head, exp_tail), ValueKind::List(_)) => {
-            assign_cons_exp(arena, ctx, exp_head, exp_tail, value)
+        (ast::ExpKind::Cons(exp_head, exp_tail), ValueKind::List(values)) => {
+            let values = Values::from_slice(values);
+            let typ = arena.value.typ(value.note).clone();
+            assign_cons_exp(arena, ctx, exp_head, exp_tail, typ, &values)
         }
         // Iteration: as a whole or row by row
         (ast::ExpKind::Iter(exp_inner, exp_iter), _) => {
@@ -216,20 +218,18 @@ fn assign_cons_exp<Ctx: WriteContext>(
     ctx: &mut Ctx,
     exp_head: &ast::Exp,
     exp_tail: &ast::Exp,
-    value: Value,
+    typ: Rc<ast::TypKind>,
+    values: &[Value],
 ) -> Backtrack<()> {
-    let (value_head, values_tail) = value::get::list(arena, &value)
-        .expect("cons pattern must match a list")
+    let (value_head, values_tail) = values
         .split_first()
         .expect("cons pattern must match a non-empty list");
-    let (value_head, values_tail) = (*value_head, values_tail.to_vec());
     // Rebuild the tail as a list value of the same type
-    let typ = arena.value.typ(value.note).clone();
     let value_tail = unwrap_from_result!(
-        value::make::list(arena, typ, values_tail, Span::default()),
+        value::make::list(arena, typ, values_tail.to_vec(), Span::default()),
         &Span::default()
     );
-    unwrap!(assign_exp(arena, ctx, exp_head, value_head));
+    unwrap!(assign_exp(arena, ctx, exp_head, *value_head));
     assign_exp(arena, ctx, exp_tail, value_tail)
 }
 
