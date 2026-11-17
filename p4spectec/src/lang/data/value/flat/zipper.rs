@@ -24,6 +24,12 @@ use super::{Value, ValueArena, ValueCase, ValueKind};
 
 // = Decomposition and composition
 
+/// Per variable, in order, the steps from an element to that variable.
+///
+/// The pattern `(a, (b, c))` over `a`, `b`, and `c` decomposes into
+/// `[[Tuple(0)], [Tuple(1), Tuple(0)], [Tuple(1), Tuple(1)]]`.
+pub(crate) type Decomp = Vec<Vec<Step>>;
+
 /// One step from a value to its child at a fixed position.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) enum Step {
@@ -39,11 +45,16 @@ pub(crate) enum Step {
     Opt,
 }
 
-/// Per variable, in order, the steps from an element to that variable.
+/// The constructor of every zipped element and the variable of each argument.
 ///
-/// The pattern `(a, (b, c))` over `a`, `b`, and `c` decomposes into
-/// `[[Tuple(0)], [Tuple(1), Tuple(0)], [Tuple(1), Tuple(1)]]`.
-pub(crate) type Decomp = Vec<Vec<Step>>;
+/// The expression `(b, a)*` over `a` and `b` composes into
+/// the shape `Tuple` with the variable indices `[1, 0]`.
+pub(crate) struct Comp {
+    /// The constructor.
+    pub(crate) shape: Shape,
+    /// Per argument, in order, the index of its variable.
+    pub(crate) idxs: Vec<usize>,
+}
 
 /// The constructor of every element built by zipping.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -54,17 +65,6 @@ pub(crate) enum Shape {
     List,
     /// A case of the mixop with the arguments.
     Case(Mixop),
-}
-
-/// The constructor of every zipped element and the variable of each argument.
-///
-/// The expression `(b, a)*` over `a` and `b` composes into
-/// the shape `Tuple` with the variable indices `[1, 0]`.
-pub(crate) struct Comp {
-    /// The constructor.
-    pub(crate) shape: Shape,
-    /// Per argument, in order, the index of its variable.
-    pub(crate) idxs: Vec<usize>,
 }
 
 // = Cache
