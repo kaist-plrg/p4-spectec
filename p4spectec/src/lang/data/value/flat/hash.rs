@@ -9,7 +9,7 @@ use crate::lang::data::{
     notation::MixopArena,
 };
 
-use super::{Value, ValueField, ValueKind};
+use super::{ValueField, ValueKind};
 
 impl CanonHash<MixopArena> for ValueKind {
     fn canon_hash<H: Hasher>(
@@ -49,50 +49,5 @@ impl CanonHash<MixopArena> for ValueKind {
             ValueKind::Func(id) => id.node.hash(hasher),
             ValueKind::Extern(json) => json.hash(hasher),
         }
-    }
-}
-
-/// Exact hashes also serve borrowed constructor queries.
-impl Hash for ValueKind {
-    fn hash<H: Hasher>(&self, hasher: &mut H) {
-        self.tag().hash(hasher);
-        match self {
-            Self::Bool(value) => value.hash(hasher),
-            Self::Num(value) => value.hash(hasher),
-            Self::Text(value) => value.hash(hasher),
-            Self::Struct(fields) => {
-                fields.len().hash(hasher);
-                for field in fields {
-                    field.atom.hash(hasher);
-                    exact_value(&field.value, hasher);
-                }
-            }
-            Self::Case(case) => {
-                case.mixop().hash(hasher);
-                exact_values(case.args(), hasher);
-            }
-            Self::Tuple(values) | Self::List(values) => exact_values(values, hasher),
-            Self::Opt(value) => {
-                value.is_some().hash(hasher);
-                if let Some(value) = value {
-                    exact_value(value, hasher);
-                }
-            }
-            Self::Func(id) => id.hash(hasher),
-            Self::Extern(value) => value.hash(hasher),
-        }
-    }
-}
-
-/// Hashes all three exact handles in two machine-word writes.
-fn exact_value<H: Hasher>(value: &Value, hasher: &mut H) {
-    hasher.write_u64(u64::from(value.node.index()) | (u64::from(value.note.index()) << 32));
-    value.span.hash(hasher);
-}
-
-fn exact_values<H: Hasher>(values: &[Value], hasher: &mut H) {
-    values.len().hash(hasher);
-    for value in values {
-        exact_value(value, hasher);
     }
 }
