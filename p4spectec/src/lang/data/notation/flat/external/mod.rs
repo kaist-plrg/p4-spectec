@@ -134,7 +134,8 @@ impl<'de> DeserializeState<'de, DecodeContext<'_>> for flat::Mixop {
         deserializer: D,
     ) -> Result<Self, D::Error> {
         match ctx {
-            DecodeContext::ArenaRelative(_) => u32::deserialize(deserializer).map(Self::from_index),
+            DecodeContext::ArenaRelative(_) => u32::deserialize(deserializer)
+                .and_then(|index| Self::try_from_index(index).map_err(::serde::de::Error::custom)),
             DecodeContext::ArenaIndependent(arena_mixop) => {
                 let mixop_tree = tree::Mixop::deserialize(deserializer)?;
                 mixop_tree

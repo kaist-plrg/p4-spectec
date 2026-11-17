@@ -124,14 +124,21 @@ impl fmt::Display for Position {
 // == Spans
 
 /// A source span between two positions.
-#[derive(
-    Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
-)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Span {
     /// Start of the span.
     pub left: Position,
     /// End of the span.
     pub right: Position,
+}
+
+impl std::hash::Hash for Span {
+    fn hash<H: std::hash::Hasher>(&self, hasher: &mut H) {
+        // All six coordinates fit into three full machine-word writes.
+        hasher.write_u64(u64::from(self.left.file.0) | (u64::from(self.right.file.0) << 32));
+        hasher.write_u64(u64::from(self.left.line) | (u64::from(self.left.column) << 32));
+        hasher.write_u64(u64::from(self.right.line) | (u64::from(self.right.column) << 32));
+    }
 }
 
 impl Span {

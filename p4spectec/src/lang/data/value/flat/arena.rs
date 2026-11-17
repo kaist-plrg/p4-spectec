@@ -24,6 +24,8 @@ use super::{Value, ValueKind};
 /// Storage for value bodies, types, and spans.
 #[derive(Debug)]
 pub struct ValueArena {
+    /// `false` and `true` with the default span, allocated on first use.
+    pub(super) bools: [Option<Value>; 2],
     /// Bodies, with canonical identities; a case reads its mixop's.
     values: CanonInterner<ValueKind>,
     /// Types, shared by exact contents including nested source spans.
@@ -35,14 +37,20 @@ pub struct ValueArena {
 impl Default for ValueArena {
     fn default() -> Self {
         let mut spans = Interner::new();
-        spans
+        let span_default = spans
             .intern_default()
             .expect("the first span fits in an interner index");
-        Self { values: CanonInterner::new(), types: Interner::new(), spans }
+        debug_assert_eq!(span_default, Self::span_default());
+        Self { bools: [None; 2], values: CanonInterner::new(), types: Interner::new(), spans }
     }
 }
 
 impl ValueArena {
+    /// The handle of the default location, which `Default` interns first.
+    pub(super) fn span_default() -> Interned<Span> {
+        Interned::from_index(0)
+    }
+
     // - Interning
 
     /// Interns a value body and its annotations in allocation order.
@@ -81,7 +89,7 @@ impl ValueArena {
         &mut self,
         span: Span,
     ) -> Result<Interned<Span>, std::num::TryFromIntError> {
-        self.spans.intern(span)
+        if span == Span::default() { Ok(Self::span_default()) } else { self.spans.intern(span) }
     }
 
     // - Lookup

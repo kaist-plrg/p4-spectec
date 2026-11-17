@@ -60,7 +60,7 @@ impl<T> Clone for CanonId<T> {
 
 impl<T> fmt::Debug for CanonId<T> {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt.debug_tuple("CanonId").field(&self.0.index).finish()
+        fmt.debug_tuple("CanonId").field(&self.0.index()).finish()
     }
 }
 
@@ -132,7 +132,7 @@ impl<T> CanonInterner<T> {
 
     /// The canonical identity of a stored item.
     pub fn canon_id(&self, id: Interned<T>) -> CanonId<T> {
-        self.canon[id.index as usize]
+        self.canon[id.index() as usize]
     }
 }
 
@@ -155,7 +155,7 @@ impl<T: Eq + Hash> CanonInterner<T> {
     {
         // An exact duplicate already has its canonical id
         let id = self.storage.intern(item)?;
-        if (id.index as usize) < self.canon.len() {
+        if (id.index() as usize) < self.canon.len() {
             return Ok(id);
         }
         // Look for an existing class with the same meaning
