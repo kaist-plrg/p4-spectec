@@ -245,7 +245,7 @@ impl ValueArena {
         columns: &[Interned<ValueKind>],
     ) -> Result<Interned<ValueKind>, ValueError> {
         let span = Self::span_default();
-        let len = self.column_len(columns);
+        let len = self.len_column(columns);
         let mut elems = Vec::with_capacity(len);
         for idx in 0..len {
             // The entries at this index become the arguments
@@ -273,7 +273,7 @@ impl ValueArena {
     }
 
     /// The length shared by the zipped columns, zero without any column.
-    fn column_len(&self, columns: &[Interned<ValueKind>]) -> usize {
+    fn len_column(&self, columns: &[Interned<ValueKind>]) -> usize {
         columns.first().map_or(0, |column| {
             let ValueKind::List(values) = self.kind(*column) else {
                 unreachable!("zipped column must be a list");
