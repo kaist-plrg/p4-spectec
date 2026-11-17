@@ -24,8 +24,6 @@ use super::{Value, ValueKind, projection::Shape};
 /// Storage for value bodies, types, and spans.
 #[derive(Debug)]
 pub struct ValueArena {
-    /// `false` and `true` with the default span, allocated on first use.
-    pub(super) bools: [Option<Value>; 2],
     /// Bodies, with canonical identities; a case reads its mixop's.
     values: CanonInterner<ValueKind>,
     /// Tail bodies already derived from immutable non-empty lists.
@@ -47,7 +45,6 @@ impl Default for ValueArena {
             .expect("the first span fits in an interner index");
         debug_assert_eq!(span_default, Self::span_default());
         Self {
-            bools: [None; 2],
             values: CanonInterner::new(),
             tails: Default::default(),
             columns: Default::default(),
@@ -124,7 +121,7 @@ impl ValueArena {
         &mut self,
         span: Span,
     ) -> Result<Interned<Span>, std::num::TryFromIntError> {
-        if span == Span::default() { Ok(Self::span_default()) } else { self.spans.intern(span) }
+        self.spans.intern(span)
     }
 
     /// Reuses a list tail without copying and hashing the same suffix again.
