@@ -5,8 +5,7 @@
 //! by following a `Decomp` into every element;
 //! `ValueArena::zip` builds `[(1, 2), (3, 4)]` back from those columns
 //! by applying a `Comp` to the entries at each index.
-//! Both read only immutable bodies, so their results are cached,
-//! and zipping the columns unzipped from a list reuses that list's elements.
+//! Both read only immutable bodies, so their results are cached.
 
 use std::rc::Rc;
 
@@ -76,8 +75,6 @@ pub(super) struct ZipCache {
     unzips: HashMap<UnzipKey, Vec<Interned<ValueKind>>, RandomState>,
     /// Lists, by constructor, annotations, and columns in argument order.
     zips: HashMap<ZipKey, Value, RandomState>,
-    /// Source lists, by the columns unzipped from them in argument order.
-    origins: HashMap<Vec<Interned<ValueKind>>, Interned<ValueKind>, RandomState>,
 }
 
 // - Unzip keys
@@ -173,16 +170,6 @@ impl ValueArena {
         for column in columns {
             nodes.push(self.intern_kind(arena_mixop, ValueKind::List(column))?);
         }
-        // Columns of the arguments in order can zip back to the source
-        let in_order = decomp.iter().enumerate().all(|(idx, steps)| {
-            matches!(
-                steps.as_slice(),
-                [Step::Tuple(pos) | Step::Case(pos) | Step::List(pos)] if *pos == idx
-            )
-        });
-        if !decomp.is_empty() && in_order {
-            self.zipper.origins.insert(nodes.clone(), source);
-        }
         self.zipper
             .unzips
             .insert(UnzipKey { source, decomp: decomp.clone() }, nodes.clone());
@@ -242,64 +229,13 @@ impl ValueArena {
         if let Some(value) = self.zipper.zips.get(&query) {
             return Ok(*value);
         }
-        // Reuse the source the columns were unzipped from, or build new elements
-        let node = match self.zip_origin(arena_mixop, shape, note_elem, &columns)? {
-            Some(node) => node,
-            None => self.zip_elems(arena_mixop, shape, note_elem, &columns)?,
-        };
+        // Otherwise build the elements
+        let node = self.zip_elems(arena_mixop, shape, note_elem, &columns)?;
         let value = Value { node, note: note_list, span: Self::span_default() };
         self.zipper
             .zips
             .insert(ZipKey { shape, note_elem, note_list, columns }, value);
         Ok(value)
-    }
-
-    /// Reuses the elements of the list that the columns were unzipped from.
-    ///
-    /// After `(a, b)* <- xs` unzips `xs` into `a*` and `b*`,
-    /// zipping `a*` and `b*` by `(a, b)*` returns the elements of `xs`.
-    fn zip_origin(
-        &mut self,
-        arena_mixop: &MixopArena,
-        shape: Shape,
-        note_elem: Interned<Rc<TypKind>>,
-        columns: &[Interned<ValueKind>],
-    ) -> Result<Option<Interned<ValueKind>>, ValueError> {
-        let Some(source) = self.zipper.origins.get(columns).copied() else {
-            return Ok(None);
-        };
-        let ValueKind::List(elems) = self.kind(source) else {
-            unreachable!("unzipped source must be a list");
-        };
-        // The source elements must be built by the same constructor at full length
-        let built = elems.len() == self.column_len(columns)
-            && elems
-                .iter()
-                .all(|elem| match (shape, self.kind(elem.node)) {
-                    (Shape::Tuple, ValueKind::Tuple(values))
-                    | (Shape::List, ValueKind::List(values)) => values.len() == columns.len(),
-                    (Shape::Case(mixop), ValueKind::Case(value_case)) => {
-                        *value_case.mixop() == mixop && value_case.args().len() == columns.len()
-                    }
-                    _ => false,
-                });
-        if !built {
-            return Ok(None);
-        }
-        // The source serves as is when its elements carry the zipped annotations
-        let span = Self::span_default();
-        if elems
-            .iter()
-            .all(|elem| elem.note == note_elem && elem.span == span)
-        {
-            return Ok(Some(source));
-        }
-        // Otherwise the same bodies are annotated again
-        let elems = elems
-            .iter()
-            .map(|elem| Value { node: elem.node, note: note_elem, span })
-            .collect();
-        Ok(Some(self.intern_kind(arena_mixop, ValueKind::List(elems))?))
     }
 
     /// Builds each element from the columns' entries at its index.
