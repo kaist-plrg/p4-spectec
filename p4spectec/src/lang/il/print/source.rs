@@ -242,19 +242,28 @@ impl Print for NotExp {
 
 impl<V: Print> Print for ExpIter<V> {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
-        self.iter.print(printer)?;
-        printer.write_char('{')?;
-        for (index, var) in self.vars.iter().enumerate() {
-            if index != 0 {
-                printer.write_str(", ")?;
-            }
-            var.print(printer)?;
-            printer.write_str(" <- ")?;
-            var.print(printer)?;
-            self.iter.print(printer)?;
-        }
-        printer.write_char('}')
+        print_exp_iter(printer, &self.iter, &self.vars)
     }
+}
+
+/// Prints an iteration and each variable's binding, as in `*{x <- x*}`.
+pub(super) fn print_exp_iter<V: Print>(
+    printer: &mut Printer<'_>,
+    iter: &Iter,
+    vars: &[V],
+) -> fmt::Result {
+    iter.print(printer)?;
+    printer.write_char('{')?;
+    for (index, var) in vars.iter().enumerate() {
+        if index != 0 {
+            printer.write_str(", ")?;
+        }
+        var.print(printer)?;
+        printer.write_str(" <- ")?;
+        var.print(printer)?;
+        iter.print(printer)?;
+    }
+    printer.write_char('}')
 }
 
 impl<V: Print> Print for [ExpIter<V>] {

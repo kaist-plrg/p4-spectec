@@ -201,7 +201,7 @@ pub enum ExpKind<P: Stage = Source> {
     /// `$id<` targ* `>(` arg* `)`
     Call(Id, Vec<Targ>, Vec<Arg<P>>),
     /// `exp iterexp`
-    Iter(Box<Exp<P>>, ExpIter<P::Var>),
+    Iter(Box<Exp<P>>, P::ExpIter),
 }
 
 /// A notation expression: a mixfix skeleton with expressions as arguments.

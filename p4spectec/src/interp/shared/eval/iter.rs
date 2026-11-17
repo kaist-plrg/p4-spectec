@@ -42,9 +42,9 @@ where
     Ext: Extern,
 {
     // Slots of the variables one iteration outward
-    let vars = &exp_iter.vars;
+    let vars = exp_iter.vars();
     let vars_outer = iterate_vars(vars);
-    let value = match exp_iter.iter {
+    let value = match exp_iter.iter() {
         // Option: evaluate once with the payloads, or produce none
         ast::Iter::Opt => {
             let values = unwrap_from_result!(

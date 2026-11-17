@@ -18,8 +18,8 @@ pub fn find_slot_of_exp(exp: &ast::Exp) -> Option<SlotIdx> {
         // A plain variable already has its slot
         ast::ExpKind::Id(id) => Some(id.slot),
         // Matching slots imply the same name and the same iteration path
-        ast::ExpKind::Iter(exp_inner, ast::ExpIter { vars, .. }) => {
-            let [var] = vars.as_slice() else {
+        ast::ExpKind::Iter(exp_inner, exp_iter) => {
+            let [var] = exp_iter.vars() else {
                 return None;
             };
             let slot = find_slot_of_exp(exp_inner)?;

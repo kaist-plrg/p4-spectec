@@ -253,7 +253,7 @@ fn assign_iter_exp<Ctx: WriteContext>(
         return ok!(());
     }
     // Otherwise assign each element and gather per variable
-    match exp_iter.iter {
+    match exp_iter.iter() {
         // Option: the payload once, or none for every variable
         ast::Iter::Opt => assign_iter_opt_exp(arena, ctx, exp, exp_inner, exp_iter, value),
         // List: one assignment per element
@@ -271,7 +271,7 @@ fn assign_iter_opt_exp<Ctx: WriteContext>(
     value: Value,
 ) -> Backtrack<()> {
     let span = &exp.span;
-    let vars_outer = iterate_vars(&exp_iter.vars);
+    let vars_outer = iterate_vars(exp_iter.vars());
     // Assign the payload, if any, in a copy of the context
     let value_opt =
         value::get::opt(arena, &value).expect("iteration assignment value must be an option");
@@ -284,7 +284,7 @@ fn assign_iter_opt_exp<Ctx: WriteContext>(
         None => None,
     };
     // Each variable becomes an option of its payload binding
-    for (var, var_outer) in exp_iter.vars.iter().zip(&vars_outer) {
+    for (var, var_outer) in exp_iter.vars().iter().zip(&vars_outer) {
         let typ = Rc::clone(&var_outer.typ);
         let value_opt = ctx_sub.as_ref().map(|ctx_sub| {
             *ctx_sub
@@ -313,7 +313,7 @@ fn assign_iter_list_exp<Ctx: WriteContext>(
     value: Value,
 ) -> Backtrack<()> {
     // A fixed pattern unzips the list; any other assigns element by element
-    match zipper::decompose(exp_inner, &exp_iter.vars) {
+    match zipper::decompose(exp_inner, exp_iter.vars()) {
         Some(decomp) => assign_iter_list_exp_with_decomp(arena, ctx, exp, exp_iter, &decomp, value),
         None => assign_iter_list_exp_without_decomp(arena, ctx, exp, exp_inner, exp_iter, value),
     }
@@ -331,10 +331,13 @@ fn assign_iter_list_exp_with_decomp<Ctx: WriteContext>(
     decomp: &Decomp,
     value: Value,
 ) -> Backtrack<()> {
-    let typs = exp_iter.vars.iter().map(|var| Rc::clone(&var.outer().typ));
+    let typs = exp_iter
+        .vars()
+        .iter()
+        .map(|var| Rc::clone(&var.outer().typ));
     let values_outer =
         unwrap_from_result!(arena.value.unzip(&arena.mixop, value.node, decomp, typs), &exp.span);
-    for (var, value_outer) in exp_iter.vars.iter().zip(values_outer) {
+    for (var, value_outer) in exp_iter.vars().iter().zip(values_outer) {
         ctx.add_value_at_slot(var.outer().slot, value_outer);
     }
     ok!(())
@@ -357,7 +360,7 @@ fn assign_iter_list_exp_without_decomp<Ctx: WriteContext>(
     exp_iter: &ast::ExpIter,
     value: Value,
 ) -> Backtrack<()> {
-    let vars = &exp_iter.vars;
+    let vars = exp_iter.vars();
     let values = value::get::list(arena, &value)
         .expect("iteration assignment value must be a list")
         .to_vec();

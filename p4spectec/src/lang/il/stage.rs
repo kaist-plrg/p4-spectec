@@ -37,6 +37,8 @@ pub trait Stage: Clone + fmt::Debug + PartialEq + 'static {
     type SubBind: Clone + fmt::Debug + PartialEq;
     /// A unit that runs in its own frame: its syntax, or a callable with its frame layout.
     type Framed<T: Clone + fmt::Debug + PartialEq>: Clone + fmt::Debug + PartialEq;
+    /// An expression's iteration, and in prepared form how it runs.
+    type ExpIter: Clone + fmt::Debug + PartialEq;
 }
 
 /// Syntax as elaboration and the passes produce it.
@@ -50,6 +52,7 @@ impl Stage for Source {
     type SubTarget = Typ;
     type SubBind = Typ;
     type Framed<T: Clone + fmt::Debug + PartialEq> = T;
+    type ExpIter = super::ast::ExpIter<Var>;
 }
 
 /// Syntax whose names are resolved to slots and mixops to arena handles.
@@ -63,4 +66,5 @@ impl Stage for Prepared {
     type SubTarget = Subcheck;
     type SubBind = SubBind;
     type Framed<T: Clone + fmt::Debug + PartialEq> = Callable<T>;
+    type ExpIter = super::prepared::ExpIter;
 }

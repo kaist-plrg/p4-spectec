@@ -270,6 +270,12 @@ impl Print for ExpRef<'_> {
     }
 }
 
+impl Print for ExpIter {
+    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
+        super::source::print_exp_iter(printer, &self.iter(), self.vars())
+    }
+}
+
 impl Print for ExpsRef<'_> {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         let arena_mixop = self.arena_mixop;

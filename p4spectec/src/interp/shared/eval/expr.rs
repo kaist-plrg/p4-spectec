@@ -646,7 +646,7 @@ fn eval_iter_exp_with_comp<'global, Interp: Invoker<Iface, Ext>, Iface: Interfac
 ) -> Backtrack<Value> {
     let arena = runner_ctx.arena_mut();
     // The variables must be lists of one length
-    let vars_outer = iterate_vars(&exp_iter.vars);
+    let vars_outer = iterate_vars(exp_iter.vars());
     unwrap_from_result!(ctx.find_list_values_by_var(arena, &vars_outer), &exp.span);
     let values_outer: Vec<_> = vars_outer
         .iter()

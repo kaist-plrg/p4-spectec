@@ -69,7 +69,10 @@ pub(super) fn strip_exp(exp: &ast::Exp) -> shared_ast::Exp {
             P::Call(id, targs, args) => {
                 E::Call(id.clone(), targs.clone(), args.iter().map(strip_arg).collect())
             }
-            P::Iter(exp, iter) => E::Iter(Box::new(strip_exp(exp)), iter.clone()),
+            P::Iter(exp, exp_iter) => E::Iter(
+                Box::new(strip_exp(exp)),
+                shared_ast::ExpIter::Elems { iter: exp_iter.iter, vars: exp_iter.vars.clone() },
+            ),
         };
         crate::note_phrase! {
             node: node,

@@ -105,7 +105,7 @@ fn decompose_inner(
 /// ```
 pub(super) fn compose(exp_inner: &ast::Exp, exp_iter: &ast::ExpIter) -> Option<Comp> {
     // Only a list iteration zips its outer values
-    if exp_iter.iter != ast::Iter::List {
+    if exp_iter.iter() != ast::Iter::List {
         return None;
     }
     // The body must be a tuple, list, or case constructor
@@ -120,11 +120,11 @@ pub(super) fn compose(exp_inner: &ast::Exp, exp_iter: &ast::ExpIter) -> Option<C
         .iter()
         .map(|exp| {
             let slot = find_slot_of_exp(exp)?;
-            exp_iter.vars.iter().position(|var| var.slot == slot)
+            exp_iter.vars().iter().position(|var| var.slot == slot)
         })
         .collect::<Option<_>>()?;
     // Every variable must be an argument, so that zipping checks every length
-    if (0..exp_iter.vars.len()).any(|idx| !idxs.contains(&idx)) {
+    if (0..exp_iter.vars().len()).any(|idx| !idxs.contains(&idx)) {
         return None;
     }
     Some(Comp { shape, idxs })

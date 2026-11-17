@@ -33,7 +33,34 @@ pub type Exp = source::Exp<Prepared>;
 pub type ExpField = source::ExpField<Prepared>;
 pub type ExpKind = source::ExpKind<Prepared>;
 pub type NotExp = source::NotExp<Prepared>;
-pub type ExpIter = source::ExpIter<Var>;
+
+// - Iterations
+
+/// An iteration over variables alone, as in condition and binding iterations.
+pub type ExpIterVars = source::ExpIter<Var>;
+
+/// An expression's iteration, and how the interpreter runs it.
+#[derive(Clone, Debug, PartialEq)]
+pub enum ExpIter {
+    /// Assigned or evaluated element by element.
+    Elems { iter: Iter, vars: Vec<Var> },
+}
+
+impl ExpIter {
+    /// `?` or `*`.
+    pub fn iter(&self) -> Iter {
+        match self {
+            Self::Elems { iter, .. } => *iter,
+        }
+    }
+
+    /// The variables whose bound dimension this iteration consumes.
+    pub fn vars(&self) -> &[Var] {
+        match self {
+            Self::Elems { vars, .. } => vars,
+        }
+    }
+}
 
 // - Paths
 

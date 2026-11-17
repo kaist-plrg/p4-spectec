@@ -190,8 +190,8 @@ impl Prepare<PrepareContext<'_>> for source::ExpKind {
             }
             source::ExpKind::Iter(exp_inner, exp_iter_inner) => {
                 let exp_inner = exp_inner.prepare(ctx);
-                let exp_iter_inner = exp_iter_inner.prepare(ctx);
-                ExpKind::Iter(exp_inner, exp_iter_inner)
+                let ExpIterVars { iter, vars } = exp_iter_inner.prepare(ctx);
+                ExpKind::Iter(exp_inner, ExpIter::Elems { iter, vars })
             }
         }
     }
@@ -206,14 +206,14 @@ impl Prepare<PrepareContext<'_>> for source::ExpField {
 }
 
 impl Prepare<PrepareContext<'_>> for source::ExpIter {
-    type Output = ExpIter;
+    type Output = ExpIterVars;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let source::ExpIter { iter, vars } = self;
         // Prepare `x*` for every iterated `x`
         let mut vars = vars.prepare(ctx);
         ctx.prepare_outer_vars(&mut vars, iter);
-        ExpIter { iter, vars }
+        ExpIterVars { iter, vars }
     }
 }
 

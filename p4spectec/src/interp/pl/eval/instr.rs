@@ -319,7 +319,7 @@ fn eval_condition<'global, Tier, Iface: Interface, Ext: Extern>(
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
     exp: &ast::Exp,
-    iter_exps: &[ast::ExpIter],
+    iter_exps: &[ast::ExpIterVars],
     block: &ast::Block<Tier>,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Test the condition across all enclosing iterations
@@ -646,14 +646,14 @@ fn eval_route_instr<'global, Iface: Interface, Ext: Extern>(
 fn eval_cond_iter<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: &Context<'_>,
-    iters: &[ast::ExpIter],
+    iters: &[ast::ExpIterVars],
     eval: &mut impl FnMut(&mut RunnerContext<'_, PlInterp, Iface, Ext>, &Context<'_>) -> Backtrack<bool>,
 ) -> Backtrack<bool> {
     // Recurse from the outermost iteration inward
     let Some((exp_iter, iters_tail)) = iters.split_last() else {
         return eval(runner_ctx, ctx);
     };
-    let ast::ExpIter { iter, vars } = exp_iter;
+    let ast::ExpIterVars { iter, vars } = exp_iter;
     let vars_outer = iterate_vars(vars);
     match iter {
         // An option iterates zero or one time
