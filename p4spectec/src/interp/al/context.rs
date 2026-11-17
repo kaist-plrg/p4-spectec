@@ -5,16 +5,14 @@
 //! `FuncSignature` extracts types from prepared AL function definitions.
 
 use crate::lang::data::{
+    frame::FrameLayout,
     notation::MixopArena,
     typ::{FuncTyp, make},
 };
 
 use crate::lang::al::{ast as source, prepared as ast};
 
-use crate::runtime::envs::{
-    elab::TDEnv,
-    interp::shared::{TypeDef, frame::FrameLayout},
-};
+use crate::runtime::envs::{elab::TDEnv, interp::shared::TypeDef};
 
 use crate::interp::shared::{
     context::{self as shared, FuncSignature},
@@ -26,9 +24,7 @@ use super::prepare::PrepareContext;
 
 // = Context aliases
 
-pub use shared::Scope;
-
-/// Stores loaded AL definitions and prepared callables.
+/// Stores loaded AL definitions, prepared.
 pub type SpecEnv = shared::Global<ast::RelDef, ast::MetaFuncDef>;
 
 /// Holds local AL bindings over borrowed global definitions.
@@ -37,7 +33,7 @@ pub type Context<'global> = shared::Context<'global, ast::RelDef, ast::MetaFuncD
 // = Loading
 
 impl SpecEnv {
-    /// Loads a specification and prepares its callables for slot execution,
+    /// Loads a specification and prepares its definitions for slot execution,
     /// interning their notations into `arena_mixop`.
     ///
     /// Panics if a global definition is repeated.
@@ -84,9 +80,9 @@ impl SpecEnv {
         for def in spec {
             match def.node {
                 source::DefKind::Rel(rel) => {
-                    // Relations are prepared into callables with a frame layout
+                    // Each rule group of a relation is prepared into a callable with a frame layout
                     let rel = rel.prepare(&mut ctx);
-                    let id = match &rel.def {
+                    let id = match &rel {
                         ast::RelDef::Extern(rel) => &rel.id,
                         ast::RelDef::Defined(rel) => &rel.id,
                     };
@@ -95,7 +91,7 @@ impl SpecEnv {
                 source::DefKind::MetaFunc(func) => {
                     // Prepare functions before sharing them with local bindings
                     let func = func.prepare(&mut ctx);
-                    let id = match &func.def {
+                    let id = match &func {
                         ast::MetaFuncDef::Extern(func) => &func.id,
                         ast::MetaFuncDef::Builtin(func) => &func.id,
                         ast::MetaFuncDef::Table(func) => &func.id,

@@ -27,7 +27,7 @@ pub fn find_slot_of_exp(ctx: &impl ReadContext, exp: &ast::Exp) -> Option<SlotId
                 return None;
             };
             let slot = find_slot_of_exp(ctx, exp_inner)?;
-            (slot == var.slot).then(|| ctx.find_slot_iterated(var, *iter))
+            (slot == var.slot).then(|| ctx.find_var_slot_iterated(var, *iter))
         }
         // Computed expressions require normal iteration evaluation
         _ => None,

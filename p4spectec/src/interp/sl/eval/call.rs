@@ -12,6 +12,7 @@ use std::{borrow::Cow, rc::Rc};
 use crate::lang::{
     data::{
         arena::Arena,
+        frame::FrameLayout,
         value::flat::{Value, ValueKind},
     },
     hints::input,
@@ -21,10 +22,7 @@ use crate::lang::sl::prepared as ast;
 
 use crate::diagnostic::Diagnostic;
 
-use crate::runtime::{
-    envs::interp::shared::frame::FrameLayout,
-    ops::{typ, value},
-};
+use crate::runtime::ops::{typ, value};
 
 use crate::runner::{Extern, Interface, RunnerContext, SideEffect};
 
@@ -36,11 +34,7 @@ use crate::interp::shared::{
     eval::assign::assign_tparams,
 };
 
-use super::super::{
-    SlInterp,
-    context::{Context, Scope},
-    flow::Flow,
-};
+use super::super::{SlInterp, context::Context, flow::Flow};
 
 use super::{assign, instr};
 
@@ -70,10 +64,11 @@ pub(in crate::interp::sl) fn check_rel_inputs(
 ) -> Backtrack<()> {
     let rel = unwrap_from_result!(ctx.find_rel(id), &id.span);
     // Extern and defined relations share the signature shape
-    let (not_typ, inputs) = match &rel.def {
-        ast::RelDef::Extern(rel) => (&rel.rel_signature.not_typ, &rel.rel_signature.input_hint),
-        ast::RelDef::Defined(rel) => (&rel.rel_signature.not_typ, &rel.rel_signature.input_hint),
+    let signature = match rel {
+        ast::RelDef::Extern(rel) => &rel.rel_signature,
+        ast::RelDef::Defined(rel) => &rel.def.rel_signature,
     };
+    let (not_typ, inputs) = (&signature.not_typ, &signature.input_hint);
     // Always check the input count, even without type guards
     unwrap!(backtrack::check(inputs.indices().len() == values.len(), id.span, || {
         error::guard::relation_input_arity_mismatch(inputs.indices().len(), values.len())
@@ -171,23 +166,23 @@ pub(in crate::interp::sl) fn cache_rel<Iface: Interface, Ext: Extern>(
     ctx: &Context<'_>,
     id: &ast::Id,
 ) -> bool {
-    runner_ctx.interp().config.cache
-        && matches!(ctx.find_rel(id), Ok(rel) if matches!(&rel.def, ast::RelDef::Defined(_)))
+    runner_ctx.interp().config.cache && matches!(ctx.find_rel(id), Ok(ast::RelDef::Defined(_)))
 }
 
 /// Whether a function call may be memoized.
 ///
-/// Requires caching on, a global non-extern function,
+/// Requires caching on, a non-extern function not reached through a parameter,
 /// and no function-valued argument.
 pub(in crate::interp::sl) fn cache_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     id: &ast::Id,
+    func: &ast::MetaFuncDef,
     values: &[Value],
 ) -> bool {
     runner_ctx.interp().config.cache
-        && matches!(ctx.find_func_with_scope(id), Ok((Scope::Global, func))
-            if !matches!(&func.def, ast::MetaFuncDef::Extern(_)))
+        && ctx.find_func_param_opt(id).is_none()
+        && !matches!(func, ast::MetaFuncDef::Extern(_))
         && !values
             .iter()
             .any(|value| matches!(runner_ctx.arena().value.kind(value.node), ValueKind::Func(_)))
@@ -236,14 +231,13 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
         let checkpoint = runner_ctx.effect_checkpoint();
         let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
             let rel = unwrap_from_result!(ctx.find_rel(&id), &id.span);
-            let layout = &rel.layout;
-            match &rel.def {
+            match rel {
                 ast::RelDef::Extern(rel) => {
                     let values = unwrap!(invoke_extern_rel(runner_ctx, ctx, &id, rel, &values));
                     ok!(RelResult::Result(values))
                 }
                 ast::RelDef::Defined(rel) => {
-                    invoke_defined_rel(runner_ctx, ctx, layout, rel, &values)
+                    invoke_defined_rel(runner_ctx, ctx, &rel.layout, &rel.def, &values)
                 }
             }
         });
@@ -359,6 +353,8 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
     targs: &[ast::Typ],
     values: &[Value],
 ) -> Backtrack<Value> {
+    // A call through a function parameter invokes the global definition its value names
+    let mut id_def = ctx.resolve_func_id(runner_ctx.arena(), id);
     let mut id = Cow::Borrowed(id);
     let mut targs = Cow::Borrowed(targs);
     let mut values = Cow::Borrowed(values);
@@ -367,14 +363,15 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
     // Cache the final result for these calls unless an effect occurs
     let mut keys_cache = Vec::new();
     loop {
-        // Serve from the cache when eligible
-        let cache = cache_func(runner_ctx, ctx, &id, &values);
+        // Serve from the cache when eligible, keyed by the global definition
+        let cache = matches!(ctx.find_func(&id_def),
+            Ok(func) if cache_func(runner_ctx, ctx, &id, func, &values));
         if cache
             && let Some(value) =
                 runner_ctx
                     .interp()
                     .cache
-                    .find_func(runner_ctx.arena(), &id.node, &values)
+                    .find_func(runner_ctx.arena(), &id_def.node, &values)
         {
             let value = *value;
             // Cached results also complete the pure callers in this chain
@@ -384,14 +381,13 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
             return ok!(value);
         }
         if cache {
-            keys_cache.push(CallKey::new(runner_ctx.arena(), &id.node, &values));
+            keys_cache.push(CallKey::new(runner_ctx.arena(), &id_def.node, &values));
         }
         // Track effects for memoization; grow the stack for deep recursion
         let checkpoint = runner_ctx.effect_checkpoint();
         let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-            let func = unwrap_from_result!(ctx.find_func(&id), &id.span);
-            let layout = &func.layout;
-            match &func.def {
+            let func = unwrap_from_result!(ctx.find_func(&id_def), &id.span);
+            match func.as_ref() {
                 ast::MetaFuncDef::Extern(func) => ok!(FuncResult::Return(unwrap!(
                     invoke_extern_func(runner_ctx, ctx, &id, func, &targs, &values)
                 ))),
@@ -399,11 +395,17 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
                     invoke_builtin_func(runner_ctx, ctx, &id, func, &targs, &values)
                 ))),
                 ast::MetaFuncDef::Table(func) => {
-                    invoke_table_func(runner_ctx, ctx, layout, func, &values)
+                    invoke_table_func(runner_ctx, ctx, &func.layout, &func.def, &values)
                 }
-                ast::MetaFuncDef::Defined(func) => {
-                    invoke_defined_func(runner_ctx, ctx, layout, &id, func, &targs, &values)
-                }
+                ast::MetaFuncDef::Defined(func) => invoke_defined_func(
+                    runner_ctx,
+                    ctx,
+                    &func.layout,
+                    &id,
+                    &func.def,
+                    &targs,
+                    &values,
+                ),
             }
         });
         // Nest failures under this call and then under the tail-calling callers
@@ -432,6 +434,8 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
             // Tail call: remember this callee for the trace and loop
             FuncResult::TailCall(id_tail, targs_tail, values_tail) => {
                 calls_trace.push((id.into_owned(), targs.into_owned()));
+                // Tail calls already name global definitions
+                id_def = id_tail.clone();
                 id = Cow::Owned(id_tail);
                 targs = Cow::Owned(targs_tail);
                 values = Cow::Owned(values_tail);
@@ -517,7 +521,6 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     // Parameters bind into a fresh frame
     let ctx_local = unwrap!(assign::assign_params(
         runner_ctx.arena_mut(),
-        ctx,
         ctx.localize_with_layout(layout),
         &func.params,
         values
@@ -560,13 +563,8 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     let ctx_local =
         unwrap!(assign_tparams(ctx.localize_with_layout(layout), &func.tparams, targs, &id.span));
     // Parameters bind after the type parameters, so their types resolve
-    let ctx_local = unwrap!(assign::assign_params(
-        runner_ctx.arena_mut(),
-        ctx,
-        ctx_local,
-        &func.params,
-        values
-    ));
+    let ctx_local =
+        unwrap!(assign::assign_params(runner_ctx.arena_mut(), ctx_local, &func.params, values));
     // Run the body, falling back to the otherwise block
     let flow = unwrap!(instr::eval_block_with_else(
         runner_ctx,

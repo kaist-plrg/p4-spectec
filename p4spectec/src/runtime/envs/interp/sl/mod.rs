@@ -1,6 +1,6 @@
 //! Definition environments used by SL execution
 //!
-//! Relations and functions are stored prepared, with their frame layouts.
+//! Relations and functions are stored prepared; those with a body carry their frame layouts.
 
 use std::rc::Rc;
 
@@ -8,11 +8,9 @@ use crate::lang::common::ds::map::IdMap;
 
 use crate::lang::sl::prepared as ast;
 
-use super::shared::callable::Callable;
-
 pub use super::shared::TDEnv;
 
-/// Relations to their prepared callables.
-pub type REnv = IdMap<Callable<ast::RelDef>>;
-/// Functions to their prepared callables, shared through `Rc`.
-pub type FEnv = IdMap<Rc<Callable<ast::MetaFuncDef>>>;
+/// Relations to their prepared definitions.
+pub type REnv = IdMap<ast::RelDef>;
+/// Functions to their prepared definitions, shared through `Rc`.
+pub type FEnv = IdMap<Rc<ast::MetaFuncDef>>;

@@ -2,7 +2,8 @@
 //!
 //! A `Stage` chooses identifier and variable occurrences,
 //! how a notation's mixop is held,
-//! and whether a subtype test holds its type, its runtime check, or both.
+//! whether a subtype test holds its type, its runtime check, or both,
+//! and whether a unit that runs in its own frame carries that frame's layout.
 //! `Source` keeps names and shares mixop trees, as elaboration and the passes
 //! produce and rewrite them;
 //! the interpreters prepare syntax into a stage with frame slots and
@@ -13,6 +14,7 @@ use std::{fmt, rc::Rc};
 use crate::lang::{
     common::Id,
     data::{
+        callable::Callable,
         notation::{flat, tree},
         typ::Typ,
         var::{IdSlot, Var, VarSlot},
@@ -33,6 +35,8 @@ pub trait Stage: Clone + fmt::Debug + PartialEq + 'static {
     type SubTarget: Clone + fmt::Debug + PartialEq;
     /// A binding subtype test's target: a type, or the type and its check.
     type SubBind: Clone + fmt::Debug + PartialEq;
+    /// A unit that runs in its own frame: its syntax, or a callable with its frame layout.
+    type Framed<T: Clone + fmt::Debug + PartialEq>: Clone + fmt::Debug + PartialEq;
 }
 
 /// Syntax as elaboration and the passes produce it.
@@ -45,6 +49,7 @@ impl Stage for Source {
     type Mixop = Rc<tree::Mixop>;
     type SubTarget = Typ;
     type SubBind = Typ;
+    type Framed<T: Clone + fmt::Debug + PartialEq> = T;
 }
 
 /// Syntax whose names are resolved to slots and mixops to arena handles.
@@ -57,4 +62,5 @@ impl Stage for Prepared {
     type Mixop = flat::Mixop;
     type SubTarget = Subcheck;
     type SubBind = SubBind;
+    type Framed<T: Clone + fmt::Debug + PartialEq> = Callable<T>;
 }
