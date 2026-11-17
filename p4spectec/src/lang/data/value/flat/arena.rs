@@ -26,9 +26,6 @@ use super::{Value, ValueKind, projection::Shape};
 pub struct ValueArena {
     /// Bodies, with canonical identities; a case reads its mixop's.
     values: CanonInterner<ValueKind>,
-    /// Tail bodies already derived from immutable non-empty lists.
-    tails:
-        hashbrown::HashMap<Interned<ValueKind>, Interned<ValueKind>, foldhash::fast::RandomState>,
     /// Exact structural columns, invalidated with their source bodies.
     pub(super) columns: super::projection::Columns,
     /// Types, shared by exact contents including nested source spans.
@@ -46,7 +43,6 @@ impl Default for ValueArena {
         debug_assert_eq!(span_default, Self::span_default());
         Self {
             values: CanonInterner::new(),
-            tails: Default::default(),
             columns: Default::default(),
             types: Interner::new(),
             spans,
@@ -122,27 +118,6 @@ impl ValueArena {
         span: Span,
     ) -> Result<Interned<Span>, std::num::TryFromIntError> {
         self.spans.intern(span)
-    }
-
-    /// Reuses a list tail without copying and hashing the same suffix again.
-    pub(crate) fn list_tail(
-        &mut self,
-        arena_mixop: &MixopArena,
-        value: Value,
-    ) -> Result<Value, ValueError> {
-        let node = if let Some(node) = self.tails.get(&value.node) {
-            *node
-        } else {
-            let ValueKind::List(values) = self.kind(value.node) else { unreachable!("list tail") };
-            let values = values
-                .get(1..)
-                .expect("cons pattern must match a non-empty list")
-                .to_vec();
-            let node = self.intern_kind(arena_mixop, ValueKind::List(values))?;
-            self.tails.insert(value.node, node);
-            node
-        };
-        Ok(Value { node, note: value.note, span: Self::span_default() })
     }
 
     // - Lookup

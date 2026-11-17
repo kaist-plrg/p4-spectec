@@ -218,13 +218,17 @@ fn assign_cons_exp<Ctx: WriteContext>(
     exp_tail: &ast::Exp,
     value: Value,
 ) -> Backtrack<()> {
-    let value_head = *value::get::list(arena, &value)
+    let (value_head, values_tail) = value::get::list(arena, &value)
         .expect("cons pattern must match a list")
-        .first()
+        .split_first()
         .expect("cons pattern must match a non-empty list");
-    // Reuse the tail body the arena derived from this list
-    let value_tail =
-        unwrap_from_result!(arena.value.list_tail(&arena.mixop, value), &Span::default());
+    let (value_head, values_tail) = (*value_head, values_tail.to_vec());
+    // Rebuild the tail as a list value of the same type
+    let typ = arena.value.typ(value.note).clone();
+    let value_tail = unwrap_from_result!(
+        value::make::list(arena, typ, values_tail, Span::default()),
+        &Span::default()
+    );
     unwrap!(assign_exp(arena, ctx, exp_head, value_head));
     assign_exp(arena, ctx, exp_tail, value_tail)
 }
