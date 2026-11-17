@@ -13,7 +13,7 @@ use std::{
 use crate::lang::{
     common::source::Span,
     data::{
-        value::flat::{self as value, Value, ValueKind},
+        value::flat::{self as value, Value, ValueKind, projection::Shape},
         var::IdSlot,
     },
     traits::print::Print,
@@ -36,45 +36,11 @@ use crate::interp::shared::{
 use super::super::context::ReadContext;
 
 use super::{Invoker, arg::eval_args, iter, ops, path::eval_update_path};
-use crate::lang::data::value::flat::projection::Shape;
 
 // = Expression evaluation
 
 /// Evaluates an expression, nesting failures under an evaluation trace.
 pub(crate) fn eval_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
-    runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    ctx: &Interp::Context<'global>,
-    exp: &ast::Exp,
-) -> Backtrack<Value> {
-    match &exp.node {
-        // Variables and identity iterations read their slot without a trace frame
-        ast::ExpKind::Id(id) => eval_id_exp(ctx, id),
-        ast::ExpKind::Iter(..) if let Some(slot) = find_slot_of_exp(exp) => {
-            ok!(*ctx.find_value_at_slot(slot).expect("value must be bound"))
-        }
-        // Calls keep their trace frame outside the general evaluator
-        ast::ExpKind::Call(..) => eval_call_exp_with_frame(runner_ctx, ctx, exp),
-        // Every other expression goes through the general evaluator
-        _ => eval_exp_inner(runner_ctx, ctx, exp),
-    }
-}
-
-/// Evaluates calls without reserving the general expression evaluator's frame.
-fn eval_call_exp_with_frame<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
-    runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    ctx: &Interp::Context<'global>,
-    exp: &ast::Exp,
-) -> Backtrack<Value> {
-    let ast::ExpKind::Call(id, targs, args) = &exp.node else {
-        unreachable!("call expression dispatch")
-    };
-    eval_call_exp(runner_ctx, ctx, id, targs, args).with_frame(exp.span, || {
-        format!("while evaluating expression {}", exp.view(&runner_ctx.arena().mixop).to_string())
-    })
-}
-
-/// Evaluates any other expression under its evaluation trace frame.
-fn eval_exp_inner<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     ctx: &Interp::Context<'global>,
     exp: &ast::Exp,
@@ -574,26 +540,47 @@ pub(crate) fn resolve_targs<'a>(
         },
         _ => None,
     };
-    // Reuse unchanged arguments; function binders still need freshening.
-    fn unchanged<'a>(typ: &ast::Typ, find: &impl Fn(&ast::Id) -> Option<&'a ast::Typ>) -> bool {
-        match &typ.node {
-            ast::TypKind::Bool | ast::TypKind::Num(_) | ast::TypKind::Text => true,
-            ast::TypKind::Var(id, targs) => {
-                find(id).is_none() && targs.iter().all(|typ| unchanged(typ, find))
-            }
-            ast::TypKind::Tuple(typs) => typs.iter().all(|typ| unchanged(typ, find)),
-            ast::TypKind::Iter(typ, _) => unchanged(typ, find),
-            ast::TypKind::Func(_) => false,
-        }
-    }
-    if targs.iter().all(|typ| unchanged(typ, &find_subst)) {
+    // Reuse the arguments when substitution changes none of them
+    if targs
+        .iter()
+        .all(|targ| unchanged_by_subst(targ, &find_subst))
+    {
         return Ok(Cow::Borrowed(targs));
     }
+    // Otherwise substitute every argument
     targs
         .iter()
         .map(|targ| subst_typ(&find_subst, targ))
         .collect::<Result<Vec<_>, _>>()
         .map(Cow::Owned)
+}
+
+/// Checks whether substitution leaves a type as it is.
+///
+/// A function type always changes, since substitution freshens its binders.
+fn unchanged_by_subst<'a>(
+    typ: &ast::Typ,
+    find_subst: &impl Fn(&ast::Id) -> Option<&'a ast::Typ>,
+) -> bool {
+    match &typ.node {
+        // Primitive types contain no type variable
+        ast::TypKind::Bool | ast::TypKind::Num(_) | ast::TypKind::Text => true,
+        // A variable stays when neither it nor its arguments are substituted
+        ast::TypKind::Var(id, targs) => {
+            find_subst(id).is_none()
+                && targs
+                    .iter()
+                    .all(|targ| unchanged_by_subst(targ, find_subst))
+        }
+        // A tuple stays when all of its components do
+        ast::TypKind::Tuple(typs) => typs
+            .iter()
+            .all(|typ_elem| unchanged_by_subst(typ_elem, find_subst)),
+        // An iteration stays when its element type does
+        ast::TypKind::Iter(typ_inner, _) => unchanged_by_subst(typ_inner, find_subst),
+        // A function type has binders to freshen
+        ast::TypKind::Func(_) => false,
+    }
 }
 
 /// Resolves type arguments, evaluates arguments, and invokes the function.
@@ -625,6 +612,7 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     if let Some(slot) = find_slot_of_exp(exp) {
         return ok!(*ctx.find_value_at_slot(slot).expect("value must be bound"));
     }
+    // Fixed patterns project the rows into columns directly
     if let Some(result) = super::rows::map(runner_ctx.arena_mut(), ctx, exp, exp_inner, exp_iter) {
         return result;
     }
