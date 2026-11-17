@@ -158,6 +158,25 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
+    /// Draws a uniform integer in `[0, bound)` for a positive `bound`.
+    ///
+    /// Each `RandomState` carries fresh SipHash keys, so hashing nothing yields 64 random bits.
+    fn draw_below(bound: &BigInt) -> BigInt {
+        let bits = bound.bits();
+        let int_mask = (BigInt::from(1) << bits) - 1;
+        loop {
+            // Fill the bound's width in 64-bit chunks, then drop the excess bits
+            let mut int = BigInt::zero();
+            for _ in 0..bits.div_ceil(64) {
+                int = (int << 64) | BigInt::from(RandomState::new().build_hasher().finish());
+            }
+            int &= &int_mask;
+            // Reject a draw at or above the bound to keep the draw uniform
+            if &int < bound {
+                return int;
+            }
+        }
+    }
     let value_lo = func::find_var_e_local(ctx, value_ctx, "lo")?;
     let (int_width, int_lo) = unpack::p4_fixed_bit(ctx.arena_mut(), &value_lo)?;
     let value_hi = func::find_var_e_local(ctx, value_ctx, "hi")?;
@@ -188,26 +207,6 @@ where
         span: Span::default(),
     }?;
     Ok((value_ctx, value_arch, value_call_result))
-}
-
-/// Draws a uniform integer in `[0, bound)` for a positive `bound`.
-///
-/// Each `RandomState` carries fresh SipHash keys, so hashing nothing yields 64 random bits.
-fn draw_below(bound: &BigInt) -> BigInt {
-    let bits = bound.bits();
-    let int_mask = (BigInt::from(1) << bits) - 1;
-    loop {
-        // Fill the bound's width in 64-bit chunks, then drop the excess bits
-        let mut int = BigInt::zero();
-        for _ in 0..bits.div_ceil(64) {
-            int = (int << 64) | BigInt::from(RandomState::new().build_hasher().finish());
-        }
-        int &= &int_mask;
-        // Reject a draw at or above the bound to keep the draw uniform
-        if &int < bound {
-            return int;
-        }
-    }
 }
 
 /// Calculate a hash function of the value specified by the data
