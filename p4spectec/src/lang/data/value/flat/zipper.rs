@@ -73,8 +73,8 @@ pub(crate) enum Shape {
 pub(super) struct ZipCache {
     /// Columns, by source list and decomposition.
     unzips: HashMap<UnzipKey, Vec<Interned<ValueKind>>, RandomState>,
-    /// Lists, by constructor, annotations, and columns in argument order.
-    zips: HashMap<ZipKey, Value, RandomState>,
+    /// Lists, by constructor, element type, and columns in argument order.
+    zips: HashMap<ZipKey, Interned<ValueKind>, RandomState>,
 }
 
 // - Unzip keys
@@ -104,7 +104,6 @@ impl Equivalent<UnzipKey> for UnzipQuery<'_> {
 struct ZipKey {
     shape: Shape,
     note_elem: Interned<Rc<TypKind>>,
-    note_list: Interned<Rc<TypKind>>,
     columns: Vec<Interned<ValueKind>>,
 }
 
@@ -113,16 +112,12 @@ struct ZipKey {
 struct ZipQuery<'a> {
     shape: Shape,
     note_elem: Interned<Rc<TypKind>>,
-    note_list: Interned<Rc<TypKind>>,
     columns: &'a [Interned<ValueKind>],
 }
 
 impl Equivalent<ZipKey> for ZipQuery<'_> {
     fn equivalent(&self, key: &ZipKey) -> bool {
-        self.shape == key.shape
-            && self.note_elem == key.note_elem
-            && self.note_list == key.note_list
-            && self.columns == key.columns
+        self.shape == key.shape && self.note_elem == key.note_elem && self.columns == key.columns
     }
 }
 
@@ -224,18 +219,19 @@ impl ValueArena {
         let note_list = self.intern_typ(typ_list)?;
         // Each argument takes its variable's column
         let columns: Vec<_> = comp.idxs.iter().map(|idx| columns_by_var[*idx]).collect();
-        // A cached zip returns its list
-        let query = ZipQuery { shape, note_elem, note_list, columns: &columns };
-        if let Some(value) = self.zipper.zips.get(&query) {
-            return Ok(*value);
-        }
-        // Otherwise build the elements
-        let node = self.zip_elems(arena_mixop, shape, note_elem, &columns)?;
-        let value = Value { node, note: note_list, span: Self::span_default() };
-        self.zipper
-            .zips
-            .insert(ZipKey { shape, note_elem, note_list, columns }, value);
-        Ok(value)
+        // A cached zip reuses its list, or the elements are built
+        let query = ZipQuery { shape, note_elem, columns: &columns };
+        let node = match self.zipper.zips.get(&query) {
+            Some(node) => *node,
+            None => {
+                let node = self.zip_elems(arena_mixop, shape, note_elem, &columns)?;
+                self.zipper
+                    .zips
+                    .insert(ZipKey { shape, note_elem, columns }, node);
+                node
+            }
+        };
+        Ok(Value { node, note: note_list, span: Self::span_default() })
     }
 
     /// Builds each element from the columns' entries at its index.
