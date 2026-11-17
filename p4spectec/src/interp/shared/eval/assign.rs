@@ -307,8 +307,7 @@ fn assign_iter_list_exp<Ctx: WriteContext>(
     let span = &exp.span;
     let vars_outer = iterate_vars(&exp_iter.vars);
     // Fixed patterns project the rows into columns directly
-    if let Some(values) =
-        super::rows::collect(arena, ctx, exp_inner, &exp_iter.vars, &vars_outer, value)
+    if let Some(values) = super::rows::collect(arena, exp_inner, &exp_iter.vars, &vars_outer, value)
     {
         let values = unwrap_from_result!(values, span);
         for (var_outer, value) in vars_outer.iter().zip(values) {

@@ -5,7 +5,7 @@
 //! constructing a context for every row. Patterns that construct tails or
 //! nested iterations retain the general assignment path.
 
-use crate::interp::shared::{context::ReadContext, util::find_slot_of_exp};
+use crate::interp::shared::util::find_slot_of_exp;
 use crate::lang::data::{
     arena::Arena,
     value::{
@@ -15,71 +15,62 @@ use crate::lang::data::{
 };
 use crate::lang::il::prepared as ast;
 
-/// Records the last projection assigned to each output variable.
-fn paths(
-    ctx: &impl ReadContext,
+/// Records the position of each variable in a fixed pattern,
+/// failing on any part that computes a value.
+fn find_paths(
     exp: &ast::Exp,
     vars: &[ast::Var],
     path: &mut Vec<Step>,
     paths: &mut [Option<Vec<Step>>],
 ) -> Option<()> {
-    // Identity iterations already denote one prepared slot
+    // A variable or an identity iteration ends its path
     if let Some(slot) = find_slot_of_exp(exp) {
         if let Some(idx) = vars.iter().position(|var| var.slot == slot) {
             paths[idx] = Some(path.clone());
         }
         return Some(());
     }
-    // Other fixed patterns select children without allocating values
+    // Every child extends the path by its position
+    let mut find_child = |step: Step, exp_child: &ast::Exp| {
+        path.push(step);
+        let found = find_paths(exp_child, vars, path, paths);
+        path.pop();
+        found
+    };
     match &exp.node {
-        ast::ExpKind::Tuple(exps) | ast::ExpKind::List(exps) => {
-            for (idx, exp_inner) in exps.iter().enumerate() {
-                path.push(if matches!(exp.node, ast::ExpKind::Tuple(_)) {
-                    Step::Tuple(idx)
-                } else {
-                    Step::List(idx)
-                });
-                paths_inner(ctx, exp_inner, vars, path, paths)?;
-            }
-        }
-        ast::ExpKind::Case(not_exp) => {
-            for (idx, exp_inner) in not_exp.args().iter().enumerate() {
-                path.push(Step::Case(idx));
-                paths_inner(ctx, exp_inner, vars, path, paths)?;
-            }
-        }
-        ast::ExpKind::Str(fields) => {
-            for (idx, field) in fields.iter().enumerate() {
-                path.push(Step::Struct(idx));
-                paths_inner(ctx, &field.exp, vars, path, paths)?;
-            }
-        }
-        ast::ExpKind::Opt(Some(exp_inner)) => {
-            path.push(Step::Opt);
-            paths_inner(ctx, exp_inner, vars, path, paths)?;
-        }
-        ast::ExpKind::Opt(None) => {}
-        _ => return None,
+        // Tuple: positional components
+        ast::ExpKind::Tuple(exps) => exps
+            .iter()
+            .enumerate()
+            .try_for_each(|(idx, exp_child)| find_child(Step::Tuple(idx), exp_child)),
+        // List literal: positional elements
+        ast::ExpKind::List(exps) => exps
+            .iter()
+            .enumerate()
+            .try_for_each(|(idx, exp_child)| find_child(Step::List(idx), exp_child)),
+        // Case: positional arguments
+        ast::ExpKind::Case(not_exp) => not_exp
+            .args()
+            .iter()
+            .enumerate()
+            .try_for_each(|(idx, exp_child)| find_child(Step::Case(idx), exp_child)),
+        // Struct: fields in order
+        ast::ExpKind::Str(exp_fields) => exp_fields
+            .iter()
+            .enumerate()
+            .try_for_each(|(idx, exp_field)| find_child(Step::Struct(idx), &exp_field.exp)),
+        // Option: the payload, if present
+        ast::ExpKind::Opt(Some(exp_child)) => find_child(Step::Opt, exp_child),
+        // Absent option: nothing to bind
+        ast::ExpKind::Opt(None) => Some(()),
+        // Anything else computes a value
+        _ => None,
     }
-    Some(())
-}
-
-fn paths_inner(
-    ctx: &impl ReadContext,
-    exp: &ast::Exp,
-    vars: &[ast::Var],
-    path: &mut Vec<Step>,
-    paths_out: &mut [Option<Vec<Step>>],
-) -> Option<()> {
-    paths(ctx, exp, vars, path, paths_out)?;
-    path.pop();
-    Some(())
 }
 
 /// Collects fixed-pattern bindings, or requests general row assignment.
 pub(super) fn collect(
     arena: &mut Arena,
-    ctx: &impl ReadContext,
     exp: &ast::Exp,
     vars: &[ast::Var],
     vars_outer: &[ast::Var],
@@ -119,7 +110,7 @@ pub(super) fn collect(
         }
     }
     let mut paths_out = vec![None; vars.len()];
-    paths(ctx, exp, vars, &mut Vec::new(), &mut paths_out)?;
+    find_paths(exp, vars, &mut Vec::new(), &mut paths_out)?;
     let paths_out: Vec<_> = paths_out.into_iter().collect::<Option<_>>()?;
     let paths: Vec<_> = paths_out.iter().map(Vec::as_slice).collect();
     Some(arena.value.project_rows(
