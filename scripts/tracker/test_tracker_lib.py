@@ -22,8 +22,11 @@ def test_parse_bare():
 
 
 def test_walk_real_excludes():
-    rows = walk_excludes(Path(__file__).parents[2] / "excludes")
-    assert len(rows) == 59
+    root = Path(__file__).parents[2] / "excludes"
+    rows = walk_excludes(root)
+    # Every .exclude under the static and dynamic layers yields one row
+    files = [p for layer in ("static", "dynamic") for p in (root / layer).rglob("*.exclude")]
+    assert len(rows) == len(files)
     byname = {r["name"]: r for r in rows}
     sns = byname["self-nesting-struct"]
     assert sns["repo"] == "67" and sns["upstream"] == "c5240"
