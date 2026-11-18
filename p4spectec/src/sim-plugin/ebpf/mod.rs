@@ -3,7 +3,7 @@
 //! Extern calls reach the pipeline module;
 //! the only stateful object is a counter array.
 
-use crate::lang::data::value::flat::Value;
+use crate::lang::data::value::{flat::Value, host::HostTyp};
 
 use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
 
@@ -18,6 +18,10 @@ pub use pipe::{Ebpf, drive_pipe, init_pipe, transform_stf_stmt};
 
 /// Hands every extern hook to the pipeline module.
 impl externs::Impl for Ebpf {
+    fn host_typdefs(&self) -> Vec<HostTyp> {
+        vec![self.arch_state.erase(), self.object_state.erase()]
+    }
+
     fn eval_extern_init<Interp, Iface>(
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],

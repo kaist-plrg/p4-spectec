@@ -34,6 +34,8 @@ use crate::interp::pl::{Config as PlConfig, PlInterp, context::SpecEnv as PlSpec
 
 use crate::interface::{self as builtin, p4::P4Interface};
 
+use crate::runtime::envs::interp::shared::HTDEnv;
+
 use crate::sim_plugin::dummy::Dummy;
 
 pub use context::{Checkpoint, RunnerContext};
@@ -146,6 +148,8 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
     /// Prepares a specification with the supplied interface and extern state.
     ///
     /// Interns notation in `arena`; every evaluation must borrow that same arena.
+    /// Fails unless the extern gives one type definition
+    /// for each extern syntax type the specification declares.
     pub fn new(
         arena: &mut Arena,
         spec: Spec,
@@ -153,17 +157,19 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
         interface: Iface,
         external: Ext,
     ) -> Result<Self, BuildError> {
+        // Loading checks each extern type declaration against the host
+        let htdenv = HTDEnv::new(external.host_typdefs())?;
         let backend = match spec {
             Spec::Al(spec) => Backend::Al {
-                spec_env: AlSpecEnv::load(&mut arena.mixop, config.det, config.tco, spec)?,
+                spec_env: AlSpecEnv::load(&mut arena.mixop, htdenv, config.det, config.tco, spec)?,
                 interp: AlInterp::new(AlConfig::new(config.cache, config.det, config.guard)),
             },
             Spec::Sl(spec) => Backend::Sl {
-                spec_env: SlSpecEnv::load(&mut arena.mixop, config.det, config.tco, spec)?,
+                spec_env: SlSpecEnv::load(&mut arena.mixop, htdenv, config.det, config.tco, spec)?,
                 interp: SlInterp::new(SlConfig::new(config.cache, config.det, config.guard)),
             },
             Spec::Pl(spec) => Backend::Pl {
-                spec_env: PlSpecEnv::load(&mut arena.mixop, config.det, config.tco, spec)?,
+                spec_env: PlSpecEnv::load(&mut arena.mixop, htdenv, config.det, config.tco, spec)?,
                 interp: PlInterp::new(PlConfig::new(config.cache, config.det, config.guard)),
             },
         };

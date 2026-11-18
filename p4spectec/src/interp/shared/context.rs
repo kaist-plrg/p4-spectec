@@ -1,6 +1,7 @@
 //! Loaded definitions, local bindings, and shared context access
 //!
-//! Stage-specific loaders prepare definitions into `Global<R, F>`.
+//! Stage-specific loaders prepare definitions into `Global<R, F>`,
+//! which also keeps the host's type definitions for extern types.
 //! A `Context` borrows those globals and owns persistent local bindings;
 //! cloning preserves its scope, while `localize` starts a fresh one.
 //! `ReadContext`, `WriteContext`, and `IterContext` serve shared evaluation;
@@ -13,7 +14,10 @@ use crate::lang::{
     data::{
         arena::Arena,
         frame::{Frame, FrameLayout},
-        value::flat::{self as value, Value, ValueKind},
+        value::{
+            flat::{self as value, Value, ValueKind},
+            host::HostTyp,
+        },
         var::SlotIdx,
     },
 };
@@ -22,7 +26,13 @@ use crate::lang::il::prepared as ast;
 
 use crate::diagnostic::{Label, Report};
 
-use crate::runtime::envs::interp::shared::{FrozenTDEnv, MicroTDEnv, TypeDef};
+use crate::runtime::{
+    envs::{
+        elab::TDEnv,
+        interp::shared::{FrozenTDEnv, HTDEnv, MicroTDEnv, TypeDef},
+    },
+    typdef,
+};
 
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap_from_result},
@@ -54,6 +64,8 @@ pub trait ReadContext {
     fn find_typdef_local_opt(&self, id: &ast::Id) -> Option<&TypeDef>;
     /// Finds a type in either scope or reports the lookup location.
     fn find_typdef(&self, id: &ast::Id) -> Result<&TypeDef, Error>;
+    /// Finds the host's definition of the extern type `id`, if any.
+    fn find_host_typdef_opt(&self, id: &ast::Id) -> Option<HostTyp>;
 
     // == Functions
 
@@ -152,6 +164,7 @@ pub trait IterContext: WriteContext {
 #[derive(Debug)]
 pub struct Global<R, F> {
     tdenv: FrozenTDEnv,
+    htdenv: HTDEnv,
     renv: FrozenIdMap<R>,
     fenv: FrozenIdMap<Rc<F>>,
 }
@@ -160,8 +173,28 @@ impl<R, F> Global<R, F> {
     // == Constructors
 
     /// Creates empty environments for a stage-specific loader.
-    pub(crate) fn new() -> Self {
-        Self { tdenv: FrozenTDEnv::new(), renv: FrozenIdMap::new(), fenv: FrozenIdMap::new() }
+    pub(crate) fn new(htdenv: HTDEnv) -> Self {
+        Self {
+            tdenv: FrozenTDEnv::new(),
+            htdenv,
+            renv: FrozenIdMap::new(),
+            fenv: FrozenIdMap::new(),
+        }
+    }
+
+    // == Checks
+
+    /// Checks that the host defines every extern type in `tdenv`.
+    pub(crate) fn check_htdenv(&self, tdenv: &TDEnv) -> Result<(), Error> {
+        for (id, typdef_source) in tdenv.iter() {
+            // Values of this type would match nothing
+            if matches!(typdef_source, typdef::TypeDef::Extern) && !self.htdenv.contains(&id.node) {
+                let diagnostic = error::context::extern_type_undefined(id.node.to_string())
+                    .with_label(Label::primary(&id.span, ""));
+                return Err(Box::new(Report::from(diagnostic)));
+            }
+        }
+        Ok(())
     }
 
     // == Inserters
@@ -332,6 +365,10 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
                     .with_label(Label::primary(&id.span, ""));
             Box::new(Report::from(diagnostic))
         })
+    }
+
+    fn find_host_typdef_opt(&self, id: &ast::Id) -> Option<HostTyp> {
+        self.global.htdenv.find(&id.node)
     }
 
     // - Functions

@@ -135,13 +135,14 @@ fn check_values(
 ) -> Backtrack<()> {
     // Resolve type names and function types through the context
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);
+    let find_host_typdef_opt = |id: &ast::Id| ctx.find_host_typdef_opt(id);
     let find_func = |name: &str| {
         let id = crate::phrase!(node: name.into(), span: id.span);
         ctx.find_func_typ(&id).ok()
     };
     // Check all values against their declared types
     let matches = unwrap_from_result!(
-        value::subs(arena, &find_typdef_opt, &find_func, typs, values),
+        value::subs(arena, &find_typdef_opt, &find_host_typdef_opt, &find_func, typs, values),
         &id.span
     );
     backtrack::check(matches, id.span, diagnostic)

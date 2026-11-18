@@ -12,7 +12,10 @@ use crate::lang::data::{
 
 use crate::lang::al::{ast as source, prepared as ast};
 
-use crate::runtime::envs::{elab::TDEnv, interp::shared::TypeDef};
+use crate::runtime::envs::{
+    elab::TDEnv,
+    interp::shared::{HTDEnv, TypeDef},
+};
 
 use crate::interp::shared::{
     context::{self as shared, FuncSignature},
@@ -36,15 +39,18 @@ impl SpecEnv {
     /// Loads a specification and prepares its definitions for slot execution,
     /// interning their notations into `arena_mixop`.
     ///
-    /// Panics if a global definition is repeated.
+    /// Fails if the host has no type definition for a declared extern type;
+    /// panics if a global definition is repeated.
     pub fn load(
         arena_mixop: &mut MixopArena,
+        htdenv: HTDEnv,
         det: bool,
         tco: bool,
         spec: source::Spec,
     ) -> Result<Self, Error> {
-        let mut loaded = Self::new();
+        let mut loaded = Self::new(htdenv);
         let tdenv = loaded.load_typdefs(arena_mixop, &spec);
+        loaded.check_htdenv(&tdenv)?;
         loaded.load_callables(arena_mixop, &tdenv, det, tco, spec);
         loaded.freeze();
         Ok(loaded)

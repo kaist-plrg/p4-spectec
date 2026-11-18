@@ -20,6 +20,17 @@ pub fn binding_repeated(kind: EntityKind, name: String) -> Diagnostic {
     diagnostic(BINDING_REPEATED, format!("{kind} `{name}` was already defined"), Vec::new())
 }
 
+const EXTERN_TYPE_UNDEFINED: &str = "runtime/extern-type-undefined";
+
+/// Reports an extern type the host does not define.
+pub fn extern_type_undefined(name: String) -> Diagnostic {
+    diagnostic(
+        EXTERN_TYPE_UNDEFINED,
+        format!("extern type `{name}` has no host type definition"),
+        Vec::new(),
+    )
+}
+
 const ITERATION_OPTIONALITY_MISMATCH: &str = "runtime/iteration-optionality-mismatch";
 
 /// Reports optionality mismatch.
