@@ -17,6 +17,7 @@ use std::{mem, rc::Rc};
 use crate::lang::data::{callable::Callable, frame::FrameLayout, notation::MixopArena};
 
 use crate::lang::{
+    common::source::NotePhrase,
     hints::input,
     il::ast as il_source,
     pl::{annot::Annotated, ast as pl, prepared as ast},
@@ -163,43 +164,75 @@ impl Prepare<PrepareContext<'_>> for pl::ParamKind {
 
 // = Blocks
 
-/// A tier whose blocks prepare their instructions together.
-pub trait PrepareBlock<'a>: Prepare<PrepareContext<'a>> + Sized {
-    /// Prepares the instructions of one block.
-    fn prepare_instrs(
-        instrs: Vec<pl::Instr<Self>>,
-        ctx: &mut PrepareContext<'a>,
-    ) -> Vec<ast::Instr<Self::Output>> {
-        prepare_instrs_placed(instrs, ctx)
+impl Prepare<PrepareContext<'_>> for pl::DispatchBlock {
+    type Output = ast::DispatchBlock;
+
+    fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        let pos = ctx.pos;
+        let len = self.instrs.len();
+        let mut instrs = Vec::with_capacity(len);
+        for (idx, instr) in self.instrs.into_iter().enumerate() {
+            // Each instruction is placed by whether it is the block's last
+            let pos_instr = pos.at(idx + 1 == len);
+            instrs.push(ctx.with_pos(pos_instr, |ctx| instr.prepare(ctx)));
+        }
+        ast::Block { instrs }
     }
 }
 
-/// Prepares the instructions of a block, each placed by whether it is the last.
-fn prepare_instrs_placed<'a, Tier: PrepareBlock<'a>>(
-    instrs: Vec<pl::Instr<Tier>>,
-    ctx: &mut PrepareContext<'a>,
-) -> Vec<ast::Instr<Tier::Output>> {
-    let pos = ctx.pos;
-    let len = instrs.len();
-    let mut instrs_prepared = Vec::with_capacity(len);
-    for (idx, instr) in instrs.into_iter().enumerate() {
-        let pos_instr = pos.at(idx + 1 == len);
-        instrs_prepared.push(ctx.with_pos(pos_instr, |ctx| instr.prepare(ctx)));
-    }
-    instrs_prepared
-}
+impl Prepare<PrepareContext<'_>> for pl::GroupBlock {
+    type Output = ast::GroupBlock;
 
-impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::Block<Tier> {
-    type Output = ast::Block<Tier::Output>;
-
-    fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
-        ast::Block { instrs: Tier::prepare_instrs(self.instrs, ctx) }
+    /// Prepares the block; in tail position under `tco`, a relation call
+    /// followed by a result of its outputs becomes one result making the call.
+    fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        let pos = ctx.pos;
+        let mut instrs = Vec::with_capacity(self.instrs.len());
+        let mut instrs_source = self.instrs.into_iter().peekable();
+        while let Some(instr) = instrs_source.next() {
+            // Compare source expressions before their mixops become arena handles
+            let tail = ctx.tco
+                && match (&instr.node.node, instrs_source.peek().map(|instr| &instr.node.node)) {
+                    (
+                        pl::InstrKind::Tier(pl::TierInstr {
+                            tier: pl::GroupInstr::Rule(instr_rule),
+                        }),
+                        Some(pl::InstrKind::Tier(pl::TierInstr {
+                            tier: pl::GroupInstr::Result(instr_result),
+                        })),
+                    ) => instr_rule.is_tail_call(pos, instr_result),
+                    _ => false,
+                };
+            // The call concludes in place of the result after it, keeping its own span
+            if tail {
+                instrs_source.next();
+                let pl::InstrKind::Tier(pl::TierInstr { tier: pl::GroupInstr::Rule(instr_rule) }) =
+                    instr.node.node
+                else {
+                    unreachable!("a tail call is a relation call")
+                };
+                let call = instr_rule.prepare_tail(ctx);
+                let tier = ast::GroupInstr::Result(ast::ResultInstr::Tail(call));
+                let node = ast::InstrKind::Tier(ast::TierInstr { tier });
+                let node = NotePhrase { node, note: instr.node.note, span: instr.node.span };
+                instrs.push(Annotated { node, hints: instr.hints });
+                continue;
+            }
+            // Otherwise the instruction is placed by whether it is the block's last
+            let pos_instr = pos.at(instrs_source.peek().is_none());
+            instrs.push(ctx.with_pos(pos_instr, |ctx| instr.prepare(ctx)));
+        }
+        ast::Block { instrs }
     }
 }
 
 // = Holding conditions
 
-impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::HoldCase<Tier> {
+impl<'a, Tier> Prepare<PrepareContext<'a>> for pl::HoldCase<Tier>
+where
+    Tier: Prepare<PrepareContext<'a>>,
+    pl::Block<Tier>: Prepare<PrepareContext<'a>, Output = ast::Block<Tier::Output>>,
+{
     type Output = ast::HoldCase<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
@@ -246,7 +279,11 @@ impl ast::Guard {
 
 // = Instructions
 
-impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::InstrKind<Tier> {
+impl<'a, Tier> Prepare<PrepareContext<'a>> for pl::InstrKind<Tier>
+where
+    Tier: Prepare<PrepareContext<'a>>,
+    pl::Block<Tier>: Prepare<PrepareContext<'a>, Output = ast::Block<Tier::Output>>,
+{
     type Output = ast::InstrKind<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
@@ -267,7 +304,11 @@ impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::InstrKind<T
 
 // - If instruction
 
-impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::IfInstr<Tier> {
+impl<'a, Tier> Prepare<PrepareContext<'a>> for pl::IfInstr<Tier>
+where
+    Tier: Prepare<PrepareContext<'a>>,
+    pl::Block<Tier>: Prepare<PrepareContext<'a>, Output = ast::Block<Tier::Output>>,
+{
     type Output = ast::IfInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
@@ -280,7 +321,11 @@ impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::IfInstr<Tie
 
 // - Conditional bindings
 
-impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::IfLetSubInstr<Tier> {
+impl<'a, Tier> Prepare<PrepareContext<'a>> for pl::IfLetSubInstr<Tier>
+where
+    Tier: Prepare<PrepareContext<'a>>,
+    pl::Block<Tier>: Prepare<PrepareContext<'a>, Output = ast::Block<Tier::Output>>,
+{
     type Output = ast::IfLetSubInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
@@ -299,7 +344,11 @@ impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::IfLetSubIns
     }
 }
 
-impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::IfLetMatchInstr<Tier> {
+impl<'a, Tier> Prepare<PrepareContext<'a>> for pl::IfLetMatchInstr<Tier>
+where
+    Tier: Prepare<PrepareContext<'a>>,
+    pl::Block<Tier>: Prepare<PrepareContext<'a>, Output = ast::Block<Tier::Output>>,
+{
     type Output = ast::IfLetMatchInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
@@ -316,7 +365,11 @@ impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::IfLetMatchI
 
 // - Check instruction
 
-impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::CheckInstr<Tier> {
+impl<'a, Tier> Prepare<PrepareContext<'a>> for pl::CheckInstr<Tier>
+where
+    Tier: Prepare<PrepareContext<'a>>,
+    pl::Block<Tier>: Prepare<PrepareContext<'a>, Output = ast::Block<Tier::Output>>,
+{
     type Output = ast::CheckInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
@@ -329,7 +382,11 @@ impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::CheckInstr<
 
 // - Hold instruction
 
-impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::HoldInstr<Tier> {
+impl<'a, Tier> Prepare<PrepareContext<'a>> for pl::HoldInstr<Tier>
+where
+    Tier: Prepare<PrepareContext<'a>>,
+    pl::Block<Tier>: Prepare<PrepareContext<'a>, Output = ast::Block<Tier::Output>>,
+{
     type Output = ast::HoldInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
@@ -342,7 +399,11 @@ impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::HoldInstr<T
 
 // - Case instruction
 
-impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::CaseInstr<Tier> {
+impl<'a, Tier> Prepare<PrepareContext<'a>> for pl::CaseInstr<Tier>
+where
+    Tier: Prepare<PrepareContext<'a>>,
+    pl::Block<Tier>: Prepare<PrepareContext<'a>, Output = ast::Block<Tier::Output>>,
+{
     type Output = ast::CaseInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
@@ -404,7 +465,7 @@ impl Prepare<PrepareContext<'_>> for pl::DestructInstr {
 
 // - Tier instruction
 
-impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::TierInstr<Tier> {
+impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::TierInstr<Tier> {
     type Output = ast::TierInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
@@ -414,50 +475,15 @@ impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::TierInstr<T
 
 // = Group-body tier
 
-/// In tail position under `tco`, a relation call followed by a result of its outputs
-/// becomes one result that makes the call in place of the relation.
-impl<'a> PrepareBlock<'a> for pl::GroupInstr {
-    fn prepare_instrs(
-        instrs: Vec<pl::Instr<Self>>,
-        ctx: &mut PrepareContext<'a>,
-    ) -> Vec<ast::Instr<Self::Output>> {
-        // Compare source expressions before their mixops become arena handles
-        let idxs_tail: Vec<usize> = if ctx.tco {
-            (instrs.windows(2).enumerate())
-                .filter(|(_, pair)| match (&pair[0].node.node, &pair[1].node.node) {
-                    (
-                        pl::InstrKind::Tier(pl::TierInstr { tier: pl::GroupInstr::Rule(instr) }),
-                        pl::InstrKind::Tier(pl::TierInstr {
-                            tier: pl::GroupInstr::Result(instr_result),
-                        }),
-                    ) => instr.is_tail_call(ctx.pos, instr_result),
-                    _ => false,
-                })
-                .map(|(idx, _)| idx)
-                .collect()
-        } else {
-            Vec::new()
-        };
-        let mut instrs = prepare_instrs_placed(instrs, ctx);
-        // The call concludes in place of the result after it, keeping its own span
-        for idx in idxs_tail.into_iter().rev() {
-            instrs.remove(idx + 1);
-            let ast::InstrKind::Tier(ast::TierInstr { tier }) = &mut instrs[idx].node.node else {
-                unreachable!("a tail call is a relation call")
-            };
-            let ast::GroupInstr::Rule(instr) = tier else {
-                unreachable!("a tail call is a relation call")
-            };
-            let id = instr.id.clone();
-            let exps_input = mem::take(&mut instr.exps_input);
-            let call = ast::TailRel { id, exps_input };
-            *tier = ast::GroupInstr::Result(ast::ResultInstr::Tail(call));
-        }
-        instrs
-    }
-}
-
 impl pl::RuleInstr {
+    /// Prepares the call as a tail call, dropping the result that returns its outputs.
+    fn prepare_tail(self, ctx: &mut PrepareContext<'_>) -> ast::TailRel {
+        let (exps_input, _) = input::split(&self.input_hint, self.not_exp.into_args())
+            .expect("input hint must fit relation");
+        let exps_input = exps_input.prepare(&mut ctx.il());
+        ast::TailRel { id: self.id, exps_input }
+    }
+
     /// Checks tail position and whether the next result concludes with exactly its outputs.
     fn is_tail_call(&self, pos: Position, instr_result: &pl::ResultInstr) -> bool {
         // Non-tail positions and iterated calls must retain their outputs
@@ -545,8 +571,6 @@ impl Prepare<PrepareContext<'_>> for pl::BacktrackInstr {
 }
 
 // = Dispatch tier
-
-impl PrepareBlock<'_> for pl::DispatchInstr {}
 
 impl Prepare<PrepareContext<'_>> for pl::DispatchInstr {
     type Output = ast::DispatchInstr;
