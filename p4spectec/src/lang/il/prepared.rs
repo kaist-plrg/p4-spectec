@@ -40,8 +40,9 @@ pub type NotExp = source::NotExp<Prepared>;
 
 // - Iterations
 
-/// An iteration over variables alone, as in condition and binding iterations.
-pub type ExpIterVars = source::ExpIter<Var>;
+/// The iterations a condition runs under:
+/// `-- if (x > 0)*` checks `x > 0` for each element of `x*`.
+pub type CondIter = source::ExpIter<Var>;
 
 /// An expression's iteration, and how the interpreter runs it.
 #[derive(Clone, Debug, PartialEq)]

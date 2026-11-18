@@ -190,7 +190,7 @@ impl Prepare<PrepareContext<'_>> for source::ExpKind {
             }
             source::ExpKind::Iter(exp_inner, exp_iter_inner) => {
                 let exp_inner = exp_inner.prepare(ctx);
-                let ExpIterVars { iter, vars } = exp_iter_inner.prepare(ctx);
+                let source::ExpIter { iter, vars } = exp_iter_inner.prepare(ctx);
                 let exp_iter = zipper::plan_exp(&exp_inner, iter, vars);
                 ExpKind::Iter(exp_inner, exp_iter)
             }
@@ -207,14 +207,14 @@ impl Prepare<PrepareContext<'_>> for source::ExpField {
 }
 
 impl Prepare<PrepareContext<'_>> for source::ExpIter {
-    type Output = ExpIterVars;
+    type Output = source::ExpIter<VarSlot>;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let source::ExpIter { iter, vars } = self;
         // Prepare `x*` for every iterated `x`
         let mut vars = vars.prepare(ctx);
         ctx.prepare_outer_vars(&mut vars, iter);
-        ExpIterVars { iter, vars }
+        source::ExpIter { iter, vars }
     }
 }
 
