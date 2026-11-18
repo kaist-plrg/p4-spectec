@@ -255,8 +255,10 @@ fn assign_iter_exp<Ctx: WriteContext>(
         ast::ExpIter::Split { decomp, vars } => {
             assign_iter_exp_split(arena, ctx, exp, decomp, vars, value)
         }
+        // Only evaluated expressions join
+        ast::ExpIter::Join { .. } => unreachable!("assigned iteration must not join"),
         // Any other pattern assigns each element and gathers per variable
-        ast::ExpIter::Each { .. } | ast::ExpIter::Join { .. } => match exp_iter.iter() {
+        ast::ExpIter::Each { .. } => match exp_iter.iter() {
             // Option: the payload once, or none for every variable
             ast::Iter::Opt => assign_iter_opt_exp(arena, ctx, exp, exp_inner, exp_iter, value),
             // List: one assignment per element

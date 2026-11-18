@@ -13,7 +13,7 @@ use crate::lang::{
     traits::print::{Print, Printer},
 };
 
-use crate::lang::il::prepared::*;
+use crate::lang::il::{ast as source, prepared::*};
 
 // == Borrowed views
 
@@ -272,7 +272,9 @@ impl Print for ExpRef<'_> {
 
 impl Print for ExpIter {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
-        super::source::print_exp_iter(printer, &self.iter(), self.vars())
+        // Prints as the source iteration over the same variables
+        let exp_iter = source::ExpIter { iter: self.iter(), vars: self.vars().to_vec() };
+        exp_iter.print(printer)
     }
 }
 

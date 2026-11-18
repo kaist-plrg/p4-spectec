@@ -631,9 +631,9 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
             eval_iter_exp_join(runner_ctx, ctx, exp, exp_inner, comp, vars)
         }
         // Any other body is evaluated per element
-        ast::ExpIter::Each { .. } | ast::ExpIter::Split { .. } => {
-            eval_iter_exp_each(runner_ctx, ctx, exp, exp_inner, exp_iter)
-        }
+        ast::ExpIter::Each { .. } => eval_iter_exp_each(runner_ctx, ctx, exp, exp_inner, exp_iter),
+        // Only assigned patterns split
+        ast::ExpIter::Split { .. } => unreachable!("evaluated iteration must not split"),
     }
 }
 
