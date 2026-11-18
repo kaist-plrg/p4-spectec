@@ -351,7 +351,7 @@ pub enum GroupInstr<P: Stage = Source> {
     /// Conclude the function with a value.
     Return(ReturnInstr<P>),
     /// Call a relation and bind its outputs.
-    Rule(RuleInstr<P>),
+    Rule(P::RuleInstr),
     /// Try the arms in order until one concludes.
     Backtrack(BacktrackInstr<P>),
 }

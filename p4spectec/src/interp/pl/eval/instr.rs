@@ -10,7 +10,6 @@
 use crate::lang::{
     common::source::Span,
     data::value::flat::{self as value, Value},
-    hints::input,
     traits::{eq::SyntaxEq, print::Print},
 };
 
@@ -521,20 +520,21 @@ fn eval_rule_instr<'global, Iface: Interface, Ext: Extern>(
     ctx: Context<'global>,
     instr: &ast::RuleInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    // The input hint separates arguments from output patterns
-    let (exps_input, exps_output) =
-        input::split(&instr.input_hint, instr.not_exp.args().iter().collect())
-            .expect("input hint must fit relation");
     // Invoke the relation at each enclosing iteration
     let ctx = unwrap!(eval_instr_iter(
         runner_ctx,
         ctx,
         &instr.iter_instrs,
         &mut |runner_ctx, mut ctx| {
-            let values = unwrap!(eval_exps(runner_ctx, &ctx, &exps_input));
+            let values = unwrap!(eval_exps(runner_ctx, &ctx, &instr.exps_input));
             let values = unwrap!(PlInterp::invoke_rel(runner_ctx, &ctx, &instr.id, &values));
             // Extend the local bindings with relation outputs
-            unwrap!(assign::assign_exps(runner_ctx.arena_mut(), &mut ctx, &exps_output, &values));
+            unwrap!(assign::assign_exps(
+                runner_ctx.arena_mut(),
+                &mut ctx,
+                &instr.exps_output,
+                &values
+            ));
             ok!(ctx)
         }
     ));

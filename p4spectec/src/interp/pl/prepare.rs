@@ -12,11 +12,7 @@
 
 use std::{mem, rc::Rc};
 
-use crate::lang::data::{
-    callable::Callable,
-    frame::FrameLayout,
-    notation::{MixopArena, flat},
-};
+use crate::lang::data::{callable::Callable, frame::FrameLayout, notation::MixopArena};
 
 use crate::lang::{
     hints::input,
@@ -393,28 +389,14 @@ impl Prepare<PrepareContext<'_>> for pl::RuleInstr {
     type Output = ast::RuleInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        let (mixop, args) = self.not_exp.into_parts();
-        let mixop = mixop.prepare(ctx.arena_mixop);
-        // The outputs are patterns the call binds
-        let (_, idxs_output) = input::split(&self.input_hint, (0..args.len()).collect())
+        // The input hint separates the arguments once, before any call
+        let (exps_input, exps_output) = input::split(&self.input_hint, self.not_exp.into_args())
             .expect("input hint must fit relation");
-        let args = args
-            .into_iter()
-            .enumerate()
-            .map(|(idx, arg)| {
-                if idxs_output.contains(&idx) {
-                    arg.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign))
-                } else {
-                    arg.prepare(&mut ctx.il())
-                }
-            })
-            .collect();
-        let not_exp =
-            flat::Mixfix::new(ctx.arena_mixop, mixop, args).expect("a mixfix fills every position");
         ast::RuleInstr {
             id: self.id,
-            not_exp,
-            input_hint: self.input_hint,
+            exps_input: exps_input.prepare(&mut ctx.il()),
+            // The outputs are patterns the call binds
+            exps_output: exps_output.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
             iter_instrs: self.iter_instrs.prepare(&mut ctx.il()),
         }
     }
