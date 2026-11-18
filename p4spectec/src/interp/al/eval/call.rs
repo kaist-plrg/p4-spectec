@@ -30,7 +30,10 @@ use crate::interp::shared::{
     cache::CallKey,
     context::ReadContext,
     error,
-    eval::assign::assign_tparams,
+    eval::{
+        assign::assign_tparams,
+        tail::{eval_tail_func, eval_tail_rel},
+    },
 };
 
 use super::super::{
@@ -323,7 +326,7 @@ fn eval_rule_path<Iface: Interface, Ext: Extern>(
         }
         // A tail call goes to the invoker loop
         ast::RelResult::Tail(tail) => {
-            let (id, values) = unwrap!(expr::eval_tail_rel(runner_ctx, &ctx, tail));
+            let (id, values) = unwrap!(eval_tail_rel(runner_ctx, &ctx, tail));
             ok!(RelOutcome::TailCall(id, values))
         }
     }
@@ -565,7 +568,7 @@ fn eval_func_return<Iface: Interface, Ext: Extern>(
         }
         // A tail call goes to the invoker loop
         ast::FuncReturn::Tail(tail) => {
-            let (id, targs, values) = unwrap!(expr::eval_tail_func(runner_ctx, ctx, tail));
+            let (id, targs, values) = unwrap!(eval_tail_func(runner_ctx, ctx, tail));
             ok!(FuncOutcome::TailCall(id, targs, values))
         }
     }

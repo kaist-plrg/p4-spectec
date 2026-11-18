@@ -25,7 +25,10 @@ use crate::interp::shared::{
     backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
     context::{IterContext, WriteContext},
     error,
-    eval::{Invoker, iter, ops},
+    eval::{
+        Invoker, iter, ops,
+        tail::{eval_tail_func, eval_tail_rel},
+    },
     util::iterate_vars,
 };
 
@@ -39,7 +42,7 @@ use super::super::{
 
 use super::{
     assign,
-    expr::{self, eval_exp, eval_exps},
+    expr::{eval_exp, eval_exps},
 };
 
 // = Block evaluation
@@ -371,7 +374,7 @@ fn eval_result_instr<Iface: Interface, Ext: Extern>(
         }
         // A tail call goes to the invoker loop
         ast::ResultInstr::Tail(tail) => {
-            let call = unwrap!(expr::eval_tail_rel(runner_ctx, ctx.as_ref(), tail));
+            let call = unwrap!(eval_tail_rel(runner_ctx, ctx.as_ref(), tail));
             ok!(Flow::TailRel(phrase!(node: call, span: *span)))
         }
     }
@@ -394,7 +397,7 @@ fn eval_return_instr<Iface: Interface, Ext: Extern>(
         }
         // A tail call goes to the invoker loop
         ast::ReturnInstr::Tail(tail) => {
-            let call = unwrap!(expr::eval_tail_func(runner_ctx, ctx.as_ref(), tail));
+            let call = unwrap!(eval_tail_func(runner_ctx, ctx.as_ref(), tail));
             ok!(Flow::TailFunc(phrase!(node: call, span: *span)))
         }
     }

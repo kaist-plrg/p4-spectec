@@ -23,7 +23,10 @@ use crate::interp::shared::{
     backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
     context::{IterContext, WriteContext},
     error,
-    eval::{Invoker, iter, ops},
+    eval::{
+        Invoker, iter, ops,
+        tail::{eval_tail_func, eval_tail_rel},
+    },
     util::iterate_vars,
 };
 
@@ -37,7 +40,7 @@ use crate::phrase;
 
 use super::{
     assign,
-    expr::{eval_exp, eval_exps, eval_tail_func, eval_tail_rel},
+    expr::{eval_exp, eval_exps},
 };
 
 // = Block evaluation
