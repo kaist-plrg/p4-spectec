@@ -1,6 +1,6 @@
 //! Resolve simple iterated-variable expressions through their prepared outer variables
 //!
-//! `find_slot_of_exp` maps `x*` used as an expression to its slot;
+//! `find_slot_of_exp` maps `x`, or `x*` read whole, to its slot;
 //! `iterate_vars` returns the variables one iteration outward.
 
 use crate::lang::data::var::SlotIdx;
@@ -12,20 +12,18 @@ pub fn iterate_vars(vars: &[ast::Var]) -> Vec<ast::Var> {
     vars.iter().map(|var| var.outer().clone()).collect()
 }
 
-/// Recognizes identity iterations using prepared slots without cloning syntax.
+/// The slot of a variable, or of an iterated variable read whole.
+///
+/// ```text
+/// x      x's slot
+/// x*     x*'s slot, when chosen whole
+/// x**    x**'s slot, when chosen whole
+/// x + 1  None
+/// ```
 pub fn find_slot_of_exp(exp: &ast::Exp) -> Option<SlotIdx> {
     match &exp.node {
-        // A plain variable already has its slot
         ast::ExpKind::Id(id) => Some(id.slot),
-        // Matching slots imply the same name and the same iteration path
-        ast::ExpKind::Iter(exp_inner, ast::ExpIter { vars, .. }) => {
-            let [var] = vars.as_slice() else {
-                return None;
-            };
-            let slot = find_slot_of_exp(exp_inner)?;
-            (slot == var.slot).then(|| var.outer().slot)
-        }
-        // Computed expressions require normal iteration evaluation
+        ast::ExpKind::Iter(_, ast::ExpIter::Whole { var, .. }) => Some(var.outer().slot),
         _ => None,
     }
 }

@@ -4,7 +4,7 @@
 //! and binds its variables:
 //! `(x, y) <- (1, 2)` binds `x` and `y`;
 //! `x* <- [1, 2]` binds `x*` as a whole;
-//! `(x, y)* <- [(1, 2), (3, 4)]` unzips into `x* = [1, 3]` and `y* = [2, 4]`,
+//! `(x, y)* <- [(1, 2), (3, 4)]` splits into `x* = [1, 3]` and `y* = [2, 4]`,
 //! while `(x, y :: ys)* <- [...]` assigns each element in a fresh sub-context
 //! and gathers the elements into `x*`, `y*`, and `ys*`.
 
@@ -28,14 +28,12 @@ use crate::runtime::envs::interp::shared::TypeDef;
 
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap, unwrap_from_result},
-    util::{find_slot_of_exp, iterate_vars},
+    util::iterate_vars,
 };
 
 use crate::phrase;
 
 use super::super::context::WriteContext;
-
-use super::zipper;
 
 /// Child handles copied out of the arena, which recursive assignment may grow.
 type Values = SmallVec<[Value; 8]>;
@@ -247,17 +245,64 @@ fn assign_iter_exp<Ctx: WriteContext>(
     exp_iter: &ast::ExpIter,
     value: Value,
 ) -> Backtrack<()> {
-    // A bare iterated variable binds as a whole
-    if let Some(slot) = find_slot_of_exp(exp) {
-        ctx.add_value_at_slot(slot, value);
-        return ok!(());
+    match exp_iter {
+        // An iterated variable binds as a whole
+        ast::ExpIter::Whole { var, .. } => {
+            ctx.add_value_at_slot(var.outer().slot, value);
+            ok!(())
+        }
+        // A list pattern that only selects children splits each element
+        ast::ExpIter::ListSplit { decomp, vars } => {
+            assign_iter_exp_list_split(arena, ctx, exp, decomp, vars, value)
+        }
+        // Any other pattern assigns each element and gathers per variable
+        ast::ExpIter::Each { iter, vars } => {
+            assign_iter_exp_each(arena, ctx, exp, exp_inner, *iter, vars, value)
+        }
+        // Only evaluated expressions join
+        ast::ExpIter::ListJoin { .. } => unreachable!("assigned iteration must not join a list"),
     }
-    // Otherwise assign each element and gather per variable
-    match exp_iter.iter {
+}
+
+/// Binds each variable's outer value split from the list's elements.
+///
+/// For `(a, b)* <- [(1, 2), (3, 4)]`,
+/// `a*` binds `[1, 3]` and `b*` binds `[2, 4]`.
+fn assign_iter_exp_list_split<Ctx: WriteContext>(
+    arena: &mut Arena,
+    ctx: &mut Ctx,
+    exp: &ast::Exp,
+    decomp: &Decomp,
+    vars: &[ast::Var],
+    value: Value,
+) -> Backtrack<()> {
+    let typs = vars.iter().map(|var| Rc::clone(&var.outer().typ));
+    let values_outer =
+        unwrap_from_result!(arena.value.unzip(&arena.mixop, value.node, decomp, typs), &exp.span);
+    for (var, value_outer) in vars.iter().zip(values_outer) {
+        ctx.add_value_at_slot(var.outer().slot, value_outer);
+    }
+    ok!(())
+}
+
+/// Assigns the pattern once per element and gathers each variable's values.
+///
+/// For `(a, y :: ys)* <- [(1, [2, 3]), (4, [5])]`,
+/// `a*` binds `[1, 4]`, `y*` binds `[2, 5]`, and `ys*` binds `[[3], []]`.
+fn assign_iter_exp_each<Ctx: WriteContext>(
+    arena: &mut Arena,
+    ctx: &mut Ctx,
+    exp: &ast::Exp,
+    exp_inner: &ast::Exp,
+    iter: ast::Iter,
+    vars: &[ast::Var],
+    value: Value,
+) -> Backtrack<()> {
+    match iter {
         // Option: the payload once, or none for every variable
-        ast::Iter::Opt => assign_iter_opt_exp(arena, ctx, exp, exp_inner, exp_iter, value),
+        ast::Iter::Opt => assign_iter_opt_exp(arena, ctx, exp, exp_inner, vars, value),
         // List: one assignment per element
-        ast::Iter::List => assign_iter_list_exp(arena, ctx, exp, exp_inner, exp_iter, value),
+        ast::Iter::List => assign_iter_list_exp(arena, ctx, exp, exp_inner, vars, value),
     }
 }
 
@@ -267,11 +312,11 @@ fn assign_iter_opt_exp<Ctx: WriteContext>(
     ctx: &mut Ctx,
     exp: &ast::Exp,
     exp_inner: &ast::Exp,
-    exp_iter: &ast::ExpIter,
+    vars: &[ast::Var],
     value: Value,
 ) -> Backtrack<()> {
     let span = &exp.span;
-    let vars_outer = iterate_vars(&exp_iter.vars);
+    let vars_outer = iterate_vars(vars);
     // Assign the payload, if any, in a copy of the context
     let value_opt =
         value::get::opt(arena, &value).expect("iteration assignment value must be an option");
@@ -284,7 +329,7 @@ fn assign_iter_opt_exp<Ctx: WriteContext>(
         None => None,
     };
     // Each variable becomes an option of its payload binding
-    for (var, var_outer) in exp_iter.vars.iter().zip(&vars_outer) {
+    for (var, var_outer) in vars.iter().zip(&vars_outer) {
         let typ = Rc::clone(&var_outer.typ);
         let value_opt = ctx_sub.as_ref().map(|ctx_sub| {
             *ctx_sub
@@ -298,48 +343,6 @@ fn assign_iter_opt_exp<Ctx: WriteContext>(
     ok!(())
 }
 
-/// Assigns each list element and gathers the results per variable.
-///
-/// ```text
-/// (a, b)* <- [(1, 2), (3, 4)]          decomposes: unzips the list
-/// (a, y :: ys)* <- [(1, [2, 3]), ...]  does not: assigns element by element
-/// ```
-fn assign_iter_list_exp<Ctx: WriteContext>(
-    arena: &mut Arena,
-    ctx: &mut Ctx,
-    exp: &ast::Exp,
-    exp_inner: &ast::Exp,
-    exp_iter: &ast::ExpIter,
-    value: Value,
-) -> Backtrack<()> {
-    // A fixed pattern unzips the list; any other assigns element by element
-    match zipper::decompose(exp_inner, &exp_iter.vars) {
-        Some(decomp) => assign_iter_list_exp_with_decomp(arena, ctx, exp, exp_iter, &decomp, value),
-        None => assign_iter_list_exp_without_decomp(arena, ctx, exp, exp_inner, exp_iter, value),
-    }
-}
-
-/// Binds each variable's outer value unzipped from the list.
-///
-/// For `(a, b)* <- [(1, 2), (3, 4)]`,
-/// `a*` binds `[1, 3]` and `b*` binds `[2, 4]`.
-fn assign_iter_list_exp_with_decomp<Ctx: WriteContext>(
-    arena: &mut Arena,
-    ctx: &mut Ctx,
-    exp: &ast::Exp,
-    exp_iter: &ast::ExpIter,
-    decomp: &Decomp,
-    value: Value,
-) -> Backtrack<()> {
-    let typs = exp_iter.vars.iter().map(|var| Rc::clone(&var.outer().typ));
-    let values_outer =
-        unwrap_from_result!(arena.value.unzip(&arena.mixop, value.node, decomp, typs), &exp.span);
-    for (var, value_outer) in exp_iter.vars.iter().zip(values_outer) {
-        ctx.add_value_at_slot(var.outer().slot, value_outer);
-    }
-    ok!(())
-}
-
 /// Assigns each list element in a cleared copy of the context,
 /// then binds every variable's values as a list one iteration outward.
 ///
@@ -349,15 +352,14 @@ fn assign_iter_list_exp_with_decomp<Ctx: WriteContext>(
 /// element 1   a = 4, y = 5, ys = []
 /// binds       a* = [1, 4], y* = [2, 5], ys* = [[3], []]
 /// ```
-fn assign_iter_list_exp_without_decomp<Ctx: WriteContext>(
+fn assign_iter_list_exp<Ctx: WriteContext>(
     arena: &mut Arena,
     ctx: &mut Ctx,
     exp: &ast::Exp,
     exp_inner: &ast::Exp,
-    exp_iter: &ast::ExpIter,
+    vars: &[ast::Var],
     value: Value,
 ) -> Backtrack<()> {
-    let vars = &exp_iter.vars;
     let values = value::get::list(arena, &value)
         .expect("iteration assignment value must be a list")
         .to_vec();

@@ -6,7 +6,7 @@
 //! iteration premises repeat under `iter::yield`.
 //! A failed premise is an `Unmatch`, so the enclosing candidate is skipped.
 
-use crate::lang::{data::value::flat as value, hints::input, traits::print::Print};
+use crate::lang::{data::value::flat as value, traits::print::Print};
 
 use crate::lang::al::prepared as ast;
 
@@ -64,13 +64,15 @@ fn eval_rule_prem<'global, Iface: Interface, Ext: Extern>(
     mut ctx: Context<'global>,
     prem: &ast::RulePrem,
 ) -> Backtrack<Context<'global>> {
-    // Split by the input hint, evaluate inputs, bind outputs
-    let exps = prem.not_exp.args().iter().collect();
-    let (exps_input, exps_output) =
-        input::split(&prem.input_hint, exps).expect("input hint must fit relation");
-    let values_input = unwrap!(expr::eval_exps(runner_ctx, &ctx, &exps_input));
+    // Evaluate the inputs, call the relation, and bind its outputs
+    let values_input = unwrap!(expr::eval_exps(runner_ctx, &ctx, &prem.exps_input));
     let values_output = unwrap!(AlInterp::invoke_rel(runner_ctx, &ctx, &prem.id, &values_input));
-    unwrap!(assign::assign_exps(runner_ctx.arena_mut(), &mut ctx, &exps_output, &values_output));
+    unwrap!(assign::assign_exps(
+        runner_ctx.arena_mut(),
+        &mut ctx,
+        &prem.exps_output,
+        &values_output
+    ));
     ok!(ctx)
 }
 

@@ -5,6 +5,8 @@
 //! AL, SL, and PL reuse these expressions and supporting syntax;
 //! preparation operations live under `interp/shared/prepare`.
 
+use crate::lang::data::value::flat::zipper::{Comp, Decomp};
+
 use super::{ast as source, stage::Stage};
 
 pub use super::ast::{
@@ -33,7 +35,25 @@ pub type Exp = source::Exp<Prepared>;
 pub type ExpField = source::ExpField<Prepared>;
 pub type ExpKind = source::ExpKind<Prepared>;
 pub type NotExp = source::NotExp<Prepared>;
-pub type ExpIter = source::ExpIter<Var>;
+
+// - Iterations
+
+/// The iterations a condition runs under:
+/// `-- if (x > 0)*` checks `x > 0` for each element of `x*`.
+pub type CondIter = source::ExpIter<Var>;
+
+/// An expression's iteration, and how the interpreter runs it.
+#[derive(Clone, Debug, PartialEq)]
+pub enum ExpIter {
+    /// Evaluates the body or assigns the pattern per element.
+    Each { iter: Iter, vars: Vec<Var> },
+    /// Reads or binds an iterated variable whole: `x*`, `x**`.
+    Whole { iter: Iter, var: Var },
+    /// Splits each element of a list into its variables: `(a, b)* <- xs`.
+    ListSplit { decomp: Decomp, vars: Vec<Var> },
+    /// Joins the variables into each element of a list: `(b, a)*`.
+    ListJoin { comp: Comp, vars: Vec<Var> },
+}
 
 // - Paths
 

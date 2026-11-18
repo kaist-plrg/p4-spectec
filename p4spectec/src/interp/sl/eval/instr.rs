@@ -464,7 +464,7 @@ fn eval_debug_instr<Iface: Interface, Ext: Extern>(
 fn eval_cond_iter<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: &Context<'_>,
-    iters: &[ast::ExpIter],
+    iters: &[ast::CondIter],
     eval: &mut impl FnMut(&mut RunnerContext<'_, SlInterp, Iface, Ext>, &Context<'_>) -> Backtrack<bool>,
 ) -> Backtrack<bool> {
     if iters.is_empty() {
@@ -477,14 +477,14 @@ fn eval_cond_iter<Iface: Interface, Ext: Extern>(
 fn eval_cond_iter_inner<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: &Context<'_>,
-    iters: &[ast::ExpIter],
+    iters: &[ast::CondIter],
     eval: &mut impl FnMut(&mut RunnerContext<'_, SlInterp, Iface, Ext>, &Context<'_>) -> Backtrack<bool>,
 ) -> Backtrack<bool> {
     // Recurse from the outermost iteration inward
     let Some((exp_iter, iters_tail)) = iters.split_last() else {
         return eval(runner_ctx, ctx);
     };
-    let ast::ExpIter { iter, vars } = exp_iter;
+    let ast::CondIter { iter, vars } = exp_iter;
     let vars_outer = iterate_vars(vars);
     match iter {
         // An option iterates zero or one time

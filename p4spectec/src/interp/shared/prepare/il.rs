@@ -2,7 +2,9 @@
 //!
 //! The `Prepare` implementations rebuild source nodes as prepared syntax.
 //! Iterations register the outer variable `x*` for every iterated `x`,
-//! so evaluation can find its slot.
+//! so evaluation can find its slot,
+//! and choose how they run by what the expression is prepared for:
+//! `(a, b)*` joins when evaluated and splits when assigned.
 //! Type definitions prepare their mixops without allocating frame slots.
 //! Subtype tests compute their runtime checks here,
 //! against source type definitions.
@@ -20,7 +22,9 @@ use crate::lang::il::{ast as source, prepared::*};
 
 use crate::runtime::{envs::elab::TDEnv, ops::typ::optimize_sub_typ};
 
-use super::{Prepare, mixop};
+use crate::interp::shared::util::find_slot_of_exp;
+
+use super::{Prepare, mixop, zipper};
 
 // - Preparation context
 
@@ -32,6 +36,17 @@ pub struct PrepareContext<'a> {
     pub tdenv: &'a TDEnv,
     /// The callable's frame layout.
     pub layout: &'a mut FrameLayout,
+    /// What the iterations of the expression being prepared run for.
+    pub exp_iter_for: ExpIterFor,
+}
+
+/// Which interpreter function a prepared `ExpIter` runs for.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ExpIterFor {
+    /// `eval_exp`: `f((a, b)*)` joins `a*` and `b*`.
+    Eval,
+    /// `assign_exp`: `let (a, b)* = xs` splits `xs`.
+    Assign,
 }
 
 impl PrepareContext<'_> {
@@ -190,8 +205,8 @@ impl Prepare<PrepareContext<'_>> for source::ExpKind {
             }
             source::ExpKind::Iter(exp_inner, exp_iter_inner) => {
                 let exp_inner = exp_inner.prepare(ctx);
-                let exp_iter_inner = exp_iter_inner.prepare(ctx);
-                ExpKind::Iter(exp_inner, exp_iter_inner)
+                let exp_iter = ExpIter::prepare(ctx, &exp_inner, exp_iter_inner);
+                ExpKind::Iter(exp_inner, exp_iter)
             }
         }
     }
@@ -206,14 +221,50 @@ impl Prepare<PrepareContext<'_>> for source::ExpField {
 }
 
 impl Prepare<PrepareContext<'_>> for source::ExpIter {
-    type Output = ExpIter;
+    type Output = source::ExpIter<VarSlot>;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let source::ExpIter { iter, vars } = self;
         // Prepare `x*` for every iterated `x`
         let mut vars = vars.prepare(ctx);
         ctx.prepare_outer_vars(&mut vars, iter);
-        ExpIter { iter, vars }
+        source::ExpIter { iter, vars }
+    }
+}
+
+impl ExpIter {
+    /// Prepares an iteration and chooses how it runs from its prepared body.
+    ///
+    /// ```text
+    /// x*, x**    whole: the body is the iterated variable itself
+    /// (b, a)*    join when evaluated, split when assigned
+    /// (a + b)*   each: the body computes per element
+    /// ```
+    pub(crate) fn prepare(
+        ctx: &mut PrepareContext<'_>,
+        exp_inner: &Exp,
+        exp_iter: source::ExpIter,
+    ) -> Self {
+        let source::ExpIter { iter, vars } = exp_iter.prepare(ctx);
+        // The body is the one iterated variable
+        if let [var] = vars.as_slice()
+            && find_slot_of_exp(exp_inner) == Some(var.slot)
+        {
+            let var = var.clone();
+            return ExpIter::Whole { iter, var };
+        }
+        match ctx.exp_iter_for {
+            // An evaluated constructor over its variables joins them
+            ExpIterFor::Eval => match zipper::compose(exp_inner, iter, &vars) {
+                Some(comp) => ExpIter::ListJoin { comp, vars },
+                None => ExpIter::Each { iter, vars },
+            },
+            // An assigned pattern that only selects children splits the list
+            ExpIterFor::Assign => match zipper::decompose(exp_inner, iter, &vars) {
+                Some(decomp) => ExpIter::ListSplit { decomp, vars },
+                None => ExpIter::Each { iter, vars },
+            },
+        }
     }
 }
 

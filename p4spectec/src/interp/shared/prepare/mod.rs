@@ -5,6 +5,7 @@
 
 pub(crate) mod il;
 pub(crate) mod mixop;
+pub(crate) mod zipper;
 
 use crate::lang::common::source::NotePhrase;
 

@@ -16,7 +16,14 @@ pub use super::ast::{BuiltinFunc, DefinedTyp, ExternFunc, ExternRel, ExternTyp, 
 
 pub type Prem = source::Prem<Prepared>;
 pub type PremKind = source::PremKind<Prepared>;
-pub type RulePrem = source::RulePrem<Prepared>;
+
+/// A relation call with input and output positions resolved during preparation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RulePrem {
+    pub id: Id,
+    pub exps_input: Vec<Exp>,
+    pub exps_output: Vec<Exp>,
+}
 pub type IfPrem = source::IfPrem<Prepared>;
 pub type IfHoldPrem = source::IfHoldPrem<Prepared>;
 pub type IfNotHoldPrem = source::IfNotHoldPrem<Prepared>;

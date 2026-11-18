@@ -240,16 +240,16 @@ fn eval_if_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     // Test the original value before narrowing it for the binding
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
     let ast::SubBind { typ, subcheck } = &instr.target;
-    if !unwrap!(ops::sub(runner_ctx.arena(), &ctx, &instr.exp_r.node.span, subcheck, value)) {
+    if !unwrap!(ops::sub(runner_ctx.arena(), &ctx, &instr.exp_r.span, subcheck, value)) {
         let text = format!(
             "({} has type {})",
             instr.exp_r.view(&runner_ctx.arena().mixop).to_string(),
             typ.to_string()
         );
-        return ok!((ctx, Flow::cont(instr.exp_r.node.span, error::prem::condition_unmet(text))));
+        return ok!((ctx, Flow::cont(instr.exp_r.span, error::prem::condition_unmet(text))));
     }
     // Same-type bindings do not introduce an otherwise absent cast
-    let value = if instr.exp_r.node.note.as_ref().syntax_eq(&typ.node) {
+    let value = if instr.exp_r.note.as_ref().syntax_eq(&typ.node) {
         value
     } else {
         unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, typ, value))
@@ -282,7 +282,7 @@ fn eval_if_let_match_instr<'global, Tier, Iface: Interface, Ext: Extern>(
             instr.exp_r.view(&runner_ctx.arena().mixop).to_string(),
             instr.pattern.view(&runner_ctx.arena().mixop).to_string()
         );
-        return ok!((ctx, Flow::cont(instr.exp_r.node.span, error::prem::condition_unmet(text))));
+        return ok!((ctx, Flow::cont(instr.exp_r.span, error::prem::condition_unmet(text))));
     }
     // Binding and body failures propagate after the condition succeeds
     let mut ctx_local = ctx.clone();
@@ -319,7 +319,7 @@ fn eval_condition<'global, Tier, Iface: Interface, Ext: Extern>(
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
     exp: &ast::Exp,
-    iter_exps: &[ast::ExpIter],
+    iter_exps: &[ast::CondIter],
     block: &ast::Block<Tier>,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Test the condition across all enclosing iterations
@@ -334,7 +334,7 @@ fn eval_condition<'global, Tier, Iface: Interface, Ext: Extern>(
         ok!((
             ctx,
             Flow::cont(
-                exp.node.span,
+                exp.span,
                 error::prem::condition_unmet(exp.view(&runner_ctx.arena().mixop).to_string())
             )
         ))
@@ -421,7 +421,7 @@ fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
             let mut ctx_local = ctx.clone();
             match &case.guard {
                 ast::Guard::LetSub(ast::SubBind { typ, .. }, exp_l) => {
-                    let value = if instr.exp.node.note.as_ref().syntax_eq(&typ.node) {
+                    let value = if instr.exp.note.as_ref().syntax_eq(&typ.node) {
                         value
                     } else {
                         unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, typ, value))
@@ -452,7 +452,7 @@ fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     ok!((
         ctx,
         Flow::cont(
-            instr.exp.node.span,
+            instr.exp.span,
             error::prem::condition_unmet(instr.exp.view(&runner_ctx.arena().mixop).to_string())
         )
     ))
@@ -473,7 +473,7 @@ fn eval_guard<'global, Iface: Interface, Ext: Extern>(
         // Compare against the evaluated right side
         ast::Guard::Cmp(op, _, exp_r) => {
             let value_r = unwrap!(eval_exp(runner_ctx, ctx, exp_r));
-            ops::cmpop(runner_ctx.arena(), &exp_r.node.span, op, value, value_r)
+            ops::cmpop(runner_ctx.arena(), &exp_r.span, op, value, value_r)
         }
         // Check membership before introducing any binding
         ast::Guard::Sub(subcheck) | ast::Guard::LetSub(ast::SubBind { subcheck, .. }, _) => {
@@ -486,7 +486,7 @@ fn eval_guard<'global, Iface: Interface, Ext: Extern>(
         // Test membership in the evaluated list
         ast::Guard::Mem(exp_list) => {
             let value_list = unwrap!(eval_exp(runner_ctx, ctx, exp_list));
-            ops::mem(runner_ctx.arena(), &exp_list.node.span, value, value_list)
+            ops::mem(runner_ctx.arena(), &exp_list.span, value, value_list)
         }
     }
 }
@@ -646,14 +646,14 @@ fn eval_route_instr<'global, Iface: Interface, Ext: Extern>(
 fn eval_cond_iter<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: &Context<'_>,
-    iters: &[ast::ExpIter],
+    iters: &[ast::CondIter],
     eval: &mut impl FnMut(&mut RunnerContext<'_, PlInterp, Iface, Ext>, &Context<'_>) -> Backtrack<bool>,
 ) -> Backtrack<bool> {
     // Recurse from the outermost iteration inward
     let Some((exp_iter, iters_tail)) = iters.split_last() else {
         return eval(runner_ctx, ctx);
     };
-    let ast::ExpIter { iter, vars } = exp_iter;
+    let ast::CondIter { iter, vars } = exp_iter;
     let vars_outer = iterate_vars(vars);
     match iter {
         // An option iterates zero or one time

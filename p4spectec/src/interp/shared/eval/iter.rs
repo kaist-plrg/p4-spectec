@@ -32,7 +32,8 @@ pub fn map<Ctx, Interp, Iface, Ext>(
     ctx: &Ctx,
     span: &Span,
     typ: &Rc<ast::TypKind>,
-    exp_iter: &ast::ExpIter,
+    iter: ast::Iter,
+    vars: &[ast::Var],
     mut eval: impl FnMut(&mut RunnerContext<'_, Interp, Iface, Ext>, &Ctx) -> Backtrack<Value>,
 ) -> Backtrack<Value>
 where
@@ -42,9 +43,8 @@ where
     Ext: Extern,
 {
     // Slots of the variables one iteration outward
-    let vars = &exp_iter.vars;
     let vars_outer = iterate_vars(vars);
-    let value = match exp_iter.iter {
+    let value = match iter {
         // Option: evaluate once with the payloads, or produce none
         ast::Iter::Opt => {
             let values = unwrap_from_result!(

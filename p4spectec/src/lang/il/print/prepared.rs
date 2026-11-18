@@ -4,7 +4,10 @@
 //! `Print::print` resolves mixops while traversing the syntax;
 //! `Print::to_string` supplies the common string-rendering entry point.
 
-use std::fmt::{self, Write};
+use std::{
+    fmt::{self, Write},
+    slice,
+};
 
 use crate::util::text::escape_text;
 
@@ -13,7 +16,7 @@ use crate::lang::{
     traits::print::{Print, Printer},
 };
 
-use crate::lang::il::prepared::*;
+use crate::lang::il::{ast as source, prepared::*};
 
 // == Borrowed views
 
@@ -267,6 +270,21 @@ impl Print for ExpRef<'_> {
                 exp_iter.print(printer)
             }
         }
+    }
+}
+
+impl Print for ExpIter {
+    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
+        let (iter, vars) = match self {
+            ExpIter::Each { iter, vars } => (*iter, vars.as_slice()),
+            ExpIter::Whole { iter, var } => (*iter, slice::from_ref(var)),
+            ExpIter::ListSplit { vars, .. } | ExpIter::ListJoin { vars, .. } => {
+                (Iter::List, vars.as_slice())
+            }
+        };
+        // Prints as the source iteration over the same variables
+        let exp_iter = source::ExpIter { iter, vars: vars.to_vec() };
+        exp_iter.print(printer)
     }
 }
 

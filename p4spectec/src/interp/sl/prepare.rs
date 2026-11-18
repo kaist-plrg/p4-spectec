@@ -22,7 +22,10 @@ use crate::lang::sl::{ast as source, prepared as ast};
 
 use crate::runtime::{envs::elab::TDEnv, typdef::TypeDef};
 
-use crate::interp::shared::prepare::{Prepare, il};
+use crate::interp::shared::prepare::{
+    Prepare,
+    il::{self, ExpIterFor},
+};
 
 // - Preparation context
 
@@ -63,10 +66,15 @@ impl<'a> PrepareContext<'a> {
     }
 
     fn il(&mut self) -> il::PrepareContext<'_> {
+        self.il_exp_iter_for(ExpIterFor::Eval)
+    }
+
+    fn il_exp_iter_for(&mut self, exp_iter_for: ExpIterFor) -> il::PrepareContext<'_> {
         il::PrepareContext {
             arena_mixop: &mut *self.arena_mixop,
             tdenv: self.tdenv,
             layout: &mut *self.layout,
+            exp_iter_for,
         }
     }
 }
@@ -218,7 +226,10 @@ impl Prepare<PrepareContext<'_>> for source::LetInstr {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         ast::LetInstr {
-            exp_l: self.exp_l.prepare(&mut ctx.il()),
+            // The left side is a pattern the value binds
+            exp_l: self
+                .exp_l
+                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
             exp_r: self.exp_r.prepare(&mut ctx.il()),
             iter_instrs: self.iter_instrs.prepare(&mut ctx.il()),
             block: self.block.prepare(ctx),
@@ -242,13 +253,13 @@ impl Prepare<PrepareContext<'_>> for source::RuleInstr {
             });
         }
         // Ordinary calls retain output binding, iterations, and the continuation
-        let not_exp = self.not_exp.prepare(&mut ctx.il());
-        let (exps_input, exps_output) = input::split(&self.input_hint, not_exp.into_args())
+        let (exps_input, exps_output) = input::split(&self.input_hint, self.not_exp.into_args())
             .expect("input hint must fit relation");
         ast::RuleInstr::Call(ast::RuleCallInstr {
             id: self.id,
-            exps_input,
-            exps_output,
+            exps_input: exps_input.prepare(&mut ctx.il()),
+            // The outputs are patterns the call binds
+            exps_output: exps_output.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
             iter_instrs: self.iter_instrs.prepare(&mut ctx.il()),
             block: self.block.prepare(ctx),
         })
@@ -381,7 +392,10 @@ impl Prepare<PrepareContext<'_>> for source::DefinedRel {
         ast::DefinedRel {
             id: self.id,
             rel_signature: self.rel_signature,
-            exps_input: self.exps_input.prepare(&mut ctx.il()),
+            // The inputs are patterns the call's arguments bind
+            exps_input: self
+                .exps_input
+                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
             block: self.block.prepare(&mut ctx.at(pos)),
             block_else: self
                 .block_else
@@ -538,8 +552,9 @@ impl Prepare<PrepareContext<'_>> for source::ParamKind {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         match self {
+            // The parameter is a pattern the argument binds
             source::ParamKind::Exp(typ, exp) => {
-                ast::ParamKind::Exp(typ, exp.prepare(&mut ctx.il()))
+                ast::ParamKind::Exp(typ, exp.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)))
             }
             source::ParamKind::Def(id, tparams, params, typ) => {
                 // The parameter holds its function value in a slot

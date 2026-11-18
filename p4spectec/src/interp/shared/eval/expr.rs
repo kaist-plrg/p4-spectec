@@ -30,12 +30,12 @@ use crate::runner::{Extern, Interface, RunnerContext};
 
 use crate::interp::shared::{
     backtrack::{Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
-    util::{find_slot_of_exp, iterate_vars},
+    util::iterate_vars,
 };
 
 use super::super::context::{IterContext, ReadContext};
 
-use super::{Invoker, arg::eval_args, iter, ops, path::eval_update_path, zipper};
+use super::{Invoker, arg::eval_args, iter, ops, path::eval_update_path};
 
 // = Expression evaluation
 
@@ -604,13 +604,13 @@ fn eval_call_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
 
 // - Iteration expression
 
-/// Evaluates an iterated expression; a bare iterated variable reads its slot.
+/// Evaluates an iterated expression as preparation chose to run it.
 ///
 /// ```text
 /// with a* = [1, 3] and b* = [2, 4]
-/// a*        [1, 3]             reads the slot
-/// (b, a)*   [(2, 1), (4, 3)]   composes: zips the outer values
-/// (a + b)*  [3, 7]             does not: evaluates per element
+/// a*        [1, 3]             whole: reads the slot
+/// (b, a)*   [(2, 1), (4, 3)]   join: zips the outer values
+/// (a + b)*  [3, 7]             each: evaluates per element
 /// ```
 fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
@@ -619,14 +619,23 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     exp_inner: &ast::Exp,
     exp_iter: &ast::ExpIter,
 ) -> Backtrack<Value> {
-    // `x*` as an expression is just the bound value
-    if let Some(slot) = find_slot_of_exp(exp) {
-        return ok!(*ctx.find_value_at_slot(slot).expect("value must be bound"));
-    }
-    // A constructor over all the variables zips them; any other body is mapped
-    match zipper::compose(exp_inner, exp_iter) {
-        Some(comp) => eval_iter_exp_with_comp(runner_ctx, ctx, exp, exp_inner, exp_iter, &comp),
-        None => eval_iter_exp_without_comp(runner_ctx, ctx, exp, exp_inner, exp_iter),
+    match exp_iter {
+        // An iterated variable is just its bound value
+        ast::ExpIter::Whole { var, .. } => {
+            ok!(*ctx
+                .find_value_at_slot(var.outer().slot)
+                .expect("value must be bound"))
+        }
+        // A constructor over all the variables joins them
+        ast::ExpIter::ListJoin { comp, vars } => {
+            eval_iter_exp_list_join(runner_ctx, ctx, exp, exp_inner, comp, vars)
+        }
+        // Any other body is evaluated per element
+        ast::ExpIter::Each { iter, vars } => {
+            eval_iter_exp_each(runner_ctx, ctx, exp, exp_inner, *iter, vars)
+        }
+        // Only assigned patterns split
+        ast::ExpIter::ListSplit { .. } => unreachable!("evaluated iteration must not split a list"),
     }
 }
 
@@ -636,17 +645,17 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
 /// builds `[(2, 1), (4, 3)]`;
 /// with `b* = [2]` instead,
 /// fails on the unequal lengths as the general path does.
-fn eval_iter_exp_with_comp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
+fn eval_iter_exp_list_join<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     ctx: &Interp::Context<'global>,
     exp: &ast::Exp,
     exp_inner: &ast::Exp,
-    exp_iter: &ast::ExpIter,
     comp: &Comp,
+    vars: &[ast::Var],
 ) -> Backtrack<Value> {
     let arena = runner_ctx.arena_mut();
     // The variables must be lists of one length
-    let vars_outer = iterate_vars(&exp_iter.vars);
+    let vars_outer = iterate_vars(vars);
     unwrap_from_result!(ctx.find_list_values_by_var(arena, &vars_outer), &exp.span);
     let values_outer: Vec<_> = vars_outer
         .iter()
@@ -672,19 +681,15 @@ fn eval_iter_exp_with_comp<'global, Interp: Invoker<Iface, Ext>, Iface: Interfac
 ///
 /// For `(a + b)*` with `a* = [1, 3]` and `b* = [2, 4]`,
 /// evaluates `1 + 2` and `3 + 4`.
-fn eval_iter_exp_without_comp<
-    'global,
-    Interp: Invoker<Iface, Ext>,
-    Iface: Interface,
-    Ext: Extern,
->(
+fn eval_iter_exp_each<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     ctx: &Interp::Context<'global>,
     exp: &ast::Exp,
     exp_inner: &ast::Exp,
-    exp_iter: &ast::ExpIter,
+    iter: ast::Iter,
+    vars: &[ast::Var],
 ) -> Backtrack<Value> {
-    iter::map(runner_ctx, ctx, &exp.span, &exp.note, exp_iter, |runner_ctx, ctx_sub| {
+    iter::map(runner_ctx, ctx, &exp.span, &exp.note, iter, vars, |runner_ctx, ctx_sub| {
         eval_exp(runner_ctx, ctx_sub, exp_inner)
     })
 }

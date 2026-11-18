@@ -1,6 +1,6 @@
 //! Argument mapping for mixfix forms
 //!
-//! `map` and `try_map` preserve the mixop and argument order.
+//! `map`, `into_map`, and `try_map` preserve the mixop and argument order.
 //! The mapped form keeps one argument per position.
 
 use super::Mixfix;
@@ -14,6 +14,11 @@ impl<M, T> Mixfix<M, T> {
         M: Clone,
     {
         Mixfix { mixop: self.mixop.clone(), args: self.args.iter().map(map_arg).collect() }
+    }
+
+    /// Maps each owned argument in order, keeping the mixop.
+    pub fn into_map<U>(self, map_arg: impl FnMut(T) -> U) -> Mixfix<M, U> {
+        Mixfix { mixop: self.mixop, args: self.args.into_iter().map(map_arg).collect() }
     }
 
     /// Maps each argument in order, stopping at the first error.

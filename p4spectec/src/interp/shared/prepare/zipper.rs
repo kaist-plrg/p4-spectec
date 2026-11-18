@@ -1,4 +1,4 @@
-//! Fixed iteration patterns and constructors, analyzed to unzip and zip
+//! Iterations over fixed positions, analyzed once during preparation
 //!
 //! ```text
 //! (a, b)* <- [(1, 2), (3, 4)]   decompose  a at [Tuple(0)], b at [Tuple(1)]
@@ -7,25 +7,33 @@
 //!                               zip        [(2, 1), (4, 3)]
 //! ```
 //!
-//! Both read only syntax; `None` sends the caller
-//! to the per-element path in `assign` and `iter`.
+//! Preparation splits an assigned iteration when `decompose` succeeds
+//! and joins an evaluated one when `compose` succeeds,
+//! recording the result in the iteration,
+//! so the interpreter dispatches on it without reading the syntax again.
 
-use crate::interp::shared::util::find_slot_of_exp;
 use crate::lang::data::value::flat::zipper::{Comp, Decomp, Shape, Step};
 use crate::lang::il::prepared as ast;
 
-/// Decomposes a fixed pattern into steps to each variable, in `vars` order,
-/// or returns `None` when any part of it computes a value.
+use crate::interp::shared::util::find_slot_of_exp;
+
+/// Decomposes a list iteration's fixed pattern into steps to each variable,
+/// in `vars` order, or returns `None` when any part of it computes a value.
 ///
 /// ```text
-/// pattern  (a, (b, c))   vars [a, b, c]
+/// pattern  (a, (b, c))*   vars [a, b, c]
 /// decomp   [[Tuple(0)], [Tuple(1), Tuple(0)], [Tuple(1), Tuple(1)]]
 ///
+/// (a, b)?        None: not a list iteration
 /// (a, y :: ys)   None: the cons builds a tail per element
 /// (a, 1)         None: the constant is not a variable
 /// a              None for vars [a, b]: b does not occur
 /// ```
-pub(super) fn decompose(exp: &ast::Exp, vars: &[ast::Var]) -> Option<Decomp> {
+pub(crate) fn decompose(exp: &ast::Exp, iter: ast::Iter, vars: &[ast::Var]) -> Option<Decomp> {
+    // Only a list iteration splits into outer values
+    if iter != ast::Iter::List {
+        return None;
+    }
     let mut steps_by_var = vec![None; vars.len()];
     decompose_inner(exp, vars, &mut Vec::new(), &mut steps_by_var)?;
     // Every variable must occur in the pattern
@@ -103,9 +111,9 @@ fn decompose_inner(
 /// (a, b + 1)*   None: an argument computes
 /// (a, a)*       None: b is no argument, so its length would go unchecked
 /// ```
-pub(super) fn compose(exp_inner: &ast::Exp, exp_iter: &ast::ExpIter) -> Option<Comp> {
-    // Only a list iteration zips its outer values
-    if exp_iter.iter != ast::Iter::List {
+pub(crate) fn compose(exp_inner: &ast::Exp, iter: ast::Iter, vars: &[ast::Var]) -> Option<Comp> {
+    // Only a list iteration joins its outer values
+    if iter != ast::Iter::List {
         return None;
     }
     // The body must be a tuple, list, or case constructor
@@ -120,11 +128,11 @@ pub(super) fn compose(exp_inner: &ast::Exp, exp_iter: &ast::ExpIter) -> Option<C
         .iter()
         .map(|exp| {
             let slot = find_slot_of_exp(exp)?;
-            exp_iter.vars.iter().position(|var| var.slot == slot)
+            vars.iter().position(|var| var.slot == slot)
         })
         .collect::<Option<_>>()?;
     // Every variable must be an argument, so that zipping checks every length
-    if (0..exp_iter.vars.len()).any(|idx| !idxs.contains(&idx)) {
+    if (0..vars.len()).any(|idx| !idxs.contains(&idx)) {
         return None;
     }
     Some(Comp { shape, idxs })

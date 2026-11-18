@@ -28,11 +28,11 @@ use super::{Value, ValueArena, ValueCase, ValueKind};
 ///
 /// The pattern `(a, (b, c))` over `a`, `b`, and `c` decomposes into
 /// `[[Tuple(0)], [Tuple(1), Tuple(0)], [Tuple(1), Tuple(1)]]`.
-pub(crate) type Decomp = Vec<Vec<Step>>;
+pub type Decomp = Vec<Vec<Step>>;
 
 /// One step from a value to its child at a fixed position.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub(crate) enum Step {
+pub enum Step {
     /// A tuple component by index: `Tuple(1)` takes `(1, 2)` to `2`.
     Tuple(usize),
     /// A case argument by index: `Case(1)` takes `x ':' 2` to `2`.
@@ -49,11 +49,12 @@ pub(crate) enum Step {
 ///
 /// The expression `(b, a)*` over `a` and `b` composes into
 /// the shape `Tuple` with the variable indices `[1, 0]`.
-pub(crate) struct Comp {
+#[derive(Clone, Debug, PartialEq)]
+pub struct Comp {
     /// The constructor.
-    pub(crate) shape: Shape,
+    pub shape: Shape,
     /// Per argument, in order, the index of its variable.
-    pub(crate) idxs: Vec<usize>,
+    pub idxs: Vec<usize>,
 }
 
 /// The constructor of every element built by zipping.
@@ -61,7 +62,7 @@ pub(crate) struct Comp {
 /// `(a, b)*` builds tuples, `[a, b]*` list literals,
 /// and `(a ':' b)*` cases of `:`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub(crate) enum Shape {
+pub enum Shape {
     /// A tuple of the arguments.
     Tuple,
     /// A list literal of the arguments.
