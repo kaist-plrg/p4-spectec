@@ -246,7 +246,10 @@ impl Prepare<PrepareContext<'_>> for source::RulePath {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         // Compare source expressions before their mixops become arena handles
-        let tail = ctx.tail && self.ends_with_returned_call();
+        let tail = matches!(
+            self.prems.last().map(|prem| &prem.node),
+            Some(source::PremKind::Rule(prem)) if prem.is_tail_call(ctx.tail, &self.res)
+        );
         let mut prems = self.prems;
         // The last premise's call concludes the path in place of its outputs
         let prem_tail = tail.then(|| prems.pop().expect("a tail call ends a premise list"));
@@ -269,31 +272,21 @@ impl Prepare<PrepareContext<'_>> for source::RulePath {
     }
 }
 
-impl source::RulePath {
-    /// Checks whether the last premise is a relation call whose outputs the path concludes with.
-    fn ends_with_returned_call(&self) -> bool {
-        let Some(source::PremKind::Rule(prem)) = self.prems.last().map(|prem| &prem.node) else {
+impl source::RulePrem {
+    /// Checks tail position and whether its rule path concludes with exactly its outputs.
+    fn is_tail_call(&self, tail: bool, exps_res: &[source::Exp]) -> bool {
+        // A candidate not in tail position must retain its outputs
+        if !tail {
             return false;
-        };
-        // Output and path expressions must agree in order, ignoring source spans
-        let (_, exps_output) = input::split(&prem.input_hint, prem.not_exp.args().iter().collect())
+        }
+        // Output and result expressions must agree in order, ignoring source spans
+        let (_, exps_output) = input::split(&self.input_hint, self.not_exp.args().iter().collect())
             .expect("input hint must fit relation");
-        exps_output.len() == self.res.len()
+        exps_output.len() == exps_res.len()
             && exps_output
                 .iter()
-                .zip(&self.res)
+                .zip(exps_res)
                 .all(|(exp_l, exp_r)| exp_l.syntax_eq(exp_r))
-            // Skipping the binding must not skip a mismatch
-            && exps_output.iter().all(|exp| binds_any(exp))
-    }
-}
-
-/// Checks whether a pattern binds any value: a variable, possibly iterated.
-fn binds_any(exp: &source::Exp) -> bool {
-    match &exp.node {
-        source::ExpKind::Id(_) => true,
-        source::ExpKind::Iter(exp, _) => binds_any(exp),
-        _ => false,
     }
 }
 

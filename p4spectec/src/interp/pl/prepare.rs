@@ -422,9 +422,17 @@ impl<'a> PrepareBlock<'a> for pl::GroupInstr {
         ctx: &mut PrepareContext<'a>,
     ) -> Vec<ast::Instr<Self::Output>> {
         // Compare source expressions before their mixops become arena handles
-        let idxs_tail: Vec<usize> = if ctx.tco && ctx.pos.mismatch_ends {
+        let idxs_tail: Vec<usize> = if ctx.tco {
             (instrs.windows(2).enumerate())
-                .filter(|(_, pair)| returns_outputs(&pair[0], &pair[1]))
+                .filter(|(_, pair)| match (&pair[0].node.node, &pair[1].node.node) {
+                    (
+                        pl::InstrKind::Tier(pl::TierInstr { tier: pl::GroupInstr::Rule(instr) }),
+                        pl::InstrKind::Tier(pl::TierInstr {
+                            tier: pl::GroupInstr::Result(instr_result),
+                        }),
+                    ) => instr.is_tail_call(ctx.pos, instr_result),
+                    _ => false,
+                })
                 .map(|(idx, _)| idx)
                 .collect()
         } else {
@@ -449,44 +457,21 @@ impl<'a> PrepareBlock<'a> for pl::GroupInstr {
     }
 }
 
-/// Checks whether `instr` is a relation call whose outputs `instr_next` concludes with.
-fn returns_outputs(
-    instr: &pl::Instr<pl::GroupInstr>,
-    instr_next: &pl::Instr<pl::GroupInstr>,
-) -> bool {
-    let pl::InstrKind::Tier(pl::TierInstr { tier: pl::GroupInstr::Rule(instr_rule) }) =
-        &instr.node.node
-    else {
-        return false;
-    };
-    let pl::InstrKind::Tier(pl::TierInstr { tier: pl::GroupInstr::Result(instr_result) }) =
-        &instr_next.node.node
-    else {
-        return false;
-    };
-    // Iterated calls must retain their output bindings
-    if !instr_rule.iter_instrs.is_empty() {
-        return false;
-    }
-    // Output and result expressions must agree in order, ignoring source spans
-    let (_, exps_output) =
-        input::split(&instr_rule.input_hint, instr_rule.not_exp.args().iter().collect())
+impl pl::RuleInstr {
+    /// Checks tail position and whether the next result concludes with exactly its outputs.
+    fn is_tail_call(&self, pos: Position, instr_result: &pl::ResultInstr) -> bool {
+        // Non-tail positions and iterated calls must retain their outputs
+        if !pos.mismatch_ends || !self.iter_instrs.is_empty() {
+            return false;
+        }
+        // Output and result expressions must agree in order, ignoring source spans
+        let (_, exps_output) = input::split(&self.input_hint, self.not_exp.args().iter().collect())
             .expect("input hint must fit relation");
-    exps_output.len() == instr_result.exps_output.len()
-        && exps_output
-            .iter()
-            .zip(&instr_result.exps_output)
-            .all(|(exp_l, exp_r)| exp_l.syntax_eq(exp_r))
-        // Skipping the binding must not skip a mismatch
-        && exps_output.iter().all(|exp| binds_any(exp))
-}
-
-/// Checks whether a pattern binds any value: a variable, possibly iterated.
-fn binds_any(exp: &pl::Exp) -> bool {
-    match &exp.node.node {
-        pl::ExpKind::Id(_) => true,
-        pl::ExpKind::Iter(exp, _) => binds_any(exp),
-        _ => false,
+        exps_output.len() == instr_result.exps_output.len()
+            && exps_output
+                .iter()
+                .zip(&instr_result.exps_output)
+                .all(|(exp_l, exp_r)| exp_l.syntax_eq(exp_r))
     }
 }
 
