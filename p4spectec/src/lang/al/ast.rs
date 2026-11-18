@@ -198,7 +198,7 @@ pub struct RuleMatch<P: Stage = Source> {
 pub struct RulePath<P: Stage = Source> {
     pub id: Id,
     pub prems: Vec<Prem<P>>,
-    pub exps_output: Vec<Exp<P>>,
+    pub res: P::RelResult,
 }
 
 /// A rule group with its span.
@@ -231,7 +231,7 @@ pub type Clause<P = Source> = Phrase<ClauseKind<P>>;
 #[derive(Clone, Debug, PartialEq)]
 pub struct ClauseKind<P: Stage = Source> {
     pub args: Vec<Arg<P>>,
-    pub exp: Exp<P>,
+    pub ret: P::FuncReturn,
     pub prems: Vec<Prem<P>>,
 }
 
@@ -253,7 +253,7 @@ pub type TableRow<P = Source> = Phrase<TableRowKind<P>>;
 pub struct TableRowKind<P: Stage = Source> {
     pub exps_signature: Vec<Exp<P>>,
     pub args: Vec<Arg<P>>,
-    pub exp: Exp<P>,
+    pub ret: P::FuncReturn,
     pub prems: Vec<Prem<P>>,
 }
 

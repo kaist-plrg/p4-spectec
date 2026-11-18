@@ -722,7 +722,7 @@ fn lower_rule_path(
         .into_iter()
         .map(AnalyzedPrem::into_prem)
         .collect();
-    Ok(al::ast::RulePath { id, prems: prems_al, exps_output: exps_output_il })
+    Ok(al::ast::RulePath { id, prems: prems_al, res: exps_output_il })
 }
 
 /// Shares the input match across rules, then analyzes each rule's path.
@@ -849,7 +849,7 @@ fn lower_clause(
     let clause_al = phrase! {
         node: al::ast::ClauseKind {
             args: args_al,
-            exp: exp_il,
+            ret: exp_il,
             prems: prems_all_al,
         },
         span: span,
@@ -1000,7 +1000,7 @@ fn lower_table_row(
         node: al::ast::TableRowKind {
             exps_signature: exps_signature_al,
             args: args_input_al,
-            exp: exp_il,
+            ret: exp_il,
             prems: prems_al,
         },
         span: span,

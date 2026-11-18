@@ -465,7 +465,7 @@ pub(super) fn antiunify_rule_matches(
 /// Prepends a clause's template bindings to its own premises.
 fn populate_clause(uenv: &UEnv, args_template: &[Arg], clause: Clause) -> (Vec<Prem>, Exp) {
     let clause_kind = clause.node;
-    let ClauseKind { args, exp, prems } = clause_kind;
+    let ClauseKind { args, ret: exp, prems } = clause_kind;
     let mut prems_template = populate_args_templates(uenv, args_template, &args);
     prems_template.extend(prems);
     (prems_template, exp)

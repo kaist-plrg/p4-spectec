@@ -100,7 +100,7 @@ impl FreeIds for RulePath {
         self.prems
             .as_slice()
             .free_ids()
-            .union(self.exps_output.as_slice().free_ids())
+            .union(self.res.as_slice().free_ids())
     }
 }
 
@@ -111,7 +111,7 @@ impl FreeIds for ClauseKind {
         self.args
             .as_slice()
             .free_ids()
-            .union(self.exp.free_ids())
+            .union(self.ret.free_ids())
             .union(self.prems.as_slice().free_ids())
     }
 }
@@ -129,7 +129,7 @@ impl FreeIds for TableRowKind {
         self.args
             .as_slice()
             .free_ids()
-            .union(self.exp.free_ids())
+            .union(self.ret.free_ids())
             .union(self.prems.as_slice().free_ids())
     }
 }

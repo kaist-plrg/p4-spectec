@@ -859,7 +859,7 @@ fn insert_rule_group(ctx: &Context, mut rule_group_al: ast::RuleGroup) -> ast::R
         rule_path_al.prems = prems_path.output;
 
         // Outputs need guards too, after the path premises
-        let prems_output = collect_exps(ctx, rule_path_al.exps_output.iter());
+        let prems_output = collect_exps(ctx, rule_path_al.res.iter());
         let prems_output = filter_prems_insert(
             &prems_base,
             &prems_path.derived,
@@ -893,7 +893,7 @@ fn insert_else_group(
     else_group_al.node.rule_path.prems = prems_path.output;
 
     // Outputs need guards too, after the path premises
-    let prems_output = collect_exps(ctx, else_group_al.node.rule_path.exps_output.iter());
+    let prems_output = collect_exps(ctx, else_group_al.node.rule_path.res.iter());
     let prems_output = filter_prems_insert(
         &prems_base,
         &prems_path.derived,
@@ -926,7 +926,7 @@ fn insert_clause(ctx: &Context, mut clause_al: ast::Clause) -> ast::Clause {
     clause_al.node.prems = prems_clause.output;
 
     // The body's guards go after the premises
-    let prems_output = collect_exp(ctx, &clause_al.node.exp);
+    let prems_output = collect_exp(ctx, &clause_al.node.ret);
     let prems_output = filter_prems_insert(
         &[&prems_args],
         &prems_clause.derived,
@@ -978,7 +978,7 @@ fn check_table_row(ctx: &Context, table_row_al: &ast::TableRow) -> Result<(), Al
         prems_derived.extend(collected.prems_must);
     }
     // The body's guards follow the premises
-    let prems_output = collect_exp(ctx, &table_row_al.node.exp);
+    let prems_output = collect_exp(ctx, &table_row_al.node.ret);
     let prems_output =
         filter_prems_insert(&[&prems_args], &prems_derived, prems_row_al, prems_output);
     if let Some(prem_guard_al) = prems_output.first() {

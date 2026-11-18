@@ -316,7 +316,7 @@ fn struct_debug_prem(
 
 /// Structures one rule's premises into a block ending in its result.
 fn struct_rule_path(rel_signature: &ol::RelSignature, rule_path: al::RulePath) -> ol::Block {
-    let al::RulePath { prems, exps_output, .. } = rule_path;
+    let al::RulePath { prems, res: exps_output, .. } = rule_path;
     // Locate the result at the outputs, else the premises, else the signature
     let span = if exps_output.is_empty() {
         if prems.is_empty() { rel_signature.not_typ.span } else { prems.at() }
@@ -407,8 +407,8 @@ fn struct_clause_path((prems, exp): (Vec<al::Prem>, al::Exp)) -> ol::Block {
 
 /// Splits a table row into its signature patterns and an argument clause.
 fn struct_table_row_clause(table_row_al: al::TableRow) -> (Vec<al::Exp>, al::Clause) {
-    let al::TableRowKind { exps_signature, args, exp, prems } = table_row_al.node;
-    let clause_kind = al::ClauseKind { args, exp, prems };
+    let al::TableRowKind { exps_signature, args, ret: exp, prems } = table_row_al.node;
+    let clause_kind = al::ClauseKind { args, ret: exp, prems };
     let clause = crate::phrase! {node: clause_kind, span: table_row_al.span};
     (exps_signature, clause)
 }

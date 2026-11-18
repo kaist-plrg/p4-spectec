@@ -63,7 +63,7 @@ pub struct Config {
     det: bool,
     /// Type-check arguments and results at call boundaries.
     guard: bool,
-    /// Turn SL relation and function calls in tail position into tail calls.
+    /// Turn SL and AL relation and function calls in tail position into tail calls.
     tco: bool,
 }
 
@@ -155,7 +155,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
     ) -> Result<Self, BuildError> {
         let backend = match spec {
             Spec::Al(spec) => Backend::Al {
-                spec_env: AlSpecEnv::load(&mut arena.mixop, spec)?,
+                spec_env: AlSpecEnv::load(&mut arena.mixop, config.det, config.tco, spec)?,
                 interp: AlInterp::new(AlConfig::new(config.cache, config.det, config.guard)),
             },
             Spec::Sl(spec) => Backend::Sl {
