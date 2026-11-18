@@ -42,7 +42,7 @@ pub struct PrepareContext<'a> {
     pub det: bool,
     /// Make calls in tail position as tail calls.
     pub tco: bool,
-    /// Whether the candidate being prepared ends with a tail call.
+    /// Whether the candidate being prepared is in tail position.
     tail: bool,
 }
 
@@ -58,7 +58,7 @@ impl<'a> PrepareContext<'a> {
         Self { arena_mixop, tdenv, layout, det, tco, tail: false }
     }
 
-    /// Reborrows the context for a candidate that ends with a tail call or not.
+    /// Reborrows the context for a candidate in tail position or not.
     fn at(&mut self, tail: bool) -> PrepareContext<'_> {
         PrepareContext {
             arena_mixop: &mut *self.arena_mixop,
@@ -68,11 +68,6 @@ impl<'a> PrepareContext<'a> {
             tco: self.tco,
             tail,
         }
-    }
-
-    /// Whether the candidate `idx` of `len`, followed by no otherwise candidate, is in tail position.
-    fn tail_at(&self, idx: usize, len: usize) -> bool {
-        self.tco && idx + 1 == len && (!self.det || len == 1)
     }
 
     fn il(&mut self) -> il::PrepareContext<'_> {
@@ -248,7 +243,7 @@ impl Prepare<PrepareContext<'_>> for source::RulePath {
         // Compare source expressions before their mixops become arena handles
         let tail = matches!(
             self.prems.last().map(|prem| &prem.node),
-            Some(source::PremKind::Rule(prem)) if prem.is_tail_call(ctx.tail, &self.res)
+            Some(source::PremKind::Rule(prem)) if ctx.tco && prem.is_tail_call(ctx.tail, &self.res)
         );
         let mut prems = self.prems;
         // The last premise's call concludes the path in place of its outputs
@@ -318,7 +313,8 @@ impl Prepare<PrepareContext<'_>> for source::ClauseKind {
     type Output = ClauseKind;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        let tail = ctx.tail;
+        // A returned call in tail position is made in place of the function
+        let tail = ctx.tco && ctx.tail;
         let args = self.args.prepare(ctx);
         let ret = FuncReturn::prepare(self.ret, &mut ctx.il(), tail);
         let prems = self.prems.prepare(ctx);
@@ -341,7 +337,8 @@ impl Prepare<PrepareContext<'_>> for source::TableRowKind {
     type Output = TableRowKind;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        let tail = ctx.tail;
+        // A returned call in tail position is made in place of the function
+        let tail = ctx.tco && ctx.tail;
         let exps_signature = self.exps_signature.prepare(&mut ctx.il());
         let args = self.args.prepare(ctx);
         let ret = FuncReturn::prepare(self.ret, &mut ctx.il(), tail);
@@ -373,25 +370,26 @@ impl Prepare<PrepareContext<'_>> for source::DefinedRel {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         // Paths are candidates across groups; the otherwise group is tried last
-        let len_paths = (self.rule_groups.iter())
+        let len_paths: usize = (self.rule_groups.iter())
             .map(|group| group.node.rule_paths.len())
             .sum();
-        let tail = self.else_group.is_none() && ctx.tail_at(len_paths - 1, len_paths);
+        // Another path may conclude after one mismatches,
+        // unless it is tried last, or under deterministic choice it is the only one
+        let tail_last = self.else_group.is_none() && (!ctx.det || len_paths == 1);
         // Only the last group holds the relation's last path
         let len_groups = self.rule_groups.len();
         let mut rule_groups = Vec::with_capacity(len_groups);
         for (idx, group) in self.rule_groups.into_iter().enumerate() {
-            let tail_group = tail && idx + 1 == len_groups;
+            let tail_group = tail_last && idx + 1 == len_groups;
             // Each group runs in its own frame: prepare it, then transfer the layout it filled
             let def = group.prepare(&mut ctx.at(tail_group));
             let layout = Rc::new(mem::take(ctx.layout));
             rule_groups.push(Callable { def, layout });
         }
         // The otherwise group concludes the relation when it runs
-        let tco = ctx.tco;
         let mut else_group = None;
         if let Some(group) = self.else_group {
-            let def = group.prepare(&mut ctx.at(tco));
+            let def = group.prepare(&mut ctx.at(true));
             let layout = Rc::new(mem::take(ctx.layout));
             else_group = Some(Callable { def, layout });
         }
@@ -436,7 +434,7 @@ impl Prepare<PrepareContext<'_>> for source::TableFunc {
         let len = self.table_rows.len();
         let mut table_rows = Vec::with_capacity(len);
         for (idx, row) in self.table_rows.into_iter().enumerate() {
-            let tail = ctx.tco && idx + 1 == len;
+            let tail = idx + 1 == len;
             // Each row runs in its own frame: prepare it, then transfer the layout it filled
             let def = row.prepare(&mut ctx.at(tail));
             let layout = Rc::new(mem::take(ctx.layout));
@@ -466,20 +464,21 @@ impl Prepare<PrepareContext<'_>> for source::DefinedFunc {
         );
         // Clauses are candidates; the otherwise clause is tried last
         let len = self.clauses.len();
-        let tail_last = self.else_clause.is_none();
+        // Another clause may conclude after one mismatches,
+        // unless it is tried last, or under deterministic choice it is the only one
+        let tail_last = self.else_clause.is_none() && (!ctx.det || len == 1);
         let mut clauses = Vec::with_capacity(len);
         for (idx, clause) in self.clauses.into_iter().enumerate() {
-            let tail = tail_last && ctx.tail_at(idx, len);
+            let tail = tail_last && idx + 1 == len;
             // Each clause runs in its own frame: prepare it, then transfer the layout it filled
             let def = clause.prepare(&mut ctx.at(tail));
             let layout = Rc::new(mem::take(ctx.layout));
             clauses.push(Callable { def, layout });
         }
         // The otherwise clause concludes the function when it runs
-        let tco = ctx.tco;
         let mut else_clause = None;
         if let Some(clause) = self.else_clause {
-            let def = clause.prepare(&mut ctx.at(tco));
+            let def = clause.prepare(&mut ctx.at(true));
             let layout = Rc::new(mem::take(ctx.layout));
             else_clause = Some(Callable { def, layout });
         }
