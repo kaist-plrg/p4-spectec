@@ -114,7 +114,7 @@ impl Prepare<PrepareContext<'_>> for source::Block {
         for (idx, instr) in self.instrs.into_iter().enumerate() {
             // Deterministic selection gives every candidate the enclosing position
             let pos = if ctx.det || idx + 1 == instrs_len { ctx.pos } else { Position::NonTail };
-            instrs.push(prepare_instr(instr, &mut ctx.at(pos)));
+            instrs.push(ast::Instr::prepare(&mut ctx.at(pos), instr));
         }
         ast::Block { instrs }
     }
@@ -122,14 +122,16 @@ impl Prepare<PrepareContext<'_>> for source::Block {
 
 // = Instructions
 
-/// Numbers the instruction before its nested instructions.
-fn prepare_instr(instr: source::Instr, ctx: &mut PrepareContext<'_>) -> ast::Instr {
-    // Grow the stack for deep syntax trees
-    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-        let note = ctx.next_instr_id();
-        let node = instr.node.prepare(ctx);
-        ast::Instr { node, note, span: instr.span }
-    })
+impl ast::Instr {
+    /// Prepares an instruction, numbering it before its nested instructions.
+    fn prepare(ctx: &mut PrepareContext<'_>, instr: source::Instr) -> Self {
+        // Grow the stack for deep syntax trees
+        stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
+            let note = ctx.next_instr_id();
+            let node = instr.node.prepare(ctx);
+            ast::Instr { node, note, span: instr.span }
+        })
+    }
 }
 
 impl Prepare<PrepareContext<'_>> for source::InstrKind {
@@ -299,7 +301,7 @@ impl Prepare<PrepareContext<'_>> for source::DebugInstr {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let exp = self.exp.prepare(&mut ctx.il());
-        let instr = prepare_instr(*self.instr, ctx);
+        let instr = ast::Instr::prepare(ctx, *self.instr);
         ast::DebugInstr { exp, instr: Box::new(instr) }
     }
 }
@@ -476,7 +478,7 @@ impl Prepare<PrepareContext<'_>> for source::TableFunc {
                 // Only the last instruction across all rows inherits tail position
                 instrs_len -= 1;
                 let pos = if instrs_len == 0 { Position::Tail } else { Position::NonTail };
-                instrs.push(prepare_instr(instr, &mut ctx.at(pos)));
+                instrs.push(ast::Instr::prepare(&mut ctx.at(pos), instr));
             }
             let block = ast::Block { instrs };
             table_rows.push(ast::TableRow { exps_input, exp, block });
