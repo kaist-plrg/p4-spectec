@@ -8,6 +8,13 @@ use crate::lang::il::ast as il;
 
 use crate::lang::pl::ast as pl;
 
+// = Helpers
+
+/// Removes the prose hints of an expression to box.
+fn boxed(exp: pl::Exp) -> Box<il::Exp> {
+    Box::new(exp.into())
+}
+
 // = Expressions
 
 /// Removes the prose hints of an expression and its subexpressions.
@@ -59,11 +66,6 @@ impl From<pl::Exp> for il::Exp {
             crate::note_phrase!(node: node, note: exp.note, span: exp.span)
         })
     }
-}
-
-/// Removes the prose hints of an expression to box.
-fn boxed(exp: pl::Exp) -> Box<il::Exp> {
-    Box::new(exp.into())
 }
 
 // = Paths
