@@ -100,17 +100,6 @@ enum Position {
     NonTail,
 }
 
-impl Position {
-    /// Places one of `len` alternatives of an instruction placed here.
-    ///
-    /// Another alternative may conclude after one mismatches or falls through,
-    /// unless it is tried last, or under deterministic choice it is the only one.
-    fn alternative(self, det: bool, idx: usize, len: usize) -> Self {
-        let alone = if det { len == 1 } else { idx + 1 == len };
-        if alone { self } else { Position::NonTail }
-    }
-}
-
 // = Annotations
 
 impl<C, T: Prepare<C>> Prepare<C> for Annotated<T> {
@@ -548,11 +537,13 @@ impl Prepare<PrepareContext<'_>> for pl::BacktrackInstr {
     type Output = ast::BacktrackInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        let (pos, det, len) = (ctx.pos, ctx.det, self.blocks.len());
+        let (pos, len) = (ctx.pos, self.blocks.len());
         let mut blocks = Vec::with_capacity(len);
         for (idx, block) in self.blocks.into_iter().enumerate() {
-            // Each alternative is placed by what may still run after it
-            let pos_block = pos.alternative(det, idx, len);
+            // Another alternative may conclude after one mismatches or falls through,
+            // unless it is tried last, or under deterministic choice it is the only one
+            let alone = if ctx.det { len == 1 } else { idx + 1 == len };
+            let pos_block = if alone { pos } else { Position::NonTail };
             blocks.push(block.prepare(&mut ctx.at(pos_block)));
         }
         ast::BacktrackInstr { blocks }
@@ -596,11 +587,13 @@ impl Prepare<PrepareContext<'_>> for pl::RouteInstr {
     type Output = ast::RouteInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        let (pos, det, len) = (ctx.pos, ctx.det, self.blocks.len());
+        let (pos, len) = (ctx.pos, self.blocks.len());
         let mut blocks = Vec::with_capacity(len);
         for (idx, block) in self.blocks.into_iter().enumerate() {
-            // Each alternative is placed by what may still run after it
-            let pos_block = pos.alternative(det, idx, len);
+            // Another alternative may conclude after one mismatches or falls through,
+            // unless it is tried last, or under deterministic choice it is the only one
+            let alone = if ctx.det { len == 1 } else { idx + 1 == len };
+            let pos_block = if alone { pos } else { Position::NonTail };
             blocks.push(block.prepare(&mut ctx.at(pos_block)));
         }
         ast::RouteInstr { blocks }
