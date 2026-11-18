@@ -87,14 +87,29 @@ impl<'a> PrepareContext<'a> {
 
 /// Where a block or instruction sits in its callable, for deciding tail calls.
 ///
-/// A mismatch leaves every block up to the nearest alternative or otherwise block,
-/// while falling through a block continues with the instruction after it.
-/// A call becomes a tail call only where its mismatch would end the callable.
+/// A PL block runs its instructions in sequence, and one can end in two ways that travel apart.
+/// A mismatch (`Unmatch`) leaves every enclosing block,
+/// until an alternative turns it into a fall-through or the callable's body ends;
+/// a fall-through (`Flow::Cont`) continues with the next instruction of the block.
+/// A call becomes a tail call only where its mismatch would end the callable anyway,
+/// and an alternative's mismatch ends it only where the alternative falls through to the end:
+///
+/// ```text
+/// if c { return f(x) }                          f(x) mismatches: the callable mismatches,
+/// return g()                                    so f(x) is a tail call
+///
+/// if c { backtrack { return f(x) | return h(x) } }
+/// return g()                                    h(x) mismatches: backtrack falls through,
+///                                               then return g() runs, so h(x) is not
+/// ```
+///
+/// SL needs one flag, `Position::Tail`, since an SL instruction turns its own mismatch
+/// into a fall-through to the next alternative of its block.
 #[derive(Clone, Copy)]
 struct Position {
-    /// Whether a mismatch ends the callable.
+    /// Whether a mismatch here ends the callable.
     mismatch_ends: bool,
-    /// Whether falling through ends the callable.
+    /// Whether a fall-through here ends the callable.
     fallthrough_ends: bool,
 }
 
@@ -105,14 +120,18 @@ impl Position {
     const NON_TAIL: Self = Self { mismatch_ends: false, fallthrough_ends: false };
 
     /// Places an instruction of the block, and the blocks nested in it.
+    ///
+    /// A mismatch leaves the block whatever follows,
+    /// while a fall-through ends the callable only from the block's last instruction.
     fn at(self, last: bool) -> Self {
         Self { mismatch_ends: self.mismatch_ends, fallthrough_ends: self.fallthrough_ends && last }
     }
 
     /// Places one of `len` alternatives of an instruction placed here.
     ///
-    /// Another alternative may conclude after this one mismatches or falls through,
-    /// unless it is tried last, or under deterministic choice it is the only one.
+    /// The alternative's mismatch and fall-through both become the instruction's fall-through,
+    /// and another alternative may conclude after either,
+    /// unless this one is tried last, or under deterministic choice it is the only one.
     fn alternative(self, det: bool, idx: usize, len: usize) -> Self {
         let alone = if det { len == 1 } else { idx + 1 == len };
         let ends = self.fallthrough_ends && alone;
