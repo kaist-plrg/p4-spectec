@@ -553,30 +553,9 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
     }
 }
 
-// - Function return
-
-/// Concludes a clause or row with its value, or with the call made in its place.
-fn eval_func_return<Iface: Interface, Ext: Extern>(
-    runner_ctx: &mut RunnerContext<'_, AlInterp, Iface, Ext>,
-    ctx: &Context<'_>,
-    ret: &ast::FuncReturn,
-) -> Backtrack<FuncOutcome> {
-    match ret {
-        // The value finishes the function
-        ast::FuncReturn::Value(exp) => {
-            ok!(FuncOutcome::Return(unwrap!(expr::eval_exp(runner_ctx, ctx, exp))))
-        }
-        // A tail call goes to the invoker loop
-        ast::FuncReturn::Tail(tail) => {
-            let (id, targs, values) = unwrap!(eval_tail_func(runner_ctx, ctx, tail));
-            ok!(FuncOutcome::TailCall(id, targs, values))
-        }
-    }
-}
-
 // - Table function
 
-/// Runs one table row: bind arguments, check premises, evaluate the body.
+/// Runs one table row: bind arguments, check premises, then conclude.
 fn eval_table_row<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, AlInterp, Iface, Ext>,
     ctx: &Context<'_>,
@@ -589,9 +568,19 @@ fn eval_table_row<Iface: Interface, Ext: Extern>(
     // Arguments bind into a fresh frame for the row
     let mut ctx = ctx.localize_with_layout(layout);
     unwrap!(assign::assign_args(runner_ctx.arena_mut(), &mut ctx, &table_row.node.args, values));
-    // Premises, then the row body
+    // Premises, then the row concludes with its value or a tail call
     let ctx = unwrap!(eval_prems(runner_ctx, ctx, &table_row.node.prems));
-    eval_func_return(runner_ctx, &ctx, &table_row.node.ret)
+    match &table_row.node.ret {
+        // The value finishes the function
+        ast::FuncReturn::Value(exp) => {
+            ok!(FuncOutcome::Return(unwrap!(expr::eval_exp(runner_ctx, &ctx, exp))))
+        }
+        // A tail call goes to the invoker loop
+        ast::FuncReturn::Tail(tail) => {
+            let (id, targs, values) = unwrap!(eval_tail_func(runner_ctx, &ctx, tail));
+            ok!(FuncOutcome::TailCall(id, targs, values))
+        }
+    }
 }
 
 /// Tries the table rows in order; the first matching row decides.
@@ -609,7 +598,7 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
 
 // - Defined function
 
-/// Runs one clause: bind arguments, check premises, evaluate the body.
+/// Runs one clause: bind arguments, check premises, then conclude.
 fn eval_clause<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, AlInterp, Iface, Ext>,
     ctx_tparams: &Context<'_>,
@@ -622,9 +611,19 @@ fn eval_clause<Iface: Interface, Ext: Extern>(
     // Arguments bind into the clause's own frame
     let mut ctx = ctx_tparams.localize_frame(layout);
     unwrap!(assign::assign_args(runner_ctx.arena_mut(), &mut ctx, &clause_kind.args, values));
-    // Premises, then the clause body
+    // Premises, then the clause concludes with its value or a tail call
     let ctx = unwrap!(eval_prems(runner_ctx, ctx, &clause_kind.prems));
-    eval_func_return(runner_ctx, &ctx, &clause_kind.ret)
+    match &clause_kind.ret {
+        // The value finishes the function
+        ast::FuncReturn::Value(exp) => {
+            ok!(FuncOutcome::Return(unwrap!(expr::eval_exp(runner_ctx, &ctx, exp))))
+        }
+        // A tail call goes to the invoker loop
+        ast::FuncReturn::Tail(tail) => {
+            let (id, targs, values) = unwrap!(eval_tail_func(runner_ctx, &ctx, tail));
+            ok!(FuncOutcome::TailCall(id, targs, values))
+        }
+    }
 }
 
 /// Binds the type parameters, tries the clauses, then the otherwise clause.
