@@ -36,7 +36,7 @@ pub fn matches(tx: &Tx, expect: &Expectation) -> bool {
     // Otherwise the expectation is a prefix pattern
     tx.packet
         .get(..expect.tx.packet.len())
-        .is_some_and(|packet| crate::stf::r#match::matches(packet, &expect.tx.packet))
+        .is_some_and(|packet| crate::sim_plugin::stf::r#match::matches(packet, &expect.tx.packet))
 }
 
 impl std::fmt::Display for Transmission {

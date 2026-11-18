@@ -12,5 +12,5 @@ pub mod transform;
 
 #[allow(clippy::extra_unused_lifetimes, clippy::type_complexity)]
 pub(crate) mod parser {
-    include!(concat!(env!("OUT_DIR"), "/stf/parser.rs"));
+    include!(concat!(env!("OUT_DIR"), "/sim-plugin/stf/parser.rs"));
 }

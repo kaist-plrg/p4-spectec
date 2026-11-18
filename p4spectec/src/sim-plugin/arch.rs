@@ -12,7 +12,7 @@ use crate::lang::data::value::flat::Value;
 
 use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
 
-use crate::stf::ast::Statement;
+use crate::sim_plugin::stf::ast::Statement;
 
 use crate::sim_plugin::error;
 

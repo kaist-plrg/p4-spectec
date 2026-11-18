@@ -5,6 +5,7 @@
 //! with that architecture as its extern,
 //! and boxes it as a `Simulator` that runs STF tests.
 //! `core` and `spec` are the helpers the architectures share;
+//! `stf` parses STF tests,
 //! `stf_runner`, `table`, `hash`, `io`, and `state` drive one test,
 //! and `cover` measures SL instruction coverage over many.
 
@@ -30,6 +31,7 @@ pub mod io;
 pub mod psa;
 pub mod spec;
 pub mod state;
+pub mod stf;
 pub mod stf_runner;
 pub mod table;
 pub mod v1model;

@@ -26,7 +26,7 @@ use crate::runner::{
     Backend, ExternError, Interface, InterfaceError, Interpreter, Runner, RunnerContext,
 };
 
-use crate::stf::{
+use crate::sim_plugin::stf::{
     self,
     ast::{Action, MatchKind, Name, Statement, TableMatch},
 };

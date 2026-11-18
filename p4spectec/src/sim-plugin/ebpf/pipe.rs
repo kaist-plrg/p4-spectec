@@ -25,7 +25,7 @@ use crate::lang::{
 
 use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
 
-use crate::stf::ast::{Name, Statement};
+use crate::sim_plugin::stf::ast::{Name, Statement};
 
 use crate::sim_plugin::error;
 

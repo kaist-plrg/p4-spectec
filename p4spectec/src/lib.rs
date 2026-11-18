@@ -30,7 +30,6 @@ pub mod interp;
 pub mod runner;
 #[path = "sim-plugin/mod.rs"]
 pub mod sim_plugin;
-pub mod stf;
 
 // == Parsing and transformation APIs
 
