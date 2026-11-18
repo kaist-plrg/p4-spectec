@@ -50,8 +50,6 @@ pub type DispatchBlock = source::DispatchBlock<Prepared>;
 // - Group-body tier
 
 pub type GroupInstr = source::GroupInstr<Prepared>;
-pub type ResultInstr = source::ResultInstr<Prepared>;
-pub type ReturnInstr = source::ReturnInstr<Prepared>;
 
 /// A relation call with input and output positions resolved during preparation.
 #[derive(Clone, Debug, PartialEq)]
@@ -61,6 +59,13 @@ pub struct RuleInstr {
     pub exps_output: Vec<Exp>,
     pub iter_instrs: Vec<InstrIter>,
 }
+
+// - Conclusions
+
+/// A prepared result: the relation's values, or a call made in its place.
+pub type ResultInstr = RelResult;
+/// A prepared return: the function's value, or a call made in its place.
+pub type ReturnInstr = FuncReturn;
 
 pub type BacktrackInstr = source::BacktrackInstr<Prepared>;
 

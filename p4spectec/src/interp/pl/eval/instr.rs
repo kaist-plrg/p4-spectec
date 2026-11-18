@@ -5,7 +5,7 @@
 //! `eval_block` isolates bindings; `eval_alternatives` selects conclusions.
 //! Blocks run sequentially; alternatives delegate selection to `pl::flow`.
 //! `eval_instr` propagates failures to the enclosing block or invocation.
-//! Expression and assignment adapters remove hints before shared evaluation.
+//! Calls that preparation made tail calls conclude with `TailFunc` or `TailRel`.
 
 use crate::lang::{
     common::source::Span,
@@ -37,7 +37,7 @@ use crate::phrase;
 
 use super::{
     assign,
-    expr::{eval_exp, eval_exps},
+    expr::{eval_exp, eval_exps, eval_tail_func, eval_tail_rel},
 };
 
 // = Block evaluation
@@ -543,28 +543,48 @@ fn eval_rule_instr<'global, Iface: Interface, Ext: Extern>(
 
 // - Result instruction
 
-/// Evaluates the outputs and finishes the relation.
+/// Concludes the relation with its values, or with the call made in its place.
 fn eval_result_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
     span: &Span,
     instr: &ast::ResultInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    let values = unwrap!(eval_exps(runner_ctx, &ctx, &instr.exps_output));
-    ok!((ctx, Flow::Result(phrase!(node: values, span: *span))))
+    match instr {
+        // The values finish the relation
+        ast::ResultInstr::Values(exps) => {
+            let values = unwrap!(eval_exps(runner_ctx, &ctx, exps));
+            ok!((ctx, Flow::Result(phrase!(node: values, span: *span))))
+        }
+        // A tail call goes to the invoker loop
+        ast::ResultInstr::Tail(tail) => {
+            let call = unwrap!(eval_tail_rel(runner_ctx, &ctx, tail));
+            ok!((ctx, Flow::TailRel(phrase!(node: call, span: *span))))
+        }
+    }
 }
 
 // - Return instruction
 
-/// Evaluates the value and finishes the function.
+/// Concludes the function with its value, or with the call made in its place.
 fn eval_return_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
     span: &Span,
     instr: &ast::ReturnInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
-    ok!((ctx, Flow::Return(phrase!(node: value, span: *span))))
+    match instr {
+        // The value finishes the function
+        ast::ReturnInstr::Value(exp) => {
+            let value = unwrap!(eval_exp(runner_ctx, &ctx, exp));
+            ok!((ctx, Flow::Return(phrase!(node: value, span: *span))))
+        }
+        // A tail call goes to the invoker loop
+        ast::ReturnInstr::Tail(tail) => {
+            let call = unwrap!(eval_tail_func(runner_ctx, &ctx, tail));
+            ok!((ctx, Flow::TailFunc(phrase!(node: call, span: *span))))
+        }
+    }
 }
 
 // - Debug instruction

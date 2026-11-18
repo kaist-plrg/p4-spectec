@@ -1,6 +1,6 @@
-//! PL block continuations, function returns, and relation results
+//! PL block continuations, function returns, relation results, and tail calls
 //!
-//! PL concludes directly; invocations evaluate their callable bodies.
+//! PL concludes directly, or under `tco` with a call for the invoker to make.
 //! `choose_sequential` keeps the first conclusion and the deepest failures;
 //! `choose_deterministic` combines outcomes and rejects multiple conclusions.
 //! Evaluators supply candidates and manage their local bindings.
@@ -9,6 +9,8 @@ use crate::lang::{
     common::source::{Phrase, Span},
     data::value::flat::Value,
 };
+
+use crate::lang::pl::prepared::{Id, Typ};
 
 use crate::diagnostic::{Diagnostic, Label, Report};
 
@@ -26,9 +28,24 @@ pub enum Flow {
     Return(Phrase<Value>),
     /// A relation body produced its outputs.
     Result(Phrase<Vec<Value>>),
+    /// A function call to make in place of the current one.
+    TailFunc(Phrase<(Id, Vec<Typ>, Vec<Value>)>),
+    /// A relation call to make in place of the current one.
+    TailRel(Phrase<(Id, Vec<Value>)>),
 }
 
 impl Flow {
+    /// Returns the instruction location of a conclusion.
+    fn span(&self) -> Span {
+        match self {
+            Self::Return(value) => value.span,
+            Self::Result(values) => values.span,
+            Self::TailFunc(call) => call.span,
+            Self::TailRel(call) => call.span,
+            Self::Cont(_) => unreachable!("continuations have no concluding instruction"),
+        }
+    }
+
     // = Continuation
 
     /// Creates a recoverable continuation with its premise diagnostic.
@@ -90,19 +107,18 @@ fn combine_deterministic(flow: Flow, flow_post: Flow) -> Backtrack<Flow> {
         }
         // One concluded: keep it
         (Flow::Cont(_), flow) | (flow, Flow::Cont(_)) => flow,
-        // Two of the same kind: nondeterminism
-        (Flow::Return(value), Flow::Return(value_post)) => {
-            return fatal!(value_post.span, error::call::instruction_nondeterministic(&value.span));
+        // Different conclusion kinds cannot belong to the same callable
+        (Flow::Return(_) | Flow::TailFunc(_), Flow::Result(_) | Flow::TailRel(_))
+        | (Flow::Result(_) | Flow::TailRel(_), Flow::Return(_) | Flow::TailFunc(_)) => {
+            unreachable!("function and relation conclusions cannot mix")
         }
-        // Empty output lists still carry the instruction that concluded
-        (Flow::Result(values), Flow::Result(values_post)) => {
+        // Two conclusions of the same callable: nondeterminism
+        (flow, flow_post) => {
             return fatal!(
-                values_post.span,
-                error::call::instruction_nondeterministic(&values.span)
+                flow_post.span(),
+                error::call::instruction_nondeterministic(&flow.span())
             );
         }
-        // Different conclusion kinds cannot belong to the same callable
-        _ => unreachable!("function and relation conclusions cannot mix"),
     };
     ok!(flow)
 }

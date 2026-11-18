@@ -347,9 +347,9 @@ pub type RelSignature = sl::ast::RelSignature;
 /// Instructions of a rule group's body.
 pub enum GroupInstr<P: Stage = Source> {
     /// Conclude the relation with outputs.
-    Result(ResultInstr<P>),
+    Result(P::ResultInstr),
     /// Conclude the function with a value.
-    Return(ReturnInstr<P>),
+    Return(P::ReturnInstr),
     /// Call a relation and bind its outputs.
     Rule(P::RuleInstr),
     /// Try the arms in order until one concludes.
