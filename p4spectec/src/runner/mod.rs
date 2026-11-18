@@ -160,12 +160,7 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
             },
             Spec::Sl(spec) => Backend::Sl {
                 spec_env: SlSpecEnv::load(&mut arena.mixop, config.det, config.tco, spec)?,
-                interp: SlInterp::new(SlConfig::new(
-                    config.cache,
-                    config.det,
-                    config.guard,
-                    config.tco,
-                )),
+                interp: SlInterp::new(SlConfig::new(config.cache, config.det, config.guard)),
             },
             Spec::Pl(spec) => Backend::Pl {
                 spec_env: PlSpecEnv::load(&mut arena.mixop, spec)?,

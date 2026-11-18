@@ -1,10 +1,11 @@
 //! Lower SL rule calls while resolving slots and interning mixops
 //!
-//! Source rules become ordinary or tail calls in the prepared stage.
+//! A rule call whose continuation only returns its outputs becomes a result,
+//! and results and returns conclude with values or with tail calls.
 //! Tail position follows the interpreter's selection mode and otherwise blocks;
 //! table rows form one sequential block even in deterministic mode.
-//! Only a tail-position call that immediately returns its outputs is lowered,
-//! and only under `tco`.
+//! Only a tail-position rule call that immediately returns its outputs,
+//! or a returned call in tail position, is lowered, and only under `tco`.
 //! Instructions are numbered in pre-order;
 //! without `tco` the numbering matches the source pre-order.
 //! Defined relations, table functions, and defined functions become callables
@@ -145,6 +146,10 @@ impl Prepare<PrepareContext<'_>> for source::InstrKind {
             source::InstrKind::Case(instr) => ast::InstrKind::Case(instr.prepare(ctx)),
             source::InstrKind::Group(instr) => ast::InstrKind::Group(instr.prepare(ctx)),
             source::InstrKind::Let(instr) => ast::InstrKind::Let(instr.prepare(ctx)),
+            // A call whose sole continuation returns its outputs concludes in their place
+            source::InstrKind::Rule(instr) if ctx.tco && instr.is_tail_call(ctx.pos) => {
+                ast::InstrKind::Result(ast::ResultInstr::Tail(instr.prepare_tail(ctx)))
+            }
             source::InstrKind::Rule(instr) => ast::InstrKind::Rule(instr.prepare(ctx)),
             source::InstrKind::Result(instr) => ast::InstrKind::Result(instr.prepare(ctx)),
             source::InstrKind::Return(instr) => ast::InstrKind::Return(instr.prepare(ctx)),
@@ -243,30 +248,28 @@ impl Prepare<PrepareContext<'_>> for source::RuleInstr {
     type Output = ast::RuleInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        // Compare source expressions before their mixops become arena handles
-        if ctx.tco && self.is_tail_call(ctx.pos) {
-            let (exps_input, _) = input::split(&self.input_hint, self.not_exp.into_args())
-                .expect("input hint must fit relation");
-            return ast::RuleInstr::Tail(ast::RuleTailInstr {
-                id: self.id,
-                exps_input: exps_input.prepare(&mut ctx.il()),
-            });
-        }
-        // Ordinary calls retain output binding, iterations, and the continuation
+        // The call retains output binding, iterations, and the continuation
         let (exps_input, exps_output) = input::split(&self.input_hint, self.not_exp.into_args())
             .expect("input hint must fit relation");
-        ast::RuleInstr::Call(ast::RuleCallInstr {
+        ast::RuleInstr {
             id: self.id,
             exps_input: exps_input.prepare(&mut ctx.il()),
             // The outputs are patterns the call binds
             exps_output: exps_output.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
             iter_instrs: self.iter_instrs.prepare(&mut ctx.il()),
             block: self.block.prepare(ctx),
-        })
+        }
     }
 }
 
 impl source::RuleInstr {
+    /// Prepares the call as a tail call, dropping the result that returns its outputs.
+    fn prepare_tail(self, ctx: &mut PrepareContext<'_>) -> ast::TailRel {
+        let (exps_input, _) = input::split(&self.input_hint, self.not_exp.into_args())
+            .expect("input hint must fit relation");
+        ast::TailRel { id: self.id, exps_input: exps_input.prepare(&mut ctx.il()) }
+    }
+
     /// Checks tail position and whether the sole continuation returns the outputs.
     fn is_tail_call(&self, pos: Position) -> bool {
         // Non-tail positions and iterated calls must retain their continuation
@@ -292,10 +295,7 @@ impl Prepare<PrepareContext<'_>> for source::ResultInstr {
     type Output = ast::ResultInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::ResultInstr {
-            rel_signature: self.rel_signature,
-            exps: self.exps.prepare(&mut ctx.il()),
-        }
+        ast::ResultInstr::Values(self.exps.prepare(&mut ctx.il()))
     }
 }
 
@@ -305,7 +305,9 @@ impl Prepare<PrepareContext<'_>> for source::ReturnInstr {
     type Output = ast::ReturnInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::ReturnInstr { exp: self.exp.prepare(&mut ctx.il()) }
+        // A call returned in tail position is made in place of the function
+        let tail = ctx.tco && ctx.pos == Position::Tail;
+        ast::ReturnInstr::prepare(self.exp, &mut ctx.il(), tail)
     }
 }
 

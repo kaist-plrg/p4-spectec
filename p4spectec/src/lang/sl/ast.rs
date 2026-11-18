@@ -190,9 +190,9 @@ pub enum InstrKind<P: Stage = Source> {
     /// Call a relation using the stage's rule-call representation.
     Rule(P::RuleInstr),
     /// Conclude the relation with outputs.
-    Result(ResultInstr<P>),
+    Result(P::ResultInstr),
     /// Conclude the function with a value.
-    Return(ReturnInstr<P>),
+    Return(P::ReturnInstr),
     /// Print an expression, then run the wrapped instruction.
     Debug(DebugInstr<P>),
 }
