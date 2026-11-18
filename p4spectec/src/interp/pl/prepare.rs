@@ -108,23 +108,23 @@ impl<'a> PrepareContext<'a> {
 #[derive(Clone, Copy)]
 struct Position {
     /// Whether a mismatch here ends the callable.
-    mismatch_ends: bool,
+    ends_mismatch: bool,
     /// Whether a fall-through here ends the callable.
-    fallthrough_ends: bool,
+    ends_fallthrough: bool,
 }
 
 impl Position {
     /// Where nothing in the callable runs after the block.
-    const TAIL: Self = Self { mismatch_ends: true, fallthrough_ends: true };
+    const TAIL: Self = Self { ends_mismatch: true, ends_fallthrough: true };
     /// Where the callable may still run something after the block.
-    const NON_TAIL: Self = Self { mismatch_ends: false, fallthrough_ends: false };
+    const NON_TAIL: Self = Self { ends_mismatch: false, ends_fallthrough: false };
 
     /// Places an instruction of the block, and the blocks nested in it.
     ///
     /// A mismatch leaves the block whatever follows,
     /// while a fall-through ends the callable only from the block's last instruction.
     fn at(self, last: bool) -> Self {
-        Self { mismatch_ends: self.mismatch_ends, fallthrough_ends: self.fallthrough_ends && last }
+        Self { ends_mismatch: self.ends_mismatch, ends_fallthrough: self.ends_fallthrough && last }
     }
 
     /// Places one of `len` alternatives of an instruction placed here.
@@ -134,8 +134,8 @@ impl Position {
     /// unless this one is tried last, or under deterministic choice it is the only one.
     fn alternative(self, det: bool, idx: usize, len: usize) -> Self {
         let alone = if det { len == 1 } else { idx + 1 == len };
-        let ends = self.fallthrough_ends && alone;
-        Self { mismatch_ends: ends, fallthrough_ends: ends }
+        let ends = self.ends_fallthrough && alone;
+        Self { ends_mismatch: ends, ends_fallthrough: ends }
     }
 }
 
@@ -506,7 +506,7 @@ impl pl::RuleInstr {
     /// Checks tail position and whether the next result concludes with exactly its outputs.
     fn is_tail_call(&self, pos: Position, instr_result: &pl::ResultInstr) -> bool {
         // Non-tail positions and iterated calls must retain their outputs
-        if !pos.mismatch_ends || !self.iter_instrs.is_empty() {
+        if !pos.ends_mismatch || !self.iter_instrs.is_empty() {
             return false;
         }
         // Output and result expressions must agree in order, ignoring source spans
@@ -550,7 +550,7 @@ impl Prepare<PrepareContext<'_>> for pl::ReturnInstr {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         // A call returned where its mismatch would end the function is made in its place
-        let tail = ctx.tco && ctx.pos.mismatch_ends;
+        let tail = ctx.tco && ctx.pos.ends_mismatch;
         ast::ReturnInstr::prepare(il_source::Exp::from(self.exp), &mut ctx.il(), tail)
     }
 }
