@@ -19,6 +19,7 @@ use crate::lang::data::{
 
 use crate::lang::{
     hints::input,
+    il::ast as il_source,
     pl::{annot::Annotated, ast as pl, prepared as ast},
 };
 
@@ -28,8 +29,6 @@ use crate::interp::shared::prepare::{
     Prepare,
     il::{self, ExpIterFor},
 };
-
-use super::strip;
 
 // - Preparation context
 
@@ -84,13 +83,13 @@ impl Prepare<PrepareContext<'_>> for pl::Exp {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         // Prose hints only render, so execution prepares the IL expression
-        strip::strip_exp(self).prepare(&mut ctx.il())
+        il_source::Exp::from(self).prepare(&mut ctx.il())
     }
 }
 
 /// Prepares an expression that a value binds, as a pattern.
 fn prepare_pattern(ctx: &mut PrepareContext<'_>, exp: pl::Exp) -> ast::Exp {
-    strip::strip_exp(exp).prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign))
+    il_source::Exp::from(exp).prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign))
 }
 
 // = Parameters
