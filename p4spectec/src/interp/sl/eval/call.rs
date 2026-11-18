@@ -37,13 +37,13 @@ use super::{assign, instr};
 // = Invocation results
 
 /// What a function body produced: a value, or a tail call to make.
-enum FuncResult {
+enum FuncOutcome {
     Return(Value),
     TailCall(ast::Id, Vec<ast::Typ>, Vec<Value>),
 }
 
 /// What a relation body produced: outputs, or a tail call to make.
-enum RelResult {
+enum RelOutcome {
     Result(Vec<Value>),
     TailCall(ast::Id, Vec<Value>),
 }
@@ -222,7 +222,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
             match rel {
                 ast::RelDef::Extern(rel) => {
                     let values = unwrap!(invoke_extern_rel(runner_ctx, ctx, &id, rel, &values));
-                    ok!(RelResult::Result(values))
+                    ok!(RelOutcome::Result(values))
                 }
                 ast::RelDef::Defined(rel) => {
                     invoke_defined_rel(runner_ctx, ctx, &rel.layout, &rel.def, &values)
@@ -244,7 +244,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
         let result = unwrap!(result);
         match result {
             // Memoize a pure result
-            RelResult::Result(values) => {
+            RelOutcome::Result(values) => {
                 for key in keys_cache {
                     runner_ctx
                         .interp_mut()
@@ -255,7 +255,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
                 return ok!(values);
             }
             // Tail call: remember this callee for the trace and loop
-            RelResult::TailCall(id_tail, values_tail) => {
+            RelOutcome::TailCall(id_tail, values_tail) => {
                 ids_trace.push(id.into_owned());
                 id = Cow::Owned(id_tail);
                 values = Cow::Owned(values_tail);
@@ -305,7 +305,7 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
     layout: &Rc<FrameLayout>,
     rel: &ast::DefinedRel,
     values: &[Value],
-) -> Backtrack<RelResult> {
+) -> Backtrack<RelOutcome> {
     // Inputs bind into a fresh frame
     let mut ctx = ctx.localize_with_layout(layout);
     unwrap!(assign::assign_exps(runner_ctx.arena_mut(), &mut ctx, &rel.exps_input, values));
@@ -314,11 +314,11 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
         unwrap!(instr::eval_block_with_else(runner_ctx, ctx, &rel.block, rel.block_else.as_ref()));
     match flow {
         // Results finish the relation
-        Flow::Result(values) => ok!(RelResult::Result(values.node)),
+        Flow::Result(values) => ok!(RelOutcome::Result(values.node)),
         // Tail calls go back to the invoker loop
         Flow::TailRel(call) => {
             let (id, values) = call.node;
-            ok!(RelResult::TailCall(id, values))
+            ok!(RelOutcome::TailCall(id, values))
         }
         // Falling through the whole body is a mismatch
         Flow::Cont(errors) => unmatch!(errors),
@@ -371,10 +371,10 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
         let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
             let func = unwrap_from_result!(ctx.find_func(&id_def), &id.span);
             match func.as_ref() {
-                ast::MetaFuncDef::Extern(func) => ok!(FuncResult::Return(unwrap!(
+                ast::MetaFuncDef::Extern(func) => ok!(FuncOutcome::Return(unwrap!(
                     invoke_extern_func(runner_ctx, ctx, &id, func, &targs, &values)
                 ))),
-                ast::MetaFuncDef::Builtin(func) => ok!(FuncResult::Return(unwrap!(
+                ast::MetaFuncDef::Builtin(func) => ok!(FuncOutcome::Return(unwrap!(
                     invoke_builtin_func(runner_ctx, ctx, &id, func, &targs, &values)
                 ))),
                 ast::MetaFuncDef::Table(func) => {
@@ -408,14 +408,14 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
         let result = unwrap!(result);
         match result {
             // Memoize a pure result
-            FuncResult::Return(value) => {
+            FuncOutcome::Return(value) => {
                 for key in keys_cache {
                     runner_ctx.interp_mut().cache.funcs.insert(key, value);
                 }
                 return ok!(value);
             }
             // Tail call: remember this callee for the trace and loop
-            FuncResult::TailCall(id_tail, targs_tail, values_tail) => {
+            FuncOutcome::TailCall(id_tail, targs_tail, values_tail) => {
                 calls_trace.push((id.into_owned(), targs.into_owned()));
                 // Tail calls already name global definitions
                 id_def = id_tail.clone();
@@ -501,7 +501,7 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     layout: &Rc<FrameLayout>,
     func: &ast::TableFunc,
     values: &[Value],
-) -> Backtrack<FuncResult> {
+) -> Backtrack<FuncOutcome> {
     // Parameters bind into a fresh frame
     let mut ctx_local = ctx.localize_with_layout(layout);
     unwrap!(assign::assign_params(runner_ctx.arena_mut(), &mut ctx_local, &func.params, values));
@@ -510,15 +510,14 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
         .table_rows
         .iter()
         .flat_map(|row| row.block.instrs.iter());
-    let flow =
-        unwrap!(instr::eval_block_sequential(runner_ctx, Cow::Owned(ctx_local), instrs, true));
+    let flow = unwrap!(instr::eval_block_sequential(runner_ctx, Cow::Owned(ctx_local), instrs));
     match flow {
         // A return is the table result
-        Flow::Return(value) => ok!(FuncResult::Return(value.node)),
+        Flow::Return(value) => ok!(FuncOutcome::Return(value.node)),
         // Tail calls go back to the invoker loop
         Flow::TailFunc(call) => {
             let (id, targs, values) = call.node;
-            ok!(FuncResult::TailCall(id, targs, values))
+            ok!(FuncOutcome::TailCall(id, targs, values))
         }
         // Exhausting the rows preserves their recoverable failures
         Flow::Cont(errors) => unmatch!(errors),
@@ -538,7 +537,7 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     func: &ast::DefinedFunc,
     targs: &[ast::Typ],
     values: &[Value],
-) -> Backtrack<FuncResult> {
+) -> Backtrack<FuncOutcome> {
     // Bind type arguments in the callee frame
     let mut ctx_local =
         unwrap!(assign_tparams(ctx.localize_with_layout(layout), &func.tparams, targs, &id.span));
@@ -553,11 +552,11 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     ));
     match flow {
         // Returns finish the function
-        Flow::Return(value) => ok!(FuncResult::Return(value.node)),
+        Flow::Return(value) => ok!(FuncOutcome::Return(value.node)),
         // Tail calls go back to the invoker loop
         Flow::TailFunc(call) => {
             let (id, targs, values) = call.node;
-            ok!(FuncResult::TailCall(id, targs, values))
+            ok!(FuncOutcome::TailCall(id, targs, values))
         }
         // Falling through the whole body is a mismatch
         Flow::Cont(errors) => unmatch!(errors),

@@ -67,6 +67,41 @@ pub type PathKind = source::PathKind<Prepared>;
 pub type Arg = source::Arg<Prepared>;
 pub type ArgKind = source::ArgKind<Prepared>;
 
+// - Conclusions
+
+/// How a function concludes: with a value, or with a call made in its place.
+#[derive(Clone, Debug, PartialEq)]
+pub enum FuncReturn {
+    /// Evaluates the expression and returns its value.
+    Value(Exp),
+    /// Makes the call in place of the current function, under `tco`.
+    Tail(TailFunc),
+}
+
+/// How a relation concludes: with its output values, or with a call made in its place.
+#[derive(Clone, Debug, PartialEq)]
+pub enum RelResult {
+    /// Evaluates the expressions and concludes with their values.
+    Values(Vec<Exp>),
+    /// Makes the call in place of the current relation, under `tco`.
+    Tail(TailRel),
+}
+
+/// A function call made in place of the function that concludes with it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TailFunc {
+    pub id: Id,
+    pub targs: Vec<Targ>,
+    pub args: Vec<Arg>,
+}
+
+/// A relation call made in place of the relation that concludes with its outputs.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TailRel {
+    pub id: Id,
+    pub exps_input: Vec<Exp>,
+}
+
 // - Type definitions
 
 /// A notation type over a prepared shape.

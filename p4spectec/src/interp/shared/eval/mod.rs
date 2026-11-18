@@ -2,7 +2,7 @@
 //!
 //! `Invoker` is what AL and SL supply: how to call a function or a relation.
 //! Everything else here is stage-independent:
-//! `expr`, `assign`, `arg`, `path`, `ops`, and `iter`.
+//! `expr`, `assign`, `arg`, `path`, `ops`, `iter`, and `tail`.
 
 pub(crate) mod arg;
 pub mod assign;
@@ -10,6 +10,7 @@ pub(crate) mod expr;
 pub mod iter;
 pub(crate) mod ops;
 pub(crate) mod path;
+pub(crate) mod tail;
 
 use crate::lang::data::value::flat::Value;
 

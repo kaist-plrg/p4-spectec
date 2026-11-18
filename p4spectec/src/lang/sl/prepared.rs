@@ -39,8 +39,6 @@ pub type HoldInstr = source::HoldInstr<Prepared>;
 pub type CaseInstr = source::CaseInstr<Prepared>;
 pub type GroupInstr = source::GroupInstr<Prepared>;
 pub type LetInstr = source::LetInstr<Prepared>;
-pub type ResultInstr = source::ResultInstr<Prepared>;
-pub type ReturnInstr = source::ReturnInstr<Prepared>;
 pub type DebugInstr = source::DebugInstr<Prepared>;
 pub type InstrIter = PremIter;
 
@@ -69,28 +67,19 @@ pub type DefinedFunc = source::DefinedFunc<Prepared>;
 
 // - Rule calls
 
-/// A prepared relation call with its execution form.
-#[derive(Clone, Debug, PartialEq)]
-pub enum RuleInstr {
-    /// Binds the relation's outputs and runs its continuation.
-    Call(RuleCallInstr),
-    /// Returns the relation's outputs through the tail-call dispatch loop.
-    Tail(RuleTailInstr),
-}
-
-/// A relation call whose outputs conclude the enclosing relation.
-#[derive(Clone, Debug, PartialEq)]
-pub struct RuleTailInstr {
-    pub id: Id,
-    pub exps_input: Vec<Exp>,
-}
-
 /// A relation call with input and output positions resolved during preparation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RuleCallInstr {
+pub struct RuleInstr {
     pub id: Id,
     pub exps_input: Vec<Exp>,
     pub exps_output: Vec<Exp>,
     pub iter_instrs: Vec<InstrIter>,
     pub block: Block,
 }
+
+// - Conclusions
+
+/// A prepared result: the relation's values, or a call made in its place.
+pub type ResultInstr = RelResult;
+/// A prepared return: the function's value, or a call made in its place.
+pub type ReturnInstr = FuncReturn;

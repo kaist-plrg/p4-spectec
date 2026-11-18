@@ -101,7 +101,7 @@ impl SyntaxEq for RulePath {
     fn syntax_eq(&self, other: &Self) -> bool {
         self.id.syntax_eq(&other.id)
             && self.prems.syntax_eq(&other.prems)
-            && self.exps_output.syntax_eq(&other.exps_output)
+            && self.res.syntax_eq(&other.res)
     }
 }
 
@@ -110,7 +110,7 @@ impl SyntaxEq for RulePath {
 impl SyntaxEq for ClauseKind {
     fn syntax_eq(&self, other: &Self) -> bool {
         self.args.syntax_eq(&other.args)
-            && self.exp.syntax_eq(&other.exp)
+            && self.ret.syntax_eq(&other.ret)
             && self.prems.syntax_eq(&other.prems)
     }
 }
@@ -127,7 +127,7 @@ impl SyntaxEq for TableRowKind {
     fn syntax_eq(&self, other: &Self) -> bool {
         self.exps_signature.syntax_eq(&other.exps_signature)
             && self.args.syntax_eq(&other.args)
-            && self.exp.syntax_eq(&other.exp)
+            && self.ret.syntax_eq(&other.ret)
             && self.prems.syntax_eq(&other.prems)
     }
 }

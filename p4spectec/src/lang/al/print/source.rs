@@ -194,7 +194,7 @@ fn write_rulepath(
     write_prems_with(output, 2, &rule_path.prems)?;
     output.write_char('\n')?;
     output.write_str(&indent(2))?;
-    write_ruleoutput(output, not_typ, input_hint, &rule_path.exps_output)
+    write_ruleoutput(output, not_typ, input_hint, &rule_path.res)
 }
 
 /// Fills the input expressions into the notation at the hint's positions.
@@ -260,7 +260,7 @@ impl Print for ClauseKind {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         self.args.print(printer)?;
         printer.write_str(" = ")?;
-        self.exp.print(printer)?;
+        self.ret.print(printer)?;
         write_prems_with(printer, 1, &self.prems)
     }
 }
@@ -286,7 +286,7 @@ impl Print for TableRow {
         printer.write_str(&indent(2))?;
         self.node.args.as_slice().print(printer)?;
         printer.write_str(" -> ")?;
-        self.node.exp.print(printer)?;
+        self.node.ret.print(printer)?;
         write_prems_with(printer, 2, &self.node.prems)
     }
 }

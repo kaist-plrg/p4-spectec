@@ -330,3 +330,20 @@ impl<'a, T: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for tree::M
             .expect("a mixfix fills every position")
     }
 }
+
+// - Conclusions
+
+impl FuncReturn {
+    /// Prepares a returned expression; in tail position, a call becomes a tail call.
+    pub fn prepare(exp: source::Exp, ctx: &mut PrepareContext<'_>, tail: bool) -> Self {
+        let exp = exp.prepare(ctx);
+        match exp.node {
+            // Only a call can be made in place of the function
+            ExpKind::Call(id, targs, args) if tail => {
+                FuncReturn::Tail(TailFunc { id, targs, args })
+            }
+            // Any other expression, or one not in tail position, is returned as its value
+            node => FuncReturn::Value(Exp { node, ..exp }),
+        }
+    }
+}

@@ -37,10 +37,15 @@ impl SpecEnv {
     /// interning their notations into `arena_mixop`.
     ///
     /// Panics if a global definition is repeated.
-    pub fn load(arena_mixop: &mut MixopArena, spec: source::Spec) -> Result<Self, Error> {
+    pub fn load(
+        arena_mixop: &mut MixopArena,
+        det: bool,
+        tco: bool,
+        spec: source::Spec,
+    ) -> Result<Self, Error> {
         let mut loaded = Self::new();
         let tdenv = loaded.load_typdefs(arena_mixop, &spec);
-        loaded.load_callables(arena_mixop, &tdenv, spec);
+        loaded.load_callables(arena_mixop, &tdenv, det, tco, spec);
         loaded.freeze();
         Ok(loaded)
     }
@@ -75,9 +80,16 @@ impl SpecEnv {
     }
 
     /// Prepares relations and functions against the complete type definitions.
-    fn load_callables(&mut self, arena_mixop: &mut MixopArena, tdenv: &TDEnv, spec: source::Spec) {
+    fn load_callables(
+        &mut self,
+        arena_mixop: &mut MixopArena,
+        tdenv: &TDEnv,
+        det: bool,
+        tco: bool,
+        spec: source::Spec,
+    ) {
         let mut layout = FrameLayout::default();
-        let mut ctx = PrepareContext::new(arena_mixop, tdenv, &mut layout);
+        let mut ctx = PrepareContext::new(arena_mixop, tdenv, &mut layout, det, tco);
         for def in spec {
             match def.node {
                 source::DefKind::Rel(rel) => {
