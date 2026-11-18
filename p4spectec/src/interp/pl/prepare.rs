@@ -175,43 +175,49 @@ impl Prepare<PrepareContext<'_>> for pl::GroupBlock {
     type Output = ast::GroupBlock;
 
     /// Prepares the block; in tail position under `tco`, a relation call
-    /// followed by a result of its outputs becomes one result making the call.
+    /// followed by a final result of its outputs becomes one result making the call.
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let pos = ctx.pos;
-        let mut instrs = Vec::with_capacity(self.instrs.len());
-        let mut instrs_source = self.instrs.into_iter().peekable();
-        while let Some(instr) = instrs_source.next() {
-            // Compare source expressions before their mixops become arena handles
-            let tail = ctx.tco
-                && match (&instr.node.node, instrs_source.peek().map(|instr| &instr.node.node)) {
-                    (
-                        pl::InstrKind::Tier(pl::TierInstr {
-                            tier: pl::GroupInstr::Rule(instr_rule),
-                        }),
-                        Some(pl::InstrKind::Tier(pl::TierInstr {
-                            tier: pl::GroupInstr::Result(instr_result),
-                        })),
-                    ) => instr_rule.is_tail_call(pos, instr_result),
-                    _ => false,
-                };
-            // The call concludes in place of the result after it, keeping its own span
-            if tail {
-                instrs_source.next();
-                let pl::InstrKind::Tier(pl::TierInstr { tier: pl::GroupInstr::Rule(instr_rule) }) =
-                    instr.node.node
-                else {
-                    unreachable!("a tail call is a relation call")
-                };
-                let call = instr_rule.prepare_tail(ctx);
-                let tier = ast::GroupInstr::Result(ast::ResultInstr::Tail(call));
-                let node = ast::InstrKind::Tier(ast::TierInstr { tier });
-                let node = NotePhrase { node, note: instr.node.note, span: instr.node.span };
-                instrs.push(Annotated { node, hints: instr.hints });
-                continue;
-            }
-            // Otherwise the instruction is placed by whether it is the block's last
-            let pos_instr = if instrs_source.peek().is_none() { pos } else { Position::NonTail };
+        let mut instrs_source = self.instrs;
+        let mut instr_tail = None;
+        // Compare source expressions before their mixops become arena handles
+        if ctx.tco
+            && let [.., instr_before_final, instr_final] = instrs_source.as_slice()
+            && let pl::InstrKind::Tier(pl::TierInstr { tier: pl::GroupInstr::Rule(instr_rule) }) =
+                &instr_before_final.node.node
+            && let pl::InstrKind::Tier(pl::TierInstr { tier: pl::GroupInstr::Result(instr_result) }) =
+                &instr_final.node.node
+            && instr_rule.is_tail_call(pos, instr_result)
+        {
+            // The call replaces the final result
+            instrs_source.pop();
+            let Some(Annotated { node: NotePhrase { node, note, span }, hints }) =
+                instrs_source.pop()
+            else {
+                unreachable!("the call precedes the final result")
+            };
+            let pl::InstrKind::Tier(pl::TierInstr { tier: pl::GroupInstr::Rule(instr_rule) }) =
+                node
+            else {
+                unreachable!("the call is a relation call")
+            };
+            instr_tail = Some((instr_rule, note, span, hints));
+        }
+        let len = instrs_source.len();
+        let mut instrs = Vec::with_capacity(len + 1);
+        for (idx, instr) in instrs_source.into_iter().enumerate() {
+            // Each instruction is placed by whether it is the block's last
+            let last = idx + 1 == len && instr_tail.is_none();
+            let pos_instr = if last { pos } else { Position::NonTail };
             instrs.push(instr.prepare(&mut ctx.at(pos_instr)));
+        }
+        // The call is prepared as usual, then concludes in place of the relation with its span
+        if let Some((instr_rule, note, span, hints)) = instr_tail {
+            let instr_rule = instr_rule.prepare(&mut ctx.at(pos));
+            let call = ast::TailRel { id: instr_rule.id, exps_input: instr_rule.exps_input };
+            let tier = ast::GroupInstr::Result(ast::ResultInstr::Tail(call));
+            let node = ast::InstrKind::Tier(ast::TierInstr { tier });
+            instrs.push(Annotated { node: NotePhrase { node, note, span }, hints });
         }
         ast::Block { instrs }
     }
@@ -467,14 +473,6 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
 // = Group-body tier
 
 impl pl::RuleInstr {
-    /// Prepares the call as a tail call, dropping the result that returns its outputs.
-    fn prepare_tail(self, ctx: &mut PrepareContext<'_>) -> ast::TailRel {
-        let (exps_input, _) = input::split(&self.input_hint, self.not_exp.into_args())
-            .expect("input hint must fit relation");
-        let exps_input = exps_input.prepare(&mut ctx.il());
-        ast::TailRel { id: self.id, exps_input }
-    }
-
     /// Checks tail position and whether the next result concludes with exactly its outputs.
     fn is_tail_call(&self, pos: Position, instr_result: &pl::ResultInstr) -> bool {
         // Non-tail positions and iterated calls must retain their outputs
