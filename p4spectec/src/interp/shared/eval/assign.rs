@@ -258,11 +258,11 @@ fn assign_iter_exp<Ctx: WriteContext>(
         // Only evaluated expressions join
         ast::ExpIter::Join { .. } => unreachable!("assigned iteration must not join"),
         // Any other pattern assigns each element and gathers per variable
-        ast::ExpIter::Each { .. } => match exp_iter.iter() {
+        ast::ExpIter::Each { iter, vars } => match iter {
             // Option: the payload once, or none for every variable
-            ast::Iter::Opt => assign_iter_opt_exp(arena, ctx, exp, exp_inner, exp_iter, value),
+            ast::Iter::Opt => assign_iter_opt_exp(arena, ctx, exp, exp_inner, vars, value),
             // List: one assignment per element
-            ast::Iter::List => assign_iter_list_exp(arena, ctx, exp, exp_inner, exp_iter, value),
+            ast::Iter::List => assign_iter_list_exp(arena, ctx, exp, exp_inner, vars, value),
         },
     }
 }
@@ -273,11 +273,11 @@ fn assign_iter_opt_exp<Ctx: WriteContext>(
     ctx: &mut Ctx,
     exp: &ast::Exp,
     exp_inner: &ast::Exp,
-    exp_iter: &ast::ExpIter,
+    vars: &[ast::Var],
     value: Value,
 ) -> Backtrack<()> {
     let span = &exp.span;
-    let vars_outer = iterate_vars(exp_iter.vars());
+    let vars_outer = iterate_vars(vars);
     // Assign the payload, if any, in a copy of the context
     let value_opt =
         value::get::opt(arena, &value).expect("iteration assignment value must be an option");
@@ -290,7 +290,7 @@ fn assign_iter_opt_exp<Ctx: WriteContext>(
         None => None,
     };
     // Each variable becomes an option of its payload binding
-    for (var, var_outer) in exp_iter.vars().iter().zip(&vars_outer) {
+    for (var, var_outer) in vars.iter().zip(&vars_outer) {
         let typ = Rc::clone(&var_outer.typ);
         let value_opt = ctx_sub.as_ref().map(|ctx_sub| {
             *ctx_sub
@@ -339,10 +339,9 @@ fn assign_iter_list_exp<Ctx: WriteContext>(
     ctx: &mut Ctx,
     exp: &ast::Exp,
     exp_inner: &ast::Exp,
-    exp_iter: &ast::ExpIter,
+    vars: &[ast::Var],
     value: Value,
 ) -> Backtrack<()> {
-    let vars = exp_iter.vars();
     let values = value::get::list(arena, &value)
         .expect("iteration assignment value must be a list")
         .to_vec();

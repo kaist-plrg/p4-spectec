@@ -5,8 +5,6 @@
 //! AL, SL, and PL reuse these expressions and supporting syntax;
 //! preparation operations live under `interp/shared/prepare`.
 
-use std::slice;
-
 use crate::lang::data::value::flat::zipper::{Comp, Decomp};
 
 use super::{ast as source, stage::Stage};
@@ -55,24 +53,6 @@ pub enum ExpIter {
     Split { decomp: Decomp, vars: Vec<Var> },
     /// Joins the variables into each element of a list: `(b, a)*`.
     Join { comp: Comp, vars: Vec<Var> },
-}
-
-impl ExpIter {
-    /// `?` or `*`.
-    pub fn iter(&self) -> Iter {
-        match self {
-            Self::Each { iter, .. } | Self::Whole { iter, .. } => *iter,
-            Self::Split { .. } | Self::Join { .. } => Iter::List,
-        }
-    }
-
-    /// The variables whose bound dimension this iteration consumes.
-    pub fn vars(&self) -> &[Var] {
-        match self {
-            Self::Whole { var, .. } => slice::from_ref(var),
-            Self::Each { vars, .. } | Self::Split { vars, .. } | Self::Join { vars, .. } => vars,
-        }
-    }
 }
 
 // - Paths

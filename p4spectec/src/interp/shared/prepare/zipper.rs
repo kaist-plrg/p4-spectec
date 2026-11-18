@@ -12,11 +12,10 @@
 //! recording the result in the iteration,
 //! so the interpreter dispatches on it without reading the syntax again.
 
-use crate::lang::data::{
-    value::flat::zipper::{Comp, Decomp, Shape, Step},
-    var::SlotIdx,
-};
+use crate::lang::data::value::flat::zipper::{Comp, Decomp, Shape, Step};
 use crate::lang::il::prepared as ast;
+
+use crate::interp::shared::util::find_slot_of_exp;
 
 /// Decomposes a list iteration's fixed pattern into steps to each variable,
 /// in `vars` order, or returns `None` when any part of it computes a value.
@@ -57,7 +56,7 @@ fn decompose_inner(
     steps_by_var: &mut [Option<Vec<Step>>],
 ) -> Option<()> {
     // A variable or an identity iteration ends its steps
-    if let Some(slot) = slot_of(exp) {
+    if let Some(slot) = find_slot_of_exp(exp) {
         if let Some(idx) = vars.iter().position(|var| var.slot == slot) {
             steps_by_var[idx] = Some(steps.clone());
         }
@@ -128,7 +127,7 @@ pub(crate) fn compose(exp_inner: &ast::Exp, iter: ast::Iter, vars: &[ast::Var]) 
     let idxs: Vec<usize> = exps
         .iter()
         .map(|exp| {
-            let slot = slot_of(exp)?;
+            let slot = find_slot_of_exp(exp)?;
             vars.iter().position(|var| var.slot == slot)
         })
         .collect::<Option<_>>()?;
@@ -137,20 +136,4 @@ pub(crate) fn compose(exp_inner: &ast::Exp, iter: ast::Iter, vars: &[ast::Var]) 
         return None;
     }
     Some(Comp { shape, idxs })
-}
-
-/// The slot of a variable, or of an iterated variable read whole.
-///
-/// ```text
-/// x      x's slot
-/// x*     x*'s slot, when chosen whole
-/// x**    x**'s slot, when chosen whole
-/// x + 1  None
-/// ```
-pub(crate) fn slot_of(exp: &ast::Exp) -> Option<SlotIdx> {
-    match &exp.node {
-        ast::ExpKind::Id(id) => Some(id.slot),
-        ast::ExpKind::Iter(_, ast::ExpIter::Whole { var, .. }) => Some(var.outer().slot),
-        _ => None,
-    }
 }

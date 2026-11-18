@@ -3,7 +3,8 @@
 //! Prosification produces annotated blocks with name-based expressions.
 //! `Prepare` consumes those nodes to build executable blocks:
 //! instructions retain their hints, while expressions drop theirs
-//! and become IL's prepared expressions, with identifiers resolved to slots.
+//! and prepare in IL's context as IL expressions,
+//! for `ExpIterFor::Assign` where a value binds them.
 //! Each callable collects its frame layout during the same traversal.
 //! Shared container and phrase implementations preserve metadata and grow stacks.
 //! Defined relations, table functions, and defined functions become callables
@@ -14,7 +15,7 @@ use std::{mem, rc::Rc};
 use crate::lang::data::{
     callable::Callable,
     frame::FrameLayout,
-    notation::{self, MixopArena, flat, tree},
+    notation::{MixopArena, flat},
 };
 
 use crate::lang::{
@@ -78,18 +79,13 @@ impl<C, T: Prepare<C>> Prepare<C> for Annotated<T> {
 
 // = Expressions
 
-impl Prepare<PrepareContext<'_>> for pl::Exp {
+impl Prepare<il::PrepareContext<'_>> for pl::Exp {
     type Output = ast::Exp;
 
-    fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+    fn prepare(self, ctx: &mut il::PrepareContext<'_>) -> Self::Output {
         // Prose hints only render, so execution prepares the IL expression
-        il_source::Exp::from(self).prepare(&mut ctx.il())
+        il_source::Exp::from(self).prepare(ctx)
     }
-}
-
-/// Prepares an expression that a value binds, as a pattern.
-fn prepare_pattern(ctx: &mut PrepareContext<'_>, exp: pl::Exp) -> ast::Exp {
-    il_source::Exp::from(exp).prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign))
 }
 
 // = Parameters
@@ -101,7 +97,7 @@ impl Prepare<PrepareContext<'_>> for pl::ParamKind {
         match self {
             // The parameter is a pattern the argument binds
             pl::ParamKind::Exp(typ, exp) => {
-                ast::ParamKind::Exp(typ, Box::new(prepare_pattern(ctx, *exp)))
+                ast::ParamKind::Exp(typ, exp.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)))
             }
             pl::ParamKind::Def(id, tparams, params, typ) => {
                 // The parameter holds its function value in a slot
@@ -147,20 +143,24 @@ impl ast::Guard {
     fn prepare(ctx: &mut PrepareContext<'_>, guard: pl::Guard, typ_scrut: &pl::Typ) -> Self {
         match guard {
             pl::Guard::Bool(cond) => ast::Guard::Bool(cond),
-            pl::Guard::Cmp(op, typ, exp) => ast::Guard::Cmp(op, typ, exp.prepare(ctx)),
+            pl::Guard::Cmp(op, typ, exp) => ast::Guard::Cmp(op, typ, exp.prepare(&mut ctx.il())),
             pl::Guard::Sub(typ) => {
                 ast::Guard::Sub(ast::Subcheck::prepare(&mut ctx.il(), typ_scrut, &typ))
             }
             // The bound expression is a pattern the scrutinee binds
             pl::Guard::LetSub(typ, exp_l) => {
                 let subcheck = ast::Subcheck::prepare(&mut ctx.il(), typ_scrut, &typ);
-                ast::Guard::LetSub(ast::SubBind { typ, subcheck }, prepare_pattern(ctx, exp_l))
+                ast::Guard::LetSub(
+                    ast::SubBind { typ, subcheck },
+                    exp_l.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
+                )
             }
-            pl::Guard::LetMatch(pattern, exp_l) => {
-                ast::Guard::LetMatch(pattern.prepare(&mut ctx.il()), prepare_pattern(ctx, exp_l))
-            }
+            pl::Guard::LetMatch(pattern, exp_l) => ast::Guard::LetMatch(
+                pattern.prepare(&mut ctx.il()),
+                exp_l.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
+            ),
             pl::Guard::Match(pattern) => ast::Guard::Match(pattern.prepare(&mut ctx.il())),
-            pl::Guard::Mem(exp) => ast::Guard::Mem(exp.prepare(ctx)),
+            pl::Guard::Mem(exp) => ast::Guard::Mem(exp.prepare(&mut ctx.il())),
         }
     }
 }
@@ -193,7 +193,7 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
         ast::IfInstr {
-            exp: self.exp.prepare(ctx),
+            exp: self.exp.prepare(&mut ctx.il()),
             iter_exps: self.iter_exps.prepare(&mut ctx.il()),
             block: self.block.prepare(ctx),
             dangle: self.dangle,
@@ -215,8 +215,10 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>>
         let subcheck = ast::Subcheck::prepare(&mut ctx.il(), &typ_source, &self.target);
         ast::IfLetSubInstr {
             target: ast::SubBind { typ: self.target, subcheck },
-            exp_l: prepare_pattern(ctx, self.exp_l),
-            exp_r: self.exp_r.prepare(ctx),
+            exp_l: self
+                .exp_l
+                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
+            exp_r: self.exp_r.prepare(&mut ctx.il()),
             block: self.block.prepare(ctx),
             dangle: self.dangle,
         }
@@ -231,8 +233,10 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>>
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
         ast::IfLetMatchInstr {
             pattern: self.pattern.prepare(&mut ctx.il()),
-            exp_l: prepare_pattern(ctx, self.exp_l),
-            exp_r: self.exp_r.prepare(ctx),
+            exp_l: self
+                .exp_l
+                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
+            exp_r: self.exp_r.prepare(&mut ctx.il()),
             block: self.block.prepare(ctx),
             dangle: self.dangle,
         }
@@ -246,7 +250,7 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
         ast::CheckInstr {
-            exp: self.exp.prepare(ctx),
+            exp: self.exp.prepare(&mut ctx.il()),
             iter_exps: self.iter_exps.prepare(&mut ctx.il()),
             block: self.block.prepare(ctx),
         }
@@ -261,7 +265,7 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
         ast::HoldInstr {
             id: self.id,
-            not_exp: self.not_exp.prepare(ctx),
+            not_exp: self.not_exp.prepare(&mut ctx.il()),
             iter_exps: self.iter_exps.prepare(&mut ctx.il()),
             hold_case: self.hold_case.prepare(ctx),
         }
@@ -274,7 +278,7 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
     type Output = ast::CaseInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
-        let exp = self.exp.prepare(ctx);
+        let exp = self.exp.prepare(&mut ctx.il());
         // Guards test the scrutinee, so their checks start from its type
         let typ_scrut = crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span);
         let cases = self
@@ -297,8 +301,10 @@ impl Prepare<PrepareContext<'_>> for pl::LetInstr {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         ast::LetInstr {
-            exp_l: prepare_pattern(ctx, self.exp_l),
-            exp_r: self.exp_r.prepare(ctx),
+            exp_l: self
+                .exp_l
+                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
+            exp_r: self.exp_r.prepare(&mut ctx.il()),
             iter_instrs: self.iter_instrs.prepare(&mut ctx.il()),
         }
     }
@@ -310,7 +316,7 @@ impl Prepare<PrepareContext<'_>> for pl::DebugInstr {
     type Output = ast::DebugInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::DebugInstr { exp: self.exp.prepare(ctx) }
+        ast::DebugInstr { exp: self.exp.prepare(&mut ctx.il()) }
     }
 }
 
@@ -324,9 +330,11 @@ impl Prepare<PrepareContext<'_>> for pl::DestructInstr {
             bindings: self
                 .bindings
                 .into_iter()
-                .map(|(name, exp)| (name, prepare_pattern(ctx, exp)))
+                .map(|(name, exp)| {
+                    (name, exp.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)))
+                })
                 .collect(),
-            exp: self.exp.prepare(ctx),
+            exp: self.exp.prepare(&mut ctx.il()),
         }
     }
 }
@@ -364,7 +372,7 @@ impl Prepare<PrepareContext<'_>> for pl::ResultInstr {
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         ast::ResultInstr {
             rel_signature: self.rel_signature,
-            exps_output: self.exps_output.prepare(ctx),
+            exps_output: self.exps_output.prepare(&mut ctx.il()),
         }
     }
 }
@@ -375,7 +383,7 @@ impl Prepare<PrepareContext<'_>> for pl::ReturnInstr {
     type Output = ast::ReturnInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::ReturnInstr { exp: self.exp.prepare(ctx) }
+        ast::ReturnInstr { exp: self.exp.prepare(&mut ctx.il()) }
     }
 }
 
@@ -395,9 +403,9 @@ impl Prepare<PrepareContext<'_>> for pl::RuleInstr {
             .enumerate()
             .map(|(idx, arg)| {
                 if idxs_output.contains(&idx) {
-                    prepare_pattern(ctx, arg)
+                    arg.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign))
                 } else {
-                    arg.prepare(ctx)
+                    arg.prepare(&mut ctx.il())
                 }
             })
             .collect();
@@ -445,7 +453,7 @@ impl Prepare<PrepareContext<'_>> for pl::RuleGroupInstr {
             id_rel: self.id_rel,
             id_group: self.id_group,
             rel_signature: self.rel_signature,
-            exps_input: self.exps_input.prepare(ctx),
+            exps_input: self.exps_input.prepare(&mut ctx.il()),
             block: self.block.prepare(ctx),
         }
     }
@@ -468,8 +476,8 @@ impl Prepare<PrepareContext<'_>> for pl::TableRow {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         ast::TableRow {
-            exps_input: self.exps_input.prepare(ctx),
-            exp: self.exp.prepare(ctx),
+            exps_input: self.exps_input.prepare(&mut ctx.il()),
+            exp: self.exp.prepare(&mut ctx.il()),
             block: self.block.prepare(ctx),
         }
     }
@@ -508,7 +516,7 @@ impl Prepare<PrepareContext<'_>> for pl::ExternRel {
         ast::ExternRel {
             id: self.id,
             rel_signature: self.rel_signature,
-            exps_input: self.exps_input.prepare(ctx),
+            exps_input: self.exps_input.prepare(&mut ctx.il()),
         }
     }
 }
@@ -525,9 +533,7 @@ impl Prepare<PrepareContext<'_>> for pl::DefinedRel {
             // The inputs are patterns the call's arguments bind
             exps_input: self
                 .exps_input
-                .into_iter()
-                .map(|exp| prepare_pattern(ctx, exp))
-                .collect(),
+                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
             block: self.block.prepare(ctx),
             block_else_opt: self.block_else_opt.prepare(ctx),
         }
@@ -634,19 +640,5 @@ impl Prepare<PrepareContext<'_>> for pl::DefinedFunc {
             block: self.block.prepare(ctx),
             block_else_opt: self.block_else_opt.prepare(ctx),
         }
-    }
-}
-
-// = Notation
-
-impl<'a, T: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for tree::Mixfix<T> {
-    type Output = flat::Mixfix<T::Output>;
-
-    fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
-        let (mixop, args) = self.into_parts();
-        let mixop = mixop.prepare(ctx.arena_mixop);
-        let args = args.prepare(ctx);
-        notation::flat::Mixfix::new(ctx.arena_mixop, mixop, args)
-            .expect("a mixfix fills every position")
     }
 }

@@ -631,7 +631,9 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
             eval_iter_exp_join(runner_ctx, ctx, exp, exp_inner, comp, vars)
         }
         // Any other body is evaluated per element
-        ast::ExpIter::Each { .. } => eval_iter_exp_each(runner_ctx, ctx, exp, exp_inner, exp_iter),
+        ast::ExpIter::Each { iter, vars } => {
+            eval_iter_exp_each(runner_ctx, ctx, exp, exp_inner, *iter, vars)
+        }
         // Only assigned patterns split
         ast::ExpIter::Split { .. } => unreachable!("evaluated iteration must not split"),
     }
@@ -684,9 +686,10 @@ fn eval_iter_exp_each<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ex
     ctx: &Interp::Context<'global>,
     exp: &ast::Exp,
     exp_inner: &ast::Exp,
-    exp_iter: &ast::ExpIter,
+    iter: ast::Iter,
+    vars: &[ast::Var],
 ) -> Backtrack<Value> {
-    iter::map(runner_ctx, ctx, &exp.span, &exp.note, exp_iter, |runner_ctx, ctx_sub| {
+    iter::map(runner_ctx, ctx, &exp.span, &exp.note, iter, vars, |runner_ctx, ctx_sub| {
         eval_exp(runner_ctx, ctx_sub, exp_inner)
     })
 }
