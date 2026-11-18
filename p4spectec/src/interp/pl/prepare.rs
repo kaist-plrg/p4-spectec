@@ -82,16 +82,6 @@ impl<'a> PrepareContext<'a> {
     }
 }
 
-/// Prepares a unit that runs in a frame of its own, then takes the layout it filled.
-fn prepare_callable<'a, T: Prepare<PrepareContext<'a>>>(
-    def: T,
-    ctx: &mut PrepareContext<'a>,
-) -> Callable<T::Output> {
-    let def = def.prepare(ctx);
-    let layout = Rc::new(mem::take(ctx.layout));
-    Callable { def, layout }
-}
-
 // - Position
 
 /// Where a block or instruction sits in its callable, for deciding tail calls.
@@ -645,7 +635,13 @@ impl Prepare<PrepareContext<'_>> for pl::RelDef {
                 *ctx.layout = FrameLayout::default();
                 ast::RelDef::Extern(rel)
             }
-            pl::RelDef::Defined(rel) => ast::RelDef::Defined(prepare_callable(rel, ctx)),
+            pl::RelDef::Defined(rel) => {
+                // Prepare the relation, then transfer the layout it filled
+                let def = rel.prepare(ctx);
+                let layout = Rc::new(mem::take(ctx.layout));
+                let rel = Callable { def, layout };
+                ast::RelDef::Defined(rel)
+            }
         }
     }
 }
@@ -706,9 +702,18 @@ impl Prepare<PrepareContext<'_>> for pl::MetaFuncDef {
                 *ctx.layout = FrameLayout::default();
                 ast::MetaFuncDef::Builtin(func)
             }
-            pl::MetaFuncDef::Table(func) => ast::MetaFuncDef::Table(prepare_callable(func, ctx)),
+            pl::MetaFuncDef::Table(func) => {
+                // Prepare the function, then transfer the layout it filled
+                let def = func.prepare(ctx);
+                let layout = Rc::new(mem::take(ctx.layout));
+                let func = Callable { def, layout };
+                ast::MetaFuncDef::Table(func)
+            }
             pl::MetaFuncDef::Defined(func) => {
-                ast::MetaFuncDef::Defined(prepare_callable(func, ctx))
+                let def = func.prepare(ctx);
+                let layout = Rc::new(mem::take(ctx.layout));
+                let func = Callable { def, layout };
+                ast::MetaFuncDef::Defined(func)
             }
         }
     }

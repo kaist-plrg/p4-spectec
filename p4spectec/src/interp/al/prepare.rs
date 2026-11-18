@@ -89,16 +89,6 @@ impl<'a> PrepareContext<'a> {
     }
 }
 
-/// Prepares a unit that runs in a frame of its own, then takes the layout it filled.
-fn prepare_callable<'a, T: Prepare<PrepareContext<'a>>>(
-    def: T,
-    ctx: &mut PrepareContext<'a>,
-) -> Callable<T::Output> {
-    let def = def.prepare(ctx);
-    let layout = Rc::new(mem::take(ctx.layout));
-    Callable { def, layout }
-}
-
 // - Premises
 
 impl Prepare<PrepareContext<'_>> for source::PremKind {
@@ -399,11 +389,19 @@ impl Prepare<PrepareContext<'_>> for source::DefinedRel {
         let mut rule_groups = Vec::with_capacity(len_groups);
         for (idx, group) in self.rule_groups.into_iter().enumerate() {
             let tail_group = tail && idx + 1 == len_groups;
-            rule_groups.push(prepare_callable(group, &mut ctx.at(tail_group)));
+            // Each group runs in its own frame: prepare it, then transfer the layout it filled
+            let def = group.prepare(&mut ctx.at(tail_group));
+            let layout = Rc::new(mem::take(ctx.layout));
+            rule_groups.push(Callable { def, layout });
         }
         // The otherwise group concludes the relation when it runs
         let tco = ctx.tco;
-        let else_group = (self.else_group).map(|group| prepare_callable(group, &mut ctx.at(tco)));
+        let mut else_group = None;
+        if let Some(group) = self.else_group {
+            let def = group.prepare(&mut ctx.at(tco));
+            let layout = Rc::new(mem::take(ctx.layout));
+            else_group = Some(Callable { def, layout });
+        }
         DefinedRel {
             id: self.id,
             not_typ: self.not_typ,
@@ -446,7 +444,10 @@ impl Prepare<PrepareContext<'_>> for source::TableFunc {
         let mut table_rows = Vec::with_capacity(len);
         for (idx, row) in self.table_rows.into_iter().enumerate() {
             let tail = ctx.tco && idx + 1 == len;
-            table_rows.push(prepare_callable(row, &mut ctx.at(tail)));
+            // Each row runs in its own frame: prepare it, then transfer the layout it filled
+            let def = row.prepare(&mut ctx.at(tail));
+            let layout = Rc::new(mem::take(ctx.layout));
+            table_rows.push(Callable { def, layout });
         }
         TableFunc { id: self.id, params: self.params, typ: self.typ, table_rows, hints: self.hints }
     }
@@ -476,12 +477,19 @@ impl Prepare<PrepareContext<'_>> for source::DefinedFunc {
         let mut clauses = Vec::with_capacity(len);
         for (idx, clause) in self.clauses.into_iter().enumerate() {
             let tail = tail_last && ctx.tail_at(idx, len);
-            clauses.push(prepare_callable(clause, &mut ctx.at(tail)));
+            // Each clause runs in its own frame: prepare it, then transfer the layout it filled
+            let def = clause.prepare(&mut ctx.at(tail));
+            let layout = Rc::new(mem::take(ctx.layout));
+            clauses.push(Callable { def, layout });
         }
         // The otherwise clause concludes the function when it runs
         let tco = ctx.tco;
-        let else_clause =
-            (self.else_clause).map(|clause| prepare_callable(clause, &mut ctx.at(tco)));
+        let mut else_clause = None;
+        if let Some(clause) = self.else_clause {
+            let def = clause.prepare(&mut ctx.at(tco));
+            let layout = Rc::new(mem::take(ctx.layout));
+            else_clause = Some(Callable { def, layout });
+        }
         DefinedFunc {
             id: self.id,
             tparams: self.tparams,
