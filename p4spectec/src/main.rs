@@ -20,7 +20,7 @@ use p4spectec::runner::{self, RunError};
 
 use p4spectec::coverage::{self, Outcome, Progress};
 
-use p4spectec::sim_plugin::dummy::Dummy;
+use p4spectec::sim_plugin::{self, dummy::Dummy};
 
 // = Helpers
 
@@ -523,7 +523,7 @@ fn cover_sim_command(args: CoverSimArgs) -> Result<(), ()> {
         .map(|(path_p4, path_stf)| format!("{} {}", path_p4.display(), path_stf.display()))
         .collect();
     let bar = progress_bar(&labels);
-    let coverage = coverage::cover_sim(
+    let coverage = sim_plugin::cover::cover_sim(
         &spec_sl,
         &args.arch,
         args.config.config(),

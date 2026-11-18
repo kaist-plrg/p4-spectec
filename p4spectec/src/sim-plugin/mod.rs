@@ -5,7 +5,8 @@
 //! with that architecture as its extern,
 //! and boxes it as a `Simulator` that runs STF tests.
 //! `core` and `spec` are the helpers the architectures share;
-//! `stf_runner`, `table`, `hash`, `io`, and `state` drive one test.
+//! `stf_runner`, `table`, `hash`, `io`, and `state` drive one test,
+//! and `cover` measures SL instruction coverage over many.
 
 use std::path::{Path, PathBuf};
 
@@ -19,6 +20,7 @@ use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, v1model::V1Model};
 
 pub mod arch;
 pub mod core;
+pub mod cover;
 pub mod dummy;
 pub mod ebpf;
 mod error;
