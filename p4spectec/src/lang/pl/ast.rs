@@ -7,8 +7,9 @@
 //! Instructions are generic over a `Tier`, the instruction kind it alone has:
 //! `DispatchInstr` selects a rule group, `GroupInstr` runs its body.
 //! The stage parameter `P` (`stage::Stage`) resolves identifiers,
-//! variables, and mixops for the interpreter.
-//! Expressions and their containing syntax share the same stage.
+//! variables, and mixops for the interpreter, and selects the expressions:
+//! PL expressions with prose hints in source syntax,
+//! IL's prepared expressions in prepared syntax.
 
 use std::rc::Rc;
 
@@ -17,7 +18,7 @@ use crate::lang::{
     data::notation::Mixfix,
 };
 
-use crate::lang::sl;
+use crate::lang::{il, sl};
 
 use crate::lang::pl::annot;
 
@@ -76,41 +77,41 @@ pub type OpTyp = sl::ast::OpTyp;
 // Expressions
 
 /// A typed expression before annotation, sharing its SL type.
-pub type ExpNode<P = Source> = NotePhrase<ExpKind<P>, Rc<TypKind>>;
+pub type ExpNode = NotePhrase<ExpKind, Rc<TypKind>>;
 /// A typed expression with prose hints.
-pub type Exp<P = Source> = annot::Annotated<ExpNode<P>>;
+pub type Exp = annot::Annotated<ExpNode>;
 #[derive(Clone, Debug, PartialEq)]
 /// The forms of an expression, as in SL.
-pub enum ExpKind<P: Stage = Source> {
+pub enum ExpKind {
     Bool(bool),
     Num(Num),
     Text(Text),
-    Id(P::Id),
-    Un(UnOp, OpTyp, Box<Exp<P>>),
-    Bin(BinOp, OpTyp, Box<Exp<P>>, Box<Exp<P>>),
-    Cmp(CmpOp, OpTyp, Box<Exp<P>>, Box<Exp<P>>),
-    UpCast(Typ, Box<Exp<P>>),
-    DownCast(Typ, Box<Exp<P>>),
-    Sub(Box<Exp<P>>, P::SubTarget),
-    Match(Box<Exp<P>>, Pattern<P>),
-    Tuple(Vec<Exp<P>>),
-    Case(Box<NotExp<P>>),
-    Str(Vec<(Atom, Exp<P>)>),
-    Opt(Option<Box<Exp<P>>>),
-    List(Vec<Exp<P>>),
-    Cons(Box<Exp<P>>, Box<Exp<P>>),
-    Cat(Box<Exp<P>>, Box<Exp<P>>),
-    Mem(Box<Exp<P>>, Box<Exp<P>>),
-    Len(Box<Exp<P>>),
-    Dot(Box<Exp<P>>, Atom),
-    Idx(Box<Exp<P>>, Box<Exp<P>>),
-    Slice(Box<Exp<P>>, Box<Exp<P>>, Box<Exp<P>>),
-    Upd(Box<Exp<P>>, Box<Path<P>>, Box<Exp<P>>),
-    Call(Id, Vec<Targ>, Vec<Arg<P>>),
-    Iter(Box<Exp<P>>, ExpIter<P::Var>),
+    Id(Id),
+    Un(UnOp, OpTyp, Box<Exp>),
+    Bin(BinOp, OpTyp, Box<Exp>, Box<Exp>),
+    Cmp(CmpOp, OpTyp, Box<Exp>, Box<Exp>),
+    UpCast(Typ, Box<Exp>),
+    DownCast(Typ, Box<Exp>),
+    Sub(Box<Exp>, Typ),
+    Match(Box<Exp>, Pattern),
+    Tuple(Vec<Exp>),
+    Case(Box<NotExp>),
+    Str(Vec<(Atom, Exp)>),
+    Opt(Option<Box<Exp>>),
+    List(Vec<Exp>),
+    Cons(Box<Exp>, Box<Exp>),
+    Cat(Box<Exp>, Box<Exp>),
+    Mem(Box<Exp>, Box<Exp>),
+    Len(Box<Exp>),
+    Dot(Box<Exp>, Atom),
+    Idx(Box<Exp>, Box<Exp>),
+    Slice(Box<Exp>, Box<Exp>, Box<Exp>),
+    Upd(Box<Exp>, Box<Path>, Box<Exp>),
+    Call(Id, Vec<Targ>, Vec<Arg>),
+    Iter(Box<Exp>, ExpIter),
 }
 /// A notation expression: a mixfix skeleton with expressions as arguments.
-pub type NotExp<P = Source> = Mixfix<<P as Stage>::Mixop, Exp<P>>;
+pub type NotExp<P = Source> = Mixfix<<P as il::stage::Stage>::Mixop, <P as Stage>::Exp>;
 pub type ExpIter<V = Var> = sl::ast::ExpIter<V>;
 
 // Patterns
@@ -120,14 +121,14 @@ pub type Pattern<P = Source> = sl::ast::Pattern<P>;
 // Path
 
 /// A typed path into a value, for updates, sharing its SL type.
-pub type Path<P = Source> = NotePhrase<PathKind<P>, Rc<TypKind>>;
+pub type Path = NotePhrase<PathKind, Rc<TypKind>>;
 #[derive(Clone, Debug, PartialEq)]
 /// The steps of a path, from the root outward.
-pub enum PathKind<P: Stage = Source> {
+pub enum PathKind {
     Root,
-    Idx(Box<Path<P>>, Box<Exp<P>>),
-    Slice(Box<Path<P>>, Box<Exp<P>>, Box<Exp<P>>),
-    Dot(Box<Path<P>>, Atom),
+    Idx(Box<Path>, Box<Exp>),
+    Slice(Box<Path>, Box<Exp>, Box<Exp>),
+    Dot(Box<Path>, Atom),
 }
 
 // Type parameters
@@ -141,7 +142,7 @@ pub type Param<P = Source> = Phrase<ParamKind<P>>;
 #[derive(Clone, Debug, PartialEq)]
 /// A parameter: a typed pattern, or a function with its own signature.
 pub enum ParamKind<P: Stage = Source> {
-    Exp(Typ, Box<Exp<P>>),
+    Exp(Typ, Box<P::Exp>),
     Def(Id, Vec<TParam>, Vec<Param<P>>, Typ),
 }
 
@@ -152,11 +153,11 @@ pub type Targ = sl::ast::Targ;
 // Arguments
 
 /// A call argument with its span.
-pub type Arg<P = Source> = Phrase<ArgKind<P>>;
+pub type Arg = Phrase<ArgKind>;
 #[derive(Clone, Debug, PartialEq)]
 /// An argument: a value expression or a function name.
-pub enum ArgKind<P: Stage = Source> {
-    Exp(Box<Exp<P>>),
+pub enum ArgKind {
+    Exp(Box<Exp>),
     Def(Id),
 }
 
@@ -211,17 +212,17 @@ pub enum Guard<P: Stage = Source> {
     /// The scrutinee is this boolean.
     Bool(bool),
     /// The scrutinee compares so with the expression.
-    Cmp(CmpOp, OpTyp, Exp<P>),
+    Cmp(CmpOp, OpTyp, P::Exp),
     /// The scrutinee has the type.
     Sub(P::SubTarget),
     /// The scrutinee has the type and binds the expression.
-    LetSub(P::SubBind, Exp<P>),
+    LetSub(P::SubBind, P::Exp),
     /// The scrutinee matches the pattern.
     Match(Pattern<P>),
     /// The scrutinee matches the pattern and binds the expression.
-    LetMatch(Pattern<P>, Exp<P>),
+    LetMatch(Pattern<P>, P::Exp),
     /// The scrutinee is an element of the list.
-    Mem(Exp<P>),
+    Mem(P::Exp),
 }
 
 // Instructions
@@ -259,7 +260,7 @@ pub enum InstrKind<Tier, P: Stage = Source> {
 #[derive(Clone, Debug, PartialEq)]
 /// Run the block when the condition holds under its iterations.
 pub struct IfInstr<Tier, P: Stage = Source> {
-    pub exp: Exp<P>,
+    pub exp: P::Exp,
     pub iter_exps: Vec<ExpIter<P::Var>>,
     pub block: Block<Tier, P>,
     pub dangle: Dangle,
@@ -268,8 +269,8 @@ pub struct IfInstr<Tier, P: Stage = Source> {
 /// Bind a value with the required subtype and run the block.
 pub struct IfLetSubInstr<Tier, P: Stage = Source> {
     pub target: P::SubBind,
-    pub exp_l: Exp<P>,
-    pub exp_r: Exp<P>,
+    pub exp_l: P::Exp,
+    pub exp_r: P::Exp,
     pub block: Block<Tier, P>,
     pub dangle: Dangle,
 }
@@ -277,15 +278,15 @@ pub struct IfLetSubInstr<Tier, P: Stage = Source> {
 /// Bind a value matching the pattern and run the block.
 pub struct IfLetMatchInstr<Tier, P: Stage = Source> {
     pub pattern: Pattern<P>,
-    pub exp_l: Exp<P>,
-    pub exp_r: Exp<P>,
+    pub exp_l: P::Exp,
+    pub exp_r: P::Exp,
     pub block: Block<Tier, P>,
     pub dangle: Dangle,
 }
 #[derive(Clone, Debug, PartialEq)]
 /// A condition required to reach the conclusion, with bindings scoped to its block.
 pub struct CheckInstr<Tier, P: Stage = Source> {
-    pub exp: Exp<P>,
+    pub exp: P::Exp,
     pub iter_exps: Vec<ExpIter<P::Var>>,
     pub block: Block<Tier, P>,
 }
@@ -300,7 +301,7 @@ pub struct HoldInstr<Tier, P: Stage = Source> {
 #[derive(Clone, Debug, PartialEq)]
 /// Case analysis on an expression.
 pub struct CaseInstr<Tier, P: Stage = Source> {
-    pub exp: Exp<P>,
+    pub exp: P::Exp,
     pub cases: Vec<Case<Tier, P>>,
     pub dangle: Dangle,
     pub totality: Totality,
@@ -308,20 +309,20 @@ pub struct CaseInstr<Tier, P: Stage = Source> {
 #[derive(Clone, Debug, PartialEq)]
 /// Bind `exp_l` to `exp_r` under the iterations.
 pub struct LetInstr<P: Stage = Source> {
-    pub exp_l: Exp<P>,
-    pub exp_r: Exp<P>,
+    pub exp_l: P::Exp,
+    pub exp_r: P::Exp,
     pub iter_instrs: Vec<InstrIter<P::Var>>,
 }
 #[derive(Clone, Debug, PartialEq)]
 /// Print the expression.
 pub struct DebugInstr<P: Stage = Source> {
-    pub exp: Exp<P>,
+    pub exp: P::Exp,
 }
 #[derive(Clone, Debug, PartialEq)]
 /// Bind each field expression, named when shown, from `exp`.
 pub struct DestructInstr<P: Stage = Source> {
-    pub bindings: Vec<(Option<String>, Exp<P>)>,
-    pub exp: Exp<P>,
+    pub bindings: Vec<(Option<String>, P::Exp)>,
+    pub exp: P::Exp,
 }
 #[derive(Clone, Debug, PartialEq)]
 /// The tier-specific instruction.
@@ -359,12 +360,12 @@ pub enum GroupInstr<P: Stage = Source> {
 /// The relation's outputs.
 pub struct ResultInstr<P: Stage = Source> {
     pub rel_signature: RelSignature,
-    pub exps_output: Vec<Exp<P>>,
+    pub exps_output: Vec<P::Exp>,
 }
 #[derive(Clone, Debug, PartialEq)]
 /// The function's result.
 pub struct ReturnInstr<P: Stage = Source> {
-    pub exp: Exp<P>,
+    pub exp: P::Exp,
 }
 #[derive(Clone, Debug, PartialEq)]
 /// A relation call under its iterations; the hint marks the input arguments.
@@ -401,7 +402,7 @@ pub struct RuleGroupInstr<P: Stage = Source> {
     pub id_rel: Id,
     pub id_group: Id,
     pub rel_signature: RelSignature,
-    pub exps_input: Vec<Exp<P>>,
+    pub exps_input: Vec<P::Exp>,
     pub block: GroupBlock<P>,
 }
 #[derive(Clone, Debug, PartialEq)]
@@ -463,7 +464,7 @@ pub enum RelDef<P: Stage = Source> {
 pub struct ExternRel<P: Stage = Source> {
     pub id: Id,
     pub rel_signature: RelSignature,
-    pub exps_input: Vec<Exp<P>>,
+    pub exps_input: Vec<P::Exp>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -471,7 +472,7 @@ pub struct ExternRel<P: Stage = Source> {
 pub struct DefinedRel<P: Stage = Source> {
     pub id: Id,
     pub rel_signature: RelSignature,
-    pub exps_input: Vec<Exp<P>>,
+    pub exps_input: Vec<P::Exp>,
     pub block: DispatchBlock<P>,
     pub block_else_opt: Option<DispatchBlock<P>>,
 }
@@ -512,8 +513,8 @@ pub struct BuiltinFunc<P: Stage = Source> {
 #[derive(Clone, Debug, PartialEq)]
 /// One row: input patterns, the matched expression, and a group-body block.
 pub struct TableRow<P: Stage = Source> {
-    pub exps_input: Vec<Exp<P>>,
-    pub exp: Exp<P>,
+    pub exps_input: Vec<P::Exp>,
+    pub exp: P::Exp,
     pub block: GroupBlock<P>,
 }
 

@@ -9,6 +9,7 @@ pub mod context;
 mod eval;
 pub mod flow;
 mod prepare;
+mod strip;
 
 use crate::lang::{common::source::Span, data::value::flat::Value};
 

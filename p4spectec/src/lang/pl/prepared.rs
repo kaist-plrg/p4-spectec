@@ -1,8 +1,8 @@
 //! PL syntax instantiated with execution slots
 //!
-//! Preparation retains PL expression forms and every prose annotation.
-//! Identifiers and iterations resolve to the same slots as AL and SL;
-//! evaluation removes expression hints at the shared evaluator boundary.
+//! Instructions keep their prose hints and fall-through notes,
+//! while expressions are IL's prepared expressions,
+//! so the shared evaluator runs them as it runs AL and SL ones.
 
 pub use crate::lang::il::prepared::*;
 
@@ -11,22 +11,6 @@ use super::ast as source;
 pub use source::{Fallthrough, RelSignature, TierInstr};
 
 // == Prepared syntax
-
-// - Expressions
-
-pub type Exp = source::Exp<Prepared>;
-pub type ExpKind = source::ExpKind<Prepared>;
-pub type NotExp = source::NotExp<Prepared>;
-
-// - Paths
-
-pub type Path = source::Path<Prepared>;
-pub type PathKind = source::PathKind<Prepared>;
-
-// - Arguments
-
-pub type Arg = source::Arg<Prepared>;
-pub type ArgKind = source::ArgKind<Prepared>;
 
 // - Parameters
 

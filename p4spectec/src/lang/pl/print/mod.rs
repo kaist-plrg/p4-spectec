@@ -1,9 +1,6 @@
 //! Text rendering for PL syntax
 //!
-//! `source` implements source rendering.
-//! `prepared` renders arena-backed syntax through borrowed views.
+//! `source` implements source rendering;
+//! prepared expressions are IL's and render through IL's views.
 
-mod prepared;
 mod source;
-
-pub use prepared::{ArgRef, ArgsRef, ExpRef, ExpsRef, PathRef};
