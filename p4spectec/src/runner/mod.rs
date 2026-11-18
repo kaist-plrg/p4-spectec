@@ -36,8 +36,6 @@ use crate::interface::{self as builtin, p4::P4Interface};
 
 use crate::runtime::envs::interp::shared::HTDEnv;
 
-use crate::sim_plugin::dummy::Dummy;
-
 pub use context::{Checkpoint, RunnerContext};
 pub use externs::{Extern, ExternError, NullExtern};
 pub use hook::{Handler, Hooks};
@@ -362,19 +360,20 @@ pub enum RunError {
     Eval(InterpreterError),
 }
 
-/// Builds a runner with dummy externs and evaluates a P4 program's entry.
-pub fn run(
+/// Builds a runner with `external` and evaluates a P4 program's entry.
+pub fn run<Ext: Extern>(
     spec: Spec,
     config: Config,
+    external: Ext,
     relation: &str,
     includes: &[PathBuf],
     path_p4: &Path,
 ) -> Result<(), RunError> {
     let mut arena = Arena::new();
     let runner = match spec {
-        Spec::Al(spec_al) => build_al(&mut arena, spec_al, config, Dummy::default()),
-        Spec::Sl(spec_sl) => build_sl(&mut arena, spec_sl, config, Dummy::default()),
-        Spec::Pl(spec_pl) => build_pl(&mut arena, spec_pl, config, Dummy::default()),
+        Spec::Al(spec_al) => build_al(&mut arena, spec_al, config, external),
+        Spec::Sl(spec_sl) => build_sl(&mut arena, spec_sl, config, external),
+        Spec::Pl(spec_pl) => build_pl(&mut arena, spec_pl, config, external),
     }
     .map_err(RunError::Build)?;
     run_program(&mut arena, runner, relation, includes, path_p4)

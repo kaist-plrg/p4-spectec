@@ -18,9 +18,9 @@ use std::{
 
 use crate::lang::{data::arena::Arena, sl};
 
-use crate::runner::{self, Config};
+use crate::runner::{self, Config, Extern};
 
-use crate::sim_plugin::{self, dummy::Dummy};
+use crate::sim_plugin;
 
 pub use error::CoverError;
 pub use instr::{Cover, Hits, InstrHandler, Measure};
@@ -79,12 +79,14 @@ fn run_catching<T, E>(body: impl FnOnce() -> Result<T, E>) -> Outcome {
     }
 }
 
-/// Evaluates each program through `relation` and records SL instruction coverage.
+/// Evaluates each program with `external` through `relation`
+/// and records SL instruction coverage.
 ///
 /// `config` must disable `tco`.
-pub fn cover_run(
+pub fn cover_run<Ext: Extern>(
     spec_sl: &sl::ast::Spec,
     config: Config,
+    external: Ext,
     relation: &str,
     includes: &[PathBuf],
     paths_p4: &[PathBuf],
@@ -92,7 +94,7 @@ pub fn cover_run(
 ) -> Result<Coverage, CoverError> {
     let mut cover = Cover::new(spec_sl);
     let mut arena = Arena::new();
-    let mut runner = runner::build_sl(&mut arena, spec_sl.clone(), config, Dummy::default())?;
+    let mut runner = runner::build_sl(&mut arena, spec_sl.clone(), config, external)?;
     let hits = Hits::new(cover.len());
     runner
         .hooks_mut()

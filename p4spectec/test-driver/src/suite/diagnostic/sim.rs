@@ -8,7 +8,7 @@ use p4spectec::diagnostic::Report;
 
 use p4spectec::runner::{self, Config, RunError, Spec};
 
-use p4spectec::sim_plugin;
+use p4spectec::sim_plugin::{self, dummy::Dummy};
 
 use crate::harness::Result;
 
@@ -44,6 +44,7 @@ pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     let report = match runner::run(
         Spec::Al(spec_al),
         config,
+        Dummy::default(),
         relation,
         std::slice::from_ref(path_include),
         path,

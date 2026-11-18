@@ -20,6 +20,8 @@ use p4spectec::runner::{self, RunError};
 
 use p4spectec::coverage::{self, Outcome, Progress};
 
+use p4spectec::sim_plugin::dummy::Dummy;
+
 // = Helpers
 
 // - Diagnostic output
@@ -261,22 +263,21 @@ fn run_command(args: RunArgs) -> Result<(), ()> {
 
     // Execute with the requested interpreter controls
     let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard, true);
-    p4spectec::run(spec, config, &args.relation, &args.includes, &args.program).map_err(
-        |error| match error {
-            RunError::Build(report) => {
-                // Render runner preparation with the default presentation
-                render_report(&mut renderer, &report);
-            }
-            RunError::Parse(error) => {
-                // Render the input diagnostic without compacting its details
-                render_report(&mut renderer, &error.into_report());
-            }
-            RunError::Eval(error) => {
-                // Compact only the execution frames
-                render_exec_report(&error.into_report());
-            }
-        },
-    )?;
+    p4spectec::run(spec, config, Dummy::default(), &args.relation, &args.includes, &args.program)
+        .map_err(|error| match error {
+        RunError::Build(report) => {
+            // Render runner preparation with the default presentation
+            render_report(&mut renderer, &report);
+        }
+        RunError::Parse(error) => {
+            // Render the input diagnostic without compacting its details
+            render_report(&mut renderer, &error.into_report());
+        }
+        RunError::Eval(error) => {
+            // Compact only the execution frames
+            render_exec_report(&error.into_report());
+        }
+    })?;
 
     // Print success only after evaluation completes
     println!("passed");
@@ -444,6 +445,7 @@ fn cover_run_command(args: CoverRunArgs) -> Result<(), ()> {
     let coverage = coverage::cover_run(
         &spec_sl,
         args.config.config(),
+        Dummy::default(),
         &args.relation,
         &args.includes,
         &programs.items,
