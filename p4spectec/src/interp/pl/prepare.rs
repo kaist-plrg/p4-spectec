@@ -61,12 +61,16 @@ impl<'a> PrepareContext<'a> {
         Self { arena_mixop, tdenv, layout, det, tco, pos: Position::NonTail }
     }
 
-    /// Prepares under the position `pos`, then restores the current one.
-    fn with_pos<T>(&mut self, pos: Position, prepare: impl FnOnce(&mut Self) -> T) -> T {
-        let pos_outer = mem::replace(&mut self.pos, pos);
-        let output = prepare(self);
-        self.pos = pos_outer;
-        output
+    /// Reborrows the context for a block or instruction at `pos`.
+    fn at(&mut self, pos: Position) -> PrepareContext<'_> {
+        PrepareContext {
+            arena_mixop: &mut *self.arena_mixop,
+            tdenv: self.tdenv,
+            layout: &mut *self.layout,
+            det: self.det,
+            tco: self.tco,
+            pos,
+        }
     }
 
     fn il(&mut self) -> il::PrepareContext<'_> {
@@ -97,14 +101,6 @@ enum Position {
 }
 
 impl Position {
-    /// Places an instruction of the block, and the blocks nested in it.
-    ///
-    /// Only the last instruction keeps the position: after any other,
-    /// a fall-through continues with the next instruction.
-    fn at(self, last: bool) -> Self {
-        if last { self } else { Position::NonTail }
-    }
-
     /// Places one of `len` alternatives of an instruction placed here.
     ///
     /// Another alternative may conclude after one mismatches or falls through,
@@ -168,8 +164,8 @@ impl Prepare<PrepareContext<'_>> for pl::DispatchBlock {
         let mut instrs = Vec::with_capacity(len);
         for (idx, instr) in self.instrs.into_iter().enumerate() {
             // Each instruction is placed by whether it is the block's last
-            let pos_instr = pos.at(idx + 1 == len);
-            instrs.push(ctx.with_pos(pos_instr, |ctx| instr.prepare(ctx)));
+            let pos_instr = if idx + 1 == len { pos } else { Position::NonTail };
+            instrs.push(instr.prepare(&mut ctx.at(pos_instr)));
         }
         ast::Block { instrs }
     }
@@ -214,8 +210,8 @@ impl Prepare<PrepareContext<'_>> for pl::GroupBlock {
                 continue;
             }
             // Otherwise the instruction is placed by whether it is the block's last
-            let pos_instr = pos.at(instrs_source.peek().is_none());
-            instrs.push(ctx.with_pos(pos_instr, |ctx| instr.prepare(ctx)));
+            let pos_instr = if instrs_source.peek().is_none() { pos } else { Position::NonTail };
+            instrs.push(instr.prepare(&mut ctx.at(pos_instr)));
         }
         ast::Block { instrs }
     }
@@ -559,7 +555,7 @@ impl Prepare<PrepareContext<'_>> for pl::BacktrackInstr {
         for (idx, block) in self.blocks.into_iter().enumerate() {
             // Each alternative is placed by what may still run after it
             let pos_block = pos.alternative(det, idx, len);
-            blocks.push(ctx.with_pos(pos_block, |ctx| block.prepare(ctx)));
+            blocks.push(block.prepare(&mut ctx.at(pos_block)));
         }
         ast::BacktrackInstr { blocks }
     }
@@ -607,7 +603,7 @@ impl Prepare<PrepareContext<'_>> for pl::RouteInstr {
         for (idx, block) in self.blocks.into_iter().enumerate() {
             // Each alternative is placed by what may still run after it
             let pos_block = pos.alternative(det, idx, len);
-            blocks.push(ctx.with_pos(pos_block, |ctx| block.prepare(ctx)));
+            blocks.push(block.prepare(&mut ctx.at(pos_block)));
         }
         ast::RouteInstr { blocks }
     }
@@ -676,8 +672,8 @@ impl Prepare<PrepareContext<'_>> for pl::DefinedRel {
             .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
         // An otherwise block may still run after the body
         let pos = if self.block_else_opt.is_some() { Position::NonTail } else { Position::Tail };
-        let block = ctx.with_pos(pos, |ctx| self.block.prepare(ctx));
-        let block_else_opt = ctx.with_pos(Position::Tail, |ctx| self.block_else_opt.prepare(ctx));
+        let block = self.block.prepare(&mut ctx.at(pos));
+        let block_else_opt = self.block_else_opt.prepare(&mut ctx.at(Position::Tail));
         ast::DefinedRel {
             id: self.id,
             rel_signature: self.rel_signature,
@@ -764,7 +760,7 @@ impl Prepare<PrepareContext<'_>> for pl::TableFunc {
         // so no other row can conclude after a row that applies
         let mut rows = Vec::with_capacity(self.rows.len());
         for row in self.rows {
-            rows.push(ctx.with_pos(Position::Tail, |ctx| row.prepare(ctx)));
+            rows.push(row.prepare(&mut ctx.at(Position::Tail)));
         }
         ast::TableFunc { id: self.id, params, typ: self.typ, rows }
     }
@@ -791,8 +787,8 @@ impl Prepare<PrepareContext<'_>> for pl::DefinedFunc {
         let params = self.params.prepare(ctx);
         // An otherwise block may still run after the body
         let pos = if self.block_else_opt.is_some() { Position::NonTail } else { Position::Tail };
-        let block = ctx.with_pos(pos, |ctx| self.block.prepare(ctx));
-        let block_else_opt = ctx.with_pos(Position::Tail, |ctx| self.block_else_opt.prepare(ctx));
+        let block = self.block.prepare(&mut ctx.at(pos));
+        let block_else_opt = self.block_else_opt.prepare(&mut ctx.at(Position::Tail));
         ast::DefinedFunc {
             id: self.id,
             tparams: self.tparams,
