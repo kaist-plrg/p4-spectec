@@ -7,10 +7,9 @@
 //!                               zip        [(2, 1), (4, 3)]
 //! ```
 //!
-//! `plan_exp` lets an expression's iteration join when `compose` succeeds,
-//! and `plan_pattern` lets a pattern's iteration split
-//! when `decompose` succeeds.
-//! Either records the result in the iteration,
+//! Preparation splits an assigned iteration when `decompose` succeeds
+//! and joins an evaluated one when `compose` succeeds,
+//! recording the result in the iteration,
 //! so the interpreter dispatches on it without reading the syntax again.
 
 use crate::lang::data::{
@@ -19,94 +18,23 @@ use crate::lang::data::{
 };
 use crate::lang::il::prepared as ast;
 
-/// Plans an expression's iteration from its prepared body.
+/// Decomposes a list iteration's fixed pattern into steps to each variable,
+/// in `vars` order, or returns `None` when any part of it computes a value.
 ///
 /// ```text
-/// x*, x**    whole: the body is the iterated variable itself
-/// (b, a)*    join by Tuple with idxs [1, 0]
-/// (a + b)*   each: the body computes per element
-/// ```
-pub(crate) fn plan_exp(exp_inner: &ast::Exp, iter: ast::Iter, vars: Vec<ast::Var>) -> ast::ExpIter {
-    // The body is the one iterated variable
-    if let [var] = vars.as_slice()
-        && slot_of(exp_inner) == Some(var.slot)
-    {
-        let var = var.clone();
-        return ast::ExpIter::Whole { iter, var };
-    }
-    // A body that only constructs from its variables joins them
-    match compose(exp_inner, iter, &vars) {
-        Some(comp) => ast::ExpIter::Join { comp, vars },
-        None => ast::ExpIter::Each { iter, vars },
-    }
-}
-
-/// Plans every pattern of a list, as `plan_pattern` plans one.
-pub(crate) fn plan_patterns(exps: &mut [ast::Exp]) {
-    exps.iter_mut().for_each(plan_pattern);
-}
-
-/// Plans every iteration in a pattern to split where its pattern decomposes.
-///
-/// ```text
-/// (x, (a, b)*)   the inner (a, b)* splits by [[Tuple(0)], [Tuple(1)]]
-/// (y :: ys)*     each: the cons builds a tail per element
-/// x*             stays whole
-/// ```
-pub(crate) fn plan_pattern(exp: &mut ast::Exp) {
-    match &mut exp.node {
-        // Tuple and list literal: positional children
-        ast::ExpKind::Tuple(exps) | ast::ExpKind::List(exps) => {
-            exps.iter_mut().for_each(plan_pattern);
-        }
-        // Case: positional arguments
-        ast::ExpKind::Case(not_exp) => not_exp.args_mut().iter_mut().for_each(plan_pattern),
-        // Struct: fields in order
-        ast::ExpKind::Str(exp_fields) => {
-            for exp_field in exp_fields {
-                plan_pattern(&mut exp_field.exp);
-            }
-        }
-        // Option: the payload, if present
-        ast::ExpKind::Opt(Some(exp_inner)) => plan_pattern(exp_inner),
-        // Cons: the head and the tail
-        ast::ExpKind::Cons(exp_head, exp_tail) => {
-            plan_pattern(exp_head);
-            plan_pattern(exp_tail);
-        }
-        // Iteration: the element pattern, then this iteration itself
-        ast::ExpKind::Iter(exp_inner, exp_iter) => {
-            // The variable itself binds whole, as in an expression
-            if matches!(exp_iter, ast::ExpIter::Whole { .. }) {
-                return;
-            }
-            plan_pattern(exp_inner);
-            let (iter, vars) = (exp_iter.iter(), exp_iter.vars().to_vec());
-            let decomp = (iter == ast::Iter::List)
-                .then(|| decompose(exp_inner, &vars))
-                .flatten();
-            *exp_iter = match decomp {
-                Some(decomp) => ast::ExpIter::Split { decomp, vars },
-                None => ast::ExpIter::Each { iter, vars },
-            };
-        }
-        // Anything else holds no iteration to plan
-        _ => {}
-    }
-}
-
-/// Decomposes a fixed pattern into steps to each variable, in `vars` order,
-/// or returns `None` when any part of it computes a value.
-///
-/// ```text
-/// pattern  (a, (b, c))   vars [a, b, c]
+/// pattern  (a, (b, c))*   vars [a, b, c]
 /// decomp   [[Tuple(0)], [Tuple(1), Tuple(0)], [Tuple(1), Tuple(1)]]
 ///
+/// (a, b)?        None: not a list iteration
 /// (a, y :: ys)   None: the cons builds a tail per element
 /// (a, 1)         None: the constant is not a variable
 /// a              None for vars [a, b]: b does not occur
 /// ```
-fn decompose(exp: &ast::Exp, vars: &[ast::Var]) -> Option<Decomp> {
+pub(crate) fn decompose(exp: &ast::Exp, iter: ast::Iter, vars: &[ast::Var]) -> Option<Decomp> {
+    // Only a list iteration splits into outer values
+    if iter != ast::Iter::List {
+        return None;
+    }
     let mut steps_by_var = vec![None; vars.len()];
     decompose_inner(exp, vars, &mut Vec::new(), &mut steps_by_var)?;
     // Every variable must occur in the pattern
@@ -215,11 +143,11 @@ pub(crate) fn compose(exp_inner: &ast::Exp, iter: ast::Iter, vars: &[ast::Var]) 
 ///
 /// ```text
 /// x      x's slot
-/// x*     x*'s slot, when planned whole
-/// x**    x**'s slot, when planned whole
+/// x*     x*'s slot, when chosen whole
+/// x**    x**'s slot, when chosen whole
 /// x + 1  None
 /// ```
-fn slot_of(exp: &ast::Exp) -> Option<SlotIdx> {
+pub(crate) fn slot_of(exp: &ast::Exp) -> Option<SlotIdx> {
     match &exp.node {
         ast::ExpKind::Id(id) => Some(id.slot),
         ast::ExpKind::Iter(_, ast::ExpIter::Whole { var, .. }) => Some(var.outer().slot),

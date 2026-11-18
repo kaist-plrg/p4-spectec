@@ -17,7 +17,10 @@ use crate::lang::al::{ast as source, prepared::*};
 
 use crate::runtime::{envs::elab::TDEnv, typdef::TypeDef};
 
-use crate::interp::shared::prepare::{Prepare, il, zipper};
+use crate::interp::shared::prepare::{
+    Prepare,
+    il::{self, ExpIterFor},
+};
 
 // - Preparation context
 
@@ -42,10 +45,15 @@ impl<'a> PrepareContext<'a> {
     }
 
     fn il(&mut self) -> il::PrepareContext<'_> {
+        self.il_exp_iter_for(ExpIterFor::Eval)
+    }
+
+    fn il_exp_iter_for(&mut self, exp_iter_for: ExpIterFor) -> il::PrepareContext<'_> {
         il::PrepareContext {
             arena_mixop: &mut *self.arena_mixop,
             tdenv: self.tdenv,
             layout: &mut *self.layout,
+            exp_iter_for,
         }
     }
 }
@@ -75,12 +83,14 @@ impl Prepare<PrepareContext<'_>> for source::RulePrem {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         // The input hint separates the arguments once, before any call
-        let not_exp = self.not_exp.prepare(&mut ctx.il());
-        let (exps_input, mut exps_output) = input::split(&self.input_hint, not_exp.into_args())
+        let (exps_input, exps_output) = input::split(&self.input_hint, self.not_exp.into_args())
             .expect("input hint must fit relation");
-        // The outputs are patterns the call binds
-        zipper::plan_patterns(&mut exps_output);
-        RulePrem { id: self.id, exps_input, exps_output }
+        RulePrem {
+            id: self.id,
+            exps_input: exps_input.prepare(&mut ctx.il()),
+            // The outputs are patterns the call binds
+            exps_output: exps_output.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
+        }
     }
 }
 
@@ -120,10 +130,13 @@ impl Prepare<PrepareContext<'_>> for source::LetPrem {
     type Output = LetPrem;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        // The left side is a pattern the value binds
-        let mut exp_l = self.exp_l.prepare(&mut ctx.il());
-        zipper::plan_pattern(&mut exp_l);
-        LetPrem { exp_l, exp_r: self.exp_r.prepare(&mut ctx.il()) }
+        LetPrem {
+            // The left side is a pattern the value binds
+            exp_l: self
+                .exp_l
+                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
+            exp_r: self.exp_r.prepare(&mut ctx.il()),
+        }
     }
 }
 
@@ -184,12 +197,12 @@ impl Prepare<PrepareContext<'_>> for source::RuleMatch {
     type Output = RuleMatch;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        // The inputs are patterns the call's arguments bind
-        let mut exps_input = self.exps_input.prepare(&mut ctx.il());
-        zipper::plan_patterns(&mut exps_input);
         RuleMatch {
             exps_signature: self.exps_signature.prepare(&mut ctx.il()),
-            exps_input,
+            // The inputs are patterns the call's arguments bind
+            exps_input: self
+                .exps_input
+                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
             prems: self.prems.prepare(ctx),
         }
     }
@@ -219,9 +232,7 @@ impl Prepare<PrepareContext<'_>> for source::ArgKind {
         match self {
             // An expression argument is a pattern the call's argument binds
             source::ArgKind::Exp(exp) => {
-                let mut exp = exp.prepare(&mut ctx.il());
-                zipper::plan_pattern(&mut exp);
-                ArgKind::Exp(exp)
+                ArgKind::Exp(exp.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)))
             }
             source::ArgKind::Def(id) => {
                 // The parameter holds its function value in a slot

@@ -604,7 +604,7 @@ fn eval_call_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
 
 // - Iteration expression
 
-/// Evaluates an iterated expression as preparation planned it.
+/// Evaluates an iterated expression as preparation chose to run it.
 ///
 /// ```text
 /// with a* = [1, 3] and b* = [2, 4]

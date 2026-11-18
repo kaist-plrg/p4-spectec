@@ -24,7 +24,10 @@ use crate::lang::{
 
 use crate::runtime::{envs::elab::TDEnv, typdef::TypeDef};
 
-use crate::interp::shared::prepare::{Prepare, il, zipper};
+use crate::interp::shared::prepare::{
+    Prepare,
+    il::{self, ExpIterFor},
+};
 
 use super::strip;
 
@@ -51,10 +54,15 @@ impl<'a> PrepareContext<'a> {
     }
 
     fn il(&mut self) -> il::PrepareContext<'_> {
+        self.il_exp_iter_for(ExpIterFor::Eval)
+    }
+
+    fn il_exp_iter_for(&mut self, exp_iter_for: ExpIterFor) -> il::PrepareContext<'_> {
         il::PrepareContext {
             arena_mixop: &mut *self.arena_mixop,
             tdenv: self.tdenv,
             layout: &mut *self.layout,
+            exp_iter_for,
         }
     }
 }
@@ -80,11 +88,9 @@ impl Prepare<PrepareContext<'_>> for pl::Exp {
     }
 }
 
-/// Prepares an expression that a value binds, planning it as a pattern.
+/// Prepares an expression that a value binds, as a pattern.
 fn prepare_pattern(ctx: &mut PrepareContext<'_>, exp: pl::Exp) -> ast::Exp {
-    let mut exp = exp.prepare(ctx);
-    zipper::plan_pattern(&mut exp);
-    exp
+    strip::strip_exp(exp).prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign))
 }
 
 // = Parameters
@@ -380,12 +386,24 @@ impl Prepare<PrepareContext<'_>> for pl::RuleInstr {
     type Output = ast::RuleInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        let mut not_exp = self.not_exp.prepare(ctx);
+        let (mixop, args) = self.not_exp.into_parts();
+        let mixop = mixop.prepare(ctx.arena_mixop);
         // The outputs are patterns the call binds
-        let (_, exps_output) =
-            input::split(&self.input_hint, not_exp.args_mut().iter_mut().collect())
-                .expect("input hint must fit relation");
-        exps_output.into_iter().for_each(zipper::plan_pattern);
+        let (_, idxs_output) = input::split(&self.input_hint, (0..args.len()).collect())
+            .expect("input hint must fit relation");
+        let args = args
+            .into_iter()
+            .enumerate()
+            .map(|(idx, arg)| {
+                if idxs_output.contains(&idx) {
+                    prepare_pattern(ctx, arg)
+                } else {
+                    arg.prepare(ctx)
+                }
+            })
+            .collect();
+        let not_exp =
+            flat::Mixfix::new(ctx.arena_mixop, mixop, args).expect("a mixfix fills every position");
         ast::RuleInstr {
             id: self.id,
             not_exp,
@@ -502,13 +520,15 @@ impl Prepare<PrepareContext<'_>> for pl::DefinedRel {
     type Output = ast::DefinedRel;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        // The inputs are patterns the call's arguments bind
-        let mut exps_input = self.exps_input.prepare(ctx);
-        zipper::plan_patterns(&mut exps_input);
         ast::DefinedRel {
             id: self.id,
             rel_signature: self.rel_signature,
-            exps_input,
+            // The inputs are patterns the call's arguments bind
+            exps_input: self
+                .exps_input
+                .into_iter()
+                .map(|exp| prepare_pattern(ctx, exp))
+                .collect(),
             block: self.block.prepare(ctx),
             block_else_opt: self.block_else_opt.prepare(ctx),
         }
