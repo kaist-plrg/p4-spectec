@@ -146,11 +146,7 @@ impl Prepare<PrepareContext<'_>> for source::InstrKind {
             source::InstrKind::Case(instr) => ast::InstrKind::Case(instr.prepare(ctx)),
             source::InstrKind::Group(instr) => ast::InstrKind::Group(instr.prepare(ctx)),
             source::InstrKind::Let(instr) => ast::InstrKind::Let(instr.prepare(ctx)),
-            // A call whose sole continuation returns its outputs concludes in their place
-            source::InstrKind::Rule(instr) if ctx.tco && instr.is_tail_call(ctx.pos) => {
-                ast::InstrKind::Result(ast::ResultInstr::Tail(instr.prepare_tail(ctx)))
-            }
-            source::InstrKind::Rule(instr) => ast::InstrKind::Rule(instr.prepare(ctx)),
+            source::InstrKind::Rule(instr) => instr.prepare(ctx),
             source::InstrKind::Result(instr) => ast::InstrKind::Result(instr.prepare(ctx)),
             source::InstrKind::Return(instr) => ast::InstrKind::Return(instr.prepare(ctx)),
             source::InstrKind::Debug(instr) => ast::InstrKind::Debug(instr.prepare(ctx)),
@@ -245,31 +241,30 @@ impl Prepare<PrepareContext<'_>> for source::LetInstr {
 // - Rule instruction
 
 impl Prepare<PrepareContext<'_>> for source::RuleInstr {
-    type Output = ast::RuleInstr;
+    /// A call, or the result that makes it in place of the relation.
+    type Output = ast::InstrKind;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        // The call retains output binding, iterations, and the continuation
+        // Compare source expressions before their mixops become arena handles
+        let tail = ctx.tco && self.is_tail_call(ctx.pos);
         let (exps_input, exps_output) = input::split(&self.input_hint, self.not_exp.into_args())
             .expect("input hint must fit relation");
-        ast::RuleInstr {
-            id: self.id,
-            exps_input: exps_input.prepare(&mut ctx.il()),
-            // The outputs are patterns the call binds
-            exps_output: exps_output.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
-            iter_instrs: self.iter_instrs.prepare(&mut ctx.il()),
-            block: self.block.prepare(ctx),
+        let exps_input = exps_input.prepare(&mut ctx.il());
+        // A call whose sole continuation returns its outputs concludes in their place
+        if tail {
+            let call = ast::TailRel { id: self.id, exps_input };
+            return ast::InstrKind::Result(ast::ResultInstr::Tail(call));
         }
+        // Otherwise the call binds its outputs as patterns and runs its continuation
+        let exps_output = exps_output.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+        let iter_instrs = self.iter_instrs.prepare(&mut ctx.il());
+        let block = self.block.prepare(ctx);
+        let instr = ast::RuleInstr { id: self.id, exps_input, exps_output, iter_instrs, block };
+        ast::InstrKind::Rule(instr)
     }
 }
 
 impl source::RuleInstr {
-    /// Prepares the call as a tail call, dropping the result that returns its outputs.
-    fn prepare_tail(self, ctx: &mut PrepareContext<'_>) -> ast::TailRel {
-        let (exps_input, _) = input::split(&self.input_hint, self.not_exp.into_args())
-            .expect("input hint must fit relation");
-        ast::TailRel { id: self.id, exps_input: exps_input.prepare(&mut ctx.il()) }
-    }
-
     /// Checks tail position and whether the sole continuation returns the outputs.
     fn is_tail_call(&self, pos: Position) -> bool {
         // Non-tail positions and iterated calls must retain their continuation
