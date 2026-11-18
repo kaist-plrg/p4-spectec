@@ -2,10 +2,15 @@
 //!
 //! `eval_group_block` executes a rule group or function body;
 //! `eval_dispatch_block` selects relation groups through routing instructions.
-//! `eval_block` isolates bindings; `eval_alternatives` selects conclusions.
+//! `eval_block` threads bindings; `eval_alternatives` selects conclusions.
 //! Blocks run sequentially; alternatives delegate selection to `pl::flow`.
-//! `eval_instr` propagates failures to the enclosing block or invocation.
-//! Expression and assignment adapters remove hints before shared evaluation.
+//!
+//! A nested block borrows the enclosing bindings and copies them only to bind,
+//! unless nothing reads them after it: the last instruction of a block,
+//! the last alternative, and a callable body without an otherwise block
+//! own the bindings and extend them in place.
+
+use std::borrow::Cow;
 
 use crate::lang::{
     common::source::Span,
@@ -40,55 +45,128 @@ use super::{
     expr::{eval_exp, eval_exps},
 };
 
+// = Block bindings
+
+/// The bindings of a running block, as one of its instructions sees them.
+///
+/// A binding instruction takes them and extends them for the rest of the block.
+/// Any other instruction reads them, and lends them to its nested blocks;
+/// the last instruction hands them over instead, since the block ends with it.
+pub(super) struct BlockContext<'ctx, 'global> {
+    /// The bindings, absent once handed over.
+    ctx: Option<Cow<'ctx, Context<'global>>>,
+    /// Whether the instruction is the last of its block.
+    last: bool,
+}
+
+impl<'global> BlockContext<'_, 'global> {
+    fn get(&self) -> &Context<'global> {
+        self.ctx
+            .as_deref()
+            .expect("block bindings are present until handed over")
+    }
+
+    /// Lends the bindings to a nested block; the last instruction hands them over.
+    fn pass(&mut self) -> Cow<'_, Context<'global>> {
+        if self.last {
+            self.ctx
+                .take()
+                .expect("block bindings are handed over once")
+        } else {
+            Cow::Borrowed(self.get())
+        }
+    }
+
+    /// Extends the bindings for the rest of the block, copying borrowed ones first.
+    fn bind(
+        &mut self,
+        bind: impl FnOnce(Context<'global>) -> Backtrack<Context<'global>>,
+    ) -> Backtrack<()> {
+        let ctx = self
+            .ctx
+            .take()
+            .expect("block bindings are present until handed over");
+        let ctx = unwrap!(bind(ctx.into_owned()));
+        self.ctx = Some(Cow::Owned(ctx));
+        ok!(())
+    }
+}
+
 // = Block evaluation
 
-/// Runs instructions sequentially, restoring bindings at the block boundary.
+/// Runs instructions sequentially, threading each one's bindings to the next.
 pub(super) fn eval_block<'global, 'instr, Tier: 'instr, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: Cow<'_, Context<'global>>,
     mut evaluate: impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
+        &mut BlockContext<'_, 'global>,
         &ast::Instr<Tier>,
-    ) -> Backtrack<(Context<'global>, Flow)>,
+    ) -> Backtrack<Flow>,
     instrs: impl IntoIterator<Item = &'instr ast::Instr<Tier>>,
-) -> Backtrack<(Context<'global>, Flow)> {
-    // Assignments extend this block, not its enclosing scope
-    let mut ctx_local = ctx.clone();
+) -> Backtrack<Flow> {
+    let mut ctx = BlockContext { ctx: Some(ctx), last: false };
     let mut errors = Vec::new();
-    // Pass each instruction's bindings to the next
-    for instr in instrs {
-        let (ctx_post, flow) = unwrap!(evaluate(runner_ctx, ctx_local, instr));
-        ctx_local = ctx_post;
-        match flow {
+    let mut instrs = instrs.into_iter().peekable();
+    while let Some(instr) = instrs.next() {
+        // The last instruction may take the bindings
+        ctx.last = instrs.peek().is_none();
+        match unwrap!(evaluate(runner_ctx, &mut ctx, instr)) {
             // Continue with the most specific failure so far
             Flow::Cont(errors_post) => {
                 flow::retain_deepest_errors(&mut errors, errors_post);
             }
             // A conclusion ends this execution path
-            flow => return ok!((ctx, flow)),
+            flow => return ok!(flow),
         }
     }
-    // Leaving the block restores the enclosing bindings
-    ok!((ctx, Flow::Cont(errors)))
+    ok!(Flow::Cont(errors))
 }
 
-/// Runs a group body in its own local scope.
+/// Runs a group body.
 pub(super) fn eval_group_block<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: Cow<'_, Context<'global>>,
     block: &ast::GroupBlock,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     eval_block(runner_ctx, ctx, eval_group_instr, &block.instrs)
 }
 
-/// Runs relation routing in its own local scope.
+/// Runs relation routing.
 pub(super) fn eval_dispatch_block<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: Cow<'_, Context<'global>>,
     block: &ast::DispatchBlock,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     eval_block(runner_ctx, ctx, eval_dispatch_instr, &block.instrs)
+}
+
+/// Runs a callable body; if it falls through, runs the otherwise block instead.
+///
+/// The otherwise block starts from the same input bindings,
+/// so the body borrows them only when an otherwise block follows.
+pub(super) fn eval_block_with_else<'global, Block, Iface: Interface, Ext: Extern>(
+    runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
+    ctx: Context<'global>,
+    block: &Block,
+    block_else: Option<&Block>,
+    mut evaluate: impl FnMut(
+        &mut RunnerContext<'_, PlInterp, Iface, Ext>,
+        Cow<'_, Context<'global>>,
+        &Block,
+    ) -> Backtrack<Flow>,
+) -> Backtrack<Flow> {
+    // Without an otherwise block the body owns the bindings
+    let Some(block_else) = block_else else {
+        return Flow::cont_from_unmatch(evaluate(runner_ctx, Cow::Owned(ctx), block));
+    };
+    // A recoverable mismatch in the body permits the otherwise block
+    let flow = unwrap!(Flow::cont_from_unmatch(evaluate(runner_ctx, Cow::Borrowed(&ctx), block)));
+    if matches!(flow, Flow::Cont(_)) {
+        evaluate(runner_ctx, Cow::Owned(ctx), block_else)
+    } else {
+        ok!(flow)
+    }
 }
 
 // - Alternative selection
@@ -96,29 +174,38 @@ pub(super) fn eval_dispatch_block<'global, Iface: Interface, Ext: Extern>(
 /// Chooses between isolated alternatives in either execution mode.
 fn eval_alternatives<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: Cow<'_, Context<'global>>,
     mut evaluate: impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
+        Cow<'_, Context<'global>>,
         &ast::Block<Tier>,
-    ) -> Backtrack<(Context<'global>, Flow)>,
+    ) -> Backtrack<Flow>,
     blocks: &[ast::Block<Tier>],
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     let det = runner_ctx.interp().config.det;
-    // Every alternative starts from the enclosing bindings
-    let mut eval = |block| {
-        let (_, flow) = unwrap!(evaluate(runner_ctx, ctx.clone(), block));
-        ok!(flow)
+    // Every alternative starts from the enclosing bindings; the last one takes them
+    let mut ctx = Some(ctx);
+    let mut eval = |(idx, block): (usize, &ast::Block<Tier>)| {
+        let ctx = if idx + 1 == blocks.len() {
+            ctx.take()
+                .expect("the last alternative takes the bindings once")
+        } else {
+            Cow::Borrowed(
+                ctx.as_deref()
+                    .expect("bindings are present until the last alternative"),
+            )
+        };
+        evaluate(runner_ctx, ctx, block)
     };
-    let flow = if det {
+    if det {
         // Deterministic choice checks alternatives for conflicting conclusions
-        unwrap!(flow::choose_deterministic(blocks, eval))
+        flow::choose_deterministic(blocks.iter().enumerate(), eval)
     } else {
         // A mismatch ends this alternative, but permits trying the next one
-        unwrap!(flow::choose_sequential(blocks, |block| { Flow::cont_from_unmatch(eval(block)) }))
-    };
-    // Local alternative bindings never escape
-    ok!((ctx, flow))
+        flow::choose_sequential(blocks.iter().enumerate(), |candidate| {
+            Flow::cont_from_unmatch(eval(candidate))
+        })
+    }
 }
 
 // = Instruction evaluation
@@ -126,19 +213,19 @@ fn eval_alternatives<'global, Tier, Iface: Interface, Ext: Extern>(
 /// Evaluates one instruction, returning any failure unchanged.
 fn eval_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     eval_tier: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
+        &mut BlockContext<'_, 'global>,
         &Tier,
-    ) -> Backtrack<(Context<'global>, Flow)>,
+    ) -> Backtrack<Flow>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
+        Cow<'_, Context<'global>>,
         &ast::Block<Tier>,
-    ) -> Backtrack<(Context<'global>, Flow)>,
+    ) -> Backtrack<Flow>,
     instr: &ast::Instr<Tier>,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     // Grow the stack for deep blocks
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || match &instr.node.node {
         ast::InstrKind::If(instr) => eval_if_instr(runner_ctx, ctx, evaluate_block, instr),
@@ -161,9 +248,9 @@ fn eval_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 /// Evaluates one group instruction.
 pub(super) fn eval_group_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     instr: &ast::Instr<ast::GroupInstr>,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     eval_instr(
         runner_ctx,
         ctx,
@@ -175,10 +262,10 @@ pub(super) fn eval_group_instr<'global, Iface: Interface, Ext: Extern>(
 
 fn eval_group_tier<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     span: &Span,
     tier: &ast::GroupInstr,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     match tier {
         ast::GroupInstr::Result(instr) => eval_result_instr(runner_ctx, ctx, span, instr),
         ast::GroupInstr::Return(instr) => eval_return_instr(runner_ctx, ctx, span, instr),
@@ -190,17 +277,17 @@ fn eval_group_tier<'global, Iface: Interface, Ext: Extern>(
 /// Evaluates one dispatch instruction.
 fn eval_dispatch_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     instr: &ast::Instr<ast::DispatchInstr>,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     eval_instr(runner_ctx, ctx, &mut eval_dispatch_tier, &mut eval_dispatch_block, instr)
 }
 
 fn eval_dispatch_tier<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     tier: &ast::DispatchInstr,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     match tier {
         ast::DispatchInstr::Group(instr) => eval_rule_group_instr(runner_ctx, ctx, instr),
         ast::DispatchInstr::Route(instr) => eval_route_instr(runner_ctx, ctx, instr),
@@ -212,14 +299,14 @@ fn eval_dispatch_tier<'global, Iface: Interface, Ext: Extern>(
 /// Evaluates the if condition and its nested block.
 fn eval_if_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
+        Cow<'_, Context<'global>>,
         &ast::Block<Tier>,
-    ) -> Backtrack<(Context<'global>, Flow)>,
+    ) -> Backtrack<Flow>,
     instr: &ast::IfInstr<Tier>,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     eval_condition(runner_ctx, ctx, evaluate_block, &instr.exp, &instr.iter_exps, &instr.block)
 }
 
@@ -228,36 +315,35 @@ fn eval_if_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 /// Tests and narrows the scrutinee once, keeping its binding inside the body.
 fn eval_if_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
+        Cow<'_, Context<'global>>,
         &ast::Block<Tier>,
-    ) -> Backtrack<(Context<'global>, Flow)>,
+    ) -> Backtrack<Flow>,
     instr: &ast::IfLetSubInstr<Tier>,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     // Test the original value before narrowing it for the binding
-    let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
+    let value = unwrap!(eval_exp(runner_ctx, ctx.get(), &instr.exp_r));
     let ast::SubBind { typ, subcheck } = &instr.target;
-    if !unwrap!(ops::sub(runner_ctx.arena(), &ctx, &instr.exp_r.span, subcheck, value)) {
+    if !unwrap!(ops::sub(runner_ctx.arena(), ctx.get(), &instr.exp_r.span, subcheck, value)) {
         let text = format!(
             "({} has type {})",
             instr.exp_r.view(&runner_ctx.arena().mixop).to_string(),
             typ.to_string()
         );
-        return ok!((ctx, Flow::cont(instr.exp_r.span, error::prem::condition_unmet(text))));
+        return ok!(Flow::cont(instr.exp_r.span, error::prem::condition_unmet(text)));
     }
     // Same-type bindings do not introduce an otherwise absent cast
     let value = if instr.exp_r.note.as_ref().syntax_eq(&typ.node) {
         value
     } else {
-        unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, typ, value))
+        unwrap!(ops::cast_down(runner_ctx.arena_mut(), ctx.get(), typ, value))
     };
-    // Restore the enclosing bindings when the selected body finishes
-    let mut ctx_local = ctx.clone();
-    unwrap!(assign::assign_exp(runner_ctx.arena_mut(), &mut ctx_local, &instr.exp_l, value));
-    let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_local, &instr.block));
-    ok!((ctx, flow))
+    // The binding stays inside the body
+    let mut ctx_local = ctx.pass();
+    unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx_local.to_mut(), &instr.exp_l, value));
+    evaluate_block(runner_ctx, ctx_local, &instr.block)
 }
 
 // - Pattern binding instruction
@@ -265,29 +351,28 @@ fn eval_if_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 /// Tests the scrutinee once and runs the body with its pattern bindings.
 fn eval_if_let_match_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
+        Cow<'_, Context<'global>>,
         &ast::Block<Tier>,
-    ) -> Backtrack<(Context<'global>, Flow)>,
+    ) -> Backtrack<Flow>,
     instr: &ast::IfLetMatchInstr<Tier>,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     // Evaluate and test before introducing local bindings
-    let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
+    let value = unwrap!(eval_exp(runner_ctx, ctx.get(), &instr.exp_r));
     if !ops::r#match(runner_ctx.arena(), &instr.pattern, value) {
         let text = format!(
             "({} matches pattern {})",
             instr.exp_r.view(&runner_ctx.arena().mixop).to_string(),
             instr.pattern.view(&runner_ctx.arena().mixop).to_string()
         );
-        return ok!((ctx, Flow::cont(instr.exp_r.span, error::prem::condition_unmet(text))));
+        return ok!(Flow::cont(instr.exp_r.span, error::prem::condition_unmet(text)));
     }
     // Binding and body failures propagate after the condition succeeds
-    let mut ctx_local = ctx.clone();
-    unwrap!(assign::assign_exp(runner_ctx.arena_mut(), &mut ctx_local, &instr.exp_l, value));
-    let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_local, &instr.block));
-    ok!((ctx, flow))
+    let mut ctx_local = ctx.pass();
+    unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx_local.to_mut(), &instr.exp_l, value));
+    evaluate_block(runner_ctx, ctx_local, &instr.block)
 }
 
 // - Check instruction
@@ -295,14 +380,14 @@ fn eval_if_let_match_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 /// Evaluates the check condition and its nested block.
 fn eval_check_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
+        Cow<'_, Context<'global>>,
         &ast::Block<Tier>,
-    ) -> Backtrack<(Context<'global>, Flow)>,
+    ) -> Backtrack<Flow>,
     instr: &ast::CheckInstr<Tier>,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     eval_condition(runner_ctx, ctx, evaluate_block, &instr.exp, &instr.iter_exps, &instr.block)
 }
 
@@ -311,31 +396,28 @@ fn eval_check_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 /// Runs the block when the condition holds under its iterations.
 fn eval_condition<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
+        Cow<'_, Context<'global>>,
         &ast::Block<Tier>,
-    ) -> Backtrack<(Context<'global>, Flow)>,
+    ) -> Backtrack<Flow>,
     exp: &ast::Exp,
     iter_exps: &[ast::CondIter],
     block: &ast::Block<Tier>,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     // Test the condition across all enclosing iterations
-    let cond = unwrap!(eval_cond_iter(runner_ctx, &ctx, iter_exps, &mut |runner_ctx, ctx| {
+    let cond = unwrap!(eval_cond_iter(runner_ctx, ctx.get(), iter_exps, &mut |runner_ctx, ctx| {
         let value = unwrap!(eval_exp(runner_ctx, ctx, exp));
         ok!(value::get::bool(runner_ctx.arena(), &value).expect("condition must be a boolean"))
     }));
     // Run the block, or fall through recording the failed condition
     if cond {
-        evaluate_block(runner_ctx, ctx, block)
+        evaluate_block(runner_ctx, ctx.pass(), block)
     } else {
-        ok!((
-            ctx,
-            Flow::cont(
-                exp.span,
-                error::prem::condition_unmet(exp.view(&runner_ctx.arena().mixop).to_string())
-            )
+        ok!(Flow::cont(
+            exp.span,
+            error::prem::condition_unmet(exp.view(&runner_ctx.arena().mixop).to_string())
         ))
     }
 }
@@ -345,18 +427,18 @@ fn eval_condition<'global, Tier, Iface: Interface, Ext: Extern>(
 /// Runs the branch for whether the relation applies; a missing one continues.
 fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
+        Cow<'_, Context<'global>>,
         &ast::Block<Tier>,
-    ) -> Backtrack<(Context<'global>, Flow)>,
+    ) -> Backtrack<Flow>,
     instr: &ast::HoldInstr<Tier>,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     // Keep the first failed relation call under the condition
     let mut errors = Vec::new();
     let cond =
-        unwrap!(eval_cond_iter(runner_ctx, &ctx, &instr.iter_exps, &mut |runner_ctx, ctx| {
+        unwrap!(eval_cond_iter(runner_ctx, ctx.get(), &instr.iter_exps, &mut |runner_ctx, ctx| {
             let values = unwrap!(eval_exps(runner_ctx, ctx, instr.not_exp.args()));
             match PlInterp::invoke_rel(runner_ctx, ctx, &instr.id, &values) {
                 // A match means it holds
@@ -373,27 +455,24 @@ fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     match &instr.hold_case {
         // Both branches present: pick by the outcome
         ast::HoldCase::Both(block_hold, block_not) => {
-            evaluate_block(runner_ctx, ctx, if cond { block_hold } else { block_not })
+            evaluate_block(runner_ctx, ctx.pass(), if cond { block_hold } else { block_not })
         }
         // Only the matching branch present: run it
-        ast::HoldCase::Hold(block, _) if cond => evaluate_block(runner_ctx, ctx, block),
+        ast::HoldCase::Hold(block, _) if cond => evaluate_block(runner_ctx, ctx.pass(), block),
         // Likewise for the not-hold branch
-        ast::HoldCase::NotHold(block, _) if !cond => evaluate_block(runner_ctx, ctx, block),
+        ast::HoldCase::NotHold(block, _) if !cond => evaluate_block(runner_ctx, ctx.pass(), block),
         // A failed hold condition retains its relation failure
         ast::HoldCase::Hold(..) => {
             let diagnostic = error::prem::hold_condition_unmet(instr.id.node.to_string());
             let report = Report::from(diagnostic)
                 .with_span(&instr.id.span)
                 .with_children(errors);
-            ok!((ctx, Flow::Cont(vec![report])))
+            ok!(Flow::Cont(vec![report]))
         }
         // A failed not-hold condition has no inner failure
-        ast::HoldCase::NotHold(..) => ok!((
-            ctx,
-            Flow::cont(
-                instr.id.span,
-                error::prem::not_hold_condition_unmet(instr.id.node.to_string()),
-            )
+        ast::HoldCase::NotHold(..) => ok!(Flow::cont(
+            instr.id.span,
+            error::prem::not_hold_condition_unmet(instr.id.node.to_string()),
         )),
     }
 }
@@ -403,31 +482,36 @@ fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 /// Runs the first matching case with its body bindings kept local.
 fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
+        Cow<'_, Context<'global>>,
         &ast::Block<Tier>,
-    ) -> Backtrack<(Context<'global>, Flow)>,
+    ) -> Backtrack<Flow>,
     instr: &ast::CaseInstr<Tier>,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     // Evaluate the scrutinee once
-    let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
+    let value = unwrap!(eval_exp(runner_ctx, ctx.get(), &instr.exp));
     // Try guards in source order from the enclosing bindings
     for case in &instr.cases {
-        if unwrap!(eval_guard(runner_ctx, &ctx, value, &case.guard)) {
+        if unwrap!(eval_guard(runner_ctx, ctx.get(), value, &case.guard)) {
             // Commit to the accepted guard before assigning its local binding
-            let mut ctx_local = ctx.clone();
+            let mut ctx_local = ctx.pass();
             match &case.guard {
                 ast::Guard::LetSub(ast::SubBind { typ, .. }, exp_l) => {
                     let value = if instr.exp.note.as_ref().syntax_eq(&typ.node) {
                         value
                     } else {
-                        unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, typ, value))
+                        unwrap!(ops::cast_down(
+                            runner_ctx.arena_mut(),
+                            ctx_local.as_ref(),
+                            typ,
+                            value
+                        ))
                     };
                     unwrap!(assign::assign_exp(
                         runner_ctx.arena_mut(),
-                        &mut ctx_local,
+                        ctx_local.to_mut(),
                         exp_l,
                         value
                     ));
@@ -435,7 +519,7 @@ fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
                 ast::Guard::LetMatch(_, exp_l) => {
                     unwrap!(assign::assign_exp(
                         runner_ctx.arena_mut(),
-                        &mut ctx_local,
+                        ctx_local.to_mut(),
                         exp_l,
                         value
                     ));
@@ -443,17 +527,13 @@ fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
                 _ => {}
             }
             // Keep body bindings inside the selected case
-            let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_local, &case.block));
-            return ok!((ctx, flow));
+            return evaluate_block(runner_ctx, ctx_local, &case.block);
         }
     }
     // No guard accepted: fall through
-    ok!((
-        ctx,
-        Flow::cont(
-            instr.exp.span,
-            error::prem::condition_unmet(instr.exp.view(&runner_ctx.arena().mixop).to_string())
-        )
+    ok!(Flow::cont(
+        instr.exp.span,
+        error::prem::condition_unmet(instr.exp.view(&runner_ctx.arena().mixop).to_string())
     ))
 }
 
@@ -495,11 +575,11 @@ fn eval_guard<'global, Iface: Interface, Ext: Extern>(
 /// Assigns under the binding iterators and continues with the new bindings.
 fn eval_let_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     instr: &ast::LetInstr,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     // Extend the current block with bindings from each iteration
-    let ctx = unwrap!(eval_instr_iter(
+    unwrap!(ctx.bind(|ctx| eval_instr_iter(
         runner_ctx,
         ctx,
         &instr.iter_instrs,
@@ -508,8 +588,8 @@ fn eval_let_instr<'global, Iface: Interface, Ext: Extern>(
             unwrap!(assign::assign_exp(runner_ctx.arena_mut(), &mut ctx, &instr.exp_l, value));
             ok!(ctx)
         }
-    ));
-    ok!((ctx, Flow::Cont(vec![])))
+    )));
+    ok!(Flow::Cont(vec![]))
 }
 
 // - Rule instruction
@@ -517,11 +597,11 @@ fn eval_let_instr<'global, Iface: Interface, Ext: Extern>(
 /// Calls the relation and binds its outputs under the binding iterators.
 fn eval_rule_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     instr: &ast::RuleInstr,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     // Invoke the relation at each enclosing iteration
-    let ctx = unwrap!(eval_instr_iter(
+    unwrap!(ctx.bind(|ctx| eval_instr_iter(
         runner_ctx,
         ctx,
         &instr.iter_instrs,
@@ -537,8 +617,8 @@ fn eval_rule_instr<'global, Iface: Interface, Ext: Extern>(
             ));
             ok!(ctx)
         }
-    ));
-    ok!((ctx, Flow::Cont(vec![])))
+    )));
+    ok!(Flow::Cont(vec![]))
 }
 
 // - Result instruction
@@ -546,12 +626,12 @@ fn eval_rule_instr<'global, Iface: Interface, Ext: Extern>(
 /// Evaluates the outputs and finishes the relation.
 fn eval_result_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     span: &Span,
     instr: &ast::ResultInstr,
-) -> Backtrack<(Context<'global>, Flow)> {
-    let values = unwrap!(eval_exps(runner_ctx, &ctx, &instr.exps_output));
-    ok!((ctx, Flow::Result(phrase!(node: values, span: *span))))
+) -> Backtrack<Flow> {
+    let values = unwrap!(eval_exps(runner_ctx, ctx.get(), &instr.exps_output));
+    ok!(Flow::Result(phrase!(node: values, span: *span)))
 }
 
 // - Return instruction
@@ -559,12 +639,12 @@ fn eval_result_instr<'global, Iface: Interface, Ext: Extern>(
 /// Evaluates the value and finishes the function.
 fn eval_return_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     span: &Span,
     instr: &ast::ReturnInstr,
-) -> Backtrack<(Context<'global>, Flow)> {
-    let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
-    ok!((ctx, Flow::Return(phrase!(node: value, span: *span))))
+) -> Backtrack<Flow> {
+    let value = unwrap!(eval_exp(runner_ctx, ctx.get(), &instr.exp));
+    ok!(Flow::Return(phrase!(node: value, span: *span)))
 }
 
 // - Debug instruction
@@ -572,14 +652,14 @@ fn eval_return_instr<'global, Iface: Interface, Ext: Extern>(
 /// Prints the expression value and continues with the current bindings.
 fn eval_debug_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     instr: &ast::DebugInstr,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     // Evaluate before printing so expression failures keep their trace
-    let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
+    let value = unwrap!(eval_exp(runner_ctx, ctx.get(), &instr.exp));
     runner_ctx.record_effect(crate::runner::SideEffect::Impure);
     println!("{}", value.view(runner_ctx.arena()).to_string());
-    ok!((ctx, Flow::Cont(vec![])))
+    ok!(Flow::Cont(vec![]))
 }
 
 // - Destruct instruction
@@ -587,11 +667,11 @@ fn eval_debug_instr<'global, Iface: Interface, Ext: Extern>(
 /// Binds the fields of a case value and continues with the new bindings.
 fn eval_destruct_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    mut ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     instr: &ast::DestructInstr,
-) -> Backtrack<(Context<'global>, Flow)> {
+) -> Backtrack<Flow> {
     // Extract fields before mutating the arena during assignment
-    let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
+    let value = unwrap!(eval_exp(runner_ctx, ctx.get(), &instr.exp));
     let value_case =
         value::get::case(runner_ctx.arena(), &value).expect("destructuring value must be a case");
     let values = value_case.args().to_vec();
@@ -601,8 +681,11 @@ fn eval_destruct_instr<'global, Iface: Interface, Ext: Extern>(
         .map(|(_, exp)| exp)
         .collect::<Vec<_>>();
     // Bind each extracted field to its pattern
-    unwrap!(assign::assign_exps(runner_ctx.arena_mut(), &mut ctx, &exps, &values));
-    ok!((ctx, Flow::Cont(vec![])))
+    unwrap!(ctx.bind(|mut ctx| {
+        unwrap!(assign::assign_exps(runner_ctx.arena_mut(), &mut ctx, &exps, &values));
+        ok!(ctx)
+    }));
+    ok!(Flow::Cont(vec![]))
 }
 
 // - Backtrack instruction
@@ -610,10 +693,10 @@ fn eval_destruct_instr<'global, Iface: Interface, Ext: Extern>(
 /// Chooses a conclusion from isolated group-body alternatives.
 fn eval_backtrack_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     instr: &ast::BacktrackInstr,
-) -> Backtrack<(Context<'global>, Flow)> {
-    eval_alternatives(runner_ctx, ctx, eval_group_block, &instr.blocks)
+) -> Backtrack<Flow> {
+    eval_alternatives(runner_ctx, ctx.pass(), eval_group_block, &instr.blocks)
 }
 
 // - Rule group instruction
@@ -621,10 +704,10 @@ fn eval_backtrack_instr<'global, Iface: Interface, Ext: Extern>(
 /// Runs a relation group in its own local scope.
 fn eval_rule_group_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     instr: &ast::RuleGroupInstr,
-) -> Backtrack<(Context<'global>, Flow)> {
-    eval_group_block(runner_ctx, ctx, &instr.block)
+) -> Backtrack<Flow> {
+    eval_group_block(runner_ctx, ctx.pass(), &instr.block)
 }
 
 // - Route instruction
@@ -632,10 +715,10 @@ fn eval_rule_group_instr<'global, Iface: Interface, Ext: Extern>(
 /// Chooses a conclusion from isolated dispatch alternatives.
 fn eval_route_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &mut BlockContext<'_, 'global>,
     instr: &ast::RouteInstr,
-) -> Backtrack<(Context<'global>, Flow)> {
-    eval_alternatives(runner_ctx, ctx, eval_dispatch_block, &instr.blocks)
+) -> Backtrack<Flow> {
+    eval_alternatives(runner_ctx, ctx.pass(), eval_dispatch_block, &instr.blocks)
 }
 
 // = Iteration

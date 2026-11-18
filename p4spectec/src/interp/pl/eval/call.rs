@@ -6,7 +6,7 @@
 //! Only pure results are memoized; failures retain their invocation trace.
 //! With `guard` enabled, host outputs and public inputs are type-checked.
 
-use std::rc::Rc;
+use std::{borrow::Cow, rc::Rc};
 
 use crate::lang::{
     data::{arena::Arena, frame::FrameLayout, value::flat::Value},
@@ -22,7 +22,7 @@ use crate::runtime::ops::{typ, value};
 use crate::runner::{Extern, Interface, RunnerContext, SideEffect};
 
 use crate::interp::shared::{
-    backtrack::{self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
+    backtrack::{self, Backtrack, WithFrame, ok, unmatch, unwrap, unwrap_from_result},
     cache::CallKey,
     context::ReadContext,
     error,
@@ -33,7 +33,9 @@ use crate::interp::pl::{PlInterp, context::Context, flow::Flow};
 
 use super::{
     assign::{assign_exps, assign_params},
-    instr::{eval_block, eval_dispatch_block, eval_group_block, eval_group_instr},
+    instr::{
+        eval_block, eval_block_with_else, eval_dispatch_block, eval_group_block, eval_group_instr,
+    },
 };
 
 // = Input and output checks
@@ -263,21 +265,14 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
     // Inputs bind into a fresh frame
     let mut ctx_local = ctx.localize_with_layout(layout);
     unwrap!(assign_exps(runner_ctx.arena_mut(), &mut ctx_local, &rel.exps_input, values));
-    // Run the body, retaining recoverable mismatches as continuations
-    let mut flow = match eval_dispatch_block(runner_ctx, ctx_local.clone(), &rel.block) {
-        // A completed block reports its own conclusion or continuation
-        ok!((_, flow)) => flow,
-        // A recoverable mismatch permits the otherwise block
-        unmatch!(errors) => Flow::Cont(errors),
-        // A fatal error aborts the call
-        fatal!(errors) => return fatal!(errors),
-    };
-    // Try the otherwise block from the original input bindings
-    if matches!(flow, Flow::Cont(_))
-        && let Some(block) = &rel.block_else_opt
-    {
-        flow = unwrap!(eval_dispatch_block(runner_ctx, ctx_local, block)).1;
-    }
+    // Run the body, falling back to the otherwise block
+    let flow = unwrap!(eval_block_with_else(
+        runner_ctx,
+        ctx_local,
+        &rel.block,
+        rel.block_else_opt.as_ref(),
+        eval_dispatch_block
+    ));
     match flow {
         // Results finish the relation
         Flow::Result(values) => ok!(values.node),
@@ -422,7 +417,7 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     unwrap!(assign_params(runner_ctx.arena_mut(), &mut ctx_local, &func.params, values));
     // Table rows stay sequential and borrow their instructions
     let instrs = func.rows.iter().flat_map(|row| &row.block.instrs);
-    let (_, flow) = unwrap!(eval_block(runner_ctx, ctx_local, eval_group_instr, instrs));
+    let flow = unwrap!(eval_block(runner_ctx, Cow::Owned(ctx_local), eval_group_instr, instrs));
     match flow {
         // The first return is the table result
         Flow::Return(value) => ok!(value.node),
@@ -450,21 +445,14 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
         unwrap!(assign_tparams(ctx.localize_with_layout(layout), &func.tparams, targs, &id.span));
     // Bind parameters after their type arguments are in scope
     unwrap!(assign_params(runner_ctx.arena_mut(), &mut ctx_local, &func.params, values));
-    // Run the body, retaining recoverable mismatches as continuations
-    let mut flow = match eval_group_block(runner_ctx, ctx_local.clone(), &func.block) {
-        // A completed block reports its own conclusion or continuation
-        ok!((_, flow)) => flow,
-        // A recoverable mismatch permits the otherwise block
-        unmatch!(errors) => Flow::Cont(errors),
-        // A fatal error aborts the call
-        fatal!(errors) => return fatal!(errors),
-    };
-    // Try the otherwise block from the original input bindings
-    if matches!(flow, Flow::Cont(_))
-        && let Some(block) = &func.block_else_opt
-    {
-        flow = unwrap!(eval_group_block(runner_ctx, ctx_local, block)).1;
-    }
+    // Run the body, falling back to the otherwise block
+    let flow = unwrap!(eval_block_with_else(
+        runner_ctx,
+        ctx_local,
+        &func.block,
+        func.block_else_opt.as_ref(),
+        eval_group_block
+    ));
     match flow {
         // Returns finish the function
         Flow::Return(value) => ok!(value.node),
