@@ -50,9 +50,9 @@ pub enum ExpIter {
     /// Reads or binds an iterated variable whole: `x*`, `x**`.
     Whole { iter: Iter, var: Var },
     /// Splits each element of a list into its variables: `(a, b)* <- xs`.
-    Split { decomp: Decomp, vars: Vec<Var> },
+    ListSplit { decomp: Decomp, vars: Vec<Var> },
     /// Joins the variables into each element of a list: `(b, a)*`.
-    Join { comp: Comp, vars: Vec<Var> },
+    ListJoin { comp: Comp, vars: Vec<Var> },
 }
 
 // - Paths

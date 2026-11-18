@@ -252,11 +252,11 @@ fn assign_iter_exp<Ctx: WriteContext>(
             ok!(())
         }
         // A list pattern that only selects children splits each element
-        ast::ExpIter::Split { decomp, vars } => {
-            assign_iter_exp_split(arena, ctx, exp, decomp, vars, value)
+        ast::ExpIter::ListSplit { decomp, vars } => {
+            assign_iter_list_exp_split(arena, ctx, exp, decomp, vars, value)
         }
         // Only evaluated expressions join
-        ast::ExpIter::Join { .. } => unreachable!("assigned iteration must not join"),
+        ast::ExpIter::ListJoin { .. } => unreachable!("assigned iteration must not join a list"),
         // Any other pattern assigns each element and gathers per variable
         ast::ExpIter::Each { iter, vars } => match iter {
             // Option: the payload once, or none for every variable
@@ -308,7 +308,7 @@ fn assign_iter_opt_exp<Ctx: WriteContext>(
 ///
 /// For `(a, b)* <- [(1, 2), (3, 4)]`,
 /// `a*` binds `[1, 3]` and `b*` binds `[2, 4]`.
-fn assign_iter_exp_split<Ctx: WriteContext>(
+fn assign_iter_list_exp_split<Ctx: WriteContext>(
     arena: &mut Arena,
     ctx: &mut Ctx,
     exp: &ast::Exp,

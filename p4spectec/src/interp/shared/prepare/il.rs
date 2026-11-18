@@ -256,12 +256,12 @@ impl ExpIter {
         match ctx.exp_iter_for {
             // An evaluated constructor over its variables joins them
             ExpIterFor::Eval => match zipper::compose(exp_inner, iter, &vars) {
-                Some(comp) => ExpIter::Join { comp, vars },
+                Some(comp) => ExpIter::ListJoin { comp, vars },
                 None => ExpIter::Each { iter, vars },
             },
             // An assigned pattern that only selects children splits the list
             ExpIterFor::Assign => match zipper::decompose(exp_inner, iter, &vars) {
-                Some(decomp) => ExpIter::Split { decomp, vars },
+                Some(decomp) => ExpIter::ListSplit { decomp, vars },
                 None => ExpIter::Each { iter, vars },
             },
         }

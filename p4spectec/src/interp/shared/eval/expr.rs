@@ -627,15 +627,15 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
                 .expect("value must be bound"))
         }
         // A constructor over all the variables joins them
-        ast::ExpIter::Join { comp, vars } => {
-            eval_iter_exp_join(runner_ctx, ctx, exp, exp_inner, comp, vars)
+        ast::ExpIter::ListJoin { comp, vars } => {
+            eval_iter_list_exp_join(runner_ctx, ctx, exp, exp_inner, comp, vars)
         }
         // Any other body is evaluated per element
         ast::ExpIter::Each { iter, vars } => {
             eval_iter_exp_each(runner_ctx, ctx, exp, exp_inner, *iter, vars)
         }
         // Only assigned patterns split
-        ast::ExpIter::Split { .. } => unreachable!("evaluated iteration must not split"),
+        ast::ExpIter::ListSplit { .. } => unreachable!("evaluated iteration must not split a list"),
     }
 }
 
@@ -645,7 +645,7 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
 /// builds `[(2, 1), (4, 3)]`;
 /// with `b* = [2]` instead,
 /// fails on the unequal lengths as the general path does.
-fn eval_iter_exp_join<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
+fn eval_iter_list_exp_join<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     ctx: &Interp::Context<'global>,
     exp: &ast::Exp,

@@ -278,7 +278,7 @@ impl Print for ExpIter {
         let (iter, vars) = match self {
             ExpIter::Each { iter, vars } => (*iter, vars.as_slice()),
             ExpIter::Whole { iter, var } => (*iter, slice::from_ref(var)),
-            ExpIter::Split { vars, .. } | ExpIter::Join { vars, .. } => {
+            ExpIter::ListSplit { vars, .. } | ExpIter::ListJoin { vars, .. } => {
                 (Iter::List, vars.as_slice())
             }
         };
