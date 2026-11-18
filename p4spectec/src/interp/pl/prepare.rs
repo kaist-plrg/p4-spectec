@@ -10,7 +10,7 @@
 //! Defined relations, table functions, and defined functions become callables
 //! with their own frame layouts.
 //! Under `tco`, a returned call or a relation call whose outputs conclude
-//! becomes a tail call where its mismatch would end the callable (`Position`).
+//! becomes a tail call in tail position (`Position`).
 
 use std::{mem, rc::Rc};
 
@@ -58,7 +58,7 @@ impl<'a> PrepareContext<'a> {
         det: bool,
         tco: bool,
     ) -> Self {
-        Self { arena_mixop, tdenv, layout, det, tco, pos: Position::NON_TAIL }
+        Self { arena_mixop, tdenv, layout, det, tco, pos: Position::NonTail }
     }
 
     /// Prepares under the position `pos`, then restores the current one.
@@ -85,57 +85,33 @@ impl<'a> PrepareContext<'a> {
 
 // - Position
 
-/// Where a block or instruction sits in its callable, for deciding tail calls.
+/// Where a block sits in its callable, for deciding tail calls, as in SL.
 ///
-/// A PL block runs its instructions in sequence, and one can end in two ways that travel apart.
-/// A mismatch (`Unmatch`) leaves every enclosing block,
-/// until an alternative turns it into a fall-through or the callable's body ends;
-/// a fall-through (`Flow::Cont`) continues with the next instruction of the block.
-/// A call becomes a tail call only where its mismatch would end the callable anyway,
-/// and an alternative's mismatch ends it only where the alternative falls through to the end:
-///
-/// ```text
-/// if c { return f(x) }                          f(x) mismatches: the callable mismatches,
-/// return g()                                    so f(x) is a tail call
-///
-/// if c { backtrack { return f(x) | return h(x) } }
-/// return g()                                    h(x) mismatches: backtrack falls through,
-///                                               then return g() runs, so h(x) is not
-/// ```
-///
-/// SL needs one flag, `Position::Tail`, since an SL instruction turns its own mismatch
-/// into a fall-through to the next alternative of its block.
-#[derive(Clone, Copy)]
-struct Position {
-    /// Whether a mismatch here ends the callable.
-    ends_mismatch: bool,
-    /// Whether a fall-through here ends the callable.
-    ends_fallthrough: bool,
+/// In tail position, nothing else in the callable can conclude
+/// once the block mismatches or falls through,
+/// so a call that concludes the block can be made in place of the callable.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Position {
+    Tail,
+    NonTail,
 }
 
 impl Position {
-    /// Where nothing in the callable runs after the block.
-    const TAIL: Self = Self { ends_mismatch: true, ends_fallthrough: true };
-    /// Where the callable may still run something after the block.
-    const NON_TAIL: Self = Self { ends_mismatch: false, ends_fallthrough: false };
-
     /// Places an instruction of the block, and the blocks nested in it.
     ///
-    /// A mismatch leaves the block whatever follows,
-    /// while a fall-through ends the callable only from the block's last instruction.
+    /// Only the last instruction keeps the position: after any other,
+    /// a fall-through continues with the next instruction.
     fn at(self, last: bool) -> Self {
-        Self { ends_mismatch: self.ends_mismatch, ends_fallthrough: self.ends_fallthrough && last }
+        if last { self } else { Position::NonTail }
     }
 
     /// Places one of `len` alternatives of an instruction placed here.
     ///
-    /// The alternative's mismatch and fall-through both become the instruction's fall-through,
-    /// and another alternative may conclude after either,
-    /// unless this one is tried last, or under deterministic choice it is the only one.
+    /// Another alternative may conclude after one mismatches or falls through,
+    /// unless it is tried last, or under deterministic choice it is the only one.
     fn alternative(self, det: bool, idx: usize, len: usize) -> Self {
         let alone = if det { len == 1 } else { idx + 1 == len };
-        let ends = self.ends_fallthrough && alone;
-        Self { ends_mismatch: ends, ends_fallthrough: ends }
+        if alone { self } else { Position::NonTail }
     }
 }
 
@@ -506,7 +482,7 @@ impl pl::RuleInstr {
     /// Checks tail position and whether the next result concludes with exactly its outputs.
     fn is_tail_call(&self, pos: Position, instr_result: &pl::ResultInstr) -> bool {
         // Non-tail positions and iterated calls must retain their outputs
-        if !pos.ends_mismatch || !self.iter_instrs.is_empty() {
+        if pos != Position::Tail || !self.iter_instrs.is_empty() {
             return false;
         }
         // Output and result expressions must agree in order, ignoring source spans
@@ -549,8 +525,8 @@ impl Prepare<PrepareContext<'_>> for pl::ReturnInstr {
     type Output = ast::ReturnInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        // A call returned where its mismatch would end the function is made in its place
-        let tail = ctx.tco && ctx.pos.ends_mismatch;
+        // A call returned in tail position is made in place of the function
+        let tail = ctx.tco && ctx.pos == Position::Tail;
         ast::ReturnInstr::prepare(il_source::Exp::from(self.exp), &mut ctx.il(), tail)
     }
 }
@@ -699,9 +675,9 @@ impl Prepare<PrepareContext<'_>> for pl::DefinedRel {
             .exps_input
             .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
         // An otherwise block may still run after the body
-        let pos = if self.block_else_opt.is_some() { Position::NON_TAIL } else { Position::TAIL };
+        let pos = if self.block_else_opt.is_some() { Position::NonTail } else { Position::Tail };
         let block = ctx.with_pos(pos, |ctx| self.block.prepare(ctx));
-        let block_else_opt = ctx.with_pos(Position::TAIL, |ctx| self.block_else_opt.prepare(ctx));
+        let block_else_opt = ctx.with_pos(Position::Tail, |ctx| self.block_else_opt.prepare(ctx));
         ast::DefinedRel {
             id: self.id,
             rel_signature: self.rel_signature,
@@ -784,12 +760,11 @@ impl Prepare<PrepareContext<'_>> for pl::TableFunc {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let params = self.params.prepare(ctx);
-        // Rows run as one block, so only the last row's last instruction ends it
-        let len = self.rows.len();
-        let mut rows = Vec::with_capacity(len);
-        for (idx, row) in self.rows.into_iter().enumerate() {
-            let pos = Position::TAIL.at(idx + 1 == len);
-            rows.push(ctx.with_pos(pos, |ctx| row.prepare(ctx)));
+        // Rows are mutually exclusive, as algorithmic conversion checks,
+        // so no other row can conclude after a row that applies
+        let mut rows = Vec::with_capacity(self.rows.len());
+        for row in self.rows {
+            rows.push(ctx.with_pos(Position::Tail, |ctx| row.prepare(ctx)));
         }
         ast::TableFunc { id: self.id, params, typ: self.typ, rows }
     }
@@ -815,9 +790,9 @@ impl Prepare<PrepareContext<'_>> for pl::DefinedFunc {
         );
         let params = self.params.prepare(ctx);
         // An otherwise block may still run after the body
-        let pos = if self.block_else_opt.is_some() { Position::NON_TAIL } else { Position::TAIL };
+        let pos = if self.block_else_opt.is_some() { Position::NonTail } else { Position::Tail };
         let block = ctx.with_pos(pos, |ctx| self.block.prepare(ctx));
-        let block_else_opt = ctx.with_pos(Position::TAIL, |ctx| self.block_else_opt.prepare(ctx));
+        let block_else_opt = ctx.with_pos(Position::Tail, |ctx| self.block_else_opt.prepare(ctx));
         ast::DefinedFunc {
             id: self.id,
             tparams: self.tparams,
