@@ -80,6 +80,16 @@ impl<'a> PrepareContext<'a> {
     }
 }
 
+/// Prepares a unit that runs in a frame of its own, then takes the layout it filled.
+fn prepare_callable<'a, T: Prepare<PrepareContext<'a>>>(
+    def: T,
+    ctx: &mut PrepareContext<'a>,
+) -> Callable<T::Output> {
+    let def = def.prepare(ctx);
+    let layout = Rc::new(mem::take(ctx.layout));
+    Callable { def, layout }
+}
+
 // - Execution position
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -110,17 +120,12 @@ impl Prepare<PrepareContext<'_>> for source::Block {
     /// Prepares a block using the evaluator's tail-position rule.
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let instrs_len = self.instrs.len();
-        // Deterministic selection gives every candidate the enclosing position
-        let instrs = self
-            .instrs
-            .into_iter()
-            .enumerate()
-            .map(|(idx, instr)| {
-                let pos =
-                    if ctx.det || idx + 1 == instrs_len { ctx.pos } else { Position::NonTail };
-                prepare_instr(instr, &mut ctx.at(pos))
-            })
-            .collect();
+        let mut instrs = Vec::with_capacity(instrs_len);
+        for (idx, instr) in self.instrs.into_iter().enumerate() {
+            // Deterministic selection gives every candidate the enclosing position
+            let pos = if ctx.det || idx + 1 == instrs_len { ctx.pos } else { Position::NonTail };
+            instrs.push(prepare_instr(instr, &mut ctx.at(pos)));
+        }
         ast::Block { instrs }
     }
 }
@@ -132,7 +137,8 @@ fn prepare_instr(instr: source::Instr, ctx: &mut PrepareContext<'_>) -> ast::Ins
     // Grow the stack for deep syntax trees
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
         let note = ctx.next_instr_id();
-        ast::Instr { node: instr.node.prepare(ctx), note, span: instr.span }
+        let node = instr.node.prepare(ctx);
+        ast::Instr { node, note, span: instr.span }
     })
 }
 
@@ -160,12 +166,10 @@ impl Prepare<PrepareContext<'_>> for source::IfInstr {
     type Output = ast::IfInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::IfInstr {
-            exp: self.exp.prepare(&mut ctx.il()),
-            iter_exps: self.iter_exps.prepare(&mut ctx.il()),
-            block: self.block.prepare(ctx),
-            dangle: self.dangle,
-        }
+        let exp = self.exp.prepare(&mut ctx.il());
+        let iter_exps = self.iter_exps.prepare(&mut ctx.il());
+        let block = self.block.prepare(ctx);
+        ast::IfInstr { exp, iter_exps, block, dangle: self.dangle }
     }
 }
 
@@ -175,12 +179,10 @@ impl Prepare<PrepareContext<'_>> for source::HoldInstr {
     type Output = ast::HoldInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::HoldInstr {
-            id: self.id,
-            not_exp: self.not_exp.prepare(&mut ctx.il()),
-            iter_exps: self.iter_exps.prepare(&mut ctx.il()),
-            hold_case: self.hold_case.prepare(ctx),
-        }
+        let not_exp = self.not_exp.prepare(&mut ctx.il());
+        let iter_exps = self.iter_exps.prepare(&mut ctx.il());
+        let hold_case = self.hold_case.prepare(ctx);
+        ast::HoldInstr { id: self.id, not_exp, iter_exps, hold_case }
     }
 }
 
@@ -193,14 +195,12 @@ impl Prepare<PrepareContext<'_>> for source::CaseInstr {
         let exp = self.exp.prepare(&mut ctx.il());
         // Guards test the scrutinee, so their checks start from its type
         let typ_scrut = crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span);
-        let cases = self
-            .cases
-            .into_iter()
-            .map(|case| ast::Case {
-                guard: ast::Guard::prepare(ctx, case.guard, &typ_scrut),
-                block: case.block.prepare(ctx),
-            })
-            .collect();
+        let mut cases = Vec::with_capacity(self.cases.len());
+        for case in self.cases {
+            let guard = ast::Guard::prepare(ctx, case.guard, &typ_scrut);
+            let block = case.block.prepare(ctx);
+            cases.push(ast::Case { guard, block });
+        }
         ast::CaseInstr { exp, cases, totality: self.totality, dangle: self.dangle }
     }
 }
@@ -211,12 +211,9 @@ impl Prepare<PrepareContext<'_>> for source::GroupInstr {
     type Output = ast::GroupInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::GroupInstr {
-            id: self.id,
-            rel_signature: self.rel_signature,
-            exps: self.exps.prepare(&mut ctx.il()),
-            block: self.block.prepare(ctx),
-        }
+        let exps = self.exps.prepare(&mut ctx.il());
+        let block = self.block.prepare(ctx);
+        ast::GroupInstr { id: self.id, rel_signature: self.rel_signature, exps, block }
     }
 }
 
@@ -226,15 +223,14 @@ impl Prepare<PrepareContext<'_>> for source::LetInstr {
     type Output = ast::LetInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::LetInstr {
-            // The left side is a pattern the value binds
-            exp_l: self
-                .exp_l
-                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
-            exp_r: self.exp_r.prepare(&mut ctx.il()),
-            iter_instrs: self.iter_instrs.prepare(&mut ctx.il()),
-            block: self.block.prepare(ctx),
-        }
+        // The left side is a pattern the value binds
+        let exp_l = self
+            .exp_l
+            .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+        let exp_r = self.exp_r.prepare(&mut ctx.il());
+        let iter_instrs = self.iter_instrs.prepare(&mut ctx.il());
+        let block = self.block.prepare(ctx);
+        ast::LetInstr { exp_l, exp_r, iter_instrs, block }
     }
 }
 
@@ -312,10 +308,9 @@ impl Prepare<PrepareContext<'_>> for source::DebugInstr {
     type Output = ast::DebugInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::DebugInstr {
-            exp: self.exp.prepare(&mut ctx.il()),
-            instr: Box::new(prepare_instr(*self.instr, ctx)),
-        }
+        let exp = self.exp.prepare(&mut ctx.il());
+        let instr = prepare_instr(*self.instr, ctx);
+        ast::DebugInstr { exp, instr: Box::new(instr) }
     }
 }
 
@@ -352,13 +347,7 @@ impl Prepare<PrepareContext<'_>> for source::RelDef {
                 *ctx.layout = FrameLayout::default();
                 ast::RelDef::Extern(rel)
             }
-            source::RelDef::Defined(rel) => {
-                // Prepare the relation, then transfer the layout it filled
-                let def = rel.prepare(ctx);
-                let layout = Rc::new(mem::take(ctx.layout));
-                let rel = Callable { def, layout };
-                ast::RelDef::Defined(rel)
-            }
+            source::RelDef::Defined(rel) => ast::RelDef::Defined(prepare_callable(rel, ctx)),
         }
     }
 }
@@ -384,19 +373,20 @@ impl Prepare<PrepareContext<'_>> for source::DefinedRel {
     type Output = ast::DefinedRel;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        // The inputs are patterns the call's arguments bind
+        let exps_input = self
+            .exps_input
+            .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
         // The otherwise block must still catch a failing main body
         let pos = if self.block_else.is_some() { Position::NonTail } else { Position::Tail };
+        let block = self.block.prepare(&mut ctx.at(pos));
+        let block_else = (self.block_else).map(|block| block.prepare(&mut ctx.at(Position::Tail)));
         ast::DefinedRel {
             id: self.id,
             rel_signature: self.rel_signature,
-            // The inputs are patterns the call's arguments bind
-            exps_input: self
-                .exps_input
-                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
-            block: self.block.prepare(&mut ctx.at(pos)),
-            block_else: self
-                .block_else
-                .map(|block| block.prepare(&mut ctx.at(Position::Tail))),
+            exps_input,
+            block,
+            block_else,
             hints: self.hints,
         }
     }
@@ -421,17 +411,10 @@ impl Prepare<PrepareContext<'_>> for source::MetaFuncDef {
                 ast::MetaFuncDef::Builtin(func)
             }
             source::MetaFuncDef::Table(func) => {
-                // Prepare the function, then transfer the layout it filled
-                let def = func.prepare(ctx);
-                let layout = Rc::new(mem::take(ctx.layout));
-                let func = Callable { def, layout };
-                ast::MetaFuncDef::Table(func)
+                ast::MetaFuncDef::Table(prepare_callable(func, ctx))
             }
             source::MetaFuncDef::Defined(func) => {
-                let def = func.prepare(ctx);
-                let layout = Rc::new(mem::take(ctx.layout));
-                let func = Callable { def, layout };
-                ast::MetaFuncDef::Defined(func)
+                ast::MetaFuncDef::Defined(prepare_callable(func, ctx))
             }
         }
     }
@@ -481,27 +464,20 @@ impl Prepare<PrepareContext<'_>> for source::TableFunc {
             .iter()
             .map(|row| row.block.instrs.len())
             .sum();
-        // Only the last instruction across all rows inherits tail position
-        let table_rows = self
-            .table_rows
-            .into_iter()
-            .map(|row| {
-                let exps_input = row.exps_input.prepare(&mut ctx.il());
-                let exp = row.exp.prepare(&mut ctx.il());
-                let instrs = row
-                    .block
-                    .instrs
-                    .into_iter()
-                    .map(|instr| {
-                        instrs_len -= 1;
-                        let pos = if instrs_len == 0 { Position::Tail } else { Position::NonTail };
-                        prepare_instr(instr, &mut ctx.at(pos))
-                    })
-                    .collect();
-                let block = ast::Block { instrs };
-                ast::TableRow { exps_input, exp, block }
-            })
-            .collect();
+        let mut table_rows = Vec::with_capacity(self.table_rows.len());
+        for row in self.table_rows {
+            let exps_input = row.exps_input.prepare(&mut ctx.il());
+            let exp = row.exp.prepare(&mut ctx.il());
+            let mut instrs = Vec::with_capacity(row.block.instrs.len());
+            for instr in row.block.instrs {
+                // Only the last instruction across all rows inherits tail position
+                instrs_len -= 1;
+                let pos = if instrs_len == 0 { Position::Tail } else { Position::NonTail };
+                instrs.push(prepare_instr(instr, &mut ctx.at(pos)));
+            }
+            let block = ast::Block { instrs };
+            table_rows.push(ast::TableRow { exps_input, exp, block });
+        }
         ast::TableFunc { id: self.id, params, typ: self.typ, table_rows, hints: self.hints }
     }
 }
@@ -526,17 +502,18 @@ impl Prepare<PrepareContext<'_>> for source::DefinedFunc {
             counter_instr: &mut *ctx.counter_instr,
             pos: ctx.pos,
         };
+        let params = self.params.prepare(ctx);
         // The otherwise block must still catch a failing main body
         let pos = if self.block_else.is_some() { Position::NonTail } else { Position::Tail };
+        let block = self.block.prepare(&mut ctx.at(pos));
+        let block_else = (self.block_else).map(|block| block.prepare(&mut ctx.at(Position::Tail)));
         ast::DefinedFunc {
             id: self.id,
             tparams: self.tparams,
-            params: self.params.prepare(ctx),
+            params,
             typ: self.typ,
-            block: self.block.prepare(&mut ctx.at(pos)),
-            block_else: self
-                .block_else
-                .map(|block| block.prepare(&mut ctx.at(Position::Tail))),
+            block,
+            block_else,
             hints: self.hints,
         }
     }
@@ -551,7 +528,8 @@ impl Prepare<PrepareContext<'_>> for source::ParamKind {
         match self {
             // The parameter is a pattern the argument binds
             source::ParamKind::Exp(typ, exp) => {
-                ast::ParamKind::Exp(typ, exp.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)))
+                let exp = exp.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+                ast::ParamKind::Exp(typ, exp)
             }
             source::ParamKind::Def(id, tparams, params, typ) => {
                 // The parameter holds its function value in a slot

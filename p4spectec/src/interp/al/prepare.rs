@@ -89,6 +89,16 @@ impl<'a> PrepareContext<'a> {
     }
 }
 
+/// Prepares a unit that runs in a frame of its own, then takes the layout it filled.
+fn prepare_callable<'a, T: Prepare<PrepareContext<'a>>>(
+    def: T,
+    ctx: &mut PrepareContext<'a>,
+) -> Callable<T::Output> {
+    let def = def.prepare(ctx);
+    let layout = Rc::new(mem::take(ctx.layout));
+    Callable { def, layout }
+}
+
 // - Premises
 
 impl Prepare<PrepareContext<'_>> for source::PremKind {
@@ -116,12 +126,10 @@ impl Prepare<PrepareContext<'_>> for source::RulePrem {
         // The input hint separates the arguments once, before any call
         let (exps_input, exps_output) = input::split(&self.input_hint, self.not_exp.into_args())
             .expect("input hint must fit relation");
-        RulePrem {
-            id: self.id,
-            exps_input: exps_input.prepare(&mut ctx.il()),
-            // The outputs are patterns the call binds
-            exps_output: exps_output.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
-        }
+        let exps_input = exps_input.prepare(&mut ctx.il());
+        // The outputs are patterns the call binds
+        let exps_output = exps_output.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+        RulePrem { id: self.id, exps_input, exps_output }
     }
 }
 
@@ -161,13 +169,12 @@ impl Prepare<PrepareContext<'_>> for source::LetPrem {
     type Output = LetPrem;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        LetPrem {
-            // The left side is a pattern the value binds
-            exp_l: self
-                .exp_l
-                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
-            exp_r: self.exp_r.prepare(&mut ctx.il()),
-        }
+        // The left side is a pattern the value binds
+        let exp_l = self
+            .exp_l
+            .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+        let exp_r = self.exp_r.prepare(&mut ctx.il());
+        LetPrem { exp_l, exp_r }
     }
 }
 
@@ -177,7 +184,9 @@ impl Prepare<PrepareContext<'_>> for source::IterPrem {
     type Output = IterPrem;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        IterPrem { prem: self.prem.prepare(ctx), prem_iter: self.prem_iter.prepare(&mut ctx.il()) }
+        let prem = self.prem.prepare(ctx);
+        let prem_iter = self.prem_iter.prepare(&mut ctx.il());
+        IterPrem { prem, prem_iter }
     }
 }
 
@@ -201,11 +210,13 @@ impl Prepare<PrepareContext<'_>> for source::RuleGroupKind {
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let rule_match = self.rule_match.prepare(&mut ctx.at(false));
         // Only the group's last path can be its relation's last candidate
-        let len = self.rule_paths.len();
         let tail = ctx.tail;
-        let rule_paths = (self.rule_paths.into_iter().enumerate())
-            .map(|(idx, path)| path.prepare(&mut ctx.at(tail && idx + 1 == len)))
-            .collect();
+        let len = self.rule_paths.len();
+        let mut rule_paths = Vec::with_capacity(len);
+        for (idx, path) in self.rule_paths.into_iter().enumerate() {
+            let tail_path = tail && idx + 1 == len;
+            rule_paths.push(path.prepare(&mut ctx.at(tail_path)));
+        }
         RuleGroupKind { id: self.id, rule_match, rule_paths }
     }
 }
@@ -216,12 +227,9 @@ impl Prepare<PrepareContext<'_>> for source::ElseGroupKind {
     type Output = ElseGroupKind;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ElseGroupKind {
-            otherwise: self.otherwise,
-            id: self.id,
-            rule_match: self.rule_match.prepare(ctx),
-            rule_path: self.rule_path.prepare(ctx),
-        }
+        let rule_match = self.rule_match.prepare(ctx);
+        let rule_path = self.rule_path.prepare(ctx);
+        ElseGroupKind { otherwise: self.otherwise, id: self.id, rule_match, rule_path }
     }
 }
 
@@ -231,14 +239,13 @@ impl Prepare<PrepareContext<'_>> for source::RuleMatch {
     type Output = RuleMatch;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        RuleMatch {
-            exps_signature: self.exps_signature.prepare(&mut ctx.il()),
-            // The inputs are patterns the call's arguments bind
-            exps_input: self
-                .exps_input
-                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
-            prems: self.prems.prepare(ctx),
-        }
+        let exps_signature = self.exps_signature.prepare(&mut ctx.il());
+        // The inputs are patterns the call's arguments bind
+        let exps_input = self
+            .exps_input
+            .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+        let prems = self.prems.prepare(ctx);
+        RuleMatch { exps_signature, exps_input, prems }
     }
 }
 
@@ -255,6 +262,7 @@ impl Prepare<PrepareContext<'_>> for source::RulePath {
         let prem_tail = tail.then(|| prems.pop().expect("a tail call ends a premise list"));
         let prems = prems.prepare(ctx);
         let res = match prem_tail {
+            // The tail call's inputs evaluate after the remaining premises
             Some(prem) => {
                 let source::PremKind::Rule(prem) = prem.node else {
                     unreachable!("a tail call is a rule premise")
@@ -264,6 +272,7 @@ impl Prepare<PrepareContext<'_>> for source::RulePath {
                 let exps_input = exps_input.prepare(&mut ctx.il());
                 RelResult::Tail(TailRel { id: prem.id, exps_input })
             }
+            // Otherwise the path concludes with its outputs
             None => RelResult::Values(self.res.prepare(&mut ctx.il())),
         };
         RulePath { id: self.id, prems, res }
@@ -308,7 +317,8 @@ impl Prepare<PrepareContext<'_>> for source::ArgKind {
         match self {
             // An expression argument is a pattern the call's argument binds
             source::ArgKind::Exp(exp) => {
-                ArgKind::Exp(exp.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)))
+                let exp = exp.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+                ArgKind::Exp(exp)
             }
             source::ArgKind::Def(id) => {
                 // The parameter holds its function value in a slot
@@ -326,11 +336,10 @@ impl Prepare<PrepareContext<'_>> for source::ClauseKind {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let tail = ctx.tail;
-        ClauseKind {
-            args: self.args.prepare(ctx),
-            ret: FuncReturn::prepare(self.ret, &mut ctx.il(), tail),
-            prems: self.prems.prepare(ctx),
-        }
+        let args = self.args.prepare(ctx);
+        let ret = FuncReturn::prepare(self.ret, &mut ctx.il(), tail);
+        let prems = self.prems.prepare(ctx);
+        ClauseKind { args, ret, prems }
     }
 }
 
@@ -338,7 +347,8 @@ impl Prepare<PrepareContext<'_>> for source::ElseClauseKind {
     type Output = ElseClauseKind;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ElseClauseKind { otherwise: self.otherwise, clause: self.clause.prepare(ctx) }
+        let clause = self.clause.prepare(ctx);
+        ElseClauseKind { otherwise: self.otherwise, clause }
     }
 }
 
@@ -349,12 +359,11 @@ impl Prepare<PrepareContext<'_>> for source::TableRowKind {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let tail = ctx.tail;
-        TableRowKind {
-            exps_signature: self.exps_signature.prepare(&mut ctx.il()),
-            args: self.args.prepare(ctx),
-            ret: FuncReturn::prepare(self.ret, &mut ctx.il(), tail),
-            prems: self.prems.prepare(ctx),
-        }
+        let exps_signature = self.exps_signature.prepare(&mut ctx.il());
+        let args = self.args.prepare(ctx);
+        let ret = FuncReturn::prepare(self.ret, &mut ctx.il(), tail);
+        let prems = self.prems.prepare(ctx);
+        TableRowKind { exps_signature, args, ret, prems }
     }
 }
 
@@ -381,29 +390,26 @@ impl Prepare<PrepareContext<'_>> for source::DefinedRel {
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         // Paths are candidates across groups; the otherwise group is tried last
-        let len = (self.rule_groups.iter())
+        let len_paths = (self.rule_groups.iter())
             .map(|group| group.node.rule_paths.len())
             .sum();
-        let tail = self.else_group.is_none() && ctx.tail_at(len - 1, len);
+        let tail = self.else_group.is_none() && ctx.tail_at(len_paths - 1, len_paths);
+        // Only the last group holds the relation's last path
         let len_groups = self.rule_groups.len();
+        let mut rule_groups = Vec::with_capacity(len_groups);
+        for (idx, group) in self.rule_groups.into_iter().enumerate() {
+            let tail_group = tail && idx + 1 == len_groups;
+            rule_groups.push(prepare_callable(group, &mut ctx.at(tail_group)));
+        }
+        // The otherwise group concludes the relation when it runs
+        let tco = ctx.tco;
+        let else_group = (self.else_group).map(|group| prepare_callable(group, &mut ctx.at(tco)));
         DefinedRel {
             id: self.id,
             not_typ: self.not_typ,
             input_hint: self.input_hint,
-            // Each group runs in its own frame: prepare it, then transfer the layout it filled
-            rule_groups: (self.rule_groups.into_iter().enumerate())
-                .map(|(idx, group)| {
-                    let def = group.prepare(&mut ctx.at(tail && idx + 1 == len_groups));
-                    let layout = Rc::new(mem::take(ctx.layout));
-                    Callable { def, layout }
-                })
-                .collect(),
-            else_group: (self.else_group).map(|group| {
-                let tco = ctx.tco;
-                let def = group.prepare(&mut ctx.at(tco));
-                let layout = Rc::new(mem::take(ctx.layout));
-                Callable { def, layout }
-            }),
+            rule_groups,
+            else_group,
             hints: self.hints,
         }
     }
@@ -435,23 +441,14 @@ impl Prepare<PrepareContext<'_>> for source::TableFunc {
     type Output = TableFunc;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        // Rows are always tried in order, so only the last row is in tail position
         let len = self.table_rows.len();
-        TableFunc {
-            id: self.id,
-            params: self.params,
-            typ: self.typ,
-            // Each row runs in its own frame: prepare it, then transfer the layout it filled
-            table_rows: (self.table_rows.into_iter().enumerate())
-                .map(|(idx, row)| {
-                    // Rows are always tried in order
-                    let tail = ctx.tco && idx + 1 == len;
-                    let def = row.prepare(&mut ctx.at(tail));
-                    let layout = Rc::new(mem::take(ctx.layout));
-                    Callable { def, layout }
-                })
-                .collect(),
-            hints: self.hints,
+        let mut table_rows = Vec::with_capacity(len);
+        for (idx, row) in self.table_rows.into_iter().enumerate() {
+            let tail = ctx.tco && idx + 1 == len;
+            table_rows.push(prepare_callable(row, &mut ctx.at(tail)));
         }
+        TableFunc { id: self.id, params: self.params, typ: self.typ, table_rows, hints: self.hints }
     }
 }
 
@@ -473,29 +470,25 @@ impl Prepare<PrepareContext<'_>> for source::DefinedFunc {
             ctx.det,
             ctx.tco,
         );
-        // The otherwise clause is tried last
+        // Clauses are candidates; the otherwise clause is tried last
         let len = self.clauses.len();
         let tail_last = self.else_clause.is_none();
+        let mut clauses = Vec::with_capacity(len);
+        for (idx, clause) in self.clauses.into_iter().enumerate() {
+            let tail = tail_last && ctx.tail_at(idx, len);
+            clauses.push(prepare_callable(clause, &mut ctx.at(tail)));
+        }
+        // The otherwise clause concludes the function when it runs
+        let tco = ctx.tco;
+        let else_clause =
+            (self.else_clause).map(|clause| prepare_callable(clause, &mut ctx.at(tco)));
         DefinedFunc {
             id: self.id,
             tparams: self.tparams,
             params: self.params,
             typ: self.typ,
-            // Each clause runs in its own frame: prepare it, then transfer the layout it filled
-            clauses: (self.clauses.into_iter().enumerate())
-                .map(|(idx, clause)| {
-                    let tail = tail_last && ctx.tail_at(idx, len);
-                    let def = clause.prepare(&mut ctx.at(tail));
-                    let layout = Rc::new(mem::take(ctx.layout));
-                    Callable { def, layout }
-                })
-                .collect(),
-            else_clause: (self.else_clause).map(|clause| {
-                let tco = ctx.tco;
-                let def = clause.prepare(&mut ctx.at(tco));
-                let layout = Rc::new(mem::take(ctx.layout));
-                Callable { def, layout }
-            }),
+            clauses,
+            else_clause,
             hints: self.hints,
         }
     }

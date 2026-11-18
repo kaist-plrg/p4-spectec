@@ -82,6 +82,16 @@ impl<'a> PrepareContext<'a> {
     }
 }
 
+/// Prepares a unit that runs in a frame of its own, then takes the layout it filled.
+fn prepare_callable<'a, T: Prepare<PrepareContext<'a>>>(
+    def: T,
+    ctx: &mut PrepareContext<'a>,
+) -> Callable<T::Output> {
+    let def = def.prepare(ctx);
+    let layout = Rc::new(mem::take(ctx.layout));
+    Callable { def, layout }
+}
+
 // - Position
 
 /// Where a block or instruction sits in its callable, for deciding tail calls.
@@ -149,7 +159,8 @@ impl Prepare<PrepareContext<'_>> for pl::ParamKind {
         match self {
             // The parameter is a pattern the argument binds
             pl::ParamKind::Exp(typ, exp) => {
-                ast::ParamKind::Exp(typ, exp.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)))
+                let exp = exp.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+                ast::ParamKind::Exp(typ, exp)
             }
             pl::ParamKind::Def(id, tparams, params, typ) => {
                 // The parameter holds its function value in a slot
@@ -180,9 +191,12 @@ fn prepare_instrs_placed<'a, Tier: PrepareBlock<'a>>(
 ) -> Vec<ast::Instr<Tier::Output>> {
     let pos = ctx.pos;
     let len = instrs.len();
-    (instrs.into_iter().enumerate())
-        .map(|(idx, instr)| ctx.with_pos(pos.at(idx + 1 == len), |ctx| instr.prepare(ctx)))
-        .collect()
+    let mut instrs_prepared = Vec::with_capacity(len);
+    for (idx, instr) in instrs.into_iter().enumerate() {
+        let pos_instr = pos.at(idx + 1 == len);
+        instrs_prepared.push(ctx.with_pos(pos_instr, |ctx| instr.prepare(ctx)));
+    }
+    instrs_prepared
 }
 
 impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::Block<Tier> {
@@ -225,15 +239,15 @@ impl ast::Guard {
             // The bound expression is a pattern the scrutinee binds
             pl::Guard::LetSub(typ, exp_l) => {
                 let subcheck = ast::Subcheck::prepare(&mut ctx.il(), typ_scrut, &typ);
-                ast::Guard::LetSub(
-                    ast::SubBind { typ, subcheck },
-                    exp_l.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
-                )
+                let exp_l = exp_l.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+                ast::Guard::LetSub(ast::SubBind { typ, subcheck }, exp_l)
             }
-            pl::Guard::LetMatch(pattern, exp_l) => ast::Guard::LetMatch(
-                pattern.prepare(&mut ctx.il()),
-                exp_l.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
-            ),
+            // Likewise for a pattern match
+            pl::Guard::LetMatch(pattern, exp_l) => {
+                let pattern = pattern.prepare(&mut ctx.il());
+                let exp_l = exp_l.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+                ast::Guard::LetMatch(pattern, exp_l)
+            }
             pl::Guard::Match(pattern) => ast::Guard::Match(pattern.prepare(&mut ctx.il())),
             pl::Guard::Mem(exp) => ast::Guard::Mem(exp.prepare(&mut ctx.il())),
         }
@@ -267,12 +281,10 @@ impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::IfInstr<Tie
     type Output = ast::IfInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
-        ast::IfInstr {
-            exp: self.exp.prepare(&mut ctx.il()),
-            iter_exps: self.iter_exps.prepare(&mut ctx.il()),
-            block: self.block.prepare(ctx),
-            dangle: self.dangle,
-        }
+        let exp = self.exp.prepare(&mut ctx.il());
+        let iter_exps = self.iter_exps.prepare(&mut ctx.il());
+        let block = self.block.prepare(ctx);
+        ast::IfInstr { exp, iter_exps, block, dangle: self.dangle }
     }
 }
 
@@ -286,15 +298,14 @@ impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::IfLetSubIns
         let typ_source =
             crate::phrase!(node: self.exp_r.node.note.as_ref().clone(), span: self.exp_r.node.span);
         let subcheck = ast::Subcheck::prepare(&mut ctx.il(), &typ_source, &self.target);
-        ast::IfLetSubInstr {
-            target: ast::SubBind { typ: self.target, subcheck },
-            exp_l: self
-                .exp_l
-                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
-            exp_r: self.exp_r.prepare(&mut ctx.il()),
-            block: self.block.prepare(ctx),
-            dangle: self.dangle,
-        }
+        let target = ast::SubBind { typ: self.target, subcheck };
+        // The left side is a pattern the value binds
+        let exp_l = self
+            .exp_l
+            .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+        let exp_r = self.exp_r.prepare(&mut ctx.il());
+        let block = self.block.prepare(ctx);
+        ast::IfLetSubInstr { target, exp_l, exp_r, block, dangle: self.dangle }
     }
 }
 
@@ -302,15 +313,14 @@ impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::IfLetMatchI
     type Output = ast::IfLetMatchInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
-        ast::IfLetMatchInstr {
-            pattern: self.pattern.prepare(&mut ctx.il()),
-            exp_l: self
-                .exp_l
-                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
-            exp_r: self.exp_r.prepare(&mut ctx.il()),
-            block: self.block.prepare(ctx),
-            dangle: self.dangle,
-        }
+        let pattern = self.pattern.prepare(&mut ctx.il());
+        // The left side is a pattern the value binds
+        let exp_l = self
+            .exp_l
+            .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+        let exp_r = self.exp_r.prepare(&mut ctx.il());
+        let block = self.block.prepare(ctx);
+        ast::IfLetMatchInstr { pattern, exp_l, exp_r, block, dangle: self.dangle }
     }
 }
 
@@ -320,11 +330,10 @@ impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::CheckInstr<
     type Output = ast::CheckInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
-        ast::CheckInstr {
-            exp: self.exp.prepare(&mut ctx.il()),
-            iter_exps: self.iter_exps.prepare(&mut ctx.il()),
-            block: self.block.prepare(ctx),
-        }
+        let exp = self.exp.prepare(&mut ctx.il());
+        let iter_exps = self.iter_exps.prepare(&mut ctx.il());
+        let block = self.block.prepare(ctx);
+        ast::CheckInstr { exp, iter_exps, block }
     }
 }
 
@@ -334,12 +343,10 @@ impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::HoldInstr<T
     type Output = ast::HoldInstr<Tier::Output>;
 
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
-        ast::HoldInstr {
-            id: self.id,
-            not_exp: self.not_exp.prepare(&mut ctx.il()),
-            iter_exps: self.iter_exps.prepare(&mut ctx.il()),
-            hold_case: self.hold_case.prepare(ctx),
-        }
+        let not_exp = self.not_exp.prepare(&mut ctx.il());
+        let iter_exps = self.iter_exps.prepare(&mut ctx.il());
+        let hold_case = self.hold_case.prepare(ctx);
+        ast::HoldInstr { id: self.id, not_exp, iter_exps, hold_case }
     }
 }
 
@@ -352,15 +359,12 @@ impl<'a, Tier: PrepareBlock<'a>> Prepare<PrepareContext<'a>> for pl::CaseInstr<T
         let exp = self.exp.prepare(&mut ctx.il());
         // Guards test the scrutinee, so their checks start from its type
         let typ_scrut = crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span);
-        let cases = self
-            .cases
-            .into_iter()
-            .map(|case| ast::Case {
-                guard: ast::Guard::prepare(ctx, case.guard, &typ_scrut),
-                block: case.block.prepare(ctx),
-                fallthrough: case.fallthrough,
-            })
-            .collect();
+        let mut cases = Vec::with_capacity(self.cases.len());
+        for case in self.cases {
+            let guard = ast::Guard::prepare(ctx, case.guard, &typ_scrut);
+            let block = case.block.prepare(ctx);
+            cases.push(ast::Case { guard, block, fallthrough: case.fallthrough });
+        }
         ast::CaseInstr { exp, cases, totality: self.totality, dangle: self.dangle }
     }
 }
@@ -371,13 +375,13 @@ impl Prepare<PrepareContext<'_>> for pl::LetInstr {
     type Output = ast::LetInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::LetInstr {
-            exp_l: self
-                .exp_l
-                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
-            exp_r: self.exp_r.prepare(&mut ctx.il()),
-            iter_instrs: self.iter_instrs.prepare(&mut ctx.il()),
-        }
+        // The left side is a pattern the value binds
+        let exp_l = self
+            .exp_l
+            .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+        let exp_r = self.exp_r.prepare(&mut ctx.il());
+        let iter_instrs = self.iter_instrs.prepare(&mut ctx.il());
+        ast::LetInstr { exp_l, exp_r, iter_instrs }
     }
 }
 
@@ -397,16 +401,14 @@ impl Prepare<PrepareContext<'_>> for pl::DestructInstr {
     type Output = ast::DestructInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::DestructInstr {
-            bindings: self
-                .bindings
-                .into_iter()
-                .map(|(name, exp)| {
-                    (name, exp.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)))
-                })
-                .collect(),
-            exp: self.exp.prepare(&mut ctx.il()),
+        // Each field binds a pattern
+        let mut bindings = Vec::with_capacity(self.bindings.len());
+        for (name, exp) in self.bindings {
+            let exp = exp.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+            bindings.push((name, exp));
         }
+        let exp = self.exp.prepare(&mut ctx.il());
+        ast::DestructInstr { bindings, exp }
     }
 }
 
@@ -448,9 +450,10 @@ impl<'a> PrepareBlock<'a> for pl::GroupInstr {
             let ast::GroupInstr::Rule(instr) = tier else {
                 unreachable!("a tail call is a relation call")
             };
-            let tail =
-                ast::TailRel { id: instr.id.clone(), exps_input: mem::take(&mut instr.exps_input) };
-            *tier = ast::GroupInstr::Result(ast::ResultInstr::Tail(tail));
+            let id = instr.id.clone();
+            let exps_input = mem::take(&mut instr.exps_input);
+            let call = ast::TailRel { id, exps_input };
+            *tier = ast::GroupInstr::Result(ast::ResultInstr::Tail(call));
         }
         instrs
     }
@@ -541,13 +544,11 @@ impl Prepare<PrepareContext<'_>> for pl::RuleInstr {
         // The input hint separates the arguments once, before any call
         let (exps_input, exps_output) = input::split(&self.input_hint, self.not_exp.into_args())
             .expect("input hint must fit relation");
-        ast::RuleInstr {
-            id: self.id,
-            exps_input: exps_input.prepare(&mut ctx.il()),
-            // The outputs are patterns the call binds
-            exps_output: exps_output.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
-            iter_instrs: self.iter_instrs.prepare(&mut ctx.il()),
-        }
+        let exps_input = exps_input.prepare(&mut ctx.il());
+        // The outputs are patterns the call binds
+        let exps_output = exps_output.prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
+        let iter_instrs = self.iter_instrs.prepare(&mut ctx.il());
+        ast::RuleInstr { id: self.id, exps_input, exps_output, iter_instrs }
     }
 }
 
@@ -557,13 +558,13 @@ impl Prepare<PrepareContext<'_>> for pl::BacktrackInstr {
     type Output = ast::BacktrackInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        // Each alternative is placed by what may still run after it
         let (pos, det, len) = (ctx.pos, ctx.det, self.blocks.len());
-        let blocks = (self.blocks.into_iter().enumerate())
-            .map(|(idx, block)| {
-                ctx.with_pos(pos.alternative(det, idx, len), |ctx| block.prepare(ctx))
-            })
-            .collect();
+        let mut blocks = Vec::with_capacity(len);
+        for (idx, block) in self.blocks.into_iter().enumerate() {
+            // Each alternative is placed by what may still run after it
+            let pos_block = pos.alternative(det, idx, len);
+            blocks.push(ctx.with_pos(pos_block, |ctx| block.prepare(ctx)));
+        }
         ast::BacktrackInstr { blocks }
     }
 }
@@ -589,12 +590,14 @@ impl Prepare<PrepareContext<'_>> for pl::RuleGroupInstr {
     type Output = ast::RuleGroupInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        let exps_input = self.exps_input.prepare(&mut ctx.il());
+        let block = self.block.prepare(ctx);
         ast::RuleGroupInstr {
             id_rel: self.id_rel,
             id_group: self.id_group,
             rel_signature: self.rel_signature,
-            exps_input: self.exps_input.prepare(&mut ctx.il()),
-            block: self.block.prepare(ctx),
+            exps_input,
+            block,
         }
     }
 }
@@ -605,13 +608,13 @@ impl Prepare<PrepareContext<'_>> for pl::RouteInstr {
     type Output = ast::RouteInstr;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        // Each alternative is placed by what may still run after it
         let (pos, det, len) = (ctx.pos, ctx.det, self.blocks.len());
-        let blocks = (self.blocks.into_iter().enumerate())
-            .map(|(idx, block)| {
-                ctx.with_pos(pos.alternative(det, idx, len), |ctx| block.prepare(ctx))
-            })
-            .collect();
+        let mut blocks = Vec::with_capacity(len);
+        for (idx, block) in self.blocks.into_iter().enumerate() {
+            // Each alternative is placed by what may still run after it
+            let pos_block = pos.alternative(det, idx, len);
+            blocks.push(ctx.with_pos(pos_block, |ctx| block.prepare(ctx)));
+        }
         ast::RouteInstr { blocks }
     }
 }
@@ -622,11 +625,10 @@ impl Prepare<PrepareContext<'_>> for pl::TableRow {
     type Output = ast::TableRow;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        ast::TableRow {
-            exps_input: self.exps_input.prepare(&mut ctx.il()),
-            exp: self.exp.prepare(&mut ctx.il()),
-            block: self.block.prepare(ctx),
-        }
+        let exps_input = self.exps_input.prepare(&mut ctx.il());
+        let exp = self.exp.prepare(&mut ctx.il());
+        let block = self.block.prepare(ctx);
+        ast::TableRow { exps_input, exp, block }
     }
 }
 
@@ -643,13 +645,7 @@ impl Prepare<PrepareContext<'_>> for pl::RelDef {
                 *ctx.layout = FrameLayout::default();
                 ast::RelDef::Extern(rel)
             }
-            pl::RelDef::Defined(rel) => {
-                // Prepare the relation, then transfer the layout it filled
-                let def = rel.prepare(ctx);
-                let layout = Rc::new(mem::take(ctx.layout));
-                let rel = Callable { def, layout };
-                ast::RelDef::Defined(rel)
-            }
+            pl::RelDef::Defined(rel) => ast::RelDef::Defined(prepare_callable(rel, ctx)),
         }
     }
 }
@@ -674,17 +670,20 @@ impl Prepare<PrepareContext<'_>> for pl::DefinedRel {
     type Output = ast::DefinedRel;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        // The inputs are patterns the call's arguments bind
+        let exps_input = self
+            .exps_input
+            .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign));
         // An otherwise block may still run after the body
         let pos = if self.block_else_opt.is_some() { Position::NON_TAIL } else { Position::TAIL };
+        let block = ctx.with_pos(pos, |ctx| self.block.prepare(ctx));
+        let block_else_opt = ctx.with_pos(Position::TAIL, |ctx| self.block_else_opt.prepare(ctx));
         ast::DefinedRel {
             id: self.id,
             rel_signature: self.rel_signature,
-            // The inputs are patterns the call's arguments bind
-            exps_input: self
-                .exps_input
-                .prepare(&mut ctx.il_exp_iter_for(ExpIterFor::Assign)),
-            block: ctx.with_pos(pos, |ctx| self.block.prepare(ctx)),
-            block_else_opt: ctx.with_pos(Position::TAIL, |ctx| self.block_else_opt.prepare(ctx)),
+            exps_input,
+            block,
+            block_else_opt,
         }
     }
 }
@@ -707,18 +706,9 @@ impl Prepare<PrepareContext<'_>> for pl::MetaFuncDef {
                 *ctx.layout = FrameLayout::default();
                 ast::MetaFuncDef::Builtin(func)
             }
-            pl::MetaFuncDef::Table(func) => {
-                // Prepare the function, then transfer the layout it filled
-                let def = func.prepare(ctx);
-                let layout = Rc::new(mem::take(ctx.layout));
-                let func = Callable { def, layout };
-                ast::MetaFuncDef::Table(func)
-            }
+            pl::MetaFuncDef::Table(func) => ast::MetaFuncDef::Table(prepare_callable(func, ctx)),
             pl::MetaFuncDef::Defined(func) => {
-                let def = func.prepare(ctx);
-                let layout = Rc::new(mem::take(ctx.layout));
-                let func = Callable { def, layout };
-                ast::MetaFuncDef::Defined(func)
+                ast::MetaFuncDef::Defined(prepare_callable(func, ctx))
             }
         }
     }
@@ -763,12 +753,11 @@ impl Prepare<PrepareContext<'_>> for pl::TableFunc {
         let params = self.params.prepare(ctx);
         // Rows run as one block, so only the last row's last instruction ends it
         let len = self.rows.len();
-        let rows = (self.rows.into_iter().enumerate())
-            .map(|(idx, row)| {
-                let pos = Position::TAIL.at(idx + 1 == len);
-                ctx.with_pos(pos, |ctx| row.prepare(ctx))
-            })
-            .collect();
+        let mut rows = Vec::with_capacity(len);
+        for (idx, row) in self.rows.into_iter().enumerate() {
+            let pos = Position::TAIL.at(idx + 1 == len);
+            rows.push(ctx.with_pos(pos, |ctx| row.prepare(ctx)));
+        }
         ast::TableFunc { id: self.id, params, typ: self.typ, rows }
     }
 }
@@ -791,15 +780,18 @@ impl Prepare<PrepareContext<'_>> for pl::DefinedFunc {
             ctx.det,
             ctx.tco,
         );
+        let params = self.params.prepare(ctx);
         // An otherwise block may still run after the body
         let pos = if self.block_else_opt.is_some() { Position::NON_TAIL } else { Position::TAIL };
+        let block = ctx.with_pos(pos, |ctx| self.block.prepare(ctx));
+        let block_else_opt = ctx.with_pos(Position::TAIL, |ctx| self.block_else_opt.prepare(ctx));
         ast::DefinedFunc {
             id: self.id,
             tparams: self.tparams,
-            params: self.params.prepare(ctx),
+            params,
             typ: self.typ,
-            block: ctx.with_pos(pos, |ctx| self.block.prepare(ctx)),
-            block_else_opt: ctx.with_pos(Position::TAIL, |ctx| self.block_else_opt.prepare(ctx)),
+            block,
+            block_else_opt,
         }
     }
 }
