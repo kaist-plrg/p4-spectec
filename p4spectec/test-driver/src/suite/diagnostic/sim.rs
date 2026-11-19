@@ -4,8 +4,6 @@
 //! P4 assertion cases use the full declared specification and include directory,
 //! then evaluate Program_ok through the production runner with dummy externs.
 
-use p4spectec::lang::data::encoding::Encoding;
-
 use p4spectec::diagnostic::Report;
 
 use p4spectec::runner::{self, Config, RunError, Spec};
@@ -28,7 +26,7 @@ pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
         let spec_al = p4spectec::algo(std::slice::from_ref(path)).map_err(|report| {
             failure(&case.name, format!("conversion failed before simulator admission: {report}"))
         })?;
-        let report = sim_plugin::build(Spec::Al(spec_al), arch, config, Encoding::default())
+        let report = sim_plugin::build(Spec::Al(spec_al), arch, config)
             .err()
             .ok_or_else(|| failure(&case.name, "simulator accepted negative architecture"))?;
         return Ok(vec![*report]);

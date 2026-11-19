@@ -3,8 +3,6 @@
 //! Emitting a header appends its bits;
 //! the buffer is prepended to the payload when the packet leaves.
 
-use serde::{Deserialize, Serialize};
-
 use crate::lang::{
     common::source::Span,
     data::{
@@ -18,8 +16,7 @@ use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
 use crate::sim_plugin::spec::func;
 
 /// Output packet data accumulated by emission.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PacketOut {
     /// Emitted bits so far, most significant first.
     pub bits: Vec<bool>,

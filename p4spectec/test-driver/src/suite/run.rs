@@ -211,7 +211,7 @@ fn prepare(
 ) -> Result<(Arena, Runner<P4Interface, Dummy>)> {
     let mut arena = Arena::new();
     let spec = config.language.spec(&registration.spec)?;
-    let runner = interpreter::build(&mut arena, spec, config.runner(), Dummy)?;
+    let runner = interpreter::build(&mut arena, spec, config.runner(), Dummy::default())?;
     Ok((arena, runner))
 }
 

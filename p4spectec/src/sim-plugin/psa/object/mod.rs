@@ -1,7 +1,7 @@
 //! Stateful PSA extern objects, from counters to checksums
 //!
-//! Each object is decoded from the specification's object state,
-//! updated by its method, and encoded back by the pipeline.
+//! Each object is read from the specification's object state,
+//! updated by its method, and stored back by the pipeline.
 //! Doc comments summarize the object's description in `psa.p4`.
 
 pub mod counter;

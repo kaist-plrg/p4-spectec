@@ -16,9 +16,7 @@ use crate::lang::{
 };
 
 /// An iteration marker.
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Iter {
     /// `?`
     Opt,

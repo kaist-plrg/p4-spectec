@@ -69,7 +69,7 @@ impl CanonEq<MixopArena> for ValueKind {
                 _ => false,
             },
             (ValueKind::Func(id_l), ValueKind::Func(id_r)) => id_l.node == id_r.node,
-            (ValueKind::Extern(json_l), ValueKind::Extern(json_r)) => json_l == json_r,
+            (ValueKind::Extern(payload_l), ValueKind::Extern(payload_r)) => payload_l == payload_r,
             _ => false,
         }
     }
@@ -150,8 +150,8 @@ impl SyntaxCmp for ValueRef<'_> {
                 (None, None) => Ordering::Equal,
             },
             (ValueKind::Func(id_l), ValueKind::Func(id_r)) => id_l.node.cmp(&id_r.node),
-            (ValueKind::Extern(json_l), ValueKind::Extern(json_r)) => {
-                crate::util::json::compare(json_l, json_r)
+            (ValueKind::Extern(payload_l), ValueKind::Extern(payload_r)) => {
+                payload_l.cmp(payload_r)
             }
             // Different kinds order by tag
             _ => kind_l.tag().cmp(&kind_r.tag()),

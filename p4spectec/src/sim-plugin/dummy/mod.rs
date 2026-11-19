@@ -4,7 +4,7 @@
 //! Compile-time assertions such as `static_assert` are supported;
 //! runtime extern function and method calls are not.
 
-use crate::lang::data::value::flat::Value;
+use crate::lang::data::value::{flat::Value, host::HostTyp};
 
 use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
 
@@ -18,6 +18,10 @@ pub use pipe::Dummy;
 
 /// Hands every extern hook to the pipeline module.
 impl externs::Impl for Dummy {
+    fn host_typdefs(&self) -> Vec<HostTyp> {
+        vec![self.arch_state.erase(), self.object_state.erase()]
+    }
+
     fn eval_extern_init<Interp, Iface>(
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],

@@ -5,7 +5,6 @@
 //! Positions name their file by an interned `FileId`, so spans are `Copy`.
 //! Spans print as `file:line.col-line.col`;
 //! the default span, used for generated syntax, prints only its file.
-//! The `serde_state` impls thread an encoding context through nested nodes.
 
 use std::{
     cmp::Ordering,
@@ -13,9 +12,6 @@ use std::{
     fmt,
     sync::{Mutex, OnceLock, PoisonError},
 };
-
-use serde::{Deserialize, Serialize};
-use serde_derive_state::DeserializeState;
 
 // == Files
 
@@ -72,7 +68,7 @@ impl FileId {
 // == Positions
 
 /// A source position.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Position {
     /// Source file.
     pub file: FileId,
@@ -124,9 +120,7 @@ impl fmt::Display for Position {
 // == Spans
 
 /// A source span between two positions.
-#[derive(
-    Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
-)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Span {
     /// Start of the span.
     pub left: Position,
@@ -176,7 +170,7 @@ impl fmt::Display for Span {
 // == Phrases
 
 /// A syntax node paired with semantic and source annotations.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NotePhrase<T, N = (), S = Span> {
     /// The syntax itself.
     pub node: T,
@@ -216,121 +210,4 @@ macro_rules! note_phrase {
     (node: $node:expr, note: $note:expr, span: $span:expr $(,)?) => {
         $crate::lang::common::source::NotePhrase { node: $node, note: ($note).into(), span: $span }
     };
-}
-
-// == Serialization
-
-// - Encode
-
-// Encode the file by name, so payloads keep their shape
-impl Serialize for FileId {
-    fn serialize<Serializer>(
-        &self,
-        serializer: Serializer,
-    ) -> Result<Serializer::Ok, Serializer::Error>
-    where
-        Serializer: serde::Serializer,
-    {
-        self.name().serialize(serializer)
-    }
-}
-
-impl<State> serde_state::SerializeState<State> for Span {
-    fn serialize_state<Serializer>(
-        &self,
-        serializer: Serializer,
-        _state: &State,
-    ) -> Result<Serializer::Ok, Serializer::Error>
-    where
-        Serializer: serde::Serializer,
-    {
-        self.serialize(serializer)
-    }
-}
-
-// Check the stack at every phrase before traversing recursive value/type nodes
-impl<T, N, S, State> serde_state::SerializeState<State> for NotePhrase<T, N, S>
-where
-    T: serde_state::SerializeState<State>,
-    N: serde_state::SerializeState<State>,
-    S: serde_state::SerializeState<State>,
-{
-    fn serialize_state<Serializer>(
-        &self,
-        serializer: Serializer,
-        state: &State,
-    ) -> Result<Serializer::Ok, Serializer::Error>
-    where
-        Serializer: serde::Serializer,
-    {
-        use serde_state::ser::Seeded;
-
-        stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-            NotePhrase {
-                node: Seeded::new(state, &self.node),
-                note: Seeded::new(state, &self.note),
-                span: Seeded::new(state, &self.span),
-            }
-            .serialize(serializer)
-        })
-    }
-}
-
-// - Decode
-
-// Intern the decoded file name
-impl<'de> Deserialize<'de> for FileId {
-    fn deserialize<Deserializer>(deserializer: Deserializer) -> Result<Self, Deserializer::Error>
-    where
-        Deserializer: serde::Deserializer<'de>,
-    {
-        Ok(Self::intern(&String::deserialize(deserializer)?))
-    }
-}
-
-impl<'de, State> serde_state::DeserializeState<'de, State> for Span {
-    fn deserialize_state<Deserializer>(
-        _state: &mut State,
-        deserializer: Deserializer,
-    ) -> Result<Self, Deserializer::Error>
-    where
-        Deserializer: serde::Deserializer<'de>,
-    {
-        Self::deserialize(deserializer)
-    }
-}
-
-impl<'de, T, N, S, State> serde_state::DeserializeState<'de, State> for NotePhrase<T, N, S>
-where
-    T: serde_state::DeserializeState<'de, State>,
-    N: serde_state::DeserializeState<'de, State>,
-    S: serde_state::DeserializeState<'de, State>,
-{
-    fn deserialize_state<Deserializer>(
-        state: &mut State,
-        deserializer: Deserializer,
-    ) -> Result<Self, Deserializer::Error>
-    where
-        Deserializer: serde::Deserializer<'de>,
-    {
-        // Keep state-only attributes off the ordinary serde derives
-        #[derive(DeserializeState)]
-        #[serde(rename = "NotePhrase")]
-        #[serde(deserialize_state = "State", de_parameters = "State")]
-        #[serde(bound(
-            deserialize = "T: serde_state::DeserializeState<'de, State>, N: serde_state::DeserializeState<'de, State>, S: serde_state::DeserializeState<'de, State>"
-        ))]
-        struct NotePhraseState<T, N, S> {
-            #[serde(state)]
-            node: T,
-            #[serde(state)]
-            note: N,
-            #[serde(state)]
-            span: S,
-        }
-
-        let NotePhraseState { node, note, span } =
-            NotePhraseState::deserialize_state(state, deserializer)?;
-        Ok(Self { node, note, span })
-    }
 }

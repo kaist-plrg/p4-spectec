@@ -5,6 +5,7 @@
 //! without depending on any trait of the item type.
 
 use std::{
+    cmp::Ordering,
     fmt,
     hash::{Hash, Hasher},
     marker::PhantomData,
@@ -51,6 +52,21 @@ impl<T> PartialEq for Interned<T> {
 
 impl<T> Eq for Interned<T> {}
 
+// - Ordering
+
+// Handles order by allocation, not by the meaning of their items
+impl<T> PartialOrd for Interned<T> {
+    fn partial_cmp(&self, id_other: &Self) -> Option<Ordering> {
+        Some(self.cmp(id_other))
+    }
+}
+
+impl<T> Ord for Interned<T> {
+    fn cmp(&self, id_other: &Self) -> Ordering {
+        self.index.cmp(&id_other.index)
+    }
+}
+
 // - Hashing
 
 impl<T> Hash for Interned<T> {
@@ -60,7 +76,7 @@ impl<T> Hash for Interned<T> {
 }
 
 impl<T> Interned<T> {
-    /// The raw index, for arena-relative encoding.
+    /// The zero-based index.
     pub(crate) fn index(self) -> u32 {
         self.index.get() - 1
     }
@@ -72,11 +88,6 @@ impl<T> Interned<T> {
             index: NonZeroU32::new(one_based).expect("one-based index"),
             marker: PhantomData,
         })
-    }
-
-    /// Rejects the reserved index in external arena-relative data.
-    pub(crate) fn try_from_index(index: u32) -> Result<Self, TryFromIntError> {
-        Self::from_len(index as usize)
     }
 
     /// A handle from a raw index; the caller vouches for its interner.

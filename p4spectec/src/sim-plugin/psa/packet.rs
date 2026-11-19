@@ -2,17 +2,11 @@
 //!
 //! A saved context, input packet, and the pipeline it resumes at.
 
-use serde::{Deserialize, Serialize};
-use serde_derive_state::{DeserializeState, SerializeState};
-
-use crate::lang::data::value::flat::{
-    Value,
-    external::{DecodeContext, EncodeContext},
-};
+use crate::lang::data::value::flat::Value;
 
 use super::super::core::object::PacketIn;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Which pipeline a queued packet resumes at.
 pub enum Entrypoint {
     /// Ingress parser, control, and deparser.
@@ -21,13 +15,10 @@ pub enum Entrypoint {
     Egress,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, SerializeState, DeserializeState)]
-#[serde(deny_unknown_fields, serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
-#[serde(deserialize_state = "DecodeContext<'de>")]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Processing context per packet.
 pub struct Packet {
     /// Evaluation context.
-    #[serde(state)]
     pub value_ctx: Value,
     /// Packet input.
     pub packet_in: PacketIn,

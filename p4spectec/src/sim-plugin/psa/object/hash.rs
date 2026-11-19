@@ -4,7 +4,6 @@
 
 use num_bigint::BigInt;
 use num_traits::Zero;
-use serde::{Deserialize, Serialize};
 
 use crate::lang::{
     common::source::Span,
@@ -22,7 +21,7 @@ use crate::sim_plugin::{
     spec::{args, func, pack, unpack},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// A hash configured with one algorithm.
 pub struct HashExtern {
     /// The `hash` algorithm name.

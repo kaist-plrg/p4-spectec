@@ -141,12 +141,20 @@ pub(crate) fn sub(
     value: Value,
 ) -> Backtrack<bool> {
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);
+    let find_host_typdef_opt = |id: &ast::Id| ctx.find_host_typdef_opt(id);
     let find_func = |name: &str| {
         let id = crate::phrase!(node: name.into(), span: *span);
         ctx.find_func_typ(&id).ok()
     };
     backtrack::from_result(
-        ops::value::check(arena, &find_typdef_opt, &find_func, subcheck, &value),
+        ops::value::check(
+            arena,
+            &find_typdef_opt,
+            &find_host_typdef_opt,
+            &find_func,
+            subcheck,
+            &value,
+        ),
         span,
     )
 }

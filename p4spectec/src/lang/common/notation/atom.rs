@@ -7,8 +7,6 @@
 
 use std::{error::Error, fmt};
 
-use serde::{Deserialize, Serialize};
-
 use crate::lang::{
     common::{ds::set::IdSet, source::Phrase},
     traits::{
@@ -21,7 +19,7 @@ use crate::lang::{
 // == Types
 
 /// A literal piece of notation.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Atom {
     /// Concrete object word such as `INT`
     Keyword(String),
@@ -203,36 +201,5 @@ impl Atom {
         } else {
             Ok(Self::Operator(op))
         }
-    }
-}
-
-// == Serialization
-
-// - Encode
-
-impl<State> serde_state::SerializeState<State> for Atom {
-    fn serialize_state<Serializer>(
-        &self,
-        serializer: Serializer,
-        _state: &State,
-    ) -> Result<Serializer::Ok, Serializer::Error>
-    where
-        Serializer: serde::Serializer,
-    {
-        self.serialize(serializer)
-    }
-}
-
-// - Decode
-
-impl<'de, State> serde_state::DeserializeState<'de, State> for Atom {
-    fn deserialize_state<Deserializer>(
-        _state: &mut State,
-        deserializer: Deserializer,
-    ) -> Result<Self, Deserializer::Error>
-    where
-        Deserializer: serde::Deserializer<'de>,
-    {
-        Self::deserialize(deserializer)
     }
 }

@@ -1,8 +1,12 @@
 //! Shared execution environments
 //!
 //! `caches` memoize calls.
+//! `host` holds the host's definitions of extern types.
 
 pub mod caches;
+mod host;
+
+pub use host::HTDEnv;
 
 use crate::lang::common::ds::map::{FrozenIdMap, MicroIdMap};
 

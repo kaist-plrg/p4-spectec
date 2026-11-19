@@ -10,7 +10,6 @@
 
 pub mod arena;
 pub mod callable;
-pub mod encoding;
 pub mod frame;
 pub mod intern;
 pub mod notation;

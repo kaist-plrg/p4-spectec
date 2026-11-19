@@ -5,10 +5,7 @@
 
 use std::collections::BTreeMap;
 
-use serde::{Deserialize, Serialize};
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// One replica: an output port and its replication id.
 pub struct Node {
     /// Output port of the replica.
@@ -17,8 +14,7 @@ pub struct Node {
     pub rid: usize,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Multicast groups, nodes, and the handle allocator.
 pub struct State {
     /// Next unused node handle.

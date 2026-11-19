@@ -16,10 +16,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::lang::{
-    data::{arena::Arena, encoding::Encoding},
-    sl,
-};
+use crate::lang::{data::arena::Arena, sl};
 
 use crate::runner::{self, Config};
 
@@ -95,7 +92,7 @@ pub fn cover_run(
 ) -> Result<Coverage, CoverError> {
     let mut cover = Cover::new(spec_sl);
     let mut arena = Arena::new();
-    let mut runner = runner::build_sl(&mut arena, spec_sl.clone(), config, Dummy)?;
+    let mut runner = runner::build_sl(&mut arena, spec_sl.clone(), config, Dummy::default())?;
     let hits = Hits::new(cover.len());
     runner
         .hooks_mut()
@@ -130,14 +127,13 @@ pub fn cover_sim(
     spec_sl: &sl::ast::Spec,
     arch: &str,
     config: Config,
-    encoding: Encoding,
     includes: &[PathBuf],
     pairs: &[(PathBuf, PathBuf)],
     mut on_progress: impl FnMut(Progress),
 ) -> Result<Coverage, CoverError> {
     let mut cover = Cover::new(spec_sl);
     let spec = runner::Spec::Sl(spec_sl.clone());
-    let mut simulator = sim_plugin::build(spec, arch, config, encoding)?;
+    let mut simulator = sim_plugin::build(spec, arch, config)?;
     let hits = Hits::new(cover.len());
     simulator
         .hooks_mut()

@@ -2,8 +2,6 @@
 //!
 //! Metering is not modeled; `execute` always returns green.
 
-use serde::{Deserialize, Serialize};
-
 use crate::lang::{
     common::source::Span,
     data::{
@@ -20,7 +18,7 @@ use crate::sim_plugin::{
     spec::{args, pack, unpack},
 };
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// A meter color (RFC 2698).
 pub enum Color {
     /// Over the peak rate.
@@ -31,7 +29,7 @@ pub enum Color {
     Yellow,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Meter array by `PSA_MeterType_t`; the state is never updated.
 pub enum Meter {
     /// Meters packets regardless of size.

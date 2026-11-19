@@ -5,7 +5,6 @@
 
 use num_bigint::BigInt;
 use num_traits::Zero;
-use serde::{Deserialize, Serialize};
 
 use crate::util::bigint;
 
@@ -24,7 +23,7 @@ use crate::sim_plugin::{
     spec::{func, pack, unpack},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// The running ones-complement sum.
 pub struct InternetChecksum {
     /// The accumulated 16-bit sum.
