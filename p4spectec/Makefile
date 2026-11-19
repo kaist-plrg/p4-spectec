@@ -9,10 +9,10 @@ endif
 .PHONY: build release debug fmt fmt-check lint rustdoc clean
 
 debug:
-	$(CARGO) build --locked --bin p4spectec --target-dir "$(TARGET_DIR)"
+	$(CARGO) build --locked -p p4spectec-cli --target-dir "$(TARGET_DIR)"
 
 build release:
-	$(CARGO) build --locked --release --bin p4spectec --target-dir "$(TARGET_DIR)"
+	$(CARGO) build --locked --release -p p4spectec-cli --target-dir "$(TARGET_DIR)"
 
 fmt:
 	$(CARGO) fmt --all
