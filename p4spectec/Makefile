@@ -9,25 +9,22 @@ endif
 .PHONY: build release debug fmt fmt-check lint rustdoc clean
 
 debug:
-	$(CARGO) build --locked --bin p4spectec --target-dir "$(TARGET_DIR)"
+	$(CARGO) build --locked -p p4spectec-cli --target-dir "$(TARGET_DIR)"
 
 build release:
-	$(CARGO) build --locked --release --bin p4spectec --target-dir "$(TARGET_DIR)"
+	$(CARGO) build --locked --release -p p4spectec-cli --target-dir "$(TARGET_DIR)"
 
 fmt:
-	$(CARGO) fmt
-	$(CARGO) fmt --manifest-path test-driver/Cargo.toml
+	$(CARGO) fmt --all
 
 fmt-check:
-	$(CARGO) fmt --check
-	$(CARGO) fmt --manifest-path test-driver/Cargo.toml --check
+	$(CARGO) fmt --all --check
 
 lint:
-	$(CARGO) clippy --locked --all-targets --no-deps --target-dir "$(TARGET_DIR)"
-	$(CARGO) clippy --locked --all-targets --no-deps --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)"
+	$(CARGO) clippy --locked --workspace --all-targets --no-deps --target-dir "$(TARGET_DIR)"
 
 rustdoc:
-	RUSTDOCFLAGS="-D warnings" $(CARGO) doc --locked --no-deps --target-dir "$(TARGET_DIR)"
+	RUSTDOCFLAGS="-D warnings" $(CARGO) doc --locked --no-deps -p p4spectec -p p4spectec-sim --target-dir "$(TARGET_DIR)"
 
 clean:
 	$(CARGO) clean --target-dir "$(TARGET_DIR)"
