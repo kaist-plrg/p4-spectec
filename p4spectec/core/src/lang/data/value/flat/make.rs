@@ -101,6 +101,7 @@ pub fn case_flat(
 }
 
 /// A variant case from a mixop text, its arguments, and its type name.
+#[macro_export]
 macro_rules! case_string {
     (
         arena: $arena:expr,
@@ -144,7 +145,7 @@ macro_rules! case_string {
     }};
 }
 
-pub(crate) use case_string;
+pub use crate::case_string;
 
 // - Sequences
 

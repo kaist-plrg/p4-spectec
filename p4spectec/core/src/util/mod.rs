@@ -3,4 +3,4 @@
 //! Integer and bit arithmetic and text escaping.
 
 pub mod bigint;
-pub(crate) mod text;
+pub mod text;

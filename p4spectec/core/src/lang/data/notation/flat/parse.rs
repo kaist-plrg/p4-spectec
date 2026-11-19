@@ -11,7 +11,7 @@ use super::{Mixop, MixopArena, MixopKind};
 
 /// A failure parsing or interning a notation string.
 #[derive(Debug, thiserror::Error)]
-pub(crate) enum ParseMixopError {
+pub enum ParseMixopError {
     /// The string is not a valid notation type.
     #[error(transparent)]
     Syntax(#[from] FrontendError),
@@ -21,7 +21,7 @@ pub(crate) enum ParseMixopError {
 }
 
 /// Converts a notation representation into an interned flat mixop.
-pub(crate) trait ToMixop {
+pub trait ToMixop {
     /// The failures supported by this representation.
     type Error;
 

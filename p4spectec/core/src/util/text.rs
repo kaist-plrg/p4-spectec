@@ -3,7 +3,7 @@
 use std::fmt::Write;
 
 /// Escapes a string for a double-quoted literal, octal-escaping other bytes.
-pub(crate) fn escape_text(text: &str) -> String {
+pub fn escape_text(text: &str) -> String {
     text.bytes().fold(String::new(), |mut escaped, byte| {
         match byte {
             b'\\' => escaped.push_str("\\\\"),

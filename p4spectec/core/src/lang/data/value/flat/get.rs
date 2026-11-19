@@ -65,6 +65,7 @@ pub fn case<'a>(arena: &'a Arena, value: &Value) -> Result<&'a ValueCase, ValueE
 
 /// Interns patterns and copies matched arguments before releasing the arena borrow.
 /// User arms execute only after the selection scope has ended.
+#[macro_export]
 macro_rules! matches_string {
     // Select the first matching shape without evaluating any user arm
     (@select_arms $arena:ident, $mixop:ident, $idx:expr;
@@ -145,7 +146,7 @@ macro_rules! matches_string {
     }};
 }
 
-pub(crate) use matches_string;
+pub use crate::matches_string;
 
 // - Sequences
 

@@ -4,8 +4,7 @@
 //! `elab`, `algo`, `structure`, and `prosify` transform them through `pass`.
 //! `specdoc` renders specifications and expands skeleton documents.
 //! `runner_spec_with_warnings` prepares AL, SL, or PL for execution;
-//! `run` evaluates a P4 program,
-//! and `build_simulator` prepares native STF execution.
+//! and `run` evaluates a P4 program with the caller's externs.
 //! `coverage` measures SL instruction coverage over programs.
 //! Callers render returned diagnostics and accumulated warnings.
 
@@ -28,8 +27,6 @@ pub mod coverage;
 pub mod interface;
 pub mod interp;
 pub mod runner;
-#[path = "sim-plugin/mod.rs"]
-pub mod sim_plugin;
 
 // == Parsing and transformation APIs
 
@@ -47,4 +44,3 @@ pub use specdoc::splicer::splice_files_with_warnings;
 // == Execution APIs
 
 pub use runner::{RunError, run};
-pub use sim_plugin::{SimError, Simulator, build as build_simulator};

@@ -13,7 +13,7 @@ mod cmp;
 mod convert;
 mod hash;
 mod make;
-pub(crate) mod parse;
+pub mod parse;
 mod print;
 mod view;
 mod visit;

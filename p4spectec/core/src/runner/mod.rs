@@ -128,17 +128,25 @@ pub fn build_pl<Ext: Extern>(
 /// Values and notation belong to the arena supplied during preparation.
 /// All calls must borrow that same arena until this runner is dropped.
 pub struct Runner<Iface: Interface, Ext: Extern> {
-    pub(crate) backend: Backend,
-    pub(crate) interface: Iface,
-    pub(crate) external: Ext,
-    pub(crate) effects: u64,
-    pub(crate) hooks: Hooks,
+    /// The selected stage's definitions and interpreter.
+    pub backend: Backend,
+    /// The host's parser and builtin implementation.
+    pub interface: Iface,
+    /// The host's extern implementation and state.
+    pub external: Ext,
+    /// The count of side effects performed so far.
+    pub effects: u64,
+    /// Handlers retained across evaluations and program resets.
+    pub hooks: Hooks,
 }
 
 /// Pairs one stage's prepared definitions with its interpreter state.
-pub(crate) enum Backend {
+pub enum Backend {
+    /// The AL definitions and interpreter.
     Al { spec_env: AlSpecEnv, interp: AlInterp },
+    /// The SL definitions and interpreter.
     Sl { spec_env: SlSpecEnv, interp: SlInterp },
+    /// The PL definitions and interpreter.
     Pl { spec_env: PlSpecEnv, interp: PlInterp },
 }
 

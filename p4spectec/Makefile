@@ -24,7 +24,7 @@ lint:
 	$(CARGO) clippy --locked --workspace --all-targets --no-deps --target-dir "$(TARGET_DIR)"
 
 rustdoc:
-	RUSTDOCFLAGS="-D warnings" $(CARGO) doc --locked --no-deps -p p4spectec --target-dir "$(TARGET_DIR)"
+	RUSTDOCFLAGS="-D warnings" $(CARGO) doc --locked --no-deps -p p4spectec -p p4spectec-sim --target-dir "$(TARGET_DIR)"
 
 clean:
 	$(CARGO) clean --target-dir "$(TARGET_DIR)"

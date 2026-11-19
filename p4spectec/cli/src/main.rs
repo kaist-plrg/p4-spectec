@@ -20,7 +20,7 @@ use p4spectec::runner::{self, RunError};
 
 use p4spectec::coverage::{self, Outcome, Progress};
 
-use p4spectec::sim_plugin::{self, dummy::Dummy};
+use p4spectec_sim::dummy::Dummy;
 
 // = Helpers
 
@@ -329,7 +329,7 @@ fn sim_command(args: SimArgs) -> Result<(), ()> {
 
     // Build the requested native architecture
     let config = runner::Config::new(!args.no_cache, !args.no_det, args.guard, true);
-    let mut simulator = p4spectec::build_simulator(spec, &args.arch, config)
+    let mut simulator = p4spectec_sim::build(spec, &args.arch, config)
         .map_err(|report| render_report(&mut renderer, &report))?;
 
     // Print matched packets as execution proceeds
@@ -523,7 +523,7 @@ fn cover_sim_command(args: CoverSimArgs) -> Result<(), ()> {
         .map(|(path_p4, path_stf)| format!("{} {}", path_p4.display(), path_stf.display()))
         .collect();
     let bar = progress_bar(&labels);
-    let coverage = sim_plugin::cover::cover_sim(
+    let coverage = p4spectec_sim::cover::cover_sim(
         &spec_sl,
         &args.arch,
         args.config.config(),

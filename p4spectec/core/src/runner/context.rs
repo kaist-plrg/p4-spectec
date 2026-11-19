@@ -48,7 +48,11 @@ where
     Iface: Interface,
     Ext: Extern,
 {
-    pub(crate) fn new(
+    /// Borrows a runner's components for one evaluation.
+    ///
+    /// Hosts that drive the interpreter outside `Runner`'s entry points,
+    /// such as the simulator, match on `Runner::backend` to build one.
+    pub fn new(
         arena: &'runner mut Arena,
         spec_env: &'runner Interp::SpecEnv,
         interp: &'runner mut Interp,

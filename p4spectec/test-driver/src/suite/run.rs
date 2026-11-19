@@ -14,7 +14,7 @@ use p4spectec::interface::p4::{
 
 use p4spectec::runner::Runner;
 
-use p4spectec::sim_plugin::dummy::Dummy;
+use p4spectec_sim::dummy::Dummy;
 
 use serde::Deserialize;
 
