@@ -9,12 +9,12 @@
 
 // == Calls
 
-pub mod args;
-pub mod func;
-pub mod pgm;
-pub mod rel;
+pub(crate) mod args;
+pub(crate) mod func;
+pub(crate) mod pgm;
+pub(crate) mod rel;
 
 // == Values
 
-pub mod pack;
-pub mod unpack;
+pub(crate) mod pack;
+pub(crate) mod unpack;

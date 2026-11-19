@@ -4,9 +4,9 @@
 //! builds a host runner over the AL or SL specification
 //! with that architecture as its extern,
 //! and boxes it as a `Simulator` that runs STF tests.
-//! `core` and `spec` are the helpers the architectures share;
-//! `stf` parses STF tests,
-//! `stf_runner`, `table`, `hash`, `io`, and `state` drive one test,
+//! `arch` holds the architectures and what they share,
+//! `spec` calls the specification's relations and functions,
+//! `stf` parses and runs one STF test,
 //! and `cover` measures SL instruction coverage over many.
 
 use std::path::{Path, PathBuf};
@@ -17,25 +17,15 @@ use p4spectec::interface::p4::P4Interface;
 
 use p4spectec::runner::{self, Hooks, Runner};
 
-use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, v1model::V1Model};
+use self::arch::{Architecture, ebpf::Ebpf, io::Tx, psa::Psa, v1model::V1Model};
 
-pub mod arch;
-pub mod core;
+mod arch;
 pub mod cover;
-pub mod dummy;
-pub mod ebpf;
 mod error;
-mod externs;
-pub mod hash;
-pub mod io;
-pub mod psa;
-pub mod spec;
-pub mod state;
-pub mod stf;
-pub mod stf_runner;
-pub mod table;
-pub mod v1model;
+mod spec;
+mod stf;
 
+pub use arch::dummy::Dummy;
 pub use error::SimError;
 
 // == Simulator
@@ -70,7 +60,7 @@ where
         path_stf: &Path,
         on_match: &mut dyn FnMut(&Tx),
     ) -> Result<(), SimError> {
-        stf_runner::run_stf_test(arena, self, includes, path_p4, path_stf, on_match).map(drop)
+        stf::run::run_stf_test(arena, self, includes, path_p4, path_stf, on_match).map(drop)
     }
 }
 

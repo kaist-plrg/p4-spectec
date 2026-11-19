@@ -1,12 +1,12 @@
-//! String and filesystem entry points for the STF parser
+//! Filesystem entry point for the STF parser
 //!
-//! `parse_file` reads a source before delegating to `parse_str`.
+//! `parse_file` reads a source before delegating to `parse_source`.
 //! Located lexer tokens become LALRPOP input,
 //! statements retain their source spans,
 //! and parse failures become diagnostic reports.
 //! For example, `wait` becomes one located `Statement::Wait`.
 
-use std::{fs, path::Path, rc::Rc};
+use std::{fs, path::Path};
 
 use lalrpop_util::ParseError;
 
@@ -94,12 +94,7 @@ pub(crate) fn parse_priority(spelling: String, span: Span) -> Result<i64, StfErr
     }
 }
 
-// - Source strings
-
-/// Parses an STF source string and retains statement source spans.
-pub fn parse_str(name: impl Into<Rc<str>>, source: &str) -> Result<Program, StfError> {
-    parse_source(FileId::intern(&name.into()), source)
-}
+// - Source files
 
 /// Parses STF source text whose positions name `file`.
 fn parse_source(file: FileId, source: &str) -> Result<Program, StfError> {
@@ -108,8 +103,6 @@ fn parse_source(file: FileId, source: &str) -> Result<Program, StfError> {
     let result = parser::StatementsParser::new().parse(file, input);
     result.map_err(|error| translate_lalrpop_error(file, error))
 }
-
-// - Source files
 
 /// Reads and parses an STF file.
 pub fn parse_file(path: impl AsRef<Path>) -> Result<Program, StfError> {

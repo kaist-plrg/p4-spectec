@@ -8,7 +8,7 @@ use p4spectec::diagnostic::Report;
 
 use p4spectec::runner::{self, Config, RunError, Spec};
 
-use p4spectec_sim::dummy::Dummy;
+use p4spectec_sim::Dummy;
 
 use crate::harness::Result;
 

@@ -7,7 +7,7 @@ use p4spectec::lang::common::source::Span;
 
 use p4spectec::diagnostic::{Diagnostic, Report, Severity};
 
-use super::io::{Expectation, Tx};
+use crate::{arch::io::Tx, stf::expect::Expectation};
 
 /// A diagnostic from simulator construction or execution.
 pub type SimError = Box<Report>;

@@ -20,7 +20,7 @@ use p4spectec::runner::{self, RunError};
 
 use p4spectec::coverage::{self, Outcome, Progress};
 
-use p4spectec_sim::dummy::Dummy;
+use p4spectec_sim::Dummy;
 
 // = Helpers
 
