@@ -76,7 +76,7 @@ impl<T> Hash for Interned<T> {
 }
 
 impl<T> Interned<T> {
-    /// The raw index, for arena-relative encoding.
+    /// The zero-based index.
     pub(crate) fn index(self) -> u32 {
         self.index.get() - 1
     }
@@ -88,11 +88,6 @@ impl<T> Interned<T> {
             index: NonZeroU32::new(one_based).expect("one-based index"),
             marker: PhantomData,
         })
-    }
-
-    /// Rejects the reserved index in external arena-relative data.
-    pub(crate) fn try_from_index(index: u32) -> Result<Self, TryFromIntError> {
-        Self::from_len(index as usize)
     }
 
     /// A handle from a raw index; the caller vouches for its interner.

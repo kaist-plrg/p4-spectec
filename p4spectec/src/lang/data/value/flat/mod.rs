@@ -6,8 +6,6 @@
 
 use std::rc::Rc;
 
-use serde_derive_state::{DeserializeState, SerializeState};
-
 use crate::lang::{
     common::{
         Id,
@@ -23,12 +21,8 @@ use crate::lang::{
 
 use super::{ValueTag, host::HostPayload};
 
-use self::external::{DecodeContext, EncodeContext};
-
 mod arena;
 mod cmp;
-mod convert;
-pub mod external;
 pub mod get;
 mod hash;
 pub mod make;
@@ -55,19 +49,16 @@ pub struct ValueField {
 pub type ValueCase = Mixfix<Value>;
 
 /// A stored value body whose children belong to the same arena.
-#[derive(Debug, PartialEq, Eq, Hash, SerializeState, DeserializeState)]
-#[serde(rename = "ValueKind")]
-#[serde(serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
-#[serde(deserialize_state = "DecodeContext<'arena>", de_parameters = "'arena")]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum ValueKind {
     Bool(bool),
     Num(Number),
     Text(String),
-    Struct(#[serde(state)] Vec<ValueField>),
-    Case(#[serde(state)] ValueCase),
-    Tuple(#[serde(state)] Vec<Value>),
-    Opt(#[serde(state)] Option<Value>),
-    List(#[serde(state)] Vec<Value>),
+    Struct(Vec<ValueField>),
+    Case(ValueCase),
+    Tuple(Vec<Value>),
+    Opt(Option<Value>),
+    List(Vec<Value>),
     Func(Id),
     Extern(Rc<HostPayload>),
 }

@@ -6,8 +6,6 @@
 
 use std::rc::Rc;
 
-use serde::{Deserialize, Serialize};
-
 use super::{AtomPhrase, MixopTag};
 
 mod at;
@@ -24,7 +22,7 @@ pub use view::{MixfixRef, MixfixView};
 // = Notation forms
 
 /// An owned notation with an argument hole at each position.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub enum Mixop {
     Arg,
     Atom(AtomPhrase),

@@ -9,7 +9,6 @@
 //! A payload belongs to the definition that made it:
 //! payloads of two definitions never compare equal,
 //! even with the same name or the same Rust data type.
-//! Payloads live only in the arena; encoding one fails.
 
 use std::{
     any::Any,
@@ -20,8 +19,6 @@ use std::{
     rc::Rc,
     sync::atomic::{self, AtomicU64},
 };
-
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de, ser};
 
 use super::ValueError;
 
@@ -195,21 +192,5 @@ impl Hash for HostPayload {
     fn hash<H: Hasher>(&self, hasher: &mut H) {
         self.typdef.hash(hasher);
         self.data.hash_dyn(hasher);
-    }
-}
-
-// - Encoding
-
-// Payloads are host data without a value encoding
-impl Serialize for HostPayload {
-    fn serialize<S: Serializer>(&self, _serializer: S) -> Result<S::Ok, S::Error> {
-        let name = self.typdef.name;
-        Err(ser::Error::custom(format!("host payload of {name} cannot be encoded")))
-    }
-}
-
-impl<'de> Deserialize<'de> for HostPayload {
-    fn deserialize<D: Deserializer<'de>>(_deserializer: D) -> Result<Self, D::Error> {
-        Err(de::Error::custom("host payloads cannot be decoded"))
     }
 }

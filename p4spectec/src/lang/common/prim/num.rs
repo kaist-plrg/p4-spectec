@@ -19,12 +19,11 @@ use crate::lang::traits::print::{Print, Printer};
 ///
 /// Construct with `TryFrom<BigInt>`;
 /// negative inputs return `NumericError::NaturalNegative`.
-#[derive(Clone, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
-#[serde(try_from = "BigInt")]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Natural(BigInt);
 
 /// A natural number or a signed integer.
-#[derive(Clone, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Number {
     /// A natural number.
     Nat(Natural),
@@ -33,9 +32,7 @@ pub enum Number {
 }
 
 /// The numeric types.
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Typ {
     Nat,
     Int,

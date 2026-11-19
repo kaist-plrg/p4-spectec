@@ -88,12 +88,6 @@ impl From<std::io::Error> for ExternError {
     }
 }
 
-impl From<serde_json::Error> for ExternError {
-    fn from(error: serde_json::Error) -> Self {
-        Self::diagnostic(Some(EXTERN_STATE_INVALID), error.to_string())
-    }
-}
-
 impl From<std::collections::TryReserveError> for ExternError {
     fn from(error: std::collections::TryReserveError) -> Self {
         Self::diagnostic(Some(EXTERN_ALLOCATION_FAILED), error.to_string())

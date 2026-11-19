@@ -9,8 +9,6 @@ use std::{
     fmt::{self, Write},
 };
 
-use serde::{Deserialize, Serialize};
-
 use crate::lang::{
     common::{
         Id, Iter, TId,
@@ -31,7 +29,7 @@ use crate::phrase;
 pub type Typ = Phrase<TypKind>;
 
 /// The forms of a type.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TypKind {
     /// `bool`
     Bool,
@@ -50,7 +48,7 @@ pub enum TypKind {
 }
 
 /// The type of a function: type parameters, parameter types, result type.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FuncTyp {
     pub tparams: Vec<TId>,
     pub typs_params: Vec<Typ>,
@@ -201,63 +199,6 @@ pub mod make {
         let func_typ = FuncTyp { tparams, typs_params, typ_ret };
         let typ_kind = TypKind::Func(func_typ);
         phrase!(node: typ_kind, span: Span::default())
-    }
-}
-
-// == Serialization
-
-// - Encode
-
-// Ordinary serde needs extra stack space for deeply nested types
-impl<State> serde_state::SerializeState<State> for TypKind {
-    fn serialize_state<Serializer>(
-        &self,
-        serializer: Serializer,
-        _state: &State,
-    ) -> Result<Serializer::Ok, Serializer::Error>
-    where
-        Serializer: serde::Serializer,
-    {
-        stacker::grow(32 * 1024 * 1024, || self.serialize(serializer))
-    }
-}
-
-impl<State> serde_state::SerializeState<State> for FuncTyp {
-    fn serialize_state<Serializer>(
-        &self,
-        serializer: Serializer,
-        _state: &State,
-    ) -> Result<Serializer::Ok, Serializer::Error>
-    where
-        Serializer: serde::Serializer,
-    {
-        stacker::grow(32 * 1024 * 1024, || self.serialize(serializer))
-    }
-}
-
-// - Decode
-
-impl<'de, State> serde_state::DeserializeState<'de, State> for TypKind {
-    fn deserialize_state<Deserializer>(
-        _state: &mut State,
-        deserializer: Deserializer,
-    ) -> Result<Self, Deserializer::Error>
-    where
-        Deserializer: serde::Deserializer<'de>,
-    {
-        Self::deserialize(deserializer)
-    }
-}
-
-impl<'de, State> serde_state::DeserializeState<'de, State> for FuncTyp {
-    fn deserialize_state<Deserializer>(
-        _state: &mut State,
-        deserializer: Deserializer,
-    ) -> Result<Self, Deserializer::Error>
-    where
-        Deserializer: serde::Deserializer<'de>,
-    {
-        Self::deserialize(deserializer)
     }
 }
 
