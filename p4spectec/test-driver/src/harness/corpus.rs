@@ -122,6 +122,15 @@ impl Corpus {
         Ok(Self::new(cases))
     }
 
+    /// Makes one case per path the `.exclude` files under `dir` list.
+    pub fn listed(dir: &str) -> Result<Self> {
+        let cases = collect_excludes(&root().join(dir))?
+            .into_iter()
+            .map(|path| vec![PathBuf::from(path)])
+            .collect();
+        Ok(Self::new(cases))
+    }
+
     /// Skips the cases with a path named by the `.exclude` files under `dirs`.
     pub fn excludes(mut self, dirs: &[&str]) -> Result<Self> {
         for dir in dirs {
