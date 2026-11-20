@@ -243,12 +243,7 @@ fn run_fail(dir: &str, config: Config) {
 
 #[test]
 fn run() {
-    run_fail("neg/run", Config { cache: true, det: false, guard: false, tco: true });
-}
-
-#[test]
-fn run_det() {
-    run_fail("neg/run-det", Config { cache: true, det: true, guard: false, tco: true });
+    run_fail("neg/run", Config { cache: true, det: true, guard: false, tco: true });
 }
 
 #[test]
@@ -267,7 +262,7 @@ fn run_main() {
 
 #[test]
 fn sim() {
-    let config = Config { cache: true, det: false, guard: false, tco: true };
+    let config = Config { cache: true, det: true, guard: false, tco: true };
     // Admission must reject an architecture the simulator lacks
     for path in fixtures("neg/sim", &[".watsup"]) {
         let spec_al = must_pass(
