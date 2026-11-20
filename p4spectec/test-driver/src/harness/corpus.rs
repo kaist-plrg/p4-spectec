@@ -28,9 +28,6 @@ const ENV_TIMEOUT: &str = "P4SPECTEC_TEST_TIMEOUT";
 pub enum Outcome {
     Pass,
     Fail,
-    ParseFail,
-    ReparseFail,
-    RoundtripFail,
     Exclude,
     Timeout,
 }
@@ -41,9 +38,6 @@ impl Outcome {
         match self {
             Self::Pass => "pass",
             Self::Fail => "fail",
-            Self::ParseFail => "parse-fail",
-            Self::ReparseFail => "reparse-fail",
-            Self::RoundtripFail => "roundtrip-fail",
             Self::Exclude => "exclude",
             Self::Timeout => "timeout",
         }
@@ -51,18 +45,10 @@ impl Outcome {
 
     /// Reads an outcome spelled as in expected files.
     pub fn from_name(name: &str) -> Result<Self> {
-        [
-            Self::Pass,
-            Self::Fail,
-            Self::ParseFail,
-            Self::ReparseFail,
-            Self::RoundtripFail,
-            Self::Exclude,
-            Self::Timeout,
-        ]
-        .into_iter()
-        .find(|outcome| outcome.name() == name)
-        .ok_or_else(|| Error::from(format!("unknown outcome {name}")))
+        [Self::Pass, Self::Fail, Self::Exclude, Self::Timeout]
+            .into_iter()
+            .find(|outcome| outcome.name() == name)
+            .ok_or_else(|| Error::from(format!("unknown outcome {name}")))
     }
 }
 

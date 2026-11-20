@@ -152,17 +152,25 @@ fn serve_p4parse(options: &Options) -> Result<()> {
     let spec_al = p4spectec::algo(&options.paths_spec)?;
     let unparser = P4Unparser::from_al_spec(&spec_al);
     channel.serve(|request| {
-        let outcome = roundtrip(&unparser, &options.paths_include, Path::new(request))?;
-        Ok((outcome.name().to_owned(), String::new()))
+        let (outcome, details) = roundtrip(&unparser, &options.paths_include, Path::new(request))?;
+        Ok((outcome.name().to_owned(), details))
     })
 }
 
 /// Parses, prints, and reparses the program at `path`.
-fn roundtrip(unparser: &P4Unparser, paths_include: &[PathBuf], path: &Path) -> Result<Outcome> {
+///
+/// A failure names the step that failed in its details.
+fn roundtrip(
+    unparser: &P4Unparser,
+    paths_include: &[PathBuf],
+    path: &Path,
+) -> Result<(Outcome, String)> {
     let mut arena = Arena::new();
     let program = match parse_file(&mut arena, paths_include, path) {
         Ok(program) => program,
-        Err(P4Error { kind: P4ErrorKind::Syntax(_), .. }) => return Ok(Outcome::ParseFail),
+        Err(error @ P4Error { kind: P4ErrorKind::Syntax(_), .. }) => {
+            return Ok((Outcome::Fail, format!("parse: {error}")));
+        }
         Err(error) => return Err(failure(path, error)),
     };
     // The parser's root nonterminal is the program's declared type
@@ -175,14 +183,16 @@ fn roundtrip(unparser: &P4Unparser, paths_include: &[PathBuf], path: &Path) -> R
         .map_err(|error| Error::from(format!("{}: {error}", path.display())))?;
     let program_roundtrip = match parse_string(&mut arena, path, &text) {
         Ok(program) => program,
-        Err(P4Error { kind: P4ErrorKind::Syntax(_), .. }) => return Ok(Outcome::ReparseFail),
+        Err(error @ P4Error { kind: P4ErrorKind::Syntax(_), .. }) => {
+            return Ok((Outcome::Fail, format!("reparse of the printed program: {error}")));
+        }
         Err(error) => return Err(failure(path, error)),
     };
     // Canonical bodies ignore source spans and type notes, like IL value equality
     if arena.value.canon_id(program.node) == arena.value.canon_id(program_roundtrip.node) {
-        Ok(Outcome::Pass)
+        Ok((Outcome::Pass, String::new()))
     } else {
-        Ok(Outcome::RoundtripFail)
+        Ok((Outcome::Fail, "roundtrip: the printed program reparses to a different one".into()))
     }
 }
 
