@@ -1,11 +1,14 @@
 //! Worker executable that runs corpus cases for the integration tests under `tests/`
 //!
-//! `p4spectec-test-worker <command> <args>...` prepares the specification under `spec/` once,
+//! `p4spectec-test-worker <options>... <command> <args>...` prepares the specification once,
 //! then answers one request per stdin line (see `harness::worker`):
 //! `run <language> <relation>` evaluates a P4 program through the relation,
 //! `sim <language> <arch>` runs a `<p4>\t<stf>` pair on the native simulator,
 //! and `p4parse` parses a P4 program, prints it, and parses the text again.
-//! It runs from the repository root, against which every request path is spelled.
+//! Options name the specification sources (`--spec PATH`), P4 include directories
+//! (`--include PATH`), and the runner options enabled (`--cache`, `--det`, `--guard`, `--tco`);
+//! none has a default.
+//! It runs from the repository root, against which every path is spelled.
 
 use std::{
     path::{Path, PathBuf},
@@ -36,27 +39,61 @@ use p4spectec_test::harness::{
     worker::Channel,
 };
 
-/// Specification sources, relative to the repository root.
-const PATH_SPEC: &str = "spec";
+/// Worker options given before the command.
+struct Options {
+    /// Specification sources.
+    paths_spec: Vec<PathBuf>,
+    /// Include directories of P4 programs.
+    paths_include: Vec<PathBuf>,
+    /// Runner options.
+    config: Config,
+}
 
-/// Include directory of P4 programs, relative to the repository root.
-const PATH_P4INCLUDE: &str = "p4c/p4include";
-
-/// Returns the runner options of every corpus: call caching and determinism checks.
-fn config() -> Config {
-    Config::new(true, true, false, true)
+/// Splits `args` into options and the command with its arguments.
+fn parse_args(args: &[String]) -> Result<(Options, Vec<&str>)> {
+    let mut paths_spec = Vec::new();
+    let mut paths_include = Vec::new();
+    let (mut cache, mut det, mut guard, mut tco) = (false, false, false, false);
+    let mut args = args.iter().map(String::as_str);
+    let mut command = Vec::new();
+    while let Some(arg) = args.next() {
+        match arg {
+            // Take the path after a path option
+            "--spec" | "--include" => {
+                let path = args
+                    .next()
+                    .ok_or_else(|| Error::from(format!("{arg} needs a path")))?;
+                let paths = if arg == "--spec" { &mut paths_spec } else { &mut paths_include };
+                paths.push(PathBuf::from(path));
+            }
+            // Enable a runner option
+            "--cache" => cache = true,
+            "--det" => det = true,
+            "--guard" => guard = true,
+            "--tco" => tco = true,
+            // Keep the command and everything after it
+            _ => {
+                command.push(arg);
+                command.extend(args);
+                break;
+            }
+        }
+    }
+    let config = Config::new(cache, det, guard, tco);
+    Ok((Options { paths_spec, paths_include, config }, command))
 }
 
 // = Run
 
 /// Serves P4 programs through `relation` under `language`.
-fn serve_run(language: Language, relation: &str) -> Result<()> {
+fn serve_run(options: &Options, language: Language, relation: &str) -> Result<()> {
     let channel = Channel::open()?;
     let mut arena = Arena::new();
-    let spec = language.spec(&[PathBuf::from(PATH_SPEC)])?;
-    let mut runner = interpreter::build(&mut arena, spec, config(), Dummy::default())?;
+    let spec = language.spec(&options.paths_spec)?;
+    let mut runner = interpreter::build(&mut arena, spec, options.config, Dummy::default())?;
     channel.serve(|request| {
-        let outcome = run(&mut arena, &mut runner, relation, Path::new(request))?;
+        let outcome =
+            run(&mut arena, &mut runner, &options.paths_include, relation, Path::new(request))?;
         Ok((outcome.name().to_owned(), String::new()))
     })
 }
@@ -65,11 +102,11 @@ fn serve_run(language: Language, relation: &str) -> Result<()> {
 fn run(
     arena: &mut Arena,
     runner: &mut Runner<P4Interface, Dummy>,
+    paths_include: &[PathBuf],
     relation: &str,
     path: &Path,
 ) -> Result<Outcome> {
-    let paths_include = [PathBuf::from(PATH_P4INCLUDE)];
-    let source = preprocess(&paths_include, path).map_err(|error| failure(path, error))?;
+    let source = preprocess(paths_include, path).map_err(|error| failure(path, error))?;
     // Reset before parsing: no value may cross this program boundary
     runner.reset();
     arena.reset_values();
@@ -89,17 +126,17 @@ fn run(
 // = Sim
 
 /// Serves STF tests on the native simulator of `arch` under `language`.
-fn serve_sim(language: Language, arch: &str) -> Result<()> {
+fn serve_sim(options: &Options, language: Language, arch: &str) -> Result<()> {
     let channel = Channel::open()?;
-    let spec = language.spec(&[PathBuf::from(PATH_SPEC)])?;
-    let mut simulator = p4spectec_sim::build(spec, arch, config())?;
-    let paths_include = [PathBuf::from(PATH_P4INCLUDE)];
+    let spec = language.spec(&options.paths_spec)?;
+    let mut simulator = p4spectec_sim::build(spec, arch, options.config)?;
+    let paths_include = &options.paths_include;
     channel.serve(|request| {
         let (path_p4, path_stf) = request
             .split_once('\t')
             .ok_or_else(|| Error::from(format!("invalid sim request: {request}")))?;
         let result =
-            simulator.run_stf_test(&paths_include, Path::new(path_p4), Path::new(path_stf), |_| {});
+            simulator.run_stf_test(paths_include, Path::new(path_p4), Path::new(path_stf), |_| {});
         // Answer a failing test with its simulation error
         match result {
             Ok(()) => Ok((Outcome::Pass.name().to_owned(), String::new())),
@@ -111,20 +148,20 @@ fn serve_sim(language: Language, arch: &str) -> Result<()> {
 // = P4parse
 
 /// Serves P4 parse/print/parse roundtrips.
-fn serve_p4parse() -> Result<()> {
+fn serve_p4parse(options: &Options) -> Result<()> {
     let channel = Channel::open()?;
-    let spec_al = p4spectec::algo(&[PathBuf::from(PATH_SPEC)])?;
+    let spec_al = p4spectec::algo(&options.paths_spec)?;
     let unparser = P4Unparser::from_al_spec(&spec_al);
     channel.serve(|request| {
-        let outcome = roundtrip(&unparser, Path::new(request))?;
+        let outcome = roundtrip(&unparser, &options.paths_include, Path::new(request))?;
         Ok((outcome.name().to_owned(), String::new()))
     })
 }
 
 /// Parses, prints, and reparses the program at `path`.
-fn roundtrip(unparser: &P4Unparser, path: &Path) -> Result<Outcome> {
+fn roundtrip(unparser: &P4Unparser, paths_include: &[PathBuf], path: &Path) -> Result<Outcome> {
     let mut arena = Arena::new();
-    let program = match parse_file(&mut arena, &[PathBuf::from(PATH_P4INCLUDE)], path) {
+    let program = match parse_file(&mut arena, paths_include, path) {
         Ok(program) => program,
         Err(P4Error { kind: P4ErrorKind::Syntax(_), .. }) => return Ok(Outcome::ParseFail),
         Err(error) => return Err(failure(path, error)),
@@ -162,12 +199,14 @@ fn execute(args: &[String]) -> Result<()> {
         .join("../..")
         .canonicalize()?;
     std::env::set_current_dir(&root)?;
-    let args = args.iter().map(String::as_str).collect::<Vec<_>>();
-    match args.as_slice() {
-        ["run", language, relation] => serve_run(Language::from_name(language)?, relation),
-        ["sim", language, arch] => serve_sim(Language::from_name(language)?, arch),
-        ["p4parse"] => serve_p4parse(),
-        _ => Err(Error::from(format!("unknown worker command: {}", args.join(" ")))),
+    let (options, command) = parse_args(args)?;
+    match command.as_slice() {
+        ["run", language, relation] => {
+            serve_run(&options, Language::from_name(language)?, relation)
+        }
+        ["sim", language, arch] => serve_sim(&options, Language::from_name(language)?, arch),
+        ["p4parse"] => serve_p4parse(&options),
+        _ => Err(Error::from(format!("unknown worker command: {}", command.join(" ")))),
     }
 }
 

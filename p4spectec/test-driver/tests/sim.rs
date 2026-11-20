@@ -22,8 +22,13 @@ const P4TESTGEN: &str = "testdata/p4testgen";
 const CUSTOM: &str = "testdata/custom";
 const REGRESSION: &str = "testdata/regression/sim";
 
+const HEADERS: &str = "excludes/headers";
 const STATIC: &str = "excludes/static";
 const DYNAMIC: &str = "excludes/dynamic";
+
+/// Worker options: specification, P4 includes, and the runner options enabled.
+const OPTIONS: [&str; 7] =
+    ["--spec", "spec", "--include", "p4c/p4include", "--cache", "--det", "--tco"];
 
 /// A source file found under `dir`, at `path` relative to it.
 struct Input {
@@ -118,7 +123,8 @@ fn sim(
     let result = Corpus::new(pairs(arch, dir_p4, dir_stf, dir_patches))
         .excludes(dirs_exclude)
         .and_then(|corpus| {
-            corpus.run(env!("CARGO_BIN_EXE_p4spectec-test-worker"), &["sim", language, arch])
+            let args = [&OPTIONS[..], &["sim", language, arch]].concat();
+            corpus.run(env!("CARGO_BIN_EXE_p4spectec-test-worker"), &args)
         })
         .and_then(|report| report.expect_all(Outcome::Pass));
     if let Err(error) = result {
@@ -128,32 +134,74 @@ fn sim(
 
 #[test]
 fn v1model_p4c_al() {
-    sim("al", "v1model", P4C_SAMPLES, P4C_SAMPLES, Some("patches/v1model"), &[STATIC, DYNAMIC]);
+    sim(
+        "al",
+        "v1model",
+        P4C_SAMPLES,
+        P4C_SAMPLES,
+        Some("patches/v1model"),
+        &[HEADERS, STATIC, DYNAMIC],
+    );
 }
 
 #[test]
 fn v1model_p4c_sl() {
-    sim("sl", "v1model", P4C_SAMPLES, P4C_SAMPLES, Some("patches/v1model"), &[STATIC, DYNAMIC]);
+    sim(
+        "sl",
+        "v1model",
+        P4C_SAMPLES,
+        P4C_SAMPLES,
+        Some("patches/v1model"),
+        &[HEADERS, STATIC, DYNAMIC],
+    );
 }
 
 #[test]
 fn v1model_p4c_pl() {
-    sim("pl", "v1model", P4C_SAMPLES, P4C_SAMPLES, Some("patches/v1model"), &[STATIC, DYNAMIC]);
+    sim(
+        "pl",
+        "v1model",
+        P4C_SAMPLES,
+        P4C_SAMPLES,
+        Some("patches/v1model"),
+        &[HEADERS, STATIC, DYNAMIC],
+    );
 }
 
 #[test]
 fn v1model_p4testgen_al() {
-    sim("al", "v1model", P4C_SAMPLES, P4TESTGEN, Some("patches/v1model"), &[STATIC, DYNAMIC]);
+    sim(
+        "al",
+        "v1model",
+        P4C_SAMPLES,
+        P4TESTGEN,
+        Some("patches/v1model"),
+        &[HEADERS, STATIC, DYNAMIC],
+    );
 }
 
 #[test]
 fn v1model_p4testgen_sl() {
-    sim("sl", "v1model", P4C_SAMPLES, P4TESTGEN, Some("patches/v1model"), &[STATIC, DYNAMIC]);
+    sim(
+        "sl",
+        "v1model",
+        P4C_SAMPLES,
+        P4TESTGEN,
+        Some("patches/v1model"),
+        &[HEADERS, STATIC, DYNAMIC],
+    );
 }
 
 #[test]
 fn v1model_p4testgen_pl() {
-    sim("pl", "v1model", P4C_SAMPLES, P4TESTGEN, Some("patches/v1model"), &[STATIC, DYNAMIC]);
+    sim(
+        "pl",
+        "v1model",
+        P4C_SAMPLES,
+        P4TESTGEN,
+        Some("patches/v1model"),
+        &[HEADERS, STATIC, DYNAMIC],
+    );
 }
 
 #[test]
@@ -173,47 +221,47 @@ fn v1model_custom_pl() {
 
 #[test]
 fn ebpf_p4c_al() {
-    sim("al", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[STATIC, DYNAMIC]);
+    sim("al", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn ebpf_p4c_sl() {
-    sim("sl", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[STATIC, DYNAMIC]);
+    sim("sl", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn ebpf_p4c_pl() {
-    sim("pl", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[STATIC, DYNAMIC]);
+    sim("pl", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn ebpf_p4testgen_al() {
-    sim("al", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[STATIC, DYNAMIC]);
+    sim("al", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn ebpf_p4testgen_sl() {
-    sim("sl", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[STATIC, DYNAMIC]);
+    sim("sl", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn ebpf_p4testgen_pl() {
-    sim("pl", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[STATIC, DYNAMIC]);
+    sim("pl", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn psa_p4c_al() {
-    sim("al", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[STATIC, DYNAMIC]);
+    sim("al", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn psa_p4c_sl() {
-    sim("sl", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[STATIC, DYNAMIC]);
+    sim("sl", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn psa_p4c_pl() {
-    sim("pl", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[STATIC, DYNAMIC]);
+    sim("pl", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]

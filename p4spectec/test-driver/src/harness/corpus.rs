@@ -72,9 +72,7 @@ pub fn collect(dir: &Path, suffix: &str) -> Result<Vec<PathBuf>> {
     let mut files = Vec::new();
     for path in paths {
         if fs::metadata(&path)?.is_dir() {
-            if path.file_name().is_some_and(|name| name != "include") {
-                files.extend(collect(&path, suffix)?);
-            }
+            files.extend(collect(&path, suffix)?);
         } else if path.to_str().is_some_and(|path| path.ends_with(suffix)) {
             files.push(path);
         }

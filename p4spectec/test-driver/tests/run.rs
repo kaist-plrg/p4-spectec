@@ -13,7 +13,12 @@ const ERRORS: &str = "p4c/testdata/p4_16_errors";
 const REGRESSION_POS: &str = "testdata/regression/pos";
 const REGRESSION_NEG: &str = "testdata/regression/neg";
 
+const HEADERS: &str = "excludes/headers";
 const STATIC: &str = "excludes/static";
+
+/// Worker options: specification, P4 includes, and the runner options enabled.
+const OPTIONS: [&str; 7] =
+    ["--spec", "spec", "--include", "p4c/p4include", "--cache", "--det", "--tco"];
 
 /// Runs the programs under `dir` through `relation` and expects `outcome` of each,
 /// skipping those listed under `dirs_exclude`.
@@ -23,7 +28,8 @@ fn run(language: &str, relation: &str, dir: &str, dirs_exclude: &[&str], outcome
     let result = Corpus::files(dir, ".p4")
         .and_then(|corpus| corpus.excludes(dirs_exclude))
         .and_then(|corpus| {
-            corpus.run(env!("CARGO_BIN_EXE_p4spectec-test-worker"), &["run", language, relation])
+            let args = [&OPTIONS[..], &["run", language, relation]].concat();
+            corpus.run(env!("CARGO_BIN_EXE_p4spectec-test-worker"), &args)
         })
         .and_then(|report| report.expect_all(outcome));
     if let Err(error) = result {
@@ -33,17 +39,17 @@ fn run(language: &str, relation: &str, dir: &str, dirs_exclude: &[&str], outcome
 
 #[test]
 fn pos_al() {
-    run("al", "Program_inst", SAMPLES, &[STATIC], Outcome::Pass)
+    run("al", "Program_inst", SAMPLES, &[HEADERS, STATIC], Outcome::Pass)
 }
 
 #[test]
 fn pos_sl() {
-    run("sl", "Program_inst", SAMPLES, &[STATIC], Outcome::Pass)
+    run("sl", "Program_inst", SAMPLES, &[HEADERS, STATIC], Outcome::Pass)
 }
 
 #[test]
 fn pos_pl() {
-    run("pl", "Program_inst", SAMPLES, &[STATIC], Outcome::Pass)
+    run("pl", "Program_inst", SAMPLES, &[HEADERS, STATIC], Outcome::Pass)
 }
 
 #[test]

@@ -208,7 +208,8 @@ make test FILTER='test(=v1model_p4c_al)'          # one corpus
 make test FILTER='package(p4spectec-cli)'         # CLI diagnostics
 ```
 
-Corpus tests run each case in a worker process;
+Corpus tests run each case in a worker process,
+started with the specification, P4 include directories, and runner options its test file names;
 `make test TIMEOUT=SECONDS` (or `P4SPECTEC_TEST_TIMEOUT`) gives each case a timeout;
 without it, cases run without one.
 Each corpus test names the `excludes/` directories whose `.exclude` files list the cases it skips.

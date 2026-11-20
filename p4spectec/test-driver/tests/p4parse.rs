@@ -8,13 +8,19 @@
 
 use p4spectec_test::harness::corpus::{Corpus, Outcome};
 
+/// Worker options: specification and P4 includes.
+const OPTIONS: [&str; 4] = ["--spec", "spec", "--include", "p4c/p4include"];
+
 /// Roundtrips the programs under `dir`, skipping those listed under `dirs_exclude`.
 ///
 /// Panics with the error text, so that its lines print unescaped.
 fn p4parse(dir: &str, dirs_exclude: &[&str]) {
     let result = Corpus::files(dir, ".p4")
         .and_then(|corpus| corpus.excludes(dirs_exclude))
-        .and_then(|corpus| corpus.run(env!("CARGO_BIN_EXE_p4spectec-test-worker"), &["p4parse"]))
+        .and_then(|corpus| {
+            let args = [&OPTIONS[..], &["p4parse"]].concat();
+            corpus.run(env!("CARGO_BIN_EXE_p4spectec-test-worker"), &args)
+        })
         .and_then(|report| report.expect_all(Outcome::Pass));
     if let Err(error) = result {
         panic!("{error}");
@@ -23,7 +29,7 @@ fn p4parse(dir: &str, dirs_exclude: &[&str]) {
 
 #[test]
 fn pos() {
-    p4parse("p4c/testdata/p4_16_samples", &["excludes/p4parse"]);
+    p4parse("p4c/testdata/p4_16_samples", &["excludes/headers", "excludes/p4parse"]);
 }
 
 #[test]
