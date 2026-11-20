@@ -2,7 +2,7 @@
 //!
 //! A test runs every fixture of its directories under `testdata/spec`:
 //! the stages before its own must pass, and its own must fail
-//! (or, for a fixture under `pos/`, pass).
+//! (or pass, for a test of positive fixtures).
 //! The reports are rendered and compared with `<stem>.expect` beside the fixture;
 //! `UPDATE_EXPECT=1` rewrites the expectation instead.
 //! Every test runs from `testdata/spec`, so that reports show stable relative paths.
@@ -101,15 +101,14 @@ fn frames_short() -> RenderConfig {
     RenderConfig { frame_style: Some(DisplayStyle::Short), ..Default::default() }
 }
 
-/// Builds a runner of the specification at `path` in `language`.
+/// Builds a runner of the specification at `path` in `language` under `config`.
 fn runner(
     arena: &mut Arena,
     path: &Path,
     language: Language,
-    det: bool,
+    config: Config,
 ) -> runner::Runner<p4spectec::interface::p4::P4Interface, NullExtern> {
     let spec = must_pass(path, "conversion", language.spec(&[path.to_path_buf()]));
-    let config = Config::new(true, det, false, true);
     must_pass(path, "runner build", interpreter::build(arena, spec, config, NullExtern))
 }
 
@@ -129,22 +128,29 @@ fn parse() {
     }
 }
 
-#[test]
-fn elab() {
-    for path in fixtures("neg/elab", &[".watsup"])
-        .into_iter()
-        .chain(fixtures("pos/elab", &[".watsup"]))
-    {
+/// Elaborates each fixture of `dir`, which must pass if `pos` and fail otherwise,
+/// and compares its warnings, then its error if any.
+fn elab_check(dir: &str, pos: bool) {
+    for path in fixtures(dir, &[".watsup"]) {
         let spec_el = must_pass(&path, "parsing", parse_files([&path]));
-        // Keep the warnings before the result, then the error if any
         let (result, mut reports) = pass::elaborate::convert_with_warnings(spec_el);
-        if path.starts_with("pos") {
+        if pos {
             must_pass(&path, "elaboration", result);
         } else {
             reports.push(*must_fail(&path, "elaboration", result));
         }
         check(&expected(&path), &reports, &RenderConfig::default());
     }
+}
+
+#[test]
+fn elab() {
+    elab_check("neg/elab", false);
+}
+
+#[test]
+fn elab_pos() {
+    elab_check("pos/elab", true);
 }
 
 #[test]
@@ -231,13 +237,13 @@ fn p4_syntax() {
     }
 }
 
-/// Applies `R` to the natural 1 for each fixture of `dir` in every language,
-/// with determinism checks if `det`, and requires it to fail.
-fn run_fail(dir: &str, det: bool) {
+/// Applies `R` to the natural 1 for each fixture of `dir` in every language
+/// under `config`, and requires it to fail.
+fn run_fail(dir: &str, config: Config) {
     for path in fixtures(dir, &[".watsup"]) {
         for language in LANGUAGES {
             let mut arena = Arena::new();
-            let mut runner = runner(&mut arena, &path, language, det);
+            let mut runner = runner(&mut arena, &path, language, config);
             let nat = value::make::nat(&mut arena, 1u64.into(), Span::default()).unwrap();
             let result = runner.eval_rel(&mut arena, "R", &[nat]).result;
             let error = must_fail(&path, "relation R", result);
@@ -252,21 +258,24 @@ fn run_fail(dir: &str, det: bool) {
 
 #[test]
 fn run() {
-    run_fail("neg/run", false);
+    // Cache and tail calls on, determinism checks off
+    run_fail("neg/run", Config::new(true, false, false, true));
 }
 
 #[test]
 fn run_det() {
-    run_fail("neg/run-det", true);
+    // Cache, determinism checks, and tail calls on
+    run_fail("neg/run-det", Config::new(true, true, false, true));
 }
 
 #[test]
 fn run_main() {
     // Each source's `Main`, whose notation is `OK`, must hold in every language
+    let config = Config::new(true, true, false, true);
     for path in fixtures("pos/run", &[".watsup"]) {
         for language in LANGUAGES {
             let mut arena = Arena::new();
-            let mut runner = runner(&mut arena, &path, language, true);
+            let mut runner = runner(&mut arena, &path, language, config);
             let result = runner.eval_rel(&mut arena, "Main", &[]).result;
             must_pass(&path, &format!("Main in {}", language.name()), result.map_err(|_| "error"));
         }
