@@ -53,7 +53,7 @@ struct Options {
 fn parse_args(args: &[String]) -> Result<(Options, Vec<&str>)> {
     let mut paths_spec = Vec::new();
     let mut paths_include = Vec::new();
-    let (mut cache, mut det, mut guard, mut tco) = (false, false, false, false);
+    let mut config = Config { cache: false, det: false, guard: false, tco: false };
     let mut args = args.iter().map(String::as_str);
     let mut command = Vec::new();
     while let Some(arg) = args.next() {
@@ -67,10 +67,10 @@ fn parse_args(args: &[String]) -> Result<(Options, Vec<&str>)> {
                 paths.push(PathBuf::from(path));
             }
             // Enable a runner option
-            "--cache" => cache = true,
-            "--det" => det = true,
-            "--guard" => guard = true,
-            "--tco" => tco = true,
+            "--cache" => config.cache = true,
+            "--det" => config.det = true,
+            "--guard" => config.guard = true,
+            "--tco" => config.tco = true,
             // Keep the command and everything after it
             _ => {
                 command.push(arg);
@@ -79,7 +79,6 @@ fn parse_args(args: &[String]) -> Result<(Options, Vec<&str>)> {
             }
         }
     }
-    let config = Config::new(cache, det, guard, tco);
     Ok((Options { paths_spec, paths_include, config }, command))
 }
 

@@ -2,7 +2,7 @@
 //!
 //! A test runs every fixture of its directories under `testdata/spec`:
 //! the stages before its own must pass, and its own must fail
-//! (or pass, for a test of positive fixtures).
+//! (or, in `elab_pos`, pass).
 //! The reports are rendered and compared with `<stem>.expect` beside the fixture;
 //! `UPDATE_EXPECT=1` rewrites the expectation instead.
 //! Every test runs from `testdata/spec`, so that reports show stable relative paths.
@@ -117,29 +117,25 @@ fn parse() {
     }
 }
 
-/// Elaborates each fixture of `dir`, which must pass if `pos` and fail otherwise,
-/// and compares its warnings, then its error if any.
-fn elab_check(dir: &str, pos: bool) {
-    for path in fixtures(dir, &[".watsup"]) {
+#[test]
+fn elab_neg() {
+    for path in fixtures("neg/elab", &[".watsup"]) {
         let spec_el = must_pass(&path, "parsing", parse_files([&path]));
+        // Keep the warnings before the error
         let (result, mut reports) = pass::elaborate::convert_with_warnings(spec_el);
-        if pos {
-            must_pass(&path, "elaboration", result);
-        } else {
-            reports.push(*must_fail(&path, "elaboration", result));
-        }
+        reports.push(*must_fail(&path, "elaboration", result));
         check(&expected(&path), &reports, &RenderConfig::default());
     }
 }
 
 #[test]
-fn elab() {
-    elab_check("neg/elab", false);
-}
-
-#[test]
 fn elab_pos() {
-    elab_check("pos/elab", true);
+    for path in fixtures("pos/elab", &[".watsup"]) {
+        let spec_el = must_pass(&path, "parsing", parse_files([&path]));
+        let (result, reports) = pass::elaborate::convert_with_warnings(spec_el);
+        must_pass(&path, "elaboration", result);
+        check(&expected(&path), &reports, &RenderConfig::default());
+    }
 }
 
 #[test]
@@ -247,20 +243,18 @@ fn run_fail(dir: &str, config: Config) {
 
 #[test]
 fn run() {
-    // Cache and tail calls on, determinism checks off
-    run_fail("neg/run", Config::new(true, false, false, true));
+    run_fail("neg/run", Config { cache: true, det: false, guard: false, tco: true });
 }
 
 #[test]
 fn run_det() {
-    // Cache, determinism checks, and tail calls on
-    run_fail("neg/run-det", Config::new(true, true, false, true));
+    run_fail("neg/run-det", Config { cache: true, det: true, guard: false, tco: true });
 }
 
 #[test]
 fn run_main() {
     // Each source's `Main`, whose notation is `OK`, must hold in every language
-    let config = Config::new(true, true, false, true);
+    let config = Config { cache: true, det: true, guard: false, tco: true };
     for path in fixtures("pos/run", &[".watsup"]) {
         for language in LANGUAGES {
             let mut arena = Arena::new();
@@ -273,7 +267,7 @@ fn run_main() {
 
 #[test]
 fn sim() {
-    let config = Config::new(true, false, false, true);
+    let config = Config { cache: true, det: false, guard: false, tco: true };
     // Admission must reject an architecture the simulator lacks
     for path in fixtures("neg/sim", &[".watsup"]) {
         let spec_al = must_pass(
