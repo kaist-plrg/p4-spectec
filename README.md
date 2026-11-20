@@ -188,7 +188,7 @@ Tests are Rust integration tests run by [cargo-nextest](https://nexte.st)
 
 | Test file | Coverage |
 | --- | --- |
-| `p4spectec/test-driver/tests/speclang.rs` | Elaborated, AL, SL, and prose specifications; AsciiDoc and anchor determinism |
+| `p4spectec/test-driver/tests/speclang.rs` | Elaborated, AL, SL, and prose specifications; AsciiDoc, LaTeX, and anchor determinism |
 | `p4spectec/test-driver/tests/p4parse.rs` | P4 parse/unparse/parse corpus |
 | `p4spectec/test-driver/tests/run.rs` | AL/SL/PL P4 execution corpus |
 | `p4spectec/test-driver/tests/sim.rs` | AL/SL/PL packet simulation corpus |

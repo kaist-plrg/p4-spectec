@@ -11,7 +11,7 @@ use expect_test::expect_file;
 use p4spectec::{
     diagnostic::{RenderConfig, Renderer},
     lang::traits::print::Print,
-    specdoc::adoc,
+    specdoc::{adoc, latex},
 };
 
 use p4spectec_test::harness::corpus;
@@ -76,6 +76,18 @@ fn adoc_el() {
     let spec_el = p4spectec::parse(spec()).unwrap_or_else(|report| panic!("{report}"));
     let texts = spec_el.iter().map(adoc::el::render_def).collect::<Vec<_>>();
     check("adoc-el", &texts.join("\n\n"));
+}
+
+#[test]
+fn latex_el() {
+    // Render each EL definition as a separate LaTeX block, without link destinations
+    let spec_el = p4spectec::parse(spec()).unwrap_or_else(|report| panic!("{report}"));
+    let anchor_ctx = latex::AnchorContext::default();
+    let texts = spec_el
+        .iter()
+        .map(|def| latex::render_def(&anchor_ctx, def).unwrap_or_else(|report| panic!("{report}")))
+        .collect::<Vec<_>>();
+    check("latex-el", &texts.join("\n\n"));
 }
 
 #[test]
