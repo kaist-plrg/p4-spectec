@@ -212,10 +212,13 @@ Corpus tests run each case in a worker process,
 started with the specification, P4 include directories, and runner options its test file names;
 `make test TIMEOUT=SECONDS` (or `P4SPECTEC_TEST_TIMEOUT`) gives each case a timeout;
 without it, cases run without one.
-Each corpus test names the `excludes/` directories whose `.exclude` files list the cases it skips.
+Each corpus test names the `excludes/` directories whose `.exclude` files list the cases it skips,
+and compares the outcome of every case with `p4spectec/test-driver/expected/<file>/<suite>.expected`,
+which the AL, SL, and PL tests of a suite share;
+a case that times out keeps its recorded outcome.
 `make test PROFILE=ci` runs the CI selection of `p4spectec/.config/nextest.toml`.
 
-Snapshot and diagnostic tests compare text with expected files.
+Corpus, snapshot, and diagnostic tests compare text with expected files.
 `UPDATE_EXPECT=1 make test` rewrites those files instead;
 review their diffs before committing.
 

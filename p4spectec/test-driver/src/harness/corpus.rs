@@ -3,16 +3,18 @@
 //! `collect` discovers sources under a root,
 //! and `collect_excludes` reads exclusion lists.
 //! A test runs a corpus through a worker:
-//! `Corpus::files(dir, ".p4")?.excludes(dirs)?.run(worker, args)?.expect_all(Outcome::Pass)`
+//! `Corpus::files(dir, ".p4")?.excludes(dirs)?.run(worker, args)?.check(path_expected)`
 //! gives each case the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
-//! prints one line per case, and fails on any case off its outcome.
+//! prints one line per case, and compares the outcomes with a snapshot.
 
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
     time::{Duration, Instant},
 };
+
+use expect_test::expect_file;
 
 use super::{
     Error, Result,
@@ -122,15 +124,6 @@ impl Corpus {
         Ok(Self::new(cases))
     }
 
-    /// Makes one case per path the `.exclude` files under `dir` list.
-    pub fn listed(dir: &str) -> Result<Self> {
-        let cases = collect_excludes(&root().join(dir))?
-            .into_iter()
-            .map(|path| vec![PathBuf::from(path)])
-            .collect();
-        Ok(Self::new(cases))
-    }
-
     /// Skips the cases with a path named by the `.exclude` files under `dirs`.
     pub fn excludes(mut self, dirs: &[&str]) -> Result<Self> {
         for dir in dirs {
@@ -163,7 +156,7 @@ impl Corpus {
                 .iter()
                 .map(|path| path.display().to_string())
                 .collect::<Vec<_>>()
-                .join(" ");
+                .join(",");
             // Record excluded cases without running them
             if paths.iter().any(|path| {
                 path.to_str()
@@ -201,10 +194,13 @@ pub struct Report {
 }
 
 impl Report {
-    /// Fails unless every case run reached `outcome_expect`.
+    /// Compares the outcome of every case with the snapshot at `path_expected`.
     ///
-    /// Excluded cases are skipped, and a timeout only warns.
-    pub fn expect_all(&self, outcome_expect: Outcome) -> Result<()> {
+    /// Each line is `<outcome>,<paths>`, in corpus order.
+    /// A case that timed out keeps its line of the snapshot,
+    /// since a timeout says nothing about the outcome.
+    /// `UPDATE_EXPECT=1` rewrites the snapshot instead.
+    pub fn check(&self, path_expected: &Path) {
         let count = |outcome| {
             self.outcomes
                 .iter()
@@ -219,29 +215,26 @@ impl Report {
             count(Outcome::Fail),
             count(Outcome::Timeout),
         );
-        let mut texts_wrong = Vec::new();
+        // Index the snapshot's lines by case
+        let text_expected = fs::read_to_string(path_expected).unwrap_or_default();
+        let lines_expected: BTreeMap<&str, &str> = text_expected
+            .lines()
+            .filter_map(|line| line.split_once(',').map(|(_, text_case)| (text_case, line)))
+            .collect();
+        let mut text = String::new();
         for (text_case, outcome) in &self.outcomes {
-            match outcome {
-                // Skip cases the exclusion lists name
-                Outcome::Exclude => {}
-                // Warn on a timeout, which says nothing about the outcome
-                Outcome::Timeout => eprintln!("warning: timeout {text_case}"),
-                // Collect cases off the expected outcome
-                _ if *outcome != outcome_expect => {
-                    texts_wrong.push(format!("{} {text_case}", outcome.name()));
+            let line = match (outcome, lines_expected.get(text_case.as_str())) {
+                // Keep the recorded outcome of a case that timed out
+                (Outcome::Timeout, Some(line)) => {
+                    eprintln!("warning: timeout {text_case}");
+                    (*line).to_owned()
                 }
-                // Accept cases that reached it
-                _ => {}
-            }
+                // Record any other outcome as reached
+                _ => format!("{},{text_case}", outcome.name()),
+            };
+            text.push_str(&line);
+            text.push('\n');
         }
-        if texts_wrong.is_empty() {
-            return Ok(());
-        }
-        Err(Error::from(format!(
-            "{} cases did not {}:\n{}",
-            texts_wrong.len(),
-            outcome_expect.name(),
-            texts_wrong.join("\n")
-        )))
+        expect_file![path_expected].assert_eq(&text);
     }
 }

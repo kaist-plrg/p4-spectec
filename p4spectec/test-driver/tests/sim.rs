@@ -1,21 +1,22 @@
 //! STF simulation corpora under every interpreter language
 //!
-//! Each test pairs the P4 programs of one architecture with their STF tests
-//! and expects every pair to pass:
+//! Each test pairs the P4 programs of one architecture with their STF tests:
 //! a program under `dir_p4` that includes the architecture's model
 //! pairs with each test under `dir_stf` of its stem,
 //! either beside it or in a directory named after it,
 //! and files under `dir_patches` replace those with the same stem.
 //! Pairs naming a file listed under the test's exclusion directories are skipped.
 //! Each test runs its pairs in one `p4spectec-test-worker`,
-//! which gives each pair the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set.
+//! which gives each pair the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
+//! and compares the outcomes with `expected/sim/<suite>.expected`,
+//! which the languages share.
 
 use std::{
     fs,
     path::{Path, PathBuf},
 };
 
-use p4spectec_test::harness::corpus::{self, Corpus, Outcome};
+use p4spectec_test::harness::corpus::{self, Corpus};
 
 const P4C_SAMPLES: &str = "p4c/testdata/p4_16_samples";
 const P4TESTGEN: &str = "testdata/p4testgen";
@@ -109,10 +110,12 @@ fn pairs(arch: &str, dir_p4: &str, dir_stf: &str, dir_patches: Option<&str>) -> 
 }
 
 /// Simulates the `arch` pairs of `dir_p4` and `dir_stf` under `language`,
-/// skipping those listed under `dirs_exclude`.
+/// skipping those listed under `dirs_exclude`,
+/// and compares the outcomes with the snapshot of `suite`.
 ///
 /// Panics with the error text, so that its lines print unescaped.
 fn sim(
+    suite: &str,
     language: &str,
     arch: &str,
     dir_p4: &str,
@@ -125,16 +128,19 @@ fn sim(
         .and_then(|corpus| {
             let args = [&OPTIONS[..], &["sim", language, arch]].concat();
             corpus.run(env!("CARGO_BIN_EXE_p4spectec-test-worker"), &args)
-        })
-        .and_then(|report| report.expect_all(Outcome::Pass));
-    if let Err(error) = result {
-        panic!("{error}");
+        });
+    match result {
+        Ok(report) => report.check(
+            &Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/sim/{suite}.expected")),
+        ),
+        Err(error) => panic!("{error}"),
     }
 }
 
 #[test]
 fn v1model_p4c_al() {
     sim(
+        "v1model-p4c",
         "al",
         "v1model",
         P4C_SAMPLES,
@@ -147,6 +153,7 @@ fn v1model_p4c_al() {
 #[test]
 fn v1model_p4c_sl() {
     sim(
+        "v1model-p4c",
         "sl",
         "v1model",
         P4C_SAMPLES,
@@ -159,6 +166,7 @@ fn v1model_p4c_sl() {
 #[test]
 fn v1model_p4c_pl() {
     sim(
+        "v1model-p4c",
         "pl",
         "v1model",
         P4C_SAMPLES,
@@ -171,6 +179,7 @@ fn v1model_p4c_pl() {
 #[test]
 fn v1model_p4testgen_al() {
     sim(
+        "v1model-p4testgen",
         "al",
         "v1model",
         P4C_SAMPLES,
@@ -183,6 +192,7 @@ fn v1model_p4testgen_al() {
 #[test]
 fn v1model_p4testgen_sl() {
     sim(
+        "v1model-p4testgen",
         "sl",
         "v1model",
         P4C_SAMPLES,
@@ -195,6 +205,7 @@ fn v1model_p4testgen_sl() {
 #[test]
 fn v1model_p4testgen_pl() {
     sim(
+        "v1model-p4testgen",
         "pl",
         "v1model",
         P4C_SAMPLES,
@@ -206,90 +217,114 @@ fn v1model_p4testgen_pl() {
 
 #[test]
 fn v1model_custom_al() {
-    sim("al", "v1model", CUSTOM, CUSTOM, Some("patches/v1model"), &[STATIC, DYNAMIC]);
+    sim(
+        "v1model-custom",
+        "al",
+        "v1model",
+        CUSTOM,
+        CUSTOM,
+        Some("patches/v1model"),
+        &[STATIC, DYNAMIC],
+    );
 }
 
 #[test]
 fn v1model_custom_sl() {
-    sim("sl", "v1model", CUSTOM, CUSTOM, Some("patches/v1model"), &[STATIC, DYNAMIC]);
+    sim(
+        "v1model-custom",
+        "sl",
+        "v1model",
+        CUSTOM,
+        CUSTOM,
+        Some("patches/v1model"),
+        &[STATIC, DYNAMIC],
+    );
 }
 
 #[test]
 fn v1model_custom_pl() {
-    sim("pl", "v1model", CUSTOM, CUSTOM, Some("patches/v1model"), &[STATIC, DYNAMIC]);
+    sim(
+        "v1model-custom",
+        "pl",
+        "v1model",
+        CUSTOM,
+        CUSTOM,
+        Some("patches/v1model"),
+        &[STATIC, DYNAMIC],
+    );
 }
 
 #[test]
 fn ebpf_p4c_al() {
-    sim("al", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim("ebpf-p4c", "al", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn ebpf_p4c_sl() {
-    sim("sl", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim("ebpf-p4c", "sl", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn ebpf_p4c_pl() {
-    sim("pl", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim("ebpf-p4c", "pl", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn ebpf_p4testgen_al() {
-    sim("al", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim("ebpf-p4testgen", "al", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn ebpf_p4testgen_sl() {
-    sim("sl", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim("ebpf-p4testgen", "sl", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn ebpf_p4testgen_pl() {
-    sim("pl", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim("ebpf-p4testgen", "pl", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn psa_p4c_al() {
-    sim("al", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim("psa-p4c", "al", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn psa_p4c_sl() {
-    sim("sl", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim("psa-p4c", "sl", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn psa_p4c_pl() {
-    sim("pl", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim("psa-p4c", "pl", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
 }
 
 #[test]
 fn v1model_regression_al() {
-    sim("al", "v1model", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
+    sim("v1model-regression", "al", "v1model", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
 }
 
 #[test]
 fn v1model_regression_sl() {
-    sim("sl", "v1model", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
+    sim("v1model-regression", "sl", "v1model", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
 }
 
 #[test]
 fn v1model_regression_pl() {
-    sim("pl", "v1model", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
+    sim("v1model-regression", "pl", "v1model", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
 }
 
 #[test]
 fn ebpf_regression_al() {
-    sim("al", "ebpf", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
+    sim("ebpf-regression", "al", "ebpf", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
 }
 
 #[test]
 fn ebpf_regression_sl() {
-    sim("sl", "ebpf", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
+    sim("ebpf-regression", "sl", "ebpf", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
 }
 
 #[test]
 fn ebpf_regression_pl() {
-    sim("pl", "ebpf", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
+    sim("ebpf-regression", "pl", "ebpf", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
 }
