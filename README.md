@@ -198,11 +198,12 @@ Tests are Rust integration tests run by [cargo-nextest](https://nexte.st)
 `make test FILTER=EXPR` runs the tests matching a
 [nextest filterset](https://nexte.st/docs/filtersets/).
 A test is named `<package>::<file> <function>`, as `cargo nextest list` shows,
-for example `p4spectec-test::run pos_sl`:
+for example `p4spectec-test::run pos_sl`;
+`binary(run)` matches the tests of `run.rs`, and `test(_sl)` the tests whose names contain `_sl`:
 
 ```
 make test FILTER='binary(run)'                    # every test of run.rs
-make test FILTER='binary(sim) & test(/_sl$/)'     # SL simulation corpora
+make test FILTER='binary(sim) & test(_sl)'        # SL simulation corpora
 make test FILTER='test(=v1model_p4c_al)'          # one corpus
 make test FILTER='package(p4spectec-cli)'         # CLI diagnostics
 ```
