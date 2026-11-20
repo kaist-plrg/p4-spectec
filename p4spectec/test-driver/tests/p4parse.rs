@@ -10,6 +10,9 @@ use std::path::Path;
 
 use p4spectec_test::harness::corpus::Corpus;
 
+/// Worker executable, which Cargo builds before the tests.
+const WORKER: &str = env!("CARGO_BIN_EXE_p4spectec-test-worker");
+
 /// Worker options: specification and P4 includes.
 const OPTIONS: [&str; 4] = ["--spec", "spec", "--include", "p4c/p4include"];
 
@@ -22,7 +25,7 @@ fn p4parse(suite: &str, dir: &str, dirs_exclude: &[&str]) {
         .and_then(|corpus| corpus.excludes(dirs_exclude))
         .and_then(|corpus| {
             let args = [&OPTIONS[..], &["p4parse"]].concat();
-            corpus.run(env!("CARGO_BIN_EXE_p4spectec-test-worker"), &args)
+            corpus.run(WORKER, &args)
         });
     match result {
         Ok(report) => report.check(

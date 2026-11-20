@@ -19,6 +19,9 @@ const REGRESSION_NEG: &str = "testdata/regression/neg";
 const HEADERS: &str = "excludes/headers";
 const STATIC: &str = "excludes/static";
 
+/// Worker executable, which Cargo builds before the tests.
+const WORKER: &str = env!("CARGO_BIN_EXE_p4spectec-test-worker");
+
 /// Worker options: specification, P4 includes, and the runner options enabled.
 const OPTIONS: [&str; 7] =
     ["--spec", "spec", "--include", "p4c/p4include", "--cache", "--det", "--tco"];
@@ -32,7 +35,7 @@ fn run(suite: &str, language: &str, relation: &str, dir: &str, dirs_exclude: &[&
         .and_then(|corpus| corpus.excludes(dirs_exclude))
         .and_then(|corpus| {
             let args = [&OPTIONS[..], &["run", language, relation]].concat();
-            corpus.run(env!("CARGO_BIN_EXE_p4spectec-test-worker"), &args)
+            corpus.run(WORKER, &args)
         });
     match result {
         Ok(report) => report.check(

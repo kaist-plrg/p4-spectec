@@ -27,6 +27,9 @@ const HEADERS: &str = "excludes/headers";
 const STATIC: &str = "excludes/static";
 const DYNAMIC: &str = "excludes/dynamic";
 
+/// Worker executable, which Cargo builds before the tests.
+const WORKER: &str = env!("CARGO_BIN_EXE_p4spectec-test-worker");
+
 /// Worker options: specification, P4 includes, and the runner options enabled.
 const OPTIONS: [&str; 7] =
     ["--spec", "spec", "--include", "p4c/p4include", "--cache", "--det", "--tco"];
@@ -127,7 +130,7 @@ fn sim(
         .excludes(dirs_exclude)
         .and_then(|corpus| {
             let args = [&OPTIONS[..], &["sim", language, arch]].concat();
-            corpus.run(env!("CARGO_BIN_EXE_p4spectec-test-worker"), &args)
+            corpus.run(WORKER, &args)
         });
     match result {
         Ok(report) => report.check(
