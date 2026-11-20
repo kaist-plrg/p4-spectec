@@ -1,7 +1,7 @@
-//! Snapshots of the P4 specification at every conversion stage
+//! The P4 specification at every conversion stage
 //!
 //! Each test converts the sources under `spec/` from the repository root
-//! and compares the printed or rendered text with `expected/snapshot/<name>.expected`;
+//! and compares the printed or rendered text with `expected/speclang/<name>.expected`;
 //! `UPDATE_EXPECT=1` rewrites the expected file instead.
 
 use std::path::{Path, PathBuf};
@@ -35,7 +35,7 @@ fn check(name: &str, text: &str) {
         .collect::<Vec<_>>()
         .join("\n");
     let path_expected = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("expected/snapshot")
+        .join("expected/speclang")
         .join(format!("{name}.expected"));
     expect_file![path_expected].assert_eq(&text);
 }

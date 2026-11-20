@@ -42,7 +42,7 @@ test:
 	$(if $(TIMEOUT),P4SPECTEC_TEST_TIMEOUT=$(TIMEOUT)) $(CARGO) nextest run --locked --release --workspace --target-dir "$(TARGET_DIR)" $(if $(PROFILE),--profile $(PROFILE)) $(if $(FILTER),-E '$(value FILTER)')
 
 # test-<alias> runs the tests of the filterset FILTER_<alias>, e.g. `make test-sim-v1model-p4c-sl`
-FILTER_snapshot := binary(snapshot)
+FILTER_speclang := binary(speclang)
 FILTER_diagnostic := binary(diagnostic)
 FILTER_p4parse := binary(p4parse)
 FILTER_run := binary(run)

@@ -184,11 +184,11 @@ make test         # Run every integration test
 ```
 
 Tests are Rust integration tests run by [cargo-nextest](https://nexte.st)
-(`cargo install --locked cargo-nextest`), one test per corpus or snapshot:
+(`cargo install --locked cargo-nextest`), one test per corpus, specification stage, or diagnostic stage:
 
 | Test file | Coverage |
 | --- | --- |
-| `p4spectec/test-driver/tests/snapshot.rs` | Elaborated, AL, SL, and prose specifications; AsciiDoc and anchor determinism |
+| `p4spectec/test-driver/tests/speclang.rs` | Elaborated, AL, SL, and prose specifications; AsciiDoc and anchor determinism |
 | `p4spectec/test-driver/tests/p4parse.rs` | P4 parse/unparse/parse corpus |
 | `p4spectec/test-driver/tests/run.rs` | AL/SL/PL P4 execution corpus |
 | `p4spectec/test-driver/tests/sim.rs` | AL/SL/PL packet simulation corpus |
@@ -198,7 +198,7 @@ Tests are Rust integration tests run by [cargo-nextest](https://nexte.st)
 `make test-<alias>` runs a group of tests:
 
 ```
-make test-snapshot                  # snapshot.rs
+make test-speclang                  # speclang.rs
 make test-diagnostic                # diagnostics of the pipeline and the command line
 make test-p4parse                   # p4parse.rs
 make test-run                       # run.rs; test-run-sl: its SL tests
@@ -222,7 +222,7 @@ which the AL, SL, and PL tests of a suite share;
 a case that times out keeps its recorded outcome.
 `make test PROFILE=ci` runs the CI selection of `p4spectec/.config/nextest.toml`.
 
-Corpus, snapshot, and diagnostic tests compare text with expected files.
+Corpus, speclang, and diagnostic tests compare text with expected files.
 `UPDATE_EXPECT=1 make test` rewrites those files instead;
 review their diffs before committing.
 
