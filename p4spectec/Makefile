@@ -32,10 +32,11 @@ clean:
 .DEFAULT_GOAL := test
 
 # Integration tests under test-driver/tests and cli/tests, run by cargo-nextest
+# FILTER=EXPR selects tests by a nextest filterset, e.g. FILTER='binary(run)'
 # PROFILE=NAME selects a profile of .config/nextest.toml (CI uses `ci`)
 # TIMEOUT=SECONDS gives each corpus case a timeout (none by default)
 # UPDATE_EXPECT=1 rewrites expected files instead of comparing with them
 .PHONY: test
 
 test:
-	$(if $(TIMEOUT),P4SPECTEC_TEST_TIMEOUT=$(TIMEOUT)) $(CARGO) nextest run --locked --release --workspace --target-dir "$(TARGET_DIR)" $(if $(PROFILE),--profile $(PROFILE))
+	$(if $(TIMEOUT),P4SPECTEC_TEST_TIMEOUT=$(TIMEOUT)) $(CARGO) nextest run --locked --release --workspace --target-dir "$(TARGET_DIR)" $(if $(PROFILE),--profile $(PROFILE)) $(if $(FILTER),-E '$(value FILTER)')

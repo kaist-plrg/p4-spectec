@@ -195,8 +195,18 @@ Tests are Rust integration tests run by [cargo-nextest](https://nexte.st)
 | `p4spectec/test-driver/tests/diagnostic.rs` | Diagnostics of each pipeline stage on fixtures under `testdata/spec` |
 | `p4spectec/cli/tests/diagnostic.rs` | Diagnostics of the `p4spectec` command line |
 
-Select tests with a nextest filter, for example
-`cargo nextest run --release -p p4spectec-test -E 'test(/_sl$/)'` in `p4spectec/`.
+`make test FILTER=EXPR` runs the tests matching a
+[nextest filterset](https://nexte.st/docs/filtersets/).
+A test is named `<package>::<file> <function>`, as `cargo nextest list` shows,
+for example `p4spectec-test::run pos_sl`:
+
+```
+make test FILTER='binary(run)'                    # every test of run.rs
+make test FILTER='binary(sim) & test(/_sl$/)'     # SL simulation corpora
+make test FILTER='test(=v1model_p4c_al)'          # one corpus
+make test FILTER='package(p4spectec-cli)'         # CLI diagnostics
+```
+
 Corpus tests run each case in a worker process;
 `make test TIMEOUT=SECONDS` (or `P4SPECTEC_TEST_TIMEOUT`) gives each case a timeout;
 without it, cases run without one.
