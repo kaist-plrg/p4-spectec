@@ -37,10 +37,6 @@ use p4spectec_test::harness::{
 /// Interpreter languages every execution fixture runs in.
 const LANGUAGES: [Language; 3] = [Language::Al, Language::Sl, Language::Pl];
 
-/// Stems of the `neg/run` fixtures that run with determinism checks.
-const STEMS_DET: [&str; 3] =
-    ["relation-nondeterministic", "function-nondeterministic", "list-overlap-det"];
-
 // = Helpers
 
 /// Enters `testdata/spec` and lists the files of `dir` ending in one of `suffixes`.
@@ -235,13 +231,11 @@ fn p4_syntax() {
     }
 }
 
-#[test]
-fn run() {
-    for path in fixtures("neg/run", &[".watsup"]) {
-        let stem = path.file_stem().unwrap().to_string_lossy();
-        let det = STEMS_DET.contains(&&*stem);
+/// Applies `R` to the natural 1 for each fixture of `dir` in every language,
+/// with determinism checks if `det`, and requires it to fail.
+fn run_fail(dir: &str, det: bool) {
+    for path in fixtures(dir, &[".watsup"]) {
         for language in LANGUAGES {
-            // Apply `R` to the natural 1
             let mut arena = Arena::new();
             let mut runner = runner(&mut arena, &path, language, det);
             let nat = value::make::nat(&mut arena, 1u64.into(), Span::default()).unwrap();
@@ -254,6 +248,16 @@ fn run() {
             check(&path_expected, &[*error.into_report()], &frames_short());
         }
     }
+}
+
+#[test]
+fn run() {
+    run_fail("neg/run", false);
+}
+
+#[test]
+fn run_det() {
+    run_fail("neg/run-det", true);
 }
 
 #[test]
