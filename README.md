@@ -211,7 +211,7 @@ make test FILTER='package(p4spectec-cli)'         # CLI diagnostics
 Corpus tests run each case in a worker process;
 `make test TIMEOUT=SECONDS` (or `P4SPECTEC_TEST_TIMEOUT`) gives each case a timeout;
 without it, cases run without one.
-Cases named by `.exclude` files under `excludes/` are skipped.
+Each corpus test names the `excludes/` directories whose `.exclude` files list the cases it skips.
 `make test PROFILE=ci` runs the CI selection of `p4spectec/.config/nextest.toml`.
 
 Snapshot and diagnostic tests compare text with expected files.

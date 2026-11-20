@@ -3,7 +3,7 @@
 //! `collect` discovers sources under a root,
 //! and `collect_excludes` reads exclusion lists.
 //! A test runs a corpus through a worker:
-//! `Corpus::files(dir, ".p4")?.excludes(dir)?.run(worker, args)?.expect_all(Outcome::Pass)`
+//! `Corpus::files(dir, ".p4")?.excludes(dirs)?.run(worker, args)?.expect_all(Outcome::Pass)`
 //! gives each case the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
 //! prints one line per case, and fails on any case off its outcome.
 
@@ -124,9 +124,11 @@ impl Corpus {
         Ok(Self::new(cases))
     }
 
-    /// Skips the cases with a path named by the `.exclude` files under `dir`.
-    pub fn excludes(mut self, dir: &str) -> Result<Self> {
-        self.excludes.extend(collect_excludes(&root().join(dir))?);
+    /// Skips the cases with a path named by the `.exclude` files under `dirs`.
+    pub fn excludes(mut self, dirs: &[&str]) -> Result<Self> {
+        for dir in dirs {
+            self.excludes.extend(collect_excludes(&root().join(dir))?);
+        }
         Ok(self)
     }
 
