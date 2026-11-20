@@ -1,7 +1,6 @@
-//! Test harness and suites of the acceptance driver
+//! Integration-test support for the P4-SpecTec implementation
 //!
-//! The driver, `bin/main.rs`, runs the suites under `suite`
-//! on the harness under `harness`.
+//! The tests under `tests/` share the harness under `harness`;
+//! corpus tests run their cases in the worker executable, `bin/worker.rs`.
 
 pub mod harness;
-pub mod suite;

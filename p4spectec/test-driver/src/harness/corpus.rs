@@ -1,18 +1,26 @@
-//! Source discovery and per-file results for corpus suites
+//! Corpus discovery and execution for the integration tests
 //!
 //! `collect` discovers sources under a root,
 //! and `collect_excludes` reads exclusion lists.
-//! `Results` compares per-test outcomes with one CSV expected file per suite.
+//! A test runs a corpus through a worker:
+//! `Corpus::files(dir, ".p4")?.excludes(dir)?.run(worker, args)?.expect_all(Outcome::Pass)`
+//! gives each case the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
+//! prints one line per case, and fails on any case off its outcome.
 
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::BTreeSet,
     fs,
     path::{Path, PathBuf},
+    time::{Duration, Instant},
 };
 
-use indicatif::{ProgressBar, ProgressStyle};
+use super::{
+    Error, Result,
+    worker::{self, Reply, Worker},
+};
 
-use super::{Error, Result};
+/// Names the environment variable setting the per-case timeout in seconds.
+const ENV_TIMEOUT: &str = "P4SPECTEC_TEST_TIMEOUT";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Outcome {
@@ -88,109 +96,143 @@ pub fn collect_excludes(dir: &Path) -> Result<BTreeSet<String>> {
     Ok(excludes)
 }
 
-/// Collects per-test outcomes of one suite for comparison with its expected file.
-///
-/// The expected file is CSV without a header or quoting,
-/// one line `<outcome>,<path>...` per test.
-pub struct Results {
-    path_expected: PathBuf,
-    outcomes: BTreeMap<Vec<PathBuf>, Outcome>,
+/// Returns the repository root, against which corpus paths are spelled.
+pub fn root() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
-impl Results {
-    pub fn new(path_expected: &Path) -> Self {
-        Self { path_expected: path_expected.to_path_buf(), outcomes: BTreeMap::new() }
+/// Cases of one corpus, each a list of paths relative to the repository root,
+/// and the exclusion lists that skip some of them.
+pub struct Corpus {
+    cases: Vec<Vec<PathBuf>>,
+    excludes: BTreeSet<String>,
+}
+
+impl Corpus {
+    /// Makes a corpus of the given cases.
+    pub fn new(cases: Vec<Vec<PathBuf>>) -> Self {
+        Self { cases, excludes: BTreeSet::new() }
     }
 
-    /// Records one test under its paths, which must be unique and CSV-safe.
-    pub fn record(&mut self, paths: &[&Path], outcome: Outcome) -> Result<()> {
-        for path in paths {
-            if !path
-                .to_str()
-                .is_some_and(|path| !path.contains([',', '"', '\r', '\n']))
-            {
-                return Err(Error::from(format!("invalid result path: {}", path.display())));
-            }
-        }
-        let key = paths.iter().map(|path| path.to_path_buf()).collect();
-        if self.outcomes.insert(key, outcome).is_some() {
-            return Err(Error::from(format!("duplicate result: {}", paths[0].display())));
-        }
-        Ok(())
+    /// Collects one case per file ending in `suffix` under `dir`.
+    pub fn files(dir: &str, suffix: &str) -> Result<Self> {
+        let root = root();
+        let cases = collect(&root.join(dir), suffix)?
+            .into_iter()
+            .map(|path| Ok(vec![path.strip_prefix(&root)?.to_path_buf()]))
+            .collect::<Result<_>>()?;
+        Ok(Self::new(cases))
     }
 
-    /// Compares each test's outcome with the expected file, printing mismatches to stderr.
+    /// Skips the cases with a path named by the `.exclude` files under `dir`.
+    pub fn excludes(mut self, dir: &str) -> Result<Self> {
+        self.excludes.extend(collect_excludes(&root().join(dir))?);
+        Ok(self)
+    }
+
+    /// Runs every case not excluded in a worker of `path_program` started with `args`.
     ///
-    /// A timeout matches any expected outcome with a warning.
-    /// Returns whether every test matched.
-    pub fn check(self) -> Result<bool> {
-        let display = self.path_expected.display();
-        let text = fs::read_to_string(&self.path_expected)
-            .map_err(|error| Error::from(format!("{display}: {error}")))?;
-        let mut expected = BTreeMap::new();
-        for (index, line) in text.lines().enumerate() {
-            let number = index + 1;
-            let mut fields = line.split(',');
-            let outcome = Outcome::from_name(fields.next().unwrap_or_default())
-                .map_err(|error| Error::from(format!("{display}:{number}: {error}")))?;
-            let paths = fields.map(PathBuf::from).collect::<Vec<_>>();
-            if paths.is_empty() {
-                return Err(Error::from(format!("{display}:{number}: no test paths")));
+    /// Each request is the case's paths separated by tabs,
+    /// and the worker answers its outcome name and details;
+    /// with `P4SPECTEC_TEST_TIMEOUT` set,
+    /// a case still running after that many seconds is recorded as a timeout,
+    /// and the worker restarts for the next case.
+    pub fn run(&self, path_program: &str, args: &[&str]) -> Result<Report> {
+        // Read the per-case timeout; without one, wait for every case
+        let timeout = match std::env::var(ENV_TIMEOUT) {
+            Ok(text) => Some(Duration::from_secs(
+                text.parse()
+                    .map_err(|error| Error::from(format!("{ENV_TIMEOUT}={text}: {error}")))?,
+            )),
+            Err(_) => None,
+        };
+        let args = args.iter().map(|arg| (*arg).to_owned()).collect();
+        let mut worker = Worker::new(PathBuf::from(path_program), args, timeout);
+        let mut report = Report { outcomes: Vec::new() };
+        for paths in &self.cases {
+            let text_case = paths
+                .iter()
+                .map(|path| path.display().to_string())
+                .collect::<Vec<_>>()
+                .join(" ");
+            // Record excluded cases without running them
+            if paths.iter().any(|path| {
+                path.to_str()
+                    .is_some_and(|path| self.excludes.contains(path))
+            }) {
+                report.outcomes.push((text_case, Outcome::Exclude));
+                continue;
             }
-            if expected.insert(paths, (number, outcome)).is_some() {
-                return Err(Error::from(format!("{display}:{number}: duplicate test")));
+            // Run the case in the worker
+            let request = paths
+                .iter()
+                .map(|path| worker::text_path(path))
+                .collect::<Result<Vec<_>>>()?
+                .join("\t");
+            let start = Instant::now();
+            let (outcome, details) = match worker.request(&request)? {
+                Reply::Done { status, details } => (Outcome::from_name(&status)?, details),
+                Reply::Timeout => (Outcome::Timeout, String::new()),
+            };
+            // Print its outcome and duration, then any details indented
+            let secs = start.elapsed().as_secs_f64();
+            println!("{:<7} {secs:>7.2}s {text_case}", outcome.name());
+            for line in details.lines() {
+                println!("    {line}");
             }
+            report.outcomes.push((text_case, outcome));
         }
-        let mut matched = true;
-        for (paths, outcome) in self.outcomes {
-            let text_paths = text_paths(&paths);
-            match expected.remove(&paths) {
-                None => {
-                    matched = false;
-                    eprintln!("{display}: {text_paths}: got {}, not expected", outcome.name());
-                }
-                Some((number, outcome_expected)) if outcome == Outcome::Timeout => {
-                    eprintln!(
-                        "warning: {display}:{number}: {text_paths}: timeout, expected {}",
-                        outcome_expected.name()
-                    );
-                }
-                Some((number, outcome_expected)) if outcome != outcome_expected => {
-                    matched = false;
-                    eprintln!(
-                        "{display}:{number}: {text_paths}: expected {}, got {}",
-                        outcome_expected.name(),
-                        outcome.name()
-                    );
-                }
-                Some(_) => {}
-            }
-        }
-        let mut unrun = expected.into_iter().collect::<Vec<_>>();
-        unrun.sort_by_key(|(_, (number, _))| *number);
-        for (paths, (number, outcome_expected)) in unrun {
-            matched = false;
-            eprintln!(
-                "{display}:{number}: {}: expected {}, not run",
-                text_paths(&paths),
-                outcome_expected.name()
-            );
-        }
-        Ok(matched)
+        Ok(report)
     }
 }
 
-/// Joins test paths as in expected files.
-fn text_paths(paths: &[PathBuf]) -> String {
-    paths
-        .iter()
-        .map(|path| path.display().to_string())
-        .collect::<Vec<_>>()
-        .join(",")
+/// Outcomes of one corpus run, in corpus order.
+pub struct Report {
+    outcomes: Vec<(String, Outcome)>,
 }
 
-/// Creates a progress bar over `len` tests.
-pub fn progress_bar(len: usize) -> Result<ProgressBar> {
-    let style = ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")?;
-    Ok(ProgressBar::new(len as u64).with_style(style))
+impl Report {
+    /// Fails unless every case run reached `outcome_expect`.
+    ///
+    /// Excluded cases are skipped, and a timeout only warns.
+    pub fn expect_all(&self, outcome_expect: Outcome) -> Result<()> {
+        let count = |outcome| {
+            self.outcomes
+                .iter()
+                .filter(|(_, other)| *other == outcome)
+                .count()
+        };
+        println!(
+            "collected={} excluded={} pass={} fail={} timeout={}",
+            self.outcomes.len(),
+            count(Outcome::Exclude),
+            count(Outcome::Pass),
+            count(Outcome::Fail),
+            count(Outcome::Timeout),
+        );
+        let mut texts_wrong = Vec::new();
+        for (text_case, outcome) in &self.outcomes {
+            match outcome {
+                // Skip cases the exclusion lists name
+                Outcome::Exclude => {}
+                // Warn on a timeout, which says nothing about the outcome
+                Outcome::Timeout => eprintln!("warning: timeout {text_case}"),
+                // Collect cases off the expected outcome
+                _ if *outcome != outcome_expect => {
+                    texts_wrong.push(format!("{} {text_case}", outcome.name()));
+                }
+                // Accept cases that reached it
+                _ => {}
+            }
+        }
+        if texts_wrong.is_empty() {
+            return Ok(());
+        }
+        Err(Error::from(format!(
+            "{} cases did not {}:\n{}",
+            texts_wrong.len(),
+            outcome_expect.name(),
+            texts_wrong.join("\n")
+        )))
+    }
 }

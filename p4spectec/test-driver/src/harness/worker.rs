@@ -1,10 +1,11 @@
-//! Per-test timeouts through a worker process
+//! Corpus cases in a worker process, with an optional per-case timeout
 //!
-//! A driver given a timeout runs its tests in a worker:
-//! the same executable started with a hidden `worker` command,
-//! which prepares its specification once and then answers one request per line on stdin.
-//! `Worker` starts it, sends requests, and waits at most the timeout for each answer;
-//! a test without an answer by then is a timeout, and the worker is killed
+//! A worker is the `p4spectec-test-worker` executable:
+//! it prepares its specification once
+//! and then answers one request per line on stdin.
+//! `Worker` starts it, sends requests, and waits for each answer,
+//! at most the timeout when one is given;
+//! a case without an answer by then is a timeout, and the worker is killed
 //! and started afresh for the next request.
 //! `Channel` is the worker's end: it keeps the original stdout for answers,
 //! each a status line and detail lines ended by a NUL byte,
@@ -14,7 +15,7 @@ use std::{
     fs::File,
     io::{self, BufRead, BufReader, BufWriter, Write},
     os::fd::AsFd,
-    path::Path,
+    path::{Path, PathBuf},
     process::{Child, ChildStdin, Command, Stdio},
     sync::mpsc::{self, Receiver, RecvTimeoutError},
     thread,
@@ -23,7 +24,7 @@ use std::{
 
 use super::{Error, Result, output::SilenceStdout};
 
-/// Status of an answer that reports a test execution error as its details.
+/// Status of an answer that reports a case execution error as its details.
 const STATUS_ERROR: &str = "error";
 
 /// Ends each answer, which never contains it.
@@ -31,9 +32,9 @@ const END_ANSWER: u8 = b'\0';
 
 /// The answer to one request.
 pub enum Reply {
-    /// The test finished with a status and detail lines.
+    /// The case finished with a status and detail lines.
     Done { status: String, details: String },
-    /// The test did not finish within the timeout.
+    /// The case did not finish within the timeout.
     Timeout,
 }
 
@@ -46,8 +47,9 @@ pub fn text_path(path: &Path) -> Result<&str> {
 
 /// Runs requests in a worker process, restarting it after a timeout.
 pub struct Worker {
+    path_program: PathBuf,
     args: Vec<String>,
-    timeout: Duration,
+    timeout: Option<Duration>,
     running: Option<Running>,
 }
 
@@ -59,12 +61,14 @@ struct Running {
 }
 
 impl Worker {
-    /// Prepares a worker of this executable with `args`, started on its first request.
-    pub fn new(args: Vec<String>, timeout: Duration) -> Self {
-        Self { args, timeout, running: None }
+    /// Prepares a worker of `path_program` with `args`, started on its first request.
+    ///
+    /// Without a `timeout`, each request waits until the worker answers.
+    pub fn new(path_program: PathBuf, args: Vec<String>, timeout: Option<Duration>) -> Self {
+        Self { path_program, args, timeout, running: None }
     }
 
-    /// Sends one request line and waits at most the timeout for its answer.
+    /// Sends one request line and waits for its answer, at most the timeout if any.
     ///
     /// Preparing a newly started worker does not count toward the timeout.
     pub fn request(&mut self, request: &str) -> Result<Reply> {
@@ -74,7 +78,14 @@ impl Worker {
         let running = self.running.as_mut().expect("worker started");
         writeln!(running.stdin, "{request}")?;
         running.stdin.flush()?;
-        match running.answers.recv_timeout(self.timeout) {
+        let answer = match self.timeout {
+            Some(timeout) => running.answers.recv_timeout(timeout),
+            None => running
+                .answers
+                .recv()
+                .map_err(|_| RecvTimeoutError::Disconnected),
+        };
+        match answer {
             Ok(answer) => {
                 let answer = String::from_utf8(answer)?;
                 let (status, details) = answer.split_once('\n').unwrap_or((&answer, ""));
@@ -96,7 +107,7 @@ impl Worker {
 
     /// Starts the worker and waits, without a timeout, until it is prepared.
     fn start(&self) -> Result<Running> {
-        let mut child = Command::new(std::env::current_exe()?)
+        let mut child = Command::new(&self.path_program)
             .args(&self.args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
