@@ -2,7 +2,7 @@
 //!
 //! A test runs every fixture of its directories under `testdata/spec`:
 //! the stages before its own must pass, and its own must fail
-//! (or, in `elab_pos`, pass).
+//! (or, in a `_pos` test, pass).
 //! The reports are rendered and compared with `<stem>.expect` beside the fixture;
 //! `UPDATE_EXPECT=1` rewrites the expectation instead.
 //! Every test runs from `testdata/spec`, so that reports show stable relative paths.
@@ -36,6 +36,9 @@ use p4spectec_test::harness::{
 
 /// Interpreter languages every execution fixture runs in.
 const LANGUAGES: [Language; 3] = [Language::Al, Language::Sl, Language::Pl];
+
+/// Runner options of every execution fixture.
+const CONFIG: Config = Config { cache: true, det: true, guard: false, tco: true };
 
 // = Helpers
 
@@ -90,15 +93,14 @@ fn frames_short() -> RenderConfig {
     RenderConfig { frame_style: Some(DisplayStyle::Short), ..Default::default() }
 }
 
-/// Builds a runner of the specification at `path` in `language` under `config`.
+/// Builds a runner of the specification at `path` in `language` under `CONFIG`.
 fn runner(
     arena: &mut Arena,
     path: &Path,
     language: Language,
-    config: Config,
 ) -> runner::Runner<p4spectec::interface::p4::P4Interface, NullExtern> {
     let spec = must_pass(path, "conversion", language.spec(&[path.to_path_buf()]));
-    must_pass(path, "runner build", interpreter::build(arena, spec, config, NullExtern))
+    must_pass(path, "runner build", interpreter::build(arena, spec, CONFIG, NullExtern))
 }
 
 // = Specification stages
@@ -222,13 +224,13 @@ fn p4_syntax() {
     }
 }
 
-/// Applies `R` to the natural 1 for each fixture of `dir` in every language
-/// under `config`, and requires it to fail.
-fn run_fail(dir: &str, config: Config) {
-    for path in fixtures(dir, &[".watsup"]) {
+#[test]
+fn run_neg() {
+    // Apply `R` to the natural 1 in every language, which must fail
+    for path in fixtures("neg/run", &[".watsup"]) {
         for language in LANGUAGES {
             let mut arena = Arena::new();
-            let mut runner = runner(&mut arena, &path, language, config);
+            let mut runner = runner(&mut arena, &path, language);
             let nat = value::make::nat(&mut arena, 1u64.into(), Span::default()).unwrap();
             let result = runner.eval_rel(&mut arena, "R", &[nat]).result;
             let error = must_fail(&path, "relation R", result);
@@ -242,18 +244,12 @@ fn run_fail(dir: &str, config: Config) {
 }
 
 #[test]
-fn run() {
-    run_fail("neg/run", Config { cache: true, det: true, guard: false, tco: true });
-}
-
-#[test]
-fn run_main() {
+fn run_pos() {
     // Each source's `Main`, whose notation is `OK`, must hold in every language
-    let config = Config { cache: true, det: true, guard: false, tco: true };
     for path in fixtures("pos/run", &[".watsup"]) {
         for language in LANGUAGES {
             let mut arena = Arena::new();
-            let mut runner = runner(&mut arena, &path, language, config);
+            let mut runner = runner(&mut arena, &path, language);
             let result = runner.eval_rel(&mut arena, "Main", &[]).result;
             must_pass(&path, &format!("Main in {}", language.name()), result.map_err(|_| "error"));
         }
@@ -261,8 +257,7 @@ fn run_main() {
 }
 
 #[test]
-fn sim() {
-    let config = Config { cache: true, det: true, guard: false, tco: true };
+fn sim_arch() {
     // Admission must reject an architecture the simulator lacks
     for path in fixtures("neg/sim", &[".watsup"]) {
         let spec_al = must_pass(
@@ -270,10 +265,14 @@ fn sim() {
             "algorithmic conversion",
             p4spectec::algo(std::slice::from_ref(&path)),
         );
-        let result = p4spectec_sim::build(Spec::Al(spec_al), "unsupported", config);
+        let result = p4spectec_sim::build(Spec::Al(spec_al), "unsupported", CONFIG);
         let report = must_fail(&path, "simulator build", result);
         check(&expected(&path), &[*report], &frames_short());
     }
+}
+
+#[test]
+fn sim_assert() {
     // P4 programs run under the full specification and fail a static assertion
     let paths_spec = [PathBuf::from("../../spec")];
     let paths_include = [PathBuf::from("../../p4c/p4include")];
@@ -281,7 +280,7 @@ fn sim() {
         let spec_al = must_pass(&path, "algorithmic conversion", p4spectec::algo(&paths_spec));
         let result = runner::run(
             Spec::Al(spec_al),
-            config,
+            CONFIG,
             Dummy::default(),
             "Program_ok",
             &paths_include,
