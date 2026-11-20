@@ -23,6 +23,10 @@ build release debug:
 fmt fmt-check lint rustdoc test:
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
+# Test aliases of the Rust crate, e.g. `make test-run-sl`
+test-%:
+	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
+
 # Specification documents
 .PHONY: p4spec-draft p4spec-draft-html p4spec-release p4spec-release-html
 

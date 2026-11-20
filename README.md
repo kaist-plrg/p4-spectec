@@ -195,18 +195,22 @@ Tests are Rust integration tests run by [cargo-nextest](https://nexte.st)
 | `p4spectec/test-driver/tests/diagnostic.rs` | Diagnostics of each pipeline stage on fixtures under `testdata/spec` |
 | `p4spectec/cli/tests/diagnostic.rs` | Diagnostics of the `p4spectec` command line |
 
-`make test FILTER=EXPR` runs the tests matching a
-[nextest filterset](https://nexte.st/docs/filtersets/).
-A test is named `<package>::<file> <function>`, as `cargo nextest list` shows,
-for example `p4spectec-test::run pos_sl`;
-`binary(run)` matches the tests of `run.rs`, and `test(_sl)` the tests whose names contain `_sl`:
+`make test-<alias>` runs a group of tests:
 
 ```
-make test FILTER='binary(run)'                    # every test of run.rs
-make test FILTER='binary(sim) & test(_sl)'        # SL simulation corpora
-make test FILTER='test(=v1model_p4c_al)'          # one corpus
-make test FILTER='package(p4spectec-cli)'         # CLI diagnostics
+make test-snapshot                  # snapshot.rs
+make test-diagnostic                # diagnostics of the pipeline and the command line
+make test-p4parse                   # p4parse.rs
+make test-run                       # run.rs; test-run-sl: its SL tests
+make test-run-pos-sl                # one corpus of run.rs in one language
+make test-sim                       # sim.rs; test-sim-al: its AL tests
+make test-sim-v1model-p4c-sl        # one corpus of sim.rs in one language
 ```
+
+Each alias is a [nextest filterset](https://nexte.st/docs/filtersets/) named in `p4spectec/Makefile`;
+`make test FILTER=EXPR` runs any other filterset, for example `make test FILTER='package(p4spectec-cli)'`.
+A test is named `<package>::<file> <function>`, as `cargo nextest list` shows,
+for example `p4spectec-test::run pos_sl`.
 
 Corpus tests run each case in a worker process,
 started with the specification, P4 include directories, and runner options its test file names;

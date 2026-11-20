@@ -40,3 +40,28 @@ clean:
 
 test:
 	$(if $(TIMEOUT),P4SPECTEC_TEST_TIMEOUT=$(TIMEOUT)) $(CARGO) nextest run --locked --release --workspace --target-dir "$(TARGET_DIR)" $(if $(PROFILE),--profile $(PROFILE)) $(if $(FILTER),-E '$(value FILTER)')
+
+# test-<alias> runs the tests of the filterset FILTER_<alias>, e.g. `make test-sim-v1model-p4c-sl`
+FILTER_snapshot := binary(snapshot)
+FILTER_diagnostic := binary(diagnostic)
+FILTER_p4parse := binary(p4parse)
+FILTER_run := binary(run)
+FILTER_sim := binary(sim)
+
+LANGUAGES := al sl pl
+RUN_SUITES := pos neg regression-pos regression-neg
+SIM_SUITES := v1model-p4c v1model-p4testgen v1model-custom v1model-regression \
+  ebpf-p4c ebpf-p4testgen ebpf-regression psa-p4c
+
+# Every language of run.rs or sim.rs, and each suite of them in one language
+$(foreach language,$(LANGUAGES),\
+  $(eval FILTER_run-$(language) := binary(run) & test(_$(language)))\
+  $(eval FILTER_sim-$(language) := binary(sim) & test(_$(language)))\
+  $(foreach suite,$(RUN_SUITES),\
+    $(eval FILTER_run-$(suite)-$(language) := binary(run) & test(=$(subst -,_,$(suite))_$(language))))\
+  $(foreach suite,$(SIM_SUITES),\
+    $(eval FILTER_sim-$(suite)-$(language) := binary(sim) & test(=$(subst -,_,$(suite))_$(language)))))
+
+test-%:
+	$(if $(FILTER_$*),,$(error unknown test alias $*))
+	$(MAKE) test FILTER='$(FILTER_$*)'
