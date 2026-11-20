@@ -9,12 +9,7 @@
 
 use std::path::Path;
 
-use p4spectec_test::harness::corpus::Corpus;
-
-const SAMPLES: &str = "p4c/testdata/p4_16_samples";
-const ERRORS: &str = "p4c/testdata/p4_16_errors";
-const REGRESSION_POS: &str = "testdata/regression/pos";
-const REGRESSION_NEG: &str = "testdata/regression/neg";
+use p4spectec_test::harness::{corpus::Corpus, interpreter::Language};
 
 const HEADERS: &str = "excludes/headers";
 const STATIC: &str = "excludes/static";
@@ -26,81 +21,121 @@ const WORKER: &str = env!("CARGO_BIN_EXE_p4spectec-test-worker");
 const OPTIONS: [&str; 7] =
     ["--spec", "spec", "--include", "p4c/p4include", "--cache", "--det", "--tco"];
 
-/// Runs the programs under `dir` through `relation`, skipping those listed under `dirs_exclude`,
+/// One execution corpus.
+struct Suite {
+    /// Names the snapshot `expected/run/<name>.expected`.
+    name: &'static str,
+    /// Names the relation each program runs through.
+    relation: &'static str,
+    /// Holds the programs, relative to the repository root.
+    dir: &'static str,
+    /// Holds the `.exclude` files of the programs to skip.
+    dirs_exclude: &'static [&'static str],
+}
+
+/// Runs the programs of `suite` under `language`
 /// and compares the outcomes with the snapshot of `suite`.
 ///
 /// Panics with the error text, so that its lines print unescaped.
-fn run(suite: &str, language: &str, relation: &str, dir: &str, dirs_exclude: &[&str]) {
-    let result = Corpus::files(dir, ".p4")
-        .and_then(|corpus| corpus.excludes(dirs_exclude))
+fn run(suite: &Suite, language: Language) {
+    let result = Corpus::files(suite.dir, ".p4")
+        .and_then(|corpus| corpus.excludes(suite.dirs_exclude))
         .and_then(|corpus| {
-            let args = [&OPTIONS[..], &["run", language, relation]].concat();
+            let args = [&OPTIONS[..], &["run", language.name(), suite.relation]].concat();
             corpus.run(WORKER, &args)
         });
+    let path_expected =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/run/{}.expected", suite.name));
     match result {
-        Ok(report) => report.check(
-            &Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/run/{suite}.expected")),
-        ),
+        Ok(report) => report.check(&path_expected),
         Err(error) => panic!("{error}"),
     }
 }
 
+const POS: Suite = Suite {
+    name: "pos",
+    relation: "Program_inst",
+    dir: "p4c/testdata/p4_16_samples",
+    dirs_exclude: &[HEADERS, STATIC],
+};
+
 #[test]
 fn pos_al() {
-    run("pos", "al", "Program_inst", SAMPLES, &[HEADERS, STATIC])
+    run(&POS, Language::Al);
 }
 
 #[test]
 fn pos_sl() {
-    run("pos", "sl", "Program_inst", SAMPLES, &[HEADERS, STATIC])
+    run(&POS, Language::Sl);
 }
 
 #[test]
 fn pos_pl() {
-    run("pos", "pl", "Program_inst", SAMPLES, &[HEADERS, STATIC])
+    run(&POS, Language::Pl);
 }
+
+const NEG: Suite = Suite {
+    name: "neg",
+    relation: "Program_ok",
+    dir: "p4c/testdata/p4_16_errors",
+    dirs_exclude: &[STATIC],
+};
 
 #[test]
 fn neg_al() {
-    run("neg", "al", "Program_ok", ERRORS, &[STATIC])
+    run(&NEG, Language::Al);
 }
 
 #[test]
 fn neg_sl() {
-    run("neg", "sl", "Program_ok", ERRORS, &[STATIC])
+    run(&NEG, Language::Sl);
 }
 
 #[test]
 fn neg_pl() {
-    run("neg", "pl", "Program_ok", ERRORS, &[STATIC])
+    run(&NEG, Language::Pl);
 }
+
+const REGRESSION_POS: Suite = Suite {
+    name: "regression-pos",
+    relation: "Program_inst",
+    dir: "testdata/regression/pos",
+    dirs_exclude: &[STATIC],
+};
 
 #[test]
 fn regression_pos_al() {
-    run("regression-pos", "al", "Program_inst", REGRESSION_POS, &[STATIC])
+    run(&REGRESSION_POS, Language::Al);
 }
 
 #[test]
 fn regression_pos_sl() {
-    run("regression-pos", "sl", "Program_inst", REGRESSION_POS, &[STATIC])
+    run(&REGRESSION_POS, Language::Sl);
 }
 
 #[test]
 fn regression_pos_pl() {
-    run("regression-pos", "pl", "Program_inst", REGRESSION_POS, &[STATIC])
+    run(&REGRESSION_POS, Language::Pl);
 }
+
+const REGRESSION_NEG: Suite = Suite {
+    name: "regression-neg",
+    relation: "Program_ok",
+    dir: "testdata/regression/neg",
+    dirs_exclude: &[STATIC],
+};
 
 #[test]
 fn regression_neg_al() {
-    run("regression-neg", "al", "Program_ok", REGRESSION_NEG, &[STATIC])
+    run(&REGRESSION_NEG, Language::Al);
 }
 
 #[test]
 fn regression_neg_sl() {
-    run("regression-neg", "sl", "Program_ok", REGRESSION_NEG, &[STATIC])
+    run(&REGRESSION_NEG, Language::Sl);
 }
 
 #[test]
 fn regression_neg_pl() {
-    run("regression-neg", "pl", "Program_ok", REGRESSION_NEG, &[STATIC])
+    run(&REGRESSION_NEG, Language::Pl);
 }

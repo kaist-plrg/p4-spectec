@@ -16,12 +16,16 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use p4spectec_test::harness::corpus::{self, Corpus};
+use p4spectec_test::harness::{
+    corpus::{self, Corpus},
+    interpreter::Language,
+};
 
 const P4C_SAMPLES: &str = "p4c/testdata/p4_16_samples";
 const P4TESTGEN: &str = "testdata/p4testgen";
 const CUSTOM: &str = "testdata/custom";
 const REGRESSION: &str = "testdata/regression/sim";
+const PATCHES_V1MODEL: &str = "patches/v1model";
 
 const HEADERS: &str = "excludes/headers";
 const STATIC: &str = "excludes/static";
@@ -112,222 +116,229 @@ fn pairs(arch: &str, dir_p4: &str, dir_stf: &str, dir_patches: Option<&str>) -> 
     pairs
 }
 
-/// Simulates the `arch` pairs of `dir_p4` and `dir_stf` under `language`,
-/// skipping those listed under `dirs_exclude`,
+/// One simulation corpus: the `arch` programs of `dir_p4` paired with the STF tests of `dir_stf`.
+struct Suite {
+    /// Names the snapshot `expected/sim/<name>.expected`.
+    name: &'static str,
+    /// Names the architecture, whose model the programs include.
+    arch: &'static str,
+    /// Holds the P4 programs, relative to the repository root.
+    dir_p4: &'static str,
+    /// Holds the STF tests, relative to the repository root.
+    dir_stf: &'static str,
+    /// Holds the files replacing programs and tests of the same stem, if any.
+    dir_patches: Option<&'static str>,
+    /// Holds the `.exclude` files of the pairs to skip.
+    dirs_exclude: &'static [&'static str],
+}
+
+/// Simulates the pairs of `suite` under `language`
 /// and compares the outcomes with the snapshot of `suite`.
 ///
 /// Panics with the error text, so that its lines print unescaped.
-fn sim(
-    suite: &str,
-    language: &str,
-    arch: &str,
-    dir_p4: &str,
-    dir_stf: &str,
-    dir_patches: Option<&str>,
-    dirs_exclude: &[&str],
-) {
-    let result = Corpus::new(pairs(arch, dir_p4, dir_stf, dir_patches))
-        .excludes(dirs_exclude)
+fn sim(suite: &Suite, language: Language) {
+    let result = Corpus::new(pairs(suite.arch, suite.dir_p4, suite.dir_stf, suite.dir_patches))
+        .excludes(suite.dirs_exclude)
         .and_then(|corpus| {
-            let args = [&OPTIONS[..], &["sim", language, arch]].concat();
+            let args = [&OPTIONS[..], &["sim", language.name(), suite.arch]].concat();
             corpus.run(WORKER, &args)
         });
+    let path_expected =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/sim/{}.expected", suite.name));
     match result {
-        Ok(report) => report.check(
-            &Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/sim/{suite}.expected")),
-        ),
+        Ok(report) => report.check(&path_expected),
         Err(error) => panic!("{error}"),
     }
 }
 
+const V1MODEL_P4C: Suite = Suite {
+    name: "v1model-p4c",
+    arch: "v1model",
+    dir_p4: P4C_SAMPLES,
+    dir_stf: P4C_SAMPLES,
+    dir_patches: Some(PATCHES_V1MODEL),
+    dirs_exclude: &[HEADERS, STATIC, DYNAMIC],
+};
+
 #[test]
 fn v1model_p4c_al() {
-    sim(
-        "v1model-p4c",
-        "al",
-        "v1model",
-        P4C_SAMPLES,
-        P4C_SAMPLES,
-        Some("patches/v1model"),
-        &[HEADERS, STATIC, DYNAMIC],
-    );
+    sim(&V1MODEL_P4C, Language::Al);
 }
 
 #[test]
 fn v1model_p4c_sl() {
-    sim(
-        "v1model-p4c",
-        "sl",
-        "v1model",
-        P4C_SAMPLES,
-        P4C_SAMPLES,
-        Some("patches/v1model"),
-        &[HEADERS, STATIC, DYNAMIC],
-    );
+    sim(&V1MODEL_P4C, Language::Sl);
 }
 
 #[test]
 fn v1model_p4c_pl() {
-    sim(
-        "v1model-p4c",
-        "pl",
-        "v1model",
-        P4C_SAMPLES,
-        P4C_SAMPLES,
-        Some("patches/v1model"),
-        &[HEADERS, STATIC, DYNAMIC],
-    );
+    sim(&V1MODEL_P4C, Language::Pl);
 }
+
+const V1MODEL_P4TESTGEN: Suite = Suite {
+    name: "v1model-p4testgen",
+    arch: "v1model",
+    dir_p4: P4C_SAMPLES,
+    dir_stf: P4TESTGEN,
+    dir_patches: Some(PATCHES_V1MODEL),
+    dirs_exclude: &[HEADERS, STATIC, DYNAMIC],
+};
 
 #[test]
 fn v1model_p4testgen_al() {
-    sim(
-        "v1model-p4testgen",
-        "al",
-        "v1model",
-        P4C_SAMPLES,
-        P4TESTGEN,
-        Some("patches/v1model"),
-        &[HEADERS, STATIC, DYNAMIC],
-    );
+    sim(&V1MODEL_P4TESTGEN, Language::Al);
 }
 
 #[test]
 fn v1model_p4testgen_sl() {
-    sim(
-        "v1model-p4testgen",
-        "sl",
-        "v1model",
-        P4C_SAMPLES,
-        P4TESTGEN,
-        Some("patches/v1model"),
-        &[HEADERS, STATIC, DYNAMIC],
-    );
+    sim(&V1MODEL_P4TESTGEN, Language::Sl);
 }
 
 #[test]
 fn v1model_p4testgen_pl() {
-    sim(
-        "v1model-p4testgen",
-        "pl",
-        "v1model",
-        P4C_SAMPLES,
-        P4TESTGEN,
-        Some("patches/v1model"),
-        &[HEADERS, STATIC, DYNAMIC],
-    );
+    sim(&V1MODEL_P4TESTGEN, Language::Pl);
 }
+
+const V1MODEL_CUSTOM: Suite = Suite {
+    name: "v1model-custom",
+    arch: "v1model",
+    dir_p4: CUSTOM,
+    dir_stf: CUSTOM,
+    dir_patches: Some(PATCHES_V1MODEL),
+    dirs_exclude: &[STATIC, DYNAMIC],
+};
 
 #[test]
 fn v1model_custom_al() {
-    sim(
-        "v1model-custom",
-        "al",
-        "v1model",
-        CUSTOM,
-        CUSTOM,
-        Some("patches/v1model"),
-        &[STATIC, DYNAMIC],
-    );
+    sim(&V1MODEL_CUSTOM, Language::Al);
 }
 
 #[test]
 fn v1model_custom_sl() {
-    sim(
-        "v1model-custom",
-        "sl",
-        "v1model",
-        CUSTOM,
-        CUSTOM,
-        Some("patches/v1model"),
-        &[STATIC, DYNAMIC],
-    );
+    sim(&V1MODEL_CUSTOM, Language::Sl);
 }
 
 #[test]
 fn v1model_custom_pl() {
-    sim(
-        "v1model-custom",
-        "pl",
-        "v1model",
-        CUSTOM,
-        CUSTOM,
-        Some("patches/v1model"),
-        &[STATIC, DYNAMIC],
-    );
+    sim(&V1MODEL_CUSTOM, Language::Pl);
 }
+
+const EBPF_P4C: Suite = Suite {
+    name: "ebpf-p4c",
+    arch: "ebpf",
+    dir_p4: P4C_SAMPLES,
+    dir_stf: P4C_SAMPLES,
+    dir_patches: None,
+    dirs_exclude: &[HEADERS, STATIC, DYNAMIC],
+};
 
 #[test]
 fn ebpf_p4c_al() {
-    sim("ebpf-p4c", "al", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim(&EBPF_P4C, Language::Al);
 }
 
 #[test]
 fn ebpf_p4c_sl() {
-    sim("ebpf-p4c", "sl", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim(&EBPF_P4C, Language::Sl);
 }
 
 #[test]
 fn ebpf_p4c_pl() {
-    sim("ebpf-p4c", "pl", "ebpf", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim(&EBPF_P4C, Language::Pl);
 }
+
+const EBPF_P4TESTGEN: Suite = Suite {
+    name: "ebpf-p4testgen",
+    arch: "ebpf",
+    dir_p4: P4C_SAMPLES,
+    dir_stf: P4TESTGEN,
+    dir_patches: None,
+    dirs_exclude: &[HEADERS, STATIC, DYNAMIC],
+};
 
 #[test]
 fn ebpf_p4testgen_al() {
-    sim("ebpf-p4testgen", "al", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim(&EBPF_P4TESTGEN, Language::Al);
 }
 
 #[test]
 fn ebpf_p4testgen_sl() {
-    sim("ebpf-p4testgen", "sl", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim(&EBPF_P4TESTGEN, Language::Sl);
 }
 
 #[test]
 fn ebpf_p4testgen_pl() {
-    sim("ebpf-p4testgen", "pl", "ebpf", P4C_SAMPLES, P4TESTGEN, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim(&EBPF_P4TESTGEN, Language::Pl);
 }
+
+const PSA_P4C: Suite = Suite {
+    name: "psa-p4c",
+    arch: "psa",
+    dir_p4: P4C_SAMPLES,
+    dir_stf: P4C_SAMPLES,
+    dir_patches: None,
+    dirs_exclude: &[HEADERS, STATIC, DYNAMIC],
+};
 
 #[test]
 fn psa_p4c_al() {
-    sim("psa-p4c", "al", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim(&PSA_P4C, Language::Al);
 }
 
 #[test]
 fn psa_p4c_sl() {
-    sim("psa-p4c", "sl", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim(&PSA_P4C, Language::Sl);
 }
 
 #[test]
 fn psa_p4c_pl() {
-    sim("psa-p4c", "pl", "psa", P4C_SAMPLES, P4C_SAMPLES, None, &[HEADERS, STATIC, DYNAMIC]);
+    sim(&PSA_P4C, Language::Pl);
 }
+
+const V1MODEL_REGRESSION: Suite = Suite {
+    name: "v1model-regression",
+    arch: "v1model",
+    dir_p4: REGRESSION,
+    dir_stf: REGRESSION,
+    dir_patches: None,
+    dirs_exclude: &[STATIC, DYNAMIC],
+};
 
 #[test]
 fn v1model_regression_al() {
-    sim("v1model-regression", "al", "v1model", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
+    sim(&V1MODEL_REGRESSION, Language::Al);
 }
 
 #[test]
 fn v1model_regression_sl() {
-    sim("v1model-regression", "sl", "v1model", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
+    sim(&V1MODEL_REGRESSION, Language::Sl);
 }
 
 #[test]
 fn v1model_regression_pl() {
-    sim("v1model-regression", "pl", "v1model", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
+    sim(&V1MODEL_REGRESSION, Language::Pl);
 }
+
+const EBPF_REGRESSION: Suite = Suite {
+    name: "ebpf-regression",
+    arch: "ebpf",
+    dir_p4: REGRESSION,
+    dir_stf: REGRESSION,
+    dir_patches: None,
+    dirs_exclude: &[STATIC, DYNAMIC],
+};
 
 #[test]
 fn ebpf_regression_al() {
-    sim("ebpf-regression", "al", "ebpf", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
+    sim(&EBPF_REGRESSION, Language::Al);
 }
 
 #[test]
 fn ebpf_regression_sl() {
-    sim("ebpf-regression", "sl", "ebpf", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
+    sim(&EBPF_REGRESSION, Language::Sl);
 }
 
 #[test]
 fn ebpf_regression_pl() {
-    sim("ebpf-regression", "pl", "ebpf", REGRESSION, REGRESSION, None, &[STATIC, DYNAMIC]);
+    sim(&EBPF_REGRESSION, Language::Pl);
 }
