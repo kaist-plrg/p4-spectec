@@ -42,23 +42,12 @@ const LANGUAGES: [Language; 3] = [Language::Al, Language::Sl, Language::Pl];
 /// Enters `testdata/spec` and lists the files of `dir` ending in one of `suffixes`.
 ///
 /// Paths are relative to `testdata/spec`.
-/// A file named by an `.args` file of `dir` is an input of that CLI case
-/// (see `cli/tests/diagnostic.rs`), not a fixture of its own, and is left out.
 fn fixtures(dir: &str, suffixes: &[&str]) -> Vec<PathBuf> {
     let root = corpus::root().join("testdata/spec");
     std::env::set_current_dir(&root).expect("enter testdata/spec");
-    let list = |suffix| corpus::collect(Path::new(dir), suffix).expect("fixture directory");
-    let paths_cli: Vec<PathBuf> = list(".args")
-        .into_iter()
-        .flat_map(|path| {
-            let text = std::fs::read_to_string(path).expect("argument file");
-            text.lines().map(PathBuf::from).collect::<Vec<_>>()
-        })
-        .collect();
     let mut paths: Vec<PathBuf> = suffixes
         .iter()
-        .flat_map(|suffix| list(suffix))
-        .filter(|path| !paths_cli.contains(path))
+        .flat_map(|suffix| corpus::collect(Path::new(dir), suffix).expect("fixture directory"))
         .collect();
     assert!(!paths.is_empty(), "no fixtures in {dir}");
     paths.sort();
@@ -209,8 +198,8 @@ fn specdoc() {
 #[test]
 fn splice() {
     // Splice each skeleton against the one specification of its directory
-    let paths_spec = [PathBuf::from("cli/splice/minimal.watsup")];
-    for path in fixtures("cli/splice", &[".adoc"]) {
+    let paths_spec = [PathBuf::from("neg/splice/minimal.watsup")];
+    for path in fixtures("neg/splice", &[".adoc"]) {
         let spec_el = must_pass(&path, "parsing", parse_files(&paths_spec));
         let spec_pl = must_pass(&path, "prose conversion", p4spectec::prosify(&paths_spec));
         let text = std::fs::read_to_string(&path).unwrap();
@@ -286,7 +275,7 @@ fn run_main() {
 fn sim() {
     let config = Config::new(true, false, false, true);
     // Admission must reject an architecture the simulator lacks
-    for path in fixtures("cli/sim", &[".watsup"]) {
+    for path in fixtures("neg/sim", &[".watsup"]) {
         let spec_al = must_pass(
             &path,
             "algorithmic conversion",
@@ -299,7 +288,7 @@ fn sim() {
     // P4 programs run under the full specification and fail a static assertion
     let paths_spec = [PathBuf::from("../../spec")];
     let paths_include = [PathBuf::from("../../p4c/p4include")];
-    for path in fixtures("cli/sim", &[".p4"]) {
+    for path in fixtures("neg/sim", &[".p4"]) {
         let spec_al = must_pass(&path, "algorithmic conversion", p4spectec::algo(&paths_spec));
         let result = runner::run(
             Spec::Al(spec_al),
