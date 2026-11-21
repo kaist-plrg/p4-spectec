@@ -2,29 +2,24 @@
 //!
 //! Extern calls record clone, resubmit, and recirculate requests
 //! in the architecture state;
-//! the scheduler in `pipe` acts on them once the control returns.
-//! Stateful objects live in `object`, extern functions in `func`.
+//! the scheduler in `target::pipe` acts on them once the control returns.
+//! Stateful objects live in `externs::object`, extern functions in `externs::func`.
 
 use p4spectec::lang::data::value::{flat::Value, host::HostTyp};
 
 use p4spectec::runner::{ExternError, Interface, Interpreter, RunnerContext};
 
-use super::externs;
+pub(crate) mod externs;
+pub(crate) mod target;
 
-pub(crate) mod arch;
-pub(crate) mod func;
-pub(crate) mod mirror;
-pub(crate) mod multicast;
-pub(crate) mod object;
-pub(crate) mod packet;
-pub(crate) mod pipe;
+pub(crate) use self::target::pipe;
 
-pub use pipe::V1Model;
+pub use self::target::pipe::V1Model;
 
 // == Extern calls
 
 /// Hands every extern hook to the pipeline module.
-impl externs::Impl for V1Model {
+impl super::externs::Impl for V1Model {
     fn host_typdefs(&self) -> Vec<HostTyp> {
         vec![self.arch_state.erase(), self.object_state.erase()]
     }

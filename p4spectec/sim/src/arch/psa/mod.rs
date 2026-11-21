@@ -2,27 +2,23 @@
 //!
 //! Ingress and egress each parse, control, and deparse;
 //! the PRE and BQE schedule clones, multicast, resubmit, and recirculate.
-//! Stateful objects live in `object`, the scheduler in `pipe`.
+//! Stateful objects live in `externs::object`, the scheduler in `target::pipe`.
 
 use p4spectec::lang::data::value::{flat::Value, host::HostTyp};
 
 use p4spectec::runner::{ExternError, Interface, Interpreter, RunnerContext};
 
-use super::externs;
+pub(crate) mod externs;
+pub(crate) mod target;
 
-pub(crate) mod arch;
-pub(crate) mod mirror;
-pub(crate) mod multicast;
-pub(crate) mod object;
-pub(crate) mod packet;
-pub(crate) mod pipe;
+pub(crate) use self::target::pipe;
 
-pub use pipe::Psa;
+pub use self::target::pipe::Psa;
 
 // == Extern calls
 
 /// Hands every extern hook to the pipeline module.
-impl externs::Impl for Psa {
+impl super::externs::Impl for Psa {
     fn host_typdefs(&self) -> Vec<HostTyp> {
         vec![self.arch_state.erase(), self.object_state.erase()]
     }

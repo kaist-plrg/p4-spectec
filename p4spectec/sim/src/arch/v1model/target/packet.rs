@@ -10,7 +10,7 @@ use crate::error;
 
 use crate::spec::unpack;
 
-use super::super::core::object::PacketIn;
+use crate::arch::core::object::PacketIn;
 
 // == Packet clones
 

@@ -31,7 +31,10 @@ use crate::{
     spec::{func, pack, rel, unpack},
 };
 
-use super::{V1Model, packet::CloneInfo, pipe};
+use super::super::{
+    V1Model,
+    target::{packet::CloneInfo, pipe},
+};
 
 /// Calling digest causes a message containing the values specified in
 /// the data parameter to be sent to the control plane software.  It is

@@ -31,22 +31,22 @@ use crate::error;
 
 use crate::spec::{func, pgm, rel, unpack};
 
-use super::super::{
+use crate::arch::{
     core::{func as core_func, object::PacketIn},
     io::{Rx, Tx},
     state::SimState,
 };
 
-use super::object::CounterArray;
+use super::super::externs::object::CounterArray;
 
 // == Configuration
 
 /// The eBPF architecture, with its definitions of the extern types.
 pub struct Ebpf {
     /// The definition of `archState`, which eBPF leaves empty.
-    pub(super) arch_state: HostTypDef<()>,
+    pub(crate) arch_state: HostTypDef<()>,
     /// The definition of `objectState`; a stateless object carries `None`.
-    pub(super) object_state: HostTypDef<Option<ExternObject>>,
+    pub(crate) object_state: HostTypDef<Option<ExternObject>>,
 }
 
 // Every instance makes definitions of its own
@@ -137,7 +137,7 @@ pub fn transform_stf_stmt(mut stmt: Statement) -> Statement {
 // == Architectural state
 
 /// The initial architecture state: the unit payload.
-pub(super) fn init_arch_state<Interp, Iface>(
+pub(crate) fn init_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
 ) -> Result<Value, ExternError>
 where
@@ -153,7 +153,7 @@ where
 // - Initialization
 
 /// Constructs a `CounterArray`; any other object gets an empty state.
-pub(super) fn eval_extern_init<Interp, Iface>(
+pub(crate) fn eval_extern_init<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     values: &[Value],
 ) -> Result<Value, ExternError>
@@ -177,7 +177,7 @@ where
 // - Function calls
 
 /// Dispatches an extern function call; only `verify` is supported.
-pub(super) fn eval_extern_func_call<Interp, Iface>(
+pub(crate) fn eval_extern_func_call<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     values: &[Value],
 ) -> Result<Vec<Value>, ExternError>
@@ -228,7 +228,7 @@ fn unsupported_method(
 /// Dispatches an extern method call on the object named `value_id`.
 ///
 /// The object is decoded, updated by its method, and written back.
-pub(super) fn eval_extern_method_call<Interp, Iface>(
+pub(crate) fn eval_extern_method_call<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     values: &[Value],
 ) -> Result<Vec<Value>, ExternError>

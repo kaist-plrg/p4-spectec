@@ -4,7 +4,7 @@
 
 use p4spectec::lang::data::value::flat::Value;
 
-use super::super::core::object::PacketIn;
+use crate::arch::core::object::PacketIn;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Which pipeline a queued packet resumes at.

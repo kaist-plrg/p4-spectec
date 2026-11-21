@@ -36,7 +36,7 @@ use crate::error;
 
 use crate::spec::{func, pack, pgm, rel, unpack};
 
-use super::super::{
+use crate::arch::{
     core::{
         func as core_func,
         object::{PacketIn, PacketOut, packet},
@@ -45,11 +45,14 @@ use super::super::{
     state::SimState,
 };
 
-use super::{
-    arch::Arch,
+use super::super::externs::{
     func as v1model_func,
     object::{Counter, DirectCounter, DirectMeter, Register},
+};
+
+use super::{
     packet::{CloneInfo, CloneType, Entrypoint, Packet},
+    state::Arch,
 };
 
 // == Configuration
@@ -57,9 +60,9 @@ use super::{
 /// The v1model architecture, with its definitions of the extern types.
 pub struct V1Model {
     /// The definition of `archState` as the architectural state.
-    pub(super) arch_state: HostTypDef<Arch>,
+    pub(crate) arch_state: HostTypDef<Arch>,
     /// The definition of `objectState`; a stateless object carries `None`.
-    pub(super) object_state: HostTypDef<Option<ObjectState>>,
+    pub(crate) object_state: HostTypDef<Option<ObjectState>>,
 }
 
 // Every instance makes definitions of its own
@@ -166,7 +169,7 @@ pub fn transform_stf_stmt(mut stmt: Statement) -> Statement {
 // == Architectural state
 
 /// The initial architecture state: empty queue, tables, and requests.
-pub(super) fn init_arch_state<Interp, Iface>(
+pub(crate) fn init_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
 ) -> Result<Value, ExternError>
 where
@@ -277,7 +280,7 @@ where
 ///
 /// `values` holds the object name, type arguments, parameter names,
 /// and parameter values; core objects and unknown names get an empty state.
-pub(super) fn eval_extern_init<Interp, Iface>(
+pub(crate) fn eval_extern_init<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     values: &[Value],
 ) -> Result<Value, ExternError>
@@ -322,7 +325,7 @@ where
 ///
 /// `values` holds the context, the architecture state, the name,
 /// and the parameter names; the result adds the call result to the pair.
-pub(super) fn eval_extern_func_call<Interp, Iface>(
+pub(crate) fn eval_extern_func_call<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     values: &[Value],
 ) -> Result<Vec<Value>, ExternError>
@@ -392,7 +395,7 @@ where
 /// The object is decoded, updated by its method, and written back;
 /// `values` holds the context, state, object id, method name,
 /// and parameter names.
-pub(super) fn eval_extern_method_call<Interp, Iface>(
+pub(crate) fn eval_extern_method_call<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     values: &[Value],
 ) -> Result<Vec<Value>, ExternError>

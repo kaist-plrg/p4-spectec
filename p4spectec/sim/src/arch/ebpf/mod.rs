@@ -7,17 +7,17 @@ use p4spectec::lang::data::value::{flat::Value, host::HostTyp};
 
 use p4spectec::runner::{ExternError, Interface, Interpreter, RunnerContext};
 
-use super::externs;
+pub(crate) mod externs;
+pub(crate) mod target;
 
-pub(crate) mod object;
-pub(crate) mod pipe;
+pub(crate) use self::target::pipe;
 
-pub use pipe::Ebpf;
+pub use self::target::pipe::Ebpf;
 
 // == Extern calls
 
 /// Hands every extern hook to the pipeline module.
-impl externs::Impl for Ebpf {
+impl super::externs::Impl for Ebpf {
     fn host_typdefs(&self) -> Vec<HostTyp> {
         vec![self.arch_state.erase(), self.object_state.erase()]
     }
