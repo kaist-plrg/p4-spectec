@@ -99,12 +99,14 @@ impl DirectCounter {
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
+        // `PacketIn::len` counts bits
+        let bytes = BigInt::from(packet_in.len / 8);
         match &mut self {
             Self::Packets(count) => *count += BigInt::one(),
-            Self::Bytes(count) => *count += BigInt::from(packet_in.len),
+            Self::Bytes(count) => *count += &bytes,
             Self::PacketsAndBytes((count_packets, count_bytes)) => {
                 *count_packets += BigInt::one();
-                *count_bytes += BigInt::from(packet_in.len);
+                *count_bytes += &bytes;
             }
         }
         // Return without a value

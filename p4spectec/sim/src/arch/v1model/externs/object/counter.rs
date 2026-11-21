@@ -102,6 +102,8 @@ impl Counter {
         let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
         let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
         // An out-of-range index leaves the array untouched
+        // `PacketIn::len` counts bits
+        let bytes = BigInt::from(packet_in.len / 8);
         match &mut self {
             Self::Packets(counts) => {
                 if let Some(count) = counts.get_mut(idx) {
@@ -110,13 +112,13 @@ impl Counter {
             }
             Self::Bytes(counts) => {
                 if let Some(count) = counts.get_mut(idx) {
-                    *count += BigInt::from(packet_in.len);
+                    *count += &bytes;
                 }
             }
             Self::PacketsAndBytes(counts) => {
                 if let Some((count_packets, count_bytes)) = counts.get_mut(idx) {
                     *count_packets += BigInt::one();
-                    *count_bytes += BigInt::from(packet_in.len);
+                    *count_bytes += &bytes;
                 }
             }
         }
