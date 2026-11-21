@@ -207,23 +207,9 @@ impl Report {
     /// Checks that every case not excluded reaches `outcome`.
     ///
     /// A case that timed out only warns, since a timeout says nothing about the outcome.
-    /// A failure lists the other cases, at most `LIMIT_CASES`,
+    /// A failure panics with the other cases, at most `LIMIT_CASES`,
     /// each with the worker's details.
     pub fn check(&self, outcome: Outcome) {
-        let count = |outcome| {
-            self.outcomes
-                .iter()
-                .filter(|(_, other, _)| *other == outcome)
-                .count()
-        };
-        println!(
-            "collected={} excluded={} pass={} fail={} timeout={}",
-            self.outcomes.len(),
-            count(Outcome::Exclude),
-            count(Outcome::Pass),
-            count(Outcome::Fail),
-            count(Outcome::Timeout),
-        );
         for (text_case, ..) in self
             .outcomes
             .iter()
@@ -240,17 +226,23 @@ impl Report {
         if mismatches.is_empty() {
             return;
         }
-        // List them, at most `LIMIT_CASES`
+        // Panic with them, at most `LIMIT_CASES`, as the test's failure message
+        let count_run = self
+            .outcomes
+            .iter()
+            .filter(|(_, other, _)| *other != Outcome::Exclude)
+            .count();
+        let mut text =
+            format!("{} of {count_run} cases did not {}", mismatches.len(), outcome.name());
         for (text_case, _, details) in mismatches.iter().take(LIMIT_CASES) {
-            println!("{text_case}");
+            text.push_str(&format!("\n{text_case}"));
             for line_details in details.lines() {
-                println!("    {line_details}");
+                text.push_str(&format!("\n    {line_details}"));
             }
         }
         if mismatches.len() > LIMIT_CASES {
-            println!("and {} more", mismatches.len() - LIMIT_CASES);
+            text.push_str(&format!("\nand {} more", mismatches.len() - LIMIT_CASES));
         }
-        let count_run = self.outcomes.len() - count(Outcome::Exclude);
-        panic!("{} of {count_run} cases did not {}", mismatches.len(), outcome.name());
+        panic!("{text}");
     }
 }
