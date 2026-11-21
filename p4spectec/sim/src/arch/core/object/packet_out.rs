@@ -3,17 +3,9 @@
 //! Emitting a header appends its bits;
 //! the buffer is prepended to the payload when the packet leaves.
 
-use p4spectec::lang::{
-    common::source::Span,
-    data::{
-        typ,
-        value::flat::{self as value, Value},
-    },
-};
+use p4spectec::runner::ExternError;
 
-use p4spectec::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
-
-use crate::spec::func;
+use crate::p4::{CallResult, ExternEnv, P4Ops, P4Value, P4Vars};
 
 /// Output packet data accumulated by emission.
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -23,44 +15,32 @@ pub struct PacketOut {
 }
 
 impl PacketOut {
-    /// Appends the header's bits to the output packet
+    /// Runs the method `name`, whose parameters are `params`.
+    pub fn call(
+        &mut self,
+        env: &mut ExternEnv,
+        name: &str,
+        params: &[&str],
+    ) -> Result<CallResult, ExternError> {
+        match (name, params) {
+            ("emit", ["hdr"]) => {
+                let hdr = env.get_local("hdr")?;
+                self.emit(env, &hdr)?;
+                Ok(CallResult::Return(None))
+            }
+            _ => env.unsupported(),
+        }
+    }
+
+    /// Appends the header's bits to the output packet.
     ///
+    /// Only a valid header serializes to bits:
     /// ```text
     /// void emit<T>(in T hdr);
     /// ```
-    pub fn emit<Interp, Iface, Ext>(
-        &self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        // Only a valid header serializes to bits
-        let value_hdr = func::find_var_e_local(ctx, value_ctx, "hdr")?;
-        let value_bits = func::write_bits_from_value(ctx, value_hdr)?;
-        let bits = value::get::list(ctx.arena(), &value_bits)?
-            .iter()
-            .map(|value| value::get::bool(ctx.arena(), value))
-            .collect::<Result<Vec<_>, _>>()?;
-        // Append to a copy; objects are immutable values
-        let pkt = Self { bits: self.bits.iter().copied().chain(bits).collect() };
-        // `emit` returns nothing: a `RETURN` with no value
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((pkt, value_ctx, value_arch, value_call_result))
+    pub fn emit(&mut self, env: &mut ExternEnv, hdr: &P4Value) -> Result<(), ExternError> {
+        let bits = env.to_bits(hdr)?;
+        self.bits.extend(bits);
+        Ok(())
     }
 }

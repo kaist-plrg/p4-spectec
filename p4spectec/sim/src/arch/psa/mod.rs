@@ -1,72 +1,63 @@
-//! PSA architecture with its two pipelines, replication engines, and objects
+//! PSA architecture: the externs of `psa.p4` and the switch behind them
 //!
-//! Ingress and egress each parse, control, and deparse;
-//! the PRE and BQE schedule clones, multicast, resubmit, and recirculate.
-//! Stateful objects live in `object`, the scheduler in `pipe`.
+//! `externs` is what `psa.p4` declares, its stateful objects (`object`),
+//! and how a specification call reaches them.
+//! `target` is the switch behind it: the architecture state (`state`),
+//! the packet queue, mirror and multicast tables, the control plane (`runtime`),
+//! and the scheduler (`pipe`): ingress and egress each parse, control, and deparse,
+//! and the PRE and BQE schedule clones, multicast, resubmit, and recirculate.
+//! The enums of `psa.p4` are in `types`.
 
-use p4spectec::lang::data::value::{flat::Value, host::HostTyp};
+use crate::p4::HostTypDef;
 
-use p4spectec::runner::{ExternError, Interface, Interpreter, RunnerContext};
+use super::core::object::{PacketIn, PacketOut};
 
-use super::externs;
+use self::{
+    externs::object::{Counter, HashExtern, InternetChecksum, Meter, Register},
+    target::state::ArchState,
+};
 
-pub(crate) mod arch;
-pub(crate) mod mirror;
-pub(crate) mod multicast;
-pub(crate) mod object;
-pub(crate) mod packet;
-pub(crate) mod pipe;
+mod externs;
+pub(super) mod target;
+pub(crate) mod types;
 
-pub use pipe::Psa;
+// == Configuration
 
-// == Extern calls
+/// The PSA architecture, with its definitions of the extern types.
+pub struct Psa {
+    /// The definition of `archState` as the architectural state.
+    typdef_state: HostTypDef<ArchState>,
+    /// The definition of `objectState`; a stateless object carries `None`.
+    typdef_object: HostTypDef<Option<ObjectState>>,
+}
 
-/// Hands every extern hook to the pipeline module.
-impl externs::Impl for Psa {
-    fn host_typdefs(&self) -> Vec<HostTyp> {
-        vec![self.arch_state.erase(), self.object_state.erase()]
+// Every instance makes definitions of its own
+impl Default for Psa {
+    fn default() -> Self {
+        Self {
+            typdef_state: HostTypDef::new("archState"),
+            typdef_object: HostTypDef::new("objectState"),
+        }
     }
+}
 
-    fn eval_extern_init<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        values: &[Value],
-    ) -> Result<Value, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        pipe::eval_extern_init(ctx, values)
-    }
+// == Extern objects
 
-    fn eval_extern_func_call<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        values: &[Value],
-    ) -> Result<Vec<Value>, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        pipe::eval_extern_func_call(ctx, values)
-    }
-
-    fn eval_extern_method_call<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        values: &[Value],
-    ) -> Result<Vec<Value>, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        pipe::eval_extern_method_call(ctx, values)
-    }
-
-    fn init_arch_state<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-    ) -> Result<Value, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        pipe::init_arch_state(ctx)
-    }
+/// Core and PSA-specific extern objects.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum ObjectState {
+    /// A `packet_in` of the current pipeline.
+    PacketIn(PacketIn),
+    /// A `packet_out` being emitted.
+    PacketOut(PacketOut),
+    /// A `Counter` array.
+    Counter(Counter),
+    /// A `Register` array.
+    Register(Register),
+    /// A `Hash`.
+    Hash(HashExtern),
+    /// An `InternetChecksum`.
+    InternetChecksum(InternetChecksum),
+    /// A `Meter`.
+    Meter(Meter),
 }

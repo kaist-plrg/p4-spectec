@@ -5,7 +5,9 @@
 //! with that architecture as its extern,
 //! and boxes it as a `Simulator` that runs STF tests.
 //! `arch` holds the architectures and what they share,
-//! `spec` calls the specification's relations and functions,
+//! written in the P4-level values of `p4`;
+//! `spec` calls the specification's relations and functions
+//! and converts its values to and from `p4`,
 //! `stf` parses and runs one STF test,
 //! and `cover` measures SL instruction coverage over many.
 
@@ -17,11 +19,15 @@ use p4spectec::interface::p4::P4Interface;
 
 use p4spectec::runner::{self, Hooks, Runner};
 
-use self::arch::{Architecture, ebpf::Ebpf, io::Tx, psa::Psa, v1model::V1Model};
+use self::{
+    arch::{ebpf::Ebpf, io::Tx, psa::Psa, v1model::V1Model},
+    p4::RuntimeInterface,
+};
 
 mod arch;
 pub mod cover;
 mod error;
+mod p4;
 mod spec;
 mod stf;
 
@@ -46,7 +52,7 @@ trait SimulatorRunner {
 
 impl<Arch> SimulatorRunner for Runner<P4Interface, Arch>
 where
-    Arch: Architecture + 'static,
+    Arch: RuntimeInterface,
 {
     fn hooks_mut(&mut self) -> &mut Hooks {
         Runner::hooks_mut(self)
@@ -75,7 +81,7 @@ impl Simulator {
     /// Boxes a runner.
     fn new<Arch>(arena: Arena, runner: Runner<P4Interface, Arch>) -> Self
     where
-        Arch: Architecture + 'static,
+        Arch: RuntimeInterface,
     {
         Self { arena, runner: Box::new(runner) }
     }
@@ -116,7 +122,7 @@ pub fn build(
 }
 
 /// Builds the AL or SL runner, whichever the specification is.
-fn build_for_arch<Arch: Architecture + 'static>(
+fn build_for_arch<Arch: RuntimeInterface>(
     spec: runner::Spec,
     config: runner::Config,
     arch: Arch,

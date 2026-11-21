@@ -7,12 +7,12 @@ use p4spectec::runner::ExternError;
 use super::{PacketIn, PacketOut, bits::bits_to_string};
 
 /// The output packet as hex: emitted bits followed by the unparsed payload.
-pub fn to_string(pkt_in: &PacketIn, pkt_out: &PacketOut) -> Result<String, ExternError> {
-    let bits: Vec<_> = pkt_out
+pub fn to_string(packet_in: &PacketIn, packet_out: &PacketOut) -> Result<String, ExternError> {
+    let bits: Vec<_> = packet_out
         .bits
         .iter()
         .copied()
-        .chain(pkt_in.payload()?.iter().copied())
+        .chain(packet_in.payload()?.iter().copied())
         .collect();
     Ok(bits_to_string(&bits))
 }

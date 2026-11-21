@@ -1,7 +1,8 @@
 //! Packet field packing, reflected CRCs, and one's-complement checksums
 //!
-//! The hash externs pack their fields into one wide integer (`package`)
-//! and hash it with the named algorithm (`compute_hash`).
+//! The hash externs pack their fields into one wide integer (`pack`)
+//! and hash it with an `Algorithm` (`hash_bits`), both through `hash_values`;
+//! each architecture's P4 `HashAlgorithm` enum converts into one.
 //! CRCs are the reflected table-less form over bytes;
 //! checksums fold 16-bit words with end-around carry and complement the result.
 
@@ -10,15 +11,32 @@ use num_traits::{One, ToPrimitive, Zero};
 
 use p4spectec::util::bigint::{remainder, width_bit};
 
-use p4spectec::lang::data::{arena::Arena, value::flat::Value};
-
 use p4spectec::runner::ExternError;
+
+use crate::p4::P4Value;
 
 use crate::error;
 
-use crate::spec::unpack;
+// == Algorithms
 
-// == Bit operations
+/// The hash and checksum algorithms the simulator computes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Algorithm {
+    /// The packed value itself.
+    Identity,
+    /// CRC16-ARC.
+    Crc16,
+    /// CRC32 as in IEEE 802.3.
+    Crc32,
+    /// The Internet checksum, adding the fields to the seed.
+    Csum16,
+    /// The Internet checksum, subtracting the fields from the seed.
+    Csum16Sub,
+    /// An algorithm a P4 enum names but the simulator does not compute.
+    Unsupported(&'static str),
+}
+
+// == Hash algorithms
 
 /// A width as `usize`, which must be a multiple of `alignment`.
 fn width_bit_aligned(width: &BigInt, alignment: usize) -> Result<usize, ExternError> {
@@ -31,8 +49,6 @@ fn width_bit_aligned(width: &BigInt, alignment: usize) -> Result<usize, ExternEr
     }
     Ok(width)
 }
-
-// == Hash algorithms
 
 /// A reflected CRC over the low `width` bits of `int`, high byte first.
 fn crc(
@@ -60,82 +76,80 @@ fn crc(
 }
 
 /// The one's-complement sum of 16-bit words, complemented;
-/// `subtract` folds inverted words.
+/// `Csum16Sub` folds inverted words.
 fn checksum(
     width: &BigInt,
     int: &BigInt,
     int_init: &BigInt,
-    subtract: bool,
+    algo: Algorithm,
 ) -> Result<BigInt, ExternError> {
     let width = width_bit_aligned(width, 16)?;
     let int_threshold = BigInt::one() << 16;
-    let mask = &int_threshold - BigInt::one();
+    let int_mask = &int_threshold - BigInt::one();
     let mut int_hash = int_init.clone();
     // Add each word with end-around carry
     for idx in (0..width).step_by(16).rev() {
-        let int_word = (int >> idx) & &mask;
-        let int_word = if subtract { int_word ^ &mask } else { int_word };
+        let int_word = (int >> idx) & &int_mask;
+        let int_word = if algo == Algorithm::Csum16Sub { int_word ^ &int_mask } else { int_word };
         let int_sum = int_hash + int_word;
         let carry = u8::from(int_sum >= int_threshold);
         int_hash = remainder(&int_sum, &int_threshold) + carry;
     }
     // Complement only the low 16 bits, retaining any higher seed bits
-    Ok(int_hash ^ mask)
+    Ok(int_hash ^ int_mask)
 }
 
-// == Hash computation
+// == Hashing
 
 /// Hashes a packed field with the named algorithm.
-pub fn compute_hash(
-    algo: &str,
+fn hash_bits(
+    algo: Algorithm,
     int_init: Option<&BigInt>,
     (width, int): &(BigInt, BigInt),
 ) -> Result<BigInt, ExternError> {
+    let int_seed = int_init.unwrap_or(&BigInt::zero()).clone();
     match algo {
-        // CRC16-ARC
-        "crc16" => crc(width, int, 0xA001, 0),
-        // CRC32 as in IEEE 802.3
-        "crc32" => crc(width, int, 0xEDB88320, u32::MAX),
-        // Internet checksum, optionally subtracting the fields from the seed
-        "csum16" | "csum16_sub" => {
-            checksum(width, int, int_init.unwrap_or(&BigInt::zero()), algo == "csum16_sub")
+        Algorithm::Identity => Ok(int.clone()),
+        Algorithm::Crc16 => crc(width, int, 0xA001, 0),
+        Algorithm::Crc32 => crc(width, int, 0xEDB88320, u32::MAX),
+        Algorithm::Csum16 | Algorithm::Csum16Sub => checksum(width, int, &int_seed, algo),
+        Algorithm::Unsupported(name) => {
+            Err(error::hash_algorithm_unsupported(format!("(TODO: compute_hash) {name}")).into())
         }
-        // Identity passes the packed value through
-        "identity" => Ok(int.clone()),
-        // Other algorithms are not implemented
-        _ => Err(error::hash_algorithm_unsupported(format!("(TODO: compute_hash) {algo}")).into()),
     }
 }
 
 /// Concatenates fixed-width fields into one integer, padded to 16 bits.
-pub fn package(arena: &mut Arena, values: &[Value]) -> Result<(BigInt, BigInt), ExternError> {
+fn pack(values: &[P4Value]) -> Result<(BigInt, BigInt), ExternError> {
     let mut width_pack = BigInt::zero();
     let mut int_pack = BigInt::zero();
     for value in values {
-        // Each field adds its width and its bits, reduced modulo the width
-        let (width, int) = unpack::p4_precision_number(arena, value)?;
-        let width_bits = width_bit(&width)?;
-        let int_modulus = BigInt::one() << width_bits;
+        // Each field adds its width and its bits, reduced modulo the width;
+        // a varbit adds its actual width, not its maximum
+        let (width, int) = match value {
+            P4Value::Bit { width, int }
+            | P4Value::Int { width, int }
+            | P4Value::Varbit { width, int, .. } => (*width, int),
+            _ => return Err(value.mismatch("a bit<W>, int<W>, or varbit<W>")),
+        };
+        let int_modulus = BigInt::one() << width;
         width_pack += width;
-        int_pack = (int_pack << width_bits) + remainder(&int, &int_modulus);
+        int_pack = (int_pack << width) + remainder(int, &int_modulus);
     }
-    let rem = &width_pack % 16_u8;
-    if !rem.is_zero() {
+    let int_rem = &width_pack % 16_u8;
+    if !int_rem.is_zero() {
         // Source padding widens the capacity without shifting the packed bits
-        width_pack += BigInt::from(16_u8) - rem;
+        width_pack += BigInt::from(16_u8) - int_rem;
     }
     Ok((width_pack, int_pack))
 }
 
-// == Entry points
-
 /// Packs the fields and hashes them.
-pub fn compute_checksum(
-    arena: &mut Arena,
-    algo: &str,
+pub fn hash_values(
+    algo: Algorithm,
     int_init: Option<&BigInt>,
-    values: &[Value],
+    values: &[P4Value],
 ) -> Result<BigInt, ExternError> {
-    let bits = package(arena, values)?;
-    compute_hash(algo, int_init, &bits)
+    let bits = pack(values)?;
+    hash_bits(algo, int_init, &bits)
 }
