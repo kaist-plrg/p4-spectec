@@ -208,7 +208,7 @@ impl Report {
     /// since a timeout says nothing about the outcome.
     /// Every changed case prints as `<recorded> -> <reached>  <paths>`,
     /// `-` standing for no line, followed by the worker's details;
-    /// with `INSTA_OUTPUT=minimal` these lines replace insta's diff.
+    /// with `INSTA_OUTPUT=none` these lines replace insta's output.
     /// `INSTA_UPDATE=always` rewrites the snapshot instead.
     pub fn check(&self, path_expected: &Path) {
         let count = |outcome| {
