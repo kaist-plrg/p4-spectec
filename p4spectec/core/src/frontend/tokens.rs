@@ -65,6 +65,7 @@ fn starts_sequence(token: &Token) -> bool {
             | Token::UpperId(_)
             | Token::LowerId(_)
             | Token::UpperIdLeftParen(_)
+            | Token::LowerIdLeftAngle(_)
     )
 }
 
