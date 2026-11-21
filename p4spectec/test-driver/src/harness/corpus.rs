@@ -6,7 +6,7 @@
 //! `Corpus::files(dir, ".p4")?.excludes(dirs)?.run(worker, args, name)?.check(path_expected)`
 //! gives each case the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
 //! and compares the outcomes with a snapshot,
-//! printing the details of every case whose outcome changed.
+//! printing every case whose outcome changed with its details.
 //! With `P4SPECTEC_TEST_LOG` set to a directory,
 //! the run also writes `<name>.log` there: the snapshot's lines in corpus order,
 //! each followed by its duration in seconds (empty for an excluded case).
@@ -206,7 +206,9 @@ impl Report {
     /// Each line is `<outcome>,<paths>`, in corpus order.
     /// A case that timed out keeps its line of the snapshot,
     /// since a timeout says nothing about the outcome.
-    /// A case whose line changed prints its details first.
+    /// Every changed case prints as `<recorded> -> <reached>  <paths>`,
+    /// `-` standing for no line, followed by the worker's details;
+    /// with `INSTA_OUTPUT=minimal` these lines replace insta's diff.
     /// `INSTA_UPDATE=always` rewrites the snapshot instead.
     pub fn check(&self, path_expected: &Path) {
         let count = |outcome| {
@@ -241,16 +243,29 @@ impl Report {
                 // Record any other outcome as reached
                 _ => format!("{},{text_case}", outcome.name()),
             };
-            // Print why a case changed its outcome
-            if lines_expected.get(text_case.as_str()) != Some(&line.as_str()) && !details.is_empty()
-            {
-                println!("{text_case}");
+            // Print a changed case with the worker's details
+            let line_expected = lines_expected.get(text_case.as_str());
+            if line_expected != Some(&line.as_str()) {
+                let name_expected =
+                    line_expected.map_or("-", |line| line.split(',').next().unwrap());
+                println!("{name_expected} -> {}  {text_case}", outcome.name());
                 for line_details in details.lines() {
                     println!("    {line_details}");
                 }
             }
             text.push_str(&line);
             text.push('\n');
+        }
+        // Print a case the snapshot lists but the run no longer reaches
+        let cases: BTreeSet<&str> = self
+            .outcomes
+            .iter()
+            .map(|(text_case, _, _)| text_case.as_str())
+            .collect();
+        for (text_case, line) in &lines_expected {
+            if !cases.contains(text_case) {
+                println!("{} -> -  {text_case}", line.split(',').next().unwrap());
+            }
         }
         let name = path_expected.file_stem().unwrap().to_str().unwrap();
         insta::with_settings!({
