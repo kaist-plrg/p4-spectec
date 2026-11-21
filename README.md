@@ -217,21 +217,19 @@ started with the specification, P4 include directories, and runner options its t
 `make test TIMEOUT=SECONDS` (or `P4SPECTEC_TEST_TIMEOUT`) gives each case a timeout;
 without it, cases run without one.
 Each corpus test names the `excludes/` directories whose `.exclude` files list the cases it skips,
-and compares the outcome of every case with `p4spectec/test-driver/expected/<file>/<suite>.expected`,
-which the AL, SL, and PL tests of a suite share;
-a case that times out keeps its recorded outcome.
+and checks that every other case reaches the suite's outcome:
+`pass`, except `fail` for the negative `run` corpora.
+A failure lists the other cases, at most 20, each with its failure details, such as a simulation error;
+a case that times out only warns.
 `make test TEST_LOG=DIR` also writes `DIR/<test>.log` per corpus test, such as `DIR/run-pos-sl.log`,
-as the cases end: each line is the case's expectation line followed by its duration in seconds
-(empty for an excluded case), so `sort -t, -k3 -n -r DIR/run-pos-sl.log | head` lists the slowest cases.
+as the cases end: each line is `<outcome>,<paths>,<seconds>`
+(seconds empty for an excluded case), so `sort -t, -k3 -n -r DIR/run-pos-sl.log | head` lists the slowest cases.
 `make test PROFILE=ci` runs the CI selection of `p4spectec/.config/nextest.toml`.
 
-An expectation lists one `<outcome>,<paths>` line per case;
-a failing corpus test lists the changed cases grouped by change, such as `pass -> fail`,
-at most 20 per change, each with its failure details, such as a simulation error.
 Speclang and diagnostic tests compare text with [insta](https://insta.rs) snapshots (`.snap` files);
 a failure prints only the changed lines, colored in a terminal (`CLICOLOR_FORCE` in `p4spectec/.cargo/config.toml`),
 and leaves the new text in `<name>.snap.new`.
-`INSTA_UPDATE=always make test` rewrites the expectations and snapshots instead;
+`INSTA_UPDATE=always make test` rewrites the snapshots instead;
 review their diffs before committing.
 
 `make clean` removes `bin/p4spectec` and the selected Cargo build directory.

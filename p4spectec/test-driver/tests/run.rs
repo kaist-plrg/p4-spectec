@@ -4,12 +4,12 @@
 //! Programs listed under the test's exclusion directories are skipped.
 //! Each test runs its corpus in one `p4spectec-test-worker`,
 //! which gives each program the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
-//! and compares the outcomes with `expected/run/<suite>.expected`,
-//! which the languages share.
+//! and checks that every program not excluded reaches the suite's outcome.
 
-use std::path::Path;
-
-use p4spectec_test::harness::{corpus::Corpus, interpreter::Language};
+use p4spectec_test::harness::{
+    corpus::{Corpus, Outcome},
+    interpreter::Language,
+};
 
 const HEADERS: &str = "excludes/headers";
 const STATIC: &str = "excludes/static";
@@ -23,10 +23,12 @@ const OPTIONS: [&str; 7] =
 
 /// One execution corpus.
 struct Suite {
-    /// Names the expectation `expected/run/<name>.expected`.
+    /// Names the run log `run-<name>-<language>.log`.
     name: &'static str,
     /// Names the relation each program runs through.
     relation: &'static str,
+    /// Names the outcome every program must reach.
+    outcome: Outcome,
     /// Holds the programs, relative to the repository root.
     dir: &'static str,
     /// Holds the `.exclude` files of the programs to skip.
@@ -34,7 +36,7 @@ struct Suite {
 }
 
 /// Runs the programs of `suite` under `language`
-/// and compares the outcomes with the expectation of `suite`.
+/// and checks that each reaches the outcome of `suite`.
 ///
 /// Panics with the error text, so that its lines print unescaped.
 fn run(suite: &Suite, language: Language) {
@@ -44,10 +46,8 @@ fn run(suite: &Suite, language: Language) {
             let args = [&OPTIONS[..], &["run", language.name(), suite.relation]].concat();
             corpus.run(WORKER, &args, &format!("run-{}-{}", suite.name, language.name()))
         });
-    let path_expected =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/run/{}.expected", suite.name));
     match result {
-        Ok(report) => report.check(&path_expected),
+        Ok(report) => report.check(suite.outcome),
         Err(error) => panic!("{error}"),
     }
 }
@@ -55,6 +55,7 @@ fn run(suite: &Suite, language: Language) {
 const POS: Suite = Suite {
     name: "pos",
     relation: "Program_inst",
+    outcome: Outcome::Pass,
     dir: "p4c/testdata/p4_16_samples",
     dirs_exclude: &[HEADERS, STATIC],
 };
@@ -77,6 +78,7 @@ fn pos_pl() {
 const NEG: Suite = Suite {
     name: "neg",
     relation: "Program_ok",
+    outcome: Outcome::Fail,
     dir: "p4c/testdata/p4_16_errors",
     dirs_exclude: &[STATIC],
 };
@@ -99,6 +101,7 @@ fn neg_pl() {
 const REGRESSION_POS: Suite = Suite {
     name: "regression-pos",
     relation: "Program_inst",
+    outcome: Outcome::Pass,
     dir: "testdata/regression/pos",
     dirs_exclude: &[STATIC],
 };
@@ -121,6 +124,7 @@ fn regression_pos_pl() {
 const REGRESSION_NEG: Suite = Suite {
     name: "regression-neg",
     relation: "Program_ok",
+    outcome: Outcome::Fail,
     dir: "testdata/regression/neg",
     dirs_exclude: &[STATIC],
 };

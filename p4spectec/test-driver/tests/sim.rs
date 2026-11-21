@@ -8,8 +8,7 @@
 //! Pairs naming a file listed under the test's exclusion directories are skipped.
 //! Each test runs its pairs in one `p4spectec-test-worker`,
 //! which gives each pair the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
-//! and compares the outcomes with `expected/sim/<suite>.expected`,
-//! which the languages share.
+//! and checks that every pair not excluded passes.
 
 use std::{
     fs,
@@ -17,7 +16,7 @@ use std::{
 };
 
 use p4spectec_test::harness::{
-    corpus::{self, Corpus},
+    corpus::{self, Corpus, Outcome},
     interpreter::Language,
 };
 
@@ -118,7 +117,7 @@ fn pairs(arch: &str, dir_p4: &str, dir_stf: &str, dir_patches: Option<&str>) -> 
 
 /// One simulation corpus: the `arch` programs of `dir_p4` paired with the STF tests of `dir_stf`.
 struct Suite {
-    /// Names the expectation `expected/sim/<name>.expected`.
+    /// Names the run log `sim-<name>-<language>.log`.
     name: &'static str,
     /// Names the architecture, whose model the programs include.
     arch: &'static str,
@@ -133,7 +132,7 @@ struct Suite {
 }
 
 /// Simulates the pairs of `suite` under `language`
-/// and compares the outcomes with the expectation of `suite`.
+/// and checks that each passes.
 ///
 /// Panics with the error text, so that its lines print unescaped.
 fn sim(suite: &Suite, language: Language) {
@@ -143,10 +142,8 @@ fn sim(suite: &Suite, language: Language) {
             let args = [&OPTIONS[..], &["sim", language.name(), suite.arch]].concat();
             corpus.run(WORKER, &args, &format!("sim-{}-{}", suite.name, language.name()))
         });
-    let path_expected =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/sim/{}.expected", suite.name));
     match result {
-        Ok(report) => report.check(&path_expected),
+        Ok(report) => report.check(Outcome::Pass),
         Err(error) => panic!("{error}"),
     }
 }
