@@ -11,7 +11,7 @@
 use std::{
     collections::HashMap,
     fs,
-    io::{self, Write},
+    io::{self, IsTerminal, Write},
 };
 
 use codespan_reporting::{
@@ -510,8 +510,15 @@ impl Renderer {
     }
 
     /// Renders a complete report to stderr using the configured colors.
+    ///
+    /// `ColorChoice::Auto` colors only a terminal:
+    /// termcolor's own `Auto` follows `TERM` even into pipes and files.
     pub fn render_to_stderr(&mut self, report: &Report) -> Result<(), RenderError> {
-        let writer = BufferWriter::stderr(self.config.color);
+        let color = match self.config.color {
+            ColorChoice::Auto if !io::stderr().is_terminal() => ColorChoice::Never,
+            color => color,
+        };
+        let writer = BufferWriter::stderr(color);
         let mut buffer = writer.buffer();
         self.render_to_buffer(&mut buffer, report)?;
         writer.print(&buffer).map_err(files::Error::from)?;
