@@ -1,22 +1,41 @@
 //! Core extern functions `static_assert` and `verify`
 //!
-//! Both read their arguments from the specification's local context
-//! and return specification values:
-//! a boolean, or a parser `RETURN`/`REJECT` result.
+//! Both read their arguments from the call;
+//! `static_assert` evaluates to a boolean at compile time,
+//! `verify` returns or rejects the parser.
+//! `call_compile_time` dispatches a compile-time call to `static_assert`
+//! for every architecture.
 
-use p4spectec::lang::{
-    common::source::Span,
-    data::{
-        typ,
-        value::flat::{self as value, Value},
-    },
-};
-
-use p4spectec::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use p4spectec::runner::ExternError;
 
 use crate::error;
 
-use crate::spec::{func, unpack};
+use crate::p4::{CallResult, CompileTimeEnv, ExternEnv, P4Value, P4Vars, Signature, SpecValue};
+
+use crate::spec::host::SpecHost;
+
+/// Evaluates `static_assert`, the only compile-time known extern function,
+/// in the caller's context `value_ctx`.
+pub fn call_compile_time(
+    host: &mut dyn SpecHost,
+    signature: &Signature,
+    value_ctx: SpecValue,
+) -> Result<P4Value, ExternError> {
+    // Both overloads of `static_assert`; nothing else is known
+    let (name, params) = signature.as_strs();
+    let has_message = match (name, &params[..]) {
+        ("static_assert", ["check", "message"]) => true,
+        ("static_assert", ["check"]) => false,
+        _ => {
+            return Err(error::extern_function_unsupported(format!(
+                "unsupported local compile-time known extern function call: {signature}"
+            ))
+            .into());
+        }
+    };
+    let mut env = CompileTimeEnv::new(host, value_ctx);
+    static_assert(&mut env, has_message)
+}
 
 /// Evaluates a boolean expression at compilation time
 /// and stops compilation with the supplied message when it is false.
@@ -33,31 +52,17 @@ use crate::spec::{func, unpack};
 /// extern bool static_assert(bool check, string message);
 /// extern bool static_assert(bool check);
 /// ```
-pub fn static_assert<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: &Value,
-    has_message: bool,
-) -> Result<Value, ExternError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
+pub fn static_assert(env: &mut CompileTimeEnv, has_message: bool) -> Result<P4Value, ExternError> {
     // Arguments are bound as local variables of the call
-    let value_check = func::find_var_value_t_local(ctx, value_ctx, "check")?;
-    let value_message = if has_message {
-        Some(func::find_var_value_t_local(ctx, value_ctx, "message")?)
-    } else {
-        None
-    };
-    let check = unpack::p4_bool(ctx.arena_mut(), &value_check)?;
+    let check = env.get_local("check")?;
+    let message = if has_message { Some(env.get_local("message")?) } else { None };
     // A passing assertion evaluates to its check
-    if check {
-        return Ok(value_check);
+    if bool::try_from(check.clone())? {
+        return Ok(check);
     }
     // The default message when the one-argument overload is used
-    let message = match value_message {
-        Some(value) => unpack::p4_string(ctx.arena_mut(), &value)?,
+    let message = match message {
+        Some(message) => message.try_into()?,
         None => "static_assert failed".to_owned(),
     };
     Err(error::assertion_unmet(message).into())
@@ -70,42 +75,15 @@ where
 /// ```text
 /// extern void verify(in bool check, in error toSignal);
 /// ```
-pub fn verify<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    value_arch: Value,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
-    // Arguments are bound as local variables of the call
-    let value_check = func::find_var_e_local(ctx, value_ctx, "check")?;
-    let value_signal = func::find_var_e_local(ctx, value_ctx, "toSignal")?;
-    let check = unpack::p4_bool(ctx.arena_mut(), &value_check)?;
-    // True: return nothing; false: reject with the given error
-    let value_call_result = if check {
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?
-    } else {
-        value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "REJECT errorValue",
-            args: vec![value_signal],
-            typ: "rejectResult",
-            span: Span::default(),
-        }?
-    };
-    Ok((value_ctx, value_arch, value_call_result))
+pub fn verify(env: &mut ExternEnv) -> Result<CallResult, ExternError> {
+    // A true check returns nothing
+    let check: bool = env.get_local("check")?.try_into()?;
+    if check {
+        return Ok(CallResult::Return(None));
+    }
+    // A false check rejects with the `toSignal` error
+    match env.get_local("toSignal")? {
+        P4Value::Error(id) => Ok(CallResult::Reject(id)),
+        to_signal => Err(to_signal.mismatch("an error")),
+    }
 }

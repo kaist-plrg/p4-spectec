@@ -5,21 +5,13 @@
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
 
-use p4spectec::lang::{
-    common::source::Span,
-    data::{
-        arena::Arena,
-        typ,
-        value::flat::{self as value, Value},
-    },
-};
+use p4spectec::runner::ExternError;
 
-use p4spectec::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::error;
 
-use crate::{
-    error,
-    spec::{args, func, unpack},
-};
+use crate::p4::{CallResult, ExternEnv, InitEnv, P4Vars};
+
+use crate::arch::psa::types::CounterType;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Counter array by `PSA_CounterType_t`.
@@ -34,53 +26,51 @@ pub enum Counter {
 
 impl Counter {
     /// Indirect counter with `n_counters` independent counter values, where
-    /// every counter value has a data plane size specified by type `W`
+    /// every counter value has a data plane size specified by type `W`.
     ///
     /// ```text
     /// extern Counter<W, S>
     /// Counter(bit<32> n_counters, PSA_CounterType_t type);
     /// ```
-    pub fn init(
-        arena: &mut Arena,
-        _value_targs: Value,
-        value_ids: Value,
-        value_args: Value,
-    ) -> Result<Self, ExternError> {
-        let args = args::assoc(arena, value_ids, value_args)?;
-        let value_size = args::find(&args, "n_counters")?;
-        let value_type = args::find(&args, "type")?;
-        let size = usize::try_from(&unpack::p4_fixed_bit(arena, &value_size)?.1)?;
-        let (id_enum, id_type) = unpack::p4_enum(arena, &value_type)?;
+    pub fn init(env: &mut InitEnv) -> Result<Self, ExternError> {
+        let n_counters = env.get("n_counters")?;
+        let kind = env.get("type")?;
+        let size: usize = n_counters.try_into()?;
         // The type argument selects what is counted
-        match (id_enum.as_str(), id_type.as_str()) {
-            ("PSA_CounterType_t", "PACKETS") => Ok(Self::Packets(vec![BigInt::zero(); size])),
-            ("PSA_CounterType_t", "BYTES") => Ok(Self::Bytes(vec![BigInt::zero(); size])),
-            ("PSA_CounterType_t", "PACKETS_AND_BYTES") => {
+        match CounterType::try_from(&kind)? {
+            CounterType::Packets => Ok(Self::Packets(vec![BigInt::zero(); size])),
+            CounterType::Bytes => Ok(Self::Bytes(vec![BigInt::zero(); size])),
+            CounterType::PacketsAndBytes => {
                 Ok(Self::PacketsAndBytes(vec![(BigInt::zero(), BigInt::zero()); size]))
             }
-            _ => Err(error::counter_type_invalid(format!(
-                "invalid PSA_CounterType_t enum value: {id_enum}.{id_type}"
-            ))
-            .into()),
         }
     }
 
+    // - Methods
+
+    /// Runs the method `name`, whose parameters are `params`.
+    pub fn call(
+        &mut self,
+        env: &mut ExternEnv,
+        name: &str,
+        params: &[&str],
+    ) -> Result<CallResult, ExternError> {
+        match (name, params) {
+            ("count", ["index"]) => {
+                let idx: usize = env.get_local("index")?.try_into()?;
+                self.count(idx)?;
+                Ok(CallResult::Return(None))
+            }
+            _ => env.unsupported(),
+        }
+    }
+
+    /// Counts a packet at `idx`; an out-of-range index counts nothing.
+    ///
     /// `void count(in S index);`
-    pub fn count<Interp, Iface, Ext>(
-        mut self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
+    pub fn count(&mut self, idx: usize) -> Result<(), ExternError> {
         // Only the `PACKETS` type is supported here
-        let Self::Packets(counts) = &mut self else {
+        let Self::Packets(counts) = self else {
             return Err(error::counter_type_unsupported(
                 "Only enum value PACKETS of PSA_CounterType_t is supported".to_owned(),
             )
@@ -89,19 +79,6 @@ impl Counter {
         if let Some(count) = counts.get_mut(idx) {
             *count += BigInt::one();
         }
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
+        Ok(())
     }
 }

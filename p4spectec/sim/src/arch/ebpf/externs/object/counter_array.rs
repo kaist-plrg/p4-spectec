@@ -2,21 +2,13 @@
 //!
 //! A dense array of 32-bit counters the data plane increments.
 
-use p4spectec::lang::{
-    common::source::Span,
-    data::{
-        arena::Arena,
-        typ,
-        value::flat::{self as value, Value},
-    },
-};
+use num_bigint::BigInt;
 
-use p4spectec::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use p4spectec::runner::ExternError;
 
-use crate::{
-    error,
-    spec::{args, func, unpack},
-};
+use crate::error;
+
+use crate::p4::{CallResult, ExternEnv, InitEnv, P4Vars};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// A counter array as a vector of 32-bit values.
@@ -39,105 +31,64 @@ impl CounterArray {
     /// ```p4
     /// CounterArray(bit<32> max_index, bool sparse);
     /// ```
-    pub fn init(
-        arena: &mut Arena,
-        value_ids: Value,
-        value_args: Value,
-    ) -> Result<Self, ExternError> {
-        let args = args::assoc(arena, value_ids, value_args)?;
-        let value_max = args::find(&args, "max_index")?;
-        let value_sparse = args::find(&args, "sparse")?;
-        let len = usize::try_from(&unpack::p4_fixed_bit(arena, &value_max)?.1)?;
-        unpack::p4_bool(arena, &value_sparse)?;
+    pub fn init(env: &mut InitEnv) -> Result<Self, ExternError> {
+        let max = env.get("max_index")?;
+        let sparse = env.get("sparse")?;
+        let len: usize = max.try_into()?;
+        // A sparse array is kept dense, but `sparse` must still be a bool
+        let _: bool = sparse.try_into()?;
         let mut counts = Vec::new();
         counts.try_reserve_exact(len)?;
         counts.resize(len, 0);
         Ok(Self { counts })
     }
 
-    /// Increment counter with specified index
+    // - Methods
+
+    /// Runs the method `name`, whose parameters are `params`.
+    pub fn call(
+        &mut self,
+        env: &mut ExternEnv,
+        name: &str,
+        params: &[&str],
+    ) -> Result<CallResult, ExternError> {
+        match (name, params) {
+            ("increment", ["index"]) => {
+                let idx: usize = env.get_local("index")?.try_into()?;
+                self.increment(idx);
+                Ok(CallResult::Return(None))
+            }
+            ("add", ["index", "value"]) => {
+                let idx: usize = env.get_local("index")?.try_into()?;
+                let int_add: BigInt = env.get_local("value")?.try_into()?;
+                let int = u32::try_from(&int_add).map_err(|_| {
+                    error::counter_value_out_of_bounds("counter value exceeds 32 bits".to_owned())
+                })?;
+                self.add(idx, int);
+                Ok(CallResult::Return(None))
+            }
+            _ => env.unsupported(),
+        }
+    }
+
+    /// Increment counter with specified index.
     ///
     /// ```p4
     /// void increment(in bit<32> index);
     /// ```
-    pub fn increment<Interp, Iface, Ext>(
-        self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        // Get "index"
-        let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
-        self.update(ctx, value_ctx, value_arch, idx, 1)
+    pub fn increment(&mut self, idx: usize) {
+        self.add(idx, 1);
     }
 
-    /// Add value to counter with specified index
+    /// Add value to counter with specified index.
     ///
+    /// Adds with wrapping; an out-of-range index updates no counter:
     /// ```p4
     /// void add(in bit<32> index, in bit<32> value);
     /// ```
-    pub fn add<Interp, Iface, Ext>(
-        self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        // Get "index"
-        let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
-        // Get "value"
-        let value_add = func::find_var_e_local(ctx, value_ctx, "value")?;
-        let (_, int_add) = unpack::p4_fixed_bit(ctx.arena_mut(), &value_add)?;
-        let int = u32::try_from(&int_add).map_err(|_| {
-            error::counter_value_out_of_bounds("counter value exceeds 32 bits".to_owned())
-        })?;
-        self.update(ctx, value_ctx, value_arch, idx, int)
-    }
-
-    /// Adds `int` to the counter at `idx`, wrapping; out of range does nothing.
-    fn update<Interp, Iface, Ext>(
-        mut self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-        idx: usize,
-        int: u32,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        // Update counter
-        // Out of range: no counter is updated
+    pub fn add(&mut self, idx: usize, int: u32) {
         if let Some(count) = self.counts.get_mut(idx) {
             *count = count.wrapping_add(int);
         }
-        // Create call result
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
     }
 }

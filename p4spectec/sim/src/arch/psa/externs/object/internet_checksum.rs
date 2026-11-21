@@ -8,20 +8,11 @@ use num_traits::Zero;
 
 use p4spectec::util::bigint;
 
-use p4spectec::lang::{
-    common::source::Span,
-    data::{
-        typ,
-        value::flat::{self as value, Value},
-    },
-};
+use p4spectec::runner::ExternError;
 
-use p4spectec::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::arch::hash;
 
-use crate::{
-    arch::hash,
-    spec::{func, pack, unpack},
-};
+use crate::p4::{CallResult, ExternEnv, P4Value, P4Vars};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// The running ones-complement sum.
@@ -33,7 +24,7 @@ pub struct InternetChecksum {
 impl InternetChecksum {
     /// Checksum based on the `ONES_COMPLEMENT16` algorithm used in IPv4,
     /// TCP and UDP. Supports incremental updates through `subtract`
-    /// (see IETF RFC 1624)
+    /// (see IETF RFC 1624).
     ///
     /// ```text
     /// extern InternetChecksum
@@ -43,7 +34,48 @@ impl InternetChecksum {
         Self { int: BigInt::zero() }
     }
 
-    /// Reset internal state and prepare the unit for computation
+    // - Methods
+
+    /// Runs the method `name`, whose parameters are `params`.
+    pub fn call(
+        &mut self,
+        env: &mut ExternEnv,
+        name: &str,
+        params: &[&str],
+    ) -> Result<CallResult, ExternError> {
+        match (name, params) {
+            ("clear", []) => {
+                self.clear();
+                Ok(CallResult::Return(None))
+            }
+            ("add", ["data"]) => {
+                let data = match env.get_local("data")? {
+                    P4Value::Tuple(data) => data,
+                    data => return Err(data.mismatch("a tuple")),
+                };
+                self.add(&data)?;
+                Ok(CallResult::Return(None))
+            }
+            ("subtract", ["data"]) => {
+                let data = match env.get_local("data")? {
+                    P4Value::Tuple(data) => data,
+                    data => return Err(data.mismatch("a tuple")),
+                };
+                self.subtract(&data)?;
+                Ok(CallResult::Return(None))
+            }
+            ("get", []) => Ok(CallResult::Return(Some(self.get()?))),
+            ("get_state", []) => Ok(CallResult::Return(Some(self.get_state()))),
+            ("set_state", ["checksum_state"]) => {
+                let int_state: BigInt = env.get_local("checksum_state")?.try_into()?;
+                self.set_state(int_state);
+                Ok(CallResult::Return(None))
+            }
+            _ => env.unsupported(),
+        }
+    }
+
+    /// Reset internal state and prepare the unit for computation.
     ///
     /// Every InternetChecksum instance is automatically initialized as if
     /// `clear()` had been called whenever the parser or control containing
@@ -51,182 +83,53 @@ impl InternetChecksum {
     /// packet
     ///
     /// `void clear();`
-    pub fn clear<Interp, Iface, Ext>(
-        self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((Self::init(), value_ctx, value_arch, value_call_result))
+    pub fn clear(&mut self) {
+        *self = Self::init();
     }
 
-    /// Add data to the checksum; `data` must be a multiple of 16 bits long
+    /// Add data to the checksum; `data` must be a multiple of 16 bits long.
     ///
     /// `void add<T>(in T data);`
-    pub fn add<Interp, Iface, Ext>(
-        self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        self.update(ctx, value_ctx, value_arch, "csum16")
+    pub fn add(&mut self, data: &[P4Value]) -> Result<(), ExternError> {
+        self.update(data, hash::Algorithm::Csum16)
     }
 
     /// Subtract data from the existing checksum; `data` must be a multiple
-    /// of 16 bits long
+    /// of 16 bits long.
     ///
     /// `void subtract<T>(in T data);`
-    pub fn subtract<Interp, Iface, Ext>(
-        self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        self.update(ctx, value_ctx, value_arch, "csum16_sub")
+    pub fn subtract(&mut self, data: &[P4Value]) -> Result<(), ExternError> {
+        self.update(data, hash::Algorithm::Csum16Sub)
     }
 
     /// Folds `data` into the sum with `algo`, then stores its complement.
-    fn update<Interp, Iface, Ext>(
-        mut self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-        algo: &str,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
-        let values = unpack::p4_tuple(ctx.arena_mut(), &value_data)?;
-        let int = hash::compute_checksum(ctx.arena_mut(), algo, Some(&self.int), &values)?;
+    fn update(&mut self, data: &[P4Value], algo: hash::Algorithm) -> Result<(), ExternError> {
+        let int = hash::hash_values(algo, Some(&self.int), data)?;
         self.int = bigint::bitwise_neg(&int, &16.into())?;
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
+        Ok(())
     }
 
-    /// Get the checksum for data added and not removed since the last clear
+    /// Get the checksum for data added and not removed since the last clear.
     ///
     /// `bit<16> get();`
-    pub fn get<Interp, Iface, Ext>(
-        mut self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
+    pub fn get(&mut self) -> Result<P4Value, ExternError> {
         self.int = bigint::bitwise_neg(&self.int, &16.into())?;
-        self.get_state(ctx, value_ctx, value_arch)
+        Ok(self.get_state())
     }
 
     /// Get the current checksum computation state. The return value is only
-    /// intended for a future call to `set_state`
+    /// intended for a future call to `set_state`.
     ///
     /// `bit<16> get_state();`
-    pub fn get_state<Interp, Iface, Ext>(
-        self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        let value_checksum = pack::p4_fixed_bit(ctx.arena_mut(), 16.into(), self.int.clone())?;
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(
-            ctx.arena_mut(),
-            typ.node.into(),
-            Some(value_checksum),
-            Span::default(),
-        )?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
+    pub fn get_state(&self) -> P4Value {
+        P4Value::Bit { width: 16, int: self.int.clone() }
     }
 
     /// Restore state returned by an earlier `get_state` call on this
-    /// InternetChecksum instance or a different one
+    /// InternetChecksum instance or a different one.
     ///
     /// `void set_state(in bit<16> checksum_state);`
-    pub fn set_state<Interp, Iface, Ext>(
-        mut self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        let value_state = func::find_var_e_local(ctx, value_ctx, "checksum_state")?;
-        self.int = unpack::p4_fixed_bit(ctx.arena_mut(), &value_state)?.1;
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
+    pub fn set_state(&mut self, int_state: BigInt) {
+        self.int = int_state;
     }
 }

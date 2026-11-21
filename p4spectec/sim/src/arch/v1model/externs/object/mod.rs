@@ -1,7 +1,7 @@
 //! Stateful v1model extern objects
 //!
 //! Each object is read from the specification's object state,
-//! updated by its method, and stored back by the pipeline.
+//! updated by its method, and stored back by the dispatcher.
 //! Doc comments summarize the object's description in `v1model.p4`.
 
 pub(crate) mod counter;

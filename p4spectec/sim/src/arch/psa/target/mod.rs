@@ -1,7 +1,15 @@
-//! The switch behind the externs: its scheduler, state, and mirror and multicast tables
+//! The PSA switch behind the externs
+//!
+//! `state` is the architecture state the specification carries:
+//! the packet queue (`packet`), the clone sessions (`mirror`),
+//! and the multicast groups (`multicast`).
+//! `runtime` is the control plane that configures them,
+//! and `pipe` the scheduler that drives one received packet
+//! through both pipelines and the PRE and BQE.
 
-pub(crate) mod mirror;
-pub(crate) mod multicast;
-pub(crate) mod packet;
-pub(crate) mod pipe;
-pub(crate) mod state;
+mod mirror;
+mod multicast;
+mod packet;
+pub(in crate::arch) mod pipe;
+mod runtime;
+pub(super) mod state;

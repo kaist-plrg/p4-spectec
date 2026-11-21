@@ -6,22 +6,11 @@
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
 
-use p4spectec::lang::{
-    common::source::Span,
-    data::{
-        arena::Arena,
-        typ,
-        value::flat::{self as value, Value},
-    },
-};
+use p4spectec::runner::ExternError;
 
-use p4spectec::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::p4::{CallResult, ExternEnv, InitEnv};
 
-use crate::{
-    arch::core::object::PacketIn,
-    error,
-    spec::{args, unpack},
-};
+use crate::arch::{core::object::PacketIn, v1model::types::CounterType};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Direct counter by `CounterType`.
@@ -53,26 +42,35 @@ impl DirectCounter {
     /// register.
     ///
     /// `direct_counter(CounterType type);`
-    pub fn init(
-        arena: &mut Arena,
-        _value_targs: Value,
-        value_ids: Value,
-        value_args: Value,
-    ) -> Result<Self, ExternError> {
-        let args = args::assoc(arena, value_ids, value_args)?;
-        let value_type = args::find(&args, "type")?;
-        let (id_enum, id_type) = unpack::p4_enum(arena, &value_type)?;
+    pub fn init(env: &mut InitEnv) -> Result<Self, ExternError> {
+        let kind = env.get("type")?;
         // The type argument selects what is counted
-        match (id_enum.as_str(), id_type.as_str()) {
-            ("CounterType", "packets") => Ok(Self::Packets(BigInt::zero())),
-            ("CounterType", "bytes") => Ok(Self::Bytes(BigInt::zero())),
-            ("CounterType", "packets_and_bytes") => {
+        match CounterType::try_from(&kind)? {
+            CounterType::Packets => Ok(Self::Packets(BigInt::zero())),
+            CounterType::Bytes => Ok(Self::Bytes(BigInt::zero())),
+            CounterType::PacketsAndBytes => {
                 Ok(Self::PacketsAndBytes((BigInt::zero(), BigInt::zero())))
             }
-            _ => Err(error::counter_type_invalid(format!(
-                "invalid CounterType enum value: {id_enum}.{id_type}"
-            ))
-            .into()),
+        }
+    }
+
+    // - Methods
+
+    /// Runs the method `name`, whose parameters are `params`,
+    /// on the current packet `packet`.
+    pub fn call(
+        &mut self,
+        env: &mut ExternEnv,
+        name: &str,
+        params: &[&str],
+        packet: &PacketIn,
+    ) -> Result<CallResult, ExternError> {
+        match (name, params) {
+            ("count", []) => {
+                self.count(packet);
+                Ok(CallResult::Return(None))
+            }
+            _ => env.unsupported(),
         }
     }
 
@@ -87,41 +85,16 @@ impl DirectCounter {
     /// the body of that action.
     ///
     /// `void count();`
-    pub fn count<Interp, Iface, Ext>(
-        mut self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-        packet_in: &PacketIn,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
+    pub fn count(&mut self, packet: &PacketIn) {
         // `PacketIn::len` counts bits
-        let bytes = BigInt::from(packet_in.len / 8);
-        match &mut self {
+        let bytes = BigInt::from(packet.len / 8);
+        match self {
             Self::Packets(count) => *count += BigInt::one(),
-            Self::Bytes(count) => *count += &bytes,
+            Self::Bytes(count) => *count += bytes,
             Self::PacketsAndBytes((count_packets, count_bytes)) => {
                 *count_packets += BigInt::one();
-                *count_bytes += &bytes;
+                *count_bytes += bytes;
             }
         }
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
     }
 }

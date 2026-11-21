@@ -5,6 +5,8 @@
 //! Packets drive the pipeline; `expect` lines are matched against outputs
 //! in either order, so both keep a queue; the rest update tables, mirrors,
 //! multicast groups, and registers through the architecture.
+//! `expect` holds an `expect` line and matches outputs against it,
+//! comparing packets nibble by nibble through `match`.
 
 use std::path::{Path, PathBuf};
 
@@ -14,17 +16,17 @@ use p4spectec::util::text::escape_text;
 
 use p4spectec::lang::{
     common::source::{Phrase, Span},
-    data::{
-        arena::Arena,
-        typ,
-        value::flat::{self as value, Value},
-    },
     traits::print::Print,
 };
 
-use p4spectec::runner::{
-    Backend, ExternError, Interface, InterfaceError, Interpreter, Runner, RunnerContext,
+use p4spectec::runner::{ExternError, Interface, InterfaceError, Runner};
+
+use crate::p4::{
+    ActionCall, EntryStatus, MatchKey, MatchKeyParam, MirroringSessionConfig, P4Value, Radix,
+    RuntimeInterface, Sim, TableEntry,
 };
+
+use crate::spec::host::{ArchHost, Arena, parse_program, with_host};
 
 use crate::stf::{
     self,
@@ -34,12 +36,11 @@ use crate::stf::{
 use crate::error::{self, SimError};
 
 use crate::arch::{
-    Architecture,
     io::{Rx, Tx},
     state::SimState,
 };
 
-use super::table;
+use super::transform;
 
 use self::expect::Expectation;
 
@@ -148,10 +149,10 @@ impl Run {
     }
 }
 
-// == Pipeline initialization
+// == Run initialization
 
 /// Parses the program and initializes the pipeline in a fresh runner.
-pub fn init_pipe<Iface, Arch>(
+pub fn init_run<Iface, Arch>(
     arena: &mut Arena,
     runner: &mut Runner<Iface, Arch>,
     includes: &[PathBuf],
@@ -159,53 +160,15 @@ pub fn init_pipe<Iface, Arch>(
 ) -> Result<Run, SimError>
 where
     Iface: Interface,
-    Arch: Architecture,
+    Arch: RuntimeInterface,
 {
     // Each program starts from an empty arena and cleared extern state
     runner.reset();
     arena.reset_values();
-    let program = runner
-        .parse_program(arena, includes, &[path.to_path_buf()])
+    let program = parse_program(arena, runner, includes, &[path.to_path_buf()])
         .map_err(InterfaceError::into_report)?;
-    let state = match &mut runner.backend {
-        Backend::Al { spec_env, interp } => {
-            let mut ctx = RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut runner.interface,
-                &mut runner.external,
-                &mut runner.effects,
-                &mut runner.hooks,
-            );
-            Arch::init_pipe(&mut ctx, program)
-        }
-        Backend::Sl { spec_env, interp, .. } => {
-            let mut ctx = RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut runner.interface,
-                &mut runner.external,
-                &mut runner.effects,
-                &mut runner.hooks,
-            );
-            Arch::init_pipe(&mut ctx, program)
-        }
-        Backend::Pl { spec_env, interp } => {
-            let mut ctx = RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut runner.interface,
-                &mut runner.external,
-                &mut runner.effects,
-                &mut runner.hooks,
-            );
-            Arch::init_pipe(&mut ctx, program)
-        }
-    }
-    .map_err(ExternError::into_report)?;
+    let state = with_host(arena, runner, |host| Arch::init_pipe(host, program))
+        .map_err(ExternError::into_report)?;
     Ok(Run::new(state))
 }
 
@@ -220,49 +183,13 @@ pub fn run_stf_stmt<Iface, Arch>(
 ) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
-    Arch: Architecture,
+    Arch: RuntimeInterface,
 {
-    // Fresh output list; the architecture may rewrite the statement first
+    // Fresh output list, then p4c's names rewritten to the specification's
     run.state.txs.clear();
-    let stmt_kind = Arch::transform_stf_stmt(stmt.node.clone());
-    let result = match &mut runner.backend {
-        Backend::Al { spec_env, interp } => {
-            let mut ctx = RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut runner.interface,
-                &mut runner.external,
-                &mut runner.effects,
-                &mut runner.hooks,
-            );
-            run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
-        }
-        Backend::Sl { spec_env, interp, .. } => {
-            let mut ctx = RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut runner.interface,
-                &mut runner.external,
-                &mut runner.effects,
-                &mut runner.hooks,
-            );
-            run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
-        }
-        Backend::Pl { spec_env, interp } => {
-            let mut ctx = RunnerContext::new(
-                arena,
-                spec_env,
-                interp,
-                &mut runner.interface,
-                &mut runner.external,
-                &mut runner.effects,
-                &mut runner.hooks,
-            );
-            run_stf_stmt_kind(&mut ctx, &stmt.span, run, stmt_kind)
-        }
-    };
+    let stmt_kind = transform::transform_stmt(Arch::NAME, stmt.node.clone());
+    let result =
+        with_host(arena, runner, |host| run_stf_stmt_kind(host, &stmt.span, run, stmt_kind));
     // Attach the statement's span to failures that have none
     let tx = result.map_err(|report| {
         if stmt.span == Span::default() {
@@ -279,57 +206,52 @@ where
 }
 
 /// Executes a transformed statement through a stage-specific context.
-fn run_stf_stmt_kind<Interp, Iface, Arch>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+fn run_stf_stmt_kind<Arch: RuntimeInterface>(
+    host: &mut dyn ArchHost<Arch>,
     span: &Span,
     run: &mut Run,
     stmt_kind: Statement,
-) -> Result<Option<Tx>, SimError>
-where
-    Iface: Interface,
-    Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
-{
+) -> Result<Option<Tx>, SimError> {
     match stmt_kind {
         // Packets drive the pipeline
-        Statement::Packet { port, packet } => run_stf_packet_stmt(ctx, span, run, port, packet),
+        Statement::Packet { port, packet } => run_stf_packet_stmt(host, span, run, port, packet),
         // Expectations match outputs
         Statement::Expect { port, packet_expected, exact } => {
             run_stf_expect_stmt(run, port, packet_expected, exact)
         }
         // Table control plane
         Statement::Add { table, priority, matches, action, .. } => {
-            run_stf_add_stmt(ctx, span, &mut run.state, table, priority, matches, action)
+            run_stf_add_stmt(host, span, &mut run.state, table, priority, matches, action)
         }
         Statement::SetDefault { table, action } => {
-            run_stf_set_default_stmt(ctx, span, &mut run.state, table, action)
+            run_stf_set_default_stmt(host, span, &mut run.state, table, action)
         }
         // Mirror sessions
         Statement::MirroringAdd { session, port } => {
-            run_stf_mirroring_add_stmt(ctx, span, &mut run.state, session, port)
+            run_stf_mirroring_add_stmt(host, span, &mut run.state, session, port)
         }
         Statement::MirroringAddMc { session, group_id } => {
-            run_stf_mirroring_add_mc_stmt(ctx, span, &mut run.state, session, group_id)
+            run_stf_mirroring_add_mc_stmt(host, span, &mut run.state, session, group_id)
         }
         // Multicast groups and nodes
         Statement::McGroupCreate { group_id } => {
-            run_stf_mc_group_create_stmt(ctx, span, &mut run.state, group_id)
+            run_stf_mc_group_create_stmt(host, span, &mut run.state, group_id)
         }
         Statement::McNodeCreate { replication_id, ports } => {
-            run_stf_mc_node_create_stmt(ctx, span, &mut run.state, replication_id, ports)
+            run_stf_mc_node_create_stmt(host, span, &mut run.state, replication_id, ports)
         }
         Statement::McNodeAssociate { group_id, handle } => {
-            run_stf_mc_node_associate_stmt(ctx, span, &mut run.state, group_id, handle)
+            run_stf_mc_node_associate_stmt(host, span, &mut run.state, group_id, handle)
         }
         // Registers
         Statement::RegisterRead { name, index } => {
-            run_stf_register_read_stmt(ctx, span, &mut run.state, name, index)
+            run_stf_register_read_stmt(host, span, &mut run.state, name, index)
         }
         Statement::RegisterWrite { name, index, value } => {
-            run_stf_register_write_stmt(ctx, span, &mut run.state, name, index, value)
+            run_stf_register_write_stmt(host, span, &mut run.state, name, index, value)
         }
         Statement::RegisterReset { name } => {
-            run_stf_register_reset_stmt(ctx, span, &mut run.state, name)
+            run_stf_register_reset_stmt(host, span, &mut run.state, name)
         }
         // Statements with no effect here
         Statement::MirroringGet { .. } | Statement::Wait => Ok(None),
@@ -341,21 +263,16 @@ where
 // - Packet I/O
 
 /// Drives one packet through the pipeline and matches the first output.
-fn run_stf_packet_stmt<Interp, Iface, Arch>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+fn run_stf_packet_stmt<Arch: RuntimeInterface>(
+    host: &mut dyn ArchHost<Arch>,
     span: &Span,
     run: &mut Run,
     port: String,
     packet: String,
-) -> Result<Option<Tx>, SimError>
-where
-    Iface: Interface,
-    Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
-{
+) -> Result<Option<Tx>, SimError> {
     // Payloads compare in uppercase hex
     let rx = Rx { port: parse_int::<usize>(&port)?, packet: packet.to_ascii_uppercase() };
-    Arch::drive_pipe(ctx, &mut run.state, &rx)
+    Arch::drive_pipe(&mut Sim::new(host, &mut run.state), &rx)
         .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     run.on_tx_output()
 }
@@ -379,278 +296,180 @@ fn run_stf_expect_stmt(
 
 // - Match-action table updates
 
-/// Encodes STF match keys as the specification's `tableKeyInterface` list.
-fn encode_table_keys(arena: &mut Arena, matches: &[TableMatch]) -> Result<Value, SimError> {
-    let typ_key = typ::make::var(
-        p4spectec::phrase!(node: "tableKeyInterface".into(), span: Span::default()),
-        vec![],
-    );
-    let mut values_key = Vec::new();
-    for key in matches {
-        let value_name = value::make::text(
-            arena,
-            convert_dollar_to_brackets(key.name.as_str()),
-            Span::default(),
-        )?;
-        // Numbers keep their radix spelling as a tagged text
-        let value_key = match &key.kind {
-            MatchKind::Number(num) => {
-                let (shape, num) = if let Some(num) = num.strip_prefix("0x") {
-                    ("_HEX text", num)
-                } else if let Some(num) = num.strip_prefix("0b") {
-                    ("_BIN text", num)
-                } else {
-                    ("_DEC text", num.as_str())
-                };
-                let value_num = value::make::text(arena, num.to_owned(), Span::default())?;
-                value::make::case_string! {
-                    arena: arena,
-                    shape: shape,
-                    args: vec![value_num],
-                    typ: "tableKeyValueInterface",
-                    span: Span::default(),
-                }?
-            }
-            // `prefix/mask` becomes a text and a natural
-            MatchKind::Slash(prefix, mask) => {
-                let value_prefix = value::make::text(arena, prefix.clone(), Span::default())?;
-                let mask = BigInt::from(parse_int::<i128>(mask)?);
-                let nat = p4spectec::lang::common::prim::num::Natural::try_from(mask)?;
-                let value_mask = value::make::nat(arena, nat, Span::default())?;
-                value::make::case_string! {
-                    arena: arena,
-                    shape: "text _SLASH nat",
-                    args: vec![value_prefix, value_mask],
-                    typ: "tableKeyValueInterface",
-                    span: Span::default(),
-                }?
-            }
-        };
-        values_key.push(value::make::tuple(
-            arena,
-            typ_key.node.clone().into(),
-            vec![value_name, value_key],
-            Span::default(),
-        )?);
-    }
-    Ok(value::make::list(arena, typ::make::list(typ_key).node.into(), values_key, Span::default())?)
+/// An STF match key as a table entry key; a number keeps its radix spelling.
+fn match_key(key: &TableMatch) -> Result<MatchKey, SimError> {
+    let param = match &key.kind {
+        MatchKind::Number(num) => {
+            let (radix, digits) = if let Some(digits) = num.strip_prefix("0x") {
+                (Radix::Hex, digits)
+            } else if let Some(digits) = num.strip_prefix("0b") {
+                (Radix::Bin, digits)
+            } else {
+                (Radix::Dec, num.as_str())
+            };
+            MatchKeyParam::Number { radix, digits: digits.to_owned() }
+        }
+        MatchKind::Slash(value, len) => {
+            MatchKeyParam::Prefix { value: value.clone(), len: parse_int::<usize>(len)? }
+        }
+    };
+    Ok(MatchKey { name: convert_dollar_to_brackets(key.name.as_str()), param })
+}
+
+/// An STF action as an action call with integer arguments.
+fn action_call(action: &Action) -> Result<ActionCall, SimError> {
+    let args = action
+        .args
+        .iter()
+        .map(|arg| Ok((arg.id.clone(), BigInt::from(parse_int::<i128>(&arg.num)?))))
+        .collect::<Result<Vec<_>, SimError>>()?;
+    Ok(ActionCall { name: action.name.as_str().to_owned(), args })
 }
 
 /// Adds a table entry: name, optional priority, keys, and action.
-fn run_stf_add_stmt<Interp, Iface, Arch>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+///
+/// When the table rejects the STF key names,
+/// the entry is tried once more with the table's own key names in order,
+/// skipping `selector` keys, which take no STF value.
+fn run_stf_add_stmt<Arch: RuntimeInterface>(
+    host: &mut dyn ArchHost<Arch>,
     span: &Span,
     state: &mut SimState,
     table: Name,
     priority: Option<i64>,
     matches: Vec<TableMatch>,
     action: Action,
-) -> Result<Option<Tx>, SimError>
-where
-    Iface: Interface,
-    Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
-{
+) -> Result<Option<Tx>, SimError> {
+    let failure =
+        |error: ExternError| error::statement_execution_failure(span, error.into_report());
     // Add names use the same escaped spelling as P4 annotation names
-    let text_name = escape_text(&table.into_string());
-    let value_name =
-        value::make::text(ctx.arena_mut(), text_name, Span::default()).map_err(SimError::from)?;
-    // Priority is optional
-    let value_priority = priority
-        .map(|priority| value::make::int(ctx.arena_mut(), priority.into(), Span::default()))
-        .transpose()
-        .map_err(SimError::from)?;
-    let value_priority = value::make::opt(
-        ctx.arena_mut(),
-        typ::make::opt(typ::make::int()).node.into(),
-        value_priority,
-        Span::default(),
-    )
-    .map_err(SimError::from)?;
-    let value_keys = encode_table_keys(ctx.arena_mut(), &matches)?;
-    let value_action = encode_table_action(ctx.arena_mut(), &action)?;
-    state.value_arch = table::add_entry(
-        ctx,
-        state.value_ctx,
-        state.value_arch,
-        value_name,
-        value_priority,
-        value_keys,
-        value_action,
-    )
-    .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
-    Ok(None)
-}
-
-/// Encodes an STF action as the specification's `tableActionInterface`.
-fn encode_table_action(arena: &mut Arena, action: &Action) -> Result<Value, SimError> {
-    let value_name = value::make::text(arena, action.name.as_str().to_owned(), Span::default())?;
-    let typ_arg = typ::make::var(
-        p4spectec::phrase!(node: "tableActionArgumentInterface".into(), span: Span::default()),
-        vec![],
-    );
-    let mut values_arg = Vec::new();
-    // Each argument is a name and an integer
-    for arg in &action.args {
-        let value_name = value::make::text(arena, arg.id.clone(), Span::default())?;
-        let int = BigInt::from(parse_int::<i128>(&arg.num)?);
-        let value_int = value::make::int(arena, int, Span::default())?;
-        values_arg.push(value::make::tuple(
-            arena,
-            typ_arg.node.clone().into(),
-            vec![value_name, value_int],
-            Span::default(),
-        )?);
+    let mut entry = TableEntry {
+        table: escape_text(&table.into_string()),
+        priority,
+        keys: matches.iter().map(match_key).collect::<Result<_, _>>()?,
+        action: action_call(&action)?,
+    };
+    let mut sim = Sim::new(host, state);
+    if sim.add_entry(&entry).map_err(failure)? == EntryStatus::Added {
+        return Ok(None);
     }
-    // An action is its name and its argument list
-    let value_args = value::make::list(
-        arena,
-        typ::make::list(typ_arg).node.into(),
-        values_arg,
-        Span::default(),
-    )?;
-    Ok(value::make::tuple(
-        arena,
-        typ::make::var(
-            p4spectec::phrase!(node: "tableActionInterface".into(), span: Span::default()),
-            vec![],
-        )
-        .node
-        .into(),
-        vec![value_name, value_args],
-        Span::default(),
-    )?)
+    // Rename the keys after the table's own, in order
+    let names: Vec<_> = sim
+        .get_keys(&entry.table)
+        .map_err(failure)?
+        .into_iter()
+        .filter(|key| key.match_kind != "selector")
+        .map(|key| key.name)
+        .collect();
+    if names.len() != entry.keys.len() {
+        return Err(failure(
+            error::table_entry_invalid(format!(
+                "table has {} keys, but the entry has {}",
+                names.len(),
+                entry.keys.len()
+            ))
+            .into(),
+        ));
+    }
+    for (key, name) in entry.keys.iter_mut().zip(names) {
+        key.name = name;
+    }
+    // A second rejection is final
+    match sim.add_entry(&entry).map_err(failure)? {
+        EntryStatus::Added => Ok(None),
+        EntryStatus::Rejected => {
+            Err(failure(error::table_entry_invalid("table entry rejected".to_owned()).into()))
+        }
+    }
 }
 
 /// Sets a table's default action.
-fn run_stf_set_default_stmt<Interp, Iface, Arch>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+fn run_stf_set_default_stmt<Arch: RuntimeInterface>(
+    host: &mut dyn ArchHost<Arch>,
     span: &Span,
     state: &mut SimState,
     table: Name,
     action: Action,
-) -> Result<Option<Tx>, SimError>
-where
-    Iface: Interface,
-    Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
-{
-    // Table name and action, then let the table module store it
-    let value_name = value::make::text(ctx.arena_mut(), table.into_string(), Span::default())
-        .map_err(SimError::from)?;
-    let value_action = encode_table_action(ctx.arena_mut(), &action)?;
-    state.value_arch =
-        table::add_default_action(ctx, state.value_ctx, state.value_arch, value_name, value_action)
-            .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
+) -> Result<Option<Tx>, SimError> {
+    let action = action_call(&action)?;
+    Sim::new(host, state)
+        .set_default_action(&table.into_string(), &action)
+        .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
 // - Mirror session updates
 
 /// Maps a mirror session to a port.
-fn run_stf_mirroring_add_stmt<Interp, Iface, Arch>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+fn run_stf_mirroring_add_stmt<Arch: RuntimeInterface>(
+    host: &mut dyn ArchHost<Arch>,
     span: &Span,
     state: &mut SimState,
     session: String,
     port: String,
-) -> Result<Option<Tx>, SimError>
-where
-    Iface: Interface,
-    Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
-{
-    state.value_arch = Arch::add_mirror_session(
-        ctx,
-        state.value_arch,
-        parse_int::<usize>(&session)?,
-        parse_int::<usize>(&port)?,
-    )
-    .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
+) -> Result<Option<Tx>, SimError> {
+    let config = MirroringSessionConfig::EgressPort(parse_int::<usize>(&port)?);
+    Arch::mirroring_add_session(&mut Sim::new(host, state), parse_int::<usize>(&session)?, config)
+        .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
 /// Maps a mirror session to a multicast group.
-fn run_stf_mirroring_add_mc_stmt<Interp, Iface, Arch>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+fn run_stf_mirroring_add_mc_stmt<Arch: RuntimeInterface>(
+    host: &mut dyn ArchHost<Arch>,
     span: &Span,
     state: &mut SimState,
     session: String,
     id_group: String,
-) -> Result<Option<Tx>, SimError>
-where
-    Iface: Interface,
-    Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
-{
-    state.value_arch = Arch::add_mirror_session_mc(
-        ctx,
-        state.value_arch,
-        parse_int::<usize>(&session)?,
-        parse_int::<usize>(&id_group)?,
-    )
-    .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
+) -> Result<Option<Tx>, SimError> {
+    let config = MirroringSessionConfig::Mgid(parse_int::<usize>(&id_group)?);
+    Arch::mirroring_add_session(&mut Sim::new(host, state), parse_int::<usize>(&session)?, config)
+        .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
 // - Multicast group updates
 
 /// Creates a multicast group.
-fn run_stf_mc_group_create_stmt<Interp, Iface, Arch>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+fn run_stf_mc_group_create_stmt<Arch: RuntimeInterface>(
+    host: &mut dyn ArchHost<Arch>,
     span: &Span,
     state: &mut SimState,
     id_group: String,
-) -> Result<Option<Tx>, SimError>
-where
-    Iface: Interface,
-    Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
-{
-    state.value_arch = Arch::mc_mgrp_create(ctx, state.value_arch, parse_int::<usize>(&id_group)?)
+) -> Result<Option<Tx>, SimError> {
+    Arch::mc_mgrp_create(&mut Sim::new(host, state), parse_int::<usize>(&id_group)?)
         .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
 /// Creates a multicast node over the listed ports.
-fn run_stf_mc_node_create_stmt<Interp, Iface, Arch>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+fn run_stf_mc_node_create_stmt<Arch: RuntimeInterface>(
+    host: &mut dyn ArchHost<Arch>,
     span: &Span,
     state: &mut SimState,
     id_replication: String,
     ports: Vec<String>,
-) -> Result<Option<Tx>, SimError>
-where
-    Iface: Interface,
-    Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
-{
+) -> Result<Option<Tx>, SimError> {
     let instance = parse_int::<usize>(&id_replication)?;
     let ports = ports
         .iter()
         .map(|port| parse_int::<usize>(port))
         .collect::<Result<Vec<_>, _>>()?;
-    state.value_arch = Arch::mc_node_create(ctx, state.value_arch, instance, &ports)
+    Arch::mc_node_create(&mut Sim::new(host, state), instance, &ports)
         .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
 /// Adds a multicast node to a group.
-fn run_stf_mc_node_associate_stmt<Interp, Iface, Arch>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+fn run_stf_mc_node_associate_stmt<Arch: RuntimeInterface>(
+    host: &mut dyn ArchHost<Arch>,
     span: &Span,
     state: &mut SimState,
     id_group: String,
     handle: String,
-) -> Result<Option<Tx>, SimError>
-where
-    Iface: Interface,
-    Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
-{
-    state.value_arch = Arch::mc_node_associate(
-        ctx,
-        state.value_arch,
+) -> Result<Option<Tx>, SimError> {
+    Arch::mc_node_associate(
+        &mut Sim::new(host, state),
         parse_int::<usize>(&id_group)?,
         parse_int::<usize>(&handle)?,
     )
@@ -661,62 +480,46 @@ where
 // - Register updates
 
 /// Reads a register cell.
-fn run_stf_register_read_stmt<Interp, Iface, Arch>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+fn run_stf_register_read_stmt<Arch: RuntimeInterface>(
+    host: &mut dyn ArchHost<Arch>,
     span: &Span,
     state: &mut SimState,
     name: Name,
     idx: String,
-) -> Result<Option<Tx>, SimError>
-where
-    Iface: Interface,
-    Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
-{
-    state.value_arch =
-        Arch::register_read(ctx, state.value_arch, name.as_str(), parse_int::<usize>(&idx)?)
-            .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
+) -> Result<Option<Tx>, SimError> {
+    // The value read is not printed
+    Arch::register_read(&mut Sim::new(host, state), name.as_str(), parse_int::<usize>(&idx)?)
+        .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
 /// Writes a register cell.
-fn run_stf_register_write_stmt<Interp, Iface, Arch>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+fn run_stf_register_write_stmt<Arch: RuntimeInterface>(
+    host: &mut dyn ArchHost<Arch>,
     span: &Span,
     state: &mut SimState,
     name: Name,
     idx: String,
     value: String,
-) -> Result<Option<Tx>, SimError>
-where
-    Iface: Interface,
-    Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
-{
-    state.value_arch = Arch::register_write(
-        ctx,
-        state.value_arch,
+) -> Result<Option<Tx>, SimError> {
+    Arch::register_write(
+        &mut Sim::new(host, state),
         name.as_str(),
         parse_int::<usize>(&idx)?,
-        BigInt::from(parse_int::<i128>(&value)?),
+        P4Value::InfInt(parse_int::<i128>(&value)?.into()),
     )
     .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
 /// Clears a register.
-fn run_stf_register_reset_stmt<Interp, Iface, Arch>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+fn run_stf_register_reset_stmt<Arch: RuntimeInterface>(
+    host: &mut dyn ArchHost<Arch>,
     span: &Span,
     state: &mut SimState,
     name: Name,
-) -> Result<Option<Tx>, SimError>
-where
-    Iface: Interface,
-    Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
-{
-    state.value_arch = Arch::register_reset(ctx, state.value_arch, name.as_str())
+) -> Result<Option<Tx>, SimError> {
+    Arch::register_reset(&mut Sim::new(host, state), name.as_str())
         .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
@@ -734,9 +537,9 @@ pub fn run_stf_test<Iface, Arch>(
 ) -> Result<Run, SimError>
 where
     Iface: Interface,
-    Arch: Architecture,
+    Arch: RuntimeInterface,
 {
-    let mut run = init_pipe(arena, runner, includes, path_p4)?;
+    let mut run = init_run(arena, runner, includes, path_p4)?;
     let stmts = stf::syntax::parse::parse_file(path_stf)?;
     for stmt in &stmts.0 {
         if let Some(tx) = run_stf_stmt(arena, runner, &mut run, stmt)? {

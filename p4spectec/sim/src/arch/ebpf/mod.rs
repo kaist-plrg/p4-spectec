@@ -1,67 +1,46 @@
-//! eBPF architecture that parses, filters, and forwards accepted packets
+//! eBPF architecture: the externs of `ebpf_model.p4` and the switch behind them
 //!
-//! Extern calls reach the pipeline module;
-//! the only stateful object is a counter array.
+//! `externs` is what `ebpf_model.p4` declares, its one stateful object,
+//! a counter array (`object`), and how a specification call reaches it.
+//! `target` is the switch behind it: the control plane (`runtime`)
+//! and the pipeline (`pipe`), which parses, filters, and forwards accepted packets.
 
-use p4spectec::lang::data::value::{flat::Value, host::HostTyp};
+use crate::p4::HostTypDef;
 
-use p4spectec::runner::{ExternError, Interface, Interpreter, RunnerContext};
+use super::core::object::PacketIn;
 
-pub(crate) mod externs;
-pub(crate) mod target;
+use self::externs::object::CounterArray;
 
-pub(crate) use self::target::pipe;
+mod externs;
+pub(super) mod target;
 
-pub use self::target::pipe::Ebpf;
+// == Configuration
 
-// == Extern calls
+/// The eBPF architecture, with its definitions of the extern types.
+pub struct Ebpf {
+    /// The definition of `archState`, which eBPF leaves empty.
+    typdef_state: HostTypDef<()>,
+    /// The definition of `objectState`; a stateless object carries `None`.
+    typdef_object: HostTypDef<Option<ObjectState>>,
+}
 
-/// Hands every extern hook to the pipeline module.
-impl super::externs::Impl for Ebpf {
-    fn host_typdefs(&self) -> Vec<HostTyp> {
-        vec![self.arch_state.erase(), self.object_state.erase()]
+// Every instance makes definitions of its own
+impl Default for Ebpf {
+    fn default() -> Self {
+        Self {
+            typdef_state: HostTypDef::new("archState"),
+            typdef_object: HostTypDef::new("objectState"),
+        }
     }
+}
 
-    fn eval_extern_init<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        values: &[Value],
-    ) -> Result<Value, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        pipe::eval_extern_init(ctx, values)
-    }
+// == Extern objects
 
-    fn eval_extern_func_call<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        values: &[Value],
-    ) -> Result<Vec<Value>, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        pipe::eval_extern_func_call(ctx, values)
-    }
-
-    fn eval_extern_method_call<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        values: &[Value],
-    ) -> Result<Vec<Value>, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        pipe::eval_extern_method_call(ctx, values)
-    }
-
-    fn init_arch_state<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-    ) -> Result<Value, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        pipe::init_arch_state(ctx)
-    }
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+/// Core and eBPF-specific extern objects.
+pub enum ObjectState {
+    /// The `packet_in` being parsed.
+    PacketIn(PacketIn),
+    /// A `CounterArray`.
+    CounterArray(CounterArray),
 }

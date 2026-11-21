@@ -2,28 +2,18 @@
 //!
 //! The packet is a bit vector with a cursor;
 //! extraction reads bits at the cursor and advances it.
-//! Every method returns the new object, the updated context and architecture,
-//! and a parser result: `RETURN` with an optional value,
-//! or `REJECT` with `PacketTooShort`, `HeaderTooShort`,
+//! `call` dispatches a method by name;
+//! each returns a parser result: a return with an optional value,
+//! or a rejection with `PacketTooShort`, `HeaderTooShort`,
 //! or `ParserInvalidArgument`.
 
 use num_bigint::BigInt;
-use num_traits::ToPrimitive;
 
-use p4spectec::lang::{
-    common::{prim::num, source::Span},
-    data::{
-        typ,
-        value::flat::{self as value, Value},
-    },
-};
+use p4spectec::runner::ExternError;
 
-use p4spectec::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::error;
 
-use crate::{
-    error,
-    spec::{func, pack, rel, unpack},
-};
+use crate::p4::{CallResult, ExternEnv, P4Ops, P4Value, P4Vars};
 
 use super::bits::{bits_to_int_unsigned, string_to_bits};
 
@@ -40,7 +30,7 @@ pub struct PacketIn {
 
 impl PacketIn {
     /// A packet from hex text with the cursor at the start.
-    pub fn init(text: &str) -> Result<Self, ExternError> {
+    pub fn new(text: &str) -> Result<Self, ExternError> {
         let bits = string_to_bits(text)?;
         let len = bits.len();
         Ok(Self { bits, idx: 0, len })
@@ -76,8 +66,8 @@ impl PacketIn {
             .into());
         }
         let bits = self.bits[self.idx..self.idx + size].to_vec();
-        let pkt = Self { idx: self.idx + size, ..self.clone() };
-        Ok((pkt, bits))
+        let packet_in = Self { idx: self.idx + size, ..self.clone() };
+        Ok((packet_in, bits))
     }
 
     /// The bits not yet extracted.
@@ -95,360 +85,140 @@ impl PacketIn {
             .collect())
     }
 
-    /// Reads a fixed-size header into `hdr` and advances the packet cursor
+    // - Methods
+
+    /// Runs the method `name`, whose parameters are `params`.
+    pub fn call(
+        &mut self,
+        env: &mut ExternEnv,
+        name: &str,
+        params: &[&str],
+    ) -> Result<CallResult, ExternError> {
+        match (name, params) {
+            ("extract", ["hdr"]) => self.extract(env),
+            ("extract", ["variableSizeHeader", "variableFieldSizeInBits"]) => {
+                let width_varsize: usize = env.get_local("variableFieldSizeInBits")?.try_into()?;
+                self.extract_varsize(env, width_varsize)
+            }
+            ("lookahead", []) => self.lookahead(env),
+            ("advance", ["sizeInBits"]) => {
+                let size: usize = env.get_local("sizeInBits")?.try_into()?;
+                self.advance(size)
+            }
+            ("length", []) => Ok(CallResult::Return(Some(self.length()))),
+            _ => env.unsupported(),
+        }
+    }
+
+    /// Reads a fixed-size header into `hdr` and advances the packet cursor.
     ///
     /// `T` must be a fixed-size header type.
     /// Extraction may trigger `PacketTooShort` or `StackOutOfBounds`:
     /// ```text
     /// void extract<T>(out T hdr);
     /// ```
-    pub fn extract<Interp, Iface, Ext>(
-        &self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
+    pub fn extract(&mut self, env: &mut ExternEnv) -> Result<CallResult, ExternError> {
         // The header size comes from the instantiated type argument
-        let value_typ = func::find_type_e_local(ctx, value_ctx, "T")?;
-        let value_typ_subst = func::subst_type_e_local(ctx, value_ctx, value_typ)?;
-        let size = (func::sizeof_max_size_in_bits(ctx, value_typ_subst)?)
-            .to_usize()
-            .ok_or_else(|| error::packet_size_invalid("invalid packet size".to_owned()))?;
+        let typ = env.get_type("T")?;
+        let size = env.max_size_in_bits(&typ)?;
         // Too few bits: reject with `PacketTooShort`
         if !self.has_size(size)? {
-            let value_name =
-                value::make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())?;
-            let value_err = value::make::case_string! {
-                arena: ctx.arena_mut(),
-                shape: "ERROR '.' nameIR",
-                args: vec![value_name],
-                typ: "errorValue",
-                span: Span::default(),
-            }?;
-            let value_call_result = value::make::case_string! {
-                arena: ctx.arena_mut(),
-                shape: "REJECT errorValue",
-                args: vec![value_err],
-                typ: "rejectTransitionResult",
-                span: Span::default(),
-            }?;
-            return Ok((self.clone(), value_ctx, value_arch, value_call_result));
+            return Ok(CallResult::Reject("PacketTooShort".to_owned()));
         }
+        // Take the header's bits and advance the cursor past them
+        let (packet_in, bits) = self.parse(size)?;
+        *self = packet_in;
+        // The `out` argument's current value gives the header's layout
+        let hdr = env.get_local("hdr")?;
         // Fill the header from the bits and write it to the `out` argument
-        let (pkt, bits) = self.parse(size)?;
-        let value_hdr = func::find_var_e_local(ctx, value_ctx, "hdr")?;
-        let value_hdr = func::write_value_from_bits(ctx, value_hdr, 0, &bits)?;
-        let value_ctx = rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "hdr", value_hdr)?;
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((pkt, value_ctx, value_arch, value_call_result))
+        let hdr = env.from_bits(hdr, 0, &bits)?;
+        env.set_local("hdr", hdr)?;
+        Ok(CallResult::Return(None))
     }
 
-    /// Extracts a header with a variable-size field
+    /// Extracts a header whose variable-size field takes `width_varsize` bits.
     ///
     /// ```text
     /// void extract<T>(out T variableSizeHeader,
     ///                 in bit<32> variableFieldSizeInBits);
     /// ```
-    pub fn extract_varsize<Interp, Iface, Ext>(
-        &self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        let value_typ = func::find_type_e_local(ctx, value_ctx, "T")?;
-        let value_typ_subst = func::subst_type_e_local(ctx, value_ctx, value_typ)?;
+    pub fn extract_varsize(
+        &mut self,
+        env: &mut ExternEnv,
+        width_varsize: usize,
+    ) -> Result<CallResult, ExternError> {
         // Fixed part and maximum of the header type
-        let size_min = (func::sizeof_min_size_in_bits(ctx, value_typ_subst)?)
-            .to_usize()
-            .ok_or_else(|| error::packet_size_invalid("invalid packet size".to_owned()))?;
-        let size_max = (func::sizeof_max_size_in_bits(ctx, value_typ_subst)?)
-            .to_usize()
-            .ok_or_else(|| error::packet_size_invalid("invalid packet size".to_owned()))?;
-        // The variable size must be byte-aligned: test its low three bits
-        let value_size = func::find_var_e_local(ctx, value_ctx, "variableFieldSizeInBits")?;
-        let value_hi = pack::p4_arbitrary_int(ctx.arena_mut(), 2.into())?;
-        let value_lo = pack::p4_arbitrary_int(ctx.arena_mut(), 0.into())?;
-        let value_alignment = func::bitacc_range_op(ctx, value_size, value_hi, value_lo)?;
-        let alignment = (unpack::p4_fixed_bit(ctx.arena_mut(), &value_alignment)?.1)
-            .to_usize()
-            .ok_or_else(|| error::packet_size_invalid("invalid packet size".to_owned()))?;
-        // The variable size as a number
-        let values_size = value::get::case(ctx.arena(), &value_size)?.args();
-        let value_varsize = values_size.get(1).ok_or_else(|| {
-            ExternError::from(p4spectec::lang::data::value::ValueError::IndexOutOfBounds {
-                index: 1,
-                len: values_size.len(),
-            })
-        })?;
-        let size_varsize = (num::to_int(value::get::num(ctx.arena(), value_varsize)?))
-            .to_usize()
-            .ok_or_else(|| error::packet_size_invalid("invalid packet size".to_owned()))?;
+        let typ = env.get_type("T")?;
+        let size_min = env.min_size_in_bits(&typ)?;
+        let size_max = env.max_size_in_bits(&typ)?;
         // Total size is the fixed part plus the variable part
         let size = size_min
-            .checked_add(size_varsize)
+            .checked_add(width_varsize)
             .ok_or_else(|| error::packet_size_out_of_bounds("packet size overflow".to_owned()))?;
-        // Misaligned: reject with `ParserInvalidArgument`
-        if alignment != 0 {
-            let value_name = value::make::text(
-                ctx.arena_mut(),
-                "ParserInvalidArgument".to_owned(),
-                Span::default(),
-            )?;
-            let value_err = value::make::case_string! {
-                arena: ctx.arena_mut(),
-                shape: "ERROR '.' nameIR",
-                args: vec![value_name],
-                typ: "errorValue",
-                span: Span::default(),
-            }?;
-            let value_call_result = value::make::case_string! {
-                arena: ctx.arena_mut(),
-                shape: "REJECT errorValue",
-                args: vec![value_err],
-                typ: "rejectTransitionResult",
-                span: Span::default(),
-            }?;
-            return Ok((self.clone(), value_ctx, value_arch, value_call_result));
+        // Not a whole number of bytes: reject with `ParserInvalidArgument`
+        if !width_varsize.is_multiple_of(8) {
+            return Ok(CallResult::Reject("ParserInvalidArgument".to_owned()));
         }
         // Too few bits: reject with `PacketTooShort`
         if !self.has_size(size)? {
-            let value_name =
-                value::make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())?;
-            let value_err = value::make::case_string! {
-                arena: ctx.arena_mut(),
-                shape: "ERROR '.' nameIR",
-                args: vec![value_name],
-                typ: "errorValue",
-                span: Span::default(),
-            }?;
-            let value_call_result = value::make::case_string! {
-                arena: ctx.arena_mut(),
-                shape: "REJECT errorValue",
-                args: vec![value_err],
-                typ: "rejectTransitionResult",
-                span: Span::default(),
-            }?;
-            return Ok((self.clone(), value_ctx, value_arch, value_call_result));
+            return Ok(CallResult::Reject("PacketTooShort".to_owned()));
         }
         // Larger than the type allows: reject with `HeaderTooShort`
         if size > size_max {
-            let value_name =
-                value::make::text(ctx.arena_mut(), "HeaderTooShort".to_owned(), Span::default())?;
-            let value_err = value::make::case_string! {
-                arena: ctx.arena_mut(),
-                shape: "ERROR '.' nameIR",
-                args: vec![value_name],
-                typ: "errorValue",
-                span: Span::default(),
-            }?;
-            let value_call_result = value::make::case_string! {
-                arena: ctx.arena_mut(),
-                shape: "REJECT errorValue",
-                args: vec![value_err],
-                typ: "rejectTransitionResult",
-                span: Span::default(),
-            }?;
-            return Ok((self.clone(), value_ctx, value_arch, value_call_result));
+            return Ok(CallResult::Reject("HeaderTooShort".to_owned()));
         }
+        // Take the header's bits and advance the cursor past them
+        let (packet_in, bits) = self.parse(size)?;
+        *self = packet_in;
+        // The `out` argument's current value gives the header's layout
+        let hdr_varsize = env.get_local("variableSizeHeader")?;
         // Fill the header, sizing its variable field, and write it back
-        let (pkt, bits) = self.parse(size)?;
-        let value_hdr = func::find_var_e_local(ctx, value_ctx, "variableSizeHeader")?;
-        let value_hdr = func::write_value_from_bits(ctx, value_hdr, size_varsize, &bits)?;
-        let value_ctx = rel::lvalue_write_var_local(
-            ctx,
-            value_ctx,
-            value_arch,
-            "variableSizeHeader",
-            value_hdr,
-        )?;
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((pkt, value_ctx, value_arch, value_call_result))
+        let hdr_varsize = env.from_bits(hdr_varsize, width_varsize, &bits)?;
+        env.set_local("variableSizeHeader", hdr_varsize)?;
+        Ok(CallResult::Return(None))
     }
 
-    /// Reads a value without advancing the packet cursor
+    /// Reads a value without advancing the packet cursor.
     ///
     /// ```text
     /// T lookahead<T>();
     /// ```
-    pub fn lookahead<Interp, Iface, Ext>(
-        &self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
+    pub fn lookahead(&self, env: &mut ExternEnv) -> Result<CallResult, ExternError> {
         // The header size comes from the instantiated type argument
-        let value_typ = func::find_type_e_local(ctx, value_ctx, "T")?;
-        let value_typ_subst = func::subst_type_e_local(ctx, value_ctx, value_typ)?;
-        let size = (func::sizeof_max_size_in_bits(ctx, value_typ_subst)?)
-            .to_usize()
-            .ok_or_else(|| error::packet_size_invalid("invalid packet size".to_owned()))?;
+        let typ = env.get_type("T")?;
+        let size = env.max_size_in_bits(&typ)?;
+        // With no `out` argument, the default value of `T` gives the layout
+        let hdr = env.default_of(&typ)?;
         // Too few bits: reject with `PacketTooShort`
-        let value_hdr = func::default(ctx, value_typ)?;
         if !self.has_size(size)? {
-            let value_name =
-                value::make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())?;
-            let value_err = value::make::case_string! {
-                arena: ctx.arena_mut(),
-                shape: "ERROR '.' nameIR",
-                args: vec![value_name],
-                typ: "errorValue",
-                span: Span::default(),
-            }?;
-            let value_call_result = value::make::case_string! {
-                arena: ctx.arena_mut(),
-                shape: "REJECT errorValue",
-                args: vec![value_err],
-                typ: "rejectTransitionResult",
-                span: Span::default(),
-            }?;
-            return Ok((self.clone(), value_ctx, value_arch, value_call_result));
+            return Ok(CallResult::Reject("PacketTooShort".to_owned()));
         }
         // Read without moving the cursor; the value is returned, not stored
         let bits = &self.bits[self.idx..self.idx + size];
-        let value_hdr = func::write_value_from_bits(ctx, value_hdr, 0, bits)?;
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt =
-            value::make::opt(ctx.arena_mut(), typ.node.into(), Some(value_hdr), Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self.clone(), value_ctx, value_arch, value_call_result))
+        let hdr = env.from_bits(hdr, 0, bits)?;
+        Ok(CallResult::Return(Some(hdr)))
     }
 
-    /// Advances the packet cursor by the requested number of bits
+    /// Advances the packet cursor by `size` bits.
     ///
     /// ```text
     /// void advance(in bit<32> sizeInBits);
     /// ```
-    pub fn advance<Interp, Iface, Ext>(
-        &self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        // The advance is a runtime `bit<32>`
-        let value_size = func::find_var_e_local(ctx, value_ctx, "sizeInBits")?;
-        let size = (unpack::p4_fixed_bit(ctx.arena_mut(), &value_size)?.1)
-            .to_usize()
-            .ok_or_else(|| error::packet_size_invalid("invalid packet size".to_owned()))?;
+    pub fn advance(&mut self, size: usize) -> Result<CallResult, ExternError> {
         // Too few bits: reject with `PacketTooShort`
         if !self.has_size(size)? {
-            let value_name =
-                value::make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())?;
-            let value_err = value::make::case_string! {
-                arena: ctx.arena_mut(),
-                shape: "ERROR '.' nameIR",
-                args: vec![value_name],
-                typ: "errorValue",
-                span: Span::default(),
-            }?;
-            let value_call_result = value::make::case_string! {
-                arena: ctx.arena_mut(),
-                shape: "REJECT errorValue",
-                args: vec![value_err],
-                typ: "rejectTransitionResult",
-                span: Span::default(),
-            }?;
-            return Ok((self.clone(), value_ctx, value_arch, value_call_result));
+            return Ok(CallResult::Reject("PacketTooShort".to_owned()));
         }
-        let pkt = Self { idx: self.idx + size, ..self.clone() };
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((pkt, value_ctx, value_arch, value_call_result))
+        self.idx += size;
+        Ok(CallResult::Return(None))
     }
 
-    /// Returns the total packet length in bytes
+    /// The total packet length in whole bytes, rounding a partial byte up.
     ///
     /// ```text
     /// bit<32> length();
     /// ```
-    pub fn length<Interp, Iface, Ext>(
-        &self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        // Length in whole bytes, rounding a partial byte up
-        // Return the length as a `bit<32>` value
-        let value_len =
-            pack::p4_fixed_bit(ctx.arena_mut(), 32.into(), self.len.div_ceil(8).into())?;
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt =
-            value::make::opt(ctx.arena_mut(), typ.node.into(), Some(value_len), Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self.clone(), value_ctx, value_arch, value_call_result))
+    pub fn length(&self) -> P4Value {
+        P4Value::Bit { width: 32, int: self.len.div_ceil(8).into() }
     }
 }

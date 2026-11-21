@@ -1,69 +1,89 @@
-//! v1model architecture with its scheduler, objects, and extern functions
+//! v1model architecture: the externs of `v1model.p4` and the switch behind them
 //!
-//! Extern calls record clone, resubmit, and recirculate requests
-//! in the architecture state;
-//! the scheduler in `target::pipe` acts on them once the control returns.
-//! Stateful objects live in `externs::object`, extern functions in `externs::func`.
+//! This module defines the architecture's type and the extern objects it keeps
+//! (`ObjectState`), the drop port and the port width,
+//! and `Sim::get_packet_in`, which both the externs and the scheduler read.
+//! `externs` holds what `v1model.p4` declares, its extern functions and objects,
+//! and `impl Architecture`, which is how a specification call reaches them.
+//! `target` is the switch behind them: the state, the packet queue,
+//! mirror and multicast tables, the control plane, and the scheduler (`pipe`).
+//! `types` has the enums of `v1model.p4`.
 
-use p4spectec::lang::data::value::{flat::Value, host::HostTyp};
+use p4spectec::runner::ExternError;
 
-use p4spectec::runner::{ExternError, Interface, Interpreter, RunnerContext};
+use crate::{
+    error,
+    p4::{HostTypDef, Sim},
+};
 
-pub(crate) mod externs;
-pub(crate) mod target;
+use super::core::object::{PacketIn, PacketOut};
 
-pub(crate) use self::target::pipe;
+use self::{
+    externs::object::{Counter, DirectCounter, DirectMeter, Register},
+    target::state::ArchState,
+};
 
-pub use self::target::pipe::V1Model;
+mod externs;
+pub(super) mod target;
+pub(crate) mod types;
 
-// == Extern calls
+// == Configuration
 
-/// Hands every extern hook to the pipeline module.
-impl super::externs::Impl for V1Model {
-    fn host_typdefs(&self) -> Vec<HostTyp> {
-        vec![self.arch_state.erase(), self.object_state.erase()]
+/// The v1model architecture, with its definitions of the extern types.
+pub struct V1Model {
+    /// The definition of `archState` as the architectural state.
+    typdef_state: HostTypDef<ArchState>,
+    /// The definition of `objectState`; a stateless object carries `None`.
+    typdef_object: HostTypDef<Option<ObjectState>>,
+}
+
+// Every instance makes definitions of its own
+impl Default for V1Model {
+    fn default() -> Self {
+        Self {
+            typdef_state: HostTypDef::new("archState"),
+            typdef_object: HostTypDef::new("objectState"),
+        }
     }
+}
 
-    fn eval_extern_init<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        values: &[Value],
-    ) -> Result<Value, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        pipe::eval_extern_init(ctx, values)
-    }
+// == Extern objects
 
-    fn eval_extern_func_call<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        values: &[Value],
-    ) -> Result<Vec<Value>, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        pipe::eval_extern_func_call(ctx, values)
-    }
+/// Core and v1model-specific extern objects.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum ObjectState {
+    /// The `packet_in` of the current packet.
+    PacketIn(PacketIn),
+    /// The `packet_out` being emitted.
+    PacketOut(PacketOut),
+    /// A `counter` array.
+    Counter(Counter),
+    /// A `register` array.
+    Register(Register),
+    /// A `direct_counter`.
+    DirectCounter(DirectCounter),
+    /// A `direct_meter`.
+    DirectMeter(DirectMeter),
+}
 
-    fn eval_extern_method_call<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-        values: &[Value],
-    ) -> Result<Vec<Value>, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        pipe::eval_extern_method_call(ctx, values)
-    }
+// == Constants
 
-    fn init_arch_state<Interp, Iface>(
-        ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-    ) -> Result<Value, ExternError>
-    where
-        Iface: Interface,
-        Interp: Interpreter<Iface, Self>,
-    {
-        pipe::init_arch_state(ctx)
+/// The port that drops a packet, bmv2's `SimpleSwitch::default_drop_port`.
+const DEFAULT_DROP_PORT: usize = 511;
+
+/// The width of a port in `standard_metadata`, `PortId_t` in `v1model.p4`.
+const PORT_WIDTH: usize = 9;
+
+// == Objects of the current packet
+
+impl Sim<'_, V1Model> {
+    /// The `packet_in` object of the current packet.
+    fn get_packet_in(&mut self) -> Result<PacketIn, ExternError> {
+        match self.get_object("packet_in")? {
+            ObjectState::PacketIn(packet_in) => Ok(packet_in),
+            _ => {
+                Err(error::extern_object_undefined("packet_in extern not found".to_owned()).into())
+            }
+        }
     }
 }

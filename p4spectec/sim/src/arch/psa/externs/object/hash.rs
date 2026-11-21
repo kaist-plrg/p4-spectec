@@ -1,32 +1,24 @@
 //! The PSA `Hash` extern, a hash over a data tuple
 //!
-//! The constructor's algorithm enumerator maps to a `hash` algorithm name.
+//! The constructor's `PSA_HashAlgorithm_t` member selects the `hash::Algorithm`.
 
 use num_bigint::BigInt;
 use num_traits::Zero;
 
-use p4spectec::lang::{
-    common::source::Span,
-    data::{
-        arena::Arena,
-        typ,
-        value::flat::{self as value, Value},
-    },
-};
+use p4spectec::runner::ExternError;
 
-use p4spectec::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::p4::{CallResult, ExternEnv, InitEnv, P4Ops, P4Value, P4Vars};
 
 use crate::{
-    arch::hash,
+    arch::{hash, psa::types::HashAlgorithm},
     error,
-    spec::{args, func, pack, unpack},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// A hash configured with one algorithm.
 pub struct HashExtern {
-    /// The `hash` algorithm name.
-    pub algo: String,
+    /// The algorithm.
+    pub algo: hash::Algorithm,
 }
 
 impl HashExtern {
@@ -34,124 +26,81 @@ impl HashExtern {
     /// extern Hash<O>
     /// Hash(PSA_HashAlgorithm_t algo);
     /// ```
-    pub fn init(
-        arena: &mut Arena,
-        _value_targs: Value,
-        value_ids: Value,
-        value_args: Value,
-    ) -> Result<Self, ExternError> {
-        let args = args::assoc(arena, value_ids, value_args)?;
-        let value_algo = args::find(&args, "algo")?;
-        let (id_enum, id_type) = unpack::p4_enum(arena, &value_algo)?;
-        // Only a `PSA_HashAlgorithm_t` enumerator selects the algorithm
-        if id_enum != "PSA_HashAlgorithm_t" {
-            return Err(error::hash_algorithm_invalid(
-                "invalid PSA hash algorithm enum type".to_owned(),
-            )
-            .into());
-        }
-        // Map the enumerator to the internal algorithm name
-        let algo = match id_type.as_str() {
-            "IDENTITY" => "identity",
-            "CRC32" => "crc32",
-            "CRC16" => "crc16",
-            "ONES_COMPLEMENT16" => "csum16",
-            algo => algo,
-        }
-        .to_owned();
-        Ok(Self { algo })
+    pub fn init(env: &mut InitEnv) -> Result<Self, ExternError> {
+        // An algorithm the simulator does not compute fails when hashing
+        let algo = HashAlgorithm::try_from(&env.get("algo")?)?;
+        Ok(Self { algo: algo.into() })
     }
 
-    /// Compute and return the hash for `data`
+    // - Methods
+
+    /// Runs the method `name`, whose parameters are `params`.
+    pub fn call(
+        &mut self,
+        env: &mut ExternEnv,
+        name: &str,
+        params: &[&str],
+    ) -> Result<CallResult, ExternError> {
+        match (name, params) {
+            ("get_hash", ["data"]) => {
+                let data = match env.get_local("data")? {
+                    P4Value::Tuple(data) => data,
+                    data => return Err(data.mismatch("a tuple")),
+                };
+                let hash = self.get_hash(env, &data)?;
+                Ok(CallResult::Return(Some(hash)))
+            }
+            ("get_hash", ["base", "data", "max"]) => {
+                let int_base: BigInt = env.get_local("base")?.try_into()?;
+                let int_max: BigInt = env.get_local("max")?.try_into()?;
+                let data = match env.get_local("data")? {
+                    P4Value::Tuple(data) => data,
+                    data => return Err(data.mismatch("a tuple")),
+                };
+                let hash = self.get_hash_adjust(env, &int_base, &data, &int_max)?;
+                Ok(CallResult::Return(Some(hash)))
+            }
+            _ => env.unsupported(),
+        }
+    }
+
+    /// Compute and return the hash for `data`.
     ///
     /// `O get_hash<D>(in D data);`
-    pub fn get_hash<Interp, Iface, Ext>(
-        self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
-        let values = unpack::p4_tuple(ctx.arena_mut(), &value_data)?;
-        let int_hash = hash::compute_checksum(ctx.arena_mut(), &self.algo, None, &values)?;
-        self.return_hash(ctx, value_ctx, value_arch, int_hash)
+    pub fn get_hash(&self, env: &mut ExternEnv, data: &[P4Value]) -> Result<P4Value, ExternError> {
+        let int_hash = hash::hash_values(self.algo, None, data)?;
+        // Cast the arbitrary-precision hash to the output type `O`
+        let typ = env.get_type("O")?;
+        env.cast(&typ, P4Value::InfInt(int_hash))
     }
 
-    /// Compute the hash for `data`, reduce it modulo `max`, then add `base`
+    /// Compute the hash for `data`, reduce it modulo `max`, then add `base`.
     ///
     /// `base` specifies the minimum return value. `max` is the hash modulus;
     /// an implementation may limit its largest supported value, for example
     /// to 32 or 256, and may only support powers of two. P4 developers should
-    /// limit their choice to such values to maximize portability
+    /// limit their choice to such values to maximize portability.
     ///
-    /// Returns `base + (h % max)`, where `h` is the hash value
+    /// Returns `base + (h % max)`, where `h` is the hash value.
     ///
     /// `O get_hash<T, D>(in T base, in D data, in T max);`
-    pub fn get_hash_adjust<Interp, Iface, Ext>(
-        self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        let value_base = func::find_var_e_local(ctx, value_ctx, "base")?;
-        let base = unpack::p4_fixed_bit(ctx.arena_mut(), &value_base)?.1;
-        let value_max = func::find_var_e_local(ctx, value_ctx, "max")?;
-        let max = unpack::p4_fixed_bit(ctx.arena_mut(), &value_max)?.1;
-        let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
-        let values = unpack::p4_tuple(ctx.arena_mut(), &value_data)?;
-        let int_hash = hash::compute_checksum(ctx.arena_mut(), &self.algo, None, &values)?;
-        if max <= BigInt::zero() {
+    pub fn get_hash_adjust(
+        &self,
+        env: &mut ExternEnv,
+        int_base: &BigInt,
+        data: &[P4Value],
+        int_max: &BigInt,
+    ) -> Result<P4Value, ExternError> {
+        let int_hash = hash::hash_values(self.algo, None, data)?;
+        // The modulus must be positive
+        if *int_max <= BigInt::zero() {
             return Err(
                 error::hash_range_invalid("hash modulus must be positive".to_owned()).into()
             );
         }
-        let int_hash = ((int_hash % &max) + &max) % &max + base;
-        self.return_hash(ctx, value_ctx, value_arch, int_hash)
-    }
-
-    /// Casts the hash to the output type `O` and returns it.
-    fn return_hash<Interp, Iface, Ext>(
-        self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-        int_hash: BigInt,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        let value_typ = func::find_type_e_local(ctx, value_ctx, "O")?;
-        let value_result = pack::p4_arbitrary_int(ctx.arena_mut(), int_hash)?;
-        let value_result = func::cast_op(ctx, value_typ, value_result)?;
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(
-            ctx.arena_mut(),
-            typ.node.into(),
-            Some(value_result),
-            Span::default(),
-        )?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
+        let int_hash = ((int_hash % int_max) + int_max) % int_max + int_base;
+        // Cast the arbitrary-precision hash to the output type `O`
+        let typ = env.get_type("O")?;
+        env.cast(&typ, P4Value::InfInt(int_hash))
     }
 }

@@ -5,22 +5,11 @@
 use num_bigint::BigInt;
 use num_traits::Zero;
 
-use p4spectec::lang::{
-    common::source::Span,
-    data::{
-        arena::Arena,
-        typ,
-        value::flat::{self as value, Value},
-    },
-};
+use p4spectec::runner::ExternError;
 
-use p4spectec::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::p4::{CallResult, ExternEnv, InitEnv, P4Ops, P4Value, P4Vars};
 
-use crate::{
-    arch::core::object::PacketIn,
-    error,
-    spec::{args, func, pack, rel, unpack},
-};
+use crate::arch::v1model::types::MeterType;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Direct meter by `MeterType`; the state is never updated.
@@ -45,23 +34,30 @@ impl DirectMeter {
     ///
     /// ```
     /// `direct_meter(MeterType type);`
-    pub fn init(
-        arena: &mut Arena,
-        _value_targs: Value,
-        value_ids: Value,
-        value_args: Value,
-    ) -> Result<Self, ExternError> {
-        let args = args::assoc(arena, value_ids, value_args)?;
-        let value_type = args::find(&args, "type")?;
-        let (id_enum, id_type) = unpack::p4_enum(arena, &value_type)?;
+    pub fn init(env: &mut InitEnv) -> Result<Self, ExternError> {
+        let kind = env.get("type")?;
         // The type argument selects what is metered
-        match (id_enum.as_str(), id_type.as_str()) {
-            ("MeterType", "packets") => Ok(Self::Packets(BigInt::zero())),
-            ("MeterType", "bytes") => Ok(Self::Bytes(BigInt::zero())),
-            _ => Err(error::meter_type_invalid(format!(
-                "invalid MeterType enum value: {id_enum}.{id_type}"
-            ))
-            .into()),
+        match MeterType::try_from(&kind)? {
+            MeterType::Packets => Ok(Self::Packets(BigInt::zero())),
+            MeterType::Bytes => Ok(Self::Bytes(BigInt::zero())),
+        }
+    }
+
+    // - Methods
+
+    /// Runs the method `name`, whose parameters are `params`.
+    pub fn call(
+        &mut self,
+        env: &mut ExternEnv,
+        name: &str,
+        params: &[&str],
+    ) -> Result<CallResult, ExternError> {
+        match (name, params) {
+            ("read", ["result"]) => {
+                self.read(env)?;
+                Ok(CallResult::Return(None))
+            }
+            _ => env.unsupported(),
         }
     }
 
@@ -85,38 +81,11 @@ impl DirectMeter {
     ///              and RFC 2698 for the meaning of these colors).
     ///
     /// `void read(out T result);`
-    pub fn read<Interp, Iface, Ext>(
-        self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-        _packet_in: &PacketIn,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
+    pub fn read(&self, env: &mut ExternEnv) -> Result<(), ExternError> {
         // The color width comes from the instantiated `T`
-        let value_typ = func::find_type_e_local(ctx, value_ctx, "T")?;
-        let value_typ = func::subst_type_e_local(ctx, value_ctx, value_typ)?;
-        let size = func::sizeof_max_size_in_bits(ctx, value_typ)?;
+        let typ = env.get_type("T")?;
+        let size = env.max_size_in_bits(&typ)?;
         // Metering is not modeled: always GREEN
-        let value = pack::p4_fixed_bit(ctx.arena_mut(), size, BigInt::zero())?;
-        let value_ctx = rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "result", value)?;
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
+        env.set_local("result", P4Value::Bit { width: size, int: BigInt::zero() })
     }
 }

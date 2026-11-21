@@ -1,8 +1,11 @@
 //! v1model extern functions
 //!
+//! Each reads its arguments from the `ExternEnv`;
+//! clone, resubmit, and recirculate record their request
+//! in the architecture state the dispatcher passes in.
 //! Doc comments summarize the extern's description in `v1model.p4`.
 //! clone, truncate, assert, and assume are not implemented;
-//! the pipeline's dispatch rejects them as unsupported calls.
+//! the dispatcher rejects them as unsupported calls.
 
 use std::hash::{BuildHasher, Hasher, RandomState};
 use std::io::Write;
@@ -12,29 +15,19 @@ use num_traits::Zero;
 
 use p4spectec::util::bigint::remainder;
 
-use p4spectec::lang::{
-    common::source::Span,
-    data::{
-        arena::Arena,
-        typ,
-        value::flat::{self as value, Value},
-    },
-    traits::print::Print,
-};
+use p4spectec::runner::ExternError;
 
-use p4spectec::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::p4::{CallResult, ExternEnv, P4Ops, P4Value, P4Vars};
 
-use crate::{
-    arch::core::object::PacketIn,
-    arch::hash,
-    error,
-    spec::{func, pack, rel, unpack},
-};
+use crate::{arch::core::object::PacketIn, arch::hash, error};
 
 use super::super::{
-    V1Model,
-    target::{packet::CloneInfo, pipe},
+    DEFAULT_DROP_PORT, PORT_WIDTH,
+    target::{packet::CloneInfo, state::ArchState},
+    types::HashAlgorithm,
 };
+
+// == Packet decisions
 
 /// Calling digest causes a message containing the values specified in
 /// the data parameter to be sent to the control plane software.  It is
@@ -59,31 +52,9 @@ use super::super::{
 /// value of the receiver parameter.
 ///
 /// `extern void digest<T>(in bit<32> receiver, in T data);`
-pub fn digest<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    value_arch: Value,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
+pub fn digest(_env: &mut ExternEnv) -> Result<CallResult, ExternError> {
     // No-op in the source simulator
-    // Return without a value
-    let typ = typ::make::opt(typ::make::var(
-        p4spectec::phrase!(node: "value".into(), span: Span::default()),
-        Vec::new(),
-    ));
-    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_string! {
-        arena: ctx.arena_mut(),
-        shape: "RETURN value?",
-        args: vec![value_opt],
-        typ: "returnResult",
-        span: Span::default(),
-    }?;
-    Ok((value_ctx, value_arch, value_call_result))
+    Ok(CallResult::Return(None))
 }
 
 /// mark_to_drop(`standard_metadata`) is a primitive action that modifies
@@ -96,51 +67,16 @@ where
 /// packet to do something other than drop.
 ///
 /// `extern void mark_to_drop(inout standard_metadata_t standard_metadata);`
-pub fn mark_to_drop<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    value_arch: Value,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
-    // The drop port is 511 on 9 bits
-    let value_egress_spec = pack::p4_fixed_bit(ctx.arena_mut(), 9.into(), 511.into())?;
-    let value_ctx = rel::lvalue_write_dot_local(
-        ctx,
-        value_ctx,
-        value_arch,
-        "standard_metadata",
-        "egress_spec",
-        value_egress_spec,
-    )?;
+pub fn mark_to_drop(env: &mut ExternEnv) -> Result<CallResult, ExternError> {
+    // Send the packet to the drop port
+    let port_drop = P4Value::Bit { width: PORT_WIDTH, int: DEFAULT_DROP_PORT.into() };
+    env.set_local("standard_metadata.egress_spec", port_drop)?;
     // No multicast for a dropped packet
-    let value_mcast_grp = pack::p4_fixed_bit(ctx.arena_mut(), 16.into(), 0.into())?;
-    let value_ctx = rel::lvalue_write_dot_local(
-        ctx,
-        value_ctx,
-        value_arch,
-        "standard_metadata",
-        "mcast_grp",
-        value_mcast_grp,
-    )?;
-    // Return without a value
-    let typ = typ::make::opt(typ::make::var(
-        p4spectec::phrase!(node: "value".into(), span: Span::default()),
-        Vec::new(),
-    ));
-    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_string! {
-        arena: ctx.arena_mut(),
-        shape: "RETURN value?",
-        args: vec![value_opt],
-        typ: "returnResult",
-        span: Span::default(),
-    }?;
-    Ok((value_ctx, value_arch, value_call_result))
+    env.set_local("standard_metadata.mcast_grp", P4Value::Bit { width: 16, int: 0.into() })?;
+    Ok(CallResult::Return(None))
 }
+
+// == Random numbers and hashes
 
 /// Generate a random number in the range lo..hi, inclusive, and write
 /// it to the result parameter.  The value written to result is not
@@ -152,16 +88,7 @@ where
 /// @param T          Must be a type `bit<W>`
 ///
 /// `extern void random<T>(out T result, in T lo, in T hi);`
-pub fn random<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    value_arch: Value,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
+pub fn random(env: &mut ExternEnv) -> Result<CallResult, ExternError> {
     /// Draws a uniform integer in `[0, bound)` for a positive `bound`.
     ///
     /// Each `RandomState` carries fresh SipHash keys, so hashing nothing yields 64 random bits.
@@ -181,10 +108,12 @@ where
             }
         }
     }
-    let value_lo = func::find_var_e_local(ctx, value_ctx, "lo")?;
-    let (int_width, int_lo) = unpack::p4_fixed_bit(ctx.arena_mut(), &value_lo)?;
-    let value_hi = func::find_var_e_local(ctx, value_ctx, "hi")?;
-    let int_hi = unpack::p4_fixed_bit(ctx.arena_mut(), &value_hi)?.1;
+    // `T` is `bit<W>`, so the result takes the width of `lo`
+    let (width, int_lo) = match env.get_local("lo")? {
+        P4Value::Bit { width, int } => (width, int),
+        lo => return Err(lo.mismatch("a bit<W>")),
+    };
+    let int_hi: BigInt = env.get_local("hi")?.try_into()?;
     // Draw from the inclusive range, or keep the lower bound if it is empty
     let int = if int_lo <= int_hi {
         let int_bound = &int_hi - &int_lo + 1;
@@ -193,24 +122,9 @@ where
         int_lo
     };
     // Mark the draw as an effect so that enclosing calls are not cached
-    ctx.record_effect(p4spectec::runner::SideEffect::Impure);
-    let value_result = pack::p4_fixed_bit(ctx.arena_mut(), int_width, int)?;
-    let value_ctx =
-        rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "result", value_result)?;
-    // Return without a value
-    let typ = typ::make::opt(typ::make::var(
-        p4spectec::phrase!(node: "value".into(), span: Span::default()),
-        Vec::new(),
-    ));
-    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_string! {
-        arena: ctx.arena_mut(),
-        shape: "RETURN value?",
-        args: vec![value_opt],
-        typ: "returnResult",
-        span: Span::default(),
-    }?;
-    Ok((value_ctx, value_arch, value_call_result))
+    env.mark_impure();
+    env.set_local("result", P4Value::Bit { width, int })?;
+    Ok(CallResult::Return(None))
 }
 
 /// Calculate a hash function of the value specified by the data
@@ -230,154 +144,52 @@ where
 ///
 /// `extern void hash<O, T, D, M>(out O result, in HashAlgorithm algo,`
 ///                              `in T base, in D data, in M max);`
-pub fn hash<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    value_arch: Value,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
-    let value_base = func::find_var_e_local(ctx, value_ctx, "base")?;
-    let int_base = unpack::p4_fixed_bit(ctx.arena_mut(), &value_base)?.1;
-    let value_max = func::find_var_e_local(ctx, value_ctx, "max")?;
-    let int_max = unpack::p4_fixed_bit(ctx.arena_mut(), &value_max)?.1;
-    let int = compute_checksum(ctx, value_ctx, None)?;
+pub fn hash(env: &mut ExternEnv) -> Result<CallResult, ExternError> {
+    let int_base: BigInt = env.get_local("base")?.try_into()?;
+    let int_max: BigInt = env.get_local("max")?.try_into()?;
+    let int = hash_data(env, None)?;
     // The source simulator uses max - base as the range divisor
     let int = adjust(&int_base, &int_max, &int)?;
     // Cast the arbitrary-precision result to the output type `O`
-    let value_typ = func::find_type_e_local(ctx, value_ctx, "O")?;
-    let value_result = pack::p4_arbitrary_int(ctx.arena_mut(), int)?;
-    let value_result = func::cast_op(ctx, value_typ, value_result)?;
-    let value_ctx =
-        rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "result", value_result)?;
-    // Return without a value
-    let typ = typ::make::opt(typ::make::var(
-        p4spectec::phrase!(node: "value".into(), span: Span::default()),
-        Vec::new(),
-    ));
-    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_string! {
-        arena: ctx.arena_mut(),
-        shape: "RETURN value?",
-        args: vec![value_opt],
-        typ: "returnResult",
-        span: Span::default(),
-    }?;
-    Ok((value_ctx, value_arch, value_call_result))
+    let typ = env.get_type("O")?;
+    let result = env.cast(&typ, P4Value::InfInt(int))?;
+    env.set_local("result", result)?;
+    Ok(CallResult::Return(None))
 }
 
-/// Folds `int` into `[base, rmax)`, or returns `base` when `rmax` is zero.
-pub fn adjust(base: &BigInt, rmax: &BigInt, int: &BigInt) -> Result<BigInt, ExternError> {
+/// Folds `int` into `[int_base, int_max)`, or returns `int_base` when `int_max` is zero.
+fn adjust(int_base: &BigInt, int_max: &BigInt, int: &BigInt) -> Result<BigInt, ExternError> {
     // max = 0: the result is always base
-    if rmax.is_zero() {
-        return Ok(base.clone());
+    if int_max.is_zero() {
+        return Ok(int_base.clone());
     }
-    let int_range = rmax - base;
+    let int_range = int_max - int_base;
     // The divisor max - base must be positive
     if int_range <= BigInt::zero() {
         return Err(
             error::hash_range_invalid("hash range divisor must be positive".to_owned()).into()
         );
     }
-    Ok(remainder(int, &int_range) + base)
+    Ok(remainder(int, &int_range) + int_base)
 }
 
 /// Hashes the `data` tuple, plus the unparsed payload if given, with `algo`.
-fn compute_checksum<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    payload: Option<&PacketIn>,
-) -> Result<BigInt, ExternError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
-    let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
-    let mut values = unpack::p4_tuple(ctx.arena_mut(), &value_data)?;
+fn hash_data(env: &mut ExternEnv, payload: Option<&PacketIn>) -> Result<BigInt, ExternError> {
+    let mut data = match env.get_local("data")? {
+        P4Value::Tuple(data) => data,
+        data => return Err(data.mismatch("a tuple")),
+    };
     // The payload is appended as 8-bit values
-    if let Some(packet_in) = payload {
-        for byte in packet_in.payload_bytes()? {
-            values.push(pack::p4_fixed_bit(ctx.arena_mut(), 8.into(), byte)?);
+    if let Some(packet) = payload {
+        for byte in packet.payload_bytes()? {
+            data.push(P4Value::Bit { width: 8, int: byte });
         }
     }
-    let value_algo = func::find_var_e_local(ctx, value_ctx, "algo")?;
-    let (id_enum, id_field) = unpack::p4_enum(ctx.arena_mut(), &value_algo)?;
-    // Only a `HashAlgorithm` enumerator selects the algorithm
-    if id_enum != "HashAlgorithm" {
-        return Err(error::hash_algorithm_invalid(format!(
-            "invalid HashAlgorithm enum value: {id_enum}.{id_field}"
-        ))
-        .into());
-    }
-    hash::compute_checksum(ctx.arena_mut(), &id_field, None, &values)
+    let algo = HashAlgorithm::try_from(&env.get_local("algo")?)?;
+    hash::hash_values(algo.into(), None, &data)
 }
 
-/// Shared body of `verify_checksum` and its `_with_payload` variant.
-fn do_verify_checksum<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    value_arch: Value,
-    payload: Option<&PacketIn>,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
-    let value_condition = func::find_var_e_local(ctx, value_ctx, "condition")?;
-    // A false condition skips the checksum
-    if !unpack::p4_bool(ctx.arena_mut(), &value_condition)? {
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        return Ok((value_ctx, value_arch, value_call_result));
-    }
-    let value_checksum = func::find_var_e_local(ctx, value_ctx, "checksum")?;
-    let int_expect = unpack::p4_fixed_bit(ctx.arena_mut(), &value_checksum)?.1;
-    let int_actual = compute_checksum(ctx, value_ctx, payload)?;
-    // A mismatch sets `checksum_error` to 1
-    let value_ctx = if int_expect == int_actual {
-        value_ctx
-    } else {
-        let value_error = pack::p4_fixed_bit(ctx.arena_mut(), 1.into(), 1.into())?;
-        rel::lvalue_write_dot_global(
-            ctx,
-            value_ctx,
-            value_arch,
-            "standard_metadata",
-            "checksum_error",
-            value_error,
-        )?
-    };
-    // Return without a value
-    let typ = typ::make::opt(typ::make::var(
-        p4spectec::phrase!(node: "value".into(), span: Span::default()),
-        Vec::new(),
-    ));
-    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_string! {
-        arena: ctx.arena_mut(),
-        shape: "RETURN value?",
-        args: vec![value_opt],
-        typ: "returnResult",
-        span: Span::default(),
-    }?;
-    Ok((value_ctx, value_arch, value_call_result))
-}
+// == Checksums
 
 /// Verifies the checksum of the supplied data.  If this method detects
 /// that a checksum of the data is not correct, then the value of the
@@ -413,87 +225,27 @@ where
 ///
 /// `extern void verify_checksum_with_payload<T, O>(`
 /// `    in bool condition, in T data, in O checksum, HashAlgorithm algo);`
-pub fn verify_checksum<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    value_arch: Value,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
-    do_verify_checksum(ctx, value_ctx, value_arch, None)
-}
-
-/// `verify_checksum` over `data` plus the packet's unparsed payload.
 ///
-/// Only supported in the VerifyChecksum control.
-pub fn verify_checksum_with_payload<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    value_arch: Value,
-    packet_in: &PacketIn,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
-    do_verify_checksum(ctx, value_ctx, value_arch, Some(packet_in))
-}
-
-/// Shared body of `update_checksum` and its `_with_payload` variant.
-fn do_update_checksum<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    value_arch: Value,
+/// `payload` is the packet for the `_with_payload` variant.
+pub fn verify_checksum(
+    env: &mut ExternEnv,
     payload: Option<&PacketIn>,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
-    let value_condition = func::find_var_e_local(ctx, value_ctx, "condition")?;
+) -> Result<CallResult, ExternError> {
     // A false condition skips the checksum
-    if !unpack::p4_bool(ctx.arena_mut(), &value_condition)? {
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        return Ok((value_ctx, value_arch, value_call_result));
+    let condition: bool = env.get_local("condition")?.try_into()?;
+    if !condition {
+        return Ok(CallResult::Return(None));
     }
-    let int = compute_checksum(ctx, value_ctx, payload)?;
-    // Cast the arbitrary-precision result to the output type `O`
-    let value_typ = func::find_type_e_local(ctx, value_ctx, "O")?;
-    let value_checksum = pack::p4_arbitrary_int(ctx.arena_mut(), int)?;
-    let value_checksum = func::cast_op(ctx, value_typ, value_checksum)?;
-    let value_ctx =
-        rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "checksum", value_checksum)?;
-    // Return without a value
-    let typ = typ::make::opt(typ::make::var(
-        p4spectec::phrase!(node: "value".into(), span: Span::default()),
-        Vec::new(),
-    ));
-    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_string! {
-        arena: ctx.arena_mut(),
-        shape: "RETURN value?",
-        args: vec![value_opt],
-        typ: "returnResult",
-        span: Span::default(),
-    }?;
-    Ok((value_ctx, value_arch, value_call_result))
+    let int_expect: BigInt = env.get_local("checksum")?.try_into()?;
+    let int_actual = hash_data(env, payload)?;
+    // A mismatch sets `checksum_error` to 1
+    if int_expect != int_actual {
+        env.set_global(
+            "standard_metadata.checksum_error",
+            P4Value::Bit { width: 1, int: 1.into() },
+        )?;
+    }
+    Ok(CallResult::Return(None))
 }
 
 /// Computes the checksum of the supplied data and writes it to the
@@ -527,35 +279,26 @@ where
 ///
 /// `extern void update_checksum_with_payload<T, O>(`
 /// `    in bool condition, in T data, inout O checksum, HashAlgorithm algo);`
-pub fn update_checksum<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    value_arch: Value,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
-    do_update_checksum(ctx, value_ctx, value_arch, None)
+///
+/// `payload` is the packet for the `_with_payload` variant.
+pub fn update_checksum(
+    env: &mut ExternEnv,
+    payload: Option<&PacketIn>,
+) -> Result<CallResult, ExternError> {
+    // A false condition skips the checksum
+    let condition: bool = env.get_local("condition")?.try_into()?;
+    if !condition {
+        return Ok(CallResult::Return(None));
+    }
+    let int = hash_data(env, payload)?;
+    // Cast the arbitrary-precision result to the output type `O`
+    let typ = env.get_type("O")?;
+    let checksum = env.cast(&typ, P4Value::InfInt(int))?;
+    env.set_local("checksum", checksum)?;
+    Ok(CallResult::Return(None))
 }
 
-/// `update_checksum` over `data` plus the packet's unparsed payload.
-///
-/// Only supported in the ComputeChecksum control.
-pub fn update_checksum_with_payload<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-    value_ctx: Value,
-    value_arch: Value,
-    packet_in: &PacketIn,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
-{
-    do_update_checksum(ctx, value_ctx, value_arch, Some(packet_in))
-}
+// == Clone, resubmit, and recirculate
 
 /// Calling resubmit_preserving_field_list during execution of the
 /// ingress control will cause the packet to be resubmitted, i.e. it
@@ -593,35 +336,14 @@ where
 /// `resubmit_preserving_field_list(2)` will only preserve field y.
 ///
 /// `extern void resubmit_preserving_field_list(bit<8> index);`
-pub fn resubmit_preserving_field_list<Interp, Iface>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
-    value_ctx: Value,
-    value_arch: Value,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Interp: Interpreter<Iface, V1Model>,
-{
-    let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-    let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
+pub fn resubmit_preserving_field_list(
+    env: &mut ExternEnv,
+    arch: &mut ArchState,
+) -> Result<CallResult, ExternError> {
+    let idx: usize = env.get_local("index")?.try_into()?;
     // The scheduler acts on the request after the control returns
-    let mut arch = pipe::find_arch_state(ctx, value_arch)?;
     arch.action.resubmit_opt = Some(idx);
-    let value_arch = pipe::update_arch_state(ctx, value_arch, &arch)?;
-    // Return without a value
-    let typ = typ::make::opt(typ::make::var(
-        p4spectec::phrase!(node: "value".into(), span: Span::default()),
-        Vec::new(),
-    ));
-    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_string! {
-        arena: ctx.arena_mut(),
-        shape: "RETURN value?",
-        args: vec![value_opt],
-        typ: "returnResult",
-        span: Span::default(),
-    }?;
-    Ok((value_ctx, value_arch, value_call_result))
+    Ok(CallResult::Return(None))
 }
 
 /// Calling recirculate_preserving_field_list during execution of the
@@ -646,35 +368,14 @@ where
 /// for more details.
 ///
 /// `extern void recirculate_preserving_field_list(bit<8> index);`
-pub fn recirculate_preserving_field_list<Interp, Iface>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
-    value_ctx: Value,
-    value_arch: Value,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Interp: Interpreter<Iface, V1Model>,
-{
-    let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-    let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
+pub fn recirculate_preserving_field_list(
+    env: &mut ExternEnv,
+    arch: &mut ArchState,
+) -> Result<CallResult, ExternError> {
+    let idx: usize = env.get_local("index")?.try_into()?;
     // The scheduler acts on the request after the control returns
-    let mut arch = pipe::find_arch_state(ctx, value_arch)?;
     arch.action.recirculate_opt = Some(idx);
-    let value_arch = pipe::update_arch_state(ctx, value_arch, &arch)?;
-    // Return without a value
-    let typ = typ::make::opt(typ::make::var(
-        p4spectec::phrase!(node: "value".into(), span: Span::default()),
-        Vec::new(),
-    ));
-    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_string! {
-        arena: ctx.arena_mut(),
-        shape: "RETURN value?",
-        args: vec![value_opt],
-        typ: "returnResult",
-        span: Span::default(),
-    }?;
-    Ok((value_ctx, value_arch, value_call_result))
+    Ok(CallResult::Return(None))
 }
 
 /// Calling clone_preserving_field_list during execution of the ingress
@@ -712,79 +413,42 @@ where
 ///
 /// `extern void clone_preserving_field_list(in CloneType type,`
 ///                                         `in bit<32> session, bit<8> index);`
-pub fn clone_preserving_field_list<Interp, Iface>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
-    value_ctx: Value,
-    value_arch: Value,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Interp: Interpreter<Iface, V1Model>,
-{
+pub fn clone_preserving_field_list(
+    env: &mut ExternEnv,
+    arch: &mut ArchState,
+) -> Result<CallResult, ExternError> {
+    let kind = env.get_local("type")?;
+    let session = env.get_local("session")?;
+    let idx = env.get_local("index")?;
     // The scheduler acts on the request after the control returns
-    let mut arch = pipe::find_arch_state(ctx, value_arch)?;
-    let value_type = func::find_var_e_local(ctx, value_ctx, "type")?;
-    let value_session = func::find_var_e_local(ctx, value_ctx, "session")?;
-    let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-    arch.action.clone_opt =
-        Some(CloneInfo::new(ctx.arena_mut(), &value_type, &value_session, &value_idx)?);
-    let value_arch = pipe::update_arch_state(ctx, value_arch, &arch)?;
-    // Return without a value
-    let typ = typ::make::opt(typ::make::var(
-        p4spectec::phrase!(node: "value".into(), span: Span::default()),
-        Vec::new(),
-    ));
-    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_string! {
-        arena: ctx.arena_mut(),
-        shape: "RETURN value?",
-        args: vec![value_opt],
-        typ: "returnResult",
-        span: Span::default(),
-    }?;
-    Ok((value_ctx, value_arch, value_call_result))
+    arch.action.clone_opt = Some(CloneInfo::new(&kind, session, idx)?);
+    Ok(CallResult::Return(None))
 }
 
-/// Log user defined messages
+// == Log messages
+
+/// Log user defined messages.
 /// Example: log_msg("User defined message");
 /// or log_msg("Value1 = {}, Value2 = {}",{value1, value2});
 ///
 /// `extern void log_msg(string msg);`
 /// `extern void log_msg<T>(string msg, in T data);`
-pub fn log_msg<Interp, Iface>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
-    value_ctx: Value,
-    value_arch: Value,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Interp: Interpreter<Iface, V1Model>,
-{
-    let value_msg = func::find_var_e_local(ctx, value_ctx, "msg")?;
-    let msg = unpack::p4_string(ctx.arena_mut(), &value_msg)?;
-    ctx.record_effect(p4spectec::runner::SideEffect::Impure);
+pub fn log_msg(env: &mut ExternEnv) -> Result<CallResult, ExternError> {
+    let msg: String = env.get_local("msg")?.try_into()?;
+    env.mark_impure();
     writeln!(std::io::stdout(), "{msg}")
         .map_err(|error| error::program_output_failed(error.to_string()))?;
-    // Return without a value
-    let typ = typ::make::opt(typ::make::var(
-        p4spectec::phrase!(node: "value".into(), span: Span::default()),
-        Vec::new(),
-    ));
-    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_string! {
-        arena: ctx.arena_mut(),
-        shape: "RETURN value?",
-        args: vec![value_opt],
-        typ: "returnResult",
-        span: Span::default(),
-    }?;
-    Ok((value_ctx, value_arch, value_call_result))
+    Ok(CallResult::Return(None))
 }
 
-/// Expands `{}` holes in `fmt` with `args`; `{{` and `}}` are literal braces.
-pub fn format_braces(arena: &Arena, fmt: &str, args: &[Value]) -> Result<String, ExternError> {
+/// Expands `{}` holes in `fmt` with `values`; `{{` and `}}` are literal braces.
+fn format_braces(
+    env: &mut ExternEnv,
+    fmt: &str,
+    values: &[P4Value],
+) -> Result<String, ExternError> {
     let mut chars = fmt.chars().peekable();
-    let mut args = args.iter();
+    let mut values = values.iter();
     let mut text = String::with_capacity(fmt.len());
     while let Some(char) = chars.next() {
         match (char, chars.peek().copied()) {
@@ -796,19 +460,19 @@ pub fn format_braces(arena: &Arena, fmt: &str, args: &[Value]) -> Result<String,
             // `{}` consumes the next argument
             ('{', Some('}')) => {
                 chars.next();
-                let value = args.next().ok_or_else(|| {
+                let value = values.next().ok_or_else(|| {
                     error::format_argument_arity_mismatch(
                         "not enough arguments for format string in log_msg".to_owned(),
                     )
                 })?;
-                text.push_str(&value.view(arena).to_string());
+                text.push_str(&env.format(value)?);
             }
             // Anything else is copied
             _ => text.push(char),
         }
     }
     // Every argument must be consumed
-    if args.next().is_some() {
+    if values.next().is_some() {
         return Err(error::format_argument_arity_mismatch(
             "too many arguments for format string in log_msg".to_owned(),
         )
@@ -818,35 +482,15 @@ pub fn format_braces(arena: &Arena, fmt: &str, args: &[Value]) -> Result<String,
 }
 
 /// Prints `msg` with each `{}` replaced by the next element of `data`.
-pub fn log_msg_format<Interp, Iface>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
-    value_ctx: Value,
-    value_arch: Value,
-) -> Result<(Value, Value, Value), ExternError>
-where
-    Iface: Interface,
-    Interp: Interpreter<Iface, V1Model>,
-{
-    let value_msg = func::find_var_e_local(ctx, value_ctx, "msg")?;
-    let msg = unpack::p4_string(ctx.arena_mut(), &value_msg)?;
-    let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
-    let values = unpack::p4_tuple(ctx.arena_mut(), &value_data)?;
-    let text = format_braces(ctx.arena(), &msg, &values)?;
-    ctx.record_effect(p4spectec::runner::SideEffect::Impure);
+pub fn log_msg_format(env: &mut ExternEnv) -> Result<CallResult, ExternError> {
+    let msg: String = env.get_local("msg")?.try_into()?;
+    let data = match env.get_local("data")? {
+        P4Value::Tuple(data) => data,
+        data => return Err(data.mismatch("a tuple")),
+    };
+    let text = format_braces(env, &msg, &data)?;
+    env.mark_impure();
     writeln!(std::io::stdout(), "{text}")
         .map_err(|error| error::program_output_failed(error.to_string()))?;
-    // Return without a value
-    let typ = typ::make::opt(typ::make::var(
-        p4spectec::phrase!(node: "value".into(), span: Span::default()),
-        Vec::new(),
-    ));
-    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = value::make::case_string! {
-        arena: ctx.arena_mut(),
-        shape: "RETURN value?",
-        args: vec![value_opt],
-        typ: "returnResult",
-        span: Span::default(),
-    }?;
-    Ok((value_ctx, value_arch, value_call_result))
+    Ok(CallResult::Return(None))
 }

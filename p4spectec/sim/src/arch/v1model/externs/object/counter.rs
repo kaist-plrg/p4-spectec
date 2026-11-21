@@ -6,22 +6,11 @@
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
 
-use p4spectec::lang::{
-    common::source::Span,
-    data::{
-        arena::Arena,
-        typ,
-        value::flat::{self as value, Value},
-    },
-};
+use p4spectec::runner::ExternError;
 
-use p4spectec::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::p4::{CallResult, ExternEnv, InitEnv, P4Vars};
 
-use crate::{
-    arch::core::object::PacketIn,
-    error,
-    spec::{args, func, unpack},
-};
+use crate::arch::{core::object::PacketIn, v1model::types::CounterType};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Counter array by `CounterType`.
@@ -50,28 +39,38 @@ impl Counter {
     /// register.
     ///
     /// `counter(bit<32> size, CounterType type);`
-    pub fn init(
-        arena: &mut Arena,
-        _value_targs: Value,
-        value_ids: Value,
-        value_args: Value,
-    ) -> Result<Self, ExternError> {
-        let args = args::assoc(arena, value_ids, value_args)?;
-        let value_size = args::find(&args, "size")?;
-        let value_type = args::find(&args, "type")?;
-        let size = usize::try_from(&unpack::p4_fixed_bit(arena, &value_size)?.1)?;
-        let (id_enum, id_type) = unpack::p4_enum(arena, &value_type)?;
+    pub fn init(env: &mut InitEnv) -> Result<Self, ExternError> {
+        let size = env.get("size")?;
+        let kind = env.get("type")?;
+        let size: usize = size.try_into()?;
         // The type argument selects what is counted
-        match (id_enum.as_str(), id_type.as_str()) {
-            ("CounterType", "packets") => Ok(Self::Packets(vec![BigInt::zero(); size])),
-            ("CounterType", "bytes") => Ok(Self::Bytes(vec![BigInt::zero(); size])),
-            ("CounterType", "packets_and_bytes") => {
+        match CounterType::try_from(&kind)? {
+            CounterType::Packets => Ok(Self::Packets(vec![BigInt::zero(); size])),
+            CounterType::Bytes => Ok(Self::Bytes(vec![BigInt::zero(); size])),
+            CounterType::PacketsAndBytes => {
                 Ok(Self::PacketsAndBytes(vec![(BigInt::zero(), BigInt::zero()); size]))
             }
-            _ => Err(error::counter_type_invalid(format!(
-                "invalid CounterType enum value: {id_enum}.{id_type}"
-            ))
-            .into()),
+        }
+    }
+
+    // - Methods
+
+    /// Runs the method `name`, whose parameters are `params`,
+    /// on the current packet `packet`.
+    pub fn call(
+        &mut self,
+        env: &mut ExternEnv,
+        name: &str,
+        params: &[&str],
+        packet: &PacketIn,
+    ) -> Result<CallResult, ExternError> {
+        match (name, params) {
+            ("count", ["index"]) => {
+                let idx: usize = env.get_local("index")?.try_into()?;
+                self.count(idx, packet);
+                Ok(CallResult::Return(None))
+            }
+            _ => env.unsupported(),
         }
     }
 
@@ -87,24 +86,11 @@ impl Counter {
     ///               updated.
     ///
     /// `void count(in bit<32> index);`
-    pub fn count<Interp, Iface, Ext>(
-        mut self,
-        ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
-        value_ctx: Value,
-        value_arch: Value,
-        packet_in: &PacketIn,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
-    where
-        Iface: Interface,
-        Ext: Extern,
-        Interp: Interpreter<Iface, Ext>,
-    {
-        let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena_mut(), &value_idx)?.1)?;
-        // An out-of-range index leaves the array untouched
+    pub fn count(&mut self, idx: usize, packet: &PacketIn) {
         // `PacketIn::len` counts bits
-        let bytes = BigInt::from(packet_in.len / 8);
-        match &mut self {
+        let bytes = BigInt::from(packet.len / 8);
+        // An out-of-range index leaves the array untouched
+        match self {
             Self::Packets(counts) => {
                 if let Some(count) = counts.get_mut(idx) {
                     *count += BigInt::one();
@@ -112,29 +98,15 @@ impl Counter {
             }
             Self::Bytes(counts) => {
                 if let Some(count) = counts.get_mut(idx) {
-                    *count += &bytes;
+                    *count += bytes;
                 }
             }
             Self::PacketsAndBytes(counts) => {
                 if let Some((count_packets, count_bytes)) = counts.get_mut(idx) {
                     *count_packets += BigInt::one();
-                    *count_bytes += &bytes;
+                    *count_bytes += bytes;
                 }
             }
         }
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            p4spectec::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_string! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
     }
 }

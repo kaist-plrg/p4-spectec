@@ -2,7 +2,7 @@
 //!
 //! A saved context, input packet, and the pipeline it resumes at.
 
-use p4spectec::lang::data::value::flat::Value;
+use crate::p4::SpecValue;
 
 use crate::arch::core::object::PacketIn;
 
@@ -19,7 +19,7 @@ pub enum Entrypoint {
 /// Processing context per packet.
 pub struct Packet {
     /// Evaluation context.
-    pub value_ctx: Value,
+    pub value_ctx: SpecValue,
     /// Packet input.
     pub packet_in: PacketIn,
     /// Which pipeline the packet should begin processing.
