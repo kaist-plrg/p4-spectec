@@ -52,7 +52,7 @@ use super::{
         doc::{Block, Code, ItemKind, Link, Prose, Subject, Table},
         serialize,
     },
-    fallthrough::{self, Context},
+    fallthrough::Context,
 };
 
 // == Conditional bindings
