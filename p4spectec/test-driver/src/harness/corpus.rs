@@ -5,7 +5,8 @@
 //! A test runs a corpus through a worker:
 //! `Corpus::files(dir, ".p4")?.excludes(dirs)?.run(worker, args, name)?.check(path_expected)`
 //! gives each case the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
-//! prints one line per case, and compares the outcomes with a snapshot.
+//! and compares the outcomes with a snapshot,
+//! printing the details of every case whose outcome changed.
 //! With `P4SPECTEC_TEST_LOG` set to a directory,
 //! the run also writes `<name>.log` there: the snapshot's lines in corpus order,
 //! each followed by its duration in seconds (empty for an excluded case).
@@ -166,7 +167,9 @@ impl Corpus {
                 if let Some(file) = &mut file_log {
                     writeln!(file, "{},{text_case},", Outcome::Exclude.name())?;
                 }
-                report.outcomes.push((text_case, Outcome::Exclude));
+                report
+                    .outcomes
+                    .push((text_case, Outcome::Exclude, String::new()));
                 continue;
             }
             // Run the case in the worker
@@ -180,17 +183,12 @@ impl Corpus {
                 Reply::Done { status, details } => (Outcome::from_name(&status)?, details),
                 Reply::Timeout => (Outcome::Timeout, String::new()),
             };
-            // Print its outcome and duration, then any details indented
             let secs = start.elapsed().as_secs_f64();
-            println!("{:<7} {secs:>7.2}s {text_case}", outcome.name());
-            for line in details.lines() {
-                println!("    {line}");
-            }
             // Log the outcome as reached, a timeout included, with its duration
             if let Some(file) = &mut file_log {
                 writeln!(file, "{},{text_case},{secs:.2}", outcome.name())?;
             }
-            report.outcomes.push((text_case, outcome));
+            report.outcomes.push((text_case, outcome, details));
         }
         Ok(report)
     }
@@ -198,7 +196,8 @@ impl Corpus {
 
 /// Outcomes of one corpus run, in corpus order.
 pub struct Report {
-    outcomes: Vec<(String, Outcome)>,
+    /// Each case with its outcome and the worker's details.
+    outcomes: Vec<(String, Outcome, String)>,
 }
 
 impl Report {
@@ -207,12 +206,13 @@ impl Report {
     /// Each line is `<outcome>,<paths>`, in corpus order.
     /// A case that timed out keeps its line of the snapshot,
     /// since a timeout says nothing about the outcome.
+    /// A case whose line changed prints its details first.
     /// `INSTA_UPDATE=always` rewrites the snapshot instead.
     pub fn check(&self, path_expected: &Path) {
         let count = |outcome| {
             self.outcomes
                 .iter()
-                .filter(|(_, other)| *other == outcome)
+                .filter(|(_, other, _)| *other == outcome)
                 .count()
         };
         println!(
@@ -231,7 +231,7 @@ impl Report {
             .filter_map(|line| line.split_once(',').map(|(_, text_case)| (text_case, line)))
             .collect();
         let mut text = String::new();
-        for (text_case, outcome) in &self.outcomes {
+        for (text_case, outcome, details) in &self.outcomes {
             let line = match (outcome, lines_expected.get(text_case.as_str())) {
                 // Keep the recorded outcome of a case that timed out
                 (Outcome::Timeout, Some(line)) => {
@@ -241,6 +241,14 @@ impl Report {
                 // Record any other outcome as reached
                 _ => format!("{},{text_case}", outcome.name()),
             };
+            // Print why a case changed its outcome
+            if lines_expected.get(text_case.as_str()) != Some(&line.as_str()) && !details.is_empty()
+            {
+                println!("{text_case}");
+                for line_details in details.lines() {
+                    println!("    {line_details}");
+                }
+            }
             text.push_str(&line);
             text.push('\n');
         }
