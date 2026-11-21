@@ -3,13 +3,17 @@
 //! `collect` discovers sources under a root,
 //! and `collect_excludes` reads exclusion lists.
 //! A test runs a corpus through a worker:
-//! `Corpus::files(dir, ".p4")?.excludes(dirs)?.run(worker, args)?.check(path_expected)`
+//! `Corpus::files(dir, ".p4")?.excludes(dirs)?.run(worker, args, name)?.check(path_expected)`
 //! gives each case the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
 //! prints one line per case, and compares the outcomes with a snapshot.
+//! With `P4SPECTEC_TEST_LOG` set to a directory,
+//! the run also writes `<name>.log` there: the snapshot's lines in corpus order,
+//! each followed by its duration in seconds (empty for an excluded case).
 
 use std::{
     collections::{BTreeMap, BTreeSet},
-    fs,
+    fs::{self, File},
+    io::Write,
     path::{Path, PathBuf},
     time::{Duration, Instant},
 };
@@ -23,6 +27,9 @@ use super::{
 
 /// Names the environment variable setting the per-case timeout in seconds.
 const ENV_TIMEOUT: &str = "P4SPECTEC_TEST_TIMEOUT";
+
+/// Names the environment variable setting the directory of run logs.
+const ENV_LOG: &str = "P4SPECTEC_TEST_LOG";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Outcome {
@@ -125,7 +132,9 @@ impl Corpus {
     /// with `P4SPECTEC_TEST_TIMEOUT` set,
     /// a case still running after that many seconds is recorded as a timeout,
     /// and the worker restarts for the next case.
-    pub fn run(&self, path_program: &str, args: &[&str]) -> Result<Report> {
+    /// With `P4SPECTEC_TEST_LOG` set, each case's line goes to `<name>.log`
+    /// in that directory as soon as the case ends.
+    pub fn run(&self, path_program: &str, args: &[&str], name: &str) -> Result<Report> {
         // Read the per-case timeout; without one, wait for every case
         let timeout = match std::env::var(ENV_TIMEOUT) {
             Ok(text) => Some(Duration::from_secs(
@@ -133,6 +142,14 @@ impl Corpus {
                     .map_err(|error| Error::from(format!("{ENV_TIMEOUT}={text}: {error}")))?,
             )),
             Err(_) => None,
+        };
+        // Open the log `<name>.log`, if a log directory is set
+        let mut file_log = match std::env::var_os(ENV_LOG) {
+            Some(dir) => {
+                fs::create_dir_all(&dir)?;
+                Some(File::create(Path::new(&dir).join(format!("{name}.log")))?)
+            }
+            None => None,
         };
         let args = args.iter().map(|arg| (*arg).to_owned()).collect();
         let mut worker = Worker::new(PathBuf::from(path_program), args, timeout);
@@ -148,6 +165,9 @@ impl Corpus {
                 path.to_str()
                     .is_some_and(|path| self.excludes.contains(path))
             }) {
+                if let Some(file) = &mut file_log {
+                    writeln!(file, "{},{text_case},", Outcome::Exclude.name())?;
+                }
                 report.outcomes.push((text_case, Outcome::Exclude));
                 continue;
             }
@@ -167,6 +187,10 @@ impl Corpus {
             println!("{:<7} {secs:>7.2}s {text_case}", outcome.name());
             for line in details.lines() {
                 println!("    {line}");
+            }
+            // Log the outcome as reached, a timeout included, with its duration
+            if let Some(file) = &mut file_log {
+                writeln!(file, "{},{text_case},{secs:.2}", outcome.name())?;
             }
             report.outcomes.push((text_case, outcome));
         }

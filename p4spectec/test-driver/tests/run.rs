@@ -42,7 +42,7 @@ fn run(suite: &Suite, language: Language) {
         .and_then(|corpus| corpus.excludes(suite.dirs_exclude))
         .and_then(|corpus| {
             let args = [&OPTIONS[..], &["run", language.name(), suite.relation]].concat();
-            corpus.run(WORKER, &args)
+            corpus.run(WORKER, &args, &format!("run-{}-{}", suite.name, language.name()))
         });
     let path_expected =
         Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/run/{}.expected", suite.name));

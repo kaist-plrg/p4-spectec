@@ -35,7 +35,7 @@ fn p4parse(suite: &Suite) {
         .and_then(|corpus| corpus.excludes(suite.dirs_exclude))
         .and_then(|corpus| {
             let args = [&OPTIONS[..], &["p4parse"]].concat();
-            corpus.run(WORKER, &args)
+            corpus.run(WORKER, &args, &format!("p4parse-{}", suite.name))
         });
     let path_expected = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join(format!("expected/p4parse/{}.expected", suite.name));

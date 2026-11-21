@@ -220,6 +220,9 @@ Each corpus test names the `excludes/` directories whose `.exclude` files list t
 and compares the outcome of every case with `p4spectec/test-driver/expected/<file>/<suite>.expected`,
 which the AL, SL, and PL tests of a suite share;
 a case that times out keeps its recorded outcome.
+`make test TEST_LOG=DIR` also writes `DIR/<test>.log` per corpus test, such as `DIR/run-pos-sl.log`,
+as the cases end: each line is the case's expected-file line followed by its duration in seconds
+(empty for an excluded case), so `sort -t, -k3 -n -r DIR/run-pos-sl.log | head` lists the slowest cases.
 `make test PROFILE=ci` runs the CI selection of `p4spectec/.config/nextest.toml`.
 
 Corpus, speclang, and diagnostic tests compare text with expected files.

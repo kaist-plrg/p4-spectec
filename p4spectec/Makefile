@@ -35,11 +35,12 @@ clean:
 # FILTER=EXPR selects tests by a nextest filterset, e.g. FILTER='binary(run)'
 # PROFILE=NAME selects a profile of .config/nextest.toml (CI uses `ci`)
 # TIMEOUT=SECONDS gives each corpus case a timeout (none by default)
+# TEST_LOG=DIR writes DIR/<test>.log per corpus test: each case's expected line and duration
 # UPDATE_EXPECT=1 rewrites expected files instead of comparing with them
 .PHONY: test
 
 test:
-	$(if $(TIMEOUT),P4SPECTEC_TEST_TIMEOUT=$(TIMEOUT)) $(CARGO) nextest run --locked --release --workspace --target-dir "$(TARGET_DIR)" $(if $(PROFILE),--profile $(PROFILE)) $(if $(FILTER),-E '$(value FILTER)')
+	$(if $(TIMEOUT),P4SPECTEC_TEST_TIMEOUT=$(TIMEOUT)) $(if $(TEST_LOG),P4SPECTEC_TEST_LOG="$(abspath $(TEST_LOG))") $(CARGO) nextest run --locked --release --workspace --target-dir "$(TARGET_DIR)" $(if $(PROFILE),--profile $(PROFILE)) $(if $(FILTER),-E '$(value FILTER)')
 
 # test-<alias> runs the tests of the filterset FILTER_<alias>, e.g. `make test-sim-v1model-p4c-sl`
 FILTER_speclang := binary(speclang)

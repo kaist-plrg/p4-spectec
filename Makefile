@@ -20,12 +20,16 @@ build release debug:
 	rm -f ./$(SPEC)
 	cp "$(CARGO_TARGET_DIR)/$(if $(filter debug,$@),debug,release)/p4spectec" ./$(SPEC)
 
-fmt fmt-check lint rustdoc test:
+fmt fmt-check lint rustdoc:
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
+
+# Resolve TEST_LOG here; the recursive make runs inside the Rust crate
+test:
+	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $(if $(TEST_LOG),TEST_LOG="$(abspath $(TEST_LOG))") $@
 
 # Test aliases of the Rust crate, e.g. `make test-run-sl`
 test-%:
-	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
+	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $(if $(TEST_LOG),TEST_LOG="$(abspath $(TEST_LOG))") $@
 
 # Specification documents
 .PHONY: p4spec-draft p4spec-draft-html p4spec-release p4spec-release-html

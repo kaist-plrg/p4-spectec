@@ -141,7 +141,7 @@ fn sim(suite: &Suite, language: Language) {
         .excludes(suite.dirs_exclude)
         .and_then(|corpus| {
             let args = [&OPTIONS[..], &["sim", language.name(), suite.arch]].concat();
-            corpus.run(WORKER, &args)
+            corpus.run(WORKER, &args, &format!("sim-{}-{}", suite.name, language.name()))
         });
     let path_expected =
         Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/sim/{}.expected", suite.name));
