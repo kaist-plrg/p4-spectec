@@ -228,8 +228,7 @@ as the cases end: each line is the case's snapshot line followed by its duration
 Corpus, speclang, and diagnostic tests compare text with [insta](https://insta.rs) snapshots (`.snap` files);
 a failure prints only the changed lines, colored in a terminal (`CLICOLOR_FORCE` in `p4spectec/.cargo/config.toml`),
 and leaves the new text in `<name>.snap.new`.
-A corpus test also prints each changed case as `pass -> fail  <paths>` with the failure details;
-`INSTA_OUTPUT=none make test` keeps those lines and drops insta's output.
+A corpus test also prints the failure details of each changed case, such as a simulation error.
 `INSTA_UPDATE=always make test` rewrites the snapshots instead;
 review their diffs before committing.
 

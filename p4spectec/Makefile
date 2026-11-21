@@ -37,7 +37,6 @@ clean:
 # TIMEOUT=SECONDS gives each corpus case a timeout (none by default)
 # TEST_LOG=DIR writes DIR/<test>.log per corpus test: each case's snapshot line and duration
 # INSTA_UPDATE=always rewrites snapshots instead of comparing with them
-# INSTA_OUTPUT=none drops insta's output; corpus tests still print each changed case
 .PHONY: test
 
 test:
