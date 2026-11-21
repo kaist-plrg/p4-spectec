@@ -43,13 +43,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential
 
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
       - name: Check formatting
         run: make fmt-check
 
-      - name: Run registered E2E acceptance
-        run: >-
-          make -j2 test-elab test-algo test-structure test-prose test-adoc
-          test-p4parse test-run-sl test-diagnostics test-sim-sl
+      - name: Run integration tests
+        run: make test PROFILE=ci
 
       - name: Check that acceptance leaves fixtures unchanged
         run: git diff --exit-code -- p4spectec/test-driver excludes testdata patches

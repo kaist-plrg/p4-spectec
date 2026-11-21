@@ -176,42 +176,65 @@ To splice another skeleton, use the Rust CLI's long options:
 Run these commands from the project root:
 
 ```shell
-make fmt          # Format the product and E2E driver
+make fmt          # Format the product and tests
 make fmt-check    # Check formatting without rewriting files
-make lint         # Clippy for the product and E2E driver
+make lint         # Clippy for the product and tests
 make rustdoc      # Build the Rust API documentation
-make test         # Run all registered E2E suites
+make test         # Run every integration test
 ```
 
-`make test` runs specification/document snapshots, P4 parsing, diagnostics,
-and AL/SL/PL execution and simulation.
-Suite registrations live in `p4spectec/test-driver/suites/`, one TOML file per runner.
-Execution, simulation, and micro tests run one named configuration at a time
-(`run sl` runs the `sl` configuration of `suites/run.toml`),
-which sets the interpreter language, caching, and determinism checking.
+Tests are Rust integration tests run by [cargo-nextest](https://nexte.st)
+(`cargo install --locked cargo-nextest`), one test per corpus, specification stage, or diagnostic stage:
 
-Individual targets are available for focused runs:
-
-| Targets | Coverage |
+| Test file | Coverage |
 | --- | --- |
-| `test-elab`, `test-algo`, `test-structure`, `test-prose` | Specification processing |
-| `test-adoc` | AsciiDoc snapshots and anchor determinism |
-| `test-p4parse` | P4 parse/unparse/parse corpus |
-| `test-diagnostics` | Source/expected diagnostics, including CLI and splicing errors |
-| `test-run-al`, `test-run-sl`, `test-run-pl` | P4 execution corpus |
-| `test-sim-al`, `test-sim-sl`, `test-sim-pl` | Packet simulation corpus |
-| `test-expected` | All of the above except simulation |
+| `p4spectec/test-driver/tests/speclang.rs` | Elaborated, AL, SL, and prose specifications; AsciiDoc, LaTeX, and anchor determinism |
+| `p4spectec/test-driver/tests/p4parse.rs` | P4 parse/unparse/parse corpus |
+| `p4spectec/test-driver/tests/run.rs` | AL/SL/PL P4 execution corpus |
+| `p4spectec/test-driver/tests/sim.rs` | AL/SL/PL packet simulation corpus |
+| `p4spectec/test-driver/tests/diagnostic.rs` | Diagnostics of each pipeline stage on fixtures under `testdata/spec` |
+| `p4spectec/cli/tests/diagnostic.rs` | Diagnostics of the `p4spectec` command line |
 
-Normal test targets clear `UPDATE_EXPECT` and compare against stored results.
-To deliberately regenerate the elaboration, AL, prose, and AsciiDoc snapshots,
-run `make promote` (also available as `make test-promote`). Diagnostics have a
-separate `make test-diagnostics-promote` target. These commands rerun the suites;
-review their diffs before committing. P4 parsing, structure, execution,
-simulation, and exclusions are not promoted by these targets.
+`make test-<alias>` runs a group of tests:
+
+```
+make test-speclang                  # speclang.rs
+make test-diagnostic                # diagnostics of the pipeline and the command line
+make test-p4parse                   # p4parse.rs
+make test-run                       # run.rs; test-run-sl: its SL tests
+make test-run-pos-sl                # one corpus of run.rs in one language
+make test-sim                       # sim.rs; test-sim-al: its AL tests
+make test-sim-v1model-p4c-sl        # one corpus of sim.rs in one language
+```
+
+Each alias is a [nextest filterset](https://nexte.st/docs/filtersets/) named in `p4spectec/Makefile`;
+`make test FILTER=EXPR` runs any other filterset, for example `make test FILTER='package(p4spectec-cli)'`.
+A test is named `<package>::<file> <function>`, as `cargo nextest list` shows,
+for example `p4spectec-test::run pos_sl`.
+
+Corpus tests run each case in a worker process,
+started with the specification, P4 include directories, and runner options its test file names;
+`make test TIMEOUT=SECONDS` (or `P4SPECTEC_TEST_TIMEOUT`) gives each case a timeout;
+without it, cases run without one.
+Each corpus test names the `excludes/` directories whose `.exclude` files list the cases it skips,
+and compares the outcome of every case with `p4spectec/test-driver/expected/<file>/<suite>.snap`,
+which the AL, SL, and PL tests of a suite share;
+a case that times out keeps its recorded outcome.
+`make test TEST_LOG=DIR` also writes `DIR/<test>.log` per corpus test, such as `DIR/run-pos-sl.log`,
+as the cases end: each line is the case's snapshot line followed by its duration in seconds
+(empty for an excluded case), so `sort -t, -k3 -n -r DIR/run-pos-sl.log | head` lists the slowest cases.
+`make test PROFILE=ci` runs the CI selection of `p4spectec/.config/nextest.toml`.
+
+Corpus, speclang, and diagnostic tests compare text with [insta](https://insta.rs) snapshots (`.snap` files);
+a failure prints only the changed lines, colored in a terminal (`CLICOLOR_FORCE` in `p4spectec/.cargo/config.toml`),
+and leaves the new text in `<name>.snap.new`.
+A corpus test also prints the failure details of each changed case, such as a simulation error.
+`INSTA_UPDATE=always make test` rewrites the snapshots instead;
+review their diffs before committing.
 
 `make clean` removes `bin/p4spectec` and the selected Cargo build directory.
 
-CI runs Rust builds, formatting, Clippy, API documentation, E2E acceptance, and
+CI runs Rust builds, formatting, Clippy, API documentation, integration tests, and
 HTML specification generation for pull requests and pushes to `rust-port`
 and `main`, version tags, and manual dispatches. Version tags and manual
 runs also render the P4 release PDF specification.

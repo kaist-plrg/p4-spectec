@@ -1,4 +1,4 @@
-# Rust builds and end-to-end acceptance through the registered driver
+# Rust builds and integration tests
 
 CARGO := cargo
 TARGET_DIR := $(if $(CARGO_TARGET_DIR),$(CARGO_TARGET_DIR),target)
@@ -31,80 +31,38 @@ clean:
 
 .DEFAULT_GOAL := test
 
-.PHONY: test test-adoc
+# Integration tests under test-driver/tests and cli/tests, run by cargo-nextest
+# FILTER=EXPR selects tests by a nextest filterset, e.g. FILTER='binary(run)'
+# PROFILE=NAME selects a profile of .config/nextest.toml (CI uses `ci`)
+# TIMEOUT=SECONDS gives each corpus case a timeout (none by default)
+# TEST_LOG=DIR writes DIR/<test>.log per corpus test: each case's snapshot line and duration
+# INSTA_UPDATE=always rewrites snapshots instead of comparing with them
+.PHONY: test
 
-test: test-expected test-sim-al test-sim-sl test-sim-pl
+test:
+	$(if $(TIMEOUT),P4SPECTEC_TEST_TIMEOUT=$(TIMEOUT)) $(if $(TEST_LOG),P4SPECTEC_TEST_LOG="$(abspath $(TEST_LOG))") $(CARGO) nextest run --locked --release --workspace --target-dir "$(TARGET_DIR)" $(if $(PROFILE),--profile $(PROFILE)) $(if $(FILTER),-E '$(value FILTER)')
 
-# Standalone acceptance driver; registrations live in test-driver/suites/
-# TEST_LOG=DIR writes per-test timing logs of p4parse, run, sim, and micro
-# TIMEOUT=SECONDS records a run or sim test still running after it as a timeout
-.PHONY: test-expected test-promote test-elab test-algo test-structure test-prose test-p4parse test-run-al test-run-sl test-run-pl test-micro
-.PHONY: test-diagnostics test-diagnostics-promote diagnostic-cli
-DRIVER = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" -- $(if $(TEST_LOG),--log "$(abspath $(TEST_LOG))")
-CORPUS_ARGS = $(if $(TIMEOUT),--timeout $(TIMEOUT))
-DIAGNOSTIC_CLI = $(TARGET_DIR)/release/p4spectec
+# test-<alias> runs the tests of the filterset FILTER_<alias>, e.g. `make test-sim-v1model-p4c-sl`
+FILTER_speclang := binary(speclang)
+FILTER_diagnostic := binary(diagnostic)
+FILTER_p4parse := binary(p4parse)
+FILTER_run := binary(run)
+FILTER_sim := binary(sim)
 
-test-elab:
-	env -u UPDATE_EXPECT $(DRIVER) elab
+LANGUAGES := al sl pl
+RUN_SUITES := pos neg regression-pos regression-neg
+SIM_SUITES := v1model-p4c v1model-p4testgen v1model-custom v1model-regression \
+  ebpf-p4c ebpf-p4testgen ebpf-regression psa-p4c
 
-test-algo:
-	env -u UPDATE_EXPECT $(DRIVER) algo
+# Every language of run.rs or sim.rs, and each suite of them in one language
+$(foreach language,$(LANGUAGES),\
+  $(eval FILTER_run-$(language) := binary(run) & test(_$(language)))\
+  $(eval FILTER_sim-$(language) := binary(sim) & test(_$(language)))\
+  $(foreach suite,$(RUN_SUITES),\
+    $(eval FILTER_run-$(suite)-$(language) := binary(run) & test(=$(subst -,_,$(suite))_$(language))))\
+  $(foreach suite,$(SIM_SUITES),\
+    $(eval FILTER_sim-$(suite)-$(language) := binary(sim) & test(=$(subst -,_,$(suite))_$(language)))))
 
-test-structure:
-	env -u UPDATE_EXPECT $(DRIVER) structure
-
-test-prose:
-	env -u UPDATE_EXPECT $(DRIVER) prose
-
-# Export fragments with $(DRIVER) adoc --output DIR for Asciidoctor validation
-test-adoc:
-	env -u UPDATE_EXPECT $(DRIVER) adoc
-
-test-p4parse:
-	env -u UPDATE_EXPECT $(DRIVER) p4parse
-
-test-run-al:
-	env -u UPDATE_EXPECT $(DRIVER) run al $(CORPUS_ARGS)
-
-test-run-sl:
-	env -u UPDATE_EXPECT $(DRIVER) run sl $(CORPUS_ARGS)
-
-test-run-pl:
-	env -u UPDATE_EXPECT $(DRIVER) run pl $(CORPUS_ARGS)
-
-# Micro tests: standalone spec-language sources checked by pipeline stage
-test-micro:
-	env -u UPDATE_EXPECT $(DRIVER) micro al
-	env -u UPDATE_EXPECT $(DRIVER) micro sl
-	env -u UPDATE_EXPECT $(DRIVER) micro pl
-	env -u UPDATE_EXPECT $(DRIVER) micro specdoc
-
-test-expected: test-elab test-algo test-structure test-prose test-adoc test-p4parse test-run-al test-run-sl test-run-pl test-micro test-diagnostics
-
-# Rerun elab/algo/prose/adoc and update snapshots; does not approve a previous run
-# Parsing, structure, execution, simulation, and exclusions are never promoted
-test-promote:
-	UPDATE_EXPECT=1 $(DRIVER) elab
-	UPDATE_EXPECT=1 $(DRIVER) algo
-	UPDATE_EXPECT=1 $(DRIVER) prose
-	UPDATE_EXPECT=1 $(DRIVER) adoc
-
-# Native simulation uses source-derived expectations in both cached modes
-.PHONY: test-sim-al test-sim-sl test-sim-pl
-
-test-sim-al:
-	env -u UPDATE_EXPECT $(DRIVER) sim al $(CORPUS_ARGS)
-
-test-sim-sl:
-	env -u UPDATE_EXPECT $(DRIVER) sim sl $(CORPUS_ARGS)
-
-test-sim-pl:
-	env -u UPDATE_EXPECT $(DRIVER) sim pl $(CORPUS_ARGS)
-
-diagnostic-cli: release
-
-test-diagnostics: diagnostic-cli
-	env -u UPDATE_EXPECT $(DRIVER) diagnostics --cli "$(DIAGNOSTIC_CLI)"
-
-test-diagnostics-promote: diagnostic-cli
-	UPDATE_EXPECT=1 $(DRIVER) diagnostics --cli "$(DIAGNOSTIC_CLI)"
+test-%:
+	$(if $(FILTER_$*),,$(error unknown test alias $*))
+	$(MAKE) test FILTER='$(FILTER_$*)'

@@ -112,8 +112,10 @@ impl Prepare<PrepareContext<'_>> for source::Block {
         let instrs_len = self.instrs.len();
         let mut instrs = Vec::with_capacity(instrs_len);
         for (idx, instr) in self.instrs.into_iter().enumerate() {
-            // Deterministic selection gives every candidate the enclosing position
-            let pos = if ctx.det || idx + 1 == instrs_len { ctx.pos } else { Position::NonTail };
+            // Another instruction may conclude after one falls through, unless it is tried
+            // last, or under deterministic choice it is the only one
+            let alone = if ctx.det { instrs_len == 1 } else { idx + 1 == instrs_len };
+            let pos = if alone { ctx.pos } else { Position::NonTail };
             instrs.push(ast::Instr::prepare(&mut ctx.at(pos), instr));
         }
         ast::Block { instrs }

@@ -1,12 +1,9 @@
 //! Interpreter construction shared by corpus and diagnostic suites
 //!
 //! `Language::spec` converts specification sources for one interpreter,
-//! `build` builds a P4 runner from the result,
-//! and `Configuration` names the language and runner options a corpus runs under.
+//! `build` builds a P4 runner from the result.
 
 use std::path::PathBuf;
-
-use serde::Deserialize;
 
 use p4spectec::lang::data::arena::Arena;
 
@@ -16,9 +13,8 @@ use p4spectec::runner::{self, Config, Extern, Runner, Spec};
 
 use super::{Error, Result};
 
-/// Selects the production interpreter used by a configuration or diagnostic case.
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
+/// Selects the production interpreter used by a corpus or diagnostic case.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Language {
     Al,
     Sl,
@@ -26,13 +22,21 @@ pub enum Language {
 }
 
 impl Language {
-    /// Returns the language's registration spelling.
+    /// Returns the language's spelling in worker arguments.
     pub fn name(self) -> &'static str {
         match self {
             Self::Al => "al",
             Self::Sl => "sl",
             Self::Pl => "pl",
         }
+    }
+
+    /// Reads a language spelled as in worker arguments.
+    pub fn from_name(name: &str) -> Result<Self> {
+        [Self::Al, Self::Sl, Self::Pl]
+            .into_iter()
+            .find(|language| language.name() == name)
+            .ok_or_else(|| Error::from(format!("unknown language {name}")))
     }
 
     /// Converts specification sources into this language's runner specification.
@@ -43,36 +47,6 @@ impl Language {
             Self::Pl => p4spectec::SpecLang::Pl,
         };
         Ok(p4spectec::runner_spec_with_warnings(spec_lang, paths).0?)
-    }
-}
-
-/// Names one interpreter setup under which a corpus runs every suite.
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Configuration {
-    pub name: String,
-    pub language: Language,
-    pub cache: bool,
-    pub det: bool,
-}
-
-impl Configuration {
-    /// Finds the configuration named on the command line.
-    pub fn find<'a>(configs: &'a [Self], name: &str) -> Result<&'a Self> {
-        configs
-            .iter()
-            .find(|config| config.name == name)
-            .ok_or_else(|| Error::from(format!("no configuration named {name}")))
-    }
-
-    /// Returns the runner options of this configuration.
-    pub fn runner(&self) -> Config {
-        Config::new(self.cache, self.det, false, true)
-    }
-
-    /// Describes the configuration in progress and summary lines.
-    pub fn describe(&self) -> String {
-        format!("{} cache={} det={}", self.name, self.cache, self.det)
     }
 }
 
