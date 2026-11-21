@@ -225,6 +225,7 @@ a case that times out only warns.
 as the cases end: each line is `<outcome>,<paths>,<seconds>`
 (seconds empty for an excluded case), so `sort -t, -k3 -n -r DIR/run-pos-sl.log | head` lists the slowest cases.
 `make test PROFILE=ci` runs the CI selection of `p4spectec/.config/nextest.toml`.
+A run stops at the first failing test; `make test NO_FAIL_FAST=1` runs every test.
 
 Speclang and diagnostic tests compare text with [insta](https://insta.rs) snapshots (`.snap` files);
 a failure prints only the changed lines, colored in a terminal (`CLICOLOR_FORCE` in `p4spectec/.cargo/config.toml`),
