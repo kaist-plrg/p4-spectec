@@ -4,7 +4,7 @@
 //! Programs listed under the test's exclusion directories are skipped.
 //! Each test runs its corpus in one `p4spectec-test-worker`,
 //! which gives each program the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
-//! and compares the outcomes with `expected/p4parse/<suite>.snap`.
+//! and compares the outcomes with `expected/p4parse/<suite>.expected`.
 
 use std::path::Path;
 
@@ -18,7 +18,7 @@ const OPTIONS: [&str; 4] = ["--spec", "spec", "--include", "p4c/p4include"];
 
 /// One roundtrip corpus.
 struct Suite {
-    /// Names the snapshot `expected/p4parse/<name>.snap`.
+    /// Names the expectation `expected/p4parse/<name>.expected`.
     name: &'static str,
     /// Holds the programs, relative to the repository root.
     dir: &'static str,
@@ -27,7 +27,7 @@ struct Suite {
 }
 
 /// Roundtrips the programs of `suite`
-/// and compares the outcomes with the snapshot of `suite`.
+/// and compares the outcomes with the expectation of `suite`.
 ///
 /// Panics with the error text, so that its lines print unescaped.
 fn p4parse(suite: &Suite) {
@@ -37,8 +37,8 @@ fn p4parse(suite: &Suite) {
             let args = [&OPTIONS[..], &["p4parse"]].concat();
             corpus.run(WORKER, &args, &format!("p4parse-{}", suite.name))
         });
-    let path_expected =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/p4parse/{}.snap", suite.name));
+    let path_expected = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("expected/p4parse/{}.expected", suite.name));
     match result {
         Ok(report) => report.check(&path_expected),
         Err(error) => panic!("{error}"),

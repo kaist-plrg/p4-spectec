@@ -5,10 +5,10 @@
 //! A test runs a corpus through a worker:
 //! `Corpus::files(dir, ".p4")?.excludes(dirs)?.run(worker, args, name)?.check(path_expected)`
 //! gives each case the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
-//! and compares the outcomes with a snapshot,
-//! printing the worker's details of every case whose outcome changed.
+//! and compares the outcomes with an expectation,
+//! listing the cases whose outcome changed with the worker's details.
 //! With `P4SPECTEC_TEST_LOG` set to a directory,
-//! the run also writes `<name>.log` there: the snapshot's lines in corpus order,
+//! the run also writes `<name>.log` there: the expectation's lines in corpus order,
 //! each followed by its duration in seconds (empty for an excluded case).
 
 use std::{
@@ -30,6 +30,13 @@ const ENV_TIMEOUT: &str = "P4SPECTEC_TEST_TIMEOUT";
 /// Names the environment variable setting the directory of run logs.
 const ENV_LOG: &str = "P4SPECTEC_TEST_LOG";
 
+/// Names the environment variable that rewrites expectations when `always`,
+/// the one insta reads.
+const ENV_UPDATE: &str = "INSTA_UPDATE";
+
+/// Bounds the cases a failure lists per change.
+const LIMIT_CASES: usize = 20;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Outcome {
     Pass,
@@ -39,7 +46,7 @@ pub enum Outcome {
 }
 
 impl Outcome {
-    /// Spells the outcome as recorded in snapshots.
+    /// Spells the outcome as recorded in expectations.
     pub fn name(self) -> &'static str {
         match self {
             Self::Pass => "pass",
@@ -49,7 +56,7 @@ impl Outcome {
         }
     }
 
-    /// Reads an outcome spelled as in snapshots.
+    /// Reads an outcome spelled as in expectations.
     pub fn from_name(name: &str) -> Result<Self> {
         [Self::Pass, Self::Fail, Self::Exclude, Self::Timeout]
             .into_iter()
@@ -201,14 +208,16 @@ pub struct Report {
 }
 
 impl Report {
-    /// Compares the outcome of every case with the snapshot at `path_expected`.
+    /// Compares the outcome of every case with the expectation at `path_expected`.
     ///
     /// Each line is `<outcome>,<paths>`, in corpus order.
-    /// A case that timed out keeps its line of the snapshot,
+    /// A case that timed out keeps its expected outcome,
     /// since a timeout says nothing about the outcome.
-    /// A changed case with details from the worker prints its paths and details,
-    /// the reason the snapshot diff leaves out.
-    /// `INSTA_UPDATE=always` rewrites the snapshot instead.
+    /// A failure lists the changed cases grouped by change,
+    /// `none` standing for a case missing on one side,
+    /// each with the worker's details.
+    /// `INSTA_UPDATE=always`, which also rewrites insta snapshots,
+    /// rewrites the expectation instead.
     pub fn check(&self, path_expected: &Path) {
         let count = |outcome| {
             self.outcomes
@@ -224,42 +233,83 @@ impl Report {
             count(Outcome::Fail),
             count(Outcome::Timeout),
         );
-        // Index the snapshot's lines by case, past its metadata header
+        // Index the expected outcomes by case
         let text_expected = fs::read_to_string(path_expected).unwrap_or_default();
-        let (_, text_expected) = text_expected.split_once("\n---\n").unwrap_or_default();
-        let lines_expected: BTreeMap<&str, &str> = text_expected
+        let names_expected: BTreeMap<&str, &str> = text_expected
             .lines()
-            .filter_map(|line| line.split_once(',').map(|(_, text_case)| (text_case, line)))
+            .filter_map(|line| line.split_once(','))
+            .map(|(name, text_case)| (text_case, name))
             .collect();
+        // Spell each reached outcome and group the changed cases by change
         let mut text = String::new();
+        let mut changes: BTreeMap<(&str, &str), Vec<(&str, &str)>> = BTreeMap::new();
         for (text_case, outcome, details) in &self.outcomes {
-            let line = match (outcome, lines_expected.get(text_case.as_str())) {
-                // Keep the recorded outcome of a case that timed out
-                (Outcome::Timeout, Some(line)) => {
+            let name_expected = names_expected.get(text_case.as_str()).copied();
+            let name = match (outcome, name_expected) {
+                // Keep the expected outcome of a case that timed out
+                (Outcome::Timeout, Some(name)) => {
                     eprintln!("warning: timeout {text_case}");
-                    (*line).to_owned()
+                    name
                 }
                 // Record any other outcome as reached
-                _ => format!("{},{text_case}", outcome.name()),
+                _ => outcome.name(),
             };
-            // Print why a case changed its outcome
-            if lines_expected.get(text_case.as_str()) != Some(&line.as_str()) && !details.is_empty()
-            {
-                println!("{text_case}");
+            if name_expected != Some(name) {
+                changes
+                    .entry((name_expected.unwrap_or("none"), name))
+                    .or_default()
+                    .push((text_case, details));
+            }
+            text.push_str(&format!("{name},{text_case}\n"));
+        }
+        // Report expected cases the corpus no longer has
+        let cases: BTreeSet<&str> = self
+            .outcomes
+            .iter()
+            .map(|(text_case, ..)| text_case.as_str())
+            .collect();
+        for (text_case, name) in &names_expected {
+            if !cases.contains(text_case) {
+                changes
+                    .entry((name, "none"))
+                    .or_default()
+                    .push((text_case, ""));
+            }
+        }
+        // Rewrite the expectation on request
+        if std::env::var(ENV_UPDATE).is_ok_and(|value| value == "always") {
+            if text != text_expected {
+                fs::write(path_expected, &text).unwrap();
+                println!("updated {}", path_expected.display());
+            }
+            return;
+        }
+        if changes.is_empty() {
+            return;
+        }
+        // List the changed cases, at most `LIMIT_CASES` per change
+        for ((name_expected, name), cases) in &changes {
+            println!("{name_expected} -> {name}: {} cases", cases.len());
+            for (text_case, details) in cases.iter().take(LIMIT_CASES) {
+                println!("    {text_case}");
                 for line_details in details.lines() {
-                    println!("    {line_details}");
+                    println!("        {line_details}");
                 }
             }
-            text.push_str(&line);
-            text.push('\n');
+            if cases.len() > LIMIT_CASES {
+                println!("    and {} more", cases.len() - LIMIT_CASES);
+            }
         }
-        let name = path_expected.file_stem().unwrap().to_str().unwrap();
-        insta::with_settings!({
-            snapshot_path => path_expected.parent().unwrap(),
-            prepend_module_to_snapshot => false,
-            omit_expression => true,
-        }, {
-            insta::assert_snapshot!(name, text);
-        });
+        // Name the expectation relative to the workspace, where `make test` runs
+        let dir_workspace = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let count_changed: usize = changes.values().map(Vec::len).sum();
+        panic!(
+            "{count_changed} of {} cases changed from {}; {ENV_UPDATE}=always rewrites it",
+            self.outcomes.len(),
+            path_expected
+                .strip_prefix(dir_workspace)
+                .unwrap_or(path_expected)
+                .display(),
+        );
     }
 }

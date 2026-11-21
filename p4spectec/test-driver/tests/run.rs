@@ -4,7 +4,7 @@
 //! Programs listed under the test's exclusion directories are skipped.
 //! Each test runs its corpus in one `p4spectec-test-worker`,
 //! which gives each program the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
-//! and compares the outcomes with `expected/run/<suite>.snap`,
+//! and compares the outcomes with `expected/run/<suite>.expected`,
 //! which the languages share.
 
 use std::path::Path;
@@ -23,7 +23,7 @@ const OPTIONS: [&str; 7] =
 
 /// One execution corpus.
 struct Suite {
-    /// Names the snapshot `expected/run/<name>.snap`.
+    /// Names the expectation `expected/run/<name>.expected`.
     name: &'static str,
     /// Names the relation each program runs through.
     relation: &'static str,
@@ -34,7 +34,7 @@ struct Suite {
 }
 
 /// Runs the programs of `suite` under `language`
-/// and compares the outcomes with the snapshot of `suite`.
+/// and compares the outcomes with the expectation of `suite`.
 ///
 /// Panics with the error text, so that its lines print unescaped.
 fn run(suite: &Suite, language: Language) {
@@ -45,7 +45,7 @@ fn run(suite: &Suite, language: Language) {
             corpus.run(WORKER, &args, &format!("run-{}-{}", suite.name, language.name()))
         });
     let path_expected =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/run/{}.snap", suite.name));
+        Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/run/{}.expected", suite.name));
     match result {
         Ok(report) => report.check(&path_expected),
         Err(error) => panic!("{error}"),
