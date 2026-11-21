@@ -17,7 +17,7 @@ use super::{Case, failure};
 /// Requires simulator admission or source program evaluation to reject.
 pub(super) fn run_case(case: &Case) -> Result<Vec<Report>> {
     let path = &case.input;
-    let config = Config::new(true, false, false, true);
+    let config = Config { cache: true, det: false, guard: false, tco: true };
     // A source specification exercises architecture admission normally
     if path.extension().is_some_and(|ext| ext == "watsup") {
         let Some(arch) = &case.arch else {
