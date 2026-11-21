@@ -35,7 +35,7 @@ use p4spectec::lang::{
 
 use p4spectec::runner::{ExternError, Interface, Interpreter, RunnerContext};
 
-use crate::stf::ast::Statement;
+use crate::stf::syntax::ast::Statement;
 
 use crate::error;
 

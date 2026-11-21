@@ -28,7 +28,7 @@ use p4spectec::runner::{
 
 use crate::stf::{
     self,
-    ast::{Action, MatchKind, Name, Statement, TableMatch},
+    syntax::ast::{Action, MatchKind, Name, Statement, TableMatch},
 };
 
 use crate::error::{self, SimError};
@@ -39,10 +39,12 @@ use crate::arch::{
     state::SimState,
 };
 
-use super::{
-    expect::{self, Expectation},
-    table,
-};
+use super::table;
+
+use self::expect::Expectation;
+
+pub(crate) mod expect;
+mod r#match;
 
 // == Helpers
 
@@ -735,7 +737,7 @@ where
     Arch: Architecture,
 {
     let mut run = init_pipe(arena, runner, includes, path_p4)?;
-    let stmts = stf::parse::parse_file(path_stf)?;
+    let stmts = stf::syntax::parse::parse_file(path_stf)?;
     for stmt in &stmts.0 {
         if let Some(tx) = run_stf_stmt(arena, runner, &mut run, stmt)? {
             on_match(&tx);

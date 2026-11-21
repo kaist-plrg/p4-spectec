@@ -30,7 +30,7 @@ use p4spectec::lang::{
 
 use p4spectec::runner::{ExternError, Interface, Interpreter, RunnerContext};
 
-use crate::stf::ast::Statement;
+use crate::stf::syntax::ast::Statement;
 
 use crate::error;
 
@@ -136,7 +136,7 @@ impl ObjectState {
 /// `main.eg`, and `$valid$` in an `add` match becomes `isValid()`.
 /// A bare name, such as the global name of `@name(".t")`, is kept.
 pub fn transform_stf_stmt(mut stmt: Statement) -> Statement {
-    fn transform_name(name: crate::stf::ast::Name) -> crate::stf::ast::Name {
+    fn transform_name(name: crate::stf::syntax::ast::Name) -> crate::stf::syntax::ast::Name {
         // Keep a bare name; only a qualified name has a block prefix
         if !name.to_string().contains('.') {
             return name;

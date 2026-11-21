@@ -14,7 +14,7 @@ use p4spectec::lang::data::value::flat::Value;
 
 use p4spectec::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
 
-use crate::stf::ast::Statement;
+use crate::stf::syntax::ast::Statement;
 
 use crate::error;
 

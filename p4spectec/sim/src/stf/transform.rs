@@ -4,10 +4,7 @@
 //! action qualification before simulation. For example, `hdr.$valid$` becomes
 //! `hdr.isValid()`.
 
-use super::{
-    ast::{Action, TableMatch},
-    name::Name,
-};
+use super::syntax::ast::{Action, Name, TableMatch};
 
 // == Case-insensitive string helpers
 

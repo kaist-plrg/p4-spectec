@@ -25,7 +25,7 @@ use p4spectec::lang::{
 
 use p4spectec::runner::{ExternError, Interface, Interpreter, RunnerContext};
 
-use crate::stf::ast::{Name, Statement};
+use crate::stf::syntax::ast::{Name, Statement};
 
 use crate::error;
 
