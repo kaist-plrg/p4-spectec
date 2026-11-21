@@ -18,8 +18,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use expect_test::expect_file;
-
 use super::{
     Error, Result,
     worker::{self, Reply, Worker},
@@ -40,7 +38,7 @@ pub enum Outcome {
 }
 
 impl Outcome {
-    /// Spells the outcome as recorded in expected files.
+    /// Spells the outcome as recorded in snapshots.
     pub fn name(self) -> &'static str {
         match self {
             Self::Pass => "pass",
@@ -50,7 +48,7 @@ impl Outcome {
         }
     }
 
-    /// Reads an outcome spelled as in expected files.
+    /// Reads an outcome spelled as in snapshots.
     pub fn from_name(name: &str) -> Result<Self> {
         [Self::Pass, Self::Fail, Self::Exclude, Self::Timeout]
             .into_iter()
@@ -209,7 +207,7 @@ impl Report {
     /// Each line is `<outcome>,<paths>`, in corpus order.
     /// A case that timed out keeps its line of the snapshot,
     /// since a timeout says nothing about the outcome.
-    /// `UPDATE_EXPECT=1` rewrites the snapshot instead.
+    /// `INSTA_UPDATE=always` rewrites the snapshot instead.
     pub fn check(&self, path_expected: &Path) {
         let count = |outcome| {
             self.outcomes
@@ -225,8 +223,9 @@ impl Report {
             count(Outcome::Fail),
             count(Outcome::Timeout),
         );
-        // Index the snapshot's lines by case
+        // Index the snapshot's lines by case, past its metadata header
         let text_expected = fs::read_to_string(path_expected).unwrap_or_default();
+        let (_, text_expected) = text_expected.split_once("\n---\n").unwrap_or_default();
         let lines_expected: BTreeMap<&str, &str> = text_expected
             .lines()
             .filter_map(|line| line.split_once(',').map(|(_, text_case)| (text_case, line)))
@@ -245,6 +244,13 @@ impl Report {
             text.push_str(&line);
             text.push('\n');
         }
-        expect_file![path_expected].assert_eq(&text);
+        let name = path_expected.file_stem().unwrap().to_str().unwrap();
+        insta::with_settings!({
+            snapshot_path => path_expected.parent().unwrap(),
+            prepend_module_to_snapshot => false,
+            omit_expression => true,
+        }, {
+            insta::assert_snapshot!(name, text);
+        });
     }
 }

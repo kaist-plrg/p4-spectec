@@ -4,7 +4,7 @@
 //! Programs listed under the test's exclusion directories are skipped.
 //! Each test runs its corpus in one `p4spectec-test-worker`,
 //! which gives each program the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
-//! and compares the outcomes with `expected/run/<suite>.expected`,
+//! and compares the outcomes with `expected/run/<suite>.snap`,
 //! which the languages share.
 
 use std::path::Path;
@@ -23,7 +23,7 @@ const OPTIONS: [&str; 7] =
 
 /// One execution corpus.
 struct Suite {
-    /// Names the snapshot `expected/run/<name>.expected`.
+    /// Names the snapshot `expected/run/<name>.snap`.
     name: &'static str,
     /// Names the relation each program runs through.
     relation: &'static str,
@@ -45,7 +45,7 @@ fn run(suite: &Suite, language: Language) {
             corpus.run(WORKER, &args, &format!("run-{}-{}", suite.name, language.name()))
         });
     let path_expected =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/run/{}.expected", suite.name));
+        Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/run/{}.snap", suite.name));
     match result {
         Ok(report) => report.check(&path_expected),
         Err(error) => panic!("{error}"),

@@ -35,8 +35,8 @@ clean:
 # FILTER=EXPR selects tests by a nextest filterset, e.g. FILTER='binary(run)'
 # PROFILE=NAME selects a profile of .config/nextest.toml (CI uses `ci`)
 # TIMEOUT=SECONDS gives each corpus case a timeout (none by default)
-# TEST_LOG=DIR writes DIR/<test>.log per corpus test: each case's expected line and duration
-# UPDATE_EXPECT=1 rewrites expected files instead of comparing with them
+# TEST_LOG=DIR writes DIR/<test>.log per corpus test: each case's snapshot line and duration
+# INSTA_UPDATE=always rewrites snapshots instead of comparing with them
 .PHONY: test
 
 test:

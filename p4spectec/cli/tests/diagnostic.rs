@@ -4,17 +4,15 @@
 //! A test runs the product with them from `testdata/spec`,
 //! requires it to fail (or, where written, to pass),
 //! and compares its stderr with the expectation beside the argument file:
-//! `<stem>.expect`, or, when absent, the one the languages share,
+//! the snapshot `<stem>.snap`, or, when absent, the one the languages share,
 //! named by the stem without its `al`, `sl`, or `pl` segment.
-//! `UPDATE_EXPECT=1` rewrites the expectation instead.
+//! `INSTA_UPDATE=always` rewrites the snapshot instead.
 
 use std::{
     fs,
     path::{Path, PathBuf},
     process::Command,
 };
-
-use expect_test::expect_file;
 
 /// Returns `testdata/spec`, the directory the product runs from.
 fn root() -> PathBuf {
@@ -36,7 +34,7 @@ fn args_files(dir: &str) -> Vec<PathBuf> {
 
 /// Returns the expectation of the argument file at `path`.
 fn expected(path: &Path) -> PathBuf {
-    let path_own = path.with_extension("expect");
+    let path_own = path.with_extension("snap");
     if root().join(&path_own).exists() {
         return path_own;
     }
@@ -46,7 +44,7 @@ fn expected(path: &Path) -> PathBuf {
         .split('-')
         .filter(|segment| !["al", "sl", "pl"].contains(segment))
         .collect();
-    path.with_file_name(format!("{}.expect", segments.join("-")))
+    path.with_file_name(format!("{}.snap", segments.join("-")))
 }
 
 /// Runs the product with the arguments of `path` from `dir`
@@ -60,7 +58,14 @@ fn check(path: &Path, dir: &Path, success: bool, path_expected: &Path) {
         .expect("run the product");
     assert_eq!(output.status.success(), success, "{}: exit status", path.display());
     let stderr = String::from_utf8(output.stderr).expect("UTF-8 stderr");
-    expect_file![root().join(path_expected)].assert_eq(&stderr);
+    let name = path_expected.file_stem().unwrap().to_str().unwrap();
+    insta::with_settings!({
+        snapshot_path => root().join(path_expected.parent().unwrap()),
+        prepend_module_to_snapshot => false,
+        omit_expression => true,
+    }, {
+        insta::assert_snapshot!(name, stderr);
+    });
 }
 
 /// Runs every argument file of `dir`, each of which must fail.
@@ -96,6 +101,6 @@ fn splice() {
             let path_input = Path::new("cli/splice").join(name);
             fs::copy(root().join(&path_input), dir.path().join(&path_input)).unwrap();
         }
-        check(&path, dir.path(), true, Path::new("cli/splice/warning-original.expect"));
+        check(&path, dir.path(), true, Path::new("cli/splice/warning-original.snap"));
     }
 }

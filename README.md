@@ -217,16 +217,17 @@ started with the specification, P4 include directories, and runner options its t
 `make test TIMEOUT=SECONDS` (or `P4SPECTEC_TEST_TIMEOUT`) gives each case a timeout;
 without it, cases run without one.
 Each corpus test names the `excludes/` directories whose `.exclude` files list the cases it skips,
-and compares the outcome of every case with `p4spectec/test-driver/expected/<file>/<suite>.expected`,
+and compares the outcome of every case with `p4spectec/test-driver/expected/<file>/<suite>.snap`,
 which the AL, SL, and PL tests of a suite share;
 a case that times out keeps its recorded outcome.
 `make test TEST_LOG=DIR` also writes `DIR/<test>.log` per corpus test, such as `DIR/run-pos-sl.log`,
-as the cases end: each line is the case's expected-file line followed by its duration in seconds
+as the cases end: each line is the case's snapshot line followed by its duration in seconds
 (empty for an excluded case), so `sort -t, -k3 -n -r DIR/run-pos-sl.log | head` lists the slowest cases.
 `make test PROFILE=ci` runs the CI selection of `p4spectec/.config/nextest.toml`.
 
-Corpus, speclang, and diagnostic tests compare text with expected files.
-`UPDATE_EXPECT=1 make test` rewrites those files instead;
+Corpus, speclang, and diagnostic tests compare text with [insta](https://insta.rs) snapshots (`.snap` files);
+a failure prints only the changed lines and leaves the new text in `<name>.snap.new`.
+`INSTA_UPDATE=always make test` rewrites the snapshots instead;
 review their diffs before committing.
 
 `make clean` removes `bin/p4spectec` and the selected Cargo build directory.

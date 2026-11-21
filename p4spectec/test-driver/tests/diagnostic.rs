@@ -3,16 +3,14 @@
 //! A test runs every fixture of its directories under `testdata/spec`:
 //! the stages before its own must pass, and its own must fail
 //! (or, in a `_pos` test, pass).
-//! The reports are rendered and compared with `<stem>.expect` beside the fixture;
-//! `UPDATE_EXPECT=1` rewrites the expectation instead.
+//! The reports are rendered and compared with the snapshot `<stem>.snap` beside the fixture;
+//! `INSTA_UPDATE=always` rewrites the snapshot instead.
 //! Every test runs from `testdata/spec`, so that reports show stable relative paths.
 
 use std::{
     fmt::Display,
     path::{Path, PathBuf},
 };
-
-use expect_test::expect_file;
 
 use p4spectec::{
     diagnostic::{DisplayStyle, RenderConfig, Renderer, Report},
@@ -79,13 +77,19 @@ fn check(path_expected: &Path, reports: &[Report], config: &RenderConfig) {
             .expect("render report");
         text.push_str(&rendered);
     }
-    let path_expected = std::env::current_dir().unwrap().join(path_expected);
-    expect_file![path_expected].assert_eq(&text);
+    let name = path_expected.file_stem().unwrap().to_str().unwrap();
+    insta::with_settings!({
+        snapshot_path => std::env::current_dir().unwrap().join(path_expected.parent().unwrap()),
+        prepend_module_to_snapshot => false,
+        omit_expression => true,
+    }, {
+        insta::assert_snapshot!(name, text);
+    });
 }
 
 /// Returns the expectation beside `path`.
 fn expected(path: &Path) -> PathBuf {
-    path.with_extension("expect")
+    path.with_extension("snap")
 }
 
 /// Renders runtime frames in the short style.
@@ -235,7 +239,7 @@ fn run_neg() {
             let result = runner.eval_rel(&mut arena, "R", &[nat]).result;
             let error = must_fail(&path, "relation R", result);
             // A language's own expectation overrides the shared one
-            let path_language = path.with_extension(format!("{}.expect", language.name()));
+            let path_language = path.with_extension(format!("{}.snap", language.name()));
             let path_expected =
                 if path_language.exists() { path_language } else { expected(&path) };
             check(&path_expected, &[*error.into_report()], &frames_short());

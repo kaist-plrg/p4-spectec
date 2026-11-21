@@ -8,7 +8,7 @@
 //! Pairs naming a file listed under the test's exclusion directories are skipped.
 //! Each test runs its pairs in one `p4spectec-test-worker`,
 //! which gives each pair the timeout of `P4SPECTEC_TEST_TIMEOUT`, if set,
-//! and compares the outcomes with `expected/sim/<suite>.expected`,
+//! and compares the outcomes with `expected/sim/<suite>.snap`,
 //! which the languages share.
 
 use std::{
@@ -118,7 +118,7 @@ fn pairs(arch: &str, dir_p4: &str, dir_stf: &str, dir_patches: Option<&str>) -> 
 
 /// One simulation corpus: the `arch` programs of `dir_p4` paired with the STF tests of `dir_stf`.
 struct Suite {
-    /// Names the snapshot `expected/sim/<name>.expected`.
+    /// Names the snapshot `expected/sim/<name>.snap`.
     name: &'static str,
     /// Names the architecture, whose model the programs include.
     arch: &'static str,
@@ -144,7 +144,7 @@ fn sim(suite: &Suite, language: Language) {
             corpus.run(WORKER, &args, &format!("sim-{}-{}", suite.name, language.name()))
         });
     let path_expected =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/sim/{}.expected", suite.name));
+        Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("expected/sim/{}.snap", suite.name));
     match result {
         Ok(report) => report.check(&path_expected),
         Err(error) => panic!("{error}"),

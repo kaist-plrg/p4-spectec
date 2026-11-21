@@ -1,12 +1,10 @@
 //! The P4 specification at every conversion stage
 //!
 //! Each test converts the sources under `spec/` from the repository root
-//! and compares the printed or rendered text with `expected/speclang/<name>.expected`;
-//! `UPDATE_EXPECT=1` rewrites the expected file instead.
+//! and compares the printed or rendered text with `expected/speclang/<name>.snap`;
+//! `INSTA_UPDATE=always` rewrites the snapshot instead.
 
 use std::path::{Path, PathBuf};
-
-use expect_test::expect_file;
 
 use p4spectec::{
     diagnostic::{RenderConfig, Renderer},
@@ -34,10 +32,13 @@ fn check(name: &str, text: &str) {
         .map(|line| line.trim_end_matches([' ', '\t']))
         .collect::<Vec<_>>()
         .join("\n");
-    let path_expected = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("expected/speclang")
-        .join(format!("{name}.expected"));
-    expect_file![path_expected].assert_eq(&text);
+    insta::with_settings!({
+        snapshot_path => Path::new(env!("CARGO_MANIFEST_DIR")).join("expected/speclang"),
+        prepend_module_to_snapshot => false,
+        omit_expression => true,
+    }, {
+        insta::assert_snapshot!(name, text);
+    });
 }
 
 #[test]
