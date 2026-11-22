@@ -31,9 +31,12 @@ clean:
 
 .DEFAULT_GOAL := test
 
-.PHONY: test test-adoc
+.PHONY: test test-core test-adoc
 
-test: test-expected test-sim-al test-sim-sl test-sim-pl
+test: test-core test-expected test-sim-al test-sim-sl test-sim-pl
+
+test-core:
+	$(CARGO) test --locked -p p4spectec --target-dir "$(TARGET_DIR)"
 
 # Standalone acceptance driver; registrations live in test-driver/suites/
 # TEST_LOG=DIR writes per-test timing logs of p4parse, run, sim, and micro

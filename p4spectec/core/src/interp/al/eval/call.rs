@@ -501,7 +501,7 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Value> {
     // Dispatch by the definition's name, recording effects before the result
-    let result = runner_ctx.call_extern_func(&extern_func.id.node, &[], values);
+    let result = runner_ctx.call_extern_func(&extern_func.id.node, targs, values);
     // Attach the call site to fatal host failures
     let value = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Guard the result against the declared type
