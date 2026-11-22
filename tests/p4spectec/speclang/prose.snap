@@ -32602,79 +32602,79 @@ relation TableActions_inst: IC STO |- (tableActionIR)*{tableActionIR <- tableAct
 
       4. Result in: % % |- % : STO_1 tableActionIR_h_inst :: (tableActionIR_t_inst)*{tableActionIR_t_inst <- tableActionIR_t_inst*}
 
-relation TableProperty_inst: IC STO |- tablePropertyIR : % %
+relation TableProperty_inst: objectId IC STO |- tablePropertyIR : % %
 
 1. Case analysis on tablePropertyIR (total)
 
   1. Case (% has type tableKeysPropertyIR, let tableKeysPropertyIR = %)
 
-    1. Group tableKeysPropertyIR: IC STO |- (tableKeysPropertyIR as tablePropertyIR) : % %
+    1. Group tableKeysPropertyIR: objectId IC STO |- (tableKeysPropertyIR as tablePropertyIR) : % %
 
-      1. Result in: % % |- % : STO (tableKeysPropertyIR as tablePropertyIR)
+      1. Result in: % % % |- % : STO (tableKeysPropertyIR as tablePropertyIR)
 
   2. Case (% has type tableActionsPropertyIR, let (ACTIONS '=' `{ tableActionListIR `}) = %)
 
-    1. Group tableActionsPropertyIR: IC STO |- ((ACTIONS '=' `{ tableActionListIR `}) as tablePropertyIR) : % %
+    1. Group tableActionsPropertyIR: objectId IC STO |- ((ACTIONS '=' `{ tableActionListIR `}) as tablePropertyIR) : % %
 
       1. (TableActions_inst: IC STO |- tableActionListIR : STO_1 tableActionListIR_inst) [FAIL]
 
       2. (Let tableActionsPropertyIR be (ACTIONS '=' `{ tableActionListIR_inst `}))
 
-      3. Result in: % % |- % : STO_1 (tableActionsPropertyIR as tablePropertyIR)
+      3. Result in: % % % |- % : STO_1 (tableActionsPropertyIR as tablePropertyIR)
 
   3. Case (% has type tableDefaultActionPropertyIR, let tableDefaultActionPropertyIR = %)
 
-    1. Group tableDefaultActionPropertyIR: IC STO |- (tableDefaultActionPropertyIR as tablePropertyIR) : % %
+    1. Group tableDefaultActionPropertyIR: objectId IC STO |- (tableDefaultActionPropertyIR as tablePropertyIR) : % %
 
-      1. Result in: % % |- % : STO (tableDefaultActionPropertyIR as tablePropertyIR)
+      1. Result in: % % % |- % : STO (tableDefaultActionPropertyIR as tablePropertyIR)
 
   4. Case (% has type tableEntriesPropertyIR, let tableEntriesPropertyIR = %)
 
-    1. Group tableEntriesPropertyIR: IC STO |- (tableEntriesPropertyIR as tablePropertyIR) : % %
+    1. Group tableEntriesPropertyIR: objectId IC STO |- (tableEntriesPropertyIR as tablePropertyIR) : % %
 
-      1. Result in: % % |- % : STO (tableEntriesPropertyIR as tablePropertyIR)
+      1. Result in: % % % |- % : STO (tableEntriesPropertyIR as tablePropertyIR)
 
   5. Case (% has type tableCustomPropertyIR, let tableCustomPropertyIR = %)
 
-    1. Group tableCustomPropertyIR: IC STO |- (tableCustomPropertyIR as tablePropertyIR) : % %
+    1. Group tableCustomPropertyIR: objectId IC STO |- (tableCustomPropertyIR as tablePropertyIR) : % %
 
       1. Case analysis on tableCustomPropertyIR (total)
 
         1. Case (% matches pattern % % CUSTOM % % ';', let (annotationList constOptIR CUSTOM nameIR ('=' typedExpressionIR) ';') = %)
 
-          1. (Let IC_inner be $enter_path_i(IC, nameIR)) [FAIL]
+          1. (Let IC_inner be IC[PATH = objectId ++ [nameIR]])
 
           2. (Expr_inst: (LOCAL) IC_inner STO |- typedExpressionIR : STO_1 value) [FAIL]
 
           3. (Let tableCustomPropertyIR_inst be (annotationList constOptIR CUSTOM_CONST nameIR ('=' _VALUE value) ';'))
 
-          4. Result in: % % |- % : STO_1 (tableCustomPropertyIR_inst as tablePropertyIR)
+          4. Result in: % % % |- % : STO_1 (tableCustomPropertyIR_inst as tablePropertyIR)
 
         2. Case (% matches pattern % % CUSTOM_CONST % % ';', let (annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';') = %)
 
           1. (Let tableCustomPropertyIR_inst be (annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';'))
 
-          2. Result in: % % |- % : STO (tableCustomPropertyIR_inst as tablePropertyIR)
+          2. Result in: % % % |- % : STO (tableCustomPropertyIR_inst as tablePropertyIR)
 
-relation TableProperties_inst: IC STO |- (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*} : % %
+relation TableProperties_inst: objectId IC STO |- (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*} : % %
 
-1. Group : IC STO |- (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*} : % %
+1. Group : objectId IC STO |- (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*} : % %
 
   1. Case analysis on (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*} (total)
 
     1. Case (% matches pattern [])
 
-      1. Result in: % % |- % : STO []
+      1. Result in: % % % |- % : STO []
 
     2. Case (% matches pattern _ :: _)
 
       1. (Let tablePropertyIR_h :: (tablePropertyIR_t)*{tablePropertyIR_t <- tablePropertyIR_t*} be (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*})
 
-      2. (TableProperty_inst: IC STO |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst) [FAIL]
+      2. (TableProperty_inst: objectId IC STO |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst) [FAIL]
 
-      3. (TableProperties_inst: IC STO_1 |- (tablePropertyIR_t)*{tablePropertyIR_t <- tablePropertyIR_t*} : STO_2 (tablePropertyIR_t_inst)*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}) [FAIL]
+      3. (TableProperties_inst: objectId IC STO_1 |- (tablePropertyIR_t)*{tablePropertyIR_t <- tablePropertyIR_t*} : STO_2 (tablePropertyIR_t_inst)*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}) [FAIL]
 
-      4. Result in: % % |- % : STO_2 tablePropertyIR_h_inst :: (tablePropertyIR_t_inst)*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}
+      4. Result in: % % % |- % : STO_2 tablePropertyIR_h_inst :: (tablePropertyIR_t_inst)*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}
 
 relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
@@ -32714,63 +32714,31 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
     1. Group tableDeclarationIR: IC_0 STO |- ((annotationList TABLE typeIR nameIR `{ tablePropertyListIR `}) as controlLocalDeclarationIR) : % % %
 
-      1. (Let IC_callee_0 be $inherit_i((BLOCK), IC_0)) [FAIL]
+      1. (Let objectId be $objectId_of_table(IC_0.PATH, annotationList, nameIR)) [FAIL]
 
-      2. (Let IC_frame be $enter_i(IC_callee_0)) [FAIL]
+      2. (Let IC_callee_0 be $inherit_i((BLOCK), IC_0)) [FAIL]
 
-      3. (TableProperties_inst: IC_frame STO |- tablePropertyListIR : STO_1 tablePropertyListIR_inst) [FAIL]
+      3. (Let IC_frame be $enter_i(IC_callee_0)) [FAIL]
 
-      4. (Let TBL be $init_table(tablePropertyListIR_inst)) [FAIL]
+      4. (TableProperties_inst: objectId IC_frame STO |- tablePropertyListIR : STO_1 tablePropertyListIR_inst) [FAIL]
 
-      5. (Let (frame')*{frame' <- frame'*} be IC_frame.LOCAL.FRAMES)
+      5. (Let TBL be $init_table(tablePropertyListIR_inst)) [FAIL]
 
-      6. Check (((frame')*{frame' <- frame'*} matches pattern _ :: _))
+      6. (Let (frame')*{frame' <- frame'*} be IC_frame.LOCAL.FRAMES)
+
+      7. Check (((frame')*{frame' <- frame'*} matches pattern _ :: _))
 
         1. (Let frame :: (_frame)*{_frame <- _frame*} be (frame')*{frame' <- frame'*})
 
         2. (Let object_table be ((TABLE nameIR `{ frame TBL `}) as object))
 
-        3. (Let nameIR_object be $name_annotation_default(annotationList, nameIR)) [FAIL]
+        3. (Let STO_2 be $add_store(STO_1, objectId, object_table)) [FAIL]
 
-        4. Block (2 arms)
+        4. (Let IC_1 be $add_var_i((BLOCK), IC_0, nameIR, ((REF objectId) as value))) [FAIL]
 
-        Arm 1:
+        5. (Let constantDeclarationIR be ((_EMPTY) CONST typeIR nameIR ('=' _VALUE ((REF objectId) as value)) ';'))
 
-          1. (Let objectId be IC_0.PATH ++ [nameIR_object])
-
-          2. (Let STO_2 be $add_store(STO_1, objectId, object_table)) [→ next]
-
-          3. If (($name_annotation(annotationList) matches pattern [])), then [→ next]
-
-            1. (Let IC_1 be $add_var_i((BLOCK), IC_0, nameIR, ((REF objectId) as value))) [→ next]
-
-            2. (Let constantDeclarationIR be ((_EMPTY) CONST typeIR nameIR ('=' _VALUE ((REF objectId) as value)) ';'))
-
-            3. Result in: % % |- % : IC_1 STO_2 ?((constantDeclarationIR as controlLocalDeclarationIR))
-
-          3. Else Dangling
-
-        Arm 2:
-
-          1. (Let objectId be $qualify_objectId(IC_0.PATH, nameIR_object)) [FAIL]
-
-          2. (Let STO_2 be $add_store(STO_1, objectId, object_table)) [FAIL]
-
-          3. (Let (nameIR')*{nameIR' <- nameIR'*} be $name_annotation(annotationList)) [FAIL]
-
-          4. Check (((nameIR')*{nameIR' <- nameIR'*} matches pattern [ _/1 ]))
-
-            1. (Let [nameIR_annotation] be (nameIR')*{nameIR' <- nameIR'*})
-
-            2. (Let objectId_annotation be $qualify_objectId(IC_0.PATH, nameIR_annotation)) [FAIL]
-
-            3. (Let STO_3 be $add_store(STO_2, objectId_annotation, object_table)) [FAIL]
-
-            4. (Let IC_1 be $add_var_i((BLOCK), IC_0, nameIR, ((REF objectId) as value))) [FAIL]
-
-            5. (Let constantDeclarationIR be ((_EMPTY) CONST typeIR nameIR ('=' _VALUE ((REF objectId) as value)) ';'))
-
-            6. Result in: % % |- % : IC_1 STO_3 ?((constantDeclarationIR as controlLocalDeclarationIR))
+        6. Result in: % % |- % : IC_1 STO_2 ?((constantDeclarationIR as controlLocalDeclarationIR))
 
 relation ControlLocalDecls_inst: IC STO |- (controlLocalDeclarationIR)*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} : % % %
 
@@ -33721,6 +33689,12 @@ def $constructor_of_externConstructorPrototypeIR(typeParameterListIR_expl, exter
 2. (Let constructorDef be ((EXTERN nameIR `< typeParameterListIR `> `( (parameterIR)*{parameterIR <- parameterIR*} `) `{ externMethodPrototypeListIR `}) as constructorDef))
 
 3. Return constructorDef
+
+def $objectId_of_table(objectId, annotationList, nameIR)
+
+1. (Let nameIR_local be $name_annotation_default(annotationList, nameIR)) [FAIL]
+
+2. Return $qualify_objectId(objectId, nameIR_local) [FAIL]
 
 def $init_table((tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*})
 

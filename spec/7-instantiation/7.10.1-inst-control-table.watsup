@@ -103,13 +103,13 @@ rulegroup TableActions_inst {
 ;;; KEY `= `{ tableKeyListIR }
 
 rule TableProperty_inst/tableKeysPropertyIR:
-  IC STO |- tableKeysPropertyIR : STO tableKeysPropertyIR
+  objectId IC STO |- tableKeysPropertyIR : STO tableKeysPropertyIR
 
 ;;; ACTIONS `= `{ tableActionListIR }
 
 rule TableProperty_inst/tableActionsPropertyIR:
-  IC STO_0 |- ACTIONS '=' `{ tableActionListIR `}
-          : STO_1 tableActionsPropertyIR
+  objectId IC STO_0 |- ACTIONS '=' `{ tableActionListIR `}
+                   : STO_1 tableActionsPropertyIR
   -- TableActions_inst:
       IC STO_0 |- tableActionListIR : STO_1 tableActionListIR_inst
   -- if tableActionsPropertyIR = ACTIONS '=' `{ tableActionListIR_inst `}
@@ -117,12 +117,12 @@ rule TableProperty_inst/tableActionsPropertyIR:
 ;;; annotationList constOptIR DEFAULT_ACTION `= tableActionReferenceIR `;
 
 rule TableProperty_inst/tableDefaultActionPropertyIR:
-  IC STO |- tableDefaultActionPropertyIR : STO tableDefaultActionPropertyIR
+  objectId IC STO |- tableDefaultActionPropertyIR : STO tableDefaultActionPropertyIR
 
 ;;; annotationList constOptIR ENTRIES `= `{ tableEntryListIR }
 
 rule TableProperty_inst/tableEntriesPropertyIR:
-  IC STO |- tableEntriesPropertyIR : STO tableEntriesPropertyIR
+  objectId IC STO |- tableEntriesPropertyIR : STO tableEntriesPropertyIR
 
 ;;; annotationList constOptIR CUSTOM nameIR initializerIR `;
 ;;; annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR `;
@@ -130,17 +130,17 @@ rule TableProperty_inst/tableEntriesPropertyIR:
 rulegroup TableProperty_inst/tableCustomPropertyIR {
 
   rule TableProperty_inst/custom:
-    IC STO_0 |- annotationList constOptIR CUSTOM nameIR ('=' typedExpressionIR) ';'
-              : STO_1 tableCustomPropertyIR_inst
-    ---- ;; instantiate expression and replace custom property with evaluated result
-    -- if IC_inner = $enter_path_i(IC, nameIR)
+    objectId IC STO_0 |- annotationList constOptIR CUSTOM nameIR ('=' typedExpressionIR) ';'
+                       : STO_1 tableCustomPropertyIR_inst
+    ---- ;; instantiate expression under the table object and replace custom property with evaluated result
+    -- if IC_inner = IC[ .PATH = objectId ++ nameIR ]
     -- Expr_inst: LOCAL IC_inner STO_0 |- typedExpressionIR : STO_1 value
     -- if tableCustomPropertyIR_inst
         = annotationList constOptIR CUSTOM_CONST nameIR ('=' _VALUE value) ';'
 
   rule TableProperty_inst/custom-const:
-    IC STO |- annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';'
-            : STO tableCustomPropertyIR_inst
+    objectId IC STO |- annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';'
+                     : STO tableCustomPropertyIR_inst
     -- if tableCustomPropertyIR_inst
         = annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';'
 
@@ -155,17 +155,27 @@ rulegroup TableProperty_inst/tableCustomPropertyIR {
 rulegroup TableProperties_inst {
 
   rule TableProperties_inst/nil:
-    IC STO |- eps : STO eps
+    objectId IC STO |- eps : STO eps
 
   rule TableProperties_inst/cons:
-    IC STO_0 |- tablePropertyIR_h :: tablePropertyIR_t*
-              : STO_2 (tablePropertyIR_h_inst :: tablePropertyIR_t_inst*)
+    objectId IC STO_0 |- tablePropertyIR_h :: tablePropertyIR_t*
+                       : STO_2 (tablePropertyIR_h_inst :: tablePropertyIR_t_inst*)
     -- TableProperty_inst:
-        IC STO_0 |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst
+        objectId IC STO_0 |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst
     -- TableProperties_inst:
-        IC STO_1 |- tablePropertyIR_t* : STO_2 tablePropertyIR_t_inst*
+        objectId IC STO_1 |- tablePropertyIR_t* : STO_2 tablePropertyIR_t_inst*
 
 }
+
+;;
+;; Table object identifier
+;;
+
+dec $objectId_of_table(objectId, annotationList, nameIR) : objectId
+
+def $objectId_of_table(objectId, annotationList, nameIR)
+  = $qualify_objectId(objectId, nameIR_local)
+  -- if nameIR_local = $name_annotation_default(annotationList, nameIR)
 
 ;;
 ;; Create runtime representation of table

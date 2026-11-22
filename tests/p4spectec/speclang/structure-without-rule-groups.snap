@@ -35268,7 +35268,7 @@ relation TableActions_inst: IC STO |- tableActionIR*{tableActionIR <- tableActio
 
           1. Result in: % % |- % : STO_1 tableActionIR_h_inst :: tableActionIR_t_inst*{tableActionIR_t_inst <- tableActionIR_t_inst*}
 
-relation TableProperty_inst: IC STO |- tablePropertyIR : % %
+relation TableProperty_inst: objectId IC STO |- tablePropertyIR : % %
 
 1. Case analysis on tablePropertyIR (total)
 
@@ -35276,7 +35276,7 @@ relation TableProperty_inst: IC STO |- tablePropertyIR : % %
 
     1. (Let tableKeysPropertyIR be tablePropertyIR as tableKeysPropertyIR)
 
-      1. Result in: % % |- % : STO tableKeysPropertyIR as tablePropertyIR
+      1. Result in: % % % |- % : STO tableKeysPropertyIR as tablePropertyIR
 
   2. Case (% has type tableActionsPropertyIR)
 
@@ -35286,19 +35286,19 @@ relation TableProperty_inst: IC STO |- tablePropertyIR : % %
 
         1. (Let tableActionsPropertyIR be ACTIONS '=' `{ tableActionListIR_inst `})
 
-          1. Result in: % % |- % : STO_1 tableActionsPropertyIR as tablePropertyIR
+          1. Result in: % % % |- % : STO_1 tableActionsPropertyIR as tablePropertyIR
 
   3. Case (% has type tableDefaultActionPropertyIR)
 
     1. (Let tableDefaultActionPropertyIR be tablePropertyIR as tableDefaultActionPropertyIR)
 
-      1. Result in: % % |- % : STO tableDefaultActionPropertyIR as tablePropertyIR
+      1. Result in: % % % |- % : STO tableDefaultActionPropertyIR as tablePropertyIR
 
   4. Case (% has type tableEntriesPropertyIR)
 
     1. (Let tableEntriesPropertyIR be tablePropertyIR as tableEntriesPropertyIR)
 
-      1. Result in: % % |- % : STO tableEntriesPropertyIR as tablePropertyIR
+      1. Result in: % % % |- % : STO tableEntriesPropertyIR as tablePropertyIR
 
   5. Case (% has type tableCustomPropertyIR)
 
@@ -35310,13 +35310,13 @@ relation TableProperty_inst: IC STO |- tablePropertyIR : % %
 
           1. (Let annotationList constOptIR CUSTOM nameIR '=' typedExpressionIR ';' be tableCustomPropertyIR)
 
-            1. (Let IC_inner be $enter_path_i(IC, nameIR))
+            1. (Let IC_inner be IC[PATH = objectId ++ [nameIR]])
 
               1. (Expr_inst: LOCAL IC_inner STO |- typedExpressionIR : STO_1 value)
 
                 1. (Let tableCustomPropertyIR_inst be annotationList constOptIR CUSTOM_CONST nameIR '=' _VALUE value ';')
 
-                  1. Result in: % % |- % : STO_1 tableCustomPropertyIR_inst as tablePropertyIR
+                  1. Result in: % % % |- % : STO_1 tableCustomPropertyIR_inst as tablePropertyIR
 
         2. Case (% matches pattern % % CUSTOM_CONST % % ';')
 
@@ -35324,25 +35324,25 @@ relation TableProperty_inst: IC STO |- tablePropertyIR : % %
 
             1. (Let tableCustomPropertyIR_inst be annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';')
 
-              1. Result in: % % |- % : STO tableCustomPropertyIR_inst as tablePropertyIR
+              1. Result in: % % % |- % : STO tableCustomPropertyIR_inst as tablePropertyIR
 
-relation TableProperties_inst: IC STO |- tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} : % %
+relation TableProperties_inst: objectId IC STO |- tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} : % %
 
 1. Case analysis on tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} (total)
 
   1. Case (% matches pattern [])
 
-    1. Result in: % % |- % : STO []
+    1. Result in: % % % |- % : STO []
 
   2. Case (% matches pattern _ :: _)
 
     1. (Let tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} be tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
 
-      1. (TableProperty_inst: IC STO |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst)
+      1. (TableProperty_inst: objectId IC STO |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst)
 
-        1. (TableProperties_inst: IC STO_1 |- tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} : STO_2 tablePropertyIR_t_inst*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*})
+        1. (TableProperties_inst: objectId IC STO_1 |- tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} : STO_2 tablePropertyIR_t_inst*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*})
 
-          1. Result in: % % |- % : STO_2 tablePropertyIR_h_inst :: tablePropertyIR_t_inst*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}
+          1. Result in: % % % |- % : STO_2 tablePropertyIR_h_inst :: tablePropertyIR_t_inst*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}
 
 relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
@@ -35382,61 +35382,33 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
     1. (Let annotationList TABLE typeIR nameIR `{ tablePropertyListIR `} be controlLocalDeclarationIR as tableDeclarationIR)
 
-      1. (Let IC_callee_0 be $inherit_i(BLOCK, IC_0))
+      1. (Let objectId be $objectId_of_table(IC_0.PATH, annotationList, nameIR))
 
-        1. (Let IC_frame be $enter_i(IC_callee_0))
+        1. (Let IC_callee_0 be $inherit_i(BLOCK, IC_0))
 
-          1. (TableProperties_inst: IC_frame STO |- tablePropertyListIR : STO_1 tablePropertyListIR_inst)
+          1. (Let IC_frame be $enter_i(IC_callee_0))
 
-            1. (Let TBL be $init_table(tablePropertyListIR_inst))
+            1. (TableProperties_inst: objectId IC_frame STO |- tablePropertyListIR : STO_1 tablePropertyListIR_inst)
 
-              1. (Let frame'*{frame' <- frame'*} be IC_frame.LOCAL.FRAMES)
+              1. (Let TBL be $init_table(tablePropertyListIR_inst))
 
-                1. If (frame'*{frame' <- frame'*} matches _ :: _), then
+                1. (Let frame'*{frame' <- frame'*} be IC_frame.LOCAL.FRAMES)
 
-                  1. (Let frame :: _frame*{_frame <- _frame*} be frame'*{frame' <- frame'*})
+                  1. If (frame'*{frame' <- frame'*} matches _ :: _), then
 
-                    1. (Let object_table be TABLE nameIR `{ frame TBL `} as object)
+                    1. (Let frame :: _frame*{_frame <- _frame*} be frame'*{frame' <- frame'*})
 
-                      1. (Let nameIR_object be $name_annotation_default(annotationList, nameIR))
+                      1. (Let object_table be TABLE nameIR `{ frame TBL `} as object)
 
-                        1. (Let objectId be IC_0.PATH ++ [nameIR_object])
+                        1. (Let STO_2 be $add_store(STO_1, objectId, object_table))
 
-                          1. (Let STO_2 be $add_store(STO_1, objectId, object_table))
+                          1. (Let IC_1 be $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value))
 
-                            1. If ($name_annotation(annotationList) matches []), then
+                            1. (Let constantDeclarationIR be _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';')
 
-                              1. (Let IC_1 be $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value))
+                              1. Result in: % % |- % : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
 
-                                1. (Let constantDeclarationIR be _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';')
-
-                                  1. Result in: % % |- % : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
-
-                            1. Else Dangling
-
-                        2. (Let objectId be $qualify_objectId(IC_0.PATH, nameIR_object))
-
-                          1. (Let STO_2 be $add_store(STO_1, objectId, object_table))
-
-                            1. (Let nameIR'*{nameIR' <- nameIR'*} be $name_annotation(annotationList))
-
-                              1. If (nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]), then
-
-                                1. (Let [nameIR_annotation] be nameIR'*{nameIR' <- nameIR'*})
-
-                                  1. (Let objectId_annotation be $qualify_objectId(IC_0.PATH, nameIR_annotation))
-
-                                    1. (Let STO_3 be $add_store(STO_2, objectId_annotation, object_table))
-
-                                      1. (Let IC_1 be $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value))
-
-                                        1. (Let constantDeclarationIR be _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';')
-
-                                          1. Result in: % % |- % : IC_1 STO_3 ?(constantDeclarationIR as controlLocalDeclarationIR)
-
-                              1. Else Dangling
-
-                1. Else Dangling
+                  1. Else Dangling
 
 relation ControlLocalDecls_inst: IC STO |- controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} : % % %
 
@@ -36403,6 +36375,12 @@ def $constructor_of_externConstructorPrototypeIR(typeParameterListIR_expl, exter
   1. (Let constructorDef be EXTERN nameIR `< typeParameterListIR `> `( parameterIR*{parameterIR <- parameterIR*} `) `{ externMethodPrototypeListIR `} as constructorDef)
 
     1. Return constructorDef
+
+def $objectId_of_table(objectId, annotationList, nameIR)
+
+1. (Let nameIR_local be $name_annotation_default(annotationList, nameIR))
+
+  1. Return $qualify_objectId(objectId, nameIR_local)
 
 def $init_table(tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
 

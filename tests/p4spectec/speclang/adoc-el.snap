@@ -21177,10 +21177,10 @@ relation TableActions_inst:
   instContext store |- tableActionIR* : store tableActionIR*
 
 relation TableProperty_inst:
-  instContext store |- tablePropertyIR : store tablePropertyIR
+  objectId instContext store |- tablePropertyIR : store tablePropertyIR
 
 relation TableProperties_inst:
-  instContext store |- tablePropertyIR* : store tablePropertyIR*
+  objectId instContext store |- tablePropertyIR* : store tablePropertyIR*
 
 relation ControlLocalDecl_inst:
   instContext store
@@ -22956,14 +22956,15 @@ rulegroup TableActions_inst {
 
 
 rule TableProperty_inst/tableKeysPropertyIR:
-  IC STO |- tableKeysPropertyIR : STO tableKeysPropertyIR
+  objectId IC STO |- tableKeysPropertyIR : STO tableKeysPropertyIR
 
 
 
 
 
 rule TableProperty_inst/tableActionsPropertyIR:
-  IC STO_0 |- ACTIONS '=' `{ tableActionListIR `} : STO_1 tableActionsPropertyIR
+  objectId IC STO_0
+      |- ACTIONS '=' `{ tableActionListIR `} : STO_1 tableActionsPropertyIR
   -- TableActions_inst:
       IC STO_0 |- tableActionListIR : STO_1 tableActionListIR_inst
   -- if tableActionsPropertyIR = ACTIONS '=' `{ tableActionListIR_inst `}
@@ -22973,14 +22974,15 @@ rule TableProperty_inst/tableActionsPropertyIR:
 
 
 rule TableProperty_inst/tableDefaultActionPropertyIR:
-  IC STO |- tableDefaultActionPropertyIR : STO tableDefaultActionPropertyIR
+  objectId IC STO
+      |- tableDefaultActionPropertyIR : STO tableDefaultActionPropertyIR
 
 
 
 
 
 rule TableProperty_inst/tableEntriesPropertyIR:
-  IC STO |- tableEntriesPropertyIR : STO tableEntriesPropertyIR
+  objectId IC STO |- tableEntriesPropertyIR : STO tableEntriesPropertyIR
 
 
 
@@ -22989,16 +22991,16 @@ rule TableProperty_inst/tableEntriesPropertyIR:
 rulegroup TableProperty_inst/tableCustomPropertyIR {
 
   rule TableProperty_inst/custom:
-    IC STO_0
+    objectId IC STO_0
         |- annotationList constOptIR CUSTOM nameIR ('=' typedExpressionIR) ';'
             : STO_1 tableCustomPropertyIR_inst
-    -- if IC_inner = $enter_path_i(IC, nameIR)
+    -- if IC_inner = IC[PATH = objectId ++ nameIR]
     -- Expr_inst: LOCAL IC_inner STO_0 |- typedExpressionIR : STO_1 value
     -- if tableCustomPropertyIR_inst
         = annotationList constOptIR CUSTOM_CONST nameIR ('=' _VALUE value) ';'
 
   rule TableProperty_inst/custom-const:
-    IC STO
+    objectId IC STO
         |- annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR
         ';'
             : STO tableCustomPropertyIR_inst
@@ -23015,18 +23017,28 @@ rulegroup TableProperty_inst/tableCustomPropertyIR {
 rulegroup TableProperties_inst {
 
   rule TableProperties_inst/nil:
-    IC STO |- eps : STO eps
+    objectId IC STO |- eps : STO eps
 
   rule TableProperties_inst/cons:
-    IC STO_0
+    objectId IC STO_0
         |- tablePropertyIR_h :: tablePropertyIR_t*
             : STO_2 (tablePropertyIR_h_inst :: tablePropertyIR_t_inst*)
     -- TableProperty_inst:
-        IC STO_0 |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst
+        objectId IC STO_0 |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst
     -- TableProperties_inst:
-        IC STO_1 |- tablePropertyIR_t* : STO_2 tablePropertyIR_t_inst*
+        objectId IC STO_1 |- tablePropertyIR_t* : STO_2 tablePropertyIR_t_inst*
 
 }
+
+
+
+
+
+dec $objectId_of_table(objectId, annotationList, nameIR) : objectId
+
+def $objectId_of_table(objectId, annotationList, nameIR)
+  = $qualify_objectId(objectId, nameIR_local)
+  -- if nameIR_local = $name_annotation_default(annotationList, nameIR)
 
 
 
@@ -23122,49 +23134,23 @@ rule ControlLocalDecl_inst/actionDeclarationIR:
 
 
 
-rulegroup ControlLocalDecl_inst/tableDeclarationIR {
-
-  rule ControlLocalDecl_inst/tableDeclarationIR-no-name-annotation:
-    IC_0 STO_0
-        |- annotationList TABLE typeIR nameIR `{ tablePropertyListIR `}
-            : IC_1 STO_2 constantDeclarationIR
-    -- if IC_callee_0 = $inherit_i(BLOCK, IC_0)
-    -- if IC_frame = $enter_i(IC_callee_0)
-    -- TableProperties_inst:
-        IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
-    -- if TBL = $init_table(tablePropertyListIR_inst)
-    -- if frame :: _ = IC_frame.LOCAL.FRAMES
-    -- if object_table = TABLE nameIR `{ frame TBL `}
-    -- if nameIR_object = $name_annotation_default(annotationList, nameIR)
-    -- if objectId = IC_0.PATH ++ nameIR_object
-    -- if STO_2 = $add_store(STO_1, objectId, object_table)
-    -- if eps = $name_annotation(annotationList)
-    -- if IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId)
-    -- if constantDeclarationIR
-        = _EMPTY CONST typeIR nameIR ('=' _VALUE (REF objectId)) ';'
-
-  rule ControlLocalDecl_inst/tableDeclarationIR-name-annotation:
-    IC_0 STO_0
-        |- annotationList TABLE typeIR nameIR `{ tablePropertyListIR `}
-            : IC_1 STO_3 constantDeclarationIR
-    -- if IC_callee_0 = $inherit_i(BLOCK, IC_0)
-    -- if IC_frame = $enter_i(IC_callee_0)
-    -- TableProperties_inst:
-        IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
-    -- if TBL = $init_table(tablePropertyListIR_inst)
-    -- if frame :: _ = IC_frame.LOCAL.FRAMES
-    -- if object_table = TABLE nameIR `{ frame TBL `}
-    -- if nameIR_object = $name_annotation_default(annotationList, nameIR)
-    -- if objectId = $qualify_objectId(IC_0.PATH, nameIR_object)
-    -- if STO_2 = $add_store(STO_1, objectId, object_table)
-    -- if nameIR_annotation = $name_annotation(annotationList)
-    -- if objectId_annotation = $qualify_objectId(IC_0.PATH, nameIR_annotation)
-    -- if STO_3 = $add_store(STO_2, objectId_annotation, object_table)
-    -- if IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId)
-    -- if constantDeclarationIR
-        = _EMPTY CONST typeIR nameIR ('=' _VALUE (REF objectId)) ';'
-
-}
+rule ControlLocalDecl_inst/tableDeclarationIR:
+  IC_0 STO_0
+      |- annotationList TABLE typeIR nameIR `{ tablePropertyListIR `}
+          : IC_1 STO_2 constantDeclarationIR
+  -- if objectId = $objectId_of_table(IC_0.PATH, annotationList, nameIR)
+  -- if IC_callee_0 = $inherit_i(BLOCK, IC_0)
+  -- if IC_frame = $enter_i(IC_callee_0)
+  -- TableProperties_inst:
+      objectId IC_frame STO_0
+          |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
+  -- if TBL = $init_table(tablePropertyListIR_inst)
+  -- if frame :: _ = IC_frame.LOCAL.FRAMES
+  -- if object_table = TABLE nameIR `{ frame TBL `}
+  -- if STO_2 = $add_store(STO_1, objectId, object_table)
+  -- if IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId)
+  -- if constantDeclarationIR
+      = _EMPTY CONST typeIR nameIR ('=' _VALUE (REF objectId)) ';'
 
 
 

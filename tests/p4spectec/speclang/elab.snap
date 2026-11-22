@@ -14829,45 +14829,45 @@ relation TableActions_inst: instContext store |- tableActionIR* : store tableAct
     -- TableAction_inst: IC STO_0 |- tableActionIR_h : STO_1 tableActionIR_h_inst
     -- TableActions_inst: IC STO_1 |- tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} : STO_2 tableActionIR_t_inst*{tableActionIR_t_inst <- tableActionIR_t_inst*}
 
-relation TableProperty_inst: instContext store |- tablePropertyIR : store tablePropertyIR
+relation TableProperty_inst: objectId instContext store |- tablePropertyIR : store tablePropertyIR
 
   rulegroup tableKeysPropertyIR
 
-    rule tableKeysPropertyIR: IC STO |- tableKeysPropertyIR as tablePropertyIR : STO tableKeysPropertyIR as tablePropertyIR
+    rule tableKeysPropertyIR: objectId IC STO |- tableKeysPropertyIR as tablePropertyIR : STO tableKeysPropertyIR as tablePropertyIR
 
   rulegroup tableActionsPropertyIR
 
-    rule tableActionsPropertyIR: IC STO_0 |- ACTIONS '=' `{ tableActionListIR `} as tablePropertyIR : STO_1 tableActionsPropertyIR as tablePropertyIR
+    rule tableActionsPropertyIR: objectId IC STO_0 |- ACTIONS '=' `{ tableActionListIR `} as tablePropertyIR : STO_1 tableActionsPropertyIR as tablePropertyIR
     -- TableActions_inst: IC STO_0 |- tableActionListIR : STO_1 tableActionListIR_inst
     -- if (tableActionsPropertyIR = ACTIONS '=' `{ tableActionListIR_inst `})
 
   rulegroup tableDefaultActionPropertyIR
 
-    rule tableDefaultActionPropertyIR: IC STO |- tableDefaultActionPropertyIR as tablePropertyIR : STO tableDefaultActionPropertyIR as tablePropertyIR
+    rule tableDefaultActionPropertyIR: objectId IC STO |- tableDefaultActionPropertyIR as tablePropertyIR : STO tableDefaultActionPropertyIR as tablePropertyIR
 
   rulegroup tableEntriesPropertyIR
 
-    rule tableEntriesPropertyIR: IC STO |- tableEntriesPropertyIR as tablePropertyIR : STO tableEntriesPropertyIR as tablePropertyIR
+    rule tableEntriesPropertyIR: objectId IC STO |- tableEntriesPropertyIR as tablePropertyIR : STO tableEntriesPropertyIR as tablePropertyIR
 
   rulegroup tableCustomPropertyIR
 
-    rule custom: IC STO_0 |- annotationList constOptIR CUSTOM nameIR '=' typedExpressionIR ';' as tablePropertyIR : STO_1 tableCustomPropertyIR_inst as tablePropertyIR
-    -- if (IC_inner = $enter_path_i(IC, nameIR))
+    rule custom: objectId IC STO_0 |- annotationList constOptIR CUSTOM nameIR '=' typedExpressionIR ';' as tablePropertyIR : STO_1 tableCustomPropertyIR_inst as tablePropertyIR
+    -- if (IC_inner = IC[PATH = objectId ++ [nameIR]])
     -- Expr_inst: LOCAL IC_inner STO_0 |- typedExpressionIR : STO_1 value
     -- if (tableCustomPropertyIR_inst = annotationList constOptIR CUSTOM_CONST nameIR '=' _VALUE value ';')
 
-    rule custom-const: IC STO |- annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';' as tablePropertyIR : STO tableCustomPropertyIR_inst as tablePropertyIR
+    rule custom-const: objectId IC STO |- annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';' as tablePropertyIR : STO tableCustomPropertyIR_inst as tablePropertyIR
     -- if (tableCustomPropertyIR_inst = annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';')
 
-relation TableProperties_inst: instContext store |- tablePropertyIR* : store tablePropertyIR*
+relation TableProperties_inst: objectId instContext store |- tablePropertyIR* : store tablePropertyIR*
 
   rulegroup
 
-    rule nil: IC STO |- [] : STO []
+    rule nil: objectId IC STO |- [] : STO []
 
-    rule cons: IC STO_0 |- tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} : STO_2 tablePropertyIR_h_inst :: tablePropertyIR_t_inst*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}
-    -- TableProperty_inst: IC STO_0 |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst
-    -- TableProperties_inst: IC STO_1 |- tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} : STO_2 tablePropertyIR_t_inst*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}
+    rule cons: objectId IC STO_0 |- tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} : STO_2 tablePropertyIR_h_inst :: tablePropertyIR_t_inst*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}
+    -- TableProperty_inst: objectId IC STO_0 |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst
+    -- TableProperties_inst: objectId IC STO_1 |- tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} : STO_2 tablePropertyIR_t_inst*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}
 
 relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR : instContext store controlLocalDeclarationIR?
 
@@ -14892,33 +14892,15 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
 
   rulegroup tableDeclarationIR
 
-    rule tableDeclarationIR-no-name-annotation: IC_0 STO_0 |- annotationList TABLE typeIR nameIR `{ tablePropertyListIR `} as controlLocalDeclarationIR : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
+    rule tableDeclarationIR: IC_0 STO_0 |- annotationList TABLE typeIR nameIR `{ tablePropertyListIR `} as controlLocalDeclarationIR : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
+    -- if (objectId = $objectId_of_table(IC_0.PATH, annotationList, nameIR))
     -- if (IC_callee_0 = $inherit_i(BLOCK, IC_0))
     -- if (IC_frame = $enter_i(IC_callee_0))
-    -- TableProperties_inst: IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
+    -- TableProperties_inst: objectId IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
     -- if (TBL = $init_table(tablePropertyListIR_inst))
     -- if (frame :: _frame*{_frame <- _frame*} = IC_frame.LOCAL.FRAMES)
     -- if (object_table = TABLE nameIR `{ frame TBL `} as object)
-    -- if (nameIR_object = $name_annotation_default(annotationList, nameIR))
-    -- if (objectId = IC_0.PATH ++ [nameIR_object])
     -- if (STO_2 = $add_store(STO_1, objectId, object_table))
-    -- if ([] = $name_annotation(annotationList))
-    -- if (IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value))
-    -- if (constantDeclarationIR = _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';')
-
-    rule tableDeclarationIR-name-annotation: IC_0 STO_0 |- annotationList TABLE typeIR nameIR `{ tablePropertyListIR `} as controlLocalDeclarationIR : IC_1 STO_3 ?(constantDeclarationIR as controlLocalDeclarationIR)
-    -- if (IC_callee_0 = $inherit_i(BLOCK, IC_0))
-    -- if (IC_frame = $enter_i(IC_callee_0))
-    -- TableProperties_inst: IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
-    -- if (TBL = $init_table(tablePropertyListIR_inst))
-    -- if (frame :: _frame*{_frame <- _frame*} = IC_frame.LOCAL.FRAMES)
-    -- if (object_table = TABLE nameIR `{ frame TBL `} as object)
-    -- if (nameIR_object = $name_annotation_default(annotationList, nameIR))
-    -- if (objectId = $qualify_objectId(IC_0.PATH, nameIR_object))
-    -- if (STO_2 = $add_store(STO_1, objectId, object_table))
-    -- if ([nameIR_annotation] = $name_annotation(annotationList))
-    -- if (objectId_annotation = $qualify_objectId(IC_0.PATH, nameIR_annotation))
-    -- if (STO_3 = $add_store(STO_2, objectId_annotation, object_table))
     -- if (IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value))
     -- if (constantDeclarationIR = _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';')
 
@@ -15394,6 +15376,11 @@ def $constructor_of_externConstructorPrototypeIR(typeParameterListIR, externMeth
   clause 0 : (typeParameterListIR_expl, externMethodPrototypeListIR, _annotationList nameIR `< ',' typeParameterListIR_impl `> `( parameterIR*{parameterIR <- parameterIR*} `) ';') = constructorDef
   -- if (typeParameterListIR = typeParameterListIR_expl ++ typeParameterListIR_impl)
   -- if (constructorDef = EXTERN nameIR `< typeParameterListIR `> `( parameterIR*{parameterIR <- parameterIR*} `) `{ externMethodPrototypeListIR `} as constructorDef)
+
+def $objectId_of_table(objectId, annotationList, nameIR) : objectId =
+
+  clause 0 : (objectId, annotationList, nameIR) = $qualify_objectId(objectId, nameIR_local)
+  -- if (nameIR_local = $name_annotation_default(annotationList, nameIR))
 
 def $init_table(tablePropertyListIR) : tableObjectProperty =
 

@@ -26273,28 +26273,28 @@ relation TableActions_inst: instContext store |- tableActionIR* : store tableAct
     -- TableActions_inst: IC STO_1 |- tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} : STO_2 tableActionIR_t_inst*{tableActionIR_t_inst <- tableActionIR_t_inst*}
     -- output: % % |- % : STO_1 tableActionIR_h_inst :: tableActionIR_t_inst*{tableActionIR_t_inst <- tableActionIR_t_inst*}
 
-relation TableProperty_inst: instContext store |- tablePropertyIR : store tablePropertyIR
+relation TableProperty_inst: objectId instContext store |- tablePropertyIR : store tablePropertyIR
 
   rulegroup tableKeysPropertyIR
 
    match
 
-    (signature) IC STO |- tableKeysPropertyIR as tablePropertyIR : % %
-    IC STO |- tablePropertyIR : % %
+    (signature) objectId IC STO |- tableKeysPropertyIR as tablePropertyIR : % %
+    objectId IC STO |- tablePropertyIR : % %
     -- if tablePropertyIR <: tableKeysPropertyIR
     -- let tableKeysPropertyIR = tablePropertyIR as tableKeysPropertyIR
 
    paths
 
     rulepath tableKeysPropertyIR
-    -- output: % % |- % : STO tableKeysPropertyIR as tablePropertyIR
+    -- output: % % % |- % : STO tableKeysPropertyIR as tablePropertyIR
 
   rulegroup tableActionsPropertyIR
 
    match
 
-    (signature) IC STO_0 |- ACTIONS '=' `{ tableActionListIR `} as tablePropertyIR : % %
-    IC STO_0 |- tablePropertyIR : % %
+    (signature) objectId IC STO_0 |- ACTIONS '=' `{ tableActionListIR `} as tablePropertyIR : % %
+    objectId IC STO_0 |- tablePropertyIR : % %
     -- if tablePropertyIR <: tableActionsPropertyIR
     -- let ACTIONS '=' `{ tableActionListIR `} = tablePropertyIR as tableActionsPropertyIR
 
@@ -26303,42 +26303,42 @@ relation TableProperty_inst: instContext store |- tablePropertyIR : store tableP
     rulepath tableActionsPropertyIR
     -- TableActions_inst: IC STO_0 |- tableActionListIR : STO_1 tableActionListIR_inst
     -- let tableActionsPropertyIR = ACTIONS '=' `{ tableActionListIR_inst `}
-    -- output: % % |- % : STO_1 tableActionsPropertyIR as tablePropertyIR
+    -- output: % % % |- % : STO_1 tableActionsPropertyIR as tablePropertyIR
 
   rulegroup tableDefaultActionPropertyIR
 
    match
 
-    (signature) IC STO |- tableDefaultActionPropertyIR as tablePropertyIR : % %
-    IC STO |- tablePropertyIR : % %
+    (signature) objectId IC STO |- tableDefaultActionPropertyIR as tablePropertyIR : % %
+    objectId IC STO |- tablePropertyIR : % %
     -- if tablePropertyIR <: tableDefaultActionPropertyIR
     -- let tableDefaultActionPropertyIR = tablePropertyIR as tableDefaultActionPropertyIR
 
    paths
 
     rulepath tableDefaultActionPropertyIR
-    -- output: % % |- % : STO tableDefaultActionPropertyIR as tablePropertyIR
+    -- output: % % % |- % : STO tableDefaultActionPropertyIR as tablePropertyIR
 
   rulegroup tableEntriesPropertyIR
 
    match
 
-    (signature) IC STO |- tableEntriesPropertyIR as tablePropertyIR : % %
-    IC STO |- tablePropertyIR : % %
+    (signature) objectId IC STO |- tableEntriesPropertyIR as tablePropertyIR : % %
+    objectId IC STO |- tablePropertyIR : % %
     -- if tablePropertyIR <: tableEntriesPropertyIR
     -- let tableEntriesPropertyIR = tablePropertyIR as tableEntriesPropertyIR
 
    paths
 
     rulepath tableEntriesPropertyIR
-    -- output: % % |- % : STO tableEntriesPropertyIR as tablePropertyIR
+    -- output: % % % |- % : STO tableEntriesPropertyIR as tablePropertyIR
 
   rulegroup tableCustomPropertyIR
 
    match
 
-    (signature) IC STO' |- tableCustomPropertyIR as tablePropertyIR : % %
-    IC STO' |- tablePropertyIR : % %
+    (signature) objectId IC STO' |- tableCustomPropertyIR as tablePropertyIR : % %
+    objectId IC STO' |- tablePropertyIR : % %
     -- if tablePropertyIR <: tableCustomPropertyIR
     -- let tableCustomPropertyIR = tablePropertyIR as tableCustomPropertyIR
 
@@ -26349,10 +26349,10 @@ relation TableProperty_inst: instContext store |- tablePropertyIR : store tableP
     -- let tableCustomPropertyIR' = tableCustomPropertyIR
     -- if tableCustomPropertyIR' matches % % CUSTOM % % ';'
     -- let annotationList constOptIR CUSTOM nameIR '=' typedExpressionIR ';' = tableCustomPropertyIR'
-    -- let IC_inner = $enter_path_i(IC, nameIR)
+    -- let IC_inner = IC[PATH = objectId ++ [nameIR]]
     -- Expr_inst: LOCAL IC_inner STO_0 |- typedExpressionIR : STO_1 value
     -- let tableCustomPropertyIR_inst = annotationList constOptIR CUSTOM_CONST nameIR '=' _VALUE value ';'
-    -- output: % % |- % : STO_1 tableCustomPropertyIR_inst as tablePropertyIR
+    -- output: % % % |- % : STO_1 tableCustomPropertyIR_inst as tablePropertyIR
 
     rulepath custom-const
     -- let STO = STO'
@@ -26360,32 +26360,32 @@ relation TableProperty_inst: instContext store |- tablePropertyIR : store tableP
     -- if tableCustomPropertyIR' matches % % CUSTOM_CONST % % ';'
     -- let annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';' = tableCustomPropertyIR'
     -- let tableCustomPropertyIR_inst = annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ';'
-    -- output: % % |- % : STO tableCustomPropertyIR_inst as tablePropertyIR
+    -- output: % % % |- % : STO tableCustomPropertyIR_inst as tablePropertyIR
 
-relation TableProperties_inst: instContext store |- tablePropertyIR* : store tablePropertyIR*
+relation TableProperties_inst: objectId instContext store |- tablePropertyIR* : store tablePropertyIR*
 
   rulegroup
 
    match
 
-    (signature) IC STO' |- tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} : % %
-    IC STO' |- tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} : % %
+    (signature) objectId IC STO' |- tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} : % %
+    objectId IC STO' |- tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} : % %
 
    paths
 
     rulepath nil
     -- let STO = STO'
     -- if (tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} = [])
-    -- output: % % |- % : STO []
+    -- output: % % % |- % : STO []
 
     rulepath cons
     -- let STO_0 = STO'
     -- let tablePropertyIR'*{tablePropertyIR' <- tablePropertyIR'*} = tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
     -- if tablePropertyIR'*{tablePropertyIR' <- tablePropertyIR'*} matches _ :: _
     -- let tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} = tablePropertyIR'*{tablePropertyIR' <- tablePropertyIR'*}
-    -- TableProperty_inst: IC STO_0 |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst
-    -- TableProperties_inst: IC STO_1 |- tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} : STO_2 tablePropertyIR_t_inst*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}
-    -- output: % % |- % : STO_2 tablePropertyIR_h_inst :: tablePropertyIR_t_inst*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}
+    -- TableProperty_inst: objectId IC STO_0 |- tablePropertyIR_h : STO_1 tablePropertyIR_h_inst
+    -- TableProperties_inst: objectId IC STO_1 |- tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} : STO_2 tablePropertyIR_t_inst*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}
+    -- output: % % % |- % : STO_2 tablePropertyIR_h_inst :: tablePropertyIR_t_inst*{tablePropertyIR_t_inst <- tablePropertyIR_t_inst*}
 
 relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR : instContext store controlLocalDeclarationIR?
 
@@ -26459,43 +26459,20 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
 
    paths
 
-    rulepath tableDeclarationIR-no-name-annotation
+    rulepath tableDeclarationIR
+    -- let objectId = $objectId_of_table(IC_0.PATH, annotationList, nameIR)
     -- let IC_callee_0 = $inherit_i(BLOCK, IC_0)
     -- let IC_frame = $enter_i(IC_callee_0)
-    -- TableProperties_inst: IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
+    -- TableProperties_inst: objectId IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
     -- let TBL = $init_table(tablePropertyListIR_inst)
     -- let frame'*{frame' <- frame'*} = IC_frame.LOCAL.FRAMES
     -- if frame'*{frame' <- frame'*} matches _ :: _
     -- let frame :: _frame*{_frame <- _frame*} = frame'*{frame' <- frame'*}
     -- let object_table = TABLE nameIR `{ frame TBL `} as object
-    -- let nameIR_object = $name_annotation_default(annotationList, nameIR)
-    -- let objectId = IC_0.PATH ++ [nameIR_object]
     -- let STO_2 = $add_store(STO_1, objectId, object_table)
-    -- if ([] = $name_annotation(annotationList))
     -- let IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value)
     -- let constantDeclarationIR = _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';'
     -- output: % % |- % : IC_1 STO_2 ?(constantDeclarationIR as controlLocalDeclarationIR)
-
-    rulepath tableDeclarationIR-name-annotation
-    -- let IC_callee_0 = $inherit_i(BLOCK, IC_0)
-    -- let IC_frame = $enter_i(IC_callee_0)
-    -- TableProperties_inst: IC_frame STO_0 |- tablePropertyListIR : STO_1 tablePropertyListIR_inst
-    -- let TBL = $init_table(tablePropertyListIR_inst)
-    -- let frame'*{frame' <- frame'*} = IC_frame.LOCAL.FRAMES
-    -- if frame'*{frame' <- frame'*} matches _ :: _
-    -- let frame :: _frame*{_frame <- _frame*} = frame'*{frame' <- frame'*}
-    -- let object_table = TABLE nameIR `{ frame TBL `} as object
-    -- let nameIR_object = $name_annotation_default(annotationList, nameIR)
-    -- let objectId = $qualify_objectId(IC_0.PATH, nameIR_object)
-    -- let STO_2 = $add_store(STO_1, objectId, object_table)
-    -- let nameIR'*{nameIR' <- nameIR'*} = $name_annotation(annotationList)
-    -- if nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]
-    -- let [nameIR_annotation] = nameIR'*{nameIR' <- nameIR'*}
-    -- let objectId_annotation = $qualify_objectId(IC_0.PATH, nameIR_annotation)
-    -- let STO_3 = $add_store(STO_2, objectId_annotation, object_table)
-    -- let IC_1 = $add_var_i(BLOCK, IC_0, nameIR, REF objectId as value)
-    -- let constantDeclarationIR = _EMPTY CONST typeIR nameIR '=' _VALUE REF objectId as value ';'
-    -- output: % % |- % : IC_1 STO_3 ?(constantDeclarationIR as controlLocalDeclarationIR)
 
 relation ControlLocalDecls_inst: instContext store |- controlLocalDeclarationIR* : instContext store controlLocalDeclarationIR*
 
@@ -27504,6 +27481,11 @@ def $constructor_of_externConstructorPrototypeIR(typeParameterListIR, externMeth
   clause 0 : (typeParameterListIR_expl, externMethodPrototypeListIR, _annotationList nameIR `< ',' typeParameterListIR_impl `> `( parameterIR*{parameterIR <- parameterIR*} `) ';') = constructorDef
   -- let typeParameterListIR = typeParameterListIR_expl ++ typeParameterListIR_impl
   -- let constructorDef = EXTERN nameIR `< typeParameterListIR `> `( parameterIR*{parameterIR <- parameterIR*} `) `{ externMethodPrototypeListIR `} as constructorDef
+
+def $objectId_of_table(objectId, annotationList, nameIR) : objectId =
+
+  clause 0 : (objectId, annotationList, nameIR) = $qualify_objectId(objectId, nameIR_local)
+  -- let nameIR_local = $name_annotation_default(annotationList, nameIR)
 
 def $init_table(tablePropertyListIR) : tableObjectProperty =
 
