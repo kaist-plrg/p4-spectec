@@ -1,6 +1,7 @@
 //! P4 execution corpora under every interpreter language
 //!
-//! Positive programs run through `Program_inst`, negative ones through `Program_ok`.
+//! Positive programs run through `Program_inst`, p4c negative ones through `Program_ok`,
+//! and regression negative ones through `Program_inst`.
 //! Programs listed under the test's exclusion directories are skipped.
 //! Each corpus test prepares the specification once, runs its corpus from the repository root,
 //! and checks that every program not excluded reaches the suite's outcome.
@@ -259,7 +260,7 @@ fn regression_pos_pl() {
 
 const REGRESSION_NEG: Suite = Suite {
     name: "regression-neg",
-    relation: "Program_ok",
+    relation: "Program_inst",
     outcome: Outcome::Fail,
     dir: "tests/p4/regression/neg",
     dirs_exclude: &[STATIC],

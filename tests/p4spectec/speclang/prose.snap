@@ -30978,9 +30978,11 @@ def $empty_store
 
 def $add_store(store, objectId, object)
 
-1. (Let store' be $add_map<objectId, object>(store, objectId, object)) [FAIL]
+1. Check (~$in_set<objectId>(objectId, $dom_map<objectId, object>(store))) [FAIL]
 
-2. Return store'
+  1. (Let store' be $add_map<objectId, object>(store, objectId, object)) [FAIL]
+
+  2. Return store'
 
 def $find_store(store, objectId)
 
