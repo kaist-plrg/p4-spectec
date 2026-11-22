@@ -1,0 +1,10 @@
+var i : int
+extern dec $inspect_note(int*): bool
+dec $forward_note(int*): bool
+def $forward_note(i*) = $inspect_note(i*)
+extern dec $inspect_nested(int**): bool
+dec $forward_nested(int**): bool
+def $forward_nested(i**) = $inspect_nested(i**)
+relation Echo: int* |- int*
+  hint(input %0)
+rule Echo/same: i* |- i*
